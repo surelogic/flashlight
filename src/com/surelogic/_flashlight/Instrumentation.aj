@@ -66,20 +66,20 @@ public aspect Instrumentation {
 	 * for the semantics of waiting on an intrinsic lock.
 	 */
 	pointcut intrinsicWait() : (
-			call(public void java.lang.Object.wait()) ||
-	        call(public void java.lang.Object.wait(long)) ||
-			call(public void java.lang.Object.wait(long, int))
+			call(public void wait()) ||
+	        call(public void wait(long)) ||
+			call(public void wait(long, int))
 			) && nofl();
 
 	before() : intrinsicWait() {
-		final Object oThis = thisJoinPoint.getThis();
+		final Object oThis = thisJoinPoint.getTarget();
 		final SourceLocation sl = thisJoinPointStaticPart.getSourceLocation();
 		final SrcLoc location = new SrcLoc(sl.getFileName(), sl.getLine());
 		Store.beforeIntrinsicLockWait(oThis, location);
 	}
 
 	after() : intrinsicWait() {
-		final Object oThis = thisJoinPoint.getThis();
+		final Object oThis = thisJoinPoint.getTarget();
 		final SourceLocation sl = thisJoinPointStaticPart.getSourceLocation();
 		final SrcLoc location = new SrcLoc(sl.getFileName(), sl.getLine());
 		Store.afterIntrinsicLockWait(oThis, location);

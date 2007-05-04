@@ -595,7 +595,7 @@ public final class Store {
 				logAProblem("intrinsic lock object cannot be null...bug");
 				return;
 			}
-			final Event e = new BeforeIntrinsicLockWait(lockObject, location);
+			final Event e = new AfterIntrinsicLockWait(lockObject, location);
 			putInQueue(f_rawQueue, e);
 		} finally {
 			tl_withinStore.set(Boolean.FALSE);

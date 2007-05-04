@@ -27,7 +27,17 @@ final class OutputStrategyXML extends EventVisitor {
 	}
 
 	@Override
+	void visit(AfterIntrinsicLockWait e) {
+		o(e.toString());
+	}
+
+	@Override
 	void visit(BeforeIntrinsicLockAcquisition e) {
+		o(e.toString());
+	}
+
+	@Override
+	void visit(BeforeIntrinsicLockWait e) {
 		o(e.toString());
 	}
 

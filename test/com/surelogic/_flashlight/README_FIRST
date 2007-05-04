@@ -1,0 +1,14 @@
+** WARNING **
+
+The JUnit tests in this directory cannot all be run together.  Please
+run one after the other so that each test is within its own JVM.  This is
+required because Flashlight's Store uses static data that causes
+interference between the tests if they are run all together within the same
+JVM.
+
+Some of the tests dump a file into java.io.tmpdir that you'll need to clean up.
+
+Further, some of these tests depend upon the System.gc() and could
+fail when there is really nothing wrong with the code.  Delays have been
+built into the test to minimize the probability of this type of failure
+occurring.

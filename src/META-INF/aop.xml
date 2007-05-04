@@ -1,0 +1,9 @@
+<aspectj>
+  <aspects>
+    <aspect name="com.surelogic._flashlight.Instrumentation"/>
+  </aspects>
+  <weaver options="-Xjoinpoints:synchronization">
+    <exclude within="com.surelogic._flashlight.*"/>
+    <exclude within="com.surelogic._flashlight.emory.*"/>
+  </weaver>
+</aspectj>

@@ -45,6 +45,18 @@ public class IntrinsicLockingWait {
 			} catch (InterruptedException e) {
 			}
 		}
+		synchronized (n) {
+			try {
+				n.wait();
+				System.out.println("n.wait()");
+				n.wait(10000);
+				System.out.println("n.wait(10000)");
+				n.wait(10000, 10);
+				System.out.println("n.wait(10000, 10)");
+
+			} catch (InterruptedException e) {
+			}
+		}
 		n.done = true;
 	}
 }

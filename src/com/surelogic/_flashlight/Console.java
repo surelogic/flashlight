@@ -55,7 +55,8 @@ class Console extends Thread {
 		} while (!listening && ++tryCount <= 100);
 		if (!listening) {
 			Store.logAProblem("unable to listen on any port between " + f_port
-					+ " and " + f_port + 100);
+					+ " and " + f_port + 100
+					+ " (i.e., Flashlight cannot be shutdown via a console)");
 			return;
 		}
 		Store.log("console server listening on port " + f_port);

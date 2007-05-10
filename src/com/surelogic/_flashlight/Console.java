@@ -21,7 +21,8 @@ class Console extends Thread {
 
 	private volatile boolean f_shutdownRequested = false;
 
-	private final int f_port = Store.getIntProperty("FL_CONSOLE_PORT", 43524);
+	private final int f_port = Store.getIntProperty("FL_CONSOLE_PORT", 43524,
+			1024);
 
 	/**
 	 * The socket this game server is listening on.
@@ -42,10 +43,19 @@ class Console extends Thread {
 		Store.flashlightThread();
 
 		// start listening on a port
-		try {
-			f_socket = new ServerSocket(f_port);
-		} catch (IOException e) {
-			Store.logAProblem("unable to listen on port " + f_port, e);
+		boolean listening = false;
+		int tryCount = 0;
+		do {
+			try {
+				f_socket = new ServerSocket(f_port + tryCount); // count up
+				listening = true;
+			} catch (IOException e) {
+				// ignore
+			}
+		} while (!listening && ++tryCount <= 100);
+		if (!listening) {
+			Store.logAProblem("unable to listen on any port between " + f_port
+					+ " and " + f_port + 100);
 			return;
 		}
 		Store.log("console server listening on port " + f_port);

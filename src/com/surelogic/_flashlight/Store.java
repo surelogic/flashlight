@@ -215,29 +215,24 @@ public final class Store {
 					"_yyyy.MM.dd_'at'_H.mm.ss");
 			fileName.append(dateFormat.format(new Date()));
 
-			final boolean log = System.getProperty("FL_NO_LOG") == null;
-			if (log) {
-				File logFile = new File(fileName.toString() + ".log");
-				PrintWriter w = null;
-				try {
-					OutputStream stream = new FileOutputStream(logFile);
-					stream = new BufferedOutputStream(stream);
-					w = new PrintWriter(stream);
-				} catch (IOException e) {
-					System.err.println("unable to output to \""
-							+ logFile.getAbsolutePath() + "\"");
-					e.printStackTrace(System.err);
-					System.exit(1); // bail
-				}
-				f_log = w;
-			} else {
-				f_log = null;
+			File logFile = new File(fileName.toString() + ".log");
+			PrintWriter w = null;
+			try {
+				OutputStream stream = new FileOutputStream(logFile);
+				stream = new BufferedOutputStream(stream);
+				w = new PrintWriter(stream);
+			} catch (IOException e) {
+				System.err.println("[Flashlight] unable to output to \""
+						+ logFile.getAbsolutePath() + "\"");
+				e.printStackTrace(System.err);
+				System.exit(1); // bail
 			}
+			f_log = w;
 			// still incremented even if logging is off.
 			f_problemCount = new AtomicLong();
 
 			File file = new File(fileName.toString() + ".data.xml.gz");
-			PrintWriter w = null;
+			w = null;
 			try {
 				OutputStream stream = new FileOutputStream(file);
 				stream = new GZIPOutputStream(stream, 4096);
@@ -251,10 +246,10 @@ public final class Store {
 			}
 			final EventVisitor outputStrategy = new OutputStrategyXML(w);
 
-			final int rawQueueSize = getIntProperty("FL_RAWQ_SIZE", 500);
+			final int rawQueueSize = getIntProperty("FL_RAWQ_SIZE", 500, 10);
 			f_rawQueue = new ArrayBlockingQueue<Event>(rawQueueSize);
 			putInQueue(f_rawQueue, new Time());
-			final int outQueueSize = getIntProperty("FL_OUTQ_SIZE", 500);
+			final int outQueueSize = getIntProperty("FL_OUTQ_SIZE", 500, 10);
 			f_outQueue = new ArrayBlockingQueue<Event>(outQueueSize);
 			tl_withinStore = new ThreadLocal<Boolean>() {
 				@Override
@@ -272,7 +267,8 @@ public final class Store {
 									new ObjectDefinition(o));
 						}
 					});
-			final int refinerySize = getIntProperty("FL_REFINERY_SIZE", 5000);
+			final int refinerySize = getIntProperty("FL_REFINERY_SIZE", 5000,
+					100);
 			f_refinery = new Refinery(f_rawQueue, f_outQueue, refinerySize);
 			f_refinery.start();
 			f_depository = new Depository(f_outQueue, outputStrategy);
@@ -325,7 +321,7 @@ public final class Store {
 		f_flashlightIsNotInitialized = false;
 	}
 
-	static int getIntProperty(final String key, int def) {
+	static int getIntProperty(final String key, int def, final int min) {
 		try {
 			String intString = System.getProperty(key);
 			if (intString != null)
@@ -333,7 +329,8 @@ public final class Store {
 		} catch (NumberFormatException e) {
 			// ignore, go with the default
 		}
-		return def;
+		// ensure the result isn't less than the minimum
+		return (def >= min ? def : min);
 	}
 
 	/**

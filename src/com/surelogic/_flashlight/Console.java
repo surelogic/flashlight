@@ -140,8 +140,8 @@ class Console extends Thread {
 						new InputStreamReader(f_client.getInputStream()));
 				BufferedWriter outputStream = new BufferedWriter(
 						new OutputStreamWriter(f_client.getOutputStream()));
-				sendResponse(outputStream, "Welcome to Flashlight! ["
-						+ Store.getId() + "]");
+				sendResponse(outputStream, "Welcome to Flashlight! \""
+						+ Store.getRun() + "\"");
 				sendResponse(outputStream,
 						"(type \"stop\" to shutdown collection)");
 				while (!f_shutdownRequested) {
@@ -166,6 +166,7 @@ class Console extends Thread {
 						} else if (nextLine.equalsIgnoreCase("exit")
 								|| nextLine.equalsIgnoreCase("quit")) {
 							f_shutdownRequested = true;
+							f_client.close();
 						} else {
 							sendResponse(outputStream,
 									"invalid command...please use \"stop\" when you want to halt collection");

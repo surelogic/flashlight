@@ -68,10 +68,12 @@
 
 	<target name="run-store-tests" depends="compile-test-code">
 		<echo message="(These tests do not use the instrumentation)" />
+		<echo message=" - The below test might fail if the GC gods do not smile upon it" />
 		<junit printsummary="on" fork="yes" haltonfailure="yes">
 			<classpath refid="test.classpath" />
 			<test name="com.surelogic._flashlight.TestBasicRefinery" />
 		</junit>
+		<echo message=" - The below test might fail if the GC gods do not smile upon it" />
 		<junit printsummary="on" fork="yes" haltonfailure="yes">
 			<classpath refid="test.classpath" />
 			<test name="com.surelogic._flashlight.TestBasicSharedState" />

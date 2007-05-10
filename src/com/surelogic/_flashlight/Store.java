@@ -132,23 +132,20 @@ public final class Store {
 	}
 
 	/**
-	 * A string identifier for this Flashlight run that includes the value of
-	 * the <tt>FL_RUN</tt> (or <tt>flashlight</tt> if this property is not
-	 * set) and the date. This string is used as part of the output file names.
+	 * The string value of the <tt>FL_RUN</tt> property or
+	 * <tt>"flashlight"</tt> if this property is not set.
 	 */
-	private static final String f_id;
+	private static final String f_run;
 
 	/**
-	 * Gets a string identifier for this Flashlight run that includes the value
-	 * of the <tt>FL_RUN</tt> (or <tt>flashlight</tt> if this property is
-	 * not set) and the date. This string is used as part of the output file
-	 * names.
+	 * Gets the string value of the <tt>FL_RUN</tt> property or
+	 * <tt>"flashlight"</tt> if this property is not set.
 	 * 
-	 * @return a string identifier for this Flashlight run, for example
-	 *         <tt>flashlight_2007.05.10_at_12.37.05</tt>.
+	 * @return the string value of the <tt>FL_RUN</tt> property or
+	 *         <tt>"flashlight"</tt> if this property is not set.
 	 */
-	static String getId() {
-		return f_id;
+	static String getRun() {
+		return f_run;
 	}
 
 	/**
@@ -230,13 +227,13 @@ public final class Store {
 			fileName.append(System.getProperty("FL_DIR", System
 					.getProperty("java.io.tmpdir")));
 			fileName.append(System.getProperty("file.separator"));
-			fileName.append(System.getProperty("FL_RUN", "flashlight"));
+			f_run = System.getProperty("FL_RUN", "flashlight");
+			fileName.append(f_run);
 			final SimpleDateFormat dateFormat = new SimpleDateFormat(
 					"_yyyy.MM.dd_'at'_H.mm.ss");
 			fileName.append(dateFormat.format(new Date()));
-			f_id = fileName.toString();
 
-			File logFile = new File(f_id + ".log");
+			File logFile = new File(fileName.toString() + ".log");
 			PrintWriter w = null;
 			try {
 				OutputStream stream = new FileOutputStream(logFile);
@@ -252,7 +249,7 @@ public final class Store {
 			// still incremented even if logging is off.
 			f_problemCount = new AtomicLong();
 
-			File dataFile = new File(f_id + ".data.xml.gz");
+			File dataFile = new File(fileName.toString() + ".data.xml.gz");
 			w = null;
 			try {
 				OutputStream stream = new FileOutputStream(dataFile);
@@ -328,8 +325,8 @@ public final class Store {
 
 			f_start_nano = System.nanoTime();
 		} else {
+			f_run = null;
 			f_log = null;
-			f_id = null;
 			f_problemCount = null;
 			f_rawQueue = null;
 			f_outQueue = null;

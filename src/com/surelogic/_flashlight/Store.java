@@ -229,7 +229,7 @@ public final class Store {
 			f_run = System.getProperty("FL_RUN", "flashlight");
 			fileName.append(f_run);
 			final SimpleDateFormat dateFormat = new SimpleDateFormat(
-					"_yyyy.MM.dd_'at'_HH.mm.ss.SSS");
+					"-yyyy.MM.dd-'at'-HH.mm.ss.SSS");
 			// make the filename and time event times match
 			final Time timeEvent = new Time();
 			fileName.append(dateFormat.format(timeEvent.getDate()));
@@ -294,7 +294,7 @@ public final class Store {
 			f_depository.start();
 			log("collection started (rawQ=" + rawQueueSize + " : refinery="
 					+ refinerySize + " : outQ=" + outQueueSize + ")");
-			log("           to \"" + dataFile.getAbsolutePath() + "\"");
+			log("to \"" + dataFile.getAbsolutePath() + "\"");
 			/*
 			 * The spy periodically checks the state of the instrumented program
 			 * and shuts down flashlight if the program is finished.

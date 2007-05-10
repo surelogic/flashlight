@@ -7,13 +7,45 @@ final class OutputStrategyXML extends EventVisitor {
 	private final PrintWriter f_out;
 	private String f_indent = "";
 
+	private void o(final String s) {
+		f_out.print(f_indent);
+		f_out.println(s);
+	}
+
+	private void addProperty(final String key, final StringBuilder b) {
+		String prop = System.getProperty(key);
+		if (prop == null)
+			prop = "UNKNOWN";
+		Entities.addAttribute(key.replaceAll("\\.", "-"), prop, b);
+	}
+
 	public OutputStrategyXML(final PrintWriter out) {
 		assert out != null;
 		f_out = out;
 		o("<?xml version='1.0' encoding='" + Store.ENCODING
 				+ "' standalone='yes'?>");
-		o("<flashlight version='1.0'>");
+		StringBuilder b = new StringBuilder();
+		b.append("<flashlight");
+		Entities.addAttribute("version", "1.0", b);
+		Entities.addAttribute("run", Store.getRun(), b);
+		b.append("/>");
+		o(b.toString());
 		f_indent = "  ";
+		b = new StringBuilder();
+		b.append("<environment");
+		addProperty("user.name", b);
+		addProperty("java.version", b);
+		addProperty("java.vendor", b);
+		addProperty("os.name", b);
+		addProperty("os.arch", b);
+		addProperty("os.version", b);
+		Entities.addAttribute("max-memory-mb", ((long) Runtime.getRuntime()
+				.maxMemory())
+				/ (1024L * 1024L), b);
+		Entities.addAttribute("processors", Runtime.getRuntime()
+				.availableProcessors(), b);
+		b.append("/>");
+		o(b.toString());
 	}
 
 	@Override
@@ -91,10 +123,5 @@ final class OutputStrategyXML extends EventVisitor {
 	@Override
 	void visit(Time e) {
 		o(e.toString());
-	}
-
-	private void o(final String s) {
-		f_out.print(f_indent);
-		f_out.println(s);
 	}
 }

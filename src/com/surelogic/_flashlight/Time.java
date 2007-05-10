@@ -11,16 +11,14 @@ import java.util.Date;
  */
 public final class Time extends Event {
 
-	private final String f_wallTime;
+	private final Date f_date;
 
-	String getWallTime() {
-		return f_wallTime;
+	Date getDate() {
+		return f_date;
 	}
 
 	Time() {
-		final SimpleDateFormat dateFormat = new SimpleDateFormat(
-				"yyyy-MM-dd H:mm:ss.S");
-		f_wallTime = dateFormat.format(new Date());
+		f_date = new Date();
 	}
 
 	@Override
@@ -33,7 +31,9 @@ public final class Time extends Event {
 		final StringBuilder b = new StringBuilder();
 		b.append("<time ");
 		addNanoTime(b);
-		Entities.addAttribute("wall-clock-time", f_wallTime, b);
+		final SimpleDateFormat dateFormat = new SimpleDateFormat(
+				"yyyy-MM-dd HH:mm:ss.SSS");
+		Entities.addAttribute("wall-clock-time", dateFormat.format(f_date), b);
 		b.append("/>");
 		return b.toString();
 	}

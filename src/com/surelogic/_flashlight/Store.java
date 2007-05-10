@@ -9,7 +9,6 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.lang.reflect.Field;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -230,8 +229,10 @@ public final class Store {
 			f_run = System.getProperty("FL_RUN", "flashlight");
 			fileName.append(f_run);
 			final SimpleDateFormat dateFormat = new SimpleDateFormat(
-					"_yyyy.MM.dd_'at'_H.mm.ss");
-			fileName.append(dateFormat.format(new Date()));
+					"_yyyy.MM.dd_'at'_HH.mm.ss.SSS");
+			// make the filename and time event times match
+			final Time timeEvent = new Time();
+			fileName.append(dateFormat.format(timeEvent.getDate()));
 
 			File logFile = new File(fileName.toString() + ".log");
 			PrintWriter w = null;
@@ -266,7 +267,7 @@ public final class Store {
 
 			final int rawQueueSize = getIntProperty("FL_RAWQ_SIZE", 500, 10);
 			f_rawQueue = new ArrayBlockingQueue<Event>(rawQueueSize);
-			putInQueue(f_rawQueue, new Time());
+			putInQueue(f_rawQueue, timeEvent);
 			final int outQueueSize = getIntProperty("FL_OUTQ_SIZE", 500, 10);
 			f_outQueue = new ArrayBlockingQueue<Event>(outQueueSize);
 			tl_withinStore = new ThreadLocal<Boolean>() {

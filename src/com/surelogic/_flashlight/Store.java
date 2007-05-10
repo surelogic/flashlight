@@ -132,6 +132,26 @@ public final class Store {
 	}
 
 	/**
+	 * A string identifier for this Flashlight run that includes the value of
+	 * the <tt>FL_RUN</tt> (or <tt>flashlight</tt> if this property is not
+	 * set) and the date. This string is used as part of the output file names.
+	 */
+	private static final String f_id;
+
+	/**
+	 * Gets a string identifier for this Flashlight run that includes the value
+	 * of the <tt>FL_RUN</tt> (or <tt>flashlight</tt> if this property is
+	 * not set) and the date. This string is used as part of the output file
+	 * names.
+	 * 
+	 * @return a string identifier for this Flashlight run, for example
+	 *         <tt>flashlight_2007.05.10_at_12.37.05</tt>.
+	 */
+	static String getId() {
+		return f_id;
+	}
+
+	/**
 	 * The value of {@link System#nanoTime()} when we start collecting data.
 	 */
 	private static final long f_start_nano;
@@ -214,15 +234,16 @@ public final class Store {
 			final SimpleDateFormat dateFormat = new SimpleDateFormat(
 					"_yyyy.MM.dd_'at'_H.mm.ss");
 			fileName.append(dateFormat.format(new Date()));
+			f_id = fileName.toString();
 
-			File logFile = new File(fileName.toString() + ".log");
+			File logFile = new File(f_id + ".log");
 			PrintWriter w = null;
 			try {
 				OutputStream stream = new FileOutputStream(logFile);
 				stream = new BufferedOutputStream(stream);
 				w = new PrintWriter(stream);
 			} catch (IOException e) {
-				System.err.println("[Flashlight] unable to output to \""
+				System.err.println("[Flashlight] unable to log to \""
 						+ logFile.getAbsolutePath() + "\"");
 				e.printStackTrace(System.err);
 				System.exit(1); // bail
@@ -231,17 +252,17 @@ public final class Store {
 			// still incremented even if logging is off.
 			f_problemCount = new AtomicLong();
 
-			File file = new File(fileName.toString() + ".data.xml.gz");
+			File dataFile = new File(f_id + ".data.xml.gz");
 			w = null;
 			try {
-				OutputStream stream = new FileOutputStream(file);
+				OutputStream stream = new FileOutputStream(dataFile);
 				stream = new GZIPOutputStream(stream, 4096);
 				OutputStreamWriter osw = new OutputStreamWriter(stream,
 						ENCODING);
 				w = new PrintWriter(osw);
 			} catch (IOException e) {
-				logAProblem("unable to output to \"" + file.getAbsolutePath()
-						+ "\"", e);
+				logAProblem("unable to output to \""
+						+ dataFile.getAbsolutePath() + "\"", e);
 				System.exit(1); // bail
 			}
 			final EventVisitor outputStrategy = new OutputStrategyXML(w);
@@ -275,7 +296,7 @@ public final class Store {
 			f_depository.start();
 			log("collection started (rawQ=" + rawQueueSize + " : refinery="
 					+ refinerySize + " : outQ=" + outQueueSize + ")");
-			log("outputting to \"" + fileName + "\"");
+			log("           to \"" + dataFile.getAbsolutePath() + "\"");
 			/*
 			 * The spy periodically checks the state of the instrumented program
 			 * and shuts down flashlight if the program is finished.
@@ -308,6 +329,7 @@ public final class Store {
 			f_start_nano = System.nanoTime();
 		} else {
 			f_log = null;
+			f_id = null;
 			f_problemCount = null;
 			f_rawQueue = null;
 			f_outQueue = null;

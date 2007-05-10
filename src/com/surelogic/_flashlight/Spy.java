@@ -62,7 +62,6 @@ public final class Spy extends Thread {
 
 					if (!current && !flashlightThread && !destroyJavaVM) {
 						timeToShutdown = false;
-						Store.log(t.getName() + " is alive");
 					}
 				}
 			}

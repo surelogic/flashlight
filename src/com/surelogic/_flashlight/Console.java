@@ -45,27 +45,28 @@ class Console extends Thread {
 		// start listening on a port
 		boolean listening = false;
 		int tryCount = 0;
+		int port = f_port;
 		do {
 			try {
-				f_socket = new ServerSocket(f_port + tryCount); // count up
+				port = f_port + tryCount;
+				f_socket = new ServerSocket(port);
 				listening = true;
 			} catch (IOException e) {
-				// ignore
+				tryCount++;
 			}
-		} while (!listening && ++tryCount <= 100);
+		} while (!listening && tryCount <= 100);
 		if (!listening) {
 			Store.logAProblem("unable to listen on any port between " + f_port
-					+ " and " + f_port + 100
+					+ " and " + port
 					+ " (i.e., Flashlight cannot be shutdown via a console)");
 			return;
 		}
-		Store.log("console server listening on port " + f_port);
+		Store.log("console server listening on port " + port);
 
 		// until told to shutdown, listen for and handle client connections
 		while (!f_shutdownRequested) {
 			try {
 				final Socket client = f_socket.accept(); // wait for a client
-				// connection
 				Store.log("console connection ");
 				final ClientHandler handler = new ClientHandler(client);
 				final WeakReference<ClientHandler> p_handler = new WeakReference<ClientHandler>(
@@ -80,7 +81,7 @@ class Console extends Thread {
 				 */
 			} catch (IOException e) {
 				Store.logAProblem("failure listening for client connections "
-						+ f_port, e);
+						+ port, e);
 			}
 		}
 		/*
@@ -214,5 +215,4 @@ class Console extends Thread {
 			}
 		}
 	}
-
 }

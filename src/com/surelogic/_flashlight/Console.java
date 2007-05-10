@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.lang.ref.WeakReference;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
@@ -67,8 +68,13 @@ class Console extends Thread {
 		while (!f_shutdownRequested) {
 			try {
 				final Socket client = f_socket.accept(); // wait for a client
-				Store.log("console connection ");
+				InetAddress address = client.getInetAddress();
 				final ClientHandler handler = new ClientHandler(client);
+				Store
+						.log("console connect from "
+								+ (address == null ? "UNKNOWN" : address
+										.getCanonicalHostName()) + " ("
+								+ handler + ")");
 				final WeakReference<ClientHandler> p_handler = new WeakReference<ClientHandler>(
 						handler);
 				f_handlers.add(p_handler);
@@ -173,6 +179,7 @@ class Console extends Thread {
 						}
 					}
 				}
+				Store.log("console disconnect (" + this + ")");
 			} catch (SocketException e) {
 				/*
 				 * ignore, this is normal behavior during a shutdown, i.e.,

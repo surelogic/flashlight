@@ -70,11 +70,10 @@ class Console extends Thread {
 				final Socket client = f_socket.accept(); // wait for a client
 				InetAddress address = client.getInetAddress();
 				final ClientHandler handler = new ClientHandler(client);
-				Store
-						.log("console connect from "
-								+ (address == null ? "UNKNOWN" : address
-										.getCanonicalHostName()) + " ("
-								+ handler + ")");
+				Store.log("console connect from "
+						+ (address == null ? "UNKNOWN" : address
+								.getCanonicalHostName()) + " ("
+						+ handler.getName() + ")");
 				final WeakReference<ClientHandler> p_handler = new WeakReference<ClientHandler>(
 						handler);
 				f_handlers.add(p_handler);
@@ -179,7 +178,7 @@ class Console extends Thread {
 						}
 					}
 				}
-				Store.log("console disconnect (" + this + ")");
+				Store.log("console disconnect (" + getName() + ")");
 			} catch (SocketException e) {
 				/*
 				 * ignore, this is normal behavior during a shutdown, i.e.,

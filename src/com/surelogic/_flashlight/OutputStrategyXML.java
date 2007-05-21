@@ -28,7 +28,7 @@ final class OutputStrategyXML extends EventVisitor {
 		b.append("<flashlight");
 		Entities.addAttribute("version", "1.0", b);
 		Entities.addAttribute("run", Store.getRun(), b);
-		b.append("/>");
+		b.append(">"); // don't end this element
 		o(b.toString());
 		f_indent = "  ";
 		b = new StringBuilder();

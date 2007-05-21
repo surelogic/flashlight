@@ -234,7 +234,7 @@ public final class Store {
 			final Time timeEvent = new Time();
 			fileName.append(dateFormat.format(timeEvent.getDate()));
 
-			File logFile = new File(fileName.toString() + ".log");
+			File logFile = new File(fileName.toString() + ".flog");
 			PrintWriter w = null;
 			try {
 				OutputStream stream = new FileOutputStream(logFile);
@@ -250,7 +250,7 @@ public final class Store {
 			// still incremented even if logging is off.
 			f_problemCount = new AtomicLong();
 
-			File dataFile = new File(fileName.toString() + ".data.xml.gz");
+			File dataFile = new File(fileName.toString() + ".fl.gz");
 			w = null;
 			try {
 				OutputStream stream = new FileOutputStream(dataFile);

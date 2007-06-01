@@ -1154,8 +1154,8 @@ public class RadkeHashMap implements Map, Cloneable, java.io.Serializable {
             for (int i=0; i<iters; i++) {
                 System.out.println("total: " + total);
                 while (rmap.size() < ceil) {
-                    Object key = new Integer(r.nextInt(ceil*5));
-                    Object val = new Integer(r.nextInt());
+                    Object key = Integer.valueOf(r.nextInt(ceil*5));
+                    Object val = Integer.valueOf(r.nextInt());
 
                     Object o1 = rmap.put(key, val);
                     Object o2 = hmap.put(key, val);
@@ -1167,7 +1167,7 @@ public class RadkeHashMap implements Map, Cloneable, java.io.Serializable {
                 }
 
                 for (int j=0; j<gets; j++) {
-                    Object key = new Integer(r.nextInt(ceil*5));
+                    Object key = Integer.valueOf(r.nextInt(ceil*5));
                     Object v1 = hmap.get(key);
                     Object v2 = rmap.get(key);
                     if (!(RadkeHashMap.equals(v1,v2))) throw new IllegalStateException();

@@ -41,6 +41,10 @@ public final class Entities {
 		add(name, "" + value, b);
 	}
 
+	public static void addEscaped(final String value, final StringBuilder b) {
+		b.append(E.escape(value));
+	}
+
 	/**
 	 * A private type to store names and values that we want escaped.
 	 */

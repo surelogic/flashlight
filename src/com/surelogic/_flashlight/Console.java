@@ -109,7 +109,8 @@ class Console extends Thread {
 	void requestShutdown() {
 		f_shutdownRequested = true;
 		try {
-			f_socket.close();
+			if (f_socket != null)
+				f_socket.close();
 		} catch (IOException e) {
 			Store.logAProblem(
 					"unable to close the socket used by " + getName(), e);

@@ -134,6 +134,8 @@ public final class Data {
 						// comment or blank line -- ignore this line
 					} else if (buffer.endsWith(";")) {
 						// end of an SQL statement -- add to our resulting list
+						if (b.length() > 0)
+							b.append("\n");
 						b.append(buffer);
 						b.deleteCharAt(b.length() - 1); // remove the ";"
 						result.add(b);

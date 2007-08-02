@@ -18,5 +18,4 @@ Require-Bundle: org.eclipse.ui,
  com.surelogic.adhoc,
  com.surelogic.common.eclipse
 Eclipse-LazyStart: true
-Bundle-ClassPath: .,
- lib/database/derby.jar
+Bundle-ClassPath: .

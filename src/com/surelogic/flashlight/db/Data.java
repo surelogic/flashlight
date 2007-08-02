@@ -16,6 +16,7 @@ import java.util.List;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 
+import com.surelogic.common.eclipse.Derby;
 import com.surelogic.flashlight.Activator;
 import com.surelogic.flashlight.FLog;
 
@@ -24,8 +25,6 @@ public final class Data {
 	private Data() {
 		// no instances
 	}
-
-	private static final String DRIVER = "org.apache.derby.jdbc.EmbeddedDriver";
 
 	private static final String SCHEMA_VERSION = "1.0";
 
@@ -39,17 +38,7 @@ public final class Data {
 			throws CoreException {
 		assert schemaURL != null;
 
-		try {
-			/*
-			 * Load the Derby driver. When the embedded Driver is used this
-			 * action start the Derby engine.
-			 */
-			Class.forName(DRIVER);
-		} catch (java.lang.ClassNotFoundException e) {
-			throw new CoreException(FLog.createErrorStatus(
-					"Unable to startup the embedded Flashlight database using "
-							+ DRIVER + ".", e));
-		}
+		Derby.bootEmbedded();
 
 		final String connectionURL = getConnectionURL() + ";create = true";
 		try {

@@ -1,16 +1,11 @@
 package com.surelogic.flashlight.db;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
@@ -92,7 +87,14 @@ public final class Data {
 		assert c != null;
 		assert schemaURL != null;
 
-		List<StringBuilder> stmts = getSQLStatements(schemaURL);
+		List<StringBuilder> stmts;
+		try {
+			stmts = Derby.getSQLStatements(schemaURL);
+		} catch (RuntimeException e) {
+			throw new CoreException(FLog.createErrorStatus(
+					"Unable to open/read the Flashlight schema file: "
+							+ schemaURL, e));
+		}
 		final Statement st = c.createStatement();
 		try {
 			for (StringBuilder b : stmts) {
@@ -101,51 +103,6 @@ public final class Data {
 		} finally {
 			st.close();
 		}
-	}
-
-	private static List<StringBuilder> getSQLStatements(final URL schemaURL)
-			throws CoreException {
-		assert schemaURL != null;
-
-		List<StringBuilder> result = new ArrayList<StringBuilder>();
-
-		try {
-			final InputStream is = schemaURL.openStream();
-			final InputStreamReader isr = new InputStreamReader(is);
-			final BufferedReader br = new BufferedReader(isr);
-
-			try {
-				StringBuilder b = new StringBuilder();
-				String buffer;
-				while ((buffer = br.readLine()) != null) {
-					buffer = buffer.trim();
-					if (buffer.startsWith("--") || buffer.equals("")) {
-						// comment or blank line -- ignore this line
-					} else if (buffer.endsWith(";")) {
-						// end of an SQL statement -- add to our resulting list
-						if (b.length() > 0)
-							b.append("\n");
-						b.append(buffer);
-						b.deleteCharAt(b.length() - 1); // remove the ";"
-						result.add(b);
-						b = new StringBuilder();
-					} else {
-						// add this line (with a newline after the first line)
-						if (b.length() > 0)
-							b.append("\n");
-						b.append(buffer);
-					}
-				}
-				br.readLine();
-			} finally {
-				br.close();
-			}
-		} catch (IOException e) {
-			throw new CoreException(FLog.createErrorStatus(
-					"Unable to open/read the Flashlight schema file: "
-							+ schemaURL, e));
-		}
-		return result;
 	}
 
 	private static String getConnectionURL() {

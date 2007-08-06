@@ -5,16 +5,6 @@
 -- generate a result set (i.e., no queries).
 ---------------------------------------------------------------------
 
-create schema FL;
-
-set schema FL;
-
-create table Version (
-  Flashlight    LONG VARCHAR  NOT NULL
-);
-
-insert into VERSION values ('1.0');
-
 create table RUN (
   Run            INT          NOT NULL GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   Name           VARCHAR(200) NOT NULL,

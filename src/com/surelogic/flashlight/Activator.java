@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
@@ -15,16 +14,12 @@ import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 
-import com.surelogic.flashlight.db.Data;
-
 /**
  * The activator class controls the plug-in life cycle
  */
 public class Activator extends AbstractUIPlugin {
 
 	public static final String PLUGIN_ID = "com.surelogic.flashlight";
-
-	public static final String SCHEMA_FILE = "/lib/database/schema.sql";
 
 	public static final String XML_ENCODING = "UTF-8";
 
@@ -53,19 +48,8 @@ public class Activator extends AbstractUIPlugin {
 	@Override
 	public void start(BundleContext context) throws Exception {
 		super.start(context);
-		// find the schema file within this plug-in
-		IPath p = Path.fromOSString(SCHEMA_FILE);
-		final URL schemaURL = FileLocator.find(getBundle(), p, null);
-		if (schemaURL != null) {
-			// startup the database and (if necessary) load its schema
-			Data.bootAndCheckSchema(schemaURL);
-		} else {
-			throw new CoreException(
-					FLog
-							.createErrorStatus("Unable to find the Flashlight schema file, "
-									+ SCHEMA_FILE
-									+ ", relative to the plug-in path."));
-		}
+		// startup the database and ensure its schema is up to date
+		Data.bootAndCheckSchema();
 	}
 
 	@Override

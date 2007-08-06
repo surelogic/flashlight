@@ -20,8 +20,8 @@ import org.eclipse.ui.PlatformUI;
 
 import com.surelogic.common.eclipse.SLImages;
 import com.surelogic.flashlight.Activator;
+import com.surelogic.flashlight.Data;
 import com.surelogic.flashlight.FLog;
-import com.surelogic.flashlight.db.Data;
 import com.surelogic.flashlight.entities.IRunDescription;
 import com.surelogic.flashlight.entities.Run;
 import com.surelogic.flashlight.entities.RunDAO;

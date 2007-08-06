@@ -22,8 +22,8 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import com.surelogic.adhoc.DatabaseJob;
+import com.surelogic.flashlight.Data;
 import com.surelogic.flashlight.FLog;
-import com.surelogic.flashlight.db.Data;
 import com.surelogic.flashlight.entities.Run;
 import com.surelogic.flashlight.entities.RunDAO;
 import com.surelogic.flashlight.files.Raw;

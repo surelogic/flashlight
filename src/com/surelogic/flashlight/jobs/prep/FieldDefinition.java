@@ -6,10 +6,11 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.Set;
+import java.util.logging.Level;
 
 import org.xml.sax.Attributes;
 
-import com.surelogic.flashlight.FLog;
+import com.surelogic.common.logging.SLLogger;
 
 public final class FieldDefinition extends TrackUnreferenced {
 
@@ -48,7 +49,8 @@ public final class FieldDefinition extends TrackUnreferenced {
 			}
 		}
 		if (id == -1 || type == -1 || field == null) {
-			FLog.logError("Missing id, type, or field in field-definition");
+			SLLogger.getLogger().log(Level.SEVERE,
+					"Missing id, type, or field in field-definition");
 			return;
 		}
 		insert(runId, id, type, field, isStatic, isFinal, isVolatile);
@@ -72,7 +74,7 @@ public final class FieldDefinition extends TrackUnreferenced {
 			f_ps.setString(7, isVolatile ? "Y" : "N");
 			f_ps.executeUpdate();
 		} catch (SQLException e) {
-			FLog.logError("Insert failed: FIELD", e);
+			SLLogger.getLogger().log(Level.SEVERE, "Insert failed: FIELD", e);
 		}
 	}
 

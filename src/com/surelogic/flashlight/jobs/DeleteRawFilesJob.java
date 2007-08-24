@@ -7,7 +7,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 
-import com.surelogic.flashlight.FLog;
+import com.surelogic.common.eclipse.logging.SLStatus;
 import com.surelogic.flashlight.files.Raw;
 import com.surelogic.flashlight.views.RunView;
 
@@ -29,14 +29,14 @@ public final class DeleteRawFilesJob extends Job {
 		boolean deleted = file.delete();
 		monitor.worked(1);
 		if (!deleted) {
-			return FLog.createErrorStatus("Unable to delete "
+			return SLStatus.createErrorStatus("Unable to delete "
 					+ file.getAbsolutePath());
 		}
 		file = f_raw.getLogFile();
 		deleted = file.delete();
 		monitor.worked(1);
 		if (!deleted) {
-			return FLog.createErrorStatus("Unable to delete "
+			return SLStatus.createErrorStatus("Unable to delete "
 					+ file.getAbsolutePath());
 		}
 		RunView.refreshViewContents();

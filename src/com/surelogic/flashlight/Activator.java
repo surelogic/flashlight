@@ -3,6 +3,7 @@ package com.surelogic.flashlight;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.logging.Level;
 
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.IPath;
@@ -13,6 +14,8 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
+
+import com.surelogic.common.logging.SLLogger;
 
 /**
  * The activator class controls the plug-in life cycle
@@ -91,8 +94,8 @@ public class Activator extends AbstractUIPlugin {
 					.showView(viewId);
 			return view;
 		} catch (PartInitException e) {
-			FLog.logError("Unable to open the view identified by " + viewId
-					+ ".", e);
+			SLLogger.getLogger().log(Level.SEVERE,
+					"Unable to open the view identified by " + viewId + ".", e);
 		}
 		return null;
 	}
@@ -105,8 +108,10 @@ public class Activator extends AbstractUIPlugin {
 							viewId, secondaryId, mode);
 			return view;
 		} catch (PartInitException e) {
-			FLog.logError("Unable to open the view identified by " + viewId
-					+ " " + secondaryId + ".", e);
+			SLLogger.getLogger().log(
+					Level.SEVERE,
+					"Unable to open the view identified by " + viewId + " "
+							+ secondaryId + ".", e);
 		}
 		return null;
 	}

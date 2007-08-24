@@ -6,10 +6,11 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.Set;
+import java.util.logging.Level;
 
 import org.xml.sax.Attributes;
 
-import com.surelogic.flashlight.FLog;
+import com.surelogic.common.logging.SLLogger;
 
 public abstract class ReferenceDefinition extends TrackUnreferenced {
 
@@ -38,7 +39,8 @@ public abstract class ReferenceDefinition extends TrackUnreferenced {
 			}
 		}
 		if (id == -1) {
-			FLog.logError("Missing id in " + getXMLElementName());
+			SLLogger.getLogger().log(Level.SEVERE,
+					"Missing id in " + getXMLElementName());
 			return;
 		}
 		newObject(id);
@@ -80,7 +82,7 @@ public abstract class ReferenceDefinition extends TrackUnreferenced {
 			}
 			f_ps.executeUpdate();
 		} catch (SQLException e) {
-			FLog.logError("Insert failed: OBJECT", e);
+			SLLogger.getLogger().log(Level.SEVERE, "Insert failed: OBJECT", e);
 		}
 	}
 

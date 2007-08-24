@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
 
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.action.Action;
@@ -19,9 +20,9 @@ import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.PlatformUI;
 
 import com.surelogic.common.eclipse.SLImages;
+import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.Activator;
 import com.surelogic.flashlight.Data;
-import com.surelogic.flashlight.FLog;
 import com.surelogic.flashlight.entities.IRunDescription;
 import com.surelogic.flashlight.entities.Run;
 import com.surelogic.flashlight.entities.RunDAO;
@@ -147,7 +148,8 @@ public final class RunMediator {
 				c.close();
 			}
 		} catch (SQLException e) {
-			FLog.logError("Lookup of all runs failed", e);
+			SLLogger.getLogger().log(Level.SEVERE, "Lookup of all runs failed",
+					e);
 		}
 		// minimize the column widths
 		if (firstRefresh) {
@@ -219,7 +221,7 @@ public final class RunMediator {
 				em.close();
 			}
 		} catch (SQLException e) {
-			FLog.logError("Lookup of a run failed", e);
+			SLLogger.getLogger().log(Level.SEVERE, "Lookup of a run failed", e);
 		}
 		return unPrepId;
 	}
@@ -256,7 +258,8 @@ public final class RunMediator {
 			if (o instanceof IRunDescription) {
 				runName = ((IRunDescription) o).getName();
 			} else {
-				FLog.logError("Selected run is not an IRunDescription",
+				SLLogger.getLogger().log(Level.SEVERE,
+						"Selected run is not an IRunDescription",
 						new Exception("at this location"));
 				return;
 			}
@@ -272,9 +275,11 @@ public final class RunMediator {
 			final boolean onlyPrep = raw == null;
 			final boolean onlyRaw = unPrepRunId == -1;
 			if (onlyPrep && onlyRaw) {
-				FLog.logError("Selected run " + runName
-						+ " lacks both raw and prepared data", new Exception(
-						"at this location"));
+				SLLogger.getLogger().log(
+						Level.SEVERE,
+						"Selected run " + runName
+								+ " lacks both raw and prepared data",
+						new Exception("at this location"));
 				return;
 			}
 			DeleteRunDialog d = new DeleteRunDialog(f_table.getShell(),

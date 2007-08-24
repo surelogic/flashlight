@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.logging.Level;
 
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
@@ -19,7 +20,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 
-import com.surelogic.flashlight.FLog;
+import com.surelogic.common.logging.SLLogger;
 
 public final class LogDialog extends Dialog {
 
@@ -85,8 +86,8 @@ public final class LogDialog extends Dialog {
 			text.setText(b.toString());
 			r.close();
 		} catch (IOException e) {
-			FLog.logError("Unable to examine log file "
-					+ f_log.getAbsolutePath(), e);
+			SLLogger.getLogger().log(Level.SEVERE,
+					"Unable to examine log file " + f_log.getAbsolutePath(), e);
 		}
 	}
 

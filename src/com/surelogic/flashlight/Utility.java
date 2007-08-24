@@ -5,20 +5,24 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public final class Utility {
-	
+
 	private Utility() {
 		// no instances
 	}
 
-	static final SimpleDateFormat dateFormat = new SimpleDateFormat(
-			"yyyy-MM-dd HH:mm:ss.SSS");
+	private final static ThreadLocal<SimpleDateFormat> tl_format = new ThreadLocal<SimpleDateFormat>() {
+		@Override
+		protected SimpleDateFormat initialValue() {
+			return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		}
+	};
 
 	public static synchronized String toStringMS(final Date date) {
-		return dateFormat.format(date);
+		return tl_format.get().format(date);
 	}
 
-	public static Timestamp getWall(final Timestamp start,
-			final long startNS, final long timeNS) {
+	public static Timestamp getWall(final Timestamp start, final long startNS,
+			final long timeNS) {
 		long tMS = start.getTime();
 		final long deltaNS = timeNS - startNS;
 		if (deltaNS < 0)

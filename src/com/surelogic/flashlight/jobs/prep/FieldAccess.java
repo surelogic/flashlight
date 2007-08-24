@@ -6,10 +6,11 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.Set;
+import java.util.logging.Level;
 
 import org.xml.sax.Attributes;
 
-import com.surelogic.flashlight.FLog;
+import com.surelogic.common.logging.SLLogger;
 
 public abstract class FieldAccess extends Event {
 
@@ -47,8 +48,10 @@ public abstract class FieldAccess extends Event {
 		}
 		if (nanoTime == -1 || inThread == -1 || file == null
 				|| lineNumber == -1 || field == -1) {
-			FLog.logError("Missing nano-time, thread, file, line or field in "
-					+ getXMLElementName());
+			SLLogger.getLogger().log(
+					Level.SEVERE,
+					"Missing nano-time, thread, file, line or field in "
+							+ getXMLElementName());
 			return;
 		}
 		if (receiver == -1) {
@@ -81,7 +84,7 @@ public abstract class FieldAccess extends Event {
 			}
 			f_ps.executeUpdate();
 		} catch (SQLException e) {
-			FLog.logError("Insert failed: ACCESS", e);
+			SLLogger.getLogger().log(Level.SEVERE, "Insert failed: ACCESS", e);
 		}
 
 	}

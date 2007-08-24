@@ -2,13 +2,14 @@ package com.surelogic.flashlight.jobs.prep;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.logging.Level;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import com.surelogic.flashlight.FLog;
+import com.surelogic.common.logging.SLLogger;
 
 public final class DataPreScan extends DefaultHandler {
 
@@ -108,7 +109,8 @@ public final class DataPreScan extends DefaultHandler {
 				}
 			}
 			if (field == -1) {
-				FLog.logError("Missing field in single-threaded-field");
+				SLLogger.getLogger().log(Level.SEVERE,
+						"Missing field in single-threaded-field");
 				return;
 			}
 			if (receiver == -1) {

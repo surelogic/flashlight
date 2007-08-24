@@ -6,10 +6,11 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.Set;
+import java.util.logging.Level;
 
 import org.xml.sax.Attributes;
 
-import com.surelogic.flashlight.FLog;
+import com.surelogic.common.logging.SLLogger;
 
 public abstract class IntrinsicLock extends Event {
 
@@ -52,8 +53,10 @@ public abstract class IntrinsicLock extends Event {
 		}
 		if (nanoTime == -1 || inThread == -1 || file == null
 				|| lineNumber == -1 || lock == -1) {
-			FLog.logError("Missing nano-time, thread, file, line or lock in "
-					+ getXMLElementName());
+			SLLogger.getLogger().log(
+					Level.SEVERE,
+					"Missing nano-time, thread, file, line or lock in "
+							+ getXMLElementName());
 			return;
 		}
 		final long id = f_id++;
@@ -90,7 +93,7 @@ public abstract class IntrinsicLock extends Event {
 			}
 			f_ps.executeUpdate();
 		} catch (SQLException e) {
-			FLog.logError("Insert failed: ILOCK", e);
+			SLLogger.getLogger().log(Level.SEVERE, "Insert failed: ILOCK", e);
 		}
 	}
 

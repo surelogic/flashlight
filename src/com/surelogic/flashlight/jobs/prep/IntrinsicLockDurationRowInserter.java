@@ -6,8 +6,10 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
 
-import com.surelogic.flashlight.FLog;
+import com.surelogic.common.eclipse.logging.SLStatus;
+import com.surelogic.common.logging.SLLogger;
 
 public final class IntrinsicLockDurationRowInserter {
 
@@ -67,7 +69,7 @@ public final class IntrinsicLockDurationRowInserter {
 				insert(runId, inThread, lock, event.time, event.id, time, id,
 						IntrinsicLockDurationState.BLOCKING);
 			} else {
-				FLog.createErrorStatus(event.lockState + " cannot proceed "
+				SLStatus.createErrorStatus(event.lockState + " cannot proceed "
 						+ lockState + " for lock " + lock + " in thread "
 						+ inThread);
 			}
@@ -76,7 +78,7 @@ public final class IntrinsicLockDurationRowInserter {
 				insert(runId, inThread, lock, event.time, event.id, time, id,
 						IntrinsicLockDurationState.HOLDING);
 			} else {
-				FLog.createErrorStatus(event.lockState + " cannot proceed "
+				SLStatus.createErrorStatus(event.lockState + " cannot proceed "
 						+ lockState + " for lock " + lock + " in thread "
 						+ inThread);
 			}
@@ -85,7 +87,7 @@ public final class IntrinsicLockDurationRowInserter {
 				insert(runId, inThread, lock, event.time, event.id, time, id,
 						IntrinsicLockDurationState.WAITING);
 			} else {
-				FLog.createErrorStatus(event.lockState + " cannot proceed "
+				SLStatus.createErrorStatus(event.lockState + " cannot proceed "
 						+ lockState + " for lock " + lock + " in thread "
 						+ inThread);
 			}
@@ -95,12 +97,13 @@ public final class IntrinsicLockDurationRowInserter {
 				insert(runId, inThread, lock, event.time, event.id, time, id,
 						IntrinsicLockDurationState.HOLDING);
 			} else {
-				FLog.createErrorStatus(event.lockState + " cannot proceed "
+				SLStatus.createErrorStatus(event.lockState + " cannot proceed "
 						+ lockState + " for lock " + lock + " in thread "
 						+ inThread);
 			}
 		} else {
-			FLog.createErrorStatus("Unknown intrinsic lock state " + lockState);
+			SLStatus.createErrorStatus("Unknown intrinsic lock state "
+					+ lockState);
 			return;
 		}
 		setEvent(event, id, time, lockState);
@@ -120,7 +123,8 @@ public final class IntrinsicLockDurationRowInserter {
 			f_ps.setString(8, state.toString());
 			f_ps.executeUpdate();
 		} catch (SQLException e) {
-			FLog.logError("Insert failed: ILOCKDURATION", e);
+			SLLogger.getLogger().log(Level.SEVERE,
+					"Insert failed: ILOCKDURATION", e);
 		}
 
 	}

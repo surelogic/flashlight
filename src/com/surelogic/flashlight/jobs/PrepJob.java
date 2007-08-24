@@ -9,6 +9,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.zip.GZIPInputStream;
 
 import javax.xml.parsers.SAXParser;
@@ -22,8 +23,9 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import com.surelogic.adhoc.DatabaseJob;
+import com.surelogic.common.eclipse.logging.SLStatus;
+import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.Data;
-import com.surelogic.flashlight.FLog;
 import com.surelogic.flashlight.entities.Run;
 import com.surelogic.flashlight.entities.RunDAO;
 import com.surelogic.flashlight.files.Raw;
@@ -181,7 +183,7 @@ public final class PrepJob extends DatabaseJob {
 						c.close();
 					}
 				} catch (SQLException e) {
-					return FLog.createErrorStatus(
+					return SLStatus.createErrorStatus(
 							"Could not work with the embedded database", e);
 				}
 			} finally {
@@ -190,8 +192,8 @@ public final class PrepJob extends DatabaseJob {
 		} catch (Exception e) {
 			if (monitor.isCanceled())
 				return Status.CANCEL_STATUS;
-			return FLog.createErrorStatus("Unable to prepare " + dataFileName,
-					e);
+			return SLStatus.createErrorStatus("Unable to prepare "
+					+ dataFileName, e);
 		}
 		RunView.refreshViewContents();
 		monitor.done();
@@ -239,7 +241,7 @@ public final class PrepJob extends DatabaseJob {
 				try {
 					f_c.commit();
 				} catch (SQLException e) {
-					FLog.logError("commit failed", e);
+					SLLogger.getLogger().log(Level.SEVERE, "commit failed", e);
 				}
 			} else
 				f_work++;

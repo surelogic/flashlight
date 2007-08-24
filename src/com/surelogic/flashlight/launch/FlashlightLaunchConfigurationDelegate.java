@@ -8,8 +8,8 @@ import org.eclipse.jdt.launching.IVMInstall2;
 import org.eclipse.jdt.launching.IVMRunner;
 import org.eclipse.jdt.launching.JavaLaunchDelegate;
 
+import com.surelogic.common.eclipse.logging.SLStatus;
 import com.surelogic.flashlight.Activator;
-import com.surelogic.flashlight.FLog;
 import com.surelogic.flashlight.preferences.PreferenceConstants;
 
 public final class FlashlightLaunchConfigurationDelegate extends
@@ -26,7 +26,7 @@ public final class FlashlightLaunchConfigurationDelegate extends
 			b.append(jarLocation.toOSString());
 		} else {
 			throw new CoreException(
-					FLog
+					SLStatus
 							.createErrorStatus("No bundle location found for the Flashlight plug-in."));
 		}
 		final String run = getMainTypeName(configuration);
@@ -86,20 +86,20 @@ public final class FlashlightLaunchConfigurationDelegate extends
 			int majorRel = Integer.parseInt(javaVersion.substring(2, 3));
 			if (majorRel < 5) {
 				throw new CoreException(
-						FLog
+						SLStatus
 								.createErrorStatus("Flashlight requires minimum VM version 1.5 (VM version is "
 										+ javaVersion + ")."));
 			}
 		} else {
 			throw new CoreException(
-					FLog
+					SLStatus
 							.createErrorStatus("Flashlight requires minimum VM version 1.5 "
 									+ "(VM version is unknown)."));
 		}
 		IVMRunner runner = vm.getVMRunner("run");
 		if (runner == null) {
 			throw new CoreException(
-					FLog
+					SLStatus
 							.createErrorStatus("Failed to configure the VM to run Flashlight."));
 		}
 		return runner;

@@ -7,8 +7,9 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 
-import com.surelogic.flashlight.FLog;
+import com.surelogic.common.logging.SLLogger;
 
 /**
  * A data access object for {@link Run}.
@@ -112,7 +113,6 @@ public final class RunDAO {
 		} finally {
 			s.close();
 		}
-		FLog.logWarning("RunDAO find(name, started) produced a null Run");
 		return null;
 	}
 
@@ -140,7 +140,11 @@ public final class RunDAO {
 		} finally {
 			s.close();
 		}
-		FLog.logWarning("RunDAO find(run) produced a null Run");
+		SLLogger.getLogger()
+				.log(
+						Level.WARNING,
+						"find on the run identified by " + run
+								+ " produced a null Run");
 		return null;
 	}
 
@@ -165,7 +169,8 @@ public final class RunDAO {
 				if (r != null) {
 					result.add(r);
 				} else {
-					FLog.logError("RunDAO getAll() produced a null Run");
+					SLLogger.getLogger().log(Level.WARNING,
+							"RunDAO getAll() produced a null Run");
 				}
 			}
 		} finally {

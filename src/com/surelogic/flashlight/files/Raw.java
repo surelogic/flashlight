@@ -13,6 +13,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.zip.GZIPInputStream;
 
 import javax.xml.parsers.SAXParser;
@@ -22,7 +23,7 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import com.surelogic.flashlight.FLog;
+import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.entities.IRunDescription;
 
 public final class Raw implements IRunDescription {
@@ -310,8 +311,10 @@ public final class Raw implements IRunDescription {
 						 * Things could go badly if file permissions are wrong,
 						 * or someone deletes the file being examined.
 						 */
-						FLog
-								.logWarning(
+						SLLogger
+								.getLogger()
+								.log(
+										Level.WARNING,
 										"Failure during examination of raw data files. "
 												+ "Perhaps due to permissions or concurrent operations.",
 										e);
@@ -324,9 +327,11 @@ public final class Raw implements IRunDescription {
 		private void add(final File dataFile, final List<Raw> mutableResult)
 				throws Exception {
 			if (dataFile == null || !dataFile.exists()) {
-				FLog.logWarning("Data file "
-						+ (dataFile == null ? "Unknown" : dataFile.getName())
-						+ " does not exist.");
+				SLLogger.getLogger().log(
+						Level.WARNING,
+						"Data file "
+								+ (dataFile == null ? "Unknown" : dataFile
+										.getName()) + " does not exist.");
 				return;
 			}
 
@@ -345,8 +350,11 @@ public final class Raw implements IRunDescription {
 			try {
 				File logFile = new File(prefix + ".flog");
 				if (!logFile.exists()) {
-					FLog.logWarning("No log file found for "
-							+ dataFile.getName() + ".");
+					SLLogger.getLogger()
+							.log(
+									Level.WARNING,
+									"No log file found for "
+											+ dataFile.getName() + ".");
 					return;
 				}
 
@@ -367,8 +375,9 @@ public final class Raw implements IRunDescription {
 					 * got what we wanted.
 					 */
 					if (!e.getMessage().equals("done")) {
-						FLog
-								.logWarning("XML parsing problem reading header of data file "
+						SLLogger.getLogger().log(
+								Level.WARNING,
+								"XML parsing problem reading header of data file "
 										+ dataFile.getName() + ".");
 						throw new SAXException(e);
 					}
@@ -387,8 +396,10 @@ public final class Raw implements IRunDescription {
 							handler.processors, handler.nanoTime,
 							handler.wallClockTime));
 				} else {
-					FLog.logWarning("Incomplete information read from "
-							+ dataFile.getName() + ".");
+					SLLogger.getLogger().log(
+							Level.WARNING,
+							"Incomplete information read from "
+									+ dataFile.getName() + ".");
 				}
 			} finally {
 				stream.close();
@@ -420,8 +431,8 @@ public final class Raw implements IRunDescription {
 				r.close();
 			}
 		} catch (IOException e) {
-			FLog.logError("Unable to examine log file "
-					+ f_log.getAbsolutePath(), e);
+			SLLogger.getLogger().log(Level.SEVERE,
+					"Unable to examine log file " + f_log.getAbsolutePath(), e);
 		}
 		return true;
 	}

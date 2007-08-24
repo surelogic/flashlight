@@ -9,8 +9,8 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 
 import com.surelogic.adhoc.DatabaseJob;
+import com.surelogic.common.eclipse.logging.SLStatus;
 import com.surelogic.flashlight.Data;
-import com.surelogic.flashlight.FLog;
 import com.surelogic.flashlight.views.RunView;
 
 public final class UnPrepJob extends DatabaseJob {
@@ -62,7 +62,7 @@ public final class UnPrepJob extends DatabaseJob {
 				monitor.worked(1);
 			}
 		} catch (SQLException e) {
-			return FLog.createErrorStatus(taskName + " failed", e);
+			return SLStatus.createErrorStatus(taskName + " failed", e);
 		}
 		RunView.refreshViewContents();
 		monitor.done();

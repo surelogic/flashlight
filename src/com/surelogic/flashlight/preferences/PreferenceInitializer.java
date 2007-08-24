@@ -1,12 +1,13 @@
 package com.surelogic.flashlight.preferences;
 
 import java.io.File;
+import java.util.logging.Level;
 
 import org.eclipse.core.runtime.preferences.AbstractPreferenceInitializer;
 import org.eclipse.jface.preference.IPreferenceStore;
 
+import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.Activator;
-import com.surelogic.flashlight.FLog;
 
 /**
  * Class used to initialize default preference values.
@@ -41,7 +42,8 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		File p = new File(path);
 		if (!p.exists()) {
 			if (!p.mkdirs()) {
-				FLog.logError("Couldn't create " + path);
+				SLLogger.getLogger().log(Level.SEVERE,
+						"Couldn't create " + path);
 			}
 		}
 	}

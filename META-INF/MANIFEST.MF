@@ -1,8 +1,8 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: %pluginName
+Bundle-Name: Flashlight
 Bundle-SymbolicName: com.surelogic.flashlight;singleton:=true
-Bundle-Vendor: %providerName
+Bundle-Vendor: SureLogic, Inc.
 Bundle-Version: 1.1.0
 Bundle-Activator: com.surelogic.flashlight.Activator
 Bundle-Localization: plugin

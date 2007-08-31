@@ -13,7 +13,7 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 
 import com.surelogic.common.eclipse.SLImages;
-import com.surelogic.flashlight.Activator;
+import com.surelogic.common.eclipse.ViewUtility;
 import com.surelogic.flashlight.Utility;
 import com.surelogic.flashlight.entities.IRunDescription;
 import com.surelogic.flashlight.views.RunMediator.ColumnWrapper;
@@ -166,7 +166,7 @@ public final class RunView extends ViewPart {
 	public static void refreshViewContents() {
 		PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
 			public void run() {
-				final IViewPart view = Activator.showView(RunView.ID);
+				final IViewPart view = ViewUtility.showView(RunView.ID);
 				if (view instanceof RunView) {
 					((RunView) view).refresh();
 

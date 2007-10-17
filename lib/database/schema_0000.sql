@@ -18,7 +18,8 @@ create table RUN (
   MaxMemoryMB    INT          NOT NULL,
   Processors     INT          NOT NULL,
   Started        TIMESTAMP    NOT NULL
-);
+)
+<<>>
 
 create table OBJECT ( -- class, object, and thread definitions
   Run         INT            NOT NULL CONSTRAINT OBJECT_Run_FK REFERENCES RUN (Run),
@@ -29,7 +30,8 @@ create table OBJECT ( -- class, object, and thread definitions
   ClassName   VARCHAR(32672), -- null unless this is a class
   PRIMARY KEY (Run, Id),
   CONSTRAINT OBJECT_Type_FK FOREIGN KEY (Run, Type) REFERENCES OBJECT (Run, Id)
-);
+)
+<<>>
 
 create table FIELD ( -- field definitions
   Run           INT            NOT NULL CONSTRAINT FIELD_Run_FK REFERENCES RUN (Run),
@@ -41,7 +43,8 @@ create table FIELD ( -- field definitions
   Volatile      CHAR(1)        NOT NULL CONSTRAINT FIELD_Volatile_CN CHECK (Volatile IN ('Y', 'N')),
   PRIMARY KEY (Run, Id),
   CONSTRAINT FIELD_DeclaringType_FK FOREIGN KEY (Run, DeclaringType) REFERENCES OBJECT (Run, Id)
-);
+)
+<<>>
 
 create table ACCESS ( -- field access (read/write) events
   Run      INT          NOT NULL CONSTRAINT ACCESS_Run_FK REFERENCES RUN (Run),
@@ -55,7 +58,8 @@ create table ACCESS ( -- field access (read/write) events
   CONSTRAINT ACCESS_InThread_FK FOREIGN KEY (Run, InThread) REFERENCES OBJECT (Run, Id),
   CONSTRAINT ACCESS_Field_FK FOREIGN KEY (Run, Field) REFERENCES FIELD (Run, Id),
   CONSTRAINT ACCESS_Receiver_FK FOREIGN KEY (Run, Receiver) REFERENCES OBJECT (Run, Id)
-);
+)
+<<>>
 
 create table ILOCK ( -- intrinsic lock events
   Run         INT          NOT NULL CONSTRAINT ILOCK_Run_FK REFERENCES RUN (Run),
@@ -72,7 +76,8 @@ create table ILOCK ( -- intrinsic lock events
   PRIMARY KEY (Run, Id),
   CONSTRAINT ILOCK_InThread_FK FOREIGN KEY (Run, InThread) REFERENCES OBJECT (Run, Id),
   CONSTRAINT ILOCK_Lock_FK FOREIGN KEY (Run, Lock) REFERENCES OBJECT (Run, Id)
-);
+)
+<<>>
 
 create table ILOCKDURATION ( -- derived from ILOCK
   Run          INT       NOT NULL CONSTRAINT ILOCKDURATION_Run_FK REFERENCES RUN (Run),
@@ -88,4 +93,5 @@ create table ILOCKDURATION ( -- derived from ILOCK
   CONSTRAINT ILOCKDURATION_Lock_FK FOREIGN KEY (Run, Lock) REFERENCES OBJECT (Run, Id),
   CONSTRAINT ILOCKDURATION_BlockedEvent_FK FOREIGN KEY (Run, StartEvent) REFERENCES ILOCK (Run, Id),
   CONSTRAINT ILOCKDURATION_AcquiredEvent_FK FOREIGN KEY (Run, StopEvent) REFERENCES ILOCK (Run, Id)
-);
+)
+<<>>

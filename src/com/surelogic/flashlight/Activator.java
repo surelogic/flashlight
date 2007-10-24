@@ -12,7 +12,6 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 
 import com.surelogic.common.eclipse.logging.SLStatus;
-import com.surelogic.common.logging.SLLogger;
 
 /**
  * The activator class controls the plug-in life cycle
@@ -53,15 +52,6 @@ public class Activator extends AbstractUIPlugin {
 		 * "Touch" common-eclipse so the logging gets Eclipse-ified.
 		 */
 		SLStatus.touch();
-
-		final Runtime rt = Runtime.getRuntime();
-		SLLogger.getLogger().info(
-				"Flashlight loaded : Java runtime: maxMemory="
-						+ (rt.maxMemory() / 1024 / 1024) + " MB; totalMemory="
-						+ (rt.totalMemory() / 1024 / 1024) + " MB; freeMemory="
-						+ (rt.freeMemory() / 1024 / 1024)
-						+ " MB; availableProcessors="
-						+ rt.availableProcessors());
 
 		// startup the database and ensure its schema is up to date
 		Data.bootAndCheckSchema();

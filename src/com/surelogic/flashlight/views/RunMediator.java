@@ -8,11 +8,11 @@ import java.util.logging.Level;
 
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.action.Action;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
-import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
@@ -180,15 +180,12 @@ public final class RunMediator {
 				int unPrepRunId = getRunId(raw);
 
 				if (unPrepRunId != -1) {
-					final MessageBox confirmDelete = new MessageBox(f_table
-							.getShell(), SWT.ICON_WARNING
-							| SWT.APPLICATION_MODAL | SWT.YES | SWT.NO);
-					confirmDelete.setText("Confirm Flashlight Re-Prep");
-					confirmDelete
-							.setMessage("Do you wish to delete and re-prepare the data for "
-									+ raw.getName() + "?");
-					if (confirmDelete.open() == SWT.NO)
+					if (!MessageDialog.openConfirm(f_table.getShell(),
+							"Confirm Flashlight Re-Prep",
+							"Do you wish to delete and re-prepare the data for "
+									+ raw.getName() + "?")) {
 						return; // bail
+					}
 					Job job = new UnPrepJob(unPrepRunId, raw.getName());
 					job.setUser(true);
 					job.schedule();

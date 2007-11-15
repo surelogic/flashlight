@@ -53,6 +53,7 @@
 
    <!-- UI for launching Java applications in Flashlight -->
 
+   <!--
    <extension
          point="org.eclipse.ui.actionSets">
       <actionSet
@@ -78,6 +79,7 @@
          </action>
       </actionSet>
    </extension>
+   -->
    
    <!-- I have to add a tab group for my mode...I just use jdt's class -->
 

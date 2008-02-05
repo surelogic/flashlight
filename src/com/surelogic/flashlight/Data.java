@@ -9,6 +9,7 @@ import java.sql.SQLException;
 import org.eclipse.core.runtime.IPath;
 
 import com.surelogic.common.eclipse.Derby;
+import com.surelogic.common.jdbc.FutureDatabaseException;
 import com.surelogic.common.jdbc.SchemaUtility;
 
 public final class Data {
@@ -54,7 +55,7 @@ public final class Data {
 	public static final String SQL_SCRIPT_PREFIX = "/lib/database/schema_";
 
 	public static void checkAndUpdate(final Connection c) throws SQLException,
-			IOException {
+			IOException, FutureDatabaseException {
 		final int arrayLength = schemaVersion + 1;
 
 		final URL[] scripts = new URL[arrayLength];

@@ -25,9 +25,8 @@ public final class FlashlightLaunchConfigurationDelegate extends
 			IPath jarLocation = bundleBase.append("lib/flashlight.jar");
 			b.append(jarLocation.toOSString());
 		} else {
-			throw new CoreException(
-					SLStatus
-							.createErrorStatus("No bundle location found for the Flashlight plug-in."));
+			throw new CoreException(SLStatus.createErrorStatus(0,
+					"No bundle location found for the Flashlight plug-in."));
 		}
 		final String run = getMainTypeName(configuration);
 		if (run != null) {
@@ -85,22 +84,19 @@ public final class FlashlightLaunchConfigurationDelegate extends
 			final String javaVersion = vm2.getJavaVersion();
 			int majorRel = Integer.parseInt(javaVersion.substring(2, 3));
 			if (majorRel < 5) {
-				throw new CoreException(
-						SLStatus
-								.createErrorStatus("Flashlight requires minimum VM version 1.5 (VM version is "
-										+ javaVersion + ")."));
+				throw new CoreException(SLStatus.createErrorStatus(0,
+						"Flashlight requires minimum VM version 1.5 (VM version is "
+								+ javaVersion + ")."));
 			}
 		} else {
-			throw new CoreException(
-					SLStatus
-							.createErrorStatus("Flashlight requires minimum VM version 1.5 "
-									+ "(VM version is unknown)."));
+			throw new CoreException(SLStatus.createErrorStatus(0,
+					"Flashlight requires minimum VM version 1.5 "
+							+ "(VM version is unknown)."));
 		}
 		IVMRunner runner = vm.getVMRunner("run");
 		if (runner == null) {
-			throw new CoreException(
-					SLStatus
-							.createErrorStatus("Failed to configure the VM to run Flashlight."));
+			throw new CoreException(SLStatus.createErrorStatus(0,
+					"Failed to configure the VM to run Flashlight."));
 		}
 		return runner;
 	}

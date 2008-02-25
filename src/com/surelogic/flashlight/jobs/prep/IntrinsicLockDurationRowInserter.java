@@ -69,27 +69,27 @@ public final class IntrinsicLockDurationRowInserter {
 				insert(runId, inThread, lock, event.time, event.id, time, id,
 						IntrinsicLockDurationState.BLOCKING);
 			} else {
-				SLStatus.createErrorStatus(event.lockState + " cannot proceed "
-						+ lockState + " for lock " + lock + " in thread "
-						+ inThread);
+				SLStatus.createErrorStatus(0, event.lockState
+						+ " cannot proceed " + lockState + " for lock " + lock
+						+ " in thread " + inThread);
 			}
 		} else if (lockState == IntrinsicLockState.BEFORE_WAIT) {
 			if (event.lockState == IntrinsicLockState.AFTER_ACQUISITION) {
 				insert(runId, inThread, lock, event.time, event.id, time, id,
 						IntrinsicLockDurationState.HOLDING);
 			} else {
-				SLStatus.createErrorStatus(event.lockState + " cannot proceed "
-						+ lockState + " for lock " + lock + " in thread "
-						+ inThread);
+				SLStatus.createErrorStatus(0, event.lockState
+						+ " cannot proceed " + lockState + " for lock " + lock
+						+ " in thread " + inThread);
 			}
 		} else if (lockState == IntrinsicLockState.AFTER_WAIT) {
 			if (event.lockState == IntrinsicLockState.BEFORE_WAIT) {
 				insert(runId, inThread, lock, event.time, event.id, time, id,
 						IntrinsicLockDurationState.WAITING);
 			} else {
-				SLStatus.createErrorStatus(event.lockState + " cannot proceed "
-						+ lockState + " for lock " + lock + " in thread "
-						+ inThread);
+				SLStatus.createErrorStatus(0, event.lockState
+						+ " cannot proceed " + lockState + " for lock " + lock
+						+ " in thread " + inThread);
 			}
 		} else if (lockState == IntrinsicLockState.AFTER_RELEASE) {
 			if (event.lockState == IntrinsicLockState.AFTER_ACQUISITION
@@ -97,12 +97,12 @@ public final class IntrinsicLockDurationRowInserter {
 				insert(runId, inThread, lock, event.time, event.id, time, id,
 						IntrinsicLockDurationState.HOLDING);
 			} else {
-				SLStatus.createErrorStatus(event.lockState + " cannot proceed "
-						+ lockState + " for lock " + lock + " in thread "
-						+ inThread);
+				SLStatus.createErrorStatus(0, event.lockState
+						+ " cannot proceed " + lockState + " for lock " + lock
+						+ " in thread " + inThread);
 			}
 		} else {
-			SLStatus.createErrorStatus("Unknown intrinsic lock state "
+			SLStatus.createErrorStatus(0, "Unknown intrinsic lock state "
 					+ lockState);
 			return;
 		}

@@ -183,7 +183,7 @@ public final class PrepJob extends DatabaseJob {
 						c.close();
 					}
 				} catch (SQLException e) {
-					return SLStatus.createErrorStatus(
+					return SLStatus.createErrorStatus(0,
 							"Could not work with the embedded database", e);
 				}
 			} finally {
@@ -192,7 +192,7 @@ public final class PrepJob extends DatabaseJob {
 		} catch (Exception e) {
 			if (monitor.isCanceled())
 				return Status.CANCEL_STATUS;
-			return SLStatus.createErrorStatus("Unable to prepare "
+			return SLStatus.createErrorStatus(0,"Unable to prepare "
 					+ dataFileName, e);
 		}
 		RunView.refreshViewContents();

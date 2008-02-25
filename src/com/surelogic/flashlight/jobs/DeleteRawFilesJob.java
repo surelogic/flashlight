@@ -29,14 +29,14 @@ public final class DeleteRawFilesJob extends Job {
 		boolean deleted = file.delete();
 		monitor.worked(1);
 		if (!deleted) {
-			return SLStatus.createErrorStatus("Unable to delete "
+			return SLStatus.createErrorStatus(0,"Unable to delete "
 					+ file.getAbsolutePath());
 		}
 		file = f_raw.getLogFile();
 		deleted = file.delete();
 		monitor.worked(1);
 		if (!deleted) {
-			return SLStatus.createErrorStatus("Unable to delete "
+			return SLStatus.createErrorStatus(0,"Unable to delete "
 					+ file.getAbsolutePath());
 		}
 		RunView.refreshViewContents();

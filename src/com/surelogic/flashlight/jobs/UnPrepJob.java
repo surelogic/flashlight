@@ -62,7 +62,7 @@ public final class UnPrepJob extends DatabaseJob {
 				monitor.worked(1);
 			}
 		} catch (SQLException e) {
-			return SLStatus.createErrorStatus(taskName + " failed", e);
+			return SLStatus.createErrorStatus(0, taskName + " failed", e);
 		}
 		RunView.refreshViewContents();
 		monitor.done();

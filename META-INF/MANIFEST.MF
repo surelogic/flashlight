@@ -17,6 +17,7 @@ Require-Bundle: org.eclipse.ui,
  org.eclipse.jdt.ui,
  com.surelogic.adhoc,
  com.surelogic.common.eclipse,
- com.surelogic.common
+ com.surelogic.common,
+ com.surelogic.adhoc.eclipse
 Eclipse-LazyStart: true
 Bundle-ClassPath: .

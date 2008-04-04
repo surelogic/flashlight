@@ -168,7 +168,7 @@
    <!-- Extension point to use ad hoc query UI -->
    
    <extension
-         point="com.surelogic.adhoc.query">
+         point="com.surelogic.adhoc.eclipse.query">
       <instance
             adHocQueryViewId="com.surelogic.flashlight.AdHocQueryView"
             class="com.surelogic.flashlight.AdHocGlue">

@@ -18,6 +18,8 @@ Require-Bundle: org.eclipse.ui,
  com.surelogic.adhoc,
  com.surelogic.common.eclipse,
  com.surelogic.common,
- com.surelogic.adhoc.eclipse
+ com.surelogic.adhoc.eclipse,
+ com.surelogic.common.derby,
+ com.surelogic.flashlight.common
 Eclipse-LazyStart: true
 Bundle-ClassPath: .

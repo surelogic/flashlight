@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Common Code for Flashlight
+Bundle-SymbolicName: com.surelogic.flashlight.common
+Bundle-Version: 1.0.0
+Bundle-Vendor: SureLogic, Inc.
+Require-Bundle: com.surelogic.common,
+ com.surelogic.common.derby,
+ com.surelogic.adhoc

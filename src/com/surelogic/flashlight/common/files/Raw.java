@@ -33,6 +33,15 @@ public final class Raw implements IRunDescription {
 	public static final String DEFAULT_RAW_LOCATION = 
 		System.getProperty("user.home") + System.getProperty("file.separator") + "Flashlight";
 	
+	public static Raw[] findRawFiles(String location) {	
+		Raw[] raws = new Raw.Builder().addDirectory(location).build();
+		return raws;
+	}
+	
+	public static Raw createRawFile(File loc) {
+		return new Builder().build(loc);
+	}
+	
 	private final File f_data;
 
 	public File getDataFile() {
@@ -282,6 +291,13 @@ public final class Raw implements IRunDescription {
 		}
 
 		final List<File> f_path = new ArrayList<File>();
+		private final FileFilter filter = new FileFilter() {
+			public boolean accept(File pathname) {
+				final String name = pathname.getName();
+				return name.endsWith(COMPRESSED_SUFFIX) || 
+                       name.endsWith(SUFFIX);
+			}
+		};
 
 		public Builder addDirectory(final String directory) {
 			return addDirectory(new File(directory));
@@ -299,16 +315,24 @@ public final class Raw implements IRunDescription {
 			return this;
 		}
 
+		public Raw build(File loc) {
+			if (filter.accept(loc)) {
+				final List<Raw> result = new ArrayList<Raw>(1);
+				try {
+					add(loc, result);
+					return result.get(0);
+				} catch (Exception e) {
+					e.printStackTrace();
+					return null;
+				}
+			}
+			return null;
+		}
+		
 		public Raw[] build() {
 			final ArrayList<Raw> result = new ArrayList<Raw>();
 			for (File directory : f_path) {
-				File[] dataFiles = directory.listFiles(new FileFilter() {
-					public boolean accept(File pathname) {
-						final String name = pathname.getName();
-						return name.endsWith(COMPRESSED_SUFFIX) || 
-                                                       name.endsWith(SUFFIX);
-					}
-				});
+				File[] dataFiles = directory.listFiles(filter);
 				for (File f : dataFiles) {
 					try {
 						add(f, result);

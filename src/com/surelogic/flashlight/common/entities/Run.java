@@ -1,4 +1,4 @@
-package com.surelogic.flashlight.entities;
+package com.surelogic.flashlight.common.entities;
 
 import java.io.Serializable;
 import java.sql.Timestamp;

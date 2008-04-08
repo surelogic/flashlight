@@ -1,4 +1,4 @@
-package com.surelogic.flashlight.files;
+package com.surelogic.flashlight.common.files;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -24,7 +24,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import com.surelogic.common.logging.SLLogger;
-import com.surelogic.flashlight.entities.IRunDescription;
+import com.surelogic.flashlight.common.entities.IRunDescription;
 
 public final class Raw implements IRunDescription {
 

@@ -34,7 +34,12 @@
                     </run-dependency>
                 </dependency>
             </module-dependencies>
-            <public-packages/>
+            <public-packages>
+                <package>com.surelogic.flashlight.common</package>
+                <package>com.surelogic.flashlight.common.entities</package>
+                <package>com.surelogic.flashlight.common.files</package>
+                <package>com.surelogic.flashlight.common.prep</package>
+            </public-packages>
         </data>
     </configuration>
 </project>

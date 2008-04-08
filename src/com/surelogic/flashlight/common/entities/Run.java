@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.sql.Timestamp;
 
 public final class Run implements IRunDescription, Serializable {
+	private static final long serialVersionUID = 6479279025704310761L;
 
 	public Run(int run, String name, String rawDataVersion, String userName,
 			String javaVersion, String javaVendor, String osName,

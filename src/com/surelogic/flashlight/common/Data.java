@@ -47,7 +47,6 @@ public final class Data {
 	}
 
 	private static String getConnectionURL() {
-		//IPath pluginState = Activator.getDefault().getStateLocation();
 		return JDBC_PRE + dbLocation + JDBC_POST;
 	}
 

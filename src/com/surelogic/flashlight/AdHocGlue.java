@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import org.eclipse.core.runtime.IPath;
 
 import com.surelogic.adhoc.IAdHoc;
+import com.surelogic.flashlight.common.Data;
 import com.surelogic.flashlight.preferences.PreferenceConstants;
 
 public final class AdHocGlue implements IAdHoc {

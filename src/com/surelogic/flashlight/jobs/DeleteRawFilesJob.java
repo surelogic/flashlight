@@ -8,7 +8,7 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 
 import com.surelogic.common.eclipse.logging.SLStatus;
-import com.surelogic.flashlight.files.Raw;
+import com.surelogic.flashlight.common.files.Raw;
 import com.surelogic.flashlight.views.RunView;
 
 public final class DeleteRawFilesJob extends Job {

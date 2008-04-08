@@ -10,7 +10,7 @@ import org.eclipse.core.runtime.Status;
 
 import com.surelogic.common.eclipse.jobs.DatabaseJob;
 import com.surelogic.common.eclipse.logging.SLStatus;
-import com.surelogic.flashlight.Data;
+import com.surelogic.flashlight.common.Data;
 import com.surelogic.flashlight.views.RunView;
 
 public final class UnPrepJob extends DatabaseJob {

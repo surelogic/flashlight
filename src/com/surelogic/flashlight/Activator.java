@@ -12,6 +12,7 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 
 import com.surelogic.common.eclipse.logging.SLStatus;
+import com.surelogic.flashlight.common.Data;
 
 /**
  * The activator class controls the plug-in life cycle
@@ -54,7 +55,8 @@ public class Activator extends AbstractUIPlugin {
 		SLStatus.touch();
 
 		// startup the database and ensure its schema is up to date
-		Data.bootAndCheckSchema();
+		IPath pluginState = Activator.getDefault().getStateLocation();
+		Data.bootAndCheckSchema(pluginState.toOSString());
 	}
 
 	@Override

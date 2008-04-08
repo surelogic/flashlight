@@ -14,8 +14,8 @@ import org.eclipse.ui.part.ViewPart;
 
 import com.surelogic.common.eclipse.SLImages;
 import com.surelogic.common.eclipse.ViewUtility;
-import com.surelogic.flashlight.Utility;
-import com.surelogic.flashlight.entities.IRunDescription;
+import com.surelogic.flashlight.common.Utility;
+import com.surelogic.flashlight.common.entities.IRunDescription;
 import com.surelogic.flashlight.views.RunMediator.ColumnWrapper;
 
 public final class RunView extends ViewPart {

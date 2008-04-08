@@ -22,26 +22,27 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
+import com.surelogic.common.eclipse.SLProgressMonitorWrapper;
 import com.surelogic.common.eclipse.jobs.DatabaseJob;
 import com.surelogic.common.eclipse.logging.SLStatus;
 import com.surelogic.common.logging.SLLogger;
-import com.surelogic.flashlight.Data;
-import com.surelogic.flashlight.entities.Run;
-import com.surelogic.flashlight.entities.RunDAO;
-import com.surelogic.flashlight.files.Raw;
-import com.surelogic.flashlight.jobs.prep.AfterIntrinisicLockAcquisition;
-import com.surelogic.flashlight.jobs.prep.AfterIntrinsicLockWait;
-import com.surelogic.flashlight.jobs.prep.AfterIntrinsisLockRelease;
-import com.surelogic.flashlight.jobs.prep.BeforeIntrinsicLockAcquisition;
-import com.surelogic.flashlight.jobs.prep.BeforeIntrinsicLockWait;
-import com.surelogic.flashlight.jobs.prep.ClassDefinition;
-import com.surelogic.flashlight.jobs.prep.DataPreScan;
-import com.surelogic.flashlight.jobs.prep.FieldDefinition;
-import com.surelogic.flashlight.jobs.prep.FieldRead;
-import com.surelogic.flashlight.jobs.prep.FieldWrite;
-import com.surelogic.flashlight.jobs.prep.IPrep;
-import com.surelogic.flashlight.jobs.prep.ObjectDefinition;
-import com.surelogic.flashlight.jobs.prep.ThreadDefinition;
+import com.surelogic.flashlight.common.Data;
+import com.surelogic.flashlight.common.entities.Run;
+import com.surelogic.flashlight.common.entities.RunDAO;
+import com.surelogic.flashlight.common.files.Raw;
+import com.surelogic.flashlight.common.prep.AfterIntrinisicLockAcquisition;
+import com.surelogic.flashlight.common.prep.AfterIntrinsicLockWait;
+import com.surelogic.flashlight.common.prep.AfterIntrinsisLockRelease;
+import com.surelogic.flashlight.common.prep.BeforeIntrinsicLockAcquisition;
+import com.surelogic.flashlight.common.prep.BeforeIntrinsicLockWait;
+import com.surelogic.flashlight.common.prep.ClassDefinition;
+import com.surelogic.flashlight.common.prep.DataPreScan;
+import com.surelogic.flashlight.common.prep.FieldDefinition;
+import com.surelogic.flashlight.common.prep.FieldRead;
+import com.surelogic.flashlight.common.prep.FieldWrite;
+import com.surelogic.flashlight.common.prep.IPrep;
+import com.surelogic.flashlight.common.prep.ObjectDefinition;
+import com.surelogic.flashlight.common.prep.ThreadDefinition;
 import com.surelogic.flashlight.views.RunView;
 
 public final class PrepJob extends DatabaseJob {
@@ -96,7 +97,8 @@ public final class PrepJob extends DatabaseJob {
 				 * inserting unnecessary data into the database.
 				 */
 				SAXParserFactory factory = SAXParserFactory.newInstance();
-				final DataPreScan scanResults = new DataPreScan(monitor,
+				final DataPreScan scanResults = 
+					new DataPreScan(new SLProgressMonitorWrapper(monitor),
 						estimatedEvents, dataFileName);
 				SAXParser saxParser = factory.newSAXParser();
 				saxParser.parse(stream, scanResults);

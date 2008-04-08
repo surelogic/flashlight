@@ -26,9 +26,14 @@ public final class Data {
 	private static String dbLocation = null;
 
 	public static void bootAndCheckSchema(String location) throws Exception {
-		if (new File(location).exists()) {
+		if (location == null) {
+			throw new IllegalArgumentException("Null db location");
+		}
+		/*
+		if (!new File(location).exists()) {
 			throw new IllegalArgumentException("Non-existent db location: "+location);
 		}
+		*/
 		dbLocation = location;
 
 		Derby.bootEmbedded();

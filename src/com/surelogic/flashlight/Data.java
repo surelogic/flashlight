@@ -8,7 +8,7 @@ import java.sql.SQLException;
 
 import org.eclipse.core.runtime.IPath;
 
-import com.surelogic.common.eclipse.Derby;
+import com.surelogic.common.derby.Derby;
 import com.surelogic.common.jdbc.FutureDatabaseException;
 import com.surelogic.common.jdbc.SchemaUtility;
 

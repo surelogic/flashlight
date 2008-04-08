@@ -27,7 +27,9 @@ import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.common.entities.IRunDescription;
 
 public final class Raw implements IRunDescription {
-
+	public static final String DEFAULT_RAW_LOCATION = 
+		System.getProperty("user.home") + System.getProperty("file.separator") + "Flashlight";
+	
 	private final File f_data;
 
 	public File getDataFile() {

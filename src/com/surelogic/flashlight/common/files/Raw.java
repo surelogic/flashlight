@@ -186,11 +186,12 @@ public final class Raw implements IRunDescription {
 		StringBuilder sb = new StringBuilder();		
 		sb.append("Name: ").append(f_name).append('\n');
 		sb.append("Format: v").append(f_rawDataVersion).append('\n');
-		sb.append("Data: ").append(f_data.getAbsolutePath());
-		if (f_gzip) {
-			sb.append(" (Compressed)\n");
-		} else {
-			sb.append('\n');
+		sb.append("Data: ").append(f_data.getAbsolutePath()).append('\n');
+                sb.append("Size: ").append(f_data.length());
+		if (f_gzip) {	
+                    sb.append(" bytes (Compressed)\n");
+                } else {
+                    sb.append(" bytes\n");
 		}
 		sb.append("Log: ").append(f_log.getAbsolutePath()).append('\n');
 		sb.append("User: ").append(f_userName).append('\n');

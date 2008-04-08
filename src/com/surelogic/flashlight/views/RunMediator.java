@@ -81,9 +81,8 @@ public final class RunMediator {
 		 */
 		final int oldSelection = f_table.getSelectionIndex();
 
-		Raw[] raws = new Raw.Builder().addDirectory(
-				Activator.getDefault().getPluginPreferences().getString(
-						PreferenceConstants.P_RAW_PATH)).build();
+		Raw[] raws = Raw.findRawFiles(Activator.getDefault().getPluginPreferences()
+				                      .getString(PreferenceConstants.P_RAW_PATH));
 
 		// remove the contents
 		TableItem[] items = f_table.getItems();

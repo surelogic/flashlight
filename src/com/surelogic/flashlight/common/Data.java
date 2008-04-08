@@ -1,12 +1,11 @@
-package com.surelogic.flashlight;
+package com.surelogic.flashlight.common;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-
-import org.eclipse.core.runtime.IPath;
 
 import com.surelogic.common.derby.Derby;
 import com.surelogic.common.jdbc.FutureDatabaseException;
@@ -23,8 +22,14 @@ public final class Data {
 	private static final String JDBC_POST = System
 			.getProperty("file.separator")
 			+ "db;user=" + SCHEMA_NAME;
+	
+	private static String dbLocation = null;
 
-	public static void bootAndCheckSchema() throws Exception {
+	public static void bootAndCheckSchema(String location) throws Exception {
+		if (new File(location).exists()) {
+			throw new IllegalArgumentException("Non-existent db location: "+location);
+		}
+		dbLocation = location;
 
 		Derby.bootEmbedded();
 
@@ -42,8 +47,8 @@ public final class Data {
 	}
 
 	private static String getConnectionURL() {
-		IPath pluginState = Activator.getDefault().getStateLocation();
-		return JDBC_PRE + pluginState.toOSString() + JDBC_POST;
+		//IPath pluginState = Activator.getDefault().getStateLocation();
+		return JDBC_PRE + dbLocation + JDBC_POST;
 	}
 
 	/**

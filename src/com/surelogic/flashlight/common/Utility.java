@@ -1,4 +1,4 @@
-package com.surelogic.flashlight;
+package com.surelogic.flashlight.common;
 
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;

@@ -27,6 +27,9 @@ import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.common.entities.IRunDescription;
 
 public final class Raw implements IRunDescription {
+        public static final String SUFFIX = ".fl";
+        public static final String COMPRESSED_SUFFIX = ".fl.gz";
+    
 	public static final String DEFAULT_RAW_LOCATION = 
 		System.getProperty("user.home") + System.getProperty("file.separator") + "Flashlight";
 	
@@ -302,7 +305,8 @@ public final class Raw implements IRunDescription {
 				File[] dataFiles = directory.listFiles(new FileFilter() {
 					public boolean accept(File pathname) {
 						final String name = pathname.getName();
-						return name.endsWith(".fl.gz") || name.endsWith(".fl");
+						return name.endsWith(COMPRESSED_SUFFIX) || 
+                                                       name.endsWith(SUFFIX);
 					}
 				});
 				for (File f : dataFiles) {

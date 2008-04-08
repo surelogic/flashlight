@@ -8,21 +8,18 @@ import org.eclipse.jface.preference.IPreferenceStore;
 
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.Activator;
+import com.surelogic.flashlight.common.files.Raw;
 
 /**
  * Class used to initialize default preference values.
  */
 public class PreferenceInitializer extends AbstractPreferenceInitializer {
-
-	static private final String RAW = System.getProperty("user.home")
-			+ System.getProperty("file.separator") + "Flashlight";
-
 	@Override
 	public void initializeDefaultPreferences() {
 		final IPreferenceStore store = Activator.getDefault()
 				.getPreferenceStore();
-		create(RAW);
-		store.setDefault(PreferenceConstants.P_RAW_PATH, RAW);
+		create(Raw.DEFAULT_RAW_LOCATION);
+		store.setDefault(PreferenceConstants.P_RAW_PATH, Raw.DEFAULT_RAW_LOCATION);
 		store.setDefault(PreferenceConstants.P_RAWQ_SIZE, 5000);
 		store.setDefault(PreferenceConstants.P_OUTQ_SIZE, 5000);
 		store.setDefault(PreferenceConstants.P_REFINERY_SIZE, 5000);

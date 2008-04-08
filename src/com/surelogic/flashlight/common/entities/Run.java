@@ -23,6 +23,22 @@ public final class Run implements IRunDescription, Serializable {
 		this.processors = processors;
 		this.started = started;
 	}
+	
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append("Id: ").append(run).append('\n');
+		sb.append("Name:").append(name).append('\n');
+		sb.append("Format: v").append(rawDataVersion).append('\n');
+		sb.append("User: ").append(userName).append('\n');
+		sb.append("Java: ").append(javaVendor).append(' ').append(javaVersion).append('\n');
+		sb.append("OS: ").append(osName).append(' ').append(osArch).append(' ');
+		sb.append(osVersion).append('\n');
+		sb.append("Max Memory: ").append(maxMemoryMb).append(" MB\n");
+		sb.append("CPUs: ").append(processors).append('\n');
+		sb.append("Started at: ").append(started).append('\n');
+		return sb.toString();
+	}
 
 	private int run;
 

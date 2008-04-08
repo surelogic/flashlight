@@ -181,6 +181,29 @@ public final class Raw implements IRunDescription {
 		f_started = new Timestamp(f_wallClockTime.getTime());
 	}
 
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();		
+		sb.append("Name:").append(f_name).append('\n');
+		sb.append("Format: v").append(f_rawDataVersion).append('\n');
+		sb.append("Data: ").append(f_data.getAbsolutePath());
+		if (f_gzip) {
+			sb.append(" (Compressed)\n");
+		} else {
+			sb.append('\n');
+		}
+		sb.append("Log: ").append(f_log.getAbsolutePath());
+		sb.append("User: ").append(f_userName).append('\n');
+		sb.append("Java: ").append(f_javaVendor).append(' ').append(f_javaVersion).append('\n');
+		sb.append("OS: ").append(f_osName).append(' ').append(f_osArch).append(' ');
+		sb.append(f_osVersion).append('\n');
+		sb.append("Max Memory: ").append(f_maxMemoryMB).append(" MB\n");
+		sb.append("CPUs: ").append(f_processors).append('\n');
+		sb.append("Started at: ").append(f_started).append('\n');
+		sb.append("Run Time: ").append(f_nanoTime).append(" ns\n");
+		return sb.toString();
+	}
+	
 	public static class Builder {
 
 		private static class PrefixReader extends DefaultHandler {

@@ -7,3 +7,7 @@ Bundle-Vendor: SureLogic, Inc.
 Require-Bundle: com.surelogic.common,
  com.surelogic.common.derby,
  com.surelogic.adhoc
+Export-Package: com.surelogic.flashlight.common,
+ com.surelogic.flashlight.common.entities,
+ com.surelogic.flashlight.common.files,
+ com.surelogic.flashlight.common.prep

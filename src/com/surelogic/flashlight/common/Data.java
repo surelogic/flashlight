@@ -24,10 +24,18 @@ public final class Data {
 	
 	private static String dbLocation = null;
 
-	public static void bootAndCheckSchema(String location) throws Exception {
+        public static synchronized boolean isBooted() {
+            return (dbLocation != null);
+        }
+        
+	public static synchronized boolean bootAndCheckSchema(String location) throws Exception {
 		if (location == null) {
 			throw new IllegalArgumentException("Null db location");
 		}
+                if (isBooted()) {
+                    // already initialized
+                    return false;
+                }
 		/*
 		if (!new File(location).exists()) {
 			throw new IllegalArgumentException("Non-existent db location: "+location);
@@ -43,7 +51,8 @@ public final class Data {
 			checkAndUpdate(c);
 		} finally {
 			c.close();
-		}
+		}                
+                return true;
 	}
 
 	public static Connection getConnection() throws SQLException {

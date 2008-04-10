@@ -14,6 +14,7 @@ import org.eclipse.ui.part.ViewPart;
 
 import com.surelogic.common.eclipse.SLImages;
 import com.surelogic.common.eclipse.ViewUtility;
+import com.surelogic.common.images.CommonImages;
 import com.surelogic.flashlight.common.Utility;
 import com.surelogic.flashlight.common.entities.IRunDescription;
 import com.surelogic.flashlight.views.RunMediator.ColumnWrapper;
@@ -110,20 +111,20 @@ public final class RunView extends ViewPart {
 
 		final Action refreshAction = f_mediator.getRefreshAction();
 		refreshAction.setImageDescriptor(SLImages
-				.getImageDescriptor(SLImages.IMG_REFRESH));
+				.getImageDescriptor(CommonImages.IMG_REFRESH));
 		refreshAction.setToolTipText("Refresh the contents of this view");
 		getViewSite().getActionBars().getToolBarManager().add(refreshAction);
 
 		final Action prepAction = f_mediator.getPrepAction();
 		prepAction.setImageDescriptor(SLImages
-				.getImageDescriptor(SLImages.IMG_FL_PREP_DATA));
+				.getImageDescriptor(CommonImages.IMG_FL_PREP_DATA));
 		prepAction.setToolTipText("Prepare the raw data from this run");
 		prepAction.setEnabled(false);
 		getViewSite().getActionBars().getToolBarManager().add(prepAction);
 
 		final Action showLogAction = f_mediator.getShowLogAction();
 		showLogAction.setImageDescriptor(SLImages
-				.getImageDescriptor(SLImages.IMG_FL_READ_LOG));
+				.getImageDescriptor(CommonImages.IMG_FL_READ_LOG));
 		showLogAction
 				.setToolTipText("Show the instrumentation log from this run");
 		showLogAction.setEnabled(false);

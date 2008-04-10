@@ -20,6 +20,7 @@ import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.PlatformUI;
 
 import com.surelogic.common.eclipse.SLImages;
+import com.surelogic.common.images.CommonImages;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.Activator;
 import com.surelogic.flashlight.common.Data;
@@ -128,7 +129,7 @@ public final class RunMediator {
 						if (run.isSameRun((Raw) ti.getData())) {
 							found = true;
 							ti.setImage(1, SLImages
-									.getImage(SLImages.IMG_FL_PREP));
+									.getImage(CommonImages.IMG_FL_PREP));
 						}
 
 					}
@@ -136,7 +137,7 @@ public final class RunMediator {
 						TableItem nti = new TableItem(f_table, SWT.NONE);
 						nti
 								.setImage(1, SLImages
-										.getImage(SLImages.IMG_FL_PREP));
+										.getImage(CommonImages.IMG_FL_PREP));
 						for (int i = 2; i < f_table.getColumnCount(); i++) {
 							nti.setText(i, f_indexToColumn.get(i).getText(run));
 						}

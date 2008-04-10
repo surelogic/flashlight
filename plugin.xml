@@ -45,7 +45,7 @@
       <launchGroup
             bannerImage="/lib/images/fl_wiz.png"
             id="com.surelogic.flashlight.launchGroup.flashlight"
-            image="platform:/plugin/com.surelogic.common.eclipse/lib/images/fl_run.gif"
+            image="platform:/plugin/com.surelogic.common/src/com/surelogic/common/images/fl_run.gif"
             label="Flashlight"
             mode="flashlight"
             title="%fl.launchGroup.title"/>
@@ -61,7 +61,7 @@
          <action
                label="%fl.run"
                style="pulldown"
-               icon="platform:/plugin/com.surelogic.common.eclipse/lib/images/fl_run.gif"
+               icon="platform:/plugin/com.surelogic.common/src/com/surelogic/common/images/fl_run.gif"
                class="com.surelogic.flashlight.actions.RunToolbarAction"
                menubarPath="org.eclipse.ui.run/ExternalToolsGroup"
                id="com.surelogic.flashlight.FlashlightMenuDelegateMenu">
@@ -69,9 +69,9 @@
          <action
                id="com.surelogic.flashlight.actions.RunToolbarAction"
                toolbarPath="org.eclipse.debug.ui.launchActionSet/debug"
-               hoverIcon="platform:/plugin/com.surelogic.common.eclipse/lib/images/fl_run.gif"
+               hoverIcon="platform:/plugin/com.surelogic.common/src/com/surelogic/common/images/fl_run.gif"
                class="com.surelogic.flashlight.actions.RunToolbarAction"
-               icon="platform:/plugin/com.surelogic.common.eclipse/lib/images/fl_run.gif"
+               icon="platform:/plugin/com.surelogic.common/src/com/surelogic/common/images/fl_run.gif"
                helpContextId="run_action_context"
                label="%fl.runDropDownAction.label"
                style="pulldown">
@@ -101,7 +101,7 @@
          point="org.eclipse.debug.ui.launchShortcuts">
       <shortcut
             label="%fl.javaApplicationShortcut.label"
-            icon="platform:/plugin/com.surelogic.common.eclipse/lib/images/fl_app.gif"
+            icon="platform:/plugin/com.surelogic.common/src/com/surelogic/common/images/fl_app.gif"
             helpContextId="org.eclipse.jdt.debug.ui.shortcut_local_java_application"
             modes="flashlight"
             class="org.eclipse.jdt.internal.debug.ui.launcher.JavaApplicationLaunchShortcut"
@@ -139,7 +139,7 @@
             allowMultiple="false"
             category="com.surelogic.flashlight.Flashlight"
             class="com.surelogic.flashlight.views.RunView"
-            icon="platform:/plugin/com.surelogic.common.eclipse/lib/images/fl_run_view.gif"
+            icon="platform:/plugin/com.surelogic.common/src/com/surelogic/common/images/fl_run_view.gif"
             id="com.surelogic.flashlight.RunView"
             name="Flashlight Runs">
       </view>
@@ -150,7 +150,7 @@
             allowMultiple="false"
             category="com.surelogic.flashlight.Flashlight"
             class="com.surelogic.adhoc.views.AdHocQueryView"
-            icon="platform:/plugin/com.surelogic.common.eclipse/lib/images/query.gif"
+            icon="platform:/plugin/com.surelogic.common/src/com/surelogic/common/images/query.gif"
             id="com.surelogic.flashlight.AdHocQueryView"
             name="Query Flashlight">
       </view>
@@ -159,7 +159,7 @@
             allowMultiple="true"
             category="com.surelogic.flashlight.Flashlight"
             class="com.surelogic.adhoc.views.AdHocQueryResultsView"
-            icon="platform:/plugin/com.surelogic.common.eclipse/lib/images/query.gif"
+            icon="platform:/plugin/com.surelogic.common/src/com/surelogic/common/images/query.gif"
             id="com.surelogic.flashlight.AdHocQueryView.Results"
             name="Query Results">
       </view>

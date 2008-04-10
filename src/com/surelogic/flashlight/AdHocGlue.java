@@ -6,11 +6,11 @@ import java.sql.SQLException;
 
 import org.eclipse.core.runtime.IPath;
 
-import com.surelogic.adhoc.IAdHoc;
 import com.surelogic.flashlight.common.Data;
 import com.surelogic.flashlight.preferences.PreferenceConstants;
+import com.surelogic.adhoc.AbstractAdHocGlue;
 
-public final class AdHocGlue implements IAdHoc {
+public final class AdHocGlue extends AbstractAdHocGlue {
 
 	public Connection getConnection() throws SQLException {
 		return Data.getConnection();

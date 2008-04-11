@@ -64,6 +64,7 @@ public final class IntrinsicLockDurationRowInserter {
 		final Event event = getEvent(inThread, lock);
 		if (lockState == IntrinsicLockState.BEFORE_ACQUISITION) {
 			// event information is saved below
+			// FIX what about re-entrant locks?
 		} else if (lockState == IntrinsicLockState.AFTER_ACQUISITION) {
 			if (event.lockState == IntrinsicLockState.BEFORE_ACQUISITION) {
 				insert(runId, inThread, lock, event.time, event.id, time, id,
@@ -96,6 +97,7 @@ public final class IntrinsicLockDurationRowInserter {
 					|| event.lockState == IntrinsicLockState.AFTER_WAIT) {
 				insert(runId, inThread, lock, event.time, event.id, time, id,
 						IntrinsicLockDurationState.HOLDING);
+				// FIX should be able to remove the lock state
 			} else {
 				LogStatus.createErrorStatus(0, event.lockState
 						+ " cannot proceed " + lockState + " for lock " + lock

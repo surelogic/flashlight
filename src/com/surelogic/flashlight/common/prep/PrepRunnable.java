@@ -1,4 +1,4 @@
-package com.surelogic.flashlight.jobs;
+package com.surelogic.flashlight.common.prep;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -15,38 +15,21 @@ import java.util.zip.GZIPInputStream;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import com.surelogic.common.eclipse.SLProgressMonitorWrapper;
-import com.surelogic.common.eclipse.jobs.DatabaseJob;
-import com.surelogic.common.eclipse.logging.SLStatus;
+import com.surelogic.common.SLProgressMonitor;
+import com.surelogic.common.logging.LogStatus;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.common.Data;
 import com.surelogic.flashlight.common.entities.Run;
 import com.surelogic.flashlight.common.entities.RunDAO;
 import com.surelogic.flashlight.common.files.Raw;
-import com.surelogic.flashlight.common.prep.AfterIntrinisicLockAcquisition;
-import com.surelogic.flashlight.common.prep.AfterIntrinsicLockWait;
-import com.surelogic.flashlight.common.prep.AfterIntrinsisLockRelease;
-import com.surelogic.flashlight.common.prep.BeforeIntrinsicLockAcquisition;
-import com.surelogic.flashlight.common.prep.BeforeIntrinsicLockWait;
-import com.surelogic.flashlight.common.prep.ClassDefinition;
-import com.surelogic.flashlight.common.prep.DataPreScan;
-import com.surelogic.flashlight.common.prep.FieldDefinition;
-import com.surelogic.flashlight.common.prep.FieldRead;
-import com.surelogic.flashlight.common.prep.FieldWrite;
-import com.surelogic.flashlight.common.prep.IPrep;
-import com.surelogic.flashlight.common.prep.ObjectDefinition;
-import com.surelogic.flashlight.common.prep.ThreadDefinition;
-import com.surelogic.flashlight.views.RunView;
 
-public final class PrepJob extends DatabaseJob {
-
+public final class PrepRunnable implements Runnable {
+    Object status = null;
+	
 	/**
 	 * New elements need to be added into this array.
 	 */
@@ -59,11 +42,12 @@ public final class PrepJob extends DatabaseJob {
 			new ObjectDefinition(), new ThreadDefinition() };
 
 	final Raw f_raw;
-
-	public PrepJob(final Raw raw) {
-		super("Preparing Flashlight data");
+    final SLProgressMonitor monitor;
+	
+	public PrepRunnable(final Raw raw, SLProgressMonitor mon) {
 		assert raw != null;
 		f_raw = raw;
+		monitor = mon;
 	}
 
 	private InputStream getDataFileStream(final Raw raw) throws IOException {
@@ -74,8 +58,7 @@ public final class PrepJob extends DatabaseJob {
 		return stream;
 	}
 
-	@Override
-	protected IStatus run(IProgressMonitor monitor) {
+	public void run() {
 		final String dataFileName = f_raw.getDataFile().getName();
 		/*
 		 * Estimate the work based upon the size of the raw file. This is only a
@@ -98,13 +81,13 @@ public final class PrepJob extends DatabaseJob {
 				 */
 				SAXParserFactory factory = SAXParserFactory.newInstance();
 				final DataPreScan scanResults = 
-					new DataPreScan(new SLProgressMonitorWrapper(monitor),
+					new DataPreScan(monitor,
 						estimatedEvents, dataFileName);
 				SAXParser saxParser = factory.newSAXParser();
 				saxParser.parse(stream, scanResults);
 				stream.close();
 				if (monitor.isCanceled())
-					return Status.CANCEL_STATUS;
+					return; //Status.CANCEL_STATUS;
 				/*
 				 * Read the data file (our second pass) and insert all data into
 				 * the database.
@@ -147,7 +130,7 @@ public final class PrepJob extends DatabaseJob {
 						saxParser.parse(stream, handler);
 						c.commit();
 						if (monitor.isCanceled())
-							return Status.CANCEL_STATUS;
+							return; // Status.CANCEL_STATUS;
 						/*
 						 * Remove all unreferenced objects and fields.
 						 */
@@ -166,7 +149,7 @@ public final class PrepJob extends DatabaseJob {
 						}
 						s.close();
 						if (monitor.isCanceled())
-							return Status.CANCEL_STATUS;
+							return; // Status.CANCEL_STATUS;
 						monitor.subTask("Deleting thread-local objects");
 						s = c
 								.prepareStatement("delete from OBJECT where Run=? and Id=?");
@@ -184,22 +167,25 @@ public final class PrepJob extends DatabaseJob {
 						}
 						c.close();
 					}
-				} catch (SQLException e) {
-					return SLStatus.createErrorStatus(0,
+				} catch (SQLException e) {					
+					status = LogStatus.createErrorStatus(0,
 							"Could not work with the embedded database", e);
+					return;
 				}
 			} finally {
 				stream.close();
 			}
 		} catch (Exception e) {
 			if (monitor.isCanceled())
-				return Status.CANCEL_STATUS;
-			return SLStatus.createErrorStatus(0,"Unable to prepare "
+				return; // Status.CANCEL_STATUS;
+			
+			status = LogStatus.createErrorStatus(0,"Unable to prepare "
 					+ dataFileName, e);
+		    return;
 		}
-		RunView.refreshViewContents();
-		monitor.done();
-		return Status.OK_STATUS;
+		//RunView.refreshViewContents();
+		//monitor.done();
+		//return Status.OK_STATUS;
 	}
 
 	public static class RawFileReader extends DefaultHandler {
@@ -207,11 +193,11 @@ public final class PrepJob extends DatabaseJob {
 		int f_work = 0;
 		final int f_tickSize;
 		final Connection f_c;
-		final IProgressMonitor f_monitor;
+		final SLProgressMonitor f_monitor;
 		final int f_run;
 
 		public RawFileReader(final int run, final Connection c,
-				final IProgressMonitor monitor, final long eventCount,
+				final SLProgressMonitor monitor, final long eventCount,
 				final String dataFileName) throws SQLException {
 			f_run = run;
 			f_c = c;

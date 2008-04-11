@@ -50,6 +50,10 @@ public final class PrepRunnable implements Runnable {
 		monitor = mon;
 	}
 
+	public Object getStatus() {
+		return status;
+	}
+	
 	private InputStream getDataFileStream(final Raw raw) throws IOException {
 		InputStream stream = new FileInputStream(raw.getDataFile());
 		if (raw.isDataFileGzip()) {

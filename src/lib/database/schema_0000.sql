@@ -95,3 +95,11 @@ create table ILOCKDURATION ( -- derived from ILOCK
   CONSTRAINT ILOCKDURATION_AcquiredEvent_FK FOREIGN KEY (Run, StopEvent) REFERENCES ILOCK (Run, Id)
 )
 <<>>
+
+create table ILOCKSHELD ( -- derived from ILOCK to track locks held when trying to acquire another
+  Run          INT       NOT NULL CONSTRAINT ILOCKSHELD_Run_FK REFERENCES RUN (Run),
+  LockEvent    BIGINT    NOT NULL,
+  LockHeld     BIGINT    NOT NULL,
+  CONSTRAINT ILOCKSHELD_AcquiredEvent_FK FOREIGN KEY (Run, LockEvent) REFERENCES ILOCK (Run, Id)
+)
+<<>>

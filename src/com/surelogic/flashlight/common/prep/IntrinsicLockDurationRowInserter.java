@@ -14,8 +14,10 @@ import com.surelogic.common.logging.SLLogger;
 public final class IntrinsicLockDurationRowInserter {
 
 	private static final String f_psQ = "INSERT INTO ILOCKDURATION VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+	private static final String f_heldLockQuery = "INSERT INTO ILOCKSHELD VALUES (?, ?, ?)";
 
 	private PreparedStatement f_ps;
+	private PreparedStatement f_heldLockPS;
 
 	static class Event {
 		long id;
@@ -28,9 +30,14 @@ public final class IntrinsicLockDurationRowInserter {
 	public IntrinsicLockDurationRowInserter(final Connection c)
 			throws SQLException {
 		f_ps = c.prepareStatement(f_psQ);
+		f_heldLockPS = c.prepareStatement(f_heldLockQuery);
 	}
 
 	public void close() throws SQLException {
+		if (f_heldLockPS != null) {
+			f_heldLockPS.close();
+			f_heldLockPS = null;
+		}
 		if (f_ps != null) {
 			f_ps.close();
 			f_ps = null;
@@ -38,12 +45,16 @@ public final class IntrinsicLockDurationRowInserter {
 		}
 	}
 
-	private Event getEvent(long inThread, long lock) {
+	private Map<Long, Event> getLockToEventMap(long inThread) {
 		Map<Long, Event> lockToEvent = f_threadToLockToEvent.get(inThread);
 		if (lockToEvent == null) {
 			lockToEvent = new HashMap<Long, Event>();
 			f_threadToLockToEvent.put(inThread, lockToEvent);
 		}
+		return lockToEvent;
+	}
+	
+	private Event getEvent(Map<Long,Event> lockToEvent, long lock) {
 		Event event = lockToEvent.get(lock);
 		if (event == null) {
 			event = new Event();
@@ -61,7 +72,15 @@ public final class IntrinsicLockDurationRowInserter {
 
 	public void event(int runId, long id, Timestamp time, long inThread,
 			long lock, IntrinsicLockState lockState) {
-		final Event event = getEvent(inThread, lock);
+		final Map<Long, Event> lockToEvent = getLockToEventMap(inThread);
+        for(Map.Entry<Long, Event> e : lockToEvent.entrySet()) {
+        	IntrinsicLockState state = e.getValue().lockState;
+        	if (state.isLockHeld()) {
+        		insertHeldLock(runId, id, e.getKey());
+        	}
+        }		
+		
+		final Event event = getEvent(lockToEvent, lock);
 		if (lockState == IntrinsicLockState.BEFORE_ACQUISITION) {
 			// event information is saved below
 			// FIX what about re-entrant locks?
@@ -128,6 +147,17 @@ public final class IntrinsicLockDurationRowInserter {
 			SLLogger.getLogger().log(Level.SEVERE,
 					"Insert failed: ILOCKDURATION", e);
 		}
-
+	}
+	
+	private void insertHeldLock(int runId, long eventId, Long lock) {
+		try {
+			f_heldLockPS.setInt(1, runId);
+			f_heldLockPS.setLong(2, eventId);
+			f_heldLockPS.setLong(3, lock);
+			f_heldLockPS.executeUpdate();
+		} catch (SQLException e) {
+			SLLogger.getLogger().log(Level.SEVERE,
+					"Insert failed: ILOCKSHELD", e);
+		}
 	}
 }

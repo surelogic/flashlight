@@ -100,6 +100,7 @@ create table ILOCKSHELD ( -- derived from ILOCK to track locks held when trying 
   Run          INT       NOT NULL CONSTRAINT ILOCKSHELD_Run_FK REFERENCES RUN (Run),
   LockEvent    BIGINT    NOT NULL,
   LockHeld     BIGINT    NOT NULL,
+  CONSTRAINT ILOCKSHELD_Lock_FK FOREIGN KEY (Run, LockHeld) REFERENCES OBJECT (Run, Id),  
   CONSTRAINT ILOCKSHELD_AcquiredEvent_FK FOREIGN KEY (Run, LockEvent) REFERENCES ILOCK (Run, Id)
 )
 <<>>

@@ -14,7 +14,7 @@ import com.surelogic.common.logging.SLLogger;
 public final class IntrinsicLockDurationRowInserter {
 
 	private static final String f_psQ = "INSERT INTO ILOCKDURATION VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-	private static final String f_heldLockQuery = "INSERT INTO ILOCKSHELD VALUES (?, ?, ?)";
+	private static final String f_heldLockQuery = "INSERT INTO ILOCKSHELD VALUES (?, ?, ?, ?, ?)";
 
 	private PreparedStatement f_ps;
 	private PreparedStatement f_heldLockPS;
@@ -153,7 +153,7 @@ public final class IntrinsicLockDurationRowInserter {
 			                               Map<Long, State> lockToState, State state) {
 		if (lockEvent == eventToMatch) {
 			assert state.timesEntered >= 0;
-			noteHeldLocks(runId, id, lock, lockToState);
+			noteHeldLocks(runId, id, inThread, lock, lockToState);
 			noteStateTransition(runId, id, time, inThread, lock, lockEvent, state,
 					            IntrinsicLockDurationState.HOLDING);		
 			state.timesEntered++;
@@ -177,7 +177,7 @@ public final class IntrinsicLockDurationRowInserter {
 				+ " in thread " + inThread);
 	} 
 
-	private void noteHeldLocks(int runId, long id, long lock,
+	private void noteHeldLocks(int runId, long id, long thread, long lock,
 			final Map<Long, State> lockToState) {
 		// Note what other locks are held at the time of this event 
         for(Map.Entry<Long, State> e : lockToState.entrySet()) {
@@ -187,7 +187,7 @@ public final class IntrinsicLockDurationRowInserter {
         	}
         	IntrinsicLockDurationState state = e.getValue().lockState;
         	if (state == IntrinsicLockDurationState.HOLDING) {
-        		insertHeldLock(runId, id, e.getKey());
+        		insertHeldLock(runId, id, e.getKey(), lock, thread);
         	}
         }
 	}
@@ -211,15 +211,37 @@ public final class IntrinsicLockDurationRowInserter {
 		}
 	}
 	
-	private void insertHeldLock(int runId, long eventId, Long lock) {
+	private void insertHeldLock(int runId, long eventId, Long lock, long acquired, long thread) {
 		try {
 			f_heldLockPS.setInt(1, runId);
 			f_heldLockPS.setLong(2, eventId);
 			f_heldLockPS.setLong(3, lock);
+			f_heldLockPS.setLong(4, acquired);
+			f_heldLockPS.setLong(5, thread);
 			f_heldLockPS.executeUpdate();
 		} catch (SQLException e) {
 			SLLogger.getLogger().log(Level.SEVERE,
 					"Insert failed: ILOCKSHELD", e);
 		}
 	}
+	
+	/*
+select distinct lockheld, lockacquired
+FROM ilocksheld 
+
+select distinct l1.lockheld, l2.lockheld, l2.lockacquired
+FROM ilocksheld AS l1, ilocksheld AS l2
+WHERE l1.inthread <> l2.inthread
+AND l1.lockacquired = l2.lockheld
+AND l2.lockacquired = l1.lockheld
+
+select distinct l1.lockheld, l2.lockheld, l3.lockheld, l3.lockacquired
+FROM ilocksheld AS l1, ilocksheld AS l2, ilocksheld AS l3
+WHERE l1.inthread <> l2.inthread
+AND l2.inthread <> l3.inthread
+AND l1.inthread <> l3.inthread
+AND l1.lockacquired = l2.lockheld
+AND l2.lockacquired = l3.lockheld
+AND l3.lockacquired = l1.lockheld
+	 */
 }

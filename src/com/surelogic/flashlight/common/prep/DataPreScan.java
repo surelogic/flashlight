@@ -81,14 +81,15 @@ public final class DataPreScan extends DefaultHandler {
 	public void startElement(String uri, String localName, String name,
 			Attributes attributes) throws SAXException {
 		/*
-		 * Check for cancel.
-		 */
-		if (f_monitor.isCanceled())
-			throw new IllegalStateException("cancelled");
-		/*
 		 * Show progress to the user
 		 */
 		if (f_work >= f_tickSize) {
+			/*
+			 * Check for cancel.
+			 */
+			if (f_monitor.isCanceled())
+				throw new IllegalStateException("cancelled");
+			
 			f_monitor.worked(1);
 			f_work = 0;
 		} else

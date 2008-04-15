@@ -57,7 +57,7 @@ public final class PrepRunnable implements Runnable {
 	private InputStream getDataFileStream(final Raw raw) throws IOException {
 		InputStream stream = new FileInputStream(raw.getDataFile());
 		if (raw.isDataFileGzip()) {
-			stream = new GZIPInputStream(stream);
+			stream = new GZIPInputStream(stream, 32*1024);
 		}
 		return stream;
 	}
@@ -88,7 +88,9 @@ public final class PrepRunnable implements Runnable {
 					new DataPreScan(monitor,
 						estimatedEvents, dataFileName);
 				SAXParser saxParser = factory.newSAXParser();
+				final long startPreScan = System.currentTimeMillis();
 				saxParser.parse(stream, scanResults);
+				System.out.println("Prescan = "+(System.currentTimeMillis() - startPreScan)+" ms");
 				stream.close();
 				if (monitor.isCanceled())
 					return; //Status.CANCEL_STATUS;
@@ -131,8 +133,11 @@ public final class PrepRunnable implements Runnable {
 								monitor, scanResults.getElementCount(),
 								dataFileName);
 						saxParser = factory.newSAXParser();
+						final long startScan = System.currentTimeMillis();
 						saxParser.parse(stream, handler);
 						c.commit();
+						System.out.println("Scan = "+(System.currentTimeMillis() - startScan)+" ms");
+
 						if (monitor.isCanceled())
 							return; // Status.CANCEL_STATUS;
 						/*
@@ -220,14 +225,15 @@ public final class PrepRunnable implements Runnable {
 		public void startElement(String uri, String localName, String name,
 				Attributes attributes) throws SAXException {
 			/*
-			 * Check for cancel.
-			 */
-			if (f_monitor.isCanceled())
-				throw new IllegalStateException("cancelled");
-			/*
 			 * Show progress to the user
 			 */
 			if (f_work >= f_tickSize) {
+				/*
+				 * Check for cancel.
+				 */
+				if (f_monitor.isCanceled())
+					throw new IllegalStateException("cancelled");
+				
 				f_monitor.worked(1);
 				f_work = 0;
 				try {
@@ -241,6 +247,7 @@ public final class PrepRunnable implements Runnable {
 			for (IPrep element : f_elements) {
 				if (name.equals(element.getXMLElementName())) {
 					element.parse(f_run, attributes);
+					break;
 				}
 			}
 		}

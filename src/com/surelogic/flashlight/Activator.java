@@ -55,6 +55,8 @@ public class Activator extends AbstractUIPlugin {
 		SLStatus.touch();
 
 		// startup the database and ensure its schema is up to date
+		System.setProperty("derby.storage.pageSize", "8192");
+		System.setProperty("derby.storage.pageCacheSize", "5000");
 		IPath pluginState = Activator.getDefault().getStateLocation();
 		Data.bootAndCheckSchema(pluginState.toOSString());
 	}

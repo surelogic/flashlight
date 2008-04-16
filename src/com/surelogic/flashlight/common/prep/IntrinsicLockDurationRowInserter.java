@@ -252,5 +252,11 @@ AND l3.lockacquired = l1.lockheld
 select * from ilockduration
 where state = 'BLOCKING'
 order by duration desc
+
+select run, inthread, lock, sum(duration) as blocktime
+from ilockduration
+where state = 'BLOCKING'
+group by run, inthread, lock
+order by blocktime desc
 	 */
 }

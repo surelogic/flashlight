@@ -115,6 +115,8 @@ public abstract class IntrinsicLock extends Event {
 		if (f_ps != null) {
 			f_ps.close();
 			f_ps = null;
+		}
+		if (f_rowInserter != null) {
 			f_rowInserter.close();
 			f_rowInserter = null;
 		}

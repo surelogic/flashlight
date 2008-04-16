@@ -33,4 +33,8 @@ public abstract class TrackUnreferenced implements IPrep {
 		f_unreferencedObjects = unreferencedObjects;
 		f_unreferencedFields = unreferencedFields;
 	}
+	
+	public void printStats() {
+		// Nothing to do
+	}
 }

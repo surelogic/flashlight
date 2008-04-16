@@ -19,6 +19,8 @@ public abstract class FieldAccess extends Event {
 	private static PreparedStatement f_ps;
 
 	private static DataPreScan f_scanResults;
+	
+	private long skipped, inserted;
 
 	public void parse(int runId, Attributes attributes) {
 		long nanoTime = -1;
@@ -55,16 +57,21 @@ public abstract class FieldAccess extends Event {
 			return;
 		}
 		if (receiver == -1) {
-			if (f_scanResults.isSingleThreadedStaticField(field))
+			if (f_scanResults.isSingleThreadedStaticField(field)) {							
+				skipped++;
 				return;
+			}
 		} else {
 			useObject(receiver);
-			if (f_scanResults.isThreadedField(field, receiver))
+			if (f_scanResults.isThreadedField(field, receiver)) {
+				skipped++;
 				return;
+			}
 		}
 		insert(runId, nanoTime, inThread, file, lineNumber, field, receiver);
 		useObject(inThread);
 		useField(field);
+		inserted++;
 	}
 
 	private void insert(int runId, long nanoTime, long inThread, String file,
@@ -102,6 +109,13 @@ public abstract class FieldAccess extends Event {
 		}
 	}
 
+	@Override
+	public void printStats() {
+		System.out.println(getClass().getName()+" Skipped   = "+skipped);
+		System.out.println(getClass().getName()+" Inserted  = "+inserted);
+		System.out.println(getClass().getName()+" %Inserted = "+(inserted * 100.0 / (skipped + inserted)));
+	}
+	
 	public final void close() throws SQLException {
 		if (f_ps != null) {
 			f_ps.close();

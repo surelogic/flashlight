@@ -36,52 +36,89 @@ import java.util.Random;
 public class Deadlock {
     static class Friend {
         private final String name;
-        public Friend(String name) {
+        private final int delay;
+        public Friend(String name, int delay) {
             this.name = name;
+            this.delay = delay;
         }
         public String getName() {
             return this.name;
         }
+        
+		private void delay() {
+			if (delay > 0) {
+            	try {
+					Thread.sleep(delay);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+            }
+		}
+		
         public synchronized void bow(Friend bower) {
             System.out.format("%s: %s has bowed to me!%n", 
                     this.name, bower.getName());
             bower.bowBack(this);
         }
+
         public synchronized void bowBack(Friend bower) {
+            delay();
+        	
             System.out.format("%s: %s has bowed back to me!%n",
                     this.name, bower.getName());
         }
     }
 
     public static void main(String[] args) {
-        final Friend alphonse = new Friend("Alphonse");
-        final Friend gaston = new Friend("Gaston");
-        final Random r = new Random();
-        
-        new Thread(new Runnable() {
-            public void run() { 
-            	for(int i=0; i<10; i++) {
-            		try {
-            			Thread.sleep(r.nextInt(1000));
-            		} catch (InterruptedException e) {
-            			e.printStackTrace();
-            		}
-            		alphonse.bow(gaston); 
-            	}
-            }
-        }).start();
-        new Thread(new Runnable() {
-            public void run() { 
-            	for(int i=0; i<10; i++) {
-            		try {
-            			Thread.sleep(r.nextInt(1000));
-            		} catch (InterruptedException e) {
-            			e.printStackTrace();
-            		}
-            		gaston.bow(alphonse); 
-            	}
-            }
-        }).start();
+      run(0, new IntGeneratorFactory() {
+		public IntGenerator create() {
+			final Random r = new Random();
+			return new IntGenerator() {
+				public int nextInt(int max) {
+					return r.nextInt(max);
+				}
+			};
+		}    	  
+      });	
+    }
+    
+    public static void run(int delay, final IntGeneratorFactory igf) {
+        final Friend[] friends = { 
+        		new Friend("Alphonse", delay),
+        		new Friend("Bob", delay),
+        		new Friend("Carol", delay),
+        		new Friend("Deirdre", delay),
+        		new Friend("Ed", delay),
+        		new Friend("Francois", delay),
+        		new Friend("Gaston", delay),
+        };
+        for(final Friend f : friends) {
+        	final Runnable r = new Runnable() {
+        		final IntGenerator r = igf.create();
+        		public void run() { 
+        			for(int i=0; i<10; i++) {
+        				try {
+        					Thread.sleep(r.nextInt(1000));
+        				} catch (InterruptedException e) {
+        					e.printStackTrace();
+        				}
+        				Friend f2 = friends[r.nextInt(friends.length)];
+        				if (f != f2) {
+        				  f.bow(f2);
+        				}
+        			}
+        		}
+        	};
+        	new Thread(r).start();
+        }
+    }
+    
+    static interface IntGenerator {
+        int nextInt(int max);	
+    }
+    
+    static interface IntGeneratorFactory {
+    	IntGenerator create();
     }
 }
 

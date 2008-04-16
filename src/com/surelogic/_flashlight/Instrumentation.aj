@@ -13,6 +13,8 @@ public aspect Instrumentation {
 
 	/**
 	 * Instrument field reads and writes.
+	 * 
+	 * FIX move code out to avoid problems w/ bytecode size limits
 	 */
 	pointcut getField() : get(* *) && nofl();
 

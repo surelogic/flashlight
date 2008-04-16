@@ -100,6 +100,7 @@ public final class PrepRunnable implements Runnable {
 				 */
 				stream = getDataFileStream(f_raw);
 				try {
+					// FIX change to decouple DB inserts?
 					final Connection c = Data.getConnection();
 					c.setAutoCommit(false);
 					/*
@@ -138,6 +139,10 @@ public final class PrepRunnable implements Runnable {
 						c.commit();
 						System.out.println("Scan = "+(System.currentTimeMillis() - startScan)+" ms");
 
+						for (IPrep element : f_elements) {
+							element.printStats();
+						}
+						
 						if (monitor.isCanceled())
 							return; // Status.CANCEL_STATUS;
 						/*

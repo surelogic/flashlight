@@ -24,6 +24,7 @@ final class Depository extends Thread {
 
 	private boolean f_finished = false;
 
+	// TODO isn't this thread-local?
 	private final AtomicLong f_outputCount = new AtomicLong();
 
 	@Override

@@ -87,6 +87,7 @@ create table ILOCKDURATION ( -- derived from ILOCK
   StartEvent   BIGINT    NOT NULL,
   Stop         TIMESTAMP NOT NULL,
   StopEvent    BIGINT    NOT NULL,
+  Duration     BIGINT    NOT NULL, -- redundant w/ Start and Stop
   State        VARCHAR(10) NOT NULL CONSTRAINT ILOCKDURATION_State_CN CHECK
     (State IN ('BLOCKING', 'HOLDING', 'WAITING')),
   CONSTRAINT ILOCKDURATION_InThread_FK FOREIGN KEY (Run, InThread) REFERENCES OBJECT (Run, Id),

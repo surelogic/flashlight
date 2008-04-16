@@ -13,7 +13,7 @@ import com.surelogic.common.logging.SLLogger;
 
 public final class IntrinsicLockDurationRowInserter {
 
-	private static final String f_psQ = "INSERT INTO ILOCKDURATION VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+	private static final String f_psQ = "INSERT INTO ILOCKDURATION VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 	private static final String f_heldLockQuery = "INSERT INTO ILOCKSHELD VALUES (?, ?, ?, ?, ?)";
 
 	private PreparedStatement f_ps;
@@ -203,7 +203,12 @@ public final class IntrinsicLockDurationRowInserter {
 			f_ps.setLong(5, startEvent);
 			f_ps.setTimestamp(6, stopTime);
 			f_ps.setLong(7, stopEvent);
-			f_ps.setString(8, state.toString());
+			
+			long secs  = (stopTime.getTime() / 1000) - (startTime.getTime() / 1000);
+			long nanos = stopTime.getNanos() - startTime.getNanos();
+			
+			f_ps.setLong(8, (1000000000 * secs) + nanos);
+			f_ps.setString(9, state.toString());
 			f_ps.executeUpdate();
 		} catch (SQLException e) {
 			SLLogger.getLogger().log(Level.SEVERE,
@@ -243,5 +248,9 @@ AND l1.inthread <> l3.inthread
 AND l1.lockacquired = l2.lockheld
 AND l2.lockacquired = l3.lockheld
 AND l3.lockacquired = l1.lockheld
+
+select * from ilockduration
+where state = 'BLOCKING'
+order by duration desc
 	 */
 }

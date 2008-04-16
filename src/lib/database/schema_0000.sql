@@ -109,3 +109,14 @@ create table ILOCKSHELD ( -- derived from ILOCK to track locks held when trying 
   CONSTRAINT ILOCKSHELD_AcquiredEvent_FK FOREIGN KEY (Run, LockEvent) REFERENCES ILOCK (Run, Id)
 )
 <<>>
+
+create table ILOCKTHREADSTATS ( -- derived from ILOCK to track # of threads over time
+  Run          INT       NOT NULL CONSTRAINT ILOCKTHREADSTATS_Run_FK REFERENCES RUN (Run),
+  LockEvent    BIGINT    NOT NULL,
+  Time         TIMESTAMP NOT NULL,
+  Blocking     INT       NOT NULL,
+  Holding      INT       NOT NULL,
+  Waiting      INT       NOT NULL,
+  CONSTRAINT ILOCKTHREADSTATS_AcquiredEvent_FK FOREIGN KEY (Run, LockEvent) REFERENCES ILOCK (Run, Id)
+)
+<<>>

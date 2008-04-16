@@ -15,9 +15,17 @@ public final class IntrinsicLockDurationRowInserter {
 
 	private static final String f_psQ = "INSERT INTO ILOCKDURATION VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 	private static final String f_heldLockQuery = "INSERT INTO ILOCKSHELD VALUES (?, ?, ?, ?, ?)";
-
+	private static final String f_threadStatusQuery = "INSERT INTO ILOCKTHREADSTATS VALUES (?, ?, ?, ?, ?, ?)";
+	
 	private PreparedStatement f_ps;
 	private PreparedStatement f_heldLockPS;
+	private PreparedStatement f_threadStatusPS;
+	
+	/*
+	private int lastBlocking = 0;
+	private int lastHolding = 0;
+	private int lastWaiting = 0;
+	*/
 	
 	static class State {
 		IntrinsicLockDurationState lockState = IntrinsicLockDurationState.IDLE;
@@ -35,6 +43,7 @@ public final class IntrinsicLockDurationRowInserter {
 			throws SQLException {
 		f_ps = c.prepareStatement(f_psQ);
 		f_heldLockPS = c.prepareStatement(f_heldLockQuery);
+		f_threadStatusPS = c.prepareStatement(f_threadStatusQuery);
 	}
 
 	public void close() throws SQLException {
@@ -180,16 +189,16 @@ public final class IntrinsicLockDurationRowInserter {
 	private void noteHeldLocks(int runId, long id, long thread, long lock,
 			final Map<Long, State> lockToState) {
 		// Note what other locks are held at the time of this event 
-        for(Map.Entry<Long, State> e : lockToState.entrySet()) {
-        	long otherLock = e.getKey();
-        	if (lock == otherLock) {
-        		continue; // Skip myself
-        	}
-        	IntrinsicLockDurationState state = e.getValue().lockState;
-        	if (state == IntrinsicLockDurationState.HOLDING) {
-        		insertHeldLock(runId, id, e.getKey(), lock, thread);
-        	}
-        }
+		for(Map.Entry<Long, State> e : lockToState.entrySet()) {
+			long otherLock = e.getKey();
+			if (lock == otherLock) {
+				continue; // Skip myself
+			}
+			IntrinsicLockDurationState state = e.getValue().lockState;
+			if (state == IntrinsicLockDurationState.HOLDING) {
+				insertHeldLock(runId, id, e.getKey(), lock, thread);                	
+			}
+		}
 	}
 
 	private void recordStateDuration(int runId, long inThread, long lock,
@@ -227,6 +236,22 @@ public final class IntrinsicLockDurationRowInserter {
 		} catch (SQLException e) {
 			SLLogger.getLogger().log(Level.SEVERE,
 					"Insert failed: ILOCKSHELD", e);
+		}
+	}
+	
+	private void recordThreadStats(int runId, long eventId, Timestamp t, 
+			                       int blocking, int holding, int waiting) {
+		try {
+			f_threadStatusPS.setInt(1, runId);
+			f_threadStatusPS.setLong(2, eventId);
+			f_threadStatusPS.setTimestamp(3, t);
+			f_threadStatusPS.setInt(4, blocking);
+			f_threadStatusPS.setInt(5, holding);
+			f_threadStatusPS.setInt(6, waiting);
+			f_threadStatusPS.executeUpdate();
+		} catch (SQLException e) {
+			SLLogger.getLogger().log(Level.SEVERE,
+					"Insert failed: ILOCKTHREADSTATS", e);
 		}
 	}
 	

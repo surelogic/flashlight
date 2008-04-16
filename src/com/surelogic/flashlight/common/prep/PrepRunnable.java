@@ -182,6 +182,7 @@ public final class PrepRunnable implements Runnable {
 						c.close();
 					}
 				} catch (SQLException e) {					
+					e.printStackTrace(System.err);
 					status = LogStatus.createErrorStatus(0,
 							"Could not work with the embedded database", e);
 					return;

@@ -58,7 +58,9 @@ public final class FlashlightLaunchConfigurationDelegate extends
 		if (!useSpy) {
 			b.append(" -DFL_NO_SPY=true");
 		}
-		return b.toString();
+		String result = b.toString();
+		//System.out.println("Flashlight VM args: "+result);
+		return result;
 	}
 
 	/**

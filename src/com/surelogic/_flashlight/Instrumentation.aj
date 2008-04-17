@@ -1,10 +1,5 @@
 package com.surelogic._flashlight;
 
-import java.lang.reflect.Field;
-
-import org.aspectj.lang.Signature;
-import org.aspectj.lang.reflect.*;
-
 public aspect Instrumentation {
 
 	/**
@@ -56,52 +51,46 @@ public aspect Instrumentation {
 	 */
 
 	before() : trace() {
-		InstrumentationHelper.beforeTrace(thisEnclosingJoinPointStaticPart
-				.getSignature(), thisJoinPointStaticPart.getSourceLocation());
+		InstrumentationHelper.beforeTrace(thisEnclosingJoinPointStaticPart, 
+				                          thisJoinPointStaticPart);
 	}
 
 	before(Object o) : intrinsicLock(o) {
-		InstrumentationHelper.beforeIntrinsicLockAcquisition(o, thisJoinPoint
-				.getThis(), thisJoinPointStaticPart.getSourceLocation());
+		InstrumentationHelper.beforeIntrinsicLockAcquisition(o, thisJoinPoint, 
+				thisJoinPointStaticPart);
 	}
 
 	before() : intrinsicWait() {
 		InstrumentationHelper.beforeIntrinsicLockWait(
-				thisJoinPoint.getTarget(), thisJoinPointStaticPart
-						.getSourceLocation());
+				thisJoinPoint, thisJoinPointStaticPart);
 	}
 
 	after() : getField() {
 		InstrumentationHelper.fieldRead(
-				(FieldSignature) thisJoinPointStaticPart.getSignature(),
-				thisJoinPoint.getTarget(), thisJoinPointStaticPart
-						.getSourceLocation());
+				thisJoinPoint, thisJoinPointStaticPart);
 	}
 
 	after() : setField() {
 		InstrumentationHelper.fieldWrite(
-				(FieldSignature) thisJoinPointStaticPart.getSignature(),
-				thisJoinPoint.getTarget(), thisJoinPointStaticPart
-						.getSourceLocation());
+				thisJoinPoint, thisJoinPointStaticPart);
 	}
 
 	after() : trace() {
-		InstrumentationHelper.afterTrace(thisJoinPointStaticPart
-				.getSourceLocation());
+		InstrumentationHelper.afterTrace(thisJoinPointStaticPart);
 	}
 
 	after() : intrinsicWait() {
-		InstrumentationHelper.afterIntrinsicLockWait(thisJoinPoint.getTarget(),
-				thisJoinPointStaticPart.getSourceLocation());
+		InstrumentationHelper.afterIntrinsicLockWait(thisJoinPoint,
+				thisJoinPointStaticPart);
 	}
 
 	after(Object o) : intrinsicLock(o) {
 		InstrumentationHelper.afterIntrinsicLockAcquisition(o,
-				thisJoinPointStaticPart.getSourceLocation());
+				thisJoinPointStaticPart);
 	}
 
 	after(Object o) : intrinsicUnlock(o) {
 		InstrumentationHelper.afterIntrinsicLockRelease(o,
-				thisJoinPointStaticPart.getSourceLocation());
+				thisJoinPointStaticPart);
 	}
 }

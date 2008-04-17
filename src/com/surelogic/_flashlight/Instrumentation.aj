@@ -56,79 +56,52 @@ public aspect Instrumentation {
 	 */
 
 	before() : trace() {
-		final Signature signature = thisEnclosingJoinPointStaticPart
-				.getSignature();
-		final String locationName = signature.getName();
-		final String declaringTypeName = signature.getDeclaringTypeName();
-		final SourceLocation sl = thisJoinPointStaticPart.getSourceLocation();
-		final SrcLoc location = new SrcLoc(sl.getFileName(), sl.getLine());
-		Store.beforeTrace(declaringTypeName, locationName, location);
+		InstrumentationHelper.beforeTrace(thisEnclosingJoinPointStaticPart
+				.getSignature(), thisJoinPointStaticPart.getSourceLocation());
 	}
 
 	before(Object o) : intrinsicLock(o) {
-		final Object oThis = thisJoinPoint.getThis();
-		final boolean lockIsThis = (oThis == null ? false : oThis == o);
-		final SourceLocation sl = thisJoinPointStaticPart.getSourceLocation();
-		final SrcLoc location = new SrcLoc(sl.getFileName(), sl.getLine());
-		boolean lockIsClass = false;
-		if (!lockIsThis) {
-			final Class oClass = sl.getWithinType();
-			if (oClass == o)
-				lockIsClass = true;
-		}
-		Store.beforeIntrinsicLockAcquisition(o, lockIsThis, lockIsClass,
-				location);
+		InstrumentationHelper.beforeIntrinsicLockAcquisition(o, thisJoinPoint
+				.getThis(), thisJoinPointStaticPart.getSourceLocation());
 	}
 
 	before() : intrinsicWait() {
-		final Object oThis = thisJoinPoint.getTarget();
-		final SourceLocation sl = thisJoinPointStaticPart.getSourceLocation();
-		final SrcLoc location = new SrcLoc(sl.getFileName(), sl.getLine());
-		Store.beforeIntrinsicLockWait(oThis, location);
+		InstrumentationHelper.beforeIntrinsicLockWait(
+				thisJoinPoint.getTarget(), thisJoinPointStaticPart
+						.getSourceLocation());
 	}
 
 	after() : getField() {
-		final FieldSignature signature = (FieldSignature) thisJoinPointStaticPart
-				.getSignature();
-		final Field field = signature.getField();
-		final Object receiver = thisJoinPoint.getTarget();
-		final SourceLocation sl = thisJoinPointStaticPart.getSourceLocation();
-		final SrcLoc location = new SrcLoc(sl.getFileName(), sl.getLine());
-		Store.fieldRead(receiver, field, location);
+		InstrumentationHelper.fieldRead(
+				(FieldSignature) thisJoinPointStaticPart.getSignature(),
+				thisJoinPoint.getTarget(), thisJoinPointStaticPart
+						.getSourceLocation());
 	}
 
 	after() : setField() {
-		final FieldSignature signature = (FieldSignature) thisJoinPointStaticPart
-				.getSignature();
-		final Field field = signature.getField();
-		final Object receiver = thisJoinPoint.getTarget();
-		final SourceLocation sl = thisJoinPointStaticPart.getSourceLocation();
-		final SrcLoc location = new SrcLoc(sl.getFileName(), sl.getLine());
-		Store.fieldWrite(receiver, field, location);
+		InstrumentationHelper.fieldWrite(
+				(FieldSignature) thisJoinPointStaticPart.getSignature(),
+				thisJoinPoint.getTarget(), thisJoinPointStaticPart
+						.getSourceLocation());
 	}
 
 	after() : trace() {
-		final SourceLocation sl = thisJoinPointStaticPart.getSourceLocation();
-		final SrcLoc location = new SrcLoc(sl.getFileName(), sl.getLine());
-		Store.afterTrace(location);
+		InstrumentationHelper.afterTrace(thisJoinPointStaticPart
+				.getSourceLocation());
 	}
 
 	after() : intrinsicWait() {
-		final Object oThis = thisJoinPoint.getTarget();
-		final SourceLocation sl = thisJoinPointStaticPart.getSourceLocation();
-		final SrcLoc location = new SrcLoc(sl.getFileName(), sl.getLine());
-		Store.afterIntrinsicLockWait(oThis, location);
+		InstrumentationHelper.afterIntrinsicLockWait(thisJoinPoint.getTarget(),
+				thisJoinPointStaticPart.getSourceLocation());
 	}
 
 	after(Object o) : intrinsicLock(o) {
-		final SourceLocation sl = thisJoinPointStaticPart.getSourceLocation();
-		final SrcLoc location = new SrcLoc(sl.getFileName(), sl.getLine());
-		Store.afterIntrinsicLockAcquisition(o, location);
+		InstrumentationHelper.afterIntrinsicLockAcquisition(o,
+				thisJoinPointStaticPart.getSourceLocation());
 	}
 
 	after(Object o) : intrinsicUnlock(o) {
-		final SourceLocation sl = thisJoinPointStaticPart.getSourceLocation();
-		final SrcLoc location = new SrcLoc(sl.getFileName(), sl.getLine());
-		Store.afterIntrinsicLockRelease(o, location);
+		InstrumentationHelper.afterIntrinsicLockRelease(o,
+				thisJoinPointStaticPart.getSourceLocation());
 	}
 }

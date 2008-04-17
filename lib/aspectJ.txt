@@ -1,0 +1,1 @@
+aspectjrt.jar, aspectjtools, and aspectjweaver.jar came from aspectj-1.6.0rc1.jar

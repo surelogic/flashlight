@@ -451,6 +451,38 @@ public final class Store {
 		}
 	}
 
+	public static void beforeTrace(final String declaringTypeName,
+			final String locationName, final SrcLoc location) {
+		if (f_flashlightIsNotInitialized)
+			return;
+		if (FL_OFF.get())
+			return;
+		if (tl_withinStore.get().booleanValue())
+			return;
+		tl_withinStore.set(Boolean.TRUE);
+		try {
+			f_log.println("\tat " + declaringTypeName + "." + locationName
+					+ "(" + location + ")");
+		} finally {
+			tl_withinStore.set(Boolean.FALSE);
+		}
+	}
+
+	public static void afterTrace(final SrcLoc location) {
+		if (f_flashlightIsNotInitialized)
+			return;
+		if (FL_OFF.get())
+			return;
+		if (tl_withinStore.get().booleanValue())
+			return;
+		tl_withinStore.set(Boolean.TRUE);
+		try {
+			f_log.println("\treturn to " + location);
+		} finally {
+			tl_withinStore.set(Boolean.FALSE);
+		}
+	}
+
 	/**
 	 * Records that the program is attempting to acquire an intrinsic lock. An
 	 * intrinsic lock is a <code>synchronized</code> block or method.

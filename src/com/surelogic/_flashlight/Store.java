@@ -451,6 +451,22 @@ public final class Store {
 		}
 	}
 
+	/**
+	 * Records a call to something from a location that should be able to be
+	 * seen in a trace. Typically this is a call to a method from another
+	 * method. The information we care about is at the point where the call is
+	 * made, not the method that is being called.
+	 * 
+	 * @param declaringTypeName
+	 *            the fully qualified name of the type where the trace event
+	 *            occurred.
+	 * @param locationName
+	 *            the name of the method, constructor, or initializer where the
+	 *            trace event occurred.
+	 * @param location
+	 *            the source location of where the trace event occurred, may be
+	 *            <code>null</code>.
+	 */
 	public static void beforeTrace(final String declaringTypeName,
 			final String locationName, final SrcLoc location) {
 		if (f_flashlightIsNotInitialized)
@@ -468,6 +484,14 @@ public final class Store {
 		}
 	}
 
+	/**
+	 * Records a return (normal or exceptional) back to the point where a
+	 * corresponding {@link #beforeTrace(String, String, SrcLoc)} was made.
+	 * 
+	 * @param location
+	 *            the source location of where the trace event occurred, may be
+	 *            <code>null</code>.
+	 */
 	public static void afterTrace(final SrcLoc location) {
 		if (f_flashlightIsNotInitialized)
 			return;

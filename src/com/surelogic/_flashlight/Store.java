@@ -477,8 +477,9 @@ public final class Store {
 			return;
 		tl_withinStore.set(Boolean.TRUE);
 		try {
-			f_log.println("\tat " + declaringTypeName + "." + locationName
-					+ "(" + location + ")");
+			final Event e = new BeforeTrace(declaringTypeName, locationName,
+					location);
+			putInQueue(f_rawQueue, e);
 		} finally {
 			tl_withinStore.set(Boolean.FALSE);
 		}
@@ -501,7 +502,8 @@ public final class Store {
 			return;
 		tl_withinStore.set(Boolean.TRUE);
 		try {
-			f_log.println("\treturn to " + location);
+			final Event e = new AfterTrace(location);
+			putInQueue(f_rawQueue, e);
 		} finally {
 			tl_withinStore.set(Boolean.FALSE);
 		}

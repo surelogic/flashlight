@@ -39,8 +39,7 @@ final class OutputStrategyXML extends EventVisitor {
 		addProperty("os.name", b);
 		addProperty("os.arch", b);
 		addProperty("os.version", b);
-		Entities.addAttribute("max-memory-mb", ((long) Runtime.getRuntime()
-				.maxMemory())
+		Entities.addAttribute("max-memory-mb", Runtime.getRuntime().maxMemory()
 				/ (1024L * 1024L), b);
 		Entities.addAttribute("processors", Runtime.getRuntime()
 				.availableProcessors(), b);
@@ -64,12 +63,22 @@ final class OutputStrategyXML extends EventVisitor {
 	}
 
 	@Override
+	void visit(final AfterTrace e) {
+		o(e.toString());
+	}
+
+	@Override
 	void visit(BeforeIntrinsicLockAcquisition e) {
 		o(e.toString());
 	}
 
 	@Override
 	void visit(BeforeIntrinsicLockWait e) {
+		o(e.toString());
+	}
+
+	@Override
+	void visit(BeforeTrace e) {
 		o(e.toString());
 	}
 

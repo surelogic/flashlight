@@ -1,5 +1,11 @@
 package com.surelogic._flashlight;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+
+import org.aspectj.lang.*;
+import org.aspectj.lang.reflect.*;
+
 public aspect Instrumentation {
 
 	/**
@@ -8,17 +14,26 @@ public aspect Instrumentation {
 	pointcut nofl() : !within(com.surelogic._flashlight..*);
 
 	/**
-	 * Instrument field reads and writes.
+	 * Instrument field reads.
 	 */
 	pointcut getField() : get(* *) && nofl();
 
+	/**
+	 * Instrument field writes.
+	 */
 	pointcut setField() : set(* *) && nofl();
 
 	/**
-	 * Instrument traces within the code.
+	 * Instrument method calls.
 	 */
-	pointcut trace() : 
-         (call(* *.*(..)) || call( *.new(..))) && nofl();
+	pointcut method() : 
+         call(* *.*(..)) && nofl();
+
+	/**
+	 * Instrument constructor calls.
+	 */
+	pointcut constructor() : 
+		 call( *.new(..)) && nofl();
 
 	/**
 	 * Instrument intrinsic lock acquisition. This is done in two steps: before
@@ -26,17 +41,6 @@ public aspect Instrumentation {
 	 * two steps separately supports runtime deadlock detection by flashlight.
 	 */
 	pointcut intrinsicLock(Object o) : lock() && args(o) && nofl();
-
-	/**
-	 * Instrument waiting on an intrinsic lock. See the Java Language
-	 * Specification (3rd edition) section 17.8 <i>Wait Sets and Notification</i>
-	 * for the semantics of waiting on an intrinsic lock.
-	 */
-	pointcut intrinsicWait() : (
-			call(public void wait()) ||
-	        call(public void wait(long)) ||
-			call(public void wait(long, int))
-			) && nofl();
 
 	/**
 	 * Instrument intrinsic lock release.
@@ -50,47 +54,75 @@ public aspect Instrumentation {
 	 * precedence error from the AspectJ compiler.
 	 */
 
-	before() : trace() {
-		InstrumentationHelper.beforeTrace(thisEnclosingJoinPointStaticPart, 
-				                          thisJoinPointStaticPart);
+	before() : method() {
+		methodCallHelper(true, thisJoinPoint, thisJoinPointStaticPart,
+				thisEnclosingJoinPointStaticPart);
 	}
 
 	before(Object o) : intrinsicLock(o) {
-		InstrumentationHelper.beforeIntrinsicLockAcquisition(o, thisJoinPoint, 
-				thisJoinPointStaticPart);
-	}
-
-	before() : intrinsicWait() {
-		InstrumentationHelper.beforeIntrinsicLockWait(
-				thisJoinPoint, thisJoinPointStaticPart);
+		final Object oThis = thisJoinPoint.getThis();
+		final boolean lockIsThis = (oThis == null ? false : oThis == o);
+		final SourceLocation sl = thisJoinPointStaticPart.getSourceLocation();
+		final SrcLoc location = new SrcLoc(sl.getFileName(), sl.getLine());
+		boolean lockIsClass = false;
+		if (!lockIsThis) {
+			final Class oClass = sl.getWithinType();
+			if (oClass == o)
+				lockIsClass = true;
+		}
+		Store.beforeIntrinsicLockAcquisition(o, lockIsThis, lockIsClass,
+				location);
 	}
 
 	after() : getField() {
-		InstrumentationHelper.fieldRead(
-				thisJoinPoint, thisJoinPointStaticPart);
+		fieldAccessHelper(true, thisJoinPoint, thisJoinPointStaticPart);
 	}
 
 	after() : setField() {
-		InstrumentationHelper.fieldWrite(
-				thisJoinPoint, thisJoinPointStaticPart);
+		fieldAccessHelper(false, thisJoinPoint, thisJoinPointStaticPart);
 	}
 
-	after() : trace() {
-		InstrumentationHelper.afterTrace(thisJoinPointStaticPart);
-	}
-
-	after() : intrinsicWait() {
-		InstrumentationHelper.afterIntrinsicLockWait(thisJoinPoint,
-				thisJoinPointStaticPart);
+	after() : method() {
+		methodCallHelper(false, thisJoinPoint, thisJoinPointStaticPart,
+				thisEnclosingJoinPointStaticPart);
 	}
 
 	after(Object o) : intrinsicLock(o) {
-		InstrumentationHelper.afterIntrinsicLockAcquisition(o,
-				thisJoinPointStaticPart);
+		final SourceLocation sl = thisJoinPointStaticPart.getSourceLocation();
+		final SrcLoc location = new SrcLoc(sl.getFileName(), sl.getLine());
+		Store.afterIntrinsicLockAcquisition(o, location);
 	}
 
 	after(Object o) : intrinsicUnlock(o) {
-		InstrumentationHelper.afterIntrinsicLockRelease(o,
-				thisJoinPointStaticPart);
+		final SourceLocation sl = thisJoinPointStaticPart.getSourceLocation();
+		final SrcLoc location = new SrcLoc(sl.getFileName(), sl.getLine());
+		Store.afterIntrinsicLockRelease(o, location);
+	}
+
+	void fieldAccessHelper(final boolean read, final JoinPoint jp,
+			final JoinPoint.StaticPart jpsp) {
+		final FieldSignature signature = (FieldSignature) jpsp.getSignature();
+		final Object receiver = jp.getTarget();
+		final SourceLocation sl = jpsp.getSourceLocation();
+		final Field field = signature.getField();
+		final SrcLoc location = new SrcLoc(sl.getFileName(), sl.getLine());
+		Store.fieldAccess(read, receiver, field, location);
+	}
+
+	void methodCallHelper(final boolean before, final JoinPoint jp,
+			final JoinPoint.StaticPart jpsp,
+			final JoinPoint.StaticPart enclosing) {
+		final Signature enclosingSignature = enclosing.getSignature();
+		final MethodSignature methodSignature = (MethodSignature) jpsp
+				.getSignature();
+		final Method method = methodSignature.getMethod();
+		final Object receiver = jp.getTarget();
+		final SourceLocation sl = jpsp.getSourceLocation();
+		final String enclosingLocationName = enclosingSignature.getName();
+		final String enclosingDeclaringTypeName = enclosingSignature
+				.getDeclaringTypeName();
+		final SrcLoc location = new SrcLoc(sl.getFileName(), sl.getLine());
+		Store.methodCall(before, method, receiver, enclosingDeclaringTypeName,
+				enclosingLocationName, location);
 	}
 }

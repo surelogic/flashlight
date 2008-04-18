@@ -8,6 +8,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -59,7 +60,14 @@ public final class Store {
 	 * Non-null if Flashlight should log to the console, <code>null</code>
 	 * otherwise.
 	 */
-	private final static PrintWriter f_log;
+	private static final PrintWriter f_log;
+
+	/**
+	 * Flags if helpful debug information should be output to the console log.
+	 * This flag generates a lot of output and should only be set to
+	 * {@code true} for small test programs.
+	 */
+	public static final boolean DEBUG = true;
 
 	/**
 	 * Logs a message if logging is enabled.
@@ -354,19 +362,22 @@ public final class Store {
 	}
 
 	/**
-	 * Records a read of a field within the instrumented program.
+	 * Records that a field access occurred within the instrumented program.
 	 * 
+	 * @param read
+	 *            {@code true} indicates a field <i>read</i>, {@code false}
+	 *            indicates a field <i>write</i>.
 	 * @param receiver
 	 *            the object instance the field is part of the state of, or
-	 *            <code>null</code> if the field is <code>static</code>.
+	 *            {@code null} if the field is {@code static}.
 	 * @param field
 	 *            a field within the instrumented program.
 	 * @param location
 	 *            the source location of where the field read occurred, may be
-	 *            <code>null</code>.
+	 *            {@code null}.
 	 */
-	public static void fieldRead(final Object receiver, final Field field,
-			final SrcLoc location) {
+	public static void fieldAccess(final boolean read, final Object receiver,
+			final Field field, final SrcLoc location) {
 		if (f_flashlightIsNotInitialized)
 			return;
 		if (FL_OFF.get())
@@ -375,26 +386,40 @@ public final class Store {
 			return;
 		tl_withinStore.set(Boolean.TRUE);
 		try {
+			if (DEBUG) {
+				final String fmt = "Store.fieldAccess(%n\t\t%s%n\t\treceiver=%s%n\t\tfield=%s%n\t\tlocation=%s)";
+				log(String.format(fmt, read ? "read" : "write", receiver,
+						field, location));
+			}
 			/*
 			 * Check that the parameters are valid, gather needed information,
 			 * and put an event in the raw queue.
 			 */
 			if (field == null) {
-				logAProblem("field cannot be null...bug");
+				final String fmt = "field cannot be null...instrumentation bug detected by Store.fieldAccess(%s, receiver=%s, field=%s, location=%s)";
+				logAProblem(String.format(fmt, read ? "read" : "write",
+						receiver, field, location));
 				return;
 			}
 			final ObservedField oField = ObservedField.getInstance(field,
 					f_rawQueue);
 			final Event e;
 			if (oField.isStatic()) {
-				e = new FieldReadStatic(oField, location);
+				if (read)
+					e = new FieldReadStatic(oField, location);
+				else
+					e = new FieldWriteStatic(oField, location);
 			} else {
 				if (receiver == null) {
-					logAProblem("instance field " + oField
-							+ " read reported with a null receiver...bug");
+					final String fmt = "instance field %s access reported with a null receiver...instrumentation bug detected by Store.fieldAccess(%s, receiver=%s, field=%s, location=%s)";
+					logAProblem(String.format(fmt, oField, read ? "read"
+							: "write", receiver, field, location));
 					return;
 				}
-				e = new FieldReadInstance(receiver, oField, location);
+				if (read)
+					e = new FieldReadInstance(receiver, oField, location);
+				else
+					e = new FieldWriteInstance(receiver, oField, location);
 			}
 			putInQueue(f_rawQueue, e);
 		} finally {
@@ -403,72 +428,37 @@ public final class Store {
 	}
 
 	/**
-	 * Records a write of a field within the instrumented program.
+	 * Records that a method call occurred within the instrumented program.
+	 * Typically this is a call to a method from another method, however, the
+	 * call could originate in a constructor or an initializer.
+	 * <p>
+	 * This method also dispatches this event properly if the method call is to
+	 * an <i>interesting</i> method with regard to the program's concurrency.
+	 * Interesting methods include calls to {@link Object#wait()},
+	 * {@link Object#wait(long)}, {@link Object#wait(long, int)}, and
+	 * {@code java.util.concurrent} locks.
 	 * 
+	 * @param before
+	 *            {@code true} indicates <i>before</i> the method call,
+	 *            {@code false} indicates <i>after</i> the method call.
+	 * @param method
+	 *            the method being called.
 	 * @param receiver
-	 *            the object instance the field is part of the state of, or
-	 *            <code>null</code> if the field is <code>static</code>.
-	 * @param field
-	 *            a field within the instrumented program.
-	 * @param location
-	 *            the source location of where the field read occurred, may be
-	 *            <code>null</code>.
-	 */
-	public static void fieldWrite(final Object receiver, final Field field,
-			final SrcLoc location) {
-		if (f_flashlightIsNotInitialized)
-			return;
-		if (FL_OFF.get())
-			return;
-		if (tl_withinStore.get().booleanValue())
-			return;
-		tl_withinStore.set(Boolean.TRUE);
-		try {
-			/*
-			 * Check that the parameters are valid, gather needed information,
-			 * and put an event in the raw queue.
-			 */
-			if (field == null) {
-				logAProblem("field cannot be null...bug");
-				return;
-			}
-			final ObservedField oField = ObservedField.getInstance(field,
-					f_rawQueue);
-			final Event e;
-			if (oField.isStatic()) {
-				e = new FieldWriteStatic(oField, location);
-			} else {
-				if (receiver == null) {
-					logAProblem("instance field " + oField
-							+ " write reported with a null receiver...bug");
-					return;
-				}
-				e = new FieldWriteInstance(receiver, oField, location);
-			}
-			putInQueue(f_rawQueue, e);
-		} finally {
-			tl_withinStore.set(Boolean.FALSE);
-		}
-	}
-
-	/**
-	 * Records a call to something from a location that should be able to be
-	 * seen in a trace. Typically this is a call to a method from another
-	 * method. The information we care about is at the point where the call is
-	 * made, not the method that is being called.
-	 * 
-	 * @param declaringTypeName
-	 *            the fully qualified name of the type where the trace event
+	 *            the object instance the method is being called on, or
+	 *            {@code null} if the method is {@code static}.
+	 * @param enclosingDeclaringTypeName
+	 *            the fully qualified name of the type where the method call
 	 *            occurred.
-	 * @param locationName
+	 * @param enclosingLocationName
 	 *            the name of the method, constructor, or initializer where the
-	 *            trace event occurred.
+	 *            method call occurred.
 	 * @param location
-	 *            the source location of where the trace event occurred, may be
-	 *            <code>null</code>.
+	 *            the source location of where the method call occurred, may be
+	 *            {@code null}.
 	 */
-	public static void beforeTrace(final String declaringTypeName,
-			final String locationName, final SrcLoc location) {
+	public static void methodCall(final boolean before, final Method method,
+			final Object receiver, final String enclosingDeclaringTypeName,
+			final String enclosingLocationName, final SrcLoc location) {
 		if (f_flashlightIsNotInitialized)
 			return;
 		if (FL_OFF.get())
@@ -477,8 +467,38 @@ public final class Store {
 			return;
 		tl_withinStore.set(Boolean.TRUE);
 		try {
-			final Event e = new BeforeTrace(declaringTypeName, locationName,
-					location);
+			if (DEBUG) {
+				final String fmt = "Store.methodCall(%n\t\t%s%n\t\tmethod=%s%n\t\treceiver=%s%n\t\tenclosingDeclaringTypeName=%s%n\t\tenclosingLocationName=%s%n\t\tlocation=%s)";
+				log(String.format(fmt, before ? "before" : "after", method,
+						receiver, enclosingDeclaringTypeName,
+						enclosingLocationName, location));
+			}
+			/*
+			 * Check that the parameters are valid, gather needed information,
+			 * and put an event in the raw queue.
+			 */
+			if (method == null) {
+				final String fmt = "method cannot be null...instrumentation bug detected by Store.methodCall(%s, method=%s, receiver=%s, enclosingDeclaringTypeName=%s, enclosingLocationName=%s, location=%s)";
+				logAProblem(String.format(fmt, before ? "before" : "after",
+						method, receiver, enclosingDeclaringTypeName,
+						enclosingLocationName, location));
+			} else {
+				final Class<?> declaringClass = method.getDeclaringClass();
+				if (declaringClass.equals(Object.class)) {
+					if ("wait".equals(method.getName())) {
+						if (before)
+							beforeIntrinsicLockWait(receiver, location);
+						else
+							afterIntrinsicLockWait(receiver, location);
+					}
+				}
+			}
+			final Event e;
+			if (before)
+				e = new BeforeTrace(enclosingDeclaringTypeName,
+						enclosingLocationName, location);
+			else
+				e = new AfterTrace(location);
 			putInQueue(f_rawQueue, e);
 		} finally {
 			tl_withinStore.set(Boolean.FALSE);
@@ -486,45 +506,21 @@ public final class Store {
 	}
 
 	/**
-	 * Records a return (normal or exceptional) back to the point where a
-	 * corresponding {@link #beforeTrace(String, String, SrcLoc)} was made.
-	 * 
-	 * @param location
-	 *            the source location of where the trace event occurred, may be
-	 *            <code>null</code>.
-	 */
-	public static void afterTrace(final SrcLoc location) {
-		if (f_flashlightIsNotInitialized)
-			return;
-		if (FL_OFF.get())
-			return;
-		if (tl_withinStore.get().booleanValue())
-			return;
-		tl_withinStore.set(Boolean.TRUE);
-		try {
-			final Event e = new AfterTrace(location);
-			putInQueue(f_rawQueue, e);
-		} finally {
-			tl_withinStore.set(Boolean.FALSE);
-		}
-	}
-
-	/**
-	 * Records that the program is attempting to acquire an intrinsic lock. An
-	 * intrinsic lock is a <code>synchronized</code> block or method.
+	 * Records that the instrumented program is attempting to acquire an
+	 * intrinsic lock. An intrinsic lock is a {@code synchronized} block or
+	 * method.
 	 * 
 	 * @param lockObject
 	 *            the object being synchronized (i.e., the lock).
 	 * @param lockIsThis
-	 *            <code>true</code> if the lock object is dynamically the same
-	 *            as the receiver object, i.e., <code>this == on</code>.
+	 *            {@code true} if the lock object is dynamically the same as the
+	 *            receiver object, i.e., {@code this == on}.
 	 * @param lockIsClass
-	 *            <code>true</code> if the lock object is dynamically the same
-	 *            as the class the method is declared within, <code>false</code>
-	 *            otherwise.
+	 *            {@code true} if the lock object is dynamically the same as the
+	 *            class the method is declared within, {@code false} otherwise.
 	 * @param location
 	 *            the source location of where the event occurred, may be
-	 *            <code>null</code>.
+	 *            {@code null}.
 	 */
 	public static void beforeIntrinsicLockAcquisition(final Object lockObject,
 			final boolean lockIsThis, final boolean lockIsClass,
@@ -554,14 +550,14 @@ public final class Store {
 	}
 
 	/**
-	 * Records that the program has acquired an intrinsic lock. An intrinsic
-	 * lock is a <code>synchronized</code> block or method.
+	 * Records that the instrumented program has acquired an intrinsic lock. An
+	 * intrinsic lock is a {@code synchronized} block or method.
 	 * 
 	 * @param lockObject
 	 *            the object being synchronized (i.e., the lock).
 	 * @param location
 	 *            the source location of where the event occurred, may be
-	 *            <code>null</code>.
+	 *            {@code null}.
 	 */
 	public static void afterIntrinsicLockAcquisition(final Object lockObject,
 			final SrcLoc location) {
@@ -590,8 +586,8 @@ public final class Store {
 	}
 
 	/**
-	 * Records that the program is entering a call to one of the following
-	 * methods:
+	 * Records that the instrumented program is entering a call to one of the
+	 * following methods:
 	 * <ul>
 	 * <li>{@link Object#wait()}</li>
 	 * <li>{@link Object#wait(long)}</li>
@@ -599,43 +595,37 @@ public final class Store {
 	 * </ul>
 	 * See the Java Language Specification (3rd edition) section 17.8 <i>Wait
 	 * Sets and Notification</i> for the semantics of waiting on an intrinsic
-	 * lock. An intrinsic lock is a <code>synchronized</code> block or method.
+	 * lock. An intrinsic lock is a {@code synchronized} block or method.
 	 * 
 	 * @param lockObject
 	 *            the object being waited on (i.e., the thread should be holding
 	 *            a lock on this object).
 	 * @param location
 	 *            the source location of where the event occurred, may be
-	 *            <code>null</code>.
+	 *            {@code null}.
 	 */
-	public static void beforeIntrinsicLockWait(final Object lockObject,
+	private static void beforeIntrinsicLockWait(final Object lockObject,
 			final SrcLoc location) {
-		if (f_flashlightIsNotInitialized)
-			return;
-		if (FL_OFF.get())
-			return;
-		if (tl_withinStore.get().booleanValue())
-			return;
-		tl_withinStore.set(Boolean.TRUE);
-		try {
-			/*
-			 * Check that the parameters are valid, gather needed information,
-			 * and put an event in the raw queue.
-			 */
-			if (lockObject == null) {
-				logAProblem("intrinsic lock object cannot be null...bug");
-				return;
-			}
-			final Event e = new BeforeIntrinsicLockWait(lockObject, location);
-			putInQueue(f_rawQueue, e);
-		} finally {
-			tl_withinStore.set(Boolean.FALSE);
+		if (DEBUG) {
+			final String fmt = "Store.beforeIntrinsicLockWait(%n\t\tlockObject=%s%n\t\tlocation=%s)";
+			log(String.format(fmt, lockObject, location));
 		}
+		/*
+		 * Check that the parameters are valid, gather needed information, and
+		 * put an event in the raw queue.
+		 */
+		if (lockObject == null) {
+			final String fmt = "intrinsic lock object cannot be null...instrumentation bug detected by Store.beforeIntrinsicLockWait(lockObject=%s, location=%s)";
+			logAProblem(String.format(fmt, lockObject, location));
+			return;
+		}
+		final Event e = new BeforeIntrinsicLockWait(lockObject, location);
+		putInQueue(f_rawQueue, e);
 	}
 
 	/**
-	 * Records that the program is completing a call to one of the following
-	 * methods:
+	 * Records that the instrumented program is completing a call to one of the
+	 * following methods:
 	 * <ul>
 	 * <li>{@link Object#wait()}</li>
 	 * <li>{@link Object#wait(long)}</li>
@@ -643,49 +633,44 @@ public final class Store {
 	 * </ul>
 	 * See the Java Language Specification (3rd edition) section 17.8 <i>Wait
 	 * Sets and Notification</i> for the semantics of waiting on an intrinsic
-	 * lock. An intrinsic lock is a <code>synchronized</code> block or method.
+	 * lock. An intrinsic lock is a {@code synchronized} block or method.
 	 * 
 	 * @param lockObject
 	 *            the object being waited on (i.e., the thread should be holding
 	 *            a lock on this object).
 	 * @param location
 	 *            the source location of where the event occurred, may be
-	 *            <code>null</code>.
+	 *            {@code null}.
 	 */
-	public static void afterIntrinsicLockWait(final Object lockObject,
+	private static void afterIntrinsicLockWait(final Object lockObject,
 			final SrcLoc location) {
-		if (f_flashlightIsNotInitialized)
-			return;
-		if (FL_OFF.get())
-			return;
-		if (tl_withinStore.get().booleanValue())
-			return;
-		tl_withinStore.set(Boolean.TRUE);
-		try {
-			/*
-			 * Check that the parameters are valid, gather needed information,
-			 * and put an event in the raw queue.
-			 */
-			if (lockObject == null) {
-				logAProblem("intrinsic lock object cannot be null...bug");
-				return;
-			}
-			final Event e = new AfterIntrinsicLockWait(lockObject, location);
-			putInQueue(f_rawQueue, e);
-		} finally {
-			tl_withinStore.set(Boolean.FALSE);
+		if (DEBUG) {
+			final String fmt = "Store.afterIntrinsicLockWait(%n\t\tlockObject=%s%n\t\tlocation=%s)";
+			log(String.format(fmt, lockObject, location));
 		}
+		/*
+		 * Check that the parameters are valid, gather needed information, and
+		 * put an event in the raw queue.
+		 */
+		if (lockObject == null) {
+			final String fmt = "intrinsic lock object cannot be null...instrumentation bug detected by Store.afterIntrinsicLockWait(lockObject=%s, location=%s)";
+			logAProblem(String.format(fmt, lockObject, location));
+			return;
+		}
+		final Event e = new AfterIntrinsicLockWait(lockObject, location);
+		putInQueue(f_rawQueue, e);
+
 	}
 
 	/**
 	 * Records that the program has released an intrinsic lock. An intrinsic
-	 * lock is a <code>synchronized</code> block or method.
+	 * lock is a {@code synchronized} block or method.
 	 * 
 	 * @param lockObject
 	 *            the object being synchronized (i.e., the lock).
 	 * @param location
 	 *            the source location of where the event occurred, may be
-	 *            <code>null</code>.
+	 *            {@code null}.
 	 */
 	public static void afterIntrinsicLockRelease(final Object lockObject,
 			final SrcLoc location) {

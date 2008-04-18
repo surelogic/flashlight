@@ -39,8 +39,8 @@ public class TestOutput extends TestCase {
 			 * with up to (THREADS * 2) extra events.
 			 */
 			A o = new A();
-			Store.fieldRead(o, f_j, null);
-			Store.fieldRead(o, f_j, null);
+			Store.fieldAccess(true, o, f_j, null);
+			Store.fieldAccess(true, o, f_j, null);
 			o = null;
 			midGate.countDown();
 			try {
@@ -49,10 +49,10 @@ public class TestOutput extends TestCase {
 				// ignore, just go
 			}
 			for (int i = 0; i < EVENTS; i++) {
-				Store.fieldRead(o1, f_i, null);
-				Store.fieldWrite(o1, f_i, null);
-				Store.fieldRead(null, f_s, null);
-				Store.fieldWrite(null, f_s, null);
+				Store.fieldAccess(true, o1, f_i, null);
+				Store.fieldAccess(false, o1, f_i, null);
+				Store.fieldAccess(true, null, f_s, null);
+				Store.fieldAccess(false, null, f_s, null);
 			}
 			endGate.countDown();
 		}

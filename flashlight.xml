@@ -27,9 +27,6 @@
 		<delete dir="${classes}" />
 		<mkdir dir="${classes}" />
 		<javac srcdir="${src}" destdir="${classes}" source="1.5">
-			<classpath>
-				<pathelement location="${aspectjrt.jar}" />
-			</classpath>
 		</javac>
 		<iajc source="1.5" Xlint="ignore" X="joinpoints:synchronization" destdir="${classes}">
 			<sourceroots>

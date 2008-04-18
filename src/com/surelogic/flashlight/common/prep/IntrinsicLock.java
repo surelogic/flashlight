@@ -111,6 +111,10 @@ public abstract class IntrinsicLock extends Event {
 		}
 	}
 
+	public final void flush(final int runId) throws SQLException {
+		f_rowInserter.flush(runId);
+	}
+	
 	public final void close() throws SQLException {
 		if (f_ps != null) {
 			f_ps.close();

@@ -4,28 +4,30 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.Map.Entry;
 import java.util.logging.Level;
+
+import org.jgrapht.alg.CycleDetector;
+import org.jgrapht.graph.*;
 
 import com.surelogic.common.logging.LogStatus;
 import com.surelogic.common.logging.SLLogger;
 
 public final class IntrinsicLockDurationRowInserter {
-
-	private static final String f_psQ = "INSERT INTO ILOCKDURATION VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-	private static final String f_heldLockQuery = "INSERT INTO ILOCKSHELD VALUES (?, ?, ?, ?, ?)";
-	private static final String f_threadStatusQuery = "INSERT INTO ILOCKTHREADSTATS VALUES (?, ?, ?, ?, ?, ?)";
+	private static final int LOCK_DURATION = 0;
+	private static final int LOCKS_HELD = 1;
+	private static final int THREAD_STATS = 2;
+	private static final int LOCK_CYCLE = 3;
 	
-	private PreparedStatement f_ps;
-	private PreparedStatement f_heldLockPS;
-	private PreparedStatement f_threadStatusPS;
-	
-	/*
-	private int lastBlocking = 0;
-	private int lastHolding = 0;
-	private int lastWaiting = 0;
-	*/
+    private static final String[] queries = {
+	  "INSERT INTO ILOCKDURATION VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+	  "INSERT INTO ILOCKSHELD VALUES (?, ?, ?, ?, ?)",
+      "INSERT INTO ILOCKTHREADSTATS VALUES (?, ?, ?, ?, ?, ?)",
+	  "INSERT INTO ILOCKCYCLE VALUES (?, ?)",
+    };
+    private static final PreparedStatement[] statements = 
+    	new PreparedStatement[queries.length];
 	
 	static class State {
 		IntrinsicLockDurationState lockState = IntrinsicLockDurationState.IDLE;
@@ -37,25 +39,54 @@ public final class IntrinsicLockDurationRowInserter {
 		IntrinsicLockState startEvent;
 	}
 
-	private final Map<Long, Map<Long, State>> f_threadToLockToState = new HashMap<Long, Map<Long, State>>();
+	private final Map<Long, Map<Long, State>> f_threadToLockToState = 
+		new HashMap<Long, Map<Long, State>>();
+    private final Map<Long, IntrinsicLockDurationState> f_threadToStatus = 
+    	new HashMap<Long, IntrinsicLockDurationState>();
 
+    /**
+     * Vertices = locks
+     * Edges = threads doing the acquire
+     */
+    private final DefaultDirectedGraph<Long, Object> lockGraph = 
+    	new DefaultDirectedGraph<Long, Object>(Object.class);
+    private boolean flushed = false;
+    
 	public IntrinsicLockDurationRowInserter(final Connection c)
 			throws SQLException {
-		f_ps = c.prepareStatement(f_psQ);
-		f_heldLockPS = c.prepareStatement(f_heldLockQuery);
-		f_threadStatusPS = c.prepareStatement(f_threadStatusQuery);
+		int i=0;
+		for (String q : queries) {
+			statements[i++] = c.prepareStatement(q);
+		}
 	}
 
-	public void close() throws SQLException {
-		if (f_heldLockPS != null) {
-			f_heldLockPS.close();
-			f_heldLockPS = null;
+	public void flush(final int runId) throws SQLException {
+		if (flushed) {
+			return;
 		}
-		if (f_ps != null) {
-			f_ps.close();
-			f_ps = null;
-			f_threadToLockToState.clear();
+		flushed = true;
+
+		CycleDetector<Long, Object> detector = new CycleDetector<Long, Object>(lockGraph);
+		Set<Long> vertices = detector.findCycles();
+		
+		final PreparedStatement f_cyclePS = statements[LOCK_CYCLE];
+		for(Long lockId : vertices) {
+			f_cyclePS.setInt(1, runId);
+			f_cyclePS.setLong(2, lockId);
+			f_cyclePS.executeUpdate();
 		}
+	}
+	
+	public void close() throws SQLException {	
+		for(int i=0; i<statements.length; i++) {
+			if (statements[i] != null) {
+				statements[i].close();
+				statements[i] = null;
+			}
+		}
+		f_threadToLockToState.clear();
+		f_threadToStatus.clear();
+		// FIX clear lockGraph
 	}
 
 	private Map<Long, State> getLockToStateMap(long inThread) {
@@ -76,12 +107,108 @@ public final class IntrinsicLockDurationRowInserter {
 		return event;
 	}
 
-	private void updateState(State mutableState, long id, Timestamp time,
-			IntrinsicLockState startEvent, IntrinsicLockDurationState lockState) {
+	private void updateState(State mutableState, int run, long id, Timestamp time, 
+			                 long inThread, IntrinsicLockState startEvent, 
+			                 IntrinsicLockDurationState lockState) {
+		IntrinsicLockDurationState oldLockState = mutableState.lockState;
 		mutableState.id = id;
 		mutableState.time = time;
 		mutableState.startEvent = startEvent;
 		mutableState.lockState = lockState;
+
+		updateThreadStatus(run, id, time, inThread, oldLockState, lockState);
+	}
+
+	private void updateThreadStatus(int run, long id, Timestamp time, long inThread, 
+			                        IntrinsicLockDurationState oldLockState,
+			                        IntrinsicLockDurationState newLockState) {
+		int blocking = 0, holding = 0, waiting = 0;
+		boolean found = false;
+		for(Entry<Long, IntrinsicLockDurationState> e : f_threadToStatus.entrySet()) {
+		    IntrinsicLockDurationState thisStatus = e.getValue();
+            // Check if it's the current thread 			
+			final long thisThread = e.getKey();
+			if (inThread == thisThread) {
+				found = true;
+				e.setValue(computeThisThreadStatus(thisStatus, oldLockState, 
+						                           newLockState, inThread));
+			}			
+			switch (thisStatus) {
+			case BLOCKING:
+				blocking++;
+				break;
+			case HOLDING:
+				holding++;
+				break;
+			case WAITING:
+				waiting++;
+				break;
+			default:
+				continue;
+			}
+		}
+		if (!found) {
+			// insert the entry
+			IntrinsicLockDurationState newState = 
+				computeThisThreadStatus(IntrinsicLockDurationState.IDLE, 
+						                oldLockState, newLockState, inThread);
+			f_threadToStatus.put(inThread, newState);
+			switch (newState) {
+			case BLOCKING:
+				blocking++;
+				break;
+			case HOLDING:
+				holding++;
+				break;
+			case WAITING:
+				waiting++;
+				break;
+			default:
+			}
+		}
+		recordThreadStats(run, id, time, blocking, holding, waiting);
+	}
+
+	/**
+	 * Update this thread's status, based on an event on one of the locks
+	 */
+	private IntrinsicLockDurationState 
+	computeThisThreadStatus(IntrinsicLockDurationState threadState,
+     		                IntrinsicLockDurationState oldLockState, 
+			                IntrinsicLockDurationState newLockState, 
+			                long inThread) {
+		switch (oldLockState) {
+		default:
+		case IDLE:
+		case HOLDING:
+			assert threadState.isRunning();
+			return computeRunningThreadStatus(newLockState, inThread);
+		case BLOCKING:
+			assert threadState == IntrinsicLockDurationState.BLOCKING;
+			assert newLockState == IntrinsicLockDurationState.HOLDING;
+			return newLockState;
+		case WAITING:
+			assert threadState == IntrinsicLockDurationState.WAITING;
+			assert newLockState == IntrinsicLockDurationState.HOLDING;
+			return newLockState;
+		}		
+	}
+
+	private IntrinsicLockDurationState 
+	computeRunningThreadStatus(IntrinsicLockDurationState newLockState, long inThread) {
+		if (newLockState == IntrinsicLockDurationState.IDLE) {
+			// Need to check the status on the other locks
+			final Map<Long, State> lockToState = getLockToStateMap(inThread);
+			for(Entry<Long, State> e : lockToState.entrySet()) {
+				final State state = e.getValue();
+				assert state.lockState.isRunning();
+				if (state.lockState != IntrinsicLockDurationState.IDLE) {
+					return state.lockState;
+				}
+			}
+			// Otherwise idle
+		} 
+		return newLockState; 		
 	}
 
 	public void event(int runId, long id, Timestamp time, long inThread,
@@ -94,7 +221,8 @@ public final class IntrinsicLockDurationRowInserter {
 			assert state.timesEntered == 0;
 			if (lockEvent == IntrinsicLockState.BEFORE_ACQUISITION) {
 				// No need to record idle time
-				updateState(state, id, time, lockEvent, IntrinsicLockDurationState.BLOCKING);
+				updateState(state, runId, id, time, inThread,
+						    lockEvent, IntrinsicLockDurationState.BLOCKING);
 			} else {
 				logBadEvent(inThread, lock, lockEvent, state);
 			}
@@ -163,8 +291,8 @@ public final class IntrinsicLockDurationRowInserter {
 		if (lockEvent == eventToMatch) {
 			assert state.timesEntered >= 0;
 			noteHeldLocks(runId, id, inThread, lock, lockToState);
-			noteStateTransition(runId, id, time, inThread, lock, lockEvent, state,
-					            IntrinsicLockDurationState.HOLDING);		
+			noteStateTransition(runId, id, time, inThread, lock, 
+					            lockEvent, state, IntrinsicLockDurationState.HOLDING);		
 			state.timesEntered++;
 		} else {
 			logBadEvent(inThread, lock, lockEvent, state);
@@ -176,7 +304,7 @@ public final class IntrinsicLockDurationRowInserter {
 			                         IntrinsicLockDurationState newState) {
 		recordStateDuration(runId, inThread, lock, state.time, state.id, time, id,
 			                state.lockState);
-		updateState(state, id, time, lockEvent, newState);
+		updateState(state, runId, id, time, inThread, lockEvent, newState);
 	}
 	
 	private void logBadEvent(long inThread, long lock,
@@ -204,6 +332,7 @@ public final class IntrinsicLockDurationRowInserter {
 	private void recordStateDuration(int runId, long inThread, long lock,
 			Timestamp startTime, long startEvent, Timestamp stopTime,
 			long stopEvent, IntrinsicLockDurationState state) {
+		final PreparedStatement f_ps = statements[LOCK_DURATION];
 		try {
 			f_ps.setInt(1, runId);
 			f_ps.setLong(2, inThread);
@@ -226,6 +355,7 @@ public final class IntrinsicLockDurationRowInserter {
 	}
 	
 	private void insertHeldLock(int runId, long eventId, Long lock, long acquired, long thread) {
+		final PreparedStatement f_heldLockPS = statements[LOCKS_HELD];
 		try {
 			f_heldLockPS.setInt(1, runId);
 			f_heldLockPS.setLong(2, eventId);
@@ -236,11 +366,17 @@ public final class IntrinsicLockDurationRowInserter {
 		} catch (SQLException e) {
 			SLLogger.getLogger().log(Level.SEVERE,
 					"Insert failed: ILOCKSHELD", e);
-		}
+		}				
+		lockGraph.addVertex(lock);
+	
+		final Long acq = acquired;				
+	    lockGraph.addVertex(acq);		
+		lockGraph.addEdge(lock, acq, thread);
 	}
 	
 	private void recordThreadStats(int runId, long eventId, Timestamp t, 
 			                       int blocking, int holding, int waiting) {
+		final PreparedStatement f_threadStatusPS = statements[THREAD_STATS];
 		try {
 			f_threadStatusPS.setInt(1, runId);
 			f_threadStatusPS.setLong(2, eventId);

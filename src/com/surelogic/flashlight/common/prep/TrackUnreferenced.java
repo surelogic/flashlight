@@ -34,6 +34,10 @@ public abstract class TrackUnreferenced implements IPrep {
 		f_unreferencedFields = unreferencedFields;
 	}
 	
+	public void flush(final int runId) throws SQLException {
+		// Nothing to do
+	}
+	
 	public void printStats() {
 		// Nothing to do
 	}

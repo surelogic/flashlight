@@ -140,6 +140,9 @@ public final class PrepRunnable implements Runnable {
 						System.out.println("Scan = "+(System.currentTimeMillis() - startScan)+" ms");
 
 						for (IPrep element : f_elements) {
+							element.flush(runId);
+						}
+						for (IPrep element : f_elements) {
 							element.printStats();
 						}
 						

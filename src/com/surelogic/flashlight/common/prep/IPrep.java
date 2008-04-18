@@ -21,6 +21,8 @@ public interface IPrep {
 			final DataPreScan st, Set<Long> unreferencedObjects,
 			Set<Long> unreferencedFields) throws SQLException;
 
+	void flush(final int runId) throws SQLException;
+	
 	void printStats();
 	
 	void close() throws SQLException;

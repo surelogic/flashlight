@@ -110,6 +110,13 @@ create table ILOCKSHELD ( -- derived from ILOCK to track locks held when trying 
 )
 <<>>
 
+create table ILOCKCYCLE ( -- derived from ILOCKSHELD to find locks involved in cycles
+  Run          INT       NOT NULL CONSTRAINT ILOCKCYCLE_Run_FK REFERENCES RUN (Run),  
+  Lock         BIGINT    NOT NULL, 
+  CONSTRAINT ILOCKCYCLE_Lock_FK FOREIGN KEY (Run, Lock) REFERENCES OBJECT (Run, Id)
+)
+<<>>
+
 create table ILOCKTHREADSTATS ( -- derived from ILOCK to track # of threads over time
   Run          INT       NOT NULL CONSTRAINT ILOCKTHREADSTATS_Run_FK REFERENCES RUN (Run),
   LockEvent    BIGINT    NOT NULL,

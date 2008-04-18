@@ -20,7 +20,7 @@ public final class UnPrepJob extends DatabaseJob {
 	 * tables about a run without running into referential integrity problems.
 	 */
 	static private final String[] TABLES = { "ILOCKTHREADSTATS", "ILOCKSHELD", 
-		    "ILOCKDURATION", "ILOCK",
+		    "ILOCKDURATION", "ILOCK", "ILOCKCYCLE",
 			"ACCESS", "FIELD", "OBJECT", "RUN" };
 
 	private final int f_runId;

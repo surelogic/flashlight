@@ -127,3 +127,17 @@ create table ILOCKTHREADSTATS ( -- derived from ILOCK to track # of threads over
   CONSTRAINT ILOCKTHREADSTATS_AcquiredEvent_FK FOREIGN KEY (Run, LockEvent) REFERENCES ILOCK (Run, Id)
 )
 <<>>
+			
+create table TRACE ( -- stack trace durations
+  Run         INT          NOT NULL CONSTRAINT TRACE_Run_FK REFERENCES RUN (Run),
+  Id          BIGINT       NOT NULL,
+  InThread    BIGINT       NOT NULL,
+  InFile      VARCHAR(200) NOT NULL,
+  AtLine      INT          NOT NULL,
+  Location    VARCHAR(200) NOT NULL,
+  Start       TIMESTAMP    NOT NULL,
+  Stop        TIMESTAMP    NOT NULL,
+  PRIMARY KEY (Run, Id),
+  CONSTRAINT TRACE_InThread_FK FOREIGN KEY (Run, InThread) REFERENCES OBJECT (Run, Id)
+)
+<<>>

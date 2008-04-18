@@ -30,10 +30,12 @@ import com.surelogic.flashlight.common.files.Raw;
 public final class PrepRunnable implements Runnable {
     Object status = null;
 	
+    private static final BeforeTrace beforeTrace = new BeforeTrace();    
 	/**
 	 * New elements need to be added into this array.
 	 */
 	private static final IPrep[] f_elements = {
+		    beforeTrace, new AfterTrace(beforeTrace),
 			new AfterIntrinisicLockAcquisition(), new AfterIntrinsicLockWait(),
 			new AfterIntrinsisLockRelease(),
 			new BeforeIntrinsicLockAcquisition(),
@@ -253,10 +255,22 @@ public final class PrepRunnable implements Runnable {
 			} else
 				f_work++;
 
+			boolean parsed = false;
 			for (IPrep element : f_elements) {
 				if (name.equals(element.getXMLElementName())) {
 					element.parse(f_run, attributes);
+					parsed = true;
 					break;
+				}
+			}
+			if (!parsed) {
+				System.out.println(name);
+				if (attributes != null) {
+					for (int i = 0; i < attributes.getLength(); i++) {
+						final String aName = attributes.getQName(i);
+						final String aValue = attributes.getValue(i);
+						System.out.println("\t"+aName+" = "+aValue);
+					}
 				}
 			}
 		}

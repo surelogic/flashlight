@@ -1,5 +1,6 @@
 package com.surelogic._flashlight;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
@@ -52,7 +53,15 @@ public aspect Instrumentation {
 	 * 
 	 * We need to put 'before' advice before 'after' advice so we don't get a
 	 * precedence error from the AspectJ compiler.
+	 * 
+	 * It is a good idea to create a helper method to call into the Flashlight
+	 * store.
 	 */
+
+	before() : constructor() {
+		constructorCallHelper(true, thisJoinPoint, thisJoinPointStaticPart,
+				thisEnclosingJoinPointStaticPart);
+	}
 
 	before() : method() {
 		methodCallHelper(true, thisJoinPoint, thisJoinPointStaticPart,
@@ -60,18 +69,7 @@ public aspect Instrumentation {
 	}
 
 	before(Object o) : intrinsicLock(o) {
-		final Object oThis = thisJoinPoint.getThis();
-		final boolean lockIsThis = (oThis == null ? false : oThis == o);
-		final SourceLocation sl = thisJoinPointStaticPart.getSourceLocation();
-		final SrcLoc location = new SrcLoc(sl.getFileName(), sl.getLine());
-		boolean lockIsClass = false;
-		if (!lockIsThis) {
-			final Class oClass = sl.getWithinType();
-			if (oClass == o)
-				lockIsClass = true;
-		}
-		Store.beforeIntrinsicLockAcquisition(o, lockIsThis, lockIsClass,
-				location);
+		beforeIntrinsicLockHelper(o, thisJoinPoint, thisJoinPointStaticPart);
 	}
 
 	after() : getField() {
@@ -82,22 +80,27 @@ public aspect Instrumentation {
 		fieldAccessHelper(false, thisJoinPoint, thisJoinPointStaticPart);
 	}
 
+	after() : constructor() {
+		constructorCallHelper(false, thisJoinPoint, thisJoinPointStaticPart,
+				thisEnclosingJoinPointStaticPart);
+	}
+
 	after() : method() {
 		methodCallHelper(false, thisJoinPoint, thisJoinPointStaticPart,
 				thisEnclosingJoinPointStaticPart);
 	}
 
 	after(Object o) : intrinsicLock(o) {
-		final SourceLocation sl = thisJoinPointStaticPart.getSourceLocation();
-		final SrcLoc location = new SrcLoc(sl.getFileName(), sl.getLine());
-		Store.afterIntrinsicLockAcquisition(o, location);
+		afterIntrinisicLockHelper(true, o, thisJoinPointStaticPart);
 	}
 
 	after(Object o) : intrinsicUnlock(o) {
-		final SourceLocation sl = thisJoinPointStaticPart.getSourceLocation();
-		final SrcLoc location = new SrcLoc(sl.getFileName(), sl.getLine());
-		Store.afterIntrinsicLockRelease(o, location);
+		afterIntrinisicLockHelper(false, o, thisJoinPointStaticPart);
 	}
+
+	/*
+	 * Helper methods that call into the Flashlight store.
+	 */
 
 	void fieldAccessHelper(final boolean read, final JoinPoint jp,
 			final JoinPoint.StaticPart jpsp) {
@@ -107,6 +110,23 @@ public aspect Instrumentation {
 		final Field field = signature.getField();
 		final SrcLoc location = new SrcLoc(sl.getFileName(), sl.getLine());
 		Store.fieldAccess(read, receiver, field, location);
+	}
+
+	void constructorCallHelper(final boolean before, final JoinPoint jp,
+			final JoinPoint.StaticPart jpsp,
+			final JoinPoint.StaticPart enclosing) {
+		final Signature enclosingSignature = enclosing.getSignature();
+		final ConstructorSignature constructorSignature = (ConstructorSignature) jpsp
+				.getSignature();
+		final Constructor constructor = constructorSignature.getConstructor();
+		final Object receiver = jp.getTarget();
+		final SourceLocation sl = jpsp.getSourceLocation();
+		final String enclosingLocationName = enclosingSignature.getName();
+		final String enclosingDeclaringTypeName = enclosingSignature
+				.getDeclaringTypeName();
+		final SrcLoc location = new SrcLoc(sl.getFileName(), sl.getLine());
+		Store.constructorCall(before, constructor, receiver,
+				enclosingDeclaringTypeName, enclosingLocationName, location);
 	}
 
 	void methodCallHelper(final boolean before, final JoinPoint jp,
@@ -124,5 +144,31 @@ public aspect Instrumentation {
 		final SrcLoc location = new SrcLoc(sl.getFileName(), sl.getLine());
 		Store.methodCall(before, method, receiver, enclosingDeclaringTypeName,
 				enclosingLocationName, location);
+	}
+
+	void beforeIntrinsicLockHelper(final Object o, final JoinPoint jp,
+			final JoinPoint.StaticPart jpsp) {
+		final Object oThis = jp.getThis();
+		final boolean lockIsThis = (oThis == null ? false : oThis == o);
+		final SourceLocation sl = jpsp.getSourceLocation();
+		final SrcLoc location = new SrcLoc(sl.getFileName(), sl.getLine());
+		boolean lockIsClass = false;
+		if (!lockIsThis) {
+			final Class oClass = sl.getWithinType();
+			if (oClass == o)
+				lockIsClass = true;
+		}
+		Store.beforeIntrinsicLockAcquisition(o, lockIsThis, lockIsClass,
+				location);
+	}
+
+	void afterIntrinisicLockHelper(final boolean lockAcquisition,
+			final Object o, final JoinPoint.StaticPart jpsp) {
+		final SourceLocation sl = jpsp.getSourceLocation();
+		final SrcLoc location = new SrcLoc(sl.getFileName(), sl.getLine());
+		if (lockAcquisition)
+			Store.afterIntrinsicLockAcquisition(o, location);
+		else
+			Store.afterIntrinsicLockRelease(o, location);
 	}
 }

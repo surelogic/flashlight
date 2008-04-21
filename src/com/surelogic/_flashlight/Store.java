@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
@@ -427,6 +428,49 @@ public final class Store {
 		}
 	}
 
+	public static void constructorCall(final boolean before,
+			final Constructor constructor, final Object receiver,
+			final String enclosingDeclaringTypeName,
+			final String enclosingLocationName, final SrcLoc location) {
+		if (f_flashlightIsNotInitialized)
+			return;
+		if (FL_OFF.get())
+			return;
+		if (tl_withinStore.get().booleanValue())
+			return;
+		tl_withinStore.set(Boolean.TRUE);
+		try {
+			if (DEBUG) {
+				final String fmt = "Store.constructorCall(%n\t\t%s%n\t\tconstructor=%s%n\t\treceiver=%s%n\t\tenclosingDeclaringTypeName=%s%n\t\tenclosingLocationName=%s%n\t\tlocation=%s)";
+				log(String.format(fmt, before ? "before" : "after",
+						constructor, receiver, enclosingDeclaringTypeName,
+						enclosingLocationName, location));
+			}
+			/*
+			 * Check that the parameters are valid, gather needed information,
+			 * and put an event in the raw queue.
+			 */
+			if (constructor == null) {
+				final String fmt = "constructor cannot be null...instrumentation bug detected by Store.constructorCall(%s, constructor=%s, receiver=%s, enclosingDeclaringTypeName=%s, enclosingLocationName=%s, location=%s)";
+				logAProblem(String.format(fmt, before ? "before" : "after",
+						constructor, receiver, enclosingDeclaringTypeName,
+						enclosingLocationName, location));
+			} else {
+				final Class<?> declaringClass = constructor.getDeclaringClass();
+				// TODO do something here
+			}
+			final Event e;
+			if (before)
+				e = new BeforeTrace(enclosingDeclaringTypeName,
+						enclosingLocationName, location);
+			else
+				e = new AfterTrace(location);
+			putInQueue(f_rawQueue, e);
+		} finally {
+			tl_withinStore.set(Boolean.FALSE);
+		}
+	}
+
 	/**
 	 * Records that a method call occurred within the instrumented program.
 	 * Typically this is a call to a method from another method, however, the
@@ -533,12 +577,19 @@ public final class Store {
 			return;
 		tl_withinStore.set(Boolean.TRUE);
 		try {
+			if (DEBUG) {
+				final String fmt = "Store.beforeIntrinsicLockAcquisition(%n\t\tlockObject=%s%n\t\tlockIsThis=%b%n\t\tlockIsClass=%b%n\t\tlocation=%s)";
+				log(String.format(fmt, lockObject, lockIsThis, lockIsClass,
+						location));
+			}
 			/*
 			 * Check that the parameters are valid, gather needed information,
 			 * and put an event in the raw queue.
 			 */
 			if (lockObject == null) {
-				logAProblem("intrinsic lock object cannot be null...bug");
+				final String fmt = "intrinsic lock object cannot be null...instrumentation bug detected by Store.beforeIntrinsicLockAcquisition(lockObject=%s, lockIsThis=%b, lockIsClass=%b, location=%s)";
+				logAProblem(String.format(fmt, lockObject, lockIsThis,
+						lockIsClass, location));
 				return;
 			}
 			final Event e = new BeforeIntrinsicLockAcquisition(lockObject,
@@ -569,12 +620,17 @@ public final class Store {
 			return;
 		tl_withinStore.set(Boolean.TRUE);
 		try {
+			if (DEBUG) {
+				final String fmt = "Store.afterIntrinsicLockAcquisition(%n\t\tlockObject=%s%n\t\tlocation=%s)";
+				log(String.format(fmt, lockObject, location));
+			}
 			/*
 			 * Check that the parameters are valid, gather needed information,
 			 * and put an event in the raw queue.
 			 */
 			if (lockObject == null) {
-				logAProblem("intrinsic lock object cannot be null...bug");
+				final String fmt = "intrinsic lock object cannot be null...instrumentation bug detected by Store.afterIntrinsicLockAcquisition(lockObject=%s, location=%s)";
+				logAProblem(String.format(fmt, lockObject, location));
 				return;
 			}
 			final Event e = new AfterIntrinsicLockAcquisition(lockObject,
@@ -682,12 +738,17 @@ public final class Store {
 			return;
 		tl_withinStore.set(Boolean.TRUE);
 		try {
+			if (DEBUG) {
+				final String fmt = "Store.afterIntrinsicLockRelease(%n\t\tlockObject=%s%n\t\tlocation=%s)";
+				log(String.format(fmt, lockObject, location));
+			}
 			/*
 			 * Check that the parameters are valid, gather needed information,
 			 * and put an event in the raw queue.
 			 */
 			if (lockObject == null) {
-				logAProblem("intrinsic lock object cannot be null...bug");
+				final String fmt = "intrinsic lock object cannot be null...instrumentation bug detected by Store.afterIntrinsicLockRelease(lockObject=%s, location=%s)";
+				logAProblem(String.format(fmt, lockObject, location));
 				return;
 			}
 			final Event e = new AfterIntrinsicLockRelease(lockObject, location);

@@ -12,6 +12,7 @@ final class FinalEvent extends Event {
 	static final FinalEvent FINAL_EVENT = new FinalEvent();
 
 	private FinalEvent() {
+		// singleton
 	}
 
 	@Override

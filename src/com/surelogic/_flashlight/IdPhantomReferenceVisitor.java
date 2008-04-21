@@ -6,11 +6,14 @@ package com.surelogic._flashlight;
 abstract class IdPhantomReferenceVisitor {
 
 	void visit(final ClassPhantomReference r) {
+		// do nothing
 	}
 
 	void visit(final ObjectPhantomReference r) {
+		// do nothing
 	}
 
 	void visit(final ThreadPhantomReference r) {
+		// do nothing
 	}
 }

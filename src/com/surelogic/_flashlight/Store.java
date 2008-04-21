@@ -68,7 +68,7 @@ public final class Store {
 	 * This flag generates a lot of output and should only be set to
 	 * {@code true} for small test programs.
 	 */
-	public static final boolean DEBUG = false;
+	public static final boolean DEBUG = true;
 
 	/**
 	 * Logs a message if logging is enabled.
@@ -93,11 +93,7 @@ public final class Store {
 	 *            the message to log.
 	 */
 	static void logAProblem(final String msg) {
-		try {
-			throw new IllegalStateException();
-		} catch (IllegalStateException e) {
-			logAProblem(msg, e);
-		}
+		logAProblem(msg, new Exception());
 	}
 
 	/**

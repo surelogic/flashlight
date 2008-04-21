@@ -68,7 +68,7 @@ public final class Store {
 	 * This flag generates a lot of output and should only be set to
 	 * {@code true} for small test programs.
 	 */
-	public static final boolean DEBUG = true;
+	public static final boolean DEBUG = false;
 
 	/**
 	 * Logs a message if logging is enabled.
@@ -93,7 +93,11 @@ public final class Store {
 	 *            the message to log.
 	 */
 	static void logAProblem(final String msg) {
-		logAProblem(msg, new Exception());
+		try {
+			throw new IllegalStateException();
+		} catch (IllegalStateException e) {
+			logAProblem(msg, e);
+		}
 	}
 
 	/**
@@ -384,22 +388,18 @@ public final class Store {
 		tl_withinStore.set(Boolean.TRUE);
 		try {
 			if (DEBUG) {
-				final String msg = "Store.fieldAccess("
-						+ (read ? "read" : "write") + ", receiver=" + receiver
-						+ ", field=" + field + ", location=" + location + ")";
-				log(msg);
+				final String fmt = "Store.fieldAccess(%n\t\t%s%n\t\treceiver=%s%n\t\tfield=%s%n\t\tlocation=%s)";
+				log(String.format(fmt, read ? "read" : "write",
+						safeToString(receiver), field, location));
 			}
 			/*
 			 * Check that the parameters are valid, gather needed information,
 			 * and put an event in the raw queue.
 			 */
 			if (field == null) {
-				final String msg = "field cannot be null...instrumentation bug detected by Store.fieldAccess("
-						+ (read ? "read" : "write")
-						+ ", receiver="
-						+ receiver
-						+ ", field=" + field + ", location=" + location + ")";
-				logAProblem(msg);
+				final String fmt = "field cannot be null...instrumentation bug detected by Store.fieldAccess(%s, receiver=%s, field=%s, location=%s)";
+				logAProblem(String.format(fmt, read ? "read" : "write",
+						safeToString(receiver), field, location));
 				return;
 			}
 			final ObservedField oField = ObservedField.getInstance(field,
@@ -412,15 +412,9 @@ public final class Store {
 					e = new FieldWriteStatic(oField, location);
 			} else {
 				if (receiver == null) {
-					final String msg = "instance field %s access reported with a null receiver...instrumentation bug detected by Store.fieldAccess("
-							+ (read ? "read" : "write")
-							+ ", receiver="
-							+ receiver
-							+ ", field="
-							+ field
-							+ ", location="
-							+ location + ")";
-					logAProblem(msg);
+					final String fmt = "instance field %s access reported with a null receiver...instrumentation bug detected by Store.fieldAccess(%s, receiver=%s, field=%s, location=%s)";
+					logAProblem(String.format(fmt, oField, read ? "read"
+							: "write", safeToString(receiver), field, location));
 					return;
 				}
 				if (read)
@@ -465,13 +459,10 @@ public final class Store {
 		tl_withinStore.set(Boolean.TRUE);
 		try {
 			if (DEBUG) {
-				final String msg = "Store.constructorCall("
-						+ (before ? "before" : "after") + ", constructor="
-						+ constructor + ", enclosingDeclaringTypeName="
-						+ enclosingDeclaringTypeName
-						+ ", enclosingLocationName=" + enclosingLocationName
-						+ ", location=" + location + ")";
-				log(msg);
+				final String fmt = "Store.constructorCall(%n\t\t%s%n\t\tconstructor=%s%n\t\tenclosingDeclaringTypeName=%s%n\t\tenclosingLocationName=%s%n\t\tlocation=%s)";
+				log(String.format(fmt, before ? "before" : "after",
+						constructor, enclosingDeclaringTypeName,
+						enclosingLocationName, location));
 			}
 			/*
 			 * Check that the parameters are valid, gather needed information,
@@ -483,16 +474,10 @@ public final class Store {
 				 * problem if the instrumentation gave us a null reference to
 				 * the constructor object.
 				 */
-				final String msg = "constructor cannot be null...instrumentation bug detected by Store.constructorCall("
-						+ (before ? "before" : "after")
-						+ ", constructor="
-						+ constructor
-						+ ", enclosingDeclaringTypeName="
-						+ enclosingDeclaringTypeName
-						+ ", enclosingLocationName="
-						+ enclosingLocationName
-						+ ", location=" + location + ")";
-				logAProblem(msg);
+				final String fmt = "constructor cannot be null...instrumentation bug detected by Store.constructorCall(%s, constructor=%s, enclosingDeclaringTypeName=%s, enclosingLocationName=%s, location=%s)";
+				logAProblem(String.format(fmt, before ? "before" : "after",
+						constructor, enclosingDeclaringTypeName,
+						enclosingLocationName, location));
 			}
 			final Event e;
 			if (before)
@@ -539,21 +524,18 @@ public final class Store {
 		tl_withinStore.set(Boolean.TRUE);
 		try {
 			if (DEBUG) {
-				final String msg = "Store.constructorExecution("
-						+ (before ? "before" : "after") + ", receiver="
-						+ receiver + ", location=" + location + ")";
-				log(msg);
+				final String fmt = "Store.constructorExecution(%n\t\t%s%n\t\treceiver=%s%n\t\tlocation=%s)";
+				log(String.format(fmt, before ? "before" : "after",
+						safeToString(receiver), location));
 			}
 			/*
 			 * Check that the parameters are valid, gather needed information,
 			 * and put an event in the raw queue.
 			 */
 			if (receiver == null) {
-				final String msg = "constructor cannot be null...instrumentation bug detected by Store.constructorExecution("
-						+ (before ? "before" : "after")
-						+ ", receiver="
-						+ receiver + ", location=" + location + ")";
-				logAProblem(msg);
+				final String fmt = "constructor cannot be null...instrumentation bug detected by Store.constructorExecution(%s, receiver=%s, location=%s)";
+				logAProblem(String.format(fmt, before ? "before" : "after",
+						safeToString(receiver), location));
 			} else {
 				IdPhantomReference p = Phantom.ofObject(receiver);
 				if (before)
@@ -607,32 +589,21 @@ public final class Store {
 		tl_withinStore.set(Boolean.TRUE);
 		try {
 			if (DEBUG) {
-				final String msg = "Store.methodCall("
-						+ (before ? "before" : "after") + ", method=" + method
-						+ ", receiver=" + receiver
-						+ ", enclosingDeclaringTypeName="
-						+ enclosingDeclaringTypeName
-						+ ", enclosingLocationName=" + enclosingLocationName
-						+ ", location=" + location + ")";
-				log(msg);
+				final String fmt = "Store.methodCall(%n\t\t%s%n\t\tmethod=%s%n\t\treceiver=%s%n\t\tenclosingDeclaringTypeName=%s%n\t\tenclosingLocationName=%s%n\t\tlocation=%s)";
+				log(String.format(fmt, before ? "before" : "after", method,
+						safeToString(receiver), enclosingDeclaringTypeName,
+						enclosingLocationName, location));
 			}
 			/*
 			 * Check that the parameters are valid, gather needed information,
 			 * and put an event in the raw queue.
 			 */
 			if (method == null) {
-				final String msg = "method cannot be null...instrumentation bug detected by Store.methodCall("
-						+ (before ? "before" : "after")
-						+ ", method="
-						+ method
-						+ ", receiver="
-						+ receiver
-						+ ", enclosingDeclaringTypeName="
-						+ enclosingDeclaringTypeName
-						+ ", enclosingLocationName="
-						+ enclosingLocationName
-						+ ", location=" + location + ")";
-				logAProblem(msg);
+				final String fmt = "method cannot be null...instrumentation bug detected by Store.methodCall(%s, method=%s, receiver=%s, enclosingDeclaringTypeName=%s, enclosingLocationName=%s, location=%s)";
+				logAProblem(String.format(fmt, before ? "before" : "after",
+						method, safeToString(receiver),
+						enclosingDeclaringTypeName, enclosingLocationName,
+						location));
 			} else {
 				final Class<?> declaringClass = method.getDeclaringClass();
 				if (declaringClass.equals(Object.class)) {
@@ -685,30 +656,18 @@ public final class Store {
 		tl_withinStore.set(Boolean.TRUE);
 		try {
 			if (DEBUG) {
-				final String msg = "Store.beforeIntrinsicLockAcquisition(lockObject="
-						+ lockObject
-						+ ", lockIsThis="
-						+ lockIsThis
-						+ ", lockIsClass="
-						+ lockIsClass
-						+ ", location="
-						+ location + ")";
-				log(msg);
+				final String fmt = "Store.beforeIntrinsicLockAcquisition(%n\t\tlockObject=%s%n\t\tlockIsThis=%b%n\t\tlockIsClass=%b%n\t\tlocation=%s)";
+				log(String.format(fmt, safeToString(lockObject), lockIsThis,
+						lockIsClass, location));
 			}
 			/*
 			 * Check that the parameters are valid, gather needed information,
 			 * and put an event in the raw queue.
 			 */
 			if (lockObject == null) {
-				final String msg = "intrinsic lock object cannot be null...instrumentation bug detected by Store.beforeIntrinsicLockAcquisition(lockObject="
-						+ lockObject
-						+ ", lockIsThis="
-						+ lockIsThis
-						+ ", lockIsClass="
-						+ lockIsClass
-						+ ", location="
-						+ location + ")";
-				logAProblem(msg);
+				final String fmt = "intrinsic lock object cannot be null...instrumentation bug detected by Store.beforeIntrinsicLockAcquisition(lockObject=%s, lockIsThis=%b, lockIsClass=%b, location=%s)";
+				logAProblem(String.format(fmt, safeToString(lockObject),
+						lockIsThis, lockIsClass, location));
 				return;
 			}
 			final Event e = new BeforeIntrinsicLockAcquisition(lockObject,
@@ -740,18 +699,17 @@ public final class Store {
 		tl_withinStore.set(Boolean.TRUE);
 		try {
 			if (DEBUG) {
-				final String msg = "Store.afterIntrinsicLockAcquisition(lockObject="
-						+ lockObject + ", location=" + location + ")";
-				log(msg);
+				final String fmt = "Store.afterIntrinsicLockAcquisition(%n\t\tlockObject=%s%n\t\tlocation=%s)";
+				log(String.format(fmt, safeToString(lockObject), location));
 			}
 			/*
 			 * Check that the parameters are valid, gather needed information,
 			 * and put an event in the raw queue.
 			 */
 			if (lockObject == null) {
-				final String msg = "intrinsic lock object cannot be null...instrumentation bug detected by Store.afterIntrinsicLockAcquisition(lockObject="
-						+ lockObject + ", location=" + location + ")";
-				logAProblem(msg);
+				final String fmt = "intrinsic lock object cannot be null...instrumentation bug detected by Store.afterIntrinsicLockAcquisition(lockObject=%s, location=%s)";
+				logAProblem(String.format(fmt, safeToString(lockObject),
+						location));
 				return;
 			}
 			final Event e = new AfterIntrinsicLockAcquisition(lockObject,
@@ -784,18 +742,16 @@ public final class Store {
 	private static void beforeIntrinsicLockWait(final Object lockObject,
 			final SrcLoc location) {
 		if (DEBUG) {
-			final String msg = "Store.beforeIntrinsicLockWait(lockObject="
-					+ lockObject + ", location=" + location + ")";
-			log(msg);
+			final String fmt = "Store.beforeIntrinsicLockWait(%n\t\tlockObject=%s%n\t\tlocation=%s)";
+			log(String.format(fmt, safeToString(lockObject), location));
 		}
 		/*
 		 * Check that the parameters are valid, gather needed information, and
 		 * put an event in the raw queue.
 		 */
 		if (lockObject == null) {
-			final String msg = "intrinsic lock object cannot be null...instrumentation bug detected by Store.beforeIntrinsicLockWait(lockObject="
-					+ lockObject + ", location=" + location + ")";
-			logAProblem(msg);
+			final String fmt = "intrinsic lock object cannot be null...instrumentation bug detected by Store.beforeIntrinsicLockWait(lockObject=%s, location=%s)";
+			logAProblem(String.format(fmt, safeToString(lockObject), location));
 			return;
 		}
 		final Event e = new BeforeIntrinsicLockWait(lockObject, location);
@@ -824,18 +780,16 @@ public final class Store {
 	private static void afterIntrinsicLockWait(final Object lockObject,
 			final SrcLoc location) {
 		if (DEBUG) {
-			final String msg = "Store.afterIntrinsicLockWait(lockObject="
-					+ lockObject + ", location=" + location + ")";
-			log(msg);
+			final String fmt = "Store.afterIntrinsicLockWait(%n\t\tlockObject=%s%n\t\tlocation=%s)";
+			log(String.format(fmt, safeToString(lockObject), location));
 		}
 		/*
 		 * Check that the parameters are valid, gather needed information, and
 		 * put an event in the raw queue.
 		 */
 		if (lockObject == null) {
-			final String msg = "intrinsic lock object cannot be null...instrumentation bug detected by Store.afterIntrinsicLockWait(lockObject="
-					+ lockObject + ", location=" + location + ")";
-			logAProblem(msg);
+			final String fmt = "intrinsic lock object cannot be null...instrumentation bug detected by Store.afterIntrinsicLockWait(lockObject=%s, location=%s)";
+			logAProblem(String.format(fmt, safeToString(lockObject), location));
 			return;
 		}
 		final Event e = new AfterIntrinsicLockWait(lockObject, location);
@@ -864,18 +818,17 @@ public final class Store {
 		tl_withinStore.set(Boolean.TRUE);
 		try {
 			if (DEBUG) {
-				final String msg = "Store.afterIntrinsicLockRelease(lockObject="
-						+ lockObject + ", location=" + location + ")";
-				log(msg);
+				final String fmt = "Store.afterIntrinsicLockRelease(%n\t\tlockObject=%s%n\t\tlocation=%s)";
+				log(String.format(fmt, safeToString(lockObject), location));
 			}
 			/*
 			 * Check that the parameters are valid, gather needed information,
 			 * and put an event in the raw queue.
 			 */
 			if (lockObject == null) {
-				final String msg = "intrinsic lock object cannot be null...instrumentation bug detected by Store.afterIntrinsicLockRelease(lockObject="
-						+ lockObject + ", location=" + location + ")";
-				logAProblem(msg);
+				final String fmt = "intrinsic lock object cannot be null...instrumentation bug detected by Store.afterIntrinsicLockRelease(lockObject=%s, location=%s)";
+				logAProblem(String.format(fmt, safeToString(lockObject),
+						location));
 				return;
 			}
 			final Event e = new AfterIntrinsicLockRelease(lockObject, location);
@@ -999,6 +952,27 @@ public final class Store {
 				// ignore, we expect to be interrupted
 			}
 		}
+	}
+
+	/**
+	 * Produces a safe string representation of any object. Some overrides of
+	 * {@link Object#toString()} throw exceptions and behave badly. This method
+	 * avoids those problems by building the same string that would be built for
+	 * the object if {@link Object#toString()} was not overridden.
+	 * <p>
+	 * In a dynamic analysis, like Flashlight, it is not safe to be calling the
+	 * {@link Object#toString()} methods of objects where the class is unknown.
+	 * 
+	 * @param o
+	 *            the object to return a string representation of.
+	 * @return a string representing the passed object.
+	 */
+	private static String safeToString(final Object o) {
+		if (o == null)
+			return "null";
+		else
+			return o.getClass().getName() + "@"
+					+ Integer.toHexString(o.hashCode());
 	}
 
 	private Store() {

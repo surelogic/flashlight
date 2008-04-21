@@ -428,8 +428,26 @@ public final class Store {
 		}
 	}
 
+	/**
+	 * Records that a constructor call occurred within the instrumented program.
+	 * 
+	 * @param before
+	 *            {@code true} indicates <i>before</i> the constructor call,
+	 *            {@code false} indicates <i>after</i> the constructor call.
+	 * @param constructor
+	 *            the constructor being called.
+	 * @param enclosingDeclaringTypeName
+	 *            the fully qualified name of the type where the constructor
+	 *            call occurred.
+	 * @param enclosingLocationName
+	 *            the name of the method, constructor, or initializer where the
+	 *            constructor call occurred.
+	 * @param location
+	 *            the source location of where the constructor call occurred,
+	 *            may be {@code null}.
+	 */
 	public static void constructorCall(final boolean before,
-			final Constructor constructor, final Object receiver,
+			final Constructor constructor,
 			final String enclosingDeclaringTypeName,
 			final String enclosingLocationName, final SrcLoc location) {
 		if (f_flashlightIsNotInitialized)
@@ -441,9 +459,9 @@ public final class Store {
 		tl_withinStore.set(Boolean.TRUE);
 		try {
 			if (DEBUG) {
-				final String fmt = "Store.constructorCall(%n\t\t%s%n\t\tconstructor=%s%n\t\treceiver=%s%n\t\tenclosingDeclaringTypeName=%s%n\t\tenclosingLocationName=%s%n\t\tlocation=%s)";
+				final String fmt = "Store.constructorCall(%n\t\t%s%n\t\tconstructor=%s%n\t\tenclosingDeclaringTypeName=%s%n\t\tenclosingLocationName=%s%n\t\tlocation=%s)";
 				log(String.format(fmt, before ? "before" : "after",
-						constructor, receiver, enclosingDeclaringTypeName,
+						constructor, enclosingDeclaringTypeName,
 						enclosingLocationName, location));
 			}
 			/*
@@ -451,13 +469,15 @@ public final class Store {
 			 * and put an event in the raw queue.
 			 */
 			if (constructor == null) {
-				final String fmt = "constructor cannot be null...instrumentation bug detected by Store.constructorCall(%s, constructor=%s, receiver=%s, enclosingDeclaringTypeName=%s, enclosingLocationName=%s, location=%s)";
+				/*
+				 * We really only trace the call, however, let's report a
+				 * problem if the instrumentation gave us a null reference to
+				 * the constructor object.
+				 */
+				final String fmt = "constructor cannot be null...instrumentation bug detected by Store.constructorCall(%s, constructor=%s, enclosingDeclaringTypeName=%s, enclosingLocationName=%s, location=%s)";
 				logAProblem(String.format(fmt, before ? "before" : "after",
-						constructor, receiver, enclosingDeclaringTypeName,
+						constructor, enclosingDeclaringTypeName,
 						enclosingLocationName, location));
-			} else {
-				final Class<?> declaringClass = constructor.getDeclaringClass();
-				// TODO do something here
 			}
 			final Event e;
 			if (before)
@@ -466,6 +486,59 @@ public final class Store {
 			else
 				e = new AfterTrace(location);
 			putInQueue(f_rawQueue, e);
+		} finally {
+			tl_withinStore.set(Boolean.FALSE);
+		}
+	}
+
+	/**
+	 * Records that a constructor is executing within the instrumented program.
+	 * Constructor executions are used to track objects that are under
+	 * construction. Unlike constructor call records, many pairs of constructor
+	 * executions may be reported during the construction of an object. This is
+	 * because a pair of constructor executions is reported for each block of
+	 * constructor code that is executed. Therefore, explicit or implicit calls
+	 * to {@code super(..)} or {@code this(..)} can cause multiple blocks of
+	 * code to execute during object construction. The receiver object reported
+	 * will, of course, be the same for all pairs of constructor executions
+	 * reported for the construction of an object.
+	 * 
+	 * @param before
+	 *            {@code true} indicates <i>before</i> the constructor
+	 *            execution, {@code false} indicates <i>after</i> the
+	 *            constructor execution.
+	 * @param receiver
+	 *            the object under construction.
+	 * @param location
+	 *            the source location of where the constructor execution
+	 *            occurred, may be {@code null}.
+	 */
+	public static void constructorExecution(final boolean before,
+			final Object receiver, final SrcLoc location) {
+		if (f_flashlightIsNotInitialized)
+			return;
+		if (FL_OFF.get())
+			return;
+		if (tl_withinStore.get().booleanValue())
+			return;
+		tl_withinStore.set(Boolean.TRUE);
+		try {
+			if (DEBUG) {
+				final String fmt = "Store.constructorExecution(%n\t\t%s%n\t\treceiver=%s%n\t\tlocation=%s)";
+				log(String.format(fmt, before ? "before" : "after", receiver,
+						location));
+			}
+			/*
+			 * Check that the parameters are valid, gather needed information,
+			 * and put an event in the raw queue.
+			 */
+			if (receiver == null) {
+				final String fmt = "constructor cannot be null...instrumentation bug detected by Store.constructorExecution(%s, receiver=%s, location=%s)";
+				logAProblem(String.format(fmt, before ? "before" : "after",
+						receiver, location));
+			} else {
+				// TODO do something here
+			}
 		} finally {
 			tl_withinStore.set(Boolean.FALSE);
 		}

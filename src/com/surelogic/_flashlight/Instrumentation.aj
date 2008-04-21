@@ -36,6 +36,9 @@ public aspect Instrumentation {
 	pointcut constructor() : 
 		 call( *.new(..)) && nofl();
 
+	pointcut constructorExecution() :
+		execution( *.new(..)) && nofl();
+
 	/**
 	 * Instrument intrinsic lock acquisition. This is done in two steps: before
 	 * the lock is acquired and after the lock is acquired. Instrumenting these
@@ -59,8 +62,12 @@ public aspect Instrumentation {
 	 */
 
 	before() : constructor() {
-		constructorCallHelper(true, thisJoinPoint, thisJoinPointStaticPart,
+		constructorCallHelper(true, thisJoinPointStaticPart,
 				thisEnclosingJoinPointStaticPart);
+	}
+
+	before() : constructorExecution() {
+		constructorExecutionHelper(true, thisJoinPoint, thisJoinPointStaticPart);
 	}
 
 	before() : method() {
@@ -81,8 +88,13 @@ public aspect Instrumentation {
 	}
 
 	after() : constructor() {
-		constructorCallHelper(false, thisJoinPoint, thisJoinPointStaticPart,
+		constructorCallHelper(false, thisJoinPointStaticPart,
 				thisEnclosingJoinPointStaticPart);
+	}
+
+	after() : constructorExecution() {
+		constructorExecutionHelper(false, thisJoinPoint,
+				thisJoinPointStaticPart);
 	}
 
 	after() : method() {
@@ -112,21 +124,28 @@ public aspect Instrumentation {
 		Store.fieldAccess(read, receiver, field, location);
 	}
 
-	void constructorCallHelper(final boolean before, final JoinPoint jp,
+	void constructorCallHelper(final boolean before,
 			final JoinPoint.StaticPart jpsp,
 			final JoinPoint.StaticPart enclosing) {
 		final Signature enclosingSignature = enclosing.getSignature();
 		final ConstructorSignature constructorSignature = (ConstructorSignature) jpsp
 				.getSignature();
 		final Constructor constructor = constructorSignature.getConstructor();
-		final Object receiver = jp.getTarget();
 		final SourceLocation sl = jpsp.getSourceLocation();
 		final String enclosingLocationName = enclosingSignature.getName();
 		final String enclosingDeclaringTypeName = enclosingSignature
 				.getDeclaringTypeName();
 		final SrcLoc location = new SrcLoc(sl.getFileName(), sl.getLine());
-		Store.constructorCall(before, constructor, receiver,
-				enclosingDeclaringTypeName, enclosingLocationName, location);
+		Store.constructorCall(before, constructor, enclosingDeclaringTypeName,
+				enclosingLocationName, location);
+	}
+
+	void constructorExecutionHelper(final boolean before, final JoinPoint jp,
+			final JoinPoint.StaticPart jpsp) {
+		final Object receiver = jp.getTarget();
+		final SourceLocation sl = jpsp.getSourceLocation();
+		final SrcLoc location = new SrcLoc(sl.getFileName(), sl.getLine());
+		Store.constructorExecution(before, receiver, location);
 	}
 
 	void methodCallHelper(final boolean before, final JoinPoint jp,

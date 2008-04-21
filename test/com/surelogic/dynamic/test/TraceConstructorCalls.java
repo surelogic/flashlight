@@ -56,9 +56,18 @@ public final class TraceConstructorCalls {
 	}
 
 	public static void main(String[] args) {
-		B tmc = new B(5, 2);
+		final B tmc = new B(5, 2);
 		m1();
 		tmc.m2();
+
+		Runnable r = new Runnable() {
+			public void run() {
+				tmc.getI();
+				tmc.getJ();
+				tmc.getK();
+			}
+		};
+		(new Thread(r)).start();
 	}
 
 }

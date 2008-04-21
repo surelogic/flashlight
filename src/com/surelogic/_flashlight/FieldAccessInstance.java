@@ -10,10 +10,17 @@ abstract class FieldAccessInstance extends FieldAccess {
 		return f_receiver;
 	}
 
+	private final boolean f_receiverUnderConstruction;
+
+	boolean receiverUnderConstruction() {
+		return f_receiverUnderConstruction;
+	}
+
 	FieldAccessInstance(final Object receiver, final ObservedField field,
 			final SrcLoc location) {
 		super(field, location);
 		f_receiver = Phantom.ofObject(receiver);
+		f_receiverUnderConstruction = UnderConstruction.contains(f_receiver);
 	}
 
 	@Override
@@ -23,5 +30,8 @@ abstract class FieldAccessInstance extends FieldAccess {
 
 	protected final void addReceiver(final StringBuilder b) {
 		Entities.addAttribute("receiver", f_receiver.getId(), b);
+		if (f_receiverUnderConstruction) {
+			Entities.addAttribute("under-construction", "yes", b);
+		}
 	}
 }

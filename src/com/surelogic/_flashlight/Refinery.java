@@ -159,9 +159,10 @@ final class Refinery extends Thread {
 		f_deadList.clear();
 		if (Phantom.drainTo(f_deadList) > 0) {
 			f_garbageCollectedObjectCount.addAndGet(f_deadList.size());
-			for (PhantomReference pr : f_deadList) {
+			for (IdPhantomReference pr : f_deadList) {
 				removeSharedFieldsWithin(pr);
 				removeThreadLocalFieldsWithin(pr);
+				UnderConstruction.remove(pr);
 			}
 		}
 	}

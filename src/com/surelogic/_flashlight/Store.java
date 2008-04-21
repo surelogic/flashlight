@@ -537,7 +537,11 @@ public final class Store {
 				logAProblem(String.format(fmt, before ? "before" : "after",
 						receiver, location));
 			} else {
-				// TODO do something here
+				IdPhantomReference p = Phantom.ofObject(receiver);
+				if (before)
+					UnderConstruction.add(p);
+				else
+					UnderConstruction.remove(p);
 			}
 		} finally {
 			tl_withinStore.set(Boolean.FALSE);

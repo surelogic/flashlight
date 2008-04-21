@@ -14,7 +14,7 @@ import com.surelogic.common.logging.SLLogger;
 
 public abstract class FieldAccess extends Event {
 
-	private static final String f_psQ = "INSERT INTO ACCESS VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+	private static final String f_psQ = "INSERT INTO ACCESS VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 	private static PreparedStatement f_ps;
 
@@ -29,6 +29,7 @@ public abstract class FieldAccess extends Event {
 		int lineNumber = -1;
 		long field = -1;
 		long receiver = -1;
+		boolean underConstruction = false;
 		if (attributes != null) {
 			for (int i = 0; i < attributes.getLength(); i++) {
 				final String aName = attributes.getQName(i);
@@ -45,6 +46,8 @@ public abstract class FieldAccess extends Event {
 					field = Long.parseLong(aValue);
 				} else if ("receiver".equals(aName)) {
 					receiver = Long.parseLong(aValue);
+				} else if ("under-construction".equals(aName)) {
+					underConstruction = "yes".equals(aValue);
 				}
 			}
 		}
@@ -68,14 +71,14 @@ public abstract class FieldAccess extends Event {
 				return;
 			}
 		}
-		insert(runId, nanoTime, inThread, file, lineNumber, field, receiver);
+		insert(runId, nanoTime, inThread, file, lineNumber, field, receiver, underConstruction);
 		useObject(inThread);
 		useField(field);
 		inserted++;
 	}
 
 	private void insert(int runId, long nanoTime, long inThread, String file,
-			int lineNumber, long field, long receiver) {
+			int lineNumber, long field, long receiver, boolean underConstruction) {
 		try {
 			f_ps.setInt(1, runId);
 			f_ps.setTimestamp(2, getTimestamp(nanoTime));
@@ -89,6 +92,7 @@ public abstract class FieldAccess extends Event {
 			} else {
 				f_ps.setLong(8, receiver);
 			}
+			f_ps.setString(9, underConstruction ? "Y" : "N");
 			f_ps.executeUpdate();
 		} catch (SQLException e) {
 			SLLogger.getLogger().log(Level.SEVERE, "Insert failed: ACCESS", e);

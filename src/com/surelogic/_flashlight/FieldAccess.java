@@ -1,6 +1,6 @@
 package com.surelogic._flashlight;
 
-abstract class FieldAccess extends ProgramEvent {
+abstract class FieldAccess extends WithinThreadEvent {
 
 	private final ObservedField f_field;
 

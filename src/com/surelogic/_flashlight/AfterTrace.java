@@ -1,6 +1,6 @@
 package com.surelogic._flashlight;
 
-public final class AfterTrace extends Trace {
+final class AfterTrace extends Trace {
 
 	AfterTrace(SrcLoc location) {
 		super(location);

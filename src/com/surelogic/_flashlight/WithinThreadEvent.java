@@ -3,12 +3,13 @@ package com.surelogic._flashlight;
 import java.lang.ref.PhantomReference;
 
 /**
- * Holds data about an event which occurred in the instrumented program. This
- * class assumes that it is being called from the same thread that the program
- * event occurred within. Intended to be subclassed for each specific type of
- * event that can occur.
+ * Holds data about an event which occurred within a thread within the
+ * instrumented program. This class assumes that it is being constructed within
+ * the same thread that the event occurred within.
+ * <p>
+ * Intended to be subclassed for each specific type of event that can occur.
  */
-abstract class ProgramEvent extends Event {
+abstract class WithinThreadEvent extends Event {
 
 	/**
 	 * An identity for the thread this event occurred within.
@@ -26,7 +27,7 @@ abstract class ProgramEvent extends Event {
 		return f_location;
 	}
 
-	ProgramEvent(final SrcLoc location) {
+	WithinThreadEvent(final SrcLoc location) {
 		if (location == null)
 			f_location = SrcLoc.UNKNOWN;
 		else

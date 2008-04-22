@@ -1,6 +1,6 @@
 package com.surelogic._flashlight;
 
-public final class BeforeIntrinsicLockAcquisition extends IntrinsicLock {
+final class BeforeIntrinsicLockAcquisition extends IntrinsicLock {
 
 	/**
 	 * <code>true</code> if the lock object is dynamically the same as the

@@ -1,6 +1,6 @@
 package com.surelogic._flashlight;
 
-public final class BeforeTrace extends Trace {
+final class BeforeTrace extends Trace {
 
 	private final String f_declaringTypeName;
 

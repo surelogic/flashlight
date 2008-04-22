@@ -1,6 +1,6 @@
 package com.surelogic._flashlight;
 
-public abstract class Trace extends ProgramEvent {
+abstract class Trace extends WithinThreadEvent {
 
 	Trace(SrcLoc location) {
 		super(location);

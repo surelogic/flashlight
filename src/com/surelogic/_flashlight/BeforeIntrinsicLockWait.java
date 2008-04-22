@@ -1,6 +1,6 @@
 package com.surelogic._flashlight;
 
-public final class BeforeIntrinsicLockWait extends IntrinsicLock {
+final class BeforeIntrinsicLockWait extends IntrinsicLock {
 
 	BeforeIntrinsicLockWait(final Object lockObject, final SrcLoc location) {
 		super(lockObject, location);

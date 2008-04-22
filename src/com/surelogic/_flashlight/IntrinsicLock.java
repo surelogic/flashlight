@@ -2,7 +2,7 @@ package com.surelogic._flashlight;
 
 import java.lang.ref.PhantomReference;
 
-abstract class IntrinsicLock extends ProgramEvent {
+abstract class IntrinsicLock extends WithinThreadEvent {
 
 	/**
 	 * The object being synchronized on.

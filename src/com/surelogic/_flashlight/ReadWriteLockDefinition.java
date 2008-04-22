@@ -1,6 +1,6 @@
 package com.surelogic._flashlight;
 
-public final class ReadWriteLockDefinition extends Event {
+final class ReadWriteLockDefinition extends DefinitionEvent {
 
 	private final long f_readWriteLockId;
 

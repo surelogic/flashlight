@@ -19,8 +19,14 @@ public abstract class FieldAccess extends Event {
 	private static PreparedStatement f_ps;
 
 	private static DataPreScan f_scanResults;
-	
+
 	private long skipped, inserted;
+
+	private final BeforeTrace before;
+
+	public FieldAccess(BeforeTrace before) {
+		this.before = before;
+	}
 
 	public void parse(int runId, Attributes attributes) {
 		long nanoTime = -1;
@@ -60,7 +66,7 @@ public abstract class FieldAccess extends Event {
 			return;
 		}
 		if (receiver == -1) {
-			if (f_scanResults.isSingleThreadedStaticField(field)) {							
+			if (f_scanResults.isSingleThreadedStaticField(field)) {
 				skipped++;
 				return;
 			}
@@ -71,7 +77,9 @@ public abstract class FieldAccess extends Event {
 				return;
 			}
 		}
-		insert(runId, nanoTime, inThread, file, lineNumber, field, receiver, underConstruction);
+		before.threadEvent(inThread);
+		insert(runId, nanoTime, inThread, file, lineNumber, field, receiver,
+				underConstruction);
 		useObject(inThread);
 		useField(field);
 		inserted++;
@@ -94,7 +102,7 @@ public abstract class FieldAccess extends Event {
 			}
 			f_ps.setString(9, underConstruction ? "Y" : "N");
 			f_ps.executeUpdate();
-		} catch (SQLException e) {
+		} catch (final SQLException e) {
 			SLLogger.getLogger().log(Level.SEVERE, "Insert failed: ACCESS", e);
 		}
 
@@ -115,11 +123,12 @@ public abstract class FieldAccess extends Event {
 
 	@Override
 	public void printStats() {
-		System.out.println(getClass().getName()+" Skipped   = "+skipped);
-		System.out.println(getClass().getName()+" Inserted  = "+inserted);
-		System.out.println(getClass().getName()+" %Inserted = "+(inserted * 100.0 / (skipped + inserted)));
+		System.out.println(getClass().getName() + " Skipped   = " + skipped);
+		System.out.println(getClass().getName() + " Inserted  = " + inserted);
+		System.out.println(getClass().getName() + " %Inserted = "
+				+ (inserted * 100.0 / (skipped + inserted)));
 	}
-	
+
 	public final void close() throws SQLException {
 		if (f_ps != null) {
 			f_ps.close();

@@ -28,24 +28,26 @@ import com.surelogic.flashlight.common.entities.RunDAO;
 import com.surelogic.flashlight.common.files.Raw;
 
 public final class PrepRunnable implements Runnable {
-    Object status = null;
-	
-    private static final BeforeTrace beforeTrace = new BeforeTrace();    
+	Object status = null;
+
+	private static final BeforeTrace beforeTrace = new BeforeTrace();
 	/**
 	 * New elements need to be added into this array.
 	 */
-	private static final IPrep[] f_elements = {
-		    beforeTrace, new AfterTrace(beforeTrace),
-			new AfterIntrinisicLockAcquisition(), new AfterIntrinsicLockWait(),
-			new AfterIntrinsisLockRelease(),
-			new BeforeIntrinsicLockAcquisition(),
-			new BeforeIntrinsicLockWait(), new ClassDefinition(),
-			new FieldDefinition(), new FieldRead(), new FieldWrite(),
-			new ObjectDefinition(), new ThreadDefinition() };
+	private static final IPrep[] f_elements = { beforeTrace,
+			new AfterTrace(beforeTrace),
+			new AfterIntrinisicLockAcquisition(beforeTrace),
+			new AfterIntrinsicLockWait(beforeTrace),
+			new AfterIntrinsisLockRelease(beforeTrace),
+			new BeforeIntrinsicLockAcquisition(beforeTrace),
+			new BeforeIntrinsicLockWait(beforeTrace), new ClassDefinition(),
+			new FieldDefinition(), new FieldRead(beforeTrace),
+			new FieldWrite(beforeTrace), new ObjectDefinition(),
+			new ThreadDefinition() };
 
 	final Raw f_raw;
-    final SLProgressMonitor monitor;
-	
+	final SLProgressMonitor monitor;
+
 	public PrepRunnable(final Raw raw, SLProgressMonitor mon) {
 		assert raw != null;
 		f_raw = raw;
@@ -55,11 +57,11 @@ public final class PrepRunnable implements Runnable {
 	public Object getStatus() {
 		return status;
 	}
-	
+
 	private InputStream getDataFileStream(final Raw raw) throws IOException {
 		InputStream stream = new FileInputStream(raw.getDataFile());
 		if (raw.isDataFileGzip()) {
-			stream = new GZIPInputStream(stream, 32*1024);
+			stream = new GZIPInputStream(stream, 32 * 1024);
 		}
 		return stream;
 	}
@@ -70,11 +72,12 @@ public final class PrepRunnable implements Runnable {
 		 * Estimate the work based upon the size of the raw file. This is only a
 		 * guess and we will probably be a bit high.
 		 */
-		long sizeInBytes = f_raw.getDataFile().length();
+		final long sizeInBytes = f_raw.getDataFile().length();
 		long estimatedEvents = (sizeInBytes / (f_raw.isDataFileGzip() ? 7L
 				: 130L));
-		if (estimatedEvents <= 0)
+		if (estimatedEvents <= 0) {
 			estimatedEvents = 10L;
+		}
 		monitor.beginTask("Creating run information " + dataFileName, 4);
 		try {
 			InputStream stream = getDataFileStream(f_raw);
@@ -85,17 +88,18 @@ public final class PrepRunnable implements Runnable {
 				 * to be single-threaded. This information allows us to avoid
 				 * inserting unnecessary data into the database.
 				 */
-				SAXParserFactory factory = SAXParserFactory.newInstance();
-				final DataPreScan scanResults = 
-					new DataPreScan(monitor,
+				final SAXParserFactory factory = SAXParserFactory.newInstance();
+				final DataPreScan scanResults = new DataPreScan(monitor,
 						estimatedEvents, dataFileName);
 				SAXParser saxParser = factory.newSAXParser();
 				final long startPreScan = System.currentTimeMillis();
 				saxParser.parse(stream, scanResults);
-				System.out.println("Prescan = "+(System.currentTimeMillis() - startPreScan)+" ms");
+				System.out.println("Prescan = "
+						+ (System.currentTimeMillis() - startPreScan) + " ms");
 				stream.close();
-				if (monitor.isCanceled())
-					return; //Status.CANCEL_STATUS;
+				if (monitor.isCanceled()) {
+					return; // Status.CANCEL_STATUS;
+				}
 				/*
 				 * Read the data file (our second pass) and insert all data into
 				 * the database.
@@ -125,31 +129,34 @@ public final class PrepRunnable implements Runnable {
 					/*
 					 * Do the second pass through the file.
 					 */
-					Set<Long> unreferencedObjects = new HashSet<Long>();
-					Set<Long> unreferencedFields = new HashSet<Long>();
+					final Set<Long> unreferencedObjects = new HashSet<Long>();
+					final Set<Long> unreferencedFields = new HashSet<Long>();
 					try {
-						for (IPrep element : f_elements) {
+						for (final IPrep element : f_elements) {
 							element.setup(c, start, startNS, scanResults,
 									unreferencedObjects, unreferencedFields);
 						}
-						RawFileReader handler = new RawFileReader(runId, c,
-								monitor, scanResults.getElementCount(),
+						final RawFileReader handler = new RawFileReader(runId,
+								c, monitor, scanResults.getElementCount(),
 								dataFileName);
 						saxParser = factory.newSAXParser();
 						final long startScan = System.currentTimeMillis();
 						saxParser.parse(stream, handler);
 						c.commit();
-						System.out.println("Scan = "+(System.currentTimeMillis() - startScan)+" ms");
+						System.out.println("Scan = "
+								+ (System.currentTimeMillis() - startScan)
+								+ " ms");
 
-						for (IPrep element : f_elements) {
+						for (final IPrep element : f_elements) {
 							element.flush(runId);
 						}
-						for (IPrep element : f_elements) {
+						for (final IPrep element : f_elements) {
 							element.printStats();
 						}
-						
-						if (monitor.isCanceled())
+
+						if (monitor.isCanceled()) {
 							return; // Status.CANCEL_STATUS;
+						}
 						/*
 						 * Remove all unreferenced objects and fields.
 						 */
@@ -160,19 +167,20 @@ public final class PrepRunnable implements Runnable {
 						monitor.subTask("Deleting thread-local fields");
 						PreparedStatement s = c
 								.prepareStatement("delete from FIELD where Run=? and Id=?");
-						for (Long l : unreferencedFields) {
+						for (final Long l : unreferencedFields) {
 							s.setInt(1, runId);
 							s.setLong(2, l);
 							s.executeUpdate();
 							monitor.worked(1);
 						}
 						s.close();
-						if (monitor.isCanceled())
+						if (monitor.isCanceled()) {
 							return; // Status.CANCEL_STATUS;
+						}
 						monitor.subTask("Deleting thread-local objects");
 						s = c
 								.prepareStatement("delete from OBJECT where Run=? and Id=?");
-						for (Long l : unreferencedObjects) {
+						for (final Long l : unreferencedObjects) {
 							s.setInt(1, runId);
 							s.setLong(2, l);
 							s.executeUpdate();
@@ -181,12 +189,12 @@ public final class PrepRunnable implements Runnable {
 						s.close();
 					} finally {
 						c.commit();
-						for (IPrep element : f_elements) {
+						for (final IPrep element : f_elements) {
 							element.close();
 						}
 						c.close();
 					}
-				} catch (SQLException e) {					
+				} catch (final SQLException e) {
 					e.printStackTrace(System.err);
 					status = LogStatus.createErrorStatus(0,
 							"Could not work with the embedded database", e);
@@ -195,17 +203,18 @@ public final class PrepRunnable implements Runnable {
 			} finally {
 				stream.close();
 			}
-		} catch (Exception e) {
-			if (monitor.isCanceled())
+		} catch (final Exception e) {
+			if (monitor.isCanceled()) {
 				return; // Status.CANCEL_STATUS;
-			
-			status = LogStatus.createErrorStatus(0,"Unable to prepare "
+			}
+
+			status = LogStatus.createErrorStatus(0, "Unable to prepare "
 					+ dataFileName, e);
-		    return;
+			return;
 		}
-		//RunView.refreshViewContents();
-		//monitor.done();
-		//return Status.OK_STATUS;
+		// RunView.refreshViewContents();
+		// monitor.done();
+		// return Status.OK_STATUS;
 	}
 
 	public static class RawFileReader extends DefaultHandler {
@@ -242,21 +251,23 @@ public final class PrepRunnable implements Runnable {
 				/*
 				 * Check for cancel.
 				 */
-				if (f_monitor.isCanceled())
+				if (f_monitor.isCanceled()) {
 					throw new IllegalStateException("cancelled");
-				
+				}
+
 				f_monitor.worked(1);
 				f_work = 0;
 				try {
 					f_c.commit();
-				} catch (SQLException e) {
+				} catch (final SQLException e) {
 					SLLogger.getLogger().log(Level.SEVERE, "commit failed", e);
 				}
-			} else
+			} else {
 				f_work++;
+			}
 
 			boolean parsed = false;
-			for (IPrep element : f_elements) {
+			for (final IPrep element : f_elements) {
 				if (name.equals(element.getXMLElementName())) {
 					element.parse(f_run, attributes);
 					parsed = true;
@@ -269,7 +280,7 @@ public final class PrepRunnable implements Runnable {
 					for (int i = 0; i < attributes.getLength(); i++) {
 						final String aName = attributes.getQName(i);
 						final String aValue = attributes.getValue(i);
-						System.out.println("\t"+aName+" = "+aValue);
+						System.out.println("\t" + aName + " = " + aValue);
 					}
 				}
 			}

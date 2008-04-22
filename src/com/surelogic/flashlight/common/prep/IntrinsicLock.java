@@ -22,6 +22,12 @@ public abstract class IntrinsicLock extends Event {
 
 	private static IntrinsicLockDurationRowInserter f_rowInserter;
 
+	private final BeforeTrace before;
+
+	public IntrinsicLock(BeforeTrace before) {
+		this.before = before;
+	}
+
 	public void parse(int runId, Attributes attributes) {
 		long nanoTime = -1;
 		long inThread = -1;
@@ -61,6 +67,7 @@ public abstract class IntrinsicLock extends Event {
 		}
 		final long id = f_id++;
 		final Timestamp time = getTimestamp(nanoTime);
+		before.threadEvent(inThread);
 		insert(runId, id, time, inThread, file, lineNumber, lock, getState(),
 				lockIsThis, lockIsClass);
 		useObject(inThread);
@@ -92,7 +99,7 @@ public abstract class IntrinsicLock extends Event {
 				f_ps.setNull(10, Types.CHAR);
 			}
 			f_ps.executeUpdate();
-		} catch (SQLException e) {
+		} catch (final SQLException e) {
 			SLLogger.getLogger().log(Level.SEVERE, "Insert failed: ILOCK", e);
 		}
 	}
@@ -114,7 +121,7 @@ public abstract class IntrinsicLock extends Event {
 	public final void flush(final int runId) throws SQLException {
 		f_rowInserter.flush(runId);
 	}
-	
+
 	public final void close() throws SQLException {
 		if (f_ps != null) {
 			f_ps.close();

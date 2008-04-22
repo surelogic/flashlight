@@ -29,10 +29,10 @@ public class BeforeTrace extends Trace {
 		}
 		return trace;
 	}
-
+		
 	static class TraceStateStack {
 		TraceState trace;
-
+		
 		TraceState peek() {
 			return trace;
 		}
@@ -41,10 +41,12 @@ public class BeforeTrace extends Trace {
 			this.trace = new TraceState(id, time, file, lineNumber, loc, trace);
 		}
 
-		TraceState pop() {
+		TraceState pop() {			
 			final TraceState current = trace;
 			if (trace != null) {
 				trace = trace.parent;
+			} else {
+				throw new IllegalStateException("No stack available; probably mismatched traces");
 			}
 			return current;
 		}
@@ -152,11 +154,6 @@ public class BeforeTrace extends Trace {
 		final TraceState trace = getTraces(inThread).peek();
 		if (trace != null) {
 			trace.threadEvent();
-		} else {
-			SLLogger.getLogger().log(
-					Level.SEVERE,
-					"A thread event occured in thread " + inThread
-							+ " with no stack available.");
 		}
 	}
 

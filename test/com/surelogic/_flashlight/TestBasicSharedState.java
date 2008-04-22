@@ -137,16 +137,23 @@ public class TestBasicSharedState extends TestCase {
 			/*
 			 * OK, now check the counters.
 			 */
-			assertEquals(1, f_osc.finalEventCt);
-			assertEquals(2, f_osc.timeCt);
-			assertEquals(2, f_osc.fieldDefinitionCt);
-			assertEquals(THREADS + 3, f_osc.objectDefinitionCt);
-			assertEquals(EVENTS * THREADS, f_osc.fieldReadInstanceCt);
-			assertEquals(EVENTS * THREADS, f_osc.fieldWriteInstanceCt);
-			assertEquals(EVENTS * THREADS, f_osc.fieldReadStaticCt);
-			assertEquals(EVENTS * THREADS, f_osc.fieldWriteStaticCt);
-			assertEquals(0, f_osc.singleThreadedFieldInstanceCt);
-			assertEquals(0, f_osc.singleThreadedFieldStaticCt);
+			assertEquals("finalEventCt", 1, f_osc.finalEventCt);
+			assertEquals("timeCt", 2, f_osc.timeCt);
+			assertEquals("fieldDefinitionCt", 2, f_osc.fieldDefinitionCt);
+			assertEquals("objectDefinitionCt", THREADS + 3,
+					f_osc.objectDefinitionCt);
+			assertEquals("fieldReadInstanceCt", EVENTS * THREADS,
+					f_osc.fieldReadInstanceCt);
+			assertEquals("fieldWriteInstanceCt", EVENTS * THREADS,
+					f_osc.fieldWriteInstanceCt);
+			assertEquals("fieldReadStaticCt", EVENTS * THREADS,
+					f_osc.fieldReadStaticCt);
+			assertEquals("fieldWriteStaticCt", EVENTS * THREADS,
+					f_osc.fieldWriteStaticCt);
+			assertEquals("singleThreadedFieldInstanceCt", 0,
+					f_osc.singleThreadedFieldInstanceCt);
+			assertEquals("singleThreadedFieldStaticCt", 0,
+					f_osc.singleThreadedFieldStaticCt);
 		} catch (InterruptedException e) {
 			fail("interrupted during end gate await");
 		}

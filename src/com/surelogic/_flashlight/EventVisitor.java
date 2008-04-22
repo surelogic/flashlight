@@ -57,6 +57,10 @@ abstract class EventVisitor {
 		// do nothing
 	}
 
+	void visit(GarbageCollectedObject e) {
+		// do nothing
+	}
+
 	void visit(final ObjectDefinition e) {
 		// do nothing
 	}

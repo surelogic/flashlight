@@ -115,6 +115,11 @@ final class OutputStrategyXML extends EventVisitor {
 	}
 
 	@Override
+	void visit(GarbageCollectedObject e) {
+		o(e.toString());
+	}
+
+	@Override
 	void visit(ObjectDefinition e) {
 		o(e.toString());
 	}

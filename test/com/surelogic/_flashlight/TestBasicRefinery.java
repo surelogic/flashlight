@@ -81,14 +81,17 @@ public class TestBasicRefinery extends TestCase {
 			/*
 			 * OK, now check the counters.
 			 */
-			assertEquals(1, f_osc.finalEventCt);
-			assertEquals(2, f_osc.timeCt);
-			assertEquals(3, f_osc.fieldDefinitionCt);
-			assertEquals(THREADS, f_osc.singleThreadedFieldInstanceCt);
-			assertTrue(EVENTS * THREADS <= f_osc.fieldReadInstanceCt);
-			assertTrue(EVENTS * THREADS <= f_osc.fieldWriteInstanceCt);
-			assertTrue(EVENTS * THREADS <= f_osc.fieldReadStaticCt);
-			assertTrue(EVENTS * THREADS <= f_osc.fieldWriteStaticCt);
+			assertEquals("finalEventCt", 1, f_osc.finalEventCt);
+			assertEquals("timeCt", 2, f_osc.timeCt);
+			assertEquals("fieldDefinitionCt", 3, f_osc.fieldDefinitionCt);
+			assertTrue("fieldReadInstanceCt",
+					EVENTS * THREADS <= f_osc.fieldReadInstanceCt);
+			assertTrue("fieldWriteInstanceCt",
+					EVENTS * THREADS <= f_osc.fieldWriteInstanceCt);
+			assertTrue("fieldReadStaticCt",
+					EVENTS * THREADS <= f_osc.fieldReadStaticCt);
+			assertTrue("fieldWriteStaticCt",
+					EVENTS * THREADS <= f_osc.fieldWriteStaticCt);
 			/*
 			 * The below checks are dependent upon the garbage collector telling
 			 * the refinery that the thread-local objects are not used in time
@@ -96,12 +99,10 @@ public class TestBasicRefinery extends TestCase {
 			 * 
 			 * So, sometimes, they might not pass due to the VM.
 			 */
-			assertEquals(EVENTS * THREADS, f_osc.fieldReadInstanceCt);
-			assertEquals(EVENTS * THREADS, f_osc.fieldWriteInstanceCt);
-			assertEquals(EVENTS * THREADS, f_osc.fieldReadStaticCt);
-			assertEquals(EVENTS * THREADS, f_osc.fieldWriteStaticCt);
-
-			assertEquals(0, f_osc.singleThreadedFieldStaticCt);
+			assertEquals("singleThreadedFieldInstanceCt", THREADS,
+					f_osc.singleThreadedFieldInstanceCt);
+			assertEquals("singleThreadedFieldStaticCt", 0,
+					f_osc.singleThreadedFieldStaticCt);
 		} catch (InterruptedException e) {
 			fail("interrupted during end gate await");
 		}

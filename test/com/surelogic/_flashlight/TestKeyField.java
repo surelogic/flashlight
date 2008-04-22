@@ -34,10 +34,6 @@ public class TestKeyField extends TestCase {
 	private Field fa_f1, fa_f2, fa_s1, fa_s2, fb_f1, fb_f2, fb_s1, fb_s2;
 	private ObservedField a_f1, a_f2, a_s1, a_s2, b_f1, b_f2, b_s1, b_s2;
 
-	{
-
-	}
-
 	private A o1 = new A();
 	private A o2 = new A();
 	private A o3 = new A();
@@ -88,20 +84,13 @@ public class TestKeyField extends TestCase {
 	}
 
 	public void testKeyFieldInstance() {
-		KeyFieldInstance k10 = new KeyFieldInstance(a_f1, Phantom
-				.ofObject(o2));
-		KeyFieldInstance k11 = new KeyFieldInstance(a_f1, Phantom
-				.ofObject(o2));
-		KeyFieldInstance k20 = new KeyFieldInstance(a_f1, Phantom
-				.ofObject(o4));
-		KeyFieldInstance k21 = new KeyFieldInstance(a_f1, Phantom
-				.ofObject(o4));
-		KeyFieldInstance k22 = new KeyFieldInstance(a_f1, Phantom
-				.ofObject(o1));
-		KeyFieldInstance k23 = new KeyFieldInstance(a_f2, Phantom
-				.ofObject(o4));
-		KeyFieldInstance k24 = new KeyFieldInstance(a_f1, Phantom
-				.ofObject(o3));
+		KeyFieldInstance k10 = new KeyFieldInstance(a_f1, Phantom.ofObject(o2));
+		KeyFieldInstance k11 = new KeyFieldInstance(a_f1, Phantom.ofObject(o2));
+		KeyFieldInstance k20 = new KeyFieldInstance(a_f1, Phantom.ofObject(o4));
+		KeyFieldInstance k21 = new KeyFieldInstance(a_f1, Phantom.ofObject(o4));
+		KeyFieldInstance k22 = new KeyFieldInstance(a_f1, Phantom.ofObject(o1));
+		KeyFieldInstance k23 = new KeyFieldInstance(a_f2, Phantom.ofObject(o4));
+		KeyFieldInstance k24 = new KeyFieldInstance(a_f1, Phantom.ofObject(o3));
 		assertEquals(k10, k11);
 		assertEquals(k20, k21);
 		assertFalse(k10.equals(k20));
@@ -160,8 +149,7 @@ public class TestKeyField extends TestCase {
 	}
 
 	public void testMixedKeys() {
-		KeyFieldInstance k10 = new KeyFieldInstance(a_f1, Phantom
-				.ofObject(o2));
+		KeyFieldInstance k10 = new KeyFieldInstance(a_f1, Phantom.ofObject(o2));
 		KeyFieldStatic k11 = new KeyFieldStatic(a_s1);
 		assertFalse(k10.equals(k11));
 		assertFalse(k11.equals(k10));

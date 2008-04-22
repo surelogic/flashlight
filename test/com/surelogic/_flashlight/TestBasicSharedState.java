@@ -138,7 +138,7 @@ public class TestBasicSharedState extends TestCase {
 			 * OK, now check the counters.
 			 */
 			assertEquals(1, f_osc.finalEventCt);
-			assertEquals(1, f_osc.timeCt);
+			assertEquals(2, f_osc.timeCt);
 			assertEquals(2, f_osc.fieldDefinitionCt);
 			assertEquals(THREADS + 3, f_osc.objectDefinitionCt);
 			assertEquals(EVENTS * THREADS, f_osc.fieldReadInstanceCt);

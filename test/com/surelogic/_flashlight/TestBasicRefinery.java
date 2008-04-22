@@ -82,7 +82,7 @@ public class TestBasicRefinery extends TestCase {
 			 * OK, now check the counters.
 			 */
 			assertEquals(1, f_osc.finalEventCt);
-			assertEquals(1, f_osc.timeCt);
+			assertEquals(2, f_osc.timeCt);
 			assertEquals(3, f_osc.fieldDefinitionCt);
 			assertEquals(THREADS, f_osc.singleThreadedFieldInstanceCt);
 			assertTrue(EVENTS * THREADS <= f_osc.fieldReadInstanceCt);

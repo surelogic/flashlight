@@ -17,6 +17,8 @@ public class BeforeTrace extends Trace {
 	private static long f_id = 0;
 	private static PreparedStatement f_ps;
 
+	private long skipped, inserted;
+
 	private final Map<Long, TraceStateStack> threadToStackTrace = new HashMap<Long, TraceStateStack>();
 
 	private TraceStateStack getTraces(Long inThread) {
@@ -128,6 +130,9 @@ public class BeforeTrace extends Trace {
 				SLLogger.getLogger().log(Level.SEVERE, "Insert failed: TRACE",
 						e);
 			}
+			inserted++;
+		} else {
+			skipped++;
 		}
 	}
 
@@ -153,5 +158,13 @@ public class BeforeTrace extends Trace {
 					"A thread event occured in thread " + inThread
 							+ " with no stack available.");
 		}
+	}
+
+	@Override
+	public void printStats() {
+		System.out.println(getClass().getName() + " Skipped   = " + skipped);
+		System.out.println(getClass().getName() + " Inserted  = " + inserted);
+		System.out.println(getClass().getName() + " %Inserted = "
+				+ (inserted * 100.0 / (skipped + inserted)));
 	}
 }

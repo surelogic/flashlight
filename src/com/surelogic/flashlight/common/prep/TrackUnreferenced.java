@@ -4,10 +4,15 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.*;
+import java.util.logging.Logger;
 
 import org.xml.sax.Attributes;
 
+import com.surelogic.common.logging.SLLogger;
+
 public abstract class TrackUnreferenced implements IPrep {
+	protected static final Logger LOG = SLLogger.getLoggerFor(TrackUnreferenced.class);
+	
 	protected static final String LINE = "line";
 	protected static final String FILE = "file";
 	protected static final String THREAD = "thread";
@@ -22,12 +27,19 @@ public abstract class TrackUnreferenced implements IPrep {
 				final String aName = attributes.getQName(i);
 				final String aValue = attributes.getValue(i);
 				attrs.put(aName, aValue);
+				if (aValue == null) {
+					LOG.severe("Null for "+aName);
+				}
 			}
     	}
     }
     
     protected String getAttr(String name) {
-    	return attrs.get(name);
+    	String val = attrs.get(name);
+		if (val == null) {
+			LOG.severe("Null for "+name);
+		}
+    	return val;
     }
     
 	private Set<Long> f_unreferencedObjects;

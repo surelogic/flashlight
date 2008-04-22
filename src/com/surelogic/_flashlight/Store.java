@@ -69,7 +69,7 @@ public final class Store {
 	 * This flag generates a lot of output and should only be set to
 	 * {@code true} for small test programs.
 	 */
-	public static final boolean DEBUG = true;
+	public static final boolean DEBUG = false;
 
 	/**
 	 * Logs a message if logging is enabled.

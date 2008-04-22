@@ -27,4 +27,8 @@ public final class UnderConstruction {
 			return f_object.contains(o);
 		}
 	}
+
+	private UnderConstruction() {
+		// no instances
+	}
 }

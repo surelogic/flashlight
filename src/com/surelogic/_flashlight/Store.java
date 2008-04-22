@@ -15,6 +15,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReadWriteLock;
 import java.util.zip.GZIPOutputStream;
 
 /**
@@ -533,7 +534,7 @@ public final class Store {
 				logAProblem(String.format(fmt, before ? "before" : "after",
 						safeToString(receiver), location));
 			} else {
-				IdPhantomReference p = Phantom.ofObject(receiver);
+				final ObjectPhantomReference p = Phantom.ofObject(receiver);
 				if (before)
 					UnderConstruction.add(p);
 				else
@@ -602,12 +603,39 @@ public final class Store {
 						location));
 			} else {
 				final Class<?> declaringClass = method.getDeclaringClass();
+				/*
+				 * Special handling for calls to wait(..)
+				 */
 				if (declaringClass.equals(Object.class)) {
 					if ("wait".equals(method.getName())) {
 						if (before)
 							beforeIntrinsicLockWait(receiver, location);
 						else
 							afterIntrinsicLockWait(receiver, location);
+					}
+				}
+				/*
+				 * Special handling for ReadWriteLocks
+				 */
+				if (receiver != null) {
+					if (receiver instanceof ReadWriteLock) {
+						/*
+						 * Define the structure of the ReadWriteLock in an
+						 * event.
+						 */
+						final ReadWriteLock rwl = (ReadWriteLock) receiver;
+						final ObjectPhantomReference p = Phantom.ofObject(rwl);
+						if (!UtilConcurrent.containsReadWriteLock(p)) {
+							if (DEBUG) {
+								final String fmt = "Defined ReadWriteLock id=%d";
+								log(String.format(fmt, p.getId()));
+							}
+							UtilConcurrent.addReadWriteLock(p);
+							final Event e = new ReadWriteLockDefinition(p,
+									Phantom.ofObject(rwl.readLock()), Phantom
+											.ofObject(rwl.writeLock()));
+							putInQueue(f_rawQueue, e);
+						}
 					}
 				}
 			}

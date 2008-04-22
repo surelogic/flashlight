@@ -61,6 +61,10 @@ abstract class EventVisitor {
 		// do nothing
 	}
 
+	void visit(final ReadWriteLockDefinition e) {
+		// do nothing
+	}
+
 	void visit(final SingleThreadedFieldInstance e) {
 		// do nothing
 	}

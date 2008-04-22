@@ -120,6 +120,11 @@ final class OutputStrategyXML extends EventVisitor {
 	}
 
 	@Override
+	void visit(ReadWriteLockDefinition e) {
+		o(e.toString());
+	}
+
+	@Override
 	void visit(SingleThreadedFieldInstance e) {
 		o(e.toString());
 	}

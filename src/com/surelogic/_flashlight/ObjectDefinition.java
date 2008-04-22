@@ -4,7 +4,7 @@ public final class ObjectDefinition extends Event {
 
 	private final IdPhantomReference f_object;
 
-	Object getObject() {
+	IdPhantomReference getObject() {
 		return f_object;
 	}
 

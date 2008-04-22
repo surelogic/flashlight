@@ -77,6 +77,7 @@ final class Refinery extends Thread {
 				Store.logAProblem("refinery was interrupted...a bug");
 			}
 		}
+		Store.putInQueue(f_outQueue, new Time());
 		Store.putInQueue(f_outQueue, FinalEvent.FINAL_EVENT);
 		Store.log("refinery completed (" + f_garbageCollectedObjectCount.get()
 				+ " object(s) garbage collected : "
@@ -163,6 +164,7 @@ final class Refinery extends Thread {
 				removeSharedFieldsWithin(pr);
 				removeThreadLocalFieldsWithin(pr);
 				UnderConstruction.remove(pr);
+				UtilConcurrent.remove(pr);
 			}
 		}
 	}

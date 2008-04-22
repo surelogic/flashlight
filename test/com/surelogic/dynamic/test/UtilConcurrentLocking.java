@@ -11,7 +11,7 @@ public final class UtilConcurrentLocking {
 	final Lock lock1 = new ReentrantLock();
 	final ReadWriteLock rwLock = new ReentrantReadWriteLock();
 
-	void lock() {
+	void lock1() {
 		lock1.lock();
 		try {
 			// blocking case
@@ -51,9 +51,39 @@ public final class UtilConcurrentLocking {
 		}
 	}
 
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
+	void lockrw() {
+		rwLock.readLock().lock();
+		try {
+			// do stuff
+		} finally {
+			rwLock.readLock().unlock();
+		}
+		Lock r = rwLock.readLock();
+		r.lock();
+		try {
+			// do stuff
+		} finally {
+			r.unlock();
+		}
 
+		rwLock.writeLock().lock();
+		try {
+			// do stuff
+		} finally {
+			rwLock.writeLock().unlock();
+		}
+		Lock w = rwLock.writeLock();
+		w.lock();
+		try {
+			// do stuff
+		} finally {
+			w.unlock();
+		}
 	}
 
+	public static void main(String[] args) {
+		UtilConcurrentLocking ucl = new UtilConcurrentLocking();
+		ucl.lock1();
+		ucl.lockrw();
+	}
 }

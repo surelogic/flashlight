@@ -29,7 +29,7 @@ public final class Time extends Event {
 	@Override
 	public String toString() {
 		final StringBuilder b = new StringBuilder();
-		b.append("<time ");
+		b.append("<time");
 		addNanoTime(b);
 		final SimpleDateFormat dateFormat = new SimpleDateFormat(
 				"yyyy-MM-dd HH:mm:ss.SSS");

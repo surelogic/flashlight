@@ -36,9 +36,7 @@ abstract class WithinThreadEvent extends ProgramEvent {
 
 	protected final void addThread(final StringBuilder b) {
 		Entities.addAttribute("thread", f_withinThread.getId(), b);
-		if (f_location != SrcLoc.UNKNOWN) {
-			Entities.addAttribute("file", f_location.getFileName(), b);
-			Entities.addAttribute("line", f_location.getLine(), b);
-		}
+		Entities.addAttribute("in", f_location.getTypeName(), b);
+		Entities.addAttribute("line", f_location.getLine(), b);
 	}
 }

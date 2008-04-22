@@ -389,7 +389,6 @@ public final class Store {
 				log(String.format(fmt, read ? "read" : "write",
 						safeToString(receiver), field, location));
 			}
-			checkTraceStatusForThisThread();
 			/*
 			 * Check that the parameters are valid, gather needed information,
 			 * and put an event in the raw queue.
@@ -434,9 +433,8 @@ public final class Store {
 	 *            {@code false} indicates <i>after</i> the constructor call.
 	 * @param constructor
 	 *            the constructor being called.
-	 * @param enclosingDeclaringTypeName
-	 *            the fully qualified name of the type where the constructor
-	 *            call occurred.
+	 * @param enclosingFileName
+	 *            the name of the file where the constructor call occurred.
 	 * @param enclosingLocationName
 	 *            the name of the method, constructor, or initializer where the
 	 *            constructor call occurred.
@@ -445,8 +443,7 @@ public final class Store {
 	 *            may be {@code null}.
 	 */
 	public static void constructorCall(final boolean before,
-			final Constructor constructor,
-			final String enclosingDeclaringTypeName,
+			final Constructor constructor, final String enclosingFileName,
 			final String enclosingLocationName, final SrcLoc location) {
 		if (f_flashlightIsNotInitialized)
 			return;
@@ -457,12 +454,11 @@ public final class Store {
 		tl_withinStore.set(Boolean.TRUE);
 		try {
 			if (DEBUG) {
-				final String fmt = "Store.constructorCall(%n\t\t%s%n\t\tconstructor=%s%n\t\tenclosingDeclaringTypeName=%s%n\t\tenclosingLocationName=%s%n\t\tlocation=%s)";
+				final String fmt = "Store.constructorCall(%n\t\t%s%n\t\tconstructor=%s%n\t\tenclosingFileName=%s%n\t\tenclosingLocationName=%s%n\t\tlocation=%s)";
 				log(String.format(fmt, before ? "before" : "after",
-						constructor, enclosingDeclaringTypeName,
-						enclosingLocationName, location));
+						constructor, enclosingFileName, enclosingLocationName,
+						location));
 			}
-			checkTraceStatusForThisThread();
 			/*
 			 * Check that the parameters are valid, gather needed information,
 			 * and put an event in the raw queue.
@@ -473,15 +469,15 @@ public final class Store {
 				 * problem if the instrumentation gave us a null reference to
 				 * the constructor object.
 				 */
-				final String fmt = "constructor cannot be null...instrumentation bug detected by Store.constructorCall(%s, constructor=%s, enclosingDeclaringTypeName=%s, enclosingLocationName=%s, location=%s)";
+				final String fmt = "constructor cannot be null...instrumentation bug detected by Store.constructorCall(%s, constructor=%s, enclosingFileName=%s, enclosingLocationName=%s, location=%s)";
 				logAProblem(String.format(fmt, before ? "before" : "after",
-						constructor, enclosingDeclaringTypeName,
-						enclosingLocationName, location));
+						constructor, enclosingFileName, enclosingLocationName,
+						location));
 			}
 			final Event e;
 			if (before)
-				e = new BeforeTrace(enclosingDeclaringTypeName,
-						enclosingLocationName, location);
+				e = new BeforeTrace(enclosingFileName, enclosingLocationName,
+						location);
 			else
 				e = new AfterTrace(location);
 			putInQueue(f_rawQueue, e);
@@ -566,9 +562,8 @@ public final class Store {
 	 * @param receiver
 	 *            the object instance the method is being called on, or
 	 *            {@code null} if the method is {@code static}.
-	 * @param enclosingDeclaringTypeName
-	 *            the fully qualified name of the type where the method call
-	 *            occurred.
+	 * @param enclosingFileName
+	 *            the name of the file where the method call occurred.
 	 * @param enclosingLocationName
 	 *            the name of the method, constructor, or initializer where the
 	 *            method call occurred.
@@ -577,7 +572,7 @@ public final class Store {
 	 *            {@code null}.
 	 */
 	public static void methodCall(final boolean before, final Method method,
-			final Object receiver, final String enclosingDeclaringTypeName,
+			final Object receiver, final String enclosingFileName,
 			final String enclosingLocationName, final SrcLoc location) {
 		if (f_flashlightIsNotInitialized)
 			return;
@@ -588,22 +583,20 @@ public final class Store {
 		tl_withinStore.set(Boolean.TRUE);
 		try {
 			if (DEBUG) {
-				final String fmt = "Store.methodCall(%n\t\t%s%n\t\tmethod=%s%n\t\treceiver=%s%n\t\tenclosingDeclaringTypeName=%s%n\t\tenclosingLocationName=%s%n\t\tlocation=%s)";
+				final String fmt = "Store.methodCall(%n\t\t%s%n\t\tmethod=%s%n\t\treceiver=%s%n\t\tenclosingFileName=%s%n\t\tenclosingLocationName=%s%n\t\tlocation=%s)";
 				log(String.format(fmt, before ? "before" : "after", method,
-						safeToString(receiver), enclosingDeclaringTypeName,
+						safeToString(receiver), enclosingFileName,
 						enclosingLocationName, location));
 			}
-			checkTraceStatusForThisThread();
 			/*
 			 * Check that the parameters are valid, gather needed information,
 			 * and put an event in the raw queue.
 			 */
 			if (method == null) {
-				final String fmt = "method cannot be null...instrumentation bug detected by Store.methodCall(%s, method=%s, receiver=%s, enclosingDeclaringTypeName=%s, enclosingLocationName=%s, location=%s)";
+				final String fmt = "method cannot be null...instrumentation bug detected by Store.methodCall(%s, method=%s, receiver=%s, enclosingFileName=%s, enclosingLocationName=%s, location=%s)";
 				logAProblem(String.format(fmt, before ? "before" : "after",
-						method, safeToString(receiver),
-						enclosingDeclaringTypeName, enclosingLocationName,
-						location));
+						method, safeToString(receiver), enclosingFileName,
+						enclosingLocationName, location));
 			} else {
 				final Class<?> declaringClass = method.getDeclaringClass();
 				/*
@@ -644,8 +637,8 @@ public final class Store {
 			}
 			final Event e;
 			if (before)
-				e = new BeforeTrace(enclosingDeclaringTypeName,
-						enclosingLocationName, location);
+				e = new BeforeTrace(enclosingFileName, enclosingLocationName,
+						location);
 			else
 				e = new AfterTrace(location);
 			putInQueue(f_rawQueue, e);
@@ -687,7 +680,6 @@ public final class Store {
 				log(String.format(fmt, safeToString(lockObject), lockIsThis,
 						lockIsClass, location));
 			}
-			checkTraceStatusForThisThread();
 			/*
 			 * Check that the parameters are valid, gather needed information,
 			 * and put an event in the raw queue.
@@ -863,38 +855,6 @@ public final class Store {
 			putInQueue(f_rawQueue, e);
 		} finally {
 			tl_withinStore.set(Boolean.FALSE);
-		}
-	}
-
-	/**
-	 * This method checks if the current thread has manufactured the first part
-	 * of its stack trace information from an actual exception stack trace.
-	 * <p>
-	 * The store has to manufacture the first step of the trace from an actual
-	 * stack trace. This is because the instrumentation can't see the thread
-	 * start (or the operating system call to start the program).
-	 * <p>
-	 * Note that the first before trace event within each thread will never have
-	 * a corresponding after trace event.
-	 */
-	private static void checkTraceStatusForThisThread() {
-		final Thread thread = Thread.currentThread();
-		final ThreadPhantomReference withinThread = Phantom.ofThread(thread);
-		if (!TracedThreads.contains(withinThread)) {
-			TracedThreads.add(withinThread);
-			final StackTraceElement[] stackTrace = thread.getStackTrace();
-			if (stackTrace.length > 0) {
-				final StackTraceElement element = stackTrace[stackTrace.length - 1];
-				final String className = element.getClassName();
-				final String methodName = element.getMethodName();
-				final Event e = new BeforeTrace(className, methodName,
-						SrcLoc.UNKNOWN);
-				putInQueue(f_rawQueue, e);
-				if (DEBUG) {
-					final String fmt = "Store.checkTraceStatusForThisThread() manufacured %s";
-					log(String.format(fmt, e));
-				}
-			}
 		}
 	}
 

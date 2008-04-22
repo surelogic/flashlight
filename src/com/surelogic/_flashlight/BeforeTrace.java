@@ -2,10 +2,10 @@ package com.surelogic._flashlight;
 
 final class BeforeTrace extends Trace {
 
-	private final String f_declaringTypeName;
+	private final String f_fileName;
 
 	String getDeclartingTypeName() {
-		return f_declaringTypeName;
+		return f_fileName;
 	}
 
 	private final String f_locationName;
@@ -14,17 +14,10 @@ final class BeforeTrace extends Trace {
 		return f_locationName;
 	}
 
-	String getTraceLine() {
-		final SrcLoc location = getLocation();
-		return f_declaringTypeName + "." + f_locationName
-				+ (location == SrcLoc.UNKNOWN ? "()" : "(" + location + ")");
-	}
-
-	BeforeTrace(final String declaringTypeName, final String locationName,
+	BeforeTrace(final String fileName, final String locationName,
 			final SrcLoc location) {
 		super(location);
-		f_declaringTypeName = declaringTypeName == null ? "<unknown declaring type>"
-				: declaringTypeName;
+		f_fileName = fileName == null ? "<unknown file name>" : fileName;
 		f_locationName = locationName == null ? "<unknown location>"
 				: locationName;
 	}
@@ -40,7 +33,8 @@ final class BeforeTrace extends Trace {
 		b.append("<before-trace");
 		addNanoTime(b);
 		addThread(b);
-		Entities.addAttribute("at", getTraceLine(), b);
+		Entities.addAttribute("location", f_locationName, b);
+		Entities.addAttribute("file", f_fileName, b);
 		b.append("/>");
 		return b.toString();
 	}

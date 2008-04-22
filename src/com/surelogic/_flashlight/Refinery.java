@@ -165,7 +165,6 @@ final class Refinery extends Thread {
 				removeThreadLocalFieldsWithin(pr);
 				UnderConstruction.remove(pr);
 				UtilConcurrent.remove(pr);
-				TracedThreads.remove(pr);
 				f_eventCache.add(new GarbageCollectedObject(pr));
 			}
 		}

@@ -120,7 +120,7 @@ public aspect Instrumentation {
 		final Object receiver = jp.getTarget();
 		final SourceLocation sl = jpsp.getSourceLocation();
 		final Field field = signature.getField();
-		final SrcLoc location = new SrcLoc(sl.getFileName(), sl.getLine());
+		final SrcLoc location = new SrcLoc(sl.getWithinType(), sl.getLine());
 		Store.fieldAccess(read, receiver, field, location);
 	}
 
@@ -133,10 +133,9 @@ public aspect Instrumentation {
 		final Constructor constructor = constructorSignature.getConstructor();
 		final SourceLocation sl = jpsp.getSourceLocation();
 		final String enclosingLocationName = enclosingSignature.getName();
-		final String enclosingDeclaringTypeName = enclosingSignature
-				.getDeclaringTypeName();
-		final SrcLoc location = new SrcLoc(sl.getFileName(), sl.getLine());
-		Store.constructorCall(before, constructor, enclosingDeclaringTypeName,
+		final String enclosingFileName = sl.getFileName();
+		final SrcLoc location = new SrcLoc(sl.getWithinType(), sl.getLine());
+		Store.constructorCall(before, constructor, enclosingFileName,
 				enclosingLocationName, location);
 	}
 
@@ -144,7 +143,7 @@ public aspect Instrumentation {
 			final JoinPoint.StaticPart jpsp) {
 		final Object receiver = jp.getTarget();
 		final SourceLocation sl = jpsp.getSourceLocation();
-		final SrcLoc location = new SrcLoc(sl.getFileName(), sl.getLine());
+		final SrcLoc location = new SrcLoc(sl.getWithinType(), sl.getLine());
 		Store.constructorExecution(before, receiver, location);
 	}
 
@@ -158,10 +157,9 @@ public aspect Instrumentation {
 		final Object receiver = jp.getTarget();
 		final SourceLocation sl = jpsp.getSourceLocation();
 		final String enclosingLocationName = enclosingSignature.getName();
-		final String enclosingDeclaringTypeName = enclosingSignature
-				.getDeclaringTypeName();
-		final SrcLoc location = new SrcLoc(sl.getFileName(), sl.getLine());
-		Store.methodCall(before, method, receiver, enclosingDeclaringTypeName,
+		final String enclosingFileName = sl.getFileName();
+		final SrcLoc location = new SrcLoc(sl.getWithinType(), sl.getLine());
+		Store.methodCall(before, method, receiver, enclosingFileName,
 				enclosingLocationName, location);
 	}
 
@@ -170,7 +168,7 @@ public aspect Instrumentation {
 		final Object oThis = jp.getThis();
 		final boolean lockIsThis = (oThis == null ? false : oThis == o);
 		final SourceLocation sl = jpsp.getSourceLocation();
-		final SrcLoc location = new SrcLoc(sl.getFileName(), sl.getLine());
+		final SrcLoc location = new SrcLoc(sl.getWithinType(), sl.getLine());
 		boolean lockIsClass = false;
 		if (!lockIsThis) {
 			final Class oClass = sl.getWithinType();
@@ -184,7 +182,7 @@ public aspect Instrumentation {
 	void afterIntrinisicLockHelper(final boolean lockAcquisition,
 			final Object o, final JoinPoint.StaticPart jpsp) {
 		final SourceLocation sl = jpsp.getSourceLocation();
-		final SrcLoc location = new SrcLoc(sl.getFileName(), sl.getLine());
+		final SrcLoc location = new SrcLoc(sl.getWithinType(), sl.getLine());
 		if (lockAcquisition)
 			Store.afterIntrinsicLockAcquisition(o, location);
 		else

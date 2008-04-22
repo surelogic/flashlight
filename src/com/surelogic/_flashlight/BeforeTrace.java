@@ -15,8 +15,9 @@ final class BeforeTrace extends Trace {
 	}
 
 	String getTraceLine() {
-		return f_declaringTypeName + "." + f_locationName + "(" + getLocation()
-				+ ")";
+		final SrcLoc location = getLocation();
+		return f_declaringTypeName + "." + f_locationName
+				+ (location == SrcLoc.UNKNOWN ? "()" : "(" + location + ")");
 	}
 
 	BeforeTrace(final String declaringTypeName, final String locationName,

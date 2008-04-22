@@ -389,6 +389,7 @@ public final class Store {
 				log(String.format(fmt, read ? "read" : "write",
 						safeToString(receiver), field, location));
 			}
+			checkTraceStatusForThisThread();
 			/*
 			 * Check that the parameters are valid, gather needed information,
 			 * and put an event in the raw queue.
@@ -461,6 +462,7 @@ public final class Store {
 						constructor, enclosingDeclaringTypeName,
 						enclosingLocationName, location));
 			}
+			checkTraceStatusForThisThread();
 			/*
 			 * Check that the parameters are valid, gather needed information,
 			 * and put an event in the raw queue.
@@ -591,6 +593,7 @@ public final class Store {
 						safeToString(receiver), enclosingDeclaringTypeName,
 						enclosingLocationName, location));
 			}
+			checkTraceStatusForThisThread();
 			/*
 			 * Check that the parameters are valid, gather needed information,
 			 * and put an event in the raw queue.
@@ -684,6 +687,7 @@ public final class Store {
 				log(String.format(fmt, safeToString(lockObject), lockIsThis,
 						lockIsClass, location));
 			}
+			checkTraceStatusForThisThread();
 			/*
 			 * Check that the parameters are valid, gather needed information,
 			 * and put an event in the raw queue.
@@ -859,6 +863,38 @@ public final class Store {
 			putInQueue(f_rawQueue, e);
 		} finally {
 			tl_withinStore.set(Boolean.FALSE);
+		}
+	}
+
+	/**
+	 * This method checks if the current thread has manufactured the first part
+	 * of its stack trace information from an actual exception stack trace.
+	 * <p>
+	 * The store has to manufacture the first step of the trace from an actual
+	 * stack trace. This is because the instrumentation can't see the thread
+	 * start (or the operating system call to start the program).
+	 * <p>
+	 * Note that the first before trace event within each thread will never have
+	 * a corresponding after trace event.
+	 */
+	private static void checkTraceStatusForThisThread() {
+		final Thread thread = Thread.currentThread();
+		final ThreadPhantomReference withinThread = Phantom.ofThread(thread);
+		if (!TracedThreads.contains(withinThread)) {
+			TracedThreads.add(withinThread);
+			final StackTraceElement[] stackTrace = thread.getStackTrace();
+			if (stackTrace.length > 0) {
+				final StackTraceElement element = stackTrace[stackTrace.length - 1];
+				final String className = element.getClassName();
+				final String methodName = element.getMethodName();
+				final Event e = new BeforeTrace(className, methodName,
+						SrcLoc.UNKNOWN);
+				putInQueue(f_rawQueue, e);
+				if (DEBUG) {
+					final String fmt = "Store.checkTraceStatusForThisThread() manufacured %s";
+					log(String.format(fmt, e));
+				}
+			}
 		}
 	}
 

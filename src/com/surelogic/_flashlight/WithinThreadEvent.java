@@ -14,11 +14,11 @@ abstract class WithinThreadEvent extends ProgramEvent {
 	/**
 	 * An identity for the thread this event occurred within.
 	 */
-	private final ThreadPhantomReference f_withinthread = Phantom
+	private final ThreadPhantomReference f_withinThread = Phantom
 			.ofThread(Thread.currentThread());
 
 	PhantomReference getWithinThread() {
-		return f_withinthread;
+		return f_withinThread;
 	}
 
 	private final SrcLoc f_location;
@@ -35,7 +35,7 @@ abstract class WithinThreadEvent extends ProgramEvent {
 	}
 
 	protected final void addThread(final StringBuilder b) {
-		Entities.addAttribute("thread", f_withinthread.getId(), b);
+		Entities.addAttribute("thread", f_withinThread.getId(), b);
 		if (f_location != SrcLoc.UNKNOWN) {
 			Entities.addAttribute("file", f_location.getFileName(), b);
 			Entities.addAttribute("line", f_location.getLine(), b);

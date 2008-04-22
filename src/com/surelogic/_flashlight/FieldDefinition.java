@@ -5,7 +5,7 @@ package com.surelogic._flashlight;
  * reference fields by their identifiers. This event always occurs in the output
  * before any other event about the field it defines.
  */
-final class FieldDefinition extends DefinitionEvent {
+final class FieldDefinition extends DefinitionalEvent {
 
 	private final ObservedField f_field;
 

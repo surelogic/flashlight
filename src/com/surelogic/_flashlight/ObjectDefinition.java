@@ -1,6 +1,6 @@
 package com.surelogic._flashlight;
 
-final class ObjectDefinition extends DefinitionEvent {
+final class ObjectDefinition extends DefinitionalEvent {
 
 	private final IdPhantomReference f_object;
 

@@ -1,5 +1,5 @@
 package com.surelogic._flashlight;
 
-abstract class DefinitionEvent extends Event {
+abstract class DefinitionalEvent extends ProgramEvent {
 	// Subclassed by definitional events.
 }

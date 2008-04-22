@@ -7,7 +7,7 @@ package com.surelogic._flashlight;
  * memory some events might have been output. Data prep can safely removed all
  * events about any single-threaded field from the data.
  */
-abstract class SingleThreadedField extends Event {
+abstract class SingleThreadedField extends ObservationalEvent {
 
 	private final ObservedField f_field;
 

@@ -9,7 +9,7 @@ import java.lang.ref.PhantomReference;
  * <p>
  * Intended to be subclassed for each specific type of event that can occur.
  */
-abstract class WithinThreadEvent extends Event {
+abstract class WithinThreadEvent extends ProgramEvent {
 
 	/**
 	 * An identity for the thread this event occurred within.

@@ -15,6 +15,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.zip.GZIPOutputStream;
 
@@ -610,10 +611,10 @@ public final class Store {
 							afterIntrinsicLockWait(receiver, location);
 					}
 				}
-				/*
-				 * Special handling for ReadWriteLocks
-				 */
 				if (receiver != null) {
+					/*
+					 * Special handling for ReadWriteLocks
+					 */
 					if (receiver instanceof ReadWriteLock) {
 						/*
 						 * Define the structure of the ReadWriteLock in an
@@ -631,6 +632,29 @@ public final class Store {
 									Phantom.ofObject(rwl.readLock()), Phantom
 											.ofObject(rwl.writeLock()));
 							putInQueue(f_rawQueue, e);
+						}
+					}
+					/*
+					 * Special handling for util.concurrent locks.
+					 */
+					if (receiver instanceof Lock) {
+						final Lock ucLock = (Lock) receiver;
+						if ("unlock".equals(method.getName())
+								&& method.getParameterTypes().length == 0) {
+							if (!before)
+								afterUCLockRelease(ucLock, location);
+						} else {
+							/*
+							 * Pass all the other calls to our acquisition
+							 * attempt code. It will determine if the calls are
+							 * interesting.
+							 */
+							if (before)
+								beforeUCLockAcquisitionAttempt(ucLock, method,
+										location);
+							else
+								afterUCLockAcquisitionAttempt(ucLock, method,
+										location);
 						}
 					}
 				}
@@ -855,6 +879,50 @@ public final class Store {
 			putInQueue(f_rawQueue, e);
 		} finally {
 			tl_withinStore.set(Boolean.FALSE);
+		}
+	}
+
+	private static void beforeUCLockAcquisitionAttempt(final Lock lockObject,
+			final Method method, final SrcLoc location) {
+		if (DEBUG) {
+			final String fmt = "Store.beforeUCLockAcquisitionAttempt(%n\t\tlockObject=%s%n\t\tmethod=%s%n\t\tlocation=%s)";
+			log(String.format(fmt, lockObject, method, location));
+		}
+		if (isUCLockAcquisitionMethod(method)) {
+			// TODO
+		}
+	}
+
+	private static void afterUCLockAcquisitionAttempt(final Lock lockObject,
+			final Method method, final SrcLoc location) {
+		if (DEBUG) {
+			final String fmt = "Store.afterUCLockAcquisitionAttempt(%n\t\tlockObject=%s%n\t\tmethod=%s%n\t\tlocation=%s)";
+			log(String.format(fmt, lockObject, method, location));
+		}
+		if (isUCLockAcquisitionMethod(method)) {
+			// TODO
+		}
+	}
+
+	private static boolean isUCLockAcquisitionMethod(final Method method) {
+		if (("lock".equals(method.getName()) || "lockInterruptibly"
+				.equals(method.getName()))
+				&& method.getParameterTypes().length == 0) {
+			return true;
+		}
+		if ("tryLock".equals(method.getName())
+				&& (method.getParameterTypes().length == 0 || method
+						.getParameterTypes().length == 2)) {
+			return true;
+		}
+		return false;
+	}
+
+	private static void afterUCLockRelease(final Lock lockObject,
+			final SrcLoc location) {
+		if (DEBUG) {
+			final String fmt = "Store.afterUCLockRelease(%n\t\tlockObject=%s%n\t\tlocation=%s)";
+			log(String.format(fmt, lockObject, location));
 		}
 	}
 

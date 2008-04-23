@@ -10,27 +10,21 @@ final class SrcLoc {
 		return f_line;
 	}
 
-	private final String f_typeName;
-
-	String getTypeName() {
-		return f_typeName;
+	private final ClassPhantomReference f_withinClass;
+	
+	long getWithinClassId() {
+		return f_withinClass.getId();
 	}
 
-	SrcLoc(Class<?> withinType, final int line) {
-		if (withinType == null)
-			withinType = UnknownError.class;
-		final String typeName = withinType.getName();
-		if (typeName != null) {
-			f_typeName = typeName;
-		} else {
-			f_typeName = "<unknown type>";
-			Store.logAProblem("No name available for the type " + withinType);
-		}
+	SrcLoc(Class<?> withinClass, final int line) {
+		if (withinClass == null)
+			withinClass = UnknownError.class;
+		f_withinClass = Phantom.ofClass(withinClass);
 		f_line = line;
 	}
 
 	@Override
 	public String toString() {
-		return f_typeName + ":" + f_line;
+		return f_withinClass + ":" + f_line;
 	}
 }

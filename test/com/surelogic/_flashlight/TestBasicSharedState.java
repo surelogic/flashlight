@@ -134,13 +134,16 @@ public class TestBasicSharedState extends TestCase {
 		try {
 			endGate.await();
 			Store.shutdown();
+			Thread.sleep(1000);
 			/*
 			 * OK, now check the counters.
 			 */
 			assertEquals("finalEventCt", 1, f_osc.finalEventCt);
 			assertEquals("timeCt", 2, f_osc.timeCt);
 			assertEquals("fieldDefinitionCt", 2, f_osc.fieldDefinitionCt);
-			assertEquals("objectDefinitionCt", THREADS + 3,
+			assertEquals(
+					"objectDefinitionCt",
+					THREADS + 2 /* class */+ 1 /* object */+ 1 /* UnknownError */,
 					f_osc.objectDefinitionCt);
 			assertEquals("fieldReadInstanceCt", EVENTS * THREADS,
 					f_osc.fieldReadInstanceCt);

@@ -78,6 +78,7 @@ public class TestBasicRefinery extends TestCase {
 		try {
 			endGate.await();
 			Store.shutdown();
+			Thread.sleep(1000);
 			/*
 			 * OK, now check the counters.
 			 */

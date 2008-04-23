@@ -8,7 +8,7 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 
-import org.jgrapht.alg.CycleDetector;
+import org.jgrapht.alg.*;
 import org.jgrapht.graph.*;
 
 import com.surelogic.common.logging.LogStatus;
@@ -44,12 +44,31 @@ public final class IntrinsicLockDurationRowInserter {
     private final Map<Long, IntrinsicLockDurationState> f_threadToStatus = 
     	new HashMap<Long, IntrinsicLockDurationState>();
 
+    
+    static class HeldLockRange {
+    	final Long lock;
+    	final Timestamp first;
+    	Timestamp last;
+    	
+    	HeldLockRange(Long l, Timestamp t) {
+    		lock = l;
+    		first = last = t;
+    	}
+
+		public void updateLast(Timestamp time) {
+			if (time != null && time.after(last)) {
+				last = time;
+			}
+		}
+    }
     /**
      * Vertices = locks
      * Edges = threads doing the acquire
+     * Edge weight = # of times the edge appears
      */
-    private final DefaultDirectedGraph<Long, Object> lockGraph = 
-    	new DefaultDirectedGraph<Long, Object>(Object.class);
+    private final DefaultDirectedWeightedGraph<Long, Object> lockGraph = 
+    	new DefaultDirectedWeightedGraph<Long, Object>(Object.class);
+    private final Map<Long,HeldLockRange> heldLocks = new HashMap<Long,HeldLockRange>();
     private boolean flushed = false;
     
 	public IntrinsicLockDurationRowInserter(final Connection c)
@@ -67,13 +86,20 @@ public final class IntrinsicLockDurationRowInserter {
 		flushed = true;
 
 		CycleDetector<Long, Object> detector = new CycleDetector<Long, Object>(lockGraph);
-		Set<Long> vertices = detector.findCycles();
-		
-		final PreparedStatement f_cyclePS = statements[LOCK_CYCLE];
-		for(Long lockId : vertices) {
-			f_cyclePS.setInt(1, runId);
-			f_cyclePS.setLong(2, lockId);
-			f_cyclePS.executeUpdate();
+		if (detector.detectCycles()) {
+			StrongConnectivityInspector<Long, Object> inspector = 
+				new StrongConnectivityInspector<Long, Object>(lockGraph);
+			Set<Long> cycled = new HashSet<Long>();
+			for(Set<Long> comp : inspector.stronglyConnectedSets()) {
+				cycled.addAll(comp);
+			}
+
+			final PreparedStatement f_cyclePS = statements[LOCK_CYCLE];
+			for(Long lockId : cycled) {
+				f_cyclePS.setInt(1, runId);
+				f_cyclePS.setLong(2, lockId);
+				f_cyclePS.executeUpdate();
+			}
 		}
 	}
 	
@@ -290,7 +316,7 @@ public final class IntrinsicLockDurationRowInserter {
 			                               Map<Long, State> lockToState, State state) {
 		if (lockEvent == eventToMatch) {
 			assert state.timesEntered >= 0;
-			noteHeldLocks(runId, id, inThread, lock, lockToState);
+			noteHeldLocks(runId, id, time, inThread, lock, lockToState);
 			noteStateTransition(runId, id, time, inThread, lock, 
 					            lockEvent, state, IntrinsicLockDurationState.HOLDING);		
 			state.timesEntered++;
@@ -314,7 +340,7 @@ public final class IntrinsicLockDurationRowInserter {
 				+ " in thread " + inThread);
 	} 
 
-	private void noteHeldLocks(int runId, long id, long thread, long lock,
+	private void noteHeldLocks(int runId, long id, Timestamp time, long thread, long lock,
 			final Map<Long, State> lockToState) {
 		// Note what other locks are held at the time of this event 
 		for(Map.Entry<Long, State> e : lockToState.entrySet()) {
@@ -324,7 +350,7 @@ public final class IntrinsicLockDurationRowInserter {
 			}
 			IntrinsicLockDurationState state = e.getValue().lockState;
 			if (state == IntrinsicLockDurationState.HOLDING) {
-				insertHeldLock(runId, id, e.getKey(), lock, thread);                	
+				insertHeldLock(runId, id, time, e.getKey(), lock, thread);                	
 			}
 		}
 	}
@@ -354,7 +380,7 @@ public final class IntrinsicLockDurationRowInserter {
 		}
 	}
 	
-	private void insertHeldLock(int runId, long eventId, Long lock, long acquired, long thread) {
+	private void insertHeldLock(int runId, long eventId, Timestamp time, Long lock, long acquired, long thread) {
 		final PreparedStatement f_heldLockPS = statements[LOCKS_HELD];
 		try {
 			f_heldLockPS.setInt(1, runId);
@@ -367,13 +393,32 @@ public final class IntrinsicLockDurationRowInserter {
 			SLLogger.getLogger().log(Level.SEVERE,
 					"Insert failed: ILOCKSHELD", e);
 		}				
-		lockGraph.addVertex(lock);
-	
+		boolean addedV1 = lockGraph.addVertex(lock);
+	    updateHeldLockRange(addedV1, lock, time);
+		
 		final Long acq = acquired;				
-	    lockGraph.addVertex(acq);		
-		lockGraph.addEdge(lock, acq, thread);
+		lockGraph.addVertex(acq);		
+		 
+	    final Long t = thread; 
+		boolean addedEdge = lockGraph.addEdge(lock, acq, t);
+		if (addedEdge) {
+			lockGraph.setEdgeWeight(t, 1.0);
+		} else {
+			double wt = lockGraph.getEdgeWeight(t);
+			lockGraph.setEdgeWeight(t, wt + 1.0);
+		}
 	}
 	
+	private void updateHeldLockRange(boolean added, Long lock, Timestamp time) {
+		HeldLockRange range = added ? null : heldLocks.get(lock);
+		if (added || range == null) {
+			range = new HeldLockRange(lock, time);
+			heldLocks.put(lock, range);
+		} else {			
+			range.updateLast(time);
+		}		
+	}
+
 	private void recordThreadStats(int runId, long eventId, Timestamp t, 
 			                       int blocking, int holding, int waiting) {
 		final PreparedStatement f_threadStatusPS = statements[THREAD_STATS];

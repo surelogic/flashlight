@@ -43,6 +43,7 @@ public class IntrinsicLockingWait {
 				System.out.println("lock.wait(10000, 10)");
 
 			} catch (InterruptedException e) {
+				// safe to ignore
 			}
 		}
 		synchronized (n) {
@@ -55,6 +56,7 @@ public class IntrinsicLockingWait {
 				System.out.println("n.wait(10000, 10)");
 
 			} catch (InterruptedException e) {
+				// safe to ignore
 			}
 		}
 		n.done = true;

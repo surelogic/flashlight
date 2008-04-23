@@ -63,11 +63,10 @@ public final class IntrinsicLockDurationRowInserter {
     }
     /**
      * Vertices = locks
-     * Edges = threads doing the acquire
      * Edge weight = # of times the edge appears
      */
-    private final DefaultDirectedWeightedGraph<Long, Object> lockGraph = 
-    	new DefaultDirectedWeightedGraph<Long, Object>(Object.class);
+    private final DefaultDirectedWeightedGraph<Long, DefaultWeightedEdge> lockGraph = 
+    	new DefaultDirectedWeightedGraph<Long, DefaultWeightedEdge>(DefaultWeightedEdge.class);
     private final Map<Long,HeldLockRange> heldLocks = new HashMap<Long,HeldLockRange>();
     private boolean flushed = false;
     
@@ -85,10 +84,11 @@ public final class IntrinsicLockDurationRowInserter {
 		}
 		flushed = true;
 
-		CycleDetector<Long, Object> detector = new CycleDetector<Long, Object>(lockGraph);
+		CycleDetector<Long, DefaultWeightedEdge> detector = 
+			new CycleDetector<Long, DefaultWeightedEdge>(lockGraph);
 		if (detector.detectCycles()) {
-			StrongConnectivityInspector<Long, Object> inspector = 
-				new StrongConnectivityInspector<Long, Object>(lockGraph);
+			StrongConnectivityInspector<Long, DefaultWeightedEdge> inspector = 
+				new StrongConnectivityInspector<Long, DefaultWeightedEdge>(lockGraph);
 			Set<Long> cycled = new HashSet<Long>();
 			for(Set<Long> comp : inspector.stronglyConnectedSets()) {
 				cycled.addAll(comp);
@@ -399,13 +399,13 @@ public final class IntrinsicLockDurationRowInserter {
 		final Long acq = acquired;				
 		lockGraph.addVertex(acq);		
 		 
-	    final Long t = thread; 
-		boolean addedEdge = lockGraph.addEdge(lock, acq, t);
-		if (addedEdge) {
-			lockGraph.setEdgeWeight(t, 1.0);
+		DefaultWeightedEdge addedEdge = lockGraph.addEdge(lock, acq);
+		if (addedEdge != null) {
+			lockGraph.setEdgeWeight(addedEdge, 1.0);
 		} else {
-			double wt = lockGraph.getEdgeWeight(t);
-			lockGraph.setEdgeWeight(t, wt + 1.0);
+			addedEdge = lockGraph.getEdge(lock, acq);
+			double wt = lockGraph.getEdgeWeight(addedEdge);
+			lockGraph.setEdgeWeight(addedEdge, wt + 1.0);
 		}
 	}
 	

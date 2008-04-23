@@ -24,7 +24,7 @@ public final class IntrinsicLockDurationRowInserter {
 	  "INSERT INTO ILOCKDURATION VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
 	  "INSERT INTO ILOCKSHELD VALUES (?, ?, ?, ?, ?)",
       "INSERT INTO ILOCKTHREADSTATS VALUES (?, ?, ?, ?, ?, ?)",
-	  "INSERT INTO ILOCKCYCLE VALUES (?, ?)",
+	  "INSERT INTO ILOCKCYCLE VALUES (?, ?, ?, ?, ?, ?)",
     };
     private static final PreparedStatement[] statements = 
     	new PreparedStatement[queries.length];
@@ -43,31 +43,50 @@ public final class IntrinsicLockDurationRowInserter {
 		new HashMap<Long, Map<Long, State>>();
     private final Map<Long, IntrinsicLockDurationState> f_threadToStatus = 
     	new HashMap<Long, IntrinsicLockDurationState>();
-
     
-    static class HeldLockRange {
-    	final Long lock;
-    	final Timestamp first;
-    	Timestamp last;
+    static class Edge extends DefaultEdge {
+		private static final long serialVersionUID = 1L;
+		final Long lockHeld;
+    	final Long lockAcquired;
+    	private Timestamp first;
+    	private Timestamp last;
+    	private long count;
     	
-    	HeldLockRange(Long l, Timestamp t) {
-    		lock = l;
-    		first = last = t;
+    	Edge(Long held, Long acq) {
+    		lockHeld = held;
+    		lockAcquired = acq;    	
     	}
+    	
+    	public void setFirst(Timestamp t) {
+    		if (first != null) {
+    			throw new IllegalStateException("Already set first time");
+    		}
+    	    first = last = t;	
+    	    count = 1;
+    	}    	
 
 		public void updateLast(Timestamp time) {
 			if (time != null && time.after(last)) {
 				last = time;
+				count++;
 			}
 		}
+		public long getCount() {
+			return count;
+		}
     }
+    static class EdgeFactory implements org.jgrapht.EdgeFactory<Long, Edge> {
+		public Edge createEdge(Long held, Long acq) {
+			return new Edge(held, acq);
+		}    	
+    }
+    
     /**
      * Vertices = locks
      * Edge weight = # of times the edge appears
      */
-    private final DefaultDirectedWeightedGraph<Long, DefaultWeightedEdge> lockGraph = 
-    	new DefaultDirectedWeightedGraph<Long, DefaultWeightedEdge>(DefaultWeightedEdge.class);
-    private final Map<Long,HeldLockRange> heldLocks = new HashMap<Long,HeldLockRange>();
+    private final DefaultDirectedGraph<Long, Edge> lockGraph = 
+    	new DefaultDirectedGraph<Long, Edge>(new EdgeFactory());
     private boolean flushed = false;
     
 	public IntrinsicLockDurationRowInserter(final Connection c)
@@ -84,21 +103,25 @@ public final class IntrinsicLockDurationRowInserter {
 		}
 		flushed = true;
 
-		CycleDetector<Long, DefaultWeightedEdge> detector = 
-			new CycleDetector<Long, DefaultWeightedEdge>(lockGraph);
+		CycleDetector<Long, Edge> detector = 
+			new CycleDetector<Long, Edge>(lockGraph);
 		if (detector.detectCycles()) {
-			StrongConnectivityInspector<Long, DefaultWeightedEdge> inspector = 
-				new StrongConnectivityInspector<Long, DefaultWeightedEdge>(lockGraph);
-			Set<Long> cycled = new HashSet<Long>();
-			for(Set<Long> comp : inspector.stronglyConnectedSets()) {
-				cycled.addAll(comp);
-			}
-
 			final PreparedStatement f_cyclePS = statements[LOCK_CYCLE];
-			for(Long lockId : cycled) {
-				f_cyclePS.setInt(1, runId);
-				f_cyclePS.setLong(2, lockId);
-				f_cyclePS.executeUpdate();
+			
+			StrongConnectivityInspector<Long, Edge> inspector = 
+				new StrongConnectivityInspector<Long, Edge>(lockGraph);
+			for(DirectedSubgraph<Long, Edge> comp :
+				inspector.stronglyConnectedSubgraphs()) {
+				for(Edge e : comp.edgeSet()) {
+					// Should only be output once
+					f_cyclePS.setInt(1, runId);
+					f_cyclePS.setLong(2, e.lockHeld);
+					f_cyclePS.setLong(3, e.lockAcquired);
+					f_cyclePS.setLong(4, e.count);
+					f_cyclePS.setTimestamp(5, e.first);
+					f_cyclePS.setTimestamp(6, e.last);
+					f_cyclePS.executeUpdate();
+				}
 			}
 		}
 	}
@@ -393,30 +416,18 @@ public final class IntrinsicLockDurationRowInserter {
 			SLLogger.getLogger().log(Level.SEVERE,
 					"Insert failed: ILOCKSHELD", e);
 		}				
-		boolean addedV1 = lockGraph.addVertex(lock);
-	    updateHeldLockRange(addedV1, lock, time);
+		lockGraph.addVertex(lock);
 		
 		final Long acq = acquired;				
 		lockGraph.addVertex(acq);		
 		 
-		DefaultWeightedEdge addedEdge = lockGraph.addEdge(lock, acq);
+		Edge addedEdge = lockGraph.addEdge(lock, acq);
 		if (addedEdge != null) {
-			lockGraph.setEdgeWeight(addedEdge, 1.0);
-		} else {
-			addedEdge = lockGraph.getEdge(lock, acq);
-			double wt = lockGraph.getEdgeWeight(addedEdge);
-			lockGraph.setEdgeWeight(addedEdge, wt + 1.0);
-		}
-	}
-	
-	private void updateHeldLockRange(boolean added, Long lock, Timestamp time) {
-		HeldLockRange range = added ? null : heldLocks.get(lock);
-		if (added || range == null) {
-			range = new HeldLockRange(lock, time);
-			heldLocks.put(lock, range);
+			addedEdge.setFirst(time);
 		} else {			
-			range.updateLast(time);
-		}		
+			addedEdge = lockGraph.getEdge(lock, acq);
+			addedEdge.updateLast(time);
+		}
 	}
 
 	private void recordThreadStats(int runId, long eventId, Timestamp t, 

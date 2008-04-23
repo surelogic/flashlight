@@ -14,6 +14,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.zip.GZIPOutputStream;
 
@@ -68,7 +69,7 @@ public final class Store {
 	 * This flag generates a lot of output and should only be set to
 	 * {@code true} for small test programs.
 	 */
-	public static final boolean DEBUG = true;
+	public static final boolean DEBUG = false;
 
 	/**
 	 * Logs a message if logging is enabled.
@@ -832,6 +833,17 @@ public final class Store {
 		}
 	}
 
+	/**
+	 * Records that the instrumented program is attempting to acquire a
+	 * {@link Lock}.
+	 * 
+	 * @param lockObject
+	 *            the {@link Lock} object in use.
+	 * @param withinClass
+	 *            the class where the event occurred, may be {@code null}.
+	 * @param line
+	 *            the line number where the event occurred.
+	 */
 	public static void beforeUtilConcurrentLockAcquisitionAttempt(
 			final Object lockObject, Class<?> withinClass, final int line) {
 		if (f_flashlightIsNotInitialized)
@@ -849,14 +861,41 @@ public final class Store {
 				 * the util.concurrent Lock object to not have a bad toString()
 				 * method.
 				 */
-				final String fmt = "Store.beforeUCLockAcquisitionAttempt(%n\t\tlockObject=%s%n\t\tlocation=%s)";
+				final String fmt = "Store.beforeUtilConcurrentLockAcquisitionAttempt(%n\t\tlockObject=%s%n\t\tlocation=%s)";
 				log(String.format(fmt, lockObject, location));
+			}
+			if (lockObject instanceof Lock) {
+				final Lock ucLock = (Lock) lockObject;
+				final Event e = new BeforeUtilConcurrentLockAcquisitionAttempt(
+						ucLock, location);
+				putInQueue(f_rawQueue, e);
+			} else {
+				final String fmt = "lock object must be a java.util.concurrent.locks.Lock...instrumentation bug detected by Store.beforeUtilConcurrentLockAcquisitionAttempt(lockObject=%s, location=%s)";
+				logAProblem(String.format(fmt, lockObject, location));
+				return;
 			}
 		} finally {
 			tl_withinStore.set(Boolean.FALSE);
 		}
 	}
 
+	/**
+	 * Records the result of the instrumented program's attempt to acquire a
+	 * {@link Lock}.
+	 * 
+	 * @param gotTheLock
+	 *            {@code true} indicates the attempt succeeded and the lock was
+	 *            obtained, {@code false} indicates the attempt failed and the
+	 *            lock was not obtained (due to an exception or a false return
+	 *            from a {@link Lock#tryLock()} or
+	 *            {@link Lock#tryLock(long, java.util.concurrent.TimeUnit)}).
+	 * @param lockObject
+	 *            the {@link Lock} object in use.
+	 * @param withinClass
+	 *            the class where the event occurred, may be {@code null}.
+	 * @param line
+	 *            the line number where the event occurred.
+	 */
 	public static void afterUtilConcurrentLockAcquisitionAttempt(
 			final boolean gotTheLock, final Object lockObject,
 			Class<?> withinClass, final int line) {
@@ -875,15 +914,42 @@ public final class Store {
 				 * the util.concurrent Lock object to not have a bad toString()
 				 * method.
 				 */
-				final String fmt = "Store.afterUCLockAcquisitionAttempt(%n\t\t%s%n\t\tlockObject=%s%n\t\tlocation=%s)";
+				final String fmt = "Store.afterUtilConcurrentLockAcquisitionAttempt(%n\t\t%s%n\t\tlockObject=%s%n\t\tlocation=%s)";
 				log(String.format(fmt, gotTheLock ? "holding"
 						: "failed-to-acquire", lockObject, location));
+			}
+			if (lockObject instanceof Lock) {
+				final Lock ucLock = (Lock) lockObject;
+				final Event e = new AfterUtilConcurrentLockAcquisitionAttempt(
+						gotTheLock, ucLock, location);
+				putInQueue(f_rawQueue, e);
+			} else {
+				final String fmt = "lock object must be a java.util.concurrent.locks.Lock...instrumentation bug detected by Store.afterUtilConcurrentLockAcquisitionAttempt(%s, lockObject=%s, location=%s)";
+				logAProblem(String.format(fmt, gotTheLock ? "holding"
+						: "failed-to-acquire", lockObject, location));
+				return;
 			}
 		} finally {
 			tl_withinStore.set(Boolean.FALSE);
 		}
 	}
 
+	/**
+	 * Records the result of the instrumented program's attempt to release a
+	 * {@link Lock}.
+	 * 
+	 * @param releasedTheLock
+	 *            {@code true} indicates the attempt succeeded and the lock was
+	 *            released, {@code false} indicates the attempt failed and the
+	 *            lock was not released (due to an exception that was likely
+	 *            caused because the thread was not holding the lock).
+	 * @param lockObject
+	 *            the {@link Lock} object in use.
+	 * @param withinClass
+	 *            the class where the event occurred, may be {@code null}.
+	 * @param line
+	 *            the line number where the event occurred.
+	 */
 	public static void afterUtilConcurrentLockReleaseAttempt(
 			final boolean releasedTheLock, final Object lockObject,
 			Class<?> withinClass, final int line) {
@@ -902,9 +968,20 @@ public final class Store {
 				 * the util.concurrent Lock object to not have a bad toString()
 				 * method.
 				 */
-				final String fmt = "Store.afterUCLockRelease(%n\t\t%s%n\t\tlockObject=%s%n\t\tlocation=%s)";
+				final String fmt = "Store.afterUtilConcurrentLockReleaseAttempt(%n\t\t%s%n\t\tlockObject=%s%n\t\tlocation=%s)";
 				log(String.format(fmt, releasedTheLock ? "released"
 						: "failed-to-release", lockObject, location));
+			}
+			if (lockObject instanceof Lock) {
+				final Lock ucLock = (Lock) lockObject;
+				final Event e = new AfterUtilConcurrentLockReleaseAttempt(
+						releasedTheLock, ucLock, location);
+				putInQueue(f_rawQueue, e);
+			} else {
+				final String fmt = "lock object must be a java.util.concurrent.locks.Lock...instrumentation bug detected by Store.afterUtilConcurrentLockReleaseAttempt(%s, lockObject=%s, location=%s)";
+				logAProblem(String.format(fmt, releasedTheLock ? "released"
+						: "failed-to-release", lockObject, location));
+				return;
 			}
 		} finally {
 			tl_withinStore.set(Boolean.FALSE);

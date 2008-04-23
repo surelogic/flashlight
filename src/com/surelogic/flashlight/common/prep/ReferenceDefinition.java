@@ -14,7 +14,7 @@ import com.surelogic.common.logging.SLLogger;
 
 public abstract class ReferenceDefinition extends TrackUnreferenced {
 
-	private static final String f_psQ = "INSERT INTO OBJECT VALUES (?, ?, ?, ?, ?, ?)";
+	private static final String f_psQ = "INSERT INTO OBJECT (Run,Id,Type,Threadname,PackageName,ClassName,Flag) VALUES (?, ?, ?, ?, ?, ?, ?)";
 
 	private static PreparedStatement f_ps;
 
@@ -51,7 +51,7 @@ public abstract class ReferenceDefinition extends TrackUnreferenced {
 		}
 		String packageName = null;
 		if (className != null) {
-			int lastDot = className.lastIndexOf('.');
+			final int lastDot = className.lastIndexOf('.');
 			if (lastDot == -1) {
 				packageName = "(default)";
 			} else {
@@ -80,11 +80,14 @@ public abstract class ReferenceDefinition extends TrackUnreferenced {
 				f_ps.setNull(5, Types.VARCHAR);
 				f_ps.setNull(6, Types.VARCHAR);
 			}
+			f_ps.setString(7, getFlag());
 			f_ps.executeUpdate();
-		} catch (SQLException e) {
+		} catch (final SQLException e) {
 			SLLogger.getLogger().log(Level.SEVERE, "Insert failed: OBJECT", e);
 		}
 	}
+
+	protected abstract String getFlag();
 
 	@Override
 	public final void setup(final Connection c, final Timestamp start,

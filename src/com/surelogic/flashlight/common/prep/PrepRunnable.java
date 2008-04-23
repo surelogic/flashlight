@@ -161,32 +161,45 @@ public final class PrepRunnable implements Runnable {
 						 * Remove all unreferenced objects and fields.
 						 */
 						monitor.beginTask(
-								"Deleting thread-local object information",
-								unreferencedFields.size()
-										+ unreferencedObjects.size());
+								"Deleting thread-local object information", 2);
 						monitor.subTask("Deleting thread-local fields");
-						PreparedStatement s = c
-								.prepareStatement("delete from FIELD where Run=? and Id=?");
-						for (final Long l : unreferencedFields) {
-							s.setInt(1, runId);
-							s.setLong(2, l);
-							s.executeUpdate();
-							monitor.worked(1);
+						System.out.printf(
+								"Unreferenced fields calculated: %d\n",
+								unreferencedFields.size());
+						final PreparedStatement deleteFields = c
+								.prepareStatement("DELETE FROM FIELD WHERE RUN = ? AND ID IN "
+										+ "(SELECT ID FROM FIELD WHERE RUN = ? "
+										+ "EXCEPT "
+										+ "SELECT FIELD FROM ACCESS WHERE RUN = ?)");
+						for (int i = 1; i <= 3; i++) {
+							deleteFields.setInt(i, runId);
 						}
-						s.close();
+						System.out.printf("Unreference fields deleted: %d\n",
+								deleteFields.executeUpdate());
+						monitor.worked(1);
+						deleteFields.close();
+						/*
+						 * PreparedStatement s = c .prepareStatement("delete
+						 * from FIELD where Run=? and Id=?"); for (final Long l :
+						 * unreferencedFields) { s.setInt(1, runId);
+						 * s.setLong(2, l); s.executeUpdate();
+						 * monitor.worked(1); } s.close();
+						 */
+
 						if (monitor.isCanceled()) {
 							return; // Status.CANCEL_STATUS;
 						}
 						monitor.subTask("Deleting thread-local objects");
-						s = c
-								.prepareStatement("delete from OBJECT where Run=? and Id=?");
-						for (final Long l : unreferencedObjects) {
-							s.setInt(1, runId);
-							s.setLong(2, l);
-							s.executeUpdate();
-							monitor.worked(1);
-						}
-						s.close();
+						/*
+						 * s = c .prepareStatement("delete from OBJECT where
+						 * Run=? and Id=?"); for (final Long l :
+						 * unreferencedObjects) { s.setInt(1, runId);
+						 * s.setLong(2, l); s.executeUpdate();
+						 * monitor.worked(1); } s.close();
+						 */
+						System.out.printf("Unreference objects: %d\n",
+								unreferencedObjects.size());
+						monitor.worked(1);
 					} finally {
 						c.commit();
 						for (final IPrep element : f_elements) {

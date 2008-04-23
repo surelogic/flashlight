@@ -14,7 +14,7 @@ import com.surelogic.common.logging.SLLogger;
 
 public abstract class IntrinsicLock extends Event {
 
-	private static final String f_psQ = "INSERT INTO ILOCK VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+	private static final String f_psQ = "INSERT INTO ILOCK (Run,Id,TS,InThread,InClass,AtLine,Lock,State,LockIsThis,LockIsClass) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 	private static long f_id;
 
@@ -31,7 +31,7 @@ public abstract class IntrinsicLock extends Event {
 	public void parse(int runId, Attributes attributes) {
 		long nanoTime = -1;
 		long inThread = -1;
-		String file = null;
+		long inClass = -1;
 		int lineNumber = -1;
 		long lock = -1;
 		boolean lockIsThis = false;
@@ -44,8 +44,8 @@ public abstract class IntrinsicLock extends Event {
 					nanoTime = Long.parseLong(aValue);
 				} else if ("thread".equals(aName)) {
 					inThread = Long.parseLong(aValue);
-				} else if ("file".equals(aName)) {
-					file = aValue;
+				} else if ("in-class".equals(aName)) {
+					inClass = Long.parseLong(aValue);
 				} else if ("line".equals(aName)) {
 					lineNumber = Integer.parseInt(aValue);
 				} else if ("lock".equals(aName)) {
@@ -57,7 +57,7 @@ public abstract class IntrinsicLock extends Event {
 				}
 			}
 		}
-		if (nanoTime == -1 || inThread == -1 || file == null
+		if (nanoTime == -1 || inThread == -1 || inClass == -1
 				|| lineNumber == -1 || lock == -1) {
 			SLLogger.getLogger().log(
 					Level.SEVERE,
@@ -68,15 +68,15 @@ public abstract class IntrinsicLock extends Event {
 		final long id = f_id++;
 		final Timestamp time = getTimestamp(nanoTime);
 		before.threadEvent(inThread);
-		insert(runId, id, time, inThread, file, lineNumber, lock, getState(),
-				lockIsThis, lockIsClass);
+		insert(runId, id, time, inThread, inClass, lineNumber, lock,
+				getState(), lockIsThis, lockIsClass);
 		useObject(inThread);
 		useObject(lock);
 		f_rowInserter.event(runId, id, time, inThread, lock, getState());
 	}
 
 	private void insert(int runId, long id, Timestamp time, long inThread,
-			String file, int lineNumber, long lock,
+			long inClass, int lineNumber, long lock,
 			IntrinsicLockState lockState, boolean lockIsThis,
 			boolean lockIsClass) {
 		try {
@@ -84,7 +84,7 @@ public abstract class IntrinsicLock extends Event {
 			f_ps.setLong(2, id);
 			f_ps.setTimestamp(3, time);
 			f_ps.setLong(4, inThread);
-			f_ps.setString(5, file);
+			f_ps.setLong(5, inClass);
 			f_ps.setInt(6, lineNumber);
 			f_ps.setLong(7, lock);
 			f_ps.setString(8, lockState.toString().replace('_', ' '));

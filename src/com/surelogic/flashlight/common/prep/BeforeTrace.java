@@ -12,7 +12,8 @@ import java.util.logging.Level;
 import com.surelogic.common.logging.SLLogger;
 
 public class BeforeTrace extends Trace {
-	private static final String f_psQ = "INSERT INTO TRACE VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+
+	private static final String f_psQ = "INSERT INTO TRACE (Run,Id,InThread,InClass,InFile,AtLine,Location,Start,Stop) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 	private static long f_id = 0;
 	private static PreparedStatement f_ps;
@@ -29,24 +30,27 @@ public class BeforeTrace extends Trace {
 		}
 		return trace;
 	}
-		
+
 	static class TraceStateStack {
 		TraceState trace;
-		
+
 		TraceState peek() {
 			return trace;
 		}
 
-		void push(long id, long time, String file, int lineNumber, String loc) {
-			this.trace = new TraceState(id, time, file, lineNumber, loc, trace);
+		void push(long id, long time, long clazz, String file, int lineNumber,
+				String loc) {
+			this.trace = new TraceState(id, time, clazz, file, lineNumber, loc,
+					trace);
 		}
 
-		TraceState pop() {			
+		TraceState pop() {
 			final TraceState current = trace;
 			if (trace != null) {
 				trace = trace.parent;
 			} else {
-				throw new IllegalStateException("No stack available; probably mismatched traces");
+				throw new IllegalStateException(
+						"No stack available; probably mismatched traces");
 			}
 			return current;
 		}
@@ -56,6 +60,7 @@ public class BeforeTrace extends Trace {
 	static class TraceState {
 		final long id;
 		final long time;
+		final long clazz;
 		final String file;
 		final int line;
 		final String location;
@@ -65,10 +70,11 @@ public class BeforeTrace extends Trace {
 		 */
 		boolean hasEvents;
 
-		TraceState(long id, long time, String file, int lineNumber, String loc,
-				TraceState parent) {
+		TraceState(long id, long time, long clazz, String file, int lineNumber,
+				String loc, TraceState parent) {
 			this.id = id;
 			this.time = time;
+			this.clazz = clazz;
 			this.file = file;
 			this.line = lineNumber;
 			this.location = loc;
@@ -104,29 +110,31 @@ public class BeforeTrace extends Trace {
 	}
 
 	@Override
-	protected void handleTrace(int runId, long inThread, long time,
-			String file, int lineNumber) {
-		final String location = getAttr("at");
+	protected void handleTrace(int runId, long inThread, long inClass,
+			long time, String file, int lineNumber) {
+		final String location = getAttr("location");
 		final long id = ++f_id;
 		final Long thread = inThread;
-		getTraces(thread).push(id, time, file, lineNumber, location);
+		getTraces(thread).push(id, time, inClass, file, lineNumber, location);
 	}
 
-	void popTrace(int runId, long inThread, long time, String file,
+	void popTrace(int runId, long inThread, long inClass, long time,
 			int lineNumber) {
 		final TraceState state = getTraces(inThread).pop();
-		assert state.file.equals(file) && state.line == lineNumber;
+		assert (state.clazz == inClass) && (state.line == lineNumber);
 		if (state.hasEvents) {
 			// insert start and stop time
 			try {
-				f_ps.setInt(1, runId);
-				f_ps.setLong(2, state.id);
-				f_ps.setLong(3, inThread);
-				f_ps.setString(4, file);
-				f_ps.setInt(5, lineNumber);
-				f_ps.setString(6, state.location);
-				f_ps.setTimestamp(7, getTimestamp(state.time));
-				f_ps.setTimestamp(8, getTimestamp(time));
+				int idx = 1;
+				f_ps.setInt(idx++, runId);
+				f_ps.setLong(idx++, state.id);
+				f_ps.setLong(idx++, inThread);
+				f_ps.setLong(idx++, state.clazz);
+				f_ps.setString(idx++, state.file);
+				f_ps.setInt(idx++, lineNumber);
+				f_ps.setString(idx++, state.location);
+				f_ps.setTimestamp(idx++, getTimestamp(state.time));
+				f_ps.setTimestamp(idx++, getTimestamp(time));
 				f_ps.executeUpdate();
 			} catch (final SQLException e) {
 				SLLogger.getLogger().log(Level.SEVERE, "Insert failed: TRACE",

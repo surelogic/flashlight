@@ -21,38 +21,53 @@ public final class Data {
 	private static final String JDBC_POST = System
 			.getProperty("file.separator")
 			+ "db;user=" + SCHEMA_NAME;
-	
+
 	private static String dbLocation = null;
 
-        public static synchronized boolean isBooted() {
-            return (dbLocation != null);
-        }
-        
-	public static synchronized boolean bootAndCheckSchema(String location) throws Exception {
+	public static synchronized boolean isBooted() {
+		return (dbLocation != null);
+	}
+
+	public static synchronized boolean bootAndCheckSchema(String location)
+			throws Exception {
 		if (location == null) {
 			throw new IllegalArgumentException("Null db location");
 		}
-                if (isBooted()) {
-                    // already initialized
-                    return false;
-                }
-		/*
-		if (!new File(location).exists()) {
-			throw new IllegalArgumentException("Non-existent db location: "+location);
+		if (isBooted()) {
+			// already initialized
+			return false;
 		}
-		*/
+		/*
+		 * if (!new File(location).exists()) { throw new
+		 * IllegalArgumentException("Non-existent db location: "+location); }
+		 */
 		dbLocation = location;
 
 		Derby.bootEmbedded();
 
 		final String connectionURL = getConnectionURL() + ";create=true";
 		final Connection c = DriverManager.getConnection(connectionURL);
+		c.setAutoCommit(false);
+		Exception e = null;
 		try {
 			checkAndUpdate(c);
+			c.commit();
+		} catch (final SQLException e1) {
+			c.rollback();
+			e = e1;
 		} finally {
-			c.close();
-		}                
-                return true;
+			try {
+				c.close();
+			} catch (final SQLException e1) {
+				if (e == null) {
+					e = e1;
+				}
+			}
+		}
+		if (e != null) {
+			throw e;
+		}
+		return true;
 	}
 
 	public static Connection getConnection() throws SQLException {
@@ -67,7 +82,7 @@ public final class Data {
 	 * Up this number when you add a new schema version SQL script to this
 	 * package.
 	 */
-	public static final int schemaVersion = 1;
+	public static final int schemaVersion = 2;
 
 	public static final String SQL_SCRIPT_PREFIX = "/lib/database/schema_";
 
@@ -98,8 +113,9 @@ public final class Data {
 		assert n >= 0;
 
 		String result = "" + n;
-		while (result.length() < 4)
+		while (result.length() < 4) {
 			result = "0" + result;
+		}
 		return result;
 	}
 }

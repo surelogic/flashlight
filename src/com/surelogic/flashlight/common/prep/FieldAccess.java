@@ -14,7 +14,7 @@ import com.surelogic.common.logging.SLLogger;
 
 public abstract class FieldAccess extends Event {
 
-	private static final String f_psQ = "INSERT INTO ACCESS VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+	private static final String f_psQ = "INSERT INTO ACCESS (Run,TS,InThread,InClass,AtLine,Field,RW,Receiver,UnderConstruction) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 	private static PreparedStatement f_ps;
 
@@ -31,7 +31,7 @@ public abstract class FieldAccess extends Event {
 	public void parse(int runId, Attributes attributes) {
 		long nanoTime = -1;
 		long inThread = -1;
-		String file = null;
+		long inClass = -1;
 		int lineNumber = -1;
 		long field = -1;
 		long receiver = -1;
@@ -44,8 +44,8 @@ public abstract class FieldAccess extends Event {
 					nanoTime = Long.parseLong(aValue);
 				} else if ("thread".equals(aName)) {
 					inThread = Long.parseLong(aValue);
-				} else if ("file".equals(aName)) {
-					file = aValue;
+				} else if ("in-class".equals(aName)) {
+					inClass = Long.parseLong(aValue);
 				} else if ("line".equals(aName)) {
 					lineNumber = Integer.parseInt(aValue);
 				} else if ("field".equals(aName)) {
@@ -57,7 +57,7 @@ public abstract class FieldAccess extends Event {
 				}
 			}
 		}
-		if (nanoTime == -1 || inThread == -1 || file == null
+		if (nanoTime == -1 || inThread == -1 || inClass == -1
 				|| lineNumber == -1 || field == -1) {
 			SLLogger.getLogger().log(
 					Level.SEVERE,
@@ -78,20 +78,20 @@ public abstract class FieldAccess extends Event {
 			}
 		}
 		before.threadEvent(inThread);
-		insert(runId, nanoTime, inThread, file, lineNumber, field, receiver,
+		insert(runId, nanoTime, inThread, inClass, lineNumber, field, receiver,
 				underConstruction);
 		useObject(inThread);
 		useField(field);
 		inserted++;
 	}
 
-	private void insert(int runId, long nanoTime, long inThread, String file,
+	private void insert(int runId, long nanoTime, long inThread, long inClass,
 			int lineNumber, long field, long receiver, boolean underConstruction) {
 		try {
 			f_ps.setInt(1, runId);
 			f_ps.setTimestamp(2, getTimestamp(nanoTime));
 			f_ps.setLong(3, inThread);
-			f_ps.setString(4, file);
+			f_ps.setLong(4, inClass);
 			f_ps.setInt(5, lineNumber);
 			f_ps.setLong(6, field);
 			f_ps.setString(7, getRW());

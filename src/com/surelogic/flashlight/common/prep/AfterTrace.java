@@ -4,7 +4,7 @@ import java.sql.SQLException;
 
 public class AfterTrace extends Trace {
 	private final BeforeTrace before;
-	
+
 	public String getXMLElementName() {
 		return "after-trace";
 	}
@@ -14,9 +14,9 @@ public class AfterTrace extends Trace {
 	}
 
 	@Override
-	protected void handleTrace(int runId, long inThread, long time,
-			                   String file, int lineNumber) {
-		before.popTrace(runId, inThread, time, file, lineNumber);
+	protected void handleTrace(int runId, long inThread, long inClass,
+			long time, String file, int lineNumber) {
+		before.popTrace(runId, inThread, inClass, time, lineNumber);
 	}
 
 	public void close() throws SQLException {

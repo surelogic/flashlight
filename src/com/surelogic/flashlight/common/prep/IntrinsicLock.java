@@ -71,6 +71,7 @@ public abstract class IntrinsicLock extends Event {
 		insert(runId, id, time, inThread, inClass, lineNumber, lock,
 				getState(), lockIsThis, lockIsClass);
 		useObject(inThread);
+		useObject(inClass);
 		useObject(lock);
 		f_rowInserter.event(runId, id, time, inThread, lock, getState());
 	}

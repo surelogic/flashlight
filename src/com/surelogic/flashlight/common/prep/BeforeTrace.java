@@ -123,6 +123,7 @@ public class BeforeTrace extends Trace {
 		final TraceState state = getTraces(inThread).pop();
 		assert (state.clazz == inClass) && (state.line == lineNumber);
 		if (state.hasEvents) {
+			useObject(inClass);
 			// insert start and stop time
 			try {
 				int idx = 1;

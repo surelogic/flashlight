@@ -81,6 +81,7 @@ public abstract class FieldAccess extends Event {
 		insert(runId, nanoTime, inThread, inClass, lineNumber, field, receiver,
 				underConstruction);
 		useObject(inThread);
+		useObject(inClass);
 		useField(field);
 		inserted++;
 	}

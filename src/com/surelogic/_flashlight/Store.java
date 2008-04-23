@@ -9,13 +9,11 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.zip.GZIPOutputStream;
 
@@ -565,8 +563,6 @@ public final class Store {
 	 * @param before
 	 *            {@code true} indicates <i>before</i> the method call,
 	 *            {@code false} indicates <i>after</i> the method call.
-	 * @param method
-	 *            the method being called.
 	 * @param receiver
 	 *            the object instance the method is being called on, or
 	 *            {@code null} if the method is {@code static}.
@@ -580,10 +576,9 @@ public final class Store {
 	 * @param line
 	 *            the line number where the event occurred.
 	 */
-	public static void methodCall(final boolean before, final Method method,
-			final Object receiver, final String enclosingFileName,
-			final String enclosingLocationName, Class<?> withinClass,
-			final int line) {
+	public static void methodCall(final boolean before, final Object receiver,
+			final String enclosingFileName, final String enclosingLocationName,
+			Class<?> withinClass, final int line) {
 		if (f_flashlightIsNotInitialized)
 			return;
 		if (FL_OFF.get())
@@ -594,81 +589,37 @@ public final class Store {
 		try {
 			final SrcLoc location = new SrcLoc(withinClass, line);
 			if (DEBUG) {
-				final String fmt = "Store.methodCall(%n\t\t%s%n\t\tmethod=%s%n\t\treceiver=%s%n\t\tenclosingFileName=%s%n\t\tenclosingLocationName=%s%n\t\tlocation=%s)";
-				log(String.format(fmt, before ? "before" : "after", method,
+				final String fmt = "Store.methodCall(%n\t\t%s%n\t\treceiver=%s%n\t\tenclosingFileName=%s%n\t\tenclosingLocationName=%s%n\t\tlocation=%s)";
+				log(String.format(fmt, before ? "before" : "after",
 						safeToString(receiver), enclosingFileName,
 						enclosingLocationName, location));
 			}
-			/*
-			 * Check that the parameters are valid, gather needed information,
-			 * and put an event in the raw queue.
-			 */
-			if (method == null) {
-				final String fmt = "method cannot be null...instrumentation bug detected by Store.methodCall(%s, method=%s, receiver=%s, enclosingFileName=%s, enclosingLocationName=%s, location=%s)";
-				logAProblem(String.format(fmt, before ? "before" : "after",
-						method, safeToString(receiver), enclosingFileName,
-						enclosingLocationName, location));
-			} else {
-				final Class<?> declaringClass = method.getDeclaringClass();
+			if (receiver != null) {
 				/*
-				 * Special handling for calls to wait(..)
+				 * Special handling for ReadWriteLocks
 				 */
-				if (declaringClass.equals(Object.class)) {
-					if ("wait".equals(method.getName())) {
-						if (before)
-							beforeIntrinsicLockWait(receiver, location);
-						else
-							afterIntrinsicLockWait(receiver, location);
-					}
-				}
-				if (receiver != null) {
+				if (receiver instanceof ReadWriteLock) {
 					/*
-					 * Special handling for ReadWriteLocks
+					 * Define the structure of the ReadWriteLock in an event.
 					 */
-					if (receiver instanceof ReadWriteLock) {
-						/*
-						 * Define the structure of the ReadWriteLock in an
-						 * event.
-						 */
-						final ReadWriteLock rwl = (ReadWriteLock) receiver;
-						final ObjectPhantomReference p = Phantom.ofObject(rwl);
-						if (!UtilConcurrent.containsReadWriteLock(p)) {
-							if (DEBUG) {
-								final String fmt = "Defined ReadWriteLock id=%d";
-								log(String.format(fmt, p.getId()));
-							}
-							UtilConcurrent.addReadWriteLock(p);
-							final Event e = new ReadWriteLockDefinition(p,
-									Phantom.ofObject(rwl.readLock()), Phantom
-											.ofObject(rwl.writeLock()));
-							putInQueue(f_rawQueue, e);
+					final ReadWriteLock rwl = (ReadWriteLock) receiver;
+					final ObjectPhantomReference p = Phantom.ofObject(rwl);
+					if (!UtilConcurrent.containsReadWriteLock(p)) {
+						if (DEBUG) {
+							final String fmt = "Defined ReadWriteLock id=%d";
+							log(String.format(fmt, p.getId()));
 						}
-					}
-					/*
-					 * Special handling for util.concurrent locks.
-					 */
-					if (receiver instanceof Lock) {
-						final Lock ucLock = (Lock) receiver;
-						if ("unlock".equals(method.getName())
-								&& method.getParameterTypes().length == 0) {
-							if (!before)
-								afterUCLockRelease(ucLock, location);
-						} else {
-							/*
-							 * Pass all the other calls to our acquisition
-							 * attempt code. It will determine if the calls are
-							 * interesting.
-							 */
-							if (before)
-								beforeUCLockAcquisitionAttempt(ucLock, method,
-										location);
-							else
-								afterUCLockAcquisitionAttempt(ucLock, method,
-										location);
-						}
+						UtilConcurrent.addReadWriteLock(p);
+						final Event e = new ReadWriteLockDefinition(p, Phantom
+								.ofObject(rwl.readLock()), Phantom.ofObject(rwl
+								.writeLock()));
+						putInQueue(f_rawQueue, e);
 					}
 				}
 			}
+			/*
+			 * Record this call in the trace.
+			 */
 			final Event e;
 			if (before)
 				e = new BeforeTrace(enclosingFileName, enclosingLocationName,
@@ -790,69 +741,52 @@ public final class Store {
 	 * Sets and Notification</i> for the semantics of waiting on an intrinsic
 	 * lock. An intrinsic lock is a {@code synchronized} block or method.
 	 * 
+	 * @param before
+	 *            {@code true} indicates <i>before</i> the method call,
+	 *            {@code false} indicates <i>after</i> the method call.
 	 * @param lockObject
 	 *            the object being waited on (i.e., the thread should be holding
 	 *            a lock on this object).
-	 * @param location
-	 *            the source location of where the event occurred, may be
-	 *            {@code null}.
+	 * @param withinClass
+	 *            the class where the event occurred, may be {@code null}.
+	 * @param line
+	 *            the line number where the event occurred.
 	 */
-	private static void beforeIntrinsicLockWait(final Object lockObject,
-			final SrcLoc location) {
-		if (DEBUG) {
-			final String fmt = "Store.beforeIntrinsicLockWait(%n\t\tlockObject=%s%n\t\tlocation=%s)";
-			log(String.format(fmt, safeToString(lockObject), location));
-		}
-		/*
-		 * Check that the parameters are valid, gather needed information, and
-		 * put an event in the raw queue.
-		 */
-		if (lockObject == null) {
-			final String fmt = "intrinsic lock object cannot be null...instrumentation bug detected by Store.beforeIntrinsicLockWait(lockObject=%s, location=%s)";
-			logAProblem(String.format(fmt, safeToString(lockObject), location));
+	public static void intrinsicLockWait(final boolean before,
+			final Object lockObject, Class<?> withinClass, final int line) {
+		if (f_flashlightIsNotInitialized)
 			return;
-		}
-		final Event e = new BeforeIntrinsicLockWait(lockObject, location);
-		putInQueue(f_rawQueue, e);
-	}
-
-	/**
-	 * Records that the instrumented program is completing a call to one of the
-	 * following methods:
-	 * <ul>
-	 * <li>{@link Object#wait()}</li>
-	 * <li>{@link Object#wait(long)}</li>
-	 * <li>{@link Object#wait(long, int)}</li>
-	 * </ul>
-	 * See the Java Language Specification (3rd edition) section 17.8 <i>Wait
-	 * Sets and Notification</i> for the semantics of waiting on an intrinsic
-	 * lock. An intrinsic lock is a {@code synchronized} block or method.
-	 * 
-	 * @param lockObject
-	 *            the object being waited on (i.e., the thread should be holding
-	 *            a lock on this object).
-	 * @param location
-	 *            the source location of where the event occurred, may be
-	 *            {@code null}.
-	 */
-	private static void afterIntrinsicLockWait(final Object lockObject,
-			final SrcLoc location) {
-		if (DEBUG) {
-			final String fmt = "Store.afterIntrinsicLockWait(%n\t\tlockObject=%s%n\t\tlocation=%s)";
-			log(String.format(fmt, safeToString(lockObject), location));
-		}
-		/*
-		 * Check that the parameters are valid, gather needed information, and
-		 * put an event in the raw queue.
-		 */
-		if (lockObject == null) {
-			final String fmt = "intrinsic lock object cannot be null...instrumentation bug detected by Store.afterIntrinsicLockWait(lockObject=%s, location=%s)";
-			logAProblem(String.format(fmt, safeToString(lockObject), location));
+		if (FL_OFF.get())
 			return;
+		if (tl_withinStore.get().booleanValue())
+			return;
+		tl_withinStore.set(Boolean.TRUE);
+		try {
+			final SrcLoc location = new SrcLoc(withinClass, line);
+			if (DEBUG) {
+				final String fmt = "Store.intrinsicLockWait(%n\t\t%s%n\t\tlockObject=%s%n\t\tlocation=%s)";
+				log(String.format(fmt, before ? "before" : "after",
+						safeToString(lockObject), location));
+			}
+			/*
+			 * Check that the parameters are valid, gather needed information,
+			 * and put an event in the raw queue.
+			 */
+			if (lockObject == null) {
+				final String fmt = "intrinsic lock object cannot be null...instrumentation bug detected by Store.intrinsicLockWait(%s, lockObject=%s, location=%s)";
+				logAProblem(String.format(fmt, before ? "before" : "after",
+						safeToString(lockObject), location));
+				return;
+			}
+			final Event e;
+			if (before)
+				e = new BeforeIntrinsicLockWait(lockObject, location);
+			else
+				e = new AfterIntrinsicLockWait(lockObject, location);
+			putInQueue(f_rawQueue, e);
+		} finally {
+			tl_withinStore.set(Boolean.FALSE);
 		}
-		final Event e = new AfterIntrinsicLockWait(lockObject, location);
-		putInQueue(f_rawQueue, e);
-
 	}
 
 	/**
@@ -898,47 +832,80 @@ public final class Store {
 		}
 	}
 
-	private static void beforeUCLockAcquisitionAttempt(final Lock lockObject,
-			final Method method, final SrcLoc location) {
-		if (DEBUG) {
-			final String fmt = "Store.beforeUCLockAcquisitionAttempt(%n\t\tlockObject=%s%n\t\tmethod=%s%n\t\tlocation=%s)";
-			log(String.format(fmt, lockObject, method, location));
-		}
-		if (isUCLockAcquisitionMethod(method)) {
-			// TODO
+	public static void beforeUCLockAcquisitionAttempt(final Object lockObject,
+			Class<?> withinClass, final int line) {
+		if (f_flashlightIsNotInitialized)
+			return;
+		if (FL_OFF.get())
+			return;
+		if (tl_withinStore.get().booleanValue())
+			return;
+		tl_withinStore.set(Boolean.TRUE);
+		try {
+			final SrcLoc location = new SrcLoc(withinClass, line);
+			if (DEBUG) {
+				/*
+				 * Implementation note: We are counting on the implementer of
+				 * the util.concurrent Lock object to not have a bad toString()
+				 * method.
+				 */
+				final String fmt = "Store.beforeUCLockAcquisitionAttempt(%n\t\tlockObject=%s%n\t\tlocation=%s)";
+				log(String.format(fmt, lockObject, location));
+			}
+		} finally {
+			tl_withinStore.set(Boolean.FALSE);
 		}
 	}
 
-	private static void afterUCLockAcquisitionAttempt(final Lock lockObject,
-			final Method method, final SrcLoc location) {
-		if (DEBUG) {
-			final String fmt = "Store.afterUCLockAcquisitionAttempt(%n\t\tlockObject=%s%n\t\tmethod=%s%n\t\tlocation=%s)";
-			log(String.format(fmt, lockObject, method, location));
-		}
-		if (isUCLockAcquisitionMethod(method)) {
-			// TODO
+	public static void afterUCLockAcquisitionAttempt(final boolean gotTheLock,
+			final Object lockObject, Class<?> withinClass, final int line) {
+		if (f_flashlightIsNotInitialized)
+			return;
+		if (FL_OFF.get())
+			return;
+		if (tl_withinStore.get().booleanValue())
+			return;
+		tl_withinStore.set(Boolean.TRUE);
+		try {
+			final SrcLoc location = new SrcLoc(withinClass, line);
+			if (DEBUG) {
+				/*
+				 * Implementation note: We are counting on the implementer of
+				 * the util.concurrent Lock object to not have a bad toString()
+				 * method.
+				 */
+				final String fmt = "Store.afterUCLockAcquisitionAttempt(%n\t\t%s%n\t\tlockObject=%s%n\t\tmethod=%s%n\t\tlocation=%s)";
+				log(String.format(fmt, gotTheLock ? "holding"
+						: "failed-to-acquire", lockObject, location));
+			}
+		} finally {
+			tl_withinStore.set(Boolean.FALSE);
 		}
 	}
 
-	private static boolean isUCLockAcquisitionMethod(final Method method) {
-		if (("lock".equals(method.getName()) || "lockInterruptibly"
-				.equals(method.getName()))
-				&& method.getParameterTypes().length == 0) {
-			return true;
-		}
-		if ("tryLock".equals(method.getName())
-				&& (method.getParameterTypes().length == 0 || method
-						.getParameterTypes().length == 2)) {
-			return true;
-		}
-		return false;
-	}
-
-	private static void afterUCLockRelease(final Lock lockObject,
-			final SrcLoc location) {
-		if (DEBUG) {
-			final String fmt = "Store.afterUCLockRelease(%n\t\tlockObject=%s%n\t\tlocation=%s)";
-			log(String.format(fmt, lockObject, location));
+	public static void afterUCLockRelease(final boolean releasedTheLock,
+			final Object lockObject, Class<?> withinClass, final int line) {
+		if (f_flashlightIsNotInitialized)
+			return;
+		if (FL_OFF.get())
+			return;
+		if (tl_withinStore.get().booleanValue())
+			return;
+		tl_withinStore.set(Boolean.TRUE);
+		try {
+			final SrcLoc location = new SrcLoc(withinClass, line);
+			if (DEBUG) {
+				/*
+				 * Implementation note: We are counting on the implementer of
+				 * the util.concurrent Lock object to not have a bad toString()
+				 * method.
+				 */
+				final String fmt = "Store.afterUCLockRelease(%n\t\t%s%n\t\tlockObject=%s%n\t\tlocation=%s)";
+				log(String.format(fmt, releasedTheLock ? "released"
+						: "failed-to-release", lockObject, location));
+			}
+		} finally {
+			tl_withinStore.set(Boolean.FALSE);
 		}
 	}
 

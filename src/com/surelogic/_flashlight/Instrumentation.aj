@@ -2,10 +2,12 @@ package com.surelogic._flashlight;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 
-import org.aspectj.lang.*;
-import org.aspectj.lang.reflect.*;
+import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.Signature;
+import org.aspectj.lang.reflect.ConstructorSignature;
+import org.aspectj.lang.reflect.FieldSignature;
+import org.aspectj.lang.reflect.SourceLocation;
 
 public aspect Instrumentation {
 
@@ -47,9 +49,26 @@ public aspect Instrumentation {
 	pointcut intrinsicLock(Object o) : lock() && args(o) && nofl();
 
 	/**
+	 * Instrument waiting on an intrinsic lock. See the Java Language
+	 * Specification (3rd edition) section 17.8 <i>Wait Sets and Notification</i>
+	 * for the semantics of waiting on an intrinsic lock.
+	 */
+	pointcut intrinsicWait() : (
+			call(public void wait()) ||
+	        call(public void wait(long)) ||
+			call(public void wait(long, int))
+			) && nofl();
+
+	/**
 	 * Instrument intrinsic lock release.
 	 */
 	pointcut intrinsicUnlock(Object o) : unlock() && args(o) && nofl();
+
+	pointcut ucLock() : (call(public void java.util.concurrent.locks.Lock.lock()) || call(public void java.util.concurrent.locks.Lock.lockInterruptibly())) && nofl();
+
+	pointcut ucTryLock() : call(public boolean java.util.concurrent.locks.Lock.tryLock(..)) && nofl();
+
+	pointcut ucUnlock() : call(public void java.util.concurrent.locks.Lock.unlock()) && nofl();
 
 	/*
 	 * Advice
@@ -79,6 +98,15 @@ public aspect Instrumentation {
 		beforeIntrinsicLockHelper(o, thisJoinPoint, thisJoinPointStaticPart);
 	}
 
+	before() : intrinsicWait() {
+		intrinsicWaitHelper(true, thisJoinPoint, thisJoinPointStaticPart);
+	}
+
+	before() : ucLock()  || ucTryLock() {
+		beforeUCLockAcquisitionAttemptHelper(thisJoinPoint,
+				thisJoinPointStaticPart);
+	}
+
 	after() : getField() {
 		fieldAccessHelper(true, thisJoinPoint, thisJoinPointStaticPart);
 	}
@@ -106,8 +134,40 @@ public aspect Instrumentation {
 		afterIntrinisicLockHelper(true, o, thisJoinPointStaticPart);
 	}
 
+	after() : intrinsicWait() {
+		intrinsicWaitHelper(false, thisJoinPoint, thisJoinPointStaticPart);
+	}
+
 	after(Object o) : intrinsicUnlock(o) {
 		afterIntrinisicLockHelper(false, o, thisJoinPointStaticPart);
+	}
+
+	after() returning : ucLock() {
+		afterUCLockAcquisitionAttemptHelper(true, thisJoinPoint,
+				thisJoinPointStaticPart);
+	}
+
+	after() throwing : ucLock() {
+		afterUCLockAcquisitionAttemptHelper(false, thisJoinPoint,
+				thisJoinPointStaticPart);
+	}
+
+	after() returning(boolean gotTheLock) : ucTryLock() {
+		afterUCLockAcquisitionAttemptHelper(gotTheLock, thisJoinPoint,
+				thisJoinPointStaticPart);
+	}
+
+	after() throwing : ucTryLock() {
+		afterUCLockAcquisitionAttemptHelper(false, thisJoinPoint,
+				thisJoinPointStaticPart);
+	}
+
+	after() returning : ucUnlock() {
+		afterUCLockReleaseHelper(true, thisJoinPoint, thisJoinPointStaticPart);
+	}
+
+	after() throwing : ucUnlock() {
+		afterUCLockReleaseHelper(false, thisJoinPoint, thisJoinPointStaticPart);
 	}
 
 	/*
@@ -150,14 +210,11 @@ public aspect Instrumentation {
 			final JoinPoint.StaticPart jpsp,
 			final JoinPoint.StaticPart enclosing) {
 		final Signature enclosingSignature = enclosing.getSignature();
-		final MethodSignature methodSignature = (MethodSignature) jpsp
-				.getSignature();
-		final Method method = methodSignature.getMethod();
 		final Object receiver = jp.getTarget();
 		final SourceLocation sl = jpsp.getSourceLocation();
 		final String enclosingLocationName = enclosingSignature.getName();
 		final String enclosingFileName = sl.getFileName();
-		Store.methodCall(before, method, receiver, enclosingFileName,
+		Store.methodCall(before, receiver, enclosingFileName,
 				enclosingLocationName, sl.getWithinType(), sl.getLine());
 	}
 
@@ -186,5 +243,38 @@ public aspect Instrumentation {
 			Store
 					.afterIntrinsicLockRelease(o, sl.getWithinType(), sl
 							.getLine());
+	}
+
+	void intrinsicWaitHelper(final boolean before, final JoinPoint jp,
+			final JoinPoint.StaticPart jpsp) {
+		final Object oThis = jp.getThis();
+		final SourceLocation sl = jpsp.getSourceLocation();
+		Store
+				.intrinsicLockWait(before, oThis, sl.getWithinType(), sl
+						.getLine());
+	}
+
+	void beforeUCLockAcquisitionAttemptHelper(final JoinPoint jp,
+			final JoinPoint.StaticPart jpsp) {
+		final Object oThis = jp.getThis();
+		final SourceLocation sl = jpsp.getSourceLocation();
+		Store.beforeUCLockAcquisitionAttempt(oThis, sl.getWithinType(), sl
+				.getLine());
+	}
+
+	void afterUCLockAcquisitionAttemptHelper(final boolean gotTheLock,
+			final JoinPoint jp, final JoinPoint.StaticPart jpsp) {
+		final Object oThis = jp.getThis();
+		final SourceLocation sl = jpsp.getSourceLocation();
+		Store.afterUCLockAcquisitionAttempt(gotTheLock, oThis, sl
+				.getWithinType(), sl.getLine());
+	}
+
+	void afterUCLockReleaseHelper(final boolean releasedTheLock,
+			final JoinPoint jp, final JoinPoint.StaticPart jpsp) {
+		final Object oThis = jp.getThis();
+		final SourceLocation sl = jpsp.getSourceLocation();
+		Store.afterUCLockRelease(releasedTheLock, oThis, sl.getWithinType(), sl
+				.getLine());
 	}
 }

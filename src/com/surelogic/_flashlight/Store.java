@@ -68,7 +68,7 @@ public final class Store {
 	 * This flag generates a lot of output and should only be set to
 	 * {@code true} for small test programs.
 	 */
-	public static final boolean DEBUG = false;
+	public static final boolean DEBUG = true;
 
 	/**
 	 * Logs a message if logging is enabled.
@@ -832,8 +832,8 @@ public final class Store {
 		}
 	}
 
-	public static void beforeUCLockAcquisitionAttempt(final Object lockObject,
-			Class<?> withinClass, final int line) {
+	public static void beforeUtilConcurrentLockAcquisitionAttempt(
+			final Object lockObject, Class<?> withinClass, final int line) {
 		if (f_flashlightIsNotInitialized)
 			return;
 		if (FL_OFF.get())
@@ -857,8 +857,9 @@ public final class Store {
 		}
 	}
 
-	public static void afterUCLockAcquisitionAttempt(final boolean gotTheLock,
-			final Object lockObject, Class<?> withinClass, final int line) {
+	public static void afterUtilConcurrentLockAcquisitionAttempt(
+			final boolean gotTheLock, final Object lockObject,
+			Class<?> withinClass, final int line) {
 		if (f_flashlightIsNotInitialized)
 			return;
 		if (FL_OFF.get())
@@ -874,7 +875,7 @@ public final class Store {
 				 * the util.concurrent Lock object to not have a bad toString()
 				 * method.
 				 */
-				final String fmt = "Store.afterUCLockAcquisitionAttempt(%n\t\t%s%n\t\tlockObject=%s%n\t\tmethod=%s%n\t\tlocation=%s)";
+				final String fmt = "Store.afterUCLockAcquisitionAttempt(%n\t\t%s%n\t\tlockObject=%s%n\t\tlocation=%s)";
 				log(String.format(fmt, gotTheLock ? "holding"
 						: "failed-to-acquire", lockObject, location));
 			}
@@ -883,8 +884,9 @@ public final class Store {
 		}
 	}
 
-	public static void afterUCLockRelease(final boolean releasedTheLock,
-			final Object lockObject, Class<?> withinClass, final int line) {
+	public static void afterUtilConcurrentLockReleaseAttempt(
+			final boolean releasedTheLock, final Object lockObject,
+			Class<?> withinClass, final int line) {
 		if (f_flashlightIsNotInitialized)
 			return;
 		if (FL_OFF.get())

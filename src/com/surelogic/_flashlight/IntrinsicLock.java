@@ -1,15 +1,13 @@
 package com.surelogic._flashlight;
 
-import java.lang.ref.PhantomReference;
-
 abstract class IntrinsicLock extends WithinThreadEvent {
 
 	/**
-	 * The object being synchronized on.
+	 * Phantom reference of the object being synchronized on.
 	 */
 	private final IdPhantomReference f_lockObject;
 
-	PhantomReference getLockObject() {
+	IdPhantomReference getLockObject() {
 		return f_lockObject;
 	}
 

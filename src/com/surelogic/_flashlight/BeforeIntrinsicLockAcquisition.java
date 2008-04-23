@@ -42,9 +42,9 @@ final class BeforeIntrinsicLockAcquisition extends IntrinsicLock {
 		addNanoTime(b);
 		addThread(b);
 		addLock(b);
-		if (isLockThis())
+		if (f_lockIsThis)
 			Entities.addAttribute("lock-is-this", "yes", b);
-		if (isLockClass())
+		if (f_lockIsClass)
 			Entities.addAttribute("lock-is-class", "yes", b);
 		b.append("/>");
 		return b.toString();

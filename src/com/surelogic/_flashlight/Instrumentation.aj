@@ -163,11 +163,13 @@ public aspect Instrumentation {
 	}
 
 	after() returning : ucUnlock() {
-		afterUCLockReleaseHelper(true, thisJoinPoint, thisJoinPointStaticPart);
+		afterUCLockReleaseAttemptHelper(true, thisJoinPoint,
+				thisJoinPointStaticPart);
 	}
 
 	after() throwing : ucUnlock() {
-		afterUCLockReleaseHelper(false, thisJoinPoint, thisJoinPointStaticPart);
+		afterUCLockReleaseAttemptHelper(false, thisJoinPoint,
+				thisJoinPointStaticPart);
 	}
 
 	/*
@@ -247,34 +249,33 @@ public aspect Instrumentation {
 
 	void intrinsicWaitHelper(final boolean before, final JoinPoint jp,
 			final JoinPoint.StaticPart jpsp) {
-		final Object oThis = jp.getThis();
+		final Object receiver = jp.getTarget();
 		final SourceLocation sl = jpsp.getSourceLocation();
-		Store
-				.intrinsicLockWait(before, oThis, sl.getWithinType(), sl
-						.getLine());
+		Store.intrinsicLockWait(before, receiver, sl.getWithinType(), sl
+				.getLine());
 	}
 
 	void beforeUCLockAcquisitionAttemptHelper(final JoinPoint jp,
 			final JoinPoint.StaticPart jpsp) {
-		final Object oThis = jp.getThis();
+		final Object receiver = jp.getTarget();
 		final SourceLocation sl = jpsp.getSourceLocation();
-		Store.beforeUCLockAcquisitionAttempt(oThis, sl.getWithinType(), sl
-				.getLine());
+		Store.beforeUtilConcurrentLockAcquisitionAttempt(receiver, sl
+				.getWithinType(), sl.getLine());
 	}
 
 	void afterUCLockAcquisitionAttemptHelper(final boolean gotTheLock,
 			final JoinPoint jp, final JoinPoint.StaticPart jpsp) {
-		final Object oThis = jp.getThis();
+		final Object receiver = jp.getTarget();
 		final SourceLocation sl = jpsp.getSourceLocation();
-		Store.afterUCLockAcquisitionAttempt(gotTheLock, oThis, sl
-				.getWithinType(), sl.getLine());
+		Store.afterUtilConcurrentLockAcquisitionAttempt(gotTheLock, receiver,
+				sl.getWithinType(), sl.getLine());
 	}
 
-	void afterUCLockReleaseHelper(final boolean releasedTheLock,
+	void afterUCLockReleaseAttemptHelper(final boolean releasedTheLock,
 			final JoinPoint jp, final JoinPoint.StaticPart jpsp) {
-		final Object oThis = jp.getThis();
+		final Object receiver = jp.getTarget();
 		final SourceLocation sl = jpsp.getSourceLocation();
-		Store.afterUCLockRelease(releasedTheLock, oThis, sl.getWithinType(), sl
-				.getLine());
+		Store.afterUtilConcurrentLockReleaseAttempt(releasedTheLock, receiver,
+				sl.getWithinType(), sl.getLine());
 	}
 }

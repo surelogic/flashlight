@@ -32,10 +32,10 @@ public class TestBasicSharedState extends TestCase {
 				// ignore, just go
 			}
 			for (int i = 0; i < EVENTS; i++) {
-				Store.fieldAccess(true, o1, f_i, null);
-				Store.fieldAccess(false, o1, f_i, null);
-				Store.fieldAccess(true, null, f_s, null);
-				Store.fieldAccess(false, null, f_s, null);
+				Store.fieldAccess(true, o1, f_i, null, 1);
+				Store.fieldAccess(false, o1, f_i, null, 1);
+				Store.fieldAccess(true, null, f_s, null, 1);
+				Store.fieldAccess(false, null, f_s, null, 1);
 			}
 			endGate.countDown();
 		}

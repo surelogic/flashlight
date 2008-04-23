@@ -120,8 +120,8 @@ public aspect Instrumentation {
 		final Object receiver = jp.getTarget();
 		final SourceLocation sl = jpsp.getSourceLocation();
 		final Field field = signature.getField();
-		final SrcLoc location = new SrcLoc(sl.getWithinType(), sl.getLine());
-		Store.fieldAccess(read, receiver, field, location);
+		Store.fieldAccess(read, receiver, field, sl.getWithinType(), sl
+				.getLine());
 	}
 
 	void constructorCallHelper(final boolean before,
@@ -134,17 +134,16 @@ public aspect Instrumentation {
 		final SourceLocation sl = jpsp.getSourceLocation();
 		final String enclosingLocationName = enclosingSignature.getName();
 		final String enclosingFileName = sl.getFileName();
-		final SrcLoc location = new SrcLoc(sl.getWithinType(), sl.getLine());
 		Store.constructorCall(before, constructor, enclosingFileName,
-				enclosingLocationName, location);
+				enclosingLocationName, sl.getWithinType(), sl.getLine());
 	}
 
 	void constructorExecutionHelper(final boolean before, final JoinPoint jp,
 			final JoinPoint.StaticPart jpsp) {
 		final Object receiver = jp.getTarget();
 		final SourceLocation sl = jpsp.getSourceLocation();
-		final SrcLoc location = new SrcLoc(sl.getWithinType(), sl.getLine());
-		Store.constructorExecution(before, receiver, location);
+		Store.constructorExecution(before, receiver, sl.getWithinType(), sl
+				.getLine());
 	}
 
 	void methodCallHelper(final boolean before, final JoinPoint jp,
@@ -158,9 +157,8 @@ public aspect Instrumentation {
 		final SourceLocation sl = jpsp.getSourceLocation();
 		final String enclosingLocationName = enclosingSignature.getName();
 		final String enclosingFileName = sl.getFileName();
-		final SrcLoc location = new SrcLoc(sl.getWithinType(), sl.getLine());
 		Store.methodCall(before, method, receiver, enclosingFileName,
-				enclosingLocationName, location);
+				enclosingLocationName, sl.getWithinType(), sl.getLine());
 	}
 
 	void beforeIntrinsicLockHelper(final Object o, final JoinPoint jp,
@@ -168,24 +166,25 @@ public aspect Instrumentation {
 		final Object oThis = jp.getThis();
 		final boolean lockIsThis = (oThis == null ? false : oThis == o);
 		final SourceLocation sl = jpsp.getSourceLocation();
-		final SrcLoc location = new SrcLoc(sl.getWithinType(), sl.getLine());
 		boolean lockIsClass = false;
 		if (!lockIsThis) {
 			final Class oClass = sl.getWithinType();
 			if (oClass == o)
 				lockIsClass = true;
 		}
-		Store.beforeIntrinsicLockAcquisition(o, lockIsThis, lockIsClass,
-				location);
+		Store.beforeIntrinsicLockAcquisition(o, lockIsThis, lockIsClass, sl
+				.getWithinType(), sl.getLine());
 	}
 
 	void afterIntrinisicLockHelper(final boolean lockAcquisition,
 			final Object o, final JoinPoint.StaticPart jpsp) {
 		final SourceLocation sl = jpsp.getSourceLocation();
-		final SrcLoc location = new SrcLoc(sl.getWithinType(), sl.getLine());
 		if (lockAcquisition)
-			Store.afterIntrinsicLockAcquisition(o, location);
+			Store.afterIntrinsicLockAcquisition(o, sl.getWithinType(), sl
+					.getLine());
 		else
-			Store.afterIntrinsicLockRelease(o, location);
+			Store
+					.afterIntrinsicLockRelease(o, sl.getWithinType(), sl
+							.getLine());
 	}
 }

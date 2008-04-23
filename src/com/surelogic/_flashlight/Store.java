@@ -371,12 +371,13 @@ public final class Store {
 	 *            {@code null} if the field is {@code static}.
 	 * @param field
 	 *            a field within the instrumented program.
-	 * @param location
-	 *            the source location of where the field read occurred, may be
-	 *            {@code null}.
+	 * @param withinClass
+	 *            the class where the event occurred, may be {@code null}.
+	 * @param line
+	 *            the line number where the event occurred.
 	 */
 	public static void fieldAccess(final boolean read, final Object receiver,
-			final Field field, final SrcLoc location) {
+			final Field field, Class<?> withinClass, final int line) {
 		if (f_flashlightIsNotInitialized)
 			return;
 		if (FL_OFF.get())
@@ -385,6 +386,7 @@ public final class Store {
 			return;
 		tl_withinStore.set(Boolean.TRUE);
 		try {
+			final SrcLoc location = new SrcLoc(withinClass, line);
 			if (DEBUG) {
 				final String fmt = "Store.fieldAccess(%n\t\t%s%n\t\treceiver=%s%n\t\tfield=%s%n\t\tlocation=%s)";
 				log(String.format(fmt, read ? "read" : "write",
@@ -439,13 +441,15 @@ public final class Store {
 	 * @param enclosingLocationName
 	 *            the name of the method, constructor, or initializer where the
 	 *            constructor call occurred.
-	 * @param location
-	 *            the source location of where the constructor call occurred,
-	 *            may be {@code null}.
+	 * @param withinClass
+	 *            the class where the event occurred, may be {@code null}.
+	 * @param line
+	 *            the line number where the event occurred.
 	 */
 	public static void constructorCall(final boolean before,
 			final Constructor constructor, final String enclosingFileName,
-			final String enclosingLocationName, final SrcLoc location) {
+			final String enclosingLocationName, Class<?> withinClass,
+			final int line) {
 		if (f_flashlightIsNotInitialized)
 			return;
 		if (FL_OFF.get())
@@ -454,6 +458,7 @@ public final class Store {
 			return;
 		tl_withinStore.set(Boolean.TRUE);
 		try {
+			final SrcLoc location = new SrcLoc(withinClass, line);
 			if (DEBUG) {
 				final String fmt = "Store.constructorCall(%n\t\t%s%n\t\tconstructor=%s%n\t\tenclosingFileName=%s%n\t\tenclosingLocationName=%s%n\t\tlocation=%s)";
 				log(String.format(fmt, before ? "before" : "after",
@@ -505,12 +510,13 @@ public final class Store {
 	 *            constructor execution.
 	 * @param receiver
 	 *            the object under construction.
-	 * @param location
-	 *            the source location of where the constructor execution
-	 *            occurred, may be {@code null}.
+	 * @param withinClass
+	 *            the class where the event occurred, may be {@code null}.
+	 * @param line
+	 *            the line number where the event occurred.
 	 */
 	public static void constructorExecution(final boolean before,
-			final Object receiver, final SrcLoc location) {
+			final Object receiver, Class<?> withinClass, final int line) {
 		if (f_flashlightIsNotInitialized)
 			return;
 		if (FL_OFF.get())
@@ -519,6 +525,7 @@ public final class Store {
 			return;
 		tl_withinStore.set(Boolean.TRUE);
 		try {
+			final SrcLoc location = new SrcLoc(withinClass, line);
 			if (DEBUG) {
 				final String fmt = "Store.constructorExecution(%n\t\t%s%n\t\treceiver=%s%n\t\tlocation=%s)";
 				log(String.format(fmt, before ? "before" : "after",
@@ -568,13 +575,15 @@ public final class Store {
 	 * @param enclosingLocationName
 	 *            the name of the method, constructor, or initializer where the
 	 *            method call occurred.
-	 * @param location
-	 *            the source location of where the method call occurred, may be
-	 *            {@code null}.
+	 * @param withinClass
+	 *            the class where the event occurred, may be {@code null}.
+	 * @param line
+	 *            the line number where the event occurred.
 	 */
 	public static void methodCall(final boolean before, final Method method,
 			final Object receiver, final String enclosingFileName,
-			final String enclosingLocationName, final SrcLoc location) {
+			final String enclosingLocationName, Class<?> withinClass,
+			final int line) {
 		if (f_flashlightIsNotInitialized)
 			return;
 		if (FL_OFF.get())
@@ -583,6 +592,7 @@ public final class Store {
 			return;
 		tl_withinStore.set(Boolean.TRUE);
 		try {
+			final SrcLoc location = new SrcLoc(withinClass, line);
 			if (DEBUG) {
 				final String fmt = "Store.methodCall(%n\t\t%s%n\t\tmethod=%s%n\t\treceiver=%s%n\t\tenclosingFileName=%s%n\t\tenclosingLocationName=%s%n\t\tlocation=%s)";
 				log(String.format(fmt, before ? "before" : "after", method,
@@ -684,13 +694,14 @@ public final class Store {
 	 * @param lockIsClass
 	 *            {@code true} if the lock object is dynamically the same as the
 	 *            class the method is declared within, {@code false} otherwise.
-	 * @param location
-	 *            the source location of where the event occurred, may be
-	 *            {@code null}.
+	 * @param withinClass
+	 *            the class where the event occurred, may be {@code null}.
+	 * @param line
+	 *            the line number where the event occurred.
 	 */
 	public static void beforeIntrinsicLockAcquisition(final Object lockObject,
 			final boolean lockIsThis, final boolean lockIsClass,
-			final SrcLoc location) {
+			Class<?> withinClass, final int line) {
 		if (f_flashlightIsNotInitialized)
 			return;
 		if (FL_OFF.get())
@@ -699,6 +710,7 @@ public final class Store {
 			return;
 		tl_withinStore.set(Boolean.TRUE);
 		try {
+			final SrcLoc location = new SrcLoc(withinClass, line);
 			if (DEBUG) {
 				final String fmt = "Store.beforeIntrinsicLockAcquisition(%n\t\tlockObject=%s%n\t\tlockIsThis=%b%n\t\tlockIsClass=%b%n\t\tlocation=%s)";
 				log(String.format(fmt, safeToString(lockObject), lockIsThis,
@@ -728,12 +740,13 @@ public final class Store {
 	 * 
 	 * @param lockObject
 	 *            the object being synchronized (i.e., the lock).
-	 * @param location
-	 *            the source location of where the event occurred, may be
-	 *            {@code null}.
+	 * @param withinClass
+	 *            the class where the event occurred, may be {@code null}.
+	 * @param line
+	 *            the line number where the event occurred.
 	 */
 	public static void afterIntrinsicLockAcquisition(final Object lockObject,
-			final SrcLoc location) {
+			Class<?> withinClass, final int line) {
 		if (f_flashlightIsNotInitialized)
 			return;
 		if (FL_OFF.get())
@@ -742,6 +755,7 @@ public final class Store {
 			return;
 		tl_withinStore.set(Boolean.TRUE);
 		try {
+			final SrcLoc location = new SrcLoc(withinClass, line);
 			if (DEBUG) {
 				final String fmt = "Store.afterIntrinsicLockAcquisition(%n\t\tlockObject=%s%n\t\tlocation=%s)";
 				log(String.format(fmt, safeToString(lockObject), location));
@@ -847,12 +861,13 @@ public final class Store {
 	 * 
 	 * @param lockObject
 	 *            the object being synchronized (i.e., the lock).
-	 * @param location
-	 *            the source location of where the event occurred, may be
-	 *            {@code null}.
+	 * @param withinClass
+	 *            the class where the event occurred, may be {@code null}.
+	 * @param line
+	 *            the line number where the event occurred.
 	 */
 	public static void afterIntrinsicLockRelease(final Object lockObject,
-			final SrcLoc location) {
+			Class<?> withinClass, final int line) {
 		if (f_flashlightIsNotInitialized)
 			return;
 		if (FL_OFF.get())
@@ -861,6 +876,7 @@ public final class Store {
 			return;
 		tl_withinStore.set(Boolean.TRUE);
 		try {
+			final SrcLoc location = new SrcLoc(withinClass, line);
 			if (DEBUG) {
 				final String fmt = "Store.afterIntrinsicLockRelease(%n\t\tlockObject=%s%n\t\tlocation=%s)";
 				log(String.format(fmt, safeToString(lockObject), location));

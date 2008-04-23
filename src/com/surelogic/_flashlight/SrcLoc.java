@@ -11,7 +11,7 @@ final class SrcLoc {
 	}
 
 	private final ClassPhantomReference f_withinClass;
-	
+
 	long getWithinClassId() {
 		return f_withinClass.getId();
 	}

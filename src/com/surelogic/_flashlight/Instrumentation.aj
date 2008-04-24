@@ -80,13 +80,13 @@ public aspect Instrumentation {
 	 * store.
 	 */
 
+	before() : constructorExecution() {
+		constructorExecutionHelper(true, thisJoinPoint, thisJoinPointStaticPart);
+	}
+
 	before() : constructor() {
 		constructorCallHelper(true, thisJoinPointStaticPart,
 				thisEnclosingJoinPointStaticPart);
-	}
-
-	before() : constructorExecution() {
-		constructorExecutionHelper(true, thisJoinPoint, thisJoinPointStaticPart);
 	}
 
 	before() : method() {
@@ -113,33 +113,6 @@ public aspect Instrumentation {
 
 	after() : setField() {
 		fieldAccessHelper(false, thisJoinPoint, thisJoinPointStaticPart);
-	}
-
-	after() : constructor() {
-		constructorCallHelper(false, thisJoinPointStaticPart,
-				thisEnclosingJoinPointStaticPart);
-	}
-
-	after() : constructorExecution() {
-		constructorExecutionHelper(false, thisJoinPoint,
-				thisJoinPointStaticPart);
-	}
-
-	after() : method() {
-		methodCallHelper(false, thisJoinPoint, thisJoinPointStaticPart,
-				thisEnclosingJoinPointStaticPart);
-	}
-
-	after(Object o) : intrinsicLock(o) {
-		afterIntrinisicLockHelper(true, o, thisJoinPointStaticPart);
-	}
-
-	after() : intrinsicWait() {
-		intrinsicWaitHelper(false, thisJoinPoint, thisJoinPointStaticPart);
-	}
-
-	after(Object o) : intrinsicUnlock(o) {
-		afterIntrinisicLockHelper(false, o, thisJoinPointStaticPart);
 	}
 
 	after() returning : ucLock() {
@@ -169,6 +142,33 @@ public aspect Instrumentation {
 
 	after() throwing : ucUnlock() {
 		afterUCLockReleaseAttemptHelper(false, thisJoinPoint,
+				thisJoinPointStaticPart);
+	}
+
+	after(Object o) : intrinsicLock(o) {
+		afterIntrinisicLockHelper(true, o, thisJoinPointStaticPart);
+	}
+
+	after() : intrinsicWait() {
+		intrinsicWaitHelper(false, thisJoinPoint, thisJoinPointStaticPart);
+	}
+
+	after(Object o) : intrinsicUnlock(o) {
+		afterIntrinisicLockHelper(false, o, thisJoinPointStaticPart);
+	}
+
+	after() : method() {
+		methodCallHelper(false, thisJoinPoint, thisJoinPointStaticPart,
+				thisEnclosingJoinPointStaticPart);
+	}
+
+	after() : constructor() {
+		constructorCallHelper(false, thisJoinPointStaticPart,
+				thisEnclosingJoinPointStaticPart);
+	}
+
+	after() : constructorExecution() {
+		constructorExecutionHelper(false, thisJoinPoint,
 				thisJoinPointStaticPart);
 	}
 

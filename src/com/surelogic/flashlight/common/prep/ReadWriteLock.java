@@ -67,8 +67,9 @@ public class ReadWriteLock extends TrackUnreferenced {
 	private void insert(int runId, long id, long readLock, long writeLock) {
 		try {
 			f_ps.setLong(1, runId);
-			f_ps.setLong(2, readLock);
-			f_ps.setLong(3, writeLock);
+			f_ps.setLong(2, id);
+			f_ps.setLong(3, readLock);
+			f_ps.setLong(4, writeLock);
 			f_ps.execute();
 		} catch (final SQLException e) {
 			SLLogger.getLogger().log(Level.SEVERE,

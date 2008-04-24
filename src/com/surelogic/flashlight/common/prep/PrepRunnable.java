@@ -40,10 +40,13 @@ public final class PrepRunnable implements Runnable {
 			new AfterIntrinsicLockWait(beforeTrace),
 			new AfterIntrinsisLockRelease(beforeTrace),
 			new BeforeIntrinsicLockAcquisition(beforeTrace),
-			new BeforeIntrinsicLockWait(beforeTrace), new ClassDefinition(),
-			new FieldDefinition(), new FieldRead(beforeTrace),
-			new FieldWrite(beforeTrace), new ObjectDefinition(),
-			new ThreadDefinition() };
+			new BeforeIntrinsicLockWait(beforeTrace),
+			new BeforeUtilConcurrentLockAquisitionAttempt(beforeTrace),
+			new AfterUtilConcurrentLockAcquisitionAttempt(beforeTrace),
+			new AfterUtilConcurrentLockReleaseAttempt(beforeTrace),
+			new ReadWriteLock(), new ClassDefinition(), new FieldDefinition(),
+			new FieldRead(beforeTrace), new FieldWrite(beforeTrace),
+			new ObjectDefinition(), new ThreadDefinition() };
 
 	final Raw f_raw;
 	final SLProgressMonitor monitor;
@@ -174,6 +177,13 @@ public final class PrepRunnable implements Runnable {
 						for (int i = 1; i <= 3; i++) {
 							deleteFields.setInt(i, runId);
 						}
+						final String deletion = "DELETE FROM OBJECT WHERE RUN = 1 AND "
+								+ "ID IN "
+								+ "((SELECT ID FROM OBJECT WHERE RUN = 1 AND FLAG = 'O' "
+								+ "EXCEPT "
+								+ "SELECT LOCK FROM ILOCK WHERE RUN = 1) "
+								+ "   EXCEPT "
+								+ " SELECT RECEIVER FROM ACCESS WHERE RUN = 1)";
 						System.out.printf("Unreference fields deleted: %d\n",
 								deleteFields.executeUpdate());
 						monitor.worked(1);

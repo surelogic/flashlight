@@ -15,7 +15,7 @@ public class AfterUtilConcurrentLockReleaseAttempt extends UtilConcurrentLock {
 
 	@Override
 	protected Boolean parseSuccess(Attributes attr) {
-		return Boolean.parseBoolean(attr.getValue("released-the-lock"));
+		return "yes".equals(attr.getValue("released-the-lock"));
 	}
 
 	public String getXMLElementName() {

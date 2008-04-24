@@ -3,6 +3,7 @@ DROP TABLE ILOCKCYCLE
 
 create table ILOCKCYCLE ( -- derived from ILOCKSHELD to find locks involved in cycles
   Run          INT       NOT NULL CONSTRAINT ILOCKCYCLE_Run_FK REFERENCES RUN (Run),  
+  Component    INT       NOT NULL,
   LockHeld     BIGINT    NOT NULL, 
   LockAcquired BIGINT    NOT NULL, 
   Count        BIGINT    NOT NULL, 

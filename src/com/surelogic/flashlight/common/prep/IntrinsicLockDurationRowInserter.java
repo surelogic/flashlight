@@ -24,7 +24,7 @@ public final class IntrinsicLockDurationRowInserter {
 	  "INSERT INTO ILOCKDURATION VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
 	  "INSERT INTO ILOCKSHELD VALUES (?, ?, ?, ?, ?)",
       "INSERT INTO ILOCKTHREADSTATS VALUES (?, ?, ?, ?, ?, ?)",
-	  "INSERT INTO ILOCKCYCLE VALUES (?, ?, ?, ?, ?, ?)",
+	  "INSERT INTO ILOCKCYCLE VALUES (?, ?, ?, ?, ?, ?, ?)",
     };
     private static final PreparedStatement[] statements = 
     	new PreparedStatement[queries.length];
@@ -110,18 +110,21 @@ public final class IntrinsicLockDurationRowInserter {
 			
 			StrongConnectivityInspector<Long, Edge> inspector = 
 				new StrongConnectivityInspector<Long, Edge>(lockGraph);
+			int compId = 0;
 			for(DirectedSubgraph<Long, Edge> comp :
 				inspector.stronglyConnectedSubgraphs()) {
 				for(Edge e : comp.edgeSet()) {
 					// Should only be output once
 					f_cyclePS.setInt(1, runId);
-					f_cyclePS.setLong(2, e.lockHeld);
-					f_cyclePS.setLong(3, e.lockAcquired);
-					f_cyclePS.setLong(4, e.count);
-					f_cyclePS.setTimestamp(5, e.first);
-					f_cyclePS.setTimestamp(6, e.last);
+					f_cyclePS.setInt(2, compId);
+					f_cyclePS.setLong(3, e.lockHeld);
+					f_cyclePS.setLong(4, e.lockAcquired);
+					f_cyclePS.setLong(5, e.count);
+					f_cyclePS.setTimestamp(6, e.first);
+					f_cyclePS.setTimestamp(7, e.last);
 					f_cyclePS.executeUpdate();
 				}
+				compId++;
 			}
 		}
 	}

@@ -34,8 +34,8 @@ public abstract class Lock extends Event {
 		long inClass = -1;
 		int lineNumber = -1;
 		long lock = -1;
-		Boolean lockIsThis = null;
-		Boolean lockIsClass = null;
+		Boolean lockIsThis = false;
+		Boolean lockIsClass = false;
 		Boolean success = null;
 		if (attributes != null) {
 			for (int i = 0; i < attributes.getLength(); i++) {
@@ -53,14 +53,16 @@ public abstract class Lock extends Event {
 					lock = Long.parseLong(aValue);
 				} else if ("lock-is-this".equals(aName)) {
 					lockIsThis = true;
-					lockIsClass = false;
 				} else if ("lock-is-class".equals(aName)) {
-					lockIsThis = false;
 					lockIsClass = true;
 				} else if ("released-the-lock".equals(aName)) {
 					success = "yes".equals(aValue);
+					lockIsThis = null;
+					lockIsClass = null;
 				} else if ("got-the-lock".equals(aName)) {
 					success = "yes".equals(aValue);
+					lockIsThis = null;
+					lockIsClass = null;
 				}
 			}
 		}

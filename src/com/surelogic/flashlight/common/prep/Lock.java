@@ -12,16 +12,19 @@ import org.xml.sax.Attributes;
 import com.surelogic.common.jdbc.JDBCUtils;
 import com.surelogic.common.logging.SLLogger;
 
-public abstract class UtilConcurrentLock extends Event {
-	private static final String f_psQ = "INSERT INTO UCLOCK (Run,Id,TS,InThread,InClass,AtLine,Lock,Type,Success) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+public abstract class Lock extends Event {
+
+	private static final String f_psQ = "INSERT INTO LOCK (Run,Id,TS,InThread,InClass,AtLine,Lock,Type,State,Success,LockIsThis,LockIsClass) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?)";
 
 	private static long f_id;
 
 	private static PreparedStatement f_ps;
 
+	private static IntrinsicLockDurationRowInserter f_rowInserter;
+
 	private final BeforeTrace before;
 
-	public UtilConcurrentLock(BeforeTrace before) {
+	public Lock(BeforeTrace before) {
 		this.before = before;
 	}
 
@@ -31,6 +34,9 @@ public abstract class UtilConcurrentLock extends Event {
 		long inClass = -1;
 		int lineNumber = -1;
 		long lock = -1;
+		Boolean lockIsThis = null;
+		Boolean lockIsClass = null;
+		Boolean success = null;
 		if (attributes != null) {
 			for (int i = 0; i < attributes.getLength(); i++) {
 				final String aName = attributes.getQName(i);
@@ -45,6 +51,16 @@ public abstract class UtilConcurrentLock extends Event {
 					lineNumber = Integer.parseInt(aValue);
 				} else if ("lock".equals(aName)) {
 					lock = Long.parseLong(aValue);
+				} else if ("lock-is-this".equals(aName)) {
+					lockIsThis = true;
+					lockIsClass = false;
+				} else if ("lock-is-class".equals(aName)) {
+					lockIsThis = false;
+					lockIsClass = true;
+				} else if ("released-the-lock".equals(aName)) {
+					success = "yes".equals(aValue);
+				} else if ("got-the-lock".equals(aName)) {
+					success = "yes".equals(aValue);
 				}
 			}
 		}
@@ -52,37 +68,43 @@ public abstract class UtilConcurrentLock extends Event {
 				|| lineNumber == -1 || lock == -1) {
 			SLLogger.getLogger().log(
 					Level.SEVERE,
-					"Missing nano-time, thread, file, line, or lock in "
+					"Missing nano-time, thread, file, line or lock in "
 							+ getXMLElementName());
 			return;
 		}
 		final long id = f_id++;
 		final Timestamp time = getTimestamp(nanoTime);
 		before.threadEvent(inThread);
-		insert(runId, id, time, inThread, inClass, lineNumber, lock, getType(),
-				parseSuccess(attributes));
+		insert(runId, id, time, inThread, inClass, lineNumber, lock, success,
+				lockIsThis, lockIsClass);
 		useObject(inThread);
 		useObject(inClass);
 		useObject(lock);
+		if (getType() == LockType.INTRINSIC) {
+			f_rowInserter.event(runId, id, time, inThread, lock, getState());
+		}
 	}
 
 	private void insert(int runId, long id, Timestamp time, long inThread,
-			long inClass, int lineNumber, long lock, String type,
-			Boolean success) {
+			long inClass, int lineNumber, long lock, Boolean success,
+			Boolean lockIsThis, Boolean lockIsClass) {
 		try {
-			f_ps.setInt(1, runId);
-			f_ps.setLong(2, id);
-			f_ps.setTimestamp(3, time);
-			f_ps.setLong(4, inThread);
-			f_ps.setLong(5, inClass);
-			f_ps.setInt(6, lineNumber);
-			f_ps.setLong(7, lock);
-			f_ps.setString(8, type);
-			JDBCUtils.setNullableString(9, f_ps, success == null ? null
-					: (success ? "Y" : "N"));
+			int idx = 1;
+			f_ps.setInt(idx++, runId);
+			f_ps.setLong(idx++, id);
+			f_ps.setTimestamp(idx++, time);
+			f_ps.setLong(idx++, inThread);
+			f_ps.setLong(idx++, inClass);
+			f_ps.setInt(idx++, lineNumber);
+			f_ps.setLong(idx++, lock);
+			f_ps.setString(idx++, getType().getFlag());
+			f_ps.setString(idx++, getState().toString().replace('_', ' '));
+			JDBCUtils.setNullableBoolean(idx++, f_ps, success);
+			JDBCUtils.setNullableBoolean(idx++, f_ps, lockIsThis);
+			JDBCUtils.setNullableBoolean(idx++, f_ps, lockIsClass);
 			f_ps.executeUpdate();
 		} catch (final SQLException e) {
-			SLLogger.getLogger().log(Level.SEVERE, "Insert failed: UCLOCK", e);
+			SLLogger.getLogger().log(Level.SEVERE, "Insert failed: ILOCK", e);
 		}
 	}
 
@@ -96,7 +118,12 @@ public abstract class UtilConcurrentLock extends Event {
 		if (f_ps == null) {
 			f_id = 0;
 			f_ps = c.prepareStatement(f_psQ);
+			f_rowInserter = new IntrinsicLockDurationRowInserter(c);
 		}
+	}
+
+	public final void flush(final int runId) throws SQLException {
+		f_rowInserter.flush(runId);
 	}
 
 	public final void close() throws SQLException {
@@ -104,10 +131,13 @@ public abstract class UtilConcurrentLock extends Event {
 			f_ps.close();
 			f_ps = null;
 		}
-
+		if (f_rowInserter != null) {
+			f_rowInserter.close();
+			f_rowInserter = null;
+		}
 	}
 
-	abstract protected String getType();
+	abstract protected LockState getState();
 
-	abstract protected Boolean parseSuccess(Attributes attr);
+	abstract protected LockType getType();
 }

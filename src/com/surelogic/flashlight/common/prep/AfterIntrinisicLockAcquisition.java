@@ -1,6 +1,6 @@
 package com.surelogic.flashlight.common.prep;
 
-public final class AfterIntrinisicLockAcquisition extends IntrinsicLock {
+public final class AfterIntrinisicLockAcquisition extends Lock {
 
 	public AfterIntrinisicLockAcquisition(BeforeTrace before) {
 		super(before);
@@ -11,7 +11,12 @@ public final class AfterIntrinisicLockAcquisition extends IntrinsicLock {
 	}
 
 	@Override
-	protected IntrinsicLockState getState() {
-		return IntrinsicLockState.AFTER_ACQUISITION;
+	protected LockState getState() {
+		return LockState.AFTER_ACQUISITION;
+	}
+
+	@Override
+	protected LockType getType() {
+		return LockType.INTRINSIC;
 	}
 }

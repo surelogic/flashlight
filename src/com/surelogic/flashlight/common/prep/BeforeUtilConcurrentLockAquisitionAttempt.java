@@ -1,17 +1,10 @@
 package com.surelogic.flashlight.common.prep;
 
-import org.xml.sax.Attributes;
 
-public class BeforeUtilConcurrentLockAquisitionAttempt extends
-		UtilConcurrentLock {
+public class BeforeUtilConcurrentLockAquisitionAttempt extends Lock {
 
 	public BeforeUtilConcurrentLockAquisitionAttempt(BeforeTrace before) {
 		super(before);
-	}
-
-	@Override
-	protected String getType() {
-		return "B";
 	}
 
 	public String getXMLElementName() {
@@ -19,8 +12,13 @@ public class BeforeUtilConcurrentLockAquisitionAttempt extends
 	}
 
 	@Override
-	protected Boolean parseSuccess(Attributes attr) {
-		return null;
+	protected LockState getState() {
+		return LockState.BEFORE_ACQUISITION;
+	}
+
+	@Override
+	protected LockType getType() {
+		return LockType.UTIL;
 	}
 
 }

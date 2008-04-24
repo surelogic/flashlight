@@ -200,16 +200,25 @@ public final class PrepRunnable implements Runnable {
 							return; // Status.CANCEL_STATUS;
 						}
 						monitor.subTask("Deleting thread-local objects");
-						/*
-						 * s = c .prepareStatement("delete from OBJECT where
-						 * Run=? and Id=?"); for (final Long l :
-						 * unreferencedObjects) { s.setInt(1, runId);
-						 * s.setLong(2, l); s.executeUpdate();
-						 * monitor.worked(1); } s.close();
-						 */
+
+						final PreparedStatement s = c
+								.prepareStatement("delete from OBJECT where Run=? and Id=?");
+						for (final Long l : unreferencedObjects) {
+							s.setInt(1, runId);
+							s.setLong(2, l);
+							s.executeUpdate();
+							monitor.worked(1);
+						}
+						s.close();
+
 						System.out.printf("Unreference objects: %d\n",
 								unreferencedObjects.size());
 						monitor.worked(1);
+					} catch (final SQLException e) {
+						e.printStackTrace(System.err);
+						status = LogStatus.createErrorStatus(0,
+								"Could not work with the embedded database", e);
+						return;
 					} finally {
 						c.commit();
 						for (final IPrep element : f_elements) {

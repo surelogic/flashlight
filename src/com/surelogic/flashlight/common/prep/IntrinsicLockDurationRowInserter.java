@@ -36,7 +36,7 @@ public final class IntrinsicLockDurationRowInserter {
 		// Info about the event that started us in this state
 		long id;
 		Timestamp time;
-		IntrinsicLockState startEvent;
+		LockState startEvent;
 	}
 
 	private final Map<Long, Map<Long, State>> f_threadToLockToState = 
@@ -160,7 +160,7 @@ public final class IntrinsicLockDurationRowInserter {
 	}
 
 	private void updateState(State mutableState, int run, long id, Timestamp time, 
-			                 long inThread, IntrinsicLockState startEvent, 
+			                 long inThread, LockState startEvent, 
 			                 IntrinsicLockDurationState lockState) {
 		IntrinsicLockDurationState oldLockState = mutableState.lockState;
 		mutableState.id = id;
@@ -264,14 +264,14 @@ public final class IntrinsicLockDurationRowInserter {
 	}
 
 	public void event(int runId, long id, Timestamp time, long inThread,
-			long lock, IntrinsicLockState lockEvent) {
+			long lock, LockState lockEvent) {
 		final Map<Long, State> lockToState = getLockToStateMap(inThread);		
 		final State state = getState(lockToState, lock);
 		switch (state.lockState) {
 		case IDLE:
 			// Only legal transition is BA->Block
 			assert state.timesEntered == 0;
-			if (lockEvent == IntrinsicLockState.BEFORE_ACQUISITION) {
+			if (lockEvent == LockState.BEFORE_ACQUISITION) {
 				// No need to record idle time
 				updateState(state, runId, id, time, inThread,
 						    lockEvent, IntrinsicLockDurationState.BLOCKING);
@@ -282,7 +282,7 @@ public final class IntrinsicLockDurationRowInserter {
 		case BLOCKING:
 			// Only legal transition is AA->Hold+1
 			handlePossibleLockAcquire(runId, id, time, inThread, lock, lockEvent,
-	                                  IntrinsicLockState.AFTER_ACQUISITION, lockToState, state);
+	                                  LockState.AFTER_ACQUISITION, lockToState, state);
 			break;
 		case HOLDING:
 			handleEventWhileHolding(runId, id, time, inThread, lock, lockEvent, state);
@@ -290,7 +290,7 @@ public final class IntrinsicLockDurationRowInserter {
 		case WAITING:			
 			// Only legal transition is AW->Hold+1
 			handlePossibleLockAcquire(runId, id, time, inThread, lock, lockEvent,
-	                                  IntrinsicLockState.AFTER_WAIT, lockToState, state);
+	                                  LockState.AFTER_WAIT, lockToState, state);
 			break;
 		default:
 			LogStatus.createErrorStatus(0, "Unexpected lock state: "+state.lockState);
@@ -305,7 +305,7 @@ public final class IntrinsicLockDurationRowInserter {
 	 * AR: Idle-1 if timesEntered = 1, otherwise Hold-1
 	 */
 	private void handleEventWhileHolding(int runId, long id, Timestamp time, long inThread, 
-			                             long lock, IntrinsicLockState lockEvent, State state) {
+			                             long lock, LockState lockEvent, State state) {
 		assert state.timesEntered > 0;
 		switch (lockEvent) {
 		case BEFORE_ACQUISITION:
@@ -337,8 +337,8 @@ public final class IntrinsicLockDurationRowInserter {
 	}
 	
 	private void handlePossibleLockAcquire(int runId, long id, Timestamp time, long inThread,
-			                               long lock, IntrinsicLockState lockEvent,
-			                               final IntrinsicLockState eventToMatch,
+			                               long lock, LockState lockEvent,
+			                               final LockState eventToMatch,
 			                               Map<Long, State> lockToState, State state) {
 		if (lockEvent == eventToMatch) {
 			assert state.timesEntered >= 0;
@@ -352,7 +352,7 @@ public final class IntrinsicLockDurationRowInserter {
 	}
 
 	private void noteStateTransition(int runId, long id, Timestamp time, long inThread, 
-			                         long lock, IntrinsicLockState lockEvent, State state,
+			                         long lock, LockState lockEvent, State state,
 			                         IntrinsicLockDurationState newState) {
 		recordStateDuration(runId, inThread, lock, state.time, state.id, time, id,
 			                state.lockState);
@@ -360,7 +360,7 @@ public final class IntrinsicLockDurationRowInserter {
 	}
 	
 	private void logBadEvent(long inThread, long lock,
-			IntrinsicLockState lockEvent, final State state) {
+			LockState lockEvent, final State state) {
 		LogStatus.createErrorStatus(0, state.lockState
 				+ " has no transition for " + lockEvent + " for lock " + lock
 				+ " in thread " + inThread);

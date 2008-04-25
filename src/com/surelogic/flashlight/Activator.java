@@ -13,6 +13,7 @@ import org.osgi.framework.BundleContext;
 
 import com.surelogic.common.eclipse.logging.SLStatus;
 import com.surelogic.flashlight.common.Data;
+import com.surelogic.flashlight.preferences.PreferenceConstants;
 
 /**
  * The activator class controls the plug-in life cycle
@@ -57,8 +58,8 @@ public class Activator extends AbstractUIPlugin {
 		// startup the database and ensure its schema is up to date
 		System.setProperty("derby.storage.pageSize", "8192");
 		System.setProperty("derby.storage.pageCacheSize", "5000");
-		IPath pluginState = Activator.getDefault().getStateLocation();
-		Data.bootAndCheckSchema(pluginState.toOSString());
+		final String rawPath = PreferenceConstants.getFlashlightRawDataPath();
+		Data.bootAndCheckSchema(rawPath);
 	}
 
 	@Override

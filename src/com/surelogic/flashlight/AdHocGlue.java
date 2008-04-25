@@ -4,11 +4,9 @@ import java.io.File;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-import org.eclipse.core.runtime.IPath;
-
+import com.surelogic.adhoc.AbstractAdHocGlue;
 import com.surelogic.flashlight.common.Data;
 import com.surelogic.flashlight.preferences.PreferenceConstants;
-import com.surelogic.adhoc.AbstractAdHocGlue;
 
 public final class AdHocGlue extends AbstractAdHocGlue {
 
@@ -22,8 +20,7 @@ public final class AdHocGlue extends AbstractAdHocGlue {
 	}
 
 	public File getQuerySaveFile() {
-		IPath pluginState = Activator.getDefault().getStateLocation();
-		return new File(pluginState.toOSString()
+		return new File(PreferenceConstants.getFlashlightRawDataPath()
 				+ System.getProperty("file.separator") + "queries.xml");
 	}
 }

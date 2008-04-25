@@ -1,11 +1,18 @@
 package com.surelogic.flashlight.preferences;
 
+import com.surelogic.flashlight.Activator;
+
 /**
  * Constant definitions for plug-in preferences
  */
 public class PreferenceConstants {
 
 	public static final String P_RAW_PATH = "com.surelogic.flashlight.raw";
+
+	public static String getFlashlightRawDataPath() {
+		return Activator.getDefault().getPluginPreferences().getString(
+				P_RAW_PATH);
+	}
 
 	public static final String P_RAWQ_SIZE = "com.surelogic.flashlight.rawq.size";
 

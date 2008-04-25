@@ -34,9 +34,7 @@ public final class FlashlightLaunchConfigurationDelegate extends
 			b.append(run);
 		}
 		b.append("\" -DFL_DIR=\"");
-		final String rawPath = Activator.getDefault().getPluginPreferences()
-				.getString(PreferenceConstants.P_RAW_PATH);
-		b.append(rawPath);
+		b.append(PreferenceConstants.getFlashlightRawDataPath());
 		b.append("\" -DFL_RAWQ_SIZE=");
 		final String rawQSize = Activator.getDefault().getPluginPreferences()
 				.getString(PreferenceConstants.P_RAWQ_SIZE);
@@ -59,7 +57,7 @@ public final class FlashlightLaunchConfigurationDelegate extends
 			b.append(" -DFL_NO_SPY=true");
 		}
 		String result = b.toString();
-		//System.out.println("Flashlight VM args: "+result);
+		// System.out.println("Flashlight VM args: "+result);
 		return result;
 	}
 

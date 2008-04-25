@@ -1,5 +1,11 @@
 package com.surelogic.flashlight.launch;
 
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.logging.Level;
+
+import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.debug.core.ILaunchConfiguration;
@@ -8,7 +14,9 @@ import org.eclipse.jdt.launching.IVMInstall2;
 import org.eclipse.jdt.launching.IVMRunner;
 import org.eclipse.jdt.launching.JavaLaunchDelegate;
 
+import com.surelogic.common.eclipse.jdt.SourceZip;
 import com.surelogic.common.eclipse.logging.SLStatus;
+import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.Activator;
 import com.surelogic.flashlight.preferences.PreferenceConstants;
 
@@ -97,6 +105,40 @@ public final class FlashlightLaunchConfigurationDelegate extends
 		if (runner == null) {
 			throw new CoreException(SLStatus.createErrorStatus(0,
 					"Failed to configure the VM to run Flashlight."));
+		}
+		
+		
+		
+		// Create source zip
+		final StringBuilder fileName = new StringBuilder();
+		final String rawPath = PreferenceConstants.getFlashlightRawDataPath();
+		if (rawPath != null) {
+			fileName.append(rawPath);
+		} else {
+			fileName.append(System.getProperty("java.io.tmpdir"));
+		}
+		fileName.append(System.getProperty("file.separator"));
+		fileName.append(getMainTypeName(configuration));
+		
+		final SimpleDateFormat dateFormat = new SimpleDateFormat(
+				"-yyyy.MM.dd-'at'-HH.mm.ss.SSS");
+		// make the filename and time event times match
+		Date now = new Date();
+		fileName.append(dateFormat.format(now));
+		fileName.append(".src.zip");
+
+		final String projAttr    = "org.eclipse.jdt.launching.PROJECT_ATTR";
+		final String projectName = configuration.getAttribute(projAttr, "");
+		IWorkspaceRoot root      = ResourcesPlugin.getWorkspace().getRoot();
+		IProject project         = root.getProject(projectName);
+		if (project != null && project.exists()) {
+			try {
+				SourceZip.generateSourceZip(fileName.toString(), project);
+			} catch (IOException e) {
+				SLLogger.log(Level.SEVERE, "Unable to create source zip", e);
+			}
+		} else {
+			SLLogger.log(Level.SEVERE, "No such project: "+projectName);
 		}
 		return runner;
 	}

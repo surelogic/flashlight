@@ -131,6 +131,7 @@ public final class FlashlightLaunchConfigurationDelegate extends
 		final String projectName = configuration.getAttribute(projAttr, "");
 		IWorkspaceRoot root      = ResourcesPlugin.getWorkspace().getRoot();
 		IProject project         = root.getProject(projectName);
+		// FIX this is not right for projects with dependencies
 		if (project != null && project.exists()) {
 			try {
 				SourceZip.generateSourceZip(fileName.toString(), project);

@@ -71,10 +71,16 @@ public final class Data {
 	}
 
 	public static Connection getConnection() throws SQLException {
+            if (getConnectionURL() == null) {
+                return null;
+            }
 		return DriverManager.getConnection(getConnectionURL());
 	}
 
 	private static String getConnectionURL() {
+            if (dbLocation == null) {
+                return null;
+            }
 		return JDBC_PRE + dbLocation + JDBC_POST;
 	}
 

@@ -27,21 +27,22 @@ import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.common.entities.IRunDescription;
 
 public final class Raw implements IRunDescription {
-        public static final String SUFFIX = ".fl";
-        public static final String COMPRESSED_SUFFIX = ".fl.gz";
-    
-	public static final String DEFAULT_RAW_LOCATION = 
-		System.getProperty("user.home") + System.getProperty("file.separator") + "Flashlight";
-	
-	public static Raw[] findRawFiles(String location) {	
+	public static final String SUFFIX = ".fl";
+	public static final String COMPRESSED_SUFFIX = ".fl.gz";
+
+	public static final String DEFAULT_RAW_LOCATION = System
+			.getProperty("user.home")
+			+ System.getProperty("file.separator") + ".flashlight-data";
+
+	public static Raw[] findRawFiles(String location) {
 		Raw[] raws = new Raw.Builder().addDirectory(location).build();
 		return raws;
 	}
-	
+
 	public static Raw createRawFile(File loc) {
 		return new Builder().build(loc);
 	}
-	
+
 	private final File f_data;
 
 	public File getDataFile() {
@@ -183,20 +184,22 @@ public final class Raw implements IRunDescription {
 
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();		
+		StringBuilder sb = new StringBuilder();
 		sb.append("Name: ").append(f_name).append('\n');
 		sb.append("Format: v").append(f_rawDataVersion).append('\n');
 		sb.append("Data: ").append(f_data.getAbsolutePath()).append('\n');
-                sb.append("Size: ").append(f_data.length());
-		if (f_gzip) {	
-                    sb.append(" bytes (Compressed)\n");
-                } else {
-                    sb.append(" bytes\n");
+		sb.append("Size: ").append(f_data.length());
+		if (f_gzip) {
+			sb.append(" bytes (Compressed)\n");
+		} else {
+			sb.append(" bytes\n");
 		}
 		sb.append("Log: ").append(f_log.getAbsolutePath()).append('\n');
 		sb.append("User: ").append(f_userName).append('\n');
-		sb.append("Java: ").append(f_javaVendor).append(' ').append(f_javaVersion).append('\n');
-		sb.append("OS: ").append(f_osName).append(' ').append(f_osArch).append(' ');
+		sb.append("Java: ").append(f_javaVendor).append(' ').append(
+				f_javaVersion).append('\n');
+		sb.append("OS: ").append(f_osName).append(' ').append(f_osArch).append(
+				' ');
 		sb.append(f_osVersion).append('\n');
 		sb.append("Max Memory: ").append(f_maxMemoryMB).append(" MB\n");
 		sb.append("CPUs: ").append(f_processors).append('\n');
@@ -204,7 +207,7 @@ public final class Raw implements IRunDescription {
 		sb.append("Run Time: ").append(f_nanoTime).append(" ns\n");
 		return sb.toString();
 	}
-	
+
 	public static class Builder {
 
 		private static class PrefixReader extends DefaultHandler {
@@ -318,8 +321,8 @@ public final class Raw implements IRunDescription {
 		private final FileFilter filter = new FileFilter() {
 			public boolean accept(File pathname) {
 				final String name = pathname.getName();
-				return name.endsWith(COMPRESSED_SUFFIX) || 
-                       name.endsWith(SUFFIX);
+				return name.endsWith(COMPRESSED_SUFFIX)
+						|| name.endsWith(SUFFIX);
 			}
 		};
 
@@ -352,7 +355,7 @@ public final class Raw implements IRunDescription {
 			}
 			return null;
 		}
-		
+
 		public Raw[] build() {
 			final ArrayList<Raw> result = new ArrayList<Raw>();
 			for (File directory : f_path) {

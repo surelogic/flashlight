@@ -1,6 +1,5 @@
 Manifest-Version: 1.0
 OpenIDE-Module: com.surelogic.flashlight.common/2
 OpenIDE-Module-Implementation-Version: 2
-OpenIDE-Module-Layer: com/surelogic/flashlight/common/layer.xml
 OpenIDE-Module-Localizing-Bundle: com/surelogic/flashlight/common/Bundle.properties
 

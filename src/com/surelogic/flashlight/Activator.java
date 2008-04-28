@@ -40,9 +40,10 @@ public class Activator extends AbstractUIPlugin {
 	 * The constructor
 	 */
 	public Activator() {
-		if (plugin != null)
+		if (plugin != null) {
 			throw new IllegalStateException(PLUGIN_ID + " class instance ("
 					+ Activator.class.getName() + ") already exits");
+		}
 		plugin = this;
 	}
 
@@ -56,6 +57,7 @@ public class Activator extends AbstractUIPlugin {
 		SLStatus.touch();
 
 		// startup the database and ensure its schema is up to date
+		System.setProperty("derby.system.durability", "test");
 		System.setProperty("derby.storage.pageSize", "8192");
 		System.setProperty("derby.storage.pageCacheSize", "5000");
 		final String rawPath = PreferenceConstants.getFlashlightRawDataPath();
@@ -69,16 +71,17 @@ public class Activator extends AbstractUIPlugin {
 	}
 
 	public IPath getBundleLocation() {
-		Bundle bundle = getBundle();
-		if (bundle == null)
+		final Bundle bundle = getBundle();
+		if (bundle == null) {
 			return null;
+		}
 		URL local = null;
 		try {
 			local = FileLocator.toFileURL(bundle.getEntry("/"));
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			return null;
 		}
-		String fullPath = new File(local.getPath()).getAbsolutePath();
+		final String fullPath = new File(local.getPath()).getAbsolutePath();
 		return Path.fromOSString(fullPath);
 	}
 }

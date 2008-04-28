@@ -19,10 +19,9 @@ public final class UnPrepJob extends DatabaseJob {
 	 * The order in this array reflects the safe order to delete rows from
 	 * tables about a run without running into referential integrity problems.
 	 */
-	static private final String[] TABLES = { "ILOCKTHREADSTATS", 
-		    "ILOCKSHELD", "ILOCKDURATION", "ILOCKCYCLE",
-		    "LOCK", "ILOCK", "TRACE",
-			"ACCESS", "FIELD", "OBJECT", "RUN" };
+	static private final String[] TABLES = { "LOCKTHREADSTATS", "LOCKSHELD",
+			"LOCKDURATION", "LOCKCYCLE", "LOCK", "TRACE", "ACCESS", "RWLOCK",
+			"FIELD", "OBJECT", "RUN" };
 
 	private final int f_runId;
 	private final String f_runName;
@@ -43,17 +42,18 @@ public final class UnPrepJob extends DatabaseJob {
 			final Connection c = Data.getConnection();
 			try {
 				monitor.worked(1);
-				Statement s = c.createStatement();
+				final Statement s = c.createStatement();
 				try {
 					StringBuilder b;
-					for (String table : TABLES) {
+					for (final String table : TABLES) {
 						monitor.subTask("Removing prepared data from " + table);
 						b = new StringBuilder();
 						b.append("delete from ").append(table).append(
 								" where Run=").append(f_runId);
 						s.executeUpdate(b.toString());
-						if (monitor.isCanceled())
+						if (monitor.isCanceled()) {
 							return Status.CANCEL_STATUS;
+						}
 						monitor.worked(1);
 					}
 				} finally {
@@ -63,7 +63,7 @@ public final class UnPrepJob extends DatabaseJob {
 				c.close();
 				monitor.worked(1);
 			}
-		} catch (SQLException e) {
+		} catch (final SQLException e) {
 			return SLStatus.createErrorStatus(0, taskName + " failed", e);
 		}
 		RunView.refreshViewContents();

@@ -71,16 +71,16 @@ public final class Data {
 	}
 
 	public static Connection getConnection() throws SQLException {
-            if (getConnectionURL() == null) {
-                return null;
-            }
+		if (getConnectionURL() == null) {
+			return null;
+		}
 		return DriverManager.getConnection(getConnectionURL());
 	}
 
 	private static String getConnectionURL() {
-            if (dbLocation == null) {
-                return null;
-            }
+		if (dbLocation == null) {
+			return null;
+		}
 		return JDBC_PRE + dbLocation + JDBC_POST;
 	}
 
@@ -88,7 +88,7 @@ public final class Data {
 	 * Up this number when you add a new schema version SQL script to this
 	 * package.
 	 */
-	public static final int schemaVersion = 7;
+	public static final int schemaVersion = 8;
 
 	public static final String SQL_SCRIPT_PREFIX = "/lib/database/schema_";
 

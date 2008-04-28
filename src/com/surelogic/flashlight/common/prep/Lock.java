@@ -82,9 +82,8 @@ public abstract class Lock extends Event {
 		useObject(inThread);
 		useObject(inClass);
 		useObject(lock);
-		if (getType() == LockType.INTRINSIC) {
-			f_rowInserter.event(runId, id, time, inThread, lock, getState());
-		}
+		f_rowInserter.event(runId, id, time, inThread, lock, getState(),
+				success != Boolean.FALSE);
 	}
 
 	private void insert(int runId, long id, Timestamp time, long inThread,

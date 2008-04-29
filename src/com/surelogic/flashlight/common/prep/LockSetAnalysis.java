@@ -95,12 +95,12 @@ public class LockSetAnalysis extends DBQueryEmpty {
 				locks.add(rLock);
 			}
 			// Handle the last row
-			if (!first) {
-				lockSet.retainAll(locks);
-				return lockSet.isEmpty();
+			if (first) {
+				lockSet.addAll(locks);
 			} else {
-				return false;
+				lockSet.retainAll(locks);
 			}
+			return lockSet.isEmpty();
 		}
 
 	}

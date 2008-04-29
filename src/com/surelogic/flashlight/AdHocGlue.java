@@ -3,6 +3,7 @@ package com.surelogic.flashlight;
 import java.io.File;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.concurrent.Executor;
 
 import com.surelogic.adhoc.AbstractAdHocGlue;
 import com.surelogic.flashlight.common.Data;
@@ -22,5 +23,10 @@ public final class AdHocGlue extends AbstractAdHocGlue {
 	public File getQuerySaveFile() {
 		return new File(PreferenceConstants.getFlashlightRawDataPath()
 				+ System.getProperty("file.separator") + "queries.xml");
+	}
+
+	public Executor getExecutor() {
+		// TODO
+		throw new UnsupportedOperationException("Not implemented yet");
 	}
 }

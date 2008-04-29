@@ -70,12 +70,7 @@ public class LockSetAnalysis extends DBQueryEmpty {
 			for (final Row row : r) {
 				final Date rts = row.nextDate();
 				final long rThread = row.nextLong();
-				long rLock = row.nextLong();
-				final Long rwLock = row.nullableLong();
-				if (rwLock != null) {
-					// Use the read/write lock id rather than the lock id
-					rLock = rwLock;
-				}
+				final long rLock = row.nextLong();
 				if (ts == null) {
 					// handle the first pass
 					ts = rts;
@@ -92,6 +87,8 @@ public class LockSetAnalysis extends DBQueryEmpty {
 							return true;
 						}
 					}
+					ts = rts;
+					thread = rThread;
 					locks.clear();
 					first = false;
 				}

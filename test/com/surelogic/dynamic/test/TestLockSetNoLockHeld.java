@@ -1,11 +1,11 @@
 package com.surelogic.dynamic.test;
 
-public class TestLockSet {
+public class TestLockSetNoLockHeld {
 
 	int a;
 
 	public static void main(String[] args) {
-		new TestLockSet().go();
+		new TestLockSetNoLockHeld().go();
 	}
 
 	void go() {

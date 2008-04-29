@@ -20,6 +20,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import com.surelogic.common.SLProgressMonitor;
+import com.surelogic.common.jdbc.ConnectionQuery;
 import com.surelogic.common.logging.LogStatus;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.common.Data;
@@ -210,9 +211,13 @@ public final class PrepRunnable implements Runnable {
 							monitor.worked(1);
 						}
 						s.close();
-
 						System.out.printf("Unreference objects: %d\n",
 								unreferencedObjects.size());
+						monitor.worked(1);
+
+						monitor.beginTask("Performing lock set analysis", 1);
+						new LockSetAnalysis(runId).perform(new ConnectionQuery(
+								c));
 						monitor.worked(1);
 					} catch (final SQLException e) {
 						e.printStackTrace(System.err);

@@ -1,17 +1,16 @@
 package com.surelogic.dynamic.test;
 
-
 public class TestLockSetDifferentLocks {
 
 	int a;
 
 	public static void main(String[] args) {
-		new TestLockSetNoLockHeld().go();
+		new TestLockSetDifferentLocks().go();
 	}
 
 	void go() {
 		final Thread one = new Thread(new Z());
-		final Thread two = new Thread(new Y()); 
+		final Thread two = new Thread(new Y());
 		one.start();
 		two.start();
 		try {
@@ -25,15 +24,15 @@ public class TestLockSetDifferentLocks {
 	private class Z implements Runnable {
 		public synchronized void run() {
 			for (int i = 0; i < 2; i++) {
-				a--;
+					a--;
 			}
 		}
 	}
 
 	private class Y implements Runnable {
 		public synchronized void run() {
-			for (int i = 1; i < 2; i++) {
-				a++;
+			for (int i = 0; i < 2; i++) {
+					a++;
 			}
 		}
 	}

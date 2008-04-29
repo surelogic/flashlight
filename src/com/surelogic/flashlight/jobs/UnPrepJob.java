@@ -19,9 +19,9 @@ public final class UnPrepJob extends DatabaseJob {
 	 * The order in this array reflects the safe order to delete rows from
 	 * tables about a run without running into referential integrity problems.
 	 */
-	static private final String[] TABLES = { "LOCKTHREADSTATS", "LOCKSHELD",
-			"LOCKDURATION", "LOCKCYCLE", "LOCK", "TRACE", "ACCESS", "RWLOCK",
-			"FIELD", "OBJECT", "RUN" };
+	static private final String[] TABLES = { "BADPUBLISH", "BADLOCKSET",
+			"LOCKTHREADSTATS", "LOCKSHELD", "LOCKDURATION", "LOCKCYCLE",
+			"LOCK", "TRACE", "ACCESS", "RWLOCK", "FIELD", "OBJECT", "RUN" };
 
 	private final int f_runId;
 	private final String f_runName;

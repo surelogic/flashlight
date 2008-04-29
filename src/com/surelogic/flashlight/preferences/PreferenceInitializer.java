@@ -18,8 +18,9 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 	public void initializeDefaultPreferences() {
 		final IPreferenceStore store = Activator.getDefault()
 				.getPreferenceStore();
-		create(Raw.DEFAULT_RAW_LOCATION);
-		store.setDefault(PreferenceConstants.P_RAW_PATH, Raw.DEFAULT_RAW_LOCATION);
+		create(Raw.DEFAULT_FLASHLIGHT_DATA_LOCATION);
+		store.setDefault(PreferenceConstants.P_RAW_PATH,
+				Raw.DEFAULT_FLASHLIGHT_DATA_LOCATION);
 		store.setDefault(PreferenceConstants.P_RAWQ_SIZE, 5000);
 		store.setDefault(PreferenceConstants.P_OUTQ_SIZE, 5000);
 		store.setDefault(PreferenceConstants.P_REFINERY_SIZE, 5000);

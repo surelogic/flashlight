@@ -1,9 +1,7 @@
 package com.surelogic.flashlight.common.prep;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import com.surelogic.common.jdbc.DBQueryEmpty;
@@ -63,7 +61,7 @@ public class LockSetAnalysis extends DBQueryEmpty {
 			Date ts = null;
 			long thread = -1L;
 			final Set<Long> lockSet = new HashSet<Long>();
-			final List<Long> locks = new ArrayList<Long>();
+			final Set<Long> locks = new HashSet<Long>();
 			boolean first = true;
 			/*
 			 * We initialize our lock set w/ the contents of the first access.
@@ -100,8 +98,12 @@ public class LockSetAnalysis extends DBQueryEmpty {
 				locks.add(rLock);
 			}
 			// Handle the last row
-			lockSet.retainAll(locks);
-			return lockSet.isEmpty();
+			if (!first) {
+				lockSet.retainAll(locks);
+				return lockSet.isEmpty();
+			} else {
+				return false;
+			}
 		}
 
 	}

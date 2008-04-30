@@ -214,7 +214,7 @@ public final class PrepRunnable implements Runnable {
 						System.out.printf("Unreference objects: %d\n",
 								unreferencedObjects.size());
 						monitor.worked(1);
-
+						c.commit();
 						monitor.beginTask("Performing lock set analysis", 1);
 						new LockSetAnalysis(runId).perform(new ConnectionQuery(
 								c));

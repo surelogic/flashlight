@@ -34,7 +34,6 @@ public class LockSetAnalysis extends DBQueryEmpty {
 				.prepared("LockSet.insertSuspiciousField");
 		final Queryable<Void> badPublish = q
 				.prepared("LockSet.insertBadPublish");
-
 		for (final Field id : q.prepared("LockSet.badPublishes",
 				new FieldHandler()).call(runId)) {
 			badPublish.call(runId, id.fieldId, id.receiverId);
@@ -57,7 +56,7 @@ public class LockSetAnalysis extends DBQueryEmpty {
 	private static class LocksSetHandler implements ResultHandler<Boolean> {
 
 		public Boolean handle(Result r) {
-			// A.TS,A.InThread,D.Lock,RW.Id
+			// A.TS,A.InThread,Lock
 			Date ts = null;
 			long thread = -1L;
 			final Set<Long> lockSet = new HashSet<Long>();

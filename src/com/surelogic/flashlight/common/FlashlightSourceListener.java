@@ -12,8 +12,8 @@ import java.util.logging.Level;
  *
  * @author Edwin.Chan
  */
-public abstract class FlashlightSourceListener 
-implements SourceListener, Callable<Void> {
+public abstract class FlashlightSourceListener extends DataCallable<Void>
+implements SourceListener {
     final int run;    
     String pkg;
     String cls;
@@ -49,45 +49,9 @@ implements SourceListener, Callable<Void> {
         setSource(pkg, cls, line);
     }
     
-    private boolean query(String sql) {
-        try {
-            this.sql = sql;
-            Data.getExecutor().submit(this).get();
-            return true;
-        } catch (InterruptedException ex) {
-        // Ignore this
-        } catch (ExecutionException ex) {
-        // Ignore this
-        }
-        return false;
-    }
-    
-    public Void call() throws Exception {
-        Connection c = Data.getConnection();
-        try {
-            Statement s = c.createStatement();
-            try {
-                ResultSet rs = s.executeQuery(sql);
-                try {
-                    if (rs != null && rs.next()) {
-                        pkg = rs.getString(1);
-                        cls = rs.getString(2);                        
-                    }
-                } catch (SQLException e) {
-                    SLLogger.log(Level.SEVERE, "Unable to finish: " + sql, e);
-                } finally {
-                    if (rs != null) rs.close();
-                }
-            } finally {
-                if (s != null) {
-                    s.close();
-                }
-            }
-        } finally {
-            if (c != null) {
-                c.close();
-            }
-        }
+    protected Void handleResultSet(ResultSet rs) throws SQLException {
+        pkg = rs.getString(1);
+        cls = rs.getString(2);
         return null;
     }
 }

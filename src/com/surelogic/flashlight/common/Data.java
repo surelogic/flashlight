@@ -9,6 +9,8 @@ import java.sql.SQLException;
 import com.surelogic.common.derby.Derby;
 import com.surelogic.common.jdbc.FutureDatabaseException;
 import com.surelogic.common.jdbc.SchemaUtility;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public final class Data {
 
@@ -24,6 +26,12 @@ public final class Data {
 
 	private static String dbLocation = null;
 
+        private static final ExecutorService exec = Executors.newSingleThreadExecutor();
+        
+        public static ExecutorService getExecutor() {
+            return exec;
+        }
+        
 	public static synchronized boolean isBooted() {
 		return (dbLocation != null);
 	}

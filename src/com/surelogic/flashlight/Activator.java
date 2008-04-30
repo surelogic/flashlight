@@ -59,7 +59,7 @@ public class Activator extends AbstractUIPlugin {
 		// startup the database and ensure its schema is up to date
 		System.setProperty("derby.system.durability", "test");
 		System.setProperty("derby.storage.pageSize", "8192");
-		System.setProperty("derby.storage.pageCacheSize", "5000");
+		System.setProperty("derby.storage.pageCacheSize", "20000");
 		final String rawPath = PreferenceConstants.getFlashlightRawDataPath();
 		Data.bootAndCheckSchema(rawPath);
 	}

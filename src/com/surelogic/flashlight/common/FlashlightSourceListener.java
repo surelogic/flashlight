@@ -20,20 +20,27 @@ implements SourceListener {
     String[] columnLabels;
     Cell[] row;
     Properties props;
+    private IPropertiesListener listener = null;
             
     protected FlashlightSourceListener(int run) {
         this.run = run;
     }
     
-    public <T> void setData(final String[] labels, final Cell<T>[] r) {
+    public <T> void setData(String[] labels, Cell<T>[] r, Properties vars) {
         this.columnLabels = labels;
         this.row = r;
-        props = new Properties();
+        props = new Properties(vars);
         for(int i=0; i<r.length; i++) {
-            props.put(labels[i].toUpperCase(), r[i].label);
+            String key = labels[i].toUpperCase();
+            if (!props.containsKey(key)) {
+                props.put(key, r[i].label);
+            }
         }
         if (!props.containsKey("RUN")) {
             props.put("RUN", Integer.toString(run));
+        }
+        if (listener != null) {
+            listener.updateProperties(props);
         }
     }
     
@@ -66,5 +73,9 @@ implements SourceListener {
         pkg = rs.getString(1);
         cls = rs.getString(2);
         return null;
+    }
+    
+    public void setPropertiesListener(IPropertiesListener l) {
+        listener = l;
     }
 }

@@ -2,11 +2,8 @@ package com.surelogic.flashlight.common;
 
 import com.surelogic.adhoc.SourceListener;
 import com.surelogic.adhoc.query.QueryUtil.Cell;
-import com.surelogic.common.logging.SLLogger;
 import java.sql.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.logging.Level;
+import java.util.Properties;
 
 /**
  *
@@ -19,9 +16,25 @@ implements SourceListener {
     String cls;
     int line;
     String sql;
-    
+
+    String[] columnLabels;
+    Cell[] row;
+    Properties props;
+            
     protected FlashlightSourceListener(int run) {
         this.run = run;
+    }
+    
+    public <T> void setData(final String[] labels, final Cell<T>[] r) {
+        this.columnLabels = labels;
+        this.row = r;
+        props = new Properties();
+        for(int i=0; i<r.length; i++) {
+            props.put(labels[i].toUpperCase(), r[i].label);
+        }
+        if (!props.containsKey("RUN")) {
+            props.put("RUN", Integer.toString(run));
+        }
     }
     
     public <T> void setSource(final String[] columnLabels, final Cell<T>[] row,

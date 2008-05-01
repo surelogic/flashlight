@@ -5,12 +5,12 @@ import java.net.URL;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import com.surelogic.common.derby.Derby;
 import com.surelogic.common.jdbc.FutureDatabaseException;
 import com.surelogic.common.jdbc.SchemaUtility;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public final class Data {
 
@@ -26,12 +26,13 @@ public final class Data {
 
 	private static String dbLocation = null;
 
-        private static final ExecutorService exec = Executors.newSingleThreadExecutor();
-        
-        public static ExecutorService getExecutor() {
-            return exec;
-        }
-        
+	private static final ExecutorService exec = Executors
+			.newSingleThreadExecutor();
+
+	public static ExecutorService getExecutor() {
+		return exec;
+	}
+
 	public static synchronized boolean isBooted() {
 		return (dbLocation != null);
 	}
@@ -96,7 +97,7 @@ public final class Data {
 	 * Up this number when you add a new schema version SQL script to this
 	 * package.
 	 */
-	public static final int schemaVersion = 10;
+	public static final int schemaVersion = 11;
 
 	public static final String SQL_SCRIPT_PREFIX = "/lib/database/schema_";
 

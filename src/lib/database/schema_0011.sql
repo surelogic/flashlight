@@ -1,0 +1,38 @@
+
+CREATE INDEX ACCESS_TS_INDEX ON ACCESS (TS)
+<<>>
+CREATE TABLE FIELDLOCKSET ( -- Grand Lock Set intersection for all field accesses
+  Run    INT          NOT NULL CONSTRAINT FIELDLOCKSET_Run_FK REFERENCES RUN (Run),
+  Field  BIGINT       NOT NULL,
+  Lock   BIGINT       NOT NULL,
+  CONSTRAINT FIELDLOCKSET_Field_FK FOREIGN KEY (Run, Field) REFERENCES FIELD (Run, Id),
+  CONSTRAINT FIELDLOCKSET_Lock_FK  FOREIGN KEY (Run, Lock) REFERENCES OBJECT (Run, Id),
+  PRIMARY KEY (Run, Field, Lock)
+)
+<<>>
+CREATE TABLE FIELDINSTANCELOCKSET ( -- Grand Lock Set intersection for all field accesses
+  Run       INT          NOT NULL CONSTRAINT FIELDINSTANCELOCKSET_Run_FK REFERENCES RUN (Run),
+  Field     BIGINT       NOT NULL,
+  Receiver  BIGINT,
+  Lock      BIGINT       NOT NULL,
+  CONSTRAINT FIELDINSTANCELOCKSET_Field_FK FOREIGN KEY (Run, Field) REFERENCES FIELD (Run, Id),
+  CONSTRAINT FIELDINSTANCELOCKSET_Lock_FK  FOREIGN KEY (Run, Lock) REFERENCES OBJECT (Run, Id),
+  CONSTRAINT FIELDINSTANCELOCKSET_Receiver_FK  FOREIGN KEY (Run, Receiver) REFERENCES OBJECT (Run, Id),
+  PRIMARY KEY (Run, Field, Receiver, Lock)
+)
+<<>>
+CREATE TABLE FIELDINSTANCETHREAD ( --Read/Write counts of each field instance per thread
+  Run         INT          NOT NULL CONSTRAINT FIELDINSTANCETHREAD_Run_FK REFERENCES RUN (Run),
+  Field       BIGINT       NOT NULL,
+  Receiver    BIGINT       NOT NULL, -- Only non-static fields in this table
+  Thread      BIGINT       NOT NULL,
+  ReadCount   BIGINT       NOT NULL,
+  WriteCount  BIGINT       NOT NULL,
+  CONSTRAINT FIELDINSTANCETHREAD_Field_FK FOREIGN KEY (Run, Field) REFERENCES FIELD (Run, Id),
+  CONSTRAINT FIELDINSTANCETHREAD_Receiver_FK  FOREIGN KEY (Run, Receiver) REFERENCES OBJECT (Run, Id),
+  CONSTRAINT FIELDINSTANCETHREAD_Thread_FK FOREIGN KEY (Run, Thread) REFERENCES OBJECT (Run, Id),
+  PRIMARY KEY (Run, Field, Receiver, Thread)
+)
+<<>>
+DROP TABLE BADLOCKSET
+<<>>

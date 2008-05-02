@@ -18,7 +18,8 @@ implements SourceListener {
     String sql;
 
     String[] columnLabels;
-    Cell[] row;
+    @SuppressWarnings("unchecked")
+	Cell[] row;
     Properties props;
     private IPropertiesListener listener = null;
             

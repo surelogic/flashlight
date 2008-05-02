@@ -53,6 +53,8 @@ implements SourceListener {
         this.line = line;
         
         String classId = null;
+        String fieldType = null;
+        String fieldName = null;
         for(int i=0; i<columnLabels.length; i++) {
             final String col = columnLabels[i].toLowerCase();
             if ("inclass".equals(col)) {
@@ -61,15 +63,25 @@ implements SourceListener {
             else if (line < 0 && "atline".equals(col)) {
                 this.line = Integer.parseInt(row[i].label);
             }
+            else if ("ftype".equals(col) || "declaringtype".equals(col)) {
+                fieldType = row[i].label;  
+            }
+            else if ("field".equals(col) || "fieldname".equals(col)) {
+                fieldName = row[i].label;  
+            }
         }
         if (run >= 0 && classId != null) {
-            if (query("select PackageName,ClassName from OBJECT"+
-                  " where run="+run+" and id="+classId)) {
-                setSource(this.pkg, this.cls, this.line);    
-            }            
+            query("select PackageName,ClassName from OBJECT"+
+                  " where run="+run+" and id="+classId);           
         }                
-        setSource(pkg, cls, line);
+        setSource(this.pkg, this.cls);
+        if (/*fieldType != null &&*/ fieldName != null) {
+            this.line = findSourceLine(fieldType, fieldName);
+        }
+        setSourceLine(this.line); 
     }
+        
+    protected abstract int findSourceLine(String fieldType, String fieldName);
     
     protected Void handleResultSet(ResultSet rs) throws SQLException {
         pkg = rs.getString(1);

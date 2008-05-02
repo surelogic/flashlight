@@ -7,10 +7,12 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.logging.Level;
 
 import com.surelogic.common.derby.Derby;
 import com.surelogic.common.jdbc.FutureDatabaseException;
 import com.surelogic.common.jdbc.SchemaUtility;
+import com.surelogic.common.logging.SLLogger;
 
 public final class Data {
 
@@ -59,6 +61,7 @@ public final class Data {
 		Derby.bootEmbedded();
 
 		final String connectionURL = getConnectionURL() + ";create=true";
+		SLLogger.log(Level.INFO, "Using Flashlight database at " + connectionURL);
 		final Connection c = DriverManager.getConnection(connectionURL);
 		c.setAutoCommit(false);
 		Exception e = null;

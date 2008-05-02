@@ -1,28 +1,33 @@
 package com.surelogic.flashlight;
 
 import java.io.File;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.concurrent.Executor;
+import java.util.logging.Level;
 
-import com.surelogic.adhoc.AbstractAdHocGlue;
-import com.surelogic.flashlight.common.Data;
+import com.surelogic.common.logging.SLLogger;
+import com.surelogic.flashlight.common.*;
 import com.surelogic.flashlight.preferences.PreferenceConstants;
 
-public final class AdHocGlue extends AbstractAdHocGlue {
-
-	public Connection getConnection() throws SQLException {
-		return Data.getConnection();
-	}
-
+public final class AdHocGlue extends AbstractFlashlightAdhocGlue {
 	public int getMaxRowsPerQuery() {
 		return Activator.getDefault().getPluginPreferences().getInt(
 				PreferenceConstants.P_MAX_ROWS_PER_QUERY);
 	}
 
 	public File getQuerySaveFile() {
-		return new File(PreferenceConstants.getFlashlightRawDataPath()
+		File qsf = new File(PreferenceConstants.getFlashlightRawDataPath()
 				+ System.getProperty("file.separator") + "queries.xml");
+		if (!qsf.exists()) {
+			try {
+				copyDefaultQueryFile(qsf);
+			} catch (IOException e) {
+				SLLogger.log(Level.SEVERE, "Problem creating default query file", e);
+			}
+		}
+		return qsf;
 	}
 
 	public Executor getExecutor() {

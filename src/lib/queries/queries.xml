@@ -1,0 +1,155 @@
+<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
+<ad-hoc version='1.0' current='13'>
+  <query name='Show Tables'>show tables</query>
+  <query name='Show available runs' meta-query-name='What fields are shared? (from a run)'>-- This query returns all the prepared runs in the database
+select * from RUN</query>
+  <query name='What fields are shared? (from a run)' meta-query-name='What threads access this field? (from a shared field)'>select distinct
+  O.PackageName &quot;Package__PACKAGE&quot;,
+  O.ClassName &quot;Class__CLASS|&quot;,
+  F.FieldName &quot;Field&quot;
+       
+from OBJECT O,
+     FIELD F
+
+where
+  O.Run = ?RUN?
+  and F.Run = ?RUN?
+  and F.DeclaringType = O.Id
+
+order by 1, 2, 3</query>
+  <query name='Show all threads' meta-query-name='Threads'>
+select Run, Id, ThreadName from OBJECT    
+where ThreadName is not null
+  </query>
+  <query name='What threads access this field? (from a shared field)'>select distinct O.ThreadName &quot;Thread&quot;
+
+from OBJECT O,
+     ACCESS A,
+     FIELD F
+
+where O.Run = ?RUN?
+and A.Run = ?RUN?
+and F.Run = ?RUN?
+and F.FieldName = &apos;?FIELDNAME?&apos;
+and F.id = A.Field
+
+order by 1</query>
+  <query name='What threads use each lock? (from a run)'>select distinct L.LOCK &quot;LOCK ID&quot;, O.THREADNAME &quot;THREAD NAME|&quot;
+from LOCK L, OBJECT O
+where L.INTHREAD = O.ID
+and L.RUN = O.RUN
+and O.Run = ?RUN?
+order by 1, 2</query>
+  <query name='Show lock event (from a run)'>select l.TS, t.ThreadName, l.Lock, lkType.ClassName as LockClass, l.LockIsThis as IsThis, l.LockIsClass as IsClass,
+l.State, cl.PackageName, cl.ClassName, l.AtLine
+from LOCK as l, OBJECT as cl, OBJECT as lk, OBJECT as t, OBJECT as lkType
+where l.Run = ?RUN?
+and l.Id = ?LOCK?
+and l.InClass = cl.Id
+and l.Lock = lk.Id
+and l.InThread = t.Id
+and lk.Type = lkType.Id</query>
+  <query name='Show summary of contended locks' meta-query-name='Lock contention'>
+select Run, Lock, sum(Duration) as BlockTime from LOCKDURATION    
+where State = &apos;BLOCKING&apos;
+group by Run, Lock
+  </query>
+  <query name='Show contended locks'>select Run &quot;Run__RUN&quot;, 
+Lock &quot;Lock__LOCK&quot;, 
+Start &quot;Start_START|&quot;, Duration, State
+from LOCKDURATION   
+order by Run, Lock 
+
+</query>
+  <query name='Show when threads hold locks and acquire more' meta-query-name='Held + Acquiring'>select Run, LockEvent, count(LockHeld) as NumLocksHeld
+from LOCKSHELD
+group by Run, LockEvent
+
+  </query>
+  <query name='Show locks potentially involved in deadlock'>select * from lockcycle
+order by count desc</query>
+  <query name='Show code potentially involved in deadlock'>select distinct cl.PackageName as package, cl.ClassName as class, l.AtLine as line
+from LOCKCYCLE as cy, LOCKSHELD as lh, LOCK as l, OBJECT as cl
+where cy.Run = lh.Run
+and lh.Run = l.Run
+and cy.LockHeld = lh.LockHeld
+and cy.LockAcquired = lh.LockAcquired
+and lh.LockEvent = l.Id
+and l.InClass = cl.Id
+
+</query>
+  <query name='Show stack traces potentially involved in deadlock'>select cl.PackageName &quot;Package__PACKAGE&quot;, 
+cl.ClassName &quot;Class__CLASS&quot;, 
+&apos;Line &apos; ||  CAST(l.AtLine AS CHAR(10)) &quot;Line__LINE&quot;,
+&apos;Event &apos; ||  CAST(l.Id AS CHAR(10)) &quot;Event__LOCK&quot;,
+t.InFile &quot;File__FILE|&quot;, 
+tc.PackageName as package, tc.ClassName as class, t.AtLine as line,
+t.Location, t.Start, t.Stop 
+from trace as t, lock as l, OBJECT as cl, OBJECT as tc
+where t.run = l.run
+and l.id in 
+(
+select l.id
+from LOCKCYCLE as cy, LOCKSHELD as lh, LOCK as l
+where cy.Run = lh.Run
+and lh.Run = l.Run
+and l.Run = t.Run
+and cy.LockHeld = lh.LockHeld
+and cy.LockAcquired = lh.LockAcquired
+and lh.LockEvent = l.Id
+)
+and l.ts between t.start and t.stop
+and l.InClass = cl.Id
+and t.InClass = tc.Id
+order by l.id, t.start desc
+
+
+
+
+
+</query>
+  <query name='Show stack trace (for a lock event)'>select t.InFile, t.AtLine, t.Location, t.Start, t.Stop 
+from trace as t, lock as l
+where t.run = ?RUN?
+and l.run = ?RUN? and l.id = ?LOCKEVENT?
+and l.ts between t.start and t.stop
+order by t.start desc</query>
+  <query name='2ML 1 Create locks held table'>create table LOCKSHELD (
+  Run INT NOT NULL,
+  TS TIMESTAMP NOT NULL,
+  Field BIGINT NOT NULL,
+  InThread BIGINT NOT NULL,
+  CountOfLocksHeld INT NOT NULL
+)</query>
+  <query name='2ML 2 Insert rows'>insert into LOCKSHELD
+select a.Run, a.TS, a.FIELD, a.InThread, count(*)
+from ACCESS A, LOCKDURATION L
+where a.RUN = L.RUN
+and a.ts between L.START and L.STOP
+and a.INTHREAD = L.INTHREAD
+group by a.FIELD, a.TS, a.Run, a.InThread</query>
+  <query name='2ML 3 Delete one lock rows'>delete from LOCKSHELD where CountOfLocksHeld &lt; 2</query>
+  <query name='2ML 4 Show holding two or more locks'>select a.InFile &quot;FILE____CFILE&quot;, &apos;at line# &apos; || CAST(a.AtLine AS CHAR(10)) &quot;LINE NUMBER&quot;, a.ts &quot;Time&quot;, &apos;in thread: &apos; || t.ThreadName &quot;IN THREAD|&quot;, l.Lock &quot;Lock Object Id Held&quot;
+from LOCKSHELD lh, ACCESS a, OBJECT T, LOCKDURATION L
+where lh.Run = a.Run
+and lh.Run = t.Run
+and lh.Run = L.Run
+and a.InThread = t.id
+and lh.ts = a.ts
+and lh.field = a.field
+and lh.ts = a.ts
+and lh.ts between l.start and l.stop
+and lh.inThread = l.InThread
+</query>
+  <query name='2ML (debug) show all LOCKSHELD rows' meta-query-name='Shared Fields'>select * from LOCKSHELD</query>
+  <query name='query (1)'></query>
+  <query name='query (2)'></query>
+  <query name='query (3)'></query>
+  <query name='query (4)'></query>
+  <query name='query (5)'></query>
+  <query name='query (6)'></query>
+  <query name='query (7)'></query>
+  <query name='query (8)'></query>
+  <query name='query (9)'></query>
+  <query name='query (10)'></query>
+</ad-hoc>

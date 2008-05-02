@@ -33,6 +33,10 @@ public final class Data {
 		return exec;
 	}
 
+        public static URL getDefaultQueryFileURL() {
+            return Data.class.getResource("/lib/queries/queries.xml");
+        }
+        
 	public static synchronized boolean isBooted() {
 		return (dbLocation != null);
 	}

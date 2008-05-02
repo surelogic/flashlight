@@ -33,7 +33,8 @@ implements SourceListener {
         for(int i=0; i<r.length; i++) {
             String key = labels[i].toUpperCase();
             if (!props.containsKey(key)) {
-                props.put(key, r[i].label);
+                String value = r[i].label;
+                props.put(key, value == null ? "null" : r[i].label);
             }
         }
         if (!props.containsKey("RUN")) {

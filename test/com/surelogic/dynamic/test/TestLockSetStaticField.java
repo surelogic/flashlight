@@ -1,15 +1,12 @@
 package com.surelogic.dynamic.test;
-/**
- * Tests that this lock set does not have a consistent lock.
- * @author nathan
- *
- */
-public class TestLockSetDifferentLocks {
 
-	int a;
+
+public class TestLockSetStaticField {
+
+	static int a;
 
 	public static void main(String[] args) {
-		new TestLockSetDifferentLocks().go();
+		new TestLockSetStaticField().go();
 	}
 
 	void go() {
@@ -26,17 +23,21 @@ public class TestLockSetDifferentLocks {
 	}
 
 	private class Z implements Runnable {
-		public synchronized void run() {
-			for (int i = 0; i < 2; i++) {
+		public void run() {
+			synchronized (TestLockSetStaticField.class) {
+				for (int i = 0; i < 2; i++) {
 					a--;
+				}
 			}
 		}
 	}
 
 	private class Y implements Runnable {
-		public synchronized void run() {
-			for (int i = 0; i < 2; i++) {
+		public void run() {
+			synchronized (TestLockSetStaticField.class) {
+				for (int i = 0; i < 2; i++) {
 					a++;
+				}
 			}
 		}
 	}

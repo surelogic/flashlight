@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.NavigableSet;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.Map.Entry;
@@ -279,7 +278,7 @@ public class LockSetAnalysis extends DBQueryEmpty {
 	private static class ThreadLocks {
 		private final Iterator<Row> locks;
 		private final Map<Long, Set<Long>> threads;
-		private final NavigableSet<Lock> activeLocks;
+		private final TreeSet<Lock> activeLocks;
 		private Lock lock;
 
 		ThreadLocks(Result lockDurations) {

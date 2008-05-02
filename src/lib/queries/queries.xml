@@ -142,6 +142,60 @@ and lh.ts between l.start and l.stop
 and lh.inThread = l.InThread
 </query>
   <query name='2ML (debug) show all LOCKSHELD rows' meta-query-name='Shared Fields'>select * from LOCKSHELD</query>
+    <query name='Lock Sets for the set of interesting instance fields' meta-query-name='Thread counts for the instance field'>SELECT 
+  O.PackageName &quot;Package__PACKAGE&quot;,
+  O.ClassName &quot;Class__CLASS&quot;,
+  FI.FieldName &quot;Field&quot;,
+  I.FIELD &quot;FieldId|&quot;,I.RECEIVER, F.LOCK 
+ FROM OBJECT O
+ INNER JOIN FIELD FI ON FI.DeclaringType = O.Id AND FI.RUN = ?RUN?
+ INNER JOIN INTERESTINGFIELD I ON FI.STATIC = &apos;N&apos; AND I.FIELD=FI.ID
+ LEFT OUTER JOIN FIELDINSTANCELOCKSET F ON 
+   F.RUN = I.RUN AND F.FIELD = I.FIELD AND F.RECEIVER = I.RECEIVER </query>
+  <query name='Show lock held counts for the instance field' meta-query-name='Interesting Fields'>SELECT LOCKS.*, (CAST (LOCKS.LOCKCOUNT AS FLOAT)) / (CAST (ACCESSES.ACCESSCOUNT AS FLOAT))
+FROM
+(SELECT D.Lock &quot;LOCK&quot;,COUNT(D.Lock) &quot;LOCKCOUNT&quot;
+ FROM ACCESS A
+      INNER JOIN LOCKDURATION D ON D.InThread = A.InThread AND D.Start &lt; A.TS AND D.Stop &gt; A.TS AND State = &apos;HOLDING&apos; 
+    WHERE A.RUN=?RUN? AND A.FIELD = ?FIELDID? AND A.RECEIVER = ?RECEIVER?
+ GROUP BY D.LOCK) AS LOCKS,
+(SELECT COUNT(*) &quot;ACCESSCOUNT&quot; FROM ACCESS A WHERE A.RUN=?RUN? AND A.FIELD = ?FIELDID? AND A.RECEIVER = ?RECEIVER?) AS ACCESSES</query>
+  <query name='Thread counts for the instance field'>SELECT O.THREADNAME, F.READCOUNT, F.WRITECOUNT
+ FROM FIELDINSTANCETHREAD F, OBJECT O
+ WHERE F.FIELD = ?FIELDID? AND F.RECEIVER = ?RECEIVER? AND F.RUN = ?RUN? AND O.ID = F.THREAD</query>
+  <query name='Lock Sets for the set of interesting static fields' meta-query-name='Thread counts for the static field'>SELECT 
+  O.PackageName &quot;Package__PACKAGE&quot;,
+  O.ClassName &quot;Class__CLASS&quot;,
+  FI.FieldName &quot;Field&quot;,
+  I.FIELD &quot;FieldId|&quot;,
+  F.LOCK 
+ FROM OBJECT O
+ INNER JOIN FIELD FI ON FI.DeclaringType = O.Id AND FI.RUN = ?RUN? 
+ INNER JOIN INTERESTINGFIELD I ON I.RECEIVER IS NULL AND I.FIELD=FI.ID
+ LEFT OUTER JOIN FIELDLOCKSET F ON 
+   F.RUN = I.RUN AND F.FIELD = I.FIELD</query>
+  <query name='Show lock held counts for a static field'>SELECT LOCKS.*, (CAST (LOCKS.LOCKCOUNT AS FLOAT)) / (CAST (ACCESSES.ACCESSCOUNT AS FLOAT))
+FROM
+(SELECT D.Lock &quot;LOCK&quot;,COUNT(D.Lock) &quot;LOCKCOUNT&quot;
+ FROM ACCESS A
+      INNER JOIN LOCKDURATION D ON D.InThread = A.InThread AND D.Start &lt; A.TS AND D.Stop &gt; A.TS AND State = &apos;HOLDING&apos; 
+    WHERE A.RUN=?RUN? AND A.FIELD = ?FIELDID? AND A.RECEIVER IS NULL
+ GROUP BY D.LOCK) AS LOCKS,
+(SELECT COUNT(*) &quot;ACCESSCOUNT&quot; FROM ACCESS A WHERE A.RUN=?RUN? AND A.FIELD = ?FIELDID? AND A.RECEIVER IS NULL) AS ACCESSES</query>
+  <query name='Thread counts for the static field'>SELECT O.THREADNAME, F.READCOUNT, F.WRITECOUNT
+ FROM FIELDSTATICTHREAD F, OBJECT O
+ WHERE F.FIELD = ?FIELDID? AND F.RUN = ?RUN? AND O.ID = F.THREAD</query>
+   <query name='GRAND Lock Sets for the set of interesting instance fields (1)'>SELECT DISTINCT
+  O.PackageName &quot;Package__PACKAGE&quot;,
+  O.ClassName &quot;Class__CLASS&quot;,
+  FI.FieldName &quot;Field&quot;,
+  I.FIELD &quot;FieldId|&quot;,
+  F.LOCK 
+ FROM OBJECT O
+ INNER JOIN FIELD FI ON FI.DeclaringType = O.Id AND FI.RUN = ?RUN? 
+ INNER JOIN INTERESTINGFIELD I ON I.RECEIVER IS NOT NULL AND I.FIELD=FI.ID
+ LEFT OUTER JOIN FIELDLOCKSET F ON 
+   F.RUN = I.RUN AND F.FIELD = I.FIELD</query>
   <query name='query (1)'></query>
   <query name='query (2)'></query>
   <query name='query (3)'></query>

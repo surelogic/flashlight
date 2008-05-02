@@ -1,7 +1,7 @@
 
 CREATE INDEX ACCESS_TS_INDEX ON ACCESS (TS)
 <<>>
-CREATE TABLE FIELDLOCKSET ( -- Grand Lock Set intersection for all field accesses
+CREATE TABLE FIELDLOCKSET ( -- Grand Lock Set intersection for all field accesses, also for statics
   Run    INT          NOT NULL CONSTRAINT FIELDLOCKSET_Run_FK REFERENCES RUN (Run),
   Field  BIGINT       NOT NULL,
   Lock   BIGINT       NOT NULL,
@@ -10,7 +10,7 @@ CREATE TABLE FIELDLOCKSET ( -- Grand Lock Set intersection for all field accesse
   PRIMARY KEY (Run, Field, Lock)
 )
 <<>>
-CREATE TABLE FIELDINSTANCELOCKSET ( -- Grand Lock Set intersection for all field accesses
+CREATE TABLE FIELDINSTANCELOCKSET (
   Run       INT          NOT NULL CONSTRAINT FIELDINSTANCELOCKSET_Run_FK REFERENCES RUN (Run),
   Field     BIGINT       NOT NULL,
   Receiver  BIGINT,

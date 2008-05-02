@@ -36,6 +36,8 @@ public class LockSetAnalysis extends DBQueryEmpty {
 	}
 
 	public void doPerform(final Query q) {
+		q.prepared("LockSet.badPublishes").call(runId);
+		q.prepared("LockSet.interestingFields").call(runId);
 		q.prepared("LockSet.lockDurations", new ResultHandler<Void>() {
 			public Void handle(final Result lockDurations) {
 				final LockSets sets = new LockSets(lockDurations);
@@ -47,12 +49,12 @@ public class LockSetAnalysis extends DBQueryEmpty {
 							final long thread = r.nextLong();
 							final long field = r.nextLong();
 							final Long receiver = r.nullableLong();
+							final boolean read = "R".equals(r.nextString());
 							if (receiver == null) {
-								sets.staticAccess(ts, thread, field);
+								sets.staticAccess(ts, thread, field, read);
 							} else {
-								sets
-										.instanceAccess(ts, thread, field,
-												receiver);
+								sets.instanceAccess(ts, thread, field,
+										receiver, read);
 							}
 						}
 						return null;
@@ -68,12 +70,16 @@ public class LockSetAnalysis extends DBQueryEmpty {
 
 		private final Map<Long, Set<Long>> fields;
 		private final Map<Long, Map<Long, Set<Long>>> instances;
+		private final Map<StaticInstance, Count> staticCounts;
+		private final Map<FieldInstance, Count> counts;
 		final ThreadLocks locks;
 
 		public LockSets(Result lockDurations) {
 			fields = new HashMap<Long, Set<Long>>();
 			locks = new ThreadLocks(lockDurations);
 			instances = new HashMap<Long, Map<Long, Set<Long>>>();
+			staticCounts = new HashMap<StaticInstance, Count>();
+			counts = new HashMap<FieldInstance, Count>();
 		}
 
 		public void writeStatistics(Query q) {
@@ -109,24 +115,50 @@ public class LockSetAnalysis extends DBQueryEmpty {
 					insertFieldLockSets.call(runId, field, lock);
 				}
 			}
+			final Queryable<Void> insertStaticCounts = q
+					.prepared("LockSet.insertStaticCounts");
+			final Queryable<Void> insertFieldCounts = q
+					.prepared("LockSet.insertFieldCounts");
+			for (final Entry<StaticInstance, Count> e : staticCounts.entrySet()) {
+				final StaticInstance si = e.getKey();
+				final Count c = e.getValue();
+				insertStaticCounts.call(runId, si.thread, si.field, c.read,
+						c.write);
+			}
+			for (final Entry<FieldInstance, Count> e : counts.entrySet()) {
+				final FieldInstance fi = e.getKey();
+				final Count c = e.getValue();
+				insertFieldCounts.call(runId, fi.thread, fi.field, fi.receiver,
+						c.read, c.write);
+			}
 		}
 
-		public void staticAccess(Timestamp ts, long thread, long field) {
+		public void staticAccess(Timestamp ts, long thread, long field,
+				boolean read) {
 			locks.ensureTime(ts);
 			Set<Long> fieldSet = fields.get(field);
 			final Collection<Long> lockSet = locks.getLocks(thread);
 			if (fieldSet == null) {
-				fieldSet = new HashSet<Long>();
-				fieldSet.addAll(lockSet);
+				fieldSet = new HashSet<Long>(lockSet);
 				fields.put(field, fieldSet);
 			} else {
 				fieldSet.retainAll(lockSet);
 			}
-
+			final StaticInstance si = new StaticInstance(thread, field);
+			Count c = staticCounts.get(si);
+			if (c == null) {
+				c = new Count();
+				staticCounts.put(si, c);
+			}
+			if (read) {
+				c.read++;
+			} else {
+				c.write++;
+			}
 		}
 
 		public void instanceAccess(Timestamp ts, long thread, long field,
-				long receiver) {
+				long receiver, boolean read) {
 			locks.ensureTime(ts);
 			Map<Long, Set<Long>> fieldMap = instances.get(field);
 			if (fieldMap == null) {
@@ -136,13 +168,106 @@ public class LockSetAnalysis extends DBQueryEmpty {
 			Set<Long> instance = fieldMap.get(receiver);
 			final Collection<Long> lockSet = locks.getLocks(thread);
 			if (instance == null) {
-				instance = new HashSet<Long>();
-				instance.addAll(lockSet);
+				instance = new HashSet<Long>(lockSet);
 				fieldMap.put(receiver, instance);
 			} else {
 				instance.retainAll(lockSet);
 			}
+			final FieldInstance fi = new FieldInstance(thread, field, receiver);
+			Count count = counts.get(fi);
+			if (count == null) {
+				count = new Count();
+				counts.put(fi, count);
+			}
+			if (read) {
+				count.read++;
+			} else {
+				count.write++;
+			}
 		}
+	}
+
+	private static class StaticInstance {
+		long thread;
+		long field;
+
+		public StaticInstance(long thread, long field) {
+			super();
+			this.thread = thread;
+			this.field = field;
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + (int) (field ^ (field >>> 32));
+			result = prime * result + (int) (thread ^ (thread >>> 32));
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			final StaticInstance other = (StaticInstance) obj;
+			if (field != other.field) {
+				return false;
+			}
+			if (thread != other.thread) {
+				return false;
+			}
+			return true;
+		}
+
+	}
+
+	private static class FieldInstance {
+		long thread;
+		long field;
+		long receiver;
+
+		public FieldInstance(long thread, long field, long receiver) {
+			super();
+			this.thread = thread;
+			this.field = field;
+			this.receiver = receiver;
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + (int) (field ^ (field >>> 32));
+			result = prime * result + (int) (receiver ^ (receiver >>> 32));
+			result = prime * result + (int) (thread ^ (thread >>> 32));
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			final FieldInstance other = (FieldInstance) obj;
+			if (field != other.field) {
+				return false;
+			}
+			if (receiver != other.receiver) {
+				return false;
+			}
+			if (thread != other.thread) {
+				return false;
+			}
+			return true;
+		}
+
+	}
+
+	private static class Count {
+		long read;
+		long write;
 	}
 
 	/**
@@ -207,6 +332,12 @@ public class LockSetAnalysis extends DBQueryEmpty {
 			}
 		}
 
+		/**
+		 * Get the set of locks a thread currently holds.
+		 * 
+		 * @param id
+		 * @return
+		 */
 		private Set<Long> getThreadSet(long id) {
 			Set<Long> threadSet = threads.get(id);
 			if (threadSet == null) {
@@ -251,6 +382,15 @@ public class LockSetAnalysis extends DBQueryEmpty {
 
 		@Override
 		public boolean equals(Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null) {
+				return false;
+			}
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
 			final Lock other = (Lock) obj;
 			if (end == null) {
 				if (other.end != null) {

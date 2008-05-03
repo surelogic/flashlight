@@ -309,6 +309,7 @@ public final class PrepRunnable implements Runnable {
 					break;
 				}
 			}
+			/*
 			if (!parsed) {
 				System.out.println(name);
 				if (attributes != null) {
@@ -319,6 +320,7 @@ public final class PrepRunnable implements Runnable {
 					}
 				}
 			}
+			*/
 		}
 	}
 }

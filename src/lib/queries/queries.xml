@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes'?>
-<ad-hoc version='1.0' current='13'>
+<ad-hoc version='1.0' current='14'>
   <query name='Show Tables'>show tables</query>
   <query name='Show available runs' meta-query-name='What fields are shared? (from a run)'>-- This query returns all the prepared runs in the database
-select * from RUN</query>
+select Run, Name, Started, Username from RUN</query>
   <query name='What fields are shared? (from a run)' meta-query-name='What threads access this field? (from a shared field)'>select distinct
   O.PackageName &quot;Package__PACKAGE&quot;,
   O.ClassName &quot;Class__CLASS|&quot;,
@@ -18,9 +18,12 @@ where
 
 order by 1, 2, 3</query>
   <query name='Show all threads' meta-query-name='Threads'>
-select Run, Id, ThreadName from OBJECT    
-where ThreadName is not null
-  </query>
+select t.Id, t.ThreadName, cl.PackageName, cl.ClassName
+from OBJECT as t, OBJECT as cl   
+where t.ThreadName is not null
+and t.Run=?RUN?
+and cl.Run=?RUN?
+and t.Type=cl.Id</query>
   <query name='What threads access this field? (from a shared field)'>select distinct O.ThreadName &quot;Thread&quot;
 
 from OBJECT O,
@@ -50,10 +53,25 @@ and l.Lock = lk.Id
 and l.InThread = t.Id
 and lk.Type = lkType.Id</query>
   <query name='Show summary of contended locks' meta-query-name='Lock contention'>
-select Run, Lock, sum(Duration) as BlockTime from LOCKDURATION    
+select Lock, sum(Duration) as BlockTime from LOCKDURATION    
 where State = &apos;BLOCKING&apos;
-group by Run, Lock
+and Run=?RUN?
+group by Lock
+order by BlockTime desc
   </query>
+  <query name='Show details of a contended lock'>
+select 
+le.InClass, le.AtLine,
+ld.InThread &quot;Thread&quot;, 
+ld.State &quot;State|&quot;,
+sum(ld.Duration)
+from LOCKDURATION as ld, LOCK as le  
+where ld.Run=?RUN?
+and ld.Lock=?LOCK?
+and le.Run=?RUN?
+and le.Id=ld.StartEvent
+group by ld.InThread, ld.State, le.InClass, le.AtLine
+</query>
   <query name='Show contended locks'>select Run &quot;Run__RUN&quot;, 
 Lock &quot;Lock__LOCK&quot;, 
 Start &quot;Start_START|&quot;, Duration, State
@@ -61,11 +79,14 @@ from LOCKDURATION
 order by Run, Lock 
 
 </query>
-  <query name='Show when threads hold locks and acquire more' meta-query-name='Held + Acquiring'>select Run, LockEvent, count(LockHeld) as NumLocksHeld
-from LOCKSHELD
-group by Run, LockEvent
-
-  </query>
+  <query name='Show when threads hold locks and acquire more' meta-query-name='Held + Acquiring'>select lh.LockEvent, count(LockHeld) as NumLocksHeld,
+le.InClass, le.AtLine
+from LOCKSHELD as lh, LOCK as le
+where lh.Run=?RUN?
+and lh.LockEvent=le.Id
+and le.Run=?RUN?
+group by lh.LockEvent, le.InClass, le.AtLine
+order by NumLocksHeld desc, lh.LockEvent</query>
   <query name='Show locks potentially involved in deadlock'>select * from lockcycle
 order by count desc</query>
   <query name='Show code potentially involved in deadlock'>select distinct cl.PackageName as package, cl.ClassName as class, l.AtLine as line
@@ -108,7 +129,7 @@ order by l.id, t.start desc
 
 
 </query>
-  <query name='Show stack trace (for a lock event)'>select t.InFile, t.AtLine, t.Location, t.Start, t.Stop 
+  <query name='Show stack trace (for a lock event)'>select t.InFile, t.InClass, t.AtLine, t.Location, t.Start, t.Stop 
 from trace as t, lock as l
 where t.run = ?RUN?
 and l.run = ?RUN? and l.id = ?LOCKEVENT?
@@ -142,7 +163,7 @@ and lh.ts between l.start and l.stop
 and lh.inThread = l.InThread
 </query>
   <query name='2ML (debug) show all LOCKSHELD rows' meta-query-name='Shared Fields'>select * from LOCKSHELD</query>
-    <query name='Lock Sets for the set of interesting instance fields' meta-query-name='Thread counts for the instance field'>SELECT 
+  <query name='Lock Sets for the set of interesting instance fields' meta-query-name='Thread counts for the instance field'>SELECT 
   O.PackageName &quot;Package__PACKAGE&quot;,
   O.ClassName &quot;Class__CLASS&quot;,
   FI.FieldName &quot;Field&quot;,
@@ -185,7 +206,7 @@ FROM
   <query name='Thread counts for the static field'>SELECT O.THREADNAME, F.READCOUNT, F.WRITECOUNT
  FROM FIELDSTATICTHREAD F, OBJECT O
  WHERE F.FIELD = ?FIELDID? AND F.RUN = ?RUN? AND O.ID = F.THREAD</query>
-   <query name='GRAND Lock Sets for the set of interesting instance fields (1)'>SELECT DISTINCT
+  <query name='GRAND Lock Sets for the set of interesting instance fields (1)'>SELECT DISTINCT
   O.PackageName &quot;Package__PACKAGE&quot;,
   O.ClassName &quot;Class__CLASS&quot;,
   FI.FieldName &quot;Field&quot;,

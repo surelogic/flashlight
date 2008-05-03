@@ -12,9 +12,10 @@ import com.surelogic.common.SLProgressMonitor;
 import com.surelogic.common.logging.SLLogger;
 
 public final class DataPreScan extends DefaultHandler {
-
-	int f_work = 0;
-	final int f_tickSize;
+  private long f_startTime = -1;
+  private long f_endTime = -1;
+	private int f_work = 0;
+	private final int f_tickSize;
 
 	final SLProgressMonitor f_monitor;
 
@@ -122,5 +123,37 @@ public final class DataPreScan extends DefaultHandler {
 				f_singleThreadedFields.add(new Pair(field, receiver));
 			}
 		}
+		else if ("time".equals(name)) {
+		  if (attributes != null) {
+        for (int i = 0; i < attributes.getLength(); i++) {
+          final String aName = attributes.getQName(i);
+          if ("nano-time".equals(aName)) {
+            long time = Long.parseLong(attributes.getValue(i));
+            if (f_startTime == -1) {
+              f_startTime = time;
+            }
+            else if (f_endTime == -1) {
+              f_endTime = time;
+            }
+            else {
+              SLLogger.getLogger().log(Level.SEVERE, "Extra time element: "+time);
+            }
+          }
+        }
+		  }
+		}
 	}
+
+	public long getEndTime() {
+	  return f_endTime;
+	}
+	
+  public void done() {
+    if (f_startTime == -1) {
+      SLLogger.getLogger().log(Level.SEVERE, "Missing start time element");
+    }
+    else if (f_endTime == -1) {
+      SLLogger.getLogger().log(Level.SEVERE, "Missing end time element");
+    }    
+  }
 }

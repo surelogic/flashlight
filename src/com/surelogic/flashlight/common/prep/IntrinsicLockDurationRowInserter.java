@@ -98,12 +98,24 @@ public final class IntrinsicLockDurationRowInserter {
 		}
 	}
 
-	public void flush(final int runId) throws SQLException {
+	public void flush(final int runId, final long endTime) throws SQLException {
 		if (flushed) {
 			return;
 		}
 		flushed = true;
 
+		for(Entry<Long, IntrinsicLockDurationState> e : f_threadToStatus.entrySet()) {
+		  final Long thread = e.getKey();
+		  System.out.println("Thread "+thread+" : "+e.getValue());
+		  
+		  final Map<Long,State> lockToState = f_threadToLockToState.get(thread);
+		  if (lockToState != null) {
+		    for(Entry<Long,State> e2 : lockToState.entrySet()) {
+		      System.out.println("\tLock "+e2.getKey()+" : "+e2.getValue().lockState);
+		    }
+		  }
+		}
+		
 		final CycleDetector<Long, Edge> detector = new CycleDetector<Long, Edge>(
 				lockGraph);
 		if (detector.detectCycles()) {

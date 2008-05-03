@@ -123,8 +123,8 @@ public abstract class Lock extends Event {
 		}
 	}
 
-	public final void flush(final int runId) throws SQLException {
-		f_rowInserter.flush(runId);
+	public final void flush(final int runId, final long endTime) throws SQLException {
+		f_rowInserter.flush(runId, endTime);
 	}
 
 	public final void close() throws SQLException {

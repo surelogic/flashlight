@@ -97,6 +97,8 @@ public final class PrepRunnable implements Runnable {
 				SAXParser saxParser = factory.newSAXParser();
 				final long startPreScan = System.currentTimeMillis();
 				saxParser.parse(stream, scanResults);
+				scanResults.done();
+				
 				System.out.println("Prescan = "
 						+ (System.currentTimeMillis() - startPreScan) + " ms");
 				stream.close();
@@ -151,7 +153,7 @@ public final class PrepRunnable implements Runnable {
 								+ " ms");
 
 						for (final IPrep element : f_elements) {
-							element.flush(runId);
+							element.flush(runId, scanResults.getEndTime());
 						}
 						for (final IPrep element : f_elements) {
 							element.printStats();

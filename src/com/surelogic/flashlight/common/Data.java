@@ -104,7 +104,7 @@ public final class Data {
 	 * Up this number when you add a new schema version SQL script to this
 	 * package.
 	 */
-	public static final int schemaVersion = 12;
+	public static final int schemaVersion = 13;
 
 	public static final String SQL_SCRIPT_PREFIX = "/lib/database/schema_";
 

@@ -12,18 +12,22 @@ import java.util.logging.*;
 public abstract class DataCallable<T> implements Callable<T> {
     protected static final Logger LOG = SLLogger.getLogger();
     
+    private String name;
     private String sql;
     
     protected DataCallable() {
-        this(null);
+        this(null, null);
     }
-    protected DataCallable(String sql) {
+    protected DataCallable(String name, String sql) {
+        this.name = name;
         this.sql = sql;
     }
     
     protected abstract T handleResultSet(ResultSet rs) throws SQLException;
     
-    public final boolean query(String sql) {
+    public final boolean query(String name, String sql) {
+        this.name = name;
+        
         if (sql == null) {
             return false;
         }
@@ -51,6 +55,10 @@ public abstract class DataCallable<T> implements Callable<T> {
             LOG.log(Level.SEVERE, "Problem with "+sql, ex.getCause());
         }
         return null;
+    }
+    
+    public String getQueryName() {
+        return name;
     }
     
     public final T call() throws Exception {

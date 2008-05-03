@@ -11,10 +11,14 @@ import java.util.Properties;
  */
 public abstract class FlashlightSourceListener extends DataCallable<Void>
 implements SourceListener {
+    static final String PKG_CLS = "pkgClass";
+    static final String FIELD_TYPE = "fieldType";
+    
     final int run;    
     String pkg;
-    String cls;
+    String cls;        
     int line;
+    String fieldType;
     String sql;
 
     String[] columnLabels;
@@ -53,8 +57,9 @@ implements SourceListener {
         this.line = line;
         
         String classId = null;
-        String fieldType = null;
         String fieldName = null;
+        fieldType = null;
+        
         for(int i=0; i<columnLabels.length; i++) {
             final String col = columnLabels[i].toLowerCase();
             if ("inclass".equals(col)) {
@@ -63,19 +68,39 @@ implements SourceListener {
             else if (line < 0 && "atline".equals(col)) {
                 this.line = Integer.parseInt(row[i].label);
             }
+            /*
             else if ("ftype".equals(col) || "declaringtype".equals(col)) {
                 fieldType = row[i].label;  
             }
+             */ 
             else if ("field".equals(col) || "fieldname".equals(col)) {
                 fieldName = row[i].label;  
             }
         }
-        if (run >= 0 && classId != null) {
-            query("select PackageName,ClassName from OBJECT"+
-                  " where run="+run+" and id="+classId);           
-        }                
+        if (run >= 0) {
+            if (classId != null) {
+                query(PKG_CLS, "select PackageName,ClassName from OBJECT" +
+                               " where run=" + run + " and id=" + classId);
+            }    
+            /*
+            else if (line < 0 && fieldType != null && fieldType.length() > 0 &&
+                     Character.isDigit(fieldType.charAt(0))) {
+                query(FIELD_TYPE, "select ClassName from OBJECT"+
+                                  " where run="+run+" and id="+fieldType);
+                if (fieldType != null) {
+                    // Check if nested class
+                    int lastSeg = fieldType.indexOf('$');
+                    if (lastSeg >= 0) {
+                        fieldType = fieldType.substring(lastSeg + 1);                 
+                    }
+                }
+            }
+             */
+        }
+        
         setSource(this.pkg, this.cls);
         if (/*fieldType != null &&*/ fieldName != null) {
+            LOG.info("Trying to find declaration: "+fieldType+" "+fieldName);
             this.line = findSourceLine(fieldType, fieldName);
         }
         setSourceLine(this.line); 
@@ -83,9 +108,14 @@ implements SourceListener {
         
     protected abstract int findSourceLine(String fieldType, String fieldName);
     
-    protected Void handleResultSet(ResultSet rs) throws SQLException {
-        pkg = rs.getString(1);
-        cls = rs.getString(2);
+    protected Void handleResultSet(ResultSet rs) throws SQLException {        
+        if (PKG_CLS.equals(getQueryName())) {
+            pkg = rs.getString(1);
+            cls = rs.getString(2);
+        }
+        else if (FIELD_TYPE.equals(getQueryName())) {
+            fieldType = rs.getString(1);
+        }
         return null;
     }
     

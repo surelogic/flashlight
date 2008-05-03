@@ -56,6 +56,7 @@ implements SourceListener {
         this.cls = cls;
         this.line = line;
         
+        String lockId = null;
         String classId = null;
         String fieldName = null;
         fieldType = null;
@@ -76,12 +77,15 @@ implements SourceListener {
             else if ("field".equals(col) || "fieldname".equals(col)) {
                 fieldName = row[i].label;  
             }
+            else if ("lock".equals(col)) {
+                lockId = row[i].label;  
+            }
         }
         if (run >= 0) {
             if (classId != null) {
                 query(PKG_CLS, "select PackageName,ClassName from OBJECT" +
                                " where run=" + run + " and id=" + classId);
-            }    
+            } 
             /*
             else if (line < 0 && fieldType != null && fieldType.length() > 0 &&
                      Character.isDigit(fieldType.charAt(0))) {

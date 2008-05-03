@@ -78,7 +78,10 @@ public class ReadWriteLock extends TrackUnreferenced {
 	}
 
 	public void close() throws SQLException {
-		f_ps.close();
+	  if (f_ps != null) {
+		  f_ps.close();
+		  f_ps = null;
+	  }
 	}
 
 }

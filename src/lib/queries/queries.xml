@@ -173,6 +173,23 @@ and lh.inThread = l.InThread
  INNER JOIN INTERESTINGFIELD I ON FI.STATIC = &apos;N&apos; AND I.FIELD=FI.ID
  LEFT OUTER JOIN FIELDINSTANCELOCKSET F ON 
    F.RUN = I.RUN AND F.FIELD = I.FIELD AND F.RECEIVER = I.RECEIVER </query>
+  <query name='Locks held for each access of an instance field' meta-query-name='Trace for an acquisition of a lock'>SELECT O.THREADNAME &quot;THREAD&quot;,A.TS &quot;TIME&quot;,D.Lock &quot;LOCK|&quot;,LO.PackageName &quot;Package__PACKAGE&quot;, LO.ClassName &quot;Class__CLASS&quot;, L.AtLine &quot;Line&quot;
+FROM ACCESS A, LOCKDURATION D, OBJECT O, LOCK L, OBJECT LO
+WHERE 
+   A.FIELD = ?FIELD? AND 
+   A.RECEIVER = ?RECEIVER? AND 
+   A.RUN=?RUN? AND 
+   D.InThread = A.InThread AND 
+   D.Run = A.Run AND 
+   (A.TS BETWEEN D.Start AND D.Stop) AND 
+   O.Run = A.Run AND 
+   O.Id = A.InThread AND 
+   L.Run = D.Run AND 
+   L.Id = D.StartEvent AND 
+   LO.Run = L.Run AND 
+   LO.Id = L.InClass
+ORDER BY O.THREADNAME, A.TS, D.Start
+--TODO outer join onto LOCKDURATION</query>
   <query name='Show lock held counts for the instance field' meta-query-name='Interesting Fields'>SELECT LOCKS.*, (CAST (LOCKS.LOCKCOUNT AS FLOAT)) / (CAST (ACCESSES.ACCESSCOUNT AS FLOAT))
 FROM
 (SELECT D.Lock &quot;LOCK&quot;,COUNT(D.Lock) &quot;LOCKCOUNT&quot;
@@ -195,6 +212,22 @@ FROM
  INNER JOIN INTERESTINGFIELD I ON I.RECEIVER IS NULL AND I.FIELD=FI.ID
  LEFT OUTER JOIN FIELDLOCKSET F ON 
    F.RUN = I.RUN AND F.FIELD = I.FIELD</query>
+  <query name='Locks held for each access of a static field'>SELECT O.THREADNAME &quot;THREAD&quot;,A.TS &quot;TIME&quot;,D.Lock &quot;LOCK|&quot;,LO.PackageName &quot;Package__PACKAGE&quot;, LO.ClassName &quot;Class__CLASS&quot;, L.AtLine &quot;Line&quot;
+FROM ACCESS A, LOCKDURATION D, OBJECT O, LOCK L, OBJECT LO
+WHERE 
+   A.FIELD = ?FIELD? AND 
+   A.RUN=?RUN? AND 
+   D.InThread = A.InThread AND 
+   D.Run = A.Run AND 
+   (A.TS BETWEEN D.Start AND D.Stop) AND 
+   O.Run = A.Run AND 
+   O.Id = A.InThread AND 
+   L.Run = D.Run AND 
+   L.Id = D.StartEvent AND 
+   LO.Run = L.Run AND 
+   LO.Id = L.InClass
+ORDER BY O.THREADNAME, A.TS, D.Start
+--TODO Outer join onto the lock duration table</query>
   <query name='Show lock held counts for a static field'>SELECT LOCKS.*, (CAST (LOCKS.LOCKCOUNT AS FLOAT)) / (CAST (ACCESSES.ACCESSCOUNT AS FLOAT))
 FROM
 (SELECT D.Lock &quot;LOCK&quot;,COUNT(D.Lock) &quot;LOCKCOUNT&quot;

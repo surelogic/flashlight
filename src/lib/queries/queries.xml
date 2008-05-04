@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes'?>
-<ad-hoc version='1.0' current='14'>
+<ad-hoc version='1.0' current='1'>
   <query name='Show Tables'>show tables</query>
-  <query name='Show available runs' meta-query-name='What fields are shared? (from a run)'>-- This query returns all the prepared runs in the database
+  <query name='Show available runs' meta-query-name='Lock Sets for the set of interesting instance fields'>-- This query returns all the prepared runs in the database
 select Run, Name, Started, Username from RUN</query>
   <query name='What fields are shared? (from a run)' meta-query-name='What threads access this field? (from a shared field)'>select distinct
   O.PackageName &quot;Package__PACKAGE&quot;,
@@ -163,7 +163,7 @@ and lh.ts between l.start and l.stop
 and lh.inThread = l.InThread
 </query>
   <query name='2ML (debug) show all LOCKSHELD rows' meta-query-name='Shared Fields'>select * from LOCKSHELD</query>
-  <query name='Lock Sets for the set of interesting instance fields' meta-query-name='Thread counts for the instance field'>SELECT 
+  <query name='Lock Sets for the set of interesting instance fields' meta-query-name='Locks held for each access of an instance field'>SELECT 
   O.PackageName &quot;Package__PACKAGE&quot;,
   O.ClassName &quot;Class__CLASS&quot;,
   FI.FieldName &quot;Field&quot;,
@@ -176,7 +176,7 @@ and lh.inThread = l.InThread
   <query name='Locks held for each access of an instance field' meta-query-name='Trace for an acquisition of a lock'>SELECT O.THREADNAME &quot;THREAD&quot;,A.TS &quot;TIME&quot;,D.Lock &quot;LOCK|&quot;,LO.PackageName &quot;Package__PACKAGE&quot;, LO.ClassName &quot;Class__CLASS&quot;, L.AtLine &quot;Line&quot;
 FROM ACCESS A, LOCKDURATION D, OBJECT O, LOCK L, OBJECT LO
 WHERE 
-   A.FIELD = ?FIELD? AND 
+   A.FIELD = ?FIELDID? AND 
    A.RECEIVER = ?RECEIVER? AND 
    A.RUN=?RUN? AND 
    D.InThread = A.InThread AND 
@@ -215,7 +215,7 @@ FROM
   <query name='Locks held for each access of a static field'>SELECT O.THREADNAME &quot;THREAD&quot;,A.TS &quot;TIME&quot;,D.Lock &quot;LOCK|&quot;,LO.PackageName &quot;Package__PACKAGE&quot;, LO.ClassName &quot;Class__CLASS&quot;, L.AtLine &quot;Line&quot;
 FROM ACCESS A, LOCKDURATION D, OBJECT O, LOCK L, OBJECT LO
 WHERE 
-   A.FIELD = ?FIELD? AND 
+   A.FIELD = ?FIELDID? AND 
    A.RUN=?RUN? AND 
    D.InThread = A.InThread AND 
    D.Run = A.Run AND 

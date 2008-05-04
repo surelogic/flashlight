@@ -19,6 +19,7 @@ import com.surelogic.common.logging.LogStatus;
 import com.surelogic.common.logging.SLLogger;
 
 public final class IntrinsicLockDurationRowInserter {
+  private static final long FINAL_EVENT = Lock.FINAL_EVENT;
 	private static final int LOCK_DURATION = 0;
 	private static final int LOCKS_HELD = 1;
 	private static final int THREAD_STATS = 2;
@@ -98,23 +99,13 @@ public final class IntrinsicLockDurationRowInserter {
 		}
 	}
 
-	public void flush(final int runId, final long endTime) throws SQLException {
+	public void flush(final int runId, final Timestamp endTime) throws SQLException {
 		if (flushed) {
 			return;
 		}
 		flushed = true;
 
-		for(Entry<Long, IntrinsicLockDurationState> e : f_threadToStatus.entrySet()) {
-		  final Long thread = e.getKey();
-		  System.out.println("Thread "+thread+" : "+e.getValue());
-		  
-		  final Map<Long,State> lockToState = f_threadToLockToState.get(thread);
-		  if (lockToState != null) {
-		    for(Entry<Long,State> e2 : lockToState.entrySet()) {
-		      System.out.println("\tLock "+e2.getKey()+" : "+e2.getValue().lockState);
-		    }
-		  }
-		}
+		handleNonIdleFinalState(runId, endTime);
 		
 		final CycleDetector<Long, Edge> detector = new CycleDetector<Long, Edge>(
 				lockGraph);
@@ -141,6 +132,52 @@ public final class IntrinsicLockDurationRowInserter {
 			}
 		}
 	}
+
+  private void handleNonIdleFinalState(final int runId, final Timestamp endTime) {
+    boolean createdEvent = false;    
+    int blocking = 0, holding = 0, waiting = 0;
+    for(Entry<Long, IntrinsicLockDurationState> e : f_threadToStatus.entrySet()) {
+      final Long thread = e.getKey();
+      System.out.println("Thread "+thread+" : "+e.getValue());
+      switch (e.getValue()) {
+        case BLOCKING:
+          blocking++;
+          break;
+        case HOLDING:
+          holding++;
+          break;
+        case WAITING:
+          waiting++;
+          break;
+        default:       
+      }
+      
+      final Map<Long,State> lockToState = f_threadToLockToState.get(thread);
+      if (lockToState != null) {
+        for(Entry<Long,State> e2 : lockToState.entrySet()) {
+          final long lock = e2.getKey();
+          final State state = e2.getValue();
+          if (state.lockState != IntrinsicLockDurationState.IDLE) {
+            System.out.println("\tLock "+lock+" : "+state.lockState);
+            if (!createdEvent) {
+              createdEvent = true;
+              Lock.insert(runId, FINAL_EVENT, endTime, thread, lock, 0, /* src is nonsense */
+                          lock, LockType.INTRINSIC, 
+                          LockState.AFTER_RELEASE, true, false, false);
+            }            
+            if (state.lockState == IntrinsicLockDurationState.BLOCKING) {
+              noteHeldLocks(runId, FINAL_EVENT, endTime, thread, lock, lockToState);            
+            }
+            recordStateDuration(runId, thread, lock, state.time, state.id, 
+                                endTime, FINAL_EVENT, state.lockState);
+          }
+        }
+      }
+    }
+    if (createdEvent) {
+      recordThreadStats(runId, FINAL_EVENT, endTime, blocking, holding, waiting);
+    }
+  }
 
 	public void close() throws SQLException {
 		for (int i = 0; i < statements.length; i++) {
@@ -453,6 +490,17 @@ public final class IntrinsicLockDurationRowInserter {
 		}
 	}
 
+  public void defineRWLock(int runId, long id, Long readLock, Long writeLock, Timestamp startTime) {
+    // Add dependency edges between the read and write locks    
+    lockGraph.addVertex(readLock);
+    lockGraph.addVertex(writeLock);
+    final Edge addedEdge1 = lockGraph.addEdge(readLock, writeLock);
+    addedEdge1.setFirst(startTime);
+    
+    final Edge addedEdge2 = lockGraph.addEdge(writeLock, readLock);
+    addedEdge2.setFirst(startTime);
+  }
+	
 	private void recordThreadStats(int runId, long eventId, Timestamp t,
 			int blocking, int holding, int waiting) {
 		final PreparedStatement f_threadStatusPS = statements[THREAD_STATS];

@@ -11,12 +11,14 @@ import org.xml.sax.Attributes;
 
 import com.surelogic.common.logging.SLLogger;
 
-public class ReadWriteLock extends TrackUnreferenced {
+public class ReadWriteLock extends Event {
 
 	private static final String f_psQ = "INSERT INTO RWLOCK (Run,Id,ReadLock,WriteLock) VALUES (?, ?, ?, ?)";
 
 	private static PreparedStatement f_ps;
 
+	private Timestamp startTime;
+	
 	@Override
 	public void setup(final Connection c, final Timestamp start,
 			final long startNS, final DataPreScan scanResults,
@@ -27,6 +29,7 @@ public class ReadWriteLock extends TrackUnreferenced {
 		if (f_ps == null) {
 			f_ps = c.prepareStatement(f_psQ);
 		}
+		startTime = start;
 	}
 
 	public String getXMLElementName() {
@@ -59,6 +62,7 @@ public class ReadWriteLock extends TrackUnreferenced {
 			return;
 		}
 		insert(runId, id, readLock, writeLock);
+    f_rowInserter.defineRWLock(runId, id, readLock, writeLock, startTime);
 		useObject(id);
 		useObject(readLock);
 		useObject(writeLock);

@@ -13,14 +13,13 @@ import com.surelogic.common.jdbc.JDBCUtils;
 import com.surelogic.common.logging.SLLogger;
 
 public abstract class Lock extends Event {
-
+  static final long FINAL_EVENT = Long.MAX_VALUE;  
+  
 	private static final String f_psQ = "INSERT INTO LOCK (Run,Id,TS,InThread,InClass,AtLine,Lock,Type,State,Success,LockIsThis,LockIsClass) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?)";
 
 	private static long f_id;
 
 	private static PreparedStatement f_ps;
-
-	private static IntrinsicLockDurationRowInserter f_rowInserter;
 
 	private final BeforeTrace before;
 
@@ -77,8 +76,8 @@ public abstract class Lock extends Event {
 		final long id = f_id++;
 		final Timestamp time = getTimestamp(nanoTime);
 		before.threadEvent(inThread);
-		insert(runId, id, time, inThread, inClass, lineNumber, lock, success,
-				lockIsThis, lockIsClass);
+		insert(runId, id, time, inThread, inClass, lineNumber, lock, 
+		       getType(), getState(), success, lockIsThis, lockIsClass);
 		useObject(inThread);
 		useObject(inClass);
 		useObject(lock);
@@ -86,9 +85,10 @@ public abstract class Lock extends Event {
 				success != Boolean.FALSE);
 	}
 
-	private void insert(int runId, long id, Timestamp time, long inThread,
-			long inClass, int lineNumber, long lock, Boolean success,
-			Boolean lockIsThis, Boolean lockIsClass) {
+	// Only called here and from IntrinsicLockDurationInserter
+  static void insert(int runId, long id, Timestamp time, long inThread,
+			long inClass, int lineNumber, long lock, LockType lockType, LockState lockState, 
+			Boolean success, Boolean lockIsThis, Boolean lockIsClass) {
 		try {
 			int idx = 1;
 			f_ps.setInt(idx++, runId);
@@ -98,8 +98,8 @@ public abstract class Lock extends Event {
 			f_ps.setLong(idx++, inClass);
 			f_ps.setInt(idx++, lineNumber);
 			f_ps.setLong(idx++, lock);
-			f_ps.setString(idx++, getType().getFlag());
-			f_ps.setString(idx++, getState().toString().replace('_', ' '));
+			f_ps.setString(idx++, lockType.getFlag());
+			f_ps.setString(idx++, lockState.toString().replace('_', ' '));
 			JDBCUtils.setNullableBoolean(idx++, f_ps, success);
 			JDBCUtils.setNullableBoolean(idx++, f_ps, lockIsThis);
 			JDBCUtils.setNullableBoolean(idx++, f_ps, lockIsClass);
@@ -124,7 +124,7 @@ public abstract class Lock extends Event {
 	}
 
 	public final void flush(final int runId, final long endTime) throws SQLException {
-		f_rowInserter.flush(runId, endTime);
+		f_rowInserter.flush(runId, getTimestamp(endTime));
 	}
 
 	public final void close() throws SQLException {

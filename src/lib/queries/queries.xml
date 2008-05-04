@@ -68,7 +68,7 @@ sum(ld.Duration) as BlockTime
 from LOCKDURATION as ld, LOCK as le  
 where ld.Run=?RUN?
 and ld.Lock=?LOCK?
-where ld.State = &apos;BLOCKING&apos;
+and ld.State = &apos;BLOCKING&apos;
 and le.Run=?RUN?
 and le.Id=ld.StartEvent
 group by ld.InThread, ld.State, le.InClass, le.AtLine

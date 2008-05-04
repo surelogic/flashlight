@@ -37,7 +37,9 @@ and F.FieldName = &apos;?FIELDNAME?&apos;
 and F.id = A.Field
 
 order by 1</query>
-  <query name='What threads use each lock? (from a run)'>select distinct L.LOCK &quot;LOCK ID&quot;, O.THREADNAME &quot;THREAD NAME|&quot;
+  <query name='What threads use each lock? (from a run)'>select distinct 
+&apos;Lock&apos; || CAST(l.lock AS CHAR(10)) &quot;LOCK ID&quot;, 
+O.THREADNAME &quot;THREAD NAME|&quot;
 from LOCK L, OBJECT O
 where L.INTHREAD = O.ID
 and L.RUN = O.RUN
@@ -88,45 +90,45 @@ and le.Run=?RUN?
 group by lh.LockEvent, le.InClass, le.AtLine
 order by NumLocksHeld desc, lh.LockEvent</query>
   <query name='Show locks potentially involved in deadlock'>select * from lockcycle
+where run = ?RUN?
 order by count desc</query>
   <query name='Show code potentially involved in deadlock'>select distinct cl.PackageName as package, cl.ClassName as class, l.AtLine as line
 from LOCKCYCLE as cy, LOCKSHELD as lh, LOCK as l, OBJECT as cl
-where cy.Run = lh.Run
-and lh.Run = l.Run
+where cy.Run = ?RUN?
+and lh.Run = ?RUN?
 and cy.LockHeld = lh.LockHeld
 and cy.LockAcquired = lh.LockAcquired
+and l.Run = ?RUN?
 and lh.LockEvent = l.Id
+and cl.Run = ?RUN?
 and l.InClass = cl.Id
 
 </query>
-  <query name='Show stack traces potentially involved in deadlock'>select cl.PackageName &quot;Package__PACKAGE&quot;, 
+  <query name='* Show stack traces potentially involved in deadlock'>select cl.PackageName &quot;Package__PACKAGE&quot;, 
 cl.ClassName &quot;Class__CLASS&quot;, 
 &apos;Line &apos; ||  CAST(l.AtLine AS CHAR(10)) &quot;Line__LINE&quot;,
 &apos;Event &apos; ||  CAST(l.Id AS CHAR(10)) &quot;Event__LOCK&quot;,
 t.InFile &quot;File__FILE|&quot;, 
 tc.PackageName as package, tc.ClassName as class, t.AtLine as line,
 t.Location, t.Start, t.Stop 
-from trace as t, lock as l, OBJECT as cl, OBJECT as tc
-where t.run = l.run
+from lock as l, trace as t, OBJECT as cl, OBJECT as tc
+where l.run = ?RUN?
 and l.id in 
 (
-select l.id
-from LOCKCYCLE as cy, LOCKSHELD as lh, LOCK as l
-where cy.Run = lh.Run
-and lh.Run = l.Run
-and l.Run = t.Run
+select lh.LockEvent
+from LOCKCYCLE as cy, LOCKSHELD as lh
+where cy.Run = ?RUN?
+and lh.Run = ?RUN?
 and cy.LockHeld = lh.LockHeld
 and cy.LockAcquired = lh.LockAcquired
-and lh.LockEvent = l.Id
 )
+and t.run = ?RUN?
 and l.ts between t.start and t.stop
+and cl.run = ?RUN?
 and l.InClass = cl.Id
+and tc.run = ?RUN?
 and t.InClass = tc.Id
 order by l.id, t.start desc
-
-
-
-
 
 </query>
   <query name='Show stack trace (for a lock event)'>select t.InFile, t.InClass, t.AtLine, t.Location, t.Start, t.Stop 

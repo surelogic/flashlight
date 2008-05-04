@@ -1,8 +1,10 @@
 package com.surelogic.flashlight.common;
 
 import com.surelogic.adhoc.SourceListener;
+import com.surelogic.adhoc.query.QueryUtil;
 import com.surelogic.adhoc.query.QueryUtil.Cell;
 import java.sql.*;
+import java.util.Map.Entry;
 import java.util.Properties;
 
 /**
@@ -32,9 +34,15 @@ implements SourceListener {
     }
     
     public <T> void setData(String[] labels, Cell<T>[] r, Properties vars) {
+        /*
+        LOG.info("Variables passed in for "+listener);
+        for(Entry e : vars.entrySet()) {            
+            LOG.info("\t"+e.getKey()+" = "+e.getValue());
+        }
+        */
         this.columnLabels = labels;
         this.row = r;
-        props = new Properties(vars);
+        props = QueryUtil.copyVariables(vars);
         for(int i=0; i<r.length; i++) {
             String key = labels[i].toUpperCase();
             if (!props.containsKey(key)) {
@@ -45,6 +53,12 @@ implements SourceListener {
         if (!props.containsKey("RUN")) {
             props.put("RUN", Integer.toString(run));
         }
+        /*
+        LOG.info("Variables sent to "+listener);
+        for(Entry e : props.entrySet()) {            
+            LOG.info("\t"+e.getKey()+" = "+e.getValue());
+        }
+         */
         if (listener != null) {
             listener.updateProperties(props);
         }

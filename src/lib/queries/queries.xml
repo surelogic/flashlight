@@ -54,33 +54,50 @@ and l.InClass = cl.Id
 and l.Lock = lk.Id
 and l.InThread = t.Id
 and lk.Type = lkType.Id</query>
-  <query name='Show summary of contended locks' meta-query-name='Lock contention'>
+  <query name='What locks are contended most? (from a run)' meta-query-name='Lock contention'>
 select Lock, sum(Duration) as BlockTime from LOCKDURATION    
 where State = &apos;BLOCKING&apos;
 and Run=?RUN?
 group by Lock
 order by BlockTime desc
   </query>
-  <query name='Show details of a contended lock'>
-select 
-le.InClass, le.AtLine,
-ld.InThread &quot;Thread&quot;, 
-ld.State &quot;State|&quot;,
-sum(ld.Duration)
+  <query name='Which threads/code are contending for that lock?'>
+select le.InClass, le.AtLine,
+ld.InThread &quot;Thread|&quot;, 
+sum(ld.Duration) as BlockTime 
 from LOCKDURATION as ld, LOCK as le  
 where ld.Run=?RUN?
 and ld.Lock=?LOCK?
+where ld.State = &apos;BLOCKING&apos;
 and le.Run=?RUN?
 and le.Id=ld.StartEvent
 group by ld.InThread, ld.State, le.InClass, le.AtLine
-</query>
-  <query name='Show contended locks'>select Run &quot;Run__RUN&quot;, 
-Lock &quot;Lock__LOCK&quot;, 
-Start &quot;Start_START|&quot;, Duration, State
-from LOCKDURATION   
-order by Run, Lock 
-
-</query>
+order by BlockTime desc
+  </query>
+  <query name='When/where is this thread contending for that lock?'>
+select ld.StartEvent as LockEvent,
+ld.Start,ld.Duration 
+from LOCKDURATION AS ld, LOCK as le
+where ld.State = &apos;BLOCKING&apos;
+and ld.Run=?RUN?
+and ld.Lock=?LOCK?
+and ld.InThread=?INTHREAD?
+and le.Run=?RUN?
+and le.Id=ld.StartEvent
+and le.InClass=?INCLASS?
+and le.AtLine=?ATLINE?
+order by ld.Duration desc
+  </query>
+  <query name='Who is interacting with that lock at that moment?'>
+select ld.InThread, ld.State, ld.Start, ld.Stop, ld.Duration, ld.StartEvent
+from LOCK as le, LOCKDURATION AS ld
+where le.Run=?RUN?
+and le.Id=?LOCKEVENT?
+and ld.Run=?RUN?
+and ld.Lock=?LOCK?
+and le.ts between ld.Start and ld.Stop
+order by ld.Start 
+  </query>
   <query name='Show when threads hold locks and acquire more' meta-query-name='Held + Acquiring'>select lh.LockEvent, count(LockHeld) as NumLocksHeld,
 le.InClass, le.AtLine
 from LOCKSHELD as lh, LOCK as le
@@ -89,7 +106,10 @@ and lh.LockEvent=le.Id
 and le.Run=?RUN?
 group by lh.LockEvent, le.InClass, le.AtLine
 order by NumLocksHeld desc, lh.LockEvent</query>
-  <query name='Show locks potentially involved in deadlock'>select * from lockcycle
+  <query name='Show locks potentially involved in deadlock'>select Component, LockHeld &quot;LockHeld|&quot;,
+LockAcquired,
+Count, FirstTime, LastTime
+from lockcycle
 where run = ?RUN?
 order by count desc</query>
   <query name='Show code potentially involved in deadlock'>select distinct cl.PackageName as package, cl.ClassName as class, l.AtLine as line

@@ -49,7 +49,7 @@ order by 1, 2</query>
 l.State, cl.PackageName, cl.ClassName, l.AtLine
 from LOCK as l, OBJECT as cl, OBJECT as lk, OBJECT as t, OBJECT as lkType
 where l.Run = ?RUN?
-and l.Id = ?LOCK?
+and l.Id = ?LOCKEVENT?
 and l.InClass = cl.Id
 and l.Lock = lk.Id
 and l.InThread = t.Id
@@ -63,7 +63,7 @@ order by BlockTime desc
   </query>
   <query name='Which threads/code are contending for that lock?'>
 select le.InClass, le.AtLine,
-ld.InThread &quot;Thread|&quot;, 
+ld.InThread &quot;InThread|&quot;, 
 sum(ld.Duration) as BlockTime 
 from LOCKDURATION as ld, LOCK as le  
 where ld.Run=?RUN?
@@ -89,7 +89,8 @@ and le.AtLine=?ATLINE?
 order by ld.Duration desc
   </query>
   <query name='Who is interacting with that lock at that moment?'>
-select ld.InThread, ld.State, ld.Start, ld.Stop, ld.Duration, ld.StartEvent
+select ld.InThread, ld.State, ld.Start, ld.Stop, ld.Duration, 
+ld.StartEvent as LockEvent
 from LOCK as le, LOCKDURATION AS ld
 where le.Run=?RUN?
 and le.Id=?LOCKEVENT?

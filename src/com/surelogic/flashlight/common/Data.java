@@ -28,17 +28,22 @@ public final class Data {
 
 	private static String dbLocation = null;
 
-	private static final ExecutorService exec = Executors
+	private static ExecutorService exec = Executors
 			.newSingleThreadExecutor();
 
 	public static ExecutorService getExecutor() {
 		return exec;
 	}
 
-	public static URL getDefaultQueryFileURL() {
-		return Data.class.getResource("/lib/queries/queries.xml");
-	}
-
+        public static void restartExecutor() {
+            exec.shutdownNow();
+            exec = Executors.newSingleThreadExecutor();
+        }
+        
+        public static URL getDefaultQueryFileURL() {
+            return Data.class.getResource("/lib/queries/queries.xml");
+        }
+        
 	public static synchronized boolean isBooted() {
 		return (dbLocation != null);
 	}

@@ -35,10 +35,10 @@ public final class Data {
 		return exec;
 	}
 
-        public static URL getDefaultQueryFileURL() {
-            return Data.class.getResource("/lib/queries/queries.xml");
-        }
-        
+	public static URL getDefaultQueryFileURL() {
+		return Data.class.getResource("/lib/queries/queries.xml");
+	}
+
 	public static synchronized boolean isBooted() {
 		return (dbLocation != null);
 	}
@@ -61,7 +61,8 @@ public final class Data {
 		Derby.bootEmbedded();
 
 		final String connectionURL = getConnectionURL() + ";create=true";
-		SLLogger.log(Level.INFO, "Using Flashlight database at " + connectionURL);
+		SLLogger.log(Level.INFO, "Using Flashlight database at "
+				+ connectionURL);
 		final Connection c = DriverManager.getConnection(connectionURL);
 		c.setAutoCommit(false);
 		Exception e = null;
@@ -104,7 +105,7 @@ public final class Data {
 	 * Up this number when you add a new schema version SQL script to this
 	 * package.
 	 */
-	public static final int schemaVersion = 15;
+	public static final int schemaVersion = 16;
 
 	public static final String SQL_SCRIPT_PREFIX = "/lib/database/schema_";
 

@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes'?>
-<ad-hoc version='1.0' current='24'>
+<ad-hoc version='1.0' current='22'>
   <query name='Show Tables'>show tables</query>
-  <query name='Show available runs' meta-query-name='Lock Sets for the set of interesting static fields'>-- This query returns all the prepared runs in the database
+  <query name='Show available runs' meta-query-name='Lock Sets for the set of interesting instance fields'>-- This query returns all the prepared runs in the database
 select Run, Name, Started, Username from RUN</query>
   <query name='What fields are shared? (from a run)' meta-query-name='What threads access this field? (from a shared field)'>select distinct
   O.PackageName &quot;Package__PACKAGE&quot;,
@@ -196,7 +196,7 @@ and lh.inThread = l.InThread
  INNER JOIN INTERESTINGFIELD I ON FI.STATIC = &apos;N&apos; AND I.FIELD=FI.ID
  LEFT OUTER JOIN FIELDINSTANCELOCKSET F ON 
    F.RUN = I.RUN AND F.FIELD = I.FIELD AND F.RECEIVER = I.RECEIVER </query>
-  <query name='Locks held for each access of an instance field' meta-query-name='Trace for an acquisition of a lock'>SELECT O.THREADNAME &quot;THREAD&quot;,A.TS &quot;TIME&quot;,D.Lock &quot;LOCK|&quot;,LO.PackageName &quot;Package__PACKAGE&quot;, LO.ClassName &quot;Class__CLASS&quot;, L.AtLine &quot;Line&quot;
+  <query name='Locks held for each access of an instance field' meta-query-name='Trace from a lock duration'>SELECT O.THREADNAME &quot;THREAD&quot;,A.TS &quot;TIME&quot;,D.Lock &quot;LOCK|&quot;,LO.PackageName &quot;Package__PACKAGE&quot;, LO.ClassName &quot;Class__CLASS&quot;, L.AtLine &quot;Line&quot;,D.ID &quot;LDID&quot;
 FROM ACCESS A, LOCKDURATION D, OBJECT O, LOCK L, OBJECT LO
 WHERE 
    A.FIELD = ?FIELDID? AND 
@@ -273,8 +273,16 @@ FROM
  INNER JOIN INTERESTINGFIELD I ON I.RECEIVER IS NOT NULL AND I.FIELD=FI.ID
  LEFT OUTER JOIN FIELDLOCKSET F ON 
    F.RUN = I.RUN AND F.FIELD = I.FIELD</query>
-  <query name='query (1)'></query>
-  <query name='query (2)'></query>
+  <query name='Trace from a lock duration'>SELECT O.PACKAGENAME &quot;Package&quot;, O.ClassName &quot;Class&quot;, T.LOCATION &quot;Location&quot;, T.AtLine &quot;Line&quot;
+ FROM OBJECT O, TRACE T, LOCKDURATION LD
+ WHERE 
+   LD.ID = ?LDID? AND 
+   (LD.START BETWEEN T.START AND T.STOP) AND
+   T.INTHREAD = LD.INTHREAD AND
+   T.RUN = LD.RUN AND
+   O.RUN = LD.RUN AND 
+   O.ID = T.InClass
+ ORDER BY T.START</query>
   <query name='query (3)'></query>
   <query name='query (4)'></query>
   <query name='query (5)'></query>

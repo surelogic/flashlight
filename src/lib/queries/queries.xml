@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes'?>
-<ad-hoc version='1.0' current='22'>
+<ad-hoc version='1.0' current='26'>
   <query name='Show Tables'>show tables</query>
-  <query name='Show available runs' meta-query-name='Lock Sets for the set of interesting instance fields'>-- This query returns all the prepared runs in the database
+  <query name='Show available runs' meta-query-name='Lock Sets for the set of interesting static fields'>-- This query returns all the prepared runs in the database
 select Run, Name, Started, Username from RUN</query>
   <query name='What fields are shared? (from a run)' meta-query-name='What threads access this field? (from a shared field)'>select distinct
   O.PackageName &quot;Package__PACKAGE&quot;,
@@ -196,23 +196,27 @@ and lh.inThread = l.InThread
  INNER JOIN INTERESTINGFIELD I ON FI.STATIC = &apos;N&apos; AND I.FIELD=FI.ID
  LEFT OUTER JOIN FIELDINSTANCELOCKSET F ON 
    F.RUN = I.RUN AND F.FIELD = I.FIELD AND F.RECEIVER = I.RECEIVER </query>
-  <query name='Locks held for each access of an instance field' meta-query-name='Trace from a lock duration'>SELECT O.THREADNAME &quot;THREAD&quot;,A.TS &quot;TIME&quot;,D.Lock &quot;LOCK|&quot;,LO.PackageName &quot;Package__PACKAGE&quot;, LO.ClassName &quot;Class__CLASS&quot;, L.AtLine &quot;Line&quot;,D.ID &quot;LDID&quot;
-FROM ACCESS A, LOCKDURATION D, OBJECT O, LOCK L, OBJECT LO
+  <query name='Locks held for each access of an instance field' meta-query-name='Trace from an access'>SELECT O.THREADNAME &quot;THREAD&quot;,A.TS &quot;TIME&quot;,D.Lock &quot;LOCK|&quot;,LO.PackageName &quot;Package__PACKAGE&quot;, LO.ClassName &quot;Class__CLASS&quot;, L.AtLine &quot;Line&quot;,D.ID &quot;LDID&quot;,A.ID &quot;AID&quot;
+ FROM ACCESS A
+ INNER JOIN OBJECT O ON
+   O.Run = A.Run AND 
+   O.Id = A.InThread 
+ LEFT OUTER JOIN LOCKDURATION D ON
+   D.InThread = A.InThread AND 
+   D.Run = A.Run AND 
+   (A.TS BETWEEN D.Start AND D.Stop)
+ LEFT OUTER JOIN LOCK L ON
+   L.Run = D.Run AND 
+   L.Id = D.StartEvent
+ LEFT OUTER JOIN OBJECT LO ON
+   LO.Run = L.Run AND 
+   LO.Id = L.InClass
 WHERE 
    A.FIELD = ?FIELDID? AND 
    A.RECEIVER = ?RECEIVER? AND 
-   A.RUN=?RUN? AND 
-   D.InThread = A.InThread AND 
-   D.Run = A.Run AND 
-   (A.TS BETWEEN D.Start AND D.Stop) AND 
-   O.Run = A.Run AND 
-   O.Id = A.InThread AND 
-   L.Run = D.Run AND 
-   L.Id = D.StartEvent AND 
-   LO.Run = L.Run AND 
-   LO.Id = L.InClass
+   A.RUN=?RUN?
 ORDER BY O.THREADNAME, A.TS, D.Start
---TODO outer join onto LOCKDURATION</query>
+</query>
   <query name='Show lock held counts for the instance field' meta-query-name='Interesting Fields'>SELECT LOCKS.*, (CAST (LOCKS.LOCKCOUNT AS FLOAT)) / (CAST (ACCESSES.ACCESSCOUNT AS FLOAT))
 FROM
 (SELECT D.Lock &quot;LOCK&quot;,COUNT(D.Lock) &quot;LOCKCOUNT&quot;
@@ -224,7 +228,7 @@ FROM
   <query name='Thread counts for the instance field'>SELECT O.THREADNAME, F.READCOUNT, F.WRITECOUNT
  FROM FIELDINSTANCETHREAD F, OBJECT O
  WHERE F.FIELD = ?FIELDID? AND F.RECEIVER = ?RECEIVER? AND F.RUN = ?RUN? AND O.ID = F.THREAD</query>
-  <query name='Lock Sets for the set of interesting static fields' meta-query-name='Thread counts for the static field'>SELECT 
+  <query name='Lock Sets for the set of interesting static fields' meta-query-name='Locks held for each access of a static field'>SELECT 
   O.PackageName &quot;Package__PACKAGE&quot;,
   O.ClassName &quot;Class__CLASS&quot;,
   FI.FieldName &quot;Field&quot;,
@@ -235,22 +239,26 @@ FROM
  INNER JOIN INTERESTINGFIELD I ON I.RECEIVER IS NULL AND I.FIELD=FI.ID
  LEFT OUTER JOIN FIELDLOCKSET F ON 
    F.RUN = I.RUN AND F.FIELD = I.FIELD</query>
-  <query name='Locks held for each access of a static field'>SELECT O.THREADNAME &quot;THREAD&quot;,A.TS &quot;TIME&quot;,D.Lock &quot;LOCK|&quot;,LO.PackageName &quot;Package__PACKAGE&quot;, LO.ClassName &quot;Class__CLASS&quot;, L.AtLine &quot;Line&quot;
-FROM ACCESS A, LOCKDURATION D, OBJECT O, LOCK L, OBJECT LO
-WHERE 
-   A.FIELD = ?FIELDID? AND 
-   A.RUN=?RUN? AND 
+  <query name='Locks held for each access of a static field' meta-query-name='Trace from an access'>SELECT O.THREADNAME &quot;THREAD&quot;,A.TS &quot;TIME&quot;,D.Lock &quot;LOCK|&quot;,LO.PackageName &quot;Package__PACKAGE&quot;, LO.ClassName &quot;Class__CLASS&quot;, L.AtLine &quot;Line&quot;,D.ID &quot;LDID&quot;,A.ID &quot;AID&quot;
+ FROM ACCESS A
+ INNER JOIN OBJECT O ON
+   O.Run = A.Run AND 
+   O.Id = A.InThread 
+ LEFT OUTER JOIN LOCKDURATION D ON
    D.InThread = A.InThread AND 
    D.Run = A.Run AND 
-   (A.TS BETWEEN D.Start AND D.Stop) AND 
-   O.Run = A.Run AND 
-   O.Id = A.InThread AND 
+   (A.TS BETWEEN D.Start AND D.Stop)
+ LEFT OUTER JOIN LOCK L ON
    L.Run = D.Run AND 
-   L.Id = D.StartEvent AND 
+   L.Id = D.StartEvent
+ LEFT OUTER JOIN OBJECT LO ON
    LO.Run = L.Run AND 
    LO.Id = L.InClass
-ORDER BY O.THREADNAME, A.TS, D.Start
---TODO Outer join onto the lock duration table</query>
+WHERE 
+   A.FIELD = ?FIELDID? AND 
+   A.RUN=?RUN? AND
+   A.RECEIVER IS NULL
+ORDER BY O.THREADNAME, A.TS, D.Start</query>
   <query name='Show lock held counts for a static field'>SELECT LOCKS.*, (CAST (LOCKS.LOCKCOUNT AS FLOAT)) / (CAST (ACCESSES.ACCESSCOUNT AS FLOAT))
 FROM
 (SELECT D.Lock &quot;LOCK&quot;,COUNT(D.Lock) &quot;LOCKCOUNT&quot;
@@ -281,6 +289,16 @@ FROM
    T.INTHREAD = LD.INTHREAD AND
    T.RUN = LD.RUN AND
    O.RUN = LD.RUN AND 
+   O.ID = T.InClass
+ ORDER BY T.START</query>
+  <query name='Trace from an access'>SELECT O.PACKAGENAME &quot;Package&quot;, O.ClassName &quot;Class&quot;, T.LOCATION &quot;Location&quot;, T.AtLine &quot;Line&quot;
+ FROM OBJECT O, TRACE T, ACCESS A
+ WHERE 
+   A.ID = ?AID? AND 
+   (A.TS BETWEEN T.START AND T.STOP) AND
+   T.INTHREAD = A.INTHREAD AND
+   T.RUN = A.RUN AND
+   O.RUN = A.RUN AND 
    O.ID = T.InClass
  ORDER BY T.START</query>
   <query name='query (3)'></query>

@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes'?>
-<ad-hoc version='1.0' current='26'>
+<ad-hoc version='1.0' current='31'>
   <query name='Show Tables'>show tables</query>
-  <query name='Show available runs' meta-query-name='Lock Sets for the set of interesting static fields'>-- This query returns all the prepared runs in the database
+  <query name='Show available runs' meta-query-name='Lock Sets for the set of interesting instance fields'>-- This query returns all the prepared runs in the database
 select Run, Name, Started, Username from RUN</query>
   <query name='What fields are shared? (from a run)' meta-query-name='What threads access this field? (from a shared field)'>select distinct
   O.PackageName &quot;Package__PACKAGE&quot;,
@@ -281,7 +281,9 @@ FROM
  INNER JOIN INTERESTINGFIELD I ON I.RECEIVER IS NOT NULL AND I.FIELD=FI.ID
  LEFT OUTER JOIN FIELDLOCKSET F ON 
    F.RUN = I.RUN AND F.FIELD = I.FIELD</query>
-  <query name='Trace from a lock duration'>SELECT O.PACKAGENAME &quot;Package&quot;, O.ClassName &quot;Class&quot;, T.LOCATION &quot;Location&quot;, T.AtLine &quot;Line&quot;
+  <query name='Trace from a lock duration'>SELECT 
+ &apos;at &apos; || O.ClassName || &apos;.&apos; || T.Location || &apos;(&apos; || T.InFile || &apos;:&apos; || TRIM(CAST(T.AtLine AS CHAR(10))) || &apos;)&apos; &quot;Trace&quot;,
+ O.PACKAGENAME &quot;Package&quot;, O.ClassName &quot;Class&quot;, T.LOCATION &quot;Location&quot;, T.AtLine &quot;Line&quot;
  FROM OBJECT O, TRACE T, LOCKDURATION LD
  WHERE 
    LD.ID = ?LDID? AND 
@@ -290,8 +292,10 @@ FROM
    T.RUN = LD.RUN AND
    O.RUN = LD.RUN AND 
    O.ID = T.InClass
- ORDER BY T.START</query>
-  <query name='Trace from an access'>SELECT O.PACKAGENAME &quot;Package&quot;, O.ClassName &quot;Class&quot;, T.LOCATION &quot;Location&quot;, T.AtLine &quot;Line&quot;
+ ORDER BY T.START DESC</query>
+  <query name='Trace from an access'>SELECT 
+ &apos;at &apos; || O.ClassName || &apos;.&apos; || T.Location || &apos;(&apos; || T.InFile || &apos;:&apos; || TRIM(CAST(T.AtLine AS CHAR(10))) || &apos;)&apos; &quot;Trace&quot;,
+ O.PACKAGENAME &quot;Package&quot;, O.ClassName &quot;Class&quot;, T.LOCATION &quot;Location&quot;, T.AtLine &quot;Line&quot;
  FROM OBJECT O, TRACE T, ACCESS A
  WHERE 
    A.ID = ?AID? AND 
@@ -300,8 +304,8 @@ FROM
    T.RUN = A.RUN AND
    O.RUN = A.RUN AND 
    O.ID = T.InClass
- ORDER BY T.START</query>
-  <query name='query (3)'></query>
+ ORDER BY T.START DESC</query>
+  <query name='query (3)'>DESCRIBE FLASHLIGHT.TRACE</query>
   <query name='query (4)'></query>
   <query name='query (5)'></query>
   <query name='query (6)'></query>

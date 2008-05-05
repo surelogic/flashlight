@@ -1,0 +1,61 @@
+<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
+<ad-hoc version='1.0' current='24'>
+  <query name='Show available runs' meta-query-name='Lock Sets for the set of interesting static fields'>-- This query returns all the prepared runs in the database
+select Run, Name, Started, Username from RUN</query>
+  <query name='* Show stack traces potentially involved in deadlock'>select cl.PackageName &quot;Package__PACKAGE&quot;, 
+cl.ClassName &quot;Class__CLASS&quot;, 
+&apos;Line &apos; ||  CAST(l.AtLine AS CHAR(10)) &quot;Line__LINE&quot;,
+&apos;Event &apos; ||  CAST(l.Id AS CHAR(10)) &quot;Event__LOCK&quot;,
+t.InFile &quot;File__FILE|&quot;, 
+tc.PackageName as package, tc.ClassName as class, t.AtLine as line,
+t.Location, t.Start, t.Stop 
+from lock as l, trace as t, OBJECT as cl, OBJECT as tc
+where l.run = ?RUN?
+and l.id in 
+(
+select lh.LockEvent
+from LOCKCYCLE as cy, LOCKSHELD as lh
+where cy.Run = ?RUN?
+and lh.Run = ?RUN?
+and cy.LockHeld = lh.LockHeld
+and cy.LockAcquired = lh.LockAcquired
+)
+and t.run = ?RUN?
+and l.ts between t.start and t.stop
+and cl.run = ?RUN?
+and l.InClass = cl.Id
+and tc.run = ?RUN?
+and t.InClass = tc.Id
+order by l.id, t.start desc
+
+</query>
+  <query name='2ML 1 Create locks held table'>create table LOCKSHELD (
+  Run INT NOT NULL,
+  TS TIMESTAMP NOT NULL,
+  Field BIGINT NOT NULL,
+  InThread BIGINT NOT NULL,
+  CountOfLocksHeld INT NOT NULL
+)</query>
+  <query name='2ML 2 Insert rows'>insert into LOCKSHELD
+select a.Run, a.TS, a.FIELD, a.InThread, count(*)
+from ACCESS A, LOCKDURATION L
+where a.RUN = L.RUN
+and a.ts between L.START and L.STOP
+and a.INTHREAD = L.INTHREAD
+group by a.FIELD, a.TS, a.Run, a.InThread</query>
+  <query name='2ML 3 Delete one lock rows'>delete from LOCKSHELD where CountOfLocksHeld &lt; 2</query>
+  <query name='2ML 4 Show holding two or more locks'>select a.InFile &quot;FILE____CFILE&quot;, &apos;at line# &apos; || CAST(a.AtLine AS CHAR(10)) &quot;LINE NUMBER&quot;, a.ts &quot;Time&quot;, &apos;in thread: &apos; || t.ThreadName &quot;IN THREAD|&quot;, l.Lock &quot;Lock Object Id Held&quot;
+from LOCKSHELD lh, ACCESS a, OBJECT T, LOCKDURATION L
+where lh.Run = a.Run
+and lh.Run = t.Run
+and lh.Run = L.Run
+and a.InThread = t.id
+and lh.ts = a.ts
+and lh.field = a.field
+and lh.ts = a.ts
+and lh.ts between l.start and l.stop
+and lh.inThread = l.InThread
+</query>
+  <query name='2ML (debug) show all LOCKSHELD rows' meta-query-name='Shared Fields'>select * from LOCKSHELD</query>
+</ad-hoc>
+

@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes'?>
-<ad-hoc version='1.0' current='31'>
+<ad-hoc version='1.0' current='28'>
   <query name='Show Tables'>show tables</query>
-  <query name='Show available runs' meta-query-name='Lock Sets for the set of interesting instance fields'>-- This query returns all the prepared runs in the database
+  <query name='Show available runs' meta-query-name='Static Fields with no lock set'>-- This query returns all the prepared runs in the database
 select Run, Name, Started, Username from RUN</query>
   <query name='What fields are shared? (from a run)' meta-query-name='What threads access this field? (from a shared field)'>select distinct
   O.PackageName &quot;Package__PACKAGE&quot;,
@@ -186,16 +186,30 @@ and lh.ts between l.start and l.stop
 and lh.inThread = l.InThread
 </query>
   <query name='2ML (debug) show all LOCKSHELD rows' meta-query-name='Shared Fields'>select * from LOCKSHELD</query>
-  <query name='Lock Sets for the set of interesting instance fields' meta-query-name='Locks held for each access of an instance field'>SELECT 
+  <query name='Instance Fields with a lock set' meta-query-name='Locks held for each access of an instance field'>SELECT 
   O.PackageName &quot;Package__PACKAGE&quot;,
   O.ClassName &quot;Class__CLASS&quot;,
   FI.FieldName &quot;Field&quot;,
   I.FIELD &quot;FieldId|&quot;,I.RECEIVER, F.LOCK 
  FROM OBJECT O
- INNER JOIN FIELD FI ON FI.DeclaringType = O.Id AND FI.RUN = ?RUN? AND O.Run = FI.Run
- INNER JOIN INTERESTINGFIELD I ON FI.STATIC = &apos;N&apos; AND I.FIELD=FI.ID
+ INNER JOIN FIELD FI ON FI.DeclaringType = O.Id AND O.Run = FI.Run
+ INNER JOIN INTERESTINGFIELD I ON FI.STATIC = &apos;N&apos; AND I.FIELD=FI.ID AND I.RUN = FI.RUN
+ INNER JOIN FIELDINSTANCELOCKSET F ON 
+   F.RUN = I.RUN AND F.FIELD = I.FIELD AND F.RECEIVER = I.RECEIVER 
+ WHERE FI.RUN = ?RUN?
+ ORDER BY O.PackageName,O.ClassName,FI.FieldName,I.Receiver</query>
+  <query name='Instance Fields with no lock set'>SELECT 
+  O.PackageName &quot;Package__PACKAGE&quot;,
+  O.ClassName &quot;Class__CLASS&quot;,
+  FI.FieldName &quot;Field&quot;,
+  I.FIELD &quot;FieldId|&quot;,I.RECEIVER
+ FROM OBJECT O
+ INNER JOIN FIELD FI ON FI.DeclaringType = O.Id AND O.Run = FI.Run
+ INNER JOIN INTERESTINGFIELD I ON FI.STATIC = &apos;N&apos; AND I.FIELD=FI.ID AND I.RUN = FI.RUN
  LEFT OUTER JOIN FIELDINSTANCELOCKSET F ON 
-   F.RUN = I.RUN AND F.FIELD = I.FIELD AND F.RECEIVER = I.RECEIVER </query>
+   F.RUN = I.RUN AND F.FIELD = I.FIELD AND F.RECEIVER = I.RECEIVER 
+ WHERE FI.RUN = ?RUN? AND F.LOCK IS NULL
+ ORDER BY O.PackageName, O.ClassName, FI.FieldName</query>
   <query name='Locks held for each access of an instance field' meta-query-name='Trace from an access'>SELECT O.THREADNAME &quot;THREAD&quot;,A.TS &quot;TIME&quot;,D.Lock &quot;LOCK|&quot;,LO.PackageName &quot;Package__PACKAGE&quot;, LO.ClassName &quot;Class__CLASS&quot;, L.AtLine &quot;Line&quot;,D.ID &quot;LDID&quot;,A.ID &quot;AID&quot;
  FROM ACCESS A
  INNER JOIN OBJECT O ON
@@ -228,17 +242,30 @@ FROM
   <query name='Thread counts for the instance field'>SELECT O.THREADNAME, F.READCOUNT, F.WRITECOUNT
  FROM FIELDINSTANCETHREAD F, OBJECT O
  WHERE F.FIELD = ?FIELDID? AND F.RECEIVER = ?RECEIVER? AND F.RUN = ?RUN? AND O.ID = F.THREAD</query>
-  <query name='Lock Sets for the set of interesting static fields' meta-query-name='Locks held for each access of a static field'>SELECT 
+  <query name='Static fields with a lock set' meta-query-name='Locks held for each access of a static field'>SELECT 
   O.PackageName &quot;Package__PACKAGE&quot;,
   O.ClassName &quot;Class__CLASS&quot;,
   FI.FieldName &quot;Field&quot;,
-  I.FIELD &quot;FieldId|&quot;,
-  F.LOCK 
+  I.FIELD &quot;FieldId|&quot;, F.LOCK 
  FROM OBJECT O
- INNER JOIN FIELD FI ON FI.DeclaringType = O.Id AND FI.RUN = ?RUN? AND O.Run = FI.Run
- INNER JOIN INTERESTINGFIELD I ON I.RECEIVER IS NULL AND I.FIELD=FI.ID
+ INNER JOIN FIELD FI ON FI.DeclaringType = O.Id AND O.Run = FI.Run
+ INNER JOIN INTERESTINGFIELD I ON I.RECEIVER IS NULL AND I.FIELD=FI.ID AND I.RUN = FI.RUN
+ INNER JOIN FIELDLOCKSET F ON 
+   F.RUN = I.RUN AND F.FIELD = I.FIELD
+ WHERE FI.RUN = ?RUN?
+ ORDER BY O.PackageName,O.ClassName,FI.FieldName</query>
+  <query name='Static Fields with no lock set'>SELECT 
+  O.PackageName &quot;Package__PACKAGE&quot;,
+  O.ClassName &quot;Class__CLASS&quot;,
+  FI.FieldName &quot;Field&quot;,
+  I.FIELD &quot;FieldId|&quot;
+ FROM OBJECT O
+ INNER JOIN FIELD FI ON FI.DeclaringType = O.Id AND O.Run = FI.Run
+ INNER JOIN INTERESTINGFIELD I ON I.RECEIVER IS NULL AND I.FIELD=FI.ID AND I.RUN = FI.RUN
  LEFT OUTER JOIN FIELDLOCKSET F ON 
-   F.RUN = I.RUN AND F.FIELD = I.FIELD</query>
+   F.RUN = I.RUN AND F.FIELD = I.FIELD
+ WHERE FI.RUN = ?RUN? AND F.LOCK IS NULL
+ ORDER BY O.PackageName,O.ClassName,FI.FieldName</query>
   <query name='Locks held for each access of a static field' meta-query-name='Trace from an access'>SELECT O.THREADNAME &quot;THREAD&quot;,A.TS &quot;TIME&quot;,D.Lock &quot;LOCK|&quot;,LO.PackageName &quot;Package__PACKAGE&quot;, LO.ClassName &quot;Class__CLASS&quot;, L.AtLine &quot;Line&quot;,D.ID &quot;LDID&quot;,A.ID &quot;AID&quot;
  FROM ACCESS A
  INNER JOIN OBJECT O ON
@@ -270,7 +297,7 @@ FROM
   <query name='Thread counts for the static field'>SELECT O.THREADNAME, F.READCOUNT, F.WRITECOUNT
  FROM FIELDSTATICTHREAD F, OBJECT O
  WHERE F.FIELD = ?FIELDID? AND F.RUN = ?RUN? AND O.ID = F.THREAD</query>
-  <query name='GRAND Lock Sets for the set of interesting instance fields (1)'>SELECT DISTINCT
+  <query name='GRAND Lock Sets for the set of interesting instance fields'>SELECT DISTINCT
   O.PackageName &quot;Package__PACKAGE&quot;,
   O.ClassName &quot;Class__CLASS&quot;,
   FI.FieldName &quot;Field&quot;,
@@ -280,33 +307,59 @@ FROM
  INNER JOIN FIELD FI ON FI.DeclaringType = O.Id AND FI.RUN = ?RUN? 
  INNER JOIN INTERESTINGFIELD I ON I.RECEIVER IS NOT NULL AND I.FIELD=FI.ID
  LEFT OUTER JOIN FIELDLOCKSET F ON 
-   F.RUN = I.RUN AND F.FIELD = I.FIELD</query>
+   F.RUN = I.RUN AND F.FIELD = I.FIELD
+ ORDER BY O.PackageName,O.ClassName,FI.FieldName</query>
   <query name='Trace from a lock duration'>SELECT 
- &apos;at &apos; || O.ClassName || &apos;.&apos; || T.Location || &apos;(&apos; || T.InFile || &apos;:&apos; || TRIM(CAST(T.AtLine AS CHAR(10))) || &apos;)&apos; &quot;Trace&quot;,
+ &apos;In thread &apos; || THO.ThreadName || &apos;&quot; in &apos; || LO.PackageName || &apos;.&apos; || LO.ClassName || &apos; on line &apos; || TRIM(CAST(L.AtLine AS CHAR(10))) &quot;Lock&quot;,
+ &apos;at &apos; || O.ClassName || &apos;.&apos; || T.Location || &apos;(&apos; || T.InFile || &apos;:&apos; || TRIM(CAST(T.AtLine AS CHAR(10))) || &apos;)&apos; &quot;Trace|&quot;,
  O.PACKAGENAME &quot;Package&quot;, O.ClassName &quot;Class&quot;, T.LOCATION &quot;Location&quot;, T.AtLine &quot;Line&quot;
- FROM OBJECT O, TRACE T, LOCKDURATION LD
- WHERE 
-   LD.ID = ?LDID? AND 
+ FROM LOCKDURATION LD
+  INNER JOIN LOCK L ON
+   L.RUN = LD.RUN AND
+   L.ID = LD.STARTEVENT
+  INNER JOIN OBJECT LO ON
+   LO.RUN = L.RUN AND
+   LO.ID = L.INCLASS
+  INNER JOIN OBJECT THO ON
+   THO.RUN = LD.RUN AND
+   THO.ID = LD.INTHREAD
+  LEFT OUTER JOIN TRACE T ON
    (LD.START BETWEEN T.START AND T.STOP) AND
    T.INTHREAD = LD.INTHREAD AND
-   T.RUN = LD.RUN AND
-   O.RUN = LD.RUN AND 
+   T.RUN = LD.RUN
+  LEFT OUTER JOIN OBJECT O ON
+   O.RUN = T.RUN AND 
    O.ID = T.InClass
+ WHERE 
+   LD.ID = ?LDID? 
  ORDER BY T.START DESC</query>
   <query name='Trace from an access'>SELECT 
- &apos;at &apos; || O.ClassName || &apos;.&apos; || T.Location || &apos;(&apos; || T.InFile || &apos;:&apos; || TRIM(CAST(T.AtLine AS CHAR(10))) || &apos;)&apos; &quot;Trace&quot;,
+ &apos;In thread &apos; || THO.ThreadName || &apos; at &quot;&apos; || F.FIELDNAME || &apos;&quot; in &apos; || AO.PackageName || &apos;.&apos; || AO.ClassName || &apos; on line &apos; || TRIM(CAST(A.AtLine AS CHAR(10))) &quot;Access&quot;,
+ &apos;at &apos; || O.ClassName || &apos;.&apos; || T.Location || &apos;(&apos; || T.InFile || &apos;:&apos; || TRIM(CAST(T.AtLine AS CHAR(10))) || &apos;)&apos; &quot;Trace|&quot;,
  O.PACKAGENAME &quot;Package&quot;, O.ClassName &quot;Class&quot;, T.LOCATION &quot;Location&quot;, T.AtLine &quot;Line&quot;
- FROM OBJECT O, TRACE T, ACCESS A
- WHERE 
-   A.ID = ?AID? AND 
+ FROM ACCESS A
+  INNER JOIN FIELD F ON
+   F.RUN = A.RUN AND
+   F.ID = A.FIELD
+  INNER JOIN OBJECT AO ON
+   AO.RUN = A.RUN AND
+   AO.ID = A.InClass
+  LEFT OUTER JOIN TRACE T ON
    (A.TS BETWEEN T.START AND T.STOP) AND
    T.INTHREAD = A.INTHREAD AND
-   T.RUN = A.RUN AND
-   O.RUN = A.RUN AND 
+   T.RUN = A.RUN
+  LEFT OUTER JOIN OBJECT O ON
+   O.RUN = T.RUN AND 
    O.ID = T.InClass
- ORDER BY T.START DESC</query>
-  <query name='query (3)'>DESCRIBE FLASHLIGHT.TRACE</query>
-  <query name='query (4)'></query>
+  LEFT OUTER JOIN OBJECT THO ON
+   THO.RUN = A.RUN AND
+   THO.ID = A.InThread 
+ WHERE 
+   A.ID = ?AID?
+ ORDER BY T.START DESC
+</query>
+  <query name='query (3)'>DESCRIBE FLASHLIGHT.LOCK</query>
+  <query name='query (4)'>DESCRIBE FLASHLIGHT.OBJECT</query>
   <query name='query (5)'></query>
   <query name='query (6)'></query>
   <query name='query (7)'></query>

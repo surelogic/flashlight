@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes'?>
-<ad-hoc version='1.0' current='10'>
+<ad-hoc version='1.0' current='19'>
   <query name='Show Tables'>show tables</query>
-  <query name='Show available runs' meta-query-name='Static Fields with no lock set'>-- This query returns all the prepared runs in the database
+  <query name='Show available runs' meta-query-name='Instance Fields with no lock set'>-- This query returns all the prepared runs in the database
 select Run, Name, Started, Username from RUN</query>
   <query name='What static fields are shared? ' meta-query-name='What threads access this field? (from a shared field)'>select
   O.PackageName &quot;Package__PACKAGE&quot;,
@@ -132,10 +132,10 @@ LockAcquired,
 Count, FirstTime, LastTime
 from lockcycle
 where run = ?RUN?
-and count > 1
+and count &gt; 1
 order by count desc</query>
   <query name='Show the lock events for a lock graph edge'>
-select l.InClass, l.AtLine "Line|", lh.LockEvent 
+select l.InClass, l.AtLine &quot;Line|&quot;, lh.LockEvent 
 from LOCKSHELD as lh, LOCK as l
 where lh.Run = ?RUN?
 and lh.LockHeld=?LOCKHELD?
@@ -145,10 +145,10 @@ and lh.LockEvent=l.Id
 order by l.InClass, l.AtLine, lh.LockEvent
   </query>
   <query name='Show code potentially involved in deadlock'>
-select cl.PackageName "Package__PACKAGE", 
-cl.ClassName "Class__CLASS", 
-l.AtLine "Line",
-lh.LockEvent "LockEvent|"
+select cl.PackageName &quot;Package__PACKAGE&quot;, 
+cl.ClassName &quot;Class__CLASS&quot;, 
+l.AtLine &quot;Line&quot;,
+lh.LockEvent &quot;LockEvent|&quot;
 from LOCKCYCLE as cy, LOCKSHELD as lh, LOCK as l, OBJECT as cl
 where cy.Run = ?RUN?
 and lh.Run = ?RUN?
@@ -178,7 +178,7 @@ order by t.start desc</query>
    F.RUN = I.RUN AND F.FIELD = I.FIELD AND F.RECEIVER = I.RECEIVER 
  WHERE FI.RUN = ?RUN?
  ORDER BY O.PackageName,O.ClassName,FI.FieldName,I.Receiver</query>
-  <query name='Instance Fields with no lock set' meta-query-name='Locks held for each access of an instance field'>SELECT 
+  <query name='Instance Fields with no lock set' meta-query-name='Lock frequencies for an instance field'>SELECT 
   O.PackageName &quot;Package__PACKAGE&quot;,
   O.ClassName &quot;Class__CLASS&quot;,
   FI.FieldName &quot;Field&quot;,
@@ -211,13 +211,14 @@ WHERE
    A.RUN=?RUN?
 ORDER BY O.THREADNAME ASC, A.TS ASC, D.Start DESC
 </query>
-  <query name='Show lock held counts for the instance field' meta-query-name='Interesting Fields'>SELECT LOCKS.*, (CAST (LOCKS.LOCKCOUNT AS FLOAT)) / (CAST (ACCESSES.ACCESSCOUNT AS FLOAT))
+  <query name='Lock frequencies for an instance field' meta-query-name='Interesting Fields'>SELECT LOCKS.*, CAST ((CAST (LOCKS.&quot;Lock Count&quot; AS FLOAT)) / (CAST (ACCESSES.ACCESSCOUNT AS FLOAT)) AS DECIMAL (4,3)) &quot;Frequency&quot;
 FROM
-(SELECT D.Lock &quot;LOCK&quot;,COUNT(D.Lock) &quot;LOCKCOUNT&quot;
+(SELECT D.Lock &quot;Lock&quot;,RW.ID &quot;R/W Lock&quot;, COUNT(D.Lock) &quot;Lock Count&quot;
  FROM ACCESS A
       INNER JOIN LOCKDURATION D ON D.InThread = A.InThread AND D.Start &lt; A.TS AND D.Stop &gt; A.TS AND State = &apos;HOLDING&apos; 
+      LEFT OUTER JOIN RWLOCK RW ON RW.ReadLock = D.LOCK OR RW.WRITELOCK = D.LOCK
     WHERE A.RUN=?RUN? AND A.FIELD = ?FIELDID? AND A.RECEIVER = ?RECEIVER?
- GROUP BY D.LOCK) AS LOCKS,
+ GROUP BY D.LOCK,RW.ID) AS LOCKS,
 (SELECT COUNT(*) &quot;ACCESSCOUNT&quot; FROM ACCESS A WHERE A.RUN=?RUN? AND A.FIELD = ?FIELDID? AND A.RECEIVER = ?RECEIVER?) AS ACCESSES</query>
   <query name='Thread counts for the instance field'>SELECT O.THREADNAME, F.READCOUNT, F.WRITECOUNT
  FROM FIELDINSTANCETHREAD F, OBJECT O

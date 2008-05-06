@@ -1,9 +1,7 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes'?>
 <ad-hoc version='1.0' current='3'>
   <query name='Show Tables'>show tables</query>
-  <query name='Show available runs' meta-query-name='What instance fields are shared?'>-- This query returns all the prepared runs in the database
-select Run, Name, Started, Username from RUN</query>
-  <query name='What static fields are shared? ' meta-query-name='What threads access this field? (from a shared field)'>select
+  <query name='What static fields are shared? '>select
   O.PackageName &quot;Package__PACKAGE&quot;,
   O.ClassName &quot;Class__CLASS&quot;,
   F.FieldName &quot;Field&quot;,
@@ -30,9 +28,11 @@ order by O.PackageName,O.ClassName,F.FieldName,THO.ThreadName</query>
   FI.Receiver &quot;Receiver&quot;,
   THO.ThreadName &quot;Thread|&quot;,
   FI.ReadCount &quot;Read Count&quot;,
-  FI.WriteCount &quot;Write Count&quot;,
-  FI.ReadUCCount &quot;Reads Under Construction&quot;,
-  FI.WriteUCCount &quot;Writes Under Construction&quot;
+  FI.WriteCount &quot;Write Count&quot;
+-- Only for schema 17
+--  ,
+--  FI.ReadUCCount &quot;Reads Under Construction&quot;,
+--  FI.WriteUCCount &quot;Writes Under Construction&quot;
 from OBJECT O,
      FIELD F,
      FIELDINSTANCETHREAD FI,
@@ -46,7 +46,7 @@ where
   and THO.RUN = FI.RUN
   and THO.ID = FI.Thread
 order by O.PackageName,O.ClassName,F.FieldName,FI.Receiver,THO.ThreadName</query>
-  <query name='Show all threads' meta-query-name='Threads'>
+  <query name='Show all threads'>
 select t.Id, t.ThreadName, cl.PackageName, cl.ClassName
 from OBJECT as t, OBJECT as cl   
 where t.ThreadName is not null
@@ -74,16 +74,29 @@ where L.INTHREAD = O.ID
 and L.RUN = O.RUN
 and O.Run = ?RUN?
 order by 1, 2</query>
-  <query name='Show lock event'>select l.TS, t.ThreadName, l.Lock, lkType.ClassName as LockClass, l.LockIsThis as IsThis, l.LockIsClass as IsClass,
+  <query name='Show lock event'>
+select l.TS, t.ThreadName, l.Lock, lkType.ClassName as LockClass, 
+l.LockIsThis as IsThis, l.LockIsClass as IsClass,
 l.State, cl.PackageName, cl.ClassName, l.AtLine
 from LOCK as l, OBJECT as cl, OBJECT as lk, OBJECT as t, OBJECT as lkType
 where l.Run = ?RUN?
 and l.Id = ?LOCKEVENT?
+and cl.Run = ?RUN?
 and l.InClass = cl.Id
+and lk.Run = ?RUN?
 and l.Lock = lk.Id
+and t.Run = ?RUN?
 and l.InThread = t.Id
+and lkType.Run = ?RUN?
 and lk.Type = lkType.Id</query>
   <query name='What locks are contended most? '>
+select Lock, sum(Duration) as BlockTime from LOCKDURATION    
+where State = &apos;BLOCKING&apos;
+and Run=?RUN?
+group by Lock
+order by BlockTime desc
+  </query>
+  <query name='Which threads/code are contending for that lock?'>      
 select le.InClass, le.AtLine,
 ld.InThread &quot;InThread|&quot;, 
 sum(ld.Duration) as BlockTime 
@@ -121,7 +134,8 @@ and ld.Lock=?LOCK?
 and le.ts between ld.Start and ld.Stop
 order by ld.Start 
   </query>
-  <query name='Show when threads hold locks and acquire more' meta-query-name='Held + Acquiring'>select lh.LockEvent, count(LockHeld) as NumLocksHeld,
+  <query name='Show when threads hold locks and acquire more'>
+select lh.LockEvent, count(LockHeld) as NumLocksHeld,
 le.InClass, le.AtLine
 from LOCKSHELD as lh, LOCK as le
 where lh.Run=?RUN?

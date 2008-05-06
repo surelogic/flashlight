@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes'?>
-<ad-hoc version='1.0' current='19'>
+<ad-hoc version='1.0' current='28'>
   <query name='Show Tables'>show tables</query>
   <query name='Show available runs' meta-query-name='Instance Fields with no lock set'>-- This query returns all the prepared runs in the database
 select Run, Name, Started, Username from RUN</query>
@@ -178,7 +178,7 @@ order by t.start desc</query>
    F.RUN = I.RUN AND F.FIELD = I.FIELD AND F.RECEIVER = I.RECEIVER 
  WHERE FI.RUN = ?RUN?
  ORDER BY O.PackageName,O.ClassName,FI.FieldName,I.Receiver</query>
-  <query name='Instance Fields with no lock set' meta-query-name='Lock frequencies for an instance field'>SELECT 
+  <query name='Instance Fields with no lock set' meta-query-name='Locks held for each access of an instance field'>SELECT 
   O.PackageName &quot;Package__PACKAGE&quot;,
   O.ClassName &quot;Class__CLASS&quot;,
   FI.FieldName &quot;Field&quot;,
@@ -334,6 +334,8 @@ ORDER BY &quot;Time&quot; DESC</query>
   INNER JOIN OBJECT THO ON
    THO.RUN = A.RUN AND
    THO.ID = A.InThread 
+ WHERE
+   A.ID = ?AID?
 )
 UNION
 (SELECT

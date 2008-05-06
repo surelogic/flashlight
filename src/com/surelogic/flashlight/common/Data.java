@@ -28,22 +28,21 @@ public final class Data {
 
 	private static String dbLocation = null;
 
-	private static ExecutorService exec = Executors
-			.newSingleThreadExecutor();
+	private static ExecutorService exec = Executors.newSingleThreadExecutor();
 
 	public static ExecutorService getExecutor() {
 		return exec;
 	}
 
-        public static void restartExecutor() {
-            exec.shutdownNow();
-            exec = Executors.newSingleThreadExecutor();
-        }
-        
-        public static URL getDefaultQueryFileURL() {
-            return Data.class.getResource("/lib/queries/queries.xml");
-        }
-        
+	public static void restartExecutor() {
+		exec.shutdownNow();
+		exec = Executors.newSingleThreadExecutor();
+	}
+
+	public static URL getDefaultQueryFileURL() {
+		return Data.class.getResource("/lib/queries/queries.xml");
+	}
+
 	public static synchronized boolean isBooted() {
 		return (dbLocation != null);
 	}
@@ -110,7 +109,7 @@ public final class Data {
 	 * Up this number when you add a new schema version SQL script to this
 	 * package.
 	 */
-	public static final int schemaVersion = 16;
+	public static final int schemaVersion = 17;
 
 	public static final String SQL_SCRIPT_PREFIX = "/lib/database/schema_";
 

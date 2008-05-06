@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes'?>
-<ad-hoc version='1.0' current='28'>
+<ad-hoc version='1.0' current='3'>
   <query name='Show Tables'>show tables</query>
-  <query name='Show available runs' meta-query-name='Instance Fields with no lock set'>-- This query returns all the prepared runs in the database
+  <query name='Show available runs' meta-query-name='What instance fields are shared?'>-- This query returns all the prepared runs in the database
 select Run, Name, Started, Username from RUN</query>
   <query name='What static fields are shared? ' meta-query-name='What threads access this field? (from a shared field)'>select
   O.PackageName &quot;Package__PACKAGE&quot;,
@@ -30,7 +30,9 @@ order by O.PackageName,O.ClassName,F.FieldName,THO.ThreadName</query>
   FI.Receiver &quot;Receiver&quot;,
   THO.ThreadName &quot;Thread|&quot;,
   FI.ReadCount &quot;Read Count&quot;,
-  FI.WriteCount &quot;Write Count&quot;
+  FI.WriteCount &quot;Write Count&quot;,
+  FI.ReadUCCount &quot;Reads Under Construction&quot;,
+  FI.WriteUCCount &quot;Writes Under Construction&quot;
 from OBJECT O,
      FIELD F,
      FIELDINSTANCETHREAD FI,
@@ -166,6 +168,7 @@ where t.run = ?RUN?
 and l.run = ?RUN? and l.id = ?LOCKEVENT?
 and l.ts between t.start and t.stop
 order by t.start desc</query>
+  <query name='All accesses with more than 2 locks held'>SELECT * FROM ACCESS</query>
   <query name='Instance Fields with a lock set' meta-query-name='Locks held for each access of an instance field'>SELECT 
   O.PackageName &quot;Package__PACKAGE&quot;,
   O.ClassName &quot;Class__CLASS&quot;,

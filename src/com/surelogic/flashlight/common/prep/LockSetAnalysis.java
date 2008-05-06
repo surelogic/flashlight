@@ -49,12 +49,18 @@ public class LockSetAnalysis extends DBQueryEmpty {
 							final long field = r.nextLong();
 							final Long receiver = r.nullableLong();
 							final boolean read = "R".equals(r.nextString());
-							if (receiver == null) {
+							final boolean underConstruction = "Y".equals(r
+									.nextString());
+							if (underConstruction) {
+								sets.instanceUnderConstruction(thread, field,
+										receiver, read);
+							} else if (receiver == null) {
 								sets.staticAccess(ts, thread, field, read);
 							} else {
 								sets.instanceAccess(ts, thread, field,
 										receiver, read);
 							}
+
 						}
 						return null;
 					}
@@ -69,7 +75,7 @@ public class LockSetAnalysis extends DBQueryEmpty {
 
 		private final Map<Long, Set<Long>> fields;
 		private final Map<Long, Map<Long, Set<Long>>> instances;
-		private final Map<StaticInstance, Count> staticCounts;
+		private final Map<StaticInstance, StaticCount> staticCounts;
 		private final Map<FieldInstance, Count> counts;
 		final ThreadLocks locks;
 
@@ -77,8 +83,23 @@ public class LockSetAnalysis extends DBQueryEmpty {
 			fields = new HashMap<Long, Set<Long>>();
 			locks = new ThreadLocks(lockDurations);
 			instances = new HashMap<Long, Map<Long, Set<Long>>>();
-			staticCounts = new HashMap<StaticInstance, Count>();
+			staticCounts = new HashMap<StaticInstance, StaticCount>();
 			counts = new HashMap<FieldInstance, Count>();
+		}
+
+		public void instanceUnderConstruction(long thread, long field,
+				Long receiver, boolean read) {
+			final FieldInstance fi = new FieldInstance(thread, field, receiver);
+			Count count = counts.get(fi);
+			if (count == null) {
+				count = new Count();
+				counts.put(fi, count);
+			}
+			if (read) {
+				count.readUC++;
+			} else {
+				count.writeUC++;
+			}
 		}
 
 		public void writeStatistics(Query q) {
@@ -118,9 +139,10 @@ public class LockSetAnalysis extends DBQueryEmpty {
 					.prepared("LockSet.insertStaticCounts");
 			final Queryable<Void> insertFieldCounts = q
 					.prepared("LockSet.insertFieldCounts");
-			for (final Entry<StaticInstance, Count> e : staticCounts.entrySet()) {
+			for (final Entry<StaticInstance, StaticCount> e : staticCounts
+					.entrySet()) {
 				final StaticInstance si = e.getKey();
-				final Count c = e.getValue();
+				final StaticCount c = e.getValue();
 				insertStaticCounts.call(runId, si.thread, si.field, c.read,
 						c.write);
 			}
@@ -128,7 +150,7 @@ public class LockSetAnalysis extends DBQueryEmpty {
 				final FieldInstance fi = e.getKey();
 				final Count c = e.getValue();
 				insertFieldCounts.call(runId, fi.thread, fi.field, fi.receiver,
-						c.read, c.write);
+						c.read, c.write, c.readUC, c.writeUC);
 			}
 		}
 
@@ -144,9 +166,9 @@ public class LockSetAnalysis extends DBQueryEmpty {
 				fieldSet.retainAll(lockSet);
 			}
 			final StaticInstance si = new StaticInstance(thread, field);
-			Count c = staticCounts.get(si);
+			StaticCount c = staticCounts.get(si);
 			if (c == null) {
-				c = new Count();
+				c = new StaticCount();
 				staticCounts.put(si, c);
 			}
 			if (read) {
@@ -265,6 +287,13 @@ public class LockSetAnalysis extends DBQueryEmpty {
 	}
 
 	private static class Count {
+		long read;
+		long write;
+		long readUC;
+		long writeUC;
+	}
+
+	private static class StaticCount {
 		long read;
 		long write;
 	}

@@ -12,7 +12,7 @@ import java.util.TreeSet;
 import java.util.Map.Entry;
 
 import com.surelogic.common.jdbc.ConnectionQuery;
-import com.surelogic.common.jdbc.DBQueryEmpty;
+import com.surelogic.common.jdbc.DBQueryNoResult;
 import com.surelogic.common.jdbc.Query;
 import com.surelogic.common.jdbc.Queryable;
 import com.surelogic.common.jdbc.Result;
@@ -26,7 +26,7 @@ import com.surelogic.common.jdbc.Row;
  * @author nathan
  * 
  */
-public class LockSetAnalysis extends DBQueryEmpty {
+public class LockSetAnalysis extends DBQueryNoResult {
 
 	private final long runId;
 

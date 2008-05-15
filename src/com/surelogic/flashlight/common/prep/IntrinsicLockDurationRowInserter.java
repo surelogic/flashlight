@@ -532,6 +532,20 @@ public final class IntrinsicLockDurationRowInserter {
 		}
 	}
 
+	/**
+	 * Clear out state for the Object
+	 */
+  public void gcObject(long id) {
+    final Long key = id;
+    // Clean up if it's a thread
+    f_threadToStatus.remove(key);
+    f_threadToLockToState.remove(key);
+    for(Map<Long, State> e : f_threadToLockToState.values()) {
+      e.remove(key);
+    }
+    // TODO Clean up lock graph?
+  }
+
 	/*
 	 * select distinct lockheld, lockacquired FROM ilocksheld
 	 * 

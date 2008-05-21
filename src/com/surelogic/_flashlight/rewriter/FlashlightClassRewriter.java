@@ -26,7 +26,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
       final String signature, final String superName,
       final String[] interfaces) {
     cv.visit(version, access, name, signature, superName, interfaces);
-    className = name.replace('/', '.');
+    className = Utils.internal2FullyQualified(name);
   }
 
   @Override

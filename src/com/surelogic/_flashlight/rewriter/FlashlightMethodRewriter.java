@@ -8,7 +8,7 @@ import org.objectweb.asm.Type;
 
 final class FlashlightMethodRewriter extends MethodAdapter {
   // Constants for accessing the special Flashlight Store class
-  private static final String FLASHLIGHT_STORE = "com.surelogic._flashlight.rewriter.test.DebugStore";
+  private static final String FLASHLIGHT_STORE = "com/surelogic/_flashlight/rewriter/test/DebugStore";
   private static final String STORE_FIELD_ACCESS = "fieldAccess";
   private static final String FIELD_ACCESS_SIGNATURE = "(ZLjava/lang/Object;Ljava/lang/reflect/Field;Ljava/lang/Class;I)V";
 
@@ -39,6 +39,11 @@ final class FlashlightMethodRewriter extends MethodAdapter {
    * information is available.
    */
   private Integer currentSrcLine = Integer.valueOf(-1);
+  
+  /**
+   * The amount by which the stack depth must be increased.
+   */
+  private int stackDepthDelta = 0;
   
   
   
@@ -74,8 +79,24 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     }
   }
 
-
-
+  
+  
+  /**
+   * Update the stack depth delta. The stack depth must be increased by at least
+   * as much as the value provided here. If {@code newDelta} is less than the
+   * current stack depth delta then we do nothing. Otherwise we update delta;
+   * 
+   * @param newDelta
+   *          The minimum amount by which the stack depth must be increased.
+   */
+  private void updateStackDepthDelta(final int newDelta) {
+    if (newDelta > stackDepthDelta) {
+      stackDepthDelta = newDelta;
+    } 
+  }
+  
+  
+  
   /**
    * Rewrite a {@code PUTFIELD} instruction.
    * 
@@ -90,21 +111,46 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   private void rewritePutfield(
       final String owner, final String name, final String desc) {
     final String fullyQualifiedOwner = Utils.internal2FullyQualified(owner);
-
+    final int stackDelta;
+    
     /* We need to manipulate the stack to make a copy of the object being
      * accessed so that we can have it for the call to the Store.
+     * How we do this depends on whether the top value on the stack is a
+     * catagory 1 or a category 2 value.  We have to test the type descriptor
+     * of the field to determine this.
      */
-    // At the start the stack is "... objectref, value"
-    mv.visitInsn(Opcodes.SWAP);
-    // Stack is "... value, objectref"
-    mv.visitInsn(Opcodes.DUP_X1);
-    // Stack is "... objectref, value, objectref"
-    mv.visitInsn(Opcodes.SWAP);
-    // Stack is "... objectref, objectref, value"
+    final Type fieldType = Type.getType(desc);
+    if (fieldType == Type.DOUBLE_TYPE || fieldType == Type.LONG_TYPE) {
+      // Category 2
+      stackDelta = 2;
+      
+      // At the start the stack is "..., objectref, value"
+      mv.visitInsn(Opcodes.DUP2_X1);
+      // Stack is "..., value, objectref, value"
+      mv.visitInsn(Opcodes.POP2);
+      // Stack is "..., value, objectref"
+      mv.visitInsn(Opcodes.DUP_X2);
+      // Stack is "..., objectref, value, objectref"
+      mv.visitInsn(Opcodes.DUP_X2);
+      // Stack is "..., objectref, objectref, value, objectref"
+      mv.visitInsn(Opcodes.POP);
+      // Stack is "..., objectref, objectref, value"      
+    } else {
+      // Category 1
+      stackDelta = 3;
+
+      // At the start the stack is "..., objectref, value"
+      mv.visitInsn(Opcodes.SWAP);
+      // Stack is "..., value, objectref"
+      mv.visitInsn(Opcodes.DUP_X1);
+      // Stack is "..., objectref, value, objectref"
+      mv.visitInsn(Opcodes.SWAP);
+      // Stack is "..., objectref, objectref, value"
+    }
     
     // Execute the original PUTFIELD instruction
     mv.visitFieldInsn(Opcodes.PUTFIELD, owner, name, desc);
-    // Stack is "... objectref"
+    // Stack is "..., objectref"
     
     /* Again manipulate the stack so that we can set up the first two
      * arguments to the Store.fieldAccess() call.  The first argument
@@ -112,9 +158,9 @@ final class FlashlightMethodRewriter extends MethodAdapter {
      * accessed.
      */
     mv.visitInsn(Opcodes.ICONST_0); // Push "false"
-    // Stack is "... objectref, 0"
+    // Stack is "..., objectref, 0"
     mv.visitInsn(Opcodes.SWAP);
-    // Stack is "... 0, objectref"
+    // Stack is "..., 0, objectref"
     
     /* We have to create try-catch blocks to deal with the exceptions that
      * the inserted reflection methods might throw.  We do this on a per-call
@@ -147,7 +193,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     mv.visitLdcInsn(name);
     mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, JAVA_LANG_CLASS, CLASS_GET_DECLARED_FIELD, GET_DECLARED_FIELD_SIGNATURE);
     mv.visitLabel(try2End_try3Start);
-    // Stack is "... 0, objectref, Field"
+    // Stack is "..., 0, objectref, Field"
     
     /* We need to insert the expression "Class.forName(<current_class>)"
      * to push the java.lang.Class object of the referencing class onto the 
@@ -156,14 +202,14 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     mv.visitLdcInsn(classBeingAnalyzed);
     mv.visitMethodInsn(Opcodes.INVOKESTATIC, JAVA_LANG_CLASS, CLASS_FOR_NAME, FOR_NAME_SIGNATURE);
     mv.visitLabel(try3End);
-    // Stack is "... 0, objectref, Field, Class"
+    // Stack is "..., 0, objectref, Field, Class"
     
     /* We need to push the line number of the field access.  We could be smart
      * about how we do this based on whether the line number fits into an 8-,
      * 16-, or 32-bit value.  Right now we are dumb.
      */
     mv.visitLdcInsn(currentSrcLine);
-    // Stack is "... 0, objectref, Field, Class, LineNumber"
+    // Stack is "..., 0, objectref, Field, Class, LineNumber"
     
     /* We can now call Store.fieldAccess() */
     mv.visitMethodInsn(Opcodes.INVOKESTATIC, FLASHLIGHT_STORE, STORE_FIELD_ACCESS, FIELD_ACCESS_SIGNATURE);
@@ -195,10 +241,13 @@ final class FlashlightMethodRewriter extends MethodAdapter {
 
     /* Resume original instruction stream */
     mv.visitLabel(noExceptions);
+    
+    // Update stack depth
+    updateStackDepthDelta(stackDelta);
   }
   
   @Override
   public void visitMaxs(final int maxStack, final int maxLocals) {
-    mv.visitMaxs(maxStack+5, maxLocals);
+    mv.visitMaxs(maxStack + stackDepthDelta, maxLocals);
   }
 }

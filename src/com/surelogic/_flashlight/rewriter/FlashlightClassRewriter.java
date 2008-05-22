@@ -2,7 +2,9 @@ package com.surelogic._flashlight.rewriter;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
@@ -39,8 +41,31 @@ public final class FlashlightClassRewriter extends ClassAdapter {
   
   
   public static void main(final String[] args) throws IOException {
-    System.out.println("Reading class " + args[0]);
-    final BufferedInputStream bis = new BufferedInputStream(new FileInputStream(args[0]));
+    rewriteDirectory(new File(args[0]), new File(args[1]));
+    
+    System.out.println("done");
+  }
+
+  private static void rewriteDirectory(final File inDir, final File outDir)
+      throws FileNotFoundException, IOException {
+    for (final String name : inDir.list()) {
+      final File nextIn = new File(inDir, name);
+      final File nextOut = new File(outDir, name);
+      if (nextIn.isDirectory()) {
+        rewriteDirectory(nextIn, nextOut);
+      } else {
+        if (name.endsWith(".class")) {
+          rewriteClass(nextIn, nextOut);
+        }
+      }
+    }
+  }
+
+
+  private static void rewriteClass(final File inName, final File outName)
+      throws FileNotFoundException, IOException {
+    System.out.println("Reading class " + inName);
+    final BufferedInputStream bis = new BufferedInputStream(new FileInputStream(inName));
     final ClassReader input = new ClassReader(bis);
     final ClassWriter output = new ClassWriter(input, 0);
     final FlashlightClassRewriter xformer = new FlashlightClassRewriter(output);
@@ -49,11 +74,9 @@ public final class FlashlightClassRewriter extends ClassAdapter {
     
     final byte[] newClass = output.toByteArray();    
 
-    System.out.println("Writing class " + args[1]);
-    final BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(args[1]));
+    System.out.println("Writing class " + outName);
+    final BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(outName));
     bos.write(newClass);
     bos.close();
-    
-    System.out.println("done");
   }
 }

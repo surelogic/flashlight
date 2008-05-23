@@ -12,4 +12,23 @@ public class DebugStore {
     System.out.println("  withinClass = " + withinClass);
     System.out.println("  line = " + line);
   }
+
+  public static void beforeIntrinsicLockAcquisition(final Object lockObject,
+      final boolean lockIsThis, final boolean lockIsClass,
+      Class<?> withinClass, final int line) {
+    System.out.println("beforeIntrinsicLockAcquisition");
+    System.out.println("  lockObject = " + lockObject);
+    System.out.println("  lockIsThis = " + lockIsThis);
+    System.out.println("  lockIsClass = " + lockIsClass);
+    System.out.println("  withinClass = " + withinClass);
+    System.out.println("  line = " + line);
+  }
+
+  public static void afterIntrinsicLockAcquisition(final Object lockObject,
+      Class<?> withinClass, final int line) {
+    System.out.println("afterIntrinsicLockAcquisition");
+    System.out.println("  lockObject = " + lockObject);
+    System.out.println("  withinClass = " + withinClass);
+    System.out.println("  line = " + line);
+  }
 }

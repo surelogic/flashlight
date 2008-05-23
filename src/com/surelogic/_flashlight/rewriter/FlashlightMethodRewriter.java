@@ -8,9 +8,13 @@ import org.objectweb.asm.Opcodes;
 final class FlashlightMethodRewriter extends MethodAdapter {
   // Constants for accessing the special Flashlight Store class
   private static final String FLASHLIGHT_STORE = "com/surelogic/_flashlight/rewriter/test/DebugStore";
+  private static final String STORE_AFTER_INTRINSIC_LOCK_ACQUISITION = "afterIntrinsicLockAcquisition";
+  private static final String AFTER_INTRINSIC_LOCK_ACQUISITION_SIGNATURE = "(Ljava/lang/Object;Ljava/lang/Class;I)V";
+  private static final String STORE_BEFORE_INTRINSIC_LOCK_ACQUISITION = "beforeIntrinsicLockAcquisition";
+  private static final String BEFORE_INTRINSIC_LOCK_ACQUISITION_SIGNATURE = "(Ljava/lang/Object;ZZLjava/lang/Class;I)V";
   private static final String STORE_FIELD_ACCESS = "fieldAccess";
   private static final String FIELD_ACCESS_SIGNATURE = "(ZLjava/lang/Object;Ljava/lang/reflect/Field;Ljava/lang/Class;I)V";
-
+  
   // Other Java classes and methods
   private static final String CONSTRUCTOR = "<init>";
   
@@ -20,7 +24,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   private static final String CLASS_GET_DECLARED_FIELD = "getDeclaredField";
   private static final String GET_DECLARED_FIELD_SIGNATURE = "(Ljava/lang/String;)Ljava/lang/reflect/Field;";
 
-  private static final String JAVA_LAND_CLASS_NOT_FOUND_EXCEPTION = "java/lang/ClassNotFoundException";
+  private static final String JAVA_LANG_CLASS_NOT_FOUND_EXCEPTION = "java/lang/ClassNotFoundException";
 
   private static final String JAVA_LANG_ERROR = "java/lang/Error";
   private static final String ERROR_SIGNATURE = "(Ljava/lang/String;)V";
@@ -69,6 +73,15 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   }
   
   @Override
+  public void visitInsn(final int opcode) {
+    if (opcode == Opcodes.MONITORENTER) {
+      rewriteMonitorenter();
+    } else {
+      mv.visitInsn(opcode);
+    }
+  }
+  
+  @Override
   public void visitFieldInsn(final int opcode, final String owner,
       final String name, final String desc) {
     if (opcode == Opcodes.PUTFIELD) {
@@ -91,7 +104,11 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     mv.visitMaxs(maxStack + stackDepthDelta, maxLocals);
   }
 
-
+  
+  
+  // =========================================================================
+  // == Utility methods
+  // =========================================================================
 
   /**
    * Update the stack depth delta. The stack depth must be increased by at least
@@ -106,9 +123,13 @@ final class FlashlightMethodRewriter extends MethodAdapter {
       stackDepthDelta = newDelta;
     } 
   }
+
   
   
-  
+  // =========================================================================
+  // == Rewrite field accesses
+  // =========================================================================
+
   /**
    * Rewrite a {@code PUTFIELD} instruction.
    * 
@@ -345,9 +366,9 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     final Label catchClassNotFound1 = new Label();
     final Label catchNoSuchField = new Label();
     final Label catchClassNotFound2 = new Label();
-    mv.visitTryCatchBlock(try1Start, try1End_try2Start, catchClassNotFound1, JAVA_LAND_CLASS_NOT_FOUND_EXCEPTION);
+    mv.visitTryCatchBlock(try1Start, try1End_try2Start, catchClassNotFound1, JAVA_LANG_CLASS_NOT_FOUND_EXCEPTION);
     mv.visitTryCatchBlock(try1End_try2Start, try2End_try3Start, catchNoSuchField, JAVA_LANG_NO_SUCH_FIELD_EXCEPTION);
-    mv.visitTryCatchBlock(try2End_try3Start, try3End, catchClassNotFound2, JAVA_LAND_CLASS_NOT_FOUND_EXCEPTION);
+    mv.visitTryCatchBlock(try2End_try3Start, try3End, catchClassNotFound2, JAVA_LANG_CLASS_NOT_FOUND_EXCEPTION);
     
     /* We need to insert the expression
      * "Class.forName(<owner>).getDeclaredField(<name>)" into the code.  This puts
@@ -412,5 +433,141 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   
     /* Resume original instruction stream */
     mv.visitLabel(noExceptions);
+  }
+
+  
+  
+  // =========================================================================
+  // == Rewrite monitor methods
+  // =========================================================================
+
+  private void rewriteMonitorenter() {
+    // ..., obj  
+    
+    /* We begin by partially setting up the stack for the post-synchronized
+     * call.  We set up the first two arguments to the method.
+     */
+    
+    /* Copy the object being locked for use as the first parameter */
+    mv.visitInsn(Opcodes.DUP);
+    // ..., obj, obj  
+    /* Copy again to use in the pre-synchronized call */
+    mv.visitInsn(Opcodes.DUP);
+    // ..., obj, obj, obj  
+    
+    /* We have to use Class.forName() to get the Class object for the class
+     * being analyzed.  We need to both compare this object with the object
+     * being locked and use it as a parameter for the pre- and post-synchronized
+     * call.  We have to set up a try-catch block around this call.
+     */
+    
+    final Label tryStart = new Label();
+    final Label tryEnd = new Label();
+    final Label catchClassNotFound = new Label();
+    mv.visitTryCatchBlock(tryStart, tryEnd, catchClassNotFound, JAVA_LANG_CLASS_NOT_FOUND_EXCEPTION);
+    
+    mv.visitLabel(tryStart);
+    mv.visitLdcInsn(classBeingAnalyzed);
+    // ..., obj, obj, obj, classNameString  
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, JAVA_LANG_CLASS, CLASS_FOR_NAME, FOR_NAME_SIGNATURE);
+    // ..., obj, obj, obj, inClass
+    mv.visitLabel(tryEnd);
+    /* Copy the class object three values down to use as the second parameter
+     * in the post-synchronized call.
+     */
+    mv.visitInsn(Opcodes.DUP_X2);
+    // ..., obj, inClass, obj,   obj, inClass  
+
+    /* Make some more copies of the object being locked for comparison purposes */
+    mv.visitInsn(Opcodes.SWAP);
+    // ..., obj, inClass, obj,   inClass, obj  
+    mv.visitInsn(Opcodes.DUP_X1);
+    // ..., obj, inClass, obj,   obj, inClass, obj  
+    mv.visitInsn(Opcodes.DUP);
+    // ..., obj, inClass, obj,   obj, inClass, obj, obj
+
+    /* Compare the object against "this" */
+    mv.visitVarInsn(Opcodes.ALOAD, 0);
+    // ..., obj, inClass, obj,   obj, inClass, obj, obj, this
+    final Label pushFalse1 = new Label();
+    final Label afterPushIsThis = new Label();
+    mv.visitJumpInsn(Opcodes.IF_ACMPNE, pushFalse1);
+    mv.visitInsn(Opcodes.ICONST_1); // push true
+    mv.visitJumpInsn(Opcodes.GOTO, afterPushIsThis);
+    mv.visitLabel(pushFalse1);
+    mv.visitInsn(Opcodes.ICONST_0); // push false
+    mv.visitLabel(afterPushIsThis);
+    // ..., obj, inClass, obj,   obj, inClass, obj, isThis
+    
+    /* Copy the comparison result three values down to use as the
+     * second parameter to the pre-synchronized call, and then
+     * dispose of the original
+     */
+    mv.visitInsn(Opcodes.DUP_X2);
+    // ..., obj, inClass, obj,   obj, isThis, inClass, obj, isThis
+    mv.visitInsn(Opcodes.POP);
+    // ..., obj, inClass, obj,   obj, isThis, inClass, obj
+    
+    /* Rotate up the stack the Class object, and then put a copy
+     * two values down to use as the 4th parameter to the pre-call.
+     * (We rotate it into the correct stack position later.)
+     */
+    mv.visitInsn(Opcodes.SWAP);
+    // ..., obj, inClass, obj,   obj, isThis, obj, inClass
+    mv.visitInsn(Opcodes.DUP_X1);
+    // ..., obj, inClass, obj,   obj, isThis, inClass, obj, inClass
+
+    /* Compare the object being locked against the Class object */
+    final Label pushFalse2 = new Label();
+    final Label afterPushIsClass = new Label();
+    mv.visitJumpInsn(Opcodes.IF_ACMPNE, pushFalse2);
+    mv.visitInsn(Opcodes.ICONST_1); // push true;
+    mv.visitJumpInsn(Opcodes.GOTO, afterPushIsClass);
+    mv.visitLabel(pushFalse2);
+    mv.visitInsn(Opcodes.ICONST_0); // push false;
+    mv.visitLabel(afterPushIsClass);
+    // ..., obj, inClass, obj,   obj, isThis, inClass, isClass
+    
+    /* Swap the orger of inClass and isClass to correctly establish
+     * the 3rd and 4th parameters to the pre-call
+     */
+    mv.visitInsn(Opcodes.SWAP);
+    // ..., obj, inClass, obj,   obj, isThis, isClass, inClass
+    
+    /* Push the lineNumber and call the pre-sychronized method */
+    mv.visitLdcInsn(currentSrcLine);
+    // ..., obj, inClass, obj,   obj, isThis, isClass, inClass, lineNumber
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FLASHLIGHT_STORE,
+        STORE_BEFORE_INTRINSIC_LOCK_ACQUISITION,
+        BEFORE_INTRINSIC_LOCK_ACQUISITION_SIGNATURE);
+    // ..., obj, inClass, obj
+    
+    /* The original monitor enter call */
+    mv.visitInsn(Opcodes.MONITORENTER);
+    // ..., obj, inClass
+    
+    /* Push the 3rd parameter for the post-synchronized call and call it */
+    mv.visitLdcInsn(currentSrcLine);
+    // ..., obj, inClass, lineNumber
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FLASHLIGHT_STORE,
+        STORE_AFTER_INTRINSIC_LOCK_ACQUISITION,
+        AFTER_INTRINSIC_LOCK_ACQUISITION_SIGNATURE);
+    // ...
+    
+    /* Done, jump past the exception handler */
+    final Label resume = new Label();
+    mv.visitJumpInsn(Opcodes.GOTO, resume);
+    
+    mv.visitLabel(catchClassNotFound); // catch ClassNotFoundException
+    mv.visitTypeInsn(Opcodes.NEW, JAVA_LANG_ERROR);
+    mv.visitInsn(Opcodes.DUP);
+    mv.visitLdcInsn("Failed to find Class object for " + classBeingAnalyzed);
+    mv.visitMethodInsn(Opcodes.INVOKESPECIAL, JAVA_LANG_ERROR, CONSTRUCTOR, ERROR_SIGNATURE);
+    mv.visitInsn(Opcodes.ATHROW);
+
+    /* Resume original instruction stream */
+    mv.visitLabel(resume);
+
+    updateStackDepthDelta(7);
   }
 }

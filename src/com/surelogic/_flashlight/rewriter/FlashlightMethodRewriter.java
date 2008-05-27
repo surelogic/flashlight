@@ -48,7 +48,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
    * {@link #visitLineNumber}. This is {@code -1} when no line number
    * information is available.
    */
-  private Integer currentSrcLine = Integer.valueOf(-1);
+  private int currentSrcLine = -1;
   
   /**
    * The amount by which the stack depth must be increased.
@@ -93,7 +93,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   @Override
   public void visitLineNumber(final int line, final Label start) {
     mv.visitLineNumber(line, start);
-    currentSrcLine = Integer.valueOf(line);
+    currentSrcLine = line;
   }
   
   @Override
@@ -150,7 +150,21 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     } 
   }
 
-
+  /**
+   * Generate code to push an integer constant.  Optimizes for whether the
+   * integer fits in 8, 16, or 32 bits.
+   */
+  private void pushIntegerContant(final int v) {
+    if (v < 128) {
+      mv.visitIntInsn(Opcodes.BIPUSH, v);
+    } else if (v < 32767) {
+      mv.visitIntInsn(Opcodes.SIPUSH, v);
+    } else {
+      mv.visitLdcInsn(Integer.valueOf(v));
+    }
+  }
+  
+  
 
   // =========================================================================
   // == Insert Bookkeeping code
@@ -434,14 +448,11 @@ final class FlashlightMethodRewriter extends MethodAdapter {
      */
     final Label try1Start = new Label();
     final Label try1End_try2Start = new Label();
-    final Label try2End_try3Start = new Label();
-    final Label try3End = new Label();
-    final Label catchClassNotFound1 = new Label();
+    final Label try2End = new Label();
+    final Label catchClassNotFound = new Label();
     final Label catchNoSuchField = new Label();
-    final Label catchClassNotFound2 = new Label();
-    mv.visitTryCatchBlock(try1Start, try1End_try2Start, catchClassNotFound1, JAVA_LANG_CLASS_NOT_FOUND_EXCEPTION);
-    mv.visitTryCatchBlock(try1End_try2Start, try2End_try3Start, catchNoSuchField, JAVA_LANG_NO_SUCH_FIELD_EXCEPTION);
-    mv.visitTryCatchBlock(try2End_try3Start, try3End, catchClassNotFound2, JAVA_LANG_CLASS_NOT_FOUND_EXCEPTION);
+    mv.visitTryCatchBlock(try1Start, try1End_try2Start, catchClassNotFound, JAVA_LANG_CLASS_NOT_FOUND_EXCEPTION);
+    mv.visitTryCatchBlock(try1End_try2Start, try2End, catchNoSuchField, JAVA_LANG_NO_SUCH_FIELD_EXCEPTION);
     
     /* We need to insert the expression
      * "Class.forName(<owner>).getDeclaredField(<name>)" into the code.  This puts
@@ -455,24 +466,20 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     mv.visitLabel(try1End_try2Start);
     mv.visitLdcInsn(name);
     mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, JAVA_LANG_CLASS, GET_DECLARED_FIELD, GET_DECLARED_FIELD_SIGNATURE);
-    mv.visitLabel(try2End_try3Start);
+    mv.visitLabel(try2End);
     // Stack is "..., isRead, receiver, Field"
     
     /* We need to insert the expression "Class.forName(<current_class>)"
      * to push the java.lang.Class object of the referencing class onto the 
      * stack.
      */
-    mv.visitLdcInsn(classBeingAnalyzedFullyQualified);
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, JAVA_LANG_CLASS, FOR_NAME, FOR_NAME_SIGNATURE);
-    mv.visitLabel(try3End);
-    // Stack is "..., isRead, receiver, Field, Class"
+    mv.visitFieldInsn(Opcodes.GETSTATIC, classBeingAnalyzedInternal,
+        FlashlightNames.IN_CLASS, FlashlightNames.IN_CLASS_DESC);
+    // Stack is "..., isRead, receiver, Field, inClass"
     
-    /* We need to push the line number of the field access.  We could be smart
-     * about how we do this based on whether the line number fits into an 8-,
-     * 16-, or 32-bit value.  Right now we are dumb.
-     */
-    mv.visitLdcInsn(currentSrcLine);
-    // Stack is "..., isRead, receiver, Field, Class, LineNumber"
+    /* Push the line number of the field access. */
+    pushIntegerContant(currentSrcLine);
+    // Stack is "..., isRead, receiver, Field, inClass, LineNumber"
     
     /* We can now call Store.fieldAccess() */
     mv.visitMethodInsn(Opcodes.INVOKESTATIC, FLASHLIGHT_STORE, FIELD_ACCESS, FIELD_ACCESS_SIGNATURE);
@@ -483,17 +490,10 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     final Label noExceptions = new Label();
     mv.visitJumpInsn(Opcodes.GOTO, noExceptions);
     
-    mv.visitLabel(catchClassNotFound1); // catch ClassNotFoundException
+    mv.visitLabel(catchClassNotFound); // catch ClassNotFoundException
     mv.visitTypeInsn(Opcodes.NEW, JAVA_LANG_ERROR);
     mv.visitInsn(Opcodes.DUP);
     mv.visitLdcInsn("Failed to find Class object for " + fullyQualifiedOwner);
-    mv.visitMethodInsn(Opcodes.INVOKESPECIAL, JAVA_LANG_ERROR, CONSTRUCTOR, ERROR_SIGNATURE);
-    mv.visitInsn(Opcodes.ATHROW);
-  
-    mv.visitLabel(catchClassNotFound2); // catch ClassNotFoundException
-    mv.visitTypeInsn(Opcodes.NEW, JAVA_LANG_ERROR);
-    mv.visitInsn(Opcodes.DUP);
-    mv.visitLdcInsn("Failed to find Class object for " + classBeingAnalyzedFullyQualified);
     mv.visitMethodInsn(Opcodes.INVOKESPECIAL, JAVA_LANG_ERROR, CONSTRUCTOR, ERROR_SIGNATURE);
     mv.visitInsn(Opcodes.ATHROW);
   
@@ -599,7 +599,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     // ..., obj, inClass, obj,   obj, isThis, isClass, inClass
     
     /* Push the lineNumber and call the pre-sychronized method */
-    mv.visitLdcInsn(currentSrcLine);
+    pushIntegerContant(currentSrcLine);
     // ..., obj, inClass, obj,   obj, isThis, isClass, inClass, lineNumber
     mv.visitMethodInsn(Opcodes.INVOKESTATIC, FLASHLIGHT_STORE,
         BEFORE_INTRINSIC_LOCK_ACQUISITION,
@@ -611,7 +611,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     // ..., obj, inClass
     
     /* Push the 3rd parameter for the post-synchronized call and call it */
-    mv.visitLdcInsn(currentSrcLine);
+    pushIntegerContant(currentSrcLine);
     // ..., obj, inClass, lineNumber
     mv.visitMethodInsn(Opcodes.INVOKESTATIC, FLASHLIGHT_STORE,
         AFTER_INTRINSIC_LOCK_ACQUISITION,
@@ -642,7 +642,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     // ..., obj, inClass
     
     /* Push the lineNumber and call the Store method. */
-    mv.visitLdcInsn(currentSrcLine);
+    pushIntegerContant(currentSrcLine);
     // ..., obj, inClass, lineNumber
     mv.visitMethodInsn(Opcodes.INVOKESTATIC, FLASHLIGHT_STORE,
         AFTER_INTRINSIC_LOCK_RELEASE, AFTER_INTRINSIC_LOCK_RELEASE_SIGNATURE);

@@ -31,4 +31,12 @@ public class DebugStore {
     System.out.println("  withinClass = " + withinClass);
     System.out.println("  line = " + line);
   }
+  
+  public static void afterIntrinsicLockRelease(final Object lockObject,
+      Class<?> withinClass, final int line) {
+    System.out.println("afterIntrinsicLockRelease");
+    System.out.println("  lockObject = " + lockObject);
+    System.out.println("  withinClass = " + withinClass);
+    System.out.println("  line = " + line);
+  }
 }

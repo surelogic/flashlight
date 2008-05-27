@@ -12,10 +12,25 @@ import org.objectweb.asm.ClassAdapter;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 
 public final class FlashlightClassRewriter extends ClassAdapter {
-  private String className;
+  private static final String CLASS_INITIALIZER = "<clinit>";
+  private static final String CLASS_INITIALIZER_DESC = "()V";
+
+
+  
+  private String classNameInternal;
+  private String classNameFullyQualified;
+  /**
+   * Do we need to add a class initializer?  If the class already had one,
+   * we modify it.  Otherwise we need to add one.
+   */
+  private boolean needsClassInitializer = true;
+  
+  
   
   public FlashlightClassRewriter(final ClassVisitor cv) {
     super(cv);
@@ -28,16 +43,52 @@ public final class FlashlightClassRewriter extends ClassAdapter {
       final String signature, final String superName,
       final String[] interfaces) {
     cv.visit(version, access, name, signature, superName, interfaces);
-    className = Utils.internal2FullyQualified(name);
+    classNameInternal = name;
+    classNameFullyQualified = Utils.internal2FullyQualified(name);
   }
 
   @Override
   public MethodVisitor visitMethod(final int access, final String name,
       final String desc, final String signature, final String[] exceptions) {
-    return new FlashlightMethodRewriter(className,
+    final boolean isClassInit = name.equals(CLASS_INITIALIZER);
+    if (isClassInit) {
+      needsClassInitializer = false;
+    }
+    return new FlashlightMethodRewriter(
+        classNameInternal, classNameFullyQualified, isClassInit,
         cv.visitMethod(access, name, desc, signature, exceptions));
   }
   
+  @Override
+  public void visitEnd() {
+    // insert our new field
+    final FieldVisitor fv = 
+      cv.visitField(FlashlightNames.IN_CLASS_ACCESS, FlashlightNames.IN_CLASS,
+          FlashlightNames.IN_CLASS_DESC, null, null);
+    fv.visitEnd();
+
+    // Add the class initializer if needed
+    if (needsClassInitializer) {
+      addClassInitializer();
+    }
+    
+    // Now we are done
+    cv.visitEnd();
+  }
+  
+  
+  
+  private void addClassInitializer() {
+    final MethodVisitor mv =
+      cv.visitMethod(Opcodes.ACC_STATIC, CLASS_INITIALIZER,
+          CLASS_INITIALIZER_DESC, null, null);
+    final MethodVisitor rewriter_mv = new FlashlightMethodRewriter(
+        classNameInternal, classNameFullyQualified, true, mv);
+    rewriter_mv.visitCode();
+    mv.visitInsn(Opcodes.RETURN);
+    rewriter_mv.visitMaxs(0, 0);
+    mv.visitEnd();
+  }
   
   
   public static void main(final String[] args) throws IOException {

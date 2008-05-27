@@ -1,5 +1,7 @@
 package com.surelogic._flashlight.rewriter;
 
+import javax.swing.text.html.HTMLDocument.HTMLReader.IsindexAction;
+
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodAdapter;
 import org.objectweb.asm.MethodVisitor;
@@ -8,20 +10,23 @@ import org.objectweb.asm.Opcodes;
 final class FlashlightMethodRewriter extends MethodAdapter {
   // Constants for accessing the special Flashlight Store class
   private static final String FLASHLIGHT_STORE = "com/surelogic/_flashlight/rewriter/test/DebugStore";
-  private static final String STORE_AFTER_INTRINSIC_LOCK_ACQUISITION = "afterIntrinsicLockAcquisition";
+  private static final String AFTER_INTRINSIC_LOCK_ACQUISITION = "afterIntrinsicLockAcquisition";
   private static final String AFTER_INTRINSIC_LOCK_ACQUISITION_SIGNATURE = "(Ljava/lang/Object;Ljava/lang/Class;I)V";
-  private static final String STORE_BEFORE_INTRINSIC_LOCK_ACQUISITION = "beforeIntrinsicLockAcquisition";
+  private static final String AFTER_INTRINSIC_LOCK_RELEASE = "afterIntrinsicLockRelease";
+  private static final String AFTER_INTRINSIC_LOCK_RELEASE_SIGNATURE = "(Ljava/lang/Object;Ljava/lang/Class;I)V";
+  private static final String BEFORE_INTRINSIC_LOCK_ACQUISITION = "beforeIntrinsicLockAcquisition";
   private static final String BEFORE_INTRINSIC_LOCK_ACQUISITION_SIGNATURE = "(Ljava/lang/Object;ZZLjava/lang/Class;I)V";
-  private static final String STORE_FIELD_ACCESS = "fieldAccess";
+  private static final String FIELD_ACCESS = "fieldAccess";
   private static final String FIELD_ACCESS_SIGNATURE = "(ZLjava/lang/Object;Ljava/lang/reflect/Field;Ljava/lang/Class;I)V";
   
   // Other Java classes and methods
   private static final String CONSTRUCTOR = "<init>";
+  private static final String CLASS_INITIALIZER = "<clinit>";
   
   private static final String JAVA_LANG_CLASS = "java/lang/Class";
-  private static final String CLASS_FOR_NAME = "forName";
+  private static final String FOR_NAME = "forName";
   private static final String FOR_NAME_SIGNATURE = "(Ljava/lang/String;)Ljava/lang/Class;";
-  private static final String CLASS_GET_DECLARED_FIELD = "getDeclaredField";
+  private static final String GET_DECLARED_FIELD = "getDeclaredField";
   private static final String GET_DECLARED_FIELD_SIGNATURE = "(Ljava/lang/String;)Ljava/lang/reflect/Field;";
 
   private static final String JAVA_LANG_CLASS_NOT_FOUND_EXCEPTION = "java/lang/ClassNotFoundException";
@@ -33,8 +38,13 @@ final class FlashlightMethodRewriter extends MethodAdapter {
 
 
   
+  /** The internal name of the class being rewritten */
+  private final String classBeingAnalyzedInternal;
   /** The fully qualified name of the class being rewritten */
-  private final String classBeingAnalyzed;
+  private final String classBeingAnalyzedFullyQualified;
+  
+  /** Are we visiting the class initializer method? */
+  private final boolean isClassInitializer;
   
   /**
    * The current source line of code being rewritten. Driven by calls to
@@ -53,18 +63,35 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   /**
    * Create a new method rewriter.
    * 
-   * @param className
+   * @param nameInternal
+   *          The internal name of the class being rewritten.
+   * @param nameFullyQualified
    *          The fully qualified name of the class being rewritten.
+   * @param isClassInit
+   *          Is the visitor visiting the class initialization method "&lt;clinit&gt;"?
    * @param mv
    *          The {@code MethodVisitor} to delegate to.
    */
   public FlashlightMethodRewriter(
-      final String className, final MethodVisitor mv) {
+      final String nameInternal, final String nameFullyQualified,
+      final boolean isClassInit, final MethodVisitor mv) {
     super(mv);
-    classBeingAnalyzed = className;
+    classBeingAnalyzedInternal = nameInternal;
+    classBeingAnalyzedFullyQualified = nameFullyQualified;
+    isClassInitializer = isClassInit;
   }
   
   
+  
+  @Override
+  public void visitCode() {
+    mv.visitCode();
+    
+    // Initialize the flashlight$inClass field
+    if (isClassInitializer) {
+      insertClassInitializerCode();
+    }
+  }
   
   @Override
   public void visitLineNumber(final int line, final Label start) {
@@ -76,6 +103,8 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   public void visitInsn(final int opcode) {
     if (opcode == Opcodes.MONITORENTER) {
       rewriteMonitorenter();
+    } else if (opcode == Opcodes.MONITOREXIT) {
+      rewriteMonitorexit();
     } else {
       mv.visitInsn(opcode);
     }
@@ -122,6 +151,53 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     if (newDelta > stackDepthDelta) {
       stackDepthDelta = newDelta;
     } 
+  }
+
+
+
+  // =========================================================================
+  // == Insert Bookkeeping code
+  // =========================================================================
+
+  private void insertClassInitializerCode() {
+    // Stack is empty (we are at the beginning of the method!)
+    
+    /* We need to insert the expression "Class.forName(<fully-qualified-class-name>)"
+     * into the code.  We have to introduce a try-catch for the call.
+     */
+    final Label tryStart = new Label();
+    final Label tryEnd = new Label();
+    final Label catchClassNotFound = new Label();
+    mv.visitTryCatchBlock(tryStart, tryEnd, catchClassNotFound, JAVA_LANG_CLASS_NOT_FOUND_EXCEPTION);
+    mv.visitLabel(tryStart);
+    mv.visitLdcInsn(classBeingAnalyzedFullyQualified);
+    // className
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, JAVA_LANG_CLASS, FOR_NAME, FOR_NAME_SIGNATURE);
+    // Class
+    mv.visitLabel(tryEnd);
+    mv.visitFieldInsn(Opcodes.PUTSTATIC, classBeingAnalyzedInternal, FlashlightNames.IN_CLASS, FlashlightNames.IN_CLASS_DESC);
+    // empty stack
+
+    final Label resume = new Label();
+    mv.visitJumpInsn(Opcodes.GOTO, resume);
+   
+    mv.visitLabel(catchClassNotFound);
+    // ..., ClassNotFoundException
+    mv.visitInsn(Opcodes.POP);
+    // ...,
+    mv.visitTypeInsn(Opcodes.NEW, JAVA_LANG_ERROR);
+    // ..., Error
+    mv.visitInsn(Opcodes.DUP);
+    // ..., Error, Error
+    mv.visitLdcInsn("Failed to find Class object for " + classBeingAnalyzedFullyQualified);
+    // ..., Error, Error, message
+    mv.visitMethodInsn(Opcodes.INVOKESPECIAL, JAVA_LANG_ERROR, CONSTRUCTOR, ERROR_SIGNATURE);
+    // ..., Error
+    mv.visitInsn(Opcodes.ATHROW);
+    
+    mv.visitLabel(resume);
+   
+    updateStackDepthDelta(3);
   }
 
   
@@ -378,10 +454,10 @@ final class FlashlightMethodRewriter extends MethodAdapter {
      */
     mv.visitLabel(try1Start);
     mv.visitLdcInsn(fullyQualifiedOwner);
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, JAVA_LANG_CLASS, CLASS_FOR_NAME, FOR_NAME_SIGNATURE);
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, JAVA_LANG_CLASS, FOR_NAME, FOR_NAME_SIGNATURE);
     mv.visitLabel(try1End_try2Start);
     mv.visitLdcInsn(name);
-    mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, JAVA_LANG_CLASS, CLASS_GET_DECLARED_FIELD, GET_DECLARED_FIELD_SIGNATURE);
+    mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, JAVA_LANG_CLASS, GET_DECLARED_FIELD, GET_DECLARED_FIELD_SIGNATURE);
     mv.visitLabel(try2End_try3Start);
     // Stack is "..., isRead, receiver, Field"
     
@@ -389,8 +465,8 @@ final class FlashlightMethodRewriter extends MethodAdapter {
      * to push the java.lang.Class object of the referencing class onto the 
      * stack.
      */
-    mv.visitLdcInsn(classBeingAnalyzed);
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, JAVA_LANG_CLASS, CLASS_FOR_NAME, FOR_NAME_SIGNATURE);
+    mv.visitLdcInsn(classBeingAnalyzedFullyQualified);
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, JAVA_LANG_CLASS, FOR_NAME, FOR_NAME_SIGNATURE);
     mv.visitLabel(try3End);
     // Stack is "..., isRead, receiver, Field, Class"
     
@@ -402,7 +478,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     // Stack is "..., isRead, receiver, Field, Class, LineNumber"
     
     /* We can now call Store.fieldAccess() */
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FLASHLIGHT_STORE, STORE_FIELD_ACCESS, FIELD_ACCESS_SIGNATURE);
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FLASHLIGHT_STORE, FIELD_ACCESS, FIELD_ACCESS_SIGNATURE);
     
     // Stack is "..."
     
@@ -420,7 +496,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     mv.visitLabel(catchClassNotFound2); // catch ClassNotFoundException
     mv.visitTypeInsn(Opcodes.NEW, JAVA_LANG_ERROR);
     mv.visitInsn(Opcodes.DUP);
-    mv.visitLdcInsn("Failed to find Class object for " + classBeingAnalyzed);
+    mv.visitLdcInsn("Failed to find Class object for " + classBeingAnalyzedFullyQualified);
     mv.visitMethodInsn(Opcodes.INVOKESPECIAL, JAVA_LANG_ERROR, CONSTRUCTOR, ERROR_SIGNATURE);
     mv.visitInsn(Opcodes.ATHROW);
   
@@ -455,23 +531,14 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     mv.visitInsn(Opcodes.DUP);
     // ..., obj, obj, obj  
     
-    /* We have to use Class.forName() to get the Class object for the class
-     * being analyzed.  We need to both compare this object with the object
-     * being locked and use it as a parameter for the pre- and post-synchronized
-     * call.  We have to set up a try-catch block around this call.
+    /* Get the Class object for the class being analyzed. We need to both
+     * compare this object with the object being locked and use it as a
+     * parameter for the pre- and post-synchronized call.
      */
-    
-    final Label tryStart = new Label();
-    final Label tryEnd = new Label();
-    final Label catchClassNotFound = new Label();
-    mv.visitTryCatchBlock(tryStart, tryEnd, catchClassNotFound, JAVA_LANG_CLASS_NOT_FOUND_EXCEPTION);
-    
-    mv.visitLabel(tryStart);
-    mv.visitLdcInsn(classBeingAnalyzed);
-    // ..., obj, obj, obj, classNameString  
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, JAVA_LANG_CLASS, CLASS_FOR_NAME, FOR_NAME_SIGNATURE);
+    mv.visitFieldInsn(Opcodes.GETSTATIC, classBeingAnalyzedInternal,
+        FlashlightNames.IN_CLASS, FlashlightNames.IN_CLASS_DESC);
     // ..., obj, obj, obj, inClass
-    mv.visitLabel(tryEnd);
+
     /* Copy the class object three values down to use as the second parameter
      * in the post-synchronized call.
      */
@@ -538,7 +605,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     mv.visitLdcInsn(currentSrcLine);
     // ..., obj, inClass, obj,   obj, isThis, isClass, inClass, lineNumber
     mv.visitMethodInsn(Opcodes.INVOKESTATIC, FLASHLIGHT_STORE,
-        STORE_BEFORE_INTRINSIC_LOCK_ACQUISITION,
+        BEFORE_INTRINSIC_LOCK_ACQUISITION,
         BEFORE_INTRINSIC_LOCK_ACQUISITION_SIGNATURE);
     // ..., obj, inClass, obj
     
@@ -550,24 +617,42 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     mv.visitLdcInsn(currentSrcLine);
     // ..., obj, inClass, lineNumber
     mv.visitMethodInsn(Opcodes.INVOKESTATIC, FLASHLIGHT_STORE,
-        STORE_AFTER_INTRINSIC_LOCK_ACQUISITION,
+        AFTER_INTRINSIC_LOCK_ACQUISITION,
         AFTER_INTRINSIC_LOCK_ACQUISITION_SIGNATURE);
     // ...
     
-    /* Done, jump past the exception handler */
-    final Label resume = new Label();
-    mv.visitJumpInsn(Opcodes.GOTO, resume);
-    
-    mv.visitLabel(catchClassNotFound); // catch ClassNotFoundException
-    mv.visitTypeInsn(Opcodes.NEW, JAVA_LANG_ERROR);
-    mv.visitInsn(Opcodes.DUP);
-    mv.visitLdcInsn("Failed to find Class object for " + classBeingAnalyzed);
-    mv.visitMethodInsn(Opcodes.INVOKESPECIAL, JAVA_LANG_ERROR, CONSTRUCTOR, ERROR_SIGNATURE);
-    mv.visitInsn(Opcodes.ATHROW);
-
     /* Resume original instruction stream */
-    mv.visitLabel(resume);
 
     updateStackDepthDelta(7);
+  }
+
+  private void rewriteMonitorexit() {
+    // ..., obj  
+    
+    /* Copy the object being locked for use as the first parameter to
+     * Store.afterInstrinsicLockRelease().
+     */
+    mv.visitInsn(Opcodes.DUP);
+    // ..., obj, obj  
+
+    /* The original monitor exit call */
+    mv.visitInsn(Opcodes.MONITOREXIT);
+    // ..., obj
+    
+    /* Get the Class object for the class being analyzed. */
+    mv.visitFieldInsn(Opcodes.GETSTATIC, classBeingAnalyzedInternal,
+        FlashlightNames.IN_CLASS, FlashlightNames.IN_CLASS_DESC);
+    // ..., obj, inClass
+    
+    /* Push the lineNumber and call the Store method. */
+    mv.visitLdcInsn(currentSrcLine);
+    // ..., obj, inClass, lineNumber
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FLASHLIGHT_STORE,
+        AFTER_INTRINSIC_LOCK_RELEASE, AFTER_INTRINSIC_LOCK_RELEASE_SIGNATURE);
+    // ...
+
+    /* Resume original instruction stream */
+
+    updateStackDepthDelta(2);
   }
 }

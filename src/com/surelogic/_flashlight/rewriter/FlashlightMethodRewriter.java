@@ -1,7 +1,5 @@
 package com.surelogic._flashlight.rewriter;
 
-import javax.swing.text.html.HTMLDocument.HTMLReader.IsindexAction;
-
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodAdapter;
 import org.objectweb.asm.MethodVisitor;
@@ -21,7 +19,6 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   
   // Other Java classes and methods
   private static final String CONSTRUCTOR = "<init>";
-  private static final String CLASS_INITIALIZER = "<clinit>";
   
   private static final String JAVA_LANG_CLASS = "java/lang/Class";
   private static final String FOR_NAME = "forName";
@@ -101,9 +98,9 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   
   @Override
   public void visitInsn(final int opcode) {
-    if (opcode == Opcodes.MONITORENTER) {
+    if (opcode == Opcodes.MONITORENTER && Properties.REWRITE_MONITORENTER) {
       rewriteMonitorenter();
-    } else if (opcode == Opcodes.MONITOREXIT) {
+    } else if (opcode == Opcodes.MONITOREXIT && Properties.REWRITE_MONITOREXIT) {
       rewriteMonitorexit();
     } else {
       mv.visitInsn(opcode);
@@ -113,13 +110,13 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   @Override
   public void visitFieldInsn(final int opcode, final String owner,
       final String name, final String desc) {
-    if (opcode == Opcodes.PUTFIELD) {
+    if (opcode == Opcodes.PUTFIELD && Properties.REWRITE_PUTFIELD) {
       rewritePutfield(owner, name, desc);
-    } else if (opcode == Opcodes.PUTSTATIC) {
+    } else if (opcode == Opcodes.PUTSTATIC && Properties.REWRITE_PUTSTATIC) {
       rewritePutstatic(owner, name, desc);
-    } else if (opcode == Opcodes.GETFIELD) {
+    } else if (opcode == Opcodes.GETFIELD && Properties.REWRITE_GETFIELD) {
       rewriteGetfield(owner, name, desc);
-    } else if (opcode == Opcodes.GETSTATIC) {
+    } else if (opcode == Opcodes.GETSTATIC && Properties.REWRITE_GETSTATIC) {
       rewriteGetstatic(owner, name, desc);
     } else {
       mv.visitFieldInsn(opcode, owner, name, desc);

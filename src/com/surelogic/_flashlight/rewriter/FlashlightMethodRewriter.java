@@ -17,6 +17,14 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   private static final String FIELD_ACCESS = "fieldAccess";
   private static final String FIELD_ACCESS_SIGNATURE = "(ZLjava/lang/Object;Ljava/lang/reflect/Field;Ljava/lang/Class;I)V";
   
+  // Flashlight classes and methods
+  private static final String FLASHLIGHT_RUNTIME_SUPPORT = "com/surelogic/_flashlight/rewriter/runtime/FlashlightRuntimeSupport";
+  private static final String REPORT_FATAL_ERROR = "reportFatalError";
+  private static final String REPORT_FATAL_ERROR_SIGNATURE = "(Ljava/lang/Exception;)V";
+  
+  private static final String FLASHLIGHT_EXCEPTION = "com/surelogic/_flashlight/rewriter/runtime/FlashlightRuntimeException";
+  private static final String FLASHLIGHT_EXCEPTION_SIGNATURE = "(Ljava/lang/Exception;)V";
+  
   // Other Java classes and methods
   private static final String CONSTRUCTOR = "<init>";
   
@@ -27,10 +35,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   private static final String GET_DECLARED_FIELD_SIGNATURE = "(Ljava/lang/String;)Ljava/lang/reflect/Field;";
 
   private static final String JAVA_LANG_CLASS_NOT_FOUND_EXCEPTION = "java/lang/ClassNotFoundException";
-
-  private static final String JAVA_LANG_ERROR = "java/lang/Error";
-  private static final String ERROR_SIGNATURE = "(Ljava/lang/String;)V";
-
+  
   private static final String JAVA_LANG_NO_SUCH_FIELD_EXCEPTION = "java/lang/NoSuchFieldException";
 
 
@@ -54,6 +59,16 @@ final class FlashlightMethodRewriter extends MethodAdapter {
    * The amount by which the stack depth must be increased.
    */
   private int stackDepthDelta = 0;
+  
+  /**
+   * The label for the exception handler, if necessary.  This starts out as 
+   * {@code null}.  If the method needs one, as indicated by a call to
+   * {@link #getFlashlightExceptionHandlerLabel()}, this field is initialized to a new
+   * label (at most once).  When non-{@code null} at the start of
+   * {@link #visitMaxs()}, an exceptional handler is inserted using 
+   * {@link #insertFlashlightExceptionHandler()}.
+   */
+  private Label exceptionHandlerLabel = null;
   
   
   
@@ -127,6 +142,11 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   
   @Override
   public void visitMaxs(final int maxStack, final int maxLocals) {
+    // Insert the exception handler if needed
+    if (exceptionHandlerLabel != null) {
+      insertFlashlightExceptionHandler();
+    }
+
     mv.visitMaxs(maxStack + stackDepthDelta, maxLocals);
   }
 
@@ -163,6 +183,40 @@ final class FlashlightMethodRewriter extends MethodAdapter {
       mv.visitLdcInsn(Integer.valueOf(v));
     }
   }
+
+  
+  
+  // =========================================================================
+  // == Insert Fatal error exception handler
+  // =========================================================================
+
+  private Label getFlashlightExceptionHandlerLabel() {
+    if (exceptionHandlerLabel == null) {
+      exceptionHandlerLabel = new Label();
+    }
+    return exceptionHandlerLabel;
+  }
+  
+  private void insertFlashlightExceptionHandler() {
+    mv.visitLabel(exceptionHandlerLabel);
+    
+    // Exception
+    mv.visitInsn(Opcodes.DUP);
+    // Exception, Exception
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FLASHLIGHT_RUNTIME_SUPPORT, REPORT_FATAL_ERROR, REPORT_FATAL_ERROR_SIGNATURE);
+    // Exception    
+    mv.visitTypeInsn(Opcodes.NEW, FLASHLIGHT_EXCEPTION);
+    // Exception, FlashlightException
+    mv.visitInsn(Opcodes.DUP_X1);
+    // FlashlightException, Exception, FlashlightException
+    mv.visitInsn(Opcodes.SWAP);
+    // FlashlightException, FlashlightException, Exception
+    mv.visitMethodInsn(Opcodes.INVOKESPECIAL, FLASHLIGHT_EXCEPTION, CONSTRUCTOR, FLASHLIGHT_EXCEPTION_SIGNATURE);
+    // FlashlightException
+    mv.visitInsn(Opcodes.ATHROW);
+    
+    updateStackDepthDelta(3);
+  }
   
   
 
@@ -178,37 +232,20 @@ final class FlashlightMethodRewriter extends MethodAdapter {
      */
     final Label tryStart = new Label();
     final Label tryEnd = new Label();
-    final Label catchClassNotFound = new Label();
+    final Label catchClassNotFound = getFlashlightExceptionHandlerLabel();
     mv.visitTryCatchBlock(tryStart, tryEnd, catchClassNotFound, JAVA_LANG_CLASS_NOT_FOUND_EXCEPTION);
-    mv.visitLabel(tryStart);
     mv.visitLdcInsn(classBeingAnalyzedFullyQualified);
     // className
+    mv.visitLabel(tryStart);
     mv.visitMethodInsn(Opcodes.INVOKESTATIC, JAVA_LANG_CLASS, FOR_NAME, FOR_NAME_SIGNATURE);
     // Class
     mv.visitLabel(tryEnd);
     mv.visitFieldInsn(Opcodes.PUTSTATIC, classBeingAnalyzedInternal, FlashlightNames.IN_CLASS, FlashlightNames.IN_CLASS_DESC);
     // empty stack
 
-    final Label resume = new Label();
-    mv.visitJumpInsn(Opcodes.GOTO, resume);
-   
-    mv.visitLabel(catchClassNotFound);
-    // ..., ClassNotFoundException
-    mv.visitInsn(Opcodes.POP);
-    // ...,
-    mv.visitTypeInsn(Opcodes.NEW, JAVA_LANG_ERROR);
-    // ..., Error
-    mv.visitInsn(Opcodes.DUP);
-    // ..., Error, Error
-    mv.visitLdcInsn("Failed to find Class object for " + classBeingAnalyzedFullyQualified);
-    // ..., Error, Error, message
-    mv.visitMethodInsn(Opcodes.INVOKESPECIAL, JAVA_LANG_ERROR, CONSTRUCTOR, ERROR_SIGNATURE);
-    // ..., Error
-    mv.visitInsn(Opcodes.ATHROW);
+    // resume
     
-    mv.visitLabel(resume);
-   
-    updateStackDepthDelta(3);
+    updateStackDepthDelta(1);
   }
 
   
@@ -447,24 +484,24 @@ final class FlashlightMethodRewriter extends MethodAdapter {
      * the bytecode is more flexible.
      */
     final Label try1Start = new Label();
-    final Label try1End_try2Start = new Label();
+    final Label try1End = new Label();
+    final Label try2Start = new Label();
     final Label try2End = new Label();
-    final Label catchClassNotFound = new Label();
-    final Label catchNoSuchField = new Label();
-    mv.visitTryCatchBlock(try1Start, try1End_try2Start, catchClassNotFound, JAVA_LANG_CLASS_NOT_FOUND_EXCEPTION);
-    mv.visitTryCatchBlock(try1End_try2Start, try2End, catchNoSuchField, JAVA_LANG_NO_SUCH_FIELD_EXCEPTION);
+    final Label catchClassNotFound = getFlashlightExceptionHandlerLabel();
+    final Label catchNoSuchField = getFlashlightExceptionHandlerLabel();
+    mv.visitTryCatchBlock(try1Start, try1End, catchClassNotFound, JAVA_LANG_CLASS_NOT_FOUND_EXCEPTION);
+    mv.visitTryCatchBlock(try2Start, try2End, catchNoSuchField, JAVA_LANG_NO_SUCH_FIELD_EXCEPTION);
     
     /* We need to insert the expression
      * "Class.forName(<owner>).getDeclaredField(<name>)" into the code.  This puts
      * the java.lang.reflect.Field object for the accessed field on the stack.
-     * We have a try-catch for the call to forName() and a separate try-catch
-     * for the call to getDeclaredField().
      */
-    mv.visitLabel(try1Start);
     mv.visitLdcInsn(fullyQualifiedOwner);
+    mv.visitLabel(try1Start);
     mv.visitMethodInsn(Opcodes.INVOKESTATIC, JAVA_LANG_CLASS, FOR_NAME, FOR_NAME_SIGNATURE);
-    mv.visitLabel(try1End_try2Start);
+    mv.visitLabel(try1End);
     mv.visitLdcInsn(name);
+    mv.visitLabel(try2Start);
     mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, JAVA_LANG_CLASS, GET_DECLARED_FIELD, GET_DECLARED_FIELD_SIGNATURE);
     mv.visitLabel(try2End);
     // Stack is "..., isRead, receiver, Field"
@@ -482,30 +519,10 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     // Stack is "..., isRead, receiver, Field, inClass, LineNumber"
     
     /* We can now call Store.fieldAccess() */
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FLASHLIGHT_STORE, FIELD_ACCESS, FIELD_ACCESS_SIGNATURE);
-    
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FLASHLIGHT_STORE, FIELD_ACCESS, FIELD_ACCESS_SIGNATURE);    
     // Stack is "..."
     
-    /* Insert catch blocks.  We also have to insert a jump around them. */
-    final Label noExceptions = new Label();
-    mv.visitJumpInsn(Opcodes.GOTO, noExceptions);
-    
-    mv.visitLabel(catchClassNotFound); // catch ClassNotFoundException
-    mv.visitTypeInsn(Opcodes.NEW, JAVA_LANG_ERROR);
-    mv.visitInsn(Opcodes.DUP);
-    mv.visitLdcInsn("Failed to find Class object for " + fullyQualifiedOwner);
-    mv.visitMethodInsn(Opcodes.INVOKESPECIAL, JAVA_LANG_ERROR, CONSTRUCTOR, ERROR_SIGNATURE);
-    mv.visitInsn(Opcodes.ATHROW);
-  
-    mv.visitLabel(catchNoSuchField); // catch NoSuchFieldException
-    mv.visitTypeInsn(Opcodes.NEW, JAVA_LANG_ERROR);
-    mv.visitInsn(Opcodes.DUP);
-    mv.visitLdcInsn("Failed to Field object for " + name + " in class " + fullyQualifiedOwner);
-    mv.visitMethodInsn(Opcodes.INVOKESPECIAL, JAVA_LANG_ERROR, CONSTRUCTOR, ERROR_SIGNATURE);
-    mv.visitInsn(Opcodes.ATHROW);
-  
-    /* Resume original instruction stream */
-    mv.visitLabel(noExceptions);
+    // Resume
   }
 
   

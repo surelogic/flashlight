@@ -39,4 +39,16 @@ public class DebugStore {
     System.out.println("  withinClass = " + withinClass);
     System.out.println("  line = " + line);
   }
+
+  public static void methodCall(final boolean before, final Object receiver,
+      final String enclosingFileName, final String enclosingLocationName,
+      Class<?> withinClass, final int line) {
+    System.out.println("methodCall");
+    System.out.println("  before = " + before);
+    System.out.println("  receiver = " + receiver);
+    System.out.println("  enclosingFileName = " + enclosingFileName);
+    System.out.println("  enclosingLocationName = " + enclosingLocationName);
+    System.out.println("  withinClass = " + withinClass);
+    System.out.println("  line = " + line);
+  }
 }

@@ -17,13 +17,21 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 public final class FlashlightClassRewriter extends ClassAdapter {
+  private static final String UNKNOWN_SOURCE_FILE = "<unknown>";
+  
   private static final String CLASS_INITIALIZER = "<clinit>";
   private static final String CLASS_INITIALIZER_DESC = "()V";
 
 
   
+  /** The name of the source file that contains the class being rewritten. */
+  private String sourceFileName = UNKNOWN_SOURCE_FILE;
+
+  /** The internal name of the class being rewritten. */
   private String classNameInternal;
+  /** The fully qualified name of the class being rewritten. */
   private String classNameFullyQualified;
+  
   /**
    * Do we need to add a class initializer?  If the class already had one,
    * we modify it.  Otherwise we need to add one.
@@ -48,14 +56,21 @@ public final class FlashlightClassRewriter extends ClassAdapter {
   }
 
   @Override
+  public void visitSource(final String source, final String debug) {
+    if (source != null) {
+      sourceFileName = source;
+    }
+  }
+  
+  @Override
   public MethodVisitor visitMethod(final int access, final String name,
       final String desc, final String signature, final String[] exceptions) {
     final boolean isClassInit = name.equals(CLASS_INITIALIZER);
     if (isClassInit) {
       needsClassInitializer = false;
     }
-    return new FlashlightMethodRewriter(
-        classNameInternal, classNameFullyQualified, isClassInit,
+    return new FlashlightMethodRewriter(sourceFileName,
+        classNameInternal, classNameFullyQualified, name, isClassInit,
         cv.visitMethod(access, name, desc, signature, exceptions));
   }
   
@@ -82,8 +97,10 @@ public final class FlashlightClassRewriter extends ClassAdapter {
     final MethodVisitor mv =
       cv.visitMethod(Opcodes.ACC_STATIC, CLASS_INITIALIZER,
           CLASS_INITIALIZER_DESC, null, null);
-    final MethodVisitor rewriter_mv = new FlashlightMethodRewriter(
-        classNameInternal, classNameFullyQualified, true, mv);
+    final MethodVisitor rewriter_mv =
+      new FlashlightMethodRewriter(sourceFileName,
+        classNameInternal, classNameFullyQualified,
+        CLASS_INITIALIZER, true, mv);
     rewriter_mv.visitCode();
     mv.visitInsn(Opcodes.RETURN);
     rewriter_mv.visitMaxs(0, 0);

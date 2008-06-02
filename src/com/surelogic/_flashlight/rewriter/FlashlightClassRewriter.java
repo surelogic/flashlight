@@ -7,6 +7,9 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.TreeSet;
 
 import org.objectweb.asm.ClassAdapter;
 import org.objectweb.asm.ClassReader;
@@ -21,7 +24,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
   
   private static final String CLASS_INITIALIZER = "<clinit>";
   private static final String CLASS_INITIALIZER_DESC = "()V";
-
+  
 
   
   /** The name of the source file that contains the class being rewritten. */
@@ -37,6 +40,13 @@ public final class FlashlightClassRewriter extends ClassAdapter {
    * we modify it.  Otherwise we need to add one.
    */
   private boolean needsClassInitializer = true;
+  
+  /**
+   * The wrapper methods that we need to generate to instrument calls to
+   * instance methods.
+   */
+  private final Set<WrapperMethod> wrapperMethods =
+    new TreeSet<WrapperMethod>(WrapperMethod.comparator);
   
   
   
@@ -60,6 +70,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
     if (source != null) {
       sourceFileName = source;
     }
+    cv.visitSource(source, debug);
   }
   
   @Override
@@ -69,8 +80,9 @@ public final class FlashlightClassRewriter extends ClassAdapter {
     if (isClassInit) {
       needsClassInitializer = false;
     }
-    return new FlashlightMethodRewriter(sourceFileName,
-        classNameInternal, classNameFullyQualified, name, isClassInit,
+    return new FlashlightMethodRewriter(
+        sourceFileName, classNameInternal, classNameFullyQualified,
+        name, isClassInit, wrapperMethods,
         cv.visitMethod(access, name, desc, signature, exceptions));
   }
   
@@ -87,6 +99,11 @@ public final class FlashlightClassRewriter extends ClassAdapter {
       addClassInitializer();
     }
     
+    // Add the wrapper methods
+    for (final WrapperMethod wrapper : wrapperMethods) {
+      addWrapperMethod(wrapper);
+    }
+    
     // Now we are done
     cv.visitEnd();
   }
@@ -94,18 +111,75 @@ public final class FlashlightClassRewriter extends ClassAdapter {
   
   
   private void addClassInitializer() {
+    // XXX: Clean this up, it is error prone
     final MethodVisitor mv =
       cv.visitMethod(Opcodes.ACC_STATIC, CLASS_INITIALIZER,
           CLASS_INITIALIZER_DESC, null, null);
     final MethodVisitor rewriter_mv =
       new FlashlightMethodRewriter(sourceFileName,
         classNameInternal, classNameFullyQualified,
-        CLASS_INITIALIZER, true, mv);
+        CLASS_INITIALIZER, true, new HashSet<WrapperMethod>(), mv);
     rewriter_mv.visitCode();
     mv.visitInsn(Opcodes.RETURN);
     rewriter_mv.visitMaxs(0, 0);
     mv.visitEnd();
   }
+  
+  private void addWrapperMethod(final WrapperMethod wrapper) {
+    /* Create the method header */
+    final MethodVisitor mv =  cv.visitMethod(FlashlightNames.WRAPPER_METHOD_ACCESS,
+        wrapper.getWrapperName(), wrapper.getWrapperSignature(), null, null);
+    mv.visitCode();
+    
+    /* before method all event */
+    // empty stack 
+    ByteCodeUtils.pushBooleanConstant(mv, true);
+    // true
+    wrapper.pushObjectRef(mv);
+    // true, objRef
+    mv.visitLdcInsn(sourceFileName);
+    // true, objRef, filename
+    wrapper.pushCallingMethodName(mv);
+    // true, objRef, filename, callingMethodName
+    ByteCodeUtils.pushInClass(mv, classNameInternal);
+    // true, objRef, filename, callingMethodName, inClass
+    wrapper.pushCallingLineNumber(mv);
+    // true, objRef, filename, callingMethodName, inClass, line
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE, FlashlightNames.METHOD_CALL, FlashlightNames.METHOD_CALL_SIGNATURE);
+    // empty stack 
+
+    /* original method call */
+    wrapper.pushObjectRef(mv);
+    // objRef
+    wrapper.pushOriginalArguments(mv);
+    // objRef, arg1, ..., argN
+    wrapper.invokeOriginalMethod(mv);
+    // [returnValue]
+    
+    /* after method call event */
+    ByteCodeUtils.pushBooleanConstant(mv, false);
+    // [returnValue], true
+    mv.visitVarInsn(Opcodes.ALOAD, 0);
+    // [returnValue], true, objRef
+    mv.visitLdcInsn(sourceFileName);
+    // [returnValue], true, objRef, filename
+    wrapper.pushCallingMethodName(mv);
+    // [returnValue], true, objRef, filename, callingMethodName
+    ByteCodeUtils.pushInClass(mv, classNameInternal);
+    // [returnValue], true, objRef, filename, callingMethodName, inClass
+    wrapper.pushCallingLineNumber(mv);
+    // [returnValue], true, objRef, filename, callingMethodName, inClass, line
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE, FlashlightNames.METHOD_CALL, FlashlightNames.METHOD_CALL_SIGNATURE);
+    // [returnValue]
+    
+    /* Method return */
+    wrapper.methodReturn(mv);
+    
+    final int numLocals = wrapper.getNumLocals();
+    mv.visitMaxs(Math.max(6 + wrapper.getMethodReturnSize(), numLocals), numLocals);
+    mv.visitEnd();
+  }
+  
   
   
   public static void main(final String[] args) throws IOException {

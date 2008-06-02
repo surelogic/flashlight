@@ -6,6 +6,10 @@ import java.io.IOException;
 
 public class Properties {
   private static final String REWRITE_DEFAULT_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.default";
+  private static final String REWRITE_INVOKEINTERFACE_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.invokeinterface";
+  private static final String REWRITE_INVOKESPECIAL_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.invokespecial";
+  private static final String REWRITE_INVOKESTATIC_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.invokestatic";
+  private static final String REWRITE_INVOKEVIRTUAL_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.invokevirtual";
   private static final String REWRITE_MONITOREXIT_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.monitorexit";
   private static final String REWRITE_MONITORENTER_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.monitorenter";
   private static final String REWRITE_GETSTATIC_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.getstatic";
@@ -50,6 +54,11 @@ public class Properties {
   
   
   private static final String REWRITE_DEFAULT = properties.getProperty(REWRITE_DEFAULT_PROPERTY, TRUE);
+  
+  public static final boolean REWRITE_INVOKEINTERFACE = getBoolean(REWRITE_INVOKEINTERFACE_PROPERTY);
+  public static final boolean REWRITE_INVOKESPECIAL = getBoolean(REWRITE_INVOKESPECIAL_PROPERTY);
+  public static final boolean REWRITE_INVOKESTATIC = getBoolean(REWRITE_INVOKESTATIC_PROPERTY);
+  public static final boolean REWRITE_INVOKEVIRTUAL = getBoolean(REWRITE_INVOKEVIRTUAL_PROPERTY);
   
   public static final boolean REWRITE_PUTFIELD = getBoolean(REWRITE_PUTFIELD_PROPERTY);
   public static final boolean REWRITE_GETFIELD = getBoolean(REWRITE_GETFIELD_PROPERTY);

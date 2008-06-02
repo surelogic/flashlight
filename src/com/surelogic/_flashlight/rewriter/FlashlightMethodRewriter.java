@@ -1,48 +1,18 @@
 package com.surelogic._flashlight.rewriter;
 
+import java.util.Set;
+
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodAdapter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 final class FlashlightMethodRewriter extends MethodAdapter {
-  // Constants for accessing the special Flashlight Store class
-  private static final String FLASHLIGHT_STORE = "com/surelogic/_flashlight/rewriter/test/DebugStore";
-  private static final String AFTER_INTRINSIC_LOCK_ACQUISITION = "afterIntrinsicLockAcquisition";
-  private static final String AFTER_INTRINSIC_LOCK_ACQUISITION_SIGNATURE = "(Ljava/lang/Object;Ljava/lang/Class;I)V";
-  private static final String AFTER_INTRINSIC_LOCK_RELEASE = "afterIntrinsicLockRelease";
-  private static final String AFTER_INTRINSIC_LOCK_RELEASE_SIGNATURE = "(Ljava/lang/Object;Ljava/lang/Class;I)V";
-  private static final String BEFORE_INTRINSIC_LOCK_ACQUISITION = "beforeIntrinsicLockAcquisition";
-  private static final String BEFORE_INTRINSIC_LOCK_ACQUISITION_SIGNATURE = "(Ljava/lang/Object;ZZLjava/lang/Class;I)V";
-  private static final String FIELD_ACCESS = "fieldAccess";
-  private static final String FIELD_ACCESS_SIGNATURE = "(ZLjava/lang/Object;Ljava/lang/reflect/Field;Ljava/lang/Class;I)V";
-  private static final String METHOD_CALL = "methodCall";
-  private static final String METHOD_CALL_SIGNATURE = "(ZLjava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;I)V";
+  private static final String ENCLOSING_THIS_PREFIX = "this$";
   
-  // Flashlight classes and methods
-  private static final String FLASHLIGHT_RUNTIME_SUPPORT = "com/surelogic/_flashlight/rewriter/runtime/FlashlightRuntimeSupport";
-  private static final String REPORT_FATAL_ERROR = "reportFatalError";
-  private static final String REPORT_FATAL_ERROR_SIGNATURE = "(Ljava/lang/Exception;)V";
   
-  private static final String FLASHLIGHT_EXCEPTION = "com/surelogic/_flashlight/rewriter/runtime/FlashlightRuntimeException";
-  private static final String FLASHLIGHT_EXCEPTION_SIGNATURE = "(Ljava/lang/Exception;)V";
-  
-  // Other Java classes and methods
-  private static final String CONSTRUCTOR = "<init>";
-  
-  private static final String JAVA_LANG_CLASS = "java/lang/Class";
-  private static final String FOR_NAME = "forName";
-  private static final String FOR_NAME_SIGNATURE = "(Ljava/lang/String;)Ljava/lang/Class;";
-  private static final String GET_DECLARED_FIELD = "getDeclaredField";
-  private static final String GET_DECLARED_FIELD_SIGNATURE = "(Ljava/lang/String;)Ljava/lang/reflect/Field;";
 
-  private static final String JAVA_LANG_CLASS_NOT_FOUND_EXCEPTION = "java/lang/ClassNotFoundException";
-  
-  private static final String JAVA_LANG_NO_SUCH_FIELD_EXCEPTION = "java/lang/NoSuchFieldException";
-
-
-  
-  /** The name of the sourcefile that contains the class being rewritten. */
+  /** The name of the source file that contains the class being rewritten. */
   private final String sourceFileName;
   
   /** The internal name of the class being rewritten. */
@@ -77,13 +47,19 @@ final class FlashlightMethodRewriter extends MethodAdapter {
    */
   private Label exceptionHandlerLabel = null;
   
+  /**
+   * The global list of wrapper methods that need to be created.  This list
+   * is added to by this class, and is provided by the FlashlightClassRewriter
+   * instance that create the method rewriter.
+   */
+  private final Set<WrapperMethod> wrapperMethods;
   
   
   /**
    * Create a new method rewriter.
    * 
    * @param fname
-   *          The name of the sourcefile that contains the class being
+   *          The name of the source file that contains the class being
    *          rewritten.
    * @param nameInternal
    *          The internal name of the class being rewritten.
@@ -94,18 +70,22 @@ final class FlashlightMethodRewriter extends MethodAdapter {
    * @param isClassInit
    *          Is the visitor visiting the class initialization method
    *          "&lt;clinit&gt;"?
+   * @param wrappers
+   *          The set of wrapper methods that this visitor should add to.
    * @param mv
    *          The {@code MethodVisitor} to delegate to.
    */
   public FlashlightMethodRewriter(final String fname,
       final String nameInternal, final String nameFullyQualified,
-      final String mname, final boolean isClassInit, final MethodVisitor mv) {
+      final String mname, final boolean isClassInit, 
+      final Set<WrapperMethod> wrappers, final MethodVisitor mv) {
     super(mv);
     sourceFileName = fname;
     classBeingAnalyzedInternal = nameInternal;
     classBeingAnalyzedFullyQualified = nameFullyQualified;
     methodName = mname;
     isClassInitializer = isClassInit;
+    wrapperMethods = wrappers;
   }
   
   
@@ -156,7 +136,17 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   @Override
   public void visitMethodInsn(final int opcode, final String owner,
       final String name, final String desc) {
-    if (opcode == Opcodes.INVOKESTATIC) {
+    if (opcode == Opcodes.INVOKEVIRTUAL && Properties.REWRITE_INVOKEVIRTUAL) {
+      rewriteInstanceMethodCall(opcode, owner, name, desc);
+    } else if (opcode == Opcodes.INVOKESPECIAL && Properties.REWRITE_INVOKESPECIAL) {
+      if (!name.equals(FlashlightNames.CONSTRUCTOR)) {
+        rewriteInstanceMethodCall(Opcodes.INVOKESPECIAL, owner, name, desc);
+      } else {
+        mv.visitMethodInsn(opcode, owner, name, desc);
+      }
+    } else if (opcode == Opcodes.INVOKEINTERFACE && Properties.REWRITE_INVOKEINTERFACE) {
+      rewriteInstanceMethodCall(Opcodes.INVOKEINTERFACE, owner, name, desc);
+    } else if (opcode == Opcodes.INVOKESTATIC && Properties.REWRITE_INVOKESTATIC) {
       rewriteInvokeStatic(owner, name, desc);
     } else {
       mv.visitMethodInsn(opcode, owner, name, desc);
@@ -193,33 +183,6 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     } 
   }
 
-  /**
-   * Generate code to push an integer constant.  Optimizes for whether the
-   * integer fits in 8, 16, or 32 bits.
-   * @param v The integer to push onto the stack.
-   */
-  private void pushIntegerConstant(final int v) {
-    if (v < 128) {
-      mv.visitIntInsn(Opcodes.BIPUSH, v);
-    } else if (v < 32767) {
-      mv.visitIntInsn(Opcodes.SIPUSH, v);
-    } else {
-      mv.visitLdcInsn(Integer.valueOf(v));
-    }
-  }
-  
-  /**
-   * Generate code to push a Boolean constant.
-   * @param b The Boolean value to push onto the stack.
-   */
-  private void pushBooleanConstant(final boolean b) {
-    if (b) {
-      mv.visitInsn(Opcodes.ICONST_1);
-    } else {
-      mv.visitInsn(Opcodes.ICONST_0);
-    }
-  }
-
   
   
   // =========================================================================
@@ -239,15 +202,17 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     // Exception
     mv.visitInsn(Opcodes.DUP);
     // Exception, Exception
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FLASHLIGHT_RUNTIME_SUPPORT, REPORT_FATAL_ERROR, REPORT_FATAL_ERROR_SIGNATURE);
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, 
+        FlashlightNames.FLASHLIGHT_RUNTIME_SUPPORT,
+        FlashlightNames.REPORT_FATAL_ERROR, FlashlightNames.REPORT_FATAL_ERROR_SIGNATURE);
     // Exception    
-    mv.visitTypeInsn(Opcodes.NEW, FLASHLIGHT_EXCEPTION);
+    mv.visitTypeInsn(Opcodes.NEW, FlashlightNames.FLASHLIGHT_EXCEPTION);
     // Exception, FlashlightException
     mv.visitInsn(Opcodes.DUP_X1);
     // FlashlightException, Exception, FlashlightException
     mv.visitInsn(Opcodes.SWAP);
     // FlashlightException, FlashlightException, Exception
-    mv.visitMethodInsn(Opcodes.INVOKESPECIAL, FLASHLIGHT_EXCEPTION, CONSTRUCTOR, FLASHLIGHT_EXCEPTION_SIGNATURE);
+    mv.visitMethodInsn(Opcodes.INVOKESPECIAL, FlashlightNames.FLASHLIGHT_EXCEPTION, FlashlightNames.CONSTRUCTOR, FlashlightNames.FLASHLIGHT_EXCEPTION_SIGNATURE);
     // FlashlightException
     mv.visitInsn(Opcodes.ATHROW);
     
@@ -269,11 +234,11 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     final Label tryStart = new Label();
     final Label tryEnd = new Label();
     final Label catchClassNotFound = getFlashlightExceptionHandlerLabel();
-    mv.visitTryCatchBlock(tryStart, tryEnd, catchClassNotFound, JAVA_LANG_CLASS_NOT_FOUND_EXCEPTION);
+    mv.visitTryCatchBlock(tryStart, tryEnd, catchClassNotFound, FlashlightNames.JAVA_LANG_CLASS_NOT_FOUND_EXCEPTION);
     mv.visitLdcInsn(classBeingAnalyzedFullyQualified);
     // className
     mv.visitLabel(tryStart);
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, JAVA_LANG_CLASS, FOR_NAME, FOR_NAME_SIGNATURE);
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.JAVA_LANG_CLASS, FlashlightNames.FOR_NAME, FlashlightNames.FOR_NAME_SIGNATURE);
     // Class
     mv.visitLabel(tryEnd);
     mv.visitFieldInsn(Opcodes.PUTSTATIC, classBeingAnalyzedInternal, FlashlightNames.IN_CLASS, FlashlightNames.IN_CLASS_DESC);
@@ -291,6 +256,17 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   // =========================================================================
 
   /**
+   * Is the field a compiler-generated <code>this$</code> field used by nested
+   * classes?  We should really be checking whether the field is synthetic,
+   * but that would require linking.
+   */
+  private static boolean isEnclosingThisField(final String name) {
+    return name.startsWith(ENCLOSING_THIS_PREFIX);
+  }
+  
+  
+  
+  /**
    * Rewrite a {@code PUTFIELD} instruction.
    * 
    * @param owner
@@ -303,6 +279,12 @@ final class FlashlightMethodRewriter extends MethodAdapter {
    */
   private void rewritePutfield(
       final String owner, final String name, final String desc) {
+    if (isEnclosingThisField(name)) {
+      /* Don't instrument enclosing this references */
+      mv.visitFieldInsn(Opcodes.PUTFIELD, owner, name, desc);
+      return;
+    }
+        
     final String fullyQualifiedOwner = Utils.internal2FullyQualified(owner);
     final int stackDelta;
     
@@ -349,7 +331,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
      * is a boolean "isRead" flag.  The second argument is the object being
      * accessed.
      */
-    pushBooleanConstant(false);
+    ByteCodeUtils.pushBooleanConstant(mv, false);
     // Stack is "..., objectref, false"
     mv.visitInsn(Opcodes.SWAP);
     // Stack is "..., false, objectref"
@@ -376,6 +358,12 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   private void rewriteGetfield(
       final String owner, final String name, final String desc) {
     final String fullyQualifiedOwner = Utils.internal2FullyQualified(owner);
+    if (isEnclosingThisField(name)) {
+      /* Don't instrument enclosing this references */
+      mv.visitFieldInsn(Opcodes.PUTFIELD, owner, name, desc);
+      return;
+    }
+
     // Stack is "..., objectref"
     
     /* We need to manipulate the stack to make a copy of the object being
@@ -404,7 +392,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
       mv.visitInsn(Opcodes.SWAP);
       // Stack is "..., value, objectref"
     }
-    pushBooleanConstant(true);
+    ByteCodeUtils.pushBooleanConstant(mv, true);
     // Stack is "..., value, objectref, true"
     mv.visitInsn(Opcodes.SWAP);
     // Stack is "..., value, true, objectref"
@@ -443,7 +431,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
      * The second argument is the object being accessed, which is "null"
      * in this case.
      */
-    pushBooleanConstant(false);
+    ByteCodeUtils.pushBooleanConstant(mv, false);
     // Stack is "..., false"
     mv.visitInsn(Opcodes.ACONST_NULL);
     // Stack is "..., false, null"
@@ -479,7 +467,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     /* Manipulate the stack so that we push the first two arguments to 
      * Store.fieldAccess().
      */
-    pushBooleanConstant(true);
+    ByteCodeUtils.pushBooleanConstant(mv, true);
     // Stack is "..., value, true"
     mv.visitInsn(Opcodes.ACONST_NULL);
     // Stack is "..., value, true, null"
@@ -519,43 +507,42 @@ final class FlashlightMethodRewriter extends MethodAdapter {
      * possible in the Java source code unless we used local variables.  But
      * the bytecode is more flexible.
      */
-    final Label try1Start = new Label();
-    final Label try1End = new Label();
-    final Label try2Start = new Label();
-    final Label try2End = new Label();
-    final Label catchClassNotFound = getFlashlightExceptionHandlerLabel();
-    final Label catchNoSuchField = getFlashlightExceptionHandlerLabel();
-    mv.visitTryCatchBlock(try1Start, try1End, catchClassNotFound, JAVA_LANG_CLASS_NOT_FOUND_EXCEPTION);
-    mv.visitTryCatchBlock(try2Start, try2End, catchNoSuchField, JAVA_LANG_NO_SUCH_FIELD_EXCEPTION);
+//    final Label try1Start = new Label();
+//    final Label try1End = new Label();
+//    final Label try2Start = new Label();
+//    final Label try2End = new Label();
+//    final Label catchClassNotFound = getFlashlightExceptionHandlerLabel();
+//    final Label catchNoSuchField = getFlashlightExceptionHandlerLabel();
+//    mv.visitTryCatchBlock(try1Start, try1End, catchClassNotFound, FlashlightNames.JAVA_LANG_CLASS_NOT_FOUND_EXCEPTION);
+//    mv.visitTryCatchBlock(try2Start, try2End, catchNoSuchField, FlashlightNames.JAVA_LANG_NO_SUCH_FIELD_EXCEPTION);
     
     /* We need to insert the expression
      * "Class.forName(<owner>).getDeclaredField(<name>)" into the code.  This puts
      * the java.lang.reflect.Field object for the accessed field on the stack.
      */
     mv.visitLdcInsn(fullyQualifiedOwner);
-    mv.visitLabel(try1Start);
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, JAVA_LANG_CLASS, FOR_NAME, FOR_NAME_SIGNATURE);
-    mv.visitLabel(try1End);
+//    mv.visitLabel(try1Start);
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.JAVA_LANG_CLASS, FlashlightNames.FOR_NAME, FlashlightNames.FOR_NAME_SIGNATURE);
+//    mv.visitLabel(try1End);
     mv.visitLdcInsn(name);
-    mv.visitLabel(try2Start);
-    mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, JAVA_LANG_CLASS, GET_DECLARED_FIELD, GET_DECLARED_FIELD_SIGNATURE);
-    mv.visitLabel(try2End);
+//    mv.visitLabel(try2Start);
+    mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, FlashlightNames.JAVA_LANG_CLASS, FlashlightNames.GET_DECLARED_FIELD, FlashlightNames.GET_DECLARED_FIELD_SIGNATURE);
+//    mv.visitLabel(try2End);
     // Stack is "..., isRead, receiver, Field"
     
     /* We need to insert the expression "Class.forName(<current_class>)"
      * to push the java.lang.Class object of the referencing class onto the 
      * stack.
      */
-    mv.visitFieldInsn(Opcodes.GETSTATIC, classBeingAnalyzedInternal,
-        FlashlightNames.IN_CLASS, FlashlightNames.IN_CLASS_DESC);
+    ByteCodeUtils.pushInClass(mv, classBeingAnalyzedInternal);
     // Stack is "..., isRead, receiver, Field, inClass"
     
     /* Push the line number of the field access. */
-    pushIntegerConstant(currentSrcLine);
+    ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
     // Stack is "..., isRead, receiver, Field, inClass, LineNumber"
     
     /* We can now call Store.fieldAccess() */
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FLASHLIGHT_STORE, FIELD_ACCESS, FIELD_ACCESS_SIGNATURE);    
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE, FlashlightNames.FIELD_ACCESS, FlashlightNames.FIELD_ACCESS_SIGNATURE);    
     // Stack is "..."
     
     // Resume
@@ -581,13 +568,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     mv.visitInsn(Opcodes.DUP);
     // ..., obj, obj, obj  
     
-    /* Get the Class object for the class being analyzed. We need to both
-     * compare this object with the object being locked and use it as a
-     * parameter for the pre- and post-synchronized call.
-     */
-    mv.visitFieldInsn(Opcodes.GETSTATIC, classBeingAnalyzedInternal,
-        FlashlightNames.IN_CLASS, FlashlightNames.IN_CLASS_DESC);
-    // ..., obj, obj, obj, inClass
+    ByteCodeUtils.pushInClass(mv, classBeingAnalyzedInternal);
 
     /* Copy the class object three values down to use as the second parameter
      * in the post-synchronized call.
@@ -609,10 +590,10 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     final Label pushFalse1 = new Label();
     final Label afterPushIsThis = new Label();
     mv.visitJumpInsn(Opcodes.IF_ACMPNE, pushFalse1);
-    pushBooleanConstant(true);
+    ByteCodeUtils.pushBooleanConstant(mv, true);
     mv.visitJumpInsn(Opcodes.GOTO, afterPushIsThis);
     mv.visitLabel(pushFalse1);
-    pushBooleanConstant(false);
+    ByteCodeUtils.pushBooleanConstant(mv, false);
     mv.visitLabel(afterPushIsThis);
     // ..., obj, inClass, obj,   obj, inClass, obj, isThis
     
@@ -638,10 +619,10 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     final Label pushFalse2 = new Label();
     final Label afterPushIsClass = new Label();
     mv.visitJumpInsn(Opcodes.IF_ACMPNE, pushFalse2);
-    pushBooleanConstant(true);
+    ByteCodeUtils.pushBooleanConstant(mv, true);
     mv.visitJumpInsn(Opcodes.GOTO, afterPushIsClass);
     mv.visitLabel(pushFalse2);
-    pushBooleanConstant(false);
+    ByteCodeUtils.pushBooleanConstant(mv, false);
     mv.visitLabel(afterPushIsClass);
     // ..., obj, inClass, obj,   obj, isThis, inClass, isClass
     
@@ -652,11 +633,11 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     // ..., obj, inClass, obj,   obj, isThis, isClass, inClass
     
     /* Push the lineNumber and call the pre-sychronized method */
-    pushIntegerConstant(currentSrcLine);
+    ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
     // ..., obj, inClass, obj,   obj, isThis, isClass, inClass, lineNumber
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FLASHLIGHT_STORE,
-        BEFORE_INTRINSIC_LOCK_ACQUISITION,
-        BEFORE_INTRINSIC_LOCK_ACQUISITION_SIGNATURE);
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE,
+        FlashlightNames.BEFORE_INTRINSIC_LOCK_ACQUISITION,
+        FlashlightNames.BEFORE_INTRINSIC_LOCK_ACQUISITION_SIGNATURE);
     // ..., obj, inClass, obj
     
     /* The original monitor enter call */
@@ -664,11 +645,11 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     // ..., obj, inClass
     
     /* Push the 3rd parameter for the post-synchronized call and call it */
-    pushIntegerConstant(currentSrcLine);
+    ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
     // ..., obj, inClass, lineNumber
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FLASHLIGHT_STORE,
-        AFTER_INTRINSIC_LOCK_ACQUISITION,
-        AFTER_INTRINSIC_LOCK_ACQUISITION_SIGNATURE);
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE,
+        FlashlightNames.AFTER_INTRINSIC_LOCK_ACQUISITION,
+        FlashlightNames.AFTER_INTRINSIC_LOCK_ACQUISITION_SIGNATURE);
     // ...
     
     /* Resume original instruction stream */
@@ -689,16 +670,13 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     mv.visitInsn(Opcodes.MONITOREXIT);
     // ..., obj
     
-    /* Get the Class object for the class being analyzed. */
-    mv.visitFieldInsn(Opcodes.GETSTATIC, classBeingAnalyzedInternal,
-        FlashlightNames.IN_CLASS, FlashlightNames.IN_CLASS_DESC);
-    // ..., obj, inClass
+    ByteCodeUtils.pushInClass(mv, classBeingAnalyzedInternal);
     
     /* Push the lineNumber and call the Store method. */
-    pushIntegerConstant(currentSrcLine);
+    ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
     // ..., obj, inClass, lineNumber
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FLASHLIGHT_STORE,
-        AFTER_INTRINSIC_LOCK_RELEASE, AFTER_INTRINSIC_LOCK_RELEASE_SIGNATURE);
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE,
+        FlashlightNames.AFTER_INTRINSIC_LOCK_RELEASE, FlashlightNames.AFTER_INTRINSIC_LOCK_RELEASE_SIGNATURE);
     // ...
 
     /* Resume original instruction stream */
@@ -711,44 +689,59 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   // =========================================================================
   // == Rewrite method calls
   // =========================================================================
-
+  
+  private void rewriteInstanceMethodCall(final int opcode,
+      final String owner, final String name, final String desc) {
+    /* Create the wrapper method information and add it to the list of wrappers */
+    final WrapperMethod wrapper =
+      new WrapperMethod(owner, name, desc, opcode);
+    wrapperMethods.add(wrapper);
+    
+    // ..., objRef, arg1, ..., argN
+    mv.visitLdcInsn(methodName);
+    // ..., objRef, arg1, ..., argN, callingMethodName    
+    ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
+    // ..., objRef, arg1, ..., argN, callingMethodName, sourceLine
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, classBeingAnalyzedInternal,
+        wrapper.getWrapperName(), wrapper.getWrapperSignature());
+    // ..., [returnVlaue]
+    
+    updateStackDepthDelta(2);
+  }
+  
   private void rewriteInvokeStatic(
       final String owner, final String name, final String desc) {
     // arg_1, ..., arg_n
-    pushBooleanConstant(true);
+    ByteCodeUtils.pushBooleanConstant(mv, true);
     // arg_1, ..., arg_n, true
     mv.visitInsn(Opcodes.ACONST_NULL);
     // arg_1, ..., arg_n, true, null
     mv.visitLdcInsn(sourceFileName);
     // arg_1, ..., arg_n, true, null, filename
     mv.visitLdcInsn(methodName);
-    // arg_1, ..., arg_n, true, null, filename, mname
-    mv.visitFieldInsn(Opcodes.GETSTATIC, classBeingAnalyzedInternal,
-        FlashlightNames.IN_CLASS, FlashlightNames.IN_CLASS_DESC);
+    ByteCodeUtils.pushInClass(mv, classBeingAnalyzedInternal);
     // arg_1, ..., arg_n, true, null, filename, mname, inClass
-    pushIntegerConstant(currentSrcLine);
+    ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
     // arg_1, ..., arg_n, true, null, filename, mname, inClass, line
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FLASHLIGHT_STORE, METHOD_CALL, METHOD_CALL_SIGNATURE);
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE, FlashlightNames.METHOD_CALL, FlashlightNames.METHOD_CALL_SIGNATURE);
     // arg_1, ..., arg_n
     
     // The original method call
     mv.visitMethodInsn(Opcodes.INVOKESTATIC, owner, name, desc);
     
     // arg_1, ..., arg_n
-    pushBooleanConstant(false);
+    ByteCodeUtils.pushBooleanConstant(mv, false);
     // arg_1, ..., arg_n, false
     mv.visitInsn(Opcodes.ACONST_NULL);
     // arg_1, ..., arg_n, false, null
     mv.visitLdcInsn(sourceFileName);
     // arg_1, ..., arg_n, false, null, filename
     mv.visitLdcInsn(methodName);
-    // arg_1, ..., arg_n, false, null, filename, mname
-    mv.visitFieldInsn(Opcodes.GETSTATIC, classBeingAnalyzedInternal,
-        FlashlightNames.IN_CLASS, FlashlightNames.IN_CLASS_DESC);
+    ByteCodeUtils.pushInClass(mv, classBeingAnalyzedInternal);
     // arg_1, ..., arg_n, false, null, filename, mname, inClass
-    pushIntegerConstant(currentSrcLine);
+    ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
     // arg_1, ..., arg_n, false, null, filename, mname, inClass, line
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FLASHLIGHT_STORE, METHOD_CALL, METHOD_CALL_SIGNATURE);
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE, FlashlightNames.METHOD_CALL, FlashlightNames.METHOD_CALL_SIGNATURE);
 
     // Resume code
     

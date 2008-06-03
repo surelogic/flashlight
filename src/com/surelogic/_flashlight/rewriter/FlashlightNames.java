@@ -49,10 +49,6 @@ final class FlashlightNames {
   public static final int IN_CLASS_ACCESS =
     Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL | Opcodes.ACC_SYNTHETIC;
   public static final String IN_CLASS_DESC = "Ljava/lang/Class;";
-
-  /** Generated wrapper methods are <code>private static</code> and synthetic. */
-  public static final int WRAPPER_METHOD_ACCESS =
-    Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_SYNTHETIC;
   
   
   

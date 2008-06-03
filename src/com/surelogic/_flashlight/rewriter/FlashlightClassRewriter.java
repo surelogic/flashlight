@@ -127,8 +127,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
   
   private void addWrapperMethod(final WrapperMethod wrapper) {
     /* Create the method header */
-    final MethodVisitor mv =  cv.visitMethod(FlashlightNames.WRAPPER_METHOD_ACCESS,
-        wrapper.getWrapperName(), wrapper.getWrapperSignature(), null, null);
+    final MethodVisitor mv = wrapper.createMethodHeader(cv);
     mv.visitCode();
     
     /* before method all event */

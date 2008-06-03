@@ -693,8 +693,12 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   private void rewriteInstanceMethodCall(final int opcode,
       final String owner, final String name, final String desc) {
     /* Create the wrapper method information and add it to the list of wrappers */
-    final WrapperMethod wrapper =
-      new WrapperMethod(owner, name, desc, opcode);
+    final WrapperMethod wrapper;
+    if (opcode == Opcodes.INVOKESPECIAL) {
+      wrapper = new InstanceWrapperMethod(owner, name, desc, opcode);
+    } else {
+      wrapper = new StaticWrapperMethod(owner, name, desc, opcode);
+    }
     wrapperMethods.add(wrapper);
     
     // ..., objRef, arg1, ..., argN
@@ -702,8 +706,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     // ..., objRef, arg1, ..., argN, callingMethodName    
     ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
     // ..., objRef, arg1, ..., argN, callingMethodName, sourceLine
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, classBeingAnalyzedInternal,
-        wrapper.getWrapperName(), wrapper.getWrapperSignature());
+    wrapper.invokeWrapperMethod(mv, classBeingAnalyzedInternal);
     // ..., [returnVlaue]
     
     updateStackDepthDelta(2);

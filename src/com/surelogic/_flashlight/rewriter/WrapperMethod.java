@@ -1,15 +1,13 @@
 package com.surelogic._flashlight.rewriter;
 
-import java.text.MessageFormat;
 import java.util.Comparator;
 
+import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
-final class WrapperMethod {
-  private static final String WRAPPER_NAME_TEMPLATE = "flashlight${0}${1}$wrapper";
-  private static final String WRAPPER_SIGNATURE_TEMPLATE = "(L{0};{1}Ljava/lang/String;I){2}";
+abstract class WrapperMethod {
   private static final char INTERNAL_NAME_SEPARATOR = '/';
   private static final char UNDERSCORE = '_';
   private static final char END_OF_ARGS = ')';
@@ -28,36 +26,46 @@ final class WrapperMethod {
     
   
   
-  private final String wrapperName;
-  private final String wrapperSignature;
-  private final String owner;
-  private final String originalName;
-  private final String originalSignature;
-  private final int opcode;
+  protected final String wrapperName;
+  protected final String wrapperSignature;
+  protected final String owner;
+  protected final String originalName;
+  protected final String originalSignature;
+  protected final int opcode;
   
   private final String identityString;
   private final int hashCode;
   
-  private final Type[] originalArgTypes;
-  private final int[] wrapperArgsToLocals;
-  private final int numWrapperLocals;
+  protected final Type[] originalArgTypes;
+  protected final int[] wrapperArgsToLocals;
+  protected final int numWrapperLocals;
  
-  private final Type originalReturnType;
+  protected final Type originalReturnType;
   
   
   
   public WrapperMethod(final String owner, final String originalName,
       final String originalSignature, final int opcode) {
-    this.wrapperName = createWrapperMethodName(owner, originalName);
-    this.wrapperSignature = createWrapperMethodSignature(owner, originalSignature);
+    final String ownerUnderscored = owner.replace(INTERNAL_NAME_SEPARATOR, UNDERSCORE);
+    final int endOfArgs = originalSignature.lastIndexOf(END_OF_ARGS);
+    final String originalArgs = originalSignature.substring(1, endOfArgs);
+    final String originalReturn = originalSignature.substring(endOfArgs + 1);
+
+    this.wrapperName = createWrapperMethodName(ownerUnderscored, originalName, opcode);
+    this.wrapperSignature = createWrapperMethodSignature(owner, originalArgs, originalReturn);
     this.owner = owner;
     this.originalName = originalName;
     this.originalSignature = originalSignature;
     this.opcode = opcode;
     
-    this.identityString = owner + originalName + originalSignature;
+    this.identityString = owner + originalName + originalSignature + opcode;
     this.hashCode = identityString.hashCode();
     
+    /* The mapping of arguments to locals is the same regardless of whether
+     * the wrapper method is static or instance.  This is because the instance
+     * method has an implicit first argument that is made explicit in our
+     * static method.
+     */
     originalArgTypes = Type.getArgumentTypes(originalSignature);
     wrapperArgsToLocals = new int[originalArgTypes.length+3]; // original plus objRef, method name, line number
     wrapperArgsToLocals[0] = 0;
@@ -75,7 +83,7 @@ final class WrapperMethod {
   }
   
   @Override
-  public boolean equals(final Object o) {
+  public final boolean equals(final Object o) {
     if (o instanceof WrapperMethod) {
       return this.identityString.equals(((WrapperMethod) o).identityString);
     } else {
@@ -84,69 +92,95 @@ final class WrapperMethod {
   }
 
   @Override
-  public int hashCode() {
+  public final int hashCode() {
     return hashCode;
   }
+
   
-
-
-  private static String createWrapperMethodName(
-      final String owner, final String name) {
-    return MessageFormat.format(WRAPPER_NAME_TEMPLATE,
-        owner.replace(INTERNAL_NAME_SEPARATOR, UNDERSCORE), name);
-  }
   
-  private static String createWrapperMethodSignature(
-      final String owner, final String originalSignature) {
-    final int endOfArgs = originalSignature.lastIndexOf(END_OF_ARGS);
-    return MessageFormat.format(WRAPPER_SIGNATURE_TEMPLATE,
-        owner, originalSignature.substring(1, endOfArgs),
-        originalSignature.substring(endOfArgs + 1));
-  }
-
-
-
-  public String getWrapperName() {
-    return wrapperName;
-  }
   
-  public String getWrapperSignature() {
-    return wrapperSignature;
-  }
-  
-  public int getNumLocals() {
+  /**
+   * Create the name of the wrapper method. Called from the constructor. This
+   * should not look at any instance state of the class. It is only non-<code>static</code>
+   * because <code>static</code> methods cannot be virtual.
+   * 
+   * @param ownerUnderscored
+   *          The owner class of the wrapped method with '/' replaced by '_'.
+   * @param name
+   *          The simple name of the wrapped method.
+   * @param opcode
+   *          The opcode used to invoke the wrapped method.
+   * @return The simple name of the wrapper method.
+   */
+  protected abstract String createWrapperMethodName(
+      String owner, String name, int opcode);
+
+  /**
+   * Create the signature of the wrapper method. Called from the constructor.
+   * This should not look at any instance state of the class. It is only non-<code>static</code>
+   * because <code>static</code> methods cannot be virtual.
+   * 
+   * @param owner
+   *          The owner class of the wrapped method.
+   * @param originalArgs
+   *          The argument types of the wrapped method, lifted from the wrapped
+   *          method's signature.
+   * @param originalReturn
+   *          The return type of the wrapped method, lifted from the wrapped
+   *          method's signature.
+   * @return The signature of the wrapper method.
+   */
+  protected abstract String createWrapperMethodSignature(
+      String owner, String originalArgs, String originalReturn);
+
+  /**
+   * Get the access flags for the wrapper method.
+   * @return The access flags.
+   */
+  protected abstract int getAccess();
+
+
+
+  public final int getNumLocals() {
     return numWrapperLocals;
   }
   
   
   
-  public void pushObjectRef(final MethodVisitor mv) {
+  public final MethodVisitor createMethodHeader(final ClassVisitor cv) {
+    return cv.visitMethod(getAccess(), wrapperName, wrapperSignature, null, null);
+  }
+  
+  public final void pushObjectRef(final MethodVisitor mv) {
     mv.visitVarInsn(Opcodes.ALOAD, wrapperArgsToLocals[OBJ_REF_ARG]);
   }
   
-  public void pushCallingMethodName(final MethodVisitor mv) {
+  public final void pushCallingMethodName(final MethodVisitor mv) {
     mv.visitVarInsn(Opcodes.ALOAD, wrapperArgsToLocals[wrapperArgsToLocals.length - CALLING_METHOD_ARG_FROM_END]);
   }
   
-  public void pushCallingLineNumber(final MethodVisitor mv) {
+  public final void pushCallingLineNumber(final MethodVisitor mv) {
     mv.visitVarInsn(Opcodes.ILOAD, wrapperArgsToLocals[wrapperArgsToLocals.length - CALLING_LINE_ARG_FROM_END]);
   }
   
-  public void pushOriginalArguments(final MethodVisitor mv) {
+  public final void pushOriginalArguments(final MethodVisitor mv) {
     for (int i = 0; i < originalArgTypes.length; i++) {
       mv.visitVarInsn(originalArgTypes[i].getOpcode(Opcodes.ILOAD), wrapperArgsToLocals[FIRST_ORIGINAL_ARG + i]);
     }
   }
   
-  public void invokeOriginalMethod(final MethodVisitor mv) {
+  public abstract void invokeWrapperMethod(
+      MethodVisitor mv, String classBeingAnalyzed);
+  
+  public final void invokeOriginalMethod(final MethodVisitor mv) {
     mv.visitMethodInsn(opcode, owner, originalName, originalSignature);
   }
   
-  public void methodReturn(final MethodVisitor mv) {
+  public final void methodReturn(final MethodVisitor mv) {
     mv.visitInsn(originalReturnType.getOpcode(Opcodes.IRETURN));
   }
   
-  public int getMethodReturnSize() {
+  public final int getMethodReturnSize() {
     return originalReturnType.getSize();
   }
 }

@@ -44,10 +44,17 @@ final class FlashlightNames {
 
   
   
-  // Generated fields and methods
+  /* We add the static final field "flashlight$inClass" to store the Class
+   * object of the class for use in logging calls.  We prefer this field to
+   * be private, but for interfaces we have to make the field public.  The
+   * field cannot be accessed from Java code though because of the '$' in the
+   * field's name.
+   */ 
   public static final String IN_CLASS = "flashlight$inClass";
-  public static final int IN_CLASS_ACCESS =
-    Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL | Opcodes.ACC_SYNTHETIC;
+  private static final int IN_CLASS_ACCESS_BASE = 
+    Opcodes.ACC_STATIC | Opcodes.ACC_FINAL | Opcodes.ACC_SYNTHETIC;
+  public static final int IN_CLASS_ACCESS_CLASS = Opcodes.ACC_PRIVATE | IN_CLASS_ACCESS_BASE;
+  public static final int IN_CLASS_ACCESS_INTERFACE = Opcodes.ACC_PUBLIC | IN_CLASS_ACCESS_BASE;
   public static final String IN_CLASS_DESC = "Ljava/lang/Class;";
   
   

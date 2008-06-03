@@ -27,6 +27,12 @@ public final class FlashlightClassRewriter extends ClassAdapter {
   
 
   
+  /** Is the current class file an interface? */
+  private boolean isInterface;
+  
+  /** Is the class file version at least Java 5? */
+  private boolean atLeastJava5;
+  
   /** The name of the source file that contains the class being rewritten. */
   private String sourceFileName = UNKNOWN_SOURCE_FILE;
 
@@ -61,6 +67,8 @@ public final class FlashlightClassRewriter extends ClassAdapter {
       final String signature, final String superName,
       final String[] interfaces) {
     cv.visit(version, access, name, signature, superName, interfaces);
+    isInterface = (access & Opcodes.ACC_INTERFACE) != 0;
+    atLeastJava5 = (version & 0xFFFF0000) >= Opcodes.V1_5;
     classNameInternal = name;
     classNameFullyQualified = Utils.internal2FullyQualified(name);
   }
@@ -89,9 +97,10 @@ public final class FlashlightClassRewriter extends ClassAdapter {
   @Override
   public void visitEnd() {
     // insert our new field
-    final FieldVisitor fv = 
-      cv.visitField(FlashlightNames.IN_CLASS_ACCESS, FlashlightNames.IN_CLASS,
-          FlashlightNames.IN_CLASS_DESC, null, null);
+    final FieldVisitor fv = cv.visitField(
+        isInterface ? FlashlightNames.IN_CLASS_ACCESS_INTERFACE
+            : FlashlightNames.IN_CLASS_ACCESS_CLASS,
+        FlashlightNames.IN_CLASS, FlashlightNames.IN_CLASS_DESC, null, null);
     fv.visitEnd();
 
     // Add the class initializer if needed

@@ -6,6 +6,7 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodAdapter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 
 final class FlashlightMethodRewriter extends MethodAdapter {
   private static final String ENCLOSING_THIS_PREFIX = "this$";
@@ -24,6 +25,10 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   private final String methodName;
   /** Are we visiting the class initializer method? */
   private final boolean isClassInitializer;
+  /** Was the method originally synchronized? */
+  private final boolean wasSynchronized;
+  /** Is the method static? */
+  private final boolean isStatic;
   
   /**
    * The current source line of code being rewritten. Driven by calls to
@@ -54,6 +59,19 @@ final class FlashlightMethodRewriter extends MethodAdapter {
    */
   private final Set<WrapperMethod> wrapperMethods;
   
+  /**
+   * Label for the start of the original method code, used for rewriting
+   * synchronized methods 
+   */
+  private Label startOfOriginalMethod = null;
+  /**
+   * Label marking the end of the original method code (including the 
+   * inserted flashlight exception handler), used for rewriting synchronized
+   * methods.
+   */
+  private Label endOfOriginalBody_startOfExceptionHandler = null;
+  
+  
   
   /**
    * Create a new method rewriter.
@@ -72,13 +90,18 @@ final class FlashlightMethodRewriter extends MethodAdapter {
    *          "&lt;clinit&gt;"?
    * @param wrappers
    *          The set of wrapper methods that this visitor should add to.
+   * @param _synchronized
+   *          Was the method originally synchronized?
+   * @param _static 
+   *          Is the method static?
    * @param mv
    *          The {@code MethodVisitor} to delegate to.
    */
   public FlashlightMethodRewriter(final String fname,
       final String nameInternal, final String nameFullyQualified,
       final String mname, final boolean isClassInit, 
-      final Set<WrapperMethod> wrappers, final MethodVisitor mv) {
+      final Set<WrapperMethod> wrappers, final int access,
+      final MethodVisitor mv) {
     super(mv);
     sourceFileName = fname;
     classBeingAnalyzedInternal = nameInternal;
@@ -86,6 +109,8 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     methodName = mname;
     isClassInitializer = isClassInit;
     wrapperMethods = wrappers;
+    wasSynchronized = (access & Opcodes.ACC_SYNCHRONIZED) != 0;
+    isStatic = (access & Opcodes.ACC_STATIC) != 0;
   }
   
   
@@ -97,6 +122,8 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     // Initialize the flashlight$inClass field
     if (isClassInitializer) {
       insertClassInitializerCode();
+    } else if (wasSynchronized && Properties.REWRITE_SYNCHRONIZED_METHOD) {
+      insertSynchronizedMethodPrefix();
     }
   }
   
@@ -112,6 +139,11 @@ final class FlashlightMethodRewriter extends MethodAdapter {
       rewriteMonitorenter();
     } else if (opcode == Opcodes.MONITOREXIT && Properties.REWRITE_MONITOREXIT) {
       rewriteMonitorexit();
+    } else if ((opcode >= Opcodes.IRETURN && opcode <= Opcodes.RETURN)) {
+      if (wasSynchronized && Properties.REWRITE_SYNCHRONIZED_METHOD) {
+        insertSynchronizedMethodExit();
+      }
+      mv.visitInsn(opcode);
     } else {
       mv.visitInsn(opcode);
     }
@@ -159,8 +191,12 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     if (exceptionHandlerLabel != null) {
       insertFlashlightExceptionHandler();
     }
+    
+    if (wasSynchronized && Properties.REWRITE_SYNCHRONIZED_METHOD) {
+      insertSynchronizedMethodPostfix();
+    }
 
-    mv.visitMaxs(maxStack + stackDepthDelta, maxLocals);
+    super.visitMaxs(maxStack + stackDepthDelta, maxLocals);
   }
 
   
@@ -682,6 +718,112 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     /* Resume original instruction stream */
 
     updateStackDepthDelta(2);
+  }
+
+  
+  
+  // =========================================================================
+  // == Rewrite synchronized methods
+  // =========================================================================
+  
+  private void pushSynchronizedMethodLockObject() {
+    if (isStatic) {
+      ByteCodeUtils.pushInClass(mv, classBeingAnalyzedInternal);
+    } else {
+      mv.visitVarInsn(Opcodes.ALOAD, 0);
+    }
+  }
+  
+  private void insertSynchronizedMethodPrefix() {
+    // empty stack
+    
+    /* First call Store.beforeInstrinsicLockAcquisition() */
+    pushSynchronizedMethodLockObject();
+    // lockObj
+    ByteCodeUtils.pushBooleanConstant(mv, !isStatic);
+    // lockObj, isReceiver
+    ByteCodeUtils.pushBooleanConstant(mv, isStatic);
+    // lockObj, isReceiver, isStatic
+    ByteCodeUtils.pushInClass(mv, classBeingAnalyzedInternal);
+    // lockObj, isReceiver, isStatic, inClass
+    ByteCodeUtils.pushIntegerConstant(mv, 0);
+    // lockObj, isReceiver, isStatic, inClass, 0
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE,
+        FlashlightNames.BEFORE_INTRINSIC_LOCK_ACQUISITION,
+        FlashlightNames.BEFORE_INTRINSIC_LOCK_ACQUISITION_SIGNATURE);
+    // empty stack
+    
+    /* Insert the explicit monitor acquisition */
+    pushSynchronizedMethodLockObject();
+    // lockObj
+    mv.visitInsn(Opcodes.MONITORENTER);
+    // empty stack
+    
+    /* Now call Store.afterIntrinsicLockAcquisition */
+    pushSynchronizedMethodLockObject();
+    // lockObj
+    ByteCodeUtils.pushInClass(mv, classBeingAnalyzedInternal);
+    // lockObj, inClass
+    ByteCodeUtils.pushIntegerConstant(mv, 0);
+    // lockObj, inClass, 0
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE,
+        FlashlightNames.AFTER_INTRINSIC_LOCK_ACQUISITION,
+        FlashlightNames.AFTER_INTRINSIC_LOCK_ACQUISITION_SIGNATURE);
+    // empty stack
+    
+    startOfOriginalMethod = new Label();
+    endOfOriginalBody_startOfExceptionHandler = new Label();
+    mv.visitTryCatchBlock(startOfOriginalMethod,
+        endOfOriginalBody_startOfExceptionHandler,
+        endOfOriginalBody_startOfExceptionHandler, null);
+    mv.visitLabel(startOfOriginalMethod);
+    // Resume code
+    
+    updateStackDepthDelta(5);
+  }
+  
+  private void insertSynchronizedMethodPostfix() {
+    mv.visitLabel(endOfOriginalBody_startOfExceptionHandler);
+    
+    // exception 
+    insertSynchronizedMethodExit();
+    // exception
+    
+    /* Rethrow the exception */
+    mv.visitInsn(Opcodes.ATHROW);
+    
+    /* Should update the stack depth, but we know we only get executed if
+     * insertSynchronizedMethodPrefix() is run, and that already updates the
+     * stack depth by 5, which is more than we need here (4).
+     */ 
+  }
+
+  private void insertSynchronizedMethodExit() {
+    // ...
+    
+    /* Explicitly release the lock */
+    pushSynchronizedMethodLockObject();
+    // ..., lockObj
+    mv.visitInsn(Opcodes.MONITOREXIT);
+    // ...
+    
+    /* Call Store.afterIntrinsicLockRelease(). */
+    pushSynchronizedMethodLockObject();
+    // ..., lockObj
+    ByteCodeUtils.pushInClass(mv, classBeingAnalyzedInternal);
+    // ..., lockObj, inClass
+    ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
+    // ..., lockObj, inClass, exitLineNumber
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE,
+        FlashlightNames.AFTER_INTRINSIC_LOCK_RELEASE, FlashlightNames.AFTER_INTRINSIC_LOCK_RELEASE_SIGNATURE);
+    // ...
+    
+    // Resume code
+
+    /* Should update the stack depth, but we know we only get executed if
+     * insertSynchronizedMethodPrefix() is run, and that already updates the
+     * stack depth by 5, which is more than we need here (3).
+     */ 
   }
 
   

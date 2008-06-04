@@ -10,6 +10,7 @@ public class Properties {
   private static final String REWRITE_INVOKESPECIAL_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.invokespecial";
   private static final String REWRITE_INVOKESTATIC_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.invokestatic";
   private static final String REWRITE_INVOKEVIRTUAL_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.invokevirtual";
+  private static final String REWRITE_SYNCHRONIZED_METHOD_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.synchronizedmethod";
   private static final String REWRITE_MONITOREXIT_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.monitorexit";
   private static final String REWRITE_MONITORENTER_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.monitorenter";
   private static final String REWRITE_GETSTATIC_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.getstatic";
@@ -66,6 +67,7 @@ public class Properties {
   public static final boolean REWRITE_PUTSTATIC = getBoolean(REWRITE_PUTSTATIC_PROPERTY);
   public static final boolean REWRITE_GETSTATIC = getBoolean(REWRITE_GETSTATIC_PROPERTY);
 
+  public static final boolean REWRITE_SYNCHRONIZED_METHOD = getBoolean(REWRITE_SYNCHRONIZED_METHOD_PROPERTY);
   public static final boolean REWRITE_MONITORENTER = getBoolean(REWRITE_MONITORENTER_PROPERTY);
   public static final boolean REWRITE_MONITOREXIT = getBoolean(REWRITE_MONITOREXIT_PROPERTY);
   

@@ -31,6 +31,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
   private boolean isInterface;
   
   /** Is the class file version at least Java 5? */
+  @SuppressWarnings("unused")
   private boolean atLeastJava5;
   
   /** The name of the source file that contains the class being rewritten. */
@@ -88,10 +89,12 @@ public final class FlashlightClassRewriter extends ClassAdapter {
     if (isClassInit) {
       needsClassInitializer = false;
     }
+    
+    final int newAccess = access & ~Opcodes.ACC_SYNCHRONIZED;
     return new FlashlightMethodRewriter(
         sourceFileName, classNameInternal, classNameFullyQualified,
-        name, isClassInit, wrapperMethods,
-        cv.visitMethod(access, name, desc, signature, exceptions));
+        name, isClassInit, wrapperMethods, access,
+        cv.visitMethod(newAccess, name, desc, signature, exceptions));
   }
   
   @Override
@@ -127,7 +130,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
     final MethodVisitor rewriter_mv =
       new FlashlightMethodRewriter(sourceFileName,
         classNameInternal, classNameFullyQualified,
-        CLASS_INITIALIZER, true, new HashSet<WrapperMethod>(), mv);
+        CLASS_INITIALIZER, true, new HashSet<WrapperMethod>(), Opcodes.ACC_STATIC, mv);
     rewriter_mv.visitCode();
     mv.visitInsn(Opcodes.RETURN);
     rewriter_mv.visitMaxs(0, 0);

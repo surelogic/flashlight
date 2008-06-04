@@ -538,32 +538,31 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     
     /* We have to create try-catch blocks to deal with the exceptions that
      * the inserted reflection methods might throw.  We do this on a per-call
-     * basis here in the bytecode, nested within the creation of the argument
-     * list for the ultimate call to Store.fieldAccess().  This would not be
-     * possible in the Java source code unless we used local variables.  But
-     * the bytecode is more flexible.
+     * basis here in the bytecode, with the two exceptions sharing the same
+     * handler.  Furthermore, there is only one handler for the entire method.
+     * This is not expressible in the Java source code.
      */
-//    final Label try1Start = new Label();
-//    final Label try1End = new Label();
-//    final Label try2Start = new Label();
-//    final Label try2End = new Label();
-//    final Label catchClassNotFound = getFlashlightExceptionHandlerLabel();
-//    final Label catchNoSuchField = getFlashlightExceptionHandlerLabel();
-//    mv.visitTryCatchBlock(try1Start, try1End, catchClassNotFound, FlashlightNames.JAVA_LANG_CLASS_NOT_FOUND_EXCEPTION);
-//    mv.visitTryCatchBlock(try2Start, try2End, catchNoSuchField, FlashlightNames.JAVA_LANG_NO_SUCH_FIELD_EXCEPTION);
+    final Label try1Start = new Label();
+    final Label try1End = new Label();
+    final Label try2Start = new Label();
+    final Label try2End = new Label();
+    final Label catchClassNotFound = getFlashlightExceptionHandlerLabel();
+    final Label catchNoSuchField = getFlashlightExceptionHandlerLabel();
+    mv.visitTryCatchBlock(try1Start, try1End, catchClassNotFound, FlashlightNames.JAVA_LANG_CLASS_NOT_FOUND_EXCEPTION);
+    mv.visitTryCatchBlock(try2Start, try2End, catchNoSuchField, FlashlightNames.JAVA_LANG_NO_SUCH_FIELD_EXCEPTION);
     
     /* We need to insert the expression
      * "Class.forName(<owner>).getDeclaredField(<name>)" into the code.  This puts
      * the java.lang.reflect.Field object for the accessed field on the stack.
      */
     mv.visitLdcInsn(fullyQualifiedOwner);
-//    mv.visitLabel(try1Start);
+    mv.visitLabel(try1Start);
     mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.JAVA_LANG_CLASS, FlashlightNames.FOR_NAME, FlashlightNames.FOR_NAME_SIGNATURE);
-//    mv.visitLabel(try1End);
+    mv.visitLabel(try1End);
     mv.visitLdcInsn(name);
-//    mv.visitLabel(try2Start);
+    mv.visitLabel(try2Start);
     mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, FlashlightNames.JAVA_LANG_CLASS, FlashlightNames.GET_DECLARED_FIELD, FlashlightNames.GET_DECLARED_FIELD_SIGNATURE);
-//    mv.visitLabel(try2End);
+    mv.visitLabel(try2End);
     // Stack is "..., isRead, receiver, Field"
     
     /* We need to insert the expression "Class.forName(<current_class>)"

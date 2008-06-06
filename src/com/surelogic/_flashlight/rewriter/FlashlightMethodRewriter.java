@@ -57,7 +57,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
    * is added to by this class, and is provided by the FlashlightClassRewriter
    * instance that create the method rewriter.
    */
-  private final Set<WrapperMethod> wrapperMethods;
+  private final Set<MethodCallWrapper> wrapperMethods;
   
   /**
    * Label for the start of the original method code, used for rewriting
@@ -100,7 +100,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   public FlashlightMethodRewriter(final String fname,
       final String nameInternal, final String nameFullyQualified,
       final String mname, final boolean isClassInit, 
-      final Set<WrapperMethod> wrappers, final int access,
+      final Set<MethodCallWrapper> wrappers, final int access,
       final MethodVisitor mv) {
     super(mv);
     sourceFileName = fname;
@@ -834,11 +834,11 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   private void rewriteInstanceMethodCall(final int opcode,
       final String owner, final String name, final String desc) {
     /* Create the wrapper method information and add it to the list of wrappers */
-    final WrapperMethod wrapper;
+    final MethodCallWrapper wrapper;
     if (opcode == Opcodes.INVOKESPECIAL) {
-      wrapper = new InstanceWrapperMethod(owner, name, desc, opcode);
+      wrapper = new SpecialCallWrapper(owner, name, desc, opcode);
     } else {
-      wrapper = new StaticWrapperMethod(owner, name, desc, opcode);
+      wrapper = new InterfaceAndVirtualCallWrapper(owner, name, desc, opcode);
     }
     wrapperMethods.add(wrapper);
     
@@ -863,6 +863,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     mv.visitLdcInsn(sourceFileName);
     // arg_1, ..., arg_n, true, null, filename
     mv.visitLdcInsn(methodName);
+    // arg_1, ..., arg_n, true, null, filename, mname
     ByteCodeUtils.pushInClass(mv, classBeingAnalyzedInternal);
     // arg_1, ..., arg_n, true, null, filename, mname, inClass
     ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
@@ -870,25 +871,56 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE, FlashlightNames.METHOD_CALL, FlashlightNames.METHOD_CALL_SIGNATURE);
     // arg_1, ..., arg_n
     
-    // The original method call
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, owner, name, desc);
+    final Label before = new Label();
+    final Label after = new Label();
+    final Label handler = new Label();
+    final Label resume = new Label();
+    mv.visitTryCatchBlock(before, after, handler, null);
     
-    // arg_1, ..., arg_n
+    // The original method call
+    mv.visitLabel(before);
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, owner, name, desc);
+    mv.visitLabel(after);
+    
+    // 
     ByteCodeUtils.pushBooleanConstant(mv, false);
-    // arg_1, ..., arg_n, false
+    // false
     mv.visitInsn(Opcodes.ACONST_NULL);
-    // arg_1, ..., arg_n, false, null
+    // false, null
     mv.visitLdcInsn(sourceFileName);
-    // arg_1, ..., arg_n, false, null, filename
+    // false, null, filename
     mv.visitLdcInsn(methodName);
+    // false, null, filename, mname
     ByteCodeUtils.pushInClass(mv, classBeingAnalyzedInternal);
-    // arg_1, ..., arg_n, false, null, filename, mname, inClass
+    // false, null, filename, mname, inClass
     ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
-    // arg_1, ..., arg_n, false, null, filename, mname, inClass, line
+    // false, null, filename, mname, inClass, line
     mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE, FlashlightNames.METHOD_CALL, FlashlightNames.METHOD_CALL_SIGNATURE);
+    // 
+    
+    mv.visitJumpInsn(Opcodes.GOTO, resume);
+    
+    mv.visitLabel(handler);
+    // exception
+    ByteCodeUtils.pushBooleanConstant(mv, false);
+    // exception, false
+    mv.visitInsn(Opcodes.ACONST_NULL);
+    // exception, false, null
+    mv.visitLdcInsn(sourceFileName);
+    // exception, false, null, filename
+    mv.visitLdcInsn(methodName);
+    // exception, false, null, filename, mname
+    ByteCodeUtils.pushInClass(mv, classBeingAnalyzedInternal);
+    // exception, false, null, filename, mname, inClass
+    ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
+    // exception, false, null, filename, mname, inClass, line
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE, FlashlightNames.METHOD_CALL, FlashlightNames.METHOD_CALL_SIGNATURE);
+    // exception
+    mv.visitInsn(Opcodes.ATHROW);
 
     // Resume code
+    mv.visitLabel(resume);
     
-    updateStackDepthDelta(6);
+    updateStackDepthDelta(7);
   }
 }

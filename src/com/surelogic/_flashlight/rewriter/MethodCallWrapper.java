@@ -7,7 +7,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
-abstract class WrapperMethod {
+abstract class MethodCallWrapper {
   private static final char INTERNAL_NAME_SEPARATOR = '/';
   private static final char UNDERSCORE = '_';
   private static final char END_OF_ARGS = ')';
@@ -17,9 +17,9 @@ abstract class WrapperMethod {
   private static final int CALLING_METHOD_ARG_FROM_END = 2;
   private static final int CALLING_LINE_ARG_FROM_END = 1;
   
-  public static final Comparator<WrapperMethod> comparator =
-    new Comparator<WrapperMethod>() {
-      public int compare(WrapperMethod o1, WrapperMethod o2) {
+  public static final Comparator<MethodCallWrapper> comparator =
+    new Comparator<MethodCallWrapper>() {
+      public int compare(MethodCallWrapper o1, MethodCallWrapper o2) {
         return o1.identityString.compareTo(o2.identityString);
       }
     };
@@ -44,7 +44,7 @@ abstract class WrapperMethod {
   
   
   
-  public WrapperMethod(final String owner, final String originalName,
+  public MethodCallWrapper(final String owner, final String originalName,
       final String originalSignature, final int opcode) {
     final String ownerUnderscored = owner.replace(INTERNAL_NAME_SEPARATOR, UNDERSCORE);
     final int endOfArgs = originalSignature.lastIndexOf(END_OF_ARGS);
@@ -84,8 +84,8 @@ abstract class WrapperMethod {
   
   @Override
   public final boolean equals(final Object o) {
-    if (o instanceof WrapperMethod) {
-      return this.identityString.equals(((WrapperMethod) o).identityString);
+    if (o instanceof MethodCallWrapper) {
+      return this.identityString.equals(((MethodCallWrapper) o).identityString);
     } else {
       return false;
     }
@@ -141,6 +141,17 @@ abstract class WrapperMethod {
 
 
 
+  
+  public final boolean testOriginalName(final String testOwner, final String testName) {
+    return owner.equals(testOwner) && originalName.equals(testName);
+  }
+  
+  public final boolean testOriginalSignature(final String testSignature) {
+    return originalSignature.equals(testSignature);
+  }
+
+  
+  
   public final int getNumLocals() {
     return numWrapperLocals;
   }

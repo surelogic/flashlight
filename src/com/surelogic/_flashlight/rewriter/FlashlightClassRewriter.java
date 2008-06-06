@@ -16,6 +16,7 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -52,8 +53,8 @@ public final class FlashlightClassRewriter extends ClassAdapter {
    * The wrapper methods that we need to generate to instrument calls to
    * instance methods.
    */
-  private final Set<WrapperMethod> wrapperMethods =
-    new TreeSet<WrapperMethod>(WrapperMethod.comparator);
+  private final Set<MethodCallWrapper> wrapperMethods =
+    new TreeSet<MethodCallWrapper>(MethodCallWrapper.comparator);
   
   
   
@@ -112,7 +113,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
     }
     
     // Add the wrapper methods
-    for (final WrapperMethod wrapper : wrapperMethods) {
+    for (final MethodCallWrapper wrapper : wrapperMethods) {
       addWrapperMethod(wrapper);
     }
     
@@ -130,14 +131,14 @@ public final class FlashlightClassRewriter extends ClassAdapter {
     final MethodVisitor rewriter_mv =
       new FlashlightMethodRewriter(sourceFileName,
         classNameInternal, classNameFullyQualified,
-        CLASS_INITIALIZER, true, new HashSet<WrapperMethod>(), Opcodes.ACC_STATIC, mv);
+        CLASS_INITIALIZER, true, new HashSet<MethodCallWrapper>(), Opcodes.ACC_STATIC, mv);
     rewriter_mv.visitCode();
     mv.visitInsn(Opcodes.RETURN);
     rewriter_mv.visitMaxs(0, 0);
     mv.visitEnd();
   }
   
-  private void addWrapperMethod(final WrapperMethod wrapper) {
+  private void addWrapperMethod(final MethodCallWrapper wrapper) {
     /* Create the method header */
     final MethodVisitor mv = wrapper.createMethodHeader(cv);
     mv.visitCode();
@@ -159,14 +160,22 @@ public final class FlashlightClassRewriter extends ClassAdapter {
     mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE, FlashlightNames.METHOD_CALL, FlashlightNames.METHOD_CALL_SIGNATURE);
     // empty stack 
 
+    final Label beforeOriginalCall = new Label();
+    final Label afterOriginalCall = new Label();
+    final Label exceptionHandler = new Label();
+    mv.visitTryCatchBlock(beforeOriginalCall, afterOriginalCall, exceptionHandler, null);
+    
     /* original method call */
     wrapper.pushObjectRef(mv);
     // objRef
     wrapper.pushOriginalArguments(mv);
     // objRef, arg1, ..., argN
+
+    mv.visitLabel(beforeOriginalCall);
     wrapper.invokeOriginalMethod(mv);
+    mv.visitLabel(afterOriginalCall);
     // [returnValue]
-    
+
     /* after method call event */
     ByteCodeUtils.pushBooleanConstant(mv, false);
     // [returnValue], true
@@ -185,13 +194,116 @@ public final class FlashlightClassRewriter extends ClassAdapter {
     
     /* Method return */
     wrapper.methodReturn(mv);
+
+    /* Exception handler: still want to report method exit when there is an exception */
+    mv.visitLabel(exceptionHandler);
+    // exception
+    
+    /* after method call event */
+    ByteCodeUtils.pushBooleanConstant(mv, false);
+    // exception, true
+    mv.visitVarInsn(Opcodes.ALOAD, 0);
+    // exception, true, objRef
+    mv.visitLdcInsn(sourceFileName);
+    // exception, true, objRef, filename
+    wrapper.pushCallingMethodName(mv);
+    // exception, true, objRef, filename, callingMethodName
+    ByteCodeUtils.pushInClass(mv, classNameInternal);
+    // exception, true, objRef, filename, callingMethodName, inClass
+    wrapper.pushCallingLineNumber(mv);
+    // exception, true, objRef, filename, callingMethodName, inClass, line
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE, FlashlightNames.METHOD_CALL, FlashlightNames.METHOD_CALL_SIGNATURE);
+    // exception
+    mv.visitInsn(Opcodes.ATHROW);
     
     final int numLocals = wrapper.getNumLocals();
-    mv.visitMaxs(Math.max(6 + wrapper.getMethodReturnSize(), numLocals), numLocals);
+    mv.visitMaxs(Math.max(6 + Math.max(1, wrapper.getMethodReturnSize()), numLocals), numLocals);
     mv.visitEnd();
   }
   
+//  private void insertBeforeWaitCall(
+//      final MethodVisitor mv, final WrapperMethod wrapper) {
+//    if (wrapper.testOriginalName(
+//        FlashlightNames.JAVA_LANG_OBJECT, FlashlightNames.WAIT)) {
+//      // ...
+//      ByteCodeUtils.pushBooleanConstant(mv, true);
+//      // ..., true
+//      wrapper.pushObjectRef(mv);
+//      // ..., true, objRef
+//      ByteCodeUtils.pushInClass(mv, classNameInternal);
+//      // ..., true, objRef, inClass
+//      wrapper.pushCallingLineNumber(mv);
+//      // ..., true, objRef, inClass, line
+//      mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE, FlashlightNames.INTRINSIC_LOCK_WAIT, FlashlightNames.INTRINSIC_LOCK_WAIT_SIGNATURE);      
+//    }
+//  }
   
+//  private void insertAfterWaitCall(
+//      final MethodVisitor mv, final WrapperMethod wrapper) {
+//    if (wrapper.testOriginalName(
+//        FlashlightNames.JAVA_LANG_OBJECT, FlashlightNames.WAIT)) {
+//      // ...
+//      ByteCodeUtils.pushBooleanConstant(mv, false);
+//      // ..., true
+//      wrapper.pushObjectRef(mv);
+//      // ..., true, objRef
+//      ByteCodeUtils.pushInClass(mv, classNameInternal);
+//      // ..., true, objRef, inClass
+//      wrapper.pushCallingLineNumber(mv);
+//      // ..., true, objRef, inClass, line
+//      mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE, FlashlightNames.INTRINSIC_LOCK_WAIT, FlashlightNames.INTRINSIC_LOCK_WAIT_SIGNATURE);      
+//    }
+//  }
+  
+//  private Label insertBeforeLockCall(
+//      final MethodVisitor mv, final WrapperMethod wrapper,
+//      final Label before, final Label after) {
+//    if (wrapper.testOriginalName(
+//        FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK, FlashlightNames.LOCK)
+//        || wrapper.testOriginalName(
+//            FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK,
+//            FlashlightNames.LOCK_INTERRUPTiBLY)) {
+//      final Label handler = new Label();
+//      mv.visitTryCatchBlock(before, after, handler, null);
+//      
+//      // ...
+//      wrapper.pushObjectRef(mv);
+//      // ..., objRef
+//      ByteCodeUtils.pushInClass(mv, classNameInternal);
+//      // ..., objRef, inClass
+//      wrapper.pushCallingLineNumber(mv);
+//      // ..., objRef, inClass, line
+//      mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE,
+//          FlashlightNames.BEFORE_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT,
+//          FlashlightNames.BEFORE_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT_SIGNATURE);
+//      
+//      return handler;
+//    } else {
+//      return null;
+//    }
+//  }
+  
+//  private void insertAfterLockCall(final MethodVisitor mv,
+//      final WrapperMethod wrapper, final Label handler, final Label resume) {
+//    if (wrapper.testOriginalName(
+//        FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK, FlashlightNames.LOCK)
+//        || wrapper.testOriginalName(
+//            FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK,
+//            FlashlightNames.LOCK_INTERRUPTiBLY)) {
+//      // ...
+//      ByteCodeUtils.pushBooleanConstant(mv, true);
+//      // ..., true
+//      wrapper.pushObjectRef(mv);
+//      // ..., true, objRef
+//      ByteCodeUtils.pushInClass(mv, classNameInternal);
+//      // ..., true, objRef, inClass
+//      wrapper.pushCallingLineNumber(mv);
+//      // ..., true, objRef, inClass, line
+//      mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE, FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT, FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT_SIGNATURE);      
+//    }
+//  }
+  
+
   
   public static void main(final String[] args) throws IOException {
     rewriteDirectory(new File(args[0]), new File(args[1]));

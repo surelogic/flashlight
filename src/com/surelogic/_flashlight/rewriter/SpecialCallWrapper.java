@@ -5,14 +5,14 @@ import java.text.MessageFormat;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-final class InstanceWrapperMethod extends WrapperMethod {
+final class SpecialCallWrapper extends MethodCallWrapper {
   private static final String WRAPPER_NAME_TEMPLATE = "flashlight${0}${1}${2,choice,0#virtual|1#special|2#static|3#interface}Wrapper";
   private static final String WRAPPER_SIGNATURE_TEMPLATE = "({0}Ljava/lang/String;I){1}";
   /** Generated wrapper methods are <code>private</code> and synthetic. */
   private static final int WRAPPER_METHOD_ACCESS = Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC;
   
   
-  public InstanceWrapperMethod(final String owner, final String originalName,
+  public SpecialCallWrapper(final String owner, final String originalName,
       final String originalSignature, final int opcode) {
     super(owner, originalName, originalSignature, opcode);
   }

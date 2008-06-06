@@ -5,7 +5,7 @@ import java.text.MessageFormat;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-final class StaticWrapperMethod extends WrapperMethod {
+final class InterfaceAndVirtualCallWrapper extends MethodCallWrapper {
   private static final String WRAPPER_NAME_TEMPLATE = "flashlight${0}${1}${2,choice,0#virtual|1#special|2#static|3#interface}Wrapper";
   private static final String WRAPPER_SIGNATURE_TEMPLATE = "(L{0};{1}Ljava/lang/String;I){2}";
   /** Generated wrapper methods are <code>private static</code> and synthetic. */
@@ -14,7 +14,7 @@ final class StaticWrapperMethod extends WrapperMethod {
 
   
   
-  public StaticWrapperMethod(final String owner, final String originalName,
+  public InterfaceAndVirtualCallWrapper(final String owner, final String originalName,
       final String originalSignature, final int opcode) {
     super(owner, originalName, originalSignature, opcode);
   }

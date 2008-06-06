@@ -160,6 +160,9 @@ public final class FlashlightClassRewriter extends ClassAdapter {
     mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE, FlashlightNames.METHOD_CALL, FlashlightNames.METHOD_CALL_SIGNATURE);
     // empty stack 
 
+    /* Additional pre-call instrumentation */
+    insertBeforeAnyJUCLockAcquisition(mv, wrapper);
+    
     final Label beforeOriginalCall = new Label();
     final Label afterOriginalCall = new Label();
     final Label exceptionHandler = new Label();
@@ -176,6 +179,11 @@ public final class FlashlightClassRewriter extends ClassAdapter {
     mv.visitLabel(afterOriginalCall);
     // [returnValue]
 
+    /* Additional post-call instrumentation */
+    insertAfterLockAndLockInterruptibly(mv, wrapper, true);
+    insertAfterTryLockNormal(mv, wrapper);
+    insertAfterUnlock(mv, wrapper, true);
+    
     /* after method call event */
     ByteCodeUtils.pushBooleanConstant(mv, false);
     // [returnValue], true
@@ -198,6 +206,11 @@ public final class FlashlightClassRewriter extends ClassAdapter {
     /* Exception handler: still want to report method exit when there is an exception */
     mv.visitLabel(exceptionHandler);
     // exception
+
+    /* Additional post-call instrumentation */
+    insertAfterLockAndLockInterruptibly(mv, wrapper, false);
+    insertAfterTryLockException(mv, wrapper);
+    insertAfterUnlock(mv, wrapper, false);
     
     /* after method call event */
     ByteCodeUtils.pushBooleanConstant(mv, false);
@@ -255,55 +268,120 @@ public final class FlashlightClassRewriter extends ClassAdapter {
 //    }
 //  }
   
-//  private Label insertBeforeLockCall(
-//      final MethodVisitor mv, final WrapperMethod wrapper,
-//      final Label before, final Label after) {
-//    if (wrapper.testOriginalName(
-//        FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK, FlashlightNames.LOCK)
-//        || wrapper.testOriginalName(
-//            FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK,
-//            FlashlightNames.LOCK_INTERRUPTiBLY)) {
-//      final Label handler = new Label();
-//      mv.visitTryCatchBlock(before, after, handler, null);
-//      
-//      // ...
-//      wrapper.pushObjectRef(mv);
-//      // ..., objRef
-//      ByteCodeUtils.pushInClass(mv, classNameInternal);
-//      // ..., objRef, inClass
-//      wrapper.pushCallingLineNumber(mv);
-//      // ..., objRef, inClass, line
-//      mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE,
-//          FlashlightNames.BEFORE_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT,
-//          FlashlightNames.BEFORE_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT_SIGNATURE);
-//      
-//      return handler;
-//    } else {
-//      return null;
-//    }
-//  }
+  private void insertBeforeAnyJUCLockAcquisition(
+      final MethodVisitor mv, final MethodCallWrapper wrapper) {
+    if (wrapper.testOriginalName(
+        FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK, FlashlightNames.LOCK)
+        || wrapper.testOriginalName(
+            FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK,
+            FlashlightNames.LOCK_INTERRUPTIBLY)
+        || wrapper.testOriginalName(
+            FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK,
+            FlashlightNames.TRY_LOCK)) {
+      // ...
+      wrapper.pushObjectRefForOriginalMethod(mv);
+      // ..., objRef
+      ByteCodeUtils.pushInClass(mv, classNameInternal);
+      // ..., objRef, inClass
+      wrapper.pushCallingLineNumber(mv);
+      // ..., objRef, inClass, line
+      mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE,
+          FlashlightNames.BEFORE_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT,
+          FlashlightNames.BEFORE_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT_SIGNATURE);
+    }
+  }
   
-//  private void insertAfterLockCall(final MethodVisitor mv,
-//      final WrapperMethod wrapper, final Label handler, final Label resume) {
-//    if (wrapper.testOriginalName(
-//        FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK, FlashlightNames.LOCK)
-//        || wrapper.testOriginalName(
-//            FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK,
-//            FlashlightNames.LOCK_INTERRUPTiBLY)) {
-//      // ...
-//      ByteCodeUtils.pushBooleanConstant(mv, true);
-//      // ..., true
-//      wrapper.pushObjectRef(mv);
-//      // ..., true, objRef
-//      ByteCodeUtils.pushInClass(mv, classNameInternal);
-//      // ..., true, objRef, inClass
-//      wrapper.pushCallingLineNumber(mv);
-//      // ..., true, objRef, inClass, line
-//      mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE, FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT, FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT_SIGNATURE);      
-//    }
-//  }
+  private void insertAfterLockAndLockInterruptibly(final MethodVisitor mv,
+      final MethodCallWrapper wrapper, final boolean gotTheLock) {
+    if (wrapper.testOriginalName(
+        FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK, FlashlightNames.LOCK)
+        || wrapper.testOriginalName(
+            FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK,
+            FlashlightNames.LOCK_INTERRUPTIBLY)) {
+      // ...
+      ByteCodeUtils.pushBooleanConstant(mv, gotTheLock);
+      // ..., gotTheLock
+      wrapper.pushObjectRefForOriginalMethod(mv);
+      // ..., gotTheLock, objRef
+      ByteCodeUtils.pushInClass(mv, classNameInternal);
+      // ..., gotTheLock, objRef, inClass
+      wrapper.pushCallingLineNumber(mv);
+      // ..., gotTheLock, objRef, inClass, line
+      mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE,
+          FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT,
+          FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT_SIGNATURE);      
+    }
+  }
   
+  private void insertAfterTryLockNormal(
+      final MethodVisitor mv, final MethodCallWrapper wrapper) {
+    if (wrapper.testOriginalName(
+        FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK,
+        FlashlightNames.TRY_LOCK)) {
+      // ..., gotTheLock
+      
+      /* We need to make a copy of tryLock()'s return value */
+      mv.visitInsn(Opcodes.DUP);
+      // ..., gotTheLock, gotTheLock      
+      wrapper.pushObjectRefForOriginalMethod(mv);
+      // ..., gotTheLock, gotTheLock, objRef
+      ByteCodeUtils.pushInClass(mv, classNameInternal);
+      // ..., gotTheLock, gotTheLock, objRef, inClass
+      wrapper.pushCallingLineNumber(mv);
+      // ..., gotTheLock, gotTheLock, objRef, inClass, line
+      mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE,
+          FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT,
+          FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT_SIGNATURE);
+      // ..., gotTheLock
+    }
+  }
+  
+  private void insertAfterTryLockException(
+      final MethodVisitor mv, final MethodCallWrapper wrapper) {
+    if (wrapper.testOriginalName(
+        FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK,
+        FlashlightNames.TRY_LOCK)) {
+      // ...
+      ByteCodeUtils.pushBooleanConstant(mv, false);
+      // ..., false
+      wrapper.pushObjectRefForOriginalMethod(mv);
+      // ..., false, objRef
+      ByteCodeUtils.pushInClass(mv, classNameInternal);
+      // ..., false, objRef, inClass
+      wrapper.pushCallingLineNumber(mv);
+      // ..., false, objRef, inClass, line
+      mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE,
+          FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT,
+          FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT_SIGNATURE);      
+    }
+  }
+  
+  
+  private void insertAfterUnlock(final MethodVisitor mv,
+      final MethodCallWrapper wrapper, final boolean releasedTheLock) {
+    if (wrapper.testOriginalName(
+        FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK,
+        FlashlightNames.UNLOCK)) {
+      // ...
+      ByteCodeUtils.pushBooleanConstant(mv, releasedTheLock);
+      // ..., gotTheLock
+      wrapper.pushObjectRefForOriginalMethod(mv);
+      // ..., gotTheLock, objRef
+      ByteCodeUtils.pushInClass(mv, classNameInternal);
+      // ..., gotTheLock, objRef, inClass
+      wrapper.pushCallingLineNumber(mv);
+      // ..., gotTheLock, objRef, inClass, line
+      mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE,
+          FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_RELEASE_ATTEMPT,
+          FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_RELEASE_ATTEMPT_SIGNATURE);      
+    }
+  }
 
+
+  
+  // ========================================================================
+  
+  
   
   public static void main(final String[] args) throws IOException {
     rewriteDirectory(new File(args[0]), new File(args[1]));

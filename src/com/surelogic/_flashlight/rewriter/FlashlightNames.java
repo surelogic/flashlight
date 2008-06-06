@@ -16,6 +16,8 @@ final class FlashlightNames {
   public static final String AFTER_INTRINSIC_LOCK_RELEASE_SIGNATURE = "(Ljava/lang/Object;Ljava/lang/Class;I)V";
   public static final String AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT = "afterUtilConcurrentLockAcquisitionAttempt";
   public static final String AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT_SIGNATURE = "(ZLjava/lang/Object;Ljava/lang/Class;I)V";
+  public static final String AFTER_UTIL_CONCURRENT_LOCK_RELEASE_ATTEMPT = "afterUtilConcurrentLockReleaseAttempt";
+  public static final String AFTER_UTIL_CONCURRENT_LOCK_RELEASE_ATTEMPT_SIGNATURE = "(ZLjava/lang/Object;Ljava/lang/Class;I)V";
   public static final String BEFORE_INTRINSIC_LOCK_ACQUISITION = "beforeIntrinsicLockAcquisition";
   public static final String BEFORE_INTRINSIC_LOCK_ACQUISITION_SIGNATURE = "(Ljava/lang/Object;ZZLjava/lang/Class;I)V";
   public static final String BEFORE_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT = "beforeUtilConcurrentLockAcquisitionAttempt";
@@ -57,7 +59,10 @@ final class FlashlightNames {
 
   public static final String JAVA_UTIL_CONCURRENT_LOCKS_LOCK = "java/util/concurrent/locks/Lock";
   public static final String LOCK = "lock";
-  public static final String LOCK_INTERRUPTiBLY = "lockInterruptibly";
+  public static final String LOCK_INTERRUPTIBLY = "lockInterruptibly";
+  public static final String TRY_LOCK = "tryLock";
+  public static final String UNLOCK = "unlock";
+  
   
   
   /* We add the static final field "flashlight$inClass" to store the Class

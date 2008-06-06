@@ -6,25 +6,18 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 final class SpecialCallWrapper extends MethodCallWrapper {
-  private static final String WRAPPER_NAME_TEMPLATE = "flashlight${0}${1}${2,choice,0#virtual|1#special|2#static|3#interface}Wrapper";
   private static final String WRAPPER_SIGNATURE_TEMPLATE = "({0}Ljava/lang/String;I){1}";
   /** Generated wrapper methods are <code>private</code> and synthetic. */
   private static final int WRAPPER_METHOD_ACCESS = Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC;
   
   
+  
   public SpecialCallWrapper(final String owner, final String originalName,
       final String originalSignature, final int opcode) {
-    super(owner, originalName, originalSignature, opcode);
+    super(owner, originalName, originalSignature, opcode, true);
   }
 
   
-  
-  @Override
-  protected String createWrapperMethodName(
-      final String ownerUnderscored, final String name, final int opcode) {
-    return MessageFormat.format(WRAPPER_NAME_TEMPLATE,
-        ownerUnderscored, name, (opcode - Opcodes.INVOKEVIRTUAL));
-  }
   
   @Override
   protected String createWrapperMethodSignature(
@@ -39,10 +32,34 @@ final class SpecialCallWrapper extends MethodCallWrapper {
   }
   
   @Override
-  public void invokeWrapperMethod(
-      final MethodVisitor mv, final String classBeingAnalyzed) {
-    /* Wrapped method is called using invokespecial because it is private */
-    mv.visitMethodInsn(
-        Opcodes.INVOKESPECIAL, classBeingAnalyzed, wrapperName, wrapperSignature);
+  protected int getWrapperMethodOpcode() {
+    return Opcodes.INVOKESPECIAL;
+  }
+
+  
+  
+  @Override
+  protected final int getFirstOriginalArgPosition(final int numOriginalArgs) {
+    return 0;
+  }
+
+  @Override
+  protected final int getCallingMethodNamePosition(final int numOriginalArgs) {
+    return numOriginalArgs;
+  }
+  
+  @Override
+  protected final int getCallingLineNumberPosition(final int numOriginalArgs) {
+    return numOriginalArgs + 1;
+  }
+
+  @Override
+  public final void pushObjectRefForEvent(final MethodVisitor mv) {
+    mv.visitVarInsn(Opcodes.ALOAD, 0);
+  }
+
+  @Override
+  public final void pushObjectRefForOriginalMethod(final MethodVisitor mv) {
+    mv.visitVarInsn(Opcodes.ALOAD, 0);
   }
 }

@@ -169,17 +169,17 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   public void visitMethodInsn(final int opcode, final String owner,
       final String name, final String desc) {
     if (opcode == Opcodes.INVOKEVIRTUAL && Properties.REWRITE_INVOKEVIRTUAL) {
-      rewriteInstanceMethodCall(opcode, owner, name, desc);
+      rewriteMethodCall(opcode, owner, name, desc);
     } else if (opcode == Opcodes.INVOKESPECIAL && Properties.REWRITE_INVOKESPECIAL) {
       if (!name.equals(FlashlightNames.CONSTRUCTOR)) {
-        rewriteInstanceMethodCall(Opcodes.INVOKESPECIAL, owner, name, desc);
+        rewriteMethodCall(Opcodes.INVOKESPECIAL, owner, name, desc);
       } else {
         mv.visitMethodInsn(opcode, owner, name, desc);
       }
     } else if (opcode == Opcodes.INVOKEINTERFACE && Properties.REWRITE_INVOKEINTERFACE) {
-      rewriteInstanceMethodCall(Opcodes.INVOKEINTERFACE, owner, name, desc);
+      rewriteMethodCall(Opcodes.INVOKEINTERFACE, owner, name, desc);
     } else if (opcode == Opcodes.INVOKESTATIC && Properties.REWRITE_INVOKESTATIC) {
-      rewriteInvokeStatic(owner, name, desc);
+      rewriteMethodCall(Opcodes.INVOKESTATIC, owner, name, desc);
     } else {
       mv.visitMethodInsn(opcode, owner, name, desc);
     }
@@ -831,96 +831,27 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   // == Rewrite method calls
   // =========================================================================
   
-  private void rewriteInstanceMethodCall(final int opcode,
+  private void rewriteMethodCall(final int opcode,
       final String owner, final String name, final String desc) {
     /* Create the wrapper method information and add it to the list of wrappers */
     final MethodCallWrapper wrapper;
     if (opcode == Opcodes.INVOKESPECIAL) {
       wrapper = new SpecialCallWrapper(owner, name, desc, opcode);
+    } else if (opcode == Opcodes.INVOKESTATIC){
+      wrapper = new StaticCallWrapper(owner, name, desc, opcode);
     } else {
       wrapper = new InterfaceAndVirtualCallWrapper(owner, name, desc, opcode);
     }
     wrapperMethods.add(wrapper);
     
-    // ..., objRef, arg1, ..., argN
+    // ..., [objRef], arg1, ..., argN
     mv.visitLdcInsn(methodName);
-    // ..., objRef, arg1, ..., argN, callingMethodName    
+    // ..., [objRef], arg1, ..., argN, callingMethodName    
     ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
-    // ..., objRef, arg1, ..., argN, callingMethodName, sourceLine
+    // ..., [objRef], arg1, ..., argN, callingMethodName, sourceLine
     wrapper.invokeWrapperMethod(mv, classBeingAnalyzedInternal);
     // ..., [returnVlaue]
     
     updateStackDepthDelta(2);
-  }
-  
-  private void rewriteInvokeStatic(
-      final String owner, final String name, final String desc) {
-    // arg_1, ..., arg_n
-    ByteCodeUtils.pushBooleanConstant(mv, true);
-    // arg_1, ..., arg_n, true
-    mv.visitInsn(Opcodes.ACONST_NULL);
-    // arg_1, ..., arg_n, true, null
-    mv.visitLdcInsn(sourceFileName);
-    // arg_1, ..., arg_n, true, null, filename
-    mv.visitLdcInsn(methodName);
-    // arg_1, ..., arg_n, true, null, filename, mname
-    ByteCodeUtils.pushInClass(mv, classBeingAnalyzedInternal);
-    // arg_1, ..., arg_n, true, null, filename, mname, inClass
-    ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
-    // arg_1, ..., arg_n, true, null, filename, mname, inClass, line
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE, FlashlightNames.METHOD_CALL, FlashlightNames.METHOD_CALL_SIGNATURE);
-    // arg_1, ..., arg_n
-    
-    final Label before = new Label();
-    final Label after = new Label();
-    final Label handler = new Label();
-    final Label resume = new Label();
-    mv.visitTryCatchBlock(before, after, handler, null);
-    
-    // The original method call
-    mv.visitLabel(before);
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, owner, name, desc);
-    mv.visitLabel(after);
-    
-    // 
-    ByteCodeUtils.pushBooleanConstant(mv, false);
-    // false
-    mv.visitInsn(Opcodes.ACONST_NULL);
-    // false, null
-    mv.visitLdcInsn(sourceFileName);
-    // false, null, filename
-    mv.visitLdcInsn(methodName);
-    // false, null, filename, mname
-    ByteCodeUtils.pushInClass(mv, classBeingAnalyzedInternal);
-    // false, null, filename, mname, inClass
-    ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
-    // false, null, filename, mname, inClass, line
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE, FlashlightNames.METHOD_CALL, FlashlightNames.METHOD_CALL_SIGNATURE);
-    // 
-    
-    mv.visitJumpInsn(Opcodes.GOTO, resume);
-    
-    mv.visitLabel(handler);
-    // exception
-    ByteCodeUtils.pushBooleanConstant(mv, false);
-    // exception, false
-    mv.visitInsn(Opcodes.ACONST_NULL);
-    // exception, false, null
-    mv.visitLdcInsn(sourceFileName);
-    // exception, false, null, filename
-    mv.visitLdcInsn(methodName);
-    // exception, false, null, filename, mname
-    ByteCodeUtils.pushInClass(mv, classBeingAnalyzedInternal);
-    // exception, false, null, filename, mname, inClass
-    ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
-    // exception, false, null, filename, mname, inClass, line
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE, FlashlightNames.METHOD_CALL, FlashlightNames.METHOD_CALL_SIGNATURE);
-    // exception
-    mv.visitInsn(Opcodes.ATHROW);
-
-    // Resume code
-    mv.visitLabel(resume);
-    
-    updateStackDepthDelta(7);
   }
 }

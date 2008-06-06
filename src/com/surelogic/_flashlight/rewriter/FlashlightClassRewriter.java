@@ -147,7 +147,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
     // empty stack 
     ByteCodeUtils.pushBooleanConstant(mv, true);
     // true
-    wrapper.pushObjectRef(mv);
+    wrapper.pushObjectRefForEvent(mv);
     // true, objRef
     mv.visitLdcInsn(sourceFileName);
     // true, objRef, filename
@@ -166,7 +166,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
     mv.visitTryCatchBlock(beforeOriginalCall, afterOriginalCall, exceptionHandler, null);
     
     /* original method call */
-    wrapper.pushObjectRef(mv);
+    wrapper.pushObjectRefForOriginalMethod(mv);
     // objRef
     wrapper.pushOriginalArguments(mv);
     // objRef, arg1, ..., argN
@@ -179,7 +179,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
     /* after method call event */
     ByteCodeUtils.pushBooleanConstant(mv, false);
     // [returnValue], true
-    mv.visitVarInsn(Opcodes.ALOAD, 0);
+    wrapper.pushObjectRefForEvent(mv);
     // [returnValue], true, objRef
     mv.visitLdcInsn(sourceFileName);
     // [returnValue], true, objRef, filename
@@ -202,7 +202,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
     /* after method call event */
     ByteCodeUtils.pushBooleanConstant(mv, false);
     // exception, true
-    mv.visitVarInsn(Opcodes.ALOAD, 0);
+    wrapper.pushObjectRefForEvent(mv);
     // exception, true, objRef
     mv.visitLdcInsn(sourceFileName);
     // exception, true, objRef, filename

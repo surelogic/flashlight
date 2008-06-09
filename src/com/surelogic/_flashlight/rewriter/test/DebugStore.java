@@ -12,6 +12,7 @@ public class DebugStore {
     System.out.println("  field = " + field);
     System.out.println("  withinClass = " + withinClass);
     System.out.println("  line = " + line);
+    System.out.flush();
   }
 
   public static synchronized void beforeIntrinsicLockAcquisition(final Object lockObject,
@@ -23,6 +24,7 @@ public class DebugStore {
     System.out.println("  lockIsClass = " + lockIsClass);
     System.out.println("  withinClass = " + withinClass);
     System.out.println("  line = " + line);
+    System.out.flush();
   }
 
   public static synchronized void afterIntrinsicLockAcquisition(final Object lockObject,
@@ -31,6 +33,7 @@ public class DebugStore {
     System.out.println("  lockObject = " + lockObject);
     System.out.println("  withinClass = " + withinClass);
     System.out.println("  line = " + line);
+    System.out.flush();
   }
   
   public static synchronized void afterIntrinsicLockRelease(final Object lockObject,
@@ -39,6 +42,7 @@ public class DebugStore {
     System.out.println("  lockObject = " + lockObject);
     System.out.println("  withinClass = " + withinClass);
     System.out.println("  line = " + line);
+    System.out.flush();
   }
 
   public static synchronized void intrinsicLockWait(final boolean before,
@@ -48,6 +52,7 @@ public class DebugStore {
     System.out.println("  lockObject = " + lockObject);
     System.out.println("  withinClass = " + withinClass);
     System.out.println("  line = " + line);
+    System.out.flush();
   }
   
   public static synchronized void methodCall(final boolean before, final Object receiver,
@@ -60,6 +65,7 @@ public class DebugStore {
     System.out.println("  enclosingLocationName = " + enclosingLocationName);
     System.out.println("  withinClass = " + withinClass);
     System.out.println("  line = " + line);
+    System.out.flush();
   }
 
   public static synchronized void constructorCall(final boolean before,
@@ -73,6 +79,7 @@ public class DebugStore {
     System.out.println("  enclosingLocationName = " + enclosingLocationName);
     System.out.println("  withinClass = " + withinClass);
     System.out.println("  line = " + line);
+    System.out.flush();
   }
   
   public static synchronized void constructorExecution(final boolean before,
@@ -82,6 +89,7 @@ public class DebugStore {
     System.out.println("  receiver = " + receiver);
     System.out.println("  withinClass = " + withinClass);
     System.out.println("  line = " + line);
+    System.out.flush();
   }
 
   public static synchronized void beforeUtilConcurrentLockAcquisitionAttempt(
@@ -90,6 +98,7 @@ public class DebugStore {
     System.out.println("  lockObject = " + lockObject);
     System.out.println("  withinClass = " + withinClass);
     System.out.println("  line = " + line);
+    System.out.flush();
   }
 
   public static void afterUtilConcurrentLockAcquisitionAttempt(
@@ -100,6 +109,7 @@ public class DebugStore {
     System.out.println("  lockObject = " + lockObject);
     System.out.println("  withinClass = " + withinClass);
     System.out.println("  line = " + line);
+    System.out.flush();
   }
 
   public static void afterUtilConcurrentLockReleaseAttempt(
@@ -110,5 +120,6 @@ public class DebugStore {
     System.out.println("  lockObject = " + lockObject);
     System.out.println("  withinClass = " + withinClass);
     System.out.println("  line = " + line);
+    System.out.flush();
   }
 }

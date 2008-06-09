@@ -4,7 +4,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 
-public class Properties {
+public final class Properties {
+  private Properties() {
+    // do nothing
+  }
+  
   private static final String REWRITE_DEFAULT_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.default";
   private static final String REWRITE_INVOKEINTERFACE_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.invokeinterface";
   private static final String REWRITE_INVOKESPECIAL_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.invokespecial";
@@ -17,6 +21,19 @@ public class Properties {
   private static final String REWRITE_PUTSTATIC_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.putstatic";
   private static final String REWRITE_GETFIELD_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.getfield";
   private static final String REWRITE_PUTFIELD_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.putfield";
+  
+  /* These properties require that the REWRITE_INVOKE*_PROPERITES be true. */
+  private static final String INSTRUMENT_DEFAULT_PROPERTY = "com.surelogic._flashlight.rewriter.instrument.default";
+  private static final String INSTRUMENT_BEFORE_CALL_PROPERTY = "com.surelogic._flashlight.rewriter.instrument.call.before";
+  private static final String INSTRUMENT_AFTER_CALL_PROPERTY = "com.surelogic._flashlight.rewriter.instrument.call.after";
+  private static final String INSTRUMENT_BEFORE_WAIT_PROPERTY = "com.surelogic._flashlight.rewriter.instrument.wait.before";
+  private static final String INSTRUMENT_AFTER_WAIT_PROPERTY = "com.surelogic._flashlight.rewriter.instrument.wait.after";
+  private static final String INSTRUMENT_BEFORE_JUC_LOCK_PROPERTY = "com.surelogic._flashlight.rewriter.instrument.lock.before";
+  private static final String INSTRUMENT_AFTER_LOCK_PROPERTY = "com.surelogic._flashlight.rewriter.instrument.lock.after";
+  private static final String INSTRUMENT_AFTER_TRYLOCK_PROPERTY = "com.surelogic._flashlight.rewriter.instrument.trylock.after";
+  private static final String INSTRUMENT_AFTER_UNLOCK_PROPERTY = "com.surelogic._flashlight.rewriter.instrument.unlock.after";
+  
+  
   
   private static final String USER_HOME_SYSTEM_PROPERTY = "user.home";
   
@@ -56,24 +73,35 @@ public class Properties {
   
   private static final String REWRITE_DEFAULT = properties.getProperty(REWRITE_DEFAULT_PROPERTY, TRUE);
   
-  public static final boolean REWRITE_INVOKEINTERFACE = getBoolean(REWRITE_INVOKEINTERFACE_PROPERTY);
-  public static final boolean REWRITE_INVOKESPECIAL = getBoolean(REWRITE_INVOKESPECIAL_PROPERTY);
-  public static final boolean REWRITE_INVOKESTATIC = getBoolean(REWRITE_INVOKESTATIC_PROPERTY);
-  public static final boolean REWRITE_INVOKEVIRTUAL = getBoolean(REWRITE_INVOKEVIRTUAL_PROPERTY);
+  public static final boolean REWRITE_INVOKEINTERFACE = getBoolean(REWRITE_INVOKEINTERFACE_PROPERTY, REWRITE_DEFAULT);
+  public static final boolean REWRITE_INVOKESPECIAL = getBoolean(REWRITE_INVOKESPECIAL_PROPERTY, REWRITE_DEFAULT);
+  public static final boolean REWRITE_INVOKESTATIC = getBoolean(REWRITE_INVOKESTATIC_PROPERTY, REWRITE_DEFAULT);
+  public static final boolean REWRITE_INVOKEVIRTUAL = getBoolean(REWRITE_INVOKEVIRTUAL_PROPERTY, REWRITE_DEFAULT);
   
-  public static final boolean REWRITE_PUTFIELD = getBoolean(REWRITE_PUTFIELD_PROPERTY);
-  public static final boolean REWRITE_GETFIELD = getBoolean(REWRITE_GETFIELD_PROPERTY);
+  public static final boolean REWRITE_PUTFIELD = getBoolean(REWRITE_PUTFIELD_PROPERTY, REWRITE_DEFAULT);
+  public static final boolean REWRITE_GETFIELD = getBoolean(REWRITE_GETFIELD_PROPERTY, REWRITE_DEFAULT);
 
-  public static final boolean REWRITE_PUTSTATIC = getBoolean(REWRITE_PUTSTATIC_PROPERTY);
-  public static final boolean REWRITE_GETSTATIC = getBoolean(REWRITE_GETSTATIC_PROPERTY);
+  public static final boolean REWRITE_PUTSTATIC = getBoolean(REWRITE_PUTSTATIC_PROPERTY, REWRITE_DEFAULT);
+  public static final boolean REWRITE_GETSTATIC = getBoolean(REWRITE_GETSTATIC_PROPERTY, REWRITE_DEFAULT);
 
-  public static final boolean REWRITE_SYNCHRONIZED_METHOD = getBoolean(REWRITE_SYNCHRONIZED_METHOD_PROPERTY);
-  public static final boolean REWRITE_MONITORENTER = getBoolean(REWRITE_MONITORENTER_PROPERTY);
-  public static final boolean REWRITE_MONITOREXIT = getBoolean(REWRITE_MONITOREXIT_PROPERTY);
+  public static final boolean REWRITE_SYNCHRONIZED_METHOD = getBoolean(REWRITE_SYNCHRONIZED_METHOD_PROPERTY, REWRITE_DEFAULT);
+  public static final boolean REWRITE_MONITORENTER = getBoolean(REWRITE_MONITORENTER_PROPERTY, REWRITE_DEFAULT);
+  public static final boolean REWRITE_MONITOREXIT = getBoolean(REWRITE_MONITOREXIT_PROPERTY, REWRITE_DEFAULT);
+
+  private static final String INSTRUMENT_DEFAULT = properties.getProperty(INSTRUMENT_DEFAULT_PROPERTY, TRUE);
+
+  public static final boolean INSTRUMENT_BEFORE_CALL = getBoolean(INSTRUMENT_BEFORE_CALL_PROPERTY, INSTRUMENT_DEFAULT);
+  public static final boolean INSTRUMENT_AFTER_CALL = getBoolean(INSTRUMENT_AFTER_CALL_PROPERTY, INSTRUMENT_DEFAULT);
+  public static final boolean INSTRUMENT_BEFORE_WAIT = getBoolean(INSTRUMENT_BEFORE_WAIT_PROPERTY, INSTRUMENT_DEFAULT);
+  public static final boolean INSTRUMENT_AFTER_WAIT = getBoolean(INSTRUMENT_AFTER_WAIT_PROPERTY, INSTRUMENT_DEFAULT);
+  public static final boolean INSTRUMENT_BEFORE_JUC_LOCK = getBoolean(INSTRUMENT_BEFORE_JUC_LOCK_PROPERTY, INSTRUMENT_DEFAULT);
+  public static final boolean INSTRUMENT_AFTER_LOCK = getBoolean(INSTRUMENT_AFTER_LOCK_PROPERTY, INSTRUMENT_DEFAULT);
+  public static final boolean INSTRUMENT_AFTER_TRYLOCK = getBoolean(INSTRUMENT_AFTER_TRYLOCK_PROPERTY, INSTRUMENT_DEFAULT);
+  public static final boolean INSTRUMENT_AFTER_UNLOCK = getBoolean(INSTRUMENT_AFTER_UNLOCK_PROPERTY, INSTRUMENT_DEFAULT);
+
   
   
-  
-  private static boolean getBoolean(final String propName) {
-    return Boolean.valueOf(properties.getProperty(propName, REWRITE_DEFAULT));
+  private static boolean getBoolean(final String propName, final String defaultValue) {
+    return Boolean.valueOf(properties.getProperty(propName, defaultValue));
   }
 }

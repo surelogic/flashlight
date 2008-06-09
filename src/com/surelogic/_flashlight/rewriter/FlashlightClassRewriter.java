@@ -143,25 +143,14 @@ public final class FlashlightClassRewriter extends ClassAdapter {
     final MethodVisitor mv = wrapper.createMethodHeader(cv);
     mv.visitCode();
     
+    // empty stack
+    
     /* before method all event */
-    // empty stack 
-    ByteCodeUtils.pushBooleanConstant(mv, true);
-    // true
-    wrapper.pushObjectRefForEvent(mv);
-    // true, objRef
-    mv.visitLdcInsn(sourceFileName);
-    // true, objRef, filename
-    wrapper.pushCallingMethodName(mv);
-    // true, objRef, filename, callingMethodName
-    ByteCodeUtils.pushInClass(mv, classNameInternal);
-    // true, objRef, filename, callingMethodName, inClass
-    wrapper.pushCallingLineNumber(mv);
-    // true, objRef, filename, callingMethodName, inClass, line
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE, FlashlightNames.METHOD_CALL, FlashlightNames.METHOD_CALL_SIGNATURE);
-    // empty stack 
+    instrumentBeforeMethodCall(mv, wrapper);
 
     /* Additional pre-call instrumentation */
-    insertBeforeAnyJUCLockAcquisition(mv, wrapper);
+    instrumentBeforeAnyJUCLockAcquisition(mv, wrapper);
+    instrumentBeforeWait(mv, wrapper);
     
     final Label beforeOriginalCall = new Label();
     final Label afterOriginalCall = new Label();
@@ -180,25 +169,13 @@ public final class FlashlightClassRewriter extends ClassAdapter {
     // [returnValue]
 
     /* Additional post-call instrumentation */
-    insertAfterLockAndLockInterruptibly(mv, wrapper, true);
-    insertAfterTryLockNormal(mv, wrapper);
-    insertAfterUnlock(mv, wrapper, true);
+    instrumentAfterLockAndLockInterruptibly(mv, wrapper, true);
+    instrumentAfterTryLockNormal(mv, wrapper);
+    instrumentAfterUnlock(mv, wrapper, true);
+    instrumentAfterWait(mv, wrapper);
     
     /* after method call event */
-    ByteCodeUtils.pushBooleanConstant(mv, false);
-    // [returnValue], true
-    wrapper.pushObjectRefForEvent(mv);
-    // [returnValue], true, objRef
-    mv.visitLdcInsn(sourceFileName);
-    // [returnValue], true, objRef, filename
-    wrapper.pushCallingMethodName(mv);
-    // [returnValue], true, objRef, filename, callingMethodName
-    ByteCodeUtils.pushInClass(mv, classNameInternal);
-    // [returnValue], true, objRef, filename, callingMethodName, inClass
-    wrapper.pushCallingLineNumber(mv);
-    // [returnValue], true, objRef, filename, callingMethodName, inClass, line
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE, FlashlightNames.METHOD_CALL, FlashlightNames.METHOD_CALL_SIGNATURE);
-    // [returnValue]
+    instrumentAfterMethodCall(mv, wrapper);
     
     /* Method return */
     wrapper.methodReturn(mv);
@@ -208,78 +185,121 @@ public final class FlashlightClassRewriter extends ClassAdapter {
     // exception
 
     /* Additional post-call instrumentation */
-    insertAfterLockAndLockInterruptibly(mv, wrapper, false);
-    insertAfterTryLockException(mv, wrapper);
-    insertAfterUnlock(mv, wrapper, false);
+    instrumentAfterLockAndLockInterruptibly(mv, wrapper, false);
+    instrumentAfterTryLockException(mv, wrapper);
+    instrumentAfterUnlock(mv, wrapper, false);
+    instrumentAfterWait(mv, wrapper);
     
-    /* after method call event */
-    ByteCodeUtils.pushBooleanConstant(mv, false);
-    // exception, true
-    wrapper.pushObjectRefForEvent(mv);
-    // exception, true, objRef
-    mv.visitLdcInsn(sourceFileName);
-    // exception, true, objRef, filename
-    wrapper.pushCallingMethodName(mv);
-    // exception, true, objRef, filename, callingMethodName
-    ByteCodeUtils.pushInClass(mv, classNameInternal);
-    // exception, true, objRef, filename, callingMethodName, inClass
-    wrapper.pushCallingLineNumber(mv);
-    // exception, true, objRef, filename, callingMethodName, inClass, line
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE, FlashlightNames.METHOD_CALL, FlashlightNames.METHOD_CALL_SIGNATURE);
+    instrumentAfterMethodCall(mv, wrapper);
+
     // exception
     mv.visitInsn(Opcodes.ATHROW);
     
     final int numLocals = wrapper.getNumLocals();
-    mv.visitMaxs(Math.max(6 + Math.max(1, wrapper.getMethodReturnSize()), numLocals), numLocals);
+    mv.visitMaxs(
+        Math.max(6 + Math.max(1, wrapper.getMethodReturnSize()), numLocals),
+        numLocals);
     mv.visitEnd();
   }
-  
-//  private void insertBeforeWaitCall(
-//      final MethodVisitor mv, final WrapperMethod wrapper) {
-//    if (wrapper.testOriginalName(
-//        FlashlightNames.JAVA_LANG_OBJECT, FlashlightNames.WAIT)) {
-//      // ...
-//      ByteCodeUtils.pushBooleanConstant(mv, true);
-//      // ..., true
-//      wrapper.pushObjectRef(mv);
-//      // ..., true, objRef
-//      ByteCodeUtils.pushInClass(mv, classNameInternal);
-//      // ..., true, objRef, inClass
-//      wrapper.pushCallingLineNumber(mv);
-//      // ..., true, objRef, inClass, line
-//      mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE, FlashlightNames.INTRINSIC_LOCK_WAIT, FlashlightNames.INTRINSIC_LOCK_WAIT_SIGNATURE);      
-//    }
-//  }
-  
-//  private void insertAfterWaitCall(
-//      final MethodVisitor mv, final WrapperMethod wrapper) {
-//    if (wrapper.testOriginalName(
-//        FlashlightNames.JAVA_LANG_OBJECT, FlashlightNames.WAIT)) {
-//      // ...
-//      ByteCodeUtils.pushBooleanConstant(mv, false);
-//      // ..., true
-//      wrapper.pushObjectRef(mv);
-//      // ..., true, objRef
-//      ByteCodeUtils.pushInClass(mv, classNameInternal);
-//      // ..., true, objRef, inClass
-//      wrapper.pushCallingLineNumber(mv);
-//      // ..., true, objRef, inClass, line
-//      mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE, FlashlightNames.INTRINSIC_LOCK_WAIT, FlashlightNames.INTRINSIC_LOCK_WAIT_SIGNATURE);      
-//    }
-//  }
-  
-  private void insertBeforeAnyJUCLockAcquisition(
+
+
+
+  private void instrumentBeforeMethodCall(
+      final MethodVisitor mv, final MethodCallWrapper wrapper) {
+    if (Properties.INSTRUMENT_BEFORE_CALL) {
+      // empty stack 
+      ByteCodeUtils.pushBooleanConstant(mv, true);
+      // true
+      wrapper.pushObjectRefForEvent(mv);
+      // true, objRef
+      mv.visitLdcInsn(sourceFileName);
+      // true, objRef, filename
+      wrapper.pushCallingMethodName(mv);
+      // true, objRef, filename, callingMethodName
+      ByteCodeUtils.pushInClass(mv, classNameInternal);
+      // true, objRef, filename, callingMethodName, inClass
+      wrapper.pushCallingLineNumber(mv);
+      // true, objRef, filename, callingMethodName, inClass, line
+      mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE,
+          FlashlightNames.METHOD_CALL, FlashlightNames.METHOD_CALL_SIGNATURE);
+      // empty stack 
+    }
+  }
+
+
+
+  private void instrumentAfterMethodCall(
+      final MethodVisitor mv, final MethodCallWrapper wrapper) {
+    if (Properties.INSTRUMENT_AFTER_CALL) {
+      // ...,
+      ByteCodeUtils.pushBooleanConstant(mv, false);
+      // ..., true
+      wrapper.pushObjectRefForEvent(mv);
+      // ..., true, objRef
+      mv.visitLdcInsn(sourceFileName);
+      // ..., true, objRef, filename
+      wrapper.pushCallingMethodName(mv);
+      // ..., true, objRef, filename, callingMethodName
+      ByteCodeUtils.pushInClass(mv, classNameInternal);
+      // ..., true, objRef, filename, callingMethodName, inClass
+      wrapper.pushCallingLineNumber(mv);
+      // ..., true, objRef, filename, callingMethodName, inClass, line
+      mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE, FlashlightNames.METHOD_CALL, FlashlightNames.METHOD_CALL_SIGNATURE);
+      // ...
+    }
+  }
+
+
+
+  private void instrumentBeforeWait(
       final MethodVisitor mv, final MethodCallWrapper wrapper) {
     if (wrapper.testOriginalName(
+        FlashlightNames.JAVA_LANG_OBJECT, FlashlightNames.WAIT)
+        && Properties.INSTRUMENT_BEFORE_WAIT) {
+      // ...
+      ByteCodeUtils.pushBooleanConstant(mv, true);
+      // ..., true
+      wrapper.pushObjectRefForEvent(mv);
+      // ..., true, objRef
+      ByteCodeUtils.pushInClass(mv, classNameInternal);
+      // ..., true, objRef, inClass
+      wrapper.pushCallingLineNumber(mv);
+      // ..., true, objRef, inClass, line
+      mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE, FlashlightNames.INTRINSIC_LOCK_WAIT, FlashlightNames.INTRINSIC_LOCK_WAIT_SIGNATURE);      
+    }
+  }
+  
+  private void instrumentAfterWait(
+      final MethodVisitor mv, final MethodCallWrapper wrapper) {
+    if (wrapper.testOriginalName(
+        FlashlightNames.JAVA_LANG_OBJECT, FlashlightNames.WAIT)
+        && Properties.INSTRUMENT_AFTER_WAIT) {
+      // ...
+      ByteCodeUtils.pushBooleanConstant(mv, false);
+      // ..., true
+      wrapper.pushObjectRefForEvent(mv);
+      // ..., true, objRef
+      ByteCodeUtils.pushInClass(mv, classNameInternal);
+      // ..., true, objRef, inClass
+      wrapper.pushCallingLineNumber(mv);
+      // ..., true, objRef, inClass, line
+      mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE, FlashlightNames.INTRINSIC_LOCK_WAIT, FlashlightNames.INTRINSIC_LOCK_WAIT_SIGNATURE);      
+    }
+  }
+  
+  private void instrumentBeforeAnyJUCLockAcquisition(
+      final MethodVisitor mv, final MethodCallWrapper wrapper) {
+    if ((wrapper.testOriginalName(
         FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK, FlashlightNames.LOCK)
         || wrapper.testOriginalName(
             FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK,
             FlashlightNames.LOCK_INTERRUPTIBLY)
         || wrapper.testOriginalName(
             FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK,
-            FlashlightNames.TRY_LOCK)) {
+            FlashlightNames.TRY_LOCK))
+        && Properties.INSTRUMENT_BEFORE_JUC_LOCK) {
       // ...
-      wrapper.pushObjectRefForOriginalMethod(mv);
+      wrapper.pushObjectRefForEvent(mv);
       // ..., objRef
       ByteCodeUtils.pushInClass(mv, classNameInternal);
       // ..., objRef, inClass
@@ -291,17 +311,18 @@ public final class FlashlightClassRewriter extends ClassAdapter {
     }
   }
   
-  private void insertAfterLockAndLockInterruptibly(final MethodVisitor mv,
+  private void instrumentAfterLockAndLockInterruptibly(final MethodVisitor mv,
       final MethodCallWrapper wrapper, final boolean gotTheLock) {
-    if (wrapper.testOriginalName(
+    if ((wrapper.testOriginalName(
         FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK, FlashlightNames.LOCK)
         || wrapper.testOriginalName(
             FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK,
-            FlashlightNames.LOCK_INTERRUPTIBLY)) {
+            FlashlightNames.LOCK_INTERRUPTIBLY))
+        && Properties.INSTRUMENT_AFTER_LOCK) {
       // ...
       ByteCodeUtils.pushBooleanConstant(mv, gotTheLock);
       // ..., gotTheLock
-      wrapper.pushObjectRefForOriginalMethod(mv);
+      wrapper.pushObjectRefForEvent(mv);
       // ..., gotTheLock, objRef
       ByteCodeUtils.pushInClass(mv, classNameInternal);
       // ..., gotTheLock, objRef, inClass
@@ -313,17 +334,17 @@ public final class FlashlightClassRewriter extends ClassAdapter {
     }
   }
   
-  private void insertAfterTryLockNormal(
+  private void instrumentAfterTryLockNormal(
       final MethodVisitor mv, final MethodCallWrapper wrapper) {
     if (wrapper.testOriginalName(
         FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK,
-        FlashlightNames.TRY_LOCK)) {
+        FlashlightNames.TRY_LOCK) && Properties.INSTRUMENT_AFTER_TRYLOCK) {
       // ..., gotTheLock
       
       /* We need to make a copy of tryLock()'s return value */
       mv.visitInsn(Opcodes.DUP);
       // ..., gotTheLock, gotTheLock      
-      wrapper.pushObjectRefForOriginalMethod(mv);
+      wrapper.pushObjectRefForEvent(mv);
       // ..., gotTheLock, gotTheLock, objRef
       ByteCodeUtils.pushInClass(mv, classNameInternal);
       // ..., gotTheLock, gotTheLock, objRef, inClass
@@ -336,15 +357,15 @@ public final class FlashlightClassRewriter extends ClassAdapter {
     }
   }
   
-  private void insertAfterTryLockException(
+  private void instrumentAfterTryLockException(
       final MethodVisitor mv, final MethodCallWrapper wrapper) {
     if (wrapper.testOriginalName(
         FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK,
-        FlashlightNames.TRY_LOCK)) {
+        FlashlightNames.TRY_LOCK) && Properties.INSTRUMENT_AFTER_TRYLOCK) {
       // ...
       ByteCodeUtils.pushBooleanConstant(mv, false);
       // ..., false
-      wrapper.pushObjectRefForOriginalMethod(mv);
+      wrapper.pushObjectRefForEvent(mv);
       // ..., false, objRef
       ByteCodeUtils.pushInClass(mv, classNameInternal);
       // ..., false, objRef, inClass
@@ -357,15 +378,15 @@ public final class FlashlightClassRewriter extends ClassAdapter {
   }
   
   
-  private void insertAfterUnlock(final MethodVisitor mv,
+  private void instrumentAfterUnlock(final MethodVisitor mv,
       final MethodCallWrapper wrapper, final boolean releasedTheLock) {
     if (wrapper.testOriginalName(
         FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK,
-        FlashlightNames.UNLOCK)) {
+        FlashlightNames.UNLOCK) && Properties.INSTRUMENT_AFTER_UNLOCK) {
       // ...
       ByteCodeUtils.pushBooleanConstant(mv, releasedTheLock);
       // ..., gotTheLock
-      wrapper.pushObjectRefForOriginalMethod(mv);
+      wrapper.pushObjectRefForEvent(mv);
       // ..., gotTheLock, objRef
       ByteCodeUtils.pushInClass(mv, classNameInternal);
       // ..., gotTheLock, objRef, inClass

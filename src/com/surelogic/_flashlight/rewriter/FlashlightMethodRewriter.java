@@ -11,6 +11,9 @@ import org.objectweb.asm.Type;
 final class FlashlightMethodRewriter extends MethodAdapter {
   private static final String ENCLOSING_THIS_PREFIX = "this$";
   
+  private static final String CLASS_INITIALIZER = "<clinit>";
+  private static final String INITIALIZER = "<init>";
+  
   
 
   /** The name of the source file that contains the class being rewritten. */
@@ -23,6 +26,8 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   
   /** The simple name of the method being rewritten. */
   private final String methodName;
+  /** Are we visiting a constructor? */
+  private final boolean isConstructor;
   /** Are we visiting the class initializer method? */
   private final boolean isClassInitializer;
   /** Was the method originally synchronized? */
@@ -99,15 +104,15 @@ final class FlashlightMethodRewriter extends MethodAdapter {
    */
   public FlashlightMethodRewriter(final String fname,
       final String nameInternal, final String nameFullyQualified,
-      final String mname, final boolean isClassInit, 
-      final Set<MethodCallWrapper> wrappers, final int access,
+      final String mname, final Set<MethodCallWrapper> wrappers, final int access,
       final MethodVisitor mv) {
     super(mv);
     sourceFileName = fname;
     classBeingAnalyzedInternal = nameInternal;
     classBeingAnalyzedFullyQualified = nameFullyQualified;
     methodName = mname;
-    isClassInitializer = isClassInit;
+    isConstructor = mname.equals(INITIALIZER);
+    isClassInitializer = mname.equals(CLASS_INITIALIZER);
     wrapperMethods = wrappers;
     wasSynchronized = (access & Opcodes.ACC_SYNCHRONIZED) != 0;
     isStatic = (access & Opcodes.ACC_STATIC) != 0;
@@ -195,7 +200,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     if (wasSynchronized && Properties.REWRITE_SYNCHRONIZED_METHOD) {
       insertSynchronizedMethodPostfix();
     }
-
+    
     super.visitMaxs(maxStack + stackDepthDelta, maxLocals);
   }
 
@@ -854,4 +859,23 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     
     updateStackDepthDelta(2);
   }
+
+
+
+//  private void insertConstructorExecution(final boolean before) {
+//    // ...
+//    ByteCodeUtils.pushBooleanConstant(mv, before);
+//    // ..., before
+//    mv.visitVarInsn(Opcodes.ALOAD, 0);
+//    // ..., before, this
+//    ByteCodeUtils.pushInClass(mv, classBeingAnalyzedInternal);
+//    // ..., before, this, inClass
+//    ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
+//    // ..., before, this, inClass, exitLineNumber
+//    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE,
+//        "constructorExecution", "(ZLjava/lang/Object;Ljava/lang/Class;I)V");
+//    // ...
+//    
+//    updateStackDepthDelta(4);
+//  }
 }

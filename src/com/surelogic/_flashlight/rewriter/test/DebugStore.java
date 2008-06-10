@@ -101,7 +101,7 @@ public class DebugStore {
     System.out.flush();
   }
 
-  public static void afterUtilConcurrentLockAcquisitionAttempt(
+  public static synchronized void afterUtilConcurrentLockAcquisitionAttempt(
       final boolean gotTheLock, final Object lockObject,
       Class<?> withinClass, final int line) {
     System.out.println("afterUtilConcurrentLockAcquisitionAttempt");
@@ -112,7 +112,7 @@ public class DebugStore {
     System.out.flush();
   }
 
-  public static void afterUtilConcurrentLockReleaseAttempt(
+  public static synchronized void afterUtilConcurrentLockReleaseAttempt(
       final boolean releasedTheLock, final Object lockObject,
       Class<?> withinClass, final int line) {
     System.out.println("afterUtilConcurrentLockReleaseAttempt");

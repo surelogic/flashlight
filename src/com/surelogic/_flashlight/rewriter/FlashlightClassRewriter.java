@@ -94,7 +94,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
     final int newAccess = access & ~Opcodes.ACC_SYNCHRONIZED;
     return new FlashlightMethodRewriter(
         sourceFileName, classNameInternal, classNameFullyQualified,
-        name, isClassInit, wrapperMethods, access,
+        name, wrapperMethods, access,
         cv.visitMethod(newAccess, name, desc, signature, exceptions));
   }
   
@@ -131,7 +131,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
     final MethodVisitor rewriter_mv =
       new FlashlightMethodRewriter(sourceFileName,
         classNameInternal, classNameFullyQualified,
-        CLASS_INITIALIZER, true, new HashSet<MethodCallWrapper>(), Opcodes.ACC_STATIC, mv);
+        CLASS_INITIALIZER, new HashSet<MethodCallWrapper>(), Opcodes.ACC_STATIC, mv);
     rewriter_mv.visitCode();
     mv.visitInsn(Opcodes.RETURN);
     rewriter_mv.visitMaxs(0, 0);

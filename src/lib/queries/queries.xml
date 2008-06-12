@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes'?>
-<ad-hoc version='1.0' current='23'>
+<ad-hoc version='1.0' current='3'>
   <query name='What static fields are shared?' meta-query-name='What threads access this field? (FIELDNAME)'>select
   O.PackageName &quot;Package__PACKAGE&quot;,
   O.ClassName &quot;Class__CLASS&quot;,
@@ -56,9 +56,9 @@ where t.ThreadName is not null
   count(*) &quot;Acquisition Count&quot;
 from LOCK L, OBJECT O
 where L.INTHREAD = O.ID
-and L.RUN = O.RUN
-and O.Run = ?RUN?
-and L.STATE = &apos;AFTER ACQUISITION&apos;
+  and L.RUN = O.RUN
+  and O.Run = ?RUN?
+  and L.STATE = &apos;AFTER ACQUISITION&apos;
 group by l.lock, O.THREADNAME
 order by 1, 2
 </query>
@@ -95,29 +95,28 @@ where ld.State = &apos;BLOCKING&apos;
 order by ld.Duration desc
   </query>
   <query name='Who is interacting with that lock at that moment?'>select ld.InThread, ld.State, ld.Start, ld.Stop, ld.Duration, 
-ld.StartEvent as LockEvent
+  ld.StartEvent as LockEvent
 from LOCK as le, LOCKDURATION AS ld
 where le.Run=?RUN?
-and le.Id=?LOCKEVENT?
-and ld.Run=?RUN?
-and ld.Lock=?LOCK?
-and le.ts between ld.Start and ld.Stop
+  and le.Id=?LOCKEVENT?
+  and ld.Run=?RUN?
+  and ld.Lock=?LOCK?
+  and le.ts between ld.Start and ld.Stop
 order by ld.Start 
   </query>
-  <query name='Where does a thread hold a lock and acquire another?'>select lh.LockEvent, count(LockHeld) &quot;Number of Locks Held&quot;,
-le.InClass &quot;InClass__CLASS&quot;, le.AtLine &quot;Line&quot;
+  <query name='Where does a thread hold a lock and acquire another?'>select lh.LockEvent, count(LockHeld) &quot;Number of Locks Already Held&quot;,
+  le.InClass &quot;InClass__CLASS&quot;, le.AtLine &quot;Line&quot;
 from LOCKSHELD as lh, LOCK as le
 where lh.Run=?RUN?
-and lh.LockEvent=le.Id
-and le.Run=?RUN?
+  and lh.LockEvent=le.Id
+  and le.Run=?RUN?
 group by lh.LockEvent, le.InClass, le.AtLine
 order by 2 desc, 1</query>
   <query name='How are ReadWriteLock objects defined?'>select ID &quot;ReadWriteLock__FOLDER&quot;,
        READLOCK &quot;ReadLock Object Id&quot;,
        WRITELOCK &quot;WriteLock Object Id&quot; 
 from RWLOCK RWL
-where
-  RWL.Run = ?RUN?
+where RWL.Run = ?RUN?
 order by 1</query>
   <query name='What locks could potentially cause deadlock?' meta-query-name='Show the lock events for a lock graph edge'>select Component, LockHeld &quot;LockHeld|&quot;,
   LockAcquired,
@@ -129,17 +128,17 @@ order by count desc</query>
   <query name='Show the lock events for a lock graph edge' meta-query-name='Show lock trace for a lock event'>select l.InClass, l.AtLine &quot;Line|&quot;, lh.LockEvent 
 from LOCKSHELD as lh, LOCK as l
 where lh.Run = ?RUN?
-and lh.LockHeld=?LOCKHELD?
-and lh.LockAcquired=?LOCKACQUIRED?
-and l.Run = ?RUN?
-and lh.LockEvent=l.Id
+  and lh.LockHeld=?LOCKHELD?
+  and lh.LockAcquired=?LOCKACQUIRED?
+  and l.Run = ?RUN?
+  and lh.LockEvent=l.Id
 order by l.InClass, l.AtLine, lh.LockEvent
   </query>
   <query name='Show stack trace for a lock event'>select t.InFile &quot;InFile__CU&quot;, t.InClass &quot;InClass__CLASS&quot;, t.AtLine &quot;Line&quot;, t.Location &quot;Method&quot;, t.Start &quot;Start Time&quot;, t.Stop &quot;Stop Time&quot;
 from trace as t, lock as l
 where t.run = ?RUN?
-and l.run = ?RUN? and l.id = ?LOCKEVENT?
-and l.ts between t.start and t.stop
+  and l.run = ?RUN? and l.id = ?LOCKEVENT?
+  and l.ts between t.start and t.stop
 order by t.start desc</query>
   <query name='Show lock trace for a lock event'>SELECT D.Lock &quot;LOCK&quot;, LO.PackageName &quot;Package__PACKAGE&quot;, LO.ClassName &quot;Class__CLASS&quot;, LL.AtLine &quot;Line&quot;,D.ID &quot;LDID&quot;
 FROM LOCK L

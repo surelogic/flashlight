@@ -1,10 +1,9 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes'?>
-<ad-hoc version='1.0' current='3'>
-  <query name='Show Tables'>show tables</query>
-  <query name='What static fields are shared? '>select
+<ad-hoc version='1.0' current='23'>
+  <query name='What static fields are shared?' meta-query-name='What threads access this field? (FIELDNAME)'>select
   O.PackageName &quot;Package__PACKAGE&quot;,
   O.ClassName &quot;Class__CLASS&quot;,
-  F.FieldName &quot;Field&quot;,
+  F.FieldName &quot;FieldName&quot;,
   THO.ThreadName &quot;Thread|&quot;,
   FS.ReadCount &quot;Read Count&quot;,
   FS.WriteCount &quot;Write Count&quot;
@@ -24,15 +23,13 @@ order by O.PackageName,O.ClassName,F.FieldName,THO.ThreadName</query>
   <query name='What instance fields are shared?'>select
   O.PackageName &quot;Package__PACKAGE&quot;,
   O.ClassName &quot;Class__CLASS&quot;,
-  F.FieldName &quot;Field&quot;,
+  F.FieldName &quot;FieldName&quot;,
   FI.Receiver &quot;Receiver&quot;,
   THO.ThreadName &quot;Thread|&quot;,
-  FI.ReadCount &quot;Read Count&quot;,
-  FI.WriteCount &quot;Write Count&quot;
--- Only for schema 17
---  ,
---  FI.ReadUCCount &quot;Reads Under Construction&quot;,
---  FI.WriteUCCount &quot;Writes Under Construction&quot;
+  FI.ReadUCCount + FI.ReadCount &quot;Reads&quot;,
+  FI.WriteUCCount + FI.WriteCount &quot;Writes&quot;,
+  FI.ReadUCCount &quot;Reads During Construction&quot;,
+  FI.WriteUCCount &quot;Writes During Construction&quot;
 from OBJECT O,
      FIELD F,
      FIELDINSTANCETHREAD FI,
@@ -46,85 +43,58 @@ where
   and THO.RUN = FI.RUN
   and THO.ID = FI.Thread
 order by O.PackageName,O.ClassName,F.FieldName,FI.Receiver,THO.ThreadName</query>
-  <query name='Show all threads'>
-select t.Id, t.ThreadName, cl.PackageName, cl.ClassName
+  <query name='What objects are threads?'>select t.Id, t.ThreadName, cl.PackageName &quot;Package__PACKAGE&quot;,
+       cl.ClassName &quot;Class__CLASS&quot;
 from OBJECT as t, OBJECT as cl   
 where t.ThreadName is not null
-and t.Run=?RUN?
-and cl.Run=?RUN?
-and t.Type=cl.Id</query>
-  <query name='What threads access this field? '>select distinct O.ThreadName &quot;Thread&quot;
-
-from OBJECT O,
-     ACCESS A,
-     FIELD F
-
-where O.Run = ?RUN?
-and A.Run = ?RUN?
-and F.Run = ?RUN?
-and F.FieldName = &apos;?FIELDNAME?&apos;
-and F.id = A.Field
-
-order by 1</query>
-  <query name='What threads use each lock? '>select distinct 
-&apos;Lock&apos; || CAST(l.lock AS CHAR(10)) &quot;LOCK ID&quot;, 
-O.THREADNAME &quot;THREAD NAME|&quot;
+  and t.Run=?RUN?
+  and cl.Run=?RUN?
+  and t.Type=cl.Id</query>
+  <query name='What threads use each lock?'>select 
+  L.LOCK &quot;Lock&quot;, 
+  O.THREADNAME &quot;Thread Name|&quot;,
+  count(*) &quot;Acquisition Count&quot;
 from LOCK L, OBJECT O
 where L.INTHREAD = O.ID
 and L.RUN = O.RUN
 and O.Run = ?RUN?
-order by 1, 2</query>
-  <query name='Show lock event'>
-select l.TS, t.ThreadName, l.Lock, lkType.ClassName as LockClass, 
-l.LockIsThis as IsThis, l.LockIsClass as IsClass,
-l.State, cl.PackageName, cl.ClassName, l.AtLine
-from LOCK as l, OBJECT as cl, OBJECT as lk, OBJECT as t, OBJECT as lkType
-where l.Run = ?RUN?
-and l.Id = ?LOCKEVENT?
-and cl.Run = ?RUN?
-and l.InClass = cl.Id
-and lk.Run = ?RUN?
-and l.Lock = lk.Id
-and t.Run = ?RUN?
-and l.InThread = t.Id
-and lkType.Run = ?RUN?
-and lk.Type = lkType.Id</query>
-  <query name='What locks are contended most? '>
-select Lock, sum(Duration) as BlockTime from LOCKDURATION    
+and L.STATE = &apos;AFTER ACQUISITION&apos;
+group by l.lock, O.THREADNAME
+order by 1, 2
+</query>
+  <query name='What locks are contended for the longest time?' meta-query-name='Which threads and what code are contending for a lock? (LOCK)'>select Lock, sum(Duration) as &quot;Block Time (ns)&quot;
+from LOCKDURATION    
 where State = &apos;BLOCKING&apos;
-and Run=?RUN?
+  and Run=?RUN?
 group by Lock
-order by BlockTime desc
+order by 2 desc
   </query>
-  <query name='Which threads/code are contending for that lock?'>      
-select le.InClass, le.AtLine,
-ld.InThread &quot;InThread|&quot;, 
-sum(ld.Duration) as BlockTime 
+  <query name='Which threads and what code are contending for a lock?'>select le.InClass &quot;InClass__CLASS&quot;, le.AtLine,
+  ld.InThread &quot;InThread|&quot;, 
+  sum(ld.Duration) as BlockTime 
 from LOCKDURATION as ld, LOCK as le  
 where ld.Run=?RUN?
-and ld.Lock=?LOCK?
-and ld.State = &apos;BLOCKING&apos;
-and le.Run=?RUN?
-and le.Id=ld.StartEvent
+  and ld.Lock=?LOCK?
+  and ld.State = &apos;BLOCKING&apos;
+  and le.Run=?RUN?
+  and le.Id=ld.StartEvent
 group by ld.InThread, ld.State, le.InClass, le.AtLine
 order by BlockTime desc
   </query>
-  <query name='When/where is this thread contending for that lock?'>
-select ld.StartEvent as LockEvent,
-ld.Start,ld.Duration 
+  <query name='When and where is this thread contending for that lock?'>select ld.StartEvent as LockEvent,
+   ld.Start,ld.Duration 
 from LOCKDURATION AS ld, LOCK as le
 where ld.State = &apos;BLOCKING&apos;
-and ld.Run=?RUN?
-and ld.Lock=?LOCK?
-and ld.InThread=?INTHREAD?
-and le.Run=?RUN?
-and le.Id=ld.StartEvent
-and le.InClass=?INCLASS?
-and le.AtLine=?ATLINE?
+  and ld.Run=?RUN?
+  and ld.Lock=?LOCK?
+  and ld.InThread=?INTHREAD?
+  and le.Run=?RUN?
+  and le.Id=ld.StartEvent
+  and le.InClass=?INCLASS?
+  and le.AtLine=?ATLINE?
 order by ld.Duration desc
   </query>
-  <query name='Who is interacting with that lock at that moment?'>
-select ld.InThread, ld.State, ld.Start, ld.Stop, ld.Duration, 
+  <query name='Who is interacting with that lock at that moment?'>select ld.InThread, ld.State, ld.Start, ld.Stop, ld.Duration, 
 ld.StartEvent as LockEvent
 from LOCK as le, LOCKDURATION AS ld
 where le.Run=?RUN?
@@ -134,24 +104,29 @@ and ld.Lock=?LOCK?
 and le.ts between ld.Start and ld.Stop
 order by ld.Start 
   </query>
-  <query name='Show when threads hold locks and acquire more'>
-select lh.LockEvent, count(LockHeld) as NumLocksHeld,
-le.InClass, le.AtLine
+  <query name='Where does a thread hold a lock and acquire another?'>select lh.LockEvent, count(LockHeld) &quot;Number of Locks Held&quot;,
+le.InClass &quot;InClass__CLASS&quot;, le.AtLine &quot;Line&quot;
 from LOCKSHELD as lh, LOCK as le
 where lh.Run=?RUN?
 and lh.LockEvent=le.Id
 and le.Run=?RUN?
 group by lh.LockEvent, le.InClass, le.AtLine
-order by NumLocksHeld desc, lh.LockEvent</query>
-  <query name='Show locks potentially involved in deadlock'>select Component, LockHeld &quot;LockHeld|&quot;,
-LockAcquired,
-Count, FirstTime, LastTime
+order by 2 desc, 1</query>
+  <query name='How are ReadWriteLock objects defined?'>select ID &quot;ReadWriteLock__FOLDER&quot;,
+       READLOCK &quot;ReadLock Object Id&quot;,
+       WRITELOCK &quot;WriteLock Object Id&quot; 
+from RWLOCK RWL
+where
+  RWL.Run = ?RUN?
+order by 1</query>
+  <query name='What locks could potentially cause deadlock?' meta-query-name='Show the lock events for a lock graph edge'>select Component, LockHeld &quot;LockHeld|&quot;,
+  LockAcquired,
+  Count, FirstTime, LastTime
 from lockcycle
 where run = ?RUN?
-and count &gt; 1
+  and count &gt; 1
 order by count desc</query>
-  <query name='Show the lock events for a lock graph edge'>
-select l.InClass, l.AtLine &quot;Line|&quot;, lh.LockEvent 
+  <query name='Show the lock events for a lock graph edge' meta-query-name='Show lock trace for a lock event'>select l.InClass, l.AtLine &quot;Line|&quot;, lh.LockEvent 
 from LOCKSHELD as lh, LOCK as l
 where lh.Run = ?RUN?
 and lh.LockHeld=?LOCKHELD?
@@ -160,30 +135,29 @@ and l.Run = ?RUN?
 and lh.LockEvent=l.Id
 order by l.InClass, l.AtLine, lh.LockEvent
   </query>
-  <query name='Show code potentially involved in deadlock'>
-select cl.PackageName &quot;Package__PACKAGE&quot;, 
-cl.ClassName &quot;Class__CLASS&quot;, 
-l.AtLine &quot;Line&quot;,
-lh.LockEvent &quot;LockEvent|&quot;
-from LOCKCYCLE as cy, LOCKSHELD as lh, LOCK as l, OBJECT as cl
-where cy.Run = ?RUN?
-and lh.Run = ?RUN?
-and cy.LockHeld = lh.LockHeld
-and cy.LockAcquired = lh.LockAcquired
-and l.Run = ?RUN?
-and lh.LockEvent = l.Id
-and cl.Run = ?RUN?
-and l.InClass = cl.Id
-order by cl.packagename, cl.classname, l.atline, lh.lockevent
-</query>
-  <query name='Show stack trace (for a lock event)'>select t.InFile, t.InClass, t.AtLine, t.Location, t.Start, t.Stop 
+  <query name='Show stack trace for a lock event'>select t.InFile &quot;InFile__CU&quot;, t.InClass &quot;InClass__CLASS&quot;, t.AtLine &quot;Line&quot;, t.Location &quot;Method&quot;, t.Start &quot;Start Time&quot;, t.Stop &quot;Stop Time&quot;
 from trace as t, lock as l
 where t.run = ?RUN?
 and l.run = ?RUN? and l.id = ?LOCKEVENT?
 and l.ts between t.start and t.stop
 order by t.start desc</query>
-  <query name='All accesses with more than 2 locks held'>SELECT * FROM ACCESS</query>
-  <query name='Instance Fields with a lock set' meta-query-name='Locks held for each access of an instance field'>SELECT 
+  <query name='Show lock trace for a lock event'>SELECT D.Lock &quot;LOCK&quot;, LO.PackageName &quot;Package__PACKAGE&quot;, LO.ClassName &quot;Class__CLASS&quot;, LL.AtLine &quot;Line&quot;,D.ID &quot;LDID&quot;
+FROM LOCK L
+ INNER JOIN LOCKDURATION D ON
+   D.InThread = L.InThread AND 
+   D.Run = L.Run AND 
+   L.TS &gt;= D.Start AND
+   L.TS &lt; D.Stop
+ INNER JOIN LOCK LL ON
+   LL.Run = D.Run AND 
+   LL.Id = D.Lock
+ INNER JOIN OBJECT LO ON
+   LO.Run = LL.Run AND
+   LL.InClass = LO.Id
+WHERE L.Run = ?RUN?
+  and L.Id = ?LOCKEVENT?
+ORDER BY D.START DESC</query>
+  <query name='What instance fields have a lock set?' meta-query-name='Locks held for each access of an instance field'>SELECT 
   O.PackageName &quot;Package__PACKAGE&quot;,
   O.ClassName &quot;Class__CLASS&quot;,
   FI.FieldName &quot;Field&quot;,
@@ -195,7 +169,7 @@ order by t.start desc</query>
    F.RUN = I.RUN AND F.FIELD = I.FIELD AND F.RECEIVER = I.RECEIVER 
  WHERE FI.RUN = ?RUN?
  ORDER BY O.PackageName,O.ClassName,FI.FieldName,I.Receiver</query>
-  <query name='Instance Fields with no lock set' meta-query-name='Locks held for each access of an instance field'>SELECT 
+  <query name='What instance fields have an empty lock set?' meta-query-name='Locks held for each access of an instance field'>SELECT 
   O.PackageName &quot;Package__PACKAGE&quot;,
   O.ClassName &quot;Class__CLASS&quot;,
   FI.FieldName &quot;Field&quot;,
@@ -240,7 +214,7 @@ FROM
   <query name='Thread counts for the instance field'>SELECT O.THREADNAME, F.READCOUNT, F.WRITECOUNT
  FROM FIELDINSTANCETHREAD F, OBJECT O
  WHERE F.FIELD = ?FIELDID? AND F.RECEIVER = ?RECEIVER? AND F.RUN = ?RUN? AND O.ID = F.THREAD</query>
-  <query name='Static fields with a lock set' meta-query-name='Locks held for each access of a static field'>SELECT 
+  <query name='What static fields have a lock set?' meta-query-name='Locks held for each access of a static field'>SELECT 
   O.PackageName &quot;Package__PACKAGE&quot;,
   O.ClassName &quot;Class__CLASS&quot;,
   FI.FieldName &quot;Field&quot;,
@@ -252,7 +226,7 @@ FROM
    F.RUN = I.RUN AND F.FIELD = I.FIELD
  WHERE FI.RUN = ?RUN?
  ORDER BY O.PackageName,O.ClassName,FI.FieldName</query>
-  <query name='Static Fields with no lock set' meta-query-name='Locks held for each access of a static field'>SELECT 
+  <query name='What static fields have an empty lock set?' meta-query-name='Locks held for each access of a static field'>SELECT 
   O.PackageName &quot;Package__PACKAGE&quot;,
   O.ClassName &quot;Class__CLASS&quot;,
   FI.FieldName &quot;Field&quot;,
@@ -295,21 +269,9 @@ FROM
   <query name='Thread counts for the static field'>SELECT O.THREADNAME, F.READCOUNT, F.WRITECOUNT
  FROM FIELDSTATICTHREAD F, OBJECT O
  WHERE F.FIELD = ?FIELDID? AND F.RUN = ?RUN? AND O.ID = F.THREAD</query>
-  <query name='GRAND Lock Sets for the set of interesting instance fields'>SELECT DISTINCT
-  O.PackageName &quot;Package__PACKAGE&quot;,
-  O.ClassName &quot;Class__CLASS&quot;,
-  FI.FieldName &quot;Field&quot;,
-  I.FIELD &quot;FieldId|&quot;,
-  F.LOCK 
- FROM OBJECT O
- INNER JOIN FIELD FI ON FI.DeclaringType = O.Id AND FI.RUN = ?RUN? 
- INNER JOIN INTERESTINGFIELD I ON I.RECEIVER IS NOT NULL AND I.FIELD=FI.ID
- LEFT OUTER JOIN FIELDLOCKSET F ON 
-   F.RUN = I.RUN AND F.FIELD = I.FIELD
- ORDER BY O.PackageName,O.ClassName,FI.FieldName</query>
   <query name='Trace from a lock duration'>(SELECT 
  CAST (&apos;In thread &apos; || THO.ThreadName || &apos;&quot; in &apos; || LO.PackageName || &apos;.&apos; || LO.ClassName || &apos; on line &apos; || TRIM(CAST(L.AtLine AS CHAR(10))) AS VARCHAR(1000)) &quot;Trace&quot;,
-  LO.PackageName &quot;Package&quot;, LO.ClassName &quot;Class&quot;, &apos;&apos; &quot;Location&quot;, L.AtLine &quot;Line&quot;, LD.Start &quot;Time&quot;
+  LO.PackageName &quot;Package__PACKAGE&quot;, LO.ClassName &quot;Class__CLASS&quot;, &apos;&apos; &quot;Location&quot;, L.AtLine &quot;Line&quot;, LD.Start &quot;Time&quot;
  FROM LOCKDURATION LD
   INNER JOIN LOCK L ON
    L.RUN = LD.RUN AND
@@ -325,7 +287,7 @@ FROM
 UNION
 (SELECT 
  CAST (&apos;at &apos; || O.ClassName || &apos;.&apos; || T.Location || &apos;(&apos; || T.InFile || &apos;:&apos; || TRIM(CAST(T.AtLine AS CHAR(10))) || &apos;)&apos; AS VARCHAR(1000)) &quot;Trace&quot;,
- O.PACKAGENAME &quot;Package&quot;, O.ClassName &quot;Class&quot;, T.LOCATION &quot;Location&quot;, T.AtLine &quot;Line&quot;, T.Start &quot;Time&quot;
+ O.PACKAGENAME &quot;Package__PACKAGE&quot;, O.ClassName &quot;Class__CLASS&quot;, T.LOCATION &quot;Location&quot;, T.AtLine &quot;Line&quot;, T.Start &quot;Time&quot;
  FROM LOCKDURATION LD
   INNER JOIN TRACE T ON
    (LD.START BETWEEN T.START AND T.STOP) AND
@@ -340,7 +302,7 @@ UNION
 ORDER BY &quot;Time&quot; DESC</query>
   <query name='Trace from an access'>(SELECT 
  CAST (&apos;In thread &apos; || THO.ThreadName || &apos; at &quot;&apos; || F.FIELDNAME || &apos;&quot; in &apos; || AO.PackageName || &apos;.&apos; || AO.ClassName || &apos; on line &apos; || TRIM(CAST(A.AtLine AS CHAR(10))) AS VARCHAR(1000)) &quot;Trace&quot;,
- AO.PackageName &quot;Package&quot;, AO.ClassName &quot;Class&quot;, F.FieldName &quot;Location&quot;, A.AtLine &quot;Line&quot;, A.TS &quot;Time&quot;
+ AO.PackageName &quot;Package__PACKAGE&quot;, AO.ClassName &quot;Class__CLASS&quot;, F.FieldName &quot;Location&quot;, A.AtLine &quot;Line&quot;, A.TS &quot;Time&quot;
  FROM ACCESS A
   INNER JOIN FIELD F ON
    F.RUN = A.RUN AND
@@ -357,7 +319,7 @@ ORDER BY &quot;Time&quot; DESC</query>
 UNION
 (SELECT
  CAST (&apos;at &apos; || O.ClassName || &apos;.&apos; || T.Location || &apos;(&apos; || T.InFile || &apos;:&apos; || TRIM(CAST(T.AtLine AS CHAR(10))) || &apos;)&apos; AS VARCHAR(1000)) &quot;Trace&quot;,
- O.PACKAGENAME &quot;Package&quot;, O.ClassName &quot;Class&quot;, T.LOCATION &quot;Location&quot;, T.AtLine &quot;Line&quot;, T.Start &quot;Time&quot;
+ O.PACKAGENAME &quot;Package__PACKAGE&quot;, O.ClassName &quot;Class__CLASS&quot;, T.LOCATION &quot;Location&quot;, T.AtLine &quot;Line&quot;, T.Start &quot;Time&quot;
  FROM ACCESS A
   INNER JOIN TRACE T ON
    (A.TS BETWEEN T.START AND T.STOP) AND
@@ -371,4 +333,19 @@ UNION
 )
 ORDER BY &quot;Time&quot; DESC
 </query>
+  <query name='Show lock event'>select l.TS, t.ThreadName, l.Lock, lkType.ClassName as LockClass, 
+l.LockIsThis as IsThis, l.LockIsClass as IsClass,
+l.State, cl.PackageName, cl.ClassName, l.AtLine
+from LOCK as l, OBJECT as cl, OBJECT as lk, OBJECT as t, OBJECT as lkType
+where l.Run = ?RUN?
+and l.Id = ?LOCKEVENT?
+and cl.Run = ?RUN?
+and l.InClass = cl.Id
+and lk.Run = ?RUN?
+and l.Lock = lk.Id
+and t.Run = ?RUN?
+and l.InThread = t.Id
+and lkType.Run = ?RUN?
+and lk.Type = lkType.Id</query>
+  <query name='show all tables'>show tables</query>
 </ad-hoc>

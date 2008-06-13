@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes'?>
-<ad-hoc version='1.0' current='27'>
+<ad-hoc version='1.0' current='13'>
   <query name='What static fields are shared?' meta-query-name='What threads access this field? (FIELDNAME)'>select
   O.PackageName &quot;Package__PACKAGE&quot;,
   O.ClassName &quot;Class__CLASS&quot;,
@@ -163,19 +163,19 @@ UNION
  )
 ORDER BY &quot;Time&quot; DESC
 </query>
-  <query name='Show lock trace for a lock event'>SELECT D.Lock &quot;LOCK&quot;, LO.PackageName &quot;Package__PACKAGE&quot;, LO.ClassName &quot;Class__CLASS&quot;, LL.AtLine &quot;Line&quot;,D.ID &quot;LDID&quot;
+  <query name='Show lock trace for a lock event'>SELECT D.Lock &quot;LOCK&quot;, LO.PackageName &quot;Package__PACKAGE&quot;, LO.ClassName &quot;Class__CLASS&quot;, LL.AtLine &quot;Line&quot;
 FROM LOCK L
  INNER JOIN LOCKDURATION D ON
    D.InThread = L.InThread AND 
    D.Run = L.Run AND 
-   L.TS &gt; D.Start AND
+   L.TS &gt;= D.Start AND
    L.TS &lt; D.Stop
  INNER JOIN LOCK LL ON
    LL.Run = D.Run AND 
-   LL.Id = D.Lock
+   LL.Id = D.StartEvent
  INNER JOIN OBJECT LO ON
    LO.Run = LL.Run AND
-   LL.InClass = LO.Id
+   LO.ID = LL.InClass
 WHERE L.Run = ?RUN?
   and L.Id = ?LOCKEVENT?
 ORDER BY D.START DESC</query>
@@ -369,5 +369,5 @@ and t.Run = ?RUN?
 and l.InThread = t.Id
 and lkType.Run = ?RUN?
 and lk.Type = lkType.Id</query>
-  <query name='show all tables'>show tables</query>
+  <query name='show all tables'>select * from FLASHLIGHT.LOCK</query>
 </ad-hoc>

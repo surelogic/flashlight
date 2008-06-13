@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes'?>
-<ad-hoc version='1.0' current='13'>
+<ad-hoc version='1.0' current='19'>
   <query name='What static fields are shared?' meta-query-name='What threads access this field? (FIELDNAME)'>select
   O.PackageName &quot;Package__PACKAGE&quot;,
   O.ClassName &quot;Class__CLASS&quot;,
@@ -163,7 +163,7 @@ UNION
  )
 ORDER BY &quot;Time&quot; DESC
 </query>
-  <query name='Show lock trace for a lock event'>SELECT D.Lock &quot;LOCK&quot;, LO.PackageName &quot;Package__PACKAGE&quot;, LO.ClassName &quot;Class__CLASS&quot;, LL.AtLine &quot;Line&quot;
+  <query name='Show lock trace for a lock event'>SELECT D.Lock &quot;LOCK&quot;, LO.PackageName &quot;Package__PACKAGE&quot;, LO.ClassName &quot;Class__CLASS&quot;, LL.AtLine &quot;Line&quot;, D.Start &quot;Time&quot;
 FROM LOCK L
  INNER JOIN LOCKDURATION D ON
    D.InThread = L.InThread AND 
@@ -203,7 +203,7 @@ ORDER BY D.START DESC</query>
    F.RUN = I.RUN AND F.FIELD = I.FIELD AND F.RECEIVER = I.RECEIVER 
  WHERE FI.RUN = ?RUN? AND F.LOCK IS NULL
  ORDER BY O.PackageName, O.ClassName, FI.FieldName</query>
-  <query name='Locks held for each access of an instance field' meta-query-name='Trace from an access'>SELECT O.THREADNAME &quot;THREAD&quot;,A.TS &quot;TIME&quot;,D.Lock &quot;LOCK|&quot;,LO.PackageName &quot;Package__PACKAGE&quot;, LO.ClassName &quot;Class__CLASS&quot;, L.AtLine &quot;Line&quot;,D.ID &quot;LDID&quot;,A.ID &quot;AID&quot;
+  <query name='What locks are held for each access of this instance field?' meta-query-name='Trace from an access'>SELECT O.THREADNAME &quot;THREAD&quot;,A.TS &quot;TIME&quot;,D.Lock &quot;LOCK|&quot;,LO.PackageName &quot;Package__PACKAGE&quot;, LO.ClassName &quot;Class__CLASS&quot;, L.AtLine &quot;Line&quot;,D.ID &quot;LDID&quot;,A.ID &quot;AID&quot;
  FROM ACCESS A
  INNER JOIN OBJECT O ON
    O.Run = A.Run AND 
@@ -224,7 +224,7 @@ WHERE
    A.RUN=?RUN?
 ORDER BY O.THREADNAME ASC, A.TS ASC, D.Start DESC
 </query>
-  <query name='Lock frequencies for an instance field' meta-query-name='Interesting Fields'>SELECT LOCKS.*, CAST ((CAST (LOCKS.&quot;Lock Count&quot; AS FLOAT)) / (CAST (ACCESSES.ACCESSCOUNT AS FLOAT)) AS DECIMAL (4,3)) &quot;Frequency&quot;
+  <query name='How often is a lock held when this instance field is accessed?' meta-query-name='Interesting Fields'>SELECT LOCKS.*, CAST ((CAST (LOCKS.&quot;Lock Count&quot; AS FLOAT)) / (CAST (ACCESSES.ACCESSCOUNT AS FLOAT)) AS DECIMAL (4,3)) &quot;Frequency&quot;
 FROM
 (SELECT D.Lock &quot;Lock&quot;,RW.ID &quot;R/W Lock&quot;, COUNT(D.Lock) &quot;Lock Count&quot;
  FROM ACCESS A
@@ -233,9 +233,38 @@ FROM
     WHERE A.RUN=?RUN? AND A.FIELD = ?FIELDID? AND A.RECEIVER = ?RECEIVER?
  GROUP BY D.LOCK,RW.ID) AS LOCKS,
 (SELECT COUNT(*) &quot;ACCESSCOUNT&quot; FROM ACCESS A WHERE A.RUN=?RUN? AND A.FIELD = ?FIELDID? AND A.RECEIVER = ?RECEIVER?) AS ACCESSES</query>
-  <query name='Thread counts for the instance field'>SELECT O.THREADNAME, F.READCOUNT, F.WRITECOUNT
- FROM FIELDINSTANCETHREAD F, OBJECT O
- WHERE F.FIELD = ?FIELDID? AND F.RECEIVER = ?RECEIVER? AND F.RUN = ?RUN? AND O.ID = F.THREAD</query>
+  <query name='What threads read and write this instance field?'>SELECT
+  CO.PackageName &quot;Package__PACKAGE&quot;,
+  CO.ClassName   &quot;Class__CLASS&quot;,
+  F.FieldName    &quot;FieldName&quot;,
+  THO.ThreadName &quot;Thread|&quot;,
+  FI.ReadUCCount + FI.ReadCount &quot;Reads&quot;,
+  FI.WriteUCCount + FI.WriteCount &quot;Writes&quot;,
+  FI.ReadUCCount &quot;Reads During Construction&quot;,
+  FI.WriteUCCount &quot;Writes During Construction&quot;
+ FROM FIELDINSTANCETHREAD FI, OBJECT THO, FIELD F, OBJECT CO
+ WHERE FI.FIELD = ?FIELDID? AND 
+   FI.RECEIVER = ?RECEIVER? AND 
+   FI.RUN = ?RUN? AND 
+   THO.ID = FI.THREAD AND 
+   THO.RUN = FI.RUN AND
+   F.RUN = FI.RUN AND
+   F.ID = FI.FIELD AND
+   CO.RUN = F.RUN AND
+   CO.ID = F.DECLARINGTYPE</query>
+  <query name='Where is this instance field accessed?'>SELECT CO.PackageName &quot;Package__PACKAGE&quot;, CO.ClassName &quot;Class__CLASS&quot;, O.THREADNAME &quot;THREAD&quot;,A.TS &quot;TIME|&quot;, A.AtLine &quot;Line&quot;,A.ID &quot;AID&quot;
+ FROM ACCESS A
+ INNER JOIN OBJECT O ON
+   O.Run = A.Run AND 
+   O.Id = A.InThread 
+ INNER JOIN OBJECT CO ON
+   CO.Run = A.Run AND
+   CO.Id = A.InClass
+WHERE 
+   A.FIELD = ?FIELDID? AND 
+   A.RECEIVER = ?RECEIVER? AND 
+   A.RUN=?RUN?
+ORDER BY O.THREADNAME, A.TS ASC</query>
   <query name='What static fields have a lock set?' meta-query-name='Locks held for each access of a static field'>SELECT 
   O.PackageName &quot;Package__PACKAGE&quot;,
   O.ClassName &quot;Class__CLASS&quot;,
@@ -260,7 +289,7 @@ FROM
    F.RUN = I.RUN AND F.FIELD = I.FIELD
  WHERE FI.RUN = ?RUN? AND F.LOCK IS NULL
  ORDER BY O.PackageName,O.ClassName,FI.FieldName</query>
-  <query name='Locks held for each access of a static field' meta-query-name='Trace from an access'>SELECT O.THREADNAME &quot;THREAD&quot;,A.TS &quot;TIME&quot;,D.Lock &quot;LOCK|&quot;,LO.PackageName &quot;Package__PACKAGE&quot;, LO.ClassName &quot;Class__CLASS&quot;, L.AtLine &quot;Line&quot;,D.ID &quot;LDID&quot;,A.ID &quot;AID&quot;
+  <query name='What locks are held for each access of this static field?' meta-query-name='Trace from an access'>SELECT O.THREADNAME &quot;THREAD&quot;,A.TS &quot;TIME&quot;,D.Lock &quot;LOCK|&quot;,LO.PackageName &quot;Package__PACKAGE&quot;, LO.ClassName &quot;Class__CLASS&quot;, L.AtLine &quot;Line&quot;,D.ID &quot;LDID&quot;,A.ID &quot;AID&quot;
  FROM ACCESS A
  INNER JOIN OBJECT O ON
    O.Run = A.Run AND 
@@ -280,7 +309,7 @@ WHERE
    A.RUN=?RUN? AND
    A.RECEIVER IS NULL
 ORDER BY O.THREADNAME ASC, A.TS ASC, D.Start DESC</query>
-  <query name='Show lock held counts for a static field'>SELECT LOCKS.*, (CAST (LOCKS.LOCKCOUNT AS FLOAT)) / (CAST (ACCESSES.ACCESSCOUNT AS FLOAT))
+  <query name='How often is a lock held when this static field is accessed?'>SELECT LOCKS.*, (CAST (LOCKS.LOCKCOUNT AS FLOAT)) / (CAST (ACCESSES.ACCESSCOUNT AS FLOAT))
 FROM
 (SELECT D.Lock &quot;LOCK&quot;,COUNT(D.Lock) &quot;LOCKCOUNT&quot;
  FROM ACCESS A
@@ -288,10 +317,36 @@ FROM
     WHERE A.RUN=?RUN? AND A.FIELD = ?FIELDID? AND A.RECEIVER IS NULL
  GROUP BY D.LOCK) AS LOCKS,
 (SELECT COUNT(*) &quot;ACCESSCOUNT&quot; FROM ACCESS A WHERE A.RUN=?RUN? AND A.FIELD = ?FIELDID? AND A.RECEIVER IS NULL) AS ACCESSES</query>
-  <query name='Thread counts for the static field'>SELECT O.THREADNAME, F.READCOUNT, F.WRITECOUNT
- FROM FIELDSTATICTHREAD F, OBJECT O
- WHERE F.FIELD = ?FIELDID? AND F.RUN = ?RUN? AND O.ID = F.THREAD</query>
-  <query name='Trace from a lock duration'>(SELECT 
+  <query name='What threads read and write a static field?'>SELECT
+  CO.PackageName &quot;Package__PACKAGE&quot;,
+  CO.ClassName   &quot;Class__CLASS&quot;,
+  F.FieldName    &quot;FieldName&quot;,
+  THO.ThreadName &quot;Thread|&quot;,
+  FI.ReadCount &quot;Reads&quot;,
+  FI.WriteCount &quot;Writes&quot;
+ FROM FIELDSTATICTHREAD FI, OBJECT THO, FIELD F, OBJECT CO
+ WHERE FI.FIELD = ?FIELDID? AND 
+   FI.RUN = ?RUN? AND 
+   THO.ID = FI.THREAD AND 
+   THO.RUN = FI.RUN AND
+   F.RUN = FI.RUN AND
+   F.ID = FI.FIELD AND
+   CO.RUN = F.RUN AND
+   CO.ID = F.DECLARINGTYPE</query>
+  <query name='Where is this static field accessed?'>SELECT CO.PackageName &quot;Package__PACKAGE&quot;, CO.ClassName &quot;Class__CLASS&quot;, O.THREADNAME &quot;THREAD&quot;,A.TS &quot;TIME|&quot;, A.AtLine &quot;Line&quot;,A.ID &quot;AID&quot;
+ FROM ACCESS A
+ INNER JOIN OBJECT O ON
+   O.Run = A.Run AND 
+   O.Id = A.InThread 
+ INNER JOIN OBJECT CO ON
+   CO.Run = A.Run AND
+   CO.Id = A.InClass
+WHERE 
+   A.FIELD = ?FIELDID? AND 
+   A.RECEIVER IS NULL AND 
+   A.RUN=?RUN?
+ORDER BY O.THREADNAME, A.TS ASC</query>
+  <query name='Trace from a lock duration (LDID)'>(SELECT 
  CAST (&apos;In thread &apos; || THO.ThreadName || &apos;&quot; in &apos; || LO.PackageName || &apos;.&apos; || LO.ClassName || &apos; on line &apos; || TRIM(CAST(L.AtLine AS CHAR(10))) AS VARCHAR(1000)) &quot;Trace&quot;,
   LO.PackageName &quot;Package__PACKAGE&quot;, LO.ClassName &quot;Class__CLASS&quot;, &apos;&apos; &quot;Location&quot;, L.AtLine &quot;Line&quot;, LD.Start &quot;Time&quot;
  FROM LOCKDURATION LD
@@ -322,7 +377,7 @@ UNION
    LD.ID = ?LDID? 
  )
 ORDER BY &quot;Time&quot; DESC</query>
-  <query name='Trace from an access'>(SELECT 
+  <query name='Trace from an access (AID)'>(SELECT 
  CAST (&apos;In thread &apos; || THO.ThreadName || &apos; at &quot;&apos; || F.FIELDNAME || &apos;&quot; in &apos; || AO.PackageName || &apos;.&apos; || AO.ClassName || &apos; on line &apos; || TRIM(CAST(A.AtLine AS CHAR(10))) AS VARCHAR(1000)) &quot;Trace&quot;,
  AO.PackageName &quot;Package__PACKAGE&quot;, AO.ClassName &quot;Class__CLASS&quot;, F.FieldName &quot;Location&quot;, A.AtLine &quot;Line&quot;, A.TS &quot;Time&quot;
  FROM ACCESS A
@@ -355,7 +410,7 @@ UNION
 )
 ORDER BY &quot;Time&quot; DESC
 </query>
-  <query name='Show lock event'>select l.TS, t.ThreadName, l.Lock, lkType.ClassName as LockClass, 
+  <query name='Show this lock event'>select l.TS, t.ThreadName, l.Lock, lkType.ClassName as LockClass, 
 l.LockIsThis as IsThis, l.LockIsClass as IsClass,
 l.State, cl.PackageName, cl.ClassName, l.AtLine
 from LOCK as l, OBJECT as cl, OBJECT as lk, OBJECT as t, OBJECT as lkType

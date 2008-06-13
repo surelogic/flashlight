@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes'?>
-<ad-hoc version='1.0' current='3'>
+<ad-hoc version='1.0' current='27'>
   <query name='What static fields are shared?' meta-query-name='What threads access this field? (FIELDNAME)'>select
   O.PackageName &quot;Package__PACKAGE&quot;,
   O.ClassName &quot;Class__CLASS&quot;,
@@ -134,18 +134,41 @@ where lh.Run = ?RUN?
   and lh.LockEvent=l.Id
 order by l.InClass, l.AtLine, lh.LockEvent
   </query>
-  <query name='Show stack trace for a lock event'>select t.InFile &quot;InFile__CU&quot;, t.InClass &quot;InClass__CLASS&quot;, t.AtLine &quot;Line&quot;, t.Location &quot;Method&quot;, t.Start &quot;Start Time&quot;, t.Stop &quot;Stop Time&quot;
-from trace as t, lock as l
-where t.run = ?RUN?
-  and l.run = ?RUN? and l.id = ?LOCKEVENT?
-  and l.ts between t.start and t.stop
-order by t.start desc</query>
+  <query name='Show stack trace for a lock event'>(SELECT 
+ CAST (&apos;In thread &apos; || THO.ThreadName || &apos;&quot; in &apos; || LO.PackageName || &apos;.&apos; || LO.ClassName || &apos; on line &apos; || TRIM(CAST(L.AtLine AS CHAR(10))) AS VARCHAR(1000)) &quot;Trace&quot;,
+  LO.PackageName &quot;Package__PACKAGE&quot;, LO.ClassName &quot;Class__CLASS&quot;, &apos;&apos; &quot;Location&quot;, L.AtLine &quot;Line&quot;, L.TS &quot;Time&quot;
+  FROM LOCK L
+  INNER JOIN OBJECT LO ON
+   LO.RUN = L.RUN AND
+   LO.ID = L.INCLASS
+  INNER JOIN OBJECT THO ON
+   THO.RUN = L.RUN AND
+   THO.ID = L.INTHREAD
+ WHERE 
+   L.ID = ?LOCKEVENT? AND L.RUN = ?RUN?)
+UNION
+(SELECT 
+ CAST (&apos;at &apos; || O.ClassName || &apos;.&apos; || T.Location || &apos;(&apos; || T.InFile || &apos;:&apos; || TRIM(CAST(T.AtLine AS CHAR(10))) || &apos;)&apos; AS VARCHAR(1000)) &quot;Trace&quot;,
+ O.PACKAGENAME &quot;Package__PACKAGE&quot;, O.ClassName &quot;Class__CLASS&quot;, T.LOCATION &quot;Location&quot;, T.AtLine &quot;Line&quot;, T.Start &quot;Time&quot;
+ FROM LOCK L
+  INNER JOIN TRACE T ON
+   (L.TS BETWEEN T.START AND T.STOP) AND
+   T.INTHREAD = L.INTHREAD AND
+   T.RUN = L.RUN
+  INNER JOIN OBJECT O ON
+   O.RUN = T.RUN AND 
+   O.ID = T.InClass
+ WHERE 
+   L.ID = ?LOCKEVENT? AND L.RUN = ?RUN? 
+ )
+ORDER BY &quot;Time&quot; DESC
+</query>
   <query name='Show lock trace for a lock event'>SELECT D.Lock &quot;LOCK&quot;, LO.PackageName &quot;Package__PACKAGE&quot;, LO.ClassName &quot;Class__CLASS&quot;, LL.AtLine &quot;Line&quot;,D.ID &quot;LDID&quot;
 FROM LOCK L
  INNER JOIN LOCKDURATION D ON
    D.InThread = L.InThread AND 
    D.Run = L.Run AND 
-   L.TS &gt;= D.Start AND
+   L.TS &gt; D.Start AND
    L.TS &lt; D.Stop
  INNER JOIN LOCK LL ON
    LL.Run = D.Run AND 

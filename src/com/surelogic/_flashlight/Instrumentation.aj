@@ -190,13 +190,10 @@ public aspect Instrumentation {
 			final JoinPoint.StaticPart jpsp,
 			final JoinPoint.StaticPart enclosing) {
 		final Signature enclosingSignature = enclosing.getSignature();
-		final ConstructorSignature constructorSignature = (ConstructorSignature) jpsp
-				.getSignature();
-		final Constructor constructor = constructorSignature.getConstructor();
 		final SourceLocation sl = jpsp.getSourceLocation();
 		final String enclosingLocationName = enclosingSignature.getName();
 		final String enclosingFileName = sl.getFileName();
-		Store.constructorCall(before, constructor, enclosingFileName,
+		Store.constructorCall(before, enclosingFileName,
 				enclosingLocationName, sl.getWithinType(), sl.getLine());
 	}
 

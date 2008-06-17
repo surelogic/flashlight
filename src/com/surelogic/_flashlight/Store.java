@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.text.SimpleDateFormat;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -433,8 +432,6 @@ public final class Store {
 	 * @param before
 	 *            {@code true} indicates <i>before</i> the constructor call,
 	 *            {@code false} indicates <i>after</i> the constructor call.
-	 * @param constructor
-	 *            the constructor being called.
 	 * @param enclosingFileName
 	 *            the name of the file where the constructor call occurred.
 	 * @param enclosingLocationName
@@ -446,9 +443,8 @@ public final class Store {
 	 *            the line number where the event occurred.
 	 */
 	public static void constructorCall(final boolean before,
-			final Constructor constructor, final String enclosingFileName,
-			final String enclosingLocationName, Class<?> withinClass,
-			final int line) {
+			final String enclosingFileName, final String enclosingLocationName,
+			Class<?> withinClass, final int line) {
 		if (f_flashlightIsNotInitialized)
 			return;
 		if (FL_OFF.get())
@@ -459,26 +455,14 @@ public final class Store {
 		try {
 			final SrcLoc location = new SrcLoc(withinClass, line);
 			if (DEBUG) {
-				final String fmt = "Store.constructorCall(%n\t\t%s%n\t\tconstructor=%s%n\t\tenclosingFileName=%s%n\t\tenclosingLocationName=%s%n\t\tlocation=%s)";
+				final String fmt = "Store.constructorCall(%n\t\t%s%n\t\tenclosingFileName=%s%n\t\tenclosingLocationName=%s%n\t\tlocation=%s)";
 				log(String.format(fmt, before ? "before" : "after",
-						constructor, enclosingFileName, enclosingLocationName,
-						location));
+						enclosingFileName, enclosingLocationName, location));
 			}
 			/*
 			 * Check that the parameters are valid, gather needed information,
 			 * and put an event in the raw queue.
 			 */
-			if (constructor == null) {
-				/*
-				 * We really only trace the call, however, let's report a
-				 * problem if the instrumentation gave us a null reference to
-				 * the constructor object.
-				 */
-				final String fmt = "constructor cannot be null...instrumentation bug detected by Store.constructorCall(%s, constructor=%s, enclosingFileName=%s, enclosingLocationName=%s, location=%s)";
-				logAProblem(String.format(fmt, before ? "before" : "after",
-						constructor, enclosingFileName, enclosingLocationName,
-						location));
-			}
 			final Event e;
 			if (before)
 				e = new BeforeTrace(enclosingFileName, enclosingLocationName,

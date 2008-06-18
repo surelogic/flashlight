@@ -1,5 +1,5 @@
+package com.surelogic._flashlight.rewriter.test;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 
 public class DebugStore {

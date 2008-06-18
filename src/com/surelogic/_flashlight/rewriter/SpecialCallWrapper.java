@@ -12,9 +12,9 @@ final class SpecialCallWrapper extends MethodCallWrapper {
   
   
   
-  public SpecialCallWrapper(final String owner, final String originalName,
-      final String originalSignature, final int opcode) {
-    super(owner, originalName, originalSignature, opcode, true);
+  public SpecialCallWrapper(
+      final String owner, final String originalName, final String originalSignature) {
+    super(owner, originalName, originalSignature, Opcodes.INVOKESPECIAL, true);
   }
 
   

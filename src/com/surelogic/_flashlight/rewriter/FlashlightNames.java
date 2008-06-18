@@ -10,23 +10,37 @@ import org.objectweb.asm.Opcodes;
 final class FlashlightNames {
   // Constants for accessing the special Flashlight Store class
   public static final String FLASHLIGHT_STORE = "com/surelogic/_flashlight/rewriter/test/DebugStore";
+  
   public static final String AFTER_INTRINSIC_LOCK_ACQUISITION = "afterIntrinsicLockAcquisition";
   public static final String AFTER_INTRINSIC_LOCK_ACQUISITION_SIGNATURE = "(Ljava/lang/Object;Ljava/lang/Class;I)V";
+  
   public static final String AFTER_INTRINSIC_LOCK_RELEASE = "afterIntrinsicLockRelease";
   public static final String AFTER_INTRINSIC_LOCK_RELEASE_SIGNATURE = "(Ljava/lang/Object;Ljava/lang/Class;I)V";
+  
   public static final String AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT = "afterUtilConcurrentLockAcquisitionAttempt";
   public static final String AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT_SIGNATURE = "(ZLjava/lang/Object;Ljava/lang/Class;I)V";
+  
   public static final String AFTER_UTIL_CONCURRENT_LOCK_RELEASE_ATTEMPT = "afterUtilConcurrentLockReleaseAttempt";
   public static final String AFTER_UTIL_CONCURRENT_LOCK_RELEASE_ATTEMPT_SIGNATURE = "(ZLjava/lang/Object;Ljava/lang/Class;I)V";
+  
   public static final String BEFORE_INTRINSIC_LOCK_ACQUISITION = "beforeIntrinsicLockAcquisition";
   public static final String BEFORE_INTRINSIC_LOCK_ACQUISITION_SIGNATURE = "(Ljava/lang/Object;ZZLjava/lang/Class;I)V";
+  
   public static final String BEFORE_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT = "beforeUtilConcurrentLockAcquisitionAttempt";
   public static final String BEFORE_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT_SIGNATURE = "(Ljava/lang/Object;Ljava/lang/Class;I)V";
   
+  public static final String CONSTRUCTOR_CALL = "constructorCall";
+  public static final String CONSTRUCTOR_CALL_SIGNATURE = "(ZLjava/lang/String;Ljava/lang/String;Ljava/lang/Class;I)V";
+
+  public static final String CONSTRUCTOR_EXECUTION = "constructorExecution";
+  public static final String CONSTRUCTOR_EXECUTION_SIGNATURE = "(ZLjava/lang/Object;Ljava/lang/Class;I)V";
+  
   public static final String FIELD_ACCESS = "fieldAccess";
   public static final String FIELD_ACCESS_SIGNATURE = "(ZLjava/lang/Object;Ljava/lang/reflect/Field;Ljava/lang/Class;I)V";
+  
   public static final String INTRINSIC_LOCK_WAIT = "intrinsicLockWait";
   public static final String INTRINSIC_LOCK_WAIT_SIGNATURE = "(ZLjava/lang/Object;Ljava/lang/Class;I)V";
+  
   public static final String METHOD_CALL = "methodCall";
   public static final String METHOD_CALL_SIGNATURE = "(ZLjava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;I)V";
   

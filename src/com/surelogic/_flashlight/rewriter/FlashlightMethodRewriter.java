@@ -8,11 +8,29 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
+import com.surelogic._flashlight.rewriter.ConstructorInitStateMachine.Callback;
+
 final class FlashlightMethodRewriter extends MethodAdapter {
   private static final String ENCLOSING_THIS_PREFIX = "this$";
   
   private static final String CLASS_INITIALIZER = "<clinit>";
   private static final String INITIALIZER = "<init>";
+  
+  
+  
+  /**
+   * Call back for the constructor initialization state machine.
+   * Clears the machine, and 
+   * inserts the constructor execution begin event into the constructor code.
+   */
+  private final class ObjectInitCallback implements Callback {
+    public void superConstructorCalled() {
+      stateMachine = null;
+      if (Properties.REWRITE_CONSTRUCTOR_EXECUTION) {
+        insertConstructorExecutionPrefix();
+      }
+    }
+  }
   
   
 
@@ -66,15 +84,24 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   
   /**
    * Label for the start of the original method code, used for rewriting
-   * synchronized methods 
+   * constructors and synchronized methods.
    */
   private Label startOfOriginalMethod = null;
+  
   /**
    * Label marking the end of the original method code (including the 
-   * inserted flashlight exception handler), used for rewriting synchronized
+   * inserted flashlight exception handler), used for rewriting constructors and synchronized
    * methods.
    */
   private Label endOfOriginalBody_startOfExceptionHandler = null;
+  
+  /**
+   * If {@link #isConstructor} is <code>true</code>, this is initialized to
+   * a state machine that fires after the super constructor call has been
+   * detected; see {@link ObjectInitCallback}.  This field is nulled once
+   * the call has been detected.
+   */
+  private ConstructorInitStateMachine stateMachine = null;
   
   
   
@@ -116,6 +143,12 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     wrapperMethods = wrappers;
     wasSynchronized = (access & Opcodes.ACC_SYNCHRONIZED) != 0;
     isStatic = (access & Opcodes.ACC_STATIC) != 0;
+    
+    if (isConstructor) {
+      stateMachine = new ConstructorInitStateMachine(new ObjectInitCallback());
+    } else {
+      stateMachine = null;
+    }
   }
   
   
@@ -139,6 +172,16 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   }
   
   @Override
+  public void visitTypeInsn(final int opcode, final String type) {
+//    if (opcode == Opcodes.NEW) {
+//      rewriteNew(type);
+//    } else {
+      mv.visitTypeInsn(opcode, type);
+//    }
+    if (stateMachine != null) stateMachine.visitTypeInsn(opcode, type);
+  }
+  
+  @Override
   public void visitInsn(final int opcode) {
     if (opcode == Opcodes.MONITORENTER && Properties.REWRITE_MONITORENTER) {
       rewriteMonitorenter();
@@ -148,10 +191,16 @@ final class FlashlightMethodRewriter extends MethodAdapter {
       if (wasSynchronized && Properties.REWRITE_SYNCHRONIZED_METHOD) {
         insertSynchronizedMethodExit();
       }
+      if (isConstructor && Properties.REWRITE_CONSTRUCTOR_EXECUTION) {
+        insertConstructorExecution(false);
+        // Max Stack height is already updated because insertConstructorExecutionPrefix() must have been run 
+      }
       mv.visitInsn(opcode);
     } else {
       mv.visitInsn(opcode);
     }
+
+    if (stateMachine != null) stateMachine.visitInsn(opcode);
   }
   
   @Override
@@ -168,6 +217,8 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     } else {
       mv.visitFieldInsn(opcode, owner, name, desc);
     }
+    
+    if (stateMachine != null) stateMachine.visitFieldInsn(opcode, owner, name, desc);    
   }
 
   @Override
@@ -179,15 +230,21 @@ final class FlashlightMethodRewriter extends MethodAdapter {
       if (!name.equals(FlashlightNames.CONSTRUCTOR)) {
         rewriteMethodCall(Opcodes.INVOKESPECIAL, owner, name, desc);
       } else {
-        mv.visitMethodInsn(opcode, owner, name, desc);
+        if (Properties.REWRITE_INIT) {
+          rewriteConstructorCall(owner, name, desc);
+        } else {
+          mv.visitMethodInsn(opcode, owner, name, desc);
+        }
       }
     } else if (opcode == Opcodes.INVOKEINTERFACE && Properties.REWRITE_INVOKEINTERFACE) {
       rewriteMethodCall(Opcodes.INVOKEINTERFACE, owner, name, desc);
     } else if (opcode == Opcodes.INVOKESTATIC && Properties.REWRITE_INVOKESTATIC) {
       rewriteMethodCall(Opcodes.INVOKESTATIC, owner, name, desc);
-    } else {
+    } else { // Unknown, but safe
       mv.visitMethodInsn(opcode, owner, name, desc);
     }
+
+    if (stateMachine != null) stateMachine.visitMethodInsn(opcode, owner, name, desc);
   }
   
   @Override
@@ -201,9 +258,63 @@ final class FlashlightMethodRewriter extends MethodAdapter {
       insertSynchronizedMethodPostfix();
     }
     
-    super.visitMaxs(maxStack + stackDepthDelta, maxLocals);
+    if (isConstructor && Properties.REWRITE_CONSTRUCTOR_EXECUTION) {
+      insertConstructorExecutionPostfix();
+    }
+    
+    mv.visitMaxs(maxStack + stackDepthDelta, maxLocals);
   }
 
+  @Override
+  public void visitIntInsn(final int opcode, final int operand) {
+    if (stateMachine != null) stateMachine.visitIntInsn(opcode, operand);
+    mv.visitIntInsn(opcode, operand);
+  }
+  
+  @Override
+  public void visitJumpInsn(final int opcode, final Label label) {
+    if (stateMachine != null) stateMachine.visitJumpInsn(opcode, label);
+    mv.visitJumpInsn(opcode, label);
+  }
+  
+  @Override
+  public void visitLabel(final Label label) {
+    if (stateMachine != null) stateMachine.visitLabel(label);
+    mv.visitLabel(label);
+  }
+  
+  @Override
+  public void visitLdcInsn(final Object cst) {
+    if (stateMachine != null) stateMachine.visitLdcInsn(cst);
+    mv.visitLdcInsn(cst);
+  }
+  
+  @Override
+  public void visitLookupSwitchInsn(
+      final Label dflt, final int[] keys, final Label[] labels) {
+    if (stateMachine != null) stateMachine.visitLookupSwitchInsn(dflt, keys, labels);
+    mv.visitLookupSwitchInsn(dflt, keys, labels);
+  }
+  
+  @Override
+  public void visitMultiANewArrayInsn(final String desc, final int dims) {
+    if (stateMachine != null) stateMachine.visitMultiANewArrayInsn(desc, dims);
+    mv.visitMultiANewArrayInsn(desc, dims);
+  }
+  
+  @Override
+  public void visitTableSwitchInsn(
+      final int min, final int max, final Label dflt, final Label[] labels) {
+    if (stateMachine != null) stateMachine.visitTableSwitchInsn(min, max, dflt, labels);
+    mv.visitTableSwitchInsn(min, max, dflt, labels);
+  }
+  
+  @Override
+  public void visitVarInsn(final int opcode, final int var) {
+    if (stateMachine != null) stateMachine.visitVarInsn(opcode, var);
+    mv.visitVarInsn(opcode, var);
+  }
+  
   
   
   // =========================================================================
@@ -291,6 +402,130 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   }
 
   
+  
+  // =========================================================================
+  // == Rewrite new/<init>
+  // =========================================================================
+  
+  private void insertConstructorExecutionPrefix() {
+    /* Create event */
+    insertConstructorExecution(true);
+    
+    /* Set up finally handler */
+    startOfOriginalMethod = new Label();
+    endOfOriginalBody_startOfExceptionHandler = new Label();
+    mv.visitTryCatchBlock(startOfOriginalMethod,
+        endOfOriginalBody_startOfExceptionHandler,
+        endOfOriginalBody_startOfExceptionHandler, null);
+    
+    /* Start of constructor */
+    mv.visitLabel(startOfOriginalMethod);
+    
+    updateStackDepthDelta(4);
+  }
+  
+  private void insertConstructorExecutionPostfix() {
+    mv.visitLabel(endOfOriginalBody_startOfExceptionHandler);
+    
+    // exception 
+    insertConstructorExecution(false); // +4 on stack
+    // exception
+    
+    /* Rethrow the exception */
+    mv.visitInsn(Opcodes.ATHROW);
+    
+    updateStackDepthDelta(5);
+  }
+  
+  private void insertConstructorExecution(final boolean before) {
+    // ...
+    ByteCodeUtils.pushBooleanConstant(mv, before);
+    // ..., before
+    mv.visitVarInsn(Opcodes.ALOAD, 0);
+    // ..., before, this
+    ByteCodeUtils.pushInClass(mv, classBeingAnalyzedInternal);
+    // ..., before, this, inClass
+    ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
+    // ..., before, this, inClass, line
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE, FlashlightNames.CONSTRUCTOR_EXECUTION, FlashlightNames.CONSTRUCTOR_EXECUTION_SIGNATURE);
+    // ...
+  }
+  
+  private void rewriteConstructorCall(
+      final String owner, final String name, final String desc) {
+    if (isConstructor && stateMachine != null) {
+      /* Original call */
+      mv.visitMethodInsn(Opcodes.INVOKESPECIAL, owner, name, desc);
+    } else {
+      // ...
+      ByteCodeUtils.pushBooleanConstant(mv, true);
+      // ..., true
+      mv.visitLdcInsn(sourceFileName);
+      // ..., true, fileName
+      mv.visitLdcInsn(methodName);
+      // ..., true, fileName, methodName
+      ByteCodeUtils.pushInClass(mv, classBeingAnalyzedInternal);
+      // ..., true, fileName, methodName, inClass
+      ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
+      // ..., true, fileName, methodName, inClass, line 
+      mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE,
+          FlashlightNames.CONSTRUCTOR_CALL,
+          FlashlightNames.CONSTRUCTOR_CALL_SIGNATURE);
+
+      final Label start = new Label();
+      final Label end = new Label();
+      final Label handler = new Label();
+      final Label resume = new Label();
+      mv.visitTryCatchBlock(start, end, handler, null);
+      
+      /* Original call */
+      mv.visitLabel(start);
+      mv.visitMethodInsn(Opcodes.INVOKESPECIAL, owner, name, desc);
+      mv.visitLabel(end);
+
+      /* Normal return */
+      // ...
+      ByteCodeUtils.pushBooleanConstant(mv, false);
+      // ..., true
+      mv.visitLdcInsn(sourceFileName);
+      // ..., true, fileName
+      mv.visitLdcInsn(methodName);
+      // ..., true, fileName, methodName
+      ByteCodeUtils.pushInClass(mv, classBeingAnalyzedInternal);
+      // ..., true, fileName, methodName, inClass
+      ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
+      // ..., true, fileName, methodName, inClass, line 
+      mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE,
+          FlashlightNames.CONSTRUCTOR_CALL,
+          FlashlightNames.CONSTRUCTOR_CALL_SIGNATURE);
+      // ...
+      mv.visitJumpInsn(Opcodes.GOTO, resume);
+      
+      /* exception handler */
+      mv.visitLabel(handler);
+      // ex
+      ByteCodeUtils.pushBooleanConstant(mv, false);
+      // ex, true
+      mv.visitLdcInsn(sourceFileName);
+      // ex, true, fileName
+      mv.visitLdcInsn(methodName);
+      // ex, true, fileName, methodName
+      ByteCodeUtils.pushInClass(mv, classBeingAnalyzedInternal);
+      // ex, true, fileName, methodName, inClass
+      ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
+      // ex, true, fileName, methodName, inClass, line 
+      mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE,
+          FlashlightNames.CONSTRUCTOR_CALL,
+          FlashlightNames.CONSTRUCTOR_CALL_SIGNATURE);
+      // rethrow exception
+      mv.visitInsn(Opcodes.ATHROW);
+      
+      // resume
+      mv.visitLabel(resume);
+      
+      updateStackDepthDelta(6);
+    }
+  }
   
   // =========================================================================
   // == Rewrite field accesses
@@ -841,12 +1076,15 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     /* Create the wrapper method information and add it to the list of wrappers */
     final MethodCallWrapper wrapper;
     if (opcode == Opcodes.INVOKESPECIAL) {
-      wrapper = new SpecialCallWrapper(owner, name, desc, opcode);
+      wrapper = new SpecialCallWrapper(owner, name, desc);
     } else if (opcode == Opcodes.INVOKESTATIC){
-      wrapper = new StaticCallWrapper(owner, name, desc, opcode);
-    } else {
-      wrapper = new InterfaceAndVirtualCallWrapper(owner, name, desc, opcode);
+      wrapper = new StaticCallWrapper(owner, name, desc);
+    } else if (opcode == Opcodes.INVOKEINTERFACE) {
+      wrapper = new InterfaceCallWrapper(owner, name, desc);
+    } else { // virtual call
+      wrapper = new VirtualCallWrapper(owner, name, desc);
     }
+    
     wrapperMethods.add(wrapper);
     
     // ..., [objRef], arg1, ..., argN
@@ -859,23 +1097,4 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     
     updateStackDepthDelta(2);
   }
-
-
-
-//  private void insertConstructorExecution(final boolean before) {
-//    // ...
-//    ByteCodeUtils.pushBooleanConstant(mv, before);
-//    // ..., before
-//    mv.visitVarInsn(Opcodes.ALOAD, 0);
-//    // ..., before, this
-//    ByteCodeUtils.pushInClass(mv, classBeingAnalyzedInternal);
-//    // ..., before, this, inClass
-//    ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
-//    // ..., before, this, inClass, exitLineNumber
-//    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE,
-//        "constructorExecution", "(ZLjava/lang/Object;Ljava/lang/Class;I)V");
-//    // ...
-//    
-//    updateStackDepthDelta(4);
-//  }
 }

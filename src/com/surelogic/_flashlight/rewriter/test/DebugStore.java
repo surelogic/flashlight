@@ -69,12 +69,11 @@ public class DebugStore {
   }
 
   public static synchronized void constructorCall(final boolean before,
-      final Constructor constructor, final String enclosingFileName,
+      final String enclosingFileName,
       final String enclosingLocationName, Class<?> withinClass,
       final int line) {
     System.out.println("constructorCall");
     System.out.println("  before = " + before);
-    System.out.println("  constructor = " + constructor);
     System.out.println("  enclosingFileName = " + enclosingFileName);
     System.out.println("  enclosingLocationName = " + enclosingLocationName);
     System.out.println("  withinClass = " + withinClass);

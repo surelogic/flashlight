@@ -21,6 +21,8 @@ public final class Properties {
   private static final String REWRITE_PUTSTATIC_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.putstatic";
   private static final String REWRITE_GETFIELD_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.getfield";
   private static final String REWRITE_PUTFIELD_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.putfield";
+  private static final String REWRITE_INIT_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.<init>";
+  private static final String REWRITE_CONSTRUCTOR_EXECUTION_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.<init>.execution";
   
   /* These properties require that the REWRITE_INVOKE*_PROPERITES be true. */
   private static final String INSTRUMENT_DEFAULT_PROPERTY = "com.surelogic._flashlight.rewriter.instrument.default";
@@ -87,6 +89,9 @@ public final class Properties {
   public static final boolean REWRITE_SYNCHRONIZED_METHOD = getBoolean(REWRITE_SYNCHRONIZED_METHOD_PROPERTY, REWRITE_DEFAULT);
   public static final boolean REWRITE_MONITORENTER = getBoolean(REWRITE_MONITORENTER_PROPERTY, REWRITE_DEFAULT);
   public static final boolean REWRITE_MONITOREXIT = getBoolean(REWRITE_MONITOREXIT_PROPERTY, REWRITE_DEFAULT);
+
+  public static final boolean REWRITE_INIT = getBoolean(REWRITE_INIT_PROPERTY, REWRITE_DEFAULT);
+  public static final boolean REWRITE_CONSTRUCTOR_EXECUTION = getBoolean(REWRITE_CONSTRUCTOR_EXECUTION_PROPERTY, REWRITE_DEFAULT);
 
   private static final String INSTRUMENT_DEFAULT = properties.getProperty(INSTRUMENT_DEFAULT_PROPERTY, TRUE);
 

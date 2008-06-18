@@ -14,8 +14,8 @@ public final class StaticCallWrapper extends MethodCallWrapper {
   
   
   public StaticCallWrapper(final String owner, final String originalName,
-      final String originalSignature, final int opcode) {
-    super(owner, originalName, originalSignature, opcode, false);
+      final String originalSignature) {
+    super(owner, originalName, originalSignature, Opcodes.INVOKESTATIC, false);
   }
 
   

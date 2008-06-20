@@ -7,7 +7,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
@@ -69,7 +68,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
   
   
   
-  public FlashlightClassRewriter(final ClassVisitor cv, final Configuration conf) {
+  public FlashlightClassRewriter(final Configuration conf, final ClassVisitor cv) {
     super(cv);
     config = conf;
   }
@@ -106,9 +105,9 @@ public final class FlashlightClassRewriter extends ClassAdapter {
     final int newAccess = access & ~Opcodes.ACC_SYNCHRONIZED;
     return new FlashlightMethodRewriter(
         config,
+        cv.visitMethod(newAccess, name, desc, signature, exceptions), access, name,
         sourceFileName, classNameInternal, classNameFullyQualified,
-        name, wrapperMethods, access,
-        cv.visitMethod(newAccess, name, desc, signature, exceptions));
+        wrapperMethods);
   }
   
   @Override
@@ -137,18 +136,20 @@ public final class FlashlightClassRewriter extends ClassAdapter {
   
   
   private void addClassInitializer() {
-    // XXX: Clean this up, it is error prone
+    /* Create a new <clinit> method to vist */
     final MethodVisitor mv =
       cv.visitMethod(Opcodes.ACC_STATIC, CLASS_INITIALIZER,
           CLASS_INITIALIZER_DESC, null, null);
-    final MethodVisitor rewriter_mv =
-      new FlashlightMethodRewriter(config, sourceFileName,
-        classNameInternal, classNameFullyQualified,
-        CLASS_INITIALIZER, new HashSet<MethodCallWrapper>(), Opcodes.ACC_STATIC, mv);
-    rewriter_mv.visitCode();
-    mv.visitInsn(Opcodes.RETURN);
-    rewriter_mv.visitMaxs(0, 0);
-    mv.visitEnd();
+    /* Proceed as if visitMethod() were called on us, and simulate the method
+     * traversal through the rewriter visitor.
+     */
+    final MethodVisitor rewriter_mv = new FlashlightMethodRewriter(config, mv,
+        Opcodes.ACC_STATIC, CLASS_INITIALIZER, sourceFileName,
+        classNameInternal, classNameFullyQualified, wrapperMethods);
+    rewriter_mv.visitCode(); // start code section
+    rewriter_mv.visitInsn(Opcodes.RETURN); // empty method, just return
+    rewriter_mv.visitMaxs(0, 0); // Don't need any stack or variables
+    rewriter_mv.visitEnd(); // end of method
   }
   
   private void addWrapperMethod(final MethodCallWrapper wrapper) {
@@ -472,7 +473,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
     final BufferedInputStream bis = new BufferedInputStream(new FileInputStream(inName));
     final ClassReader input = new ClassReader(bis);
     final ClassWriter output = new ClassWriter(input, 0);
-    final FlashlightClassRewriter xformer = new FlashlightClassRewriter(output, config);
+    final FlashlightClassRewriter xformer = new FlashlightClassRewriter(config, output);
     input.accept(xformer, 0);
     bis.close();
     

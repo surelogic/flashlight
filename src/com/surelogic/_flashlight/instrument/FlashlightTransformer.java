@@ -40,7 +40,7 @@ final class FlashlightTransformer implements ClassFileTransformer {
       theLog.log("Transforming class " + className);
       final ClassReader input = new ClassReader(classfileBuffer);
       final ClassWriter output = new ClassWriter(input, 0);
-      final FlashlightClassRewriter xformer = new FlashlightClassRewriter(output, rewriterConfig);
+      final FlashlightClassRewriter xformer = new FlashlightClassRewriter(rewriterConfig, output);
       input.accept(xformer, 0);
       final byte[] newClass = output.toByteArray();    
       if (rewriteCache != null) {

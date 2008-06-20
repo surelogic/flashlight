@@ -109,7 +109,10 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   
   /**
    * Create a new method rewriter.
-   * 
+   * @param mv
+   *          The {@code MethodVisitor} to delegate to.
+   * @param mname
+   *          The simple name of the method being rewritten.
    * @param fname
    *          The name of the source file that contains the class being
    *          rewritten.
@@ -117,36 +120,25 @@ final class FlashlightMethodRewriter extends MethodAdapter {
    *          The internal name of the class being rewritten.
    * @param nameFullyQualified
    *          The fully qualified name of the class being rewritten.
-   * @param mname
-   *          The simple name of the method being rewritten.
-   * @param isClassInit
-   *          Is the visitor visiting the class initialization method
-   *          "&lt;clinit&gt;"?
    * @param wrappers
    *          The set of wrapper methods that this visitor should add to.
-   * @param _synchronized
-   *          Was the method originally synchronized?
-   * @param _static 
-   *          Is the method static?
-   * @param mv
-   *          The {@code MethodVisitor} to delegate to.
    */
   public FlashlightMethodRewriter(
-      final Configuration conf, final String fname,
-      final String nameInternal, final String nameFullyQualified,
-      final String mname, final Set<MethodCallWrapper> wrappers, final int access,
-      final MethodVisitor mv) {
+      final Configuration conf, final MethodVisitor mv,
+      final int access, final String mname,
+      final String fname, final String nameInternal, final String nameFullyQualified,
+      final Set<MethodCallWrapper> wrappers) {
     super(mv);
     config = conf;
-    sourceFileName = fname;
-    classBeingAnalyzedInternal = nameInternal;
-    classBeingAnalyzedFullyQualified = nameFullyQualified;
+    wasSynchronized = (access & Opcodes.ACC_SYNCHRONIZED) != 0;
+    isStatic = (access & Opcodes.ACC_STATIC) != 0;
     methodName = mname;
     isConstructor = mname.equals(INITIALIZER);
     isClassInitializer = mname.equals(CLASS_INITIALIZER);
+    sourceFileName = fname;
+    classBeingAnalyzedInternal = nameInternal;
+    classBeingAnalyzedFullyQualified = nameFullyQualified;
     wrapperMethods = wrappers;
-    wasSynchronized = (access & Opcodes.ACC_SYNCHRONIZED) != 0;
-    isStatic = (access & Opcodes.ACC_STATIC) != 0;
     
     if (isConstructor) {
       stateMachine = new ConstructorInitStateMachine(new ObjectInitCallback());

@@ -2,7 +2,11 @@ package com.surelogic._flashlight.rewriter;
 
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 
+/**
+ * Home to static utility functions for generation of bytecode operations.
+ */
 final class ByteCodeUtils {
   private ByteCodeUtils() {
     // do nothing
@@ -11,9 +15,36 @@ final class ByteCodeUtils {
   
   
   /**
-   * Generate code to push an integer constant.  Optimizes for whether the
+   * Convert an internal class name to a fully qualified class name.
+   * 
+   * @param name
+   *          An internal class name
+   * @return The fully qualified class name that corresponds to the given name.
+   */
+  public static String internal2FullyQualified(final String name) {
+    return name.replace('/', '.');
+  }
+  
+  /**
+   * Test if the given type description is for a category 2 type.
+   * 
+   * @param typeDesc
+   *          The type description to test.
+   * @return <code>true</code> if the described type is category 2;
+   *         <code>false</code> otherwise, i.e., the described type is
+   *         category 1.
+   */
+  public static boolean isCategory2(final String typeDesc) {
+    final Type fieldType = Type.getType(typeDesc);
+    return fieldType == Type.DOUBLE_TYPE || fieldType == Type.LONG_TYPE;
+  }
+    
+  /**
+   * Generate code to push an integer constant. Optimizes for whether the
    * integer fits in 8, 16, or 32 bits.
-   * @param v The integer to push onto the stack.
+   * 
+   * @param v
+   *          The integer to push onto the stack.
    */
   public static void pushIntegerConstant(final MethodVisitor mv, final int v) {
     if (v >= -1 && v <= 5) {
@@ -29,7 +60,9 @@ final class ByteCodeUtils {
   
   /**
    * Generate code to push a Boolean constant.
-   * @param b The Boolean value to push onto the stack.
+   * 
+   * @param b
+   *          The Boolean value to push onto the stack.
    */
   public static void pushBooleanConstant(final MethodVisitor mv, final boolean b) {
     if (b) {
@@ -40,11 +73,20 @@ final class ByteCodeUtils {
   }
 
   /**
-   * Generate code to push the Class object of the class that this method
-   * is a part of.
+   * Generate code to push the Class object the named class.
    */
   public static void pushInClass(final MethodVisitor mv, final String internalClassName) {
     mv.visitFieldInsn(Opcodes.GETSTATIC, internalClassName,
         FlashlightNames.IN_CLASS, FlashlightNames.IN_CLASS_DESC);
   }
-}
+
+  /**
+   * Get the name of the flashlight store class.
+   */
+  public static final String getFlashlightStore(final Properties properties) {
+    if (properties.useDebugStore) {
+      return FlashlightNames.FLASHLIGHT_DEBUG_STORE;
+    } else {
+      return FlashlightNames.FLASHLIGHT_STORE;
+    }
+  }}

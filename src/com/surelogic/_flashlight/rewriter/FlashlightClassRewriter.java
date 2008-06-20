@@ -20,14 +20,24 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+/**
+ * Visits a classfile and rewrites it to contain Flashlight instrumentation.
+ * 
+ * @see FlashlightMethodRewriter
+ * 
+ * @author aarong
+ */
 public final class FlashlightClassRewriter extends ClassAdapter {
   private static final String UNKNOWN_SOURCE_FILE = "<unknown>";
   
   private static final String CLASS_INITIALIZER = "<clinit>";
   private static final String CLASS_INITIALIZER_DESC = "()V";
   
-
   
+  
+  /** Properties to control rewriting and instrumentation. */
+  private final Properties properties;
+
   /** Is the current class file an interface? */
   private boolean isInterface;
   
@@ -58,8 +68,9 @@ public final class FlashlightClassRewriter extends ClassAdapter {
   
   
   
-  public FlashlightClassRewriter(final ClassVisitor cv) {
+  public FlashlightClassRewriter(final ClassVisitor cv, final Properties props) {
     super(cv);
+    properties = props;
   }
   
   
@@ -72,7 +83,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
     isInterface = (access & Opcodes.ACC_INTERFACE) != 0;
     atLeastJava5 = (version & 0xFFFF0000) >= Opcodes.V1_5;
     classNameInternal = name;
-    classNameFullyQualified = Utils.internal2FullyQualified(name);
+    classNameFullyQualified = ByteCodeUtils.internal2FullyQualified(name);
   }
 
   @Override
@@ -93,6 +104,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
     
     final int newAccess = access & ~Opcodes.ACC_SYNCHRONIZED;
     return new FlashlightMethodRewriter(
+        properties,
         sourceFileName, classNameInternal, classNameFullyQualified,
         name, wrapperMethods, access,
         cv.visitMethod(newAccess, name, desc, signature, exceptions));
@@ -129,7 +141,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
       cv.visitMethod(Opcodes.ACC_STATIC, CLASS_INITIALIZER,
           CLASS_INITIALIZER_DESC, null, null);
     final MethodVisitor rewriter_mv =
-      new FlashlightMethodRewriter(sourceFileName,
+      new FlashlightMethodRewriter(properties, sourceFileName,
         classNameInternal, classNameFullyQualified,
         CLASS_INITIALIZER, new HashSet<MethodCallWrapper>(), Opcodes.ACC_STATIC, mv);
     rewriter_mv.visitCode();
@@ -206,7 +218,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
 
   private void instrumentBeforeMethodCall(
       final MethodVisitor mv, final MethodCallWrapper wrapper) {
-    if (Properties.INSTRUMENT_BEFORE_CALL) {
+    if (properties.instrumentBeforeCall) {
       // empty stack 
       ByteCodeUtils.pushBooleanConstant(mv, true);
       // true
@@ -220,7 +232,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
       // true, objRef, filename, callingMethodName, inClass
       wrapper.pushCallingLineNumber(mv);
       // true, objRef, filename, callingMethodName, inClass, line
-      mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE,
+      mv.visitMethodInsn(Opcodes.INVOKESTATIC, ByteCodeUtils.getFlashlightStore(properties),
           FlashlightNames.METHOD_CALL, FlashlightNames.METHOD_CALL_SIGNATURE);
       // empty stack 
     }
@@ -230,7 +242,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
 
   private void instrumentAfterMethodCall(
       final MethodVisitor mv, final MethodCallWrapper wrapper) {
-    if (Properties.INSTRUMENT_AFTER_CALL) {
+    if (properties.instrumentAfterCall) {
       // ...,
       ByteCodeUtils.pushBooleanConstant(mv, false);
       // ..., true
@@ -244,7 +256,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
       // ..., true, objRef, filename, callingMethodName, inClass
       wrapper.pushCallingLineNumber(mv);
       // ..., true, objRef, filename, callingMethodName, inClass, line
-      mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE, FlashlightNames.METHOD_CALL, FlashlightNames.METHOD_CALL_SIGNATURE);
+      mv.visitMethodInsn(Opcodes.INVOKESTATIC, ByteCodeUtils.getFlashlightStore(properties), FlashlightNames.METHOD_CALL, FlashlightNames.METHOD_CALL_SIGNATURE);
       // ...
     }
   }
@@ -255,7 +267,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
       final MethodVisitor mv, final MethodCallWrapper wrapper) {
     if (wrapper.testOriginalName(
         FlashlightNames.JAVA_LANG_OBJECT, FlashlightNames.WAIT)
-        && Properties.INSTRUMENT_BEFORE_WAIT) {
+        && properties.instrumentBeforeWait) {
       // ...
       ByteCodeUtils.pushBooleanConstant(mv, true);
       // ..., true
@@ -265,7 +277,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
       // ..., true, objRef, inClass
       wrapper.pushCallingLineNumber(mv);
       // ..., true, objRef, inClass, line
-      mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE, FlashlightNames.INTRINSIC_LOCK_WAIT, FlashlightNames.INTRINSIC_LOCK_WAIT_SIGNATURE);      
+      mv.visitMethodInsn(Opcodes.INVOKESTATIC, ByteCodeUtils.getFlashlightStore(properties), FlashlightNames.INTRINSIC_LOCK_WAIT, FlashlightNames.INTRINSIC_LOCK_WAIT_SIGNATURE);      
     }
   }
   
@@ -273,7 +285,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
       final MethodVisitor mv, final MethodCallWrapper wrapper) {
     if (wrapper.testOriginalName(
         FlashlightNames.JAVA_LANG_OBJECT, FlashlightNames.WAIT)
-        && Properties.INSTRUMENT_AFTER_WAIT) {
+        && properties.instrumentAfterWait) {
       // ...
       ByteCodeUtils.pushBooleanConstant(mv, false);
       // ..., true
@@ -283,7 +295,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
       // ..., true, objRef, inClass
       wrapper.pushCallingLineNumber(mv);
       // ..., true, objRef, inClass, line
-      mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE, FlashlightNames.INTRINSIC_LOCK_WAIT, FlashlightNames.INTRINSIC_LOCK_WAIT_SIGNATURE);      
+      mv.visitMethodInsn(Opcodes.INVOKESTATIC, ByteCodeUtils.getFlashlightStore(properties), FlashlightNames.INTRINSIC_LOCK_WAIT, FlashlightNames.INTRINSIC_LOCK_WAIT_SIGNATURE);      
     }
   }
   
@@ -297,7 +309,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
         || wrapper.testOriginalName(
             FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK,
             FlashlightNames.TRY_LOCK))
-        && Properties.INSTRUMENT_BEFORE_JUC_LOCK) {
+        && properties.instrumentBeforeJUCLock) {
       // ...
       wrapper.pushObjectRefForEvent(mv);
       // ..., objRef
@@ -305,7 +317,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
       // ..., objRef, inClass
       wrapper.pushCallingLineNumber(mv);
       // ..., objRef, inClass, line
-      mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE,
+      mv.visitMethodInsn(Opcodes.INVOKESTATIC, ByteCodeUtils.getFlashlightStore(properties),
           FlashlightNames.BEFORE_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT,
           FlashlightNames.BEFORE_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT_SIGNATURE);
     }
@@ -318,7 +330,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
         || wrapper.testOriginalName(
             FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK,
             FlashlightNames.LOCK_INTERRUPTIBLY))
-        && Properties.INSTRUMENT_AFTER_LOCK) {
+        && properties.instrumentAfterLock) {
       // ...
       ByteCodeUtils.pushBooleanConstant(mv, gotTheLock);
       // ..., gotTheLock
@@ -328,7 +340,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
       // ..., gotTheLock, objRef, inClass
       wrapper.pushCallingLineNumber(mv);
       // ..., gotTheLock, objRef, inClass, line
-      mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE,
+      mv.visitMethodInsn(Opcodes.INVOKESTATIC, ByteCodeUtils.getFlashlightStore(properties),
           FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT,
           FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT_SIGNATURE);      
     }
@@ -338,7 +350,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
       final MethodVisitor mv, final MethodCallWrapper wrapper) {
     if (wrapper.testOriginalName(
         FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK,
-        FlashlightNames.TRY_LOCK) && Properties.INSTRUMENT_AFTER_TRYLOCK) {
+        FlashlightNames.TRY_LOCK) && properties.instrumentAfterTryLock) {
       // ..., gotTheLock
       
       /* We need to make a copy of tryLock()'s return value */
@@ -350,7 +362,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
       // ..., gotTheLock, gotTheLock, objRef, inClass
       wrapper.pushCallingLineNumber(mv);
       // ..., gotTheLock, gotTheLock, objRef, inClass, line
-      mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE,
+      mv.visitMethodInsn(Opcodes.INVOKESTATIC, ByteCodeUtils.getFlashlightStore(properties),
           FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT,
           FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT_SIGNATURE);
       // ..., gotTheLock
@@ -361,7 +373,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
       final MethodVisitor mv, final MethodCallWrapper wrapper) {
     if (wrapper.testOriginalName(
         FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK,
-        FlashlightNames.TRY_LOCK) && Properties.INSTRUMENT_AFTER_TRYLOCK) {
+        FlashlightNames.TRY_LOCK) && properties.instrumentAfterTryLock) {
       // ...
       ByteCodeUtils.pushBooleanConstant(mv, false);
       // ..., false
@@ -371,7 +383,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
       // ..., false, objRef, inClass
       wrapper.pushCallingLineNumber(mv);
       // ..., false, objRef, inClass, line
-      mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE,
+      mv.visitMethodInsn(Opcodes.INVOKESTATIC, ByteCodeUtils.getFlashlightStore(properties),
           FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT,
           FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT_SIGNATURE);      
     }
@@ -382,7 +394,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
       final MethodCallWrapper wrapper, final boolean releasedTheLock) {
     if (wrapper.testOriginalName(
         FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK,
-        FlashlightNames.UNLOCK) && Properties.INSTRUMENT_AFTER_UNLOCK) {
+        FlashlightNames.UNLOCK) && properties.instrumentAfterUnlock) {
       // ...
       ByteCodeUtils.pushBooleanConstant(mv, releasedTheLock);
       // ..., gotTheLock
@@ -392,7 +404,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
       // ..., gotTheLock, objRef, inClass
       wrapper.pushCallingLineNumber(mv);
       // ..., gotTheLock, objRef, inClass, line
-      mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_STORE,
+      mv.visitMethodInsn(Opcodes.INVOKESTATIC, ByteCodeUtils.getFlashlightStore(properties),
           FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_RELEASE_ATTEMPT,
           FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_RELEASE_ATTEMPT_SIGNATURE);      
     }
@@ -405,34 +417,61 @@ public final class FlashlightClassRewriter extends ClassAdapter {
   
   
   public static void main(final String[] args) throws IOException {
-    rewriteDirectory(new File(args[0]), new File(args[1]));
+    final File userHome = new File(System.getProperty("user.home"));
+    final File propFile = new File(userHome, "flashlight-rewriter.properties");
+    final Properties properties = new Properties(loadPropertiesFromFile(propFile));
+    
+    rewriteDirectory(properties, new File(args[0]), new File(args[1]));
     
     System.out.println("done");
   }
+  
+  private static java.util.Properties loadPropertiesFromFile(final File propFile) {
+    final java.util.Properties properties = new java.util.Properties(System.getProperties());
+    FileInputStream fis = null;
+    try {
+      fis = new FileInputStream(propFile);
+      properties.load(fis);
+      fis.close();
+    } catch (final IOException e) {
+      System.err.println("Problem reading properties file: " + e.getMessage());
+      if (fis != null) {
+      try {
+        fis.close();
+        } catch (final IOException e2) {
+          // eat it, what else can we do?
+        }
+      }
+    }
+    return properties;
+  }
 
-  private static void rewriteDirectory(final File inDir, final File outDir)
+
+  private static void rewriteDirectory(
+      final Properties properties, final File inDir, final File outDir)
       throws FileNotFoundException, IOException {
     for (final String name : inDir.list()) {
       final File nextIn = new File(inDir, name);
       final File nextOut = new File(outDir, name);
       if (nextIn.isDirectory()) {
-        rewriteDirectory(nextIn, nextOut);
+        nextOut.mkdirs();
+        rewriteDirectory(properties, nextIn, nextOut);
       } else {
         if (name.endsWith(".class")) {
-          rewriteClass(nextIn, nextOut);
+          rewriteClass(properties, nextIn, nextOut);
         }
       }
     }
   }
 
 
-  private static void rewriteClass(final File inName, final File outName)
+  private static void rewriteClass(final Properties properties, final File inName, final File outName)
       throws FileNotFoundException, IOException {
     System.out.println("Reading class " + inName);
     final BufferedInputStream bis = new BufferedInputStream(new FileInputStream(inName));
     final ClassReader input = new ClassReader(bis);
     final ClassWriter output = new ClassWriter(input, 0);
-    final FlashlightClassRewriter xformer = new FlashlightClassRewriter(output);
+    final FlashlightClassRewriter xformer = new FlashlightClassRewriter(output, properties);
     input.accept(xformer, 0);
     bis.close();
     

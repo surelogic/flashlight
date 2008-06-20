@@ -1,112 +1,110 @@
 package com.surelogic._flashlight.rewriter;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-
 public final class Properties {
-  private Properties() {
-    // do nothing
-  }
-  
-  private static final String REWRITE_DEFAULT_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.default";
-  private static final String REWRITE_INVOKEINTERFACE_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.invokeinterface";
-  private static final String REWRITE_INVOKESPECIAL_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.invokespecial";
-  private static final String REWRITE_INVOKESTATIC_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.invokestatic";
-  private static final String REWRITE_INVOKEVIRTUAL_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.invokevirtual";
-  private static final String REWRITE_SYNCHRONIZED_METHOD_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.synchronizedmethod";
-  private static final String REWRITE_MONITOREXIT_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.monitorexit";
-  private static final String REWRITE_MONITORENTER_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.monitorenter";
-  private static final String REWRITE_GETSTATIC_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.getstatic";
-  private static final String REWRITE_PUTSTATIC_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.putstatic";
-  private static final String REWRITE_GETFIELD_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.getfield";
-  private static final String REWRITE_PUTFIELD_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.putfield";
-  private static final String REWRITE_INIT_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.<init>";
-  private static final String REWRITE_CONSTRUCTOR_EXECUTION_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.<init>.execution";
+  public static final String REWRITE_DEFAULT_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.default";
+  public static final String REWRITE_INVOKEINTERFACE_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.invokeinterface";
+  public static final String REWRITE_INVOKESPECIAL_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.invokespecial";
+  public static final String REWRITE_INVOKESTATIC_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.invokestatic";
+  public static final String REWRITE_INVOKEVIRTUAL_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.invokevirtual";
+  public static final String REWRITE_SYNCHRONIZED_METHOD_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.synchronizedmethod";
+  public static final String REWRITE_MONITOREXIT_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.monitorexit";
+  public static final String REWRITE_MONITORENTER_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.monitorenter";
+  public static final String REWRITE_GETSTATIC_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.getstatic";
+  public static final String REWRITE_PUTSTATIC_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.putstatic";
+  public static final String REWRITE_GETFIELD_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.getfield";
+  public static final String REWRITE_PUTFIELD_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.putfield";
+  public static final String REWRITE_INIT_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.<init>";
+  public static final String REWRITE_CONSTRUCTOR_EXECUTION_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.<init>.execution";
   
   /* These properties require that the REWRITE_INVOKE*_PROPERITES be true. */
-  private static final String INSTRUMENT_DEFAULT_PROPERTY = "com.surelogic._flashlight.rewriter.instrument.default";
-  private static final String INSTRUMENT_BEFORE_CALL_PROPERTY = "com.surelogic._flashlight.rewriter.instrument.call.before";
-  private static final String INSTRUMENT_AFTER_CALL_PROPERTY = "com.surelogic._flashlight.rewriter.instrument.call.after";
-  private static final String INSTRUMENT_BEFORE_WAIT_PROPERTY = "com.surelogic._flashlight.rewriter.instrument.wait.before";
-  private static final String INSTRUMENT_AFTER_WAIT_PROPERTY = "com.surelogic._flashlight.rewriter.instrument.wait.after";
-  private static final String INSTRUMENT_BEFORE_JUC_LOCK_PROPERTY = "com.surelogic._flashlight.rewriter.instrument.lock.before";
-  private static final String INSTRUMENT_AFTER_LOCK_PROPERTY = "com.surelogic._flashlight.rewriter.instrument.lock.after";
-  private static final String INSTRUMENT_AFTER_TRYLOCK_PROPERTY = "com.surelogic._flashlight.rewriter.instrument.trylock.after";
-  private static final String INSTRUMENT_AFTER_UNLOCK_PROPERTY = "com.surelogic._flashlight.rewriter.instrument.unlock.after";
+  public static final String INSTRUMENT_DEFAULT_PROPERTY = "com.surelogic._flashlight.rewriter.instrument.default";
+  public static final String INSTRUMENT_BEFORE_CALL_PROPERTY = "com.surelogic._flashlight.rewriter.instrument.call.before";
+  public static final String INSTRUMENT_AFTER_CALL_PROPERTY = "com.surelogic._flashlight.rewriter.instrument.call.after";
+  public static final String INSTRUMENT_BEFORE_WAIT_PROPERTY = "com.surelogic._flashlight.rewriter.instrument.wait.before";
+  public static final String INSTRUMENT_AFTER_WAIT_PROPERTY = "com.surelogic._flashlight.rewriter.instrument.wait.after";
+  public static final String INSTRUMENT_BEFORE_JUC_LOCK_PROPERTY = "com.surelogic._flashlight.rewriter.instrument.lock.before";
+  public static final String INSTRUMENT_AFTER_LOCK_PROPERTY = "com.surelogic._flashlight.rewriter.instrument.lock.after";
+  public static final String INSTRUMENT_AFTER_TRYLOCK_PROPERTY = "com.surelogic._flashlight.rewriter.instrument.trylock.after";
+  public static final String INSTRUMENT_AFTER_UNLOCK_PROPERTY = "com.surelogic._flashlight.rewriter.instrument.unlock.after";
+  
+  public static final String USE_DEBUG_STORE_PROPERTY = "com.surelogic._flashlight.rewriter.useDebugStore";
   
   
-  
-  private static final String USER_HOME_SYSTEM_PROPERTY = "user.home";
-  
-  private static final String PROPERTY_FILENAME = "flashlight-rewriter.properties";
   
   private static final String TRUE = "true";
+  private static final String FALSE = "false";
   
   
   
-  private final static java.util.Properties properties = new java.util.Properties();
+  public final boolean rewriteInvokeinterface;
+  public final boolean rewriteInvokespecial;
+  public final boolean rewriteInvokestatic;
+  public final boolean rewriteInvokevirtual;
+  
+  public final boolean rewritePutfield;
+  public final boolean rewriteGetfield;
+
+  public final boolean rewritePutstatic;
+  public final boolean rewriteGetstatic;
+
+  public final boolean rewriteSynchronizedMethod;
+  public final boolean rewriteMonitorenter;
+  public final boolean rewriteMonitorexit;
+
+  public final boolean rewriteInit;
+  public final boolean rewriteConstructorExecution;
+
+  public final boolean instrumentBeforeCall;
+  public final boolean instrumentAfterCall;
+  public final boolean instrumentBeforeWait;
+  public final boolean instrumentAfterWait;
+  public final boolean instrumentBeforeJUCLock;
+  public final boolean instrumentAfterLock;
+  public final boolean instrumentAfterTryLock;
+  public final boolean instrumentAfterUnlock;
+  
+  public final boolean useDebugStore;
+
   
   
-  
-  /* Load the properties from a file in the user's home directory */
-  static {
-    final File homeDir = new File(System.getProperty(USER_HOME_SYSTEM_PROPERTY));
-    final File propFile = new File(homeDir, PROPERTY_FILENAME);
-    
-    FileInputStream fis = null;
-    try {
-      fis = new FileInputStream(propFile);
-      properties.load(fis);
-      fis.close();
-    } catch (final IOException e) {
-      System.err.println("Problem reading properties file: " + e.getMessage());
-      if (fis != null) {
-      try {
-        fis.close();
-        } catch (final IOException e2) {
-          // eat it, what else can we do?
-        }
-      }
-    }
+  private static boolean getBoolean(final java.util.Properties props, final String propName, final String defaultValue) {
+    return Boolean.valueOf(props.getProperty(propName, defaultValue));
   }
-  
-  
-  
-  private static final String REWRITE_DEFAULT = properties.getProperty(REWRITE_DEFAULT_PROPERTY, TRUE);
-  
-  public static final boolean REWRITE_INVOKEINTERFACE = getBoolean(REWRITE_INVOKEINTERFACE_PROPERTY, REWRITE_DEFAULT);
-  public static final boolean REWRITE_INVOKESPECIAL = getBoolean(REWRITE_INVOKESPECIAL_PROPERTY, REWRITE_DEFAULT);
-  public static final boolean REWRITE_INVOKESTATIC = getBoolean(REWRITE_INVOKESTATIC_PROPERTY, REWRITE_DEFAULT);
-  public static final boolean REWRITE_INVOKEVIRTUAL = getBoolean(REWRITE_INVOKEVIRTUAL_PROPERTY, REWRITE_DEFAULT);
-  
-  public static final boolean REWRITE_PUTFIELD = getBoolean(REWRITE_PUTFIELD_PROPERTY, REWRITE_DEFAULT);
-  public static final boolean REWRITE_GETFIELD = getBoolean(REWRITE_GETFIELD_PROPERTY, REWRITE_DEFAULT);
-
-  public static final boolean REWRITE_PUTSTATIC = getBoolean(REWRITE_PUTSTATIC_PROPERTY, REWRITE_DEFAULT);
-  public static final boolean REWRITE_GETSTATIC = getBoolean(REWRITE_GETSTATIC_PROPERTY, REWRITE_DEFAULT);
-
-  public static final boolean REWRITE_SYNCHRONIZED_METHOD = getBoolean(REWRITE_SYNCHRONIZED_METHOD_PROPERTY, REWRITE_DEFAULT);
-  public static final boolean REWRITE_MONITORENTER = getBoolean(REWRITE_MONITORENTER_PROPERTY, REWRITE_DEFAULT);
-  public static final boolean REWRITE_MONITOREXIT = getBoolean(REWRITE_MONITOREXIT_PROPERTY, REWRITE_DEFAULT);
-
-  public static final boolean REWRITE_INIT = getBoolean(REWRITE_INIT_PROPERTY, REWRITE_DEFAULT);
-  public static final boolean REWRITE_CONSTRUCTOR_EXECUTION = getBoolean(REWRITE_CONSTRUCTOR_EXECUTION_PROPERTY, REWRITE_DEFAULT);
-
-  private static final String INSTRUMENT_DEFAULT = properties.getProperty(INSTRUMENT_DEFAULT_PROPERTY, TRUE);
-
-  public static final boolean INSTRUMENT_BEFORE_CALL = getBoolean(INSTRUMENT_BEFORE_CALL_PROPERTY, INSTRUMENT_DEFAULT);
-  public static final boolean INSTRUMENT_AFTER_CALL = getBoolean(INSTRUMENT_AFTER_CALL_PROPERTY, INSTRUMENT_DEFAULT);
-  public static final boolean INSTRUMENT_BEFORE_WAIT = getBoolean(INSTRUMENT_BEFORE_WAIT_PROPERTY, INSTRUMENT_DEFAULT);
-  public static final boolean INSTRUMENT_AFTER_WAIT = getBoolean(INSTRUMENT_AFTER_WAIT_PROPERTY, INSTRUMENT_DEFAULT);
-  public static final boolean INSTRUMENT_BEFORE_JUC_LOCK = getBoolean(INSTRUMENT_BEFORE_JUC_LOCK_PROPERTY, INSTRUMENT_DEFAULT);
-  public static final boolean INSTRUMENT_AFTER_LOCK = getBoolean(INSTRUMENT_AFTER_LOCK_PROPERTY, INSTRUMENT_DEFAULT);
-  public static final boolean INSTRUMENT_AFTER_TRYLOCK = getBoolean(INSTRUMENT_AFTER_TRYLOCK_PROPERTY, INSTRUMENT_DEFAULT);
-  public static final boolean INSTRUMENT_AFTER_UNLOCK = getBoolean(INSTRUMENT_AFTER_UNLOCK_PROPERTY, INSTRUMENT_DEFAULT);
 
   
   
-  private static boolean getBoolean(final String propName, final String defaultValue) {
-    return Boolean.valueOf(properties.getProperty(propName, defaultValue));
+  public Properties(final java.util.Properties props) {
+    final String rewriteDefault = props.getProperty(REWRITE_DEFAULT_PROPERTY, TRUE);
+    
+    rewriteInvokeinterface = getBoolean(props, REWRITE_INVOKEINTERFACE_PROPERTY, rewriteDefault);
+    rewriteInvokespecial = getBoolean(props, REWRITE_INVOKESPECIAL_PROPERTY, rewriteDefault);
+    rewriteInvokestatic = getBoolean(props, REWRITE_INVOKESTATIC_PROPERTY, rewriteDefault);
+    rewriteInvokevirtual = getBoolean(props, REWRITE_INVOKEVIRTUAL_PROPERTY, rewriteDefault);
+    
+    rewritePutfield = getBoolean(props, REWRITE_PUTFIELD_PROPERTY, rewriteDefault);
+    rewriteGetfield = getBoolean(props, REWRITE_GETFIELD_PROPERTY, rewriteDefault);
+
+    rewritePutstatic = getBoolean(props, REWRITE_PUTSTATIC_PROPERTY, rewriteDefault);
+    rewriteGetstatic = getBoolean(props, REWRITE_GETSTATIC_PROPERTY, rewriteDefault);
+
+    rewriteSynchronizedMethod = getBoolean(props, REWRITE_SYNCHRONIZED_METHOD_PROPERTY, rewriteDefault);
+    rewriteMonitorenter = getBoolean(props, REWRITE_MONITORENTER_PROPERTY, rewriteDefault);
+    rewriteMonitorexit = getBoolean(props, REWRITE_MONITOREXIT_PROPERTY, rewriteDefault);
+
+    rewriteInit = getBoolean(props, REWRITE_INIT_PROPERTY, rewriteDefault);
+    rewriteConstructorExecution = getBoolean(props, REWRITE_CONSTRUCTOR_EXECUTION_PROPERTY, rewriteDefault);
+
+    final String instrumentDefault = props.getProperty(INSTRUMENT_DEFAULT_PROPERTY, TRUE);
+
+    instrumentBeforeCall = getBoolean(props, INSTRUMENT_BEFORE_CALL_PROPERTY, instrumentDefault);
+    instrumentAfterCall = getBoolean(props, INSTRUMENT_AFTER_CALL_PROPERTY, instrumentDefault);
+    instrumentBeforeWait = getBoolean(props, INSTRUMENT_BEFORE_WAIT_PROPERTY, instrumentDefault);
+    instrumentAfterWait = getBoolean(props, INSTRUMENT_AFTER_WAIT_PROPERTY, instrumentDefault);
+    instrumentBeforeJUCLock = getBoolean(props, INSTRUMENT_BEFORE_JUC_LOCK_PROPERTY, instrumentDefault);
+    instrumentAfterLock = getBoolean(props, INSTRUMENT_AFTER_LOCK_PROPERTY, instrumentDefault);
+    instrumentAfterTryLock = getBoolean(props, INSTRUMENT_AFTER_TRYLOCK_PROPERTY, instrumentDefault);
+    instrumentAfterUnlock = getBoolean(props, INSTRUMENT_AFTER_UNLOCK_PROPERTY, instrumentDefault);
+    
+    useDebugStore = getBoolean(props, USE_DEBUG_STORE_PROPERTY, FALSE);
   }
 }

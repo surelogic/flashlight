@@ -8,8 +8,8 @@ import org.objectweb.asm.Opcodes;
  * @author aarong
  */
 final class FlashlightNames {
-  // Constants for accessing the special Flashlight Store class
-  public static final String FLASHLIGHT_STORE = "com/surelogic/_flashlight/rewriter/test/DebugStore";
+  public static final String FLASHLIGHT_STORE = "com/surelogic/_flashlight/Store";
+  public static final String FLASHLIGHT_DEBUG_STORE = "com/surelogic/_flashlight/rewriter/test/DebugStore";
   
   public static final String AFTER_INTRINSIC_LOCK_ACQUISITION = "afterIntrinsicLockAcquisition";
   public static final String AFTER_INTRINSIC_LOCK_ACQUISITION_SIGNATURE = "(Ljava/lang/Object;Ljava/lang/Class;I)V";
@@ -91,7 +91,7 @@ final class FlashlightNames {
   public static final int IN_CLASS_ACCESS_CLASS = Opcodes.ACC_PRIVATE | IN_CLASS_ACCESS_BASE;
   public static final int IN_CLASS_ACCESS_INTERFACE = Opcodes.ACC_PUBLIC | IN_CLASS_ACCESS_BASE;
   public static final String IN_CLASS_DESC = "Ljava/lang/Class;";
-  
+
   
   
   // Prevent instantiation

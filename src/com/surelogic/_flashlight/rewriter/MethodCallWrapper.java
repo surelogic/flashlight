@@ -8,6 +8,13 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
+/**
+ * Abstract representation of the wrapper method that is generated to replace
+ * method calls.  Primarily encapsulates differences in whether the method is static or not,
+ * and differences in parameters.
+ * 
+ * @author aarong
+ */
 abstract class MethodCallWrapper {
   private static final String WRAPPER_NAME_TEMPLATE = "flashlight${0}${1}${2,choice,0#virtual|1#special|2#static|3#interface}Wrapper";
   private static final char INTERNAL_NAME_SEPARATOR = '/';

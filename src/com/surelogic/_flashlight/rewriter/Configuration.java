@@ -1,6 +1,8 @@
 package com.surelogic._flashlight.rewriter;
 
-public final class Properties {
+import java.util.Properties;
+
+public final class Configuration {
   public static final String REWRITE_DEFAULT_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.default";
   public static final String REWRITE_INVOKEINTERFACE_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.invokeinterface";
   public static final String REWRITE_INVOKESPECIAL_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.invokespecial";
@@ -73,7 +75,7 @@ public final class Properties {
 
   
   
-  public Properties(final java.util.Properties props) {
+  public Configuration(final Properties props) {
     final String rewriteDefault = props.getProperty(REWRITE_DEFAULT_PROPERTY, TRUE);
     
     rewriteInvokeinterface = getBoolean(props, REWRITE_INVOKEINTERFACE_PROPERTY, rewriteDefault);

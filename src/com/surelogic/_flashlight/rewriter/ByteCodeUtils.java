@@ -83,8 +83,8 @@ final class ByteCodeUtils {
   /**
    * Get the name of the flashlight store class.
    */
-  public static final String getFlashlightStore(final Properties properties) {
-    if (properties.useDebugStore) {
+  public static final String getFlashlightStore(final Configuration config) {
+    if (config.useDebugStore) {
       return FlashlightNames.FLASHLIGHT_DEBUG_STORE;
     } else {
       return FlashlightNames.FLASHLIGHT_STORE;

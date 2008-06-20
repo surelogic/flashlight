@@ -5,7 +5,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.instrument.Instrumentation;
 
-import com.surelogic._flashlight.rewriter.Properties;
+import com.surelogic._flashlight.rewriter.Configuration;
 import com.surelogic._flashlight.rewriter.runtime.FlashlightRuntimeSupport;
 import com.surelogic._flashlight.rewriter.runtime.Log;
 
@@ -39,7 +39,7 @@ public class FlashlightAgent {
       log = NullLog.prototype;
     }
     
-    final Properties rewriterProperties = new Properties(properties);
+    final Configuration rewriterProperties = new Configuration(properties);
     final FlashlightTransformer ft =
       new FlashlightTransformer(log, rewriteCacheName, rewriterProperties);
     Runtime.getRuntime().addShutdownHook(new FlashlightShutdown(log));

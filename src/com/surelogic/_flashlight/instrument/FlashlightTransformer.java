@@ -13,7 +13,7 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 
 import com.surelogic._flashlight.rewriter.FlashlightClassRewriter;
-import com.surelogic._flashlight.rewriter.Properties;
+import com.surelogic._flashlight.rewriter.Configuration;
 import com.surelogic._flashlight.rewriter.runtime.Log;
 
 final class FlashlightTransformer implements ClassFileTransformer {
@@ -21,12 +21,12 @@ final class FlashlightTransformer implements ClassFileTransformer {
   
   private final Log theLog;
   private final File rewriteCache;
-  private final Properties rewriterProperties;
+  private final Configuration rewriterConfig;
   
-  public FlashlightTransformer(final Log log, final String rcn, final Properties rp) {
+  public FlashlightTransformer(final Log log, final String rcn, final Configuration rp) {
     theLog = log;
     rewriteCache = (rcn == null) ? null : new File(rcn);
-    rewriterProperties = rp;
+    rewriterConfig = rp;
   }
   
   public byte[] transform(final ClassLoader loader, final String className,
@@ -40,7 +40,7 @@ final class FlashlightTransformer implements ClassFileTransformer {
       theLog.log("Transforming class " + className);
       final ClassReader input = new ClassReader(classfileBuffer);
       final ClassWriter output = new ClassWriter(input, 0);
-      final FlashlightClassRewriter xformer = new FlashlightClassRewriter(output, rewriterProperties);
+      final FlashlightClassRewriter xformer = new FlashlightClassRewriter(output, rewriterConfig);
       input.accept(xformer, 0);
       final byte[] newClass = output.toByteArray();    
       if (rewriteCache != null) {

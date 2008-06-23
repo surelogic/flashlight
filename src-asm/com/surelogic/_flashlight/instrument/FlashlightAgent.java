@@ -33,13 +33,16 @@ public class FlashlightAgent {
     final String logFileName = properties.getProperty(LOG_FILE_NAME_PROPERTY, null);
     final String rewriteCacheName = properties.getProperty(REWRITE_CACHE_NAME_PROPERTY, null);
     
-    final Log log;
+    Log log = NullLog.prototype;
     if (logFileName != null) {
-      log = new PrintWriterLog(logFileName);
-      FlashlightRuntimeSupport.setLog(log);
-    } else {
-      log = NullLog.prototype;
+      try {
+        log = new PrintWriterLog(logFileName);
+      } catch (final IOException e) {
+        System.err.println("Couldn't create log file " + logFileName + ": " + e.getMessage());
+        log = NullLog.prototype;
+      }
     }
+    FlashlightRuntimeSupport.setLog(log);
     
     final Configuration rewriterProperties = new Configuration(properties);
     final FlashlightTransformer ft =

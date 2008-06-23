@@ -10,16 +10,12 @@ import com.surelogic._flashlight.rewriter.runtime.Log;
 final class PrintWriterLog implements Log {
   private final PrintWriter pwLog;
   
-  public PrintWriterLog(final String logFileName) {
+  public PrintWriterLog(final String logFileName) throws IOException {
     PrintWriter logWriter = null;
     if (logFileName != null) {
-      try {
-        final FileWriter fw = new FileWriter(logFileName);
-        final BufferedWriter bw = new BufferedWriter(fw);
-        logWriter = new PrintWriter(bw);
-      } catch (final IOException e) {
-        logWriter = null;
-      }
+      final FileWriter fw = new FileWriter(logFileName); // Might throw IOException
+      final BufferedWriter bw = new BufferedWriter(fw);
+      logWriter = new PrintWriter(bw);
     }
     pwLog = logWriter;
   }

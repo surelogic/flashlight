@@ -4,9 +4,14 @@
 
 	<property name="lib" value="${basedir}/lib" />
 	<property name="classes" value="${basedir}/bin-cl" />
+	<property name="classes-asm" value="${basedir}/bin-asm" />
+	
 	<property name="src" value="${basedir}/src" />
+	<property name="src-asm" value="${basedir}/src-asm" />
 	<property name="test" value="${basedir}/test" />
 
+	<property name="asm.jar" value="${lib}/asm-3.1.jar" />
+	
 	<property name="aspectjrt.jar" value="${lib}/aspectjrt.jar" />
 	<property name="aspectjtools.jar" value="${lib}/aspectjtools.jar" />
 	<property name="aspectjweaver.jar" value="${lib}/aspectjweaver.jar" />
@@ -15,6 +20,9 @@
 
 	<property name="flashlight.jar" value="${basedir}/flashlight.jar" />
 	<property name="flashlight.jar.manifest" value="${lib}/MANIFEST.MF" />
+
+	<property name="flashlight-asm.jar" value="${basedir}/flashlight-asm.jar" />
+	<property name="flashlight-asm.jar.manifest" value="${lib}/ASM-MANIFEST.MF" />
 
 	<taskdef resource="org/aspectj/tools/ant/taskdefs/aspectjTaskdefs.properties">
 		<classpath>
@@ -45,6 +53,23 @@
 			<fileset dir="${src}/META-INF" />
 		</copy>
 		<jar manifest="${flashlight.jar.manifest}" destfile="${flashlight.jar}" basedir="${classes}" />
+	</target>
+
+	<target name="compile-asm">
+		<delete dir="${classes-asm}" />
+		<mkdir dir="${classes-asm}" />
+		<javac destdir="${classes-asm}" source="1.5" target="1.5">
+			<src path="${src}" />
+			<src path="${src-asm}" />
+			<classpath>
+				<pathelement location="${asm.jar}" />
+			</classpath>
+		</javac>
+	</target>
+
+	<target name="build-asm-jar" depends="compile-asm">
+		<unzip src="${asm.jar}" dest="${classes-asm}" />
+		<jar manifest="${flashlight-asm.jar.manifest}" destfile="${flashlight-asm.jar}" basedir="${classes-asm}" />
 	</target>
 
 	<target name="compile-test-code" depends="build-jar">

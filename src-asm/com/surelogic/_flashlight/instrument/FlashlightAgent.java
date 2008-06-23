@@ -17,6 +17,9 @@ public class FlashlightAgent {
   private static final String USER_HOME_SYSTEM_PROPERTY = "user.home";
   private static final String PROPERTY_FILENAME = "flashlight-rewriter.properties";
     
+  private static final String PROPERTIES_DIRECTORY_PROPERTY="com.surelogic._flashlight.rewriter.properties.dir";
+  private static final String PROPERTIES_NAME_PROPERTY="com.surelogic._flashlight.rewriter.properties.name";
+  
   public static final String LOG_FILE_NAME_PROPERTY = "com.surelogic._flashlight.rewriter.log.name";
   public static final String REWRITE_CACHE_NAME_PROPERTY = "com.surelogic._flashlight.rewriter.cache.name";
 
@@ -24,8 +27,7 @@ public class FlashlightAgent {
   
   public static void premain(
       final String agentArgs, final Instrumentation inst) {
-    final File userHome = new File(System.getProperty(USER_HOME_SYSTEM_PROPERTY));
-    final File propFile = new File(userHome, PROPERTY_FILENAME);
+    final File propFile = getPropertyFile();
     final java.util.Properties properties = loadPropertiesFromFile(propFile);
     
     final String logFileName = properties.getProperty(LOG_FILE_NAME_PROPERTY, null);
@@ -44,6 +46,15 @@ public class FlashlightAgent {
       new FlashlightTransformer(log, rewriteCacheName, rewriterProperties);
     Runtime.getRuntime().addShutdownHook(new FlashlightShutdown(log));
     inst.addTransformer(ft);
+  }
+
+  
+  
+  private static final File getPropertyFile() {
+    final String userHome = System.getProperty(USER_HOME_SYSTEM_PROPERTY);
+    final String propDir = System.getProperty(PROPERTIES_DIRECTORY_PROPERTY, userHome);
+    final String propName = System.getProperty(PROPERTIES_NAME_PROPERTY, PROPERTY_FILENAME);
+    return new File(propDir, propName);
   }
   
   

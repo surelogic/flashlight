@@ -65,8 +65,8 @@ public final class Data {
 		Derby.bootEmbedded();
 
 		final String connectionURL = getConnectionURL() + ";create=true";
-		SLLogger.log(Level.INFO, "Using Flashlight database at "
-				+ connectionURL);
+		SLLogger.getLogger().log(Level.INFO,
+				"Using Flashlight database at " + connectionURL);
 		final Connection c = DriverManager.getConnection(connectionURL);
 		c.setAutoCommit(false);
 		Exception e = null;

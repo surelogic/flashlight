@@ -106,9 +106,7 @@ public final class FlashlightLaunchConfigurationDelegate extends
 			throw new CoreException(SLStatus.createErrorStatus(0,
 					"Failed to configure the VM to run Flashlight."));
 		}
-		
-		
-		
+
 		// Create source zip
 		final StringBuilder fileName = new StringBuilder();
 		final String rawPath = PreferenceConstants.getFlashlightRawDataPath();
@@ -119,7 +117,7 @@ public final class FlashlightLaunchConfigurationDelegate extends
 		}
 		fileName.append(System.getProperty("file.separator"));
 		fileName.append(getMainTypeName(configuration));
-		
+
 		final SimpleDateFormat dateFormat = new SimpleDateFormat(
 				"-yyyy.MM.dd-'at'-HH.mm.ss.SSS");
 		// make the filename and time event times match
@@ -127,19 +125,22 @@ public final class FlashlightLaunchConfigurationDelegate extends
 		fileName.append(dateFormat.format(now));
 		fileName.append(".src.zip");
 
-		final String projAttr    = "org.eclipse.jdt.launching.PROJECT_ATTR";
+		final String projAttr = "org.eclipse.jdt.launching.PROJECT_ATTR";
 		final String projectName = configuration.getAttribute(projAttr, "");
-		IWorkspaceRoot root      = ResourcesPlugin.getWorkspace().getRoot();
-		IProject project         = root.getProject(projectName);
+		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
+		IProject project = root.getProject(projectName);
 		// FIX this is not right for projects with dependencies
 		if (project != null && project.exists()) {
 			try {
-				SourceZip.generateSourceZip(fileName.toString(), project, false);
+				SourceZip
+						.generateSourceZip(fileName.toString(), project, false);
 			} catch (IOException e) {
-				SLLogger.log(Level.SEVERE, "Unable to create source zip", e);
+				SLLogger.getLogger().log(Level.SEVERE,
+						"Unable to create source zip", e);
 			}
 		} else {
-			SLLogger.log(Level.SEVERE, "No such project: "+projectName);
+			SLLogger.getLogger().log(Level.SEVERE,
+					"No such project: " + projectName);
 		}
 		return runner;
 	}

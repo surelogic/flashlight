@@ -2,13 +2,11 @@ package com.surelogic.flashlight;
 
 import java.io.File;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.concurrent.Executor;
 import java.util.logging.Level;
 
 import com.surelogic.common.logging.SLLogger;
-import com.surelogic.flashlight.common.*;
+import com.surelogic.flashlight.common.AbstractFlashlightAdhocGlue;
 import com.surelogic.flashlight.preferences.PreferenceConstants;
 
 public final class AdHocGlue extends AbstractFlashlightAdhocGlue {
@@ -24,7 +22,8 @@ public final class AdHocGlue extends AbstractFlashlightAdhocGlue {
 			try {
 				copyDefaultQueryFile(qsf);
 			} catch (IOException e) {
-				SLLogger.log(Level.SEVERE, "Problem creating default query file", e);
+				SLLogger.getLogger().log(Level.SEVERE,
+						"Problem creating default query file", e);
 			}
 		}
 		return qsf;

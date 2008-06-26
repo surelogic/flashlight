@@ -792,12 +792,16 @@ final class FlashlightMethodRewriter extends MethodAdapter {
      * the java.lang.reflect.Field object for the accessed field on the stack.
      */
     mv.visitLdcInsn(fullyQualifiedOwner);
+    // ..., isRead, receiver, className
     mv.visitLabel(try1Start);
     mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.JAVA_LANG_CLASS, FlashlightNames.FOR_NAME, FlashlightNames.FOR_NAME_SIGNATURE);
+    // ..., isRead, receiver, classObj
     mv.visitLabel(try1End);
     mv.visitLdcInsn(name);
+    // ..., isRead, receiver, classObj, fieldName
     mv.visitLabel(try2Start);
-    mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, FlashlightNames.JAVA_LANG_CLASS, FlashlightNames.GET_DECLARED_FIELD, FlashlightNames.GET_DECLARED_FIELD_SIGNATURE);
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_RUNTIME_SUPPORT, FlashlightNames.GET_FIELD, FlashlightNames.GET_FIELD_SIGNATURE);
+//    mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, FlashlightNames.JAVA_LANG_CLASS, FlashlightNames.GET_DECLARED_FIELD, FlashlightNames.GET_DECLARED_FIELD_SIGNATURE);
     mv.visitLabel(try2End);
     // Stack is "..., isRead, receiver, Field"
     

@@ -851,21 +851,30 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     mv.visitInsn(Opcodes.SWAP);
     // ..., obj, inClass, obj,   inClass, obj  
     mv.visitInsn(Opcodes.DUP_X1);
-    // ..., obj, inClass, obj,   obj, inClass, obj  
-    mv.visitInsn(Opcodes.DUP);
-    // ..., obj, inClass, obj,   obj, inClass, obj, obj
+    // ..., obj, inClass, obj,   obj, inClass, obj
+    
+    if (isStatic) {
+      // Static methods do not have a receiver
+      ByteCodeUtils.pushBooleanConstant(mv, false);
+      // ..., obj, inClass, obj,   obj, inClass, obj, false
+    } else {
+      mv.visitInsn(Opcodes.DUP);
+      // ..., obj, inClass, obj,   obj, inClass, obj, obj
 
-    /* Compare the object against "this" */
-    mv.visitVarInsn(Opcodes.ALOAD, 0);
-    // ..., obj, inClass, obj,   obj, inClass, obj, obj, this
-    final Label pushFalse1 = new Label();
-    final Label afterPushIsThis = new Label();
-    mv.visitJumpInsn(Opcodes.IF_ACMPNE, pushFalse1);
-    ByteCodeUtils.pushBooleanConstant(mv, true);
-    mv.visitJumpInsn(Opcodes.GOTO, afterPushIsThis);
-    mv.visitLabel(pushFalse1);
-    ByteCodeUtils.pushBooleanConstant(mv, false);
-    mv.visitLabel(afterPushIsThis);
+      /* Compare the object against "this" */
+      mv.visitVarInsn(Opcodes.ALOAD, 0);
+      // ..., obj, inClass, obj,   obj, inClass, obj, obj, this
+      final Label pushFalse1 = new Label();
+      final Label afterPushIsThis = new Label();
+      mv.visitJumpInsn(Opcodes.IF_ACMPNE, pushFalse1);
+      // ..., obj, inClass, obj,   obj, inClass, obj
+      ByteCodeUtils.pushBooleanConstant(mv, true);
+      mv.visitJumpInsn(Opcodes.GOTO, afterPushIsThis);
+      mv.visitLabel(pushFalse1);
+      // ..., obj, inClass, obj,   obj, inClass, obj
+      ByteCodeUtils.pushBooleanConstant(mv, false);
+      mv.visitLabel(afterPushIsThis);
+    }
     // ..., obj, inClass, obj,   obj, inClass, obj, isThis
     
     /* Copy the comparison result three values down to use as the

@@ -37,7 +37,7 @@ final class FlashlightTransformer implements ClassFileTransformer {
       theLog.log("Skipping " + className + " (loaded by bootstrap class loader)");
       return null;
     } else if (isTransformable(className)) {
-      theLog.log("Transforming class " + className);
+      theLog.log("Transforming class " + className + " (loaded by " + loader.getClass().getName() + ")");
       final ClassReader input = new ClassReader(classfileBuffer);
       final ClassWriter output = new ClassWriter(input, 0);
       final FlashlightClassRewriter xformer = new FlashlightClassRewriter(rewriterConfig, output);
@@ -48,7 +48,7 @@ final class FlashlightTransformer implements ClassFileTransformer {
       }
       return newClass;
     } else {
-      theLog.log("Skipping class " + className);
+      theLog.log("Skipping class " + className + " (loaded by " + loader.getClass().getName() + ")");
       return null;
     }
   }

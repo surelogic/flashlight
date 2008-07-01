@@ -44,6 +44,11 @@ public class FlashlightAgent {
     }
     FlashlightRuntimeSupport.setLog(log);
     
+    /* Log all the classes that have already been loaded */
+    for (final Class<?> loadedClass : inst.getAllLoadedClasses()) {
+      log.log("Class " + loadedClass + " was loaded before FlashlightTransformer was installed");
+    }
+    
     final Configuration rewriterProperties = new Configuration(properties);
     final FlashlightTransformer ft =
       new FlashlightTransformer(log, rewriteCacheName, rewriterProperties);

@@ -33,11 +33,12 @@ final class FlashlightTransformer implements ClassFileTransformer {
       final Class<?> classBeingRedefined,
       final ProtectionDomain protectionDomain, final byte[] classfileBuffer)
       throws IllegalClassFormatException {
-    if (loader == null) {
-      theLog.log("Skipping " + className + " (loaded by bootstrap class loader)");
+    if (!checkLoader(loader)) {
+      theLog.log("Skipping " + className + " (loaded by " + getLoaderName(loader) + ")");
       return null;
-    } else if (isTransformable(className)) {
-      theLog.log("Transforming class " + className + " (loaded by " + loader.getClass().getName() + ")");
+    }
+    if (isTransformable(className)) {
+      theLog.log("Transforming class " + className + " (loaded by " + getLoaderName(loader) + ")");
       final ClassReader input = new ClassReader(classfileBuffer);
       final ClassWriter output = new ClassWriter(input, 0);
       final FlashlightClassRewriter xformer = new FlashlightClassRewriter(rewriterConfig, output);
@@ -52,11 +53,26 @@ final class FlashlightTransformer implements ClassFileTransformer {
       return null;
     }
   }
+  
+  private static String getLoaderName(final ClassLoader loader) {
+    if (loader == null) {
+      return "Bootstrap Class Loader";
+    } else {
+      return loader.getClass().getName();
+    }
+  }
+  
+  private static boolean checkLoader(final ClassLoader loader) {
+    if (loader == null) {
+      return false;
+    }
+    return !getLoaderName(loader).startsWith("sun.reflect");
+  }
 
   private static boolean isTransformable(final String className) {
-    return !className.startsWith(FLASHLIGHT_PACKAGE_PREFIX);
-//        && !className.startsWith("java/") && !className.startsWith("javax/")
-//        && !className.startsWith("sun/refelct/");
+    return !className.startsWith(FLASHLIGHT_PACKAGE_PREFIX)
+        && !className.startsWith("java/") && !className.startsWith("javax/")
+        && !className.startsWith("sun/reflect/");
   }
   
   private void cacheClassfile(final String className, final byte[] classBytes) {

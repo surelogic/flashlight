@@ -16,8 +16,6 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   private static final String CLASS_INITIALIZER = "<clinit>";
   private static final String INITIALIZER = "<init>";
   
-  private final Configuration config;
-  
   
   
   /**
@@ -35,6 +33,12 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   }
   
   
+  
+  /** Configuration information, derived from properties. */
+  private final Configuration config;
+
+  /** Is the current class at least from Java 5? */
+  private final boolean atLeastJava5;
 
   /** The name of the source file that contains the class being rewritten. */
   private final String sourceFileName;
@@ -124,12 +128,13 @@ final class FlashlightMethodRewriter extends MethodAdapter {
    *          The set of wrapper methods that this visitor should add to.
    */
   public FlashlightMethodRewriter(
-      final Configuration conf, final MethodVisitor mv,
+      final Configuration conf, final boolean java5, final MethodVisitor mv,
       final int access, final String mname,
       final String fname, final String nameInternal, final String nameFullyQualified,
       final Set<MethodCallWrapper> wrappers) {
     super(mv);
     config = conf;
+    atLeastJava5 = java5;
     wasSynchronized = (access & Opcodes.ACC_SYNCHRONIZED) != 0;
     isStatic = (access & Opcodes.ACC_STATIC) != 0;
     methodName = mname;
@@ -154,7 +159,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     mv.visitCode();
     
     // Initialize the flashlight$inClass field
-    if (isClassInitializer) {
+    if (!atLeastJava5 && isClassInitializer) {
       insertClassInitializerCode();
     } else if (wasSynchronized && config.rewriteSynchronizedMethod) {
       insertSynchronizedMethodPrefix();
@@ -169,11 +174,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   
   @Override
   public void visitTypeInsn(final int opcode, final String type) {
-//    if (opcode == Opcodes.NEW) {
-//      rewriteNew(type);
-//    } else {
-      mv.visitTypeInsn(opcode, type);
-//    }
+    mv.visitTypeInsn(opcode, type);
     if (stateMachine != null) stateMachine.visitTypeInsn(opcode, type);
   }
   
@@ -439,7 +440,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     // ..., before
     mv.visitVarInsn(Opcodes.ALOAD, 0);
     // ..., before, this
-    ByteCodeUtils.pushInClass(mv, classBeingAnalyzedInternal);
+    ByteCodeUtils.pushInClass(mv, atLeastJava5, classBeingAnalyzedInternal);
     // ..., before, this, inClass
     ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
     // ..., before, this, inClass, line
@@ -460,7 +461,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
       // ..., true, fileName
       mv.visitLdcInsn(methodName);
       // ..., true, fileName, methodName
-      ByteCodeUtils.pushInClass(mv, classBeingAnalyzedInternal);
+      ByteCodeUtils.pushInClass(mv, atLeastJava5, classBeingAnalyzedInternal);
       // ..., true, fileName, methodName, inClass
       ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
       // ..., true, fileName, methodName, inClass, line 
@@ -487,7 +488,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
       // ..., true, fileName
       mv.visitLdcInsn(methodName);
       // ..., true, fileName, methodName
-      ByteCodeUtils.pushInClass(mv, classBeingAnalyzedInternal);
+      ByteCodeUtils.pushInClass(mv, atLeastJava5, classBeingAnalyzedInternal);
       // ..., true, fileName, methodName, inClass
       ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
       // ..., true, fileName, methodName, inClass, line 
@@ -506,7 +507,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
       // ex, true, fileName
       mv.visitLdcInsn(methodName);
       // ex, true, fileName, methodName
-      ByteCodeUtils.pushInClass(mv, classBeingAnalyzedInternal);
+      ByteCodeUtils.pushInClass(mv, atLeastJava5, classBeingAnalyzedInternal);
       // ex, true, fileName, methodName, inClass
       ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
       // ex, true, fileName, methodName, inClass, line 
@@ -632,7 +633,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     final String fullyQualifiedOwner = ByteCodeUtils.internal2FullyQualified(owner);
     if (isEnclosingThisField(name)) {
       /* Don't instrument enclosing this references */
-      mv.visitFieldInsn(Opcodes.PUTFIELD, owner, name, desc);
+      mv.visitFieldInsn(Opcodes.GETFIELD, owner, name, desc);
       return;
     }
 
@@ -809,7 +810,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
      * to push the java.lang.Class object of the referencing class onto the 
      * stack.
      */
-    ByteCodeUtils.pushInClass(mv, classBeingAnalyzedInternal);
+    ByteCodeUtils.pushInClass(mv, atLeastJava5, classBeingAnalyzedInternal);
     // Stack is "..., isRead, receiver, Field, inClass"
     
     /* Push the line number of the field access. */
@@ -843,7 +844,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     mv.visitInsn(Opcodes.DUP);
     // ..., obj, obj, obj  
     
-    ByteCodeUtils.pushInClass(mv, classBeingAnalyzedInternal);
+    ByteCodeUtils.pushInClass(mv, atLeastJava5, classBeingAnalyzedInternal);
 
     /* Copy the class object three values down to use as the second parameter
      * in the post-synchronized call.
@@ -954,7 +955,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     mv.visitInsn(Opcodes.MONITOREXIT);
     // ..., obj
     
-    ByteCodeUtils.pushInClass(mv, classBeingAnalyzedInternal);
+    ByteCodeUtils.pushInClass(mv, atLeastJava5, classBeingAnalyzedInternal);
     
     /* Push the lineNumber and call the Store method. */
     ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
@@ -976,7 +977,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   
   private void pushSynchronizedMethodLockObject() {
     if (isStatic) {
-      ByteCodeUtils.pushInClass(mv, classBeingAnalyzedInternal);
+      ByteCodeUtils.pushInClass(mv, atLeastJava5, classBeingAnalyzedInternal);
     } else {
       mv.visitVarInsn(Opcodes.ALOAD, 0);
     }
@@ -992,7 +993,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     // lockObj, isReceiver
     ByteCodeUtils.pushBooleanConstant(mv, isStatic);
     // lockObj, isReceiver, isStatic
-    ByteCodeUtils.pushInClass(mv, classBeingAnalyzedInternal);
+    ByteCodeUtils.pushInClass(mv, atLeastJava5, classBeingAnalyzedInternal);
     // lockObj, isReceiver, isStatic, inClass
     ByteCodeUtils.pushIntegerConstant(mv, 0);
     // lockObj, isReceiver, isStatic, inClass, 0
@@ -1010,7 +1011,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     /* Now call Store.afterIntrinsicLockAcquisition */
     pushSynchronizedMethodLockObject();
     // lockObj
-    ByteCodeUtils.pushInClass(mv, classBeingAnalyzedInternal);
+    ByteCodeUtils.pushInClass(mv, atLeastJava5, classBeingAnalyzedInternal);
     // lockObj, inClass
     ByteCodeUtils.pushIntegerConstant(mv, 0);
     // lockObj, inClass, 0
@@ -1058,7 +1059,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     /* Call Store.afterIntrinsicLockRelease(). */
     pushSynchronizedMethodLockObject();
     // ..., lockObj
-    ByteCodeUtils.pushInClass(mv, classBeingAnalyzedInternal);
+    ByteCodeUtils.pushInClass(mv, atLeastJava5, classBeingAnalyzedInternal);
     // ..., lockObj, inClass
     ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
     // ..., lockObj, inClass, exitLineNumber

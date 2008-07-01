@@ -75,9 +75,15 @@ final class ByteCodeUtils {
   /**
    * Generate code to push the Class object the named class.
    */
-  public static void pushInClass(final MethodVisitor mv, final String internalClassName) {
-    mv.visitFieldInsn(Opcodes.GETSTATIC, internalClassName,
-        FlashlightNames.IN_CLASS, FlashlightNames.IN_CLASS_DESC);
+  public static void pushInClass(
+      final MethodVisitor mv, final boolean atLeastJava5, 
+      final String internalClassName) {
+    if (!atLeastJava5) {
+      mv.visitFieldInsn(Opcodes.GETSTATIC, internalClassName,
+          FlashlightNames.IN_CLASS, FlashlightNames.IN_CLASS_DESC);
+    } else {
+      mv.visitLdcInsn(Type.getType("L"+internalClassName+";"));
+    }
   }
 
   /**

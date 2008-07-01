@@ -81,7 +81,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
       final String[] interfaces) {
     cv.visit(version, access, name, signature, superName, interfaces);
     isInterface = (access & Opcodes.ACC_INTERFACE) != 0;
-    atLeastJava5 = (version & 0xFFFF0000) >= Opcodes.V1_5;
+    atLeastJava5 = (version & 0x0000FFFF) >= Opcodes.V1_5;
     classNameInternal = name;
     classNameFullyQualified = ByteCodeUtils.internal2FullyQualified(name);
   }
@@ -104,7 +104,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
     
     final int newAccess = access & ~Opcodes.ACC_SYNCHRONIZED;
     return new FlashlightMethodRewriter(
-        config,
+        config, atLeastJava5,
         cv.visitMethod(newAccess, name, desc, signature, exceptions), access, name,
         sourceFileName, classNameInternal, classNameFullyQualified,
         wrapperMethods);
@@ -112,16 +112,18 @@ public final class FlashlightClassRewriter extends ClassAdapter {
   
   @Override
   public void visitEnd() {
-    // insert our new field
-    final FieldVisitor fv = cv.visitField(
-        isInterface ? FlashlightNames.IN_CLASS_ACCESS_INTERFACE
-            : FlashlightNames.IN_CLASS_ACCESS_CLASS,
-        FlashlightNames.IN_CLASS, FlashlightNames.IN_CLASS_DESC, null, null);
-    fv.visitEnd();
+    if (!atLeastJava5) {
+      // insert our new field
+      final FieldVisitor fv = cv.visitField(
+          isInterface ? FlashlightNames.IN_CLASS_ACCESS_INTERFACE
+              : FlashlightNames.IN_CLASS_ACCESS_CLASS,
+          FlashlightNames.IN_CLASS, FlashlightNames.IN_CLASS_DESC, null, null);
+      fv.visitEnd();
 
-    // Add the class initializer if needed
-    if (needsClassInitializer) {
-      addClassInitializer();
+      // Add the class initializer if needed
+      if (needsClassInitializer) {
+        addClassInitializer();
+      }
     }
     
     // Add the wrapper methods
@@ -143,7 +145,8 @@ public final class FlashlightClassRewriter extends ClassAdapter {
     /* Proceed as if visitMethod() were called on us, and simulate the method
      * traversal through the rewriter visitor.
      */
-    final MethodVisitor rewriter_mv = new FlashlightMethodRewriter(config, mv,
+    final MethodVisitor rewriter_mv = new FlashlightMethodRewriter(
+        config, atLeastJava5, mv,
         Opcodes.ACC_STATIC, CLASS_INITIALIZER, sourceFileName,
         classNameInternal, classNameFullyQualified, wrapperMethods);
     rewriter_mv.visitCode(); // start code section
@@ -230,7 +233,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
       // true, objRef, filename
       wrapper.pushCallingMethodName(mv);
       // true, objRef, filename, callingMethodName
-      ByteCodeUtils.pushInClass(mv, classNameInternal);
+      ByteCodeUtils.pushInClass(mv, atLeastJava5, classNameInternal);
       // true, objRef, filename, callingMethodName, inClass
       wrapper.pushCallingLineNumber(mv);
       // true, objRef, filename, callingMethodName, inClass, line
@@ -254,7 +257,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
       // ..., true, objRef, filename
       wrapper.pushCallingMethodName(mv);
       // ..., true, objRef, filename, callingMethodName
-      ByteCodeUtils.pushInClass(mv, classNameInternal);
+      ByteCodeUtils.pushInClass(mv, atLeastJava5, classNameInternal);
       // ..., true, objRef, filename, callingMethodName, inClass
       wrapper.pushCallingLineNumber(mv);
       // ..., true, objRef, filename, callingMethodName, inClass, line
@@ -275,7 +278,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
       // ..., true
       wrapper.pushObjectRefForEvent(mv);
       // ..., true, objRef
-      ByteCodeUtils.pushInClass(mv, classNameInternal);
+      ByteCodeUtils.pushInClass(mv, atLeastJava5, classNameInternal);
       // ..., true, objRef, inClass
       wrapper.pushCallingLineNumber(mv);
       // ..., true, objRef, inClass, line
@@ -293,7 +296,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
       // ..., true
       wrapper.pushObjectRefForEvent(mv);
       // ..., true, objRef
-      ByteCodeUtils.pushInClass(mv, classNameInternal);
+      ByteCodeUtils.pushInClass(mv, atLeastJava5, classNameInternal);
       // ..., true, objRef, inClass
       wrapper.pushCallingLineNumber(mv);
       // ..., true, objRef, inClass, line
@@ -315,7 +318,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
       // ...
       wrapper.pushObjectRefForEvent(mv);
       // ..., objRef
-      ByteCodeUtils.pushInClass(mv, classNameInternal);
+      ByteCodeUtils.pushInClass(mv, atLeastJava5, classNameInternal);
       // ..., objRef, inClass
       wrapper.pushCallingLineNumber(mv);
       // ..., objRef, inClass, line
@@ -338,7 +341,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
       // ..., gotTheLock
       wrapper.pushObjectRefForEvent(mv);
       // ..., gotTheLock, objRef
-      ByteCodeUtils.pushInClass(mv, classNameInternal);
+      ByteCodeUtils.pushInClass(mv, atLeastJava5, classNameInternal);
       // ..., gotTheLock, objRef, inClass
       wrapper.pushCallingLineNumber(mv);
       // ..., gotTheLock, objRef, inClass, line
@@ -360,7 +363,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
       // ..., gotTheLock, gotTheLock      
       wrapper.pushObjectRefForEvent(mv);
       // ..., gotTheLock, gotTheLock, objRef
-      ByteCodeUtils.pushInClass(mv, classNameInternal);
+      ByteCodeUtils.pushInClass(mv, atLeastJava5, classNameInternal);
       // ..., gotTheLock, gotTheLock, objRef, inClass
       wrapper.pushCallingLineNumber(mv);
       // ..., gotTheLock, gotTheLock, objRef, inClass, line
@@ -381,7 +384,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
       // ..., false
       wrapper.pushObjectRefForEvent(mv);
       // ..., false, objRef
-      ByteCodeUtils.pushInClass(mv, classNameInternal);
+      ByteCodeUtils.pushInClass(mv, atLeastJava5, classNameInternal);
       // ..., false, objRef, inClass
       wrapper.pushCallingLineNumber(mv);
       // ..., false, objRef, inClass, line
@@ -402,7 +405,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
       // ..., gotTheLock
       wrapper.pushObjectRefForEvent(mv);
       // ..., gotTheLock, objRef
-      ByteCodeUtils.pushInClass(mv, classNameInternal);
+      ByteCodeUtils.pushInClass(mv, atLeastJava5, classNameInternal);
       // ..., gotTheLock, objRef, inClass
       wrapper.pushCallingLineNumber(mv);
       // ..., gotTheLock, objRef, inClass, line

@@ -46,7 +46,7 @@ public class FlashlightAgent {
     
     /* Log all the classes that have already been loaded */
     for (final Class<?> loadedClass : inst.getAllLoadedClasses()) {
-      log.log("Class " + loadedClass + " was loaded before FlashlightTransformer was installed");
+      log.log("Class " + loadedClass.getName() + " was loaded before FlashlightTransformer was installed");
     }
     
     final Configuration rewriterProperties = new Configuration(properties);

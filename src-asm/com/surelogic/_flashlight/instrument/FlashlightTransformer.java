@@ -34,7 +34,7 @@ final class FlashlightTransformer implements ClassFileTransformer {
       final ProtectionDomain protectionDomain, final byte[] classfileBuffer)
       throws IllegalClassFormatException {
     if (!checkLoader(loader)) {
-      theLog.log("Skipping " + className + " (loaded by " + getLoaderName(loader) + ")");
+      theLog.log("Skipping " + className + " because it is loaded by " + getLoaderName(loader));
       return null;
     }
     if (isTransformable(className)) {

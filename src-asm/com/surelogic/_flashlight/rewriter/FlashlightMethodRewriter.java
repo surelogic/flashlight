@@ -72,16 +72,6 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   private int stackDepthDelta = 0;
   
   /**
-   * The label for the exception handler, if necessary.  This starts out as 
-   * {@code null}.  If the method needs one, as indicated by a call to
-   * {@link #getFlashlightExceptionHandlerLabel()}, this field is initialized to a new
-   * label (at most once).  When non-{@code null} at the start of
-   * {@link #visitMaxs()}, an exceptional handler is inserted using 
-   * {@link #insertFlashlightExceptionHandler()}.
-   */
-  private Label exceptionHandlerLabel = null;
-  
-  /**
    * The global list of wrapper methods that need to be created.  This list
    * is added to by this class, and is provided by the FlashlightClassRewriter
    * instance that create the method rewriter.
@@ -246,11 +236,6 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   
   @Override
   public void visitMaxs(final int maxStack, final int maxLocals) {
-    // Insert the exception handler if needed
-    if (exceptionHandlerLabel != null) {
-      insertFlashlightExceptionHandler();
-    }
-    
     if (wasSynchronized && config.rewriteSynchronizedMethod) {
       insertSynchronizedMethodPostfix();
     }
@@ -335,42 +320,6 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   
   
   // =========================================================================
-  // == Insert Fatal error exception handler
-  // =========================================================================
-
-  private Label getFlashlightExceptionHandlerLabel() {
-    if (exceptionHandlerLabel == null) {
-      exceptionHandlerLabel = new Label();
-    }
-    return exceptionHandlerLabel;
-  }
-  
-  private void insertFlashlightExceptionHandler() {
-    mv.visitLabel(exceptionHandlerLabel);
-    
-    // Exception
-    mv.visitInsn(Opcodes.DUP);
-    // Exception, Exception
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, 
-        FlashlightNames.FLASHLIGHT_RUNTIME_SUPPORT,
-        FlashlightNames.REPORT_FATAL_ERROR, FlashlightNames.REPORT_FATAL_ERROR_SIGNATURE);
-    // Exception    
-    mv.visitTypeInsn(Opcodes.NEW, FlashlightNames.FLASHLIGHT_EXCEPTION);
-    // Exception, FlashlightException
-    mv.visitInsn(Opcodes.DUP_X1);
-    // FlashlightException, Exception, FlashlightException
-    mv.visitInsn(Opcodes.SWAP);
-    // FlashlightException, FlashlightException, Exception
-    mv.visitMethodInsn(Opcodes.INVOKESPECIAL, FlashlightNames.FLASHLIGHT_EXCEPTION, FlashlightNames.CONSTRUCTOR, FlashlightNames.FLASHLIGHT_EXCEPTION_SIGNATURE);
-    // FlashlightException
-    mv.visitInsn(Opcodes.ATHROW);
-    
-    updateStackDepthDelta(3);
-  }
-  
-  
-
-  // =========================================================================
   // == Insert Bookkeeping code
   // =========================================================================
 
@@ -378,18 +327,12 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     // Stack is empty (we are at the beginning of the method!)
     
     /* We need to insert the expression "Class.forName(<fully-qualified-class-name>)"
-     * into the code.  We have to introduce a try-catch for the call.
+     * into the code.
      */
-    final Label tryStart = new Label();
-    final Label tryEnd = new Label();
-    final Label catchClassNotFound = getFlashlightExceptionHandlerLabel();
-    mv.visitTryCatchBlock(tryStart, tryEnd, catchClassNotFound, FlashlightNames.JAVA_LANG_CLASS_NOT_FOUND_EXCEPTION);
     mv.visitLdcInsn(classBeingAnalyzedFullyQualified);
     // className
-    mv.visitLabel(tryStart);
     mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.JAVA_LANG_CLASS, FlashlightNames.FOR_NAME, FlashlightNames.FOR_NAME_SIGNATURE);
     // Class
-    mv.visitLabel(tryEnd);
     mv.visitFieldInsn(Opcodes.PUTSTATIC, classBeingAnalyzedInternal, FlashlightNames.IN_CLASS, FlashlightNames.IN_CLASS_DESC);
     // empty stack
 
@@ -773,37 +716,17 @@ final class FlashlightMethodRewriter extends MethodAdapter {
       final String name, final String fullyQualifiedOwner) {
     // Stack is "..., isRead, receiver"
     
-    /* We have to create try-catch blocks to deal with the exceptions that
-     * the inserted reflection methods might throw.  We do this on a per-call
-     * basis here in the bytecode, with the two exceptions sharing the same
-     * handler.  Furthermore, there is only one handler for the entire method.
-     * This is not expressible in the Java source code.
-     */
-    final Label try1Start = new Label();
-    final Label try1End = new Label();
-    final Label try2Start = new Label();
-    final Label try2End = new Label();
-    final Label catchClassNotFound = getFlashlightExceptionHandlerLabel();
-    final Label catchNoSuchField = getFlashlightExceptionHandlerLabel();
-    mv.visitTryCatchBlock(try1Start, try1End, catchClassNotFound, FlashlightNames.JAVA_LANG_CLASS_NOT_FOUND_EXCEPTION);
-    mv.visitTryCatchBlock(try2Start, try2End, catchNoSuchField, FlashlightNames.JAVA_LANG_NO_SUCH_FIELD_EXCEPTION);
-    
     /* We need to insert the expression
      * "Class.forName(<owner>).getDeclaredField(<name>)" into the code.  This puts
      * the java.lang.reflect.Field object for the accessed field on the stack.
      */
     mv.visitLdcInsn(fullyQualifiedOwner);
     // ..., isRead, receiver, className
-    mv.visitLabel(try1Start);
     mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.JAVA_LANG_CLASS, FlashlightNames.FOR_NAME, FlashlightNames.FOR_NAME_SIGNATURE);
     // ..., isRead, receiver, classObj
-    mv.visitLabel(try1End);
     mv.visitLdcInsn(name);
     // ..., isRead, receiver, classObj, fieldName
-    mv.visitLabel(try2Start);
     mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_RUNTIME_SUPPORT, FlashlightNames.GET_FIELD, FlashlightNames.GET_FIELD_SIGNATURE);
-//    mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, FlashlightNames.JAVA_LANG_CLASS, FlashlightNames.GET_DECLARED_FIELD, FlashlightNames.GET_DECLARED_FIELD_SIGNATURE);
-    mv.visitLabel(try2End);
     // Stack is "..., isRead, receiver, Field"
     
     /* We need to insert the expression "Class.forName(<current_class>)"

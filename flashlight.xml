@@ -69,7 +69,14 @@
 
 	<target name="build-asm-jar" depends="compile-asm">
 		<unzip src="${asm.jar}" dest="${classes-asm}" />
-		<jar manifest="${flashlight-asm.jar.manifest}" destfile="${flashlight-asm.jar}" basedir="${classes-asm}" />
+		<jar destfile="${flashlight-asm.jar}" basedir="${classes-asm}">
+			<manifest>
+			  <attribute name="Manifest-Version" value="1.0"/>
+			  <attribute name="Premain-Class" value="com.surelogic._flashlight.instrument.FlashlightAgent"/>
+			  <attribute name="Can-Redefine-Classes" value="false"/>
+  		  <attribute name="Main-Class" value="com.surelogic._flashlight.rewriter.FlashlightClassRewriter"/>
+			</manifest>
+	  </jar>
 	</target>
 
 	<target name="compile-test-code" depends="build-jar">

@@ -1,0 +1,4 @@
+Manifest-Version: 1.0
+Premain-Class: com.surelogic._flashlight.instrument.FlashlightAgent
+Can-Redefine-Classes: false
+Class-Path: flashlight-asm-rewriter.jar flashlight-asm-runtime.jar

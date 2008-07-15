@@ -11,6 +11,7 @@
 	<property name="test" value="${basedir}/test" />
 
 	<property name="asm.jar" value="${lib}/asm-3.1.jar" />
+	<property name="servlet.jar" value="${lib}/servlet-api.jar" />
 	
 	<property name="aspectjrt.jar" value="${lib}/aspectjrt.jar" />
 	<property name="aspectjtools.jar" value="${lib}/aspectjtools.jar" />
@@ -30,8 +31,8 @@
 	<property name="flashlight-asm-instrument.jar" value="${basedir}/flashlight-asm-instrument.jar" />
 	<property name="flashlight-asm-instrument.jar.manifest" value="${lib}/ASM-INSTRUMENT-MANIFEST.MF" />
 
-	<property name="flashlight-asm-rewrite.jar" value="${basedir}/flashlight-asm-rewrite.jar" />
-	<property name="flashlight-asm-rewrite.jar.manifest" value="${lib}/ASM-REWRITE-MANIFEST.MF" />
+	<property name="flashlight-asm-rewriter.jar" value="${basedir}/flashlight-asm-rewriter.jar" />
+	<property name="flashlight-asm-rewriter.jar.manifest" value="${lib}/ASM-REWRITER-MANIFEST.MF" />
 
 	<taskdef resource="org/aspectj/tools/ant/taskdefs/aspectjTaskdefs.properties">
 		<classpath>
@@ -52,6 +53,7 @@
 			<classpath>
 				<pathelement path="${java.class.path}" />
 				<pathelement location="${aspectjrt.jar}" />
+				<pathelement location="${servlet.jar}" />
 			</classpath>
 		</iajc>
 	</target>
@@ -72,6 +74,7 @@
 			<src path="${src-asm}" />
 			<classpath>
 				<pathelement location="${asm.jar}" />
+				<pathelement location="${servlet.jar}" />
 			</classpath>
 		</javac>
 	</target>
@@ -100,12 +103,13 @@
 	  </jar>
 	</target>
 
-	<target name="build-asm-rewrite-jar" depends="compile-asm">
-		<jar destfile="${flashlight-asm-rewrite.jar}" basedir="${classes-asm}">
+	<target name="build-asm-rewriter-jar" depends="compile-asm">
+		<jar destfile="${flashlight-asm-rewriter.jar}" basedir="${classes-asm}">
 			<include name="**/com/surelogic/_flashlight/rewriter/*.class" />
 			<manifest>
 			  <attribute name="Manifest-Version" value="1.0"/>
   		  <attribute name="Main-Class" value="com.surelogic._flashlight.rewriter.FlashlightClassRewriter"/>
+				<attribute name="Class-Path" value="asm-3.1.jar"/>
 			</manifest>
 	  </jar>
 	</target>
@@ -117,11 +121,12 @@
 			  <attribute name="Manifest-Version" value="1.0"/>
 			  <attribute name="Premain-Class" value="com.surelogic._flashlight.instrument.FlashlightAgent"/>
 			  <attribute name="Can-Redefine-Classes" value="false"/>
+				<attribute name="Class-Path" value="flashlight-asm-rewriter.jar flashlight-asm-runtime.jar"/>
 			</manifest>
 	  </jar>
 	</target>
 
-	<target name="build-asm-jars" depends="build-asm-all-jar, build-asm-runtime-jar, build-asm-instrument-jar, build-asm-rewrite-jar" />
+	<target name="build-asm-jars" depends="build-asm-all-jar, build-asm-runtime-jar, build-asm-instrument-jar, build-asm-rewriter-jar" />
 	
 	<target name="compile-test-code" depends="build-aspectj-jar">
 		<delete dir="${classes}" />

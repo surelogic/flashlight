@@ -20,6 +20,8 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import com.surelogic.common.SLProgressMonitor;
+import com.surelogic.common.i18n.I18N;
+import com.surelogic.common.jdbc.QB;
 import com.surelogic.common.logging.LogStatus;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.common.Data;
@@ -31,6 +33,7 @@ public final class PrepRunnable implements Runnable {
 	Object status = null;
 
 	private static final BeforeTrace beforeTrace = new BeforeTrace();
+
 	/**
 	 * New elements need to be added into this array.
 	 */
@@ -49,6 +52,7 @@ public final class PrepRunnable implements Runnable {
 			new ObjectDefinition(), new ThreadDefinition() };
 
 	final Raw f_raw;
+
 	final SLProgressMonitor monitor;
 
 	public PrepRunnable(final Raw raw, SLProgressMonitor mon) {
@@ -98,7 +102,7 @@ public final class PrepRunnable implements Runnable {
 				final long startPreScan = System.currentTimeMillis();
 				saxParser.parse(stream, scanResults);
 				scanResults.done();
-				
+
 				System.out.println("Prescan = "
 						+ (System.currentTimeMillis() - startPreScan) + " ms");
 				stream.close();
@@ -160,7 +164,7 @@ public final class PrepRunnable implements Runnable {
 						}
 
 						if (monitor.isCanceled()) {
-							return; // Status.CANCEL_STATUS;
+							return;
 						}
 						/*
 						 * Remove all unreferenced objects and fields.
@@ -172,39 +176,22 @@ public final class PrepRunnable implements Runnable {
 								"Unreferenced fields calculated: %d\n",
 								unreferencedFields.size());
 						final PreparedStatement deleteFields = c
-								.prepareStatement("DELETE FROM FIELD WHERE RUN = ? AND ID IN "
-										+ "(SELECT ID FROM FIELD WHERE RUN = ? "
-										+ "EXCEPT "
-										+ "SELECT FIELD FROM ACCESS WHERE RUN = ?)");
+								.prepareStatement(QB.get(18));
 						for (int i = 1; i <= 3; i++) {
 							deleteFields.setInt(i, runId);
 						}
-						final String deletion = "DELETE FROM OBJECT WHERE RUN = 1 AND "
-								+ "ID IN "
-								+ "((SELECT ID FROM OBJECT WHERE RUN = 1 AND FLAG = 'O' "
-								+ "EXCEPT "
-								+ "SELECT LOCK FROM ILOCK WHERE RUN = 1) "
-								+ "   EXCEPT "
-								+ " SELECT RECEIVER FROM ACCESS WHERE RUN = 1)";
 						System.out.printf("Unreference fields deleted: %d\n",
 								deleteFields.executeUpdate());
 						monitor.worked(1);
 						deleteFields.close();
-						/*
-						 * PreparedStatement s = c .prepareStatement("delete
-						 * from FIELD where Run=? and Id=?"); for (final Long l :
-						 * unreferencedFields) { s.setInt(1, runId);
-						 * s.setLong(2, l); s.executeUpdate();
-						 * monitor.worked(1); } s.close();
-						 */
 
 						if (monitor.isCanceled()) {
-							return; // Status.CANCEL_STATUS;
+							return;
 						}
 						monitor.subTask("Deleting thread-local objects");
 
-						final PreparedStatement s = c
-								.prepareStatement("delete from OBJECT where Run=? and Id=?");
+						final PreparedStatement s = c.prepareStatement(QB
+								.get(19));
 						for (final Long l : unreferencedObjects) {
 							s.setInt(1, runId);
 							s.setLong(2, l);
@@ -242,16 +229,13 @@ public final class PrepRunnable implements Runnable {
 			}
 		} catch (final Exception e) {
 			if (monitor.isCanceled()) {
-				return; // Status.CANCEL_STATUS;
+				return;
 			}
 
 			status = LogStatus.createErrorStatus(0, "Unable to prepare "
 					+ dataFileName, e);
 			return;
 		}
-		// RunView.refreshViewContents();
-		// monitor.done();
-		// return Status.OK_STATUS;
 	}
 
 	public static class RawFileReader extends DefaultHandler {
@@ -311,18 +295,23 @@ public final class PrepRunnable implements Runnable {
 					break;
 				}
 			}
-			/*
+
 			if (!parsed) {
-				System.out.println(name);
-				if (attributes != null) {
+				final StringBuilder b = new StringBuilder();
+				b.append(I18N.err(98, name));
+				if (attributes == null || attributes.getLength() == 0) {
+					b.append(" with no attributes.");
+				} else {
+					b.append(" with the following attributes:");
 					for (int i = 0; i < attributes.getLength(); i++) {
 						final String aName = attributes.getQName(i);
 						final String aValue = attributes.getValue(i);
-						System.out.println("\t" + aName + " = " + aValue);
+						b.append(" ").append(aName).append("=").append(aValue);
 					}
+					b.append(".");
 				}
+				SLLogger.getLogger().log(Level.WARNING, b.toString());
 			}
-			*/
 		}
 	}
 }

@@ -8,8 +8,8 @@ import java.util.Set;
 import org.xml.sax.Attributes;
 
 /**
- * Ensure that any new subclasses are added to the <tt>f_elements</tt> array
- * in what used to be PrepJob.
+ * Ensure that any new subclasses are added to the {@code f_elements} array in
+ * {@link PrepRunnable}.
  */
 public interface IPrep {
 
@@ -22,8 +22,8 @@ public interface IPrep {
 			Set<Long> unreferencedFields) throws SQLException;
 
 	void flush(final int runId, final long endTime) throws SQLException;
-	
+
 	void printStats();
-	
+
 	void close() throws SQLException;
 }

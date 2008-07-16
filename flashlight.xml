@@ -11,7 +11,7 @@
 	<property name="test" value="${basedir}/test" />
 
 	<property name="asm.jar" value="${lib}/asm-3.1.jar" />
-	<property name="servlet.jar" value="${lib}/servlet-api.jar" />
+	<property name="servlet.jar" value="${lib}/servlet-2_5-api.jar" />
 	
 	<property name="aspectjrt.jar" value="${lib}/aspectjrt.jar" />
 	<property name="aspectjtools.jar" value="${lib}/aspectjtools.jar" />
@@ -27,6 +27,9 @@
 
 	<property name="flashlight-asm-runtime.jar" value="${basedir}/flashlight-asm-runtime.jar" />
 	<property name="flashlight-asm-runtime.jar.manifest" value="${lib}/ASM-RUNTIME-MANIFEST.MF" />
+
+	<property name="flashlight-asm-servlet.jar" value="${basedir}/flashlight-asm-servlet.jar" />
+	<property name="flashlight-asm-servlet.jar.manifest" value="${lib}/ASM-SERVLET-MANIFEST.MF" />
 
 	<property name="flashlight-asm-instrument.jar" value="${basedir}/flashlight-asm-instrument.jar" />
 	<property name="flashlight-asm-instrument.jar.manifest" value="${lib}/ASM-INSTRUMENT-MANIFEST.MF" />
@@ -103,6 +106,15 @@
 	  </jar>
 	</target>
 
+	<target name="build-asm-servlet-jar" depends="compile-asm">
+		<jar destfile="${flashlight-asm-servlet.jar}" basedir="${classes-asm}">
+			<include name="**/com/surelogic/_flashlight/servlet/*.class" />
+			<manifest>
+			  <attribute name="Manifest-Version" value="1.0"/>
+			</manifest>
+	  </jar>
+	</target>
+
 	<target name="build-asm-rewriter-jar" depends="compile-asm">
 		<jar destfile="${flashlight-asm-rewriter.jar}" basedir="${classes-asm}">
 			<include name="**/com/surelogic/_flashlight/rewriter/*.class" />
@@ -126,7 +138,7 @@
 	  </jar>
 	</target>
 
-	<target name="build-asm-jars" depends="build-asm-all-jar, build-asm-runtime-jar, build-asm-instrument-jar, build-asm-rewriter-jar" />
+	<target name="build-asm-jars" depends="build-asm-all-jar, build-asm-runtime-jar, build-asm-servlet-jar, build-asm-instrument-jar, build-asm-rewriter-jar" />
 	
 	<target name="compile-test-code" depends="build-aspectj-jar">
 		<delete dir="${classes}" />

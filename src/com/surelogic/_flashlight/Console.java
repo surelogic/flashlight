@@ -22,8 +22,7 @@ class Console extends Thread {
 
 	private volatile boolean f_shutdownRequested = false;
 
-	private final int f_port = Store.getIntProperty("FL_CONSOLE_PORT", 43524,
-			1024);
+	private final int f_port = StoreConfiguration.getConsolePort();
 
 	/**
 	 * The socket this game server is listening on.

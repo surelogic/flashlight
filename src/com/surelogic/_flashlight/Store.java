@@ -49,8 +49,7 @@ public final class Store {
 	 * It is an invariant of this field that it is monotonic towards
 	 * <code>true</code>.
 	 */
-	private static final AtomicBoolean FL_OFF = new AtomicBoolean(System
-			.getProperty("FL_OFF") != null);
+	private static final AtomicBoolean FL_OFF = new AtomicBoolean(StoreConfiguration.isOff());
 
 	/**
 	 * Output encoding.
@@ -227,11 +226,13 @@ public final class Store {
 			 * Initialize final static fields. If Flashlight is off these fields
 			 * are all set to null to save memory.
 			 */
+      final File flashlightDir = new File(StoreConfiguration.getDirectory());
+      if (!flashlightDir.exists()) flashlightDir.mkdirs();
+      // ??? What to do if mkdirs() fails???
 			final StringBuilder fileName = new StringBuilder();
-			fileName.append(System.getProperty("FL_DIR", System
-					.getProperty("java.io.tmpdir")));
+      fileName.append(flashlightDir);
 			fileName.append(System.getProperty("file.separator"));
-			f_run = System.getProperty("FL_RUN", "flashlight");
+			f_run = StoreConfiguration.getRun();
 			fileName.append(f_run);
 			final SimpleDateFormat dateFormat = new SimpleDateFormat(
 					"-yyyy.MM.dd-'at'-HH.mm.ss.SSS");
@@ -270,10 +271,10 @@ public final class Store {
 			}
 			final EventVisitor outputStrategy = new OutputStrategyXML(w);
 
-			final int rawQueueSize = getIntProperty("FL_RAWQ_SIZE", 500, 10);
+			final int rawQueueSize = StoreConfiguration.getRawQueueSize();
 			f_rawQueue = new ArrayBlockingQueue<Event>(rawQueueSize);
 			putInQueue(f_rawQueue, timeEvent);
-			final int outQueueSize = getIntProperty("FL_OUTQ_SIZE", 500, 10);
+			final int outQueueSize = StoreConfiguration.getOutQueueSize();
 			f_outQueue = new ArrayBlockingQueue<Event>(outQueueSize);
 			tl_withinStore = new ThreadLocal<Boolean>() {
 				@Override
@@ -291,8 +292,7 @@ public final class Store {
 									new ObjectDefinition(o));
 						}
 					});
-			final int refinerySize = getIntProperty("FL_REFINERY_SIZE", 5000,
-					100);
+			final int refinerySize = StoreConfiguration.getRefinerySize();
 			f_refinery = new Refinery(f_rawQueue, f_outQueue, refinerySize);
 			f_refinery.start();
 			f_depository = new Depository(f_outQueue, outputStrategy);
@@ -304,7 +304,7 @@ public final class Store {
 			 * The spy periodically checks the state of the instrumented program
 			 * and shuts down flashlight if the program is finished.
 			 */
-			final boolean noSpy = System.getProperty("FL_NO_SPY") != null;
+			final boolean noSpy = StoreConfiguration.getNoSpy();
 			if (noSpy) {
 				f_spy = null;
 			} else {

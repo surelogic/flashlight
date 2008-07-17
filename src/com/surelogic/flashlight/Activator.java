@@ -61,7 +61,7 @@ public class Activator extends AbstractUIPlugin {
 		System.setProperty("derby.storage.pageSize", "8192");
 		System.setProperty("derby.storage.pageCacheSize", "20000");
 		final String rawPath = PreferenceConstants.getFlashlightRawDataPath();
-		Data.getInstance().setDatabaseLocation(rawPath);
+		Data.getInstance().setDatabaseLocation(rawPath + "/db");
 		Data.getInstance().bootAndCheckSchema();
 	}
 

@@ -41,7 +41,7 @@ public final class UnPrepJob extends DatabaseJob {
 		monitor.beginTask(taskName, TABLES.length + 2);
 
 		try {
-			final Connection c = Data.getConnection();
+			final Connection c = Data.getInstance().getConnection();
 			try {
 				monitor.worked(1);
 				final Statement s = c.createStatement();

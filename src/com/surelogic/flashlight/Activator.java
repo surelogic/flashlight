@@ -48,7 +48,7 @@ public class Activator extends AbstractUIPlugin {
 	}
 
 	@Override
-	public void start(BundleContext context) throws Exception {
+	public void start(final BundleContext context) throws Exception {
 		super.start(context);
 
 		/*
@@ -61,11 +61,12 @@ public class Activator extends AbstractUIPlugin {
 		System.setProperty("derby.storage.pageSize", "8192");
 		System.setProperty("derby.storage.pageCacheSize", "20000");
 		final String rawPath = PreferenceConstants.getFlashlightRawDataPath();
-		Data.bootAndCheckSchema(rawPath);
+		Data.getInstance().setDatabaseLocation(rawPath);
+		Data.getInstance().bootAndCheckSchema();
 	}
 
 	@Override
-	public void stop(BundleContext context) throws Exception {
+	public void stop(final BundleContext context) throws Exception {
 		plugin = null;
 		super.stop(context);
 	}

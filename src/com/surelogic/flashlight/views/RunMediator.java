@@ -120,7 +120,7 @@ public final class RunMediator {
 		// see what is in the database
 		items = f_table.getItems();
 		try {
-			final Connection c = Data.getConnection();
+			final Connection c = Data.getInstance().getConnection();
 			try {
 				Run[] runs = RunDAO.getAll(c);
 				for (Run run : runs) {
@@ -208,7 +208,7 @@ public final class RunMediator {
 	private int getRunId(Raw raw) {
 		int unPrepId = -1;
 		try {
-			final Connection em = Data.getConnection();
+			final Connection em = Data.getInstance().getConnection();
 			try {
 				Run r = RunDAO.find(em, raw.getName(), raw.getStartTimeOfRun());
 				if (r != null) {

@@ -15,7 +15,7 @@ import org.eclipse.jdt.launching.IVMRunner;
 import org.eclipse.jdt.launching.JavaLaunchDelegate;
 
 import com.surelogic.common.eclipse.jdt.SourceZip;
-import com.surelogic.common.eclipse.logging.SLStatus;
+import com.surelogic.common.eclipse.logging.SLStatusUtility;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.Activator;
 import com.surelogic.flashlight.preferences.PreferenceConstants;
@@ -33,7 +33,7 @@ public final class FlashlightLaunchConfigurationDelegate extends
 			IPath jarLocation = bundleBase.append("lib/flashlight-asm-all.jar");
 			b.append(jarLocation.toOSString());
 		} else {
-			throw new CoreException(SLStatus.createErrorStatus(0,
+			throw new CoreException(SLStatusUtility.createErrorStatus(0,
 					"No bundle location found for the Flashlight plug-in."));
 		}
 		final String run = getMainTypeName(configuration);
@@ -92,18 +92,18 @@ public final class FlashlightLaunchConfigurationDelegate extends
 			final String javaVersion = vm2.getJavaVersion();
 			int majorRel = Integer.parseInt(javaVersion.substring(2, 3));
 			if (majorRel < 5) {
-				throw new CoreException(SLStatus.createErrorStatus(0,
+				throw new CoreException(SLStatusUtility.createErrorStatus(0,
 						"Flashlight requires minimum VM version 1.5 (VM version is "
 								+ javaVersion + ")."));
 			}
 		} else {
-			throw new CoreException(SLStatus.createErrorStatus(0,
+			throw new CoreException(SLStatusUtility.createErrorStatus(0,
 					"Flashlight requires minimum VM version 1.5 "
 							+ "(VM version is unknown)."));
 		}
 		IVMRunner runner = vm.getVMRunner("run");
 		if (runner == null) {
-			throw new CoreException(SLStatus.createErrorStatus(0,
+			throw new CoreException(SLStatusUtility.createErrorStatus(0,
 					"Failed to configure the VM to run Flashlight."));
 		}
 

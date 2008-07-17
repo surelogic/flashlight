@@ -11,7 +11,7 @@ import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 
-import com.surelogic.common.eclipse.logging.SLStatus;
+import com.surelogic.common.eclipse.logging.SLStatusUtility;
 import com.surelogic.flashlight.common.Data;
 import com.surelogic.flashlight.preferences.PreferenceConstants;
 
@@ -54,7 +54,7 @@ public class Activator extends AbstractUIPlugin {
 		/*
 		 * "Touch" common-eclipse so the logging gets Eclipse-ified.
 		 */
-		SLStatus.touch();
+		SLStatusUtility.touch();
 
 		// startup the database and ensure its schema is up to date
 		System.setProperty("derby.system.durability", "test");

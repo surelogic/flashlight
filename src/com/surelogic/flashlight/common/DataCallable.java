@@ -31,7 +31,7 @@ public abstract class DataCallable<T> implements Callable<T> {
 		}
 		try {
 			this.sql = sql;
-			Data.getExecutor().submit(this).get();
+			Data.getInstance().getExecutor().submit(this).get();
 			return true;
 		} catch (InterruptedException ex) {
 			// Ignore this
@@ -46,7 +46,7 @@ public abstract class DataCallable<T> implements Callable<T> {
 			return null;
 		}
 		try {
-			return Data.getExecutor().submit(this).get();
+			return Data.getInstance().getExecutor().submit(this).get();
 		} catch (InterruptedException ex) {
 			LOG.log(Level.SEVERE, "Interrupted: " + sql, ex);
 		} catch (ExecutionException ex) {
@@ -60,7 +60,7 @@ public abstract class DataCallable<T> implements Callable<T> {
 	}
 
 	public final T call() throws Exception {
-		Connection c = Data.getConnection();
+		Connection c = Data.getInstance().getConnection();
 		try {
 			Statement s = c.createStatement();
 			try {

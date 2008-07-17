@@ -116,7 +116,7 @@ public final class PrepRunnable implements Runnable {
 				stream = getDataFileStream(f_raw);
 				try {
 					// FIX change to decouple DB inserts?
-					final Connection c = Data.getConnection();
+					final Connection c = Data.getInstance().getConnection();
 					c.setAutoCommit(false);
 					/*
 					 * Persist the run and obtain its database identifier, start

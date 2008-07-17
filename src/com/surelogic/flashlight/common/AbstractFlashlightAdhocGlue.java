@@ -9,13 +9,13 @@ import com.surelogic.adhoc.AbstractAdHocGlue;
 
 public abstract class AbstractFlashlightAdhocGlue extends AbstractAdHocGlue {
 	public final Connection getConnection() throws SQLException {
-		return Data.getConnection();
+		return Data.getInstance().getConnection();
 	}
 	
     protected static void copyDefaultQueryFile(File qsf) throws IOException {
         InputStream is = null;
         try {
-            URL url = Data.getDefaultQueryFileURL();
+            URL url = Data.getInstance().getDefaultQueryFileURL();
             is = url.openStream();
             is = new BufferedInputStream(is, 8192);
             OutputStream os = new FileOutputStream(qsf);

@@ -1,40 +1,30 @@
 package com.surelogic.flashlight.common;
 
-import java.io.IOException;
 import java.net.URL;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.logging.Level;
 
-import com.surelogic.common.derby.Derby;
-import com.surelogic.common.jdbc.FutureDatabaseException;
-import com.surelogic.common.jdbc.SchemaUtility;
-import com.surelogic.common.logging.SLLogger;
+import com.surelogic.common.derby.DerbyConnection;
+import com.surelogic.common.jdbc.SchemaData;
+import com.surelogic.flashlight.schema.FlashlightSchemaData;
 
-public final class Data {
+public final class Data extends DerbyConnection {
 
 	private Data() {
 		// no instances
 	}
 
 	private static final String SCHEMA_NAME = "FLASHLIGHT";
-	private static final String JDBC_PRE = "jdbc:derby:";
-	private static final String JDBC_POST = System
-			.getProperty("file.separator")
-			+ "db;user=" + SCHEMA_NAME;
 
-	private static String dbLocation = null;
+	private String dbLocation = null;
 
-	private static ExecutorService exec = Executors.newSingleThreadExecutor();
+	private ExecutorService exec = Executors.newSingleThreadExecutor();
 
-	public static ExecutorService getExecutor() {
+	public ExecutorService getExecutor() {
 		return exec;
 	}
 
-	public static void restartExecutor() {
+	public void restartExecutor() {
 		exec.shutdownNow();
 		exec = Executors.newSingleThreadExecutor();
 	}
@@ -43,106 +33,38 @@ public final class Data {
 		return Data.class.getResource("/lib/queries/queries.xml");
 	}
 
-	public static synchronized boolean isBooted() {
-		return (dbLocation != null);
+	@Override
+	protected boolean deleteDatabaseOnStartup() {
+		return false;
 	}
 
-	public static synchronized boolean bootAndCheckSchema(String location)
-			throws Exception {
-		if (location == null) {
-			throw new IllegalArgumentException("Null db location");
-		}
-		if (isBooted()) {
-			// already initialized
-			return false;
-		}
-		/*
-		 * if (!new File(location).exists()) { throw new
-		 * IllegalArgumentException("Non-existent db location: "+location); }
-		 */
+	@Override
+	protected synchronized String getDatabaseLocation() {
+		return dbLocation;
+	}
+
+	public synchronized void setDatabaseLocation(final String location) {
 		dbLocation = location;
-
-		Derby.bootEmbedded();
-
-		final String connectionURL = getConnectionURL() + ";create=true";
-		SLLogger.getLogger().log(Level.INFO,
-				"Using Flashlight database at " + connectionURL);
-		final Connection c = DriverManager.getConnection(connectionURL);
-		c.setAutoCommit(false);
-		Exception e = null;
-		try {
-			checkAndUpdate(c);
-			c.commit();
-		} catch (final SQLException e1) {
-			c.rollback();
-			e = e1;
-		} finally {
-			try {
-				c.close();
-			} catch (final SQLException e1) {
-				if (e == null) {
-					e = e1;
-				}
-			}
-		}
-		if (e != null) {
-			throw e;
-		}
-		return true;
 	}
 
-	public static Connection getConnection() throws SQLException {
-		if (getConnectionURL() == null) {
-			return null;
-		}
-		return DriverManager.getConnection(getConnectionURL());
+	@Override
+	protected SchemaData getSchemaLoader() {
+		return new FlashlightSchemaData();
 	}
 
-	private static String getConnectionURL() {
-		if (dbLocation == null) {
-			return null;
-		}
-		return JDBC_PRE + dbLocation + JDBC_POST;
+	@Override
+	protected String getSchemaName() {
+		return SCHEMA_NAME;
 	}
 
-	/**
-	 * Up this number when you add a new schema version SQL script to this
-	 * package.
-	 */
-	public static final int schemaVersion = 17;
-
-	public static final String SQL_SCRIPT_PREFIX = "/lib/database/schema_";
-
-	public static void checkAndUpdate(final Connection c) throws SQLException,
-			IOException, FutureDatabaseException {
-		final int arrayLength = schemaVersion + 1;
-
-		final URL[] scripts = new URL[arrayLength];
-		for (int i = 0; i < scripts.length; i++) {
-			scripts[i] = Data.class.getResource(SQL_SCRIPT_PREFIX
-					+ getZeroPadded(i) + ".sql");
-		}
-		SchemaUtility.checkAndUpdate(c, scripts, null);
+	@Override
+	protected void setDeleteDatabaseOnStartup(final boolean bool) {
+		// Do nothing
 	}
 
-	/**
-	 * Pads the given positive integer with 0s and returns a string of at least
-	 * 4 characters. For example: <code>getZeroPadded(0)</code> results in the
-	 * string <code>"0000"</code>; <code>getZeroPadded(436)</code> results
-	 * in the string <code>"0456"</code>; <code>getZeroPadded(56900)</code>
-	 * results in the string <code>"56900"</code>.
-	 * 
-	 * @param n
-	 *            a non-negative integer (i.e., n >=0).
-	 * @return a
-	 */
-	private static String getZeroPadded(final int n) {
-		assert n >= 0;
+	private static final Data INSTANCE = new Data();
 
-		String result = "" + n;
-		while (result.length() < 4) {
-			result = "0" + result;
-		}
-		return result;
+	public static Data getInstance() {
+		return INSTANCE;
 	}
 }

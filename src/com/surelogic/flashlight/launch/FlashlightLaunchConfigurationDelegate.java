@@ -14,6 +14,7 @@ import org.eclipse.jdt.launching.IVMInstall2;
 import org.eclipse.jdt.launching.IVMRunner;
 import org.eclipse.jdt.launching.JavaLaunchDelegate;
 
+import com.surelogic.common.FileUtility;
 import com.surelogic.common.eclipse.jdt.SourceZip;
 import com.surelogic.common.eclipse.logging.SLStatusUtility;
 import com.surelogic.common.logging.SLLogger;
@@ -42,7 +43,7 @@ public final class FlashlightLaunchConfigurationDelegate extends
 			b.append(run);
 		}
 		b.append("\" -DFL_DIR=\"");
-		b.append(PreferenceConstants.getFlashlightRawDataPath());
+		b.append(FileUtility.getFlashlightDataDirectory());
 		b.append("\" -DFL_RAWQ_SIZE=");
 		final String rawQSize = Activator.getDefault().getPluginPreferences()
 				.getString(PreferenceConstants.P_RAWQ_SIZE);
@@ -109,7 +110,7 @@ public final class FlashlightLaunchConfigurationDelegate extends
 
 		// Create source zip
 		final StringBuilder fileName = new StringBuilder();
-		final String rawPath = PreferenceConstants.getFlashlightRawDataPath();
+		final String rawPath = FileUtility.getFlashlightDataDirectory();
 		if (rawPath != null) {
 			fileName.append(rawPath);
 		} else {

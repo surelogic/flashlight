@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.concurrent.Executor;
 import java.util.logging.Level;
 
+import com.surelogic.common.FileUtility;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.common.AbstractFlashlightAdhocGlue;
 import com.surelogic.flashlight.preferences.PreferenceConstants;
@@ -16,8 +17,8 @@ public final class AdHocGlue extends AbstractFlashlightAdhocGlue {
 	}
 
 	public File getQuerySaveFile() {
-		File qsf = new File(PreferenceConstants.getFlashlightRawDataPath()
-				+ System.getProperty("file.separator") + "queries.xml");
+		File qsf = new File(FileUtility.getFlashlightDataDirectory()
+				+ File.separator + "queries.xml");
 		if (!qsf.exists()) {
 			try {
 				copyDefaultQueryFile(qsf);

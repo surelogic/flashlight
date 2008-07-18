@@ -1,7 +1,6 @@
 package com.surelogic.flashlight.preferences;
 
 import org.eclipse.jface.preference.BooleanFieldEditor;
-import org.eclipse.jface.preference.DirectoryFieldEditor;
 import org.eclipse.jface.preference.FieldEditorPreferencePage;
 import org.eclipse.jface.preference.IntegerFieldEditor;
 import org.eclipse.jface.preference.ScaleFieldEditor;
@@ -26,9 +25,6 @@ public class FlashlightPreferencePage extends FieldEditorPreferencePage
 	 */
 	@Override
 	public void createFieldEditors() {
-		addField(new DirectoryFieldEditor(PreferenceConstants.P_RAW_PATH,
-				"&Raw data directory:", getFieldEditorParent()));
-
 		addField(new ScaleFieldEditor(PreferenceConstants.P_RAWQ_SIZE,
 				"Raw queue size:", getFieldEditorParent(), 1000, 50000, 1000,
 				1000));

@@ -19,10 +19,10 @@ import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.PlatformUI;
 
+import com.surelogic.common.FileUtility;
 import com.surelogic.common.eclipse.SLImages;
 import com.surelogic.common.images.CommonImages;
 import com.surelogic.common.logging.SLLogger;
-import com.surelogic.flashlight.Activator;
 import com.surelogic.flashlight.common.Data;
 import com.surelogic.flashlight.common.entities.IRunDescription;
 import com.surelogic.flashlight.common.entities.Run;
@@ -31,7 +31,6 @@ import com.surelogic.flashlight.common.files.Raw;
 import com.surelogic.flashlight.jobs.DeleteRawFilesJob;
 import com.surelogic.flashlight.jobs.PrepJob;
 import com.surelogic.flashlight.jobs.UnPrepJob;
-import com.surelogic.flashlight.preferences.PreferenceConstants;
 
 public final class RunMediator {
 
@@ -82,8 +81,7 @@ public final class RunMediator {
 		 */
 		final int oldSelection = f_table.getSelectionIndex();
 
-		Raw[] raws = Raw.findRawFiles(Activator.getDefault().getPluginPreferences()
-				                      .getString(PreferenceConstants.P_RAW_PATH));
+		Raw[] raws = Raw.findRawFiles(FileUtility.getFlashlightDataDirectory());
 
 		// remove the contents
 		TableItem[] items = f_table.getItems();
@@ -135,9 +133,8 @@ public final class RunMediator {
 					}
 					if (!found) {
 						TableItem nti = new TableItem(f_table, SWT.NONE);
-						nti
-								.setImage(1, SLImages
-										.getImage(CommonImages.IMG_FL_PREP));
+						nti.setImage(1, SLImages
+								.getImage(CommonImages.IMG_FL_PREP));
 						for (int i = 2; i < f_table.getColumnCount(); i++) {
 							nti.setText(i, f_indexToColumn.get(i).getText(run));
 						}

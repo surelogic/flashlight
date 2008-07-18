@@ -64,7 +64,7 @@ public abstract class FlashlightSourceListener extends DataCallable<Void>
 		this.cls = cls;
 		this.line = line;
 
-		String lockId = null;
+		//String lockId = null;
 		String classId = null;
 		String fieldName = null;
 		fieldType = null;
@@ -83,7 +83,7 @@ public abstract class FlashlightSourceListener extends DataCallable<Void>
 			else if ("field".equals(col) || "fieldname".equals(col)) {
 				fieldName = row[i].label;
 			} else if ("lock".equals(col)) {
-				lockId = row[i].label;
+				//lockId = row[i].label;
 			}
 		}
 		if (run >= 0) {

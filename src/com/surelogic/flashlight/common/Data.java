@@ -31,7 +31,7 @@ public final class Data extends DerbyConnection {
 
 	public static URL getDefaultQueryFileURL() {
 		return Data.class
-				.getResource("com/surelogic/flashlight/common/default-queries.xml");
+				.getResource("/com/surelogic/flashlight/common/default-queries.xml");
 	}
 
 	@Override

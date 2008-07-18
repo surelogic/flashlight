@@ -11,7 +11,7 @@ import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 
-import com.surelogic.common.eclipse.logging.SLStatusUtility;
+import com.surelogic.common.eclipse.logging.SLEclipseStatusUtility;
 import com.surelogic.flashlight.common.Data;
 
 /**
@@ -53,7 +53,7 @@ public class Activator extends AbstractUIPlugin {
 		/*
 		 * "Touch" common-eclipse so the logging gets Eclipse-ified.
 		 */
-		SLStatusUtility.touch();
+		SLEclipseStatusUtility.touch();
 
 		// startup the database and ensure its schema is up to date
 		Data.getInstance().bootAndCheckSchema();

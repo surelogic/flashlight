@@ -5,7 +5,7 @@ import org.eclipse.core.runtime.IStatus;
 
 import com.surelogic.common.eclipse.SLProgressMonitorWrapper;
 import com.surelogic.common.eclipse.jobs.DatabaseJob;
-import com.surelogic.common.eclipse.logging.SLStatusUtility;
+import com.surelogic.common.eclipse.logging.SLEclipseStatusUtility;
 import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.flashlight.common.files.Raw;
 import com.surelogic.flashlight.common.prep.PrepSLJob;
@@ -26,6 +26,6 @@ public final class PrepJob extends DatabaseJob {
 		final SLStatus status = prep.run(new SLProgressMonitorWrapper(monitor));
 		RunView.refreshViewContents();
 		monitor.done();
-		return SLStatusUtility.convert(status);
+		return SLEclipseStatusUtility.convert(status);
 	}
 }

@@ -8,7 +8,7 @@ import com.surelogic.common.eclipse.jobs.DatabaseJob;
 import com.surelogic.common.eclipse.logging.SLStatusUtility;
 import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.flashlight.common.files.Raw;
-import com.surelogic.flashlight.common.prep.PrepRunnable;
+import com.surelogic.flashlight.common.prep.PrepSLJob;
 import com.surelogic.flashlight.views.RunView;
 
 public final class PrepJob extends DatabaseJob {
@@ -22,7 +22,7 @@ public final class PrepJob extends DatabaseJob {
 
 	@Override
 	protected IStatus run(IProgressMonitor monitor) {
-		final PrepRunnable prep = new PrepRunnable(f_raw);
+		final PrepSLJob prep = new PrepSLJob(f_raw);
 		final SLStatus status = prep.run(new SLProgressMonitorWrapper(monitor));
 		RunView.refreshViewContents();
 		monitor.done();

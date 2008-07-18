@@ -56,9 +56,6 @@ public class Activator extends AbstractUIPlugin {
 		SLStatusUtility.touch();
 
 		// startup the database and ensure its schema is up to date
-		System.setProperty("derby.system.durability", "test");
-		System.setProperty("derby.storage.pageSize", "8192");
-		System.setProperty("derby.storage.pageCacheSize", "20000");
 		Data.getInstance().bootAndCheckSchema();
 	}
 

@@ -1,9 +1,11 @@
 package com.surelogic.flashlight.common;
 
+import java.io.File;
 import java.net.URL;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import com.surelogic.common.FileUtility;
 import com.surelogic.common.derby.DerbyConnection;
 import com.surelogic.common.jdbc.SchemaData;
 import com.surelogic.flashlight.schema.FlashlightSchemaData;
@@ -15,8 +17,6 @@ public final class Data extends DerbyConnection {
 	}
 
 	private static final String SCHEMA_NAME = "FLASHLIGHT";
-
-	private String dbLocation = null;
 
 	private ExecutorService exec = Executors.newSingleThreadExecutor();
 
@@ -40,11 +40,8 @@ public final class Data extends DerbyConnection {
 
 	@Override
 	protected synchronized String getDatabaseLocation() {
-		return dbLocation;
-	}
-
-	public synchronized void setDatabaseLocation(final String location) {
-		dbLocation = location;
+		return FileUtility.getFlashlightDataDirectory() + File.separator
+				+ DATABASE_PATH_FRAGMENT;
 	}
 
 	@Override

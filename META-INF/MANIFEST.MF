@@ -10,6 +10,7 @@ Require-Bundle: com.surelogic.common,
 Export-Package: com.surelogic.flashlight.common,
  com.surelogic.flashlight.common.entities,
  com.surelogic.flashlight.common.files,
- com.surelogic.flashlight.common.prep
+ com.surelogic.flashlight.common.prep,
+ com.surelogic.flashlight.schema
 Bundle-ClassPath: lib/jgrapht-jdk1.5.jar,
  .

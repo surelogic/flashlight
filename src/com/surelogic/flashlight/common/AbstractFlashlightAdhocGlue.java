@@ -15,7 +15,8 @@ public abstract class AbstractFlashlightAdhocGlue extends AbstractAdHocGlue {
     protected static void copyDefaultQueryFile(File qsf) throws IOException {
         InputStream is = null;
         try {
-            URL url = Data.getInstance().getDefaultQueryFileURL();
+            Data.getInstance();
+			URL url = Data.getDefaultQueryFileURL();
             is = url.openStream();
             is = new BufferedInputStream(is, 8192);
             OutputStream os = new FileOutputStream(qsf);

@@ -9,7 +9,7 @@ import org.xml.sax.Attributes;
 
 /**
  * Ensure that any new subclasses are added to the {@code f_elements} array in
- * {@link PrepRunnable}.
+ * {@link PrepSLJob}.
  */
 public interface IPrep {
 

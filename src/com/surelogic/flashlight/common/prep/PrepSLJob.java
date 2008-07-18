@@ -30,7 +30,7 @@ import com.surelogic.flashlight.common.entities.Run;
 import com.surelogic.flashlight.common.entities.RunDAO;
 import com.surelogic.flashlight.common.files.Raw;
 
-public final class PrepRunnable implements SLJob {
+public final class PrepSLJob implements SLJob {
 
 	private static final BeforeTrace beforeTrace = new BeforeTrace();
 
@@ -53,7 +53,7 @@ public final class PrepRunnable implements SLJob {
 
 	final Raw f_raw;
 
-	public PrepRunnable(final Raw raw) {
+	public PrepSLJob(final Raw raw) {
 		assert raw != null;
 		f_raw = raw;
 	}
@@ -235,6 +235,7 @@ public final class PrepRunnable implements SLJob {
 		final Connection f_c;
 		final SLProgressMonitor f_monitor;
 		final int f_run;
+		final Set<String> f_notParsed = new HashSet<String>();
 
 		public RawFileReader(final int run, final Connection c,
 				final SLProgressMonitor monitor, final long eventCount,
@@ -250,6 +251,11 @@ public final class PrepRunnable implements SLJob {
 			}
 			monitor.beginTask("Preparing file " + dataFileName, (int) work);
 			f_tickSize = tickSize;
+			f_notParsed.add("environment");
+			f_notParsed.add("flashlight");
+			f_notParsed.add("garbage-collected-object");
+			f_notParsed.add("single-threaded-field");
+			f_notParsed.add("time");
 		}
 
 		@Override
@@ -286,7 +292,7 @@ public final class PrepRunnable implements SLJob {
 				}
 			}
 
-			if (!parsed) {
+			if (!parsed && !f_notParsed.contains(name)) {
 				final StringBuilder b = new StringBuilder();
 				b.append(I18N.err(98, name));
 				if (attributes == null || attributes.getLength() == 0) {

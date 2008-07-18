@@ -22,15 +22,15 @@ import org.xml.sax.helpers.DefaultHandler;
 import com.surelogic.common.SLProgressMonitor;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jdbc.QB;
-import com.surelogic.common.logging.LogStatus;
+import com.surelogic.common.jobs.SLJob;
+import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.common.Data;
 import com.surelogic.flashlight.common.entities.Run;
 import com.surelogic.flashlight.common.entities.RunDAO;
 import com.surelogic.flashlight.common.files.Raw;
 
-public final class PrepRunnable implements Runnable {
-	Object status = null;
+public final class PrepRunnable implements SLJob {
 
 	private static final BeforeTrace beforeTrace = new BeforeTrace();
 
@@ -53,16 +53,9 @@ public final class PrepRunnable implements Runnable {
 
 	final Raw f_raw;
 
-	final SLProgressMonitor monitor;
-
-	public PrepRunnable(final Raw raw, SLProgressMonitor mon) {
+	public PrepRunnable(final Raw raw) {
 		assert raw != null;
 		f_raw = raw;
-		monitor = mon;
-	}
-
-	public Object getStatus() {
-		return status;
 	}
 
 	private InputStream getDataFileStream(final Raw raw) throws IOException {
@@ -73,7 +66,7 @@ public final class PrepRunnable implements Runnable {
 		return stream;
 	}
 
-	public void run() {
+	public SLStatus run(SLProgressMonitor monitor) {
 		final String dataFileName = f_raw.getDataFile().getName();
 		/*
 		 * Estimate the work based upon the size of the raw file. This is only a
@@ -107,7 +100,7 @@ public final class PrepRunnable implements Runnable {
 						+ (System.currentTimeMillis() - startPreScan) + " ms");
 				stream.close();
 				if (monitor.isCanceled()) {
-					return; // Status.CANCEL_STATUS;
+					return SLStatus.CANCEL_STATUS;
 				}
 				/*
 				 * Read the data file (our second pass) and insert all data into
@@ -164,7 +157,7 @@ public final class PrepRunnable implements Runnable {
 						}
 
 						if (monitor.isCanceled()) {
-							return;
+							return SLStatus.CANCEL_STATUS;
 						}
 						/*
 						 * Remove all unreferenced objects and fields.
@@ -186,7 +179,7 @@ public final class PrepRunnable implements Runnable {
 						deleteFields.close();
 
 						if (monitor.isCanceled()) {
-							return;
+							return SLStatus.CANCEL_STATUS;
 						}
 						monitor.subTask("Deleting thread-local objects");
 
@@ -208,9 +201,8 @@ public final class PrepRunnable implements Runnable {
 						monitor.worked(1);
 					} catch (final SQLException e) {
 						e.printStackTrace(System.err);
-						status = LogStatus.createErrorStatus(0,
+						return SLStatus.createErrorStatus(0,
 								"Could not work with the embedded database", e);
-						return;
 					} finally {
 						c.commit();
 						for (final IPrep element : f_elements) {
@@ -220,22 +212,20 @@ public final class PrepRunnable implements Runnable {
 					}
 				} catch (final SQLException e) {
 					e.printStackTrace(System.err);
-					status = LogStatus.createErrorStatus(0,
+					return SLStatus.createErrorStatus(0,
 							"Could not work with the embedded database", e);
-					return;
 				}
 			} finally {
 				stream.close();
 			}
 		} catch (final Exception e) {
 			if (monitor.isCanceled()) {
-				return;
+				return SLStatus.CANCEL_STATUS;
 			}
-
-			status = LogStatus.createErrorStatus(0, "Unable to prepare "
+			return SLStatus.createErrorStatus(0, "Unable to prepare "
 					+ dataFileName, e);
-			return;
 		}
+		return SLStatus.OK_STATUS;
 	}
 
 	public static class RawFileReader extends DefaultHandler {

@@ -15,7 +15,7 @@ import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DirectedSubgraph;
 
-import com.surelogic.common.logging.LogStatus;
+import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.logging.SLLogger;
 
 public final class IntrinsicLockDurationRowInserter {
@@ -169,9 +169,8 @@ public final class IntrinsicLockDurationRowInserter {
 							Lock
 									.insert(runId, FINAL_EVENT, endTime,
 											thread, lock, 0, /*
-																 * src is
-																 * nonsense
-																 */
+															 * src is nonsense
+															 */
 											lock, LockType.INTRINSIC,
 											LockState.AFTER_RELEASE, true,
 											false, false);
@@ -343,7 +342,7 @@ public final class IntrinsicLockDurationRowInserter {
 				updateState(state, runId, id, time, inThread, lockEvent,
 						IntrinsicLockDurationState.BLOCKING);
 			} else {
-				logBadEvent(inThread, lock, lockEvent, state);
+				logBadEventTransition(inThread, lock, lockEvent, state);
 			}
 			break;
 		case BLOCKING:
@@ -360,8 +359,8 @@ public final class IntrinsicLockDurationRowInserter {
 					lockEvent, LockState.AFTER_WAIT, lockToState, state, true);
 			break;
 		default:
-			LogStatus.createErrorStatus(0, "Unexpected lock state: "
-					+ state.lockState);
+			SLLogger.getLogger().log(Level.SEVERE,
+					I18N.err(103, state.lockState.toString()));
 		}
 	}
 
@@ -387,7 +386,7 @@ public final class IntrinsicLockDurationRowInserter {
 					IntrinsicLockDurationState.WAITING);
 			break;
 		case AFTER_WAIT:
-			logBadEvent(inThread, lock, lockEvent, state);
+			logBadEventTransition(inThread, lock, lockEvent, state);
 			break;
 		case AFTER_RELEASE:
 			state.timesEntered--;
@@ -402,8 +401,8 @@ public final class IntrinsicLockDurationRowInserter {
 			}
 			break;
 		default:
-			LogStatus.createErrorStatus(0, "Unexpected lock event: "
-					+ lockEvent);
+			SLLogger.getLogger().log(Level.SEVERE,
+					I18N.err(104, lockEvent.toString()));
 		}
 	}
 
@@ -423,15 +422,16 @@ public final class IntrinsicLockDurationRowInserter {
 							: IntrinsicLockDurationState.IDLE);
 			state.timesEntered++;
 		} else {
-			logBadEvent(inThread, lock, lockEvent, state);
+			logBadEventTransition(inThread, lock, lockEvent, state);
 		}
 	}
 
-	private void logBadEvent(long inThread, long lock, LockState lockEvent,
-			final State state) {
-		LogStatus.createErrorStatus(0, state.lockState
-				+ " has no transition for " + lockEvent + " for lock " + lock
-				+ " in thread " + inThread);
+	private void logBadEventTransition(long inThread, long lock,
+			LockState lockEvent, final State state) {
+		SLLogger.getLogger().log(
+				Level.SEVERE,
+				I18N.err(102, state.lockState.toString(), lockEvent.toString(),
+						lock, inThread));
 	}
 
 	private void noteHeldLocks(int runId, long id, Timestamp time, long thread,
@@ -535,16 +535,16 @@ public final class IntrinsicLockDurationRowInserter {
 	/**
 	 * Clear out state for the Object
 	 */
-  public void gcObject(long id) {
-    final Long key = id;
-    // Clean up if it's a thread
-    f_threadToStatus.remove(key);
-    f_threadToLockToState.remove(key);
-    for(Map<Long, State> e : f_threadToLockToState.values()) {
-      e.remove(key);
-    }
-    // TODO Clean up lock graph?
-  }
+	public void gcObject(long id) {
+		final Long key = id;
+		// Clean up if it's a thread
+		f_threadToStatus.remove(key);
+		f_threadToLockToState.remove(key);
+		for (Map<Long, State> e : f_threadToLockToState.values()) {
+			e.remove(key);
+		}
+		// TODO Clean up lock graph?
+	}
 
 	/*
 	 * select distinct lockheld, lockacquired FROM ilocksheld
@@ -555,12 +555,11 @@ public final class IntrinsicLockDurationRowInserter {
 	 * 
 	 * select distinct l1.lockheld, l2.lockheld, l3.lockheld, l3.lockacquired
 	 * FROM ilocksheld AS l1, ilocksheld AS l2, ilocksheld AS l3 WHERE
-	 * l1.inthread <> l2.inthread AND l2.inthread <> l3.inthread AND l1.inthread <>
-	 * l3.inthread AND l1.lockacquired = l2.lockheld AND l2.lockacquired =
+	 * l1.inthread <> l2.inthread AND l2.inthread <> l3.inthread AND l1.inthread
+	 * <> l3.inthread AND l1.lockacquired = l2.lockheld AND l2.lockacquired =
 	 * l3.lockheld AND l3.lockacquired = l1.lockheld
 	 * 
-	 * select * from ilockduration where state = 'BLOCKING' order by duration
-	 * desc
+	 * select from ilockduration where state = 'BLOCKING' order by duration desc
 	 * 
 	 * select run, inthread, lock, sum(duration) as blocktime from ilockduration
 	 * where state = 'BLOCKING' group by run, inthread, lock order by blocktime

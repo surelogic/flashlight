@@ -4,7 +4,6 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Properties;
@@ -413,78 +412,5 @@ public final class FlashlightClassRewriter extends ClassAdapter {
           FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_RELEASE_ATTEMPT,
           FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_RELEASE_ATTEMPT_SIGNATURE);      
     }
-  }
-
-
-  
-  // ========================================================================
-  
-  
-  
-  public static void main(final String[] args) throws IOException {
-    final File userHome = new File(System.getProperty("user.home"));
-    final File propFile = new File(userHome, "flashlight-rewriter.properties");
-    final Properties properties = new Properties(loadPropertiesFromFile(propFile));
-    
-    rewriteDirectory(new Configuration(properties), new File(args[0]), new File(args[1]));
-    
-    System.out.println("done");
-  }
-  
-  private static java.util.Properties loadPropertiesFromFile(final File propFile) {
-    final java.util.Properties properties = new java.util.Properties(System.getProperties());
-    FileInputStream fis = null;
-    try {
-      fis = new FileInputStream(propFile);
-      properties.load(fis);
-      fis.close();
-    } catch (final IOException e) {
-      System.err.println("Problem reading properties file: " + e.getMessage());
-      if (fis != null) {
-      try {
-        fis.close();
-        } catch (final IOException e2) {
-          // eat it, what else can we do?
-        }
-      }
-    }
-    return properties;
-  }
-
-
-  private static void rewriteDirectory(
-      final Configuration config, final File inDir, final File outDir)
-      throws FileNotFoundException, IOException {
-    for (final String name : inDir.list()) {
-      final File nextIn = new File(inDir, name);
-      final File nextOut = new File(outDir, name);
-      if (nextIn.isDirectory()) {
-        nextOut.mkdirs();
-        rewriteDirectory(config, nextIn, nextOut);
-      } else {
-        if (name.endsWith(".class")) {
-          rewriteClass(config, nextIn, nextOut);
-        }
-      }
-    }
-  }
-
-
-  private static void rewriteClass(final Configuration config, final File inName, final File outName)
-      throws FileNotFoundException, IOException {
-    System.out.println("Reading class " + inName);
-    final BufferedInputStream bis = new BufferedInputStream(new FileInputStream(inName));
-    final ClassReader input = new ClassReader(bis);
-    final ClassWriter output = new ClassWriter(input, 0);
-    final FlashlightClassRewriter xformer = new FlashlightClassRewriter(config, output);
-    input.accept(xformer, 0);
-    bis.close();
-    
-    final byte[] newClass = output.toByteArray();    
-
-    System.out.println("Writing class " + outName);
-    final BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(outName));
-    bos.write(newClass);
-    bos.close();
   }
 }

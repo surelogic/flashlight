@@ -29,11 +29,15 @@
 	<property name="flashlight-asm-rewriter.jar" value="${basedir}/flashlight-asm-rewriter.jar" />
 	<property name="flashlight-asm-rewriter.jar.manifest" value="${lib}/ASM-REWRITER-MANIFEST.MF" />
 
+	<property name="flashlight-ant.jar" value="${basedir}/flashlight-ant.jar" />
+	<property name="flashlight-ant.jar.manifest" value="${lib}/ANT-MANIFEST.MF" />
+
+	
 
 	<target name="compile-asm">
 		<delete dir="${classes}" />
 		<mkdir dir="${classes}" />
-		<javac destdir="${classes}" source="1.5" target="1.5">
+		<javac destdir="${classes}" debug="true" source="1.5" target="1.5">
 			<src path="${src}" />
 			<src path="${src-asm}" />
 			<classpath>
@@ -79,9 +83,10 @@
 	<target name="build-asm-rewriter-jar" depends="compile-asm">
 		<jar destfile="${flashlight-asm-rewriter.jar}" basedir="${classes}">
 			<include name="**/com/surelogic/_flashlight/rewriter/*.class" />
+			<include name="**/com/surelogic/_flashlight/rewriter/engine/*.class" />
 			<manifest>
 			  <attribute name="Manifest-Version" value="1.0"/>
-  		  <attribute name="Main-Class" value="com.surelogic._flashlight.rewriter.FlashlightClassRewriter"/>
+  		  <attribute name="Main-Class" value="com.surelogic._flashlight.rewriter.engine.RewriteEngine"/>
 				<attribute name="Class-Path" value="asm-3.1.jar"/>
 			</manifest>
 	  </jar>
@@ -99,7 +104,17 @@
 	  </jar>
 	</target>
 
-	<target name="build-asm-jars" depends="build-asm-all-jar, build-asm-runtime-jar, build-asm-servlet-jar, build-asm-instrument-jar, build-asm-rewriter-jar" />
+	<target name="build-ant-jar" depends="compile-asm">
+		<jar destfile="${flashlight-ant.jar}" basedir="${classes}">
+			<include name="**/com/surelogic/_flashlight/ant/*.class" />
+			<manifest>
+			  <attribute name="Manifest-Version" value="1.0"/>
+				<attribute name="Class-Path" value="flashlight-asm-rewriter.jar"/>
+			</manifest>
+	  </jar>
+	</target>
+
+	<target name="build-asm-jars" depends="build-asm-all-jar, build-asm-runtime-jar, build-asm-servlet-jar, build-asm-instrument-jar, build-asm-rewriter-jar, build-ant-jar" />
 	
 	<target name="compile-test-code" depends="build-asm-all-jar">
 		<delete dir="${classes}" />

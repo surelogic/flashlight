@@ -33,8 +33,8 @@ public final class Configuration {
   
   
   
-  private static final String TRUE = "true";
-  private static final String FALSE = "false";
+  public static final String TRUE = "true";
+  public static final String FALSE = "false";
   
   
   
@@ -75,6 +75,58 @@ public final class Configuration {
 
   
   
+  public static void writeDefaultProperties(final Properties props) {
+    props.setProperty(REWRITE_INVOKEINTERFACE_PROPERTY, "true");
+    props.setProperty(REWRITE_INVOKESPECIAL_PROPERTY, "true");
+    props.setProperty(REWRITE_INVOKESTATIC_PROPERTY, "true");
+    props.setProperty(REWRITE_INVOKEVIRTUAL_PROPERTY, "true");
+    props.setProperty(REWRITE_SYNCHRONIZED_METHOD_PROPERTY, "true");
+    props.setProperty(REWRITE_MONITOREXIT_PROPERTY, "true");
+    props.setProperty(REWRITE_MONITORENTER_PROPERTY, "true");
+    props.setProperty(REWRITE_GETSTATIC_PROPERTY, "true");
+    props.setProperty(REWRITE_PUTSTATIC_PROPERTY, "true");
+    props.setProperty(REWRITE_GETFIELD_PROPERTY, "true");
+    props.setProperty(REWRITE_PUTFIELD_PROPERTY, "true");
+    props.setProperty(REWRITE_INIT_PROPERTY, "true");
+    props.setProperty(REWRITE_CONSTRUCTOR_EXECUTION_PROPERTY, "true");
+  
+    props.setProperty(INSTRUMENT_BEFORE_CALL_PROPERTY, "true");
+    props.setProperty(INSTRUMENT_AFTER_CALL_PROPERTY, "true");
+    props.setProperty(INSTRUMENT_BEFORE_WAIT_PROPERTY, "true");
+    props.setProperty(INSTRUMENT_AFTER_WAIT_PROPERTY, "true");
+    props.setProperty(INSTRUMENT_BEFORE_JUC_LOCK_PROPERTY, "true");
+    props.setProperty(INSTRUMENT_AFTER_LOCK_PROPERTY, "true");
+    props.setProperty(INSTRUMENT_AFTER_TRYLOCK_PROPERTY, "true");
+    props.setProperty(INSTRUMENT_AFTER_UNLOCK_PROPERTY, "true");
+  
+    props.setProperty(USE_DEBUG_STORE_PROPERTY, "false");
+  }
+  
+  private static Properties getDefaultProperties() {
+    final Properties defaults = new Properties();
+    writeDefaultProperties(defaults);
+    return defaults;
+  }
+
+  
+  
+  /**
+   * Initialize the configuration to use all the default values:
+   * <ul>
+   * <li>All the rewriting and instrumenting is performed.
+   * <li>The debug store is not used.
+   * </ul>
+   */
+  public Configuration() {
+    this(getDefaultProperties());
+  }
+  
+  
+  
+  /**
+   * Initialize the configuration based on property values in the given
+   * property dictionary.
+   */
   public Configuration(final Properties props) {
     final String rewriteDefault = props.getProperty(REWRITE_DEFAULT_PROPERTY, TRUE);
     

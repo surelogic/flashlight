@@ -24,7 +24,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import com.surelogic.common.logging.SLLogger;
-import com.surelogic.flashlight.common.entities.IRunDescription;
+import com.surelogic.flashlight.common.model.IRunDescription;
 
 public final class Raw implements IRunDescription {
 

@@ -1,4 +1,4 @@
-package com.surelogic.flashlight.common.entities;
+package com.surelogic.flashlight.common.model;
 
 import java.sql.Timestamp;
 

@@ -1,10 +1,10 @@
 package com.surelogic.flashlight.common.entities;
 
-import java.io.Serializable;
 import java.sql.Timestamp;
 
-public final class Run implements IRunDescription, Serializable {
-	private static final long serialVersionUID = 6479279025704310761L;
+import com.surelogic.flashlight.common.model.IRunDescription;
+
+public final class Run implements IRunDescription {
 
 	public Run(int run, String name, String rawDataVersion, String userName,
 			String javaVersion, String javaVendor, String osName,
@@ -23,7 +23,7 @@ public final class Run implements IRunDescription, Serializable {
 		this.processors = processors;
 		this.started = started;
 	}
-	
+
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
@@ -31,7 +31,8 @@ public final class Run implements IRunDescription, Serializable {
 		sb.append("Name:").append(name).append('\n');
 		sb.append("Format: v").append(rawDataVersion).append('\n');
 		sb.append("User: ").append(userName).append('\n');
-		sb.append("Java: ").append(javaVendor).append(' ').append(javaVersion).append('\n');
+		sb.append("Java: ").append(javaVendor).append(' ').append(javaVersion)
+				.append('\n');
 		sb.append("OS: ").append(osName).append(' ').append(osArch).append(' ');
 		sb.append(osVersion).append('\n');
 		sb.append("Max Memory: ").append(maxMemoryMb).append(" MB\n");

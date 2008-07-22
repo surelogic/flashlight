@@ -22,8 +22,6 @@ public class Activator extends AbstractUIPlugin {
 
 	public static final String PLUGIN_ID = "com.surelogic.flashlight";
 
-	public static final String XML_ENCODING = "UTF-8";
-
 	// The shared instance
 	private static Activator plugin;
 

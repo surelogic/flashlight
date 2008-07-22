@@ -29,6 +29,9 @@ import com.surelogic.flashlight.jobs.DeleteRawFilesJob;
 import com.surelogic.flashlight.jobs.PrepJob;
 import com.surelogic.flashlight.jobs.UnPrepJob;
 
+/**
+ * Mediator for the {@link RunView}.
+ */
 public final class RunMediator implements IRunManagerObserver, ILifecycle {
 
 	private boolean firstRefresh = true;

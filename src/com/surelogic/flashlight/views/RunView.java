@@ -16,6 +16,9 @@ import com.surelogic.common.images.CommonImages;
 import com.surelogic.flashlight.common.Utility;
 import com.surelogic.flashlight.common.model.RunDescription;
 
+/**
+ * View to display all raw and prepared Flashlight runs to the user.
+ */
 public final class RunView extends ViewPart {
 
 	public static final String ID = "com.surelogic.flashlight.RunView";
@@ -44,49 +47,49 @@ public final class RunView extends ViewPart {
 		f_indexToColumn.put(next++, new RunViewColumnWrapper(table, "Run",
 				SWT.LEFT, TableUtility.SORT_COLUMN_ALPHABETICALLY) {
 			@Override
-			String getText(final RunDescription run) {
-				return run.getName();
+			String getText(final RunDescription description) {
+				return description.getName();
 			}
 		});
 
 		f_indexToColumn.put(next++, new RunViewColumnWrapper(table, "Time",
 				SWT.LEFT, TableUtility.SORT_COLUMN_ALPHABETICALLY) {
 			@Override
-			String getText(final RunDescription run) {
-				return Utility.toStringMS(run.getStartTimeOfRun());
+			String getText(final RunDescription description) {
+				return Utility.toStringMS(description.getStartTimeOfRun());
 			}
 		});
 
 		f_indexToColumn.put(next++, new RunViewColumnWrapper(table, "By",
 				SWT.CENTER, TableUtility.SORT_COLUMN_ALPHABETICALLY) {
 			@Override
-			String getText(final RunDescription run) {
-				return run.getUserName();
+			String getText(final RunDescription description) {
+				return description.getUserName();
 			}
 		});
 
 		f_indexToColumn.put(next++, new RunViewColumnWrapper(table, "Java",
 				SWT.CENTER, TableUtility.SORT_COLUMN_ALPHABETICALLY) {
 			@Override
-			String getText(final RunDescription run) {
-				return run.getJavaVersion();
+			String getText(final RunDescription description) {
+				return description.getJavaVersion();
 			}
 		});
 
 		f_indexToColumn.put(next++, new RunViewColumnWrapper(table, "Vendor",
 				SWT.CENTER, TableUtility.SORT_COLUMN_ALPHABETICALLY) {
 			@Override
-			String getText(final RunDescription run) {
-				return run.getJavaVendor();
+			String getText(final RunDescription description) {
+				return description.getJavaVendor();
 			}
 		});
 
 		f_indexToColumn.put(next++, new RunViewColumnWrapper(table, "OS",
 				SWT.CENTER, TableUtility.SORT_COLUMN_ALPHABETICALLY) {
 			@Override
-			String getText(final RunDescription run) {
-				return run.getOSName() + " (" + run.getOSVersion() + ") on "
-						+ run.getOSArch();
+			String getText(final RunDescription description) {
+				return description.getOSName() + " (" + description.getOSVersion() + ") on "
+						+ description.getOSArch();
 			}
 		});
 
@@ -94,8 +97,8 @@ public final class RunView extends ViewPart {
 				"Max Memory (MB)", SWT.RIGHT,
 				TableUtility.SORT_COLUMN_NUMERICALLY) {
 			@Override
-			String getText(final RunDescription run) {
-				return run.getMaxMemoryMb() + "";
+			String getText(final RunDescription description) {
+				return description.getMaxMemoryMb() + "";
 			}
 		});
 
@@ -103,8 +106,8 @@ public final class RunView extends ViewPart {
 				new RunViewColumnWrapper(table, "Processors", SWT.CENTER,
 						TableUtility.SORT_COLUMN_NUMERICALLY) {
 					@Override
-					String getText(final RunDescription run) {
-						return run.getProcessors() + "";
+					String getText(final RunDescription description) {
+						return description.getProcessors() + "";
 					}
 				});
 

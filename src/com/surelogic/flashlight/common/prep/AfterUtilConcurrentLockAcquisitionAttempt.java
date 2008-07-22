@@ -1,6 +1,6 @@
 package com.surelogic.flashlight.common.prep;
 
-public class AfterUtilConcurrentLockAcquisitionAttempt extends Lock {
+public final class AfterUtilConcurrentLockAcquisitionAttempt extends Lock {
 
 	public AfterUtilConcurrentLockAcquisitionAttempt(BeforeTrace before) {
 		super(before);

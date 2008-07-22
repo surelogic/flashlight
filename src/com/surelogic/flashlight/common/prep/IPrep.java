@@ -7,6 +7,8 @@ import java.util.Set;
 
 import org.xml.sax.Attributes;
 
+import com.surelogic.flashlight.common.jobs.PrepSLJob;
+
 /**
  * Ensure that any new subclasses are added to the {@code f_elements} array in
  * {@link PrepSLJob}.

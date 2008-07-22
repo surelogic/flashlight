@@ -1,4 +1,4 @@
-package com.surelogic.flashlight.common.prep;
+package com.surelogic.flashlight.common.jobs;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -33,6 +33,27 @@ import com.surelogic.flashlight.common.files.RawDataFilePrefix;
 import com.surelogic.flashlight.common.files.RawFileHandles;
 import com.surelogic.flashlight.common.files.RawFileUtility;
 import com.surelogic.flashlight.common.model.RunDescription;
+import com.surelogic.flashlight.common.model.RunManager;
+import com.surelogic.flashlight.common.prep.AfterIntrinisicLockAcquisition;
+import com.surelogic.flashlight.common.prep.AfterIntrinsicLockWait;
+import com.surelogic.flashlight.common.prep.AfterIntrinsisLockRelease;
+import com.surelogic.flashlight.common.prep.AfterTrace;
+import com.surelogic.flashlight.common.prep.AfterUtilConcurrentLockAcquisitionAttempt;
+import com.surelogic.flashlight.common.prep.AfterUtilConcurrentLockReleaseAttempt;
+import com.surelogic.flashlight.common.prep.BeforeIntrinsicLockAcquisition;
+import com.surelogic.flashlight.common.prep.BeforeIntrinsicLockWait;
+import com.surelogic.flashlight.common.prep.BeforeTrace;
+import com.surelogic.flashlight.common.prep.BeforeUtilConcurrentLockAquisitionAttempt;
+import com.surelogic.flashlight.common.prep.ClassDefinition;
+import com.surelogic.flashlight.common.prep.DataPreScan;
+import com.surelogic.flashlight.common.prep.FieldDefinition;
+import com.surelogic.flashlight.common.prep.FieldRead;
+import com.surelogic.flashlight.common.prep.FieldWrite;
+import com.surelogic.flashlight.common.prep.IPrep;
+import com.surelogic.flashlight.common.prep.LockSetAnalysis;
+import com.surelogic.flashlight.common.prep.ObjectDefinition;
+import com.surelogic.flashlight.common.prep.ReadWriteLock;
+import com.surelogic.flashlight.common.prep.ThreadDefinition;
 
 public final class PrepSLJob implements SLJob {
 
@@ -55,10 +76,11 @@ public final class PrepSLJob implements SLJob {
 			new FieldRead(beforeTrace), new FieldWrite(beforeTrace),
 			new ObjectDefinition(), new ThreadDefinition() };
 
-	final RunDescription f_description;
+	private final RunDescription f_description;
 
 	public PrepSLJob(final RunDescription description) {
-		assert description != null;
+		if (description == null)
+			throw new IllegalArgumentException(I18N.err(44, "description"));
 		f_description = description;
 	}
 
@@ -72,7 +94,8 @@ public final class PrepSLJob implements SLJob {
 	}
 
 	public SLStatus run(SLProgressMonitor monitor) {
-		final RawFileHandles handles = RawFileUtility.getRawFileHandlesFor(f_description);
+		final RawFileHandles handles = RawFileUtility
+				.getRawFileHandlesFor(f_description);
 		final File dataFile = handles.getDataFile();
 		final String dataFileName = dataFile.getName();
 		/*
@@ -130,7 +153,8 @@ public final class PrepSLJob implements SLJob {
 					start = new Timestamp(prefix.getWallClockTime().getTime());
 					startNS = prefix.getNanoTime();
 
-					final PrepRunDescription newRun = RunDAO.create(c, f_description);
+					final PrepRunDescription newRun = RunDAO.create(c,
+							f_description);
 					final int runId = newRun.getRun();
 					/*
 					 * Do the second pass through the file.
@@ -228,6 +252,9 @@ public final class PrepSLJob implements SLJob {
 			}
 			return SLStatus.createErrorStatus(0, "Unable to prepare "
 					+ dataFileName, e);
+		} finally {
+			RunManager.getInstance().refresh();
+			monitor.done();
 		}
 		return SLStatus.OK_STATUS;
 	}

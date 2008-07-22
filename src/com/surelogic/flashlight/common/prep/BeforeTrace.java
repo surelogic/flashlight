@@ -11,7 +11,7 @@ import java.util.logging.Level;
 
 import com.surelogic.common.logging.SLLogger;
 
-public class BeforeTrace extends Trace {
+public final class BeforeTrace extends Trace {
 
 	private static final String f_psQ = "INSERT INTO TRACE (Run,Id,InThread,InClass,InFile,AtLine,Location,Start,Stop) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 

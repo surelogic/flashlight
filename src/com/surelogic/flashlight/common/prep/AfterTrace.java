@@ -2,14 +2,14 @@ package com.surelogic.flashlight.common.prep;
 
 import java.sql.SQLException;
 
-public class AfterTrace extends Trace {
+public final class AfterTrace extends Trace {
 	private final BeforeTrace before;
 
 	public String getXMLElementName() {
 		return "after-trace";
 	}
 
-	AfterTrace(BeforeTrace before) {
+	public AfterTrace(BeforeTrace before) {
 		this.before = before;
 	}
 

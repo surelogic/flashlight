@@ -1,6 +1,6 @@
 package com.surelogic.flashlight.common.prep;
 
-public class AfterUtilConcurrentLockReleaseAttempt extends Lock {
+public final class AfterUtilConcurrentLockReleaseAttempt extends Lock {
 
 	public AfterUtilConcurrentLockReleaseAttempt(BeforeTrace before) {
 		super(before);

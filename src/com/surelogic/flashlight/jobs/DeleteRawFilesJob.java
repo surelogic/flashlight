@@ -8,38 +8,42 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 
 import com.surelogic.common.eclipse.logging.SLEclipseStatusUtility;
-import com.surelogic.flashlight.common.files.Raw;
-import com.surelogic.flashlight.views.RunView;
+import com.surelogic.flashlight.common.files.RawFileHandles;
+import com.surelogic.flashlight.common.files.RawFileUtility;
+import com.surelogic.flashlight.common.model.RunDescription;
+import com.surelogic.flashlight.common.model.RunManager;
 
 public final class DeleteRawFilesJob extends Job {
 
-	private final Raw f_raw;
+	private final RunDescription f_description;
 
-	public DeleteRawFilesJob(final Raw raw) {
+	public DeleteRawFilesJob(final RunDescription description) {
 		super("Removing Raw Flashlight data");
-		assert raw != null;
-		f_raw = raw;
+		assert description != null;
+		f_description = description;
 	}
 
 	@Override
 	protected IStatus run(IProgressMonitor monitor) {
-		final String taskName = "Removing raw data " + f_raw.getName();
+		final String taskName = "Removing raw data " + f_description.getName();
 		monitor.beginTask(taskName, 3);
-		File file = f_raw.getDataFile();
+		final RawFileHandles handles = RawFileUtility
+				.getRawFileHandlesFor(f_description);
+		File file = handles.getDataFile();
 		boolean deleted = file.delete();
 		monitor.worked(1);
 		if (!deleted) {
-			return SLEclipseStatusUtility.createErrorStatus(0,"Unable to delete "
-					+ file.getAbsolutePath());
+			return SLEclipseStatusUtility.createErrorStatus(0,
+					"Unable to delete " + file.getAbsolutePath());
 		}
-		file = f_raw.getLogFile();
+		file = handles.getLogFile();
 		deleted = file.delete();
 		monitor.worked(1);
 		if (!deleted) {
-			return SLEclipseStatusUtility.createErrorStatus(0,"Unable to delete "
-					+ file.getAbsolutePath());
+			return SLEclipseStatusUtility.createErrorStatus(0,
+					"Unable to delete " + file.getAbsolutePath());
 		}
-		RunView.refreshViewContents();
+		RunManager.getInstance().refresh();
 		monitor.done();
 		return Status.OK_STATUS;
 	}

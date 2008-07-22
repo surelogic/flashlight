@@ -1,10 +1,8 @@
 package com.surelogic.flashlight.views;
 
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
+import java.util.Set;
 
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.action.Action;
@@ -19,20 +17,19 @@ import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.PlatformUI;
 
-import com.surelogic.common.FileUtility;
+import com.surelogic.common.ILifecycle;
 import com.surelogic.common.eclipse.SLImages;
 import com.surelogic.common.images.CommonImages;
-import com.surelogic.common.logging.SLLogger;
-import com.surelogic.flashlight.common.Data;
-import com.surelogic.flashlight.common.entities.Run;
-import com.surelogic.flashlight.common.entities.RunDAO;
-import com.surelogic.flashlight.common.files.Raw;
-import com.surelogic.flashlight.common.model.IRunDescription;
+import com.surelogic.flashlight.common.entities.PrepRunDescription;
+import com.surelogic.flashlight.common.files.RawFileHandles;
+import com.surelogic.flashlight.common.model.IRunManagerObserver;
+import com.surelogic.flashlight.common.model.RunDescription;
+import com.surelogic.flashlight.common.model.RunManager;
 import com.surelogic.flashlight.jobs.DeleteRawFilesJob;
 import com.surelogic.flashlight.jobs.PrepJob;
 import com.surelogic.flashlight.jobs.UnPrepJob;
 
-public final class RunMediator {
+public final class RunMediator implements IRunManagerObserver, ILifecycle {
 
 	private boolean firstRefresh = true;
 
@@ -40,11 +37,25 @@ public final class RunMediator {
 
 	RunMediator(final Table table) {
 		f_table = table;
+	}
+
+	public void init() {
 		f_table.addListener(SWT.Selection, new Listener() {
 			public void handleEvent(Event event) {
 				setToolbarState();
 			}
 		});
+		RunManager.getInstance().addObserver(this);
+	}
+
+	private RunDescription getData(final TableItem item) {
+		if (item != null) {
+			final Object o = item.getData();
+			if (o instanceof RunDescription) {
+				return (RunDescription) o;
+			}
+		}
+		return null;
 	}
 
 	private TableItem getTableSelection() {
@@ -55,12 +66,8 @@ public final class RunMediator {
 		return null;
 	}
 
-	private Object getTableSelectionData() {
-		TableItem selection = getTableSelection();
-		if (selection != null) {
-			return selection.getData();
-		}
-		return null;
+	private RunDescription getTableSelectionData() {
+		return getData(getTableSelection());
 	}
 
 	private final Action f_refresh = new Action() {
@@ -75,13 +82,12 @@ public final class RunMediator {
 	}
 
 	void refresh() {
+		final RunManager rm = RunManager.getInstance();
 		/*
 		 * Make a best effort to remember the row the user had selected before
 		 * as we refresh.
 		 */
-		final int oldSelection = f_table.getSelectionIndex();
-
-		Raw[] raws = Raw.findRawFiles(FileUtility.getFlashlightDataDirectory());
+		final RunDescription oldSelection = getTableSelectionData();
 
 		// remove the contents
 		TableItem[] items = f_table.getItems();
@@ -89,65 +95,41 @@ public final class RunMediator {
 			ti.dispose();
 		}
 
-		// add in the raw data
-		for (Raw raw : raws) {
+		Set<RunDescription> descriptions = rm.getRunDescriptions();
+
+		for (RunDescription description : descriptions) {
 			TableItem ti = new TableItem(f_table, SWT.NONE);
-			ti.setImage(0, SLImages
-					.getWorkbenchImage(ISharedImages.IMG_OBJ_FILE));
-
-			final long sizeKb = raw.getDataFile().length() / 1024;
-			String textSize;
-			if (sizeKb < 1024) {
-				textSize = sizeKb + " KB";
-			} else {
-				textSize = (sizeKb / 1024) + " MB";
-			}
-			ti.setText(0, textSize);
 			for (int i = 2; i < f_table.getColumnCount(); i++) {
-				ti.setText(i, f_indexToColumn.get(i).getText(raw));
+				ti.setText(i, f_indexToColumn.get(i).getText(description));
 			}
-			ti.setData(raw);
-			// add a warning image if the log indicates problems
-			if (!raw.isLogClean()) {
-				ti.setImage(2, PlatformUI.getWorkbench().getSharedImages()
-						.getImage(ISharedImages.IMG_OBJS_WARN_TSK));
-				ti.setText(2, ti.getText(2) + " (warnings in log)");
-			}
-		}
+			ti.setData(description);
+			final RawFileHandles handles = rm.getRawFileHandlesFor(description);
+			if (handles != null) {
+				ti.setImage(0, SLImages
+						.getWorkbenchImage(ISharedImages.IMG_OBJ_FILE));
 
-		// see what is in the database
-		items = f_table.getItems();
-		try {
-			final Connection c = Data.getInstance().getConnection();
-			try {
-				Run[] runs = RunDAO.getAll(c);
-				for (Run run : runs) {
-					boolean found = false;
-					for (TableItem ti : items) {
-						if (run.isSameRun((Raw) ti.getData())) {
-							found = true;
-							ti.setImage(1, SLImages
-									.getImage(CommonImages.IMG_FL_PREP));
-						}
-
-					}
-					if (!found) {
-						TableItem nti = new TableItem(f_table, SWT.NONE);
-						nti.setImage(1, SLImages
-								.getImage(CommonImages.IMG_FL_PREP));
-						for (int i = 2; i < f_table.getColumnCount(); i++) {
-							nti.setText(i, f_indexToColumn.get(i).getText(run));
-						}
-						nti.setData(run);
-					}
+				final long sizeKb = handles.getDataFile().length() / 1024;
+				String textSize;
+				if (sizeKb < 1024) {
+					textSize = sizeKb + " KB";
+				} else {
+					textSize = (sizeKb / 1024) + " MB";
 				}
-			} finally {
-				c.close();
+				ti.setText(0, textSize);
+				// add a warning image if the log indicates problems
+				if (!handles.isLogClean()) {
+					ti.setImage(2, PlatformUI.getWorkbench().getSharedImages()
+							.getImage(ISharedImages.IMG_OBJS_WARN_TSK));
+					ti.setText(2, ti.getText(2) + " (warnings in log)");
+				}
 			}
-		} catch (SQLException e) {
-			SLLogger.getLogger().log(Level.SEVERE, "Lookup of all runs failed",
-					e);
+			final PrepRunDescription prep = rm
+					.getPrepRunDescriptionFor(description);
+			if (prep != null) {
+				ti.setImage(1, SLImages.getImage(CommonImages.IMG_FL_PREP));
+			}
 		}
+
 		// minimize the column widths
 		if (firstRefresh) {
 			firstRefresh = false;
@@ -159,66 +141,47 @@ public final class RunMediator {
 		// no sort column after a refresh
 		f_table.setSortColumn(null);
 
-		if (oldSelection != -1 && oldSelection < f_table.getItemCount()) {
-			f_table.setSelection(oldSelection);
+		// restore the old row selection
+		if (oldSelection != null) {
+			items = f_table.getItems();
+			for (TableItem ti : items) {
+				if (oldSelection.equals(getData(ti))) {
+					f_table.setSelection(ti);
+				}
+			}
 		}
+
 		setToolbarState();
 	}
 
 	private final Action f_prep = new Action() {
 		@Override
 		public void run() {
-			final Object o = getTableSelectionData();
-			if (o instanceof Raw) {
-				final Raw raw = (Raw) o;
+			final RunDescription description = getTableSelectionData();
+			if (description != null) {
 				/*
 				 * Is it already prepared?
 				 */
-				int unPrepRunId = getRunId(raw);
-
-				if (unPrepRunId != -1) {
+				PrepRunDescription prep = RunManager.getInstance()
+						.getPrepRunDescriptionFor(description);
+				if (prep != null) {
 					if (!MessageDialog.openConfirm(f_table.getShell(),
 							"Confirm Flashlight Re-Prep",
 							"Do you wish to delete and re-prepare the data for "
-									+ raw.getName() + "?")) {
+									+ description.getName() + "?")) {
 						return; // bail
 					}
-					Job job = new UnPrepJob(unPrepRunId, raw.getName());
+					Job job = new UnPrepJob(prep.getRun(), description
+							.getName());
 					job.setUser(true);
 					job.schedule();
 				}
-				Job job = new PrepJob(raw);
+				Job job = new PrepJob(description);
 				job.setUser(true);
 				job.schedule();
 			}
 		}
 	};
-
-	/**
-	 * Looks up the id for a run in the database.
-	 * 
-	 * @param raw
-	 *            the raw run representation.
-	 * @return the id of the prepared data, or -1 if the data is not found in
-	 *         the database.
-	 */
-	private int getRunId(Raw raw) {
-		int unPrepId = -1;
-		try {
-			final Connection em = Data.getInstance().getConnection();
-			try {
-				Run r = RunDAO.find(em, raw.getName(), raw.getStartTimeOfRun());
-				if (r != null) {
-					unPrepId = r.getRun();
-				}
-			} finally {
-				em.close();
-			}
-		} catch (SQLException e) {
-			SLLogger.getLogger().log(Level.SEVERE, "Lookup of a run failed", e);
-		}
-		return unPrepId;
-	}
 
 	public Action getPrepAction() {
 		return f_prep;
@@ -227,13 +190,16 @@ public final class RunMediator {
 	private final Action f_showLog = new Action() {
 		@Override
 		public void run() {
-			final Object o = getTableSelectionData();
-			if (o instanceof Raw) {
-				final Raw raw = (Raw) o;
-				LogDialog d = new LogDialog(f_table.getShell(), raw
-						.getLogFile(), "Instrumentation Log for "
-						+ raw.getName());
-				d.open();
+			final RunDescription description = getTableSelectionData();
+			if (description != null) {
+				final RawFileHandles handles = RunManager.getInstance()
+						.getRawFileHandlesFor(description);
+				if (handles != null) {
+					LogDialog d = new LogDialog(f_table.getShell(), handles
+							.getLogFile(), "Instrumentation Log for "
+							+ description.getName());
+					d.open();
+				}
 			}
 		}
 	};
@@ -245,52 +211,33 @@ public final class RunMediator {
 	private final Action f_deleteRun = new Action() {
 		@Override
 		public void run() {
-			int unPrepRunId = -1;
-			Raw raw = null;
-			String runName = "Unknown";
-			final Object o = getTableSelectionData();
-			if (o instanceof IRunDescription) {
-				runName = ((IRunDescription) o).getName();
-			} else {
-				SLLogger.getLogger().log(Level.SEVERE,
-						"Selected run is not an IRunDescription",
-						new Exception("at this location"));
-				return;
-			}
-			if (o instanceof Raw) {
-				raw = (Raw) o;
-				/*
-				 * Is it already prepared?
-				 */
-				unPrepRunId = getRunId(raw);
-			} else if (o instanceof Run) {
-				unPrepRunId = ((Run) o).getRun();
-			}
-			final boolean onlyPrep = raw == null;
-			final boolean onlyRaw = unPrepRunId == -1;
-			if (onlyPrep && onlyRaw) {
-				SLLogger.getLogger().log(
-						Level.SEVERE,
-						"Selected run " + runName
-								+ " lacks both raw and prepared data",
-						new Exception("at this location"));
-				return;
-			}
-			DeleteRunDialog d = new DeleteRunDialog(f_table.getShell(),
-					runName, onlyRaw, onlyPrep);
-			d.open();
-			if (Window.CANCEL == d.getReturnCode())
-				return;
+			final RunDescription description = getTableSelectionData();
+			if (description != null) {
+				final RawFileHandles handles = RunManager.getInstance()
+						.getRawFileHandlesFor(description);
+				PrepRunDescription prep = RunManager.getInstance()
+						.getPrepRunDescriptionFor(description);
 
-			if (unPrepRunId != -1) {
-				Job job = new UnPrepJob(unPrepRunId, runName);
-				job.setUser(true);
-				job.schedule();
-			}
-			if (raw != null && d.deleteRawDataFiles()) {
-				Job job = new DeleteRawFilesJob(raw);
-				job.setUser(true);
-				job.schedule();
+				boolean hasRawFiles = handles != null;
+				boolean hasPrep = prep != null;
+
+				DeleteRunDialog d = new DeleteRunDialog(f_table.getShell(),
+						description.getName(), hasRawFiles, hasPrep);
+				d.open();
+				if (Window.CANCEL == d.getReturnCode())
+					return;
+
+				if (hasPrep) {
+					Job job = new UnPrepJob(prep.getRun(), description
+							.getName());
+					job.setUser(true);
+					job.schedule();
+				}
+				if (hasRawFiles && d.deleteRawDataFiles()) {
+					Job job = new DeleteRawFilesJob(description);
+					job.setUser(true);
+					job.schedule();
+				}
 			}
 		}
 	};
@@ -301,8 +248,8 @@ public final class RunMediator {
 
 	private final void setToolbarState() {
 		boolean rawActionsEnabled = false;
-		final Object o = getTableSelectionData();
-		if (o instanceof Raw) {
+		final RunDescription o = getTableSelectionData();
+		if (o != null) { // TODO Fix logic
 			rawActionsEnabled = true;
 		}
 		f_prep.setEnabled(rawActionsEnabled);
@@ -310,33 +257,25 @@ public final class RunMediator {
 		f_deleteRun.setEnabled(o != null);
 	}
 
-	static abstract class ColumnWrapper {
+	private final Map<Integer, RunViewColumnWrapper> f_indexToColumn = new HashMap<Integer, RunViewColumnWrapper>();
 
-		private final TableColumn f_column;
-
-		TableColumn getColumn() {
-			return f_column;
-		}
-
-		ColumnWrapper(Table table, String columnTitle, int style,
-				Listener columnSortListener) {
-			f_column = new TableColumn(table, style);
-			f_column.setText(columnTitle);
-			f_column.addListener(SWT.Selection, columnSortListener);
-			f_column.setMoveable(true);
-		}
-
-		abstract String getText(final IRunDescription run);
-	}
-
-	private final Map<Integer, ColumnWrapper> f_indexToColumn = new HashMap<Integer, ColumnWrapper>();
-
-	public Map<Integer, ColumnWrapper> getIndexToColumnMap() {
+	public Map<Integer, RunViewColumnWrapper> getIndexToColumnMap() {
 		return f_indexToColumn;
 	}
 
+	/**
+	 * Probably we have not been called from the SWT event dispatch thread.
+	 */
+	public void notify(RunManager manager) {
+		PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
+			public void run() {
+				refresh();
+			}
+		});
+	}
+
 	public void dispose() {
-		// nothing
+		RunManager.getInstance().removeObserver(this);
 	}
 
 	public void setFocus() {

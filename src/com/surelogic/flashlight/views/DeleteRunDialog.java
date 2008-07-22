@@ -12,25 +12,25 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 
+import com.surelogic.common.i18n.I18N;
+
 public final class DeleteRunDialog extends Dialog {
 
 	private final String f_run;
 
 	private volatile boolean f_deleteRawFiles;
 
-	private final boolean f_onlyRawFiles;
+	private final boolean f_hasRawFiles;
 
-	private final boolean f_onlyPrepFiles;
-
-	DeleteRunDialog(Shell parentShell, final String run,
-			final boolean onlyRawFiles, final boolean onlyPrep) {
+	DeleteRunDialog(Shell parentShell, final String runName,
+			final boolean hasRawFiles, final boolean hasPrep) {
 		super(parentShell);
 		setShellStyle(getShellStyle());
-		assert run != null;
-		f_run = run;
-		f_deleteRawFiles = onlyRawFiles;
-		f_onlyRawFiles = onlyRawFiles;
-		f_onlyPrepFiles = onlyPrep;
+		if (runName == null)
+			throw new IllegalArgumentException(I18N.err(44, "runName"));
+		f_run = runName;
+		f_hasRawFiles = hasRawFiles;
+		f_deleteRawFiles = !hasPrep;
 	}
 
 	@Override
@@ -52,10 +52,8 @@ public final class DeleteRunDialog extends Dialog {
 		work.setLayout(fillLayout);
 
 		final Label msg = new Label(work, SWT.NONE);
-		msg.setText("Do you wish to delete"
-				+ (f_onlyRawFiles ? " " : " prepared ") + "data for the run "
-				+ f_run + "?");
-		if (!f_onlyPrepFiles) {
+		msg.setText("Do you wish to delete data for the run " + f_run + "?");
+		if (f_hasRawFiles) {
 			final Button rawToo = new Button(work, SWT.CHECK);
 			rawToo.setText("Delete raw data files from the disk");
 			rawToo.setSelection(f_deleteRawFiles);
@@ -64,8 +62,6 @@ public final class DeleteRunDialog extends Dialog {
 					f_deleteRawFiles = rawToo.getSelection();
 				}
 			});
-			if (f_onlyRawFiles)
-				rawToo.setEnabled(false);
 		}
 
 		c.pack();

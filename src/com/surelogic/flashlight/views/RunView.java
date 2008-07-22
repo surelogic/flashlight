@@ -8,16 +8,13 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.ui.ISharedImages;
-import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 
 import com.surelogic.common.eclipse.SLImages;
-import com.surelogic.common.eclipse.ViewUtility;
 import com.surelogic.common.images.CommonImages;
 import com.surelogic.flashlight.common.Utility;
-import com.surelogic.flashlight.common.model.IRunDescription;
-import com.surelogic.flashlight.views.RunMediator.ColumnWrapper;
+import com.surelogic.flashlight.common.model.RunDescription;
 
 public final class RunView extends ViewPart {
 
@@ -27,7 +24,6 @@ public final class RunView extends ViewPart {
 
 	@Override
 	public void createPartControl(Composite parent) {
-
 		final Table table = new Table(parent, SWT.BORDER | SWT.FULL_SELECTION);
 		table.setHeaderVisible(true);
 		table.setLinesVisible(true);
@@ -43,71 +39,74 @@ public final class RunView extends ViewPart {
 		prep.setMoveable(true);
 
 		int next = 2;
-		final Map<Integer, ColumnWrapper> f_indexToColumn = f_mediator
+		final Map<Integer, RunViewColumnWrapper> f_indexToColumn = f_mediator
 				.getIndexToColumnMap();
-		f_indexToColumn.put(next++, new ColumnWrapper(table, "Run", SWT.LEFT,
-				TableUtility.SORT_COLUMN_ALPHABETICALLY) {
+		f_indexToColumn.put(next++, new RunViewColumnWrapper(table, "Run",
+				SWT.LEFT, TableUtility.SORT_COLUMN_ALPHABETICALLY) {
 			@Override
-			String getText(final IRunDescription run) {
+			String getText(final RunDescription run) {
 				return run.getName();
 			}
 		});
 
-		f_indexToColumn.put(next++, new ColumnWrapper(table, "Time", SWT.LEFT,
-				TableUtility.SORT_COLUMN_ALPHABETICALLY) {
+		f_indexToColumn.put(next++, new RunViewColumnWrapper(table, "Time",
+				SWT.LEFT, TableUtility.SORT_COLUMN_ALPHABETICALLY) {
 			@Override
-			String getText(final IRunDescription run) {
+			String getText(final RunDescription run) {
 				return Utility.toStringMS(run.getStartTimeOfRun());
 			}
 		});
 
-		f_indexToColumn.put(next++, new ColumnWrapper(table, "By", SWT.CENTER,
-				TableUtility.SORT_COLUMN_ALPHABETICALLY) {
+		f_indexToColumn.put(next++, new RunViewColumnWrapper(table, "By",
+				SWT.CENTER, TableUtility.SORT_COLUMN_ALPHABETICALLY) {
 			@Override
-			String getText(final IRunDescription run) {
+			String getText(final RunDescription run) {
 				return run.getUserName();
 			}
 		});
 
-		f_indexToColumn.put(next++, new ColumnWrapper(table, "Java",
+		f_indexToColumn.put(next++, new RunViewColumnWrapper(table, "Java",
 				SWT.CENTER, TableUtility.SORT_COLUMN_ALPHABETICALLY) {
 			@Override
-			String getText(final IRunDescription run) {
+			String getText(final RunDescription run) {
 				return run.getJavaVersion();
 			}
 		});
 
-		f_indexToColumn.put(next++, new ColumnWrapper(table, "Vendor",
+		f_indexToColumn.put(next++, new RunViewColumnWrapper(table, "Vendor",
 				SWT.CENTER, TableUtility.SORT_COLUMN_ALPHABETICALLY) {
 			@Override
-			String getText(final IRunDescription run) {
+			String getText(final RunDescription run) {
 				return run.getJavaVendor();
 			}
 		});
 
-		f_indexToColumn.put(next++, new ColumnWrapper(table, "OS", SWT.CENTER,
-				TableUtility.SORT_COLUMN_ALPHABETICALLY) {
+		f_indexToColumn.put(next++, new RunViewColumnWrapper(table, "OS",
+				SWT.CENTER, TableUtility.SORT_COLUMN_ALPHABETICALLY) {
 			@Override
-			String getText(final IRunDescription run) {
+			String getText(final RunDescription run) {
 				return run.getOSName() + " (" + run.getOSVersion() + ") on "
 						+ run.getOSArch();
 			}
 		});
-		f_indexToColumn.put(next++, new ColumnWrapper(table, "Max Memory (MB)",
-				SWT.RIGHT, TableUtility.SORT_COLUMN_NUMERICALLY) {
+
+		f_indexToColumn.put(next++, new RunViewColumnWrapper(table,
+				"Max Memory (MB)", SWT.RIGHT,
+				TableUtility.SORT_COLUMN_NUMERICALLY) {
 			@Override
-			String getText(final IRunDescription run) {
-				return run.getMaxMemoryMB() + "";
+			String getText(final RunDescription run) {
+				return run.getMaxMemoryMb() + "";
 			}
 		});
 
-		f_indexToColumn.put(next++, new ColumnWrapper(table, "Processors",
-				SWT.CENTER, TableUtility.SORT_COLUMN_NUMERICALLY) {
-			@Override
-			String getText(final IRunDescription run) {
-				return run.getProcessors() + "";
-			}
-		});
+		f_indexToColumn.put(next++,
+				new RunViewColumnWrapper(table, "Processors", SWT.CENTER,
+						TableUtility.SORT_COLUMN_NUMERICALLY) {
+					@Override
+					String getText(final RunDescription run) {
+						return run.getProcessors() + "";
+					}
+				});
 
 		final Action refreshAction = f_mediator.getRefreshAction();
 		refreshAction.setImageDescriptor(SLImages
@@ -138,6 +137,8 @@ public final class RunView extends ViewPart {
 		deleteRunAction.setEnabled(false);
 		getViewSite().getActionBars().getToolBarManager().add(deleteRunAction);
 
+		f_mediator.init();
+
 		refresh();
 	}
 
@@ -164,18 +165,9 @@ public final class RunView extends ViewPart {
 		}
 	}
 
-	public static void refreshViewContents() {
-		PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
-			public void run() {
-				final IViewPart view = ViewUtility.showView(RunView.ID);
-				if (view instanceof RunView) {
-					((RunView) view).refresh();
-
-				}
-			}
-		});
-	}
-
+	/**
+	 * Must be invoked within the SWT event thread.
+	 */
 	void refresh() {
 		f_mediator.refresh();
 	}

@@ -7,24 +7,25 @@ import com.surelogic.common.eclipse.SLProgressMonitorWrapper;
 import com.surelogic.common.eclipse.jobs.DatabaseJob;
 import com.surelogic.common.eclipse.logging.SLEclipseStatusUtility;
 import com.surelogic.common.jobs.SLStatus;
-import com.surelogic.flashlight.common.files.Raw;
+import com.surelogic.flashlight.common.model.RunDescription;
+import com.surelogic.flashlight.common.model.RunManager;
 import com.surelogic.flashlight.common.prep.PrepSLJob;
-import com.surelogic.flashlight.views.RunView;
 
 public final class PrepJob extends DatabaseJob {
-	final Raw f_raw;
 
-	public PrepJob(final Raw raw) {
+	private final RunDescription f_description;
+
+	public PrepJob(final RunDescription description) {
 		super("Preparing Flashlight data");
-		assert raw != null;
-		f_raw = raw;
+		assert description != null;
+		f_description = description;
 	}
 
 	@Override
 	protected IStatus run(IProgressMonitor monitor) {
-		final PrepSLJob prep = new PrepSLJob(f_raw);
+		final PrepSLJob prep = new PrepSLJob(f_description);
 		final SLStatus status = prep.run(new SLProgressMonitorWrapper(monitor));
-		RunView.refreshViewContents();
+		RunManager.getInstance().refresh();
 		monitor.done();
 		return SLEclipseStatusUtility.convert(status);
 	}

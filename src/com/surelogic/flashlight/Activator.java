@@ -13,6 +13,7 @@ import org.osgi.framework.BundleContext;
 
 import com.surelogic.common.eclipse.logging.SLEclipseStatusUtility;
 import com.surelogic.flashlight.common.Data;
+import com.surelogic.flashlight.common.model.RunManager;
 
 /**
  * The activator class controls the plug-in life cycle
@@ -57,6 +58,9 @@ public class Activator extends AbstractUIPlugin {
 
 		// startup the database and ensure its schema is up to date
 		Data.getInstance().bootAndCheckSchema();
+
+		// look at what runs are available
+		RunManager.getInstance().refresh();
 	}
 
 	@Override

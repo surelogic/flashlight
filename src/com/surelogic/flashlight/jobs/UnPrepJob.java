@@ -11,7 +11,7 @@ import org.eclipse.core.runtime.Status;
 import com.surelogic.common.eclipse.jobs.DatabaseJob;
 import com.surelogic.common.eclipse.logging.SLEclipseStatusUtility;
 import com.surelogic.flashlight.common.Data;
-import com.surelogic.flashlight.views.RunView;
+import com.surelogic.flashlight.common.model.RunManager;
 
 public final class UnPrepJob extends DatabaseJob {
 
@@ -69,7 +69,7 @@ public final class UnPrepJob extends DatabaseJob {
 			return SLEclipseStatusUtility.createErrorStatus(0, taskName
 					+ " failed", e);
 		}
-		RunView.refreshViewContents();
+		RunManager.getInstance().refresh();
 		monitor.done();
 		return Status.OK_STATUS;
 	}

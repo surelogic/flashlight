@@ -1,5 +1,6 @@
 package com.surelogic.flashlight.common.prep;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,9 +27,12 @@ import com.surelogic.common.jobs.SLJob;
 import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.common.Data;
-import com.surelogic.flashlight.common.entities.Run;
+import com.surelogic.flashlight.common.entities.PrepRunDescription;
 import com.surelogic.flashlight.common.entities.RunDAO;
-import com.surelogic.flashlight.common.files.Raw;
+import com.surelogic.flashlight.common.files.RawDataFilePrefix;
+import com.surelogic.flashlight.common.files.RawFileHandles;
+import com.surelogic.flashlight.common.files.RawFileUtility;
+import com.surelogic.flashlight.common.model.RunDescription;
 
 public final class PrepSLJob implements SLJob {
 
@@ -51,36 +55,39 @@ public final class PrepSLJob implements SLJob {
 			new FieldRead(beforeTrace), new FieldWrite(beforeTrace),
 			new ObjectDefinition(), new ThreadDefinition() };
 
-	final Raw f_raw;
+	final RunDescription f_description;
 
-	public PrepSLJob(final Raw raw) {
-		assert raw != null;
-		f_raw = raw;
+	public PrepSLJob(final RunDescription description) {
+		assert description != null;
+		f_description = description;
 	}
 
-	private InputStream getDataFileStream(final Raw raw) throws IOException {
-		InputStream stream = new FileInputStream(raw.getDataFile());
-		if (raw.isDataFileGzip()) {
+	private InputStream getDataFileStream(final RawFileHandles handles)
+			throws IOException {
+		InputStream stream = new FileInputStream(handles.getDataFile());
+		if (handles.isDataFileGzip()) {
 			stream = new GZIPInputStream(stream, 32 * 1024);
 		}
 		return stream;
 	}
 
 	public SLStatus run(SLProgressMonitor monitor) {
-		final String dataFileName = f_raw.getDataFile().getName();
+		final RawFileHandles handles = RawFileUtility.getRawFileHandlesFor(f_description);
+		final File dataFile = handles.getDataFile();
+		final String dataFileName = dataFile.getName();
 		/*
 		 * Estimate the work based upon the size of the raw file. This is only a
 		 * guess and we will probably be a bit high.
 		 */
-		final long sizeInBytes = f_raw.getDataFile().length();
-		long estimatedEvents = (sizeInBytes / (f_raw.isDataFileGzip() ? 7L
+		final long sizeInBytes = dataFile.length();
+		long estimatedEvents = (sizeInBytes / (handles.isDataFileGzip() ? 7L
 				: 130L));
 		if (estimatedEvents <= 0) {
 			estimatedEvents = 10L;
 		}
 		monitor.beginTask("Creating run information " + dataFileName, 4);
 		try {
-			InputStream stream = getDataFileStream(f_raw);
+			InputStream stream = getDataFileStream(handles);
 			monitor.worked(1);
 			try {
 				/*
@@ -106,7 +113,7 @@ public final class PrepSLJob implements SLJob {
 				 * Read the data file (our second pass) and insert all data into
 				 * the database.
 				 */
-				stream = getDataFileStream(f_raw);
+				stream = getDataFileStream(handles);
 				try {
 					// FIX change to decouple DB inserts?
 					final Connection c = Data.getInstance().getConnection();
@@ -118,15 +125,12 @@ public final class PrepSLJob implements SLJob {
 					final Timestamp start;
 					final long startNS;
 					monitor.worked(1);
-					start = new Timestamp(f_raw.getWallClockTime().getTime());
-					startNS = f_raw.getNanoTime();
+					final RawDataFilePrefix prefix = new RawDataFilePrefix();
+					prefix.read(dataFile);
+					start = new Timestamp(prefix.getWallClockTime().getTime());
+					startNS = prefix.getNanoTime();
 
-					final Run newRun = RunDAO.create(c, f_raw.getName(), f_raw
-							.getRawDataVersion(), f_raw.getUserName(), f_raw
-							.getJavaVersion(), f_raw.getJavaVendor(), f_raw
-							.getOSName(), f_raw.getOSArch(), f_raw
-							.getOSVersion(), f_raw.getMaxMemoryMB(), f_raw
-							.getProcessors(), start);
+					final PrepRunDescription newRun = RunDAO.create(c, f_description);
 					final int runId = newRun.getRun();
 					/*
 					 * Do the second pass through the file.
@@ -204,10 +208,10 @@ public final class PrepSLJob implements SLJob {
 						return SLStatus.createErrorStatus(0,
 								"Could not work with the embedded database", e);
 					} finally {
-						c.commit();
 						for (final IPrep element : f_elements) {
 							element.close();
 						}
+						c.commit();
 						c.close();
 					}
 				} catch (final SQLException e) {

@@ -5,14 +5,18 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.logging.Level;
 
+import com.surelogic.common.i18n.I18N;
+import com.surelogic.common.jdbc.QB;
 import com.surelogic.common.logging.SLLogger;
+import com.surelogic.flashlight.common.model.RunDescription;
 
 /**
- * A data access object for {@link Run}.
+ * A data access object for {@link PrepRunDescription} and
+ * {@link RunDescription}.
  * <p>
  * This roughly follows the pattern from page 462 of <i>Core J2EE Patterns</i>
  * (2nd edition) by Alur, Crupi, and Malks (Prentice Hall 2003). I've made it a
@@ -20,72 +24,39 @@ import com.surelogic.common.logging.SLLogger;
  */
 public final class RunDAO {
 
-	private RunDAO() {
-		// no instances
-	}
-
-	private static final String f_createSQL = "insert into RUN (Name, "
-			+ "RawDataVersion, UserName, JavaVersion, JavaVendor, OsName, "
-			+ "OsArch, OsVersion, MaxMemoryMB, Processors, Started) "
-			+ "values (?,?,?,?,?,?,?,?,?,?,?)";
-
 	/**
 	 * Creates a new run in the database.
 	 * 
 	 * @param c
 	 *            the database connection to use.
-	 * @param name
-	 *            the name of the run.
-	 * @param rawDataVersion
-	 *            the raw data version.
-	 * @param userName
-	 *            the user who did the run.
-	 * @param javaVersion
-	 *            the Java version the run was made on.
-	 * @param javaVendor
-	 *            the vendor who produced the JVM the run was made on.
-	 * @param osName
-	 *            the operating system the run was made on.
-	 * @param osArch
-	 *            the processor architecture the run was made on.
-	 * @param osVersion
-	 *            the version of the operating system the run was made on.
-	 * @param maxMemoryMb
-	 *            the maximum memory the JVM used when the run was made.
-	 * @param processors
-	 *            the number of processors used during the run.
-	 * @param started
-	 *            the time the run was started.
+	 * @param run
+	 *            a description of the run to create.
 	 * @return the new run.
 	 * @throws SQLException
 	 *             if something goes wrong interacting with the database.
 	 */
-	public static Run create(Connection c, String name, String rawDataVersion,
-			String userName, String javaVersion, String javaVendor,
-			String osName, String osArch, String osVersion, int maxMemoryMb,
-			int processors, Timestamp started) throws SQLException {
-		PreparedStatement s = c.prepareStatement(f_createSQL);
+	public static PrepRunDescription create(Connection c, RunDescription run)
+			throws SQLException {
+		PreparedStatement s = c.prepareStatement(QB.get(20));
 		try {
 			int i = 1;
-			s.setString(i++, name);
-			s.setString(i++, rawDataVersion);
-			s.setString(i++, userName);
-			s.setString(i++, javaVersion);
-			s.setString(i++, javaVendor);
-			s.setString(i++, osName);
-			s.setString(i++, osArch);
-			s.setString(i++, osVersion);
-			s.setInt(i++, maxMemoryMb);
-			s.setInt(i++, processors);
-			s.setTimestamp(i++, started);
+			s.setString(i++, run.getName());
+			s.setString(i++, run.getRawDataVersion());
+			s.setString(i++, run.getUserName());
+			s.setString(i++, run.getJavaVersion());
+			s.setString(i++, run.getJavaVendor());
+			s.setString(i++, run.getOSName());
+			s.setString(i++, run.getOSArch());
+			s.setString(i++, run.getOSVersion());
+			s.setInt(i++, run.getMaxMemoryMb());
+			s.setInt(i++, run.getProcessors());
+			s.setTimestamp(i++, run.getStartTimeOfRun());
 			s.executeUpdate();
 		} finally {
 			s.close();
 		}
-		return find(c, name, started);
+		return find(c, run.getName(), run.getStartTimeOfRun());
 	}
-
-	private static final String f_findByNameSQL = "select * from RUN where Name=? and Started=?";
 
 	/**
 	 * Looks up a run in the database by its name and start time.
@@ -100,9 +71,9 @@ public final class RunDAO {
 	 * @throws SQLException
 	 *             if something goes wrong interacting with the database.
 	 */
-	public static Run find(Connection c, String name, Timestamp started)
-			throws SQLException {
-		PreparedStatement s = c.prepareStatement(f_findByNameSQL);
+	public static PrepRunDescription find(Connection c, String name,
+			Timestamp started) throws SQLException {
+		PreparedStatement s = c.prepareStatement(QB.get(21));
 		try {
 			s.setString(1, name);
 			s.setTimestamp(2, started);
@@ -116,8 +87,6 @@ public final class RunDAO {
 		return null;
 	}
 
-	private static final String f_findByRunSQL = "select * from RUN where Run=?";
-
 	/**
 	 * Looks up a run in the database by its identifier.
 	 * 
@@ -129,8 +98,9 @@ public final class RunDAO {
 	 * @throws SQLException
 	 *             if something goes wrong interacting with the database.
 	 */
-	public static Run find(Connection c, int run) throws SQLException {
-		PreparedStatement s = c.prepareStatement(f_findByRunSQL);
+	public static PrepRunDescription find(Connection c, int run)
+			throws SQLException {
+		PreparedStatement s = c.prepareStatement(QB.get(22));
 		try {
 			s.setInt(1, run);
 			ResultSet rs = s.executeQuery();
@@ -140,46 +110,43 @@ public final class RunDAO {
 		} finally {
 			s.close();
 		}
-		SLLogger.getLogger()
-				.log(
-						Level.WARNING,
-						"find on the run identified by " + run
-								+ " produced a null Run");
+		SLLogger.getLogger().log(Level.WARNING, I18N.err(110, run),
+				new Exception());
 		return null;
 	}
-
-	private static final String f_getAllSQL = "select * from RUN";
 
 	/**
 	 * Looks up all the runs in the database.
 	 * 
 	 * @param c
 	 *            the database connection to use.
-	 * @return all the runs in the database, or the empty array if none exist.
+	 * @return all the runs in the database, or an empty list if none exist.
 	 * @throws SQLException
 	 *             if something goes wrong interacting with the database.
 	 */
-	public static Run[] getAll(Connection c) throws SQLException {
-		List<Run> result = new ArrayList<Run>();
-		PreparedStatement s = c.prepareStatement(f_getAllSQL);
+	public static Set<PrepRunDescription> getAll(Connection c)
+			throws SQLException {
+		Set<PrepRunDescription> result = new HashSet<PrepRunDescription>();
+		PreparedStatement s = c.prepareStatement(QB.get(23));
 		try {
 			ResultSet rs = s.executeQuery();
 			while (rs.next()) {
-				Run r = convertRowToObject(rs);
+				PrepRunDescription r = convertRowToObject(rs);
 				if (r != null) {
 					result.add(r);
 				} else {
-					SLLogger.getLogger().log(Level.WARNING,
-							"RunDAO getAll() produced a null Run");
+					SLLogger.getLogger().log(Level.WARNING, I18N.err(111),
+							new Exception());
 				}
 			}
 		} finally {
 			s.close();
 		}
-		return result.toArray(new Run[result.size()]);
+		return result;
 	}
 
-	private static Run convertRowToObject(ResultSet rs) throws SQLException {
+	private static PrepRunDescription convertRowToObject(ResultSet rs)
+			throws SQLException {
 		int i = 1;
 		int run = rs.getInt(i++);
 		String name = rs.getString(i++);
@@ -193,8 +160,13 @@ public final class RunDAO {
 		int maxMemoryMb = rs.getInt(i++);
 		int processors = rs.getInt(i++);
 		Timestamp started = rs.getTimestamp(i++);
-		return new Run(run, name, rawDataVersion, userName, javaVersion,
-				javaVendor, osName, osArch, osVersion, maxMemoryMb, processors,
-				started);
+		final RunDescription description = new RunDescription(name,
+				rawDataVersion, userName, javaVersion, javaVendor, osName,
+				osArch, osVersion, maxMemoryMb, processors, started);
+		return new PrepRunDescription(run, description);
+	}
+
+	private RunDAO() {
+		// no instances
 	}
 }

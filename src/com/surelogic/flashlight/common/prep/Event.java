@@ -8,11 +8,11 @@ import java.util.Set;
 import com.surelogic.flashlight.common.Utility;
 
 public abstract class Event extends TrackUnreferenced {
-  static IntrinsicLockDurationRowInserter f_rowInserter;
-  
-	Timestamp f_start = null;
+	static IntrinsicLockDurationRowInserter f_rowInserter;
 
-	long f_startNS;
+	private Timestamp f_start = null;
+
+	private long f_startNS;
 
 	protected Timestamp getTimestamp(long timeNS) {
 		if (f_start == null)
@@ -30,5 +30,4 @@ public abstract class Event extends TrackUnreferenced {
 		f_start = start;
 		f_startNS = startNS;
 	}
-
 }

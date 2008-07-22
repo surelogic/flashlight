@@ -171,8 +171,7 @@ public final class RunMediator implements IRunManagerObserver, ILifecycle {
 									+ description.getName() + "?")) {
 						return; // bail
 					}
-					Job job = new UnPrepJob(prep.getRun(), description
-							.getName());
+					Job job = new UnPrepJob(prep);
 					job.setUser(true);
 					job.schedule();
 				}
@@ -228,8 +227,7 @@ public final class RunMediator implements IRunManagerObserver, ILifecycle {
 					return;
 
 				if (hasPrep) {
-					Job job = new UnPrepJob(prep.getRun(), description
-							.getName());
+					Job job = new UnPrepJob(prep);
 					job.setUser(true);
 					job.schedule();
 				}

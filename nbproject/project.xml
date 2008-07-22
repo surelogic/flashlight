@@ -55,7 +55,10 @@
                 <package>com.surelogic.flashlight.common</package>
                 <package>com.surelogic.flashlight.common.entities</package>
                 <package>com.surelogic.flashlight.common.files</package>
+                <package>com.surelogic.flashlight.common.jobs</package>
+                <package>com.surelogic.flashlight.common.model</package>
                 <package>com.surelogic.flashlight.common.prep</package>
+                <package>com.surelogic.flashlight.schema</package>
             </public-packages>
         </data>
     </configuration>

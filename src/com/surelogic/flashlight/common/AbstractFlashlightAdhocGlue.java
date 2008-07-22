@@ -5,10 +5,10 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.concurrent.Executor;
 
-import com.surelogic.adhoc.IAdHoc;
+import com.surelogic.adhoc.AbstractAdHoc;
 import com.surelogic.common.FileUtility;
 
-public abstract class AbstractFlashlightAdhocGlue implements IAdHoc {
+public abstract class AbstractFlashlightAdhocGlue extends AbstractAdHoc {
 
 	public final Connection getConnection() throws SQLException {
 		return Data.getInstance().getConnection();

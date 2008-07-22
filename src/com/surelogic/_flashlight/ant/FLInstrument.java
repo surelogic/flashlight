@@ -16,8 +16,40 @@ import com.surelogic._flashlight.rewriter.engine.RewriteEngine;
 
 public final class FLInstrument extends Task {
   private final Properties properties = new Properties();
-  private final List<SrcDstPair> dirsToInstrument = new ArrayList<SrcDstPair>();
+  private final List<Directory> dirsToInstrument = new ArrayList<Directory>();
+  private final List<Jar> jarsToInstrument = new ArrayList<Jar>();
   
+  
+  
+  public static final class Directory {
+    private String srcdir = null;
+    private String destdir = null;
+        
+    public Directory() { super(); }
+        
+    public void setSrcdir(final String src) { this.srcdir = src; }
+    public void setDestdir(final String dest) { this.destdir = dest; }
+    
+    String getSrcdir() { return srcdir; }
+    String getDestdir() { return destdir; }
+  }
+  
+  public static final class Jar {
+    private String srcfile = null;
+    private String destfile = null;
+    private String destdir = null;
+    
+    public Jar() { super(); }
+        
+    public void setSrcfile(final String src) { this.srcfile = src; }
+    public void setDestfile(final String dest) { this.destfile = dest; }
+    public void setDestdir(final String dest) { this.destdir = dest; }
+    
+    String getSrcfile() { return srcfile; }
+    String getDestfile() { return destfile; }
+    String getDestdir() { return destdir; }
+  }
+
   
   
   public FLInstrument() {
@@ -123,14 +155,31 @@ public final class FLInstrument extends Task {
   }
   
   
-  public void addConfiguredDir(final SrcDstPair pair) {
-    if (pair.getSrcdir() == null) {
-      throw new BuildException("Source directory not set");
+  
+  public void addConfiguredDir(final Directory dir) {
+    if (dir.getSrcdir() == null) {
+      throw new BuildException("Source directory is not set");
     }
-    if (pair.getDestdir() == null) {
-      throw new BuildException("Destination directory not set");
+    if (dir.getDestdir() == null) {
+      throw new BuildException("Destination directory is not set");
     }
-    dirsToInstrument.add(pair);
+    dirsToInstrument.add(dir);
+  }
+  
+  public void addConfiguredJar(final Jar jar) {
+    if (jar.getSrcfile() == null) {
+      throw new BuildException("Source jar file is not set");
+    }
+    
+    final String destfile = jar.getDestfile();
+    final String destdir = jar.getDestdir();
+    if (destfile != null && destdir != null) {
+      throw new BuildException("Cannot set both the destination jar file and destination directory");
+    }
+    if (destfile == null && destdir == null) {
+      throw new BuildException("Must set either the destination jar file or the destination directory");
+    }
+    jarsToInstrument.add(jar);
   }
   
   
@@ -146,14 +195,34 @@ public final class FLInstrument extends Task {
     final RewriteEngine engine =
       new RewriteEngine(config, new AntLogMessenger(Project.MSG_VERBOSE));
     
-    for (final SrcDstPair dirPair : dirsToInstrument) {
-      final String src = dirPair.getSrcdir();
-      final String dst = dirPair.getDestdir();
-      log("Instrumenting classes in " + src + ", writing them to " + dst, Project.MSG_INFO);
+    for (final Directory dir : dirsToInstrument) {
+      final String src = dir.getSrcdir();
+      final String dest = dir.getDestdir();
+      log("Instrumenting class directory " + src + ": writing instrumented classes to directory" + dest, Project.MSG_INFO);
       try {
-        engine.rewriteDirectory(new File(src), new File(dst));
+        engine.rewriteDirectory(new File(src), new File(dest));
       } catch (final IOException e) {
         final String msg = "Error instrumenting class files in directory " + src;
+        log(msg, Project.MSG_ERR);
+        throw new BuildException(msg, e, getLocation());
+      }
+    }
+
+    for (final Jar jar : jarsToInstrument) {
+      final String src = jar.getSrcfile();
+      final String destfile = jar.getDestfile();
+      final String destdir = jar.getDestdir();      
+      try {
+        /* One of dstfile and dstdir is non-null, but not both */
+        if (destfile != null) {
+          log("Instrumenting classes in jar " + src + ": writing instrumented classes to jar " + destfile, Project.MSG_INFO);
+          engine.rewriteJarToJar(new File(src), new File(destfile));
+        } else {
+          log("Instrumenting classes in jar " + src + ": writing instrumented classes to directory " + destdir, Project.MSG_INFO);
+          engine.rewriteJarToDirectory(new File(src), new File(destdir));
+        }
+      } catch (final IOException e) {
+        final String msg = "Error instrumenting class files in jar " + src;
         log(msg, Project.MSG_ERR);
         throw new BuildException(msg, e, getLocation());
       }

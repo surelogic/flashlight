@@ -30,7 +30,7 @@ public final class RunManager {
 	}
 
 	private RunManager() {
-		// singleton
+		refresh();
 	}
 
 	private final Set<IRunManagerObserver> f_observers = new CopyOnWriteArraySet<IRunManagerObserver>();

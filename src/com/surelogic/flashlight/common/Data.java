@@ -12,11 +12,32 @@ import com.surelogic.flashlight.schema.FlashlightSchemaData;
 
 public final class Data extends DerbyConnection {
 
-	private Data() {
-		// no instances
+	private static final Data INSTANCE = new Data();
+
+	public static Data getInstance() {
+		INSTANCE.loggedBootAndCheckSchema();
+		return INSTANCE;
 	}
 
-	private static final String SCHEMA_NAME = "FLASHLIGHT";
+	private Data() {
+		// singleton
+	}
+
+	@Override
+	protected String getDatabaseLocation() {
+		return FileUtility.getFlashlightDataDirectory() + File.separator
+				+ DATABASE_PATH_FRAGMENT;
+	}
+
+	@Override
+	protected String getSchemaName() {
+		return "FLASHLIGHT";
+	}
+
+	@Override
+	protected SchemaData getSchemaLoader() {
+		return new FlashlightSchemaData();
+	}
 
 	private ExecutorService exec = Executors.newSingleThreadExecutor();
 
@@ -34,35 +55,4 @@ public final class Data extends DerbyConnection {
 				.getResource("/com/surelogic/flashlight/common/default-queries.xml");
 	}
 
-	@Override
-	protected boolean deleteDatabaseOnStartup() {
-		return false;
-	}
-
-	@Override
-	protected synchronized String getDatabaseLocation() {
-		return FileUtility.getFlashlightDataDirectory() + File.separator
-				+ DATABASE_PATH_FRAGMENT;
-	}
-
-	@Override
-	protected SchemaData getSchemaLoader() {
-		return new FlashlightSchemaData();
-	}
-
-	@Override
-	protected String getSchemaName() {
-		return SCHEMA_NAME;
-	}
-
-	@Override
-	protected void setDeleteDatabaseOnStartup(final boolean bool) {
-		// Do nothing
-	}
-
-	private static final Data INSTANCE = new Data();
-
-	public static Data getInstance() {
-		return INSTANCE;
-	}
 }

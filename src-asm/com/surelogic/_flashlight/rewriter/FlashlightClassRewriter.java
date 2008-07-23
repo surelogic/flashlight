@@ -1,19 +1,10 @@
 package com.surelogic._flashlight.rewriter;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
 
 import org.objectweb.asm.ClassAdapter;
-import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
@@ -41,7 +32,6 @@ public final class FlashlightClassRewriter extends ClassAdapter {
   private boolean isInterface;
   
   /** Is the class file version at least Java 5? */
-  @SuppressWarnings("unused")
   private boolean atLeastJava5;
   
   /** The name of the source file that contains the class being rewritten. */

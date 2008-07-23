@@ -1,4 +1,4 @@
-package com.surelogic.flashlight.views;
+package com.surelogic.flashlight.client.eclipse.views;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -20,14 +20,15 @@ import org.eclipse.ui.PlatformUI;
 import com.surelogic.common.ILifecycle;
 import com.surelogic.common.eclipse.SLImages;
 import com.surelogic.common.images.CommonImages;
+import com.surelogic.flashlight.client.eclipse.jobs.DeleteRawFilesJob;
+import com.surelogic.flashlight.client.eclipse.jobs.PrepJob;
+import com.surelogic.flashlight.client.eclipse.jobs.RefreshRunManagerJob;
+import com.surelogic.flashlight.client.eclipse.jobs.UnPrepJob;
 import com.surelogic.flashlight.common.entities.PrepRunDescription;
 import com.surelogic.flashlight.common.files.RawFileHandles;
 import com.surelogic.flashlight.common.model.IRunManagerObserver;
 import com.surelogic.flashlight.common.model.RunDescription;
 import com.surelogic.flashlight.common.model.RunManager;
-import com.surelogic.flashlight.jobs.DeleteRawFilesJob;
-import com.surelogic.flashlight.jobs.PrepJob;
-import com.surelogic.flashlight.jobs.UnPrepJob;
 
 /**
  * Mediator for the {@link RunView}.
@@ -76,7 +77,8 @@ public final class RunMediator implements IRunManagerObserver, ILifecycle {
 	private final Action f_refresh = new Action() {
 		@Override
 		public void run() {
-			refresh();
+			final Job job = new RefreshRunManagerJob();
+			job.schedule();
 		}
 	};
 

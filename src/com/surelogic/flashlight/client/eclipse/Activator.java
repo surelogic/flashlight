@@ -1,4 +1,4 @@
-package com.surelogic.flashlight;
+package com.surelogic.flashlight.client.eclipse;
 
 import java.io.File;
 import java.io.IOException;

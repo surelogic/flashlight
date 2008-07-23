@@ -1,7 +1,7 @@
-package com.surelogic.flashlight;
+package com.surelogic.flashlight.client.eclipse;
 
+import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
 import com.surelogic.flashlight.common.AbstractFlashlightAdhocGlue;
-import com.surelogic.flashlight.preferences.PreferenceConstants;
 
 public final class AdHocGlue extends AbstractFlashlightAdhocGlue {
 

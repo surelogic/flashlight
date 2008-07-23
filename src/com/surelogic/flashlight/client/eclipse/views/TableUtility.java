@@ -1,4 +1,4 @@
-package com.surelogic.flashlight.views;
+package com.surelogic.flashlight.client.eclipse.views;
 
 import java.util.Comparator;
 

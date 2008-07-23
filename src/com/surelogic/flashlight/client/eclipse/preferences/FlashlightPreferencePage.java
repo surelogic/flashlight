@@ -1,4 +1,4 @@
-package com.surelogic.flashlight.preferences;
+package com.surelogic.flashlight.client.eclipse.preferences;
 
 import org.eclipse.jface.preference.BooleanFieldEditor;
 import org.eclipse.jface.preference.FieldEditorPreferencePage;
@@ -7,7 +7,7 @@ import org.eclipse.jface.preference.ScaleFieldEditor;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 
-import com.surelogic.flashlight.Activator;
+import com.surelogic.flashlight.client.eclipse.Activator;
 
 public class FlashlightPreferencePage extends FieldEditorPreferencePage
 		implements IWorkbenchPreferencePage {

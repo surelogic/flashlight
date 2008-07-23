@@ -1,9 +1,9 @@
-package com.surelogic.flashlight.preferences;
+package com.surelogic.flashlight.client.eclipse.preferences;
 
 import org.eclipse.core.runtime.preferences.AbstractPreferenceInitializer;
 import org.eclipse.jface.preference.IPreferenceStore;
 
-import com.surelogic.flashlight.Activator;
+import com.surelogic.flashlight.client.eclipse.Activator;
 
 /**
  * Class used to initialize default preference values.

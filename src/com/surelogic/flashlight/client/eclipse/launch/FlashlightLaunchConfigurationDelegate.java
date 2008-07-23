@@ -1,4 +1,4 @@
-package com.surelogic.flashlight.launch;
+package com.surelogic.flashlight.client.eclipse.launch;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -18,8 +18,8 @@ import com.surelogic.common.FileUtility;
 import com.surelogic.common.eclipse.jdt.SourceZip;
 import com.surelogic.common.eclipse.logging.SLEclipseStatusUtility;
 import com.surelogic.common.logging.SLLogger;
-import com.surelogic.flashlight.Activator;
-import com.surelogic.flashlight.preferences.PreferenceConstants;
+import com.surelogic.flashlight.client.eclipse.Activator;
+import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
 
 public final class FlashlightLaunchConfigurationDelegate extends
 		JavaLaunchDelegate {

@@ -1,4 +1,4 @@
-package com.surelogic.flashlight.actions;
+package com.surelogic.flashlight.client.eclipse.actions;
 
 import org.eclipse.debug.ui.actions.AbstractLaunchToolbarAction;
 

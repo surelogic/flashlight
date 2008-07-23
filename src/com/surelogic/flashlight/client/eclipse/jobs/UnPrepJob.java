@@ -1,22 +1,22 @@
-package com.surelogic.flashlight.jobs;
+package com.surelogic.flashlight.client.eclipse.jobs;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.jobs.Job;
 
 import com.surelogic.common.eclipse.SLProgressMonitorWrapper;
+import com.surelogic.common.eclipse.jobs.DatabaseJob;
 import com.surelogic.common.eclipse.logging.SLEclipseStatusUtility;
 import com.surelogic.common.jobs.SLStatus;
-import com.surelogic.flashlight.common.jobs.DeleteRawFilesSLJob;
-import com.surelogic.flashlight.common.model.RunDescription;
+import com.surelogic.flashlight.common.entities.PrepRunDescription;
+import com.surelogic.flashlight.common.jobs.UnPrepSLJob;
 
-public final class DeleteRawFilesJob extends Job {
+public final class UnPrepJob extends DatabaseJob {
 
-	private final DeleteRawFilesSLJob f_job;
+	private final UnPrepSLJob f_job;
 
-	public DeleteRawFilesJob(final RunDescription description) {
-		super("Removing Raw Flashlight data");
-		f_job = new DeleteRawFilesSLJob(description);
+	public UnPrepJob(final PrepRunDescription prep) {
+		super("Removing prepared Flashlight data");
+		f_job = new UnPrepSLJob(prep);
 	}
 
 	@Override

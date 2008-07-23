@@ -1,4 +1,4 @@
-package com.surelogic.flashlight.preferences;
+package com.surelogic.flashlight.client.eclipse.preferences;
 
 /**
  * Constant definitions for plug-in preferences

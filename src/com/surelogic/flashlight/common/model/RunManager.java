@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.surelogic.common.jdbc.DBTransaction;
@@ -63,6 +64,17 @@ public final class RunManager {
 			new HashMap<RunDescription, PrepRunDescription>());
 
 	/**
+	 * The count of raw runs observed. This value is used to trigger a call to
+	 * the observers if this number changes upon refresh.
+	 */
+	private final AtomicInteger f_rawCount = new AtomicInteger(0);
+	/**
+	 * The count of prepared runs observed. This value is used to trigger a call
+	 * to the observers if this number changes upon refresh.
+	 */
+	private final AtomicInteger f_prepCount = new AtomicInteger(0);
+
+	/**
 	 * Gets the set of run descriptions known to this manager.
 	 * 
 	 * @return the non-null set of run descriptions known to this manager. This
@@ -91,9 +103,14 @@ public final class RunManager {
 	 * all observers if that set has changed.
 	 */
 	public void refresh() {
+		boolean isChanged = false; // assume nothing changed
 		final Map<RunDescription, PrepRunDescription> descToPrep = new HashMap<RunDescription, PrepRunDescription>();
 		final Set<RunDescription> rawDescriptions = RawFileUtility
 				.getRunDescriptions();
+		final int rawCount = rawDescriptions.size();
+		if (rawCount != f_rawCount.getAndSet(rawCount)) {
+			isChanged = true;
+		}
 		/*
 		 * Put in all the raw descriptions with a null. This indicates that
 		 * there is no prepared description associated with them.
@@ -111,9 +128,13 @@ public final class RunManager {
 				return RunDAO.getAll(conn);
 			}
 		};
-		final Set<PrepRunDescription> preppedDescriptions = Data.getInstance()
+		final Set<PrepRunDescription> prepDescriptions = Data.getInstance()
 				.withReadOnly(tran);
-		for (PrepRunDescription value : preppedDescriptions) {
+		final int prepCount = rawDescriptions.size();
+		if (prepCount != f_prepCount.getAndSet(prepCount)) {
+			isChanged = true;
+		}
+		for (PrepRunDescription value : prepDescriptions) {
 			final RunDescription key = value.getDescription();
 			descToPrep.put(key, value);
 		}
@@ -124,7 +145,9 @@ public final class RunManager {
 		 */
 		final Map<RunDescription, PrepRunDescription> descToPrepOld = f_descToPrep
 				.get();
-		final boolean isChanged = !descToPrepOld.equals(descToPrep);
+		if (!descToPrepOld.equals(descToPrep)) {
+			isChanged = true;
+		}
 		if (isChanged) {
 			f_descToPrep.set(Collections.unmodifiableMap(descToPrep));
 			notifyObservers();

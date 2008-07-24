@@ -3,6 +3,9 @@ package com.surelogic.flashlight.common.model;
 import java.sql.Timestamp;
 
 import com.surelogic.common.i18n.I18N;
+import com.surelogic.flashlight.common.entities.PrepRunDescription;
+import com.surelogic.flashlight.common.files.RawFileHandles;
+import com.surelogic.flashlight.common.files.RawFileUtility;
 
 /**
  * Describes the run of a program with Flashlight instrumentation. This class is
@@ -215,5 +218,33 @@ public final class RunDescription {
 		} else if (!f_userName.equals(other.f_userName))
 			return false;
 		return true;
+	}
+
+	/**
+	 * Gets the prepared run description corresponding to this run description,
+	 * or {@code null} if there is not one.
+	 * <p>
+	 * The prepared run description is not considered part of the state of this
+	 * object. The {@link RunManager} is used to perform this lookup.
+	 * 
+	 * @return the prepared run description corresponding to this, or {@code
+	 *         null} if there is none.
+	 */
+	public PrepRunDescription getPrepRunDescription() {
+		return RunManager.getInstance().getPrepRunDescriptionFor(this);
+	}
+
+	/**
+	 * Examines the Flashlight data directory and returns file handles
+	 * corresponding to this run description, or {@code null} if there are none.
+	 * <p>
+	 * The file handles are not considered part of the state of this object. The
+	 * {@link RawFileUtility} is used to perform this lookup.
+	 * 
+	 * @return an object containing file handles to the raw data file and its
+	 *         associated log file, or {@code null} if no file handles exist.
+	 */
+	public RawFileHandles getRawFileHandles() {
+		return RawFileUtility.getRawFileHandlesFor(this);
 	}
 }

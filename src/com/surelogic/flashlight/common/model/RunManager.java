@@ -13,7 +13,6 @@ import com.surelogic.common.jdbc.DBTransaction;
 import com.surelogic.flashlight.common.Data;
 import com.surelogic.flashlight.common.entities.PrepRunDescription;
 import com.surelogic.flashlight.common.entities.RunDAO;
-import com.surelogic.flashlight.common.files.RawFileHandles;
 import com.surelogic.flashlight.common.files.RawFileUtility;
 
 /**
@@ -83,23 +82,8 @@ public final class RunManager {
 	 * @return the prepared run description corresponding to the given run
 	 *         description, or {@code null} if there is none.
 	 */
-	public PrepRunDescription getPrepRunDescriptionFor(
-			final RunDescription description) {
+	PrepRunDescription getPrepRunDescriptionFor(final RunDescription description) {
 		return f_descToPrep.get().get(description);
-	}
-
-	/**
-	 * Examines the Flashlight data directory and returns file handles
-	 * corresponding to the passed run description, or {@code null} if no file
-	 * handles exist.
-	 * 
-	 * @param description
-	 *            a non-null run description.
-	 * @return an object containing file handles to the raw data file and its
-	 *         associated log file, or {@code null} if no file handles exist.
-	 */
-	public RawFileHandles getRawFileHandlesFor(final RunDescription description) {
-		return RawFileUtility.getRawFileHandlesFor(description);
 	}
 
 	/**

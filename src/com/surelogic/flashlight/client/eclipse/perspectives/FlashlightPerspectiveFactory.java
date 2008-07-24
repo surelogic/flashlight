@@ -4,7 +4,7 @@ import org.eclipse.ui.IFolderLayout;
 import org.eclipse.ui.IPageLayout;
 import org.eclipse.ui.IPerspectiveFactory;
 
-import com.surelogic.flashlight.client.eclipse.views.RunView;
+import com.surelogic.flashlight.client.eclipse.views.run.RunView;
 
 public final class FlashlightPerspectiveFactory implements IPerspectiveFactory {
 

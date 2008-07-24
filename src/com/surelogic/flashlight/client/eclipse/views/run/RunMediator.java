@@ -1,4 +1,4 @@
-package com.surelogic.flashlight.client.eclipse.views;
+package com.surelogic.flashlight.client.eclipse.views.run;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,6 +24,8 @@ import com.surelogic.flashlight.client.eclipse.jobs.DeleteRawFilesJob;
 import com.surelogic.flashlight.client.eclipse.jobs.PrepJob;
 import com.surelogic.flashlight.client.eclipse.jobs.RefreshRunManagerJob;
 import com.surelogic.flashlight.client.eclipse.jobs.UnPrepJob;
+import com.surelogic.flashlight.client.eclipse.views.DeleteRunDialog;
+import com.surelogic.flashlight.client.eclipse.views.LogDialog;
 import com.surelogic.flashlight.common.entities.PrepRunDescription;
 import com.surelogic.flashlight.common.files.RawFileHandles;
 import com.surelogic.flashlight.common.model.IRunManagerObserver;

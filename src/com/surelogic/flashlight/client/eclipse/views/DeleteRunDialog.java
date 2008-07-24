@@ -22,7 +22,7 @@ public final class DeleteRunDialog extends Dialog {
 
 	private final boolean f_hasRawFiles;
 
-	DeleteRunDialog(Shell parentShell, final String runName,
+	public DeleteRunDialog(Shell parentShell, final String runName,
 			final boolean hasRawFiles, final boolean hasPrep) {
 		super(parentShell);
 		setShellStyle(getShellStyle());

@@ -1,4 +1,4 @@
-package com.surelogic.flashlight.client.eclipse.views;
+package com.surelogic.flashlight.client.eclipse.views.run;
 
 import java.util.Map;
 
@@ -12,6 +12,7 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 
 import com.surelogic.common.eclipse.SLImages;
+import com.surelogic.common.eclipse.TableUtility;
 import com.surelogic.common.images.CommonImages;
 import com.surelogic.flashlight.common.Utility;
 import com.surelogic.flashlight.common.model.RunDescription;
@@ -21,7 +22,7 @@ import com.surelogic.flashlight.common.model.RunDescription;
  */
 public final class RunView extends ViewPart {
 
-	public static final String ID = "com.surelogic.flashlight.RunView";
+	public static final String ID = RunView.class.getName();
 
 	private RunMediator f_mediator;
 
@@ -88,7 +89,8 @@ public final class RunView extends ViewPart {
 				SWT.CENTER, TableUtility.SORT_COLUMN_ALPHABETICALLY) {
 			@Override
 			String getText(final RunDescription description) {
-				return description.getOSName() + " (" + description.getOSVersion() + ") on "
+				return description.getOSName() + " ("
+						+ description.getOSVersion() + ") on "
 						+ description.getOSArch();
 			}
 		});

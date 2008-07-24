@@ -28,7 +28,7 @@ public final class LogDialog extends Dialog {
 
 	private final String f_title;
 
-	LogDialog(Shell parentShell, final File log, final String title) {
+	public LogDialog(Shell parentShell, final File log, final String title) {
 		super(parentShell);
 		setShellStyle(getShellStyle() | SWT.RESIZE | SWT.MAX);
 		assert log != null;

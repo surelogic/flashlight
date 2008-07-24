@@ -1,4 +1,4 @@
-package com.surelogic.flashlight.client.eclipse.views;
+package com.surelogic.flashlight.client.eclipse.views.run;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Listener;

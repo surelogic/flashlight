@@ -134,9 +134,9 @@
    
       <!-- UI for raw data -->
 		<view allowMultiple="false" category="com.surelogic.flashlight.Flashlight"
-			class="com.surelogic.flashlight.client.eclipse.views.RunView"
+			class="com.surelogic.flashlight.client.eclipse.views.run.RunView"
 			icon="platform:/plugin/com.surelogic.common/src/com/surelogic/common/images/fl_run_view.gif"
-			id="com.surelogic.flashlight.RunView" name="Flashlight Runs">
+			id="com.surelogic.flashlight.client.eclipse.views.run.RunView" name="Flashlight Runs">
 		</view>
    
       <!-- UI for entering ad hoc queries -->

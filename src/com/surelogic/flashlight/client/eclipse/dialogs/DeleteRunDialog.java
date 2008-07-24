@@ -1,4 +1,4 @@
-package com.surelogic.flashlight.client.eclipse.views;
+package com.surelogic.flashlight.client.eclipse.dialogs;
 
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.swt.SWT;

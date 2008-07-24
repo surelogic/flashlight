@@ -1,4 +1,4 @@
-package com.surelogic.flashlight.client.eclipse.views;
+package com.surelogic.flashlight.client.eclipse.dialogs;
 
 import java.io.BufferedReader;
 import java.io.File;

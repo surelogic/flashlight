@@ -1,21 +1,23 @@
 package com.surelogic.flashlight.client.eclipse.views.run;
 
-import java.util.Map;
-
 import org.eclipse.jface.action.Action;
+import org.eclipse.jface.viewers.TableViewer;
+import org.eclipse.jface.viewers.TableViewerColumn;
+import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 
+import com.surelogic.common.eclipse.ColumnViewerSorter;
 import com.surelogic.common.eclipse.SLImages;
-import com.surelogic.common.eclipse.TableUtility;
+import com.surelogic.common.eclipse.ViewUtility;
 import com.surelogic.common.images.CommonImages;
-import com.surelogic.flashlight.common.Utility;
 import com.surelogic.flashlight.common.model.RunDescription;
+import com.surelogic.flashlight.common.model.RunManager;
+import com.surelogic.flashlight.common.model.RunViewModel;
 
 /**
  * View to display all raw and prepared Flashlight runs to the user.
@@ -24,94 +26,44 @@ public final class RunView extends ViewPart {
 
 	public static final String ID = RunView.class.getName();
 
-	private RunMediator f_mediator;
+	private RunViewMediator f_mediator;
 
 	@Override
 	public void createPartControl(Composite parent) {
-		final Table table = new Table(parent, SWT.BORDER | SWT.FULL_SELECTION);
-		table.setHeaderVisible(true);
-		table.setLinesVisible(true);
+		final TableViewer tableViewer = new TableViewer(parent, SWT.BORDER
+				| SWT.FULL_SELECTION);
+		tableViewer.setContentProvider(new RunViewContentProvider());
+		final RunViewModel model = new RunViewModel();
 
-		f_mediator = new RunMediator(table);
+		for (int index = 0; index < model.getColumnCount(); index++) {
+			final int columnIndex = index;
+			final TableViewerColumn column = new TableViewerColumn(tableViewer,
+					ViewUtility.adaptJustification(model
+							.getColumnJustification(columnIndex)));
+			column.getColumn().setText(model.getColumnTitle(index));
+			new ColumnViewerSorter<RunDescription>(tableViewer, column
+					.getColumn()) {
+				@Override
+				protected int doCompare(Viewer viewer, RunDescription e1,
+						RunDescription e2) {
+					return model.getColumnComparator(columnIndex).compare(e1,
+							e2);
+				}
+			};
+		}
+		tableViewer.setLabelProvider(new RunViewLabelProvider(model));
+		// Set the header to visible
+		tableViewer.getTable().setHeaderVisible(true);
+		// Set the line of the table visible
+		tableViewer.getTable().setLinesVisible(true);
+		// Set the input so we see data
+		tableViewer.setInput(RunManager.getInstance());
+		// Pack the columns to the ideal with
+		for (TableColumn col : tableViewer.getTable().getColumns()) {
+			col.pack();
+		}
 
-		final TableColumn raw = new TableColumn(table, SWT.LEFT);
-		raw.setText("Raw");
-		raw.setMoveable(true);
-
-		final TableColumn prep = new TableColumn(table, SWT.RIGHT);
-		prep.setText("Prep");
-		prep.setMoveable(true);
-
-		int next = 2;
-		final Map<Integer, RunViewColumnWrapper> f_indexToColumn = f_mediator
-				.getIndexToColumnMap();
-		f_indexToColumn.put(next++, new RunViewColumnWrapper(table, "Run",
-				SWT.LEFT, TableUtility.SORT_COLUMN_ALPHABETICALLY) {
-			@Override
-			String getText(final RunDescription description) {
-				return description.getName();
-			}
-		});
-
-		f_indexToColumn.put(next++, new RunViewColumnWrapper(table, "Time",
-				SWT.LEFT, TableUtility.SORT_COLUMN_ALPHABETICALLY) {
-			@Override
-			String getText(final RunDescription description) {
-				return Utility.toStringMS(description.getStartTimeOfRun());
-			}
-		});
-
-		f_indexToColumn.put(next++, new RunViewColumnWrapper(table, "By",
-				SWT.CENTER, TableUtility.SORT_COLUMN_ALPHABETICALLY) {
-			@Override
-			String getText(final RunDescription description) {
-				return description.getUserName();
-			}
-		});
-
-		f_indexToColumn.put(next++, new RunViewColumnWrapper(table, "Java",
-				SWT.CENTER, TableUtility.SORT_COLUMN_ALPHABETICALLY) {
-			@Override
-			String getText(final RunDescription description) {
-				return description.getJavaVersion();
-			}
-		});
-
-		f_indexToColumn.put(next++, new RunViewColumnWrapper(table, "Vendor",
-				SWT.CENTER, TableUtility.SORT_COLUMN_ALPHABETICALLY) {
-			@Override
-			String getText(final RunDescription description) {
-				return description.getJavaVendor();
-			}
-		});
-
-		f_indexToColumn.put(next++, new RunViewColumnWrapper(table, "OS",
-				SWT.CENTER, TableUtility.SORT_COLUMN_ALPHABETICALLY) {
-			@Override
-			String getText(final RunDescription description) {
-				return description.getOSName() + " ("
-						+ description.getOSVersion() + ") on "
-						+ description.getOSArch();
-			}
-		});
-
-		f_indexToColumn.put(next++, new RunViewColumnWrapper(table,
-				"Max Memory (MB)", SWT.RIGHT,
-				TableUtility.SORT_COLUMN_NUMERICALLY) {
-			@Override
-			String getText(final RunDescription description) {
-				return description.getMaxMemoryMb() + "";
-			}
-		});
-
-		f_indexToColumn.put(next++,
-				new RunViewColumnWrapper(table, "Processors", SWT.CENTER,
-						TableUtility.SORT_COLUMN_NUMERICALLY) {
-					@Override
-					String getText(final RunDescription description) {
-						return description.getProcessors() + "";
-					}
-				});
+		f_mediator = new RunViewMediator(tableViewer);
 
 		final Action refreshAction = f_mediator.getRefreshAction();
 		refreshAction.setImageDescriptor(SLImages
@@ -143,8 +95,6 @@ public final class RunView extends ViewPart {
 		getViewSite().getActionBars().getToolBarManager().add(deleteRunAction);
 
 		f_mediator.init();
-
-		refresh();
 	}
 
 	@Override
@@ -165,15 +115,15 @@ public final class RunView extends ViewPart {
 		/*
 		 * This is a good point to refresh the contents of the view.
 		 */
-		if (f_mediator != null) {
+		if (f_mediator != null)
 			f_mediator.setFocus();
-		}
 	}
 
 	/**
 	 * Must be invoked within the SWT event thread.
 	 */
 	void refresh() {
-		f_mediator.refresh();
+		if (f_mediator != null)
+			f_mediator.refresh();
 	}
 }

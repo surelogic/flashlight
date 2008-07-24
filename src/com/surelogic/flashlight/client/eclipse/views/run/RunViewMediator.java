@@ -1,25 +1,18 @@
 package com.surelogic.flashlight.client.eclipse.views.run;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Table;
-import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
-import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.PlatformUI;
 
 import com.surelogic.common.ILifecycle;
-import com.surelogic.common.eclipse.SLImages;
-import com.surelogic.common.images.CommonImages;
 import com.surelogic.flashlight.client.eclipse.dialogs.DeleteRunDialog;
 import com.surelogic.flashlight.client.eclipse.dialogs.LogDialog;
 import com.surelogic.flashlight.client.eclipse.jobs.DeleteRawFilesJob;
@@ -35,14 +28,14 @@ import com.surelogic.flashlight.common.model.RunManager;
 /**
  * Mediator for the {@link RunView}.
  */
-public final class RunMediator implements IRunManagerObserver, ILifecycle {
+public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 
-	private boolean firstRefresh = true;
-
+	private final TableViewer f_tableViewer;
 	private final Table f_table;
 
-	RunMediator(final Table table) {
-		f_table = table;
+	RunViewMediator(final TableViewer tableViewer) {
+		f_tableViewer = tableViewer;
+		f_table = tableViewer.getTable();
 	}
 
 	public void init() {
@@ -52,6 +45,7 @@ public final class RunMediator implements IRunManagerObserver, ILifecycle {
 			}
 		});
 		RunManager.getInstance().addObserver(this);
+		setToolbarState();
 	}
 
 	private RunDescription getData(final TableItem item) {
@@ -89,75 +83,7 @@ public final class RunMediator implements IRunManagerObserver, ILifecycle {
 	}
 
 	void refresh() {
-		final RunManager rm = RunManager.getInstance();
-		/*
-		 * Make a best effort to remember the row the user had selected before
-		 * as we refresh.
-		 */
-		final RunDescription oldSelection = getTableSelectionData();
-
-		// remove the contents
-		TableItem[] items = f_table.getItems();
-		for (TableItem ti : items) {
-			ti.dispose();
-		}
-
-		Set<RunDescription> descriptions = rm.getRunDescriptions();
-
-		for (RunDescription description : descriptions) {
-			TableItem ti = new TableItem(f_table, SWT.NONE);
-			for (int i = 2; i < f_table.getColumnCount(); i++) {
-				ti.setText(i, f_indexToColumn.get(i).getText(description));
-			}
-			ti.setData(description);
-			final RawFileHandles handles = rm.getRawFileHandlesFor(description);
-			if (handles != null) {
-				ti.setImage(0, SLImages
-						.getWorkbenchImage(ISharedImages.IMG_OBJ_FILE));
-
-				final long sizeKb = handles.getDataFile().length() / 1024;
-				String textSize;
-				if (sizeKb < 1024) {
-					textSize = sizeKb + " KB";
-				} else {
-					textSize = (sizeKb / 1024) + " MB";
-				}
-				ti.setText(0, textSize);
-				// add a warning image if the log indicates problems
-				if (!handles.isLogClean()) {
-					ti.setImage(2, PlatformUI.getWorkbench().getSharedImages()
-							.getImage(ISharedImages.IMG_OBJS_WARN_TSK));
-					ti.setText(2, ti.getText(2) + " (warnings in log)");
-				}
-			}
-			final PrepRunDescription prep = rm
-					.getPrepRunDescriptionFor(description);
-			if (prep != null) {
-				ti.setImage(1, SLImages.getImage(CommonImages.IMG_FL_PREP));
-			}
-		}
-
-		// minimize the column widths
-		if (firstRefresh) {
-			firstRefresh = false;
-			for (TableColumn col : f_table.getColumns()) {
-				col.pack();
-			}
-		}
-
-		// no sort column after a refresh
-		f_table.setSortColumn(null);
-
-		// restore the old row selection
-		if (oldSelection != null) {
-			items = f_table.getItems();
-			for (TableItem ti : items) {
-				if (oldSelection.equals(getData(ti))) {
-					f_table.setSelection(ti);
-				}
-			}
-		}
-
+		f_tableViewer.refresh();
 		setToolbarState();
 	}
 
@@ -169,8 +95,7 @@ public final class RunMediator implements IRunManagerObserver, ILifecycle {
 				/*
 				 * Is it already prepared?
 				 */
-				PrepRunDescription prep = RunManager.getInstance()
-						.getPrepRunDescriptionFor(description);
+				PrepRunDescription prep = description.getPrepRunDescription();
 				if (prep != null) {
 					if (!MessageDialog.openConfirm(f_table.getShell(),
 							"Confirm Flashlight Re-Prep",
@@ -198,8 +123,7 @@ public final class RunMediator implements IRunManagerObserver, ILifecycle {
 		public void run() {
 			final RunDescription description = getTableSelectionData();
 			if (description != null) {
-				final RawFileHandles handles = RunManager.getInstance()
-						.getRawFileHandlesFor(description);
+				final RawFileHandles handles = description.getRawFileHandles();
 				if (handles != null) {
 					LogDialog d = new LogDialog(f_table.getShell(), handles
 							.getLogFile(), "Instrumentation Log for "
@@ -219,10 +143,8 @@ public final class RunMediator implements IRunManagerObserver, ILifecycle {
 		public void run() {
 			final RunDescription description = getTableSelectionData();
 			if (description != null) {
-				final RawFileHandles handles = RunManager.getInstance()
-						.getRawFileHandlesFor(description);
-				PrepRunDescription prep = RunManager.getInstance()
-						.getPrepRunDescriptionFor(description);
+				final RawFileHandles handles = description.getRawFileHandles();
+				PrepRunDescription prep = description.getPrepRunDescription();
 
 				boolean hasRawFiles = handles != null;
 				boolean hasPrep = prep != null;
@@ -252,20 +174,15 @@ public final class RunMediator implements IRunManagerObserver, ILifecycle {
 	}
 
 	private final void setToolbarState() {
-		boolean rawActionsEnabled = false;
 		final RunDescription o = getTableSelectionData();
-		if (o != null) { // TODO Fix logic
-			rawActionsEnabled = true;
+		final boolean somethingIsSelected = o != null;
+		f_deleteRun.setEnabled(somethingIsSelected);
+		boolean rawActionsEnabled = somethingIsSelected;
+		if (somethingIsSelected) {
+			rawActionsEnabled = o.getRawFileHandles() != null;
 		}
 		f_prep.setEnabled(rawActionsEnabled);
 		f_showLog.setEnabled(rawActionsEnabled);
-		f_deleteRun.setEnabled(o != null);
-	}
-
-	private final Map<Integer, RunViewColumnWrapper> f_indexToColumn = new HashMap<Integer, RunViewColumnWrapper>();
-
-	public Map<Integer, RunViewColumnWrapper> getIndexToColumnMap() {
-		return f_indexToColumn;
 	}
 
 	/**
@@ -285,6 +202,5 @@ public final class RunMediator implements IRunManagerObserver, ILifecycle {
 
 	public void setFocus() {
 		f_table.setFocus();
-		refresh();
 	}
 }

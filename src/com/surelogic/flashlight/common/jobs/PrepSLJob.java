@@ -20,10 +20,10 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import com.surelogic.common.SLProgressMonitor;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jdbc.QB;
 import com.surelogic.common.jobs.SLJob;
+import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.common.Data;

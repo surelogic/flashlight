@@ -1,7 +1,7 @@
 package com.surelogic.flashlight.common.jobs;
 
-import com.surelogic.common.SLProgressMonitor;
 import com.surelogic.common.jobs.SLJob;
+import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.flashlight.common.model.RunManager;
 

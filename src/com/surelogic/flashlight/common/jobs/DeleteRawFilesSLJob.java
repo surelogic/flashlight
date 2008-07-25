@@ -2,9 +2,9 @@ package com.surelogic.flashlight.common.jobs;
 
 import java.io.File;
 
-import com.surelogic.common.SLProgressMonitor;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jobs.SLJob;
+import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.flashlight.common.files.RawFileHandles;
 import com.surelogic.flashlight.common.files.RawFileUtility;

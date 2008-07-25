@@ -13,7 +13,7 @@ import org.eclipse.ui.part.ViewPart;
 
 import com.surelogic.common.eclipse.ColumnViewerSorter;
 import com.surelogic.common.eclipse.SLImages;
-import com.surelogic.common.eclipse.ViewUtility;
+import com.surelogic.common.eclipse.SWTUtility;
 import com.surelogic.common.images.CommonImages;
 import com.surelogic.flashlight.common.model.RunDescription;
 import com.surelogic.flashlight.common.model.RunManager;
@@ -38,7 +38,7 @@ public final class RunView extends ViewPart {
 		for (int index = 0; index < model.getColumnCount(); index++) {
 			final int columnIndex = index;
 			final TableViewerColumn column = new TableViewerColumn(tableViewer,
-					ViewUtility.adaptJustification(model
+					SWTUtility.adaptJustification(model
 							.getColumnJustification(columnIndex)));
 			column.getColumn().setText(model.getColumnTitle(index));
 			new ColumnViewerSorter<RunDescription>(tableViewer, column

@@ -54,7 +54,7 @@
 			  <attribute name="Manifest-Version" value="1.0"/>
 			  <attribute name="Premain-Class" value="com.surelogic._flashlight.instrument.FlashlightAgent"/>
 			  <attribute name="Can-Redefine-Classes" value="false"/>
-  		  <attribute name="Main-Class" value="com.surelogic._flashlight.rewriter.FlashlightClassRewriter"/>
+  		  <attribute name="Main-Class" value="com.surelogic._flashlight.rewriter.engine.RewriteEngine"/>
 			</manifest>
 	  </jar>
 	</target>

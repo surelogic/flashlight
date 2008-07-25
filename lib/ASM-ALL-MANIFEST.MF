@@ -1,4 +1,4 @@
 Manifest-Version: 1.0
 Premain-Class: com.surelogic._flashlight.instrument.FlashlightAgent
 Can-Redefine-Classes: false
-Main-Class: com.surelogic._flashlight.rewriter.FlashlightClassRewriter
+Main-Class: com.surelogic._flashlight.rewriter.engine.RewriteEngine

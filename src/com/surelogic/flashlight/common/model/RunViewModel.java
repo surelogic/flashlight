@@ -13,7 +13,7 @@ import com.surelogic.flashlight.common.files.RawFileHandles;
  * IDE independent data model for the table of Flashlight runs displayed in the
  * run view. The columns of this table are shown in the list below:
  * 
- * <ol>
+ * <ul>
  * <li>Raw</li>
  * <li>Prep</li>
  * <li>Run</li>
@@ -24,8 +24,7 @@ import com.surelogic.flashlight.common.files.RawFileHandles;
  * <li>OS</li>
  * <li>Max Memory (MB)</li>
  * <li>Processors</li>
- * </ol>
- * 
+ * </ul>
  */
 public final class RunViewModel {
 

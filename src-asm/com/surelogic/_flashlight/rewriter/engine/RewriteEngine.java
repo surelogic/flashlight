@@ -24,13 +24,31 @@ import org.objectweb.asm.ClassWriter;
 import com.surelogic._flashlight.rewriter.Configuration;
 import com.surelogic._flashlight.rewriter.FlashlightClassRewriter;
 
+/**
+ * Class that encapsulates the ability to instrument sets of classfiles.  Supports
+ * <ul>
+ * <li>{@link #rewriteDirectory(File, File) Rewriting a directory of classfiles to a new directory.}
+ * <li>{@link #rewriteJarToJar(File, File) Rewriting a jar file of classfiles to a new jar file.}
+ * <li>{@link #rewriteJarToDirectory(File, File) Rewriting a jar file of classfiles to a directory.}
+ * </ul>
+ */
 public final class RewriteEngine {
+  private static final String FLASHLIGHT_RUNTIME_JAR = "flashlight-asm-runtime.jar";
   private static final String ZIP_FILE_NAME_SEPERATOR = "/";
+  private static final char SPACE = ' ';
+  private static final int BUFSIZE = 10240;
+  
+  private final byte[] buffer = new byte[BUFSIZE];
+
   private final Configuration config;
   private final EngineMessenger messenger;
   
   
   
+  /**
+   * Create a new rewrite engine based on the given configuration and that
+   * reports messages to the given messenger.
+   */
   public RewriteEngine(final Configuration c, final EngineMessenger m) {
     config = c;
     messenger = m;
@@ -38,27 +56,63 @@ public final class RewriteEngine {
 
   
   
+  /**
+   * Is the given file name a class file?
+   */
   private static boolean isClassfileName(final String name) {
     return name.endsWith(".class");
   }
 
   
-  
+
+  /**
+   * Process the files in the given directory {@code inDir}, writing to the
+   * directory {@code outDir}. Class files are instrumented when they are
+   * copied. Other files are copied verbatim. Nested directories are processed
+   * recursively.
+   * 
+   * @throws IOException
+   *           Thrown when there is a problem with any of the directories or
+   *           files.
+   */
   public void rewriteDirectory(final File inDir, final File outDir)
       throws IOException {
     final String[] files = inDir.list();
     if (files == null) {
       throw new IOException("Source directory " + inDir + " is bad");
     }
+    // Make sure the output directory exists
+    if (!outDir.exists()) outDir.mkdirs();
     for (final String name : files) {
       final File nextIn = new File(inDir, name);
       final File nextOut = new File(outDir, name);
       if (nextIn.isDirectory()) {
-        nextOut.mkdirs();
         rewriteDirectory(nextIn, nextOut);
       } else {
-        if (isClassfileName(name)) {
-          rewriteClassfile(nextIn, nextOut);
+        final BufferedInputStream bis =
+          new BufferedInputStream(new FileInputStream(nextIn));
+        final BufferedOutputStream bos =
+          new BufferedOutputStream(new FileOutputStream(nextOut));
+        try {
+          if (isClassfileName(name)) {
+            messenger.message("Rewriting classfile " + nextIn);
+            rewriteClassfileStream(bis, bos);
+          } else {
+            messenger.message("Copying file unchanged " + nextIn);
+            copyStream(bis, bos);
+          }
+        } finally {
+          // Close the files to be tidy
+          try {
+            bis.close();
+          } catch (final IOException e) {
+            // Doesn't want to close, what can we do?
+          }
+          try {
+            bos.close();
+          } catch (final IOException e) {
+            // Doesn't want to close, what can we do?
+          }
         }
       }
     }
@@ -66,6 +120,17 @@ public final class RewriteEngine {
 
 
 
+  /**
+   * Process the files in the given JAR file {@code inJarFile}, writing to the
+   * new JAR file {@code outJarFile}. Class files are instrumented when they are
+   * copied. Other files are copied verbatim. The manifest file of
+   * {@code outJarFile} is the same as the input manifest file except that
+   * <tt>flashlight-asm-runtime.jar</tt> is added to the {@code Class-Path}
+   * attribute.
+   * 
+   * @throws IOException
+   *           Thrown when there is a problem with any of the files.
+   */
   public void rewriteJarToJar(final File inJarFile, final File outJarFile) 
       throws IOException {
     final JarFile jarFile = new JarFile(inJarFile);
@@ -77,8 +142,7 @@ public final class RewriteEngine {
       final BufferedOutputStream bos = new BufferedOutputStream(fos);
       JarOutputStream jarOut = null;
       try {
-        jarOut = new JarOutputStream(bos, updateManifest(outManifest));
-        final byte[] buffer = new byte[10240];
+        jarOut = new JarOutputStream(bos, outManifest);
         final Enumeration jarEnum = jarFile.entries(); 
         while (jarEnum.hasMoreElements()) {
           final JarEntry jarEntryIn = (JarEntry) jarEnum.nextElement();
@@ -99,10 +163,7 @@ public final class RewriteEngine {
             } else {
               // Just copy the file unchanged
               messenger.message("Copying " + entryName + " unchanged");
-              int count;
-              while ((count = entryStream.read(buffer, 0, buffer.length)) != -1) {
-                jarOut.write(buffer, 0, count);
-              }
+              copyStream(entryStream, jarOut);
             }
           }
         }
@@ -126,6 +187,17 @@ public final class RewriteEngine {
 
 
 
+  /**
+   * Process the files in the given JAR file {@code inJarFile}, writing them to
+   * the directory {@code outDir}. Class files are instrumented when they are
+   * copied. Other files are copied verbatim. The manifest file of
+   * {@code outJarFile} is also copied, but has
+   * <tt>flashlight-asm-runtime.jar</tt> added to the {@code Class-Path}
+   * attribute.
+   * 
+   * @throws IOException
+   *           Thrown when there is a problem with any of the files.
+   */
   public void rewriteJarToDirectory(final File inJarFile, final File outDir) 
       throws IOException {
     final JarFile jarFile = new JarFile(inJarFile);
@@ -147,7 +219,6 @@ public final class RewriteEngine {
         }
       }
       
-      final byte[] buffer = new byte[10240];
       final Enumeration jarEnum = jarFile.entries(); 
       while (jarEnum.hasMoreElements()) {
         final JarEntry jarEntryIn = (JarEntry) jarEnum.nextElement();
@@ -162,8 +233,9 @@ public final class RewriteEngine {
           if (jarEntryIn.isDirectory()) {
             if (!outFile.exists()) outFile.mkdirs();
           } else {
-            if (!outFile.getParentFile().exists()) {
-              outFile.getParentFile().mkdirs();
+            final File outFileParentDirectory = outFile.getParentFile();
+            if (!outFileParentDirectory.exists()) {
+              outFileParentDirectory.mkdirs();
             }
             final BufferedOutputStream bos = 
               new BufferedOutputStream(new FileOutputStream(outFile));
@@ -174,10 +246,7 @@ public final class RewriteEngine {
               } else {
                 // Just copy the file unchanged
                 messenger.message("Copying " + entryName + " unchanged");
-                int count;
-                while ((count = entryStream.read(buffer, 0, buffer.length)) != -1) {
-                  bos.write(buffer, 0, count);
-                }
+                copyStream(entryStream, bos);
               }
             } finally {
               // Close the output stream if possible
@@ -200,28 +269,13 @@ public final class RewriteEngine {
     }
   }
   
-  private void rewriteClassfile(final File inName, final File outName)
-      throws IOException {
-    messenger.message("Rewriting classfile " + inName);
-    final BufferedInputStream bis = new BufferedInputStream(new FileInputStream(inName));
-    final BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(outName));
-    try {
-      rewriteClassfileStream(bis, bos);
-    } finally {
-      // Close the files to be tidy
-      try {
-        bis.close();
-      } catch(final IOException e) {
-        // Doesn't want to close, what can we do?
-      }
-      try {
-        bos.close();
-      } catch(final IOException e) {
-        // Doesn't want to close, what can we do?
-      }
-    }
-  }
-
+  /**
+   * Given an input stream for a classfile, write an instrumented version of the
+   * classfile to the given output stream.
+   * 
+   * @throws IOException
+   *           Thrown if there is a problem with any of the streams.
+   */
   private void rewriteClassfileStream(
       final InputStream inClassfile, final OutputStream outClassfile)
       throws IOException {
@@ -232,17 +286,34 @@ public final class RewriteEngine {
     outClassfile.write(output.toByteArray());
   }
   
+  /**
+   * Copy the contents of an input stream to an output stream.
+   * 
+   * @throws IOException
+   *           Thrown if there is a problem with any of the streams.
+   */
+  private void copyStream(
+      final InputStream inStream, final OutputStream outStream)
+      throws IOException {
+    int count;
+    while ((count = inStream.read(buffer, 0, BUFSIZE)) != -1) {
+      outStream.write(buffer, 0, count);
+    }
+  }
   
+  /**
+   * Create a {@link JarEntry} suitable for use with a {@link JarOutputStream}
+   * from a JarEntry obtained from a {@link JarFile}. In particular, if the
+   * given entry is deflated, we leave the sizes and checksums of the return
+   * entry unset so that JarOutputStream will compute them. If the entry is
+   * stored, we set them explicitly by copying from the original.
+   */
   private static JarEntry copyJarEntry(final JarEntry original) {
     final JarEntry result = new JarEntry(original.getName());
     result.setMethod(original.getMethod());
     result.setExtra(original.getExtra());
     result.setComment(original.getComment());
     
-    /* If the entry is deflated, we leave the sizes and checksums unset so
-     * that ZipOutputStream will compute them.  If the entry is stored, we 
-     * must set them explicitly, so we copy them from the original.
-     */
     if (original.getMethod() == ZipEntry.STORED) {
       // Make the zip output stream do all the work
       result.setSize(original.getSize());
@@ -252,6 +323,11 @@ public final class RewriteEngine {
     return result;
   }
   
+  /**
+   * Given a File naming an output directory and a file name from a {@link JarEntry},
+   * return a new File object that names the jar entry in the output directory.
+   * (Basically prepends the output directory to the file name.)
+   */
   private static File composeFile(final File outDir, final String zipName) {
     File result = outDir;
     final StringTokenizer tokenizer =
@@ -262,17 +338,27 @@ public final class RewriteEngine {
     }
     return result;
   }
-  
+
+  /**
+   * Given a JAR file manifest, update the <tt>Class-Path</tt> attribute to
+   * ensure that it contains a reference to the Flashlight runtime JAR
+   * <tt>flashlight-asm-runtime.jar</tt>.
+   */
   private static Manifest updateManifest(final Manifest manifest) {
     final Manifest newManifest = new Manifest(manifest);
     final Attributes mainAttrs = newManifest.getMainAttributes();
     final String classpath = mainAttrs.getValue(Attributes.Name.CLASS_PATH);
     final StringBuilder newClasspath = new StringBuilder();
-    if (classpath != null) {
+    
+    if (classpath == null) {
+      newClasspath.append(FLASHLIGHT_RUNTIME_JAR);
+    } else {
       newClasspath.append(classpath);
-      newClasspath.append(' ');
+      if (classpath.indexOf(FLASHLIGHT_RUNTIME_JAR) == -1) {
+        newClasspath.append(SPACE);
+        newClasspath.append(FLASHLIGHT_RUNTIME_JAR);
+      }
     }
-    newClasspath.append("flashlight-asm-runtime.jar");
     mainAttrs.put(Attributes.Name.CLASS_PATH, newClasspath.toString());
     return newManifest;
   }

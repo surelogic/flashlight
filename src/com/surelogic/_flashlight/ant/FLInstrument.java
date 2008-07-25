@@ -14,13 +14,41 @@ import com.surelogic._flashlight.rewriter.Configuration;
 import com.surelogic._flashlight.rewriter.engine.EngineMessenger;
 import com.surelogic._flashlight.rewriter.engine.RewriteEngine;
 
+
+/**
+ * Ant task for rewriting classes to apply flashlight instrumentation. Rewrites
+ * directories of classes and jar files. Jar files can rewritten to a new jar
+ * file or to a directory. This allows more another task to be more
+ * sophisticated in the packaging of a jar than this task is.
+ * 
+ * @author aarong
+ * 
+ */
 public final class FLInstrument extends Task {
+  /**
+   * Properties table used to initialize the Flashlight class rewriter.  These
+   * properties are set from attributes of the task.
+   */
   private final Properties properties = new Properties();
+  
+  /**
+   * The list of directories to rewrite.  Derived from nested &lt;dir...&gt; elements.
+   */
   private final List<Directory> dirsToInstrument = new ArrayList<Directory>();
+  
+  /**
+   * The list of jar files to rewrite.  Derived from nested &lt;jar...&gt; elements.
+   */
   private final List<Jar> jarsToInstrument = new ArrayList<Jar>();
   
   
   
+  /**
+   * Store the results of a &lt;dir srcdir=... destdir=...&gt; element.  Used
+   * to declare a directory hierarchy that is searched for class files.  The
+   * contents of the directory hierarchy are copied to the destination directory
+   * and any class files are instrumented.
+   */
   public static final class Directory {
     private String srcdir = null;
     private String destdir = null;
@@ -34,6 +62,17 @@ public final class FLInstrument extends Task {
     String getDestdir() { return destdir; }
   }
   
+  /**
+   * Store the results of a &lt;jar srcfile=... destfile=...&gt; element or a 
+   * &lt;jar srcfile=... destdir=...&gt; element.  In the first case, the contents
+   * of the JAR file are copied to a new JAR file with any class files being
+   * instrumented.  In the second case the contents of the JAR file are 
+   * expanded to the named directory and any class files are instrumented.
+   * 
+   * <p>When a destination JAR file is used, the manifest file of the output JAR
+   * file is updated to include <code>flashlight-ant-runtime.jar</code> on the
+   * class path.
+   */
   public static final class Jar {
     private String srcfile = null;
     private String destfile = null;
@@ -52,110 +91,193 @@ public final class FLInstrument extends Task {
 
   
   
+  /**
+   * Public parameterless constructor is needed so ANT can create the task.
+   */
   public FLInstrument() {
     super();
+    // Init the properties map
     Configuration.writeDefaultProperties(properties);
   }
 
   
   
+  /**
+   * Utily method to set a Boolean-valued property in {@link #properties}.
+   * @param propName The name of the property to set
+   * @param flag The boolean value.
+   */
   private void setProperty(final String propName, final boolean flag) {
     final String value = flag ? Configuration.TRUE : Configuration.FALSE;
-    // change to verbose later
     log("Setting " + propName + " to " + value, Project.MSG_VERBOSE);
     properties.setProperty(propName, value);
   }
   
+  /**
+   * Set the "com.surelogic._flashlight.rewriter.rewrite.invokeinterface" property.
+   */
   public void setRewriteinvokeinterface(final boolean flag) {
     setProperty(Configuration.REWRITE_INVOKEINTERFACE_PROPERTY, flag);
   }
   
+  /**
+   * Set the "com.surelogic._flashlight.rewriter.rewrite.invokespecial" property.
+   */
   public void setRewriteinvokespecial(final boolean flag) {
     setProperty(Configuration.REWRITE_INVOKESPECIAL_PROPERTY, flag);
   }
   
+  /**
+   * Set the "com.surelogic._flashlight.rewriter.rewrite.invokestatic" property.
+   */
   public void setRewriteinvokestatic(final boolean flag) {
     setProperty(Configuration.REWRITE_INVOKESTATIC_PROPERTY, flag);
   }
   
+  /**
+   * Set the "com.surelogic._flashlight.rewriter.rewrite.invokevirtual" property.
+   */
   public void setRewriteinvokevirtual(final boolean flag) {
     setProperty(Configuration.REWRITE_INVOKEVIRTUAL_PROPERTY, flag);
   }
   
+  /**
+   * Set the "com.surelogic._flashlight.rewriter.rewrite.synchronizedmethod" property.
+   */
   public void setRewritesynchronizedmethod(final boolean flag) {
     setProperty(Configuration.REWRITE_SYNCHRONIZED_METHOD_PROPERTY, flag);
   }
   
+  /**
+   * Set the "com.surelogic._flashlight.rewriter.rewrite.monitorenter" property.
+   */
   public void setRewritemonitorenter(final boolean flag) {
     setProperty(Configuration.REWRITE_MONITORENTER_PROPERTY, flag);
   }
   
+  /**
+   * Set the "com.surelogic._flashlight.rewriter.rewrite.monitorexit" property.
+   */
   public void setRewritemonitorexit(final boolean flag) {
     setProperty(Configuration.REWRITE_MONITOREXIT_PROPERTY, flag);
   }
   
+  /**
+   * Set the "com.surelogic._flashlight.rewriter.rewrite.getstatic" property.
+   */
   public void setRewritegetstatic(final boolean flag) {
     setProperty(Configuration.REWRITE_GETSTATIC_PROPERTY, flag);
   }
   
+  /**
+   * Set the "com.surelogic._flashlight.rewriter.rewrite.putstatic" property.
+   */
   public void setRewriteputstatic(final boolean flag) {
     setProperty(Configuration.REWRITE_PUTSTATIC_PROPERTY, flag);
   }
   
+  /**
+   * Set the "com.surelogic._flashlight.rewriter.rewrite.getfield" property.
+   */
   public void setRewritegetfield(final boolean flag) {
     setProperty(Configuration.REWRITE_GETFIELD_PROPERTY, flag);
   }
   
+  /**
+   * Set the "com.surelogic._flashlight.rewriter.rewrite.putfield" property.
+   */
   public void setRewriteputfield(final boolean flag) {
     setProperty(Configuration.REWRITE_PUTFIELD_PROPERTY, flag);
   }
   
+  /**
+   * Set the "com.surelogic._flashlight.rewriter.rewrite.<init>" property.
+   */
   public void setRewriteinit(final boolean flag) {
     setProperty(Configuration.REWRITE_INIT_PROPERTY, flag);
   }
   
+  /**
+   * Set the "com.surelogic._flashlight.rewriter.rewrite.<init>.execution" property.
+   */
   public void setRewriteconstructorexecution(final boolean flag) {
     setProperty(Configuration.REWRITE_CONSTRUCTOR_EXECUTION_PROPERTY, flag);
   }
   
+  /**
+   * Set the "com.surelogic._flashlight.rewriter.instrument.call.before" property.
+   */
   public void setInstrumentbeforecall(final boolean flag) {
     setProperty(Configuration.INSTRUMENT_BEFORE_CALL_PROPERTY, flag);
   }
   
+  /**
+   * Set the "com.surelogic._flashlight.rewriter.instrument.call.after" property.
+   */
   public void setInstrumentaftercall(final boolean flag) {
     setProperty(Configuration.INSTRUMENT_AFTER_CALL_PROPERTY, flag);
   }
   
+  /**
+   * Set the "com.surelogic._flashlight.rewriter.instrument.wait.before" property.
+   */
   public void setInstrumentbeforewait(final boolean flag) {
     setProperty(Configuration.INSTRUMENT_BEFORE_WAIT_PROPERTY, flag);
   }
   
+  /**
+   * Set the "com.surelogic._flashlight.rewriter.instrument.wait.after" property.
+   */
   public void setInstrumentafterwait(final boolean flag) {
     setProperty(Configuration.INSTRUMENT_AFTER_WAIT_PROPERTY, flag);
   }
   
+  /**
+   * Set the "com.surelogic._flashlight.rewriter.instrument.lock.before" property.
+   */
   public void setInstrumentbeforejuclock(final boolean flag) {
     setProperty(Configuration.INSTRUMENT_BEFORE_JUC_LOCK_PROPERTY, flag);
   }
   
+  /**
+   * Set the "com.surelogic._flashlight.rewriter.instrument.lock.after" property.
+   */
   public void setInstrumentafterlock(final boolean flag) {
     setProperty(Configuration.INSTRUMENT_AFTER_LOCK_PROPERTY, flag);
   }
   
+  /**
+   * Set the "com.surelogic._flashlight.rewriter.instrument.trylock.after" property.
+   */
   public void setInstrumentaftertrylock(final boolean flag) {
     setProperty(Configuration.INSTRUMENT_AFTER_TRYLOCK_PROPERTY, flag);
   }
   
+  /**
+   * Set the "com.surelogic._flashlight.rewriter.instrument.unlock.after" property.
+   */
   public void setInstrumentafterunlock(final boolean flag) {
     setProperty(Configuration.INSTRUMENT_AFTER_UNLOCK_PROPERTY, flag);
   }
 
+  /**
+   * Set the "com.surelogic._flashlight.rewriter.useDebugStore" property.
+   */
   public void setUsedebugstore(final boolean flag) {
     setProperty(Configuration.USE_DEBUG_STORE_PROPERTY, flag);
   }
   
   
   
+  /**
+   * Accept a new &lt;dir...&gt; child element. We check that the source and
+   * destination directories are set.
+   * 
+   * @param dir
+   *          The directory to add
+   * @exception BuildException
+   *              Thrown if the source or destination directories are not set.
+   */
   public void addConfiguredDir(final Directory dir) {
     if (dir.getSrcdir() == null) {
       throw new BuildException("Source directory is not set");
@@ -166,6 +288,18 @@ public final class FLInstrument extends Task {
     dirsToInstrument.add(dir);
   }
   
+  /**
+   * Accept a new &lt;jar...&gt; child element. We check that the source file is
+   * set, and that exactly one of the destination file or destination directory
+   * is set.
+   * 
+   * @param jar
+   *          The jar to add
+   * @exception BuildException
+   *              Thrown if the source file is not set, no destination is set,
+   *              or if both a destination file and destination directory are
+   *              set.
+   */
   public void addConfiguredJar(final Jar jar) {
     if (jar.getSrcfile() == null) {
       throw new BuildException("Source jar file is not set");
@@ -187,18 +321,21 @@ public final class FLInstrument extends Task {
     // does nothing for now
   }
   
+  /**
+   * Work our magic.
+   */
   @Override
   public void execute() throws BuildException {
     checkParameters();
     
     final Configuration config = new Configuration(properties);
-    final RewriteEngine engine =
-      new RewriteEngine(config, new AntLogMessenger(Project.MSG_VERBOSE));
+    final AntLogMessenger messenger = new AntLogMessenger(Project.MSG_VERBOSE);
+    final RewriteEngine engine = new RewriteEngine(config, messenger);
     
     for (final Directory dir : dirsToInstrument) {
       final String src = dir.getSrcdir();
       final String dest = dir.getDestdir();
-      log("Instrumenting class directory " + src + ": writing instrumented classes to directory" + dest, Project.MSG_INFO);
+      log("Instrumenting class directory " + src + ": writing instrumented classes to directory " + dest, Project.MSG_INFO);
       try {
         engine.rewriteDirectory(new File(src), new File(dest));
       } catch (final IOException e) {
@@ -230,10 +367,18 @@ public final class FLInstrument extends Task {
   }
   
   
-  
+
+  /**
+   * Messenger for the Rewrite Engine that directs engine messages to the
+   * ANT log at the specificed logging level.
+   */
   private final class AntLogMessenger implements EngineMessenger {
     private final int logLevel;
     
+    /**
+     * Creates a new messenger that sends the messages to the ANT log.
+     * @param level The ANT log level to use.
+     */
     public AntLogMessenger(final int level) {
       logLevel = level;
     }

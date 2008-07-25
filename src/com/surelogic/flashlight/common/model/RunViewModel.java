@@ -231,11 +231,6 @@ public final class RunViewModel {
 			}
 
 			@Override
-			Justification getColumnJustification() {
-				return Justification.CENTER;
-			}
-
-			@Override
 			String getText(RunDescription rowData) {
 				return rowData.getUserName();
 			}
@@ -245,11 +240,6 @@ public final class RunViewModel {
 			@Override
 			String getColumnTitle() {
 				return "Java";
-			}
-
-			@Override
-			Justification getColumnJustification() {
-				return Justification.CENTER;
 			}
 
 			@Override
@@ -265,11 +255,6 @@ public final class RunViewModel {
 			}
 
 			@Override
-			Justification getColumnJustification() {
-				return Justification.CENTER;
-			}
-
-			@Override
 			String getText(RunDescription rowData) {
 				return rowData.getJavaVendor();
 			}
@@ -279,11 +264,6 @@ public final class RunViewModel {
 			@Override
 			String getColumnTitle() {
 				return "OS";
-			}
-
-			@Override
-			Justification getColumnJustification() {
-				return Justification.CENTER;
 			}
 
 			@Override

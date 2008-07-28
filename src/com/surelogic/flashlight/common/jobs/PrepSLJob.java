@@ -22,6 +22,7 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jdbc.QB;
+import com.surelogic.common.jobs.NullSLProgressMonitor;
 import com.surelogic.common.jobs.SLJob;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
@@ -94,6 +95,9 @@ public final class PrepSLJob implements SLJob {
 	}
 
 	public SLStatus run(SLProgressMonitor monitor) {
+		if (monitor == null)
+			monitor = new NullSLProgressMonitor();
+
 		final RawFileHandles handles = RawFileUtility
 				.getRawFileHandlesFor(f_description);
 		final File dataFile = handles.getDataFile();

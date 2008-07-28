@@ -3,6 +3,7 @@ package com.surelogic.flashlight.common.jobs;
 import java.io.File;
 
 import com.surelogic.common.i18n.I18N;
+import com.surelogic.common.jobs.NullSLProgressMonitor;
 import com.surelogic.common.jobs.SLJob;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
@@ -22,6 +23,9 @@ public class DeleteRawFilesSLJob implements SLJob {
 	}
 
 	public SLStatus run(SLProgressMonitor monitor) {
+		if (monitor == null)
+			monitor = new NullSLProgressMonitor();
+
 		final String taskName = "Removing raw data " + f_description.getName();
 		monitor.beginTask(taskName, 3);
 		final RawFileHandles handles = RawFileUtility

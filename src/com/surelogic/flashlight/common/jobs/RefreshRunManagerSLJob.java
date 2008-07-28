@@ -1,5 +1,6 @@
 package com.surelogic.flashlight.common.jobs;
 
+import com.surelogic.common.jobs.NullSLProgressMonitor;
 import com.surelogic.common.jobs.SLJob;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
@@ -8,8 +9,8 @@ import com.surelogic.flashlight.common.model.RunManager;
 public final class RefreshRunManagerSLJob implements SLJob {
 
 	public SLStatus run(SLProgressMonitor monitor) {
-		if (monitor.isCanceled())
-			return SLStatus.CANCEL_STATUS;
+		if (monitor == null)
+			monitor = new NullSLProgressMonitor();
 
 		try {
 			RunManager.getInstance().refresh();

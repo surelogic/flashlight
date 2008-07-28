@@ -73,6 +73,7 @@
 			<include name="**/com/surelogic/_flashlight/servlet/*" />
 			<manifest>
 			  <attribute name="Manifest-Version" value="1.0"/>
+				<attribute name="Class-Path" value="flashlight-runtime.jar"/>
 			</manifest>
 	  </jar>
 	</target>

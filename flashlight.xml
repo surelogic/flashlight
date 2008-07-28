@@ -1,4 +1,4 @@
-<project name="flashlight-instrumentation-5.0" default="build-asm-jars">
+<project name="flashlight-instrumentation-5.0" default="build-jars">
 
 	<property environment="env" />
 
@@ -14,20 +14,20 @@
 
 	<property name="junit.jar" value="${lib}/junit-4.3.1.jar" />
 
-	<property name="flashlight-asm-all.jar" value="${basedir}/flashlight-asm-all.jar" />
-	<property name="flashlight-asm-all.jar.manifest" value="${lib}/ASM-ALL-MANIFEST.MF" />
+	<property name="flashlight-all.jar" value="${basedir}/flashlight-all.jar" />
+	<property name="flashlight-all.jar.manifest" value="${lib}/ALL-MANIFEST.MF" />
 
-	<property name="flashlight-asm-runtime.jar" value="${basedir}/flashlight-asm-runtime.jar" />
-	<property name="flashlight-asm-runtime.jar.manifest" value="${lib}/ASM-RUNTIME-MANIFEST.MF" />
+	<property name="flashlight-runtime.jar" value="${basedir}/flashlight-runtime.jar" />
+	<property name="flashlight-runtime.jar.manifest" value="${lib}/RUNTIME-MANIFEST.MF" />
 
-	<property name="flashlight-asm-servlet.jar" value="${basedir}/flashlight-asm-servlet.jar" />
-	<property name="flashlight-asm-servlet.jar.manifest" value="${lib}/ASM-SERVLET-MANIFEST.MF" />
+	<property name="flashlight-servlet.jar" value="${basedir}/flashlight-servlet.jar" />
+	<property name="flashlight-servlet.jar.manifest" value="${lib}/SERVLET-MANIFEST.MF" />
 
-	<property name="flashlight-asm-instrument.jar" value="${basedir}/flashlight-asm-instrument.jar" />
-	<property name="flashlight-asm-instrument.jar.manifest" value="${lib}/ASM-INSTRUMENT-MANIFEST.MF" />
+	<property name="flashlight-instrument.jar" value="${basedir}/flashlight-instrument.jar" />
+	<property name="flashlight-instrument.jar.manifest" value="${lib}/INSTRUMENT-MANIFEST.MF" />
 
-	<property name="flashlight-asm-rewriter.jar" value="${basedir}/flashlight-asm-rewriter.jar" />
-	<property name="flashlight-asm-rewriter.jar.manifest" value="${lib}/ASM-REWRITER-MANIFEST.MF" />
+	<property name="flashlight-rewriter.jar" value="${basedir}/flashlight-rewriter.jar" />
+	<property name="flashlight-rewriter.jar.manifest" value="${lib}/REWRITER-MANIFEST.MF" />
 
 	<property name="flashlight-ant.jar" value="${basedir}/flashlight-ant.jar" />
 	<property name="flashlight-ant.jar.manifest" value="${lib}/ANT-MANIFEST.MF" />
@@ -51,9 +51,9 @@
 				todir="${classes}/com/surelogic/_flashlight/ant"/>
 	</target>
 
-	<target name="build-asm-all-jar" depends="compile-asm">
+	<target name="build-all-jar" depends="compile-asm">
 		<unzip src="${asm.jar}" dest="${classes}" />
-		<jar destfile="${flashlight-asm-all.jar}" basedir="${classes}">
+		<jar destfile="${flashlight-all.jar}" basedir="${classes}">
 			<manifest>
 			  <attribute name="Manifest-Version" value="1.0"/>
 			  <attribute name="Premain-Class" value="com.surelogic._flashlight.instrument.FlashlightAgent"/>
@@ -63,8 +63,8 @@
 	  </jar>
 	</target>
 
-	<target name="build-asm-runtime-jar" depends="compile-asm">
-		<jar destfile="${flashlight-asm-runtime.jar}" basedir="${classes}">
+	<target name="build-runtime-jar" depends="compile-asm">
+		<jar destfile="${flashlight-runtime.jar}" basedir="${classes}">
 			<include name="**/com/surelogic/_flashlight/*" />
 			<include name="**/com/surelogic/_flashlight/emory/*" />
 			<include name="**/com/surelogic/_flashlight/rewriter/runtime/*" />
@@ -75,8 +75,8 @@
 	  </jar>
 	</target>
 
-	<target name="build-asm-servlet-jar" depends="compile-asm">
-		<jar destfile="${flashlight-asm-servlet.jar}" basedir="${classes}">
+	<target name="build-servlet-jar" depends="compile-asm">
+		<jar destfile="${flashlight-servlet.jar}" basedir="${classes}">
 			<include name="**/com/surelogic/_flashlight/servlet/*" />
 			<manifest>
 			  <attribute name="Manifest-Version" value="1.0"/>
@@ -84,8 +84,8 @@
 	  </jar>
 	</target>
 
-	<target name="build-asm-rewriter-jar" depends="compile-asm">
-		<jar destfile="${flashlight-asm-rewriter.jar}" basedir="${classes}">
+	<target name="build-rewriter-jar" depends="compile-asm">
+		<jar destfile="${flashlight-rewriter.jar}" basedir="${classes}">
 			<include name="**/com/surelogic/_flashlight/rewriter/*" />
 			<include name="**/com/surelogic/_flashlight/rewriter/engine/*" />
 			<manifest>
@@ -96,14 +96,14 @@
 	  </jar>
 	</target>
 
-	<target name="build-asm-instrument-jar" depends="compile-asm">
-		<jar destfile="${flashlight-asm-instrument.jar}" basedir="${classes}">
+	<target name="build-instrument-jar" depends="compile-asm">
+		<jar destfile="${flashlight-instrument.jar}" basedir="${classes}">
 			<include name="**/com/surelogic/_flashlight/instrument/*" />
 			<manifest>
 			  <attribute name="Manifest-Version" value="1.0"/>
 			  <attribute name="Premain-Class" value="com.surelogic._flashlight.instrument.FlashlightAgent"/>
 			  <attribute name="Can-Redefine-Classes" value="false"/>
-				<attribute name="Class-Path" value="flashlight-asm-rewriter.jar flashlight-asm-runtime.jar"/>
+				<attribute name="Class-Path" value="flashlight-rewriter.jar flashlight-runtime.jar"/>
 			</manifest>
 	  </jar>
 	</target>
@@ -113,21 +113,21 @@
 			<include name="**/com/surelogic/_flashlight/ant/*" />
 			<manifest>
 			  <attribute name="Manifest-Version" value="1.0"/>
-				<attribute name="Class-Path" value="flashlight-asm-rewriter.jar"/>
+				<attribute name="Class-Path" value="flashlight-rewriter.jar"/>
 			</manifest>
 	  </jar>
 	</target>
 
-	<target name="build-asm-jars" depends="build-asm-all-jar, build-asm-runtime-jar, build-asm-servlet-jar, build-asm-instrument-jar, build-asm-rewriter-jar, build-ant-jar" />
+	<target name="build-jars" depends="build-all-jar, build-runtime-jar, build-servlet-jar, build-instrument-jar, build-rewriter-jar, build-ant-jar" />
 	
-	<target name="compile-test-code" depends="build-asm-all-jar">
+	<target name="compile-test-code" depends="build-all-jar">
 		<delete dir="${classes}" />
 		<mkdir dir="${classes}" />
 		<javac srcdir="${test}" destdir="${classes}" source="1.5" target="1.5">
 			<classpath>
 				<pathelement path="${java.class.path}" />
 				<pathelement location="${junit.jar}" />
-				<pathelement location="${flashlight-asm-all.jar}" />
+				<pathelement location="${flashlight-all.jar}" />
 			</classpath>
 		</javac>
 	</target>
@@ -137,7 +137,7 @@
 		<pathelement location="${classes}" />
 		<pathelement path="${java.class.path}" />
 		<pathelement location="${junit.jar}" />
-		<pathelement location="${flashlight-asm-all.jar}" />
+		<pathelement location="${flashlight-all.jar}" />
 	</path>
 
 	<target name="run-store-tests" depends="compile-test-code">

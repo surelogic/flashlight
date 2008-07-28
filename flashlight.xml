@@ -45,6 +45,10 @@
 				<pathelement location="${servlet.jar}" />
 			</classpath>
 		</javac>
+		<!-- Make sure the antlib.xml file is in the output directory so it is
+		     placed in the final flashlight-ant.jar file. -->
+		<copy file="${src}/com/surelogic/_flashlight/ant/antlib.xml"
+				todir="${classes}/com/surelogic/_flashlight/ant"/>
 	</target>
 
 	<target name="build-asm-all-jar" depends="compile-asm">
@@ -61,10 +65,10 @@
 
 	<target name="build-asm-runtime-jar" depends="compile-asm">
 		<jar destfile="${flashlight-asm-runtime.jar}" basedir="${classes}">
-			<include name="**/com/surelogic/_flashlight/*.class" />
-			<include name="**/com/surelogic/_flashlight/emory/*.class" />
-			<include name="**/com/surelogic/_flashlight/rewriter/runtime/*.class" />
-			<include name="**/com/surelogic/_flashlight/rewriter/test/*.class" />
+			<include name="**/com/surelogic/_flashlight/*" />
+			<include name="**/com/surelogic/_flashlight/emory/*" />
+			<include name="**/com/surelogic/_flashlight/rewriter/runtime/*" />
+			<include name="**/com/surelogic/_flashlight/rewriter/test/*" />
 			<manifest>
 			  <attribute name="Manifest-Version" value="1.0"/>
 			</manifest>
@@ -73,7 +77,7 @@
 
 	<target name="build-asm-servlet-jar" depends="compile-asm">
 		<jar destfile="${flashlight-asm-servlet.jar}" basedir="${classes}">
-			<include name="**/com/surelogic/_flashlight/servlet/*.class" />
+			<include name="**/com/surelogic/_flashlight/servlet/*" />
 			<manifest>
 			  <attribute name="Manifest-Version" value="1.0"/>
 			</manifest>
@@ -82,8 +86,8 @@
 
 	<target name="build-asm-rewriter-jar" depends="compile-asm">
 		<jar destfile="${flashlight-asm-rewriter.jar}" basedir="${classes}">
-			<include name="**/com/surelogic/_flashlight/rewriter/*.class" />
-			<include name="**/com/surelogic/_flashlight/rewriter/engine/*.class" />
+			<include name="**/com/surelogic/_flashlight/rewriter/*" />
+			<include name="**/com/surelogic/_flashlight/rewriter/engine/*" />
 			<manifest>
 			  <attribute name="Manifest-Version" value="1.0"/>
   		  <attribute name="Main-Class" value="com.surelogic._flashlight.rewriter.engine.RewriteEngine"/>
@@ -94,7 +98,7 @@
 
 	<target name="build-asm-instrument-jar" depends="compile-asm">
 		<jar destfile="${flashlight-asm-instrument.jar}" basedir="${classes}">
-			<include name="**/com/surelogic/_flashlight/instrument/*.class" />
+			<include name="**/com/surelogic/_flashlight/instrument/*" />
 			<manifest>
 			  <attribute name="Manifest-Version" value="1.0"/>
 			  <attribute name="Premain-Class" value="com.surelogic._flashlight.instrument.FlashlightAgent"/>
@@ -106,7 +110,7 @@
 
 	<target name="build-ant-jar" depends="compile-asm">
 		<jar destfile="${flashlight-ant.jar}" basedir="${classes}">
-			<include name="**/com/surelogic/_flashlight/ant/*.class" />
+			<include name="**/com/surelogic/_flashlight/ant/*" />
 			<manifest>
 			  <attribute name="Manifest-Version" value="1.0"/>
 				<attribute name="Class-Path" value="flashlight-asm-rewriter.jar"/>

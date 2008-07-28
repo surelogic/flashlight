@@ -31,7 +31,7 @@ public final class FlashlightLaunchConfigurationDelegate extends
 		b.append(" -javaagent:\"");
 		IPath bundleBase = Activator.getDefault().getBundleLocation();
 		if (bundleBase != null) {
-			IPath jarLocation = bundleBase.append("lib/flashlight-asm-all.jar");
+			IPath jarLocation = bundleBase.append("lib/flashlight-all.jar");
 			b.append(jarLocation.toOSString());
 		} else {
 			throw new CoreException(SLEclipseStatusUtility.createErrorStatus(0,

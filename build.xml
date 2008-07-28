@@ -1,0 +1,51 @@
+<project name="flashlight-ant" default="build-jars">
+
+	<property environment="env" />
+
+	<property name="src" value="${basedir}/src" />
+	<property name="lib" value="${basedir}/lib" />
+	<property name="classes" value="${basedir}/bin" />
+	
+	<property name="rest-of-flashlight" value="../flashlight-instrumentation-5.0/bin"/>
+
+	<property name="ant.jar" value="${lib}/ant.jar" />
+
+	<property name="antlib.xml" value="com/surelogic/_flashlight/ant/antlib.xml"/>
+	
+	<property name="flashlight-ant.jar" value="${basedir}/flashlight-ant.jar" />
+	<property name="flashlight-ant.jar.manifest" value="${lib}/ANT-MANIFEST.MF" />
+
+	
+	<target name="clean">
+		<delete dir="${classes}"/>
+		<delete file="${flashlight-ant.jar}"/>
+	</target>
+
+	<target name="compile">
+		<delete dir="${classes}" />
+		<mkdir dir="${classes}" />
+		<javac destdir="${classes}" debug="true" source="1.5" target="1.5">
+			<src path="${src}" />
+			<classpath>
+				<pathelement location="${ant.jar}" />
+				<pathelement location="${rest-of-flashlight}"/>
+			</classpath>
+		</javac>
+		<!-- Make sure the antlib.xml file is in the output directory so it is
+		     placed in the final flashlight-ant.jar file. -->
+		<copy file="${src}/${antlib.xml}"
+				tofile="${classes}/${antlib.xml}"/>
+	</target>
+
+	<target name="build-ant-jar" depends="compile">
+		<jar destfile="${flashlight-ant.jar}" basedir="${classes}">
+			<include name="**/com/surelogic/_flashlight/ant/*" />
+			<manifest>
+			  <attribute name="Manifest-Version" value="1.0"/>
+				<attribute name="Class-Path" value="flashlight-rewriter.jar"/>
+			</manifest>
+	  </jar>
+	</target>
+
+	<target name="build-jars" depends="build-ant-jar" />
+</project>

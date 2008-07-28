@@ -1,6 +1,0 @@
-<?xml version="1.0"?>
-<antlib>
-	<taskdef
-			name="instrument" 
-			classname="com.surelogic._flashlight.ant.FLInstrument"/>
-</antlib>

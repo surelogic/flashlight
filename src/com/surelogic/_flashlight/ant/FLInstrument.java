@@ -68,25 +68,27 @@ public final class FLInstrument extends Task {
    * of the JAR file are copied to a new JAR file with any class files being
    * instrumented.  In the second case the contents of the JAR file are 
    * expanded to the named directory and any class files are instrumented.
-   * 
-   * <p>When a destination JAR file is used, the manifest file of the output JAR
-   * file is updated to include <code>flashlight-ant-runtime.jar</code> on the
-   * class path.
    */
   public static final class Jar {
     private String srcfile = null;
     private String destfile = null;
     private String destdir = null;
+    private String runtime = RewriteEngine.DEFAULT_FLASHLIGHT_RUNTIME_JAR;
+    private boolean update = true;
     
     public Jar() { super(); }
         
     public void setSrcfile(final String src) { this.srcfile = src; }
     public void setDestfile(final String dest) { this.destfile = dest; }
     public void setDestdir(final String dest) { this.destdir = dest; }
+    public void setRuntime(final String run) { this.runtime = run; }
+    public void setUpdatemanifest(final boolean flag) { this.update = flag; }
     
     String getSrcfile() { return srcfile; }
     String getDestfile() { return destfile; }
     String getDestdir() { return destdir; }
+    String getRuntime() { return runtime; }
+    boolean getUpdatemanifest() { return update; }
   }
 
   
@@ -348,15 +350,23 @@ public final class FLInstrument extends Task {
     for (final Jar jar : jarsToInstrument) {
       final String src = jar.getSrcfile();
       final String destfile = jar.getDestfile();
-      final String destdir = jar.getDestdir();      
+      final String destdir = jar.getDestdir();
+      
+      final String runtimeJar;
+      if (jar.getUpdatemanifest()) {
+        runtimeJar = jar.getRuntime();
+      } else {
+        runtimeJar = null;
+      }
+      
       try {
         /* One of dstfile and dstdir is non-null, but not both */
         if (destfile != null) {
           log("Instrumenting classes in jar " + src + ": writing instrumented classes to jar " + destfile, Project.MSG_INFO);
-          engine.rewriteJarToJar(new File(src), new File(destfile));
+          engine.rewriteJarToJar(new File(src), new File(destfile), runtimeJar);
         } else {
           log("Instrumenting classes in jar " + src + ": writing instrumented classes to directory " + destdir, Project.MSG_INFO);
-          engine.rewriteJarToDirectory(new File(src), new File(destdir));
+          engine.rewriteJarToDirectory(new File(src), new File(destdir), runtimeJar);
         }
       } catch (final IOException e) {
         final String msg = "Error instrumenting class files in jar " + src;

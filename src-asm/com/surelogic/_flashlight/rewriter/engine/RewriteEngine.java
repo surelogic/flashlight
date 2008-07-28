@@ -33,7 +33,7 @@ import com.surelogic._flashlight.rewriter.FlashlightClassRewriter;
  * </ul>
  */
 public final class RewriteEngine {
-  private static final String FLASHLIGHT_RUNTIME_JAR = "flashlight-asm-runtime.jar";
+  public static final String DEFAULT_FLASHLIGHT_RUNTIME_JAR = "flashlight-runtime.jar";
   private static final String ZIP_FILE_NAME_SEPERATOR = "/";
   private static final char SPACE = ' ';
   private static final int BUFSIZE = 10240;
@@ -122,21 +122,28 @@ public final class RewriteEngine {
 
   /**
    * Process the files in the given JAR file {@code inJarFile}, writing to the
-   * new JAR file {@code outJarFile}. Class files are instrumented when they are
-   * copied. Other files are copied verbatim. The manifest file of
-   * {@code outJarFile} is the same as the input manifest file except that
-   * <tt>flashlight-asm-runtime.jar</tt> is added to the {@code Class-Path}
-   * attribute.
+   * new JAR file {@code outJarFile}. Class files are instrumented when they
+   * are copied. Other files are copied verbatim. If {@code runtimeJarName} is
+   * not {@code null}, the manifest file of {@code outJarFile} is the same as
+   * the input manifest file except that {@code runtimeJarName} is added to the
+   * {@code Class-Path} attribute. If {@code runtimeJarName} is {@code null},
+   * the manifest file of {@code outJarFile} is identical to the that of
+   * {@code inJarFile}.
    * 
    * @throws IOException
    *           Thrown when there is a problem with any of the files.
    */
-  public void rewriteJarToJar(final File inJarFile, final File outJarFile) 
-      throws IOException {
+  public void rewriteJarToJar(final File inJarFile, final File outJarFile,
+      final String runtimeJarName) throws IOException {
     final JarFile jarFile = new JarFile(inJarFile);
     try {
       final Manifest inManifest = jarFile.getManifest();
-      final Manifest outManifest = updateManifest(inManifest);
+      final Manifest outManifest;
+      if (runtimeJarName != null) {
+        outManifest = updateManifest(inManifest, runtimeJarName);
+      } else {
+        outManifest = inManifest;
+      }
       
       final FileOutputStream fos = new FileOutputStream(outJarFile);
       final BufferedOutputStream bos = new BufferedOutputStream(fos);
@@ -190,20 +197,25 @@ public final class RewriteEngine {
   /**
    * Process the files in the given JAR file {@code inJarFile}, writing them to
    * the directory {@code outDir}. Class files are instrumented when they are
-   * copied. Other files are copied verbatim. The manifest file of
-   * {@code outJarFile} is also copied, but has
-   * <tt>flashlight-asm-runtime.jar</tt> added to the {@code Class-Path}
-   * attribute.
+   * copied. Other files are copied verbatim. If {@code runtimeJarName} is not
+   * {@code null}, the manifest file is copied but has {@code runtimeJarName}
+   * added to the {@code Class-Path} attribute. If {@code runtimeJarName} is
+   * {@code null}, the manifest file is copied verbatim.
    * 
    * @throws IOException
    *           Thrown when there is a problem with any of the files.
    */
-  public void rewriteJarToDirectory(final File inJarFile, final File outDir) 
-      throws IOException {
+  public void rewriteJarToDirectory(final File inJarFile, final File outDir,
+      final String runtimeJarName) throws IOException {
     final JarFile jarFile = new JarFile(inJarFile);
     try {
       final Manifest inManifest = jarFile.getManifest();
-      final Manifest outManifest = updateManifest(inManifest);
+      final Manifest outManifest;
+      if (runtimeJarName != null) {
+        outManifest = updateManifest(inManifest, runtimeJarName);
+      } else {
+        outManifest = inManifest;
+      }
       
       final File outManifestFile = composeFile(outDir, JarFile.MANIFEST_NAME);
       outManifestFile.getParentFile().mkdirs();
@@ -341,22 +353,31 @@ public final class RewriteEngine {
 
   /**
    * Given a JAR file manifest, update the <tt>Class-Path</tt> attribute to
-   * ensure that it contains a reference to the Flashlight runtime JAR
-   * <tt>flashlight-asm-runtime.jar</tt>.
+   * ensure that it contains a reference to the Flashlight runtime JAR.
+   * 
+   * @param manifest
+   *          The original JAR manifest. This object is not modified by this
+   *          method.
+   * @param runtimeJarName
+   *          The name of the flashlight runtime JAR.
+   * @return A new manifest object identical to {@code manifest} except that the
+   *         <tt>Class-Path</tt> attribute is guaranteed to contain a
+   *         reference to {@code runtimeJarName}.
    */
-  private static Manifest updateManifest(final Manifest manifest) {
+  private static Manifest updateManifest(
+      final Manifest manifest, final String runtimeJarName) {
     final Manifest newManifest = new Manifest(manifest);
     final Attributes mainAttrs = newManifest.getMainAttributes();
     final String classpath = mainAttrs.getValue(Attributes.Name.CLASS_PATH);
     final StringBuilder newClasspath = new StringBuilder();
     
     if (classpath == null) {
-      newClasspath.append(FLASHLIGHT_RUNTIME_JAR);
+      newClasspath.append(runtimeJarName);
     } else {
       newClasspath.append(classpath);
-      if (classpath.indexOf(FLASHLIGHT_RUNTIME_JAR) == -1) {
+      if (classpath.indexOf(runtimeJarName) == -1) {
         newClasspath.append(SPACE);
-        newClasspath.append(FLASHLIGHT_RUNTIME_JAR);
+        newClasspath.append(runtimeJarName);
       }
     }
     mainAttrs.put(Attributes.Name.CLASS_PATH, newClasspath.toString());

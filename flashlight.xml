@@ -29,12 +29,9 @@
 	<property name="flashlight-rewriter.jar" value="${basedir}/flashlight-rewriter.jar" />
 	<property name="flashlight-rewriter.jar.manifest" value="${lib}/REWRITER-MANIFEST.MF" />
 
-	<property name="flashlight-ant.jar" value="${basedir}/flashlight-ant.jar" />
-	<property name="flashlight-ant.jar.manifest" value="${lib}/ANT-MANIFEST.MF" />
-
 	
 
-	<target name="compile-asm">
+	<target name="compile">
 		<delete dir="${classes}" />
 		<mkdir dir="${classes}" />
 		<javac destdir="${classes}" debug="true" source="1.5" target="1.5">
@@ -45,13 +42,9 @@
 				<pathelement location="${servlet.jar}" />
 			</classpath>
 		</javac>
-		<!-- Make sure the antlib.xml file is in the output directory so it is
-		     placed in the final flashlight-ant.jar file. -->
-		<copy file="${src}/com/surelogic/_flashlight/ant/antlib.xml"
-				todir="${classes}/com/surelogic/_flashlight/ant"/>
 	</target>
 
-	<target name="build-all-jar" depends="compile-asm">
+	<target name="build-all-jar" depends="compile">
 		<unzip src="${asm.jar}" dest="${classes}" />
 		<jar destfile="${flashlight-all.jar}" basedir="${classes}">
 			<manifest>
@@ -63,7 +56,7 @@
 	  </jar>
 	</target>
 
-	<target name="build-runtime-jar" depends="compile-asm">
+	<target name="build-runtime-jar" depends="compile">
 		<jar destfile="${flashlight-runtime.jar}" basedir="${classes}">
 			<include name="**/com/surelogic/_flashlight/*" />
 			<include name="**/com/surelogic/_flashlight/emory/*" />
@@ -75,7 +68,7 @@
 	  </jar>
 	</target>
 
-	<target name="build-servlet-jar" depends="compile-asm">
+	<target name="build-servlet-jar" depends="compile">
 		<jar destfile="${flashlight-servlet.jar}" basedir="${classes}">
 			<include name="**/com/surelogic/_flashlight/servlet/*" />
 			<manifest>
@@ -84,7 +77,7 @@
 	  </jar>
 	</target>
 
-	<target name="build-rewriter-jar" depends="compile-asm">
+	<target name="build-rewriter-jar" depends="compile">
 		<jar destfile="${flashlight-rewriter.jar}" basedir="${classes}">
 			<include name="**/com/surelogic/_flashlight/rewriter/*" />
 			<include name="**/com/surelogic/_flashlight/rewriter/engine/*" />
@@ -96,7 +89,7 @@
 	  </jar>
 	</target>
 
-	<target name="build-instrument-jar" depends="compile-asm">
+	<target name="build-instrument-jar" depends="compile">
 		<jar destfile="${flashlight-instrument.jar}" basedir="${classes}">
 			<include name="**/com/surelogic/_flashlight/instrument/*" />
 			<manifest>
@@ -108,17 +101,7 @@
 	  </jar>
 	</target>
 
-	<target name="build-ant-jar" depends="compile-asm">
-		<jar destfile="${flashlight-ant.jar}" basedir="${classes}">
-			<include name="**/com/surelogic/_flashlight/ant/*" />
-			<manifest>
-			  <attribute name="Manifest-Version" value="1.0"/>
-				<attribute name="Class-Path" value="flashlight-rewriter.jar"/>
-			</manifest>
-	  </jar>
-	</target>
-
-	<target name="build-jars" depends="build-all-jar, build-runtime-jar, build-servlet-jar, build-instrument-jar, build-rewriter-jar, build-ant-jar" />
+	<target name="build-jars" depends="build-all-jar, build-runtime-jar, build-servlet-jar, build-instrument-jar, build-rewriter-jar" />
 	
 	<target name="compile-test-code" depends="build-all-jar">
 		<delete dir="${classes}" />

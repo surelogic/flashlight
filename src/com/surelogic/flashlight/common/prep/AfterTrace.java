@@ -15,11 +15,7 @@ public final class AfterTrace extends Trace {
 
 	@Override
 	protected void handleTrace(int runId, long inThread, long inClass,
-			long time, String file, int lineNumber) {
+			long time, String file, int lineNumber) throws SQLException {
 		before.popTrace(runId, inThread, inClass, time, lineNumber);
-	}
-
-	public void close() throws SQLException {
-		// Nothing to do
 	}
 }

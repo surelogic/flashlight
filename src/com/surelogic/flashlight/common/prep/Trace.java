@@ -1,11 +1,13 @@
 package com.surelogic.flashlight.common.prep;
 
+import java.sql.SQLException;
+
 import org.xml.sax.Attributes;
 
 public abstract class Trace extends Event {
 	protected static final String FILE = "file";
 
-	public void parse(int runId, Attributes attributes) {
+	public void parse(int runId, Attributes attributes) throws SQLException {
 		parseAttrs(attributes);
 		final long time = Long.parseLong(getAttr(NANO_TIME));
 		final long inThread = Long.parseLong(getAttr(THREAD));
@@ -16,5 +18,5 @@ public abstract class Trace extends Event {
 	}
 
 	protected abstract void handleTrace(int runId, long inThread, long inClass,
-			long time, String file, int lineNumber);
+			long time, String file, int lineNumber) throws SQLException;
 }

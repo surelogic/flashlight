@@ -23,7 +23,7 @@ public abstract class Event extends TrackUnreferenced {
 
 	@Override
 	public void setup(Connection c, Timestamp start, long startNS,
-			final DataPreScan scanResults, Set<Long> unreferencedObjects,
+			final ScanRawFilePreScan scanResults, Set<Long> unreferencedObjects,
 			Set<Long> unreferencedFields) throws SQLException {
 		super.setup(c, start, startNS, scanResults, unreferencedObjects,
 				unreferencedFields);

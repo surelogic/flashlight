@@ -22,16 +22,18 @@ import com.surelogic.common.jdbc.Row;
 /**
  * The lock set analysis looks for bad field publishes during construction of an
  * object and for field access that hold an inconsistent set of locks.
- * 
- * @author nathan
- * 
  */
-public class LockSetAnalysis extends NullDBQuery {
+public class LockSetAnalysis extends NullDBQuery implements IPostPrep {
 
-	private final long runId;
+	private long runId;
 
-	public LockSetAnalysis(long runId) {
+	public String getDescription() {
+		return "Performing lock set analysis";
+	}
+
+	public void doPostPrep(Connection c, int runId) {
 		this.runId = runId;
+		perform(new ConnectionQuery(c));
 	}
 
 	public void doPerform(final Query q) {
@@ -446,11 +448,5 @@ public class LockSetAnalysis extends NullDBQuery {
 		public int compareTo(Lock o) {
 			return end.compareTo(o.end);
 		}
-
 	}
-
-	public static void analyze(Connection conn, long runId) {
-		new LockSetAnalysis(runId).perform(new ConnectionQuery(conn));
-	}
-
 }

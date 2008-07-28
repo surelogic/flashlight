@@ -22,7 +22,8 @@ public final class FieldDefinition extends TrackUnreferenced {
 		return "field-definition";
 	}
 
-	public void parse(final int runId, final Attributes attributes) {
+	public void parse(final int runId, final Attributes attributes)
+			throws SQLException {
 		long id = -1;
 		long type = -1;
 		String field = null;
@@ -59,28 +60,25 @@ public final class FieldDefinition extends TrackUnreferenced {
 	}
 
 	private void insert(int runId, long id, long type, String field,
-			boolean isStatic, boolean isFinal, boolean isVolatile) {
-		try {
-			f_ps.setInt(1, runId);
-			f_ps.setLong(2, id);
-			if (field != null) {
-				f_ps.setString(3, field);
-			} else {
-				f_ps.setNull(3, Types.VARCHAR);
-			}
-			f_ps.setLong(4, type);
-			f_ps.setString(5, isStatic ? "Y" : "N");
-			f_ps.setString(6, isFinal ? "Y" : "N");
-			f_ps.setString(7, isVolatile ? "Y" : "N");
-			f_ps.executeUpdate();
-		} catch (SQLException e) {
-			SLLogger.getLogger().log(Level.SEVERE, "Insert failed: FIELD", e);
+			boolean isStatic, boolean isFinal, boolean isVolatile)
+			throws SQLException {
+		f_ps.setInt(1, runId);
+		f_ps.setLong(2, id);
+		if (field != null) {
+			f_ps.setString(3, field);
+		} else {
+			f_ps.setNull(3, Types.VARCHAR);
 		}
+		f_ps.setLong(4, type);
+		f_ps.setString(5, isStatic ? "Y" : "N");
+		f_ps.setString(6, isFinal ? "Y" : "N");
+		f_ps.setString(7, isVolatile ? "Y" : "N");
+		f_ps.executeUpdate();
 	}
 
 	@Override
 	public void setup(final Connection c, final Timestamp start,
-			final long startNS, final DataPreScan scanResults,
+			final long startNS, final ScanRawFilePreScan scanResults,
 			Set<Long> unreferencedObjects, Set<Long> unreferencedFields)
 			throws SQLException {
 		super.setup(c, start, startNS, scanResults, unreferencedObjects,
@@ -90,10 +88,12 @@ public final class FieldDefinition extends TrackUnreferenced {
 		}
 	}
 
-	public void close() throws SQLException {
+	@Override
+	public void flush(int runId, long endTime) throws SQLException {
 		if (f_ps != null) {
 			f_ps.close();
 			f_ps = null;
 		}
+		super.flush(runId, endTime);
 	}
 }

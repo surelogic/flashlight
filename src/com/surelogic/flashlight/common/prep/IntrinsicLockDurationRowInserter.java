@@ -135,7 +135,7 @@ public final class IntrinsicLockDurationRowInserter {
 	}
 
 	private void handleNonIdleFinalState(final int runId,
-			final Timestamp endTime) {
+			final Timestamp endTime) throws SQLException {
 		boolean createdEvent = false;
 		int blocking = 0, holding = 0, waiting = 0;
 		for (final Entry<Long, IntrinsicLockDurationState> e : f_threadToStatus
@@ -545,24 +545,4 @@ public final class IntrinsicLockDurationRowInserter {
 		}
 		// TODO Clean up lock graph?
 	}
-
-	/*
-	 * select distinct lockheld, lockacquired FROM ilocksheld
-	 * 
-	 * select distinct l1.lockheld, l2.lockheld, l2.lockacquired FROM ilocksheld
-	 * AS l1, ilocksheld AS l2 WHERE l1.inthread <> l2.inthread AND
-	 * l1.lockacquired = l2.lockheld AND l2.lockacquired = l1.lockheld
-	 * 
-	 * select distinct l1.lockheld, l2.lockheld, l3.lockheld, l3.lockacquired
-	 * FROM ilocksheld AS l1, ilocksheld AS l2, ilocksheld AS l3 WHERE
-	 * l1.inthread <> l2.inthread AND l2.inthread <> l3.inthread AND l1.inthread
-	 * <> l3.inthread AND l1.lockacquired = l2.lockheld AND l2.lockacquired =
-	 * l3.lockheld AND l3.lockacquired = l1.lockheld
-	 * 
-	 * select from ilockduration where state = 'BLOCKING' order by duration desc
-	 * 
-	 * select run, inthread, lock, sum(duration) as blocktime from ilockduration
-	 * where state = 'BLOCKING' group by run, inthread, lock order by blocktime
-	 * desc
-	 */
 }

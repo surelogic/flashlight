@@ -18,10 +18,10 @@ public class ReadWriteLock extends Event {
 	private static PreparedStatement f_ps;
 
 	private Timestamp startTime;
-	
+
 	@Override
 	public void setup(final Connection c, final Timestamp start,
-			final long startNS, final DataPreScan scanResults,
+			final long startNS, final ScanRawFilePreScan scanResults,
 			Set<Long> unreferencedObjects, Set<Long> unreferencedFields)
 			throws SQLException {
 		super.setup(c, start, startNS, scanResults, unreferencedObjects,
@@ -36,8 +36,7 @@ public class ReadWriteLock extends Event {
 		return "read-write-lock-definition";
 	}
 
-	public void parse(int runId, Attributes attributes) {
-
+	public void parse(int runId, Attributes attributes) throws SQLException {
 		long id = -1;
 		long readLock = -1;
 		long writeLock = -1;
@@ -62,30 +61,27 @@ public class ReadWriteLock extends Event {
 			return;
 		}
 		insert(runId, id, readLock, writeLock);
-    f_rowInserter.defineRWLock(runId, id, readLock, writeLock, startTime);
+		f_rowInserter.defineRWLock(runId, id, readLock, writeLock, startTime);
 		useObject(id);
 		useObject(readLock);
 		useObject(writeLock);
 	}
 
-	private void insert(int runId, long id, long readLock, long writeLock) {
-		try {
-			f_ps.setLong(1, runId);
-			f_ps.setLong(2, id);
-			f_ps.setLong(3, readLock);
-			f_ps.setLong(4, writeLock);
-			f_ps.execute();
-		} catch (final SQLException e) {
-			SLLogger.getLogger().log(Level.SEVERE,
-					"Insert of read-write-lock-definition failed", e);
+	private void insert(int runId, long id, long readLock, long writeLock)
+			throws SQLException {
+		f_ps.setLong(1, runId);
+		f_ps.setLong(2, id);
+		f_ps.setLong(3, readLock);
+		f_ps.setLong(4, writeLock);
+		f_ps.execute();
+	}
+
+	@Override
+	public void flush(int runId, long endTime) throws SQLException {
+		if (f_ps != null) {
+			f_ps.close();
+			f_ps = null;
 		}
+		super.flush(runId, endTime);
 	}
-
-	public void close() throws SQLException {
-	  if (f_ps != null) {
-		  f_ps.close();
-		  f_ps = null;
-	  }
-	}
-
 }

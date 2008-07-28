@@ -3,19 +3,22 @@ package com.surelogic.flashlight.common.files;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.util.Date;
 import java.util.logging.Level;
 
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.logging.SLLogger;
 
 /**
- * Holds file handles to the data file and the log file of a Flashlight run.
+ * Holds file handles to the data file and the log file of a Flashlight run as
+ * well as time information.
  * 
  * @see RawFileUtility
  */
 public final class RawFileHandles {
 
-	public RawFileHandles(final File data, final File log) {
+	public RawFileHandles(final File data, final File log,
+			final Date wallClockTime, final long nanoTime) {
 		if (data == null)
 			throw new IllegalArgumentException(I18N.err(44, "data"));
 		f_data = data;
@@ -23,6 +26,10 @@ public final class RawFileHandles {
 		 * The log file can be null.
 		 */
 		f_log = log;
+		if (wallClockTime == null)
+			throw new IllegalArgumentException(I18N.err(44, "wallClockTime"));
+		f_wallClockTime = wallClockTime;
+		f_nanoTime = nanoTime;
 	}
 
 	private final File f_data;
@@ -87,5 +94,31 @@ public final class RawFileHandles {
 					I18N.err(40, f_log.getAbsolutePath()), e);
 		}
 		return true;
+	}
+
+	private final Date f_wallClockTime;
+
+	/**
+	 * Gets the <tt>wall-clock-time</tt> value from the <tt>time</tt> event at
+	 * the start of the raw data file.
+	 * 
+	 * @return the <tt>wall-clock-time</tt> value from the <tt>time</tt> event
+	 *         at the start of the raw data file.
+	 */
+	public Date getWallClockTime() {
+		return f_wallClockTime;
+	}
+
+	private final long f_nanoTime;
+
+	/**
+	 * Gets the <tt>nano-time</tt> value from the <tt>time</tt> event at the
+	 * start of the raw data file.
+	 * 
+	 * @return the <tt>nano-time</tt> value from the <tt>time</tt> event at the
+	 *         start of the raw data file.
+	 */
+	public long getNanoTime() {
+		return f_nanoTime;
 	}
 }

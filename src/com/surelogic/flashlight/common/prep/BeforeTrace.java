@@ -7,9 +7,6 @@ import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
-
-import com.surelogic.common.logging.SLLogger;
 
 public final class BeforeTrace extends Trace {
 
@@ -98,7 +95,7 @@ public final class BeforeTrace extends Trace {
 
 	@Override
 	public final void setup(final Connection c, final Timestamp start,
-			final long startNS, final DataPreScan scanResults,
+			final long startNS, final ScanRawFilePreScan scanResults,
 			Set<Long> unreferencedObjects, Set<Long> unreferencedFields)
 			throws SQLException {
 		super.setup(c, start, startNS, scanResults, unreferencedObjects,
@@ -119,39 +116,36 @@ public final class BeforeTrace extends Trace {
 	}
 
 	void popTrace(int runId, long inThread, long inClass, long time,
-			int lineNumber) {
+			int lineNumber) throws SQLException {
 		final TraceState state = getTraces(inThread).pop();
 		assert (state.clazz == inClass) && (state.line == lineNumber);
 		if (state.hasEvents) {
 			useObject(inClass);
 			// insert start and stop time
-			try {
-				int idx = 1;
-				f_ps.setInt(idx++, runId);
-				f_ps.setLong(idx++, state.id);
-				f_ps.setLong(idx++, inThread);
-				f_ps.setLong(idx++, state.clazz);
-				f_ps.setString(idx++, state.file);
-				f_ps.setInt(idx++, lineNumber);
-				f_ps.setString(idx++, state.location);
-				f_ps.setTimestamp(idx++, getTimestamp(state.time));
-				f_ps.setTimestamp(idx++, getTimestamp(time));
-				f_ps.executeUpdate();
-			} catch (final SQLException e) {
-				SLLogger.getLogger().log(Level.SEVERE, "Insert failed: TRACE",
-						e);
-			}
+			int idx = 1;
+			f_ps.setInt(idx++, runId);
+			f_ps.setLong(idx++, state.id);
+			f_ps.setLong(idx++, inThread);
+			f_ps.setLong(idx++, state.clazz);
+			f_ps.setString(idx++, state.file);
+			f_ps.setInt(idx++, lineNumber);
+			f_ps.setString(idx++, state.location);
+			f_ps.setTimestamp(idx++, getTimestamp(state.time));
+			f_ps.setTimestamp(idx++, getTimestamp(time));
+			f_ps.executeUpdate();
 			inserted++;
 		} else {
 			skipped++;
 		}
 	}
 
-	public void close() throws SQLException {
+	@Override
+	public void flush(int runId, long endTime) throws SQLException {
 		if (f_ps != null) {
 			f_ps.close();
 			f_ps = null;
 		}
+		super.flush(runId, endTime);
 	}
 
 	/**

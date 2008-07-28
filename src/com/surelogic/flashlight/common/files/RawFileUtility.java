@@ -107,7 +107,8 @@ public final class RawFileUtility {
 						.getMaxMemoryMb(), prefixInfo.getProcessors(), started);
 				f_runs.add(run);
 				final RawFileHandles handles = new RawFileHandles(dataFile,
-						logFile);
+						logFile, prefixInfo.getWallClockTime(), prefixInfo
+								.getNanoTime());
 				f_runToHandles.put(run, handles);
 			} else {
 				SLLogger.getLogger().log(Level.WARNING,

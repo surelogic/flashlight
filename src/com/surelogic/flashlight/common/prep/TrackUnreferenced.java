@@ -66,7 +66,7 @@ public abstract class TrackUnreferenced implements IPrep {
 	}
 
 	public void setup(Connection c, Timestamp start, long startNS,
-			DataPreScan scanResults, Set<Long> unreferencedObjects,
+			ScanRawFilePreScan scanResults, Set<Long> unreferencedObjects,
 			Set<Long> unreferencedFields) throws SQLException {
 		f_unreferencedObjects = unreferencedObjects;
 		f_unreferencedFields = unreferencedFields;

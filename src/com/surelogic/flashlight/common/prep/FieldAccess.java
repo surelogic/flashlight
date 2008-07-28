@@ -18,7 +18,7 @@ public abstract class FieldAccess extends Event {
 
 	private static PreparedStatement f_ps;
 
-	private static DataPreScan f_scanResults;
+	private static ScanRawFilePreScan f_scanResults;
 
 	private long skipped, inserted;
 
@@ -28,7 +28,7 @@ public abstract class FieldAccess extends Event {
 		this.before = before;
 	}
 
-	public void parse(int runId, Attributes attributes) {
+	public void parse(int runId, Attributes attributes) throws SQLException {
 		long nanoTime = -1;
 		long inThread = -1;
 		long inClass = -1;
@@ -87,39 +87,33 @@ public abstract class FieldAccess extends Event {
 	}
 
 	private void insert(int runId, long nanoTime, long inThread, long inClass,
-			int lineNumber, long field, long receiver, boolean underConstruction) {
-		try {
-			f_ps.setInt(1, runId);
-			f_ps.setTimestamp(2, getTimestamp(nanoTime));
-			f_ps.setLong(3, inThread);
-			f_ps.setLong(4, inClass);
-			f_ps.setInt(5, lineNumber);
-			f_ps.setLong(6, field);
-			f_ps.setString(7, getRW());
-			if (receiver == -1) {
-				f_ps.setNull(8, Types.BIGINT);
-			} else {
-				f_ps.setLong(8, receiver);
-			}
-			f_ps.setString(9, underConstruction ? "Y" : "N");
-			f_ps.executeUpdate();
-		} catch (final SQLException e) {
-			SLLogger.getLogger().log(Level.SEVERE, "Insert failed: ACCESS", e);
+			int lineNumber, long field, long receiver, boolean underConstruction)
+			throws SQLException {
+		f_ps.setInt(1, runId);
+		f_ps.setTimestamp(2, getTimestamp(nanoTime));
+		f_ps.setLong(3, inThread);
+		f_ps.setLong(4, inClass);
+		f_ps.setInt(5, lineNumber);
+		f_ps.setLong(6, field);
+		f_ps.setString(7, getRW());
+		if (receiver == -1) {
+			f_ps.setNull(8, Types.BIGINT);
+		} else {
+			f_ps.setLong(8, receiver);
 		}
-
+		f_ps.setString(9, underConstruction ? "Y" : "N");
+		f_ps.executeUpdate();
 	}
 
 	@Override
 	public final void setup(final Connection c, final Timestamp start,
-			final long startNS, final DataPreScan scanResults,
+			final long startNS, final ScanRawFilePreScan scanResults,
 			Set<Long> unreferencedObjects, Set<Long> unreferencedFields)
 			throws SQLException {
 		super.setup(c, start, startNS, scanResults, unreferencedObjects,
 				unreferencedFields);
-		if (f_ps == null) {
-			f_ps = c.prepareStatement(f_psQ);
-			f_scanResults = scanResults;
-		}
+		f_ps = c.prepareStatement(f_psQ);
+		f_scanResults = scanResults;
 	}
 
 	@Override
@@ -130,12 +124,12 @@ public abstract class FieldAccess extends Event {
 				+ (inserted * 100.0 / (skipped + inserted)));
 	}
 
-	public final void close() throws SQLException {
+	@Override
+	public void flush(int runId, long endTime) throws SQLException {
 		if (f_ps != null) {
 			f_ps.close();
-			f_ps = null;
-			f_scanResults = null;
 		}
+		super.flush(runId, endTime);
 	}
 
 	/**

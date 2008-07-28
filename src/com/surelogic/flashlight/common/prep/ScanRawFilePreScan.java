@@ -11,35 +11,53 @@ import org.xml.sax.helpers.DefaultHandler;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.logging.SLLogger;
 
-public final class DataPreScan extends DefaultHandler {
-  private long f_startTime = -1;
-  private long f_endTime = -1;
-	private int f_work = 0;
-	private final int f_tickSize;
+public final class ScanRawFilePreScan extends DefaultHandler {
+
+	private boolean f_firstTimeEventFound = false;
 
 	final SLProgressMonitor f_monitor;
 
-	public DataPreScan(final SLProgressMonitor monitor,
-			final long estimatedEventCount, final String dataFileName) {
+	public ScanRawFilePreScan(final SLProgressMonitor monitor) {
+		assert monitor != null;
 		f_monitor = monitor;
-		int tickSize = 1;
-		long work = estimatedEventCount;
-		while (work > 500) {
-			tickSize *= 10;
-			work /= 10;
-		}
-		monitor.beginTask("Scanning file " + dataFileName, (int) work);
-		f_tickSize = tickSize;
 	}
 
 	private long f_elementCount = 0;
 
+	/**
+	 * Gets the number of XML elements found in the raw file.
+	 * 
+	 * @return the number of XML elements found in the raw file.
+	 */
 	public long getElementCount() {
 		return f_elementCount;
 	}
 
+	private long f_endTime = -1;
+
+	/**
+	 * Gets the <tt>nano-time</tt> value from the final <tt>time</tt> event at
+	 * the end of the raw data file.
+	 * 
+	 * @return the <tt>nano-time</tt> value from the final <tt>time</tt> event
+	 *         at the end of the raw data file.
+	 */
+	public long getEndNanoTime() {
+		return f_endTime;
+	}
+
 	private Set<Long> f_singleThreadedStaticFields = new HashSet<Long>();
 
+	/**
+	 * Gets if the passed field is a single-threaded static field or not. A
+	 * field is considered single-threaded if it is only accessed from one
+	 * thread.
+	 * 
+	 * @param fieldId
+	 *            the static field to check.
+	 * @return {@code true} if the field is single-threaded, {@code false}
+	 *         otherwise.
+	 */
 	public boolean isSingleThreadedStaticField(final long fieldId) {
 		return f_singleThreadedStaticFields.contains(fieldId);
 	}
@@ -73,6 +91,18 @@ public final class DataPreScan extends DefaultHandler {
 
 	private Set<Pair> f_singleThreadedFields = new HashSet<Pair>();
 
+	/**
+	 * Gets if the passed field is a single-threaded instance field or not. A
+	 * field is considered single-threaded if it is only accessed from one
+	 * thread.
+	 * 
+	 * @param fieldId
+	 *            the instance field to check.
+	 * @param receiverId
+	 *            the receiver the instance field is within.
+	 * @return {@code true} if the field is single-threaded, {@code false}
+	 *         otherwise.
+	 */
 	public boolean isThreadedField(final long fieldId, final long receiverId) {
 		Pair p = new Pair(fieldId, receiverId);
 		return f_singleThreadedFields.contains(p);
@@ -81,21 +111,17 @@ public final class DataPreScan extends DefaultHandler {
 	@Override
 	public void startElement(String uri, String localName, String name,
 			Attributes attributes) throws SAXException {
+		f_elementCount++;
 		/*
 		 * Show progress to the user
 		 */
-		if (f_work >= f_tickSize) {
-			/*
-			 * Check for cancel.
-			 */
-			if (f_monitor.isCanceled())
-				throw new IllegalStateException("cancelled");
-			
-			f_monitor.worked(1);
-			f_work = 0;
-		} else
-			f_work++;
-		f_elementCount++;
+		f_monitor.worked(1);
+		/*
+		 * Check for a user cancel.
+		 */
+		if (f_monitor.isCanceled())
+			throw new SAXException("canceled");
+
 		if ("single-threaded-field".equals(name)) {
 			long field = -1;
 			long receiver = -1;
@@ -122,38 +148,27 @@ public final class DataPreScan extends DefaultHandler {
 				// instance field
 				f_singleThreadedFields.add(new Pair(field, receiver));
 			}
-		}
-		else if ("time".equals(name)) {
-		  if (attributes != null) {
-        for (int i = 0; i < attributes.getLength(); i++) {
-          final String aName = attributes.getQName(i);
-          if ("nano-time".equals(aName)) {
-            long time = Long.parseLong(attributes.getValue(i));
-            if (f_startTime == -1) {
-              f_startTime = time;
-            }
-            else if (f_endTime == -1) {
-              f_endTime = time;
-            }
-            else {
-              SLLogger.getLogger().log(Level.SEVERE, "Extra time element: "+time);
-            }
-          }
-        }
-		  }
+		} else if ("time".equals(name)) {
+			if (f_firstTimeEventFound) {
+				if (attributes != null) {
+					for (int i = 0; i < attributes.getLength(); i++) {
+						final String aName = attributes.getQName(i);
+						if ("nano-time".equals(aName)) {
+							long time = Long.parseLong(attributes.getValue(i));
+							f_endTime = time;
+						}
+					}
+				}
+			} else {
+				f_firstTimeEventFound = true;
+			}
 		}
 	}
 
-	public long getEndTime() {
-	  return f_endTime;
+	@Override
+	public void endDocument() throws SAXException {
+		if (f_endTime == -1) {
+			SLLogger.getLogger().log(Level.SEVERE, "Missing end time element");
+		}
 	}
-	
-  public void done() {
-    if (f_startTime == -1) {
-      SLLogger.getLogger().log(Level.SEVERE, "Missing start time element");
-    }
-    else if (f_endTime == -1) {
-      SLLogger.getLogger().log(Level.SEVERE, "Missing end time element");
-    }    
-  }
 }

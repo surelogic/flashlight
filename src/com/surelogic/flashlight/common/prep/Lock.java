@@ -27,7 +27,7 @@ public abstract class Lock extends Event {
 		this.before = before;
 	}
 
-	public void parse(int runId, Attributes attributes) {
+	public void parse(int runId, Attributes attributes) throws SQLException {
 		long nanoTime = -1;
 		long inThread = -1;
 		long inClass = -1;
@@ -89,30 +89,26 @@ public abstract class Lock extends Event {
 	static void insert(int runId, long id, Timestamp time, long inThread,
 			long inClass, int lineNumber, long lock, LockType lockType,
 			LockState lockState, Boolean success, Boolean lockIsThis,
-			Boolean lockIsClass) {
-		try {
-			int idx = 1;
-			f_ps.setInt(idx++, runId);
-			f_ps.setLong(idx++, id);
-			f_ps.setTimestamp(idx++, time);
-			f_ps.setLong(idx++, inThread);
-			f_ps.setLong(idx++, inClass);
-			f_ps.setInt(idx++, lineNumber);
-			f_ps.setLong(idx++, lock);
-			f_ps.setString(idx++, lockType.getFlag());
-			f_ps.setString(idx++, lockState.toString().replace('_', ' '));
-			JDBCUtils.setNullableBoolean(idx++, f_ps, success);
-			JDBCUtils.setNullableBoolean(idx++, f_ps, lockIsThis);
-			JDBCUtils.setNullableBoolean(idx++, f_ps, lockIsClass);
-			f_ps.executeUpdate();
-		} catch (final SQLException e) {
-			SLLogger.getLogger().log(Level.SEVERE, "Insert failed: ILOCK", e);
-		}
+			Boolean lockIsClass) throws SQLException {
+		int idx = 1;
+		f_ps.setInt(idx++, runId);
+		f_ps.setLong(idx++, id);
+		f_ps.setTimestamp(idx++, time);
+		f_ps.setLong(idx++, inThread);
+		f_ps.setLong(idx++, inClass);
+		f_ps.setInt(idx++, lineNumber);
+		f_ps.setLong(idx++, lock);
+		f_ps.setString(idx++, lockType.getFlag());
+		f_ps.setString(idx++, lockState.toString().replace('_', ' '));
+		JDBCUtils.setNullableBoolean(idx++, f_ps, success);
+		JDBCUtils.setNullableBoolean(idx++, f_ps, lockIsThis);
+		JDBCUtils.setNullableBoolean(idx++, f_ps, lockIsClass);
+		f_ps.executeUpdate();
 	}
 
 	@Override
 	public final void setup(final Connection c, final Timestamp start,
-			final long startNS, final DataPreScan scanResults,
+			final long startNS, final ScanRawFilePreScan scanResults,
 			Set<Long> unreferencedObjects, Set<Long> unreferencedFields)
 			throws SQLException {
 		super.setup(c, start, startNS, scanResults, unreferencedObjects,
@@ -126,18 +122,11 @@ public abstract class Lock extends Event {
 
 	public final void flush(final int runId, final long endTime)
 			throws SQLException {
-		f_rowInserter.flush(runId, getTimestamp(endTime));
-	}
-
-	public final void close() throws SQLException {
-		if (f_ps != null) {
+		if (f_ps != null)
 			f_ps.close();
-			f_ps = null;
-		}
-		if (f_rowInserter != null) {
-			f_rowInserter.close();
-			f_rowInserter = null;
-		}
+		f_rowInserter.flush(runId, getTimestamp(endTime));
+		f_rowInserter.close();
+		super.flush(runId, endTime);
 	}
 
 	abstract protected LockState getState();

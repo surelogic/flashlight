@@ -17,7 +17,6 @@
 
 	
 	<target name="clean">
-		<delete dir="${classes}"/>
 		<delete file="${flashlight-ant.jar}"/>
 	</target>
 
@@ -31,13 +30,13 @@
 				<pathelement location="${rest-of-flashlight}"/>
 			</classpath>
 		</javac>
+	</target>
+
+	<target name="build-ant-jar">
 		<!-- Make sure the antlib.xml file is in the output directory so it is
 		     placed in the final flashlight-ant.jar file. -->
 		<copy file="${src}/${antlib.xml}"
 				tofile="${classes}/${antlib.xml}"/>
-	</target>
-
-	<target name="build-ant-jar" depends="compile">
 		<jar destfile="${flashlight-ant.jar}" basedir="${classes}">
 			<include name="**/com/surelogic/_flashlight/ant/*" />
 			<manifest>
@@ -47,5 +46,7 @@
 	  </jar>
 	</target>
 
-	<target name="build-jars" depends="build-ant-jar" />
+	<target name="build-jars" depends="compile, build-ant-jar" />
+
+	<target name="build-jars-eclipse" depends="build-ant-jar" />
 </project>

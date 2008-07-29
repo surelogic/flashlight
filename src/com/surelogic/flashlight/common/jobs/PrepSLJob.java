@@ -301,11 +301,16 @@ public final class PrepSLJob implements SLJob {
 				stream.close();
 			}
 		} catch (final Exception e) {
+			/*
+			 * We check for a cancel here because a SAXException is thrown out
+			 * of the parser when the user presses cancel.
+			 */
 			if (monitor.isCanceled()) {
 				return SLStatus.CANCEL_STATUS;
 			}
-			return SLStatus.createErrorStatus(0,
-					"Failure during data preparation of " + dataFileName, e);
+			final int code = 116;
+			final String msg = I18N.err(code, dataFileName);
+			return SLStatus.createErrorStatus(code, msg, e);
 		} finally {
 			RunManager.getInstance().refresh();
 			monitor.done();

@@ -17,7 +17,6 @@ import com.surelogic.common.jdbc.NullResultHandler;
 import com.surelogic.common.jdbc.Query;
 import com.surelogic.common.jdbc.Queryable;
 import com.surelogic.common.jdbc.Result;
-import com.surelogic.common.jdbc.ResultHandler;
 import com.surelogic.common.jdbc.Row;
 
 /**
@@ -43,8 +42,8 @@ public class LockSetAnalysis extends NullDBQuery implements IPostPrep {
 		q.prepared("LockSet.lockDurations", new NullResultHandler() {
 			public void doHandle(final Result lockDurations) {
 				final LockSets sets = new LockSets(lockDurations);
-				q.prepared("LockSet.accesses", new ResultHandler<Void>() {
-					public Void handle(final Result accesses) {
+				q.prepared("LockSet.accesses", new NullResultHandler() {
+					public void doHandle(final Result accesses) {
 						for (final Row r : accesses) {
 							// TS, InThread, Field, Receiver
 							final Timestamp ts = r.nextTimestamp();
@@ -65,7 +64,6 @@ public class LockSetAnalysis extends NullDBQuery implements IPostPrep {
 							}
 
 						}
-						return null;
 					}
 				}).call(runId);
 				sets.writeStatistics(q);

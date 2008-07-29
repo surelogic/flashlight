@@ -13,6 +13,7 @@ import java.util.Map.Entry;
 
 import com.surelogic.common.jdbc.ConnectionQuery;
 import com.surelogic.common.jdbc.NullDBQuery;
+import com.surelogic.common.jdbc.NullResultHandler;
 import com.surelogic.common.jdbc.Query;
 import com.surelogic.common.jdbc.Queryable;
 import com.surelogic.common.jdbc.Result;
@@ -39,8 +40,8 @@ public class LockSetAnalysis extends NullDBQuery implements IPostPrep {
 	public void doPerform(final Query q) {
 		q.prepared("LockSet.badPublishes").call(runId);
 		q.prepared("LockSet.interestingFields").call(runId);
-		q.prepared("LockSet.lockDurations", new ResultHandler<Void>() {
-			public Void handle(final Result lockDurations) {
+		q.prepared("LockSet.lockDurations", new NullResultHandler() {
+			public void doHandle(final Result lockDurations) {
 				final LockSets sets = new LockSets(lockDurations);
 				q.prepared("LockSet.accesses", new ResultHandler<Void>() {
 					public Void handle(final Result accesses) {
@@ -68,7 +69,6 @@ public class LockSetAnalysis extends NullDBQuery implements IPostPrep {
 					}
 				}).call(runId);
 				sets.writeStatistics(q);
-				return null;
 			}
 		}).call(runId);
 	}

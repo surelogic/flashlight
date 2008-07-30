@@ -52,10 +52,10 @@ public final class DeleteRunDialog extends Dialog {
 		work.setLayout(fillLayout);
 
 		final Label msg = new Label(work, SWT.NONE);
-		msg.setText("Do you wish to delete data for the run " + f_run + "?");
+		msg.setText(I18N.msg("flashlight.dialog.deleteRun.msg", f_run));
 		if (f_hasRawFiles) {
 			final Button rawToo = new Button(work, SWT.CHECK);
-			rawToo.setText("Delete raw data files from the disk");
+			rawToo.setText(I18N.msg("flashlight.dialog.deleteRun.raw.msg"));
 			rawToo.setSelection(f_deleteRawFiles);
 			rawToo.addListener(SWT.Selection, new Listener() {
 				public void handleEvent(Event event) {
@@ -77,5 +77,4 @@ public final class DeleteRunDialog extends Dialog {
 	public boolean deleteRawDataFiles() {
 		return f_deleteRawFiles;
 	}
-
 }

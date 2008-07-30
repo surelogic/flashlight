@@ -1,11 +1,7 @@
 package com.surelogic.flashlight.client.eclipse.dialogs;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.logging.Level;
 
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
@@ -20,8 +16,8 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 
+import com.surelogic.common.FileUtility;
 import com.surelogic.common.i18n.I18N;
-import com.surelogic.common.logging.SLLogger;
 
 /**
  * A dialog to show the instrumentation log to the user.
@@ -72,27 +68,8 @@ public final class LogDialog extends Dialog {
 				event.styles = result.toArray(new StyleRange[result.size()]);
 			}
 		});
-		addLogText(text);
+		text.setText(FileUtility.getFileContents(f_log));
 		return c;
-	}
-
-	private void addLogText(StyledText text) {
-		StringBuilder b = new StringBuilder();
-		try {
-			BufferedReader r = new BufferedReader(new FileReader(f_log));
-			while (true) {
-				String s = r.readLine();
-				if (s == null)
-					break;
-				b.append(s);
-				b.append("\n");
-			}
-			text.setText(b.toString());
-			r.close();
-		} catch (IOException e) {
-			SLLogger.getLogger().log(Level.SEVERE,
-					I18N.err(117, f_log.getAbsolutePath()), e);
-		}
 	}
 
 	@Override

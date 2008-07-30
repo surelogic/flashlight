@@ -14,6 +14,7 @@ import org.eclipse.ui.part.ViewPart;
 import com.surelogic.common.eclipse.ColumnViewerSorter;
 import com.surelogic.common.eclipse.SLImages;
 import com.surelogic.common.eclipse.SWTUtility;
+import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.images.CommonImages;
 import com.surelogic.flashlight.common.model.RunDescription;
 import com.surelogic.flashlight.common.model.RunManager;
@@ -68,21 +69,22 @@ public final class RunView extends ViewPart {
 		final Action refreshAction = f_mediator.getRefreshAction();
 		refreshAction.setImageDescriptor(SLImages
 				.getImageDescriptor(CommonImages.IMG_REFRESH));
-		refreshAction.setToolTipText("Refresh the contents of this view");
+		refreshAction.setToolTipText(I18N
+				.msg("flashlight.run.view.tooltip.refresh"));
 		getViewSite().getActionBars().getToolBarManager().add(refreshAction);
 
 		final Action prepAction = f_mediator.getPrepAction();
 		prepAction.setImageDescriptor(SLImages
 				.getImageDescriptor(CommonImages.IMG_FL_PREP_DATA));
-		prepAction.setToolTipText("Prepare the raw data from this run");
+		prepAction.setToolTipText(I18N.msg("flashlight.run.view.tooltip.prep"));
 		prepAction.setEnabled(false);
 		getViewSite().getActionBars().getToolBarManager().add(prepAction);
 
 		final Action showLogAction = f_mediator.getShowLogAction();
 		showLogAction.setImageDescriptor(SLImages
 				.getImageDescriptor(CommonImages.IMG_FL_READ_LOG));
-		showLogAction
-				.setToolTipText("Show the instrumentation log from this run");
+		showLogAction.setToolTipText(I18N
+				.msg("flashlight.run.view.tooltip.log"));
 		showLogAction.setEnabled(false);
 		getViewSite().getActionBars().getToolBarManager().add(showLogAction);
 
@@ -90,7 +92,8 @@ public final class RunView extends ViewPart {
 		deleteRunAction.setImageDescriptor(PlatformUI.getWorkbench()
 				.getSharedImages().getImageDescriptor(
 						ISharedImages.IMG_TOOL_DELETE));
-		deleteRunAction.setToolTipText("Delete this run");
+		deleteRunAction.setToolTipText(I18N
+				.msg("flashlight.run.view.tooltip.delete"));
 		deleteRunAction.setEnabled(false);
 		getViewSite().getActionBars().getToolBarManager().add(deleteRunAction);
 

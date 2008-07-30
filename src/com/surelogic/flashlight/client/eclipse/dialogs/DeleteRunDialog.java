@@ -14,6 +14,9 @@ import org.eclipse.swt.widgets.Shell;
 
 import com.surelogic.common.i18n.I18N;
 
+/**
+ * Prompts to ensure that the use really wants to delete a run.
+ */
 public final class DeleteRunDialog extends Dialog {
 
 	private final String f_run;

@@ -20,21 +20,25 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 
+import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.logging.SLLogger;
 
+/**
+ * A dialog to show the instrumentation log to the user.
+ */
 public final class LogDialog extends Dialog {
 
 	private final File f_log;
 
-	private final String f_title;
+	private final String f_runName;
 
-	public LogDialog(Shell parentShell, final File log, final String title) {
+	public LogDialog(Shell parentShell, final File log, final String runName) {
 		super(parentShell);
 		setShellStyle(getShellStyle() | SWT.RESIZE | SWT.MAX);
 		assert log != null;
 		f_log = log;
-		assert title != null;
-		f_title = title;
+		assert runName != null;
+		f_runName = runName;
 	}
 
 	@Override
@@ -87,14 +91,14 @@ public final class LogDialog extends Dialog {
 			r.close();
 		} catch (IOException e) {
 			SLLogger.getLogger().log(Level.SEVERE,
-					"Unable to examine log file " + f_log.getAbsolutePath(), e);
+					I18N.err(117, f_log.getAbsolutePath()), e);
 		}
 	}
 
 	@Override
 	protected void configureShell(Shell newShell) {
 		super.configureShell(newShell);
-		newShell.setText(f_title);
+		newShell.setText(I18N.msg("flashlight.dialog.log.title", f_runName));
 	}
 
 	@Override

@@ -1,5 +1,7 @@
 package com.surelogic.flashlight.client.eclipse.views.run;
 
+import java.io.File;
+
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -125,10 +127,12 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 			if (description != null) {
 				final RawFileHandles handles = description.getRawFileHandles();
 				if (handles != null) {
-					LogDialog d = new LogDialog(f_table.getShell(), handles
-							.getLogFile(), "Instrumentation Log for "
-							+ description.getName());
-					d.open();
+					final File logFile = handles.getLogFile();
+					if (logFile != null) {
+						LogDialog d = new LogDialog(f_table.getShell(), handles
+								.getLogFile(), description.getName());
+						d.open();
+					}
 				}
 			}
 		}

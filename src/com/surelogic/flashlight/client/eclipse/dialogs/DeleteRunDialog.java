@@ -71,7 +71,7 @@ public final class DeleteRunDialog extends Dialog {
 	@Override
 	protected void configureShell(Shell newShell) {
 		super.configureShell(newShell);
-		newShell.setText("Confirm Flashlight Run Deletion");
+		newShell.setText(I18N.msg("flashlight.dialog.deleteRun.title"));
 	}
 
 	public boolean deleteRawDataFiles() {

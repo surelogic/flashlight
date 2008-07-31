@@ -4,17 +4,16 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jdbc.QB;
+import com.surelogic.common.jobs.AbstractSLJob;
 import com.surelogic.common.jobs.NullSLProgressMonitor;
-import com.surelogic.common.jobs.SLJob;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.flashlight.common.Data;
 import com.surelogic.flashlight.common.entities.PrepRunDescription;
 import com.surelogic.flashlight.common.model.RunManager;
 
-public final class UnPrepSLJob implements SLJob {
+public final class UnPrepSLJob extends AbstractSLJob {
 
 	/**
 	 * The order in this array reflects the safe order to delete rows from
@@ -29,8 +28,7 @@ public final class UnPrepSLJob implements SLJob {
 	private final PrepRunDescription f_prep;
 
 	public UnPrepSLJob(final PrepRunDescription prep) {
-		if (prep == null)
-			throw new IllegalArgumentException(I18N.err(44, "prep"));
+		super("Removing preparing data " + prep.getDescription().getName());
 		f_prep = prep;
 	}
 
@@ -40,7 +38,7 @@ public final class UnPrepSLJob implements SLJob {
 
 		final String taskName = "Removing preparing data "
 				+ f_prep.getDescription().getName();
-		monitor.beginTask(taskName, TABLES.length + 2);
+		monitor.begin(TABLES.length + 2);
 
 		try {
 			final Connection c = Data.getInstance().getConnection();

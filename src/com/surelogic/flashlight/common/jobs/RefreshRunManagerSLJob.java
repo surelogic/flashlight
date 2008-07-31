@@ -1,18 +1,21 @@
 package com.surelogic.flashlight.common.jobs;
 
+import com.surelogic.common.jobs.AbstractSLJob;
 import com.surelogic.common.jobs.NullSLProgressMonitor;
-import com.surelogic.common.jobs.SLJob;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.flashlight.common.model.RunManager;
 
-public final class RefreshRunManagerSLJob implements SLJob {
+public final class RefreshRunManagerSLJob extends AbstractSLJob {
+
+	public RefreshRunManagerSLJob() {
+		super("Refresh the Flashlight run manager contents");
+	}
 
 	public SLStatus run(SLProgressMonitor monitor) {
 		if (monitor == null)
 			monitor = new NullSLProgressMonitor();
-		monitor.beginTask("Refresh the Flashlight run manager contents",
-				SLProgressMonitor.UNKNOWN);
+		monitor.begin();
 
 		try {
 			RunManager.getInstance().refresh();

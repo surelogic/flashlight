@@ -15,13 +15,13 @@ import java.util.zip.GZIPInputStream;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import com.surelogic.common.SLUtility;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jdbc.DBTransaction;
 import com.surelogic.common.jdbc.QB;
+import com.surelogic.common.jobs.AbstractSLJob;
 import com.surelogic.common.jobs.NullSLProgressMonitor;
-import com.surelogic.common.jobs.SLJob;
 import com.surelogic.common.jobs.SLProgressMonitor;
-import com.surelogic.common.jobs.SLProgressUtility;
 import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.common.jobs.SubSLProgressMonitor;
 import com.surelogic.common.logging.SLLogger;
@@ -55,7 +55,7 @@ import com.surelogic.flashlight.common.prep.ScanRawFilePreScan;
 import com.surelogic.flashlight.common.prep.ScanRawFilePrepScan;
 import com.surelogic.flashlight.common.prep.ThreadDefinition;
 
-public final class PrepSLJob implements SLJob {
+public final class PrepSLJob extends AbstractSLJob {
 
 	private static final int PRE_SCAN_WORK = 100;
 	private static final int PERSIST_RUN_DESCRIPTION_WORK = 5;
@@ -90,9 +90,7 @@ public final class PrepSLJob implements SLJob {
 	private final RunDescription f_description;
 
 	public PrepSLJob(final RunDescription description) {
-		if (description == null) {
-			throw new IllegalArgumentException(I18N.err(44, "description"));
-		}
+		super("Preparing " + description.getName());
 		f_description = description;
 	}
 
@@ -115,9 +113,8 @@ public final class PrepSLJob implements SLJob {
 
 		final IPostPrep[] postPrepWork = getPostPrep();
 
-		monitor.beginTask("Preparing " + dataFileName, PRE_SCAN_WORK
-				+ PERSIST_RUN_DESCRIPTION_WORK + SETUP_WORK + PREP_WORK
-				+ FLUSH_WORK + THREAD_LOCAL_FIELD_DELETE_WORK
+		monitor.begin(PRE_SCAN_WORK + PERSIST_RUN_DESCRIPTION_WORK + SETUP_WORK
+				+ PREP_WORK + FLUSH_WORK + THREAD_LOCAL_FIELD_DELETE_WORK
 				+ THREAD_LOCAL_OBJECT_DELETE_WORK
 				+ (EACH_POST_PREP * postPrepWork.length));
 		/*
@@ -130,8 +127,7 @@ public final class PrepSLJob implements SLJob {
 		if (estimatedEvents <= 0) {
 			estimatedEvents = 10L;
 		}
-		final int estEventsInRawFile = SLProgressUtility
-				.safeLongToInt(estimatedEvents);
+		final int estEventsInRawFile = SLUtility.safeLongToInt(estimatedEvents);
 		try {
 			final InputStream stream = getDataFileStream(handles);
 			try {
@@ -142,9 +138,8 @@ public final class PrepSLJob implements SLJob {
 				 */
 				final SAXParserFactory factory = SAXParserFactory.newInstance();
 				final SLProgressMonitor preScanMonitor = new SubSLProgressMonitor(
-						monitor, PRE_SCAN_WORK);
-				preScanMonitor.beginTask("Pre-scanning the raw file",
-						estEventsInRawFile);
+						monitor, "Pre-scanning the raw file", PRE_SCAN_WORK);
+				preScanMonitor.begin(estEventsInRawFile);
 				final ScanRawFilePreScan scanResults = new ScanRawFilePreScan(
 						preScanMonitor);
 				final SAXParser saxParser = factory.newSAXParser();
@@ -152,8 +147,8 @@ public final class PrepSLJob implements SLJob {
 				preScanMonitor.done();
 				stream.close();
 
-				final int eventsInRawFile = SLProgressUtility
-						.safeLongToInt(scanResults.getElementCount());
+				final int eventsInRawFile = SLUtility.safeLongToInt(scanResults
+						.getElementCount());
 
 				if (monitor.isCanceled()) {
 					return SLStatus.CANCEL_STATUS;
@@ -175,9 +170,10 @@ public final class PrepSLJob implements SLJob {
 								 * time in nanoseconds.
 								 */
 								final SLProgressMonitor persistRunDescriptionMonitor = new SubSLProgressMonitor(
-										monitor, PERSIST_RUN_DESCRIPTION_WORK);
-								persistRunDescriptionMonitor.beginTask(
-										"Persist the new run description", 1);
+										monitor,
+										"Persist the new run description",
+										PERSIST_RUN_DESCRIPTION_WORK);
+								persistRunDescriptionMonitor.begin(1);
 								final Timestamp start = new Timestamp(handles
 										.getWallClockTime().getTime());
 								final long startNS = handles.getNanoTime();
@@ -198,10 +194,11 @@ public final class PrepSLJob implements SLJob {
 								final Set<Long> unreferencedFields = new HashSet<Long>();
 								final IPrep[] f_elements = getParseHandlers();
 								final SLProgressMonitor setupMonitor = new SubSLProgressMonitor(
-										monitor, SETUP_WORK);
-								setupMonitor.beginTask(
-										"Setting up event handlers",
-										f_elements.length);
+										monitor, "Setting up event handlers",
+										SETUP_WORK);
+								setupMonitor.begin(
+
+								f_elements.length);
 								for (final IPrep element : f_elements) {
 									element.setup(c, start, startNS,
 											scanResults, unreferencedObjects,
@@ -215,9 +212,9 @@ public final class PrepSLJob implements SLJob {
 								}
 
 								final SLProgressMonitor prepMonitor = new SubSLProgressMonitor(
-										monitor, PREP_WORK);
-								prepMonitor.beginTask("Preparing the raw file",
-										eventsInRawFile);
+										monitor, "Preparing the raw file",
+										PREP_WORK);
+								prepMonitor.begin(eventsInRawFile);
 								final ScanRawFilePrepScan handler = new ScanRawFilePrepScan(
 										runId, c, prepMonitor, f_elements);
 								saxParser.parse(dataFileStream, handler);
@@ -228,11 +225,10 @@ public final class PrepSLJob implements SLJob {
 								}
 
 								final SLProgressMonitor flushMonitor = new SubSLProgressMonitor(
-										monitor, FLUSH_WORK);
-								flushMonitor
-										.beginTask(
-												"Flushing prepared data into the database",
-												f_elements.length);
+										monitor,
+										"Flushing prepared data into the database",
+										FLUSH_WORK);
+								flushMonitor.begin(f_elements.length);
 								for (final IPrep element : f_elements) {
 									element.flush(runId, scanResults
 											.getEndNanoTime());
@@ -258,9 +254,10 @@ public final class PrepSLJob implements SLJob {
 								 * Remove all unreferenced objects and fields.
 								 */
 								final SLProgressMonitor threadLocalFieldDeleteMonitor = new SubSLProgressMonitor(
-										monitor, THREAD_LOCAL_FIELD_DELETE_WORK);
-								threadLocalFieldDeleteMonitor.beginTask(
-										"Deleting thread-local fields", 1);
+										monitor,
+										"Deleting thread-local fields",
+										THREAD_LOCAL_FIELD_DELETE_WORK);
+								threadLocalFieldDeleteMonitor.begin(1);
 								final PreparedStatement deleteFields = c
 										.prepareStatement(QB.get(18));
 								for (int i = 1; i <= 3; i++) {
@@ -276,10 +273,11 @@ public final class PrepSLJob implements SLJob {
 
 								final SLProgressMonitor threadLocalObjectDeleteMonitor = new SubSLProgressMonitor(
 										monitor,
-										THREAD_LOCAL_OBJECT_DELETE_WORK);
-								threadLocalObjectDeleteMonitor.beginTask(
 										"Deleting thread-local objects",
-										unreferencedObjects.size());
+										THREAD_LOCAL_OBJECT_DELETE_WORK);
+								threadLocalObjectDeleteMonitor.begin(
+
+								unreferencedObjects.size());
 								final PreparedStatement deleteObjects = c
 										.prepareStatement(QB.get(19));
 								for (final Long l : unreferencedObjects) {
@@ -293,9 +291,9 @@ public final class PrepSLJob implements SLJob {
 
 								for (IPostPrep postPrep : postPrepWork) {
 									final SLProgressMonitor postPrepMonitor = new SubSLProgressMonitor(
-											monitor, EACH_POST_PREP);
-									postPrepMonitor.beginTask(postPrep
-											.getDescription(), 1);
+											monitor, postPrep.getDescription(),
+											EACH_POST_PREP);
+									postPrepMonitor.begin(1);
 									postPrep.doPostPrep(c, runId);
 									postPrepMonitor.done();
 								}

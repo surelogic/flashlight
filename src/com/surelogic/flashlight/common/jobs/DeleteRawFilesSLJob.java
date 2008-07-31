@@ -2,9 +2,8 @@ package com.surelogic.flashlight.common.jobs;
 
 import java.io.File;
 
-import com.surelogic.common.i18n.I18N;
+import com.surelogic.common.jobs.AbstractSLJob;
 import com.surelogic.common.jobs.NullSLProgressMonitor;
-import com.surelogic.common.jobs.SLJob;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.flashlight.common.files.RawFileHandles;
@@ -12,13 +11,12 @@ import com.surelogic.flashlight.common.files.RawFileUtility;
 import com.surelogic.flashlight.common.model.RunDescription;
 import com.surelogic.flashlight.common.model.RunManager;
 
-public class DeleteRawFilesSLJob implements SLJob {
+public class DeleteRawFilesSLJob extends AbstractSLJob {
 
 	private final RunDescription f_description;
 
 	public DeleteRawFilesSLJob(final RunDescription description) {
-		if (description == null)
-			throw new IllegalArgumentException(I18N.err(44, "description"));
+		super("Removing raw data " + description.getName());
 		f_description = description;
 	}
 
@@ -26,8 +24,7 @@ public class DeleteRawFilesSLJob implements SLJob {
 		if (monitor == null)
 			monitor = new NullSLProgressMonitor();
 
-		final String taskName = "Removing raw data " + f_description.getName();
-		monitor.beginTask(taskName, 3);
+		monitor.begin(3);
 		final RawFileHandles handles = RawFileUtility
 				.getRawFileHandlesFor(f_description);
 		File file = handles.getDataFile();

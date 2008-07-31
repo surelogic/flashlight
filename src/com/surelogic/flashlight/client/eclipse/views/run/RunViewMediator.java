@@ -2,7 +2,6 @@ package com.surelogic.flashlight.client.eclipse.views.run;
 
 import java.io.File;
 
-import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.TableViewer;
@@ -15,14 +14,15 @@ import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.ui.PlatformUI;
 
 import com.surelogic.common.ILifecycle;
+import com.surelogic.common.eclipse.jobs.EclipseJob;
 import com.surelogic.flashlight.client.eclipse.dialogs.DeleteRunDialog;
 import com.surelogic.flashlight.client.eclipse.dialogs.LogDialog;
-import com.surelogic.flashlight.client.eclipse.jobs.DeleteRawFilesJob;
-import com.surelogic.flashlight.client.eclipse.jobs.PrepJob;
-import com.surelogic.flashlight.client.eclipse.jobs.RefreshRunManagerJob;
-import com.surelogic.flashlight.client.eclipse.jobs.UnPrepJob;
 import com.surelogic.flashlight.common.entities.PrepRunDescription;
 import com.surelogic.flashlight.common.files.RawFileHandles;
+import com.surelogic.flashlight.common.jobs.DeleteRawFilesSLJob;
+import com.surelogic.flashlight.common.jobs.PrepSLJob;
+import com.surelogic.flashlight.common.jobs.RefreshRunManagerSLJob;
+import com.surelogic.flashlight.common.jobs.UnPrepSLJob;
 import com.surelogic.flashlight.common.model.IRunManagerObserver;
 import com.surelogic.flashlight.common.model.RunDescription;
 import com.surelogic.flashlight.common.model.RunManager;
@@ -75,8 +75,7 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 	private final Action f_refresh = new Action() {
 		@Override
 		public void run() {
-			final Job job = new RefreshRunManagerJob();
-			job.schedule();
+			EclipseJob.getInstance().scheduleDb(new RefreshRunManagerSLJob());
 		}
 	};
 
@@ -105,13 +104,11 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 									+ description.getName() + "?")) {
 						return; // bail
 					}
-					Job job = new UnPrepJob(prep);
-					job.setUser(true);
-					job.schedule();
+					EclipseJob.getInstance().scheduleDb(new UnPrepSLJob(prep),
+							true, false);
 				}
-				Job job = new PrepJob(description);
-				job.setUser(true);
-				job.schedule();
+				EclipseJob.getInstance().scheduleDb(new PrepSLJob(description),
+						true, false);
 			}
 		}
 	};
@@ -160,14 +157,12 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 					return;
 
 				if (hasPrep) {
-					Job job = new UnPrepJob(prep);
-					job.setUser(true);
-					job.schedule();
+					EclipseJob.getInstance().scheduleDb(new UnPrepSLJob(prep),
+							true, false);
 				}
 				if (hasRawFiles && d.deleteRawDataFiles()) {
-					Job job = new DeleteRawFilesJob(description);
-					job.setUser(true);
-					job.schedule();
+					EclipseJob.getInstance().schedule(
+							new DeleteRawFilesSLJob(description));
 				}
 			}
 		}

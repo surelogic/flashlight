@@ -6,7 +6,6 @@ import java.sql.Statement;
 
 import com.surelogic.common.jdbc.QB;
 import com.surelogic.common.jobs.AbstractSLJob;
-import com.surelogic.common.jobs.NullSLProgressMonitor;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.flashlight.common.Data;
@@ -33,9 +32,6 @@ public final class UnPrepSLJob extends AbstractSLJob {
 	}
 
 	public SLStatus run(SLProgressMonitor monitor) {
-		if (monitor == null)
-			monitor = new NullSLProgressMonitor();
-
 		final String taskName = "Removing preparing data "
 				+ f_prep.getDescription().getName();
 		monitor.begin(TABLES.length + 2);

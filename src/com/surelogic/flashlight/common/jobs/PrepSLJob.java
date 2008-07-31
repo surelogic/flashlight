@@ -20,7 +20,6 @@ import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jdbc.DBTransaction;
 import com.surelogic.common.jdbc.QB;
 import com.surelogic.common.jobs.AbstractSLJob;
-import com.surelogic.common.jobs.NullSLProgressMonitor;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.common.jobs.SubSLProgressMonitor;
@@ -104,9 +103,7 @@ public final class PrepSLJob extends AbstractSLJob {
 		return stream;
 	}
 
-	public SLStatus run(final SLProgressMonitor monitorParam) {
-		final SLProgressMonitor monitor = monitorParam == null ? new NullSLProgressMonitor()
-				: monitorParam;
+	public SLStatus run(final SLProgressMonitor monitor) {
 		final RawFileHandles handles = RawFileUtility
 				.getRawFileHandlesFor(f_description);
 		final File dataFile = handles.getDataFile();

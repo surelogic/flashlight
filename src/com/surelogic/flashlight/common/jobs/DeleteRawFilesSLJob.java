@@ -3,7 +3,6 @@ package com.surelogic.flashlight.common.jobs;
 import java.io.File;
 
 import com.surelogic.common.jobs.AbstractSLJob;
-import com.surelogic.common.jobs.NullSLProgressMonitor;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.flashlight.common.files.RawFileHandles;
@@ -21,9 +20,6 @@ public class DeleteRawFilesSLJob extends AbstractSLJob {
 	}
 
 	public SLStatus run(SLProgressMonitor monitor) {
-		if (monitor == null)
-			monitor = new NullSLProgressMonitor();
-
 		monitor.begin(3);
 		final RawFileHandles handles = RawFileUtility
 				.getRawFileHandlesFor(f_description);

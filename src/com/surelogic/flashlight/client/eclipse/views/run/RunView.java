@@ -82,7 +82,7 @@ public final class RunView extends ViewPart {
 
 		final Action showLogAction = f_mediator.getShowLogAction();
 		showLogAction.setImageDescriptor(SLImages
-				.getImageDescriptor(CommonImages.IMG_FL_READ_LOG));
+				.getImageDescriptor(CommonImages.IMG_FILE));
 		showLogAction.setToolTipText(I18N
 				.msg("flashlight.run.view.tooltip.log"));
 		showLogAction.setEnabled(false);

@@ -19,7 +19,8 @@ public final class RefreshRunManagerJob extends DatabaseJob {
 	@Override
 	protected IStatus run(IProgressMonitor monitor) {
 		final SLJob job = new RefreshRunManagerSLJob();
-		final SLStatus status = job.run(new SLProgressMonitorWrapper(monitor));
+		final SLStatus status = job.run(new SLProgressMonitorWrapper(monitor,
+				job.getName()));
 		return SLEclipseStatusUtility.convert(status);
 	}
 }

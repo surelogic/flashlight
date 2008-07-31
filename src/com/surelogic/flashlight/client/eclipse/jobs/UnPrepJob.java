@@ -21,8 +21,8 @@ public final class UnPrepJob extends DatabaseJob {
 
 	@Override
 	protected IStatus run(IProgressMonitor monitor) {
-		final SLStatus status = f_job
-				.run(new SLProgressMonitorWrapper(monitor));
+		final SLStatus status = f_job.run(new SLProgressMonitorWrapper(monitor,
+				f_job.getName()));
 		return SLEclipseStatusUtility.convert(status);
 	}
 }

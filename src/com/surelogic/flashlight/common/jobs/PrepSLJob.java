@@ -174,7 +174,7 @@ public final class PrepSLJob extends AbstractSLJob {
 										monitor,
 										"Persist the new run description",
 										PERSIST_RUN_DESCRIPTION_WORK);
-								persistRunDescriptionMonitor.begin(1);
+								persistRunDescriptionMonitor.begin();
 								final Timestamp start = new Timestamp(handles
 										.getWallClockTime().getTime());
 								final long startNS = handles.getNanoTime();
@@ -259,7 +259,7 @@ public final class PrepSLJob extends AbstractSLJob {
 										monitor,
 										"Deleting thread-local fields",
 										THREAD_LOCAL_FIELD_DELETE_WORK);
-								threadLocalFieldDeleteMonitor.begin(1);
+								threadLocalFieldDeleteMonitor.begin();
 								final PreparedStatement deleteFields = c
 										.prepareStatement(QB.get(18));
 								for (int i = 1; i <= 3; i++) {
@@ -295,7 +295,7 @@ public final class PrepSLJob extends AbstractSLJob {
 									final SLProgressMonitor postPrepMonitor = new SubSLProgressMonitor(
 											monitor, postPrep.getDescription(),
 											EACH_POST_PREP);
-									postPrepMonitor.begin(1);
+									postPrepMonitor.begin();
 									postPrep.doPostPrep(c, runId);
 									postPrepMonitor.done();
 								}

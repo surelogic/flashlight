@@ -1,7 +1,6 @@
 package com.surelogic.flashlight.common.prep;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Set;
@@ -9,25 +8,21 @@ import java.util.logging.Level;
 
 import org.xml.sax.Attributes;
 
-import com.surelogic.common.jdbc.JDBCUtils;
 import com.surelogic.common.logging.SLLogger;
 
 public abstract class Lock extends Event {
 	static final long FINAL_EVENT = Long.MAX_VALUE;
 
-	private static final String f_psQ = "INSERT INTO LOCK (Run,Id,TS,InThread,InClass,AtLine,Lock,Type,State,Success,LockIsThis,LockIsClass) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?)";
-
-	private static long f_id;
-
-	private static PreparedStatement f_ps;
-
 	private final BeforeTrace before;
 
-	public Lock(BeforeTrace before) {
+	public Lock(final BeforeTrace before,
+			final IntrinsicLockDurationRowInserter i) {
+		super(i);
 		this.before = before;
 	}
 
-	public void parse(int runId, Attributes attributes) throws SQLException {
+	public void parse(final int runId, final Attributes attributes)
+			throws SQLException {
 		long nanoTime = -1;
 		long inThread = -1;
 		long inClass = -1;
@@ -65,19 +60,19 @@ public abstract class Lock extends Event {
 				}
 			}
 		}
-		if (nanoTime == -1 || inThread == -1 || inClass == -1
-				|| lineNumber == -1 || lock == -1) {
+		if ((nanoTime == -1) || (inThread == -1) || (inClass == -1)
+				|| (lineNumber == -1) || (lock == -1)) {
 			SLLogger.getLogger().log(
 					Level.SEVERE,
 					"Missing nano-time, thread, file, line or lock in "
 							+ getXMLElementName());
 			return;
 		}
-		final long id = f_id++;
 		final Timestamp time = getTimestamp(nanoTime);
 		before.threadEvent(inThread);
-		insert(runId, id, time, inThread, inClass, lineNumber, lock, getType(),
-				getState(), success, lockIsThis, lockIsClass);
+		final long id = f_rowInserter.insertLock(runId, false, time, inThread,
+				inClass, lineNumber, lock, getType(), getState(), success,
+				lockIsThis, lockIsClass);
 		useObject(inThread);
 		useObject(inClass);
 		useObject(lock);
@@ -85,45 +80,18 @@ public abstract class Lock extends Event {
 				success != Boolean.FALSE);
 	}
 
-	// Only called here and from IntrinsicLockDurationInserter
-	static void insert(int runId, long id, Timestamp time, long inThread,
-			long inClass, int lineNumber, long lock, LockType lockType,
-			LockState lockState, Boolean success, Boolean lockIsThis,
-			Boolean lockIsClass) throws SQLException {
-		int idx = 1;
-		f_ps.setInt(idx++, runId);
-		f_ps.setLong(idx++, id);
-		f_ps.setTimestamp(idx++, time);
-		f_ps.setLong(idx++, inThread);
-		f_ps.setLong(idx++, inClass);
-		f_ps.setInt(idx++, lineNumber);
-		f_ps.setLong(idx++, lock);
-		f_ps.setString(idx++, lockType.getFlag());
-		f_ps.setString(idx++, lockState.toString().replace('_', ' '));
-		JDBCUtils.setNullableBoolean(idx++, f_ps, success);
-		JDBCUtils.setNullableBoolean(idx++, f_ps, lockIsThis);
-		JDBCUtils.setNullableBoolean(idx++, f_ps, lockIsClass);
-		f_ps.executeUpdate();
-	}
-
 	@Override
 	public final void setup(final Connection c, final Timestamp start,
 			final long startNS, final ScanRawFilePreScan scanResults,
-			Set<Long> unreferencedObjects, Set<Long> unreferencedFields)
-			throws SQLException {
+			final Set<Long> unreferencedObjects,
+			final Set<Long> unreferencedFields) throws SQLException {
 		super.setup(c, start, startNS, scanResults, unreferencedObjects,
 				unreferencedFields);
-		if (f_ps == null) {
-			f_id = 0;
-			f_ps = c.prepareStatement(f_psQ);
-			f_rowInserter = new IntrinsicLockDurationRowInserter(c);
-		}
 	}
 
+	@Override
 	public final void flush(final int runId, final long endTime)
 			throws SQLException {
-		if (f_ps != null)
-			f_ps.close();
 		f_rowInserter.flush(runId, getTimestamp(endTime));
 		f_rowInserter.close();
 		super.flush(runId, endTime);

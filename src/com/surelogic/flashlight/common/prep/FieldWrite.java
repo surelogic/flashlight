@@ -2,8 +2,9 @@ package com.surelogic.flashlight.common.prep;
 
 public final class FieldWrite extends FieldAccess {
 
-	public FieldWrite(BeforeTrace before) {
-		super(before);
+	public FieldWrite(final BeforeTrace before,
+			final IntrinsicLockDurationRowInserter i) {
+		super(before, i);
 	}
 
 	public String getXMLElementName() {

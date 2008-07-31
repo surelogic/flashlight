@@ -32,9 +32,9 @@ import com.surelogic.flashlight.common.files.RawFileHandles;
 import com.surelogic.flashlight.common.files.RawFileUtility;
 import com.surelogic.flashlight.common.model.RunDescription;
 import com.surelogic.flashlight.common.model.RunManager;
-import com.surelogic.flashlight.common.prep.AfterIntrinisicLockAcquisition;
+import com.surelogic.flashlight.common.prep.AfterIntrinsicLockAcquisition;
+import com.surelogic.flashlight.common.prep.AfterIntrinsicLockRelease;
 import com.surelogic.flashlight.common.prep.AfterIntrinsicLockWait;
-import com.surelogic.flashlight.common.prep.AfterIntrinsisLockRelease;
 import com.surelogic.flashlight.common.prep.AfterTrace;
 import com.surelogic.flashlight.common.prep.AfterUtilConcurrentLockAcquisitionAttempt;
 import com.surelogic.flashlight.common.prep.AfterUtilConcurrentLockReleaseAttempt;
@@ -48,6 +48,7 @@ import com.surelogic.flashlight.common.prep.FieldRead;
 import com.surelogic.flashlight.common.prep.FieldWrite;
 import com.surelogic.flashlight.common.prep.IPostPrep;
 import com.surelogic.flashlight.common.prep.IPrep;
+import com.surelogic.flashlight.common.prep.IntrinsicLockDurationRowInserter;
 import com.surelogic.flashlight.common.prep.LockSetAnalysis;
 import com.surelogic.flashlight.common.prep.ObjectDefinition;
 import com.surelogic.flashlight.common.prep.ReadWriteLock;
@@ -66,20 +67,20 @@ public final class PrepSLJob extends AbstractSLJob {
 	private static final int THREAD_LOCAL_OBJECT_DELETE_WORK = 20;
 	private static final int EACH_POST_PREP = 30;
 
-	private IPrep[] getParseHandlers() {
-		final BeforeTrace beforeTrace = new BeforeTrace();
-		return new IPrep[] { beforeTrace, new AfterTrace(beforeTrace),
-				new AfterIntrinisicLockAcquisition(beforeTrace),
-				new AfterIntrinsicLockWait(beforeTrace),
-				new AfterIntrinsisLockRelease(beforeTrace),
-				new BeforeIntrinsicLockAcquisition(beforeTrace),
-				new BeforeIntrinsicLockWait(beforeTrace),
-				new BeforeUtilConcurrentLockAquisitionAttempt(beforeTrace),
-				new AfterUtilConcurrentLockAcquisitionAttempt(beforeTrace),
-				new AfterUtilConcurrentLockReleaseAttempt(beforeTrace),
-				new ReadWriteLock(), new ClassDefinition(),
-				new FieldDefinition(), new FieldRead(beforeTrace),
-				new FieldWrite(beforeTrace), new ObjectDefinition(),
+	private IPrep[] getParseHandlers(final IntrinsicLockDurationRowInserter i) {
+		final BeforeTrace beforeTrace = new BeforeTrace(i);
+		return new IPrep[] { beforeTrace, new AfterTrace(beforeTrace, i),
+				new AfterIntrinsicLockAcquisition(beforeTrace, i),
+				new AfterIntrinsicLockWait(beforeTrace, i),
+				new AfterIntrinsicLockRelease(beforeTrace, i),
+				new BeforeIntrinsicLockAcquisition(beforeTrace, i),
+				new BeforeIntrinsicLockWait(beforeTrace, i),
+				new BeforeUtilConcurrentLockAquisitionAttempt(beforeTrace, i),
+				new AfterUtilConcurrentLockAcquisitionAttempt(beforeTrace, i),
+				new AfterUtilConcurrentLockReleaseAttempt(beforeTrace, i),
+				new ReadWriteLock(i), new ClassDefinition(),
+				new FieldDefinition(), new FieldRead(beforeTrace, i),
+				new FieldWrite(beforeTrace, i), new ObjectDefinition(),
 				new ThreadDefinition() };
 	}
 
@@ -192,7 +193,8 @@ public final class PrepSLJob extends AbstractSLJob {
 								 */
 								final Set<Long> unreferencedObjects = new HashSet<Long>();
 								final Set<Long> unreferencedFields = new HashSet<Long>();
-								final IPrep[] f_elements = getParseHandlers();
+								final IPrep[] f_elements = getParseHandlers(new IntrinsicLockDurationRowInserter(
+										c));
 								final SLProgressMonitor setupMonitor = new SubSLProgressMonitor(
 										monitor, "Setting up event handlers",
 										SETUP_WORK);
@@ -289,7 +291,7 @@ public final class PrepSLJob extends AbstractSLJob {
 								deleteObjects.close();
 								threadLocalObjectDeleteMonitor.done();
 
-								for (IPostPrep postPrep : postPrepWork) {
+								for (final IPostPrep postPrep : postPrepWork) {
 									final SLProgressMonitor postPrepMonitor = new SubSLProgressMonitor(
 											monitor, postPrep.getDescription(),
 											EACH_POST_PREP);

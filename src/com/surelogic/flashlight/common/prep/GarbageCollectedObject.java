@@ -6,11 +6,15 @@ package com.surelogic.flashlight.common.prep;
 import org.xml.sax.Attributes;
 
 public class GarbageCollectedObject extends Event {
+	GarbageCollectedObject(final IntrinsicLockDurationRowInserter i) {
+		super(i);
+	}
+
 	public String getXMLElementName() {
 		return "garbage-collected-object";
 	}
 
-	public void parse(int runId, Attributes attributes) {
+	public void parse(final int runId, final Attributes attributes) {
 		if (attributes != null) {
 			for (int i = 0; i < attributes.getLength(); i++) {
 				final String aName = attributes.getQName(i);

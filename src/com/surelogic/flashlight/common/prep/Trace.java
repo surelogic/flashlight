@@ -5,9 +5,15 @@ import java.sql.SQLException;
 import org.xml.sax.Attributes;
 
 public abstract class Trace extends Event {
+
 	protected static final String FILE = "file";
 
-	public void parse(int runId, Attributes attributes) throws SQLException {
+	Trace(final IntrinsicLockDurationRowInserter i) {
+		super(i);
+	}
+
+	public void parse(final int runId, final Attributes attributes)
+			throws SQLException {
 		parseAttrs(attributes);
 		final long time = Long.parseLong(getAttr(NANO_TIME));
 		final long inThread = Long.parseLong(getAttr(THREAD));

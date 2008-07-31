@@ -16,7 +16,7 @@ public abstract class ReferenceDefinition extends TrackUnreferenced {
 
 	private static final String f_psQ = "INSERT INTO OBJECT (Run,Id,Type,Threadname,PackageName,ClassName,Flag) VALUES (?, ?, ?, ?, ?, ?, ?)";
 
-	private static PreparedStatement f_ps;
+	private PreparedStatement f_ps;
 
 	public final void parse(final int runId, final Attributes attributes)
 			throws SQLException {
@@ -63,8 +63,9 @@ public abstract class ReferenceDefinition extends TrackUnreferenced {
 		insert(runId, id, type, threadName, packageName, className);
 	}
 
-	private void insert(int runId, long id, long type, String threadName,
-			String packageName, String className) throws SQLException {
+	private void insert(final int runId, final long id, final long type,
+			final String threadName, final String packageName,
+			final String className) throws SQLException {
 		f_ps.setInt(1, runId);
 		f_ps.setLong(2, id);
 		f_ps.setLong(3, type);
@@ -89,21 +90,16 @@ public abstract class ReferenceDefinition extends TrackUnreferenced {
 	@Override
 	public final void setup(final Connection c, final Timestamp start,
 			final long startNS, final ScanRawFilePreScan scanResults,
-			Set<Long> unreferencedObjects, Set<Long> unreferencedFields)
-			throws SQLException {
+			final Set<Long> unreferencedObjects,
+			final Set<Long> unreferencedFields) throws SQLException {
 		super.setup(c, start, startNS, scanResults, unreferencedObjects,
 				unreferencedFields);
-		if (f_ps == null) {
-			f_ps = c.prepareStatement(f_psQ);
-		}
+		f_ps = c.prepareStatement(f_psQ);
 	}
 
 	@Override
-	public void flush(int runId, long endTime) throws SQLException {
-		if (f_ps != null) {
-			f_ps.close();
-			f_ps = null;
-		}
+	public void flush(final int runId, final long endTime) throws SQLException {
+		f_ps.close();
 		super.flush(runId, endTime);
 	}
 }

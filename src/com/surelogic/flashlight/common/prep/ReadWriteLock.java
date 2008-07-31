@@ -13,22 +13,24 @@ import com.surelogic.common.logging.SLLogger;
 
 public class ReadWriteLock extends Event {
 
+	public ReadWriteLock(final IntrinsicLockDurationRowInserter i) {
+		super(i);
+	}
+
 	private static final String f_psQ = "INSERT INTO RWLOCK (Run,Id,ReadLock,WriteLock) VALUES (?, ?, ?, ?)";
 
-	private static PreparedStatement f_ps;
+	private PreparedStatement f_ps;
 
 	private Timestamp startTime;
 
 	@Override
 	public void setup(final Connection c, final Timestamp start,
 			final long startNS, final ScanRawFilePreScan scanResults,
-			Set<Long> unreferencedObjects, Set<Long> unreferencedFields)
-			throws SQLException {
+			final Set<Long> unreferencedObjects,
+			final Set<Long> unreferencedFields) throws SQLException {
 		super.setup(c, start, startNS, scanResults, unreferencedObjects,
 				unreferencedFields);
-		if (f_ps == null) {
-			f_ps = c.prepareStatement(f_psQ);
-		}
+		f_ps = c.prepareStatement(f_psQ);
 		startTime = start;
 	}
 
@@ -36,7 +38,8 @@ public class ReadWriteLock extends Event {
 		return "read-write-lock-definition";
 	}
 
-	public void parse(int runId, Attributes attributes) throws SQLException {
+	public void parse(final int runId, final Attributes attributes)
+			throws SQLException {
 		long id = -1;
 		long readLock = -1;
 		long writeLock = -1;
@@ -53,7 +56,7 @@ public class ReadWriteLock extends Event {
 				}
 			}
 		}
-		if (id == -1 || readLock == -1 || writeLock == -1) {
+		if ((id == -1) || (readLock == -1) || (writeLock == -1)) {
 			SLLogger
 					.getLogger()
 					.log(Level.SEVERE,
@@ -67,8 +70,8 @@ public class ReadWriteLock extends Event {
 		useObject(writeLock);
 	}
 
-	private void insert(int runId, long id, long readLock, long writeLock)
-			throws SQLException {
+	private void insert(final int runId, final long id, final long readLock,
+			final long writeLock) throws SQLException {
 		f_ps.setLong(1, runId);
 		f_ps.setLong(2, id);
 		f_ps.setLong(3, readLock);
@@ -77,7 +80,7 @@ public class ReadWriteLock extends Event {
 	}
 
 	@Override
-	public void flush(int runId, long endTime) throws SQLException {
+	public void flush(final int runId, final long endTime) throws SQLException {
 		if (f_ps != null) {
 			f_ps.close();
 			f_ps = null;

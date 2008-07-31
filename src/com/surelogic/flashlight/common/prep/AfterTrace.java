@@ -9,13 +9,16 @@ public final class AfterTrace extends Trace {
 		return "after-trace";
 	}
 
-	public AfterTrace(BeforeTrace before) {
+	public AfterTrace(final BeforeTrace before,
+			final IntrinsicLockDurationRowInserter i) {
+		super(i);
 		this.before = before;
 	}
 
 	@Override
-	protected void handleTrace(int runId, long inThread, long inClass,
-			long time, String file, int lineNumber) throws SQLException {
+	protected void handleTrace(final int runId, final long inThread,
+			final long inClass, final long time, final String file,
+			final int lineNumber) throws SQLException {
 		before.popTrace(runId, inThread, inClass, time, lineNumber);
 	}
 }

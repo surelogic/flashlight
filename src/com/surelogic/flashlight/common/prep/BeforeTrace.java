@@ -12,14 +12,18 @@ public final class BeforeTrace extends Trace {
 
 	private static final String f_psQ = "INSERT INTO TRACE (Run,Id,InThread,InClass,InFile,AtLine,Location,Start,Stop) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-	private static long f_id = 0;
-	private static PreparedStatement f_ps;
+	private long f_id = 0;
+	private PreparedStatement f_ps;
 
 	private long skipped, inserted;
 
 	private final Map<Long, TraceStateStack> threadToStackTrace = new HashMap<Long, TraceStateStack>();
 
-	private TraceStateStack getTraces(Long inThread) {
+	public BeforeTrace(final IntrinsicLockDurationRowInserter i) {
+		super(i);
+	}
+
+	private TraceStateStack getTraces(final Long inThread) {
 		TraceStateStack trace = threadToStackTrace.get(inThread);
 		if (trace == null) {
 			trace = new TraceStateStack();
@@ -35,8 +39,8 @@ public final class BeforeTrace extends Trace {
 			return trace;
 		}
 
-		void push(long id, long time, long clazz, String file, int lineNumber,
-				String loc) {
+		void push(final long id, final long time, final long clazz,
+				final String file, final int lineNumber, final String loc) {
 			this.trace = new TraceState(id, time, clazz, file, lineNumber, loc,
 					trace);
 		}
@@ -67,8 +71,9 @@ public final class BeforeTrace extends Trace {
 		 */
 		boolean hasEvents;
 
-		TraceState(long id, long time, long clazz, String file, int lineNumber,
-				String loc, TraceState parent) {
+		TraceState(final long id, final long time, final long clazz,
+				final String file, final int lineNumber, final String loc,
+				final TraceState parent) {
 			this.id = id;
 			this.time = time;
 			this.clazz = clazz;
@@ -96,8 +101,8 @@ public final class BeforeTrace extends Trace {
 	@Override
 	public final void setup(final Connection c, final Timestamp start,
 			final long startNS, final ScanRawFilePreScan scanResults,
-			Set<Long> unreferencedObjects, Set<Long> unreferencedFields)
-			throws SQLException {
+			final Set<Long> unreferencedObjects,
+			final Set<Long> unreferencedFields) throws SQLException {
 		super.setup(c, start, startNS, scanResults, unreferencedObjects,
 				unreferencedFields);
 
@@ -107,16 +112,17 @@ public final class BeforeTrace extends Trace {
 	}
 
 	@Override
-	protected void handleTrace(int runId, long inThread, long inClass,
-			long time, String file, int lineNumber) {
+	protected void handleTrace(final int runId, final long inThread,
+			final long inClass, final long time, final String file,
+			final int lineNumber) {
 		final String location = getAttr("location");
 		final long id = ++f_id;
 		final Long thread = inThread;
 		getTraces(thread).push(id, time, inClass, file, lineNumber, location);
 	}
 
-	void popTrace(int runId, long inThread, long inClass, long time,
-			int lineNumber) throws SQLException {
+	void popTrace(final int runId, final long inThread, final long inClass,
+			final long time, final int lineNumber) throws SQLException {
 		final TraceState state = getTraces(inThread).pop();
 		assert (state.clazz == inClass) && (state.line == lineNumber);
 		if (state.hasEvents) {
@@ -140,7 +146,7 @@ public final class BeforeTrace extends Trace {
 	}
 
 	@Override
-	public void flush(int runId, long endTime) throws SQLException {
+	public void flush(final int runId, final long endTime) throws SQLException {
 		if (f_ps != null) {
 			f_ps.close();
 			f_ps = null;
@@ -153,7 +159,7 @@ public final class BeforeTrace extends Trace {
 	 * 
 	 * @param inThread
 	 */
-	void threadEvent(long inThread) {
+	void threadEvent(final long inThread) {
 		final TraceState trace = getTraces(inThread).peek();
 		if (trace != null) {
 			trace.threadEvent();

@@ -16,7 +16,7 @@ public final class FieldDefinition extends TrackUnreferenced {
 
 	private static final String f_psQ = "INSERT INTO FIELD VALUES (?, ?, ?, ?, ?, ?, ?)";
 
-	private static PreparedStatement f_ps;
+	private PreparedStatement f_ps;
 
 	public String getXMLElementName() {
 		return "field-definition";
@@ -49,7 +49,7 @@ public final class FieldDefinition extends TrackUnreferenced {
 				}
 			}
 		}
-		if (id == -1 || type == -1 || field == null) {
+		if ((id == -1) || (type == -1) || (field == null)) {
 			SLLogger.getLogger().log(Level.SEVERE,
 					"Missing id, type, or field in field-definition");
 			return;
@@ -59,9 +59,9 @@ public final class FieldDefinition extends TrackUnreferenced {
 		useObject(type);
 	}
 
-	private void insert(int runId, long id, long type, String field,
-			boolean isStatic, boolean isFinal, boolean isVolatile)
-			throws SQLException {
+	private void insert(final int runId, final long id, final long type,
+			final String field, final boolean isStatic, final boolean isFinal,
+			final boolean isVolatile) throws SQLException {
 		f_ps.setInt(1, runId);
 		f_ps.setLong(2, id);
 		if (field != null) {
@@ -79,21 +79,16 @@ public final class FieldDefinition extends TrackUnreferenced {
 	@Override
 	public void setup(final Connection c, final Timestamp start,
 			final long startNS, final ScanRawFilePreScan scanResults,
-			Set<Long> unreferencedObjects, Set<Long> unreferencedFields)
-			throws SQLException {
+			final Set<Long> unreferencedObjects,
+			final Set<Long> unreferencedFields) throws SQLException {
 		super.setup(c, start, startNS, scanResults, unreferencedObjects,
 				unreferencedFields);
-		if (f_ps == null) {
-			f_ps = c.prepareStatement(f_psQ);
-		}
+		f_ps = c.prepareStatement(f_psQ);
 	}
 
 	@Override
-	public void flush(int runId, long endTime) throws SQLException {
-		if (f_ps != null) {
-			f_ps.close();
-			f_ps = null;
-		}
+	public void flush(final int runId, final long endTime) throws SQLException {
+		f_ps.close();
 		super.flush(runId, endTime);
 	}
 }

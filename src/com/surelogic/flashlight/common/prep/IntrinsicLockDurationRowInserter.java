@@ -519,10 +519,13 @@ public final class IntrinsicLockDurationRowInserter {
 		lockGraph.addVertex(readLock);
 		lockGraph.addVertex(writeLock);
 		final Edge addedEdge1 = lockGraph.addEdge(readLock, writeLock);
-		addedEdge1.setFirst(startTime);
-
+		if (addedEdge1 != null) {
+			addedEdge1.setFirst(startTime);
+		}
 		final Edge addedEdge2 = lockGraph.addEdge(writeLock, readLock);
-		addedEdge2.setFirst(startTime);
+		if (addedEdge2 != null) {
+			addedEdge2.setFirst(startTime);
+		}
 	}
 
 	private void recordThreadStats(final int runId, final long eventId,

@@ -25,14 +25,14 @@ import java.util.zip.GZIPOutputStream;
 public final class Store {
 
 	/**
-	 * This <i>must</i> be declared first within this class so that it can
-	 * avoid instrumented library calls made by the static initialization of
-	 * this class to recursively reenter the class during static initialization.
+	 * This <i>must</i> be declared first within this class so that it can avoid
+	 * instrumented library calls made by the static initialization of this
+	 * class to recursively reenter the class during static initialization.
 	 * <P>
-	 * Normally this field would need to be <code>volatile</code>, however
-	 * since the class loader holds a lock during class initialization the final
-	 * value of <code>false</code> should be publicized safely to the other
-	 * program thread.
+	 * Normally this field would need to be <code>volatile</code>, however since
+	 * the class loader holds a lock during class initialization the final value
+	 * of <code>false</code> should be publicized safely to the other program
+	 * thread.
 	 */
 	private static boolean f_flashlightIsNotInitialized = true;
 
@@ -49,7 +49,8 @@ public final class Store {
 	 * It is an invariant of this field that it is monotonic towards
 	 * <code>true</code>.
 	 */
-	private static final AtomicBoolean FL_OFF = new AtomicBoolean(StoreConfiguration.isOff());
+	private static final AtomicBoolean FL_OFF = new AtomicBoolean(
+			StoreConfiguration.isOff());
 
 	/**
 	 * Output encoding.
@@ -64,8 +65,8 @@ public final class Store {
 
 	/**
 	 * Flags if helpful debug information should be output to the console log.
-	 * This flag generates a lot of output and should only be set to
-	 * {@code true} for small test programs.
+	 * This flag generates a lot of output and should only be set to {@code
+	 * true} for small test programs.
 	 */
 	public static final boolean DEBUG = false;
 
@@ -135,8 +136,8 @@ public final class Store {
 	}
 
 	/**
-	 * The string value of the <tt>FL_RUN</tt> property or
-	 * <tt>"flashlight"</tt> if this property is not set.
+	 * The string value of the <tt>FL_RUN</tt> property or <tt>"flashlight"</tt>
+	 * if this property is not set.
 	 */
 	private static final String f_run;
 
@@ -226,11 +227,13 @@ public final class Store {
 			 * Initialize final static fields. If Flashlight is off these fields
 			 * are all set to null to save memory.
 			 */
-      final File flashlightDir = new File(StoreConfiguration.getDirectory());
-      if (!flashlightDir.exists()) flashlightDir.mkdirs();
-      // ??? What to do if mkdirs() fails???
+			final File flashlightDir = new File(StoreConfiguration
+					.getDirectory());
+			if (!flashlightDir.exists())
+				flashlightDir.mkdirs();
+			// ??? What to do if mkdirs() fails???
 			final StringBuilder fileName = new StringBuilder();
-      fileName.append(flashlightDir);
+			fileName.append(flashlightDir);
 			fileName.append(System.getProperty("file.separator"));
 			f_run = StoreConfiguration.getRun();
 			fileName.append(f_run);
@@ -542,15 +545,15 @@ public final class Store {
 	 * This method also dispatches this event properly if the method call is to
 	 * an <i>interesting</i> method with regard to the program's concurrency.
 	 * Interesting methods include calls to {@link Object#wait()},
-	 * {@link Object#wait(long)}, {@link Object#wait(long, int)}, and
-	 * {@code java.util.concurrent} locks.
+	 * {@link Object#wait(long)}, {@link Object#wait(long, int)}, and {@code
+	 * java.util.concurrent} locks.
 	 * 
 	 * @param before
-	 *            {@code true} indicates <i>before</i> the method call,
-	 *            {@code false} indicates <i>after</i> the method call.
+	 *            {@code true} indicates <i>before</i> the method call, {@code
+	 *            false} indicates <i>after</i> the method call.
 	 * @param receiver
-	 *            the object instance the method is being called on, or
-	 *            {@code null} if the method is {@code static}.
+	 *            the object instance the method is being called on, or {@code
+	 *            null} if the method is {@code static}.
 	 * @param enclosingFileName
 	 *            the name of the file where the method call occurred.
 	 * @param enclosingLocationName
@@ -589,12 +592,11 @@ public final class Store {
 					 */
 					final ReadWriteLock rwl = (ReadWriteLock) receiver;
 					final ObjectPhantomReference p = Phantom.ofObject(rwl);
-					if (!UtilConcurrent.containsReadWriteLock(p)) {
+					if (UtilConcurrent.addReadWriteLock(p)) {
 						if (DEBUG) {
 							final String fmt = "Defined ReadWriteLock id=%d";
 							log(String.format(fmt, p.getId()));
 						}
-						UtilConcurrent.addReadWriteLock(p);
 						final Event e = new ReadWriteLockDefinition(p, Phantom
 								.ofObject(rwl.readLock()), Phantom.ofObject(rwl
 								.writeLock()));
@@ -718,17 +720,16 @@ public final class Store {
 	 * Records that the instrumented program is entering a call to one of the
 	 * following methods:
 	 * <ul>
-	 * <li>{@link Object#wait()}</li>
-	 * <li>{@link Object#wait(long)}</li>
-	 * <li>{@link Object#wait(long, int)}</li>
+	 * <li>{@link Object#wait()}</li> <li>{@link Object#wait(long)}</li> <li>
+	 * {@link Object#wait(long, int)}</li>
 	 * </ul>
 	 * See the Java Language Specification (3rd edition) section 17.8 <i>Wait
 	 * Sets and Notification</i> for the semantics of waiting on an intrinsic
 	 * lock. An intrinsic lock is a {@code synchronized} block or method.
 	 * 
 	 * @param before
-	 *            {@code true} indicates <i>before</i> the method call,
-	 *            {@code false} indicates <i>after</i> the method call.
+	 *            {@code true} indicates <i>before</i> the method call, {@code
+	 *            false} indicates <i>after</i> the method call.
 	 * @param lockObject
 	 *            the object being waited on (i.e., the thread should be holding
 	 *            a lock on this object).
@@ -977,12 +978,11 @@ public final class Store {
 	 * may be called from within the following thread contexts:
 	 * <ul>
 	 * <li>A direct call from a program thread, i.e., a call was added to the
-	 * program code </li>
-	 * <li>The {@link Spy} thread if it detected the instrumented program
-	 * completed and only flashlight threads remain running.</li>
-	 * <li>A client handler thread created by the {@link Console} thread that
-	 * was told to shutdown flashlight via socket.</li>
-	 * <li>The thread created to run our shutdown hook.</li>
+	 * program code </li> <li>The {@link Spy} thread if it detected the
+	 * instrumented program completed and only flashlight threads remain
+	 * running.</li> <li>A client handler thread created by the {@link Console}
+	 * thread that was told to shutdown flashlight via socket.</li> <li>The
+	 * thread created to run our shutdown hook.</li>
 	 * </ul>
 	 */
 	public static void shutdown() {

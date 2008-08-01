@@ -12,15 +12,17 @@ public final class UtilConcurrent {
 
 	static private final Set<IdPhantomReference> f_knownReadWriteLockIds = new HashSet<IdPhantomReference>();
 
-	static void addReadWriteLock(final IdPhantomReference o) {
+	/**
+	 * Adds a ReadWriteLock reference to the set of known instances.
+	 * 
+	 * @param o
+	 *            the reference to add.
+	 * @return {@code true} if this set did not already contain the specified
+	 *         element
+	 */
+	static boolean addReadWriteLock(final IdPhantomReference o) {
 		synchronized (f_knownReadWriteLockIds) {
-			f_knownReadWriteLockIds.add(o);
-		}
-	}
-
-	static boolean containsReadWriteLock(final IdPhantomReference o) {
-		synchronized (f_knownReadWriteLockIds) {
-			return f_knownReadWriteLockIds.contains(o);
+			return f_knownReadWriteLockIds.add(o);
 		}
 	}
 

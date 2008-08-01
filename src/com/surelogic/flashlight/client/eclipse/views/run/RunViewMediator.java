@@ -15,6 +15,7 @@ import org.eclipse.ui.PlatformUI;
 
 import com.surelogic.common.ILifecycle;
 import com.surelogic.common.eclipse.jobs.EclipseJob;
+import com.surelogic.common.i18n.I18N;
 import com.surelogic.flashlight.client.eclipse.dialogs.DeleteRunDialog;
 import com.surelogic.flashlight.client.eclipse.dialogs.LogDialog;
 import com.surelogic.flashlight.common.entities.PrepRunDescription;
@@ -97,11 +98,12 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 				 * Is it already prepared?
 				 */
 				PrepRunDescription prep = description.getPrepRunDescription();
-				if (prep != null) {
-					if (!MessageDialog.openConfirm(f_table.getShell(),
-							"Confirm Flashlight Re-Prep",
-							"Do you wish to delete and re-prepare the data for "
-									+ description.getName() + "?")) {
+				final boolean hasPrep = prep != null;
+				if (hasPrep) {
+					if (!MessageDialog.openConfirm(f_table.getShell(), I18N
+							.msg("flashlight.dialog.reprep.title"), I18N.msg(
+							"flashlight.dialog.reprep.msg", description
+									.getName()))) {
 						return; // bail
 					}
 					EclipseJob.getInstance().scheduleDb(new UnPrepSLJob(prep),

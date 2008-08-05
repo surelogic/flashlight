@@ -14,42 +14,42 @@ import com.surelogic._flashlight.rewriter.Configuration;
 import com.surelogic._flashlight.rewriter.engine.AbstractIndentingMessager;
 import com.surelogic._flashlight.rewriter.engine.RewriteEngine;
 
-
 /**
  * Ant task for rewriting classes to apply flashlight instrumentation. Rewrites
  * directories of classes and jar files. Jar files can rewritten to a new jar
  * file or to a directory. This allows more another task to be more
  * sophisticated in the packaging of a jar than this task is.
- * 
- * @author aarong
- * 
  */
 public final class FLInstrument extends Task {
   /**
-   * Properties table used to initialize the Flashlight class rewriter.  These
+   * Properties table used to initialize the Flashlight class rewriter. These
    * properties are set from attributes of the task.
    */
   private final Properties properties = new Properties();
   
   /**
-   * The list of directories to rewrite.  Derived from nested &lt;dir...&gt; elements.
+   * The list of Directory and Jar subtasks to execute in the order they
+   * appear in the build file.
    */
-  private final List<Directory> dirsToInstrument = new ArrayList<Directory>();
+  private final List<InstrumentationSubTask> subTasks =
+    new ArrayList<InstrumentationSubTask>();
+  
+  
+  
+  public static interface InstrumentationSubTask {
+    public void execute(
+        FLInstrument task, RewriteEngine engine) throws BuildException;
+  }
+  
+  
   
   /**
-   * The list of jar files to rewrite.  Derived from nested &lt;jar...&gt; elements.
-   */
-  private final List<Jar> jarsToInstrument = new ArrayList<Jar>();
-  
-  
-  
-  /**
-   * Store the results of a &lt;dir srcdir=... destdir=...&gt; element.  Used
-   * to declare a directory hierarchy that is searched for class files.  The
+   * Store the results of a &lt;dir srcdir=... destdir=...&gt; element. Used to
+   * declare a directory hierarchy that is searched for class files. The
    * contents of the directory hierarchy are copied to the destination directory
    * and any class files are instrumented.
    */
-  public static final class Directory {
+  public static final class Directory implements InstrumentationSubTask {
     private String srcdir = null;
     private String destdir = null;
         
@@ -60,16 +60,31 @@ public final class FLInstrument extends Task {
     
     String getSrcdir() { return srcdir; }
     String getDestdir() { return destdir; }
+    
+    public void execute(
+        final FLInstrument instrumentTask, final RewriteEngine engine)
+        throws BuildException {
+      instrumentTask.log("Instrumenting class directory " + srcdir
+          + ": writing instrumented classes to directory " + destdir,
+          Project.MSG_INFO);
+      try {
+        engine.rewriteDirectory(new File(srcdir), new File(destdir));
+      } catch (final IOException e) {
+        final String msg = "Error instrumenting class files in directory " + srcdir;
+        instrumentTask.log(msg, Project.MSG_ERR);
+        throw new BuildException(msg, e, instrumentTask.getLocation());
+      }
+    }
   }
   
   /**
-   * Store the results of a &lt;jar srcfile=... destfile=...&gt; element or a 
-   * &lt;jar srcfile=... destdir=...&gt; element.  In the first case, the contents
-   * of the JAR file are copied to a new JAR file with any class files being
-   * instrumented.  In the second case the contents of the JAR file are 
+   * Store the results of a &lt;jar srcfile=... destfile=...&gt; element or a
+   * &lt;jar srcfile=... destdir=...&gt; element. In the first case, the
+   * contents of the JAR file are copied to a new JAR file with any class files
+   * being instrumented. In the second case the contents of the JAR file are
    * expanded to the named directory and any class files are instrumented.
    */
-  public static final class Jar {
+  public static final class Jar implements InstrumentationSubTask {
     private String srcfile = null;
     private String destfile = null;
     private String destdir = null;
@@ -87,8 +102,36 @@ public final class FLInstrument extends Task {
     String getSrcfile() { return srcfile; }
     String getDestfile() { return destfile; }
     String getDestdir() { return destdir; }
-    String getRuntime() { return runtime; }
-    boolean getUpdatemanifest() { return update; }
+
+    public void execute(
+        final FLInstrument instrumentTask, final RewriteEngine engine)
+        throws BuildException {
+      final String runtimeJar;
+      if (update) {
+        runtimeJar = runtime;
+      } else {
+        runtimeJar = null;
+      }
+      
+      try {
+        /* One of dstfile and dstdir is non-null, but not both */
+        if (destfile != null) {
+          instrumentTask.log("Instrumenting classes in jar " + srcfile
+              + ": writing instrumented classes to jar " + destfile,
+              Project.MSG_INFO);
+          engine.rewriteJarToJar(new File(srcfile), new File(destfile), runtimeJar);
+        } else {
+          instrumentTask.log("Instrumenting classes in jar " + srcfile
+              + ": writing instrumented classes to directory " + destdir,
+              Project.MSG_INFO);
+          engine.rewriteJarToDirectory(new File(srcfile), new File(destdir), runtimeJar);
+        }
+      } catch (final IOException e) {
+        final String msg = "Error instrumenting class files in jar " + srcfile;
+        instrumentTask.log(msg, Project.MSG_ERR);
+        throw new BuildException(msg, e, instrumentTask.getLocation());
+      }
+    }
   }
 
   
@@ -106,8 +149,11 @@ public final class FLInstrument extends Task {
   
   /**
    * Utily method to set a Boolean-valued property in {@link #properties}.
-   * @param propName The name of the property to set
-   * @param flag The boolean value.
+   * 
+   * @param propName
+   *          The name of the property to set
+   * @param flag
+   *          The boolean value.
    */
   private void setProperty(final String propName, final boolean flag) {
     final String value = flag ? Configuration.TRUE : Configuration.FALSE;
@@ -116,14 +162,16 @@ public final class FLInstrument extends Task {
   }
   
   /**
-   * Set the "com.surelogic._flashlight.rewriter.rewrite.invokeinterface" property.
+   * Set the "com.surelogic._flashlight.rewriter.rewrite.invokeinterface"
+   * property.
    */
   public void setRewriteinvokeinterface(final boolean flag) {
     setProperty(Configuration.REWRITE_INVOKEINTERFACE_PROPERTY, flag);
   }
   
   /**
-   * Set the "com.surelogic._flashlight.rewriter.rewrite.invokespecial" property.
+   * Set the "com.surelogic._flashlight.rewriter.rewrite.invokespecial"
+   * property.
    */
   public void setRewriteinvokespecial(final boolean flag) {
     setProperty(Configuration.REWRITE_INVOKESPECIAL_PROPERTY, flag);
@@ -137,14 +185,16 @@ public final class FLInstrument extends Task {
   }
   
   /**
-   * Set the "com.surelogic._flashlight.rewriter.rewrite.invokevirtual" property.
+   * Set the "com.surelogic._flashlight.rewriter.rewrite.invokevirtual"
+   * property.
    */
   public void setRewriteinvokevirtual(final boolean flag) {
     setProperty(Configuration.REWRITE_INVOKEVIRTUAL_PROPERTY, flag);
   }
   
   /**
-   * Set the "com.surelogic._flashlight.rewriter.rewrite.synchronizedmethod" property.
+   * Set the "com.surelogic._flashlight.rewriter.rewrite.synchronizedmethod"
+   * property.
    */
   public void setRewritesynchronizedmethod(final boolean flag) {
     setProperty(Configuration.REWRITE_SYNCHRONIZED_METHOD_PROPERTY, flag);
@@ -200,63 +250,72 @@ public final class FLInstrument extends Task {
   }
   
   /**
-   * Set the "com.surelogic._flashlight.rewriter.rewrite.<init>.execution" property.
+   * Set the "com.surelogic._flashlight.rewriter.rewrite.<init>.execution"
+   * property.
    */
   public void setRewriteconstructorexecution(final boolean flag) {
     setProperty(Configuration.REWRITE_CONSTRUCTOR_EXECUTION_PROPERTY, flag);
   }
   
   /**
-   * Set the "com.surelogic._flashlight.rewriter.instrument.call.before" property.
+   * Set the "com.surelogic._flashlight.rewriter.instrument.call.before"
+   * property.
    */
   public void setInstrumentbeforecall(final boolean flag) {
     setProperty(Configuration.INSTRUMENT_BEFORE_CALL_PROPERTY, flag);
   }
   
   /**
-   * Set the "com.surelogic._flashlight.rewriter.instrument.call.after" property.
+   * Set the "com.surelogic._flashlight.rewriter.instrument.call.after"
+   * property.
    */
   public void setInstrumentaftercall(final boolean flag) {
     setProperty(Configuration.INSTRUMENT_AFTER_CALL_PROPERTY, flag);
   }
   
   /**
-   * Set the "com.surelogic._flashlight.rewriter.instrument.wait.before" property.
+   * Set the "com.surelogic._flashlight.rewriter.instrument.wait.before"
+   * property.
    */
   public void setInstrumentbeforewait(final boolean flag) {
     setProperty(Configuration.INSTRUMENT_BEFORE_WAIT_PROPERTY, flag);
   }
   
   /**
-   * Set the "com.surelogic._flashlight.rewriter.instrument.wait.after" property.
+   * Set the "com.surelogic._flashlight.rewriter.instrument.wait.after"
+   * property.
    */
   public void setInstrumentafterwait(final boolean flag) {
     setProperty(Configuration.INSTRUMENT_AFTER_WAIT_PROPERTY, flag);
   }
   
   /**
-   * Set the "com.surelogic._flashlight.rewriter.instrument.lock.before" property.
+   * Set the "com.surelogic._flashlight.rewriter.instrument.lock.before"
+   * property.
    */
   public void setInstrumentbeforejuclock(final boolean flag) {
     setProperty(Configuration.INSTRUMENT_BEFORE_JUC_LOCK_PROPERTY, flag);
   }
   
   /**
-   * Set the "com.surelogic._flashlight.rewriter.instrument.lock.after" property.
+   * Set the "com.surelogic._flashlight.rewriter.instrument.lock.after"
+   * property.
    */
   public void setInstrumentafterlock(final boolean flag) {
     setProperty(Configuration.INSTRUMENT_AFTER_LOCK_PROPERTY, flag);
   }
   
   /**
-   * Set the "com.surelogic._flashlight.rewriter.instrument.trylock.after" property.
+   * Set the "com.surelogic._flashlight.rewriter.instrument.trylock.after"
+   * property.
    */
   public void setInstrumentaftertrylock(final boolean flag) {
     setProperty(Configuration.INSTRUMENT_AFTER_TRYLOCK_PROPERTY, flag);
   }
   
   /**
-   * Set the "com.surelogic._flashlight.rewriter.instrument.unlock.after" property.
+   * Set the "com.surelogic._flashlight.rewriter.instrument.unlock.after"
+   * property.
    */
   public void setInstrumentafterunlock(final boolean flag) {
     setProperty(Configuration.INSTRUMENT_AFTER_UNLOCK_PROPERTY, flag);
@@ -287,7 +346,7 @@ public final class FLInstrument extends Task {
     if (dir.getDestdir() == null) {
       throw new BuildException("Destination directory is not set");
     }
-    dirsToInstrument.add(dir);
+    subTasks.add(dir);
   }
   
   /**
@@ -315,7 +374,7 @@ public final class FLInstrument extends Task {
     if (destfile == null && destdir == null) {
       throw new BuildException("Must set either the destination jar file or the destination directory");
     }
-    jarsToInstrument.add(jar);
+    subTasks.add(jar);
   }
   
   
@@ -334,53 +393,16 @@ public final class FLInstrument extends Task {
     final AntLogMessenger messenger = new AntLogMessenger();
     final RewriteEngine engine = new RewriteEngine(config, messenger);
     
-    for (final Directory dir : dirsToInstrument) {
-      final String src = dir.getSrcdir();
-      final String dest = dir.getDestdir();
-      log("Instrumenting class directory " + src + ": writing instrumented classes to directory " + dest, Project.MSG_INFO);
-      try {
-        engine.rewriteDirectory(new File(src), new File(dest));
-      } catch (final IOException e) {
-        final String msg = "Error instrumenting class files in directory " + src;
-        log(msg, Project.MSG_ERR);
-        throw new BuildException(msg, e, getLocation());
-      }
-    }
-
-    for (final Jar jar : jarsToInstrument) {
-      final String src = jar.getSrcfile();
-      final String destfile = jar.getDestfile();
-      final String destdir = jar.getDestdir();
-      
-      final String runtimeJar;
-      if (jar.getUpdatemanifest()) {
-        runtimeJar = jar.getRuntime();
-      } else {
-        runtimeJar = null;
-      }
-      
-      try {
-        /* One of dstfile and dstdir is non-null, but not both */
-        if (destfile != null) {
-          log("Instrumenting classes in jar " + src + ": writing instrumented classes to jar " + destfile, Project.MSG_INFO);
-          engine.rewriteJarToJar(new File(src), new File(destfile), runtimeJar);
-        } else {
-          log("Instrumenting classes in jar " + src + ": writing instrumented classes to directory " + destdir, Project.MSG_INFO);
-          engine.rewriteJarToDirectory(new File(src), new File(destdir), runtimeJar);
-        }
-      } catch (final IOException e) {
-        final String msg = "Error instrumenting class files in jar " + src;
-        log(msg, Project.MSG_ERR);
-        throw new BuildException(msg, e, getLocation());
-      }
+    for (final InstrumentationSubTask subTask : subTasks) {
+      subTask.execute(this, engine);
     }
   }
   
   
 
   /**
-   * Messenger for the Rewrite Engine that directs engine messages to the
-   * ANT log.
+   * Messenger for the Rewrite Engine that directs engine messages to the ANT
+   * log.
    */
   private final class AntLogMessenger extends AbstractIndentingMessager {
     public AntLogMessenger() {

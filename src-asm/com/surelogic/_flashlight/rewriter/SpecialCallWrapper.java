@@ -14,7 +14,7 @@ final class SpecialCallWrapper extends MethodCallWrapper {
   
   public SpecialCallWrapper(
       final String owner, final String originalName, final String originalSignature) {
-    super(owner, originalName, originalSignature, Opcodes.INVOKESPECIAL, true);
+    super(Opcodes.INVOKESPECIAL, owner, originalName, originalSignature, true);
   }
 
   
@@ -54,12 +54,12 @@ final class SpecialCallWrapper extends MethodCallWrapper {
   }
 
   @Override
-  public final void pushObjectRefForEvent(final MethodVisitor mv) {
+  public final void pushReceiverForEvent(final MethodVisitor mv) {
     mv.visitVarInsn(Opcodes.ALOAD, 0);
   }
 
   @Override
-  public final void pushObjectRefForOriginalMethod(final MethodVisitor mv) {
+  protected final void pushReceiverForOriginalMethod(final MethodVisitor mv) {
     mv.visitVarInsn(Opcodes.ALOAD, 0);
   }
 }

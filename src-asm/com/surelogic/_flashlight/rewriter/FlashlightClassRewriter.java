@@ -1,14 +1,18 @@
 package com.surelogic._flashlight.rewriter;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
 import org.objectweb.asm.ClassAdapter;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
-import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.commons.CodeSizeEvaluator;
 
 /**
  * Visits a classfile and rewrites it to contain Flashlight instrumentation.
@@ -22,6 +26,8 @@ public final class FlashlightClassRewriter extends ClassAdapter {
   
   private static final String CLASS_INITIALIZER = "<clinit>";
   private static final String CLASS_INITIALIZER_DESC = "()V";
+  
+  private static final int MAX_CODE_SIZE = 64 * 1024;
   
   
   
@@ -55,11 +61,44 @@ public final class FlashlightClassRewriter extends ClassAdapter {
   private final Set<MethodCallWrapper> wrapperMethods =
     new TreeSet<MethodCallWrapper>(MethodCallWrapper.comparator);
   
+  /**
+   * Table from method names to CodeSizeEvaluators.  Need to look at this
+   * after the class has been visited to find overly long methods.
+   * The key is the method name + method description.
+   */
+  private final Map<MethodIdentifier, CodeSizeEvaluator> methodSizes =
+    new HashMap<MethodIdentifier, CodeSizeEvaluator>();
+  
+  /**
+   * The set of methods that should not be rewritten.
+   */
+  private final Set<MethodIdentifier> methodsToIgnore;
   
   
-  public FlashlightClassRewriter(final Configuration conf, final ClassVisitor cv) {
+  
+  public FlashlightClassRewriter(
+      final Configuration conf, final ClassVisitor cv,
+      final Set<MethodIdentifier> ignore) {
     super(cv);
     config = conf;
+    methodsToIgnore = ignore;
+  }
+  
+  
+  
+  
+  /**
+   * Get the names of those methods whose code size has become too large
+   * after instrumentation.
+   */
+  public Set<MethodIdentifier> getOversizedMethods() {
+    final Set<MethodIdentifier> result = new HashSet<MethodIdentifier>();
+    for (final Map.Entry<MethodIdentifier, CodeSizeEvaluator> entry : methodSizes.entrySet()) {
+      if (entry.getValue().getMaxSize() > MAX_CODE_SIZE) {
+        result.add(entry.getKey());
+      }
+    }
+    return Collections.unmodifiableSet(result);
   }
   
   
@@ -91,12 +130,25 @@ public final class FlashlightClassRewriter extends ClassAdapter {
       needsClassInitializer = false;
     }
     
-    final int newAccess = access & ~Opcodes.ACC_SYNCHRONIZED;
-    return new FlashlightMethodRewriter(
-        config, atLeastJava5,
-        cv.visitMethod(newAccess, name, desc, signature, exceptions), access, name,
-        sourceFileName, classNameInternal, classNameFullyQualified,
-        wrapperMethods);
+    final MethodIdentifier methodId = new MethodIdentifier(name, desc);
+    if (methodsToIgnore.contains(methodId)) {
+      return cv.visitMethod(access, name, desc, signature, exceptions);
+    } else {
+      final int newAccess;
+      if (config.rewriteSynchronizedMethod) {
+        newAccess = access & ~Opcodes.ACC_SYNCHRONIZED;
+      } else {
+        newAccess = access;
+      }
+      final MethodVisitor original =
+        cv.visitMethod(newAccess, name, desc, signature, exceptions);
+      final CodeSizeEvaluator cse = new CodeSizeEvaluator(original);
+      methodSizes.put(methodId, cse);
+      return FlashlightMethodRewriter.create(
+          access, name, desc, cse, config, atLeastJava5, isInterface,
+          sourceFileName, classNameInternal, classNameFullyQualified,
+          wrapperMethods);
+    }
   }
   
   @Override
@@ -134,9 +186,9 @@ public final class FlashlightClassRewriter extends ClassAdapter {
     /* Proceed as if visitMethod() were called on us, and simulate the method
      * traversal through the rewriter visitor.
      */
-    final MethodVisitor rewriter_mv = new FlashlightMethodRewriter(
-        config, atLeastJava5, mv,
-        Opcodes.ACC_STATIC, CLASS_INITIALIZER, sourceFileName,
+    final MethodVisitor rewriter_mv = FlashlightMethodRewriter.create(
+        Opcodes.ACC_STATIC, CLASS_INITIALIZER, CLASS_INITIALIZER_DESC, mv,
+        config, atLeastJava5, isInterface, sourceFileName,
         classNameInternal, classNameFullyQualified, wrapperMethods);
     rewriter_mv.visitCode(); // start code section
     rewriter_mv.visitInsn(Opcodes.RETURN); // empty method, just return
@@ -144,263 +196,27 @@ public final class FlashlightClassRewriter extends ClassAdapter {
     rewriter_mv.visitEnd(); // end of method
   }
   
+  
+  
   private void addWrapperMethod(final MethodCallWrapper wrapper) {
     /* Create the method header */
     final MethodVisitor mv = wrapper.createMethodHeader(cv);
     mv.visitCode();
     
     // empty stack
-    
-    /* before method all event */
-    instrumentBeforeMethodCall(mv, wrapper);
 
-    /* Additional pre-call instrumentation */
-    instrumentBeforeAnyJUCLockAcquisition(mv, wrapper);
-    instrumentBeforeWait(mv, wrapper);
+    /* Instrument the method call */
+    final MethodCallInstrumenter instrumenter = new MethodCallInstrumenter(
+        config, mv, wrapper, atLeastJava5, sourceFileName, classNameInternal);
+    instrumenter.instrumentMethodCall();
     
-    final Label beforeOriginalCall = new Label();
-    final Label afterOriginalCall = new Label();
-    final Label exceptionHandler = new Label();
-    mv.visitTryCatchBlock(beforeOriginalCall, afterOriginalCall, exceptionHandler, null);
-    
-    /* original method call */
-    wrapper.pushObjectRefForOriginalMethod(mv);
-    // objRef
-    wrapper.pushOriginalArguments(mv);
-    // objRef, arg1, ..., argN
-
-    mv.visitLabel(beforeOriginalCall);
-    wrapper.invokeOriginalMethod(mv);
-    mv.visitLabel(afterOriginalCall);
-    // [returnValue]
-
-    /* Additional post-call instrumentation */
-    instrumentAfterLockAndLockInterruptibly(mv, wrapper, true);
-    instrumentAfterTryLockNormal(mv, wrapper);
-    instrumentAfterUnlock(mv, wrapper, true);
-    instrumentAfterWait(mv, wrapper);
-    
-    /* after method call event */
-    instrumentAfterMethodCall(mv, wrapper);
-    
-    /* Method return */
+    /* Return from method */
     wrapper.methodReturn(mv);
 
-    /* Exception handler: still want to report method exit when there is an exception */
-    mv.visitLabel(exceptionHandler);
-    // exception
-
-    /* Additional post-call instrumentation */
-    instrumentAfterLockAndLockInterruptibly(mv, wrapper, false);
-    instrumentAfterTryLockException(mv, wrapper);
-    instrumentAfterUnlock(mv, wrapper, false);
-    instrumentAfterWait(mv, wrapper);
-    
-    instrumentAfterMethodCall(mv, wrapper);
-
-    // exception
-    mv.visitInsn(Opcodes.ATHROW);
-    
     final int numLocals = wrapper.getNumLocals();
     mv.visitMaxs(
         Math.max(6 + Math.max(1, wrapper.getMethodReturnSize()), numLocals),
         numLocals);
     mv.visitEnd();
-  }
-
-
-
-  private void instrumentBeforeMethodCall(
-      final MethodVisitor mv, final MethodCallWrapper wrapper) {
-    if (config.instrumentBeforeCall) {
-      // empty stack 
-      ByteCodeUtils.pushBooleanConstant(mv, true);
-      // true
-      wrapper.pushObjectRefForEvent(mv);
-      // true, objRef
-      mv.visitLdcInsn(sourceFileName);
-      // true, objRef, filename
-      wrapper.pushCallingMethodName(mv);
-      // true, objRef, filename, callingMethodName
-      ByteCodeUtils.pushInClass(mv, atLeastJava5, classNameInternal);
-      // true, objRef, filename, callingMethodName, inClass
-      wrapper.pushCallingLineNumber(mv);
-      // true, objRef, filename, callingMethodName, inClass, line
-      mv.visitMethodInsn(Opcodes.INVOKESTATIC, ByteCodeUtils.getFlashlightStore(config),
-          FlashlightNames.METHOD_CALL, FlashlightNames.METHOD_CALL_SIGNATURE);
-      // empty stack 
-    }
-  }
-
-
-
-  private void instrumentAfterMethodCall(
-      final MethodVisitor mv, final MethodCallWrapper wrapper) {
-    if (config.instrumentAfterCall) {
-      // ...,
-      ByteCodeUtils.pushBooleanConstant(mv, false);
-      // ..., true
-      wrapper.pushObjectRefForEvent(mv);
-      // ..., true, objRef
-      mv.visitLdcInsn(sourceFileName);
-      // ..., true, objRef, filename
-      wrapper.pushCallingMethodName(mv);
-      // ..., true, objRef, filename, callingMethodName
-      ByteCodeUtils.pushInClass(mv, atLeastJava5, classNameInternal);
-      // ..., true, objRef, filename, callingMethodName, inClass
-      wrapper.pushCallingLineNumber(mv);
-      // ..., true, objRef, filename, callingMethodName, inClass, line
-      mv.visitMethodInsn(Opcodes.INVOKESTATIC, ByteCodeUtils.getFlashlightStore(config), FlashlightNames.METHOD_CALL, FlashlightNames.METHOD_CALL_SIGNATURE);
-      // ...
-    }
-  }
-
-
-
-  private void instrumentBeforeWait(
-      final MethodVisitor mv, final MethodCallWrapper wrapper) {
-    if (wrapper.testOriginalName(
-        FlashlightNames.JAVA_LANG_OBJECT, FlashlightNames.WAIT)
-        && config.instrumentBeforeWait) {
-      // ...
-      ByteCodeUtils.pushBooleanConstant(mv, true);
-      // ..., true
-      wrapper.pushObjectRefForEvent(mv);
-      // ..., true, objRef
-      ByteCodeUtils.pushInClass(mv, atLeastJava5, classNameInternal);
-      // ..., true, objRef, inClass
-      wrapper.pushCallingLineNumber(mv);
-      // ..., true, objRef, inClass, line
-      mv.visitMethodInsn(Opcodes.INVOKESTATIC, ByteCodeUtils.getFlashlightStore(config), FlashlightNames.INTRINSIC_LOCK_WAIT, FlashlightNames.INTRINSIC_LOCK_WAIT_SIGNATURE);      
-    }
-  }
-  
-  private void instrumentAfterWait(
-      final MethodVisitor mv, final MethodCallWrapper wrapper) {
-    if (wrapper.testOriginalName(
-        FlashlightNames.JAVA_LANG_OBJECT, FlashlightNames.WAIT)
-        && config.instrumentAfterWait) {
-      // ...
-      ByteCodeUtils.pushBooleanConstant(mv, false);
-      // ..., true
-      wrapper.pushObjectRefForEvent(mv);
-      // ..., true, objRef
-      ByteCodeUtils.pushInClass(mv, atLeastJava5, classNameInternal);
-      // ..., true, objRef, inClass
-      wrapper.pushCallingLineNumber(mv);
-      // ..., true, objRef, inClass, line
-      mv.visitMethodInsn(Opcodes.INVOKESTATIC, ByteCodeUtils.getFlashlightStore(config), FlashlightNames.INTRINSIC_LOCK_WAIT, FlashlightNames.INTRINSIC_LOCK_WAIT_SIGNATURE);      
-    }
-  }
-  
-  private void instrumentBeforeAnyJUCLockAcquisition(
-      final MethodVisitor mv, final MethodCallWrapper wrapper) {
-    if ((wrapper.testOriginalName(
-        FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK, FlashlightNames.LOCK)
-        || wrapper.testOriginalName(
-            FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK,
-            FlashlightNames.LOCK_INTERRUPTIBLY)
-        || wrapper.testOriginalName(
-            FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK,
-            FlashlightNames.TRY_LOCK))
-        && config.instrumentBeforeJUCLock) {
-      // ...
-      wrapper.pushObjectRefForEvent(mv);
-      // ..., objRef
-      ByteCodeUtils.pushInClass(mv, atLeastJava5, classNameInternal);
-      // ..., objRef, inClass
-      wrapper.pushCallingLineNumber(mv);
-      // ..., objRef, inClass, line
-      mv.visitMethodInsn(Opcodes.INVOKESTATIC, ByteCodeUtils.getFlashlightStore(config),
-          FlashlightNames.BEFORE_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT,
-          FlashlightNames.BEFORE_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT_SIGNATURE);
-    }
-  }
-  
-  private void instrumentAfterLockAndLockInterruptibly(final MethodVisitor mv,
-      final MethodCallWrapper wrapper, final boolean gotTheLock) {
-    if ((wrapper.testOriginalName(
-        FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK, FlashlightNames.LOCK)
-        || wrapper.testOriginalName(
-            FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK,
-            FlashlightNames.LOCK_INTERRUPTIBLY))
-        && config.instrumentAfterLock) {
-      // ...
-      ByteCodeUtils.pushBooleanConstant(mv, gotTheLock);
-      // ..., gotTheLock
-      wrapper.pushObjectRefForEvent(mv);
-      // ..., gotTheLock, objRef
-      ByteCodeUtils.pushInClass(mv, atLeastJava5, classNameInternal);
-      // ..., gotTheLock, objRef, inClass
-      wrapper.pushCallingLineNumber(mv);
-      // ..., gotTheLock, objRef, inClass, line
-      mv.visitMethodInsn(Opcodes.INVOKESTATIC, ByteCodeUtils.getFlashlightStore(config),
-          FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT,
-          FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT_SIGNATURE);      
-    }
-  }
-  
-  private void instrumentAfterTryLockNormal(
-      final MethodVisitor mv, final MethodCallWrapper wrapper) {
-    if (wrapper.testOriginalName(
-        FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK,
-        FlashlightNames.TRY_LOCK) && config.instrumentAfterTryLock) {
-      // ..., gotTheLock
-      
-      /* We need to make a copy of tryLock()'s return value */
-      mv.visitInsn(Opcodes.DUP);
-      // ..., gotTheLock, gotTheLock      
-      wrapper.pushObjectRefForEvent(mv);
-      // ..., gotTheLock, gotTheLock, objRef
-      ByteCodeUtils.pushInClass(mv, atLeastJava5, classNameInternal);
-      // ..., gotTheLock, gotTheLock, objRef, inClass
-      wrapper.pushCallingLineNumber(mv);
-      // ..., gotTheLock, gotTheLock, objRef, inClass, line
-      mv.visitMethodInsn(Opcodes.INVOKESTATIC, ByteCodeUtils.getFlashlightStore(config),
-          FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT,
-          FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT_SIGNATURE);
-      // ..., gotTheLock
-    }
-  }
-  
-  private void instrumentAfterTryLockException(
-      final MethodVisitor mv, final MethodCallWrapper wrapper) {
-    if (wrapper.testOriginalName(
-        FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK,
-        FlashlightNames.TRY_LOCK) && config.instrumentAfterTryLock) {
-      // ...
-      ByteCodeUtils.pushBooleanConstant(mv, false);
-      // ..., false
-      wrapper.pushObjectRefForEvent(mv);
-      // ..., false, objRef
-      ByteCodeUtils.pushInClass(mv, atLeastJava5, classNameInternal);
-      // ..., false, objRef, inClass
-      wrapper.pushCallingLineNumber(mv);
-      // ..., false, objRef, inClass, line
-      mv.visitMethodInsn(Opcodes.INVOKESTATIC, ByteCodeUtils.getFlashlightStore(config),
-          FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT,
-          FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT_SIGNATURE);      
-    }
-  }
-  
-  
-  private void instrumentAfterUnlock(final MethodVisitor mv,
-      final MethodCallWrapper wrapper, final boolean releasedTheLock) {
-    if (wrapper.testOriginalName(
-        FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK,
-        FlashlightNames.UNLOCK) && config.instrumentAfterUnlock) {
-      // ...
-      ByteCodeUtils.pushBooleanConstant(mv, releasedTheLock);
-      // ..., gotTheLock
-      wrapper.pushObjectRefForEvent(mv);
-      // ..., gotTheLock, objRef
-      ByteCodeUtils.pushInClass(mv, atLeastJava5, classNameInternal);
-      // ..., gotTheLock, objRef, inClass
-      wrapper.pushCallingLineNumber(mv);
-      // ..., gotTheLock, objRef, inClass, line
-      mv.visitMethodInsn(Opcodes.INVOKESTATIC, ByteCodeUtils.getFlashlightStore(config),
-          FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_RELEASE_ATTEMPT,
-          FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_RELEASE_ATTEMPT_SIGNATURE);      
-    }
   }
 }

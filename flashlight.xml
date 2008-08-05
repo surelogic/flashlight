@@ -10,6 +10,7 @@
 	<property name="test" value="${basedir}/test" />
 
 	<property name="asm.jar" value="${lib}/asm-3.1.jar" />
+	<property name="asm-commons.jar" value="${lib}/asm-commons-3.1.jar" />
 	<property name="servlet.jar" value="${lib}/servlet-2_5-api.jar" />
 
 	<property name="junit.jar" value="${lib}/junit-4.3.1.jar" />
@@ -49,6 +50,7 @@
 			<src path="${src-asm}" />
 			<classpath>
 				<pathelement location="${asm.jar}" />
+				<pathelement location="${asm-commons.jar}" />
 				<pathelement location="${servlet.jar}" />
 			</classpath>
 		</javac>
@@ -56,6 +58,7 @@
 
 	<target name="build-all-jar">
 		<unzip src="${asm.jar}" dest="${classes}" />
+		<unzip src="${asm-commons.jar}" dest="${classes}" />
 		<jar destfile="${flashlight-all.jar}" basedir="${classes}">
 			<manifest>
 			  <attribute name="Manifest-Version" value="1.0"/>
@@ -95,7 +98,7 @@
 			<manifest>
 			  <attribute name="Manifest-Version" value="1.0"/>
   		  <attribute name="Main-Class" value="com.surelogic._flashlight.rewriter.engine.RewriteEngine"/>
-				<attribute name="Class-Path" value="asm-3.1.jar"/>
+				<attribute name="Class-Path" value="asm-3.1.jar asm-commons-3.1.jar"/>
 			</manifest>
 	  </jar>
 	</target>

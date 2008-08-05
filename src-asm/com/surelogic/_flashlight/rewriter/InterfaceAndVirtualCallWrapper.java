@@ -15,7 +15,7 @@ abstract class InterfaceAndVirtualCallWrapper extends MethodCallWrapper {
   
   public InterfaceAndVirtualCallWrapper(final String owner, final String originalName,
       final String originalSignature, final int opcode) {
-    super(owner, originalName, originalSignature, opcode, false);
+    super(opcode, owner, originalName, originalSignature, false);
   }
 
   
@@ -55,12 +55,12 @@ abstract class InterfaceAndVirtualCallWrapper extends MethodCallWrapper {
   }
 
   @Override
-  public final void pushObjectRefForEvent(final MethodVisitor mv) {
+  public final void pushReceiverForEvent(final MethodVisitor mv) {
     mv.visitVarInsn(Opcodes.ALOAD, 0);
   }
 
   @Override
-  public final void pushObjectRefForOriginalMethod(final MethodVisitor mv) {
+  protected final void pushReceiverForOriginalMethod(final MethodVisitor mv) {
     mv.visitVarInsn(Opcodes.ALOAD, 0);
   }
 }

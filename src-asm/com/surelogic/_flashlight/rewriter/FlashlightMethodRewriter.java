@@ -7,12 +7,11 @@ import org.objectweb.asm.MethodAdapter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.commons.LocalVariablesSorter;
 
 import com.surelogic._flashlight.rewriter.ConstructorInitStateMachine.Callback;
 
 final class FlashlightMethodRewriter extends MethodAdapter {
-  private static final String ENCLOSING_THIS_PREFIX = "this$";
-  
   private static final String CLASS_INITIALIZER = "<clinit>";
   private static final String INITIALIZER = "<init>";
   
@@ -37,9 +36,12 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   /** Configuration information, derived from properties. */
   private final Configuration config;
 
-  /** Is the current class at least from Java 5? */
+  /** Is the current classfile at least from Java 5? */
   private final boolean atLeastJava5;
 
+  /** Is the current classfile an interface? */
+  private final boolean inInterface;
+  
   /** The name of the source file that contains the class being rewritten. */
   private final String sourceFileName;
   
@@ -99,14 +101,35 @@ final class FlashlightMethodRewriter extends MethodAdapter {
    */
   private ConstructorInitStateMachine stateMachine = null;
   
+  /**
+   * Local variable sorter used to manage the indices of local variables
+   * so that we can pop arguments off the stack when processing method
+   * calls inside if methods.
+   */
+  private LocalVariablesSorter lvs;
+  
+  
+  
+  public static MethodVisitor create(
+      final int access, final String mname, final String desc,
+      final MethodVisitor mv, final Configuration conf, final boolean java5,
+      final boolean inInt, final String fname, final String nameInternal,
+      final String nameFullyQualified, final Set<MethodCallWrapper> wrappers) {
+    final FlashlightMethodRewriter methodRewriter =
+      new FlashlightMethodRewriter(access, mname, desc, mv,
+          conf, java5, inInt, fname, nameInternal, nameFullyQualified, wrappers);
+    methodRewriter.lvs = new LocalVariablesSorter(access, desc, methodRewriter);
+    return methodRewriter.lvs;
+  }
+  
   
   
   /**
    * Create a new method rewriter.
-   * @param mv
-   *          The {@code MethodVisitor} to delegate to.
    * @param mname
    *          The simple name of the method being rewritten.
+   * @param mv
+   *          The {@code MethodVisitor} to delegate to.
    * @param fname
    *          The name of the source file that contains the class being
    *          rewritten.
@@ -117,14 +140,15 @@ final class FlashlightMethodRewriter extends MethodAdapter {
    * @param wrappers
    *          The set of wrapper methods that this visitor should add to.
    */
-  public FlashlightMethodRewriter(
-      final Configuration conf, final boolean java5, final MethodVisitor mv,
-      final int access, final String mname,
-      final String fname, final String nameInternal, final String nameFullyQualified,
-      final Set<MethodCallWrapper> wrappers) {
+  private FlashlightMethodRewriter(
+      final int access, final String mname, final String desc,
+      final MethodVisitor mv, final Configuration conf, final boolean java5,
+      final boolean inInt, final String fname, final String nameInternal,
+      final String nameFullyQualified, final Set<MethodCallWrapper> wrappers) {
     super(mv);
     config = conf;
     atLeastJava5 = java5;
+    inInterface = inInt;
     wasSynchronized = (access & Opcodes.ACC_SYNCHRONIZED) != 0;
     isStatic = (access & Opcodes.ACC_STATIC) != 0;
     methodName = mname;
@@ -212,7 +236,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   public void visitMethodInsn(final int opcode, final String owner,
       final String name, final String desc) {
     if (opcode == Opcodes.INVOKEVIRTUAL && config.rewriteInvokevirtual) {
-      rewriteMethodCall(opcode, owner, name, desc);
+      rewriteMethodCall(Opcodes.INVOKEVIRTUAL, owner, name, desc);
     } else if (opcode == Opcodes.INVOKESPECIAL && config.rewriteInvokespecial) {
       if (!name.equals(FlashlightNames.CONSTRUCTOR)) {
         rewriteMethodCall(Opcodes.INVOKESPECIAL, owner, name, desc);
@@ -470,17 +494,6 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   // =========================================================================
   // == Rewrite field accesses
   // =========================================================================
-
-  /**
-   * Is the field a compiler-generated <code>this$</code> field used by nested
-   * classes?  We should really be checking whether the field is synthetic,
-   * but that would require linking.
-   */
-  private static boolean isEnclosingThisField(final String name) {
-    return name.startsWith(ENCLOSING_THIS_PREFIX);
-  }
-  
-  
   
   /**
    * Rewrite a {@code PUTFIELD} instruction.
@@ -495,8 +508,15 @@ final class FlashlightMethodRewriter extends MethodAdapter {
    */
   private void rewritePutfield(
       final String owner, final String name, final String desc) {
-    if (isEnclosingThisField(name)) {
-      /* Don't instrument enclosing this references */
+    /* If we are in a constructor and we have not yet been initialized then
+     * don't instrument the field because we cannot pass the receiver to the
+     * Store in an uninitialized state. (The constructors for inner classes have
+     * the inits of the "this$" and "val$" fields before the super constructor
+     * call.) It's not a big deal that we have missing instrumentation for these
+     * fields because they are introduced by the compiler and are not directly
+     * accessible by the programmer.
+     */
+    if (isConstructor && stateMachine != null) {
       mv.visitFieldInsn(Opcodes.PUTFIELD, owner, name, desc);
       return;
     }
@@ -574,11 +594,11 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   private void rewriteGetfield(
       final String owner, final String name, final String desc) {
     final String fullyQualifiedOwner = ByteCodeUtils.internal2FullyQualified(owner);
-    if (isEnclosingThisField(name)) {
-      /* Don't instrument enclosing this references */
-      mv.visitFieldInsn(Opcodes.GETFIELD, owner, name, desc);
-      return;
-    }
+//    if (isEnclosingThisField(name)) {
+//      /* Don't instrument enclosing this references */
+//      mv.visitFieldInsn(Opcodes.GETFIELD, owner, name, desc);
+//      return;
+//    }
 
     // Stack is "..., objectref"
     
@@ -1006,28 +1026,47 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   
   private void rewriteMethodCall(final int opcode,
       final String owner, final String name, final String desc) {
-    /* Create the wrapper method information and add it to the list of wrappers */
-    final MethodCallWrapper wrapper;
-    if (opcode == Opcodes.INVOKESPECIAL) {
-      wrapper = new SpecialCallWrapper(owner, name, desc);
-    } else if (opcode == Opcodes.INVOKESTATIC){
-      wrapper = new StaticCallWrapper(owner, name, desc);
-    } else if (opcode == Opcodes.INVOKEINTERFACE) {
-      wrapper = new InterfaceCallWrapper(owner, name, desc);
-    } else { // virtual call
-      wrapper = new VirtualCallWrapper(owner, name, desc);
+    if (!inInterface) {
+      /* Create the wrapper method information and add it to the list of wrappers */
+      final MethodCallWrapper wrapper;
+      if (opcode == Opcodes.INVOKESPECIAL) {
+        wrapper = new SpecialCallWrapper(owner, name, desc);
+      } else if (opcode == Opcodes.INVOKESTATIC){
+        wrapper = new StaticCallWrapper(owner, name, desc);
+      } else if (opcode == Opcodes.INVOKEINTERFACE) {
+        wrapper = new InterfaceCallWrapper(owner, name, desc);
+      } else { // virtual call
+        wrapper = new VirtualCallWrapper(owner, name, desc);
+      }
+      
+      wrapperMethods.add(wrapper);
+      
+      // ..., [objRef], arg1, ..., argN
+      mv.visitLdcInsn(methodName);
+      // ..., [objRef], arg1, ..., argN, callingMethodName    
+      ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
+      // ..., [objRef], arg1, ..., argN, callingMethodName, sourceLine
+      wrapper.invokeWrapperMethod(mv, classBeingAnalyzedInternal);
+      // ..., [returnVlaue]
+      
+      updateStackDepthDelta(2);
+    } else {
+      final InPlaceMethodInstrumentation methodCall;
+      if (opcode == Opcodes.INVOKESTATIC) {
+        methodCall = new InPlaceStaticMethodInstrumentation(
+            opcode, owner, name, desc, methodName, currentSrcLine);
+      } else {
+        methodCall = new InPlaceInstanceMethodInstrumentation(
+            opcode, owner, name, desc, methodName, currentSrcLine, lvs);
+      }
+      
+      final MethodCallInstrumenter instrumenter = new MethodCallInstrumenter(
+          config, mv, methodCall, atLeastJava5, sourceFileName,
+          classBeingAnalyzedInternal);
+      methodCall.popReceiverAndArguments(mv);
+      instrumenter.instrumentMethodCall();
+      
+      updateStackDepthDelta(7);
     }
-    
-    wrapperMethods.add(wrapper);
-    
-    // ..., [objRef], arg1, ..., argN
-    mv.visitLdcInsn(methodName);
-    // ..., [objRef], arg1, ..., argN, callingMethodName    
-    ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
-    // ..., [objRef], arg1, ..., argN, callingMethodName, sourceLine
-    wrapper.invokeWrapperMethod(mv, classBeingAnalyzedInternal);
-    // ..., [returnVlaue]
-    
-    updateStackDepthDelta(2);
   }
 }

@@ -8,8 +8,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Properties;
+import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
@@ -23,6 +25,7 @@ import org.objectweb.asm.ClassWriter;
 
 import com.surelogic._flashlight.rewriter.Configuration;
 import com.surelogic._flashlight.rewriter.FlashlightClassRewriter;
+import com.surelogic._flashlight.rewriter.MethodIdentifier;
 
 /**
  * Class that encapsulates the ability to instrument sets of classfiles.  Supports
@@ -89,25 +92,15 @@ public final class RewriteEngine {
       if (nextIn.isDirectory()) {
         rewriteDirectory(nextIn, nextOut);
       } else {
-        final BufferedInputStream bis =
-          new BufferedInputStream(new FileInputStream(nextIn));
-        final BufferedOutputStream bos =
-          new BufferedOutputStream(new FileOutputStream(nextOut));
+        final BufferedOutputStream bos = new BufferedOutputStream(
+            new FileOutputStream(nextOut));
         try {
-          if (isClassfileName(name)) {
-            messenger.message("Rewriting classfile " + nextIn);
-            rewriteClassfileStream(bis, bos);
-          } else {
-            messenger.message("Copying file unchanged " + nextIn);
-            copyStream(bis, bos);
-          }
+          rewriteFileStream(new RewriteHelper() {
+            public InputStream getInputStream() throws IOException {
+              return new BufferedInputStream(new FileInputStream(nextIn));
+            }
+          }, nextIn.getPath(), bos);
         } finally {
-          // Close the files to be tidy
-          try {
-            bis.close();
-          } catch (final IOException e) {
-            // Doesn't want to close, what can we do?
-          }
           try {
             bos.close();
           } catch (final IOException e) {
@@ -117,8 +110,6 @@ public final class RewriteEngine {
       }
     }
   }
-
-
 
   /**
    * Process the files in the given JAR file {@code inJarFile}, writing to the
@@ -160,18 +151,12 @@ public final class RewriteEngine {
            */
           if (!entryName.equals(JarFile.MANIFEST_NAME)) {
             final JarEntry jarEntryOut = copyJarEntry(jarEntryIn);
-            jarOut.putNextEntry(jarEntryOut);          
-            final BufferedInputStream entryStream =
-              new BufferedInputStream(jarFile.getInputStream(jarEntryIn));
-            
-            if (isClassfileName(entryName)) {
-              messenger.message("Rewriting classfile " + entryName);
-              rewriteClassfileStream(entryStream, jarOut);
-            } else {
-              // Just copy the file unchanged
-              messenger.message("Copying " + entryName + " unchanged");
-              copyStream(entryStream, jarOut);
-            }
+            jarOut.putNextEntry(jarEntryOut);
+            rewriteFileStream(new RewriteHelper() {
+              public InputStream getInputStream() throws IOException {
+                return new BufferedInputStream(jarFile.getInputStream(jarEntryIn));
+              }
+            }, entryName, jarOut);
           }
         }
       } finally {
@@ -191,8 +176,6 @@ public final class RewriteEngine {
       }
     }
   }
-
-
 
   /**
    * Process the files in the given JAR file {@code inJarFile}, writing them to
@@ -238,9 +221,6 @@ public final class RewriteEngine {
         
         /* Skip the manifest file, it has already been written above */
         if (!entryName.equals(JarFile.MANIFEST_NAME)) {
-          final BufferedInputStream entryStream =
-            new BufferedInputStream(jarFile.getInputStream(jarEntryIn));
-          
           final File outFile = composeFile(outDir, entryName);
           if (jarEntryIn.isDirectory()) {
             if (!outFile.exists()) outFile.mkdirs();
@@ -252,14 +232,11 @@ public final class RewriteEngine {
             final BufferedOutputStream bos = 
               new BufferedOutputStream(new FileOutputStream(outFile));
             try {
-              if (isClassfileName(entryName)) {
-                messenger.message("Rewriting classfile " + entryName);
-                rewriteClassfileStream(entryStream, bos);
-              } else {
-                // Just copy the file unchanged
-                messenger.message("Copying " + entryName + " unchanged");
-                copyStream(entryStream, bos);
-              }
+              rewriteFileStream(new RewriteHelper() {
+                public InputStream getInputStream() throws IOException {
+                  return new BufferedInputStream(jarFile.getInputStream(jarEntryIn));
+                }
+              }, entryName, bos);
             } finally {
               // Close the output stream if possible
               try {
@@ -280,22 +257,94 @@ public final class RewriteEngine {
       }
     }
   }
+
+  public static interface RewriteHelper {
+    public InputStream getInputStream() throws IOException;
+  }
+  
+  public void rewriteFileStream(final RewriteHelper helper, 
+      final String fname, final OutputStream outFile)
+      throws IOException {
+    if (isClassfileName(fname)) {
+      messenger.info(0, "Rewriting classfile " + fname);
+      rewriteClassfileStream(fname, helper, outFile);
+    } else {
+      messenger.info(0, "Copying file unchanged " + fname);
+      final InputStream inStream = helper.getInputStream();
+      try {
+        copyStream(inStream, outFile);
+      } finally {
+        try {
+          inStream.close();
+        } catch (final IOException e) {
+          // Doesn't want to close, what can we do?
+        }
+      }
+    }          
+  }
+  
+  public void rewriteClassfileStream(final String classname,
+      final RewriteHelper helper, final OutputStream outClassfile)
+      throws IOException {
+    boolean done = false;
+    Set<MethodIdentifier> badMethods =
+      Collections.<MethodIdentifier>emptySet();
+    while (!done) {
+      final InputStream inClassfile = helper.getInputStream();
+      try {
+        tryToRewriteClassfileStream(inClassfile, outClassfile, badMethods);
+        done = true;
+      } catch (final OversizedMethodsException e) {
+        badMethods = e.getOversizedMethods();
+        for (final MethodIdentifier id : badMethods) {
+          messenger.warning(1, "Instrumentation causes method " + id.name
+              + " in " + classname + " to be too large.  Skipping.");
+        }
+      } finally {
+        try {
+          inClassfile.close();
+        } catch (final IOException e) {
+          // Doesn't want to close, what can we do?
+        }
+      }
+    }
+  }
   
   /**
    * Given an input stream for a classfile, write an instrumented version of the
-   * classfile to the given output stream.
+   * classfile to the given output stream, ignoring the given methods.
    * 
+   * @param inClassfile
+   *          The stream to read the input class file from.
+   * @param outClassfile
+   *          The stream to write the instrumented class file to.
+   * @param ignoreMethods
+   *          The set of methods that should not be instrumented.
    * @throws IOException
    *           Thrown if there is a problem with any of the streams.
+   * @throws OversizedMethodsException
+   *           Thrown if any of the methods would become oversized were the
+   *           instrumentation applied. When this is thrown, the instrumented
+   *           version of the class is not written to the output stream.
+   *           Specifically, nothing is written to the output stream when this
+   *           exception is thrown.
    */
-  private void rewriteClassfileStream(
-      final InputStream inClassfile, final OutputStream outClassfile)
-      throws IOException {
+  private void tryToRewriteClassfileStream(
+      final InputStream inClassfile, final OutputStream outClassfile,
+      final Set<MethodIdentifier> ignoreMethods)
+      throws IOException, OversizedMethodsException {
     final ClassReader input = new ClassReader(inClassfile);
     final ClassWriter output = new ClassWriter(input, 0);
-    final FlashlightClassRewriter xformer = new FlashlightClassRewriter(config, output);
+    final FlashlightClassRewriter xformer =
+      new FlashlightClassRewriter(config, output, ignoreMethods);
     input.accept(xformer, 0);
-    outClassfile.write(output.toByteArray());
+    final Set<MethodIdentifier> badMethods = xformer.getOversizedMethods();
+    if (!badMethods.isEmpty()) {
+      throw new OversizedMethodsException(
+          "Instrumentation generates oversized methods", badMethods);
+    } else {
+      outClassfile.write(output.toByteArray());
+    }
   }
   
   /**

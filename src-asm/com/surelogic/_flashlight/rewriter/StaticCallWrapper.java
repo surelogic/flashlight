@@ -15,7 +15,7 @@ public final class StaticCallWrapper extends MethodCallWrapper {
   
   public StaticCallWrapper(final String owner, final String originalName,
       final String originalSignature) {
-    super(owner, originalName, originalSignature, Opcodes.INVOKESTATIC, false);
+    super(Opcodes.INVOKESTATIC, owner, originalName, originalSignature, false);
   }
 
   
@@ -55,12 +55,12 @@ public final class StaticCallWrapper extends MethodCallWrapper {
   }
 
   @Override
-  public void pushObjectRefForEvent(MethodVisitor mv) {
+  public void pushReceiverForEvent(MethodVisitor mv) {
     mv.visitInsn(Opcodes.ACONST_NULL);
   }
 
   @Override
-  public void pushObjectRefForOriginalMethod(MethodVisitor mv) {
+  protected void pushReceiverForOriginalMethod(MethodVisitor mv) {
     // do nothing
   }
 

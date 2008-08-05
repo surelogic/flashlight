@@ -10,12 +10,10 @@ import org.objectweb.asm.Type;
 
 /**
  * Abstract representation of the wrapper method that is generated to replace
- * method calls.  Primarily encapsulates differences in whether the method is static or not,
- * and differences in parameters.
- * 
- * @author aarong
+ * method calls. Primarily encapsulates differences in whether the method is
+ * static or not, and differences in parameters.
  */
-abstract class MethodCallWrapper {
+abstract class MethodCallWrapper extends MethodCall {
   private static final String WRAPPER_NAME_TEMPLATE = "flashlight${0}${1}${2,choice,0#virtual|1#special|2#static|3#interface}Wrapper";
   private static final char INTERNAL_NAME_SEPARATOR = '/';
   private static final char UNDERSCORE = '_';
@@ -27,15 +25,9 @@ abstract class MethodCallWrapper {
         return o1.identityString.compareTo(o2.identityString);
       }
     };
-    
-  
   
   protected final String wrapperName;
-  protected final String wrapperSignature;
-  protected final String owner;
-  protected final String originalName;
-  protected final String originalSignature;
-  protected final int opcode;
+  protected final String wrapperDescriptor;
   
   private final String identityString;
   private final int hashCode;
@@ -52,27 +44,33 @@ abstract class MethodCallWrapper {
   
   
   
-  public MethodCallWrapper(final String owner, final String originalName,
-      final String originalSignature, final int opcode, final boolean isInstance) {
+  /**
+   * 
+   * @param opcode The opcode used to invoke the original method.
+   * @param owner The owner of the original method.
+   * @param originalName The name of the original method.
+   * @param originalDesc The descriptor of the original method.
+   * @param isInstance Should the wrapper method be an instance method?
+   */
+  public MethodCallWrapper(final int opcode, final String owner,
+      final String originalName, final String originalDesc,
+      final boolean isInstance) {
+    super(opcode, owner, originalName, originalDesc);
     final String ownerUnderscored = owner.replace(INTERNAL_NAME_SEPARATOR, UNDERSCORE);
-    final int endOfArgs = originalSignature.lastIndexOf(END_OF_ARGS);
-    final String originalArgs = originalSignature.substring(1, endOfArgs);
-    final String originalReturn = originalSignature.substring(endOfArgs + 1);
+    final int endOfArgs = originalDesc.lastIndexOf(END_OF_ARGS);
+    final String originalArgs = originalDesc.substring(1, endOfArgs);
+    final String originalReturn = originalDesc.substring(endOfArgs + 1);
 
     this.wrapperName = MessageFormat.format(WRAPPER_NAME_TEMPLATE,
         ownerUnderscored, originalName, (opcode - Opcodes.INVOKEVIRTUAL));
-    this.wrapperSignature = createWrapperMethodSignature(owner, originalArgs, originalReturn);
-    this.owner = owner;
-    this.originalName = originalName;
-    this.originalSignature = originalSignature;
-    this.opcode = opcode;
+    this.wrapperDescriptor = createWrapperMethodSignature(owner, originalArgs, originalReturn);
     
-    this.identityString = owner + originalName + originalSignature + opcode;
+    this.identityString = owner + originalName + originalDesc + opcode;
     this.hashCode = identityString.hashCode();
     
-    this.originalArgTypes = Type.getArgumentTypes(originalSignature);
+    this.originalArgTypes = Type.getArgumentTypes(originalDesc);
 
-    final Type[] wrapperArgTypes = Type.getArgumentTypes(wrapperSignature);
+    final Type[] wrapperArgTypes = Type.getArgumentTypes(wrapperDescriptor);
     wrapperArgsToLocals = new int[wrapperArgTypes.length];
     int nextLocalVariable = isInstance ? 1 : 0;
     for (int i = 0; i < wrapperArgTypes.length; i++ ) {
@@ -85,7 +83,7 @@ abstract class MethodCallWrapper {
     callingMethodNamePos = getCallingMethodNamePosition(originalArgTypes.length);
     callingLineNumberPos = getCallingLineNumberPosition(originalArgTypes.length);
     
-    originalReturnType = Type.getReturnType(originalSignature);
+    originalReturnType = Type.getReturnType(originalDesc);
   }
   
   @Override
@@ -134,17 +132,8 @@ abstract class MethodCallWrapper {
   
   protected abstract int getCallingLineNumberPosition(int numOriginalArgs);
   
+  protected abstract void pushReceiverForOriginalMethod(MethodVisitor mv);
 
-  
-  public final boolean testOriginalName(final String testOwner, final String testName) {
-    return owner.equals(testOwner) && originalName.equals(testName);
-  }
-  
-  public final boolean testOriginalSignature(final String testSignature) {
-    return originalSignature.equals(testSignature);
-  }
-
-  
   
   public final int getNumLocals() {
     return numWrapperLocals;
@@ -153,22 +142,22 @@ abstract class MethodCallWrapper {
   
   
   public final MethodVisitor createMethodHeader(final ClassVisitor cv) {
-    return cv.visitMethod(getAccess(), wrapperName, wrapperSignature, null, null);
+    return cv.visitMethod(getAccess(), wrapperName, wrapperDescriptor, null, null);
   }
   
-  public abstract void pushObjectRefForEvent(MethodVisitor mv);
-
-  public abstract void pushObjectRefForOriginalMethod(MethodVisitor mv);
-  
+  @Override
   public final void pushCallingMethodName(final MethodVisitor mv) {
     mv.visitVarInsn(Opcodes.ALOAD, wrapperArgsToLocals[callingMethodNamePos]);
   }
   
+  @Override
   public final void pushCallingLineNumber(final MethodVisitor mv) {
     mv.visitVarInsn(Opcodes.ILOAD, wrapperArgsToLocals[callingLineNumberPos]);
   }
   
-  public final void pushOriginalArguments(final MethodVisitor mv) {
+  @Override
+  public final void pushReceiverAndArguments(final MethodVisitor mv) {
+    pushReceiverForOriginalMethod(mv);
     for (int i = 0; i < originalArgTypes.length; i++) {
       mv.visitVarInsn(originalArgTypes[i].getOpcode(Opcodes.ILOAD),
           wrapperArgsToLocals[firstOriginalArgPos + i]);
@@ -178,14 +167,10 @@ abstract class MethodCallWrapper {
   public final void invokeWrapperMethod(
       final MethodVisitor mv, final String classBeingAnalyzed) {
     mv.visitMethodInsn(getWrapperMethodOpcode(), classBeingAnalyzed,
-        wrapperName, wrapperSignature);
+        wrapperName, wrapperDescriptor);
   }
   
   protected abstract int getWrapperMethodOpcode();
-  
-  public final void invokeOriginalMethod(final MethodVisitor mv) {
-    mv.visitMethodInsn(opcode, owner, originalName, originalSignature);
-  }
   
   public final void methodReturn(final MethodVisitor mv) {
     mv.visitInsn(originalReturnType.getOpcode(Opcodes.IRETURN));

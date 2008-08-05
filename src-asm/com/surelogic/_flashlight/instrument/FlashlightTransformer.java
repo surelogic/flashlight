@@ -1,19 +1,21 @@
 package com.surelogic._flashlight.instrument;
 
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.security.ProtectionDomain;
 import java.util.StringTokenizer;
 
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassWriter;
-
-import com.surelogic._flashlight.rewriter.FlashlightClassRewriter;
 import com.surelogic._flashlight.rewriter.Configuration;
+import com.surelogic._flashlight.rewriter.engine.AbstractIndentingMessager;
+import com.surelogic._flashlight.rewriter.engine.RewriteEngine;
+import com.surelogic._flashlight.rewriter.engine.RewriteEngine.RewriteHelper;
 import com.surelogic._flashlight.rewriter.runtime.Log;
 
 final class FlashlightTransformer implements ClassFileTransformer {
@@ -21,12 +23,24 @@ final class FlashlightTransformer implements ClassFileTransformer {
   
   private final Log theLog;
   private final File rewriteCache;
-  private final Configuration rewriterConfig;
+  private final RewriteEngine rewriteEngine;
   
-  public FlashlightTransformer(final Log log, final String rcn, final Configuration rp) {
+  public FlashlightTransformer(final Log log, final String rcn, final Configuration config) {
     theLog = log;
     rewriteCache = (rcn == null) ? null : new File(rcn);
-    rewriterConfig = rp;
+    rewriteEngine = new RewriteEngine(config, new AbstractIndentingMessager() {
+      public void error(int nesting, String message) {
+        theLog.log(indentMessage(nesting, "ERROR: " + message));
+      }
+
+      public void info(int nesting, String message) {
+        theLog.log(indentMessage(nesting, message));
+      }
+
+      public void warning(int nesting, String message) {
+        theLog.log(indentMessage(nesting, "WARNING: " + message));
+      }
+    });      
   }
   
   public byte[] transform(final ClassLoader loader, final String className,
@@ -39,14 +53,20 @@ final class FlashlightTransformer implements ClassFileTransformer {
     }
     if (isTransformable(className)) {
       theLog.log("Transforming class " + className + " (loaded by " + getLoaderName(loader) + ")");
-      final ClassReader input = new ClassReader(classfileBuffer);
-      final ClassWriter output = new ClassWriter(input, 0);
-      final FlashlightClassRewriter xformer = new FlashlightClassRewriter(rewriterConfig, output);
-      input.accept(xformer, 0);
-      final byte[] newClass = output.toByteArray();    
-      if (rewriteCache != null) {
-        cacheClassfile(className, newClass);
+      final ByteArrayOutputStream output =
+        new ByteArrayOutputStream(classfileBuffer.length<<1);
+      try {
+        rewriteEngine.rewriteClassfileStream(className, new RewriteHelper() {
+          public InputStream getInputStream() {
+            return new ByteArrayInputStream(classfileBuffer);
+          }
+        }, output);
+      } catch (final IOException e) {
+        theLog.log(e);
       }
+      
+      final byte[] newClass = output.toByteArray();    
+      if (rewriteCache != null) cacheClassfile(className, newClass);
       return newClass;
     } else {
       theLog.log("Skipping class " + className + " (loaded by " + loader.getClass().getName() + ")");

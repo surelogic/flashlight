@@ -11,7 +11,7 @@ import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Task;
 
 import com.surelogic._flashlight.rewriter.Configuration;
-import com.surelogic._flashlight.rewriter.engine.EngineMessenger;
+import com.surelogic._flashlight.rewriter.engine.AbstractIndentingMessager;
 import com.surelogic._flashlight.rewriter.engine.RewriteEngine;
 
 
@@ -331,7 +331,7 @@ public final class FLInstrument extends Task {
     checkParameters();
     
     final Configuration config = new Configuration(properties);
-    final AntLogMessenger messenger = new AntLogMessenger(Project.MSG_VERBOSE);
+    final AntLogMessenger messenger = new AntLogMessenger();
     final RewriteEngine engine = new RewriteEngine(config, messenger);
     
     for (final Directory dir : dirsToInstrument) {
@@ -380,21 +380,23 @@ public final class FLInstrument extends Task {
 
   /**
    * Messenger for the Rewrite Engine that directs engine messages to the
-   * ANT log at the specificed logging level.
+   * ANT log.
    */
-  private final class AntLogMessenger implements EngineMessenger {
-    private final int logLevel;
-    
-    /**
-     * Creates a new messenger that sends the messages to the ANT log.
-     * @param level The ANT log level to use.
-     */
-    public AntLogMessenger(final int level) {
-      logLevel = level;
+  private final class AntLogMessenger extends AbstractIndentingMessager {
+    public AntLogMessenger() {
+      super("    ");
     }
     
-    public void message(final String message) {
-      FLInstrument.this. log(message, logLevel);
+    public void error(final int nesting, final String message) {
+      FLInstrument.this. log(indentMessage(nesting + 1, message), Project.MSG_ERR);
+    }
+    
+    public void warning(final int nesting, final String message) {
+      FLInstrument.this. log(indentMessage(nesting + 1, message), Project.MSG_WARN);
+    }
+    
+    public void info(final int nesting, final String message) {
+      FLInstrument.this. log(indentMessage(nesting + 1, message), Project.MSG_VERBOSE);
     }
   }
 }

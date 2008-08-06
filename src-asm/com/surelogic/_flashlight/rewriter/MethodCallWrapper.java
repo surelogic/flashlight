@@ -56,14 +56,15 @@ abstract class MethodCallWrapper extends MethodCall {
       final String originalName, final String originalDesc,
       final boolean isInstance) {
     super(opcode, owner, originalName, originalDesc);
-    final String ownerUnderscored = owner.replace(INTERNAL_NAME_SEPARATOR, UNDERSCORE);
+    final String ownerUnderscored = fixOwnerNameForMethodName(owner);
     final int endOfArgs = originalDesc.lastIndexOf(END_OF_ARGS);
     final String originalArgs = originalDesc.substring(1, endOfArgs);
     final String originalReturn = originalDesc.substring(endOfArgs + 1);
 
     this.wrapperName = MessageFormat.format(WRAPPER_NAME_TEMPLATE,
         ownerUnderscored, originalName, (opcode - Opcodes.INVOKEVIRTUAL));
-    this.wrapperDescriptor = createWrapperMethodSignature(owner, originalArgs, originalReturn);
+    this.wrapperDescriptor = createWrapperMethodSignature(
+        fixOwnerNameForDescriptor(owner), originalArgs, originalReturn);
     
     this.identityString = owner + originalName + originalDesc + opcode;
     this.hashCode = identityString.hashCode();
@@ -85,6 +86,49 @@ abstract class MethodCallWrapper extends MethodCall {
     
     originalReturnType = Type.getReturnType(originalDesc);
   }
+  
+  /**
+   * Fix the owner name that is suitable to use in the generated method name.
+   * Converts and "/" to "_".  We also have to handle the crazy case of the 
+   * owner being an array, which can happen in the case of the "clone" method.
+   * In that case, we turn each leading "[" into "arrayOf_".  We also expand out
+   * any of the single character descriptors for primitive types, and discard 
+   * the "L" and ";" around class names.
+   */
+  private static String fixOwnerNameForMethodName(final String inOwner) {
+    if (inOwner.charAt(0) == '[') {
+      final StringBuilder sb = new StringBuilder();
+      int index = 0;
+      while (inOwner.charAt(index) == '[') {
+        sb.append("arrayOf_");
+        index += 1;
+      }
+      final char type = inOwner.charAt(index);
+      if (type == 'B') { sb.append("byte"); }
+      else if (type == 'C') { sb.append("char"); }
+      else if (type == 'D') { sb.append("double"); }
+      else if (type == 'F') { sb.append("float"); }
+      else if (type == 'I') { sb.append("int"); }
+      else if (type == 'J') { sb.append("long"); }
+      else if (type == 'L') {
+        sb.append(inOwner.substring(index + 1, inOwner.length() - 1).replace(
+            INTERNAL_NAME_SEPARATOR, UNDERSCORE));
+      } else if (type == 'S') { sb.append("short"); }
+      else if (type == 'Z') { sb.append("boolean"); }
+      return sb.toString();
+    } else {
+      return inOwner.replace(INTERNAL_NAME_SEPARATOR, UNDERSCORE);
+    }
+  }  
+  
+  private static String fixOwnerNameForDescriptor(final String inOwner) {
+    if (inOwner.charAt(0) == '[') {
+      return inOwner;
+    } else {
+      return "L" + inOwner + ";";
+    }
+  }
+  
   
   @Override
   public final boolean equals(final Object o) {

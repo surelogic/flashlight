@@ -141,7 +141,7 @@
    
       <!-- UI for entering ad hoc queries -->
 		<view allowMultiple="false" category="com.surelogic.flashlight.Flashlight"
-			class="com.surelogic.adhoc.views.AdHocQueryView"
+			class="com.surelogic.flashlight.client.eclipse.views.adhoc.FlashlightAdHocQueryView"
 			icon="platform:/plugin/com.surelogic.common/src/com/surelogic/common/images/query.gif"
 			id="com.surelogic.flashlight.AdHocQueryView" name="Query Flashlight">
 		</view>
@@ -150,12 +150,5 @@
 			icon="platform:/plugin/com.surelogic.common/src/com/surelogic/common/images/query.gif"
 			id="com.surelogic.flashlight.AdHocQueryView.Results" name="Query Results">
 		</view>
-	</extension>
-   
-   <!-- Extension point to use ad hoc query UI -->
-	<extension point="com.surelogic.adhoc.eclipse.query">
-		<instance adHocQueryViewId="com.surelogic.flashlight.AdHocQueryView"
-			class="com.surelogic.flashlight.client.eclipse.AdHocGlue">
-		</instance>
 	</extension>
 </plugin>

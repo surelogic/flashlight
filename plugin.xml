@@ -145,6 +145,11 @@
 			icon="platform:/plugin/com.surelogic.common/src/com/surelogic/common/images/query.gif"
 			id="com.surelogic.flashlight.AdHocQueryView" name="Query Flashlight">
 		</view>
+		<view allowMultiple="false" category="com.surelogic.flashlight.Flashlight"
+			class="com.surelogic.adhoc.views.editor.QueryEditorView"
+			icon="platform:/plugin/com.surelogic.common/src/com/surelogic/common/images/query.gif"
+			id="com.surelogic.adhoc.views.editor.QueryEditorView" name="New Query Flashlight">
+		</view>
 		<view allowMultiple="true" category="com.surelogic.flashlight.Flashlight"
 			class="com.surelogic.adhoc.views.AdHocQueryResultsView"
 			icon="platform:/plugin/com.surelogic.common/src/com/surelogic/common/images/query.gif"

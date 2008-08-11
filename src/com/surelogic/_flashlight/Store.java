@@ -227,10 +227,11 @@ public final class Store {
 			 * Initialize final static fields. If Flashlight is off these fields
 			 * are all set to null to save memory.
 			 */
-			final File flashlightDir = new File(StoreConfiguration
-					.getDirectory());
-			if (!flashlightDir.exists())
+			final File flashlightDir =
+			  new File(StoreConfiguration.getDirectory());
+			if (!flashlightDir.exists()) {
 				flashlightDir.mkdirs();
+			}
 			// ??? What to do if mkdirs() fails???
 			final StringBuilder fileName = new StringBuilder();
 			fileName.append(flashlightDir);

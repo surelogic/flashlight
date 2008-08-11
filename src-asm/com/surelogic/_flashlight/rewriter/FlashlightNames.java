@@ -9,7 +9,6 @@ import org.objectweb.asm.Opcodes;
  */
 final class FlashlightNames {
   public static final String FLASHLIGHT_STORE = "com/surelogic/_flashlight/Store";
-  public static final String FLASHLIGHT_DEBUG_STORE = "com/surelogic/_flashlight/rewriter/test/DebugStore";
   
   public static final String AFTER_INTRINSIC_LOCK_ACQUISITION = "afterIntrinsicLockAcquisition";
   public static final String AFTER_INTRINSIC_LOCK_ACQUISITION_SIGNATURE = "(Ljava/lang/Object;Ljava/lang/Class;I)V";
@@ -48,7 +47,10 @@ final class FlashlightNames {
   public static final String FLASHLIGHT_RUNTIME_SUPPORT = "com/surelogic/_flashlight/rewriter/runtime/FlashlightRuntimeSupport";
   public static final String REPORT_FATAL_ERROR = "reportFatalError";
   public static final String REPORT_FATAL_ERROR_SIGNATURE = "(Ljava/lang/Exception;)V";
-  
+
+  public static final String GET_CLASS = "getClass";
+  public static final String GET_CLASS_SIGNATURE = "(Ljava/lang/String;)Ljava/lang/Class;";
+
   public static final String GET_FIELD = "getField";
   public static final String GET_FIELD_SIGNATURE = "(Ljava/lang/Class;Ljava/lang/String;)Ljava/lang/reflect/Field;";
   
@@ -65,10 +67,6 @@ final class FlashlightNames {
   public static final String WAIT_SIGNATURE_2_ARGS = "(JI)V";
   
   public static final String JAVA_LANG_CLASS = "java/lang/Class";
-  public static final String FOR_NAME = "forName";
-  public static final String FOR_NAME_SIGNATURE = "(Ljava/lang/String;)Ljava/lang/Class;";
-//  public static final String GET_DECLARED_FIELD = "getDeclaredField";
-//  public static final String GET_DECLARED_FIELD_SIGNATURE = "(Ljava/lang/String;)Ljava/lang/reflect/Field;";
 
   public static final String JAVA_LANG_CLASS_NOT_FOUND_EXCEPTION = "java/lang/ClassNotFoundException";
   

@@ -1,6 +1,8 @@
 package com.surelogic._flashlight.rewriter.runtime;
 
 import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Helper methods to support Flashlight transformations at runtime.
@@ -8,6 +10,11 @@ import java.lang.reflect.Field;
  * @author aarong
  */
 public final class FlashlightRuntimeSupport {
+  private static Map<Class, Map<String, Field>> classToNameToField =
+    new HashMap<Class, Map<String, Field>>();
+
+  private static Map<String, Class<?>> classes = new HashMap<String, Class<?>>();
+
   private static Log theLog = new Log() {
     public void log(final String message) {
       System.err.println(message);
@@ -48,26 +55,46 @@ public final class FlashlightRuntimeSupport {
   }
   
   
+  public static synchronized Class<?>getClass(final String className) 
+      throws ClassNotFoundException {
+    Class<?> clazz = classes.get(className);
+    if (clazz == null) {
+      clazz = Class.forName(className);
+      classes.put(className, clazz);
+    }
+    return clazz;
+  }
   
-//  private static Map<String, Field> fieldCache = new HashMap<String, Field>();
   
   /**
    * Get the Field object for the named field, starting the search with the
    * given class Object.
    */
-  public static synchronized Field getField(final Class root, final String fname) 
-  throws NoSuchFieldException {
-//    final String key = root.getCanonicalName() + "#" + fname;
-//    Field f = fieldCache.get(key);
-//    if (f != null) {
-//      return f;
-//    }
-    
+  public static synchronized Field getField(final Class root, final String fname)
+      throws NoSuchFieldException {
+    Map<String, Field> nameToField = classToNameToField.get(root);
+    if (nameToField == null) {
+      nameToField = new HashMap<String, Field>();
+      classToNameToField.put(root, nameToField);
+      final Field field = getFieldInternal(root, fname);
+      nameToField.put(fname, field);
+      return field;
+    } else {
+      Field field = nameToField.get(fname);
+      if (field == null) {
+        field = getFieldInternal(root, fname);
+        nameToField.put(fname, field);
+      }
+      return field;
+    }
+  }
+  
+  private static Field getFieldInternal(final Class root, final String fname) 
+      throws NoSuchFieldException {
     try {
       /* Hopefully the field is local. */
       final Field f = root.getDeclaredField(fname);
       // Won't get here if the field is not found
-//      fieldCache.put(key, f);
       return f;
     } catch(final NoSuchFieldException e) {
       // Fall through to try super class and interfaces 
@@ -76,7 +103,7 @@ public final class FlashlightRuntimeSupport {
     final Class superClass = root.getSuperclass();
     if (superClass != null) {
       try {
-        return getField(superClass, fname);
+        return getFieldInternal(superClass, fname);
       } catch (final NoSuchFieldException e) {
         // fall through to check interfaces
       }
@@ -85,7 +112,7 @@ public final class FlashlightRuntimeSupport {
     final Class[] interfaces = root.getInterfaces();
     for (final Class i : interfaces) {
       try {
-        return getField(i, fname);
+        return getFieldInternal(i, fname);
       } catch (final NoSuchFieldException e) {
         // try next interface
       }

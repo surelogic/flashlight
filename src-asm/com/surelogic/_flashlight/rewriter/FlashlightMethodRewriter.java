@@ -355,7 +355,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
      */
     mv.visitLdcInsn(classBeingAnalyzedFullyQualified);
     // className
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.JAVA_LANG_CLASS, FlashlightNames.FOR_NAME, FlashlightNames.FOR_NAME_SIGNATURE);
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_RUNTIME_SUPPORT, FlashlightNames.GET_CLASS, FlashlightNames.GET_CLASS_SIGNATURE);
     // Class
     mv.visitFieldInsn(Opcodes.PUTSTATIC, classBeingAnalyzedInternal, FlashlightNames.IN_CLASS, FlashlightNames.IN_CLASS_DESC);
     // empty stack
@@ -411,7 +411,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     // ..., before, this, inClass
     ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
     // ..., before, this, inClass, line
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, ByteCodeUtils.getFlashlightStore(config), FlashlightNames.CONSTRUCTOR_EXECUTION, FlashlightNames.CONSTRUCTOR_EXECUTION_SIGNATURE);
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName, FlashlightNames.CONSTRUCTOR_EXECUTION, FlashlightNames.CONSTRUCTOR_EXECUTION_SIGNATURE);
     // ...
   }
   
@@ -432,7 +432,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
       // ..., true, fileName, methodName, inClass
       ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
       // ..., true, fileName, methodName, inClass, line 
-      mv.visitMethodInsn(Opcodes.INVOKESTATIC, ByteCodeUtils.getFlashlightStore(config),
+      mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
           FlashlightNames.CONSTRUCTOR_CALL,
           FlashlightNames.CONSTRUCTOR_CALL_SIGNATURE);
 
@@ -459,7 +459,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
       // ..., true, fileName, methodName, inClass
       ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
       // ..., true, fileName, methodName, inClass, line 
-      mv.visitMethodInsn(Opcodes.INVOKESTATIC, ByteCodeUtils.getFlashlightStore(config),
+      mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
           FlashlightNames.CONSTRUCTOR_CALL,
           FlashlightNames.CONSTRUCTOR_CALL_SIGNATURE);
       // ...
@@ -478,7 +478,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
       // ex, true, fileName, methodName, inClass
       ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
       // ex, true, fileName, methodName, inClass, line 
-      mv.visitMethodInsn(Opcodes.INVOKESTATIC, ByteCodeUtils.getFlashlightStore(config),
+      mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
           FlashlightNames.CONSTRUCTOR_CALL,
           FlashlightNames.CONSTRUCTOR_CALL_SIGNATURE);
       // rethrow exception
@@ -742,7 +742,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
      */
     mv.visitLdcInsn(fullyQualifiedOwner);
     // ..., isRead, receiver, className
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.JAVA_LANG_CLASS, FlashlightNames.FOR_NAME, FlashlightNames.FOR_NAME_SIGNATURE);
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_RUNTIME_SUPPORT, FlashlightNames.GET_CLASS, FlashlightNames.GET_CLASS_SIGNATURE);
     // ..., isRead, receiver, classObj
     mv.visitLdcInsn(name);
     // ..., isRead, receiver, classObj, fieldName
@@ -761,7 +761,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     // Stack is "..., isRead, receiver, Field, inClass, LineNumber"
     
     /* We can now call Store.fieldAccess() */
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, ByteCodeUtils.getFlashlightStore(config), FlashlightNames.FIELD_ACCESS, FlashlightNames.FIELD_ACCESS_SIGNATURE);    
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName, FlashlightNames.FIELD_ACCESS, FlashlightNames.FIELD_ACCESS_SIGNATURE);    
     // Stack is "..."
     
     // Resume
@@ -863,7 +863,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     /* Push the lineNumber and call the pre-sychronized method */
     ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
     // ..., obj, inClass, obj,   obj, isThis, isClass, inClass, lineNumber
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, ByteCodeUtils.getFlashlightStore(config),
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
         FlashlightNames.BEFORE_INTRINSIC_LOCK_ACQUISITION,
         FlashlightNames.BEFORE_INTRINSIC_LOCK_ACQUISITION_SIGNATURE);
     // ..., obj, inClass, obj
@@ -875,7 +875,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     /* Push the 3rd parameter for the post-synchronized call and call it */
     ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
     // ..., obj, inClass, lineNumber
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, ByteCodeUtils.getFlashlightStore(config),
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
         FlashlightNames.AFTER_INTRINSIC_LOCK_ACQUISITION,
         FlashlightNames.AFTER_INTRINSIC_LOCK_ACQUISITION_SIGNATURE);
     // ...
@@ -903,7 +903,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     /* Push the lineNumber and call the Store method. */
     ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
     // ..., obj, inClass, lineNumber
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, ByteCodeUtils.getFlashlightStore(config),
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
         FlashlightNames.AFTER_INTRINSIC_LOCK_RELEASE, FlashlightNames.AFTER_INTRINSIC_LOCK_RELEASE_SIGNATURE);
     // ...
 
@@ -940,7 +940,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     // lockObj, isReceiver, isStatic, inClass
     ByteCodeUtils.pushIntegerConstant(mv, 0);
     // lockObj, isReceiver, isStatic, inClass, 0
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, ByteCodeUtils.getFlashlightStore(config),
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
         FlashlightNames.BEFORE_INTRINSIC_LOCK_ACQUISITION,
         FlashlightNames.BEFORE_INTRINSIC_LOCK_ACQUISITION_SIGNATURE);
     // empty stack
@@ -958,7 +958,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     // lockObj, inClass
     ByteCodeUtils.pushIntegerConstant(mv, 0);
     // lockObj, inClass, 0
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, ByteCodeUtils.getFlashlightStore(config),
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
         FlashlightNames.AFTER_INTRINSIC_LOCK_ACQUISITION,
         FlashlightNames.AFTER_INTRINSIC_LOCK_ACQUISITION_SIGNATURE);
     // empty stack
@@ -1006,7 +1006,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     // ..., lockObj, inClass
     ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
     // ..., lockObj, inClass, exitLineNumber
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, ByteCodeUtils.getFlashlightStore(config),
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
         FlashlightNames.AFTER_INTRINSIC_LOCK_RELEASE, FlashlightNames.AFTER_INTRINSIC_LOCK_RELEASE_SIGNATURE);
     // ...
     

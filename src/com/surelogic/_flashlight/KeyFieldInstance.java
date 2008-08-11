@@ -17,6 +17,11 @@ final class KeyFieldInstance extends KeyField {
 	boolean isWithin(final PhantomReference o) {
 		return f_enclosingInstance == o;
 	}
+	
+	@Override
+	PhantomReference getWithin() {
+	  return f_enclosingInstance;
+	}
 
 	@Override
 	SingleThreadedField getSingleThreadedEventAbout() {

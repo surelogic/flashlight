@@ -29,8 +29,8 @@ public final class Configuration {
   public static final String INSTRUMENT_AFTER_TRYLOCK_PROPERTY = "com.surelogic._flashlight.rewriter.instrument.trylock.after";
   public static final String INSTRUMENT_AFTER_UNLOCK_PROPERTY = "com.surelogic._flashlight.rewriter.instrument.unlock.after";
   
-  public static final String USE_DEBUG_STORE_PROPERTY = "com.surelogic._flashlight.rewriter.useDebugStore";
-  
+  public static final String STORE_CLASS_NAME_PROPERTY = "com.surelogic._flashlight.rewriter.store";
+
   
   
   public static final String TRUE = "true";
@@ -65,7 +65,7 @@ public final class Configuration {
   public final boolean instrumentAfterTryLock;
   public final boolean instrumentAfterUnlock;
   
-  public final boolean useDebugStore;
+  public final String storeClassName;
 
   
   
@@ -99,7 +99,7 @@ public final class Configuration {
     props.setProperty(INSTRUMENT_AFTER_TRYLOCK_PROPERTY, "true");
     props.setProperty(INSTRUMENT_AFTER_UNLOCK_PROPERTY, "true");
   
-    props.setProperty(USE_DEBUG_STORE_PROPERTY, "false");
+    props.setProperty(STORE_CLASS_NAME_PROPERTY, FlashlightNames.FLASHLIGHT_STORE);
   }
   
   private static Properties getDefaultProperties() {
@@ -159,6 +159,6 @@ public final class Configuration {
     instrumentAfterTryLock = getBoolean(props, INSTRUMENT_AFTER_TRYLOCK_PROPERTY, instrumentDefault);
     instrumentAfterUnlock = getBoolean(props, INSTRUMENT_AFTER_UNLOCK_PROPERTY, instrumentDefault);
     
-    useDebugStore = getBoolean(props, USE_DEBUG_STORE_PROPERTY, FALSE);
+    storeClassName = props.getProperty(STORE_CLASS_NAME_PROPERTY, FlashlightNames.FLASHLIGHT_STORE);
   }
 }

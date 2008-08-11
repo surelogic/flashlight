@@ -115,7 +115,7 @@ final class MethodCallInstrumenter {
       // true, objRef, filename, callingMethodName, inClass
       methodCall.pushCallingLineNumber(mv);
       // true, objRef, filename, callingMethodName, inClass, line
-      mv.visitMethodInsn(Opcodes.INVOKESTATIC, ByteCodeUtils.getFlashlightStore(config),
+      mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
           FlashlightNames.METHOD_CALL, FlashlightNames.METHOD_CALL_SIGNATURE);
       // empty stack 
     }
@@ -137,7 +137,7 @@ final class MethodCallInstrumenter {
       // ..., true, objRef, filename, callingMethodName, inClass
       methodCall.pushCallingLineNumber(mv);
       // ..., true, objRef, filename, callingMethodName, inClass, line
-      mv.visitMethodInsn(Opcodes.INVOKESTATIC, ByteCodeUtils.getFlashlightStore(config), FlashlightNames.METHOD_CALL, FlashlightNames.METHOD_CALL_SIGNATURE);
+      mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName, FlashlightNames.METHOD_CALL, FlashlightNames.METHOD_CALL_SIGNATURE);
       // ...
     }
   }
@@ -156,7 +156,7 @@ final class MethodCallInstrumenter {
       // ..., true, objRef, inClass
       methodCall.pushCallingLineNumber(mv);
       // ..., true, objRef, inClass, line
-      mv.visitMethodInsn(Opcodes.INVOKESTATIC, ByteCodeUtils.getFlashlightStore(config), FlashlightNames.INTRINSIC_LOCK_WAIT, FlashlightNames.INTRINSIC_LOCK_WAIT_SIGNATURE);      
+      mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName, FlashlightNames.INTRINSIC_LOCK_WAIT, FlashlightNames.INTRINSIC_LOCK_WAIT_SIGNATURE);      
     }
   }
   
@@ -174,7 +174,7 @@ final class MethodCallInstrumenter {
       // ..., true, objRef, inClass
       methodCall.pushCallingLineNumber(mv);
       // ..., true, objRef, inClass, line
-      mv.visitMethodInsn(Opcodes.INVOKESTATIC, ByteCodeUtils.getFlashlightStore(config), FlashlightNames.INTRINSIC_LOCK_WAIT, FlashlightNames.INTRINSIC_LOCK_WAIT_SIGNATURE);      
+      mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName, FlashlightNames.INTRINSIC_LOCK_WAIT, FlashlightNames.INTRINSIC_LOCK_WAIT_SIGNATURE);      
     }
   }
   
@@ -196,7 +196,7 @@ final class MethodCallInstrumenter {
       // ..., objRef, inClass
       methodCall.pushCallingLineNumber(mv);
       // ..., objRef, inClass, line
-      mv.visitMethodInsn(Opcodes.INVOKESTATIC, ByteCodeUtils.getFlashlightStore(config),
+      mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
           FlashlightNames.BEFORE_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT,
           FlashlightNames.BEFORE_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT_SIGNATURE);
     }
@@ -219,7 +219,7 @@ final class MethodCallInstrumenter {
       // ..., gotTheLock, objRef, inClass
       methodCall.pushCallingLineNumber(mv);
       // ..., gotTheLock, objRef, inClass, line
-      mv.visitMethodInsn(Opcodes.INVOKESTATIC, ByteCodeUtils.getFlashlightStore(config),
+      mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
           FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT,
           FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT_SIGNATURE);      
     }
@@ -241,7 +241,7 @@ final class MethodCallInstrumenter {
       // ..., gotTheLock, gotTheLock, objRef, inClass
       methodCall.pushCallingLineNumber(mv);
       // ..., gotTheLock, gotTheLock, objRef, inClass, line
-      mv.visitMethodInsn(Opcodes.INVOKESTATIC, ByteCodeUtils.getFlashlightStore(config),
+      mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
           FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT,
           FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT_SIGNATURE);
       // ..., gotTheLock
@@ -262,7 +262,7 @@ final class MethodCallInstrumenter {
       // ..., false, objRef, inClass
       methodCall.pushCallingLineNumber(mv);
       // ..., false, objRef, inClass, line
-      mv.visitMethodInsn(Opcodes.INVOKESTATIC, ByteCodeUtils.getFlashlightStore(config),
+      mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
           FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT,
           FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT_SIGNATURE);      
     }
@@ -282,7 +282,7 @@ final class MethodCallInstrumenter {
       // ..., gotTheLock, objRef, inClass
       methodCall.pushCallingLineNumber(mv);
       // ..., gotTheLock, objRef, inClass, line
-      mv.visitMethodInsn(Opcodes.INVOKESTATIC, ByteCodeUtils.getFlashlightStore(config),
+      mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
           FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_RELEASE_ATTEMPT,
           FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_RELEASE_ATTEMPT_SIGNATURE);      
     }

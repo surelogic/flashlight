@@ -21,6 +21,8 @@ abstract class KeyField {
 	 */
 	abstract boolean isWithin(final PhantomReference o);
 
+	abstract PhantomReference getWithin();
+	
 	/**
 	 * Factory to create an appropriate {@link SingleThreadedField} event about
 	 * this field.

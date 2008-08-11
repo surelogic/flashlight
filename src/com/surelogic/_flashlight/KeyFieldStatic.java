@@ -14,6 +14,11 @@ final class KeyFieldStatic extends KeyField {
 	}
 
 	@Override
+	PhantomReference getWithin() {
+	  return f_field.getDeclaringType();
+	}
+	
+	@Override
 	SingleThreadedField getSingleThreadedEventAbout() {
 		return new SingleThreadedFieldStatic(f_field);
 	}

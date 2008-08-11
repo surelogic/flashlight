@@ -85,14 +85,4 @@ final class ByteCodeUtils {
       mv.visitLdcInsn(Type.getType("L"+internalClassName+";"));
     }
   }
-
-  /**
-   * Get the name of the flashlight store class.
-   */
-  public static final String getFlashlightStore(final Configuration config) {
-    if (config.useDebugStore) {
-      return FlashlightNames.FLASHLIGHT_DEBUG_STORE;
-    } else {
-      return FlashlightNames.FLASHLIGHT_STORE;
-    }
-  }}
+}

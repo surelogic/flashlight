@@ -85,21 +85,111 @@ final class Refinery extends Thread {
 				+ " thread-local fields observed)");
 	}
 
+//	/**
+//	 * A map from a field key to the phantom reference to the only thread
+//	 * observed reading or writing the field. This map only contains fields as
+//	 * keys that, so far, are thread-local. If a field key has been observed to
+//	 * be shared it will not be in this map, it will be in
+//	 * {@link #f_sharedFields}.
+//	 */
+//	private final Map<KeyField, PhantomReference> f_fieldToThread = new HashMap<KeyField, PhantomReference>();
+	
+	
 	/**
-	 * A map from a field key to the phantom reference to the only thread
-	 * observed reading or writing the field. This map only contains fields as
-	 * keys that, so far, are thread-local. If a field key has been observed to
-	 * be shared it will not be in this map, it will be in
-	 * {@link #f_sharedFields}.
+	 * A double layer map whose primary goal is to map field keys to threads, but
+	 * we also need to make it very cheap to remove all the fields that belong
+	 * to a particular object.  So the first layer of the map is from object to
+	 * (field to thread).  This still keeps the primary field to thread operations
+	 * cheap because each field knows the object it belongs to.  But it makes
+	 * removing all the fields for an object much cheaper than before because we
+	 * don't have to iterate over all the keys anymore.
 	 */
-	private final Map<KeyField, PhantomReference> f_fieldToThread = new HashMap<KeyField, PhantomReference>();
+	private final Map<PhantomReference, Map<KeyField, PhantomReference>> f_objToFieldToThread =
+	  new HashMap<PhantomReference, Map<KeyField, PhantomReference>>();
+	
+	
+	/**
+	 * Check that that the given field is mapped to the given thread.  If the
+	 * field is not currently mapped to anything, then the field is mapped to
+	 * the given thread, and the method returns <code>true</code>.  If the field
+	 * is mapped to a thread, then this method returns whether that thread is
+	 * the same as the given thread.
+	 */ 
+	private boolean testFieldToThread(
+	    final KeyField field, final PhantomReference thread) {
+	  final PhantomReference obj = field.getWithin();
+	  Map<KeyField, PhantomReference> fieldToThread = f_objToFieldToThread.get(obj);
+	  if (fieldToThread == null) {
+	    fieldToThread = new HashMap<KeyField, PhantomReference>();
+      f_objToFieldToThread.put(obj, fieldToThread);
+	    fieldToThread.put(field, thread);
+	    return true;
+	  } else {
+	    return fieldToThread.get(field) == thread;
+	  }
+	}
 
 	/**
-	 * Maintains a list of field keys that have been observed to be shared until
-	 * the enclosing object is garbage collected.
+	 * Remove the field to thread mapping for the given field.
 	 */
-	private final List<KeyField> f_sharedFields = new LinkedList<KeyField>();
+	private void removeFieldToThread(final KeyField field) {
+    final PhantomReference obj = field.getWithin();
+    Map<KeyField, PhantomReference> fieldToThread = f_objToFieldToThread.get(obj);
+    if (fieldToThread != null) {
+      fieldToThread.remove(field);
+    }
+	}
+	
+	/**
+	 * Get the field to thread mapping for a given object and remove it from the
+	 * global table.
+	 */
+	private Map<KeyField, PhantomReference> removeFieldsForObject(
+	    final PhantomReference obj) {
+	  return f_objToFieldToThread.remove(obj);
+	}
+	    
 
+//	/**
+//	 * Maintains a list of field keys that have been observed to be shared until
+//	 * the enclosing object is garbage collected.
+//	 */
+//	private final List<KeyField> f_sharedFields = new LinkedList<KeyField>();
+	
+	/**
+   * A map whose primary goal is to keep a set of field keys that have been
+   * observed to be shared until the enclosing object is garbage collected. We
+   * need to be able to cheaply add fields to the set, but to also cheaply
+   * remove all the fields that belong to particular object. So from objects to
+   * sets of fields. This still keeps the primary field operations cheap because
+   * each field knows the object it belongs to. But it makes removing all the
+   * fields for an object much cheaper than before because we don't have to
+   * iterate over all the fields anymore.
+   */
+  private final Map<PhantomReference, Set<KeyField>> f_objToSharedFields =
+    new HashMap<PhantomReference, Set<KeyField>>();
+
+  /**
+   * Is the given field shared?
+   */
+  private boolean isSharedField(final KeyField field) {
+    final Set<KeyField> sharedFields = f_objToSharedFields.get(field.getWithin());
+    return sharedFields == null ? false : sharedFields.contains(field);
+  }
+
+  /**
+   * Mark the given field as shared 
+   */
+  private void addSharedField(final KeyField field) {
+    final PhantomReference obj = field.getWithin();
+    Set<KeyField> sharedFields = f_objToSharedFields.get(obj);
+    if (sharedFields == null) {
+      sharedFields = new HashSet<KeyField>();
+      f_objToSharedFields.put(obj, sharedFields);
+    }
+    sharedFields.add(field);
+  }
+  
 	private final EventVisitor f_detectSharedFieldsVisitor = new EventVisitor() {
 
 		@Override
@@ -124,24 +214,34 @@ final class Refinery extends Thread {
 
 		private void visitFieldAccess(final FieldAccess e) {
 			final KeyField key = e.getKey();
-			if (f_sharedFields.contains(key))
+//			if (f_sharedFields.contains(key))
+			if (isSharedField(key)) 
 				return;
-			PhantomReference thread = f_fieldToThread.get(key);
-			if (thread == null) {
-				/*
-				 * First time we have see an access to this field, assume access
-				 * will be single-threaded.
-				 */
-				f_fieldToThread.put(key, e.getWithinThread());
-			} else {
-				if (thread != e.getWithinThread()) {
-					/*
-					 * Shared access observed on this field.
-					 */
-					f_fieldToThread.remove(key);
-					f_sharedFields.add(key);
-				}
-			}
+			if (!testFieldToThread(key, e.getWithinThread())) {
+        /*
+         * Shared access observed on this field.
+         */
+			  removeFieldToThread(key);
+			  addSharedField(key);
+//        f_sharedFields.add(key);
+			}			  
+			
+//			PhantomReference thread = f_fieldToThread.get(key);
+//			if (thread == null) {
+//				/*
+//				 * First time we have see an access to this field, assume access
+//				 * will be single-threaded.
+//				 */
+//				f_fieldToThread.put(key, e.getWithinThread());
+//			} else {
+//				if (thread != e.getWithinThread()) {
+//					/*
+//					 * Shared access observed on this field.
+//					 */
+//					f_fieldToThread.remove(key);
+//					f_sharedFields.add(key);
+//				}
+//			}
 		}
 	};
 
@@ -179,11 +279,13 @@ final class Refinery extends Thread {
 	 *            the phantom of the object.
 	 */
 	private void removeSharedFieldsWithin(final PhantomReference pr) {
-		for (Iterator<KeyField> i = f_sharedFields.iterator(); i.hasNext();) {
-			KeyField field = i.next();
-			if (field.isWithin(pr))
-				i.remove();
-		}
+	  f_objToSharedFields.remove(pr);
+	  
+//		for (Iterator<KeyField> i = f_sharedFields.iterator(); i.hasNext();) {
+//			KeyField field = i.next();
+//			if (field.isWithin(pr))
+//				i.remove();
+//		}
 	}
 
 	/**
@@ -199,17 +301,22 @@ final class Refinery extends Thread {
 		 * Collect up all the thread-local fields within the garbage collected
 		 * object.
 		 */
-		final Set<KeyField> threadLocalFields = new HashSet<KeyField>();
-		for (Iterator<KeyField> i = f_fieldToThread.keySet().iterator(); i
-				.hasNext();) {
-			KeyField field = i.next();
-			if (field.isWithin(pr)) {
-				i.remove();
-				threadLocalFields.add(field);
-			}
-		}
-		if (!threadLocalFields.isEmpty())
-			removeEventsAbout(threadLocalFields);
+	  final Map<KeyField, PhantomReference> fieldMap = removeFieldsForObject(pr);
+	  if (fieldMap != null) {
+	    removeEventsAbout(fieldMap.keySet());
+	  }
+	  	  
+//		final Set<KeyField> threadLocalFields = new HashSet<KeyField>();
+//		for (Iterator<KeyField> i = f_fieldToThread.keySet().iterator(); i
+//				.hasNext();) {
+//			KeyField field = i.next();
+//			if (field.isWithin(pr)) {
+//				i.remove();
+//				threadLocalFields.add(field);
+//			}
+//		}
+//		if (!threadLocalFields.isEmpty())
+//			removeEventsAbout(threadLocalFields);
 	}
 
 	/**
@@ -242,10 +349,19 @@ final class Refinery extends Thread {
 	 * thread-local or shared.
 	 */
 	private void removeRemainingThreadLocalFields() {
-		if (!f_fieldToThread.keySet().isEmpty())
-			removeEventsAbout(f_fieldToThread.keySet());
-		f_fieldToThread.clear();
-		f_sharedFields.clear();
+	  System.out.println("eventCache size is " + f_eventCache.size());
+	  for (final Map.Entry<PhantomReference, Map<KeyField, PhantomReference>> entry : f_objToFieldToThread.entrySet()) {
+	    System.out.println("...set size is " + entry.getValue().keySet().size());
+	    removeEventsAbout(entry.getValue().keySet());
+	  }
+	  f_objToFieldToThread.clear();
+	  
+//		if (!f_fieldToThread.keySet().isEmpty())
+//			removeEventsAbout(f_fieldToThread.keySet());
+//		f_fieldToThread.clear();
+	  
+	  f_objToSharedFields.clear();
+//		f_sharedFields.clear();
 	}
 
 	/**

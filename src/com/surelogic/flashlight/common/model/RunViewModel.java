@@ -169,7 +169,7 @@ public final class RunViewModel {
 			@Override
 			String getImageSymbolicName(RunDescription rowData) {
 				if (rowData.getPrepRunDescription() != null) {
-					return CommonImages.IMG_FL_PREP;
+					return CommonImages.IMG_DRUM;
 				}
 				return super.getImageSymbolicName(rowData);
 			}

@@ -148,25 +148,31 @@ public final class FLInstrument extends Task {
   
   
   /**
-   * Utily method to set a Boolean-valued property in {@link #properties}.
+   * Utility method to set a Boolean-valued property in {@link #properties}.
    * 
    * @param propName
    *          The name of the property to set
    * @param flag
    *          The boolean value.
    */
-  private void setProperty(final String propName, final boolean flag) {
+  private void setBooleanProperty(final String propName, final boolean flag) {
     final String value = flag ? Configuration.TRUE : Configuration.FALSE;
+    setProperty(propName, value);
+  }
+  
+  /**
+   */
+  private void setProperty(final String propName, final String value) {
     log("Setting " + propName + " to " + value, Project.MSG_VERBOSE);
     properties.setProperty(propName, value);
-  }
+  }    
   
   /**
    * Set the "com.surelogic._flashlight.rewriter.rewrite.invokeinterface"
    * property.
    */
   public void setRewriteinvokeinterface(final boolean flag) {
-    setProperty(Configuration.REWRITE_INVOKEINTERFACE_PROPERTY, flag);
+    setBooleanProperty(Configuration.REWRITE_INVOKEINTERFACE_PROPERTY, flag);
   }
   
   /**
@@ -174,14 +180,14 @@ public final class FLInstrument extends Task {
    * property.
    */
   public void setRewriteinvokespecial(final boolean flag) {
-    setProperty(Configuration.REWRITE_INVOKESPECIAL_PROPERTY, flag);
+    setBooleanProperty(Configuration.REWRITE_INVOKESPECIAL_PROPERTY, flag);
   }
   
   /**
    * Set the "com.surelogic._flashlight.rewriter.rewrite.invokestatic" property.
    */
   public void setRewriteinvokestatic(final boolean flag) {
-    setProperty(Configuration.REWRITE_INVOKESTATIC_PROPERTY, flag);
+    setBooleanProperty(Configuration.REWRITE_INVOKESTATIC_PROPERTY, flag);
   }
   
   /**
@@ -189,7 +195,7 @@ public final class FLInstrument extends Task {
    * property.
    */
   public void setRewriteinvokevirtual(final boolean flag) {
-    setProperty(Configuration.REWRITE_INVOKEVIRTUAL_PROPERTY, flag);
+    setBooleanProperty(Configuration.REWRITE_INVOKEVIRTUAL_PROPERTY, flag);
   }
   
   /**
@@ -197,56 +203,56 @@ public final class FLInstrument extends Task {
    * property.
    */
   public void setRewritesynchronizedmethod(final boolean flag) {
-    setProperty(Configuration.REWRITE_SYNCHRONIZED_METHOD_PROPERTY, flag);
+    setBooleanProperty(Configuration.REWRITE_SYNCHRONIZED_METHOD_PROPERTY, flag);
   }
   
   /**
    * Set the "com.surelogic._flashlight.rewriter.rewrite.monitorenter" property.
    */
   public void setRewritemonitorenter(final boolean flag) {
-    setProperty(Configuration.REWRITE_MONITORENTER_PROPERTY, flag);
+    setBooleanProperty(Configuration.REWRITE_MONITORENTER_PROPERTY, flag);
   }
   
   /**
    * Set the "com.surelogic._flashlight.rewriter.rewrite.monitorexit" property.
    */
   public void setRewritemonitorexit(final boolean flag) {
-    setProperty(Configuration.REWRITE_MONITOREXIT_PROPERTY, flag);
+    setBooleanProperty(Configuration.REWRITE_MONITOREXIT_PROPERTY, flag);
   }
   
   /**
    * Set the "com.surelogic._flashlight.rewriter.rewrite.getstatic" property.
    */
   public void setRewritegetstatic(final boolean flag) {
-    setProperty(Configuration.REWRITE_GETSTATIC_PROPERTY, flag);
+    setBooleanProperty(Configuration.REWRITE_GETSTATIC_PROPERTY, flag);
   }
   
   /**
    * Set the "com.surelogic._flashlight.rewriter.rewrite.putstatic" property.
    */
   public void setRewriteputstatic(final boolean flag) {
-    setProperty(Configuration.REWRITE_PUTSTATIC_PROPERTY, flag);
+    setBooleanProperty(Configuration.REWRITE_PUTSTATIC_PROPERTY, flag);
   }
   
   /**
    * Set the "com.surelogic._flashlight.rewriter.rewrite.getfield" property.
    */
   public void setRewritegetfield(final boolean flag) {
-    setProperty(Configuration.REWRITE_GETFIELD_PROPERTY, flag);
+    setBooleanProperty(Configuration.REWRITE_GETFIELD_PROPERTY, flag);
   }
   
   /**
    * Set the "com.surelogic._flashlight.rewriter.rewrite.putfield" property.
    */
   public void setRewriteputfield(final boolean flag) {
-    setProperty(Configuration.REWRITE_PUTFIELD_PROPERTY, flag);
+    setBooleanProperty(Configuration.REWRITE_PUTFIELD_PROPERTY, flag);
   }
   
   /**
    * Set the "com.surelogic._flashlight.rewriter.rewrite.<init>" property.
    */
   public void setRewriteinit(final boolean flag) {
-    setProperty(Configuration.REWRITE_INIT_PROPERTY, flag);
+    setBooleanProperty(Configuration.REWRITE_INIT_PROPERTY, flag);
   }
   
   /**
@@ -254,7 +260,7 @@ public final class FLInstrument extends Task {
    * property.
    */
   public void setRewriteconstructorexecution(final boolean flag) {
-    setProperty(Configuration.REWRITE_CONSTRUCTOR_EXECUTION_PROPERTY, flag);
+    setBooleanProperty(Configuration.REWRITE_CONSTRUCTOR_EXECUTION_PROPERTY, flag);
   }
   
   /**
@@ -262,7 +268,7 @@ public final class FLInstrument extends Task {
    * property.
    */
   public void setInstrumentbeforecall(final boolean flag) {
-    setProperty(Configuration.INSTRUMENT_BEFORE_CALL_PROPERTY, flag);
+    setBooleanProperty(Configuration.INSTRUMENT_BEFORE_CALL_PROPERTY, flag);
   }
   
   /**
@@ -270,7 +276,7 @@ public final class FLInstrument extends Task {
    * property.
    */
   public void setInstrumentaftercall(final boolean flag) {
-    setProperty(Configuration.INSTRUMENT_AFTER_CALL_PROPERTY, flag);
+    setBooleanProperty(Configuration.INSTRUMENT_AFTER_CALL_PROPERTY, flag);
   }
   
   /**
@@ -278,7 +284,7 @@ public final class FLInstrument extends Task {
    * property.
    */
   public void setInstrumentbeforewait(final boolean flag) {
-    setProperty(Configuration.INSTRUMENT_BEFORE_WAIT_PROPERTY, flag);
+    setBooleanProperty(Configuration.INSTRUMENT_BEFORE_WAIT_PROPERTY, flag);
   }
   
   /**
@@ -286,7 +292,7 @@ public final class FLInstrument extends Task {
    * property.
    */
   public void setInstrumentafterwait(final boolean flag) {
-    setProperty(Configuration.INSTRUMENT_AFTER_WAIT_PROPERTY, flag);
+    setBooleanProperty(Configuration.INSTRUMENT_AFTER_WAIT_PROPERTY, flag);
   }
   
   /**
@@ -294,7 +300,7 @@ public final class FLInstrument extends Task {
    * property.
    */
   public void setInstrumentbeforejuclock(final boolean flag) {
-    setProperty(Configuration.INSTRUMENT_BEFORE_JUC_LOCK_PROPERTY, flag);
+    setBooleanProperty(Configuration.INSTRUMENT_BEFORE_JUC_LOCK_PROPERTY, flag);
   }
   
   /**
@@ -302,7 +308,7 @@ public final class FLInstrument extends Task {
    * property.
    */
   public void setInstrumentafterlock(final boolean flag) {
-    setProperty(Configuration.INSTRUMENT_AFTER_LOCK_PROPERTY, flag);
+    setBooleanProperty(Configuration.INSTRUMENT_AFTER_LOCK_PROPERTY, flag);
   }
   
   /**
@@ -310,7 +316,7 @@ public final class FLInstrument extends Task {
    * property.
    */
   public void setInstrumentaftertrylock(final boolean flag) {
-    setProperty(Configuration.INSTRUMENT_AFTER_TRYLOCK_PROPERTY, flag);
+    setBooleanProperty(Configuration.INSTRUMENT_AFTER_TRYLOCK_PROPERTY, flag);
   }
   
   /**
@@ -318,14 +324,14 @@ public final class FLInstrument extends Task {
    * property.
    */
   public void setInstrumentafterunlock(final boolean flag) {
-    setProperty(Configuration.INSTRUMENT_AFTER_UNLOCK_PROPERTY, flag);
+    setBooleanProperty(Configuration.INSTRUMENT_AFTER_UNLOCK_PROPERTY, flag);
   }
 
   /**
-   * Set the "com.surelogic._flashlight.rewriter.useDebugStore" property.
+   * Set the "com.surelogic._flashlight.rewriter.store" property.
    */
-  public void setUsedebugstore(final boolean flag) {
-    setProperty(Configuration.USE_DEBUG_STORE_PROPERTY, flag);
+  public void setStore(final String className) {
+    setProperty(Configuration.STORE_CLASS_NAME_PROPERTY, className);
   }
   
   

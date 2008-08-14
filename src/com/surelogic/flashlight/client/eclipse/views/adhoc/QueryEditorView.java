@@ -7,6 +7,6 @@ public final class QueryEditorView extends AbstractQueryEditorView {
 
 	@Override
 	public AdHocManager getManager() {
-		return AdHocManager.getInstance(FlashlightAdHocDataSource.INSTANCE);
+		return FlashlightAdHocDataSource.getManager();
 	}
 }

@@ -146,7 +146,7 @@
 			id="com.surelogic.flashlight.client.eclipse.views.adhoc.QueryEditorView"
 			name="Flashlight Query Editor">
 		</view>
-		<view allowMultiple="true" category="com.surelogic.flashlight.Flashlight"
+		<view allowMultiple="false" category="com.surelogic.flashlight.Flashlight"
 			class="com.surelogic.flashlight.client.eclipse.views.adhoc.QueryResultsView"
 			icon="platform:/plugin/com.surelogic.common/src/com/surelogic/common/images/query_obj.gif"
 			id="com.surelogic.flashlight.client.eclipse.views.adhoc.QueryResultsView"

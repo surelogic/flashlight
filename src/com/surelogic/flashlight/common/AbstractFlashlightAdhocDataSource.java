@@ -10,7 +10,7 @@ import com.surelogic.common.adhoc.IAdHocDataSource;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.logging.SLLogger;
 
-public abstract class AbstractFlashlightAdhocGlue implements IAdHocDataSource {
+public abstract class AbstractFlashlightAdhocDataSource implements IAdHocDataSource {
 
 	public File getQuerySaveFile() {
 		File saveFile = new File(FileUtility.getFlashlightDataDirectory()

@@ -749,6 +749,8 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_RUNTIME_SUPPORT, FlashlightNames.GET_FIELD, FlashlightNames.GET_FIELD_SIGNATURE);
     // Stack is "..., isRead, receiver, Field"
     
+//    mv.visitInsn(Opcodes.ACONST_NULL);
+    
     /* We need to insert the expression "Class.forName(<current_class>)"
      * to push the java.lang.Class object of the referencing class onto the 
      * stack.
@@ -772,6 +774,98 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   // =========================================================================
   // == Rewrite monitor methods
   // =========================================================================
+
+//  private void rewriteMonitorenter() {
+//    // ..., obj  
+//    
+//    /* Store the lock object in a local variable, and put it back on the stack */
+//    final int lockObj = lvs.newLocal(Type.getObjectType("java/lang/Object"));
+//    mv.visitVarInsn(Opcodes.ASTORE, lockObj);
+//    // ...
+//    mv.visitVarInsn(Opcodes.ALOAD, lockObj);
+//    // ..., obj
+//    
+////    ByteCodeUtils.pushBooleanConstant(mv, false);
+////    ByteCodeUtils.pushBooleanConstant(mv, false);
+//    
+//    /* Check the object against the receiver, unless the method is static */
+//    if (isStatic) {
+//      // Static methods do not have a receiver
+//      ByteCodeUtils.pushBooleanConstant(mv, false);
+//      // ..., obj, false
+//    } else {
+//      /* Push the lock object and the receiver on the stack */
+//      mv.visitVarInsn(Opcodes.ALOAD, lockObj);
+//      // ..., obj, obj
+//      mv.visitVarInsn(Opcodes.ALOAD, 0);
+//      // ..., obj, obj, this
+//
+//      final Label pushFalse1 = new Label();
+//      final Label afterPushIsThis = new Label();
+//      mv.visitJumpInsn(Opcodes.IF_ACMPNE, pushFalse1);
+//      // ..., obj
+//      ByteCodeUtils.pushBooleanConstant(mv, true);
+//      // ..., obj, true
+//      mv.visitJumpInsn(Opcodes.GOTO, afterPushIsThis);
+//      mv.visitLabel(pushFalse1);
+//      // ..., obj
+//      ByteCodeUtils.pushBooleanConstant(mv, false);
+//      // ..., obj, false
+//      mv.visitLabel(afterPushIsThis);
+//    }
+//    // ..., obj, isThis
+//    
+//    /* Duplicate the lock object and check the object against the class object */
+//    mv.visitVarInsn(Opcodes.ALOAD, lockObj);
+//    // ..., obj, isThis, obj
+//    ByteCodeUtils.pushInClass(mv, atLeastJava5, classBeingAnalyzedInternal);
+//    // ..., obj, isThis, obj, inClass
+//    final Label pushFalse2 = new Label();
+//    final Label afterPushIsClass = new Label();
+//    mv.visitJumpInsn(Opcodes.IF_ACMPNE, pushFalse2);
+//    // ..., obj, isThis
+//    ByteCodeUtils.pushBooleanConstant(mv, true);
+//    // ..., obj, isThis, true
+//    mv.visitJumpInsn(Opcodes.GOTO, afterPushIsClass);
+//    mv.visitLabel(pushFalse2);
+//    // ..., obj, isThis
+//    ByteCodeUtils.pushBooleanConstant(mv, false);
+//    // ..., obj, isThis, false
+//    mv.visitLabel(afterPushIsClass);
+//    // ..., obj, isThis, isClass
+//    
+//    /* Push the current class and the line number, and call the pre-synchronized method */
+//    ByteCodeUtils.pushInClass(mv, atLeastJava5, classBeingAnalyzedInternal);
+//    // ..., obj, isThis, isClass, inClass
+//    ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
+//    // ..., obj, isThis, isClass, inClass, lineNumber
+//    mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
+//        FlashlightNames.BEFORE_INTRINSIC_LOCK_ACQUISITION,
+//        FlashlightNames.BEFORE_INTRINSIC_LOCK_ACQUISITION_SIGNATURE);
+//    // ...
+//    
+//    /* The original monitor enter call */
+//    mv.visitVarInsn(Opcodes.ALOAD, lockObj);
+//    // ... obj
+//    mv.visitInsn(Opcodes.MONITORENTER);
+//    // ...
+//    
+//    /* Make the post-synchronized call */
+//    mv.visitVarInsn(Opcodes.ALOAD, lockObj);
+//    // ..., obj
+//    ByteCodeUtils.pushInClass(mv, atLeastJava5, classBeingAnalyzedInternal);
+//    // ...., obj, inClass
+//    ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
+//    // ..., obj, inClass, lineNumber
+//    mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
+//        FlashlightNames.AFTER_INTRINSIC_LOCK_ACQUISITION,
+//        FlashlightNames.AFTER_INTRINSIC_LOCK_ACQUISITION_SIGNATURE);
+//    // ...
+//    
+//    /* Resume original instruction stream */
+//
+//    updateStackDepthDelta(4);
+//  }
 
   private void rewriteMonitorenter() {
     // ..., obj  
@@ -911,7 +1005,6 @@ final class FlashlightMethodRewriter extends MethodAdapter {
 
     updateStackDepthDelta(2);
   }
-
   
   
   // =========================================================================

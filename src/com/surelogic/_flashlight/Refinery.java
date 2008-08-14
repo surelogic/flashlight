@@ -349,9 +349,7 @@ final class Refinery extends Thread {
 	 * thread-local or shared.
 	 */
 	private void removeRemainingThreadLocalFields() {
-	  System.out.println("eventCache size is " + f_eventCache.size());
 	  for (final Map.Entry<PhantomReference, Map<KeyField, PhantomReference>> entry : f_objToFieldToThread.entrySet()) {
-	    System.out.println("...set size is " + entry.getValue().keySet().size());
 	    removeEventsAbout(entry.getValue().keySet());
 	  }
 	  f_objToFieldToThread.clear();

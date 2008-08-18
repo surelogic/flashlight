@@ -52,7 +52,7 @@ public final class FlashlightAdHocDataSource extends
 		AdHocManager.shutdown();
 	}
 
-	public void notifyNewResult(final AdHocQueryResult result) {
+	public void notifySelectedResultChange(final AdHocQueryResult result) {
 		final UIJob job = new SLUIJob() {
 			@Override
 			public IStatus runInUIThread(IProgressMonitor monitor) {
@@ -73,6 +73,14 @@ public final class FlashlightAdHocDataSource extends
 	}
 
 	public void notifyResultModelChange(AdHocManager manager) {
+		// nothing to do
+	}
+
+	public void notifyVariableValueGlobalChange(AdHocManager manager) {
+		// nothing to do
+	}
+
+	public void notifyVariableValueChange(AdHocManager manager) {
 		// nothing to do
 	}
 }

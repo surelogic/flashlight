@@ -5,8 +5,8 @@ import java.util.Comparator;
 import java.util.List;
 
 import com.surelogic.common.Justification;
+import com.surelogic.common.SLUtility;
 import com.surelogic.common.images.CommonImages;
-import com.surelogic.flashlight.common.Utility;
 import com.surelogic.flashlight.common.files.RawFileHandles;
 
 /**
@@ -219,7 +219,7 @@ public final class RunViewModel {
 
 			@Override
 			String getText(RunDescription rowData) {
-				return Utility.toStringMS(rowData.getStartTimeOfRun());
+				return SLUtility.toStringMS(rowData.getStartTimeOfRun());
 			}
 		});
 

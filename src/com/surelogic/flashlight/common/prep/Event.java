@@ -5,7 +5,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Set;
 
-import com.surelogic.flashlight.common.Utility;
+import com.surelogic.common.SLUtility;
 
 public abstract class Event extends TrackUnreferenced {
 
@@ -24,7 +24,7 @@ public abstract class Event extends TrackUnreferenced {
 			throw new IllegalStateException(
 					"start times not set (did you forget to call super.setup()?)");
 		}
-		return Utility.getWall(f_start, f_startNS, timeNS);
+		return SLUtility.getWall(f_start, f_startNS, timeNS);
 	}
 
 	@Override

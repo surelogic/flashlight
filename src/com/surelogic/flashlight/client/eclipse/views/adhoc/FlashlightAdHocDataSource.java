@@ -4,11 +4,13 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.ui.IViewPart;
+import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.progress.UIJob;
 
 import com.surelogic.common.ILifecycle;
 import com.surelogic.common.adhoc.AdHocManager;
 import com.surelogic.common.adhoc.AdHocQueryResult;
+import com.surelogic.common.adhoc.AdHocQueryResultSqlData;
 import com.surelogic.common.adhoc.IAdHocManagerObserver;
 import com.surelogic.common.eclipse.ViewUtility;
 import com.surelogic.common.eclipse.jobs.SLUIJob;
@@ -57,7 +59,7 @@ public final class FlashlightAdHocDataSource extends
 			@Override
 			public IStatus runInUIThread(IProgressMonitor monitor) {
 				IViewPart view = ViewUtility.showView(QueryResultsView.class
-						.getName());
+						.getName(), null, IWorkbenchPage.VIEW_VISIBLE);
 				if (view instanceof QueryResultsView) {
 					QueryResultsView queryResultsView = (QueryResultsView) view;
 					queryResultsView.displayResult(result);
@@ -76,11 +78,11 @@ public final class FlashlightAdHocDataSource extends
 		// nothing to do
 	}
 
-	public void notifyVariableValueGlobalChange(AdHocManager manager) {
+	public void notifyGlobalVariableValueChange(AdHocManager manager) {
 		// nothing to do
 	}
 
-	public void notifyVariableValueChange(AdHocManager manager) {
+	public void notifyResultVariableValueChange(AdHocQueryResultSqlData result) {
 		// nothing to do
 	}
 }

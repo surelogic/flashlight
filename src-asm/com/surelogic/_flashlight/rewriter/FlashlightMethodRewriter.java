@@ -1119,7 +1119,20 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   
   private void rewriteMethodCall(final int opcode,
       final String owner, final String name, final String desc) {
-    if (!inInterface) {
+	/* The clone() method is a special case due to its retarded 
+	 * semantics.  If the class of the object being used as the receiver,
+	 * call it C, implements Cloneable, but DOES NOT override the clone() method, 
+	 * the clone method is still seen as a protected method from Object.
+	 * This means, we don't be able to invoke the method from a static
+	 * method in C because the receiver will still be seen as being of
+	 * type Object.  This situation works in JRE 5, but not in JRE 6 due to
+	 * a stricter bytecode verifier.
+	 * 
+	 * The best thing to do in this case is to inline the instrumentation.
+	 */  
+	final boolean isClone = (opcode == Opcodes.INVOKEVIRTUAL)
+		&& name.equals("clone") && desc.startsWith("()");
+    if (!inInterface && !isClone) {
       /* Create the wrapper method information and add it to the list of wrappers */
       final MethodCallWrapper wrapper;
       if (opcode == Opcodes.INVOKESPECIAL) {

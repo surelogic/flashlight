@@ -182,15 +182,16 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 		final boolean somethingIsSelected = o != null;
 		f_deleteRun.setEnabled(somethingIsSelected);
 		boolean rawActionsEnabled = somethingIsSelected;
+		String runVariableValue = null;
 		if (somethingIsSelected) {
 			rawActionsEnabled = o.getRawFileHandles() != null;
 			final PrepRunDescription prep = o.getPrepRunDescription();
-			AdHocDataSource.getManager().setGlobalVariableValue(RUN_VARIABLE,
-					Integer.toString(prep.getRun()));
-		} else {
-			AdHocDataSource.getManager().setGlobalVariableValue(RUN_VARIABLE,
-					null);
+			if (prep != null) {
+				runVariableValue = Integer.toString(prep.getRun());
+			}
 		}
+		AdHocDataSource.getManager().setGlobalVariableValue(RUN_VARIABLE,
+				runVariableValue);
 		f_prep.setEnabled(rawActionsEnabled);
 		f_showLog.setEnabled(rawActionsEnabled);
 	}

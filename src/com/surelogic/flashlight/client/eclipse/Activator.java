@@ -12,7 +12,7 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 
 import com.surelogic.common.eclipse.logging.SLEclipseStatusUtility;
-import com.surelogic.flashlight.client.eclipse.views.adhoc.FlashlightAdHocDataSource;
+import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
 
 /**
  * The activator class controls the plug-in life cycle
@@ -57,7 +57,7 @@ public class Activator extends AbstractUIPlugin {
 	@Override
 	public void stop(final BundleContext context) throws Exception {
 		plugin = null;
-		FlashlightAdHocDataSource.getInstance().dispose();
+		AdHocDataSource.getInstance().dispose();
 		super.stop(context);
 	}
 

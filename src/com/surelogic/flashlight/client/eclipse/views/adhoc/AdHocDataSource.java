@@ -27,20 +27,20 @@ import com.surelogic.flashlight.client.eclipse.Activator;
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
 import com.surelogic.flashlight.common.Data;
 
-public final class FlashlightAdHocDataSource extends AdHocManagerAdapter
+public final class AdHocDataSource extends AdHocManagerAdapter
 		implements IAdHocDataSource, ILifecycle {
 
-	private static final FlashlightAdHocDataSource INSTANCE = new FlashlightAdHocDataSource();
+	private static final AdHocDataSource INSTANCE = new AdHocDataSource();
 
 	static {
 		INSTANCE.init();
 	}
 
-	public static FlashlightAdHocDataSource getInstance() {
+	public static AdHocDataSource getInstance() {
 		return INSTANCE;
 	}
 
-	private FlashlightAdHocDataSource() {
+	private AdHocDataSource() {
 		// singleton
 	}
 

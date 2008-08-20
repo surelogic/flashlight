@@ -7,6 +7,6 @@ public final class QueryMenuView extends AbstractQueryMenuView {
 
 	@Override
 	public AdHocManager getManager() {
-		return FlashlightAdHocDataSource.getManager();
+		return AdHocDataSource.getManager();
 	}
 }

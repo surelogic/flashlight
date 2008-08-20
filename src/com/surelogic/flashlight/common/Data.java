@@ -2,8 +2,6 @@ package com.surelogic.flashlight.common;
 
 import java.io.File;
 import java.net.URL;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import com.surelogic.common.FileUtility;
 import com.surelogic.common.derby.DerbyConnection;
@@ -11,6 +9,8 @@ import com.surelogic.common.jdbc.SchemaData;
 import com.surelogic.flashlight.schema.FlashlightSchemaData;
 
 public final class Data extends DerbyConnection {
+
+	public static final String DEFAULT_FLASHLIGHT_QUERIES_URL = "/com/surelogic/flashlight/common/default-flashlight-queries.xml";
 
 	private static final Data INSTANCE = new Data();
 
@@ -39,20 +39,7 @@ public final class Data extends DerbyConnection {
 		return new FlashlightSchemaData();
 	}
 
-	private ExecutorService exec = Executors.newSingleThreadExecutor();
-
-	public ExecutorService getExecutor() {
-		return exec;
+	public URL getDefaultQueryUrl() {
+		return Data.class.getResource(DEFAULT_FLASHLIGHT_QUERIES_URL);
 	}
-
-	public void restartExecutor() {
-		exec.shutdownNow();
-		exec = Executors.newSingleThreadExecutor();
-	}
-
-	public static URL getDefaultQueryFileURL() {
-		return Data.class
-				.getResource("/com/surelogic/flashlight/common/default-queries.xml");
-	}
-
 }

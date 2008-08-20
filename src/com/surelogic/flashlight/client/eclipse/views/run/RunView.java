@@ -25,8 +25,6 @@ import com.surelogic.flashlight.common.model.RunViewModel;
  */
 public final class RunView extends ViewPart {
 
-	public static final String ID = RunView.class.getName();
-
 	private RunViewMediator f_mediator;
 
 	@Override

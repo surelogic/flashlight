@@ -18,6 +18,7 @@ import com.surelogic.common.eclipse.jobs.EclipseJob;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.flashlight.client.eclipse.dialogs.DeleteRunDialog;
 import com.surelogic.flashlight.client.eclipse.dialogs.LogDialog;
+import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
 import com.surelogic.flashlight.common.entities.PrepRunDescription;
 import com.surelogic.flashlight.common.files.RawFileHandles;
 import com.surelogic.flashlight.common.jobs.DeleteRawFilesSLJob;
@@ -32,6 +33,8 @@ import com.surelogic.flashlight.common.model.RunManager;
  * Mediator for the {@link RunView}.
  */
 public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
+
+	private static final String RUN_VARIABLE = "RUN";
 
 	private final TableViewer f_tableViewer;
 	private final Table f_table;
@@ -181,6 +184,12 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 		boolean rawActionsEnabled = somethingIsSelected;
 		if (somethingIsSelected) {
 			rawActionsEnabled = o.getRawFileHandles() != null;
+			final PrepRunDescription prep = o.getPrepRunDescription();
+			AdHocDataSource.getManager().setGlobalVariableValue(RUN_VARIABLE,
+					Integer.toString(prep.getRun()));
+		} else {
+			AdHocDataSource.getManager().setGlobalVariableValue(RUN_VARIABLE,
+					null);
 		}
 		f_prep.setEnabled(rawActionsEnabled);
 		f_showLog.setEnabled(rawActionsEnabled);

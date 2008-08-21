@@ -27,8 +27,8 @@ import com.surelogic.flashlight.client.eclipse.Activator;
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
 import com.surelogic.flashlight.common.Data;
 
-public final class AdHocDataSource extends AdHocManagerAdapter
-		implements IAdHocDataSource, ILifecycle {
+public final class AdHocDataSource extends AdHocManagerAdapter implements
+		IAdHocDataSource, ILifecycle {
 
 	private static final AdHocDataSource INSTANCE = new AdHocDataSource();
 
@@ -50,7 +50,7 @@ public final class AdHocDataSource extends AdHocManagerAdapter
 
 	public File getQuerySaveFile() {
 		return new File(FileUtility.getFlashlightDataDirectory()
-				+ File.separator + "queries.xml");
+				+ File.separator + "flashlight-queries.xml");
 	}
 
 	public URL getDefaultQueryUrl() {

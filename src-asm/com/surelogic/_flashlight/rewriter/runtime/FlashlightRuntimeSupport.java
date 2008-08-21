@@ -10,11 +10,6 @@ import java.util.Map;
  * @author aarong
  */
 public final class FlashlightRuntimeSupport {
-  private static Map<Class, Map<String, Field>> classToNameToField =
-    new HashMap<Class, Map<String, Field>>();
-
-  private static Map<String, Class<?>> classes = new HashMap<String, Class<?>>();
-
   private static Log theLog = new Log() {
     public void log(final String message) {
       System.err.println(message);
@@ -28,8 +23,13 @@ public final class FlashlightRuntimeSupport {
       // nothing to do
     }
   };
-  
-  
+
+  private static Map<String, Class<?>> classes = new HashMap<String, Class<?>>();
+
+  private static Map<String, Map<String, Field>> classNameToFieldNameToField =
+    new HashMap<String, Map<String, Field>>();
+
+
   
   /** Private method to prevent instantiation. */
   private FlashlightRuntimeSupport() {
@@ -55,40 +55,38 @@ public final class FlashlightRuntimeSupport {
   }
   
   
-  public static synchronized Class<?>getClass(final String className) 
-      throws ClassNotFoundException {
-    Class<?> clazz = classes.get(className);
-    if (clazz == null) {
-      clazz = Class.forName(className);
-      classes.put(className, clazz);
-    }
-    return clazz;
-  }
-  
   
   /**
    * Get the Field object for the named field, starting the search with the
-   * given class Object.
+   * given named classt.
    */
-  public static synchronized Field getField(final Class root, final String fname)
-      throws NoSuchFieldException {
-    Map<String, Field> nameToField = classToNameToField.get(root);
-    if (nameToField == null) {
-      nameToField = new HashMap<String, Field>();
-      classToNameToField.put(root, nameToField);
-      final Field field = getFieldInternal(root, fname);
-      nameToField.put(fname, field);
+  public static synchronized Field getField(
+      final String className, final String fieldName)
+      throws NoSuchFieldException, ClassNotFoundException {
+    Map<String, Field> fieldName2Field = classNameToFieldNameToField.get(className);
+    if (fieldName2Field == null) {
+      /* Never seen this class before */
+      final Class clazz = Class.forName(className);
+      final Field field = getFieldInternal(clazz, fieldName);
+      
+      classes.put(className, clazz);
+      fieldName2Field = new HashMap<String, Field>();
+      fieldName2Field.put(fieldName, field);
+      classNameToFieldNameToField.put(className, fieldName2Field);
       return field;
     } else {
-      Field field = nameToField.get(fname);
+      // Have we seen this field before?
+      Field field = fieldName2Field.get(fieldName);
       if (field == null) {
-        field = getFieldInternal(root, fname);
-        nameToField.put(fname, field);
+        // We know that Class in the classes table
+        final Class clazz = classes.get(className);
+        field = getFieldInternal(clazz, fieldName);
+        fieldName2Field.put(fieldName, field);
       }
       return field;
     }
   }
-  
+    
   private static Field getFieldInternal(final Class root, final String fname) 
       throws NoSuchFieldException {
     try {

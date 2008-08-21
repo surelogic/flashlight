@@ -355,7 +355,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
      */
     mv.visitLdcInsn(classBeingAnalyzedFullyQualified);
     // className
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_RUNTIME_SUPPORT, FlashlightNames.GET_CLASS, FlashlightNames.GET_CLASS_SIGNATURE);
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.JAVA_LANG_CLASS, FlashlightNames.FOR_NAME, FlashlightNames.FOR_NAME_SIGNATURE);
     // Class
     mv.visitFieldInsn(Opcodes.PUTSTATIC, classBeingAnalyzedInternal, FlashlightNames.IN_CLASS, FlashlightNames.IN_CLASS_DESC);
     // empty stack
@@ -735,21 +735,16 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   private void finishFieldAccess(
       final String name, final String fullyQualifiedOwner) {
     // Stack is "..., isRead, receiver"
-    
-    /* We need to insert the expression
-     * "Class.forName(<owner>).getDeclaredField(<name>)" into the code.  This puts
-     * the java.lang.reflect.Field object for the accessed field on the stack.
+
+    /* Push the class name and field name on the stack for a call to
+     * FlashlightRuntimeSupport.getField().
      */
     mv.visitLdcInsn(fullyQualifiedOwner);
     // ..., isRead, receiver, className
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_RUNTIME_SUPPORT, FlashlightNames.GET_CLASS, FlashlightNames.GET_CLASS_SIGNATURE);
-    // ..., isRead, receiver, classObj
     mv.visitLdcInsn(name);
-    // ..., isRead, receiver, classObj, fieldName
+    // ..., isRead, receiver, className, fieldName
     mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_RUNTIME_SUPPORT, FlashlightNames.GET_FIELD, FlashlightNames.GET_FIELD_SIGNATURE);
     // Stack is "..., isRead, receiver, Field"
-    
-//    mv.visitInsn(Opcodes.ACONST_NULL);
     
     /* We need to insert the expression "Class.forName(<current_class>)"
      * to push the java.lang.Class object of the referencing class onto the 

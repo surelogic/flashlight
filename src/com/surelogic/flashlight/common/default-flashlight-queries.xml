@@ -147,7 +147,7 @@ UNION
  )
 ORDER BY &quot;Time&quot; DESC
 </query>
-  <query id='Q0012' description='Show the lock events for a lock graph edge' display='true'>select lo.PackageName &quot;Package__PACKAGE&quot;, lo.ClassName &quot;Class__CLASS&quot;, l.AtLine &quot;Line&quot;, tho.ThreadName &quot;Thread&quot;, lh.LockEvent &quot;LockEvent|&quot;
+  <query id='Q0012' description='Show the lock events for a lock graph edge' display='true'>select lo.PackageName &quot;Package__PACKAGE&quot;, lo.ClassName &quot;Class__CLASS&quot;, l.AtLine &quot;Line&quot;, tho.ThreadName &quot;Thread|&quot;, lh.LockEvent &quot;LockEvent&quot;
 from LOCKSHELD as lh, LOCK l, OBJECT lo, OBJECT tho
 where lh.Run = ?RUN?
   and lh.LockHeld=?LockHeld?
@@ -440,41 +440,41 @@ where le.Run=?RUN?
   and le.ts between ld.Start and ld.Stop
 order by ld.Start 
   </query>
-  <sub-query id='Q0012' sub-query='Q0029'/>
-  <sub-query id='Q0012' sub-query='Q0014'/>
   <sub-query id='Q0012' sub-query='Q0013'/>
+  <sub-query id='Q0012' sub-query='Q0014'/>
+  <sub-query id='Q0012' sub-query='Q0029'/>
   <sub-query id='Q0005' sub-query='Q0006'/>
   <sub-query id='Q0017' sub-query='Q0027'/>
   <sub-query id='Q0017' sub-query='Q0028'/>
   <sub-query id='Q0023' sub-query='Q0027'/>
   <sub-query id='Q0023' sub-query='Q0028'/>
   <sub-query id='Q0011' sub-query='Q0012'/>
-  <sub-query id='Q0002' sub-query='Q0020'/>
   <sub-query id='Q0002' sub-query='Q0019'/>
   <sub-query id='Q0002' sub-query='Q0017'/>
   <sub-query id='Q0002' sub-query='Q0018'/>
-  <sub-query id='Q0015' sub-query='Q0020'/>
+  <sub-query id='Q0002' sub-query='Q0020'/>
   <sub-query id='Q0015' sub-query='Q0019'/>
   <sub-query id='Q0015' sub-query='Q0017'/>
   <sub-query id='Q0015' sub-query='Q0018'/>
-  <sub-query id='Q0016' sub-query='Q0020'/>
+  <sub-query id='Q0015' sub-query='Q0020'/>
   <sub-query id='Q0016' sub-query='Q0019'/>
   <sub-query id='Q0016' sub-query='Q0017'/>
   <sub-query id='Q0016' sub-query='Q0018'/>
+  <sub-query id='Q0016' sub-query='Q0020'/>
   <sub-query id='Q0001' sub-query='Q0025'/>
-  <sub-query id='Q0001' sub-query='Q0023'/>
   <sub-query id='Q0001' sub-query='Q0024'/>
+  <sub-query id='Q0001' sub-query='Q0023'/>
   <sub-query id='Q0001' sub-query='Q0026'/>
   <sub-query id='Q0021' sub-query='Q0025'/>
-  <sub-query id='Q0021' sub-query='Q0023'/>
   <sub-query id='Q0021' sub-query='Q0024'/>
+  <sub-query id='Q0021' sub-query='Q0023'/>
   <sub-query id='Q0021' sub-query='Q0026'/>
   <sub-query id='Q0022' sub-query='Q0025'/>
-  <sub-query id='Q0022' sub-query='Q0023'/>
   <sub-query id='Q0022' sub-query='Q0024'/>
+  <sub-query id='Q0022' sub-query='Q0023'/>
   <sub-query id='Q0022' sub-query='Q0026'/>
-  <sub-query id='Q0009' sub-query='Q0014'/>
   <sub-query id='Q0009' sub-query='Q0013'/>
+  <sub-query id='Q0009' sub-query='Q0014'/>
   <sub-query id='Q0020' sub-query='Q0028'/>
   <sub-query id='Q0006' sub-query='Q0027'/>
 </ad-hoc>

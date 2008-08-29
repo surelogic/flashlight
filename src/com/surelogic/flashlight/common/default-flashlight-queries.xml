@@ -38,7 +38,7 @@ and t.Run = ?RUN?
 and l.InThread = t.Id
 and lkType.Run = ?RUN?
 and lk.Type = lkType.Id</query>
-  <query id='Q0014' description='Show lock trace for a lock event' display='true'>SELECT D.Lock &quot;Lock&quot;, LO.PackageName &quot;Package__PACKAGE&quot;, LO.ClassName &quot;Class__CLASS&quot;, LL.AtLine &quot;Line&quot;, D.Start &quot;Time&quot;
+  <query id='Q0014' description='Show lock trace for a lock event' display='true'>SELECT D.Lock &quot;Lock__(r)&quot;, LO.PackageName &quot;Package__package.gif&quot;, LO.ClassName &quot;Class__class.gif&quot;, LL.AtLine &quot;Line__(r)&quot;, D.Start &quot;Time&quot;
 FROM LOCK L
  INNER JOIN LOCKDURATION D ON
    D.InThread = L.InThread AND 
@@ -56,7 +56,7 @@ WHERE L.Run = ?RUN?
 ORDER BY D.START DESC</query>
   <query id='Q0028' description='Show stack trace for a field access' display='true'>(SELECT 
  CAST (&apos;In thread &apos; || THO.ThreadName || &apos; at &quot;&apos; || F.FIELDNAME || &apos;&quot; in &apos; || AO.PackageName || &apos;.&apos; || AO.ClassName || &apos; on line &apos; || TRIM(CAST(A.AtLine AS CHAR(10))) AS VARCHAR(1000)) &quot;Trace&quot;,
- AO.PackageName &quot;Package__PACKAGE&quot;, AO.ClassName &quot;Class__CLASS&quot;, F.FieldName &quot;Location&quot;, A.AtLine &quot;Line&quot;, A.TS &quot;Time&quot;
+ AO.PackageName &quot;Package__package.gif&quot;, AO.ClassName &quot;Class__class.gif&quot;, F.FieldName &quot;Location&quot;, A.AtLine &quot;Line__(r)&quot;, A.TS &quot;Time&quot;
  FROM ACCESS A
   INNER JOIN FIELD F ON
    F.RUN = A.RUN AND
@@ -73,7 +73,7 @@ ORDER BY D.START DESC</query>
 UNION
 (SELECT
  CAST (&apos;at &apos; || O.ClassName || &apos;.&apos; || T.Location || &apos;(&apos; || T.InFile || &apos;:&apos; || TRIM(CAST(T.AtLine AS CHAR(10))) || &apos;)&apos; AS VARCHAR(1000)) &quot;Trace&quot;,
- O.PACKAGENAME &quot;Package__PACKAGE&quot;, O.ClassName &quot;Class__CLASS&quot;, T.LOCATION &quot;Location&quot;, T.AtLine &quot;Line&quot;, T.Start &quot;Time&quot;
+ O.PACKAGENAME &quot;Package__package.gif&quot;, O.ClassName &quot;Class__class.gif&quot;, T.LOCATION &quot;Location&quot;, T.AtLine &quot;Line__(r)&quot;, T.Start &quot;Time&quot;
  FROM ACCESS A
   INNER JOIN TRACE T ON
    (A.TS BETWEEN T.START AND T.STOP) AND
@@ -89,7 +89,7 @@ ORDER BY &quot;Time&quot; DESC
 </query>
   <query id='Q0027' description='Show stack trace for a lock acquisition' display='true'>(SELECT 
  CAST (&apos;In thread &apos; || THO.ThreadName || &apos;&quot; in &apos; || LO.PackageName || &apos;.&apos; || LO.ClassName || &apos; on line &apos; || TRIM(CAST(L.AtLine AS CHAR(10))) AS VARCHAR(1000)) &quot;Trace&quot;,
-  LO.PackageName &quot;Package__PACKAGE&quot;, LO.ClassName &quot;Class__CLASS&quot;, &apos;&apos; &quot;Location&quot;, L.AtLine &quot;Line&quot;, LD.Start &quot;Time&quot;
+  LO.PackageName &quot;Package__package.gif&quot;, LO.ClassName &quot;Class__class.gif&quot;, &apos;&apos; &quot;Location&quot;, L.AtLine &quot;Line__(r)&quot;, LD.Start &quot;Time&quot;
  FROM LOCKDURATION LD
   INNER JOIN LOCK L ON
    L.RUN = LD.RUN AND
@@ -105,7 +105,7 @@ ORDER BY &quot;Time&quot; DESC
 UNION
 (SELECT 
  CAST (&apos;at &apos; || O.ClassName || &apos;.&apos; || T.Location || &apos;(&apos; || T.InFile || &apos;:&apos; || TRIM(CAST(T.AtLine AS CHAR(10))) || &apos;)&apos; AS VARCHAR(1000)) &quot;Trace&quot;,
- O.PACKAGENAME &quot;Package__PACKAGE&quot;, O.ClassName &quot;Class__CLASS&quot;, T.LOCATION &quot;Location&quot;, T.AtLine &quot;Line&quot;, T.Start &quot;Time&quot;
+ O.PACKAGENAME &quot;Package__package.gif&quot;, O.ClassName &quot;Class__class.gif&quot;, T.LOCATION &quot;Location&quot;, T.AtLine &quot;Line__(r)&quot;, T.Start &quot;Time&quot;
  FROM LOCKDURATION LD
   INNER JOIN TRACE T ON
    (LD.START BETWEEN T.START AND T.STOP) AND
@@ -120,7 +120,7 @@ UNION
 ORDER BY &quot;Time&quot; DESC</query>
   <query id='Q0013' description='Show stack trace for a lock event' display='true'>(SELECT 
  CAST (&apos;In thread &apos; || THO.ThreadName || &apos;&quot; in &apos; || LO.PackageName || &apos;.&apos; || LO.ClassName || &apos; on line &apos; || TRIM(CAST(L.AtLine AS CHAR(10))) AS VARCHAR(1000)) &quot;Trace&quot;,
-  LO.PackageName &quot;Package__PACKAGE&quot;, LO.ClassName &quot;Class__CLASS&quot;, &apos;&apos; &quot;Location&quot;, L.AtLine &quot;Line&quot;, L.TS &quot;Time&quot;
+  LO.PackageName &quot;Package__package.gif&quot;, LO.ClassName &quot;Class__class.gif&quot;, &apos;&apos; &quot;Location&quot;, L.AtLine &quot;Line__(r)&quot;, L.TS &quot;Time&quot;
   FROM LOCK L
   INNER JOIN OBJECT LO ON
    LO.RUN = L.RUN AND
@@ -133,7 +133,7 @@ ORDER BY &quot;Time&quot; DESC</query>
 UNION
 (SELECT 
  CAST (&apos;at &apos; || O.ClassName || &apos;.&apos; || T.Location || &apos;(&apos; || T.InFile || &apos;:&apos; || TRIM(CAST(T.AtLine AS CHAR(10))) || &apos;)&apos; AS VARCHAR(1000)) &quot;Trace&quot;,
- O.PACKAGENAME &quot;Package__PACKAGE&quot;, O.ClassName &quot;Class__CLASS&quot;, T.LOCATION &quot;Location&quot;, T.AtLine &quot;Line&quot;, T.Start &quot;Time&quot;
+ O.PACKAGENAME &quot;Package__package.gif&quot;, O.ClassName &quot;Class__class.gif&quot;, T.LOCATION &quot;Location&quot;, T.AtLine &quot;Line__(r)&quot;, T.Start &quot;Time&quot;
  FROM LOCK L
   INNER JOIN TRACE T ON
    (L.TS BETWEEN T.START AND T.STOP) AND
@@ -147,7 +147,7 @@ UNION
  )
 ORDER BY &quot;Time&quot; DESC
 </query>
-  <query id='Q0012' description='Show the lock events for a lock graph edge' display='true'>select lo.PackageName &quot;Package__PACKAGE&quot;, lo.ClassName &quot;Class__CLASS&quot;, l.AtLine &quot;Line&quot;, tho.ThreadName &quot;Thread|&quot;, lh.LockEvent &quot;LockEvent&quot;
+  <query id='Q0012' description='Show the lock events for a lock graph edge' display='true'>select lo.PackageName &quot;Package__package.gif&quot;, lo.ClassName &quot;Class__class.gif&quot;, l.AtLine &quot;Line__]&quot;, tho.ThreadName &quot;Thread__|&quot;, lh.LockEvent &quot;LockEvent__(r)&quot;
 from LOCKSHELD as lh, LOCK l, OBJECT lo, OBJECT tho
 where lh.Run = ?RUN?
   and lh.LockHeld=?LockHeld?
@@ -160,14 +160,14 @@ where lh.Run = ?RUN?
   and tho.Id = l.InThread
 order by lo.PackageName,lo.ClassName, l.AtLine, tho.ThreadName, lh.LockEvent
   </query>
-  <query id='Q0005' description='What locks are contended for the longest time?' display='true' display-at-root='true'>select Lock &quot;Lock&quot;, sum(Duration) as &quot;Block Time (ns)&quot;
+  <query id='Q0005' description='What locks are contended for the longest time?' display='true' display-at-root='true'>select Lock &quot;Lock__(c)&quot;, (trim (cast(sum(Duration) as char(20)))) || &apos; ns&apos; as &quot;Block Time__(r)&quot;
 from LOCKDURATION    
 where State = &apos;BLOCKING&apos;
   and Run=?RUN?
 group by Lock
-order by 2 desc
+order by sum(duration) desc
   </query>
-  <query id='Q0017' description='What locks are held for each access of this non-static field?' display='true'>SELECT O.THREADNAME &quot;Thread&quot;,A.TS &quot;Time&quot;,D.Lock &quot;Lock|&quot;,LO.PackageName &quot;Package__PACKAGE&quot;, LO.ClassName &quot;Class__CLASS&quot;, L.AtLine &quot;Line&quot;,D.ID &quot;LDID__HIDE&quot;,A.ID &quot;AID__HIDE&quot;
+  <query id='Q0017' description='What locks are held for each access of this non-static field?' display='true'>SELECT O.THREADNAME &quot;Thread&quot;,A.TS &quot;Time&quot;,D.Lock &quot;Lock__|&quot;,LO.PackageName &quot;Package__package.gif&quot;, LO.ClassName &quot;Class__class.gif&quot;, L.AtLine &quot;Line__(r)&quot;,D.ID &quot;LDID__HIDE&quot;,A.ID &quot;AID__HIDE&quot;
  FROM ACCESS A
  INNER JOIN OBJECT O ON
    O.Run = A.Run AND 
@@ -188,7 +188,7 @@ WHERE
    A.RUN=?RUN?
 ORDER BY O.THREADNAME ASC, A.TS ASC, D.Start DESC
 </query>
-  <query id='Q0023' description='What locks are held for each access of this static field?' display='true'>SELECT O.THREADNAME &quot;Thread&quot;,A.TS &quot;Time&quot;,D.Lock &quot;Lock|&quot;,LO.PackageName &quot;Package__PACKAGE&quot;, LO.ClassName &quot;Class__CLASS&quot;, L.AtLine &quot;Line&quot;,D.ID &quot;LDID__HIDE&quot;,A.ID &quot;AID__HIDE&quot;
+  <query id='Q0023' description='What locks are held for each access of this static field?' display='true'>SELECT O.THREADNAME &quot;Thread&quot;,A.TS &quot;Time&quot;,D.Lock &quot;Lock__|&quot;,LO.PackageName &quot;Package__package.gif&quot;, LO.ClassName &quot;Class__class.gif&quot;, L.AtLine &quot;Line__(r)&quot;,D.ID &quot;LDID__HIDE&quot;,A.ID &quot;AID__HIDE&quot;
  FROM ACCESS A
  INNER JOIN OBJECT O ON
    O.Run = A.Run AND 
@@ -208,23 +208,23 @@ WHERE
    A.RUN=?RUN? AND
    A.RECEIVER IS NULL
 ORDER BY O.THREADNAME ASC, A.TS ASC, D.Start DESC</query>
-  <query id='Q0011' description='What locks could potentially cause deadlock?' display='true' display-at-root='true'>select Component &quot;Component&quot;, LockHeld &quot;LockHeld|&quot;,
-  LockAcquired &quot;LockAcquired&quot;,
-  Count &quot;Count&quot;, FirstTime &quot;FirstTime&quot;, LastTime &quot;LastTime&quot;
+  <query id='Q0011' description='What locks could potentially cause deadlock?' display='true' display-at-root='true'>select Component &quot;Component&quot;, LockHeld &quot;LockHeld__(r)|&quot;,
+  LockAcquired &quot;LockAcquired__(r)&quot;,
+  Count &quot;Count__(r)&quot;, FirstTime &quot;FirstTime&quot;, LastTime &quot;LastTime&quot;
 from lockcycle
 where run = ?RUN?
   and count &gt; 1
 order by count desc</query>
   <query id='Q0002' description='What non-static fields are shared?' display='true' display-at-root='true'>select
-  O.PackageName &quot;Package__PACKAGE&quot;,
-  O.ClassName &quot;Class__CLASS&quot;,
-  F.FieldName &quot;FieldName]&quot;,
+  O.PackageName &quot;Package__package.gif&quot;,
+  O.ClassName &quot;Class__class.gif&quot;,
+  F.FieldName &quot;FieldName__]&quot;,
   FI.Receiver &quot;Receiver&quot;,
-  THO.ThreadName &quot;Thread|&quot;,
-  FI.ReadUCCount + FI.ReadCount &quot;Reads&quot;,
-  FI.WriteUCCount + FI.WriteCount &quot;Writes&quot;,
-  FI.ReadUCCount &quot;Reads During Construction&quot;,
-  FI.WriteUCCount &quot;Writes During Construction&quot;,
+  THO.ThreadName &quot;Thread__|&quot;,
+  FI.ReadUCCount + FI.ReadCount &quot;Reads__(sum)(r)&quot;,
+  FI.WriteUCCount + FI.WriteCount &quot;Writes__(sum)(r)&quot;,
+  FI.ReadUCCount &quot;Reads During Construction__(sum)(r)&quot;,
+  FI.WriteUCCount &quot;Writes During Construction__(sum)(r)&quot;,
   F.ID &quot;FieldId__HIDE&quot;
 from OBJECT O,
      FIELD F,
@@ -240,10 +240,10 @@ where
   and THO.ID = FI.Thread
 order by O.PackageName,O.ClassName,F.FieldName,FI.Receiver,THO.ThreadName</query>
   <query id='Q0015' description='What non-static fields have a lock set?' display='true' display-at-root='true'>SELECT 
-  O.PackageName &quot;Package__PACKAGE&quot;,
-  O.ClassName &quot;Class__CLASS&quot;,
-  FI.FieldName &quot;Field]&quot;,
-  I.RECEIVER &quot;Receiver|&quot;, F.LOCK &quot;Lock&quot;, I.FIELD &quot;FieldId__HIDE&quot;
+  O.PackageName &quot;Package__package.gif&quot;,
+  O.ClassName &quot;Class__class.gif&quot;,
+  FI.FieldName &quot;Field__]&quot;,
+  I.RECEIVER &quot;Receiver__|&quot;, F.LOCK &quot;Lock&quot;, I.FIELD &quot;FieldId__HIDE&quot;
  FROM OBJECT O
  INNER JOIN FIELD FI ON FI.DeclaringType = O.Id AND O.Run = FI.Run
  INNER JOIN INTERESTINGFIELD I ON FI.STATIC = &apos;N&apos; AND I.FIELD=FI.ID AND I.RUN = FI.RUN
@@ -252,10 +252,10 @@ order by O.PackageName,O.ClassName,F.FieldName,FI.Receiver,THO.ThreadName</query
  WHERE FI.RUN = ?RUN?
  ORDER BY O.PackageName,O.ClassName,FI.FieldName,I.Receiver</query>
   <query id='Q0016' description='What non-static fields have an empty lock set?' display='true' display-at-root='true'>SELECT 
-  O.PackageName &quot;Package__PACKAGE&quot;,
-  O.ClassName &quot;Class__CLASS&quot;,
-  FI.FieldName &quot;Field]&quot;,
-  I.RECEIVER &quot;Receiver|&quot;,I.FIELD &quot;FieldId__HIDE&quot;
+  O.PackageName &quot;Package__package.gif&quot;,
+  O.ClassName &quot;Class__class.gif&quot;,
+  FI.FieldName &quot;Field__]&quot;,
+  I.RECEIVER &quot;Receiver__|&quot;,I.FIELD &quot;FieldId__HIDE&quot;
  FROM OBJECT O
  INNER JOIN FIELD FI ON FI.DeclaringType = O.Id AND O.Run = FI.Run
  INNER JOIN INTERESTINGFIELD I ON FI.STATIC = &apos;N&apos; AND I.FIELD=FI.ID AND I.RUN = FI.RUN
@@ -263,20 +263,20 @@ order by O.PackageName,O.ClassName,F.FieldName,FI.Receiver,THO.ThreadName</query
    F.RUN = I.RUN AND F.FIELD = I.FIELD AND F.RECEIVER = I.RECEIVER 
  WHERE FI.RUN = ?RUN? AND F.LOCK IS NULL
  ORDER BY O.PackageName, O.ClassName, FI.FieldName</query>
-  <query id='Q0003' description='What objects are threads?' display='true'>select t.Id, t.ThreadName, cl.PackageName &quot;Package__PACKAGE&quot;,
-       cl.ClassName &quot;Class__CLASS&quot;
+  <query id='Q0003' description='What objects are threads?' display='true'>select t.Id, t.ThreadName, cl.PackageName &quot;Package__package.gif&quot;,
+       cl.ClassName &quot;Class__class.gif&quot;
 from OBJECT as t, OBJECT as cl   
 where t.ThreadName is not null
   and t.Run=?RUN?
   and cl.Run=?RUN?
   and t.Type=cl.Id</query>
   <query id='Q0001' description='What static fields are shared?' display='true' display-at-root='true'>select
-  O.PackageName &quot;Package__PACKAGE&quot;,
-  O.ClassName &quot;Class__CLASS&quot;,
-  F.FieldName &quot;FieldName]&quot;,
-  THO.ThreadName &quot;Thread|&quot;,
-  FS.ReadCount &quot;Read Count&quot;,
-  FS.WriteCount &quot;Write Count&quot;,
+  O.PackageName &quot;Package__package.gif&quot;,
+  O.ClassName &quot;Class__class.gif&quot;,
+  F.FieldName &quot;FieldName__]&quot;,
+  THO.ThreadName &quot;Thread__|&quot;,
+  FS.ReadCount &quot;Read Count__(sum)(r)&quot;,
+  FS.WriteCount &quot;Write Count__(sum)(r)&quot;,
   F.ID &quot;FieldId__HIDE&quot;
 from OBJECT O,
      FIELD F,
@@ -292,9 +292,9 @@ where
   and THO.ID = FS.Thread
 order by O.PackageName,O.ClassName,F.FieldName,THO.ThreadName</query>
   <query id='Q0021' description='What static fields have a lock set?' display='true' display-at-root='true'>SELECT 
-  O.PackageName &quot;Package__PACKAGE&quot;,
-  O.ClassName &quot;Class__CLASS&quot;,
-  FI.FieldName &quot;Field|&quot;,
+  O.PackageName &quot;Package__package.gif&quot;,
+  O.ClassName &quot;Class__class.gif&quot;,
+  FI.FieldName &quot;Field__|&quot;,
   I.FIELD &quot;FieldId__HIDE&quot;, F.LOCK 
  FROM OBJECT O
  INNER JOIN FIELD FI ON FI.DeclaringType = O.Id AND O.Run = FI.Run
@@ -304,9 +304,9 @@ order by O.PackageName,O.ClassName,F.FieldName,THO.ThreadName</query>
  WHERE FI.RUN = ?RUN?
  ORDER BY O.PackageName,O.ClassName,FI.FieldName</query>
   <query id='Q0022' description='What static fields have an empty lock set?' display='true' display-at-root='true'>SELECT 
-  O.PackageName &quot;Package__PACKAGE&quot;,
-  O.ClassName &quot;Class__CLASS&quot;,
-  FI.FieldName &quot;Field|&quot;,
+  O.PackageName &quot;Package__package.gif&quot;,
+  O.ClassName &quot;Class__class.gif&quot;,
+  FI.FieldName &quot;Field__|&quot;,
   I.FIELD &quot;FieldId__HIDE&quot;
  FROM OBJECT O
  INNER JOIN FIELD FI ON FI.DeclaringType = O.Id AND O.Run = FI.Run
@@ -316,10 +316,10 @@ order by O.PackageName,O.ClassName,F.FieldName,THO.ThreadName</query>
  WHERE FI.RUN = ?RUN? AND F.LOCK IS NULL
  ORDER BY O.PackageName,O.ClassName,FI.FieldName</query>
   <query id='Q0025' description='What threads read and write a static field?' display='true'>SELECT
-  CO.PackageName &quot;Package__PACKAGE&quot;,
-  CO.ClassName   &quot;Class__CLASS&quot;,
+  CO.PackageName &quot;Package__package.gif&quot;,
+  CO.ClassName   &quot;Class__class.gif&quot;,
   F.FieldName    &quot;FieldName&quot;,
-  THO.ThreadName &quot;Thread|&quot;,
+  THO.ThreadName &quot;Thread__|&quot;,
   FI.ReadCount &quot;Reads&quot;,
   FI.WriteCount &quot;Writes&quot;
  FROM FIELDSTATICTHREAD FI, OBJECT THO, FIELD F, OBJECT CO
@@ -332,10 +332,10 @@ order by O.PackageName,O.ClassName,F.FieldName,THO.ThreadName</query>
    CO.RUN = F.RUN AND
    CO.ID = F.DECLARINGTYPE</query>
   <query id='Q0019' description='What threads read and write this non-static field?' display='true'>SELECT
-  CO.PackageName &quot;Package__PACKAGE&quot;,
-  CO.ClassName   &quot;Class__CLASS&quot;,
+  CO.PackageName &quot;Package__package.gif&quot;,
+  CO.ClassName   &quot;Class__class.gif&quot;,
   F.FieldName    &quot;FieldName&quot;,
-  THO.ThreadName &quot;Thread|&quot;,
+  THO.ThreadName &quot;Thread__|&quot;,
   FI.ReadUCCount + FI.ReadCount &quot;Reads&quot;,
   FI.WriteUCCount + FI.WriteCount &quot;Writes&quot;,
   FI.ReadUCCount &quot;Reads During Construction&quot;,
@@ -352,7 +352,7 @@ order by O.PackageName,O.ClassName,F.FieldName,THO.ThreadName</query>
    CO.ID = F.DECLARINGTYPE</query>
   <query id='Q0004' description='What threads use each lock?' display='true'>select 
   L.LOCK &quot;Lock&quot;, 
-  O.THREADNAME &quot;Thread Name|&quot;,
+  O.THREADNAME &quot;Thread Name__|&quot;,
   count(*) &quot;Acquisition Count&quot;
 from LOCK L, OBJECT O
 where L.INTHREAD = O.ID
@@ -376,7 +376,7 @@ where ld.State = &apos;BLOCKING&apos;
 order by ld.Duration desc
   </query>
   <query id='Q0009' description='Where does a thread hold a lock and acquire another?' display='true' display-at-root='true'>select lh.LockEvent &quot;LockEvent__HIDE&quot;, count(LockHeld) &quot;Number of Locks Already Held&quot;,
-  tho.ThreadName &quot;ThreadName&quot;, lo.ClassName &quot;Class__CLASS&quot;, lo.PackageName &quot;Package__PACKAGE&quot;, le.AtLine &quot;Line&quot;
+  tho.ThreadName &quot;ThreadName&quot;, lo.ClassName &quot;Class__class.gif&quot;, lo.PackageName &quot;Package__package.gif&quot;, le.AtLine &quot;Line__(r)&quot;
 from LOCKSHELD lh, LOCK le, OBJECT lo, OBJECT tho
 where lh.Run=?RUN?
   and lh.LockEvent=le.Id
@@ -389,7 +389,7 @@ group by lh.LockEvent, lo.ClassName, lo.PackageName, le.AtLine, tho.ThreadName
 order by 2 desc, 1
 
 </query>
-  <query id='Q0020' description='Where is this non-static field accessed?' display='true'>SELECT CO.PackageName &quot;Package__PACKAGE&quot;, CO.ClassName &quot;Class__CLASS&quot;, O.THREADNAME &quot;Thread&quot;,A.TS &quot;Time|&quot;, A.AtLine &quot;Line&quot;,A.ID &quot;AID__HIDE&quot;
+  <query id='Q0020' description='Where is this non-static field accessed?' display='true'>SELECT CO.PackageName &quot;Package__package.gif&quot;, CO.ClassName &quot;Class__class.gif&quot;, O.THREADNAME &quot;Thread&quot;,A.TS &quot;Time__|&quot;, A.AtLine &quot;Line__(r)&quot;,A.ID &quot;AID__HIDE&quot;
  FROM ACCESS A
  INNER JOIN OBJECT O ON
    O.Run = A.Run AND 
@@ -402,7 +402,7 @@ WHERE
    A.RECEIVER = ?Receiver? AND 
    A.RUN=?RUN?
 ORDER BY O.THREADNAME, A.TS ASC</query>
-  <query id='Q0026' description='Where is this static field accessed?' display='true'>SELECT CO.PackageName &quot;Package__PACKAGE&quot;, CO.ClassName &quot;Class__CLASS&quot;, O.THREADNAME &quot;THREAD&quot;,A.TS &quot;TIME|&quot;, A.AtLine &quot;Line&quot;,A.ID &quot;AID&quot;
+  <query id='Q0026' description='Where is this static field accessed?' display='true'>SELECT CO.PackageName &quot;Package__package.gif&quot;, CO.ClassName &quot;Class__class.gif&quot;, O.THREADNAME &quot;THREAD&quot;,A.TS &quot;TIME|&quot;, A.AtLine &quot;Line__(r)&quot;,A.ID &quot;AID&quot;
  FROM ACCESS A
  INNER JOIN OBJECT O ON
    O.Run = A.Run AND 
@@ -415,8 +415,8 @@ WHERE
    A.RECEIVER IS NULL AND 
    A.RUN=?RUN?
 ORDER BY O.THREADNAME, A.TS ASC</query>
-  <query id='Q0006' description='Which threads and what code are contending for a lock?' display='true'>select lo.PackageName &quot;Package__PACKAGE&quot;, lo.ClassName &quot;Class__CLASS&quot;, le.AtLine &quot;AtLine&quot;,
-  tho.ThreadName &quot;Thread|&quot;, sum(ld.Duration) &quot;BlockTime&quot;, ld.id &quot;LDID__HIDE&quot;
+  <query id='Q0006' description='Which threads and what code are contending for a lock?' display='true'>select lo.PackageName &quot;Package__package.gif&quot;, lo.ClassName &quot;Class__class.gif&quot;, le.AtLine &quot;AtLine__]&quot;,
+  tho.ThreadName &quot;Thread__|&quot;, (trim(cast(sum(ld.Duration) as char(10))) || &apos; ns&apos;) &quot;BlockTime__(sum)(r)&quot;, ld.id &quot;LDID__HIDE&quot;
 from LOCKDURATION ld, LOCK le, OBJECT lo, OBJECT tho
 where ld.Run=?RUN?
   and ld.Lock=?Lock?
@@ -428,7 +428,7 @@ where ld.Run=?RUN?
   and tho.Run = ld.Run
   and tho.Id = ld.InThread
 group by lo.PackageName,lo.ClassName, le.AtLine, tho.ThreadName, ld.Id, ld.State
-order by &quot;BlockTime&quot; desc
+order by lo.PackageName, lo.ClassName, le.AtLine, sum(ld.Duration) desc
   </query>
   <query id='Q0008' description='Who is interacting with that lock at that moment?' display='true'>select ld.InThread &quot;InThread&quot;, ld.State &quot;State&quot;, ld.Start &quot;Start&quot;, ld.Stop &quot;Stop&quot;, ld.Duration &quot;Duration&quot;, 
   ld.StartEvent &quot;LockEvent&quot;
@@ -440,39 +440,39 @@ where le.Run=?RUN?
   and le.ts between ld.Start and ld.Stop
 order by ld.Start 
   </query>
-  <sub-query id='Q0012' sub-query='Q0029'/>
   <sub-query id='Q0012' sub-query='Q0013'/>
+  <sub-query id='Q0012' sub-query='Q0029'/>
   <sub-query id='Q0012' sub-query='Q0014'/>
   <sub-query id='Q0005' sub-query='Q0006'/>
-  <sub-query id='Q0017' sub-query='Q0028'/>
   <sub-query id='Q0017' sub-query='Q0027'/>
-  <sub-query id='Q0023' sub-query='Q0028'/>
+  <sub-query id='Q0017' sub-query='Q0028'/>
   <sub-query id='Q0023' sub-query='Q0027'/>
+  <sub-query id='Q0023' sub-query='Q0028'/>
   <sub-query id='Q0011' sub-query='Q0012'/>
   <sub-query id='Q0002' sub-query='Q0019'/>
-  <sub-query id='Q0002' sub-query='Q0018'/>
   <sub-query id='Q0002' sub-query='Q0017'/>
+  <sub-query id='Q0002' sub-query='Q0018'/>
   <sub-query id='Q0002' sub-query='Q0020'/>
   <sub-query id='Q0015' sub-query='Q0019'/>
-  <sub-query id='Q0015' sub-query='Q0018'/>
   <sub-query id='Q0015' sub-query='Q0017'/>
+  <sub-query id='Q0015' sub-query='Q0018'/>
   <sub-query id='Q0015' sub-query='Q0020'/>
   <sub-query id='Q0016' sub-query='Q0019'/>
-  <sub-query id='Q0016' sub-query='Q0018'/>
   <sub-query id='Q0016' sub-query='Q0017'/>
+  <sub-query id='Q0016' sub-query='Q0018'/>
   <sub-query id='Q0016' sub-query='Q0020'/>
-  <sub-query id='Q0001' sub-query='Q0024'/>
   <sub-query id='Q0001' sub-query='Q0023'/>
-  <sub-query id='Q0001' sub-query='Q0026'/>
   <sub-query id='Q0001' sub-query='Q0025'/>
-  <sub-query id='Q0021' sub-query='Q0024'/>
+  <sub-query id='Q0001' sub-query='Q0026'/>
+  <sub-query id='Q0001' sub-query='Q0024'/>
   <sub-query id='Q0021' sub-query='Q0023'/>
-  <sub-query id='Q0021' sub-query='Q0026'/>
   <sub-query id='Q0021' sub-query='Q0025'/>
-  <sub-query id='Q0022' sub-query='Q0024'/>
+  <sub-query id='Q0021' sub-query='Q0026'/>
+  <sub-query id='Q0021' sub-query='Q0024'/>
   <sub-query id='Q0022' sub-query='Q0023'/>
-  <sub-query id='Q0022' sub-query='Q0026'/>
   <sub-query id='Q0022' sub-query='Q0025'/>
+  <sub-query id='Q0022' sub-query='Q0026'/>
+  <sub-query id='Q0022' sub-query='Q0024'/>
   <sub-query id='Q0009' sub-query='Q0013'/>
   <sub-query id='Q0009' sub-query='Q0014'/>
   <sub-query id='Q0020' sub-query='Q0028'/>

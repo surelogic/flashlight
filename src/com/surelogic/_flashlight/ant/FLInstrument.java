@@ -1,7 +1,9 @@
 package com.surelogic._flashlight.ant;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -34,9 +36,13 @@ public final class FLInstrument extends Task {
   private final List<InstrumentationSubTask> subTasks =
     new ArrayList<InstrumentationSubTask>();
   
+  private String fieldsFileName = null;
+  
   
   
   public static interface InstrumentationSubTask {
+    public void scan(
+        FLInstrument task, RewriteEngine engine) throws BuildException;
     public void execute(
         FLInstrument task, RewriteEngine engine) throws BuildException;
   }
@@ -60,6 +66,19 @@ public final class FLInstrument extends Task {
     
     String getSrcdir() { return srcdir; }
     String getDestdir() { return destdir; }
+    
+    public void scan(
+        final FLInstrument instrumentTask, final RewriteEngine engine)
+        throws BuildException {
+      instrumentTask.log("Scanning class directory " + srcdir, Project.MSG_INFO);
+      try {
+        engine.scanDirectory(new File(srcdir));
+      } catch (final IOException e) {
+        final String msg = "Error scanning class files in directory " + srcdir;
+        instrumentTask.log(msg, Project.MSG_ERR);
+        throw new BuildException(msg, e, instrumentTask.getLocation());
+      }
+    }
     
     public void execute(
         final FLInstrument instrumentTask, final RewriteEngine engine)
@@ -102,6 +121,19 @@ public final class FLInstrument extends Task {
     String getSrcfile() { return srcfile; }
     String getDestfile() { return destfile; }
     String getDestdir() { return destdir; }
+
+    public void scan(
+        final FLInstrument instrumentTask, final RewriteEngine engine)
+        throws BuildException {
+      try {
+        instrumentTask.log("Scanning classes in jar " + srcfile, Project.MSG_INFO);
+        engine.scanJar(new File(srcfile));
+      } catch (final IOException e) {
+        final String msg = "Error scanning class files in jar " + srcfile;
+        instrumentTask.log(msg, Project.MSG_ERR);
+        throw new BuildException(msg, e, instrumentTask.getLocation());
+      }
+    }
 
     public void execute(
         final FLInstrument instrumentTask, final RewriteEngine engine)
@@ -335,6 +367,10 @@ public final class FLInstrument extends Task {
   }
   
   
+  public void setFieldsfile(final String fileName) {
+    fieldsFileName = fileName;
+  }
+  
   
   /**
    * Accept a new &lt;dir...&gt; child element. We check that the source and
@@ -386,6 +422,10 @@ public final class FLInstrument extends Task {
   
   private void checkParameters() throws BuildException {
     // does nothing for now
+    
+    if (fieldsFileName == null) {
+      throw new BuildException("No file name specified for the fields database");
+    }
   }
   
   /**
@@ -397,10 +437,23 @@ public final class FLInstrument extends Task {
     
     final Configuration config = new Configuration(properties);
     final AntLogMessenger messenger = new AntLogMessenger();
-    final RewriteEngine engine = new RewriteEngine(config, messenger);
     
-    for (final InstrumentationSubTask subTask : subTasks) {
-      subTask.execute(this, engine);
+    PrintWriter fieldsOut = null;
+    try {
+      fieldsOut = new PrintWriter(fieldsFileName);
+      final RewriteEngine engine = new RewriteEngine(config, messenger, fieldsOut);
+      for (final InstrumentationSubTask subTask : subTasks) {
+        subTask.scan(this, engine);
+      }    
+      for (final InstrumentationSubTask subTask : subTasks) {
+        subTask.execute(this, engine);
+      }
+    } catch(final FileNotFoundException e) {
+      throw new BuildException("Couldn't open " + fieldsFileName, e);
+    } finally {
+      if (fieldsOut != null) {
+        fieldsOut.close();
+      }
     }
   }
   

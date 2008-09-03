@@ -3,6 +3,16 @@ package com.surelogic._flashlight.rewriter.test;
 import java.lang.reflect.Field;
 
 public class EmptyStore {
+  public static void fieldAccessSeen(final boolean read, final Object receiver,
+      final int fieldID, final Class<?> withinClass, final int line) {
+    // do nothing
+  }
+
+  public static void fieldAccessUnseen(final boolean read, final Object receiver,
+      final Field field, final Class<?> withinClass, final int line) {
+    // do nothing
+  }
+
   public static void fieldAccess(final boolean read, final Object receiver,
       final Field field, final Class<?> withinClass, final int line) {
     // do nothing

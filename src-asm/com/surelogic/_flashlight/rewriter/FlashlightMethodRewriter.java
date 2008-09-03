@@ -109,14 +109,16 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   private LocalVariablesSorter lvs;
   
   
+  private final FieldIDs fieldIDs;
   
-  public static MethodVisitor create(
+  
+  public static MethodVisitor create(final FieldIDs fids,
       final int access, final String mname, final String desc,
       final MethodVisitor mv, final Configuration conf, final boolean java5,
       final boolean inInt, final String fname, final String nameInternal,
       final String nameFullyQualified, final Set<MethodCallWrapper> wrappers) {
     final FlashlightMethodRewriter methodRewriter =
-      new FlashlightMethodRewriter(access, mname, desc, mv,
+      new FlashlightMethodRewriter(fids, access, mname, desc, mv,
           conf, java5, inInt, fname, nameInternal, nameFullyQualified, wrappers);
     methodRewriter.lvs = new LocalVariablesSorter(access, desc, methodRewriter);
     return methodRewriter.lvs;
@@ -140,12 +142,13 @@ final class FlashlightMethodRewriter extends MethodAdapter {
    * @param wrappers
    *          The set of wrapper methods that this visitor should add to.
    */
-  private FlashlightMethodRewriter(
+  private FlashlightMethodRewriter(final FieldIDs fids,
       final int access, final String mname, final String desc,
       final MethodVisitor mv, final Configuration conf, final boolean java5,
       final boolean inInt, final String fname, final String nameInternal,
       final String nameFullyQualified, final Set<MethodCallWrapper> wrappers) {
     super(mv);
+    fieldIDs = fids;
     config = conf;
     atLeastJava5 = java5;
     inInterface = inInt;
@@ -575,7 +578,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     finishFieldAccess(name, fullyQualifiedOwner);
     
     // Update stack depth
-    updateStackDepthDelta(stackDelta);
+    updateStackDepthDelta(stackDelta+1);
   }
 
 
@@ -636,7 +639,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     finishFieldAccess(name, fullyQualifiedOwner);
     
     // Update stack depth
-    updateStackDepthDelta(5);
+    updateStackDepthDelta(5+1);
   }
 
 
@@ -677,7 +680,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     /* Update stack depth.  Either 3 or 4 depending on the category of the
      * original value on the stack.
      */
-    updateStackDepthDelta(ByteCodeUtils.isCategory2(desc) ? 3 : 4);
+    updateStackDepthDelta(1 + (ByteCodeUtils.isCategory2(desc) ? 3 : 4));
   }
   
   /**
@@ -711,7 +714,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     finishFieldAccess(name, fullyQualifiedOwner);
     
     // Update stack depth
-    updateStackDepthDelta(5);
+    updateStackDepthDelta(5+1);
   }
 
 
@@ -734,34 +737,60 @@ final class FlashlightMethodRewriter extends MethodAdapter {
    */
   private void finishFieldAccess(
       final String name, final String fullyQualifiedOwner) {
-    // Stack is "..., isRead, receiver"
-
-    /* Push the class name and field name on the stack for a call to
-     * FlashlightRuntimeSupport.getField().
-     */
-    mv.visitLdcInsn(fullyQualifiedOwner);
-    // ..., isRead, receiver, className
-    mv.visitLdcInsn(name);
-    // ..., isRead, receiver, className, fieldName
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_RUNTIME_SUPPORT, FlashlightNames.GET_FIELD, FlashlightNames.GET_FIELD_SIGNATURE);
-    // Stack is "..., isRead, receiver, Field"
-    
-    /* We need to insert the expression "Class.forName(<current_class>)"
-     * to push the java.lang.Class object of the referencing class onto the 
-     * stack.
-     */
-    ByteCodeUtils.pushInClass(mv, atLeastJava5, classBeingAnalyzedInternal);
-    // Stack is "..., isRead, receiver, Field, inClass"
-    
-    /* Push the line number of the field access. */
-    ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
-    // Stack is "..., isRead, receiver, Field, inClass, LineNumber"
-    
-    /* We can now call Store.fieldAccess() */
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName, FlashlightNames.FIELD_ACCESS, FlashlightNames.FIELD_ACCESS_SIGNATURE);    
-    // Stack is "..."
-    
-    // Resume
+    final Integer fid = fieldIDs.getFieldID(fullyQualifiedOwner, name);
+    if (fid == FieldIDs.NOT_FOUND) {
+      System.out.println("In method " + classBeingAnalyzedFullyQualified + "." + methodName + "(): unseen field " + fullyQualifiedOwner + "." + name);
+      // Stack is "..., isRead, receiver"
+  
+      /* Push the class name and field name on the stack for a call to
+       * FlashlightRuntimeSupport.getField().
+       */
+      mv.visitLdcInsn(fullyQualifiedOwner);
+      // ..., isRead, receiver, className
+      mv.visitLdcInsn(name);
+      // ..., isRead, receiver, className, fieldName
+      mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_RUNTIME_SUPPORT, FlashlightNames.GET_FIELD, FlashlightNames.GET_FIELD_SIGNATURE);
+      // Stack is "..., isRead, receiver, Field"
+      
+      /* We need to insert the expression "Class.forName(<current_class>)"
+       * to push the java.lang.Class object of the referencing class onto the 
+       * stack.
+       */
+      ByteCodeUtils.pushInClass(mv, atLeastJava5, classBeingAnalyzedInternal);
+      // Stack is "..., isRead, receiver, Field, inClass"
+      
+      /* Push the line number of the field access. */
+      ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
+      // Stack is "..., isRead, receiver, Field, inClass, LineNumber"
+      
+      /* We can now call Store.fieldAccess() */
+      mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName, FlashlightNames.FIELD_ACCESS_UNSEEN, FlashlightNames.FIELD_ACCESS_UNSEEN_SIGNATURE);    
+      // Stack is "..."
+      
+      // Resume
+    } else {
+      // Stack is "..., isRead, receiver"
+      
+      mv.visitLdcInsn(fid);
+      // Static is "..., isRead, receiver, field_id
+      
+      /* We need to insert the expression "Class.forName(<current_class>)"
+       * to push the java.lang.Class object of the referencing class onto the 
+       * stack.
+       */
+      ByteCodeUtils.pushInClass(mv, atLeastJava5, classBeingAnalyzedInternal);
+      // Stack is "..., isRead, receiver, field_id, inClass"
+      
+      /* Push the line number of the field access. */
+      ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
+      // Stack is "..., isRead, receiver, field_id, inClass, LineNumber"
+      
+      /* We can now call Store.fieldAccess() */
+      mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName, FlashlightNames.FIELD_ACCESS_SEEN, FlashlightNames.FIELD_ACCESS_SEEN_SIGNATURE);    
+      // Stack is "..."
+      
+      // Resume
+    }
   }
 
   

@@ -8,6 +8,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Properties;
@@ -24,6 +25,8 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 
 import com.surelogic._flashlight.rewriter.Configuration;
+import com.surelogic._flashlight.rewriter.FieldCataloger;
+import com.surelogic._flashlight.rewriter.FieldIDs;
 import com.surelogic._flashlight.rewriter.FlashlightClassRewriter;
 import com.surelogic._flashlight.rewriter.MethodIdentifier;
 
@@ -46,15 +49,18 @@ public final class RewriteEngine {
   private final Configuration config;
   private final EngineMessenger messenger;
   
+  private final FieldIDs fieldIDs = new FieldIDs();
+  private final PrintWriter fieldOutput;
   
   
   /**
    * Create a new rewrite engine based on the given configuration and that
    * reports messages to the given messenger.
    */
-  public RewriteEngine(final Configuration c, final EngineMessenger m) {
+  public RewriteEngine(final Configuration c, final EngineMessenger m, final PrintWriter pw) {
     config = c;
     messenger = m;
+    fieldOutput = pw;
   }
 
   
@@ -110,6 +116,25 @@ public final class RewriteEngine {
       }
     }
   }
+  
+  public void scanDirectory(final File inDir) throws IOException {
+    final String[] files = inDir.list();
+    if (files == null) {
+      throw new IOException("Source directory " + inDir + " is bad");
+    }
+    for (final String name : files) {
+      final File nextIn = new File(inDir, name);
+      if (nextIn.isDirectory()) {
+        scanDirectory(nextIn);
+      } else {
+        scanFileStream(new RewriteHelper() {
+          public InputStream getInputStream() throws IOException {
+            return new BufferedInputStream(new FileInputStream(nextIn));
+          }
+        }, nextIn.getPath());
+      }
+    }
+  }  
 
   /**
    * Process the files in the given JAR file {@code inJarFile}, writing to the
@@ -258,6 +283,32 @@ public final class RewriteEngine {
     }
   }
 
+  public void scanJar(final File inJarFile) throws IOException {
+    final JarFile jarFile = new JarFile(inJarFile);
+    try {
+      final Enumeration jarEnum = jarFile.entries(); 
+      while (jarEnum.hasMoreElements()) {
+        final JarEntry jarEntryIn = (JarEntry) jarEnum.nextElement();
+        final String entryName = jarEntryIn.getName();
+        
+        if (!jarEntryIn.isDirectory()) {
+          scanFileStream(new RewriteHelper() {
+            public InputStream getInputStream() throws IOException {
+              return new BufferedInputStream(jarFile.getInputStream(jarEntryIn));
+            }
+          }, entryName);
+        }
+      }
+    } finally {
+      // Close the jarFile to be tidy
+      try {
+        jarFile.close();
+      } catch (final IOException e) {
+        // Doesn't want to close, what can we do?
+      }
+    }
+  }
+
   public static interface RewriteHelper {
     public InputStream getInputStream() throws IOException;
   }
@@ -282,7 +333,15 @@ public final class RewriteEngine {
       }
     }          
   }
-  
+
+  public void scanFileStream(final RewriteHelper helper, final String fname)
+      throws IOException {
+    if (isClassfileName(fname)) {
+      messenger.info(0, "Scanning classfile " + fname);
+      scanClassfileStream(fname, helper);
+    }          
+  }
+
   public void rewriteClassfileStream(final String classname,
       final RewriteHelper helper, final OutputStream outClassfile)
       throws IOException {
@@ -306,6 +365,20 @@ public final class RewriteEngine {
         } catch (final IOException e) {
           // Doesn't want to close, what can we do?
         }
+      }
+    }
+  }
+
+  public void scanClassfileStream(final String classname, final RewriteHelper helper)
+      throws IOException {
+    final InputStream inClassfile = helper.getInputStream();
+    try {
+      tryToScanClassfileStream(inClassfile);
+    } finally {
+      try {
+        inClassfile.close();
+      } catch (final IOException e) {
+        // Doesn't want to close, what can we do?
       }
     }
   }
@@ -336,7 +409,7 @@ public final class RewriteEngine {
     final ClassReader input = new ClassReader(inClassfile);
     final ClassWriter output = new ClassWriter(input, 0);
     final FlashlightClassRewriter xformer =
-      new FlashlightClassRewriter(config, output, ignoreMethods);
+      new FlashlightClassRewriter(fieldIDs, config, output, ignoreMethods);
     input.accept(xformer, 0);
     final Set<MethodIdentifier> badMethods = xformer.getOversizedMethods();
     if (!badMethods.isEmpty()) {
@@ -346,7 +419,15 @@ public final class RewriteEngine {
       outClassfile.write(output.toByteArray());
     }
   }
-  
+
+  private void tryToScanClassfileStream(final InputStream inClassfile) 
+      throws IOException {
+    final ClassReader input = new ClassReader(inClassfile);
+    final FieldCataloger cataloger =
+      new FieldCataloger(fieldOutput, fieldIDs);
+    input.accept(cataloger, ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
+  }
+
   /**
    * Copy the contents of an input stream to an output stream.
    * 
@@ -440,9 +521,12 @@ public final class RewriteEngine {
     final File propFile = new File(userHome, "flashlight-rewriter.properties");
     final Properties properties = new Properties(loadPropertiesFromFile(propFile));
     
+    final PrintWriter writer = new PrintWriter(System.out);
     final RewriteEngine engine =
-      new RewriteEngine(new Configuration(properties), ConsoleMessenger.prototype);
+      new RewriteEngine(new Configuration(properties), ConsoleMessenger.prototype, writer);
+    engine.scanDirectory(new File(args[0]));
     engine.rewriteDirectory(new File(args[0]), new File(args[1]));
+    writer.close();
     
     System.out.println("done");
   }

@@ -74,12 +74,14 @@ public final class FlashlightClassRewriter extends ClassAdapter {
    */
   private final Set<MethodIdentifier> methodsToIgnore;
   
+  private final FieldIDs fieldIDs;
   
   
-  public FlashlightClassRewriter(
+  public FlashlightClassRewriter(final FieldIDs fids,
       final Configuration conf, final ClassVisitor cv,
       final Set<MethodIdentifier> ignore) {
     super(cv);
+    fieldIDs = fids;
     config = conf;
     methodsToIgnore = ignore;
   }
@@ -144,7 +146,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
         cv.visitMethod(newAccess, name, desc, signature, exceptions);
       final CodeSizeEvaluator cse = new CodeSizeEvaluator(original);
       methodSizes.put(methodId, cse);
-      return FlashlightMethodRewriter.create(
+      return FlashlightMethodRewriter.create(fieldIDs,
           access, name, desc, cse, config, atLeastJava5, isInterface,
           sourceFileName, classNameInternal, classNameFullyQualified,
           wrapperMethods);
@@ -186,7 +188,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
     /* Proceed as if visitMethod() were called on us, and simulate the method
      * traversal through the rewriter visitor.
      */
-    final MethodVisitor rewriter_mv = FlashlightMethodRewriter.create(
+    final MethodVisitor rewriter_mv = FlashlightMethodRewriter.create(fieldIDs,
         Opcodes.ACC_STATIC, CLASS_INITIALIZER, CLASS_INITIALIZER_DESC, mv,
         config, atLeastJava5, isInterface, sourceFileName,
         classNameInternal, classNameFullyQualified, wrapperMethods);

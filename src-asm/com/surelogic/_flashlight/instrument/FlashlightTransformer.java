@@ -40,7 +40,7 @@ final class FlashlightTransformer implements ClassFileTransformer {
       public void warning(int nesting, String message) {
         theLog.log(indentMessage(nesting, "WARNING: " + message));
       }
-    });      
+    }, null);      
   }
   
   public byte[] transform(final ClassLoader loader, final String className,

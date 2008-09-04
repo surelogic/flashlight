@@ -1,4 +1,4 @@
-package com.surelogic._flashlight.rewriter.engine;
+package com.surelogic._flashlight.rewriter;
 
 public final class NullMessenger implements EngineMessenger {
   public static final NullMessenger prototype = new NullMessenger();

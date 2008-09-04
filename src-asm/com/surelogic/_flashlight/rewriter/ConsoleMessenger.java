@@ -1,4 +1,4 @@
-package com.surelogic._flashlight.rewriter.engine;
+package com.surelogic._flashlight.rewriter;
 
 public final class ConsoleMessenger extends AbstractIndentingMessager {
   public static final ConsoleMessenger prototype = new ConsoleMessenger();

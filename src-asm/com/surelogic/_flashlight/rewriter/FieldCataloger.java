@@ -27,7 +27,7 @@ import org.objectweb.asm.Opcodes;
  * @see ClassAndFieldModel
  * @see ClassAndFieldModel.Clazz
  */
-public final class FieldCataloger implements ClassVisitor {
+final class FieldCataloger implements ClassVisitor {
   /**
    * The PrintWriter to which to write the field catalog.
    */

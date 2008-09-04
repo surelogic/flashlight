@@ -10,7 +10,6 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.LocalVariablesSorter;
 
 import com.surelogic._flashlight.rewriter.ConstructorInitStateMachine.Callback;
-import com.surelogic._flashlight.rewriter.engine.EngineMessenger;
 
 
 /**

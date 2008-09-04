@@ -5,7 +5,7 @@ import java.text.MessageFormat;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-public final class StaticCallWrapper extends MethodCallWrapper {
+final class StaticCallWrapper extends MethodCallWrapper {
   private static final String WRAPPER_SIGNATURE_TEMPLATE = "({0}Ljava/lang/String;I){1}";
   /** Generated wrapper methods are <code>private static</code> and synthetic. */
   private static final int WRAPPER_METHOD_ACCESS =

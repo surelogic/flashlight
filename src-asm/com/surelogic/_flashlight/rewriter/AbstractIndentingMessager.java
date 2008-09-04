@@ -1,4 +1,4 @@
-package com.surelogic._flashlight.rewriter.engine;
+package com.surelogic._flashlight.rewriter;
 
 public abstract class AbstractIndentingMessager implements EngineMessenger {
   private final String indent;

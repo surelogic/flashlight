@@ -1,4 +1,4 @@
-package com.surelogic._flashlight.rewriter.engine;
+package com.surelogic._flashlight.rewriter;
 
 /**
  * Interface used by {@link RewriteEngine} to report status messages.

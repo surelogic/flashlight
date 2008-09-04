@@ -11,7 +11,7 @@ import java.util.Map;
  * 
  * <p>Instances of this class are not thread safe.
  */
-public final class ClassAndFieldModel {
+final class ClassAndFieldModel {
   /**
    * Return value for {@link #getFieldID(String, String)} indicating that a
    * field with the given name could not be found in the class.

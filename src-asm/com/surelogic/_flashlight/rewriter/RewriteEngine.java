@@ -1,4 +1,4 @@
-package com.surelogic._flashlight.rewriter.engine;
+package com.surelogic._flashlight.rewriter;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;

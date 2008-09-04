@@ -5,7 +5,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.LocalVariablesSorter;
 
-public class InPlaceInstanceMethodInstrumentation extends
+class InPlaceInstanceMethodInstrumentation extends
     InPlaceMethodInstrumentation {
   private final Type rcvrType;
   private int rcvrLocal;

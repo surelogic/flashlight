@@ -12,10 +12,9 @@ import java.lang.instrument.IllegalClassFormatException;
 import java.security.ProtectionDomain;
 import java.util.StringTokenizer;
 
+import com.surelogic._flashlight.rewriter.AbstractIndentingMessager;
 import com.surelogic._flashlight.rewriter.Configuration;
-import com.surelogic._flashlight.rewriter.engine.AbstractIndentingMessager;
-import com.surelogic._flashlight.rewriter.engine.RewriteEngine;
-import com.surelogic._flashlight.rewriter.engine.RewriteEngine.RewriteHelper;
+import com.surelogic._flashlight.rewriter.RewriteEngine;
 import com.surelogic._flashlight.rewriter.runtime.Log;
 
 final class FlashlightTransformer implements ClassFileTransformer {
@@ -56,7 +55,7 @@ final class FlashlightTransformer implements ClassFileTransformer {
       final ByteArrayOutputStream output =
         new ByteArrayOutputStream(classfileBuffer.length<<1);
       try {
-        rewriteEngine.rewriteClassfileStream(className, new RewriteHelper() {
+        rewriteEngine.rewriteClassfileStream(className, new RewriteEngine.RewriteHelper() {
           public InputStream getInputStream() {
             return new ByteArrayInputStream(classfileBuffer);
           }

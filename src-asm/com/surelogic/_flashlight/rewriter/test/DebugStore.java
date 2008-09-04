@@ -16,11 +16,46 @@ public class DebugStore {
     }
   }
   
-  public static synchronized void fieldAccess(final boolean read, final Object receiver,
-      final Field field, final Class<?> withinClass, final int line) {
-    System.out.println("fieldAccess");
+  public static void instanceFieldAccess(
+      final boolean read, final Object receiver, final int fieldID,
+      final Class<?> withinClass, final int line) {
+    System.out.println("instanceFieldAccess");
     System.out.println("  read = " + read);
     System.out.println("  receiver = " + objectToString(receiver));
+    System.out.println("  fieldID = " + fieldID);
+    System.out.println("  withinClass = " + withinClass);
+    System.out.println("  line = " + line);
+    System.out.flush();
+  }
+
+  public static void staticFieldAccess(
+      final boolean read, final int fieldID,
+      final Class<?> withinClass, final int line) {
+    System.out.println("staticFieldAccess");
+    System.out.println("  read = " + read);
+    System.out.println("  fieldID = " + fieldID);
+    System.out.println("  withinClass = " + withinClass);
+    System.out.println("  line = " + line);
+    System.out.flush();
+  }
+
+  public static void instanceFieldAccessLookup(
+      final boolean read, final Object receiver, final Field field,
+      final Class<?> withinClass, final int line) {
+    System.out.println("instanceFieldAccessLookup");
+    System.out.println("  read = " + read);
+    System.out.println("  receiver = " + objectToString(receiver));
+    System.out.println("  field = " + field);
+    System.out.println("  withinClass = " + withinClass);
+    System.out.println("  line = " + line);
+    System.out.flush();
+  }
+
+  public static void staticFieldAccessLookup(
+      final boolean read, final Field field,
+      final Class<?> withinClass, final int line) {
+    System.out.println("staticFieldAccessLookup");
+    System.out.println("  read = " + read);
     System.out.println("  field = " + field);
     System.out.println("  withinClass = " + withinClass);
     System.out.println("  line = " + line);

@@ -24,9 +24,9 @@ import java.util.zip.ZipEntry;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 
+import com.surelogic._flashlight.rewriter.ClassAndFieldModel;
 import com.surelogic._flashlight.rewriter.Configuration;
 import com.surelogic._flashlight.rewriter.FieldCataloger;
-import com.surelogic._flashlight.rewriter.FieldIDs;
 import com.surelogic._flashlight.rewriter.FlashlightClassRewriter;
 import com.surelogic._flashlight.rewriter.MethodIdentifier;
 
@@ -37,6 +37,27 @@ import com.surelogic._flashlight.rewriter.MethodIdentifier;
  * <li>{@link #rewriteJarToJar(File, File) Rewriting a jar file of classfiles to a new jar file.}
  * <li>{@link #rewriteJarToDirectory(File, File) Rewriting a jar file of classfiles to a directory.}
  * </ul>
+ * 
+ * <p>Supports both one- and two-pass processing.  Two-pass processing is the
+ * preferred way of doing things: The first pass builds a model of the class 
+ * hierarchy from all the classfiles to be instrumented and assigns unique
+ * identifiers to all the declared fields in those classfiles.  The second pass
+ * rewrites the classfiles and inserts instrumentation.  This cuts down on the
+ * amount of reflection required during runtime: only fields that are not declared
+ * in the instrumented classes requires reflection.
+ * 
+ * <p>One-pass processing skips the first scanning phase and just rewrites the
+ * code.  In this case, all field accesses require reflective lookups.  It is 
+ * very expensive at runtime.
+ * 
+ * <p>The first scanning pass is performed using the methods
+ * {@link #scanDirectory(File)} and {@link #scanJar(File)}.
+ * 
+ * <p>The second instrumentation pass is performed using the methods
+ * {@link #rewriteDirectory(File, File)}, {@link #rewriteJarToJar(File, File)},
+ * and {@link #rewriteJarToDirectory(File, File)}. 
+ * 
+ * <p>You must not invoke a scan method after invoking a rewrite method.
  */
 public final class RewriteEngine {
   public static final String DEFAULT_FLASHLIGHT_RUNTIME_JAR = "flashlight-runtime.jar";
@@ -49,7 +70,7 @@ public final class RewriteEngine {
   private final Configuration config;
   private final EngineMessenger messenger;
   
-  private final FieldIDs fieldIDs = new FieldIDs();
+  private final ClassAndFieldModel classModel = new ClassAndFieldModel();
   private final PrintWriter fieldOutput;
   
   
@@ -73,6 +94,10 @@ public final class RewriteEngine {
   }
 
   
+  
+  // =======================================================================
+  // == Dir to Dir functionality
+  // =======================================================================
 
   /**
    * Process the files in the given directory {@code inDir}, writing to the
@@ -117,6 +142,11 @@ public final class RewriteEngine {
     }
   }
   
+  /**
+   * Process the files in the given directory {@code inDir} and build a class and
+   * field model from them to be used in the second rewrite pass of the 
+   * instrumentation.
+   */
   public void scanDirectory(final File inDir) throws IOException {
     final String[] files = inDir.list();
     if (files == null) {
@@ -135,6 +165,12 @@ public final class RewriteEngine {
       }
     }
   }  
+
+  
+  
+  // =======================================================================
+  // == Jar functionality
+  // =======================================================================
 
   /**
    * Process the files in the given JAR file {@code inJarFile}, writing to the
@@ -283,6 +319,11 @@ public final class RewriteEngine {
     }
   }
 
+  /**
+   * Process the files in the given JAR file {@code inJarFile} and build a class
+   * and field model from them to be used in the second rewrite pass of the
+   * instrumentation.
+   */
   public void scanJar(final File inJarFile) throws IOException {
     final JarFile jarFile = new JarFile(inJarFile);
     try {
@@ -309,6 +350,12 @@ public final class RewriteEngine {
     }
   }
 
+  
+  
+  // =======================================================================
+  // == Rewrite helpers
+  // =======================================================================
+
   public static interface RewriteHelper {
     public InputStream getInputStream() throws IOException;
   }
@@ -331,14 +378,6 @@ public final class RewriteEngine {
           // Doesn't want to close, what can we do?
         }
       }
-    }          
-  }
-
-  public void scanFileStream(final RewriteHelper helper, final String fname)
-      throws IOException {
-    if (isClassfileName(fname)) {
-      messenger.info(0, "Scanning classfile " + fname);
-      scanClassfileStream(fname, helper);
     }          
   }
 
@@ -365,20 +404,6 @@ public final class RewriteEngine {
         } catch (final IOException e) {
           // Doesn't want to close, what can we do?
         }
-      }
-    }
-  }
-
-  public void scanClassfileStream(final String classname, final RewriteHelper helper)
-      throws IOException {
-    final InputStream inClassfile = helper.getInputStream();
-    try {
-      tryToScanClassfileStream(inClassfile);
-    } finally {
-      try {
-        inClassfile.close();
-      } catch (final IOException e) {
-        // Doesn't want to close, what can we do?
       }
     }
   }
@@ -409,7 +434,7 @@ public final class RewriteEngine {
     final ClassReader input = new ClassReader(inClassfile);
     final ClassWriter output = new ClassWriter(input, 0);
     final FlashlightClassRewriter xformer =
-      new FlashlightClassRewriter(fieldIDs, config, output, ignoreMethods);
+      new FlashlightClassRewriter(config, output, classModel, ignoreMethods);
     input.accept(xformer, 0);
     final Set<MethodIdentifier> badMethods = xformer.getOversizedMethods();
     if (!badMethods.isEmpty()) {
@@ -420,13 +445,42 @@ public final class RewriteEngine {
     }
   }
 
-  private void tryToScanClassfileStream(final InputStream inClassfile) 
+  
+  
+  // =======================================================================
+  // == Scan helpers
+  // =======================================================================
+
+  public void scanFileStream(final RewriteHelper helper, final String fname)
       throws IOException {
-    final ClassReader input = new ClassReader(inClassfile);
-    final FieldCataloger cataloger =
-      new FieldCataloger(fieldOutput, fieldIDs);
-    input.accept(cataloger, ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
+    if (isClassfileName(fname)) {
+      messenger.info(0, "Scanning classfile " + fname);
+      scanClassfileStream(fname, helper);
+    }          
   }
+
+  public void scanClassfileStream(final String classname, final RewriteHelper helper)
+      throws IOException {
+    final InputStream inClassfile = helper.getInputStream();
+    try {
+      final ClassReader input = new ClassReader(inClassfile);
+      final FieldCataloger cataloger =
+        new FieldCataloger(fieldOutput, classModel);
+      input.accept(cataloger, ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
+    } finally {
+      try {
+        inClassfile.close();
+      } catch (final IOException e) {
+        // Doesn't want to close, what can we do?
+      }
+    }
+  }
+
+
+  
+  // =======================================================================
+  // == Copy helpers
+  // =======================================================================
 
   /**
    * Copy the contents of an input stream to an output stream.
@@ -465,6 +519,12 @@ public final class RewriteEngine {
     return result;
   }
   
+
+
+  // =======================================================================
+  // == Other Helpers
+  // =======================================================================
+
   /**
    * Given a File naming an output directory and a file name from a {@link JarEntry},
    * return a new File object that names the jar entry in the output directory.
@@ -514,7 +574,11 @@ public final class RewriteEngine {
     return newManifest;
   }
 
-
+  
+  
+  // =======================================================================
+  // == Main
+  // =======================================================================
   
   public static void main(final String[] args) throws IOException {
     final File userHome = new File(System.getProperty("user.home"));

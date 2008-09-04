@@ -37,11 +37,17 @@ final class FlashlightNames {
 //  public static final String FIELD_ACCESS = "fieldAccess";
 //  public static final String FIELD_ACCESS_SIGNATURE = "(ZLjava/lang/Object;Ljava/lang/reflect/Field;Ljava/lang/Class;I)V";
   
-  public static final String FIELD_ACCESS_SEEN = "fieldAccessSeen";
-  public static final String FIELD_ACCESS_SEEN_SIGNATURE = "(ZLjava/lang/Object;ILjava/lang/Class;I)V";
+  public static final String INSTANCE_FIELD_ACCESS = "instanceFieldAccess";
+  public static final String INSTANCE_FIELD_ACCESS_SIGNATURE = "(ZLjava/lang/Object;ILjava/lang/Class;I)V";
   
-  public static final String FIELD_ACCESS_UNSEEN = "fieldAccessUnseen";
-  public static final String FIELD_ACCESS_UNSEEN_SIGNATURE = "(ZLjava/lang/Object;Ljava/lang/reflect/Field;Ljava/lang/Class;I)V";
+  public static final String STATIC_FIELD_ACCESS = "staticFieldAccess";
+  public static final String STATIC_FIELD_ACCESS_SIGNATURE = "(ZILjava/lang/Class;I)V";
+  
+  public static final String INSTANCE_FIELD_ACCESS_LOOKUP = "instanceFieldAccessLookup";
+  public static final String INSTANCE_FIELD_ACCESS_LOOKUP_SIGNATURE = "(ZLjava/lang/Object;Ljava/lang/reflect/Field;Ljava/lang/Class;I)V";
+  
+  public static final String STATIC_FIELD_ACCESS_LOOKUP = "staticFieldAccessLookup";
+  public static final String STATIC_FIELD_ACCESS_LOOKUP_SIGNATURE = "(ZLjava/lang/reflect/Field;Ljava/lang/Class;I)V";
   
   public static final String INTRINSIC_LOCK_WAIT = "intrinsicLockWait";
   public static final String INTRINSIC_LOCK_WAIT_SIGNATURE = "(ZLjava/lang/Object;Ljava/lang/Class;I)V";

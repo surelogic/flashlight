@@ -16,10 +16,21 @@ import org.objectweb.asm.commons.CodeSizeEvaluator;
 
 /**
  * Visits a classfile and rewrites it to contain Flashlight instrumentation.
+ * This is the second pass of the instrumentation process. The first pass is
+ * implemented by {@link FieldCataloger}, and the results of the first pass are
+ * provided to this pass as a {@link ClassAndFieldModel} instance. This class
+ * can be used as the first and only pass by providing an empty class model. In
+ * this case, all the field accesses will use reflection at runtime, which has
+ * significant runtime costs.
  * 
+ * <p>
+ * Most of the real work is performed by instances of
+ * {@link FlashlightMethodRewriter}.
+ * 
+ * @see FieldCataloger
+ * @see ClassAndFieldModel
  * @see FlashlightMethodRewriter
- * 
- * @author aarong
+ * @see Configuration
  */
 public final class FlashlightClassRewriter extends ClassAdapter {
   private static final String UNKNOWN_SOURCE_FILE = "<unknown>";
@@ -27,6 +38,11 @@ public final class FlashlightClassRewriter extends ClassAdapter {
   private static final String CLASS_INITIALIZER = "<clinit>";
   private static final String CLASS_INITIALIZER_DESC = "()V";
   
+  /**
+   * The maximum size in bytes that a method code section is allowed to be.
+   * Methods that end up larger than this after instrumentation are not 
+   * instrumented at all.
+   */
   private static final int MAX_CODE_SIZE = 64 * 1024;
   
   
@@ -45,6 +61,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
 
   /** The internal name of the class being rewritten. */
   private String classNameInternal;
+  
   /** The fully qualified name of the class being rewritten. */
   private String classNameFullyQualified;
   
@@ -74,14 +91,34 @@ public final class FlashlightClassRewriter extends ClassAdapter {
    */
   private final Set<MethodIdentifier> methodsToIgnore;
   
-  private final FieldIDs fieldIDs;
+  /**
+   * The class and field model built during the first pass.  This is used
+   * to obtain unique field identifiers.  For a field that does not have a
+   * unique identifier in this model, we must use reflection at runtime.
+   */
+  private final ClassAndFieldModel classModel;
   
   
-  public FlashlightClassRewriter(final FieldIDs fids,
-      final Configuration conf, final ClassVisitor cv,
+  
+  /**
+   * Create a new class rewriter.
+   * 
+   * @param conf
+   *          The configuration information for instrumentation.
+   * @param cv
+   *          The class visitor to delegate to.
+   * @param model
+   *          The class and field model to use.
+   * @param ignore
+   *          The set of methods that <em>should not</em> be instrumented.
+   *          This are determined by a prior attempt at instrumentation, and would
+   *          be obtained by calling {@link #getOversizedMethods()}.
+   */
+  public FlashlightClassRewriter(final Configuration conf,
+      final ClassVisitor cv, final ClassAndFieldModel model,
       final Set<MethodIdentifier> ignore) {
     super(cv);
-    fieldIDs = fids;
+    classModel = model;
     config = conf;
     methodsToIgnore = ignore;
   }
@@ -146,8 +183,8 @@ public final class FlashlightClassRewriter extends ClassAdapter {
         cv.visitMethod(newAccess, name, desc, signature, exceptions);
       final CodeSizeEvaluator cse = new CodeSizeEvaluator(original);
       methodSizes.put(methodId, cse);
-      return FlashlightMethodRewriter.create(fieldIDs,
-          access, name, desc, cse, config, atLeastJava5, isInterface,
+      return FlashlightMethodRewriter.create(access,
+          name, desc, cse, config, classModel, atLeastJava5, isInterface,
           sourceFileName, classNameInternal, classNameFullyQualified,
           wrapperMethods);
     }
@@ -188,9 +225,9 @@ public final class FlashlightClassRewriter extends ClassAdapter {
     /* Proceed as if visitMethod() were called on us, and simulate the method
      * traversal through the rewriter visitor.
      */
-    final MethodVisitor rewriter_mv = FlashlightMethodRewriter.create(fieldIDs,
-        Opcodes.ACC_STATIC, CLASS_INITIALIZER, CLASS_INITIALIZER_DESC, mv,
-        config, atLeastJava5, isInterface, sourceFileName,
+    final MethodVisitor rewriter_mv = FlashlightMethodRewriter.create(Opcodes.ACC_STATIC,
+        CLASS_INITIALIZER, CLASS_INITIALIZER_DESC, mv, config,
+        classModel, atLeastJava5, isInterface, sourceFileName,
         classNameInternal, classNameFullyQualified, wrapperMethods);
     rewriter_mv.visitCode(); // start code section
     rewriter_mv.visitInsn(Opcodes.RETURN); // empty method, just return

@@ -12,9 +12,9 @@ import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Task;
 
+import com.surelogic._flashlight.rewriter.AbstractIndentingMessager;
 import com.surelogic._flashlight.rewriter.Configuration;
-import com.surelogic._flashlight.rewriter.engine.AbstractIndentingMessager;
-import com.surelogic._flashlight.rewriter.engine.RewriteEngine;
+import com.surelogic._flashlight.rewriter.RewriteEngine;
 
 /**
  * Ant task for rewriting classes to apply flashlight instrumentation. Rewrites

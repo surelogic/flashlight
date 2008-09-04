@@ -360,18 +360,40 @@ public final class RewriteEngine {
     public InputStream getInputStream() throws IOException;
   }
   
+  private static final class OversizedMethodsException extends Exception {
+    private Set<MethodIdentifier> oversizedMethods;
+    
+    public OversizedMethodsException(
+        final String message, final Set<MethodIdentifier> methods) {
+      super(message);
+      oversizedMethods = methods;
+    }
+    
+    public Set<MethodIdentifier> getOversizedMethods() {
+      return oversizedMethods;
+    }
+  }
+
+  
   public void rewriteFileStream(final RewriteHelper helper, 
       final String fname, final OutputStream outFile)
       throws IOException {
     if (isClassfileName(fname)) {
-      messenger.info(0, "Rewriting classfile " + fname);
-      rewriteClassfileStream(fname, helper, outFile);
+      messenger.info("Rewriting classfile " + fname);
+      try {
+        messenger.increaseNesting();
+        rewriteClassfileStream(fname, helper, outFile);
+      } finally {
+        messenger.decreaseNesting();
+      }
     } else {
-      messenger.info(0, "Copying file unchanged " + fname);
+      messenger.info("Copying file unchanged " + fname);
       final InputStream inStream = helper.getInputStream();
       try {
+        messenger.increaseNesting();
         copyStream(inStream, outFile);
       } finally {
+        messenger.decreaseNesting();
         try {
           inStream.close();
         } catch (final IOException e) {
@@ -384,20 +406,21 @@ public final class RewriteEngine {
   public void rewriteClassfileStream(final String classname,
       final RewriteHelper helper, final OutputStream outClassfile)
       throws IOException {
+    EngineMessenger msgr = messenger;
     boolean done = false;
     Set<MethodIdentifier> badMethods =
       Collections.<MethodIdentifier>emptySet();
     while (!done) {
       final InputStream inClassfile = helper.getInputStream();
       try {
-        tryToRewriteClassfileStream(inClassfile, outClassfile, badMethods);
+        tryToRewriteClassfileStream(inClassfile, outClassfile, msgr, badMethods);
         done = true;
       } catch (final OversizedMethodsException e) {
         badMethods = e.getOversizedMethods();
-        for (final MethodIdentifier id : badMethods) {
-          messenger.warning(1, "Instrumentation causes method " + id.name
-              + " in " + classname + " to be too large.  Skipping.");
-        }
+        /* Set the messenger to be silent because it is going to output all
+         * the same warning messages all over again.
+         */
+        msgr = NullMessenger.prototype;
       } finally {
         try {
           inClassfile.close();
@@ -416,6 +439,7 @@ public final class RewriteEngine {
    *          The stream to read the input class file from.
    * @param outClassfile
    *          The stream to write the instrumented class file to.
+   * @param msgr The status messenger to use.
    * @param ignoreMethods
    *          The set of methods that should not be instrumented.
    * @throws IOException
@@ -429,12 +453,12 @@ public final class RewriteEngine {
    */
   private void tryToRewriteClassfileStream(
       final InputStream inClassfile, final OutputStream outClassfile,
-      final Set<MethodIdentifier> ignoreMethods)
+      final EngineMessenger msgr, final Set<MethodIdentifier> ignoreMethods)
       throws IOException, OversizedMethodsException {
     final ClassReader input = new ClassReader(inClassfile);
     final ClassWriter output = new ClassWriter(input, 0);
     final FlashlightClassRewriter xformer =
-      new FlashlightClassRewriter(config, output, classModel, ignoreMethods);
+      new FlashlightClassRewriter(config, msgr, output, classModel, ignoreMethods);
     input.accept(xformer, 0);
     final Set<MethodIdentifier> badMethods = xformer.getOversizedMethods();
     if (!badMethods.isEmpty()) {
@@ -454,8 +478,13 @@ public final class RewriteEngine {
   public void scanFileStream(final RewriteHelper helper, final String fname)
       throws IOException {
     if (isClassfileName(fname)) {
-      messenger.info(0, "Scanning classfile " + fname);
-      scanClassfileStream(fname, helper);
+      messenger.info("Scanning classfile " + fname);
+      try {
+        messenger.increaseNesting();
+        scanClassfileStream(fname, helper);
+      } finally {
+        messenger.decreaseNesting();
+      }
     }          
   }
 

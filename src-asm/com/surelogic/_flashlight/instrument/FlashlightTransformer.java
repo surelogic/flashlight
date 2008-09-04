@@ -29,16 +29,16 @@ final class FlashlightTransformer implements ClassFileTransformer {
     theLog = log;
     rewriteCache = (rcn == null) ? null : new File(rcn);
     rewriteEngine = new RewriteEngine(config, new AbstractIndentingMessager() {
-      public void error(int nesting, String message) {
-        theLog.log(indentMessage(nesting, "ERROR: " + message));
+      public void error(String message) {
+        theLog.log(indentMessage("ERROR: " + message));
       }
 
-      public void info(int nesting, String message) {
-        theLog.log(indentMessage(nesting, message));
+      public void info(String message) {
+        theLog.log(indentMessage(message));
       }
 
-      public void warning(int nesting, String message) {
-        theLog.log(indentMessage(nesting, "WARNING: " + message));
+      public void warning(String message) {
+        theLog.log(indentMessage("WARNING: " + message));
       }
     }, null);      
   }

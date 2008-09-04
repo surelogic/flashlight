@@ -10,6 +10,7 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.LocalVariablesSorter;
 
 import com.surelogic._flashlight.rewriter.ConstructorInitStateMachine.Callback;
+import com.surelogic._flashlight.rewriter.engine.EngineMessenger;
 
 
 /**
@@ -40,6 +41,9 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   /** Configuration information, derived from properties. */
   private final Configuration config;
 
+  /** Messenger for reporting status */
+  private final EngineMessenger messenger;
+  
   /** Is the current classfile at least from Java 5? */
   private final boolean atLeastJava5;
 
@@ -128,13 +132,14 @@ final class FlashlightMethodRewriter extends MethodAdapter {
    * Factory method for generating a new instance.  We need this so we can
    * manage the local variables sorter used by the instance.
    */
-  public static MethodVisitor create(final int access,
-      final String mname, final String desc, final MethodVisitor mv,
-      final Configuration conf, final ClassAndFieldModel model, final boolean java5,
-      final boolean inInt, final String fname, final String nameInternal,
-      final String nameFullyQualified, final Set<MethodCallWrapper> wrappers) {
+  public static MethodVisitor create(final int access, final String mname,
+      final String desc, final MethodVisitor mv, final Configuration conf,
+      final EngineMessenger msg, final ClassAndFieldModel model,
+      final boolean java5, final boolean inInt, final String fname,
+      final String nameInternal, final String nameFullyQualified,
+      final Set<MethodCallWrapper> wrappers) {
     final FlashlightMethodRewriter methodRewriter =
-      new FlashlightMethodRewriter(access, mname, desc, mv, conf,
+      new FlashlightMethodRewriter(access, mname, desc, mv, conf, msg,
           model, java5, inInt, fname, nameInternal, nameFullyQualified, wrappers);
     methodRewriter.lvs = new LocalVariablesSorter(access, desc, methodRewriter);
     return methodRewriter.lvs;
@@ -158,14 +163,16 @@ final class FlashlightMethodRewriter extends MethodAdapter {
    * @param wrappers
    *          The set of wrapper methods that this visitor should add to.
    */
-  private FlashlightMethodRewriter(final int access,
-      final String mname, final String desc, final MethodVisitor mv,
-      final Configuration conf, final ClassAndFieldModel model, final boolean java5,
-      final boolean inInt, final String fname, final String nameInternal,
-      final String nameFullyQualified, final Set<MethodCallWrapper> wrappers) {
+  private FlashlightMethodRewriter(final int access, final String mname,
+      final String desc, final MethodVisitor mv, final Configuration conf,
+      final EngineMessenger msg, final ClassAndFieldModel model,
+      final boolean java5, final boolean inInt, final String fname,
+      final String nameInternal, final String nameFullyQualified,
+      final Set<MethodCallWrapper> wrappers) {
     super(mv);
-    classModel = model;
     config = conf;
+    messenger = msg;
+    classModel = model;
     atLeastJava5 = java5;
     inInterface = inInt;
     wasSynchronized = (access & Opcodes.ACC_SYNCHRONIZED) != 0;
@@ -777,7 +784,10 @@ final class FlashlightMethodRewriter extends MethodAdapter {
       storeMethodName = foundMethodName;
       storeMethodSignature = foundMethodSignature;
     } else {
-      System.out.println("In method " + classBeingAnalyzedFullyQualified + "." + methodName + "() at line " + currentSrcLine + ": unseen field " + fullyQualifiedOwner + "." + name);
+      messenger.info("Field " + fullyQualifiedOwner + "." + name
+          + " needs reflection at " + classBeingAnalyzedFullyQualified + "."
+          + methodName + "():" + currentSrcLine);
+
       // Stack is "..., isRead, [receiver]"
   
       /* Push the class name and field name on the stack for a call to

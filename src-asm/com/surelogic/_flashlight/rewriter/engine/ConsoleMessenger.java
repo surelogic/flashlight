@@ -7,15 +7,15 @@ public final class ConsoleMessenger extends AbstractIndentingMessager {
     super();
   }
   
-  public void error(final int nesting, final String message) {
-    System.err.println(indentMessage(nesting, "ERROR: " + message));
+  public void error(final String message) {
+    System.err.println(indentMessage("ERROR: " + message));
   }
   
-  public void warning(final int nesting, final String message) {
-    System.out.println(indentMessage(nesting, "WARNING: " + message));
+  public void warning(final String message) {
+    System.out.println(indentMessage("WARNING: " + message));
   }
   
-  public void info(final int nesting, final String message) {
-    System.out.println(indentMessage(nesting, message));
+  public void info(final String message) {
+    System.out.println(indentMessage(message));
   }
 }

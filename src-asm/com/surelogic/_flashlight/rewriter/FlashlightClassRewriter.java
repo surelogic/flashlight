@@ -14,6 +14,8 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.CodeSizeEvaluator;
 
+import com.surelogic._flashlight.rewriter.engine.EngineMessenger;
+
 /**
  * Visits a classfile and rewrites it to contain Flashlight instrumentation.
  * This is the second pass of the instrumentation process. The first pass is
@@ -50,6 +52,9 @@ public final class FlashlightClassRewriter extends ClassAdapter {
   /** Properties to control rewriting and instrumentation. */
   private final Configuration config;
 
+  /** Messenger for status reports. */
+  private final EngineMessenger messenger;
+  
   /** Is the current class file an interface? */
   private boolean isInterface;
   
@@ -92,6 +97,12 @@ public final class FlashlightClassRewriter extends ClassAdapter {
   private final Set<MethodIdentifier> methodsToIgnore;
   
   /**
+   * After the entire class has been visited this contains the names of all
+   * the methods that are oversized after instrumentation.
+   */
+  private final Set<MethodIdentifier> oversizedMethods = new HashSet<MethodIdentifier>();
+  
+  /**
    * The class and field model built during the first pass.  This is used
    * to obtain unique field identifiers.  For a field that does not have a
    * unique identifier in this model, we must use reflection at runtime.
@@ -115,11 +126,13 @@ public final class FlashlightClassRewriter extends ClassAdapter {
    *          be obtained by calling {@link #getOversizedMethods()}.
    */
   public FlashlightClassRewriter(final Configuration conf,
+      final EngineMessenger msg,
       final ClassVisitor cv, final ClassAndFieldModel model,
       final Set<MethodIdentifier> ignore) {
     super(cv);
-    classModel = model;
     config = conf;
+    messenger = msg;
+    classModel = model;
     methodsToIgnore = ignore;
   }
   
@@ -131,13 +144,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
    * after instrumentation.
    */
   public Set<MethodIdentifier> getOversizedMethods() {
-    final Set<MethodIdentifier> result = new HashSet<MethodIdentifier>();
-    for (final Map.Entry<MethodIdentifier, CodeSizeEvaluator> entry : methodSizes.entrySet()) {
-      if (entry.getValue().getMaxSize() > MAX_CODE_SIZE) {
-        result.add(entry.getKey());
-      }
-    }
-    return Collections.unmodifiableSet(result);
+    return Collections.unmodifiableSet(oversizedMethods);
   }
   
   
@@ -184,7 +191,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
       final CodeSizeEvaluator cse = new CodeSizeEvaluator(original);
       methodSizes.put(methodId, cse);
       return FlashlightMethodRewriter.create(access,
-          name, desc, cse, config, classModel, atLeastJava5, isInterface,
+          name, desc, cse, config, messenger, classModel, atLeastJava5, isInterface,
           sourceFileName, classNameInternal, classNameFullyQualified,
           wrapperMethods);
     }
@@ -211,6 +218,17 @@ public final class FlashlightClassRewriter extends ClassAdapter {
       addWrapperMethod(wrapper);
     }
     
+    // Find any oversized methods
+    for (final Map.Entry<MethodIdentifier, CodeSizeEvaluator> entry : methodSizes.entrySet()) {
+      if (entry.getValue().getMaxSize() > MAX_CODE_SIZE) {
+        final MethodIdentifier mid = entry.getKey();
+        oversizedMethods.add(mid);
+        messenger.warning("Instrumentation causes method "
+            + classNameFullyQualified + "." + mid.name + mid.desc
+            + " to be too large.");
+      }
+    }
+    
     // Now we are done
     cv.visitEnd();
   }
@@ -226,7 +244,7 @@ public final class FlashlightClassRewriter extends ClassAdapter {
      * traversal through the rewriter visitor.
      */
     final MethodVisitor rewriter_mv = FlashlightMethodRewriter.create(Opcodes.ACC_STATIC,
-        CLASS_INITIALIZER, CLASS_INITIALIZER_DESC, mv, config,
+        CLASS_INITIALIZER, CLASS_INITIALIZER_DESC, mv, config, messenger,
         classModel, atLeastJava5, isInterface, sourceFileName,
         classNameInternal, classNameFullyQualified, wrapperMethods);
     rewriter_mv.visitCode(); // start code section

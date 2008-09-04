@@ -484,16 +484,16 @@ public final class FLInstrument extends Task {
       super("    ");
     }
     
-    public void error(final int nesting, final String message) {
-      FLInstrument.this. log(indentMessage(nesting + 1, message), Project.MSG_ERR);
+    public void error(final String message) {
+      FLInstrument.this. log(indentMessage(message), Project.MSG_ERR);
     }
     
-    public void warning(final int nesting, final String message) {
-      FLInstrument.this. log(indentMessage(nesting + 1, message), Project.MSG_WARN);
+    public void warning(final String message) {
+      FLInstrument.this. log(indentMessage(message), Project.MSG_WARN);
     }
     
-    public void info(final int nesting, final String message) {
-      FLInstrument.this. log(indentMessage(nesting + 1, message), Project.MSG_VERBOSE);
+    public void info(final String message) {
+      FLInstrument.this. log(indentMessage(message), Project.MSG_VERBOSE);
     }
   }
 }

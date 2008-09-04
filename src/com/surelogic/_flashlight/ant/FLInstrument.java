@@ -38,12 +38,24 @@ public final class FLInstrument extends Task {
   
   private String fieldsFileName = null;
   
+  private boolean onePass = false;
   
   
+  
+  /**
+   * Interface for directory and jar subtasks.  Abstracts out the
+   * scanning and instrumenting operations.
+   */
   public static interface InstrumentationSubTask {
+    /**
+     * Scan classfiles to add to the class and field model.
+     */
     public void scan(
         FLInstrument task, RewriteEngine engine) throws BuildException;
-    public void execute(
+    /**
+     * Rewrite classfiles to insert instrumentation.
+     */
+    public void instrument(
         FLInstrument task, RewriteEngine engine) throws BuildException;
   }
   
@@ -80,7 +92,7 @@ public final class FLInstrument extends Task {
       }
     }
     
-    public void execute(
+    public void instrument(
         final FLInstrument instrumentTask, final RewriteEngine engine)
         throws BuildException {
       instrumentTask.log("Instrumenting class directory " + srcdir
@@ -135,7 +147,7 @@ public final class FLInstrument extends Task {
       }
     }
 
-    public void execute(
+    public void instrument(
         final FLInstrument instrumentTask, final RewriteEngine engine)
         throws BuildException {
       final String runtimeJar;
@@ -190,6 +202,10 @@ public final class FLInstrument extends Task {
   private void setBooleanProperty(final String propName, final boolean flag) {
     final String value = flag ? Configuration.TRUE : Configuration.FALSE;
     setProperty(propName, value);
+  }
+  
+  public void setOnepass(final boolean flag) {
+    onePass = flag;
   }
   
   /**
@@ -421,8 +437,6 @@ public final class FLInstrument extends Task {
   
   
   private void checkParameters() throws BuildException {
-    // does nothing for now
-    
     if (fieldsFileName == null) {
       throw new BuildException("No file name specified for the fields database");
     }
@@ -442,11 +456,13 @@ public final class FLInstrument extends Task {
     try {
       fieldsOut = new PrintWriter(fieldsFileName);
       final RewriteEngine engine = new RewriteEngine(config, messenger, fieldsOut);
+      if (!onePass) {
+        for (final InstrumentationSubTask subTask : subTasks) {
+          subTask.scan(this, engine);
+        }    
+      }
       for (final InstrumentationSubTask subTask : subTasks) {
-        subTask.scan(this, engine);
-      }    
-      for (final InstrumentationSubTask subTask : subTasks) {
-        subTask.execute(this, engine);
+        subTask.instrument(this, engine);
       }
     } catch(final FileNotFoundException e) {
       throw new BuildException("Couldn't open " + fieldsFileName, e);

@@ -4,9 +4,11 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.StringTokenizer;
 
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
@@ -42,6 +44,31 @@ public final class FLInstrument extends Task {
   
   
   
+  public static final class Directories {
+    private static final String DEFAULT_DELIMETERS=" ,";
+    private String list;
+    private String delimeters = DEFAULT_DELIMETERS;
+    private String srcPattern;
+    private String destPattern;
+    private String replace;
+    
+    public Directories() { super(); }
+    
+    public void setList(final String value) { list = value; }
+    public void setDelimeters(final String value) { delimeters = value; }
+    public void setSrcpattern(final String value) { srcPattern = value; }
+    public void setDestpattern(final String value) { destPattern = value; }
+    public void setReplace(final String value) { replace = value; }
+    
+    String getList() { return list; }
+    String getDelimeters() { return delimeters; }
+    String getSrcpattern() { return srcPattern; }
+    String getDestpattern() { return destPattern; }
+    String getReplace() { return replace; }
+  }
+  
+  
+  
   /**
    * Interface for directory and jar subtasks.  Abstracts out the
    * scanning and instrumenting operations.
@@ -72,7 +99,12 @@ public final class FLInstrument extends Task {
     private String destdir = null;
         
     public Directory() { super(); }
-        
+    
+    Directory(final String src, final String dest) {
+      srcdir = src;
+      destdir = dest;
+    }
+    
     public void setSrcdir(final String src) { this.srcdir = src; }
     public void setDestdir(final String dest) { this.destdir = dest; }
     
@@ -407,6 +439,49 @@ public final class FLInstrument extends Task {
     subTasks.add(dir);
   }
   
+  
+  public void addConfiguredDirs(final Directories dirs) {
+    final String list = dirs.getList();
+    final String delimeters = dirs.getDelimeters();
+    final String srcPattern = dirs.getSrcpattern();
+    final String destPattern = dirs.getDestpattern();
+    final String replace = dirs.getReplace();
+
+    if (list == null) {
+      throw new BuildException("List is not set");
+    }
+    if (delimeters == null) {
+      throw new BuildException("Delimeters is not set");
+    }
+    if (srcPattern == null) {
+      throw new BuildException("Source directory pattern is not set");
+    }
+    if (destPattern == null) {
+      throw new BuildException("Destination directory pattern is not set");
+    }
+    if (replace == null) {
+      throw new BuildException("Replacement pattern is not set");
+    }
+    
+    FLInstrument.this. log(
+        MessageFormat.format("Expanding list of directories using list=\"{0}\", delimeters=\"{1}\", source pattern=\"{2}\", destination pattern=\"{3}\", and replacement pattern=\"{4}\"",
+            list, delimeters, srcPattern, destPattern, replace),
+            Project.MSG_VERBOSE);
+    
+    final StringTokenizer st =
+      new StringTokenizer(dirs.getList(), dirs.getDelimeters());
+    while (st.hasMoreTokens()) {
+      final String element = st.nextToken();
+      final String srcdir = srcPattern.replace(replace, element);
+      final String destdir = destPattern.replace(replace, element);
+      FLInstrument.this.log(MessageFormat.format(
+          "    Adding srcdir=\"{0}\", destdir=\"{1}\"", srcdir, destdir),
+          Project.MSG_VERBOSE);
+      subTasks.add(new Directory(srcdir, destdir));
+    }
+  }
+  
+  
   /**
    * Accept a new &lt;jar...&gt; child element. We check that the source file is
    * set, and that exactly one of the destination file or destination directory
@@ -482,6 +557,7 @@ public final class FLInstrument extends Task {
   private final class AntLogMessenger extends AbstractIndentingMessager {
     public AntLogMessenger() {
       super("    ");
+      increaseNesting();
     }
     
     public void error(final String message) {

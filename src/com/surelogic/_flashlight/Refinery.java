@@ -58,13 +58,13 @@ final class Refinery extends Thread {
 		while (!f_finished) {
 			try {
 				Event e = f_rawQueue.take();
-				if (e == FinalEvent.FINAL_EVENT)
+				if (e == FinalEvent.FINAL_EVENT) {
 					/*
 					 * We need to delay putting the final event on the out queue
 					 * until all the thread-local events get added.
 					 */
 					f_finished = true;
-				else {
+				} else {
 					f_eventCache.add(e);
 					e.accept(f_detectSharedFieldsVisitor);
 				}
@@ -85,15 +85,6 @@ final class Refinery extends Thread {
 				+ " thread-local fields observed)");
 	}
 
-//	/**
-//	 * A map from a field key to the phantom reference to the only thread
-//	 * observed reading or writing the field. This map only contains fields as
-//	 * keys that, so far, are thread-local. If a field key has been observed to
-//	 * be shared it will not be in this map, it will be in
-//	 * {@link #f_sharedFields}.
-//	 */
-//	private final Map<KeyField, PhantomReference> f_fieldToThread = new HashMap<KeyField, PhantomReference>();
-	
 	
 	/**
 	 * A double layer map whose primary goal is to map field keys to threads, but
@@ -149,12 +140,6 @@ final class Refinery extends Thread {
 	  return f_objToFieldToThread.remove(obj);
 	}
 	    
-
-//	/**
-//	 * Maintains a list of field keys that have been observed to be shared until
-//	 * the enclosing object is garbage collected.
-//	 */
-//	private final List<KeyField> f_sharedFields = new LinkedList<KeyField>();
 	
 	/**
    * A map whose primary goal is to keep a set of field keys that have been
@@ -174,7 +159,7 @@ final class Refinery extends Thread {
    */
   private boolean isSharedField(final KeyField field) {
     final Set<KeyField> sharedFields = f_objToSharedFields.get(field.getWithin());
-    return sharedFields == null ? false : sharedFields.contains(field);
+    return (sharedFields == null) ? false : sharedFields.contains(field);
   }
 
   /**
@@ -214,7 +199,6 @@ final class Refinery extends Thread {
 
 		private void visitFieldAccess(final FieldAccess e) {
 			final KeyField key = e.getKey();
-//			if (f_sharedFields.contains(key))
 			if (isSharedField(key)) 
 				return;
 			if (!testFieldToThread(key, e.getWithinThread())) {
@@ -223,25 +207,7 @@ final class Refinery extends Thread {
          */
 			  removeFieldToThread(key);
 			  addSharedField(key);
-//        f_sharedFields.add(key);
 			}			  
-			
-//			PhantomReference thread = f_fieldToThread.get(key);
-//			if (thread == null) {
-//				/*
-//				 * First time we have see an access to this field, assume access
-//				 * will be single-threaded.
-//				 */
-//				f_fieldToThread.put(key, e.getWithinThread());
-//			} else {
-//				if (thread != e.getWithinThread()) {
-//					/*
-//					 * Shared access observed on this field.
-//					 */
-//					f_fieldToThread.remove(key);
-//					f_sharedFields.add(key);
-//				}
-//			}
 		}
 	};
 
@@ -280,12 +246,6 @@ final class Refinery extends Thread {
 	 */
 	private void removeSharedFieldsWithin(final PhantomReference pr) {
 	  f_objToSharedFields.remove(pr);
-	  
-//		for (Iterator<KeyField> i = f_sharedFields.iterator(); i.hasNext();) {
-//			KeyField field = i.next();
-//			if (field.isWithin(pr))
-//				i.remove();
-//		}
 	}
 
 	/**
@@ -305,18 +265,6 @@ final class Refinery extends Thread {
 	  if (fieldMap != null) {
 	    removeEventsAbout(fieldMap.keySet());
 	  }
-	  	  
-//		final Set<KeyField> threadLocalFields = new HashSet<KeyField>();
-//		for (Iterator<KeyField> i = f_fieldToThread.keySet().iterator(); i
-//				.hasNext();) {
-//			KeyField field = i.next();
-//			if (field.isWithin(pr)) {
-//				i.remove();
-//				threadLocalFields.add(field);
-//			}
-//		}
-//		if (!threadLocalFields.isEmpty())
-//			removeEventsAbout(threadLocalFields);
 	}
 
 	/**
@@ -352,14 +300,8 @@ final class Refinery extends Thread {
 	  for (final Map.Entry<PhantomReference, Map<KeyField, PhantomReference>> entry : f_objToFieldToThread.entrySet()) {
 	    removeEventsAbout(entry.getValue().keySet());
 	  }
-	  f_objToFieldToThread.clear();
-	  
-//		if (!f_fieldToThread.keySet().isEmpty())
-//			removeEventsAbout(f_fieldToThread.keySet());
-//		f_fieldToThread.clear();
-	  
+	  f_objToFieldToThread.clear();	  
 	  f_objToSharedFields.clear();
-//		f_sharedFields.clear();
 	}
 
 	/**

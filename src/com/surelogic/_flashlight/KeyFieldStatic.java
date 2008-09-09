@@ -9,11 +9,6 @@ final class KeyFieldStatic extends KeyField {
 	}
 
 	@Override
-	boolean isWithin(final PhantomReference o) {
-		return f_field.getDeclaringType() == o;
-	}
-
-	@Override
 	PhantomReference getWithin() {
 	  return f_field.getDeclaringType();
 	}

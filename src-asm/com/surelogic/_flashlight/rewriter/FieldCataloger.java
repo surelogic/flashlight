@@ -74,11 +74,14 @@ final class FieldCataloger implements ClassVisitor {
     final Integer id = clazz.addField(name);
     final boolean isFinal = (access & Opcodes.ACC_FINAL) != 0;
     final boolean isVolatile = (access & Opcodes.ACC_VOLATILE) != 0;
+    final boolean isStatic = (access & Opcodes.ACC_STATIC) != 0;
     out.print(id.intValue());
     out.print(' ');
     out.print(classNameFullyQualified);
     out.print(' ');
     out.print(name);
+    out.print(' ');
+    out.print(isStatic);
     out.print(' ');
     out.print(isFinal);
     out.print(' ');

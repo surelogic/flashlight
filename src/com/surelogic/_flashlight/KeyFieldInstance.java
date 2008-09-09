@@ -12,11 +12,6 @@ final class KeyFieldInstance extends KeyField {
 		assert enclosingInstance != null;
 		f_enclosingInstance = enclosingInstance;
 	}
-
-	@Override
-	boolean isWithin(final PhantomReference o) {
-		return f_enclosingInstance == o;
-	}
 	
 	@Override
 	PhantomReference getWithin() {

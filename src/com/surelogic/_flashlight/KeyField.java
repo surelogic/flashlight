@@ -11,16 +11,9 @@ abstract class KeyField {
 		f_field = field;
 	}
 
-	/**
-	 * Determines if this field is within the passed object.
-	 * 
-	 * @param o
-	 *            the phantom of the object.
-	 * @return <code>true</code> if the this field is within the passed
-	 *         object, <code>false</code> otherwise.
-	 */
-	abstract boolean isWithin(final PhantomReference o);
-
+  /**
+   * Get the object that this field is a part of.
+   */
 	abstract PhantomReference getWithin();
 	
 	/**

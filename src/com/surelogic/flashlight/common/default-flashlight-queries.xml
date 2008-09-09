@@ -243,7 +243,7 @@ order by O.PackageName,O.ClassName,F.FieldName,FI.Receiver,THO.ThreadName</query
   O.PackageName &quot;Package__package.gif&quot;,
   O.ClassName &quot;Class__class.gif&quot;,
   FI.FieldName &quot;Field__]&quot;,
-  I.RECEIVER &quot;Receiver__|&quot;, F.LOCK &quot;Lock&quot;, I.FIELD &quot;FieldId__HIDE&quot;
+  I.RECEIVER &quot;Receiver&quot;, F.LOCK &quot;Lock__|&quot;, I.FIELD &quot;FieldId__HIDE&quot;
  FROM OBJECT O
  INNER JOIN FIELD FI ON FI.DeclaringType = O.Id AND O.Run = FI.Run
  INNER JOIN INTERESTINGFIELD I ON FI.STATIC = &apos;N&apos; AND I.FIELD=FI.ID AND I.RUN = FI.RUN
@@ -294,8 +294,9 @@ order by O.PackageName,O.ClassName,F.FieldName,THO.ThreadName</query>
   <query id='Q0021' description='What static fields have a lock set?' display='true' display-at-root='true'>SELECT 
   O.PackageName &quot;Package__package.gif&quot;,
   O.ClassName &quot;Class__class.gif&quot;,
-  FI.FieldName &quot;Field__|&quot;,
-  I.FIELD &quot;FieldId__HIDE&quot;, F.LOCK 
+  FI.FieldName &quot;Field&quot;,
+  F.LOCK &quot;Lock__|&quot;,
+  I.FIELD &quot;FieldId__HIDE&quot; 
  FROM OBJECT O
  INNER JOIN FIELD FI ON FI.DeclaringType = O.Id AND O.Run = FI.Run
  INNER JOIN INTERESTINGFIELD I ON I.RECEIVER IS NULL AND I.FIELD=FI.ID AND I.RUN = FI.RUN
@@ -440,39 +441,39 @@ where le.Run=?RUN?
   and le.ts between ld.Start and ld.Stop
 order by ld.Start 
   </query>
-  <sub-query id='Q0012' sub-query='Q0013'/>
   <sub-query id='Q0012' sub-query='Q0029'/>
+  <sub-query id='Q0012' sub-query='Q0013'/>
   <sub-query id='Q0012' sub-query='Q0014'/>
   <sub-query id='Q0005' sub-query='Q0006'/>
-  <sub-query id='Q0017' sub-query='Q0027'/>
   <sub-query id='Q0017' sub-query='Q0028'/>
-  <sub-query id='Q0023' sub-query='Q0027'/>
+  <sub-query id='Q0017' sub-query='Q0027'/>
   <sub-query id='Q0023' sub-query='Q0028'/>
+  <sub-query id='Q0023' sub-query='Q0027'/>
   <sub-query id='Q0011' sub-query='Q0012'/>
+  <sub-query id='Q0002' sub-query='Q0018'/>
   <sub-query id='Q0002' sub-query='Q0019'/>
   <sub-query id='Q0002' sub-query='Q0017'/>
-  <sub-query id='Q0002' sub-query='Q0018'/>
   <sub-query id='Q0002' sub-query='Q0020'/>
+  <sub-query id='Q0015' sub-query='Q0018'/>
   <sub-query id='Q0015' sub-query='Q0019'/>
   <sub-query id='Q0015' sub-query='Q0017'/>
-  <sub-query id='Q0015' sub-query='Q0018'/>
   <sub-query id='Q0015' sub-query='Q0020'/>
+  <sub-query id='Q0016' sub-query='Q0018'/>
   <sub-query id='Q0016' sub-query='Q0019'/>
   <sub-query id='Q0016' sub-query='Q0017'/>
-  <sub-query id='Q0016' sub-query='Q0018'/>
   <sub-query id='Q0016' sub-query='Q0020'/>
-  <sub-query id='Q0001' sub-query='Q0023'/>
+  <sub-query id='Q0001' sub-query='Q0024'/>
   <sub-query id='Q0001' sub-query='Q0025'/>
   <sub-query id='Q0001' sub-query='Q0026'/>
-  <sub-query id='Q0001' sub-query='Q0024'/>
-  <sub-query id='Q0021' sub-query='Q0023'/>
+  <sub-query id='Q0001' sub-query='Q0023'/>
+  <sub-query id='Q0021' sub-query='Q0024'/>
   <sub-query id='Q0021' sub-query='Q0025'/>
   <sub-query id='Q0021' sub-query='Q0026'/>
-  <sub-query id='Q0021' sub-query='Q0024'/>
-  <sub-query id='Q0022' sub-query='Q0023'/>
+  <sub-query id='Q0021' sub-query='Q0023'/>
+  <sub-query id='Q0022' sub-query='Q0024'/>
   <sub-query id='Q0022' sub-query='Q0025'/>
   <sub-query id='Q0022' sub-query='Q0026'/>
-  <sub-query id='Q0022' sub-query='Q0024'/>
+  <sub-query id='Q0022' sub-query='Q0023'/>
   <sub-query id='Q0009' sub-query='Q0013'/>
   <sub-query id='Q0009' sub-query='Q0014'/>
   <sub-query id='Q0020' sub-query='Q0028'/>

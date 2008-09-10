@@ -102,21 +102,26 @@ final class ObservedField {
 	static ObservedField getInstance(final Field field,
 			BlockingQueue<Event> rawQueue) {
 		assert field != null;
-		final String fieldName = field.getName();
-		final int mod = field.getModifiers();
+		final String fieldName    = field.getName();
 		final Class declaringType = field.getDeclaringClass();
-		final ClassPhantomReference pDeclaringType = Phantom
-				.ofClass(declaringType);
+		final ClassPhantomReference pDeclaringType = Phantom.ofClass(declaringType);
+		ConcurrentHashMap<String, ObservedField> fieldNameToField = f_declaringTypeToFieldNameToField.get(pDeclaringType);
+		if (fieldNameToField == null) {
+			fieldNameToField = new ConcurrentHashMap<String, ObservedField>();
+			f_declaringTypeToFieldNameToField.putIfAbsent(pDeclaringType, fieldNameToField);						
+		} else {
+			// Check the existing map to see if the field has already been created
+			final ObservedField result = fieldNameToField.get(fieldName);
+			if (result != null) {
+				return result;
+			}
+		}
+		// Need to create the field
+		final int mod = field.getModifiers();
 		final ObservedField result = new ObservedField(pDeclaringType,
 				fieldName, Modifier.isFinal(mod), Modifier.isStatic(mod),
-				Modifier.isVolatile(mod));
-		ConcurrentHashMap<String, ObservedField> fieldNameToField = new ConcurrentHashMap<String, ObservedField>();
-		final ConcurrentHashMap<String, ObservedField> sFieldNameToField = f_declaringTypeToFieldNameToField
-				.putIfAbsent(pDeclaringType, fieldNameToField);
-		if (sFieldNameToField != null)
-			fieldNameToField = sFieldNameToField;
-		final ObservedField sResult = fieldNameToField.putIfAbsent(fieldName,
-				result);
+				Modifier.isVolatile(mod));		
+		final ObservedField sResult = fieldNameToField.putIfAbsent(fieldName, result);
 		if (sResult != null)
 			return sResult;
 		else {

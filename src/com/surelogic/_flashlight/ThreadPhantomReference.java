@@ -1,8 +1,10 @@
 package com.surelogic._flashlight;
 
 import java.lang.ref.ReferenceQueue;
+import java.util.concurrent.ConcurrentMap;
 
-import com.surelogic._flashlight.emory.WeakIdentityHashMap;
+import com.surelogic._flashlight.jsr166y.ConcurrentReferenceHashMap;
+import com.surelogic._flashlight.jsr166y.ConcurrentReferenceHashMap.ReferenceType;
 
 /**
  * @region private static ThreadPRInstanceMap
@@ -21,7 +23,15 @@ final class ThreadPhantomReference extends ObjectPhantomReference {
 	 * @unique
 	 * @aggregate Instance into ThreadPRInstanceMap
 	 */
-	private static final WeakIdentityHashMap f_threadToPhantom = new WeakIdentityHashMap();
+	private static final ConcurrentMap<Thread,ThreadPhantomReference> f_threadToPhantom = 
+		new ConcurrentReferenceHashMap<Thread,ThreadPhantomReference>(ReferenceType.WEAK, ReferenceType.STRONG, true);
+
+	private static final RefFactory<Thread,ThreadPhantomReference> f_factory = 
+		new RefFactory<Thread,ThreadPhantomReference>() {
+			public ThreadPhantomReference newReference(Thread o, ReferenceQueue q) {
+				return new ThreadPhantomReference(o, q);
+			}		
+	};
 
 	private final String f_threadName;
 
@@ -41,24 +51,7 @@ final class ThreadPhantomReference extends ObjectPhantomReference {
 
 	static ThreadPhantomReference getInstance(final Thread c,
 			final ReferenceQueue q) {
-		ThreadPhantomReference pr;
-		final boolean phantomExisted;
-		synchronized (f_threadToPhantom) {
-			pr = (ThreadPhantomReference) f_threadToPhantom.get(c);
-			phantomExisted = pr != null;
-			if (!phantomExisted) {
-				pr = new ThreadPhantomReference(c, q);
-				f_threadToPhantom.put(c, pr);
-			}
-		}
-		/*
-		 * We want to release the lock before we notify observers because, well,
-		 * who knows what they will do and we wouldn't want to deadlock.
-		 */
-		if (!phantomExisted) {
-			pr.notifyObservers();
-		}
-		return pr;
+		return getInstance(c, q, f_threadToPhantom, f_factory);
 	}
 
 	@Override

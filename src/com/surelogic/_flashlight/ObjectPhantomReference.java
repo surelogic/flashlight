@@ -1,8 +1,10 @@
 package com.surelogic._flashlight;
 
 import java.lang.ref.ReferenceQueue;
+import java.util.concurrent.ConcurrentMap;
 
-import com.surelogic._flashlight.emory.WeakIdentityHashMap;
+import com.surelogic._flashlight.jsr166y.ConcurrentReferenceHashMap;
+import com.surelogic._flashlight.jsr166y.ConcurrentReferenceHashMap.ReferenceType;
 
 /**
  * @region private static ObjectPRInstanceMap
@@ -21,8 +23,16 @@ class ObjectPhantomReference extends IdPhantomReference {
 	 * @unique
 	 * @aggregate Instance into ObjectPRInstanceMap
 	 */
-	private static final WeakIdentityHashMap f_objectToPhantom = new WeakIdentityHashMap();
+	private static final ConcurrentMap<Object,ObjectPhantomReference> f_objectToPhantom = 
+		new ConcurrentReferenceHashMap<Object,ObjectPhantomReference>(ReferenceType.WEAK, ReferenceType.STRONG, true);
 
+	private static final RefFactory<Object,ObjectPhantomReference> f_factory = 
+		new RefFactory<Object,ObjectPhantomReference>() {
+			public ObjectPhantomReference newReference(Object o, ReferenceQueue q) {
+				return new ObjectPhantomReference(o, q);
+			}		
+	};
+	
 	private final ClassPhantomReference f_type;
 
 	ClassPhantomReference getType() {
@@ -35,26 +45,8 @@ class ObjectPhantomReference extends IdPhantomReference {
 		f_type = ClassPhantomReference.getInstance(referent.getClass(), q);
 	}
 
-	static ObjectPhantomReference getInstance(final Object o,
-			final ReferenceQueue q) {
-		ObjectPhantomReference pr;
-		final boolean phantomExisted;
-		synchronized (f_objectToPhantom) {
-			pr = (ObjectPhantomReference) f_objectToPhantom.get(o);
-			phantomExisted = pr != null;
-			if (!phantomExisted) {
-				pr = new ObjectPhantomReference(o, q);
-				f_objectToPhantom.put(o, pr);
-			}
-		}
-		/*
-		 * We want to release the lock before we notify observers because, well,
-		 * who knows what they will do and we wouldn't want to deadlock.
-		 */
-		if (!phantomExisted) {
-			pr.notifyObservers();
-		}
-		return pr;
+	static ObjectPhantomReference getInstance(final Object o, final ReferenceQueue q) {
+		return getInstance(o, q, f_objectToPhantom, f_factory);
 	}
 
 	@Override

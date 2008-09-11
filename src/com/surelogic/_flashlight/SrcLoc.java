@@ -19,8 +19,8 @@ final class SrcLoc {
 
 	private final int f_line;
 
+	/*
 	static SrcLoc getLocation(final Class<?> withinClass, final int line) {
-		/*
 		// Check if it's in the cache first
 		ConcurrentHashMap<Integer, SrcLoc> lineMap = f_cache.get(withinClass);
 		if (lineMap == null) {
@@ -40,10 +40,10 @@ final class SrcLoc {
 		if (loc == null) {
 			loc = temp;
 		}
-		return loc;
-		*/
-		return new SrcLoc(withinClass, line);
+		return loc;		
+		//return new SrcLoc(withinClass, line);
 	}
+	*/
 	
 	int getLine() {
 		return f_line;

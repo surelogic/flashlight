@@ -134,8 +134,7 @@ public final class FlashlightLaunchConfigurationDelegate extends
 		// FIX this is not right for projects with dependencies
 		if (project != null && project.exists()) {
 			try {
-				SourceZip
-						.generateSourceZip(fileName.toString(), project, false);
+				new SourceZip(project).generateSourceZip(fileName.toString(), project, false);
 			} catch (IOException e) {
 				SLLogger.getLogger().log(Level.SEVERE,
 						"Unable to create source zip", e);

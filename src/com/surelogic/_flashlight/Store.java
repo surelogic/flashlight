@@ -9,8 +9,11 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.lang.reflect.Field;
 import java.text.SimpleDateFormat;
+import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
@@ -167,7 +170,7 @@ public final class Store {
 	 * A queue to buffer refined event records from the {@link Refinery} to the
 	 * {@link Depository}.
 	 */
-	private static final BlockingQueue<Event> f_outQueue;
+	private static final BlockingQueue<List<Event>> f_outQueue;
 
 	/**
 	 * The refinery thread.
@@ -264,7 +267,11 @@ public final class Store {
 			w = null;
 			try {
 				OutputStream stream = new FileOutputStream(dataFile);
-				stream = new GZIPOutputStream(stream, 4096);
+				if (true) {
+				  stream = new GZIPOutputStream(stream, 4096);
+				} else {
+			      stream = new BufferedOutputStream(stream, 4096);
+				}				
 				OutputStreamWriter osw = new OutputStreamWriter(stream,
 						ENCODING);
 				w = new PrintWriter(osw);
@@ -276,10 +283,14 @@ public final class Store {
 			final EventVisitor outputStrategy = new OutputStrategyXML(w);
 
 			final int rawQueueSize = StoreConfiguration.getRawQueueSize();
-			f_rawQueue = new ArrayBlockingQueue<Event>(rawQueueSize);
+			if (true) {
+				f_rawQueue = new ArrayBlockingQueue<Event>(rawQueueSize);
+			} else {
+				f_rawQueue = new LinkedBlockingQueue<Event>();
+			}
 			putInQueue(f_rawQueue, timeEvent);
 			final int outQueueSize = StoreConfiguration.getOutQueueSize();
-			f_outQueue = new ArrayBlockingQueue<Event>(outQueueSize);
+			f_outQueue = new ArrayBlockingQueue<List<Event>>(outQueueSize);
 			tl_withinStore = new ThreadLocal<Boolean>() {
 				@Override
 				protected Boolean initialValue() {
@@ -1150,7 +1161,7 @@ public final class Store {
 	 * @param e
 	 *            the event to put into the raw queue.
 	 */
-	static void putInQueue(final BlockingQueue<Event> queue, final Event e) {
+	static <T> void putInQueue(final BlockingQueue<T> queue, final T e) {
 		boolean done = false;
 		while (!done) {
 			try {
@@ -1174,6 +1185,9 @@ public final class Store {
 	 *            the thread to join on.
 	 */
 	private static void join(final Thread t) {
+		if (t == null) {
+			return;
+		}
 		boolean done = false;
 		while (!done) {
 			try {

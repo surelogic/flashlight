@@ -1,5 +1,7 @@
 package com.surelogic._flashlight;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -9,11 +11,11 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 final class Depository extends Thread {
 
-	private final BlockingQueue<Event> f_outQueue;
+	private final BlockingQueue<List<Event>> f_outQueue;
 
 	private volatile EventVisitor f_outputStrategy;
 
-	Depository(final BlockingQueue<Event> outQueue,
+	Depository(final BlockingQueue<List<Event>> outQueue,
 			final EventVisitor outputStrategy) {
 		super("flashlight-depository");
 		assert outQueue != null;
@@ -30,14 +32,17 @@ final class Depository extends Thread {
 	@Override
 	public void run() {
 		Store.flashlightThread();
-
+		
 		while (!f_finished) {
 			try {
-				Event e = f_outQueue.take();
-				if (e == FinalEvent.FINAL_EVENT)
-					f_finished = true;
-				e.accept(f_outputStrategy);
-				f_outputCount.incrementAndGet();
+				List<Event> buf = f_outQueue.take();
+				for(Event e : buf) {
+					if (e == FinalEvent.FINAL_EVENT)
+						f_finished = true;
+					e.accept(f_outputStrategy);
+					f_outputCount.incrementAndGet();
+				}
+				buf.clear();
 			} catch (InterruptedException e) {
 				Store.logAProblem("depository was interrupted...a bug");
 			}

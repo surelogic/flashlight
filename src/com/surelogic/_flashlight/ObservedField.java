@@ -84,7 +84,8 @@ final class ObservedField {
 	 * profiling will tell if this is a good approach (I hope it is and
 	 * reflection is suppose to be fast according to Ernst).
 	 */
-	private static final ConcurrentHashMap<PhantomReference, ConcurrentHashMap<String, ObservedField>> f_declaringTypeToFieldNameToField = new ConcurrentHashMap<PhantomReference, ConcurrentHashMap<String, ObservedField>>();
+	private static final ConcurrentHashMap<ClassPhantomReference, ConcurrentHashMap<String, ObservedField>> f_declaringTypeToFieldNameToField = 
+		new ConcurrentHashMap<ClassPhantomReference, ConcurrentHashMap<String, ObservedField>>();
 
 	/**
 	 * Returns the one {@link ObservedField} instance associated with the
@@ -107,8 +108,11 @@ final class ObservedField {
 		final ClassPhantomReference pDeclaringType = Phantom.ofClass(declaringType);
 		ConcurrentHashMap<String, ObservedField> fieldNameToField = f_declaringTypeToFieldNameToField.get(pDeclaringType);
 		if (fieldNameToField == null) {
-			fieldNameToField = new ConcurrentHashMap<String, ObservedField>();
-			f_declaringTypeToFieldNameToField.putIfAbsent(pDeclaringType, fieldNameToField);						
+			ConcurrentHashMap<String, ObservedField> temp = new ConcurrentHashMap<String, ObservedField>();
+			fieldNameToField = f_declaringTypeToFieldNameToField.putIfAbsent(pDeclaringType, temp);						
+			if (fieldNameToField == null) {
+				fieldNameToField = temp;
+			}
 		} else {
 			// Check the existing map to see if the field has already been created
 			final ObservedField result = fieldNameToField.get(fieldName);

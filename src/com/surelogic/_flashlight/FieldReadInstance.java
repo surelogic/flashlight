@@ -14,7 +14,7 @@ final class FieldReadInstance extends FieldAccessInstance {
 
 	@Override
 	public String toString() {
-		final StringBuilder b = new StringBuilder();
+		final StringBuilder b = new StringBuilder(128);
 		b.append("<field-read");
 		addNanoTime(b);
 		addThread(b);

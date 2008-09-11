@@ -12,7 +12,8 @@ import java.util.Collection;
  * It also is able to provide a list of what objects have been garbage
  * collected.
  */
-final class Phantom {
+// Made public so that ofClass() can be called from instrumented classfiles
+public final class Phantom {
 
 	private static final ReferenceQueue f_collected = new ReferenceQueue();
 
@@ -39,7 +40,8 @@ final class Phantom {
 	 *            the non-null class.
 	 * @return the class's phantom reference.
 	 */
-	static ClassPhantomReference ofClass(final Class c) {
+	// Made public so that it can be called from instrumented classfiles
+	public static ClassPhantomReference ofClass(final Class c) {
 		assert c != null;
 		return ClassPhantomReference.getInstance(c, f_collected);
 	}

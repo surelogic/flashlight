@@ -1,11 +1,9 @@
 package com.surelogic._flashlight;
 
-import java.util.concurrent.*;
-
-import com.surelogic._flashlight.jsr166y.ConcurrentReferenceHashMap;
-import com.surelogic._flashlight.jsr166y.ConcurrentReferenceHashMap.ReferenceType;
-
 final class SrcLoc {	
+  private static final ClassPhantomReference unknownErrorPhantom =
+    Phantom.ofClass(UnknownError.class);
+  
 	/**
 	 * Cache for SrcLoc objects
 	 */
@@ -15,7 +13,7 @@ final class SrcLoc {
 				                                                                  ReferenceType.STRONG, true);
 	*/
 	
-	static final SrcLoc UNKNOWN = new SrcLoc(UnknownError.class, 0);
+	static final SrcLoc UNKNOWN = new SrcLoc(unknownErrorPhantom, 0);
 
 	private final int f_line;
 
@@ -55,12 +53,13 @@ final class SrcLoc {
 		return f_withinClass.getId();
 	}
 
-	SrcLoc(Class<?> withinClass, final int line) {
-		if (withinClass == null)
-			withinClass = UnknownError.class;
-		f_withinClass = Phantom.ofClass(withinClass);
-		f_line = line;
-	}
+  SrcLoc(ClassPhantomReference withinClass, final int line) {
+     if (withinClass == null) {
+       withinClass = unknownErrorPhantom;
+     }
+     f_withinClass = withinClass;
+     f_line = line;
+   }
 
 	@Override
 	public String toString() {

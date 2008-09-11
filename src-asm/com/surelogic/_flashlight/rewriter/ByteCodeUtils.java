@@ -85,4 +85,15 @@ final class ByteCodeUtils {
       mv.visitLdcInsn(Type.getType("L"+internalClassName+";"));
     }
   }
+
+  /**
+   * Generate code to push the phantom object for the Class object of the named class.
+   * @param mv
+   * @param internalClassName
+   */
+  public static void pushWithinClass(
+      final MethodVisitor mv, final String internalClassName) {
+    mv.visitFieldInsn(Opcodes.GETSTATIC, internalClassName,
+        FlashlightNames.WITHIN_CLASS, FlashlightNames.WITHIN_CLASS_DESC);
+  }
 }

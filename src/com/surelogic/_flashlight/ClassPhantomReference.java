@@ -10,7 +10,10 @@ import com.surelogic._flashlight.jsr166y.ConcurrentReferenceHashMap.ReferenceTyp
  * @region private static ClassPRInstanceMap
  * @lock ClassPRInstanceMapLock is f_classToPhantom protects ClassPRInstanceMap
  */
-final class ClassPhantomReference extends IdPhantomReference {
+/* Made public so that instrumented classfiles can keep a reference to an
+ * instance to avoid repeated calls to Phantom.ofClass() in SrcLoc.
+ */
+public final class ClassPhantomReference extends IdPhantomReference {
 
 	/**
 	 * Map from an {@link Class} to its associated {@link ClassPhantomReference}.

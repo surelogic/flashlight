@@ -5,57 +5,60 @@ import org.objectweb.asm.Opcodes;
 /**
  * Constants for names introduced into class files by the Flashlight classfile
  * rewriter.
- * @author aarong
  */
 final class FlashlightNames {
   public static final String FLASHLIGHT_STORE = "com/surelogic/_flashlight/Store";
   
   public static final String AFTER_INTRINSIC_LOCK_ACQUISITION = "afterIntrinsicLockAcquisition";
-  public static final String AFTER_INTRINSIC_LOCK_ACQUISITION_SIGNATURE = "(Ljava/lang/Object;Ljava/lang/Class;I)V";
+  public static final String AFTER_INTRINSIC_LOCK_ACQUISITION_SIGNATURE = "(Ljava/lang/Object;Lcom/surelogic/_flashlight/ClassPhantomReference;I)V";
   
   public static final String AFTER_INTRINSIC_LOCK_RELEASE = "afterIntrinsicLockRelease";
-  public static final String AFTER_INTRINSIC_LOCK_RELEASE_SIGNATURE = "(Ljava/lang/Object;Ljava/lang/Class;I)V";
+  public static final String AFTER_INTRINSIC_LOCK_RELEASE_SIGNATURE = "(Ljava/lang/Object;Lcom/surelogic/_flashlight/ClassPhantomReference;I)V";
   
   public static final String AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT = "afterUtilConcurrentLockAcquisitionAttempt";
-  public static final String AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT_SIGNATURE = "(ZLjava/lang/Object;Ljava/lang/Class;I)V";
+  public static final String AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT_SIGNATURE = "(ZLjava/lang/Object;Lcom/surelogic/_flashlight/ClassPhantomReference;I)V";
   
   public static final String AFTER_UTIL_CONCURRENT_LOCK_RELEASE_ATTEMPT = "afterUtilConcurrentLockReleaseAttempt";
-  public static final String AFTER_UTIL_CONCURRENT_LOCK_RELEASE_ATTEMPT_SIGNATURE = "(ZLjava/lang/Object;Ljava/lang/Class;I)V";
+  public static final String AFTER_UTIL_CONCURRENT_LOCK_RELEASE_ATTEMPT_SIGNATURE = "(ZLjava/lang/Object;Lcom/surelogic/_flashlight/ClassPhantomReference;I)V";
   
   public static final String BEFORE_INTRINSIC_LOCK_ACQUISITION = "beforeIntrinsicLockAcquisition";
-  public static final String BEFORE_INTRINSIC_LOCK_ACQUISITION_SIGNATURE = "(Ljava/lang/Object;ZZLjava/lang/Class;I)V";
+  public static final String BEFORE_INTRINSIC_LOCK_ACQUISITION_SIGNATURE = "(Ljava/lang/Object;ZZLcom/surelogic/_flashlight/ClassPhantomReference;I)V";
   
   public static final String BEFORE_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT = "beforeUtilConcurrentLockAcquisitionAttempt";
-  public static final String BEFORE_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT_SIGNATURE = "(Ljava/lang/Object;Ljava/lang/Class;I)V";
+  public static final String BEFORE_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT_SIGNATURE = "(Ljava/lang/Object;Lcom/surelogic/_flashlight/ClassPhantomReference;I)V";
   
   public static final String CONSTRUCTOR_CALL = "constructorCall";
-  public static final String CONSTRUCTOR_CALL_SIGNATURE = "(ZLjava/lang/String;Ljava/lang/String;Ljava/lang/Class;I)V";
+  public static final String CONSTRUCTOR_CALL_SIGNATURE = "(ZLjava/lang/String;Ljava/lang/String;Lcom/surelogic/_flashlight/ClassPhantomReference;I)V";
 
   public static final String CONSTRUCTOR_EXECUTION = "constructorExecution";
-  public static final String CONSTRUCTOR_EXECUTION_SIGNATURE = "(ZLjava/lang/Object;Ljava/lang/Class;I)V";
+  public static final String CONSTRUCTOR_EXECUTION_SIGNATURE = "(ZLjava/lang/Object;Lcom/surelogic/_flashlight/ClassPhantomReference;I)V";
   
 //  public static final String FIELD_ACCESS = "fieldAccess";
-//  public static final String FIELD_ACCESS_SIGNATURE = "(ZLjava/lang/Object;Ljava/lang/reflect/Field;Ljava/lang/Class;I)V";
+//  public static final String FIELD_ACCESS_SIGNATURE = "(ZLjava/lang/Object;Ljava/lang/reflect/Field;Lcom/surelogic/_flashlight/ClassPhantomReference;I)V";
   
   public static final String INSTANCE_FIELD_ACCESS = "instanceFieldAccess";
-  public static final String INSTANCE_FIELD_ACCESS_SIGNATURE = "(ZLjava/lang/Object;ILjava/lang/Class;I)V";
+  public static final String INSTANCE_FIELD_ACCESS_SIGNATURE = "(ZLjava/lang/Object;ILcom/surelogic/_flashlight/ClassPhantomReference;I)V";
   
   public static final String STATIC_FIELD_ACCESS = "staticFieldAccess";
-  public static final String STATIC_FIELD_ACCESS_SIGNATURE = "(ZILjava/lang/Class;I)V";
+  public static final String STATIC_FIELD_ACCESS_SIGNATURE = "(ZILcom/surelogic/_flashlight/ClassPhantomReference;I)V";
   
   public static final String INSTANCE_FIELD_ACCESS_LOOKUP = "instanceFieldAccessLookup";
-  public static final String INSTANCE_FIELD_ACCESS_LOOKUP_SIGNATURE = "(ZLjava/lang/Object;Ljava/lang/reflect/Field;Ljava/lang/Class;I)V";
+  public static final String INSTANCE_FIELD_ACCESS_LOOKUP_SIGNATURE = "(ZLjava/lang/Object;Ljava/lang/reflect/Field;Lcom/surelogic/_flashlight/ClassPhantomReference;I)V";
   
   public static final String STATIC_FIELD_ACCESS_LOOKUP = "staticFieldAccessLookup";
-  public static final String STATIC_FIELD_ACCESS_LOOKUP_SIGNATURE = "(ZLjava/lang/reflect/Field;Ljava/lang/Class;I)V";
+  public static final String STATIC_FIELD_ACCESS_LOOKUP_SIGNATURE = "(ZLjava/lang/reflect/Field;Lcom/surelogic/_flashlight/ClassPhantomReference;I)V";
   
   public static final String INTRINSIC_LOCK_WAIT = "intrinsicLockWait";
-  public static final String INTRINSIC_LOCK_WAIT_SIGNATURE = "(ZLjava/lang/Object;Ljava/lang/Class;I)V";
+  public static final String INTRINSIC_LOCK_WAIT_SIGNATURE = "(ZLjava/lang/Object;Lcom/surelogic/_flashlight/ClassPhantomReference;I)V";
   
   public static final String METHOD_CALL = "methodCall";
-  public static final String METHOD_CALL_SIGNATURE = "(ZLjava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;I)V";
+  public static final String METHOD_CALL_SIGNATURE = "(ZLjava/lang/Object;Ljava/lang/String;Ljava/lang/String;Lcom/surelogic/_flashlight/ClassPhantomReference;I)V";
   
   // Flashlight classes and methods
+  public static final String PHANTOM = "com/surelogic/_flashlight/Phantom";
+  public static final String OF_CLASS = "ofClass";
+  public static final String OF_CLASS_SIGNATURE = "(Ljava/lang/Class;)Lcom/surelogic/_flashlight/ClassPhantomReference;";
+  
   public static final String FLASHLIGHT_RUNTIME_SUPPORT = "com/surelogic/_flashlight/rewriter/runtime/FlashlightRuntimeSupport";
   public static final String REPORT_FATAL_ERROR = "reportFatalError";
   public static final String REPORT_FATAL_ERROR_SIGNATURE = "(Ljava/lang/Exception;)V";
@@ -104,6 +107,18 @@ final class FlashlightNames {
   public static final int IN_CLASS_ACCESS_INTERFACE = Opcodes.ACC_PUBLIC | IN_CLASS_ACCESS_BASE;
   public static final String IN_CLASS_DESC = "Ljava/lang/Class;";
 
+  /* We add the static final field "flashlight$withinClass" to store the Class
+   * object of the class for use in logging calls.  We prefer this field to
+   * be private, but for interfaces we have to make the field public.  The
+   * field cannot be accessed from Java code though because of the '$' in the
+   * field's name.
+   */ 
+  public static final String WITHIN_CLASS = "flashlight$withinClass";
+  private static final int WITHIN_CLASS_ACCESS_BASE = 
+    Opcodes.ACC_STATIC | Opcodes.ACC_FINAL | Opcodes.ACC_SYNTHETIC;
+  public static final int WITHIN_CLASS_ACCESS_CLASS = Opcodes.ACC_PRIVATE | WITHIN_CLASS_ACCESS_BASE;
+  public static final int WITHIN_CLASS_ACCESS_INTERFACE = Opcodes.ACC_PUBLIC | WITHIN_CLASS_ACCESS_BASE;
+  public static final String WITHIN_CLASS_DESC = "Lcom/surelogic/_flashlight/ClassPhantomReference;";
   
   
   // Prevent instantiation

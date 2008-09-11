@@ -12,7 +12,6 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -375,19 +374,19 @@ public final class Store {
 
   public static void instanceFieldAccess(
       final boolean read, final Object receiver, final int fieldID,
-      final Class<?> withinClass, final int line) {
+      final ClassPhantomReference withinClass, final int line) {
     throw new UnsupportedOperationException("Not yet implemented.  Use single pass instrumenation.");
   }
 
   public static void staticFieldAccess(
       final boolean read, final int fieldID,
-      final Class<?> withinClass, final int line) {
+      final ClassPhantomReference withinClass, final int line) {
     throw new UnsupportedOperationException("Not yet implemented.  Use single pass instrumenation.");
   }
 
   public static void instanceFieldAccessLookup(
       final boolean read, final Object receiver, final Field field,
-      final Class<?> withinClass, final int line) {
+      final ClassPhantomReference withinClass, final int line) {
     if (f_flashlightIsNotInitialized)
       return;
     if (FL_OFF.get())
@@ -433,7 +432,7 @@ public final class Store {
 
   public static void staticFieldAccessLookup(
       final boolean read, final Field field,
-      final Class<?> withinClass, final int line) {
+      final ClassPhantomReference withinClass, final int line) {
     if (f_flashlightIsNotInitialized)
       return;
     if (FL_OFF.get())
@@ -486,7 +485,7 @@ public final class Store {
 	 *            the line number where the event occurred.
 	 */
 	public static void fieldAccess(final boolean read, final Object receiver,
-			final Field field, Class<?> withinClass, final int line) {
+			final Field field, ClassPhantomReference withinClass, final int line) {
 		if (f_flashlightIsNotInitialized)
 			return;
 		if (FL_OFF.get())
@@ -555,7 +554,7 @@ public final class Store {
 	 */
 	public static void constructorCall(final boolean before,
 			final String enclosingFileName, final String enclosingLocationName,
-			Class<?> withinClass, final int line) {
+			ClassPhantomReference withinClass, final int line) {
 		if (f_flashlightIsNotInitialized)
 			return;
 		if (FL_OFF.get())
@@ -610,7 +609,7 @@ public final class Store {
 	 *            the line number where the event occurred.
 	 */
 	public static void constructorExecution(final boolean before,
-			final Object receiver, Class<?> withinClass, final int line) {
+			final Object receiver, ClassPhantomReference withinClass, final int line) {
 		if (f_flashlightIsNotInitialized)
 			return;
 		if (FL_OFF.get())
@@ -674,7 +673,7 @@ public final class Store {
 	 */
 	public static void methodCall(final boolean before, final Object receiver,
 			final String enclosingFileName, final String enclosingLocationName,
-			Class<?> withinClass, final int line) {
+			ClassPhantomReference withinClass, final int line) {
 		if (f_flashlightIsNotInitialized)
 			return;
 		if (FL_OFF.get())
@@ -747,7 +746,7 @@ public final class Store {
 	 */
 	public static void beforeIntrinsicLockAcquisition(final Object lockObject,
 			final boolean lockIsThis, final boolean lockIsClass,
-			Class<?> withinClass, final int line) {
+			ClassPhantomReference withinClass, final int line) {
 		if (f_flashlightIsNotInitialized)
 			return;
 		if (FL_OFF.get())
@@ -792,7 +791,7 @@ public final class Store {
 	 *            the line number where the event occurred.
 	 */
 	public static void afterIntrinsicLockAcquisition(final Object lockObject,
-			Class<?> withinClass, final int line) {
+			ClassPhantomReference withinClass, final int line) {
 		if (f_flashlightIsNotInitialized)
 			return;
 		if (FL_OFF.get())
@@ -847,7 +846,7 @@ public final class Store {
 	 *            the line number where the event occurred.
 	 */
 	public static void intrinsicLockWait(final boolean before,
-			final Object lockObject, Class<?> withinClass, final int line) {
+			final Object lockObject, ClassPhantomReference withinClass, final int line) {
 		if (f_flashlightIsNotInitialized)
 			return;
 		if (FL_OFF.get())
@@ -895,7 +894,7 @@ public final class Store {
 	 *            the line number where the event occurred.
 	 */
 	public static void afterIntrinsicLockRelease(final Object lockObject,
-			Class<?> withinClass, final int line) {
+			ClassPhantomReference withinClass, final int line) {
 		if (f_flashlightIsNotInitialized)
 			return;
 		if (FL_OFF.get())
@@ -938,7 +937,7 @@ public final class Store {
 	 *            the line number where the event occurred.
 	 */
 	public static void beforeUtilConcurrentLockAcquisitionAttempt(
-			final Object lockObject, Class<?> withinClass, final int line) {
+			final Object lockObject, ClassPhantomReference withinClass, final int line) {
 		if (f_flashlightIsNotInitialized)
 			return;
 		if (FL_OFF.get())
@@ -991,7 +990,7 @@ public final class Store {
 	 */
 	public static void afterUtilConcurrentLockAcquisitionAttempt(
 			final boolean gotTheLock, final Object lockObject,
-			Class<?> withinClass, final int line) {
+			ClassPhantomReference withinClass, final int line) {
 		if (f_flashlightIsNotInitialized)
 			return;
 		if (FL_OFF.get())
@@ -1045,7 +1044,7 @@ public final class Store {
 	 */
 	public static void afterUtilConcurrentLockReleaseAttempt(
 			final boolean releasedTheLock, final Object lockObject,
-			Class<?> withinClass, final int line) {
+			ClassPhantomReference withinClass, final int line) {
 		if (f_flashlightIsNotInitialized)
 			return;
 		if (FL_OFF.get())

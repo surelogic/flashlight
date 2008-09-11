@@ -227,6 +227,9 @@ final class Refinery extends Thread {
 		if (Phantom.drainTo(f_deadList) > 0) {
 			f_garbageCollectedObjectCount.addAndGet(f_deadList.size());
 			for (IdPhantomReference pr : f_deadList) {
+				if (pr.shouldBeIgnored()) {
+					continue;
+				}				
 				removeSharedFieldsWithin(pr);
 				removeThreadLocalFieldsWithin(pr);
 				UnderConstruction.remove(pr);

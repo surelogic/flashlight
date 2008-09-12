@@ -2,6 +2,8 @@ package com.surelogic._flashlight.rewriter;
 
 import java.util.Set;
 
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.Attribute;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodAdapter;
 import org.objectweb.asm.MethodVisitor;
@@ -125,6 +127,17 @@ final class FlashlightMethodRewriter extends MethodAdapter {
    */
   private final ClassAndFieldModel classModel;
   
+  /**
+   * If the previously visited element was an ASTORE instruction, this is set to
+   * the index of the local variable stored. Otherwise, it is {@code -1}.
+   */
+  private int previousStore = -1;
+  
+  /**
+   * If the previously visited element was an ALOAD instruction, this is set to
+   * the index of the local variable loaded. Otherwise, it is {@code -1}.
+   */
+  private int previousLoad = -1;
   
   
   /**
@@ -208,23 +221,40 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   
   @Override
   public void visitLineNumber(final int line, final Label start) {
+    handlePreviousLoad();
+    handlePreviousStore();
+    handleDelayedOutputPrefix(OpType.OTHER);
     mv.visitLineNumber(line, start);
+    handleDelayedOutputPostfix(OpType.OTHER);
     currentSrcLine = line;
   }
   
   @Override
   public void visitTypeInsn(final int opcode, final String type) {
+    handlePreviousLoad();
+    handlePreviousStore();
+    handleDelayedOutputPrefix(OpType.OTHER);
     mv.visitTypeInsn(opcode, type);
     if (stateMachine != null) stateMachine.visitTypeInsn(opcode, type);
+    handleDelayedOutputPostfix(OpType.OTHER);
   }
   
   @Override
   public void visitInsn(final int opcode) {
     if (opcode == Opcodes.MONITORENTER && config.rewriteMonitorenter) {
+      handlePreviousLoad();
+      // previous store is dealt with in rewriteMonitorenter
+      handleDelayedOutputPrefix(OpType.OTHER);
       rewriteMonitorenter();
     } else if (opcode == Opcodes.MONITOREXIT && config.rewriteMonitorexit) {
+      // previous load is dealt with in rewriteMonitorexit()
+      handlePreviousStore();
+      handleDelayedOutputPrefix(OpType.OTHER);
       rewriteMonitorexit();
     } else if ((opcode >= Opcodes.IRETURN && opcode <= Opcodes.RETURN)) {
+      handlePreviousLoad();
+      handlePreviousStore();
+      handleDelayedOutputPrefix(OpType.OTHER);
       if (wasSynchronized && config.rewriteSynchronizedMethod) {
         insertSynchronizedMethodExit();
       }
@@ -234,8 +264,12 @@ final class FlashlightMethodRewriter extends MethodAdapter {
       }
       mv.visitInsn(opcode);
     } else {
+      handlePreviousLoad();
+      handlePreviousStore();
+      handleDelayedOutputPrefix(OpType.OTHER);
       mv.visitInsn(opcode);
     }
+    handleDelayedOutputPostfix(OpType.OTHER);
 
     if (stateMachine != null) stateMachine.visitInsn(opcode);
   }
@@ -243,6 +277,9 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   @Override
   public void visitFieldInsn(final int opcode, final String owner,
       final String name, final String desc) {
+    handlePreviousLoad();
+    handlePreviousStore();
+    handleDelayedOutputPrefix(OpType.OTHER);
     if (opcode == Opcodes.PUTFIELD && config.rewritePutfield) {
       rewritePutfield(owner, name, desc);
     } else if (opcode == Opcodes.PUTSTATIC && config.rewritePutstatic) {
@@ -254,6 +291,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     } else {
       mv.visitFieldInsn(opcode, owner, name, desc);
     }
+    handleDelayedOutputPostfix(OpType.OTHER);
     
     if (stateMachine != null) stateMachine.visitFieldInsn(opcode, owner, name, desc);    
   }
@@ -261,6 +299,9 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   @Override
   public void visitMethodInsn(final int opcode, final String owner,
       final String name, final String desc) {
+    handlePreviousLoad();
+    handlePreviousStore();
+    handleDelayedOutputPrefix(OpType.OTHER);
     if (opcode == Opcodes.INVOKEVIRTUAL && config.rewriteInvokevirtual) {
       rewriteMethodCall(Opcodes.INVOKEVIRTUAL, owner, name, desc);
     } else if (opcode == Opcodes.INVOKESPECIAL && config.rewriteInvokespecial) {
@@ -280,12 +321,16 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     } else { // Unknown, but safe
       mv.visitMethodInsn(opcode, owner, name, desc);
     }
+    handleDelayedOutputPostfix(OpType.OTHER);
 
     if (stateMachine != null) stateMachine.visitMethodInsn(opcode, owner, name, desc);
   }
   
   @Override
   public void visitMaxs(final int maxStack, final int maxLocals) {
+    handlePreviousLoad();
+    handlePreviousStore();
+    handleDelayedOutputPostfix(OpType.OTHER);
     if (wasSynchronized && config.rewriteSynchronizedMethod) {
       insertSynchronizedMethodPostfix();
     }
@@ -295,56 +340,95 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     }
     
     mv.visitMaxs(maxStack + stackDepthDelta, maxLocals);
+    handleDelayedOutputPostfix(OpType.OTHER);
   }
 
   @Override
   public void visitIntInsn(final int opcode, final int operand) {
+    handlePreviousLoad();
+    handlePreviousStore();
+    handleDelayedOutputPrefix(OpType.OTHER);
     if (stateMachine != null) stateMachine.visitIntInsn(opcode, operand);
     mv.visitIntInsn(opcode, operand);
+    handleDelayedOutputPostfix(OpType.OTHER);
   }
   
   @Override
   public void visitJumpInsn(final int opcode, final Label label) {
+    handlePreviousLoad();
+    handlePreviousStore();
+    handleDelayedOutputPrefix(OpType.OTHER);
     if (stateMachine != null) stateMachine.visitJumpInsn(opcode, label);
     mv.visitJumpInsn(opcode, label);
+    handleDelayedOutputPostfix(OpType.OTHER);
   }
   
   @Override
   public void visitLabel(final Label label) {
+    handlePreviousLoad();
+    handlePreviousStore();
+    handleDelayedOutputPrefix(OpType.LABEL);
     if (stateMachine != null) stateMachine.visitLabel(label);
     mv.visitLabel(label);
+    handleDelayedOutputPostfix(OpType.LABEL);
   }
   
   @Override
   public void visitLdcInsn(final Object cst) {
+    handlePreviousLoad();
+    handlePreviousStore();
+    handleDelayedOutputPrefix(OpType.OTHER);
     if (stateMachine != null) stateMachine.visitLdcInsn(cst);
     mv.visitLdcInsn(cst);
+    handleDelayedOutputPostfix(OpType.OTHER);
   }
   
   @Override
   public void visitLookupSwitchInsn(
       final Label dflt, final int[] keys, final Label[] labels) {
+    handlePreviousLoad();
+    handlePreviousStore();
+    handleDelayedOutputPrefix(OpType.OTHER);
     if (stateMachine != null) stateMachine.visitLookupSwitchInsn(dflt, keys, labels);
     mv.visitLookupSwitchInsn(dflt, keys, labels);
+    handleDelayedOutputPostfix(OpType.OTHER);
   }
   
   @Override
   public void visitMultiANewArrayInsn(final String desc, final int dims) {
+    handlePreviousLoad();
+    handlePreviousStore();
+    handleDelayedOutputPrefix(OpType.OTHER);
     if (stateMachine != null) stateMachine.visitMultiANewArrayInsn(desc, dims);
     mv.visitMultiANewArrayInsn(desc, dims);
+    handleDelayedOutputPostfix(OpType.OTHER);
   }
   
   @Override
   public void visitTableSwitchInsn(
       final int min, final int max, final Label dflt, final Label[] labels) {
+    handlePreviousLoad();
+    handlePreviousStore();
+    handleDelayedOutputPrefix(OpType.OTHER);
     if (stateMachine != null) stateMachine.visitTableSwitchInsn(min, max, dflt, labels);
     mv.visitTableSwitchInsn(min, max, dflt, labels);
+    handleDelayedOutputPostfix(OpType.OTHER);
   }
   
   @Override
   public void visitVarInsn(final int opcode, final int var) {
+    handlePreviousLoad();
+    handlePreviousStore();
+    handleDelayedOutputPrefix(OpType.OTHER);
     if (stateMachine != null) stateMachine.visitVarInsn(opcode, var);
-    mv.visitVarInsn(opcode, var);
+    if (opcode == Opcodes.ASTORE) {
+      previousStore = var;
+    } else if (opcode == Opcodes.ALOAD) {
+      previousLoad = var;
+    } else {
+      mv.visitVarInsn(opcode, var);
+    }
+    handleDelayedOutputPostfix(OpType.OTHER);
   }
   
   
@@ -852,19 +936,17 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   // =========================================================================
 
   private void rewriteMonitorenter() {
-    // ..., obj  
-
-    /* Copy the object being locked for use as the first parameter */
-    mv.visitInsn(Opcodes.DUP);
-    // ..., obj, obj  
-    /* Copy again so we can save it to local variable */
-    mv.visitInsn(Opcodes.DUP);
-    // ..., obj, obj, obj  
-
-    /* Store the lock object in a new local variable */
-    final int lockObj = lvs.newLocal(Type.getObjectType(FlashlightNames.JAVA_LANG_OBJECT));
-    mv.visitVarInsn(Opcodes.ASTORE, lockObj);
-    // ..., obj, obj
+    if (previousStore != -1) {
+      /* There was an ASTORE immediately preceding this monitorenter.  We want
+       * to delay the output of the ASTORE until immediately before the monitorenter
+       * that we output.  In this case the stack is already "..., obj, obj"
+       */
+      // ..., obj, obj
+    } else {
+      /* Copy the lock object to use for comparison purposes */
+      mv.visitInsn(Opcodes.DUP);
+      // ..., obj, obj
+    }
     
     /* Compare the lock object against the receiver */
     if (isStatic) {
@@ -895,10 +977,12 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     // ..., obj, obj, isThis
 
     /* Compare the object being locked against the Class object */
+    mv.visitInsn(Opcodes.SWAP);
+    // ..., obj, isThis, obj
+    mv.visitInsn(Opcodes.DUP_X1);
+    // ..., obj, obj, isThis, obj
     ByteCodeUtils.pushInClass(mv, atLeastJava5, classBeingAnalyzedInternal);
-    // ..., obj, obj, isThis, inClass
-    mv.visitVarInsn(Opcodes.ALOAD, lockObj);
-    // ..., obj, obj, isThis, inClass, obj
+    // ..., obj, obj, isThis, obj, inClass
     final Label pushFalse2 = new Label();
     final Label afterPushIsClass = new Label();
     mv.visitJumpInsn(Opcodes.IF_ACMPNE, pushFalse2);
@@ -924,25 +1008,40 @@ final class FlashlightMethodRewriter extends MethodAdapter {
         FlashlightNames.BEFORE_INTRINSIC_LOCK_ACQUISITION_SIGNATURE);
     // ..., obj
 
-    /* Duplicate the lock object so we have a reference to use for the
-     * post-method call.
-     */
+    /* Duplicate the lock object to have it for the post-synchronized method */
     mv.visitInsn(Opcodes.DUP);
     // ..., obj, obj
     
+    if (previousStore != -1) {
+      /* Duplicate again, and store it in the local variable */
+      mv.visitInsn(Opcodes.DUP);
+      // ..., obj, obj, obj
+      
+      mv.visitVarInsn(Opcodes.ASTORE, previousStore);
+      previousStore = -1;
+      // ..., obj, obj
+    }
+    
+    // ..., obj, obj      
+      
     /* The original monitor enter call */
     mv.visitInsn(Opcodes.MONITORENTER);
     // ..., obj
     
-    /* Push the phantom class reference and line number, and call the post-method */
-    ByteCodeUtils.pushWithinClass(mv, classBeingAnalyzedInternal);
-    // ..., obj, withinClass
-    ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
-    // ..., obj, withinClass, lineNumber
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
-        FlashlightNames.AFTER_INTRINSIC_LOCK_ACQUISITION,
-        FlashlightNames.AFTER_INTRINSIC_LOCK_ACQUISITION_SIGNATURE);
-    // ...
+    delayOutput(new DelayedOutput(OpType.LABEL) {
+      @Override
+      public void insertCode() {
+        /* Push the phantom class reference and line number, and call the post-method */
+        ByteCodeUtils.pushWithinClass(mv, classBeingAnalyzedInternal);
+        // ..., obj, withinClass
+        ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
+        // ..., obj, withinClass, lineNumber
+        mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
+            FlashlightNames.AFTER_INTRINSIC_LOCK_ACQUISITION,
+            FlashlightNames.AFTER_INTRINSIC_LOCK_ACQUISITION_SIGNATURE);
+        // ...
+      }
+    });
     
     /* Resume original instruction stream */
 
@@ -950,29 +1049,49 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   }
 
   private void rewriteMonitorexit() {
-    // ..., obj  
-    
-    /* Copy the object being locked for use as the first parameter to
-     * Store.afterInstrinsicLockRelease().
-     */
-    mv.visitInsn(Opcodes.DUP);
-    // ..., obj, obj  
-
+    if (previousLoad != -1) {
+      // ...
+      
+      /* There was an ALOAD immediately preceding this monitorexit, but
+       * we haven't output it yet.  We need two copies of the object, one
+       * for the monitorexit, and one for our post-call that follows it, so 
+       * we need to insert the ALOAD twice.  The point here is to make sure that
+       * the ALOAD still immediately precedes the monitorexit.
+       */  
+      mv.visitVarInsn(Opcodes.ALOAD, previousLoad);
+      // ..., obj
+      mv.visitVarInsn(Opcodes.ALOAD, previousLoad);
+      // ..., obj, obj
+      
+      previousLoad = -1;
+    } else {
+      // ..., obj  
+      
+      /* Copy the object being locked for use as the first parameter to
+       * Store.afterInstrinsicLockRelease().
+       */
+      mv.visitInsn(Opcodes.DUP);
+      // ..., obj, obj  
+    }
     /* The original monitor exit call */
     mv.visitInsn(Opcodes.MONITOREXIT);
     // ..., obj
     
-    ByteCodeUtils.pushWithinClass(mv, classBeingAnalyzedInternal);
-    
-    /* Push the lineNumber and call the Store method. */
-    ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
-    // ..., obj, withinClass, lineNumber
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
-        FlashlightNames.AFTER_INTRINSIC_LOCK_RELEASE, FlashlightNames.AFTER_INTRINSIC_LOCK_RELEASE_SIGNATURE);
-    // ...
+    delayOutput(new DelayedOutput(OpType.LABEL) {
+      @Override
+      public void insertCode() {
+        ByteCodeUtils.pushWithinClass(mv, classBeingAnalyzedInternal);
+        
+        /* Push the lineNumber and call the Store method. */
+        ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
+        // ..., obj, withinClass, lineNumber
+        mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
+            FlashlightNames.AFTER_INTRINSIC_LOCK_RELEASE, FlashlightNames.AFTER_INTRINSIC_LOCK_RELEASE_SIGNATURE);
+        // ...
+      }
+    });      
 
     /* Resume original instruction stream */
-
     updateStackDepthDelta(2);
   }
   
@@ -1144,5 +1263,154 @@ final class FlashlightMethodRewriter extends MethodAdapter {
       
       updateStackDepthDelta(7);
     }
+  }
+  
+  
+  
+  private enum OpType { LABEL, OTHER }
+  
+  private abstract class DelayedOutput {
+    public final OpType delayedFor;
+    
+    public DelayedOutput(final OpType df) {
+      delayedFor = df;
+    }
+    
+    public abstract void insertCode();
+  }
+  
+  private DelayedOutput delayedOutput = null;
+  
+  private void delayOutput(final DelayedOutput delayed) {
+    if (delayedOutput != null) {
+      throw new IllegalStateException("Already have pending output");
+    } else {
+      delayedOutput = delayed;
+    }
+  }
+  
+  private void handleDelayedOutputPrefix(final OpType current) {
+    if (delayedOutput != null) {
+      if (current != delayedOutput.delayedFor) {
+        delayedOutput.insertCode();
+        delayedOutput = null;
+      }
+    }
+  }
+
+  private void handleDelayedOutputPostfix(final OpType current) {
+    if (delayedOutput != null) {
+      if (current == delayedOutput.delayedFor) {
+        delayedOutput.insertCode();
+        delayedOutput = null;
+      }
+    }
+  }
+
+  
+  private void handlePreviousLoad() {
+    if (previousLoad != -1) {
+      mv.visitVarInsn(Opcodes.ALOAD, previousLoad);
+      previousLoad = -1;
+    }
+  }
+  
+  private void handlePreviousStore() {
+    if (previousStore != -1) {
+      mv.visitVarInsn(Opcodes.ASTORE, previousStore);
+      previousStore = -1;
+    }
+  }
+  
+  
+
+  @Override
+  public AnnotationVisitor visitAnnotationDefault() {
+    handlePreviousLoad();
+    handlePreviousStore();
+    handleDelayedOutputPrefix(OpType.OTHER);
+    final AnnotationVisitor av = mv.visitAnnotationDefault();
+    handleDelayedOutputPostfix(OpType.OTHER);
+    return av;
+  }
+
+  @Override
+  public AnnotationVisitor visitAnnotation(final String desc,
+      final boolean visible) {
+    handlePreviousLoad();
+    handlePreviousStore();
+    handleDelayedOutputPrefix(OpType.OTHER);
+    AnnotationVisitor av = mv.visitAnnotation(desc, visible);
+    handleDelayedOutputPostfix(OpType.OTHER);
+    return av;
+  }
+
+  @Override
+  public AnnotationVisitor visitParameterAnnotation(final int parameter,
+      final String desc, final boolean visible) {
+    handlePreviousLoad();
+    handlePreviousStore();
+    handleDelayedOutputPrefix(OpType.OTHER);
+    AnnotationVisitor av = mv.visitParameterAnnotation(parameter, desc, visible);
+    handleDelayedOutputPostfix(OpType.OTHER);
+    return av;
+  }
+
+  @Override
+  public void visitAttribute(final Attribute attr) {
+    handlePreviousLoad();
+    handlePreviousStore();
+    handleDelayedOutputPrefix(OpType.OTHER);
+    mv.visitAttribute(attr);
+    handleDelayedOutputPostfix(OpType.OTHER);
+  }
+
+  @Override
+  public void visitFrame(final int type, final int nLocal,
+      final Object[] local, final int nStack, final Object[] stack) {
+    handlePreviousLoad();
+    handlePreviousStore();
+    handleDelayedOutputPrefix(OpType.OTHER);
+    mv.visitFrame(type, nLocal, local, nStack, stack);
+    handleDelayedOutputPostfix(OpType.OTHER);
+  }
+
+  @Override
+  public void visitIincInsn(final int var, final int increment) {
+    handlePreviousLoad();
+    handlePreviousStore();
+    handleDelayedOutputPrefix(OpType.OTHER);
+    mv.visitIincInsn(var, increment);
+    handleDelayedOutputPostfix(OpType.OTHER);
+  }
+
+  @Override
+  public void visitTryCatchBlock(final Label start, final Label end,
+      final Label handler, final String type) {
+    handlePreviousLoad();
+    handlePreviousStore();
+    handleDelayedOutputPrefix(OpType.OTHER);
+    mv.visitTryCatchBlock(start, end, handler, type);
+    handleDelayedOutputPostfix(OpType.OTHER);
+  }
+
+  @Override
+  public void visitLocalVariable(final String name, final String desc,
+      final String signature, final Label start, final Label end,
+      final int index) {
+    handlePreviousLoad();
+    handlePreviousStore();
+    handleDelayedOutputPrefix(OpType.OTHER);
+    mv.visitLocalVariable(name, desc, signature, start, end, index);
+    handleDelayedOutputPostfix(OpType.OTHER);
+  }
+
+  @Override
+  public void visitEnd() {
+    handlePreviousLoad();
+    handlePreviousStore();
+    handleDelayedOutputPrefix(OpType.OTHER);
+    mv.visitEnd();
+    handleDelayedOutputPostfix(OpType.OTHER);
   }
 }

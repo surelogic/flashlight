@@ -66,16 +66,18 @@ final class Refinery extends Thread {
 						 * until all the thread-local events get added.
 						 */
 						f_finished = true;
+						break;
 					} else {
 						f_eventCache.add(e);
 						e.accept(f_detectSharedFieldsVisitor);
 					}
-					processGarbageCollectedObjects();
-					if (f_finished) {
-						removeRemainingThreadLocalFields();
-					}
 				}
 				buf.clear();
+				processGarbageCollectedObjects();
+				if (f_finished) {
+					removeRemainingThreadLocalFields();
+				}
+				
 				final boolean xferd = transferEventsToOutQueue();
 				if (!xferd) {
 					try {
@@ -238,16 +240,21 @@ final class Refinery extends Thread {
 	private void processGarbageCollectedObjects() {
 		f_deadList.clear();
 		if (Phantom.drainTo(f_deadList) > 0) {
+			Map<KeyField, PhantomReference> deadFields = null;
 			f_garbageCollectedObjectCount.addAndGet(f_deadList.size());
 			for (IdPhantomReference pr : f_deadList) {
 				if (pr.shouldBeIgnored()) {
 					continue;
 				}				
 				removeSharedFieldsWithin(pr);
-				removeThreadLocalFieldsWithin(pr);
+				
+				deadFields = removeThreadLocalFieldsWithin(deadFields, pr);
 				UnderConstruction.remove(pr);
 				UtilConcurrent.remove(pr);
 				f_eventCache.add(new GarbageCollectedObject(pr));
+			}
+			if (deadFields != null) {
+				removeEventsAbout(deadFields.keySet());
 			}
 		}
 	}
@@ -266,21 +273,34 @@ final class Refinery extends Thread {
 
 	/**
 	 * Remove all mappings within the {@link #f_fieldToThread} map that are
-	 * within the garbage collected object. All <code>FieldAccess</code>
-	 * events about these fields are removed from {@link #f_eventCache}.
+	 * within the garbage collected object. 
 	 * 
 	 * @param pr
 	 *            the phantom of the object.
 	 */
-	private void removeThreadLocalFieldsWithin(final PhantomReference pr) {
+	private Map<KeyField,PhantomReference> removeThreadLocalFieldsWithin(Map<KeyField,PhantomReference> deadFields, 
+			final PhantomReference pr) {
 		/*
 		 * Collect up all the thread-local fields within the garbage collected
 		 * object.
 		 */
-	  final Map<KeyField, PhantomReference> fieldMap = removeFieldsForObject(pr);
-	  if (fieldMap != null) {
-	    removeEventsAbout(fieldMap.keySet());
-	  }
+		final Map<KeyField, PhantomReference> fieldMap = removeFieldsForObject(pr);
+		if (fieldMap != null) {
+			if (deadFields == null) {
+				deadFields = fieldMap;
+			} else {
+				deadFields.putAll(fieldMap);
+			}
+			markAsSingleThreaded(fieldMap.keySet());
+		}
+		return deadFields;
+	}
+
+	private void markAsSingleThreaded(final Set<KeyField> fields) {
+		f_threadLocalFieldCount.addAndGet(fields.size());
+		for (KeyField field : fields) {
+			f_eventCache.add(field.getSingleThreadedEventAbout());
+		}
 	}
 
 	/**
@@ -300,10 +320,6 @@ final class Refinery extends Thread {
 					j.remove();
 			}
 		}
-		f_threadLocalFieldCount.addAndGet(fields.size());
-		for (KeyField field : fields) {
-			f_eventCache.add(field.getSingleThreadedEventAbout());
-		}
 	}
 
 	/**
@@ -313,9 +329,12 @@ final class Refinery extends Thread {
 	 * thread-local or shared.
 	 */
 	private void removeRemainingThreadLocalFields() {
+	  Set<KeyField> fields = new HashSet<KeyField>();
 	  for (final Map.Entry<PhantomReference, Map<KeyField, PhantomReference>> entry : f_objToFieldToThread.entrySet()) {
-	    removeEventsAbout(entry.getValue().keySet());
+	    fields.addAll(entry.getValue().keySet());
 	  }
+	  removeEventsAbout(fields);
+	  markAsSingleThreaded(fields);
 	  f_objToFieldToThread.clear();	  
 	  f_objToSharedFields.clear();
 	}

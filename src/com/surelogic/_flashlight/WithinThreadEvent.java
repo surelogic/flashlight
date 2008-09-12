@@ -1,7 +1,5 @@
 package com.surelogic._flashlight;
 
-import java.lang.ref.PhantomReference;
-
 /**
  * Holds data about an event which occurred within a thread within the
  * instrumented program. This class assumes that it is being constructed within
@@ -17,7 +15,7 @@ abstract class WithinThreadEvent extends ProgramEvent {
 	private final ThreadPhantomReference f_withinThread = Phantom
 			.ofThread(Thread.currentThread());
 
-	PhantomReference getWithinThread() {
+	IdPhantomReference getWithinThread() {
 		return f_withinThread;
 	}
 

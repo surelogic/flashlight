@@ -1,12 +1,10 @@
 package com.surelogic._flashlight;
 
-import java.lang.ref.PhantomReference;
-
 abstract class FieldAccessInstance extends FieldAccess {
 
 	private final ObjectPhantomReference f_receiver;
 
-	PhantomReference getReceiver() {
+	IdPhantomReference getReceiver() {
 		return f_receiver;
 	}
 

@@ -1,7 +1,5 @@
 package com.surelogic._flashlight;
 
-import java.lang.ref.PhantomReference;
-
 final class KeyFieldInstance extends KeyField {
 
 	final ObjectPhantomReference f_enclosingInstance;
@@ -14,7 +12,7 @@ final class KeyFieldInstance extends KeyField {
 	}
 	
 	@Override
-	PhantomReference getWithin() {
+	IdPhantomReference getWithin() {
 	  return f_enclosingInstance;
 	}
 

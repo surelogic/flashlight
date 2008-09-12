@@ -1,7 +1,5 @@
 package com.surelogic._flashlight;
 
-import java.lang.ref.PhantomReference;
-
 abstract class KeyField {
 
 	final ObservedField f_field;
@@ -14,7 +12,7 @@ abstract class KeyField {
   /**
    * Get the object that this field is a part of.
    */
-	abstract PhantomReference getWithin();
+	abstract IdPhantomReference getWithin();
 	
 	/**
 	 * Factory to create an appropriate {@link SingleThreadedField} event about

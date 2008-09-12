@@ -264,22 +264,28 @@ public final class Store {
 
 			File dataFile = new File(fileName.toString() + ".fl.gz");
 			w = null;
+			final boolean outputBinary = false;
+			OutputStream stream = null;
 			try {
-				OutputStream stream = new FileOutputStream(dataFile);
-				if (true) {
+				stream = new FileOutputStream(dataFile);
+				if (false) {
 				  stream = new GZIPOutputStream(stream, 4096);
 				} else {
 			      stream = new BufferedOutputStream(stream, 4096);
 				}				
+				if (!outputBinary) {
 				OutputStreamWriter osw = new OutputStreamWriter(stream,
 						ENCODING);
 				w = new PrintWriter(osw);
+				}
 			} catch (IOException e) {
+				
 				logAProblem("unable to output to \""
 						+ dataFile.getAbsolutePath() + "\"", e);
 				System.exit(1); // bail
 			}
-			final EventVisitor outputStrategy = new OutputStrategyXML(w);
+			final EventVisitor outputStrategy = 
+				outputBinary ? new OutputStrategyFields(stream) : new OutputStrategyXML(w);
 
 			final int rawQueueSize = StoreConfiguration.getRawQueueSize();
 			if (true) {

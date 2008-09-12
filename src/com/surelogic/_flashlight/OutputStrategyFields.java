@@ -3,7 +3,28 @@ package com.surelogic._flashlight;
 import java.io.PrintWriter;
 
 public class OutputStrategyFields extends EventVisitor {
+	static class Buffer {
+		char[] buf = new char[64];
+		int count;
+		
+		public void clear() {
+			count = 0;
+		}
+
+		public void append(char c) {
+			if (count == buf.length) {
+				char[] tmp = new char[buf.length << 1];
+				System.arraycopy(buf, 0, tmp, 0, buf.length);
+				buf = tmp;
+			}
+			buf[count] = c;
+			count++;
+		}
+		
+	}
+	
 	private final PrintWriter f_out;
+	private final Buffer buf = new Buffer();
 	
 	public OutputStrategyFields(PrintWriter w) {
 		f_out = w;
@@ -11,38 +32,46 @@ public class OutputStrategyFields extends EventVisitor {
 
 	@Override
 	void visit(final FieldReadInstance e) {
-		if (true) {
+		if (false) {
 			f_out.println(e.toString());
-		} else {
+		} else {		
+			buf.clear();
+			
 			// FieldReadInstance
-			f_out.write('R');
-			f_out.write('t');
+			buf.append('R');
+			buf.append('t');
 			write(e.getNanoTime());
-			f_out.write('T');
+			buf.append('T');
 			write(e.getWithinThread().getId());
-			f_out.write('C');
+			buf.append('C');
 			write(e.getLocation().getWithinClassId());
-			f_out.write('l');
+			buf.append('l');
 			write(e.getLocation().getLine());
-			f_out.write('F');
+			buf.append('F');
 			write(e.getField().getId());
-			f_out.write('R');
+			buf.append('R');
 			write(e.getReceiver().getId());
 			if (e.receiverUnderConstruction()) {
-				f_out.write('U');
+				buf.append('U');
 			}
+			
+			f_out.write(buf.buf, 0, buf.count);
 		}
 	}
 	
+	void write(char c) {
+		buf.append(c);
+	}
+	
 	void write(int i) {
-		f_out.write(i & 0xffff);
-		f_out.write(i >> 16);
+		buf.append((char) (i & 0xffff));
+		buf.append((char) (i >> 16));
 	}
 	
 	void write(long l) {
 		int i0 = (int) l;
-		f_out.write(i0);
+		write(i0);
 		int i1 = (int) (l >> 32);
-		f_out.write(i1);
+		write(i1);
 	}
 }

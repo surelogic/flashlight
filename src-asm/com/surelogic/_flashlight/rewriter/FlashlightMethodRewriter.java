@@ -95,17 +95,16 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   private final Set<MethodCallWrapper> wrapperMethods;
   
   /**
-   * Label for the start of the original method code, used for rewriting
-   * constructors and synchronized methods.
+   * Label for marking the start of the exception handler used when
+   * rewriting constructors and synchronized methods.
    */
-  private Label startOfOriginalMethod = null;
+  private Label startOfExceptionHandler = null;
   
   /**
-   * Label marking the end of the original method code (including the 
-   * inserted flashlight exception handler), used for rewriting constructors and synchronized
-   * methods.
+   * Label for marking the end of the current try-finally block when rewriting
+   * synchronized methods.
    */
-  private Label endOfOriginalBody_startOfExceptionHandler = null;
+  private Label endOfTryBlock = null;
   
   /**
    * If {@link #isConstructor} is <code>true</code>, this is initialized to
@@ -138,6 +137,13 @@ final class FlashlightMethodRewriter extends MethodAdapter {
    * the index of the local variable loaded. Otherwise, it is {@code -1}.
    */
   private int previousLoad = -1;
+  
+  /**
+   * When rewriting a synchronized method to use explicit locking, this 
+   * holds the id of the local variable that stores the lock object.  Otherwise,
+   * it is {@code -1}.
+   */
+  private int syncMethodLockVariable = -1;
   
   
   /**
@@ -263,6 +269,14 @@ final class FlashlightMethodRewriter extends MethodAdapter {
         // Max Stack height is already updated because insertConstructorExecutionPrefix() must have been run 
       }
       mv.visitInsn(opcode);
+      
+      if (wasSynchronized && config.rewriteSynchronizedMethod) {
+        /* Start a new try-block */
+        final Label startOfTryBlock = new Label();
+        endOfTryBlock = new Label();
+        mv.visitTryCatchBlock(startOfTryBlock, endOfTryBlock, startOfExceptionHandler, null);
+        mv.visitLabel(startOfTryBlock);
+      }
     } else {
       handlePreviousLoad();
       handlePreviousStore();
@@ -509,20 +523,19 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     insertConstructorExecution(true);
     
     /* Set up finally handler */
-    startOfOriginalMethod = new Label();
-    endOfOriginalBody_startOfExceptionHandler = new Label();
-    mv.visitTryCatchBlock(startOfOriginalMethod,
-        endOfOriginalBody_startOfExceptionHandler,
-        endOfOriginalBody_startOfExceptionHandler, null);
+    final Label startOfOriginalConstructor = new Label();
+    startOfExceptionHandler = new Label();
+    mv.visitTryCatchBlock(startOfOriginalConstructor,
+        startOfExceptionHandler, startOfExceptionHandler, null);
     
     /* Start of constructor */
-    mv.visitLabel(startOfOriginalMethod);
+    mv.visitLabel(startOfOriginalConstructor);
     
     updateStackDepthDelta(4);
   }
   
   private void insertConstructorExecutionPostfix() {
-    mv.visitLabel(endOfOriginalBody_startOfExceptionHandler);
+    mv.visitLabel(startOfExceptionHandler);
     
     // exception 
     insertConstructorExecution(false); // +4 on stack
@@ -532,6 +545,8 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     mv.visitInsn(Opcodes.ATHROW);
     
     updateStackDepthDelta(5);
+    
+    startOfExceptionHandler = null;
   }
   
   private void insertConstructorExecution(final boolean before) {
@@ -1127,12 +1142,29 @@ final class FlashlightMethodRewriter extends MethodAdapter {
         FlashlightNames.BEFORE_INTRINSIC_LOCK_ACQUISITION_SIGNATURE);
     // empty stack
     
-    /* Insert the explicit monitor acquisition */
+    /* Insert the explicit monitor acquisition.  Even though we already know
+     * the lock object by context, we need to store it in a local variable 
+     * so that we emulate the bytecode produced by the Java compiler.  If we 
+     * don't do this, then the JIT compiler will not compiler the instrumented
+     * method to native code.  Also, our try-block must start immediately after
+     * the monitorenter, and end immediately after the normal monitorexit.
+     */
     pushSynchronizedMethodLockObject();
+    // lockObj
+    mv.visitInsn(Opcodes.DUP);
+    // lockObj, lockObj
+    syncMethodLockVariable = lvs.newLocal(Type.getObjectType("java/lang/Object"));
+    mv.visitVarInsn(Opcodes.ASTORE, syncMethodLockVariable);
     // lockObj
     mv.visitInsn(Opcodes.MONITORENTER);
     // empty stack
-    
+
+    final Label startOfTryBlock = new Label();
+    endOfTryBlock = new Label();
+    startOfExceptionHandler = new Label();
+    mv.visitTryCatchBlock(startOfTryBlock, endOfTryBlock, startOfExceptionHandler, null);
+    mv.visitLabel(startOfTryBlock);
+
     /* Now call Store.afterIntrinsicLockAcquisition */
     pushSynchronizedMethodLockObject();
     // lockObj
@@ -1145,19 +1177,21 @@ final class FlashlightMethodRewriter extends MethodAdapter {
         FlashlightNames.AFTER_INTRINSIC_LOCK_ACQUISITION_SIGNATURE);
     // empty stack
     
-    startOfOriginalMethod = new Label();
-    endOfOriginalBody_startOfExceptionHandler = new Label();
-    mv.visitTryCatchBlock(startOfOriginalMethod,
-        endOfOriginalBody_startOfExceptionHandler,
-        endOfOriginalBody_startOfExceptionHandler, null);
-    mv.visitLabel(startOfOriginalMethod);
     // Resume code
     
     updateStackDepthDelta(5);
   }
   
   private void insertSynchronizedMethodPostfix() {
-    mv.visitLabel(endOfOriginalBody_startOfExceptionHandler);
+    /* The exception handler also needs an exception handler.  A new handler
+     * was already started following the last return, and because we are at the
+     * end of the method, and all methods must return, this code is part of
+     * that handler.  The try-block for the handler itself is closed in
+     * insertSynchronizedMethodExit().
+     */
+    
+    /* The exception handler */
+    mv.visitLabel(startOfExceptionHandler);
     
     // exception 
     insertSynchronizedMethodExit();
@@ -1170,16 +1204,23 @@ final class FlashlightMethodRewriter extends MethodAdapter {
      * insertSynchronizedMethodPrefix() is run, and that already updates the
      * stack depth by 5, which is more than we need here (4).
      */ 
+    
+    endOfTryBlock = null;
+    startOfExceptionHandler = null;
+    syncMethodLockVariable = -1;
   }
 
   private void insertSynchronizedMethodExit() {
     // ...
     
     /* Explicitly release the lock */
-    pushSynchronizedMethodLockObject();
+    mv.visitVarInsn(Opcodes.ALOAD, syncMethodLockVariable);
     // ..., lockObj
     mv.visitInsn(Opcodes.MONITOREXIT);
     // ...
+    
+    /* End of try-block */
+    mv.visitLabel(endOfTryBlock);
     
     /* Call Store.afterIntrinsicLockRelease(). */
     pushSynchronizedMethodLockObject();
@@ -1198,6 +1239,10 @@ final class FlashlightMethodRewriter extends MethodAdapter {
      * insertSynchronizedMethodPrefix() is run, and that already updates the
      * stack depth by 5, which is more than we need here (3).
      */ 
+    
+    /* New try block is inserted in visitInsn() so that it starts after the
+     * return operation.
+     */
   }
 
   

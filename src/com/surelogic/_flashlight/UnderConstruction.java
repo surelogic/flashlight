@@ -1,31 +1,25 @@
 package com.surelogic._flashlight;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Tracks objects in the instrumented program that are under construction.
  */
 public final class UnderConstruction {
 
-	private static final Set<IdPhantomReference> f_object = new HashSet<IdPhantomReference>();
+	private static final Map<IdPhantomReference,Object> f_object = new ConcurrentHashMap<IdPhantomReference,Object>();
 
 	static void add(final IdPhantomReference o) {
-		synchronized (f_object) {
-			f_object.add(o);
-		}
+		f_object.put(o, o);
 	}
 
 	static void remove(final IdPhantomReference o) {
-		synchronized (f_object) {
-			f_object.remove(o);
-		}
+		f_object.remove(o);
 	}
 
 	static boolean contains(final IdPhantomReference o) {
-		synchronized (f_object) {
-			return f_object.contains(o);
-		}
+		return f_object.containsKey(o);
 	}
 
 	private UnderConstruction() {

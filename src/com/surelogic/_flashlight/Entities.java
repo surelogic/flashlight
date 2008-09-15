@@ -78,7 +78,11 @@ public final class Entities {
 	  /**
 	   * Get the value.
 	   */
-	  public abstract void appendValue(StringBuilder sb);
+	  public final void appendName(StringBuilder sb) {
+	    sb.append('&');
+	    sb.append(f_name);
+	    sb.append(';');
+	  }
 	}
 	
 	private static final class CharValueTuple extends Tuple {
@@ -103,11 +107,6 @@ public final class Entities {
 	  public int getValueLength() {
 	    return 1;
 	  }
-	  
-    @Override
-	  public void appendValue(final StringBuilder sb) {
-	    sb.append(f_value);
-	  }
 	}
 	
 	private static final class StringValueTuple extends Tuple {
@@ -126,11 +125,6 @@ public final class Entities {
     @Override
     public int getValueLength() {
       return f_value.length();
-    }
-    
-    @Override
-    public void appendValue(final StringBuilder sb) {
-      sb.append(f_value);
     }
 	}
 	
@@ -193,7 +187,7 @@ public final class Entities {
 	          sb.append(text.substring(copyFromIdx, testForIdx));
 	        }
 	        // process escape
-	        t.appendValue(sb);
+	        t.appendName(sb);
 	        testForIdx += t.getValueLength();
 	        copyFromIdx = testForIdx;
 	        // Found the escape at this position, so stop looping over escapes

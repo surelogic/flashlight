@@ -119,8 +119,8 @@ abstract class ObservedField {
 		final boolean isFinal    = Modifier.isFinal(mod);
 		final boolean isVolatile = Modifier.isVolatile(mod);
 		final ObservedField result = Modifier.isStatic(mod) ?
-				new Instance(pDeclaringType, fieldName, isFinal, isVolatile) :
-				new Static(pDeclaringType, fieldName, isFinal, isVolatile);
+				new Static(pDeclaringType, fieldName, isFinal, isVolatile) :
+				new Instance(pDeclaringType, fieldName, isFinal, isVolatile);
 		final ObservedField sResult = fieldNameToField.putIfAbsent(fieldName, result);
 		if (sResult != null)
 			return sResult;

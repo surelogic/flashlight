@@ -120,6 +120,9 @@ final class Refinery extends Thread {
 	 */
 	private Set<IKeyField> removeFieldsForObject(final PhantomReference obj) {
 		Set<IKeyField> fields  = f_objToFields.get(obj);
+		if (fields == null) {
+			return null;
+		}
 		Iterator<IKeyField> it = fields.iterator(); 
 		while (it.hasNext()) {
 			IKeyField f             = it.next();

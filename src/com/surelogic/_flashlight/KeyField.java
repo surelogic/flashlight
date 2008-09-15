@@ -1,6 +1,6 @@
 package com.surelogic._flashlight;
 
-abstract class KeyField {
+abstract class KeyField implements IKeyField {
 
 	final ObservedField f_field;
 
@@ -8,19 +8,6 @@ abstract class KeyField {
 		assert field != null;
 		f_field = field;
 	}
-
-  /**
-   * Get the object that this field is a part of.
-   */
-	abstract IdPhantomReference getWithin();
-	
-	/**
-	 * Factory to create an appropriate {@link SingleThreadedField} event about
-	 * this field.
-	 * 
-	 * @return a new {@link SingleThreadedField} event.
-	 */
-	abstract SingleThreadedField getSingleThreadedEventAbout();
 
 	@Override
 	public boolean equals(Object obj) {

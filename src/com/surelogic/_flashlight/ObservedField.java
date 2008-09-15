@@ -1,6 +1,5 @@
 package com.surelogic._flashlight;
 
-import java.lang.ref.PhantomReference;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.concurrent.BlockingQueue;
@@ -20,7 +19,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * <code>f</code> and you create 10 instances, then the <code>f</code> field
  * within all of the instances would be the same according to this class.
  */
-final class ObservedField {
+abstract class ObservedField {
 
 	static private final AtomicLong f_observedFieldCount = new AtomicLong();
 
@@ -48,11 +47,7 @@ final class ObservedField {
 		return f_isFinal;
 	}
 
-	private final boolean f_isStatic;
-
-	boolean isStatic() {
-		return f_isStatic;
-	}
+	abstract boolean isStatic();
 
 	private final boolean f_isVolatile;
 
@@ -62,7 +57,7 @@ final class ObservedField {
 
 	private ObservedField(final ClassPhantomReference declaringType,
 			final String fieldName, final boolean isFinal,
-			final boolean isStatic, final boolean isVolatile) {
+			final boolean isVolatile) {
 		/*
 		 * We create a lot of instances that we don't use to allow getInstance()
 		 * to run concurrently. It is possible, however unlikely, that we could
@@ -72,7 +67,6 @@ final class ObservedField {
 		f_declaringType = declaringType;
 		f_fieldName = fieldName;
 		f_isFinal = isFinal;
-		f_isStatic = isStatic;
 		f_isVolatile = isVolatile;
 	}
 
@@ -122,9 +116,11 @@ final class ObservedField {
 		}
 		// Need to create the field
 		final int mod = field.getModifiers();
-		final ObservedField result = new ObservedField(pDeclaringType,
-				fieldName, Modifier.isFinal(mod), Modifier.isStatic(mod),
-				Modifier.isVolatile(mod));		
+		final boolean isFinal    = Modifier.isFinal(mod);
+		final boolean isVolatile = Modifier.isVolatile(mod);
+		final ObservedField result = Modifier.isStatic(mod) ?
+				new Instance(pDeclaringType, fieldName, isFinal, isVolatile) :
+				new Static(pDeclaringType, fieldName, isFinal, isVolatile);
 		final ObservedField sResult = fieldNameToField.putIfAbsent(fieldName, result);
 		if (sResult != null)
 			return sResult;
@@ -138,5 +134,37 @@ final class ObservedField {
 	@Override
 	public String toString() {
 		return f_declaringType.getName() + "." + f_fieldName;
+	}
+	
+	private static class Instance extends ObservedField {
+		public Instance(ClassPhantomReference declaringType, String fieldName,
+				boolean isFinal, boolean isVolatile) {
+			super(declaringType, fieldName, isFinal, isVolatile);
+		}
+
+		@Override
+		boolean isStatic() {
+			return false;
+		}		
+	}
+	
+	private static class Static extends ObservedField implements IKeyFieldStatic {
+		public Static(ClassPhantomReference declaringType, String fieldName,
+				boolean isFinal, boolean isVolatile) {
+			super(declaringType, fieldName, isFinal, isVolatile);
+		}
+
+		@Override
+		boolean isStatic() {
+			return true;
+		}
+
+		public SingleThreadedField getSingleThreadedEventAbout() {
+			return new SingleThreadedFieldStatic(this);
+		}
+
+		public IdPhantomReference getWithin() {
+			return this.getDeclaringType();
+		}
 	}
 }

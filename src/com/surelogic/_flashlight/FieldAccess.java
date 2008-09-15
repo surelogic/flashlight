@@ -21,9 +21,7 @@ abstract class FieldAccess extends WithinThreadEvent {
 	 * 
 	 * @return a key representing the field this event is about.
 	 */
-	KeyField getKey() {
-		return new KeyFieldStatic(f_field);
-	}
+	abstract IKeyField getKey();
 
 	protected final void addField(final StringBuilder b) {
 		Entities.addAttribute("field", f_field.getId(), b);

@@ -11,13 +11,11 @@ final class KeyFieldInstance extends KeyField {
 		f_enclosingInstance = enclosingInstance;
 	}
 	
-	@Override
-	IdPhantomReference getWithin() {
+	public IdPhantomReference getWithin() {
 	  return f_enclosingInstance;
 	}
 
-	@Override
-	SingleThreadedField getSingleThreadedEventAbout() {
+	public SingleThreadedField getSingleThreadedEventAbout() {
 		return new SingleThreadedFieldInstance(f_field, f_enclosingInstance);
 	}
 

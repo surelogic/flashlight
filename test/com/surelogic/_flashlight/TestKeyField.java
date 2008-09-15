@@ -118,11 +118,11 @@ public class TestKeyField extends TestCase {
 	}
 
 	public void testKeyFieldStatic() {
-		KeyFieldStatic k10 = new KeyFieldStatic(a_s2);
-		KeyFieldStatic k11 = new KeyFieldStatic(a_s2);
-		KeyFieldStatic k12 = new KeyFieldStatic(b_s2);
-		KeyFieldStatic k13 = new KeyFieldStatic(a_s1);
-		KeyFieldStatic k14 = new KeyFieldStatic(a_s1);
+		IKeyFieldStatic k10 = (IKeyFieldStatic) (a_s2);
+		IKeyFieldStatic k11 = (IKeyFieldStatic) (a_s2);
+		IKeyFieldStatic k12 = (IKeyFieldStatic) (b_s2);
+		IKeyFieldStatic k13 = (IKeyFieldStatic) (a_s1);
+		IKeyFieldStatic k14 = (IKeyFieldStatic) (a_s1);
 		assertEquals(k10, k11);
 		assertEquals(k11, k10);
 		assertFalse(k10.equals(k12));
@@ -133,7 +133,7 @@ public class TestKeyField extends TestCase {
 		assertFalse(k14.equals(k10));
 		assertEquals(k13, k14);
 		assertEquals(k14, k13);
-		Set<KeyField> keys = new HashSet<KeyField>();
+		Set<IKeyField> keys = new HashSet<IKeyField>();
 		keys.add(k10);
 		assertEquals(1, keys.size());
 		keys.add(k10);
@@ -150,10 +150,10 @@ public class TestKeyField extends TestCase {
 
 	public void testMixedKeys() {
 		KeyFieldInstance k10 = new KeyFieldInstance(a_f1, Phantom.ofObject(o2));
-		KeyFieldStatic k11 = new KeyFieldStatic(a_s1);
+		IKeyFieldStatic k11 = (IKeyFieldStatic) a_s1;
 		assertFalse(k10.equals(k11));
 		assertFalse(k11.equals(k10));
-		Set<KeyField> keys = new HashSet<KeyField>();
+		Set<IKeyField> keys = new HashSet<IKeyField>();
 		keys.add(k10);
 		assertEquals(1, keys.size());
 		keys.add(k10);

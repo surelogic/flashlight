@@ -1,6 +1,6 @@
 package com.surelogic._flashlight;
 
-final class FieldWriteStatic extends FieldAccess {
+final class FieldWriteStatic extends FieldAccessStatic {
 
 	FieldWriteStatic(final ObservedField field, final SrcLoc location) {
 		super(field, location);

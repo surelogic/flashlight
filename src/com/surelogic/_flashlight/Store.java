@@ -285,7 +285,7 @@ public final class Store {
 				System.exit(1); // bail
 			}
 			final EventVisitor outputStrategy = 
-				outputBinary ? new OutputStrategyFields(stream) : new OutputStrategyXML(w);
+				outputBinary ? new EventVisitor() {} : new OutputStrategyXML(w);
 
 			final int rawQueueSize = StoreConfiguration.getRawQueueSize();
 			if (true) {

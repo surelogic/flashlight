@@ -1,5 +1,7 @@
 package com.surelogic._flashlight.rewriter;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 import org.objectweb.asm.AnnotationVisitor;
@@ -144,6 +146,23 @@ final class FlashlightMethodRewriter extends MethodAdapter {
    * it is {@code -1}.
    */
   private int syncMethodLockVariable = -1;
+  
+  /**
+   * Map from one label to another. The key label is a label we receive as a
+   * start label in {@link #visitTryCatchBlock}. The value label is the label
+   * we remap it to when we call {@code visitTryCatchBlock} to our delegae
+   * method visitor. We do this because the compiled code can reuse these labels
+   * for jump points, and we are sensitive to the start of try blocks that
+   * follow monitorenter operations. In particular, we insert instrumentation
+   * code after the start of the try block. But we don't want the program to
+   * later jump to start of the try block and reexecute our instrumentation
+   * code. First, this is wrong. But also, the stack isn't set up properly for
+   * this to work and the bytecode verifier rejects the code.  So we insert a new
+   * label for the start of the try block, and insert the original label after
+   * our instrumentation code.
+   */
+  private final Map<Label, Label> tryLabelMap = new HashMap<Label, Label>();
+  
   
   
   /**
@@ -383,8 +402,19 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     handlePreviousStore();
     handleDelayedOutputPrefix(OpType.LABEL);
     if (stateMachine != null) stateMachine.visitLabel(label);
-    mv.visitLabel(label);
+    
+    /* If this label is the start of a try-block, output our new start label
+     * instead.  
+     * 
+     * We output the original label below after handling any delayed output.  That
+     * is the original label follows any instrumentation we might insert.
+     */
+    final Label newLabel = tryLabelMap.get(label);
+    mv.visitLabel((newLabel != null) ? newLabel : label);
     handleDelayedOutputPostfix(OpType.LABEL);
+    if (newLabel != null) {
+      mv.visitLabel(label);
+    }
   }
   
   @Override
@@ -1435,7 +1465,17 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     handlePreviousLoad();
     handlePreviousStore();
     handleDelayedOutputPrefix(OpType.OTHER);
-    mv.visitTryCatchBlock(start, end, handler, type);
+    
+    /* Remap the label for the start of the try block.  But only if we haven't
+     * seen it before.
+     */
+    Label newStart = tryLabelMap.get(start);
+    if (newStart == null) {
+      newStart = new Label();
+      tryLabelMap.put(start, newStart);
+    }
+    mv.visitTryCatchBlock(newStart, end, handler, type);
+    
     handleDelayedOutputPostfix(OpType.OTHER);
   }
 

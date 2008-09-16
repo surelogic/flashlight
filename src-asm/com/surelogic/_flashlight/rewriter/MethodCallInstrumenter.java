@@ -111,7 +111,7 @@ final class MethodCallInstrumenter {
       // true, objRef, filename
       methodCall.pushCallingMethodName(mv);
       // true, objRef, filename, callingMethodName
-      ByteCodeUtils.pushInClass(mv, atLeastJava5, classNameInternal);
+      ByteCodeUtils.pushWithinClass(mv, classNameInternal);
       // true, objRef, filename, callingMethodName, inClass
       methodCall.pushCallingLineNumber(mv);
       // true, objRef, filename, callingMethodName, inClass, line
@@ -133,7 +133,7 @@ final class MethodCallInstrumenter {
       // ..., true, objRef, filename
       methodCall.pushCallingMethodName(mv);
       // ..., true, objRef, filename, callingMethodName
-      ByteCodeUtils.pushInClass(mv, atLeastJava5, classNameInternal);
+      ByteCodeUtils.pushWithinClass(mv, classNameInternal);
       // ..., true, objRef, filename, callingMethodName, inClass
       methodCall.pushCallingLineNumber(mv);
       // ..., true, objRef, filename, callingMethodName, inClass, line
@@ -152,7 +152,7 @@ final class MethodCallInstrumenter {
       // ..., true
       methodCall.pushReceiverForEvent(mv);
       // ..., true, objRef
-      ByteCodeUtils.pushInClass(mv, atLeastJava5, classNameInternal);
+      ByteCodeUtils.pushWithinClass(mv, classNameInternal);
       // ..., true, objRef, inClass
       methodCall.pushCallingLineNumber(mv);
       // ..., true, objRef, inClass, line
@@ -170,7 +170,7 @@ final class MethodCallInstrumenter {
       // ..., true
       methodCall.pushReceiverForEvent(mv);
       // ..., true, objRef
-      ByteCodeUtils.pushInClass(mv, atLeastJava5, classNameInternal);
+      ByteCodeUtils.pushWithinClass(mv, classNameInternal);
       // ..., true, objRef, inClass
       methodCall.pushCallingLineNumber(mv);
       // ..., true, objRef, inClass, line
@@ -192,7 +192,7 @@ final class MethodCallInstrumenter {
       // ...
       methodCall.pushReceiverForEvent(mv);
       // ..., objRef
-      ByteCodeUtils.pushInClass(mv, atLeastJava5, classNameInternal);
+      ByteCodeUtils.pushWithinClass(mv, classNameInternal);
       // ..., objRef, inClass
       methodCall.pushCallingLineNumber(mv);
       // ..., objRef, inClass, line
@@ -215,7 +215,7 @@ final class MethodCallInstrumenter {
       // ..., gotTheLock
       methodCall.pushReceiverForEvent(mv);
       // ..., gotTheLock, objRef
-      ByteCodeUtils.pushInClass(mv, atLeastJava5, classNameInternal);
+      ByteCodeUtils.pushWithinClass(mv, classNameInternal);
       // ..., gotTheLock, objRef, inClass
       methodCall.pushCallingLineNumber(mv);
       // ..., gotTheLock, objRef, inClass, line
@@ -237,7 +237,7 @@ final class MethodCallInstrumenter {
       // ..., gotTheLock, gotTheLock      
       methodCall.pushReceiverForEvent(mv);
       // ..., gotTheLock, gotTheLock, objRef
-      ByteCodeUtils.pushInClass(mv, atLeastJava5, classNameInternal);
+      ByteCodeUtils.pushWithinClass(mv, classNameInternal);
       // ..., gotTheLock, gotTheLock, objRef, inClass
       methodCall.pushCallingLineNumber(mv);
       // ..., gotTheLock, gotTheLock, objRef, inClass, line
@@ -258,7 +258,7 @@ final class MethodCallInstrumenter {
       // ..., false
       methodCall.pushReceiverForEvent(mv);
       // ..., false, objRef
-      ByteCodeUtils.pushInClass(mv, atLeastJava5, classNameInternal);
+      ByteCodeUtils.pushWithinClass(mv, classNameInternal);
       // ..., false, objRef, inClass
       methodCall.pushCallingLineNumber(mv);
       // ..., false, objRef, inClass, line
@@ -278,7 +278,7 @@ final class MethodCallInstrumenter {
       // ..., gotTheLock
       methodCall.pushReceiverForEvent(mv);
       // ..., gotTheLock, objRef
-      ByteCodeUtils.pushInClass(mv, atLeastJava5, classNameInternal);
+      ByteCodeUtils.pushWithinClass(mv, classNameInternal);
       // ..., gotTheLock, objRef, inClass
       methodCall.pushCallingLineNumber(mv);
       // ..., gotTheLock, objRef, inClass, line

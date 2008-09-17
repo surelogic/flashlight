@@ -67,6 +67,7 @@ final class Refinery extends Thread {
 		
 	@Override
 	public void run() {
+		final boolean filter = true;
 		Store.flashlightThread();
 
 		final List<Event> buf = new ArrayList<Event>();
@@ -83,11 +84,13 @@ final class Refinery extends Thread {
 						break;
 					} else {
 						f_eventCache.add(e);
-						e.accept(f_detectSharedFieldsVisitor);
+						if (filter) {
+							e.accept(f_detectSharedFieldsVisitor);
+						}
 					}
 				}
 				buf.clear();
-				processGarbageCollectedObjects();
+				processGarbageCollectedObjects(filter);
 				if (f_finished) {
 					removeRemainingThreadLocalFields();
 				}
@@ -196,8 +199,9 @@ final class Refinery extends Thread {
 	/**
 	 * Examines each garbage collected object and cleans up our information
 	 * about shared fields and thread-local fields.
+	 * @param filter 
 	 */
-	private void processGarbageCollectedObjects() {
+	private void processGarbageCollectedObjects(boolean filter) {
 		f_deadList.clear();
 		if (Phantom.drainTo(f_deadList) > 0) {
 			Set<IKeyField> deadFields = null;
@@ -205,8 +209,10 @@ final class Refinery extends Thread {
 			for (IdPhantomReference pr : f_deadList) {
 				if (pr.shouldBeIgnored()) {
 					continue;
-				}								
-				deadFields = removeThreadLocalFieldsWithin(deadFields, pr);
+				}			
+				if (filter) {
+					deadFields = removeThreadLocalFieldsWithin(deadFields, pr);
+				}
 				UnderConstruction.remove(pr);
 				UtilConcurrent.remove(pr);
 				f_eventCache.add(new GarbageCollectedObject(pr));

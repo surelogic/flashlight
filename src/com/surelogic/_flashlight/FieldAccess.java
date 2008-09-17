@@ -14,16 +14,15 @@ abstract class FieldAccess extends WithinThreadEvent {
 		f_field = field;
 	}
 
-	/**
-	 * Gets a key representing the field this event is about. All event specific
-	 * information, such as time and the thread the event occurred within, is
-	 * stripped away.
-	 * 
-	 * @return a key representing the field this event is about.
-	 */
-	abstract IKeyField getKey();
-
 	protected final void addField(final StringBuilder b) {
 		Entities.addAttribute("field", f_field.getId(), b);
 	}
+
+	abstract IFieldInfo getFieldInfo();
+	
+	@Override
+	public abstract int hashCode();
+	
+	@Override
+	public abstract boolean equals(Object o);
 }

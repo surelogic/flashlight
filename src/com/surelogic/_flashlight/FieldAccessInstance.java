@@ -21,15 +21,35 @@ abstract class FieldAccessInstance extends FieldAccess {
 		f_receiverUnderConstruction = UnderConstruction.contains(f_receiver);
 	}
 
-	@Override
-	KeyField getKey() {
-		return new KeyFieldInstance(getField(), f_receiver);
-	}
-
 	protected final void addReceiver(final StringBuilder b) {
 		Entities.addAttribute("receiver", f_receiver.getId(), b);
 		if (f_receiverUnderConstruction) {
 			Entities.addAttribute("under-construction", "yes", b);
 		}
+	}
+	
+	@Override
+	IFieldInfo getFieldInfo() {
+		return f_receiver;
+	}
+	 
+	@Override
+	public int hashCode() {
+		return getField().hashCode() + f_receiver.hashCode();
+	}
+	
+	@Override
+	public boolean equals(Object o) {
+		if (o instanceof FieldAccessInstance) {
+			FieldAccessInstance s = (FieldAccessInstance) o;
+			return this.getField() == s.getField() &&
+			       this.f_receiver == s.getReceiver();
+		}
+		else if (o instanceof SingleThreadedFieldInstance) {
+			SingleThreadedFieldInstance s = (SingleThreadedFieldInstance) o;
+			return this.getField() == s.getField() &&
+		           this.f_receiver == s.getReceiver();
+		}
+		return false;
 	}
 }

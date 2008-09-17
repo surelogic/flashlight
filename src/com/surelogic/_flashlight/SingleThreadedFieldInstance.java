@@ -30,4 +30,24 @@ final class SingleThreadedFieldInstance extends SingleThreadedField {
 		b.append("/>");
 		return b.toString();
 	}
+	
+	@Override
+	public int hashCode() {
+		return getField().hashCode() + f_receiver.hashCode();
+	}
+	
+	@Override
+	public boolean equals(Object o) {
+		if (o instanceof FieldAccessInstance) {
+			FieldAccessInstance s = (FieldAccessInstance) o;
+			return this.getField() == s.getField() &&
+			       this.f_receiver == s.getReceiver();
+		}
+		else if (o instanceof SingleThreadedFieldInstance) {
+			SingleThreadedFieldInstance s = (SingleThreadedFieldInstance) o;
+			return this.getField() == s.getField() &&
+		           this.f_receiver == s.getReceiver();
+		}
+		return false;
+	}
 }

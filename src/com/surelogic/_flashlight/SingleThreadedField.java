@@ -23,4 +23,10 @@ abstract class SingleThreadedField extends ObservationalEvent {
 	protected final void addField(final StringBuilder b) {
 		Entities.addAttribute("field", f_field.getId(), b);
 	}
+	
+	@Override
+	public abstract int hashCode();
+	
+	@Override
+	public abstract boolean equals(Object o);
 }

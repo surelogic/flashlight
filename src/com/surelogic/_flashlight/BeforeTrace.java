@@ -15,8 +15,8 @@ final class BeforeTrace extends Trace {
 	}
 
 	BeforeTrace(final String fileName, final String locationName,
-			final SrcLoc location) {
-		super(location);
+			final ClassPhantomReference withinClass, final int line) {
+		super(withinClass, line);
 		f_fileName = fileName == null ? "<unknown file name>" : fileName;
 		f_locationName = locationName == null ? "<unknown location>"
 				: locationName;

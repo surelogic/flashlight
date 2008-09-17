@@ -8,8 +8,8 @@ abstract class FieldAccess extends WithinThreadEvent {
 		return f_field;
 	}
 
-	FieldAccess(final ObservedField field, final SrcLoc location) {
-		super(location);
+	FieldAccess(final ObservedField field, final ClassPhantomReference withinClass, final int line) {
+		super(withinClass, line);
 		assert field != null;
 		f_field = field;
 	}

@@ -13,8 +13,8 @@ public abstract class UtilConcurrentLock extends WithinThreadEvent {
 		return f_lockObject;
 	}
 
-	UtilConcurrentLock(final Lock lockObject, final SrcLoc location) {
-		super(location);
+	UtilConcurrentLock(final Lock lockObject, final ClassPhantomReference withinClass, final int line) {
+		super(withinClass, line);
 		assert lockObject != null;
 		f_lockObject = Phantom.of(lockObject);
 	}

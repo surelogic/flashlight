@@ -24,8 +24,8 @@ final class BeforeIntrinsicLockAcquisition extends IntrinsicLock {
 
 	BeforeIntrinsicLockAcquisition(final Object lockObject,
 			final boolean lockIsThis, final boolean lockIsClass,
-			final SrcLoc location) {
-		super(lockObject, location);
+			final ClassPhantomReference withinClass, final int line) {
+		super(lockObject, withinClass, line);
 		f_lockIsThis = lockIsThis;
 		f_lockIsClass = lockIsClass;
 	}

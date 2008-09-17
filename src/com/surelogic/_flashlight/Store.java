@@ -268,7 +268,7 @@ public final class Store {
 			OutputStream stream = null;
 			try {
 				stream = new FileOutputStream(dataFile);
-				if (false) {
+				if (true) {
 				  stream = new GZIPOutputStream(stream, 4096);
 				} else {
 			      stream = new BufferedOutputStream(stream, 4096);
@@ -401,20 +401,19 @@ public final class Store {
       return;
     tl_withinStore.set(Boolean.TRUE);
     try {
-      final SrcLoc location = new SrcLoc(withinClass, line);
       if (DEBUG) {
         final String fmt = "Store.instanceFieldAccessLookup(%n\t\t%s%n\t\treceiver=%s%n\t\tfield=%s%n\t\tlocation=%s)";
         log(String.format(fmt, read ? "read" : "write",
-            safeToString(receiver), field, location));
+            safeToString(receiver), field, SrcLoc.toString(withinClass, line)));
       }
       /*
        * Check that the parameters are valid, gather needed information,
        * and put an event in the raw queue.
        */
       if (field == null) {
-        final String fmt = "field cannot be null...instrumentation bug detected by Store.instanceFieldAccessLookup(%s, receiver=%s, field=%s, location=%s)";
+        final String fmt = "field cannot be null...instrumentation bug detected by Store.instanceFieldAccessLookup(%s, receiver=%s, field=%s, withinClass, line=%s)";
         logAProblem(String.format(fmt, read ? "read" : "write",
-            safeToString(receiver), field, location));
+            safeToString(receiver), field, SrcLoc.toString(withinClass, line)));
         return;
       }
       final ObservedField oField = ObservedField.getInstance(field,
@@ -423,13 +422,13 @@ public final class Store {
       if (receiver == null) {
         final String fmt = "instance field %s access reported with a null receiver...instrumentation bug detected by Store.instanceFieldAccessLookup(%s, receiver=%s, field=%s, location=%s)";
         logAProblem(String.format(fmt, oField, read ? "read"
-            : "write", safeToString(receiver), field, location));
+            : "write", safeToString(receiver), field, SrcLoc.toString(withinClass, line)));
         return;
       }
       if (read)
-        e = new FieldReadInstance(receiver, oField, location);
+        e = new FieldReadInstance(receiver, oField, withinClass, line);
       else
-        e = new FieldWriteInstance(receiver, oField, location);
+        e = new FieldWriteInstance(receiver, oField, withinClass, line);
       putInQueue(f_rawQueue, e);
     } finally {
       tl_withinStore.set(Boolean.FALSE);
@@ -447,10 +446,9 @@ public final class Store {
       return;
     tl_withinStore.set(Boolean.TRUE);
     try {
-      final SrcLoc location = new SrcLoc(withinClass, line);
       if (DEBUG) {
         final String fmt = "Store.staticFieldAccessLookup(%n\t\t%s%n\t\tfield=%s%n\t\tlocation=%s)";
-        log(String.format(fmt, read ? "read" : "write", field, location));
+        log(String.format(fmt, read ? "read" : "write", field, SrcLoc.toString(withinClass, line)));
       }
       /*
        * Check that the parameters are valid, gather needed information,
@@ -458,16 +456,16 @@ public final class Store {
        */
       if (field == null) {
         final String fmt = "field cannot be null...instrumentation bug detected by Store.staticFieldAccessLookup(%s, field=%s, location=%s)";
-        logAProblem(String.format(fmt, read ? "read" : "write", field, location));
+        logAProblem(String.format(fmt, read ? "read" : "write", field, SrcLoc.toString(withinClass, line)));
         return;
       }
       final ObservedField oField = ObservedField.getInstance(field,
           f_rawQueue);
       final Event e;
       if (read)
-        e = new FieldReadStatic(oField, location);
+        e = new FieldReadStatic(oField, withinClass, line);
       else
-        e = new FieldWriteStatic(oField, location);
+        e = new FieldWriteStatic(oField, withinClass, line);
       putInQueue(f_rawQueue, e);
     } finally {
       tl_withinStore.set(Boolean.FALSE);
@@ -500,11 +498,10 @@ public final class Store {
 			return;
 		tl_withinStore.set(Boolean.TRUE);
 		try {
-			final SrcLoc location = new SrcLoc(withinClass, line);
 			if (DEBUG) {
 				final String fmt = "Store.fieldAccess(%n\t\t%s%n\t\treceiver=%s%n\t\tfield=%s%n\t\tlocation=%s)";
 				log(String.format(fmt, read ? "read" : "write",
-						safeToString(receiver), field, location));
+						safeToString(receiver), field, SrcLoc.toString(withinClass, line)));
 			}
 			/*
 			 * Check that the parameters are valid, gather needed information,
@@ -513,7 +510,7 @@ public final class Store {
 			if (field == null) {
 				final String fmt = "field cannot be null...instrumentation bug detected by Store.fieldAccess(%s, receiver=%s, field=%s, location=%s)";
 				logAProblem(String.format(fmt, read ? "read" : "write",
-						safeToString(receiver), field, location));
+						safeToString(receiver), field, SrcLoc.toString(withinClass, line)));
 				return;
 			}
 			final ObservedField oField = ObservedField.getInstance(field,
@@ -521,20 +518,20 @@ public final class Store {
 			final Event e;
 			if (oField.isStatic()) {
 				if (read)
-					e = new FieldReadStatic(oField, location);
+					e = new FieldReadStatic(oField, withinClass, line);
 				else
-					e = new FieldWriteStatic(oField, location);
+					e = new FieldWriteStatic(oField, withinClass, line);
 			} else {
 				if (receiver == null) {
 					final String fmt = "instance field %s access reported with a null receiver...instrumentation bug detected by Store.fieldAccess(%s, receiver=%s, field=%s, location=%s)";
 					logAProblem(String.format(fmt, oField, read ? "read"
-							: "write", safeToString(receiver), field, location));
+							: "write", safeToString(receiver), field, SrcLoc.toString(withinClass, line)));
 					return;
 				}
 				if (read)
-					e = new FieldReadInstance(receiver, oField, location);
+					e = new FieldReadInstance(receiver, oField, withinClass, line);
 				else
-					e = new FieldWriteInstance(receiver, oField, location);
+					e = new FieldWriteInstance(receiver, oField, withinClass, line);
 			}
 			putInQueue(f_rawQueue, e);
 		} finally {
@@ -569,11 +566,10 @@ public final class Store {
 			return;
 		tl_withinStore.set(Boolean.TRUE);
 		try {
-			final SrcLoc location = new SrcLoc(withinClass, line);
 			if (DEBUG) {
 				final String fmt = "Store.constructorCall(%n\t\t%s%n\t\tenclosingFileName=%s%n\t\tenclosingLocationName=%s%n\t\tlocation=%s)";
 				log(String.format(fmt, before ? "before" : "after",
-						enclosingFileName, enclosingLocationName, location));
+						enclosingFileName, enclosingLocationName, SrcLoc.toString(withinClass, line)));
 			}
 			/*
 			 * Check that the parameters are valid, gather needed information,
@@ -582,9 +578,9 @@ public final class Store {
 			final Event e;
 			if (before)
 				e = new BeforeTrace(enclosingFileName, enclosingLocationName,
-						location);
+						withinClass, line);
 			else
-				e = new AfterTrace(location);
+				e = new AfterTrace(withinClass, line);
 			putInQueue(f_rawQueue, e);
 		} finally {
 			tl_withinStore.set(Boolean.FALSE);
@@ -624,11 +620,10 @@ public final class Store {
 			return;
 		tl_withinStore.set(Boolean.TRUE);
 		try {
-			final SrcLoc location = new SrcLoc(withinClass, line);
 			if (DEBUG) {
 				final String fmt = "Store.constructorExecution(%n\t\t%s%n\t\treceiver=%s%n\t\tlocation=%s)";
 				log(String.format(fmt, before ? "before" : "after",
-						safeToString(receiver), location));
+						safeToString(receiver), SrcLoc.toString(withinClass, line)));
 			}
 			/*
 			 * Check that the parameters are valid, gather needed information,
@@ -637,7 +632,7 @@ public final class Store {
 			if (receiver == null) {
 				final String fmt = "constructor cannot be null...instrumentation bug detected by Store.constructorExecution(%s, receiver=%s, location=%s)";
 				logAProblem(String.format(fmt, before ? "before" : "after",
-						safeToString(receiver), location));
+						safeToString(receiver), SrcLoc.toString(withinClass, line)));
 			} else {
 				final ObjectPhantomReference p = Phantom.ofObject(receiver);
 				if (before)
@@ -688,12 +683,11 @@ public final class Store {
 			return;
 		tl_withinStore.set(Boolean.TRUE);
 		try {
-			final SrcLoc location = new SrcLoc(withinClass, line);
 			if (DEBUG) {
 				final String fmt = "Store.methodCall(%n\t\t%s%n\t\treceiver=%s%n\t\tenclosingFileName=%s%n\t\tenclosingLocationName=%s%n\t\tlocation=%s)";
 				log(String.format(fmt, before ? "before" : "after",
 						safeToString(receiver), enclosingFileName,
-						enclosingLocationName, location));
+						enclosingLocationName, SrcLoc.toString(withinClass, line)));
 			}
 			if (receiver != null) {
 				/*
@@ -723,9 +717,9 @@ public final class Store {
 			final Event e;
 			if (before)
 				e = new BeforeTrace(enclosingFileName, enclosingLocationName,
-						location);
+						withinClass, line);
 			else
-				e = new AfterTrace(location);
+				e = new AfterTrace(withinClass, line);
 			putInQueue(f_rawQueue, e);
 		} finally {
 			tl_withinStore.set(Boolean.FALSE);
@@ -761,11 +755,10 @@ public final class Store {
 			return;
 		tl_withinStore.set(Boolean.TRUE);
 		try {
-			final SrcLoc location = new SrcLoc(withinClass, line);
 			if (DEBUG) {
 				final String fmt = "Store.beforeIntrinsicLockAcquisition(%n\t\tlockObject=%s%n\t\tlockIsThis=%b%n\t\tlockIsClass=%b%n\t\tlocation=%s)";
 				log(String.format(fmt, safeToString(lockObject), lockIsThis,
-						lockIsClass, location));
+						lockIsClass, SrcLoc.toString(withinClass, line)));
 			}
 			/*
 			 * Check that the parameters are valid, gather needed information,
@@ -774,11 +767,11 @@ public final class Store {
 			if (lockObject == null) {
 				final String fmt = "intrinsic lock object cannot be null...instrumentation bug detected by Store.beforeIntrinsicLockAcquisition(lockObject=%s, lockIsThis=%b, lockIsClass=%b, location=%s)";
 				logAProblem(String.format(fmt, safeToString(lockObject),
-						lockIsThis, lockIsClass, location));
+						lockIsThis, lockIsClass, SrcLoc.toString(withinClass, line)));
 				return;
 			}
 			final Event e = new BeforeIntrinsicLockAcquisition(lockObject,
-					lockIsThis, lockIsClass, location);
+					lockIsThis, lockIsClass, withinClass, line);
 			putInQueue(f_rawQueue, e);
 		} finally {
 			tl_withinStore.set(Boolean.FALSE);
@@ -806,10 +799,9 @@ public final class Store {
 			return;
 		tl_withinStore.set(Boolean.TRUE);
 		try {
-			final SrcLoc location = new SrcLoc(withinClass, line);
 			if (DEBUG) {
 				final String fmt = "Store.afterIntrinsicLockAcquisition(%n\t\tlockObject=%s%n\t\tlocation=%s)";
-				log(String.format(fmt, safeToString(lockObject), location));
+				log(String.format(fmt, safeToString(lockObject), SrcLoc.toString(withinClass, line)));
 			}
 			/*
 			 * Check that the parameters are valid, gather needed information,
@@ -818,11 +810,11 @@ public final class Store {
 			if (lockObject == null) {
 				final String fmt = "intrinsic lock object cannot be null...instrumentation bug detected by Store.afterIntrinsicLockAcquisition(lockObject=%s, location=%s)";
 				logAProblem(String.format(fmt, safeToString(lockObject),
-						location));
+						SrcLoc.toString(withinClass, line)));
 				return;
 			}
 			final Event e = new AfterIntrinsicLockAcquisition(lockObject,
-					location);
+					withinClass, line);
 			putInQueue(f_rawQueue, e);
 		} finally {
 			tl_withinStore.set(Boolean.FALSE);
@@ -861,11 +853,10 @@ public final class Store {
 			return;
 		tl_withinStore.set(Boolean.TRUE);
 		try {
-			final SrcLoc location = new SrcLoc(withinClass, line);
 			if (DEBUG) {
 				final String fmt = "Store.intrinsicLockWait(%n\t\t%s%n\t\tlockObject=%s%n\t\tlocation=%s)";
 				log(String.format(fmt, before ? "before" : "after",
-						safeToString(lockObject), location));
+						safeToString(lockObject), SrcLoc.toString(withinClass, line)));
 			}
 			/*
 			 * Check that the parameters are valid, gather needed information,
@@ -874,14 +865,14 @@ public final class Store {
 			if (lockObject == null) {
 				final String fmt = "intrinsic lock object cannot be null...instrumentation bug detected by Store.intrinsicLockWait(%s, lockObject=%s, location=%s)";
 				logAProblem(String.format(fmt, before ? "before" : "after",
-						safeToString(lockObject), location));
+						safeToString(lockObject), SrcLoc.toString(withinClass, line)));
 				return;
 			}
 			final Event e;
 			if (before)
-				e = new BeforeIntrinsicLockWait(lockObject, location);
+				e = new BeforeIntrinsicLockWait(lockObject, withinClass, line);
 			else
-				e = new AfterIntrinsicLockWait(lockObject, location);
+				e = new AfterIntrinsicLockWait(lockObject, withinClass, line);
 			putInQueue(f_rawQueue, e);
 		} finally {
 			tl_withinStore.set(Boolean.FALSE);
@@ -909,10 +900,9 @@ public final class Store {
 			return;
 		tl_withinStore.set(Boolean.TRUE);
 		try {
-			final SrcLoc location = new SrcLoc(withinClass, line);
 			if (DEBUG) {
 				final String fmt = "Store.afterIntrinsicLockRelease(%n\t\tlockObject=%s%n\t\tlocation=%s)";
-				log(String.format(fmt, safeToString(lockObject), location));
+				log(String.format(fmt, safeToString(lockObject), SrcLoc.toString(withinClass, line)));
 			}
 			/*
 			 * Check that the parameters are valid, gather needed information,
@@ -921,10 +911,10 @@ public final class Store {
 			if (lockObject == null) {
 				final String fmt = "intrinsic lock object cannot be null...instrumentation bug detected by Store.afterIntrinsicLockRelease(lockObject=%s, location=%s)";
 				logAProblem(String.format(fmt, safeToString(lockObject),
-						location));
+						SrcLoc.toString(withinClass, line)));
 				return;
 			}
-			final Event e = new AfterIntrinsicLockRelease(lockObject, location);
+			final Event e = new AfterIntrinsicLockRelease(lockObject, withinClass, line);
 			putInQueue(f_rawQueue, e);
 		} finally {
 			tl_withinStore.set(Boolean.FALSE);
@@ -952,7 +942,6 @@ public final class Store {
 			return;
 		tl_withinStore.set(Boolean.TRUE);
 		try {
-			final SrcLoc location = new SrcLoc(withinClass, line);
 			if (DEBUG) {
 				/*
 				 * Implementation note: We are counting on the implementer of
@@ -960,16 +949,16 @@ public final class Store {
 				 * method.
 				 */
 				final String fmt = "Store.beforeUtilConcurrentLockAcquisitionAttempt(%n\t\tlockObject=%s%n\t\tlocation=%s)";
-				log(String.format(fmt, lockObject, location));
+				log(String.format(fmt, lockObject, SrcLoc.toString(withinClass, line)));
 			}
 			if (lockObject instanceof Lock) {
 				final Lock ucLock = (Lock) lockObject;
 				final Event e = new BeforeUtilConcurrentLockAcquisitionAttempt(
-						ucLock, location);
+						ucLock, withinClass, line);
 				putInQueue(f_rawQueue, e);
 			} else {
 				final String fmt = "lock object must be a java.util.concurrent.locks.Lock...instrumentation bug detected by Store.beforeUtilConcurrentLockAcquisitionAttempt(lockObject=%s, location=%s)";
-				logAProblem(String.format(fmt, lockObject, location));
+				logAProblem(String.format(fmt, lockObject, SrcLoc.toString(withinClass, line)));
 				return;
 			}
 		} finally {
@@ -1005,7 +994,6 @@ public final class Store {
 			return;
 		tl_withinStore.set(Boolean.TRUE);
 		try {
-			final SrcLoc location = new SrcLoc(withinClass, line);
 			if (DEBUG) {
 				/*
 				 * Implementation note: We are counting on the implementer of
@@ -1014,17 +1002,17 @@ public final class Store {
 				 */
 				final String fmt = "Store.afterUtilConcurrentLockAcquisitionAttempt(%n\t\t%s%n\t\tlockObject=%s%n\t\tlocation=%s)";
 				log(String.format(fmt, gotTheLock ? "holding"
-						: "failed-to-acquire", lockObject, location));
+						: "failed-to-acquire", lockObject, SrcLoc.toString(withinClass, line)));
 			}
 			if (lockObject instanceof Lock) {
 				final Lock ucLock = (Lock) lockObject;
 				final Event e = new AfterUtilConcurrentLockAcquisitionAttempt(
-						gotTheLock, ucLock, location);
+						gotTheLock, ucLock, withinClass, line);
 				putInQueue(f_rawQueue, e);
 			} else {
 				final String fmt = "lock object must be a java.util.concurrent.locks.Lock...instrumentation bug detected by Store.afterUtilConcurrentLockAcquisitionAttempt(%s, lockObject=%s, location=%s)";
 				logAProblem(String.format(fmt, gotTheLock ? "holding"
-						: "failed-to-acquire", lockObject, location));
+						: "failed-to-acquire", lockObject, SrcLoc.toString(withinClass, line)));
 				return;
 			}
 		} finally {
@@ -1059,7 +1047,6 @@ public final class Store {
 			return;
 		tl_withinStore.set(Boolean.TRUE);
 		try {
-			final SrcLoc location = new SrcLoc(withinClass, line);
 			if (DEBUG) {
 				/*
 				 * Implementation note: We are counting on the implementer of
@@ -1068,17 +1055,17 @@ public final class Store {
 				 */
 				final String fmt = "Store.afterUtilConcurrentLockReleaseAttempt(%n\t\t%s%n\t\tlockObject=%s%n\t\tlocation=%s)";
 				log(String.format(fmt, releasedTheLock ? "released"
-						: "failed-to-release", lockObject, location));
+						: "failed-to-release", lockObject, SrcLoc.toString(withinClass, line)));
 			}
 			if (lockObject instanceof Lock) {
 				final Lock ucLock = (Lock) lockObject;
 				final Event e = new AfterUtilConcurrentLockReleaseAttempt(
-						releasedTheLock, ucLock, location);
+						releasedTheLock, ucLock, withinClass, line);
 				putInQueue(f_rawQueue, e);
 			} else {
 				final String fmt = "lock object must be a java.util.concurrent.locks.Lock...instrumentation bug detected by Store.afterUtilConcurrentLockReleaseAttempt(%s, lockObject=%s, location=%s)";
 				logAProblem(String.format(fmt, releasedTheLock ? "released"
-						: "failed-to-release", lockObject, location));
+						: "failed-to-release", lockObject, SrcLoc.toString(withinClass, line)));
 				return;
 			}
 		} finally {

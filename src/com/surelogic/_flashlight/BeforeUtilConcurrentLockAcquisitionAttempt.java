@@ -6,8 +6,8 @@ final class BeforeUtilConcurrentLockAcquisitionAttempt extends
 		UtilConcurrentLock {
 
 	BeforeUtilConcurrentLockAcquisitionAttempt(final Lock lockObject,
-			final SrcLoc location) {
-		super(lockObject, location);
+			final ClassPhantomReference withinClass, final int line) {
+		super(lockObject, withinClass, line);
 	}
 
 	@Override

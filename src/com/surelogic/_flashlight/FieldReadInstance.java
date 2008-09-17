@@ -3,8 +3,8 @@ package com.surelogic._flashlight;
 final class FieldReadInstance extends FieldAccessInstance {
 
 	FieldReadInstance(final Object receiver, final ObservedField field,
-			final SrcLoc location) {
-		super(receiver, field, location);
+			final ClassPhantomReference withinClass, final int line) {
+		super(receiver, field, withinClass, line);
 	}
 
 	@Override

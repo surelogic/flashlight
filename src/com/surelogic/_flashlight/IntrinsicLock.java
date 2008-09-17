@@ -11,8 +11,8 @@ abstract class IntrinsicLock extends WithinThreadEvent {
 		return f_lockObject;
 	}
 
-	IntrinsicLock(final Object lockObject, final SrcLoc location) {
-		super(location);
+	IntrinsicLock(final Object lockObject, final ClassPhantomReference withinClass, final int line) {
+		super(withinClass, line);
 		assert lockObject != null;
 		f_lockObject = Phantom.of(lockObject);
 	}

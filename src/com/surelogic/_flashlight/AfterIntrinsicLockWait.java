@@ -2,8 +2,8 @@ package com.surelogic._flashlight;
 
 final class AfterIntrinsicLockWait extends IntrinsicLock {
 
-	AfterIntrinsicLockWait(final Object lockObject, final SrcLoc location) {
-		super(lockObject, location);
+	AfterIntrinsicLockWait(final Object lockObject, final ClassPhantomReference withinClass, final int line) {
+		super(lockObject, withinClass, line);
 	}
 
 	@Override

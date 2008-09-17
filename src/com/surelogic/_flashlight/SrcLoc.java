@@ -53,7 +53,7 @@ final class SrcLoc {
 		return f_withinClass.getId();
 	}
 
-  SrcLoc(ClassPhantomReference withinClass, final int line) {
+  private SrcLoc(ClassPhantomReference withinClass, final int line) {
      if (withinClass == null) {
        withinClass = unknownErrorPhantom;
      }
@@ -61,6 +61,10 @@ final class SrcLoc {
      f_line = line;
    }
 
+  static String toString(ClassPhantomReference withinClass, final int line) {
+	  return withinClass + ":" + line;  
+  }
+  
 	@Override
 	public String toString() {
 		return f_withinClass + ":" + f_line;

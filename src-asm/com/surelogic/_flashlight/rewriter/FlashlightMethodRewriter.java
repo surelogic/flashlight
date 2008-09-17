@@ -129,6 +129,15 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   private final ClassAndFieldModel classModel;
   
   /**
+   * Refers to a thunk used to insert instructions after the following
+   * instruction, if that instruction is a label. Otherwise, the operations are
+   * inserted before the next instruction. See
+   * {@link #delayForLabel(com.surelogic._flashlight.rewriter.FlashlightMethodRewriter.DelayedOutput)}.
+   * Once the thunk has been executed, this is reset to {@code null}.
+   */
+  private DelayedOutput delayedForLabel = null;
+
+  /**
    * If the previously visited element was an ASTORE instruction, this is set to
    * the index of the local variable stored. Otherwise, it is {@code -1}.
    */
@@ -246,40 +255,38 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   
   @Override
   public void visitLineNumber(final int line, final Label start) {
-    handlePreviousLoad();
-    handlePreviousStore();
-    handleDelayedOutputPrefix(OpType.OTHER);
+    handlePreviousAload();
+    handlePreviousAstore();
+    insertDelayedCode();
     mv.visitLineNumber(line, start);
-    handleDelayedOutputPostfix(OpType.OTHER);
     currentSrcLine = line;
   }
   
   @Override
   public void visitTypeInsn(final int opcode, final String type) {
-    handlePreviousLoad();
-    handlePreviousStore();
-    handleDelayedOutputPrefix(OpType.OTHER);
+    handlePreviousAload();
+    handlePreviousAstore();
+    insertDelayedCode();
     mv.visitTypeInsn(opcode, type);
     if (stateMachine != null) stateMachine.visitTypeInsn(opcode, type);
-    handleDelayedOutputPostfix(OpType.OTHER);
   }
   
   @Override
   public void visitInsn(final int opcode) {
     if (opcode == Opcodes.MONITORENTER && config.rewriteMonitorenter) {
-      handlePreviousLoad();
+      handlePreviousAload();
       // previous store is dealt with in rewriteMonitorenter
-      handleDelayedOutputPrefix(OpType.OTHER);
+      insertDelayedCode();
       rewriteMonitorenter();
     } else if (opcode == Opcodes.MONITOREXIT && config.rewriteMonitorexit) {
       // previous load is dealt with in rewriteMonitorexit()
-      handlePreviousStore();
-      handleDelayedOutputPrefix(OpType.OTHER);
+      handlePreviousAstore();
+      insertDelayedCode();
       rewriteMonitorexit();
     } else if ((opcode >= Opcodes.IRETURN && opcode <= Opcodes.RETURN)) {
-      handlePreviousLoad();
-      handlePreviousStore();
-      handleDelayedOutputPrefix(OpType.OTHER);
+      handlePreviousAload();
+      handlePreviousAstore();
+      insertDelayedCode();
       if (wasSynchronized && config.rewriteSynchronizedMethod) {
         insertSynchronizedMethodExit();
       }
@@ -297,12 +304,11 @@ final class FlashlightMethodRewriter extends MethodAdapter {
         mv.visitLabel(startOfTryBlock);
       }
     } else {
-      handlePreviousLoad();
-      handlePreviousStore();
-      handleDelayedOutputPrefix(OpType.OTHER);
+      handlePreviousAload();
+      handlePreviousAstore();
+      insertDelayedCode();
       mv.visitInsn(opcode);
     }
-    handleDelayedOutputPostfix(OpType.OTHER);
 
     if (stateMachine != null) stateMachine.visitInsn(opcode);
   }
@@ -310,9 +316,9 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   @Override
   public void visitFieldInsn(final int opcode, final String owner,
       final String name, final String desc) {
-    handlePreviousLoad();
-    handlePreviousStore();
-    handleDelayedOutputPrefix(OpType.OTHER);
+    handlePreviousAload();
+    handlePreviousAstore();
+    insertDelayedCode();
     if (opcode == Opcodes.PUTFIELD && config.rewritePutfield) {
       rewritePutfield(owner, name, desc);
     } else if (opcode == Opcodes.PUTSTATIC && config.rewritePutstatic) {
@@ -324,7 +330,6 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     } else {
       mv.visitFieldInsn(opcode, owner, name, desc);
     }
-    handleDelayedOutputPostfix(OpType.OTHER);
     
     if (stateMachine != null) stateMachine.visitFieldInsn(opcode, owner, name, desc);    
   }
@@ -332,9 +337,9 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   @Override
   public void visitMethodInsn(final int opcode, final String owner,
       final String name, final String desc) {
-    handlePreviousLoad();
-    handlePreviousStore();
-    handleDelayedOutputPrefix(OpType.OTHER);
+    handlePreviousAload();
+    handlePreviousAstore();
+    insertDelayedCode();
     if (opcode == Opcodes.INVOKEVIRTUAL && config.rewriteInvokevirtual) {
       rewriteMethodCall(Opcodes.INVOKEVIRTUAL, owner, name, desc);
     } else if (opcode == Opcodes.INVOKESPECIAL && config.rewriteInvokespecial) {
@@ -354,16 +359,15 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     } else { // Unknown, but safe
       mv.visitMethodInsn(opcode, owner, name, desc);
     }
-    handleDelayedOutputPostfix(OpType.OTHER);
 
     if (stateMachine != null) stateMachine.visitMethodInsn(opcode, owner, name, desc);
   }
   
   @Override
   public void visitMaxs(final int maxStack, final int maxLocals) {
-    handlePreviousLoad();
-    handlePreviousStore();
-    handleDelayedOutputPostfix(OpType.OTHER);
+    handlePreviousAload();
+    handlePreviousAstore();
+    insertDelayedCode();
     if (wasSynchronized && config.rewriteSynchronizedMethod) {
       insertSynchronizedMethodPostfix();
     }
@@ -373,45 +377,41 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     }
     
     mv.visitMaxs(maxStack + stackDepthDelta, maxLocals);
-    handleDelayedOutputPostfix(OpType.OTHER);
   }
 
   @Override
   public void visitIntInsn(final int opcode, final int operand) {
-    handlePreviousLoad();
-    handlePreviousStore();
-    handleDelayedOutputPrefix(OpType.OTHER);
+    handlePreviousAload();
+    handlePreviousAstore();
+    insertDelayedCode();
     if (stateMachine != null) stateMachine.visitIntInsn(opcode, operand);
     mv.visitIntInsn(opcode, operand);
-    handleDelayedOutputPostfix(OpType.OTHER);
   }
   
   @Override
   public void visitJumpInsn(final int opcode, final Label label) {
-    handlePreviousLoad();
-    handlePreviousStore();
-    handleDelayedOutputPrefix(OpType.OTHER);
+    handlePreviousAload();
+    handlePreviousAstore();
+    insertDelayedCode();
     if (stateMachine != null) stateMachine.visitJumpInsn(opcode, label);
     mv.visitJumpInsn(opcode, label);
-    handleDelayedOutputPostfix(OpType.OTHER);
   }
   
   @Override
   public void visitLabel(final Label label) {
-    handlePreviousLoad();
-    handlePreviousStore();
-    handleDelayedOutputPrefix(OpType.LABEL);
+    handlePreviousAload();
+    handlePreviousAstore();
     if (stateMachine != null) stateMachine.visitLabel(label);
     
     /* If this label is the start of a try-block, output our new start label
      * instead.  
      * 
      * We output the original label below after handling any delayed output.  That
-     * is the original label follows any instrumentation we might insert.
+     * is, the original label follows any instrumentation we might insert.
      */
     final Label newLabel = tryLabelMap.get(label);
     mv.visitLabel((newLabel != null) ? newLabel : label);
-    handleDelayedOutputPostfix(OpType.LABEL);
+    insertDelayedCode();
     if (newLabel != null) {
       mv.visitLabel(label);
     }
@@ -419,51 +419,47 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   
   @Override
   public void visitLdcInsn(final Object cst) {
-    handlePreviousLoad();
-    handlePreviousStore();
-    handleDelayedOutputPrefix(OpType.OTHER);
+    handlePreviousAload();
+    handlePreviousAstore();
+    insertDelayedCode();
     if (stateMachine != null) stateMachine.visitLdcInsn(cst);
     mv.visitLdcInsn(cst);
-    handleDelayedOutputPostfix(OpType.OTHER);
   }
   
   @Override
   public void visitLookupSwitchInsn(
       final Label dflt, final int[] keys, final Label[] labels) {
-    handlePreviousLoad();
-    handlePreviousStore();
-    handleDelayedOutputPrefix(OpType.OTHER);
+    handlePreviousAload();
+    handlePreviousAstore();
+    insertDelayedCode();
     if (stateMachine != null) stateMachine.visitLookupSwitchInsn(dflt, keys, labels);
     mv.visitLookupSwitchInsn(dflt, keys, labels);
-    handleDelayedOutputPostfix(OpType.OTHER);
   }
   
   @Override
   public void visitMultiANewArrayInsn(final String desc, final int dims) {
-    handlePreviousLoad();
-    handlePreviousStore();
-    handleDelayedOutputPrefix(OpType.OTHER);
+    handlePreviousAload();
+    handlePreviousAstore();
+    insertDelayedCode();
     if (stateMachine != null) stateMachine.visitMultiANewArrayInsn(desc, dims);
     mv.visitMultiANewArrayInsn(desc, dims);
-    handleDelayedOutputPostfix(OpType.OTHER);
   }
   
   @Override
   public void visitTableSwitchInsn(
       final int min, final int max, final Label dflt, final Label[] labels) {
-    handlePreviousLoad();
-    handlePreviousStore();
-    handleDelayedOutputPrefix(OpType.OTHER);
+    handlePreviousAload();
+    handlePreviousAstore();
+    insertDelayedCode();
     if (stateMachine != null) stateMachine.visitTableSwitchInsn(min, max, dflt, labels);
     mv.visitTableSwitchInsn(min, max, dflt, labels);
-    handleDelayedOutputPostfix(OpType.OTHER);
   }
   
   @Override
   public void visitVarInsn(final int opcode, final int var) {
-    handlePreviousLoad();
-    handlePreviousStore();
-    handleDelayedOutputPrefix(OpType.OTHER);
+    handlePreviousAload();
+    handlePreviousAstore();
+    insertDelayedCode();
     if (stateMachine != null) stateMachine.visitVarInsn(opcode, var);
     if (opcode == Opcodes.ASTORE) {
       previousStore = var;
@@ -472,7 +468,96 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     } else {
       mv.visitVarInsn(opcode, var);
     }
-    handleDelayedOutputPostfix(OpType.OTHER);
+  }
+
+  @Override
+  public AnnotationVisitor visitAnnotationDefault() {
+    handlePreviousAload();
+    handlePreviousAstore();
+    insertDelayedCode();
+    final AnnotationVisitor av = mv.visitAnnotationDefault();
+    return av;
+  }
+
+  @Override
+  public AnnotationVisitor visitAnnotation(final String desc,
+      final boolean visible) {
+    handlePreviousAload();
+    handlePreviousAstore();
+    insertDelayedCode();
+    AnnotationVisitor av = mv.visitAnnotation(desc, visible);
+    return av;
+  }
+
+  @Override
+  public AnnotationVisitor visitParameterAnnotation(final int parameter,
+      final String desc, final boolean visible) {
+    handlePreviousAload();
+    handlePreviousAstore();
+    insertDelayedCode();
+    AnnotationVisitor av = mv.visitParameterAnnotation(parameter, desc, visible);
+    return av;
+  }
+
+  @Override
+  public void visitAttribute(final Attribute attr) {
+    handlePreviousAload();
+    handlePreviousAstore();
+    insertDelayedCode();
+    mv.visitAttribute(attr);
+  }
+
+  @Override
+  public void visitFrame(final int type, final int nLocal,
+      final Object[] local, final int nStack, final Object[] stack) {
+    handlePreviousAload();
+    handlePreviousAstore();
+    insertDelayedCode();
+    mv.visitFrame(type, nLocal, local, nStack, stack);
+  }
+
+  @Override
+  public void visitIincInsn(final int var, final int increment) {
+    handlePreviousAload();
+    handlePreviousAstore();
+    insertDelayedCode();
+    mv.visitIincInsn(var, increment);
+  }
+
+  @Override
+  public void visitTryCatchBlock(final Label start, final Label end,
+      final Label handler, final String type) {
+    handlePreviousAload();
+    handlePreviousAstore();
+    insertDelayedCode();
+    
+    /* Remap the label for the start of the try block.  But only if we haven't
+     * seen it before.
+     */
+    Label newStart = tryLabelMap.get(start);
+    if (newStart == null) {
+      newStart = new Label();
+      tryLabelMap.put(start, newStart);
+    }
+    mv.visitTryCatchBlock(newStart, end, handler, type);
+  }
+
+  @Override
+  public void visitLocalVariable(final String name, final String desc,
+      final String signature, final Label start, final Label end,
+      final int index) {
+    handlePreviousAload();
+    handlePreviousAstore();
+    insertDelayedCode();
+    mv.visitLocalVariable(name, desc, signature, start, end, index);
+  }
+
+  @Override
+  public void visitEnd() {
+    handlePreviousAload();
+    handlePreviousAstore();
+    insertDelayedCode();
+    mv.visitEnd();
   }
   
   
@@ -495,6 +580,83 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     } 
   }
 
+  
+  
+  /**
+   * Abstract class for holding instrumentation code that needs executed after
+   * the next instruction, if the next instruction is a label, or before the next
+   * instruction if it is not a label.
+   */
+  private abstract class DelayedOutput {
+    /**
+     * Called to insert instructions after the triggering instruction has
+     * been encountered.
+     */
+    public abstract void insertCode();
+  }
+  
+  
+  private void delayForLabel(final DelayedOutput delayed) {
+    if (delayedForLabel != null) {
+      throw new IllegalStateException("Already have pending output");
+    } else {
+      delayedForLabel = delayed;
+    }
+  }
+  
+  /**
+   * Called in one of two ways:
+   * <ul>
+   * <li>Called after we have visited a label and called {@code visitLabel}
+   * on the method visitor delegate.
+   * <li>Called when we are starting to visit a non-label instruction, before we
+   * have called {@code visit...} on the method visitor delegate.
+   * </ul>
+   */
+  private void insertDelayedCode() {
+    if (delayedForLabel != null) {
+      delayedForLabel.insertCode();
+      delayedForLabel = null;
+    }
+  }
+
+  
+  /**
+   * For monitorexit operations we want to know if the previous instruction 
+   * was an aload.  If so, we want to make sure we don't insert any instructions
+   * between the ALOAD and the MONITOREXIT, or the JIT compiler will not compiler
+   * the method to native code.  So when we encounter an ALOAD in
+   * {@link #visitVarInsn} we record the variable id, but do not forward the 
+   * ALOAD to the method visitor delegate. When we visit an operation other than
+   * monitorexit, we call this method first to make sure we forward the ALOAD to
+   * the method visitor delegate before we do anything else.  When we visit a
+   * monitorexit operation we handle this case specially.
+   */
+  private void handlePreviousAload() {
+    if (previousLoad != -1) {
+      mv.visitVarInsn(Opcodes.ALOAD, previousLoad);
+      previousLoad = -1;
+    }
+  }
+  
+  /**
+   * For monitorenter operations we want to know if the previous instruction 
+   * was an astore.  If so, we want to make sure we don't insert any instructions
+   * between the astore and the monitorenter, or the JIT compiler will not compiler
+   * the method to native code.  So when we encounter an astore in
+   * {@link #visitVarInsn} we record the variable id, but do not forward the 
+   * astore to the method visitor delegate. When we visit an operation other than
+   * monitorenter, we call this method first to make sure we forward the astore to
+   * the method visitor delegate before we do anything else.  When we visit a
+   * monitorenter operation we handle this case specially.
+   */
+  private void handlePreviousAstore() {
+    if (previousStore != -1) {
+      mv.visitVarInsn(Opcodes.ASTORE, previousStore);
+      previousStore = -1;
+    }
+  }
+  
   
   
   // =========================================================================
@@ -1073,7 +1235,12 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     mv.visitInsn(Opcodes.MONITORENTER);
     // ..., obj
     
-    delayOutput(new DelayedOutput(OpType.LABEL) {
+    /* To make the JIT compiler happy, we must start the try-block immediately
+     * after the monitorenter operation.  This means we must delay the
+     * insertion of our operations to call the post-monitorenter logging call
+     * until after the label that follows the monitorenter.
+     */
+    delayForLabel(new DelayedOutput() {
       @Override
       public void insertCode() {
         /* Push the phantom class reference and line number, and call the post-method */
@@ -1122,7 +1289,12 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     mv.visitInsn(Opcodes.MONITOREXIT);
     // ..., obj
     
-    delayOutput(new DelayedOutput(OpType.LABEL) {
+    /* To make the JIT compiler happy, we must terminate the try-block
+     * just after the monitorexit operation.  This means we must delay the insertion
+     * of the post-monitorexit logging method until after the label that follows the 
+     * monitorexit instruction is output.
+     */
+    delayForLabel(new DelayedOutput() {
       @Override
       public void insertCode() {
         ByteCodeUtils.pushWithinClass(mv, classBeingAnalyzedInternal);
@@ -1339,163 +1511,5 @@ final class FlashlightMethodRewriter extends MethodAdapter {
       updateStackDepthDelta(7);
     }
   }
-  
-  
-  
-  private enum OpType { LABEL, OTHER }
-  
-  private abstract class DelayedOutput {
-    public final OpType delayedFor;
-    
-    public DelayedOutput(final OpType df) {
-      delayedFor = df;
-    }
-    
-    public abstract void insertCode();
-  }
-  
-  private DelayedOutput delayedOutput = null;
-  
-  private void delayOutput(final DelayedOutput delayed) {
-    if (delayedOutput != null) {
-      throw new IllegalStateException("Already have pending output");
-    } else {
-      delayedOutput = delayed;
-    }
-  }
-  
-  private void handleDelayedOutputPrefix(final OpType current) {
-    if (delayedOutput != null) {
-      if (current != delayedOutput.delayedFor) {
-        delayedOutput.insertCode();
-        delayedOutput = null;
-      }
-    }
-  }
 
-  private void handleDelayedOutputPostfix(final OpType current) {
-    if (delayedOutput != null) {
-      if (current == delayedOutput.delayedFor) {
-        delayedOutput.insertCode();
-        delayedOutput = null;
-      }
-    }
-  }
-
-  
-  private void handlePreviousLoad() {
-    if (previousLoad != -1) {
-      mv.visitVarInsn(Opcodes.ALOAD, previousLoad);
-      previousLoad = -1;
-    }
-  }
-  
-  private void handlePreviousStore() {
-    if (previousStore != -1) {
-      mv.visitVarInsn(Opcodes.ASTORE, previousStore);
-      previousStore = -1;
-    }
-  }
-  
-  
-
-  @Override
-  public AnnotationVisitor visitAnnotationDefault() {
-    handlePreviousLoad();
-    handlePreviousStore();
-    handleDelayedOutputPrefix(OpType.OTHER);
-    final AnnotationVisitor av = mv.visitAnnotationDefault();
-    handleDelayedOutputPostfix(OpType.OTHER);
-    return av;
-  }
-
-  @Override
-  public AnnotationVisitor visitAnnotation(final String desc,
-      final boolean visible) {
-    handlePreviousLoad();
-    handlePreviousStore();
-    handleDelayedOutputPrefix(OpType.OTHER);
-    AnnotationVisitor av = mv.visitAnnotation(desc, visible);
-    handleDelayedOutputPostfix(OpType.OTHER);
-    return av;
-  }
-
-  @Override
-  public AnnotationVisitor visitParameterAnnotation(final int parameter,
-      final String desc, final boolean visible) {
-    handlePreviousLoad();
-    handlePreviousStore();
-    handleDelayedOutputPrefix(OpType.OTHER);
-    AnnotationVisitor av = mv.visitParameterAnnotation(parameter, desc, visible);
-    handleDelayedOutputPostfix(OpType.OTHER);
-    return av;
-  }
-
-  @Override
-  public void visitAttribute(final Attribute attr) {
-    handlePreviousLoad();
-    handlePreviousStore();
-    handleDelayedOutputPrefix(OpType.OTHER);
-    mv.visitAttribute(attr);
-    handleDelayedOutputPostfix(OpType.OTHER);
-  }
-
-  @Override
-  public void visitFrame(final int type, final int nLocal,
-      final Object[] local, final int nStack, final Object[] stack) {
-    handlePreviousLoad();
-    handlePreviousStore();
-    handleDelayedOutputPrefix(OpType.OTHER);
-    mv.visitFrame(type, nLocal, local, nStack, stack);
-    handleDelayedOutputPostfix(OpType.OTHER);
-  }
-
-  @Override
-  public void visitIincInsn(final int var, final int increment) {
-    handlePreviousLoad();
-    handlePreviousStore();
-    handleDelayedOutputPrefix(OpType.OTHER);
-    mv.visitIincInsn(var, increment);
-    handleDelayedOutputPostfix(OpType.OTHER);
-  }
-
-  @Override
-  public void visitTryCatchBlock(final Label start, final Label end,
-      final Label handler, final String type) {
-    handlePreviousLoad();
-    handlePreviousStore();
-    handleDelayedOutputPrefix(OpType.OTHER);
-    
-    /* Remap the label for the start of the try block.  But only if we haven't
-     * seen it before.
-     */
-    Label newStart = tryLabelMap.get(start);
-    if (newStart == null) {
-      newStart = new Label();
-      tryLabelMap.put(start, newStart);
-    }
-    mv.visitTryCatchBlock(newStart, end, handler, type);
-    
-    handleDelayedOutputPostfix(OpType.OTHER);
-  }
-
-  @Override
-  public void visitLocalVariable(final String name, final String desc,
-      final String signature, final Label start, final Label end,
-      final int index) {
-    handlePreviousLoad();
-    handlePreviousStore();
-    handleDelayedOutputPrefix(OpType.OTHER);
-    mv.visitLocalVariable(name, desc, signature, start, end, index);
-    handleDelayedOutputPostfix(OpType.OTHER);
-  }
-
-  @Override
-  public void visitEnd() {
-    handlePreviousLoad();
-    handlePreviousStore();
-    handleDelayedOutputPrefix(OpType.OTHER);
-    mv.visitEnd();
-    handleDelayedOutputPostfix(OpType.OTHER);
-  }
 }

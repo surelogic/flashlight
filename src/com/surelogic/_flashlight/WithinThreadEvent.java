@@ -8,12 +8,18 @@ package com.surelogic._flashlight;
  * Intended to be subclassed for each specific type of event that can occur.
  */
 abstract class WithinThreadEvent extends ProgramEvent {
-
+	private static final ThreadLocal<ThreadPhantomReference> f_threads = 
+		new ThreadLocal<ThreadPhantomReference>() {
+		@Override
+		protected ThreadPhantomReference initialValue() {
+			return  Phantom.ofThread(Thread.currentThread());
+		}
+	};
+	
 	/**
 	 * An identity for the thread this event occurred within.
 	 */
-	private final ThreadPhantomReference f_withinThread = Phantom
-			.ofThread(Thread.currentThread());
+	private final ThreadPhantomReference f_withinThread = f_threads.get();
 
 	IdPhantomReference getWithinThread() {
 		return f_withinThread;

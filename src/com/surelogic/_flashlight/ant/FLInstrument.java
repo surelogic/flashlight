@@ -48,23 +48,29 @@ public final class FLInstrument extends Task {
     private static final String DEFAULT_DELIMETERS=" ,";
     private String list;
     private String delimeters = DEFAULT_DELIMETERS;
-    private String srcPattern;
-    private String destPattern;
+    private String srcDirPattern;
+    private String destDirPattern;
+    private String destFilePattern;
     private String replace;
+    private String runtime = RewriteEngine.DEFAULT_FLASHLIGHT_RUNTIME_JAR;
     
     public Directories() { super(); }
     
     public void setList(final String value) { list = value; }
     public void setDelimeters(final String value) { delimeters = value; }
-    public void setSrcpattern(final String value) { srcPattern = value; }
-    public void setDestpattern(final String value) { destPattern = value; }
+    public void setSrcdirpattern(final String value) { srcDirPattern = value; }
+    public void setDestdirpattern(final String value) { destDirPattern = value; }
+    public void setDestfilepattern(final String value) { destFilePattern = value; }
     public void setReplace(final String value) { replace = value; }
+    public void setRuntime(final String value) { runtime = value; }
     
     String getList() { return list; }
     String getDelimeters() { return delimeters; }
-    String getSrcpattern() { return srcPattern; }
-    String getDestpattern() { return destPattern; }
+    String getSrcdirpattern() { return srcDirPattern; }
+    String getDestdirpattern() { return destDirPattern; }
+    String getDestfilepattern() { return destFilePattern; }
     String getReplace() { return replace; }
+    String getRuntime() { return runtime; }
   }
   
   
@@ -97,7 +103,9 @@ public final class FLInstrument extends Task {
   public static final class Directory implements InstrumentationSubTask {
     private String srcdir = null;
     private String destdir = null;
-        
+    private String destfile = null;
+    private String runtime = RewriteEngine.DEFAULT_FLASHLIGHT_RUNTIME_JAR;
+
     public Directory() { super(); }
     
     Directory(final String src, final String dest) {
@@ -105,11 +113,20 @@ public final class FLInstrument extends Task {
       destdir = dest;
     }
     
+    Directory(final String src, final String dest, final String runtime) {
+      srcdir = src;
+      destfile = dest;
+      this.runtime = runtime;
+    }
+    
     public void setSrcdir(final String src) { this.srcdir = src; }
     public void setDestdir(final String dest) { this.destdir = dest; }
-    
+    public void setDestfile(final String dest) { this.destfile = dest; }
+    public void setRuntime(final String run) { this.runtime = run; }
+
     String getSrcdir() { return srcdir; }
     String getDestdir() { return destdir; }
+    String getDestfile() { return destfile; }
     
     public void scan(
         final FLInstrument instrumentTask, final RewriteEngine engine)
@@ -127,11 +144,19 @@ public final class FLInstrument extends Task {
     public void instrument(
         final FLInstrument instrumentTask, final RewriteEngine engine)
         throws BuildException {
-      instrumentTask.log("Instrumenting class directory " + srcdir
-          + ": writing instrumented classes to directory " + destdir,
-          Project.MSG_INFO);
+      /* One of dstfile and dstdir is non-null, but not both */
       try {
-        engine.rewriteDirectory(new File(srcdir), new File(destdir));
+        if (destdir != null) {
+          instrumentTask.log("Instrumenting class directory " + srcdir
+              + ": writing instrumented classes to directory " + destdir,
+              Project.MSG_INFO);
+          engine.rewriteDirectoryToDirectory(new File(srcdir), new File(destdir));
+        } else {
+          instrumentTask.log("Instrumenting class directory " + srcdir
+              + ": writing instrumented classes to jar " + destfile,
+              Project.MSG_INFO);
+          engine.rewriteDirectoryToJar(new File(srcdir), new File(destfile), runtime);
+        }
       } catch (final IOException e) {
         final String msg = "Error instrumenting class files in directory " + srcdir;
         instrumentTask.log(msg, Project.MSG_ERR);
@@ -433,8 +458,14 @@ public final class FLInstrument extends Task {
     if (dir.getSrcdir() == null) {
       throw new BuildException("Source directory is not set");
     }
-    if (dir.getDestdir() == null) {
-      throw new BuildException("Destination directory is not set");
+    
+    final String destdir = dir.getDestdir();
+    final String destfile = dir.getDestfile();
+    if (destfile != null && destdir != null) {
+      throw new BuildException("Cannot set both the destination jar file and destination directory");
+    }
+    if (destfile == null && destdir == null) {
+      throw new BuildException("Must set either the destination jar file or the destination directory");
     }
     subTasks.add(dir);
   }
@@ -443,9 +474,11 @@ public final class FLInstrument extends Task {
   public void addConfiguredDirs(final Directories dirs) {
     final String list = dirs.getList();
     final String delimeters = dirs.getDelimeters();
-    final String srcPattern = dirs.getSrcpattern();
-    final String destPattern = dirs.getDestpattern();
+    final String srcDirPattern = dirs.getSrcdirpattern();
+    final String destDirPattern = dirs.getDestdirpattern();
+    final String destFilePattern = dirs.getDestfilepattern();
     final String replace = dirs.getReplace();
+    final String runtime = dirs.getRuntime();
 
     if (list == null) {
       throw new BuildException("List is not set");
@@ -453,31 +486,44 @@ public final class FLInstrument extends Task {
     if (delimeters == null) {
       throw new BuildException("Delimeters is not set");
     }
-    if (srcPattern == null) {
+    if (srcDirPattern == null) {
       throw new BuildException("Source directory pattern is not set");
     }
-    if (destPattern == null) {
-      throw new BuildException("Destination directory pattern is not set");
+    
+    if (destDirPattern != null && destFilePattern != null) {
+      throw new BuildException("Cannot set both the destination jar file patten and destination directory pattern");
     }
+    if (destDirPattern == null && destFilePattern == null) {
+      throw new BuildException("Must set either the destination jar file pattern or the destination directory pattern");
+    }
+    
     if (replace == null) {
       throw new BuildException("Replacement pattern is not set");
     }
     
     FLInstrument.this. log(
-        MessageFormat.format("Expanding list of directories using list=\"{0}\", delimeters=\"{1}\", source pattern=\"{2}\", destination pattern=\"{3}\", and replacement pattern=\"{4}\"",
-            list, delimeters, srcPattern, destPattern, replace),
+        MessageFormat.format("Expanding list of directories using list=\"{0}\", delimeters=\"{1}\", source pattern=\"{2}\", destination directory pattern=\"{3}\", destination jar file pattern=\"{4}\", replacement pattern=\"{5}\", runtime jar file=\"{6}\"",
+            list, delimeters, srcDirPattern, destDirPattern, destFilePattern, replace, runtime),
             Project.MSG_VERBOSE);
     
     final StringTokenizer st =
       new StringTokenizer(dirs.getList(), dirs.getDelimeters());
     while (st.hasMoreTokens()) {
       final String element = st.nextToken();
-      final String srcdir = srcPattern.replace(replace, element);
-      final String destdir = destPattern.replace(replace, element);
-      FLInstrument.this.log(MessageFormat.format(
-          "    Adding srcdir=\"{0}\", destdir=\"{1}\"", srcdir, destdir),
-          Project.MSG_VERBOSE);
-      subTasks.add(new Directory(srcdir, destdir));
+      final String srcdir = srcDirPattern.replace(replace, element);
+      if (destDirPattern != null) {
+        final String destdir = destDirPattern.replace(replace, element);
+        FLInstrument.this.log(MessageFormat.format(
+            "    Adding srcdir=\"{0}\", destdir=\"{1}\"", srcdir, destdir),
+            Project.MSG_VERBOSE);
+        subTasks.add(new Directory(srcdir, destdir));
+      } else {
+        final String destfile = destFilePattern.replace(replace, element);
+        FLInstrument.this.log(MessageFormat.format(
+            "    Adding srcdir=\"{0}\", destfile=\"{1}\"", srcdir, destfile),
+            Project.MSG_VERBOSE);
+        subTasks.add(new Directory(srcdir, destfile, runtime));
+      }
     }
   }
   

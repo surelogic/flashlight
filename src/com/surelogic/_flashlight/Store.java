@@ -431,8 +431,8 @@ public final class Store {
    *            indicates a field <i>write</i>.
    * @param receiver
    *            the object instance the field is part of the state of.
-   * @param className
-   *            the fully qualified class name of the class in which the search
+   * @param clazz
+   *            The class object of the class in which the search
    *            for the field should begin.
    * @param fieldName
    *            the name of the field.
@@ -443,48 +443,48 @@ public final class Store {
    */
   public static void instanceFieldAccessLookup(
       final boolean read, final Object receiver,
-      final String className, final String fieldName, 
+      final Class clazz, final String fieldName, 
       final ClassPhantomReference withinClass, final int line) {
-    if (f_flashlightIsNotInitialized)
-      return;
-    if (FL_OFF.get())
-      return;
-    if (tl_withinStore.get().booleanValue())
-      return;
-    tl_withinStore.set(Boolean.TRUE);
-    try {
-      if (DEBUG) {
-        final String fmt = "Store.instanceFieldAccessLookup(%n\t\t%s%n\t\treceiver=%s%n\t\tfield=%s%n\t\tlocation=%s)";
-        log(String.format(fmt, read ? "read" : "write",
-            safeToString(receiver), field, SrcLoc.toString(withinClass, line)));
-      }
-      /*
-       * Check that the parameters are valid, gather needed information,
-       * and put an event in the raw queue.
-       */
-      if (field == null) {
-        final String fmt = "field cannot be null...instrumentation bug detected by Store.instanceFieldAccessLookup(%s, receiver=%s, field=%s, withinClass, line=%s)";
-        logAProblem(String.format(fmt, read ? "read" : "write",
-            safeToString(receiver), field, SrcLoc.toString(withinClass, line)));
-        return;
-      }
-      final ObservedField oField = ObservedField.getInstance(field,
-          f_rawQueue);
-      final Event e;
-      if (receiver == null) {
-        final String fmt = "instance field %s access reported with a null receiver...instrumentation bug detected by Store.instanceFieldAccessLookup(%s, receiver=%s, field=%s, location=%s)";
-        logAProblem(String.format(fmt, oField, read ? "read"
-            : "write", safeToString(receiver), field, SrcLoc.toString(withinClass, line)));
-        return;
-      }
-      if (read)
-        e = new FieldReadInstance(receiver, oField, withinClass, line);
-      else
-        e = new FieldWriteInstance(receiver, oField, withinClass, line);
-      putInQueue(f_rawQueue, e);
-    } finally {
-      tl_withinStore.set(Boolean.FALSE);
-    }
+//    if (f_flashlightIsNotInitialized)
+//      return;
+//    if (FL_OFF.get())
+//      return;
+//    if (tl_withinStore.get().booleanValue())
+//      return;
+//    tl_withinStore.set(Boolean.TRUE);
+//    try {
+//      if (DEBUG) {
+//        final String fmt = "Store.instanceFieldAccessLookup(%n\t\t%s%n\t\treceiver=%s%n\t\tfield=%s%n\t\tlocation=%s)";
+//        log(String.format(fmt, read ? "read" : "write",
+//            safeToString(receiver), field, SrcLoc.toString(withinClass, line)));
+//      }
+//      /*
+//       * Check that the parameters are valid, gather needed information,
+//       * and put an event in the raw queue.
+//       */
+//      if (field == null) {
+//        final String fmt = "field cannot be null...instrumentation bug detected by Store.instanceFieldAccessLookup(%s, receiver=%s, field=%s, withinClass, line=%s)";
+//        logAProblem(String.format(fmt, read ? "read" : "write",
+//            safeToString(receiver), field, SrcLoc.toString(withinClass, line)));
+//        return;
+//      }
+//      final ObservedField oField = ObservedField.getInstance(field,
+//          f_rawQueue);
+//      final Event e;
+//      if (receiver == null) {
+//        final String fmt = "instance field %s access reported with a null receiver...instrumentation bug detected by Store.instanceFieldAccessLookup(%s, receiver=%s, field=%s, location=%s)";
+//        logAProblem(String.format(fmt, oField, read ? "read"
+//            : "write", safeToString(receiver), field, SrcLoc.toString(withinClass, line)));
+//        return;
+//      }
+//      if (read)
+//        e = new FieldReadInstance(receiver, oField, withinClass, line);
+//      else
+//        e = new FieldWriteInstance(receiver, oField, withinClass, line);
+//      putInQueue(f_rawQueue, e);
+//    } finally {
+//      tl_withinStore.set(Boolean.FALSE);
+//    }
   }
 
   /**
@@ -494,8 +494,8 @@ public final class Store {
    * @param read
    *            {@code true} indicates a field <i>read</i>, {@code false}
    *            indicates a field <i>write</i>.
-   * @param className
-   *            the fully qualified class name of the class in which the search
+   * @param clazz
+   *            The class object of the class in which the search
    *            for the field should begin.
    * @param fieldName
    *            the name of the field.
@@ -505,40 +505,40 @@ public final class Store {
    *            the line number where the event occurred.
    */
   public static void staticFieldAccessLookup(final boolean read,
-      final String className, final String fieldName,
+      final Class clazz, final String fieldName,
       final ClassPhantomReference withinClass, final int line) {
-    if (f_flashlightIsNotInitialized)
-      return;
-    if (FL_OFF.get())
-      return;
-    if (tl_withinStore.get().booleanValue())
-      return;
-    tl_withinStore.set(Boolean.TRUE);
-    try {
-      if (DEBUG) {
-        final String fmt = "Store.staticFieldAccessLookup(%n\t\t%s%n\t\tfield=%s%n\t\tlocation=%s)";
-        log(String.format(fmt, read ? "read" : "write", field, SrcLoc.toString(withinClass, line)));
-      }
-      /*
-       * Check that the parameters are valid, gather needed information,
-       * and put an event in the raw queue.
-       */
-      if (field == null) {
-        final String fmt = "field cannot be null...instrumentation bug detected by Store.staticFieldAccessLookup(%s, field=%s, location=%s)";
-        logAProblem(String.format(fmt, read ? "read" : "write", field, SrcLoc.toString(withinClass, line)));
-        return;
-      }
-      final ObservedField oField = ObservedField.getInstance(field,
-          f_rawQueue);
-      final Event e;
-      if (read)
-        e = new FieldReadStatic(oField, withinClass, line);
-      else
-        e = new FieldWriteStatic(oField, withinClass, line);
-      putInQueue(f_rawQueue, e);
-    } finally {
-      tl_withinStore.set(Boolean.FALSE);
-    }
+//    if (f_flashlightIsNotInitialized)
+//      return;
+//    if (FL_OFF.get())
+//      return;
+//    if (tl_withinStore.get().booleanValue())
+//      return;
+//    tl_withinStore.set(Boolean.TRUE);
+//    try {
+//      if (DEBUG) {
+//        final String fmt = "Store.staticFieldAccessLookup(%n\t\t%s%n\t\tfield=%s%n\t\tlocation=%s)";
+//        log(String.format(fmt, read ? "read" : "write", field, SrcLoc.toString(withinClass, line)));
+//      }
+//      /*
+//       * Check that the parameters are valid, gather needed information,
+//       * and put an event in the raw queue.
+//       */
+//      if (field == null) {
+//        final String fmt = "field cannot be null...instrumentation bug detected by Store.staticFieldAccessLookup(%s, field=%s, location=%s)";
+//        logAProblem(String.format(fmt, read ? "read" : "write", field, SrcLoc.toString(withinClass, line)));
+//        return;
+//      }
+//      final ObservedField oField = ObservedField.getInstance(field,
+//          f_rawQueue);
+//      final Event e;
+//      if (read)
+//        e = new FieldReadStatic(oField, withinClass, line);
+//      else
+//        e = new FieldWriteStatic(oField, withinClass, line);
+//      putInQueue(f_rawQueue, e);
+//    } finally {
+//      tl_withinStore.set(Boolean.FALSE);
+//    }
   }
 
 	/**

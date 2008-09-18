@@ -42,12 +42,12 @@ public class DebugStore {
 
   public static void instanceFieldAccessLookup(
       final boolean read, final Object receiver,
-      final String className, final String fieldName,
+      final Class clazz, final String fieldName,
       final ClassPhantomReference withinClass, final int line) {
     System.out.println("instanceFieldAccessLookup");
     System.out.println("  read = " + read);
     System.out.println("  receiver = " + objectToString(receiver));
-    System.out.println("  className = " + className);
+    System.out.println("  class = " + clazz);
     System.out.println("  fieldName = " + fieldName);
     System.out.println("  withinClass = " + withinClass);
     System.out.println("  line = " + line);
@@ -55,11 +55,11 @@ public class DebugStore {
   }
 
   public static void staticFieldAccessLookup(final boolean read,
-      final String className, final String fieldName,
+      final Class clazz, final String fieldName,
       final ClassPhantomReference withinClass, final int line) {
     System.out.println("staticFieldAccessLookup");
     System.out.println("  read = " + read);
-    System.out.println("  className = " + className);
+    System.out.println("  class = " + clazz);
     System.out.println("  fieldName = " + fieldName);
     System.out.println("  withinClass = " + withinClass);
     System.out.println("  line = " + line);

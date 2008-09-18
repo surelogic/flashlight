@@ -1119,11 +1119,13 @@ final class FlashlightMethodRewriter extends MethodAdapter {
 
       // Stack is "..., isRead, [receiver]"
   
-      /* Push the class name and field name on the stack */
+      /* Push the class object for the owner class and then field name on the stack */
       mv.visitLdcInsn(fullyQualifiedOwner);
       // ..., isRead, [receiver], className
+      mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.JAVA_LANG_CLASS, FlashlightNames.FOR_NAME, FlashlightNames.FOR_NAME_SIGNATURE);
+      // ..., isRead, [receiver], class object
       mv.visitLdcInsn(name);
-      // ..., isRead, [receiver], className, fieldName
+      // ..., isRead, [receiver], class object, fieldName
       
       storeMethodName = lookupMethodName;
       storeMethodSignature = lookupMethodSignature;
@@ -1131,17 +1133,17 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     }
     
     // Stack is "..., isRead, [receiver/ownerPhantom], field_id" or
-    // "..., isRead, [receiver], className, fieldName"
+    // "..., isRead, [receiver], class object, fieldName"
     
     /* Push the class being analyzed */
     ByteCodeUtils.pushPhantomClass(mv, classBeingAnalyzedInternal);
     // Stack is "..., isRead, [receiver/ownerPhantom], field_id, withinClass" or
-    // "..., isRead, [receiver], className, fieldName, withinClass"
+    // "..., isRead, [receiver], class object, fieldName, withinClass"
     
     /* Push the line number of the field access. */
     ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
     // Stack is "..., isRead, [receiver/ownerPhantom], field_id, withinClass, LineNumber" or
-    // "..., isRead, [receiver], className, fieldName, withinClass, LineNumber"
+    // "..., isRead, [receiver], class object, fieldName, withinClass, LineNumber"
     
     /* We can now call the store method */
     mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,

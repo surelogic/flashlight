@@ -40,10 +40,10 @@ final class FlashlightNames {
   public static final String STATIC_FIELD_ACCESS_SIGNATURE = "(ZLcom/surelogic/_flashlight/ClassPhantomReference;ILcom/surelogic/_flashlight/ClassPhantomReference;I)V";
   
   public static final String INSTANCE_FIELD_ACCESS_LOOKUP = "instanceFieldAccessLookup";
-  public static final String INSTANCE_FIELD_ACCESS_LOOKUP_SIGNATURE = "(ZLjava/lang/Object;Ljava/lang/String;Ljava/lang/String;Lcom/surelogic/_flashlight/ClassPhantomReference;I)V";
+  public static final String INSTANCE_FIELD_ACCESS_LOOKUP_SIGNATURE = "(ZLjava/lang/Object;Ljava/lang/Class;Ljava/lang/String;Lcom/surelogic/_flashlight/ClassPhantomReference;I)V";
   
   public static final String STATIC_FIELD_ACCESS_LOOKUP = "staticFieldAccessLookup";
-  public static final String STATIC_FIELD_ACCESS_LOOKUP_SIGNATURE = "(ZLjava/lang/String;Ljava/lang/String;Lcom/surelogic/_flashlight/ClassPhantomReference;I)V";
+  public static final String STATIC_FIELD_ACCESS_LOOKUP_SIGNATURE = "(ZLjava/lang/Class;Ljava/lang/String;Lcom/surelogic/_flashlight/ClassPhantomReference;I)V";
   
   public static final String INTRINSIC_LOCK_WAIT = "intrinsicLockWait";
   public static final String INTRINSIC_LOCK_WAIT_SIGNATURE = "(ZLjava/lang/Object;Lcom/surelogic/_flashlight/ClassPhantomReference;I)V";

@@ -17,13 +17,13 @@ public class EmptyStore {
 
   public static void instanceFieldAccessLookup(
       final boolean read, final Object receiver,
-      final String className, final String fieldName,
+      final Class clazz, final String fieldName,
       final ClassPhantomReference withinClass, final int line) {
     // do nothing
   }
 
   public static void staticFieldAccessLookup(final boolean read,
-      final String className, final String fieldName,
+      final Class clazz, final String fieldName,
       final ClassPhantomReference withinClass, final int line) {
     // do nothing
   }

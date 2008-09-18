@@ -24,12 +24,8 @@ public final class FlashlightRuntimeSupport {
     }
   };
 
-  private static Map<String, Class<?>> classes = new HashMap<String, Class<?>>();
-
-  private static Map<String, Map<String, Field>> classNameToFieldNameToField =
-    new HashMap<String, Map<String, Field>>();
-
-
+  private static Map<ClassLoader,ClassLoaderInfo> loaderToInfoMap =
+	  new HashMap<ClassLoader,ClassLoaderInfo>();
   
   /** Private method to prevent instantiation. */
   private FlashlightRuntimeSupport() {
@@ -54,39 +50,18 @@ public final class FlashlightRuntimeSupport {
     }
   }
   
-  
-  
-  /**
-   * Get the Field object for the named field, starting the search with the
-   * given named classt.
-   */
-  public static synchronized Field getField(
-      final String className, final String fieldName)
-      throws NoSuchFieldException, ClassNotFoundException {
-    Map<String, Field> fieldName2Field = classNameToFieldNameToField.get(className);
-    if (fieldName2Field == null) {
-      /* Never seen this class before */
-      final Class clazz = Class.forName(className);
-      final Field field = getFieldInternal(clazz, fieldName);
-      
-      classes.put(className, clazz);
-      fieldName2Field = new HashMap<String, Field>();
-      fieldName2Field.put(fieldName, field);
-      classNameToFieldNameToField.put(className, fieldName2Field);
-      return field;
-    } else {
-      // Have we seen this field before?
-      Field field = fieldName2Field.get(fieldName);
-      if (field == null) {
-        // We know that Class in the classes table
-        final Class clazz = classes.get(className);
-        field = getFieldInternal(clazz, fieldName);
-        fieldName2Field.put(fieldName, field);
-      }
-      return field;
-    }
+  public static synchronized ClassLoaderInfo getClassLoaderInfo(Class c) {
+	  ClassLoader cl       = c.getClassLoader();
+	  ClassLoaderInfo info = loaderToInfoMap.get(cl);
+	  if (info == null) {
+		  info = new ClassLoaderInfo(cl);
+		  loaderToInfoMap.put(cl, info);
+	  }
+	  return info;
   }
-    
+   
+  
+  @SuppressWarnings("unused")
   private static Field getFieldInternal(final Class root, final String fname) 
       throws NoSuchFieldException {
     try {

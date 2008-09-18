@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * to be removed during data prep.
  */
 final class Refinery extends Thread {
-	private final BlockingQueue<Event> f_rawQueue;
+	private final BlockingQueue<List<Event>> f_rawQueue;
 
 	private final BlockingQueue<List<Event>> f_outQueue;
 
@@ -25,7 +25,7 @@ final class Refinery extends Thread {
 	 */
 	private final int f_size;
 
-	Refinery(final BlockingQueue<Event> rawQueue,
+	Refinery(final BlockingQueue<List<Event>> rawQueue,
 			final BlockingQueue<List<Event>> outQueue, final int size) {
 		super("flashlight-refinery");
 		assert rawQueue != null;
@@ -48,32 +48,45 @@ final class Refinery extends Thread {
 		final boolean filter = true;
 		Store.flashlightThread();
 
-		final List<Event> buf = new ArrayList<Event>();
+		final List<List<Event>> buf = new ArrayList<List<Event>>();
+		List<Event> last = null; // keep for reuse
 		while (!f_finished) {
 			try {
 				f_rawQueue.drainTo(buf);
-				for(Event e : buf) {
-					if (e == FinalEvent.FINAL_EVENT) {
-						/*
-						 * We need to delay putting the final event on the out queue
-						 * until all the thread-local events get added.
-						 */
-						f_finished = true;
-						break;
-					} else {
+				for(List<Event> l : buf) {
+					last = l;
+					for(Event e : l) {
+						if (e == FinalEvent.FINAL_EVENT) {
+							/*
+							 * We need to delay putting the final event on the out queue
+							 * until all the thread-local events get added.
+							 */
+							f_finished = true;
+							break;
+						} else {
+							f_eventCache.add(e);
+							if (filter) {
+								e.accept(f_detectSharedFieldsVisitor);
+							}
+						}
+					}
+				}
+				buf.clear();
+				if (f_finished) {
+					for(Event e : Store.flushLocalQueues()) {
 						f_eventCache.add(e);
 						if (filter) {
 							e.accept(f_detectSharedFieldsVisitor);
 						}
 					}
-				}
-				buf.clear();
+				}				
+				
 				processGarbageCollectedObjects(filter);
 				if (f_finished) {
 					removeRemainingThreadLocalFields();
 				}
 				
-				final boolean xferd = transferEventsToOutQueue();
+				final boolean xferd = transferEventsToOutQueue(last);
 				if (!xferd) {
 					try {
 						Thread.sleep(1);
@@ -85,10 +98,10 @@ final class Refinery extends Thread {
 				Store.logAProblem("refinery was interrupted...a bug");
 			}
 		}
-		buf.clear();
-		buf.add(new Time());
-		buf.add(FinalEvent.FINAL_EVENT);
-		Store.putInQueue(f_outQueue, buf);
+		last = new ArrayList<Event>();		
+		last.add(new Time());
+		last.add(FinalEvent.FINAL_EVENT);
+		Store.putInQueue(f_outQueue, last);
 		Store.log("refinery completed (" + f_garbageCollectedObjectCount.get()
 				+ " object(s) garbage collected : "
 				+ f_threadLocalFieldCount.get()
@@ -231,15 +244,22 @@ final class Refinery extends Thread {
 	/**
 	 * Transfers events to the out queue. If we are finished then we add all
 	 * events, otherwise we just add enough to keep our cache at {@link #f_size}.
+	 * @param l 
 	 */
-	private boolean transferEventsToOutQueue() {
+	private boolean transferEventsToOutQueue(List<Event> l) {
 		int transferCount = f_finished ? f_eventCache.size() : f_eventCache
 				.size()
 				- f_size;
 		if (!f_finished && transferCount < 100) {
 			return false;
 		}
-		final List<Event> buf = new ArrayList<Event>(transferCount);
+		final List<Event> buf;
+		if (l != null) {
+			l.clear();
+			buf = l;			
+		} else {
+			buf = new ArrayList<Event>(transferCount);
+		}
 		while (transferCount > 0) {
 			final Event e = f_eventCache.removeFirst();
 			buf.add(e);

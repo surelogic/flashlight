@@ -97,11 +97,25 @@ abstract class ObservedField {
 	 * @return the one {@link ObservedField} instance associated with the
 	 *         specified field.
 	 */
+	static ObservedField getInstance(final String className, final String fieldName,
+			BlockingQueue<List<Event>> rawQueue) {
+		assert className != null && fieldName != null;
+		final Class declaringType;
+		try {
+			declaringType = Class.forName(className);
+		} catch (ClassNotFoundException e) {
+			return null;
+		}
+		return getInstance(declaringType, fieldName, rawQueue);
+	}
+		
 	static ObservedField getInstance(final Field field,
-			BlockingQueue<Event> rawQueue) {
-		assert field != null;
-		final String fieldName    = field.getName();
-		final Class declaringType = field.getDeclaringClass();
+			BlockingQueue<List<Event>> rawQueue) {
+		return getInstance(field.getDeclaringClass(), field.getName(), rawQueue);
+	}
+	
+	static ObservedField getInstance(final Class declaringType, final String fieldName,
+			BlockingQueue<List<Event>> rawQueue) {
 		final ClassPhantomReference pDeclaringType = Phantom.ofClass(declaringType);
 		ConcurrentHashMap<String, ObservedField> fieldNameToField = f_declaringTypeToFieldNameToField.get(pDeclaringType);
 		if (fieldNameToField == null) {
@@ -118,6 +132,12 @@ abstract class ObservedField {
 			}
 		}
 		// Need to create the field
+		final Field field;
+		try {
+			field = getFieldInternal(declaringType, fieldName);
+		} catch (NoSuchFieldException e) {
+			return null;
+		}
 		final int mod = field.getModifiers();
 		final boolean isFinal    = Modifier.isFinal(mod);
 		final boolean isVolatile = Modifier.isVolatile(mod);
@@ -134,6 +154,43 @@ abstract class ObservedField {
 		}
 	}
 
+	/**
+	 * Originally in FlashlightRuntimeSupport
+	 */
+	private static Field getFieldInternal(final Class root, final String fname) 
+	throws NoSuchFieldException {
+		try {
+			/* Hopefully the field is local. */
+			final Field f = root.getDeclaredField(fname);
+			// Won't get here if the field is not found
+			return f;
+		} catch(final NoSuchFieldException e) {
+			// Fall through to try super class and interfaces 
+		}
+
+		final Class superClass = root.getSuperclass();
+		if (superClass != null) {
+			try {
+				return getFieldInternal(superClass, fname);
+			} catch (final NoSuchFieldException e) {
+				// fall through to check interfaces
+			}
+		}
+
+		final Class[] interfaces = root.getInterfaces();
+		for (final Class i : interfaces) {
+			try {
+				return getFieldInternal(i, fname);
+			} catch (final NoSuchFieldException e) {
+				// try next interface
+			}
+		}
+
+		// Couldn't find the field
+		throw new NoSuchFieldException("Couldn't find field \"" + fname
+				+ "\" in class " + root.getCanonicalName() + " or any of its ancestors");
+	}
+	
 	@Override
 	public String toString() {
 		return f_declaringType.getName() + "." + f_fieldName;

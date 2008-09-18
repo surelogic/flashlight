@@ -18,8 +18,8 @@ public class TestObservedField extends TestCase {
 	 * {@link ObservedField#getInstance(Field, BlockingQueue)} uses
 	 * {@link BlockingQueue#put(Object)} which can block.
 	 */
-	private static final BlockingQueue<Event> Q = new ArrayBlockingQueue<Event>(
-			4);
+	private static final BlockingQueue<List<Event>> Q = 
+		new ArrayBlockingQueue<List<Event>>(4);
 
 	private final static int THREADS = 30;
 

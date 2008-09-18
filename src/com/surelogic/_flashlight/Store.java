@@ -9,7 +9,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.lang.reflect.Field;
 import java.text.SimpleDateFormat;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -163,7 +163,7 @@ public final class Store {
 	 * A queue to buffer raw event records from the instrumented program to the
 	 * {@link Refinery}.
 	 */
-	private static final BlockingQueue<Event> f_rawQueue;
+	private static final BlockingQueue<List<Event>> f_rawQueue;
 
 	/**
 	 * A queue to buffer refined event records from the {@link Refinery} to the
@@ -264,7 +264,7 @@ public final class Store {
 
 			File dataFile = new File(fileName.toString() + ".fl.gz");
 			w = null;
-			final boolean outputBinary = false;
+			final boolean outputBinary = true;
 			OutputStream stream = null;
 			try {
 				stream = new FileOutputStream(dataFile);
@@ -289,11 +289,11 @@ public final class Store {
 
 			final int rawQueueSize = StoreConfiguration.getRawQueueSize();
 			if (true) {
-				f_rawQueue = new ArrayBlockingQueue<Event>(rawQueueSize);
+				f_rawQueue = new ArrayBlockingQueue<List<Event>>(rawQueueSize);
 			} else {
-				f_rawQueue = new LinkedBlockingQueue<Event>();
+				f_rawQueue = new LinkedBlockingQueue<List<Event>>();
 			}
-			putInQueue(f_rawQueue, timeEvent);
+			putInQueue(f_rawQueue, Collections.<Event>singletonList(timeEvent));
 			final int outQueueSize = StoreConfiguration.getOutQueueSize();
 			f_outQueue = new ArrayBlockingQueue<List<Event>>(outQueueSize);
 			tl_withinStore = new ThreadLocal<Boolean>() {
@@ -445,46 +445,46 @@ public final class Store {
       final boolean read, final Object receiver,
       final Class clazz, final String fieldName, 
       final ClassPhantomReference withinClass, final int line) {
-//    if (f_flashlightIsNotInitialized)
-//      return;
-//    if (FL_OFF.get())
-//      return;
-//    if (tl_withinStore.get().booleanValue())
-//      return;
-//    tl_withinStore.set(Boolean.TRUE);
-//    try {
-//      if (DEBUG) {
-//        final String fmt = "Store.instanceFieldAccessLookup(%n\t\t%s%n\t\treceiver=%s%n\t\tfield=%s%n\t\tlocation=%s)";
-//        log(String.format(fmt, read ? "read" : "write",
-//            safeToString(receiver), field, SrcLoc.toString(withinClass, line)));
-//      }
-//      /*
-//       * Check that the parameters are valid, gather needed information,
-//       * and put an event in the raw queue.
-//       */
-//      if (field == null) {
-//        final String fmt = "field cannot be null...instrumentation bug detected by Store.instanceFieldAccessLookup(%s, receiver=%s, field=%s, withinClass, line=%s)";
-//        logAProblem(String.format(fmt, read ? "read" : "write",
-//            safeToString(receiver), field, SrcLoc.toString(withinClass, line)));
-//        return;
-//      }
-//      final ObservedField oField = ObservedField.getInstance(field,
-//          f_rawQueue);
-//      final Event e;
-//      if (receiver == null) {
-//        final String fmt = "instance field %s access reported with a null receiver...instrumentation bug detected by Store.instanceFieldAccessLookup(%s, receiver=%s, field=%s, location=%s)";
-//        logAProblem(String.format(fmt, oField, read ? "read"
-//            : "write", safeToString(receiver), field, SrcLoc.toString(withinClass, line)));
-//        return;
-//      }
-//      if (read)
-//        e = new FieldReadInstance(receiver, oField, withinClass, line);
-//      else
-//        e = new FieldWriteInstance(receiver, oField, withinClass, line);
-//      putInQueue(f_rawQueue, e);
-//    } finally {
-//      tl_withinStore.set(Boolean.FALSE);
-//    }
+    if (f_flashlightIsNotInitialized)
+      return;
+    if (FL_OFF.get())
+      return;
+    if (tl_withinStore.get().booleanValue())
+      return;
+    tl_withinStore.set(Boolean.TRUE);
+    try {
+      if (DEBUG) {
+        final String fmt = "Store.instanceFieldAccessLookup(%n\t\t%s%n\t\treceiver=%s%n\t\tfield=%s%n\t\tlocation=%s)";
+        log(String.format(fmt, read ? "read" : "write",
+            safeToString(receiver), clazz.getName()+'.'+fieldName, SrcLoc.toString(withinClass, line)));
+      }
+      final ObservedField oField = ObservedField.getInstance(clazz, fieldName,
+              f_rawQueue);
+      /*
+       * Check that the parameters are valid, gather needed information,
+       * and put an event in the raw queue.
+       */
+      if (oField == null) {
+        final String fmt = "field cannot be null...instrumentation bug detected by Store.instanceFieldAccessLookup(%s, receiver=%s, field=%s, withinClass, line=%s)";
+        logAProblem(String.format(fmt, read ? "read" : "write",
+            safeToString(receiver), clazz.getName()+'.'+fieldName, SrcLoc.toString(withinClass, line)));
+        return;
+      }
+      final Event e;
+      if (receiver == null) {
+        final String fmt = "instance field %s access reported with a null receiver...instrumentation bug detected by Store.instanceFieldAccessLookup(%s, receiver=%s, field=%s, location=%s)";
+        logAProblem(String.format(fmt, oField, read ? "read"
+            : "write", safeToString(receiver), clazz.getName()+'.'+fieldName, SrcLoc.toString(withinClass, line)));
+        return;
+      }
+      if (read)
+        e = new FieldReadInstance(receiver, oField, withinClass, line);
+      else
+        e = new FieldWriteInstance(receiver, oField, withinClass, line);
+      putInQueue(f_rawQueue, e);
+    } finally {
+      tl_withinStore.set(Boolean.FALSE);
+    }
   }
 
   /**
@@ -507,38 +507,39 @@ public final class Store {
   public static void staticFieldAccessLookup(final boolean read,
       final Class clazz, final String fieldName,
       final ClassPhantomReference withinClass, final int line) {
-//    if (f_flashlightIsNotInitialized)
-//      return;
-//    if (FL_OFF.get())
-//      return;
-//    if (tl_withinStore.get().booleanValue())
-//      return;
-//    tl_withinStore.set(Boolean.TRUE);
-//    try {
-//      if (DEBUG) {
-//        final String fmt = "Store.staticFieldAccessLookup(%n\t\t%s%n\t\tfield=%s%n\t\tlocation=%s)";
-//        log(String.format(fmt, read ? "read" : "write", field, SrcLoc.toString(withinClass, line)));
-//      }
-//      /*
-//       * Check that the parameters are valid, gather needed information,
-//       * and put an event in the raw queue.
-//       */
-//      if (field == null) {
-//        final String fmt = "field cannot be null...instrumentation bug detected by Store.staticFieldAccessLookup(%s, field=%s, location=%s)";
-//        logAProblem(String.format(fmt, read ? "read" : "write", field, SrcLoc.toString(withinClass, line)));
-//        return;
-//      }
-//      final ObservedField oField = ObservedField.getInstance(field,
-//          f_rawQueue);
-//      final Event e;
-//      if (read)
-//        e = new FieldReadStatic(oField, withinClass, line);
-//      else
-//        e = new FieldWriteStatic(oField, withinClass, line);
-//      putInQueue(f_rawQueue, e);
-//    } finally {
-//      tl_withinStore.set(Boolean.FALSE);
-//    }
+    if (f_flashlightIsNotInitialized)
+      return;
+    if (FL_OFF.get())
+      return;
+    if (tl_withinStore.get().booleanValue())
+      return;
+    tl_withinStore.set(Boolean.TRUE);
+    try {
+      if (DEBUG) {
+        final String fmt = "Store.staticFieldAccessLookup(%n\t\t%s%n\t\tfield=%s%n\t\tlocation=%s)";
+        log(String.format(fmt, read ? "read" : "write", clazz.getName()+'.'+fieldName, SrcLoc.toString(withinClass, line)));
+      }
+      final ObservedField oField = ObservedField.getInstance(clazz, fieldName,
+              f_rawQueue);
+      /*
+       * Check that the parameters are valid, gather needed information,
+       * and put an event in the raw queue.
+       */
+      if (oField == null) {
+        final String fmt = "field cannot be null...instrumentation bug detected by Store.staticFieldAccessLookup(%s, field=%s, location=%s)";
+        logAProblem(String.format(fmt, read ? "read" : "write", clazz.getName()+'.'+fieldName, SrcLoc.toString(withinClass, line)));
+        return;
+      }
+
+      final Event e;
+      if (read)
+        e = new FieldReadStatic(oField, withinClass, line);
+      else
+        e = new FieldWriteStatic(oField, withinClass, line);
+      putInQueue(f_rawQueue, e);
+    } finally {
+      tl_withinStore.set(Boolean.FALSE);
+    }
   }
 
 	/**
@@ -582,7 +583,8 @@ public final class Store {
 						safeToString(receiver), field, SrcLoc.toString(withinClass, line)));
 				return;
 			}
-			final ObservedField oField = ObservedField.getInstance(field,
+			final ObservedField oField = ObservedField.getInstance(field.getDeclaringClass().getName(),
+					                                               field.getName(),
 					f_rawQueue);
 			final Event e;
 			if (oField.isStatic()) {
@@ -1172,7 +1174,7 @@ public final class Store {
 		/*
 		 * Finish up data output.
 		 */
-		putInQueue(f_rawQueue, FinalEvent.FINAL_EVENT);
+		putInQueue(f_rawQueue, Collections.<Event>singletonList(FinalEvent.FINAL_EVENT));
 		join(f_refinery);
 		join(f_depository);
 
@@ -1239,6 +1241,52 @@ public final class Store {
 		}
 	}
 
+	static final int LOCAL_QUEUE_MAX = 64;
+	
+	/**
+	 * Used by the refinery to flush all the local queues upon shutdown
+	 */
+	static final List<List<Event>> localQueueList = new ArrayList<List<Event>>();
+	
+	static final ThreadLocal<List<Event>> localQueues = new ThreadLocal<List<Event>>() {
+		@Override
+		protected List<Event> initialValue() {
+			List<Event> l = new ArrayList<Event>(LOCAL_QUEUE_MAX);
+			synchronized (localQueueList) {
+				localQueueList.add(l);
+			}
+			return l;
+		}
+	};
+	
+	static void putInQueue(final BlockingQueue<List<Event>> queue, final Event e) {
+		List<Event> localQ = localQueues.get();
+		List<Event> copy   = null;
+		synchronized (localQ) {
+			localQ.add(e);
+			if (localQ.size() >= LOCAL_QUEUE_MAX) {
+				copy = new ArrayList<Event>(localQ);
+				localQ.clear();
+			}
+		}
+		if (copy != null) {
+			putInQueue(queue, copy);
+		}		
+ 	}
+	
+	static List<Event> flushLocalQueues() {
+		List<Event> buf = new ArrayList<Event>(LOCAL_QUEUE_MAX);
+		synchronized (localQueueList) {
+			for(List<Event> q : localQueueList) {
+				synchronized (q) {
+					buf.addAll(q);
+					buf.clear();
+				}
+			}
+		}
+		return buf;
+	}
+	
 	/**
 	 * Joins on the given thread ignoring any interruptions.
 	 * 

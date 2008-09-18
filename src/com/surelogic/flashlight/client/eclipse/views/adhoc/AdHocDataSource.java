@@ -73,9 +73,11 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements
 
 	public void init() {
 		getManager().addObserver(this);
+		getManager().addObserver(JumpToCode.getInstance());
 	}
 
 	public void dispose() {
+		getManager().removeObserver(JumpToCode.getInstance());
 		getManager().removeObserver(this);
 		AdHocManager.shutdown();
 	}

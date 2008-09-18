@@ -685,7 +685,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     // ClassPhantomReference
     
     /* Set the static field flashlight$withinClass */
-    mv.visitFieldInsn(Opcodes.PUTSTATIC, classBeingAnalyzedInternal, FlashlightNames.WITHIN_CLASS, FlashlightNames.WITHIN_CLASS_DESC);
+    mv.visitFieldInsn(Opcodes.PUTSTATIC, classBeingAnalyzedInternal, FlashlightNames.PHANTOM_CLASS_OBJECT, FlashlightNames.PHANTOM_CLASS_OBJECT_DESC);
     // empty stack
     
     if (!atLeastJava5) {
@@ -696,7 +696,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
       // className
       mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.JAVA_LANG_CLASS, FlashlightNames.FOR_NAME, FlashlightNames.FOR_NAME_SIGNATURE);
       // Class
-      mv.visitFieldInsn(Opcodes.PUTSTATIC, classBeingAnalyzedInternal, FlashlightNames.IN_CLASS, FlashlightNames.IN_CLASS_DESC);
+      mv.visitFieldInsn(Opcodes.PUTSTATIC, classBeingAnalyzedInternal, FlashlightNames.CLASS_OBJECT, FlashlightNames.CLASS_OBJECT_DESC);
       // empty stack
     }
     // resume
@@ -747,7 +747,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     // ..., before
     mv.visitVarInsn(Opcodes.ALOAD, 0);
     // ..., before, this
-    ByteCodeUtils.pushWithinClass(mv, classBeingAnalyzedInternal);
+    ByteCodeUtils.pushPhantomClass(mv, classBeingAnalyzedInternal);
     // ..., before, this, withinClass
     ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
     // ..., before, this, withinClass, line
@@ -768,7 +768,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
       // ..., true, fileName
       mv.visitLdcInsn(methodName);
       // ..., true, fileName, methodName
-      ByteCodeUtils.pushWithinClass(mv, classBeingAnalyzedInternal);
+      ByteCodeUtils.pushPhantomClass(mv, classBeingAnalyzedInternal);
       // ..., true, fileName, methodName, withinClass
       ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
       // ..., true, fileName, methodName, withinClass, line 
@@ -795,7 +795,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
       // ..., true, fileName
       mv.visitLdcInsn(methodName);
       // ..., true, fileName, methodName
-      ByteCodeUtils.pushWithinClass(mv, classBeingAnalyzedInternal);
+      ByteCodeUtils.pushPhantomClass(mv, classBeingAnalyzedInternal);
       // ..., true, fileName, methodName, withinClass
       ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
       // ..., true, fileName, methodName, withinClass, line 
@@ -814,7 +814,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
       // ex, true, fileName
       mv.visitLdcInsn(methodName);
       // ex, true, fileName, methodName
-      ByteCodeUtils.pushWithinClass(mv, classBeingAnalyzedInternal);
+      ByteCodeUtils.pushPhantomClass(mv, classBeingAnalyzedInternal);
       // ex, true, fileName, methodName, withinClass
       ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
       // ex, true, fileName, methodName, withinClass, line 
@@ -862,7 +862,6 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     }
         
     final String fullyQualifiedOwner = ByteCodeUtils.internal2FullyQualified(owner);
-    final int stackDelta;
     
     /* We need to manipulate the stack to make a copy of the object being
      * accessed so that we can have it for the call to the Store.
@@ -871,9 +870,6 @@ final class FlashlightMethodRewriter extends MethodAdapter {
      * of the field to determine this.
      */
     if (ByteCodeUtils.isCategory2(desc)) {
-      // Category 2
-      stackDelta = 2;
-      
       // At the start the stack is "..., objectref, value"
       mv.visitInsn(Opcodes.DUP2_X1);
       // Stack is "..., value, objectref, value" (+2)
@@ -885,10 +881,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
       // Stack is "..., objectref, objectref, value, objectref" (+2)
       mv.visitInsn(Opcodes.POP);
       // Stack is "..., objectref, objectref, value" (+1)      
-    } else {
-      // Category 1
-      stackDelta = 3;
-  
+    } else { // Category 1
       // At the start the stack is "..., objectref, value"
       mv.visitInsn(Opcodes.SWAP);
       // Stack is "..., value, objectref" (+0)
@@ -912,12 +905,15 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     mv.visitInsn(Opcodes.SWAP);
     // Stack is "..., false, objectref"
     
-    finishFieldAccess(name, fullyQualifiedOwner, 
-        FlashlightNames.INSTANCE_FIELD_ACCESS, FlashlightNames.INSTANCE_FIELD_ACCESS_SIGNATURE,
-        FlashlightNames.INSTANCE_FIELD_ACCESS_LOOKUP, FlashlightNames.INSTANCE_FIELD_ACCESS_LOOKUP_SIGNATURE);
+    final int pushed = finishFieldAccess(false,
+        owner, fullyQualifiedOwner, name,
+        FlashlightNames.INSTANCE_FIELD_ACCESS,
+        FlashlightNames.INSTANCE_FIELD_ACCESS_SIGNATURE,
+        FlashlightNames.INSTANCE_FIELD_ACCESS_LOOKUP,
+        FlashlightNames.INSTANCE_FIELD_ACCESS_LOOKUP_SIGNATURE);
     
     // Update stack depth
-    updateStackDepthDelta(stackDelta);
+    updateStackDepthDelta(2 + pushed);
   }
 
 
@@ -969,12 +965,17 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     mv.visitInsn(Opcodes.SWAP);
     // Stack is "..., value, true, objectref"
     
-    finishFieldAccess(name, fullyQualifiedOwner, 
-        FlashlightNames.INSTANCE_FIELD_ACCESS, FlashlightNames.INSTANCE_FIELD_ACCESS_SIGNATURE,
-        FlashlightNames.INSTANCE_FIELD_ACCESS_LOOKUP, FlashlightNames.INSTANCE_FIELD_ACCESS_LOOKUP_SIGNATURE);
+    final int pushed = finishFieldAccess(false,
+        owner, fullyQualifiedOwner, name,
+        FlashlightNames.INSTANCE_FIELD_ACCESS,
+        FlashlightNames.INSTANCE_FIELD_ACCESS_SIGNATURE,
+        FlashlightNames.INSTANCE_FIELD_ACCESS_LOOKUP,
+        FlashlightNames.INSTANCE_FIELD_ACCESS_LOOKUP_SIGNATURE);
     
-    // Update stack depth
-    updateStackDepthDelta(5);
+    /* Update stack depth: Works because pushed >= 1.  We need the stack depth
+     * to increase by at least 3 in the case of value being category 2.
+     */
+    updateStackDepthDelta(2+pushed);
   }
 
 
@@ -1006,14 +1007,17 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     ByteCodeUtils.pushBooleanConstant(mv, false);
     // Stack is "..., false"
     
-    finishFieldAccess(name, fullyQualifiedOwner, 
-        FlashlightNames.STATIC_FIELD_ACCESS, FlashlightNames.STATIC_FIELD_ACCESS_SIGNATURE,
-        FlashlightNames.STATIC_FIELD_ACCESS_LOOKUP, FlashlightNames.STATIC_FIELD_ACCESS_LOOKUP_SIGNATURE);
+    final int pushed = finishFieldAccess(true,
+        owner, fullyQualifiedOwner, name,
+        FlashlightNames.STATIC_FIELD_ACCESS,
+        FlashlightNames.STATIC_FIELD_ACCESS_SIGNATURE,
+        FlashlightNames.STATIC_FIELD_ACCESS_LOOKUP,
+        FlashlightNames.STATIC_FIELD_ACCESS_LOOKUP_SIGNATURE);
     
-    /* Update stack depth.  Either 3 or 4 depending on the category of the
-     * original value on the stack.
+    /* Update stack depth. Depends on the category of the original value on the
+     * stack.
      */
-    updateStackDepthDelta(1 + (ByteCodeUtils.isCategory2(desc) ? 2 : 3));
+    updateStackDepthDelta((ByteCodeUtils.isCategory2(desc) ? -1 : 0) + pushed);
   }
   
   /**
@@ -1042,12 +1046,15 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     ByteCodeUtils.pushBooleanConstant(mv, true);
     // Stack is "..., value, true"
     
-    finishFieldAccess(name, fullyQualifiedOwner, 
-        FlashlightNames.STATIC_FIELD_ACCESS, FlashlightNames.STATIC_FIELD_ACCESS_SIGNATURE,
-        FlashlightNames.STATIC_FIELD_ACCESS_LOOKUP, FlashlightNames.STATIC_FIELD_ACCESS_LOOKUP_SIGNATURE);
+    final int pushed = finishFieldAccess(true,
+        owner, fullyQualifiedOwner, name,
+        FlashlightNames.STATIC_FIELD_ACCESS,
+        FlashlightNames.STATIC_FIELD_ACCESS_SIGNATURE,
+        FlashlightNames.STATIC_FIELD_ACCESS_LOOKUP,
+        FlashlightNames.STATIC_FIELD_ACCESS_LOOKUP_SIGNATURE);
     
     // Update stack depth
-    updateStackDepthDelta(4);
+    updateStackDepthDelta(1+pushed);
   }
 
 
@@ -1080,20 +1087,28 @@ final class FlashlightMethodRewriter extends MethodAdapter {
    * @param lookupMethodSignature
    *          The signature of the Store method to call if we didn't find the
    *          field's unique identifier and need to use reflection.
+   * @return The number of items pushed on the stack
    */
-  private void finishFieldAccess(
-      final String name, final String fullyQualifiedOwner,
+  private int finishFieldAccess(final boolean isStatic,
+      final String owner, final String fullyQualifiedOwner, final String name,
       final String foundMethodName, final String foundMethodSignature,
       final String lookupMethodName, final String lookupMethodSignature) {
     // Stack is "..., isRead, [receiver]"
 
     final String storeMethodName;
     final String storeMethodSignature;
+    final int pushed;
     final Integer fid = classModel.getFieldID(fullyQualifiedOwner, name);
     if (fid != ClassAndFieldModel.FIELD_NOT_FOUND) {
+      if (isStatic) {
+        ByteCodeUtils.pushPhantomClass(mv, owner);
+        pushed = 4;
+      } else {
+        pushed = 3;
+      }
       /* Push the id of the field */
       mv.visitLdcInsn(fid);
-      // Stack is "..., isRead, [receiver,] field_id
+      // Stack is "..., isRead, [receiver/ownerPhantom], field_id
       
       storeMethodName = foundMethodName;
       storeMethodSignature = foundMethodSignature;
@@ -1104,29 +1119,29 @@ final class FlashlightMethodRewriter extends MethodAdapter {
 
       // Stack is "..., isRead, [receiver]"
   
-      /* Push the class name and field name on the stack for a call to
-       * FlashlightRuntimeSupport.getField().
-       */
+      /* Push the class name and field name on the stack */
       mv.visitLdcInsn(fullyQualifiedOwner);
-      // ..., isRead, [receiver,] className
+      // ..., isRead, [receiver], className
       mv.visitLdcInsn(name);
-      // ..., isRead, [receiver,] className, fieldName
-      mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.FLASHLIGHT_RUNTIME_SUPPORT, FlashlightNames.GET_FIELD, FlashlightNames.GET_FIELD_SIGNATURE);
-      // Stack is "..., isRead, [receiver,] Field"
+      // ..., isRead, [receiver], className, fieldName
       
       storeMethodName = lookupMethodName;
       storeMethodSignature = lookupMethodSignature;
+      pushed = 4;
     }
     
-    // Stack is "..., isRead, [receiver,] field_id or Field
+    // Stack is "..., isRead, [receiver/ownerPhantom], field_id" or
+    // "..., isRead, [receiver], className, fieldName"
     
     /* Push the class being analyzed */
-    ByteCodeUtils.pushWithinClass(mv, classBeingAnalyzedInternal);
-    // Stack is "..., isRead, [receiver,] field_id or Field, withinClass"
+    ByteCodeUtils.pushPhantomClass(mv, classBeingAnalyzedInternal);
+    // Stack is "..., isRead, [receiver/ownerPhantom], field_id, withinClass" or
+    // "..., isRead, [receiver], className, fieldName, withinClass"
     
     /* Push the line number of the field access. */
     ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
-    // Stack is "..., isRead, [receiver,] field_id or Field, withinClass, LineNumber"
+    // Stack is "..., isRead, [receiver/ownerPhantom], field_id, withinClass, LineNumber" or
+    // "..., isRead, [receiver], className, fieldName, withinClass, LineNumber"
     
     /* We can now call the store method */
     mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
@@ -1134,6 +1149,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     // Stack is "..."
 
     // Resume
+    return pushed;
   }
 
   
@@ -1188,7 +1204,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     // ..., obj, isThis, obj
     mv.visitInsn(Opcodes.DUP_X1);
     // ..., obj, obj, isThis, obj
-    ByteCodeUtils.pushInClass(mv, atLeastJava5, classBeingAnalyzedInternal);
+    ByteCodeUtils.pushClass(mv, atLeastJava5, classBeingAnalyzedInternal);
     // ..., obj, obj, isThis, obj, inClass
     final Label pushFalse2 = new Label();
     final Label afterPushIsClass = new Label();
@@ -1206,7 +1222,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     // ..., obj, obj, isThis, isClass
 
     /* Push the phantom class reference and line number, and call the pre-method */
-    ByteCodeUtils.pushWithinClass(mv, classBeingAnalyzedInternal);
+    ByteCodeUtils.pushPhantomClass(mv, classBeingAnalyzedInternal);
     // ..., obj, obj, isThis, isClass, withinClass
     ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
     // ..., obj, obj, isThis, isClass, withinClass, lineNumber
@@ -1244,7 +1260,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
       @Override
       public void insertCode() {
         /* Push the phantom class reference and line number, and call the post-method */
-        ByteCodeUtils.pushWithinClass(mv, classBeingAnalyzedInternal);
+        ByteCodeUtils.pushPhantomClass(mv, classBeingAnalyzedInternal);
         // ..., obj, withinClass
         ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
         // ..., obj, withinClass, lineNumber
@@ -1297,7 +1313,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     delayForLabel(new DelayedOutput() {
       @Override
       public void insertCode() {
-        ByteCodeUtils.pushWithinClass(mv, classBeingAnalyzedInternal);
+        ByteCodeUtils.pushPhantomClass(mv, classBeingAnalyzedInternal);
         
         /* Push the lineNumber and call the Store method. */
         ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
@@ -1319,7 +1335,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   
   private void pushSynchronizedMethodLockObject() {
     if (isStatic) {
-      ByteCodeUtils.pushInClass(mv, atLeastJava5, classBeingAnalyzedInternal);
+      ByteCodeUtils.pushClass(mv, atLeastJava5, classBeingAnalyzedInternal);
     } else {
       mv.visitVarInsn(Opcodes.ALOAD, 0);
     }
@@ -1335,7 +1351,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     // lockObj, isReceiver
     ByteCodeUtils.pushBooleanConstant(mv, isStatic);
     // lockObj, isReceiver, isStatic
-    ByteCodeUtils.pushWithinClass(mv, classBeingAnalyzedInternal);
+    ByteCodeUtils.pushPhantomClass(mv, classBeingAnalyzedInternal);
     // lockObj, isReceiver, isStatic, withinClass
     ByteCodeUtils.pushIntegerConstant(mv, 0);
     // lockObj, isReceiver, isStatic, withinClass, 0
@@ -1370,7 +1386,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     /* Now call Store.afterIntrinsicLockAcquisition */
     pushSynchronizedMethodLockObject();
     // lockObj
-    ByteCodeUtils.pushWithinClass(mv, classBeingAnalyzedInternal);
+    ByteCodeUtils.pushPhantomClass(mv, classBeingAnalyzedInternal);
     // lockObj, withinClass
     ByteCodeUtils.pushIntegerConstant(mv, 0);
     // lockObj, withinClass, 0
@@ -1427,7 +1443,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     /* Call Store.afterIntrinsicLockRelease(). */
     pushSynchronizedMethodLockObject();
     // ..., lockObj
-    ByteCodeUtils.pushWithinClass(mv, classBeingAnalyzedInternal);
+    ByteCodeUtils.pushPhantomClass(mv, classBeingAnalyzedInternal);
     // ..., lockObj, withinClass
     ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
     // ..., lockObj, withinClass, exitLineNumber

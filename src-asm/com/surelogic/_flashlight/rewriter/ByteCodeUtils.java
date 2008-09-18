@@ -75,12 +75,12 @@ final class ByteCodeUtils {
   /**
    * Generate code to push the Class object the named class.
    */
-  public static void pushInClass(
+  public static void pushClass(
       final MethodVisitor mv, final boolean atLeastJava5, 
       final String internalClassName) {
     if (!atLeastJava5) {
       mv.visitFieldInsn(Opcodes.GETSTATIC, internalClassName,
-          FlashlightNames.IN_CLASS, FlashlightNames.IN_CLASS_DESC);
+          FlashlightNames.CLASS_OBJECT, FlashlightNames.CLASS_OBJECT_DESC);
     } else {
       mv.visitLdcInsn(Type.getType("L"+internalClassName+";"));
     }
@@ -91,9 +91,9 @@ final class ByteCodeUtils {
    * @param mv
    * @param internalClassName
    */
-  public static void pushWithinClass(
+  public static void pushPhantomClass(
       final MethodVisitor mv, final String internalClassName) {
     mv.visitFieldInsn(Opcodes.GETSTATIC, internalClassName,
-        FlashlightNames.WITHIN_CLASS, FlashlightNames.WITHIN_CLASS_DESC);
+        FlashlightNames.PHANTOM_CLASS_OBJECT, FlashlightNames.PHANTOM_CLASS_OBJECT_DESC);
   }
 }

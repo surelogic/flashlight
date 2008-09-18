@@ -33,20 +33,17 @@ final class FlashlightNames {
   public static final String CONSTRUCTOR_EXECUTION = "constructorExecution";
   public static final String CONSTRUCTOR_EXECUTION_SIGNATURE = "(ZLjava/lang/Object;Lcom/surelogic/_flashlight/ClassPhantomReference;I)V";
   
-//  public static final String FIELD_ACCESS = "fieldAccess";
-//  public static final String FIELD_ACCESS_SIGNATURE = "(ZLjava/lang/Object;Ljava/lang/reflect/Field;Lcom/surelogic/_flashlight/ClassPhantomReference;I)V";
-  
   public static final String INSTANCE_FIELD_ACCESS = "instanceFieldAccess";
   public static final String INSTANCE_FIELD_ACCESS_SIGNATURE = "(ZLjava/lang/Object;ILcom/surelogic/_flashlight/ClassPhantomReference;I)V";
   
   public static final String STATIC_FIELD_ACCESS = "staticFieldAccess";
-  public static final String STATIC_FIELD_ACCESS_SIGNATURE = "(ZILcom/surelogic/_flashlight/ClassPhantomReference;I)V";
+  public static final String STATIC_FIELD_ACCESS_SIGNATURE = "(ZLcom/surelogic/_flashlight/ClassPhantomReference;ILcom/surelogic/_flashlight/ClassPhantomReference;I)V";
   
   public static final String INSTANCE_FIELD_ACCESS_LOOKUP = "instanceFieldAccessLookup";
-  public static final String INSTANCE_FIELD_ACCESS_LOOKUP_SIGNATURE = "(ZLjava/lang/Object;Ljava/lang/reflect/Field;Lcom/surelogic/_flashlight/ClassPhantomReference;I)V";
+  public static final String INSTANCE_FIELD_ACCESS_LOOKUP_SIGNATURE = "(ZLjava/lang/Object;Ljava/lang/String;Ljava/lang/String;Lcom/surelogic/_flashlight/ClassPhantomReference;I)V";
   
   public static final String STATIC_FIELD_ACCESS_LOOKUP = "staticFieldAccessLookup";
-  public static final String STATIC_FIELD_ACCESS_LOOKUP_SIGNATURE = "(ZLjava/lang/reflect/Field;Lcom/surelogic/_flashlight/ClassPhantomReference;I)V";
+  public static final String STATIC_FIELD_ACCESS_LOOKUP_SIGNATURE = "(ZLjava/lang/String;Ljava/lang/String;Lcom/surelogic/_flashlight/ClassPhantomReference;I)V";
   
   public static final String INTRINSIC_LOCK_WAIT = "intrinsicLockWait";
   public static final String INTRINSIC_LOCK_WAIT_SIGNATURE = "(ZLjava/lang/Object;Lcom/surelogic/_flashlight/ClassPhantomReference;I)V";
@@ -94,31 +91,27 @@ final class FlashlightNames {
   
   
   
-  /* We add the static final field "flashlight$inClass" to store the Class
-   * object of the class for use in logging calls.  We prefer this field to
-   * be private, but for interfaces we have to make the field public.  The
+  /* We add the static final field "flashlight$classObject" to store the Class
+   * object of the class for use in logging calls.  We make the field public so
+   * that any class can look up the Class object of any other class.  The
    * field cannot be accessed from Java code though because of the '$' in the
    * field's name.
    */ 
-  public static final String IN_CLASS = "flashlight$inClass";
-  private static final int IN_CLASS_ACCESS_BASE = 
-    Opcodes.ACC_STATIC | Opcodes.ACC_FINAL | Opcodes.ACC_SYNTHETIC;
-  public static final int IN_CLASS_ACCESS_CLASS = Opcodes.ACC_PRIVATE | IN_CLASS_ACCESS_BASE;
-  public static final int IN_CLASS_ACCESS_INTERFACE = Opcodes.ACC_PUBLIC | IN_CLASS_ACCESS_BASE;
-  public static final String IN_CLASS_DESC = "Ljava/lang/Class;";
+  public static final String CLASS_OBJECT = "flashlight$classObject";
+  public static final int CLASS_OBJECT_ACCESS = 
+    Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL | Opcodes.ACC_SYNTHETIC;
+  public static final String CLASS_OBJECT_DESC = "Ljava/lang/Class;";
 
-  /* We add the static final field "flashlight$withinClass" to store the Class
-   * object of the class for use in logging calls.  We prefer this field to
-   * be private, but for interfaces we have to make the field public.  The
+  /* We add the static final field "flashlight$phantomClassObject" to store the Class
+   * object of the class for use in logging calls.  We make the field public so
+   * that any class can look up the phantom class object for any other class.  The
    * field cannot be accessed from Java code though because of the '$' in the
    * field's name.
    */ 
-  public static final String WITHIN_CLASS = "flashlight$withinClass";
-  private static final int WITHIN_CLASS_ACCESS_BASE = 
-    Opcodes.ACC_STATIC | Opcodes.ACC_FINAL | Opcodes.ACC_SYNTHETIC;
-  public static final int WITHIN_CLASS_ACCESS_CLASS = Opcodes.ACC_PRIVATE | WITHIN_CLASS_ACCESS_BASE;
-  public static final int WITHIN_CLASS_ACCESS_INTERFACE = Opcodes.ACC_PUBLIC | WITHIN_CLASS_ACCESS_BASE;
-  public static final String WITHIN_CLASS_DESC = "Lcom/surelogic/_flashlight/ClassPhantomReference;";
+  public static final String PHANTOM_CLASS_OBJECT = "flashlight$phantomClassObject";
+  public static final int PHANTOM_CLASS_OBJECT_ACCESS = 
+    Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL | Opcodes.ACC_SYNTHETIC;
+  public static final String PHANTOM_CLASS_OBJECT_DESC = "Lcom/surelogic/_flashlight/ClassPhantomReference;";
   
   
   // Prevent instantiation

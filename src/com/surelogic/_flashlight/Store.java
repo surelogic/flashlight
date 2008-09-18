@@ -378,20 +378,72 @@ public final class Store {
 		return (def >= min ? def : min);
 	}
 
+  /**
+   * Records that a statically numbered instance field was accessed within the
+   * instrumented program.
+   * 
+   * @param read
+   *            {@code true} indicates a field <i>read</i>, {@code false}
+   *            indicates a field <i>write</i>.
+   * @param receiver
+   *            the object instance the field is part of the state of.
+   * @param fieldID
+   *            the statically assigned id for the accessed field.
+   * @param withinClass
+   *            the phantom class object for the class where the event occurred, may be {@code null}.
+   * @param line
+   *            the line number where the event occurred.
+   */
   public static void instanceFieldAccess(
       final boolean read, final Object receiver, final int fieldID,
       final ClassPhantomReference withinClass, final int line) {
     throw new UnsupportedOperationException("Not yet implemented.  Use single pass instrumenation.");
   }
 
-  public static void staticFieldAccess(
-      final boolean read, final int fieldID,
+  /**
+   * Records that a statically numbered static field was accessed within the
+   * instrumented program.
+   * 
+   * @param read
+   *            {@code true} indicates a field <i>read</i>, {@code false}
+   *            indicates a field <i>write</i>.
+   * @param ownerClass
+   *            the phantom class object of the class that declares the field.
+   * @param fieldID
+   *            the statically assigned id for the accessed field.
+   * @param withinClass
+   *            the phantom class object for the class where the event occurred, may be {@code null}.
+   * @param line
+   *            the line number where the event occurred.
+   */
+  public static void staticFieldAccess(final boolean read,
+      final ClassPhantomReference ownerClass, final int fieldID,
       final ClassPhantomReference withinClass, final int line) {
     throw new UnsupportedOperationException("Not yet implemented.  Use single pass instrumenation.");
   }
 
+  /**
+   * Records that a instance field that needs to be assigned a dynamic field id
+   * was accessed within the instrumented program.
+   * 
+   * @param read
+   *            {@code true} indicates a field <i>read</i>, {@code false}
+   *            indicates a field <i>write</i>.
+   * @param receiver
+   *            the object instance the field is part of the state of.
+   * @param className
+   *            the fully qualified class name of the class in which the search
+   *            for the field should begin.
+   * @param fieldName
+   *            the name of the field.
+   * @param withinClass
+   *            the phantom class object for the class where the event occurred, may be {@code null}.
+   * @param line
+   *            the line number where the event occurred.
+   */
   public static void instanceFieldAccessLookup(
-      final boolean read, final Object receiver, final Field field,
+      final boolean read, final Object receiver,
+      final String className, final String fieldName, 
       final ClassPhantomReference withinClass, final int line) {
     if (f_flashlightIsNotInitialized)
       return;
@@ -435,8 +487,25 @@ public final class Store {
     }
   }
 
-  public static void staticFieldAccessLookup(
-      final boolean read, final Field field,
+  /**
+   * Records that a instance field that needs to be assigned a dynamic field id
+   * was accessed within the instrumented program.
+   * 
+   * @param read
+   *            {@code true} indicates a field <i>read</i>, {@code false}
+   *            indicates a field <i>write</i>.
+   * @param className
+   *            the fully qualified class name of the class in which the search
+   *            for the field should begin.
+   * @param fieldName
+   *            the name of the field.
+   * @param withinClass
+   *            the phantom class object for the class where the event occurred, may be {@code null}.
+   * @param line
+   *            the line number where the event occurred.
+   */
+  public static void staticFieldAccessLookup(final boolean read,
+      final String className, final String fieldName,
       final ClassPhantomReference withinClass, final int line) {
     if (f_flashlightIsNotInitialized)
       return;

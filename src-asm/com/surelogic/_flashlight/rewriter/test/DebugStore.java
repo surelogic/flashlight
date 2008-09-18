@@ -1,7 +1,5 @@
 package com.surelogic._flashlight.rewriter.test;
 
-import java.lang.reflect.Field;
-
 import com.surelogic._flashlight.ClassPhantomReference;
 
 public class DebugStore {
@@ -30,11 +28,12 @@ public class DebugStore {
     System.out.flush();
   }
 
-  public static void staticFieldAccess(
-      final boolean read, final int fieldID,
+  public static void staticFieldAccess(final boolean read,
+      final ClassPhantomReference fieldClass, final int fieldID,
       final ClassPhantomReference withinClass, final int line) {
     System.out.println("staticFieldAccess");
     System.out.println("  read = " + read);
+    System.out.println("  fieldClass = " + fieldClass);
     System.out.println("  fieldID = " + fieldID);
     System.out.println("  withinClass = " + withinClass);
     System.out.println("  line = " + line);
@@ -42,23 +41,26 @@ public class DebugStore {
   }
 
   public static void instanceFieldAccessLookup(
-      final boolean read, final Object receiver, final Field field,
+      final boolean read, final Object receiver,
+      final String className, final String fieldName,
       final ClassPhantomReference withinClass, final int line) {
     System.out.println("instanceFieldAccessLookup");
     System.out.println("  read = " + read);
     System.out.println("  receiver = " + objectToString(receiver));
-    System.out.println("  field = " + field);
+    System.out.println("  className = " + className);
+    System.out.println("  fieldName = " + fieldName);
     System.out.println("  withinClass = " + withinClass);
     System.out.println("  line = " + line);
     System.out.flush();
   }
 
-  public static void staticFieldAccessLookup(
-      final boolean read, final Field field,
+  public static void staticFieldAccessLookup(final boolean read,
+      final String className, final String fieldName,
       final ClassPhantomReference withinClass, final int line) {
     System.out.println("staticFieldAccessLookup");
     System.out.println("  read = " + read);
-    System.out.println("  field = " + field);
+    System.out.println("  className = " + className);
+    System.out.println("  fieldName = " + fieldName);
     System.out.println("  withinClass = " + withinClass);
     System.out.println("  line = " + line);
     System.out.flush();

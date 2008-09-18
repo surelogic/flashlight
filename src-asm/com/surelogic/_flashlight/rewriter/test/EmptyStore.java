@@ -1,7 +1,5 @@
 package com.surelogic._flashlight.rewriter.test;
 
-import java.lang.reflect.Field;
-
 import com.surelogic._flashlight.ClassPhantomReference;
 
 public class EmptyStore {
@@ -11,28 +9,24 @@ public class EmptyStore {
     // do nothing
   }
 
-  public static void staticFieldAccess(
-      final boolean read, final int fieldID,
+  public static void staticFieldAccess(final boolean read,
+      final ClassPhantomReference fieldClass, final int fieldID,
       final ClassPhantomReference withinClass, final int line) {
     // do nothing
   }
 
   public static void instanceFieldAccessLookup(
-      final boolean read, final Object receiver, final Field field,
+      final boolean read, final Object receiver,
+      final String className, final String fieldName,
       final ClassPhantomReference withinClass, final int line) {
     // do nothing
   }
 
-  public static void staticFieldAccessLookup(
-      final boolean read, final Field field,
+  public static void staticFieldAccessLookup(final boolean read,
+      final String className, final String fieldName,
       final ClassPhantomReference withinClass, final int line) {
     // do nothing
   }
-
-//  public static void fieldAccess(final boolean read, final Object receiver,
-//      final Field field, final ClassPhantomReference withinClass, final int line) {
-//    // do nothing
-//  }
 
   public static void beforeIntrinsicLockAcquisition(final Object lockObject,
       final boolean lockIsThis, final boolean lockIsClass,

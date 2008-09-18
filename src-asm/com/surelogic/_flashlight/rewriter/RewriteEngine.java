@@ -33,7 +33,7 @@ import com.surelogic._flashlight.rewriter.MethodIdentifier;
 /**
  * Class that encapsulates the ability to instrument sets of classfiles.  Supports
  * <ul>
- * <li>{@link #rewriteDirectory(File, File) Rewriting a directory of classfiles to a new directory.}
+ * <li>{@link #rewriteDirectoryToDirectory(File, File) Rewriting a directory of classfiles to a new directory.}
  * <li>{@link #rewriteJarToJar(File, File) Rewriting a jar file of classfiles to a new jar file.}
  * <li>{@link #rewriteJarToDirectory(File, File) Rewriting a jar file of classfiles to a directory.}
  * </ul>
@@ -54,7 +54,7 @@ import com.surelogic._flashlight.rewriter.MethodIdentifier;
  * {@link #scanDirectory(File)} and {@link #scanJar(File)}.
  * 
  * <p>The second instrumentation pass is performed using the methods
- * {@link #rewriteDirectory(File, File)}, {@link #rewriteJarToJar(File, File)},
+ * {@link #rewriteDirectoryToDirectory(File, File)}, {@link #rewriteJarToJar(File, File)},
  * and {@link #rewriteJarToDirectory(File, File)}. 
  * 
  * <p>You must not invoke a scan method after invoking a rewrite method.
@@ -96,7 +96,7 @@ public final class RewriteEngine {
   
   
   // =======================================================================
-  // == Dir to Dir functionality
+  // == Dir functionality
   // =======================================================================
 
   /**
@@ -109,7 +109,7 @@ public final class RewriteEngine {
    *           Thrown when there is a problem with any of the directories or
    *           files.
    */
-  public void rewriteDirectory(final File inDir, final File outDir)
+  public void rewriteDirectoryToDirectory(final File inDir, final File outDir)
       throws IOException {
     final String[] files = inDir.list();
     if (files == null) {
@@ -121,7 +121,7 @@ public final class RewriteEngine {
       final File nextIn = new File(inDir, name);
       final File nextOut = new File(outDir, name);
       if (nextIn.isDirectory()) {
-        rewriteDirectory(nextIn, nextOut);
+        rewriteDirectoryToDirectory(nextIn, nextOut);
       } else {
         final BufferedOutputStream bos = new BufferedOutputStream(
             new FileOutputStream(nextOut));
@@ -138,6 +138,71 @@ public final class RewriteEngine {
             // Doesn't want to close, what can we do?
           }
         }
+      }
+    }
+  }
+  
+  /**
+   * Process the files in the given directory {@code inDir}, writing to the
+   * jar file {@code outJar}. Class files are instrumented when they are
+   * stored. Other files are stored verbatim. Nested directories are processed
+   * recursively.  The jar file is given a simple manifest file that
+   * contains a "Manifest-Version" entry, and a "Class-Path" entry pointing 
+   * to the flashlight runtime jar.
+   * 
+   * @throws IOException
+   *           Thrown when there is a problem with any of the directories or
+   *           files.
+   */
+  public void rewriteDirectoryToJar(final File inDir, final File outJarFile,
+      final String runtimeJarName)
+      throws IOException {
+    /* Create the manifest object */
+    final Manifest outManifest = new Manifest();
+    outManifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
+    if (runtimeJarName != null) {
+      outManifest.getMainAttributes().put(Attributes.Name.CLASS_PATH, runtimeJarName);
+    }
+    
+    final FileOutputStream fos = new FileOutputStream(outJarFile);
+    final BufferedOutputStream bos = new BufferedOutputStream(fos);
+    JarOutputStream jarOut = null;
+    try {
+      jarOut = new JarOutputStream(bos, outManifest);
+      rewriteDirectoryToJarHelper(inDir, jarOut, "");
+    } finally {
+      final OutputStream streamToClose = (jarOut != null) ? jarOut : bos;
+      try {
+        streamToClose.close();
+      } catch (final IOException e) {
+        // Doesn't want to close, what can we do?
+      }
+    } 
+  }
+
+  private void rewriteDirectoryToJarHelper(
+      final File inDir, final JarOutputStream jarOut, final String jarPathPrefix) 
+      throws IOException {
+    final String[] files = inDir.list();
+    if (files == null) {
+      throw new IOException("Source directory " + inDir + " is bad");
+    }
+    for (final String name : files) {
+      final File nextIn = new File(inDir, name);
+      if (nextIn.isDirectory()) {
+        final String entryName = jarPathPrefix + name + "/";
+        final JarEntry jarEntryOut = new JarEntry(entryName);
+        jarOut.putNextEntry(jarEntryOut);
+        rewriteDirectoryToJarHelper(nextIn, jarOut, entryName);
+      } else {
+        final String entryName = jarPathPrefix + name;
+        final JarEntry jarEntryOut = new JarEntry(entryName);
+        jarOut.putNextEntry(jarEntryOut);
+        rewriteFileStream(new RewriteHelper() {
+          public InputStream getInputStream() throws IOException {
+            return new BufferedInputStream(new FileInputStream(nextIn));
+          }
+        }, nextIn.getPath(), jarOut);
       }
     }
   }
@@ -618,7 +683,7 @@ public final class RewriteEngine {
     final RewriteEngine engine =
       new RewriteEngine(new Configuration(properties), ConsoleMessenger.prototype, writer);
     engine.scanDirectory(new File(args[0]));
-    engine.rewriteDirectory(new File(args[0]), new File(args[1]));
+    engine.rewriteDirectoryToDirectory(new File(args[0]), new File(args[1]));
     writer.close();
     
     System.out.println("done");

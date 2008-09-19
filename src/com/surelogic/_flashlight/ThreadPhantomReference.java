@@ -4,7 +4,7 @@ import java.lang.ref.ReferenceQueue;
 import java.util.concurrent.ConcurrentMap;
 
 import com.surelogic._flashlight.jsr166y.ConcurrentReferenceHashMap;
-import com.surelogic._flashlight.jsr166y.ConcurrentReferenceHashMap.ReferenceType;
+import com.surelogic._flashlight.jsr166y.ConcurrentReferenceHashMap.*;
 
 /**
  * @region private static ThreadPRInstanceMap
@@ -24,7 +24,7 @@ final class ThreadPhantomReference extends ObjectPhantomReference {
 	 * @aggregate Instance into ThreadPRInstanceMap
 	 */
 	private static final ConcurrentMap<Thread,ThreadPhantomReference> f_threadToPhantom = 
-		new ConcurrentReferenceHashMap<Thread,ThreadPhantomReference>(ReferenceType.WEAK, ReferenceType.STRONG, true);
+		new ConcurrentReferenceHashMap<Thread,ThreadPhantomReference>(ReferenceType.WEAK, ReferenceType.STRONG, ComparisonType.IDENTITY_HASH);
 
 	private static final RefFactory<Thread,ThreadPhantomReference> f_factory = 
 		new RefFactory<Thread,ThreadPhantomReference>() {

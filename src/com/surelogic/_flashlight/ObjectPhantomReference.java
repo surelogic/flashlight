@@ -6,7 +6,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
 import com.surelogic._flashlight.jsr166y.ConcurrentReferenceHashMap;
-import com.surelogic._flashlight.jsr166y.ConcurrentReferenceHashMap.ReferenceType;
+import com.surelogic._flashlight.jsr166y.ConcurrentReferenceHashMap.*;
 
 /**
  * @region private static ObjectPRInstanceMap
@@ -25,7 +25,7 @@ class ObjectPhantomReference extends IdPhantomReference implements IFieldInfo {
 	 * @aggregate Instance into ObjectPRInstanceMap
 	 */
 	private static final ConcurrentMap<Object,ObjectPhantomReference> f_objectToPhantom = 
-		new ConcurrentReferenceHashMap<Object,ObjectPhantomReference>(ReferenceType.WEAK, ReferenceType.STRONG, true);
+		new ConcurrentReferenceHashMap<Object,ObjectPhantomReference>(ReferenceType.WEAK, ReferenceType.STRONG, ComparisonType.IDENTITY_HASH);
 
 	private static final RefFactory<Object,ObjectPhantomReference> f_factory = 
 		new RefFactory<Object,ObjectPhantomReference>() {

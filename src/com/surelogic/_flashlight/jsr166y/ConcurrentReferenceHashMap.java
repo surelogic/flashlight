@@ -149,6 +149,35 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
 		/** Indicates a {@link SoftReference} should be used */
 		SOFT
 	}
+	
+	/**
+	 * An option specifying how to hash/compare keys
+	 */
+	public static enum ComparisonType {
+		/** use object hashCode() and equals() comparison */
+		STANDARD_HASH() {
+			@Override
+	    	boolean useReferenceEquality() {
+	    		return false;
+	    	}
+	    },
+	    /** use object hashCode() and == comparison */
+	    IDENTITY_COMP,
+	    /** use System.identityHashCode() and == comparison */
+	    IDENTITY_HASH() {
+	    	@Override
+		    boolean useSystemIdentityHashCode() {
+		    	return true;
+		    }
+	    };
+	    
+	    boolean useSystemIdentityHashCode() {
+	    	return false;
+	    }
+	    boolean useReferenceEquality() {
+	    	return true;
+	    }
+	}
 
 	/* ---------------- Constants -------------- */
 
@@ -186,7 +215,7 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
 	 * The default value for using reference-equality, used when not otherwise
 	 * specified in a constructor.
 	 */
-	static final boolean DEFAULT_USE_REFERENCE_EQUALITY = false;
+	static final ComparisonType DEFAULT_USE_REFERENCE_EQUALITY = ComparisonType.STANDARD_HASH;
 
 	/**
 	 * The maximum capacity, used if a higher value is implicitly specified by
@@ -242,6 +271,12 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
 	 * object-equality.
 	 */
 	final boolean useReferenceEquality;
+	
+	/**
+	 * Flags if System.identityHashCode() is used for this map rather than
+	 * Object.hashCode().
+	 */
+	final boolean useSystemIdentityHashCode;
 
 	transient Set<K> keySet;
 	transient Set<Map.Entry<K, V>> entrySet;
@@ -279,7 +314,7 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
 	}
 
 	private int hashOf(Object key) {
-		return hash(useReferenceEquality ? System.identityHashCode(key) : key
+		return hash(useSystemIdentityHashCode ? System.identityHashCode(key) : key
 				.hashCode());
 	}
 
@@ -866,7 +901,7 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
 	 */
 	public ConcurrentReferenceHashMap(int initialCapacity, float loadFactor,
 			int concurrencyLevel, ReferenceType keyReferenceType,
-			ReferenceType valueReferenceType, boolean useReferenceEquality) {
+			ReferenceType valueReferenceType, ComparisonType compareType) {
 		if (!(loadFactor > 0) || initialCapacity < 0 || concurrencyLevel <= 0
 				|| keyReferenceType == null || valueReferenceType == null)
 			throw new IllegalArgumentException();
@@ -896,8 +931,9 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
 
 		this.keyReferenceType = keyReferenceType;
 		this.valueReferenceType = valueReferenceType;
-		this.useReferenceEquality = useReferenceEquality;
-
+		this.useReferenceEquality = compareType.useReferenceEquality();
+		this.useSystemIdentityHashCode = compareType.useSystemIdentityHashCode();
+		
 		for (int i = 0; i < this.segments.length; ++i)
 			this.segments[i] = new Segment<K, V>(cap, loadFactor,
 					this.keyReferenceType, this.valueReferenceType,
@@ -1015,10 +1051,10 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
 	 *             if the key or value reference type is null.
 	 */
 	public ConcurrentReferenceHashMap(ReferenceType keyReferenceType,
-			ReferenceType valueReferenceType, boolean useReferenceEquality) {
+			ReferenceType valueReferenceType, ComparisonType compareType) {
 		this(DEFAULT_INITIAL_CAPACITY, DEFAULT_LOAD_FACTOR,
 				DEFAULT_CONCURRENCY_LEVEL, keyReferenceType,
-				valueReferenceType, useReferenceEquality);
+				valueReferenceType, compareType);
 	}
 
 	/**
@@ -1035,10 +1071,10 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
 	 *            equal if and only if
 	 *            <tt>(k1==null ? k2==null : k1.equals(k2))</tt>.
 	 */
-	public ConcurrentReferenceHashMap(boolean useReferenceEquality) {
+	public ConcurrentReferenceHashMap(ComparisonType compareType) {
 		this(DEFAULT_INITIAL_CAPACITY, DEFAULT_LOAD_FACTOR,
 				DEFAULT_CONCURRENCY_LEVEL, DEFAULT_KEY_TYPE,
-				DEFAULT_VALUE_TYPE, useReferenceEquality);
+				DEFAULT_VALUE_TYPE, compareType);
 	}
 
 	/**

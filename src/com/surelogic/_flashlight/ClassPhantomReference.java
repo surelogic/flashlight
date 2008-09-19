@@ -4,7 +4,7 @@ import java.lang.ref.ReferenceQueue;
 import java.util.concurrent.ConcurrentMap;
 
 import com.surelogic._flashlight.jsr166y.ConcurrentReferenceHashMap;
-import com.surelogic._flashlight.jsr166y.ConcurrentReferenceHashMap.ReferenceType;
+import com.surelogic._flashlight.jsr166y.ConcurrentReferenceHashMap.*;
 
 /**
  * @region private static ClassPRInstanceMap
@@ -25,7 +25,7 @@ public final class ClassPhantomReference extends IdPhantomReference {
 	 * @aggregate Instance into ClassPRInstanceMap
 	 */
 	private static final ConcurrentMap<Class,ClassPhantomReference> f_classToPhantom = 
-		new ConcurrentReferenceHashMap<Class,ClassPhantomReference>(ReferenceType.WEAK, ReferenceType.STRONG, true);
+		new ConcurrentReferenceHashMap<Class,ClassPhantomReference>(ReferenceType.WEAK, ReferenceType.STRONG, ComparisonType.IDENTITY_HASH);
 
 	private static final RefFactory<Class,ClassPhantomReference> f_factory = 
 		new RefFactory<Class,ClassPhantomReference>() {

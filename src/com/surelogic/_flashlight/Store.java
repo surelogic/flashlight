@@ -293,7 +293,7 @@ public final class Store {
 			} else {
 				f_rawQueue = new LinkedBlockingQueue<List<Event>>();
 			}
-			putInQueue(f_rawQueue, Collections.<Event>singletonList(timeEvent));
+			putInQueue(f_rawQueue, singletonList(timeEvent));
 			final int outQueueSize = StoreConfiguration.getOutQueueSize();
 			f_outQueue = new ArrayBlockingQueue<List<Event>>(outQueueSize);
 			tl_withinStore = new ThreadLocal<Boolean>() {
@@ -1174,7 +1174,7 @@ public final class Store {
 		/*
 		 * Finish up data output.
 		 */
-		putInQueue(f_rawQueue, Collections.<Event>singletonList(FinalEvent.FINAL_EVENT));
+		putInQueue(f_rawQueue, singletonList(FinalEvent.FINAL_EVENT));
 		join(f_refinery);
 		join(f_depository);
 
@@ -1285,6 +1285,12 @@ public final class Store {
 			}
 		}
 		return buf;
+	}
+	
+	static List<Event> singletonList(Event e) {
+		List<Event> l = new ArrayList<Event>(1);
+		l.add(e);
+		return l;
 	}
 	
 	/**

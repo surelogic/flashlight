@@ -57,14 +57,6 @@ final class FlashlightNames {
   public static final String OF_CLASS_SIGNATURE = "(Ljava/lang/Class;)Lcom/surelogic/_flashlight/ClassPhantomReference;";
   
   public static final String FLASHLIGHT_RUNTIME_SUPPORT = "com/surelogic/_flashlight/rewriter/runtime/FlashlightRuntimeSupport";
-  public static final String REPORT_FATAL_ERROR = "reportFatalError";
-  public static final String REPORT_FATAL_ERROR_SIGNATURE = "(Ljava/lang/Exception;)V";
-
-  public static final String GET_FIELD = "getField";
-  public static final String GET_FIELD_SIGNATURE = "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/reflect/Field;";
-  
-  public static final String FLASHLIGHT_EXCEPTION = "com/surelogic/_flashlight/rewriter/runtime/FlashlightRuntimeException";
-  public static final String FLASHLIGHT_EXCEPTION_SIGNATURE = "(Ljava/lang/Exception;)V";
   
   // Other Java classes and methods
   public static final String CONSTRUCTOR = "<init>";

@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.lang.instrument.Instrumentation;
 
 import com.surelogic._flashlight.rewriter.Configuration;
-import com.surelogic._flashlight.rewriter.runtime.FlashlightRuntimeSupport;
 import com.surelogic._flashlight.rewriter.runtime.Log;
 
 /**
@@ -42,7 +41,6 @@ public class FlashlightAgent {
         log = NullLog.prototype;
       }
     }
-    FlashlightRuntimeSupport.setLog(log);
     
     /* Log all the classes that have already been loaded */
     for (final Class<?> loadedClass : inst.getAllLoadedClasses()) {

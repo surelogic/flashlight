@@ -2,15 +2,15 @@ package com.surelogic._flashlight.rewriter.runtime;
 
 import java.util.*;
 
-public class ClassLoaderInfo {
+public final class ClassLoaderInfo {
 	private final ClassLoader loader;
 	private final Map<String, Class<?>> classMap = new HashMap<String,Class<?>>();	
 	
-	public ClassLoaderInfo(ClassLoader cl) {
+	public ClassLoaderInfo(final ClassLoader cl) {
 		loader = cl;
 	}
 	
-	public Class getClass(String className) {
+	public Class getClass(final String className) {
 		Class c = classMap.get(className);
 		if (c == null) {
 			try {

@@ -21,8 +21,23 @@
 			<menu id="com.surelogic.flashlight.client.eclipse.workbenchMenu"
 				label="Flashlight" path="additions">
 				<groupMarker name="client" />
+				<separator name="service" />
 				<separator name="additions" />
 			</menu>
+			<action
+				class="com.surelogic.flashlight.client.eclipse.actions.SendProblemAction"
+				id="com.surelogic.flashlight.client.eclipse.actions.SendProblemAction"
+				label="Send Problem Report"
+				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/service"
+				helpContextId="menu-open-flashlight-perspective">
+			</action>
+			<action
+				class="com.surelogic.flashlight.client.eclipse.actions.SendTipAction"
+				id="com.surelogic.flashlight.client.eclipse.actions.SendTipAction"
+				label="Send Tip for Improvement"
+				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/service"
+				helpContextId="menu-open-flashlight-perspective">
+			</action>
 			<action
 				class="com.surelogic.flashlight.client.eclipse.actions.ShowFlashlightPerspectiveAction"
 				id="com.surelogic.flashlight.client.eclipse.actions.ShowFlashlightPerspectiveAction"

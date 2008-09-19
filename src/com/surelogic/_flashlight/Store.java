@@ -265,10 +265,13 @@ public final class Store {
 			File dataFile = new File(fileName.toString() + ".fl.gz");
 			w = null;
 			final boolean outputBinary = true;
+			System.err.println("Output XML = "+!outputBinary);
 			OutputStream stream = null;
 			try {
 				stream = new FileOutputStream(dataFile);
-				if (true) {
+				boolean compress = true;
+				System.err.println("Compress stream = "+compress);
+				if (compress) {
 				  stream = new GZIPOutputStream(stream, 4096);
 				} else {
 			      stream = new BufferedOutputStream(stream, 4096);

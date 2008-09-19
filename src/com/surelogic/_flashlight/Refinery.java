@@ -45,8 +45,9 @@ final class Refinery extends Thread {
 		
 	@Override
 	public void run() {
-		final boolean filter = true;
+		final boolean filter = true;		
 		Store.flashlightThread();
+		System.err.println("Filter events = "+filter);
 
 		final List<List<Event>> buf = new ArrayList<List<Event>>();
 		List<Event> last = null; // keep for reuse
@@ -86,7 +87,7 @@ final class Refinery extends Thread {
 					removeRemainingThreadLocalFields();
 				}
 				
-				final boolean xferd = transferEventsToOutQueue(last);
+				final boolean xferd = transferEventsToOutQueue(null);
 				if (!xferd) {
 					try {
 						Thread.sleep(1);

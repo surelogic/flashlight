@@ -15,7 +15,6 @@ import java.util.StringTokenizer;
 import com.surelogic._flashlight.rewriter.AbstractIndentingMessager;
 import com.surelogic._flashlight.rewriter.Configuration;
 import com.surelogic._flashlight.rewriter.RewriteEngine;
-import com.surelogic._flashlight.rewriter.runtime.Log;
 
 final class FlashlightTransformer implements ClassFileTransformer {
   private static final String FLASHLIGHT_PACKAGE_PREFIX = "com/surelogic/_flashlight/";

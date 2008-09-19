@@ -5,8 +5,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-import com.surelogic._flashlight.rewriter.runtime.Log;
-
 final class PrintWriterLog implements Log {
   private final PrintWriter pwLog;
   

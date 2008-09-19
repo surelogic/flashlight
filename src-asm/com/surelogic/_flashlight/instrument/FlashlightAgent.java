@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.lang.instrument.Instrumentation;
 
 import com.surelogic._flashlight.rewriter.Configuration;
-import com.surelogic._flashlight.rewriter.runtime.Log;
 
 /**
  * Agent class for use with the java.lang.instrument framework.

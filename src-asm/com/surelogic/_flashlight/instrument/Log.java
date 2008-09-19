@@ -1,4 +1,4 @@
-package com.surelogic._flashlight.rewriter.runtime;
+package com.surelogic._flashlight.instrument;
 
 public interface Log {
   public void log(String message);

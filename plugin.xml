@@ -62,7 +62,7 @@
 	<extension point="org.eclipse.debug.ui.launchGroups">
 		<launchGroup bannerImage="/lib/images/fl_wiz.png"
 			id="com.surelogic.flashlight.launchGroup.flashlight"
-			image="platform:/plugin/com.surelogic.common/src/com/surelogic/common/images/fl_run.gif"
+			image="platform:/plugin/com.surelogic.common/src/com/surelogic/common/images/fl_logo.gif"
 			label="Flashlight" mode="flashlight" title="%fl.launchGroup.title" />
 	</extension>
 
@@ -71,15 +71,15 @@
 		<actionSet label="%fl.launchActionSet.label" visible="true"
 			id="com.surelogic.flashlight.launchActionSet">
 			<action label="%fl.run" style="pulldown"
-				icon="platform:/plugin/com.surelogic.common/src/com/surelogic/common/images/fl_run.gif"
+				icon="platform:/plugin/com.surelogic.common/src/com/surelogic/common/images/fl_logo.gif"
 				class="com.surelogic.flashlight.client.eclipse.actions.RunToolbarAction"
 				menubarPath="org.eclipse.ui.run/ExternalToolsGroup" id="com.surelogic.flashlight.FlashlightMenuDelegateMenu">
 			</action>
 			<action id="com.surelogic.flashlight.actions.RunToolbarAction"
 				toolbarPath="org.eclipse.debug.ui.launchActionSet/debug"
-				hoverIcon="platform:/plugin/com.surelogic.common/src/com/surelogic/common/images/fl_run.gif"
+				hoverIcon="platform:/plugin/com.surelogic.common/src/com/surelogic/common/images/fl_logo.gif"
 				class="com.surelogic.flashlight.client.eclipse.actions.RunToolbarAction"
-				icon="platform:/plugin/com.surelogic.common/src/com/surelogic/common/images/fl_run.gif"
+				icon="platform:/plugin/com.surelogic.common/src/com/surelogic/common/images/fl_logo.gif"
 				helpContextId="run_action_context" label="%fl.runDropDownAction.label"
 				style="pulldown">
 			</action>

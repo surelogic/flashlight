@@ -675,17 +675,25 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     } else {
       mv.visitLdcInsn(classBeingAnalyzedFullyQualified);
       // className
-      mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.JAVA_LANG_CLASS, FlashlightNames.FOR_NAME, FlashlightNames.FOR_NAME_SIGNATURE);
+      mv.visitMethodInsn(Opcodes.INVOKESTATIC,
+          FlashlightNames.JAVA_LANG_CLASS,
+          FlashlightNames.FOR_NAME,
+          FlashlightNames.FOR_NAME_SIGNATURE);
       // Class
     }
     // Class
 
     /* Call Phantom.ofClass() */
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.PHANTOM, FlashlightNames.OF_CLASS, FlashlightNames.OF_CLASS_SIGNATURE);
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC,
+        FlashlightNames.PHANTOM,
+        FlashlightNames.OF_CLASS,
+        FlashlightNames.OF_CLASS_SIGNATURE);
     // ClassPhantomReference
     
     /* Set the static field flashlight$withinClass */
-    mv.visitFieldInsn(Opcodes.PUTSTATIC, classBeingAnalyzedInternal, FlashlightNames.PHANTOM_CLASS_OBJECT, FlashlightNames.PHANTOM_CLASS_OBJECT_DESC);
+    mv.visitFieldInsn(Opcodes.PUTSTATIC, classBeingAnalyzedInternal,
+        FlashlightNames.FLASHLIGHT_PHANTOM_CLASS_OBJECT,
+        FlashlightNames.FLASHLIGHT_PHANTOM_CLASS_OBJECT_DESC);
     // empty stack
     
     if (!atLeastJava5) {
@@ -694,13 +702,30 @@ final class FlashlightMethodRewriter extends MethodAdapter {
        */
       mv.visitLdcInsn(classBeingAnalyzedFullyQualified);
       // className
-      mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.JAVA_LANG_CLASS, FlashlightNames.FOR_NAME, FlashlightNames.FOR_NAME_SIGNATURE);
+      mv.visitMethodInsn(Opcodes.INVOKESTATIC,
+          FlashlightNames.JAVA_LANG_CLASS,
+          FlashlightNames.FOR_NAME,
+          FlashlightNames.FOR_NAME_SIGNATURE);
       // Class
-      mv.visitFieldInsn(Opcodes.PUTSTATIC, classBeingAnalyzedInternal, FlashlightNames.CLASS_OBJECT, FlashlightNames.CLASS_OBJECT_DESC);
+      mv.visitFieldInsn(Opcodes.PUTSTATIC, classBeingAnalyzedInternal,
+          FlashlightNames.FLASHLIGHT_CLASS_OBJECT,
+          FlashlightNames.FLASHLIGHT_CLASS_OBJECT_DESC);
       // empty stack
     }
-    // resume
     
+    /* Set the static field flashlight$classLoaderInfo */
+    ByteCodeUtils.pushClass(mv, atLeastJava5, classBeingAnalyzedInternal);
+    // Class
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC,
+        FlashlightNames.FLASHLIGHT_RUNTIME_SUPPORT,
+        FlashlightNames.GET_CLASSLOADER_INFO,
+        FlashlightNames.GET_CLASSLOADER_INFO_SIGNATURE);
+    // ClassLoaderInfo
+    mv.visitFieldInsn(Opcodes.PUTSTATIC, classBeingAnalyzedInternal,
+        FlashlightNames.FLASHLIGHT_CLASS_LOADER_INFO,
+        FlashlightNames.FLASHLIGHT_CLASS_LOADER_INFO_DESC);    
+    
+    // resume    
     updateStackDepthDelta(1);
   }
 
@@ -1119,11 +1144,22 @@ final class FlashlightMethodRewriter extends MethodAdapter {
 
       // Stack is "..., isRead, [receiver]"
   
-      /* Push the class object for the owner class and then field name on the stack */
+      /* Push the class object for the owner class.  We get the class object
+       * by invoking flashlight$classLoaderInfo.getClass().
+       */
+      mv.visitFieldInsn(Opcodes.GETSTATIC, classBeingAnalyzedInternal,
+          FlashlightNames.FLASHLIGHT_CLASS_LOADER_INFO,
+          FlashlightNames.FLASHLIGHT_CLASS_LOADER_INFO_DESC);
+      // ..., isRead, [receiver], classLoaderInfo
       mv.visitLdcInsn(fullyQualifiedOwner);
-      // ..., isRead, [receiver], className
-      mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.JAVA_LANG_CLASS, FlashlightNames.FOR_NAME, FlashlightNames.FOR_NAME_SIGNATURE);
+      // ..., isRead, [receiver], classLoaderInfo, className
+      mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, 
+          FlashlightNames.CLASS_LOADER_INFO,
+          FlashlightNames.GET_CLASS,
+          FlashlightNames.GET_CLASS_SIGNATURE);
       // ..., isRead, [receiver], class object
+      
+      /* Push the field name */
       mv.visitLdcInsn(name);
       // ..., isRead, [receiver], class object, fieldName
       

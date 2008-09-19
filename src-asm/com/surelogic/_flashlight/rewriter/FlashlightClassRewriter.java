@@ -199,16 +199,22 @@ final class FlashlightClassRewriter extends ClassAdapter {
   public void visitEnd() {
     // Insert the withinClass field (always) and inClass field (when needed)
     FieldVisitor fv = cv.visitField(
-        FlashlightNames.PHANTOM_CLASS_OBJECT_ACCESS,
-        FlashlightNames.PHANTOM_CLASS_OBJECT,
-        FlashlightNames.PHANTOM_CLASS_OBJECT_DESC, null, null);
+        FlashlightNames.FLASHLIGHT_PHANTOM_CLASS_OBJECT_ACCESS,
+        FlashlightNames.FLASHLIGHT_PHANTOM_CLASS_OBJECT,
+        FlashlightNames.FLASHLIGHT_PHANTOM_CLASS_OBJECT_DESC, null, null);
     fv.visitEnd();
    
+    fv = cv.visitField(
+        FlashlightNames.FLASHLIGHT_CLASS_LOADER_INFO_ACCESS,
+        FlashlightNames.FLASHLIGHT_CLASS_LOADER_INFO,
+        FlashlightNames.FLASHLIGHT_CLASS_LOADER_INFO_DESC, null, null);
+    fv.visitEnd();
+    
     if (!atLeastJava5) {
       // insert our new field
       fv = cv.visitField(
-          FlashlightNames.CLASS_OBJECT_ACCESS,
-          FlashlightNames.CLASS_OBJECT, FlashlightNames.CLASS_OBJECT_DESC,
+          FlashlightNames.FLASHLIGHT_CLASS_OBJECT_ACCESS,
+          FlashlightNames.FLASHLIGHT_CLASS_OBJECT, FlashlightNames.FLASHLIGHT_CLASS_OBJECT_DESC,
           null, null);
       fv.visitEnd();
     }

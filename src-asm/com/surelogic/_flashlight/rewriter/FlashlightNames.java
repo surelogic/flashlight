@@ -7,6 +7,11 @@ import org.objectweb.asm.Opcodes;
  * rewriter.
  */
 final class FlashlightNames {
+  // Prevent instantiation
+  private FlashlightNames() {
+    // do nothing
+  }
+
   public static final String FLASHLIGHT_STORE = "com/surelogic/_flashlight/Store";
   
   public static final String AFTER_INTRINSIC_LOCK_ACQUISITION = "afterIntrinsicLockAcquisition";
@@ -57,6 +62,12 @@ final class FlashlightNames {
   public static final String OF_CLASS_SIGNATURE = "(Ljava/lang/Class;)Lcom/surelogic/_flashlight/ClassPhantomReference;";
   
   public static final String FLASHLIGHT_RUNTIME_SUPPORT = "com/surelogic/_flashlight/rewriter/runtime/FlashlightRuntimeSupport";
+  public static final String GET_CLASSLOADER_INFO = "getClassLoaderInfo";
+  public static final String GET_CLASSLOADER_INFO_SIGNATURE = "(Ljava/lang/Class;)Lcom/surelogic/_flashlight/rewriter/runtime/ClassLoaderInfo;";
+  
+  public static final String CLASS_LOADER_INFO = "com/surelogic/_flashlight/rewriter/runtime/ClassLoaderInfo";
+  public static final String GET_CLASS = "getClass";
+  public static final String GET_CLASS_SIGNATURE = "(Ljava/lang/String;)Ljava/lang/Class;";
   
   // Other Java classes and methods
   public static final String CONSTRUCTOR = "<init>";
@@ -89,10 +100,10 @@ final class FlashlightNames {
    * field cannot be accessed from Java code though because of the '$' in the
    * field's name.
    */ 
-  public static final String CLASS_OBJECT = "flashlight$classObject";
-  public static final int CLASS_OBJECT_ACCESS = 
+  public static final String FLASHLIGHT_CLASS_OBJECT = "flashlight$classObject";
+  public static final int FLASHLIGHT_CLASS_OBJECT_ACCESS = 
     Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL | Opcodes.ACC_SYNTHETIC;
-  public static final String CLASS_OBJECT_DESC = "Ljava/lang/Class;";
+  public static final String FLASHLIGHT_CLASS_OBJECT_DESC = "Ljava/lang/Class;";
 
   /* We add the static final field "flashlight$phantomClassObject" to store the Class
    * object of the class for use in logging calls.  We make the field public so
@@ -100,14 +111,17 @@ final class FlashlightNames {
    * field cannot be accessed from Java code though because of the '$' in the
    * field's name.
    */ 
-  public static final String PHANTOM_CLASS_OBJECT = "flashlight$phantomClassObject";
-  public static final int PHANTOM_CLASS_OBJECT_ACCESS = 
+  public static final String FLASHLIGHT_PHANTOM_CLASS_OBJECT = "flashlight$phantomClassObject";
+  public static final int FLASHLIGHT_PHANTOM_CLASS_OBJECT_ACCESS = 
     Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL | Opcodes.ACC_SYNTHETIC;
-  public static final String PHANTOM_CLASS_OBJECT_DESC = "Lcom/surelogic/_flashlight/ClassPhantomReference;";
+  public static final String FLASHLIGHT_PHANTOM_CLASS_OBJECT_DESC = "Lcom/surelogic/_flashlight/ClassPhantomReference;";
   
-  
-  // Prevent instantiation
-  private FlashlightNames() {
-    // do nothing
-  }
+  /* We add a static final field "flashlight$classLoaderInfo" to store the
+   * cache of class names to class objects used when dealing with field 
+   * access that must be dynamically identified.
+   */
+  public static final String FLASHLIGHT_CLASS_LOADER_INFO = "flashlight$classLoaderInfo";
+  public static final int FLASHLIGHT_CLASS_LOADER_INFO_ACCESS =
+    Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL | Opcodes.ACC_SYNTHETIC;
+  public static final String FLASHLIGHT_CLASS_LOADER_INFO_DESC = "Lcom/surelogic/_flashlight/rewriter/runtime/ClassLoaderInfo;";
 }

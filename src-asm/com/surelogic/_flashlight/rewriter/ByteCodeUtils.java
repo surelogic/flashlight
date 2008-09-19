@@ -80,7 +80,7 @@ final class ByteCodeUtils {
       final String internalClassName) {
     if (!atLeastJava5) {
       mv.visitFieldInsn(Opcodes.GETSTATIC, internalClassName,
-          FlashlightNames.CLASS_OBJECT, FlashlightNames.CLASS_OBJECT_DESC);
+          FlashlightNames.FLASHLIGHT_CLASS_OBJECT, FlashlightNames.FLASHLIGHT_CLASS_OBJECT_DESC);
     } else {
       mv.visitLdcInsn(Type.getType("L"+internalClassName+";"));
     }
@@ -94,6 +94,6 @@ final class ByteCodeUtils {
   public static void pushPhantomClass(
       final MethodVisitor mv, final String internalClassName) {
     mv.visitFieldInsn(Opcodes.GETSTATIC, internalClassName,
-        FlashlightNames.PHANTOM_CLASS_OBJECT, FlashlightNames.PHANTOM_CLASS_OBJECT_DESC);
+        FlashlightNames.FLASHLIGHT_PHANTOM_CLASS_OBJECT, FlashlightNames.FLASHLIGHT_PHANTOM_CLASS_OBJECT_DESC);
   }
 }

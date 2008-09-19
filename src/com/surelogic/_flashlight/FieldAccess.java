@@ -2,20 +2,19 @@ package com.surelogic._flashlight;
 
 abstract class FieldAccess extends WithinThreadEvent {
 
-	private final ObservedField f_field;
+	private final long f_fieldId;
 
-	ObservedField getField() {
-		return f_field;
+	long getFieldId() {
+		return f_fieldId;
 	}
-
-	FieldAccess(final ObservedField field, final ClassPhantomReference withinClass, final int line) {
+	
+	FieldAccess(final long fieldId, final ClassPhantomReference withinClass, final int line) {
 		super(withinClass, line);
-		assert field != null;
-		f_field = field;
+		f_fieldId = fieldId;
 	}
 
 	protected final void addField(final StringBuilder b) {
-		Entities.addAttribute("field", f_field.getId(), b);
+		Entities.addAttribute("field", f_fieldId, b);
 	}
 
 	abstract IFieldInfo getFieldInfo();

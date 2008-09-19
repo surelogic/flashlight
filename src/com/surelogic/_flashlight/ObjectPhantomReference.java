@@ -1,6 +1,5 @@
 package com.surelogic._flashlight;
 
-import java.lang.ref.PhantomReference;
 import java.lang.ref.ReferenceQueue;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
@@ -13,7 +12,7 @@ import com.surelogic._flashlight.jsr166y.ConcurrentReferenceHashMap.*;
  * @lock ObjectPRInstanceMapLock is f_objectToPhantom protects
  *       ObjectPRInstanceMap
  */
-class ObjectPhantomReference extends IdPhantomReference implements IFieldInfo {
+class ObjectPhantomReference extends IdPhantomReference {
 	/**
 	 * Map from an {@link Object} to its associated
 	 * {@link ObjectPhantomReference}. The key of this map is not prevented
@@ -43,8 +42,16 @@ class ObjectPhantomReference extends IdPhantomReference implements IFieldInfo {
 	/**
 	 * Mapping from fields to the thread it's used by (or SHARED_FIELD)
 	 */
-	private final Map<ObservedField,PhantomReference> f_fieldToThread =
-		new HashMap<ObservedField,PhantomReference>();	
+	private final IFieldInfo f_info = new ObservedField.FieldInfo() {
+		@Override
+		public ObjectPhantomReference getReceiver() { 
+			return ObjectPhantomReference.this;
+		}
+	};
+	
+	public IFieldInfo getFieldInfo() {
+		return f_info;
+	}
 	
 	protected ObjectPhantomReference(final Object referent,
 			final ReferenceQueue q) {
@@ -65,35 +72,13 @@ class ObjectPhantomReference extends IdPhantomReference implements IFieldInfo {
 	public String toString() {
 		return "[ObjectPhantom: id=" + getId() + " type=" + getType() + "]";
 	}
-
-	public void setLastThread(ObservedField key, IdPhantomReference thread) {		
-		final PhantomReference lastThread = f_fieldToThread.get(key);
-		if (lastThread == SHARED_BY_THREADS) {
-			return;
-		}
-		if (lastThread == null) {
-			// First time to see this field: set to the current thread
-			f_fieldToThread.put(key, thread);
-		}
-		else if (lastThread != thread) {
-			// Set field as shared
-			f_fieldToThread.put(key, SHARED_BY_THREADS);
-		}
-	}
-
-	public void getSingleThreadedFields(Collection<SingleThreadedField> fields) {
-		for(Map.Entry<ObservedField, PhantomReference> e : f_fieldToThread.entrySet()) {
-			if (e.getValue() != SHARED_BY_THREADS) {
-				fields.add(e.getKey().getSingleThreadedEventAbout(this));
-			}
-		}
-	}
 	
 	static Set<SingleThreadedField> getAllSingleThreadedFields() {
 		Set<SingleThreadedField> fields = new HashSet<SingleThreadedField>();
 		for(ObjectPhantomReference obj : f_objectToPhantom.values()) {
-			obj.getSingleThreadedFields(fields);
-			obj.f_fieldToThread.clear();
+			IFieldInfo info = obj.getFieldInfo();
+			info.getSingleThreadedFields(fields);
+			info.clear();
 		}
 		return fields;
 	}

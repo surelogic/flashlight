@@ -14,7 +14,7 @@ abstract class FieldAccessInstance extends FieldAccess {
 		return f_receiverUnderConstruction;
 	}
 
-	FieldAccessInstance(final Object receiver, final ObservedField field,
+	FieldAccessInstance(final Object receiver, final long field,
 			final ClassPhantomReference withinClass, final int line) {
 		super(field, withinClass, line);
 		f_receiver = Phantom.ofObject(receiver);
@@ -30,24 +30,24 @@ abstract class FieldAccessInstance extends FieldAccess {
 	
 	@Override
 	IFieldInfo getFieldInfo() {
-		return f_receiver;
+		return f_receiver.getFieldInfo();
 	}
 	 
 	@Override
 	public int hashCode() {
-		return getField().hashCode() + f_receiver.hashCode();
+		return (int) (getFieldId() + f_receiver.hashCode());
 	}
 	
 	@Override
 	public boolean equals(Object o) {
 		if (o instanceof FieldAccessInstance) {
 			FieldAccessInstance s = (FieldAccessInstance) o;
-			return this.getField() == s.getField() &&
+			return this.getFieldId() == s.getFieldId() &&
 			       this.f_receiver == s.getReceiver();
 		}
 		else if (o instanceof SingleThreadedFieldInstance) {
 			SingleThreadedFieldInstance s = (SingleThreadedFieldInstance) o;
-			return this.getField() == s.getField() &&
+			return this.getFieldId() == s.getFieldId() &&
 		           this.f_receiver == s.getReceiver();
 		}
 		return false;

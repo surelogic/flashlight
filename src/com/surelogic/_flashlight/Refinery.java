@@ -132,7 +132,7 @@ final class Refinery extends Thread {
 
 		private void visitFieldAccess(final FieldAccess e) {
 			final IFieldInfo info   = e.getFieldInfo();
-			final ObservedField key = e.getField();
+			final long key          = e.getFieldId();
 			info.setLastThread(key, e.getWithinThread());	  
 		}
 	};
@@ -189,7 +189,7 @@ final class Refinery extends Thread {
 		if (pr instanceof ObjectPhantomReference) {
 			ObjectPhantomReference obj = (ObjectPhantomReference) pr;
 			f_singleThreadedList.clear();
-			obj.getSingleThreadedFields(f_singleThreadedList);
+			obj.getFieldInfo().getSingleThreadedFields(f_singleThreadedList);
 			
 			if (!f_singleThreadedList.isEmpty()) {
 				if (deadFields == null) {
@@ -233,11 +233,7 @@ final class Refinery extends Thread {
 	 */
 	private void removeRemainingThreadLocalFields() {
 	  Set<SingleThreadedField> fields = ObjectPhantomReference.getAllSingleThreadedFields();
-	  for(ObservedField f : ObservedField.emptyAll()) {
-		  if (f.isStatic()) {
-			  fields.add(f.getSingleThreadedEventAbout(null));
-		  }
-	  }
+	  ObservedField.getFieldInfo().getSingleThreadedFields(fields);
 	  removeEventsAbout(fields);
 	  markAsSingleThreaded(fields);
 	}

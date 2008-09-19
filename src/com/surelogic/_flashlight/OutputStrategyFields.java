@@ -51,7 +51,7 @@ public class OutputStrategyFields extends EventVisitor {
 		//buf.append('l');
 		write(e.getLine());
 		//buf.append('F');
-		write(e.getField().getId());
+		write(e.getFieldId());
 		//buf.append('R');
 		write(e.getReceiver().getId());
 		if (e.receiverUnderConstruction()) {

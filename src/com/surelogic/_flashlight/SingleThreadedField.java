@@ -9,19 +9,18 @@ package com.surelogic._flashlight;
  */
 abstract class SingleThreadedField extends ObservationalEvent {
 
-	private final ObservedField f_field;
+	private final long f_fieldId;
 
-	ObservedField getField() {
-		return f_field;
+	long getFieldId() {
+		return f_fieldId;
 	}
 
-	SingleThreadedField(final ObservedField field) {
-		assert field != null;
-		f_field = field;
+	SingleThreadedField(final long fieldId) {
+		f_fieldId = fieldId;
 	}
 
 	protected final void addField(final StringBuilder b) {
-		Entities.addAttribute("field", f_field.getId(), b);
+		Entities.addAttribute("field", f_fieldId, b);
 	}
 	
 	@Override

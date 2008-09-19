@@ -2,7 +2,7 @@ package com.surelogic._flashlight;
 
 final class FieldReadStatic extends FieldAccessStatic {
 
-	FieldReadStatic(final ObservedField field, final ClassPhantomReference withinClass, final int line) {
+	FieldReadStatic(final long field, final ClassPhantomReference withinClass, final int line) {
 		super(field, withinClass, line);
 	}
 

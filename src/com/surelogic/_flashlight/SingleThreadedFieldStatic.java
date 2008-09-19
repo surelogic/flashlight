@@ -2,7 +2,7 @@ package com.surelogic._flashlight;
 
 final class SingleThreadedFieldStatic extends SingleThreadedField {
 
-	SingleThreadedFieldStatic(final ObservedField field) {
+	SingleThreadedFieldStatic(final long field) {
 		super(field);
 	}
 
@@ -22,18 +22,18 @@ final class SingleThreadedFieldStatic extends SingleThreadedField {
 	
 	@Override
 	public int hashCode() {
-		return getField().hashCode();
+		return (int) getFieldId();
 	}
 	
 	@Override
 	public boolean equals(Object o) {
 		if (o instanceof FieldAccessStatic) {
 			FieldAccessStatic s = (FieldAccessStatic) o;
-			return this.getField() == s.getField();
+			return this.getFieldId() == s.getFieldId();
 		}
 		else if (o instanceof SingleThreadedFieldStatic) {
 			SingleThreadedFieldStatic s = (SingleThreadedFieldStatic) o;
-			return this.getField() == s.getField();
+			return this.getFieldId() == s.getFieldId();
 		}
 		return false;
 	}

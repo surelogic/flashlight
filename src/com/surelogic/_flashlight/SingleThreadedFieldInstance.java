@@ -10,7 +10,7 @@ final class SingleThreadedFieldInstance extends SingleThreadedField {
 		return f_receiver;
 	}
 
-	SingleThreadedFieldInstance(final ObservedField field,
+	SingleThreadedFieldInstance(final long field,
 			final ObjectPhantomReference receiver) {
 		super(field);
 		f_receiver = receiver;
@@ -33,19 +33,19 @@ final class SingleThreadedFieldInstance extends SingleThreadedField {
 	
 	@Override
 	public int hashCode() {
-		return getField().hashCode() + f_receiver.hashCode();
+		return (int) (getFieldId() + f_receiver.hashCode());
 	}
 	
 	@Override
 	public boolean equals(Object o) {
 		if (o instanceof FieldAccessInstance) {
 			FieldAccessInstance s = (FieldAccessInstance) o;
-			return this.getField() == s.getField() &&
+			return this.getFieldId() == s.getFieldId() &&
 			       this.f_receiver == s.getReceiver();
 		}
 		else if (o instanceof SingleThreadedFieldInstance) {
 			SingleThreadedFieldInstance s = (SingleThreadedFieldInstance) o;
-			return this.getField() == s.getField() &&
+			return this.getFieldId() == s.getFieldId() &&
 		           this.f_receiver == s.getReceiver();
 		}
 		return false;

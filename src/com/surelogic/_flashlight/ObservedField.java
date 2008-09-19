@@ -1,5 +1,6 @@
 package com.surelogic._flashlight;
 
+import java.lang.ref.PhantomReference;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
@@ -56,7 +57,13 @@ abstract class ObservedField {
 		return f_isVolatile;
 	}
 
-	abstract SingleThreadedField getSingleThreadedEventAbout(ObjectPhantomReference receiver);
+	static final SingleThreadedField getSingleThreadedEventAbout(long field, ObjectPhantomReference receiver) {
+		if (receiver != null) { // FIX
+			return new SingleThreadedFieldInstance(field, receiver);
+		} else {
+			return new SingleThreadedFieldStatic(field);
+		}
+	}
 	
 	private ObservedField(final ClassPhantomReference declaringType,
 			final String fieldName, final boolean isFinal,
@@ -196,18 +203,6 @@ abstract class ObservedField {
 		return f_declaringType.getName() + "." + f_fieldName;
 	}
 	
-	static Iterable<ObservedField> emptyAll() {
-		List<ObservedField> fields = new ArrayList<ObservedField>();
-		Iterator<ConcurrentHashMap<String, ObservedField>> maps = 
-			f_declaringTypeToFieldNameToField.values().iterator();
-		while (maps.hasNext()) {
-			ConcurrentHashMap<String, ObservedField> m = maps.next();
-			fields.addAll(m.values());
-			maps.remove();
-		}
-		return fields;
-	}
-	
 	private static class Instance extends ObservedField {
 		public Instance(ClassPhantomReference declaringType, String fieldName,
 				boolean isFinal, boolean isVolatile) {
@@ -218,16 +213,9 @@ abstract class ObservedField {
 		boolean isStatic() {
 			return false;
 		}		
-		
-		@Override
-		SingleThreadedField getSingleThreadedEventAbout(ObjectPhantomReference receiver) {
-			return new SingleThreadedFieldInstance(this, receiver);
-		}
 	}
 	
-	private static class Static extends ObservedField implements IFieldInfo {
-		private IdPhantomReference f_lastThread = null;
-		
+	private static class Static extends ObservedField {
 		public Static(ClassPhantomReference declaringType, String fieldName,
 				boolean isFinal, boolean isVolatile) {
 			super(declaringType, fieldName, isFinal, isVolatile);
@@ -237,25 +225,43 @@ abstract class ObservedField {
 		boolean isStatic() {
 			return true;
 		}
+	}
 
-		@Override
-		SingleThreadedField getSingleThreadedEventAbout(ObjectPhantomReference receiver) {
-			return new SingleThreadedFieldStatic(this);
-		}
-		
-		public void setLastThread(ObservedField key, IdPhantomReference thread) {
-			if (key != this) {
-				throw new IllegalArgumentException(this+" != "+key);
-			}
-			if (f_lastThread == SHARED_BY_THREADS) {
+	public static IFieldInfo getFieldInfo() {
+		return staticInfo;
+	}
+	
+	private static final IFieldInfo staticInfo = new FieldInfo();
+	
+	/**
+	 * Mapping from fields to the thread it's used by (or SHARED_FIELD)
+	 */
+	static class FieldInfo extends HashMap<Long, IdPhantomReference> implements IFieldInfo {
+		public void setLastThread(long key, IdPhantomReference thread) {		
+			final PhantomReference lastThread = this.get(key);
+			if (lastThread == SHARED_BY_THREADS) {
 				return;
 			}
-			if (f_lastThread == null) {
-				f_lastThread = thread;
-			} 
-			else if (f_lastThread != thread) { 
-				f_lastThread = SHARED_BY_THREADS;
+			if (lastThread == null) {
+				// First time to see this field: set to the current thread
+				this.put(key, thread);
 			}
+			else if (lastThread != thread) {
+				// Set field as shared
+				this.put(key, SHARED_BY_THREADS);
+			}
+		}
+		
+		public void getSingleThreadedFields(Collection<SingleThreadedField> fields) {
+			for(Map.Entry<Long, IdPhantomReference> e : this.entrySet()) {
+				if (e.getValue() != SHARED_BY_THREADS) {
+					fields.add(ObservedField.getSingleThreadedEventAbout(e.getKey(), getReceiver()));
+				}
+			}
+		}
+		
+		public ObjectPhantomReference getReceiver() {
+			return null;
 		}
 	}
 }

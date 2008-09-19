@@ -400,7 +400,51 @@ public final class Store {
   public static void instanceFieldAccess(
       final boolean read, final Object receiver, final int fieldID,
       final ClassPhantomReference withinClass, final int line) {
-    throw new UnsupportedOperationException("Not yet implemented.  Use single pass instrumenation.");
+	  if (f_flashlightIsNotInitialized)
+		  return;
+	  if (FL_OFF.get())
+		  return;
+	  if (tl_withinStore.get().booleanValue())
+		  return;
+	  tl_withinStore.set(Boolean.TRUE);
+	  try {
+		  /*
+		  if (DEBUG) {
+			  final String fmt = "Store.instanceFieldAccessLookup(%n\t\t%s%n\t\treceiver=%s%n\t\tfield=%s%n\t\tlocation=%s)";
+			  log(String.format(fmt, read ? "read" : "write",
+					  safeToString(receiver), clazz.getName()+'.'+fieldName, SrcLoc.toString(withinClass, line)));
+		  }
+		  */
+
+		  /*
+		   * Check that the parameters are valid, gather needed information,
+		   * and put an event in the raw queue.
+		   */
+		  /*
+		  if (oField == null) {
+			  final String fmt = "field cannot be null...instrumentation bug detected by Store.instanceFieldAccessLookup(%s, receiver=%s, field=%s, withinClass, line=%s)";
+			  logAProblem(String.format(fmt, read ? "read" : "write",
+					  safeToString(receiver), clazz.getName()+'.'+fieldName, SrcLoc.toString(withinClass, line)));
+			  return;
+		  }
+		  */
+		  final Event e;
+		  if (receiver == null) {
+			  /*
+			  final String fmt = "instance field %s access reported with a null receiver...instrumentation bug detected by Store.instanceFieldAccessLookup(%s, receiver=%s, field=%s, location=%s)";
+			  logAProblem(String.format(fmt, oField, read ? "read"
+					  : "write", safeToString(receiver), clazz.getName()+'.'+fieldName, SrcLoc.toString(withinClass, line)));
+					  */
+			  return;
+		  }
+		  if (read)
+			  e = new FieldReadInstance(receiver, fieldID, withinClass, line);
+		  else
+			  e = new FieldWriteInstance(receiver, fieldID, withinClass, line);
+		  putInQueue(f_rawQueue, e);
+	  } finally {
+		  tl_withinStore.set(Boolean.FALSE);
+	  }
   }
 
   /**
@@ -420,9 +464,43 @@ public final class Store {
    *            the line number where the event occurred.
    */
   public static void staticFieldAccess(final boolean read,
-      final ClassPhantomReference ownerClass, final int fieldID,
-      final ClassPhantomReference withinClass, final int line) {
-    throw new UnsupportedOperationException("Not yet implemented.  Use single pass instrumenation.");
+		  final ClassPhantomReference ownerClass, final int fieldID,
+		  final ClassPhantomReference withinClass, final int line) {
+	  if (f_flashlightIsNotInitialized)
+		  return;
+	  if (FL_OFF.get())
+		  return;
+	  if (tl_withinStore.get().booleanValue())
+		  return;
+	  tl_withinStore.set(Boolean.TRUE);
+	  try {
+		  /*
+		  if (DEBUG) {
+			  final String fmt = "Store.staticFieldAccessLookup(%n\t\t%s%n\t\tfield=%s%n\t\tlocation=%s)";
+			  log(String.format(fmt, read ? "read" : "write", clazz.getName()+'.'+fieldName, SrcLoc.toString(withinClass, line)));
+		  }
+		  */
+
+		  /*
+		   * Check that the parameters are valid, gather needed information,
+		   * and put an event in the raw queue.
+		   */
+		  /*
+		  if (oField == null) {
+			  final String fmt = "field cannot be null...instrumentation bug detected by Store.staticFieldAccessLookup(%s, field=%s, location=%s)";
+			  logAProblem(String.format(fmt, read ? "read" : "write", clazz.getName()+'.'+fieldName, SrcLoc.toString(withinClass, line)));
+			  return;
+		  }
+          */
+		  final Event e;
+		  if (read)
+			  e = new FieldReadStatic(fieldID, withinClass, line);
+		  else
+			  e = new FieldWriteStatic(fieldID, withinClass, line);
+		  putInQueue(f_rawQueue, e);
+	  } finally {
+		  tl_withinStore.set(Boolean.FALSE);
+	  }  
   }
 
   /**
@@ -481,9 +559,9 @@ public final class Store {
         return;
       }
       if (read)
-        e = new FieldReadInstance(receiver, oField, withinClass, line);
+        e = new FieldReadInstance(receiver, oField.getId(), withinClass, line);
       else
-        e = new FieldWriteInstance(receiver, oField, withinClass, line);
+        e = new FieldWriteInstance(receiver, oField.getId(), withinClass, line);
       putInQueue(f_rawQueue, e);
     } finally {
       tl_withinStore.set(Boolean.FALSE);
@@ -536,9 +614,9 @@ public final class Store {
 
       final Event e;
       if (read)
-        e = new FieldReadStatic(oField, withinClass, line);
+        e = new FieldReadStatic(oField.getId(), withinClass, line);
       else
-        e = new FieldWriteStatic(oField, withinClass, line);
+        e = new FieldWriteStatic(oField.getId(), withinClass, line);
       putInQueue(f_rawQueue, e);
     } finally {
       tl_withinStore.set(Boolean.FALSE);
@@ -592,9 +670,9 @@ public final class Store {
 			final Event e;
 			if (oField.isStatic()) {
 				if (read)
-					e = new FieldReadStatic(oField, withinClass, line);
+					e = new FieldReadStatic(oField.getId(), withinClass, line);
 				else
-					e = new FieldWriteStatic(oField, withinClass, line);
+					e = new FieldWriteStatic(oField.getId(), withinClass, line);
 			} else {
 				if (receiver == null) {
 					final String fmt = "instance field %s access reported with a null receiver...instrumentation bug detected by Store.fieldAccess(%s, receiver=%s, field=%s, location=%s)";
@@ -603,9 +681,9 @@ public final class Store {
 					return;
 				}
 				if (read)
-					e = new FieldReadInstance(receiver, oField, withinClass, line);
+					e = new FieldReadInstance(receiver, oField.getId(), withinClass, line);
 				else
-					e = new FieldWriteInstance(receiver, oField, withinClass, line);
+					e = new FieldWriteInstance(receiver, oField.getId(), withinClass, line);
 			}
 			putInQueue(f_rawQueue, e);
 		} finally {

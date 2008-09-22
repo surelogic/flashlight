@@ -1,7 +1,7 @@
 package com.surelogic._flashlight;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.io.*;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -27,8 +27,43 @@ final class Depository extends Thread {
 	private boolean f_finished = false;
 
 	// TODO isn't this thread-local?
-	private final AtomicLong f_outputCount = new AtomicLong();
+	private final AtomicLong f_outputCount = new AtomicLong();	
+	
+	private class ClassVisitor extends IdPhantomReferenceVisitor {
+		int count = 0;
+		
+		@Override
+		void visit(final ClassPhantomReference r) {
+			count = outputFieldDefs(r.getName(), r.getId(), f_outputStrategy);
+		}		
+	}
+	
+	private final ClassVisitor classVisitor = new ClassVisitor();
+	
+	private final Map<String,List<FieldInfo>> fieldDefs = loadFieldInfo();
+			
+	static class FieldInfo {
+		final int id;
+		final String declaringType;
+		final String name;
+		final boolean isStatic, isFinal, isVolatile;
+		
+		FieldInfo(String line) {
+			StringTokenizer st = new StringTokenizer(line);
+			id = Integer.parseInt(st.nextToken());
+			declaringType = st.nextToken();
+			name = st.nextToken();
+			isStatic = Boolean.parseBoolean(st.nextToken());
+			isFinal  = Boolean.parseBoolean(st.nextToken());
+			isVolatile = Boolean.parseBoolean(st.nextToken());				
+		}
 
+		public void accept(long declaringType, EventVisitor strategy) {
+			strategy.visit(new FieldDefinition(id, declaringType, name, 
+					                           isStatic, isFinal, isVolatile));
+		}
+	}
+		
 	@Override
 	public void run() {
 		Store.flashlightThread();
@@ -39,8 +74,17 @@ final class Depository extends Thread {
 				for(Event e : buf) {
 					if (e == FinalEvent.FINAL_EVENT)
 						f_finished = true;
+					
 					e.accept(f_outputStrategy);
-					f_outputCount.incrementAndGet();
+					
+					if (e instanceof ObjectDefinition) {
+						ObjectDefinition od    = (ObjectDefinition) e;
+						IdPhantomReference ref = od.getObject();
+						ref.accept(classVisitor);	
+						f_outputCount.addAndGet(1+classVisitor.count);
+					} else {
+						f_outputCount.incrementAndGet();
+					}
 				}
 				buf.clear();
 			} catch (InterruptedException e) {
@@ -49,6 +93,48 @@ final class Depository extends Thread {
 		}
 		Store.log("depository flushed (" + f_outputCount.get()
 				+ " events(s) output)");
+	}
+
+	public static Map<String,List<FieldInfo>> loadFieldInfo() {
+		String name = StoreConfiguration.getFieldsFile();
+		if (name == null) {
+			return Collections.emptyMap();
+		}
+		File f = new File(name);
+		if (!f.exists() || !f.isFile()) {
+			return Collections.emptyMap();
+		}
+		Map<String,List<FieldInfo>> map = new HashMap<String,List<FieldInfo>>();
+		try {
+			Reader r = new FileReader(f);			
+			BufferedReader br = new BufferedReader(r);
+			String line;
+			while ((line = br.readLine()) != null) {
+				FieldInfo fi      = new FieldInfo(line);
+				List<FieldInfo> l = map.get(fi.declaringType);
+				if (l == null) {
+					l = new ArrayList<FieldInfo>();
+					map.put(fi.declaringType, l);
+				}
+				l.add(fi);
+			}
+		} catch (IOException e) {
+			Store.logAProblem("Couldn't read field definition file", e);
+			map.clear();
+		}
+		return map;
+	}
+	
+	public int outputFieldDefs(String name, long id, EventVisitor strategy) {
+		List<FieldInfo> l = fieldDefs.remove(name);
+		if (l == null || l.isEmpty()) {
+			return 0;
+		}
+		int count = 0;
+		for(FieldInfo fi : l) {			
+			fi.accept(id, strategy);
+		}
+		return count;
 	}
 
 	/**

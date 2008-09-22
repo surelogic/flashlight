@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 abstract class ObservedField {
 
-	static private final AtomicLong f_observedFieldCount = new AtomicLong();
+	static private final AtomicLong f_observedFieldCount = new AtomicLong(-1L);
 
 	private final long f_id;
 
@@ -73,7 +73,7 @@ abstract class ObservedField {
 		 * to run concurrently. It is possible, however unlikely, that we could
 		 * wrap f_observedFieldCount around.
 		 */
-		f_id = f_observedFieldCount.incrementAndGet();
+		f_id = f_observedFieldCount.getAndDecrement();
 		f_declaringType = declaringType;
 		f_fieldName = fieldName;
 		f_isFinal = isFinal;

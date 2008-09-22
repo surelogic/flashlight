@@ -34,7 +34,7 @@ public class StoreConfiguration {
   private static final String FL_CONSOLE_PORT = "FL_CONSOLE_PORT";
   private static final int FL_CONSOLE_PORT_DEFAULT = 43524;
 
-  
+  private static final String FL_FIELDS_FILE = "FL_FIELDS_FILE";
   
   private static volatile boolean isOff;
   private static volatile String directory;
@@ -44,8 +44,8 @@ public class StoreConfiguration {
   private static volatile int refinerySize;
   private static volatile boolean noSpy;
   private static volatile int consolePort;
-  
-  
+  private static volatile String fieldsFile;
+ 
   
   static {
     // Initialize the settings base on Java System properties
@@ -57,6 +57,7 @@ public class StoreConfiguration {
     setRefinerySize(getIntProperty(FL_REFINERY_SIZE, FL_REFINERY_SIZE_DEFAULT));
     setNoSpy(System.getProperty(FL_NO_SPY) != null);
     setConsolePort(getIntProperty(FL_CONSOLE_PORT, FL_CONSOLE_PORT_DEFAULT));
+    setFieldsFile(System.getProperty(FL_FIELDS_FILE));
   }
   
   private static int getIntProperty(final String key, int def) {
@@ -69,9 +70,7 @@ public class StoreConfiguration {
     return def;
   }
 
-  
-  
-  // Private constructor to prevent instantiation
+// Private constructor to prevent instantiation
   private StoreConfiguration() {
     // do nothing
   }
@@ -246,5 +245,13 @@ public class StoreConfiguration {
    */
   public static void setConsolePort(final int port) {
     consolePort = Math.max(port, 1024);
+  }
+  
+  public static String getFieldsFile() {
+	  return fieldsFile;
+  }
+  
+  public static void setFieldsFile(String file) {
+	fieldsFile = file;		
   }
 }

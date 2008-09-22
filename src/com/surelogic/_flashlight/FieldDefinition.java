@@ -6,16 +6,29 @@ package com.surelogic._flashlight;
  * before any other event about the field it defines.
  */
 final class FieldDefinition extends DefinitionalEvent {
+	private final long id;
+	private final long declaringType;
+	private final String name;
+	private final boolean isStatic, isFinal, isVolatile;
 
-	private final ObservedField f_field;
-
-	ObservedField getField() {
-		return f_field;
+	FieldDefinition(long id, long declaringType, String name, 
+			        boolean isStatic, boolean isFinal, boolean isVolatile) {
+		this.id = id;
+		this.declaringType = declaringType;
+		this.name = name;
+		this.isStatic = isStatic;
+		this.isFinal = isFinal;
+		this.isVolatile = isVolatile;
 	}
-
+	
 	FieldDefinition(final ObservedField field) {
 		assert field != null;
-		f_field = field;
+		id = field.getId();
+		declaringType = field.getDeclaringType().getId();
+		name = field.getName();
+		isStatic = field.isStatic();
+		isFinal = field.isFinal();
+		isVolatile = field.isVolatile();
 	}
 
 	@Override
@@ -27,14 +40,14 @@ final class FieldDefinition extends DefinitionalEvent {
 	public String toString() {
 		final StringBuilder b = new StringBuilder();
 		b.append("<field-definition");
-		Entities.addAttribute("id", f_field.getId(), b);
-		Entities.addAttribute("type", f_field.getDeclaringType().getId(), b);
-		Entities.addAttribute("field", f_field.getName(), b);
-		if (f_field.isStatic())
+		Entities.addAttribute("id", id, b);
+		Entities.addAttribute("type", declaringType, b);
+		Entities.addAttribute("field", name, b);
+		if (isStatic)
 			Entities.addAttribute("static", "yes", b);
-		if (f_field.isFinal())
+		if (isFinal)
 			Entities.addAttribute("final", "yes", b);
-		if (f_field.isVolatile())
+		if (isVolatile)
 			Entities.addAttribute("volatile", "yes", b);
 		b.append("/>");
 		return b.toString();

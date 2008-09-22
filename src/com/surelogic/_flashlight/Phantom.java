@@ -12,7 +12,7 @@ import java.util.Collection;
  * It also is able to provide a list of what objects have been garbage
  * collected.
  */
-// Made public so that ofClass() can be called from instrumented classfiles
+// Made public so that instances can be held by the instrumented classfiles
 public final class Phantom {
 
 	private static final ReferenceQueue f_collected = new ReferenceQueue();
@@ -34,13 +34,20 @@ public final class Phantom {
 	}
 
 	/**
-	 * Gets the associated class phantom reference for the passed class.
-	 * 
-	 * @param c
-	 *            the non-null class.
-	 * @return the class's phantom reference.
-	 */
-	static ClassPhantomReference ofClass(final Class c) {
+   * Gets the associated class phantom reference for the passed class.
+   * 
+   * <p>
+   * This method is {@code public} so that it may be called from the
+   * {@code getClassPhantom()} method of the {@link EmptyStore} and
+   * {@link DebugStore} classes. This method should not be called directly
+   * outside of the Store. Use {@code getClassPhantom(Class)} on the approciate
+   * store class instead.
+   * 
+   * @param c
+   *          the non-null class.
+   * @return the class's phantom reference.
+   */
+	public static ClassPhantomReference ofClass(final Class c) {
 		assert c != null;
 		return ClassPhantomReference.getInstance(c, f_collected);
 	}

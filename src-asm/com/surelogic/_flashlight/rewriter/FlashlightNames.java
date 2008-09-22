@@ -56,11 +56,10 @@ final class FlashlightNames {
   public static final String METHOD_CALL = "methodCall";
   public static final String METHOD_CALL_SIGNATURE = "(ZLjava/lang/Object;Ljava/lang/String;Ljava/lang/String;Lcom/surelogic/_flashlight/ClassPhantomReference;I)V";
   
-  // Flashlight classes and methods
-  public static final String PHANTOM = "com/surelogic/_flashlight/Phantom";
-  public static final String OF_CLASS = "ofClass";
-  public static final String OF_CLASS_SIGNATURE = "(Ljava/lang/Class;)Lcom/surelogic/_flashlight/ClassPhantomReference;";
-  
+  public static final String GET_CLASS_PHANTOM = "getClassPhantom";
+  public static final String GET_CLASS_PHANTOM_SIGNATURE = "(Ljava/lang/Class;)Lcom/surelogic/_flashlight/ClassPhantomReference;";
+
+  // Flashlight classes and methods  
   public static final String FLASHLIGHT_RUNTIME_SUPPORT = "com/surelogic/_flashlight/rewriter/runtime/FlashlightRuntimeSupport";
   public static final String GET_CLASSLOADER_INFO = "getClassLoaderInfo";
   public static final String GET_CLASSLOADER_INFO_SIGNATURE = "(Ljava/lang/Class;)Lcom/surelogic/_flashlight/rewriter/runtime/ClassLoaderInfo;";

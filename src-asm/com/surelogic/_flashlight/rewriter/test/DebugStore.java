@@ -1,8 +1,18 @@
 package com.surelogic._flashlight.rewriter.test;
 
 import com.surelogic._flashlight.ClassPhantomReference;
+import com.surelogic._flashlight.Phantom;
 
 public class DebugStore {
+  /**
+   * Get the phantom object reference for the given {@code Class} object.
+   * Cannot use {@link Phantom#ofClass(Class)} directly because we need to make
+   * sure the store is loaded and initialized before creating phantom objects.
+   */
+  public static ClassPhantomReference getClassPhantom(Class<?> c) {
+    return Phantom.ofClass(c);
+  }
+
   /**
    * Use this instead of o.toString() because if toString() is overridden we can
    * end up having endless recursive calls to the the methodCall() event.

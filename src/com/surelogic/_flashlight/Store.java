@@ -381,6 +381,11 @@ public final class Store {
 		return (def >= min ? def : min);
 	}
 
+	/**
+	 * Get the phantom object reference for the given {@code Class} object.
+	 * Cannot use {@link Phantom#ofClass(Class)} directly because we need to make
+	 * sure the store is loaded and initialized before creating phantom objects.
+	 */
   public static ClassPhantomReference getClassPhantom(Class<?> c) {
 	  return Phantom.ofClass(c);
   }

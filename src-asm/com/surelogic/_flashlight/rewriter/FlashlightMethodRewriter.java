@@ -685,9 +685,9 @@ final class FlashlightMethodRewriter extends MethodAdapter {
 
     /* Call Phantom.ofClass() */
     mv.visitMethodInsn(Opcodes.INVOKESTATIC,
-        FlashlightNames.PHANTOM,
-        FlashlightNames.OF_CLASS,
-        FlashlightNames.OF_CLASS_SIGNATURE);
+        config.storeClassName,
+        FlashlightNames.GET_CLASS_PHANTOM,
+        FlashlightNames.GET_CLASS_PHANTOM_SIGNATURE);
     // ClassPhantomReference
     
     /* Set the static field flashlight$withinClass */

@@ -264,7 +264,7 @@ public final class Store {
 
 			File dataFile = new File(fileName.toString() + ".fl.gz");
 			w = null;
-			final boolean outputBinary = true;
+			final boolean outputBinary = false;
 			System.err.println("Output XML = "+!outputBinary);
 			OutputStream stream = null;
 			try {

@@ -381,6 +381,10 @@ public final class Store {
 		return (def >= min ? def : min);
 	}
 
+  public static ClassPhantomReference getClassPhantom(Class<?> c) {
+	  return Phantom.ofClass(c);
+  }
+	
   /**
    * Records that a statically numbered instance field was accessed within the
    * instrumented program.

@@ -40,8 +40,7 @@ public final class Phantom {
 	 *            the non-null class.
 	 * @return the class's phantom reference.
 	 */
-	// Made public so that it can be called from instrumented classfiles
-	public static ClassPhantomReference ofClass(final Class c) {
+	static ClassPhantomReference ofClass(final Class c) {
 		assert c != null;
 		return ClassPhantomReference.getInstance(c, f_collected);
 	}

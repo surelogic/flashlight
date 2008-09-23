@@ -1,9 +1,6 @@
 package com.surelogic._flashlight;
 
 final class SrcLoc {	
-  private static final ClassPhantomReference unknownErrorPhantom =
-    Phantom.ofClass(UnknownError.class);
-  
 	/**
 	 * Cache for SrcLoc objects
 	 */
@@ -12,8 +9,6 @@ final class SrcLoc {
 		new ConcurrentReferenceHashMap<Class, ConcurrentHashMap<Integer, SrcLoc>>(ReferenceType.WEAK, 
 				                                                                  ReferenceType.STRONG, true);
 	*/
-	
-	static final SrcLoc UNKNOWN = new SrcLoc(unknownErrorPhantom, 0);
 
 	private final int f_line;
 
@@ -55,7 +50,7 @@ final class SrcLoc {
 
   private SrcLoc(ClassPhantomReference withinClass, final int line) {
      if (withinClass == null) {
-       withinClass = unknownErrorPhantom;
+       withinClass = Phantom.ofClass(UnknownError.class);
      }
      f_withinClass = withinClass;
      f_line = line;

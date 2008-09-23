@@ -87,7 +87,7 @@ final class Refinery extends Thread {
 					removeRemainingThreadLocalFields();
 				}
 				
-				final boolean xferd = transferEventsToOutQueue(null);
+				final boolean xferd = transferEventsToOutQueue();
 				if (!xferd) {
 					try {
 						Thread.sleep(1);
@@ -243,26 +243,30 @@ final class Refinery extends Thread {
 	 * events, otherwise we just add enough to keep our cache at {@link #f_size}.
 	 * @param l 
 	 */
-	private boolean transferEventsToOutQueue(List<Event> l) {
+	private boolean transferEventsToOutQueue() {
 		int transferCount = f_finished ? f_eventCache.size() : f_eventCache
 				.size()
 				- f_size;
 		if (!f_finished && transferCount < 100) {
 			return false;
 		}
-		final List<Event> buf;
-		if (l != null) {
-			l.clear();
-			buf = l;			
-		} else {
-			buf = new ArrayList<Event>(transferCount);
-		}
+		final int max = 128;
+		int count = max;
+		List<Event> buf = new ArrayList<Event>(max);
 		while (transferCount > 0) {
 			final Event e = f_eventCache.removeFirst();
 			buf.add(e);
 			transferCount--;
+			count--;
+			if (count <= 0) {
+				Store.putInQueue(f_outQueue, buf);
+				buf = new ArrayList<Event>(max); 
+				count = max;
+			}
 		}
-		Store.putInQueue(f_outQueue, buf);
+		if (!buf.isEmpty()) {
+			Store.putInQueue(f_outQueue, buf);
+		}
 		return true;
 	}
 }

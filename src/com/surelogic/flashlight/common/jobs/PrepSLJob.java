@@ -1,8 +1,6 @@
 package com.surelogic.flashlight.common.jobs;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -10,7 +8,6 @@ import java.sql.Timestamp;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
-import java.util.zip.GZIPInputStream;
 
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -27,7 +24,7 @@ import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.common.Data;
 import com.surelogic.flashlight.common.entities.PrepRunDescription;
 import com.surelogic.flashlight.common.entities.RunDAO;
-import com.surelogic.flashlight.common.files.RawFileHandles;
+import com.surelogic.flashlight.common.files.RawDataFilePrefix;
 import com.surelogic.flashlight.common.files.RawFileUtility;
 import com.surelogic.flashlight.common.model.RunDescription;
 import com.surelogic.flashlight.common.model.RunManager;
@@ -87,27 +84,15 @@ public final class PrepSLJob extends AbstractSLJob {
 		return new IPostPrep[] { new LockSetAnalysis() };
 	}
 
-	private final RunDescription f_description;
+	private final File f_dataFile;
 
-	public PrepSLJob(final RunDescription description) {
-		super("Preparing " + description.getName());
-		f_description = description;
-	}
-
-	private InputStream getDataFileStream(final RawFileHandles handles)
-			throws IOException {
-		InputStream stream = new FileInputStream(handles.getDataFile());
-		if (handles.isDataFileGzip()) {
-			stream = new GZIPInputStream(stream, 32 * 1024);
-		}
-		return stream;
+	public PrepSLJob(final String runDescription, final File dataFile) {
+		super("Preparing " + runDescription);
+		f_dataFile = dataFile;
 	}
 
 	public SLStatus run(final SLProgressMonitor monitor) {
-		final RawFileHandles handles = RawFileUtility
-				.getRawFileHandlesFor(f_description);
-		final File dataFile = handles.getDataFile();
-		final String dataFileName = dataFile.getName();
+		final String dataFileName = f_dataFile.getName();
 
 		final IPostPrep[] postPrepWork = getPostPrep();
 
@@ -119,15 +104,20 @@ public final class PrepSLJob extends AbstractSLJob {
 		 * Estimate the amount of events in the raw file based upon the size of
 		 * the raw file. This guess is only used for the pre-scan of the file.
 		 */
-		final long sizeInBytes = dataFile.length();
-		long estimatedEvents = (sizeInBytes / (handles.isDataFileGzip() ? 7L
-				: 130L));
+		final long sizeInBytes = f_dataFile.length();
+		long estimatedEvents = (sizeInBytes / (RawFileUtility
+				.isRawFileGzip(f_dataFile) ? 7L : 130L));
 		if (estimatedEvents <= 0) {
 			estimatedEvents = 10L;
 		}
 		final int estEventsInRawFile = SLUtility.safeLongToInt(estimatedEvents);
 		try {
-			final InputStream stream = getDataFileStream(handles);
+			final RawDataFilePrefix rawFilePrefix = RawFileUtility
+					.getPrefixFor(f_dataFile);
+			final RunDescription runDescription = RawFileUtility
+					.getRunDescriptionFor(rawFilePrefix);
+			final InputStream stream = RawFileUtility
+					.getInputStreamFor(f_dataFile);
 			try {
 				/*
 				 * Scan the file to collect the set of fields that were observed
@@ -156,7 +146,8 @@ public final class PrepSLJob extends AbstractSLJob {
 				 * Read the data file (our second pass) and insert prepared data
 				 * into the database.
 				 */
-				final InputStream dataFileStream = getDataFileStream(handles);
+				final InputStream dataFileStream = RawFileUtility
+						.getInputStreamFor(f_dataFile);
 				return Data.getInstance().withTransaction(
 						new DBTransaction<SLStatus>() {
 							public SLStatus perform(final Connection c)
@@ -172,11 +163,13 @@ public final class PrepSLJob extends AbstractSLJob {
 										"Persist the new run description",
 										PERSIST_RUN_DESCRIPTION_WORK);
 								persistRunDescriptionMonitor.begin();
-								final Timestamp start = new Timestamp(handles
-										.getWallClockTime().getTime());
-								final long startNS = handles.getNanoTime();
+								final Timestamp start = new Timestamp(
+										rawFilePrefix.getWallClockTime()
+												.getTime());
+								final long startNS = rawFilePrefix
+										.getNanoTime();
 								final PrepRunDescription newRun = RunDAO
-										.create(c, f_description);
+										.create(c, runDescription);
 								final int runId = newRun.getRun();
 								persistRunDescriptionMonitor.done();
 

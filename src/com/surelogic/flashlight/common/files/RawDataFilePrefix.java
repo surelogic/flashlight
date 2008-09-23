@@ -1,14 +1,12 @@
 package com.surelogic.flashlight.common.files;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.logging.Level;
-import java.util.zip.GZIPInputStream;
 
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -25,6 +23,12 @@ import com.surelogic.common.logging.SLLogger;
  * loads in the information from a specified raw data file.
  */
 public final class RawDataFilePrefix {
+
+	private File f_dataFile;
+
+	public File getFile() {
+		return f_dataFile;
+	}
 
 	private String f_name;
 
@@ -216,13 +220,10 @@ public final class RawDataFilePrefix {
 						I18N.err(106, dataFile.getName()));
 				return;
 			}
+			f_dataFile = dataFile;
 
-			final InputStream stream;
-			if (dataFile.getName().endsWith(".fl")) {
-				stream = new FileInputStream(dataFile);
-			} else {
-				stream = new GZIPInputStream(new FileInputStream(dataFile));
-			}
+			final InputStream stream = RawFileUtility
+					.getInputStreamFor(dataFile);
 			try {
 
 				/*

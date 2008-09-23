@@ -4,7 +4,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import com.surelogic.common.derby.DerbyConnection;
+import com.surelogic.common.jdbc.DBConnection;
 import com.surelogic.common.jdbc.QB;
 import com.surelogic.common.jobs.AbstractSLJob;
 import com.surelogic.common.jobs.SLProgressMonitor;
@@ -25,10 +25,10 @@ public final class UnPrepSLJob extends AbstractSLJob {
 			"ACCESS", "RWLOCK", "FIELD", "OBJECT", "RUN" };
 
 	private final PrepRunDescription f_prep;
-	private final DerbyConnection f_database;
+	private final DBConnection f_database;
 
 	public UnPrepSLJob(final PrepRunDescription prep,
-			final DerbyConnection database) {
+			final DBConnection database) {
 		super("Removing preparing data " + prep.getDescription().getName());
 		f_prep = prep;
 		f_database = database;

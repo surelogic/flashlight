@@ -13,8 +13,8 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
 import com.surelogic.common.SLUtility;
-import com.surelogic.common.derby.DerbyConnection;
 import com.surelogic.common.i18n.I18N;
+import com.surelogic.common.jdbc.DBConnection;
 import com.surelogic.common.jdbc.DBTransaction;
 import com.surelogic.common.jdbc.QB;
 import com.surelogic.common.jobs.AbstractSLJob;
@@ -85,7 +85,7 @@ public final class PrepSLJob extends AbstractSLJob {
 	}
 
 	private final File f_dataFile;
-	private final DerbyConnection f_database;
+	private final DBConnection f_database;
 
 	/**
 	 * Constructs a job instance to prepare the passed raw data file into the
@@ -96,7 +96,7 @@ public final class PrepSLJob extends AbstractSLJob {
 	 * @param database
 	 *            a derby connection object for the target database.
 	 */
-	public PrepSLJob(final File dataFile, final DerbyConnection database) {
+	public PrepSLJob(final File dataFile, final DBConnection database) {
 		super("Preparing " + dataFile.getName());
 		f_dataFile = dataFile;
 		f_database = database;

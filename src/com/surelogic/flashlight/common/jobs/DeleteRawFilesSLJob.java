@@ -2,7 +2,7 @@ package com.surelogic.flashlight.common.jobs;
 
 import java.io.File;
 
-import com.surelogic.common.derby.DerbyConnection;
+import com.surelogic.common.jdbc.DBConnection;
 import com.surelogic.common.jobs.AbstractSLJob;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
@@ -14,10 +14,10 @@ import com.surelogic.flashlight.common.model.RunManager;
 public class DeleteRawFilesSLJob extends AbstractSLJob {
 
 	private final RunDescription f_description;
-	private final DerbyConnection f_database;
+	private final DBConnection f_database;
 
 	public DeleteRawFilesSLJob(final RunDescription description,
-			final DerbyConnection database) {
+			final DBConnection database) {
 		super("Removing raw data " + description.getName());
 		f_description = description;
 		f_database = database;

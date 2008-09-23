@@ -1,6 +1,6 @@
 package com.surelogic.flashlight.common.jobs;
 
-import com.surelogic.common.derby.DerbyConnection;
+import com.surelogic.common.jdbc.DBConnection;
 import com.surelogic.common.jobs.AbstractSLJob;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
@@ -8,9 +8,9 @@ import com.surelogic.flashlight.common.model.RunManager;
 
 public final class RefreshRunManagerSLJob extends AbstractSLJob {
 
-	private final DerbyConnection f_database;
+	private final DBConnection f_database;
 
-	public RefreshRunManagerSLJob(final DerbyConnection database) {
+	public RefreshRunManagerSLJob(final DBConnection database) {
 		super("Refresh the Flashlight run manager contents");
 		f_database = database;
 	}

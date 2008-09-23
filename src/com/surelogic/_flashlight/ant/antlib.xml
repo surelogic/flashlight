@@ -2,5 +2,5 @@
 <antlib>
 	<taskdef
 			name="instrument" 
-			classname="com.surelogic._flashlight.ant.FLInstrument"/>
+			classname="com.surelogic._flashlight.ant.Instrument"/>
 </antlib>

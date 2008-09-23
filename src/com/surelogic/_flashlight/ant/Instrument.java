@@ -24,7 +24,7 @@ import com.surelogic._flashlight.rewriter.RewriteEngine;
  * file or to a directory. This allows more another task to be more
  * sophisticated in the packaging of a jar than this task is.
  */
-public final class FLInstrument extends Task {
+public final class Instrument extends Task {
   /**
    * Properties table used to initialize the Flashlight class rewriter. These
    * properties are set from attributes of the task.
@@ -84,12 +84,12 @@ public final class FLInstrument extends Task {
      * Scan classfiles to add to the class and field model.
      */
     public void scan(
-        FLInstrument task, RewriteEngine engine) throws BuildException;
+        Instrument task, RewriteEngine engine) throws BuildException;
     /**
      * Rewrite classfiles to insert instrumentation.
      */
     public void instrument(
-        FLInstrument task, RewriteEngine engine) throws BuildException;
+        Instrument task, RewriteEngine engine) throws BuildException;
   }
   
   
@@ -129,7 +129,7 @@ public final class FLInstrument extends Task {
     String getDestfile() { return destfile; }
     
     public void scan(
-        final FLInstrument instrumentTask, final RewriteEngine engine)
+        final Instrument instrumentTask, final RewriteEngine engine)
         throws BuildException {
       instrumentTask.log("Scanning class directory " + srcdir, Project.MSG_INFO);
       try {
@@ -142,7 +142,7 @@ public final class FLInstrument extends Task {
     }
     
     public void instrument(
-        final FLInstrument instrumentTask, final RewriteEngine engine)
+        final Instrument instrumentTask, final RewriteEngine engine)
         throws BuildException {
       /* One of dstfile and dstdir is non-null, but not both */
       try {
@@ -192,7 +192,7 @@ public final class FLInstrument extends Task {
     String getDestdir() { return destdir; }
 
     public void scan(
-        final FLInstrument instrumentTask, final RewriteEngine engine)
+        final Instrument instrumentTask, final RewriteEngine engine)
         throws BuildException {
       try {
         instrumentTask.log("Scanning classes in jar " + srcfile, Project.MSG_INFO);
@@ -205,7 +205,7 @@ public final class FLInstrument extends Task {
     }
 
     public void instrument(
-        final FLInstrument instrumentTask, final RewriteEngine engine)
+        final Instrument instrumentTask, final RewriteEngine engine)
         throws BuildException {
       final String runtimeJar;
       if (update) {
@@ -240,7 +240,7 @@ public final class FLInstrument extends Task {
   /**
    * Public parameterless constructor is needed so ANT can create the task.
    */
-  public FLInstrument() {
+  public Instrument() {
     super();
     // Init the properties map
     Configuration.writeDefaultProperties(properties);
@@ -501,7 +501,7 @@ public final class FLInstrument extends Task {
       throw new BuildException("Replacement pattern is not set");
     }
     
-    FLInstrument.this. log(
+    Instrument.this. log(
         MessageFormat.format("Expanding list of directories using list=\"{0}\", delimeters=\"{1}\", source pattern=\"{2}\", destination directory pattern=\"{3}\", destination jar file pattern=\"{4}\", replacement pattern=\"{5}\", runtime jar file=\"{6}\"",
             list, delimeters, srcDirPattern, destDirPattern, destFilePattern, replace, runtime),
             Project.MSG_VERBOSE);
@@ -513,13 +513,13 @@ public final class FLInstrument extends Task {
       final String srcdir = srcDirPattern.replace(replace, element);
       if (destDirPattern != null) {
         final String destdir = destDirPattern.replace(replace, element);
-        FLInstrument.this.log(MessageFormat.format(
+        Instrument.this.log(MessageFormat.format(
             "    Adding srcdir=\"{0}\", destdir=\"{1}\"", srcdir, destdir),
             Project.MSG_VERBOSE);
         subTasks.add(new Directory(srcdir, destdir));
       } else {
         final String destfile = destFilePattern.replace(replace, element);
-        FLInstrument.this.log(MessageFormat.format(
+        Instrument.this.log(MessageFormat.format(
             "    Adding srcdir=\"{0}\", destfile=\"{1}\"", srcdir, destfile),
             Project.MSG_VERBOSE);
         subTasks.add(new Directory(srcdir, destfile, runtime));
@@ -607,15 +607,15 @@ public final class FLInstrument extends Task {
     }
     
     public void error(final String message) {
-      FLInstrument.this. log(indentMessage(message), Project.MSG_ERR);
+      Instrument.this. log(indentMessage(message), Project.MSG_ERR);
     }
     
     public void warning(final String message) {
-      FLInstrument.this. log(indentMessage(message), Project.MSG_WARN);
+      Instrument.this. log(indentMessage(message), Project.MSG_WARN);
     }
     
     public void info(final String message) {
-      FLInstrument.this. log(indentMessage(message), Project.MSG_VERBOSE);
+      Instrument.this. log(indentMessage(message), Project.MSG_VERBOSE);
     }
   }
 }

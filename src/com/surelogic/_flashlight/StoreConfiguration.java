@@ -21,10 +21,10 @@ public class StoreConfiguration {
   private static final String FL_RUN_DEFAULT = "flashlight";
 
   private static final String FL_RAWQ_SIZE = "FL_RAWQ_SIZE";
-  private static final int FL_RAWQ_SIZE_DEFAULT = 500;
+  private static final int FL_RAWQ_SIZE_DEFAULT = 16;
 
   private static final String FL_OUTQ_SIZE = "FL_OUTQ_SIZE";
-  private static final int FL_OUTQ_SIZE_DEFAULT = 500;
+  private static final int FL_OUTQ_SIZE_DEFAULT = 16;
 
   private static final String FL_REFINERY_SIZE = "FL_REFINERY_SIZE";
   private static final int FL_REFINERY_SIZE_DEFAULT = 5000;

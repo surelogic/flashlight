@@ -26,8 +26,7 @@ final class Depository extends Thread {
 
 	private boolean f_finished = false;
 
-	// TODO isn't this thread-local?
-	private final AtomicLong f_outputCount = new AtomicLong();	
+	private long f_outputCount = 0;	
 	
 	private class ClassVisitor extends IdPhantomReferenceVisitor {
 		int count = 0;
@@ -81,9 +80,9 @@ final class Depository extends Thread {
 						ObjectDefinition od    = (ObjectDefinition) e;
 						IdPhantomReference ref = od.getObject();
 						ref.accept(classVisitor);	
-						f_outputCount.addAndGet(1+classVisitor.count);
+						f_outputCount += (1+classVisitor.count);
 					} else {
-						f_outputCount.incrementAndGet();
+						f_outputCount++;
 					}
 				}
 				buf.clear();
@@ -91,8 +90,7 @@ final class Depository extends Thread {
 				Store.logAProblem("depository was interrupted...a bug");
 			}
 		}
-		Store.log("depository flushed (" + f_outputCount.get()
-				+ " events(s) output)");
+		Store.log("depository flushed (" + f_outputCount + " events(s) output)");
 	}
 
 	public static Map<String,List<FieldInfo>> loadFieldInfo() {

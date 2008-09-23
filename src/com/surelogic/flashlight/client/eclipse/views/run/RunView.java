@@ -6,7 +6,6 @@ import org.eclipse.jface.viewers.TableViewerColumn;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
@@ -16,6 +15,7 @@ import com.surelogic.common.eclipse.SLImages;
 import com.surelogic.common.eclipse.SWTUtility;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.images.CommonImages;
+import com.surelogic.flashlight.client.eclipse.Data;
 import com.surelogic.flashlight.common.model.RunDescription;
 import com.surelogic.flashlight.common.model.RunManager;
 import com.surelogic.flashlight.common.model.RunViewModel;
@@ -55,12 +55,10 @@ public final class RunView extends ViewPart {
 		tableViewer.getTable().setHeaderVisible(true);
 		// Set the line of the table visible
 		tableViewer.getTable().setLinesVisible(true);
+		// Ensure that the run manager data is fresh
+		RunManager.getInstance().refresh(Data.getInstance());
 		// Set the input so we see data
 		tableViewer.setInput(RunManager.getInstance());
-		// Pack the columns to the ideal with
-		for (TableColumn col : tableViewer.getTable().getColumns()) {
-			col.pack();
-		}
 
 		f_mediator = new RunViewMediator(tableViewer);
 

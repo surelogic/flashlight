@@ -24,8 +24,8 @@ import com.surelogic.common.eclipse.jobs.SLUIJob;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.client.eclipse.Activator;
+import com.surelogic.flashlight.client.eclipse.Data;
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
-import com.surelogic.flashlight.common.Data;
 
 public final class AdHocDataSource extends AdHocManagerAdapter implements
 		IAdHocDataSource, ILifecycle {

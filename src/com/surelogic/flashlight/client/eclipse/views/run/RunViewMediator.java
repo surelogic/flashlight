@@ -10,16 +10,17 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Table;
+import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.ui.PlatformUI;
 
 import com.surelogic.common.ILifecycle;
 import com.surelogic.common.eclipse.jobs.EclipseJob;
 import com.surelogic.common.i18n.I18N;
+import com.surelogic.flashlight.client.eclipse.Data;
 import com.surelogic.flashlight.client.eclipse.dialogs.DeleteRunDialog;
 import com.surelogic.flashlight.client.eclipse.dialogs.LogDialog;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
-import com.surelogic.flashlight.common.Data;
 import com.surelogic.flashlight.common.entities.PrepRunDescription;
 import com.surelogic.flashlight.common.files.RawFileHandles;
 import com.surelogic.flashlight.common.jobs.DeleteRawFilesSLJob;
@@ -52,6 +53,7 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 			}
 		});
 		RunManager.getInstance().addObserver(this);
+		packColumns();
 		setToolbarState();
 	}
 
@@ -80,7 +82,8 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 	private final Action f_refresh = new Action() {
 		@Override
 		public void run() {
-			EclipseJob.getInstance().scheduleDb(new RefreshRunManagerSLJob());
+			EclipseJob.getInstance().scheduleDb(
+					new RefreshRunManagerSLJob(Data.getInstance()));
 		}
 	};
 
@@ -90,6 +93,7 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 
 	void refresh() {
 		f_tableViewer.refresh();
+		packColumns();
 		setToolbarState();
 	}
 
@@ -173,7 +177,8 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 				}
 				if (hasRawFiles && d.deleteRawDataFiles()) {
 					EclipseJob.getInstance().schedule(
-							new DeleteRawFilesSLJob(description));
+							new DeleteRawFilesSLJob(description, Data
+									.getInstance()));
 				}
 			}
 		}
@@ -181,6 +186,15 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 
 	public Action getDeleteRun() {
 		return f_deleteRun;
+	}
+
+	/**
+	 * Pack the columns of our table to the ideal width.
+	 */
+	private final void packColumns() {
+		for (TableColumn col : f_tableViewer.getTable().getColumns()) {
+			col.pack();
+		}
 	}
 
 	private final void setToolbarState() {

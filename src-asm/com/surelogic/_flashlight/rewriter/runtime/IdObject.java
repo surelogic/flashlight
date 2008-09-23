@@ -2,7 +2,14 @@ package com.surelogic._flashlight.rewriter.runtime;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-public class IdObject {	
+
+/**
+ * Instrumentation rewrites all classes that extend from
+ * {@code java.lang.Object} to extends from this class instead. This class
+ * provides a faster unique ID lookup than is available through
+ * {@link System#identityHashCode(Object)}.
+ */
+public class IdObject extends Object {	
 	/**
 	 * Use a thread-safe counter.
 	 */

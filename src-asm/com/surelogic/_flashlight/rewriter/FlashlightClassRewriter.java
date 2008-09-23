@@ -59,6 +59,12 @@ final class FlashlightClassRewriter extends ClassAdapter {
   /** Is the class file version at least Java 5? */
   private boolean atLeastJava5;
   
+  /**
+   * Should the super constructor call be updated from {@code java.lang.Object}
+   * to {@code com.surelogic._flashlight.rewriter.runtime.IdObject}.
+   */
+  private boolean updateSuperCall;
+  
   /** The name of the source file that contains the class being rewritten. */
   private String sourceFileName = UNKNOWN_SOURCE_FILE;
 
@@ -151,11 +157,24 @@ final class FlashlightClassRewriter extends ClassAdapter {
   public void visit(final int version, final int access, final String name,
       final String signature, final String superName,
       final String[] interfaces) {
-    cv.visit(version, access, name, signature, superName, interfaces);
     isInterface = (access & Opcodes.ACC_INTERFACE) != 0;
     atLeastJava5 = (version & 0x0000FFFF) >= Opcodes.V1_5;
     classNameInternal = name;
     classNameFullyQualified = ByteCodeUtils.internal2FullyQualified(name);
+
+    final String newSuperName;
+    if (!isInterface && superName.equals(FlashlightNames.JAVA_LANG_OBJECT)) {
+      newSuperName = FlashlightNames.ID_OBJECT;
+      updateSuperCall = true;
+    } else {
+      newSuperName = superName;
+      updateSuperCall = false;
+    }
+    
+    /* If the class extends from java.lang.Object, we change it to extend
+     * com.surelogic._flashlight.rewriter.runtime.IdObject.
+     */
+    cv.visit(version, access, name, signature, newSuperName, interfaces);
   }
 
   @Override
@@ -190,7 +209,7 @@ final class FlashlightClassRewriter extends ClassAdapter {
       methodSizes.put(methodId, cse);
       return FlashlightMethodRewriter.create(access,
           name, desc, cse, config, messenger, classModel, atLeastJava5, isInterface,
-          sourceFileName, classNameInternal, classNameFullyQualified,
+          updateSuperCall, sourceFileName, classNameInternal, classNameFullyQualified,
           wrapperMethods);
     }
   }
@@ -256,7 +275,7 @@ final class FlashlightClassRewriter extends ClassAdapter {
      */
     final MethodVisitor rewriter_mv = FlashlightMethodRewriter.create(Opcodes.ACC_STATIC,
         CLASS_INITIALIZER, CLASS_INITIALIZER_DESC, mv, config, messenger,
-        classModel, atLeastJava5, isInterface, sourceFileName,
+        classModel, atLeastJava5, isInterface, updateSuperCall, sourceFileName,
         classNameInternal, classNameFullyQualified, wrapperMethods);
     rewriter_mv.visitCode(); // start code section
     rewriter_mv.visitInsn(Opcodes.RETURN); // empty method, just return

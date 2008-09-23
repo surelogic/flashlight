@@ -78,6 +78,12 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   private final boolean isStatic;
   
   /**
+   * Should the super constructor call be updated from {@code java.lang.Object}
+   * to {@code com.surelogic._flashlight.rewriter.runtime.IdObject}.
+   */
+  private final boolean updateSuperCall;
+  
+  /**
    * The current source line of code being rewritten. Driven by calls to
    * {@link #visitLineNumber}. This is {@code -1} when no line number
    * information is available.
@@ -181,12 +187,13 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   public static MethodVisitor create(final int access, final String mname,
       final String desc, final MethodVisitor mv, final Configuration conf,
       final EngineMessenger msg, final ClassAndFieldModel model,
-      final boolean java5, final boolean inInt, final String fname,
-      final String nameInternal, final String nameFullyQualified,
-      final Set<MethodCallWrapper> wrappers) {
+      final boolean java5, final boolean inInt, final boolean update, 
+      final String fname, final String nameInternal,
+      final String nameFullyQualified, final Set<MethodCallWrapper> wrappers) {
     final FlashlightMethodRewriter methodRewriter =
       new FlashlightMethodRewriter(access, mname, desc, mv, conf, msg,
-          model, java5, inInt, fname, nameInternal, nameFullyQualified, wrappers);
+          model, java5, inInt, update, fname, nameInternal, nameFullyQualified,
+          wrappers);
     methodRewriter.lvs = new LocalVariablesSorter(access, desc, methodRewriter);
     return methodRewriter.lvs;
   }
@@ -212,7 +219,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   private FlashlightMethodRewriter(final int access, final String mname,
       final String desc, final MethodVisitor mv, final Configuration conf,
       final EngineMessenger msg, final ClassAndFieldModel model,
-      final boolean java5, final boolean inInt, final String fname,
+      final boolean java5, final boolean inInt, final boolean update, final String fname,
       final String nameInternal, final String nameFullyQualified,
       final Set<MethodCallWrapper> wrappers) {
     super(mv);
@@ -221,6 +228,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     classModel = model;
     atLeastJava5 = java5;
     inInterface = inInt;
+    updateSuperCall = update;
     wasSynchronized = (access & Opcodes.ACC_SYNCHRONIZED) != 0;
     isStatic = (access & Opcodes.ACC_STATIC) != 0;
     methodName = mname;
@@ -340,22 +348,54 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     handlePreviousAload();
     handlePreviousAstore();
     insertDelayedCode();
-    if (opcode == Opcodes.INVOKEVIRTUAL && config.rewriteInvokevirtual) {
-      rewriteMethodCall(Opcodes.INVOKEVIRTUAL, owner, name, desc);
-    } else if (opcode == Opcodes.INVOKESPECIAL && config.rewriteInvokespecial) {
-      if (!name.equals(FlashlightNames.CONSTRUCTOR)) {
-        rewriteMethodCall(Opcodes.INVOKESPECIAL, owner, name, desc);
+    if (opcode == Opcodes.INVOKEVIRTUAL) {
+      if (config.rewriteInvokevirtual) {
+        rewriteMethodCall(Opcodes.INVOKEVIRTUAL, owner, name, desc);
       } else {
-        if (config.rewriteInit) {
-          rewriteConstructorCall(owner, name, desc);
-        } else {
-          mv.visitMethodInsn(opcode, owner, name, desc);
-        }
+        mv.visitMethodInsn(opcode, owner, name, desc);
       }
-    } else if (opcode == Opcodes.INVOKEINTERFACE && config.rewriteInvokeinterface) {
-      rewriteMethodCall(Opcodes.INVOKEINTERFACE, owner, name, desc);
-    } else if (opcode == Opcodes.INVOKESTATIC && config.rewriteInvokestatic) {
-      rewriteMethodCall(Opcodes.INVOKESTATIC, owner, name, desc);
+    } else if (opcode == Opcodes.INVOKESPECIAL) {
+      boolean outputOriginalCall = true;
+      if (config.rewriteInvokespecial) {
+        if (!name.equals(FlashlightNames.CONSTRUCTOR)) {
+          outputOriginalCall = false;
+          rewriteMethodCall(Opcodes.INVOKESPECIAL, owner, name, desc);
+        } else {
+          if (config.rewriteInit) {
+            outputOriginalCall = false;
+            rewriteConstructorCall(owner, name, desc);
+          } else {
+            if (isConstructor && stateMachine != null) {
+              if (updateSuperCall) {
+                outputOriginalCall = false;
+                mv.visitMethodInsn(Opcodes.INVOKESPECIAL, FlashlightNames.ID_OBJECT, name, desc);
+              }
+            }
+          }
+        }
+      } else {
+        if (name.equals(FlashlightNames.CONSTRUCTOR) && isConstructor && stateMachine != null) {
+          if (updateSuperCall) {
+            outputOriginalCall = false;
+            mv.visitMethodInsn(Opcodes.INVOKESPECIAL, FlashlightNames.ID_OBJECT, name, desc);
+          }
+        }
+      }      
+      if (outputOriginalCall) {
+        mv.visitMethodInsn(Opcodes.INVOKESPECIAL, owner, name, desc);
+      }      
+    } else if (opcode == Opcodes.INVOKEINTERFACE) {
+      if (config.rewriteInvokeinterface) {
+        rewriteMethodCall(Opcodes.INVOKEINTERFACE, owner, name, desc);
+      } else {
+        mv.visitMethodInsn(opcode, owner, name, desc);
+      }
+    } else if (opcode == Opcodes.INVOKESTATIC) {
+      if (config.rewriteInvokestatic) {
+        rewriteMethodCall(Opcodes.INVOKESTATIC, owner, name, desc);
+      } else {
+        mv.visitMethodInsn(opcode, owner, name, desc);
+      }
     } else { // Unknown, but safe
       mv.visitMethodInsn(opcode, owner, name, desc);
     }
@@ -784,7 +824,11 @@ final class FlashlightMethodRewriter extends MethodAdapter {
       final String owner, final String name, final String desc) {
     if (isConstructor && stateMachine != null) {
       /* Original call */
-      mv.visitMethodInsn(Opcodes.INVOKESPECIAL, owner, name, desc);
+      if (updateSuperCall) {
+        mv.visitMethodInsn(Opcodes.INVOKESPECIAL, FlashlightNames.ID_OBJECT, name, desc);
+      } else {
+        mv.visitMethodInsn(Opcodes.INVOKESPECIAL, owner, name, desc);
+      }
     } else {
       // ...
       ByteCodeUtils.pushBooleanConstant(mv, true);

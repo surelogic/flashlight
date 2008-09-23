@@ -68,6 +68,8 @@ final class FlashlightNames {
   public static final String GET_CLASS = "getClass";
   public static final String GET_CLASS_SIGNATURE = "(Ljava/lang/String;)Ljava/lang/Class;";
   
+  public static final String ID_OBJECT = "com/surelogic/_flashlight/rewriter/runtime/IdObject";
+  
   // Other Java classes and methods
   public static final String CONSTRUCTOR = "<init>";
   

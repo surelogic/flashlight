@@ -7,14 +7,16 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.surelogic._flashlight.rewriter.runtime.IdObject;
+
 abstract class IdPhantomReference extends PhantomReference {
 
 	/**
 	 * Use a thread-safe counter.
 	 */
-	private static final AtomicLong f_phantomCount = new AtomicLong();
+	//private static final AtomicLong f_phantomCount = new AtomicLong();
 
-	private final long f_id = f_phantomCount.incrementAndGet();
+	private final long f_id = IdObject.getNewId(); //f_phantomCount.incrementAndGet();
 	private boolean ignore = false;
 	
 	long getId() {

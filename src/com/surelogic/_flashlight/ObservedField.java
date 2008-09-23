@@ -237,6 +237,8 @@ abstract class ObservedField {
 	 * Mapping from fields to the thread it's used by (or SHARED_FIELD)
 	 */
 	static class FieldInfo extends HashMap<Long, IdPhantomReference> implements IFieldInfo {
+		static final IdPhantomReference SHARED_BY_THREADS = Phantom.ofClass(FieldInfo.class);
+		
 		public void setLastThread(long key, IdPhantomReference thread) {		
 			final PhantomReference lastThread = this.get(key);
 			if (lastThread == SHARED_BY_THREADS) {

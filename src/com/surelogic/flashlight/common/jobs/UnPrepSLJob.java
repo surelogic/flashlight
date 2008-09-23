@@ -65,7 +65,7 @@ public final class UnPrepSLJob extends AbstractSLJob {
 		} catch (final SQLException e) {
 			return SLStatus.createErrorStatus(0, taskName + " failed", e);
 		}
-		RunManager.getInstance().refresh();
+		RunManager.getInstance().refresh(f_database);
 		monitor.done();
 		return SLStatus.OK_STATUS;
 	}

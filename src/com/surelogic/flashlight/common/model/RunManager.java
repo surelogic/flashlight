@@ -10,8 +10,8 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.surelogic.common.derby.DerbyConnection;
 import com.surelogic.common.jdbc.DBTransaction;
-import com.surelogic.flashlight.common.Data;
 import com.surelogic.flashlight.common.entities.PrepRunDescription;
 import com.surelogic.flashlight.common.entities.RunDAO;
 import com.surelogic.flashlight.common.files.RawFileUtility;
@@ -30,7 +30,6 @@ public final class RunManager {
 	}
 
 	private RunManager() {
-		refresh();
 	}
 
 	private final Set<IRunManagerObserver> f_observers = new CopyOnWriteArraySet<IRunManagerObserver>();
@@ -102,7 +101,7 @@ public final class RunManager {
 	 * Refreshes the set of run descriptions managed by this class and notifies
 	 * all observers if that set has changed.
 	 */
-	public void refresh() {
+	public void refresh(final DerbyConnection database) {
 		boolean isChanged = false; // assume nothing changed
 		final Map<RunDescription, PrepRunDescription> descToPrep = new HashMap<RunDescription, PrepRunDescription>();
 		final Set<RunDescription> rawDescriptions = RawFileUtility
@@ -128,7 +127,7 @@ public final class RunManager {
 				return RunDAO.getAll(conn);
 			}
 		};
-		final Set<PrepRunDescription> prepDescriptions = Data.getInstance()
+		final Set<PrepRunDescription> prepDescriptions = database
 				.withReadOnly(tran);
 		final int prepCount = rawDescriptions.size();
 		if (prepCount != f_prepCount.getAndSet(prepCount)) {

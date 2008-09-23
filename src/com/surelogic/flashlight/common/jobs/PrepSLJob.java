@@ -316,7 +316,7 @@ public final class PrepSLJob extends AbstractSLJob {
 			final String msg = I18N.err(code, dataFileName);
 			return SLStatus.createErrorStatus(code, msg, e);
 		} finally {
-			RunManager.getInstance().refresh();
+			RunManager.getInstance().refresh(f_database);
 			monitor.done();
 		}
 	}

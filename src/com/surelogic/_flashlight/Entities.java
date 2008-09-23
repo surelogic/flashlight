@@ -25,14 +25,24 @@ public final class Entities {
    */
   private static void add(final String name, final String value,
       final StringBuilder b) {
+	add(name, value, false, b);  
+  }	  
+  
+  private static void add(final String name, final String value,
+		  final boolean escape, final StringBuilder b) {
     b.append(' ').append(name).append("='");
-    b.append(value);
+    if (escape) {
+    	E.escape(b, value);
+    } else {
+    	b.append(value);
+    }
     b.append('\'');
   }
 
   public static void addAttribute(final String name, final String value,
       final StringBuilder b) {
-    add(name, E.escape(value), b);
+    //add(name, E.escape(value), b);
+	add(name, value, true, b);
   }
 
   public static void addAttribute(final String name, final boolean value,
@@ -51,32 +61,39 @@ public final class Entities {
   }
 
   public static void addEscaped(final String value, final StringBuilder b) {
-    b.append(E.escape(value));
+    E.escape(b, value);
   }
 
   public static String trimInternal(final String value) {
     return value.replaceAll("\\s+", " ");
   }
 
+  private interface Tuple {
+	  /**
+	   * Does the value appear in the given string, beginning at the given index?
+	   */
+	  public abstract boolean testFor(String input, int idx);
+
+	  /**
+	   * Get the length of the value.
+	   */
+	  public abstract int getValueLength();
+	  
+	  /**
+	   * Get the value.
+	   */
+	  public abstract void appendName(StringBuilder sb);
+  }
+  
   /**
    * A private type to store names and values that we want escaped.
    */
-  private abstract static class Tuple {
+  private abstract static class AbstractTuple implements Tuple {
     final String f_name;
     
-    Tuple(final String name) {
+    AbstractTuple(final String name) {
       f_name = name;
     }
-    
-    /**
-     * Does the value appear in the given string, beginning at the given index?
-     */
-    public abstract boolean testFor(String input, int idx);
-    
-    /**
-     * Get the length of the value.
-     */
-    public abstract int getValueLength();
     
     /**
      * Get the value.
@@ -88,7 +105,7 @@ public final class Entities {
     }
   }
   
-  private static final class CharValueTuple extends Tuple {
+  private static final class CharValueTuple extends AbstractTuple {
     final String f_valueAsString;
     final char f_value;
     
@@ -101,18 +118,16 @@ public final class Entities {
       f_value = value.charAt(0);
     }
     
-    @Override
     public boolean testFor(final String input, final int idx) {
       return input.charAt(idx) == f_value;
     }
     
-    @Override
     public int getValueLength() {
       return 1;
     }
   }
   
-  private static final class StringValueTuple extends Tuple {
+  private static final class StringValueTuple extends AbstractTuple {
     final String f_value;
     
     StringValueTuple(final String name, final String value) {
@@ -120,24 +135,25 @@ public final class Entities {
       f_value = value;
     }
     
-    @Override
     public boolean testFor(final String input, final int idx) {
       return input.substring(idx).startsWith(f_value);
     }
     
-    @Override
     public int getValueLength() {
       return f_value.length();
     }
   }
   
   private final List<Tuple> f_NameValue = new ArrayList<Tuple>();
-
-  
   
   public String escape(final String text) {
     // Allocate space for original text plus 5 single-character entities
     final StringBuilder sb = new StringBuilder(text.length() + 10);
+    escape(sb, text);
+    return sb.toString();
+  }
+    
+  public StringBuilder escape(final StringBuilder sb, final String text) {
     int copyFromIdx = 0;
     int testForIdx = 0;
     while (testForIdx < text.length()) {
@@ -160,7 +176,7 @@ public final class Entities {
     }
     // copy remaining text
     sb.append(text.substring(copyFromIdx));
-    return sb.toString();
+    return sb;
   }
 
   /**
@@ -189,10 +205,50 @@ public final class Entities {
    * Defines the five standard XML predefined character entities: &, ', >, <, ".
    */
   public void defineStandardXML() {
+	/*
     define("amp", "&");
     define("apos", "'");
     define("gt", ">");
     define("lt", "<");
     define("quot", "\"");
+    */
+	f_NameValue.add(new Tuple() {
+		String lastMatch = null;
+		public int getValueLength() {
+			return 1;
+		}
+
+		public boolean testFor(String input, int idx) {
+			switch (input.charAt(idx)) {
+			case '&':
+				lastMatch = "amp";
+				return true;
+			case '\'':
+				lastMatch = "apos";
+				return true;
+			case '>':
+				lastMatch = "gt";
+				return true;
+			case '<':
+				lastMatch = "lt";
+				return true;
+			case '"':
+				lastMatch = "quot";
+				return true;
+			}
+			lastMatch = null;
+			return false;
+		}
+
+		public void appendName(StringBuilder sb) {
+			if (lastMatch == null) {
+				throw new IllegalArgumentException("Null match");
+			}
+			sb.append('&');			
+			sb.append(lastMatch);
+			sb.append(';');
+			lastMatch = null;
+		}
+	});
   }
 }

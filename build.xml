@@ -10,7 +10,7 @@
 
 	<property name="ant.jar" value="${lib}/ant.jar" />
 
-	<property name="antlib.xml" value="com/surelogic/_flashlight/ant/antlib.xml"/>
+	<property name="antlib.xml" value="com/surelogic/flashlight/ant/antlib.xml"/>
 	
 	<property name="flashlight-ant.jar" value="${basedir}/flashlight-ant.jar" />
 	<property name="flashlight-ant.jar.manifest" value="${lib}/ANT-MANIFEST.MF" />
@@ -38,7 +38,7 @@
 		<copy file="${src}/${antlib.xml}"
 				tofile="${classes}/${antlib.xml}"/>
 		<jar destfile="${flashlight-ant.jar}" basedir="${classes}">
-			<include name="**/com/surelogic/_flashlight/ant/*" />
+			<include name="**/com/surelogic/flashlight/ant/*" />
 			<manifest>
 			  <attribute name="Manifest-Version" value="1.0"/>
 				<attribute name="Class-Path" value="flashlight-rewriter.jar"/>

@@ -19,6 +19,7 @@ import com.surelogic.common.i18n.I18N;
 import com.surelogic.flashlight.client.eclipse.dialogs.DeleteRunDialog;
 import com.surelogic.flashlight.client.eclipse.dialogs.LogDialog;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
+import com.surelogic.flashlight.common.Data;
 import com.surelogic.flashlight.common.entities.PrepRunDescription;
 import com.surelogic.flashlight.common.files.RawFileHandles;
 import com.surelogic.flashlight.common.jobs.DeleteRawFilesSLJob;
@@ -115,7 +116,7 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 				final File dataFile = description.getRawFileHandles()
 						.getDataFile();
 				EclipseJob.getInstance().scheduleDb(
-						new PrepSLJob(description.getName(), dataFile), true,
+						new PrepSLJob(dataFile, Data.getInstance()), true,
 						false);
 			}
 		}

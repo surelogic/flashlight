@@ -13,6 +13,7 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
 import com.surelogic.common.SLUtility;
+import com.surelogic.common.derby.DerbyConnection;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jdbc.DBTransaction;
 import com.surelogic.common.jdbc.QB;
@@ -21,7 +22,6 @@ import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.common.jobs.SubSLProgressMonitor;
 import com.surelogic.common.logging.SLLogger;
-import com.surelogic.flashlight.common.Data;
 import com.surelogic.flashlight.common.entities.PrepRunDescription;
 import com.surelogic.flashlight.common.entities.RunDAO;
 import com.surelogic.flashlight.common.files.RawDataFilePrefix;
@@ -85,10 +85,21 @@ public final class PrepSLJob extends AbstractSLJob {
 	}
 
 	private final File f_dataFile;
+	private final DerbyConnection f_database;
 
-	public PrepSLJob(final String runDescription, final File dataFile) {
-		super("Preparing " + runDescription);
+	/**
+	 * Constructs a job instance to prepare the passed raw data file into the
+	 * passed target database.
+	 * 
+	 * @param dataFile
+	 *            a raw data file, either <tt>.fl</tt> or <tt>.fl.gz</tt>.
+	 * @param database
+	 *            a derby connection object for the target database.
+	 */
+	public PrepSLJob(final File dataFile, final DerbyConnection database) {
+		super("Preparing " + dataFile.getName());
 		f_dataFile = dataFile;
+		f_database = database;
 	}
 
 	public SLStatus run(final SLProgressMonitor monitor) {
@@ -148,14 +159,14 @@ public final class PrepSLJob extends AbstractSLJob {
 				 */
 				final InputStream dataFileStream = RawFileUtility
 						.getInputStreamFor(f_dataFile);
-				return Data.getInstance().withTransaction(
-						new DBTransaction<SLStatus>() {
+				return f_database
+						.withTransaction(new DBTransaction<SLStatus>() {
 							public SLStatus perform(final Connection c)
 									throws Exception {
 
 								/*
 								 * Persist the run and obtain its database
-								 * identifier, start timestamp, and the start
+								 * identifier, start time stamp, and the start
 								 * time in nanoseconds.
 								 */
 								final SLProgressMonitor persistRunDescriptionMonitor = new SubSLProgressMonitor(
@@ -188,9 +199,7 @@ public final class PrepSLJob extends AbstractSLJob {
 								final SLProgressMonitor setupMonitor = new SubSLProgressMonitor(
 										monitor, "Setting up event handlers",
 										SETUP_WORK);
-								setupMonitor.begin(
-
-								f_elements.length);
+								setupMonitor.begin(f_elements.length);
 								for (final IPrep element : f_elements) {
 									element.setup(c, start, startNS,
 											scanResults, unreferencedObjects,

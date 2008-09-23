@@ -11,7 +11,7 @@ import com.surelogic._flashlight.jsr166y.ConcurrentReferenceHashMap;
 import com.surelogic._flashlight.rewriter.runtime.IdObject;
 
 abstract class IdPhantomReference extends PhantomReference {
-	static final ConcurrentReferenceHashMap.Hasher hasher = true ? ConcurrentReferenceHashMap.IDENTITY_HASH :
+	static final ConcurrentReferenceHashMap.Hasher hasher = false ? ConcurrentReferenceHashMap.IDENTITY_HASH :
 		new ConcurrentReferenceHashMap.Hasher() {
 		public int hashCode(Object o) {
 			if (o instanceof IdObject) {

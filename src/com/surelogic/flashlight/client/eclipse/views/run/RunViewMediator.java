@@ -112,8 +112,11 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 					EclipseJob.getInstance().scheduleDb(new UnPrepSLJob(prep),
 							true, false);
 				}
-				EclipseJob.getInstance().scheduleDb(new PrepSLJob(description),
-						true, false);
+				final File dataFile = description.getRawFileHandles()
+						.getDataFile();
+				EclipseJob.getInstance().scheduleDb(
+						new PrepSLJob(description.getName(), dataFile), true,
+						false);
 			}
 		}
 	};

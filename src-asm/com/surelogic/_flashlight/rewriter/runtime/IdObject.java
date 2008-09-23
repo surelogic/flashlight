@@ -10,7 +10,7 @@ public class IdObject {
 
 	public final long id = f_idCount.incrementAndGet();
 	
-	public final int identityHashCode() {
+	public final int identity$HashCode() {
 		return (int) id;
 		//return super.hashCode();
 	}

@@ -15,7 +15,7 @@ abstract class IdPhantomReference extends PhantomReference {
 		new ConcurrentReferenceHashMap.Hasher() {
 		public int hashCode(Object o) {
 			if (o instanceof IdObject) {
-				return ((IdObject) o).identityHashCode();
+				return ((IdObject) o).identity$HashCode();
 			} else {
 				return System.identityHashCode(o);
 			}

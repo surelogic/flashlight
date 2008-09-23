@@ -1331,7 +1331,7 @@ public final class Store {
 		}
 	}
 
-	static final int LOCAL_QUEUE_MAX = 64;
+	static final int LOCAL_QUEUE_MAX = 128;
 	
 	/**
 	 * Used by the refinery to flush all the local queues upon shutdown

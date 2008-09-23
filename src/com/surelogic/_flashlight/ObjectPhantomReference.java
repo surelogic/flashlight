@@ -24,7 +24,7 @@ class ObjectPhantomReference extends IdPhantomReference {
 	 * @aggregate Instance into ObjectPRInstanceMap
 	 */
 	private static final ConcurrentMap<Object,ObjectPhantomReference> f_objectToPhantom = 
-		new ConcurrentReferenceHashMap<Object,ObjectPhantomReference>(ReferenceType.WEAK, ReferenceType.STRONG, ComparisonType.IDENTITY_HASH);
+		new ConcurrentReferenceHashMap<Object,ObjectPhantomReference>(ReferenceType.WEAK, ReferenceType.STRONG, hasher);
 
 	private static final RefFactory<Object,ObjectPhantomReference> f_factory = 
 		new RefFactory<Object,ObjectPhantomReference>() {

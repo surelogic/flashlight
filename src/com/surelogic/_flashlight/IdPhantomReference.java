@@ -7,10 +7,24 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.surelogic._flashlight.jsr166y.ConcurrentReferenceHashMap;
 import com.surelogic._flashlight.rewriter.runtime.IdObject;
 
 abstract class IdPhantomReference extends PhantomReference {
-
+	static final ConcurrentReferenceHashMap.Hasher hasher = true ? ConcurrentReferenceHashMap.IDENTITY_HASH :
+		new ConcurrentReferenceHashMap.Hasher() {
+		public int hashCode(Object o) {
+			if (o instanceof IdObject) {
+				return ((IdObject) o).identityHashCode();
+			} else {
+				return System.identityHashCode(o);
+			}
+		}
+		public boolean useReferenceEquality() {
+			return true;
+		}
+	};
+	
 	/**
 	 * Use a thread-safe counter.
 	 */

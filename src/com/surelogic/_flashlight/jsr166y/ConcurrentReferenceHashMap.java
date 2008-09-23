@@ -150,34 +150,32 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
 		SOFT
 	}
 	
-	/**
-	 * An option specifying how to hash/compare keys
-	 */
-	public static enum ComparisonType {
-		/** use object hashCode() and equals() comparison */
-		STANDARD_HASH() {
-			@Override
-	    	boolean useReferenceEquality() {
-	    		return false;
-	    	}
-	    },
-	    /** use object hashCode() and == comparison */
-	    IDENTITY_COMP,
-	    /** use System.identityHashCode() and == comparison */
-	    IDENTITY_HASH() {
-	    	@Override
-		    boolean useSystemIdentityHashCode() {
-		    	return true;
-		    }
-	    };
-	    
-	    boolean useSystemIdentityHashCode() {
-	    	return false;
-	    }
-	    boolean useReferenceEquality() {
-	    	return true;
-	    }
+	public interface Hasher {
+		int hashCode(Object o);
+	    boolean useReferenceEquality();
 	}
+	
+	/** use object hashCode() and equals() comparison */
+	public static final Hasher STANDARD_HASH = new Hasher() {
+		public int hashCode(Object o) {
+			return o.hashCode();
+		}
+		public boolean useReferenceEquality() {
+			return false;
+		}		
+	};
+    /** use object hashCode() and == comparison */
+    //IDENTITY_COMP,
+	
+    /** use System.identityHashCode() and == comparison */
+	public static final Hasher IDENTITY_HASH = new Hasher() {
+		public int hashCode(Object o) {
+			return System.identityHashCode(o);
+		}
+		public boolean useReferenceEquality() {
+			return true;
+		}		
+	};
 
 	/* ---------------- Constants -------------- */
 
@@ -215,7 +213,7 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
 	 * The default value for using reference-equality, used when not otherwise
 	 * specified in a constructor.
 	 */
-	static final ComparisonType DEFAULT_USE_REFERENCE_EQUALITY = ComparisonType.STANDARD_HASH;
+	static final Hasher DEFAULT_USE_REFERENCE_EQUALITY = STANDARD_HASH;
 
 	/**
 	 * The maximum capacity, used if a higher value is implicitly specified by
@@ -273,10 +271,9 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
 	final boolean useReferenceEquality;
 	
 	/**
-	 * Flags if System.identityHashCode() is used for this map rather than
-	 * Object.hashCode().
+	 * Hash function use
 	 */
-	final boolean useSystemIdentityHashCode;
+	final Hasher hasher;
 
 	transient Set<K> keySet;
 	transient Set<Map.Entry<K, V>> entrySet;
@@ -314,8 +311,7 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
 	}
 
 	private int hashOf(Object key) {
-		return hash(useSystemIdentityHashCode ? System.identityHashCode(key) : key
-				.hashCode());
+		return hash(hasher.hashCode(key));
 	}
 
 	/* ---------------- Inner Classes -------------- */
@@ -901,7 +897,7 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
 	 */
 	public ConcurrentReferenceHashMap(int initialCapacity, float loadFactor,
 			int concurrencyLevel, ReferenceType keyReferenceType,
-			ReferenceType valueReferenceType, ComparisonType compareType) {
+			ReferenceType valueReferenceType, Hasher compareType) {
 		if (!(loadFactor > 0) || initialCapacity < 0 || concurrencyLevel <= 0
 				|| keyReferenceType == null || valueReferenceType == null)
 			throw new IllegalArgumentException();
@@ -932,7 +928,7 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
 		this.keyReferenceType = keyReferenceType;
 		this.valueReferenceType = valueReferenceType;
 		this.useReferenceEquality = compareType.useReferenceEquality();
-		this.useSystemIdentityHashCode = compareType.useSystemIdentityHashCode();
+		this.hasher = compareType;
 		
 		for (int i = 0; i < this.segments.length; ++i)
 			this.segments[i] = new Segment<K, V>(cap, loadFactor,
@@ -1051,7 +1047,7 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
 	 *             if the key or value reference type is null.
 	 */
 	public ConcurrentReferenceHashMap(ReferenceType keyReferenceType,
-			ReferenceType valueReferenceType, ComparisonType compareType) {
+			ReferenceType valueReferenceType, Hasher compareType) {
 		this(DEFAULT_INITIAL_CAPACITY, DEFAULT_LOAD_FACTOR,
 				DEFAULT_CONCURRENCY_LEVEL, keyReferenceType,
 				valueReferenceType, compareType);
@@ -1071,7 +1067,7 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
 	 *            equal if and only if
 	 *            <tt>(k1==null ? k2==null : k1.equals(k2))</tt>.
 	 */
-	public ConcurrentReferenceHashMap(ComparisonType compareType) {
+	public ConcurrentReferenceHashMap(Hasher compareType) {
 		this(DEFAULT_INITIAL_CAPACITY, DEFAULT_LOAD_FACTOR,
 				DEFAULT_CONCURRENCY_LEVEL, DEFAULT_KEY_TYPE,
 				DEFAULT_VALUE_TYPE, compareType);

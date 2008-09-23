@@ -24,7 +24,7 @@ final class ThreadPhantomReference extends ObjectPhantomReference {
 	 * @aggregate Instance into ThreadPRInstanceMap
 	 */
 	private static final ConcurrentMap<Thread,ThreadPhantomReference> f_threadToPhantom = 
-		new ConcurrentReferenceHashMap<Thread,ThreadPhantomReference>(ReferenceType.WEAK, ReferenceType.STRONG, ComparisonType.IDENTITY_HASH);
+		new ConcurrentReferenceHashMap<Thread,ThreadPhantomReference>(ReferenceType.WEAK, ReferenceType.STRONG, hasher);
 
 	private static final RefFactory<Thread,ThreadPhantomReference> f_factory = 
 		new RefFactory<Thread,ThreadPhantomReference>() {

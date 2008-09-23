@@ -35,7 +35,8 @@ public final class ClassPhantomReference extends IdPhantomReference {
 	};
 	
 	private final String f_className;
-
+	//private volatile boolean defined;
+	
 	/**
 	 * Gets the name of this class.
 	 * 
@@ -57,6 +58,12 @@ public final class ClassPhantomReference extends IdPhantomReference {
 
 	@Override
 	void accept(IdPhantomReferenceVisitor v) {
+        /*
+		if (defined) {
+			throw new RuntimeException();		
+		}
+		defined = false;
+        */
 		v.visit(this);
 	}
 

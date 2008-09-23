@@ -1,20 +1,18 @@
 package com.surelogic.flashlight.client.eclipse;
 
 import java.io.File;
-import java.net.URL;
 
 import com.surelogic.common.FileUtility;
 import com.surelogic.common.derby.DerbyConnection;
+import com.surelogic.common.jdbc.DBConnection;
 import com.surelogic.common.jdbc.SchemaData;
 import com.surelogic.flashlight.schema.FlashlightSchemaData;
 
 public final class Data extends DerbyConnection {
 
-	public static final String DEFAULT_FLASHLIGHT_QUERIES_URL = "/com/surelogic/flashlight/common/default-flashlight-queries.xml";
-
 	private static final Data INSTANCE = new Data();
 
-	public static Data getInstance() {
+	public static DBConnection getInstance() {
 		INSTANCE.loggedBootAndCheckSchema();
 		return INSTANCE;
 	}
@@ -37,9 +35,5 @@ public final class Data extends DerbyConnection {
 	@Override
 	protected SchemaData getSchemaLoader() {
 		return new FlashlightSchemaData();
-	}
-
-	public URL getDefaultQueryUrl() {
-		return Data.class.getResource(DEFAULT_FLASHLIGHT_QUERIES_URL);
 	}
 }

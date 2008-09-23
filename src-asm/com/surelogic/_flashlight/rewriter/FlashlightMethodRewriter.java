@@ -366,19 +366,15 @@ final class FlashlightMethodRewriter extends MethodAdapter {
             rewriteConstructorCall(owner, name, desc);
           } else {
             if (isConstructor && stateMachine != null) {
-              if (updateSuperCall) {
-                outputOriginalCall = false;
-                mv.visitMethodInsn(Opcodes.INVOKESPECIAL, FlashlightNames.ID_OBJECT, name, desc);
-              }
+              outputOriginalCall = false;
+              updateSuperCall(owner, name, desc);
             }
           }
         }
       } else {
         if (name.equals(FlashlightNames.CONSTRUCTOR) && isConstructor && stateMachine != null) {
-          if (updateSuperCall) {
-            outputOriginalCall = false;
-            mv.visitMethodInsn(Opcodes.INVOKESPECIAL, FlashlightNames.ID_OBJECT, name, desc);
-          }
+          outputOriginalCall = false;
+          updateSuperCall(owner, name, desc);
         }
       }      
       if (outputOriginalCall) {
@@ -820,15 +816,19 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     // ...
   }
   
+  private void updateSuperCall(
+      final String owner, final String name, final String desc) {
+    if (owner.equals(FlashlightNames.JAVA_LANG_OBJECT) && updateSuperCall) {
+      mv.visitMethodInsn(Opcodes.INVOKESPECIAL, FlashlightNames.ID_OBJECT, name, desc);
+    } else {
+      mv.visitMethodInsn(Opcodes.INVOKESPECIAL, owner, name, desc);
+    }
+  }
+  
   private void rewriteConstructorCall(
       final String owner, final String name, final String desc) {
     if (isConstructor && stateMachine != null) {
-      /* Original call */
-      if (updateSuperCall) {
-        mv.visitMethodInsn(Opcodes.INVOKESPECIAL, FlashlightNames.ID_OBJECT, name, desc);
-      } else {
-        mv.visitMethodInsn(Opcodes.INVOKESPECIAL, owner, name, desc);
-      }
+      updateSuperCall(owner, name, desc);
     } else {
       // ...
       ByteCodeUtils.pushBooleanConstant(mv, true);

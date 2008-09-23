@@ -2,5 +2,8 @@
 <antlib>
 	<taskdef
 			name="instrument" 
-			classname="com.surelogic._flashlight.ant.Instrument"/>
+			classname="com.surelogic.flashlight.ant.Instrument"/>
+	<!--taskdef
+			name="prep" 
+			classname="com.surelogic.flashlight.ant.Prep"/-->
 </antlib>

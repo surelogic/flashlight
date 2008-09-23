@@ -1,4 +1,4 @@
-package com.surelogic._flashlight.ant;
+package com.surelogic.flashlight.ant;
 
 import java.io.File;
 import java.io.FileNotFoundException;

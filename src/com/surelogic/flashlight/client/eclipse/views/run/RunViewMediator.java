@@ -110,8 +110,9 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 									.getName()))) {
 						return; // bail
 					}
-					EclipseJob.getInstance().scheduleDb(new UnPrepSLJob(prep),
-							true, false);
+					EclipseJob.getInstance().scheduleDb(
+							new UnPrepSLJob(prep, Data.getInstance()), true,
+							false);
 				}
 				final File dataFile = description.getRawFileHandles()
 						.getDataFile();
@@ -166,8 +167,9 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 					return;
 
 				if (hasPrep) {
-					EclipseJob.getInstance().scheduleDb(new UnPrepSLJob(prep),
-							true, false);
+					EclipseJob.getInstance().scheduleDb(
+							new UnPrepSLJob(prep, Data.getInstance()), true,
+							false);
 				}
 				if (hasRawFiles && d.deleteRawDataFiles()) {
 					EclipseJob.getInstance().schedule(

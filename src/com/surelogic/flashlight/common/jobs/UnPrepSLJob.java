@@ -4,11 +4,11 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import com.surelogic.common.derby.DerbyConnection;
 import com.surelogic.common.jdbc.QB;
 import com.surelogic.common.jobs.AbstractSLJob;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
-import com.surelogic.flashlight.common.Data;
 import com.surelogic.flashlight.common.entities.PrepRunDescription;
 import com.surelogic.flashlight.common.model.RunManager;
 
@@ -25,10 +25,13 @@ public final class UnPrepSLJob extends AbstractSLJob {
 			"ACCESS", "RWLOCK", "FIELD", "OBJECT", "RUN" };
 
 	private final PrepRunDescription f_prep;
+	private final DerbyConnection f_database;
 
-	public UnPrepSLJob(final PrepRunDescription prep) {
+	public UnPrepSLJob(final PrepRunDescription prep,
+			final DerbyConnection database) {
 		super("Removing preparing data " + prep.getDescription().getName());
 		f_prep = prep;
+		f_database = database;
 	}
 
 	public SLStatus run(SLProgressMonitor monitor) {
@@ -37,7 +40,7 @@ public final class UnPrepSLJob extends AbstractSLJob {
 		monitor.begin(TABLES.length + 2);
 
 		try {
-			final Connection c = Data.getInstance().getConnection();
+			final Connection c = f_database.getConnection();
 			try {
 				monitor.worked(1);
 				final Statement s = c.createStatement();

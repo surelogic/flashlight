@@ -1350,6 +1350,14 @@ public final class Store {
 	};
 	
 	static void putInQueue(final BlockingQueue<List<Event>> queue, final Event e) {
+		/*
+		if (e instanceof ObjectDefinition) {
+			ObjectDefinition od = (ObjectDefinition) e;
+			if (od.getObject() instanceof ClassPhantomReference) {
+				System.err.println("Local queue: "+od.getObject());
+			}
+		}
+		*/
 		List<Event> localQ = localQueues.get();
 		List<Event> copy   = null;
 		synchronized (localQ) {
@@ -1360,6 +1368,16 @@ public final class Store {
 			}
 		}
 		if (copy != null) {
+			/*
+			for(Event ev : copy) {
+				if (ev instanceof ObjectDefinition) {
+					ObjectDefinition od = (ObjectDefinition) ev;
+					if (od.getObject() instanceof ClassPhantomReference) {
+						System.err.println("Queuing: "+od.getObject());
+					}
+				}
+			}
+			*/
 			putInQueue(queue, copy);
 		}		
  	}
@@ -1370,10 +1388,20 @@ public final class Store {
 			for(List<Event> q : localQueueList) {
 				synchronized (q) {
 					buf.addAll(q);
-					buf.clear();
+					q.clear();
 				}
 			}
 		}
+		/*
+		for(Event ev : buf) {
+			if (ev instanceof ObjectDefinition) {
+				ObjectDefinition od = (ObjectDefinition) ev;
+				if (od.getObject() instanceof ClassPhantomReference) {
+					System.err.println("Flushing: "+od.getObject());
+				}
+			}
+		}
+        */
 		return buf;
 	}
 	

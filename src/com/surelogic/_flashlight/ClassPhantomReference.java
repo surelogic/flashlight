@@ -49,6 +49,7 @@ public final class ClassPhantomReference extends IdPhantomReference {
 	private ClassPhantomReference(final Class referent, final ReferenceQueue q) {
 		super(referent, q);
 		f_className = referent.getName();
+		//System.err.println(Thread.currentThread()+" "+getId()+" "+f_className);
 	}
 
 	static ClassPhantomReference getInstance(final Class c,

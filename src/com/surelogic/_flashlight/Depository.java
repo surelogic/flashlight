@@ -33,6 +33,7 @@ final class Depository extends Thread {
 		
 		@Override
 		void visit(final ClassPhantomReference r) {
+			//System.err.println("Depository: "+r);							
 			count = outputFieldDefs(r.getName(), r.getId(), f_outputStrategy);
 		}		
 	}

@@ -255,6 +255,14 @@ final class Refinery extends Thread {
 		List<Event> buf = new ArrayList<Event>(max);
 		while (transferCount > 0) {
 			final Event e = f_eventCache.removeFirst();
+			/*
+			if (e instanceof ObjectDefinition) {
+				ObjectDefinition od = (ObjectDefinition) e;
+				if (od.getObject() instanceof ClassPhantomReference) {
+					System.err.println("Refinery: "+od.getObject());
+				}
+			}
+            */
 			buf.add(e);
 			transferCount--;
 			count--;

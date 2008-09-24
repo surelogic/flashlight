@@ -11,6 +11,11 @@ final class ObjectDefinition extends DefinitionalEvent {
 	ObjectDefinition(final IdPhantomReference object) {
 		assert object != null;
 		f_object = object;
+        /*
+		if (object instanceof ClassPhantomReference) {
+			System.err.println(Thread.currentThread()+" "+object);
+		}
+		*/
 	}
 
 	@Override

@@ -37,6 +37,15 @@ public class OutputStrategyFields extends EventVisitor {
 	}
 
 	@Override
+	void flush() {
+		try {
+			f_out.flush();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	@Override
 	void visit(final FieldReadInstance e) {	
 		buf.clear();
 

@@ -158,4 +158,9 @@ final class OutputStrategyXML extends EventVisitor {
 	void visit(Time e) {
 		o(e.toString());
 	}
+	
+	@Override
+	void flush() {
+		f_out.flush();
+	}
 }

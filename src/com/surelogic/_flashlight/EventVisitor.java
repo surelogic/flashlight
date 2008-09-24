@@ -92,4 +92,8 @@ abstract class EventVisitor {
 	void visit(final Time e) {
 		// do nothing
 	}
+
+	void flush() {
+		// do nothing
+	}
 }

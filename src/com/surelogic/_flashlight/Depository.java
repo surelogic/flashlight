@@ -90,6 +90,7 @@ final class Depository extends Thread {
 				Store.logAProblem("depository was interrupted...a bug");
 			}
 		}
+		f_outputStrategy.flush();
 		Store.log("depository flushed (" + f_outputCount + " events(s) output)");
 	}
 

@@ -3,7 +3,7 @@
 	<taskdef
 			name="instrument" 
 			classname="com.surelogic.flashlight.ant.Instrument"/>
-	<!--taskdef
+	<taskdef
 			name="prep" 
-			classname="com.surelogic.flashlight.ant.Prep"/-->
+			classname="com.surelogic.flashlight.ant.Prep"/>
 </antlib>

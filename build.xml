@@ -6,7 +6,10 @@
 	<property name="lib" value="${basedir}/lib" />
 	<property name="classes" value="${basedir}/bin" />
 	
-	<property name="rest-of-flashlight" value="../flashlight-instrumentation-5.0/bin"/>
+	<property name="flashlight-instrumentation-project" value="../flashlight-instrumentation-5.0/bin"/>
+  <property name="flashlight-common-project" value="../flashlight-common/bin"/>
+  <property name="common-project" value="../common/bin"/>
+  <property name="derby-common-project" value="../derby-common/bin"/>
 
 	<property name="ant.jar" value="${lib}/ant.jar" />
 
@@ -27,7 +30,10 @@
 			<src path="${src}" />
 			<classpath>
 				<pathelement location="${ant.jar}" />
-				<pathelement location="${rest-of-flashlight}"/>
+				<pathelement location="${flashlight-instrumentation-project}"/>
+				<pathelement location="${flashlight-common-project}"/>
+				<pathelement location="${common-project}"/>
+  			<pathelement location="${derby-common-project}"/>
 			</classpath>
 		</javac>
 	</target>
@@ -37,13 +43,19 @@
 		     placed in the final flashlight-ant.jar file. -->
 		<copy file="${src}/${antlib.xml}"
 				tofile="${classes}/${antlib.xml}"/>
+		<!-- (1) Include the contents of this project (flashlight-ant) -->
 		<jar destfile="${flashlight-ant.jar}" basedir="${classes}">
-			<include name="**/com/surelogic/flashlight/ant/*" />
 			<manifest>
 			  <attribute name="Manifest-Version" value="1.0"/>
 				<attribute name="Class-Path" value="flashlight-rewriter.jar"/>
 			</manifest>
 	  </jar>
+		<!-- (2) Include the contents of common -->
+		<jar update="true" destfile="${flashlight-ant.jar}" basedir="${common-project}"/>
+	  <!-- (3) Include the contents of derby-common -->
+  	<jar update="true" destfile="${flashlight-ant.jar}" basedir="${derby-common-project}"/>
+	  <!-- (4) Include the contents of flashlight-common -->
+  	<jar update="true" destfile="${flashlight-ant.jar}" basedir="${flashlight-common-project}"/>
 	</target>
 
 	<target name="build-jars" depends="compile, build-ant-jar" />

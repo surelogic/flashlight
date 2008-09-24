@@ -602,7 +602,7 @@ public final class Instrument extends Task {
    */
   private final class AntLogMessenger extends AbstractIndentingMessager {
     public AntLogMessenger() {
-      super("    ");
+      super("\t");
       increaseNesting();
     }
     

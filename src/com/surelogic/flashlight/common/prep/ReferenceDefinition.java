@@ -12,6 +12,8 @@ import org.xml.sax.Attributes;
 
 import com.surelogic.common.logging.SLLogger;
 
+import static com.surelogic._flashlight.common.AttributeType.*;
+
 public abstract class ReferenceDefinition extends TrackUnreferenced {
 
 	private static final String f_psQ = "INSERT INTO OBJECT (Run,Id,Type,Threadname,PackageName,ClassName,Flag) VALUES (?, ?, ?, ?, ?, ?, ?)";
@@ -28,13 +30,13 @@ public abstract class ReferenceDefinition extends TrackUnreferenced {
 			for (int i = 0; i < attributes.getLength(); i++) {
 				final String aName = attributes.getQName(i);
 				final String aValue = attributes.getValue(i);
-				if ("id".equals(aName)) {
+				if (ID.matches(aName)) {
 					id = Long.parseLong(aValue);
-				} else if ("type".equals(aName)) {
+				} else if (TYPE.matches(aName)) {
 					type = Long.parseLong(aValue);
-				} else if ("thread-name".equals(aName)) {
+				} else if (THREAD_NAME.matches(aName)) {
 					threadName = aValue;
-				} else if ("class-name".equals(aName)) {
+				} else if (CLASS_NAME.matches(aName)) {
 					className = aValue;
 				}
 			}

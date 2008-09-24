@@ -11,6 +11,8 @@ import org.xml.sax.helpers.DefaultHandler;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.logging.SLLogger;
 
+import static com.surelogic._flashlight.common.AttributeType.*;
+
 public final class ScanRawFilePreScan extends DefaultHandler {
 
 	private boolean f_firstTimeEventFound = false;
@@ -129,9 +131,9 @@ public final class ScanRawFilePreScan extends DefaultHandler {
 				for (int i = 0; i < attributes.getLength(); i++) {
 					final String aName = attributes.getQName(i);
 					final String aValue = attributes.getValue(i);
-					if ("field".equals(aName)) {
+					if (FIELD.matches(aName)) {
 						field = Long.parseLong(aValue);
-					} else if ("receiver".equals(aName)) {
+					} else if (RECEIVER.matches(aName)) {
 						receiver = Long.parseLong(aValue);
 					}
 				}

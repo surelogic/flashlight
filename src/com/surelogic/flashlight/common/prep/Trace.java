@@ -4,10 +4,9 @@ import java.sql.SQLException;
 
 import org.xml.sax.Attributes;
 
+import static com.surelogic._flashlight.common.AttributeType.*;
+
 public abstract class Trace extends Event {
-
-	protected static final String FILE = "file";
-
 	Trace(final IntrinsicLockDurationRowInserter i) {
 		super(i);
 	}
@@ -15,11 +14,11 @@ public abstract class Trace extends Event {
 	public void parse(final int runId, final Attributes attributes)
 			throws SQLException {
 		parseAttrs(attributes);
-		final long time = Long.parseLong(getAttr(NANO_TIME));
+		final long time = Long.parseLong(getAttr(TIME));
 		final long inThread = Long.parseLong(getAttr(THREAD));
-		final long inClass = Long.parseLong(getAttr(CLASS));
+		final long inClass = Long.parseLong(getAttr(IN_CLASS));
 		final int lineNumber = Integer.parseInt(getAttr(LINE));
-		final String file = attributes.getValue(FILE);
+		final String file = getAttr(FILE);
 		handleTrace(runId, inThread, inClass, time, file, lineNumber);
 	}
 

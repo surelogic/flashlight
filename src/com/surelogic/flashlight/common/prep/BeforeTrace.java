@@ -8,6 +8,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import static com.surelogic._flashlight.common.AttributeType.*;
+
 public final class BeforeTrace extends Trace {
 
 	private static final String f_psQ = "INSERT INTO TRACE (Run,Id,InThread,InClass,InFile,AtLine,Location,Start,Stop) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -115,7 +117,7 @@ public final class BeforeTrace extends Trace {
 	protected void handleTrace(final int runId, final long inThread,
 			final long inClass, final long time, final String file,
 			final int lineNumber) {
-		final String location = getAttr("location");
+		final String location = getAttr(LOCATION);
 		final long id = ++f_id;
 		final Long thread = inThread;
 		getTraces(thread).push(id, time, inClass, file, lineNumber, location);

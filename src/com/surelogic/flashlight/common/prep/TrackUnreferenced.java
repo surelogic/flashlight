@@ -10,16 +10,12 @@ import java.util.logging.Logger;
 
 import org.xml.sax.Attributes;
 
+import com.surelogic._flashlight.common.AttributeType;
 import com.surelogic.common.logging.SLLogger;
 
 public abstract class TrackUnreferenced implements IPrep {
 	protected static final Logger LOG = SLLogger
 			.getLoggerFor(TrackUnreferenced.class);
-
-	protected static final String LINE = "line";
-	protected static final String THREAD = "thread";
-	protected static final String NANO_TIME = "nano-time";
-	protected static final String CLASS = "in-class";
 
 	private final Map<String, String> attrs = new HashMap<String, String>();
 
@@ -37,10 +33,10 @@ public abstract class TrackUnreferenced implements IPrep {
 		}
 	}
 
-	protected String getAttr(String name) {
-		final String val = attrs.get(name);
+	protected String getAttr(AttributeType t) {
+		final String val = attrs.get(t.label()); // FIX
 		if (val == null) {
-			LOG.severe("Null for " + name);
+			LOG.severe("Null for " + t);
 		}
 		return val;
 	}

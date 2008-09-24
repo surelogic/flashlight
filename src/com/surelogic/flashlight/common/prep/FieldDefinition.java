@@ -12,6 +12,9 @@ import org.xml.sax.Attributes;
 
 import com.surelogic.common.logging.SLLogger;
 
+import static com.surelogic._flashlight.common.AttributeType.*;
+import static com.surelogic._flashlight.common.FlagType.*;
+
 public final class FieldDefinition extends TrackUnreferenced {
 
 	private static final String f_psQ = "INSERT INTO FIELD VALUES (?, ?, ?, ?, ?, ?, ?)";
@@ -34,17 +37,17 @@ public final class FieldDefinition extends TrackUnreferenced {
 			for (int i = 0; i < attributes.getLength(); i++) {
 				final String aName = attributes.getQName(i);
 				final String aValue = attributes.getValue(i);
-				if ("id".equals(aName)) {
+				if (ID.matches(aName)) {
 					id = Long.parseLong(aValue);
-				} else if ("type".equals(aName)) {
+				} else if (TYPE.matches(aName)) {
 					type = Long.parseLong(aValue);
-				} else if ("field".equals(aName)) {
+				} else if (FIELD.matches(aName)) {
 					field = aValue;
-				} else if ("static".equals(aName)) {
+				} else if (IS_STATIC.matches(aName)) {
 					isStatic = true;
-				} else if ("final".equals(aName)) {
+				} else if (IS_FINAL.matches(aName)) {
 					isFinal = true;
-				} else if ("volatile".equals(aName)) {
+				} else if (IS_VOLATILE.matches(aName)) {
 					isVolatile = true;
 				}
 			}

@@ -10,6 +10,9 @@ import org.xml.sax.Attributes;
 
 import com.surelogic.common.logging.SLLogger;
 
+import static com.surelogic._flashlight.common.AttributeType.*;
+import static com.surelogic._flashlight.common.FlagType.*;
+
 public abstract class Lock extends Event {
 	static final long FINAL_EVENT = Long.MAX_VALUE;
 
@@ -39,23 +42,23 @@ public abstract class Lock extends Event {
 			for (int i = 0; i < attributes.getLength(); i++) {
 				final String aName = attributes.getQName(i);
 				final String aValue = attributes.getValue(i);
-				if ("nano-time".equals(aName)) {
+				if (TIME.matches(aName)) {
 					nanoTime = Long.parseLong(aValue);
-				} else if ("thread".equals(aName)) {
+				} else if (THREAD.matches(aName)) {
 					inThread = Long.parseLong(aValue);
-				} else if ("in-class".equals(aName)) {
+				} else if (IN_CLASS.matches(aName)) {
 					inClass = Long.parseLong(aValue);
-				} else if ("line".equals(aName)) {
+				} else if (LINE.matches(aName)) {
 					lineNumber = Integer.parseInt(aValue);
-				} else if ("lock".equals(aName)) {
+				} else if (LOCK.matches(aName)) {
 					lock = Long.parseLong(aValue);
-				} else if ("lock-is-this".equals(aName)) {
+				} else if (THIS_LOCK.matches(aName)) {
 					lockIsThis = true;
-				} else if ("lock-is-class".equals(aName)) {
+				} else if (CLASS_LOCK.matches(aName)) {
 					lockIsClass = true;
-				} else if ("released-the-lock".equals(aName)) {
+				} else if (RELEASED_LOCK.matches(aName)) {
 					success = "yes".equals(aValue);
-				} else if ("got-the-lock".equals(aName)) {
+				} else if (GOT_LOCK.matches(aName)) {
 					success = "yes".equals(aValue);
 				}
 			}

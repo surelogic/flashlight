@@ -5,6 +5,8 @@ package com.surelogic.flashlight.common.prep;
 
 import org.xml.sax.Attributes;
 
+import static com.surelogic._flashlight.common.AttributeType.*;
+
 public class GarbageCollectedObject extends Event {
 	GarbageCollectedObject(final IntrinsicLockDurationRowInserter i) {
 		super(i);
@@ -18,7 +20,7 @@ public class GarbageCollectedObject extends Event {
 		if (attributes != null) {
 			for (int i = 0; i < attributes.getLength(); i++) {
 				final String aName = attributes.getQName(i);
-				if ("id".equals(aName)) {
+				if (ID.matches(aName)) {
 					final String aValue = attributes.getValue(i);
 					f_rowInserter.gcObject(Long.parseLong(aValue));
 				}

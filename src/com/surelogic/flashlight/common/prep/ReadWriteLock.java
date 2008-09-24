@@ -11,6 +11,8 @@ import org.xml.sax.Attributes;
 
 import com.surelogic.common.logging.SLLogger;
 
+import static com.surelogic._flashlight.common.AttributeType.*;
+
 public class ReadWriteLock extends Event {
 
 	public ReadWriteLock(final IntrinsicLockDurationRowInserter i) {
@@ -47,11 +49,11 @@ public class ReadWriteLock extends Event {
 			for (int i = 0; i < attributes.getLength(); i++) {
 				final String aName = attributes.getQName(i);
 				final String aValue = attributes.getValue(i);
-				if ("id".equals(aName)) {
+				if (ID.matches(aName)) {
 					id = Long.parseLong(aValue);
-				} else if ("read-lock-id".equals(aName)) {
+				} else if (READ_LOCK_ID.matches(aName)) {
 					readLock = Long.parseLong(aValue);
-				} else if ("write-lock-id".equals(aName)) {
+				} else if (WRITE_LOCK_ID.matches(aName)) {
 					writeLock = Long.parseLong(aValue);
 				}
 			}

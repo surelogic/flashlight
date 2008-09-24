@@ -12,6 +12,9 @@ import org.xml.sax.Attributes;
 
 import com.surelogic.common.logging.SLLogger;
 
+import static com.surelogic._flashlight.common.AttributeType.*;
+import static com.surelogic._flashlight.common.FlagType.*;
+
 public abstract class FieldAccess extends Event {
 
 	private static final String f_psQ = "INSERT INTO ACCESS (Run,TS,InThread,InClass,AtLine,Field,RW,Receiver,UnderConstruction) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -43,19 +46,19 @@ public abstract class FieldAccess extends Event {
 			for (int i = 0; i < attributes.getLength(); i++) {
 				final String aName = attributes.getQName(i);
 				final String aValue = attributes.getValue(i);
-				if ("nano-time".equals(aName)) {
+				if (TIME.matches(aName)) {
 					nanoTime = Long.parseLong(aValue);
-				} else if ("thread".equals(aName)) {
+				} else if (THREAD.matches(aName)) {
 					inThread = Long.parseLong(aValue);
-				} else if ("in-class".equals(aName)) {
+				} else if (IN_CLASS.matches(aName)) {
 					inClass = Long.parseLong(aValue);
-				} else if ("line".equals(aName)) {
+				} else if (LINE.matches(aName)) {
 					lineNumber = Integer.parseInt(aValue);
-				} else if ("field".equals(aName)) {
+				} else if (FIELD.matches(aName)) {
 					field = Long.parseLong(aValue);
-				} else if ("receiver".equals(aName)) {
+				} else if (RECEIVER.matches(aName)) {
 					receiver = Long.parseLong(aValue);
-				} else if ("under-construction".equals(aName)) {
+				} else if (UNDER_CONSTRUCTION.matches(aName)) {
 					underConstruction = "yes".equals(aValue);
 				}
 			}

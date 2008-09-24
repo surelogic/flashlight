@@ -7,7 +7,7 @@
 	
 	<property name="src" value="${basedir}/src" />
 	<property name="src-asm" value="${basedir}/src-asm" />
-    <property name="src-rt" value="${basedir}/../flashlight-runtime-common/src" />
+  <property name="src-rt" value="${basedir}/../flashlight-common/src" />
 	<property name="test" value="${basedir}/test" />
 
 	<property name="asm.jar" value="${lib}/asm-3.1.jar" />
@@ -49,7 +49,8 @@
 		<javac destdir="${classes}" debug="true" source="1.5" target="1.5">
 			<src path="${src}" />
 			<src path="${src-asm}" />
-		    <src path="${src-rt}" />
+		  <src path="${src-rt}" />
+		  <exclude name="com/surelogic/flashlight/**"/>
 			<classpath>
 				<pathelement location="${asm.jar}" />
 				<pathelement location="${asm-commons.jar}" />
@@ -62,19 +63,21 @@
 		<unzip src="${asm.jar}" dest="${classes}" />
 		<unzip src="${asm-commons.jar}" dest="${classes}" />
 		<jar destfile="${flashlight-all.jar}" basedir="${classes}">
+		  <exclude name="**/com/surelogic/flashlight/**" />
 			<manifest>
 			  <attribute name="Manifest-Version" value="1.0"/>
 			  <attribute name="Premain-Class" value="com.surelogic._flashlight.instrument.FlashlightAgent"/>
 			  <attribute name="Can-Redefine-Classes" value="false"/>
   		  <attribute name="Main-Class" value="com.surelogic._flashlight.rewriter.engine.RewriteEngine"/>
 			</manifest>
-	  </jar>
+	  </jar>	  
+	  <!-- copy file="${flashlight-all.jar}" todir="${basedir}/../flashlight-client-eclipse/lib"/ -->
 	</target>
 
 	<target name="build-runtime-jar">
 		<jar destfile="${flashlight-runtime.jar}" basedir="${classes}">
 			<include name="**/com/surelogic/_flashlight/*" />
-		    <include name="**/com/surelogic/_flashlight/common/*" />
+		  <include name="**/com/surelogic/_flashlight/common/*" />
 			<include name="**/com/surelogic/_flashlight/emory/*" />
 			<include name="**/com/surelogic/_flashlight/rewriter/runtime/*" />
 			<include name="**/com/surelogic/_flashlight/rewriter/test/*" />

@@ -7,6 +7,7 @@ import org.eclipse.jface.preference.ScaleFieldEditor;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 
+import com.surelogic.common.serviceability.UsageMeter;
 import com.surelogic.flashlight.client.eclipse.Activator;
 
 public class FlashlightPreferencePage extends FieldEditorPreferencePage
@@ -16,6 +17,9 @@ public class FlashlightPreferencePage extends FieldEditorPreferencePage
 		super(GRID);
 		setPreferenceStore(Activator.getDefault().getPreferenceStore());
 		setDescription("Use this page to customize Flashlight.");
+
+		UsageMeter.getInstance().tickUse(
+				"Flashlight FlashlightPreferencePage opened");
 	}
 
 	/**

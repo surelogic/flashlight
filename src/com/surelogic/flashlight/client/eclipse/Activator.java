@@ -12,6 +12,7 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 
 import com.surelogic.common.eclipse.logging.SLEclipseStatusUtility;
+import com.surelogic.common.serviceability.UsageMeter;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
 
 /**
@@ -52,12 +53,15 @@ public class Activator extends AbstractUIPlugin {
 		 * "Touch" common-eclipse so the logging gets Eclipse-ified.
 		 */
 		SLEclipseStatusUtility.touch();
+
+		UsageMeter.getInstance().tickUse("Flashlight Eclipse plug-in loaded");
 	}
 
 	@Override
 	public void stop(final BundleContext context) throws Exception {
 		plugin = null;
 		AdHocDataSource.getInstance().dispose();
+		UsageMeter.getInstance().persist();
 		super.stop(context);
 	}
 

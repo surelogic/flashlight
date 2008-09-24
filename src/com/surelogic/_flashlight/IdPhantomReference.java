@@ -2,7 +2,7 @@ package com.surelogic._flashlight;
 
 import java.lang.ref.PhantomReference;
 import java.lang.ref.ReferenceQueue;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicLong;
@@ -54,8 +54,22 @@ abstract class IdPhantomReference extends PhantomReference {
 	 */
 	static final Set<IdPhantomReferenceCreationObserver> f_observers = new CopyOnWriteArraySet<IdPhantomReferenceCreationObserver>();
 
-	static void addObserver(final IdPhantomReferenceCreationObserver o) {
+	static List<IdPhantomReference> unnotified = new ArrayList<IdPhantomReference>();
+	
+	static void addObserver(final IdPhantomReferenceCreationObserver o) {		
 		f_observers.add(o);
+		List<IdPhantomReference> refs = null;
+		synchronized (IdPhantomReference.class) {
+			if (unnotified != null) {
+				refs = unnotified;
+				unnotified = null;
+			}
+		}
+		if (refs != null) {
+			for(IdPhantomReference ref : refs) {
+				ref.notifyObservers();
+			}
+		}		
 	}
 
 	static void removeObserver(final IdPhantomReferenceCreationObserver o) {
@@ -63,6 +77,15 @@ abstract class IdPhantomReference extends PhantomReference {
 	}
 
 	protected void notifyObservers() {
+		if (f_observers.isEmpty()) {
+			new Throwable("No observers for IdPhantomReference").printStackTrace();
+			synchronized (IdPhantomReference.class) {
+				if (unnotified != null) {
+					unnotified.add(this);
+				}
+				return;
+			}
+		}		
 		for (IdPhantomReferenceCreationObserver o : f_observers) {
 			o.notify(this);
 		}

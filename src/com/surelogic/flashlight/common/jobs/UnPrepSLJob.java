@@ -9,6 +9,7 @@ import com.surelogic.common.jdbc.QB;
 import com.surelogic.common.jobs.AbstractSLJob;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
+import com.surelogic.common.serviceability.UsageMeter;
 import com.surelogic.flashlight.common.entities.PrepRunDescription;
 import com.surelogic.flashlight.common.model.RunManager;
 
@@ -38,6 +39,8 @@ public final class UnPrepSLJob extends AbstractSLJob {
 		final String taskName = "Removing preparing data "
 				+ f_prep.getDescription().getName();
 		monitor.begin(TABLES.length + 2);
+
+		UsageMeter.getInstance().tickUse("Flashlight ran UnPrepSLJob");
 
 		try {
 			final Connection c = f_database.getConnection();

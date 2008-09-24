@@ -22,6 +22,7 @@ import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.common.jobs.SubSLProgressMonitor;
 import com.surelogic.common.logging.SLLogger;
+import com.surelogic.common.serviceability.UsageMeter;
 import com.surelogic.flashlight.common.entities.PrepRunDescription;
 import com.surelogic.flashlight.common.entities.RunDAO;
 import com.surelogic.flashlight.common.files.RawDataFilePrefix;
@@ -111,6 +112,9 @@ public final class PrepSLJob extends AbstractSLJob {
 				+ PREP_WORK + FLUSH_WORK + THREAD_LOCAL_FIELD_DELETE_WORK
 				+ THREAD_LOCAL_OBJECT_DELETE_WORK
 				+ (EACH_POST_PREP * postPrepWork.length));
+
+		UsageMeter.getInstance().tickUse("Flashlight ran PrepSLJob");
+
 		/*
 		 * Estimate the amount of events in the raw file based upon the size of
 		 * the raw file. This guess is only used for the pre-scan of the file.

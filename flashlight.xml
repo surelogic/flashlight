@@ -7,6 +7,7 @@
 	
 	<property name="src" value="${basedir}/src" />
 	<property name="src-asm" value="${basedir}/src-asm" />
+    <property name="src-rt" value="${basedir}/../flashlight-runtime-common/src" />
 	<property name="test" value="${basedir}/test" />
 
 	<property name="asm.jar" value="${lib}/asm-3.1.jar" />
@@ -48,6 +49,7 @@
 		<javac destdir="${classes}" debug="true" source="1.5" target="1.5">
 			<src path="${src}" />
 			<src path="${src-asm}" />
+		    <src path="${src-rt}" />
 			<classpath>
 				<pathelement location="${asm.jar}" />
 				<pathelement location="${asm-commons.jar}" />
@@ -72,6 +74,7 @@
 	<target name="build-runtime-jar">
 		<jar destfile="${flashlight-runtime.jar}" basedir="${classes}">
 			<include name="**/com/surelogic/_flashlight/*" />
+		    <include name="**/com/surelogic/_flashlight/common/*" />
 			<include name="**/com/surelogic/_flashlight/emory/*" />
 			<include name="**/com/surelogic/_flashlight/rewriter/runtime/*" />
 			<include name="**/com/surelogic/_flashlight/rewriter/test/*" />

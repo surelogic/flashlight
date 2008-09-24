@@ -54,6 +54,8 @@ final class Refinery extends Thread {
 		while (!f_finished) {
 			try {
 				f_rawQueue.drainTo(buf);
+				buf.add(Store.flushLocalQueues());
+				
 				for(List<Event> l : buf) {
 					last = l;
 					for(Event e : l) {
@@ -73,6 +75,7 @@ final class Refinery extends Thread {
 					}
 				}
 				buf.clear();
+				/*
 				if (f_finished) {
 					for(Event e : Store.flushLocalQueues()) {
 						f_eventCache.add(e);
@@ -80,7 +83,8 @@ final class Refinery extends Thread {
 							e.accept(f_detectSharedFieldsVisitor);
 						}
 					}
-				}				
+				}
+				*/				
 				
 				processGarbageCollectedObjects(filter);
 				if (f_finished) {

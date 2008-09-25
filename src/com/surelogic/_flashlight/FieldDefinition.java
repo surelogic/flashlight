@@ -31,6 +31,30 @@ final class FieldDefinition extends DefinitionalEvent {
 		isVolatile = field.isVolatile();
 	}
 
+	long getId() {
+		return id;
+	}
+	
+	long getTypeId() {
+		return declaringType;
+	}
+	
+	String getName() {
+		return name;
+	}
+	
+	boolean isStatic() {
+		return isStatic;
+	}
+	
+	boolean isFinal() {
+		return isFinal;
+	}
+	
+	boolean isVolatile() {
+		return isVolatile;
+	}
+	
 	@Override
 	void accept(EventVisitor v) {
 		v.visit(this);

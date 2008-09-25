@@ -8,6 +8,7 @@ import static com.surelogic._flashlight.common.FlagType.*;
 public class OutputStrategyBinary extends EventVisitor {	
 	private final IdPhantomReferenceVisitor refVisitor = new DefinitionVisitor();
 	private final ObjectOutputStream f_out;
+	private final byte[] buf = new byte[9];
 	
 	public OutputStrategyBinary(ObjectOutputStream stream) {
 		f_out = stream;
@@ -56,7 +57,13 @@ public class OutputStrategyBinary extends EventVisitor {
 	}
 	@Override
 	void visit(final BeforeTrace e) {
-		writeTraceEvent(Before_Trace.getByte(), e);
+		try {
+			writeTraceEvent(Before_Trace.getByte(), e);
+			f_out.writeUTF(e.getDeclaringTypeName());
+			f_out.writeUTF(e.getLocationName());
+		} catch (IOException ioe) {
+			handleIOException(ioe);
+		}	
 	}
 	@Override
 	void visit(BeforeUtilConcurrentLockAcquisitionAttempt e) {
@@ -66,8 +73,8 @@ public class OutputStrategyBinary extends EventVisitor {
 	void visit(final FieldDefinition e) {
 		try {
 			f_out.writeByte(Field_Definition.getByte());
-			f_out.writeLong(e.getId());
-			f_out.writeLong(e.getTypeId());
+			writeCompressedLong(e.getId());
+			writeCompressedLong(e.getTypeId());
 			f_out.writeUTF(e.getName());
 			int flags = 0;
 			if (e.isStatic()) {
@@ -79,6 +86,7 @@ public class OutputStrategyBinary extends EventVisitor {
 			if (e.isVolatile()) {
 				flags |= IS_VOLATILE.mask();
 			}
+			writeCompressedInt(flags);
 		} catch (IOException ioe) {
 			handleIOException(ioe);
 		}		
@@ -115,7 +123,7 @@ public class OutputStrategyBinary extends EventVisitor {
 		void visit(final ClassPhantomReference r) {
 			try {
 				f_out.writeByte(Class_Definition.getByte());
-				f_out.writeLong(r.getId());
+				writeCompressedLong(r.getId());
 				f_out.writeUTF(r.getName());
 			} catch (IOException e) {
 				handleIOException(e);
@@ -129,8 +137,8 @@ public class OutputStrategyBinary extends EventVisitor {
 		void visit(final ThreadPhantomReference r) {
 			try {
 				f_out.writeByte(Thread_Definition.getByte());
-				f_out.writeLong(r.getId());
-				f_out.writeLong(r.getType().getId());
+				writeCompressedLong(r.getId());
+				writeCompressedLong(r.getType().getId());
 				f_out.writeUTF(r.getName());
 			} catch (IOException e) {
 				handleIOException(e);
@@ -147,9 +155,9 @@ public class OutputStrategyBinary extends EventVisitor {
 	void visit(final ReadWriteLockDefinition e) {
 		try {
 			f_out.writeByte(ReadWriteLock_Definition.getByte());
-			f_out.writeLong(e.getReadWriteLockId());
-			f_out.writeLong(e.getReadLockId());
-			f_out.writeLong(e.getWriteLockId());
+			writeCompressedLong(e.getReadWriteLockId());
+			writeCompressedLong(e.getReadLockId());
+			writeCompressedLong(e.getWriteLockId());
 		} catch (IOException ioe) {
 			handleIOException(ioe);
 		}
@@ -172,7 +180,7 @@ public class OutputStrategyBinary extends EventVisitor {
 	private void writeLong(byte header, long l) {
 		try {
 			f_out.writeByte(header);
-			f_out.writeLong(l);
+			writeCompressedLong(l);
 		} catch (IOException ioe) {
 			handleIOException(ioe);
 		}
@@ -181,8 +189,8 @@ public class OutputStrategyBinary extends EventVisitor {
 	private void writeTwoLongs(byte header, long l1, long l2) {
 		try {
 			f_out.writeByte(header);
-			f_out.writeLong(l1);
-			f_out.writeLong(l2);
+			writeCompressedLong(l1);
+			writeCompressedLong(l2);
 		} catch (IOException ioe) {
 			handleIOException(ioe);
 		}
@@ -190,15 +198,15 @@ public class OutputStrategyBinary extends EventVisitor {
 	
 	private void writeCommon(byte header, WithinThreadEvent e) throws IOException {
 		f_out.writeByte(header);
-		f_out.writeLong(e.getNanoTime());
-		f_out.writeLong(e.getWithinThread().getId());
-		f_out.writeLong(e.getWithinClassId());
+		writeCompressedLong(e.getNanoTime());
+		writeCompressedLong(e.getWithinThread().getId());
+		writeCompressedLong(e.getWithinClassId());
 	}
 	
 	private void writeFieldAccess_unsafe(byte header, FieldAccess e) throws IOException {
 		writeCommon(header, e);
-		f_out.writeLong(e.getFieldId());
-		f_out.writeInt(e.getLine());
+		writeCompressedLong(e.getFieldId());
+		writeCompressedInt(e.getLine());
 	}
 	
 	private void writeFieldAccess(byte header, FieldAccess e)  {
@@ -212,8 +220,8 @@ public class OutputStrategyBinary extends EventVisitor {
 	private void writeFieldAccessInstance(byte header, FieldAccessInstance e) {
 		try {
 			writeFieldAccess_unsafe(header, e);
-			f_out.writeInt(e.receiverUnderConstruction() ? UNDER_CONSTRUCTION.mask() : 0);
-			f_out.writeLong(e.getReceiver().getId());
+			writeCompressedInt(e.receiverUnderConstruction() ? UNDER_CONSTRUCTION.mask() : 0);
+			writeCompressedLong(e.getReceiver().getId());
 		} catch (IOException ioe) {
 			handleIOException(ioe);
 		}
@@ -222,8 +230,14 @@ public class OutputStrategyBinary extends EventVisitor {
 	private void writeLockEvent(byte header, Lock e) {
 		try {
 			writeCommon(header, e);
-			f_out.writeLong(e.getLockObject().getId());
-			f_out.writeInt(e.getLine());		
+			writeCompressedLong(e.getLockObject().getId());
+			writeCompressedInt(e.getLine());		
+			/* FIX
+			 readFlag(flags, THIS_LOCK, attrs);
+		     readFlag(flags, CLASS_LOCK, attrs);
+		     readFlag(flags, RELEASED_LOCK, attrs);
+		     readFlag(flags, GOT_LOCK, attrs);
+			 */
 		} catch (IOException ioe) {
 			handleIOException(ioe);
 		}
@@ -232,7 +246,7 @@ public class OutputStrategyBinary extends EventVisitor {
 	private void writeTraceEvent(byte header, Trace e) {
 		try {
 			writeCommon(header, e);
-			f_out.writeInt(e.getLine());
+			writeCompressedInt(e.getLine());
 		} catch (IOException ioe) {
 			handleIOException(ioe);
 		}
@@ -240,5 +254,60 @@ public class OutputStrategyBinary extends EventVisitor {
 	
 	private void handleIOException(IOException e) {
 		e.printStackTrace();
+	}
+	
+	private void writeCompressedInt(int i) throws IOException {
+		final int len;
+		buf[1] = (byte) i;
+		if (i == (i & 0xffff)) {
+			if (i == (i & 0xff)) {
+				len = 2;
+			} else {
+				// Need only bottom 2 bytes
+				len = 3;
+				buf[2] = (byte) (i >>> 8);
+			}
+		} else {
+			// Need at least bottom 3 bytes
+			buf[3] = (byte) (i >>> 16);
+
+			if (i == (i & 0xffffff)) {
+				// Need only bottom 3 bytes
+				len = 4;
+			} else {
+				// Need only bottom 4 bytes
+				len = 5;
+				buf[4] = (byte) (i >>> 24);
+			}
+		}	
+		buf[0] = (byte) (len-1);
+		f_out.write(buf, 0, len);
+	}
+	
+	private void writeCompressedLong(long l) throws IOException {
+		final byte len;
+		if (l == (l & 0xffffffff)) {
+			writeCompressedInt((int) l);
+		} 
+		else {
+			buf[1] = (byte) l;
+			buf[2] = (byte) (l >>> 8);
+			buf[3] = (byte) (l >>> 16);
+			buf[4] = (byte) (l >>> 24);
+			buf[5] = (byte) (l >>> 32);
+			buf[6] = (byte) (l >>> 40);
+			
+			if (l == (l & 0xffffffffffffL)) {
+				// Need only bottom 6 bytes
+				len = 7;
+			}
+			else {
+				len = 9;
+				buf[7] = (byte) (l >>> 48);
+				buf[8] = (byte) (l >>> 56);
+			}
+			buf[0] = (byte) (len-1);
+			f_out.write(buf, 0, len);
+		}
 	}
 }

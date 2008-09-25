@@ -4,6 +4,7 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
@@ -264,22 +265,25 @@ public final class Store {
 
 			File dataFile = new File(fileName.toString() + ".fl.gz");
 			w = null;
-			final boolean outputBinary = false;
+			final boolean outputBinary = true;
 			System.err.println("Output XML = "+!outputBinary);
 			OutputStream stream = null;
+			ObjectOutputStream objStream = null;
 			try {
 				stream = new FileOutputStream(dataFile);
-				boolean compress = true;
+				boolean compress = !outputBinary;
 				System.err.println("Compress stream = "+compress);
 				if (compress) {
-				  stream = new GZIPOutputStream(stream, 4096);
+				  stream = new GZIPOutputStream(stream, 32768);
 				} else {
-			      stream = new BufferedOutputStream(stream, 4096);
+			      stream = new BufferedOutputStream(stream, 32768);
 				}				
 				if (!outputBinary) {
 				OutputStreamWriter osw = new OutputStreamWriter(stream,
 						ENCODING);
 				w = new PrintWriter(osw);
+				} else {
+					objStream = new ObjectOutputStream(stream);
 				}
 			} catch (IOException e) {
 				
@@ -288,8 +292,9 @@ public final class Store {
 				System.exit(1); // bail
 			}
 			final EventVisitor outputStrategy = 
-				outputBinary ? new EventVisitor() {} : new OutputStrategyXML(w);
-
+			//	outputBinary ? new EventVisitor() {} : new OutputStrategyXML(w);
+				outputBinary ? new OutputStrategyBinary(objStream) : new OutputStrategyXML(w);
+				
 			final int rawQueueSize = StoreConfiguration.getRawQueueSize();
 			if (true) {
 				f_rawQueue = new ArrayBlockingQueue<List<Event>>(rawQueueSize);

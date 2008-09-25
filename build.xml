@@ -47,7 +47,7 @@
 		<jar destfile="${flashlight-ant.jar}" basedir="${classes}">
 			<manifest>
 			  <attribute name="Manifest-Version" value="1.0"/>
-				<attribute name="Class-Path" value="flashlight-rewriter.jar"/>
+				<attribute name="Class-Path" value="flashlight-rewriter.jar derby.jar"/>
 			</manifest>
 	  </jar>
 		<!-- (2) Include the contents of common -->

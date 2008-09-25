@@ -8,10 +8,8 @@ import org.apache.tools.ant.Task;
 
 import com.surelogic.common.derby.DerbyConnection;
 import com.surelogic.common.jobs.ConsoleJob;
-import com.surelogic.common.jobs.NullSLProgressMonitor;
 import com.surelogic.common.jobs.PrintWriterSLProgressMonitor;
 import com.surelogic.common.jobs.SLJob;
-import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLSeverity;
 import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.flashlight.common.jobs.PrepSLJob;
@@ -48,6 +46,8 @@ public final class Prep extends Task {
   public void execute() throws BuildException {
     checkParameters();
 
+    final ConsoleJob consoleJob = new ConsoleJob(new AntSLProgressMonitor.Factory(this));
+
     final DerbyConnection dbConnection = new FlashlightDBConnection(destdir);
     try {
       dbConnection.bootAndCheckSchema();
@@ -56,10 +56,10 @@ public final class Prep extends Task {
     }
     
     final SLJob prepJob = new PrepSLJob(new File(srcfile), dbConnection);
-    final SLStatus status = prepJob.run(new NullSLProgressMonitor());
+    final SLStatus status = consoleJob.submitJob(prepJob);
     
     if (status.getSeverity() != SLSeverity.OK || status.getCode() != SLStatus.OK) {
-      throw new BuildException("Flashlight data preparation failed: " + status.getMessage());
+      throw new BuildException("Flashlight data preparation failed: " + status.getMessage(), status.getException());
     }
   }  
 

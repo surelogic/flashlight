@@ -263,15 +263,16 @@ public final class Store {
 			// still incremented even if logging is off.
 			f_problemCount = new AtomicLong();
 
-			File dataFile = new File(fileName.toString() + ".fl.gz");
-			w = null;
 			final boolean outputBinary = true;
+			final boolean compress = false;
+			final String extension = outputBinary ? ".flb" : ".fl";
+			File dataFile = new File(fileName.toString() + extension + (compress ? ".gz" : ""));
+			w = null;
 			System.err.println("Output XML = "+!outputBinary);
 			OutputStream stream = null;
 			ObjectOutputStream objStream = null;
 			try {
 				stream = new FileOutputStream(dataFile);
-				boolean compress = !outputBinary;
 				System.err.println("Compress stream = "+compress);
 				if (compress) {
 				  stream = new GZIPOutputStream(stream, 32768);

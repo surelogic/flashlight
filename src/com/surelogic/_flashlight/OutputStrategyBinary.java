@@ -57,13 +57,15 @@ public class OutputStrategyBinary extends EventVisitor {
 	}
 	@Override
 	void visit(final BeforeTrace e) {
-		try {
+		//try {
 			writeTraceEvent(Before_Trace.getByte(), e);
+			/*
 			f_out.writeUTF(e.getDeclaringTypeName());
 			f_out.writeUTF(e.getLocationName());
 		} catch (IOException ioe) {
 			handleIOException(ioe);
 		}	
+		*/
 	}
 	@Override
 	void visit(BeforeUtilConcurrentLockAcquisitionAttempt e) {
@@ -149,6 +151,18 @@ public class OutputStrategyBinary extends EventVisitor {
 	@Override
 	void visit(final ObjectDefinition e) {
 		e.getObject().accept(refVisitor);
+	}
+	
+	@Override
+	void visit(final ObservedCallLocation e) {
+		try {
+			writeCompressedLong(e.getWithinClassId());
+			writeCompressedInt(e.getLine());
+			f_out.writeUTF(e.getDeclaringTypeName());
+			f_out.writeUTF(e.getLocationName());
+		} catch (IOException ioe) {
+			handleIOException(ioe);
+		}	
 	}
 	
 	@Override

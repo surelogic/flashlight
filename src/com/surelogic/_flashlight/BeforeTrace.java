@@ -1,27 +1,25 @@
 package com.surelogic._flashlight;
 
-final class BeforeTrace extends Trace {
+import java.util.List;
+import java.util.concurrent.BlockingQueue;
 
-	private final String f_fileName;
+final class BeforeTrace extends Trace implements ICallLocation {
+	private final ObservedCallLocation f_location;
 
 	String getDeclaringTypeName() {
-		return f_fileName;
+		return f_location.getDeclaringTypeName();
 	}
 
-	private final String f_locationName;
-
 	String getLocationName() {
-		return f_locationName;
+		return f_location.getLocationName();
 	}
 
 	BeforeTrace(final String fileName, final String locationName,
-			final ClassPhantomReference withinClass, final int line) {
+			    final ClassPhantomReference withinClass, final int line, BlockingQueue<List<Event>> queue) {
 		super(withinClass, line);
-		f_fileName = fileName == null ? "<unknown file name>" : fileName;
-		f_locationName = locationName == null ? "<unknown location>"
-				: locationName;
+		f_location = ObservedCallLocation.getInstance(this, fileName, locationName, queue);
 	}
-
+	
 	@Override
 	void accept(EventVisitor v) {
 		v.visit(this);
@@ -33,9 +31,24 @@ final class BeforeTrace extends Trace {
 		b.append("<before-trace");
 		addNanoTime(b);
 		addThread(b);
-		Entities.addAttribute("location", f_locationName, b);
-		Entities.addAttribute("file", f_fileName, b);
+		Entities.addAttribute("location", getLocationName(), b);
+		Entities.addAttribute("file", getDeclaringTypeName(), b);
 		b.append("/>");
 		return b.toString();
+	}
+	
+	@Override
+	public int hashCode() {
+		return (int) (getWithinClassId() + getLine());
+	}
+	
+	@Override
+	public boolean equals(Object o) {
+		if (o instanceof ObservedCallLocation) {
+			ObservedCallLocation bt = (ObservedCallLocation) o;
+			return bt.getLine() == getLine() &&
+			       bt.getWithinClassId() == getWithinClassId();
+ 		}
+		return false;
 	}
 }

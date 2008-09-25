@@ -745,7 +745,7 @@ public final class Store {
 			final Event e;
 			if (before)
 				e = new BeforeTrace(enclosingFileName, enclosingLocationName,
-						withinClass, line);
+						withinClass, line, f_rawQueue);
 			else
 				e = new AfterTrace(withinClass, line);
 			putInQueue(f_rawQueue, e);
@@ -884,7 +884,7 @@ public final class Store {
 			final Event e;
 			if (before)
 				e = new BeforeTrace(enclosingFileName, enclosingLocationName,
-						withinClass, line);
+						withinClass, line, f_rawQueue);
 			else
 				e = new AfterTrace(withinClass, line);
 			putInQueue(f_rawQueue, e);

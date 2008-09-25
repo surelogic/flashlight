@@ -69,6 +69,13 @@ public enum EventType {
 			readLockEvent(in, attrs);
 		}
 	},
+	Class_Definition("class-definition") {
+		@Override
+		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+			attrs.put(ID, in.readLong());
+			attrs.put(CLASS_NAME, in.readUTF());
+		}
+	},
 	Field_Definition("field-definition") {
 		@Override
 		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
@@ -86,8 +93,7 @@ public enum EventType {
 	FieldRead_Instance("field-read") {
 		@Override
 		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
-			readFieldAccess(in, attrs);
-			attrs.put(RECEIVER, in.readLong());
+			readFieldAccessInstance(in, attrs);
 		}
 	},	
 	FieldRead_Static("field-read") {
@@ -99,8 +105,7 @@ public enum EventType {
 	FieldWrite_Instance("field-write") {
 		@Override
 		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
-			readFieldAccess(in, attrs);
-			attrs.put(RECEIVER, in.readLong());
+			readFieldAccessInstance(in, attrs);
 		}
 	},
 	FieldWrite_Static("field-write") {
@@ -149,6 +154,14 @@ public enum EventType {
 			attrs.put(FIELD, in.readLong());
 		}
 	},
+	Thread_Definition("thread-definition") {		
+		@Override
+		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+			attrs.put(ID, in.readLong());
+			attrs.put(TYPE, in.readLong());
+			attrs.put(THREAD_NAME, in.readUTF());
+		}
+	},	
 	Time_Event("time") {
 		@Override
 		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
@@ -164,7 +177,7 @@ public enum EventType {
 	String getLabel() {
 		return label;
 	}
-	byte getByte() {
+	public byte getByte() {
 		return (byte) this.ordinal();
 	}
 	static EventType getEvent(int i) {
@@ -177,20 +190,27 @@ public enum EventType {
 		attrs.put(flag, Boolean.valueOf(((flags & flag.mask()) != 0)));
 	}
 	
-	static void readFieldAccess(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+	static void readCommon(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
 		attrs.put(TIME, in.readLong());
 		attrs.put(THREAD, in.readLong());
 		attrs.put(IN_CLASS, in.readLong());
+	}
+	
+	static void readFieldAccess(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+		readCommon(in, attrs);
 		attrs.put(FIELD, in.readLong());
 		attrs.put(LINE, in.readInt());
+	}
+	
+	static void readFieldAccessInstance(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+		readFieldAccess(in, attrs);
 		final int flags = in.readInt();
 		readFlag(flags, UNDER_CONSTRUCTION, attrs);
+		attrs.put(RECEIVER, in.readLong());
 	}
 	
 	static void readLockEvent(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
-		attrs.put(TIME, in.readLong());
-		attrs.put(THREAD, in.readLong());
-		attrs.put(IN_CLASS, in.readLong());
+		readCommon(in, attrs);
 		attrs.put(LOCK, in.readLong());
 		attrs.put(LINE, in.readInt());
 		final int flags = in.readInt();
@@ -201,9 +221,7 @@ public enum EventType {
 	}
 	
 	static void readTraceEvent(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
-		attrs.put(TIME, in.readLong());
-		attrs.put(THREAD, in.readLong());
-		attrs.put(IN_CLASS, in.readLong());
+		readCommon(in, attrs);
 		attrs.put(LINE, in.readInt());		
 	}
 }

@@ -6,6 +6,7 @@ import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.xml.sax.Attributes;
@@ -27,7 +28,7 @@ public abstract class TrackUnreferenced implements IPrep {
 				final String aValue = attributes.getValue(i);
 				attrs.put(aName, aValue);
 				if (aValue == null) {
-					LOG.severe("Null for " + aName);
+					LOG.log(Level.SEVERE, "Null for " + aName, new Throwable());
 				}
 			}
 		}
@@ -36,7 +37,7 @@ public abstract class TrackUnreferenced implements IPrep {
 	protected String getAttr(AttributeType t) {
 		final String val = attrs.get(t.label()); // FIX
 		if (val == null) {
-			LOG.severe("Null for " + t);
+			LOG.log(Level.SEVERE, "Null for " + t, new Throwable());
 		}
 		return val;
 	}

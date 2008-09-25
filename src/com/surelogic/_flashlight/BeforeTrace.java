@@ -4,7 +4,7 @@ final class BeforeTrace extends Trace {
 
 	private final String f_fileName;
 
-	String getDeclartingTypeName() {
+	String getDeclaringTypeName() {
 		return f_fileName;
 	}
 

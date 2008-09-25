@@ -126,6 +126,7 @@ public final class PrepSLJob extends AbstractSLJob {
 			estimatedEvents = 10L;
 		}
 		final int estEventsInRawFile = SLUtility.safeLongToInt(estimatedEvents);
+		Exception exc = null;
 		try {
 			final RawDataFilePrefix rawFilePrefix = RawFileUtility
 					.getPrefixFor(f_dataFile);
@@ -280,9 +281,12 @@ public final class PrepSLJob extends AbstractSLJob {
 										monitor,
 										"Deleting thread-local objects",
 										THREAD_LOCAL_OBJECT_DELETE_WORK);
-								threadLocalObjectDeleteMonitor.begin(
-
-								unreferencedObjects.size());
+								threadLocalObjectDeleteMonitor
+										.begin(unreferencedObjects.size());
+								System.out.println("Unreferenced Objects: "
+										+ unreferencedObjects.size());
+								System.out.println("Unreferenced Fields: "
+										+ unreferencedFields.size());
 								final PreparedStatement deleteObjects = c
 										.prepareStatement(QB.get(19));
 								for (final Long l : unreferencedObjects) {
@@ -309,6 +313,7 @@ public final class PrepSLJob extends AbstractSLJob {
 				stream.close();
 			}
 		} catch (final Exception e) {
+			exc = e;
 			/*
 			 * We check for a cancel here because a SAXException is thrown out
 			 * of the parser when the user presses cancel.
@@ -320,7 +325,13 @@ public final class PrepSLJob extends AbstractSLJob {
 			final String msg = I18N.err(code, dataFileName);
 			return SLStatus.createErrorStatus(code, msg, e);
 		} finally {
-			RunManager.getInstance().refresh(f_database);
+			try {
+				RunManager.getInstance().refresh(f_database);
+			} catch (final RuntimeException t) {
+				if (exc == null) {
+					throw t;
+				}
+			}
 			monitor.done();
 		}
 	}

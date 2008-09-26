@@ -200,6 +200,8 @@ public final class Store {
 	 * is part of the instrumented program.
 	 */
 	private final static ThreadLocal<Boolean> tl_withinStore;
+	
+	private static final boolean useTraces = true;
 
 	/**
 	 * This method must be called as the first statement by each flashlight
@@ -725,6 +727,10 @@ public final class Store {
 	public static void constructorCall(final boolean before,
 			final String enclosingFileName, final String enclosingLocationName,
 			ClassPhantomReference withinClass, final int line) {
+		if (!useTraces) {
+			return;
+		}
+		
 		if (f_flashlightIsNotInitialized)
 			return;
 		if (FL_OFF.get())
@@ -842,6 +848,10 @@ public final class Store {
 	public static void methodCall(final boolean before, final Object receiver,
 			final String enclosingFileName, final String enclosingLocationName,
 			ClassPhantomReference withinClass, final int line) {
+		if (!useTraces) {
+			return;
+		}
+		
 		if (f_flashlightIsNotInitialized)
 			return;
 		if (FL_OFF.get())

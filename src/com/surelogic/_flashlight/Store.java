@@ -939,7 +939,7 @@ public final class Store {
 			}
 			final Event e = new BeforeIntrinsicLockAcquisition(lockObject,
 					lockIsThis, lockIsClass, withinClass, line);
-			putInQueue(f_rawQueue, e);
+			putInQueue(f_rawQueue, e, true);
 		} finally {
 			tl_withinStore.set(Boolean.FALSE);
 		}
@@ -1040,7 +1040,7 @@ public final class Store {
 				e = new BeforeIntrinsicLockWait(lockObject, withinClass, line);
 			else
 				e = new AfterIntrinsicLockWait(lockObject, withinClass, line);
-			putInQueue(f_rawQueue, e);
+			putInQueue(f_rawQueue, e, true);
 		} finally {
 			tl_withinStore.set(Boolean.FALSE);
 		}
@@ -1122,7 +1122,7 @@ public final class Store {
 				final Lock ucLock = (Lock) lockObject;
 				final Event e = new BeforeUtilConcurrentLockAcquisitionAttempt(
 						ucLock, withinClass, line);
-				putInQueue(f_rawQueue, e);
+				putInQueue(f_rawQueue, e, true);
 			} else {
 				final String fmt = "lock object must be a java.util.concurrent.locks.Lock...instrumentation bug detected by Store.beforeUtilConcurrentLockAcquisitionAttempt(lockObject=%s, location=%s)";
 				logAProblem(String.format(fmt, lockObject, SrcLoc.toString(withinClass, line)));
@@ -1356,6 +1356,11 @@ public final class Store {
 	};
 	
 	static void putInQueue(final BlockingQueue<List<Event>> queue, final Event e) {
+		putInQueue(queue, e, false);
+	}
+	
+	static void putInQueue(final BlockingQueue<List<Event>> queue, final Event e,
+			               final boolean flush) {
 		/*
 		if (e instanceof ObjectDefinition) {
 			ObjectDefinition od = (ObjectDefinition) e;
@@ -1368,7 +1373,7 @@ public final class Store {
 		List<Event> copy   = null;
 		synchronized (localQ) {
 			localQ.add(e);
-			if (localQ.size() >= LOCAL_QUEUE_MAX) {
+			if (flush || localQ.size() >= LOCAL_QUEUE_MAX) {
 				copy = new ArrayList<Event>(localQ);
 				localQ.clear();
 			}

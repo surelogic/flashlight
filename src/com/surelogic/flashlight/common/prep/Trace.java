@@ -18,7 +18,7 @@ public abstract class Trace extends Event {
 		final long inThread = Long.parseLong(getAttr(THREAD));
 		final long inClass = Long.parseLong(getAttr(IN_CLASS));
 		final int lineNumber = Integer.parseInt(getAttr(LINE));
-		final String file = getAttr(FILE);
+		final String file = (this instanceof BeforeTrace) ? getAttr(FILE) : null;
 		handleTrace(runId, inThread, inClass, time, file, lineNumber);
 	}
 

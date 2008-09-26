@@ -114,6 +114,11 @@ public class OutputStrategyBinary extends EventVisitor {
 	@Override
 	void visit(final FinalEvent e) {
 		writeLong(Final_Event.getByte(), e.getNanoTime(), false);
+		try {
+			f_out.close();
+		} catch (IOException e1) {
+			handleIOException(e1);
+		}
 	}
 	@Override
 	void visit(GarbageCollectedObject e) {

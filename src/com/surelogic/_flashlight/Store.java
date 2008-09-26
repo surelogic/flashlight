@@ -265,8 +265,8 @@ public final class Store {
 			// still incremented even if logging is off.
 			f_problemCount = new AtomicLong();
 
-			final boolean outputBinary = true;
-			final boolean compress = false;
+			final boolean outputBinary = false;
+			final boolean compress = true;
 			final String extension = outputBinary ? ".flb" : ".fl";
 			File dataFile = new File(fileName.toString() + extension + (compress ? ".gz" : ""));
 			w = null;

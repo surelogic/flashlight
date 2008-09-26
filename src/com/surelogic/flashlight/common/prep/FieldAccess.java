@@ -13,6 +13,7 @@ import org.xml.sax.Attributes;
 import com.surelogic.common.logging.SLLogger;
 
 import static com.surelogic._flashlight.common.AttributeType.*;
+import static com.surelogic._flashlight.common.IdConstants.*;
 import static com.surelogic._flashlight.common.FlagType.*;
 
 public abstract class FieldAccess extends Event {
@@ -39,7 +40,7 @@ public abstract class FieldAccess extends Event {
 		long inThread = -1;
 		long inClass = -1;
 		int lineNumber = -1;
-		long field = -1;
+		long field = ILLEGAL_FIELD_ID;
 		long receiver = -1;
 		boolean underConstruction = false;
 		if (attributes != null) {
@@ -64,7 +65,7 @@ public abstract class FieldAccess extends Event {
 			}
 		}
 		if ((nanoTime == -1) || (inThread == -1) || (inClass == -1)
-				|| (lineNumber == -1) || (field == -1)) {
+				|| (lineNumber == -1) || (field == ILLEGAL_FIELD_ID)) {
 			SLLogger.getLogger().log(
 					Level.SEVERE,
 					"Missing nano-time, thread, file, line or field in "

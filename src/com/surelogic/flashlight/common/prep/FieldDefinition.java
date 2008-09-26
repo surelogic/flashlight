@@ -13,6 +13,7 @@ import org.xml.sax.Attributes;
 import com.surelogic.common.logging.SLLogger;
 
 import static com.surelogic._flashlight.common.AttributeType.*;
+import static com.surelogic._flashlight.common.IdConstants.*;
 import static com.surelogic._flashlight.common.FlagType.*;
 
 public final class FieldDefinition extends TrackUnreferenced {
@@ -27,7 +28,7 @@ public final class FieldDefinition extends TrackUnreferenced {
 
 	public void parse(final int runId, final Attributes attributes)
 			throws SQLException {
-		long id = -1;
+		long id = ILLEGAL_FIELD_ID;
 		long type = -1;
 		String field = null;
 		boolean isStatic = false;
@@ -52,7 +53,7 @@ public final class FieldDefinition extends TrackUnreferenced {
 				}
 			}
 		}
-		if ((id == -1) || (type == -1) || (field == null)) {
+		if ((id == ILLEGAL_FIELD_ID) || (type == -1) || (field == null)) {
 			SLLogger.getLogger().log(Level.SEVERE,
 					"Missing id, type, or field in field-definition");
 			return;

@@ -12,6 +12,7 @@ import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.logging.SLLogger;
 
 import static com.surelogic._flashlight.common.AttributeType.*;
+import static com.surelogic._flashlight.common.IdConstants.*;
 
 public final class ScanRawFilePreScan extends DefaultHandler {
 
@@ -125,7 +126,7 @@ public final class ScanRawFilePreScan extends DefaultHandler {
 			throw new SAXException("canceled");
 
 		if ("single-threaded-field".equals(name)) {
-			long field = -1;
+			long field = ILLEGAL_FIELD_ID;
 			long receiver = -1;
 			if (attributes != null) {
 				for (int i = 0; i < attributes.getLength(); i++) {
@@ -138,7 +139,7 @@ public final class ScanRawFilePreScan extends DefaultHandler {
 					}
 				}
 			}
-			if (field == -1) {
+			if (field == ILLEGAL_FIELD_ID) {
 				SLLogger.getLogger().log(Level.SEVERE,
 						"Missing field in single-threaded-field");
 				return;

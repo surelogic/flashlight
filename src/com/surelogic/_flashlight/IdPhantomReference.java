@@ -5,7 +5,7 @@ import java.lang.ref.ReferenceQueue;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.atomic.AtomicLong;
+//import java.util.concurrent.atomic.AtomicLong;
 
 import com.surelogic._flashlight.jsr166y.ConcurrentReferenceHashMap;
 import com.surelogic._flashlight.rewriter.runtime.IdObject;
@@ -13,8 +13,17 @@ import com.surelogic._flashlight.rewriter.runtime.IdObject;
 abstract class IdPhantomReference extends PhantomReference {
 	static final ConcurrentReferenceHashMap.Hasher hasher = false ? ConcurrentReferenceHashMap.IDENTITY_HASH :
 		new ConcurrentReferenceHashMap.Hasher() {
+		//private int total = 0, id = 0;
+		
 		public int hashCode(Object o) {
+			//total++;
 			if (o instanceof IdObject) {
+				/*
+				id++;
+				if ((total & 0xffff) == 0) {
+					System.out.println(id+" IdObjects of "+total);
+				}
+				*/
 				return ((IdObject) o).identity$HashCode();
 			} else {
 				return System.identityHashCode(o);

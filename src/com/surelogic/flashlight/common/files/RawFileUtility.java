@@ -244,7 +244,10 @@ public final class RawFileUtility {
 	 */
 	private static final FileFilter f_flashlightRawDataFileFilter = new FileFilter() {
 		public boolean accept(File pathname) {
-			final String name = pathname.getName();
+			if (pathname.isDirectory()) {
+				return false;
+			}
+			final String name = pathname.getName();			
 			return name.endsWith(COMPRESSED_SUFFIX) || name.endsWith(SUFFIX);
 		}
 	};

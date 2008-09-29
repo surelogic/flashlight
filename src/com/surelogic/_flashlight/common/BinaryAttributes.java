@@ -1,16 +1,42 @@
 package com.surelogic._flashlight.common;
 
 import java.io.*;
-import java.util.HashMap;
+import java.util.*;
 
 import org.xml.sax.Attributes;
 
 public class BinaryAttributes extends HashMap<IAttributeType,Object> implements Attributes {
-	private static final long serialVersionUID = -236988557562438004L;
-
+	private static final long serialVersionUID = -236988557562438004L;	
+	/*
+	BinaryAttributes() {
+		super(IAttributeType.comparator);
+	}
+	*/
+	private Map.Entry<IAttributeType,Object>[] entries;
+	
+	@SuppressWarnings("unchecked")
+	private void initEntries() {
+		if (entries != null) {
+			return;
+		}
+		entries = new Map.Entry[this.size()];
+		int i=0;
+		for(Map.Entry<IAttributeType,Object> e : this.entrySet()) {
+			entries[i] = e;
+			i++;
+		}
+	}
+	
 	public int getIndex(String name) {
-		// TODO Auto-generated method stub
-		return 0;
+		initEntries();
+		int i=0;
+		for(Map.Entry<IAttributeType,Object> e : entries) {
+			if (e.getKey().label().equals(name)) {
+				return i;
+			}
+			i++;
+		}
+		return -1;
 	}
 
 	public int getIndex(String uri, String localName) {
@@ -18,18 +44,19 @@ public class BinaryAttributes extends HashMap<IAttributeType,Object> implements 
 	}
 
 	public int getLength() {
-		// TODO Auto-generated method stub
-		return 0; // USED
+		return this.size();
 	}
 
 	public String getLocalName(int index) {
-		// TODO Auto-generated method stub
-		return null;
+		return getQName(index);
 	}
 
-	public String getQName(int index) {
-		// TODO Auto-generated method stub
-		return null; // USED
+	public String getQName(int i) {
+		initEntries();
+		if (i >= entries.length) {
+			System.out.println(this);
+		}
+		return entries[i].getKey().label();
 	}
 
 	public String getType(int index) {
@@ -45,18 +72,16 @@ public class BinaryAttributes extends HashMap<IAttributeType,Object> implements 
 	}
 
 	public String getURI(int index) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
-	public String getValue(int index) {
-		// TODO Auto-generated method stub
-		return null; // USED
+	public String getValue(int i) {
+		initEntries();
+		return entries[i].getValue().toString();
 	}
 
 	public String getValue(String name) {
-		// TODO Auto-generated method stub
-		return null; 
+		return getValue(getIndex(name)); 
 	}
 
 	public String getValue(String uri, String localName) {
@@ -67,4 +92,15 @@ public class BinaryAttributes extends HashMap<IAttributeType,Object> implements 
 		event.read(in, this);
 	}
 
+	@Override
+	public Object put(IAttributeType key, Object value) {
+		//System.out.println("Got attr: "+key.label()+" -> "+value);
+		return super.put(key, value);
+	}
+	
+	@Override
+	public void clear() {
+		super.clear();
+		entries = null;
+	}
 }

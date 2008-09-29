@@ -29,6 +29,7 @@ public class BinaryEventReader extends SAXParser {
 		handler.endDocument();
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public Parser getParser() throws SAXException {
 		throw new UnsupportedOperationException();

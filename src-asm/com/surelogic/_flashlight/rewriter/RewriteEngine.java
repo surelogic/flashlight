@@ -681,7 +681,7 @@ public final class RewriteEngine {
     
     final PrintWriter writer = new PrintWriter(System.out);
     final RewriteEngine engine =
-      new RewriteEngine(new Configuration(properties), ConsoleMessenger.prototype, writer);
+      new RewriteEngine(new Configuration(properties), PrintWriterMessenger.console, writer);
     engine.scanDirectory(new File(args[0]));
     engine.rewriteDirectoryToDirectory(new File(args[0]), new File(args[1]));
     writer.close();

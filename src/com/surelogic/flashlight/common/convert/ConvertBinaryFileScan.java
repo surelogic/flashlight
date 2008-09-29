@@ -1,4 +1,4 @@
-package com.surelogic._flashlight.common;
+package com.surelogic.flashlight.common.convert;
 
 import java.io.*;
 import java.util.zip.GZIPOutputStream;

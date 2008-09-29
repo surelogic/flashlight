@@ -5,12 +5,12 @@ import java.io.InputStream;
 
 import javax.xml.parsers.SAXParser;
 
-import com.surelogic._flashlight.common.ConvertBinaryFileScan;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jobs.AbstractSLJob;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.common.serviceability.UsageMeter;
+import com.surelogic.flashlight.common.convert.ConvertBinaryFileScan;
 import com.surelogic.flashlight.common.files.RawDataFilePrefix;
 import com.surelogic.flashlight.common.files.RawFileUtility;
 

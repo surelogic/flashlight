@@ -1,17 +1,48 @@
 package com.surelogic._flashlight;
 
 import java.io.*;
+import java.text.SimpleDateFormat;
+
+import com.surelogic._flashlight.common.EventType;
 
 import static com.surelogic._flashlight.common.EventType.*;
 import static com.surelogic._flashlight.common.FlagType.*;
 
 public class OutputStrategyBinary extends EventVisitor {	
+	private static final String version = "1.1";
+	private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 	private final IdPhantomReferenceVisitor refVisitor = new DefinitionVisitor();
 	private final ObjectOutputStream f_out;
 	private final byte[] buf = new byte[9];
 	
 	public OutputStrategyBinary(ObjectOutputStream stream) {
 		f_out = stream;
+		try {
+			f_out.writeByte(First_Event.getByte());
+			f_out.writeUTF(version);
+			f_out.writeUTF(Store.getRun());
+			f_out.writeByte(Environment.getByte());
+			f_out.writeLong(Runtime.getRuntime().maxMemory() / (1024L * 1024L)); // "max-memory-mb"
+			f_out.writeInt(Runtime.getRuntime().availableProcessors());
+			f_out.writeByte(6); // num of properties following
+			addProperty("user.name", f_out);
+			addProperty("java.version", f_out);
+			addProperty("java.vendor", f_out);
+			addProperty("os.name", f_out);
+			addProperty("os.arch", f_out);
+			addProperty("os.version", f_out);
+
+		} catch (IOException ioe) {
+			handleIOException(ioe);
+		}	
+	}
+
+	private static void addProperty(String key, ObjectOutputStream f_out) throws IOException {
+		String prop = System.getProperty(key);
+		if (prop == null)
+			prop = "UNKNOWN";
+		f_out.writeUTF(key);
+		f_out.writeUTF(prop);
 	}
 
 	@Override
@@ -74,6 +105,7 @@ public class OutputStrategyBinary extends EventVisitor {
 	@Override
 	void visit(final FieldDefinition e) {
 		try {
+			// System.out.println("Writing event: "+Field_Definition.getLabel());
 			f_out.writeByte(Field_Definition.getByte());
 			writeCompressedMaybeNegativeLong(e.getId());
 			writeCompressedLong(e.getTypeId());
@@ -129,6 +161,7 @@ public class OutputStrategyBinary extends EventVisitor {
 		@Override
 		void visit(final ClassPhantomReference r) {
 			try {
+				// System.out.println("Writing event: "+Class_Definition.getLabel());
 				f_out.writeByte(Class_Definition.getByte());
 				writeCompressedLong(r.getId());
 				f_out.writeUTF(r.getName());
@@ -143,6 +176,7 @@ public class OutputStrategyBinary extends EventVisitor {
 		@Override
 		void visit(final ThreadPhantomReference r) {
 			try {
+				// System.out.println("Writing event: "+Thread_Definition.getLabel());
 				f_out.writeByte(Thread_Definition.getByte());
 				writeCompressedLong(r.getId());
 				writeCompressedLong(r.getType().getId());
@@ -161,6 +195,8 @@ public class OutputStrategyBinary extends EventVisitor {
 	@Override
 	void visit(final ObservedCallLocation e) {
 		try {
+			// System.out.println("Writing event: "+Observed_CallLocation.getLabel());
+			f_out.writeByte(Observed_CallLocation.getByte());
 			writeCompressedLong(e.getWithinClassId());
 			writeCompressedInt(e.getLine());
 			f_out.writeUTF(e.getDeclaringTypeName());
@@ -173,6 +209,7 @@ public class OutputStrategyBinary extends EventVisitor {
 	@Override
 	void visit(final ReadWriteLockDefinition e) {
 		try {
+			// System.out.println("Writing event: "+ReadWriteLock_Definition.getLabel());
 			f_out.writeByte(ReadWriteLock_Definition.getByte());
 			writeCompressedLong(e.getReadWriteLockId());
 			writeCompressedLong(e.getReadLockId());
@@ -192,16 +229,23 @@ public class OutputStrategyBinary extends EventVisitor {
 	@Override
 	void visit(final Time e) {
 		writeLong(Time_Event.getByte(), e.getNanoTime(), false);
+		try {		
+			f_out.writeUTF(dateFormat.format(e.getDate()));
+		} catch (IOException ioe) {
+			handleIOException(ioe);
+		}
 	}
 
 	// Common code
 	
 	private void writeLong(byte header, long l, boolean compress) {
-		try {			
+		try {
+			// System.out.println("Writing event: "+EventType.getEvent(header));
 			f_out.writeByte(header);
 			if (compress) {
 				writeCompressedLong(l);
 			} else {
+				// System.out.println("\tLong: "+l);
 				f_out.writeLong(l);
 			}
 		} catch (IOException ioe) {
@@ -211,6 +255,7 @@ public class OutputStrategyBinary extends EventVisitor {
 	
 	private void writeTwoLongs(byte header, long l1, long l2) {
 		try {
+			// System.out.println("Writing event: "+EventType.getEvent(header));
 			f_out.writeByte(header);
 			writeCompressedLong(l1);
 			writeCompressedLong(l2);
@@ -220,8 +265,10 @@ public class OutputStrategyBinary extends EventVisitor {
 	}
 	
 	private void writeCommon(byte header, WithinThreadEvent e) throws IOException {
+		// System.out.println("Writing event: "+EventType.getEvent(header));
 		f_out.writeByte(header);
-		f_out.writeLong(e.getNanoTime());
+		// System.out.println("\tTime: "+e.getNanoTime());
+		f_out.writeLong(e.getNanoTime());		
 		writeCompressedLong(e.getWithinThread().getId());
 		writeCompressedLong(e.getWithinClassId());
 	}
@@ -280,6 +327,7 @@ public class OutputStrategyBinary extends EventVisitor {
 	}
 	
 	private void writeCompressedInt(int i) throws IOException {
+		// System.out.println("\tInt: "+i);
 		final int len;
 		buf[1] = (byte) i;
 		if (i == (i & 0xffff)) {
@@ -316,6 +364,7 @@ public class OutputStrategyBinary extends EventVisitor {
 		long mask = ~0xffffffffL;
 		long masked = l & mask;
 		if (masked == mask) {
+			// System.out.println("\t-? Long: "+l);
 			// top 4 bytes are all ones
 			buf[1] = (byte) l;
 			buf[2] = (byte) (l >>> 8);
@@ -349,6 +398,7 @@ public class OutputStrategyBinary extends EventVisitor {
 			return;
 		} 
 		else {
+			// System.out.println("\tLong: "+l);
 			buf[1] = (byte) l;
 			buf[2] = (byte) (l >>> 8);
 			buf[3] = (byte) (l >>> 16);

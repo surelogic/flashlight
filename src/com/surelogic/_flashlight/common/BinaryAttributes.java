@@ -7,6 +7,8 @@ import org.xml.sax.Attributes;
 
 public class BinaryAttributes extends HashMap<IAttributeType,Object> implements Attributes {
 	private static final long serialVersionUID = -236988557562438004L;	
+	static final boolean debug = BinaryEventReader.debug;
+	
 	/*
 	BinaryAttributes() {
 		super(IAttributeType.comparator);
@@ -90,11 +92,12 @@ public class BinaryAttributes extends HashMap<IAttributeType,Object> implements 
 
 	public void readAttributes(ObjectInputStream in, EventType event) throws IOException {
 		event.read(in, this);
+		preprocess(event);
 	}
 
 	@Override
 	public Object put(IAttributeType key, Object value) {
-		//System.out.println("Got attr: "+key.label()+" -> "+value);
+		if (debug) System.out.println("Got attr: "+key.label()+" -> "+value);
 		return super.put(key, value);
 	}
 	
@@ -102,5 +105,64 @@ public class BinaryAttributes extends HashMap<IAttributeType,Object> implements 
 	public void clear() {
 		super.clear();
 		entries = null;
+	}
+
+	/**
+	 * Synthesize any attributes if necessary
+	 */ 
+	private void preprocess(EventType event) {
+		switch (event) {
+		case Observed_CallLocation:
+			// Cache location based on IN_CLASS and LINE
+			CallLocation newLoc = new CallLocation(this);
+			locCache.put(newLoc, newLoc);
+			break;
+		case Before_Trace:
+			CallLocation loc = locCache.get(new CallLocation(this));
+			this.put(AttributeType.FILE, loc.getFile());
+			this.put(AttributeType.LOCATION, loc.getLocation());
+			break;
+		default:
+		}
+	}
+
+	private final Map<CallLocation,CallLocation> locCache = 
+		new HashMap<CallLocation, CallLocation>();
+	
+	static class CallLocation {
+		final long classId;
+		final int line;
+		final String file;
+		final String location;
+		
+		public CallLocation(BinaryAttributes attrs) {
+			classId  = ((Long) attrs.get(AttributeType.IN_CLASS)).longValue();
+			line     = ((Integer) attrs.get(AttributeType.LINE)).intValue();
+			location = (String) attrs.get(AttributeType.LOCATION);
+			file     = (String) attrs.get(AttributeType.FILE);
+		}
+		
+		public String getLocation() {
+			// TODO Auto-generated method stub
+			return location;
+		}
+
+		public String getFile() {
+			return file;
+		}
+		
+		@Override
+		public final int hashCode() {
+			return (int) classId + line;
+		}
+		
+		@Override
+		public final boolean equals(Object o) {
+			if (o instanceof CallLocation) {
+				CallLocation loc = (CallLocation) o;
+				return classId == loc.classId && line == loc.line;
+			}
+			return false;
+		}
 	}
 }

@@ -8,6 +8,8 @@ import org.xml.sax.*;
 import org.xml.sax.helpers.DefaultHandler;
 
 public class BinaryEventReader extends SAXParser {	
+	static final boolean debug = false;
+	
 	@Override
 	public void parse(InputStream in, DefaultHandler handler) throws SAXException, IOException {
 		final ObjectInputStream oin  = (ObjectInputStream) in;
@@ -18,7 +20,7 @@ public class BinaryEventReader extends SAXParser {
 		while ((type = in.read()) >= 0) {
 			final EventType event = EventType.getEvent(type);
 			final String name     = event.getLabel();
-			//System.out.println("Got event: "+name);
+			if (debug) System.out.println("Got event: "+name);
 			attrs.readAttributes(oin, event); 
 			handler.startElement(null, name, name, attrs);
 			attrs.clear();

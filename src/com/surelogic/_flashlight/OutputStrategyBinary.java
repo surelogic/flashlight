@@ -353,9 +353,11 @@ public class OutputStrategyBinary extends EventVisitor {
 			}
 		}				
 		buf[0] = (byte) (len-1);
-		for(int j=0; j<=4; j++) {
-			System.out.println("buf["+j+"] = "+buf[j]);
-		}
+		if (debug) {
+			for(int j=0; j<=4; j++) {
+				System.out.println("buf["+j+"] = "+buf[j]);
+			}
+		}		
 		f_out.write(buf, 0, len);
 	}
 	

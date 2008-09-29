@@ -9,7 +9,6 @@ import java.util.Date;
 import java.util.logging.Level;
 
 import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -230,11 +229,10 @@ public final class RawDataFilePrefix {
 				 * Read the flashlight, environment, and time elements from the
 				 * data file.
 				 */
-				final SAXParserFactory factory = SAXParserFactory.newInstance();
 				final PrefixHandler handler = new PrefixHandler();
 				try {
 					// Parse the input
-					final SAXParser saxParser = factory.newSAXParser();
+					final SAXParser saxParser = RawFileUtility.getParser(f_dataFile);
 					saxParser.parse(stream, handler);
 				} catch (final SAXException e) {
 					/*

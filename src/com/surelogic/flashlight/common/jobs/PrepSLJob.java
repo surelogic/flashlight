@@ -10,7 +10,6 @@ import java.util.Set;
 import java.util.logging.Level;
 
 import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
 
 import com.surelogic.common.SLUtility;
 import com.surelogic.common.i18n.I18N;
@@ -115,17 +114,7 @@ public final class PrepSLJob extends AbstractSLJob {
 
 		UsageMeter.getInstance().tickUse("Flashlight ran PrepSLJob");
 
-		/*
-		 * Estimate the amount of events in the raw file based upon the size of
-		 * the raw file. This guess is only used for the pre-scan of the file.
-		 */
-		final long sizeInBytes = f_dataFile.length();
-		long estimatedEvents = (sizeInBytes / (RawFileUtility
-				.isRawFileGzip(f_dataFile) ? 7L : 130L));
-		if (estimatedEvents <= 0) {
-			estimatedEvents = 10L;
-		}
-		final int estEventsInRawFile = SLUtility.safeLongToInt(estimatedEvents);
+		final int estEventsInRawFile = RawFileUtility.estimateNumEvents(f_dataFile);
 		Exception exc = null;
 		try {
 			final RawDataFilePrefix rawFilePrefix = RawFileUtility
@@ -140,13 +129,13 @@ public final class PrepSLJob extends AbstractSLJob {
 				 * to be single-threaded. This information allows us to avoid
 				 * inserting unnecessary data into the database.
 				 */
-				final SAXParserFactory factory = SAXParserFactory.newInstance();
+				
 				final SLProgressMonitor preScanMonitor = new SubSLProgressMonitor(
 						monitor, "Pre-scanning the raw file", PRE_SCAN_WORK);
 				preScanMonitor.begin(estEventsInRawFile);
 				final ScanRawFilePreScan scanResults = new ScanRawFilePreScan(
 						preScanMonitor);
-				final SAXParser saxParser = factory.newSAXParser();
+				final SAXParser saxParser = RawFileUtility.getParser(f_dataFile);
 				saxParser.parse(stream, scanResults);
 				preScanMonitor.done();
 				stream.close();

@@ -1,10 +1,6 @@
 package com.surelogic.flashlight.common.files;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -13,7 +9,15 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.zip.GZIPInputStream;
 
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+
+import org.xml.sax.SAXException;
+
+import com.surelogic._flashlight.common.BinaryEventReader;
 import com.surelogic.common.FileUtility;
+import com.surelogic.common.SLUtility;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.common.model.RunDescription;
@@ -26,6 +30,13 @@ public final class RawFileUtility {
 
 	public static final String SUFFIX = ".fl";
 	public static final String COMPRESSED_SUFFIX = ".fl.gz";
+	
+	public static final String BIN_SUFFIX = ".flb";
+	public static final String COMPRESSED_BIN_SUFFIX = ".flb.gz";
+	
+	private static final String[] suffixes = {
+		COMPRESSED_SUFFIX, BIN_SUFFIX, SUFFIX, COMPRESSED_BIN_SUFFIX
+	};
 
 	/**
 	 * Checks if the passed raw file is compressed or not. It does this by
@@ -38,9 +49,14 @@ public final class RawFileUtility {
 	 */
 	public static boolean isRawFileGzip(final File dataFile) {
 		final String name = dataFile.getName();
-		return name.endsWith(COMPRESSED_SUFFIX);
+		return name.endsWith(COMPRESSED_SUFFIX) || name.endsWith(COMPRESSED_BIN_SUFFIX);
 	}
 
+	static boolean isBinary(final File dataFile) {
+		final String name = dataFile.getName();
+		return name.endsWith(BIN_SUFFIX) || name.endsWith(COMPRESSED_BIN_SUFFIX);
+	}
+	
 	/**
 	 * Gets an input stream to read the passed raw file. This method opens the
 	 * right kind of stream based upon if the raw file is compressed or not.
@@ -56,6 +72,11 @@ public final class RawFileUtility {
 		InputStream stream = new FileInputStream(dataFile);
 		if (isRawFileGzip(dataFile)) {
 			stream = new GZIPInputStream(stream, 32 * 1024);
+		} else {
+			stream = new BufferedInputStream(stream, 32 * 1024);
+		}
+		if (isBinary(dataFile)) {
+			stream = new ObjectInputStream(stream);
 		}
 		return stream;
 	}
@@ -169,14 +190,13 @@ public final class RawFileUtility {
 
 		if (prefixInfo.isWellFormed()) {
 			String fileNamePrefix = prefixInfo.getFile().getAbsolutePath();
-			if (fileNamePrefix.endsWith(SUFFIX)) {
-				fileNamePrefix = fileNamePrefix.substring(0, fileNamePrefix
-						.length()
-						- SUFFIX.length());
-			} else {
-				fileNamePrefix = fileNamePrefix.substring(0, fileNamePrefix
-						.length()
-						- COMPRESSED_SUFFIX.length());
+			for(String suffix : suffixes) {
+				if (fileNamePrefix.endsWith(suffix)) {
+					fileNamePrefix = fileNamePrefix.substring(0, fileNamePrefix
+							.length()
+							- suffix.length());
+					break;
+				} 
 			}
 			final File logFile = new File(fileNamePrefix + ".flog");
 			if (!logFile.exists()) {
@@ -248,7 +268,12 @@ public final class RawFileUtility {
 				return false;
 			}
 			final String name = pathname.getName();			
-			return name.endsWith(COMPRESSED_SUFFIX) || name.endsWith(SUFFIX);
+			for(String suffix : suffixes) {
+				if (name.endsWith(suffix)) {
+					return true;
+				}
+			}
+			return false;
 		}
 	};
 
@@ -264,6 +289,24 @@ public final class RawFileUtility {
 		return dataFiles;
 	}
 
+	/*
+	 * Estimate the amount of events in the raw file based upon the size of
+	 * the raw file. This guess is only used for the pre-scan of the file.
+	 */
+	public static int estimateNumEvents(File dataFile) {
+		final long sizeInBytes = dataFile.length();
+		long estimatedEvents = (sizeInBytes / (RawFileUtility.isRawFileGzip(dataFile) ? 7L : 130L));
+		if (estimatedEvents <= 0) {
+			estimatedEvents = 10L;
+		}
+		return SLUtility.safeLongToInt(estimatedEvents);
+	}
+	
+	public static SAXParser getParser(File dataFile) throws ParserConfigurationException, SAXException {
+		final SAXParserFactory factory = SAXParserFactory.newInstance();
+		return isBinary(dataFile) ? new BinaryEventReader() : factory.newSAXParser();
+	}
+	
 	private RawFileUtility() {
 		// no instances
 	}

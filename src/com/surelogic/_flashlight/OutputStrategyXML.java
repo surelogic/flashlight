@@ -126,6 +126,7 @@ final class OutputStrategyXML extends EventVisitor {
 	void visit(FinalEvent e) {
 		f_indent = "";
 		o("</flashlight>");
+		//System.out.println("Closed.");
 		f_out.close();
 	}
 
@@ -161,6 +162,7 @@ final class OutputStrategyXML extends EventVisitor {
 	
 	@Override
 	void flush() {
+		//System.out.println("Flushed.");
 		f_out.flush();
 	}
 }

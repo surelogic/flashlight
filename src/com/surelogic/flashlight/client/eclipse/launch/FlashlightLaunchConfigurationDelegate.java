@@ -1,19 +1,30 @@
 package com.surelogic.flashlight.client.eclipse.launch;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.debug.core.ILaunchConfiguration;
+import org.eclipse.jdt.launching.IRuntimeClasspathEntry;
 import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.launching.IVMInstall2;
 import org.eclipse.jdt.launching.IVMRunner;
 import org.eclipse.jdt.launching.JavaLaunchDelegate;
+import org.eclipse.jdt.launching.JavaRuntime;
 
+import com.surelogic._flashlight.rewriter.Configuration;
+import com.surelogic._flashlight.rewriter.EngineMessenger;
+import com.surelogic._flashlight.rewriter.PrintWriterMessenger;
+import com.surelogic._flashlight.rewriter.RewriteEngine;
 import com.surelogic.common.FileUtility;
 import com.surelogic.common.eclipse.jdt.SourceZip;
 import com.surelogic.common.eclipse.logging.SLEclipseStatusUtility;
@@ -28,15 +39,15 @@ public final class FlashlightLaunchConfigurationDelegate extends
 	public String getVMArguments(ILaunchConfiguration configuration)
 			throws CoreException {
 		StringBuilder b = new StringBuilder(super.getVMArguments(configuration));
-		b.append(" -javaagent:\"");
-		IPath bundleBase = Activator.getDefault().getBundleLocation();
-		if (bundleBase != null) {
-			IPath jarLocation = bundleBase.append("lib/flashlight-all.jar");
-			b.append(jarLocation.toOSString());
-		} else {
-			throw new CoreException(SLEclipseStatusUtility.createErrorStatus(0,
-					"No bundle location found for the Flashlight plug-in."));
-		}
+//		b.append(" -javaagent:\"");
+//		IPath bundleBase = Activator.getDefault().getBundleLocation();
+//		if (bundleBase != null) {
+//			IPath jarLocation = bundleBase.append("lib/flashlight-all.jar");
+//			b.append(jarLocation.toOSString());
+//		} else {
+//			throw new CoreException(SLEclipseStatusUtility.createErrorStatus(0,
+//					"No bundle location found for the Flashlight plug-in."));
+//		}
 		final String run = getMainTypeName(configuration);
 		if (run != null) {
 			b.append("\" -DFL_RUN=\"");
@@ -109,32 +120,37 @@ public final class FlashlightLaunchConfigurationDelegate extends
 					"Failed to configure the VM to run Flashlight."));
 		}
 
+		
+		
+		// Really need a progress monitor for all this stuff
+		final String tmpDirName = System.getProperty("java.io.tmpdir");
+    final SimpleDateFormat dateFormat = new SimpleDateFormat("-yyyy.MM.dd-'at'-HH.mm.ss.SSS");
+		final String datePostfix = dateFormat.format(new Date());
+		final String mainTypeName = getMainTypeName(configuration);
+		
+		
+		
 		// Create source zip
 		final StringBuilder fileName = new StringBuilder();
 		final String rawPath = FileUtility.getFlashlightDataDirectory();
 		if (rawPath != null) {
 			fileName.append(rawPath);
 		} else {
-			fileName.append(System.getProperty("java.io.tmpdir"));
+			fileName.append(tmpDirName);
 		}
-		fileName.append(System.getProperty("file.separator"));
-		fileName.append(getMainTypeName(configuration));
-
-		final SimpleDateFormat dateFormat = new SimpleDateFormat(
-				"-yyyy.MM.dd-'at'-HH.mm.ss.SSS");
-		// make the filename and time event times match
-		Date now = new Date();
-		fileName.append(dateFormat.format(now));
+		fileName.append(File.separatorChar);
+		fileName.append(mainTypeName);
+		fileName.append(datePostfix);
 		fileName.append(".src.zip");
-
+		
 		final String projAttr = "org.eclipse.jdt.launching.PROJECT_ATTR";
 		final String projectName = configuration.getAttribute(projAttr, "");
-		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
-		IProject project = root.getProject(projectName);
+		final IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
+		final IProject runningFromProject = root.getProject(projectName);
 		// FIX this is not right for projects with dependencies
-		if (project != null && project.exists()) {
+		if (runningFromProject != null && runningFromProject.exists()) {
 			try {
-				new SourceZip(project).generateSourceZip(fileName.toString(), project, false);
+				new SourceZip(runningFromProject).generateSourceZip(fileName.toString(), runningFromProject, false);
 			} catch (IOException e) {
 				SLLogger.getLogger().log(Level.SEVERE,
 						"Unable to create source zip", e);
@@ -143,6 +159,51 @@ public final class FlashlightLaunchConfigurationDelegate extends
 			SLLogger.getLogger().log(Level.SEVERE,
 					"No such project: " + projectName);
 		}
-		return runner;
+		
+		
+		
+		// Instrument classfiles
+    IRuntimeClasspathEntry[] entries = JavaRuntime.computeUnresolvedRuntimeClasspath(configuration);
+    entries = JavaRuntime.resolveRuntimeClasspath(entries, configuration);
+    final Map<String, String> projectEntries = new HashMap<String, String>();
+    for (final IRuntimeClasspathEntry entry : entries) {
+      if (entry.getClasspathProperty() == IRuntimeClasspathEntry.USER_CLASSES &&
+          entry.getType() == IRuntimeClasspathEntry.PROJECT) {
+        final String location = entry.getLocation();
+        if (location != null) {
+          // Based on the implementation in AbstractJavaLauchConfiguration.getClassPath(), it may be possible to have duplicate directory locations.  We eat the duplicates.
+          projectEntries.put(location, location);
+        }
+      }
+    }
+    
+    /* We go through some hoops to find the project names.  It's hard to get
+     * these directly from the locations above, because we do not know how many
+     * levels deep an binary output directory may be nested.
+     */
+    final String runName = mainTypeName + datePostfix;
+    final File runOutputDir = new File(tmpDirName, runName);
+    final File projectOutputDir = new File(runOutputDir, "projects");
+    
+    final IProject[] projects = root.getProjects();
+    for (final IProject project : projects) {
+      if (project.isOpen()) {
+        final String projectLocation = project.getLocation().toOSString();
+        for (final Map.Entry<String, String> entry : projectEntries.entrySet()) {
+          final String originalLocation = entry.getKey();
+          if (originalLocation.startsWith(projectLocation) && originalLocation.charAt(projectLocation.length()) == File.separatorChar) {
+            // Found the project root path for the directory
+            final String projectDirName = projectLocation.substring(projectLocation.lastIndexOf(File.separatorChar) + 1);
+            final String binaryDirName = originalLocation.substring(projectLocation.length() + 1);
+            final File newLocation = new File(new File(projectOutputDir, projectDirName), binaryDirName);
+            entry.setValue(newLocation.getAbsolutePath());
+            break;
+          }
+        }
+      }
+    }
+      
+    return new FlashlightVMRunner(runner, runOutputDir, projectEntries);
+//		return runner;
 	}
 }

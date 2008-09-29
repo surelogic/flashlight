@@ -20,7 +20,9 @@ Require-Bundle: org.eclipse.ui,
  com.surelogic.adhoc.eclipse,
  com.surelogic.common.derby,
  com.surelogic.flashlight.common,
- com.surelogic.common.adhoc
+ com.surelogic.common.adhoc,
+ org.eclipse.jdt.core
 Eclipse-LazyStart: true
 Bundle-ActivationPolicy: lazy
-Bundle-ClassPath: .
+Bundle-ClassPath: .,
+ lib/flashlight-all.jar

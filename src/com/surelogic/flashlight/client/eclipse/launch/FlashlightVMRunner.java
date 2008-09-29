@@ -40,14 +40,37 @@ final class FlashlightVMRunner implements IVMRunner {
   public void run(final VMRunnerConfiguration configuration, final ILaunch launch,
       final IProgressMonitor monitor) throws CoreException {
     
-    // Build the instrumented class files
-
     /* Amount of work is 2 for each directory we need to process, plus 1
      * remaining unit for the delegate.
      */
     final int totalWork = 2 * projectEntries.size() + 1;
     final SubMonitor progress = SubMonitor.convert(monitor, totalWork);
+
+    /* Build the instrumented class files.  First we scan each directory
+     * to the build the field database, and then we instrument each directory.
+     */
+    if (instrumentClassfiles(progress)) {
+      // Canceled, abort early
+      return;
+    }
     
+    /* Fix the classpath.
+     */
+    final String[] newClassPath = updateClassPath(configuration);
+    
+    /* Create an updated runner configuration. */
+    final VMRunnerConfiguration newConfig = updateRunnerConfiguration(configuration, newClassPath);
+    
+    /* Done with our set up, call the real runner */
+    delegateRunner.run(newConfig, launch, monitor);
+  }
+
+  /**
+   * Instrument the classfiles.
+   * @param progress
+   * @return Whether instrumentation was canceled.
+   */
+  private boolean instrumentClassfiles(final SubMonitor progress) {
     runOutputDir.mkdirs();
     final File logFile = new File(runOutputDir, "instrumentation.log");
     final File fieldsFile = new File(runOutputDir, "fields.txt");
@@ -72,7 +95,7 @@ final class FlashlightVMRunner implements IVMRunner {
             
             // check for cancellation
             if (progress.isCanceled()) {
-              return;
+              return true;
             }
           } catch (final IOException e) {
             SLLogger.getLogger().log(Level.SEVERE,
@@ -94,7 +117,7 @@ final class FlashlightVMRunner implements IVMRunner {
 
             // check for cancellation
             if (progress.isCanceled()) {
-              return;
+              return true;
             }   
           } catch (final IOException e) {
             SLLogger.getLogger().log(Level.SEVERE,
@@ -121,40 +144,46 @@ final class FlashlightVMRunner implements IVMRunner {
       }
     }
     
-    // Fix up the classpath
+    return false;
+  }
+  
+  private String[] updateClassPath(final VMRunnerConfiguration configuration) 
+      throws CoreException {
+    /* (1) Replace each project "binary output directory" with
+     * its corresponding instrumented directory.
+     */
     final String[] classPath = configuration.getClassPath();
     final String[] newClassPath = new String[classPath.length + 1];
     for (int i = 0; i < classPath.length; i++) {
       final String newEntry = projectEntries.get(classPath[i]);
-      if (newEntry != null) {
-        System.out.println("Updated to " + newEntry);
-        newClassPath[i] = newEntry;
-      } else {
-        newClassPath[i] = classPath[i];
-        System.out.println(newClassPath[i]);
-      }
+      if (newEntry != null) newClassPath[i] = newEntry;
+      else newClassPath[i] = classPath[i];
     }
     
+    /* (2) Also add the flashlight jar file to the classpath.
+     */
     final IPath bundleBase = Activator.getDefault().getBundleLocation();
     if (bundleBase != null) {
-      IPath jarLocation = bundleBase.append("lib/flashlight-all.jar");
+      final IPath jarLocation = bundleBase.append("lib/flashlight-all.jar");
       newClassPath[classPath.length] = jarLocation.toOSString();
     } else {
       throw new CoreException(SLEclipseStatusUtility.createErrorStatus(0,
           "No bundle location found for the Flashlight plug-in."));
     }
     
-    final VMRunnerConfiguration newConfig = new VMRunnerConfiguration(configuration.getClassToLaunch(), newClassPath);
-    newConfig.setBootClassPath(configuration.getBootClassPath());
-    newConfig.setEnvironment(configuration.getEnvironment());
-    newConfig.setProgramArguments(configuration.getProgramArguments());
-    newConfig.setResumeOnStartup(configuration.isResumeOnStartup());
-    newConfig.setVMArguments(configuration.getVMArguments());
-    newConfig.setVMSpecificAttributesMap(configuration.getVMSpecificAttributesMap());
-    newConfig.setWorkingDirectory(configuration.getWorkingDirectory());
-    
-    /* Done with our set up, call the real runner */
-    delegateRunner.run(newConfig, launch, monitor);
+    return newClassPath;
   }
-
+  
+  private VMRunnerConfiguration updateRunnerConfiguration(
+      final VMRunnerConfiguration original, final String[] newClassPath) {
+    final VMRunnerConfiguration newConfig = new VMRunnerConfiguration(original.getClassToLaunch(), newClassPath);
+    newConfig.setBootClassPath(original.getBootClassPath());
+    newConfig.setEnvironment(original.getEnvironment());
+    newConfig.setProgramArguments(original.getProgramArguments());
+    newConfig.setResumeOnStartup(original.isResumeOnStartup());
+    newConfig.setVMArguments(original.getVMArguments());
+    newConfig.setVMSpecificAttributesMap(original.getVMSpecificAttributesMap());
+    newConfig.setWorkingDirectory(original.getWorkingDirectory());
+    return newConfig;
+  }
 }

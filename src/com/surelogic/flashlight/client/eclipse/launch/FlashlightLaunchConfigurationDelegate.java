@@ -161,8 +161,16 @@ public final class FlashlightLaunchConfigurationDelegate extends
 		}
 		
 		
-		
-		// Instrument classfiles
+		/* Find the classpath entries that correspond to "binary output directories"
+		 * of projects in the workspace.  These are the directories that we need
+		 * to instrument.  This use of JavaRuntime.computeUnresolvedRuntimeClasspath()
+		 * and JavaRuntime.resolveRuntimeClasspath() is taken from 
+		 * AbstractJavaLaunchConfigurationDelegate.getClasspath().  We create a
+		 * map "projectEntries" that we will use to maintain the mapping from the
+		 * original binary output directory to the instrumented binary output
+		 * directory we create later.
+		 */
+
     IRuntimeClasspathEntry[] entries = JavaRuntime.computeUnresolvedRuntimeClasspath(configuration);
     entries = JavaRuntime.resolveRuntimeClasspath(entries, configuration);
     final Map<String, String> projectEntries = new HashMap<String, String>();
@@ -177,9 +185,9 @@ public final class FlashlightLaunchConfigurationDelegate extends
       }
     }
     
-    /* We go through some hoops to find the project names.  It's hard to get
-     * these directly from the locations above, because we do not know how many
-     * levels deep an binary output directory may be nested.
+    /* Go through each open project and see which of the binary output
+     * directories belong to it based on the pathname prefix.  Update the
+     * instrumented directory path for each binary directory.  
      */
     final String runName = mainTypeName + datePostfix;
     final File runOutputDir = new File(tmpDirName, runName);

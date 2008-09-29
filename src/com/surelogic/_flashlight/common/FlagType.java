@@ -18,6 +18,14 @@ public enum FlagType implements IAttributeType {
 		mask  = 1 << this.ordinal();
 	}
 	
+	public final int base() {
+		return 100;
+	}
+	
+	public final String label() {
+		return label;
+	}
+	
 	public int mask() {
 		return mask;
 	}

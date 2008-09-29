@@ -16,7 +16,18 @@ public enum AttributeType implements IAttributeType {
 	TYPE("type"),
 	CLASS_NAME("class-name"),
 	THREAD_NAME("thread-name"),
-	FLAGS("flags");
+	FLAGS("flags"),
+	VERSION("version"),
+	RUN("run"),
+	CPUS("processors"),
+	MEMORY_MB("max-memory-mb"),
+	USER_NAME("user-name"),
+	JAVA_VERSION("java-version"),
+	JAVA_VENDOR("java-vendor"),
+	OS_NAME("os-name"),
+	OS_ARCH("os-arch"),
+	OS_VERSION("os-version"),
+	WALL_CLOCK("wall-clock-time");
 	
 	private final String label;
 	
@@ -24,11 +35,25 @@ public enum AttributeType implements IAttributeType {
 		label = l;
 	}
 	
-	public String label() {
+	public final int base() {
+		return 0;
+	}
+	
+	public final String label() {
 		return label;
 	}
 	
 	public boolean matches(String name) {
 		return label.equals(name);
+	}
+
+	public static AttributeType getType(String name) {		
+		name = name.replace('.', '-');
+		for(AttributeType t : values()) {
+			if (t.label().equals(name)) {
+				return t;
+			}
+		}
+		return null;
 	}
 }

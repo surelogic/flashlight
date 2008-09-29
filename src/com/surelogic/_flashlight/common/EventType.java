@@ -59,8 +59,10 @@ public enum EventType {
 		@Override
 		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
 			readTraceEvent(in, attrs);
+			/*
 			attrs.put(FILE, in.readUTF());
 			attrs.put(LOCATION, in.readUTF());
+			*/
 		}
 	},
 	Before_UtilConcurrentLockAcquisitionAttempt("before-util-concurrent-lock-acquisition-attempt") {
@@ -72,17 +74,28 @@ public enum EventType {
 	Class_Definition("class-definition") {
 		@Override
 		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
-			attrs.put(ID, in.readLong());
+			attrs.put(ID, readCompressedLong(in));
 			attrs.put(CLASS_NAME, in.readUTF());
+		}
+	},
+	Environment("environment") {
+		@Override
+		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+			attrs.put(MEMORY_MB, in.readLong());
+			attrs.put(CPUS, in.readInt());
+			final byte numProps = in.readByte();
+			for(int i=0; i<numProps; i++) {
+				attrs.put(AttributeType.getType(in.readUTF()), in.readUTF());
+			}			
 		}
 	},
 	Field_Definition("field-definition") {
 		@Override
 		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
-			attrs.put(ID, in.readLong());
-			attrs.put(TYPE, in.readLong());
+			attrs.put(ID, readCompressedLong(in));
+			attrs.put(TYPE, readCompressedLong(in));
 			attrs.put(FIELD, in.readUTF());
-			int flags = in.readInt();
+			int flags = readCompressedInt(in);
 			readFlag(flags, IS_STATIC, attrs);
 			readFlag(flags, IS_FINAL, attrs);
 			readFlag(flags, IS_VOLATILE, attrs);
@@ -120,45 +133,61 @@ public enum EventType {
 			attrs.put(TIME, in.readLong());
 		}
 	},
+	First_Event("flashlight") {
+		@Override
+		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+			attrs.put(VERSION, in.readUTF());
+			attrs.put(RUN, in.readUTF());
+		}
+	},
 	GarbageCollected_Object("garbage-collected-object") {
 		@Override
 		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
-			attrs.put(ID, in.readLong());
+			attrs.put(ID, readCompressedLong(in));
 		}
 	},
 	Object_Definition("object-definition") {
 		@Override
 		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
-			attrs.put(ID, in.readLong());
-			attrs.put(TYPE, in.readLong());
+			attrs.put(ID, readCompressedLong(in));
+			attrs.put(TYPE, readCompressedLong(in));
+		}
+	},
+	Observed_CallLocation("call-location") {
+		@Override
+		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+			attrs.put(IN_CLASS, readCompressedLong(in));
+			attrs.put(LINE, readCompressedInt(in));
+			attrs.put(FILE, in.readUTF());
+			attrs.put(LOCATION, in.readUTF());
 		}
 	},
 	ReadWriteLock_Definition("read-write-lock-definition") {
 		@Override
 		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
-			attrs.put(ID, in.readLong());
-			attrs.put(READ_LOCK_ID, in.readLong());
-			attrs.put(WRITE_LOCK_ID, in.readLong());
+			attrs.put(ID, readCompressedLong(in));
+			attrs.put(READ_LOCK_ID, readCompressedLong(in));
+			attrs.put(WRITE_LOCK_ID, readCompressedLong(in));
 		}
 	},
 	SingleThreadedField_Instance("single-threaded-field") {
 		@Override
 		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
-			attrs.put(FIELD, in.readLong());
-			attrs.put(RECEIVER, in.readLong());
+			attrs.put(FIELD, readCompressedLong(in));
+			attrs.put(RECEIVER, readCompressedLong(in));
 		}
 	},
 	SingleThreadedField_Static("single-threaded-field") {
 		@Override
 		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
-			attrs.put(FIELD, in.readLong());
+			attrs.put(FIELD, readCompressedLong(in));
 		}
 	},
 	Thread_Definition("thread-definition") {		
 		@Override
 		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
-			attrs.put(ID, in.readLong());
-			attrs.put(TYPE, in.readLong());
+			attrs.put(ID, readCompressedLong(in));
+			attrs.put(TYPE, readCompressedLong(in));
 			attrs.put(THREAD_NAME, in.readUTF());
 		}
 	},	
@@ -166,21 +195,25 @@ public enum EventType {
 		@Override
 		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
 			attrs.put(TIME, in.readLong());
+			attrs.put(WALL_CLOCK, in.readUTF());
 		}
 	}
 	;
+	
+	private static final byte[] buf = new byte[9];
 	private final String label;
 	
 	private EventType(String l) {
 		label = l;
 	}
-	String getLabel() {
+	public String getLabel() {
 		return label;
 	}
 	public byte getByte() {
 		return (byte) this.ordinal();
 	}
-	static EventType getEvent(int i) {
+	
+	public static EventType getEvent(int i) {
 		return values()[i];
 	}
 	
@@ -192,36 +225,101 @@ public enum EventType {
 	
 	static void readCommon(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
 		attrs.put(TIME, in.readLong());
-		attrs.put(THREAD, in.readLong());
-		attrs.put(IN_CLASS, in.readLong());
+		attrs.put(THREAD, readCompressedLong(in));
+		attrs.put(IN_CLASS, readCompressedLong(in));
 	}
 	
 	static void readFieldAccess(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
 		readCommon(in, attrs);
-		attrs.put(FIELD, in.readLong());
-		attrs.put(LINE, in.readInt());
+		attrs.put(FIELD, readCompressedLong(in));
+		attrs.put(LINE, readCompressedInt(in));
 	}
 	
 	static void readFieldAccessInstance(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
 		readFieldAccess(in, attrs);
-		final int flags = in.readInt();
+		final int flags = readCompressedInt(in);
 		readFlag(flags, UNDER_CONSTRUCTION, attrs);
-		attrs.put(RECEIVER, in.readLong());
+		attrs.put(RECEIVER, readCompressedLong(in));
 	}
 	
 	static void readLockEvent(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
 		readCommon(in, attrs);
-		attrs.put(LOCK, in.readLong());
-		attrs.put(LINE, in.readInt());
+		attrs.put(LOCK, readCompressedLong(in));
+		attrs.put(LINE, readCompressedInt(in));
+		/*
 		final int flags = in.readInt();
 		readFlag(flags, THIS_LOCK, attrs);
 		readFlag(flags, CLASS_LOCK, attrs);
 		readFlag(flags, RELEASED_LOCK, attrs);
 		readFlag(flags, GOT_LOCK, attrs);
+		*/
 	}
 	
 	static void readTraceEvent(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
 		readCommon(in, attrs);
-		attrs.put(LINE, in.readInt());		
+		attrs.put(LINE, readCompressedInt(in));		
 	}
+
+	static int readCompressedInt(ObjectInputStream in) throws IOException {
+		byte moreBytes = in.readByte();
+		int contents;
+		if (moreBytes < 0) {
+			moreBytes = (byte) -moreBytes;
+			contents  = 0xffffffff << (moreBytes << 3);
+		} else {	
+			contents = 0;
+		}
+		if (moreBytes > 0) {
+			in.read(buf, 0, moreBytes);
+			contents += (buf[0] & 0xff);
+			if (moreBytes > 1) {
+				contents += ((buf[1] & 0xff) << 8);
+			}
+			if (moreBytes > 2) {
+				contents += ((buf[2] & 0xff) << 16);
+			}
+			if (moreBytes > 3) {
+				contents += ((buf[3] & 0xff) << 24);
+			}
+		}
+		return contents;
+	}
+	
+	static long readCompressedLong(ObjectInputStream in) throws IOException {
+		byte moreBytes = in.readByte();
+		long contents;
+		if (moreBytes < 0) {
+			moreBytes = (byte) -moreBytes;
+			contents  = 0xffffffffffffffffL << (moreBytes << 3);
+		} else {	
+			contents = 0;
+		}
+		if (moreBytes > 0) {
+			in.read(buf, 0, moreBytes);
+			contents += (buf[0] & 0xffL);
+			if (moreBytes > 1) {
+				contents += ((buf[1] & 0xffL) << 8);
+			}
+			if (moreBytes > 2) {
+				contents += ((buf[2] & 0xffL) << 16);
+			}
+			if (moreBytes > 3) {
+				contents += ((buf[3] & 0xffL) << 24);
+			}
+			if (moreBytes > 4) {
+				contents += ((buf[4] & 0xffL) << 32);
+			}
+			if (moreBytes > 5) {
+				contents += ((buf[5] & 0xffL) << 40);
+			}
+			if (moreBytes > 6) {
+				contents += ((buf[6] & 0xffL) << 48);
+			}
+			if (moreBytes > 7) {
+				contents += ((buf[7] & 0xffL) << 56);
+			}
+		}
+		return contents;
+	}
+	
 }

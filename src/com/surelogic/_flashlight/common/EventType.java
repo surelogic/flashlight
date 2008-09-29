@@ -231,6 +231,11 @@ public enum EventType {
 	
 	static void readFieldAccess(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
 		readCommon(in, attrs);
+		/*
+		if (((Long)attrs.get(TIME)).longValue() == 1654719095825181L) {
+			System.out.println("Here.");
+		}
+		*/
 		attrs.put(FIELD, readCompressedLong(in));
 		attrs.put(LINE, readCompressedInt(in));
 	}
@@ -270,7 +275,7 @@ public enum EventType {
 			contents = 0;
 		}
 		if (moreBytes > 0) {
-			in.read(buf, 0, moreBytes);
+			readIntoBuffer(in, moreBytes);
 			contents += (buf[0] & 0xff);
 			if (moreBytes > 1) {
 				contents += ((buf[1] & 0xff) << 8);
@@ -282,7 +287,21 @@ public enum EventType {
 				contents += ((buf[3] & 0xff) << 24);
 			}
 		}
+		if (contents < 0) {
+			System.out.println("Negative");
+		}
 		return contents;
+	}
+	
+	static void readIntoBuffer(ObjectInputStream in, int numBytes) throws IOException {
+		int offset = 0;
+		while (offset < numBytes) {
+			final int read = in.read(buf, offset, numBytes - offset);
+			if (read < 0) {
+				throw new IOException("Couldn't read "+numBytes+" bytes: "+offset);
+			}
+			offset += read;
+		}
 	}
 	
 	static long readCompressedLong(ObjectInputStream in) throws IOException {
@@ -295,7 +314,7 @@ public enum EventType {
 			contents = 0;
 		}
 		if (moreBytes > 0) {
-			in.read(buf, 0, moreBytes);
+			readIntoBuffer(in, moreBytes);
 			contents += (buf[0] & 0xffL);
 			if (moreBytes > 1) {
 				contents += ((buf[1] & 0xffL) << 8);

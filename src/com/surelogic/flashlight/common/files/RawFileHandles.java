@@ -47,6 +47,10 @@ public final class RawFileHandles {
 		return RawFileUtility.isRawFileGzip(f_data);
 	}
 
+	public boolean isDataFileBinary() {
+		return RawFileUtility.isBinary(f_data);
+	}
+	
 	private final File f_log;
 
 	/**

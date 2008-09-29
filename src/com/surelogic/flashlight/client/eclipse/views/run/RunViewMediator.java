@@ -23,10 +23,7 @@ import com.surelogic.flashlight.client.eclipse.dialogs.LogDialog;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
 import com.surelogic.flashlight.common.entities.PrepRunDescription;
 import com.surelogic.flashlight.common.files.RawFileHandles;
-import com.surelogic.flashlight.common.jobs.DeleteRawFilesSLJob;
-import com.surelogic.flashlight.common.jobs.PrepSLJob;
-import com.surelogic.flashlight.common.jobs.RefreshRunManagerSLJob;
-import com.surelogic.flashlight.common.jobs.UnPrepSLJob;
+import com.surelogic.flashlight.common.jobs.*;
 import com.surelogic.flashlight.common.model.IRunManagerObserver;
 import com.surelogic.flashlight.common.model.RunDescription;
 import com.surelogic.flashlight.common.model.RunManager;
@@ -152,6 +149,24 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 	public Action getShowLogAction() {
 		return f_showLog;
 	}
+	
+	private final Action f_convertToXML = new Action() {
+		@Override
+		public void run() {
+			final RunDescription description = getTableSelectionData();
+			if (description != null) {
+				final RawFileHandles handles = description.getRawFileHandles();
+				if (handles != null) {
+					final File dataFile = handles.getDataFile();
+					EclipseJob.getInstance().schedule(new ConvertBinaryToXMLJob(dataFile));
+				}
+			}
+		}
+	};
+
+	public Action getConvertToXMLAction() {
+		return f_convertToXML;
+	}
 
 	private final Action f_deleteRun = new Action() {
 		@Override
@@ -202,6 +217,7 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 		final boolean somethingIsSelected = o != null;
 		f_deleteRun.setEnabled(somethingIsSelected);
 		boolean rawActionsEnabled = somethingIsSelected;
+		boolean binaryActionsEnabled = false;
 		String runVariableValue = null;
 		if (somethingIsSelected) {
 			rawActionsEnabled = o.getRawFileHandles() != null;
@@ -209,11 +225,13 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 			if (prep != null) {
 				runVariableValue = Integer.toString(prep.getRun());
 			}
+			binaryActionsEnabled = rawActionsEnabled && o.getRawFileHandles().isDataFileBinary();
 		}
 		AdHocDataSource.getManager().setGlobalVariableValue(RUN_VARIABLE,
 				runVariableValue);
 		f_prep.setEnabled(rawActionsEnabled);
 		f_showLog.setEnabled(rawActionsEnabled);
+		f_convertToXML.setEnabled(binaryActionsEnabled);
 	}
 
 	/**

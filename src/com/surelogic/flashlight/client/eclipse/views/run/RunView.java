@@ -87,6 +87,13 @@ public final class RunView extends ViewPart {
 		showLogAction.setEnabled(false);
 		getViewSite().getActionBars().getToolBarManager().add(showLogAction);
 
+		final Action convertAction = f_mediator.getConvertToXMLAction();
+		convertAction.setImageDescriptor(SLImages
+				.getImageDescriptor(CommonImages.IMG_FL_PREP_DATA));
+		convertAction.setToolTipText("Convert Binary to XML");
+		convertAction.setEnabled(false);
+		getViewSite().getActionBars().getToolBarManager().add(convertAction);
+		
 		final Action deleteRunAction = f_mediator.getDeleteRun();
 		deleteRunAction.setImageDescriptor(PlatformUI.getWorkbench()
 				.getSharedImages().getImageDescriptor(

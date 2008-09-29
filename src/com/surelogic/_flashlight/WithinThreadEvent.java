@@ -28,11 +28,11 @@ abstract class WithinThreadEvent extends ProgramEvent {
 	private final ClassPhantomReference f_withinClass;
 	private final int f_line;
 
-	int getLine() {
+	public int getLine() {
 		return f_line;
 	}
 
-	long getWithinClassId() {
+	public long getWithinClassId() {
 		return f_withinClass.getId();
 	}
 	

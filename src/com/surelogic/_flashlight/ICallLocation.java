@@ -1,5 +1,7 @@
 package com.surelogic._flashlight;
 
+// Also, re-implement equals() and hashCode()
 public interface ICallLocation {
-	// Nothing to do, besides re-implement equals() and hashCode()
+	int getLine();
+	long getWithinClassId();
 }

@@ -22,11 +22,11 @@ public class ObservedCallLocation extends ObservationalEvent implements ICallLoc
 	private final long f_withinClassId;
 	private final int f_line;
 
-	int getLine() {
+	public int getLine() {
 		return f_line;
 	}
 
-	long getWithinClassId() {
+	public long getWithinClassId() {
 		return f_withinClassId;
 	}
 	
@@ -64,8 +64,8 @@ public class ObservedCallLocation extends ObservationalEvent implements ICallLoc
 	
 	@Override
 	public boolean equals(Object o) {
-		if (o instanceof BeforeTrace) {
-			BeforeTrace bt = (BeforeTrace) o;
+		if (o instanceof ICallLocation) {
+			ICallLocation bt = (ICallLocation) o;
 			return bt.getLine() == f_line &&
 			       bt.getWithinClassId() == f_withinClassId;
  		}

@@ -4,6 +4,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 
@@ -19,22 +22,35 @@ import com.surelogic._flashlight.rewriter.Configuration;
 import com.surelogic._flashlight.rewriter.EngineMessenger;
 import com.surelogic._flashlight.rewriter.PrintWriterMessenger;
 import com.surelogic._flashlight.rewriter.RewriteManager;
+import com.surelogic.common.FileUtility;
 import com.surelogic.common.eclipse.logging.SLEclipseStatusUtility;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.client.eclipse.Activator;
+import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
 
 final class FlashlightVMRunner implements IVMRunner {
+  private static final String LOG_FILE_NAME = "instrumentation.log";
+  private static final String FIELDS_FILE_NAME = "fields.txt";
+  
   private final IVMRunner delegateRunner;
   private final File runOutputDir;
+  private final String mainTypeName;
+  private final File fieldsFile;
+  private final File logFile;
   private final Map<String, String> projectEntries;
   
   
   
   public FlashlightVMRunner(
-      final IVMRunner other, final File outDir, final Map<String, String> dirs) {
+      final IVMRunner other, final File outDir, final Map<String, String> dirs,
+      final String main) {
     delegateRunner = other;
     runOutputDir = outDir;
     projectEntries = dirs;
+    mainTypeName = main;
+    
+    fieldsFile = new File(runOutputDir, FIELDS_FILE_NAME);
+    logFile = new File(runOutputDir, LOG_FILE_NAME);
   }
   
   public void run(final VMRunnerConfiguration configuration, final ILaunch launch,
@@ -72,8 +88,6 @@ final class FlashlightVMRunner implements IVMRunner {
    */
   private boolean instrumentClassfiles(final SubMonitor progress) {
     runOutputDir.mkdirs();
-    final File logFile = new File(runOutputDir, "instrumentation.log");
-    final File fieldsFile = new File(runOutputDir, "fields.txt");
     PrintWriter logOut = null;
     try {
       logOut = new PrintWriter(logFile);
@@ -134,7 +148,34 @@ final class FlashlightVMRunner implements IVMRunner {
   
   private VMRunnerConfiguration updateRunnerConfiguration(
       final VMRunnerConfiguration original, final String[] newClassPath) {
+    // Create a new configuration and update the class path
     final VMRunnerConfiguration newConfig = new VMRunnerConfiguration(original.getClassToLaunch(), newClassPath);
+    
+    // Update the VM arguments: We need to add parameters for the Flashlight Store
+    final String[] vmArgs = original.getVMArguments();
+    // We will add at most eight arguments, but maybe less
+    final List<String> newVmArgsList = new ArrayList<String>(vmArgs.length + 8);
+    
+    final String rawQSize = Activator.getDefault().getPluginPreferences().getString(PreferenceConstants.P_RAWQ_SIZE);
+    final String refSize = Activator.getDefault().getPluginPreferences().getString(PreferenceConstants.P_REFINERY_SIZE);
+    final String outQSize = Activator.getDefault().getPluginPreferences().getString(PreferenceConstants.P_OUTQ_SIZE);
+    final String cPort = Activator.getDefault().getPluginPreferences().getString(PreferenceConstants.P_CONSOLE_PORT);
+    final boolean useSpy = Activator.getDefault().getPluginPreferences().getBoolean(PreferenceConstants.P_USE_SPY);
+    newVmArgsList.add("-DFL_RUN=\"" + mainTypeName + "\"");
+    newVmArgsList.add("-DFL_DIR=\"" + FileUtility.getFlashlightDataDirectory() + "\"");
+    newVmArgsList.add("-DFL_FIELDS_FILE=\"" + fieldsFile.getAbsolutePath() + "\"");
+    newVmArgsList.add("-DFL_RAWQ_SIZE=" + rawQSize);
+    newVmArgsList.add("-DFL_REFINERY_SIZE=" + refSize);
+    newVmArgsList.add("-DFL_OUTQ_SIZE=" + outQSize);
+    newVmArgsList.add("-DFL_CONSOLE_PORT=" + cPort);
+    if (!useSpy) newVmArgsList.add("-DFL_NO_SPY=true");
+    // Add the original arguments afterwards
+    newVmArgsList.addAll(Arrays.asList(vmArgs));
+    // Get the new array of vm arguments
+    String[] newVmArgs = new String[newVmArgsList.size()];
+    newConfig.setVMArguments(newVmArgsList.toArray(newVmArgs));
+    
+    // Copy the rest of the arguments unchanged
     newConfig.setBootClassPath(original.getBootClassPath());
     newConfig.setEnvironment(original.getEnvironment());
     newConfig.setProgramArguments(original.getProgramArguments());

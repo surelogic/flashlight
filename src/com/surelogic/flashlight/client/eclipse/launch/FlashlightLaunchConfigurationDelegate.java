@@ -22,49 +22,9 @@ import com.surelogic.common.FileUtility;
 import com.surelogic.common.eclipse.jdt.SourceZip;
 import com.surelogic.common.eclipse.logging.SLEclipseStatusUtility;
 import com.surelogic.common.logging.SLLogger;
-import com.surelogic.flashlight.client.eclipse.Activator;
-import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
 
 public final class FlashlightLaunchConfigurationDelegate extends
 		JavaLaunchDelegate {
-
-	@Override
-	public String getVMArguments(ILaunchConfiguration configuration)
-			throws CoreException {
-		StringBuilder b = new StringBuilder(super.getVMArguments(configuration));
-		final String run = getMainTypeName(configuration);
-		if (run != null) {
-			b.append(" -DFL_RUN=\"");
-			b.append(run);
-		}
-		b.append("\" -DFL_DIR=\"");
-		b.append(FileUtility.getFlashlightDataDirectory());
-		b.append("\" -DFL_RAWQ_SIZE=");
-		final String rawQSize = Activator.getDefault().getPluginPreferences()
-				.getString(PreferenceConstants.P_RAWQ_SIZE);
-		b.append(rawQSize);
-		b.append(" -DFL_REFINERY_SIZE=");
-		final String refSize = Activator.getDefault().getPluginPreferences()
-				.getString(PreferenceConstants.P_REFINERY_SIZE);
-		b.append(refSize);
-		b.append(" -DFL_OUTQ_SIZE=");
-		final String outQSize = Activator.getDefault().getPluginPreferences()
-				.getString(PreferenceConstants.P_OUTQ_SIZE);
-		b.append(outQSize);
-		b.append(" -DFL_CONSOLE_PORT=");
-		final String cPort = Activator.getDefault().getPluginPreferences()
-				.getString(PreferenceConstants.P_CONSOLE_PORT);
-		b.append(cPort);
-		final boolean useSpy = Activator.getDefault().getPluginPreferences()
-				.getBoolean(PreferenceConstants.P_USE_SPY);
-		if (!useSpy) {
-			b.append(" -DFL_NO_SPY=true");
-		}
-		String result = b.toString();
-		// System.out.println("Flashlight VM args: "+result);
-		return result;
-	}
-
 	/**
 	 * Returns the VM runner for the given launch mode to use when launching the
 	 * given configuration.
@@ -195,7 +155,7 @@ public final class FlashlightLaunchConfigurationDelegate extends
       }
     }
       
-    return new FlashlightVMRunner(runner, runOutputDir, projectEntries);
+    return new FlashlightVMRunner(runner, runOutputDir, projectEntries, mainTypeName);
 //		return runner;
 	}
 }

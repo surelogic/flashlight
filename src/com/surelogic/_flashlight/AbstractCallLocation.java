@@ -17,6 +17,10 @@ public abstract class AbstractCallLocation extends ObservationalEvent implements
         return f_withinClass.getId();
     }
     
+    String getWithinClassName() {
+    	return f_withinClass.getName();
+    }
+    
     @Override
     public final int hashCode() {
         return (int) (f_withinClass.getId() + f_line);

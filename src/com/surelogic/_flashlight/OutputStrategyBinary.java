@@ -237,6 +237,20 @@ public class OutputStrategyBinary extends EventVisitor {
 		}
 	}
 
+	@Override
+	void visit(final TraceNode e) {
+        try {
+            if (debug) System.out.println("Writing event: "+Trace_Node.getLabel());
+            f_out.writeByte(Trace_Node.getByte());
+            writeCompressedLong(e.getId());    
+            writeCompressedLong(e.getParentId());             
+            writeCompressedLong(e.getWithinClassId());
+            writeCompressedInt(e.getLine());
+        } catch (IOException ioe) {
+            handleIOException(ioe);
+        }   
+	}
+	
 	// Common code
 	
 	private void writeLong(byte header, long l, boolean compress) {

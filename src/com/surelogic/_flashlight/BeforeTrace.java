@@ -5,7 +5,7 @@ import java.util.concurrent.BlockingQueue;
 
 final class BeforeTrace extends Trace implements ICallLocation {
 	private final ObservedCallLocation f_location;
-
+	
 	String getDeclaringTypeName() {
 		return f_location.getDeclaringTypeName();
 	}

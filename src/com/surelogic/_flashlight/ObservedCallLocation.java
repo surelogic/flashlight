@@ -3,7 +3,7 @@ package com.surelogic._flashlight;
 import java.util.List;
 import java.util.concurrent.*;
 
-public class ObservedCallLocation extends ObservationalEvent implements ICallLocation {
+public class ObservedCallLocation extends AbstractCallLocation {
 	private static final ConcurrentMap<ICallLocation,ObservedCallLocation> map = 
 		new ConcurrentHashMap<ICallLocation, ObservedCallLocation>();
 		
@@ -19,31 +19,19 @@ public class ObservedCallLocation extends ObservationalEvent implements ICallLoc
 		return f_locationName;
 	}
 	
-	private final long f_withinClassId;
-	private final int f_line;
-
-	public int getLine() {
-		return f_line;
-	}
-
-	public long getWithinClassId() {
-		return f_withinClassId;
-	}
-	
 	private ObservedCallLocation(final String fileName, final String locationName,
-			                     final long withinClassId, final int line) {
+			                     final ClassPhantomReference inClass, final int line) {
+	    super(inClass, line);
 		f_fileName = fileName == null ? "<unknown file name>" : fileName;
 		f_locationName = locationName == null ? "<unknown location>"
 				: locationName;
-		f_withinClassId = withinClassId;
-		f_line = line;
 	}
 	
 	static ObservedCallLocation getInstance(BeforeTrace bt, final String fileName, final String locationName,
 			                         BlockingQueue<List<Event>> queue) {
 		ObservedCallLocation loc = map.get(bt);
 		if (loc == null) {
-			loc = new ObservedCallLocation(fileName, locationName, bt.getWithinClassId(), bt.getLine());
+			loc = new ObservedCallLocation(fileName, locationName, bt.getWithinClass(), bt.getLine());
 			ObservedCallLocation last = map.putIfAbsent(loc, loc);
 			if (last == null) {
 				Store.putInQueue(queue, loc);
@@ -55,25 +43,5 @@ public class ObservedCallLocation extends ObservationalEvent implements ICallLoc
 	@Override
 	void accept(EventVisitor v) {
 		v.visit(this);
-	}
-	
-	@Override
-	public int hashCode() {
-		return (int) (f_withinClassId + f_line);
-	}
-	
-	@Override
-	public boolean equals(Object o) {
-		if (o instanceof ICallLocation) {
-			ICallLocation bt = (ICallLocation) o;
-			return bt.getLine() == f_line &&
-			       bt.getWithinClassId() == f_withinClassId;
- 		}
-		return false;
-	}
-	
-	@Override
-	public String toString() {
-		return "";
 	}
 }

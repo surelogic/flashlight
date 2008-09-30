@@ -97,6 +97,10 @@ abstract class EventVisitor {
 		// do nothing
 	}
 
+	void visit(final TraceNode e) {
+	    // do nothing
+	}
+	
 	void flush() {
 		// do nothing
 	}

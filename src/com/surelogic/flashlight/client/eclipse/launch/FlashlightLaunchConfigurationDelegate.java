@@ -5,7 +5,9 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 
 import org.eclipse.core.resources.*;
@@ -136,7 +138,7 @@ public final class FlashlightLaunchConfigurationDelegate extends
     final String runName = mainTypeName + datePostfix;
     final File runOutputDir = new File(tmpDirName, runName);
     final File projectOutputDir = new File(runOutputDir, "projects");
-    
+    final Set<IProject> interestingProjects = new HashSet<IProject>();
     final IProject[] projects = root.getProjects();
     for (final IProject project : projects) {
       if (project.isOpen()) {
@@ -149,13 +151,14 @@ public final class FlashlightLaunchConfigurationDelegate extends
             final String binaryDirName = originalLocation.substring(projectLocation.length() + 1);
             final File newLocation = new File(new File(projectOutputDir, projectDirName), binaryDirName);
             entry.setValue(newLocation.getAbsolutePath());
+            interestingProjects.add(project);
             break;
           }
         }
       }
     }
       
-    return new FlashlightVMRunner(runner, runOutputDir, projectEntries, mainTypeName);
+    return new FlashlightVMRunner(runner, runOutputDir, projectEntries, interestingProjects, mainTypeName);
 //		return runner;
 	}
 }

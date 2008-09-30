@@ -8,8 +8,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IWorkspaceRoot;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -23,6 +27,7 @@ import com.surelogic._flashlight.rewriter.EngineMessenger;
 import com.surelogic._flashlight.rewriter.PrintWriterMessenger;
 import com.surelogic._flashlight.rewriter.RewriteManager;
 import com.surelogic.common.FileUtility;
+import com.surelogic.common.eclipse.jdt.SourceZip;
 import com.surelogic.common.eclipse.logging.SLEclipseStatusUtility;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.client.eclipse.Activator;
@@ -38,15 +43,16 @@ final class FlashlightVMRunner implements IVMRunner {
   private final File fieldsFile;
   private final File logFile;
   private final Map<String, String> projectEntries;
-  
+  private final Set<IProject> interestingProjects;
   
   
   public FlashlightVMRunner(
       final IVMRunner other, final File outDir, final Map<String, String> dirs,
-      final String main) {
+      final Set<IProject> prjs, final String main) {
     delegateRunner = other;
     runOutputDir = outDir;
     projectEntries = dirs;
+    interestingProjects = prjs;
     mainTypeName = main;
     
     fieldsFile = new File(runOutputDir, FIELDS_FILE_NAME);
@@ -56,12 +62,19 @@ final class FlashlightVMRunner implements IVMRunner {
   public void run(final VMRunnerConfiguration configuration, final ILaunch launch,
       final IProgressMonitor monitor) throws CoreException {
     
-    /* Amount of work is 2 for each directory we need to process, plus 1
-     * remaining unit for the delegate.
+    /*
+     * Amount of work is 1 for each project we need to zip, 2 for each directory
+     * we need to process, plus 1 remaining unit for the delegate.
      */
-    final int totalWork = 2 * projectEntries.size() + 1;
+    final int totalWork = interestingProjects.size() + (2 * projectEntries.size()) + 1;
     final SubMonitor progress = SubMonitor.convert(monitor, totalWork);
 
+    /* Create the source zip */
+    if (createSourceZips(progress)) {
+      // Canceled, abort early
+      return;
+    }
+    
     /* Build the instrumented class files.  First we scan each directory
      * to the build the field database, and then we instrument each directory.
      */
@@ -79,6 +92,30 @@ final class FlashlightVMRunner implements IVMRunner {
     
     /* Done with our set up, call the real runner */
     delegateRunner.run(newConfig, launch, monitor);
+  }
+  
+  private boolean createSourceZips(final SubMonitor progress) {
+    final File sourceDir = new File(runOutputDir, "source");
+    sourceDir.mkdirs();
+    
+    for (final IProject project : interestingProjects) {
+      final String projectName = project.getName();
+      progress.subTask("Creating source zip for " + projectName);
+      final SourceZip srcZip = new SourceZip(project);
+      final File zipFile = new File(sourceDir, projectName + ".src.zip");
+      try {
+        srcZip.generateSourceZip(zipFile.getAbsolutePath(), project, false);
+      } catch(final IOException e) {
+        SLLogger.getLogger().log(Level.SEVERE,
+            "Unable to create source zip for project " + projectName, e);
+      }
+      
+      if (progress.isCanceled()) {
+        return true;
+      }
+      progress.worked(1);
+    }
+    return false;
   }
 
   /**
@@ -161,9 +198,9 @@ final class FlashlightVMRunner implements IVMRunner {
     final String outQSize = Activator.getDefault().getPluginPreferences().getString(PreferenceConstants.P_OUTQ_SIZE);
     final String cPort = Activator.getDefault().getPluginPreferences().getString(PreferenceConstants.P_CONSOLE_PORT);
     final boolean useSpy = Activator.getDefault().getPluginPreferences().getBoolean(PreferenceConstants.P_USE_SPY);
-    newVmArgsList.add("-DFL_RUN=\"" + mainTypeName + "\"");
-    newVmArgsList.add("-DFL_DIR=\"" + FileUtility.getFlashlightDataDirectory() + "\"");
-    newVmArgsList.add("-DFL_FIELDS_FILE=\"" + fieldsFile.getAbsolutePath() + "\"");
+    newVmArgsList.add("-DFL_RUN=" + mainTypeName);
+    newVmArgsList.add("-DFL_DIR=" + FileUtility.getFlashlightDataDirectory());
+    newVmArgsList.add("-DFL_FIELDS_FILE=" + fieldsFile.getAbsolutePath());
     newVmArgsList.add("-DFL_RAWQ_SIZE=" + rawQSize);
     newVmArgsList.add("-DFL_REFINERY_SIZE=" + refSize);
     newVmArgsList.add("-DFL_OUTQ_SIZE=" + outQSize);
@@ -180,7 +217,6 @@ final class FlashlightVMRunner implements IVMRunner {
     newConfig.setEnvironment(original.getEnvironment());
     newConfig.setProgramArguments(original.getProgramArguments());
     newConfig.setResumeOnStartup(original.isResumeOnStartup());
-    newConfig.setVMArguments(original.getVMArguments());
     newConfig.setVMSpecificAttributesMap(original.getVMSpecificAttributesMap());
     newConfig.setWorkingDirectory(original.getWorkingDirectory());
     return newConfig;

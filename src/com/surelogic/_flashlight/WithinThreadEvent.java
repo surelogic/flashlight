@@ -45,7 +45,7 @@ abstract class WithinThreadEvent extends ProgramEvent {
 		f_line = line;
 	}
 
-	protected final void addThread(final StringBuilder b) {
+	protected void addThread(final StringBuilder b) {
 		Entities.addAttribute("thread", f_withinThread.getId(), b);
 		Entities.addAttribute("in-class", f_withinClass.getId(), b);
 		Entities.addAttribute("line", f_line, b);

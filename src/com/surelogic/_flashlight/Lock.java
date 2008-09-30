@@ -1,6 +1,6 @@
 package com.surelogic._flashlight;
 
-abstract class Lock extends WithinThreadEvent {
+abstract class Lock extends TracedEvent {
 	/**
 	 * Phantom reference of the object being synchronized on.
 	 */

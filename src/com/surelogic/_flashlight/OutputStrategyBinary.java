@@ -286,12 +286,19 @@ public class OutputStrategyBinary extends EventVisitor {
 		f_out.writeLong(e.getNanoTime());		
 		writeCompressedLong(e.getWithinThread().getId());
 		writeCompressedLong(e.getWithinClassId());
+		writeCompressedInt(e.getLine());
+	}
+	
+	private void writeTracedEvent(byte header, TracedEvent e)  throws IOException {
+		writeCommon(header, e);
+		if (TraceNode.inUse) {
+			writeCompressedLong(e.getTraceId());
+		}
 	}
 	
 	private void writeFieldAccess_unsafe(byte header, FieldAccess e) throws IOException {
-		writeCommon(header, e);
+		writeTracedEvent(header, e);
 		writeCompressedMaybeNegativeLong(e.getFieldId());
-		writeCompressedInt(e.getLine());
 	}
 	
 	private void writeFieldAccess(byte header, FieldAccess e)  {
@@ -314,9 +321,8 @@ public class OutputStrategyBinary extends EventVisitor {
 	
 	private void writeLockEvent(byte header, Lock e) {
 		try {
-			writeCommon(header, e);
+			writeTracedEvent(header, e);
 			writeCompressedLong(e.getLockObject().getId());
-			writeCompressedInt(e.getLine());		
 			/* FIX
 			 readFlag(flags, THIS_LOCK, attrs);
 		     readFlag(flags, CLASS_LOCK, attrs);
@@ -331,7 +337,6 @@ public class OutputStrategyBinary extends EventVisitor {
 	private void writeTraceEvent(byte header, Trace e) {
 		try {
 			writeCommon(header, e);
-			writeCompressedInt(e.getLine());
 		} catch (IOException ioe) {
 			handleIOException(ioe);
 		}

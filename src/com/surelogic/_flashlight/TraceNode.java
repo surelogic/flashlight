@@ -4,7 +4,10 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.surelogic._flashlight.common.IdConstants;
+
 public class TraceNode extends AbstractCallLocation {
+	static final boolean inUse = IdConstants.useTraceNodes;
 	private static final AtomicLong nextId = new AtomicLong(1); // 0 is for no parent (null)
 	private static final ThreadLocal<TraceNode> currentNode = new ThreadLocal<TraceNode>();
 	private static final Map<ICallLocation,TraceNode> roots = new HashMap<ICallLocation,TraceNode>();

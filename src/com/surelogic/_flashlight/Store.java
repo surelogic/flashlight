@@ -202,7 +202,7 @@ public final class Store {
 	private final static ThreadLocal<Boolean> tl_withinStore;
 	
 	private static final boolean useTraces = true;
-	private static final boolean useTraceNodes = false;
+	private static final boolean useTraceNodes = TraceNode.inUse;
 
 	/**
 	 * This method must be called as the first statement by each flashlight
@@ -266,7 +266,7 @@ public final class Store {
 			// still incremented even if logging is off.
 			f_problemCount = new AtomicLong();
 
-			final boolean outputBinary = false;
+			final boolean outputBinary = true;
 			final boolean compress = !outputBinary;
 			final String extension = outputBinary ? ".flb" : ".fl";
 			File dataFile = new File(fileName.toString() + extension + (compress ? ".gz" : ""));

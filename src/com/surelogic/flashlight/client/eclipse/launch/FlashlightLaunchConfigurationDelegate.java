@@ -1,9 +1,7 @@
 package com.surelogic.flashlight.client.eclipse.launch;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -12,7 +10,6 @@ import java.util.logging.Level;
 
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IPath;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.jdt.launching.IRuntimeClasspathEntry;
 import org.eclipse.jdt.launching.IVMInstall;
@@ -21,10 +18,6 @@ import org.eclipse.jdt.launching.IVMRunner;
 import org.eclipse.jdt.launching.JavaLaunchDelegate;
 import org.eclipse.jdt.launching.JavaRuntime;
 
-import com.surelogic._flashlight.rewriter.Configuration;
-import com.surelogic._flashlight.rewriter.EngineMessenger;
-import com.surelogic._flashlight.rewriter.PrintWriterMessenger;
-import com.surelogic._flashlight.rewriter.RewriteEngine;
 import com.surelogic.common.FileUtility;
 import com.surelogic.common.eclipse.jdt.SourceZip;
 import com.surelogic.common.eclipse.logging.SLEclipseStatusUtility;
@@ -39,18 +32,9 @@ public final class FlashlightLaunchConfigurationDelegate extends
 	public String getVMArguments(ILaunchConfiguration configuration)
 			throws CoreException {
 		StringBuilder b = new StringBuilder(super.getVMArguments(configuration));
-//		b.append(" -javaagent:\"");
-//		IPath bundleBase = Activator.getDefault().getBundleLocation();
-//		if (bundleBase != null) {
-//			IPath jarLocation = bundleBase.append("lib/flashlight-all.jar");
-//			b.append(jarLocation.toOSString());
-//		} else {
-//			throw new CoreException(SLEclipseStatusUtility.createErrorStatus(0,
-//					"No bundle location found for the Flashlight plug-in."));
-//		}
 		final String run = getMainTypeName(configuration);
 		if (run != null) {
-			b.append("\" -DFL_RUN=\"");
+			b.append(" -DFL_RUN=\"");
 			b.append(run);
 		}
 		b.append("\" -DFL_DIR=\"");

@@ -18,7 +18,7 @@ import org.eclipse.jdt.launching.VMRunnerConfiguration;
 import com.surelogic._flashlight.rewriter.Configuration;
 import com.surelogic._flashlight.rewriter.EngineMessenger;
 import com.surelogic._flashlight.rewriter.PrintWriterMessenger;
-import com.surelogic._flashlight.rewriter.RewriteEngine;
+import com.surelogic._flashlight.rewriter.RewriteManager;
 import com.surelogic.common.eclipse.logging.SLEclipseStatusUtility;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.client.eclipse.Activator;
@@ -77,63 +77,21 @@ final class FlashlightVMRunner implements IVMRunner {
     PrintWriter logOut = null;
     try {
       logOut = new PrintWriter(logFile);
-
+      final EngineMessenger messenger = new PrintWriterMessenger(logOut);
       final Configuration rewriterConfig = new Configuration();
-      PrintWriter fieldsOut = null;
+      final RewriteManager manager = new VMRewriteManager(rewriterConfig, messenger, fieldsFile, progress);
+      
+      for (final Map.Entry<String, String> entry : projectEntries.entrySet()) {
+        manager.addDirToDir(new File(entry.getKey()), new File(entry.getValue()));
+      }
+      
       try {
-        fieldsOut = new PrintWriter(fieldsFile);
-        final EngineMessenger messenger = new PrintWriterMessenger(logOut);
-        final RewriteEngine engine = new RewriteEngine(rewriterConfig, messenger, fieldsOut);
-        
-        for (Map.Entry<String, String> entry : projectEntries.entrySet()) {
-          final String srcDir = entry.getKey();
-          progress.subTask("Scanning " + srcDir);
-          messenger.info("Scanning " + srcDir);
-          try {
-            messenger.increaseNesting();
-            engine.scanDirectory(new File(srcDir));
-            
-            // check for cancellation
-            if (progress.isCanceled()) {
-              return true;
-            }
-          } catch (final IOException e) {
-            SLLogger.getLogger().log(Level.SEVERE,
-                "Error scanning classfiles in directory " + srcDir, e);
-          } finally {
-            messenger.decreaseNesting();
-            progress.worked(1);
-          }
-        }
-
-        for (Map.Entry<String, String> entry : projectEntries.entrySet()) {
-          final String srcDir = entry.getKey();
-          final String destDir = entry.getValue();
-          progress.subTask("Instrumenting " + srcDir);
-          messenger.info("Instrumenting " + srcDir + " to " + new File(destDir));
-          try {
-            messenger.increaseNesting();
-            engine.rewriteDirectoryToDirectory(new File(srcDir), new File(destDir));
-
-            // check for cancellation
-            if (progress.isCanceled()) {
-              return true;
-            }   
-          } catch (final IOException e) {
-            SLLogger.getLogger().log(Level.SEVERE,
-                "Error instrumenting classfiles in directory " + srcDir, e);
-          } finally {
-            messenger.decreaseNesting();
-            progress.worked(1);
-          }
-        }
-      } catch(final FileNotFoundException e) {
-        SLLogger.getLogger().log(Level.SEVERE,
-            "Unable to create fields file " + fieldsFile.getAbsolutePath(), e);
-      } finally {
-        if (fieldsOut != null) {
-          fieldsOut.close();
-        }
+        manager.execute();
+      } catch (final CanceledException e) {
+        /* Do nothing, the user canceled the launch early.
+         * Caught to prevent propagation of the local exception being used
+         * as a control flow hack.
+         */
       }
     } catch(final FileNotFoundException e) {
       SLLogger.getLogger().log(Level.SEVERE,
@@ -185,5 +143,74 @@ final class FlashlightVMRunner implements IVMRunner {
     newConfig.setVMSpecificAttributesMap(original.getVMSpecificAttributesMap());
     newConfig.setWorkingDirectory(original.getWorkingDirectory());
     return newConfig;
+  }
+  
+  
+  
+  private static final class CanceledException extends RuntimeException {
+    public CanceledException() {
+      super();
+    }
+  }
+
+
+
+  private static final class VMRewriteManager extends RewriteManager {
+    private final SubMonitor progress;
+    
+    public VMRewriteManager(
+        final Configuration c, final EngineMessenger m, final File ff,
+        final SubMonitor sub) {
+      super(c, m, ff);
+      progress = sub;
+    }
+
+    @Override
+    protected void preScan(final String srcPath) {
+      progress.subTask("Scanning " + srcPath);
+    }
+    
+    @Override
+    protected void postScan(final String srcPath) {
+      // check for cancellation
+      if (progress.isCanceled()) {
+        throw new CanceledException();
+      }
+      progress.worked(1);
+    }
+  
+    @Override
+    protected void preInstrument(final String srcPath, final String destPath) {
+      progress.subTask("Instrumenting " + srcPath);
+    }
+  
+    @Override
+    protected void postInstrument(final String srcPath, final String destPath) {
+      // check for cancellation
+      if (progress.isCanceled()) {
+        throw new CanceledException();
+      }
+      progress.worked(1);
+    }
+  
+    @Override
+    protected void exceptionScan(final String srcPath, final IOException e) {
+      SLLogger.getLogger().log(Level.SEVERE,
+          "Error scanning classfiles in " + srcPath, e);
+    }
+  
+    @Override
+    protected void exceptionInstrument(
+        final String srcPath, final String destPath, final IOException e) {
+      SLLogger.getLogger().log(Level.SEVERE,
+          "Error instrumenting classfiles in " + srcPath, e);
+    }
+  
+    @Override
+    protected void exceptionCreatingFieldsFile(
+        final File fieldsFile, final FileNotFoundException e) {
+      SLLogger.getLogger().log(Level.SEVERE,
+          "Unable to create fields file " + fieldsFile.getAbsolutePath(), e);
+    }
   }
 }

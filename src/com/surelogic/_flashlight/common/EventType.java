@@ -197,6 +197,15 @@ public enum EventType {
 			attrs.put(TIME, in.readLong());
 			attrs.put(WALL_CLOCK, in.readUTF());
 		}
+	},
+	Trace_Node("trace-node") {
+	    @Override
+	    void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+	        attrs.put(ID, readCompressedLong(in));
+	        attrs.put(PARENT_ID, readCompressedLong(in));
+            attrs.put(IN_CLASS, readCompressedLong(in));
+            attrs.put(LINE, readCompressedInt(in));
+	    }
 	}
 	;
 	

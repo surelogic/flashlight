@@ -3,7 +3,6 @@ package com.surelogic.flashlight.ant;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +15,9 @@ import org.apache.tools.ant.Task;
 
 import com.surelogic._flashlight.rewriter.AbstractIndentingMessager;
 import com.surelogic._flashlight.rewriter.Configuration;
+import com.surelogic._flashlight.rewriter.EngineMessenger;
 import com.surelogic._flashlight.rewriter.RewriteEngine;
+import com.surelogic._flashlight.rewriter.RewriteManager;
 
 /**
  * Ant task for rewriting classes to apply flashlight instrumentation. Rewrites
@@ -81,15 +82,9 @@ public final class Instrument extends Task {
    */
   public static interface InstrumentationSubTask {
     /**
-     * Scan classfiles to add to the class and field model.
+     * Add the subtask to the rewrite manager.
      */
-    public void scan(
-        Instrument task, RewriteEngine engine) throws BuildException;
-    /**
-     * Rewrite classfiles to insert instrumentation.
-     */
-    public void instrument(
-        Instrument task, RewriteEngine engine) throws BuildException;
+    public void add(RewriteManager manager);
   }
   
   
@@ -128,39 +123,12 @@ public final class Instrument extends Task {
     String getDestdir() { return destdir; }
     String getDestfile() { return destfile; }
     
-    public void scan(
-        final Instrument instrumentTask, final RewriteEngine engine)
-        throws BuildException {
-      instrumentTask.log("Scanning class directory " + srcdir, Project.MSG_INFO);
-      try {
-        engine.scanDirectory(new File(srcdir));
-      } catch (final IOException e) {
-        final String msg = "Error scanning class files in directory " + srcdir;
-        instrumentTask.log(msg, Project.MSG_ERR);
-        throw new BuildException(msg, e, instrumentTask.getLocation());
-      }
-    }
-    
-    public void instrument(
-        final Instrument instrumentTask, final RewriteEngine engine)
-        throws BuildException {
-      /* One of dstfile and dstdir is non-null, but not both */
-      try {
-        if (destdir != null) {
-          instrumentTask.log("Instrumenting class directory " + srcdir
-              + ": writing instrumented classes to directory " + destdir,
-              Project.MSG_INFO);
-          engine.rewriteDirectoryToDirectory(new File(srcdir), new File(destdir));
-        } else {
-          instrumentTask.log("Instrumenting class directory " + srcdir
-              + ": writing instrumented classes to jar " + destfile,
-              Project.MSG_INFO);
-          engine.rewriteDirectoryToJar(new File(srcdir), new File(destfile), runtime);
-        }
-      } catch (final IOException e) {
-        final String msg = "Error instrumenting class files in directory " + srcdir;
-        instrumentTask.log(msg, Project.MSG_ERR);
-        throw new BuildException(msg, e, instrumentTask.getLocation());
+    public void add(final RewriteManager manager) {
+      final File srcFile = new File(srcdir);
+      if (destdir != null) {
+        manager.addDirToDir(srcFile, new File(destdir));
+      } else {
+        manager.addDirToJar(srcFile, new File(destfile), runtime);
       }
     }
   }
@@ -190,47 +158,20 @@ public final class Instrument extends Task {
     String getSrcfile() { return srcfile; }
     String getDestfile() { return destfile; }
     String getDestdir() { return destdir; }
-
-    public void scan(
-        final Instrument instrumentTask, final RewriteEngine engine)
-        throws BuildException {
-      try {
-        instrumentTask.log("Scanning classes in jar " + srcfile, Project.MSG_INFO);
-        engine.scanJar(new File(srcfile));
-      } catch (final IOException e) {
-        final String msg = "Error scanning class files in jar " + srcfile;
-        instrumentTask.log(msg, Project.MSG_ERR);
-        throw new BuildException(msg, e, instrumentTask.getLocation());
-      }
-    }
-
-    public void instrument(
-        final Instrument instrumentTask, final RewriteEngine engine)
-        throws BuildException {
+    
+    public void add(final RewriteManager manager) {
+      final File srcFile = new File(srcfile);
       final String runtimeJar;
       if (update) {
         runtimeJar = runtime;
       } else {
         runtimeJar = null;
       }
-      
-      try {
-        /* One of dstfile and dstdir is non-null, but not both */
-        if (destfile != null) {
-          instrumentTask.log("Instrumenting classes in jar " + srcfile
-              + ": writing instrumented classes to jar " + destfile,
-              Project.MSG_INFO);
-          engine.rewriteJarToJar(new File(srcfile), new File(destfile), runtimeJar);
-        } else {
-          instrumentTask.log("Instrumenting classes in jar " + srcfile
-              + ": writing instrumented classes to directory " + destdir,
-              Project.MSG_INFO);
-          engine.rewriteJarToDirectory(new File(srcfile), new File(destdir), runtimeJar);
-        }
-      } catch (final IOException e) {
-        final String msg = "Error instrumenting class files in jar " + srcfile;
-        instrumentTask.log(msg, Project.MSG_ERR);
-        throw new BuildException(msg, e, instrumentTask.getLocation());
+
+      if (destdir != null) {
+        manager.addJarToDir(srcFile, new File(destdir), runtimeJar);
+      } else {
+        manager.addJarToJar(srcFile, new File(destfile), runtimeJar);
       }
     }
   }
@@ -572,26 +513,11 @@ public final class Instrument extends Task {
     
     final Configuration config = new Configuration(properties);
     final AntLogMessenger messenger = new AntLogMessenger();
-    
-    PrintWriter fieldsOut = null;
-    try {
-      fieldsOut = new PrintWriter(fieldsFileName);
-      final RewriteEngine engine = new RewriteEngine(config, messenger, fieldsOut);
-      if (!onePass) {
-        for (final InstrumentationSubTask subTask : subTasks) {
-          subTask.scan(this, engine);
-        }    
-      }
-      for (final InstrumentationSubTask subTask : subTasks) {
-        subTask.instrument(this, engine);
-      }
-    } catch(final FileNotFoundException e) {
-      throw new BuildException("Couldn't open " + fieldsFileName, e);
-    } finally {
-      if (fieldsOut != null) {
-        fieldsOut.close();
-      }
-    }
+    final RewriteManager manager = new AntRewriteManager(config, messenger, new File(fieldsFileName));
+    for (final InstrumentationSubTask subTask : subTasks) {
+      subTask.add(manager);
+    }    
+    manager.execute(onePass);
   }
   
   
@@ -614,8 +540,40 @@ public final class Instrument extends Task {
       Instrument.this. log(indentMessage(message), Project.MSG_WARN);
     }
     
-    public void info(final String message) {
+    public void verbose(final String message) {
       Instrument.this. log(indentMessage(message), Project.MSG_VERBOSE);
+    }
+    
+    public void info(final String message) {
+      Instrument.this. log(indentMessage(message), Project.MSG_INFO);
+    }
+  }
+  
+  
+  private final class AntRewriteManager extends RewriteManager {
+    public AntRewriteManager(final Configuration c, final EngineMessenger m, final File ff) {
+      super(c, m, ff);
+    }
+    
+    @Override
+    protected void exceptionScan(final String srcPath, final IOException e) {
+      final String msg = "Error scanning classfiles in " + srcPath;
+      log(msg, Project.MSG_ERR);
+      throw new BuildException(msg, e, getLocation());
+    }
+    
+    @Override
+    protected void exceptionInstrument(
+        final String srcPath, final String destPath, final IOException e) {
+      final String msg = "Error instrumenting classfiles in " + srcPath;
+      log(msg, Project.MSG_ERR);
+      throw new BuildException(msg, e, getLocation());
+    }
+    
+    @Override
+    protected void exceptionCreatingFieldsFile(
+        final File fieldsFile, final FileNotFoundException e) {
+      throw new BuildException("Couldn't open " + fieldsFile.getAbsolutePath(), e);
     }
   }
 }

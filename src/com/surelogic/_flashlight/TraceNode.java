@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class TraceNode extends AbstractCallLocation {
 	private static final AtomicLong nextId = new AtomicLong(1); // 0 is for no parent (null)
 	private static final ThreadLocal<TraceNode> currentNode = new ThreadLocal<TraceNode>();
-	private static final List<TraceNode> roots = new ArrayList<TraceNode>();
+	private static final Map<ICallLocation,TraceNode> roots = new HashMap<ICallLocation,TraceNode>();
 	
 	final long f_id = nextId.getAndIncrement();
 	final TraceNode f_caller;
@@ -39,15 +39,19 @@ public class TraceNode extends AbstractCallLocation {
 		} else {
 			// No caller yet
 			synchronized (roots) {	
+				/*
 			    for (TraceNode root : roots) {
 			        if (root.getWithinClassId() == inClass.getId() && root.getLine() == line) {
 			            callee = root;
 			            break;
 			        }
 			    }
+			    */
+				Key key = new Key(inClass.getId(), line);
+				callee  = roots.get(key);				
 			    if (callee == null) {
 			        callee = new TraceNode(null, inClass, line);			
-			        roots.add(callee);
+			        roots.put(callee, callee);
 			        Store.putInQueue(queue, callee);
 			    }
 			}
@@ -64,6 +68,11 @@ public class TraceNode extends AbstractCallLocation {
 		return callee;
 	}
 	
+	static TraceNode getCurrentNode() {
+		return currentNode.get();
+	}
+	
+	/*
 	static TraceNode ensureStackTrace(ClassPhantomReference inClass, int line) {
 	    // Make sure the current trace matches the real trace
 	    // Note: top and bottom of the trace might not match?	    
@@ -74,8 +83,7 @@ public class TraceNode extends AbstractCallLocation {
 
 	    return null; // FIX
 	}
-	
-	
+	*/	
 	
 	public final long getId() {
 		return f_id;

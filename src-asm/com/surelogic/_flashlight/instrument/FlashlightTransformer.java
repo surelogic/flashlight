@@ -35,6 +35,10 @@ final class FlashlightTransformer implements ClassFileTransformer {
         theLog.log(indentMessage(message));
       }
 
+      public void verbose(String message) {
+        theLog.log(indentMessage(message));
+      }
+
       public void warning(String message) {
         theLog.log(indentMessage("WARNING: " + message));
       }

@@ -19,6 +19,10 @@ public final class PrintWriterMessenger extends AbstractIndentingMessager {
     printWriter.println(indentMessage("WARNING: " + message));
   }
   
+  public void verbose(final String message) {
+    printWriter.println(indentMessage(message));
+  }
+  
   public void info(final String message) {
     printWriter.println(indentMessage(message));
   }

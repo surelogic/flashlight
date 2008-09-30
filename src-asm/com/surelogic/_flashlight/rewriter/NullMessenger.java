@@ -15,6 +15,10 @@ public final class NullMessenger implements EngineMessenger {
     // Do nothing
   }
   
+  public void verbose(final String message) {
+    // Do nothing
+  }
+  
   public void info(final String message) {
     // Do nothing
   }

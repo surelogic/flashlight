@@ -1182,7 +1182,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
       storeMethodName = foundMethodName;
       storeMethodSignature = foundMethodSignature;
     } else {
-      messenger.info("Field " + fullyQualifiedOwner + "." + name
+      messenger.verbose("Field " + fullyQualifiedOwner + "." + name
           + " needs reflection at " + classBeingAnalyzedFullyQualified + "."
           + methodName + "():" + currentSrcLine);
 

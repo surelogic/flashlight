@@ -444,7 +444,7 @@ public final class RewriteEngine {
       final String fname, final OutputStream outFile)
       throws IOException {
     if (isClassfileName(fname)) {
-      messenger.info("Rewriting classfile " + fname);
+      messenger.verbose("Rewriting classfile " + fname);
       try {
         messenger.increaseNesting();
         rewriteClassfileStream(fname, helper, outFile);
@@ -452,7 +452,7 @@ public final class RewriteEngine {
         messenger.decreaseNesting();
       }
     } else {
-      messenger.info("Copying file unchanged " + fname);
+      messenger.verbose("Copying file unchanged " + fname);
       final InputStream inStream = helper.getInputStream();
       try {
         messenger.increaseNesting();
@@ -543,7 +543,7 @@ public final class RewriteEngine {
   public void scanFileStream(final RewriteHelper helper, final String fname)
       throws IOException {
     if (isClassfileName(fname)) {
-      messenger.info("Scanning classfile " + fname);
+      messenger.verbose("Scanning classfile " + fname);
       try {
         messenger.increaseNesting();
         scanClassfileStream(fname, helper);

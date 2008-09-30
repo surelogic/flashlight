@@ -202,6 +202,7 @@ public final class Store {
 	private final static ThreadLocal<Boolean> tl_withinStore;
 	
 	private static final boolean useTraces = true;
+	private static final boolean useTraceNodes = false;
 
 	/**
 	 * This method must be called as the first statement by each flashlight
@@ -266,7 +267,7 @@ public final class Store {
 			f_problemCount = new AtomicLong();
 
 			final boolean outputBinary = false;
-			final boolean compress = true;
+			final boolean compress = !outputBinary;
 			final String extension = outputBinary ? ".flb" : ".fl";
 			File dataFile = new File(fileName.toString() + extension + (compress ? ".gz" : ""));
 			w = null;
@@ -891,13 +892,24 @@ public final class Store {
 			/*
 			 * Record this call in the trace.
 			 */
-			final Event e;
-			if (before)
-				e = new BeforeTrace(enclosingFileName, enclosingLocationName,
-						withinClass, line, f_rawQueue);
-			else
-				e = new AfterTrace(withinClass, line);
-			putInQueue(f_rawQueue, e);
+			Event e = null;
+			if (before) {
+				if (useTraceNodes) {
+					TraceNode.pushTraceNode(withinClass, line, f_rawQueue);
+				} else {
+					e = new BeforeTrace(enclosingFileName, enclosingLocationName,
+							withinClass, line, f_rawQueue);
+				}
+			} else {	
+				if (useTraceNodes) {
+					TraceNode.popTraceNode(withinClass.getId(), line);
+				} else {
+					e = new AfterTrace(withinClass, line);
+				}
+			}
+			if (!useTraceNodes) {
+				putInQueue(f_rawQueue, e);
+			}
 		} finally {
 			tl_withinStore.set(Boolean.FALSE);
 		}

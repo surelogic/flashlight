@@ -236,17 +236,24 @@ public enum EventType {
 		attrs.put(TIME, in.readLong());
 		attrs.put(THREAD, readCompressedLong(in));
 		attrs.put(IN_CLASS, readCompressedLong(in));
+		attrs.put(LINE, readCompressedInt(in));
+	}
+	
+	static void readTracedEvent(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+		readCommon(in, attrs);
+		if (IdConstants.useTraceNodes) {
+			attrs.put(TRACE, readCompressedLong(in));
+		}
 	}
 	
 	static void readFieldAccess(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
-		readCommon(in, attrs);
+		readTracedEvent(in, attrs);
 		/*
 		if (((Long)attrs.get(TIME)).longValue() == 1654719095825181L) {
 			System.out.println("Here.");
 		}
 		*/
 		attrs.put(FIELD, readCompressedLong(in));
-		attrs.put(LINE, readCompressedInt(in));
 	}
 	
 	static void readFieldAccessInstance(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
@@ -257,9 +264,8 @@ public enum EventType {
 	}
 	
 	static void readLockEvent(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
-		readCommon(in, attrs);
+		readTracedEvent(in, attrs);
 		attrs.put(LOCK, readCompressedLong(in));
-		attrs.put(LINE, readCompressedInt(in));
 		/*
 		final int flags = in.readInt();
 		readFlag(flags, THIS_LOCK, attrs);
@@ -271,7 +277,6 @@ public enum EventType {
 	
 	static void readTraceEvent(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
 		readCommon(in, attrs);
-		attrs.put(LINE, readCompressedInt(in));		
 	}
 
 	static int readCompressedInt(ObjectInputStream in) throws IOException {

@@ -28,7 +28,8 @@ public enum AttributeType implements IAttributeType {
 	OS_ARCH("os-arch"),
 	OS_VERSION("os-version"),
 	WALL_CLOCK("wall-clock-time"),
-	PARENT_ID("parent-id");
+	PARENT_ID("parent-id"),
+	TRACE("trace");
 	
 	private final String label;
 	

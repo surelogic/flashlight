@@ -44,18 +44,19 @@
 		<copy file="${src}/${antlib.xml}"
 				tofile="${classes}/${antlib.xml}"/>
 		<!-- (1) Include the contents of this project (flashlight-ant) -->
-		<jar destfile="${flashlight-ant.jar}" basedir="${classes}">
+		<jar destfile="${flashlight-ant.jar}">
 			<manifest>
 			  <attribute name="Manifest-Version" value="1.0"/>
 				<attribute name="Class-Path" value="flashlight-rewriter.jar derby.jar"/>
 			</manifest>
+			<fileset dir="${classes}"/>
+			<!-- (2) Include the contents of common -->
+			<fileset dir="${common-project}"/>
+			<!-- (3) Include the contents of derby-common -->
+			<fileset dir="${derby-common-project}"/>
+			<!-- (4) Include the contents of flashlight-common -->
+ 		  <fileset dir="${flashlight-common-project}"/>
 	  </jar>
-		<!-- (2) Include the contents of common -->
-		<jar update="true" destfile="${flashlight-ant.jar}" basedir="${common-project}"/>
-	  <!-- (3) Include the contents of derby-common -->
-  	<jar update="true" destfile="${flashlight-ant.jar}" basedir="${derby-common-project}"/>
-	  <!-- (4) Include the contents of flashlight-common -->
-  	<jar update="true" destfile="${flashlight-ant.jar}" basedir="${flashlight-common-project}"/>
 	</target>
 
 	<target name="build-jars" depends="compile, build-ant-jar" />

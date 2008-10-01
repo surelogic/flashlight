@@ -131,7 +131,7 @@ final class FlashlightVMRunner implements IVMRunner {
       final RewriteManager manager = new VMRewriteManager(rewriterConfig, messenger, fieldsFile, progress);
       
       for (final Map.Entry<String, String> entry : projectEntries.entrySet()) {
-        manager.addDirToDir(new File(entry.getKey()), new File(entry.getValue()));
+        manager.addDirToJar(new File(entry.getKey()), new File(entry.getValue()), null);
       }
       
       try {

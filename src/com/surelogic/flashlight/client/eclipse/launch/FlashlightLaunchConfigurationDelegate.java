@@ -162,7 +162,7 @@ public final class FlashlightLaunchConfigurationDelegate extends
             // Found the project root path for the directory
             final String projectDirName = projectLocation.substring(projectLocation.lastIndexOf(File.separatorChar) + 1);
             final String binaryDirName = originalLocation.substring(projectLocation.length() + 1);
-            final File newLocation = new File(new File(projectOutputDir, projectDirName), binaryDirName);
+            final File newLocation = new File(new File(projectOutputDir, projectDirName), binaryDirName + ".jar");
             entry.setValue(newLocation.getAbsolutePath());
             interestingProjects.add(project);
           }

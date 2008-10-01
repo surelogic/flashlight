@@ -11,7 +11,7 @@ public class TraceNode extends AbstractCallLocation implements ITraceNode {
 	public static final boolean inUse = IdConstants.useTraceNodes;
 	static final boolean recordOnPush = false;
 	private static final AtomicLong nextId = new AtomicLong(1); // 0 is for no parent (null)
-	private static final TraceThreadLocal currentNode = new TraceThreadLocal();
+	private static final ThreadLocal<ITraceNode> currentNode = new ThreadLocal<ITraceNode>();
 	static final Map<ICallLocation,TraceNode> roots = new HashMap<ICallLocation,TraceNode>();
 	
 	private final long f_id = nextId.getAndIncrement();

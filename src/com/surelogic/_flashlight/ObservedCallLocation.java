@@ -41,7 +41,7 @@ public class ObservedCallLocation extends AbstractCallLocation {
 	}
 	
 	@Override
-	void accept(EventVisitor v) {
+	protected void accept(EventVisitor v) {
 		v.visit(this);
 	}
 }

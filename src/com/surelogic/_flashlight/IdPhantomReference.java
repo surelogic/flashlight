@@ -42,7 +42,7 @@ abstract class IdPhantomReference extends PhantomReference {
 	private final long f_id = IdObject.getNewId(); //f_phantomCount.incrementAndGet();
 	private boolean ignore = false;
 	
-	long getId() {
+	public long getId() {
 		return f_id;
 	}
 

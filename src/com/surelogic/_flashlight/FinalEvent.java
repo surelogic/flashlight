@@ -4,7 +4,7 @@ package com.surelogic._flashlight;
  * Used to signal to the {@link Refinery} and the {@link Depository} that
  * collection has been completed and they should terminate.
  */
-final class FinalEvent extends Event {
+final class FinalEvent extends TimedEvent {
 
 	/**
 	 * The singleton instance.

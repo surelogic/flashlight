@@ -20,6 +20,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.zip.GZIPOutputStream;
 
+import com.surelogic._flashlight.trace.TraceNode;
+
 /**
  * This class defines the interface into the Flashlight data store.
  * 
@@ -1377,7 +1379,7 @@ public final class Store {
 		}
 	};
 	
-	static void putInQueue(final BlockingQueue<List<Event>> queue, final Event e) {
+	public static void putInQueue(final BlockingQueue<List<Event>> queue, final Event e) {
 		putInQueue(queue, e, false);
 	}
 	

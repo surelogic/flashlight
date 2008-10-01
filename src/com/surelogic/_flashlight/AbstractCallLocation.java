@@ -4,7 +4,7 @@ public abstract class AbstractCallLocation extends ObservationalEvent implements
     private final ClassPhantomReference f_withinClass;
     private final int f_line;
 
-    AbstractCallLocation(final ClassPhantomReference inClass, final int line) {
+    protected AbstractCallLocation(final ClassPhantomReference inClass, final int line) {
         f_withinClass = inClass;
         f_line = line;
     }
@@ -40,4 +40,7 @@ public abstract class AbstractCallLocation extends ObservationalEvent implements
     public String toString() {
         return "";
     }
+    
+    @Override
+	protected abstract void accept(final EventVisitor v);
 }

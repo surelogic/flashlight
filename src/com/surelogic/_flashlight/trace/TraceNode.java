@@ -1,13 +1,15 @@
-package com.surelogic._flashlight;
+package com.surelogic._flashlight.trace;
 
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.surelogic._flashlight.*;
 import com.surelogic._flashlight.common.IdConstants;
 
-public class TraceNode extends AbstractCallLocation {
-	static final boolean inUse = IdConstants.useTraceNodes;
+public class TraceNode extends AbstractCallLocation implements ITraceNode {	
+	public static final boolean inUse = IdConstants.useTraceNodes;
+	static final boolean recordWhenCreated = false;
 	private static final AtomicLong nextId = new AtomicLong(1); // 0 is for no parent (null)
 	private static final ThreadLocal<TraceNode> currentNode = new ThreadLocal<TraceNode>();
 	private static final Map<ICallLocation,TraceNode> roots = new HashMap<ICallLocation,TraceNode>();
@@ -15,13 +17,14 @@ public class TraceNode extends AbstractCallLocation {
 	final long f_id = nextId.getAndIncrement();
 	final TraceNode f_caller;
 	final ConcurrentMap<ICallLocation,TraceNode> calleeNodes = new ConcurrentHashMap<ICallLocation, TraceNode>(4);	
+	boolean recorded = recordWhenCreated;
 	
 	private TraceNode(TraceNode caller, ClassPhantomReference inClass, int line) {
 	    super(inClass, line);
 		f_caller  = caller;
 	}
 	
-	static TraceNode pushTraceNode(ClassPhantomReference inClass, int line, BlockingQueue<List<Event>> queue) {
+	public static void pushTraceNode(ClassPhantomReference inClass, int line, BlockingQueue<List<Event>> queue) {
 		final TraceNode caller = currentNode.get();
 		TraceNode callee = null;
 		if (caller != null) {
@@ -35,7 +38,8 @@ public class TraceNode extends AbstractCallLocation {
 				if (firstCallee != null) {
 					// Already present, so use that one
 					callee = firstCallee;
-				} else {
+				} 
+				else if (recordWhenCreated) {
 				    Store.putInQueue(queue, callee);
 				}
 			}
@@ -55,23 +59,23 @@ public class TraceNode extends AbstractCallLocation {
 			    if (callee == null) {
 			        callee = new TraceNode(null, inClass, line);			
 			        roots.put(callee, callee);
-			        Store.putInQueue(queue, callee);
+			        if (recordWhenCreated) {
+			        	Store.putInQueue(queue, callee);
+			        }
 			    }
 			}
 		}		
 		currentNode.set(callee);
-		return callee;
 	}
 	
-	static TraceNode popTraceNode(long classId, int line) {
+	public static void popTraceNode(long classId, int line) {
 		final TraceNode callee = currentNode.get();
 		if (callee != null) {
 			currentNode.set(callee.f_caller);
 		}
-		return callee;
 	}
 	
-	static TraceNode getCurrentNode() {
+	public static TraceNode getCurrentNode() {
 		return currentNode.get();
 	}
 	
@@ -97,7 +101,7 @@ public class TraceNode extends AbstractCallLocation {
 	}
 	
 	@Override
-	void accept(EventVisitor v) {
+	protected void accept(EventVisitor v) {
 	    v.visit(this);
 	}
 	

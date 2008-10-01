@@ -9,7 +9,7 @@ import java.util.Date;
  * value of {@link System#nanoTime()} on each event to a corresponding wall
  * clock time.
  */
-final class Time extends Event {
+final class Time extends TimedEvent {
 
 	private final Date f_date;
 

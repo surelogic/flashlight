@@ -1,9 +1,11 @@
 package com.surelogic._flashlight;
 
+import com.surelogic._flashlight.trace.TraceNode;
+
 /**
  * Visitor for an {@link Event}.
  */
-abstract class EventVisitor {
+public abstract class EventVisitor {
 
 	void visit(final AfterIntrinsicLockAcquisition e) {
 		// do nothing
@@ -97,7 +99,7 @@ abstract class EventVisitor {
 		// do nothing
 	}
 
-	void visit(final TraceNode e) {
+	public void visit(final TraceNode e) {
 	    // do nothing
 	}
 	

@@ -4,6 +4,7 @@ import java.io.*;
 import java.text.SimpleDateFormat;
 
 import com.surelogic._flashlight.common.EventType;
+import com.surelogic._flashlight.trace.TraceNode;
 
 import static com.surelogic._flashlight.common.EventType.*;
 import static com.surelogic._flashlight.common.FlagType.*;
@@ -238,7 +239,7 @@ public class OutputStrategyBinary extends EventVisitor {
 	}
 
 	@Override
-	void visit(final TraceNode e) {
+	public void visit(final TraceNode e) {
         try {
             if (debug) System.out.println("Writing event: "+Trace_Node.getLabel());
             f_out.writeByte(Trace_Node.getByte());

@@ -9,74 +9,113 @@ import com.surelogic._flashlight.common.IdConstants;
 
 public class TraceNode extends AbstractCallLocation implements ITraceNode {	
 	public static final boolean inUse = IdConstants.useTraceNodes;
-	static final boolean recordWhenCreated = false;
+	static final boolean recordOnPush = false;
 	private static final AtomicLong nextId = new AtomicLong(1); // 0 is for no parent (null)
-	private static final ThreadLocal<TraceNode> currentNode = new ThreadLocal<TraceNode>();
-	private static final Map<ICallLocation,TraceNode> roots = new HashMap<ICallLocation,TraceNode>();
+	private static final TraceThreadLocal currentNode = new TraceThreadLocal();
+	static final Map<ICallLocation,TraceNode> roots = new HashMap<ICallLocation,TraceNode>();
 	
-	final long f_id = nextId.getAndIncrement();
-	final TraceNode f_caller;
-	final ConcurrentMap<ICallLocation,TraceNode> calleeNodes = new ConcurrentHashMap<ICallLocation, TraceNode>(4);	
-	boolean recorded = recordWhenCreated;
+	private final long f_id = nextId.getAndIncrement();
+	private final TraceNode f_caller;
+	/*
+	private final ConcurrentMap<ICallLocation,TraceNode> calleeNodes = 
+		new ConcurrentHashMap<ICallLocation, TraceNode>(4, 0.75f, 2);	
+
+	private Map<ICallLocation,TraceNode> calleeNodes = null;
+	//	new HashMap<ICallLocation, TraceNode>(0);	
+	*/
+	private List<TraceNode> calleeNodes = null;
 	
-	private TraceNode(TraceNode caller, ClassPhantomReference inClass, int line) {
+	TraceNode(TraceNode caller, ClassPhantomReference inClass, int line) {
 	    super(inClass, line);
 		f_caller  = caller;
+
+	}
+	
+	static TraceNode newTraceNode(TraceNode caller, ClassPhantomReference inClass, int line, 
+			                      BlockingQueue<List<Event>> queue) {
+		TraceNode callee = new TraceNode(caller, inClass, line);
+				
+		if (caller != null) {
+			// Insert into caller
+			TraceNode firstCallee;
+			//firstCallee = caller.calleeNodes.putIfAbsent(callee, callee);
+			synchronized (caller) {
+				int i;
+				if (caller.calleeNodes == null) {
+					//caller.calleeNodes = new HashMap<ICallLocation, TraceNode>(1);
+					caller.calleeNodes = new ArrayList<TraceNode>(2); 
+					i = -1;
+				} else {
+					i = caller.calleeNodes.indexOf(callee);
+				}
+				//firstCallee = caller.calleeNodes.put(callee, callee);
+				if (i < 0) {
+					caller.calleeNodes.add(callee);
+					firstCallee = null; 
+				} else {
+					firstCallee = caller.calleeNodes.get(i);
+				}
+			}
+			if (firstCallee != null) {
+				// Already present, so use that one
+				callee = firstCallee;
+			} 
+			else {
+			    Store.putInQueue(queue, callee);
+			}
+		} else {
+			// Insert into roots
+			synchronized (roots) {							
+				roots.put(callee, callee);
+			}
+	        Store.putInQueue(queue, callee);
+		}
+		return callee;
 	}
 	
 	public static void pushTraceNode(ClassPhantomReference inClass, int line, BlockingQueue<List<Event>> queue) {
-		final TraceNode caller = currentNode.get();
-		TraceNode callee = null;
+		final ITraceNode caller = currentNode.get();
+		final Placeholder key   = new Placeholder(inClass, line, caller);
+		ITraceNode callee = null;
 		if (caller != null) {
 			// There's already a caller
-			Key key          = new Key(inClass.getId(), line);
-			 callee = caller.calleeNodes.get(key);
+			callee = caller.getCallee(key);
 			if (callee == null) {
 				// Try to insert a new TraceNode
-				callee = new TraceNode(caller, inClass, line);
-				TraceNode firstCallee = caller.calleeNodes.putIfAbsent(callee, callee);
-				if (firstCallee != null) {
-					// Already present, so use that one
-					callee = firstCallee;
-				} 
-				else if (recordWhenCreated) {
-				    Store.putInQueue(queue, callee);
-				}
+				callee = recordOnPush ? 
+						 newTraceNode(caller.getNode(), inClass, line, queue) : key;
 			}
-		} else {
+		} else {			
 			// No caller yet
 			synchronized (roots) {	
-				/*
-			    for (TraceNode root : roots) {
-			        if (root.getWithinClassId() == inClass.getId() && root.getLine() == line) {
-			            callee = root;
-			            break;
-			        }
-			    }
-			    */
-				Key key = new Key(inClass.getId(), line);
 				callee  = roots.get(key);				
 			    if (callee == null) {
-			        callee = new TraceNode(null, inClass, line);			
-			        roots.put(callee, callee);
-			        if (recordWhenCreated) {
-			        	Store.putInQueue(queue, callee);
-			        }
+					callee = recordOnPush ? 
+							 newTraceNode(null, inClass, line, queue) : key;		
 			    }
 			}
 		}		
 		currentNode.set(callee);
 	}
 	
-	public static void popTraceNode(long classId, int line) {
-		final TraceNode callee = currentNode.get();
+	public static void popTraceNode(long classId, int line) {		
+		final ITraceNode callee = currentNode.get();
 		if (callee != null) {
-			currentNode.set(callee.f_caller);
+			currentNode.set(callee.getParent());
 		}
 	}
 	
 	public static TraceNode getCurrentNode() {
-		return currentNode.get();
+		ITraceNode current = currentNode.get();
+		if (current == null) {
+			return null;
+		}
+		TraceNode real = current.getNode(); 
+		if (real != current) {
+			// Remove placeholders if there are any
+			currentNode.set(real);
+		}
+		return real;
 	}
 	
 	/*
@@ -105,36 +144,20 @@ public class TraceNode extends AbstractCallLocation implements ITraceNode {
 	    v.visit(this);
 	}
 	
-	static class Key implements ICallLocation {
-		final long f_classId;
-		final int f_line;
-		
-		Key(long classId, int line) {
-			f_classId = classId;
-			f_line    = line;
+	public final ITraceNode getParent() {
+		return f_caller;
+	}
+	
+	public TraceNode getNode() {
+		return this;
+	}
+	
+	public synchronized ITraceNode getCallee(ICallLocation key) {
+		if (calleeNodes == null) {
+			return null;
 		}
-		
-		public final int getLine() {
-			return f_line;
-		}
-
-		public final long getWithinClassId() {
-			return f_classId;
-		}
-		
-		@Override
-		public int hashCode() {
-			return (int) (f_classId + f_line);
-		}
-		
-		@Override
-		public boolean equals(Object o) {
-			if (o instanceof ICallLocation) {
-				ICallLocation bt = (ICallLocation) o;
-				return bt.getLine() == f_line &&
-				       bt.getWithinClassId() == f_classId;
-	 		}
-			return false;
-		}
+		//return calleeNodes.get(key);	
+		int i = calleeNodes.indexOf(key);
+		return i < 0 ? null : calleeNodes.get(i);
 	}
 }

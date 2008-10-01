@@ -75,6 +75,7 @@ public final class FlashlightLaunchConfigurationDelegate extends
 		final String mainTypeName = getMainTypeName(configuration);
 		
 		
+		/* This is old and should be removed, but VisualVM support needs it? */
 		
 		// Create source zip
 		final StringBuilder fileName = new StringBuilder();
@@ -105,7 +106,9 @@ public final class FlashlightLaunchConfigurationDelegate extends
 			SLLogger.getLogger().log(Level.SEVERE,
 					"No such project: " + projectName);
 		}
-		
+
+    /* END OLD */
+
 		
 		/* Find the classpath entries that correspond to "binary output directories"
 		 * of projects in the workspace.  These are the directories that we need
@@ -121,14 +124,24 @@ public final class FlashlightLaunchConfigurationDelegate extends
     entries = JavaRuntime.resolveRuntimeClasspath(entries, configuration);
     final Map<String, String> projectEntries = new HashMap<String, String>();
     for (final IRuntimeClasspathEntry entry : entries) {
-      if (entry.getClasspathProperty() == IRuntimeClasspathEntry.USER_CLASSES &&
-          entry.getType() == IRuntimeClasspathEntry.PROJECT) {
+      if (entry.getClasspathProperty() == IRuntimeClasspathEntry.USER_CLASSES) {
         final String location = entry.getLocation();
         if (location != null) {
-          // Based on the implementation in AbstractJavaLauchConfiguration.getClassPath(), it may be possible to have duplicate directory locations.  We eat the duplicates.
-          projectEntries.put(location, location);
+          if (entry.getType() == IRuntimeClasspathEntry.PROJECT) {
+            // The project has a single binary output directory
+            projectEntries.put(location, location);
+          } else if (entry.getType() == IRuntimeClasspathEntry.ARCHIVE) {
+            /* Could be a jar file in the project, or one of the many 
+             * binary output directories in the project.  We need to test if
+             * the location is a directory.
+             */
+            final File locationAsFile = new File(location);
+            if (locationAsFile.isDirectory()) {
+              projectEntries.put(location, location);
+            }
+          }
         }
-      }
+      }      
     }
     
     /* Go through each open project and see which of the binary output
@@ -152,7 +165,6 @@ public final class FlashlightLaunchConfigurationDelegate extends
             final File newLocation = new File(new File(projectOutputDir, projectDirName), binaryDirName);
             entry.setValue(newLocation.getAbsolutePath());
             interestingProjects.add(project);
-            break;
           }
         }
       }

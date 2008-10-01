@@ -268,7 +268,7 @@ public final class Store {
 			// still incremented even if logging is off.
 			f_problemCount = new AtomicLong();
 
-			final boolean outputBinary = true;
+			final boolean outputBinary = false;
 			final boolean compress = !outputBinary;
 			final String extension = outputBinary ? ".flb" : ".fl";
 			File dataFile = new File(fileName.toString() + extension + (compress ? ".gz" : ""));
@@ -380,6 +380,10 @@ public final class Store {
 		f_flashlightIsNotInitialized = false;
 	}
 
+	public static BlockingQueue<List<Event>> getRawQueue() {
+		return f_rawQueue;
+	}
+	
 	static int getIntProperty(final String key, int def, final int min) {
 		try {
 			String intString = System.getProperty(key);
@@ -1397,7 +1401,7 @@ public final class Store {
 		List<Event> copy   = null;
 		synchronized (localQ) {
 			localQ.add(e);
-			if (flush || localQ.size() >= LOCAL_QUEUE_MAX) {
+			if (/*flush ||*/ localQ.size() >= LOCAL_QUEUE_MAX) {
 				copy = new ArrayList<Event>(localQ);
 				localQ.clear();
 			}

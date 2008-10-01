@@ -171,7 +171,7 @@ final class FlashlightVMRunner implements IVMRunner {
      */
     final IPath bundleBase = Activator.getDefault().getBundleLocation();
     if (bundleBase != null) {
-      final IPath jarLocation = bundleBase.append("lib/flashlight-all.jar");
+      final IPath jarLocation = bundleBase.append("lib/flashlight-runtime.jar");
       newClassPath[classPath.length] = jarLocation.toOSString();
     } else {
       throw new CoreException(SLEclipseStatusUtility.createErrorStatus(0,

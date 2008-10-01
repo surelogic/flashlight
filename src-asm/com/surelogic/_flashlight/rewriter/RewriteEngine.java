@@ -164,6 +164,7 @@ public final class RewriteEngine {
       outManifest.getMainAttributes().put(Attributes.Name.CLASS_PATH, runtimeJarName);
     }
     
+    outJarFile.getParentFile().mkdirs();
     final FileOutputStream fos = new FileOutputStream(outJarFile);
     final BufferedOutputStream bos = new BufferedOutputStream(fos);
     JarOutputStream jarOut = null;
@@ -262,6 +263,7 @@ public final class RewriteEngine {
         outManifest = inManifest;
       }
       
+      outJarFile.getParentFile().mkdirs();
       final FileOutputStream fos = new FileOutputStream(outJarFile);
       final BufferedOutputStream bos = new BufferedOutputStream(fos);
       JarOutputStream jarOut = null;

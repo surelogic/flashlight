@@ -79,6 +79,7 @@
 			<include name="**/com/surelogic/_flashlight/*" />
 		  <include name="**/com/surelogic/_flashlight/common/*" />
 			<include name="**/com/surelogic/_flashlight/emory/*" />
+			<include name="**/com/surelogic/_flashlight/jsr166y/*" />
 			<include name="**/com/surelogic/_flashlight/rewriter/runtime/*" />
 			<include name="**/com/surelogic/_flashlight/rewriter/test/*" />
 			<manifest>

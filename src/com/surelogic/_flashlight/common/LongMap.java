@@ -59,8 +59,9 @@ public class LongMap<T> { //extends AbstractMap<Long,T> {
 	}
 	
 	LongEntry<T>[] table;
+	int powerOf2 = 0;
 	int mask;
-	int size;
+	int size;	
 	static final float maxLoad = 0.75f;
 	
 	public LongMap() {
@@ -73,6 +74,7 @@ public class LongMap<T> { //extends AbstractMap<Long,T> {
 		int size = 1;
 		while (size < capacity) {
 			size <<= 1;
+			powerOf2++;
 		}
 		mask  = size - 1;
 		table = new LongEntry[size];
@@ -143,7 +145,8 @@ public class LongMap<T> { //extends AbstractMap<Long,T> {
 	}
 
 	private int index(long key) {
-		int hash = (int) key;
+		// FIX to use all bits?
+		int hash = (int) (key + (key >>> powerOf2)); 
 		return hash & mask;
 	}
 	
@@ -206,6 +209,7 @@ public class LongMap<T> { //extends AbstractMap<Long,T> {
 			// resize since we're above our specified load factor
 			final int newCap              = table.length << 1;
 			final LongEntry<T>[] oldTable = table;
+			powerOf2++;
 			table = new LongEntry[newCap];
 			mask = newCap - 1;
 			// Re-insert entries

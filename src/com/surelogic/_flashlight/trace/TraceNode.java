@@ -22,8 +22,17 @@ public class TraceNode extends AbstractCallLocation implements ITraceNode {
 
 	private Map<ICallLocation,TraceNode> calleeNodes = null;
 	//	new HashMap<ICallLocation, TraceNode>(0);	
-	*/
+
 	private List<TraceNode> calleeNodes = null;
+    */
+    /**
+     * Same caller as this
+     */	
+	private TraceNode f_siblingNodes = null;
+	/**
+	 * Have this as the caller
+	 */
+	private TraceNode f_calleeNodes = null;
 	
 	TraceNode(TraceNode caller, ClassPhantomReference inClass, int line) {
 	    super(inClass, line);
@@ -31,7 +40,7 @@ public class TraceNode extends AbstractCallLocation implements ITraceNode {
 
 	}
 	
-	static TraceNode newTraceNode(TraceNode caller, ClassPhantomReference inClass, int line, 
+	static TraceNode newTraceNode(final TraceNode caller, ClassPhantomReference inClass, int line, 
 			                      BlockingQueue<List<Event>> queue) {
 		TraceNode callee = new TraceNode(caller, inClass, line);
 				
@@ -40,6 +49,7 @@ public class TraceNode extends AbstractCallLocation implements ITraceNode {
 			TraceNode firstCallee;
 			//firstCallee = caller.calleeNodes.putIfAbsent(callee, callee);
 			synchronized (caller) {
+				/*
 				int i;
 				if (caller.calleeNodes == null) {
 					//caller.calleeNodes = new HashMap<ICallLocation, TraceNode>(1);
@@ -55,12 +65,23 @@ public class TraceNode extends AbstractCallLocation implements ITraceNode {
 				} else {
 					firstCallee = caller.calleeNodes.get(i);
 				}
+				*/
+				if (caller.f_calleeNodes == null) {
+					firstCallee = null; 
+				} else {
+					firstCallee = (TraceNode) caller.getCallee(callee);
+					if (firstCallee != null && caller != firstCallee.getParent()) {
+						System.out.println("Parent doesn't match");
+					}
+				}
 			}
 			if (firstCallee != null) {
 				// Already present, so use that one
 				callee = firstCallee;
 			} 
 			else {
+				callee.f_siblingNodes = caller.f_calleeNodes;
+				caller.f_calleeNodes  = callee;
 			    Store.putInQueue(queue, callee);
 			}
 		} else {
@@ -153,11 +174,61 @@ public class TraceNode extends AbstractCallLocation implements ITraceNode {
 	}
 	
 	public synchronized ITraceNode getCallee(ICallLocation key) {
-		if (calleeNodes == null) {
+		if (f_calleeNodes == null) {
 			return null;
 		}
+		/*
 		//return calleeNodes.get(key);	
 		int i = calleeNodes.indexOf(key);
 		return i < 0 ? null : calleeNodes.get(i);
+		*/
+		//try {
+			return findCallee(this, key);
+		/*
+		} catch (StackOverflowError e) {
+			
+			TraceNode here = this;
+			while (here != null) {
+				System.out.println("StackOverflowError: "+here.superToString());
+				here = here.f_calleeNodes;
+			}
+			return null;
+		}
+		*/
+	}
+	
+	/**
+	 * @param root non-null
+	 * @param key non-null	 
+	 */
+	private static TraceNode findCallee(final TraceNode root, final ICallLocation key) {
+		TraceNode here   = root;
+		TraceNode callee = root.f_calleeNodes;
+		while (callee != null) {
+			if (callee.getParent() != root) {
+				System.out.println("Parent doesn't match");
+			}
+			if (key.equals(callee)) {
+				if (here != root) {
+					// Not the first node, so reorder the list
+					// 1. Remove the callee node
+					here.f_siblingNodes = callee.f_siblingNodes;
+					// 2. Point the callee to match the root
+					callee.f_siblingNodes = root.f_calleeNodes;
+					// 3. Change the root to point to the callee
+					root.f_calleeNodes = callee;
+				}
+				return callee;
+			}
+			/*
+			if (here == callee) {
+				System.out.println("Loop");
+			}
+			System.out.println("findCallee: "+callee.hashCode());			
+			 */
+			here   = callee;
+			callee = here.f_siblingNodes;
+		}
+		return null;
 	}
 }

@@ -41,6 +41,10 @@ public abstract class AbstractCallLocation extends ObservationalEvent implements
         return "";
     }
     
+    protected String superToString() {
+    	return super.toString();
+    }
+    
     @Override
 	protected abstract void accept(final EventVisitor v);
 }

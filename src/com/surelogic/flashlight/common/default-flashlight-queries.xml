@@ -221,10 +221,10 @@ order by count desc</query>
   F.FieldName &quot;FieldName__]&quot;,
   FI.Receiver &quot;Receiver&quot;,
   THO.ThreadName &quot;Thread__|&quot;,
-  FI.ReadUCCount + FI.ReadCount &quot;Reads__(sum)(r)&quot;,
-  FI.WriteUCCount + FI.WriteCount &quot;Writes__(sum)(r)&quot;,
-  FI.ReadUCCount &quot;Reads During Construction__(sum)(r)&quot;,
-  FI.WriteUCCount &quot;Writes During Construction__(sum)(r)&quot;,
+  FI.ReadUCCount + FI.ReadCount &quot;Reads__(sum on 3,4)(r)&quot;,
+  FI.WriteUCCount + FI.WriteCount &quot;Writes__(sum on 3,4)(r)&quot;,
+  FI.ReadUCCount &quot;Reads During Construction__(sum on 3,4)(r)&quot;,
+  FI.WriteUCCount &quot;Writes During Construction__(sum on 3,4)(r)&quot;,
   F.ID &quot;FieldId__(hide)&quot;
 from OBJECT O,
      FIELD F,
@@ -275,8 +275,8 @@ where t.ThreadName is not null
   O.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;,
   F.FieldName &quot;FieldName__]&quot;,
   THO.ThreadName &quot;Thread__|&quot;,
-  FS.ReadCount &quot;Read Count__(sum)(r)&quot;,
-  FS.WriteCount &quot;Write Count__(sum)(r)&quot;,
+  FS.ReadCount &quot;Read Count__(sum on 3)(r)&quot;,
+  FS.WriteCount &quot;Write Count__(sum on 3)(r)&quot;,
   F.ID &quot;FieldId__(hide)&quot;
 from OBJECT O,
      FIELD F,
@@ -321,8 +321,8 @@ order by O.PackageName,O.ClassName,F.FieldName,THO.ThreadName</query>
   CO.ClassName   &quot;Class__(&apos;class.gif&apos;)&quot;,
   F.FieldName    &quot;FieldName&quot;,
   THO.ThreadName &quot;Thread__|&quot;,
-  FI.ReadCount &quot;Reads&quot;,
-  FI.WriteCount &quot;Writes&quot;
+  FI.ReadCount &quot;Reads__(sum on 3)&quot;,
+  FI.WriteCount &quot;Writes__(sum on 3)&quot;
  FROM FIELDSTATICTHREAD FI, OBJECT THO, FIELD F, OBJECT CO
  WHERE FI.FIELD = ?FieldId? AND 
    FI.RUN = ?RUN? AND 
@@ -337,10 +337,10 @@ order by O.PackageName,O.ClassName,F.FieldName,THO.ThreadName</query>
   CO.ClassName   &quot;Class__(&apos;class.gif&apos;)&quot;,
   F.FieldName    &quot;FieldName&quot;,
   THO.ThreadName &quot;Thread__|&quot;,
-  FI.ReadUCCount + FI.ReadCount &quot;Reads&quot;,
-  FI.WriteUCCount + FI.WriteCount &quot;Writes&quot;,
-  FI.ReadUCCount &quot;Reads During Construction&quot;,
-  FI.WriteUCCount &quot;Writes During Construction&quot;
+  FI.ReadUCCount + FI.ReadCount &quot;Reads__(sum on 3)&quot;,
+  FI.WriteUCCount + FI.WriteCount &quot;Writes__(sum on 3)&quot;,
+  FI.ReadUCCount &quot;Reads During Construction__(sum on 3)&quot;,
+  FI.WriteUCCount &quot;Writes During Construction__(sum on 3)&quot;
  FROM FIELDINSTANCETHREAD FI, OBJECT THO, FIELD F, OBJECT CO
  WHERE FI.FIELD = ?FieldId? AND 
    FI.RECEIVER = ?Receiver? AND 
@@ -403,7 +403,7 @@ WHERE
    A.RECEIVER = ?Receiver? AND 
    A.RUN=?RUN?
 ORDER BY O.THREADNAME, A.TS ASC</query>
-  <query id='Q0026' description='Where is this static field accessed?' display='true'>SELECT CO.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;, CO.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;, O.THREADNAME &quot;THREAD&quot;,A.TS &quot;TIME|&quot;, A.AtLine &quot;Line__(r)&quot;,A.ID &quot;AID&quot;
+  <query id='Q0026' description='Where is this static field accessed?' display='true'>SELECT CO.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;, CO.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;, O.THREADNAME &quot;Thread&quot;,A.TS &quot;Time__|&quot;, A.AtLine &quot;Line__(r)&quot;,A.ID &quot;AID__(hide)&quot;
  FROM ACCESS A
  INNER JOIN OBJECT O ON
    O.Run = A.Run AND 
@@ -417,7 +417,7 @@ WHERE
    A.RUN=?RUN?
 ORDER BY O.THREADNAME, A.TS ASC</query>
   <query id='Q0006' description='Which threads and what code are contending for a lock?' display='true'>select lo.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;, lo.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;, le.AtLine &quot;AtLine__]&quot;,
-  tho.ThreadName &quot;Thread__|&quot;, (trim(cast(sum(ld.Duration) as char(10))) || &apos; ns&apos;) &quot;BlockTime__(sum &apos; ns&apos;)(r)&quot;, ld.id &quot;LDID__(hide)&quot;
+  tho.ThreadName &quot;Thread__|&quot;, ld.id &quot;LDID__(hide)&quot;,(trim(cast(sum(ld.Duration) as char(10))) || &apos; ns&apos;) &quot;BlockTime__(sum &apos; ns&apos;)(r)&quot;
 from LOCKDURATION ld, LOCK le, OBJECT lo, OBJECT tho
 where ld.Run=?RUN?
   and ld.Lock=?Lock?
@@ -441,9 +441,9 @@ where le.Run=?RUN?
   and le.ts between ld.Start and ld.Stop
 order by ld.Start 
   </query>
-  <sub-query id='Q0012' sub-query='Q0029'/>
-  <sub-query id='Q0012' sub-query='Q0013'/>
   <sub-query id='Q0012' sub-query='Q0014'/>
+  <sub-query id='Q0012' sub-query='Q0013'/>
+  <sub-query id='Q0012' sub-query='Q0029'/>
   <sub-query id='Q0005' sub-query='Q0006'/>
   <sub-query id='Q0017' sub-query='Q0028'/>
   <sub-query id='Q0017' sub-query='Q0027'/>
@@ -451,31 +451,31 @@ order by ld.Start
   <sub-query id='Q0023' sub-query='Q0027'/>
   <sub-query id='Q0011' sub-query='Q0012'/>
   <sub-query id='Q0002' sub-query='Q0020'/>
-  <sub-query id='Q0002' sub-query='Q0017'/>
   <sub-query id='Q0002' sub-query='Q0019'/>
   <sub-query id='Q0002' sub-query='Q0018'/>
+  <sub-query id='Q0002' sub-query='Q0017'/>
   <sub-query id='Q0015' sub-query='Q0020'/>
-  <sub-query id='Q0015' sub-query='Q0017'/>
   <sub-query id='Q0015' sub-query='Q0019'/>
   <sub-query id='Q0015' sub-query='Q0018'/>
+  <sub-query id='Q0015' sub-query='Q0017'/>
   <sub-query id='Q0016' sub-query='Q0020'/>
-  <sub-query id='Q0016' sub-query='Q0017'/>
   <sub-query id='Q0016' sub-query='Q0019'/>
   <sub-query id='Q0016' sub-query='Q0018'/>
-  <sub-query id='Q0001' sub-query='Q0025'/>
+  <sub-query id='Q0016' sub-query='Q0017'/>
   <sub-query id='Q0001' sub-query='Q0026'/>
   <sub-query id='Q0001' sub-query='Q0024'/>
   <sub-query id='Q0001' sub-query='Q0023'/>
-  <sub-query id='Q0021' sub-query='Q0025'/>
+  <sub-query id='Q0001' sub-query='Q0025'/>
   <sub-query id='Q0021' sub-query='Q0026'/>
   <sub-query id='Q0021' sub-query='Q0024'/>
   <sub-query id='Q0021' sub-query='Q0023'/>
-  <sub-query id='Q0022' sub-query='Q0025'/>
+  <sub-query id='Q0021' sub-query='Q0025'/>
   <sub-query id='Q0022' sub-query='Q0026'/>
   <sub-query id='Q0022' sub-query='Q0024'/>
   <sub-query id='Q0022' sub-query='Q0023'/>
-  <sub-query id='Q0009' sub-query='Q0013'/>
+  <sub-query id='Q0022' sub-query='Q0025'/>
   <sub-query id='Q0009' sub-query='Q0014'/>
+  <sub-query id='Q0009' sub-query='Q0013'/>
   <sub-query id='Q0020' sub-query='Q0028'/>
   <sub-query id='Q0006' sub-query='Q0027'/>
 </ad-hoc>

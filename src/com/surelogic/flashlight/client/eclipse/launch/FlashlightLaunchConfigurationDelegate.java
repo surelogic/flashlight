@@ -137,7 +137,7 @@ public final class FlashlightLaunchConfigurationDelegate extends
              */
             final File locationAsFile = new File(location);
             if (locationAsFile.isDirectory()) {
-              projectEntries.put(location, location);
+              projectEntries.put(location, null);
             }
           }
         }

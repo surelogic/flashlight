@@ -160,11 +160,10 @@ final class FlashlightVMRunner implements IVMRunner {
      * its corresponding instrumented directory.
      */
     final String[] classPath = configuration.getClassPath();
-    final String[] newClassPath = new String[classPath.length + 1];
+    final List<String> newClassPathList = new ArrayList<String>(classPath.length + 1);
     for (int i = 0; i < classPath.length; i++) {
       final String newEntry = projectEntries.get(classPath[i]);
-      if (newEntry != null) newClassPath[i] = newEntry;
-      else newClassPath[i] = classPath[i];
+      if (newEntry != null) newClassPathList.add(newEntry);
     }
     
     /* (2) Also add the flashlight jar file to the classpath.
@@ -172,13 +171,18 @@ final class FlashlightVMRunner implements IVMRunner {
     final IPath bundleBase = Activator.getDefault().getBundleLocation();
     if (bundleBase != null) {
       final IPath jarLocation = bundleBase.append("lib/flashlight-runtime.jar");
-      newClassPath[classPath.length] = jarLocation.toOSString();
+      newClassPathList.add(jarLocation.toOSString());
     } else {
       throw new CoreException(SLEclipseStatusUtility.createErrorStatus(0,
           "No bundle location found for the Flashlight plug-in."));
     }
     
-    return newClassPath;
+    for (String p : newClassPathList) {
+      System.out.println("Classpath: " + p);
+    }
+    
+    final String[] newClassPath = new String[newClassPathList.size()];
+    return newClassPathList.toArray(newClassPath);
   }
   
   private VMRunnerConfiguration updateRunnerConfiguration(

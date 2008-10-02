@@ -7,6 +7,7 @@ import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import com.surelogic._flashlight.common.*;
 
 /**
  * Manages the set of fields that Flashlight has observed at least one event
@@ -236,7 +237,7 @@ abstract class ObservedField {
 	/**
 	 * Mapping from fields to the thread it's used by (or SHARED_FIELD)
 	 */
-	static class FieldInfo extends HashMap<Long, IdPhantomReference> implements IFieldInfo {
+	static class FieldInfo extends LongMap<IdPhantomReference> implements IFieldInfo {
 		static final IdPhantomReference SHARED_BY_THREADS = Phantom.ofClass(FieldInfo.class);
 		
 		public void setLastThread(long key, IdPhantomReference thread) {		

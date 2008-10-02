@@ -1,17 +1,23 @@
 package com.surelogic.flashlight.common.prep;
 
+import static com.surelogic._flashlight.common.AttributeType.IN_CLASS;
+import static com.surelogic._flashlight.common.AttributeType.LINE;
+import static com.surelogic._flashlight.common.AttributeType.LOCK;
+import static com.surelogic._flashlight.common.AttributeType.THREAD;
+import static com.surelogic._flashlight.common.AttributeType.TIME;
+import static com.surelogic._flashlight.common.FlagType.CLASS_LOCK;
+import static com.surelogic._flashlight.common.FlagType.GOT_LOCK;
+import static com.surelogic._flashlight.common.FlagType.RELEASED_LOCK;
+import static com.surelogic._flashlight.common.FlagType.THIS_LOCK;
+
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.Set;
 import java.util.logging.Level;
 
 import org.xml.sax.Attributes;
 
 import com.surelogic.common.logging.SLLogger;
-
-import static com.surelogic._flashlight.common.AttributeType.*;
-import static com.surelogic._flashlight.common.FlagType.*;
 
 public abstract class Lock extends Event {
 	static final long FINAL_EVENT = Long.MAX_VALUE;
@@ -76,20 +82,15 @@ public abstract class Lock extends Event {
 		final long id = f_rowInserter.insertLock(runId, false, time, inThread,
 				inClass, lineNumber, lock, getType(), getState(), success,
 				lockIsThis, lockIsClass);
-		useObject(inThread);
-		useObject(inClass);
-		useObject(lock);
 		f_rowInserter.event(runId, id, time, inThread, lock, getState(),
 				success != Boolean.FALSE);
 	}
 
 	@Override
 	public final void setup(final Connection c, final Timestamp start,
-			final long startNS, final ScanRawFilePreScan scanResults,
-			final Set<Long> unreferencedObjects,
-			final Set<Long> unreferencedFields) throws SQLException {
-		super.setup(c, start, startNS, scanResults, unreferencedObjects,
-				unreferencedFields);
+			final long startNS, final ScanRawFilePreScan scanResults)
+			throws SQLException {
+		super.setup(c, start, startNS, scanResults);
 	}
 
 	@Override

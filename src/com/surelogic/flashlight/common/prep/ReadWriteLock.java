@@ -1,17 +1,18 @@
 package com.surelogic.flashlight.common.prep;
 
+import static com.surelogic._flashlight.common.AttributeType.ID;
+import static com.surelogic._flashlight.common.AttributeType.READ_LOCK_ID;
+import static com.surelogic._flashlight.common.AttributeType.WRITE_LOCK_ID;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.Set;
 import java.util.logging.Level;
 
 import org.xml.sax.Attributes;
 
 import com.surelogic.common.logging.SLLogger;
-
-import static com.surelogic._flashlight.common.AttributeType.*;
 
 public class ReadWriteLock extends Event {
 
@@ -27,11 +28,9 @@ public class ReadWriteLock extends Event {
 
 	@Override
 	public void setup(final Connection c, final Timestamp start,
-			final long startNS, final ScanRawFilePreScan scanResults,
-			final Set<Long> unreferencedObjects,
-			final Set<Long> unreferencedFields) throws SQLException {
-		super.setup(c, start, startNS, scanResults, unreferencedObjects,
-				unreferencedFields);
+			final long startNS, final ScanRawFilePreScan scanResults)
+			throws SQLException {
+		super.setup(c, start, startNS, scanResults);
 		f_ps = c.prepareStatement(f_psQ);
 		startTime = start;
 	}
@@ -67,9 +66,6 @@ public class ReadWriteLock extends Event {
 		}
 		insert(runId, id, readLock, writeLock);
 		f_rowInserter.defineRWLock(runId, id, readLock, writeLock, startTime);
-		useObject(id);
-		useObject(readLock);
-		useObject(writeLock);
 	}
 
 	private void insert(final int runId, final long id, final long readLock,

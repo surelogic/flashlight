@@ -3,7 +3,6 @@ package com.surelogic.flashlight.common.prep;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.Set;
 import java.util.logging.Level;
 
 import org.xml.sax.Attributes;
@@ -46,8 +45,7 @@ public interface IPrep {
 	 *             if something goes wrong, this will cause the prep to fail.
 	 */
 	void setup(final Connection c, final Timestamp start, final long startNS,
-			final ScanRawFilePreScan st, Set<Long> unreferencedObjects,
-			Set<Long> unreferencedFields) throws SQLException;
+			final ScanRawFilePreScan st) throws SQLException;
 
 	/**
 	 * Called for each instance of the XML element name found in the raw file.

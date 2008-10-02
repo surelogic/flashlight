@@ -3,7 +3,6 @@ package com.surelogic.flashlight.common.prep;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.Set;
 
 import com.surelogic.common.SLUtility;
 
@@ -29,11 +28,9 @@ public abstract class Event extends TrackUnreferenced {
 
 	@Override
 	public void setup(final Connection c, final Timestamp start,
-			final long startNS, final ScanRawFilePreScan scanResults,
-			final Set<Long> unreferencedObjects,
-			final Set<Long> unreferencedFields) throws SQLException {
-		super.setup(c, start, startNS, scanResults, unreferencedObjects,
-				unreferencedFields);
+			final long startNS, final ScanRawFilePreScan scanResults)
+			throws SQLException {
+		super.setup(c, start, startNS, scanResults);
 		f_start = start;
 		f_startNS = startNS;
 	}

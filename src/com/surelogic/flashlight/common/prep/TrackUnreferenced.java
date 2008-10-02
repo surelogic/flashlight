@@ -5,7 +5,6 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -20,7 +19,7 @@ public abstract class TrackUnreferenced implements IPrep {
 
 	private final Map<String, String> attrs = new HashMap<String, String>();
 
-	protected void parseAttrs(Attributes attributes) {
+	protected void parseAttrs(final Attributes attributes) {
 		attrs.clear();
 		if (attributes != null) {
 			for (int i = 0; i < attributes.getLength(); i++) {
@@ -34,7 +33,7 @@ public abstract class TrackUnreferenced implements IPrep {
 		}
 	}
 
-	protected String getAttr(AttributeType t) {
+	protected String getAttr(final AttributeType t) {
 		final String val = attrs.get(t.label()); // FIX
 		if (val == null) {
 			LOG.log(Level.SEVERE, "Null for " + t, new Throwable());
@@ -42,31 +41,10 @@ public abstract class TrackUnreferenced implements IPrep {
 		return val;
 	}
 
-	private Set<Long> f_unreferencedObjects;
-
-	protected void newObject(long id) {
-		f_unreferencedObjects.add(id);
-	}
-
-	protected void useObject(long id) {
-		f_unreferencedObjects.remove(id);
-	}
-
-	private Set<Long> f_unreferencedFields;
-
-	protected void newField(long id) {
-		f_unreferencedFields.add(id);
-	}
-
-	protected void useField(long id) {
-		f_unreferencedFields.remove(id);
-	}
-
-	public void setup(Connection c, Timestamp start, long startNS,
-			ScanRawFilePreScan scanResults, Set<Long> unreferencedObjects,
-			Set<Long> unreferencedFields) throws SQLException {
-		f_unreferencedObjects = unreferencedObjects;
-		f_unreferencedFields = unreferencedFields;
+	public void setup(final Connection c, final Timestamp start,
+			final long startNS, final ScanRawFilePreScan scanResults)
+			throws SQLException {
+		// Nothing to do
 	}
 
 	public void flush(final int runId, final long endTime) throws SQLException {

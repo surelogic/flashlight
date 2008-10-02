@@ -1,6 +1,10 @@
 package com.surelogic.flashlight.common.prep;
 
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 
@@ -10,9 +14,6 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.logging.SLLogger;
-
-import static com.surelogic._flashlight.common.AttributeType.*;
-import static com.surelogic._flashlight.common.IdConstants.*;
 
 public final class ScanRawFilePreScan extends DefaultHandler {
 
@@ -49,71 +50,93 @@ public final class ScanRawFilePreScan extends DefaultHandler {
 		return f_endTime;
 	}
 
-	private Set<Long> f_singleThreadedStaticFields = new HashSet<Long>();
+	private final Set<Long> f_unreferencedObjects = new HashSet<Long>();
+
+	private void newObject(final long id) {
+		f_unreferencedObjects.add(id);
+	}
+
+	private void useObject(final long id) {
+		f_unreferencedObjects.remove(id);
+	}
 
 	/**
-	 * Gets if the passed field is a single-threaded static field or not. A
-	 * field is considered single-threaded if it is only accessed from one
-	 * thread.
+	 * Returns whether or not this object is referenced.
 	 * 
-	 * @param fieldId
-	 *            the static field to check.
-	 * @return {@code true} if the field is single-threaded, {@code false}
-	 *         otherwise.
+	 * @param id
+	 * @return
 	 */
-	public boolean isSingleThreadedStaticField(final long fieldId) {
-		return f_singleThreadedStaticFields.contains(fieldId);
+	public boolean isUnusedObject(final long id) {
+		return f_unreferencedObjects.contains(id);
 	}
 
-	private static class Pair {
-		long f_field;
-		long f_receiver;
-
-		Pair(long field, long receiver) {
-			f_field = field;
-			f_receiver = receiver;
-		}
-
-		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + (int) (f_field ^ (f_field >>> 32));
-			result = prime * result + (int) (f_receiver ^ (f_receiver >>> 32));
-			return result;
-		}
-
-		@Override
-		public boolean equals(Object o) {
-			if (!(o instanceof Pair))
-				return false;
-			Pair p = (Pair) o;
-			return f_field == p.f_field && f_receiver == p.f_receiver;
-		}
-	}
-
-	private Set<Pair> f_singleThreadedFields = new HashSet<Pair>();
-
-	/**
-	 * Gets if the passed field is a single-threaded instance field or not. A
-	 * field is considered single-threaded if it is only accessed from one
-	 * thread.
-	 * 
-	 * @param fieldId
-	 *            the instance field to check.
-	 * @param receiverId
-	 *            the receiver the instance field is within.
-	 * @return {@code true} if the field is single-threaded, {@code false}
-	 *         otherwise.
+	/*
+	 * Collection of non-static fields accessed by multiple threads and the
+	 * objects that contain them, keyed by field
 	 */
-	public boolean isThreadedField(final long fieldId, final long receiverId) {
-		Pair p = new Pair(fieldId, receiverId);
-		return f_singleThreadedFields.contains(p);
+	private final Map<Long, Set<Long>> f_usedFields = new HashMap<Long, Set<Long>>();
+	/*
+	 * Collection of static fields accessed by multiple threads
+	 */
+	private final Set<Long> f_usedStatics = new HashSet<Long>();
+
+	private final Map<Long, Long> f_currentStatics = new HashMap<Long, Long>();
+	private final Map<Long, Map<Long, Long>> f_currentFields = new HashMap<Long, Map<Long, Long>>();
+
+	/*
+	 * Static field accesses
+	 */
+	private void useField(final long field, final long thread) {
+		final Long _thread = f_currentStatics.get(field);
+		if (_thread == null) {
+			f_currentStatics.put(field, thread);
+		} else {
+			if (_thread != thread) {
+				f_usedStatics.add(field);
+			}
+		}
 	}
+
+	/*
+	 * Field accesses
+	 */
+	private void useField(final long field, final long thread,
+			final long receiver) {
+		final Map<Long, Long> objectFields = f_currentFields.get(receiver);
+		if (objectFields != null) {
+			final Long _thread = objectFields.get(field);
+			if (_thread == null) {
+				objectFields.put(field, thread);
+			} else if (_thread != thread) {
+				Set<Long> receivers = f_usedFields.get(field);
+				if (receivers == null) {
+					receivers = new HashSet<Long>();
+					f_usedFields.put(field, receivers);
+				}
+				receivers.add(receiver);
+			}
+		} else {
+			final Map<Long, Long> map = new HashMap<Long, Long>();
+			map.put(field, thread);
+			f_currentFields.put(receiver, map);
+		}
+	}
+
+	private void garbageCollect(final long objectId) {
+		f_currentFields.remove(objectId);
+	}
+
+	private static final List<String> locks = Arrays.asList(
+			"after-intrinsic-lock-acquisition", "after-intrinsic-lock-release",
+			"after-intrinsic-lock-wait",
+			"after-util-concurrent-lock-acquisition-attempt",
+			"after-util-concurrent-lock-release-attempt",
+			"before-intrinsic-lock-acquisition", "before-intrinsic-lock-wait",
+			"before-util-concurrent-lock-acquisition-attempt");
 
 	@Override
-	public void startElement(String uri, String localName, String name,
-			Attributes attributes) throws SAXException {
+	public void startElement(final String uri, final String localName,
+			final String name, final Attributes attributes) throws SAXException {
 		f_elementCount++;
 		/*
 		 * Show progress to the user
@@ -122,42 +145,18 @@ public final class ScanRawFilePreScan extends DefaultHandler {
 		/*
 		 * Check for a user cancel.
 		 */
-		if (f_monitor.isCanceled())
+		if (f_monitor.isCanceled()) {
 			throw new SAXException("canceled");
+		}
 
-		if ("single-threaded-field".equals(name)) {
-			long field = ILLEGAL_FIELD_ID;
-			long receiver = -1;
-			if (attributes != null) {
-				for (int i = 0; i < attributes.getLength(); i++) {
-					final String aName = attributes.getQName(i);
-					final String aValue = attributes.getValue(i);
-					if (FIELD.matches(aName)) {
-						field = Long.parseLong(aValue);
-					} else if (RECEIVER.matches(aName)) {
-						receiver = Long.parseLong(aValue);
-					}
-				}
-			}
-			if (field == ILLEGAL_FIELD_ID) {
-				SLLogger.getLogger().log(Level.SEVERE,
-						"Missing field in single-threaded-field");
-				return;
-			}
-			if (receiver == -1) {
-				// static field
-				f_singleThreadedStaticFields.add(field);
-			} else {
-				// instance field
-				f_singleThreadedFields.add(new Pair(field, receiver));
-			}
-		} else if ("time".equals(name)) {
+		if ("time".equals(name)) {
 			if (f_firstTimeEventFound) {
 				if (attributes != null) {
 					for (int i = 0; i < attributes.getLength(); i++) {
 						final String aName = attributes.getQName(i);
 						if ("nano-time".equals(aName)) {
-							long time = Long.parseLong(attributes.getValue(i));
+							final long time = Long.parseLong(attributes
+									.getValue(i));
 							f_endTime = time;
 						}
 					}
@@ -165,6 +164,40 @@ public final class ScanRawFilePreScan extends DefaultHandler {
 			} else {
 				f_firstTimeEventFound = true;
 			}
+		} else if ("after-trace".equals(name)) {
+			// We used the class
+			useObject(Long.parseLong(attributes.getValue("in-class")));
+		} else if ("field-read".equals(name) || "field-write".equals(name)) {
+			final long field = Long.parseLong(attributes.getValue("field"));
+			final long thread = Long.parseLong(attributes.getValue("thread"));
+			final String rStr = attributes.getValue("receiver");
+			if (rStr != null) {
+				final long receiver = Long.parseLong(rStr);
+				useObject(receiver);
+				useField(field, thread, receiver);
+			} else {
+				useField(field, thread);
+			}
+			useObject(Long.parseLong(attributes.getValue("in-class")));
+			useObject(Long.parseLong(attributes.getValue("thread")));
+		} else if (locks.contains(name)) {
+			useObject(Long.parseLong(attributes.getValue("thread")));
+			useObject(Long.parseLong(attributes.getValue("in-class")));
+			useObject(Long.parseLong(attributes.getValue("lock")));
+		} else if ("read-write-lock-definition".equals(name)) {
+			useObject(Long.parseLong(attributes.getValue("id")));
+			useObject(Long.parseLong(attributes.getValue("read-lock-id")));
+			useObject(Long.parseLong(attributes.getValue("write-lock-id")));
+		} else if ("field-definition".equals(name)) {
+			useObject(Long.parseLong(attributes.getValue("type")));
+		} else if ("class-definition".equals(name)) {
+			newObject(Long.parseLong(attributes.getValue("id")));
+		} else if ("thread-definition".equals(name)
+				|| "object-definition".equals(name)) {
+			newObject(Long.parseLong(attributes.getValue("id")));
+			useObject(Long.parseLong(attributes.getValue("type")));
+		} else if ("garbage-collected-object".equals(name)) {
+			garbageCollect(Long.parseLong(attributes.getValue("id")));
 		}
 	}
 
@@ -174,4 +207,49 @@ public final class ScanRawFilePreScan extends DefaultHandler {
 			SLLogger.getLogger().log(Level.SEVERE, "Missing end time element");
 		}
 	}
+
+	@Override
+	public String toString() {
+		return "Threaded Fields: " + f_usedFields.keySet().size()
+				+ "\nThreaded Statics: " + f_usedStatics.size()
+				+ "\nUnreferenced Objects: " + f_unreferencedObjects.size();
+	}
+
+	/**
+	 * Returns whether or not this field is accessed by multiple threads.
+	 * 
+	 * @param field
+	 * @return
+	 */
+	public boolean isThreadedStaticField(final long field) {
+		return f_usedStatics.contains(field);
+	}
+
+	/**
+	 * Returns whether or not this field is accessed by multiple threads for the
+	 * given receiver.
+	 * 
+	 * @param field
+	 * @param receiver
+	 * @return
+	 */
+	public boolean isThreadedField(final long field, final long receiver) {
+		final Set<Long> receivers = f_usedFields.get(field);
+		if (receivers != null) {
+			return receivers.contains(receiver);
+		}
+		return false;
+	}
+
+	/**
+	 * Returns whether or not this field is accessed by multipleThreads for any
+	 * receiver
+	 * 
+	 * @param id
+	 * @return
+	 */
+	public boolean isThreadedField(final long field) {
+		return f_usedFields.get(field) != null;
+	}
+
 }

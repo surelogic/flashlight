@@ -3,10 +3,7 @@ package com.surelogic.flashlight.common.jobs;
 import java.io.File;
 import java.io.InputStream;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.Timestamp;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.logging.Level;
 
 import javax.xml.parsers.SAXParser;
@@ -15,7 +12,6 @@ import com.surelogic.common.SLUtility;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jdbc.DBConnection;
 import com.surelogic.common.jdbc.DBTransaction;
-import com.surelogic.common.jdbc.QB;
 import com.surelogic.common.jobs.AbstractSLJob;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
@@ -59,8 +55,6 @@ public final class PrepSLJob extends AbstractSLJob {
 	private static final int SETUP_WORK = 10;
 	private static final int PREP_WORK = 200;
 	private static final int FLUSH_WORK = 10;
-	private static final int THREAD_LOCAL_FIELD_DELETE_WORK = 20;
-	private static final int THREAD_LOCAL_OBJECT_DELETE_WORK = 20;
 	private static final int EACH_POST_PREP = 30;
 
 	private IPrep[] getParseHandlers(final IntrinsicLockDurationRowInserter i) {
@@ -108,13 +102,13 @@ public final class PrepSLJob extends AbstractSLJob {
 		final IPostPrep[] postPrepWork = getPostPrep();
 
 		monitor.begin(PRE_SCAN_WORK + PERSIST_RUN_DESCRIPTION_WORK + SETUP_WORK
-				+ PREP_WORK + FLUSH_WORK + THREAD_LOCAL_FIELD_DELETE_WORK
-				+ THREAD_LOCAL_OBJECT_DELETE_WORK
+				+ PREP_WORK + FLUSH_WORK
 				+ (EACH_POST_PREP * postPrepWork.length));
 
 		UsageMeter.getInstance().tickUse("Flashlight ran PrepSLJob");
 
-		final int estEventsInRawFile = RawFileUtility.estimateNumEvents(f_dataFile);
+		final int estEventsInRawFile = RawFileUtility
+				.estimateNumEvents(f_dataFile);
 		Exception exc = null;
 		try {
 			final RawDataFilePrefix rawFilePrefix = RawFileUtility
@@ -129,13 +123,14 @@ public final class PrepSLJob extends AbstractSLJob {
 				 * to be single-threaded. This information allows us to avoid
 				 * inserting unnecessary data into the database.
 				 */
-				
+
 				final SLProgressMonitor preScanMonitor = new SubSLProgressMonitor(
 						monitor, "Pre-scanning the raw file", PRE_SCAN_WORK);
 				preScanMonitor.begin(estEventsInRawFile);
 				final ScanRawFilePreScan scanResults = new ScanRawFilePreScan(
 						preScanMonitor);
-				final SAXParser saxParser = RawFileUtility.getParser(f_dataFile);
+				final SAXParser saxParser = RawFileUtility
+						.getParser(f_dataFile);
 				saxParser.parse(stream, scanResults);
 				preScanMonitor.done();
 				stream.close();
@@ -186,8 +181,6 @@ public final class PrepSLJob extends AbstractSLJob {
 								 * Do the second pass through the file. This
 								 * time we populate the database.
 								 */
-								final Set<Long> unreferencedObjects = new HashSet<Long>();
-								final Set<Long> unreferencedFields = new HashSet<Long>();
 								final IPrep[] f_elements = getParseHandlers(new IntrinsicLockDurationRowInserter(
 										c));
 								final SLProgressMonitor setupMonitor = new SubSLProgressMonitor(
@@ -196,8 +189,7 @@ public final class PrepSLJob extends AbstractSLJob {
 								setupMonitor.begin(f_elements.length);
 								for (final IPrep element : f_elements) {
 									element.setup(c, start, startNS,
-											scanResults, unreferencedObjects,
-											unreferencedFields);
+											scanResults);
 									setupMonitor.worked(1);
 								}
 								setupMonitor.done();
@@ -245,48 +237,6 @@ public final class PrepSLJob extends AbstractSLJob {
 									return SLStatus.CANCEL_STATUS;
 								}
 
-								/*
-								 * Remove all unreferenced objects and fields.
-								 */
-								final SLProgressMonitor threadLocalFieldDeleteMonitor = new SubSLProgressMonitor(
-										monitor,
-										"Deleting thread-local fields",
-										THREAD_LOCAL_FIELD_DELETE_WORK);
-								threadLocalFieldDeleteMonitor.begin();
-								final PreparedStatement deleteFields = c
-										.prepareStatement(QB.get(18));
-								for (int i = 1; i <= 3; i++) {
-									deleteFields.setInt(i, runId);
-								}
-								deleteFields.executeUpdate();
-								deleteFields.close();
-								threadLocalFieldDeleteMonitor.done();
-
-								if (monitor.isCanceled()) {
-									return SLStatus.CANCEL_STATUS;
-								}
-
-								final SLProgressMonitor threadLocalObjectDeleteMonitor = new SubSLProgressMonitor(
-										monitor,
-										"Deleting thread-local objects",
-										THREAD_LOCAL_OBJECT_DELETE_WORK);
-								threadLocalObjectDeleteMonitor
-										.begin(unreferencedObjects.size());
-								System.out.println("Unreferenced Objects: "
-										+ unreferencedObjects.size());
-								System.out.println("Unreferenced Fields: "
-										+ unreferencedFields.size());
-								final PreparedStatement deleteObjects = c
-										.prepareStatement(QB.get(19));
-								for (final Long l : unreferencedObjects) {
-									deleteObjects.setInt(1, runId);
-									deleteObjects.setLong(2, l);
-									deleteObjects.executeUpdate();
-									threadLocalObjectDeleteMonitor.worked(1);
-								}
-								deleteObjects.close();
-								threadLocalObjectDeleteMonitor.done();
-
 								for (final IPostPrep postPrep : postPrepWork) {
 									final SLProgressMonitor postPrepMonitor = new SubSLProgressMonitor(
 											monitor, postPrep.getDescription(),
@@ -295,6 +245,7 @@ public final class PrepSLJob extends AbstractSLJob {
 									postPrep.doPostPrep(c, runId);
 									postPrepMonitor.done();
 								}
+								System.out.println(scanResults);
 								return SLStatus.OK_STATUS;
 							}
 						});

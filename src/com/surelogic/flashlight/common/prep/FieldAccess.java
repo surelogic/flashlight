@@ -1,20 +1,24 @@
 package com.surelogic.flashlight.common.prep;
 
+import static com.surelogic._flashlight.common.AttributeType.FIELD;
+import static com.surelogic._flashlight.common.AttributeType.IN_CLASS;
+import static com.surelogic._flashlight.common.AttributeType.LINE;
+import static com.surelogic._flashlight.common.AttributeType.RECEIVER;
+import static com.surelogic._flashlight.common.AttributeType.THREAD;
+import static com.surelogic._flashlight.common.AttributeType.TIME;
+import static com.surelogic._flashlight.common.FlagType.UNDER_CONSTRUCTION;
+import static com.surelogic._flashlight.common.IdConstants.ILLEGAL_FIELD_ID;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
-import java.util.Set;
 import java.util.logging.Level;
 
 import org.xml.sax.Attributes;
 
 import com.surelogic.common.logging.SLLogger;
-
-import static com.surelogic._flashlight.common.AttributeType.*;
-import static com.surelogic._flashlight.common.IdConstants.*;
-import static com.surelogic._flashlight.common.FlagType.*;
 
 public abstract class FieldAccess extends Event {
 
@@ -73,13 +77,12 @@ public abstract class FieldAccess extends Event {
 			return;
 		}
 		if (receiver == -1) {
-			if (f_scanResults.isSingleThreadedStaticField(field)) {
+			if (!f_scanResults.isThreadedStaticField(field)) {
 				skipped++;
 				return;
 			}
 		} else {
-			useObject(receiver);
-			if (f_scanResults.isThreadedField(field, receiver)) {
+			if (!f_scanResults.isThreadedField(field, receiver)) {
 				skipped++;
 				return;
 			}
@@ -87,9 +90,6 @@ public abstract class FieldAccess extends Event {
 		before.threadEvent(inThread);
 		insert(runId, nanoTime, inThread, inClass, lineNumber, field, receiver,
 				underConstruction);
-		useObject(inThread);
-		useObject(inClass);
-		useField(field);
 		inserted++;
 	}
 
@@ -115,11 +115,9 @@ public abstract class FieldAccess extends Event {
 
 	@Override
 	public final void setup(final Connection c, final Timestamp start,
-			final long startNS, final ScanRawFilePreScan scanResults,
-			final Set<Long> unreferencedObjects,
-			final Set<Long> unreferencedFields) throws SQLException {
-		super.setup(c, start, startNS, scanResults, unreferencedObjects,
-				unreferencedFields);
+			final long startNS, final ScanRawFilePreScan scanResults)
+			throws SQLException {
+		super.setup(c, start, startNS, scanResults);
 		f_ps = c.prepareStatement(f_psQ);
 		f_scanResults = scanResults;
 	}

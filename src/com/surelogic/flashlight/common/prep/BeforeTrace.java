@@ -1,14 +1,13 @@
 package com.surelogic.flashlight.common.prep;
 
+import static com.surelogic._flashlight.common.AttributeType.LOCATION;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
-
-import static com.surelogic._flashlight.common.AttributeType.*;
 
 public final class BeforeTrace extends Trace {
 
@@ -102,12 +101,9 @@ public final class BeforeTrace extends Trace {
 
 	@Override
 	public final void setup(final Connection c, final Timestamp start,
-			final long startNS, final ScanRawFilePreScan scanResults,
-			final Set<Long> unreferencedObjects,
-			final Set<Long> unreferencedFields) throws SQLException {
-		super.setup(c, start, startNS, scanResults, unreferencedObjects,
-				unreferencedFields);
-
+			final long startNS, final ScanRawFilePreScan scanResults)
+			throws SQLException {
+		super.setup(c, start, startNS, scanResults);
 		if (f_ps == null) {
 			f_ps = c.prepareStatement(f_psQ);
 		}
@@ -128,7 +124,6 @@ public final class BeforeTrace extends Trace {
 		final TraceState state = getTraces(inThread).pop();
 		assert (state.clazz == inClass) && (state.line == lineNumber);
 		if (state.hasEvents) {
-			useObject(inClass);
 			// insert start and stop time
 			int idx = 1;
 			f_ps.setInt(idx++, runId);

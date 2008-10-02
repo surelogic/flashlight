@@ -85,8 +85,12 @@ public class LongMap<T> { //extends AbstractMap<Long,T> {
 		return new Iterator<Map.Entry<Long, T>>() {			
 			int index = -1;
 			LongEntry<T> current = null;
+			boolean valid = false;
 
 			private void findNext() {
+				if (!valid) {
+					return;
+				}
 				// Try to use the next entry in the chain
 				if (current != null) {
 					current = current.next();					
@@ -98,14 +102,16 @@ public class LongMap<T> { //extends AbstractMap<Long,T> {
 						current = table[index];
 					} else {
 						index = BAD_INDEX;
+						valid = false;
 						return;
 					}
 				}
+				valid = true;
 			}
 			
 			public boolean hasNext() {
 				findNext();
-				return index != BAD_INDEX;
+				return valid && index != BAD_INDEX;
 			}
 
 			public Map.Entry<Long, T> next() {

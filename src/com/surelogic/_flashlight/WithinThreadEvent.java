@@ -34,7 +34,8 @@ abstract class WithinThreadEvent extends ProgramEvent {
 	 * An identity for the thread this event occurred within.
 	 */
 	private final ThreadPhantomReference f_withinThread = f_threads.get();
-
+	//private final ThreadPhantomReference f_withinThread = Phantom.ofThread(Thread.currentThread());
+	
 	IdPhantomReference getWithinThread() {
 		return f_withinThread;
 	}

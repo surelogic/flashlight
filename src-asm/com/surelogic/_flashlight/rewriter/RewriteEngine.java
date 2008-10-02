@@ -523,7 +523,7 @@ public final class RewriteEngine {
       final EngineMessenger msgr, final Set<MethodIdentifier> ignoreMethods)
       throws IOException, OversizedMethodsException {
     final ClassReader input = new ClassReader(inClassfile);
-    final ClassWriter output = new ClassWriter(input, ClassWriter.COMPUTE_FRAMES);
+    final ClassWriter output = new ClassWriter(input, 0); //ClassWriter.COMPUTE_FRAMES);
     final FlashlightClassRewriter xformer =
       new FlashlightClassRewriter(config, msgr, output, classModel, ignoreMethods);
     input.accept(xformer, ClassReader.EXPAND_FRAMES);

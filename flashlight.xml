@@ -77,11 +77,12 @@
 	<target name="build-runtime-jar">
 		<jar destfile="${flashlight-runtime.jar}" basedir="${classes}">
 			<include name="**/com/surelogic/_flashlight/*" />
-		  <include name="**/com/surelogic/_flashlight/common/*" />
-			<include name="**/com/surelogic/_flashlight/emory/*" />
-			<include name="**/com/surelogic/_flashlight/jsr166y/*" />
-			<include name="**/com/surelogic/_flashlight/rewriter/runtime/*" />
-			<include name="**/com/surelogic/_flashlight/rewriter/test/*" />
+		  <include name="**/com/surelogic/_flashlight/common/**" />
+			<include name="**/com/surelogic/_flashlight/emory/**" />
+			<include name="**/com/surelogic/_flashlight/jsr166y/**" />
+			<include name="**/com/surelogic/_flashlight/rewriter/runtime/**" />
+			<include name="**/com/surelogic/_flashlight/rewriter/test/**" />
+  		<include name="**/com/surelogic/_flashlight/trace/**" />
 			<manifest>
 			  <attribute name="Manifest-Version" value="1.0"/>
 			</manifest>
@@ -101,7 +102,6 @@
 	<target name="build-rewriter-jar">
 		<jar destfile="${flashlight-rewriter.jar}" basedir="${classes}">
 			<include name="**/com/surelogic/_flashlight/rewriter/*" />
-			<include name="**/com/surelogic/_flashlight/rewriter/engine/*" />
 			<manifest>
 			  <attribute name="Manifest-Version" value="1.0"/>
   		  <attribute name="Main-Class" value="com.surelogic._flashlight.rewriter.engine.RewriteEngine"/>

@@ -100,6 +100,27 @@
 			</action>
 		</actionSet>
 	</extension>
+
+  <!-- Put a "Flashlight As" entry in the popup menu.  This is based on what
+       YourKit does. -->
+  <extension point="org.eclipse.ui.popupMenus">
+    <objectContribution
+      objectClass="java.lang.Object"
+      id="org.eclipse.debug.ui.contextualLaunch.flashlight">
+      <action
+        label="Flashlight As"
+        style="pulldown"
+        icon="platform:/plugin/com.surelogic.common/src/com/surelogic/common/images/fl_logo.gif"
+        class="com.surelogic.flashlight.client.eclipse.launch.FlashlightContextualLaunchAction"
+        menubarPath="additions"
+        enablesFor="+"
+        id="org.eclipse.debug.ui.contextualLaunch.flashlight.submenu">
+      </action>
+      <enablement>
+        <test property="org.eclipse.debug.ui.launchable" value="flashlight"/>
+      </enablement>
+    </objectContribution>
+  </extension>
    
    <!-- I have to add a tab group for my mode...I just use jdt's class -->
 	<extension point="org.eclipse.debug.ui.launchConfigurationTabGroups">

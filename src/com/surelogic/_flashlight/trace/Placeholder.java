@@ -64,4 +64,12 @@ public class Placeholder implements ITraceNode {
  		}
 		return false;
 	}
+	
+	public int getAndClearUnpropagated() {
+		return 0;
+	}
+	
+	public int addToUnpropagated(int count) {
+		return 0;
+	}
 }

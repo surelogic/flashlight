@@ -11,8 +11,14 @@ public class TraceNode extends AbstractCallLocation implements ITraceNode {
 	public static final boolean inUse = IdConstants.useTraceNodes;
 	static final boolean recordOnPush = false;
 	private static final AtomicLong nextId = new AtomicLong(1); // 0 is for no parent (null)
-	private static final ThreadLocal<ITraceNode> currentNode = new ThreadLocal<ITraceNode>();
+	private static final ThreadLocal<Header> currentNode = new ThreadLocal<Header>() {
+		@Override
+		protected Header initialValue() {
+			return new Header();
+		}
+	};
 	static final Map<ICallLocation,TraceNode> roots = new HashMap<ICallLocation,TraceNode>();
+	//static int poppedTotal = 0, poppedPlaceHolders = 0;
 	
 	private final long f_id = nextId.getAndIncrement();
 	private final TraceNode f_caller;
@@ -33,8 +39,27 @@ public class TraceNode extends AbstractCallLocation implements ITraceNode {
 	 * Have this as the caller
 	 */
 	private TraceNode f_calleeNodes = null;
+	/*
+	private int count = 0;
+	private int unpropagated = 0; // To parent
 	
-	TraceNode(TraceNode caller, ClassPhantomReference inClass, int line) {
+	public int getAndClearUnpropagated() {
+		int rv = unpropagated;
+		unpropagated = 0;
+		count += rv;
+		
+		//if ((count & 0x7ff) == 0) {
+		//	System.err.println(count);
+		//}		
+		return rv;
+	}
+	
+	public int addToUnpropagated(int add) {
+		return (unpropagated += add);	
+	}
+    */
+    
+	private TraceNode(TraceNode caller, ClassPhantomReference inClass, int line) {
 	    super(inClass, line);
 		f_caller  = caller;
 
@@ -43,10 +68,10 @@ public class TraceNode extends AbstractCallLocation implements ITraceNode {
 	static TraceNode newTraceNode(final TraceNode caller, ClassPhantomReference inClass, int line, 
 			                      BlockingQueue<List<Event>> queue) {
 		TraceNode callee = new TraceNode(caller, inClass, line);
-				
+		TraceNode firstCallee;				
 		if (caller != null) {
 			// Insert into caller
-			TraceNode firstCallee;
+
 			//firstCallee = caller.calleeNodes.putIfAbsent(callee, callee);
 			synchronized (caller) {
 				/*
@@ -70,14 +95,18 @@ public class TraceNode extends AbstractCallLocation implements ITraceNode {
 					firstCallee = null; 
 				} else {
 					firstCallee = (TraceNode) caller.getCallee(callee);
+					/*
 					if (firstCallee != null && caller != firstCallee.getParent()) {
 						System.out.println("Parent doesn't match");
 					}
+					*/
 				}
+				//callee.unpropagated++;
 			}
 			if (firstCallee != null) {
 				// Already present, so use that one
 				callee = firstCallee;
+				//callee.unpropagated++;
 			} 
 			else {
 				callee.f_siblingNodes = caller.f_calleeNodes;
@@ -86,16 +115,25 @@ public class TraceNode extends AbstractCallLocation implements ITraceNode {
 			}
 		} else {
 			// Insert into roots
-			synchronized (roots) {							
-				roots.put(callee, callee);
+			synchronized (roots) {
+				firstCallee = roots.get(callee);
+				if (firstCallee == null) {
+					roots.put(callee, callee);
+				} else {
+					callee = firstCallee;
+				}
+				//callee.unpropagated++;
 			}
-	        Store.putInQueue(queue, callee);
+			if (firstCallee == null) {
+				Store.putInQueue(queue, callee);
+			}
 		}
 		return callee;
 	}
 	
 	public static void pushTraceNode(ClassPhantomReference inClass, int line, BlockingQueue<List<Event>> queue) {
-		final ITraceNode caller = currentNode.get();
+		final Header header     = currentNode.get();
+		final ITraceNode caller = header.current;
 		final Placeholder key   = new Placeholder(inClass, line, caller);
 		ITraceNode callee = null;
 		if (caller != null) {
@@ -116,25 +154,57 @@ public class TraceNode extends AbstractCallLocation implements ITraceNode {
 			    }
 			}
 		}		
-		currentNode.set(callee);
+		header.current = callee;
+		header.count++;
 	}
 	
-	public static void popTraceNode(long classId, int line) {		
-		final ITraceNode callee = currentNode.get();
+	public static void popTraceNode(long classId, int line) {	
+		final Header header     = currentNode.get();
+		final ITraceNode callee = header.current;
 		if (callee != null) {
-			currentNode.set(callee.getParent());
+			ITraceNode parent = callee.getParent();
+			header.current = parent;
+			/*
+			if (callee instanceof Placeholder) {
+				poppedPlaceHolders++;
+			}
+			*/
+			if (parent != null && parent instanceof TraceNode) {
+				synchronized (parent) {
+					/*
+					int unprop  = callee.getAndClearUnpropagated();
+					if (unprop != 0) {
+						int parentU = parent.addToUnpropagated(unprop);
+						if (parentU > 1000) {
+							System.err.println(unprop+" -> "+parentU+"\t@ "+header.count);
+						}			
+					}
+					*/
+					if (header.count > 10000000) {
+						header.count = 0;
+						((TraceNode) parent).pruneTree();
+					}
+				}
+			}
 		}
+		/*
+		poppedTotal++;
+		if ((poppedTotal & 0xfff) == 0) {
+			System.err.println("Popped placeholders = "+poppedPlaceHolders+" out of "+poppedTotal);
+		}
+		*/
 	}
 	
 	public static TraceNode getCurrentNode() {
-		ITraceNode current = currentNode.get();
+		final Header header     = currentNode.get();
+		final ITraceNode current = header.current;
 		if (current == null) {
 			return null;
 		}
 		TraceNode real = current.getNode(); 
 		if (real != current) {
 			// Remove placeholders if there are any
-			currentNode.set(real);
+			header.current = real;
 		}
 		return real;
 	}
@@ -230,5 +300,19 @@ public class TraceNode extends AbstractCallLocation implements ITraceNode {
 			callee = here.f_siblingNodes;
 		}
 		return null;
+	}
+	
+	/**
+	 * Helps to keep stats, as well as avoid calls to ThreadLocal.set()
+	 */	
+	static class Header {
+		int count = 0;
+		ITraceNode current = null;
+	}
+	
+	synchronized void pruneTree() {
+		// FIX What to do instead?
+		f_calleeNodes = null;
+		f_siblingNodes = null;		
 	}
 }

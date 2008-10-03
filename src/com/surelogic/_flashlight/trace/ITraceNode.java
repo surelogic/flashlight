@@ -11,4 +11,6 @@ public interface ITraceNode extends ICallLocation {
 	ITraceNode getParent();
 	TraceNode getNode();
 	ITraceNode getCallee(ICallLocation key);
+	//int getAndClearUnpropagated();
+	//int addToUnpropagated(int count);
 }

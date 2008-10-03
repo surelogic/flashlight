@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import com.surelogic._flashlight.*;
 import com.surelogic._flashlight.common.IdConstants;
 
-public class TraceNode extends AbstractCallLocation implements ITraceNode {	
+public abstract class TraceNode extends AbstractCallLocation implements ITraceNode {	
 	public static final boolean inUse = IdConstants.useTraceNodes;
 	static final boolean recordOnPush = false;
 	private static final AtomicLong nextId = new AtomicLong(1); // 0 is for no parent (null)
@@ -20,7 +20,7 @@ public class TraceNode extends AbstractCallLocation implements ITraceNode {
 	static final Map<ICallLocation,TraceNode> roots = new HashMap<ICallLocation,TraceNode>();
 	//static int poppedTotal = 0, poppedPlaceHolders = 0;
 	
-	private final long f_id = nextId.getAndIncrement();
+	//private final long f_id = nextId.getAndIncrement();
 	private final TraceNode f_caller;
 	/*
 	private final ConcurrentMap<ICallLocation,TraceNode> calleeNodes = 
@@ -62,35 +62,49 @@ public class TraceNode extends AbstractCallLocation implements ITraceNode {
 	private TraceNode(TraceNode caller, ClassPhantomReference inClass, int line) {
 	    super(inClass, line);
 		f_caller  = caller;
-
+	}
+	
+	static class IntVersion extends TraceNode {
+		private final int f_id;
+		
+		IntVersion(TraceNode caller, ClassPhantomReference inClass, int line, int id) {
+		    super(caller, inClass, line);
+			f_id = id;
+		}
+		@Override
+		public long getId() {
+			return f_id;
+		}
+	}
+	static class LongVersion extends TraceNode {
+		private final long f_id;
+		
+		LongVersion(TraceNode caller, ClassPhantomReference inClass, int line, long id) {
+		    super(caller, inClass, line);
+			f_id = id;
+		}
+		@Override
+		public long getId() {
+			return f_id;
+		}
+	}
+	
+	private static TraceNode newTraceNode(final TraceNode caller, ClassPhantomReference inClass, int line) {
+		final long id  = nextId.getAndIncrement();
+		final int cast = (int) id;
+		if (cast == id) {
+			return new IntVersion(caller, inClass, line, cast);
+		}
+		return new LongVersion(caller, inClass, line, id);
 	}
 	
 	static TraceNode newTraceNode(final TraceNode caller, ClassPhantomReference inClass, int line, 
 			                      BlockingQueue<List<Event>> queue) {
-		TraceNode callee = new TraceNode(caller, inClass, line);
+		TraceNode callee = newTraceNode(caller, inClass, line);
 		TraceNode firstCallee;				
 		if (caller != null) {
 			// Insert into caller
-
-			//firstCallee = caller.calleeNodes.putIfAbsent(callee, callee);
 			synchronized (caller) {
-				/*
-				int i;
-				if (caller.calleeNodes == null) {
-					//caller.calleeNodes = new HashMap<ICallLocation, TraceNode>(1);
-					caller.calleeNodes = new ArrayList<TraceNode>(2); 
-					i = -1;
-				} else {
-					i = caller.calleeNodes.indexOf(callee);
-				}
-				//firstCallee = caller.calleeNodes.put(callee, callee);
-				if (i < 0) {
-					caller.calleeNodes.add(callee);
-					firstCallee = null; 
-				} else {
-					firstCallee = caller.calleeNodes.get(i);
-				}
-				*/
 				if (caller.f_calleeNodes == null) {
 					firstCallee = null; 
 				} else {
@@ -222,9 +236,7 @@ public class TraceNode extends AbstractCallLocation implements ITraceNode {
 	}
 	*/	
 	
-	public final long getId() {
-		return f_id;
-	}
+	public abstract long getId();
 	
 	public final long getParentId() {
 	    return f_caller == null ? 0 : f_caller.getId();

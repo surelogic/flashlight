@@ -60,9 +60,13 @@ public final class PrepSLJob extends AbstractSLJob {
 	private IPrep[] getDefinitionHandlers(
 			final IntrinsicLockDurationRowInserter i,
 			final BeforeTrace beforeTrace) {
-		return new IPrep[] { new ReadWriteLock(i), new ClassDefinition(),
-				new FieldDefinition(), new ObjectDefinition(),
+		return new IPrep[] { new ClassDefinition(), new FieldDefinition(),
 				new ThreadDefinition() };
+	}
+
+	private IPrep[] getObjectHandlers(final IntrinsicLockDurationRowInserter i,
+			final BeforeTrace beforeTrace) {
+		return new IPrep[] { new ObjectDefinition() };
 	}
 
 	private IPrep[] getParseHandlers(final IntrinsicLockDurationRowInserter i,
@@ -76,7 +80,8 @@ public final class PrepSLJob extends AbstractSLJob {
 				new BeforeUtilConcurrentLockAquisitionAttempt(beforeTrace, i),
 				new AfterUtilConcurrentLockAcquisitionAttempt(beforeTrace, i),
 				new AfterUtilConcurrentLockReleaseAttempt(beforeTrace, i),
-				new FieldRead(beforeTrace, i), new FieldWrite(beforeTrace, i) };
+				new FieldRead(beforeTrace, i), new FieldWrite(beforeTrace, i),
+				new ReadWriteLock(i) };
 	}
 
 	private IPostPrep[] getPostPrep() {
@@ -190,14 +195,22 @@ public final class PrepSLJob extends AbstractSLJob {
 										i);
 								final IPrep[] f_definitionElements = getDefinitionHandlers(
 										i, beforeTrace);
+								final IPrep[] f_objectElements = getObjectHandlers(
+										i, beforeTrace);
 								final IPrep[] f_parseElements = getParseHandlers(
 										i, beforeTrace);
 								final SLProgressMonitor setupMonitor = new SubSLProgressMonitor(
 										monitor, "Setting up event handlers",
 										SETUP_WORK);
 								setupMonitor.begin(f_parseElements.length
-										+ f_definitionElements.length);
+										+ f_definitionElements.length
+										+ f_objectElements.length);
 								for (final IPrep element : f_parseElements) {
+									element.setup(c, start, startNS,
+											scanResults);
+									setupMonitor.worked(1);
+								}
+								for (final IPrep element : f_objectElements) {
 									element.setup(c, start, startNS,
 											scanResults);
 									setupMonitor.worked(1);
@@ -220,6 +233,8 @@ public final class PrepSLJob extends AbstractSLJob {
 								final ScanRawFilePrepScan defHandler = new ScanRawFilePrepScan(
 										runId, c, prepMonitor,
 										f_definitionElements);
+								final ScanRawFilePrepScan objectHandler = new ScanRawFilePrepScan(
+										runId, c, prepMonitor, f_objectElements);
 								final ScanRawFilePrepScan parseHandler = new ScanRawFilePrepScan(
 										runId, c, prepMonitor, f_parseElements);
 								InputStream dataFileStream = RawFileUtility
@@ -230,6 +245,18 @@ public final class PrepSLJob extends AbstractSLJob {
 									dataFileStream.close();
 								}
 								for (final IPrep element : f_definitionElements) {
+									element.flush(runId, scanResults
+											.getEndNanoTime());
+								}
+								dataFileStream = RawFileUtility
+										.getInputStreamFor(f_dataFile);
+								try {
+									saxParser.parse(dataFileStream,
+											objectHandler);
+								} finally {
+									dataFileStream.close();
+								}
+								for (final IPrep element : f_objectElements) {
 									element.flush(runId, scanResults
 											.getEndNanoTime());
 								}
@@ -265,6 +292,9 @@ public final class PrepSLJob extends AbstractSLJob {
 
 								if (SLLogger.getLogger().isLoggable(Level.FINE)) {
 									for (final IPrep element : f_definitionElements) {
+										element.printStats();
+									}
+									for (final IPrep element : f_objectElements) {
 										element.printStats();
 									}
 									for (final IPrep element : f_parseElements) {

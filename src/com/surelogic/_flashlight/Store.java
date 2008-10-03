@@ -318,12 +318,12 @@ public final class Store {
 			};
 			IdPhantomReference
 					.addObserver(new IdPhantomReferenceCreationObserver() {
-						public void notify(IdPhantomReference o) {
+						public void notify(ClassPhantomReference o, IdPhantomReference r) {
 							/*
 							 * Create an event to define this object.
 							 */
 							Store.putInQueue(f_rawQueue,
-									new ObjectDefinition(o));
+									new ObjectDefinition(o, r));
 						}
 					});
 			final int refinerySize = StoreConfiguration.getRefinerySize();

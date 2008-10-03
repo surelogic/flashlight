@@ -80,7 +80,7 @@ final class Depository extends Thread {
 					if (e instanceof ObjectDefinition) {
 						ObjectDefinition od    = (ObjectDefinition) e;
 						IdPhantomReference ref = od.getObject();
-						ref.accept(classVisitor);	
+						ref.accept(od, classVisitor);	
 						f_outputCount += (1+classVisitor.count);
 					} else {
 						f_outputCount++;

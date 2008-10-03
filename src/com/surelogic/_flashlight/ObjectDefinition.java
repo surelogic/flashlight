@@ -1,14 +1,18 @@
 package com.surelogic._flashlight;
 
 final class ObjectDefinition extends DefinitionalEvent {
-
+    private final ClassPhantomReference f_objType;
 	private final IdPhantomReference f_object;
 
 	IdPhantomReference getObject() {
 		return f_object;
 	}
+	
+	ClassPhantomReference getType() {
+		return f_objType;
+	}
 
-	ObjectDefinition(final IdPhantomReference object) {
+	ObjectDefinition(final ClassPhantomReference type, final IdPhantomReference object) {
 		assert object != null;
 		f_object = object;
         /*
@@ -16,6 +20,7 @@ final class ObjectDefinition extends DefinitionalEvent {
 			System.err.println(Thread.currentThread()+" "+object);
 		}
 		*/
+		f_objType = type;
 	}
 
 	@Override
@@ -36,18 +41,18 @@ final class ObjectDefinition extends DefinitionalEvent {
 		}
 
 		@Override
-		void visit(ObjectPhantomReference r) {
+		void visit(final ObjectDefinition defn, ObjectPhantomReference r) {
 			b.append("<object-definition");
 			Entities.addAttribute("id", r.getId(), b);
-			Entities.addAttribute("type", r.getType().getId(), b);
+			Entities.addAttribute("type", defn.getType().getId(), b);
 			b.append("/>");
 		}
 
 		@Override
-		void visit(ThreadPhantomReference r) {
+		void visit(final ObjectDefinition defn, ThreadPhantomReference r) {
 			b.append("<thread-definition");
 			Entities.addAttribute("id", r.getId(), b);
-			Entities.addAttribute("type", r.getType().getId(), b);
+			Entities.addAttribute("type", defn.getType().getId(), b);
 			Entities.addAttribute("thread-name", r.getName(), b);
 			b.append("/>");
 		}
@@ -62,7 +67,7 @@ final class ObjectDefinition extends DefinitionalEvent {
 	@Override
 	public String toString() {
 		final DefinitionVisitor b = new DefinitionVisitor();
-		f_object.accept(b);
+		f_object.accept(this, b);
 		return b.toString();
 	}
 }

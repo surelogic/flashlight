@@ -172,16 +172,16 @@ public class OutputStrategyBinary extends EventVisitor {
 			}
 		}
 		@Override
-		void visit(final ObjectPhantomReference r) {
-			writeTwoLongs(Object_Definition.getByte(), r.getId(), r.getType().getId());
+		void visit(final ObjectDefinition defn, final ObjectPhantomReference r) {
+			writeTwoLongs(Object_Definition.getByte(), r.getId(), defn.getType().getId());
 		}
 		@Override
-		void visit(final ThreadPhantomReference r) {
+		void visit(final ObjectDefinition defn, final ThreadPhantomReference r) {
 			try {
 				if (debug) System.out.println("Writing event: "+Thread_Definition.getLabel());
 				f_out.writeByte(Thread_Definition.getByte());
 				writeCompressedLong(r.getId());
-				writeCompressedLong(r.getType().getId());
+				writeCompressedLong(defn.getType().getId());
 				f_out.writeUTF(r.getName());
 			} catch (IOException e) {
 				handleIOException(e);
@@ -191,7 +191,7 @@ public class OutputStrategyBinary extends EventVisitor {
 	
 	@Override
 	void visit(final ObjectDefinition e) {
-		e.getObject().accept(refVisitor);
+		e.getObject().accept(e, refVisitor);
 	}
 	
 	@Override

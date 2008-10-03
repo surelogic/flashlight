@@ -58,7 +58,7 @@ public final class ClassPhantomReference extends IdPhantomReference {
 	}
 
 	@Override
-	void accept(IdPhantomReferenceVisitor v) {
+	void accept(final ObjectDefinition defn, IdPhantomReferenceVisitor v) {
         /*
 		if (defined) {
 			throw new RuntimeException();		

@@ -12,8 +12,8 @@ interface IdPhantomReferenceCreationObserver {
 	 * Notification that a new {@link IdPhantomReference} has been created
 	 * within flashlight.
 	 * 
-	 * @param o
+	 * @param r
 	 *            the new {@link IdPhantomReference} instance.
 	 */
-	void notify(final IdPhantomReference o);
+	void notify(final ClassPhantomReference o, final IdPhantomReference r);
 }

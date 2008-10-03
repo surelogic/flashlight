@@ -61,13 +61,23 @@ abstract class IdPhantomReference extends PhantomReference {
 	/**
 	 * Use a thread-safe set to hold our observers.
 	 */
-	static final Set<IdPhantomReferenceCreationObserver> f_observers = new CopyOnWriteArraySet<IdPhantomReferenceCreationObserver>();
-
-	static List<IdPhantomReference> unnotified = new ArrayList<IdPhantomReference>();
+	static final Set<IdPhantomReferenceCreationObserver> f_observers = new CopyOnWriteArraySet<IdPhantomReferenceCreationObserver>();	
+	
+	static class Unnotified {
+		final ClassPhantomReference type;
+		final IdPhantomReference ref;
+		
+		Unnotified(ClassPhantomReference t, IdPhantomReference r) {
+			type = t;
+			ref = r;
+		}
+	}
+	
+	static List<Unnotified> unnotified = new ArrayList<Unnotified>();
 	
 	static void addObserver(final IdPhantomReferenceCreationObserver o) {		
 		f_observers.add(o);
-		List<IdPhantomReference> refs = null;
+		List<Unnotified> refs = null;
 		synchronized (IdPhantomReference.class) {
 			if (unnotified != null) {
 				refs = unnotified;
@@ -75,8 +85,8 @@ abstract class IdPhantomReference extends PhantomReference {
 			}
 		}
 		if (refs != null) {
-			for(IdPhantomReference ref : refs) {
-				ref.notifyObservers();
+			for(Unnotified u : refs) {
+				u.ref.notifyObservers(u.type);
 			}
 		}		
 	}
@@ -85,18 +95,18 @@ abstract class IdPhantomReference extends PhantomReference {
 		f_observers.remove(o);
 	}
 
-	protected void notifyObservers() {
+	protected void notifyObservers(ClassPhantomReference type) {
 		if (f_observers.isEmpty()) {
 			new Throwable("No observers for IdPhantomReference").printStackTrace();
 			synchronized (IdPhantomReference.class) {
 				if (unnotified != null) {
-					unnotified.add(this);
+					unnotified.add(new Unnotified(type, this));
 				}
 				return;
 			}
 		}		
 		for (IdPhantomReferenceCreationObserver o : f_observers) {
-			o.notify(this);
+			o.notify(type, this);
 		}
 	}
 
@@ -133,7 +143,8 @@ abstract class IdPhantomReference extends PhantomReference {
 		 * who knows what they will do and we wouldn't want to deadlock.
 		 */
 		if (!phantomExisted) {
-			pr.notifyObservers();
+			final ClassPhantomReference type = o instanceof Class ? null : ClassPhantomReference.getInstance(o.getClass(), q);
+			pr.notifyObservers(type);
 		}
 		return pr;
 	}
@@ -144,5 +155,5 @@ abstract class IdPhantomReference extends PhantomReference {
 	 * @param v
 	 *            the visitor for this phantom reference.
 	 */
-	abstract void accept(final IdPhantomReferenceVisitor v);
+	abstract void accept(final ObjectDefinition defn, final IdPhantomReferenceVisitor v);
 }

@@ -55,13 +55,13 @@ final class ThreadPhantomReference extends ObjectPhantomReference {
 	}
 
 	@Override
-	void accept(IdPhantomReferenceVisitor v) {
-		v.visit(this);
+	void accept(final ObjectDefinition defn, IdPhantomReferenceVisitor v) {
+		v.visit(defn, this);
 	}
 
 	@Override
 	public String toString() {
 		return "[ThreadPhantom: id=" + getId() + " name=" + getName()
-				+ " type=" + getType() + "]";
+				/*+ " type=" + getType()*/ + "]";
 	}
 }

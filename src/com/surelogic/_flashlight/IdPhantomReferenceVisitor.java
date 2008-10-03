@@ -9,11 +9,11 @@ abstract class IdPhantomReferenceVisitor {
 		// do nothing
 	}
 
-	void visit(final ObjectPhantomReference r) {
+	void visit(final ObjectDefinition defn, final ObjectPhantomReference r) {
 		// do nothing
 	}
 
-	void visit(final ThreadPhantomReference r) {
+	void visit(final ObjectDefinition defn, final ThreadPhantomReference r) {
 		// do nothing
 	}
 }

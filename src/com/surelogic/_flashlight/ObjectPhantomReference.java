@@ -33,11 +33,13 @@ class ObjectPhantomReference extends IdPhantomReference {
 			}		
 	};
 	
+	/*
 	private final ClassPhantomReference f_type;
 
 	ClassPhantomReference getType() {
 		return f_type;
 	}
+	*/
 
 	/**
 	 * Mapping from fields to the thread it's used by (or SHARED_FIELD)
@@ -56,7 +58,7 @@ class ObjectPhantomReference extends IdPhantomReference {
 	protected ObjectPhantomReference(final Object referent,
 			final ReferenceQueue q) {
 		super(referent, q);
-		f_type = ClassPhantomReference.getInstance(referent.getClass(), q);
+		//f_type = ClassPhantomReference.getInstance(referent.getClass(), q);
 	}
 
 	static ObjectPhantomReference getInstance(final Object o, final ReferenceQueue q) {
@@ -64,13 +66,13 @@ class ObjectPhantomReference extends IdPhantomReference {
 	}
 
 	@Override
-	void accept(IdPhantomReferenceVisitor v) {
-		v.visit(this);
+	void accept(final ObjectDefinition defn, IdPhantomReferenceVisitor v) {
+		v.visit(defn, this);
 	}
 
 	@Override
 	public String toString() {
-		return "[ObjectPhantom: id=" + getId() + " type=" + getType() + "]";
+		return "[ObjectPhantom: id=" + getId() /*+ " type=" + getType()*/ + "]";
 	}
 	
 	static Set<SingleThreadedField> getAllSingleThreadedFields() {

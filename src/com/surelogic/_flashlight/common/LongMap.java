@@ -8,20 +8,11 @@ import java.util.*;
  * @author Edwin.Chan
  */
 public class LongMap<T> { //extends AbstractMap<Long,T> {
-	static class LongEntry<T> implements Map.Entry<Long,T> {
-		private long key;
+	static abstract class Entry<T> implements Map.Entry<Long,T> {
 		private T value;
 		
-		public LongEntry(long key, T newValue) {
-			this.key = key;
-			this.value = newValue;
-		}
-		
-		public long key() {
-			return key;
-		}		
-		public Long getKey() {
-			return key;
+		Entry(T newValue) {
+			value = newValue;
 		}
 		public T getValue() {
 			return value;
@@ -30,38 +21,130 @@ public class LongMap<T> { //extends AbstractMap<Long,T> {
 			T old = this.value;
 			this.value = value;
 			return old;
-		}		
-		public LongEntry<T> next() {
+		}
+		
+		abstract long key();
+		
+		public Long getKey() {
+			return key();
+		}
+		
+		public Entry<T> next() {
 			return null;
 		}
-		public void setNext(LongEntry<T> e) {
+		public void setNext(Entry<T> e) {
 			if (e != null) {
 				throw new UnsupportedOperationException();
 			}
 		}
 	}
-	static class ChainedLongEntry<T> extends LongEntry<T> {
-		private LongEntry<T> next;
+	static abstract class ChainedEntry<T> extends Entry<T> {
+		private Entry<T> next;
 
-		public ChainedLongEntry(long key, T newValue, LongEntry<T> root) {
-			super(key, newValue);
+		ChainedEntry(T newValue, Entry<T> root) {
+			super(newValue);
 			next = root;
 		}
 
 		@Override
-		public LongEntry<T> next() {
+		public Entry<T> next() {
 			return next;
 		}
 		@Override
-		public void setNext(LongEntry<T> e) {
+		public void setNext(Entry<T> e) {
 			next = e;
 		}		
 	}
+	// 16 bytes
+	static class ShortEntry<T> extends Entry<T> {
+		private int key;
+
+		ShortEntry(int key, T newValue) {
+			super(newValue);
+			this.key = key;
+		}
+		
+		long key() {
+			return key;
+		}		
+	}
+	// 16 bytes also
+	static class IntEntry<T> extends Entry<T> {
+		private int key;
+
+		IntEntry(int key, T newValue) {
+			super(newValue);
+			this.key = key;
+		}
+		
+		long key() {
+			return key;
+		}		
+	}
+	static class LongEntry<T> extends Entry<T> {
+		private long key;
+
+		LongEntry(long key, T newValue) {
+			super(newValue);
+			this.key = key;
+		}
+		
+		long key() {
+			return key;
+		}		
+	}
+	static class ChainedIntEntry<T> extends ChainedEntry<T> {
+		private int key;
+
+		public ChainedIntEntry(int key, T newValue, Entry<T> root) {
+			super(newValue, root);
+			this.key = key;
+		}		
+		
+		long key() {
+			return key;
+		}	
+	}
+	// 32 bytes
+	static class ChainedLongEntry<T> extends ChainedEntry<T> {
+		private long key;
+
+		public ChainedLongEntry(long key, T newValue, Entry<T> root) {
+			super(newValue, root);
+			this.key = key;
+		}		
+		
+		long key() {
+			return key;
+		}	
+	}
 	
-	LongEntry<T>[] table;
+	static <T> Entry<T> newEntry(long key, T newValue) {
+		/*
+		short s = (short) key;
+		if (s == key) {
+			return new ShortEntry<T>(s, newValue);
+		}
+		*/		
+		int i = (int) key;
+		if (i == key) {
+			return new IntEntry<T>(i, newValue);
+		}
+		return new LongEntry<T>(key, newValue);
+	}
+	
+	static <T> ChainedEntry<T> newChainedEntry(long key, T newValue, Entry<T> next) {	
+		int i = (int) key;
+		if (i == key) {
+			return new ChainedIntEntry<T>(i, newValue, next);
+		}
+		return new ChainedLongEntry<T>(key, newValue, next);
+	}
+	
+	Entry<T>[] table;
 	int powerOf2 = 0;
 	int mask;
-	int size;	
+	int size;
 	static final float maxLoad = 0.75f;
 	
 	public LongMap() {
@@ -77,7 +160,7 @@ public class LongMap<T> { //extends AbstractMap<Long,T> {
 			powerOf2++;
 		}
 		mask  = size - 1;
-		table = new LongEntry[size];
+		table = new Entry[size];
 		this.size = 0;
 	}
 	
@@ -86,7 +169,7 @@ public class LongMap<T> { //extends AbstractMap<Long,T> {
 	private Iterator<Map.Entry<Long, T>> iterator() {
 		return new Iterator<Map.Entry<Long, T>>() {			
 			int index = -1;
-			LongEntry<T> current = null;
+			Entry<T> current = null;
 			boolean valid = false;
 
 			private void findNext() {
@@ -158,8 +241,8 @@ public class LongMap<T> { //extends AbstractMap<Long,T> {
 	
 	public T put(long key, T newValue) {
 		final int index = index(key);
-		final LongEntry<T> root = table[index];
-		LongEntry<T> e = root;
+		final Entry<T> root = table[index];
+		Entry<T> e = root;
 		while (e != null) {
 			if (e.key() == key) {
 				// Found, so replace the value
@@ -171,16 +254,16 @@ public class LongMap<T> { //extends AbstractMap<Long,T> {
 		}
 		// Not found, so create a new entry		
 		if (root == null) {
-			table[index] = new LongEntry<T>(key, newValue);
+			table[index] = newEntry(key, newValue);
 		} else {
 			// Resize only if collision and above load factor
 			if (checkForResize()) {
-				final int newIndex         = index(key);
-				final LongEntry<T> newRoot = table[newIndex];
-				table[newIndex] = newRoot == null ? new LongEntry<T>(key, newValue) :
-						          new ChainedLongEntry<T>(key, newValue, newRoot);
+				final int newIndex     = index(key);
+				final Entry<T> newRoot = table[newIndex];
+				table[newIndex] = newRoot == null ? newEntry(key, newValue) :
+					                         newChainedEntry(key, newValue, newRoot);
 			} else {
-				table[index] = new ChainedLongEntry<T>(key, newValue, root);
+				table[index] = newChainedEntry(key, newValue, root);
 			}
 		}		
 		size++;
@@ -189,7 +272,7 @@ public class LongMap<T> { //extends AbstractMap<Long,T> {
 	
 	public T get(long key) {
 		int index = index(key);
-		LongEntry<T> e = table[index];
+		Entry<T> e = table[index];
 		while (e != null) {
 			if (e.key() == key) {
 				return e.getValue();
@@ -208,12 +291,12 @@ public class LongMap<T> { //extends AbstractMap<Long,T> {
 		if (updatedSize / table.length > maxLoad) {
 			// resize since we're above our specified load factor
 			final int newCap              = table.length << 1;
-			final LongEntry<T>[] oldTable = table;
+			final Entry<T>[] oldTable = table;
 			powerOf2++;
-			table = new LongEntry[newCap];
+			table = new Entry[newCap];
 			mask = newCap - 1;
 			// Re-insert entries
-			for(LongEntry<T> root : oldTable) {
+			for(Entry<T> root : oldTable) {
 				reinsertChain(root);
 			}
 			return true;
@@ -221,15 +304,15 @@ public class LongMap<T> { //extends AbstractMap<Long,T> {
 		return false;
 	}
 
-	private void reinsertChain(final LongEntry<T> e) {
+	private void reinsertChain(final Entry<T> e) {
 		if (e == null) {
 			return;
 		}
 		final int newIndex         = index(e.key());
-		final LongEntry<T> newRoot = table[newIndex];
+		final Entry<T> newRoot = table[newIndex];
 		if (newRoot != null && !(e instanceof ChainedLongEntry)) {
 			// Need to switch to a ChainedLongEntry
-			table[newIndex] = new ChainedLongEntry<T>(e.key(), e.getValue(), newRoot);			
+			table[newIndex] = newChainedEntry(e.key(), e.getValue(), newRoot);			
 		} else {		
 			e.setNext(newRoot);		
 			table[newIndex] = e;

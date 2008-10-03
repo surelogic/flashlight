@@ -57,8 +57,16 @@ public final class PrepSLJob extends AbstractSLJob {
 	private static final int FLUSH_WORK = 10;
 	private static final int EACH_POST_PREP = 30;
 
-	private IPrep[] getParseHandlers(final IntrinsicLockDurationRowInserter i) {
-		final BeforeTrace beforeTrace = new BeforeTrace(i);
+	private IPrep[] getDefinitionHandlers(
+			final IntrinsicLockDurationRowInserter i,
+			final BeforeTrace beforeTrace) {
+		return new IPrep[] { new ReadWriteLock(i), new ClassDefinition(),
+				new FieldDefinition(), new ObjectDefinition(),
+				new ThreadDefinition() };
+	}
+
+	private IPrep[] getParseHandlers(final IntrinsicLockDurationRowInserter i,
+			final BeforeTrace beforeTrace) {
 		return new IPrep[] { beforeTrace, new AfterTrace(beforeTrace, i),
 				new AfterIntrinsicLockAcquisition(beforeTrace, i),
 				new AfterIntrinsicLockWait(beforeTrace, i),
@@ -68,10 +76,7 @@ public final class PrepSLJob extends AbstractSLJob {
 				new BeforeUtilConcurrentLockAquisitionAttempt(beforeTrace, i),
 				new AfterUtilConcurrentLockAcquisitionAttempt(beforeTrace, i),
 				new AfterUtilConcurrentLockReleaseAttempt(beforeTrace, i),
-				new ReadWriteLock(i), new ClassDefinition(),
-				new FieldDefinition(), new FieldRead(beforeTrace, i),
-				new FieldWrite(beforeTrace, i), new ObjectDefinition(),
-				new ThreadDefinition() };
+				new FieldRead(beforeTrace, i), new FieldWrite(beforeTrace, i) };
 	}
 
 	private IPostPrep[] getPostPrep() {
@@ -146,8 +151,6 @@ public final class PrepSLJob extends AbstractSLJob {
 				 * Read the data file (our second pass) and insert prepared data
 				 * into the database.
 				 */
-				final InputStream dataFileStream = RawFileUtility
-						.getInputStreamFor(f_dataFile);
 				return f_database
 						.withTransaction(new DBTransaction<SLStatus>() {
 							public SLStatus perform(final Connection c)
@@ -181,13 +184,25 @@ public final class PrepSLJob extends AbstractSLJob {
 								 * Do the second pass through the file. This
 								 * time we populate the database.
 								 */
-								final IPrep[] f_elements = getParseHandlers(new IntrinsicLockDurationRowInserter(
-										c));
+								final IntrinsicLockDurationRowInserter i = new IntrinsicLockDurationRowInserter(
+										c);
+								final BeforeTrace beforeTrace = new BeforeTrace(
+										i);
+								final IPrep[] f_definitionElements = getDefinitionHandlers(
+										i, beforeTrace);
+								final IPrep[] f_parseElements = getParseHandlers(
+										i, beforeTrace);
 								final SLProgressMonitor setupMonitor = new SubSLProgressMonitor(
 										monitor, "Setting up event handlers",
 										SETUP_WORK);
-								setupMonitor.begin(f_elements.length);
-								for (final IPrep element : f_elements) {
+								setupMonitor.begin(f_parseElements.length
+										+ f_definitionElements.length);
+								for (final IPrep element : f_parseElements) {
+									element.setup(c, start, startNS,
+											scanResults);
+									setupMonitor.worked(1);
+								}
+								for (final IPrep element : f_definitionElements) {
 									element.setup(c, start, startNS,
 											scanResults);
 									setupMonitor.worked(1);
@@ -202,9 +217,30 @@ public final class PrepSLJob extends AbstractSLJob {
 										monitor, "Preparing the raw file",
 										PREP_WORK);
 								prepMonitor.begin(eventsInRawFile);
-								final ScanRawFilePrepScan handler = new ScanRawFilePrepScan(
-										runId, c, prepMonitor, f_elements);
-								saxParser.parse(dataFileStream, handler);
+								final ScanRawFilePrepScan defHandler = new ScanRawFilePrepScan(
+										runId, c, prepMonitor,
+										f_definitionElements);
+								final ScanRawFilePrepScan parseHandler = new ScanRawFilePrepScan(
+										runId, c, prepMonitor, f_parseElements);
+								InputStream dataFileStream = RawFileUtility
+										.getInputStreamFor(f_dataFile);
+								try {
+									saxParser.parse(dataFileStream, defHandler);
+								} finally {
+									dataFileStream.close();
+								}
+								for (final IPrep element : f_definitionElements) {
+									element.flush(runId, scanResults
+											.getEndNanoTime());
+								}
+								dataFileStream = RawFileUtility
+										.getInputStreamFor(f_dataFile);
+								try {
+									saxParser.parse(dataFileStream,
+											parseHandler);
+								} finally {
+									dataFileStream.close();
+								}
 								prepMonitor.done();
 
 								if (monitor.isCanceled()) {
@@ -215,8 +251,8 @@ public final class PrepSLJob extends AbstractSLJob {
 										monitor,
 										"Flushing prepared data into the database",
 										FLUSH_WORK);
-								flushMonitor.begin(f_elements.length);
-								for (final IPrep element : f_elements) {
+								flushMonitor.begin(f_parseElements.length);
+								for (final IPrep element : f_parseElements) {
 									element.flush(runId, scanResults
 											.getEndNanoTime());
 									flushMonitor.worked(1);
@@ -228,7 +264,10 @@ public final class PrepSLJob extends AbstractSLJob {
 								}
 
 								if (SLLogger.getLogger().isLoggable(Level.FINE)) {
-									for (final IPrep element : f_elements) {
+									for (final IPrep element : f_definitionElements) {
+										element.printStats();
+									}
+									for (final IPrep element : f_parseElements) {
 										element.printStats();
 									}
 								}

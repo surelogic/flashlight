@@ -26,7 +26,7 @@ public abstract class TracedEvent extends WithinThreadEvent {
 	protected final void addThread(final StringBuilder b) {
 		super.addThread(b);
 		if (TraceNode.inUse) {
-			Entities.addAttribute(AttributeType.TRACE.label(), trace.getId(), b);
+			Entities.addAttribute(AttributeType.TRACE.label(), getTraceId(), b);
 		}
 	}
 }

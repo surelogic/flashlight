@@ -28,8 +28,8 @@ final class ThreadPhantomReference extends ObjectPhantomReference {
 
 	private static final RefFactory<Thread,ThreadPhantomReference> f_factory = 
 		new RefFactory<Thread,ThreadPhantomReference>() {
-			public ThreadPhantomReference newReference(Thread o, ReferenceQueue q) {
-				return new ThreadPhantomReference(o, q);
+			public ThreadPhantomReference newReference(Thread o, ReferenceQueue q, long id) {
+				return new ThreadPhantomReference(o, q, id);
 			}		
 	};
 
@@ -44,14 +44,14 @@ final class ThreadPhantomReference extends ObjectPhantomReference {
 		return f_threadName;
 	}
 
-	private ThreadPhantomReference(final Thread referent, final ReferenceQueue q) {
-		super(referent, q);
+	private ThreadPhantomReference(final Thread referent, final ReferenceQueue q, long id) {
+		super(referent, q, id);
 		f_threadName = referent.getName();
 	}
 
 	static ThreadPhantomReference getInstance(final Thread c,
-			final ReferenceQueue q) {
-		return getInstance(c, q, f_threadToPhantom, f_factory);
+			final ReferenceQueue q, long id) {
+		return getInstance(c, q, id, f_threadToPhantom, f_factory);
 	}
 
 	@Override

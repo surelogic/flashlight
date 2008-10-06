@@ -2,6 +2,8 @@ package com.surelogic._flashlight.rewriter.runtime;
 
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.surelogic._flashlight.*;
+
 
 /**
  * Instrumentation rewrites all classes that extend from
@@ -12,13 +14,16 @@ import java.util.concurrent.atomic.AtomicLong;
 public class IdObject extends Object {	
 	/**
 	 * Use a thread-safe counter.
+	 * Starting from 1
 	 */
 	private static final AtomicLong f_idCount = new AtomicLong();
 
-	public final long id = f_idCount.incrementAndGet();
+	//public final long id = f_idCount.incrementAndGet();
+	public final ObjectPhantomReference phantom = Store.getObjectPhantom(this, f_idCount.incrementAndGet());
 	
 	public final int identity$HashCode() {
-		return (int) id;
+		return (int) phantom.getId();
+		//return (int) id;
 		//return super.hashCode();
 	}
 	

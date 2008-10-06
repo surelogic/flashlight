@@ -29,7 +29,7 @@ public final class ClassPhantomReference extends IdPhantomReference {
 
 	private static final RefFactory<Class,ClassPhantomReference> f_factory = 
 		new RefFactory<Class,ClassPhantomReference>() {
-			public ClassPhantomReference newReference(Class o, ReferenceQueue q) {
+			public ClassPhantomReference newReference(Class o, ReferenceQueue q, long id) {
 				return new ClassPhantomReference(o, q);
 			}		
 	};
@@ -54,7 +54,7 @@ public final class ClassPhantomReference extends IdPhantomReference {
 
 	static ClassPhantomReference getInstance(final Class c,
 			final ReferenceQueue q) {
-		return getInstance(c, q, f_classToPhantom, f_factory);
+		return getInstance(c, q, Phantom.NO_PREASSIGNED_ID, f_classToPhantom, f_factory);
 	}
 
 	@Override

@@ -12,7 +12,7 @@ import com.surelogic._flashlight.jsr166y.ConcurrentReferenceHashMap.*;
  * @lock ObjectPRInstanceMapLock is f_objectToPhantom protects
  *       ObjectPRInstanceMap
  */
-class ObjectPhantomReference extends IdPhantomReference {
+public class ObjectPhantomReference extends IdPhantomReference {
 	/**
 	 * Map from an {@link Object} to its associated
 	 * {@link ObjectPhantomReference}. The key of this map is not prevented
@@ -28,8 +28,8 @@ class ObjectPhantomReference extends IdPhantomReference {
 
 	private static final RefFactory<Object,ObjectPhantomReference> f_factory = 
 		new RefFactory<Object,ObjectPhantomReference>() {
-			public ObjectPhantomReference newReference(Object o, ReferenceQueue q) {
-				return new ObjectPhantomReference(o, q);
+			public ObjectPhantomReference newReference(Object o, ReferenceQueue q, long id) {
+				return new ObjectPhantomReference(o, q, id);
 			}		
 	};
 	
@@ -63,13 +63,13 @@ class ObjectPhantomReference extends IdPhantomReference {
 	}
 	
 	protected ObjectPhantomReference(final Object referent,
-			final ReferenceQueue q) {
-		super(referent, q);
+			final ReferenceQueue q, long id) {
+		super(referent, q, id);
 		//f_type = ClassPhantomReference.getInstance(referent.getClass(), q);
 	}
 
-	static ObjectPhantomReference getInstance(final Object o, final ReferenceQueue q) {
-		return getInstance(o, q, f_objectToPhantom, f_factory);
+	static ObjectPhantomReference getInstance(final Object o, final long id, final ReferenceQueue q) {
+		return getInstance(o, q, id, f_objectToPhantom, f_factory);
 	}
 
 	@Override

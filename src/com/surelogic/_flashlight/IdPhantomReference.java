@@ -39,7 +39,7 @@ abstract class IdPhantomReference extends PhantomReference {
 	 */
 	//private static final AtomicLong f_phantomCount = new AtomicLong();
 
-	private final long f_id = IdObject.getNewId(); //f_phantomCount.incrementAndGet();
+	private final long f_id;// = IdObject.getNewId(); //f_phantomCount.incrementAndGet();
 	private boolean ignore = false;
 	
 	public long getId() {
@@ -55,7 +55,12 @@ abstract class IdPhantomReference extends PhantomReference {
 	}
 	
 	protected IdPhantomReference(final Object referent, final ReferenceQueue q) {
+		this(referent, q, IdObject.getNewId());
+	}
+	
+	protected IdPhantomReference(final Object referent, final ReferenceQueue q, long id) {
 		super(referent, q);
+		f_id = id;
 	}
 
 	/**
@@ -111,32 +116,46 @@ abstract class IdPhantomReference extends PhantomReference {
 	}
 
 	interface RefFactory<K,V extends IdPhantomReference> {		
-		V newReference(K o, ReferenceQueue q);
+		V newReference(K o, ReferenceQueue q, long id);
 	}
 	
 	static <K,V extends IdPhantomReference> V getInstance(final K o, final ReferenceQueue q,
+			                                       final long id, 
 			                                       final ConcurrentMap<K,V> map,
 			                                       RefFactory<K,V> factory) {
-		V pr                   = map.get(o);
-		boolean phantomExisted = pr != null; 
-		if (!phantomExisted) {
-			V pr2 = factory.newReference(o, q);
-			pr = map.putIfAbsent(o, pr2);			
-			if (pr != null) {
-				// Created an extra phantom, so kill the extra
-				phantomExisted = true;
-				pr2.setToIgnore();
+		boolean phantomExisted;
+        V pr;		
+		if (id != Phantom.NO_PREASSIGNED_ID) {
+			// Must be new
+			phantomExisted = false;
+			pr = factory.newReference(o, q, id);
+		} else {
+			if (o instanceof IdObject) {
+				IdObject ido = (IdObject) o;
+				pr = (V) ido.phantom;
 			} else {
-				/*
+				pr = map.get(o);
+			}
+			phantomExisted = pr != null; 
+			if (!phantomExisted) {
+				V pr2 = factory.newReference(o, q, id);
+				pr = map.putIfAbsent(o, pr2);			
+				if (pr != null) {
+					// Created an extra phantom, so kill the extra
+					phantomExisted = true;
+					pr2.setToIgnore();
+				} else {
+					/*
 				System.out.println(o);
 				System.out.println(map.get(o));
-				*/
-				pr = pr2;
-			}
-			/*
-		} else {
+					 */
+					pr = pr2;
+				}
+				/*
+		    } else {
 		    factory = null;
-		    */
+				 */
+			}
 		}
 		/*
 		 * We want to release the lock before we notify observers because, well,

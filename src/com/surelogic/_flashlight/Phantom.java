@@ -14,7 +14,8 @@ import java.util.Collection;
  */
 // Made public so that instances can be held by the instrumented classfiles
 public final class Phantom {
-
+	static final long NO_PREASSIGNED_ID = -1;
+	
 	private static final ReferenceQueue f_collected = new ReferenceQueue();
 
 	/**
@@ -62,16 +63,20 @@ public final class Phantom {
 	 *             if the predicate <code>(o instanceof Class)</code> is true.
 	 */
 	static ObjectPhantomReference ofObject(final Object o) {
+		return ofObject(o, NO_PREASSIGNED_ID);
+	}
+
+	static ObjectPhantomReference ofObject(final Object o, long id) {
 		assert o != null;
 		if (o instanceof Class)
 			throw new IllegalArgumentException(
 					"the object cannot be an instance of Class");
 		if (o instanceof Thread)
-			return ofThread((Thread) o);
+			return ofThread((Thread) o, id);
 		else
-			return ObjectPhantomReference.getInstance(o, f_collected);
+			return ObjectPhantomReference.getInstance(o, id, f_collected);
 	}
-
+	
 	/**
 	 * Gets the associated thread phantom reference for the passed thread.
 	 * 
@@ -81,7 +86,12 @@ public final class Phantom {
 	 */
 	static ThreadPhantomReference ofThread(final Thread t) {
 		assert t != null;
-		return ThreadPhantomReference.getInstance(t, f_collected);
+		return ThreadPhantomReference.getInstance(t, f_collected, NO_PREASSIGNED_ID);
+	}
+	
+	static ThreadPhantomReference ofThread(final Thread t, long id) {
+		assert t != null;
+		return ThreadPhantomReference.getInstance(t, f_collected, id);
 	}
 
 	/**

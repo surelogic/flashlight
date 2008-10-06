@@ -413,6 +413,10 @@ public final class Store {
 	  return Phantom.ofClass(c);
   }
 	
+  public static ObjectPhantomReference getObjectPhantom(Object o, long id) {
+	  return Phantom.ofObject(o, id);
+  }
+  
   /**
    * Records that a statically numbered instance field was accessed within the
    * instrumented program.

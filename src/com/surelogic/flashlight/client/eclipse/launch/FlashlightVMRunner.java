@@ -164,6 +164,7 @@ final class FlashlightVMRunner implements IVMRunner {
     for (int i = 0; i < classPath.length; i++) {
       final String newEntry = projectEntries.get(classPath[i]);
       if (newEntry != null) newClassPathList.add(newEntry);
+      else newClassPathList.add(classPath[i]);
     }
     
     /* (2) Also add the flashlight jar file to the classpath.

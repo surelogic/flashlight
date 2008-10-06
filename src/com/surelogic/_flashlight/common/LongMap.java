@@ -8,7 +8,7 @@ import java.util.*;
  * @author Edwin.Chan
  */
 public class LongMap<T> { //extends AbstractMap<Long,T> {
-	static abstract class Entry<T> implements Map.Entry<Long,T> {
+	public static abstract class Entry<T> implements Map.Entry<Long,T> {
 		private T value;
 		
 		Entry(T newValue) {
@@ -23,7 +23,7 @@ public class LongMap<T> { //extends AbstractMap<Long,T> {
 			return old;
 		}
 		
-		abstract long key();
+		public abstract long key();
 		
 		public Long getKey() {
 			return key();
@@ -64,7 +64,7 @@ public class LongMap<T> { //extends AbstractMap<Long,T> {
 			this.key = key;
 		}
 		
-		long key() {
+		public long key() {
 			return key;
 		}		
 	}
@@ -77,7 +77,7 @@ public class LongMap<T> { //extends AbstractMap<Long,T> {
 			this.key = key;
 		}
 		
-		long key() {
+		public long key() {
 			return key;
 		}		
 	}
@@ -89,7 +89,7 @@ public class LongMap<T> { //extends AbstractMap<Long,T> {
 			this.key = key;
 		}
 		
-		long key() {
+		public long key() {
 			return key;
 		}		
 	}
@@ -101,7 +101,7 @@ public class LongMap<T> { //extends AbstractMap<Long,T> {
 			this.key = key;
 		}		
 		
-		long key() {
+		public long key() {
 			return key;
 		}	
 	}
@@ -114,7 +114,7 @@ public class LongMap<T> { //extends AbstractMap<Long,T> {
 			this.key = key;
 		}		
 		
-		long key() {
+		public long key() {
 			return key;
 		}	
 	}
@@ -170,10 +170,10 @@ public class LongMap<T> { //extends AbstractMap<Long,T> {
 		return new Iterator<Map.Entry<Long, T>>() {			
 			int index = -1;
 			Entry<T> current = null;
-			boolean valid = false;
+			boolean valid = false; // The current entry/index are good
 
 			private void findNext() {
-				if (!valid) {
+				if (valid || index == BAD_INDEX) {
 					return;
 				}
 				// Try to use the next entry in the chain
@@ -203,6 +203,7 @@ public class LongMap<T> { //extends AbstractMap<Long,T> {
 			    if (!hasNext()) {
 			    	throw new NoSuchElementException();
 			    }
+			    valid = false;
 				return current;
 			}
 
@@ -214,6 +215,9 @@ public class LongMap<T> { //extends AbstractMap<Long,T> {
 	
 	//@Override
 	public Set<Map.Entry<Long, T>> entrySet() {
+		if (size == 0) {
+			return Collections.emptySet();
+		}
 		// FIX to fail fast?
 		return new AbstractSet<Map.Entry<Long, T>>() {
 			@Override

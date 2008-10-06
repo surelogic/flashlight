@@ -44,14 +44,21 @@ class ObjectPhantomReference extends IdPhantomReference {
 	/**
 	 * Mapping from fields to the thread it's used by (or SHARED_FIELD)
 	 */
-	private final IFieldInfo f_info = new ObservedField.FieldInfo() {
-		@Override
-		public ObjectPhantomReference getReceiver() { 
-			return ObjectPhantomReference.this;
-		}
-	};
+	private IFieldInfo f_info = null;
+	
+	private IFieldInfo makeFieldInfo() {
+		return new ObservedField.FieldInfo() {	
+			@Override
+			public ObjectPhantomReference getReceiver() { 
+				return ObjectPhantomReference.this;
+			}
+		};
+	}
 	
 	public IFieldInfo getFieldInfo() {
+		if (f_info == null) {
+			f_info = makeFieldInfo();
+		}
 		return f_info;
 	}
 	

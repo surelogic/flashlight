@@ -509,15 +509,20 @@ public final class Instrument extends Task {
    */
   @Override
   public void execute() throws BuildException {
-    checkParameters();
-    
-    final Configuration config = new Configuration(properties);
-    final AntLogMessenger messenger = new AntLogMessenger();
-    final RewriteManager manager = new AntRewriteManager(config, messenger, new File(fieldsFileName));
-    for (final InstrumentationSubTask subTask : subTasks) {
-      subTask.add(manager);
-    }    
-    manager.execute(onePass);
+	try {
+		checkParameters();
+
+		final Configuration config = new Configuration(properties);
+		final AntLogMessenger messenger = new AntLogMessenger();
+		final RewriteManager manager = new AntRewriteManager(config, messenger, new File(fieldsFileName));
+		for (final InstrumentationSubTask subTask : subTasks) {
+			subTask.add(manager);
+		}    
+		manager.execute(onePass);
+	} catch (Throwable t) {
+		t.printStackTrace();
+		throw new BuildException(t);
+	}
   }
   
   

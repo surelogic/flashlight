@@ -322,9 +322,19 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 		ITraceNode current = null;
 	}
 	
-	synchronized void pruneTree() {
+	void pruneTree() {
+		System.err.println("Pruning ...");
 		// FIX What to do instead?
-		f_calleeNodes = null;
-		f_siblingNodes = null;		
+		synchronized (this) {
+			f_calleeNodes = null;
+			f_siblingNodes = null;
+		}
+		TraceNode here = f_caller;
+		while (here != null) {
+			synchronized (here) {
+				here.f_siblingNodes = null;
+				here = here.f_caller;
+			}
+		}
 	}
 }

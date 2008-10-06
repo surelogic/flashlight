@@ -5,6 +5,8 @@ import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.surelogic._flashlight.common.IdConstants;
+
 /**
  * Takes events from the raw queue, refines them, and then places them on the
  * out queue.
@@ -15,7 +17,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * effort and some events about the field may be output. These events will have
  * to be removed during data prep.
  */
-final class Refinery extends Thread {
+final class Refinery extends AbstractRefinery {
 	private final BlockingQueue<List<Event>> f_rawQueue;
 
 	private final BlockingQueue<List<Event>> f_outQueue;
@@ -25,6 +27,8 @@ final class Refinery extends Thread {
 	 */
 	private final int f_size;
 
+	//private int filtered = 0, total = 0;
+	
 	Refinery(final BlockingQueue<List<Event>> rawQueue,
 			final BlockingQueue<List<Event>> outQueue, final int size) {
 		super("flashlight-refinery");
@@ -45,7 +49,7 @@ final class Refinery extends Thread {
 		
 	@Override
 	public void run() {
-		final boolean filter = true;		
+		final boolean filter = IdConstants.filterEvents;		
 		Store.flashlightThread();
 		System.err.println("Filter events = "+filter);
 
@@ -74,6 +78,7 @@ final class Refinery extends Thread {
 							}
 						}
 					}
+					//total += l.size();
 				}
 				buf.clear();
 
@@ -220,11 +225,19 @@ final class Refinery extends Thread {
 	 *            the set of fields to remove events about.
 	 */
 	private void removeEventsAbout(final Set<SingleThreadedField> fields) {
+		//final int cacheSize = f_eventCache.size();
 		for (Iterator<Event> j = f_eventCache.iterator(); j.hasNext();) {
 			Event e = j.next();
 			if (e instanceof FieldAccess) {
-				if (fields.contains(e))
+				if (fields.contains(e)) {
 					j.remove();
+					/*
+					filtered++;
+					if ((filtered & 0xff) == 0) {
+						System.err.println("Filtered "+filtered+" out of "+total+" ("+cacheSize+")");
+					}
+					*/
+				}
 			}
 		}
 	}

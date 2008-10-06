@@ -178,7 +178,7 @@ public final class Store {
 	/**
 	 * The refinery thread.
 	 */
-	private static final Refinery f_refinery;
+	private static final AbstractRefinery f_refinery;
 
 	/**
 	 * The depository thread.
@@ -334,7 +334,8 @@ public final class Store {
 				f_refinery.start();
 				f_depository = new Depository(f_outQueue, outputStrategy);
 			} else {
-				f_refinery = null;
+				f_refinery = new MinimalRefinery();
+				f_refinery.start();
 				f_depository = new Depository(f_rawQueue, outputStrategy);
 			}
 			f_depository.start();
@@ -1305,8 +1306,13 @@ public final class Store {
 		/*
 		 * Finish up data output.
 		 */
+		putInQueue(f_rawQueue, flushLocalQueues());
 		putInQueue(f_rawQueue, singletonList(FinalEvent.FINAL_EVENT));
-		join(f_refinery);
+		if (IdConstants.useRefinery) {
+			join(f_refinery);
+		} else {
+			f_refinery.requestShutdown();
+		}
 		join(f_depository);
 
 		/*

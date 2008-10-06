@@ -20,6 +20,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.zip.GZIPOutputStream;
 
+import com.surelogic._flashlight.common.IdConstants;
 import com.surelogic._flashlight.trace.TraceNode;
 
 /**
@@ -268,7 +269,7 @@ public final class Store {
 			// still incremented even if logging is off.
 			f_problemCount = new AtomicLong();
 
-			final boolean outputBinary = false;
+			final boolean outputBinary = IdConstants.outputBinary;
 			final boolean compress = !outputBinary;
 			final String extension = outputBinary ? ".flb" : ".fl";
 			File dataFile = new File(fileName.toString() + extension + (compress ? ".gz" : ""));
@@ -301,15 +302,16 @@ public final class Store {
 			//	outputBinary ? new EventVisitor() {} : new OutputStrategyXML(w);
 				outputBinary ? new OutputStrategyBinary(objStream) : new OutputStrategyXML(w);
 				
-			final int rawQueueSize = StoreConfiguration.getRawQueueSize();
-			if (true) {
-				f_rawQueue = new ArrayBlockingQueue<List<Event>>(rawQueueSize);
-			} else {
-				f_rawQueue = new LinkedBlockingQueue<List<Event>>();
-			}
+			final int rawQueueSize = StoreConfiguration.getRawQueueSize();			
+			f_rawQueue = new ArrayBlockingQueue<List<Event>>(rawQueueSize);
 			putInQueue(f_rawQueue, singletonList(timeEvent));
 			final int outQueueSize = StoreConfiguration.getOutQueueSize();
-			f_outQueue = new ArrayBlockingQueue<List<Event>>(outQueueSize);
+			System.err.println("Using refinery = "+IdConstants.useRefinery);
+			if (IdConstants.useRefinery) {
+				f_outQueue = new ArrayBlockingQueue<List<Event>>(outQueueSize);
+			} else {
+				f_outQueue = null;
+			}
 			tl_withinStore = new ThreadLocal<Boolean>() {
 				@Override
 				protected Boolean initialValue() {
@@ -327,9 +329,14 @@ public final class Store {
 						}
 					});
 			final int refinerySize = StoreConfiguration.getRefinerySize();
-			f_refinery = new Refinery(f_rawQueue, f_outQueue, refinerySize);
-			f_refinery.start();
-			f_depository = new Depository(f_outQueue, outputStrategy);
+			if (IdConstants.useRefinery) {
+				f_refinery = new Refinery(f_rawQueue, f_outQueue, refinerySize);
+				f_refinery.start();
+				f_depository = new Depository(f_outQueue, outputStrategy);
+			} else {
+				f_refinery = null;
+				f_depository = new Depository(f_rawQueue, outputStrategy);
+			}
 			f_depository.start();
 			log("collection started (rawQ=" + rawQueueSize + " : refinery="
 					+ refinerySize + " : outQ=" + outQueueSize + ")");

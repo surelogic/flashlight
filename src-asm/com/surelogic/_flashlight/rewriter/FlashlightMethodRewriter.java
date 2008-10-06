@@ -701,37 +701,12 @@ final class FlashlightMethodRewriter extends MethodAdapter {
 
   private void insertClassInitializerCode() {
     // Stack is empty (we are at the beginning of the method!)
-
-    /* Push the Class object.  Use LDC if Java5 or greater; otherwise, use
-     * Class.forName();
+    
+    /* Initialize the flashlight$classObject field.  Do this first so that we
+     * can use it below to initialize the flashlight$withinClass field.  
+     * We only need this field if the classfile version is less than 49.0
+     * (pre-Java 5).
      */
-    if (atLeastJava5) {
-      mv.visitLdcInsn(Type.getType("L"+classBeingAnalyzedInternal+";"));
-      // Class
-    } else {
-      mv.visitLdcInsn(classBeingAnalyzedFullyQualified);
-      // className
-      mv.visitMethodInsn(Opcodes.INVOKESTATIC,
-          FlashlightNames.JAVA_LANG_CLASS,
-          FlashlightNames.FOR_NAME,
-          FlashlightNames.FOR_NAME_SIGNATURE);
-      // Class
-    }
-    // Class
-
-    /* Call Phantom.ofClass() */
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC,
-        config.storeClassName,
-        FlashlightNames.GET_CLASS_PHANTOM,
-        FlashlightNames.GET_CLASS_PHANTOM_SIGNATURE);
-    // ClassPhantomReference
-    
-    /* Set the static field flashlight$withinClass */
-    mv.visitFieldInsn(Opcodes.PUTSTATIC, classBeingAnalyzedInternal,
-        FlashlightNames.FLASHLIGHT_PHANTOM_CLASS_OBJECT,
-        FlashlightNames.FLASHLIGHT_PHANTOM_CLASS_OBJECT_DESC);
-    // empty stack
-    
     if (!atLeastJava5) {
       /* We need to insert the expression "Class.forName(<fully-qualified-class-name>)"
        * into the code, and set the static field flashlight$inClass
@@ -746,8 +721,23 @@ final class FlashlightMethodRewriter extends MethodAdapter {
       mv.visitFieldInsn(Opcodes.PUTSTATIC, classBeingAnalyzedInternal,
           FlashlightNames.FLASHLIGHT_CLASS_OBJECT,
           FlashlightNames.FLASHLIGHT_CLASS_OBJECT_DESC);
-      // empty stack
     }
+    // empty stack
+
+    /*
+     * Set flashlight$withinClass by calling Store.getClassPhantom() 
+     */
+    ByteCodeUtils.pushClass(mv, atLeastJava5, classBeingAnalyzedInternal);
+    // Class
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC,
+        config.storeClassName,
+        FlashlightNames.GET_CLASS_PHANTOM,
+        FlashlightNames.GET_CLASS_PHANTOM_SIGNATURE);
+    // ClassPhantomReference
+    mv.visitFieldInsn(Opcodes.PUTSTATIC, classBeingAnalyzedInternal,
+        FlashlightNames.FLASHLIGHT_PHANTOM_CLASS_OBJECT,
+        FlashlightNames.FLASHLIGHT_PHANTOM_CLASS_OBJECT_DESC);
+    // empty stack
     
     /* Set the static field flashlight$classLoaderInfo */
     ByteCodeUtils.pushClass(mv, atLeastJava5, classBeingAnalyzedInternal);

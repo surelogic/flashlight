@@ -73,7 +73,7 @@ final class ByteCodeUtils {
   }
 
   /**
-   * Generate code to push the Class object the named class.
+   * Generate code to push the Class object of the named class.
    */
   public static void pushClass(
       final MethodVisitor mv, final boolean atLeastJava5, 

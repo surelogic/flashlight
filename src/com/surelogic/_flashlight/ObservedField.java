@@ -260,9 +260,15 @@ abstract class ObservedField {
 		}
 		
 		public void getSingleThreadedFields(Collection<SingleThreadedField> fields) {
-			for(Map.Entry<Long, IdPhantomReference> e : this.entrySet()) {
+			/*
+			Iterator<Map.Entry<Long, IdPhantomReference>> it = this.entrySet().iterator();
+			while (it.hasNext()) {
+				Map.Entry<Long, IdPhantomReference> e = it.next();				 
+				 */
+			for(Map.Entry<Long, IdPhantomReference> me : this.entrySet()) {
+				LongMap.Entry<IdPhantomReference> e = (LongMap.Entry<IdPhantomReference>) me;
 				if (e.getValue() != SHARED_BY_THREADS) {
-					fields.add(ObservedField.getSingleThreadedEventAbout(e.getKey(), getReceiver()));
+					fields.add(ObservedField.getSingleThreadedEventAbout(e.key(), getReceiver()));
 				}
 			}
 		}

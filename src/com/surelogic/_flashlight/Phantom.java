@@ -105,6 +105,14 @@ public final class Phantom {
 		}
 	}
 
+	static IdPhantomReference get() {
+		try {
+			return (IdPhantomReference) f_collected.remove();
+		} catch (InterruptedException e) {
+			return null;
+		}		
+	}
+	
 	private Phantom() {
 		// no instances
 	}

@@ -234,12 +234,15 @@ abstract class ObservedField {
 	
 	private static final IFieldInfo staticInfo = new FieldInfo();
 	
+	//private static int numInfos = 0, numFields = 0;
+	
 	/**
 	 * Mapping from fields to the thread it's used by (or SHARED_FIELD)
 	 */
 	static class FieldInfo extends LongMap<IdPhantomReference> implements IFieldInfo {
 		FieldInfo() {
 			super(2);
+			//numInfos++;
 		}
 		
 		static final IdPhantomReference SHARED_BY_THREADS = Phantom.ofClass(FieldInfo.class);
@@ -252,6 +255,12 @@ abstract class ObservedField {
 			if (lastThread == null) {
 				// First time to see this field: set to the current thread
 				this.put(key, thread);
+				/*
+				numFields++;
+				if ((numFields & 0xfff) == 0) {
+					System.err.println(numFields+" in "+numInfos);
+				}
+				*/
 			}
 			else if (lastThread != thread) {
 				// Set field as shared

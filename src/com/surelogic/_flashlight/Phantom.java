@@ -4,8 +4,6 @@ import java.lang.ref.PhantomReference;
 import java.lang.ref.ReferenceQueue;
 import java.util.Collection;
 
-import com.surelogic._flashlight.common.IdConstants;
-
 /**
  * Maintains a mapping from objects within the program to associated
  * {@link PhantomReference} objects and communicates what objects have been
@@ -17,7 +15,7 @@ import com.surelogic._flashlight.common.IdConstants;
 // Made public so that instances can be held by the instrumented classfiles
 public final class Phantom {
 
-	private static final ReferenceQueue f_collected = IdConstants.useRefinery ? new ReferenceQueue() : null;
+	private static final ReferenceQueue f_collected = new ReferenceQueue();
 
 	/**
 	 * Gets the phantom reference for the passed object.
@@ -96,10 +94,7 @@ public final class Phantom {
 	 *            the collection to transfer elements into.
 	 * @return the number of elements transferred.
 	 */
-	static int drainTo(final Collection<IdPhantomReference> c) {
-		if (f_collected == null) {
-			return 0;
-		}		
+	static int drainTo(final Collection<IdPhantomReference> c) {	
 		int count = 0;
 		while (true) {
 			IdPhantomReference pr = (IdPhantomReference) f_collected.poll();

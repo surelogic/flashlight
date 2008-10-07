@@ -767,13 +767,24 @@ public final class Store {
 			 * Check that the parameters are valid, gather needed information,
 			 * and put an event in the raw queue.
 			 */
-			final Event e;
-			if (before)
-				e = new BeforeTrace(enclosingFileName, enclosingLocationName,
-						withinClass, line, f_rawQueue);
-			else
-				e = new AfterTrace(withinClass, line);
-			putInQueue(f_rawQueue, e);
+			Event e = null;
+			if (before) {
+				if (useTraceNodes) {
+					TraceNode.pushTraceNode(withinClass, line, f_rawQueue);
+				} else {
+					e = new BeforeTrace(enclosingFileName, enclosingLocationName,
+							withinClass, line, f_rawQueue);
+				}
+			} else {	
+				if (useTraceNodes) {
+					TraceNode.popTraceNode(withinClass.getId(), line);
+				} else {
+					e = new AfterTrace(withinClass, line);
+				}
+			}
+			if (!useTraceNodes) {
+				putInQueue(f_rawQueue, e);
+			}
 		} finally {
 			tl_withinStore.set(Boolean.FALSE);
 		}

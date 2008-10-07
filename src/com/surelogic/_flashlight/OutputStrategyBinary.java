@@ -83,15 +83,24 @@ public class OutputStrategyBinary extends EventVisitor {
 	}
 	@Override
 	void visit(AfterUtilConcurrentLockAcquisitionAttempt e) {
-		writeLockEvent(After_UtilConcurrentLockAcquisitionAttempt.getByte(), e);
+		int flag = e.gotTheLock() ? GOT_LOCK.mask() : 0;
+		writeLockEvent(After_UtilConcurrentLockAcquisitionAttempt.getByte(), e, flag);
 	}
 	@Override
 	void visit(AfterUtilConcurrentLockReleaseAttempt e) {
-		writeLockEvent(After_UtilConcurrentLockReleaseAttempt.getByte(), e);
-	}
+		int flag = e.releasedTheLock() ? RELEASED_LOCK.mask() : 0;
+		writeLockEvent(After_UtilConcurrentLockReleaseAttempt.getByte(), e, flag);
+	} 
 	@Override
 	void visit(final BeforeIntrinsicLockAcquisition e) {
-		writeLockEvent(Before_IntrinsicLockAcquisition.getByte(), e);
+		int flags = 0;
+		if (e.isLockThis()) {
+			flags |= THIS_LOCK.mask();
+		}
+		else if (e.isLockClass()) {
+			flags |= CLASS_LOCK.mask();
+		}
+		writeLockEvent(Before_IntrinsicLockAcquisition.getByte(), e, flags);
 	}
 	@Override
 	void visit(final BeforeIntrinsicLockWait e) {
@@ -138,7 +147,10 @@ public class OutputStrategyBinary extends EventVisitor {
 
 	@Override
 	void visit(final FieldReadInstance e) {	
-		writeFieldAccessInstance(FieldRead_Instance.getByte(), e);
+		byte header = e.receiverUnderConstruction() ? 
+				FieldRead_Instance_UnderConstruction.getByte() : 
+				FieldRead_Instance.getByte();
+		writeFieldAccessInstance(header, e);
 	}
 	
 	@Override	
@@ -147,7 +159,10 @@ public class OutputStrategyBinary extends EventVisitor {
 	}
 	@Override
 	void visit(final FieldWriteInstance e) {
-		writeFieldAccessInstance(FieldWrite_Instance.getByte(), e);
+		byte header = e.receiverUnderConstruction() ? 
+				FieldWrite_Instance_UnderConstruction.getByte() : 
+				FieldWrite_Instance.getByte();
+		writeFieldAccessInstance(header, e);
 	}
 	@Override
 	void visit(final FieldWriteStatic e) {
@@ -341,7 +356,7 @@ public class OutputStrategyBinary extends EventVisitor {
 	private void writeFieldAccessInstance(byte header, FieldAccessInstance e) {
 		try {
 			writeFieldAccess_unsafe(header, e);
-			/*fieldBytes +=*/ writeCompressedInt(e.receiverUnderConstruction() ? UNDER_CONSTRUCTION.mask() : 0);
+			/*fieldBytes +=*/ //writeCompressedInt(e.receiverUnderConstruction() ? UNDER_CONSTRUCTION.mask() : 0);
 			/*fieldBytes +=*/ writeCompressedLong(e.getReceiver().getId());
 		} catch (IOException ioe) {
 			handleIOException(ioe);
@@ -352,12 +367,15 @@ public class OutputStrategyBinary extends EventVisitor {
 		try {
 			writeTracedEvent(header, e);
 			writeCompressedLong(e.getLockObject().getId());
-			/* FIX
-			 readFlag(flags, THIS_LOCK, attrs);
-		     readFlag(flags, CLASS_LOCK, attrs);
-		     readFlag(flags, RELEASED_LOCK, attrs);
-		     readFlag(flags, GOT_LOCK, attrs);
-			 */
+		} catch (IOException ioe) {
+			handleIOException(ioe);
+		}
+	}
+	
+	private void writeLockEvent(byte header, Lock e, int flags) {
+		try {
+			writeLockEvent(header, e);
+			writeCompressedInt(flags);
 		} catch (IOException ioe) {
 			handleIOException(ioe);
 		}

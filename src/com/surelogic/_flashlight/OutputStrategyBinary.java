@@ -23,6 +23,7 @@ public class OutputStrategyBinary extends EventVisitor {
 	private int commonBytes = 0;
 	private int tracedBytes = 0;
 	private int fieldBytes = 0;
+	private int totalInts = 0, compressedInts = 0;
 	*/
 	
 	public OutputStrategyBinary(ObjectOutputStream stream) {
@@ -406,6 +407,14 @@ public class OutputStrategyBinary extends EventVisitor {
 			}
 		}		
 		f_out.write(buf, 0, len);
+		/*
+		totalInts += len;
+		compressedInts += (4-len);
+		if (totalInts > 10000000) {
+			System.err.println("Total ints = "+totalInts);
+			System.err.println("Compressed = "+compressedInts);
+		}
+		*/
 		return len;
 	}
 	
@@ -439,6 +448,8 @@ public class OutputStrategyBinary extends EventVisitor {
 		} else {
 			return writeCompressedLong(l);
 		}
+		//totalInts += len;
+		//compressedInts += (8-len);
 		return len;
 	}
 	
@@ -483,6 +494,8 @@ public class OutputStrategyBinary extends EventVisitor {
 			buf[0] = (byte) (len-1);
 		}
 		f_out.write(buf, 0, len);
+		//totalInts += len;
+		//compressedInts += (8-len); 		
 		return len;
 	}
 }

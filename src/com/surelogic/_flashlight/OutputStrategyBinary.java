@@ -19,8 +19,12 @@ public class OutputStrategyBinary extends EventVisitor {
 	/*
 	private final int[] counts = new int[EventType.NumEvents];
 	private int total = 0;
-    */	
-
+	private int traceBytes = 0;
+	private int commonBytes = 0;
+	private int tracedBytes = 0;
+	private int fieldBytes = 0;
+	*/
+	
 	public OutputStrategyBinary(ObjectOutputStream stream) {
 		f_out = stream;
 		try {
@@ -240,11 +244,13 @@ public class OutputStrategyBinary extends EventVisitor {
 	@Override
 	public void visit(final TraceNode e) {
         try {
+        	int bytes = 1;
             writeHeader(Trace_Node.getByte());
-            writeCompressedLong(e.getId());    
-            writeCompressedLong(e.getParentId());             
-            writeCompressedLong(e.getWithinClassId());
-            writeCompressedInt(e.getLine());
+            bytes += writeCompressedLong(e.getId());    
+            bytes += writeCompressedLong(e.getParentId());             
+            bytes += writeCompressedLong(e.getWithinClassId());
+            bytes += writeCompressedInt(e.getLine());
+            //traceBytes += bytes;
         } catch (IOException ioe) {
             handleIOException(ioe);
         }   
@@ -258,7 +264,7 @@ public class OutputStrategyBinary extends EventVisitor {
 		/*
 		counts[header]++;
 		total++;
-		if ((total & 0xffffff) == 0) {
+		if ((total & 0xfffff) == 0) {
 			System.err.println("Total events = "+total);
 			for(int i=0; i<counts.length; i++) {
 				int count = counts[i];
@@ -267,6 +273,10 @@ public class OutputStrategyBinary extends EventVisitor {
 				}
 				System.err.println("\t"+EventType.getEvent(i)+" = "+count);
 			}
+			System.err.println("Trace  bytes = "+traceBytes);
+			System.err.println("Common bytes = "+commonBytes);		
+			System.err.println("Traced bytes = "+tracedBytes);
+			System.err.println("Field bytes  = "+fieldBytes);
 		}
 		*/
 		f_out.writeByte(header);
@@ -297,24 +307,26 @@ public class OutputStrategyBinary extends EventVisitor {
 	}
 	
 	private void writeCommon(byte header, WithinThreadEvent e) throws IOException {
+		int bytes = 9; // header, time
 		writeHeader(header);
 		if (debug) System.out.println("\tTime: "+e.getNanoTime());
 		f_out.writeLong(e.getNanoTime());		
-		writeCompressedLong(e.getWithinThread().getId());
-		writeCompressedLong(e.getWithinClassId());
-		writeCompressedInt(e.getLine());
+		bytes += writeCompressedLong(e.getWithinThread().getId());
+		bytes += writeCompressedLong(e.getWithinClassId());
+		bytes += writeCompressedInt(e.getLine());
+		//commonBytes += bytes;
 	}
 	
 	private void writeTracedEvent(byte header, TracedEvent e)  throws IOException {
 		writeCommon(header, e);
 		if (TraceNode.inUse) {
-			writeCompressedLong(e.getTraceId());
+			/*tracedBytes +=*/ writeCompressedLong(e.getTraceId());
 		}
 	}
 	
 	private void writeFieldAccess_unsafe(byte header, FieldAccess e) throws IOException {
 		writeTracedEvent(header, e);
-		writeCompressedMaybeNegativeLong(e.getFieldId());
+		/*fieldBytes +=*/ writeCompressedMaybeNegativeLong(e.getFieldId());
 	}
 	
 	private void writeFieldAccess(byte header, FieldAccess e)  {
@@ -328,8 +340,8 @@ public class OutputStrategyBinary extends EventVisitor {
 	private void writeFieldAccessInstance(byte header, FieldAccessInstance e) {
 		try {
 			writeFieldAccess_unsafe(header, e);
-			writeCompressedInt(e.receiverUnderConstruction() ? UNDER_CONSTRUCTION.mask() : 0);
-			writeCompressedLong(e.getReceiver().getId());
+			/*fieldBytes +=*/ writeCompressedInt(e.receiverUnderConstruction() ? UNDER_CONSTRUCTION.mask() : 0);
+			/*fieldBytes +=*/ writeCompressedLong(e.getReceiver().getId());
 		} catch (IOException ioe) {
 			handleIOException(ioe);
 		}
@@ -362,7 +374,7 @@ public class OutputStrategyBinary extends EventVisitor {
 		e.printStackTrace();
 	}
 	
-	private void writeCompressedInt(int i) throws IOException {
+	private int writeCompressedInt(int i) throws IOException {
 		if (debug) System.out.println("\tInt: "+i);
 		final int len;
 		buf[1] = (byte) i;
@@ -394,12 +406,12 @@ public class OutputStrategyBinary extends EventVisitor {
 			}
 		}		
 		f_out.write(buf, 0, len);
+		return len;
 	}
 	
-	private void writeCompressedMaybeNegativeLong(long l) throws IOException {
+	private int writeCompressedMaybeNegativeLong(long l) throws IOException {
 		if (l >= 0) {
-			writeCompressedLong(l);
-			return;
+			return writeCompressedLong(l);
 		}
 		final int len;
 		long mask = ~0xffffffffL;
@@ -425,18 +437,18 @@ public class OutputStrategyBinary extends EventVisitor {
 			}
 			f_out.write(buf, 0, len);
 		} else {
-			writeCompressedLong(l);
+			return writeCompressedLong(l);
 		}
+		return len;
 	}
 	
-	private void writeCompressedLong(long l) throws IOException {
+	private int writeCompressedLong(long l) throws IOException {
 		final byte len;		
 		long mask   = 0xffffffffL;
 		long masked = l & mask;
 		if (l == masked) {
 			// top 4 bytes are all zeroes
-			writeCompressedInt((int) l);
-			return;
+			return writeCompressedInt((int) l);
 		} 
 		else {
 			if (debug) System.out.println("\tLong: "+l);
@@ -471,5 +483,6 @@ public class OutputStrategyBinary extends EventVisitor {
 			buf[0] = (byte) (len-1);
 		}
 		f_out.write(buf, 0, len);
+		return len;
 	}
 }

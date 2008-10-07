@@ -1,6 +1,8 @@
 package com.surelogic._flashlight.common;
 
 public final class IdConstants {
+	public static final boolean useTraces = true;
+	public static final boolean useFieldAccesses = true;
 	public static final boolean outputBinary = false;
 	public static final boolean useTraceNodes = false;
 	public static final boolean keepLocationInTracedEvents = true;

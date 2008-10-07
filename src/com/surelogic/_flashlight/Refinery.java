@@ -172,7 +172,6 @@ final class Refinery extends AbstractRefinery {
 				if (filter) {
 					deadFields = removeThreadLocalFieldsWithin(deadFields, pr);
 				}
-				UnderConstruction.remove(pr);
 				UtilConcurrent.remove(pr);
 				f_eventCache.add(new GarbageCollectedObject(pr));
 			}

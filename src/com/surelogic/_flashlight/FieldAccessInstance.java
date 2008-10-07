@@ -18,7 +18,7 @@ abstract class FieldAccessInstance extends FieldAccess {
 			final ClassPhantomReference withinClass, final int line) {
 		super(field, withinClass, line);
 		f_receiver = Phantom.ofObject(receiver);
-		f_receiverUnderConstruction = UnderConstruction.contains(f_receiver);
+		f_receiverUnderConstruction = f_receiver.isUnderConstruction();
 	}
 
 	protected final void addReceiver(final StringBuilder b) {

@@ -827,10 +827,7 @@ public final class Store {
 						safeToString(receiver), SrcLoc.toString(withinClass, line)));
 			} else {
 				final ObjectPhantomReference p = Phantom.ofObject(receiver);
-				if (before)
-					UnderConstruction.add(p);
-				else
-					UnderConstruction.remove(p);
+				p.setUnderConstruction(before);
 			}
 		} finally {
 			tl_withinStore.set(Boolean.FALSE);

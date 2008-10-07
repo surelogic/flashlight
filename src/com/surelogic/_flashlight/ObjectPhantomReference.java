@@ -39,8 +39,10 @@ public class ObjectPhantomReference extends IdPhantomReference {
 	ClassPhantomReference getType() {
 		return f_type;
 	}
-	*/
-
+	*/	
+	
+	private boolean underConstruction = false;
+	
 	/**
 	 * Mapping from fields to the thread it's used by (or SHARED_FIELD)
 	 */
@@ -90,5 +92,13 @@ public class ObjectPhantomReference extends IdPhantomReference {
 			info.clear();
 		}
 		return fields;
+	}
+
+	synchronized boolean isUnderConstruction() {
+		return underConstruction;
+	}
+
+	synchronized void setUnderConstruction(boolean constructing) {
+		underConstruction = constructing;
 	}
 }

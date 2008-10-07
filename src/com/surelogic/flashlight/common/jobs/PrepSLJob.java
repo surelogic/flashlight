@@ -2,9 +2,12 @@ package com.surelogic.flashlight.common.jobs;
 
 import java.io.File;
 import java.io.InputStream;
+import java.net.URL;
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.util.List;
 import java.util.logging.Level;
 
 import javax.xml.parsers.SAXParser;
@@ -59,8 +62,8 @@ public final class PrepSLJob extends AbstractSLJob {
 	private static final int SETUP_WORK = 10;
 	private static final int PREP_WORK = 200;
 	private static final int FLUSH_WORK = 10;
-	private static final int EACH_POST_PREP = 30;
-	private static final int ADD_CONSTRAINT_WORK = 30;
+	private static final int EACH_POST_PREP = 50;
+	private static final int ADD_CONSTRAINT_WORK = 100;
 
 	private IPrep[] getDefinitionHandlers(
 			final IntrinsicLockDurationRowInserter i,
@@ -157,14 +160,16 @@ public final class PrepSLJob extends AbstractSLJob {
 				if (monitor.isCanceled()) {
 					return SLStatus.CANCEL_STATUS;
 				}
-
+				/*
+				 * Drop the database constraints.
+				 */
 				f_database.withTransaction(new NullDBTransaction() {
 
 					@Override
 					public void doPerform(final Connection conn)
 							throws Exception {
 						final SLProgressMonitor dropConstraintWork = new SubSLProgressMonitor(
-								monitor, "Dropping constraints",
+								monitor, "Removing indexes",
 								DROP_CONSTRAINT_WORK);
 						dropConstraintWork.begin();
 						final Statement dropSt = conn.createStatement();
@@ -338,21 +343,34 @@ public final class PrepSLJob extends AbstractSLJob {
 								}
 							});
 				} finally {
+					/*
+					 * Restore the database constraints.
+					 */
 					f_database.withTransaction(new NullDBTransaction() {
 
 						@Override
 						public void doPerform(final Connection conn)
 								throws Exception {
 							final SLProgressMonitor constraintMonitor = new SubSLProgressMonitor(
-									monitor,
-									"Flushing prepared data into the database",
+									monitor, "Generating indexes",
 									ADD_CONSTRAINT_WORK);
-							constraintMonitor.begin();
+							final URL script = f_database.getSchemaLoader()
+									.getSchemaResource("add_constraints.sql");
+							final List<StringBuilder> statements = SchemaUtility
+									.getSQLStatements(script);
+							constraintMonitor.begin(statements.size());
 							final Statement addSt = conn.createStatement();
 							try {
-								SchemaUtility.runScript(f_database
-										.getSchemaLoader().getSchemaResource(
-												"add_constraints.sql"), addSt);
+								for (final StringBuilder statement : statements) {
+									try {
+										addSt.execute(statement.toString());
+									} catch (final SQLException e) {
+										throw new IllegalStateException(I18N
+												.err(12, statement.toString(),
+														script), e);
+									}
+									constraintMonitor.worked(1);
+								}
 							} finally {
 								addSt.close();
 							}

@@ -11,7 +11,7 @@ import com.surelogic._flashlight.jsr166y.ConcurrentReferenceHashMap.*;
  * @lock ThreadPRInstanceMapLock is f_threadToPhantom protects
  *       ThreadPRInstanceMap
  */
-final class ThreadPhantomReference extends ObjectPhantomReference {
+public final class ThreadPhantomReference extends ObjectPhantomReference {
 
 	/**
 	 * Map from a {@link Thread} instance to its associated

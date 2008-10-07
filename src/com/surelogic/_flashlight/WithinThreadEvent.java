@@ -8,6 +8,7 @@ package com.surelogic._flashlight;
  * Intended to be subclassed for each specific type of event that can occur.
  */
 abstract class WithinThreadEvent extends ProgramEvent {
+	/*
 	private static final ThreadLocal<ThreadPhantomReference> f_threads = 
 		new ThreadLocal<ThreadPhantomReference>() {
 		@Override
@@ -15,6 +16,7 @@ abstract class WithinThreadEvent extends ProgramEvent {
 			return  Phantom.ofThread(Thread.currentThread());
 		}
 	};
+	*/
 	
 	/**
 	 * The value of <code>System.nanoTime()</code> when this event was
@@ -33,7 +35,7 @@ abstract class WithinThreadEvent extends ProgramEvent {
 	/**
 	 * An identity for the thread this event occurred within.
 	 */
-	private final ThreadPhantomReference f_withinThread = f_threads.get();
+	private final ThreadPhantomReference f_withinThread;// = f_threads.get();
 	//private final ThreadPhantomReference f_withinThread = Phantom.ofThread(Thread.currentThread());
 	
 	IdPhantomReference getWithinThread() {
@@ -55,9 +57,11 @@ abstract class WithinThreadEvent extends ProgramEvent {
 		return f_withinClass.getId();
 	}
 	
-	WithinThreadEvent(final ClassPhantomReference withinClass, final int line) {
+	WithinThreadEvent(final ClassPhantomReference withinClass, final int line,
+			          ThreadPhantomReference thread) {
 		f_withinClass = withinClass;
 		f_line = line;
+		f_withinThread = thread;
 	}
 
 	protected void addThread(final StringBuilder b) {

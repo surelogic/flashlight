@@ -204,7 +204,6 @@ public final class Store {
 	 */
 	private final static ThreadLocal<Boolean> tl_withinStore;
 	
-	private static final boolean useTraces = true;
 	private static final boolean useTraceNodes = TraceNode.inUse;
 
 	/**
@@ -746,7 +745,7 @@ public final class Store {
 	public static void constructorCall(final boolean before,
 			final String enclosingFileName, final String enclosingLocationName,
 			ClassPhantomReference withinClass, final int line) {
-		if (!useTraces) {
+		if (!IdConstants.useTraces) {
 			return;
 		}
 		
@@ -875,7 +874,7 @@ public final class Store {
 	public static void methodCall(final boolean before, final Object receiver,
 			final String enclosingFileName, final String enclosingLocationName,
 			ClassPhantomReference withinClass, final int line) {
-		if (!useTraces) {
+		if (!IdConstants.useTraces) {
 			return;
 		}
 		

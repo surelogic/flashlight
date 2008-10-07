@@ -1,5 +1,7 @@
 package com.surelogic._flashlight;
 
+import com.surelogic._flashlight.trace.TraceNode;
+
 abstract class FieldAccess extends TracedEvent {
 
 	private final long f_fieldId;
@@ -9,7 +11,7 @@ abstract class FieldAccess extends TracedEvent {
 	}
 	
 	FieldAccess(final long fieldId, final ClassPhantomReference withinClass, final int line) {
-		super(withinClass, line);
+		super(withinClass, line, TraceNode.getThreadState());
 		f_fieldId = fieldId;
 	}
 

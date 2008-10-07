@@ -211,16 +211,11 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 	
 	public static TraceNode getCurrentNode() {
 		final Header header     = currentNode.get();
-		final ITraceNode current = header.current;
-		if (current == null) {
-			return null;
-		}
-		TraceNode real = current.getNode(); 
-		if (real != current) {
-			// Remove placeholders if there are any
-			header.current = real;
-		}
-		return real;
+		return header.getCurrentNode();
+	}
+	
+	public static IThreadState getThreadState() {
+		return currentNode.get();
 	}
 	
 	/*
@@ -317,9 +312,27 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 	/**
 	 * Helps to keep stats, as well as avoid calls to ThreadLocal.set()
 	 */	
-	static class Header {
+	static class Header implements IThreadState {
+		final ThreadPhantomReference thread = Phantom.ofThread(Thread.currentThread());
 		int count = 0;
 		ITraceNode current = null;
+		
+		public ThreadPhantomReference getThread() {
+			return thread;
+		}
+		
+		public TraceNode getCurrentNode() {
+			final ITraceNode current = this.current;
+			if (current == null) {
+				return null;
+			}
+			TraceNode real = current.getNode(); 
+			if (real != current) {
+				// Remove placeholders if there are any
+				this.current = real;
+			}
+			return real;
+		}
 	}
 	
 	void pruneTree() {

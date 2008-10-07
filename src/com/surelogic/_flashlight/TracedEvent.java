@@ -1,13 +1,15 @@
 package com.surelogic._flashlight;
 
 import com.surelogic._flashlight.common.AttributeType;
+import com.surelogic._flashlight.trace.IThreadState;
 import com.surelogic._flashlight.trace.TraceNode;
 
 public abstract class TracedEvent extends WithinThreadEvent {
-	private final TraceNode trace = TraceNode.getCurrentNode();
+	private final TraceNode trace; // = TraceNode.getCurrentNode();
 	
-	TracedEvent(final ClassPhantomReference withinClass, final int line) {
-		super(withinClass, line);
+	TracedEvent(final ClassPhantomReference withinClass, final int line,
+			    final IThreadState state) {		
+		super(withinClass, line, state.getThread());
 		/*
 		if (trace == null) {
 			System.out.println("??? -> "+withinClass.getName()+":"+line);		
@@ -16,6 +18,7 @@ public abstract class TracedEvent extends WithinThreadEvent {
 					           withinClass.getName()+":"+line);		 
 		}
 		*/
+		trace = state.getCurrentNode();
 	}
 	
 	long getTraceId() {

@@ -84,7 +84,7 @@ public final class Phantom {
 	 *            the non-null thread.
 	 * @return the thread's phantom reference.
 	 */
-	static ThreadPhantomReference ofThread(final Thread t) {
+	public static ThreadPhantomReference ofThread(final Thread t) {
 		assert t != null;
 		return ThreadPhantomReference.getInstance(t, f_collected, NO_PREASSIGNED_ID);
 	}

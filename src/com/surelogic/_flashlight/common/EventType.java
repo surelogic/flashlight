@@ -35,18 +35,25 @@ public enum EventType {
 		@Override
 		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
 			readLockEvent(in, attrs);
+			final int flags = readCompressedInt(in);
+			readFlag(flags, GOT_LOCK, attrs);	
 		}
 	},
 	After_UtilConcurrentLockReleaseAttempt("after-util-concurrent-lock-release-attempt") {
 		@Override
 		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
 			readLockEvent(in, attrs);
+			final int flags = readCompressedInt(in);
+			readFlag(flags, RELEASED_LOCK, attrs);	
 		}
 	},
 	Before_IntrinsicLockAcquisition("before-intrinsic-lock-acquisition") {
 		@Override
 		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
 			readLockEvent(in, attrs);
+			final int flags = readCompressedInt(in);
+			readFlag(flags, THIS_LOCK, attrs);	
+			readFlag(flags, CLASS_LOCK, attrs);
 		}
 	},
 	Before_IntrinsicLockWait("before-intrinsic-lock-wait") {
@@ -109,6 +116,13 @@ public enum EventType {
 			readFieldAccessInstance(in, attrs);
 		}
 	},	
+	FieldRead_Instance_UnderConstruction("field-read") {
+		@Override
+		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+			readFieldAccessInstance(in, attrs);
+			attrs.put(UNDER_CONSTRUCTION, Boolean.TRUE);
+		}
+	},
 	FieldRead_Static("field-read") {
 		@Override
 		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
@@ -119,6 +133,13 @@ public enum EventType {
 		@Override
 		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
 			readFieldAccessInstance(in, attrs);
+		}
+	},
+	FieldWrite_Instance_UnderConstruction("field-write") {
+		@Override
+		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+			readFieldAccessInstance(in, attrs);
+			attrs.put(UNDER_CONSTRUCTION, Boolean.TRUE);
 		}
 	},
 	FieldWrite_Static("field-write") {
@@ -258,21 +279,16 @@ public enum EventType {
 	
 	static void readFieldAccessInstance(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
 		readFieldAccess(in, attrs);
+		/*
 		final int flags = readCompressedInt(in);
 		readFlag(flags, UNDER_CONSTRUCTION, attrs);
+		*/
 		attrs.put(RECEIVER, readCompressedLong(in));
 	}
 	
 	static void readLockEvent(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
 		readTracedEvent(in, attrs);
 		attrs.put(LOCK, readCompressedLong(in));
-		/*
-		final int flags = in.readInt();
-		readFlag(flags, THIS_LOCK, attrs);
-		readFlag(flags, CLASS_LOCK, attrs);
-		readFlag(flags, RELEASED_LOCK, attrs);
-		readFlag(flags, GOT_LOCK, attrs);
-		*/
 	}
 	
 	static void readTraceEvent(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {

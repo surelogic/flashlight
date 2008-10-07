@@ -142,6 +142,7 @@ abstract class IdPhantomReference extends PhantomReference {
 					System.err.println(idLookups+" IdObject lookups of "+total);
 				}
                 */
+				return pr;
 			} else {
 				pr = map.get(o);
 			}

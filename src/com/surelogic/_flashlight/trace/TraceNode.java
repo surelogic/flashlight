@@ -10,7 +10,14 @@ import com.surelogic._flashlight.common.IdConstants;
 public abstract class TraceNode extends AbstractCallLocation implements ITraceNode {	
 	public static final boolean inUse = IdConstants.useTraceNodes;
 	static final boolean recordOnPush = false;
-	private static final AtomicLong nextId = new AtomicLong(1); // 0 is for no parent (null)
+	
+	/**
+	 * This represents the top 48 bits of the id
+	 */
+	private static final AtomicLong nextSequenceId = new AtomicLong(0); 
+	private static final int SEQUENCE_SHIFT = 16;
+	private static final int SEQUENCE_MASK  = (1 << SEQUENCE_SHIFT) - 1;
+	
 	private static final ThreadLocal<Header> currentNode = new ThreadLocal<Header>() {
 		@Override
 		protected Header initialValue() {
@@ -89,8 +96,9 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 		}
 	}
 	
-	private static TraceNode newTraceNode(final TraceNode caller, ClassPhantomReference inClass, int line) {
-		final long id  = nextId.getAndIncrement();
+	private static TraceNode newTraceNode(final Header header, final TraceNode caller, 
+			                              ClassPhantomReference inClass, int line) {
+		final long id  = header.getNextId();
 		final int cast = (int) id;
 		if (cast == id) {
 			return new IntVersion(caller, inClass, line, cast);
@@ -98,9 +106,10 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 		return new LongVersion(caller, inClass, line, id);
 	}
 	
-	static TraceNode newTraceNode(final TraceNode caller, ClassPhantomReference inClass, int line, 
+	static TraceNode newTraceNode(final Header header, final TraceNode caller, 
+			                      ClassPhantomReference inClass, int line, 
 			                      BlockingQueue<List<Event>> queue) {
-		TraceNode callee = newTraceNode(caller, inClass, line);
+		TraceNode callee = newTraceNode(header, caller, inClass, line);
 		TraceNode firstCallee;				
 		if (caller != null) {
 			// Insert into caller
@@ -156,7 +165,7 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 			if (callee == null) {
 				// Try to insert a new TraceNode
 				callee = recordOnPush ? 
-						 newTraceNode(caller.getNode(), inClass, line, queue) : key;
+						 newTraceNode(header, caller.getNode(header), inClass, line, queue) : key;
 			}
 		} else {			
 			// No caller yet
@@ -164,7 +173,7 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 				callee  = roots.get(key);				
 			    if (callee == null) {
 					callee = recordOnPush ? 
-							 newTraceNode(null, inClass, line, queue) : key;		
+							 newTraceNode(header, null, inClass, line, queue) : key;		
 			    }
 			}
 		}		
@@ -246,7 +255,7 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 		return f_caller;
 	}
 	
-	public TraceNode getNode() {
+	public TraceNode getNode(Header header) {
 		return this;
 	}
 	
@@ -309,24 +318,48 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 		return null;
 	}
 	
+	static long getFirstIdInSequence() {
+		long top48 = nextSequenceId.getAndIncrement();
+		long id;
+		if (top48 == 0) {
+			id = 1; // 0 is for no parent (null)
+		} else {
+			id = top48 << SEQUENCE_SHIFT;
+		}
+		return id;
+	}
+	
 	/**
+	 * A thread-local class
 	 * Helps to keep stats, as well as avoid calls to ThreadLocal.set()
 	 */	
 	static class Header implements IThreadState {
 		final ThreadPhantomReference thread = Phantom.ofThread(Thread.currentThread());
 		int count = 0;
+		long nextId = getFirstIdInSequence(); 
 		ITraceNode current = null;
 		
 		public ThreadPhantomReference getThread() {
 			return thread;
 		}
 		
+		long getNextId() {
+			long id = nextId;
+			if ((id & SEQUENCE_MASK) == SEQUENCE_MASK) { 
+				// last id in sequence
+				nextId = getFirstIdInSequence();
+			} else {
+				nextId++;
+			}
+			return id;
+		}
+
 		public TraceNode getCurrentNode() {
 			final ITraceNode current = this.current;
 			if (current == null) {
 				return null;
 			}
-			TraceNode real = current.getNode(); 
+			TraceNode real = current.getNode(this); 
 			if (real != current) {
 				// Remove placeholders if there are any
 				this.current = real;

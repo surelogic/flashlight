@@ -7,9 +7,9 @@ import com.surelogic._flashlight.ICallLocation;
  * 
  * @author Edwin.Chan
  */
-public interface ITraceNode extends ICallLocation {
+interface ITraceNode extends ICallLocation {
 	ITraceNode getParent();
-	TraceNode getNode();
+	TraceNode getNode(TraceNode.Header header);
 	ITraceNode getCallee(ICallLocation key);
 	//int getAndClearUnpropagated();
 	//int addToUnpropagated(int count);

@@ -13,13 +13,13 @@ public class Placeholder implements ITraceNode {
 		f_caller = caller;
 	}
 	
-	public TraceNode getNode() {
+	public TraceNode getNode(TraceNode.Header header) {
 		// First, try to see if I've cached a matching TraceNode
 		TraceNode caller;
 		ITraceNode callee;
 		if (f_caller != null) {			
 			// There's already a caller
-			caller = f_caller.getNode();			
+			caller = f_caller.getNode(header);			
 			callee = caller.getCallee(this);
 		} else {
 			// No caller yet
@@ -29,9 +29,9 @@ public class Placeholder implements ITraceNode {
 			}
 		}
 		if (callee != null) {
-			return callee.getNode();
+			return callee.getNode(header);
 		}		
-		return TraceNode.newTraceNode(caller, f_class, f_line, Store.getRawQueue());
+		return TraceNode.newTraceNode(header, caller, f_class, f_line, Store.getRawQueue());
 	}
 	
 	public ITraceNode getCallee(ICallLocation key) {

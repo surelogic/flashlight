@@ -448,13 +448,25 @@ public class OutputStrategyBinary extends EventVisitor {
 			buf[6] = (byte) (l >>> 40);
 			
 			if (l == (l & 0xffffffffffffL)) {
-				// Need only bottom 6 bytes
-				len = 7;
+				// Need at most bottom 6 bytes
+				if (l == (l & 0xffffffffffL)) {
+					// Need only bottom 5 bytes
+					len = 6;
+				} else {
+					// Need only bottom 6 bytes
+					len = 7;
+				}
 			}
 			else {
-				len = 9;
+				// Need at least bottom 7 bytes
 				buf[7] = (byte) (l >>> 48);
-				buf[8] = (byte) (l >>> 56);
+				if (l == (l & 0xffffffffffffffL)) {
+					// Need only bottom 7 bytes
+					len = 8;
+				} else {
+					len = 9;
+					buf[8] = (byte) (l >>> 56);
+				}
 			}
 			buf[0] = (byte) (len-1);
 		}

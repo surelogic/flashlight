@@ -208,7 +208,7 @@ public enum EventType {
 	    }
 	}
 	;
-	
+	public static final int NumEvents = values().length;
 	private static final byte[] buf = new byte[9];
 	private final String label;
 	

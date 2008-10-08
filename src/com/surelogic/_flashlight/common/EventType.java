@@ -215,8 +215,14 @@ public enum EventType {
 	Time_Event("time") {
 		@Override
 		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
-			attrs.put(TIME, in.readLong());
+			Long time = in.readLong();
+			attrs.put(TIME, time);
+			attrs.put(START_TIME, time);
 			attrs.put(WALL_CLOCK, in.readUTF());
+		}
+		@Override
+		IAttributeType getPersistentAttribute() {
+			return START_TIME;
 		}
 	},
 	Trace_Node("trace-node") {
@@ -373,4 +379,7 @@ public enum EventType {
 		return contents;
 	}
 	
+	IAttributeType getPersistentAttribute() {
+		return null;
+	}	
 }

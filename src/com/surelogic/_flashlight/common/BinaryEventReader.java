@@ -23,7 +23,7 @@ public class BinaryEventReader extends SAXParser {
 			if (debug) System.out.println("Got event: "+name);
 			attrs.readAttributes(oin, event); 
 			handler.startElement(null, name, name, attrs);
-			attrs.clear();
+			attrs.reset(event);
 			handler.endElement(null, name, name);		
 		}
 		handler.endDocument();

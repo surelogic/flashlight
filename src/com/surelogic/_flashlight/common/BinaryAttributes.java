@@ -9,6 +9,7 @@ public class BinaryAttributes extends HashMap<IAttributeType,Object> implements 
 	private static final long serialVersionUID = -236988557562438004L;	
 	static final boolean debug = BinaryEventReader.debug;
 	
+	private final Map<IAttributeType,Object> persistent = new HashMap<IAttributeType,Object>(4);
 	/*
 	BinaryAttributes() {
 		super(IAttributeType.comparator);
@@ -164,5 +165,22 @@ public class BinaryAttributes extends HashMap<IAttributeType,Object> implements 
 			}
 			return false;
 		}
+	}
+
+	/**
+	 * Like clear(), but also re-initializes certain attributes
+	 * that are marked as 'persistent'
+	 */
+	public void reset(EventType event) {
+		// Save attributes that the event marks as persistent
+		final IAttributeType attr = event.getPersistentAttribute();
+		if (attr != null) {
+			persistent.put(attr, this.get(attr));
+		}
+		// Clear the rest
+		clear();
+
+		// Reinit persistent attributes
+		putAll(persistent);
 	}
 }

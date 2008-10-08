@@ -28,7 +28,6 @@ final class FlashlightDBConnection extends DerbyConnection {
 		return "FLASHLIGHT";
 	}
 
-	@Override
 	public SchemaData getSchemaLoader() {
 		return new FlashlightSchemaData();
 	}

@@ -41,6 +41,8 @@ public final class Instrument extends Task {
   
   private String fieldsFileName = null;
   
+  private String sitesFileName = null;
+  
   private boolean onePass = false;
   
   
@@ -385,6 +387,10 @@ public final class Instrument extends Task {
     fieldsFileName = fileName;
   }
   
+  public void setSitesfile(final String fileName) {
+    sitesFileName = fileName;
+  }
+  
   
   /**
    * Accept a new &lt;dir...&gt; child element. We check that the source and
@@ -502,6 +508,9 @@ public final class Instrument extends Task {
     if (fieldsFileName == null) {
       throw new BuildException("No file name specified for the fields database");
     }
+    if (sitesFileName == null) {
+      throw new BuildException("No file name specified for the sites database");
+    }
   }
   
   /**
@@ -514,7 +523,7 @@ public final class Instrument extends Task {
 
 		final Configuration config = new Configuration(properties);
 		final AntLogMessenger messenger = new AntLogMessenger();
-		final RewriteManager manager = new AntRewriteManager(config, messenger, new File(fieldsFileName));
+		final RewriteManager manager = new AntRewriteManager(config, messenger, new File(fieldsFileName), new File(sitesFileName));
 		for (final InstrumentationSubTask subTask : subTasks) {
 			subTask.add(manager);
 		}    
@@ -556,8 +565,9 @@ public final class Instrument extends Task {
   
   
   private final class AntRewriteManager extends RewriteManager {
-    public AntRewriteManager(final Configuration c, final EngineMessenger m, final File ff) {
-      super(c, m, ff);
+    public AntRewriteManager(final Configuration c, final EngineMessenger m,
+        final File ff, final File sf) {
+      super(c, m, ff, sf);
     }
     
     @Override
@@ -579,6 +589,12 @@ public final class Instrument extends Task {
     protected void exceptionCreatingFieldsFile(
         final File fieldsFile, final FileNotFoundException e) {
       throw new BuildException("Couldn't open " + fieldsFile.getAbsolutePath(), e);
+    }
+    
+    @Override
+    protected void exceptionCreatingSitesFile(
+        final File sitesFile, final FileNotFoundException e) {
+      throw new BuildException("Couldn't open " + sitesFile.getAbsolutePath(), e);
     }
   }
 }

@@ -254,7 +254,9 @@ public enum EventType {
 	}
 	
 	static void readCommon(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
-		attrs.put(TIME, in.readLong());
+		//attrs.put(TIME, in.readLong());
+		long start = (Long) attrs.get(START_TIME);
+		attrs.put(TIME, start + readCompressedLong(in));
 		attrs.put(THREAD, readCompressedLong(in));
 		attrs.put(IN_CLASS, readCompressedLong(in));
 		attrs.put(LINE, readCompressedInt(in));

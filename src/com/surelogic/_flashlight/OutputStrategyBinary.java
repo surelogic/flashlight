@@ -120,8 +120,8 @@ public class OutputStrategyBinary extends EventVisitor {
 		//try {
 			writeTraceEvent(Before_Trace.getByte(), e);
 			/*
-			f_out.writeUTF(e.getDeclaringTypeName());
-			f_out.writeUTF(e.getLocationName());
+			writeUTF(e.getDeclaringTypeName());
+			writeUTF(e.getLocationName());
 		} catch (IOException ioe) {
 			handleIOException(ioe);
 		}	
@@ -137,7 +137,7 @@ public class OutputStrategyBinary extends EventVisitor {
 			writeHeader(Field_Definition.getByte());
 			writeCompressedMaybeNegativeLong(e.getId());
 			writeCompressedLong(e.getTypeId());
-			f_out.writeUTF(e.getName());
+			writeUTF(e.getName());
 			int flags = 0;
 			if (e.isStatic()) {
 				flags |= IS_STATIC.mask();
@@ -197,7 +197,7 @@ public class OutputStrategyBinary extends EventVisitor {
 			try {
 				writeHeader(Class_Definition.getByte());
 				writeCompressedLong(r.getId());
-				f_out.writeUTF(r.getName());
+				writeUTF(r.getName());
 			} catch (IOException e) {
 				handleIOException(e);
 			}
@@ -212,7 +212,7 @@ public class OutputStrategyBinary extends EventVisitor {
 				writeHeader(Thread_Definition.getByte());
 				writeCompressedLong(r.getId());
 				writeCompressedLong(defn.getType().getId());
-				f_out.writeUTF(r.getName());
+				writeUTF(r.getName());
 			} catch (IOException e) {
 				handleIOException(e);
 			}
@@ -230,8 +230,8 @@ public class OutputStrategyBinary extends EventVisitor {
 			writeHeader(Observed_CallLocation.getByte());
 			writeCompressedLong(e.getWithinClassId());
 			writeCompressedInt(e.getLine());
-			f_out.writeUTF(e.getDeclaringTypeName());
-			f_out.writeUTF(e.getLocationName());
+			writeUTF(e.getDeclaringTypeName());
+			writeUTF(e.getLocationName());
 		} catch (IOException ioe) {
 			handleIOException(ioe);
 		}	
@@ -260,7 +260,7 @@ public class OutputStrategyBinary extends EventVisitor {
 	void visit(final Time e) {
 		try {		
 			writeLong_unsafe(Time_Event.getByte(), e.getNanoTime(), false);
-			f_out.writeUTF(dateFormat.format(e.getDate()));
+			writeUTF(dateFormat.format(e.getDate()));
 		} catch (IOException ioe) {
 			handleIOException(ioe);
 		}
@@ -285,6 +285,12 @@ public class OutputStrategyBinary extends EventVisitor {
 	}
 	
 	// Common code	
+	private void writeUTF(String s) throws IOException {
+		if (IdConstants.writeOutput) {
+			f_out.writeUTF(s);
+		}
+	}
+	
 	private void writeHeader(byte header) throws IOException {
 		if (debug) {
 			System.out.println("Writing event: "+EventType.getEvent(header));
@@ -307,7 +313,9 @@ public class OutputStrategyBinary extends EventVisitor {
 			System.err.println("Field bytes  = "+fieldBytes);
 		}
 		*/
-		f_out.writeByte(header);
+		if (IdConstants.writeOutput) {
+			f_out.writeByte(header);
+		}
 	}
 	
 	private void writeLong_unsafe(byte header, long l, boolean compress) throws IOException {
@@ -316,7 +324,9 @@ public class OutputStrategyBinary extends EventVisitor {
 			writeCompressedMaybeNegativeLong(l);
 		} else {
 			if (debug) System.out.println("\tLong: "+l);
-			f_out.writeLong(l);
+			if (IdConstants.writeOutput) {
+				f_out.writeLong(l);
+			}
 		}
 	}
 	
@@ -452,7 +462,7 @@ public class OutputStrategyBinary extends EventVisitor {
 			handleIOException(ioe);
 		}
 	}
-	
+
 	private void handleIOException(IOException e) {
 		e.printStackTrace();
 	}
@@ -488,7 +498,9 @@ public class OutputStrategyBinary extends EventVisitor {
 				System.out.println("buf["+j+"] = "+buf[j]);
 			}
 		}		
-		f_out.write(buf, 0, len);
+		if (IdConstants.writeOutput) {
+			f_out.write(buf, 0, len);
+		}
 		/*
 		totalInts += len;
 		compressedInts += (4-len);
@@ -526,7 +538,9 @@ public class OutputStrategyBinary extends EventVisitor {
 				buf[3] = (byte) (l >>> 16);
 				buf[4] = (byte) (l >>> 24);
 			}
-			f_out.write(buf, 0, len);
+			if (IdConstants.writeOutput) {
+				f_out.write(buf, 0, len);
+			}
 		} else {
 			return writeCompressedLong(l);
 		}
@@ -575,7 +589,9 @@ public class OutputStrategyBinary extends EventVisitor {
 			}
 			buf[0] = (byte) (len-1);
 		}
-		f_out.write(buf, 0, len);
+		if (IdConstants.writeOutput) {
+			f_out.write(buf, 0, len);
+		}
 		//totalInts += len;
 		//compressedInts += (8-len); 		
 		return len;

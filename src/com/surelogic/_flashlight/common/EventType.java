@@ -177,10 +177,9 @@ public enum EventType {
 	Observed_CallLocation("call-location") {
 		@Override
 		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+			attrs.put(SITE_ID, readCompressedLong(in));
 			attrs.put(IN_CLASS, readCompressedLong(in));
 			attrs.put(LINE, readCompressedInt(in));
-			attrs.put(FILE, in.readUTF());
-			attrs.put(LOCATION, in.readUTF());
 		}
 	},
 	ReadWriteLock_Definition("read-write-lock-definition") {
@@ -252,8 +251,7 @@ public enum EventType {
 	        attrs.put(ID, id);
 	        attrs.put(TRACE, id);
 	        attrs.put(PARENT_ID, readCompressedLong(in));
-            attrs.put(IN_CLASS, readCompressedLong(in));
-            attrs.put(LINE, readCompressedInt(in));
+            attrs.put(SITE_ID, readCompressedLong(in));
 	    }
 		@Override
 		IAttributeType getPersistentAttribute() {
@@ -292,8 +290,7 @@ public enum EventType {
 		if (!IdConstants.factorOutThreadTrace) {
 			attrs.put(THREAD, readCompressedLong(in));
 		}
-		attrs.put(IN_CLASS, readCompressedLong(in));
-		attrs.put(LINE, readCompressedInt(in));
+		attrs.put(SITE_ID, readCompressedLong(in));
 	}
 	
 	static void readTracedEvent(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {

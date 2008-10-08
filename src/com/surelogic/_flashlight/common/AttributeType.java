@@ -3,6 +3,7 @@ package com.surelogic._flashlight.common;
 public enum AttributeType implements IAttributeType {
 	TIME("nano-time"),
 	THREAD("thread"),
+	SITE_ID("site"),
 	IN_CLASS("in-class"),
 	LINE("line"),
 	FILE("file"),

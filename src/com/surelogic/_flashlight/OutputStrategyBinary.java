@@ -22,6 +22,8 @@ public class OutputStrategyBinary extends EventVisitor {
 	private long lastThread = NO_VALUE; 
 	private long lastTrace = NO_VALUE;
 	/*
+	private boolean lastWasTraceNode = false;
+	private int total = 0, same = 0;
 	private final int[] counts = new int[EventType.NumEvents];
 	private int total = 0;
 	private int traceBytes = 0;
@@ -276,6 +278,7 @@ public class OutputStrategyBinary extends EventVisitor {
             //traceBytes += bytes;
             
             lastTrace = e.getId();
+            //lastWasTraceNode = true;
         } catch (IOException ioe) {
             handleIOException(ioe);
         }   
@@ -342,7 +345,18 @@ public class OutputStrategyBinary extends EventVisitor {
 		}
 	}
 	
-	private void writeTrace(long tid) throws IOException {
+	private void writeTrace(final long tid) throws IOException {
+		/*
+		if (lastWasTraceNode) {
+			total++;
+			if (tid != lastTrace) {
+				same++;
+			}
+			if ((total & 0xfff) == 0) {
+				System.err.println(same+" same out of "+total+" TraceNode->Trace");
+			}
+		}
+		*/
 		if (tid != lastTrace) {
 			lastTrace = tid;
 			writeLong_unsafe(Trace.getByte(), tid, true);

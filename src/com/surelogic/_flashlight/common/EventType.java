@@ -204,6 +204,16 @@ public enum EventType {
 			attrs.put(FIELD, readCompressedLong(in));
 		}
 	},
+	Thread("thread") {
+	    @Override
+	    void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+	        attrs.put(THREAD, readCompressedLong(in));
+	    }
+		@Override
+		IAttributeType getPersistentAttribute() {
+			return THREAD;
+		}
+	},
 	Thread_Definition("thread-definition") {		
 		@Override
 		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
@@ -225,14 +235,30 @@ public enum EventType {
 			return START_TIME;
 		}
 	},
+	Trace("trace") {
+	    @Override
+	    void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+	        attrs.put(TRACE, readCompressedLong(in));
+	    }
+		@Override
+		IAttributeType getPersistentAttribute() {
+			return TRACE;
+		}
+	},
 	Trace_Node("trace-node") {
 	    @Override
 	    void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
-	        attrs.put(ID, readCompressedLong(in));
+	    	Long id = readCompressedLong(in);
+	        attrs.put(ID, id);
+	        attrs.put(TRACE, id);
 	        attrs.put(PARENT_ID, readCompressedLong(in));
             attrs.put(IN_CLASS, readCompressedLong(in));
             attrs.put(LINE, readCompressedInt(in));
 	    }
+		@Override
+		IAttributeType getPersistentAttribute() {
+			return TRACE;
+		}
 	}
 	;
 	public static final int NumEvents = values().length;
@@ -263,14 +289,16 @@ public enum EventType {
 		//attrs.put(TIME, in.readLong());
 		long start = (Long) attrs.get(START_TIME);
 		attrs.put(TIME, start + readCompressedLong(in));
-		attrs.put(THREAD, readCompressedLong(in));
+		if (!IdConstants.factorOutThreadTrace) {
+			attrs.put(THREAD, readCompressedLong(in));
+		}
 		attrs.put(IN_CLASS, readCompressedLong(in));
 		attrs.put(LINE, readCompressedInt(in));
 	}
 	
 	static void readTracedEvent(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
 		readCommon(in, attrs);
-		if (IdConstants.useTraceNodes) {
+		if (IdConstants.useTraceNodes && !IdConstants.factorOutThreadTrace) {
 			attrs.put(TRACE, readCompressedLong(in));
 		}
 	}

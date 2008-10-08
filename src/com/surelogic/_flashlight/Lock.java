@@ -12,8 +12,8 @@ abstract class Lock extends TracedEvent {
 		return f_lockObject;
 	}
 
-	Lock(final Object lockObject, final ClassPhantomReference withinClass, final int line) {
-		super(withinClass, line, TraceNode.getThreadState());
+	Lock(final Object lockObject, final long siteId) {
+		super(siteId, TraceNode.getThreadState());
 		assert lockObject != null;
 		f_lockObject = Phantom.of(lockObject);
 	}

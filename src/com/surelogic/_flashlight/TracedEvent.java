@@ -7,9 +7,8 @@ import com.surelogic._flashlight.trace.TraceNode;
 public abstract class TracedEvent extends WithinThreadEvent {
 	private final TraceNode trace; // = TraceNode.getCurrentNode();
 	
-	TracedEvent(final ClassPhantomReference withinClass, final int line,
-			    final IThreadState state) {		
-		super(withinClass, line, state.getThread());
+	TracedEvent(final long siteId, final IThreadState state) {		
+		super(siteId, state.getThread());
 		/*
 		if (trace == null) {
 			System.out.println("??? -> "+withinClass.getName()+":"+line);		

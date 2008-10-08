@@ -42,31 +42,19 @@ abstract class WithinThreadEvent extends ProgramEvent {
 		return f_withinThread;
 	}
 
-	private final ClassPhantomReference f_withinClass;
-	private final int f_line;
-
-	public int getLine() {
-		return f_line;
+	private final long f_siteId;
+	
+	public long getSiteId() {
+		return f_siteId;
 	}
 	
-	ClassPhantomReference getWithinClass() {
-	    return f_withinClass;
-	}
-
-	public long getWithinClassId() {
-		return f_withinClass.getId();
-	}
-	
-	WithinThreadEvent(final ClassPhantomReference withinClass, final int line,
-			          ThreadPhantomReference thread) {
-		f_withinClass = withinClass;
-		f_line = line;
+	WithinThreadEvent(final long siteId, ThreadPhantomReference thread) {
+		f_siteId = siteId;
 		f_withinThread = thread;
 	}
 
 	protected void addThread(final StringBuilder b) {
 		Entities.addAttribute("thread", f_withinThread.getId(), b);
-		Entities.addAttribute("in-class", f_withinClass.getId(), b);
-		Entities.addAttribute("line", f_line, b);
+		Entities.addAttribute("site", f_siteId, b);
 	}
 }

@@ -228,10 +228,9 @@ public class OutputStrategyBinary extends EventVisitor {
 	void visit(final ObservedCallLocation e) {
 		try {
 			writeHeader(Observed_CallLocation.getByte());
+			writeCompressedMaybeNegativeLong(e.getSiteId());
 			writeCompressedLong(e.getWithinClassId());
 			writeCompressedInt(e.getLine());
-			writeUTF(e.getDeclaringTypeName());
-			writeUTF(e.getLocationName());
 		} catch (IOException ioe) {
 			handleIOException(ioe);
 		}	
@@ -273,8 +272,7 @@ public class OutputStrategyBinary extends EventVisitor {
             writeHeader(Trace_Node.getByte());
             bytes += writeCompressedLong(e.getId());    
             bytes += writeCompressedLong(e.getParentId());             
-            bytes += writeCompressedLong(e.getWithinClassId());
-            bytes += writeCompressedInt(e.getLine());
+            bytes += writeCompressedLong(e.getSiteId());
             //traceBytes += bytes;
             
             lastTrace = e.getId();
@@ -384,8 +382,7 @@ public class OutputStrategyBinary extends EventVisitor {
 		if (!IdConstants.factorOutThreadTrace) {
 			bytes += writeCompressedLong(e.getWithinThread().getId());
 		}
-		bytes += writeCompressedLong(e.getWithinClassId());
-		bytes += writeCompressedInt(e.getLine());
+		bytes += writeCompressedMaybeNegativeLong(e.getSiteId());
 		//commonBytes += bytes;
 	}
 	

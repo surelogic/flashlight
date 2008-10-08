@@ -16,8 +16,8 @@ final class AfterUtilConcurrentLockAcquisitionAttempt extends
 	}
 
 	AfterUtilConcurrentLockAcquisitionAttempt(final boolean gotTheLock,
-			final Lock lockObject, final ClassPhantomReference withinClass, final int line) {
-		super(lockObject, withinClass, line);
+			final Lock lockObject, final long siteId) {
+		super(lockObject, siteId);
 		f_gotTheLock = gotTheLock;
 	}
 

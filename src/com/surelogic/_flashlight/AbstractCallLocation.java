@@ -1,37 +1,26 @@
 package com.surelogic._flashlight;
 
 public abstract class AbstractCallLocation extends ObservationalEvent implements ICallLocation {
-    private final ClassPhantomReference f_withinClass;
-    private final int f_line;
+    private final long f_siteId;
 
-    protected AbstractCallLocation(final ClassPhantomReference inClass, final int line) {
-        f_withinClass = inClass;
-        f_line = line;
-    }
-    
-    public final int getLine() {
-        return f_line;
+    protected AbstractCallLocation(final long siteId) {
+    	f_siteId = siteId;
     }
 
-    public final long getWithinClassId() {
-        return f_withinClass.getId();
-    }
-    
-    String getWithinClassName() {
-    	return f_withinClass.getName();
+    public final long getSiteId() {
+        return f_siteId;
     }
     
     @Override
-    public final int hashCode() {
-        return (int) (f_withinClass.getId() + f_line);
+    public int hashCode() {
+        return (int) f_siteId;
     }
     
     @Override
-    public final boolean equals(Object o) {
+    public boolean equals(Object o) {
         if (o instanceof ICallLocation) {
             ICallLocation bt = (ICallLocation) o;
-            return bt.getLine() == f_line &&
-                   bt.getWithinClassId() == getWithinClassId();
+            return bt.getSiteId() == getSiteId();
         }
         return false;
     }

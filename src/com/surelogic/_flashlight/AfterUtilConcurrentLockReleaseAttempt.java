@@ -14,8 +14,8 @@ final class AfterUtilConcurrentLockReleaseAttempt extends UtilConcurrentLock {
 	}
 
 	AfterUtilConcurrentLockReleaseAttempt(final boolean releasedTheLock,
-			final Lock lockObject, final ClassPhantomReference withinClass, final int line) {
-		super(lockObject, withinClass, line);
+			final Lock lockObject, final long siteId) {
+		super(lockObject, siteId);
 		f_releasedTheLock = releasedTheLock;
 	}
 

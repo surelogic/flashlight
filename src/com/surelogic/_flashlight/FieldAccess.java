@@ -10,8 +10,8 @@ abstract class FieldAccess extends TracedEvent {
 		return f_fieldId;
 	}
 	
-	FieldAccess(final long fieldId, final ClassPhantomReference withinClass, final int line) {
-		super(withinClass, line, TraceNode.getThreadState());
+	FieldAccess(final long fieldId, final long siteId) {
+		super(siteId, TraceNode.getThreadState());
 		f_fieldId = fieldId;
 	}
 

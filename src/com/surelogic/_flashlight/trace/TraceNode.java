@@ -66,16 +66,16 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 	}
     */
     
-	private TraceNode(TraceNode caller, ClassPhantomReference inClass, int line) {
-	    super(inClass, line);
+	private TraceNode(TraceNode caller, final long siteId) {
+	    super(siteId);
 		f_caller  = caller;
 	}
 	
 	static class IntVersion extends TraceNode {
 		private final int f_id;
 		
-		IntVersion(TraceNode caller, ClassPhantomReference inClass, int line, int id) {
-		    super(caller, inClass, line);
+		IntVersion(TraceNode caller, final long siteId, int id) {
+		    super(caller, siteId);
 			f_id = id;
 		}
 		@Override
@@ -86,8 +86,8 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 	static class LongVersion extends TraceNode {
 		private final long f_id;
 		
-		LongVersion(TraceNode caller, ClassPhantomReference inClass, int line, long id) {
-		    super(caller, inClass, line);
+		LongVersion(TraceNode caller, final long siteId, long id) {
+		    super(caller, siteId);
 			f_id = id;
 		}
 		@Override
@@ -97,19 +97,18 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 	}
 	
 	private static TraceNode newTraceNode(final Header header, final TraceNode caller, 
-			                              ClassPhantomReference inClass, int line) {
+			                              final long siteId) {
 		final long id  = header.getNextId();
 		final int cast = (int) id;
 		if (cast == id) {
-			return new IntVersion(caller, inClass, line, cast);
+			return new IntVersion(caller, siteId, cast);
 		}
-		return new LongVersion(caller, inClass, line, id);
+		return new LongVersion(caller, siteId, id);
 	}
 	
-	static TraceNode newTraceNode(final Header header, final TraceNode caller, 
-			                      ClassPhantomReference inClass, int line, 
+	static TraceNode newTraceNode(final Header header, final TraceNode caller, final long siteId, 
 			                      BlockingQueue<List<Event>> queue) {
-		TraceNode callee = newTraceNode(header, caller, inClass, line);
+		TraceNode callee = newTraceNode(header, caller, siteId);
 		TraceNode firstCallee;				
 		if (caller != null) {
 			// Insert into caller
@@ -154,10 +153,10 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 		return callee;
 	}
 	
-	public static void pushTraceNode(ClassPhantomReference inClass, int line, BlockingQueue<List<Event>> queue) {
+	public static void pushTraceNode(final long siteId, BlockingQueue<List<Event>> queue) {
 		final Header header     = currentNode.get();
 		final ITraceNode caller = header.current;
-		final Placeholder key   = new Placeholder(inClass, line, caller);
+		final Placeholder key   = new Placeholder(siteId, caller);
 		ITraceNode callee = null;
 		if (caller != null) {
 			// There's already a caller
@@ -165,7 +164,7 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 			if (callee == null) {
 				// Try to insert a new TraceNode
 				callee = recordOnPush ? 
-						 newTraceNode(header, caller.getNode(header), inClass, line, queue) : key;
+						 newTraceNode(header, caller.getNode(header), siteId, queue) : key;
 			}
 		} else {			
 			// No caller yet
@@ -173,7 +172,7 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 				callee  = roots.get(key);				
 			    if (callee == null) {
 					callee = recordOnPush ? 
-							 newTraceNode(header, null, inClass, line, queue) : key;		
+							 newTraceNode(header, null, siteId, queue) : key;		
 			    }
 			}
 		}		
@@ -181,7 +180,7 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 		header.count++;
 	}
 	
-	public static void popTraceNode(long classId, int line) {	
+	public static void popTraceNode(final long siteId) {	
 		final Header header     = currentNode.get();
 		final ITraceNode callee = header.current;
 		if (callee != null) {

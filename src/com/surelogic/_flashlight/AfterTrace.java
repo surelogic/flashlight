@@ -2,8 +2,8 @@ package com.surelogic._flashlight;
 
 final class AfterTrace extends Trace {
 
-	AfterTrace(final ClassPhantomReference withinClass, final int line) {
-		super(withinClass, line);
+	AfterTrace(final long siteId) {
+		super(siteId);
 	}
 
 	@Override

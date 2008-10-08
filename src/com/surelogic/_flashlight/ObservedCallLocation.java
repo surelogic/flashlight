@@ -2,36 +2,40 @@ package com.surelogic._flashlight;
 
 import java.util.List;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class ObservedCallLocation extends AbstractCallLocation {
-	private static final ConcurrentMap<ICallLocation,ObservedCallLocation> map = 
-		new ConcurrentHashMap<ICallLocation, ObservedCallLocation>();
-		
-	private final String f_fileName;
-
-	String getDeclaringTypeName() {
-		return f_fileName;
+	private static final ConcurrentMap<ObservedCallLocation,ObservedCallLocation> map = 
+		new ConcurrentHashMap<ObservedCallLocation, ObservedCallLocation>();
+	
+	// All negative, since dynamically created;
+	private static final AtomicLong nextId = new AtomicLong(0);
+	
+	private final ClassPhantomReference f_withinClass;
+	private final int f_line;
+	
+	public final long getWithinClassId() {
+		return f_withinClass.getId();
 	}
 
-	private final String f_locationName;
-
-	String getLocationName() {
-		return f_locationName;
+	public final int getLine() {
+		return f_line;
 	}
 	
-	private ObservedCallLocation(final String fileName, final String locationName,
-			                     final ClassPhantomReference inClass, final int line) {
-	    super(inClass, line);
-		f_fileName = fileName == null ? "<unknown file name>" : fileName;
-		f_locationName = locationName == null ? "<unknown location>"
-				: locationName;
+	private ObservedCallLocation(ClassPhantomReference withinClass, int line,
+			                     final long siteId) {
+	    super(siteId);
+	    f_withinClass = withinClass;
+	    f_line = line;
 	}
 	
-	static ObservedCallLocation getInstance(BeforeTrace bt, final String fileName, final String locationName,
-			                         BlockingQueue<List<Event>> queue) {
-		ObservedCallLocation loc = map.get(bt);
+	static ObservedCallLocation getInstance(ClassPhantomReference withinClass, int line,
+			                                BlockingQueue<List<Event>> queue) {
+		ObservedCallLocation key = new ObservedCallLocation(withinClass, line, 0);
+		ObservedCallLocation loc = map.get(key);
 		if (loc == null) {
-			loc = new ObservedCallLocation(fileName, locationName, bt.getWithinClass(), bt.getLine());
+			final long id = nextId.decrementAndGet();
+			loc = new ObservedCallLocation(withinClass, line, id);
 			ObservedCallLocation last = map.putIfAbsent(loc, loc);
 			if (last == null) {
 				Store.putInQueue(queue, loc);
@@ -44,4 +48,19 @@ public class ObservedCallLocation extends AbstractCallLocation {
 	protected void accept(EventVisitor v) {
 		v.visit(this);
 	}
+	
+    @Override
+    public int hashCode() {
+        return (int) (f_withinClass.getId() + f_line);
+    }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof ObservedCallLocation) {
+        	ObservedCallLocation loc = (ObservedCallLocation) o;
+            return loc.f_withinClass == f_withinClass &&
+                   loc.f_line == f_line;
+        }
+        return false;
+    }
 }

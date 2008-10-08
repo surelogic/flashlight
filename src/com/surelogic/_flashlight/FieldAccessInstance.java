@@ -15,8 +15,8 @@ abstract class FieldAccessInstance extends FieldAccess {
 	}
 
 	FieldAccessInstance(final Object receiver, final long field,
-			final ClassPhantomReference withinClass, final int line) {
-		super(field, withinClass, line);
+			            final long siteId) {
+		super(field, siteId);
 		f_receiver = Phantom.ofObject(receiver);
 		f_receiverUnderConstruction = f_receiver.isUnderConstruction();
 	}

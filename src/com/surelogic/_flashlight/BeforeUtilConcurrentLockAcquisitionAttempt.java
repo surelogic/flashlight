@@ -5,9 +5,8 @@ import java.util.concurrent.locks.Lock;
 final class BeforeUtilConcurrentLockAcquisitionAttempt extends
 		UtilConcurrentLock {
 
-	BeforeUtilConcurrentLockAcquisitionAttempt(final Lock lockObject,
-			final ClassPhantomReference withinClass, final int line) {
-		super(lockObject, withinClass, line);
+	BeforeUtilConcurrentLockAcquisitionAttempt(final Lock lockObject, final long siteId) {
+		super(lockObject, siteId);
 	}
 
 	@Override

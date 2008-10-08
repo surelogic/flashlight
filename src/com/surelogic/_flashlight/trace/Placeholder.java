@@ -3,13 +3,11 @@ package com.surelogic._flashlight.trace;
 import com.surelogic._flashlight.*;
 
 public class Placeholder implements ITraceNode {
-	final ClassPhantomReference f_class;
-	final int f_line;
+	final long f_siteId;
 	final ITraceNode f_caller;
 	
-	Placeholder(ClassPhantomReference classRef, int line, ITraceNode caller) {
-		f_class  = classRef;
-		f_line   = line;
+	Placeholder(long siteId, ITraceNode caller) {
+		f_siteId = siteId;
 		f_caller = caller;
 	}
 	
@@ -31,7 +29,7 @@ public class Placeholder implements ITraceNode {
 		if (callee != null) {
 			return callee.getNode(header);
 		}		
-		return TraceNode.newTraceNode(header, caller, f_class, f_line, Store.getRawQueue());
+		return TraceNode.newTraceNode(header, caller, f_siteId, Store.getRawQueue());
 	}
 	
 	public ITraceNode getCallee(ICallLocation key) {
@@ -41,26 +39,21 @@ public class Placeholder implements ITraceNode {
 	public ITraceNode getParent() {
 		return f_caller;
 	}
-	
-	public final int getLine() {
-		return f_line;
-	}
 
-	public final long getWithinClassId() {
-		return f_class.getId();
+	public final long getSiteId() {
+		return f_siteId;
 	}
 	
 	@Override
 	public int hashCode() {
-		return (int) (f_class.getId() + f_line);
+		return (int) f_siteId;
 	}
 	
 	@Override
 	public boolean equals(Object o) {
 		if (o instanceof ICallLocation) {
 			ICallLocation bt = (ICallLocation) o;
-			return bt.getLine() == f_line &&
-			       bt.getWithinClassId() == f_class.getId();
+            return bt.getSiteId() == getSiteId();
  		}
 		return false;
 	}

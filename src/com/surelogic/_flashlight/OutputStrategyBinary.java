@@ -29,7 +29,6 @@ public class OutputStrategyBinary extends EventVisitor {
 	
 	public OutputStrategyBinary(ObjectOutputStream stream, Time time) {
 		f_out = stream;
-		start = time.getNanoTime();
 		try {
 			f_out.writeByte(First_Event.getByte());
 			f_out.writeUTF(version);
@@ -48,6 +47,7 @@ public class OutputStrategyBinary extends EventVisitor {
 		} catch (IOException ioe) {
 			handleIOException(ioe);
 		}	
+		start = System.nanoTime();
 	}
 
 	private static void addProperty(String key, ObjectOutputStream f_out) throws IOException {

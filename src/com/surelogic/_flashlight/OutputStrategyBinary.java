@@ -16,6 +16,7 @@ public class OutputStrategyBinary extends EventVisitor {
 	private final IdPhantomReferenceVisitor refVisitor = new DefinitionVisitor();
 	private final ObjectOutputStream f_out;
 	private final byte[] buf = new byte[9];
+	private final long start;
 	/*
 	private final int[] counts = new int[EventType.NumEvents];
 	private int total = 0;
@@ -26,8 +27,9 @@ public class OutputStrategyBinary extends EventVisitor {
 	private int totalInts = 0, compressedInts = 0;
 	*/
 	
-	public OutputStrategyBinary(ObjectOutputStream stream) {
+	public OutputStrategyBinary(ObjectOutputStream stream, Time time) {
 		f_out = stream;
+		start = time.getNanoTime();
 		try {
 			f_out.writeByte(First_Event.getByte());
 			f_out.writeUTF(version);
@@ -326,17 +328,33 @@ public class OutputStrategyBinary extends EventVisitor {
 		int bytes = 9; // header, time
 		writeHeader(header);
 		if (debug) System.out.println("\tTime: "+e.getNanoTime());
-		f_out.writeLong(e.getNanoTime());		
+		//f_out.writeLong(e.getNanoTime());		
+		writeCompressedLong(e.getNanoTime() - start);
 		bytes += writeCompressedLong(e.getWithinThread().getId());
 		bytes += writeCompressedLong(e.getWithinClassId());
 		bytes += writeCompressedInt(e.getLine());
 		//commonBytes += bytes;
 	}
 	
+	/*
+	private long lastTrace = 0;
+	private int totalTraces = 0, sameTraces = 0;
+	*/
 	private void writeTracedEvent(byte header, TracedEvent e)  throws IOException {
 		writeCommon(header, e);
 		if (TraceNode.inUse) {
 			/*tracedBytes +=*/ writeCompressedLong(e.getTraceId());
+			/*
+			totalTraces++;
+			if (lastTrace == e.getTraceId()) {
+				sameTraces++;
+			} else {
+				lastTrace = e.getTraceId();
+			}
+			if ((totalTraces & 0xffff) == 0) {
+				System.err.println(sameTraces+" same as last out of "+totalTraces);
+			}
+			*/
 		}
 	}
 	

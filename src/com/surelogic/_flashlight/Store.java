@@ -299,7 +299,7 @@ public final class Store {
 			}
 			final EventVisitor outputStrategy = 
 			//	outputBinary ? new EventVisitor() {} : new OutputStrategyXML(w);
-				outputBinary ? new OutputStrategyBinary(objStream) : new OutputStrategyXML(w);
+				outputBinary ? new OutputStrategyBinary(objStream, timeEvent) : new OutputStrategyXML(w);
 				
 			final int rawQueueSize = StoreConfiguration.getRawQueueSize();			
 			f_rawQueue = new ArrayBlockingQueue<List<Event>>(rawQueueSize);

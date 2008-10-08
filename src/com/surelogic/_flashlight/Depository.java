@@ -72,6 +72,9 @@ final class Depository extends Thread {
 			try {
 				List<Event> buf = f_outQueue.take();
 				for(Event e : buf) {
+					if (e == null) {
+						continue;
+					}
 					if (e == FinalEvent.FINAL_EVENT)
 						f_finished = true;
 					

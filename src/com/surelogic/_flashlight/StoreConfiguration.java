@@ -27,7 +27,7 @@ public class StoreConfiguration {
   private static final int FL_OUTQ_SIZE_DEFAULT = 16;
 
   private static final String FL_REFINERY_SIZE = "FL_REFINERY_SIZE";
-  private static final int FL_REFINERY_SIZE_DEFAULT = 25000;
+  private static final int FL_REFINERY_SIZE_DEFAULT = 250;
 
   private static final String FL_NO_SPY = "FL_NO_SPY";
   

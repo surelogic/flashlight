@@ -4,6 +4,7 @@ import java.io.*;
 import java.text.SimpleDateFormat;
 
 import com.surelogic._flashlight.common.EventType;
+import com.surelogic._flashlight.common.IdConstants;
 import com.surelogic._flashlight.trace.TraceNode;
 
 import static com.surelogic._flashlight.common.EventType.*;
@@ -12,11 +13,14 @@ import static com.surelogic._flashlight.common.FlagType.*;
 public class OutputStrategyBinary extends EventVisitor {	
 	private static final boolean debug = false;
 	private static final String version = "1.1";
+	private static final long NO_VALUE = Long.MIN_VALUE;
 	private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 	private final IdPhantomReferenceVisitor refVisitor = new DefinitionVisitor();
 	private final ObjectOutputStream f_out;
 	private final byte[] buf = new byte[9];
 	private final long start;
+	private long lastThread = NO_VALUE; 
+	private long lastTrace = NO_VALUE;
 	/*
 	private final int[] counts = new int[EventType.NumEvents];
 	private int total = 0;
@@ -252,8 +256,8 @@ public class OutputStrategyBinary extends EventVisitor {
 	}
 	@Override
 	void visit(final Time e) {
-		writeLong(Time_Event.getByte(), e.getNanoTime(), false);
 		try {		
+			writeLong_unsafe(Time_Event.getByte(), e.getNanoTime(), false);
 			f_out.writeUTF(dateFormat.format(e.getDate()));
 		} catch (IOException ioe) {
 			handleIOException(ioe);
@@ -270,6 +274,8 @@ public class OutputStrategyBinary extends EventVisitor {
             bytes += writeCompressedLong(e.getWithinClassId());
             bytes += writeCompressedInt(e.getLine());
             //traceBytes += bytes;
+            
+            lastTrace = e.getId();
         } catch (IOException ioe) {
             handleIOException(ioe);
         }   
@@ -301,15 +307,19 @@ public class OutputStrategyBinary extends EventVisitor {
 		f_out.writeByte(header);
 	}
 	
+	private void writeLong_unsafe(byte header, long l, boolean compress) throws IOException {
+		writeHeader(header);
+		if (compress) {
+			writeCompressedMaybeNegativeLong(l);
+		} else {
+			if (debug) System.out.println("\tLong: "+l);
+			f_out.writeLong(l);
+		}
+	}
+	
 	private void writeLong(byte header, long l, boolean compress) {
 		try {
-			writeHeader(header);
-			if (compress) {
-				writeCompressedMaybeNegativeLong(l);
-			} else {
-				if (debug) System.out.println("\tLong: "+l);
-				f_out.writeLong(l);
-			}
+			writeLong_unsafe(header, l, compress);
 		} catch (IOException ioe) {
 			handleIOException(ioe);
 		}
@@ -325,13 +335,31 @@ public class OutputStrategyBinary extends EventVisitor {
 		}
 	}
 	
+	private void writeThread(long tid) throws IOException {
+		if (tid != lastThread) {
+			lastThread = tid;
+			writeLong_unsafe(Thread.getByte(), tid, true);			
+		}
+	}
+	
+	private void writeTrace(long tid) throws IOException {
+		if (tid != lastTrace) {
+			lastTrace = tid;
+			writeLong_unsafe(Trace.getByte(), tid, true);
+		}
+	}
+	
 	private void writeCommon(byte header, WithinThreadEvent e) throws IOException {
+		writeThread(e.getWithinThread().getId());
+		
 		int bytes = 9; // header, time
 		writeHeader(header);
 		if (debug) System.out.println("\tTime: "+e.getNanoTime());
 		//f_out.writeLong(e.getNanoTime());		
 		writeCompressedLong(e.getNanoTime() - start);
-		bytes += writeCompressedLong(e.getWithinThread().getId());
+		if (!IdConstants.factorOutThreadTrace) {
+			bytes += writeCompressedLong(e.getWithinThread().getId());
+		}
 		bytes += writeCompressedLong(e.getWithinClassId());
 		bytes += writeCompressedInt(e.getLine());
 		//commonBytes += bytes;
@@ -342,8 +370,11 @@ public class OutputStrategyBinary extends EventVisitor {
 	private int totalTraces = 0, sameTraces = 0;
 	*/
 	private void writeTracedEvent(byte header, TracedEvent e)  throws IOException {
-		writeCommon(header, e);
 		if (TraceNode.inUse) {
+			writeTrace(e.getTraceId());
+		}
+		writeCommon(header, e);
+		if (TraceNode.inUse && !IdConstants.factorOutThreadTrace) {
 			/*tracedBytes +=*/ writeCompressedLong(e.getTraceId());
 			/*
 			totalTraces++;

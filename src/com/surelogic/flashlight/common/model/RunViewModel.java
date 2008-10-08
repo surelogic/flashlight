@@ -219,7 +219,7 @@ public final class RunViewModel {
 
 			@Override
 			String getText(RunDescription rowData) {
-				return SLUtility.toStringMS(rowData.getStartTimeOfRun());
+				return SLUtility.toStringHMS(rowData.getStartTimeOfRun());
 			}
 		});
 

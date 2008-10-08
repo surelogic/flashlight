@@ -4,6 +4,7 @@ import com.surelogic.common.jdbc.DBConnection;
 import com.surelogic.common.jobs.AbstractSLJob;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
+import com.surelogic.common.license.SLLicenseUtility;
 import com.surelogic.common.serviceability.UsageMeter;
 import com.surelogic.flashlight.common.model.RunManager;
 
@@ -18,6 +19,11 @@ public final class RefreshRunManagerSLJob extends AbstractSLJob {
 
 	public SLStatus run(SLProgressMonitor monitor) {
 		monitor.begin();
+
+		final SLStatus failed = SLLicenseUtility.validateSLJob(
+				SLLicenseUtility.FLASHLIGHT_SUBJECT, monitor);
+		if (failed != null)
+			return failed;
 
 		UsageMeter.getInstance().tickUse(
 				"Flashlight ran RefreshRunManagerSLJob");

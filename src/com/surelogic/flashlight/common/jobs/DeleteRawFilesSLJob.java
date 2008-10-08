@@ -6,6 +6,7 @@ import com.surelogic.common.jdbc.DBConnection;
 import com.surelogic.common.jobs.AbstractSLJob;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
+import com.surelogic.common.license.SLLicenseUtility;
 import com.surelogic.common.serviceability.UsageMeter;
 import com.surelogic.flashlight.common.files.RawFileHandles;
 import com.surelogic.flashlight.common.files.RawFileUtility;
@@ -26,6 +27,11 @@ public class DeleteRawFilesSLJob extends AbstractSLJob {
 
 	public SLStatus run(SLProgressMonitor monitor) {
 		monitor.begin(3);
+
+		final SLStatus failed = SLLicenseUtility.validateSLJob(
+				SLLicenseUtility.FLASHLIGHT_SUBJECT, monitor);
+		if (failed != null)
+			return failed;
 
 		UsageMeter.getInstance().tickUse("Flashlight ran DeleteRawFilesSLJob");
 

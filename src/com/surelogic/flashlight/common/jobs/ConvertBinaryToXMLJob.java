@@ -9,6 +9,7 @@ import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jobs.AbstractSLJob;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
+import com.surelogic.common.license.SLLicenseUtility;
 import com.surelogic.common.serviceability.UsageMeter;
 import com.surelogic.flashlight.common.convert.ConvertBinaryFileScan;
 import com.surelogic.flashlight.common.files.RawDataFilePrefix;
@@ -18,8 +19,8 @@ public final class ConvertBinaryToXMLJob extends AbstractSLJob {
 	private final File f_dataFile;
 
 	/**
-	 * Constructs a job instance to convert the passed raw data file into 
-	 * a compressed XML file.
+	 * Constructs a job instance to convert the passed raw data file into a
+	 * compressed XML file.
 	 * 
 	 * @param dataFile
 	 *            a raw data file, either <tt>.flb</tt> or <tt>.flb.gz</tt>.
@@ -31,19 +32,29 @@ public final class ConvertBinaryToXMLJob extends AbstractSLJob {
 
 	public SLStatus run(final SLProgressMonitor monitor) {
 		final String dataFileName = f_dataFile.getName();
-		monitor.begin(100);
+		monitor.begin();
 
-		UsageMeter.getInstance().tickUse("Flashlight ran ConvertBinaryToXMLJob");
+		final SLStatus failed = SLLicenseUtility.validateSLJob(
+				SLLicenseUtility.FLASHLIGHT_SUBJECT, monitor);
+		if (failed != null)
+			return failed;
+
+		UsageMeter.getInstance()
+				.tickUse("Flashlight ran ConvertBinaryToXMLJob");
 		try {
 			final RawDataFilePrefix rawFilePrefix = RawFileUtility
 					.getPrefixFor(f_dataFile);
 			final InputStream stream = RawFileUtility
 					.getInputStreamFor(f_dataFile);
-			try {				
-				final String newName     = rawFilePrefix.getName() + RawFileUtility.COMPRESSED_SUFFIX;
-				final File convertedFile = new File(f_dataFile.getParentFile(), newName);
-				final ConvertBinaryFileScan convertFile = new ConvertBinaryFileScan(convertedFile);
-				final SAXParser saxParser = RawFileUtility.getParser(f_dataFile);
+			try {
+				final String newName = rawFilePrefix.getName()
+						+ RawFileUtility.COMPRESSED_SUFFIX;
+				final File convertedFile = new File(f_dataFile.getParentFile(),
+						newName);
+				final ConvertBinaryFileScan convertFile = new ConvertBinaryFileScan(
+						convertedFile);
+				final SAXParser saxParser = RawFileUtility
+						.getParser(f_dataFile);
 				saxParser.parse(stream, convertFile);
 				convertFile.close();
 				stream.close();

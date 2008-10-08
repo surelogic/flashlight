@@ -22,6 +22,7 @@ import com.surelogic.common.jobs.AbstractSLJob;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.common.jobs.SubSLProgressMonitor;
+import com.surelogic.common.license.SLLicenseUtility;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.common.serviceability.UsageMeter;
 import com.surelogic.flashlight.common.entities.PrepRunDescription;
@@ -123,6 +124,11 @@ public final class PrepSLJob extends AbstractSLJob {
 				+ PERSIST_RUN_DESCRIPTION_WORK + SETUP_WORK + PREP_WORK
 				+ FLUSH_WORK + (EACH_POST_PREP * postPrepWork.length)
 				+ ADD_CONSTRAINT_WORK);
+
+		final SLStatus failed = SLLicenseUtility.validateSLJob(
+				SLLicenseUtility.FLASHLIGHT_SUBJECT, monitor);
+		if (failed != null)
+			return failed;
 
 		UsageMeter.getInstance().tickUse("Flashlight ran PrepSLJob");
 

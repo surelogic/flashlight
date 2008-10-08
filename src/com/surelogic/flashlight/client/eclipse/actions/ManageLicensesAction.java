@@ -2,7 +2,6 @@ package com.surelogic.flashlight.client.eclipse.actions;
 
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.ISelection;
-import org.eclipse.jface.window.Window;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 
@@ -23,9 +22,7 @@ public final class ManageLicensesAction implements
 	public void run(IAction action) {
 		final ManageLicensesDialog dialog = new ManageLicensesDialog(SWTUtility
 				.getShell());
-		if (dialog.open() == Window.OK) {
-			System.out.println("OK pressed on manage licensese dialog...");
-		}
+		dialog.open();
 	}
 
 	public void selectionChanged(IAction action, ISelection selection) {

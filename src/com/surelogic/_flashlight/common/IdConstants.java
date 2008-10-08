@@ -8,5 +8,6 @@ public final class IdConstants {
 	public static final boolean keepLocationInTracedEvents = true;
 	public static final boolean useRefinery = true;
 	public static final boolean filterEvents = true;
+	public static final boolean factorOutThreadTrace = false;
 	public static final long ILLEGAL_FIELD_ID = Long.MIN_VALUE;
 }

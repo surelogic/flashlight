@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+//import java.util.Properties;
 import java.util.Set;
 import java.util.logging.Level;
 
@@ -34,11 +35,13 @@ import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
 final class FlashlightVMRunner implements IVMRunner {
   private static final String LOG_FILE_NAME = "instrumentation.log";
   private static final String FIELDS_FILE_NAME = "fields.txt";
+  private static final String SITES_FILE_NAME = "sites.txt";
   
   private final IVMRunner delegateRunner;
   private final File runOutputDir;
   private final String mainTypeName;
   private final File fieldsFile;
+  private final File sitesFile;
   private final File logFile;
   private final Map<String, String> projectEntries;
   private final Set<IProject> interestingProjects;
@@ -54,6 +57,7 @@ final class FlashlightVMRunner implements IVMRunner {
     mainTypeName = main;
     
     fieldsFile = new File(runOutputDir, FIELDS_FILE_NAME);
+    sitesFile = new File(runOutputDir, SITES_FILE_NAME);
     logFile = new File(runOutputDir, LOG_FILE_NAME);
   }
   
@@ -128,7 +132,15 @@ final class FlashlightVMRunner implements IVMRunner {
       logOut = new PrintWriter(logFile);
       final EngineMessenger messenger = new PrintWriterMessenger(logOut);
       final Configuration rewriterConfig = new Configuration();
-      final RewriteManager manager = new VMRewriteManager(rewriterConfig, messenger, fieldsFile, progress);
+      
+//      final Properties p = new Properties();
+//      Configuration.writeDefaultProperties(p);
+//      p.put(Configuration.STORE_CLASS_NAME_PROPERTY, "com/surelogic/_flashlight/rewriter/test/DebugStore");
+//      final Configuration rewriterConfig = new Configuration(p);
+      
+      final RewriteManager manager =
+        new VMRewriteManager(rewriterConfig, messenger,
+            fieldsFile, sitesFile, progress);
       
       for (final Map.Entry<String, String> entry : projectEntries.entrySet()) {
         manager.addDirToJar(new File(entry.getKey()), new File(entry.getValue()), null);
@@ -176,10 +188,6 @@ final class FlashlightVMRunner implements IVMRunner {
     } else {
       throw new CoreException(SLEclipseStatusUtility.createErrorStatus(0,
           "No bundle location found for the Flashlight plug-in."));
-    }
-    
-    for (String p : newClassPathList) {
-      System.out.println("Classpath: " + p);
     }
     
     final String[] newClassPath = new String[newClassPathList.size()];
@@ -240,8 +248,8 @@ final class FlashlightVMRunner implements IVMRunner {
     
     public VMRewriteManager(
         final Configuration c, final EngineMessenger m, final File ff,
-        final SubMonitor sub) {
-      super(c, m, ff);
+        final File sf, final SubMonitor sub) {
+      super(c, m, ff, sf);
       progress = sub;
     }
 
@@ -291,6 +299,13 @@ final class FlashlightVMRunner implements IVMRunner {
         final File fieldsFile, final FileNotFoundException e) {
       SLLogger.getLogger().log(Level.SEVERE,
           "Unable to create fields file " + fieldsFile.getAbsolutePath(), e);
+    }
+
+    @Override
+    protected void exceptionCreatingSitesFile(final File sitesFile,
+        final FileNotFoundException e) {
+      SLLogger.getLogger().log(Level.SEVERE,
+          "Unable to create sites file " + sitesFile.getAbsolutePath(), e);
     }
   }
 }

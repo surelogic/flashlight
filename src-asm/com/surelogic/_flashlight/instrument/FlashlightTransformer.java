@@ -26,6 +26,8 @@ final class FlashlightTransformer implements ClassFileTransformer {
   public FlashlightTransformer(final Log log, final String rcn, final Configuration config) {
     theLog = log;
     rewriteCache = (rcn == null) ? null : new File(rcn);
+    // XXX: This will cause a NullPointerException in the RewriteEngine because
+    // XXX: we are not specifying open print writers for the databases
     rewriteEngine = new RewriteEngine(config, new AbstractIndentingMessager() {
       public void error(String message) {
         theLog.log(indentMessage("ERROR: " + message));
@@ -42,7 +44,7 @@ final class FlashlightTransformer implements ClassFileTransformer {
       public void warning(String message) {
         theLog.log(indentMessage("WARNING: " + message));
       }
-    }, null);      
+    }, null, null);      
   }
   
   public byte[] transform(final ClassLoader loader, final String className,

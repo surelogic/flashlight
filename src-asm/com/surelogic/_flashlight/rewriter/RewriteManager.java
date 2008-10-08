@@ -109,14 +109,17 @@ public abstract class RewriteManager {
   private final Configuration config;
   private final EngineMessenger messenger;
   private final File fieldsFile;
+  private final File sitesFile;
   private final List<Entry> entries = new LinkedList<Entry>();
   
   
   
-  public RewriteManager(final Configuration c, final EngineMessenger m, final File ff) {
+  public RewriteManager(final Configuration c, final EngineMessenger m,
+      final File ff, final File sf) {
     config = c;
     messenger = m;
     fieldsFile = ff;
+    sitesFile = sf;
   }
   
   
@@ -143,40 +146,51 @@ public abstract class RewriteManager {
   
   public final void execute(final boolean skipScan) {
     PrintWriter fieldsOut = null;
+    PrintWriter sitesOut = null;
     try {
       fieldsOut = new PrintWriter(fieldsFile);
-      final RewriteEngine engine = new RewriteEngine(config, messenger, fieldsOut);
-      
-      if (!skipScan) {
-        for (final Entry entry : entries) {
-          final String srcPath = entry.src.getAbsolutePath();
-          messenger.info("Scanning classfiles in " + srcPath);
-          messenger.increaseNesting();
-          preScan(srcPath);
-          try {
-            entry.scan(engine);
-          } catch (final IOException e) {
-            exceptionScan(srcPath, e);
-          } finally {
-            messenger.decreaseNesting();
-            postScan(srcPath);
+      try {
+        sitesOut = new PrintWriter(sitesFile);
+        final RewriteEngine engine =
+          new RewriteEngine(config, messenger, fieldsOut, sitesOut);
+        
+        if (!skipScan) {
+          for (final Entry entry : entries) {
+            final String srcPath = entry.src.getAbsolutePath();
+            messenger.info("Scanning classfiles in " + srcPath);
+            messenger.increaseNesting();
+            preScan(srcPath);
+            try {
+              entry.scan(engine);
+            } catch (final IOException e) {
+              exceptionScan(srcPath, e);
+            } finally {
+              messenger.decreaseNesting();
+              postScan(srcPath);
+            }
           }
         }
-      }
 
-      for (final Entry entry : entries) {
-        final String srcPath = entry.src.getAbsolutePath();
-        final String destPath = entry.dest.getAbsolutePath();
-        messenger.info("Instrumenting classfiles in " + srcPath + " to " + destPath);
-        messenger.increaseNesting();
-        preInstrument(srcPath, destPath);
-        try {
-          entry.instrument(engine);
-        } catch (final IOException e) {
-          exceptionInstrument(srcPath, destPath, e);
-        } finally {
-          messenger.decreaseNesting();
-          postInstrument(srcPath, destPath);
+        for (final Entry entry : entries) {
+          final String srcPath = entry.src.getAbsolutePath();
+          final String destPath = entry.dest.getAbsolutePath();
+          messenger.info("Instrumenting classfiles in " + srcPath + " to " + destPath);
+          messenger.increaseNesting();
+          preInstrument(srcPath, destPath);
+          try {
+            entry.instrument(engine);
+          } catch (final IOException e) {
+            exceptionInstrument(srcPath, destPath, e);
+          } finally {
+            messenger.decreaseNesting();
+            postInstrument(srcPath, destPath);
+          }
+        }
+      } catch (final FileNotFoundException e) {
+        exceptionCreatingSitesFile(sitesFile, e);
+      } finally {
+        if (sitesOut != null) {
+          sitesOut.close();
         }
       }
     } catch(final FileNotFoundException e) {
@@ -209,4 +223,6 @@ public abstract class RewriteManager {
   protected abstract void exceptionInstrument(String srcPath, String destPath, IOException e);
   
   protected abstract void exceptionCreatingFieldsFile(File fieldsFile, FileNotFoundException e);
+  
+  protected abstract void exceptionCreatingSitesFile(File sitesFile, FileNotFoundException e);
 }

@@ -23,10 +23,10 @@ abstract class InPlaceMethodInstrumentation extends MethodCall {
    * @param callingName The name of the calling method.
    * @param lineNumber The source line of the method call.
    */
-  public InPlaceMethodInstrumentation(final int opcode,
+  public InPlaceMethodInstrumentation(final long callSiteId, final int opcode,
       final String owner, final String name, final String descriptor,
       final String callingName, final int lineNumber) {
-    super(opcode, owner, name, descriptor);
+    super(callSiteId, opcode, owner, name, descriptor);
     callingMethodName = callingName;
     callingLineNumber = lineNumber;
   }

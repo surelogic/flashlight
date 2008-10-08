@@ -13,11 +13,11 @@ class InPlaceInstanceMethodInstrumentation extends
   final int[] argLocals;
   final LocalVariablesSorter varSorter;
   
-  public InPlaceInstanceMethodInstrumentation(final int opcode,
+  public InPlaceInstanceMethodInstrumentation(final long callSiteId, final int opcode,
       final String owner, final String name, final String descriptor,
       final String callingName, final int lineNumber,
       final LocalVariablesSorter lvs) {
-    super(opcode, owner, name, descriptor, callingName, lineNumber);
+    super(callSiteId, opcode, owner, name, descriptor, callingName, lineNumber);
     this.varSorter = lvs;
     this.rcvrType = Type.getObjectType(owner);
     this.rcvrLocal = -1;

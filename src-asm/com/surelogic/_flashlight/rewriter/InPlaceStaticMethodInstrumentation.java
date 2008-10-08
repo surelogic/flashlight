@@ -6,10 +6,10 @@ import org.objectweb.asm.Opcodes;
 final class InPlaceStaticMethodInstrumentation extends
     InPlaceMethodInstrumentation {
 
-  public InPlaceStaticMethodInstrumentation(final int opcode,
+  public InPlaceStaticMethodInstrumentation(final long callSiteId, final int opcode,
       final String owner, final String name, final String descriptor,
       final String callingName, final int lineNumber) {
-    super(opcode, owner, name, descriptor, callingName, lineNumber);
+    super(callSiteId, opcode, owner, name, descriptor, callingName, lineNumber);
     // TODO Auto-generated constructor stub
   }
 

@@ -52,10 +52,10 @@ abstract class MethodCallWrapper extends MethodCall {
    * @param originalDesc The descriptor of the original method.
    * @param isInstance Should the wrapper method be an instance method?
    */
-  public MethodCallWrapper(final int opcode, final String owner,
+  public MethodCallWrapper(final long callSiteId, final int opcode, final String owner,
       final String originalName, final String originalDesc,
       final boolean isInstance) {
-    super(opcode, owner, originalName, originalDesc);
+    super(callSiteId, opcode, owner, originalName, originalDesc);
     final String ownerUnderscored = fixOwnerNameForMethodName(owner);
     final int endOfArgs = originalDesc.lastIndexOf(END_OF_ARGS);
     final String originalArgs = originalDesc.substring(1, endOfArgs);

@@ -7,7 +7,6 @@ import java.util.Set;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Attribute;
 import org.objectweb.asm.Label;
-import org.objectweb.asm.MethodAdapter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -19,7 +18,7 @@ import com.surelogic._flashlight.rewriter.ConstructorInitStateMachine.Callback;
 /**
  * Class visitor that inserts flashlight instrumentation into a method.
  */
-final class FlashlightMethodRewriter extends MethodAdapter {
+final class FlashlightMethodRewriter implements MethodVisitor {
   private static final String CLASS_INITIALIZER = "<clinit>";
   private static final String INITIALIZER = "<init>";
   
@@ -40,6 +39,9 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   }
   
   
+
+  /** The delegate method visitor */
+  private final MethodVisitor mv;
   
   /** Configuration information, derived from properties. */
   private final Configuration config;
@@ -178,6 +180,16 @@ final class FlashlightMethodRewriter extends MethodAdapter {
    */
   private final Map<Label, Label> tryLabelMap = new HashMap<Label, Label>();
   
+  /**
+   * Factory for creating unique site identifiers.
+   */
+  private final SiteIdFactory siteIdFactory;
+  
+  /**
+   * The current site identifier
+   */
+  private long siteId = 0;
+  
   
   
   /**
@@ -186,12 +198,13 @@ final class FlashlightMethodRewriter extends MethodAdapter {
    */
   public static MethodVisitor create(final int access, final String mname,
       final String desc, final MethodVisitor mv, final Configuration conf,
+      final SiteIdFactory csif,
       final EngineMessenger msg, final ClassAndFieldModel model,
       final boolean java5, final boolean inInt, final boolean update, 
       final String fname, final String nameInternal,
       final String nameFullyQualified, final Set<MethodCallWrapper> wrappers) {
     final FlashlightMethodRewriter methodRewriter =
-      new FlashlightMethodRewriter(access, mname, desc, mv, conf, msg,
+      new FlashlightMethodRewriter(access, mname, desc, mv, conf, csif, msg,
           model, java5, inInt, update, fname, nameInternal, nameFullyQualified,
           wrappers);
     methodRewriter.lvs = new LocalVariablesSorter(access, desc, methodRewriter);
@@ -218,12 +231,14 @@ final class FlashlightMethodRewriter extends MethodAdapter {
    */
   private FlashlightMethodRewriter(final int access, final String mname,
       final String desc, final MethodVisitor mv, final Configuration conf,
+      final SiteIdFactory csif,
       final EngineMessenger msg, final ClassAndFieldModel model,
       final boolean java5, final boolean inInt, final boolean update, final String fname,
       final String nameInternal, final String nameFullyQualified,
       final Set<MethodCallWrapper> wrappers) {
-    super(mv);
+    this.mv = mv;
     config = conf;
+    siteIdFactory = csif;
     messenger = msg;
     classModel = model;
     atLeastJava5 = java5;
@@ -248,9 +263,16 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   
   
   
-  @Override
   public void visitCode() {
+    /* We are just about to start visiting instructions, so we cannot have any
+     * delayed instructions yet.
+     */
     mv.visitCode();
+    
+    /* Initialize the site identifier in case the class doesn't have line 
+     * number information
+     */
+    updateSiteIdentifier();
     
     // Initialize the flashlight$withinClass field
     if (isClassInitializer) {
@@ -261,16 +283,19 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     }
   }
   
-  @Override
   public void visitLineNumber(final int line, final Label start) {
-    handlePreviousAload();
-    handlePreviousAstore();
-    insertDelayedCode();
+    /* This callback does not correspond to an instruction, so don't worry
+     * about delayed instructions.  May affect the line number of inserted 
+     * instructions.
+     */
+//    handlePreviousAload();
+//    handlePreviousAstore();
+//    insertDelayedCode();
     mv.visitLineNumber(line, start);
     currentSrcLine = line;
+    updateSiteIdentifier();
   }
   
-  @Override
   public void visitTypeInsn(final int opcode, final String type) {
     handlePreviousAload();
     handlePreviousAstore();
@@ -279,7 +304,6 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     if (stateMachine != null) stateMachine.visitTypeInsn(opcode, type);
   }
   
-  @Override
   public void visitInsn(final int opcode) {
     if (opcode == Opcodes.MONITORENTER && config.rewriteMonitorenter) {
       handlePreviousAload();
@@ -321,7 +345,6 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     if (stateMachine != null) stateMachine.visitInsn(opcode);
   }
   
-  @Override
   public void visitFieldInsn(final int opcode, final String owner,
       final String name, final String desc) {
     handlePreviousAload();
@@ -342,7 +365,6 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     if (stateMachine != null) stateMachine.visitFieldInsn(opcode, owner, name, desc);    
   }
 
-  @Override
   public void visitMethodInsn(final int opcode, final String owner,
       final String name, final String desc) {
     handlePreviousAload();
@@ -399,8 +421,10 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     if (stateMachine != null) stateMachine.visitMethodInsn(opcode, owner, name, desc);
   }
   
-  @Override
   public void visitMaxs(final int maxStack, final int maxLocals) {
+    /* End of instructions, see if we have any last delayed instruction in
+     * insert.
+     */
     handlePreviousAload();
     handlePreviousAstore();
     insertDelayedCode();
@@ -415,7 +439,6 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     mv.visitMaxs(maxStack + stackDepthDelta, maxLocals);
   }
 
-  @Override
   public void visitIntInsn(final int opcode, final int operand) {
     handlePreviousAload();
     handlePreviousAstore();
@@ -424,7 +447,6 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     mv.visitIntInsn(opcode, operand);
   }
   
-  @Override
   public void visitJumpInsn(final int opcode, final Label label) {
     handlePreviousAload();
     handlePreviousAstore();
@@ -433,7 +455,6 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     mv.visitJumpInsn(opcode, label);
   }
   
-  @Override
   public void visitLabel(final Label label) {
     handlePreviousAload();
     handlePreviousAstore();
@@ -453,7 +474,6 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     }
   }
   
-  @Override
   public void visitLdcInsn(final Object cst) {
     handlePreviousAload();
     handlePreviousAstore();
@@ -462,7 +482,6 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     mv.visitLdcInsn(cst);
   }
   
-  @Override
   public void visitLookupSwitchInsn(
       final Label dflt, final int[] keys, final Label[] labels) {
     handlePreviousAload();
@@ -472,7 +491,6 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     mv.visitLookupSwitchInsn(dflt, keys, labels);
   }
   
-  @Override
   public void visitMultiANewArrayInsn(final String desc, final int dims) {
     handlePreviousAload();
     handlePreviousAstore();
@@ -481,7 +499,6 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     mv.visitMultiANewArrayInsn(desc, dims);
   }
   
-  @Override
   public void visitTableSwitchInsn(
       final int min, final int max, final Label dflt, final Label[] labels) {
     handlePreviousAload();
@@ -491,7 +508,6 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     mv.visitTableSwitchInsn(min, max, dflt, labels);
   }
   
-  @Override
   public void visitVarInsn(final int opcode, final int var) {
     handlePreviousAload();
     handlePreviousAstore();
@@ -506,53 +522,44 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     }
   }
 
-  @Override
   public AnnotationVisitor visitAnnotationDefault() {
-    handlePreviousAload();
-    handlePreviousAstore();
-    insertDelayedCode();
-    final AnnotationVisitor av = mv.visitAnnotationDefault();
-    return av;
+    /* Called before visitCode(), so we don't have worry about inserting any
+     * delayed instructions.
+     */
+    return mv.visitAnnotationDefault();
   }
 
-  @Override
   public AnnotationVisitor visitAnnotation(final String desc,
       final boolean visible) {
-    handlePreviousAload();
-    handlePreviousAstore();
-    insertDelayedCode();
-    AnnotationVisitor av = mv.visitAnnotation(desc, visible);
-    return av;
+    /* Called before visitCode(), so we don't have worry about inserting any
+     * delayed instructions.
+     */
+    return mv.visitAnnotation(desc, visible);
   }
 
-  @Override
   public AnnotationVisitor visitParameterAnnotation(final int parameter,
       final String desc, final boolean visible) {
-    handlePreviousAload();
-    handlePreviousAstore();
-    insertDelayedCode();
-    AnnotationVisitor av = mv.visitParameterAnnotation(parameter, desc, visible);
-    return av;
+    /* Called before visitCode(), so we don't have worry about inserting any
+     * delayed instructions.
+     */
+    return mv.visitParameterAnnotation(parameter, desc, visible);
   }
 
-  @Override
   public void visitAttribute(final Attribute attr) {
-    handlePreviousAload();
-    handlePreviousAstore();
-    insertDelayedCode();
+    /* Called before visitCode(), so we don't have worry about inserting any
+     * delayed instructions.
+     */
     mv.visitAttribute(attr);
   }
 
-  @Override
   public void visitFrame(final int type, final int nLocal,
       final Object[] local, final int nStack, final Object[] stack) {
-    handlePreviousAload();
-    handlePreviousAstore();
-    insertDelayedCode();
+    /* This callback doesn't represent a bytecode instruction, so we don't
+     * do anything about delayed instructions yet.
+     */
     mv.visitFrame(type, nLocal, local, nStack, stack);
   }
 
-  @Override
   public void visitIincInsn(final int var, final int increment) {
     handlePreviousAload();
     handlePreviousAstore();
@@ -560,12 +567,11 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     mv.visitIincInsn(var, increment);
   }
 
-  @Override
   public void visitTryCatchBlock(final Label start, final Label end,
       final Label handler, final String type) {
-    handlePreviousAload();
-    handlePreviousAstore();
-    insertDelayedCode();
+    /* This callback doesn't represent a bytecode instruction, so we don't
+     * do anything about delayed instructions yet.
+     */
     
     /* Remap the label for the start of the try block.  But only if we haven't
      * seen it before.
@@ -578,21 +584,17 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     mv.visitTryCatchBlock(newStart, end, handler, type);
   }
 
-  @Override
   public void visitLocalVariable(final String name, final String desc,
       final String signature, final Label start, final Label end,
       final int index) {
-    handlePreviousAload();
-    handlePreviousAstore();
-    insertDelayedCode();
+    /* This callback doesn't represent a bytecode instruction, so we don't
+     * do anything about delayed instructions yet.
+     */
     mv.visitLocalVariable(name, desc, signature, start, end, index);
   }
 
-  @Override
   public void visitEnd() {
-    handlePreviousAload();
-    handlePreviousAstore();
-    insertDelayedCode();
+    /* visitMaxs already cleared out the remaining delayed instructions. */
     mv.visitEnd();
   }
   
@@ -660,7 +662,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   /**
    * For monitorexit operations we want to know if the previous instruction 
    * was an aload.  If so, we want to make sure we don't insert any instructions
-   * between the ALOAD and the MONITOREXIT, or the JIT compiler will not compiler
+   * between the ALOAD and the MONITOREXIT, or the JIT compiler will not compile
    * the method to native code.  So when we encounter an ALOAD in
    * {@link #visitVarInsn} we record the variable id, but do not forward the 
    * ALOAD to the method visitor delegate. When we visit an operation other than
@@ -678,7 +680,7 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   /**
    * For monitorenter operations we want to know if the previous instruction 
    * was an astore.  If so, we want to make sure we don't insert any instructions
-   * between the astore and the monitorenter, or the JIT compiler will not compiler
+   * between the astore and the monitorenter, or the JIT compiler will not compile
    * the method to native code.  So when we encounter an astore in
    * {@link #visitVarInsn} we record the variable id, but do not forward the 
    * astore to the method visitor delegate. When we visit an operation other than
@@ -798,11 +800,11 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     // ..., before
     mv.visitVarInsn(Opcodes.ALOAD, 0);
     // ..., before, this
-    ByteCodeUtils.pushPhantomClass(mv, classBeingAnalyzedInternal);
-    // ..., before, this, withinClass
-    ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
-    // ..., before, this, withinClass, line
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName, FlashlightNames.CONSTRUCTOR_EXECUTION, FlashlightNames.CONSTRUCTOR_EXECUTION_SIGNATURE);
+    pushSiteIdentifier();
+    // ..., before, this, siteId
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
+        FlashlightNames.CONSTRUCTOR_EXECUTION,
+        FlashlightNames.CONSTRUCTOR_EXECUTION_SIGNATURE);
     // ...
   }
   
@@ -823,14 +825,8 @@ final class FlashlightMethodRewriter extends MethodAdapter {
       // ...
       ByteCodeUtils.pushBooleanConstant(mv, true);
       // ..., true
-      mv.visitLdcInsn(sourceFileName);
-      // ..., true, fileName
-      mv.visitLdcInsn(methodName);
-      // ..., true, fileName, methodName
-      ByteCodeUtils.pushPhantomClass(mv, classBeingAnalyzedInternal);
-      // ..., true, fileName, methodName, withinClass
-      ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
-      // ..., true, fileName, methodName, withinClass, line 
+      pushSiteIdentifier();
+      // ..., true, siteId
       mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
           FlashlightNames.CONSTRUCTOR_CALL,
           FlashlightNames.CONSTRUCTOR_CALL_SIGNATURE);
@@ -849,15 +845,9 @@ final class FlashlightMethodRewriter extends MethodAdapter {
       /* Normal return */
       // ...
       ByteCodeUtils.pushBooleanConstant(mv, false);
-      // ..., true
-      mv.visitLdcInsn(sourceFileName);
-      // ..., true, fileName
-      mv.visitLdcInsn(methodName);
-      // ..., true, fileName, methodName
-      ByteCodeUtils.pushPhantomClass(mv, classBeingAnalyzedInternal);
-      // ..., true, fileName, methodName, withinClass
-      ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
-      // ..., true, fileName, methodName, withinClass, line 
+      // ..., false
+      pushSiteIdentifier();
+      // ..., false, siteId
       mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
           FlashlightNames.CONSTRUCTOR_CALL,
           FlashlightNames.CONSTRUCTOR_CALL_SIGNATURE);
@@ -868,15 +858,9 @@ final class FlashlightMethodRewriter extends MethodAdapter {
       mv.visitLabel(handler);
       // ex
       ByteCodeUtils.pushBooleanConstant(mv, false);
-      // ex, true
-      mv.visitLdcInsn(sourceFileName);
-      // ex, true, fileName
-      mv.visitLdcInsn(methodName);
-      // ex, true, fileName, methodName
-      ByteCodeUtils.pushPhantomClass(mv, classBeingAnalyzedInternal);
-      // ex, true, fileName, methodName, withinClass
-      ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
-      // ex, true, fileName, methodName, withinClass, line 
+      // ex, false
+      pushSiteIdentifier();
+      // ex, false, siteId
       mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
           FlashlightNames.CONSTRUCTOR_CALL,
           FlashlightNames.CONSTRUCTOR_CALL_SIGNATURE);
@@ -1205,16 +1189,11 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     // Stack is "..., isRead, [receiver/ownerPhantom], field_id" or
     // "..., isRead, [receiver], class object, fieldName"
     
-    /* Push the class being analyzed */
-    ByteCodeUtils.pushPhantomClass(mv, classBeingAnalyzedInternal);
-    // Stack is "..., isRead, [receiver/ownerPhantom], field_id, withinClass" or
-    // "..., isRead, [receiver], class object, fieldName, withinClass"
-    
-    /* Push the line number of the field access. */
-    ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
-    // Stack is "..., isRead, [receiver/ownerPhantom], field_id, withinClass, LineNumber" or
-    // "..., isRead, [receiver], class object, fieldName, withinClass, LineNumber"
-    
+    /* Push the site identifer */
+    pushSiteIdentifier();
+    // Stack is "..., isRead, [receiver/ownerPhantom], field_id, siteId" or
+    // "..., isRead, [receiver], class object, fieldName, siteId"
+        
     /* We can now call the store method */
     mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
         storeMethodName, storeMethodSignature);    
@@ -1293,11 +1272,9 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     mv.visitLabel(afterPushIsClass);
     // ..., obj, obj, isThis, isClass
 
-    /* Push the phantom class reference and line number, and call the pre-method */
-    ByteCodeUtils.pushPhantomClass(mv, classBeingAnalyzedInternal);
-    // ..., obj, obj, isThis, isClass, withinClass
-    ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
-    // ..., obj, obj, isThis, isClass, withinClass, lineNumber
+    /* Push the site identifier and call the pre-method */
+    pushSiteIdentifier();
+    // ..., obj, obj, isThis, isClass, siteId
     mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
         FlashlightNames.BEFORE_INTRINSIC_LOCK_ACQUISITION,
         FlashlightNames.BEFORE_INTRINSIC_LOCK_ACQUISITION_SIGNATURE);
@@ -1328,14 +1305,16 @@ final class FlashlightMethodRewriter extends MethodAdapter {
      * insertion of our operations to call the post-monitorenter logging call
      * until after the label that follows the monitorenter.
      */
+    /* Save the original site identifier, in case it changes before the delayed
+     * code is output.
+     */
+    final long originalSiteId = siteId;
     delayForLabel(new DelayedOutput() {
       @Override
       public void insertCode() {
-        /* Push the phantom class reference and line number, and call the post-method */
-        ByteCodeUtils.pushPhantomClass(mv, classBeingAnalyzedInternal);
-        // ..., obj, withinClass
-        ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
-        // ..., obj, withinClass, lineNumber
+        /* Push the site identifier and call the post-method */
+        pushSiteIdentifier(originalSiteId);
+        // ..., obj, siteId
         mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
             FlashlightNames.AFTER_INTRINSIC_LOCK_ACQUISITION,
             FlashlightNames.AFTER_INTRINSIC_LOCK_ACQUISITION_SIGNATURE);
@@ -1382,14 +1361,15 @@ final class FlashlightMethodRewriter extends MethodAdapter {
      * of the post-monitorexit logging method until after the label that follows the 
      * monitorexit instruction is output.
      */
+    /* Save the original site id in case the line number changes before the
+     * delayed code is output.
+     */
+    final long originalSiteId = siteId;
     delayForLabel(new DelayedOutput() {
       @Override
       public void insertCode() {
-        ByteCodeUtils.pushPhantomClass(mv, classBeingAnalyzedInternal);
-        
-        /* Push the lineNumber and call the Store method. */
-        ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
-        // ..., obj, withinClass, lineNumber
+        pushSiteIdentifier(originalSiteId);
+        // ..., obj, siteId
         mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
             FlashlightNames.AFTER_INTRINSIC_LOCK_RELEASE, FlashlightNames.AFTER_INTRINSIC_LOCK_RELEASE_SIGNATURE);
         // ...
@@ -1423,10 +1403,8 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     // lockObj, isReceiver
     ByteCodeUtils.pushBooleanConstant(mv, isStatic);
     // lockObj, isReceiver, isStatic
-    ByteCodeUtils.pushPhantomClass(mv, classBeingAnalyzedInternal);
-    // lockObj, isReceiver, isStatic, withinClass
-    ByteCodeUtils.pushIntegerConstant(mv, 0);
-    // lockObj, isReceiver, isStatic, withinClass, 0
+    pushSiteIdentifier();
+    // lockObj, isReceiver, isStatic, siteid
     mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
         FlashlightNames.BEFORE_INTRINSIC_LOCK_ACQUISITION,
         FlashlightNames.BEFORE_INTRINSIC_LOCK_ACQUISITION_SIGNATURE);
@@ -1458,10 +1436,8 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     /* Now call Store.afterIntrinsicLockAcquisition */
     pushSynchronizedMethodLockObject();
     // lockObj
-    ByteCodeUtils.pushPhantomClass(mv, classBeingAnalyzedInternal);
-    // lockObj, withinClass
-    ByteCodeUtils.pushIntegerConstant(mv, 0);
-    // lockObj, withinClass, 0
+    pushSiteIdentifier();
+    // lockObj, siteId
     mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
         FlashlightNames.AFTER_INTRINSIC_LOCK_ACQUISITION,
         FlashlightNames.AFTER_INTRINSIC_LOCK_ACQUISITION_SIGNATURE);
@@ -1515,10 +1491,8 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     /* Call Store.afterIntrinsicLockRelease(). */
     pushSynchronizedMethodLockObject();
     // ..., lockObj
-    ByteCodeUtils.pushPhantomClass(mv, classBeingAnalyzedInternal);
-    // ..., lockObj, withinClass
-    ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
-    // ..., lockObj, withinClass, exitLineNumber
+    pushSiteIdentifier();
+    // ..., lockObj, siteId
     mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
         FlashlightNames.AFTER_INTRINSIC_LOCK_RELEASE, FlashlightNames.AFTER_INTRINSIC_LOCK_RELEASE_SIGNATURE);
     // ...
@@ -1543,11 +1517,16 @@ final class FlashlightMethodRewriter extends MethodAdapter {
   
   private void rewriteMethodCall(final int opcode,
       final String owner, final String name, final String desc) {
+    /* Get a unique id for this callsite */
+    final long callSiteId = siteIdFactory.getSiteId(
+        sourceFileName, classBeingAnalyzedFullyQualified, methodName,
+        currentSrcLine);
+    
 	/* The clone() method is a special case due to its retarded 
 	 * semantics.  If the class of the object being used as the receiver,
 	 * call it C, implements Cloneable, but DOES NOT override the clone() method, 
 	 * the clone method is still seen as a protected method from Object.
-	 * This means, we don't be able to invoke the method from a static
+	 * This means, we won't be able to invoke the method from a static
 	 * method in C because the receiver will still be seen as being of
 	 * type Object.  This situation works in JRE 5, but not in JRE 6 due to
 	 * a stricter bytecode verifier.
@@ -1560,13 +1539,13 @@ final class FlashlightMethodRewriter extends MethodAdapter {
       /* Create the wrapper method information and add it to the list of wrappers */
       final MethodCallWrapper wrapper;
       if (opcode == Opcodes.INVOKESPECIAL) {
-        wrapper = new SpecialCallWrapper(owner, name, desc);
+        wrapper = new SpecialCallWrapper(callSiteId, owner, name, desc);
       } else if (opcode == Opcodes.INVOKESTATIC){
-        wrapper = new StaticCallWrapper(owner, name, desc);
+        wrapper = new StaticCallWrapper(callSiteId, owner, name, desc);
       } else if (opcode == Opcodes.INVOKEINTERFACE) {
-        wrapper = new InterfaceCallWrapper(owner, name, desc);
+        wrapper = new InterfaceCallWrapper(callSiteId, owner, name, desc);
       } else { // virtual call
-        wrapper = new VirtualCallWrapper(owner, name, desc);
+        wrapper = new VirtualCallWrapper(callSiteId, owner, name, desc);
       }
       
       wrapperMethods.add(wrapper);
@@ -1583,21 +1562,35 @@ final class FlashlightMethodRewriter extends MethodAdapter {
     } else {
       final InPlaceMethodInstrumentation methodCall;
       if (opcode == Opcodes.INVOKESTATIC) {
-        methodCall = new InPlaceStaticMethodInstrumentation(
+        methodCall = new InPlaceStaticMethodInstrumentation(callSiteId, 
             opcode, owner, name, desc, methodName, currentSrcLine);
       } else {
-        methodCall = new InPlaceInstanceMethodInstrumentation(
+        methodCall = new InPlaceInstanceMethodInstrumentation(callSiteId, 
             opcode, owner, name, desc, methodName, currentSrcLine, lvs);
       }
       
-      final MethodCallInstrumenter instrumenter = new MethodCallInstrumenter(
-          config, mv, methodCall, atLeastJava5, sourceFileName,
-          classBeingAnalyzedInternal);
+      final MethodCallInstrumenter instrumenter =
+        new MethodCallInstrumenter(config, mv, methodCall);
       methodCall.popReceiverAndArguments(mv);
       instrumenter.instrumentMethodCall();
       
       updateStackDepthDelta(7);
     }
   }
-
+  
+  
+  
+ 
+  private void updateSiteIdentifier() {
+    siteId = siteIdFactory.getSiteId(sourceFileName,
+        classBeingAnalyzedFullyQualified, methodName, currentSrcLine);
+  }
+  
+  private void pushSiteIdentifier(final long id) {
+    mv.visitLdcInsn(Long.valueOf(id));
+  }
+  
+  private void pushSiteIdentifier() {
+    pushSiteIdentifier(siteId);
+  }
 }

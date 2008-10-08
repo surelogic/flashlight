@@ -68,6 +68,7 @@ public final class RewriteEngine {
   private final byte[] buffer = new byte[BUFSIZE];
 
   private final Configuration config;
+  private final SiteIdFactory callSiteIdFactory;
   private final EngineMessenger messenger;
   
   private final ClassAndFieldModel classModel = new ClassAndFieldModel();
@@ -78,10 +79,12 @@ public final class RewriteEngine {
    * Create a new rewrite engine based on the given configuration and that
    * reports messages to the given messenger.
    */
-  public RewriteEngine(final Configuration c, final EngineMessenger m, final PrintWriter pw) {
+  public RewriteEngine(final Configuration c, final EngineMessenger m,
+      final PrintWriter fieldPW, final PrintWriter callSitePW) {
     config = c;
     messenger = m;
-    fieldOutput = pw;
+    fieldOutput = fieldPW;
+    callSiteIdFactory = new SiteIdFactory(callSitePW);
   }
 
   
@@ -525,7 +528,7 @@ public final class RewriteEngine {
     final ClassReader input = new ClassReader(inClassfile);
     final ClassWriter output = new ClassWriter(input, 0); //ClassWriter.COMPUTE_FRAMES);
     final FlashlightClassRewriter xformer =
-      new FlashlightClassRewriter(config, msgr, output, classModel, ignoreMethods);
+      new FlashlightClassRewriter(config, callSiteIdFactory, msgr, output, classModel, ignoreMethods);
     input.accept(xformer, ClassReader.EXPAND_FRAMES);
     final Set<MethodIdentifier> badMethods = xformer.getOversizedMethods();
     if (!badMethods.isEmpty()) {
@@ -683,7 +686,7 @@ public final class RewriteEngine {
     
     final PrintWriter writer = new PrintWriter(System.out);
     final RewriteEngine engine =
-      new RewriteEngine(new Configuration(properties), PrintWriterMessenger.console, writer);
+      new RewriteEngine(new Configuration(properties), PrintWriterMessenger.console, writer, writer);
     engine.scanDirectory(new File(args[0]));
     engine.rewriteDirectoryToDirectory(new File(args[0]), new File(args[1]));
     writer.close();

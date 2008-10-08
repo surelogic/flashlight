@@ -13,9 +13,9 @@ abstract class InterfaceAndVirtualCallWrapper extends MethodCallWrapper {
 
   
   
-  public InterfaceAndVirtualCallWrapper(final String owner, final String originalName,
+  public InterfaceAndVirtualCallWrapper(final long callSiteId, final String owner, final String originalName,
       final String originalSignature, final int opcode) {
-    super(opcode, owner, originalName, originalSignature, false);
+    super(callSiteId, opcode, owner, originalName, originalSignature, false);
   }
 
   

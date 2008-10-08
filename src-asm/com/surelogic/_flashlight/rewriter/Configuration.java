@@ -69,7 +69,8 @@ public final class Configuration {
 
   
   
-  private static boolean getBoolean(final java.util.Properties props, final String propName, final String defaultValue) {
+  private static boolean getBoolean(final java.util.Properties props,
+      final String propName, final String defaultValue) {
     return Boolean.valueOf(props.getProperty(propName, defaultValue));
   }
 

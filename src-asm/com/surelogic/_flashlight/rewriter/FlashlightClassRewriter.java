@@ -113,6 +113,9 @@ final class FlashlightClassRewriter extends ClassAdapter {
    */
   private final ClassAndFieldModel classModel;
   
+  /** Factory for unique call site identifiers */
+  private final SiteIdFactory callSiteIdFactory;
+  
   
   
   /**
@@ -130,11 +133,12 @@ final class FlashlightClassRewriter extends ClassAdapter {
    *          be obtained by calling {@link #getOversizedMethods()}.
    */
   public FlashlightClassRewriter(final Configuration conf,
-      final EngineMessenger msg,
+      final SiteIdFactory csif, final EngineMessenger msg,
       final ClassVisitor cv, final ClassAndFieldModel model,
       final Set<MethodIdentifier> ignore) {
     super(cv);
     config = conf;
+    callSiteIdFactory = csif;
     messenger = msg;
     classModel = model;
     methodsToIgnore = ignore;
@@ -208,7 +212,7 @@ final class FlashlightClassRewriter extends ClassAdapter {
       final CodeSizeEvaluator cse = new CodeSizeEvaluator(original);
       methodSizes.put(methodId, cse);
       return FlashlightMethodRewriter.create(access,
-          name, desc, cse, config, messenger, classModel, atLeastJava5, isInterface,
+          name, desc, cse, config, callSiteIdFactory, messenger, classModel, atLeastJava5, isInterface,
           updateSuperCall, sourceFileName, classNameInternal, classNameFullyQualified,
           wrapperMethods);
     }
@@ -274,7 +278,7 @@ final class FlashlightClassRewriter extends ClassAdapter {
      * traversal through the rewriter visitor.
      */
     final MethodVisitor rewriter_mv = FlashlightMethodRewriter.create(Opcodes.ACC_STATIC,
-        CLASS_INITIALIZER, CLASS_INITIALIZER_DESC, mv, config, messenger,
+        CLASS_INITIALIZER, CLASS_INITIALIZER_DESC, mv, config, callSiteIdFactory, messenger,
         classModel, atLeastJava5, isInterface, updateSuperCall, sourceFileName,
         classNameInternal, classNameFullyQualified, wrapperMethods);
     rewriter_mv.visitCode(); // start code section
@@ -293,8 +297,8 @@ final class FlashlightClassRewriter extends ClassAdapter {
     // empty stack
 
     /* Instrument the method call */
-    final MethodCallInstrumenter instrumenter = new MethodCallInstrumenter(
-        config, mv, wrapper, atLeastJava5, sourceFileName, classNameInternal);
+    final MethodCallInstrumenter instrumenter =
+      new MethodCallInstrumenter(config, mv, wrapper);
     instrumenter.instrumentMethodCall();
     
     /* Return from method */

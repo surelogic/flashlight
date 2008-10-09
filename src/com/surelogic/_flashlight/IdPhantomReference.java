@@ -11,6 +11,7 @@ import com.surelogic._flashlight.jsr166y.ConcurrentReferenceHashMap;
 import com.surelogic._flashlight.rewriter.runtime.IdObject;
 
 abstract class IdPhantomReference extends PhantomReference {
+	private static final boolean useIdObject = false; 	
 	//private static int total = 0, idLookups = 0;
 	
 	static final ConcurrentReferenceHashMap.Hasher hasher = false ? ConcurrentReferenceHashMap.IDENTITY_HASH :
@@ -19,7 +20,7 @@ abstract class IdPhantomReference extends PhantomReference {
 		
 		public int hashCode(Object o) {
 			//total++;
-			if (o instanceof IdObject) {
+			if (useIdObject && o instanceof IdObject) {
 				/*
 				id++;
 				if ((total & 0xffff) == 0) {
@@ -133,7 +134,7 @@ abstract class IdPhantomReference extends PhantomReference {
 			pr = factory.newReference(o, q, id);
 		} else {
 			//total++;
-			if (o instanceof IdObject) {
+			if (useIdObject && o instanceof IdObject) {
 				IdObject ido = (IdObject) o;
 				pr = (V) ido.phantom;
 				/*

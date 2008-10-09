@@ -12,8 +12,10 @@ import com.surelogic._flashlight.rewriter.runtime.*;
 
 abstract class IdPhantomReference extends PhantomReference {
 	private static final boolean useIdObject = true; 	
-	//private static int total = 0, idLookups = 0;
-	
+	/*
+	private static int total = 0, idLookups = 0;
+	private static int notJavaSomething = 0;
+	*/
 	static final ConcurrentReferenceHashMap.Hasher hasher = false ? ConcurrentReferenceHashMap.IDENTITY_HASH :
 		new ConcurrentReferenceHashMap.Hasher() {
 		//private int total = 0, id = 0;
@@ -157,9 +159,15 @@ abstract class IdPhantomReference extends PhantomReference {
 					pr2.setToIgnore();
 				} else {
 					/*
-				System.out.println(o);
-				System.out.println(map.get(o));
-					 */
+					total++;
+					if (!o.getClass().getPackage().getName().startsWith("java")) {
+						notJavaSomething++;
+					}
+					//System.err.println("Not IdObject: "+o.getClass().getName());
+					if ((total & 0xff) == 0) {
+						System.err.println(notJavaSomething+" non-java of "+total);
+					}
+					*/
 					pr = pr2;
 				}
 				/*

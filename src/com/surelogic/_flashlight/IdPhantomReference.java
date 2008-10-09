@@ -8,7 +8,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 //import java.util.concurrent.atomic.AtomicLong;
 
 import com.surelogic._flashlight.jsr166y.ConcurrentReferenceHashMap;
-import com.surelogic._flashlight.rewriter.runtime.IdObject;
+import com.surelogic._flashlight.rewriter.runtime.*;
 
 abstract class IdPhantomReference extends PhantomReference {
 	private static final boolean useIdObject = true; 	
@@ -20,14 +20,14 @@ abstract class IdPhantomReference extends PhantomReference {
 		
 		public int hashCode(Object o) {
 			//total++;
-			if (useIdObject && o instanceof IdObject) {
+			if (useIdObject && o instanceof IIdObject) {
 				/*
 				id++;
 				if ((total & 0xffff) == 0) {
 					System.out.println(id+" IdObjects of "+total);
 				}
 				*/
-				return ((IdObject) o).identity$HashCode();
+				return ((IIdObject) o).identity$HashCode();
 			} else {
 				return System.identityHashCode(o);
 			}
@@ -134,9 +134,9 @@ abstract class IdPhantomReference extends PhantomReference {
 			pr = factory.newReference(o, q, id);
 		} else {
 			//total++;
-			if (useIdObject && o instanceof IdObject) {
-				IdObject ido = (IdObject) o;
-				pr = (V) ido.phantom;
+			if (useIdObject && o instanceof IIdObject) {
+				IIdObject ido = (IIdObject) o;
+				pr = (V) ido.getPhantom$Reference();
 				/*
 				idLookups++;
 				if ((total & 0xffff) == 0) {

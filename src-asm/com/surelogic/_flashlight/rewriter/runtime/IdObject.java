@@ -11,23 +11,24 @@ import com.surelogic._flashlight.*;
  * provides a faster unique ID lookup than is available through
  * {@link System#identityHashCode(Object)}.
  */
-public class IdObject extends Object {	
+public class IdObject implements IIdObject {	
 	/**
 	 * Use a thread-safe counter.
 	 * Starting from 1
 	 */
 	private static final AtomicLong f_idCount = new AtomicLong();
-
-	//public final long id = f_idCount.incrementAndGet();
-	public final ObjectPhantomReference phantom = Store.getObjectPhantom(this, f_idCount.incrementAndGet());
-	
-	public final int identity$HashCode() {
-		return (int) phantom.getId();
-		//return (int) id;
-		//return super.hashCode();
-	}
 	
 	public static final long getNewId() {
 		return f_idCount.incrementAndGet();
+	}
+
+	private final ObjectPhantomReference phantom = Store.getObjectPhantom(this, IdObject.getNewId());
+	
+	public final int identity$HashCode() {
+		return (int) phantom.getId();
+	}
+	
+	public ObjectPhantomReference getPhantom$Reference() {
+		return phantom;
 	}
 }

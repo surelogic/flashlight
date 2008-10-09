@@ -25,7 +25,8 @@ public final class ClassPhantomReference extends IdPhantomReference {
 	 * @aggregate Instance into ClassPRInstanceMap
 	 */
 	private static final ConcurrentMap<Class,ClassPhantomReference> f_classToPhantom = 
-		new ConcurrentReferenceHashMap<Class,ClassPhantomReference>(ReferenceType.WEAK, ReferenceType.STRONG, hasher);
+		new ConcurrentReferenceHashMap<Class,ClassPhantomReference>(ReferenceType.WEAK, ReferenceType.STRONG, 
+				                                                    ConcurrentReferenceHashMap.IDENTITY_COMP);
 
 	private static final RefFactory<Class,ClassPhantomReference> f_factory = 
 		new RefFactory<Class,ClassPhantomReference>() {

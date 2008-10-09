@@ -164,8 +164,16 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
 			return false;
 		}		
 	};
+	
     /** use object hashCode() and == comparison */
-    //IDENTITY_COMP,
+	public static final Hasher IDENTITY_COMP = new Hasher() {
+		public int hashCode(Object o) {
+			return o.hashCode();
+		}
+		public boolean useReferenceEquality() {
+			return true;
+		}		
+	};
 	
     /** use System.identityHashCode() and == comparison */
 	public static final Hasher IDENTITY_HASH = new Hasher() {

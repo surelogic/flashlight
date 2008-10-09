@@ -37,8 +37,6 @@ abstract class MethodCallWrapper extends MethodCall {
   protected final int numWrapperLocals;
   
   protected final int firstOriginalArgPos;
-  protected final int callingMethodNamePos;
-  protected final int callingLineNumberPos;
   
   protected final Type originalReturnType;
   
@@ -81,8 +79,6 @@ abstract class MethodCallWrapper extends MethodCall {
     numWrapperLocals = nextLocalVariable;
     
     firstOriginalArgPos = getFirstOriginalArgPosition(originalArgTypes.length);
-    callingMethodNamePos = getCallingMethodNamePosition(originalArgTypes.length);
-    callingLineNumberPos = getCallingLineNumberPosition(originalArgTypes.length);
     
     originalReturnType = Type.getReturnType(originalDesc);
   }
@@ -172,10 +168,6 @@ abstract class MethodCallWrapper extends MethodCall {
 
   protected abstract int getFirstOriginalArgPosition(int numOriginalArgs);
   
-  protected abstract int getCallingMethodNamePosition(int numOriginalArgs);
-  
-  protected abstract int getCallingLineNumberPosition(int numOriginalArgs);
-  
   protected abstract void pushReceiverForOriginalMethod(MethodVisitor mv);
 
   
@@ -187,16 +179,6 @@ abstract class MethodCallWrapper extends MethodCall {
   
   public final MethodVisitor createMethodHeader(final ClassVisitor cv) {
     return cv.visitMethod(getAccess(), wrapperName, wrapperDescriptor, null, null);
-  }
-  
-  @Override
-  public final void pushCallingMethodName(final MethodVisitor mv) {
-    mv.visitVarInsn(Opcodes.ALOAD, wrapperArgsToLocals[callingMethodNamePos]);
-  }
-  
-  @Override
-  public final void pushCallingLineNumber(final MethodVisitor mv) {
-    mv.visitVarInsn(Opcodes.ILOAD, wrapperArgsToLocals[callingLineNumberPos]);
   }
   
   @Override

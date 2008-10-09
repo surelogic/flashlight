@@ -1551,10 +1551,6 @@ final class FlashlightMethodRewriter implements MethodVisitor {
       wrapperMethods.add(wrapper);
       
       // ..., [objRef], arg1, ..., argN
-      mv.visitLdcInsn(methodName);
-      // ..., [objRef], arg1, ..., argN, callingMethodName    
-      ByteCodeUtils.pushIntegerConstant(mv, currentSrcLine);
-      // ..., [objRef], arg1, ..., argN, callingMethodName, sourceLine
       wrapper.invokeWrapperMethod(mv, classBeingAnalyzedInternal);
       // ..., [returnVlaue]
       
@@ -1563,10 +1559,10 @@ final class FlashlightMethodRewriter implements MethodVisitor {
       final InPlaceMethodInstrumentation methodCall;
       if (opcode == Opcodes.INVOKESTATIC) {
         methodCall = new InPlaceStaticMethodInstrumentation(callSiteId, 
-            opcode, owner, name, desc, methodName, currentSrcLine);
+            opcode, owner, name, desc);
       } else {
         methodCall = new InPlaceInstanceMethodInstrumentation(callSiteId, 
-            opcode, owner, name, desc, methodName, currentSrcLine, lvs);
+            opcode, owner, name, desc, lvs);
       }
       
       final MethodCallInstrumenter instrumenter =

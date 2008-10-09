@@ -7,9 +7,8 @@ final class InPlaceStaticMethodInstrumentation extends
     InPlaceMethodInstrumentation {
 
   public InPlaceStaticMethodInstrumentation(final long callSiteId, final int opcode,
-      final String owner, final String name, final String descriptor,
-      final String callingName, final int lineNumber) {
-    super(callSiteId, opcode, owner, name, descriptor, callingName, lineNumber);
+      final String owner, final String name, final String descriptor) {
+    super(callSiteId, opcode, owner, name, descriptor);
     // TODO Auto-generated constructor stub
   }
 

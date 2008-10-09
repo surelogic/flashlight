@@ -9,11 +9,6 @@ import org.objectweb.asm.MethodVisitor;
  * We could do it for all cases, but it causes code bloat.
  */
 abstract class InPlaceMethodInstrumentation extends MethodCall {
-  protected String callingMethodName;
-  protected int callingLineNumber;
-  
-  
-  
   /**
    * 
    * @param opcode The opcode used to invoke the method.
@@ -24,26 +19,9 @@ abstract class InPlaceMethodInstrumentation extends MethodCall {
    * @param lineNumber The source line of the method call.
    */
   public InPlaceMethodInstrumentation(final long callSiteId, final int opcode,
-      final String owner, final String name, final String descriptor,
-      final String callingName, final int lineNumber) {
+      final String owner, final String name, final String descriptor) {
     super(callSiteId, opcode, owner, name, descriptor);
-    callingMethodName = callingName;
-    callingLineNumber = lineNumber;
   }
-
-  
-  
-  @Override
-  public final void pushCallingMethodName(final MethodVisitor mv) {
-    mv.visitLdcInsn(callingMethodName);
-  }
-  
-  @Override
-  public final void pushCallingLineNumber(final MethodVisitor mv) {
-    ByteCodeUtils.pushIntegerConstant(mv, callingLineNumber);
-  }
-  
-  
   
   public abstract void popReceiverAndArguments(final MethodVisitor mv);
 }

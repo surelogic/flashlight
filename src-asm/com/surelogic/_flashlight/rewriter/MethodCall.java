@@ -54,10 +54,6 @@ abstract class MethodCall {
    */
   public abstract void pushReceiverForEvent(MethodVisitor mv);
   
-  public abstract void pushCallingMethodName(MethodVisitor mv);
-  
-  public abstract void pushCallingLineNumber(MethodVisitor mv);
-  
   /**
    * Push the original receiver and original arguments onto the stack so that
    * method can be invoked.  This is separate from invoking the method via

@@ -6,7 +6,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 final class StaticCallWrapper extends MethodCallWrapper {
-  private static final String WRAPPER_SIGNATURE_TEMPLATE = "({0}Ljava/lang/String;I){1}";
+  private static final String WRAPPER_SIGNATURE_TEMPLATE = "({0}){1}";
   /** Generated wrapper methods are <code>private static</code> and synthetic. */
   private static final int WRAPPER_METHOD_ACCESS =
     Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_SYNTHETIC;
@@ -37,16 +37,6 @@ final class StaticCallWrapper extends MethodCallWrapper {
   @Override
   protected int getFirstOriginalArgPosition(int numOriginalArgs) {
     return 0;
-  }
-
-  @Override
-  protected int getCallingMethodNamePosition(int numOriginalArgs) {
-    return numOriginalArgs;
-  }
-
-  @Override
-  protected int getCallingLineNumberPosition(int numOriginalArgs) {
-    return numOriginalArgs + 1;
   }
 
   @Override

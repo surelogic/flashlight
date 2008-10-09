@@ -56,10 +56,29 @@ final class Refinery extends AbstractRefinery {
 		final List<List<Event>> buf = new ArrayList<List<Event>>();
 		while (!f_finished) {
 			try {
-				f_rawQueue.drainTo(buf);
+				List<Event> first = null;
+				try {
+					first = f_rawQueue.take();
+				} catch (InterruptedException e) {
+					// Ignored
+					Store.logAProblem("Interrupted while calling take()", e);
+					continue;
+				}
+				if (first != null) {
+					buf.add(first);
+				} else {
+					continue;
+				}
+				int num = f_rawQueue.drainTo(buf);
 				// Caused lots of sync overhead 
 				// buf.add(Store.flushLocalQueues());
 				
+				/*
+				System.err.println("Refinery: got "+buf.size()+" lists ("+num+")");
+				if (buf.size() == 0) {
+					continue;
+				}
+				*/
 				for(List<Event> l : buf) {
 					for(Event e : l) {
 						if (e == FinalEvent.FINAL_EVENT) {
@@ -77,6 +96,7 @@ final class Refinery extends AbstractRefinery {
 					}
 					f_eventCache.add(l);
 					//total += l.size();
+					//System.err.println("Refinery: added a list of "+l.size());
 				}
 				buf.clear();
 
@@ -175,10 +195,12 @@ final class Refinery extends AbstractRefinery {
 				UtilConcurrent.remove(pr);
 				events.add(new GarbageCollectedObject(pr));
 			}
-			f_eventCache.add(events);
 			if (deadFields != null) {
 				removeEventsAbout(deadFields);
 			}
+			
+			f_eventCache.add(events);
+			//System.err.println("Refinery: added a GC list of "+events.size());
 		}
 	}
 

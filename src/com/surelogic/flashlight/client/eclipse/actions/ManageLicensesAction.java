@@ -20,9 +20,7 @@ public final class ManageLicensesAction implements
 	}
 
 	public void run(IAction action) {
-		final ManageLicensesDialog dialog = new ManageLicensesDialog(SWTUtility
-				.getShell());
-		dialog.open();
+		ManageLicensesDialog.open(SWTUtility.getShell());
 	}
 
 	public void selectionChanged(IAction action, ISelection selection) {

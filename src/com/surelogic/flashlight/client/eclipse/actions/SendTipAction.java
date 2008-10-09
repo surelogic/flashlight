@@ -2,7 +2,6 @@ package com.surelogic.flashlight.client.eclipse.actions;
 
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.ISelection;
-import org.eclipse.jface.window.Window;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 
@@ -20,10 +19,7 @@ public final class SendTipAction implements IWorkbenchWindowActionDelegate {
 	}
 
 	public void run(IAction action) {
-		final SendTipDialog dialog = new SendTipDialog(SWTUtility.getShell());
-		if (dialog.open() == Window.OK) {
-			System.out.println("OK pressed on send tip dialog...");
-		}
+		SendTipDialog.open(SWTUtility.getShell());
 	}
 
 	public void selectionChanged(IAction action, ISelection selection) {

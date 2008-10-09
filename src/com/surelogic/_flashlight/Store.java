@@ -11,9 +11,7 @@ import java.io.PrintWriter;
 import java.lang.reflect.Field;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
@@ -202,7 +200,11 @@ public final class Store {
 	 * the objects passed into the store and the implementation of those methods
 	 * is part of the instrumented program.
 	 */
-	private final static ThreadLocal<Boolean> tl_withinStore;
+	private final static ThreadLocal<State> tl_withinStore;
+	
+	private static final class State {
+		boolean inside = false;
+	}
 	
 	private static final boolean useTraceNodes = TraceNode.inUse;
 
@@ -223,7 +225,7 @@ public final class Store {
 	 * store immediately return.
 	 */
 	final static void flashlightThread() {
-		tl_withinStore.set(Boolean.TRUE);
+		tl_withinStore.get().inside = true;
 	}
 
 	/*
@@ -311,10 +313,10 @@ public final class Store {
 			} else {
 				f_outQueue = null;
 			}
-			tl_withinStore = new ThreadLocal<Boolean>() {
+			tl_withinStore = new ThreadLocal<State>() {
 				@Override
-				protected Boolean initialValue() {
-					return Boolean.FALSE;
+				protected State initialValue() {
+					return new State();
 				}
 			};
 			IdPhantomReference
@@ -435,13 +437,17 @@ public final class Store {
   public static void instanceFieldAccess(
       final boolean read, final Object receiver, final int fieldID,
       final long siteId) {
+	  if (!IdConstants.useFieldAccesses) {
+		  return;
+	  }
 	  if (f_flashlightIsNotInitialized)
 		  return;
 	  if (FL_OFF.get())
 		  return;
-	  if (tl_withinStore.get().booleanValue())
+	  final State flState = tl_withinStore.get();
+	  if (flState.inside)
 		  return;
-	  tl_withinStore.set(Boolean.TRUE);
+	  flState.inside = true;
 	  try {
 		  /*
 		  if (DEBUG) {
@@ -478,7 +484,7 @@ public final class Store {
 			  e = new FieldWriteInstance(receiver, fieldID, siteId);
 		  putInQueue(f_rawQueue, e);
 	  } finally {
-		  tl_withinStore.set(Boolean.FALSE);
+		  flState.inside = false;
 	  }
   }
 
@@ -501,13 +507,17 @@ public final class Store {
   public static void staticFieldAccess(final boolean read,
 		  final ClassPhantomReference ownerClass, final int fieldID,
 		  final long siteId) {
+	  if (!IdConstants.useFieldAccesses) {
+		  return;
+	  }	  
 	  if (f_flashlightIsNotInitialized)
 		  return;
 	  if (FL_OFF.get())
 		  return;
-	  if (tl_withinStore.get().booleanValue())
+	  final State flState = tl_withinStore.get();
+	  if (flState.inside)
 		  return;
-	  tl_withinStore.set(Boolean.TRUE);
+	  flState.inside = true;
 	  try {
 		  /*
 		  if (DEBUG) {
@@ -534,7 +544,7 @@ public final class Store {
 			  e = new FieldWriteStatic(fieldID, siteId);
 		  putInQueue(f_rawQueue, e);
 	  } finally {
-		  tl_withinStore.set(Boolean.FALSE);
+		  flState.inside = false;
 	  }  
   }
 
@@ -560,13 +570,17 @@ public final class Store {
   public static void instanceFieldAccessLookup(
       final boolean read, final Object receiver,
       final Class clazz, final String fieldName, final long siteId) {
+	  if (!IdConstants.useFieldAccesses) {
+		  return;
+	  }	  
     if (f_flashlightIsNotInitialized)
       return;
     if (FL_OFF.get())
       return;
-    if (tl_withinStore.get().booleanValue())
-      return;
-    tl_withinStore.set(Boolean.TRUE);
+    final State flState = tl_withinStore.get();
+    if (flState.inside)
+    	return;
+    flState.inside = true;
     try {
       if (DEBUG) {
         final String fmt = "Store.instanceFieldAccessLookup(%n\t\t%s%n\t\treceiver=%s%n\t\tfield=%s%n\t\tlocation=%s)";
@@ -598,7 +612,7 @@ public final class Store {
         e = new FieldWriteInstance(receiver, oField.getId(), siteId);
       putInQueue(f_rawQueue, e);
     } finally {
-      tl_withinStore.set(Boolean.FALSE);
+    	flState.inside = false;
     }
   }
 
@@ -621,13 +635,17 @@ public final class Store {
    */
   public static void staticFieldAccessLookup(final boolean read,
       final Class clazz, final String fieldName, final long siteId) {
+	  if (!IdConstants.useFieldAccesses) {
+		  return;
+	  }	  
     if (f_flashlightIsNotInitialized)
       return;
     if (FL_OFF.get())
       return;
-    if (tl_withinStore.get().booleanValue())
-      return;
-    tl_withinStore.set(Boolean.TRUE);
+    final State flState = tl_withinStore.get();
+    if (flState.inside)
+    	return;
+    flState.inside = true;
     try {
       if (DEBUG) {
         final String fmt = "Store.staticFieldAccessLookup(%n\t\t%s%n\t\tfield=%s%n\t\tlocation=%s)";
@@ -652,7 +670,7 @@ public final class Store {
         e = new FieldWriteStatic(oField.getId(), siteId);
       putInQueue(f_rawQueue, e);
     } finally {
-      tl_withinStore.set(Boolean.FALSE);
+		flState.inside = false;
     }
   }
 
@@ -675,13 +693,17 @@ public final class Store {
   @Deprecated
 	public static void fieldAccess(final boolean read, final Object receiver,
 			final Field field, ClassPhantomReference withinClass, final int line) {
+	  if (!IdConstants.useFieldAccesses) {
+		  return;
+	  }
 		if (f_flashlightIsNotInitialized)
 			return;
 		if (FL_OFF.get())
 			return;
-		if (tl_withinStore.get().booleanValue())
+		final State flState = tl_withinStore.get();
+		if (flState.inside)
 			return;
-		tl_withinStore.set(Boolean.TRUE);
+		flState.inside = true;
 		try {
 			if (DEBUG) {
 				final String fmt = "Store.fieldAccess(%n\t\t%s%n\t\treceiver=%s%n\t\tfield=%s%n\t\tlocation=%s)";
@@ -722,7 +744,7 @@ public final class Store {
 			}
 			putInQueue(f_rawQueue, e);
 		} finally {
-			tl_withinStore.set(Boolean.FALSE);
+			flState.inside = false;
 		}
 	}
 
@@ -751,9 +773,10 @@ public final class Store {
 			return;
 		if (FL_OFF.get())
 			return;
-		if (tl_withinStore.get().booleanValue())
+		final State flState = tl_withinStore.get();
+		if (flState.inside)
 			return;
-		tl_withinStore.set(Boolean.TRUE);
+		flState.inside = true;
 		try {
 			if (DEBUG) {
 				final String fmt = "Store.constructorCall(%n\t\t%s%n\t\tlocation=%s)";
@@ -781,7 +804,7 @@ public final class Store {
 				putInQueue(f_rawQueue, e);
 			}
 		} finally {
-			tl_withinStore.set(Boolean.FALSE);
+			flState.inside = false;
 		}
 	}
 
@@ -814,9 +837,10 @@ public final class Store {
 			return;
 		if (FL_OFF.get())
 			return;
-		if (tl_withinStore.get().booleanValue())
+		final State flState = tl_withinStore.get();
+		if (flState.inside)
 			return;
-		tl_withinStore.set(Boolean.TRUE);
+		flState.inside = true;
 		try {
 			if (DEBUG) {
 				final String fmt = "Store.constructorExecution(%n\t\t%s%n\t\treceiver=%s%n\t\tlocation=%s)";
@@ -836,7 +860,7 @@ public final class Store {
 				p.setUnderConstruction(before);
 			}
 		} finally {
-			tl_withinStore.set(Boolean.FALSE);
+			flState.inside = false;
 		}
 	}
 
@@ -877,9 +901,10 @@ public final class Store {
 			return;
 		if (FL_OFF.get())
 			return;
-		if (tl_withinStore.get().booleanValue())
+		final State flState = tl_withinStore.get();
+		if (flState.inside)
 			return;
-		tl_withinStore.set(Boolean.TRUE);
+		flState.inside = true;
 		try {
 			if (DEBUG) {
 				final String fmt = "Store.methodCall(%n\t\t%s%n\t\treceiver=%s%n\t\tlocation=%s)";
@@ -929,7 +954,7 @@ public final class Store {
 				putInQueue(f_rawQueue, e);
 			}
 		} finally {
-			tl_withinStore.set(Boolean.FALSE);
+			flState.inside = false;
 		}
 	}
 
@@ -957,9 +982,10 @@ public final class Store {
 			return;
 		if (FL_OFF.get())
 			return;
-		if (tl_withinStore.get().booleanValue())
+		final State flState = tl_withinStore.get();
+		if (flState.inside)
 			return;
-		tl_withinStore.set(Boolean.TRUE);
+		flState.inside = true;
 		try {
 			if (DEBUG) {
 				final String fmt = "Store.beforeIntrinsicLockAcquisition(%n\t\tlockObject=%s%n\t\tlockIsThis=%b%n\t\tlockIsClass=%b%n\t\tlocation=%s)";
@@ -980,7 +1006,7 @@ public final class Store {
 					lockIsThis, lockIsClass, siteId);
 			putInQueue(f_rawQueue, e, true);
 		} finally {
-			tl_withinStore.set(Boolean.FALSE);
+			flState.inside = false;
 		}
 	}
 
@@ -1001,9 +1027,10 @@ public final class Store {
 			return;
 		if (FL_OFF.get())
 			return;
-		if (tl_withinStore.get().booleanValue())
+		final State flState = tl_withinStore.get();
+		if (flState.inside)
 			return;
-		tl_withinStore.set(Boolean.TRUE);
+		flState.inside = true;
 		try {
 			if (DEBUG) {
 				final String fmt = "Store.afterIntrinsicLockAcquisition(%n\t\tlockObject=%s%n\t\tlocation=%s)";
@@ -1022,7 +1049,7 @@ public final class Store {
 			final Event e = new AfterIntrinsicLockAcquisition(lockObject, siteId);
 			putInQueue(f_rawQueue, e);
 		} finally {
-			tl_withinStore.set(Boolean.FALSE);
+			flState.inside = false;
 		}
 	}
 
@@ -1054,9 +1081,10 @@ public final class Store {
 			return;
 		if (FL_OFF.get())
 			return;
-		if (tl_withinStore.get().booleanValue())
+		final State flState = tl_withinStore.get();
+		if (flState.inside)
 			return;
-		tl_withinStore.set(Boolean.TRUE);
+		flState.inside = true;
 		try {
 			if (DEBUG) {
 				final String fmt = "Store.intrinsicLockWait(%n\t\t%s%n\t\tlockObject=%s%n\t\tlocation=%s)";
@@ -1080,7 +1108,7 @@ public final class Store {
 				e = new AfterIntrinsicLockWait(lockObject, siteId);
 			putInQueue(f_rawQueue, e, true);
 		} finally {
-			tl_withinStore.set(Boolean.FALSE);
+			flState.inside = false;
 		}
 	}
 
@@ -1101,9 +1129,10 @@ public final class Store {
 			return;
 		if (FL_OFF.get())
 			return;
-		if (tl_withinStore.get().booleanValue())
+		final State flState = tl_withinStore.get();
+		if (flState.inside)
 			return;
-		tl_withinStore.set(Boolean.TRUE);
+		flState.inside = true;
 		try {
 			if (DEBUG) {
 				final String fmt = "Store.afterIntrinsicLockRelease(%n\t\tlockObject=%s%n\t\tlocation=%s)";
@@ -1122,7 +1151,7 @@ public final class Store {
 			final Event e = new AfterIntrinsicLockRelease(lockObject, siteId);
 			putInQueue(f_rawQueue, e);
 		} finally {
-			tl_withinStore.set(Boolean.FALSE);
+			flState.inside = false;
 		}
 	}
 
@@ -1143,9 +1172,10 @@ public final class Store {
 			return;
 		if (FL_OFF.get())
 			return;
-		if (tl_withinStore.get().booleanValue())
+		final State flState = tl_withinStore.get();
+		if (flState.inside)
 			return;
-		tl_withinStore.set(Boolean.TRUE);
+		flState.inside = true;
 		try {
 			if (DEBUG) {
 				/*
@@ -1167,7 +1197,7 @@ public final class Store {
 				return;
 			}
 		} finally {
-			tl_withinStore.set(Boolean.FALSE);
+			flState.inside = false;
 		}
 	}
 
@@ -1194,9 +1224,10 @@ public final class Store {
 			return;
 		if (FL_OFF.get())
 			return;
-		if (tl_withinStore.get().booleanValue())
+		final State flState = tl_withinStore.get();
+		if (flState.inside)
 			return;
-		tl_withinStore.set(Boolean.TRUE);
+		flState.inside = true;
 		try {
 			if (DEBUG) {
 				/*
@@ -1220,7 +1251,7 @@ public final class Store {
 				return;
 			}
 		} finally {
-			tl_withinStore.set(Boolean.FALSE);
+			flState.inside = false;
 		}
 	}
 
@@ -1247,9 +1278,10 @@ public final class Store {
 			return;
 		if (FL_OFF.get())
 			return;
-		if (tl_withinStore.get().booleanValue())
+		final State flState = tl_withinStore.get();
+		if (flState.inside)
 			return;
-		tl_withinStore.set(Boolean.TRUE);
+		flState.inside = true;
 		try {
 			if (DEBUG) {
 				/*
@@ -1273,7 +1305,7 @@ public final class Store {
 				return;
 			}
 		} finally {
-			tl_withinStore.set(Boolean.FALSE);
+			flState.inside = false;
 		}
 	}
 
@@ -1379,7 +1411,7 @@ public final class Store {
 		}
 	}
 
-	static final int LOCAL_QUEUE_MAX = 128;
+	static final int LOCAL_QUEUE_MAX = 256;
 	
 	/**
 	 * Used by the refinery to flush all the local queues upon shutdown

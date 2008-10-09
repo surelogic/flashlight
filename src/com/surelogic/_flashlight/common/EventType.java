@@ -127,6 +127,7 @@ public enum EventType {
 		@Override
 		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
 			readFieldAccess(in, attrs);
+			attrs.put(RECEIVER, IdConstants.ILLEGAL_RECEIVER_ID);
 		}
 	},	
 	FieldWrite_Instance("field-write") {
@@ -146,6 +147,7 @@ public enum EventType {
 		@Override
 		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
 			readFieldAccess(in, attrs);
+			attrs.put(RECEIVER, IdConstants.ILLEGAL_RECEIVER_ID);
 		}
 	},
 	Final_Event("final") {
@@ -188,6 +190,16 @@ public enum EventType {
 			attrs.put(ID, readCompressedLong(in));
 			attrs.put(READ_LOCK_ID, readCompressedLong(in));
 			attrs.put(WRITE_LOCK_ID, readCompressedLong(in));
+		}
+	},
+	Receiver("receiver") {
+	    @Override
+	    void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+	        attrs.put(RECEIVER, readCompressedLong(in));
+	    }
+		@Override
+		IAttributeType getPersistentAttribute() {
+			return RECEIVER;
 		}
 	},
 	SingleThreadedField_Instance("single-threaded-field") {
@@ -316,7 +328,7 @@ public enum EventType {
 		final int flags = readCompressedInt(in);
 		readFlag(flags, UNDER_CONSTRUCTION, attrs);
 		*/
-		attrs.put(RECEIVER, readCompressedLong(in));
+		//attrs.put(RECEIVER, readCompressedLong(in));
 	}
 	
 	static void readLockEvent(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {

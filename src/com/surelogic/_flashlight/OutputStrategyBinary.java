@@ -21,6 +21,7 @@ public class OutputStrategyBinary extends EventVisitor {
 	private final long start;
 	private long lastThread = NO_VALUE; 
 	private long lastTrace = NO_VALUE;
+	private long lastReceiver = NO_VALUE;
 	/*
 	private boolean lastWasTraceNode = false;
 	private int total = 0, same = 0;
@@ -371,6 +372,13 @@ public class OutputStrategyBinary extends EventVisitor {
 		}
 	}
 	
+	private void writeReceiver(long id) throws IOException {
+		if (id != lastReceiver) {
+			lastReceiver = id;
+			writeLong_unsafe(Receiver.getByte(), id, true);			
+		}
+	}
+	
 	private void writeCommon(byte header, WithinThreadEvent e) throws IOException {
 		writeThread(e.getWithinThread().getId());
 		
@@ -426,9 +434,23 @@ public class OutputStrategyBinary extends EventVisitor {
 	
 	private void writeFieldAccessInstance(byte header, FieldAccessInstance e) {
 		try {
+			long id = e.getReceiver().getId();
+			writeReceiver(id);
 			writeFieldAccess_unsafe(header, e);
+			
 			/*fieldBytes +=*/ //writeCompressedInt(e.receiverUnderConstruction() ? UNDER_CONSTRUCTION.mask() : 0);
-			/*fieldBytes +=*/ writeCompressedLong(e.getReceiver().getId());
+			/*
+			total++;
+			if (id == lastReceiver) {
+				same++;
+			} else {
+				lastReceiver = id;
+			}
+			if ((total & 0xffff) == 0) {
+				System.err.println(same+" same as last out of "+total);
+			}
+			*/
+			/*fieldBytes +=*/ //writeCompressedLong(id);
 		} catch (IOException ioe) {
 			handleIOException(ioe);
 		}

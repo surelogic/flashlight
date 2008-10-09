@@ -28,7 +28,9 @@ public class IdObject implements IIdObject {
 		return (int) phantom.getId();
 	}
 	
-	public ObjectPhantomReference getPhantom$Reference() {
+	public final ObjectPhantomReference getPhantom$Reference() {
 		return phantom;
 	}
+	
+	public IdObject() {}
 }

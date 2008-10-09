@@ -66,7 +66,8 @@ public final class Phantom {
 		return ofObject(o, NO_PREASSIGNED_ID);
 	}
 
-	static ObjectPhantomReference ofObject(final Object o, long id) {
+	// made public so that the EmptyStore and DebugStore could call it
+	public static ObjectPhantomReference ofObject(final Object o, long id) {
 		assert o != null;
 		if (o instanceof Class)
 			throw new IllegalArgumentException(

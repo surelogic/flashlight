@@ -59,12 +59,6 @@ final class FlashlightClassRewriter extends ClassAdapter {
   /** Is the class file version at least Java 5? */
   private boolean atLeastJava5;
   
-  /**
-   * Should the super constructor call be updated from {@code java.lang.Object}
-   * to {@code com.surelogic._flashlight.rewriter.runtime.IdObject}.
-   */
-  private boolean updateSuperCall;
-  
   /** The name of the source file that contains the class being rewritten. */
   private String sourceFileName = UNKNOWN_SOURCE_FILE;
 
@@ -79,6 +73,18 @@ final class FlashlightClassRewriter extends ClassAdapter {
    * we modify it.  Otherwise we need to add one.
    */
   private boolean needsClassInitializer = true;
+  
+  /**
+   * Should the super constructor call be updated from {@code java.lang.Object}
+   * to {@code com.surelogic._flashlight.rewriter.runtime.IdObject}.
+   */
+  private boolean updateSuperCall;
+  
+  /**
+   * Do we need to implement the IIdObject interface?  This is set by the
+   * {@link #visit} method.
+   */
+  private boolean mustImplementIIdObject = false;
   
   /**
    * The wrapper methods that we need to generate to instrument calls to
@@ -166,19 +172,45 @@ final class FlashlightClassRewriter extends ClassAdapter {
     classNameInternal = name;
     classNameFullyQualified = ByteCodeUtils.internal2FullyQualified(name);
 
+    /* We have to modify root classes to insert object id information. We only
+     * care about those classes that extend object, or whose superclass is a
+     * class not being instrumented.
+     */
     final String newSuperName;
-    if (!isInterface && superName.equals(FlashlightNames.JAVA_LANG_OBJECT)) {
-      newSuperName = FlashlightNames.ID_OBJECT;
-      updateSuperCall = true;
-    } else {
+    final String[] newInterfaces;
+    if (isInterface) { // Interface, leave alone
       newSuperName = superName;
+      newInterfaces = interfaces;
       updateSuperCall = false;
+      mustImplementIIdObject = false;
+    } else if (superName.equals(FlashlightNames.JAVA_LANG_OBJECT)) {
+      /* Class extends object, make it extend IdObject instead */
+      newSuperName = FlashlightNames.ID_OBJECT;
+      newInterfaces = interfaces;
+      updateSuperCall = true;
+      mustImplementIIdObject = false;
+    } else if (!classModel.isInstrumentedClass(ByteCodeUtils.internal2FullyQualified(superName))) {
+      /* Class extends a class that is not being instrumented.  Add the
+       * IIdObject interface, and we need to add the methods to implement it.
+       */
+      newSuperName = superName;
+      newInterfaces = new String[interfaces.length+1];
+      newInterfaces[0] = FlashlightNames.I_ID_OBJECT;
+      System.arraycopy(interfaces, 0, newInterfaces, 1, interfaces.length);
+      updateSuperCall = false;
+      mustImplementIIdObject = true;
+    } else {
+      /* Class already has a parent that implements IIdObject */
+      newSuperName = superName;
+      newInterfaces = interfaces;
+      updateSuperCall = false;      
+      mustImplementIIdObject = false;
     }
     
     /* If the class extends from java.lang.Object, we change it to extend
      * com.surelogic._flashlight.rewriter.runtime.IdObject.
      */
-    cv.visit(version, access, name, signature, newSuperName, interfaces);
+    cv.visit(version, access, name, signature, newSuperName, newInterfaces);
   }
 
   @Override
@@ -213,7 +245,7 @@ final class FlashlightClassRewriter extends ClassAdapter {
       methodSizes.put(methodId, cse);
       return FlashlightMethodRewriter.create(access,
           name, desc, cse, config, callSiteIdFactory, messenger, classModel, atLeastJava5, isInterface,
-          updateSuperCall, sourceFileName, classNameInternal, classNameFullyQualified,
+          updateSuperCall, mustImplementIIdObject, sourceFileName, classNameInternal, classNameFullyQualified,
           wrapperMethods);
     }
   }
@@ -237,11 +269,11 @@ final class FlashlightClassRewriter extends ClassAdapter {
       // insert our new field
       fv = cv.visitField(
           FlashlightNames.FLASHLIGHT_CLASS_OBJECT_ACCESS,
-          FlashlightNames.FLASHLIGHT_CLASS_OBJECT, FlashlightNames.FLASHLIGHT_CLASS_OBJECT_DESC,
-          null, null);
+          FlashlightNames.FLASHLIGHT_CLASS_OBJECT,
+          FlashlightNames.FLASHLIGHT_CLASS_OBJECT_DESC, null, null);
       fv.visitEnd();
     }
-
+    
     // Add the class initializer if needed
     if (needsClassInitializer) {
       addClassInitializer();
@@ -250,6 +282,22 @@ final class FlashlightClassRewriter extends ClassAdapter {
     // Add the wrapper methods
     for (final MethodCallWrapper wrapper : wrapperMethods) {
       addWrapperMethod(wrapper);
+    }
+
+    /* Implement the IIdObject interface, if necessary.  The constructors have
+     * already been modified by the method rewriter to initialize the 
+     * flashlight$phantomObject field.
+     */
+    if (mustImplementIIdObject) {
+      // Insert the flashlight$phantomObject field
+      fv = cv.visitField(
+          FlashlightNames.FLASHLIGHT_PHANTOM_OBJECT_ACCESS,
+          FlashlightNames.FLASHLIGHT_PHANTOM_OBJECT,
+          FlashlightNames.FLASHLIGHT_PHANTOM_OBJECT_DESC, null, null);
+      fv.visitEnd();
+      
+      // insert methods
+      addIIdObjectMethods();
     }
     
     // Find any oversized methods
@@ -270,7 +318,7 @@ final class FlashlightClassRewriter extends ClassAdapter {
   
   
   private void addClassInitializer() {
-    /* Create a new <clinit> method to vist */
+    /* Create a new <clinit> method to visit */
     final MethodVisitor mv =
       cv.visitMethod(Opcodes.ACC_STATIC, CLASS_INITIALIZER,
           CLASS_INITIALIZER_DESC, null, null);
@@ -279,7 +327,7 @@ final class FlashlightClassRewriter extends ClassAdapter {
      */
     final MethodVisitor rewriter_mv = FlashlightMethodRewriter.create(Opcodes.ACC_STATIC,
         CLASS_INITIALIZER, CLASS_INITIALIZER_DESC, mv, config, callSiteIdFactory, messenger,
-        classModel, atLeastJava5, isInterface, updateSuperCall, sourceFileName,
+        classModel, atLeastJava5, isInterface, updateSuperCall, mustImplementIIdObject, sourceFileName,
         classNameInternal, classNameFullyQualified, wrapperMethods);
     rewriter_mv.visitCode(); // start code section
     rewriter_mv.visitInsn(Opcodes.RETURN); // empty method, just return
@@ -287,6 +335,39 @@ final class FlashlightClassRewriter extends ClassAdapter {
     rewriter_mv.visitEnd(); // end of method
   }
   
+  
+  
+  private void addIIdObjectMethods() {
+    final MethodVisitor identityHashCode =
+      cv.visitMethod(FlashlightNames.IDENTITY_HASHCODE_ACCESS,
+          FlashlightNames.IDENTITY_HASHCODE,
+          FlashlightNames.IDENTITY_HASHCODE_SIGNATURE, null, null);
+    identityHashCode.visitCode();
+    identityHashCode.visitVarInsn(Opcodes.ALOAD, 0);
+    identityHashCode.visitFieldInsn(Opcodes.GETFIELD, classNameInternal,
+        FlashlightNames.FLASHLIGHT_PHANTOM_OBJECT,
+        FlashlightNames.FLASHLIGHT_PHANTOM_OBJECT_DESC);
+    identityHashCode.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
+        FlashlightNames.OBJECT_PHANTOM_REFERENCE, FlashlightNames.GET_ID,
+        FlashlightNames.GET_ID_SIGNATURE);
+    identityHashCode.visitInsn(Opcodes.L2I);
+    identityHashCode.visitInsn(Opcodes.IRETURN);
+    identityHashCode.visitMaxs(2, 1);
+    identityHashCode.visitEnd();
+    
+    final MethodVisitor getPhantomReference =
+      cv.visitMethod(FlashlightNames.GET_PHANTOM_REFERENCE_ACCESS,
+          FlashlightNames.GET_PHANTOM_REFERENCE,
+          FlashlightNames.GET_PHANTOM_REFERENCE_SIGNATURE, null, null);
+    getPhantomReference.visitCode();
+    getPhantomReference.visitVarInsn(Opcodes.ALOAD, 0);
+    getPhantomReference.visitFieldInsn(Opcodes.GETFIELD, classNameInternal,
+        FlashlightNames.FLASHLIGHT_PHANTOM_OBJECT,
+        FlashlightNames.FLASHLIGHT_PHANTOM_OBJECT_DESC);
+    getPhantomReference.visitInsn(Opcodes.ARETURN);
+    getPhantomReference.visitMaxs(1, 1);
+    getPhantomReference.visitEnd();
+  }
   
   
   private void addWrapperMethod(final MethodCallWrapper wrapper) {

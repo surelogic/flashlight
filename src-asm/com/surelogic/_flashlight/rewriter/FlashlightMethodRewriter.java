@@ -32,6 +32,18 @@ final class FlashlightMethodRewriter implements MethodVisitor {
   private final class ObjectInitCallback implements Callback {
     public void superConstructorCalled() {
       stateMachine = null;
+      /*
+       * Must initialize the flashlight$phantomObject field before calling th
+       * constructorExcecution event because constructorExecution() will may
+       * cause getPhantom$Reference() to be called. If we don't have init the
+       * field first, then this could return null causing a NullPointerException
+       * in the store.
+       */
+      if (mustImplementIIdObject) {
+        if (lastInitOwner != null && !lastInitOwner.equals(classBeingAnalyzedInternal)) {
+          initPhantomObjectField();
+        }
+      }
       if (config.rewriteConstructorExecution) {
         insertConstructorExecutionPrefix();
       }
@@ -84,6 +96,13 @@ final class FlashlightMethodRewriter implements MethodVisitor {
    * to {@code com.surelogic._flashlight.rewriter.runtime.IdObject}.
    */
   private final boolean updateSuperCall;
+  
+  /**
+   * Must the class that contains the method implement the IIdObject interface.
+   * If so, we need to update the constructors to initialize the field
+   * flashlight$phantomObject.
+   */
+  private final boolean mustImplementIIdObject;
   
   /**
    * The current source line of code being rewritten. Driven by calls to
@@ -190,6 +209,15 @@ final class FlashlightMethodRewriter implements MethodVisitor {
    */
   private long siteId = 0;
   
+  /**
+   * The owner of the last "&lt;init&gt;" method called.  Used by the object
+   * init callback to determine if the flashlight$phantomObject field should
+   * be initialized.  If the last owner is the class being instrumented,
+   * then the field is not initialized because we have a "this(...)" call,
+   * which would have already initialized the field.
+   */
+  private String lastInitOwner = null;
+  
   
   
   /**
@@ -198,14 +226,14 @@ final class FlashlightMethodRewriter implements MethodVisitor {
    */
   public static MethodVisitor create(final int access, final String mname,
       final String desc, final MethodVisitor mv, final Configuration conf,
-      final SiteIdFactory csif,
-      final EngineMessenger msg, final ClassAndFieldModel model,
-      final boolean java5, final boolean inInt, final boolean update, 
-      final String fname, final String nameInternal,
-      final String nameFullyQualified, final Set<MethodCallWrapper> wrappers) {
+      final SiteIdFactory csif, final EngineMessenger msg,
+      final ClassAndFieldModel model, final boolean java5, final boolean inInt,
+      final boolean update, final boolean mustImpl, final String fname,
+      final String nameInternal, final String nameFullyQualified,
+      final Set<MethodCallWrapper> wrappers) {
     final FlashlightMethodRewriter methodRewriter =
       new FlashlightMethodRewriter(access, mname, desc, mv, conf, csif, msg,
-          model, java5, inInt, update, fname, nameInternal, nameFullyQualified,
+          model, java5, inInt, update, mustImpl, fname, nameInternal, nameFullyQualified,
           wrappers);
     methodRewriter.lvs = new LocalVariablesSorter(access, desc, methodRewriter);
     return methodRewriter.lvs;
@@ -231,9 +259,9 @@ final class FlashlightMethodRewriter implements MethodVisitor {
    */
   private FlashlightMethodRewriter(final int access, final String mname,
       final String desc, final MethodVisitor mv, final Configuration conf,
-      final SiteIdFactory csif,
-      final EngineMessenger msg, final ClassAndFieldModel model,
-      final boolean java5, final boolean inInt, final boolean update, final String fname,
+      final SiteIdFactory csif, final EngineMessenger msg,
+      final ClassAndFieldModel model, final boolean java5, final boolean inInt,
+      final boolean update, final boolean mustImpl, final String fname,
       final String nameInternal, final String nameFullyQualified,
       final Set<MethodCallWrapper> wrappers) {
     this.mv = mv;
@@ -244,6 +272,7 @@ final class FlashlightMethodRewriter implements MethodVisitor {
     atLeastJava5 = java5;
     inInterface = inInt;
     updateSuperCall = update;
+    mustImplementIIdObject = mustImpl;
     wasSynchronized = (access & Opcodes.ACC_SYNCHRONIZED) != 0;
     isStatic = (access & Opcodes.ACC_STATIC) != 0;
     methodName = mname;
@@ -384,6 +413,7 @@ final class FlashlightMethodRewriter implements MethodVisitor {
           outputOriginalCall = false;
           rewriteMethodCall(Opcodes.INVOKESPECIAL, owner, name, desc);
         } else {
+          lastInitOwner = owner;
           if (config.rewriteInit) {
             outputOriginalCall = false;
             rewriteConstructorCall(owner, name, desc);
@@ -395,9 +425,12 @@ final class FlashlightMethodRewriter implements MethodVisitor {
           }
         }
       } else {
-        if (name.equals(FlashlightNames.CONSTRUCTOR) && isConstructor && stateMachine != null) {
-          outputOriginalCall = false;
-          updateSuperCall(owner, name, desc);
+        if (name.equals(FlashlightNames.CONSTRUCTOR)) {
+          lastInitOwner = owner;
+          if (isConstructor && stateMachine != null) {
+            outputOriginalCall = false;
+            updateSuperCall(owner, name, desc);
+          }
         }
       }      
       if (outputOriginalCall) {
@@ -1518,19 +1551,19 @@ final class FlashlightMethodRewriter implements MethodVisitor {
   
   private void rewriteMethodCall(final int opcode,
       final String owner, final String name, final String desc) {
-	/* The clone() method is a special case due to its retarded 
-	 * semantics.  If the class of the object being used as the receiver,
-	 * call it C, implements Cloneable, but DOES NOT override the clone() method, 
-	 * the clone method is still seen as a protected method from Object.
-	 * This means, we won't be able to invoke the method from a static
-	 * method in C because the receiver will still be seen as being of
-	 * type Object.  This situation works in JRE 5, but not in JRE 6 due to
-	 * a stricter bytecode verifier.
-	 * 
-	 * The best thing to do in this case is to inline the instrumentation.
-	 */  
-	final boolean isClone = (opcode == Opcodes.INVOKEVIRTUAL)
-		&& name.equals("clone") && desc.startsWith("()");
+  	/* The clone() method is a special case due to its retarded 
+  	 * semantics.  If the class of the object being used as the receiver,
+  	 * call it C, implements Cloneable, but DOES NOT override the clone() method, 
+  	 * the clone method is still seen as a protected method from Object.
+  	 * This means, we won't be able to invoke the method from a static
+  	 * method in C because the receiver will still be seen as being of
+  	 * type Object.  This situation works in JRE 5, but not in JRE 6 due to
+  	 * a stricter bytecode verifier.
+  	 * 
+  	 * The best thing to do in this case is to inline the instrumentation.
+  	 */  
+  	final boolean isClone = (opcode == Opcodes.INVOKEVIRTUAL)
+  		&& name.equals("clone") && desc.startsWith("()");
     if (!inInterface && !isClone) {
       /* Create the wrapper method information and add it to the list of wrappers */
       final MethodCallWrapper wrapper;
@@ -1569,7 +1602,26 @@ final class FlashlightMethodRewriter implements MethodVisitor {
       updateStackDepthDelta(7);
     }
   }
+
   
+  
+  // =========================================================================
+  // == For implementing IIdObject
+  // =========================================================================
+
+  // +2 on the stack
+  private void initPhantomObjectField() {
+    mv.visitVarInsn(Opcodes.ALOAD, 0);
+    mv.visitVarInsn(Opcodes.ALOAD, 0);
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.ID_OBJECT,
+        FlashlightNames.GET_NEW_ID, FlashlightNames.GET_NEW_ID_SIGNATURE);
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
+        FlashlightNames.GET_OBJECT_PHANTOM,
+        FlashlightNames.GET_OBJECT_PHANTOM_SIGNATURE);
+    mv.visitFieldInsn(Opcodes.PUTFIELD, classBeingAnalyzedInternal,
+        FlashlightNames.FLASHLIGHT_PHANTOM_OBJECT,
+        FlashlightNames.FLASHLIGHT_PHANTOM_OBJECT_DESC);
+  }
   
   
  

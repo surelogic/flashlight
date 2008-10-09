@@ -58,7 +58,32 @@ final class FlashlightNames {
   
   public static final String GET_CLASS_PHANTOM = "getClassPhantom";
   public static final String GET_CLASS_PHANTOM_SIGNATURE = "(Ljava/lang/Class;)Lcom/surelogic/_flashlight/ClassPhantomReference;";
+  
+  public static final String GET_OBJECT_PHANTOM = "getObjectPhantom";
+  public static final String GET_OBJECT_PHANTOM_SIGNATURE = "(Ljava/lang/Object;J)Lcom/surelogic/_flashlight/ObjectPhantomReference;";
 
+  // Flashlight IIdObject interface
+  public static final String I_ID_OBJECT = "com/surelogic/_flashlight/rewriter/runtime/IIdObject";
+  
+  public static final String IDENTITY_HASHCODE = "identity$HashCode";
+  public static final String IDENTITY_HASHCODE_SIGNATURE = "()I";
+  public static final int    IDENTITY_HASHCODE_ACCESS = Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL;
+
+  public static final String GET_PHANTOM_REFERENCE = "getPhantom$Reference";
+  public static final String GET_PHANTOM_REFERENCE_SIGNATURE = "()Lcom/surelogic/_flashlight/ObjectPhantomReference;";
+  public static final int    GET_PHANTOM_REFERENCE_ACCESS = Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL;
+
+  // Flashlight IdObject class
+  public static final String ID_OBJECT = "com/surelogic/_flashlight/rewriter/runtime/IdObject";
+
+  public static final String GET_NEW_ID = "getNewId";
+  public static final String GET_NEW_ID_SIGNATURE = "()J";
+  
+  // Flashlight ObjectPhantomReference class
+  public static final String OBJECT_PHANTOM_REFERENCE = "com/surelogic/_flashlight/ObjectPhantomReference";
+  public static final String GET_ID = "getId";
+  public static final String GET_ID_SIGNATURE = "()J";
+  
   // Flashlight classes and methods  
   public static final String FLASHLIGHT_RUNTIME_SUPPORT = "com/surelogic/_flashlight/rewriter/runtime/FlashlightRuntimeSupport";
   public static final String GET_CLASSLOADER_INFO = "getClassLoaderInfo";
@@ -68,8 +93,7 @@ final class FlashlightNames {
   public static final String GET_CLASS = "getClass";
   public static final String GET_CLASS_SIGNATURE = "(Ljava/lang/String;)Ljava/lang/Class;";
   
-  public static final String ID_OBJECT = "com/surelogic/_flashlight/rewriter/runtime/IdObject";
-  
+    
   // Other Java classes and methods
   public static final String CONSTRUCTOR = "<init>";
   
@@ -125,4 +149,13 @@ final class FlashlightNames {
   public static final int FLASHLIGHT_CLASS_LOADER_INFO_ACCESS =
     Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL | Opcodes.ACC_SYNTHETIC;
   public static final String FLASHLIGHT_CLASS_LOADER_INFO_DESC = "Lcom/surelogic/_flashlight/rewriter/runtime/ClassLoaderInfo;";
+  
+  /* When implementing the IIdObject interface, we need to add a private final
+   * field "flashlight$phantomObject" to store the phantom object referenced for
+   * the object.  
+   */
+  public static final String FLASHLIGHT_PHANTOM_OBJECT = "flashlight$phantomObject";
+  public static final int FLASHLIGHT_PHANTOM_OBJECT_ACCESS =
+    Opcodes.ACC_PRIVATE | Opcodes.ACC_FINAL | Opcodes.ACC_SYNTHETIC;
+  public static final String FLASHLIGHT_PHANTOM_OBJECT_DESC = "Lcom/surelogic/_flashlight/ObjectPhantomReference;";
 }

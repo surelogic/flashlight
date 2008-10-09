@@ -102,6 +102,18 @@ final class ClassAndFieldModel {
   }
   
   /**
+   * Does the class model contain an entry for this class?  In other words, is
+   * the named class part of the set of classes being instrumented.
+   * 
+   * @param name
+   *          The fully qualified name of the class.
+   * @return {@code true} if and only if the class is part of the model.
+   */
+  public boolean isInstrumentedClass(final String name) {
+    return classes.containsKey(name);
+  }
+  
+  /**
    * Get the unique identifier for the given field in the given class.
    * 
    * @param className

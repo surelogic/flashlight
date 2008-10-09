@@ -259,6 +259,10 @@ final class FlashlightMethodRewriter implements MethodVisitor {
     } else {
       stateMachine = null;
     }
+    
+    /* Reset the site factory for a new method */
+    siteIdFactory.setMethodLocation(
+        sourceFileName, classBeingAnalyzedFullyQualified, methodName);
   }
   
   
@@ -288,9 +292,6 @@ final class FlashlightMethodRewriter implements MethodVisitor {
      * about delayed instructions.  May affect the line number of inserted 
      * instructions.
      */
-//    handlePreviousAload();
-//    handlePreviousAstore();
-//    insertDelayedCode();
     mv.visitLineNumber(line, start);
     currentSrcLine = line;
     updateSiteIdentifier();
@@ -1517,11 +1518,6 @@ final class FlashlightMethodRewriter implements MethodVisitor {
   
   private void rewriteMethodCall(final int opcode,
       final String owner, final String name, final String desc) {
-    /* Get a unique id for this callsite */
-    final long callSiteId = siteIdFactory.getSiteId(
-        sourceFileName, classBeingAnalyzedFullyQualified, methodName,
-        currentSrcLine);
-    
 	/* The clone() method is a special case due to its retarded 
 	 * semantics.  If the class of the object being used as the receiver,
 	 * call it C, implements Cloneable, but DOES NOT override the clone() method, 
@@ -1539,13 +1535,13 @@ final class FlashlightMethodRewriter implements MethodVisitor {
       /* Create the wrapper method information and add it to the list of wrappers */
       final MethodCallWrapper wrapper;
       if (opcode == Opcodes.INVOKESPECIAL) {
-        wrapper = new SpecialCallWrapper(callSiteId, owner, name, desc);
+        wrapper = new SpecialCallWrapper(siteId, owner, name, desc);
       } else if (opcode == Opcodes.INVOKESTATIC){
-        wrapper = new StaticCallWrapper(callSiteId, owner, name, desc);
+        wrapper = new StaticCallWrapper(siteId, owner, name, desc);
       } else if (opcode == Opcodes.INVOKEINTERFACE) {
-        wrapper = new InterfaceCallWrapper(callSiteId, owner, name, desc);
+        wrapper = new InterfaceCallWrapper(siteId, owner, name, desc);
       } else { // virtual call
-        wrapper = new VirtualCallWrapper(callSiteId, owner, name, desc);
+        wrapper = new VirtualCallWrapper(siteId, owner, name, desc);
       }
       
       wrapperMethods.add(wrapper);
@@ -1558,10 +1554,10 @@ final class FlashlightMethodRewriter implements MethodVisitor {
     } else {
       final InPlaceMethodInstrumentation methodCall;
       if (opcode == Opcodes.INVOKESTATIC) {
-        methodCall = new InPlaceStaticMethodInstrumentation(callSiteId, 
+        methodCall = new InPlaceStaticMethodInstrumentation(siteId, 
             opcode, owner, name, desc);
       } else {
-        methodCall = new InPlaceInstanceMethodInstrumentation(callSiteId, 
+        methodCall = new InPlaceInstanceMethodInstrumentation(siteId, 
             opcode, owner, name, desc, lvs);
       }
       
@@ -1578,8 +1574,7 @@ final class FlashlightMethodRewriter implements MethodVisitor {
   
  
   private void updateSiteIdentifier() {
-    siteId = siteIdFactory.getSiteId(sourceFileName,
-        classBeingAnalyzedFullyQualified, methodName, currentSrcLine);
+    siteId = siteIdFactory.getSiteId(currentSrcLine);
   }
   
   private void pushSiteIdentifier(final long id) {

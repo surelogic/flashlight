@@ -7,7 +7,7 @@ import static com.surelogic._flashlight.common.AttributeType.RECEIVER;
 import static com.surelogic._flashlight.common.AttributeType.THREAD;
 import static com.surelogic._flashlight.common.AttributeType.TIME;
 import static com.surelogic._flashlight.common.FlagType.UNDER_CONSTRUCTION;
-import static com.surelogic._flashlight.common.IdConstants.ILLEGAL_FIELD_ID;
+import static com.surelogic._flashlight.common.IdConstants.*;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -18,6 +18,7 @@ import java.util.logging.Level;
 
 import org.xml.sax.Attributes;
 
+import com.surelogic._flashlight.common.IdConstants;
 import com.surelogic.common.logging.SLLogger;
 
 public abstract class FieldAccess extends Event {
@@ -45,7 +46,7 @@ public abstract class FieldAccess extends Event {
 		long inClass = -1;
 		int lineNumber = -1;
 		long field = ILLEGAL_FIELD_ID;
-		long receiver = -1;
+		long receiver = ILLEGAL_RECEIVER_ID;
 		boolean underConstruction = false;
 		if (attributes != null) {
 			for (int i = 0; i < attributes.getLength(); i++) {
@@ -76,7 +77,7 @@ public abstract class FieldAccess extends Event {
 							+ getXMLElementName());
 			return;
 		}
-		if (receiver == -1) {
+		if (receiver == ILLEGAL_RECEIVER_ID) {
 			if (!f_scanResults.isThreadedStaticField(field)) {
 				skipped++;
 				return;

@@ -11,4 +11,5 @@ public final class IdConstants {
 	public static final boolean factorOutThreadTrace = false;
 	public static final boolean writeOutput = true;
 	public static final long ILLEGAL_FIELD_ID = Long.MIN_VALUE;
+	public static final long ILLEGAL_RECEIVER_ID = Long.MIN_VALUE;
 }

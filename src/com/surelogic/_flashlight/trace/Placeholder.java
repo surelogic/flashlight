@@ -18,12 +18,12 @@ public class Placeholder implements ITraceNode {
 		if (f_caller != null) {			
 			// There's already a caller
 			caller = f_caller.getNode(header);			
-			callee = caller.getCallee(this);
+			callee = caller.getCallee(this.f_siteId);
 		} else {
 			// No caller yet
 			caller = null;
 			synchronized (TraceNode.roots) {	
-				callee = TraceNode.roots.get(this);	
+				callee = TraceNode.roots.get(this.f_siteId);	
 			}
 		}
 		if (callee != null) {
@@ -32,7 +32,7 @@ public class Placeholder implements ITraceNode {
 		return TraceNode.newTraceNode(header, caller, f_siteId, Store.getRawQueue());
 	}
 	
-	public ITraceNode getCallee(ICallLocation key) {
+	public ITraceNode getCallee(long key) {
 		return null;
 	}
 	

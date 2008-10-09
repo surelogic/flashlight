@@ -6,6 +6,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import com.surelogic._flashlight.*;
 import com.surelogic._flashlight.common.IdConstants;
+import com.surelogic._flashlight.common.LongMap;
 
 public abstract class TraceNode extends AbstractCallLocation implements ITraceNode {	
 	public static final boolean inUse = IdConstants.useTraceNodes;
@@ -24,7 +25,7 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 			return new Header();
 		}
 	};
-	static final Map<ICallLocation,TraceNode> roots = new HashMap<ICallLocation,TraceNode>();
+	static final LongMap<TraceNode> roots = new LongMap<TraceNode>();
 	//static int poppedTotal = 0, poppedPlaceHolders = 0;
 	
 	//private final long f_id = nextId.getAndIncrement();
@@ -116,7 +117,7 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 				if (caller.f_calleeNodes == null) {
 					firstCallee = null; 
 				} else {
-					firstCallee = (TraceNode) caller.getCallee(callee);
+					firstCallee = (TraceNode) caller.getCallee(callee.getSiteId());
 					/*
 					if (firstCallee != null && caller != firstCallee.getParent()) {
 						System.out.println("Parent doesn't match");
@@ -138,9 +139,9 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 		} else {
 			// Insert into roots
 			synchronized (roots) {
-				firstCallee = roots.get(callee);
+				firstCallee = roots.get(callee.getSiteId());
 				if (firstCallee == null) {
-					roots.put(callee, callee);
+					roots.put(callee.getSiteId(), callee);
 				} else {
 					callee = firstCallee;
 				}
@@ -156,23 +157,28 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 	public static void pushTraceNode(final long siteId, BlockingQueue<List<Event>> queue) {
 		final Header header     = currentNode.get();
 		final ITraceNode caller = header.current;
-		final Placeholder key   = new Placeholder(siteId, caller);
 		ITraceNode callee = null;
 		if (caller != null) {
 			// There's already a caller
-			callee = caller.getCallee(key);
+			callee = caller.getCallee(siteId);
 			if (callee == null) {
 				// Try to insert a new TraceNode
-				callee = recordOnPush ? 
-						 newTraceNode(header, caller.getNode(header), siteId, queue) : key;
+				if (recordOnPush) {
+					callee = newTraceNode(header, caller.getNode(header), siteId, queue);
+				} else {
+					callee = new Placeholder(siteId, caller);
+				}
 			}
 		} else {			
 			// No caller yet
 			synchronized (roots) {	
-				callee  = roots.get(key);				
+				callee  = roots.get(siteId);				
 			    if (callee == null) {
-					callee = recordOnPush ? 
-							 newTraceNode(header, null, siteId, queue) : key;		
+					if (recordOnPush) {
+						callee = newTraceNode(header, null, siteId, queue);
+					} else {
+						callee = new Placeholder(siteId, caller);
+					}	
 			    }
 			}
 		}		
@@ -258,7 +264,7 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 		return this;
 	}
 	
-	public synchronized ITraceNode getCallee(ICallLocation key) {
+	public synchronized ITraceNode getCallee(long key) {
 		if (f_calleeNodes == null) {
 			return null;
 		}
@@ -286,14 +292,14 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 	 * @param root non-null
 	 * @param key non-null	 
 	 */
-	private static TraceNode findCallee(final TraceNode root, final ICallLocation key) {
+	private static TraceNode findCallee(final TraceNode root, final long key) {
 		TraceNode here   = root;
 		TraceNode callee = root.f_calleeNodes;
 		while (callee != null) {
 			if (callee.getParent() != root) {
 				System.out.println("Parent doesn't match");
 			}
-			if (key.equals(callee)) {
+			if (key == callee.getSiteId()) {
 				if (here != root) {
 					// Not the first node, so reorder the list
 					// 1. Remove the callee node

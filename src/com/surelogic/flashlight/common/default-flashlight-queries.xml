@@ -1,11 +1,46 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes'?>
 <ad-hoc version='2.0'>
-  <query id='Q0010' description='How are ReadWriteLock objects defined?'>select ID &quot;ReadWriteLock__FOLDER&quot;,
-       READLOCK &quot;ReadLock Object Id&quot;,
-       WRITELOCK &quot;WriteLock Object Id&quot; 
-from RWLOCK RWL
-where RWL.Run = ?RUN?
-order by 1</query>
+  <query id='Q0017' description='* What locks are held for each access of this non-static field? *' display='true'>SELECT O.THREADNAME &quot;Thread&quot;,A.TS &quot;Time&quot;,D.Lock &quot;Lock__|&quot;,LO.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;, LO.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;, L.AtLine &quot;Line__(r)&quot;,D.ID &quot;LDID__(hide)&quot;,A.ID &quot;AID__(hide)&quot;
+ FROM ACCESS A
+ INNER JOIN OBJECT O ON
+   O.Run = A.Run AND 
+   O.Id = A.InThread 
+ LEFT OUTER JOIN LOCKDURATION D ON
+   D.InThread = A.InThread AND 
+   D.Run = A.Run AND 
+   (A.TS BETWEEN D.Start AND D.Stop)
+ LEFT OUTER JOIN LOCK L ON
+   L.Run = D.Run AND 
+   L.Id = D.StartEvent
+ LEFT OUTER JOIN OBJECT LO ON
+   LO.Run = L.Run AND 
+   LO.Id = L.InClass
+WHERE 
+   A.FIELD = ?FieldId? AND 
+   A.RECEIVER = ?Receiver? AND 
+   A.RUN=?RUN?
+ORDER BY O.THREADNAME ASC, A.TS ASC, D.Start DESC
+</query>
+  <query id='Q0023' description='* What locks are held for each access of this static field? *' display='true'>SELECT O.THREADNAME &quot;Thread&quot;,A.TS &quot;Time&quot;,D.Lock &quot;Lock__|&quot;,LO.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;, LO.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;, L.AtLine &quot;Line__(r)&quot;,D.ID &quot;LDID__(hide)&quot;,A.ID &quot;AID__(hide)&quot;
+ FROM ACCESS A
+ INNER JOIN OBJECT O ON
+   O.Run = A.Run AND 
+   O.Id = A.InThread 
+ LEFT OUTER JOIN LOCKDURATION D ON
+   D.InThread = A.InThread AND 
+   D.Run = A.Run AND 
+   (A.TS BETWEEN D.Start AND D.Stop)
+ LEFT OUTER JOIN LOCK L ON
+   L.Run = D.Run AND 
+   L.Id = D.StartEvent
+ LEFT OUTER JOIN OBJECT LO ON
+   LO.Run = L.Run AND 
+   LO.Id = L.InClass
+WHERE 
+   A.FIELD = ?FieldId? AND 
+   A.RUN=?RUN? AND
+   A.RECEIVER IS NULL
+ORDER BY O.THREADNAME ASC, A.TS ASC, D.Start DESC</query>
   <query id='Q0018' description='How often is a lock held when this instance field is accessed?' display='true'>SELECT LOCKS.*, CAST ((CAST (LOCKS.&quot;Lock Count&quot; AS FLOAT)) / (CAST (ACCESSES.ACCESSCOUNT AS FLOAT)) AS DECIMAL (4,3)) &quot;Frequency&quot;
 FROM
 (SELECT D.Lock &quot;Lock&quot;,RW.ID &quot;R/W Lock&quot;, COUNT(D.Lock) &quot;Lock Count&quot;
@@ -23,7 +58,6 @@ FROM
     WHERE A.RUN=?RUN? AND A.FIELD = ?FieldId? AND A.RECEIVER IS NULL
  GROUP BY D.LOCK) AS LOCKS,
 (SELECT COUNT(*) &quot;ACCESSCOUNT&quot; FROM ACCESS A WHERE A.RUN=?RUN? AND A.FIELD = ?FieldId? AND A.RECEIVER IS NULL) AS ACCESSES</query>
-  <query id='Q0030' description='show all tables'>select * from FLASHLIGHT.LOCK</query>
   <query id='Q0029' description='Show details about this lock event' display='true'>select l.TS, t.ThreadName, l.Lock, lkType.ClassName as LockClass, 
 l.LockIsThis as IsThis, l.LockIsClass as IsClass,
 l.State, cl.PackageName, cl.ClassName, l.AtLine
@@ -54,6 +88,28 @@ FROM LOCK L
 WHERE L.Run = ?RUN?
   and L.Id = ?LockEvent?
 ORDER BY D.START DESC</query>
+  <query id='Q0033' description='Show me all accesses of this non-static field' display='true'>SELECT &apos;?Package?&apos; &quot;Package__(&apos;package.gif&apos;)&quot;, &apos;?Class?&apos; &quot;Class__(&apos;class.gif&apos;)&quot;, &apos;?FieldName?&apos; &quot;FieldName__&quot;, 
+       O.THREADNAME &quot;Thread__|&quot;, A.TS &quot;Time&quot;, A.ID &quot;AID__(hide)&quot;
+ FROM ACCESS A
+ INNER JOIN OBJECT O ON
+   O.Run = A.Run AND 
+   O.Id = A.InThread 
+WHERE 
+   A.FIELD = ?FieldId? AND 
+   A.RUN= ?RUN? AND
+   A.RECEIVER = ?Receiver?
+ORDER BY A.TS ASC</query>
+  <query id='Q0031' description='Show me all accesses of this static field' display='true'>SELECT &apos;?Package?&apos; &quot;Package__(&apos;package.gif&apos;)&quot;, &apos;?Class?&apos; &quot;Class__(&apos;class.gif&apos;)&quot;, &apos;?FieldName?&apos; &quot;FieldName__&quot;, 
+       O.THREADNAME &quot;Thread__|&quot;, A.TS &quot;Time&quot;, A.ID &quot;AID__(hide)&quot;
+ FROM ACCESS A
+ INNER JOIN OBJECT O ON
+   O.Run = A.Run AND 
+   O.Id = A.InThread 
+WHERE 
+   A.FIELD = ?FieldId? AND 
+   A.RUN=?RUN? AND
+   A.RECEIVER IS NULL
+ORDER BY A.TS ASC</query>
   <query id='Q0028' description='Show stack trace for a field access' display='true'>(SELECT 
  CAST (&apos;In thread &apos; || THO.ThreadName || &apos; at &quot;' || F.FIELDNAME || &apos;" in &apos; || AO.PackageName || &apos;.&apos; || AO.ClassName || &apos; on line &apos; || TRIM(CAST(A.AtLine AS CHAR(10))) AS VARCHAR(1000)) &quot;Trace&quot;,
  AO.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;, AO.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;, F.FieldName &quot;Location&quot;, A.AtLine &quot;Line__(r)&quot;, A.TS &quot;Time&quot;
@@ -167,12 +223,12 @@ where State = &apos;BLOCKING&apos;
 group by Lock
 order by sum(duration) desc
   </query>
-  <query id='Q0017' description='What locks are held for each access of this non-static field?' display='true'>SELECT O.THREADNAME &quot;Thread&quot;,A.TS &quot;Time&quot;,D.Lock &quot;Lock__|&quot;,LO.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;, LO.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;, L.AtLine &quot;Line__(r)&quot;,D.ID &quot;LDID__(hide)&quot;,A.ID &quot;AID__(hide)&quot;
+  <query id='Q0034' description='What locks are held during this field access?' display='true'>SELECT O.THREADNAME &quot;Thread&quot;, A.TS &quot;Time&quot;, D.Lock &quot;Lock__|&quot;, LO.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;, LO.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;, L.AtLine &quot;Line__(r)&quot;, D.ID &quot;LDID__(hide)&quot;, A.ID &quot;AID__(hide)&quot;
  FROM ACCESS A
  INNER JOIN OBJECT O ON
    O.Run = A.Run AND 
    O.Id = A.InThread 
- LEFT OUTER JOIN LOCKDURATION D ON
+ INNER JOIN LOCKDURATION D ON
    D.InThread = A.InThread AND 
    D.Run = A.Run AND 
    (A.TS BETWEEN D.Start AND D.Stop)
@@ -183,31 +239,10 @@ order by sum(duration) desc
    LO.Run = L.Run AND 
    LO.Id = L.InClass
 WHERE 
-   A.FIELD = ?FieldId? AND 
-   A.RECEIVER = ?Receiver? AND 
-   A.RUN=?RUN?
+   A.ID = ?AID? AND
+   A.RUN = ?RUN?
 ORDER BY O.THREADNAME ASC, A.TS ASC, D.Start DESC
 </query>
-  <query id='Q0023' description='What locks are held for each access of this static field?' display='true'>SELECT O.THREADNAME &quot;Thread&quot;,A.TS &quot;Time&quot;,D.Lock &quot;Lock__|&quot;,LO.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;, LO.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;, L.AtLine &quot;Line__(r)&quot;,D.ID &quot;LDID__(hide)&quot;,A.ID &quot;AID__(hide)&quot;
- FROM ACCESS A
- INNER JOIN OBJECT O ON
-   O.Run = A.Run AND 
-   O.Id = A.InThread 
- LEFT OUTER JOIN LOCKDURATION D ON
-   D.InThread = A.InThread AND 
-   D.Run = A.Run AND 
-   (A.TS BETWEEN D.Start AND D.Stop)
- LEFT OUTER JOIN LOCK L ON
-   L.Run = D.Run AND 
-   L.Id = D.StartEvent
- LEFT OUTER JOIN OBJECT LO ON
-   LO.Run = L.Run AND 
-   LO.Id = L.InClass
-WHERE 
-   A.FIELD = ?FieldId? AND 
-   A.RUN=?RUN? AND
-   A.RECEIVER IS NULL
-ORDER BY O.THREADNAME ASC, A.TS ASC, D.Start DESC</query>
   <query id='Q0011' description='What locks could potentially cause deadlock?' display='true' display-at-root='true'>select Component &quot;Component&quot;, LockHeld &quot;LockHeld__(r)|&quot;,
   LockAcquired &quot;LockAcquired__(r)&quot;,
   Count &quot;Count__(r)&quot;, FirstTime &quot;FirstTime&quot;, LastTime &quot;LastTime&quot;
@@ -242,7 +277,7 @@ order by O.PackageName,O.ClassName,F.FieldName,FI.Receiver,THO.ThreadName</query
   <query id='Q0015' description='What non-static fields have a lock set?' display='true' display-at-root='true'>SELECT 
   O.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;,
   O.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;,
-  FI.FieldName &quot;Field__]&quot;,
+  FI.FieldName &quot;FieldName__]&quot;,
   I.RECEIVER &quot;Receiver&quot;, F.LOCK &quot;Lock__|&quot;, I.FIELD &quot;FieldId__(hide)&quot;
  FROM OBJECT O
  INNER JOIN FIELD FI ON FI.DeclaringType = O.Id AND O.Run = FI.Run
@@ -254,7 +289,7 @@ order by O.PackageName,O.ClassName,F.FieldName,FI.Receiver,THO.ThreadName</query
   <query id='Q0016' description='What non-static fields have an empty lock set?' display='true' display-at-root='true'>SELECT 
   O.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;,
   O.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;,
-  FI.FieldName &quot;Field__]&quot;,
+  FI.FieldName &quot;FieldName__]&quot;,
   I.RECEIVER &quot;Receiver__|&quot;,I.FIELD &quot;FieldId__(hide)&quot;
  FROM OBJECT O
  INNER JOIN FIELD FI ON FI.DeclaringType = O.Id AND O.Run = FI.Run
@@ -294,7 +329,7 @@ order by O.PackageName,O.ClassName,F.FieldName,THO.ThreadName</query>
   <query id='Q0021' description='What static fields have a lock set?' display='true' display-at-root='true'>SELECT 
   O.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;,
   O.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;,
-  FI.FieldName &quot;Field&quot;,
+  FI.FieldName &quot;FieldName&quot;,
   F.LOCK &quot;Lock__|&quot;,
   I.FIELD &quot;FieldId__(hide)&quot; 
  FROM OBJECT O
@@ -307,7 +342,7 @@ order by O.PackageName,O.ClassName,F.FieldName,THO.ThreadName</query>
   <query id='Q0022' description='What static fields have an empty lock set?' display='true' display-at-root='true'>SELECT 
   O.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;,
   O.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;,
-  FI.FieldName &quot;Field__|&quot;,
+  FI.FieldName &quot;FieldName__|&quot;,
   I.FIELD &quot;FieldId__(hide)&quot;
  FROM OBJECT O
  INNER JOIN FIELD FI ON FI.DeclaringType = O.Id AND O.Run = FI.Run
@@ -441,41 +476,52 @@ where le.Run=?RUN?
   and le.ts between ld.Start and ld.Stop
 order by ld.Start 
   </query>
-  <sub-query id='Q0012' sub-query='Q0014'/>
+  <sub-query id='Q0017' sub-query='Q0027'/>
+  <sub-query id='Q0017' sub-query='Q0028'/>
+  <sub-query id='Q0023' sub-query='Q0027'/>
+  <sub-query id='Q0023' sub-query='Q0028'/>
+  <sub-query id='Q0033' sub-query='Q0028'/>
+  <sub-query id='Q0033' sub-query='Q0034'/>
+  <sub-query id='Q0031' sub-query='Q0028'/>
+  <sub-query id='Q0031' sub-query='Q0034'/>
   <sub-query id='Q0012' sub-query='Q0013'/>
   <sub-query id='Q0012' sub-query='Q0029'/>
+  <sub-query id='Q0012' sub-query='Q0014'/>
   <sub-query id='Q0005' sub-query='Q0006'/>
-  <sub-query id='Q0017' sub-query='Q0028'/>
-  <sub-query id='Q0017' sub-query='Q0027'/>
-  <sub-query id='Q0023' sub-query='Q0028'/>
-  <sub-query id='Q0023' sub-query='Q0027'/>
+  <sub-query id='Q0034' sub-query='Q0027'/>
   <sub-query id='Q0011' sub-query='Q0012'/>
   <sub-query id='Q0002' sub-query='Q0020'/>
-  <sub-query id='Q0002' sub-query='Q0019'/>
   <sub-query id='Q0002' sub-query='Q0018'/>
   <sub-query id='Q0002' sub-query='Q0017'/>
+  <sub-query id='Q0002' sub-query='Q0019'/>
+  <sub-query id='Q0002' sub-query='Q0033'/>
   <sub-query id='Q0015' sub-query='Q0020'/>
-  <sub-query id='Q0015' sub-query='Q0019'/>
   <sub-query id='Q0015' sub-query='Q0018'/>
   <sub-query id='Q0015' sub-query='Q0017'/>
+  <sub-query id='Q0015' sub-query='Q0019'/>
+  <sub-query id='Q0015' sub-query='Q0033'/>
   <sub-query id='Q0016' sub-query='Q0020'/>
-  <sub-query id='Q0016' sub-query='Q0019'/>
   <sub-query id='Q0016' sub-query='Q0018'/>
   <sub-query id='Q0016' sub-query='Q0017'/>
+  <sub-query id='Q0016' sub-query='Q0019'/>
+  <sub-query id='Q0016' sub-query='Q0033'/>
   <sub-query id='Q0001' sub-query='Q0026'/>
+  <sub-query id='Q0001' sub-query='Q0025'/>
   <sub-query id='Q0001' sub-query='Q0024'/>
   <sub-query id='Q0001' sub-query='Q0023'/>
-  <sub-query id='Q0001' sub-query='Q0025'/>
+  <sub-query id='Q0001' sub-query='Q0031'/>
   <sub-query id='Q0021' sub-query='Q0026'/>
+  <sub-query id='Q0021' sub-query='Q0025'/>
   <sub-query id='Q0021' sub-query='Q0024'/>
   <sub-query id='Q0021' sub-query='Q0023'/>
-  <sub-query id='Q0021' sub-query='Q0025'/>
+  <sub-query id='Q0021' sub-query='Q0031'/>
   <sub-query id='Q0022' sub-query='Q0026'/>
+  <sub-query id='Q0022' sub-query='Q0025'/>
   <sub-query id='Q0022' sub-query='Q0024'/>
   <sub-query id='Q0022' sub-query='Q0023'/>
-  <sub-query id='Q0022' sub-query='Q0025'/>
-  <sub-query id='Q0009' sub-query='Q0014'/>
+  <sub-query id='Q0022' sub-query='Q0031'/>
   <sub-query id='Q0009' sub-query='Q0013'/>
+  <sub-query id='Q0009' sub-query='Q0014'/>
   <sub-query id='Q0020' sub-query='Q0028'/>
   <sub-query id='Q0006' sub-query='Q0027'/>
 </ad-hoc>

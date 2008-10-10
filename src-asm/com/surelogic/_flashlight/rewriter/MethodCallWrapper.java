@@ -14,7 +14,8 @@ import org.objectweb.asm.Type;
  * static or not, and differences in parameters.
  */
 abstract class MethodCallWrapper extends MethodCall {
-  private static final String WRAPPER_NAME_TEMPLATE = "flashlight${0}${1}${2,choice,0#virtual|1#special|2#static|3#interface}Wrapper";
+  private static final String WRAPPER_NAME_TEMPLATE_DEFAULT = "flashlight${0}${1}${2,choice,0#virtual|1#special|2#static|3#interface}Wrapper";
+  private static final String WRAPPER_NAME_TEMPLATE_RECEIVER = "flashlight${0}${1}${2}{3,choice,0#virtual|1#special|2#static|3#interface}Wrapper";
   private static final char INTERNAL_NAME_SEPARATOR = '/';
   private static final char UNDERSCORE = '_';
   private static final char END_OF_ARGS = ')';
@@ -44,13 +45,25 @@ abstract class MethodCallWrapper extends MethodCall {
   
   /**
    * 
-   * @param opcode The opcode used to invoke the original method.
-   * @param owner The owner of the original method.
-   * @param originalName The name of the original method.
-   * @param originalDesc The descriptor of the original method.
-   * @param isInstance Should the wrapper method be an instance method?
+   * @param opcode
+   *          The opcode used to invoke the original method.
+   * @param rcvrTypeInternal
+   *          If non-null this is the type of the receiver of the method being
+   *          wrapped. If non-null this replaced the use of owner for the
+   *          receiver type. This is necessary due to some stupidity in the
+   *          Eclipse compiler and how it produces nested classes access
+   *          methods.
+   * @param owner
+   *          The owner of the original method.
+   * @param originalName
+   *          The name of the original method.
+   * @param originalDesc
+   *          The descriptor of the original method.
+   * @param isInstance
+   *          Should the wrapper method be an instance method?
    */
-  public MethodCallWrapper(final long callSiteId, final int opcode, final String owner,
+  public MethodCallWrapper(final long callSiteId, final int opcode,
+      final String rcvrTypeInternal, final String owner,
       final String originalName, final String originalDesc,
       final boolean isInstance) {
     super(callSiteId, opcode, owner, originalName, originalDesc);
@@ -59,12 +72,21 @@ abstract class MethodCallWrapper extends MethodCall {
     final String originalArgs = originalDesc.substring(1, endOfArgs);
     final String originalReturn = originalDesc.substring(endOfArgs + 1);
 
-    this.wrapperName = MessageFormat.format(WRAPPER_NAME_TEMPLATE,
-        ownerUnderscored, originalName, (opcode - Opcodes.INVOKEVIRTUAL));
-    this.wrapperDescriptor = createWrapperMethodSignature(
-        fixOwnerNameForDescriptor(owner), originalArgs, originalReturn);
-    
-    this.identityString = owner + originalName + originalDesc + opcode;
+    if (rcvrTypeInternal == null) {
+      this.wrapperName = MessageFormat.format(WRAPPER_NAME_TEMPLATE_DEFAULT,
+          ownerUnderscored, originalName, (opcode - Opcodes.INVOKEVIRTUAL));
+      this.wrapperDescriptor = createWrapperMethodSignature(
+          fixOwnerNameForDescriptor(owner), originalArgs, originalReturn);
+      
+      this.identityString = owner + originalName + originalDesc + opcode;
+    } else {
+      this.wrapperName = MessageFormat.format(WRAPPER_NAME_TEMPLATE_RECEIVER,
+          fixOwnerNameForMethodName(rcvrTypeInternal), ownerUnderscored,
+          originalName, (opcode - Opcodes.INVOKEVIRTUAL));
+      this.wrapperDescriptor = createWrapperMethodSignature(
+          fixOwnerNameForDescriptor(rcvrTypeInternal), originalArgs, originalReturn);
+      this.identityString = rcvrTypeInternal + owner + originalName + originalDesc + opcode;
+    }
     this.hashCode = identityString.hashCode();
     
     this.originalArgTypes = Type.getArgumentTypes(originalDesc);

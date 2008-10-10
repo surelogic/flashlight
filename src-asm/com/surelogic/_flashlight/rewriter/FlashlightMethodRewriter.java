@@ -218,6 +218,19 @@ final class FlashlightMethodRewriter implements MethodVisitor {
    */
   private String lastInitOwner = null;
   
+  /**
+   * Whether the method is a static synthetic method whose name begins with 
+   * "access$".
+   */
+  private final boolean isAccessMethod;
+  
+  /**
+   * The internal type name of the first argument if this method is an
+   * access method and has at least one argument.  Otherwise this is {@code null}.
+   */
+  private final String firstArgInternal;  
+
+  
   
   
   /**
@@ -282,6 +295,25 @@ final class FlashlightMethodRewriter implements MethodVisitor {
     classBeingAnalyzedInternal = nameInternal;
     classBeingAnalyzedFullyQualified = nameFullyQualified;
     wrapperMethods = wrappers;
+    
+    isAccessMethod = ((access & Opcodes.ACC_SYNTHETIC) != 0) && isStatic && 
+        methodName.startsWith("access$");
+    if (isAccessMethod) {
+      final Type[] types = Type.getArgumentTypes(desc);
+      if (types.length > 0) {
+        final int sort = types[0].getSort();
+        if (sort == Type.ARRAY || sort == Type.OBJECT) {
+          firstArgInternal = types[0].getInternalName();
+        } else {
+          firstArgInternal = null;
+        }        
+      } else {
+        firstArgInternal = null;
+      }
+    } else {
+      firstArgInternal = null;
+    }
+    System.out.println(methodName + ": isAccess = " + isAccessMethod + ", type = " + firstArgInternal);
     
     if (isConstructor) {
       stateMachine = new ConstructorInitStateMachine(new ObjectInitCallback());
@@ -1564,27 +1596,7 @@ final class FlashlightMethodRewriter implements MethodVisitor {
   	 */  
   	final boolean isClone = (opcode == Opcodes.INVOKEVIRTUAL)
   		&& name.equals("clone") && desc.startsWith("()");
-    if (!inInterface && !isClone) {
-      /* Create the wrapper method information and add it to the list of wrappers */
-      final MethodCallWrapper wrapper;
-      if (opcode == Opcodes.INVOKESPECIAL) {
-        wrapper = new SpecialCallWrapper(siteId, owner, name, desc);
-      } else if (opcode == Opcodes.INVOKESTATIC){
-        wrapper = new StaticCallWrapper(siteId, owner, name, desc);
-      } else if (opcode == Opcodes.INVOKEINTERFACE) {
-        wrapper = new InterfaceCallWrapper(siteId, owner, name, desc);
-      } else { // virtual call
-        wrapper = new VirtualCallWrapper(siteId, owner, name, desc);
-      }
-      
-      wrapperMethods.add(wrapper);
-      
-      // ..., [objRef], arg1, ..., argN
-      wrapper.invokeWrapperMethod(mv, classBeingAnalyzedInternal);
-      // ..., [returnVlaue]
-      
-      updateStackDepthDelta(2);
-    } else {
+  	if (inInterface || isClone) {
       final InPlaceMethodInstrumentation methodCall;
       if (opcode == Opcodes.INVOKESTATIC) {
         methodCall = new InPlaceStaticMethodInstrumentation(siteId, 
@@ -1600,6 +1612,26 @@ final class FlashlightMethodRewriter implements MethodVisitor {
       instrumenter.instrumentMethodCall();
       
       updateStackDepthDelta(7);
+  	} else {
+      /* Create the wrapper method information and add it to the list of wrappers */
+      final MethodCallWrapper wrapper;
+      if (opcode == Opcodes.INVOKESPECIAL) {
+        wrapper = new SpecialCallWrapper(siteId, owner, name, desc);
+      } else if (opcode == Opcodes.INVOKESTATIC){
+        wrapper = new StaticCallWrapper(siteId, owner, name, desc);
+      } else if (opcode == Opcodes.INVOKEINTERFACE) {
+        wrapper = new InterfaceCallWrapper(siteId, owner, name, desc);
+      } else { // virtual call
+        wrapper = new VirtualCallWrapper(siteId, firstArgInternal, owner, name, desc);
+      }
+      
+      wrapperMethods.add(wrapper);
+      
+      // ..., [objRef], arg1, ..., argN
+      wrapper.invokeWrapperMethod(mv, classBeingAnalyzedInternal);
+      // ..., [returnVlaue]
+      
+      updateStackDepthDelta(2);
     }
   }
 

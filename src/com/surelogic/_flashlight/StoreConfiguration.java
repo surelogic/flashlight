@@ -1,5 +1,7 @@
 package com.surelogic._flashlight;
 
+import com.surelogic._flashlight.common.IdConstants;
+
 /**
  * This class is giant hack, but I don't know of a better way to do things.  
  * This class cannot be instantiated, but contains various configuration
@@ -21,7 +23,7 @@ public class StoreConfiguration {
   private static final String FL_RUN_DEFAULT = "flashlight";
 
   private static final String FL_RAWQ_SIZE = "FL_RAWQ_SIZE";
-  private static final int FL_RAWQ_SIZE_DEFAULT = 16;
+  private static final int FL_RAWQ_SIZE_DEFAULT = IdConstants.useRefinery ? 16 : 200;
 
   private static final String FL_OUTQ_SIZE = "FL_OUTQ_SIZE";
   private static final int FL_OUTQ_SIZE_DEFAULT = 16;

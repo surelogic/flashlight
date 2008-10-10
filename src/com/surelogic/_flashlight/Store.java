@@ -206,6 +206,7 @@ public final class Store {
 		boolean inside = false;
 	}
 	
+	private static final boolean useLocks = true;
 	private static final boolean useTraceNodes = TraceNode.inUse;
 
 	/**
@@ -978,6 +979,9 @@ public final class Store {
 	 */
 	public static void beforeIntrinsicLockAcquisition(final Object lockObject,
 			final boolean lockIsThis, final boolean lockIsClass, final long siteId) {
+		if (!useLocks) {
+			return;
+		}
 		if (f_flashlightIsNotInitialized)
 			return;
 		if (FL_OFF.get())
@@ -1023,6 +1027,9 @@ public final class Store {
 	 */
 	public static void afterIntrinsicLockAcquisition(
 	    final Object lockObject, final long siteId) {
+		if (!useLocks) {
+			return;
+		}		
 		if (f_flashlightIsNotInitialized)
 			return;
 		if (FL_OFF.get())
@@ -1077,6 +1084,9 @@ public final class Store {
 	 */
 	public static void intrinsicLockWait(final boolean before,
 			final Object lockObject, final long siteId) {
+		if (!useLocks) {
+			return;
+		}
 		if (f_flashlightIsNotInitialized)
 			return;
 		if (FL_OFF.get())
@@ -1125,6 +1135,9 @@ public final class Store {
 	 */
 	public static void afterIntrinsicLockRelease(
 	    final Object lockObject, final long siteId) {
+		if (!useLocks) {
+			return;
+		}
 		if (f_flashlightIsNotInitialized)
 			return;
 		if (FL_OFF.get())
@@ -1168,6 +1181,9 @@ public final class Store {
 	 */
 	public static void beforeUtilConcurrentLockAcquisitionAttempt(
 			final Object lockObject, final long siteId) {
+		if (!useLocks) {
+			return;
+		}
 		if (f_flashlightIsNotInitialized)
 			return;
 		if (FL_OFF.get())
@@ -1220,6 +1236,9 @@ public final class Store {
 	 */
 	public static void afterUtilConcurrentLockAcquisitionAttempt(
 			final boolean gotTheLock, final Object lockObject, final long siteId) {
+		if (!useLocks) {
+			return;
+		}
 		if (f_flashlightIsNotInitialized)
 			return;
 		if (FL_OFF.get())
@@ -1274,6 +1293,9 @@ public final class Store {
 	public static void afterUtilConcurrentLockReleaseAttempt(
 			final boolean releasedTheLock, final Object lockObject,
 			final long siteId) {
+		if (!useLocks) {
+			return;
+		}
 		if (f_flashlightIsNotInitialized)
 			return;
 		if (FL_OFF.get())

@@ -1,6 +1,5 @@
 package com.surelogic._flashlight.trace;
 
-import com.surelogic._flashlight.ICallLocation;
 import com.surelogic._flashlight.Store;
 
 /**
@@ -8,7 +7,7 @@ import com.surelogic._flashlight.Store;
  * 
  * @author Edwin.Chan
  */
-interface ITraceNode extends ICallLocation {
+interface ITraceNode {
 	ITraceNode pushCallee(long siteId);
 	ITraceNode popParent();
 	ITraceNode peekParent();

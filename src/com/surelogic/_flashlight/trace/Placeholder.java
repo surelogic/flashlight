@@ -2,14 +2,12 @@ package com.surelogic._flashlight.trace;
 
 import com.surelogic._flashlight.*;
 
-public class Placeholder implements ITraceNode {
+public class Placeholder extends AbstractPlaceholder {
 	final long f_siteId;
 	
-	final ITraceNode f_caller;
-	
-	Placeholder(long siteId, ITraceNode caller) {
+	Placeholder(ITraceNode caller, long siteId) {
+		super(caller);
 		f_siteId = siteId;
-		f_caller = caller;
 	}
 	
 	public TraceNode getNode(Store.State state) {
@@ -33,28 +31,13 @@ public class Placeholder implements ITraceNode {
 		return TraceNode.newTraceNode(caller, f_siteId, state);
 	}
 	
-	public ITraceNode getCallee(long key) {
-		return null;
+	@Override
+	public ITraceNode pushCallee(long siteId) {		
+		//return new Placeholder(this, siteId);
+		return new ArrayPlaceholder(this, siteId);
 	}
 	
-	public ITraceNode pushCallee(long siteId) {
-		// FIX
-		return new Placeholder(siteId, this);
-	}
-	
-	public ITraceNode popParent() {
-		// FIX
-		return f_caller;
-	}
-
-	public ITraceNode peekParent() {
-		throw new UnsupportedOperationException();
-	}
-	
-	public final long getSiteId() {
-		return f_siteId;
-	}
-	
+	/*
 	@Override
 	public int hashCode() {
 		return (int) f_siteId;
@@ -68,18 +51,11 @@ public class Placeholder implements ITraceNode {
  		}
 		return false;
 	}
-	
-	public int getAndClearUnpropagated() {
-		return 0;
-	}
-	
-	public int addToUnpropagated(int count) {
-		return 0;
-	}
+    */
 
-	public static ITraceNode push(long siteId, ITraceNode caller) {
+	public static ITraceNode push(ITraceNode caller, long siteId) {
 		if (caller == null) {
-			return new Placeholder(siteId, caller);
+			return new Placeholder(caller, siteId);
 		}
 		return caller.pushCallee(siteId);
 	}

@@ -1,7 +1,5 @@
 package com.surelogic._flashlight.trace;
 
-import java.util.*;
-import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.surelogic._flashlight.*;
@@ -171,7 +169,7 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 					if (recordOnPush) {
 						callee = newTraceNode(null, siteId, state);
 					} else {
-						callee = new Placeholder(siteId, caller /*null*/);
+						callee = new Placeholder(caller /*null*/, siteId);
 					}	
 			    }
 			}
@@ -242,7 +240,7 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 	}
 	
 	public final ITraceNode pushCallee(long siteId) {
-		return new Placeholder(siteId, this);
+		return new Placeholder(this, siteId);
 	}
 	
 	public final ITraceNode popParent() {

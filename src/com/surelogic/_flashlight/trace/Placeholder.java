@@ -4,6 +4,7 @@ import com.surelogic._flashlight.*;
 
 public class Placeholder implements ITraceNode {
 	final long f_siteId;
+	
 	final ITraceNode f_caller;
 	
 	Placeholder(long siteId, ITraceNode caller) {
@@ -36,10 +37,20 @@ public class Placeholder implements ITraceNode {
 		return null;
 	}
 	
-	public ITraceNode getParent() {
+	public ITraceNode pushCallee(long siteId) {
+		// FIX
+		return new Placeholder(siteId, this);
+	}
+	
+	public ITraceNode popParent() {
+		// FIX
 		return f_caller;
 	}
 
+	public ITraceNode peekParent() {
+		throw new UnsupportedOperationException();
+	}
+	
 	public final long getSiteId() {
 		return f_siteId;
 	}
@@ -64,5 +75,12 @@ public class Placeholder implements ITraceNode {
 	
 	public int addToUnpropagated(int count) {
 		return 0;
+	}
+
+	public static ITraceNode push(long siteId, ITraceNode caller) {
+		if (caller == null) {
+			return new Placeholder(siteId, caller);
+		}
+		return caller.pushCallee(siteId);
 	}
 }

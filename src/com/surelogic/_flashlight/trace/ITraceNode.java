@@ -9,7 +9,9 @@ import com.surelogic._flashlight.Store;
  * @author Edwin.Chan
  */
 interface ITraceNode extends ICallLocation {
-	ITraceNode getParent();
+	ITraceNode pushCallee(long siteId);
+	ITraceNode popParent();
+	ITraceNode peekParent();
 	TraceNode getNode(Store.State state);
 	ITraceNode getCallee(long key);
 	//int getAndClearUnpropagated();

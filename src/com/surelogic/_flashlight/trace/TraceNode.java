@@ -160,7 +160,7 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 				if (recordOnPush) {
 					callee = newTraceNode(caller.getNode(state), siteId, state);
 				} else {
-					callee = new Placeholder(siteId, caller);
+					callee = caller.pushCallee(siteId);
 				}
 			}
 		} else {			
@@ -171,7 +171,7 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 					if (recordOnPush) {
 						callee = newTraceNode(null, siteId, state);
 					} else {
-						callee = new Placeholder(siteId, caller);
+						callee = new Placeholder(siteId, caller /*null*/);
 					}	
 			    }
 			}
@@ -184,7 +184,7 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 		final Header header     = state.traceHeader;
 		final ITraceNode callee = header.current;
 		if (callee != null) {
-			ITraceNode parent = callee.getParent();
+			ITraceNode parent = callee.popParent();
 			header.current = parent;
 			/*
 			if (callee instanceof Placeholder) {
@@ -241,7 +241,15 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 	    v.visit(this);
 	}
 	
-	public final ITraceNode getParent() {
+	public final ITraceNode pushCallee(long siteId) {
+		return new Placeholder(siteId, this);
+	}
+	
+	public final ITraceNode popParent() {
+		return f_caller;
+	}
+	
+	public final ITraceNode peekParent() {
 		return f_caller;
 	}
 	
@@ -281,9 +289,11 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 		TraceNode here   = root;
 		TraceNode callee = root.f_calleeNodes;
 		while (callee != null) {
-			if (callee.getParent() != root) {
+			/*
+			if (callee.peekParent() != root) {
 				System.out.println("Parent doesn't match");
 			}
+			*/
 			if (key == callee.getSiteId()) {
 				if (here != root) {
 					// Not the first node, so reorder the list

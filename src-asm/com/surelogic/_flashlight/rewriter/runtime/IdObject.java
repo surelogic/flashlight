@@ -4,7 +4,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import com.surelogic._flashlight.*;
 
-
 /**
  * Instrumentation rewrites all classes that extend from
  * {@code java.lang.Object} to extends from this class instead. This class
@@ -17,9 +16,45 @@ public class IdObject implements IIdObject {
 	 * Starting from 1
 	 */
 	private static final AtomicLong f_idCount = new AtomicLong();
+	private static final int SEQUENCE_SHIFT = 8;
+	private static final int SEQUENCE_MASK  = (1 << SEQUENCE_SHIFT) - 1;
+	
+	private static long getFirstIdInSequence() {
+		long topBits = f_idCount.getAndIncrement();
+		long id;
+		if (topBits == 0) {
+			id = 1; // 0 is for null
+		} else {
+			id = topBits << SEQUENCE_SHIFT;
+		}
+		return id;
+	}
+	
+	private static class State {
+		private long nextId = getFirstIdInSequence(); 
+
+		long getNextId() {
+			long id = nextId;
+			if ((id & SEQUENCE_MASK) == SEQUENCE_MASK) { 
+				// last id in sequence
+				nextId = getFirstIdInSequence();
+			} else {
+				nextId++;
+			}
+			return id;
+		}
+	}
+	
+	private static final ThreadLocal<State> state = new ThreadLocal<State>() {
+		@Override
+		protected State initialValue() {
+			return new State();
+		}
+	};
 	
 	public static final long getNewId() {
-		return f_idCount.incrementAndGet();
+		//return f_idCount.incrementAndGet();
+		return state.get().getNextId();
 	}
 
 	private final ObjectPhantomReference phantom = Store.getObjectPhantom(this, IdObject.getNewId());
@@ -32,5 +67,8 @@ public class IdObject implements IIdObject {
 		return phantom;
 	}
 	
-	public IdObject() {}
+	public IdObject() {
+		// Nothing to do
+	}
 }
+

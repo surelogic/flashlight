@@ -1,11 +1,8 @@
 package com.surelogic._flashlight;
 
-import java.util.List;
-import java.util.concurrent.BlockingQueue;
-
 final class BeforeTrace extends Trace implements ICallLocation {	
-	BeforeTrace(final long siteId, BlockingQueue<List<Event>> queue) {
-		super(siteId);
+	BeforeTrace(final long siteId, Store.State state) {
+		super(siteId, state);
 	}
 	
 	@Override

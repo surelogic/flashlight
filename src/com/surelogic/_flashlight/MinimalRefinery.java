@@ -15,11 +15,11 @@ public class MinimalRefinery extends AbstractRefinery {
 	 */
 	@Override
 	public void run() {
-		Store.flashlightThread();
+		final Store.State state = Store.flashlightThread();
 		while (shutdown.get()) {
 			IdPhantomReference pr = Phantom.get();
 			if (pr != null) {
-				Store.putInQueue(Store.getRawQueue(), new GarbageCollectedObject(pr));
+				Store.putInQueue(state, new GarbageCollectedObject(pr));
 			}
 		}
 	}

@@ -24,8 +24,8 @@ final class BeforeIntrinsicLockAcquisition extends IntrinsicLock {
 
 	BeforeIntrinsicLockAcquisition(final Object lockObject,
 			final boolean lockIsThis, final boolean lockIsClass,
-			final long siteId) {
-		super(lockObject, siteId);
+			final long siteId, Store.State state) {
+		super(lockObject, siteId, state);
 		f_lockIsThis = lockIsThis;
 		f_lockIsClass = lockIsClass;
 	}

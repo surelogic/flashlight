@@ -1,8 +1,8 @@
 package com.surelogic._flashlight;
 
 abstract class FieldAccessStatic extends FieldAccess {
-	FieldAccessStatic(long field, final long siteId) {
-		super(field, siteId);
+	FieldAccessStatic(long field, final long siteId, Store.State state) {
+		super(field, siteId, state);
 	}
 	
 	@Override

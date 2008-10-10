@@ -14,8 +14,8 @@ final class AfterUtilConcurrentLockReleaseAttempt extends UtilConcurrentLock {
 	}
 
 	AfterUtilConcurrentLockReleaseAttempt(final boolean releasedTheLock,
-			final Lock lockObject, final long siteId) {
-		super(lockObject, siteId);
+			final Lock lockObject, final long siteId, Store.State state) {
+		super(lockObject, siteId, state);
 		f_releasedTheLock = releasedTheLock;
 	}
 

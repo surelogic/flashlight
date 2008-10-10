@@ -30,7 +30,7 @@ public class ObservedCallLocation extends AbstractCallLocation {
 	}
 	
 	static ObservedCallLocation getInstance(ClassPhantomReference withinClass, int line,
-			                                BlockingQueue<List<Event>> queue) {
+			                                Store.State state) {
 		ObservedCallLocation key = new ObservedCallLocation(withinClass, line, 0);
 		ObservedCallLocation loc = map.get(key);
 		if (loc == null) {
@@ -38,7 +38,7 @@ public class ObservedCallLocation extends AbstractCallLocation {
 			loc = new ObservedCallLocation(withinClass, line, id);
 			ObservedCallLocation last = map.putIfAbsent(loc, loc);
 			if (last == null) {
-				Store.putInQueue(queue, loc);
+				Store.putInQueue(state, loc);
 			}
 		}
 		return loc;

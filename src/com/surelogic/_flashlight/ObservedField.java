@@ -106,7 +106,7 @@ abstract class ObservedField {
 	 *         specified field.
 	 */
 	static ObservedField getInstance(final String className, final String fieldName,
-			BlockingQueue<List<Event>> rawQueue) {
+			Store.State state) {
 		assert className != null && fieldName != null;
 		final Class declaringType;
 		try {
@@ -114,16 +114,15 @@ abstract class ObservedField {
 		} catch (ClassNotFoundException e) {
 			return null;
 		}
-		return getInstance(declaringType, fieldName, rawQueue);
+		return getInstance(declaringType, fieldName, state);
 	}
 		
-	static ObservedField getInstance(final Field field,
-			BlockingQueue<List<Event>> rawQueue) {
-		return getInstance(field.getDeclaringClass(), field.getName(), rawQueue);
+	static ObservedField getInstance(final Field field, Store.State state) {
+		return getInstance(field.getDeclaringClass(), field.getName(), state);
 	}
 	
 	static ObservedField getInstance(final Class declaringType, final String fieldName,
-			BlockingQueue<List<Event>> rawQueue) {
+			                         Store.State state) {
 		final ClassPhantomReference pDeclaringType = Phantom.ofClass(declaringType);
 		ConcurrentHashMap<String, ObservedField> fieldNameToField = f_declaringTypeToFieldNameToField.get(pDeclaringType);
 		if (fieldNameToField == null) {
@@ -157,7 +156,7 @@ abstract class ObservedField {
 			return sResult;
 		else {
 			// put a field-definition event in the raw queue.
-			Store.putInQueue(rawQueue, new FieldDefinition(result));
+			Store.putInQueue(state, new FieldDefinition(result));
 			return result;
 		}
 	}

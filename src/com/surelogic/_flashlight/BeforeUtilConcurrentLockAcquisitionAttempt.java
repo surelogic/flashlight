@@ -5,8 +5,8 @@ import java.util.concurrent.locks.Lock;
 final class BeforeUtilConcurrentLockAcquisitionAttempt extends
 		UtilConcurrentLock {
 
-	BeforeUtilConcurrentLockAcquisitionAttempt(final Lock lockObject, final long siteId) {
-		super(lockObject, siteId);
+	BeforeUtilConcurrentLockAcquisitionAttempt(final Lock lockObject, final long siteId, Store.State state) {
+		super(lockObject, siteId, state);
 	}
 
 	@Override

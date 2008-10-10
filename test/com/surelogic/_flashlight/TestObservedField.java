@@ -1,9 +1,7 @@
 package com.surelogic._flashlight;
 
 import java.lang.reflect.Field;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
@@ -21,6 +19,8 @@ public class TestObservedField extends TestCase {
 	private static final BlockingQueue<List<Event>> Q = 
 		new ArrayBlockingQueue<List<Event>>(4);
 
+	private static final Store.State state = new Store.State(Q, new ArrayList<Event>());
+	
 	private final static int THREADS = 30;
 
 	static volatile int JUNK = 10;
@@ -45,7 +45,7 @@ public class TestObservedField extends TestCase {
 			try {
 				ObservedField of, last = null;
 				for (int i = 0; i < 10; i++) {
-					of = ObservedField.getInstance(f_threads, Q);
+					of = ObservedField.getInstance(f_threads, state);
 					l.add(of);
 					if (last != null)
 						if (last != of)
@@ -85,7 +85,7 @@ public class TestObservedField extends TestCase {
 			assertFalse("ObservedField.getInstance() failed in threads",
 					failureInProgThreadChecks);
 
-			ObservedField of = ObservedField.getInstance(f_threads, Q);
+			ObservedField of = ObservedField.getInstance(f_threads, state);
 			assertTrue(of.isFinal());
 			assertTrue(of.isStatic());
 			assertFalse(of.isVolatile());
@@ -95,21 +95,21 @@ public class TestObservedField extends TestCase {
 			for (ObservedField f : l)
 				assertSame(of, f);
 
-			of = ObservedField.getInstance(f_junk, Q);
+			of = ObservedField.getInstance(f_junk, state);
 			assertFalse(of.isFinal());
 			assertTrue(of.isStatic());
 			assertTrue(of.isVolatile());
 			assertEquals("com.surelogic._flashlight.TestObservedField", of
 					.getDeclaringType().getName());
 
-			of = ObservedField.getInstance(f_startGate, Q);
+			of = ObservedField.getInstance(f_startGate, state);
 			assertTrue(of.isFinal());
 			assertFalse(of.isStatic());
 			assertFalse(of.isVolatile());
 			assertEquals("com.surelogic._flashlight.TestObservedField", of
 					.getDeclaringType().getName());
 
-			of = ObservedField.getInstance(f_endGate, Q);
+			of = ObservedField.getInstance(f_endGate, state);
 			assertFalse(of.isFinal());
 			assertFalse(of.isStatic());
 			assertTrue(of.isVolatile());

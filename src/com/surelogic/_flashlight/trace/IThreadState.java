@@ -1,8 +1,7 @@
 package com.surelogic._flashlight.trace;
 
-import com.surelogic._flashlight.ThreadPhantomReference;
+import com.surelogic._flashlight.Store;
 
 public interface IThreadState {
-	ThreadPhantomReference getThread();
-	TraceNode getCurrentNode();
+	TraceNode getCurrentNode(Store.State state);
 }

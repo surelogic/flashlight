@@ -2,8 +2,8 @@ package com.surelogic._flashlight;
 
 final class AfterTrace extends Trace {
 
-	AfterTrace(final long siteId) {
-		super(siteId);
+	AfterTrace(final long siteId, Store.State state) {
+		super(siteId, state);
 	}
 
 	@Override

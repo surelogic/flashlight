@@ -2,8 +2,8 @@ package com.surelogic._flashlight;
 
 final class FieldReadStatic extends FieldAccessStatic {
 
-	FieldReadStatic(final long field, final long siteId) {
-		super(field, siteId);
+	FieldReadStatic(final long field, final long siteId, Store.State state) {
+		super(field, siteId, state);
 	}
 
 	@Override

@@ -202,8 +202,21 @@ public final class Store {
 	 */
 	private final static ThreadLocal<State> tl_withinStore;
 	
-	private static final class State {
+	public static final class State {
 		boolean inside = false;
+		final ThreadPhantomReference thread = Phantom.ofThread(Thread.currentThread());
+		public final TraceNode.Header traceHeader = TraceNode.makeHeader();
+		final List<Event> eventQueue;
+		final BlockingQueue<List<Event>> rawQueue;
+		
+		State(BlockingQueue<List<Event>> q, List<Event> l) {
+			rawQueue = q;
+			eventQueue = l;
+		}
+		
+		TraceNode getCurrentTrace() {
+			return traceHeader.getCurrentNode(this);
+		}
 	}
 	
 	private static final boolean useLocks = true;
@@ -225,8 +238,10 @@ public final class Store {
 	 * thread-local flag so that all our instrumentation entry points to the
 	 * store immediately return.
 	 */
-	final static void flashlightThread() {
-		tl_withinStore.get().inside = true;
+	final static State flashlightThread() {
+		State s = tl_withinStore.get();
+		s.inside = true;
+		return s; 
 	}
 
 	/*
@@ -317,7 +332,11 @@ public final class Store {
 			tl_withinStore = new ThreadLocal<State>() {
 				@Override
 				protected State initialValue() {
-					return new State();
+					final List<Event> l = new ArrayList<Event>(LOCAL_QUEUE_MAX);
+					synchronized (localQueueList) {
+						localQueueList.add(l);
+					}
+					return new State(f_rawQueue, l);
 				}
 			};
 			IdPhantomReference
@@ -326,7 +345,7 @@ public final class Store {
 							/*
 							 * Create an event to define this object.
 							 */
-							Store.putInQueue(f_rawQueue,
+							Store.putInQueue(tl_withinStore.get(),
 									new ObjectDefinition(o, r));
 						}
 					});
@@ -480,10 +499,10 @@ public final class Store {
 			  return;
 		  }
 		  if (read)
-			  e = new FieldReadInstance(receiver, fieldID, siteId);
+			  e = new FieldReadInstance(receiver, fieldID, siteId, flState);
 		  else
-			  e = new FieldWriteInstance(receiver, fieldID, siteId);
-		  putInQueue(f_rawQueue, e);
+			  e = new FieldWriteInstance(receiver, fieldID, siteId, flState);
+		  putInQueue(flState, e);
 	  } finally {
 		  flState.inside = false;
 	  }
@@ -540,10 +559,10 @@ public final class Store {
           */
 		  final Event e;
 		  if (read)
-			  e = new FieldReadStatic(fieldID, siteId);
+			  e = new FieldReadStatic(fieldID, siteId, flState);
 		  else
-			  e = new FieldWriteStatic(fieldID, siteId);
-		  putInQueue(f_rawQueue, e);
+			  e = new FieldWriteStatic(fieldID, siteId, flState);
+		  putInQueue(flState, e);
 	  } finally {
 		  flState.inside = false;
 	  }  
@@ -589,7 +608,7 @@ public final class Store {
             safeToString(receiver), clazz.getName()+'.'+fieldName, siteId));
       }
       final ObservedField oField = ObservedField.getInstance(clazz, fieldName,
-              f_rawQueue);
+    		  flState);
       /*
        * Check that the parameters are valid, gather needed information,
        * and put an event in the raw queue.
@@ -608,10 +627,10 @@ public final class Store {
         return;
       }
       if (read)
-        e = new FieldReadInstance(receiver, oField.getId(), siteId);
+        e = new FieldReadInstance(receiver, oField.getId(), siteId, flState);
       else
-        e = new FieldWriteInstance(receiver, oField.getId(), siteId);
-      putInQueue(f_rawQueue, e);
+        e = new FieldWriteInstance(receiver, oField.getId(), siteId, flState);
+      putInQueue(flState, e);
     } finally {
     	flState.inside = false;
     }
@@ -653,7 +672,7 @@ public final class Store {
         log(String.format(fmt, read ? "read" : "write", clazz.getName()+'.'+fieldName, siteId));
       }
       final ObservedField oField = ObservedField.getInstance(clazz, fieldName,
-              f_rawQueue);
+    		  flState);
       /*
        * Check that the parameters are valid, gather needed information,
        * and put an event in the raw queue.
@@ -666,10 +685,10 @@ public final class Store {
 
       final Event e;
       if (read)
-        e = new FieldReadStatic(oField.getId(), siteId);
+        e = new FieldReadStatic(oField.getId(), siteId, flState);
       else
-        e = new FieldWriteStatic(oField.getId(), siteId);
-      putInQueue(f_rawQueue, e);
+        e = new FieldWriteStatic(oField.getId(), siteId, flState);
+      putInQueue(flState, e);
     } finally {
 		flState.inside = false;
     }
@@ -723,14 +742,14 @@ public final class Store {
 			}
 			final ObservedField oField = ObservedField.getInstance(field.getDeclaringClass().getName(),
 					                                               field.getName(),
-					f_rawQueue);
-			final ObservedCallLocation loc = ObservedCallLocation.getInstance(withinClass, line, f_rawQueue);
+					                                               flState);
+			final ObservedCallLocation loc = ObservedCallLocation.getInstance(withinClass, line, flState);
 			final Event e;
 			if (oField.isStatic()) {
 				if (read)
-					e = new FieldReadStatic(oField.getId(), loc.getSiteId());
+					e = new FieldReadStatic(oField.getId(), loc.getSiteId(), flState);
 				else
-					e = new FieldWriteStatic(oField.getId(), loc.getSiteId());
+					e = new FieldWriteStatic(oField.getId(), loc.getSiteId(), flState);
 			} else {
 				if (receiver == null) {
 					final String fmt = "instance field %s access reported with a null receiver...instrumentation bug detected by Store.fieldAccess(%s, receiver=%s, field=%s, location=%s)";
@@ -739,11 +758,11 @@ public final class Store {
 					return;
 				}
 				if (read)
-					e = new FieldReadInstance(receiver, oField.getId(), loc.getSiteId());
+					e = new FieldReadInstance(receiver, oField.getId(), loc.getSiteId(), flState);
 				else
-					e = new FieldWriteInstance(receiver, oField.getId(), loc.getSiteId());
+					e = new FieldWriteInstance(receiver, oField.getId(), loc.getSiteId(), flState);
 			}
-			putInQueue(f_rawQueue, e);
+			putInQueue(flState, e);
 		} finally {
 			flState.inside = false;
 		}
@@ -790,19 +809,19 @@ public final class Store {
 			Event e = null;
 			if (before) {
 				if (useTraceNodes) {
-					TraceNode.pushTraceNode(siteId, f_rawQueue);
+					TraceNode.pushTraceNode(siteId, flState);
 				} else {
-					e = new BeforeTrace(siteId, f_rawQueue);
+					e = new BeforeTrace(siteId, flState);
 				}
 			} else {	
 				if (useTraceNodes) {
-					TraceNode.popTraceNode(siteId);
+					TraceNode.popTraceNode(siteId, flState);
 				} else {
-					e = new AfterTrace(siteId);
+					e = new AfterTrace(siteId, flState);
 				}
 			}
 			if (!useTraceNodes) {
-				putInQueue(f_rawQueue, e);
+				putInQueue(flState, e);
 			}
 		} finally {
 			flState.inside = false;
@@ -930,7 +949,7 @@ public final class Store {
 						final Event e = new ReadWriteLockDefinition(p, Phantom
 								.ofObject(rwl.readLock()), Phantom.ofObject(rwl
 								.writeLock()));
-						putInQueue(f_rawQueue, e);
+						putInQueue(flState, e);
 					}
 				}
 			}
@@ -940,19 +959,19 @@ public final class Store {
 			Event e = null;
 			if (before) {
 				if (useTraceNodes) {
-					TraceNode.pushTraceNode(siteId, f_rawQueue);
+					TraceNode.pushTraceNode(siteId, flState);
 				} else {
-					e = new BeforeTrace(siteId, f_rawQueue);
+					e = new BeforeTrace(siteId, flState);
 				}
 			} else {	
 				if (useTraceNodes) {
-					TraceNode.popTraceNode(siteId);
+					TraceNode.popTraceNode(siteId, flState);
 				} else {
-					e = new AfterTrace(siteId);
+					e = new AfterTrace(siteId, flState);
 				}
 			}
 			if (!useTraceNodes) {
-				putInQueue(f_rawQueue, e);
+				putInQueue(flState, e);
 			}
 		} finally {
 			flState.inside = false;
@@ -1007,8 +1026,8 @@ public final class Store {
 				return;
 			}
 			final Event e = new BeforeIntrinsicLockAcquisition(lockObject,
-					lockIsThis, lockIsClass, siteId);
-			putInQueue(f_rawQueue, e, true);
+					lockIsThis, lockIsClass, siteId, flState);
+			putInQueue(flState, e, true);
 		} finally {
 			flState.inside = false;
 		}
@@ -1053,8 +1072,8 @@ public final class Store {
 						siteId));
 				return;
 			}
-			final Event e = new AfterIntrinsicLockAcquisition(lockObject, siteId);
-			putInQueue(f_rawQueue, e);
+			final Event e = new AfterIntrinsicLockAcquisition(lockObject, siteId, flState);
+			putInQueue(flState, e);
 		} finally {
 			flState.inside = false;
 		}
@@ -1113,10 +1132,10 @@ public final class Store {
 			}
 			final Event e;
 			if (before)
-				e = new BeforeIntrinsicLockWait(lockObject, siteId);
+				e = new BeforeIntrinsicLockWait(lockObject, siteId, flState);
 			else
-				e = new AfterIntrinsicLockWait(lockObject, siteId);
-			putInQueue(f_rawQueue, e, true);
+				e = new AfterIntrinsicLockWait(lockObject, siteId, flState);
+			putInQueue(flState, e, true);
 		} finally {
 			flState.inside = false;
 		}
@@ -1161,8 +1180,8 @@ public final class Store {
 						siteId));
 				return;
 			}
-			final Event e = new AfterIntrinsicLockRelease(lockObject, siteId);
-			putInQueue(f_rawQueue, e);
+			final Event e = new AfterIntrinsicLockRelease(lockObject, siteId, flState);
+			putInQueue(flState, e);
 		} finally {
 			flState.inside = false;
 		}
@@ -1205,8 +1224,8 @@ public final class Store {
 			if (lockObject instanceof Lock) {
 				final Lock ucLock = (Lock) lockObject;
 				final Event e = new BeforeUtilConcurrentLockAcquisitionAttempt(
-						ucLock, siteId);
-				putInQueue(f_rawQueue, e, true);
+						ucLock, siteId, flState);
+				putInQueue(flState, e, true);
 			} else {
 				final String fmt = "lock object must be a java.util.concurrent.locks.Lock...instrumentation bug detected by Store.beforeUtilConcurrentLockAcquisitionAttempt(lockObject=%s, location=%s)";
 				logAProblem(String.format(fmt, lockObject, siteId));
@@ -1261,8 +1280,8 @@ public final class Store {
 			if (lockObject instanceof Lock) {
 				final Lock ucLock = (Lock) lockObject;
 				final Event e = new AfterUtilConcurrentLockAcquisitionAttempt(
-						gotTheLock, ucLock, siteId);
-				putInQueue(f_rawQueue, e);
+						gotTheLock, ucLock, siteId, flState);
+				putInQueue(flState, e);
 			} else {
 				final String fmt = "lock object must be a java.util.concurrent.locks.Lock...instrumentation bug detected by Store.afterUtilConcurrentLockAcquisitionAttempt(%s, lockObject=%s, location=%s)";
 				logAProblem(String.format(fmt, gotTheLock ? "holding"
@@ -1318,8 +1337,8 @@ public final class Store {
 			if (lockObject instanceof Lock) {
 				final Lock ucLock = (Lock) lockObject;
 				final Event e = new AfterUtilConcurrentLockReleaseAttempt(
-						releasedTheLock, ucLock, siteId);
-				putInQueue(f_rawQueue, e);
+						releasedTheLock, ucLock, siteId, flState);
+				putInQueue(flState, e);
 			} else {
 				final String fmt = "lock object must be a java.util.concurrent.locks.Lock...instrumentation bug detected by Store.afterUtilConcurrentLockReleaseAttempt(%s, lockObject=%s, location=%s)";
 				logAProblem(String.format(fmt, releasedTheLock ? "released"
@@ -1440,23 +1459,11 @@ public final class Store {
 	 */
 	static final List<List<Event>> localQueueList = new ArrayList<List<Event>>();
 	
-	static final ThreadLocal<List<Event>> localQueues = new ThreadLocal<List<Event>>() {
-		@Override
-		protected List<Event> initialValue() {
-			List<Event> l = new ArrayList<Event>(LOCAL_QUEUE_MAX);
-			synchronized (localQueueList) {
-				localQueueList.add(l);
-			}
-			return l;
-		}
-	};
-	
-	public static void putInQueue(final BlockingQueue<List<Event>> queue, final Event e) {
-		putInQueue(queue, e, false);
+	public static void putInQueue(State state, final Event e) {
+		putInQueue(state, e, false);
 	}
 	
-	static void putInQueue(final BlockingQueue<List<Event>> queue, final Event e,
-			               final boolean flush) {
+	static void putInQueue(State state, final Event e, final boolean flush) {
 		/*
 		if (e instanceof ObjectDefinition) {
 			ObjectDefinition od = (ObjectDefinition) e;
@@ -1465,7 +1472,10 @@ public final class Store {
 			}
 		}
 		*/
-		List<Event> localQ = localQueues.get();
+		if (state == null) {
+			state = tl_withinStore.get();
+		}
+		List<Event> localQ = state.eventQueue;
 		List<Event> copy   = null;
 		synchronized (localQ) {
 			localQ.add(e);
@@ -1485,7 +1495,7 @@ public final class Store {
 				}
 			}
 			*/
-			putInQueue(queue, copy);
+			putInQueue(state.rawQueue, copy);
 		}		
  	}
 	

@@ -15,8 +15,8 @@ abstract class FieldAccessInstance extends FieldAccess {
 	}
 
 	FieldAccessInstance(final Object receiver, final long field,
-			            final long siteId) {
-		super(field, siteId);
+			            final long siteId, Store.State state) {
+		super(field, siteId, state);
 		f_receiver = Phantom.ofObject(receiver);
 		f_receiverUnderConstruction = f_receiver.isUnderConstruction();
 	}

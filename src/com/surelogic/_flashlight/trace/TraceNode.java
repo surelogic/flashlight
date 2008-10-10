@@ -19,12 +19,6 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 	private static final int SEQUENCE_SHIFT = 16;
 	private static final int SEQUENCE_MASK  = (1 << SEQUENCE_SHIFT) - 1;
 	
-	private static final ThreadLocal<Header> currentNode = new ThreadLocal<Header>() {
-		@Override
-		protected Header initialValue() {
-			return new Header();
-		}
-	};
 	static final LongMap<TraceNode> roots = new LongMap<TraceNode>();
 	//static int poppedTotal = 0, poppedPlaceHolders = 0;
 	
@@ -107,9 +101,9 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 		return new LongVersion(caller, siteId, id);
 	}
 	
-	static TraceNode newTraceNode(final Header header, final TraceNode caller, final long siteId, 
-			                      BlockingQueue<List<Event>> queue) {
-		TraceNode callee = newTraceNode(header, caller, siteId);
+	static TraceNode newTraceNode(final TraceNode caller, final long siteId, 
+			                      Store.State state) {
+		TraceNode callee = newTraceNode(state.traceHeader, caller, siteId);
 		TraceNode firstCallee;				
 		if (caller != null) {
 			// Insert into caller
@@ -134,7 +128,7 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 			else {
 				callee.f_siblingNodes = caller.f_calleeNodes;
 				caller.f_calleeNodes  = callee;
-			    Store.putInQueue(queue, callee);
+			    Store.putInQueue(state, callee);
 			}
 		} else {
 			// Insert into roots
@@ -148,14 +142,14 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 				//callee.unpropagated++;
 			}
 			if (firstCallee == null) {
-				Store.putInQueue(queue, callee);
+				Store.putInQueue(state, callee);
 			}
 		}
 		return callee;
 	}
 	
-	public static void pushTraceNode(final long siteId, BlockingQueue<List<Event>> queue) {
-		final Header header     = currentNode.get();
+	public static void pushTraceNode(final long siteId, Store.State state) {
+		final Header header     = state.traceHeader;
 		final ITraceNode caller = header.current;
 		ITraceNode callee = null;
 		if (caller != null) {
@@ -164,7 +158,7 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 			if (callee == null) {
 				// Try to insert a new TraceNode
 				if (recordOnPush) {
-					callee = newTraceNode(header, caller.getNode(header), siteId, queue);
+					callee = newTraceNode(caller.getNode(state), siteId, state);
 				} else {
 					callee = new Placeholder(siteId, caller);
 				}
@@ -175,7 +169,7 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 				callee  = roots.get(siteId);				
 			    if (callee == null) {
 					if (recordOnPush) {
-						callee = newTraceNode(header, null, siteId, queue);
+						callee = newTraceNode(null, siteId, state);
 					} else {
 						callee = new Placeholder(siteId, caller);
 					}	
@@ -186,8 +180,8 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 		header.count++;
 	}
 	
-	public static void popTraceNode(final long siteId) {	
-		final Header header     = currentNode.get();
+	public static void popTraceNode(final long siteId, Store.State state) {	
+		final Header header     = state.traceHeader;
 		final ITraceNode callee = header.current;
 		if (callee != null) {
 			ITraceNode parent = callee.getParent();
@@ -223,15 +217,6 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 		*/
 	}
 	
-	public static TraceNode getCurrentNode() {
-		final Header header     = currentNode.get();
-		return header.getCurrentNode();
-	}
-	
-	public static IThreadState getThreadState() {
-		return currentNode.get();
-	}
-	
 	/*
 	static TraceNode ensureStackTrace(ClassPhantomReference inClass, int line) {
 	    // Make sure the current trace matches the real trace
@@ -260,7 +245,7 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 		return f_caller;
 	}
 	
-	public TraceNode getNode(Header header) {
+	public TraceNode getNode(Store.State state) {
 		return this;
 	}
 	
@@ -334,18 +319,21 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 		return id;
 	}
 	
+	public static Header makeHeader() {
+		return new Header();
+	}
+	
 	/**
 	 * A thread-local class
 	 * Helps to keep stats, as well as avoid calls to ThreadLocal.set()
 	 */	
-	static class Header implements IThreadState {
-		final ThreadPhantomReference thread = Phantom.ofThread(Thread.currentThread());
+	public static class Header implements IThreadState {
 		int count = 0;
 		long nextId = getFirstIdInSequence(); 
 		ITraceNode current = null;
 		
-		public ThreadPhantomReference getThread() {
-			return thread;
+		Header() {
+			// Nothing to do
 		}
 		
 		long getNextId() {
@@ -359,12 +347,12 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 			return id;
 		}
 
-		public TraceNode getCurrentNode() {
+		public TraceNode getCurrentNode(Store.State state) {
 			final ITraceNode current = this.current;
 			if (current == null) {
 				return null;
 			}
-			TraceNode real = current.getNode(this); 
+			TraceNode real = current.getNode(state); 
 			if (real != current) {
 				// Remove placeholders if there are any
 				this.current = real;

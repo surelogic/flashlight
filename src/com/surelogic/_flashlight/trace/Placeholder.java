@@ -55,7 +55,7 @@ public class Placeholder extends AbstractPlaceholder {
 
 	public static ITraceNode push(ITraceNode caller, long siteId) {
 		if (caller == null) {
-			return new Placeholder(caller, siteId);
+			return new PairPlaceholder(caller, siteId);
 		}
 		return caller.pushCallee(siteId);
 	}

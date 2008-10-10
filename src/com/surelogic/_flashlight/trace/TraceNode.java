@@ -169,7 +169,7 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 					if (recordOnPush) {
 						callee = newTraceNode(null, siteId, state);
 					} else {
-						callee = new Placeholder(caller /*null*/, siteId);
+						callee = new PairPlaceholder(caller /*null*/, siteId);
 					}	
 			    }
 			}
@@ -240,7 +240,7 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 	}
 	
 	public final ITraceNode pushCallee(long siteId) {
-		return new Placeholder(this, siteId);
+		return new PairPlaceholder(this, siteId);
 	}
 	
 	public final ITraceNode popParent() {

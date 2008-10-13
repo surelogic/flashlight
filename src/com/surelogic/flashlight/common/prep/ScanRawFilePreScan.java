@@ -10,20 +10,17 @@ import java.util.logging.Level;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
 
+import com.surelogic._flashlight.common.AbstractDataScan;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.logging.SLLogger;
 
-public final class ScanRawFilePreScan extends DefaultHandler {
+public final class ScanRawFilePreScan extends AbstractDataScan {
 
 	private boolean f_firstTimeEventFound = false;
 
-	final SLProgressMonitor f_monitor;
-
 	public ScanRawFilePreScan(final SLProgressMonitor monitor) {
-		assert monitor != null;
-		f_monitor = monitor;
+		super(monitor);
 	}
 
 	private long f_elementCount = 0;
@@ -179,7 +176,7 @@ public final class ScanRawFilePreScan extends DefaultHandler {
 				useField(field, thread);
 			}
 			useObject(Long.parseLong(attributes.getValue("in-class")));
-			useObject(Long.parseLong(attributes.getValue("thread")));
+			useObject(thread);
 		} else if (locks.contains(name)) {
 			useObject(Long.parseLong(attributes.getValue("thread")));
 			useObject(Long.parseLong(attributes.getValue("in-class")));

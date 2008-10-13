@@ -7,26 +7,24 @@ import java.util.Set;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
 
+import com.surelogic._flashlight.common.AbstractDataScan;
 import com.surelogic.common.jobs.SLProgressMonitor;
 
-public final class ScanRawFilePrepScan extends DefaultHandler {
+public final class ScanRawFilePrepScan extends AbstractDataScan {
 
 	final Connection f_c;
 	final IPrep[] f_elementHandlers;
-	final SLProgressMonitor f_monitor;
 	final int f_run;
 	final Set<String> f_notParsed = new HashSet<String>();
 
 	public ScanRawFilePrepScan(final int run, final Connection c,
 			final SLProgressMonitor monitor, final IPrep[] elementHandlers)
 			throws SQLException {
+		super(monitor);
 		f_run = run;
 		assert c != null;
 		f_c = c;
-		assert monitor != null;
-		f_monitor = monitor;
 		assert elementHandlers != null;
 		f_elementHandlers = elementHandlers;
 		f_notParsed.add("environment");

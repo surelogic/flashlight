@@ -313,7 +313,6 @@ final class FlashlightMethodRewriter implements MethodVisitor {
     } else {
       firstArgInternal = null;
     }
-    System.out.println(methodName + ": isAccess = " + isAccessMethod + ", type = " + firstArgInternal);
     
     if (isConstructor) {
       stateMachine = new ConstructorInitStateMachine(new ObjectInitCallback());

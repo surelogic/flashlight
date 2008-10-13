@@ -215,6 +215,16 @@ public enum EventType {
 			attrs.put(FIELD, readCompressedLong(in));
 		}
 	},
+	Static_CallLocation("static-call-location") {
+	    @Override
+	    void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+			attrs.put(SITE_ID, readCompressedLong(in));
+			attrs.put(IN_CLASS, readCompressedLong(in));
+			attrs.put(LINE, readCompressedInt(in));
+			attrs.put(FILE, in.readUTF());
+			attrs.put(LOCATION, in.readUTF());
+	    }
+	},
 	Thread("thread") {
 	    @Override
 	    void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {

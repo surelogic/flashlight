@@ -18,6 +18,7 @@ import com.surelogic.common.jdbc.DBConnection;
 import com.surelogic.common.jdbc.DBTransaction;
 import com.surelogic.common.jdbc.NullDBTransaction;
 import com.surelogic.common.jdbc.SchemaUtility;
+import com.surelogic.common.jdbc.TransactionException;
 import com.surelogic.common.jobs.AbstractSLJob;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
@@ -127,8 +128,9 @@ public final class PrepSLJob extends AbstractSLJob {
 
 		final SLStatus failed = SLLicenseUtility.validateSLJob(
 				SLLicenseUtility.FLASHLIGHT_SUBJECT, monitor);
-		if (failed != null)
+		if (failed != null) {
 			return failed;
+		}
 
 		UsageMeter.getInstance().tickUse("Flashlight ran PrepSLJob");
 
@@ -169,26 +171,7 @@ public final class PrepSLJob extends AbstractSLJob {
 				/*
 				 * Drop the database constraints.
 				 */
-				f_database.withTransaction(new NullDBTransaction() {
-
-					@Override
-					public void doPerform(final Connection conn)
-							throws Exception {
-						final SLProgressMonitor dropConstraintWork = new SubSLProgressMonitor(
-								monitor, "Removing indexes",
-								DROP_CONSTRAINT_WORK);
-						dropConstraintWork.begin();
-						final Statement dropSt = conn.createStatement();
-						try {
-							SchemaUtility.runScript(f_database
-									.getSchemaLoader().getSchemaResource(
-											"drop_constraints.sql"), dropSt);
-						} finally {
-							dropSt.close();
-						}
-						dropConstraintWork.done();
-					}
-				});
+				f_database.withTransaction(dropConstraints(monitor));
 				int runId = -1;
 				try {
 					/*
@@ -345,44 +328,17 @@ public final class PrepSLJob extends AbstractSLJob {
 											element.printStats();
 										}
 									}
+									addConstraints(monitor).perform(c);
 									return runId;
 								}
 							});
-				} finally {
+				} catch (final TransactionException e) {
 					/*
-					 * Restore the database constraints.
+					 * Restore the database constraints even if the entire
+					 * transaction fails.
 					 */
-					f_database.withTransaction(new NullDBTransaction() {
-
-						@Override
-						public void doPerform(final Connection conn)
-								throws Exception {
-							final SLProgressMonitor constraintMonitor = new SubSLProgressMonitor(
-									monitor, "Generating indexes",
-									ADD_CONSTRAINT_WORK);
-							final URL script = f_database.getSchemaLoader()
-									.getSchemaResource("add_constraints.sql");
-							final List<StringBuilder> statements = SchemaUtility
-									.getSQLStatements(script);
-							constraintMonitor.begin(statements.size());
-							final Statement addSt = conn.createStatement();
-							try {
-								for (final StringBuilder statement : statements) {
-									try {
-										addSt.execute(statement.toString());
-									} catch (final SQLException e) {
-										throw new IllegalStateException(I18N
-												.err(12, statement.toString(),
-														script), e);
-									}
-									constraintMonitor.worked(1);
-								}
-							} finally {
-								addSt.close();
-							}
-							constraintMonitor.done();
-						}
-					});
+					f_database.withTransaction(addConstraints(monitor));
+					throw e;
 				}
 				if (runId > -1) {
 					final int thisRun = runId;
@@ -435,5 +391,56 @@ public final class PrepSLJob extends AbstractSLJob {
 			}
 			monitor.done();
 		}
+	}
+
+	private NullDBTransaction dropConstraints(final SLProgressMonitor monitor) {
+		return new NullDBTransaction() {
+
+			@Override
+			public void doPerform(final Connection conn) throws Exception {
+				final SLProgressMonitor dropConstraintWork = new SubSLProgressMonitor(
+						monitor, "Removing indexes", DROP_CONSTRAINT_WORK);
+				dropConstraintWork.begin();
+				final Statement dropSt = conn.createStatement();
+				try {
+					SchemaUtility.runScript(f_database.getSchemaLoader()
+							.getSchemaResource("drop_constraints.sql"), dropSt);
+				} finally {
+					dropSt.close();
+				}
+				dropConstraintWork.done();
+			}
+		};
+	}
+
+	private NullDBTransaction addConstraints(final SLProgressMonitor monitor) {
+		return new NullDBTransaction() {
+
+			@Override
+			public void doPerform(final Connection conn) throws Exception {
+				final SLProgressMonitor constraintMonitor = new SubSLProgressMonitor(
+						monitor, "Generating indexes", ADD_CONSTRAINT_WORK);
+				final URL script = f_database.getSchemaLoader()
+						.getSchemaResource("add_constraints.sql");
+				final List<StringBuilder> statements = SchemaUtility
+						.getSQLStatements(script);
+				constraintMonitor.begin(statements.size());
+				final Statement addSt = conn.createStatement();
+				try {
+					for (final StringBuilder statement : statements) {
+						try {
+							addSt.execute(statement.toString());
+						} catch (final SQLException e) {
+							throw new IllegalStateException(I18N.err(12,
+									statement.toString(), script), e);
+						}
+						constraintMonitor.worked(1);
+					}
+				} finally {
+					addSt.close();
+				}
+				constraintMonitor.done();
+			}
+		};
 	}
 }

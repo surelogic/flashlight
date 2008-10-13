@@ -11,7 +11,6 @@ import java.util.logging.Level;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
-import com.surelogic._flashlight.common.AbstractDataScan;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.logging.SLLogger;
 

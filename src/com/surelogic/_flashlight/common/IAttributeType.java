@@ -12,6 +12,4 @@ public interface IAttributeType {
 			return (t1.base() - t2.base()) + (t1.ordinal() - t2.ordinal());			       
 		}
 	};
-
-
 }

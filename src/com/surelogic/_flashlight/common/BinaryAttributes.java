@@ -5,7 +5,7 @@ import java.util.*;
 
 import org.xml.sax.Attributes;
 
-public class BinaryAttributes extends HashMap<IAttributeType,Object> implements Attributes {
+public class BinaryAttributes extends PreppedAttributes implements Attributes {
 	private static final long serialVersionUID = -236988557562438004L;	
 	static final boolean debug = BinaryEventReader.debug;
 	

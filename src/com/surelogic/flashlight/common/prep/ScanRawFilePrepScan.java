@@ -8,7 +8,6 @@ import java.util.Set;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
-import com.surelogic._flashlight.common.AbstractDataScan;
 import com.surelogic.common.jobs.SLProgressMonitor;
 
 public final class ScanRawFilePrepScan extends AbstractDataScan {

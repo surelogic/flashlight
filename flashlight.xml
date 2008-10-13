@@ -17,19 +17,9 @@
 	<property name="junit.jar" value="${lib}/junit-4.3.1.jar" />
 
 	<property name="flashlight-all.jar" value="${basedir}/flashlight-all.jar" />
-	<property name="flashlight-all.jar.manifest" value="${lib}/ALL-MANIFEST.MF" />
-
 	<property name="flashlight-runtime.jar" value="${basedir}/flashlight-runtime.jar" />
-	<property name="flashlight-runtime.jar.manifest" value="${lib}/RUNTIME-MANIFEST.MF" />
-
 	<property name="flashlight-servlet.jar" value="${basedir}/flashlight-servlet.jar" />
-	<property name="flashlight-servlet.jar.manifest" value="${lib}/SERVLET-MANIFEST.MF" />
-
-	<property name="flashlight-instrument.jar" value="${basedir}/flashlight-instrument.jar" />
-	<property name="flashlight-instrument.jar.manifest" value="${lib}/INSTRUMENT-MANIFEST.MF" />
-
 	<property name="flashlight-rewriter.jar" value="${basedir}/flashlight-rewriter.jar" />
-	<property name="flashlight-rewriter.jar.manifest" value="${lib}/REWRITER-MANIFEST.MF" />
 
 	
 	
@@ -37,7 +27,6 @@
 		<delete file="${flashlight-all.jar}"/>
 		<delete file="${flashlight-runtime.jar}"/>
 		<delete file="${flashlight-servlet.jar}"/>
-		<delete file="${flashlight-instrument.jar}"/>
 		<delete file="${flashlight-rewriter.jar}"/>
 	</target>
 		
@@ -66,7 +55,6 @@
 		  <exclude name="**/com/surelogic/flashlight/**" />
 			<manifest>
 			  <attribute name="Manifest-Version" value="1.0"/>
-			  <attribute name="Premain-Class" value="com.surelogic._flashlight.instrument.FlashlightAgent"/>
 			  <attribute name="Can-Redefine-Classes" value="false"/>
   		  <attribute name="Main-Class" value="com.surelogic._flashlight.rewriter.engine.RewriteEngine"/>
 			</manifest>
@@ -110,21 +98,9 @@
 	  </jar>
 	</target>
 
-	<target name="build-instrument-jar">
-		<jar destfile="${flashlight-instrument.jar}" basedir="${classes}">
-			<include name="**/com/surelogic/_flashlight/instrument/*" />
-			<manifest>
-			  <attribute name="Manifest-Version" value="1.0"/>
-			  <attribute name="Premain-Class" value="com.surelogic._flashlight.instrument.FlashlightAgent"/>
-			  <attribute name="Can-Redefine-Classes" value="false"/>
-				<attribute name="Class-Path" value="flashlight-rewriter.jar flashlight-runtime.jar"/>
-			</manifest>
-	  </jar>
-	</target>
+	<target name="build-jars-eclipse" depends="build-all-jar, build-runtime-jar, build-servlet-jar, build-rewriter-jar" />
 
-	<target name="build-jars-eclipse" depends="build-all-jar, build-runtime-jar, build-servlet-jar, build-instrument-jar, build-rewriter-jar" />
-
-	<target name="build-jars" depends="compile, build-all-jar, build-runtime-jar, build-servlet-jar, build-instrument-jar, build-rewriter-jar" />
+	<target name="build-jars" depends="compile, build-all-jar, build-runtime-jar, build-servlet-jar, build-rewriter-jar" />
 
 	<target name="compile-test-code" depends="build-jars">
 		<delete dir="${classes}" />

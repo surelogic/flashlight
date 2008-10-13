@@ -156,6 +156,11 @@ final class OutputStrategyXML extends EventVisitor {
 	}
 
 	@Override
+	void visit(final StaticCallLocation e) {
+		o(e.toString());
+	}
+	
+	@Override
 	void visit(Time e) {
 		o(e.toString());
 	}

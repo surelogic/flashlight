@@ -37,6 +37,8 @@ public class StoreConfiguration {
   private static final int FL_CONSOLE_PORT_DEFAULT = 43524;
 
   private static final String FL_FIELDS_FILE = "FL_FIELDS_FILE";
+
+  private static final String FL_SITES_FILE = "FL_SITES_FILE";
   
   private static volatile boolean isOff;
   private static volatile String directory;
@@ -47,7 +49,7 @@ public class StoreConfiguration {
   private static volatile boolean noSpy;
   private static volatile int consolePort;
   private static volatile String fieldsFile;
- 
+  private static volatile String sitesFile;
   
   static {
     // Initialize the settings base on Java System properties
@@ -60,6 +62,7 @@ public class StoreConfiguration {
     setNoSpy(System.getProperty(FL_NO_SPY) != null);
     setConsolePort(getIntProperty(FL_CONSOLE_PORT, FL_CONSOLE_PORT_DEFAULT));
     setFieldsFile(System.getProperty(FL_FIELDS_FILE));
+    setSitesFile(System.getProperty(FL_SITES_FILE));
   }
   
   private static int getIntProperty(final String key, int def) {
@@ -255,5 +258,13 @@ public class StoreConfiguration {
   
   public static void setFieldsFile(String file) {
 	fieldsFile = file;		
+  }
+  
+  public static String getSitesFile() {
+	  return sitesFile;
+  }
+  
+  public static void setSitesFile(String file) {
+	  sitesFile = file;		
   }
 }

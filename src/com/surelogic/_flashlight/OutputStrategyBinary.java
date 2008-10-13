@@ -257,6 +257,18 @@ public class OutputStrategyBinary extends EventVisitor {
 		writeLong(SingleThreadedField_Static.getByte(), e.getFieldId(), true);
 	}
 	@Override
+	void visit(final StaticCallLocation e) {
+		try {		
+			writeLong_unsafe(Static_CallLocation.getByte(), e.getSiteId(), true);
+			writeCompressedLong(e.getWithinClassId());
+			writeCompressedInt(e.getLine());
+			writeUTF(e.getFileName());
+			writeUTF(e.getLocationName());
+		} catch (IOException ioe) {
+			handleIOException(ioe);
+		}
+	}
+	@Override
 	void visit(final Time e) {
 		try {		
 			writeLong_unsafe(Time_Event.getByte(), e.getNanoTime(), false);

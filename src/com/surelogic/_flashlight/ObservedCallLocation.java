@@ -1,6 +1,5 @@
 package com.surelogic._flashlight;
 
-import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 

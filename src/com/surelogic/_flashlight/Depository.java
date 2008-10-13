@@ -3,7 +3,6 @@ package com.surelogic._flashlight;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Takes events from the out queue and persists them according to an output
@@ -34,14 +33,46 @@ final class Depository extends Thread {
 		@Override
 		void visit(final ClassPhantomReference r) {
 			//System.err.println("Depository: "+r);							
-			count = outputFieldDefs(r.getName(), r.getId(), f_outputStrategy);
+			count = outputClassDefs(r.getName(), r.getId(), f_outputStrategy);
 		}		
 	}
 	
 	private final ClassVisitor classVisitor = new ClassVisitor();
 	
-	private final Map<String,List<FieldInfo>> fieldDefs = loadFieldInfo();
-			
+	//private final Map<String,List<FieldInfo>> fieldDefs = loadFieldInfo();
+	private final Map<String,ClassInfo> classDefs = loadClassInfo();	
+	
+	static class ClassInfo {
+		final String fileName;
+		final String className;
+		final SiteInfo[] sites;
+		final FieldInfo[] fields;
+		
+		ClassInfo(String file, String clazz, SiteInfo[] sites, FieldInfo[] fields) {
+			fileName = file;
+			className = clazz;
+			this.sites = sites;
+			this.fields = fields;
+		}
+	}
+	
+	static class SiteInfo {
+		final long id;
+		final String memberName;
+		final int line;
+		
+		SiteInfo(long id, String name, int line) {
+			this.id = id;
+			memberName = name;
+			this.line = line;
+		}
+		
+		void accept(long declaringType, EventVisitor strategy, ClassInfo info) {
+			strategy.visit(new StaticCallLocation(id, memberName, line, 
+					                              info.fileName, declaringType));
+		}
+	}
+	
 	static class FieldInfo {
 		final int id;
 		final String declaringType;
@@ -58,12 +89,12 @@ final class Depository extends Thread {
 			isVolatile = Boolean.parseBoolean(st.nextToken());				
 		}
 
-		public void accept(long declaringType, EventVisitor strategy) {
+		void accept(long declaringType, EventVisitor strategy) {
 			strategy.visit(new FieldDefinition(id, declaringType, name, 
 					                           isStatic, isFinal, isVolatile));
 		}
 	}
-		
+	
 	@Override
 	public void run() {
 		Store.flashlightThread();
@@ -98,7 +129,7 @@ final class Depository extends Thread {
 		Store.log("depository flushed (" + f_outputCount + " events(s) output)");
 	}
 
-	public static Map<String,List<FieldInfo>> loadFieldInfo() {
+	private static Map<String,List<FieldInfo>> loadFieldInfo() {
 		String name = StoreConfiguration.getFieldsFile();
 		if (name == null) {
 			return Collections.emptyMap();
@@ -128,18 +159,114 @@ final class Depository extends Thread {
 		return map;
 	}
 	
-	public int outputFieldDefs(String name, long id, EventVisitor strategy) {
-		List<FieldInfo> l = fieldDefs.remove(name);
-		if (l == null || l.isEmpty()) {
+	int outputFieldDefs(long id, EventVisitor strategy, ClassInfo info) {
+		FieldInfo[]l = info.fields;
+		if (l == null || l.length == 0) {
 			return 0;
 		}
 		int count = 0;
 		for(FieldInfo fi : l) {			
 			fi.accept(id, strategy);
+			count++;
 		}
 		return count;
 	}
 
+	int outputClassDefs(String name, long id, EventVisitor strategy) {
+		ClassInfo info = classDefs.remove(name);
+		int events = outputFieldDefs(id, strategy, info);
+		for(SiteInfo site : info.sites) {
+			site.accept(id, strategy, info);
+			events++;			
+		}
+		return events;
+	}
+		
+	private static Map<String,ClassInfo> loadClassInfo() {
+		String name = StoreConfiguration.getSitesFile();
+		File f;
+		if (name != null) {
+			f = new File(name);
+		} else {
+			// Try to use fields file to find the sites file
+			name = StoreConfiguration.getFieldsFile();
+			if (name == null) {
+				return Collections.emptyMap();
+			}
+			f = new File(name);
+			f = new File(f.getParentFile(), "sitesfile.txt");
+		}
+		return loadFileContents(f, new SitesReader()).getMap();
+	}
+	
+	private interface LineHandler {
+		void readLine(String line);		
+	}
+	
+	private static final SiteInfo[] noSites = new SiteInfo[0];
+	private static final FieldInfo[] noFields = new FieldInfo[0];	
+	
+	static class SitesReader implements LineHandler {
+		final Map<String,List<FieldInfo>> fields = loadFieldInfo();		
+		final Map<String,ClassInfo> classes = new HashMap<String,ClassInfo>();
+		List<SiteInfo> sites = new ArrayList<SiteInfo>();
+		String lastFileName;
+		String lastClassName;
+		String lastMemberName;
+		
+		public void readLine(String line) {
+			final StringTokenizer st = new StringTokenizer(line);
+			long id = Long.parseLong(st.nextToken());
+			String file = st.nextToken(); // FIX intern
+			String qname = st.nextToken(); // FIX intern
+			String member = st.nextToken(); 
+			int lineNo = Integer.parseInt(st.nextToken());
+			if (member.equals(lastMemberName)) {
+				member = lastMemberName;
+			}			
+			if (!file.equals(lastFileName) || !qname.equals(lastClassName)) {
+				makeClassInfo();
+				lastFileName = file;
+				lastClassName = qname;
+			}
+			SiteInfo site = new SiteInfo(id, member, lineNo);
+			sites.add(site);
+		}
+
+		private void makeClassInfo() {
+			if (lastClassName != null) {
+				List<FieldInfo> finfo = this.fields.remove(lastClassName);
+				FieldInfo[] fields = finfo == null ? noFields : finfo.toArray(noFields);
+				ClassInfo info = new ClassInfo(lastFileName, lastClassName, 
+						                       sites.toArray(noSites), fields);				
+				classes.put(lastClassName, info);
+				sites.clear();
+			}
+		}
+		
+		public Map<String, ClassInfo> getMap() {
+			makeClassInfo();
+			return classes.isEmpty() ? Collections.<String,ClassInfo>emptyMap() : classes;
+		}		
+	}
+	
+	private static <T extends LineHandler> T loadFileContents(File f, T handler) {
+		if (!f.exists() || !f.isFile()) {
+			return handler;
+		}
+		try {
+			Reader r = new FileReader(f);			
+			BufferedReader br = new BufferedReader(r);
+			String line;
+			while ((line = br.readLine()) != null) {
+				handler.readLine(line);
+			}
+		} catch (IOException e) {
+			Store.logAProblem("Couldn't read definition file"+f.getName(), e);
+		}
+		return handler;
+	}
+	
 	/**
 	 * Sets the output strategy used by the Depository. This method is intended
 	 * for <i>test code use only</i> because the {@link Store} configures the

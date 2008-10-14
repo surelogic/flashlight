@@ -105,7 +105,7 @@ public abstract class FieldAccess extends Event {
 		f_ps.setInt(5, lineNumber);
 		f_ps.setLong(6, field);
 		f_ps.setString(7, getRW());
-		if (receiver == -1) {
+		if (receiver == ILLEGAL_FIELD_ID) {
 			f_ps.setNull(8, Types.BIGINT);
 		} else {
 			f_ps.setLong(8, receiver);

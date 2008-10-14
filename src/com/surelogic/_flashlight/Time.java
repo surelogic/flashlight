@@ -20,6 +20,10 @@ final class Time extends TimedEvent {
 	Time() {
 		f_date = new Date();
 	}
+	
+	Time(final Date date) {
+	  f_date = date;
+	}
 
 	@Override
 	void accept(EventVisitor v) {

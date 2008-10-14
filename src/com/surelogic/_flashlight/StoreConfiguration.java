@@ -40,6 +40,8 @@ public class StoreConfiguration {
 
   private static final String FL_SITES_FILE = "FL_SITES_FILE";
   
+  private static final String FL_DATE_OVERRIDE = "FL_DATE_OVERRIDE";
+  
   private static volatile boolean isOff;
   private static volatile String directory;
   private static volatile String runName;
@@ -50,6 +52,7 @@ public class StoreConfiguration {
   private static volatile int consolePort;
   private static volatile String fieldsFile;
   private static volatile String sitesFile;
+  private static volatile String dateOverride;
   
   static {
     // Initialize the settings base on Java System properties
@@ -63,6 +66,7 @@ public class StoreConfiguration {
     setConsolePort(getIntProperty(FL_CONSOLE_PORT, FL_CONSOLE_PORT_DEFAULT));
     setFieldsFile(System.getProperty(FL_FIELDS_FILE));
     setSitesFile(System.getProperty(FL_SITES_FILE));
+    setDateOverride(System.getProperty(FL_DATE_OVERRIDE));
   }
   
   private static int getIntProperty(final String key, int def) {
@@ -75,7 +79,7 @@ public class StoreConfiguration {
     return def;
   }
 
-// Private constructor to prevent instantiation
+  // Private constructor to prevent instantiation
   private StoreConfiguration() {
     // do nothing
   }
@@ -256,15 +260,23 @@ public class StoreConfiguration {
 	  return fieldsFile;
   }
   
-  public static void setFieldsFile(String file) {
-	fieldsFile = file;		
+  public static void setFieldsFile(final String file) {
+    fieldsFile = file;		
   }
   
   public static String getSitesFile() {
-	  return sitesFile;
+    return sitesFile;
   }
   
-  public static void setSitesFile(String file) {
-	  sitesFile = file;		
+  public static void setSitesFile(final String file) {
+    sitesFile = file;   
+  }
+  
+  public static String getDateOverride() {
+    return dateOverride;
+  }
+  
+  public static void setDateOverride(final String date) {
+    dateOverride = date;
   }
 }

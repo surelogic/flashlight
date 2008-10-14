@@ -9,6 +9,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.lang.reflect.Field;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.*;
@@ -264,12 +265,37 @@ public final class Store {
 			fileName.append(System.getProperty("file.separator"));
 			f_run = StoreConfiguration.getRun();
 			fileName.append(f_run);
-			final SimpleDateFormat dateFormat = new SimpleDateFormat(
-					"-yyyy.MM.dd-'at'-HH.mm.ss.SSS");
-			// make the filename and time event times match
-			final Time timeEvent = new Time();
-			fileName.append(dateFormat.format(timeEvent.getDate()));
-
+			
+			
+			/* Get the start time of the data collection.  This time is embedded in
+			 * the time event in the output as well as in the names of the data
+			 * and log files.  The time can be provided in the configuration parameter
+			 * "date override" so that we use the same start time in the data file as
+			 * we use in the name of the flashlight run directory as constructed by
+			 * the executing IDE.
+			 */
+      final SimpleDateFormat dateFormat =
+        new SimpleDateFormat("-yyyy.MM.dd-'at'-HH.mm.ss.SSS");
+			final String dateOverride = StoreConfiguration.getDateOverride();
+			Date startTime;
+			if (dateOverride == null) {
+			  /* No time is provided, use the current time */
+			  startTime = new Date();
+			} else {
+			  /* We have an externally provided time.  Try to parse it.  If we cannot
+			   * parse it, use the current time.
+			   */
+			  try {
+          startTime = dateFormat.parse(dateOverride);
+        } catch (ParseException e) {
+          System.err.println(
+              "[Flashlight] couldn't parse date string \"" + dateOverride + "\"");
+          startTime = new Date();
+        }
+			}
+			final Time timeEvent = new Time(startTime);
+      fileName.append(dateFormat.format(timeEvent.getDate()));        
+			
 			File logFile = new File(fileName.toString() + ".flog");
 			PrintWriter w = null;
 			try {

@@ -15,15 +15,21 @@ import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.ui.PlatformUI;
 
 import com.surelogic.common.ILifecycle;
+import com.surelogic.common.eclipse.ViewUtility;
 import com.surelogic.common.eclipse.jobs.EclipseJob;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.flashlight.client.eclipse.Data;
 import com.surelogic.flashlight.client.eclipse.dialogs.DeleteRunDialog;
 import com.surelogic.flashlight.client.eclipse.dialogs.LogDialog;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
+import com.surelogic.flashlight.client.eclipse.views.adhoc.QueryMenuView;
 import com.surelogic.flashlight.common.entities.PrepRunDescription;
 import com.surelogic.flashlight.common.files.RawFileHandles;
-import com.surelogic.flashlight.common.jobs.*;
+import com.surelogic.flashlight.common.jobs.ConvertBinaryToXMLJob;
+import com.surelogic.flashlight.common.jobs.DeleteRawFilesSLJob;
+import com.surelogic.flashlight.common.jobs.PrepSLJob;
+import com.surelogic.flashlight.common.jobs.RefreshRunManagerSLJob;
+import com.surelogic.flashlight.common.jobs.UnPrepSLJob;
 import com.surelogic.flashlight.common.model.IRunManagerObserver;
 import com.surelogic.flashlight.common.model.RunDescription;
 import com.surelogic.flashlight.common.model.RunManager;
@@ -49,6 +55,31 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 				setToolbarState();
 			}
 		});
+		f_table.addListener(SWT.MouseDoubleClick, new Listener() {
+			public void handleEvent(Event event) {
+				final RunDescription description = getTableSelectionData();
+				if (description != null) {
+					/*
+					 * Is it already prepared?
+					 */
+					PrepRunDescription prep = description
+							.getPrepRunDescription();
+					final boolean hasPrep = prep != null;
+					if (hasPrep) {
+						/*
+						 * Change the focus to the query menu view.
+						 */
+						ViewUtility.showView(QueryMenuView.class.getName());
+					} else {
+						/*
+						 * Prepare this run.
+						 */
+						f_prep.run();
+					}
+				}
+			}
+		});
+
 		RunManager.getInstance().addObserver(this);
 		packColumns();
 		setToolbarState();
@@ -149,7 +180,7 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 	public Action getShowLogAction() {
 		return f_showLog;
 	}
-	
+
 	private final Action f_convertToXML = new Action() {
 		@Override
 		public void run() {
@@ -158,7 +189,8 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 				final RawFileHandles handles = description.getRawFileHandles();
 				if (handles != null) {
 					final File dataFile = handles.getDataFile();
-					EclipseJob.getInstance().schedule(new ConvertBinaryToXMLJob(dataFile));
+					EclipseJob.getInstance().schedule(
+							new ConvertBinaryToXMLJob(dataFile));
 				}
 			}
 		}
@@ -225,7 +257,8 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 			if (prep != null) {
 				runVariableValue = Integer.toString(prep.getRun());
 			}
-			binaryActionsEnabled = rawActionsEnabled && o.getRawFileHandles().isDataFileBinary();
+			binaryActionsEnabled = rawActionsEnabled
+					&& o.getRawFileHandles().isDataFileBinary();
 		}
 		AdHocDataSource.getManager().setGlobalVariableValue(RUN_VARIABLE,
 				runVariableValue);

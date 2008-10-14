@@ -28,11 +28,17 @@ public class PreppedAttributes extends HashMap<IAttributeType,Object> {
 	
 	public long getLong(IAttributeType key) {
 		Object o = this.get(key);
+		if (o == null) {
+			return Long.MIN_VALUE;
+		}
 		return (o instanceof Long) ? (Long) o : Long.parseLong(o.toString()); 
 	}
 	
 	public int getInt(IAttributeType key) {
 		Object o = this.get(key);
+		if (o == null) {
+			return Integer.MIN_VALUE;
+		}
 		return (o instanceof Integer) ? (Integer) o : Integer.parseInt(o.toString()); 		
 	}
 	

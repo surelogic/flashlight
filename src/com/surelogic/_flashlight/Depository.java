@@ -174,6 +174,18 @@ final class Depository extends Thread {
 
 	int outputClassDefs(String name, long id, EventVisitor strategy) {
 		ClassInfo info = classDefs.remove(name);
+		if (info == null) {
+			/*
+			if (name.startsWith("java")) {
+				return 0;
+			}
+			if ("com.surelogic._flashlight.ObservedField$FieldInfo".equals(name)) {
+				return 0;
+			}
+			throw new IllegalArgumentException();
+			*/
+			return 0;
+		}
 		int events = outputFieldDefs(id, strategy, info);
 		for(SiteInfo site : info.sites) {
 			site.accept(id, strategy, info);

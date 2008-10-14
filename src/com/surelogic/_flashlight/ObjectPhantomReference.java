@@ -27,7 +27,7 @@ public class ObjectPhantomReference extends IdPhantomReference {
 		new ConcurrentReferenceHashMap<Object,ObjectPhantomReference>(ReferenceType.WEAK, ReferenceType.STRONG, hasher);
 
 	private static final RefFactory<Object,ObjectPhantomReference> f_factory = 
-		new RefFactory<Object,ObjectPhantomReference>() {
+		new AbstractRefFactory<Object,ObjectPhantomReference>() {
 			public ObjectPhantomReference newReference(Object o, ReferenceQueue q, long id) {
 				return new ObjectPhantomReference(o, q, id);
 			}		

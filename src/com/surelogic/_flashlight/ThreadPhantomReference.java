@@ -27,7 +27,7 @@ public final class ThreadPhantomReference extends ObjectPhantomReference {
 		new ConcurrentReferenceHashMap<Thread,ThreadPhantomReference>(ReferenceType.WEAK, ReferenceType.STRONG, hasher);
 
 	private static final RefFactory<Thread,ThreadPhantomReference> f_factory = 
-		new RefFactory<Thread,ThreadPhantomReference>() {
+		new AbstractRefFactory<Thread,ThreadPhantomReference>() {
 			public ThreadPhantomReference newReference(Thread o, ReferenceQueue q, long id) {
 				return new ThreadPhantomReference(o, q, id);
 			}		

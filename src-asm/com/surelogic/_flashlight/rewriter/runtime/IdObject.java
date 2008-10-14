@@ -57,6 +57,7 @@ public class IdObject implements IIdObject {
 		return state.get().getNextId();
 	}
 
+	// Preallocating the id is needed for identity$HashCode
 	private final ObjectPhantomReference phantom = Store.getObjectPhantom(this, IdObject.getNewId());
 	
 	public final int identity$HashCode() {

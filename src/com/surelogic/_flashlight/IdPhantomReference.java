@@ -122,6 +122,48 @@ abstract class IdPhantomReference extends PhantomReference {
 
 	interface RefFactory<K,V extends IdPhantomReference> {		
 		V newReference(K o, ReferenceQueue q, long id);
+		V removeSpecialId(final K o);
+		void recordSpecialId(final K o, final V pr);
+	}
+	
+	static class RefNode<K,V extends IdPhantomReference> {
+		final K obj;
+		final V phantom;		
+		RefNode<K,V> next;
+		
+		RefNode(K o, V pr, RefNode<K,V> next) {
+			obj = o;
+			phantom = pr;
+			this.next = next;
+		}
+	}
+	
+	static abstract class AbstractRefFactory<K,V extends IdPhantomReference> 
+	implements RefFactory<K,V> {
+		RefNode<K,V> root;
+		
+		public synchronized final V removeSpecialId(final K o) {
+			RefNode<K,V> last = null;
+			RefNode<K,V> here = root;
+			while (here != null) {
+				if (here.obj == o) {
+					// Remove entry
+					if (last == null) {
+						root = here.next;
+					} else {
+						last.next = here.next;
+					}
+					return here.phantom;
+				}
+				last = here;
+				here = here.next;
+			}			
+			return null;
+		}
+		public synchronized final void recordSpecialId(final K o, final V pr) {
+			RefNode<K,V> n = new RefNode<K,V>(o, pr, root);
+			root = n;
+		}
 	}
 	
 	static <K,V extends IdPhantomReference> V getInstance(final K o, final ReferenceQueue q,
@@ -131,6 +173,11 @@ abstract class IdPhantomReference extends PhantomReference {
 		boolean phantomExisted;
         V pr;		
 		if (id != Phantom.NO_PREASSIGNED_ID) {
+			pr = factory.removeSpecialId(o);
+			if (pr != null) {
+				// Already allocated
+				return pr;
+			}
 			// Must be new
 			phantomExisted = false;
 			pr = factory.newReference(o, q, id);
@@ -145,6 +192,14 @@ abstract class IdPhantomReference extends PhantomReference {
 					System.err.println(idLookups+" IdObject lookups of "+total);
 				}
                 */
+				if (pr != null) {
+					return pr;
+				}
+				// If it gets here, it's because a superclass called an overridden method
+				// and the code below will allocate a phantom reference
+				pr = factory.newReference(o, q, id);
+				factory.recordSpecialId(o, pr);
+				notifyOnCreation(o, pr, q);
 				return pr;
 			} else {
 				pr = map.get(o);
@@ -181,10 +236,15 @@ abstract class IdPhantomReference extends PhantomReference {
 		 * who knows what they will do and we wouldn't want to deadlock.
 		 */
 		if (!phantomExisted) {
-			final ClassPhantomReference type = o instanceof Class ? null : ClassPhantomReference.getInstance(o.getClass(), q);
-			pr.notifyObservers(type);
+			notifyOnCreation(o, pr, q);
 		}
 		return pr;
+	}
+
+	private static <K, V extends IdPhantomReference> 
+	void notifyOnCreation(final K o, V pr, final ReferenceQueue q) {
+		final ClassPhantomReference type = o instanceof Class ? null : ClassPhantomReference.getInstance(o.getClass(), q);
+		pr.notifyObservers(type);
 	}
 	
 	/**

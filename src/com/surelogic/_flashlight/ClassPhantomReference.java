@@ -29,7 +29,7 @@ public final class ClassPhantomReference extends IdPhantomReference {
 				                                                    ConcurrentReferenceHashMap.IDENTITY_COMP);
 
 	private static final RefFactory<Class,ClassPhantomReference> f_factory = 
-		new RefFactory<Class,ClassPhantomReference>() {
+		new AbstractRefFactory<Class,ClassPhantomReference>() {
 			public ClassPhantomReference newReference(Class o, ReferenceQueue q, long id) {
 				return new ClassPhantomReference(o, q);
 			}		
@@ -50,6 +50,12 @@ public final class ClassPhantomReference extends IdPhantomReference {
 	private ClassPhantomReference(final Class referent, final ReferenceQueue q) {
 		super(referent, q);
 		f_className = referent.getName();
+		/*
+		if (f_className.startsWith("com.surelogic._flashlight") && 
+			!"com.surelogic._flashlight.ObservedField$FieldInfo".equals(f_className)) {
+			System.err.println("FL code!!");
+		}
+		*/
 		//System.err.println(Thread.currentThread()+" "+getId()+" "+f_className);
 	}
 

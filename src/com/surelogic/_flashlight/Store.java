@@ -1429,9 +1429,31 @@ public final class Store {
 		if (f_spy != null)
 			f_spy.requestShutdown();
 
-		final long problemCount = f_problemCount.get();
-		final String duration = " (duration of collection was "
-				+ (System.nanoTime() - f_start_nano) + " nanoseconds)";
+		final long nsPerSecond  = 1000000000L;	
+		final long nsPerMinute  = 60000000000L;
+		final long nsPerHour    = 3600000000000L;
+		final long totalTime    = System.nanoTime() - f_start_nano;
+		long timeLeft = totalTime;
+		final long totalHours   = timeLeft / nsPerHour;
+		timeLeft -= (totalHours * nsPerHour);
+		
+		final long totalMins    = timeLeft / nsPerMinute;
+		timeLeft -= (totalMins * nsPerMinute);
+		
+		final float totalSecs   = timeLeft / (float) nsPerSecond;
+	
+		final StringBuilder sb  = new StringBuilder(" (duration of collection was ");
+		sb.append(totalHours).append(':');
+		if (totalMins < 10) {
+			sb.append('0');
+		}
+		sb.append(totalMins).append(':');
+		if (totalSecs < 10) {
+			sb.append('0');
+		}
+		sb.append(totalSecs).append(')');
+		final String duration   = sb.toString();
+		final long problemCount = f_problemCount.get();	
 		if (problemCount < 1)
 			log("collection shutdown" + duration);
 		else

@@ -166,6 +166,8 @@ abstract class IdPhantomReference extends PhantomReference {
 		}
 	}
 	
+	
+	
 	static <K,V extends IdPhantomReference> V getInstance(final K o, final ReferenceQueue q,
 			                                       final long id, 
 			                                       final ConcurrentMap<K,V> map,
@@ -173,14 +175,18 @@ abstract class IdPhantomReference extends PhantomReference {
 		boolean phantomExisted;
         V pr;		
 		if (id != Phantom.NO_PREASSIGNED_ID) {
+			//total++;
 			pr = factory.removeSpecialId(o);
 			if (pr != null) {
 				// Already allocated
+				//specialIds++;
+				//System.err.println(specialIds+" special Ids out of "+total);				
 				return pr;
 			}
 			// Must be new
 			phantomExisted = false;
 			pr = factory.newReference(o, q, id);
+
 		} else {
 			//total++;
 			if (useIdObject && o instanceof IIdObject) {

@@ -214,6 +214,7 @@ public class OutputStrategyBinary extends EventVisitor {
 				writeCompressedLong(r.getId());
 				writeCompressedLong(defn.getType().getId());
 				writeUTF(r.getName());
+				//System.out.println("Thread "+r.getId()+" of type "+defn.getType().getId());
 			} catch (IOException e) {
 				handleIOException(e);
 			}

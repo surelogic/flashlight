@@ -1401,17 +1401,19 @@ public final class Store {
 		 */
 		if (FL_OFF.getAndSet(true))
 			return;
-		Thread.yield();
 
 		/*
 		 * Finish up data output.
 		 */
+		if (!IdConstants.useRefinery) {
+			f_refinery.requestShutdown();
+		}
+		Thread.yield();
+		
 		putInQueue(f_rawQueue, flushLocalQueues());
 		putInQueue(f_rawQueue, singletonList(FinalEvent.FINAL_EVENT));
 		if (IdConstants.useRefinery) {
-			join(f_refinery);
-		} else {
-			f_refinery.requestShutdown();
+			join(f_refinery);		
 		}
 		join(f_depository);
 

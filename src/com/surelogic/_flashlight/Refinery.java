@@ -128,7 +128,6 @@ final class Refinery extends AbstractRefinery {
 			}
 		}
 		List<Event> last = new ArrayList<Event>();		
-		last.add(new Time());
 		last.add(FinalEvent.FINAL_EVENT);
 		Store.putInQueue(f_outQueue, last);
 		Store.log("refinery completed (" + f_garbageCollectedObjectCount

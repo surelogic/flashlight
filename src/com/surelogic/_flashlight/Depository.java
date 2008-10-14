@@ -106,9 +106,11 @@ final class Depository extends Thread {
 					if (e == null) {
 						continue;
 					}
-					if (e == FinalEvent.FINAL_EVENT)
+					if (e == FinalEvent.FINAL_EVENT) {
 						f_finished = true;
-					
+						//System.err.println("Outputting final time");
+						new Time().accept(f_outputStrategy);
+					}
 					e.accept(f_outputStrategy);
 					
 					if (e instanceof ObjectDefinition) {

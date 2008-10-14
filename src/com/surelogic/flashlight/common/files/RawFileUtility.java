@@ -2,8 +2,11 @@ package com.surelogic.flashlight.common.files;
 
 import java.io.*;
 import java.sql.Timestamp;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
@@ -276,17 +279,36 @@ public final class RawFileUtility {
 			return false;
 		}
 	};
+	
+	private static final FileFilter f_directoryFilter = new FileFilter() {
+	  public boolean accept(final File pathname) {
+	    return pathname.isDirectory();
+	  }
+	};
 
 	/**
+	 * Find the raw data files.  These are going to located in directories nested
+	 * in the flashlight data directory.  That is, each run produced by the
+	 * "Run as Flashlight" option in Eclipse is going to create a top-level
+	 * directory within the Flashlight data directory that contains all information
+	 * needed for that run.
+	 *  
 	 * @return the set of Flashlight raw data files (compressed or uncompressed)
 	 *         found in the Flashlight directory.
 	 */
 	private static File[] getRawDataFiles() {
-		final File directory = new File(FileUtility
-				.getFlashlightDataDirectory());
-		final File[] dataFiles = directory
-				.listFiles(f_flashlightRawDataFileFilter);
-		return dataFiles;
+		final File directory = new File(FileUtility.getFlashlightDataDirectory());
+		
+		final List<File> rawDataFiles = new LinkedList<File>(); 
+		
+		// Get the top-level per-run directories
+		final File[] runDirs = directory.listFiles(f_directoryFilter);
+		for (final File runDir : runDirs) {
+	    final File[] dataFiles = runDir.listFiles(f_flashlightRawDataFileFilter);
+	    rawDataFiles.addAll(Arrays.asList(dataFiles));
+		}
+		final File[] value = new File[rawDataFiles.size()];
+		return rawDataFiles.toArray(value);
 	}
 
 	/*

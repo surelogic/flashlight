@@ -64,8 +64,8 @@ abstract class IdPhantomReference extends PhantomReference {
 	}
 	
 	protected IdPhantomReference(final Object referent, final ReferenceQueue q, long id) {
-		super(referent, q);
-		f_id = id;
+		super(referent, q);		
+		f_id = id == Phantom.NO_PREASSIGNED_ID ? IdObject.getNewId() : id;		
 	}
 
 	/**

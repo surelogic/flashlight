@@ -1,7 +1,7 @@
 package com.surelogic._flashlight.common;
 
 import java.io.*;
-import java.util.Map;
+import java.util.*;
 
 import static com.surelogic._flashlight.common.AttributeType.*;
 import static com.surelogic._flashlight.common.FlagType.*;
@@ -218,7 +218,7 @@ public enum EventType {
 	Static_CallLocation("static-call-location") {
 	    @Override
 	    void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
-			attrs.put(SITE_ID, readCompressedLong(in));
+			attrs.put(ID, readCompressedLong(in));
 			attrs.put(IN_CLASS, readCompressedLong(in));
 			attrs.put(LINE, readCompressedInt(in));
 			attrs.put(FILE, in.readUTF());
@@ -283,6 +283,12 @@ public enum EventType {
 	;
 	public static final int NumEvents = values().length;
 	private static final byte[] buf = new byte[9];
+	private static final Map<String,EventType> byLabel = new HashMap<String,EventType>();
+	static {
+		for(EventType e : values()) {
+			byLabel.put(e.label, e);
+		}
+	}
 	private final String label;
 	
 	private EventType(String l) {
@@ -372,9 +378,11 @@ public enum EventType {
 				contents += ((buf[3] & 0xff) << 24);
 			}
 		}
+		/*
 		if (contents < 0) {
 			System.out.println("Negative");
 		}
+		*/
 		return contents;
 	}
 	
@@ -428,5 +436,13 @@ public enum EventType {
 	
 	IAttributeType getPersistentAttribute() {
 		return null;
+	}
+	
+	public static EventType findByLabel(String label) {
+		EventType e = byLabel.get(label);
+		if (e == null) {
+			throw new IllegalArgumentException("No constant: "+label);
+		}
+		return e;
 	}	
 }

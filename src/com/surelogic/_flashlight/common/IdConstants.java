@@ -10,6 +10,8 @@ public final class IdConstants {
 	public static final boolean filterEvents = true;
 	public static final boolean factorOutThreadTrace = false;
 	public static final boolean writeOutput = true;
-	public static final long ILLEGAL_FIELD_ID = Long.MIN_VALUE;
-	public static final long ILLEGAL_RECEIVER_ID = Long.MIN_VALUE;
+	public static final long ILLEGAL_ID = Long.MIN_VALUE;
+	public static final long ILLEGAL_FIELD_ID = ILLEGAL_ID;
+	public static final long ILLEGAL_RECEIVER_ID = ILLEGAL_ID;
+	public static final long ILLEGAL_SITE_ID = ILLEGAL_ID;
 }

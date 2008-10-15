@@ -231,6 +231,10 @@ public class LongMap<T> { //extends AbstractMap<Long,T> {
 		};
 	}
 
+	public int size() {
+		return size;
+	}
+	
 	private int index(long key) {
 		// FIX to use all bits?
 		int hash = (int) (key + (key >>> powerOf2)); 
@@ -282,6 +286,30 @@ public class LongMap<T> { //extends AbstractMap<Long,T> {
 				return e.getValue();
 			}
 			e = e.next();
+		}
+		return null;
+	}
+	
+	public T remove(long key) {
+		final int index = index(key);
+		Entry<T> last = null;
+		Entry<T> e = table[index];
+		while (e != null) {
+			if (e.key() == key) {		
+				// Found, so removing ...
+				Entry<T> next = e.next();
+				if (last == null) {
+					table[index] = next;
+				} else {
+					// This should work, because last is currently
+					// pointing at e rignt now
+					last.setNext(next);
+				}
+				size--;
+				return e.getValue();
+			}
+			e = e.next();
+			last = e;
 		}
 		return null;
 	}

@@ -101,8 +101,6 @@ public final class RunView extends ViewPart {
 		actionBars.getMenuManager().add(showLogAction);
 
 		final Action convertToXmlAction = f_mediator.getConvertToXMLAction();
-		convertToXmlAction.setImageDescriptor(SLImages
-				.getImageDescriptor(CommonImages.IMG_FL_PREP_DATA));
 		convertToXmlAction.setText(I18N
 				.msg("flashlight.run.view.text.convertToXml"));
 		convertToXmlAction.setToolTipText(I18N

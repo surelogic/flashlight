@@ -205,14 +205,20 @@ public final class Store {
 	
 	public static final class State {
 		boolean inside = false;
-		final ThreadPhantomReference thread = Phantom.ofThread(Thread.currentThread());
+		final ThreadPhantomReference thread;
 		public final TraceNode.Header traceHeader = TraceNode.makeHeader();
 		final List<Event> eventQueue;
 		final BlockingQueue<List<Event>> rawQueue;
 		
-		State(BlockingQueue<List<Event>> q, List<Event> l) {
+		State(BlockingQueue<List<Event>> q, List<Event> l, boolean flashlightThread) {
 			rawQueue = q;
 			eventQueue = l;
+			if (flashlightThread) {
+				inside = true;
+				thread = null;
+			} else {
+				thread = Phantom.ofThread(Thread.currentThread());
+			}
 		}
 		
 		TraceNode getCurrentTrace() {
@@ -240,9 +246,17 @@ public final class Store {
 	 * store immediately return.
 	 */
 	final static State flashlightThread() {
-		State s = tl_withinStore.get();
-		s.inside = true;
+		State s = createState(true);
+		tl_withinStore.set(s);
 		return s; 
+	}
+	
+	private static State createState(boolean flashlightThread) {
+		final List<Event> l = new ArrayList<Event>(LOCAL_QUEUE_MAX);
+		synchronized (localQueueList) {
+			localQueueList.add(l);
+		}
+		return new State(f_rawQueue, l, flashlightThread);
 	}
 
 	/*
@@ -358,11 +372,7 @@ public final class Store {
 			tl_withinStore = new ThreadLocal<State>() {
 				@Override
 				protected State initialValue() {
-					final List<Event> l = new ArrayList<Event>(LOCAL_QUEUE_MAX);
-					synchronized (localQueueList) {
-						localQueueList.add(l);
-					}
-					return new State(f_rawQueue, l);
+					return createState(false);
 				}
 			};
 			IdPhantomReference

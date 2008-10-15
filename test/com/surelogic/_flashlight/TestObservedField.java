@@ -19,7 +19,7 @@ public class TestObservedField extends TestCase {
 	private static final BlockingQueue<List<Event>> Q = 
 		new ArrayBlockingQueue<List<Event>>(4);
 
-	private static final Store.State state = new Store.State(Q, new ArrayList<Event>());
+	private static final Store.State state = new Store.State(Q, new ArrayList<Event>(), false);
 	
 	private final static int THREADS = 30;
 

@@ -190,6 +190,7 @@ final class Depository extends Thread {
 		}
 		int events = outputFieldDefs(id, strategy, info);
 		for(SiteInfo site : info.sites) {
+			//System.err.println("Site "+site.id+" at line "+site.line);
 			site.accept(id, strategy, info);
 			events++;			
 		}

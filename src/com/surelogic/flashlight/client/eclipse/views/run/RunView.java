@@ -68,40 +68,51 @@ public final class RunView extends ViewPart {
 		final Action refreshAction = f_mediator.getRefreshAction();
 		refreshAction.setImageDescriptor(SLImages
 				.getImageDescriptor(CommonImages.IMG_REFRESH));
+		refreshAction.setText(I18N.msg("flashlight.run.view.text.refresh"));
 		refreshAction.setToolTipText(I18N
 				.msg("flashlight.run.view.tooltip.refresh"));
 		getViewSite().getActionBars().getToolBarManager().add(refreshAction);
+		getViewSite().getActionBars().getMenuManager().add(refreshAction);
 
 		final Action prepAction = f_mediator.getPrepAction();
 		prepAction.setImageDescriptor(SLImages
 				.getImageDescriptor(CommonImages.IMG_FL_PREP_DATA));
+		prepAction.setText(I18N.msg("flashlight.run.view.text.prep"));
 		prepAction.setToolTipText(I18N.msg("flashlight.run.view.tooltip.prep"));
 		prepAction.setEnabled(false);
 		getViewSite().getActionBars().getToolBarManager().add(prepAction);
+		getViewSite().getActionBars().getMenuManager().add(prepAction);
 
 		final Action showLogAction = f_mediator.getShowLogAction();
 		showLogAction.setImageDescriptor(SLImages
 				.getImageDescriptor(CommonImages.IMG_FILE));
+		showLogAction.setText(I18N.msg("flashlight.run.view.text.log"));
 		showLogAction.setToolTipText(I18N
 				.msg("flashlight.run.view.tooltip.log"));
 		showLogAction.setEnabled(false);
 		getViewSite().getActionBars().getToolBarManager().add(showLogAction);
+		getViewSite().getActionBars().getMenuManager().add(showLogAction);
 
-		final Action convertAction = f_mediator.getConvertToXMLAction();
-		convertAction.setImageDescriptor(SLImages
+		final Action convertToXmlAction = f_mediator.getConvertToXMLAction();
+		convertToXmlAction.setImageDescriptor(SLImages
 				.getImageDescriptor(CommonImages.IMG_FL_PREP_DATA));
-		convertAction.setToolTipText("Convert Binary to XML");
-		convertAction.setEnabled(false);
-		getViewSite().getActionBars().getToolBarManager().add(convertAction);
-		
+		convertToXmlAction.setText(I18N
+				.msg("flashlight.run.view.text.convertToXml"));
+		convertToXmlAction.setToolTipText(I18N
+				.msg("flashlight.run.view.tooltip.convertToXml"));
+		convertToXmlAction.setEnabled(false);
+		getViewSite().getActionBars().getMenuManager().add(convertToXmlAction);
+
 		final Action deleteRunAction = f_mediator.getDeleteRun();
 		deleteRunAction.setImageDescriptor(PlatformUI.getWorkbench()
 				.getSharedImages().getImageDescriptor(
 						ISharedImages.IMG_TOOL_DELETE));
+		deleteRunAction.setText(I18N.msg("flashlight.run.view.text.delete"));
 		deleteRunAction.setToolTipText(I18N
 				.msg("flashlight.run.view.tooltip.delete"));
 		deleteRunAction.setEnabled(false);
 		getViewSite().getActionBars().getToolBarManager().add(deleteRunAction);
+		getViewSite().getActionBars().getMenuManager().add(deleteRunAction);
 
 		f_mediator.init();
 	}

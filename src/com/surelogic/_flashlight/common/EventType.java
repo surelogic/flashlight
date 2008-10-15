@@ -282,6 +282,7 @@ public enum EventType {
 	}
 	;
 	public static final int NumEvents = values().length;
+	public static final byte MINUS_ONE = Byte.MIN_VALUE; 
 	private static final byte[] buf = new byte[9];
 	private static final Map<String,EventType> byLabel = new HashMap<String,EventType>();
 	static {
@@ -359,6 +360,9 @@ public enum EventType {
 	static int readCompressedInt(ObjectInputStream in) throws IOException {
 		byte moreBytes = in.readByte();
 		int contents;
+		if (moreBytes == MINUS_ONE) {
+			return -1;
+		}
 		if (moreBytes < 0) {
 			moreBytes = (byte) -moreBytes;
 			contents  = 0xffffffff << (moreBytes << 3);
@@ -400,6 +404,9 @@ public enum EventType {
 	static long readCompressedLong(ObjectInputStream in) throws IOException {
 		byte moreBytes = in.readByte();
 		long contents;
+		if (moreBytes == MINUS_ONE) {
+			return -1L;
+		}
 		if (moreBytes < 0) {
 			moreBytes = (byte) -moreBytes;
 			contents  = 0xffffffffffffffffL << (moreBytes << 3);

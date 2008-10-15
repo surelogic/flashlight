@@ -25,7 +25,7 @@ import com.surelogic._flashlight.rewriter.Configuration;
 import com.surelogic._flashlight.rewriter.EngineMessenger;
 import com.surelogic._flashlight.rewriter.PrintWriterMessenger;
 import com.surelogic._flashlight.rewriter.RewriteManager;
-import com.surelogic.common.eclipse.jdt.SourceZip;
+import com.surelogic.common.eclipse.SourceZip;
 import com.surelogic.common.eclipse.logging.SLEclipseStatusUtility;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.client.eclipse.Activator;

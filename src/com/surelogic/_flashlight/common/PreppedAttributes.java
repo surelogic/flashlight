@@ -23,6 +23,9 @@ public class PreppedAttributes extends HashMap<IAttributeType,Object> {
 	
 	public String getString(IAttributeType key) {
 		Object o = this.get(key);
+		if (o == null) {
+			return null;
+		}
 		return o.toString(); 
 	}
 	

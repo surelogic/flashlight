@@ -262,7 +262,7 @@ public class OutputStrategyBinary extends EventVisitor {
 		try {		
 			writeLong_unsafe(Static_CallLocation.getByte(), e.getSiteId(), true);
 			writeCompressedLong(e.getWithinClassId());
-			writeCompressedInt(e.getLine());
+			writeCompressedMaybeNegativeInt(e.getLine());
 			writeUTF(e.getFileName());
 			writeUTF(e.getLocationName());
 		} catch (IOException ioe) {
@@ -499,10 +499,26 @@ public class OutputStrategyBinary extends EventVisitor {
 		e.printStackTrace();
 	}
 	
+	private int writeCompressedMaybeNegativeInt(int i) throws IOException {
+		if (i == -1) {
+			if (debug) System.out.println("\tInt: "+i);			
+			if (IdConstants.writeOutput) {
+				buf[0] = EventType.MINUS_ONE;
+				if (debug) {
+					System.out.println("buf[0] = "+buf[0]);
+				}
+				f_out.write(buf, 0, 1);
+			}
+			return 1;
+		}
+		// FIX handle other cases (not needed yet)
+		return writeCompressedInt(i);
+	}
+	
 	private int writeCompressedInt(int i) throws IOException {
 		if (debug) System.out.println("\tInt: "+i);
 		final int len;
-		buf[1] = (byte) i;
+		buf[1] = (byte) (i & 0xff);
 		if (i == (i & 0xffff)) {
 			if (i == (i & 0xff)) {								
 				len = (i == 0) ? 1 : 2;
@@ -513,6 +529,7 @@ public class OutputStrategyBinary extends EventVisitor {
 			}
 		} else {
 			// Need at least bottom 3 bytes
+			buf[2] = (byte) (i >>> 8);
 			buf[3] = (byte) (i >>> 16);
 
 			if (i == (i & 0xffffff)) {
@@ -526,7 +543,7 @@ public class OutputStrategyBinary extends EventVisitor {
 		}				
 		buf[0] = (byte) (len-1);
 		if (debug) {
-			for(int j=0; j<=4; j++) {
+			for(int j=0; j<len; j++) {
 				System.out.println("buf["+j+"] = "+buf[j]);
 			}
 		}		
@@ -547,6 +564,13 @@ public class OutputStrategyBinary extends EventVisitor {
 	private int writeCompressedMaybeNegativeLong(long l) throws IOException {
 		if (l >= 0) {
 			return writeCompressedLong(l);
+		}
+		if (l == -1L) {
+			if (IdConstants.writeOutput) {
+				buf[0] = EventType.MINUS_ONE;
+				f_out.write(buf, 0, 1);
+			}
+			return 1;
 		}
 		final int len;
 		long mask = ~0xffffffffL;

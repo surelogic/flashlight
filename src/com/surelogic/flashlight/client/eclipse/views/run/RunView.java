@@ -1,11 +1,16 @@
 package com.surelogic.flashlight.client.eclipse.views.run;
 
 import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.IMenuListener;
+import org.eclipse.jface.action.IMenuManager;
+import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.TableViewerColumn;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
@@ -65,14 +70,16 @@ public final class RunView extends ViewPart {
 
 		f_mediator = new RunViewMediator(tableViewer);
 
+		final IActionBars actionBars = getViewSite().getActionBars();
+
 		final Action refreshAction = f_mediator.getRefreshAction();
 		refreshAction.setImageDescriptor(SLImages
 				.getImageDescriptor(CommonImages.IMG_REFRESH));
 		refreshAction.setText(I18N.msg("flashlight.run.view.text.refresh"));
 		refreshAction.setToolTipText(I18N
 				.msg("flashlight.run.view.tooltip.refresh"));
-		getViewSite().getActionBars().getToolBarManager().add(refreshAction);
-		getViewSite().getActionBars().getMenuManager().add(refreshAction);
+		actionBars.getToolBarManager().add(refreshAction);
+		actionBars.getMenuManager().add(refreshAction);
 
 		final Action prepAction = f_mediator.getPrepAction();
 		prepAction.setImageDescriptor(SLImages
@@ -80,8 +87,8 @@ public final class RunView extends ViewPart {
 		prepAction.setText(I18N.msg("flashlight.run.view.text.prep"));
 		prepAction.setToolTipText(I18N.msg("flashlight.run.view.tooltip.prep"));
 		prepAction.setEnabled(false);
-		getViewSite().getActionBars().getToolBarManager().add(prepAction);
-		getViewSite().getActionBars().getMenuManager().add(prepAction);
+		actionBars.getToolBarManager().add(prepAction);
+		actionBars.getMenuManager().add(prepAction);
 
 		final Action showLogAction = f_mediator.getShowLogAction();
 		showLogAction.setImageDescriptor(SLImages
@@ -90,8 +97,8 @@ public final class RunView extends ViewPart {
 		showLogAction.setToolTipText(I18N
 				.msg("flashlight.run.view.tooltip.log"));
 		showLogAction.setEnabled(false);
-		getViewSite().getActionBars().getToolBarManager().add(showLogAction);
-		getViewSite().getActionBars().getMenuManager().add(showLogAction);
+		actionBars.getToolBarManager().add(showLogAction);
+		actionBars.getMenuManager().add(showLogAction);
 
 		final Action convertToXmlAction = f_mediator.getConvertToXMLAction();
 		convertToXmlAction.setImageDescriptor(SLImages
@@ -101,7 +108,7 @@ public final class RunView extends ViewPart {
 		convertToXmlAction.setToolTipText(I18N
 				.msg("flashlight.run.view.tooltip.convertToXml"));
 		convertToXmlAction.setEnabled(false);
-		getViewSite().getActionBars().getMenuManager().add(convertToXmlAction);
+		actionBars.getMenuManager().add(convertToXmlAction);
 
 		final Action deleteRunAction = f_mediator.getDeleteRun();
 		deleteRunAction.setImageDescriptor(PlatformUI.getWorkbench()
@@ -111,8 +118,25 @@ public final class RunView extends ViewPart {
 		deleteRunAction.setToolTipText(I18N
 				.msg("flashlight.run.view.tooltip.delete"));
 		deleteRunAction.setEnabled(false);
-		getViewSite().getActionBars().getToolBarManager().add(deleteRunAction);
-		getViewSite().getActionBars().getMenuManager().add(deleteRunAction);
+		actionBars.getToolBarManager().add(deleteRunAction);
+		actionBars.getMenuManager().add(deleteRunAction);
+
+		/**
+		 * Add a context menu to the table viewer.
+		 */
+		final MenuManager menuMgr = new MenuManager("#PopupMenu");
+		menuMgr.setRemoveAllWhenShown(true);
+		menuMgr.addMenuListener(new IMenuListener() {
+			public void menuAboutToShow(IMenuManager manager) {
+				manager.add(prepAction);
+				manager.add(showLogAction);
+				manager.add(convertToXmlAction);
+				manager.add(deleteRunAction);
+			}
+		});
+		final Menu menu = menuMgr.createContextMenu(tableViewer.getControl());
+		tableViewer.getControl().setMenu(menu);
+		getSite().registerContextMenu(menuMgr, tableViewer);
 
 		f_mediator.init();
 	}

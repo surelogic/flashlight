@@ -84,7 +84,8 @@ public class BinaryAttributes extends PreppedAttributes implements Attributes {
 	}
 
 	public String getValue(String name) {
-		return getValue(getIndex(name)); 
+		Object o = get(PreppedAttributes.mapAttr(name)); 
+		return o == null ? null : o.toString(); 
 	}
 
 	public String getValue(String uri, String localName) {

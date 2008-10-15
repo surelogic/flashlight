@@ -14,4 +14,5 @@ public final class IdConstants {
 	public static final long ILLEGAL_FIELD_ID = ILLEGAL_ID;
 	public static final long ILLEGAL_RECEIVER_ID = ILLEGAL_ID;
 	public static final long ILLEGAL_SITE_ID = ILLEGAL_ID;
+	public static final int ILLEGAL_LINE = Integer.MIN_VALUE;
 }

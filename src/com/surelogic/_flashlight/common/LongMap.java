@@ -166,7 +166,7 @@ public class LongMap<T> { //extends AbstractMap<Long,T> {
 	
 	private static final int BAD_INDEX = Integer.MIN_VALUE;
 	
-	private Iterator<Map.Entry<Long, T>> iterator() {
+	protected Iterator<Map.Entry<Long, T>> iterator() {
 		return new Iterator<Map.Entry<Long, T>>() {			
 			int index = -1;
 			Entry<T> current = null;
@@ -336,18 +336,22 @@ public class LongMap<T> { //extends AbstractMap<Long,T> {
 		return false;
 	}
 
-	private void reinsertChain(final Entry<T> e) {
-		if (e == null) {
-			return;
-		}
-		final int newIndex         = index(e.key());
-		final Entry<T> newRoot = table[newIndex];
-		if (newRoot != null && !(e instanceof ChainedLongEntry)) {
-			// Need to switch to a ChainedLongEntry
-			table[newIndex] = newChainedEntry(e.key(), e.getValue(), newRoot);			
-		} else {		
-			e.setNext(newRoot);		
-			table[newIndex] = e;
+	private void reinsertChain(Entry<T> e) {
+		while (e != null) {
+			// Remember the next entry for processing after this one
+			final Entry<T> next    = e.next();
+			
+			// Process this entry
+			final int newIndex     = index(e.key());
+			final Entry<T> newRoot = table[newIndex];
+			if (newRoot != null && !(e instanceof ChainedLongEntry)) {
+				// Need to switch to a ChainedLongEntry
+				table[newIndex] = newChainedEntry(e.key(), e.getValue(), newRoot);			
+			} else {		
+				e.setNext(newRoot);		
+				table[newIndex] = e;
+			}
+			e = next;
 		}
 	}
 	
@@ -368,5 +372,21 @@ public class LongMap<T> { //extends AbstractMap<Long,T> {
 			}
 		}
 		System.out.println("OK.");
+	}
+	
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder("{ ");
+		for(Entry<T> e : table) {
+			while (e != null) {
+				sb.append(Long.toString(e.key()));
+				sb.append("->");
+				sb.append(e.value);
+				sb.append(", ");
+				e = e.next();
+			}
+		}
+		sb.append("}");
+		return sb.toString();
 	}
 }

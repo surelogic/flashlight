@@ -57,7 +57,7 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 		});
 		f_table.addListener(SWT.MouseDoubleClick, new Listener() {
 			public void handleEvent(Event event) {
-				final RunDescription description = getTableSelectionData();
+				final RunDescription description = getSelectedRunDescription();
 				if (description != null) {
 					/*
 					 * Is it already prepared?
@@ -74,7 +74,7 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 						/*
 						 * Prepare this run.
 						 */
-						f_prep.run();
+						f_prepAction.run();
 					}
 				}
 			}
@@ -103,11 +103,11 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 		return null;
 	}
 
-	private RunDescription getTableSelectionData() {
+	private RunDescription getSelectedRunDescription() {
 		return getData(getTableSelection());
 	}
 
-	private final Action f_refresh = new Action() {
+	private final Action f_refreshAction = new Action() {
 		@Override
 		public void run() {
 			EclipseJob.getInstance().scheduleDb(
@@ -116,7 +116,7 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 	};
 
 	public Action getRefreshAction() {
-		return f_refresh;
+		return f_refreshAction;
 	}
 
 	void refresh() {
@@ -125,10 +125,10 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 		setToolbarState();
 	}
 
-	private final Action f_prep = new Action() {
+	private final Action f_prepAction = new Action() {
 		@Override
 		public void run() {
-			final RunDescription description = getTableSelectionData();
+			final RunDescription description = getSelectedRunDescription();
 			if (description != null) {
 				/*
 				 * Is it already prepared?
@@ -156,13 +156,13 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 	};
 
 	public Action getPrepAction() {
-		return f_prep;
+		return f_prepAction;
 	}
 
-	private final Action f_showLog = new Action() {
+	private final Action f_showLogAction = new Action() {
 		@Override
 		public void run() {
-			final RunDescription description = getTableSelectionData();
+			final RunDescription description = getSelectedRunDescription();
 			if (description != null) {
 				final RawFileHandles handles = description.getRawFileHandles();
 				if (handles != null) {
@@ -178,13 +178,13 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 	};
 
 	public Action getShowLogAction() {
-		return f_showLog;
+		return f_showLogAction;
 	}
 
-	private final Action f_convertToXML = new Action() {
+	private final Action f_convertToXmlAction = new Action() {
 		@Override
 		public void run() {
-			final RunDescription description = getTableSelectionData();
+			final RunDescription description = getSelectedRunDescription();
 			if (description != null) {
 				final RawFileHandles handles = description.getRawFileHandles();
 				if (handles != null) {
@@ -196,14 +196,14 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 		}
 	};
 
-	public Action getConvertToXMLAction() {
-		return f_convertToXML;
+	public Action getConvertToXmlAction() {
+		return f_convertToXmlAction;
 	}
 
-	private final Action f_deleteRun = new Action() {
+	private final Action f_deleteAction = new Action() {
 		@Override
 		public void run() {
-			final RunDescription description = getTableSelectionData();
+			final RunDescription description = getSelectedRunDescription();
 			if (description != null) {
 				final RawFileHandles handles = description.getRawFileHandles();
 				PrepRunDescription prep = description.getPrepRunDescription();
@@ -231,8 +231,8 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 		}
 	};
 
-	public Action getDeleteRun() {
-		return f_deleteRun;
+	public Action getDeleteAction() {
+		return f_deleteAction;
 	}
 
 	/**
@@ -245,9 +245,9 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 	}
 
 	private final void setToolbarState() {
-		final RunDescription o = getTableSelectionData();
+		final RunDescription o = getSelectedRunDescription();
 		final boolean somethingIsSelected = o != null;
-		f_deleteRun.setEnabled(somethingIsSelected);
+		f_deleteAction.setEnabled(somethingIsSelected);
 		boolean rawActionsEnabled = somethingIsSelected;
 		boolean binaryActionsEnabled = false;
 		String runVariableValue = null;
@@ -262,9 +262,9 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 		}
 		AdHocDataSource.getManager().setGlobalVariableValue(RUN_VARIABLE,
 				runVariableValue);
-		f_prep.setEnabled(rawActionsEnabled);
-		f_showLog.setEnabled(rawActionsEnabled);
-		f_convertToXML.setEnabled(binaryActionsEnabled);
+		f_prepAction.setEnabled(rawActionsEnabled);
+		f_showLogAction.setEnabled(rawActionsEnabled);
+		f_convertToXmlAction.setEnabled(binaryActionsEnabled);
 	}
 
 	/**

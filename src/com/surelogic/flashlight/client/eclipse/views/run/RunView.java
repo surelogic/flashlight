@@ -11,8 +11,6 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.ui.IActionBars;
-import org.eclipse.ui.ISharedImages;
-import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 
 import com.surelogic.common.eclipse.ColumnViewerSorter;
@@ -100,7 +98,7 @@ public final class RunView extends ViewPart {
 		actionBars.getToolBarManager().add(showLogAction);
 		actionBars.getMenuManager().add(showLogAction);
 
-		final Action convertToXmlAction = f_mediator.getConvertToXMLAction();
+		final Action convertToXmlAction = f_mediator.getConvertToXmlAction();
 		convertToXmlAction.setText(I18N
 				.msg("flashlight.run.view.text.convertToXml"));
 		convertToXmlAction.setToolTipText(I18N
@@ -108,10 +106,9 @@ public final class RunView extends ViewPart {
 		convertToXmlAction.setEnabled(false);
 		actionBars.getMenuManager().add(convertToXmlAction);
 
-		final Action deleteRunAction = f_mediator.getDeleteRun();
-		deleteRunAction.setImageDescriptor(PlatformUI.getWorkbench()
-				.getSharedImages().getImageDescriptor(
-						ISharedImages.IMG_TOOL_DELETE));
+		final Action deleteRunAction = f_mediator.getDeleteAction();
+		deleteRunAction.setImageDescriptor(SLImages
+				.getImageDescriptor(CommonImages.IMG_RED_X));
 		deleteRunAction.setText(I18N.msg("flashlight.run.view.text.delete"));
 		deleteRunAction.setToolTipText(I18N
 				.msg("flashlight.run.view.tooltip.delete"));

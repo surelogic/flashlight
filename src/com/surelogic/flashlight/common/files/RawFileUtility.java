@@ -282,7 +282,8 @@ public final class RawFileUtility {
 	
 	private static final FilenameFilter f_directoryFilter = new FilenameFilter() {
     public boolean accept(final File dir, final String name) {
-      return (new File(dir, name).isDirectory()) && !name.equals(DB_DIRECTORY);
+      return (new File(dir, name).isDirectory()) &&
+              name.contains("-at-") && !name.equals(DB_DIRECTORY);
     }
 	};
 

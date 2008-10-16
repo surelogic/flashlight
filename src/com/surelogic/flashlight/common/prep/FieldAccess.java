@@ -1,14 +1,8 @@
 package com.surelogic.flashlight.common.prep;
 
-import static com.surelogic._flashlight.common.AttributeType.FIELD;
-import static com.surelogic._flashlight.common.AttributeType.IN_CLASS;
-import static com.surelogic._flashlight.common.AttributeType.LINE;
-import static com.surelogic._flashlight.common.AttributeType.RECEIVER;
-import static com.surelogic._flashlight.common.AttributeType.THREAD;
-import static com.surelogic._flashlight.common.AttributeType.TIME;
+import static com.surelogic._flashlight.common.AttributeType.*;
 import static com.surelogic._flashlight.common.FlagType.UNDER_CONSTRUCTION;
-import static com.surelogic._flashlight.common.IdConstants.ILLEGAL_FIELD_ID;
-import static com.surelogic._flashlight.common.IdConstants.ILLEGAL_RECEIVER_ID;
+import static com.surelogic._flashlight.common.IdConstants.*;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -17,8 +11,7 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.logging.Level;
 
-import org.xml.sax.Attributes;
-
+import com.surelogic._flashlight.common.PreppedAttributes;
 import com.surelogic.common.logging.SLLogger;
 
 public abstract class FieldAccess extends Event {
@@ -39,38 +32,17 @@ public abstract class FieldAccess extends Event {
 		this.before = before;
 	}
 
-	public void parse(final int runId, final Attributes attributes)
+	public void parse(final int runId, final PreppedAttributes attributes)
 			throws SQLException {
-		long nanoTime = -1;
-		long inThread = -1;
-		long inClass = -1;
-		int lineNumber = -1;
-		long field = ILLEGAL_FIELD_ID;
-		long receiver = ILLEGAL_RECEIVER_ID;
-		boolean underConstruction = false;
-		if (attributes != null) {
-			for (int i = 0; i < attributes.getLength(); i++) {
-				final String aName = attributes.getQName(i);
-				final String aValue = attributes.getValue(i);
-				if (TIME.matches(aName)) {
-					nanoTime = Long.parseLong(aValue);
-				} else if (THREAD.matches(aName)) {
-					inThread = Long.parseLong(aValue);
-				} else if (IN_CLASS.matches(aName)) {
-					inClass = Long.parseLong(aValue);
-				} else if (LINE.matches(aName)) {
-					lineNumber = Integer.parseInt(aValue);
-				} else if (FIELD.matches(aName)) {
-					field = Long.parseLong(aValue);
-				} else if (RECEIVER.matches(aName)) {
-					receiver = Long.parseLong(aValue);
-				} else if (UNDER_CONSTRUCTION.matches(aName)) {
-					underConstruction = "yes".equals(aValue);
-				}
-			}
-		}
-		if ((nanoTime == -1) || (inThread == -1) || (inClass == -1)
-				|| (lineNumber == -1) || (field == ILLEGAL_FIELD_ID)) {
+		long nanoTime = attributes.getLong(TIME);
+		long inThread = attributes.getLong(THREAD);
+		long inClass = attributes.getLong(IN_CLASS);
+		int lineNumber = attributes.getInt(LINE);
+		long field = attributes.getLong(FIELD);
+		long receiver = attributes.getLong(RECEIVER);
+		boolean underConstruction = attributes.getBoolean(UNDER_CONSTRUCTION);
+		if ((nanoTime == ILLEGAL_ID) || (inThread == ILLEGAL_ID) || (inClass == ILLEGAL_ID)
+				|| (lineNumber == ILLEGAL_LINE) || (field == ILLEGAL_FIELD_ID)) {
 			SLLogger.getLogger().log(
 					Level.SEVERE,
 					"Missing nano-time, thread, file, line or field in "

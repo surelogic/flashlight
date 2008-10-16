@@ -2,7 +2,7 @@ package com.surelogic.flashlight.common.prep;
 
 import java.sql.SQLException;
 
-import org.xml.sax.Attributes;
+import com.surelogic._flashlight.common.PreppedAttributes;
 
 import static com.surelogic._flashlight.common.AttributeType.*;
 
@@ -11,17 +11,16 @@ public abstract class Trace extends Event {
 		super(i);
 	}
 
-	public void parse(final int runId, final Attributes attributes)
+	public void parse(final int runId, final PreppedAttributes attributes)
 			throws SQLException {
-		parseAttrs(attributes);
-		final long time = Long.parseLong(getAttr(TIME));
-		final long inThread = Long.parseLong(getAttr(THREAD));
-		final long inClass = Long.parseLong(getAttr(IN_CLASS));
-		final int lineNumber = Integer.parseInt(getAttr(LINE));
-		final String file = (this instanceof BeforeTrace) ? getAttr(FILE) : null;
-		handleTrace(runId, inThread, inClass, time, file, lineNumber);
+		final long time = attributes.getLong(TIME);
+		final long inThread = attributes.getLong(THREAD);
+		final long inClass = attributes.getLong(IN_CLASS);
+		final int lineNumber = attributes.getInt(LINE);
+		final String file = (this instanceof BeforeTrace) ? attributes.getString(FILE) : null;
+		handleTrace(runId, attributes, inThread, inClass, time, file, lineNumber);
 	}
 
-	protected abstract void handleTrace(int runId, long inThread, long inClass,
+	protected abstract void handleTrace(int runId, PreppedAttributes attributes, long inThread, long inClass,
 			long time, String file, int lineNumber) throws SQLException;
 }

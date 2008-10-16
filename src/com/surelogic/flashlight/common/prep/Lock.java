@@ -1,22 +1,15 @@
 package com.surelogic.flashlight.common.prep;
 
-import static com.surelogic._flashlight.common.AttributeType.IN_CLASS;
-import static com.surelogic._flashlight.common.AttributeType.LINE;
-import static com.surelogic._flashlight.common.AttributeType.LOCK;
-import static com.surelogic._flashlight.common.AttributeType.THREAD;
-import static com.surelogic._flashlight.common.AttributeType.TIME;
-import static com.surelogic._flashlight.common.FlagType.CLASS_LOCK;
-import static com.surelogic._flashlight.common.FlagType.GOT_LOCK;
-import static com.surelogic._flashlight.common.FlagType.RELEASED_LOCK;
-import static com.surelogic._flashlight.common.FlagType.THIS_LOCK;
+import static com.surelogic._flashlight.common.AttributeType.*;
+import static com.surelogic._flashlight.common.FlagType.*;
+import static com.surelogic._flashlight.common.IdConstants.*;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.logging.Level;
 
-import org.xml.sax.Attributes;
-
+import com.surelogic._flashlight.common.PreppedAttributes;
 import com.surelogic.common.logging.SLLogger;
 
 public abstract class Lock extends Event {
@@ -30,47 +23,25 @@ public abstract class Lock extends Event {
 		this.before = before;
 	}
 
-	public void parse(final int runId, final Attributes attributes)
+	public void parse(final int runId, final PreppedAttributes attributes)
 			throws SQLException {
-		long nanoTime = -1;
-		long inThread = -1;
-		long inClass = -1;
-		int lineNumber = -1;
-		long lock = -1;
-		Boolean lockIsThis = false;
-		Boolean lockIsClass = false;
+		long nanoTime = attributes.getLong(TIME);
+		long inThread = attributes.getLong(THREAD);
+		long inClass = attributes.getLong(IN_CLASS);
+		int lineNumber = attributes.getInt(LINE);
+		long lock = attributes.getLong(LOCK);
+		Boolean lockIsThis = attributes.getBoolean(THIS_LOCK);
+		Boolean lockIsClass = attributes.getBoolean(CLASS_LOCK);
 		if (getType() == LockType.UTIL) {
 			lockIsThis = null;
 			lockIsClass = null;
 		}
 		Boolean success = null;
-		if (attributes != null) {
-			for (int i = 0; i < attributes.getLength(); i++) {
-				final String aName = attributes.getQName(i);
-				final String aValue = attributes.getValue(i);
-				if (TIME.matches(aName)) {
-					nanoTime = Long.parseLong(aValue);
-				} else if (THREAD.matches(aName)) {
-					inThread = Long.parseLong(aValue);
-				} else if (IN_CLASS.matches(aName)) {
-					inClass = Long.parseLong(aValue);
-				} else if (LINE.matches(aName)) {
-					lineNumber = Integer.parseInt(aValue);
-				} else if (LOCK.matches(aName)) {
-					lock = Long.parseLong(aValue);
-				} else if (THIS_LOCK.matches(aName)) {
-					lockIsThis = true;
-				} else if (CLASS_LOCK.matches(aName)) {
-					lockIsClass = true;
-				} else if (RELEASED_LOCK.matches(aName)) {
-					success = "yes".equals(aValue);
-				} else if (GOT_LOCK.matches(aName)) {
-					success = "yes".equals(aValue);
-				}
-			}
+		if (attributes.getBoolean(GOT_LOCK) || attributes.getBoolean(RELEASED_LOCK)) {
+			success = true;
 		}
-		if ((nanoTime == -1) || (inThread == -1) || (inClass == -1)
-				|| (lineNumber == -1) || (lock == -1)) {
+		if ((nanoTime == ILLEGAL_ID) || (inThread == ILLEGAL_ID) || (inClass == ILLEGAL_ID)
+				|| (lineNumber == ILLEGAL_LINE) || (lock == ILLEGAL_ID)) {
 			SLLogger.getLogger().log(
 					Level.SEVERE,
 					"Missing nano-time, thread, file, line or lock in "

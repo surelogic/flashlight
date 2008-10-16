@@ -4,6 +4,7 @@ import static com.surelogic._flashlight.common.AttributeType.CLASS_NAME;
 import static com.surelogic._flashlight.common.AttributeType.ID;
 import static com.surelogic._flashlight.common.AttributeType.THREAD_NAME;
 import static com.surelogic._flashlight.common.AttributeType.TYPE;
+import static com.surelogic._flashlight.common.IdConstants.*;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -12,8 +13,7 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.logging.Level;
 
-import org.xml.sax.Attributes;
-
+import com.surelogic._flashlight.common.PreppedAttributes;
 import com.surelogic.common.logging.SLLogger;
 
 public abstract class ReferenceDefinition extends TrackUnreferenced {
@@ -23,33 +23,18 @@ public abstract class ReferenceDefinition extends TrackUnreferenced {
 	private PreparedStatement f_ps;
 	private ScanRawFilePreScan preScan;
 
-	public final void parse(final int runId, final Attributes attributes)
+	public final void parse(final int runId, final PreppedAttributes attributes)
 			throws SQLException {
-		long id = -1;
-		long type = -1;
-		String threadName = null;
-		String className = null;
-		if (attributes != null) {
-			for (int i = 0; i < attributes.getLength(); i++) {
-				final String aName = attributes.getQName(i);
-				final String aValue = attributes.getValue(i);
-				if (ID.matches(aName)) {
-					id = Long.parseLong(aValue);
-				} else if (TYPE.matches(aName)) {
-					type = Long.parseLong(aValue);
-				} else if (THREAD_NAME.matches(aName)) {
-					threadName = aValue;
-				} else if (CLASS_NAME.matches(aName)) {
-					className = aValue;
-				}
-			}
-		}
-		if (id == -1) {
+		long id = attributes.getLong(ID);
+		long type = attributes.getLong(TYPE);
+		String threadName = attributes.getString(THREAD_NAME);
+		String className = attributes.getString(CLASS_NAME);
+		if (id == ILLEGAL_ID) {
 			SLLogger.getLogger().log(Level.SEVERE,
 					"Missing id in " + getXMLElementName());
 			return;
 		}
-		if (type == -1) {
+		if (type == ILLEGAL_ID) {
 			type = id;
 		}
 		String packageName = null;
@@ -68,7 +53,7 @@ public abstract class ReferenceDefinition extends TrackUnreferenced {
 	private void insert(final int runId, final long id, final long type,
 			final String threadName, final String packageName,
 			final String className) throws SQLException {
-		if (!preScan.isUnusedObject(id)) {
+		if (preScan.couldBeReferencedObject(id)) {
 			f_ps.setInt(1, runId);
 			f_ps.setLong(2, id);
 			f_ps.setLong(3, type);

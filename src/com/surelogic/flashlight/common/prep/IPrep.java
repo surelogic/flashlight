@@ -5,8 +5,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.logging.Level;
 
-import org.xml.sax.Attributes;
-
+import com.surelogic._flashlight.common.PreppedAttributes;
 import com.surelogic.flashlight.common.jobs.PrepSLJob;
 
 /**
@@ -57,7 +56,7 @@ public interface IPrep {
 	 * @throws SQLException
 	 *             if something goes wrong, this will cause the prep to fail.
 	 */
-	void parse(final int runId, final Attributes attributes)
+	void parse(final int runId, final PreppedAttributes attributes)
 			throws SQLException;
 
 	/**

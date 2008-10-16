@@ -1,12 +1,8 @@
 package com.surelogic.flashlight.common.prep;
 
-import static com.surelogic._flashlight.common.AttributeType.FIELD;
-import static com.surelogic._flashlight.common.AttributeType.ID;
-import static com.surelogic._flashlight.common.AttributeType.TYPE;
-import static com.surelogic._flashlight.common.FlagType.IS_FINAL;
-import static com.surelogic._flashlight.common.FlagType.IS_STATIC;
-import static com.surelogic._flashlight.common.FlagType.IS_VOLATILE;
-import static com.surelogic._flashlight.common.IdConstants.ILLEGAL_FIELD_ID;
+import static com.surelogic._flashlight.common.AttributeType.*;
+import static com.surelogic._flashlight.common.FlagType.*;
+import static com.surelogic._flashlight.common.IdConstants.*;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -15,8 +11,7 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.logging.Level;
 
-import org.xml.sax.Attributes;
-
+import com.surelogic._flashlight.common.PreppedAttributes;
 import com.surelogic.common.logging.SLLogger;
 
 public final class FieldDefinition extends TrackUnreferenced {
@@ -30,34 +25,15 @@ public final class FieldDefinition extends TrackUnreferenced {
 		return "field-definition";
 	}
 
-	public void parse(final int runId, final Attributes attributes)
+	public void parse(final int runId, final PreppedAttributes attributes)
 			throws SQLException {
-		long id = ILLEGAL_FIELD_ID;
-		long type = -1;
-		String field = null;
-		boolean isStatic = false;
-		boolean isFinal = false;
-		boolean isVolatile = false;
-		if (attributes != null) {
-			for (int i = 0; i < attributes.getLength(); i++) {
-				final String aName = attributes.getQName(i);
-				final String aValue = attributes.getValue(i);
-				if (ID.matches(aName)) {
-					id = Long.parseLong(aValue);
-				} else if (TYPE.matches(aName)) {
-					type = Long.parseLong(aValue);
-				} else if (FIELD.matches(aName)) {
-					field = aValue;
-				} else if (IS_STATIC.matches(aName)) {
-					isStatic = true;
-				} else if (IS_FINAL.matches(aName)) {
-					isFinal = true;
-				} else if (IS_VOLATILE.matches(aName)) {
-					isVolatile = true;
-				}
-			}
-		}
-		if ((id == ILLEGAL_FIELD_ID) || (type == -1) || (field == null)) {
+		long id = attributes.getLong(ID);
+		long type = attributes.getLong(TYPE);
+		String field = attributes.getString(FIELD);
+		boolean isStatic = attributes.getBoolean(IS_STATIC);
+		boolean isFinal = attributes.getBoolean(IS_FINAL);
+		boolean isVolatile = attributes.getBoolean(IS_VOLATILE);
+		if ((id == ILLEGAL_FIELD_ID) || (type == ILLEGAL_ID) || (field == null)) {
 			SLLogger.getLogger().log(Level.SEVERE,
 					"Missing id, type, or field in field-definition");
 			return;

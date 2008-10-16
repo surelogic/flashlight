@@ -48,7 +48,7 @@ public final class ConvertBinaryToXMLJob extends AbstractSLJob {
 					.getInputStreamFor(f_dataFile);
 			try {
 				final String newName = rawFilePrefix.getName()
-						+ RawFileUtility.COMPRESSED_SUFFIX;
+						+ ".fl.txt.gz";
 				final File convertedFile = new File(f_dataFile.getParentFile(),
 						newName);
 				final ConvertBinaryFileScan convertFile = new ConvertBinaryFileScan(

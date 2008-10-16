@@ -2,6 +2,8 @@ package com.surelogic.flashlight.common.prep;
 
 import java.sql.SQLException;
 
+import com.surelogic._flashlight.common.PreppedAttributes;
+
 public final class AfterTrace extends Trace {
 	private final BeforeTrace before;
 
@@ -16,7 +18,7 @@ public final class AfterTrace extends Trace {
 	}
 
 	@Override
-	protected void handleTrace(final int runId, final long inThread,
+	protected void handleTrace(final int runId, PreppedAttributes attributes, final long inThread,
 			final long inClass, final long time, final String file,
 			final int lineNumber) throws SQLException {
 		before.popTrace(runId, inThread, inClass, time, lineNumber);

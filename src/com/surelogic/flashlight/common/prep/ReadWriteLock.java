@@ -3,6 +3,7 @@ package com.surelogic.flashlight.common.prep;
 import static com.surelogic._flashlight.common.AttributeType.ID;
 import static com.surelogic._flashlight.common.AttributeType.READ_LOCK_ID;
 import static com.surelogic._flashlight.common.AttributeType.WRITE_LOCK_ID;
+import static com.surelogic._flashlight.common.IdConstants.*;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -10,8 +11,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.logging.Level;
 
-import org.xml.sax.Attributes;
-
+import com.surelogic._flashlight.common.PreppedAttributes;
 import com.surelogic.common.logging.SLLogger;
 
 public class ReadWriteLock extends Event {
@@ -39,25 +39,12 @@ public class ReadWriteLock extends Event {
 		return "read-write-lock-definition";
 	}
 
-	public void parse(final int runId, final Attributes attributes)
+	public void parse(final int runId, final PreppedAttributes attributes)
 			throws SQLException {
-		long id = -1;
-		long readLock = -1;
-		long writeLock = -1;
-		if (attributes != null) {
-			for (int i = 0; i < attributes.getLength(); i++) {
-				final String aName = attributes.getQName(i);
-				final String aValue = attributes.getValue(i);
-				if (ID.matches(aName)) {
-					id = Long.parseLong(aValue);
-				} else if (READ_LOCK_ID.matches(aName)) {
-					readLock = Long.parseLong(aValue);
-				} else if (WRITE_LOCK_ID.matches(aName)) {
-					writeLock = Long.parseLong(aValue);
-				}
-			}
-		}
-		if ((id == -1) || (readLock == -1) || (writeLock == -1)) {
+		long id = attributes.getLong(ID);
+		long readLock = attributes.getLong(READ_LOCK_ID);
+		long writeLock = attributes.getLong(WRITE_LOCK_ID);
+		if ((id == ILLEGAL_ID) || (readLock == ILLEGAL_ID) || (writeLock == ILLEGAL_ID)) {
 			SLLogger
 					.getLogger()
 					.log(Level.SEVERE,

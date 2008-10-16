@@ -1,11 +1,6 @@
 package com.surelogic.flashlight.common.prep;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Level;
 
 import org.xml.sax.Attributes;
@@ -13,6 +8,7 @@ import org.xml.sax.SAXException;
 
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.logging.SLLogger;
+import com.surelogic._flashlight.common.*;
 
 public final class ScanRawFilePreScan extends AbstractDataScan {
 
@@ -46,38 +42,39 @@ public final class ScanRawFilePreScan extends AbstractDataScan {
 		return f_endTime;
 	}
 
-	private final Set<Long> f_unreferencedObjects = new HashSet<Long>();
-
+	private final LongSet f_referencedObjects = new LongSet();
+	
 	private void newObject(final long id) {
-		f_unreferencedObjects.add(id);
+		//f_unreferencedObjects.add(id);
+		// What is there to do?
 	}
 
 	private void useObject(final long id) {
-		f_unreferencedObjects.remove(id);
+		f_referencedObjects.add(id);
 	}
 
 	/**
-	 * Returns whether or not this object is referenced.
+	 * Returns whether or not this object might be referenced.
 	 * 
 	 * @param id
 	 * @return
 	 */
-	public boolean isUnusedObject(final long id) {
-		return f_unreferencedObjects.contains(id);
+	public boolean couldBeReferencedObject(final long id) {
+		return f_referencedObjects.contains(id);
 	}
 
 	/*
 	 * Collection of non-static fields accessed by multiple threads and the
 	 * objects that contain them, keyed by field
 	 */
-	private final Map<Long, Set<Long>> f_usedFields = new HashMap<Long, Set<Long>>();
+	private final LongMap<ILongSet> f_usedFields = new LongMap<ILongSet>();
 	/*
 	 * Collection of static fields accessed by multiple threads
 	 */
-	private final Set<Long> f_usedStatics = new HashSet<Long>();
+	private final ILongSet f_usedStatics = new LongSet();
 
-	private final Map<Long, Long> f_currentStatics = new HashMap<Long, Long>();
-	private final Map<Long, Map<Long, Long>> f_currentFields = new HashMap<Long, Map<Long, Long>>();
+	private final LongMap<Long> f_currentStatics = new LongMap<Long>();
+	private final LongMap<LongMap<Long>> f_currentFields = new LongMap<LongMap<Long>>();
 
 	/*
 	 * Static field accesses
@@ -98,21 +95,21 @@ public final class ScanRawFilePreScan extends AbstractDataScan {
 	 */
 	private void useField(final long field, final long thread,
 			final long receiver) {
-		final Map<Long, Long> objectFields = f_currentFields.get(receiver);
+		final LongMap<Long> objectFields = f_currentFields.get(receiver);
 		if (objectFields != null) {
 			final Long _thread = objectFields.get(field);
 			if (_thread == null) {
 				objectFields.put(field, thread);
 			} else if (_thread != thread) {
-				Set<Long> receivers = f_usedFields.get(field);
+				ILongSet receivers = f_usedFields.get(field);
 				if (receivers == null) {
-					receivers = new HashSet<Long>();
+					receivers = new LongSet();
 					f_usedFields.put(field, receivers);
 				}
 				receivers.add(receiver);
 			}
 		} else {
-			final Map<Long, Long> map = new HashMap<Long, Long>();
+			final LongMap<Long> map = new LongMap<Long>();
 			map.put(field, thread);
 			f_currentFields.put(receiver, map);
 		}
@@ -144,56 +141,47 @@ public final class ScanRawFilePreScan extends AbstractDataScan {
 		if (f_monitor.isCanceled()) {
 			throw new SAXException("canceled");
 		}
-
+		EventType e             = EventType.findByLabel(name);
+		PreppedAttributes attrs = preprocessAttributes(e, attributes);
 		if ("time".equals(name)) {
 			if (f_firstTimeEventFound) {
-				if (attributes != null) {
-					for (int i = 0; i < attributes.getLength(); i++) {
-						final String aName = attributes.getQName(i);
-						if ("nano-time".equals(aName)) {
-							final long time = Long.parseLong(attributes
-									.getValue(i));
-							f_endTime = time;
-						}
-					}
-				}
+				f_endTime = attrs.getLong(AttributeType.TIME);
 			} else {
 				f_firstTimeEventFound = true;
 			}
 		} else if ("after-trace".equals(name)) {
 			// We used the class
-			useObject(Long.parseLong(attributes.getValue("in-class")));
+			useObject(attrs.getLong(AttributeType.IN_CLASS));
 		} else if ("field-read".equals(name) || "field-write".equals(name)) {
-			final long field = Long.parseLong(attributes.getValue("field"));
-			final long thread = Long.parseLong(attributes.getValue("thread"));
-			final String rStr = attributes.getValue("receiver");
-			if (rStr != null) {
-				final long receiver = Long.parseLong(rStr);
+			final long field  = attrs.getLong(AttributeType.FIELD);
+			final long thread = attrs.getLong(AttributeType.THREAD);
+			final long receiver = attrs.getLong(AttributeType.RECEIVER);
+			if (receiver != IdConstants.ILLEGAL_RECEIVER_ID) {
 				useObject(receiver);
 				useField(field, thread, receiver);
 			} else {
 				useField(field, thread);
 			}
-			useObject(Long.parseLong(attributes.getValue("in-class")));
+			useObject(attrs.getLong(AttributeType.IN_CLASS));
 			useObject(thread);
 		} else if (locks.contains(name)) {
-			useObject(Long.parseLong(attributes.getValue("thread")));
-			useObject(Long.parseLong(attributes.getValue("in-class")));
-			useObject(Long.parseLong(attributes.getValue("lock")));
+			useObject(attrs.getLong(AttributeType.THREAD));
+			useObject(attrs.getLong(AttributeType.IN_CLASS));
+			useObject(attrs.getLong(AttributeType.LOCK));
 		} else if ("read-write-lock-definition".equals(name)) {
-			useObject(Long.parseLong(attributes.getValue("id")));
-			useObject(Long.parseLong(attributes.getValue("read-lock-id")));
-			useObject(Long.parseLong(attributes.getValue("write-lock-id")));
+			useObject(attrs.getLong(AttributeType.ID));
+			useObject(attrs.getLong(AttributeType.READ_LOCK_ID));
+			useObject(attrs.getLong(AttributeType.WRITE_LOCK_ID));
 		} else if ("field-definition".equals(name)) {
-			useObject(Long.parseLong(attributes.getValue("type")));
+			useObject(attrs.getLong(AttributeType.TYPE));
 		} else if ("class-definition".equals(name)) {
-			newObject(Long.parseLong(attributes.getValue("id")));
+			newObject(attrs.getLong(AttributeType.ID));
 		} else if ("thread-definition".equals(name)
 				|| "object-definition".equals(name)) {
-			newObject(Long.parseLong(attributes.getValue("id")));
-			useObject(Long.parseLong(attributes.getValue("type")));
+			newObject(attrs.getLong(AttributeType.ID));
+			useObject(attrs.getLong(AttributeType.TYPE));
 		} else if ("garbage-collected-object".equals(name)) {
-			garbageCollect(Long.parseLong(attributes.getValue("id")));
+			garbageCollect(attrs.getLong(AttributeType.ID));
 		}
 	}
 
@@ -206,9 +194,9 @@ public final class ScanRawFilePreScan extends AbstractDataScan {
 
 	@Override
 	public String toString() {
-		return "Threaded Fields: " + f_usedFields.keySet().size()
+		return "Threaded Fields: " + f_usedFields.size()
 				+ "\nThreaded Statics: " + f_usedStatics.size()
-				+ "\nUnreferenced Objects: " + f_unreferencedObjects.size();
+				+ "\nReferenced Objects: " + f_referencedObjects.size();
 	}
 
 	/**
@@ -230,7 +218,7 @@ public final class ScanRawFilePreScan extends AbstractDataScan {
 	 * @return
 	 */
 	public boolean isThreadedField(final long field, final long receiver) {
-		final Set<Long> receivers = f_usedFields.get(field);
+		final ILongSet receivers = f_usedFields.get(field);
 		if (receivers != null) {
 			return receivers.contains(receiver);
 		}

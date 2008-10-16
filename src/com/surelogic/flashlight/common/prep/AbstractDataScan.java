@@ -21,15 +21,21 @@ public class AbstractDataScan extends DefaultHandler {
 	}
 
 	static class SiteInfo {
+		final String location;
+		final String file;
 		final long withinClassId;
 		final int line;
 
-		SiteInfo(final long inClass, final int line) {
+		SiteInfo(String location, String file, final long inClass, final int line) {
+			this.location = location;
+			this.file = file;
 			withinClassId = inClass;
 			this.line = line;
 		}
 
 		public void populateAttributes(final PreppedAttributes attrs) {
+			attrs.put(AttributeType.LOCATION, location);
+			attrs.put(AttributeType.FILE, file);
 			attrs.put(AttributeType.IN_CLASS, withinClassId);
 			attrs.put(AttributeType.LINE, line);
 		}
@@ -40,9 +46,10 @@ public class AbstractDataScan extends DefaultHandler {
 	}
 
 	private void createSiteInfo(final PreppedAttributes attrs) {
-		final SiteInfo info = new SiteInfo(attrs
-				.getLong(AttributeType.IN_CLASS), attrs
-				.getInt(AttributeType.LINE));
+		final SiteInfo info = new SiteInfo(attrs.getString(AttributeType.LOCATION), 
+				                           attrs.getString(AttributeType.FILE), 
+				                           attrs.getLong(AttributeType.IN_CLASS), 
+				                           attrs.getInt(AttributeType.LINE));
 		final long site = attrs.getLong(AttributeType.ID);
 		if (site != IdConstants.ILLEGAL_SITE_ID) {
 			sites.put(site, info);
@@ -74,6 +81,8 @@ public class AbstractDataScan extends DefaultHandler {
 					final SiteInfo info = lookupSite(site);
 					if (info != null) {
 						info.populateAttributes(attrs);
+					} else {
+						System.err.println("Couldn't find site: "+site);
 					}
 				}
 			}

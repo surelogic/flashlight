@@ -70,7 +70,9 @@ public class AbstractDataScan extends DefaultHandler {
 				long site = attrs.getLong(AttributeType.SITE_ID);
 			    if (site != IdConstants.ILLEGAL_SITE_ID) {
 			    	SiteInfo info = lookupSite(site);
-			    	info.populateAttributes(attrs);
+			    	if (info == null) {
+			    		info.populateAttributes(attrs);
+			    	}
 			    }
 			}
 		}

@@ -1,5 +1,7 @@
 package com.surelogic.flashlight.client.eclipse.preferences;
 
+import com.surelogic.common.eclipse.Activator;
+
 /**
  * Constant definitions for plug-in preferences
  */
@@ -16,4 +18,28 @@ public class PreferenceConstants {
 	public static final String P_CONSOLE_PORT = "com.surelogic.flashlight.console.port";
 
 	public static final String P_MAX_ROWS_PER_QUERY = "com.surelogic.flashlight.max.rows.per.query";
+
+	public static final String P_PROMPT_PERSPECTIVE_SWITCH = "com.surelogic.flashlight.perspective.switch.prompt";
+
+	public static boolean getPromptForPerspectiveSwitch() {
+		return Activator.getDefault().getPluginPreferences().getBoolean(
+				P_PROMPT_PERSPECTIVE_SWITCH);
+	}
+
+	public static void setPromptForPerspectiveSwitch(boolean value) {
+		Activator.getDefault().getPluginPreferences().setValue(
+				P_PROMPT_PERSPECTIVE_SWITCH, value);
+	}
+
+	public static final String P_AUTO_PERSPECTIVE_SWITCH = "com.surelogic.flashlight.perspective.switch.auto";
+
+	public static boolean getAutoPerspectiveSwitch() {
+		return Activator.getDefault().getPluginPreferences().getBoolean(
+				P_AUTO_PERSPECTIVE_SWITCH);
+	}
+
+	public static void setAutoPerspectiveSwitch(boolean value) {
+		Activator.getDefault().getPluginPreferences().setValue(
+				P_AUTO_PERSPECTIVE_SWITCH, value);
+	}
 }

@@ -19,5 +19,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		store.setDefault(PreferenceConstants.P_USE_SPY, true);
 		store.setDefault(PreferenceConstants.P_CONSOLE_PORT, 43524);
 		store.setDefault(PreferenceConstants.P_MAX_ROWS_PER_QUERY, 5000);
+		store.setDefault(PreferenceConstants.P_PROMPT_PERSPECTIVE_SWITCH, true);
+		store.setDefault(PreferenceConstants.P_AUTO_PERSPECTIVE_SWITCH, true);
 	}
 }

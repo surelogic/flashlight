@@ -11,7 +11,6 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.Collections;
 import java.util.Enumeration;
-import java.util.Properties;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.jar.Attributes;
@@ -671,46 +670,5 @@ public final class RewriteEngine {
     }
     mainAttrs.put(Attributes.Name.CLASS_PATH, newClasspath.toString());
     return newManifest;
-  }
-
-  
-  
-  // =======================================================================
-  // == Main
-  // =======================================================================
-  
-  public static void main(final String[] args) throws IOException {
-    final File userHome = new File(System.getProperty("user.home"));
-    final File propFile = new File(userHome, "flashlight-rewriter.properties");
-    final Properties properties = new Properties(loadPropertiesFromFile(propFile));
-    
-    final PrintWriter writer = new PrintWriter(System.out);
-    final RewriteEngine engine =
-      new RewriteEngine(new Configuration(properties), PrintWriterMessenger.console, writer, writer);
-    engine.scanDirectory(new File(args[0]));
-    engine.rewriteDirectoryToDirectory(new File(args[0]), new File(args[1]));
-    writer.close();
-    
-    System.out.println("done");
-  }
-  
-  private static Properties loadPropertiesFromFile(final File propFile) {
-    final Properties properties = new Properties(System.getProperties());
-    FileInputStream fis = null;
-    try {
-      fis = new FileInputStream(propFile);
-      properties.load(fis);
-      fis.close();
-    } catch (final IOException e) {
-      System.err.println("Problem reading properties file: " + e.getMessage());
-      if (fis != null) {
-      try {
-        fis.close();
-        } catch (final IOException e2) {
-          // eat it, what else can we do?
-        }
-      }
-    }
-    return properties;
   }
 }

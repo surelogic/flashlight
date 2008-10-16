@@ -11,6 +11,14 @@ import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
 
 public final class ConfirmPerspectiveSwitch {
 
+	/**
+	 * Checks if the Flashlight perspective should be opened.
+	 * 
+	 * @param shell
+	 *            a shell.
+	 * @return {@code true} if the Flashlight perspective should be opened,
+	 *         {@code false} otherwise.
+	 */
 	public static boolean toFlashlight(Shell shell) {
 		if (PreferenceConstants.getPromptForPerspectiveSwitch()) {
 			ConfirmPerspectiveSwitchDialog dialog = new ConfirmPerspectiveSwitchDialog(

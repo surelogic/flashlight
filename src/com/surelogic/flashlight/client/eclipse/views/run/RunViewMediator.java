@@ -7,6 +7,8 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.KeyAdapter;
+import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Table;
@@ -76,6 +78,16 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 						 */
 						f_prepAction.run();
 					}
+				}
+			}
+		});
+		f_table.addKeyListener(new KeyAdapter() {
+
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.character == SWT.DEL) {
+					if (f_deleteAction.isEnabled())
+						f_deleteAction.run();
 				}
 			}
 		});

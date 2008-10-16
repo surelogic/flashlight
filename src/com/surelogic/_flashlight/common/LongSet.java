@@ -3,9 +3,7 @@ package com.surelogic._flashlight.common;
 import java.util.Iterator;
 import java.util.Map;
 
-public class LongSet extends LongMap<Boolean> {
-	// FIX can this be a more space-efficient
-	// by not having any entries?
+public class LongSet extends LongMap<Boolean> implements ILongSet {
 	public void add(long e) {
 		this.put(e, Boolean.TRUE);
 	}

@@ -13,50 +13,52 @@ import com.surelogic.common.jobs.SLProgressMonitor;
 
 public class AbstractDataScan extends DefaultHandler {
 	protected final SLProgressMonitor f_monitor;
-	private LongMap<SiteInfo> sites = new LongMap<SiteInfo>();
-	
+	private final LongMap<SiteInfo> sites = new LongMap<SiteInfo>();
+
 	public AbstractDataScan(final SLProgressMonitor monitor) {
 		assert monitor != null;
 		f_monitor = monitor;
-	}	
-	
+	}
+
 	static class SiteInfo {
 		final long withinClassId;
 		final int line;
-		
-		SiteInfo(long inClass, int line) {
+
+		SiteInfo(final long inClass, final int line) {
 			withinClassId = inClass;
-			this.line     = line;
+			this.line = line;
 		}
-		
-		public void populateAttributes(PreppedAttributes attrs) {
+
+		public void populateAttributes(final PreppedAttributes attrs) {
 			attrs.put(AttributeType.IN_CLASS, withinClassId);
 			attrs.put(AttributeType.LINE, line);
-		}		
+		}
 	}
-	
-	private SiteInfo lookupSite(long site) {
+
+	private SiteInfo lookupSite(final long site) {
 		return sites.get(site);
 	}
-	
-	private void createSiteInfo(PreppedAttributes attrs) {
-		SiteInfo info = new SiteInfo(attrs.getLong(AttributeType.IN_CLASS),
-				                     attrs.getInt(AttributeType.LINE));
-		long site = attrs.getLong(AttributeType.ID);
+
+	private void createSiteInfo(final PreppedAttributes attrs) {
+		final SiteInfo info = new SiteInfo(attrs
+				.getLong(AttributeType.IN_CLASS), attrs
+				.getInt(AttributeType.LINE));
+		final long site = attrs.getLong(AttributeType.ID);
 		if (site != IdConstants.ILLEGAL_SITE_ID) {
 			sites.put(site, info);
 		} else {
-			throw new IllegalStateException("Got illegal site id for class "+info.withinClassId+
-					                        ", line "+info.line);
+			throw new IllegalStateException("Got illegal site id for class "
+					+ info.withinClassId + ", line " + info.line);
 		}
 	}
-	
-	protected PreppedAttributes preprocessAttributes(EventType e, Attributes a) {
-		//System.err.println("Got "+e.getLabel());
+
+	protected PreppedAttributes preprocessAttributes(final EventType e,
+			final Attributes a) {
+		// System.err.println("Got "+e.getLabel());
 		final PreppedAttributes attrs = new PreppedAttributes();
 		if (a != null) {
 			final int size = a.getLength();
-			for(int i=0; i<size; i++) {
+			for (int i = 0; i < size; i++) {
 				final String name = a.getQName(i);
 				final String value = a.getValue(i);
 				final IAttributeType key = PreppedAttributes.mapAttr(name);
@@ -67,13 +69,13 @@ public class AbstractDataScan extends DefaultHandler {
 				createSiteInfo(attrs);
 				break;
 			default:
-				long site = attrs.getLong(AttributeType.SITE_ID);
-			    if (site != IdConstants.ILLEGAL_SITE_ID) {
-			    	SiteInfo info = lookupSite(site);
-			    	if (info == null) {
-			    		info.populateAttributes(attrs);
-			    	}
-			    }
+				final long site = attrs.getLong(AttributeType.SITE_ID);
+				if (site != IdConstants.ILLEGAL_SITE_ID) {
+					final SiteInfo info = lookupSite(site);
+					if (info != null) {
+						info.populateAttributes(attrs);
+					}
+				}
 			}
 		}
 		return attrs;

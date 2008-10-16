@@ -133,6 +133,5 @@ public final class FlashlightLaunchConfigurationDelegate extends
     }
       
     return new FlashlightVMRunner(runner, runOutputDir, projectEntries, interestingProjects, mainTypeName, datePostfix);
-//		return runner;
 	}
 }

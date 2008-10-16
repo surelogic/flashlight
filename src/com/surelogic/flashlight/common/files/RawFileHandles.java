@@ -16,7 +16,7 @@ import com.surelogic.common.logging.SLLogger;
  */
 public final class RawFileHandles {
 
-	public RawFileHandles(final File data, final File log) {
+	RawFileHandles(final File data, final File log) {
 		if (data == null)
 			throw new IllegalArgumentException(I18N.err(44, "data"));
 		f_data = data;

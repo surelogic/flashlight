@@ -20,6 +20,7 @@ import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.jdt.launching.IVMRunner;
 import org.eclipse.jdt.launching.VMRunnerConfiguration;
+import org.eclipse.ui.progress.UIJob;
 
 import com.surelogic._flashlight.rewriter.Configuration;
 import com.surelogic._flashlight.rewriter.EngineMessenger;
@@ -29,6 +30,7 @@ import com.surelogic.common.eclipse.SourceZip;
 import com.surelogic.common.eclipse.logging.SLEclipseStatusUtility;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.client.eclipse.Activator;
+import com.surelogic.flashlight.client.eclipse.jobs.SwitchToFlashlightPerspectiveJob;
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
 
 final class FlashlightVMRunner implements IVMRunner {
@@ -95,6 +97,9 @@ final class FlashlightVMRunner implements IVMRunner {
     
     /* Done with our set up, call the real runner */
     delegateRunner.run(newConfig, launch, monitor);
+    
+    final UIJob job = new SwitchToFlashlightPerspectiveJob();
+    job.schedule();
   }
   
   private boolean createSourceZips(final SubMonitor progress) {

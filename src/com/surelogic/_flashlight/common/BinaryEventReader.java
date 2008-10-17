@@ -9,11 +9,16 @@ import org.xml.sax.helpers.DefaultHandler;
 
 public class BinaryEventReader extends SAXParser {	
 	static final boolean debug = false;
+	static boolean showRawData = false;
+	
+	public void showRawData(boolean b) {
+		showRawData = b;
+	}
 	
 	@Override
 	public void parse(InputStream in, DefaultHandler handler) throws SAXException, IOException {
 		final ObjectInputStream oin  = (ObjectInputStream) in;
-		final BinaryAttributes attrs = new BinaryAttributes();
+		final BinaryAttributes attrs = new BinaryAttributes(showRawData);
 		handler.startDocument();
 		
 		int type;

@@ -5,6 +5,7 @@ import java.io.InputStream;
 
 import javax.xml.parsers.SAXParser;
 
+import com.surelogic._flashlight.common.BinaryEventReader;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jobs.AbstractSLJob;
 import com.surelogic.common.jobs.SLProgressMonitor;
@@ -55,6 +56,10 @@ public final class ConvertBinaryToXMLJob extends AbstractSLJob {
 						convertedFile);
 				final SAXParser saxParser = RawFileUtility
 						.getParser(f_dataFile);
+				if (saxParser instanceof BinaryEventReader) {
+					BinaryEventReader r = (BinaryEventReader) saxParser;
+					r.showRawData(true);
+				}
 				saxParser.parse(stream, convertFile);
 				convertFile.close();
 				stream.close();

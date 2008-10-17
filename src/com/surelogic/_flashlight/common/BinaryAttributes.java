@@ -14,8 +14,13 @@ public class BinaryAttributes extends PreppedAttributes implements Attributes {
 	BinaryAttributes() {
 		super(IAttributeType.comparator);
 	}
-	*/
+	*/	
 	private Map.Entry<IAttributeType,Object>[] entries;
+	private final boolean showRawData;
+	
+	BinaryAttributes(boolean raw) {
+		showRawData = raw;
+	}
 	
 	@SuppressWarnings("unchecked")
 	private void initEntries() {
@@ -94,7 +99,9 @@ public class BinaryAttributes extends PreppedAttributes implements Attributes {
 
 	public void readAttributes(ObjectInputStream in, EventType event) throws IOException {
 		event.read(in, this);
-		preprocess(event);
+		if (!showRawData) {
+			preprocess(event);
+		}
 	}
 
 	@Override
@@ -173,11 +180,15 @@ public class BinaryAttributes extends PreppedAttributes implements Attributes {
 	 * that are marked as 'persistent'
 	 */
 	public void reset(EventType event) {
+		if (showRawData) {
+			clear();
+			return;
+		}
 		// Save attributes that the event marks as persistent
 		final IAttributeType attr = event.getPersistentAttribute();
 		if (attr != null) {
 			persistent.put(attr, this.get(attr));
-		}
+		}		
 		// Clear the rest
 		clear();
 

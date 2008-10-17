@@ -12,27 +12,25 @@ final class OutputStrategyXML extends EventVisitor {
 		f_out.println(s);
 	}
 
-	private void addProperty(final String key, final StringBuilder b) {
+	private static void addProperty(final String key, final StringBuilder b) {
 		String prop = System.getProperty(key);
 		if (prop == null)
 			prop = "UNKNOWN";
 		Entities.addAttribute(key.replaceAll("\\.", "-"), prop, b);
 	}
 
-	public OutputStrategyXML(final PrintWriter out) {
+	public static void outputHeader(final PrintWriter out, Time time) {
 		assert out != null;
-		f_out = out;
-		o("<?xml version='1.0' encoding='" + Store.ENCODING
+		out.println("<?xml version='1.0' encoding='" + Store.ENCODING
 				+ "' standalone='yes'?>");
 		StringBuilder b = new StringBuilder();
 		b.append("<flashlight");
 		Entities.addAttribute("version", "1.0", b);
 		Entities.addAttribute("run", Store.getRun(), b);
 		b.append(">"); // don't end this element
-		o(b.toString());
-		f_indent = "  ";
+		out.println(b.toString());
 		b = new StringBuilder();
-		b.append("<environment");
+		b.append("  <environment");
 		addProperty("user.name", b);
 		addProperty("java.version", b);
 		addProperty("java.vendor", b);
@@ -44,7 +42,18 @@ final class OutputStrategyXML extends EventVisitor {
 		Entities.addAttribute("processors", Runtime.getRuntime()
 				.availableProcessors(), b);
 		b.append("/>");
-		o(b.toString());
+		out.println(b.toString());
+		if (time != null) {
+			out.print("  ");
+			out.println(time);
+			out.println("</flashlight>");
+		}
+	}
+	
+	public OutputStrategyXML(final PrintWriter out) {
+		assert out != null;
+		f_out = out;
+		outputHeader(out, null);
 	}
 
 	@Override

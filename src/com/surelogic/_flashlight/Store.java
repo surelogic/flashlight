@@ -343,7 +343,11 @@ public final class Store {
 			System.err.println("Output XML = "+!outputBinary);
 			OutputStream stream = null;
 			ObjectOutputStream objStream = null;
-			try {
+			try {				
+				PrintWriter headerW = new PrintWriter(fileName.toString()+".flh");
+				OutputStrategyXML.outputHeader(headerW, timeEvent);
+				headerW.close();
+				
 				stream = new FileOutputStream(dataFile);
 				System.err.println("Compress stream = "+compress);
 				if (compress) {

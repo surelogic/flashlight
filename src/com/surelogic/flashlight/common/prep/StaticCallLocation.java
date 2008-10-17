@@ -30,6 +30,7 @@ public final class StaticCallLocation extends AbstractPrep {
 		f_ps.setLong(idx++, attributes.getLong(IN_CLASS));
 		f_ps.setString(idx++, attributes.getString(FILE));
 		f_ps.setString(idx++, attributes.getString(LOCATION));
+		f_ps.execute();
 	}
 
 	@Override

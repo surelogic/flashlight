@@ -75,17 +75,29 @@ final class Depository extends Thread {
 		}
 	}
 	
+	static class StringTable extends HashMap<String,String> {
+		public String intern(String s) {
+			String cached = this.get(s);
+			if (cached != null) {
+				return cached;
+			}
+			this.put(s, s);
+			return s;
+		}
+		
+	}
+	
 	static class FieldInfo {
 		final int id;
 		final String declaringType;
 		final String name;
 		final boolean isStatic, isFinal, isVolatile;
 		
-		FieldInfo(String line) {
+		FieldInfo(final StringTable strings, String line) {
 			StringTokenizer st = new StringTokenizer(line);
 			id = Integer.parseInt(st.nextToken());
-			declaringType = st.nextToken();
-			name = st.nextToken();
+			declaringType = strings.intern(st.nextToken());
+			name = strings.intern(st.nextToken());
 			isStatic = Boolean.parseBoolean(st.nextToken());
 			isFinal  = Boolean.parseBoolean(st.nextToken());
 			isVolatile = Boolean.parseBoolean(st.nextToken());				
@@ -133,7 +145,7 @@ final class Depository extends Thread {
 		Store.log("depository flushed (" + f_outputCount + " events(s) output)");
 	}
 
-	private static Map<String,List<FieldInfo>> loadFieldInfo() {
+	private static Map<String,List<FieldInfo>> loadFieldInfo(final StringTable strings) {
 		String name = StoreConfiguration.getFieldsFile();
 		if (name == null) {
 			return Collections.emptyMap();
@@ -148,7 +160,7 @@ final class Depository extends Thread {
 			BufferedReader br = new BufferedReader(r);
 			String line;
 			while ((line = br.readLine()) != null) {
-				FieldInfo fi      = new FieldInfo(line);
+				FieldInfo fi      = new FieldInfo(strings, line);
 				List<FieldInfo> l = map.get(fi.declaringType);
 				if (l == null) {
 					l = new ArrayList<FieldInfo>();
@@ -224,7 +236,8 @@ final class Depository extends Thread {
 	private static final FieldInfo[] noFields = new FieldInfo[0];	
 	
 	static class SitesReader implements LineHandler {
-		final Map<String,List<FieldInfo>> fields = loadFieldInfo();		
+		final StringTable strings = new StringTable(); 
+		final Map<String,List<FieldInfo>> fields = loadFieldInfo(strings);		
 		final Map<String,ClassInfo> classes = new HashMap<String,ClassInfo>();
 		List<SiteInfo> sites = new ArrayList<SiteInfo>();
 		String lastFileName;
@@ -240,9 +253,14 @@ final class Depository extends Thread {
 			int lineNo = Integer.parseInt(st.nextToken());
 			if (member.equals(lastMemberName)) {
 				member = lastMemberName;
-			}			
+			} else {
+				member = strings.intern(member);
+				lastMemberName = member;
+			}
 			if (!file.equals(lastFileName) || !qname.equals(lastClassName)) {
 				makeClassInfo();
+				file = strings.intern(file);
+				qname = strings.intern(qname);
 				lastFileName = file;
 				lastClassName = qname;
 			}

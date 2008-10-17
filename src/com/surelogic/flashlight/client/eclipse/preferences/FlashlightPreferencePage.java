@@ -59,6 +59,11 @@ public class FlashlightPreferencePage extends FieldEditorPreferencePage
 				PreferenceConstants.P_PROMPT_PERSPECTIVE_SWITCH,
 				"Prompt to change to the Flashlight perspective on instrumented launch",
 				getFieldEditorParent()));
+
+		addField(new BooleanFieldEditor(
+				PreferenceConstants.P_AUTO_PERSPECTIVE_SWITCH,
+				"If no prompt, automatically change to the Flashlight perspective on instrumented launch",
+				getFieldEditorParent()));
 	}
 
 	public void init(IWorkbench workbench) {

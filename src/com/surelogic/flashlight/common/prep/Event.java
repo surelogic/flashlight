@@ -6,7 +6,7 @@ import java.sql.Timestamp;
 
 import com.surelogic.common.SLUtility;
 
-public abstract class Event extends TrackUnreferenced {
+public abstract class Event extends AbstractPrep {
 
 	private Timestamp f_start = null;
 

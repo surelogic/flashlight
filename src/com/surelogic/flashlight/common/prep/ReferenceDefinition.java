@@ -16,7 +16,7 @@ import java.util.logging.Level;
 import com.surelogic._flashlight.common.PreppedAttributes;
 import com.surelogic.common.logging.SLLogger;
 
-public abstract class ReferenceDefinition extends TrackUnreferenced {
+public abstract class ReferenceDefinition extends AbstractPrep {
 
 	private static final String f_psQ = "INSERT INTO OBJECT (Run,Id,Type,Threadname,PackageName,ClassName,Flag) VALUES (?, ?, ?, ?, ?, ?, ?)";
 

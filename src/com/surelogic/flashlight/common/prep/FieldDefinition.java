@@ -14,7 +14,7 @@ import java.util.logging.Level;
 import com.surelogic._flashlight.common.PreppedAttributes;
 import com.surelogic.common.logging.SLLogger;
 
-public final class FieldDefinition extends TrackUnreferenced {
+public final class FieldDefinition extends AbstractPrep {
 
 	private static final String f_psQ = "INSERT INTO FIELD VALUES (?, ?, ?, ?, ?, ?, ?)";
 

@@ -54,6 +54,7 @@ import com.surelogic.flashlight.common.prep.ObjectDefinition;
 import com.surelogic.flashlight.common.prep.ReadWriteLock;
 import com.surelogic.flashlight.common.prep.ScanRawFilePreScan;
 import com.surelogic.flashlight.common.prep.ScanRawFilePrepScan;
+import com.surelogic.flashlight.common.prep.StaticCallLocation;
 import com.surelogic.flashlight.common.prep.ThreadDefinition;
 
 public final class PrepSLJob extends AbstractSLJob {
@@ -71,7 +72,7 @@ public final class PrepSLJob extends AbstractSLJob {
 			final IntrinsicLockDurationRowInserter i,
 			final BeforeTrace beforeTrace) {
 		return new IPrep[] { new ClassDefinition(), new FieldDefinition(),
-				new ThreadDefinition() };
+				new ThreadDefinition(), new StaticCallLocation() };
 	}
 
 	private IPrep[] getObjectHandlers(final IntrinsicLockDurationRowInserter i,

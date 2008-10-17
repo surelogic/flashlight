@@ -1,7 +1,5 @@
 package com.surelogic.flashlight.common.prep;
 
-import static com.surelogic._flashlight.common.AttributeType.LOCATION;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -13,7 +11,7 @@ import com.surelogic._flashlight.common.PreppedAttributes;
 
 public final class BeforeTrace extends Trace {
 
-	private static final String f_psQ = "INSERT INTO TRACE (Run,Id,InThread,InClass,InFile,AtLine,Location,Start,Stop) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+	private static final String f_psQ = "INSERT INTO TRACE (Run,Id,InThread,Site,Start,Stop) VALUES (?, ?, ?, ?, ?, ?)";
 
 	private long f_id = 0;
 	private PreparedStatement f_ps;
@@ -42,10 +40,8 @@ public final class BeforeTrace extends Trace {
 			return trace;
 		}
 
-		void push(final long id, final long time, final long clazz,
-				final String file, final int lineNumber, final String loc) {
-			this.trace = new TraceState(id, time, clazz, file, lineNumber, loc,
-					trace);
+		void push(final long id, final long time, final long site) {
+			this.trace = new TraceState(id, time, site, trace);
 		}
 
 		TraceState pop() {
@@ -64,25 +60,18 @@ public final class BeforeTrace extends Trace {
 	static class TraceState {
 		final long id;
 		final long time;
-		final long clazz;
-		final String file;
-		final int line;
-		final String location;
+		final long site;
 		final TraceState parent;
 		/*
 		 * whether or not the trace has any events recorded against it
 		 */
 		boolean hasEvents;
 
-		TraceState(final long id, final long time, final long clazz,
-				final String file, final int lineNumber, final String loc,
+		TraceState(final long id, final long time, final long site,
 				final TraceState parent) {
 			this.id = id;
 			this.time = time;
-			this.clazz = clazz;
-			this.file = file;
-			this.line = lineNumber;
-			this.location = loc;
+			this.site = site;
 			this.parent = parent;
 		}
 
@@ -112,29 +101,25 @@ public final class BeforeTrace extends Trace {
 	}
 
 	@Override
-	protected void handleTrace(final int runId, PreppedAttributes attributes, final long inThread,
-			final long inClass, final long time, final String file,
-			final int lineNumber) {
-		final String location = attributes.getString(LOCATION);
+	protected void handleTrace(final int runId,
+			final PreppedAttributes attributes, final long inThread,
+			final long site, final long time) {
 		final long id = ++f_id;
 		final Long thread = inThread;
-		getTraces(thread).push(id, time, inClass, file, lineNumber, location);
+		getTraces(thread).push(id, time, site);
 	}
 
-	void popTrace(final int runId, final long inThread, final long inClass,
-			final long time, final int lineNumber) throws SQLException {
+	void popTrace(final int runId, final long inThread, final long site,
+			final long time) throws SQLException {
 		final TraceState state = getTraces(inThread).pop();
-		assert (state.clazz == inClass) && (state.line == lineNumber);
+		assert (state.site == site);
 		if (state.hasEvents) {
 			// insert start and stop time
 			int idx = 1;
 			f_ps.setInt(idx++, runId);
 			f_ps.setLong(idx++, state.id);
 			f_ps.setLong(idx++, inThread);
-			f_ps.setLong(idx++, state.clazz);
-			f_ps.setString(idx++, state.file);
-			f_ps.setInt(idx++, lineNumber);
-			f_ps.setString(idx++, state.location);
+			f_ps.setLong(idx++, state.site);
 			f_ps.setTimestamp(idx++, getTimestamp(state.time));
 			f_ps.setTimestamp(idx++, getTimestamp(time));
 			f_ps.executeUpdate();

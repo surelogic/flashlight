@@ -7,9 +7,9 @@ import java.util.logging.Logger;
 
 import com.surelogic.common.logging.SLLogger;
 
-public abstract class TrackUnreferenced implements IPrep {
+public abstract class AbstractPrep implements IPrep {
 	protected static final Logger LOG = SLLogger
-			.getLoggerFor(TrackUnreferenced.class);
+			.getLoggerFor(AbstractPrep.class);
 
 	public void setup(final Connection c, final Timestamp start,
 			final long startNS, final ScanRawFilePreScan scanResults)

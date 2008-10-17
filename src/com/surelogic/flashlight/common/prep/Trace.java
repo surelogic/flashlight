@@ -1,10 +1,12 @@
 package com.surelogic.flashlight.common.prep;
 
+import static com.surelogic._flashlight.common.AttributeType.SITE_ID;
+import static com.surelogic._flashlight.common.AttributeType.THREAD;
+import static com.surelogic._flashlight.common.AttributeType.TIME;
+
 import java.sql.SQLException;
 
 import com.surelogic._flashlight.common.PreppedAttributes;
-
-import static com.surelogic._flashlight.common.AttributeType.*;
 
 public abstract class Trace extends Event {
 	Trace(final IntrinsicLockDurationRowInserter i) {
@@ -15,12 +17,11 @@ public abstract class Trace extends Event {
 			throws SQLException {
 		final long time = attributes.getLong(TIME);
 		final long inThread = attributes.getLong(THREAD);
-		final long inClass = attributes.getLong(IN_CLASS);
-		final int lineNumber = attributes.getInt(LINE);
-		final String file = (this instanceof BeforeTrace) ? attributes.getString(FILE) : null;
-		handleTrace(runId, attributes, inThread, inClass, time, file, lineNumber);
+		final long site = attributes.getLong(SITE_ID);
+		handleTrace(runId, attributes, inThread, site, time);
 	}
 
-	protected abstract void handleTrace(int runId, PreppedAttributes attributes, long inThread, long inClass,
-			long time, String file, int lineNumber) throws SQLException;
+	protected abstract void handleTrace(int runId,
+			PreppedAttributes attributes, long inThread, long site, long time)
+			throws SQLException;
 }

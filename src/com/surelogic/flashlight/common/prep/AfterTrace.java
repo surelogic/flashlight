@@ -18,9 +18,9 @@ public final class AfterTrace extends Trace {
 	}
 
 	@Override
-	protected void handleTrace(final int runId, PreppedAttributes attributes, final long inThread,
-			final long inClass, final long time, final String file,
-			final int lineNumber) throws SQLException {
-		before.popTrace(runId, inThread, inClass, time, lineNumber);
+	protected void handleTrace(final int runId,
+			final PreppedAttributes attributes, final long inThread,
+			final long site, final long time) throws SQLException {
+		before.popTrace(runId, inThread, site, time);
 	}
 }

@@ -1,6 +1,7 @@
 package com.surelogic.flashlight.client.eclipse.preferences;
 
-import com.surelogic.common.eclipse.Activator;
+import com.surelogic.flashlight.client.eclipse.Activator;
+
 
 /**
  * Constant definitions for plug-in preferences

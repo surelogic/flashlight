@@ -27,7 +27,9 @@ public final class RunDirectory {
   private static final String[] suffixes = {
     COMPRESSED_SUFFIX, BIN_SUFFIX, SUFFIX, COMPRESSED_BIN_SUFFIX
   };
-  
+
+  public static final String HEADER_SUFFIX = ".flh";
+
   /**
    * Filter used to identify files that may be raw flashlight data files.
    */
@@ -45,9 +47,6 @@ public final class RunDirectory {
       return false;
     }
   };
-
-
-  public static final String HEADER_SUFFIX = ".flh";
   
   /**
    * Filter used to identify header files for raw flashlight data files.
@@ -64,12 +63,18 @@ public final class RunDirectory {
       return false;
     }
   };
+
+
   
   /** The run description for the data file contained in this directory */
   private final RunDescription runDescription;
   
   /** The file handle for the run directory itself. */
   private final File runDirHandle;
+  
+  /** The file handle for the header file */
+  private final File headerHandle;
+  
   /** The file handles for the instrumentation files. */
   private final InstrumentationFileHandles instrumentationFileHandles;
   /** The file handles for the source zips. */
@@ -83,10 +88,11 @@ public final class RunDirectory {
   
   /* Private constructor: use the factory method */
   private RunDirectory(final RunDescription run, final File runDir,
-      final InstrumentationFileHandles instrumentation,
+      final File header, final InstrumentationFileHandles instrumentation,
       final SourceZipFileHandles source,
       final ProjectsDirectoryHandles projects, final RawFileHandles profile) {
     runDescription = run;
+    headerHandle = header;
     runDirHandle = runDir;
     instrumentationFileHandles = instrumentation;
     sourceZipFileHandles = source;
@@ -120,26 +126,28 @@ public final class RunDirectory {
      * original file handle class, and everything else is being built around the
      * machinery that preexisted to compute them.
      */
-    final File headerFile = getFileFrom(runDir, flashlightHeaderFileFilter);
+    final File headerFile = getFileFrom(runDir, flashlightHeaderFileFilter, 152, 153);
     if (headerFile != null) {
       final RawDataFilePrefix headerInfo = RawFileUtility.getPrefixFor(headerFile);
       if (headerInfo.isWellFormed()) {
         /* If we get here the profile data files are okay, now check that
          * the other files are okay too.
          */ 
-    	final File rawDataFile = getFileFrom(runDir, flashlightRawDataFileFilter);   
-    	final RawDataFilePrefix prefixInfo = rawDataFile != null ? 
-    			RawFileUtility.getPrefixFor(rawDataFile) : null;
+        final File rawDataFile =
+          getFileFrom(runDir, flashlightRawDataFileFilter, 146, 147);
+        final RawDataFilePrefix prefixInfo =
+          rawDataFile != null ? RawFileUtility.getPrefixFor(rawDataFile) : null;
 
-        if (//prefixInfo != null && prefixInfo.isWellFormed() &&
-        	instrumentation != null && source != null && projects != null) {
+        if (instrumentation != null && source != null && projects != null) {
           /* These calls won't fail because we know that prefixInfo is non-null
            * and well formed.
            */ 
           final RunDescription run = RawFileUtility.getRunDescriptionFor(headerInfo);
-          final RawFileHandles profile = prefixInfo == null || !prefixInfo.isWellFormed() ?
+          final RawFileHandles profile =
+            prefixInfo == null || !prefixInfo.isWellFormed() ?
         		  null : RawFileUtility.getRawFileHandlesFor(prefixInfo);
-          return new RunDirectory(run, runDir, instrumentation, source, projects, profile);
+          return new RunDirectory(
+              run, runDir, headerFile, instrumentation, source, projects, profile);
         }
       } else {
         SLLogger.getLogger().log(Level.WARNING, 
@@ -151,47 +159,59 @@ public final class RunDirectory {
     return null;
   }
   
-  private static File getFileFrom(final File runDir, FileFilter filter) {
+  private static File getFileFrom(final File runDir, final FileFilter filter,
+      final int noFileErr, final int manyFilesErr) {
 	  final File[] files = runDir.listFiles(filter);
 	  // Must have exactly one data file
 	  if (files.length == 0) { 
 		  SLLogger.getLogger().log(Level.WARNING, 
-				  I18N.err(146, runDir.getAbsolutePath()));
+				  I18N.err(noFileErr, runDir.getAbsolutePath()));
 	  } else if (files.length > 1) {
 		  SLLogger.getLogger().log(Level.WARNING, 
-				  I18N.err(147, runDir.getAbsolutePath()));
+				  I18N.err(manyFilesErr, runDir.getAbsolutePath()));
 	  } else { // exactly 1 (because length cannot be < 0)
 		  return files[0];
 	  }
 	  return null;
   }
   
-  /** Get the run description */
+  /** Get the run description.  Never returns {@code null}. */
   public RunDescription getRunDescription() {
     return runDescription;
   }
   
-  /** Get the handle for the run directory */
+  /** Get the handle for the run directory.  Never returns {@code null}. */
   public File getRunDirectory() {
     return runDirHandle;
   }
   
-  /** Get the handles for the instrumentation artifacts */
+  /** Get the handle for the header file.   Never returns {@code null}. */
+  public File getHeader() {
+    return headerHandle;
+  }
+  
+  /**
+   * Get the handles for the instrumentation artifacts. Never returns
+   * {@code null}.
+   */
   public InstrumentationFileHandles getInstrumentationHandles() {
     return instrumentationFileHandles;
   }
   
-  /** Get the handles for the source zip files */
+  /** Get the handles for the source zip files.  Never returns {@code null}. */
   public SourceZipFileHandles getSourceHandles() {
     return sourceZipFileHandles;
   }
   
-  /** Get the handles for the project jar files */
+  /** Get the handles for the project jar files.  Never returns {@code null}. */
   public ProjectsDirectoryHandles getProjectDirectory() {
     return projectDirHandles;
   }
   
-  /** Get the handles for the profile data files */
+  /**
+   * Get the handles for the profile data files. Unlike the other getter
+   * methods, this method <em>may</em> return {@code null}.
+   */
   public RawFileHandles getProfileHandles() {
     return rawFileHandles;
   }

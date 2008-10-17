@@ -284,7 +284,7 @@ public final class RawFileUtility {
 		public boolean accept(final File root, final String name) {
 			final File dir = new File(root, name);
 			return dir.exists() && dir.isDirectory() &&
-			       new File(dir, name+".flh").exists();
+			       new File(dir, name + RunDirectory.HEADER_SUFFIX).exists();
 			       //name.contains("-at-") && !name.equals(DB_DIRECTORY);
 		}
 	};

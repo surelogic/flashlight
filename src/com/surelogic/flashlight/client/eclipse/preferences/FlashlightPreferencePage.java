@@ -54,6 +54,11 @@ public class FlashlightPreferencePage extends FieldEditorPreferencePage
 				"Maximum rows per query:", getFieldEditorParent());
 		mre.setValidRange(1024, 65535);
 		addField(mre);
+
+		addField(new BooleanFieldEditor(
+				PreferenceConstants.P_PROMPT_PERSPECTIVE_SWITCH,
+				"Prompt to change to the Flashlight perspective on instrumented launch",
+				getFieldEditorParent()));
 	}
 
 	public void init(IWorkbench workbench) {

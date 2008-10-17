@@ -1,8 +1,15 @@
 package com.surelogic.flashlight.common.prep;
 
-import static com.surelogic._flashlight.common.AttributeType.*;
+import static com.surelogic._flashlight.common.AttributeType.FIELD;
+import static com.surelogic._flashlight.common.AttributeType.RECEIVER;
+import static com.surelogic._flashlight.common.AttributeType.SITE_ID;
+import static com.surelogic._flashlight.common.AttributeType.THREAD;
+import static com.surelogic._flashlight.common.AttributeType.TIME;
 import static com.surelogic._flashlight.common.FlagType.UNDER_CONSTRUCTION;
-import static com.surelogic._flashlight.common.IdConstants.*;
+import static com.surelogic._flashlight.common.IdConstants.ILLEGAL_FIELD_ID;
+import static com.surelogic._flashlight.common.IdConstants.ILLEGAL_ID;
+import static com.surelogic._flashlight.common.IdConstants.ILLEGAL_RECEIVER_ID;
+import static com.surelogic._flashlight.common.IdConstants.ILLEGAL_SITE_ID;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -16,7 +23,7 @@ import com.surelogic.common.logging.SLLogger;
 
 public abstract class FieldAccess extends Event {
 
-	private static final String f_psQ = "INSERT INTO ACCESS (Run,TS,InThread,InClass,AtLine,Field,RW,Receiver,UnderConstruction) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+	private static final String f_psQ = "INSERT INTO ACCESS (Run,TS,InThread,Site,Field,RW,Receiver,UnderConstruction) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
 	private PreparedStatement f_ps;
 
@@ -34,18 +41,18 @@ public abstract class FieldAccess extends Event {
 
 	public void parse(final int runId, final PreppedAttributes attributes)
 			throws SQLException {
-		long nanoTime = attributes.getLong(TIME);
-		long inThread = attributes.getLong(THREAD);
-		long inClass = attributes.getLong(IN_CLASS);
-		int lineNumber = attributes.getInt(LINE);
-		long field = attributes.getLong(FIELD);
-		long receiver = attributes.getLong(RECEIVER);
-		boolean underConstruction = attributes.getBoolean(UNDER_CONSTRUCTION);
-		if ((nanoTime == ILLEGAL_ID) || (inThread == ILLEGAL_ID) || (inClass == ILLEGAL_ID)
-				|| (lineNumber == ILLEGAL_LINE) || (field == ILLEGAL_FIELD_ID)) {
+		final long nanoTime = attributes.getLong(TIME);
+		final long inThread = attributes.getLong(THREAD);
+		final long site = attributes.getLong(SITE_ID);
+		final long field = attributes.getLong(FIELD);
+		final long receiver = attributes.getLong(RECEIVER);
+		final boolean underConstruction = attributes
+				.getBoolean(UNDER_CONSTRUCTION);
+		if ((nanoTime == ILLEGAL_ID) || (inThread == ILLEGAL_ID)
+				|| (site == ILLEGAL_SITE_ID) || (field == ILLEGAL_FIELD_ID)) {
 			SLLogger.getLogger().log(
 					Level.SEVERE,
-					"Missing nano-time, thread, file, line or field in "
+					"Missing nano-time, thread, site, or field in "
 							+ getXMLElementName());
 			return;
 		}
@@ -61,28 +68,28 @@ public abstract class FieldAccess extends Event {
 			}
 		}
 		before.threadEvent(inThread);
-		insert(runId, nanoTime, inThread, inClass, lineNumber, field, receiver,
+		insert(runId, nanoTime, inThread, site, field, receiver,
 				underConstruction);
 		inserted++;
 	}
 
 	private void insert(final int runId, final long nanoTime,
-			final long inThread, final long inClass, final int lineNumber,
-			final long field, final long receiver,
-			final boolean underConstruction) throws SQLException {
-		f_ps.setInt(1, runId);
-		f_ps.setTimestamp(2, getTimestamp(nanoTime));
-		f_ps.setLong(3, inThread);
-		f_ps.setLong(4, inClass);
-		f_ps.setInt(5, lineNumber);
-		f_ps.setLong(6, field);
-		f_ps.setString(7, getRW());
+			final long inThread, final long site, final long field,
+			final long receiver, final boolean underConstruction)
+			throws SQLException {
+		int idx = 1;
+		f_ps.setInt(idx++, runId);
+		f_ps.setTimestamp(idx++, getTimestamp(nanoTime));
+		f_ps.setLong(idx++, inThread);
+		f_ps.setLong(idx++, site);
+		f_ps.setLong(idx++, field);
+		f_ps.setString(idx++, getRW());
 		if (receiver == ILLEGAL_FIELD_ID) {
-			f_ps.setNull(8, Types.BIGINT);
+			f_ps.setNull(idx++, Types.BIGINT);
 		} else {
-			f_ps.setLong(8, receiver);
+			f_ps.setLong(idx++, receiver);
 		}
-		f_ps.setString(9, underConstruction ? "Y" : "N");
+		f_ps.setString(idx++, underConstruction ? "Y" : "N");
 		f_ps.executeUpdate();
 	}
 

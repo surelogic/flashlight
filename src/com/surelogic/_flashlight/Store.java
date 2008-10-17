@@ -20,6 +20,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.zip.GZIPOutputStream;
 
 import com.surelogic._flashlight.common.IdConstants;
+import com.surelogic._flashlight.common.LongMap;
 import com.surelogic._flashlight.trace.TraceNode;
 
 /**
@@ -183,7 +184,7 @@ public final class Store {
 	 * The depository thread.
 	 */
 	private static final Depository f_depository;
-
+	
 	/**
 	 * The console thread.
 	 */
@@ -202,6 +203,14 @@ public final class Store {
 	 * is part of the instrumented program.
 	 */
 	private final static ThreadLocal<State> tl_withinStore;
+
+	private static final LongMap<String> f_field2Class;
+	private static final Set<String> f_filteredClasses = new HashSet<String>();
+	/*
+	static {
+		f_filteredClasses.add("com.surelogic.tree.SyntaxTreeNode");
+	}
+	*/
 	
 	public static final class State {
 		boolean inside = false;
@@ -395,6 +404,7 @@ public final class Store {
 				f_refinery.start();
 				f_depository = new Depository(f_rawQueue, outputStrategy);
 			}
+			f_field2Class = f_depository.mapFieldsToClasses();
 			f_depository.start();
 			log("collection started (rawQ=" + rawQueueSize + " : refinery="
 					+ refinerySize + " : outQ=" + outQueueSize + ")");
@@ -441,6 +451,7 @@ public final class Store {
 			f_console = null;
 			f_spy = null;
 			f_start_nano = 0;
+			f_field2Class = null;
 		}
 		f_flashlightIsNotInitialized = false;
 	}
@@ -505,6 +516,9 @@ public final class Store {
 		  return;
 	  flState.inside = true;
 	  try {
+		  if (filterFieldAccess(fieldID)) {
+			  return;
+		  }
 		  /*
 		  if (DEBUG) {
 			  final String fmt = "Store.instanceFieldAccessLookup(%n\t\t%s%n\t\treceiver=%s%n\t\tfield=%s%n\t\tlocation=%s)";
@@ -575,6 +589,9 @@ public final class Store {
 		  return;
 	  flState.inside = true;
 	  try {
+		  if (filterFieldAccess(fieldID)) {
+			  return;
+		  }
 		  /*
 		  if (DEBUG) {
 			  final String fmt = "Store.staticFieldAccessLookup(%n\t\t%s%n\t\tfield=%s%n\t\tlocation=%s)";
@@ -638,6 +655,9 @@ public final class Store {
     	return;
     flState.inside = true;
     try {
+      if (filterFieldAccess(clazz)) {
+    	return;
+      }
       if (DEBUG) {
         final String fmt = "Store.instanceFieldAccessLookup(%n\t\t%s%n\t\treceiver=%s%n\t\tfield=%s%n\t\tlocation=%s)";
         log(String.format(fmt, read ? "read" : "write",
@@ -703,6 +723,9 @@ public final class Store {
     	return;
     flState.inside = true;
     try {
+      if (filterFieldAccess(clazz)) {
+       	return;
+      }	
       if (DEBUG) {
         final String fmt = "Store.staticFieldAccessLookup(%n\t\t%s%n\t\tfield=%s%n\t\tlocation=%s)";
         log(String.format(fmt, read ? "read" : "write", clazz.getName()+'.'+fieldName, siteId));
@@ -760,7 +783,10 @@ public final class Store {
 		if (flState.inside)
 			return;
 		flState.inside = true;
-		try {
+		try {			
+		    if (filterFieldAccess(field.getDeclaringClass())) {
+		      return;
+		    }
 			if (DEBUG) {
 				final String fmt = "Store.fieldAccess(%n\t\t%s%n\t\treceiver=%s%n\t\tfield=%s%n\t\tlocation=%s)";
 				log(String.format(fmt, read ? "read" : "write",
@@ -1632,5 +1658,50 @@ public final class Store {
 
 	private Store() {
 		// no instances
+	}
+	
+	//static int total, filtered;
+	
+	/**
+	 * An alternative to make this one lookup is to keep a map 
+	 * from class name to field ids, so that you can dynamically
+	 * add/remove field ids from a set of filtered fields
+	 */
+	private static boolean filterFieldAccess(long fieldId) {		
+		if (f_filteredClasses.isEmpty() || f_field2Class == null) {
+			return false;
+		}
+		// FIX why returning null?
+		String clazz = f_field2Class.get(fieldId);		
+		boolean rv = f_filteredClasses.contains(clazz);
+		/*
+		total++;
+		if (rv) {
+			filtered++;
+			//System.err.println("Filtered out "+clazz);
+		}		
+		if ((total & 0xffff) == 0) {
+			System.err.println("Filtered out "+filtered+" out of "+total);
+		}
+		*/
+		return rv;
+	}
+	private static boolean filterFieldAccess(Class declaringType) {
+		if (f_filteredClasses.isEmpty()) {
+			return false;
+		}	
+		String clazz = declaringType.getName();
+		boolean rv = f_filteredClasses.contains(clazz);
+		/*
+		total++;
+		if (rv) {
+			filtered++;
+			//System.err.println("Filtered out "+clazz);
+		}		
+		if ((total & 0xffff) == 0) {
+			System.err.println("Filtered out "+filtered+" out of "+total);
+		}
+		*/
+		return rv;
 	}
 }

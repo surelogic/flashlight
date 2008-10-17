@@ -4,6 +4,8 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 
+import com.surelogic._flashlight.common.LongMap;
+
 /**
  * Takes events from the out queue and persists them according to an output
  * strategy.
@@ -303,5 +305,16 @@ final class Depository extends Thread {
 			f_outputStrategy.visit(FinalEvent.FINAL_EVENT);
 		}
 		f_outputStrategy = outputStrategy;
+	}
+	
+	public LongMap<String> mapFieldsToClasses() {
+		LongMap<String> map = new LongMap<String>();
+		for(Map.Entry<String,ClassInfo> e : classDefs.entrySet()) {
+			String declaringType = e.getKey();
+			for(FieldInfo f : e.getValue().fields) {
+				map.put(f.id, declaringType);
+			}
+		}
+		return map;
 	}
 }

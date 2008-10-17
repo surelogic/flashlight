@@ -12,8 +12,9 @@ import com.surelogic._flashlight.common.PreppedAttributes;
 import com.surelogic.common.jobs.SLProgressMonitor;
 
 public class AbstractDataScan extends DefaultHandler {
-	protected final SLProgressMonitor f_monitor;
-	private final LongMap<SiteInfo> sites = new LongMap<SiteInfo>();
+	private static final boolean useSites = true;
+	protected final SLProgressMonitor f_monitor;	
+	private final LongMap<SiteInfo> sites = useSites ? new LongMap<SiteInfo>() : null;
 
 	public AbstractDataScan(final SLProgressMonitor monitor) {
 		assert monitor != null;
@@ -71,18 +72,20 @@ public class AbstractDataScan extends DefaultHandler {
 				final IAttributeType key = PreppedAttributes.mapAttr(name);
 				attrs.put(key, value);
 			}
-			switch (e) {
-			case Static_CallLocation:
-				createSiteInfo(attrs);
-				break;
-			default:
-				final long site = attrs.getLong(AttributeType.SITE_ID);
-				if (site != IdConstants.ILLEGAL_SITE_ID) {
-					final SiteInfo info = lookupSite(site);
-					if (info != null) {
-						info.populateAttributes(attrs);
-					} else {
-						System.err.println("Couldn't find site: "+site);
+			if (useSites) {
+				switch (e) {
+				case Static_CallLocation:
+					createSiteInfo(attrs);
+					break;
+				default:
+					final long site = attrs.getLong(AttributeType.SITE_ID);
+					if (site != IdConstants.ILLEGAL_SITE_ID) {
+						final SiteInfo info = lookupSite(site);
+						if (info != null) {
+							info.populateAttributes(attrs);
+						} else {
+							System.err.println("Couldn't find site: "+site);
+						}
 					}
 				}
 			}

@@ -281,10 +281,12 @@ public final class RawFileUtility {
 	};
 	
 	private static final FilenameFilter f_directoryFilter = new FilenameFilter() {
-    public boolean accept(final File dir, final String name) {
-      return (new File(dir, name).isDirectory()) &&
-              name.contains("-at-") && !name.equals(DB_DIRECTORY);
-    }
+		public boolean accept(final File root, final String name) {
+			final File dir = new File(root, name);
+			return dir.exists() && dir.isDirectory() &&
+			       new File(dir, name+".flh").exists();
+			       //name.contains("-at-") && !name.equals(DB_DIRECTORY);
+		}
 	};
 
 	/**

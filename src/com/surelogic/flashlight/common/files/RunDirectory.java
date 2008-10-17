@@ -27,7 +27,7 @@ public final class RunDirectory {
   private static final String[] suffixes = {
     COMPRESSED_SUFFIX, BIN_SUFFIX, SUFFIX, COMPRESSED_BIN_SUFFIX
   };
-
+  
   /**
    * Filter used to identify files that may be raw flashlight data files.
    */
@@ -46,7 +46,24 @@ public final class RunDirectory {
     }
   };
 
+
+  public static final String HEADER_SUFFIX = ".flh";
   
+  /**
+   * Filter used to identify header files for raw flashlight data files.
+   */
+  private static final FileFilter flashlightHeaderFileFilter = new FileFilter() {
+    public boolean accept(File pathname) {
+      if (pathname.isDirectory()) {
+        return false;
+      }
+      final String name = pathname.getName();     
+      if (name.endsWith(HEADER_SUFFIX)) {
+          return true;
+      }      
+      return false;
+    }
+  };
   
   /** The run description for the data file contained in this directory */
   private final RunDescription runDescription;
@@ -103,32 +120,30 @@ public final class RunDirectory {
      * original file handle class, and everything else is being built around the
      * machinery that preexisted to compute them.
      */
-    final File[] dataFiles = runDir.listFiles(flashlightRawDataFileFilter);
-    // Must have exactly one data file
-    if (dataFiles.length == 0) { 
-      SLLogger.getLogger().log(Level.WARNING, 
-          I18N.err(146, runDir.getAbsolutePath()));
-    } else if (dataFiles.length > 1) {
-      SLLogger.getLogger().log(Level.WARNING, 
-          I18N.err(147, runDir.getAbsolutePath()));
-    } else { // exactly 1 (because length cannot be < 0)
-      final RawDataFilePrefix prefixInfo =
-        RawFileUtility.getPrefixFor(dataFiles[0]);
-      if (prefixInfo.isWellFormed()) {
+    final File headerFile = getFileFrom(runDir, flashlightHeaderFileFilter);
+    if (headerFile != null) {
+      final RawDataFilePrefix headerInfo = RawFileUtility.getPrefixFor(headerFile);
+      if (headerInfo.isWellFormed()) {
         /* If we get here the profile data files are okay, now check that
          * the other files are okay too.
          */ 
-        if (instrumentation != null && source != null && projects != null) {
+    	final File rawDataFile = getFileFrom(runDir, flashlightRawDataFileFilter);   
+    	final RawDataFilePrefix prefixInfo = rawDataFile != null ? 
+    			RawFileUtility.getPrefixFor(rawDataFile) : null;
+
+        if (//prefixInfo != null && prefixInfo.isWellFormed() &&
+        	instrumentation != null && source != null && projects != null) {
           /* These calls won't fail because we know that prefixInfo is non-null
            * and well formed.
            */ 
-          final RunDescription run = RawFileUtility.getRunDescriptionFor(prefixInfo);
-          final RawFileHandles profile = RawFileUtility.getRawFileHandlesFor(prefixInfo);
+          final RunDescription run = RawFileUtility.getRunDescriptionFor(headerInfo);
+          final RawFileHandles profile = prefixInfo == null || !prefixInfo.isWellFormed() ?
+        		  null : RawFileUtility.getRawFileHandlesFor(prefixInfo);
           return new RunDirectory(run, runDir, instrumentation, source, projects, profile);
         }
       } else {
         SLLogger.getLogger().log(Level.WARNING, 
-            I18N.err(107, dataFiles[0].getAbsolutePath()));
+            I18N.err(107, headerFile.getAbsolutePath()));
       }
     }
     
@@ -136,7 +151,20 @@ public final class RunDirectory {
     return null;
   }
   
-  
+  private static File getFileFrom(final File runDir, FileFilter filter) {
+	  final File[] files = runDir.listFiles(filter);
+	  // Must have exactly one data file
+	  if (files.length == 0) { 
+		  SLLogger.getLogger().log(Level.WARNING, 
+				  I18N.err(146, runDir.getAbsolutePath()));
+	  } else if (files.length > 1) {
+		  SLLogger.getLogger().log(Level.WARNING, 
+				  I18N.err(147, runDir.getAbsolutePath()));
+	  } else { // exactly 1 (because length cannot be < 0)
+		  return files[0];
+	  }
+	  return null;
+  }
   
   /** Get the run description */
   public RunDescription getRunDescription() {

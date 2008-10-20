@@ -87,10 +87,12 @@ public class OutputStrategyBinary extends EventVisitor {
 	void visit(final AfterIntrinsicLockWait e) {
 		writeLockEvent(After_IntrinsicLockWait.getByte(), e);
 	}
+	/*
 	@Override
 	void visit(final AfterTrace e) {
 		writeTraceEvent(After_Trace.getByte(), e);
 	}
+	*/
 	@Override
 	void visit(AfterUtilConcurrentLockAcquisitionAttempt e) {
 		int flag = e.gotTheLock() ? GOT_LOCK.mask() : 0;
@@ -116,18 +118,18 @@ public class OutputStrategyBinary extends EventVisitor {
 	void visit(final BeforeIntrinsicLockWait e) {
 		writeLockEvent(Before_IntrinsicLockWait.getByte(), e);
 	}
+	/*
 	@Override
 	void visit(final BeforeTrace e) {
 		//try {
-			writeTraceEvent(Before_Trace.getByte(), e);
-			/*
+			writeTraceEvent(Before_Trace.getByte(), e);			
 			writeUTF(e.getDeclaringTypeName());
 			writeUTF(e.getLocationName());
 		} catch (IOException ioe) {
 			handleIOException(ioe);
-		}	
-		*/
+		}			
 	}
+    */
 	@Override
 	void visit(BeforeUtilConcurrentLockAcquisitionAttempt e) {
 		writeLockEvent(Before_UtilConcurrentLockAcquisitionAttempt.getByte(), e);
@@ -367,6 +369,7 @@ public class OutputStrategyBinary extends EventVisitor {
 		}
 	}
 	
+	@SuppressWarnings("unused")
 	private void writeTrace(final long tid) throws IOException {
 		/*
 		if (lastWasTraceNode) {
@@ -410,12 +413,8 @@ public class OutputStrategyBinary extends EventVisitor {
 	private long lastTrace = 0;
 	private int totalTraces = 0, sameTraces = 0;
 	*/
-	private void writeTracedEvent(byte header, TracedEvent e)  throws IOException {
-		if (TraceNode.inUse) {
-			writeTrace(e.getTraceId());
-		}
+	private void writeTracedEvent(byte header, TracedEvent e)  throws IOException {		
 		writeCommon(header, e);
-		if (TraceNode.inUse) {
 			/*tracedBytes +=*/ writeCompressedLong(e.getTraceId());
 			/*
 			totalTraces++;
@@ -428,7 +427,6 @@ public class OutputStrategyBinary extends EventVisitor {
 				System.err.println(sameTraces+" same as last out of "+totalTraces);
 			}
 			*/
-		}
 	}
 	
 	private void writeFieldAccess_unsafe(byte header, FieldAccess e) throws IOException {
@@ -485,7 +483,7 @@ public class OutputStrategyBinary extends EventVisitor {
 			handleIOException(ioe);
 		}
 	}
-	
+	/*
 	private void writeTraceEvent(byte header, Trace e) {
 		try {
 			writeCommon(header, e);
@@ -494,7 +492,7 @@ public class OutputStrategyBinary extends EventVisitor {
 			handleIOException(ioe);
 		}
 	}
-
+    */
 	private void handleIOException(IOException e) {
 		e.printStackTrace();
 	}

@@ -18,10 +18,6 @@ public abstract class EventVisitor {
 		// do nothing
 	}
 
-	void visit(final AfterTrace e) {
-		// do nothing
-	}
-
 	void visit(AfterUtilConcurrentLockAcquisitionAttempt e) {
 		// do nothing
 	}
@@ -35,10 +31,6 @@ public abstract class EventVisitor {
 	}
 
 	void visit(final BeforeIntrinsicLockWait e) {
-		// do nothing
-	}
-
-	void visit(final BeforeTrace e) {
 		// do nothing
 	}
 

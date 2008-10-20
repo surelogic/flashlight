@@ -74,11 +74,6 @@ final class OutputStrategyXML extends EventVisitor {
 	}
 
 	@Override
-	void visit(final AfterTrace e) {
-		o(e.toString());
-	}
-
-	@Override
 	void visit(AfterUtilConcurrentLockAcquisitionAttempt e) {
 		o(e.toString());
 	}
@@ -95,11 +90,6 @@ final class OutputStrategyXML extends EventVisitor {
 
 	@Override
 	void visit(BeforeIntrinsicLockWait e) {
-		o(e.toString());
-	}
-
-	@Override
-	void visit(BeforeTrace e) {
 		o(e.toString());
 	}
 

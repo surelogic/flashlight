@@ -6,11 +6,9 @@ import static com.surelogic._flashlight.common.EventType.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.surelogic._flashlight.*;
-import com.surelogic._flashlight.common.IdConstants;
 import com.surelogic._flashlight.common.LongMap;
 
 public abstract class TraceNode extends AbstractCallLocation implements ITraceNode {	
-	public static final boolean inUse = IdConstants.useTraceNodes;
 	static final boolean recordOnPush = false;
 	
 	/**

@@ -236,7 +236,6 @@ public final class Store {
 	}
 	
 	private static final boolean useLocks = true;
-	private static final boolean useTraceNodes = TraceNode.inUse;
 
 	/**
 	 * This method must be called as the first statement by each flashlight
@@ -873,22 +872,10 @@ public final class Store {
 			 * Check that the parameters are valid, gather needed information,
 			 * and put an event in the raw queue.
 			 */
-			Event e = null;
 			if (before) {
-				if (useTraceNodes) {
-					TraceNode.pushTraceNode(siteId, flState);
-				} else {
-					e = new BeforeTrace(siteId, flState);
-				}
+				TraceNode.pushTraceNode(siteId, flState);
 			} else {	
-				if (useTraceNodes) {
-					TraceNode.popTraceNode(siteId, flState);
-				} else {
-					e = new AfterTrace(siteId, flState);
-				}
-			}
-			if (!useTraceNodes) {
-				putInQueue(flState, e);
+				TraceNode.popTraceNode(siteId, flState);
 			}
 		} finally {
 			flState.inside = false;
@@ -1023,22 +1010,10 @@ public final class Store {
 			/*
 			 * Record this call in the trace.
 			 */
-			Event e = null;
 			if (before) {
-				if (useTraceNodes) {
-					TraceNode.pushTraceNode(siteId, flState);
-				} else {
-					e = new BeforeTrace(siteId, flState);
-				}
+				TraceNode.pushTraceNode(siteId, flState);
 			} else {	
-				if (useTraceNodes) {
-					TraceNode.popTraceNode(siteId, flState);
-				} else {
-					e = new AfterTrace(siteId, flState);
-				}
-			}
-			if (!useTraceNodes) {
-				putInQueue(flState, e);
+				TraceNode.popTraceNode(siteId, flState);
 			}
 		} finally {
 			flState.inside = false;

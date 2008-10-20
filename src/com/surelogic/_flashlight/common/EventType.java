@@ -314,7 +314,9 @@ public enum EventType {
 	
 	static void readCommon(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
 		//attrs.put(TIME, in.readLong());
-		long start = (Long) attrs.get(START_TIME);
+		// Added to avoid NPE when converting to raw XML
+		Long startT = (Long) attrs.get(START_TIME);		
+		long start = startT == null ? 0 : startT.longValue();
 		attrs.put(TIME, start + readCompressedLong(in));
 		if (!IdConstants.factorOutThreadTrace) {
 			attrs.put(THREAD, readCompressedLong(in));

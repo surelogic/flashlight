@@ -23,7 +23,7 @@ public final class UnPrepSLJob extends AbstractSLJob {
 	static private final String[] TABLES = { "BADPUBLISH",
 			"FIELDINSTANCELOCKSET", "FIELDINSTANCETHREAD", "FIELDLOCKSET",
 			"FIELDSTATICTHREAD", "INTERESTINGFIELD", "LOCKTHREADSTATS",
-			"LOCKSHELD", "LOCKDURATION", "LOCKCYCLE", "LOCK", "TRACE",
+			"LOCKSHELD", "LOCKDURATION", "LOCKCYCLE", "LOCK", "TRACE", "SITE",
 			"ACCESS", "RWLOCK", "FIELD", "OBJECT", "RUN" };
 
 	private final PrepRunDescription f_prep;
@@ -36,7 +36,7 @@ public final class UnPrepSLJob extends AbstractSLJob {
 		f_database = database;
 	}
 
-	public SLStatus run(SLProgressMonitor monitor) {
+	public SLStatus run(final SLProgressMonitor monitor) {
 
 		final String taskName = "Removing preparing data "
 				+ f_prep.getDescription().getName();
@@ -44,8 +44,9 @@ public final class UnPrepSLJob extends AbstractSLJob {
 
 		final SLStatus failed = SLLicenseUtility.validateSLJob(
 				SLLicenseUtility.FLASHLIGHT_SUBJECT, monitor);
-		if (failed != null)
+		if (failed != null) {
 			return failed;
+		}
 
 		UsageMeter.getInstance().tickUse("Flashlight ran UnPrepSLJob");
 

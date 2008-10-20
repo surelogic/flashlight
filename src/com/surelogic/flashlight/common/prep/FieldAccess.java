@@ -2,14 +2,13 @@ package com.surelogic.flashlight.common.prep;
 
 import static com.surelogic._flashlight.common.AttributeType.FIELD;
 import static com.surelogic._flashlight.common.AttributeType.RECEIVER;
-import static com.surelogic._flashlight.common.AttributeType.SITE_ID;
 import static com.surelogic._flashlight.common.AttributeType.THREAD;
 import static com.surelogic._flashlight.common.AttributeType.TIME;
+import static com.surelogic._flashlight.common.AttributeType.TRACE;
 import static com.surelogic._flashlight.common.FlagType.UNDER_CONSTRUCTION;
 import static com.surelogic._flashlight.common.IdConstants.ILLEGAL_FIELD_ID;
 import static com.surelogic._flashlight.common.IdConstants.ILLEGAL_ID;
 import static com.surelogic._flashlight.common.IdConstants.ILLEGAL_RECEIVER_ID;
-import static com.surelogic._flashlight.common.IdConstants.ILLEGAL_SITE_ID;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -23,7 +22,7 @@ import com.surelogic.common.logging.SLLogger;
 
 public abstract class FieldAccess extends Event {
 
-	private static final String f_psQ = "INSERT INTO ACCESS (Run,TS,InThread,Site,Field,RW,Receiver,UnderConstruction) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+	private static final String f_psQ = "INSERT INTO ACCESS (Run,TS,InThread,Trace,Field,RW,Receiver,UnderConstruction) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
 	private PreparedStatement f_ps;
 
@@ -31,25 +30,21 @@ public abstract class FieldAccess extends Event {
 
 	private long skipped, inserted;
 
-	private final BeforeTrace before;
-
-	public FieldAccess(final BeforeTrace before,
-			final IntrinsicLockDurationRowInserter i) {
+	public FieldAccess(final IntrinsicLockDurationRowInserter i) {
 		super(i);
-		this.before = before;
 	}
 
 	public void parse(final int runId, final PreppedAttributes attributes)
 			throws SQLException {
 		final long nanoTime = attributes.getLong(TIME);
 		final long inThread = attributes.getLong(THREAD);
-		final long site = attributes.getLong(SITE_ID);
+		final long trace = attributes.getLong(TRACE);
 		final long field = attributes.getLong(FIELD);
 		final long receiver = attributes.getLong(RECEIVER);
 		final boolean underConstruction = attributes
 				.getBoolean(UNDER_CONSTRUCTION);
 		if ((nanoTime == ILLEGAL_ID) || (inThread == ILLEGAL_ID)
-				|| (site == ILLEGAL_SITE_ID) || (field == ILLEGAL_FIELD_ID)) {
+				|| (trace == ILLEGAL_ID) || (field == ILLEGAL_FIELD_ID)) {
 			SLLogger.getLogger().log(
 					Level.SEVERE,
 					"Missing nano-time, thread, site, or field in "
@@ -67,21 +62,20 @@ public abstract class FieldAccess extends Event {
 				return;
 			}
 		}
-		before.threadEvent(inThread);
-		insert(runId, nanoTime, inThread, site, field, receiver,
+		insert(runId, nanoTime, inThread, trace, field, receiver,
 				underConstruction);
 		inserted++;
 	}
 
 	private void insert(final int runId, final long nanoTime,
-			final long inThread, final long site, final long field,
+			final long inThread, final long trace, final long field,
 			final long receiver, final boolean underConstruction)
 			throws SQLException {
 		int idx = 1;
 		f_ps.setInt(idx++, runId);
 		f_ps.setTimestamp(idx++, getTimestamp(nanoTime));
 		f_ps.setLong(idx++, inThread);
-		f_ps.setLong(idx++, site);
+		f_ps.setLong(idx++, trace);
 		f_ps.setLong(idx++, field);
 		f_ps.setString(idx++, getRW());
 		if (receiver == ILLEGAL_FIELD_ID) {

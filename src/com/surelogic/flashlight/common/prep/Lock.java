@@ -1,15 +1,14 @@
 package com.surelogic.flashlight.common.prep;
 
 import static com.surelogic._flashlight.common.AttributeType.LOCK;
-import static com.surelogic._flashlight.common.AttributeType.SITE_ID;
 import static com.surelogic._flashlight.common.AttributeType.THREAD;
 import static com.surelogic._flashlight.common.AttributeType.TIME;
+import static com.surelogic._flashlight.common.AttributeType.TRACE;
 import static com.surelogic._flashlight.common.FlagType.CLASS_LOCK;
 import static com.surelogic._flashlight.common.FlagType.GOT_LOCK;
 import static com.surelogic._flashlight.common.FlagType.RELEASED_LOCK;
 import static com.surelogic._flashlight.common.FlagType.THIS_LOCK;
 import static com.surelogic._flashlight.common.IdConstants.ILLEGAL_ID;
-import static com.surelogic._flashlight.common.IdConstants.ILLEGAL_SITE_ID;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -22,19 +21,15 @@ import com.surelogic.common.logging.SLLogger;
 public abstract class Lock extends Event {
 	static final long FINAL_EVENT = Long.MAX_VALUE;
 
-	private final BeforeTrace before;
-
-	public Lock(final BeforeTrace before,
-			final IntrinsicLockDurationRowInserter i) {
+	public Lock(final IntrinsicLockDurationRowInserter i) {
 		super(i);
-		this.before = before;
 	}
 
 	public void parse(final int runId, final PreppedAttributes attributes)
 			throws SQLException {
 		final long nanoTime = attributes.getLong(TIME);
 		final long inThread = attributes.getLong(THREAD);
-		final long site = attributes.getLong(SITE_ID);
+		final long trace = attributes.getLong(TRACE);
 		final long lock = attributes.getLong(LOCK);
 		Boolean lockIsThis = attributes.getBoolean(THIS_LOCK);
 		Boolean lockIsClass = attributes.getBoolean(CLASS_LOCK);
@@ -48,7 +43,7 @@ public abstract class Lock extends Event {
 			success = true;
 		}
 		if ((nanoTime == ILLEGAL_ID) || (inThread == ILLEGAL_ID)
-				|| (site == ILLEGAL_SITE_ID) || (lock == ILLEGAL_ID)) {
+				|| (trace == ILLEGAL_ID) || (lock == ILLEGAL_ID)) {
 			SLLogger.getLogger().log(
 					Level.SEVERE,
 					"Missing nano-time, thread, site, or lock in "
@@ -56,9 +51,8 @@ public abstract class Lock extends Event {
 			return;
 		}
 		final Timestamp time = getTimestamp(nanoTime);
-		before.threadEvent(inThread);
 		final long id = f_rowInserter.insertLock(runId, false, time, inThread,
-				site, lock, getType(), getState(), success, lockIsThis,
+				trace, lock, getType(), getState(), success, lockIsThis,
 				lockIsClass);
 		f_rowInserter.event(runId, id, time, inThread, lock, getState(),
 				success != Boolean.FALSE);

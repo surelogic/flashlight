@@ -2,9 +2,9 @@ package com.surelogic.flashlight.common.prep;
 
 public final class AfterUtilConcurrentLockReleaseAttempt extends Lock {
 
-	public AfterUtilConcurrentLockReleaseAttempt(final BeforeTrace before,
+	public AfterUtilConcurrentLockReleaseAttempt(
 			final IntrinsicLockDurationRowInserter i) {
-		super(before, i);
+		super(i);
 	}
 
 	@Override

@@ -32,7 +32,7 @@ public final class IntrinsicLockDurationRowInserter {
 			"INSERT INTO LOCKSHELD (Run,LockEvent,LockHeld,LockAcquired,InThread) VALUES (?, ?, ?, ?, ?)",
 			"INSERT INTO LOCKTHREADSTATS (Run,LockEvent,Time,Blocking,Holding,Waiting) VALUES (?, ?, ?, ?, ?, ?)",
 			"INSERT INTO LOCKCYCLE (Run,Component,LockHeld,LockAcquired,Count,FirstTime,LastTime) VALUES (?, ?, ?, ?, ?, ?, ?)",
-			"INSERT INTO LOCK (Run,Id,TS,InThread,Site,Lock,Type,State,Success,LockIsThis,LockIsClass) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" };
+			"INSERT INTO LOCK (Run,Id,TS,InThread,Trace,Lock,Type,State,Success,LockIsThis,LockIsClass) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" };
 	private final PreparedStatement[] statements = new PreparedStatement[queries.length];
 
 	static class State {
@@ -565,7 +565,7 @@ public final class IntrinsicLockDurationRowInserter {
 
 	// Only called here and from Lock
 	long insertLock(final int runId, final boolean finalEvent,
-			final Timestamp time, final long inThread, final long site,
+			final Timestamp time, final long inThread, final long trace,
 			final long lock, final LockType lockType,
 			final LockState lockState, final Boolean success,
 			final Boolean lockIsThis, final Boolean lockIsClass)
@@ -576,7 +576,7 @@ public final class IntrinsicLockDurationRowInserter {
 		ps.setLong(idx++, finalEvent ? Lock.FINAL_EVENT : ++f_lockId);
 		ps.setTimestamp(idx++, time);
 		ps.setLong(idx++, inThread);
-		ps.setLong(idx++, site);
+		ps.setLong(idx++, trace);
 		ps.setLong(idx++, lock);
 		ps.setString(idx++, lockType.getFlag());
 		ps.setString(idx++, lockState.toString().replace('_', ' '));

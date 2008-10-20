@@ -2,9 +2,9 @@ package com.surelogic.flashlight.common.prep;
 
 public class BeforeUtilConcurrentLockAquisitionAttempt extends Lock {
 
-	public BeforeUtilConcurrentLockAquisitionAttempt(final BeforeTrace before,
+	public BeforeUtilConcurrentLockAquisitionAttempt(
 			final IntrinsicLockDurationRowInserter i) {
-		super(before, i);
+		super(i);
 	}
 
 	public String getXMLElementName() {

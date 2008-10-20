@@ -35,12 +35,10 @@ import com.surelogic.flashlight.common.model.RunManager;
 import com.surelogic.flashlight.common.prep.AfterIntrinsicLockAcquisition;
 import com.surelogic.flashlight.common.prep.AfterIntrinsicLockRelease;
 import com.surelogic.flashlight.common.prep.AfterIntrinsicLockWait;
-import com.surelogic.flashlight.common.prep.AfterTrace;
 import com.surelogic.flashlight.common.prep.AfterUtilConcurrentLockAcquisitionAttempt;
 import com.surelogic.flashlight.common.prep.AfterUtilConcurrentLockReleaseAttempt;
 import com.surelogic.flashlight.common.prep.BeforeIntrinsicLockAcquisition;
 import com.surelogic.flashlight.common.prep.BeforeIntrinsicLockWait;
-import com.surelogic.flashlight.common.prep.BeforeTrace;
 import com.surelogic.flashlight.common.prep.BeforeUtilConcurrentLockAquisitionAttempt;
 import com.surelogic.flashlight.common.prep.ClassDefinition;
 import com.surelogic.flashlight.common.prep.FieldDefinition;
@@ -56,6 +54,7 @@ import com.surelogic.flashlight.common.prep.ScanRawFilePreScan;
 import com.surelogic.flashlight.common.prep.ScanRawFilePrepScan;
 import com.surelogic.flashlight.common.prep.StaticCallLocation;
 import com.surelogic.flashlight.common.prep.ThreadDefinition;
+import com.surelogic.flashlight.common.prep.Trace;
 
 public final class PrepSLJob extends AbstractSLJob {
 
@@ -68,19 +67,16 @@ public final class PrepSLJob extends AbstractSLJob {
 	private static final int EACH_POST_PREP = 50;
 	private static final int ADD_CONSTRAINT_WORK = 100;
 
-	private IPrep[] getParseHandlers(final IntrinsicLockDurationRowInserter i,
-			final BeforeTrace beforeTrace) {
-		return new IPrep[] { beforeTrace, new AfterTrace(beforeTrace, i),
-				new AfterIntrinsicLockAcquisition(beforeTrace, i),
-				new AfterIntrinsicLockWait(beforeTrace, i),
-				new AfterIntrinsicLockRelease(beforeTrace, i),
-				new BeforeIntrinsicLockAcquisition(beforeTrace, i),
-				new BeforeIntrinsicLockWait(beforeTrace, i),
-				new BeforeUtilConcurrentLockAquisitionAttempt(beforeTrace, i),
-				new AfterUtilConcurrentLockAcquisitionAttempt(beforeTrace, i),
-				new AfterUtilConcurrentLockReleaseAttempt(beforeTrace, i),
-				new FieldRead(beforeTrace, i), new FieldWrite(beforeTrace, i),
-				new ReadWriteLock(i), new ClassDefinition(),
+	private IPrep[] getParseHandlers(final IntrinsicLockDurationRowInserter i) {
+		return new IPrep[] { new Trace(), new AfterIntrinsicLockAcquisition(i),
+				new AfterIntrinsicLockWait(i),
+				new AfterIntrinsicLockRelease(i),
+				new BeforeIntrinsicLockAcquisition(i),
+				new BeforeIntrinsicLockWait(i),
+				new BeforeUtilConcurrentLockAquisitionAttempt(i),
+				new AfterUtilConcurrentLockAcquisitionAttempt(i),
+				new AfterUtilConcurrentLockReleaseAttempt(i), new FieldRead(i),
+				new FieldWrite(i), new ReadWriteLock(i), new ClassDefinition(),
 				new FieldDefinition(), new ThreadDefinition(),
 				new StaticCallLocation(), new ObjectDefinition() };
 	}
@@ -204,10 +200,7 @@ public final class PrepSLJob extends AbstractSLJob {
 									 */
 									final IntrinsicLockDurationRowInserter i = new IntrinsicLockDurationRowInserter(
 											c);
-									final BeforeTrace beforeTrace = new BeforeTrace(
-											i);
-									final IPrep[] f_parseElements = getParseHandlers(
-											i, beforeTrace);
+									final IPrep[] f_parseElements = getParseHandlers(i);
 									final SLProgressMonitor setupMonitor = new SubSLProgressMonitor(
 											monitor,
 											"Setting up event handlers",

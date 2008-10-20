@@ -8,6 +8,9 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
+import com.surelogic._flashlight.common.BinaryAttributes;
+import com.surelogic._flashlight.common.IAttributeType;
+import com.surelogic._flashlight.common.IdConstants;
 import com.surelogic.common.CharBuffer;
 import com.surelogic.common.xml.Entities;
 
@@ -32,12 +35,36 @@ public class ConvertBinaryFileScan extends DefaultHandler {
 	{
 		f_buf.clear();
 		f_buf.append('<').append(qName);
-		final int numAttrs = attributes.getLength();
-		for(int i=0; i<numAttrs; i++) {
-			String name  = attributes.getLocalName(i);
-			String value = attributes.getValue(i);
-			f_buf.append(' ').append(name).append("='");
-			Entities.addEscaped(value, f_buf).append('\'');
+		if (attributes instanceof BinaryAttributes) {
+			BinaryAttributes ba = (BinaryAttributes) attributes;
+			for(Map.Entry<IAttributeType,Object> e : ba.entrySet()) {
+				final String name = e.getKey().label();
+				Object v = e.getValue();
+				String value;
+				if (v instanceof Long) {
+					Long l = (Long) v;
+					if (l.longValue() == IdConstants.ILLEGAL_ID) {
+						continue;
+					}
+				}
+				else if (v instanceof Integer) {
+					Integer i = (Integer) v;
+					if (i.intValue() == IdConstants.ILLEGAL_LINE) {
+						continue;
+					}
+				}
+				value = v.toString();
+				f_buf.append(' ').append(name).append("='");
+				Entities.addEscaped(value, f_buf).append('\'');
+			}
+		} else {
+			final int numAttrs = attributes.getLength();
+			for(int i=0; i<numAttrs; i++) {
+				String name  = attributes.getLocalName(i);
+				String value = attributes.getValue(i);
+				f_buf.append(' ').append(name).append("='");
+				Entities.addEscaped(value, f_buf).append('\'');
+			}
 		}
 		f_buf.append("/>\n");
 		f_buf.write(f_out);

@@ -1,9 +1,6 @@
 package com.surelogic.flashlight.common.prep;
 
-import static com.surelogic._flashlight.common.AttributeType.FIELD;
-import static com.surelogic._flashlight.common.AttributeType.RECEIVER;
-import static com.surelogic._flashlight.common.AttributeType.THREAD;
-import static com.surelogic._flashlight.common.AttributeType.TIME;
+import static com.surelogic._flashlight.common.AttributeType.*;
 import static com.surelogic._flashlight.common.AttributeType.TRACE;
 import static com.surelogic._flashlight.common.FlagType.UNDER_CONSTRUCTION;
 import static com.surelogic._flashlight.common.IdConstants.ILLEGAL_FIELD_ID;

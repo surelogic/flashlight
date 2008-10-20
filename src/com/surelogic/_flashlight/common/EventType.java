@@ -318,15 +318,14 @@ public enum EventType {
 		Long startT = (Long) attrs.get(START_TIME);		
 		long start = startT == null ? 0 : startT.longValue();
 		attrs.put(TIME, start + readCompressedLong(in));
-		if (!IdConstants.factorOutThreadTrace) {
+		if (!IdConstants.factorOutThread) {
 			attrs.put(THREAD, readCompressedLong(in));
 		}
-		attrs.put(SITE_ID, readCompressedLong(in));
 	}
 	
 	static void readTracedEvent(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
 		readCommon(in, attrs);
-		if (IdConstants.useTraceNodes && !IdConstants.factorOutThreadTrace) {
+		if (IdConstants.useTraceNodes) {
 			attrs.put(TRACE, readCompressedLong(in));
 		}
 	}
@@ -357,6 +356,7 @@ public enum EventType {
 	
 	static void readTraceEvent(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
 		readCommon(in, attrs);
+		attrs.put(SITE_ID, readCompressedLong(in));
 	}
 
 	static int readCompressedInt(ObjectInputStream in) throws IOException {

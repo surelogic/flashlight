@@ -32,28 +32,7 @@ import com.surelogic.flashlight.common.files.RawDataFilePrefix;
 import com.surelogic.flashlight.common.files.RawFileUtility;
 import com.surelogic.flashlight.common.model.RunDescription;
 import com.surelogic.flashlight.common.model.RunManager;
-import com.surelogic.flashlight.common.prep.AfterIntrinsicLockAcquisition;
-import com.surelogic.flashlight.common.prep.AfterIntrinsicLockRelease;
-import com.surelogic.flashlight.common.prep.AfterIntrinsicLockWait;
-import com.surelogic.flashlight.common.prep.AfterUtilConcurrentLockAcquisitionAttempt;
-import com.surelogic.flashlight.common.prep.AfterUtilConcurrentLockReleaseAttempt;
-import com.surelogic.flashlight.common.prep.BeforeIntrinsicLockAcquisition;
-import com.surelogic.flashlight.common.prep.BeforeIntrinsicLockWait;
-import com.surelogic.flashlight.common.prep.BeforeUtilConcurrentLockAquisitionAttempt;
-import com.surelogic.flashlight.common.prep.ClassDefinition;
-import com.surelogic.flashlight.common.prep.FieldDefinition;
-import com.surelogic.flashlight.common.prep.FieldRead;
-import com.surelogic.flashlight.common.prep.FieldWrite;
-import com.surelogic.flashlight.common.prep.IPostPrep;
-import com.surelogic.flashlight.common.prep.IPrep;
-import com.surelogic.flashlight.common.prep.IntrinsicLockDurationRowInserter;
-import com.surelogic.flashlight.common.prep.LockSetAnalysis;
-import com.surelogic.flashlight.common.prep.ObjectDefinition;
-import com.surelogic.flashlight.common.prep.ReadWriteLock;
-import com.surelogic.flashlight.common.prep.ScanRawFilePreScan;
-import com.surelogic.flashlight.common.prep.ScanRawFilePrepScan;
-import com.surelogic.flashlight.common.prep.StaticCallLocation;
-import com.surelogic.flashlight.common.prep.ThreadDefinition;
+import com.surelogic.flashlight.common.prep.*;
 import com.surelogic.flashlight.common.prep.Trace;
 
 public final class PrepSLJob extends AbstractSLJob {
@@ -78,6 +57,7 @@ public final class PrepSLJob extends AbstractSLJob {
 				new AfterUtilConcurrentLockReleaseAttempt(i), new FieldRead(i),
 				new FieldWrite(i), new ReadWriteLock(i), new ClassDefinition(),
 				new FieldDefinition(), new ThreadDefinition(),
+				new TraceNode(),
 				new StaticCallLocation(), new ObjectDefinition() };
 	}
 

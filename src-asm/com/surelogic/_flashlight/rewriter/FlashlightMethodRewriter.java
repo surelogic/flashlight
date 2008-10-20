@@ -33,9 +33,9 @@ final class FlashlightMethodRewriter implements MethodVisitor {
     public void superConstructorCalled() {
       stateMachine = null;
       /*
-       * Must initialize the flashlight$phantomObject field before calling th
-       * constructorExcecution event because constructorExecution() will may
-       * cause getPhantom$Reference() to be called. If we don't have init the
+       * Must initialize the flashlight$phantomObject field before calling the
+       * constructorExcecution event because constructorExecution() may
+       * cause getPhantom$Reference() to be called. If we don't init the
        * field first, then this could return null causing a NullPointerException
        * in the store.
        */
@@ -1640,7 +1640,6 @@ final class FlashlightMethodRewriter implements MethodVisitor {
   // == For implementing IIdObject
   // =========================================================================
 
-  // +2 on the stack
   private void initPhantomObjectField() {
     mv.visitVarInsn(Opcodes.ALOAD, 0);
     mv.visitVarInsn(Opcodes.ALOAD, 0);
@@ -1652,6 +1651,7 @@ final class FlashlightMethodRewriter implements MethodVisitor {
     mv.visitFieldInsn(Opcodes.PUTFIELD, classBeingAnalyzedInternal,
         FlashlightNames.FLASHLIGHT_PHANTOM_OBJECT,
         FlashlightNames.FLASHLIGHT_PHANTOM_OBJECT_DESC);
+    updateStackDepthDelta(2);
   }
   
   

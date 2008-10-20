@@ -4,7 +4,6 @@ public final class IdConstants {
 	public static final boolean useTraces = true;
 	public static final boolean useFieldAccesses = true;
 	public static final boolean outputBinary = false;
-	public static final boolean useTraceNodes = true;
 	public static final boolean keepLocationInTracedEvents = true;
 	public static final boolean useRefinery = true;
 	public static final boolean filterEvents = true;

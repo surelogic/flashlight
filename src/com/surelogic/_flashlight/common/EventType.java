@@ -325,9 +325,7 @@ public enum EventType {
 	
 	static void readTracedEvent(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
 		readCommon(in, attrs);
-		if (IdConstants.useTraceNodes) {
-			attrs.put(TRACE, readCompressedLong(in));
-		}
+		attrs.put(TRACE, readCompressedLong(in));
 	}
 	
 	static void readFieldAccess(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {

@@ -55,8 +55,8 @@ public class OutputStrategyFields extends EventVisitor {
 		write(e.getNanoTime());
 		//buf.append('T');
 		write(e.getWithinThread().getId());
-		//buf.append('S');
-		write(e.getSiteId());
+		//buf.append('?');
+		write(e.getTraceId());
 		//buf.append('F');
 		write(e.getFieldId());
 		//buf.append('R');

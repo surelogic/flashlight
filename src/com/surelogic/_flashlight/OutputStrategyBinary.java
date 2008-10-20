@@ -400,10 +400,9 @@ public class OutputStrategyBinary extends EventVisitor {
 		if (debug) System.out.println("\tTime: "+e.getNanoTime());
 		//f_out.writeLong(e.getNanoTime());		
 		writeCompressedLong(e.getNanoTime() - start);
-		if (!IdConstants.factorOutThreadTrace) {
+		if (!IdConstants.factorOutThread) {
 			bytes += writeCompressedLong(e.getWithinThread().getId());
 		}
-		bytes += writeCompressedMaybeNegativeLong(e.getSiteId());
 		//commonBytes += bytes;
 	}
 	
@@ -416,7 +415,7 @@ public class OutputStrategyBinary extends EventVisitor {
 			writeTrace(e.getTraceId());
 		}
 		writeCommon(header, e);
-		if (TraceNode.inUse && !IdConstants.factorOutThreadTrace) {
+		if (TraceNode.inUse) {
 			/*tracedBytes +=*/ writeCompressedLong(e.getTraceId());
 			/*
 			totalTraces++;
@@ -490,6 +489,7 @@ public class OutputStrategyBinary extends EventVisitor {
 	private void writeTraceEvent(byte header, Trace e) {
 		try {
 			writeCommon(header, e);
+			writeCompressedMaybeNegativeLong(e.getSiteId());
 		} catch (IOException ioe) {
 			handleIOException(ioe);
 		}

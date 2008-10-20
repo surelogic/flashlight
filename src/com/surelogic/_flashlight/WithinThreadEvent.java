@@ -41,20 +41,12 @@ abstract class WithinThreadEvent extends ProgramEvent {
 	IdPhantomReference getWithinThread() {
 		return f_withinThread;
 	}
-
-	private final long f_siteId;
 	
-	public long getSiteId() {
-		return f_siteId;
-	}
-	
-	WithinThreadEvent(final long siteId, ThreadPhantomReference thread) {
-		f_siteId = siteId;
+	WithinThreadEvent(ThreadPhantomReference thread) {
 		f_withinThread = thread;
 	}
 
 	protected void addThread(final StringBuilder b) {
 		Entities.addAttribute("thread", f_withinThread.getId(), b);
-		Entities.addAttribute("site", f_siteId, b);
 	}
 }

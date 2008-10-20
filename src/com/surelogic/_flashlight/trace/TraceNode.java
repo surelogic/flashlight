@@ -1,5 +1,8 @@
 package com.surelogic._flashlight.trace;
 
+import static com.surelogic._flashlight.common.AttributeType.*;
+import static com.surelogic._flashlight.common.EventType.*;
+
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.surelogic._flashlight.*;
@@ -239,6 +242,17 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 	    v.visit(this);
 	}
 	
+	@Override
+    public String toString() {
+		StringBuilder b = new StringBuilder();
+		b.append("<").append(Trace_Node.getLabel());
+		Entities.addAttribute(ID.label(), getId(), b);
+		Entities.addAttribute(SITE_ID.label(), getSiteId(), b);
+		Entities.addAttribute(PARENT_ID.label(), getParentId(), b);
+		b.append("/>");
+		return b.toString();
+	}
+	
 	public final ITraceNode pushCallee(long siteId) {
 		return new PairPlaceholder(this, siteId);
 	}
@@ -355,7 +369,7 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 			return id;
 		}
 
-		public TraceNode getCurrentNode(Store.State state) {
+		private TraceNode getCurrentNode(Store.State state) {
 			final ITraceNode current = this.current;
 			if (current == null) {
 				return null;
@@ -366,6 +380,16 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 				this.current = real;
 			}
 			return real;
+		}
+		
+		public TraceNode getCurrentNode(long siteId, Store.State state) {
+			
+			TraceNode.pushTraceNode(siteId, state);
+			try {
+				return getCurrentNode(state);
+			} finally {
+				TraceNode.popTraceNode(siteId, state);
+			}
 		}
 	}
 	

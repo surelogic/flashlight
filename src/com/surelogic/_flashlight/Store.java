@@ -230,8 +230,8 @@ public final class Store {
 			}
 		}
 		
-		TraceNode getCurrentTrace() {
-			return traceHeader.getCurrentNode(this);
+		TraceNode getCurrentTrace(long siteId) {
+			return traceHeader.getCurrentNode(siteId, this);
 		}
 	}
 	
@@ -375,6 +375,7 @@ public final class Store {
 			final int rawQueueSize = StoreConfiguration.getRawQueueSize();			
 			f_rawQueue = new ArrayBlockingQueue<List<Event>>(rawQueueSize);
 			putInQueue(f_rawQueue, singletonList(timeEvent));
+			
 			final int outQueueSize = StoreConfiguration.getOutQueueSize();
 			System.err.println("Using refinery = "+IdConstants.useRefinery);
 			if (IdConstants.useRefinery) {

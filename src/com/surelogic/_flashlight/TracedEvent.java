@@ -7,7 +7,7 @@ public abstract class TracedEvent extends WithinThreadEvent {
 	private final TraceNode trace; // = TraceNode.getCurrentNode();
 	
 	TracedEvent(final long siteId, final Store.State state) {		
-		super(siteId, state.thread);
+		super(state.thread);
 		/*
 		if (trace == null) {
 			System.out.println("??? -> "+withinClass.getName()+":"+line);		
@@ -16,7 +16,7 @@ public abstract class TracedEvent extends WithinThreadEvent {
 					           withinClass.getName()+":"+line);		 
 		}
 		*/
-		trace = state.getCurrentTrace();
+		trace = state.getCurrentTrace(siteId);
 	}
 	
 	long getTraceId() {

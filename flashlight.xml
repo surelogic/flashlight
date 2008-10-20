@@ -57,7 +57,7 @@
 			  <attribute name="Manifest-Version" value="1.0"/>
 			</manifest>
 	  </jar>	  
-	  <!-- copy file="${flashlight-all.jar}" todir="${basedir}/../flashlight-client-eclipse/lib"/ -->
+	  <copy file="${flashlight-all.jar}" todir="${basedir}/../flashlight-client-eclipse/lib"/>
 	</target>
 
 	<target name="build-runtime-jar">
@@ -73,6 +73,7 @@
 			  <attribute name="Manifest-Version" value="1.0"/>
 			</manifest>
 	  </jar>
+	  <copy file="${flashlight-runtime.jar}" todir="${basedir}/../flashlight-client-eclipse/lib"/>	  	  
 	</target>
 
 	<target name="build-servlet-jar">
@@ -93,6 +94,7 @@
 				<attribute name="Class-Path" value="asm-3.1.jar asm-commons-3.1.jar"/>
 			</manifest>
 	  </jar>
+	  <copy file="${flashlight-rewriter.jar}" todir="${basedir}/../flashlight-client-eclipse/lib"/>	  
 	</target>
 
 	<target name="build-jars-eclipse" depends="build-all-jar, build-runtime-jar, build-servlet-jar, build-rewriter-jar" />

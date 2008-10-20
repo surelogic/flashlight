@@ -2,6 +2,8 @@ package com.surelogic._flashlight;
 
 import java.io.PrintWriter;
 
+import com.surelogic._flashlight.trace.TraceNode;
+
 final class OutputStrategyXML extends EventVisitor {
 
 	private final PrintWriter f_out;
@@ -171,6 +173,11 @@ final class OutputStrategyXML extends EventVisitor {
 	
 	@Override
 	void visit(Time e) {
+		o(e.toString());
+	}
+	
+	@Override
+	public void visit(TraceNode e) {
 		o(e.toString());
 	}
 	

@@ -12,10 +12,10 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 	static final boolean recordOnPush = false;
 	
 	/**
-	 * This represents the top 48 bits of the id
+	 * This represents the top N bits of the id
 	 */
 	private static final AtomicLong nextSequenceId = new AtomicLong(0); 
-	private static final int SEQUENCE_SHIFT = 16;
+	private static final int SEQUENCE_SHIFT = 14;
 	private static final int SEQUENCE_MASK  = (1 << SEQUENCE_SHIFT) - 1;
 	
 	static final LongMap<TraceNode> roots = new LongMap<TraceNode>();
@@ -329,12 +329,12 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 	}
 	
 	static long getFirstIdInSequence() {
-		long top48 = nextSequenceId.getAndIncrement();
+		long topBits = nextSequenceId.getAndIncrement();
 		long id;
-		if (top48 == 0) {
+		if (topBits == 0) {
 			id = 1; // 0 is for no parent (null)
 		} else {
-			id = top48 << SEQUENCE_SHIFT;
+			id = topBits << SEQUENCE_SHIFT;
 		}
 		return id;
 	}

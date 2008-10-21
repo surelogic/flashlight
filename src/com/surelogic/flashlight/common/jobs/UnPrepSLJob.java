@@ -23,8 +23,8 @@ public final class UnPrepSLJob extends AbstractSLJob {
 	static private final String[] TABLES = { "BADPUBLISH",
 			"FIELDINSTANCELOCKSET", "FIELDINSTANCETHREAD", "FIELDLOCKSET",
 			"FIELDSTATICTHREAD", "INTERESTINGFIELD", "LOCKTHREADSTATS",
-			"LOCKSHELD", "LOCKDURATION", "LOCKCYCLE", "LOCK", "TRACE", "SITE",
-			"ACCESS", "RWLOCK", "FIELD", "OBJECT", "RUN" };
+			"LOCKSHELD", "LOCKDURATION", "LOCKCYCLE", "LOCK", "ACCESS",
+			"TRACE", "SITE", "RWLOCK", "FIELD", "OBJECT", "RUN" };
 
 	private final PrepRunDescription f_prep;
 	private final DBConnection f_database;

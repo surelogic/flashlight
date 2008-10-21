@@ -5,7 +5,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 //import java.util.Properties;
@@ -26,6 +25,7 @@ import com.surelogic._flashlight.rewriter.Configuration;
 import com.surelogic._flashlight.rewriter.EngineMessenger;
 import com.surelogic._flashlight.rewriter.PrintWriterMessenger;
 import com.surelogic._flashlight.rewriter.RewriteManager;
+import com.surelogic.common.eclipse.MemoryUtility;
 import com.surelogic.common.eclipse.SourceZip;
 import com.surelogic.common.eclipse.logging.SLEclipseStatusUtility;
 import com.surelogic.common.logging.SLLogger;
@@ -34,6 +34,9 @@ import com.surelogic.flashlight.client.eclipse.jobs.SwitchToFlashlightPerspectiv
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
 
 final class FlashlightVMRunner implements IVMRunner {
+  private static final String MAX_HEAP_PREFIX = "-Xmx";
+  private static final long DEFAULT_MAX_HEAP_SIZE = 64 * 1024 * 1024;
+  
   private static final String LOG_FILE_NAME = "instrumentation.log";
   private static final String FIELDS_FILE_NAME = "fields.txt";
   private static final String SITES_FILE_NAME = "sites.txt";
@@ -209,14 +212,16 @@ final class FlashlightVMRunner implements IVMRunner {
     final String[] vmArgs = original.getVMArguments();
     
     // Check for the use or absence of "-XmX"
-    String maxHeapSetting = null;
-    for (final String vmArg : vmArgs) {
-      if (vmArg.startsWith("-Xmx")) {
-        maxHeapSetting = vmArg;
+    int heapSettingPos = -1;
+    for (int i = 0; i < vmArgs.length; i++) {
+      if (vmArgs[i].startsWith(MAX_HEAP_PREFIX)) {
+        heapSettingPos = i;
+        break;
       }
     }
     final long maxHeapSize;
-    if (maxHeapSetting != null) {
+    if (heapSettingPos != -1) {
+      final String maxHeapSetting = vmArgs[heapSettingPos];
       // We assume the -Xmx option is well-formed
       final int multiplier;
       final int lastChar = maxHeapSetting.charAt(maxHeapSetting.length()-1);
@@ -234,12 +239,11 @@ final class FlashlightVMRunner implements IVMRunner {
       final long rawHeapSize = Long.parseLong(maxHeapSetting.substring(4, endPos));
       maxHeapSize = rawHeapSize << multiplier;
     } else {
-      maxHeapSize = -1L;
+      maxHeapSize = DEFAULT_MAX_HEAP_SIZE;
     }
-    System.out.println("Max heap size = " + maxHeapSize);
     
-    // We will add at most ten arguments, but maybe less
-    final List<String> newVmArgsList = new ArrayList<String>(vmArgs.length + 10);
+    // We will add at most eleven arguments, but maybe less
+    final List<String> newVmArgsList = new ArrayList<String>(vmArgs.length + 11);
     
     final String rawQSize = Activator.getDefault().getPluginPreferences().getString(PreferenceConstants.P_RAWQ_SIZE);
     final String refSize = Activator.getDefault().getPluginPreferences().getString(PreferenceConstants.P_REFINERY_SIZE);
@@ -255,10 +259,19 @@ final class FlashlightVMRunner implements IVMRunner {
     newVmArgsList.add("-DFL_OUTQ_SIZE=" + outQSize);
     newVmArgsList.add("-DFL_CONSOLE_PORT=" + cPort);
     newVmArgsList.add("-DFL_DATE_OVERRIDE=" + datePostfix);
-    
     if (!useSpy) newVmArgsList.add("-DFL_NO_SPY=true");
-    // Add the original arguments afterwards
-    newVmArgsList.addAll(Arrays.asList(vmArgs));
+    
+    final long maxSystemHeapSize = ((long) MemoryUtility.computeMaxMemorySize()) << 20;
+    final long newHeapSizeRaw = Math.min(3 * maxHeapSize, maxSystemHeapSize);
+    newVmArgsList.add(MAX_HEAP_PREFIX + Long.toString(newHeapSizeRaw));
+    SLLogger.getLogger().log(Level.INFO,
+        "Increasing maximum heap size for launched application to "
+            + newHeapSizeRaw + " bytes from " + maxHeapSize + " bytes");
+    
+    // Add the original arguments afterwards, skipping the original -Xmx setting
+    for (int i = 0; i < vmArgs.length; i++) {
+      if (i != heapSettingPos) newVmArgsList.add(vmArgs[i]);
+    }
     // Get the new array of vm arguments
     String[] newVmArgs = new String[newVmArgsList.size()];
     newConfig.setVMArguments(newVmArgsList.toArray(newVmArgs));

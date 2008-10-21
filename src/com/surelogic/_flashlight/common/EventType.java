@@ -113,14 +113,17 @@ public enum EventType {
 	FieldRead_Instance("field-read") {
 		@Override
 		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
-			readFieldAccessInstance(in, attrs);
+			readFieldAccessInstance(in, attrs, false);
 		}
 	},	
-	FieldRead_Instance_UnderConstruction("field-read") {
+	FieldRead_Instance_WithReceiver("field-read") {
 		@Override
 		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
-			readFieldAccessInstance(in, attrs);
-			attrs.put(UNDER_CONSTRUCTION, Boolean.TRUE);
+			readFieldAccessInstance(in, attrs, true);
+		}
+		@Override
+		IAttributeType getPersistentAttribute() {
+			return RECEIVER;
 		}
 	},
 	FieldRead_Static("field-read") {
@@ -128,19 +131,23 @@ public enum EventType {
 		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
 			readFieldAccess(in, attrs);
 			attrs.put(RECEIVER, IdConstants.ILLEGAL_RECEIVER_ID);
+			attrs.put(UNDER_CONSTRUCTION, Boolean.FALSE);
 		}
 	},	
 	FieldWrite_Instance("field-write") {
 		@Override
 		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
-			readFieldAccessInstance(in, attrs);
+			readFieldAccessInstance(in, attrs, false);
 		}
 	},
-	FieldWrite_Instance_UnderConstruction("field-write") {
+	FieldWrite_Instance_WithReceiver("field-write") {
 		@Override
 		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
-			readFieldAccessInstance(in, attrs);
-			attrs.put(UNDER_CONSTRUCTION, Boolean.TRUE);
+			readFieldAccessInstance(in, attrs, true);
+		}
+		@Override
+		IAttributeType getPersistentAttribute() {
+			return RECEIVER;
 		}
 	},
 	FieldWrite_Static("field-write") {
@@ -148,6 +155,7 @@ public enum EventType {
 		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
 			readFieldAccess(in, attrs);
 			attrs.put(RECEIVER, IdConstants.ILLEGAL_RECEIVER_ID);
+			attrs.put(UNDER_CONSTRUCTION, Boolean.FALSE);
 		}
 	},
 	Final_Event("final") {
@@ -167,6 +175,16 @@ public enum EventType {
 		@Override
 		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
 			attrs.put(ID, readCompressedLong(in));
+		}
+	},
+	Not_Under_Construction("not-under-construction") {
+		@Override
+		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+			  attrs.put(UNDER_CONSTRUCTION, Boolean.FALSE);
+		}
+		@Override
+		IAttributeType getPersistentAttribute() {
+			return UNDER_CONSTRUCTION;
 		}
 	},
 	Object_Definition("object-definition") {
@@ -279,6 +297,16 @@ public enum EventType {
 		IAttributeType getPersistentAttribute() {
 			return TRACE;
 		}
+	},
+	Under_Construction("under-construction") {
+		@Override
+		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+			  attrs.put(UNDER_CONSTRUCTION, Boolean.TRUE);
+		}
+		@Override
+		IAttributeType getPersistentAttribute() {
+			return UNDER_CONSTRUCTION;
+		}
 	}
 	;
 	public static final int NumEvents = values().length;
@@ -338,13 +366,16 @@ public enum EventType {
 		attrs.put(FIELD, readCompressedLong(in));
 	}
 	
-	static void readFieldAccessInstance(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+	static void readFieldAccessInstance(ObjectInputStream in, Map<IAttributeType,Object> attrs,
+			                            boolean withReceiver) throws IOException {
 		readFieldAccess(in, attrs);
 		/*
 		final int flags = readCompressedInt(in);
 		readFlag(flags, UNDER_CONSTRUCTION, attrs);
 		*/
-		//attrs.put(RECEIVER, readCompressedLong(in));
+		if (withReceiver) {
+			attrs.put(RECEIVER, readCompressedLong(in));
+		}
 	}
 	
 	static void readLockEvent(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {

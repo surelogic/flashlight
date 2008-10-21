@@ -64,6 +64,11 @@ public class FlashlightPreferencePage extends FieldEditorPreferencePage
 				PreferenceConstants.P_AUTO_PERSPECTIVE_SWITCH,
 				"If no prompt, automatically change to the Flashlight perspective on instrumented launch",
 				getFieldEditorParent()));
+
+		addField(new BooleanFieldEditor(
+				PreferenceConstants.P_AUTO_INCREASE_HEAP_AT_LAUNCH,
+				"Automatically increase the maximum heap memory for each instrumented launch",
+				getFieldEditorParent()));
 	}
 
 	public void init(IWorkbench workbench) {

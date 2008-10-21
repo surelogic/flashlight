@@ -2,7 +2,6 @@ package com.surelogic.flashlight.client.eclipse.preferences;
 
 import com.surelogic.flashlight.client.eclipse.Activator;
 
-
 /**
  * Constant definitions for plug-in preferences
  */
@@ -42,5 +41,12 @@ public class PreferenceConstants {
 	public static void setAutoPerspectiveSwitch(boolean value) {
 		Activator.getDefault().getPluginPreferences().setValue(
 				P_AUTO_PERSPECTIVE_SWITCH, value);
+	}
+
+	public static final String P_AUTO_INCREASE_HEAP_AT_LAUNCH = "com.surelogic.flashlight.auto.increase.heap.at.launch";
+
+	public static boolean getAutoIncreasHeapAtLaunch() {
+		return Activator.getDefault().getPluginPreferences().getBoolean(
+				P_AUTO_INCREASE_HEAP_AT_LAUNCH);
 	}
 }

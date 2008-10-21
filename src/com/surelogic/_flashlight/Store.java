@@ -215,7 +215,7 @@ public final class Store {
 	public static final class State {
 		boolean inside = false;
 		final ThreadPhantomReference thread;
-		public final TraceNode.Header traceHeader = TraceNode.makeHeader();
+		public final TraceNode.Header traceHeader;
 		final List<Event> eventQueue;
 		final BlockingQueue<List<Event>> rawQueue;
 		
@@ -225,8 +225,10 @@ public final class Store {
 			if (flashlightThread) {
 				inside = true;
 				thread = null;
+				traceHeader = null;
 			} else {
 				thread = Phantom.ofThread(Thread.currentThread());
+				traceHeader = TraceNode.makeHeader();
 			}
 		}
 		

@@ -261,7 +261,7 @@ final class FlashlightVMRunner implements IVMRunner {
     newVmArgsList.add("-DFL_DATE_OVERRIDE=" + datePostfix);
     if (!useSpy) newVmArgsList.add("-DFL_NO_SPY=true");
     
-    if (PreferenceConstants.getAutoIncreasHeapAtLaunch()) {
+    if (PreferenceConstants.getAutoIncreaseHeapAtLaunch()) {
       final long maxSystemHeapSize = ((long) MemoryUtility.computeMaxMemorySizeInMb()) << 20;
       final long newHeapSizeRaw = Math.min(3 * maxHeapSize, maxSystemHeapSize);
       newVmArgsList.add(MAX_HEAP_PREFIX + Long.toString(newHeapSizeRaw));

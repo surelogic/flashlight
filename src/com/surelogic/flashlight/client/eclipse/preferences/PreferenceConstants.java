@@ -45,7 +45,7 @@ public class PreferenceConstants {
 
 	public static final String P_AUTO_INCREASE_HEAP_AT_LAUNCH = "com.surelogic.flashlight.auto.increase.heap.at.launch";
 
-	public static boolean getAutoIncreasHeapAtLaunch() {
+	public static boolean getAutoIncreaseHeapAtLaunch() {
 		return Activator.getDefault().getPluginPreferences().getBoolean(
 				P_AUTO_INCREASE_HEAP_AT_LAUNCH);
 	}

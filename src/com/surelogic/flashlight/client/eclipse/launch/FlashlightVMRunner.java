@@ -261,16 +261,23 @@ final class FlashlightVMRunner implements IVMRunner {
     newVmArgsList.add("-DFL_DATE_OVERRIDE=" + datePostfix);
     if (!useSpy) newVmArgsList.add("-DFL_NO_SPY=true");
     
-    final long maxSystemHeapSize = ((long) MemoryUtility.computeMaxMemorySizeInMb()) << 20;
-    final long newHeapSizeRaw = Math.min(3 * maxHeapSize, maxSystemHeapSize);
-    newVmArgsList.add(MAX_HEAP_PREFIX + Long.toString(newHeapSizeRaw));
-    SLLogger.getLogger().log(Level.INFO,
-        "Increasing maximum heap size for launched application to "
-            + newHeapSizeRaw + " bytes from " + maxHeapSize + " bytes");
-    
-    // Add the original arguments afterwards, skipping the original -Xmx setting
-    for (int i = 0; i < vmArgs.length; i++) {
-      if (i != heapSettingPos) newVmArgsList.add(vmArgs[i]);
+    if (PreferenceConstants.getAutoIncreasHeapAtLaunch()) {
+      final long maxSystemHeapSize = ((long) MemoryUtility.computeMaxMemorySizeInMb()) << 20;
+      final long newHeapSizeRaw = Math.min(3 * maxHeapSize, maxSystemHeapSize);
+      newVmArgsList.add(MAX_HEAP_PREFIX + Long.toString(newHeapSizeRaw));
+      SLLogger.getLogger().log(Level.INFO,
+          "Increasing maximum heap size for launched application to "
+              + newHeapSizeRaw + " bytes from " + maxHeapSize + " bytes");
+      
+      // Add the original arguments afterwards, skipping the original -Xmx setting
+      for (int i = 0; i < vmArgs.length; i++) {
+        if (i != heapSettingPos) newVmArgsList.add(vmArgs[i]);
+      }
+    } else {
+      // Add the original arguments unchanged
+      for (int i = 0; i < vmArgs.length; i++) {
+        newVmArgsList.add(vmArgs[i]);
+      }
     }
     // Get the new array of vm arguments
     String[] newVmArgs = new String[newVmArgsList.size()];

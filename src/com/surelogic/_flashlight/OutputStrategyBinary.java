@@ -22,6 +22,7 @@ public class OutputStrategyBinary extends EventVisitor {
 	private long lastThread = NO_VALUE; 
 	private long lastTrace = NO_VALUE;
 	private long lastReceiver = NO_VALUE;
+	private long lastLock = NO_VALUE;
 	private Boolean lastUnderConstruction = null;
 	/*
 	private boolean lastWasTraceNode = false;
@@ -398,6 +399,13 @@ public class OutputStrategyBinary extends EventVisitor {
 		return true;
 	}
 	
+	private void writeLock(long id) throws IOException {
+		if (id != lastLock) {
+			lastLock = id;
+			writeLong_unsafe(Lock.getByte(), id, true);			
+		}
+	}
+	
 	private void writeUnderConstruction(Boolean constructing) throws IOException {
 		if (constructing != lastUnderConstruction) {
 			lastUnderConstruction = constructing;
@@ -485,8 +493,13 @@ public class OutputStrategyBinary extends EventVisitor {
 	
 	private void writeLockEvent(byte header, Lock e) {
 		try {
+			if (IdConstants.factorOutLock) {
+				writeLock(e.getLockObject().getId());
+			}
 			writeTracedEvent(header, e);
-			writeCompressedLong(e.getLockObject().getId());
+			if (!IdConstants.factorOutLock) {
+				writeCompressedLong(e.getLockObject().getId());
+			}
 		} catch (IOException ioe) {
 			handleIOException(ioe);
 		}

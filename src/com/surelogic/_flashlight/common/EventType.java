@@ -177,6 +177,16 @@ public enum EventType {
 			attrs.put(ID, readCompressedLong(in));
 		}
 	},
+	Lock("lock") {
+	    @Override
+	    void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+	        attrs.put(LOCK, readCompressedLong(in));
+	    }
+		@Override
+		IAttributeType getPersistentAttribute() {
+			return LOCK;
+		}
+	},
 	Not_Under_Construction("not-under-construction") {
 		@Override
 		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
@@ -380,7 +390,9 @@ public enum EventType {
 	
 	static void readLockEvent(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
 		readTracedEvent(in, attrs);
-		attrs.put(LOCK, readCompressedLong(in));
+		if (!IdConstants.factorOutLock) {
+			attrs.put(LOCK, readCompressedLong(in));
+		}
 	}
 	
 	static void readTraceEvent(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {

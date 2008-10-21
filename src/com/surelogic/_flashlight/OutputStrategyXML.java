@@ -5,7 +5,7 @@ import java.io.PrintWriter;
 import com.surelogic._flashlight.trace.TraceNode;
 
 final class OutputStrategyXML extends EventVisitor {
-
+	static final String version = "1.0";
 	private final PrintWriter f_out;
 	private String f_indent = "";
 
@@ -21,13 +21,13 @@ final class OutputStrategyXML extends EventVisitor {
 		Entities.addAttribute(key.replaceAll("\\.", "-"), prop, b);
 	}
 
-	public static void outputHeader(final PrintWriter out, Time time) {
+	public static void outputHeader(final PrintWriter out, Time time, String version) {
 		assert out != null;
 		out.println("<?xml version='1.0' encoding='" + Store.ENCODING
 				+ "' standalone='yes'?>");
 		StringBuilder b = new StringBuilder();
 		b.append("<flashlight");
-		Entities.addAttribute("version", "1.0", b);
+		Entities.addAttribute("version", version, b);
 		Entities.addAttribute("run", Store.getRun(), b);
 		b.append(">"); // don't end this element
 		out.println(b.toString());
@@ -55,7 +55,7 @@ final class OutputStrategyXML extends EventVisitor {
 	public OutputStrategyXML(final PrintWriter out) {
 		assert out != null;
 		f_out = out;
-		outputHeader(out, null);
+		outputHeader(out, null, version);
 	}
 
 	@Override

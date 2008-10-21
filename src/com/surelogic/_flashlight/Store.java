@@ -344,7 +344,9 @@ public final class Store {
 			ObjectOutputStream objStream = null;
 			try {				
 				PrintWriter headerW = new PrintWriter(fileName.toString()+".flh");
-				OutputStrategyXML.outputHeader(headerW, timeEvent);
+				OutputStrategyXML.outputHeader(headerW, timeEvent, 
+						                       outputBinary ? OutputStrategyBinary.version : 
+						                    	              OutputStrategyXML.version);
 				headerW.close();
 				
 				stream = new FileOutputStream(dataFile);

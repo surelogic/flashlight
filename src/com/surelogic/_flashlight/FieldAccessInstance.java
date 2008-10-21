@@ -52,4 +52,6 @@ abstract class FieldAccessInstance extends FieldAccess {
 		}
 		return false;
 	}
+	
+	abstract boolean isWrite();
 }

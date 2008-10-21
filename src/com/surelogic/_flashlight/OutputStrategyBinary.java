@@ -12,7 +12,7 @@ import static com.surelogic._flashlight.common.FlagType.*;
 
 public class OutputStrategyBinary extends EventVisitor {	
 	private static final boolean debug = false;
-	private static final String version = "1.1";
+	static final String version = "1.1";
 	private static final long NO_VALUE = Long.MIN_VALUE;
 	private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 	private final IdPhantomReferenceVisitor refVisitor = new DefinitionVisitor();
@@ -22,6 +22,7 @@ public class OutputStrategyBinary extends EventVisitor {
 	private long lastThread = NO_VALUE; 
 	private long lastTrace = NO_VALUE;
 	private long lastReceiver = NO_VALUE;
+	private Boolean lastUnderConstruction = null;
 	/*
 	private boolean lastWasTraceNode = false;
 	private int total = 0, same = 0;
@@ -159,10 +160,7 @@ public class OutputStrategyBinary extends EventVisitor {
 
 	@Override
 	void visit(final FieldReadInstance e) {	
-		byte header = e.receiverUnderConstruction() ? 
-				FieldRead_Instance_UnderConstruction.getByte() : 
-				FieldRead_Instance.getByte();
-		writeFieldAccessInstance(header, e);
+		writeFieldAccessInstance(FieldRead_Instance.getByte(), e);
 	}
 	
 	@Override	
@@ -171,10 +169,7 @@ public class OutputStrategyBinary extends EventVisitor {
 	}
 	@Override
 	void visit(final FieldWriteInstance e) {
-		byte header = e.receiverUnderConstruction() ? 
-				FieldWrite_Instance_UnderConstruction.getByte() : 
-				FieldWrite_Instance.getByte();
-		writeFieldAccessInstance(header, e);
+		writeFieldAccessInstance(FieldWrite_Instance.getByte(), e);
 	}
 	@Override
 	void visit(final FieldWriteStatic e) {
@@ -387,11 +382,26 @@ public class OutputStrategyBinary extends EventVisitor {
 			writeLong_unsafe(Trace.getByte(), tid, true);
 		}
 	}
-	
+	@SuppressWarnings("unused")
 	private void writeReceiver(long id) throws IOException {
 		if (id != lastReceiver) {
 			lastReceiver = id;
 			writeLong_unsafe(Receiver.getByte(), id, true);			
+		}
+	}
+	
+	private boolean isSameReceiver(long id) {
+		if (id != lastReceiver) {
+			lastReceiver = id;
+			return false;
+		}
+		return true;
+	}
+	
+	private void writeUnderConstruction(Boolean constructing) throws IOException {
+		if (constructing != lastUnderConstruction) {
+			lastUnderConstruction = constructing;
+			writeHeader((constructing ? Under_Construction : Not_Under_Construction).getByte());
 		}
 	}
 	
@@ -444,8 +454,13 @@ public class OutputStrategyBinary extends EventVisitor {
 	
 	private void writeFieldAccessInstance(byte header, FieldAccessInstance e) {
 		try {
-			long id = e.getReceiver().getId();
-			writeReceiver(id);
+			writeUnderConstruction(e.receiverUnderConstruction());
+			final long id = e.getReceiver().getId();
+			final boolean same = isSameReceiver(id);
+			if (!same) {
+				header = (e.isWrite() ? FieldWrite_Instance_WithReceiver : 
+					                    FieldRead_Instance_WithReceiver).getByte();
+			}
 			writeFieldAccess_unsafe(header, e);
 			
 			/*fieldBytes +=*/ //writeCompressedInt(e.receiverUnderConstruction() ? UNDER_CONSTRUCTION.mask() : 0);
@@ -460,7 +475,9 @@ public class OutputStrategyBinary extends EventVisitor {
 				System.err.println(same+" same as last out of "+total);
 			}
 			*/
-			/*fieldBytes +=*/ //writeCompressedLong(id);
+			if (!same) {
+				/*fieldBytes +=*/ writeCompressedLong(id);
+			}
 		} catch (IOException ioe) {
 			handleIOException(ioe);
 		}

@@ -23,4 +23,9 @@ final class FieldReadInstance extends FieldAccessInstance {
 		b.append("/>");
 		return b.toString();
 	}
+	
+	@Override
+	boolean isWrite() {
+		return false;
+	}
 }

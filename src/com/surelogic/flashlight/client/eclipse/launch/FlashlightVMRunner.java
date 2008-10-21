@@ -207,6 +207,37 @@ final class FlashlightVMRunner implements IVMRunner {
     
     // Update the VM arguments: We need to add parameters for the Flashlight Store
     final String[] vmArgs = original.getVMArguments();
+    
+    // Check for the use or absence of "-XmX"
+    String maxHeapSetting = null;
+    for (final String vmArg : vmArgs) {
+      if (vmArg.startsWith("-Xmx")) {
+        maxHeapSetting = vmArg;
+      }
+    }
+    final long maxHeapSize;
+    if (maxHeapSetting != null) {
+      // We assume the -Xmx option is well-formed
+      final int multiplier;
+      final int lastChar = maxHeapSetting.charAt(maxHeapSetting.length()-1);
+      final int endPos;
+      if (lastChar == 'k' || lastChar == 'K') {
+        multiplier = 10;
+        endPos = maxHeapSetting.length() - 1;
+      } else if (lastChar == 'm' || lastChar == 'M') {
+        multiplier = 20;
+        endPos = maxHeapSetting.length() - 1;
+      } else {
+        multiplier = 0;
+        endPos = maxHeapSetting.length();
+      }
+      final long rawHeapSize = Long.parseLong(maxHeapSetting.substring(4, endPos));
+      maxHeapSize = rawHeapSize << multiplier;
+    } else {
+      maxHeapSize = -1L;
+    }
+    System.out.println("Max heap size = " + maxHeapSize);
+    
     // We will add at most ten arguments, but maybe less
     final List<String> newVmArgsList = new ArrayList<String>(vmArgs.length + 10);
     

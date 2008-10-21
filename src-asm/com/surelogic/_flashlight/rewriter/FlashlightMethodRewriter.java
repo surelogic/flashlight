@@ -1215,7 +1215,7 @@ final class FlashlightMethodRewriter implements MethodVisitor {
         pushed = 3;
       }
       /* Push the id of the field */
-      mv.visitLdcInsn(fid);
+      ByteCodeUtils.pushIntegerConstant(mv, fid);
       // Stack is "..., isRead, [receiver/ownerPhantom], field_id
       
       storeMethodName = foundMethodName;
@@ -1661,7 +1661,8 @@ final class FlashlightMethodRewriter implements MethodVisitor {
   }
   
   private void pushSiteIdentifier(final long id) {
-    mv.visitLdcInsn(Long.valueOf(id));
+    ByteCodeUtils.pushLongConstant(mv, id);
+//    mv.visitLdcInsn(Long.valueOf(id));
   }
   
   private void pushSiteIdentifier() {

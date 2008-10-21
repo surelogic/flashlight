@@ -38,7 +38,7 @@ final class ByteCodeUtils {
     final Type fieldType = Type.getType(typeDesc);
     return fieldType == Type.DOUBLE_TYPE || fieldType == Type.LONG_TYPE;
   }
-    
+  
   /**
    * Generate code to push an integer constant. Optimizes for whether the
    * integer fits in 8, 16, or 32 bits.
@@ -46,15 +46,40 @@ final class ByteCodeUtils {
    * @param v
    *          The integer to push onto the stack.
    */
-  public static void pushIntegerConstant(final MethodVisitor mv, final int v) {
-    if (v >= -1 && v <= 5) {
-      mv.visitInsn(Opcodes.ICONST_0 + v);
-    } else if (v >= -128 && v <= 127) {
-      mv.visitIntInsn(Opcodes.BIPUSH, v);
-    } else if (v >= -32768 && v <= 32767) {
-      mv.visitIntInsn(Opcodes.SIPUSH, v);
+  public static void pushIntegerConstant(final MethodVisitor mv, final Integer v) {
+    final int value = v.intValue();
+    
+    if (value >= -1 && value <= 5) {
+      mv.visitInsn(Opcodes.ICONST_0 + value);
+    } else if (value >= -128 && value <= 127) {
+      mv.visitIntInsn(Opcodes.BIPUSH, value);
+    } else if (value >= -32768 && value <= 32767) {
+      mv.visitIntInsn(Opcodes.SIPUSH, value);
     } else {
-      mv.visitLdcInsn(Integer.valueOf(v));
+      mv.visitLdcInsn(v);
+    }
+  }
+    
+  /**
+   * Generate code to push a long integer constant. Optimizes for whether the
+   * integer fits in 8, 16, or 64 bits.
+   * 
+   * @param v
+   *          The integer to push onto the stack.
+   */
+  public static void pushLongConstant(final MethodVisitor mv, final long v) {
+    if (v >= -32768 && v <= 32767) {
+      final int v2 = (int) v;
+      if (v2 >= -1 && v2 <= 5) {
+        mv.visitInsn(Opcodes.ICONST_0 + v2);
+      } else if (v2 >= -128 && v2 <= 127) {
+        mv.visitIntInsn(Opcodes.BIPUSH, v2);
+      } else if (v2 >= -32768 && v2 <= 32767) {
+        mv.visitIntInsn(Opcodes.SIPUSH, v2);
+      }
+      mv.visitInsn(Opcodes.I2L);
+    } else {
+      mv.visitLdcInsn(Long.valueOf(v));
     }
   }
   

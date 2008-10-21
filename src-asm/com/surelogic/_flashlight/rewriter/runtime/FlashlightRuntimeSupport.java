@@ -1,6 +1,5 @@
 package com.surelogic._flashlight.rewriter.runtime;
 
-import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,41 +23,5 @@ public final class FlashlightRuntimeSupport {
 		  loaderToInfoMap.put(cl, info);
 	  }
 	  return info;
-  }
-   
-  
-  @SuppressWarnings("unused")
-  private static Field getFieldInternal(final Class root, final String fname) 
-      throws NoSuchFieldException {
-    try {
-      /* Hopefully the field is local. */
-      final Field f = root.getDeclaredField(fname);
-      // Won't get here if the field is not found
-      return f;
-    } catch(final NoSuchFieldException e) {
-      // Fall through to try super class and interfaces 
-    }
-    
-    final Class superClass = root.getSuperclass();
-    if (superClass != null) {
-      try {
-        return getFieldInternal(superClass, fname);
-      } catch (final NoSuchFieldException e) {
-        // fall through to check interfaces
-      }
-    }
-      
-    final Class[] interfaces = root.getInterfaces();
-    for (final Class i : interfaces) {
-      try {
-        return getFieldInternal(i, fname);
-      } catch (final NoSuchFieldException e) {
-        // try next interface
-      }
-    }
-    
-    // Couldn't find the field
-    throw new NoSuchFieldException("Couldn't find field \"" + fname
-        + "\" in class " + root.getCanonicalName() + " or any of its ancestors");
   }
 }

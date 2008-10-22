@@ -33,16 +33,37 @@ public final class SourceView extends ViewPart {
 	// Find valid flashlight run directory
 	// Find project zip under /source
 	// Find sourceFiles.xml, classMapping.xml in zip
-	public void showSourceFile(RunDirectory dir, String name) {
+	public void showSourceFile(RunDirectory dir, String pkg, String name) {
 		SourceZipFileHandles zips = dir.getSourceHandles();
 		for(File f : zips.getSourceZips()) {
 			try {
 				ZipFile zf = new ZipFile(f);
-				getSourceFileMappings(zf);
+				Map<String,Map<String,String>> fileMap = AbstractJavaZip.readSourceFileMappings(zf);
+				//AbstractJavaZip.readClassMappings(zf);
+				Map<String,String> map = fileMap.get(pkg);
+				if (map != null) {
+					String path = map.get(name);
+					if (path != null) {
+						populate(zf, path);
+					}
+				}
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}			
 		}
+	}
+
+	private void populate(ZipFile zf, String path) throws IOException {
+		ZipEntry ze = zf.getEntry(path);
+		InputStream in = zf.getInputStream(ze);
+		BufferedReader br = new BufferedReader(new InputStreamReader(in));
+		StringBuilder sb = new StringBuilder();
+		char[] buf = new char[4096];
+		int read;
+		while ((read = br.read(buf)) >= 0) {
+			sb.append(buf, 0, read);
+		}
+		browser.setText(sb.toString());
 	}	
 }

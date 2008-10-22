@@ -4,8 +4,9 @@ import java.io.*;
 import java.util.*;
 import java.util.zip.*;
 
+import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.browser.Browser;
+import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.part.ViewPart;
 
@@ -17,25 +18,30 @@ import com.surelogic.flashlight.common.files.SourceZipFileHandles;
 import com.surelogic.flashlight.common.model.RunDescription;
 
 public final class SourceView extends ViewPart {
-	Browser browser;
+	StyledText source;
+	JavaSyntaxHighlighter highlighter;
 	
 	@Override
 	public void createPartControl(Composite parent) {
 		UsageMeter.getInstance().tickUse("Flashlight SourceView opened");
-		browser = new Browser(parent, SWT.NONE);
-		browser.setText("<html><body>This is Unicode HTML content from memory</body></html>");
-		/*
+		source = new StyledText(parent, SWT.V_SCROLL | SWT.H_SCROLL | 
+				                      SWT.BORDER | SWT.READ_ONLY);
+		source.setFont(JFaceResources.getTextFont());
+		source.setText("This is content from memory");
+		
+		highlighter = new JavaSyntaxHighlighter(source.getDisplay());
+
 		for(RunDescription rd : RawFileUtility.getRunDescriptions()) {
 			RunDirectory dir = RawFileUtility.getRunDirectoryFor(rd);
 			showSourceFile(dir, "edu.afit.planetbaron.client", "ChatTestClient.java");
 			break;
 		}
-		*/
+		source.setStyleRanges(highlighter.computeRanges(source.getText()));
 	}
 
 	@Override
 	public void setFocus() {
-		browser.setFocus();
+		source.setFocus();
 	}
 	
 	// Get flashlight directory
@@ -73,6 +79,6 @@ public final class SourceView extends ViewPart {
 		while ((read = br.read(buf)) >= 0) {
 			sb.append(buf, 0, read);
 		}
-		browser.setText(sb.toString());
+		source.setText(sb.toString());
 	}	
 }

@@ -4,7 +4,7 @@ import static com.surelogic._flashlight.common.AttributeType.CLASS_NAME;
 import static com.surelogic._flashlight.common.AttributeType.ID;
 import static com.surelogic._flashlight.common.AttributeType.THREAD_NAME;
 import static com.surelogic._flashlight.common.AttributeType.TYPE;
-import static com.surelogic._flashlight.common.IdConstants.*;
+import static com.surelogic._flashlight.common.IdConstants.ILLEGAL_ID;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -25,9 +25,9 @@ public abstract class ReferenceDefinition extends AbstractPrep {
 
 	public final void parse(final int runId, final PreppedAttributes attributes)
 			throws SQLException {
-		long id = attributes.getLong(ID);
+		final long id = attributes.getLong(ID);
 		long type = attributes.getLong(TYPE);
-		String threadName = attributes.getString(THREAD_NAME);
+		final String threadName = attributes.getString(THREAD_NAME);
 		String className = attributes.getString(CLASS_NAME);
 		if (id == ILLEGAL_ID) {
 			SLLogger.getLogger().log(Level.SEVERE,
@@ -53,7 +53,7 @@ public abstract class ReferenceDefinition extends AbstractPrep {
 	private void insert(final int runId, final long id, final long type,
 			final String threadName, final String packageName,
 			final String className) throws SQLException {
-		if (preScan.couldBeReferencedObject(id)) {
+		if (!filterUnused() || preScan.couldBeReferencedObject(id)) {
 			f_ps.setInt(1, runId);
 			f_ps.setLong(2, id);
 			f_ps.setLong(3, type);
@@ -75,6 +75,8 @@ public abstract class ReferenceDefinition extends AbstractPrep {
 	}
 
 	protected abstract String getFlag();
+
+	protected abstract boolean filterUnused();
 
 	@Override
 	public final void setup(final Connection c, final Timestamp start,

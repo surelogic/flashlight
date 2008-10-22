@@ -10,4 +10,9 @@ public final class ObjectDefinition extends ReferenceDefinition {
 	protected String getFlag() {
 		return "O";
 	}
+
+	@Override
+	protected boolean filterUnused() {
+		return true;
+	}
 }

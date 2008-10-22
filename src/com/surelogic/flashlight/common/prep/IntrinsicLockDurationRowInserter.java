@@ -41,6 +41,7 @@ public final class IntrinsicLockDurationRowInserter {
 
 		// Info about the event that started us in this state
 		long id;
+		long trace;
 		Timestamp time;
 		LockState startEvent;
 	}
@@ -170,13 +171,12 @@ public final class IntrinsicLockDurationRowInserter {
 						if (!createdEvent) {
 							createdEvent = true;
 							// FIXME
-							insertLock(runId, true, endTime, thread, 0, /*
-																		 * src
-																		 * is
-																		 * nonsense
-																		 */
-							lock, LockType.INTRINSIC, LockState.AFTER_RELEASE,
-									true, false, false);
+							insertLock(runId, true, endTime, thread,
+									state.trace, /*
+												 * src is nonsense
+												 */
+									lock, LockType.INTRINSIC,
+									LockState.AFTER_RELEASE, true, false, false);
 						}
 						if (state.lockState == IntrinsicLockDurationState.BLOCKING) {
 							noteHeldLocks(runId, FINAL_EVENT, endTime, thread,
@@ -226,10 +226,11 @@ public final class IntrinsicLockDurationRowInserter {
 
 	private void updateState(final State mutableState, final int run,
 			final long id, final Timestamp time, final long inThread,
-			final LockState startEvent,
+			final long trace, final LockState startEvent,
 			final IntrinsicLockDurationState lockState) {
 		final IntrinsicLockDurationState oldLockState = mutableState.lockState;
 		mutableState.id = id;
+		mutableState.trace = trace;
 		mutableState.time = time;
 		mutableState.startEvent = startEvent;
 		mutableState.lockState = lockState;
@@ -331,8 +332,8 @@ public final class IntrinsicLockDurationRowInserter {
 	}
 
 	public void event(final int runId, final long id, final Timestamp time,
-			final long inThread, final long lock, final LockState lockEvent,
-			final boolean success) {
+			final long inThread, final long trace, final long lock,
+			final LockState lockEvent, final boolean success) {
 		// A failed release attempt changes no states.
 		if ((lockEvent == LockState.AFTER_RELEASE) && !success) {
 			return;
@@ -345,23 +346,23 @@ public final class IntrinsicLockDurationRowInserter {
 			assert state.timesEntered == 0;
 			if (lockEvent == LockState.BEFORE_ACQUISITION) {
 				// No need to record idle time
-				updateState(state, runId, id, time, inThread, lockEvent,
+				updateState(state, runId, id, time, inThread, trace, lockEvent,
 						IntrinsicLockDurationState.BLOCKING);
 			} else {
 				logBadEventTransition(inThread, lock, lockEvent, state);
 			}
 			break;
 		case BLOCKING:
-			handlePossibleLockAcquire(runId, id, time, inThread, lock,
+			handlePossibleLockAcquire(runId, id, time, inThread, trace, lock,
 					lockEvent, LockState.AFTER_ACQUISITION, lockToState, state,
 					success);
 			break;
 		case HOLDING:
-			handleEventWhileHolding(runId, id, time, inThread, lock, lockEvent,
-					state);
+			handleEventWhileHolding(runId, id, time, inThread, trace, lock,
+					lockEvent, state);
 			break;
 		case WAITING:
-			handlePossibleLockAcquire(runId, id, time, inThread, lock,
+			handlePossibleLockAcquire(runId, id, time, inThread, trace, lock,
 					lockEvent, LockState.AFTER_WAIT, lockToState, state, true);
 			break;
 		default:
@@ -375,8 +376,8 @@ public final class IntrinsicLockDurationRowInserter {
 	 * timesEntered = 1, otherwise Hold-1
 	 */
 	private void handleEventWhileHolding(final int runId, final long id,
-			final Timestamp time, final long inThread, final long lock,
-			final LockState lockEvent, final State state) {
+			final Timestamp time, final long inThread, final long trace,
+			final long lock, final LockState lockEvent, final State state) {
 		assert state.timesEntered > 0;
 		switch (lockEvent) {
 		case BEFORE_ACQUISITION:
@@ -389,7 +390,7 @@ public final class IntrinsicLockDurationRowInserter {
 			state.timesEntered--;
 			recordStateDuration(runId, inThread, lock, state.time, state.id,
 					time, id, state.lockState);
-			updateState(state, runId, id, time, inThread, lockEvent,
+			updateState(state, runId, id, time, inThread, trace, lockEvent,
 					IntrinsicLockDurationState.WAITING);
 			break;
 		case AFTER_WAIT:
@@ -403,7 +404,7 @@ public final class IntrinsicLockDurationRowInserter {
 			if (state.timesEntered == 0) {
 				recordStateDuration(runId, inThread, lock, state.time,
 						state.id, time, id, state.lockState);
-				updateState(state, runId, id, time, inThread, lockEvent,
+				updateState(state, runId, id, time, inThread, trace, lockEvent,
 						newState);
 			}
 			break;
@@ -414,10 +415,10 @@ public final class IntrinsicLockDurationRowInserter {
 	}
 
 	private void handlePossibleLockAcquire(final int runId, final long id,
-			final Timestamp time, final long inThread, final long lock,
-			final LockState lockEvent, final LockState eventToMatch,
-			final Map<Long, State> lockToState, final State state,
-			final boolean success) {
+			final Timestamp time, final long inThread, final long trace,
+			final long lock, final LockState lockEvent,
+			final LockState eventToMatch, final Map<Long, State> lockToState,
+			final State state, final boolean success) {
 		if (lockEvent == eventToMatch) {
 			assert state.timesEntered >= 0;
 			if (success) {
@@ -425,7 +426,7 @@ public final class IntrinsicLockDurationRowInserter {
 			}
 			recordStateDuration(runId, inThread, lock, state.time, state.id,
 					time, id, state.lockState);
-			updateState(state, runId, id, time, inThread, lockEvent,
+			updateState(state, runId, id, time, inThread, trace, lockEvent,
 					success ? IntrinsicLockDurationState.HOLDING
 							: IntrinsicLockDurationState.IDLE);
 			state.timesEntered++;

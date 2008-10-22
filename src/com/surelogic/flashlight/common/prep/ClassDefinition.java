@@ -10,4 +10,9 @@ public final class ClassDefinition extends ReferenceDefinition {
 	protected String getFlag() {
 		return "C";
 	}
+
+	@Override
+	protected boolean filterUnused() {
+		return false;
+	}
 }

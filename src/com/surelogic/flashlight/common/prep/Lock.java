@@ -54,7 +54,7 @@ public abstract class Lock extends Event {
 		final long id = f_rowInserter.insertLock(runId, false, time, inThread,
 				trace, lock, getType(), getState(), success, lockIsThis,
 				lockIsClass);
-		f_rowInserter.event(runId, id, time, inThread, lock, getState(),
+		f_rowInserter.event(runId, id, time, inThread, trace, lock, getState(),
 				success != Boolean.FALSE);
 	}
 

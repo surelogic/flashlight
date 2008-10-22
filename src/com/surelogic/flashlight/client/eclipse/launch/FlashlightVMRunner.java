@@ -115,7 +115,7 @@ final class FlashlightVMRunner implements IVMRunner {
       final SourceZip srcZip = new SourceZip(project);
       final File zipFile = new File(sourceDir, projectName + ".src.zip");
       try {
-        srcZip.generateSourceZip(zipFile.getAbsolutePath(), project, false);
+        srcZip.generateSourceZip(zipFile.getAbsolutePath(), project);
       } catch(final IOException e) {
         SLLogger.getLogger().log(Level.SEVERE,
             "Unable to create source zip for project " + projectName, e);

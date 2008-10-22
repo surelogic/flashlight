@@ -28,16 +28,6 @@ public final class SourceView extends ViewPart {
 	public void setFocus() {
 		browser.setFocus();
 	}
-
-	private static Map<String, Map<String, String>> getSourceFileMappings(ZipFile zf) throws IOException {
-		ZipEntry ze = zf.getEntry(AbstractJavaZip.SOURCE_FILES);
-		InputStream in = zf.getInputStream(ze);
-		BufferedReader br = new BufferedReader(new InputStreamReader(in));
-		Map<String, Map<String, String>> fileMap = 
-			new HashMap<String, Map<String, String>>();
-		AbstractJavaZip.readFileList(br, fileMap);
-		return fileMap;
-	}
 	
 	// Get flashlight directory
 	// Find valid flashlight run directory

@@ -57,7 +57,7 @@
 			  <attribute name="Manifest-Version" value="1.0"/>
 			</manifest>
 	  </jar>	  
-	  <copy file="${flashlight-all.jar}" todir="${basedir}/../flashlight-client-eclipse/lib"/>
+	  <!--copy file="${flashlight-all.jar}" todir="${basedir}/../flashlight-client-eclipse/lib"/ -->
 	</target>
 
 	<target name="build-runtime-jar">

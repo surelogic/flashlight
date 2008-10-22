@@ -11,8 +11,10 @@ import org.eclipse.ui.part.ViewPart;
 
 import com.surelogic.common.*;
 import com.surelogic.common.serviceability.UsageMeter;
+import com.surelogic.flashlight.common.files.RawFileUtility;
 import com.surelogic.flashlight.common.files.RunDirectory;
 import com.surelogic.flashlight.common.files.SourceZipFileHandles;
+import com.surelogic.flashlight.common.model.RunDescription;
 
 public final class SourceView extends ViewPart {
 	Browser browser;
@@ -22,6 +24,13 @@ public final class SourceView extends ViewPart {
 		UsageMeter.getInstance().tickUse("Flashlight SourceView opened");
 		browser = new Browser(parent, SWT.NONE);
 		browser.setText("<html><body>This is Unicode HTML content from memory</body></html>");
+		/*
+		for(RunDescription rd : RawFileUtility.getRunDescriptions()) {
+			RunDirectory dir = RawFileUtility.getRunDirectoryFor(rd);
+			showSourceFile(dir, "edu.afit.planetbaron.client", "ChatTestClient.java");
+			break;
+		}
+		*/
 	}
 
 	@Override

@@ -73,7 +73,6 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 						 * Change the focus to the query menu view.
 						 */
 						ViewUtility.showView(QueryMenuView.class.getName());
-						SourceView.setRunDescription(description);
 					} else {
 						/*
 						 * Prepare this run.
@@ -270,6 +269,7 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 			final PrepRunDescription prep = o.getPrepRunDescription();
 			if (prep != null) {
 				runVariableValue = Integer.toString(prep.getRun());
+				SourceView.setRunDescription(o);
 			}
 			binaryActionsEnabled = rawActionsEnabled
 					&& o.getRawFileHandles().isDataFileBinary();

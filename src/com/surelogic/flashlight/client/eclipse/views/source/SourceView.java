@@ -8,7 +8,7 @@ import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.ui.IViewPart;
+import org.eclipse.ui.*;
 import org.eclipse.ui.part.ViewPart;
 
 import com.surelogic.common.*;
@@ -110,18 +110,19 @@ public final class SourceView extends ViewPart {
 	public static void tryToOpenInEditor(String pkg, String type, int lineNumber) {
 		if (currentRun != null) {
 			RunDirectory dir = RawFileUtility.getRunDirectoryFor(currentRun);
-			SourceView view = (SourceView) ViewUtility.showView(ID);
+			SourceView view = (SourceView) ViewUtility.showView(ID, null, IWorkbenchPage.VIEW_VISIBLE);
 			view.showSourceFile(dir, pkg+'.'+type);
-			view.source.setTopIndex(lineNumber);
+			view.source.setTopIndex(lineNumber < 5 ? 0 : lineNumber-5);
 		}
 	}
 
 	public static void tryToOpenInEditor(String pkg, String type, String field) {	
 		if (currentRun != null) {
 			RunDirectory dir = RawFileUtility.getRunDirectoryFor(currentRun);
-			SourceView view = (SourceView) ViewUtility.showView(ID);
+			SourceView view = (SourceView) ViewUtility.showView(ID, null, IWorkbenchPage.VIEW_VISIBLE);
 			view.showSourceFile(dir, pkg+'.'+type);
-			view.source.setTopIndex(computeLine(view.source.getText(), field));
+			int lineNumber = computeLine(view.source.getText(), field);
+			view.source.setTopIndex(lineNumber < 5 ? 0 : lineNumber-5);
 		}
 	}
 
@@ -131,7 +132,7 @@ public final class SourceView extends ViewPart {
 	// FIX to parse comp unit and find appropriate field
 	private static int computeLine(final String source, final String field) {
 		StringTokenizer st = new StringTokenizer(source, "\n");
-		int lineNum = 1;
+		int lineNum = 0;
 		int firstNonInitializedField = -1;
 		int firstInitializedField = -1;
 		while (st.hasMoreTokens()) {
@@ -143,13 +144,13 @@ public final class SourceView extends ViewPart {
 					return lineNum;
 				} 
 				else if (firstNonInitializedField < 0) {
-					firstNonInitializedField = fieldLoc;
+					firstNonInitializedField = lineNum;
 				}			
 			}
 			// Search for field with initializer
 			fieldLoc = line.indexOf(field+'=');
 			if (fieldLoc < 0) {
-				fieldLoc = source.indexOf(field);
+				fieldLoc = line.indexOf(field);
 				if (fieldLoc >= 0) {
 					// Look for whitespace before the =
 					final int here = fieldLoc;
@@ -176,10 +177,23 @@ public final class SourceView extends ViewPart {
 					return lineNum;
 				} 
 				else if (firstInitializedField < 0) {
-					firstInitializedField = fieldLoc;
+					firstInitializedField = lineNum;
 				}			
 			}
 			lineNum++;
+		}
+		if (firstInitializedField > 0) {
+			if (firstNonInitializedField > 0) { 
+				// return whichever is first
+				if (firstInitializedField < firstNonInitializedField) {
+					return firstInitializedField;
+				} 
+				return firstNonInitializedField;
+			}
+			return firstInitializedField;
+		}
+		if (firstNonInitializedField > 0) { 
+			return firstNonInitializedField;
 		}
 		return 0;
 	}

@@ -5,8 +5,6 @@ import java.util.Arrays;
 import java.util.Comparator;
 
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.custom.LineStyleEvent;
-import org.eclipse.swt.custom.LineStyleListener;
 import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.widgets.Display;
@@ -36,6 +34,9 @@ public final class JavaSyntaxHighlighter {
 	public StyleRange[] computeRanges(String text) {
 		this.text = text;
 		f_result = new ArrayList<StyleRange>();
+		lineEnd = text.length();
+		highlightMultilineComment(0);		
+		
 		int lineStart = 0;
 		while (true) {
 			lineEnd = text.indexOf('\n', lineStart);
@@ -60,6 +61,22 @@ public final class JavaSyntaxHighlighter {
 		return ranges;
 	}
 
+	private void highlightMultilineComment(int fromIndex) {
+		if (fromIndex >= text.length())
+			return;
+		// FIX What if in quotes?
+		final int ci1 = text.indexOf("/*", fromIndex);
+		if (ci1 == NOT_FOUND)
+			return;
+		final int ci2 = text.indexOf("*/", ci1 + 2);
+		if (ci2 == NOT_FOUND) {
+			return;
+		} else {
+			set(f_commentColor, SWT.NORMAL, ci1, ci2 + 1);
+		}
+		highlightMultilineComment(ci2 + 2);
+	}
+	
 	private void highlightComment(int fromIndex) {
 		if (fromIndex >= text.length())
 			return;
@@ -128,7 +145,7 @@ public final class JavaSyntaxHighlighter {
 		}
 	}
 
-	private void highlightWord(String word) {
+	private void highlightWord(String word) {		
 		final String lineText = text;
 		final int wordLength = word.length();
 		int index = 0;
@@ -136,6 +153,9 @@ public final class JavaSyntaxHighlighter {
 			index = lineText.indexOf(word, index);
 			if (index == NOT_FOUND)
 				break;
+			if ("import".equals(word)) {
+				System.err.println("Found import");
+			}
 			if (isWord(index, wordLength, lineText)) {
 				final int beginIndex = index;
 				final int endIndex = beginIndex + word.length() - 1;
@@ -162,7 +182,8 @@ public final class JavaSyntaxHighlighter {
 	}
 
 	private boolean isWhiteSpaceOrPunc(final char c) {
-		return c == ' ' || c == '\t' || c == ',';
+		return c == ' ' || c == '\n' || c == '\t' || c == ',' || c == ';' || 
+		       c == '(' || c == ')';
 	}
 
 	private void set(Color color, int style, int beginIndex, int endIndex) {
@@ -213,7 +234,7 @@ public final class JavaSyntaxHighlighter {
 		  "assert",
 		  "boolean",
 		  "break",
-		   "byte",
+		  "byte",
 		  "case",
 		  "catch",
 		  "char",

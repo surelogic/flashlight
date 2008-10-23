@@ -25,6 +25,7 @@ import com.surelogic.flashlight.client.eclipse.dialogs.DeleteRunDialog;
 import com.surelogic.flashlight.client.eclipse.dialogs.LogDialog;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.QueryMenuView;
+import com.surelogic.flashlight.client.eclipse.views.source.SourceView;
 import com.surelogic.flashlight.common.entities.PrepRunDescription;
 import com.surelogic.flashlight.common.files.RawFileHandles;
 import com.surelogic.flashlight.common.jobs.ConvertBinaryToXMLJob;
@@ -72,6 +73,7 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 						 * Change the focus to the query menu view.
 						 */
 						ViewUtility.showView(QueryMenuView.class.getName());
+						SourceView.setRunDescription(description);
 					} else {
 						/*
 						 * Prepare this run.

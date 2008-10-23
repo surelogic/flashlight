@@ -5,6 +5,7 @@ import java.util.Map;
 import com.surelogic.common.adhoc.AdHocManagerAdapter;
 import com.surelogic.common.adhoc.AdHocQueryResultSqlData;
 import com.surelogic.common.eclipse.JDTUtility;
+import com.surelogic.flashlight.client.eclipse.views.source.SourceView;
 
 /**
  * This class helps Flashlight to jump to lines of code within the Eclipse IDE
@@ -45,6 +46,8 @@ public final class JumpToCode extends AdHocManagerAdapter {
 				} catch (NumberFormatException e) {
 					// couldn't convert the line number so just use 0
 				}
+				SourceView.tryToOpenInEditor(packageName, typeName, lineNumber);
+				
 				if (JDTUtility.tryToOpenInEditor(packageName, typeName,
 						lineNumber))
 					return;
@@ -57,6 +60,7 @@ public final class JumpToCode extends AdHocManagerAdapter {
 			if (fieldName == null)
 				fieldName = variableValues.get("Field Name");
 			if (fieldName != null) {
+				SourceView.tryToOpenInEditor(packageName, typeName, fieldName);
 				JDTUtility.tryToOpenInEditor(packageName, typeName, fieldName);
 			}
 		}

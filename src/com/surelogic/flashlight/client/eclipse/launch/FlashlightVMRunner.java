@@ -15,6 +15,8 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.jdt.launching.IVMRunner;
@@ -30,6 +32,7 @@ import com.surelogic.common.eclipse.SourceZip;
 import com.surelogic.common.eclipse.logging.SLEclipseStatusUtility;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.client.eclipse.Activator;
+import com.surelogic.flashlight.client.eclipse.jobs.LaunchTerminationDetectionJob;
 import com.surelogic.flashlight.client.eclipse.jobs.SwitchToFlashlightPerspectiveJob;
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
 
@@ -101,8 +104,19 @@ final class FlashlightVMRunner implements IVMRunner {
     /* Done with our set up, call the real runner */
     delegateRunner.run(newConfig, launch, monitor);
     
-    final UIJob job = new SwitchToFlashlightPerspectiveJob();
-    job.schedule();
+    /* Create and launch a job that detects when the instrumented run terminates,
+     * and switches to the flashlight perspective on termination.
+     */
+    final LaunchTerminationDetectionJob terminationDetector = new LaunchTerminationDetectionJob(
+        launch, LaunchTerminationDetectionJob.DEFAULT_PERIOD) {
+      @Override
+      protected IStatus terminationAction() {
+        final UIJob job = new SwitchToFlashlightPerspectiveJob();
+        job.schedule();
+        return Status.OK_STATUS;
+      }
+    };
+    terminationDetector.reschedule();
   }
   
   private boolean createSourceZips(final SubMonitor progress) {

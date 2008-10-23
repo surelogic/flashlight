@@ -1,17 +1,16 @@
 package com.surelogic.flashlight.client.eclipse.preferences;
 
 import org.eclipse.jface.preference.BooleanFieldEditor;
-import org.eclipse.jface.preference.FieldEditorPreferencePage;
 import org.eclipse.jface.preference.IntegerFieldEditor;
 import org.eclipse.jface.preference.ScaleFieldEditor;
 import org.eclipse.ui.IWorkbench;
-import org.eclipse.ui.IWorkbenchPreferencePage;
 
+import com.surelogic.common.eclipse.preferences.AbstractLicenseFieldEditorPreferencePage;
 import com.surelogic.common.serviceability.UsageMeter;
 import com.surelogic.flashlight.client.eclipse.Activator;
 
-public class FlashlightPreferencePage extends FieldEditorPreferencePage
-		implements IWorkbenchPreferencePage {
+public class FlashlightPreferencePage extends
+		AbstractLicenseFieldEditorPreferencePage {
 
 	public FlashlightPreferencePage() {
 		super(GRID);

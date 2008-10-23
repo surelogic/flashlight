@@ -93,12 +93,34 @@ public final class SourceView extends ViewPart {
 		ZipEntry ze = zf.getEntry(path);
 		InputStream in = zf.getInputStream(ze);
 		BufferedReader br = new BufferedReader(new InputStreamReader(in));
-		StringBuilder sb = new StringBuilder();
+		// Count the number of lines
+		int numLines = 0;
+		while (br.readLine() != null) {
+			numLines++;
+		}
+		final int spacesForLineNum = Integer.toString(numLines).length();
+		final StringBuilder sb = new StringBuilder();
+		int lineNum = 1;
+		String line;
+		
+		// Re-init to really read
+		in = zf.getInputStream(ze);
+		br = new BufferedReader(new InputStreamReader(in));
+		while ((line = br.readLine()) != null) {
+			final String lineStr = Integer.toString(lineNum);
+			for(int i=lineStr.length(); i<spacesForLineNum; i++) {
+				sb.append(' ');
+			}
+			sb.append(lineStr).append(' ').append(line).append('\n');
+			lineNum++;
+		}
+		/*
 		char[] buf = new char[4096];
 		int read;
 		while ((read = br.read(buf)) >= 0) {
 			sb.append(buf, 0, read);
 		}
+		*/
 		source.setText(sb.toString());
 		source.setStyleRanges(highlighter.computeRanges(source.getText()));
 	}

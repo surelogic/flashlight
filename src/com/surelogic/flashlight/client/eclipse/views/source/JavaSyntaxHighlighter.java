@@ -153,9 +153,6 @@ public final class JavaSyntaxHighlighter {
 			index = lineText.indexOf(word, index);
 			if (index == NOT_FOUND)
 				break;
-			if ("import".equals(word)) {
-				System.err.println("Found import");
-			}
 			if (isWord(index, wordLength, lineText)) {
 				final int beginIndex = index;
 				final int endIndex = beginIndex + word.length() - 1;

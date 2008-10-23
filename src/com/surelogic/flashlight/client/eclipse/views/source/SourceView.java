@@ -18,6 +18,7 @@ import com.surelogic.flashlight.common.files.SourceZipFileHandles;
 import com.surelogic.flashlight.common.model.RunDescription;
 
 public final class SourceView extends ViewPart {
+	// FIX replace with SourceViewer?
 	StyledText source;
 	JavaSyntaxHighlighter highlighter;
 	
@@ -37,6 +38,7 @@ public final class SourceView extends ViewPart {
 			break;
 		}
 		source.setStyleRanges(highlighter.computeRanges(source.getText()));
+		source.setTopIndex(30);
 	}
 
 	@Override

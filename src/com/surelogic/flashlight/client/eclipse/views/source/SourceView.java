@@ -31,7 +31,7 @@ public final class SourceView extends ViewPart {
 		source = new StyledText(parent, SWT.V_SCROLL | SWT.H_SCROLL | 
 				                      SWT.BORDER | SWT.READ_ONLY);
 		source.setFont(JFaceResources.getTextFont());
-		source.setText("This is content from memory");
+		source.setText("No source to show.");
 		
 		highlighter = new JavaSyntaxHighlighter(source.getDisplay());
 	}

@@ -22,7 +22,6 @@ public final class SwitchToFlashlightPerspectiveJob extends SLUIJob {
 		 * view.
 		 */
 		final Job job = new Job("Refresh Runs") {
-
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				RunManager.getInstance().refresh(Data.getInstance());
@@ -34,11 +33,15 @@ public final class SwitchToFlashlightPerspectiveJob extends SLUIJob {
 		 * Now prompt the user to change to the Flashlight perspective, if we
 		 * are not already in it.
 		 */
-		final boolean change = ConfirmPerspectiveSwitch.toFlashlight(SWTUtility
-				.getShell());
-		if (change)
-			ViewUtility.showPerspective(FlashlightPerspectiveFactory.class
-					.getName());
+		final boolean inFlashlightPerspective = ViewUtility
+				.isPerspectiveOpen(FlashlightPerspectiveFactory.class.getName());
+		if (!inFlashlightPerspective) {
+			final boolean change = ConfirmPerspectiveSwitch
+					.toFlashlight(SWTUtility.getShell());
+			if (change)
+				ViewUtility.showPerspective(FlashlightPerspectiveFactory.class
+						.getName());
+		}
 		return Status.OK_STATUS;
 	}
 }

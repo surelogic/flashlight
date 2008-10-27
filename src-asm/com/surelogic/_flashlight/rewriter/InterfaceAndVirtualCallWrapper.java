@@ -6,17 +6,17 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 abstract class InterfaceAndVirtualCallWrapper extends MethodCallWrapper {
-  private static final String WRAPPER_SIGNATURE_TEMPLATE = "({0}{1}){2}";
+  private static final String WRAPPER_SIGNATURE_TEMPLATE = "({0}{1}J){2}";
   /** Generated wrapper methods are <code>private static</code> and synthetic. */
   private static final int WRAPPER_METHOD_ACCESS =
     Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_SYNTHETIC;
 
   
   
-  public InterfaceAndVirtualCallWrapper(final long callSiteId,
+  public InterfaceAndVirtualCallWrapper(
       final String rcvrTypeInternal, final String owner, final String originalName,
       final String originalSignature, final int opcode) {
-    super(callSiteId, opcode, rcvrTypeInternal, owner, originalName, originalSignature, false);
+    super(opcode, rcvrTypeInternal, owner, originalName, originalSignature, false);
   }
 
   
@@ -45,6 +45,11 @@ abstract class InterfaceAndVirtualCallWrapper extends MethodCallWrapper {
     return 1;
   }
 
+  @Override
+  protected final int getSiteIdArgPosition(final int numOriginalArgs) {
+    return numOriginalArgs + 1;
+  }
+  
   @Override
   public final void pushReceiverForEvent(final MethodVisitor mv) {
     mv.visitVarInsn(Opcodes.ALOAD, 0);

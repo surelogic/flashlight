@@ -100,7 +100,7 @@ final class MethodCallInstrumenter {
       // true
       methodCall.pushReceiverForEvent(mv);
       // true, objRef
-      methodCall.pushCallSiteId(mv);
+      methodCall.pushSiteId(mv);
       // true, objRef, callSiteId (long)
       mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
           FlashlightNames.METHOD_CALL, FlashlightNames.METHOD_CALL_SIGNATURE);
@@ -116,7 +116,7 @@ final class MethodCallInstrumenter {
       // ..., false
       methodCall.pushReceiverForEvent(mv);
       // ..., false, objRef
-      methodCall.pushCallSiteId(mv);
+      methodCall.pushSiteId(mv);
       // ..., false, objRef, callSiteId (long)
       mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
           FlashlightNames.METHOD_CALL, FlashlightNames.METHOD_CALL_SIGNATURE);
@@ -134,7 +134,7 @@ final class MethodCallInstrumenter {
       // ..., true
       methodCall.pushReceiverForEvent(mv);
       // ..., true, objRef
-      methodCall.pushCallSiteId(mv);
+      methodCall.pushSiteId(mv);
       // ..., true, objRef, callSiteId (long)
       mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
           FlashlightNames.INTRINSIC_LOCK_WAIT,
@@ -152,7 +152,7 @@ final class MethodCallInstrumenter {
       // ..., false
       methodCall.pushReceiverForEvent(mv);
       // ..., false, objRef
-      methodCall.pushCallSiteId(mv);
+      methodCall.pushSiteId(mv);
       // ..., false, objRef, callSiteId (long)
       mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
           FlashlightNames.INTRINSIC_LOCK_WAIT,
@@ -174,7 +174,7 @@ final class MethodCallInstrumenter {
       // ...
       methodCall.pushReceiverForEvent(mv);
       // ..., objRef
-      methodCall.pushCallSiteId(mv);
+      methodCall.pushSiteId(mv);
       // ..., objRef, callSiteId (long)
       mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
           FlashlightNames.BEFORE_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT,
@@ -195,7 +195,7 @@ final class MethodCallInstrumenter {
       // ..., gotTheLock
       methodCall.pushReceiverForEvent(mv);
       // ..., gotTheLock, objRef
-      methodCall.pushCallSiteId(mv);
+      methodCall.pushSiteId(mv);
       // ..., gotTheLock, objRef, callSiteId (long)
       mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
           FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT,
@@ -215,7 +215,7 @@ final class MethodCallInstrumenter {
       // ..., gotTheLock, gotTheLock      
       methodCall.pushReceiverForEvent(mv);
       // ..., gotTheLock, gotTheLock, objRef
-      methodCall.pushCallSiteId(mv);
+      methodCall.pushSiteId(mv);
       // ..., gotTheLock, gotTheLock, objRef, callSiteId (long)
       mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
           FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT,
@@ -234,7 +234,7 @@ final class MethodCallInstrumenter {
       // ..., false
       methodCall.pushReceiverForEvent(mv);
       // ..., false, objRef
-      methodCall.pushCallSiteId(mv);
+      methodCall.pushSiteId(mv);
       // ..., false, objRef, callSiteId (false)
       mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
           FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT,
@@ -252,7 +252,7 @@ final class MethodCallInstrumenter {
       // ..., gotTheLock
       methodCall.pushReceiverForEvent(mv);
       // ..., gotTheLock, objRef
-      methodCall.pushCallSiteId(mv);
+      methodCall.pushSiteId(mv);
       // ..., gotTheLock, objRef, callSiteId (long)
       mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
           FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_RELEASE_ATTEMPT,

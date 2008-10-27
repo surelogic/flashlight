@@ -9,6 +9,8 @@ import org.objectweb.asm.MethodVisitor;
  * We could do it for all cases, but it causes code bloat.
  */
 abstract class InPlaceMethodInstrumentation extends MethodCall {
+  private final long callSiteId;
+
   /**
    * 
    * @param opcode The opcode used to invoke the method.
@@ -20,8 +22,14 @@ abstract class InPlaceMethodInstrumentation extends MethodCall {
    */
   public InPlaceMethodInstrumentation(final long callSiteId, final int opcode,
       final String owner, final String name, final String descriptor) {
-    super(callSiteId, opcode, owner, name, descriptor);
+    super(opcode, owner, name, descriptor);
+    this.callSiteId = callSiteId;
   }
   
   public abstract void popReceiverAndArguments(final MethodVisitor mv);
+  
+  @Override
+  public final void pushSiteId(final MethodVisitor mv) {
+    ByteCodeUtils.pushLongConstant(mv, callSiteId);
+  }
 }

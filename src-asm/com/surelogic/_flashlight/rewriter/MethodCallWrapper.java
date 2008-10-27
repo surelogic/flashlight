@@ -38,7 +38,7 @@ abstract class MethodCallWrapper extends MethodCall {
   protected final int numWrapperLocals;
   
   protected final int firstOriginalArgPos;
-  
+  protected final int siteIdArgPos;
   protected final Type originalReturnType;
   
   
@@ -49,9 +49,9 @@ abstract class MethodCallWrapper extends MethodCall {
    *          The opcode used to invoke the original method.
    * @param rcvrTypeInternal
    *          If non-null this is the type of the receiver of the method being
-   *          wrapped. If non-null this replaced the use of owner for the
+   *          wrapped. If non-null this replaces the use of owner for the
    *          receiver type. This is necessary due to some stupidity in the
-   *          Eclipse compiler and how it produces nested classes access
+   *          Eclipse compiler and how it produces nested class access
    *          methods.
    * @param owner
    *          The owner of the original method.
@@ -62,11 +62,11 @@ abstract class MethodCallWrapper extends MethodCall {
    * @param isInstance
    *          Should the wrapper method be an instance method?
    */
-  public MethodCallWrapper(final long callSiteId, final int opcode,
+  public MethodCallWrapper(final int opcode,
       final String rcvrTypeInternal, final String owner,
       final String originalName, final String originalDesc,
       final boolean isInstance) {
-    super(callSiteId, opcode, owner, originalName, originalDesc);
+    super(opcode, owner, originalName, originalDesc);
     final String ownerUnderscored = fixOwnerNameForMethodName(owner);
     final int endOfArgs = originalDesc.lastIndexOf(END_OF_ARGS);
     final String originalArgs = originalDesc.substring(1, endOfArgs);
@@ -101,6 +101,7 @@ abstract class MethodCallWrapper extends MethodCall {
     numWrapperLocals = nextLocalVariable;
     
     firstOriginalArgPos = getFirstOriginalArgPosition(originalArgTypes.length);
+    siteIdArgPos = getSiteIdArgPosition(originalArgTypes.length);
     
     originalReturnType = Type.getReturnType(originalDesc);
   }
@@ -190,6 +191,8 @@ abstract class MethodCallWrapper extends MethodCall {
 
   protected abstract int getFirstOriginalArgPosition(int numOriginalArgs);
   
+  protected abstract int getSiteIdArgPosition(int numOriginalArgs);
+  
   protected abstract void pushReceiverForOriginalMethod(MethodVisitor mv);
 
   
@@ -201,6 +204,11 @@ abstract class MethodCallWrapper extends MethodCall {
   
   public final MethodVisitor createMethodHeader(final ClassVisitor cv) {
     return cv.visitMethod(getAccess(), wrapperName, wrapperDescriptor, null, null);
+  }
+  
+  @Override
+  public final void pushSiteId(final MethodVisitor mv) {
+    mv.visitVarInsn(Opcodes.LLOAD, wrapperArgsToLocals[siteIdArgPos]);
   }
   
   @Override

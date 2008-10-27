@@ -6,15 +6,15 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 final class SpecialCallWrapper extends MethodCallWrapper {
-  private static final String WRAPPER_SIGNATURE_TEMPLATE = "({0}){1}";
+  private static final String WRAPPER_SIGNATURE_TEMPLATE = "({0}J){1}";
   /** Generated wrapper methods are <code>private</code> and synthetic. */
   private static final int WRAPPER_METHOD_ACCESS = Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC;
   
   
   
-  public SpecialCallWrapper(final long callSiteId, 
+  public SpecialCallWrapper(
       final String owner, final String originalName, final String originalSignature) {
-    super(callSiteId, Opcodes.INVOKESPECIAL, null, owner, originalName, originalSignature, true);
+    super(Opcodes.INVOKESPECIAL, null, owner, originalName, originalSignature, true);
   }
 
   
@@ -41,6 +41,11 @@ final class SpecialCallWrapper extends MethodCallWrapper {
   @Override
   protected final int getFirstOriginalArgPosition(final int numOriginalArgs) {
     return 0;
+  }
+
+  @Override
+  protected final int getSiteIdArgPosition(final int numOriginalArgs) {
+    return numOriginalArgs;
   }
 
   @Override

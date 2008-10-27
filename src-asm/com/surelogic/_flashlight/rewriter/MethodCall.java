@@ -9,7 +9,6 @@ import org.objectweb.asm.MethodVisitor;
  * in place (in the case of calls from interface initializers).
  */
 abstract class MethodCall {
-  private final long callSiteId;
   protected final int opcode;
   protected final String owner;
   protected final String name;
@@ -18,15 +17,13 @@ abstract class MethodCall {
   
   
   /**
-   * @param callSiteId The unique identifier of the call site being rewritten.
    * @param opcode The opcode used to invoke the method.
    * @param owner The owner of the method.
    * @param originalName The name of the method.
    * @param originalDesc The descriptor of the method.
    */
-  public MethodCall(final long callSiteId, final int opcode, final String owner,
+  public MethodCall(final int opcode, final String owner,
       final String originalName, final String originalDesc) {
-    this.callSiteId = callSiteId;
     this.opcode = opcode;
     this.owner = owner;
     this.name = originalName;
@@ -43,9 +40,7 @@ abstract class MethodCall {
   /**
    * Push the call site identifier.
    */
-  public final void pushCallSiteId(final MethodVisitor mv) {
-    mv.visitLdcInsn(Long.valueOf(callSiteId));
-  }
+  public abstract void pushSiteId(MethodVisitor mv);
   
   /**
    * Pushes the receiver object on to the stack for use by an instrumentation

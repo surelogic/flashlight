@@ -847,8 +847,8 @@ final class FlashlightMethodRewriter implements MethodVisitor {
   private void insertConstructorExecutionPostfix() {
     mv.visitLabel(startOfExceptionHandler);
     
-    // exception 
-    insertConstructorExecution(false); // +4 on stack
+    // exception (+1)
+    insertConstructorExecution(false); // +4 on stack (thus needs +5 becaues of exception already on stack)
     // exception
     
     /* Rethrow the exception */
@@ -935,7 +935,7 @@ final class FlashlightMethodRewriter implements MethodVisitor {
       // resume
       mv.visitLabel(resume);
       
-      updateStackDepthDelta(6);
+      updateStackDepthDelta(4);
     }
   }
   
@@ -1275,95 +1275,99 @@ final class FlashlightMethodRewriter implements MethodVisitor {
   // =========================================================================
 
   private void rewriteMonitorenter() {
+    final int extraStackSize;
     if (previousStore != -1) {
       /* There was an ASTORE immediately preceding this monitorenter.  We want
        * to delay the output of the ASTORE until immediately before the monitorenter
        * that we output.  In this case the stack is already "..., obj, obj"
        */
-      // ..., obj, obj
+      // ..., obj, obj (+0,)
+      extraStackSize = 4;
     } else {
       /* Copy the lock object to use for comparison purposes */
+      // ..., obj
       mv.visitInsn(Opcodes.DUP);
-      // ..., obj, obj
+      // ..., obj, obj (,+1)
+      extraStackSize = 5;
     }
     
     /* Compare the lock object against the receiver */
     if (isStatic) {
       // Static methods do not have a receiver
       ByteCodeUtils.pushBooleanConstant(mv, false);
-      // ..., obj, obj, false
+      // ..., obj, obj, false (+1, +2)
     } else {
       mv.visitInsn(Opcodes.DUP);
-      // ..., obj, obj, obj
+      // ..., obj, obj, obj (+1, +2)
 
       /* Compare the object against "this" */
       mv.visitVarInsn(Opcodes.ALOAD, 0);
-      // ..., obj, obj, obj, this
+      // ..., obj, obj, obj, this (+2, +3)
       final Label pushFalse1 = new Label();
       final Label afterPushIsThis = new Label();
       mv.visitJumpInsn(Opcodes.IF_ACMPNE, pushFalse1);
-      // ..., obj, obj
+      // ..., obj, obj (+0, +1)
       ByteCodeUtils.pushBooleanConstant(mv, true);
-      // ..., obj, obj, true
+      // ..., obj, obj, true (+1, +2)
       mv.visitJumpInsn(Opcodes.GOTO, afterPushIsThis);
       // END
       mv.visitLabel(pushFalse1);
-      // ..., obj, obj
+      // ..., obj, obj (+0, +1)
       ByteCodeUtils.pushBooleanConstant(mv, false);
-      // ..., obj, obj, false
+      // ..., obj, obj, false (+1, +2)
       mv.visitLabel(afterPushIsThis);
     }
-    // ..., obj, obj, isThis
+    // ..., obj, obj, isThis (+1, +2)
 
     /* Compare the object being locked against the Class object */
     mv.visitInsn(Opcodes.SWAP);
-    // ..., obj, isThis, obj
+    // ..., obj, isThis, obj (+1, +2)
     mv.visitInsn(Opcodes.DUP_X1);
-    // ..., obj, obj, isThis, obj
+    // ..., obj, obj, isThis, obj (+2, +3)
     ByteCodeUtils.pushClass(mv, atLeastJava5, classBeingAnalyzedInternal);
-    // ..., obj, obj, isThis, obj, inClass
+    // ..., obj, obj, isThis, obj, inClass (+3, +4)
     final Label pushFalse2 = new Label();
     final Label afterPushIsClass = new Label();
     mv.visitJumpInsn(Opcodes.IF_ACMPNE, pushFalse2);
-    // ..., obj, obj, isThis
+    // ..., obj, obj, isThis (+1, +2)
     ByteCodeUtils.pushBooleanConstant(mv, true);
-    // ..., obj, obj, isThis, true
+    // ..., obj, obj, isThis, true (+2, +3)
     mv.visitJumpInsn(Opcodes.GOTO, afterPushIsClass);
     // END
     mv.visitLabel(pushFalse2);
-    // ..., obj, obj, isThis
+    // ..., obj, obj, isThis (+1, +2)
     ByteCodeUtils.pushBooleanConstant(mv, false);
-    // ..., obj, obj, isThis, false
+    // ..., obj, obj, isThis, false (+2, +3)
     mv.visitLabel(afterPushIsClass);
-    // ..., obj, obj, isThis, isClass
+    // ..., obj, obj, isThis, isClass (+2, +3) 
 
     /* Push the site identifier and call the pre-method */
     pushSiteIdentifier();
-    // ..., obj, obj, isThis, isClass, siteId
+    // ..., obj, obj, isThis, isClass, siteId (+4, +5)
     mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
         FlashlightNames.BEFORE_INTRINSIC_LOCK_ACQUISITION,
         FlashlightNames.BEFORE_INTRINSIC_LOCK_ACQUISITION_SIGNATURE);
-    // ..., obj
+    // ..., obj (-1, 0)
 
     /* Duplicate the lock object to have it for the post-synchronized method */
     mv.visitInsn(Opcodes.DUP);
-    // ..., obj, obj
+    // ..., obj, obj (0, +1)
     
     if (previousStore != -1) {
       /* Duplicate again, and store it in the local variable */
       mv.visitInsn(Opcodes.DUP);
-      // ..., obj, obj, obj
+      // ..., obj, obj, obj (+1,)
       
       mv.visitVarInsn(Opcodes.ASTORE, previousStore);
       previousStore = -1;
-      // ..., obj, obj
+      // ..., obj, obj (0,)
     }
     
-    // ..., obj, obj      
+    // ..., obj, obj (0, +1)
       
     /* The original monitor enter call */
     mv.visitInsn(Opcodes.MONITORENTER);
-    // ..., obj
+    // ..., obj (-1, 0)
     
     /* To make the JIT compiler happy, we must start the try-block immediately
      * after the monitorenter operation.  This means we must delay the
@@ -1389,7 +1393,7 @@ final class FlashlightMethodRewriter implements MethodVisitor {
     
     /* Resume original instruction stream */
 
-    updateStackDepthDelta(5);
+    updateStackDepthDelta(extraStackSize);
   }
 
   private void rewriteMonitorexit() {
@@ -1400,7 +1404,8 @@ final class FlashlightMethodRewriter implements MethodVisitor {
        * we haven't output it yet.  We need two copies of the object, one
        * for the monitorexit, and one for our post-call that follows it, so 
        * we need to insert the ALOAD twice.  The point here is to make sure that
-       * the ALOAD still immediately precedes the monitorexit.
+       * the ALOAD still immediately precedes the monitorexit, which is why we
+       * cannot use the DUP operation.
        */  
       mv.visitVarInsn(Opcodes.ALOAD, previousLoad);
       // ..., obj
@@ -1615,18 +1620,20 @@ final class FlashlightMethodRewriter implements MethodVisitor {
       /* Create the wrapper method information and add it to the list of wrappers */
       final MethodCallWrapper wrapper;
       if (opcode == Opcodes.INVOKESPECIAL) {
-        wrapper = new SpecialCallWrapper(siteId, owner, name, desc);
+        wrapper = new SpecialCallWrapper(owner, name, desc);
       } else if (opcode == Opcodes.INVOKESTATIC){
-        wrapper = new StaticCallWrapper(siteId, owner, name, desc);
+        wrapper = new StaticCallWrapper(owner, name, desc);
       } else if (opcode == Opcodes.INVOKEINTERFACE) {
-        wrapper = new InterfaceCallWrapper(siteId, owner, name, desc);
+        wrapper = new InterfaceCallWrapper(owner, name, desc);
       } else { // virtual call
-        wrapper = new VirtualCallWrapper(siteId, firstArgInternal, owner, name, desc);
+        wrapper = new VirtualCallWrapper(firstArgInternal, owner, name, desc);
       }
       
       wrapperMethods.add(wrapper);
       
       // ..., [objRef], arg1, ..., argN
+      pushSiteIdentifier();
+      // ..., [objRef], arg1, ..., argN, siteId
       wrapper.invokeWrapperMethod(mv, classBeingAnalyzedInternal);
       // ..., [returnVlaue]
       

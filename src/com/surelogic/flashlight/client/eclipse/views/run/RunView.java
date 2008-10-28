@@ -36,7 +36,7 @@ public final class RunView extends ViewPart {
 		UsageMeter.getInstance().tickUse("Flashlight RunView opened");
 
 		final TableViewer tableViewer = new TableViewer(parent, SWT.BORDER
-				| SWT.FULL_SELECTION);
+				| SWT.FULL_SELECTION | SWT.MULTI);
 		tableViewer.setContentProvider(new RunViewContentProvider());
 		final RunViewModel model = new RunViewModel();
 

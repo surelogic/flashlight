@@ -1,6 +1,7 @@
 package com.surelogic.flashlight.client.eclipse.views.run;
 
 import java.io.File;
+import java.util.ArrayList;
 
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -20,6 +21,8 @@ import com.surelogic.common.ILifecycle;
 import com.surelogic.common.eclipse.ViewUtility;
 import com.surelogic.common.eclipse.jobs.EclipseJob;
 import com.surelogic.common.i18n.I18N;
+import com.surelogic.common.jobs.AggregateSLJob;
+import com.surelogic.common.jobs.SLJob;
 import com.surelogic.flashlight.client.eclipse.Data;
 import com.surelogic.flashlight.client.eclipse.dialogs.DeleteRunDialog;
 import com.surelogic.flashlight.client.eclipse.dialogs.LogDialog;
@@ -60,24 +63,27 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 		});
 		f_table.addListener(SWT.MouseDoubleClick, new Listener() {
 			public void handleEvent(Event event) {
-				final RunDescription description = getSelectedRunDescription();
-				if (description != null) {
-					/*
-					 * Is it already prepared?
-					 */
-					PrepRunDescription prep = description
-							.getPrepRunDescription();
-					final boolean hasPrep = prep != null;
-					if (hasPrep) {
+				final RunDescription[] selected = getSelectedRunDescriptions();
+				if (selected.length == 1) {
+					final RunDescription description = selected[0];
+					if (description != null) {
 						/*
-						 * Change the focus to the query menu view.
+						 * Is it already prepared?
 						 */
-						ViewUtility.showView(QueryMenuView.class.getName());
-					} else {
-						/*
-						 * Prepare this run.
-						 */
-						f_prepAction.run();
+						PrepRunDescription prep = description
+								.getPrepRunDescription();
+						final boolean hasPrep = prep != null;
+						if (hasPrep) {
+							/*
+							 * Change the focus to the query menu view.
+							 */
+							ViewUtility.showView(QueryMenuView.class.getName());
+						} else {
+							/*
+							 * Prepare this run.
+							 */
+							f_prepAction.run();
+						}
 					}
 				}
 			}
@@ -108,16 +114,14 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 		return null;
 	}
 
-	private TableItem getTableSelection() {
+	private RunDescription[] getSelectedRunDescriptions() {
 		TableItem[] items = f_table.getSelection();
-		if (items.length == 1) {
-			return items[0];
-		}
-		return null;
-	}
+		RunDescription[] results = new RunDescription[items.length];
+		for (int i = 0; i < items.length; i++) {
+			results[i] = getData(items[i]);
 
-	private RunDescription getSelectedRunDescription() {
-		return getData(getTableSelection());
+		}
+		return results;
 	}
 
 	private final Action f_refreshAction = new Action() {
@@ -141,29 +145,35 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 	private final Action f_prepAction = new Action() {
 		@Override
 		public void run() {
-			final RunDescription description = getSelectedRunDescription();
-			if (description != null) {
-				/*
-				 * Is it already prepared?
-				 */
-				PrepRunDescription prep = description.getPrepRunDescription();
-				final boolean hasPrep = prep != null;
-				if (hasPrep) {
-					if (!MessageDialog.openConfirm(f_table.getShell(), I18N
-							.msg("flashlight.dialog.reprep.title"), I18N.msg(
-							"flashlight.dialog.reprep.msg", description
-									.getName()))) {
-						return; // bail
+			final ArrayList<SLJob> jobs = new ArrayList<SLJob>();
+			final RunDescription[] selected = getSelectedRunDescriptions();
+			for (RunDescription description : selected) {
+				if (description != null) {
+					/*
+					 * Is it already prepared?
+					 */
+					PrepRunDescription prep = description
+							.getPrepRunDescription();
+					final boolean hasPrep = prep != null;
+					if (hasPrep) {
+						if (!MessageDialog.openConfirm(f_table.getShell(), I18N
+								.msg("flashlight.dialog.reprep.title"), I18N
+								.msg("flashlight.dialog.reprep.msg",
+										description.getName()))) {
+							return; // bail
+						}
+						jobs.add(new UnPrepSLJob(prep, Data.getInstance()));
 					}
-					EclipseJob.getInstance().scheduleDb(
-							new UnPrepSLJob(prep, Data.getInstance()), true,
-							false);
+					final File dataFile = description.getRawFileHandles()
+							.getDataFile();
+					jobs.add(new PrepSLJob(dataFile, Data.getInstance()));
 				}
-				final File dataFile = description.getRawFileHandles()
-						.getDataFile();
-				EclipseJob.getInstance().scheduleDb(
-						new PrepSLJob(dataFile, Data.getInstance()), true,
-						false);
+			}
+			if (!jobs.isEmpty()) {
+				final String name = selected.length == 1 ? "Preparing run"
+						: "Preparing multiple runs";
+				SLJob job = new AggregateSLJob(name, jobs);
+				EclipseJob.getInstance().scheduleDb(job, true, false);
 			}
 		}
 	};
@@ -175,15 +185,18 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 	private final Action f_showLogAction = new Action() {
 		@Override
 		public void run() {
-			final RunDescription description = getSelectedRunDescription();
-			if (description != null) {
-				final RawFileHandles handles = description.getRawFileHandles();
-				if (handles != null) {
-					final File logFile = handles.getLogFile();
-					if (logFile != null) {
-						LogDialog d = new LogDialog(f_table.getShell(), handles
-								.getLogFile(), description.getName());
-						d.open();
+			final RunDescription[] selected = getSelectedRunDescriptions();
+			for (RunDescription description : selected) {
+				if (description != null) {
+					final RawFileHandles handles = description
+							.getRawFileHandles();
+					if (handles != null) {
+						final File logFile = handles.getLogFile();
+						if (logFile != null) {
+							LogDialog d = new LogDialog(f_table.getShell(),
+									handles.getLogFile(), description.getName());
+							d.open();
+						}
 					}
 				}
 			}
@@ -197,13 +210,16 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 	private final Action f_convertToXmlAction = new Action() {
 		@Override
 		public void run() {
-			final RunDescription description = getSelectedRunDescription();
-			if (description != null) {
-				final RawFileHandles handles = description.getRawFileHandles();
-				if (handles != null) {
-					final File dataFile = handles.getDataFile();
-					EclipseJob.getInstance().schedule(
-							new ConvertBinaryToXMLJob(dataFile));
+			final RunDescription[] selected = getSelectedRunDescriptions();
+			for (RunDescription description : selected) {
+				if (description != null) {
+					final RawFileHandles handles = description
+							.getRawFileHandles();
+					if (handles != null) {
+						final File dataFile = handles.getDataFile();
+						EclipseJob.getInstance().schedule(
+								new ConvertBinaryToXMLJob(dataFile));
+					}
 				}
 			}
 		}
@@ -216,30 +232,38 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 	private final Action f_deleteAction = new Action() {
 		@Override
 		public void run() {
-			final RunDescription description = getSelectedRunDescription();
-			if (description != null) {
-				final RawFileHandles handles = description.getRawFileHandles();
-				PrepRunDescription prep = description.getPrepRunDescription();
+			final ArrayList<SLJob> jobs = new ArrayList<SLJob>();
+			final RunDescription[] selected = getSelectedRunDescriptions();
+			for (RunDescription description : selected) {
+				if (description != null) {
+					final RawFileHandles handles = description
+							.getRawFileHandles();
+					PrepRunDescription prep = description
+							.getPrepRunDescription();
 
-				boolean hasRawFiles = handles != null;
-				boolean hasPrep = prep != null;
+					boolean hasRawFiles = handles != null;
+					boolean hasPrep = prep != null;
 
-				DeleteRunDialog d = new DeleteRunDialog(f_table.getShell(),
-						description.getName(), hasRawFiles, hasPrep);
-				d.open();
-				if (Window.CANCEL == d.getReturnCode())
-					return;
+					DeleteRunDialog d = new DeleteRunDialog(f_table.getShell(),
+							description.getName(), hasRawFiles, hasPrep);
+					d.open();
+					if (Window.CANCEL == d.getReturnCode())
+						return;
 
-				if (hasPrep) {
-					EclipseJob.getInstance().scheduleDb(
-							new UnPrepSLJob(prep, Data.getInstance()), true,
-							false);
+					if (hasPrep) {
+						jobs.add(new UnPrepSLJob(prep, Data.getInstance()));
+					}
+					if (hasRawFiles && d.deleteRawDataFiles()) {
+						jobs.add(new DeleteRawFilesSLJob(description, Data
+								.getInstance()));
+					}
 				}
-				if (hasRawFiles && d.deleteRawDataFiles()) {
-					EclipseJob.getInstance().schedule(
-							new DeleteRawFilesSLJob(description, Data
-									.getInstance()));
-				}
+			}
+			if (!jobs.isEmpty()) {
+				final String name = jobs.size() == 1 ? jobs.get(0).getName()
+						: "Deleting multiple runs";
+				final SLJob job = new AggregateSLJob(name, jobs);
+				EclipseJob.getInstance().scheduleDb(job, true, false);
 			}
 		}
 	};
@@ -258,21 +282,40 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 	}
 
 	private final void setToolbarState() {
-		final RunDescription o = getSelectedRunDescription();
-		final boolean somethingIsSelected = o != null;
+		final RunDescription[] selected = getSelectedRunDescriptions();
+		final boolean somethingIsSelected = selected.length > 0;
 		f_deleteAction.setEnabled(somethingIsSelected);
 		boolean rawActionsEnabled = somethingIsSelected;
-		boolean binaryActionsEnabled = false;
+		boolean binaryActionsEnabled = somethingIsSelected;
 		String runVariableValue = null;
-		if (somethingIsSelected) {
-			rawActionsEnabled = o.getRawFileHandles() != null;
+		/*
+		 * Only enable raw actions if all the selected runs have raw data. Only
+		 * enable binary actions if all the selected runs have raw binary data.
+		 */
+		for (RunDescription rd : selected) {
+			final RawFileHandles rfh = rd.getRawFileHandles();
+			if (rfh == null) {
+				rawActionsEnabled = false;
+				binaryActionsEnabled = false;
+			} else {
+				if (binaryActionsEnabled) {
+					if (!rfh.isDataFileBinary())
+						binaryActionsEnabled = false;
+				}
+			}
+		}
+		/*
+		 * If only one item is selected change the focus of the query menu and
+		 * if the selection changed inform the SourceView so it shows code from
+		 * that run.
+		 */
+		if (selected.length == 1) {
+			final RunDescription o = selected[0];
+			SourceView.setRunDescription(o);
 			final PrepRunDescription prep = o.getPrepRunDescription();
 			if (prep != null) {
 				runVariableValue = Integer.toString(prep.getRun());
-				SourceView.setRunDescription(o);
 			}
-			binaryActionsEnabled = rawActionsEnabled
-					&& o.getRawFileHandles().isDataFileBinary();
 		}
 		AdHocDataSource.getManager().setGlobalVariableValue(RUN_VARIABLE,
 				runVariableValue);

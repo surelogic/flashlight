@@ -236,31 +236,35 @@ public final class RunDescription {
 	}
 
 	/**
-   * Examines the Flashlight data directory and returns file handles
-   * corresponding to this run description, or {@code null} if there are none.
-   * <p>
-   * The file handles are not considered part of the state of this object. The
-   * {@link RawFileUtility} is used to perform this lookup.
-   * 
-   * @return an object containing file handles to the raw data file and its
-   *         associated log file, or {@code null} if no file handles exist.
-   */
+	 * Examines the Flashlight data directory and returns file handles
+	 * corresponding to this run description, or {@code null} if there are none.
+	 * <p>
+	 * The file handles are not considered part of the state of this object. The
+	 * {@link RawFileUtility} is used to perform this lookup.
+	 * 
+	 * @return an object containing file handles to the raw data file and its
+	 *         associated log file, or {@code null} if no file handles exist.
+	 */
 	public RawFileHandles getRawFileHandles() {
-		return getRunDirectory().getProfileHandles();
+		final RunDirectory runDir = getRunDirectory();
+		if (runDir != null)
+			return runDir.getProfileHandles();
+		else
+			return null;
 	}
-	
-  /**
-   * Examines the Flashlight data directory and returns per-run directory model
-   * object corresponding to this run description, or {@code null} if there is
-   * none.
-   * <p>
-   * The file handles are not considered part of the state of this object. The
-   * {@link RawFileUtility} is used to perform this lookup.
-   * 
-   * @return an object containing file handles to the contents of the per-run
-   *         directory or {@code null} if no file handles exist.
-   */
+
+	/**
+	 * Examines the Flashlight data directory and returns per-run directory
+	 * model object corresponding to this run description, or {@code null} if
+	 * there is none.
+	 * <p>
+	 * The file handles are not considered part of the state of this object. The
+	 * {@link RawFileUtility} is used to perform this lookup.
+	 * 
+	 * @return an object containing file handles to the contents of the per-run
+	 *         directory or {@code null} if no file handles exist.
+	 */
 	public RunDirectory getRunDirectory() {
-	  return RawFileUtility.getRunDirectoryFor(this);
+		return RawFileUtility.getRunDirectoryFor(this);
 	}
 }

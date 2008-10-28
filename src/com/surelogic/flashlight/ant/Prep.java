@@ -7,11 +7,11 @@ import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Task;
 
 import com.surelogic.common.derby.DerbyConnection;
-import com.surelogic.common.jobs.ConsoleJob;
-import com.surelogic.common.jobs.PrintWriterSLProgressMonitor;
 import com.surelogic.common.jobs.SLJob;
 import com.surelogic.common.jobs.SLSeverity;
 import com.surelogic.common.jobs.SLStatus;
+import com.surelogic.common.jobs.console.ConsoleJob;
+import com.surelogic.common.jobs.console.PrintWriterSLProgressMonitor;
 import com.surelogic.flashlight.common.jobs.PrepSLJob;
 
 /* Update bulid.xml to build this properly.  We need common and flashlight-common jar files too. */
@@ -65,7 +65,7 @@ public final class Prep extends Task {
 
   public static void main(String[] args) throws Exception {
     final PrintWriter pw = new PrintWriter(System.out);
-    final ConsoleJob consoleJob = new ConsoleJob(new PrintWriterSLProgressMonitor.Factory(pw));
+    final ConsoleJob consoleJob = new ConsoleJob(PrintWriterSLProgressMonitor.getFactory(pw));
     
     final DerbyConnection dbConnection = new FlashlightDBConnection(args[1]);
     dbConnection.bootAndCheckSchema();

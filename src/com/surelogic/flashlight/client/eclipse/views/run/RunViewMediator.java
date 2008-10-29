@@ -290,12 +290,12 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 				}
 			}
 			if (!jobs.isEmpty()) {
+				RunDescription one = selected.length == 1 ? selected[0] : null;
 				final String jobName;
-				if (selected.length == 1)
-					jobName = I18N.msg("flashlight.jobs.delete.one",
-							selected[0].getName(), SLUtility
-									.toStringHMS(selected[0]
-											.getStartTimeOfRun()));
+				if (one != null)
+					jobName = I18N.msg("flashlight.jobs.delete.one", one
+							.getName(), SLUtility.toStringHMS(one
+							.getStartTimeOfRun()));
 				else
 					jobName = I18N.msg("flashlight.jobs.delete.many");
 				final SLJob job = new AggregateSLJob(jobName, jobs);

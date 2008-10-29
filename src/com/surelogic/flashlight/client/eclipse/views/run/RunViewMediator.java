@@ -257,7 +257,7 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 					boolean hasPrep = prep != null;
 
 					DeleteRunDialog d = new DeleteRunDialog(f_table.getShell(),
-							description.getName(), hasRawFiles, hasPrep);
+							description, hasRawFiles, hasPrep);
 					d.open();
 					if (Window.CANCEL == d.getReturnCode())
 						return;
@@ -272,9 +272,15 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 				}
 			}
 			if (!jobs.isEmpty()) {
-				final String name = jobs.size() == 1 ? jobs.get(0).getName()
-						: "Deleting multiple runs";
-				final SLJob job = new AggregateSLJob(name, jobs);
+				final String jobName;
+				if (selected.length == 1)
+					jobName = I18N.msg("flashlight.jobs.delete.one",
+							selected[0].getName(), SLUtility
+									.toStringHMS(selected[0]
+											.getStartTimeOfRun()));
+				else
+					jobName = I18N.msg("flashlight.jobs.delete.many");
+				final SLJob job = new AggregateSLJob(jobName, jobs);
 				EclipseJob.getInstance().scheduleDb(job, true, false);
 			}
 		}

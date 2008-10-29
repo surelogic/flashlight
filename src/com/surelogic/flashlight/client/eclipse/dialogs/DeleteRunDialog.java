@@ -12,26 +12,29 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 
+import com.surelogic.common.SLUtility;
 import com.surelogic.common.i18n.I18N;
+import com.surelogic.flashlight.common.model.RunDescription;
 
 /**
  * Prompts to ensure that the use really wants to delete a run.
  */
 public final class DeleteRunDialog extends Dialog {
 
-	private final String f_run;
+	private final String f_msg;
 
 	private volatile boolean f_deleteRawFiles;
 
 	private final boolean f_hasRawFiles;
 
-	public DeleteRunDialog(Shell parentShell, final String runName,
+	public DeleteRunDialog(Shell parentShell, final RunDescription run,
 			final boolean hasRawFiles, final boolean hasPrep) {
 		super(parentShell);
 		setShellStyle(getShellStyle());
-		if (runName == null)
-			throw new IllegalArgumentException(I18N.err(44, "runName"));
-		f_run = runName;
+		if (run == null)
+			throw new IllegalArgumentException(I18N.err(44, "run"));
+		f_msg = I18N.msg("flashlight.dialog.deleteRun.msg", run.getName(),
+				SLUtility.toStringHMS(run.getStartTimeOfRun()));
 		f_hasRawFiles = hasRawFiles;
 		f_deleteRawFiles = !hasPrep;
 	}
@@ -55,7 +58,7 @@ public final class DeleteRunDialog extends Dialog {
 		work.setLayout(fillLayout);
 
 		final Label msg = new Label(work, SWT.NONE);
-		msg.setText(I18N.msg("flashlight.dialog.deleteRun.msg", f_run));
+		msg.setText(f_msg);
 		if (f_hasRawFiles) {
 			final Button rawToo = new Button(work, SWT.CHECK);
 			rawToo.setText(I18N.msg("flashlight.dialog.deleteRun.raw.msg"));

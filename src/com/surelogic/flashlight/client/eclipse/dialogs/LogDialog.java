@@ -48,9 +48,11 @@ public final class LogDialog extends Dialog {
 		 */
 		setShellStyle(SWT.RESIZE | SWT.MAX | SWT.MODELESS);
 		setBlockOnOpen(false);
-		assert log != null;
+		if (log == null)
+			throw new IllegalArgumentException(I18N.err(44, "log"));
 		f_log = log;
-		assert run != null;
+		if (run == null)
+			throw new IllegalArgumentException(I18N.err(44, "run"));
 		f_title = I18N.msg("flashlight.dialog.log.title", run.getName(),
 				SLUtility.toStringHMS(run.getStartTimeOfRun()));
 	}

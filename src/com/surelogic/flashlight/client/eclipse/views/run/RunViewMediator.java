@@ -115,6 +115,12 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 		return null;
 	}
 
+	/**
+	 * Gets the set of currently selected run descriptions.
+	 * 
+	 * @return the set of currently selected run descriptions, or an empty array
+	 *         if no row is selected.
+	 */
 	private RunDescription[] getSelectedRunDescriptions() {
 		TableItem[] items = f_table.getSelection();
 		RunDescription[] results = new RunDescription[items.length];

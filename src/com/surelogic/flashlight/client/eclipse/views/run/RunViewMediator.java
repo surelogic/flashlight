@@ -163,7 +163,7 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 										description.getName(), SLUtility
 												.toStringHMS(description
 														.getStartTimeOfRun())))) {
-							return; // bail out
+							return; // bail out on cancel
 						}
 						jobs.add(new UnPrepSLJob(prep, Data.getInstance()));
 					}
@@ -201,8 +201,12 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 					if (handles != null) {
 						final File logFile = handles.getLogFile();
 						if (logFile != null) {
+							/*
+							 * This dialog is modeless so we can open more than
+							 * one.
+							 */
 							LogDialog d = new LogDialog(f_table.getShell(),
-									handles.getLogFile(), description.getName());
+									handles.getLogFile(), description);
 							d.open();
 						}
 					}

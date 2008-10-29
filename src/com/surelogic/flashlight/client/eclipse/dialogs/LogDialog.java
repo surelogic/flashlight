@@ -17,24 +17,42 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 
 import com.surelogic.common.FileUtility;
+import com.surelogic.common.SLUtility;
 import com.surelogic.common.i18n.I18N;
+import com.surelogic.flashlight.common.model.RunDescription;
 
 /**
- * A dialog to show the instrumentation log to the user.
+ * A modeless dialog to show the instrumentation log to the user. Problems in
+ * the log are highlighted visually to the user.
  */
 public final class LogDialog extends Dialog {
 
 	private final File f_log;
 
-	private final String f_runName;
+	private final String f_title;
 
-	public LogDialog(Shell parentShell, final File log, final String runName) {
+	/**
+	 * Constructs a modeless dialog to show a log file to the user.
+	 * 
+	 * @param parentShell
+	 *            a shell.
+	 * @param log
+	 *            the log file to display.
+	 * @param run
+	 *            the Flashlight run the log is about.
+	 */
+	public LogDialog(Shell parentShell, final File log, final RunDescription run) {
 		super(parentShell);
-		setShellStyle(getShellStyle() | SWT.RESIZE | SWT.MAX);
+		/*
+		 * Ensure that this dialog is modeless.
+		 */
+		setShellStyle(SWT.RESIZE | SWT.MAX | SWT.MODELESS);
+		setBlockOnOpen(false);
 		assert log != null;
 		f_log = log;
-		assert runName != null;
-		f_runName = runName;
+		assert run != null;
+		f_title = I18N.msg("flashlight.dialog.log.title", run.getName(),
+				SLUtility.toStringHMS(run.getStartTimeOfRun()));
 	}
 
 	@Override
@@ -75,7 +93,7 @@ public final class LogDialog extends Dialog {
 	@Override
 	protected void configureShell(Shell newShell) {
 		super.configureShell(newShell);
-		newShell.setText(I18N.msg("flashlight.dialog.log.title", f_runName));
+		newShell.setText(f_title);
 	}
 
 	@Override

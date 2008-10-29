@@ -18,6 +18,7 @@ import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.ui.PlatformUI;
 
 import com.surelogic.common.ILifecycle;
+import com.surelogic.common.SLUtility;
 import com.surelogic.common.eclipse.ViewUtility;
 import com.surelogic.common.eclipse.jobs.EclipseJob;
 import com.surelogic.common.i18n.I18N;
@@ -159,8 +160,10 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 						if (!MessageDialog.openConfirm(f_table.getShell(), I18N
 								.msg("flashlight.dialog.reprep.title"), I18N
 								.msg("flashlight.dialog.reprep.msg",
-										description.getName()))) {
-							return; // bail
+										description.getName(), SLUtility
+												.toStringHMS(description
+														.getStartTimeOfRun())))) {
+							return; // bail out
 						}
 						jobs.add(new UnPrepSLJob(prep, Data.getInstance()));
 					}
@@ -170,9 +173,14 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 				}
 			}
 			if (!jobs.isEmpty()) {
-				final String name = selected.length == 1 ? "Preparing run"
-						: "Preparing multiple runs";
-				SLJob job = new AggregateSLJob(name, jobs);
+				final String jobName;
+				if (selected.length == 1)
+					jobName = I18N.msg("flashlight.jobs.prep.one", selected[0]
+							.getName(), SLUtility.toStringHMS(selected[0]
+							.getStartTimeOfRun()));
+				else
+					jobName = I18N.msg("flashlight.jobs.prep.many");
+				SLJob job = new AggregateSLJob(jobName, jobs);
 				EclipseJob.getInstance().scheduleDb(job, true, false);
 			}
 		}

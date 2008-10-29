@@ -268,12 +268,12 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 					if (Window.CANCEL == d.getReturnCode())
 						return;
 
-					if (hasPrep) {
-						jobs.add(new UnPrepSLJob(prep, Data.getInstance()));
-					}
 					if (hasRawFiles && d.deleteRawDataFiles()) {
 						jobs.add(new DeleteRawFilesSLJob(description, Data
 								.getInstance()));
+					}
+					if (hasPrep) {
+						jobs.add(new UnPrepSLJob(prep, Data.getInstance()));
 					}
 				}
 			}

@@ -162,15 +162,21 @@ public final class RunDirectory {
   private static File getFileFrom(final File runDir, final FileFilter filter,
       final int noFileErr, final int manyFilesErr) {
 	  final File[] files = runDir.listFiles(filter);
-	  // Must have exactly one data file
-	  if (files.length == 0) { 
-		  SLLogger.getLogger().log(Level.FINE, 
-				  I18N.err(noFileErr, runDir.getAbsolutePath()));
-	  } else if (files.length > 1) {
-		  SLLogger.getLogger().log(Level.FINE, 
-				  I18N.err(manyFilesErr, runDir.getAbsolutePath()));
-	  } else { // exactly 1 (because length cannot be < 0)
-		  return files[0];
+	  /* files is either null, or should be a array of length 1.  It should only
+	   * be null when we get here after a directory refresh has been kicked off
+	   * after a delete of a run directory.
+	   */
+	  if (files != null) {
+  	  // Must have exactly one data file
+  	  if (files.length == 0) { 
+  		  SLLogger.getLogger().log(Level.FINE, 
+  				  I18N.err(noFileErr, runDir.getAbsolutePath()));
+  	  } else if (files.length > 1) {
+  		  SLLogger.getLogger().log(Level.FINE, 
+  				  I18N.err(manyFilesErr, runDir.getAbsolutePath()));
+  	  } else { // exactly 1 (because length cannot be < 0)
+  		  return files[0];
+  	  }
 	  }
 	  return null;
   }

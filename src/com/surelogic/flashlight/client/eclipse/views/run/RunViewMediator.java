@@ -154,6 +154,7 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 		public void run() {
 			final ArrayList<SLJob> jobs = new ArrayList<SLJob>();
 			final RunDescription[] selected = getSelectedRunDescriptions();
+			boolean hasPrep = false;
 			for (RunDescription description : selected) {
 				if (description != null) {
 					/*
@@ -161,16 +162,8 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 					 */
 					PrepRunDescription prep = description
 							.getPrepRunDescription();
-					final boolean hasPrep = prep != null;
-					if (hasPrep) {
-						if (!MessageDialog.openConfirm(f_table.getShell(), I18N
-								.msg("flashlight.dialog.reprep.title"), I18N
-								.msg("flashlight.dialog.reprep.msg",
-										description.getName(), SLUtility
-												.toStringHMS(description
-														.getStartTimeOfRun())))) {
-							return; // bail out on cancel
-						}
+					if (prep != null) {
+						hasPrep = true;
 						jobs.add(new UnPrepSLJob(prep, Data.getInstance()));
 					}
 					final File dataFile = description.getRawFileHandles()
@@ -179,10 +172,29 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 				}
 			}
 			if (!jobs.isEmpty()) {
+				RunDescription one = selected.length == 1 ? selected[0] : null;
+				if (hasPrep) {
+					final String title;
+					final String msg;
+					if (one != null) {
+						title = I18N.msg("flashlight.dialog.reprep.title");
+						msg = I18N.msg("flashlight.dialog.reprep.msg", one
+								.getName(), SLUtility.toStringHMS(one
+								.getStartTimeOfRun()));
+					} else {
+						title = I18N
+								.msg("flashlight.dialog.reprep.multi.title");
+						msg = I18N.msg("flashlight.dialog.reprep.multi.msg");
+					}
+					if (!MessageDialog.openConfirm(f_table.getShell(), title,
+							msg)) {
+						return; // bail out on cancel
+					}
+				}
 				final String jobName;
-				if (selected.length == 1)
-					jobName = I18N.msg("flashlight.jobs.prep.one", selected[0]
-							.getName(), SLUtility.toStringHMS(selected[0]
+				if (one != null)
+					jobName = I18N.msg("flashlight.jobs.prep.one", one
+							.getName(), SLUtility.toStringHMS(one
 							.getStartTimeOfRun()));
 				else
 					jobName = I18N.msg("flashlight.jobs.prep.many");

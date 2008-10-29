@@ -164,10 +164,10 @@ public final class RunDirectory {
 	  final File[] files = runDir.listFiles(filter);
 	  // Must have exactly one data file
 	  if (files.length == 0) { 
-		  SLLogger.getLogger().log(Level.WARNING, 
+		  SLLogger.getLogger().log(Level.FINE, 
 				  I18N.err(noFileErr, runDir.getAbsolutePath()));
 	  } else if (files.length > 1) {
-		  SLLogger.getLogger().log(Level.WARNING, 
+		  SLLogger.getLogger().log(Level.FINE, 
 				  I18N.err(manyFilesErr, runDir.getAbsolutePath()));
 	  } else { // exactly 1 (because length cannot be < 0)
 		  return files[0];

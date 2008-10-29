@@ -296,7 +296,7 @@ public final class PrepSLJob extends AbstractSLJob {
 					return SLStatus.CANCEL_STATUS;
 				}
 
-				System.out.println(scanResults);
+				SLLogger.getLogger().log(Level.FINE, scanResults.toString());
 				return SLStatus.OK_STATUS;
 
 			} finally {

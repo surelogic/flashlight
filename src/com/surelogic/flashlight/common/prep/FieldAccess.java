@@ -95,9 +95,9 @@ public abstract class FieldAccess extends Event {
 
 	@Override
 	public void printStats() {
-		System.out.println(getClass().getName() + " Skipped   = " + skipped);
-		System.out.println(getClass().getName() + " Inserted  = " + inserted);
-		System.out.println(getClass().getName() + " %Inserted = "
+	  SLLogger.getLogger().log(Level.FINE, getClass().getName() + " Skipped   = " + skipped);
+	  SLLogger.getLogger().log(Level.FINE, getClass().getName() + " Inserted  = " + inserted);
+	  SLLogger.getLogger().log(Level.FINE, getClass().getName() + " %Inserted = "
 				+ (inserted * 100.0 / (skipped + inserted)));
 	}
 

@@ -8,7 +8,6 @@ import org.eclipse.core.runtime.jobs.Job;
 import com.surelogic.common.eclipse.SWTUtility;
 import com.surelogic.common.eclipse.ViewUtility;
 import com.surelogic.common.eclipse.jobs.SLUIJob;
-import com.surelogic.flashlight.client.eclipse.Data;
 import com.surelogic.flashlight.client.eclipse.dialogs.ConfirmPerspectiveSwitch;
 import com.surelogic.flashlight.client.eclipse.perspectives.FlashlightPerspectiveFactory;
 import com.surelogic.flashlight.common.model.RunManager;
@@ -16,15 +15,15 @@ import com.surelogic.flashlight.common.model.RunManager;
 public final class SwitchToFlashlightPerspectiveJob extends SLUIJob {
 
 	@Override
-	public IStatus runInUIThread(IProgressMonitor monitor) {
+	public IStatus runInUIThread(final IProgressMonitor monitor) {
 		/*
 		 * First kick off a job to refresh the runs shown in the Flashlight Runs
 		 * view.
 		 */
 		final Job job = new Job("Refresh Runs") {
 			@Override
-			protected IStatus run(IProgressMonitor monitor) {
-				RunManager.getInstance().refresh(Data.getInstance());
+			protected IStatus run(final IProgressMonitor monitor) {
+				RunManager.getInstance().refresh();
 				return Status.OK_STATUS;
 			}
 		};
@@ -38,9 +37,10 @@ public final class SwitchToFlashlightPerspectiveJob extends SLUIJob {
 		if (!inFlashlightPerspective) {
 			final boolean change = ConfirmPerspectiveSwitch
 					.toFlashlight(SWTUtility.getShell());
-			if (change)
+			if (change) {
 				ViewUtility.showPerspective(FlashlightPerspectiveFactory.class
 						.getName());
+			}
 		}
 		return Status.OK_STATUS;
 	}

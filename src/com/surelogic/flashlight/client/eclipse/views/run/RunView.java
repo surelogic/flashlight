@@ -19,7 +19,6 @@ import com.surelogic.common.eclipse.SWTUtility;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.images.CommonImages;
 import com.surelogic.common.serviceability.UsageMeter;
-import com.surelogic.flashlight.client.eclipse.Data;
 import com.surelogic.flashlight.common.model.RunDescription;
 import com.surelogic.flashlight.common.model.RunManager;
 import com.surelogic.flashlight.common.model.RunViewModel;
@@ -32,7 +31,7 @@ public final class RunView extends ViewPart {
 	private RunViewMediator f_mediator;
 
 	@Override
-	public void createPartControl(Composite parent) {
+	public void createPartControl(final Composite parent) {
 		UsageMeter.getInstance().tickUse("Flashlight RunView opened");
 
 		final TableViewer tableViewer = new TableViewer(parent, SWT.BORDER
@@ -49,8 +48,8 @@ public final class RunView extends ViewPart {
 			new ColumnViewerSorter<RunDescription>(tableViewer, column
 					.getColumn()) {
 				@Override
-				protected int doCompare(Viewer viewer, RunDescription e1,
-						RunDescription e2) {
+				protected int doCompare(final Viewer viewer,
+						final RunDescription e1, final RunDescription e2) {
 					return model.getColumnComparator(columnIndex).compare(e1,
 							e2);
 				}
@@ -62,7 +61,7 @@ public final class RunView extends ViewPart {
 		// Set the line of the table visible
 		tableViewer.getTable().setLinesVisible(true);
 		// Ensure that the run manager data is fresh
-		RunManager.getInstance().refresh(Data.getInstance());
+		RunManager.getInstance().refresh();
 		// Set the input so we see data
 		tableViewer.setInput(RunManager.getInstance());
 
@@ -122,7 +121,7 @@ public final class RunView extends ViewPart {
 		final MenuManager menuMgr = new MenuManager("#PopupMenu");
 		menuMgr.setRemoveAllWhenShown(true);
 		menuMgr.addMenuListener(new IMenuListener() {
-			public void menuAboutToShow(IMenuManager manager) {
+			public void menuAboutToShow(final IMenuManager manager) {
 				manager.add(prepAction);
 				manager.add(showLogAction);
 				manager.add(convertToXmlAction);
@@ -154,15 +153,17 @@ public final class RunView extends ViewPart {
 		/*
 		 * This is a good point to refresh the contents of the view.
 		 */
-		if (f_mediator != null)
+		if (f_mediator != null) {
 			f_mediator.setFocus();
+		}
 	}
 
 	/**
 	 * Must be invoked within the SWT event thread.
 	 */
 	void refresh() {
-		if (f_mediator != null)
+		if (f_mediator != null) {
 			f_mediator.refresh();
+		}
 	}
 }

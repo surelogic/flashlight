@@ -24,10 +24,8 @@ import com.surelogic.common.eclipse.jobs.EclipseJob;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jobs.AggregateSLJob;
 import com.surelogic.common.jobs.SLJob;
-import com.surelogic.flashlight.client.eclipse.Data;
 import com.surelogic.flashlight.client.eclipse.dialogs.DeleteRunDialog;
 import com.surelogic.flashlight.client.eclipse.dialogs.LogDialog;
-import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.QueryMenuView;
 import com.surelogic.flashlight.client.eclipse.views.source.SourceView;
 import com.surelogic.flashlight.common.entities.PrepRunDescription;
@@ -58,12 +56,13 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 
 	public void init() {
 		f_table.addListener(SWT.Selection, new Listener() {
-			public void handleEvent(Event event) {
+			public void handleEvent(final Event event) {
+				updateRunManager();
 				setToolbarState();
 			}
 		});
 		f_table.addListener(SWT.MouseDoubleClick, new Listener() {
-			public void handleEvent(Event event) {
+			public void handleEvent(final Event event) {
 				final RunDescription[] selected = getSelectedRunDescriptions();
 				if (selected.length == 1) {
 					final RunDescription description = selected[0];
@@ -71,7 +70,7 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 						/*
 						 * Is it already prepared?
 						 */
-						PrepRunDescription prep = description
+						final PrepRunDescription prep = description
 								.getPrepRunDescription();
 						final boolean hasPrep = prep != null;
 						if (hasPrep) {
@@ -92,10 +91,11 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 		f_table.addKeyListener(new KeyAdapter() {
 
 			@Override
-			public void keyPressed(KeyEvent e) {
+			public void keyPressed(final KeyEvent e) {
 				if (e.character == SWT.DEL) {
-					if (f_deleteAction.isEnabled())
+					if (f_deleteAction.isEnabled()) {
 						f_deleteAction.run();
+					}
 				}
 			}
 		});
@@ -122,8 +122,8 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 	 *         if no row is selected.
 	 */
 	private RunDescription[] getSelectedRunDescriptions() {
-		TableItem[] items = f_table.getSelection();
-		RunDescription[] results = new RunDescription[items.length];
+		final TableItem[] items = f_table.getSelection();
+		final RunDescription[] results = new RunDescription[items.length];
 		for (int i = 0; i < items.length; i++) {
 			results[i] = getData(items[i]);
 
@@ -134,8 +134,7 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 	private final Action f_refreshAction = new Action() {
 		@Override
 		public void run() {
-			EclipseJob.getInstance().scheduleDb(
-					new RefreshRunManagerSLJob(Data.getInstance()));
+			EclipseJob.getInstance().scheduleDb(new RefreshRunManagerSLJob());
 		}
 	};
 
@@ -155,24 +154,23 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 			final ArrayList<SLJob> jobs = new ArrayList<SLJob>();
 			final RunDescription[] selected = getSelectedRunDescriptions();
 			boolean hasPrep = false;
-			for (RunDescription description : selected) {
+			for (final RunDescription description : selected) {
 				if (description != null) {
 					/*
 					 * Is it already prepared?
 					 */
-					PrepRunDescription prep = description
+					final PrepRunDescription prep = description
 							.getPrepRunDescription();
 					if (prep != null) {
 						hasPrep = true;
-						jobs.add(new UnPrepSLJob(prep, Data.getInstance()));
+						jobs.add(new UnPrepSLJob(prep));
 					}
-					final File dataFile = description.getRawFileHandles()
-							.getDataFile();
-					jobs.add(new PrepSLJob(dataFile, Data.getInstance()));
+					jobs.add(new PrepSLJob(description));
 				}
 			}
 			if (!jobs.isEmpty()) {
-				RunDescription one = selected.length == 1 ? selected[0] : null;
+				final RunDescription one = selected.length == 1 ? selected[0]
+						: null;
 				if (hasPrep) {
 					final String title;
 					final String msg;
@@ -192,13 +190,14 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 					}
 				}
 				final String jobName;
-				if (one != null)
+				if (one != null) {
 					jobName = I18N.msg("flashlight.jobs.prep.one", one
 							.getName(), SLUtility.toStringHMS(one
 							.getStartTimeOfRun()));
-				else
+				} else {
 					jobName = I18N.msg("flashlight.jobs.prep.many");
-				SLJob job = new AggregateSLJob(jobName, jobs);
+				}
+				final SLJob job = new AggregateSLJob(jobName, jobs);
 				EclipseJob.getInstance().scheduleDb(job, true, false);
 			}
 		}
@@ -212,7 +211,7 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 		@Override
 		public void run() {
 			final RunDescription[] selected = getSelectedRunDescriptions();
-			for (RunDescription description : selected) {
+			for (final RunDescription description : selected) {
 				if (description != null) {
 					final RawFileHandles handles = description
 							.getRawFileHandles();
@@ -223,8 +222,9 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 							 * This dialog is modeless so we can open more than
 							 * one.
 							 */
-							LogDialog d = new LogDialog(f_table.getShell(),
-									handles.getLogFile(), description);
+							final LogDialog d = new LogDialog(f_table
+									.getShell(), handles.getLogFile(),
+									description);
 							d.open();
 						}
 					}
@@ -241,7 +241,7 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 		@Override
 		public void run() {
 			final RunDescription[] selected = getSelectedRunDescriptions();
-			for (RunDescription description : selected) {
+			for (final RunDescription description : selected) {
 				if (description != null) {
 					final RawFileHandles handles = description
 							.getRawFileHandles();
@@ -264,40 +264,42 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 		public void run() {
 			final ArrayList<SLJob> jobs = new ArrayList<SLJob>();
 			final RunDescription[] selected = getSelectedRunDescriptions();
-			for (RunDescription description : selected) {
+			for (final RunDescription description : selected) {
 				if (description != null) {
 					final RawFileHandles handles = description
 							.getRawFileHandles();
-					PrepRunDescription prep = description
+					final PrepRunDescription prep = description
 							.getPrepRunDescription();
 
-					boolean hasRawFiles = handles != null;
-					boolean hasPrep = prep != null;
+					final boolean hasRawFiles = handles != null;
+					final boolean hasPrep = prep != null;
 
-					DeleteRunDialog d = new DeleteRunDialog(f_table.getShell(),
-							description, hasRawFiles, hasPrep);
+					final DeleteRunDialog d = new DeleteRunDialog(f_table
+							.getShell(), description, hasRawFiles, hasPrep);
 					d.open();
-					if (Window.CANCEL == d.getReturnCode())
+					if (Window.CANCEL == d.getReturnCode()) {
 						return;
+					}
 
 					if (hasRawFiles && d.deleteRawDataFiles()) {
-						jobs.add(new DeleteRawFilesSLJob(description, Data
-								.getInstance()));
+						jobs.add(new DeleteRawFilesSLJob(description));
 					}
 					if (hasPrep) {
-						jobs.add(new UnPrepSLJob(prep, Data.getInstance()));
+						jobs.add(new UnPrepSLJob(prep));
 					}
 				}
 			}
 			if (!jobs.isEmpty()) {
-				RunDescription one = selected.length == 1 ? selected[0] : null;
+				final RunDescription one = selected.length == 1 ? selected[0]
+						: null;
 				final String jobName;
-				if (one != null)
+				if (one != null) {
 					jobName = I18N.msg("flashlight.jobs.delete.one", one
 							.getName(), SLUtility.toStringHMS(one
 							.getStartTimeOfRun()));
-				else
+				} else {
 					jobName = I18N.msg("flashlight.jobs.delete.many");
+				}
 				final SLJob job = new AggregateSLJob(jobName, jobs);
 				EclipseJob.getInstance().scheduleDb(job, true, false);
 			}
@@ -312,9 +314,15 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 	 * Pack the columns of our table to the ideal width.
 	 */
 	private final void packColumns() {
-		for (TableColumn col : f_tableViewer.getTable().getColumns()) {
+		for (final TableColumn col : f_tableViewer.getTable().getColumns()) {
 			col.pack();
 		}
+	}
+
+	private final void updateRunManager() {
+		final RunDescription[] selected = getSelectedRunDescriptions();
+		RunManager.getInstance().setSelectedRun(
+				selected.length == 0 ? null : selected[0]);
 	}
 
 	private final void setToolbarState() {
@@ -323,20 +331,20 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 		f_deleteAction.setEnabled(somethingIsSelected);
 		boolean rawActionsEnabled = somethingIsSelected;
 		boolean binaryActionsEnabled = somethingIsSelected;
-		String runVariableValue = null;
 		/*
 		 * Only enable raw actions if all the selected runs have raw data. Only
 		 * enable binary actions if all the selected runs have raw binary data.
 		 */
-		for (RunDescription rd : selected) {
+		for (final RunDescription rd : selected) {
 			final RawFileHandles rfh = rd.getRawFileHandles();
 			if (rfh == null) {
 				rawActionsEnabled = false;
 				binaryActionsEnabled = false;
 			} else {
 				if (binaryActionsEnabled) {
-					if (!rfh.isDataFileBinary())
+					if (!rfh.isDataFileBinary()) {
 						binaryActionsEnabled = false;
+					}
 				}
 			}
 		}
@@ -348,13 +356,8 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 		if (selected.length == 1) {
 			final RunDescription o = selected[0];
 			SourceView.setRunDescription(o);
-			final PrepRunDescription prep = o.getPrepRunDescription();
-			if (prep != null) {
-				runVariableValue = Integer.toString(prep.getRun());
-			}
 		}
-		AdHocDataSource.getManager().setGlobalVariableValue(RUN_VARIABLE,
-				runVariableValue);
+		// FIXME WE CHANGE OUR SELECTED RUN HERE
 		f_prepAction.setEnabled(rawActionsEnabled);
 		f_showLogAction.setEnabled(rawActionsEnabled);
 		f_convertToXmlAction.setEnabled(binaryActionsEnabled);
@@ -363,7 +366,7 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 	/**
 	 * Probably we have not been called from the SWT event dispatch thread.
 	 */
-	public void notify(RunManager manager) {
+	public void notify(final RunManager manager) {
 		PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
 			public void run() {
 				refresh();

@@ -3,7 +3,7 @@ package com.surelogic.flashlight.common.prep;
 import static com.surelogic._flashlight.common.AttributeType.ID;
 import static com.surelogic._flashlight.common.AttributeType.READ_LOCK_ID;
 import static com.surelogic._flashlight.common.AttributeType.WRITE_LOCK_ID;
-import static com.surelogic._flashlight.common.IdConstants.*;
+import static com.surelogic._flashlight.common.IdConstants.ILLEGAL_ID;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -20,7 +20,7 @@ public class ReadWriteLock extends Event {
 		super(i);
 	}
 
-	private static final String f_psQ = "INSERT INTO RWLOCK (Run,Id,ReadLock,WriteLock) VALUES (?, ?, ?, ?)";
+	private static final String f_psQ = "INSERT INTO RWLOCK (Id,ReadLock,WriteLock) VALUES (?, ?, ?)";
 
 	private PreparedStatement f_ps;
 
@@ -39,37 +39,37 @@ public class ReadWriteLock extends Event {
 		return "read-write-lock-definition";
 	}
 
-	public void parse(final int runId, final PreppedAttributes attributes)
-			throws SQLException {
-		long id = attributes.getLong(ID);
-		long readLock = attributes.getLong(READ_LOCK_ID);
-		long writeLock = attributes.getLong(WRITE_LOCK_ID);
-		if ((id == ILLEGAL_ID) || (readLock == ILLEGAL_ID) || (writeLock == ILLEGAL_ID)) {
+	public void parse(final PreppedAttributes attributes) throws SQLException {
+		final long id = attributes.getLong(ID);
+		final long readLock = attributes.getLong(READ_LOCK_ID);
+		final long writeLock = attributes.getLong(WRITE_LOCK_ID);
+		if ((id == ILLEGAL_ID) || (readLock == ILLEGAL_ID)
+				|| (writeLock == ILLEGAL_ID)) {
 			SLLogger
 					.getLogger()
 					.log(Level.SEVERE,
 							"Missing id, read-lock-id, or write-lock-id in read-write-lock-definition");
 			return;
 		}
-		insert(runId, id, readLock, writeLock);
-		f_rowInserter.defineRWLock(runId, id, readLock, writeLock, startTime);
+		insert(id, readLock, writeLock);
+		f_rowInserter.defineRWLock(id, readLock, writeLock, startTime);
 	}
 
-	private void insert(final int runId, final long id, final long readLock,
-			final long writeLock) throws SQLException {
-		f_ps.setLong(1, runId);
-		f_ps.setLong(2, id);
-		f_ps.setLong(3, readLock);
-		f_ps.setLong(4, writeLock);
+	private void insert(final long id, final long readLock, final long writeLock)
+			throws SQLException {
+		int idx = 1;
+		f_ps.setLong(idx++, id);
+		f_ps.setLong(idx++, readLock);
+		f_ps.setLong(idx++, writeLock);
 		f_ps.execute();
 	}
 
 	@Override
-	public void flush(final int runId, final long endTime) throws SQLException {
+	public void flush(final long endTime) throws SQLException {
 		if (f_ps != null) {
 			f_ps.close();
 			f_ps = null;
 		}
-		super.flush(runId, endTime);
+		super.flush(endTime);
 	}
 }

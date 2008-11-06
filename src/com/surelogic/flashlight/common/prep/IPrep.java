@@ -56,8 +56,7 @@ public interface IPrep {
 	 * @throws SQLException
 	 *             if something goes wrong, this will cause the prep to fail.
 	 */
-	void parse(final int runId, final PreppedAttributes attributes)
-			throws SQLException;
+	void parse(final PreppedAttributes attributes) throws SQLException;
 
 	/**
 	 * Called after the last call to {@link #parse(int, Attributes)} to allow a
@@ -71,7 +70,7 @@ public interface IPrep {
 	 * @throws SQLException
 	 *             if something goes wrong, this will cause the prep to fail.
 	 */
-	void flush(final int runId, final long endTime) throws SQLException;
+	void flush(final long endTime) throws SQLException;
 
 	/**
 	 * Logs some status if the logging level {@link Level#FINE} is loggable.

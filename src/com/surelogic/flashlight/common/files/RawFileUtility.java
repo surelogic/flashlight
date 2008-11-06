@@ -1,6 +1,13 @@
 package com.surelogic.flashlight.common.files;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileFilter;
+import java.io.FileInputStream;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -30,17 +37,16 @@ import com.surelogic.flashlight.common.model.RunDescription;
  * Flashlight data directory.
  */
 public final class RawFileUtility {
-  public static final String DB_DIRECTORY = "db";
-  
+	public static final String DB_DIRECTORY = "db";
+
 	public static final String SUFFIX = ".fl";
 	public static final String COMPRESSED_SUFFIX = ".fl.gz";
-	
+
 	public static final String BIN_SUFFIX = ".flb";
 	public static final String COMPRESSED_BIN_SUFFIX = ".flb.gz";
-	
-	private static final String[] suffixes = {
-		COMPRESSED_SUFFIX, BIN_SUFFIX, SUFFIX, COMPRESSED_BIN_SUFFIX
-	};
+
+	private static final String[] suffixes = { COMPRESSED_SUFFIX, BIN_SUFFIX,
+			SUFFIX, COMPRESSED_BIN_SUFFIX };
 
 	/**
 	 * Checks if the passed raw file is compressed or not. It does this by
@@ -53,14 +59,16 @@ public final class RawFileUtility {
 	 */
 	public static boolean isRawFileGzip(final File dataFile) {
 		final String name = dataFile.getName();
-		return name.endsWith(COMPRESSED_SUFFIX) || name.endsWith(COMPRESSED_BIN_SUFFIX);
+		return name.endsWith(COMPRESSED_SUFFIX)
+				|| name.endsWith(COMPRESSED_BIN_SUFFIX);
 	}
 
 	static boolean isBinary(final File dataFile) {
 		final String name = dataFile.getName();
-		return name.endsWith(BIN_SUFFIX) || name.endsWith(COMPRESSED_BIN_SUFFIX);
+		return name.endsWith(BIN_SUFFIX)
+				|| name.endsWith(COMPRESSED_BIN_SUFFIX);
 	}
-	
+
 	/**
 	 * Gets an input stream to read the passed raw file. This method opens the
 	 * right kind of stream based upon if the raw file is compressed or not.
@@ -101,52 +109,55 @@ public final class RawFileUtility {
 		return runDescriptionBuilder.getRunDescriptions();
 	}
 
-//	/**
-//	 * Examines the Flashlight data directory and returns file handles
-//	 * corresponding to the passed run description, or {@code null} if no file
-//	 * handles exist.
-//	 * <p>
-//	 * <i>Implementation Note:</i> This method scans the Flashlight data
-//	 * directory.
-//	 * 
-//	 * @param description
-//	 *            a non-null run description.
-//	 * @return an object containing file handles to the raw data file and its
-//	 *         associated log file, or {@code null} if no file handles exist.
-//	 */
-//	public static RawFileHandles getRawFileHandlesFor(
-//			final RunDescription description) {
-//		if (description == null)
-//			throw new IllegalArgumentException(I18N.err(44, "description"));
-//		final RawDataDirectoryReader runDescriptionBuilder = new RawDataDirectoryReader();
-//		runDescriptionBuilder.read();
-//		return runDescriptionBuilder.getRawFileHandlesFor(description);
-//	}
+	// /**
+	// * Examines the Flashlight data directory and returns file handles
+	// * corresponding to the passed run description, or {@code null} if no file
+	// * handles exist.
+	// * <p>
+	// * <i>Implementation Note:</i> This method scans the Flashlight data
+	// * directory.
+	// *
+	// * @param description
+	// * a non-null run description.
+	// * @return an object containing file handles to the raw data file and its
+	// * associated log file, or {@code null} if no file handles exist.
+	// */
+	// public static RawFileHandles getRawFileHandlesFor(
+	// final RunDescription description) {
+	// if (description == null)
+	// throw new IllegalArgumentException(I18N.err(44, "description"));
+	// final RawDataDirectoryReader runDescriptionBuilder = new
+	// RawDataDirectoryReader();
+	// runDescriptionBuilder.read();
+	// return runDescriptionBuilder.getRawFileHandlesFor(description);
+	// }
 
 	public static RunDirectory getRunDirectoryFor(
-	    final RunDescription description) {
-    if (description == null)
-      throw new IllegalArgumentException(I18N.err(44, "description"));
-    final RawDataDirectoryReader runDescriptionBuilder = new RawDataDirectoryReader();
-    runDescriptionBuilder.read();
-    return runDescriptionBuilder.getRunDirectoryFor(description);
-  }
-
-	public static RunDirectory getRunDirectoryFor(
-	    final RawDataFilePrefix prefixInfo) {
-	  return getRunDirectoryFor(getRunDescriptionFor(prefixInfo));
+			final RunDescription description) {
+		if (description == null) {
+			throw new IllegalArgumentException(I18N.err(44, "description"));
+		}
+		final RawDataDirectoryReader runDescriptionBuilder = new RawDataDirectoryReader();
+		runDescriptionBuilder.read();
+		return runDescriptionBuilder.getRunDirectoryFor(description);
 	}
-	
+
+	public static RunDirectory getRunDirectoryFor(
+			final RawDataFilePrefix prefixInfo) {
+		return getRunDirectoryFor(getRunDescriptionFor(prefixInfo));
+	}
+
 	/**
-   * Reads the prefix information from a raw data file.
-   * 
-   * @param dataFile
-   *          a raw data file.
-   * @return prefix information (may or may not be well-formed).
-   */
+	 * Reads the prefix information from a raw data file.
+	 * 
+	 * @param dataFile
+	 *            a raw data file.
+	 * @return prefix information (may or may not be well-formed).
+	 */
 	public static RawDataFilePrefix getPrefixFor(final File dataFile) {
-		if (dataFile == null)
+		if (dataFile == null) {
 			throw new IllegalArgumentException(I18N.err(44, "dataFile"));
+		}
 
 		final RawDataFilePrefix prefixInfo = new RawDataFilePrefix();
 		prefixInfo.read(dataFile);
@@ -167,8 +178,9 @@ public final class RawFileUtility {
 	 */
 	public static RunDescription getRunDescriptionFor(
 			final RawDataFilePrefix prefixInfo) {
-		if (prefixInfo == null)
+		if (prefixInfo == null) {
 			throw new IllegalArgumentException(I18N.err(44, "prefixInfo"));
+		}
 
 		if (prefixInfo.isWellFormed()) {
 
@@ -203,18 +215,19 @@ public final class RawFileUtility {
 	 */
 	public static RawFileHandles getRawFileHandlesFor(
 			final RawDataFilePrefix prefixInfo) {
-		if (prefixInfo == null)
+		if (prefixInfo == null) {
 			throw new IllegalArgumentException(I18N.err(44, "prefixInfo"));
+		}
 
 		if (prefixInfo.isWellFormed()) {
 			String fileNamePrefix = prefixInfo.getFile().getAbsolutePath();
-			for(String suffix : suffixes) {
+			for (final String suffix : suffixes) {
 				if (fileNamePrefix.endsWith(suffix)) {
 					fileNamePrefix = fileNamePrefix.substring(0, fileNamePrefix
 							.length()
 							- suffix.length());
 					break;
-				} 
+				}
 			}
 			final File logFile = new File(fileNamePrefix + ".flog");
 			if (!logFile.exists()) {
@@ -237,8 +250,7 @@ public final class RawFileUtility {
 	private static final class RawDataDirectoryReader {
 		final Set<RunDescription> f_runs = new HashSet<RunDescription>();
 
-    private final Map<RunDescription, RunDirectory> f_runToHandles =
-        new HashMap<RunDescription, RunDirectory>();
+		private final Map<RunDescription, RunDirectory> f_runToHandles = new HashMap<RunDescription, RunDirectory>();
 
 		Set<RunDescription> getRunDescriptions() {
 			return f_runs;
@@ -249,16 +261,17 @@ public final class RawFileUtility {
 		}
 
 		void read() {
-	    final File directory = new File(FileUtility.getFlashlightDataDirectory());
-	    final File[] runDirs = directory.listFiles(f_directoryFilter);
-	    for (final File runDir : runDirs) {
-	      final RunDirectory runDirectory = RunDirectory.getFor(runDir);
-	      if (runDirectory != null) {
-  	      final RunDescription run = runDirectory.getRunDescription();
-  	      f_runs.add(run);
-  	      f_runToHandles.put(run, runDirectory);
-	      }
-	    }
+			final File directory = new File(FileUtility
+					.getFlashlightDataDirectory());
+			final File[] runDirs = directory.listFiles(f_directoryFilter);
+			for (final File runDir : runDirs) {
+				final RunDirectory runDirectory = RunDirectory.getFor(runDir);
+				if (runDirectory != null) {
+					final RunDescription run = runDirectory.getRunDescription();
+					f_runs.add(run);
+					f_runToHandles.put(run, runDirectory);
+				}
+			}
 		}
 	}
 
@@ -266,12 +279,12 @@ public final class RawFileUtility {
 	 * @see #getRawDataFiles()
 	 */
 	private static final FileFilter f_flashlightRawDataFileFilter = new FileFilter() {
-		public boolean accept(File pathname) {
+		public boolean accept(final File pathname) {
 			if (pathname.isDirectory()) {
 				return false;
 			}
-			final String name = pathname.getName();			
-			for(String suffix : suffixes) {
+			final String name = pathname.getName();
+			for (final String suffix : suffixes) {
 				if (name.endsWith(suffix)) {
 					return true;
 				}
@@ -279,59 +292,66 @@ public final class RawFileUtility {
 			return false;
 		}
 	};
-	
+
 	private static final FilenameFilter f_directoryFilter = new FilenameFilter() {
 		public boolean accept(final File root, final String name) {
 			final File dir = new File(root, name);
-			return dir.exists() && dir.isDirectory() &&
-			       new File(dir, name + RunDirectory.HEADER_SUFFIX).exists();
-			       //name.contains("-at-") && !name.equals(DB_DIRECTORY);
+			return dir.exists()
+					&& dir.isDirectory()
+					&& new File(dir, name + RunDirectory.HEADER_SUFFIX)
+							.exists();
+			// name.contains("-at-") && !name.equals(DB_DIRECTORY);
 		}
 	};
 
 	/**
-	 * Find the raw data files.  These are going to located in directories nested
-	 * in the flashlight data directory.  That is, each run produced by the
+	 * Find the raw data files. These are going to located in directories nested
+	 * in the flashlight data directory. That is, each run produced by the
 	 * "Run as Flashlight" option in Eclipse is going to create a top-level
-	 * directory within the Flashlight data directory that contains all information
-	 * needed for that run.
-	 *  
+	 * directory within the Flashlight data directory that contains all
+	 * information needed for that run.
+	 * 
 	 * @return the set of Flashlight raw data files (compressed or uncompressed)
 	 *         found in the Flashlight directory.
 	 */
 	private static File[] getRawDataFiles() {
-		final File directory = new File(FileUtility.getFlashlightDataDirectory());
-		
-		final List<File> rawDataFiles = new LinkedList<File>(); 
-		
+		final File directory = new File(FileUtility
+				.getFlashlightDataDirectory());
+
+		final List<File> rawDataFiles = new LinkedList<File>();
+
 		// Get the top-level per-run directories
 		final File[] runDirs = directory.listFiles(f_directoryFilter);
 		for (final File runDir : runDirs) {
-	    final File[] dataFiles = runDir.listFiles(f_flashlightRawDataFileFilter);
-	    rawDataFiles.addAll(Arrays.asList(dataFiles));
+			final File[] dataFiles = runDir
+					.listFiles(f_flashlightRawDataFileFilter);
+			rawDataFiles.addAll(Arrays.asList(dataFiles));
 		}
 		final File[] value = new File[rawDataFiles.size()];
 		return rawDataFiles.toArray(value);
 	}
 
 	/*
-	 * Estimate the amount of events in the raw file based upon the size of
-	 * the raw file. This guess is only used for the pre-scan of the file.
+	 * Estimate the amount of events in the raw file based upon the size of the
+	 * raw file. This guess is only used for the pre-scan of the file.
 	 */
-	public static int estimateNumEvents(File dataFile) {
+	public static int estimateNumEvents(final File dataFile) {
 		final long sizeInBytes = dataFile.length();
-		long estimatedEvents = (sizeInBytes / (RawFileUtility.isRawFileGzip(dataFile) ? 7L : 130L));
+		long estimatedEvents = (sizeInBytes / (RawFileUtility
+				.isRawFileGzip(dataFile) ? 7L : 130L));
 		if (estimatedEvents <= 0) {
 			estimatedEvents = 10L;
 		}
 		return SLUtility.safeLongToInt(estimatedEvents);
 	}
-	
-	public static SAXParser getParser(File dataFile) throws ParserConfigurationException, SAXException {
+
+	public static SAXParser getParser(final File dataFile)
+			throws ParserConfigurationException, SAXException {
 		final SAXParserFactory factory = SAXParserFactory.newInstance();
-		return isBinary(dataFile) ? new BinaryEventReader() : factory.newSAXParser();
+		return isBinary(dataFile) ? new BinaryEventReader() : factory
+				.newSAXParser();
 	}
-	
+
 	private RawFileUtility() {
 		// no instances
 	}

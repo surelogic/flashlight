@@ -1,7 +1,6 @@
 package com.surelogic.flashlight.common.jobs;
 
 import com.surelogic.common.FileUtility;
-import com.surelogic.common.jdbc.DBConnection;
 import com.surelogic.common.jobs.AbstractSLJob;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
@@ -15,27 +14,26 @@ import com.surelogic.flashlight.common.model.RunManager;
 public class DeleteRawFilesSLJob extends AbstractSLJob {
 
 	private final RunDescription f_description;
-	private final DBConnection f_database;
 
-	public DeleteRawFilesSLJob(final RunDescription description,
-			final DBConnection database) {
+	public DeleteRawFilesSLJob(final RunDescription description) {
 		super("Removing raw data " + description.getName());
 		f_description = description;
-		f_database = database;
 	}
 
-	public SLStatus run(SLProgressMonitor monitor) {
+	public SLStatus run(final SLProgressMonitor monitor) {
 		final SLStatus failed = SLLicenseUtility.validateSLJob(
 				SLLicenseUtility.FLASHLIGHT_SUBJECT, monitor);
-		if (failed != null)
+		if (failed != null) {
 			return failed;
+		}
 
 		UsageMeter.getInstance().tickUse("Flashlight ran DeleteRawFilesSLJob");
 
 		monitor.begin();
-		final RunDirectory runDir = RawFileUtility.getRunDirectoryFor(f_description);
+		final RunDirectory runDir = RawFileUtility
+				.getRunDirectoryFor(f_description);
 		FileUtility.deleteDirectoryAndContents(runDir.getRunDirectory());
-		RunManager.getInstance().refresh(f_database);
+		RunManager.getInstance().refresh();
 		monitor.done();
 		return SLStatus.OK_STATUS;
 	}

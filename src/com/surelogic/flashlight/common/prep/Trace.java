@@ -15,8 +15,7 @@ public final class Trace extends AbstractPrep {
 
 	private PreparedStatement f_ps;
 
-	public void parse(final int runId, final PreppedAttributes attributes)
-			throws SQLException {
+	public void parse(final PreppedAttributes attributes) throws SQLException {
 		final long parent = attributes.getLong(PARENT_ID);
 		final long site = attributes.getLong(SITE_ID);
 		final long id = attributes.getLong(ID);
@@ -41,8 +40,8 @@ public final class Trace extends AbstractPrep {
 	}
 
 	@Override
-	public void flush(final int runId, final long endTime) throws SQLException {
-		super.flush(runId, endTime);
+	public void flush(final long endTime) throws SQLException {
+		super.flush(endTime);
 		f_ps.close();
 	}
 

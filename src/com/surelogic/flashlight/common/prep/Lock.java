@@ -25,8 +25,7 @@ public abstract class Lock extends Event {
 		super(i);
 	}
 
-	public void parse(final int runId, final PreppedAttributes attributes)
-			throws SQLException {
+	public void parse(final PreppedAttributes attributes) throws SQLException {
 		final long nanoTime = attributes.getLong(TIME);
 		final long inThread = attributes.getLong(THREAD);
 		final long trace = attributes.getLong(TRACE);
@@ -51,10 +50,9 @@ public abstract class Lock extends Event {
 			return;
 		}
 		final Timestamp time = getTimestamp(nanoTime);
-		final long id = f_rowInserter.insertLock(runId, false, time, inThread,
-				trace, lock, getType(), getState(), success, lockIsThis,
-				lockIsClass);
-		f_rowInserter.event(runId, id, time, inThread, trace, lock, getState(),
+		final long id = f_rowInserter.insertLock(false, time, inThread, trace,
+				lock, getType(), getState(), success, lockIsThis, lockIsClass);
+		f_rowInserter.event(id, time, inThread, trace, lock, getState(),
 				success != Boolean.FALSE);
 	}
 
@@ -66,11 +64,10 @@ public abstract class Lock extends Event {
 	}
 
 	@Override
-	public final void flush(final int runId, final long endTime)
-			throws SQLException {
-		f_rowInserter.flush(runId, getTimestamp(endTime));
+	public final void flush(final long endTime) throws SQLException {
+		f_rowInserter.flush(getTimestamp(endTime));
 		f_rowInserter.close();
-		super.flush(runId, endTime);
+		super.flush(endTime);
 	}
 
 	abstract protected LockState getState();

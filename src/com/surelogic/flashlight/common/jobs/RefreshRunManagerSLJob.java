@@ -1,6 +1,5 @@
 package com.surelogic.flashlight.common.jobs;
 
-import com.surelogic.common.jdbc.DBConnection;
 import com.surelogic.common.jobs.AbstractSLJob;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
@@ -10,27 +9,25 @@ import com.surelogic.flashlight.common.model.RunManager;
 
 public final class RefreshRunManagerSLJob extends AbstractSLJob {
 
-	private final DBConnection f_database;
-
-	public RefreshRunManagerSLJob(final DBConnection database) {
+	public RefreshRunManagerSLJob() {
 		super("Refresh the Flashlight run manager contents");
-		f_database = database;
 	}
 
-	public SLStatus run(SLProgressMonitor monitor) {
+	public SLStatus run(final SLProgressMonitor monitor) {
 		monitor.begin();
 
 		final SLStatus failed = SLLicenseUtility.validateSLJob(
 				SLLicenseUtility.FLASHLIGHT_SUBJECT, monitor);
-		if (failed != null)
+		if (failed != null) {
 			return failed;
+		}
 
 		UsageMeter.getInstance().tickUse(
 				"Flashlight ran RefreshRunManagerSLJob");
 
 		try {
-			RunManager.getInstance().refresh(f_database);
-		} catch (Exception e) {
+			RunManager.getInstance().refresh();
+		} catch (final Exception e) {
 			return SLStatus.createErrorStatus(SLStatus.OK,
 					"Refresh of run manager contents failed", e);
 		} finally {

@@ -13,29 +13,23 @@ import com.surelogic.flashlight.common.model.RunDescription;
  */
 public final class PrepRunDescription {
 
-	private final int f_run;
-
-	public int getRun() {
-		return f_run;
-	}
-
 	private final RunDescription f_description;
 
 	public RunDescription getDescription() {
 		return f_description;
 	}
 
-	public PrepRunDescription(final int run, final RunDescription description) {
-		f_run = run;
-		if (description == null)
+	public PrepRunDescription(final RunDescription description) {
+		if (description == null) {
 			throw new IllegalArgumentException(I18N.err(44, "description"));
+		}
 		f_description = description;
 	}
 
 	@Override
 	public String toString() {
-		StringBuilder b = new StringBuilder();
-		b.append("[PrepRunDescription: run=").append(f_run);
+		final StringBuilder b = new StringBuilder();
+		b.append("[PrepRunDescription:");
 		b.append(" description=").append(f_description);
 		b.append("]");
 		return b.toString();
@@ -47,26 +41,28 @@ public final class PrepRunDescription {
 		int result = 1;
 		result = prime * result
 				+ ((f_description == null) ? 0 : f_description.hashCode());
-		result = prime * result + f_run;
 		return result;
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
+	public boolean equals(final Object obj) {
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		PrepRunDescription other = (PrepRunDescription) obj;
+		}
+		final PrepRunDescription other = (PrepRunDescription) obj;
 		if (f_description == null) {
-			if (other.f_description != null)
+			if (other.f_description != null) {
 				return false;
-		} else if (!f_description.equals(other.f_description))
+			}
+		} else if (!f_description.equals(other.f_description)) {
 			return false;
-		if (f_run != other.f_run)
-			return false;
+		}
 		return true;
 	}
 
@@ -81,7 +77,7 @@ public final class PrepRunDescription {
 	public static Set<RunDescription> getDescriptions(
 			final Collection<PrepRunDescription> prepRunDescriptions) {
 		final Set<RunDescription> result = new HashSet<RunDescription>();
-		for (PrepRunDescription d : prepRunDescriptions) {
+		for (final PrepRunDescription d : prepRunDescriptions) {
 			result.add(d.getDescription());
 		}
 		return result;

@@ -3,6 +3,7 @@ package com.surelogic.flashlight.common.model;
 import java.sql.Timestamp;
 
 import com.surelogic.common.i18n.I18N;
+import com.surelogic.common.jdbc.DBConnection;
 import com.surelogic.flashlight.common.entities.PrepRunDescription;
 import com.surelogic.flashlight.common.files.RawFileHandles;
 import com.surelogic.flashlight.common.files.RawFileUtility;
@@ -14,38 +15,48 @@ import com.surelogic.flashlight.common.files.RunDirectory;
  */
 public final class RunDescription {
 
-	public RunDescription(String name, String rawDataVersion, String userName,
-			String javaVersion, String javaVendor, String osName,
-			String osArch, String osVersion, int maxMemoryMb, int processors,
-			Timestamp started) {
-		if (name == null)
+	public RunDescription(final String name, final String rawDataVersion,
+			final String userName, final String javaVersion,
+			final String javaVendor, final String osName, final String osArch,
+			final String osVersion, final int maxMemoryMb,
+			final int processors, final Timestamp started) {
+		if (name == null) {
 			throw new IllegalArgumentException(I18N.err(44, "name"));
+		}
 		f_name = name;
-		if (rawDataVersion == null)
+		if (rawDataVersion == null) {
 			throw new IllegalArgumentException(I18N.err(44, "rawDataVersion"));
+		}
 		f_rawDataVersion = rawDataVersion;
-		if (userName == null)
+		if (userName == null) {
 			throw new IllegalArgumentException(I18N.err(44, "userName"));
+		}
 		f_userName = userName;
-		if (javaVersion == null)
+		if (javaVersion == null) {
 			throw new IllegalArgumentException(I18N.err(44, "javaVersion"));
+		}
 		f_javaVersion = javaVersion;
-		if (javaVendor == null)
+		if (javaVendor == null) {
 			throw new IllegalArgumentException(I18N.err(44, "javaVendor"));
+		}
 		f_javaVendor = javaVendor;
-		if (osName == null)
+		if (osName == null) {
 			throw new IllegalArgumentException(I18N.err(44, "osName"));
+		}
 		f_osName = osName;
-		if (osArch == null)
+		if (osArch == null) {
 			throw new IllegalArgumentException(I18N.err(44, "osArch"));
+		}
 		f_osArch = osArch;
-		if (osVersion == null)
+		if (osVersion == null) {
 			throw new IllegalArgumentException(I18N.err(44, "osVersion"));
+		}
 		f_osVersion = osVersion;
 		f_maxMemoryMb = maxMemoryMb;
 		f_processors = processors;
-		if (started == null)
+		if (started == null) {
 			throw new IllegalArgumentException(I18N.err(44, "started"));
+		}
 		f_started = started;
 	}
 
@@ -117,7 +128,7 @@ public final class RunDescription {
 
 	@Override
 	public String toString() {
-		StringBuilder b = new StringBuilder();
+		final StringBuilder b = new StringBuilder();
 		b.append("[RunDescription: name=").append(f_name);
 		b.append(" rawDataVersion=").append(f_rawDataVersion);
 		b.append(" userName=").append(f_userName);
@@ -161,63 +172,86 @@ public final class RunDescription {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
+	public boolean equals(final Object obj) {
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		RunDescription other = (RunDescription) obj;
+		}
+		final RunDescription other = (RunDescription) obj;
 		if (f_javaVendor == null) {
-			if (other.f_javaVendor != null)
+			if (other.f_javaVendor != null) {
 				return false;
-		} else if (!f_javaVendor.equals(other.f_javaVendor))
+			}
+		} else if (!f_javaVendor.equals(other.f_javaVendor)) {
 			return false;
+		}
 		if (f_javaVersion == null) {
-			if (other.f_javaVersion != null)
+			if (other.f_javaVersion != null) {
 				return false;
-		} else if (!f_javaVersion.equals(other.f_javaVersion))
+			}
+		} else if (!f_javaVersion.equals(other.f_javaVersion)) {
 			return false;
-		if (f_maxMemoryMb != other.f_maxMemoryMb)
+		}
+		if (f_maxMemoryMb != other.f_maxMemoryMb) {
 			return false;
+		}
 		if (f_name == null) {
-			if (other.f_name != null)
+			if (other.f_name != null) {
 				return false;
-		} else if (!f_name.equals(other.f_name))
+			}
+		} else if (!f_name.equals(other.f_name)) {
 			return false;
+		}
 		if (f_osArch == null) {
-			if (other.f_osArch != null)
+			if (other.f_osArch != null) {
 				return false;
-		} else if (!f_osArch.equals(other.f_osArch))
+			}
+		} else if (!f_osArch.equals(other.f_osArch)) {
 			return false;
+		}
 		if (f_osName == null) {
-			if (other.f_osName != null)
+			if (other.f_osName != null) {
 				return false;
-		} else if (!f_osName.equals(other.f_osName))
+			}
+		} else if (!f_osName.equals(other.f_osName)) {
 			return false;
+		}
 		if (f_osVersion == null) {
-			if (other.f_osVersion != null)
+			if (other.f_osVersion != null) {
 				return false;
-		} else if (!f_osVersion.equals(other.f_osVersion))
+			}
+		} else if (!f_osVersion.equals(other.f_osVersion)) {
 			return false;
-		if (f_processors != other.f_processors)
+		}
+		if (f_processors != other.f_processors) {
 			return false;
+		}
 		if (f_rawDataVersion == null) {
-			if (other.f_rawDataVersion != null)
+			if (other.f_rawDataVersion != null) {
 				return false;
-		} else if (!f_rawDataVersion.equals(other.f_rawDataVersion))
+			}
+		} else if (!f_rawDataVersion.equals(other.f_rawDataVersion)) {
 			return false;
+		}
 		if (f_started == null) {
-			if (other.f_started != null)
+			if (other.f_started != null) {
 				return false;
-		} else if (!f_started.equals(other.f_started))
+			}
+		} else if (!f_started.equals(other.f_started)) {
 			return false;
+		}
 		if (f_userName == null) {
-			if (other.f_userName != null)
+			if (other.f_userName != null) {
 				return false;
-		} else if (!f_userName.equals(other.f_userName))
+			}
+		} else if (!f_userName.equals(other.f_userName)) {
 			return false;
+		}
 		return true;
 	}
 
@@ -247,10 +281,11 @@ public final class RunDescription {
 	 */
 	public RawFileHandles getRawFileHandles() {
 		final RunDirectory runDir = getRunDirectory();
-		if (runDir != null)
+		if (runDir != null) {
 			return runDir.getProfileHandles();
-		else
+		} else {
 			return null;
+		}
 	}
 
 	/**
@@ -267,4 +302,15 @@ public final class RunDescription {
 	public RunDirectory getRunDirectory() {
 		return RawFileUtility.getRunDirectoryFor(this);
 	}
+
+	/**
+	 * Returns a {@link DBConnection} to the database represented by this run.
+	 * 
+	 * @return
+	 */
+	public DBConnection getDB() {
+		return FlashlightDBConnection.getInstance(getRunDirectory()
+				.getDatabaseDirectory());
+	}
+
 }

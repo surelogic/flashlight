@@ -16,16 +16,13 @@ import com.surelogic._flashlight.common.PreppedAttributes;
 public final class StaticCallLocation extends AbstractPrep {
 
 	private PreparedStatement f_ps;
-	private ScanRawFilePreScan preScan;
 
 	public String getXMLElementName() {
 		return "static-call-location";
 	}
 
-	public void parse(final int runId, final PreppedAttributes attributes)
-			throws SQLException {
+	public void parse(final PreppedAttributes attributes) throws SQLException {
 		int idx = 1;
-		f_ps.setLong(idx++, runId);
 		f_ps.setLong(idx++, attributes.getLong(ID));
 		f_ps.setInt(idx++, attributes.getInt(LINE));
 		f_ps.setLong(idx++, attributes.getLong(IN_CLASS));
@@ -39,14 +36,13 @@ public final class StaticCallLocation extends AbstractPrep {
 			final long startNS, final ScanRawFilePreScan scanResults)
 			throws SQLException {
 		super.setup(c, start, startNS, scanResults);
-		preScan = scanResults;
 		f_ps = c
-				.prepareStatement("INSERT INTO SITE (Run,Id,AtLine,InClass,InFile,Location) VALUES (?,?,?,?,?,?)");
+				.prepareStatement("INSERT INTO SITE (Id,AtLine,InClass,InFile,Location) VALUES (?,?,?,?,?)");
 	}
 
 	@Override
-	public void flush(final int runId, final long endTime) throws SQLException {
-		super.flush(runId, endTime);
+	public void flush(final long endTime) throws SQLException {
+		super.flush(endTime);
 		f_ps.close();
 	}
 

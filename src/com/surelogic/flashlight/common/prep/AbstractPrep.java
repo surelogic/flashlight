@@ -17,7 +17,7 @@ public abstract class AbstractPrep implements IPrep {
 		// Nothing to do
 	}
 
-	public void flush(final int runId, final long endTime) throws SQLException {
+	public void flush(final long endTime) throws SQLException {
 		// Nothing to do
 	}
 

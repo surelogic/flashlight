@@ -31,5 +31,5 @@ public interface IPostPrep {
 	 * @param runId
 	 *            the database run identifier.
 	 */
-	void doPostPrep(final Connection c, final int runId) throws SQLException;
+	void doPostPrep(final Connection c) throws SQLException;
 }

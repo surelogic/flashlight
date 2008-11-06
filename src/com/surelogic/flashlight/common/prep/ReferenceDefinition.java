@@ -18,12 +18,12 @@ import com.surelogic.common.logging.SLLogger;
 
 public abstract class ReferenceDefinition extends AbstractPrep {
 
-	private static final String f_psQ = "INSERT INTO OBJECT (Run,Id,Type,Threadname,PackageName,ClassName,Flag) VALUES (?, ?, ?, ?, ?, ?, ?)";
+	private static final String f_psQ = "INSERT INTO OBJECT (Id,Type,Threadname,PackageName,ClassName,Flag) VALUES (?, ?, ?, ?, ?, ?)";
 
 	private PreparedStatement f_ps;
 	private ScanRawFilePreScan preScan;
 
-	public final void parse(final int runId, final PreppedAttributes attributes)
+	public final void parse(final PreppedAttributes attributes)
 			throws SQLException {
 		final long id = attributes.getLong(ID);
 		long type = attributes.getLong(TYPE);
@@ -47,29 +47,29 @@ public abstract class ReferenceDefinition extends AbstractPrep {
 				className = className.substring(lastDot + 1);
 			}
 		}
-		insert(runId, id, type, threadName, packageName, className);
+		insert(id, type, threadName, packageName, className);
 	}
 
-	private void insert(final int runId, final long id, final long type,
+	private void insert(final long id, final long type,
 			final String threadName, final String packageName,
 			final String className) throws SQLException {
 		if (!filterUnused() || preScan.couldBeReferencedObject(id)) {
-			f_ps.setInt(1, runId);
-			f_ps.setLong(2, id);
-			f_ps.setLong(3, type);
+			int idx = 1;
+			f_ps.setLong(idx++, id);
+			f_ps.setLong(idx++, type);
 			if (threadName != null) {
-				f_ps.setString(4, threadName);
+				f_ps.setString(idx++, threadName);
 			} else {
-				f_ps.setNull(4, Types.VARCHAR);
+				f_ps.setNull(idx++, Types.VARCHAR);
 			}
 			if (className != null) {
-				f_ps.setString(5, packageName);
-				f_ps.setString(6, className);
+				f_ps.setString(idx++, packageName);
+				f_ps.setString(idx++, className);
 			} else {
-				f_ps.setNull(5, Types.VARCHAR);
-				f_ps.setNull(6, Types.VARCHAR);
+				f_ps.setNull(idx++, Types.VARCHAR);
+				f_ps.setNull(idx++, Types.VARCHAR);
 			}
-			f_ps.setString(7, getFlag());
+			f_ps.setString(idx++, getFlag());
 			f_ps.executeUpdate();
 		}
 	}
@@ -88,8 +88,8 @@ public abstract class ReferenceDefinition extends AbstractPrep {
 	}
 
 	@Override
-	public void flush(final int runId, final long endTime) throws SQLException {
+	public void flush(final long endTime) throws SQLException {
 		f_ps.close();
-		super.flush(runId, endTime);
+		super.flush(endTime);
 	}
 }

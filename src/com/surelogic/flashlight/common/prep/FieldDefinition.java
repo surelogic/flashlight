@@ -1,8 +1,13 @@
 package com.surelogic.flashlight.common.prep;
 
-import static com.surelogic._flashlight.common.AttributeType.*;
-import static com.surelogic._flashlight.common.FlagType.*;
-import static com.surelogic._flashlight.common.IdConstants.*;
+import static com.surelogic._flashlight.common.AttributeType.FIELD;
+import static com.surelogic._flashlight.common.AttributeType.ID;
+import static com.surelogic._flashlight.common.AttributeType.TYPE;
+import static com.surelogic._flashlight.common.FlagType.IS_FINAL;
+import static com.surelogic._flashlight.common.FlagType.IS_STATIC;
+import static com.surelogic._flashlight.common.FlagType.IS_VOLATILE;
+import static com.surelogic._flashlight.common.IdConstants.ILLEGAL_FIELD_ID;
+import static com.surelogic._flashlight.common.IdConstants.ILLEGAL_ID;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -16,7 +21,7 @@ import com.surelogic.common.logging.SLLogger;
 
 public final class FieldDefinition extends AbstractPrep {
 
-	private static final String f_psQ = "INSERT INTO FIELD VALUES (?, ?, ?, ?, ?, ?, ?)";
+	private static final String f_psQ = "INSERT INTO FIELD VALUES (?, ?, ?, ?, ?, ?)";
 
 	private PreparedStatement f_ps;
 	private ScanRawFilePreScan preScan;
@@ -25,38 +30,37 @@ public final class FieldDefinition extends AbstractPrep {
 		return "field-definition";
 	}
 
-	public void parse(final int runId, final PreppedAttributes attributes)
-			throws SQLException {
-		long id = attributes.getLong(ID);
-		long type = attributes.getLong(TYPE);
-		String field = attributes.getString(FIELD);
-		boolean isStatic = attributes.getBoolean(IS_STATIC);
-		boolean isFinal = attributes.getBoolean(IS_FINAL);
-		boolean isVolatile = attributes.getBoolean(IS_VOLATILE);
+	public void parse(final PreppedAttributes attributes) throws SQLException {
+		final long id = attributes.getLong(ID);
+		final long type = attributes.getLong(TYPE);
+		final String field = attributes.getString(FIELD);
+		final boolean isStatic = attributes.getBoolean(IS_STATIC);
+		final boolean isFinal = attributes.getBoolean(IS_FINAL);
+		final boolean isVolatile = attributes.getBoolean(IS_VOLATILE);
 		if ((id == ILLEGAL_FIELD_ID) || (type == ILLEGAL_ID) || (field == null)) {
 			SLLogger.getLogger().log(Level.SEVERE,
 					"Missing id, type, or field in field-definition");
 			return;
 		}
-		insert(runId, id, type, field, isStatic, isFinal, isVolatile);
+		insert(id, type, field, isStatic, isFinal, isVolatile);
 	}
 
-	private void insert(final int runId, final long id, final long type,
-			final String field, final boolean isStatic, final boolean isFinal,
+	private void insert(final long id, final long type, final String field,
+			final boolean isStatic, final boolean isFinal,
 			final boolean isVolatile) throws SQLException {
 		if (isStatic ? preScan.isThreadedStaticField(id) : preScan
 				.isThreadedField(id)) {
-			f_ps.setInt(1, runId);
-			f_ps.setLong(2, id);
+			int idx = 1;
+			f_ps.setLong(idx++, id);
 			if (field != null) {
-				f_ps.setString(3, field);
+				f_ps.setString(idx++, field);
 			} else {
-				f_ps.setNull(3, Types.VARCHAR);
+				f_ps.setNull(idx++, Types.VARCHAR);
 			}
-			f_ps.setLong(4, type);
-			f_ps.setString(5, isStatic ? "Y" : "N");
-			f_ps.setString(6, isFinal ? "Y" : "N");
-			f_ps.setString(7, isVolatile ? "Y" : "N");
+			f_ps.setLong(idx++, type);
+			f_ps.setString(idx++, isStatic ? "Y" : "N");
+			f_ps.setString(idx++, isFinal ? "Y" : "N");
+			f_ps.setString(idx++, isVolatile ? "Y" : "N");
 			f_ps.executeUpdate();
 		}
 	}
@@ -71,8 +75,8 @@ public final class FieldDefinition extends AbstractPrep {
 	}
 
 	@Override
-	public void flush(final int runId, final long endTime) throws SQLException {
+	public void flush(final long endTime) throws SQLException {
 		f_ps.close();
-		super.flush(runId, endTime);
+		super.flush(endTime);
 	}
 }

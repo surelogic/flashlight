@@ -1,13 +1,16 @@
 package com.surelogic.flashlight.common.prep;
 
-import static com.surelogic._flashlight.common.AttributeType.*;
+import static com.surelogic._flashlight.common.AttributeType.ID;
+import static com.surelogic._flashlight.common.AttributeType.PARENT_ID;
+import static com.surelogic._flashlight.common.AttributeType.SITE_ID;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 
-import com.surelogic._flashlight.common.*;
+import com.surelogic._flashlight.common.EventType;
+import com.surelogic._flashlight.common.PreppedAttributes;
 
 public final class TraceNode extends AbstractPrep {
 
@@ -17,15 +20,13 @@ public final class TraceNode extends AbstractPrep {
 		return EventType.Trace_Node.getLabel();
 	}
 
-	public void parse(final int runId, final PreppedAttributes attributes)
-			throws SQLException {
+	public void parse(final PreppedAttributes attributes) throws SQLException {
 		int idx = 1;
 		final long id = attributes.getLong(ID);
 		long parent = attributes.getLong(PARENT_ID);
 		if (parent == 0) {
 			parent = id;
 		}
-		f_ps.setLong(idx++, runId);
 		f_ps.setLong(idx++, id);
 		f_ps.setLong(idx++, attributes.getLong(SITE_ID));
 		f_ps.setLong(idx++, parent);
@@ -38,12 +39,12 @@ public final class TraceNode extends AbstractPrep {
 			throws SQLException {
 		super.setup(c, start, startNS, scanResults);
 		f_ps = c
-				.prepareStatement("INSERT INTO TRACE (Run,Id,Site,Parent) VALUES (?,?,?,?)");
+				.prepareStatement("INSERT INTO TRACE (Id,Site,Parent) VALUES (?,?,?)");
 	}
 
 	@Override
-	public void flush(final int runId, final long endTime) throws SQLException {
-		super.flush(runId, endTime);
+	public void flush(final long endTime) throws SQLException {
+		super.flush(endTime);
 		f_ps.close();
 	}
 

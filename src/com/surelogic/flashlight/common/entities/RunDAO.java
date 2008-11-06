@@ -5,13 +5,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.logging.Level;
 
-import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jdbc.QB;
-import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.common.model.RunDescription;
 
 /**
@@ -35,9 +30,9 @@ public final class RunDAO {
 	 * @throws SQLException
 	 *             if something goes wrong interacting with the database.
 	 */
-	public static PrepRunDescription create(Connection c, RunDescription run)
-			throws SQLException {
-		PreparedStatement s = c.prepareStatement(QB.get(20));
+	public static PrepRunDescription create(final Connection c,
+			final RunDescription run) throws SQLException {
+		final PreparedStatement s = c.prepareStatement(QB.get("RunDAO.insert"));
 		try {
 			int i = 1;
 			s.setString(i++, run.getName());
@@ -55,40 +50,11 @@ public final class RunDAO {
 		} finally {
 			s.close();
 		}
-		return find(c, run.getName(), run.getStartTimeOfRun());
+		return find(c);
 	}
 
 	/**
-	 * Looks up a run in the database by its name and start time.
-	 * 
-	 * @param c
-	 *            the database connection to use.
-	 * @param name
-	 *            the name of the run.
-	 * @param started
-	 *            the time the run started.
-	 * @return the run, or <code>null</code> if no such run exists.
-	 * @throws SQLException
-	 *             if something goes wrong interacting with the database.
-	 */
-	public static PrepRunDescription find(Connection c, String name,
-			Timestamp started) throws SQLException {
-		PreparedStatement s = c.prepareStatement(QB.get(21));
-		try {
-			s.setString(1, name);
-			s.setTimestamp(2, started);
-			ResultSet rs = s.executeQuery();
-			if (rs.next()) {
-				return convertRowToObject(rs);
-			}
-		} finally {
-			s.close();
-		}
-		return null;
-	}
-
-	/**
-	 * Looks up a run in the database by its identifier.
+	 * Looks up the run in the database by its identifier.
 	 * 
 	 * @param c
 	 *            the database connection to use.
@@ -98,72 +64,38 @@ public final class RunDAO {
 	 * @throws SQLException
 	 *             if something goes wrong interacting with the database.
 	 */
-	public static PrepRunDescription find(Connection c, int run)
+	public static PrepRunDescription find(final Connection c)
 			throws SQLException {
-		PreparedStatement s = c.prepareStatement(QB.get(22));
+		final PreparedStatement s = c.prepareStatement(QB.get("RunDAO.select"));
 		try {
-			s.setInt(1, run);
-			ResultSet rs = s.executeQuery();
+			final ResultSet rs = s.executeQuery();
 			if (rs.next()) {
 				return convertRowToObject(rs);
 			}
 		} finally {
 			s.close();
 		}
-		SLLogger.getLogger().log(Level.WARNING, I18N.err(110, run),
-				new Exception());
 		return null;
 	}
 
-	/**
-	 * Looks up all the runs in the database.
-	 * 
-	 * @param c
-	 *            the database connection to use.
-	 * @return all the runs in the database, or an empty list if none exist.
-	 * @throws SQLException
-	 *             if something goes wrong interacting with the database.
-	 */
-	public static Set<PrepRunDescription> getAll(Connection c)
-			throws SQLException {
-		Set<PrepRunDescription> result = new HashSet<PrepRunDescription>();
-		PreparedStatement s = c.prepareStatement(QB.get(23));
-		try {
-			ResultSet rs = s.executeQuery();
-			while (rs.next()) {
-				PrepRunDescription r = convertRowToObject(rs);
-				if (r != null) {
-					result.add(r);
-				} else {
-					SLLogger.getLogger().log(Level.WARNING, I18N.err(111),
-							new Exception());
-				}
-			}
-		} finally {
-			s.close();
-		}
-		return result;
-	}
-
-	private static PrepRunDescription convertRowToObject(ResultSet rs)
+	private static PrepRunDescription convertRowToObject(final ResultSet rs)
 			throws SQLException {
 		int i = 1;
-		int run = rs.getInt(i++);
-		String name = rs.getString(i++);
-		String rawDataVersion = rs.getString(i++);
-		String userName = rs.getString(i++);
-		String javaVersion = rs.getString(i++);
-		String javaVendor = rs.getString(i++);
-		String osName = rs.getString(i++);
-		String osArch = rs.getString(i++);
-		String osVersion = rs.getString(i++);
-		int maxMemoryMb = rs.getInt(i++);
-		int processors = rs.getInt(i++);
-		Timestamp started = rs.getTimestamp(i++);
+		final String name = rs.getString(i++);
+		final String rawDataVersion = rs.getString(i++);
+		final String userName = rs.getString(i++);
+		final String javaVersion = rs.getString(i++);
+		final String javaVendor = rs.getString(i++);
+		final String osName = rs.getString(i++);
+		final String osArch = rs.getString(i++);
+		final String osVersion = rs.getString(i++);
+		final int maxMemoryMb = rs.getInt(i++);
+		final int processors = rs.getInt(i++);
+		final Timestamp started = rs.getTimestamp(i++);
 		final RunDescription description = new RunDescription(name,
 				rawDataVersion, userName, javaVersion, javaVendor, osName,
 				osArch, osVersion, maxMemoryMb, processors, started);
-		return new PrepRunDescription(run, description);
+		return new PrepRunDescription(description);
 	}
 
 	private RunDAO() {

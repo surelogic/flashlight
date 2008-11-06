@@ -3,9 +3,10 @@
  */
 package com.surelogic.flashlight.common.prep;
 
-import com.surelogic._flashlight.common.*;
+import static com.surelogic._flashlight.common.AttributeType.ID;
 
-import static com.surelogic._flashlight.common.AttributeType.*;
+import com.surelogic._flashlight.common.IdConstants;
+import com.surelogic._flashlight.common.PreppedAttributes;
 
 public class GarbageCollectedObject extends Event {
 	GarbageCollectedObject(final IntrinsicLockDurationRowInserter i) {
@@ -16,8 +17,8 @@ public class GarbageCollectedObject extends Event {
 		return "garbage-collected-object";
 	}
 
-	public void parse(final int runId, final PreppedAttributes attributes) {
-		long id = attributes.getLong(ID);
+	public void parse(final PreppedAttributes attributes) {
+		final long id = attributes.getLong(ID);
 		if (id != IdConstants.ILLEGAL_ID) {
 			f_rowInserter.gcObject(id);
 		}

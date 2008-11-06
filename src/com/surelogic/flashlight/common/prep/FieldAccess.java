@@ -1,6 +1,9 @@
 package com.surelogic.flashlight.common.prep;
 
-import static com.surelogic._flashlight.common.AttributeType.*;
+import static com.surelogic._flashlight.common.AttributeType.FIELD;
+import static com.surelogic._flashlight.common.AttributeType.RECEIVER;
+import static com.surelogic._flashlight.common.AttributeType.THREAD;
+import static com.surelogic._flashlight.common.AttributeType.TIME;
 import static com.surelogic._flashlight.common.AttributeType.TRACE;
 import static com.surelogic._flashlight.common.FlagType.UNDER_CONSTRUCTION;
 import static com.surelogic._flashlight.common.IdConstants.ILLEGAL_FIELD_ID;
@@ -19,7 +22,7 @@ import com.surelogic.common.logging.SLLogger;
 
 public abstract class FieldAccess extends Event {
 
-	private static final String f_psQ = "INSERT INTO ACCESS (Run,TS,InThread,Trace,Field,RW,Receiver,UnderConstruction) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+	private static final String f_psQ = "INSERT INTO ACCESS (TS,InThread,Trace,Field,RW,Receiver,UnderConstruction) VALUES (?, ?, ?, ?, ?, ?, ?)";
 
 	private PreparedStatement f_ps;
 
@@ -31,8 +34,7 @@ public abstract class FieldAccess extends Event {
 		super(i);
 	}
 
-	public void parse(final int runId, final PreppedAttributes attributes)
-			throws SQLException {
+	public void parse(final PreppedAttributes attributes) throws SQLException {
 		final long nanoTime = attributes.getLong(TIME);
 		final long inThread = attributes.getLong(THREAD);
 		final long trace = attributes.getLong(TRACE);
@@ -59,17 +61,14 @@ public abstract class FieldAccess extends Event {
 				return;
 			}
 		}
-		insert(runId, nanoTime, inThread, trace, field, receiver,
-				underConstruction);
+		insert(nanoTime, inThread, trace, field, receiver, underConstruction);
 		inserted++;
 	}
 
-	private void insert(final int runId, final long nanoTime,
-			final long inThread, final long trace, final long field,
-			final long receiver, final boolean underConstruction)
-			throws SQLException {
+	private void insert(final long nanoTime, final long inThread,
+			final long trace, final long field, final long receiver,
+			final boolean underConstruction) throws SQLException {
 		int idx = 1;
-		f_ps.setInt(idx++, runId);
 		f_ps.setTimestamp(idx++, getTimestamp(nanoTime));
 		f_ps.setLong(idx++, inThread);
 		f_ps.setLong(idx++, trace);
@@ -95,16 +94,16 @@ public abstract class FieldAccess extends Event {
 
 	@Override
 	public void printStats() {
-	  SLLogger.getLogger().log(Level.FINE, getClass().getName() + " Skipped   = " + skipped);
-	  SLLogger.getLogger().log(Level.FINE, getClass().getName() + " Inserted  = " + inserted);
-	  SLLogger.getLogger().log(Level.FINE, getClass().getName() + " %Inserted = "
+		System.out.println(getClass().getName() + " Skipped   = " + skipped);
+		System.out.println(getClass().getName() + " Inserted  = " + inserted);
+		System.out.println(getClass().getName() + " %Inserted = "
 				+ (inserted * 100.0 / (skipped + inserted)));
 	}
 
 	@Override
-	public void flush(final int runId, final long endTime) throws SQLException {
+	public void flush(final long endTime) throws SQLException {
 		f_ps.close();
-		super.flush(runId, endTime);
+		super.flush(endTime);
 	}
 
 	/**

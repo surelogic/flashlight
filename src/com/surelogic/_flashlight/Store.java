@@ -218,6 +218,7 @@ public final class Store {
 		public final TraceNode.Header traceHeader;
 		final List<Event> eventQueue;
 		final BlockingQueue<List<Event>> rawQueue;
+		final List<IdPhantomReference> locksHeld = IdConstants.trackLocks ? new ArrayList<IdPhantomReference>() : null;
 		
 		State(BlockingQueue<List<Event>> q, List<Event> l, boolean flashlightThread) {
 			rawQueue = q;
@@ -1118,6 +1119,10 @@ public final class Store {
 						siteId));
 				return;
 			}
+			if (IdConstants.trackLocks) {
+				IdPhantomReference lockPhantom = Phantom.of(lockObject); 
+				flState.locksHeld.add(lockPhantom);
+			}
 			final Event e = new AfterIntrinsicLockAcquisition(lockObject, siteId, flState);
 			putInQueue(flState, e);
 		} finally {
@@ -1177,10 +1182,11 @@ public final class Store {
 				return;
 			}
 			final Event e;
-			if (before)
-				e = new BeforeIntrinsicLockWait(lockObject, siteId, flState);
-			else
+			if (before) {
+				e = new BeforeIntrinsicLockWait(lockObject, siteId, flState);				
+			} else {
 				e = new AfterIntrinsicLockWait(lockObject, siteId, flState);
+			}
 			putInQueue(flState, e, true);
 		} finally {
 			flState.inside = false;
@@ -1225,6 +1231,10 @@ public final class Store {
 				logAProblem(String.format(fmt, safeToString(lockObject),
 						siteId));
 				return;
+			}
+			if (IdConstants.trackLocks) {
+				final IdPhantomReference lockPhantom = Phantom.of(lockObject); 
+				flState.locksHeld.remove(lockPhantom);
 			}
 			final Event e = new AfterIntrinsicLockRelease(lockObject, siteId, flState);
 			putInQueue(flState, e);
@@ -1324,6 +1334,10 @@ public final class Store {
 						: "failed-to-acquire", lockObject, siteId));
 			}
 			if (lockObject instanceof Lock) {
+				if (IdConstants.trackLocks && gotTheLock) {
+					final ObjectPhantomReference lockPhantom = Phantom.ofObject(lockObject); 
+					flState.locksHeld.add(lockPhantom);
+				}				
 				final Lock ucLock = (Lock) lockObject;
 				final Event e = new AfterUtilConcurrentLockAcquisitionAttempt(
 						gotTheLock, ucLock, siteId, flState);
@@ -1381,6 +1395,11 @@ public final class Store {
 						: "failed-to-release", lockObject, siteId));
 			}
 			if (lockObject instanceof Lock) {
+				if (IdConstants.trackLocks && releasedTheLock) {
+					final ObjectPhantomReference lockPhantom = Phantom.ofObject(lockObject); 
+					flState.locksHeld.remove(lockPhantom);
+				}				
+				
 				final Lock ucLock = (Lock) lockObject;
 				final Event e = new AfterUtilConcurrentLockReleaseAttempt(
 						releasedTheLock, ucLock, siteId, flState);

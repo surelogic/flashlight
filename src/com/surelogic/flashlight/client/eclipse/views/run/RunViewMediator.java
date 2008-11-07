@@ -44,8 +44,6 @@ import com.surelogic.flashlight.common.model.RunManager;
  */
 public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 
-	private static final String RUN_VARIABLE = "RUN";
-
 	private final TableViewer f_tableViewer;
 	private final Table f_table;
 
@@ -353,9 +351,12 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 		 * if the selection changed inform the SourceView so it shows code from
 		 * that run.
 		 */
-		if (selected.length == 1) {
+		if (selected.length > 0) {
 			final RunDescription o = selected[0];
 			SourceView.setRunDescription(o);
+			RunManager.getInstance().setSelectedRun(o);
+		} else {
+			RunManager.getInstance().setSelectedRun(null);
 		}
 		// FIXME WE CHANGE OUR SELECTED RUN HERE
 		f_prepAction.setEnabled(rawActionsEnabled);

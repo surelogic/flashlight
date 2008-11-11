@@ -107,7 +107,7 @@ abstract class IdPhantomReference extends PhantomReference {
 
 	protected void notifyObservers(ClassPhantomReference type) {
 		if (f_observers.isEmpty()) {
-			new Throwable("No observers for IdPhantomReference").printStackTrace();
+			//new Throwable("No observers for IdPhantomReference").printStackTrace();
 			synchronized (IdPhantomReference.class) {
 				if (unnotified != null) {
 					unnotified.add(new Unnotified(type, this));

@@ -205,7 +205,12 @@ public final class Store {
 	private final static ThreadLocal<State> tl_withinStore;
 
 	private static final LongMap<String> f_field2Filter;
-	private static final Set<String> f_filters = new HashSet<String>();
+	
+	/**
+	 * Currently describes the set of packages to be traced
+	 * All if null, none if empty
+	 */
+	private static final Set<String> f_passFilters = null;//new HashSet<String>();
 	/*
 	static {
 		f_filteredClasses.add("com.surelogic.tree.SyntaxTreeNode");
@@ -529,7 +534,7 @@ public final class Store {
 		  return;
 	  flState.inside = true;
 	  try {
-		  if (filterFieldAccess(fieldID)) {
+		  if (filterOutFieldAccess(fieldID)) {
 			  return;
 		  }
 		  /*
@@ -603,7 +608,7 @@ public final class Store {
 		  return;
 	  flState.inside = true;
 	  try {
-		  if (filterFieldAccess(fieldID)) {
+		  if (filterOutFieldAccess(fieldID)) {
 			  return;
 		  }
 		  /*
@@ -669,7 +674,7 @@ public final class Store {
     	return;
     flState.inside = true;
     try {
-      if (filterFieldAccess(clazz)) {
+      if (filterOutFieldAccess(clazz)) {
     	return;
       }
       if (DEBUG) {
@@ -737,7 +742,7 @@ public final class Store {
     	return;
     flState.inside = true;
     try {
-      if (filterFieldAccess(clazz)) {
+      if (filterOutFieldAccess(clazz)) {
        	return;
       }	
       if (DEBUG) {
@@ -798,7 +803,7 @@ public final class Store {
 			return;
 		flState.inside = true;
 		try {			
-		    if (filterFieldAccess(field.getDeclaringClass())) {
+		    if (filterOutFieldAccess(field.getDeclaringClass())) {
 		      return;
 		    }
 			if (DEBUG) {
@@ -1677,41 +1682,27 @@ public final class Store {
 	 * from class name to field ids, so that you can dynamically
 	 * add/remove field ids from a set of filtered fields
 	 */
-	private static boolean filterFieldAccess(long fieldId) {		
-		if (f_filters.isEmpty() || f_field2Filter == null) {
+	private static boolean filterOutFieldAccess(long fieldId) {		
+		if (f_passFilters == null || f_field2Filter == null) {
 			return false;
+		}
+		if (f_passFilters.isEmpty()) {
+			return true;
 		}
 		// FIX why returning null?
-		String clazz = f_field2Filter.get(fieldId);		
-		boolean rv = f_filters.contains(clazz);
-		/*
-		total++;
-		if (rv) {
-			filtered++;
-			//System.err.println("Filtered out "+clazz);
-		}		
-		if ((total & 0xffff) == 0) {
-			System.err.println("Filtered out "+filtered+" out of "+total);
-		}
-		*/
+		String filter = f_field2Filter.get(fieldId);		
+		boolean rv = !f_passFilters.contains(filter);
 		return rv;
 	}
-	private static boolean filterFieldAccess(Class declaringType) {
-		if (f_filters.isEmpty()) {
+	private static boolean filterOutFieldAccess(Class declaringType) {
+		if (f_passFilters == null) {
 			return false;
-		}	
-		String clazz = declaringType.getName();
-		boolean rv = f_filters.contains(clazz);
-		/*
-		total++;
-		if (rv) {
-			filtered++;
-			//System.err.println("Filtered out "+clazz);
-		}		
-		if ((total & 0xffff) == 0) {
-			System.err.println("Filtered out "+filtered+" out of "+total);
 		}
-		*/
+		if (f_passFilters.isEmpty()) {
+			return true;
+		}
+		String type = declaringType.getPackage().getName();
+		boolean rv = !f_passFilters.contains(type);
 		return rv;
 	}
 }

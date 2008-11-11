@@ -204,8 +204,8 @@ public final class Store {
 	 */
 	private final static ThreadLocal<State> tl_withinStore;
 
-	private static final LongMap<String> f_field2Class;
-	private static final Set<String> f_filteredClasses = new HashSet<String>();
+	private static final LongMap<String> f_field2Filter;
+	private static final Set<String> f_filters = new HashSet<String>();
 	/*
 	static {
 		f_filteredClasses.add("com.surelogic.tree.SyntaxTreeNode");
@@ -413,7 +413,7 @@ public final class Store {
 				f_refinery.start();
 				f_depository = new Depository(f_rawQueue, outputStrategy);
 			}
-			f_field2Class = f_depository.mapFieldsToClasses();
+			f_field2Filter = f_depository.mapFieldsToFilters();
 			f_depository.start();
 			log("collection started (rawQ=" + rawQueueSize + " : refinery="
 					+ refinerySize + " : outQ=" + outQueueSize + ")");
@@ -460,7 +460,7 @@ public final class Store {
 			f_console = null;
 			f_spy = null;
 			f_start_nano = 0;
-			f_field2Class = null;
+			f_field2Filter = null;
 		}
 		f_flashlightIsNotInitialized = false;
 	}
@@ -1678,12 +1678,12 @@ public final class Store {
 	 * add/remove field ids from a set of filtered fields
 	 */
 	private static boolean filterFieldAccess(long fieldId) {		
-		if (f_filteredClasses.isEmpty() || f_field2Class == null) {
+		if (f_filters.isEmpty() || f_field2Filter == null) {
 			return false;
 		}
 		// FIX why returning null?
-		String clazz = f_field2Class.get(fieldId);		
-		boolean rv = f_filteredClasses.contains(clazz);
+		String clazz = f_field2Filter.get(fieldId);		
+		boolean rv = f_filters.contains(clazz);
 		/*
 		total++;
 		if (rv) {
@@ -1697,11 +1697,11 @@ public final class Store {
 		return rv;
 	}
 	private static boolean filterFieldAccess(Class declaringType) {
-		if (f_filteredClasses.isEmpty()) {
+		if (f_filters.isEmpty()) {
 			return false;
 		}	
 		String clazz = declaringType.getName();
-		boolean rv = f_filteredClasses.contains(clazz);
+		boolean rv = f_filters.contains(clazz);
 		/*
 		total++;
 		if (rv) {

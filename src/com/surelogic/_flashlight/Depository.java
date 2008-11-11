@@ -325,12 +325,24 @@ final class Depository extends Thread {
 		f_outputStrategy = outputStrategy;
 	}
 	
-	public LongMap<String> mapFieldsToClasses() {
+	public LongMap<String> mapFieldsToFilters() {
 		LongMap<String> map = new LongMap<String>();
 		for(Map.Entry<String,ClassInfo> e : classDefs.entrySet()) {
-			String declaringType = e.getKey();
+			final String declaringType = e.getKey();
+			final String declaringPackage;
+			if (declaringType == null) {
+				declaringPackage = null;
+			} else {
+				final int lastDot = declaringType.lastIndexOf('.');
+				if (lastDot < 0) {
+					declaringPackage = ""; 
+				} else {
+					declaringPackage = declaringType.substring(0, lastDot);
+				}
+			}
+			String filter = declaringPackage;
 			for(FieldInfo f : e.getValue().fields) {
-				map.put(f.id, declaringType);
+				map.put(f.id, filter);
 			}
 		}
 		return map;

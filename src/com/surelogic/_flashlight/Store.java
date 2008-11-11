@@ -274,7 +274,7 @@ public final class Store {
 	 * Flashlight startup code used to get everything running.
 	 */
 	static {
-		if (!FL_OFF.get()) {
+		if (IdConstants.enableFlashlightToggle || !FL_OFF.get()) {
 			/*
 			 * Initialize final static fields. If Flashlight is off these fields
 			 * are all set to null to save memory.
@@ -491,7 +491,10 @@ public final class Store {
   }
 	
   public static ObjectPhantomReference getObjectPhantom(Object o, long id) {
-	  return Phantom.ofObject(o, id);
+	  if (IdConstants.enableFlashlightToggle || !FL_OFF.get()) {
+		  return Phantom.ofObject(o, id);
+	  }
+	  return null;
   }
   
   /**
@@ -513,13 +516,14 @@ public final class Store {
   public static void instanceFieldAccess(
       final boolean read, final Object receiver, final int fieldID,
       final long siteId) {
+	  if (FL_OFF.get())
+		  return;
 	  if (!IdConstants.useFieldAccesses) {
 		  return;
 	  }
 	  if (f_flashlightIsNotInitialized)
 		  return;
-	  if (FL_OFF.get())
-		  return;
+
 	  final State flState = tl_withinStore.get();
 	  if (flState.inside)
 		  return;
@@ -586,13 +590,14 @@ public final class Store {
   public static void staticFieldAccess(final boolean read,
 		  final ClassPhantomReference ownerClass, final int fieldID,
 		  final long siteId) {
+	  if (FL_OFF.get())
+		  return;
 	  if (!IdConstants.useFieldAccesses) {
 		  return;
 	  }	  
 	  if (f_flashlightIsNotInitialized)
 		  return;
-	  if (FL_OFF.get())
-		  return;
+
 	  final State flState = tl_withinStore.get();
 	  if (flState.inside)
 		  return;
@@ -972,14 +977,16 @@ public final class Store {
 	 */
 	public static void methodCall(
 	    final boolean before, final Object receiver, final long siteId) {
+		if (FL_OFF.get())
+			return;
+		
 		if (!IdConstants.useTraces) {
 			return;
 		}
 		
 		if (f_flashlightIsNotInitialized)
 			return;
-		if (FL_OFF.get())
-			return;
+
 		final State flState = tl_withinStore.get();
 		if (flState.inside)
 			return;

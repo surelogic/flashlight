@@ -22,13 +22,14 @@
 				label="Flashlight" path="additions">
 				<groupMarker name="client" />
 				<separator name="service" />
+				<separator name="license" />
 				<separator name="additions" />
 			</menu>
 			<action
 				class="com.surelogic.flashlight.client.eclipse.actions.ManageLicensesAction"
 				id="com.surelogic.flashlight.client.eclipse.actions.ManageLicensesAction"
 				label="Manage SureLogic Licenses"
-				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/service"
+				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/license"
 				helpContextId="menu-manage-licenses">
 			</action>
 			<action

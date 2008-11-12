@@ -163,7 +163,6 @@ public final class PrepSLJob extends AbstractSLJob {
 				 * Read the data file (our second pass) and insert prepared data
 				 * into the database.
 				 */
-				f_database.loggedBootAndCheckSchema();
 				try {
 					f_database.withTransaction(new NullDBTransaction() {
 						@Override

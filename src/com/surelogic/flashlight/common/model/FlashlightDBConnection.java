@@ -32,6 +32,7 @@ public final class FlashlightDBConnection extends DerbyConnection {
 		if (old != null) {
 			return old;
 		} else {
+			conn.loggedBootAndCheckSchema();
 			return conn;
 		}
 	}

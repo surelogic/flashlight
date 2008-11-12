@@ -28,8 +28,8 @@ public final class FlashlightUtility {
 	}
 
 	/**
-	 * This method gets the Flashlight data directory. It ensures the directory
-	 * exists.
+	 * This method gets the Flashlight data directory. It ensures the returned
+	 * directory exists.
 	 * <p>
 	 * This method is the same as calling
 	 * 

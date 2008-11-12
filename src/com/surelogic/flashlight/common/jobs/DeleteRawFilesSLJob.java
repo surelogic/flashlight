@@ -32,7 +32,7 @@ public class DeleteRawFilesSLJob extends AbstractSLJob {
 		monitor.begin();
 		final RunDirectory runDir = RawFileUtility
 				.getRunDirectoryFor(f_description);
-		FileUtility.deleteDirectoryAndContents(runDir.getRunDirectory());
+		FileUtility.recursiveDelete(runDir.getRunDirectory());
 		RunManager.getInstance().refresh();
 		monitor.done();
 		return SLStatus.OK_STATUS;

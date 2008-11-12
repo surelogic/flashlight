@@ -2,18 +2,14 @@ package com.surelogic.flashlight.common.files;
 
 import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.sql.Timestamp;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
@@ -261,8 +257,7 @@ public final class RawFileUtility {
 		}
 
 		void read() {
-			final File directory = new File(FileUtility
-					.getFlashlightDataDirectory());
+			final File directory = FileUtility.getFlashlightDataDirectory();
 			final File[] runDirs = directory.listFiles(f_directoryFilter);
 			for (final File runDir : runDirs) {
 				final RunDirectory runDirectory = RunDirectory.getFor(runDir);
@@ -275,24 +270,6 @@ public final class RawFileUtility {
 		}
 	}
 
-	/**
-	 * @see #getRawDataFiles()
-	 */
-	private static final FileFilter f_flashlightRawDataFileFilter = new FileFilter() {
-		public boolean accept(final File pathname) {
-			if (pathname.isDirectory()) {
-				return false;
-			}
-			final String name = pathname.getName();
-			for (final String suffix : suffixes) {
-				if (name.endsWith(suffix)) {
-					return true;
-				}
-			}
-			return false;
-		}
-	};
-
 	private static final FilenameFilter f_directoryFilter = new FilenameFilter() {
 		public boolean accept(final File root, final String name) {
 			final File dir = new File(root, name);
@@ -303,33 +280,6 @@ public final class RawFileUtility {
 			// name.contains("-at-") && !name.equals(DB_DIRECTORY);
 		}
 	};
-
-	/**
-	 * Find the raw data files. These are going to located in directories nested
-	 * in the flashlight data directory. That is, each run produced by the
-	 * "Run as Flashlight" option in Eclipse is going to create a top-level
-	 * directory within the Flashlight data directory that contains all
-	 * information needed for that run.
-	 * 
-	 * @return the set of Flashlight raw data files (compressed or uncompressed)
-	 *         found in the Flashlight directory.
-	 */
-	private static File[] getRawDataFiles() {
-		final File directory = new File(FileUtility
-				.getFlashlightDataDirectory());
-
-		final List<File> rawDataFiles = new LinkedList<File>();
-
-		// Get the top-level per-run directories
-		final File[] runDirs = directory.listFiles(f_directoryFilter);
-		for (final File runDir : runDirs) {
-			final File[] dataFiles = runDir
-					.listFiles(f_flashlightRawDataFileFilter);
-			rawDataFiles.addAll(Arrays.asList(dataFiles));
-		}
-		final File[] value = new File[rawDataFiles.size()];
-		return rawDataFiles.toArray(value);
-	}
 
 	/*
 	 * Estimate the amount of events in the raw file based upon the size of the

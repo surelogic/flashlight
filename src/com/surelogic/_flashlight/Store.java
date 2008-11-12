@@ -384,6 +384,7 @@ public final class Store {
 			final int rawQueueSize = StoreConfiguration.getRawQueueSize();			
 			f_rawQueue = new ArrayBlockingQueue<List<Event>>(rawQueueSize);
 			putInQueue(f_rawQueue, singletonList(timeEvent));
+			putInQueue(f_rawQueue, singletonList(new SelectedPackage("*")));
 			
 			final int outQueueSize = StoreConfiguration.getOutQueueSize();
 			System.err.println("Using refinery = "+IdConstants.useRefinery);

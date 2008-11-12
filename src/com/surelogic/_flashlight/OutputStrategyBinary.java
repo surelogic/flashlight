@@ -247,6 +247,17 @@ public class OutputStrategyBinary extends EventVisitor {
 			handleIOException(ioe);
 		}
 	}
+	
+	@Override
+	void visit(final SelectedPackage e) {
+		try {
+			writeLong_unsafe(ReadWriteLock_Definition.getByte(), e.getNanoTime(), false);
+			writeUTF(e.name);
+		} catch (IOException ioe) {
+			handleIOException(ioe);
+		}
+	}
+	
 	@Override
 	void visit(final SingleThreadedFieldInstance e) {
 		writeTwoLongs(SingleThreadedField_Instance.getByte(), e.getFieldId(), e.getReceiver().getId());

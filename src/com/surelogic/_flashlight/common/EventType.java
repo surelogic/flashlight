@@ -230,6 +230,13 @@ public enum EventType {
 			return RECEIVER;
 		}
 	},
+	SelectedPackage("selected-package") {
+		@Override
+		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+			attrs.put(TIME, in.readLong());
+			attrs.put(PACKAGE, in.readUTF());
+		}
+	},
 	SingleThreadedField_Instance("single-threaded-field") {
 		@Override
 		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {

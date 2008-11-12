@@ -31,7 +31,8 @@ public enum AttributeType implements IAttributeType {
 	WALL_CLOCK("wall-clock-time"),
 	PARENT_ID("parent-id"),
 	TRACE("trace"),
-	START_TIME("start-time");
+	START_TIME("start-time"),
+	PACKAGE("package");
 	
 	private final String label;
 	

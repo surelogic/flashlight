@@ -22,10 +22,10 @@ import javax.xml.parsers.SAXParserFactory;
 import org.xml.sax.SAXException;
 
 import com.surelogic._flashlight.common.BinaryEventReader;
-import com.surelogic.common.FileUtility;
 import com.surelogic.common.SLUtility;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.logging.SLLogger;
+import com.surelogic.flashlight.common.FlashlightUtility;
 import com.surelogic.flashlight.common.model.RunDescription;
 
 /**
@@ -257,7 +257,8 @@ public final class RawFileUtility {
 		}
 
 		void read() {
-			final File directory = FileUtility.getFlashlightDataDirectory();
+			final File directory = FlashlightUtility
+					.getFlashlightDataDirectory();
 			final File[] runDirs = directory.listFiles(f_directoryFilter);
 			for (final File runDir : runDirs) {
 				final RunDirectory runDirectory = RunDirectory.getFor(runDir);

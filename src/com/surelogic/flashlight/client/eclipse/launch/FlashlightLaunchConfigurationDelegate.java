@@ -20,8 +20,8 @@ import org.eclipse.jdt.launching.IVMRunner;
 import org.eclipse.jdt.launching.JavaLaunchDelegate;
 import org.eclipse.jdt.launching.JavaRuntime;
 
-import com.surelogic.common.FileUtility;
 import com.surelogic.common.eclipse.logging.SLEclipseStatusUtility;
+import com.surelogic.flashlight.common.FlashlightUtility;
 
 public final class FlashlightLaunchConfigurationDelegate extends
 		JavaLaunchDelegate {
@@ -106,7 +106,8 @@ public final class FlashlightLaunchConfigurationDelegate extends
 		 * directories belong to it based on the pathname prefix. Update the
 		 * instrumented directory path for each binary directory.
 		 */
-		final File flashlightDataDir = FileUtility.getFlashlightDataDirectory();
+		final File flashlightDataDir = FlashlightUtility
+				.getFlashlightDataDirectory();
 		final SimpleDateFormat dateFormat = new SimpleDateFormat(
 				"-yyyy.MM.dd-'at'-HH.mm.ss.SSS");
 		final String datePostfix = dateFormat.format(new Date());

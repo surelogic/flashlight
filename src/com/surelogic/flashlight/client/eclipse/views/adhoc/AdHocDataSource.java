@@ -11,7 +11,6 @@ import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.progress.UIJob;
 
-import com.surelogic.common.FileUtility;
 import com.surelogic.common.ILifecycle;
 import com.surelogic.common.adhoc.AdHocManager;
 import com.surelogic.common.adhoc.AdHocManagerAdapter;
@@ -24,6 +23,7 @@ import com.surelogic.common.jdbc.DBConnection;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.client.eclipse.Activator;
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
+import com.surelogic.flashlight.common.FlashlightUtility;
 import com.surelogic.flashlight.common.model.RunManager;
 
 public final class AdHocDataSource extends AdHocManagerAdapter implements
@@ -48,8 +48,8 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements
 	}
 
 	public File getQuerySaveFile() {
-		return new File(FileUtility.getFlashlightDataDirectory()
-				+ File.separator + "flashlight-queries.xml");
+		return new File(FlashlightUtility.getFlashlightDataDirectory(),
+				"flashlight-queries.xml");
 	}
 
 	public URL getDefaultQueryUrl() {

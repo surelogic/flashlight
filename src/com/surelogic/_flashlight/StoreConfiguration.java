@@ -1,7 +1,5 @@
 package com.surelogic._flashlight;
 
-import com.surelogic._flashlight.common.IdConstants;
-
 /**
  * This class is giant hack, but I don't know of a better way to do things.  
  * This class cannot be instantiated, but contains various configuration
@@ -23,7 +21,7 @@ public class StoreConfiguration {
   private static final String FL_RUN_DEFAULT = "flashlight";
 
   private static final String FL_RAWQ_SIZE = "FL_RAWQ_SIZE";
-  private static final int FL_RAWQ_SIZE_DEFAULT = IdConstants.useRefinery ? 16 : 200;
+  private static final int FL_RAWQ_SIZE_DEFAULT = 16;
 
   private static final String FL_OUTQ_SIZE = "FL_OUTQ_SIZE";
   private static final int FL_OUTQ_SIZE_DEFAULT = 16;
@@ -44,6 +42,11 @@ public class StoreConfiguration {
   
   private static final String FL_DATE_OVERRIDE = "FL_DATE_OVERRIDE";
   
+  private static final String FL_REFINERY_OFF = "FL_REFINERY_OFF";
+  
+  private static final String FL_OUTPUT_TYPE = "FL_OUTPUT_TYPE";
+  private static final OutputType FL_OUTPUT_TYPE_DEFAULT = OutputType.FL_GZ;
+  
   private static volatile boolean isOff;
   private static volatile String directory;
   private static volatile String runName;
@@ -56,6 +59,8 @@ public class StoreConfiguration {
   private static volatile String sitesFile;
   private static volatile String filtersFile;
   private static volatile String dateOverride;
+  private static volatile boolean isRefineryOff;
+  private static volatile OutputType outputType;
   
   static {
     // Initialize the settings base on Java System properties
@@ -71,6 +76,8 @@ public class StoreConfiguration {
     setSitesFile(System.getProperty(FL_SITES_FILE));
     setFiltersFile(System.getProperty(FL_FILTERS_FILE));
     setDateOverride(System.getProperty(FL_DATE_OVERRIDE));
+    setRefineryOff(System.getProperty(FL_REFINERY_OFF, null) != null);
+    setOutputType(OutputType.valueOf(System.getProperty(FL_OUTPUT_TYPE), FL_OUTPUT_TYPE_DEFAULT));
   }
   
   private static int getIntProperty(final String key, int def) {
@@ -290,5 +297,21 @@ public class StoreConfiguration {
   
   public static void setDateOverride(final String date) {
     dateOverride = date;
+  }
+  
+  public static boolean isRefineryOff() {
+	return isRefineryOff;
+  }
+  
+  public static void setRefineryOff(boolean off) {
+	isRefineryOff = off;
+  }
+  
+  public static OutputType getOutputType() {
+	return outputType;
+  }
+  
+  public static void setOutputType(OutputType type) {
+	outputType = type;
   }
 }

@@ -344,8 +344,8 @@ public final class Store {
 			// still incremented even if logging is off.
 			f_problemCount = new AtomicLong();
 
-			final boolean outputBinary = IdConstants.outputBinary;
-			final boolean compress = !outputBinary;
+			final boolean outputBinary = StoreConfiguration.getOutputType().isBinary();
+			final boolean compress = StoreConfiguration.getOutputType().isCompressed();
 			final String extension = outputBinary ? ".flb" : ".fl";
 			File dataFile = new File(fileName.toString() + extension + (compress ? ".gz" : ""));
 			w = null;
@@ -389,8 +389,8 @@ public final class Store {
 			putInQueue(f_rawQueue, singletonList(new SelectedPackage("*")));
 			
 			final int outQueueSize = StoreConfiguration.getOutQueueSize();
-			System.err.println("Using refinery = "+IdConstants.useRefinery);
-			if (IdConstants.useRefinery) {
+			System.err.println("Using refinery = "+!StoreConfiguration.isRefineryOff());
+			if (!StoreConfiguration.isRefineryOff()) {
 				f_outQueue = new ArrayBlockingQueue<List<Event>>(outQueueSize);
 			} else {
 				f_outQueue = null;
@@ -412,7 +412,7 @@ public final class Store {
 						}
 					});
 			final int refinerySize = StoreConfiguration.getRefinerySize();
-			if (IdConstants.useRefinery) {
+			if (!StoreConfiguration.isRefineryOff()) {
 				f_refinery = new Refinery(f_rawQueue, f_outQueue, refinerySize);
 				f_refinery.start();
 				f_depository = new Depository(f_outQueue, outputStrategy);
@@ -1460,14 +1460,16 @@ public final class Store {
 		/*
 		 * Finish up data output.
 		 */
-		if (!IdConstants.useRefinery) {
+		if (StoreConfiguration.isRefineryOff()) {
+			// Need to shutdown the minimal refinery in a different way than 
+			// the normal refinery
 			f_refinery.requestShutdown();
 		}
 		Thread.yield();
 		
 		putInQueue(f_rawQueue, flushLocalQueues());
 		putInQueue(f_rawQueue, singletonList(FinalEvent.FINAL_EVENT));
-		if (IdConstants.useRefinery) {
+		if (!StoreConfiguration.isRefineryOff()) {
 			join(f_refinery);		
 		}
 		join(f_depository);

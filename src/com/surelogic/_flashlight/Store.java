@@ -204,7 +204,9 @@ public final class Store {
 	 */
 	private final static ThreadLocal<State> tl_withinStore;
 
-	private static final LongMap<String> f_field2Filter;
+	private static final boolean filterBySite = false;
+	private static final LongMap<String> f_field2Filter;	
+	private static final LongMap<String> f_site2Filter = null;
 	
 	/**
 	 * Currently describes the set of packages to be traced
@@ -536,7 +538,7 @@ public final class Store {
 		  return;
 	  flState.inside = true;
 	  try {
-		  if (filterOutFieldAccess(fieldID)) {
+		  if (filterOutFieldAccess(fieldID, siteId)) {
 			  return;
 		  }
 		  /*
@@ -610,7 +612,7 @@ public final class Store {
 		  return;
 	  flState.inside = true;
 	  try {
-		  if (filterOutFieldAccess(fieldID)) {
+		  if (filterOutFieldAccess(fieldID, siteId)) {
 			  return;
 		  }
 		  /*
@@ -676,7 +678,7 @@ public final class Store {
     	return;
     flState.inside = true;
     try {
-      if (filterOutFieldAccess(clazz)) {
+      if (filterOutFieldAccess(clazz, siteId)) {
     	return;
       }
       if (DEBUG) {
@@ -744,7 +746,7 @@ public final class Store {
     	return;
     flState.inside = true;
     try {
-      if (filterOutFieldAccess(clazz)) {
+      if (filterOutFieldAccess(clazz, siteId)) {
        	return;
       }	
       if (DEBUG) {
@@ -805,7 +807,7 @@ public final class Store {
 			return;
 		flState.inside = true;
 		try {			
-		    if (filterOutFieldAccess(field.getDeclaringClass())) {
+		    if (filterOutFieldAccess(field.getDeclaringClass(), withinClass.getName())) {
 		      return;
 		    }
 			if (DEBUG) {
@@ -1683,28 +1685,68 @@ public final class Store {
 	 * An alternative to make this one lookup is to keep a map 
 	 * from class name to field ids, so that you can dynamically
 	 * add/remove field ids from a set of filtered fields
+	 * @param siteId 
 	 */
-	private static boolean filterOutFieldAccess(long fieldId) {		
-		if (f_passFilters == null || f_field2Filter == null) {
+	private static boolean filterOutFieldAccess(long fieldId, long siteId) {		
+		if (f_passFilters == null) {
+			return false;
+		}
+		final LongMap<String> idToFilter;
+		final long id;
+		if (filterBySite) {
+			idToFilter = f_site2Filter; 
+			id = siteId;
+		} else {
+			idToFilter = f_field2Filter;
+			id = fieldId;
+		}
+		if (idToFilter == null) {		
 			return false;
 		}
 		if (f_passFilters.isEmpty()) {
 			return true;
 		}
 		// FIX why returning null?
-		String filter = f_field2Filter.get(fieldId);		
+		String filter = idToFilter.get(id);		
 		boolean rv = !f_passFilters.contains(filter);
 		return rv;
 	}
-	private static boolean filterOutFieldAccess(Class declaringType) {
+	private static boolean filterOutFieldAccess(Class declaringType, long siteId) {
+		if (f_passFilters == null) {
+			return false;
+		}
+		String filter;
+		if (filterBySite) {
+			if (f_site2Filter == null) {
+				return false;
+			}
+			filter = f_site2Filter.get(siteId);
+		} else {
+			filter = declaringType.getPackage().getName();
+		}
+		if (f_passFilters.isEmpty()) {
+			return true;
+		}		 
+		boolean rv = !f_passFilters.contains(filter);
+		return rv;
+	}
+	
+	private static boolean filterOutFieldAccess(Class declaringType, String siteType) {	
 		if (f_passFilters == null) {
 			return false;
 		}
 		if (f_passFilters.isEmpty()) {
 			return true;
 		}
-		String type = declaringType.getPackage().getName();
-		boolean rv = !f_passFilters.contains(type);
+		// FIX why returning null?
+		String filter;
+		if (filterBySite) {
+			final int lastDot = siteType.lastIndexOf('.');
+			filter = lastDot < 0 ? siteType : siteType.substring(0, lastDot);		
+		} else {
+			filter = declaringType.getPackage().getName();
+		}
+		boolean rv = !f_passFilters.contains(filter);
 		return rv;
 	}
 }

@@ -8,12 +8,17 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Listener;
 import org.eclipse.ui.IWorkbench;
 
+import com.surelogic.common.eclipse.SLImages;
+import com.surelogic.common.eclipse.dialogs.ChangeDataDirectoryDialog;
 import com.surelogic.common.eclipse.preferences.AbstractLicensePreferencePage;
 import com.surelogic.common.i18n.I18N;
+import com.surelogic.common.images.CommonImages;
 import com.surelogic.common.serviceability.UsageMeter;
 import com.surelogic.flashlight.client.eclipse.Activator;
 import com.surelogic.flashlight.common.FlashlightUtility;
@@ -60,6 +65,21 @@ public class FlashlightPreferencePage extends AbstractLicensePreferencePage {
 				.msg("flashlight.preference.page.changeDataDirectory"));
 		change.setLayoutData(new GridData(SWT.DEFAULT, SWT.DEFAULT, false,
 				false));
+		change.addListener(SWT.Selection, new Listener() {
+			public void handleEvent(Event event) {
+				ChangeDataDirectoryDialog
+						.open(
+								change.getShell(),
+								FlashlightUtility
+										.getFlashlightDataDirectoryAnchor(),
+								I18N
+										.msg("flashlight.change.data.directory.dialog.title"),
+								SLImages.getImage(CommonImages.IMG_FL_LOGO),
+								I18N
+										.msg("flashlight.change.data.directory.dialog.information"));
+				updateDataDirectory();
+			}
+		});
 
 		final Group onGroup = new Group(panel, SWT.NONE);
 		onGroup.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));

@@ -43,7 +43,9 @@
                 </dependency>
             </module-dependencies>
             <public-packages>
+                <package>com.surelogic._flashlight.common</package>
                 <package>com.surelogic.flashlight.common</package>
+                <package>com.surelogic.flashlight.common.convert</package>
                 <package>com.surelogic.flashlight.common.entities</package>
                 <package>com.surelogic.flashlight.common.files</package>
                 <package>com.surelogic.flashlight.common.jobs</package>

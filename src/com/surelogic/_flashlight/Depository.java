@@ -43,6 +43,7 @@ final class Depository extends Thread {
 	
 	//private final Map<String,List<FieldInfo>> fieldDefs = loadFieldInfo();
 	private final Map<String,ClassInfo> classDefs = loadClassInfo();	
+	private final Set<String> passFilters = loadPassFilters();
 	
 	static class ClassInfo {
 		final String fileName;
@@ -323,6 +324,39 @@ final class Depository extends Thread {
 			f_outputStrategy.visit(FinalEvent.FINAL_EVENT);
 		}
 		f_outputStrategy = outputStrategy;
+	}
+	
+	public Set<String> getPassFilters() {
+		return passFilters;
+	}
+	
+	private static Set<String> loadPassFilters() {
+		String name = StoreConfiguration.getFiltersFile();
+		File f;
+		if (name != null) {
+			f = new File(name);
+		} else {
+			// Try to use fields file to find the sites file
+			name = StoreConfiguration.getFieldsFile();
+			if (name == null) {
+				return null;
+			}
+			f = new File(name);
+			f = new File(f.getParentFile(), "filtersfile.txt");
+		}
+		return loadFileContents(f, new FiltersReader()).getSet();
+	}
+	
+	static class FiltersReader implements LineHandler {
+		final Set<String> filters = new HashSet<String>();
+		
+		public Set<String> getSet() {
+			return filters;
+		}
+
+		public void readLine(String line) {
+			filters.add(line.trim());			
+		}
 	}
 	
 	public LongMap<String> mapFieldsToFilters() {

@@ -210,7 +210,7 @@ public final class Store {
 	 * Currently describes the set of packages to be traced
 	 * All if null, none if empty
 	 */
-	private static final Set<String> f_passFilters = null;//new HashSet<String>();
+	private static Set<String> f_passFilters;
 	/*
 	static {
 		f_filteredClasses.add("com.surelogic.tree.SyntaxTreeNode");
@@ -420,6 +420,7 @@ public final class Store {
 				f_depository = new Depository(f_rawQueue, outputStrategy);
 			}
 			f_field2Filter = f_depository.mapFieldsToFilters();
+			f_passFilters  = f_depository.getPassFilters();
 			f_depository.start();
 			log("collection started (rawQ=" + rawQueueSize + " : refinery="
 					+ refinerySize + " : outQ=" + outQueueSize + ")");

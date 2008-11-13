@@ -5,15 +5,18 @@ import org.eclipse.jface.preference.IntegerFieldEditor;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Group;
+import org.eclipse.swt.widgets.Label;
 import org.eclipse.ui.IWorkbench;
 
 import com.surelogic.common.eclipse.preferences.AbstractLicensePreferencePage;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.serviceability.UsageMeter;
 import com.surelogic.flashlight.client.eclipse.Activator;
+import com.surelogic.flashlight.common.FlashlightUtility;
 
 public class FlashlightPreferencePage extends AbstractLicensePreferencePage {
 
@@ -21,8 +24,12 @@ public class FlashlightPreferencePage extends AbstractLicensePreferencePage {
 	private BooleanFieldEditor f_autoPerspectiveSwitch;
 	private IntegerFieldEditor f_consolePort;
 	private IntegerFieldEditor f_maxRowsPerQuery;
+	private IntegerFieldEditor f_outQSize;
 	private BooleanFieldEditor f_promptPerspectiveSwitch;
+	private IntegerFieldEditor f_rawQSize;
+	private IntegerFieldEditor f_refinerySize;
 	private BooleanFieldEditor f_useSpyThread;
+	private Label f_dataDirectory;
 
 	public void init(IWorkbench workbench) {
 		setPreferenceStore(Activator.getDefault().getPreferenceStore());
@@ -37,6 +44,22 @@ public class FlashlightPreferencePage extends AbstractLicensePreferencePage {
 		final Composite panel = new Composite(parent, SWT.NONE);
 		GridLayout grid = new GridLayout();
 		panel.setLayout(grid);
+
+		final Group dataGroup = new Group(panel, SWT.NONE);
+		dataGroup.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
+		dataGroup.setText(I18N.msg("flashlight.preference.page.group.data"));
+		dataGroup.setLayout(new GridLayout(2, false));
+
+		f_dataDirectory = new Label(dataGroup, SWT.NONE);
+		updateDataDirectory();
+		f_dataDirectory.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true,
+				false));
+
+		final Button change = new Button(dataGroup, SWT.PUSH);
+		change.setText(I18N
+				.msg("flashlight.preference.page.changeDataDirectory"));
+		change.setLayoutData(new GridData(SWT.DEFAULT, SWT.DEFAULT, false,
+				false));
 
 		final Group onGroup = new Group(panel, SWT.NONE);
 		onGroup.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
@@ -73,16 +96,45 @@ public class FlashlightPreferencePage extends AbstractLicensePreferencePage {
 		f_consolePort = new IntegerFieldEditor(
 				PreferenceConstants.P_CONSOLE_PORT, I18N
 						.msg("flashlight.preference.page.consolePort"), iGroup);
+		f_consolePort.fillIntoGrid(iGroup, 2);
 		f_consolePort.setValidRange(1024, 65535);
 		f_consolePort.setPage(this);
 		f_consolePort.setPreferenceStore(getPreferenceStore());
 		f_consolePort.load();
 
+		f_rawQSize = new IntegerFieldEditor(PreferenceConstants.P_RAWQ_SIZE,
+				I18N.msg("flashlight.preference.page.rawQSize"), iGroup);
+		f_rawQSize.fillIntoGrid(iGroup, 2);
+		f_rawQSize.setValidRange(1000, 50000);
+		f_rawQSize.setPage(this);
+		f_rawQSize.setPreferenceStore(getPreferenceStore());
+		f_rawQSize.load();
+
+		f_refinerySize = new IntegerFieldEditor(
+				PreferenceConstants.P_REFINERY_SIZE, I18N
+						.msg("flashlight.preference.page.refinerySize"), iGroup);
+		f_refinerySize.fillIntoGrid(iGroup, 2);
+		f_refinerySize.setValidRange(1000, 50000);
+		f_refinerySize.setPage(this);
+		f_refinerySize.setPreferenceStore(getPreferenceStore());
+		f_refinerySize.load();
+
+		f_outQSize = new IntegerFieldEditor(PreferenceConstants.P_OUTQ_SIZE,
+				I18N.msg("flashlight.preference.page.outQSize"), iGroup);
+		f_outQSize.fillIntoGrid(iGroup, 2);
+		f_outQSize.setValidRange(1000, 50000);
+		f_outQSize.setPage(this);
+		f_outQSize.setPreferenceStore(getPreferenceStore());
+		f_outQSize.load();
+
 		f_useSpyThread = new BooleanFieldEditor(PreferenceConstants.P_USE_SPY,
 				I18N.msg("flashlight.preference.page.useSpyThread"), iGroup);
+		f_useSpyThread.fillIntoGrid(iGroup, 2);
 		f_useSpyThread.setPage(this);
 		f_useSpyThread.setPreferenceStore(getPreferenceStore());
 		f_useSpyThread.load();
+
+		iGroup.setLayout(new GridLayout(2, false));
 
 		final Group qGroup = new Group(panel, SWT.NONE);
 		qGroup.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
@@ -100,25 +152,10 @@ public class FlashlightPreferencePage extends AbstractLicensePreferencePage {
 		return panel;
 	}
 
-	// /**
-	// * Creates the field editors. Field editors are abstractions of the common
-	// * GUI blocks needed to manipulate various types of preferences. Each
-	// field
-	// * editor knows how to save and restore itself.
-	// */
-	// @Override
-	// public void createFieldEditors() {
-	// addField(new ScaleFieldEditor(PreferenceConstants.P_RAWQ_SIZE,
-	// "Raw queue size:", getFieldEditorParent(), 1000, 50000, 1000,
-	// 1000));
-	// addField(new ScaleFieldEditor(PreferenceConstants.P_REFINERY_SIZE,
-	// "Refinery cache size:", getFieldEditorParent(), 1000, 50000,
-	// 1000, 1000));
-	// addField(new ScaleFieldEditor(PreferenceConstants.P_OUTQ_SIZE,
-	// "Out queue size:", getFieldEditorParent(), 1000, 50000, 1000,
-	// 1000));
-	//
-	// }
+	private void updateDataDirectory() {
+		f_dataDirectory.setText(FlashlightUtility.getFlashlightDataDirectory()
+				.getAbsolutePath());
+	}
 
 	@Override
 	protected void performDefaults() {
@@ -126,7 +163,10 @@ public class FlashlightPreferencePage extends AbstractLicensePreferencePage {
 		f_autoPerspectiveSwitch.loadDefault();
 		f_consolePort.loadDefault();
 		f_maxRowsPerQuery.loadDefault();
+		f_outQSize.loadDefault();
 		f_promptPerspectiveSwitch.loadDefault();
+		f_rawQSize.loadDefault();
+		f_refinerySize.loadDefault();
 		f_useSpyThread.loadDefault();
 		super.performDefaults();
 	}
@@ -137,7 +177,10 @@ public class FlashlightPreferencePage extends AbstractLicensePreferencePage {
 		f_autoPerspectiveSwitch.store();
 		f_consolePort.store();
 		f_maxRowsPerQuery.store();
+		f_outQSize.store();
 		f_promptPerspectiveSwitch.store();
+		f_rawQSize.store();
+		f_refinerySize.store();
 		f_useSpyThread.store();
 		return super.performOk();
 	}

@@ -81,7 +81,7 @@ public class StoreConfiguration {
     setDateOverride(System.getProperty(FL_DATE_OVERRIDE));
     setRefineryOff(System.getProperty(FL_REFINERY_OFF, null) != null);
     setOutputType(OutputType.valueOf(System.getProperty(FL_OUTPUT_TYPE), FL_OUTPUT_TYPE_DEFAULT));
-    setDebug(!"OFF".equalsIgnoreCase(System.getProperty(FL_DEBUG, "ON")));
+    setDebug("ON".equalsIgnoreCase(System.getProperty(FL_DEBUG, "OFF")));
   }
   
   private static int getIntProperty(final String key, int def) {

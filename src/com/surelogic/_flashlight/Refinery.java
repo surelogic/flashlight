@@ -51,7 +51,9 @@ final class Refinery extends AbstractRefinery {
 	public void run() {
 		final boolean filter = IdConstants.filterEvents;		
 		Store.flashlightThread();
-		System.err.println("Filter events = "+filter);
+		if (StoreConfiguration.debugOn()) {
+			System.err.println("Filter events = "+filter);
+		}
 
 		final List<List<Event>> buf = new ArrayList<List<Event>>();
 		while (!f_finished) {

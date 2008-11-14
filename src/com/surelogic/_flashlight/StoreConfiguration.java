@@ -47,6 +47,8 @@ public class StoreConfiguration {
   private static final String FL_OUTPUT_TYPE = "FL_OUTPUT_TYPE";
   private static final OutputType FL_OUTPUT_TYPE_DEFAULT = OutputType.FL_GZ;
   
+  private static final String FL_DEBUG = "FL_DEBUG";
+  
   private static volatile boolean isOff;
   private static volatile String directory;
   private static volatile String runName;
@@ -61,6 +63,7 @@ public class StoreConfiguration {
   private static volatile String dateOverride;
   private static volatile boolean isRefineryOff;
   private static volatile OutputType outputType;
+  private static volatile boolean debug;
   
   static {
     // Initialize the settings base on Java System properties
@@ -78,6 +81,7 @@ public class StoreConfiguration {
     setDateOverride(System.getProperty(FL_DATE_OVERRIDE));
     setRefineryOff(System.getProperty(FL_REFINERY_OFF, null) != null);
     setOutputType(OutputType.valueOf(System.getProperty(FL_OUTPUT_TYPE), FL_OUTPUT_TYPE_DEFAULT));
+    setDebug(!"OFF".equalsIgnoreCase(System.getProperty(FL_DEBUG, "ON")));
   }
   
   private static int getIntProperty(final String key, int def) {
@@ -313,5 +317,13 @@ public class StoreConfiguration {
   
   public static void setOutputType(OutputType type) {
 	outputType = type;
+  }
+  
+  public static boolean debugOn() {
+	  return debug;
+  }
+  
+  public static void setDebug(boolean dbg) {
+	  debug = dbg;
   }
 }

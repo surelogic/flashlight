@@ -349,7 +349,9 @@ public final class Store {
 			final String extension = outputBinary ? ".flb" : ".fl";
 			File dataFile = new File(fileName.toString() + extension + (compress ? ".gz" : ""));
 			w = null;
-			System.err.println("Output XML = "+!outputBinary);
+			if (StoreConfiguration.debugOn()) {
+				System.err.println("Output XML = "+!outputBinary);
+			}
 			OutputStream stream = null;
 			ObjectOutputStream objStream = null;
 			try {				
@@ -360,7 +362,9 @@ public final class Store {
 				headerW.close();
 				
 				stream = new FileOutputStream(dataFile);
-				System.err.println("Compress stream = "+compress);
+				if (StoreConfiguration.debugOn()) {
+					System.err.println("Compress stream = "+compress);
+				}
 				if (compress) {
 				  stream = new GZIPOutputStream(stream, 32768);
 				} else {
@@ -389,7 +393,9 @@ public final class Store {
 			putInQueue(f_rawQueue, singletonList(new SelectedPackage("*")));
 			
 			final int outQueueSize = StoreConfiguration.getOutQueueSize();
-			System.err.println("Using refinery = "+!StoreConfiguration.isRefineryOff());
+			if (StoreConfiguration.debugOn()) {
+				System.err.println("Using refinery = "+!StoreConfiguration.isRefineryOff());
+			}
 			if (!StoreConfiguration.isRefineryOff()) {
 				f_outQueue = new ArrayBlockingQueue<List<Event>>(outQueueSize);
 			} else {
@@ -1689,7 +1695,7 @@ public final class Store {
 	 * add/remove field ids from a set of filtered fields
 	 * @param siteId 
 	 */
-	private static boolean filterOutFieldAccess(long fieldId, long siteId) {		
+	private static synchronized boolean filterOutFieldAccess(long fieldId, long siteId) {		
 		if (f_passFilters == null) {
 			return false;
 		}
@@ -1713,7 +1719,7 @@ public final class Store {
 		boolean rv = !f_passFilters.contains(filter);
 		return rv;
 	}
-	private static boolean filterOutFieldAccess(Class declaringType, long siteId) {
+	private static synchronized boolean filterOutFieldAccess(Class declaringType, long siteId) {
 		if (f_passFilters == null) {
 			return false;
 		}
@@ -1733,7 +1739,7 @@ public final class Store {
 		return rv;
 	}
 	
-	private static boolean filterOutFieldAccess(Class declaringType, String siteType) {	
+	private static synchronized boolean filterOutFieldAccess(Class declaringType, String siteType) {	
 		if (f_passFilters == null) {
 			return false;
 		}
@@ -1750,5 +1756,27 @@ public final class Store {
 		}
 		boolean rv = !f_passFilters.contains(filter);
 		return rv;
+	}
+
+	public static synchronized Collection<String> getPassFilters() {
+		return f_passFilters;
+	}
+
+	public static synchronized void clearPassFilters() {
+		f_passFilters = null;
+	}
+
+	public static synchronized void addPassFilter(String pkg) {
+		if (f_passFilters == null) {
+			f_passFilters = new HashSet<String>();
+		}
+		f_passFilters.add(pkg);
+	}
+
+	public static synchronized void removePassFilter(String pkg) {
+		if (f_passFilters == null) {
+			return; // Nothing to do
+		}
+		f_passFilters.remove(pkg);
 	}
 }

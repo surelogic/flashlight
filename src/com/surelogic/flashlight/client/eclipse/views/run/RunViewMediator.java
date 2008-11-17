@@ -26,6 +26,7 @@ import com.surelogic.common.jobs.AggregateSLJob;
 import com.surelogic.common.jobs.SLJob;
 import com.surelogic.flashlight.client.eclipse.dialogs.DeleteRunDialog;
 import com.surelogic.flashlight.client.eclipse.dialogs.LogDialog;
+import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.QueryMenuView;
 import com.surelogic.flashlight.client.eclipse.views.source.SourceView;
 import com.surelogic.flashlight.common.entities.PrepRunDescription;
@@ -43,6 +44,8 @@ import com.surelogic.flashlight.common.model.RunManager;
  * Mediator for the {@link RunView}.
  */
 public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
+
+	private static final String RUN_VARIABLE = "FLASHLIGHT-RUN";
 
 	private final TableViewer f_tableViewer;
 	private final Table f_table;
@@ -355,10 +358,13 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 			final RunDescription o = selected[0];
 			SourceView.setRunDescription(o);
 			RunManager.getInstance().setSelectedRun(o);
+			AdHocDataSource.getManager().setGlobalVariableValue(RUN_VARIABLE,
+					o.getName() + " - " + o.getStartTimeOfRun());
 		} else {
 			RunManager.getInstance().setSelectedRun(null);
+			AdHocDataSource.getManager().setGlobalVariableValue(RUN_VARIABLE,
+					null);
 		}
-		// FIXME WE CHANGE OUR SELECTED RUN HERE
 		f_prepAction.setEnabled(rawActionsEnabled);
 		f_showLogAction.setEnabled(rawActionsEnabled);
 		f_convertToXmlAction.setEnabled(binaryActionsEnabled);

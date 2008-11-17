@@ -1,11 +1,15 @@
 package com.surelogic.flashlight.common.model;
 
 import java.io.File;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
 
 import com.surelogic.common.derby.DerbyConnection;
 import com.surelogic.common.jdbc.DBConnection;
 import com.surelogic.common.jdbc.SchemaData;
+import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.schema.FlashlightSchemaData;
 
 public final class FlashlightDBConnection extends DerbyConnection {
@@ -34,6 +38,25 @@ public final class FlashlightDBConnection extends DerbyConnection {
 		} else {
 			conn.loggedBootAndCheckSchema();
 			return conn;
+		}
+	}
+
+	/**
+	 * Shuts down all open database connections.
+	 * 
+	 * @throws IllegalStateException
+	 *             if the databases are not shut down properly
+	 */
+	public static void shutdownConnections() {
+		try {
+			INSTANCES.clear();
+			DriverManager.getConnection("jdbc:derby:;shutdown=true");
+		} catch (final SQLException e) {
+			if (e.getErrorCode() == 50000) {
+				SLLogger.getLogger().log(Level.FINE, "Derby shut down", e);
+			} else {
+				throw new IllegalStateException(e);
+			}
 		}
 	}
 

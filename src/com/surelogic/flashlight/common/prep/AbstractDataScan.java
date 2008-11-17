@@ -13,6 +13,7 @@ import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.logging.SLLogger;
 
 public class AbstractDataScan extends DefaultHandler {
+	// No longer working, due to re-ordering of defs/uses
 	private static final boolean useSitesCompatibility = false;
 	protected final SLProgressMonitor f_monitor;	
 	private final LongMap<SiteInfo> sites = useSitesCompatibility ? new LongMap<SiteInfo>() : null;

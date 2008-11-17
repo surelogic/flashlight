@@ -10,6 +10,7 @@ import com.surelogic._flashlight.common.IdConstants;
 import com.surelogic._flashlight.common.LongMap;
 import com.surelogic._flashlight.common.PreppedAttributes;
 import com.surelogic.common.jobs.SLProgressMonitor;
+import com.surelogic.common.logging.SLLogger;
 
 public class AbstractDataScan extends DefaultHandler {
 	private static final boolean useSites = true;
@@ -84,7 +85,7 @@ public class AbstractDataScan extends DefaultHandler {
 						if (info != null) {
 							info.populateAttributes(attrs);
 						} else {
-							System.err.println("Couldn't find site: "+site);
+							SLLogger.getLogger().severe("Couldn't find site: "+site);
 						}
 					}
 				}

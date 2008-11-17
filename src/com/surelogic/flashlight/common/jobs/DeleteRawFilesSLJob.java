@@ -21,20 +21,24 @@ public class DeleteRawFilesSLJob extends AbstractSLJob {
 	}
 
 	public SLStatus run(final SLProgressMonitor monitor) {
-		final SLStatus failed = SLLicenseUtility.validateSLJob(
-				SLLicenseUtility.FLASHLIGHT_SUBJECT, monitor);
-		if (failed != null) {
-			return failed;
-		}
-
-		UsageMeter.getInstance().tickUse("Flashlight ran DeleteRawFilesSLJob");
-
 		monitor.begin();
-		final RunDirectory runDir = RawFileUtility
-				.getRunDirectoryFor(f_description);
-		FileUtility.recursiveDelete(runDir.getRunDirectory());
-		RunManager.getInstance().refresh();
-		monitor.done();
+		try {
+			final SLStatus failed = SLLicenseUtility.validateSLJob(
+					SLLicenseUtility.FLASHLIGHT_SUBJECT, monitor);
+			if (failed != null) {
+				return failed;
+			}
+
+			UsageMeter.getInstance().tickUse(
+					"Flashlight ran DeleteRawFilesSLJob");
+
+			final RunDirectory runDir = RawFileUtility
+					.getRunDirectoryFor(f_description);
+			FileUtility.recursiveDelete(runDir.getRunDirectory());
+			RunManager.getInstance().refresh();
+		} finally {
+			monitor.done();
+		}
 		return SLStatus.OK_STATUS;
 	}
 }

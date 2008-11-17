@@ -20,18 +20,19 @@ public final class UnPrepSLJob extends AbstractSLJob {
 
 	public SLStatus run(final SLProgressMonitor monitor) {
 		monitor.begin();
+		try {
+			final SLStatus failed = SLLicenseUtility.validateSLJob(
+					SLLicenseUtility.FLASHLIGHT_SUBJECT, monitor);
+			if (failed != null) {
+				return failed;
+			}
 
-		final SLStatus failed = SLLicenseUtility.validateSLJob(
-				SLLicenseUtility.FLASHLIGHT_SUBJECT, monitor);
-		if (failed != null) {
-			return failed;
+			UsageMeter.getInstance().tickUse("Flashlight ran UnPrepSLJob");
+			f_database.destroy();
+			RunManager.getInstance().refresh();
+		} finally {
+			monitor.done();
 		}
-
-		UsageMeter.getInstance().tickUse("Flashlight ran UnPrepSLJob");
-		f_database.destroy();
-		RunManager.getInstance().refresh();
-
-		monitor.done();
 		return SLStatus.OK_STATUS;
 	}
 }

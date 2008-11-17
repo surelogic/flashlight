@@ -34,22 +34,21 @@ public final class ConvertBinaryToXMLJob extends AbstractSLJob {
 	public SLStatus run(final SLProgressMonitor monitor) {
 		final String dataFileName = f_dataFile.getName();
 		monitor.begin();
-
-		final SLStatus failed = SLLicenseUtility.validateSLJob(
-				SLLicenseUtility.FLASHLIGHT_SUBJECT, monitor);
-		if (failed != null)
-			return failed;
-
-		UsageMeter.getInstance()
-				.tickUse("Flashlight ran ConvertBinaryToXMLJob");
 		try {
+			final SLStatus failed = SLLicenseUtility.validateSLJob(
+					SLLicenseUtility.FLASHLIGHT_SUBJECT, monitor);
+			if (failed != null)
+				return failed;
+
+			UsageMeter.getInstance().tickUse(
+					"Flashlight ran ConvertBinaryToXMLJob");
+
 			final RawDataFilePrefix rawFilePrefix = RawFileUtility
 					.getPrefixFor(f_dataFile);
 			final InputStream stream = RawFileUtility
 					.getInputStreamFor(f_dataFile);
 			try {
-				final String newName = rawFilePrefix.getName()
-						+ ".fl.txt.gz";
+				final String newName = rawFilePrefix.getName() + ".fl.txt.gz";
 				final File convertedFile = new File(f_dataFile.getParentFile(),
 						newName);
 				final ConvertBinaryFileScan convertFile = new ConvertBinaryFileScan(

@@ -15,17 +15,16 @@ public final class RefreshRunManagerSLJob extends AbstractSLJob {
 
 	public SLStatus run(final SLProgressMonitor monitor) {
 		monitor.begin();
-
-		final SLStatus failed = SLLicenseUtility.validateSLJob(
-				SLLicenseUtility.FLASHLIGHT_SUBJECT, monitor);
-		if (failed != null) {
-			return failed;
-		}
-
-		UsageMeter.getInstance().tickUse(
-				"Flashlight ran RefreshRunManagerSLJob");
-
 		try {
+			final SLStatus failed = SLLicenseUtility.validateSLJob(
+					SLLicenseUtility.FLASHLIGHT_SUBJECT, monitor);
+			if (failed != null) {
+				return failed;
+			}
+
+			UsageMeter.getInstance().tickUse(
+					"Flashlight ran RefreshRunManagerSLJob");
+
 			RunManager.getInstance().refresh();
 		} catch (final Exception e) {
 			return SLStatus.createErrorStatus(SLStatus.OK,

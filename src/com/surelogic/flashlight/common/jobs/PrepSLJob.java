@@ -116,18 +116,19 @@ public final class PrepSLJob extends AbstractSLJob {
 				+ FLUSH_WORK + (EACH_POST_PREP * postPrepWork.length)
 				+ ADD_CONSTRAINT_WORK);
 
-		final SLStatus failed = SLLicenseUtility.validateSLJob(
-				SLLicenseUtility.FLASHLIGHT_SUBJECT, monitor);
-		if (failed != null) {
-			return failed;
-		}
-
-		UsageMeter.getInstance().tickUse("Flashlight ran PrepSLJob");
-
-		final int estEventsInRawFile = RawFileUtility
-				.estimateNumEvents(f_dataFile);
 		Exception exc = null;
 		try {
+			final SLStatus failed = SLLicenseUtility.validateSLJob(
+					SLLicenseUtility.FLASHLIGHT_SUBJECT, monitor);
+			if (failed != null) {
+				return failed;
+			}
+
+			UsageMeter.getInstance().tickUse("Flashlight ran PrepSLJob");
+
+			final int estEventsInRawFile = RawFileUtility
+					.estimateNumEvents(f_dataFile);
+
 			final RawDataFilePrefix rawFilePrefix = RawFileUtility
 					.getPrefixFor(f_dataFile);
 			final RunDescription runDescription = RawFileUtility

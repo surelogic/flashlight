@@ -41,6 +41,12 @@ public final class FlashlightDBConnection extends DerbyConnection {
 		}
 	}
 
+	@Override
+	public synchronized void destroy() {
+		INSTANCES.remove(dbLocation);
+		super.destroy();
+	}
+
 	/**
 	 * Shuts down all open database connections.
 	 * 
@@ -48,14 +54,16 @@ public final class FlashlightDBConnection extends DerbyConnection {
 	 *             if the databases are not shut down properly
 	 */
 	public static void shutdownConnections() {
-		try {
-			INSTANCES.clear();
-			DriverManager.getConnection("jdbc:derby:;shutdown=true");
-		} catch (final SQLException e) {
-			if (e.getErrorCode() == 50000) {
-				SLLogger.getLogger().log(Level.FINE, "Derby shut down", e);
-			} else {
-				throw new IllegalStateException(e);
+		if (!INSTANCES.isEmpty()) {
+			try {
+				INSTANCES.clear();
+				DriverManager.getConnection("jdbc:derby:;shutdown=true");
+			} catch (final SQLException e) {
+				if (e.getErrorCode() == 50000) {
+					SLLogger.getLogger().log(Level.FINE, "Derby shut down", e);
+				} else {
+					throw new IllegalStateException(e);
+				}
 			}
 		}
 	}

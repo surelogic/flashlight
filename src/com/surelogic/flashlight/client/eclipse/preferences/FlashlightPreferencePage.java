@@ -22,6 +22,7 @@ import com.surelogic.common.images.CommonImages;
 import com.surelogic.common.serviceability.UsageMeter;
 import com.surelogic.flashlight.client.eclipse.Activator;
 import com.surelogic.flashlight.common.FlashlightUtility;
+import com.surelogic.flashlight.common.jobs.DisconnectAllDatabases;
 
 public class FlashlightPreferencePage extends AbstractLicensePreferencePage {
 
@@ -76,7 +77,8 @@ public class FlashlightPreferencePage extends AbstractLicensePreferencePage {
 										.msg("flashlight.change.data.directory.dialog.title"),
 								SLImages.getImage(CommonImages.IMG_FL_LOGO),
 								I18N
-										.msg("flashlight.change.data.directory.dialog.information"));
+										.msg("flashlight.change.data.directory.dialog.information"),
+								new DisconnectAllDatabases(), null);
 				updateDataDirectory();
 			}
 		});

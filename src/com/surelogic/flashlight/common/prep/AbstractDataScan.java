@@ -13,9 +13,9 @@ import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.logging.SLLogger;
 
 public class AbstractDataScan extends DefaultHandler {
-	private static final boolean useSites = true;
+	private static final boolean useSitesCompatibility = false;
 	protected final SLProgressMonitor f_monitor;	
-	private final LongMap<SiteInfo> sites = useSites ? new LongMap<SiteInfo>() : null;
+	private final LongMap<SiteInfo> sites = useSitesCompatibility ? new LongMap<SiteInfo>() : null;
 
 	public AbstractDataScan(final SLProgressMonitor monitor) {
 		assert monitor != null;
@@ -73,7 +73,7 @@ public class AbstractDataScan extends DefaultHandler {
 				final IAttributeType key = PreppedAttributes.mapAttr(name);
 				attrs.put(key, value);
 			}
-			if (useSites) {
+			if (useSitesCompatibility) {
 				switch (e) {
 				case Static_CallLocation:
 					createSiteInfo(attrs);

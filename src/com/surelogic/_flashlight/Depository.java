@@ -288,6 +288,9 @@ final class Depository extends Thread {
 	
 	private static <T extends LineHandler> T loadFileContents(File f, T handler) {
 		if (!f.exists() || !f.isFile()) {
+			if (StoreConfiguration.debugOn()) {
+				System.err.println("Can't read: "+f.getName());
+			}
 			return handler;
 		}
 		try {
@@ -339,22 +342,33 @@ final class Depository extends Thread {
 			// Try to use fields file to find the sites file
 			name = StoreConfiguration.getFieldsFile();
 			if (name == null) {
+				if (StoreConfiguration.debugOn()) {
+					System.err.println("No filters file.");
+				}
 				return null;
 			}
 			f = new File(name);
 			f = new File(f.getParentFile(), "filtersfile.txt");
+		}
+		if (StoreConfiguration.debugOn()) {
+			System.err.println("Loading filters file: "+f.getAbsolutePath());
 		}
 		return loadFileContents(f, new FiltersReader()).getSet();
 	}
 	
 	static class FiltersReader implements LineHandler {
 		final Set<String> filters = new HashSet<String>();
+		boolean run;
 		
 		public Set<String> getSet() {
+			if (!run) {
+				return null;
+			}
 			return filters;
 		}
 
 		public void readLine(String line) {
+			run = true;
 			filters.add(line.trim());			
 		}
 	}

@@ -19,6 +19,7 @@ import org.eclipse.ui.PlatformUI;
 
 import com.surelogic.common.ILifecycle;
 import com.surelogic.common.SLUtility;
+import com.surelogic.common.adhoc.AdHocManager;
 import com.surelogic.common.eclipse.ViewUtility;
 import com.surelogic.common.eclipse.jobs.EclipseJob;
 import com.surelogic.common.i18n.I18N;
@@ -44,8 +45,6 @@ import com.surelogic.flashlight.common.model.RunManager;
  * Mediator for the {@link RunView}.
  */
 public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
-
-	private static final String RUN_VARIABLE = "FLASHLIGHT-RUN";
 
 	private final TableViewer f_tableViewer;
 	private final Table f_table;
@@ -354,16 +353,18 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 		 * if the selection changed inform the SourceView so it shows code from
 		 * that run.
 		 */
-		if (selected.length > 0) {
+		if (selected.length == 0
+				|| (selected[0].getPrepRunDescription() == null)) {
+			RunManager.getInstance().setSelectedRun(null);
+			AdHocDataSource.getManager().setGlobalVariableValue(
+					AdHocManager.DATABASE, null);
+		} else {
 			final RunDescription o = selected[0];
 			SourceView.setRunDescription(o);
 			RunManager.getInstance().setSelectedRun(o);
-			AdHocDataSource.getManager().setGlobalVariableValue(RUN_VARIABLE,
+			AdHocDataSource.getManager().setGlobalVariableValue(
+					AdHocManager.DATABASE,
 					o.getName() + " - " + o.getStartTimeOfRun());
-		} else {
-			RunManager.getInstance().setSelectedRun(null);
-			AdHocDataSource.getManager().setGlobalVariableValue(RUN_VARIABLE,
-					null);
 		}
 		f_prepAction.setEnabled(rawActionsEnabled);
 		f_showLogAction.setEnabled(rawActionsEnabled);

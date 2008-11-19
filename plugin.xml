@@ -133,7 +133,7 @@
 		<launchConfigurationTabGroup
 			type="org.eclipse.jdt.launching.localJavaApplication"
 			helpContextId="org.eclipse.jdt.debug.ui.launchConfigHelpContext.local_java_application"
-			class="org.eclipse.jdt.internal.debug.ui.launcher.LocalJavaApplicationTabGroup"
+			class="com.surelogic.flashlight.client.eclipse.launch.FlashlightAppTabGroup"
 			id="com.surelogic.flashlight.launchConfigurationTabGroup.localJavaApplication">
 			<launchMode mode="flashlight"
 				description="%fl.localJavaApplicationTabGroupDescription">

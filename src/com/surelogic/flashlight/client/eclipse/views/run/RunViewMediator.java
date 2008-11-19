@@ -156,15 +156,6 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 			boolean hasPrep = false;
 			for (final RunDescription description : selected) {
 				if (description != null) {
-					/*
-					 * Is it already prepared?
-					 */
-					final PrepRunDescription prep = description
-							.getPrepRunDescription();
-					if (prep != null) {
-						hasPrep = true;
-						jobs.add(new UnPrepSLJob(prep));
-					}
 					jobs.add(new PrepSLJob(description));
 				}
 			}

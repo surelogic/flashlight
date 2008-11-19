@@ -36,15 +36,8 @@ public final class FlashlightDBConnection extends DerbyConnection {
 		if (old != null) {
 			return old;
 		} else {
-			conn.loggedBootAndCheckSchema();
 			return conn;
 		}
-	}
-
-	@Override
-	public synchronized void destroy() {
-		INSTANCES.remove(dbLocation);
-		super.destroy();
 	}
 
 	/**

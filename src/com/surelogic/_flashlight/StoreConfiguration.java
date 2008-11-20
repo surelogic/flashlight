@@ -1,5 +1,7 @@
 package com.surelogic._flashlight;
 
+import com.surelogic._flashlight.common.OutputType;
+
 /**
  * This class is giant hack, but I don't know of a better way to do things.  
  * This class cannot be instantiated, but contains various configuration

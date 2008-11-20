@@ -14,6 +14,7 @@ import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.preference.PreferenceStore;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
+import org.eclipse.swt.events.*;
 import org.eclipse.swt.layout.*;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.swt.widgets.List;
@@ -82,20 +83,52 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 		new Label(outer, SWT.NONE);
 		new Label(outer, SWT.NONE).setText("Active packages");
 		
-		availableList = new List(outer, SWT.CHECK);
+		availableList = new List(outer, SWT.CHECK | SWT.V_SCROLL);
+		
 		Composite middle = new Composite(outer, SWT.NONE);
-		new Button(middle, SWT.NONE).setImage(SLImages.getImage(CommonImages.IMG_RIGHT_ARROW_SMALL));
-		new Button(middle, SWT.NONE).setImage(SLImages.getImage(CommonImages.IMG_LEFT_ARROW_SMALL));
 		FillLayout fillLayout = new FillLayout();
 		fillLayout.type = SWT.VERTICAL;
 		middle.setLayout(fillLayout);
 		
-		activeList    = new List(outer, SWT.CHECK);
-
+		Button toActive = new Button(middle, SWT.NONE);
+		toActive.setImage(SLImages.getImage(CommonImages.IMG_RIGHT_ARROW_SMALL));
+		
+		Button toAvailable = new Button(middle, SWT.NONE);
+		toAvailable.setImage(SLImages.getImage(CommonImages.IMG_LEFT_ARROW_SMALL));
+		
+		activeList    = new List(outer, SWT.CHECK | SWT.V_SCROLL);
+		
+		// Needs to follow creation of referenced lists
+		toActive.addMouseListener(new TransferListener(availableList, activeList));
+		toAvailable.addMouseListener(new TransferListener(activeList, availableList));
+		
 		GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
 		availableList.setLayoutData(gridData);
 		activeList.setLayoutData(gridData);
 		return outer;
+	}
+	
+	static class TransferListener extends MouseAdapter {
+		final List fromList, toList;
+		TransferListener(List from, List to) {
+			fromList = from;
+			toList = to;
+		}
+		
+		@Override
+		public void mouseDown(MouseEvent e) {
+			try {
+			int[] indices = fromList.getSelectionIndices();
+			for(int i : indices) {
+				String item = fromList.getItem(i);
+				toList.add(item);
+				// FIX Need to sort?
+			}
+			fromList.remove(indices);			
+			} catch(Throwable t) {
+				t.printStackTrace();
+			}
+		}	
 	}
 	
 	private Group createOutputGroup(Composite parent) {

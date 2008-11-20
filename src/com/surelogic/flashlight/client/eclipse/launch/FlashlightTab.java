@@ -9,6 +9,7 @@ import org.eclipse.debug.core.*;
 import org.eclipse.debug.ui.*;
 import org.eclipse.jdt.launching.IRuntimeClasspathEntry;
 import org.eclipse.jdt.launching.JavaRuntime;
+import org.eclipse.jface.preference.FieldEditor;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.preference.PreferenceStore;
 import org.eclipse.swt.SWT;
@@ -20,6 +21,7 @@ import org.eclipse.swt.widgets.List;
 import com.surelogic.common.eclipse.SLImages;
 import com.surelogic.common.images.CommonImages;
 import com.surelogic.flashlight.client.eclipse.Activator;
+import com.surelogic.flashlight.client.eclipse.preferences.FlashlightInstrumentationWidgets;
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
 
 public class FlashlightTab extends AbstractLaunchConfigurationTab {
@@ -36,11 +38,13 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 	};
 	
 	// For use with field editors
-	private IPreferenceStore prefs = new PreferenceStore();
+	private final Collection<FieldEditor> f_editors = new ArrayList<FieldEditor>();
+	private final IPreferenceStore prefs = new PreferenceStore();
 	private List availableList, activeList;
 	private Collection<String> packages;
 
 	public void createControl(Composite parent) {		
+		// First
 		parent.setLayout(new FillLayout());
 		
 		final ScrolledComposite scroll = new ScrolledComposite (parent, SWT.V_SCROLL);
@@ -55,8 +59,12 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 		scroll.setExpandVertical(true);
 		
 		createFilteringGroup(outer);
-		createOutputGroup(outer);
-		createAdvancedGroup(outer);
+		Group output = createOutputGroup(outer);
+		Group advanced = createAdvancedGroup(outer);
+		
+		FlashlightInstrumentationWidgets widgets = 
+			new FlashlightInstrumentationWidgets(null, prefs, output, advanced);
+		f_editors.addAll(widgets.getEditors());
 		setControl(scroll);
 	}
 
@@ -93,13 +101,9 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 	private Group createOutputGroup(Composite parent) {
 		final Group outer = new Group(parent, SWT.NONE);
 		GridLayout gridLayout = new GridLayout();
-		gridLayout.numColumns = 3;		
+		gridLayout.numColumns = 2;		
 		outer.setLayout(gridLayout);
 		outer.setText("Output");
-
-		new Button(outer, SWT.RADIO).setText("XML");
-		new Button(outer, SWT.RADIO).setText("Binary");
-		new Button(outer, SWT.CHECK).setText("Compressed");
 		return outer;
 	}
 	
@@ -109,18 +113,6 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 		gridLayout.numColumns = 2;		
 		outer.setLayout(gridLayout);
 		outer.setText("Advanced");
-
-		new Button(outer, SWT.CHECK).setText("Use refinery");
-		new Button(outer, SWT.CHECK).setText("Use spy thread");
-		
-		new Label(outer, SWT.NONE).setText("Console port: ");
-		new Text(outer, SWT.NONE);
-		new Label(outer, SWT.NONE).setText("Raw queue size: ");
-		new Text(outer, SWT.NONE);
-		new Label(outer, SWT.NONE).setText("Refinery queue size: ");
-		new Text(outer, SWT.NONE);
-		new Label(outer, SWT.NONE).setText("Out queue size: ");
-		new Text(outer, SWT.NONE);
 		return outer;
 	}
 	
@@ -129,7 +121,8 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 	}
 
 	// Copy from configuration to widgets
-	public void initializeFrom(ILaunchConfiguration config) {			
+	public void initializeFrom(ILaunchConfiguration config) {	
+		// Second
 		packages = collectAvailablePackages(config);
 		try {
 			if (packages != null) {
@@ -151,18 +144,24 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 			for(String attr : IntAttrs) {
 				prefs.setValue(attr, config.getAttribute(attr, 0));
 			}
+			for(FieldEditor e : f_editors) {
+				e.load();
+			}
 		} catch (CoreException e) {
 			e.printStackTrace();
 		}
 	}
 
-	public void performApply(ILaunchConfigurationWorkingCopy config) {
-		// Copy from widgets to config
+	public void performApply(ILaunchConfigurationWorkingCopy config) {		
+		// Copy from widgets to config		
 		for(String pkg : availableList.getItems()) {
 			config.setAttribute(PreferenceConstants.P_FILTER_PKG_PREFIX+pkg, false);
 		}
 		for(String pkg : activeList.getItems()) {
 			config.setAttribute(PreferenceConstants.P_FILTER_PKG_PREFIX+pkg, true);
+		}
+		for(FieldEditor e : f_editors) {
+			e.store();
 		}
 		copyFromPrefStore(config, prefs);
 	}
@@ -174,6 +173,7 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 	// Copy from preference store to config
 	private static void copyFromPrefStore(final ILaunchConfigurationWorkingCopy config,
 			                              final IPreferenceStore prefs) {
+		
 		config.setAttribute(PreferenceConstants.P_OUTPUT_TYPE, 
 				            prefs.getString(PreferenceConstants.P_OUTPUT_TYPE));
 		for(String attr : BooleanAttrs) {

@@ -78,7 +78,6 @@ public class FlashlightInstrumentationWidgets {
 		edit.fillIntoGrid(parent, 2);
 		edit.setPage(page);
 		edit.setPreferenceStore(prefs);
-		edit.load();
 		f_editors.add(edit);
 	}
 

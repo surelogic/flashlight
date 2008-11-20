@@ -6,21 +6,30 @@ import com.surelogic.flashlight.client.eclipse.Activator;
  * Constant definitions for plug-in preferences
  */
 public class PreferenceConstants {
+	public static final String P_FL_PREFIX = "com.surelogic.flashlight.";
+	
+	public static final String P_FILTER_PKG_PREFIX = P_FL_PREFIX+"filter.";
+	
+	public static final String P_OUTPUT_TYPE = P_FL_PREFIX+"output.type";
+	
+	public static final String P_COMPRESS_OUTPUT = P_FL_PREFIX+"compress.output";
+	
+	public static final String P_USE_REFINERY = P_FL_PREFIX+"use.refinery";
+	
+	public static final String P_RAWQ_SIZE = P_FL_PREFIX+"rawq.size";
 
-	public static final String P_RAWQ_SIZE = "com.surelogic.flashlight.rawq.size";
+	public static final String P_OUTQ_SIZE = P_FL_PREFIX+"outq.size";
 
-	public static final String P_OUTQ_SIZE = "com.surelogic.flashlight.outq.size";
+	public static final String P_REFINERY_SIZE = P_FL_PREFIX+"refinery.size";
 
-	public static final String P_REFINERY_SIZE = "com.surelogic.flashlight.refinery.size";
+	public static final String P_USE_SPY = P_FL_PREFIX+"use.spy";
 
-	public static final String P_USE_SPY = "com.surelogic.flashlight.use.spy";
+	public static final String P_CONSOLE_PORT = P_FL_PREFIX+"console.port";
 
-	public static final String P_CONSOLE_PORT = "com.surelogic.flashlight.console.port";
+	public static final String P_MAX_ROWS_PER_QUERY = P_FL_PREFIX+"max.rows.per.query";
 
-	public static final String P_MAX_ROWS_PER_QUERY = "com.surelogic.flashlight.max.rows.per.query";
-
-	public static final String P_PROMPT_PERSPECTIVE_SWITCH = "com.surelogic.flashlight.perspective.switch.prompt";
-
+	public static final String P_PROMPT_PERSPECTIVE_SWITCH = P_FL_PREFIX+"perspective.switch.prompt";
+	
 	public static boolean getPromptForPerspectiveSwitch() {
 		return Activator.getDefault().getPluginPreferences().getBoolean(
 				P_PROMPT_PERSPECTIVE_SWITCH);

@@ -102,7 +102,7 @@ WHERE
    A.FIELD = ?FieldId? AND 
    A.RECEIVER IS NULL
 ORDER BY A.TS ASC</query>
-  <query id='Q0028' description='Show stack trace for a field access' display='true'>SELECT s.PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;, s.CLASSNAME &quot;Class__(&apos;class.gif&apos;)&quot;, s.INFILE &quot;File&quot;, s.LOCATION &quot;Location&quot;, s.ATLINE &quot;Line__(r_)&quot;
+  <query id='Q0028' description='Show stack trace for a field access' display='true'>SELECT s.PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;, s.CLASSNAME &quot;Class__(&apos;class.gif&apos;)&quot;, s.INFILE &quot;File&quot;, s.LOCATION &quot;Location&quot;, s.ATLINE &quot;Line__(r)&quot;
 FROM TABLE (STACKTRACE(?ATRACE?)) s
 </query>
   <query id='Q0027' description='Show stack trace for a lock acquisition' display='true'>SELECT s.PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;, s.CLASSNAME &quot;Class__(&apos;class.gif&apos;)&quot;, s.INFILE &quot;File&quot;, s.LOCATION &quot;Location&quot;, s.ATLINE &quot;Line__(r_)&quot;

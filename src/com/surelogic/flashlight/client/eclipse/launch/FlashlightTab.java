@@ -59,13 +59,14 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 		scroll.setExpandHorizontal(true);
 		scroll.setExpandVertical(true);
 		
-		createFilteringGroup(outer);
+		Group filtering = createFilteringGroup(outer);
 		Group output = createOutputGroup(outer);
 		Group advanced = createAdvancedGroup(outer);
 		
 		FlashlightInstrumentationWidgets widgets = 
-			new FlashlightInstrumentationWidgets(null, prefs, output, advanced);
+			new FlashlightInstrumentationWidgets(null, prefs, filtering, output, advanced);
 		f_editors.addAll(widgets.getEditors());
+		finishFilteringGroup(filtering);
 		setControl(scroll);
 	}
 
@@ -75,9 +76,20 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 		outer.setLayoutData(outerData);
 		
 		GridLayout gridLayout = new GridLayout();
-		gridLayout.numColumns = 3;		
+		gridLayout.numColumns = 2;		
 		outer.setLayout(gridLayout);
 		outer.setText("Filtering");
+		return outer;
+	}
+	
+	private void finishFilteringGroup(Group parent) {
+		final Composite outer = new Composite(parent, SWT.NONE);
+		GridData outerData = new GridData(SWT.FILL, SWT.FILL, true, true);
+		outer.setLayoutData(outerData);
+		
+		GridLayout gridLayout = new GridLayout();
+		gridLayout.numColumns = 3;		
+		outer.setLayout(gridLayout);
 		
 		new Label(outer, SWT.NONE).setText("Available packages");
 		new Label(outer, SWT.NONE);
@@ -105,7 +117,6 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 		GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
 		availableList.setLayoutData(gridData);
 		activeList.setLayoutData(gridData);
-		return outer;
 	}
 	
 	static class TransferListener extends MouseAdapter {
@@ -168,6 +179,8 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 		packages = collectAvailablePackages(config);
 		try {
 			if (packages != null) {
+				activeList.removeAll();
+				availableList.removeAll();
 				for(String pkg : packages) {
 					boolean active = config.getAttribute(PreferenceConstants.P_FILTER_PKG_PREFIX+pkg, false);
 					if (active) {

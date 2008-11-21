@@ -22,9 +22,19 @@ public class FlashlightInstrumentationWidgets {
 	private final BooleanFieldEditor f_useSpyThread;
 	
 	public FlashlightInstrumentationWidgets(DialogPage page, IPreferenceStore prefs,
-			                                Composite group1, Composite group2) {
+            Composite group) {
+		this(page, prefs, group, group, group);
+	}
+	
+	public FlashlightInstrumentationWidgets(DialogPage page, IPreferenceStore prefs,
+			                                Composite group0, Composite group1, Composite group2) {
 		this.page = page;
 		this.prefs = prefs;
+		
+		BooleanFieldEditor f_filter = 
+			new BooleanFieldEditor(PreferenceConstants.P_USE_FILTERING,
+				I18N.msg("flashlight.preference.page.useFiltering"), group0);
+		finishSetup(group0, f_filter);
 		
 		RadioGroupFieldEditor f_outputType = 
 			new RadioGroupFieldEditor(PreferenceConstants.P_OUTPUT_TYPE,

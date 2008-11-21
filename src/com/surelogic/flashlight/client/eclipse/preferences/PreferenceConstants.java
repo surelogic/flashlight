@@ -10,6 +10,8 @@ public class PreferenceConstants {
 	
 	public static final String P_FILTER_PKG_PREFIX = P_FL_PREFIX+"filter.";
 	
+	public static final String P_USE_FILTERING = P_FL_PREFIX+"use.filtering";
+	
 	public static final String P_OUTPUT_TYPE = P_FL_PREFIX+"output.type";
 	
 	public static final String P_COMPRESS_OUTPUT = P_FL_PREFIX+"compress.output";

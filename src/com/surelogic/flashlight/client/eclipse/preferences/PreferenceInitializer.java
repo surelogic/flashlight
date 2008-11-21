@@ -26,5 +26,6 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		store.setDefault(PreferenceConstants.P_USE_REFINERY, true);
 		store.setDefault(PreferenceConstants.P_OUTPUT_TYPE, false);
 		store.setDefault(PreferenceConstants.P_COMPRESS_OUTPUT, true);
+		store.setDefault(PreferenceConstants.P_USE_FILTERING, false);
 	}
 }

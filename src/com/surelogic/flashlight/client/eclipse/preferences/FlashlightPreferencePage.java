@@ -106,8 +106,7 @@ public class FlashlightPreferencePage extends AbstractLicensePreferencePage {
 		iGroup.setText(I18N.msg("flashlight.preference.page.group.inst"));
 
 		FlashlightInstrumentationWidgets instr = 
-			new FlashlightInstrumentationWidgets(this, getPreferenceStore(), 
-					                             iGroup, iGroup);
+			new FlashlightInstrumentationWidgets(this, getPreferenceStore(), iGroup);
 		for(FieldEditor e : instr.getEditors()) {
 			e.load();
 		}

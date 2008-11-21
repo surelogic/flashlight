@@ -29,7 +29,7 @@ import com.surelogic.flashlight.client.eclipse.dialogs.DeleteRunDialog;
 import com.surelogic.flashlight.client.eclipse.dialogs.LogDialog;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.QueryMenuView;
-import com.surelogic.flashlight.client.eclipse.views.source.SourceView;
+import com.surelogic.flashlight.client.eclipse.views.source.HistoricalSourceView;
 import com.surelogic.flashlight.common.entities.PrepRunDescription;
 import com.surelogic.flashlight.common.files.RawFileHandles;
 import com.surelogic.flashlight.common.jobs.ConvertBinaryToXMLJob;
@@ -351,7 +351,7 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 					AdHocManager.DATABASE, null);
 		} else {
 			final RunDescription o = selected[0];
-			SourceView.setRunDescription(o);
+			HistoricalSourceView.setRunDescription(o);
 			RunManager.getInstance().setSelectedRun(o);
 			AdHocDataSource.getManager().setGlobalVariableValue(
 					AdHocManager.DATABASE,

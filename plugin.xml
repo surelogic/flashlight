@@ -65,6 +65,21 @@
 		</perspective>
 	</extension>
 
+	<extension point="org.eclipse.ui.perspectiveExtensions">
+		<perspectiveExtension
+			targetID="com.surelogic.flashlight.client.eclipse.perspectives.FlashlightPerspectiveFactory">
+			<perspectiveShortcut id="org.eclipse.jdt.ui.JavaPerspective">
+			</perspectiveShortcut>
+			<viewShortcut
+				id="com.surelogic.flashlight.client.eclipse.views.adhoc.QueryEditorView">
+			</viewShortcut>
+			<viewShortcut
+				id="com.surelogic.flashlight.client.eclipse.views.source.HistoricalSourceView">
+			</viewShortcut>
+		</perspectiveExtension>
+	</extension>
+
+
 	<!-- Define a new mode for running applications -->
 	<extension point="org.eclipse.debug.core.launchModes">
 		<launchMode label="%fl.run" launchAsLabel="%fl.runAs.label"
@@ -201,10 +216,10 @@
 			name="Flashlight Query Results">
 		</view>
 		<view allowMultiple="false" category="com.surelogic.flashlight.Flashlight"
-			class="com.surelogic.flashlight.client.eclipse.views.source.SourceView"
+			class="com.surelogic.flashlight.client.eclipse.views.source.HistoricalSourceView"
 			icon="platform:/plugin/com.surelogic.common/src/com/surelogic/common/images/fl_logo.gif"
-			id="com.surelogic.flashlight.client.eclipse.views.source.SourceView"
-			name="Source View">
+			id="com.surelogic.flashlight.client.eclipse.views.source.HistoricalSourceView"
+			name="Historical Source Snapshot">
 		</view>
 	</extension>
 </plugin>

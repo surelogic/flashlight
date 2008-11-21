@@ -1,38 +1,45 @@
 package com.surelogic.flashlight.client.eclipse.views.source;
 
-import java.io.*;
-import java.util.*;
-import java.util.zip.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.Map;
+import java.util.StringTokenizer;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.ui.*;
+import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.part.ViewPart;
 
-import com.surelogic.common.*;
+import com.surelogic.common.AbstractJavaZip;
 import com.surelogic.common.eclipse.ViewUtility;
 import com.surelogic.common.serviceability.UsageMeter;
-import com.surelogic.flashlight.common.files.*;
+import com.surelogic.flashlight.common.files.RawFileUtility;
+import com.surelogic.flashlight.common.files.RunDirectory;
+import com.surelogic.flashlight.common.files.SourceZipFileHandles;
 import com.surelogic.flashlight.common.model.RunDescription;
 
-public final class SourceView extends ViewPart {
-	private static final String ID = "com.surelogic.flashlight.client.eclipse.views.source.SourceView";
+public final class HistoricalSourceView extends ViewPart {
 	private static RunDescription currentRun;
-	
+
 	// FIX replace with SourceViewer?
 	StyledText source;
 	JavaSyntaxHighlighter highlighter;
-	
+
 	@Override
 	public void createPartControl(Composite parent) {
 		UsageMeter.getInstance().tickUse("Flashlight SourceView opened");
-		source = new StyledText(parent, SWT.V_SCROLL | SWT.H_SCROLL | 
-				                      SWT.BORDER | SWT.READ_ONLY);
-		source.setFont(JFaceResources.getTextFont());
+		source = new StyledText(parent, SWT.V_SCROLL | SWT.H_SCROLL
+				| SWT.BORDER | SWT.READ_ONLY);
+		// source.setFont(JFaceResources.getTextFont());
 		source.setText("No source to show.");
-		
+
 		highlighter = new JavaSyntaxHighlighter(source.getDisplay());
 	}
 
@@ -40,19 +47,20 @@ public final class SourceView extends ViewPart {
 	public void setFocus() {
 		source.setFocus();
 	}
-	
+
 	// Get flashlight directory
 	// Find valid flashlight run directory
 	// Find project zip under /source
 	// Find sourceFiles.xml, classMapping.xml in zip
 	public boolean showSourceFile(RunDirectory dir, String pkg, String name) {
 		SourceZipFileHandles zips = dir.getSourceHandles();
-		for(File f : zips.getSourceZips()) {
+		for (File f : zips.getSourceZips()) {
 			try {
 				ZipFile zf = new ZipFile(f);
-				Map<String,Map<String,String>> fileMap = AbstractJavaZip.readSourceFileMappings(zf);
-				//AbstractJavaZip.readClassMappings(zf);
-				Map<String,String> map = fileMap.get(pkg);
+				Map<String, Map<String, String>> fileMap = AbstractJavaZip
+						.readSourceFileMappings(zf);
+				// AbstractJavaZip.readClassMappings(zf);
+				Map<String, String> map = fileMap.get(pkg);
 				if (map != null) {
 					String path = map.get(name);
 					if (path != null) {
@@ -63,17 +71,18 @@ public final class SourceView extends ViewPart {
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-			}			
+			}
 		}
 		return false;
 	}
 
 	public boolean showSourceFile(RunDirectory dir, String qname) {
 		SourceZipFileHandles zips = dir.getSourceHandles();
-		for(File f : zips.getSourceZips()) {
+		for (File f : zips.getSourceZips()) {
 			try {
 				ZipFile zf = new ZipFile(f);
-				Map<String,String> fileMap = AbstractJavaZip.readClassMappings(zf);
+				Map<String, String> fileMap = AbstractJavaZip
+						.readClassMappings(zf);
 				if (fileMap != null) {
 					String path = fileMap.get(qname);
 					if (path != null) {
@@ -84,11 +93,11 @@ public final class SourceView extends ViewPart {
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-			}			
+			}
 		}
 		return false;
 	}
-	
+
 	private void populate(ZipFile zf, String path) throws IOException {
 		ZipEntry ze = zf.getEntry(path);
 		InputStream in = zf.getInputStream(ze);
@@ -102,25 +111,23 @@ public final class SourceView extends ViewPart {
 		final StringBuilder sb = new StringBuilder();
 		int lineNum = 1;
 		String line;
-		
+
 		// Re-init to really read
 		in = zf.getInputStream(ze);
 		br = new BufferedReader(new InputStreamReader(in));
 		while ((line = br.readLine()) != null) {
 			final String lineStr = Integer.toString(lineNum);
-			for(int i=lineStr.length(); i<spacesForLineNum; i++) {
+			for (int i = lineStr.length(); i < spacesForLineNum; i++) {
 				sb.append(' ');
 			}
 			sb.append(lineStr).append(' ').append(line).append('\n');
 			lineNum++;
 		}
 		/*
-		char[] buf = new char[4096];
-		int read;
-		while ((read = br.read(buf)) >= 0) {
-			sb.append(buf, 0, read);
-		}
-		*/
+		 * char[] buf = new char[4096]; int read; while ((read = br.read(buf))
+		 * >= 0) { sb.append(buf, 0, read); }
+		 */
+		source.setFont(JFaceResources.getTextFont());
 		source.setText(sb.toString());
 		source.setStyleRanges(highlighter.computeRanges(source.getText()));
 	}
@@ -128,23 +135,27 @@ public final class SourceView extends ViewPart {
 	public static void setRunDescription(RunDescription desc) {
 		currentRun = desc;
 	}
-	
+
 	public static void tryToOpenInEditor(String pkg, String type, int lineNumber) {
 		if (currentRun != null) {
 			RunDirectory dir = RawFileUtility.getRunDirectoryFor(currentRun);
-			SourceView view = (SourceView) ViewUtility.showView(ID, null, IWorkbenchPage.VIEW_VISIBLE);
-			view.showSourceFile(dir, pkg+'.'+type);
-			view.source.setTopIndex(lineNumber < 5 ? 0 : lineNumber-5);
+			HistoricalSourceView view = (HistoricalSourceView) ViewUtility
+					.showView(HistoricalSourceView.class.getName(), null,
+							IWorkbenchPage.VIEW_VISIBLE);
+			view.showSourceFile(dir, pkg + '.' + type);
+			view.source.setTopIndex(lineNumber < 5 ? 0 : lineNumber - 5);
 		}
 	}
 
-	public static void tryToOpenInEditor(String pkg, String type, String field) {	
+	public static void tryToOpenInEditor(String pkg, String type, String field) {
 		if (currentRun != null) {
 			RunDirectory dir = RawFileUtility.getRunDirectoryFor(currentRun);
-			SourceView view = (SourceView) ViewUtility.showView(ID, null, IWorkbenchPage.VIEW_VISIBLE);
-			view.showSourceFile(dir, pkg+'.'+type);
+			HistoricalSourceView view = (HistoricalSourceView) ViewUtility
+					.showView(HistoricalSourceView.class.getName(), null,
+							IWorkbenchPage.VIEW_VISIBLE);
+			view.showSourceFile(dir, pkg + '.' + type);
 			int lineNumber = computeLine(view.source.getText(), field);
-			view.source.setTopIndex(lineNumber < 5 ? 0 : lineNumber-5);
+			view.source.setTopIndex(lineNumber < 5 ? 0 : lineNumber - 5);
 		}
 	}
 
@@ -160,17 +171,16 @@ public final class SourceView extends ViewPart {
 		while (st.hasMoreTokens()) {
 			String line = st.nextToken();
 			// Search for field w/o initializer
-			int fieldLoc = line.indexOf(field+';');
+			int fieldLoc = line.indexOf(field + ';');
 			if (fieldLoc >= 0) {
-				if (hasNonfinalModifiers(line, fieldLoc)) {			
+				if (hasNonfinalModifiers(line, fieldLoc)) {
 					return lineNum;
-				} 
-				else if (firstNonInitializedField < 0) {
+				} else if (firstNonInitializedField < 0) {
 					firstNonInitializedField = lineNum;
-				}			
+				}
 			}
 			// Search for field with initializer
-			fieldLoc = line.indexOf(field+'=');
+			fieldLoc = line.indexOf(field + '=');
 			if (fieldLoc < 0) {
 				fieldLoc = line.indexOf(field);
 				if (fieldLoc >= 0) {
@@ -178,54 +188,53 @@ public final class SourceView extends ViewPart {
 					final int here = fieldLoc;
 					final int rest = here + field.length();
 					fieldLoc = -1;
-					StringTokenizer st2 = new StringTokenizer(line.substring(rest));
+					StringTokenizer st2 = new StringTokenizer(line
+							.substring(rest));
 					if (st2.hasMoreTokens()) {
 						String next = st2.nextToken();
 						if (next.startsWith("=")) {
 							if (next.startsWith("==")) {
 								fieldLoc = -1;
-							} else {							
+							} else {
 								fieldLoc = here;
 							}
 						}
 					}
 				}
-			} else if (line.startsWith(field+"==", fieldLoc)){
+			} else if (line.startsWith(field + "==", fieldLoc)) {
 				// Ensure it's not ==
 				fieldLoc = -1;
 			}
 			if (fieldLoc >= 0) {
-				if (hasNonfinalModifiers(line, fieldLoc)) {			
+				if (hasNonfinalModifiers(line, fieldLoc)) {
 					return lineNum;
-				} 
-				else if (firstInitializedField < 0) {
+				} else if (firstInitializedField < 0) {
 					firstInitializedField = lineNum;
-				}			
+				}
 			}
 			lineNum++;
 		}
 		if (firstInitializedField > 0) {
-			if (firstNonInitializedField > 0) { 
+			if (firstNonInitializedField > 0) {
 				// return whichever is first
 				if (firstInitializedField < firstNonInitializedField) {
 					return firstInitializedField;
-				} 
+				}
 				return firstNonInitializedField;
 			}
 			return firstInitializedField;
 		}
-		if (firstNonInitializedField > 0) { 
+		if (firstNonInitializedField > 0) {
 			return firstNonInitializedField;
 		}
 		return 0;
 	}
-	
-	private static final String[] modifiers = {
-		"static", "public", "private", "protected", "volatile", "transient"
-	};
-	
+
+	private static final String[] modifiers = { "static", "public", "private",
+			"protected", "volatile", "transient" };
+
 	private static boolean hasNonfinalModifiers(String line, int here) {
-		for(String mod : modifiers) {
+		for (String mod : modifiers) {
 			if (line.lastIndexOf(mod, here) >= 0) {
 				return true;
 			}

@@ -95,7 +95,7 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 		new Label(outer, SWT.NONE);
 		new Label(outer, SWT.NONE).setText("Active packages");
 		
-		availableList = new List(outer, SWT.CHECK | SWT.V_SCROLL);
+		availableList = new List(outer, SWT.CHECK | SWT.V_SCROLL | SWT.MULTI);
 		
 		Composite middle = new Composite(outer, SWT.NONE);
 		FillLayout fillLayout = new FillLayout();
@@ -108,7 +108,7 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 		Button toAvailable = new Button(middle, SWT.NONE);
 		toAvailable.setImage(SLImages.getImage(CommonImages.IMG_LEFT_ARROW_SMALL));
 		
-		activeList    = new List(outer, SWT.CHECK | SWT.V_SCROLL);
+		activeList    = new List(outer, SWT.CHECK | SWT.V_SCROLL | SWT.MULTI);
 		
 		// Needs to follow creation of referenced lists
 		toActive.addMouseListener(new TransferListener(availableList, activeList));
@@ -129,13 +129,26 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 		@Override
 		public void mouseDown(MouseEvent e) {
 			try {
-			int[] indices = fromList.getSelectionIndices();
-			for(int i : indices) {
-				String item = fromList.getItem(i);
-				toList.add(item);
-				// FIX Need to sort?
-			}
-			fromList.remove(indices);			
+				int[] indices = fromList.getSelectionIndices();
+				if (indices.length == 0) {
+					return; // Nothing to move
+				}
+				ArrayList<String> items = new ArrayList<String>();
+				for(int i : indices) {
+					String item = fromList.getItem(i);
+					items.add(item);
+				}
+				fromList.remove(indices);
+							
+				// Remove, sort, and re-insert items
+				for(String i : toList.getItems()) {
+					items.add(i);
+				}
+				toList.removeAll();
+				Collections.sort(items);
+				for(String i : items) {
+					toList.add(i);
+				}
 			} catch(Throwable t) {
 				t.printStackTrace();
 			}

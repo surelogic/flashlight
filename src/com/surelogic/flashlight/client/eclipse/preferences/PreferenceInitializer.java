@@ -23,5 +23,8 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		store.setDefault(PreferenceConstants.P_AUTO_PERSPECTIVE_SWITCH, true);
 		store.setDefault(PreferenceConstants.P_AUTO_INCREASE_HEAP_AT_LAUNCH,
 				true);
+		store.setDefault(PreferenceConstants.P_USE_REFINERY, true);
+		store.setDefault(PreferenceConstants.P_OUTPUT_TYPE, false);
+		store.setDefault(PreferenceConstants.P_COMPRESS_OUTPUT, true);
 	}
 }

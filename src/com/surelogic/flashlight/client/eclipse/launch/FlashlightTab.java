@@ -154,7 +154,16 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 	}
 
 	// Copy from configuration to widgets
+	/**
+	 * Initializes this tab's controls with values from the given
+	 * launch configuration. This method is called when
+	 * a configuration is selected to view or edit, after this
+	 * tab's control has been created.
+	 * 
+	 * @param configuration launch configuration
+	 */
 	public void initializeFrom(ILaunchConfiguration config) {	
+		//System.err.println("initializeFrom(): "+config.getName());
 		// Second
 		packages = collectAvailablePackages(config);
 		try {
@@ -169,13 +178,21 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 				}
 			}
 			// copy from config to prefs
+			 final IPreferenceStore defaults = Activator.getDefault().getPreferenceStore();
 			prefs.setValue(PreferenceConstants.P_OUTPUT_TYPE, 
-					config.getAttribute(PreferenceConstants.P_OUTPUT_TYPE, "foo"));
+					config.getAttribute(PreferenceConstants.P_OUTPUT_TYPE, 
+							            defaults.getString(PreferenceConstants.P_OUTPUT_TYPE)));
 			for(String attr : BooleanAttrs) {
-				prefs.setValue(attr, config.getAttribute(attr, false));
+				final boolean val = defaults.getBoolean(attr);
+				//System.out.println(attr+" before: "+val);
+				prefs.setValue(attr, config.getAttribute(attr, val));
+				//System.out.println(attr+" after:  "+prefs.getBoolean(attr));
 			}
 			for(String attr : IntAttrs) {
-				prefs.setValue(attr, config.getAttribute(attr, 0));
+				final int val = defaults.getInt(attr);
+				//System.out.println(attr+" before: "+val);
+				prefs.setValue(attr, config.getAttribute(attr, val));
+				//System.out.println(attr+" after:  "+prefs.getInt(attr));
 			}
 			for(FieldEditor e : f_editors) {
 				e.load();
@@ -185,7 +202,14 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 		}
 	}
 
-	public void performApply(ILaunchConfigurationWorkingCopy config) {		
+	/**
+	 * Copies values from this tab into the given 
+	 * launch configuration.
+	 * 
+	 * @param configuration launch configuration
+	 */
+	public void performApply(ILaunchConfigurationWorkingCopy config) {	
+		//System.err.println("performApply(): "+config.getName());
 		// Copy from widgets to config		
 		for(String pkg : availableList.getItems()) {
 			config.setAttribute(PreferenceConstants.P_FILTER_PKG_PREFIX+pkg, false);
@@ -199,7 +223,18 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 		copyFromPrefStore(config, prefs);
 	}
 
+	/**
+	 * Initializes the given launch configuration with
+	 * default values for this tab. This method
+	 * is called when a new launch configuration is created
+	 * such that the configuration can be initialized with
+	 * meaningful values. This method may be called before this
+	 * tab's control is created.
+	 * 
+	 * @param configuration launch configuration
+	 */
 	public void setDefaults(ILaunchConfigurationWorkingCopy config) {
+		//System.err.println("setDefaults(): "+config.getName());
 		copyFromPrefStore(config, Activator.getDefault().getPreferenceStore());
 	}
 

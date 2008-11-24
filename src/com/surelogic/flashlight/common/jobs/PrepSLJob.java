@@ -165,7 +165,6 @@ public final class PrepSLJob extends AbstractSLJob {
 				 * into the database.
 				 */
 				f_database.destroy();
-				f_database.bootAndCheckSchema();
 				try {
 					f_database.withTransaction(new NullDBTransaction() {
 						@Override

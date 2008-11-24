@@ -1,6 +1,7 @@
 package com.surelogic.flashlight.common.model;
 
 import java.io.File;
+import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -81,4 +82,13 @@ public final class FlashlightDBConnection extends DerbyConnection {
 	public SchemaData getSchemaLoader() {
 		return new FlashlightSchemaData();
 	}
+
+	@Override
+	public Connection getConnection() throws SQLException {
+		// TODO we may want to consider doing this for all implementors of
+		// DerbyConnection
+		loggedBootAndCheckSchema();
+		return super.getConnection();
+	}
+
 }

@@ -30,6 +30,7 @@ import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
 public class FlashlightTab extends AbstractLaunchConfigurationTab {
 	private static final String CLASS_SUFFIX = ".class";
 	private static final String[] BooleanAttrs = {
+		PreferenceConstants.P_USE_FILTERING,
 		PreferenceConstants.P_USE_REFINERY,
 		PreferenceConstants.P_USE_SPY,
 		PreferenceConstants.P_COMPRESS_OUTPUT,
@@ -81,6 +82,18 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 				}			
 			});
 		}
+		Button resetToDefaults = new Button(outer, SWT.NONE);
+		resetToDefaults.setText("Reset to defaults");
+		resetToDefaults.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				copyPrefsFromDefaults();
+				for(FieldEditor fe : f_editors) {
+					fe.load();
+				}
+				setChanged();
+			}
+		});
 	}
 
 	private Group createFilteringGroup(Composite parent) {
@@ -263,6 +276,18 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 		copyFromPrefStore(config, prefs);
 	}
 
+	private void copyPrefsFromDefaults() {
+		final IPreferenceStore defaults = Activator.getDefault().getPreferenceStore();
+		prefs.setValue(PreferenceConstants.P_OUTPUT_TYPE, 
+				       defaults.getString(PreferenceConstants.P_OUTPUT_TYPE));
+		for(String attr : BooleanAttrs) {
+			prefs.setValue(attr, defaults.getBoolean(attr));
+		}
+		for(String attr : IntAttrs) {
+			prefs.setValue(attr, defaults.getInt(attr));
+		}
+	}
+	
 	/**
 	 * Initializes the given launch configuration with
 	 * default values for this tab. This method
@@ -281,7 +306,6 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 	// Copy from preference store to config
 	private static void copyFromPrefStore(final ILaunchConfigurationWorkingCopy config,
 			                              final IPreferenceStore prefs) {
-		
 		config.setAttribute(PreferenceConstants.P_OUTPUT_TYPE, 
 				            prefs.getString(PreferenceConstants.P_OUTPUT_TYPE));
 		for(String attr : BooleanAttrs) {

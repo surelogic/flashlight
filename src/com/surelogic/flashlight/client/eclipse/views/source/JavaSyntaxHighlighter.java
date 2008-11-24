@@ -84,7 +84,7 @@ public final class JavaSyntaxHighlighter {
 			i++;
 		}
 		if (mark) {
-			set(f_lineNumberColor, SWT.NORMAL, lineStart, i);
+			set(f_lineNumberColor, SWT.NORMAL, lineStart, i-1);
 		}
 		return i;
 	}

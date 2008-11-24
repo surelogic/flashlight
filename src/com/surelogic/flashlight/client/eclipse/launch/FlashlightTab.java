@@ -12,6 +12,8 @@ import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jface.preference.FieldEditor;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.preference.PreferenceStore;
+import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.*;
@@ -30,6 +32,7 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 	private static final String[] BooleanAttrs = {
 		PreferenceConstants.P_USE_REFINERY,
 		PreferenceConstants.P_USE_SPY,
+		PreferenceConstants.P_COMPRESS_OUTPUT,
 	};
 	private static final String[] IntAttrs = {
 		PreferenceConstants.P_CONSOLE_PORT,
@@ -68,6 +71,16 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 		f_editors.addAll(widgets.getEditors());
 		finishFilteringGroup(filtering);
 		setControl(scroll);
+		
+		for(FieldEditor e : f_editors) {
+			e.setPropertyChangeListener(new IPropertyChangeListener() {
+				public void propertyChange(PropertyChangeEvent event) {
+					if ("field_editor_value".equals(event.getProperty())) {
+						setChanged();
+					}
+				}			
+			});
+		}
 	}
 
 	private Group createFilteringGroup(Composite parent) {
@@ -119,7 +132,7 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 		activeList.setLayoutData(gridData);
 	}
 	
-	static class TransferListener extends MouseAdapter {
+	class TransferListener extends MouseAdapter {
 		final List fromList, toList;
 		TransferListener(List from, List to) {
 			fromList = from;
@@ -149,6 +162,7 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 				for(String i : items) {
 					toList.add(i);
 				}
+				setChanged();	
 			} catch(Throwable t) {
 				t.printStackTrace();
 			}
@@ -187,7 +201,7 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 	 * @param configuration launch configuration
 	 */
 	public void initializeFrom(ILaunchConfiguration config) {	
-		//System.err.println("initializeFrom(): "+config.getName());
+		System.err.println("initializeFrom(): "+config.getName());
 		// Second
 		packages = collectAvailablePackages(config);
 		try {
@@ -235,7 +249,7 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 	 * @param configuration launch configuration
 	 */
 	public void performApply(ILaunchConfigurationWorkingCopy config) {	
-		//System.err.println("performApply(): "+config.getName());
+		System.err.println("performApply(): "+config.getName());
 		// Copy from widgets to config		
 		for(String pkg : availableList.getItems()) {
 			config.setAttribute(PreferenceConstants.P_FILTER_PKG_PREFIX+pkg, false);
@@ -360,6 +374,11 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 		default:
 			throw new IllegalArgumentException("Unexpected type: "+e.getType()+", "+e.getLocation());
 		}
+	}
+	
+	private void setChanged() {
+		setDirty(true);
+		updateLaunchConfigurationDialog();
 	}
 }
 

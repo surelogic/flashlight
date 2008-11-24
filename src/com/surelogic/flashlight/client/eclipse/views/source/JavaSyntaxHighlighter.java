@@ -4,15 +4,20 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 
+import org.eclipse.jdt.ui.JavaUI;
+import org.eclipse.jdt.ui.text.IColorManager;
+import org.eclipse.jdt.ui.text.IJavaColorConstants;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.widgets.Display;
 
+import com.surelogic.flashlight.client.eclipse.Activator;
+
 public final class JavaSyntaxHighlighter {
 	private static final int NOT_FOUND = -1;
 
-	private final Color f_commentColor;
+	private final Color f_commentColor, f_multiLineCommentColor;
 
 	private final Color f_doubleQuoteColor;
 
@@ -23,9 +28,11 @@ public final class JavaSyntaxHighlighter {
 	private final Color f_lineNumberColor;
 	
 	public JavaSyntaxHighlighter(final Display display) {
-		f_commentColor = display.getSystemColor(SWT.COLOR_BLUE);
-		f_doubleQuoteColor = display.getSystemColor(SWT.COLOR_DARK_YELLOW);
-		f_keyWordColor = display.getSystemColor(SWT.COLOR_DARK_GREEN);
+		final IColorManager manager = JavaUI.getColorManager();
+		f_multiLineCommentColor = manager.getColor(IJavaColorConstants.JAVA_MULTI_LINE_COMMENT);
+		f_commentColor = manager.getColor(IJavaColorConstants.JAVA_SINGLE_LINE_COMMENT);
+		f_doubleQuoteColor = manager.getColor(IJavaColorConstants.JAVA_STRING);
+		f_keyWordColor = manager.getColor(IJavaColorConstants.JAVA_KEYWORD);
 		f_problemColor = display.getSystemColor(SWT.COLOR_RED);
 		f_lineNumberColor = display.getSystemColor(SWT.COLOR_GRAY);
 	}
@@ -104,12 +111,12 @@ public final class JavaSyntaxHighlighter {
 					break;
 				}
 				// Color last line and skip line number
-				set(f_commentColor, SWT.NORMAL, start, nextBreak);
+				set(f_multiLineCommentColor, SWT.NORMAL, start, nextBreak);
 				start = findLineNumber(nextBreak+1, false);
 				
 			}
 			// No more line breaks
-			set(f_commentColor, SWT.NORMAL, start, ci2 + 1);			
+			set(f_multiLineCommentColor, SWT.NORMAL, start, ci2 + 1);			
 		}
 		highlightMultilineComment(ci2 + 2);
 	}

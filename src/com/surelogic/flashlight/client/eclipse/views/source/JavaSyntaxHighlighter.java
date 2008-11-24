@@ -20,11 +20,14 @@ public final class JavaSyntaxHighlighter {
 
 	private final Color f_problemColor;
 
+	private final Color f_lineNumberColor;
+	
 	public JavaSyntaxHighlighter(final Display display) {
 		f_commentColor = display.getSystemColor(SWT.COLOR_BLUE);
 		f_doubleQuoteColor = display.getSystemColor(SWT.COLOR_DARK_YELLOW);
 		f_keyWordColor = display.getSystemColor(SWT.COLOR_DARK_GREEN);
 		f_problemColor = display.getSystemColor(SWT.COLOR_RED);
+		f_lineNumberColor = display.getSystemColor(SWT.COLOR_GRAY);
 	}
 
 	private String text;
@@ -43,6 +46,7 @@ public final class JavaSyntaxHighlighter {
 			if (lineEnd < 0) {
 				break;
 			}
+			findLineNumber(lineStart, true);
 			highlightComment(lineStart);
 			highlightQuotedText(lineStart);
 			for (String word : RESERVED_WORDS) {
@@ -61,6 +65,23 @@ public final class JavaSyntaxHighlighter {
 		return ranges;
 	}
 
+	/**
+	 * @return index of the space after the line number
+	 */
+	private int findLineNumber(final int lineStart, boolean mark) {
+		int i = lineStart; 
+		while (text.charAt(i) == ' ') {
+			i++;
+		}
+		while (Character.isDigit(text.charAt(i))) {
+			i++;
+		}
+		if (mark) {
+			set(f_lineNumberColor, SWT.NORMAL, lineStart, i);
+		}
+		return i;
+	}
+	
 	private void highlightMultilineComment(int fromIndex) {
 		if (fromIndex >= text.length())
 			return;
@@ -71,8 +92,24 @@ public final class JavaSyntaxHighlighter {
 		final int ci2 = text.indexOf("*/", ci1 + 2);
 		if (ci2 == NOT_FOUND) {
 			return;
-		} else {
-			set(f_commentColor, SWT.NORMAL, ci1, ci2 + 1);
+		} else {			
+			//set(f_commentColor, SWT.NORMAL, ci1, ci2 + 1);
+			
+			int start = ci1;
+			// Find next line break
+			int nextBreak;
+			while ((nextBreak = text.indexOf('\n', start)) >= 0) {
+				// Check if next break is outside of the comment
+				if (nextBreak > ci2) {
+					break;
+				}
+				// Color last line and skip line number
+				set(f_commentColor, SWT.NORMAL, start, nextBreak);
+				start = findLineNumber(nextBreak+1, false);
+				
+			}
+			// No more line breaks
+			set(f_commentColor, SWT.NORMAL, start, ci2 + 1);			
 		}
 		highlightMultilineComment(ci2 + 2);
 	}

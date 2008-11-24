@@ -170,7 +170,7 @@ public final class JavaSyntaxHighlighter {
 		 */
 		set(f_doubleQuoteColor, SWT.NORMAL, dq, dq);
 		int afterQuote = finishQuote(dq + 1, f_doubleQuoteColor, "\"");
-		if (afterQuote == NOT_FOUND)
+		if (afterQuote == NOT_FOUND || afterQuote > lineEnd)
 			return;
 		highlightQuotedText(afterQuote);
 	}
@@ -193,9 +193,9 @@ public final class JavaSyntaxHighlighter {
 		final String lineText = text;
 		final int wordLength = word.length();
 		int index = 0;
-		while (true) {
+		while (true) {			
 			index = lineText.indexOf(word, index);
-			if (index == NOT_FOUND)
+			if (index == NOT_FOUND || index > lineEnd)
 				break;
 			if (isWord(index, wordLength, lineText)) {
 				final int beginIndex = index;

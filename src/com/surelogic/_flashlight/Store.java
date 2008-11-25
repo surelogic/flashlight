@@ -388,11 +388,12 @@ public final class Store {
 				outputBinary ? new OutputStrategyBinary(objStream, timeEvent) : new OutputStrategyXML(w);
 				
 			final int rawQueueSize = StoreConfiguration.getRawQueueSize();			
-			f_rawQueue = new ArrayBlockingQueue<List<Event>>(rawQueueSize);
+			final int outQueueSize = StoreConfiguration.getOutQueueSize();
+			f_rawQueue = new ArrayBlockingQueue<List<Event>>(StoreConfiguration.isRefineryOff()?
+					                                         outQueueSize : rawQueueSize);
 			putInQueue(f_rawQueue, singletonList(timeEvent));
 			putInQueue(f_rawQueue, singletonList(new SelectedPackage("*")));
 			
-			final int outQueueSize = StoreConfiguration.getOutQueueSize();
 			if (StoreConfiguration.debugOn()) {
 				System.err.println("Using refinery = "+!StoreConfiguration.isRefineryOff());
 			}

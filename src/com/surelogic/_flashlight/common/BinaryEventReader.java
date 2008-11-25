@@ -25,7 +25,7 @@ public class BinaryEventReader extends SAXParser {
 		while ((type = in.read()) >= 0) {
 			final EventType event = EventType.getEvent(type);
 			final String name     = event.getLabel();
-			if (debug) System.out.println("Got event: "+name);
+			if (debug) System.out.println("Got event: "+name+" ("+type+")");
 			attrs.readAttributes(oin, event); 
 			handler.startElement(null, name, name, attrs);
 			attrs.reset(event);

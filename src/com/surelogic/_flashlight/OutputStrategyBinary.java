@@ -251,7 +251,7 @@ public class OutputStrategyBinary extends EventVisitor {
 	@Override
 	void visit(final SelectedPackage e) {
 		try {
-			writeLong_unsafe(ReadWriteLock_Definition.getByte(), e.getNanoTime(), false);
+			writeLong_unsafe(SelectedPackage.getByte(), e.getNanoTime(), false);
 			writeUTF(e.name);
 		} catch (IOException ioe) {
 			handleIOException(ioe);

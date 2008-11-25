@@ -441,6 +441,11 @@ public enum EventType {
 	}
 	
 	static void readIntoBuffer(ObjectInputStream in, int numBytes) throws IOException {
+		/*
+        if (numBytes > buf.length) {
+			throw new IllegalArgumentException("Too many bytes for buffer: ");
+		}
+        */
 		int offset = 0;
 		while (offset < numBytes) {
 			final int read = in.read(buf, offset, numBytes - offset);

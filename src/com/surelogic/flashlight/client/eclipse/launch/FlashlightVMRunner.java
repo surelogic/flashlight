@@ -4,11 +4,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 //import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Level;
 
 import org.eclipse.core.resources.IProject;
@@ -46,6 +43,7 @@ final class FlashlightVMRunner implements IVMRunner {
   private static final String LOG_FILE_NAME = "instrumentation.log";
   private static final String FIELDS_FILE_NAME = "fields.txt";
   private static final String SITES_FILE_NAME = "sites.txt";
+  private static final String FILTERS_FILE_NAME = "filters.txt";
   
   private final IVMRunner delegateRunner;
   private final File runOutputDir;
@@ -53,6 +51,7 @@ final class FlashlightVMRunner implements IVMRunner {
   private final File fieldsFile;
   private final File sitesFile;
   private final File logFile;
+  private final File filtersFile;
   private final Map<String, String> projectEntries;
   private final Set<IProject> interestingProjects;
   private final String datePostfix;
@@ -71,6 +70,7 @@ final class FlashlightVMRunner implements IVMRunner {
     fieldsFile = new File(runOutputDir, FIELDS_FILE_NAME);
     sitesFile = new File(runOutputDir, SITES_FILE_NAME);
     logFile = new File(runOutputDir, LOG_FILE_NAME);
+    filtersFile = new File(runOutputDir, FILTERS_FILE_NAME); 
   }
   
   public void run(final VMRunnerConfiguration configuration, final ILaunch launch,
@@ -281,6 +281,29 @@ final class FlashlightVMRunner implements IVMRunner {
                                                prefs.getBoolean(PreferenceConstants.P_USE_SPY));
     final boolean useRefinery = launch.getAttribute(PreferenceConstants.P_USE_REFINERY, 
                                                     prefs.getBoolean(PreferenceConstants.P_USE_REFINERY));
+    final boolean useFiltering = launch.getAttribute(PreferenceConstants.P_USE_FILTERING, 
+                                                     prefs.getBoolean(PreferenceConstants.P_USE_FILTERING));
+    if (useFiltering) {
+		try {
+			final PrintWriter out = new PrintWriter(filtersFile);
+	    	for(Object o : launch.getAttributes().entrySet()) {
+	    		Map.Entry e = (Map.Entry) o;
+	    		String key  = (String) e.getKey();
+	    		Object val  = e.getValue();
+	    		if (key.startsWith(PreferenceConstants.P_FILTER_PKG_PREFIX) && 
+	    			Boolean.TRUE.equals(e.getValue())) {
+	    			//System.out.println(key+": "+e.getValue());
+	    			out.println(key.substring(PreferenceConstants.P_FILTER_PKG_PREFIX.length()));
+	    		}
+	    	}
+	    	out.println();
+	    	out.close();
+	    	newVmArgsList.add("-DFL_FILTERS_FILE=" + filtersFile.getAbsolutePath());
+		} catch (FileNotFoundException ex) {
+			SLLogger.getLogger().log(Level.SEVERE, "Couldn't create filters file: "+filtersFile.getAbsolutePath(), ex);
+		}    	
+
+    }
     newVmArgsList.add("-DFL_RUN=" + mainTypeName);
     newVmArgsList.add("-DFL_DIR=" + runOutputDir.getAbsolutePath());
     newVmArgsList.add("-DFL_FIELDS_FILE=" + fieldsFile.getAbsolutePath());

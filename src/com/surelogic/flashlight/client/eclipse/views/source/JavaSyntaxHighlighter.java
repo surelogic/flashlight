@@ -38,7 +38,7 @@ public final class JavaSyntaxHighlighter {
 	}
 
 	private String text;
-	private int lineEnd;
+	private int lineStart, lineEnd;
 	private ArrayList<StyleRange> f_result;
 	
 	public StyleRange[] computeRanges(String text) {
@@ -47,19 +47,21 @@ public final class JavaSyntaxHighlighter {
 		lineEnd = text.length();
 		highlightMultilineComment(0);		
 		
-		int lineStart = 0;
+		lineStart = 0;
 		while (true) {
 			lineEnd = text.indexOf('\n', lineStart);
 			if (lineEnd < 0) {
 				break;
 			}
 			findLineNumber(lineStart, true);
-			highlightComment(lineStart);
-			highlightQuotedText(lineStart);
+			
+			final String line = text.substring(lineStart, lineEnd);
+			highlightComment(line, 0);
+			highlightQuotedText(line, 0);
 			for (String word : RESERVED_WORDS) {
-				highlightWord(word);
+				highlightWord(line, word);
 			}
-			lineStart = lineEnd+1;
+			lineStart = lineEnd+1;		
 		}
 		StyleRange[] ranges = f_result.toArray(new StyleRange[f_result.size()]);
 		f_result = null;
@@ -84,7 +86,7 @@ public final class JavaSyntaxHighlighter {
 			i++;
 		}
 		if (mark) {
-			set(f_lineNumberColor, SWT.NORMAL, lineStart, i-1);
+			setUnchecked(f_lineNumberColor, SWT.NORMAL, lineStart, i-1);
 		}
 		return i;
 	}
@@ -121,19 +123,19 @@ public final class JavaSyntaxHighlighter {
 		highlightMultilineComment(ci2 + 2);
 	}
 	
-	private void highlightComment(int fromIndex) {
+	private void highlightComment(String text, int fromIndex) {
 		if (fromIndex >= text.length())
 			return;
 		int ci = text.indexOf("//", fromIndex);
 		if (ci == NOT_FOUND)
 			return;
-		if (inQuote(ci, "\""))
-			highlightComment(ci + 2);
+		if (inQuote(text, ci, "\""))
+			highlightComment(text, ci + 2);
 		else
-			setToEndOfLine(ci, f_commentColor);
+			setToEndOfLine_relative(ci, f_commentColor);
 	}
 
-	private boolean inQuote(int index, String quote) {
+	private boolean inQuote(String text, int index, String quote) {
 		int count = 0;
 		int pos = index;
 		while (true) {
@@ -160,7 +162,7 @@ public final class JavaSyntaxHighlighter {
 	 * @param fromIndex
 	 *            the index to begin quote from.
 	 */
-	private void highlightQuotedText(int fromIndex) {
+	private void highlightQuotedText(String text, int fromIndex) {
 		int dq = text.indexOf("\"", fromIndex);
 		if (dq == NOT_FOUND)
 			return;
@@ -168,39 +170,45 @@ public final class JavaSyntaxHighlighter {
 		/*
 		 * Highlight the double quote
 		 */
-		set(f_doubleQuoteColor, SWT.NORMAL, dq, dq);
-		int afterQuote = finishQuote(dq + 1, f_doubleQuoteColor, "\"");
-		if (afterQuote == NOT_FOUND || afterQuote > lineEnd)
+		set_relative(f_doubleQuoteColor, SWT.NORMAL, dq, dq);
+		int afterQuote = finishQuote(text, dq + 1, f_doubleQuoteColor, "\"");
+		if (afterQuote == NOT_FOUND)
 			return;
-		highlightQuotedText(afterQuote);
+		highlightQuotedText(text, afterQuote);
 	}
 
-	private int finishQuote(int fromIndex, final Color color, String endQuote) {
+	private int finishQuote(String text, int fromIndex, final Color color, String endQuote) {
+		if (fromIndex >= text.length()) {
+			return NOT_FOUND;
+		}
 		int dq = text.indexOf(endQuote, fromIndex);
-		while (text.charAt(dq-1) == '\\') {
-			dq = text.indexOf(endQuote, dq+1);
+		if (dq != NOT_FOUND) {
+			while (text.charAt(dq-1) == '\\') {
+				dq = text.indexOf(endQuote, dq+1);
+			}
 		}
 		if (dq == NOT_FOUND) {
-			setToEndOfLine(fromIndex, f_problemColor);
+			if (text.charAt(fromIndex) != '\'') {
+				setToEndOfLine_relative(fromIndex, f_problemColor);
+			}
 			return NOT_FOUND;
 		} else {
-			set(color, SWT.NORMAL, fromIndex, dq);
+			set_relative(color, SWT.NORMAL, fromIndex, dq);
 			return dq + 1;
 		}
 	}
 
-	private void highlightWord(String word) {		
-		final String lineText = text;
+	private void highlightWord(final String lineText, String word) {		
 		final int wordLength = word.length();
 		int index = 0;
 		while (true) {			
 			index = lineText.indexOf(word, index);
-			if (index == NOT_FOUND || index > lineEnd)
+			if (index == NOT_FOUND)
 				break;
 			if (isWord(index, wordLength, lineText)) {
 				final int beginIndex = index;
 				final int endIndex = beginIndex + word.length() - 1;
-				set(f_keyWordColor, SWT.BOLD, beginIndex, endIndex);
+				set_relative(f_keyWordColor, SWT.BOLD, beginIndex, endIndex);
 			}
 			index = index + wordLength;
 		}
@@ -227,9 +235,26 @@ public final class JavaSyntaxHighlighter {
 		       c == '(' || c == ')';
 	}
 
-	private void set(Color color, int style, int beginIndex, int endIndex) {
+	private void set_relative(Color color, int style, int beginIndex, int endIndex) { 
+		set(color, style, lineStart+beginIndex, lineStart+endIndex);
+	}
+	
+	private void set(Color color, int style, int beginIndex, int endIndex) { 
 		if (beginIndex >= lineEnd)
 			return;
+		StyleRange sr = makeStyleRange(color, style, beginIndex, endIndex);
+		if (!isNested(sr))
+			f_result.add(sr);
+	}
+	
+	private void setUnchecked(Color color, int style, int beginIndex, int endIndex) { 
+		if (beginIndex >= lineEnd)
+			return;
+		StyleRange sr = makeStyleRange(color, style, beginIndex, endIndex);
+		f_result.add(sr);
+	}
+
+	private StyleRange makeStyleRange(Color color, int style, int beginIndex, int endIndex) {
 		StyleRange sr = new StyleRange();
 		sr.start = beginIndex;
 		sr.length = (endIndex - beginIndex) + 1;
@@ -238,10 +263,13 @@ public final class JavaSyntaxHighlighter {
 		}
 		sr.foreground = color;
 		sr.fontStyle = style;
-		if (!isNested(sr))
-			f_result.add(sr);
+		return sr;
 	}
 
+	private void setToEndOfLine_relative(int beginIndex, Color color) {
+		setToEndOfLine(lineStart+beginIndex, color);
+	}
+	
 	private void setToEndOfLine(int beginIndex, Color color) {
 		if (beginIndex >= lineEnd)
 			return;
@@ -260,10 +288,18 @@ public final class JavaSyntaxHighlighter {
 		for (StyleRange esr : f_result) {
 			int esrB = esr.start;
 			int esrE = esr.start + esr.length - 1;
-			boolean overlaps = (srB <= esrB && srE >= esrB)
+			boolean overlaps = false;
+			if (srB <= esrB) {
+				overlaps = srE >= esrB;
+			} 
+			else if (srB <= esrE){
+				overlaps = true;
+			}
+			/*	= (srB <= esrB && srE >= esrB)
 					|| (srB >= esrB && srE <= esrE)
 					|| (srB <= esrB && srE >= esrE)
 					|| (srB <= esrE && srE >= esrE);
+					*/
 			if (overlaps)
 				return true;
 		}

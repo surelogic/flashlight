@@ -30,4 +30,14 @@ public enum OutputType {
 		}
 		return defValue;
 	}
+
+	public static OutputType get(String useBinary, boolean compress) {
+		boolean binary = "true".equals(useBinary);
+		for(OutputType val : values()) {
+			if (val.isBinary() == binary && val.isCompressed() == compress) {
+				return val;
+			}
+		}
+		return FL_GZ;
+	}
 }

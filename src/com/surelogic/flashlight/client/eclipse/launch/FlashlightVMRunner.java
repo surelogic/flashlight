@@ -292,7 +292,7 @@ final class FlashlightVMRunner implements IVMRunner {
 	    		String key  = (String) e.getKey();
 	    		Object val  = e.getValue();
 	    		if (key.startsWith(PreferenceConstants.P_FILTER_PKG_PREFIX) && 
-	    			Boolean.TRUE.equals(e.getValue())) {
+	    			Boolean.TRUE.equals(val)) {
 	    			//System.out.println(key+": "+e.getValue());
 	    			out.println(key.substring(PreferenceConstants.P_FILTER_PKG_PREFIX.length()));
 	    		}

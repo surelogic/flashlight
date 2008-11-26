@@ -9,6 +9,9 @@ public final class InstrumentationConstants {
 	public static final String FL_RUN = "FL_RUN";
 	public static final String FL_RUN_DEFAULT = "flashlight";
 
+	public static final int FL_QUEUE_SIZE_MAX = 500;
+	public static final int FL_QUEUE_SIZE_MIN = 5;
+	
 	public static final String FL_RAWQ_SIZE = "FL_RAWQ_SIZE";
 	public static final int FL_RAWQ_SIZE_DEFAULT = 16;
 
@@ -16,7 +19,7 @@ public final class InstrumentationConstants {
 	public static final int FL_OUTQ_SIZE_DEFAULT = 16;
 
 	public static final String FL_REFINERY_SIZE = "FL_REFINERY_SIZE";
-	public static final int FL_REFINERY_SIZE_DEFAULT = 250;
+	public static final int FL_REFINERY_SIZE_DEFAULT = 16;
 
 	public static final String FL_NO_SPY = "FL_NO_SPY";
 

@@ -8,6 +8,7 @@ import org.eclipse.jface.dialogs.DialogPage;
 import org.eclipse.jface.preference.*;
 import org.eclipse.swt.widgets.Composite;
 
+import com.surelogic.common.eclipse.preferences.LabeledScaleFieldEditor;
 import com.surelogic.common.i18n.I18N;
 
 import static com.surelogic._flashlight.common.InstrumentationConstants.*;
@@ -18,9 +19,9 @@ public class FlashlightInstrumentationWidgets {
 	private final List<FieldEditor> f_editors = new ArrayList<FieldEditor>();
 	
 	private final IntegerFieldEditor f_consolePort;
-	private final IntegerFieldEditor f_outQSize;
-	private final IntegerFieldEditor f_rawQSize;
-	private final IntegerFieldEditor f_refinerySize;
+	private final ScaleFieldEditor f_outQSize;
+	private final ScaleFieldEditor f_rawQSize;
+	private final ScaleFieldEditor f_refinerySize;
 	private final BooleanFieldEditor f_useSpyThread;
 	
 	public FlashlightInstrumentationWidgets(DialogPage page, IPreferenceStore prefs,
@@ -58,18 +59,18 @@ public class FlashlightInstrumentationWidgets {
 				I18N.msg("flashlight.preference.page.useRefinery"), group2);
 		finishSetup(group2, f_useRefinery);
 
-		f_rawQSize = new IntegerFieldEditor(PreferenceConstants.P_RAWQ_SIZE,
+		f_rawQSize = new LabeledScaleFieldEditor(PreferenceConstants.P_RAWQ_SIZE,
 				I18N.msg("flashlight.preference.page.rawQSize"), group2);
-		finishIntSetup(group2, f_rawQSize, FL_QUEUE_SIZE_MIN, FL_QUEUE_SIZE_MAX);
+		finishScaleSetup(group2, f_rawQSize, FL_QUEUE_SIZE_MIN, FL_QUEUE_SIZE_MAX);
 
-		f_refinerySize = new IntegerFieldEditor(
+		f_refinerySize = new LabeledScaleFieldEditor(
 				PreferenceConstants.P_REFINERY_SIZE, I18N
 						.msg("flashlight.preference.page.refinerySize"), group2);
-		finishIntSetup(group2, f_refinerySize, FL_QUEUE_SIZE_MIN, FL_QUEUE_SIZE_MAX);
+		finishScaleSetup(group2, f_refinerySize, FL_QUEUE_SIZE_MIN, FL_QUEUE_SIZE_MAX);
 
-		f_outQSize = new IntegerFieldEditor(PreferenceConstants.P_OUTQ_SIZE,
+		f_outQSize = new LabeledScaleFieldEditor(PreferenceConstants.P_OUTQ_SIZE,
 				I18N.msg("flashlight.preference.page.outQSize"), group2);
-		finishIntSetup(group2, f_outQSize, FL_QUEUE_SIZE_MIN, FL_QUEUE_SIZE_MAX);
+		finishScaleSetup(group2, f_outQSize, FL_QUEUE_SIZE_MIN, FL_QUEUE_SIZE_MAX);
 
 		f_useSpyThread = new BooleanFieldEditor(PreferenceConstants.P_USE_SPY,
 				I18N.msg("flashlight.preference.page.useSpyThread"), group2);
@@ -81,13 +82,20 @@ public class FlashlightInstrumentationWidgets {
 		finishIntSetup(group2, f_consolePort, 1024, 65535);		
 	}
 	
+	private void finishScaleSetup(Composite parent, ScaleFieldEditor edit, int min, int max) {
+		edit.setMinimum(min);
+		edit.setMaximum(max);
+		edit.setIncrement(1);
+		finishSetup(parent, edit);
+	}
+	
 	private void finishIntSetup(Composite parent, IntegerFieldEditor edit, int min, int max) {
 		edit.setValidRange(min, max);
 		finishSetup(parent, edit);
 	}
 	
 	private void finishSetup(Composite parent, FieldEditor edit) {
-		edit.fillIntoGrid(parent, 2);
+		edit.fillIntoGrid(parent, 3);
 		edit.setPage(page);
 		edit.setPreferenceStore(prefs);
 		f_editors.add(edit);

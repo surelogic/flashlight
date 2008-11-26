@@ -111,7 +111,7 @@ public class FlashlightPreferencePage extends AbstractLicensePreferencePage {
 			e.load();
 		}
 		f_editors.addAll(instr.getEditors());
-		iGroup.setLayout(new GridLayout(2, false));
+		iGroup.setLayout(new GridLayout(3, false));
 
 		final Group qGroup = new Group(panel, SWT.NONE);
 		qGroup.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));

@@ -61,14 +61,14 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 		
 		final ScrolledComposite scroll = new ScrolledComposite (parent, SWT.V_SCROLL);
 		final Composite outer = new Composite(scroll, SWT.NONE);	    
-		GridLayout layout = new GridLayout();
-		layout.numColumns = 1;
+		GridLayout layout = new GridLayout(1, false);
 		outer.setLayout(layout);
 		scroll.setContent(outer);
 		
 		 // Expand both horizontally and vertically
 		scroll.setExpandHorizontal(true);
 		scroll.setExpandVertical(true);
+		scroll.setAlwaysShowScrollBars(true);		
 		
 		final Group filtering = createFilteringGroup(outer);
 		final Group output = createOutputGroup(outer);
@@ -76,6 +76,10 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 		
 		FlashlightInstrumentationWidgets widgets = 
 			new FlashlightInstrumentationWidgets(null, prefs, filtering, output, advanced);
+	    filtering.setLayout(new GridLayout(3, false));
+	    output.setLayout(new GridLayout(3, false));
+		advanced.setLayout(new GridLayout(3, false));
+		
 		f_editors.addAll(widgets.getEditors());
 		filterControls = finishFilteringGroup(filtering);
 		setControl(scroll);
@@ -132,10 +136,10 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 	private Group createFilteringGroup(Composite parent) {
 		final Group outer = new Group(parent, SWT.NONE);
 		GridData outerData = new GridData(SWT.FILL, SWT.FILL, true, true);
+		outerData.minimumHeight = 200;
 		outer.setLayoutData(outerData);
 		
-		GridLayout gridLayout = new GridLayout();
-		gridLayout.numColumns = 2;		
+		GridLayout gridLayout = new GridLayout(3, false);
 		outer.setLayout(gridLayout);
 		outer.setText("Filtering");
 		return outer;
@@ -229,7 +233,7 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 	private Group createOutputGroup(Composite parent) {
 		final Group outer = new Group(parent, SWT.NONE);
 		GridLayout gridLayout = new GridLayout();
-		gridLayout.numColumns = 2;		
+		gridLayout.numColumns = 3;		
 		outer.setLayout(gridLayout);
 		outer.setText("Output");
 		return outer;

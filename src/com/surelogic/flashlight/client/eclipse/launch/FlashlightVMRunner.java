@@ -35,6 +35,7 @@ import com.surelogic.flashlight.client.eclipse.Activator;
 import com.surelogic.flashlight.client.eclipse.jobs.LaunchTerminationDetectionJob;
 import com.surelogic.flashlight.client.eclipse.jobs.SwitchToFlashlightPerspectiveJob;
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
+import static com.surelogic._flashlight.common.InstrumentationConstants.*;
 
 final class FlashlightVMRunner implements IVMRunner {
   private static final String MAX_HEAP_PREFIX = "-Xmx";
@@ -298,26 +299,26 @@ final class FlashlightVMRunner implements IVMRunner {
 	    	}
 	    	out.println();
 	    	out.close();
-	    	newVmArgsList.add("-DFL_FILTERS_FILE=" + filtersFile.getAbsolutePath());
+	    	newVmArgsList.add("-D"+FL_FILTERS_FILE+"=" + filtersFile.getAbsolutePath());
 		} catch (FileNotFoundException ex) {
 			SLLogger.getLogger().log(Level.SEVERE, "Couldn't create filters file: "+filtersFile.getAbsolutePath(), ex);
 		}    	
 
     }
     newVmArgsList.add("-DFL_RUN=" + mainTypeName);
-    newVmArgsList.add("-DFL_DIR=" + runOutputDir.getAbsolutePath());
-    newVmArgsList.add("-DFL_FIELDS_FILE=" + fieldsFile.getAbsolutePath());
-    newVmArgsList.add("-DFL_SITES_FILE=" + sitesFile.getAbsolutePath());
-    newVmArgsList.add("-DFL_RAWQ_SIZE=" + rawQSize);
-    newVmArgsList.add("-DFL_REFINERY_SIZE=" + refSize);
-    newVmArgsList.add("-DFL_OUTQ_SIZE=" + outQSize);
-    newVmArgsList.add("-DFL_CONSOLE_PORT=" + cPort);
-    newVmArgsList.add("-DFL_DATE_OVERRIDE=" + datePostfix);
-    newVmArgsList.add("-DFL_OUTPUT_TYPE="+OutputType.get(useBinary, compress));
+    newVmArgsList.add("-D"+FL_DIR+"=" + runOutputDir.getAbsolutePath());
+    newVmArgsList.add("-D"+FL_FIELDS_FILE+"=" + fieldsFile.getAbsolutePath());
+    newVmArgsList.add("-D"+FL_SITES_FILE+"=" + sitesFile.getAbsolutePath());
+    newVmArgsList.add("-D"+FL_RAWQ_SIZE+"=" + rawQSize);
+    newVmArgsList.add("-D"+FL_REFINERY_SIZE+"=" + refSize);
+    newVmArgsList.add("-D"+FL_OUTQ_SIZE+"=" + outQSize);
+    newVmArgsList.add("-D"+FL_CONSOLE_PORT+"=" + cPort);
+    newVmArgsList.add("-D"+FL_DATE_OVERRIDE+"=" + datePostfix);
+    newVmArgsList.add("-D"+FL_OUTPUT_TYPE+"="+OutputType.get(useBinary, compress));
     if (!useRefinery) {
-    	newVmArgsList.add("-DFL_REFINERY_OFF=true");
+    	newVmArgsList.add("-D"+FL_REFINERY_OFF+"=true");
     }
-    if (!useSpy) newVmArgsList.add("-DFL_NO_SPY=true");
+    if (!useSpy) newVmArgsList.add("-D"+FL_NO_SPY+"=true");
     } catch(CoreException e) {
     	SLLogger.getLogger().log(Level.SEVERE, "Couldn't setup launch for "+launch.getName(), e);
     	return null;

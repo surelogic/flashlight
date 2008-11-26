@@ -10,6 +10,8 @@ import org.eclipse.swt.widgets.Composite;
 
 import com.surelogic.common.i18n.I18N;
 
+import static com.surelogic._flashlight.common.InstrumentationConstants.*;
+
 public class FlashlightInstrumentationWidgets {
 	private final DialogPage page;
 	private final IPreferenceStore prefs;
@@ -58,16 +60,16 @@ public class FlashlightInstrumentationWidgets {
 
 		f_rawQSize = new IntegerFieldEditor(PreferenceConstants.P_RAWQ_SIZE,
 				I18N.msg("flashlight.preference.page.rawQSize"), group2);
-		finishIntSetup(group2, f_rawQSize, 1000, 50000);
+		finishIntSetup(group2, f_rawQSize, FL_QUEUE_SIZE_MIN, FL_QUEUE_SIZE_MAX);
 
 		f_refinerySize = new IntegerFieldEditor(
 				PreferenceConstants.P_REFINERY_SIZE, I18N
 						.msg("flashlight.preference.page.refinerySize"), group2);
-		finishIntSetup(group2, f_refinerySize, 1000, 50000);
+		finishIntSetup(group2, f_refinerySize, FL_QUEUE_SIZE_MIN, FL_QUEUE_SIZE_MAX);
 
 		f_outQSize = new IntegerFieldEditor(PreferenceConstants.P_OUTQ_SIZE,
 				I18N.msg("flashlight.preference.page.outQSize"), group2);
-		finishIntSetup(group2, f_outQSize, 1000, 50000);
+		finishIntSetup(group2, f_outQSize, FL_QUEUE_SIZE_MIN, FL_QUEUE_SIZE_MAX);
 
 		f_useSpyThread = new BooleanFieldEditor(PreferenceConstants.P_USE_SPY,
 				I18N.msg("flashlight.preference.page.useSpyThread"), group2);

@@ -1,6 +1,7 @@
 package com.surelogic._flashlight;
 
-import com.surelogic._flashlight.common.OutputType;
+import com.surelogic._flashlight.common.*;
+import static com.surelogic._flashlight.common.InstrumentationConstants.*;
 
 /**
  * This class is giant hack, but I don't know of a better way to do things.  
@@ -13,44 +14,7 @@ import com.surelogic._flashlight.common.OutputType;
  * <p>This class initializes the attributes from Java System properties, but
  * these values can be overridden using the various setter methods.
  */
-public class StoreConfiguration {
-  private static final String FL_OFF = "FL_OFF";
-
-  private static final String FL_DIR = "FL_DIR";
-  private static final String JAVA_IO_TMPDIR = "java.io.tmpdir";
-
-  private static final String FL_RUN = "FL_RUN";
-  private static final String FL_RUN_DEFAULT = "flashlight";
-
-  private static final String FL_RAWQ_SIZE = "FL_RAWQ_SIZE";
-  private static final int FL_RAWQ_SIZE_DEFAULT = 16;
-
-  private static final String FL_OUTQ_SIZE = "FL_OUTQ_SIZE";
-  private static final int FL_OUTQ_SIZE_DEFAULT = 16;
-
-  private static final String FL_REFINERY_SIZE = "FL_REFINERY_SIZE";
-  private static final int FL_REFINERY_SIZE_DEFAULT = 250;
-
-  private static final String FL_NO_SPY = "FL_NO_SPY";
-  
-  private static final String FL_CONSOLE_PORT = "FL_CONSOLE_PORT";
-  private static final int FL_CONSOLE_PORT_DEFAULT = 43524;
-
-  private static final String FL_FIELDS_FILE = "FL_FIELDS_FILE";
-
-  private static final String FL_SITES_FILE = "FL_SITES_FILE";
-  
-  private static final String FL_FILTERS_FILE = "FL_FILTERS_FILE";
-  
-  private static final String FL_DATE_OVERRIDE = "FL_DATE_OVERRIDE";
-  
-  private static final String FL_REFINERY_OFF = "FL_REFINERY_OFF";
-  
-  private static final String FL_OUTPUT_TYPE = "FL_OUTPUT_TYPE";
-  private static final OutputType FL_OUTPUT_TYPE_DEFAULT = OutputType.FL_GZ;
-  
-  private static final String FL_DEBUG = "FL_DEBUG";
-  
+public class StoreConfiguration {  
   private static volatile boolean isOff;
   private static volatile String directory;
   private static volatile String runName;

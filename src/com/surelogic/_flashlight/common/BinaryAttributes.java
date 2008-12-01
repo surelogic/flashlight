@@ -8,6 +8,7 @@ import org.xml.sax.Attributes;
 public class BinaryAttributes extends PreppedAttributes implements Attributes {
 	private static final long serialVersionUID = -236988557562438004L;	
 	static final boolean debug = BinaryEventReader.debug;
+	static final boolean mergePersistentValues = false;
 	
 	private final Map<IAttributeType,Object> persistent = new HashMap<IAttributeType,Object>(4);
 	/*
@@ -27,12 +28,25 @@ public class BinaryAttributes extends PreppedAttributes implements Attributes {
 		if (entries != null) {
 			return;
 		}
-		entries = new Map.Entry[this.size()];
-		int i=0;
-		for(Map.Entry<IAttributeType,Object> e : this.entrySet()) {
+		final int size;
+		if (mergePersistentValues) {
+			size = this.size();
+		} else {
+			size = this.size() + persistent.size();
+		}
+		entries = new Map.Entry[size];
+		final int i = appendEntries(0, this);
+		if (!mergePersistentValues) {
+			appendEntries(i, persistent);
+		}
+	}
+
+	private int appendEntries(int i, Map<IAttributeType,Object> map) {
+		for(Map.Entry<IAttributeType,Object> e : map.entrySet()) {
 			entries[i] = e;
 			i++;
 		}
+		return i;
 	}
 	
 	public int getIndex(String name) {
@@ -104,6 +118,18 @@ public class BinaryAttributes extends PreppedAttributes implements Attributes {
 		}
 	}
 
+	@Override
+	public Object get(Object key) {
+		if (mergePersistentValues || showRawData) {
+			return super.get(key);
+		}
+		Object val = super.get(key);
+		if (val == null) {
+			val = persistent.get(key);
+		}
+		return val;		
+	}
+	
 	@Override
 	public Object put(IAttributeType key, Object value) {
 		if (debug) System.out.println("Got attr: "+key.label()+" -> "+value);
@@ -192,7 +218,9 @@ public class BinaryAttributes extends PreppedAttributes implements Attributes {
 		// Clear the rest
 		clear();
 
-		// Reinit persistent attributes
-		putAll(persistent);
+		if (mergePersistentValues) {
+			// Reinit persistent attributes
+			putAll(persistent);
+		}
 	}
 }

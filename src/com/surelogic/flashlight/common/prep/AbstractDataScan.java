@@ -4,6 +4,7 @@ import org.xml.sax.Attributes;
 import org.xml.sax.helpers.DefaultHandler;
 
 import com.surelogic._flashlight.common.AttributeType;
+import com.surelogic._flashlight.common.BinaryAttributes;
 import com.surelogic._flashlight.common.EventType;
 import com.surelogic._flashlight.common.IAttributeType;
 import com.surelogic._flashlight.common.IdConstants;
@@ -65,14 +66,20 @@ public class AbstractDataScan extends DefaultHandler {
 	protected PreppedAttributes preprocessAttributes(final EventType e,
 			final Attributes a) {
 		// System.err.println("Got "+e.getLabel());
-		final PreppedAttributes attrs = new PreppedAttributes();
+		final PreppedAttributes attrs; 
 		if (a != null) {
-			final int size = a.getLength();
-			for (int i = 0; i < size; i++) {
-				final String name = a.getQName(i);
-				final String value = a.getValue(i);
-				final IAttributeType key = PreppedAttributes.mapAttr(name);
-				attrs.put(key, value);
+			if (a instanceof BinaryAttributes) {
+				attrs = (BinaryAttributes) a;
+			} else {
+				final int size = a.getLength();
+				attrs = new PreppedAttributes();
+				
+				for (int i = 0; i < size; i++) {
+					final String name = a.getQName(i);
+					final String value = a.getValue(i);
+					final IAttributeType key = PreppedAttributes.mapAttr(name);
+					attrs.put(key, value);
+				}
 			}
 			if (useSitesCompatibility) {
 				switch (e) {
@@ -91,7 +98,8 @@ public class AbstractDataScan extends DefaultHandler {
 					}
 				}
 			}
+			return attrs;
 		}
-		return attrs;
+		return null;
 	}
 }

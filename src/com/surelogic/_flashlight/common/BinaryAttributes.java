@@ -223,4 +223,13 @@ public class BinaryAttributes extends PreppedAttributes implements Attributes {
 			putAll(persistent);
 		}
 	}
+	
+	@Override
+	public long getLong(IAttributeType key) {
+		Object o = this.get(key);
+		if (o == null) {
+			return Long.MIN_VALUE;
+		}
+		return (Long) o; 
+	}
 }

@@ -133,11 +133,11 @@ public final class ScanRawFilePreScan extends AbstractDataScan {
 		f_elementCount++;
 
 		// modified to try and reduce computation overhead)
-		if ((f_elementCount & 0x7) == 7) {
+		if ((f_elementCount & 0xf) == 0xf) {
 			/*
 			 * Show progress to the user
 			 */
-			f_monitor.worked(8);
+			f_monitor.worked(16);
 			
 			/*
 			 * Check for a user cancel.

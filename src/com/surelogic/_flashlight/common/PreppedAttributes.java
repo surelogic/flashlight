@@ -2,6 +2,7 @@ package com.surelogic._flashlight.common;
 
 import java.util.*;
 
+//public class PreppedAttributes extends TreeMap<IAttributeType,Object> {
 public class PreppedAttributes extends HashMap<IAttributeType,Object> {
 	private static final long serialVersionUID = 2176197907020676264L;
 	private static final Map<String,IAttributeType> xmlMap = new HashMap<String,IAttributeType>();
@@ -19,6 +20,11 @@ public class PreppedAttributes extends HashMap<IAttributeType,Object> {
 	}
 	public static IAttributeType mapAttr(String name) {
 		return xmlMap.get(name);
+	}
+	
+	public PreppedAttributes() {
+		//super(IAttributeType.comparator);
+		super(4);
 	}
 	
 	public String getString(IAttributeType key) {

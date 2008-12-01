@@ -131,16 +131,22 @@ public final class ScanRawFilePreScan extends AbstractDataScan {
 	public void startElement(final String uri, final String localName,
 			final String name, final Attributes attributes) throws SAXException {
 		f_elementCount++;
-		/*
-		 * Show progress to the user
-		 */
-		f_monitor.worked(1);
-		/*
-		 * Check for a user cancel.
-		 */
-		if (f_monitor.isCanceled()) {
-			throw new SAXException("canceled");
+
+		// modified to try and reduce computation overhead)
+		if ((f_elementCount & 0x7) == 7) {
+			/*
+			 * Show progress to the user
+			 */
+			f_monitor.worked(8);
+			
+			/*
+			 * Check for a user cancel.
+			 */
+			if (f_monitor.isCanceled()) {
+				throw new SAXException("canceled");
+			}
 		}
+
 		EventType e             = EventType.findByLabel(name);
 		PreppedAttributes attrs = preprocessAttributes(e, attributes);
 		if ("time".equals(name)) {

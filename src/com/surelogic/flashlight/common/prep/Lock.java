@@ -2,8 +2,6 @@ package com.surelogic.flashlight.common.prep;
 
 import static com.surelogic._flashlight.common.AttributeType.LOCK;
 import static com.surelogic._flashlight.common.AttributeType.THREAD;
-import static com.surelogic._flashlight.common.AttributeType.TIME;
-import static com.surelogic._flashlight.common.AttributeType.TRACE;
 import static com.surelogic._flashlight.common.FlagType.CLASS_LOCK;
 import static com.surelogic._flashlight.common.FlagType.GOT_LOCK;
 import static com.surelogic._flashlight.common.FlagType.RELEASED_LOCK;
@@ -26,9 +24,9 @@ public abstract class Lock extends Event {
 	}
 
 	public void parse(final PreppedAttributes attributes) throws SQLException {
-		final long nanoTime = attributes.getLong(TIME);
+		final long nanoTime = attributes.getEventTime();
 		final long inThread = attributes.getLong(THREAD);
-		final long trace = attributes.getLong(TRACE);
+		final long trace = attributes.getTraceId();
 		final long lock = attributes.getLong(LOCK);
 		Boolean lockIsThis = attributes.getBoolean(THIS_LOCK);
 		Boolean lockIsClass = attributes.getBoolean(CLASS_LOCK);

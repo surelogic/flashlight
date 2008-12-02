@@ -18,6 +18,12 @@ public class BinaryAttributes extends PreppedAttributes implements Attributes {
 	*/	
 	private Map.Entry<IAttributeType,Object>[] entries;
 	private final boolean showRawData;
+	/**
+	 * Special-case fields for very common attributes 
+	 */
+	private long startTime;
+	private long eventTime;
+	private long traceId;
 	
 	BinaryAttributes(boolean raw) {
 		showRawData = raw;
@@ -231,5 +237,29 @@ public class BinaryAttributes extends PreppedAttributes implements Attributes {
 			return Long.MIN_VALUE;
 		}
 		return (Long) o; 
+	}
+	
+	public void setStartTime(long time) {
+		startTime = time;
+	}
+	
+	public long getStartTime() {
+		return startTime;
+	}
+	
+	public void setEventTime(long time) {
+		eventTime = time;
+	}
+	@Override
+	public long getEventTime() {
+		return eventTime;
+	}
+	
+	public void setTraceId(long id) {
+		traceId = id;
+	}	
+	@Override
+	public long getTraceId() {
+		return traceId;
 	}
 }

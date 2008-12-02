@@ -24,6 +24,8 @@ public class BinaryAttributes extends PreppedAttributes implements Attributes {
 	private long startTime;
 	private long eventTime;
 	private long traceId;
+	private long lockId;
+	private long threadId;
 	
 	BinaryAttributes(boolean raw) {
 		showRawData = raw;
@@ -146,6 +148,8 @@ public class BinaryAttributes extends PreppedAttributes implements Attributes {
 	public void clear() {
 		super.clear();
 		entries = null;
+		eventTime = -1;
+		traceId = IdConstants.ILLEGAL_ID;
 	}
 
 	/**
@@ -261,5 +265,21 @@ public class BinaryAttributes extends PreppedAttributes implements Attributes {
 	@Override
 	public long getTraceId() {
 		return traceId;
+	}
+	
+	public void setLockId(long l) {
+		lockId = l;
+	}
+	@Override
+	public long getLockId() {
+		return lockId;
+	}
+	
+	public void setThreadId(long t) {
+		threadId = t;
+	}
+	@Override
+	public long getThreadId() {	
+		return threadId;
 	}
 }

@@ -180,12 +180,14 @@ public enum EventType {
 	Lock("lock") {
 	    @Override
 	    void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
-	        attrs.put(LOCK, readCompressedLong(in));
+	        attrs.setLockId(readCompressedLong(in));
 	    }
+	    /*
 		@Override
 		IAttributeType getPersistentAttribute() {
 			return LOCK;
 		}
+		*/
 	},
 	Not_Under_Construction("not-under-construction") {
 		@Override
@@ -263,12 +265,14 @@ public enum EventType {
 	Thread("thread") {
 	    @Override
 	    void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
-	        attrs.put(THREAD, readCompressedLong(in));
+	        attrs.setThreadId(readCompressedLong(in));
 	    }
+	    /*
 		@Override
 		IAttributeType getPersistentAttribute() {
 			return THREAD;
 		}
+		*/
 	},
 	Thread_Definition("thread-definition") {		
 		@Override
@@ -310,7 +314,7 @@ public enum EventType {
 	    @Override
 	    void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
 	    	Long id = readCompressedLong(in);
-	        attrs.put(ID, id);
+	        //attrs.put(ID, id);
 	        attrs.setTraceId(id);
 	        attrs.put(PARENT_ID, readCompressedLong(in));
             attrs.put(SITE_ID, readCompressedLong(in));
@@ -364,7 +368,12 @@ public enum EventType {
 	abstract void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException;
 	
 	static void readFlag(int flags, FlagType flag, BinaryAttributes attrs) {
-		attrs.put(flag, Boolean.valueOf(((flags & flag.mask()) != 0)));
+		final boolean value = (flags & flag.mask()) != 0;
+		if (value) {
+			attrs.put(flag, Boolean.TRUE);
+		} else {
+			attrs.remove(flag);
+		}
 	}
 	
 	static void readCommon(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
@@ -373,7 +382,7 @@ public enum EventType {
 		long start = attrs.getStartTime();		
 		attrs.setEventTime(start + readCompressedLong(in));
 		if (!IdConstants.factorOutThread) {
-			attrs.put(THREAD, readCompressedLong(in));
+			attrs.setThreadId(readCompressedLong(in));
 		}
 	}
 	
@@ -407,7 +416,7 @@ public enum EventType {
 	static void readLockEvent(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
 		readTracedEvent(in, attrs);
 		if (!IdConstants.factorOutLock) {
-			attrs.put(LOCK, readCompressedLong(in));
+			attrs.setLockId(readCompressedLong(in));
 		}
 	}
 	

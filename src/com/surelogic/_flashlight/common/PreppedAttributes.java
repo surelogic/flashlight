@@ -66,4 +66,10 @@ public class PreppedAttributes extends HashMap<IAttributeType,Object> {
 	public long getTraceId() {
 		return getLong(AttributeType.TRACE);
 	}
+	public long getLockId() {
+		return getLong(AttributeType.LOCK);
+	}
+	public long getThreadId() {
+		return getLong(AttributeType.THREAD);
+	}
 }

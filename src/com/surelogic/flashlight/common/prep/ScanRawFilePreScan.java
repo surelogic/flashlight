@@ -159,7 +159,7 @@ public final class ScanRawFilePreScan extends AbstractDataScan {
 			useObject(attrs.getLong(AttributeType.IN_CLASS));
 		} else if ("field-read".equals(name) || "field-write".equals(name)) {
 			final long field  = attrs.getLong(AttributeType.FIELD);
-			final long thread = attrs.getLong(AttributeType.THREAD);
+			final long thread = attrs.getThreadId();
 			final long receiver = attrs.getLong(AttributeType.RECEIVER);
 			if (receiver != IdConstants.ILLEGAL_RECEIVER_ID) {
 				useObject(receiver);
@@ -170,9 +170,9 @@ public final class ScanRawFilePreScan extends AbstractDataScan {
 			useObject(attrs.getLong(AttributeType.IN_CLASS));
 			useObject(thread);
 		} else if (locks.contains(name)) {
-			useObject(attrs.getLong(AttributeType.THREAD));
+			useObject(attrs.getThreadId());
 			useObject(attrs.getLong(AttributeType.IN_CLASS));
-			useObject(attrs.getLong(AttributeType.LOCK));
+			useObject(attrs.getLockId());
 		} else if ("read-write-lock-definition".equals(name)) {
 			useObject(attrs.getLong(AttributeType.ID));
 			useObject(attrs.getLong(AttributeType.READ_LOCK_ID));

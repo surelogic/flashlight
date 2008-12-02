@@ -1,6 +1,5 @@
 package com.surelogic.flashlight.common.prep;
 
-import static com.surelogic._flashlight.common.AttributeType.ID;
 import static com.surelogic._flashlight.common.AttributeType.PARENT_ID;
 import static com.surelogic._flashlight.common.AttributeType.SITE_ID;
 
@@ -22,7 +21,7 @@ public final class TraceNode extends AbstractPrep {
 
 	public void parse(final PreppedAttributes attributes) throws SQLException {
 		int idx = 1;
-		final long id = attributes.getLong(ID);
+		final long id = attributes.getTraceId();
 		long parent = attributes.getLong(PARENT_ID);
 		if (parent == 0) {
 			parent = id;

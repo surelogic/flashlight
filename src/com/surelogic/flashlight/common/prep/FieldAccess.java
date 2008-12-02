@@ -2,7 +2,6 @@ package com.surelogic.flashlight.common.prep;
 
 import static com.surelogic._flashlight.common.AttributeType.FIELD;
 import static com.surelogic._flashlight.common.AttributeType.RECEIVER;
-import static com.surelogic._flashlight.common.AttributeType.THREAD;
 import static com.surelogic._flashlight.common.FlagType.UNDER_CONSTRUCTION;
 import static com.surelogic._flashlight.common.IdConstants.ILLEGAL_FIELD_ID;
 import static com.surelogic._flashlight.common.IdConstants.ILLEGAL_ID;
@@ -34,7 +33,7 @@ public abstract class FieldAccess extends Event {
 
 	public void parse(final PreppedAttributes attributes) throws SQLException {
 		final long nanoTime = attributes.getEventTime();
-		final long inThread = attributes.getLong(THREAD);
+		final long inThread = attributes.getThreadId();
 		final long trace = attributes.getTraceId();
 		final long field = attributes.getLong(FIELD);
 		final long receiver = attributes.getLong(RECEIVER);

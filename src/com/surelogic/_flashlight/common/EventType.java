@@ -9,31 +9,31 @@ import static com.surelogic._flashlight.common.FlagType.*;
 public enum EventType {	
 	After_IntrinsicLockAcquisition("after-intrinsic-lock-acquisition") {
 		@Override
-		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+		void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
 			readLockEvent(in, attrs);
 		}
 	},
 	After_IntrinsicLockRelease("after-intrinsic-lock-release") {
 		@Override
-		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+		void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
 			readLockEvent(in, attrs);
 		}
 	},
 	After_IntrinsicLockWait("after-intrinsic-lock-wait") {
 		@Override
-		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+		void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
 			readLockEvent(in, attrs);
 		}
 	},
 	After_Trace("after-trace") {
 		@Override
-		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+		void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
 			readTraceEvent(in, attrs);
 		}
 	},
 	After_UtilConcurrentLockAcquisitionAttempt("after-util-concurrent-lock-acquisition-attempt") {
 		@Override
-		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+		void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
 			readLockEvent(in, attrs);
 			final int flags = readCompressedInt(in);
 			readFlag(flags, GOT_LOCK, attrs);	
@@ -41,7 +41,7 @@ public enum EventType {
 	},
 	After_UtilConcurrentLockReleaseAttempt("after-util-concurrent-lock-release-attempt") {
 		@Override
-		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+		void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
 			readLockEvent(in, attrs);
 			final int flags = readCompressedInt(in);
 			readFlag(flags, RELEASED_LOCK, attrs);	
@@ -49,7 +49,7 @@ public enum EventType {
 	},
 	Before_IntrinsicLockAcquisition("before-intrinsic-lock-acquisition") {
 		@Override
-		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+		void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
 			readLockEvent(in, attrs);
 			final int flags = readCompressedInt(in);
 			readFlag(flags, THIS_LOCK, attrs);	
@@ -58,13 +58,13 @@ public enum EventType {
 	},
 	Before_IntrinsicLockWait("before-intrinsic-lock-wait") {
 		@Override
-		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+		void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
 			readLockEvent(in, attrs);
 		}
 	},
 	Before_Trace("before-trace") {
 		@Override
-		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+		void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
 			readTraceEvent(in, attrs);
 			/*
 			attrs.put(FILE, in.readUTF());
@@ -74,20 +74,20 @@ public enum EventType {
 	},
 	Before_UtilConcurrentLockAcquisitionAttempt("before-util-concurrent-lock-acquisition-attempt") {
 		@Override
-		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+		void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
 			readLockEvent(in, attrs);
 		}
 	},
 	Class_Definition("class-definition") {
 		@Override
-		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+		void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
 			attrs.put(ID, readCompressedLong(in));
 			attrs.put(CLASS_NAME, in.readUTF());
 		}
 	},
 	Environment("environment") {
 		@Override
-		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+		void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
 			attrs.put(MEMORY_MB, in.readLong());
 			attrs.put(CPUS, in.readInt());
 			final byte numProps = in.readByte();
@@ -98,7 +98,7 @@ public enum EventType {
 	},
 	Field_Definition("field-definition") {
 		@Override
-		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+		void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
 			attrs.put(ID, readCompressedLong(in));
 			attrs.put(TYPE, readCompressedLong(in));
 			attrs.put(FIELD, in.readUTF());
@@ -112,13 +112,13 @@ public enum EventType {
 	
 	FieldRead_Instance("field-read") {
 		@Override
-		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+		void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
 			readFieldAccessInstance(in, attrs, false);
 		}
 	},	
 	FieldRead_Instance_WithReceiver("field-read") {
 		@Override
-		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+		void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
 			readFieldAccessInstance(in, attrs, true);
 		}
 		@Override
@@ -128,7 +128,7 @@ public enum EventType {
 	},
 	FieldRead_Static("field-read") {
 		@Override
-		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+		void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
 			readFieldAccess(in, attrs);
 			attrs.put(RECEIVER, IdConstants.ILLEGAL_RECEIVER_ID);
 			attrs.put(UNDER_CONSTRUCTION, Boolean.FALSE);
@@ -136,13 +136,13 @@ public enum EventType {
 	},	
 	FieldWrite_Instance("field-write") {
 		@Override
-		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+		void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
 			readFieldAccessInstance(in, attrs, false);
 		}
 	},
 	FieldWrite_Instance_WithReceiver("field-write") {
 		@Override
-		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+		void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
 			readFieldAccessInstance(in, attrs, true);
 		}
 		@Override
@@ -152,7 +152,7 @@ public enum EventType {
 	},
 	FieldWrite_Static("field-write") {
 		@Override
-		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+		void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
 			readFieldAccess(in, attrs);
 			attrs.put(RECEIVER, IdConstants.ILLEGAL_RECEIVER_ID);
 			attrs.put(UNDER_CONSTRUCTION, Boolean.FALSE);
@@ -160,26 +160,26 @@ public enum EventType {
 	},
 	Final_Event("final") {
 		@Override
-		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
-			attrs.put(TIME, in.readLong());
+		void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
+			attrs.setEventTime(in.readLong());
 		}
 	},
 	First_Event("flashlight") {
 		@Override
-		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+		void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
 			attrs.put(VERSION, in.readUTF());
 			attrs.put(RUN, in.readUTF());
 		}
 	},
 	GarbageCollected_Object("garbage-collected-object") {
 		@Override
-		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+		void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
 			attrs.put(ID, readCompressedLong(in));
 		}
 	},
 	Lock("lock") {
 	    @Override
-	    void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+	    void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
 	        attrs.put(LOCK, readCompressedLong(in));
 	    }
 		@Override
@@ -189,7 +189,7 @@ public enum EventType {
 	},
 	Not_Under_Construction("not-under-construction") {
 		@Override
-		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+		void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
 			  attrs.put(UNDER_CONSTRUCTION, Boolean.FALSE);
 		}
 		@Override
@@ -199,14 +199,14 @@ public enum EventType {
 	},
 	Object_Definition("object-definition") {
 		@Override
-		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+		void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
 			attrs.put(ID, readCompressedLong(in));
 			attrs.put(TYPE, readCompressedLong(in));
 		}
 	},
 	Observed_CallLocation("call-location") {
 		@Override
-		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+		void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
 			attrs.put(SITE_ID, readCompressedLong(in));
 			attrs.put(IN_CLASS, readCompressedLong(in));
 			attrs.put(LINE, readCompressedInt(in));
@@ -214,7 +214,7 @@ public enum EventType {
 	},
 	ReadWriteLock_Definition("read-write-lock-definition") {
 		@Override
-		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+		void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
 			attrs.put(ID, readCompressedLong(in));
 			attrs.put(READ_LOCK_ID, readCompressedLong(in));
 			attrs.put(WRITE_LOCK_ID, readCompressedLong(in));
@@ -222,7 +222,7 @@ public enum EventType {
 	},
 	Receiver("receiver") {
 	    @Override
-	    void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+	    void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
 	        attrs.put(RECEIVER, readCompressedLong(in));
 	    }
 		@Override
@@ -232,27 +232,27 @@ public enum EventType {
 	},
 	SelectedPackage("selected-package") {
 		@Override
-		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
-			attrs.put(TIME, in.readLong());
+		void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
+			attrs.setEventTime(in.readLong());
 			attrs.put(PACKAGE, in.readUTF());
 		}
 	},
 	SingleThreadedField_Instance("single-threaded-field") {
 		@Override
-		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+		void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
 			attrs.put(FIELD, readCompressedLong(in));
 			attrs.put(RECEIVER, readCompressedLong(in));
 		}
 	},
 	SingleThreadedField_Static("single-threaded-field") {
 		@Override
-		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+		void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
 			attrs.put(FIELD, readCompressedLong(in));
 		}
 	},
 	Static_CallLocation("static-call-location") {
 	    @Override
-	    void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+	    void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
 			attrs.put(ID, readCompressedLong(in));
 			attrs.put(IN_CLASS, readCompressedLong(in));
 			attrs.put(LINE, readCompressedInt(in));
@@ -262,7 +262,7 @@ public enum EventType {
 	},
 	Thread("thread") {
 	    @Override
-	    void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+	    void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
 	        attrs.put(THREAD, readCompressedLong(in));
 	    }
 		@Override
@@ -272,7 +272,7 @@ public enum EventType {
 	},
 	Thread_Definition("thread-definition") {		
 		@Override
-		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+		void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
 			attrs.put(ID, readCompressedLong(in));
 			attrs.put(TYPE, readCompressedLong(in));
 			attrs.put(THREAD_NAME, in.readUTF());
@@ -280,20 +280,25 @@ public enum EventType {
 	},	
 	Time_Event("time") {
 		@Override
-		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
-			Long time = in.readLong();
-			attrs.put(TIME, time);
-			attrs.put(START_TIME, time);
+		void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
+			long time = in.readLong();
+			attrs.setEventTime(time);			
+			attrs.setStartTime(time);
+			attrs.put(TIME, time); // Needed for unmodified code
+			//attrs.put(START_TIME, time);
 			attrs.put(WALL_CLOCK, in.readUTF());
 		}
+		/*
 		@Override
 		IAttributeType getPersistentAttribute() {
 			return START_TIME;
 		}
+		*/
 	},
+	@Deprecated
 	Trace("trace") {
 	    @Override
-	    void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+	    void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
 	        attrs.put(TRACE, readCompressedLong(in));
 	    }
 		@Override
@@ -303,21 +308,23 @@ public enum EventType {
 	},
 	Trace_Node("trace-node") {
 	    @Override
-	    void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+	    void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
 	    	Long id = readCompressedLong(in);
 	        attrs.put(ID, id);
-	        attrs.put(TRACE, id);
+	        attrs.setTraceId(id);
 	        attrs.put(PARENT_ID, readCompressedLong(in));
             attrs.put(SITE_ID, readCompressedLong(in));
 	    }
+	    /* No longer factoring out trace ids
 		@Override
 		IAttributeType getPersistentAttribute() {
 			return TRACE;
 		}
+		*/
 	},
 	Under_Construction("under-construction") {
 		@Override
-		void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+		void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
 			  attrs.put(UNDER_CONSTRUCTION, Boolean.TRUE);
 		}
 		@Override
@@ -330,7 +337,10 @@ public enum EventType {
 	public static final byte MINUS_ONE = Byte.MIN_VALUE; 
 	private static final byte[] buf = new byte[9];
 	private static final Map<String,EventType> byLabel = new HashMap<String,EventType>();
+	private static final EventType[] values;
+	
 	static {
+		values = values();
 		for(EventType e : values()) {
 			byLabel.put(e.label, e);
 		}
@@ -348,32 +358,31 @@ public enum EventType {
 	}
 	
 	public static EventType getEvent(int i) {
-		return values()[i];
+		return values[i];
 	}
 	
-	abstract void read(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException;
+	abstract void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException;
 	
-	static void readFlag(int flags, FlagType flag, Map<IAttributeType,Object> attrs) {
+	static void readFlag(int flags, FlagType flag, BinaryAttributes attrs) {
 		attrs.put(flag, Boolean.valueOf(((flags & flag.mask()) != 0)));
 	}
 	
-	static void readCommon(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+	static void readCommon(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
 		//attrs.put(TIME, in.readLong());
 		// Added to avoid NPE when converting to raw XML
-		Long startT = (Long) attrs.get(START_TIME);		
-		long start = startT == null ? 0 : startT.longValue();
-		attrs.put(TIME, start + readCompressedLong(in));
+		long start = attrs.getStartTime();		
+		attrs.setEventTime(start + readCompressedLong(in));
 		if (!IdConstants.factorOutThread) {
 			attrs.put(THREAD, readCompressedLong(in));
 		}
 	}
 	
-	static void readTracedEvent(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+	static void readTracedEvent(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
 		readCommon(in, attrs);
-		attrs.put(TRACE, readCompressedLong(in));
+		attrs.setTraceId(readCompressedLong(in));
 	}
 	
-	static void readFieldAccess(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+	static void readFieldAccess(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
 		readTracedEvent(in, attrs);
 		/*
 		if (((Long)attrs.get(TIME)).longValue() == 1654719095825181L) {
@@ -383,7 +392,7 @@ public enum EventType {
 		attrs.put(FIELD, readCompressedLong(in));
 	}
 	
-	static void readFieldAccessInstance(ObjectInputStream in, Map<IAttributeType,Object> attrs,
+	static void readFieldAccessInstance(ObjectInputStream in, BinaryAttributes attrs,
 			                            boolean withReceiver) throws IOException {
 		readFieldAccess(in, attrs);
 		/*
@@ -395,14 +404,15 @@ public enum EventType {
 		}
 	}
 	
-	static void readLockEvent(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+	static void readLockEvent(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
 		readTracedEvent(in, attrs);
 		if (!IdConstants.factorOutLock) {
 			attrs.put(LOCK, readCompressedLong(in));
 		}
 	}
 	
-	static void readTraceEvent(ObjectInputStream in, Map<IAttributeType,Object> attrs) throws IOException {
+	@Deprecated
+	static void readTraceEvent(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
 		readCommon(in, attrs);
 		attrs.put(SITE_ID, readCompressedLong(in));
 	}
@@ -445,7 +455,7 @@ public enum EventType {
         if (numBytes > buf.length) {
 			throw new IllegalArgumentException("Too many bytes for buffer: ");
 		}
-        */
+		*/
 		int offset = 0;
 		while (offset < numBytes) {
 			final int read = in.read(buf, offset, numBytes - offset);

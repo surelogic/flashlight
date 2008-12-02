@@ -4,8 +4,11 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 
@@ -36,17 +39,133 @@ public final class IntrinsicLockDurationRowInserter {
 	private final PreparedStatement[] statements = new PreparedStatement[queries.length];
 
 	static class State {
-		IntrinsicLockDurationState lockState = IntrinsicLockDurationState.IDLE;
-		int timesEntered = 0;
+		IntrinsicLockDurationState _lockState = IntrinsicLockDurationState.IDLE;
+		int _timesEntered = 0;
 
 		// Info about the event that started us in this state
-		long id;
-		long trace;
-		Timestamp time;
-		LockState startEvent;
+		long _id;
+		long _lock;
+		long _trace;
+		Timestamp _time;
+		LockState _startEvent;
+
+		public IntrinsicLockDurationState getLockState() {
+			return _lockState;
+		}
+
+		public int getTimesEntered() {
+			return _timesEntered;
+		}
+
+		public long getId() {
+			return _id;
+		}
+
+		public long getLock() {
+			return _lock;
+		}
+
+		public long getTrace() {
+			return _trace;
+		}
+
+		public Timestamp getTime() {
+			return _time;
+		}
+
+		public LockState getStartEvent() {
+			return _startEvent;
+		}
+
+		public void lockReleased() {
+			++_timesEntered;
+		}
+
+		public void lockAcquired() {
+			--_timesEntered;
+		}
+
 	}
 
-	private final Map<Long, Map<Long, State>> f_threadToLockToState = new HashMap<Long, Map<Long, State>>();
+	static class ThreadState {
+		Map<Long, State> lockToState = new HashMap<Long, State>();
+		final Set<State> nonIdleLocks = new HashSet<State>();
+		final Set<State> heldLocks = new HashSet<State>();
+
+		/**
+		 * Iterate over the set of non-idle locks
+		 * 
+		 * @return
+		 */
+		public Collection<State> nonIdleLocks() {
+			return nonIdleLocks;
+		}
+
+		/**
+		 * Called when a lock is garbage collected.
+		 * 
+		 * @param key
+		 */
+		public void gcLock(final Long key) {
+			final State state = lockToState.remove(key);
+			if (state != null) {
+				nonIdleLocks.remove(state);
+				heldLocks.remove(state);
+			}
+		}
+
+		/**
+		 * Return the state associated with the given lock in this thread.
+		 * 
+		 * @param lock
+		 * @return
+		 */
+		public State getState(final long lock) {
+			State event = lockToState.get(lock);
+			if (event == null) {
+				event = new State();
+				event._lock = lock;
+				lockToState.put(lock, event);
+			}
+			return event;
+		}
+
+		/**
+		 * Get the set of locks that are currently held.
+		 * 
+		 * @return
+		 */
+		public Collection<State> heldLocks() {
+			return heldLocks;
+		}
+
+		public void update(final State mutableState, final long id,
+				final long trace, final Timestamp time,
+				final LockState startEvent,
+				final IntrinsicLockDurationState lockState) {
+			if (mutableState.getLockState() == IntrinsicLockDurationState.HOLDING) {
+				assert lockState != IntrinsicLockDurationState.HOLDING;
+				heldLocks.remove(mutableState);
+			}
+			if (mutableState.getLockState() == IntrinsicLockDurationState.IDLE) {
+				assert lockState != IntrinsicLockDurationState.IDLE;
+				nonIdleLocks.add(mutableState);
+			} else if (lockState == IntrinsicLockDurationState.IDLE) {
+				nonIdleLocks.remove(mutableState);
+			}
+			if (lockState == IntrinsicLockDurationState.HOLDING) {
+				heldLocks.add(mutableState);
+			}
+			mutableState._id = id;
+			mutableState._trace = trace;
+			mutableState._time = time;
+			mutableState._startEvent = startEvent;
+			mutableState._lockState = lockState;
+		}
+
+	}
+
+	private final Map<Long, ThreadState> f_threadToLockToState = new HashMap<Long, ThreadState>();
 	private final Map<Long, IntrinsicLockDurationState> f_threadToStatus = new HashMap<Long, IntrinsicLockDurationState>();
 
 	static class Edge extends DefaultEdge {
@@ -158,33 +277,28 @@ public final class IntrinsicLockDurationRowInserter {
 			default:
 			}
 
-			final Map<Long, State> lockToState = f_threadToLockToState
-					.get(thread);
+			final ThreadState lockToState = f_threadToLockToState.get(thread);
 			if (lockToState != null) {
-				for (final Entry<Long, State> e2 : lockToState.entrySet()) {
-					final long lock = e2.getKey();
-					final State state = e2.getValue();
-					if (state.lockState != IntrinsicLockDurationState.IDLE) {
-						System.out.println("\tLock " + lock + " : "
-								+ state.lockState);
-						if (!createdEvent) {
-							createdEvent = true;
-							// FIXME
-							insertLock(true, endTime, thread, state.trace, /*
+				for (final State state : lockToState.nonIdleLocks()) {
+					System.out.println("\tLock " + state.getLock() + " : "
+							+ state.getLockState());
+					if (!createdEvent) {
+						createdEvent = true;
+						insertLock(true, endTime, thread, state.getTrace(), /*
 																			 * src
 																			 * is
 																			 * nonsense
 																			 */
-							lock, LockType.INTRINSIC, LockState.AFTER_RELEASE,
-									true, false, false);
-						}
-						if (state.lockState == IntrinsicLockDurationState.BLOCKING) {
-							noteHeldLocks(FINAL_EVENT, endTime, thread, lock,
-									lockToState);
-						}
-						recordStateDuration(thread, lock, state.time, state.id,
-								endTime, FINAL_EVENT, state.lockState);
+						state.getLock(), LockType.INTRINSIC,
+								LockState.AFTER_RELEASE, true, false, false);
 					}
+					if (state.getLockState() == IntrinsicLockDurationState.BLOCKING) {
+						noteHeldLocks(FINAL_EVENT, endTime, thread, state
+								.getLock(), lockToState);
+					}
+					recordStateDuration(thread, state.getLock(), state
+							.getTime(), state.getId(), endTime, FINAL_EVENT,
+							state.getLockState());
 				}
 			}
 		}
@@ -205,35 +319,22 @@ public final class IntrinsicLockDurationRowInserter {
 		// FIX clear lockGraph
 	}
 
-	private Map<Long, State> getLockToStateMap(final long inThread) {
-		Map<Long, State> lockToState = f_threadToLockToState.get(inThread);
+	private ThreadState getLockToStateMap(final long inThread) {
+		ThreadState lockToState = f_threadToLockToState.get(inThread);
 		if (lockToState == null) {
-			lockToState = new HashMap<Long, State>();
+			lockToState = new ThreadState();
 			f_threadToLockToState.put(inThread, lockToState);
 		}
 		return lockToState;
 	}
 
-	private State getState(final Map<Long, State> lockToState, final long lock) {
-		State event = lockToState.get(lock);
-		if (event == null) {
-			event = new State();
-			lockToState.put(lock, event);
-		}
-		return event;
-	}
-
-	private void updateState(final State mutableState, final long id,
+	private void updateState(final State state, final long id,
 			final Timestamp time, final long inThread, final long trace,
 			final LockState startEvent,
-			final IntrinsicLockDurationState lockState) {
-		final IntrinsicLockDurationState oldLockState = mutableState.lockState;
-		mutableState.id = id;
-		mutableState.trace = trace;
-		mutableState.time = time;
-		mutableState.startEvent = startEvent;
-		mutableState.lockState = lockState;
-
+			final IntrinsicLockDurationState lockState,
+			final ThreadState lockToState) {
+		final IntrinsicLockDurationState oldLockState = state.getLockState();
+		lockToState.update(state, id, trace, time, startEvent, lockState);
 		updateThreadStatus(id, time, inThread, oldLockState, lockState);
 	}
 
@@ -316,13 +417,10 @@ public final class IntrinsicLockDurationRowInserter {
 			final IntrinsicLockDurationState newLockState, final long inThread) {
 		if (newLockState == IntrinsicLockDurationState.IDLE) {
 			// Need to check the status on the other locks
-			final Map<Long, State> lockToState = getLockToStateMap(inThread);
-			for (final Entry<Long, State> e : lockToState.entrySet()) {
-				final State state = e.getValue();
-				assert state.lockState.isRunning();
-				if (state.lockState != IntrinsicLockDurationState.IDLE) {
-					return state.lockState;
-				}
+			final ThreadState lockToState = getLockToStateMap(inThread);
+			for (final State state : lockToState.nonIdleLocks()) {
+				assert state.getLockState().isRunning();
+				return state.getLockState();
 			}
 			// Otherwise idle
 		}
@@ -336,16 +434,16 @@ public final class IntrinsicLockDurationRowInserter {
 		if ((lockEvent == LockState.AFTER_RELEASE) && !success) {
 			return;
 		}
-		final Map<Long, State> lockToState = getLockToStateMap(inThread);
-		final State state = getState(lockToState, lock);
-		switch (state.lockState) {
+		final ThreadState lockToState = getLockToStateMap(inThread);
+		final State state = lockToState.getState(lock);
+		switch (state.getLockState()) {
 		case IDLE:
 			// Only legal transition is BA->Block
-			assert state.timesEntered == 0;
+			assert state.getTimesEntered() == 0;
 			if (lockEvent == LockState.BEFORE_ACQUISITION) {
 				// No need to record idle time
 				updateState(state, id, time, inThread, trace, lockEvent,
-						IntrinsicLockDurationState.BLOCKING);
+						IntrinsicLockDurationState.BLOCKING, lockToState);
 			} else {
 				logBadEventTransition(inThread, lock, lockEvent, state);
 			}
@@ -357,7 +455,7 @@ public final class IntrinsicLockDurationRowInserter {
 			break;
 		case HOLDING:
 			handleEventWhileHolding(id, time, inThread, trace, lock, lockEvent,
-					state);
+					state, lockToState);
 			break;
 		case WAITING:
 			handlePossibleLockAcquire(id, time, inThread, trace, lock,
@@ -365,7 +463,7 @@ public final class IntrinsicLockDurationRowInserter {
 			break;
 		default:
 			SLLogger.getLogger().log(Level.SEVERE,
-					I18N.err(103, state.lockState.toString()));
+					I18N.err(103, state.getLockState().toString()));
 		}
 	}
 
@@ -375,35 +473,36 @@ public final class IntrinsicLockDurationRowInserter {
 	 */
 	private void handleEventWhileHolding(final long id, final Timestamp time,
 			final long inThread, final long trace, final long lock,
-			final LockState lockEvent, final State state) {
-		assert state.timesEntered > 0;
+			final LockState lockEvent, final State state,
+			final ThreadState lockToState) {
+		assert state.getTimesEntered() > 0;
 		switch (lockEvent) {
 		case BEFORE_ACQUISITION:
 			// Nothing to do right now
 			break;
 		case AFTER_ACQUISITION:
-			state.timesEntered++;
+			state.lockAcquired();
 			break;
 		case BEFORE_WAIT:
-			state.timesEntered--;
-			recordStateDuration(inThread, lock, state.time, state.id, time, id,
-					state.lockState);
+			state.lockReleased();
+			recordStateDuration(inThread, lock, state.getTime(), state.getId(),
+					time, id, state.getLockState());
 			updateState(state, id, time, inThread, trace, lockEvent,
-					IntrinsicLockDurationState.WAITING);
+					IntrinsicLockDurationState.WAITING, lockToState);
 			break;
 		case AFTER_WAIT:
 			logBadEventTransition(inThread, lock, lockEvent, state);
 			break;
 		case AFTER_RELEASE:
-			state.timesEntered--;
+			state.lockReleased();
 
-			final IntrinsicLockDurationState newState = state.timesEntered == 0 ? IntrinsicLockDurationState.IDLE
+			final IntrinsicLockDurationState newState = state.getTimesEntered() == 0 ? IntrinsicLockDurationState.IDLE
 					: IntrinsicLockDurationState.HOLDING;
-			if (state.timesEntered == 0) {
-				recordStateDuration(inThread, lock, state.time, state.id, time,
-						id, state.lockState);
+			if (state.getTimesEntered() == 0) {
+				recordStateDuration(inThread, lock, state.getTime(), state
+						.getId(), time, id, state.getLockState());
 				updateState(state, id, time, inThread, trace, lockEvent,
-						newState);
+						newState, lockToState);
 			}
 			break;
 		default:
@@ -415,19 +514,19 @@ public final class IntrinsicLockDurationRowInserter {
 	private void handlePossibleLockAcquire(final long id, final Timestamp time,
 			final long inThread, final long trace, final long lock,
 			final LockState lockEvent, final LockState eventToMatch,
-			final Map<Long, State> lockToState, final State state,
+			final ThreadState lockToState, final State state,
 			final boolean success) {
 		if (lockEvent == eventToMatch) {
-			assert state.timesEntered >= 0;
+			assert state.getTimesEntered() >= 0;
 			if (success) {
 				noteHeldLocks(id, time, inThread, lock, lockToState);
 			}
-			recordStateDuration(inThread, lock, state.time, state.id, time, id,
-					state.lockState);
+			recordStateDuration(inThread, lock, state.getTime(), state.getId(),
+					time, id, state.getLockState());
 			updateState(state, id, time, inThread, trace, lockEvent,
 					success ? IntrinsicLockDurationState.HOLDING
-							: IntrinsicLockDurationState.IDLE);
-			state.timesEntered++;
+							: IntrinsicLockDurationState.IDLE, lockToState);
+			state.lockAcquired();
 		} else {
 			logBadEventTransition(inThread, lock, lockEvent, state);
 		}
@@ -437,23 +536,18 @@ public final class IntrinsicLockDurationRowInserter {
 			final LockState lockEvent, final State state) {
 		SLLogger.getLogger().log(
 				Level.SEVERE,
-				I18N.err(102, state.lockState.toString(), lockEvent.toString(),
-						lock, inThread));
+				I18N.err(102, state.getLockState().toString(), lockEvent
+						.toString(), lock, inThread));
 	}
 
 	private void noteHeldLocks(final long id, final Timestamp time,
-			final long thread, final long lock,
-			final Map<Long, State> lockToState) {
+			final long thread, final long lock, final ThreadState lockToState) {
 		// Note what other locks are held at the time of this event
-		for (final Map.Entry<Long, State> e : lockToState.entrySet()) {
-			final long otherLock = e.getKey();
-			if (lock == otherLock) {
+		for (final State state : lockToState.heldLocks()) {
+			if (lock == state.getLock()) {
 				continue; // Skip myself
 			}
-			final IntrinsicLockDurationState state = e.getValue().lockState;
-			if (state == IntrinsicLockDurationState.HOLDING) {
-				insertHeldLock(id, time, e.getKey(), lock, thread);
-			}
+			insertHeldLock(id, time, state.getLock(), lock, thread);
 		}
 	}
 
@@ -552,8 +646,8 @@ public final class IntrinsicLockDurationRowInserter {
 		// Clean up if it's a thread
 		f_threadToStatus.remove(key);
 		f_threadToLockToState.remove(key);
-		for (final Map<Long, State> e : f_threadToLockToState.values()) {
-			e.remove(key);
+		for (final ThreadState e : f_threadToLockToState.values()) {
+			e.gcLock(key);
 		}
 		// TODO Clean up lock graph?
 	}

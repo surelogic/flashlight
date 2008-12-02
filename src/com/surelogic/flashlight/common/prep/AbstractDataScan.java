@@ -63,7 +63,7 @@ public class AbstractDataScan extends DefaultHandler {
 		}
 	}
 
-	protected PreppedAttributes preprocessAttributes(final EventType e,
+	protected PreppedAttributes preprocessAttributes(final String eltName,
 			final Attributes a) {
 		// System.err.println("Got "+e.getLabel());
 		final PreppedAttributes attrs; 
@@ -82,6 +82,7 @@ public class AbstractDataScan extends DefaultHandler {
 				}
 			}
 			if (useSitesCompatibility) {
+				final EventType e = EventType.findByLabel(eltName);
 				switch (e) {
 				case Static_CallLocation:
 					createSiteInfo(attrs);

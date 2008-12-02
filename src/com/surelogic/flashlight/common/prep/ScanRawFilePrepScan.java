@@ -10,7 +10,6 @@ import java.util.Set;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
-import com.surelogic._flashlight.common.EventType;
 import com.surelogic._flashlight.common.PreppedAttributes;
 import com.surelogic.common.jobs.SLProgressMonitor;
 
@@ -51,8 +50,7 @@ public final class ScanRawFilePrepScan extends AbstractDataScan {
 		if (f_monitor.isCanceled()) {
 			throw new SAXException("cancelled");
 		}
-		final EventType et = EventType.findByLabel(name);
-		final PreppedAttributes attrs = preprocessAttributes(et, attributes);
+		final PreppedAttributes attrs = preprocessAttributes(name, attributes);
 		final IPrep element = f_elementHandlers.get(name);
 		if (element != null) {
 			try {

@@ -133,11 +133,11 @@ public final class ScanRawFilePreScan extends AbstractDataScan {
 		f_elementCount++;
 
 		// modified to try and reduce computation overhead)
-		if ((f_elementCount & 0xf) == 0xf) {
+		if ((f_elementCount & 0x1f) == 0x1f) {
 			/*
 			 * Show progress to the user
 			 */
-			f_monitor.worked(16);
+			f_monitor.worked(32);
 			
 			/*
 			 * Check for a user cancel.
@@ -147,11 +147,10 @@ public final class ScanRawFilePreScan extends AbstractDataScan {
 			}
 		}
 
-		EventType e             = EventType.findByLabel(name);
-		PreppedAttributes attrs = preprocessAttributes(e, attributes);
+		PreppedAttributes attrs = preprocessAttributes(name, attributes);
 		if ("time".equals(name)) {
 			if (f_firstTimeEventFound) {
-				f_endTime = attrs.getLong(AttributeType.TIME);
+				f_endTime = attrs.getEventTime();
 			} else {
 				f_firstTimeEventFound = true;
 			}

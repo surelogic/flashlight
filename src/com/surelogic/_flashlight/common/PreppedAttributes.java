@@ -58,4 +58,12 @@ public class PreppedAttributes extends HashMap<IAttributeType,Object> {
 		}
 		return (o instanceof Boolean) ? (Boolean) o : "yes".equals(o) || "true".equals(o); 		
 	}
+	
+	public long getEventTime() {
+		return getLong(AttributeType.TIME);
+	}
+	
+	public long getTraceId() {
+		return getLong(AttributeType.TRACE);
+	}
 }

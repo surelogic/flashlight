@@ -264,6 +264,11 @@ public class BinaryAttributes extends PreppedAttributes implements Attributes {
 	}	
 	@Override
 	public long getTraceId() {
+		/*
+        if (traceId == IdConstants.ILLEGAL_ID) {
+			throw new IllegalStateException("Bad trace id");
+		}
+		*/
 		return traceId;
 	}
 	

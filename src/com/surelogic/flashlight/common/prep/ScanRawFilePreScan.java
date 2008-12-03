@@ -167,11 +167,9 @@ public final class ScanRawFilePreScan extends AbstractDataScan {
 			} else {
 				useField(field, thread);
 			}
-			useObject(attrs.getLong(AttributeType.IN_CLASS));
 			useObject(thread);
 		} else if (locks.contains(name)) {
 			useObject(attrs.getThreadId());
-			useObject(attrs.getLong(AttributeType.IN_CLASS));
 			useObject(attrs.getLockId());
 		} else if ("read-write-lock-definition".equals(name)) {
 			useObject(attrs.getLong(AttributeType.ID));

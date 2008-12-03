@@ -38,6 +38,11 @@ public class PreppedAttributes extends HashMap<IAttributeType,Object> {
 	public long getLong(IAttributeType key) {
 		Object o = this.get(key);
 		if (o == null) {
+			/*
+			if (key != AttributeType.TYPE) {
+				System.out.println("No value for "+key);
+			}
+			*/
 			return Long.MIN_VALUE;
 		}
 		return (o instanceof Long) ? (Long) o : Long.parseLong(o.toString()); 
@@ -62,9 +67,13 @@ public class PreppedAttributes extends HashMap<IAttributeType,Object> {
 	public long getEventTime() {
 		return getLong(AttributeType.TIME);
 	}
-	
 	public long getTraceId() {
-		return getLong(AttributeType.TRACE);
+		long l = getLong(AttributeType.TRACE);
+		if (l != IdConstants.ILLEGAL_ID) {
+			return l;
+		}
+		// Backup for old traces
+		return getLong(AttributeType.ID);
 	}
 	public long getLockId() {
 		return getLong(AttributeType.LOCK);

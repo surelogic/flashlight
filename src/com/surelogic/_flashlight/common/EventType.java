@@ -303,12 +303,14 @@ public enum EventType {
 	Trace("trace") {
 	    @Override
 	    void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
-	        attrs.put(TRACE, readCompressedLong(in));
+	        attrs.setTraceId(readCompressedLong(in));
 	    }
+	    /*
 		@Override
 		IAttributeType getPersistentAttribute() {
 			return TRACE;
 		}
+		*/
 	},
 	Trace_Node("trace-node") {
 	    @Override

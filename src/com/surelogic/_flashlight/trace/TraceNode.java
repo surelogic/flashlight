@@ -244,7 +244,7 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
     public String toString() {
 		StringBuilder b = new StringBuilder();
 		b.append("<").append(Trace_Node.getLabel());
-		Entities.addAttribute(ID.label(), getId(), b);
+		Entities.addAttribute(TRACE.label(), getId(), b);
 		Entities.addAttribute(SITE_ID.label(), getSiteId(), b);
 		Entities.addAttribute(PARENT_ID.label(), getParentId(), b);
 		b.append("/>");

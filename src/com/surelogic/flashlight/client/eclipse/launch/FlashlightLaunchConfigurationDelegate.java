@@ -42,7 +42,48 @@ public final class FlashlightLaunchConfigurationDelegate extends
 	@Override
 	public IVMRunner getVMRunner(ILaunchConfiguration configuration, String mode)
 			throws CoreException {
-		IVMInstall vm = verifyVMInstall(configuration);
+	  /* Check that the Eclipse environment meets our requirements. */
+		final IVMRunner runner = checkRequirements(configuration);
+
+		/*
+     * Find the classpath entries that correspond to "binary output directories"
+     * of projects in the workspace. These are the directories that we need to
+     * instrument. We create two maps "userEntires" and "bootstrapEntires" that
+     * we use to maintain the mapping from the original binary output directory
+     * to the instrumented binary output directory we create later for entries
+     * on the standard user classpath and user entries on the bootstrap
+     * classpath, respectively.
+     */
+    final Map<String, String> userEntries = new HashMap<String, String>();
+    final Map<String, String> bootstrapEntries = new HashMap<String, String>();
+    getClasspathEntries(configuration, userEntries, bootstrapEntries);
+
+		/*
+		 * Go through each open project and see which of the binary output
+		 * directories belong to it based on the pathname prefix. Update the
+		 * instrumented directory path for each binary directory.
+		 */
+    final String mainTypeName = getMainTypeName(configuration);
+    final SimpleDateFormat dateFormat =
+      new SimpleDateFormat("-yyyy.MM.dd-'at'-HH.mm.ss.SSS");
+    final String datePostfix = dateFormat.format(new Date());
+    final String runName = mainTypeName + datePostfix;
+    final File flashlightDataDir =
+      FlashlightUtility.getFlashlightDataDirectory();
+    final File runOutputDir = new File(flashlightDataDir, runName);
+    if (!runOutputDir.exists()) {
+      runOutputDir.mkdirs();
+    }
+		final Set<IProject> interestingProjects = computeInstrumentationDirs(
+		    configuration, runOutputDir, userEntries, bootstrapEntries);
+
+		return new FlashlightVMRunner(runner, runOutputDir, userEntries,
+		    bootstrapEntries,	interestingProjects, mainTypeName, datePostfix);
+	}
+
+  private IVMRunner checkRequirements(final ILaunchConfiguration configuration)
+      throws CoreException {
+    IVMInstall vm = verifyVMInstall(configuration);
 		if (vm instanceof IVMInstall2) {
 			final IVMInstall2 vm2 = (IVMInstall2) vm;
 			final String javaVersion = vm2.getJavaVersion();
@@ -63,94 +104,96 @@ public final class FlashlightLaunchConfigurationDelegate extends
 			throw new CoreException(SLEclipseStatusUtility.createErrorStatus(0,
 					"Failed to configure the VM to run Flashlight."));
 		}
+    return runner;
+  }
 
-		/*
-		 * Find the classpath entries that correspond to
-		 * "binary output directories" of projects in the workspace. These are
-		 * the directories that we need to instrument. This use of
-		 * JavaRuntime.computeUnresolvedRuntimeClasspath() and
-		 * JavaRuntime.resolveRuntimeClasspath() is taken from
-		 * AbstractJavaLaunchConfigurationDelegate.getClasspath(). We create a
-		 * map "projectEntries" that we will use to maintain the mapping from
-		 * the original binary output directory to the instrumented binary
-		 * output directory we create later.
-		 */
-		IRuntimeClasspathEntry[] entries = JavaRuntime
-				.computeUnresolvedRuntimeClasspath(configuration);
-		entries = JavaRuntime.resolveRuntimeClasspath(entries, configuration);
-		final Map<String, String> projectEntries = new HashMap<String, String>();
-		for (final IRuntimeClasspathEntry entry : entries) {
-			if (entry.getClasspathProperty() == IRuntimeClasspathEntry.USER_CLASSES) {
-				final String location = entry.getLocation();
-				if (location != null) {
-					if (entry.getType() == IRuntimeClasspathEntry.PROJECT) {
-						// The project has a single binary output directory
-						projectEntries.put(location, location);
-					} else if (entry.getType() == IRuntimeClasspathEntry.ARCHIVE) {
-						/*
-						 * Could be a jar file in the project, or one of the
-						 * many binary output directories in the project. We
-						 * need to test if the location is a directory.
-						 */
-						final File locationAsFile = new File(location);
-						if (locationAsFile.isDirectory()) {
-							projectEntries.put(location, null);
-						}
-					}
-				}
-			}
-		}
+  private void getClasspathEntries(final ILaunchConfiguration configuration,
+      final Map<String, String> userEntries,
+      final Map<String, String> bootstrapEntries) throws CoreException {
+    /* This use of JavaRuntime.computeUnresolvedRuntimeClasspath() and
+     * JavaRuntime.resolveRuntimeClasspath() is taken from
+     * AbstractJavaLaunchConfigurationDelegate.getClasspath().
+     */
+    final IRuntimeClasspathEntry[] rawEntries =
+      JavaRuntime.computeUnresolvedRuntimeClasspath(configuration);
+    final IRuntimeClasspathEntry[] entries =
+      JavaRuntime.resolveRuntimeClasspath(rawEntries, configuration);
+    for (final IRuntimeClasspathEntry entry : entries) {
+      final int where = entry.getClasspathProperty();
+      final Map<String, String> entriesMap;
+      if (where == IRuntimeClasspathEntry.USER_CLASSES) {
+        entriesMap = userEntries;
+      } else if (where == IRuntimeClasspathEntry.BOOTSTRAP_CLASSES) {
+        entriesMap = bootstrapEntries;
+      } else {
+        // Standard (that is, system library) entry; ignore it
+        continue;
+      }
+      
+      final String location = entry.getLocation();
+      final int type = entry.getType();
+      if (location != null) {
+        if (type == IRuntimeClasspathEntry.PROJECT) {
+          // The project has a single binary output directory
+          entriesMap.put(location, location);
+        } else if (type == IRuntimeClasspathEntry.ARCHIVE) {
+          /*
+           * Could be a jar file in the project, or one of the
+           * many binary output directories in the project. We
+           * need to test if the location is a directory.
+           */
+          final File locationAsFile = new File(location);
+          if (locationAsFile.isDirectory()) {
+            entriesMap.put(location, null);
+          }
+        }
+      }
+    }
+  }
+  
+  private Set<IProject> computeInstrumentationDirs(
+      final ILaunchConfiguration configuration, final File runOutputDir,
+      final Map<String, String> userEntries,
+      final Map<String, String> bootstrapEntries) throws CoreException {
+    final File projectOutputDir = new File(runOutputDir, "projects");
+    if (!projectOutputDir.exists()) {
+      projectOutputDir.mkdir();
+    }
 
-		/*
-		 * Go through each open project and see which of the binary output
-		 * directories belong to it based on the pathname prefix. Update the
-		 * instrumented directory path for each binary directory.
-		 */
-		final File flashlightDataDir = FlashlightUtility
-				.getFlashlightDataDirectory();
-		final SimpleDateFormat dateFormat = new SimpleDateFormat(
-				"-yyyy.MM.dd-'at'-HH.mm.ss.SSS");
-		final String datePostfix = dateFormat.format(new Date());
-		final String mainTypeName = getMainTypeName(configuration);
-		final String runName = mainTypeName + datePostfix;
+    final Set<IProject> interestingProjects = new HashSet<IProject>();
+    final IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
+    final IProject[] projects = root.getProjects();
+    scanProjects(projects, projectOutputDir, interestingProjects, userEntries);
+    scanProjects(projects, projectOutputDir, interestingProjects, bootstrapEntries);
+   
+    return interestingProjects;
+  }
 
-		final File runOutputDir = new File(flashlightDataDir, runName);
-		if (!runOutputDir.exists())
-			runOutputDir.mkdirs();
-		final File projectOutputDir = new File(runOutputDir, "projects");
-		if (!projectOutputDir.exists())
-			projectOutputDir.mkdir();
-
-		final Set<IProject> interestingProjects = new HashSet<IProject>();
-		final IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
-		final IProject[] projects = root.getProjects();
-		for (final IProject project : projects) {
-			if (project.isOpen()) {
-				final String projectLocation = project.getLocation()
-						.toOSString();
-				for (final Map.Entry<String, String> entry : projectEntries
-						.entrySet()) {
-					final String originalLocation = entry.getKey();
-					if (originalLocation.startsWith(projectLocation)
-							&& originalLocation
-									.charAt(projectLocation.length()) == File.separatorChar) {
-						// Found the project root path for the directory
-						final String projectDirName = projectLocation
-								.substring(projectLocation
-										.lastIndexOf(File.separatorChar) + 1);
-						final String binaryDirName = originalLocation
-								.substring(projectLocation.length() + 1);
-						final File newLocation = new File(new File(
-								projectOutputDir, projectDirName),
-								binaryDirName + ".jar");
-						entry.setValue(newLocation.getAbsolutePath());
-						interestingProjects.add(project);
-					}
-				}
-			}
-		}
-
-		return new FlashlightVMRunner(runner, runOutputDir, projectEntries,
-				interestingProjects, mainTypeName, datePostfix);
-	}
+  private void scanProjects(final IProject[] projects,
+      final File projectOutputDir, final Set<IProject> interestingProjects,
+      final Map<String, String> classpathEntries) {
+    for (final IProject project : projects) {
+      if (project.isOpen()) {
+        final String projectLocation = project.getLocation().toOSString();
+        for (final Map.Entry<String, String> entry : classpathEntries.entrySet()) {
+          final String originalLocation = entry.getKey();
+          if (originalLocation.startsWith(projectLocation)
+              && originalLocation
+                  .charAt(projectLocation.length()) == File.separatorChar) {
+            // Found the project root path for the directory
+            final String projectDirName = projectLocation
+                .substring(projectLocation
+                    .lastIndexOf(File.separatorChar) + 1);
+            final String binaryDirName = originalLocation
+                .substring(projectLocation.length() + 1);
+            final File newLocation = new File(new File(
+                projectOutputDir, projectDirName),
+                binaryDirName + ".jar");
+            entry.setValue(newLocation.getAbsolutePath());
+            interestingProjects.add(project);
+          }
+        }
+      }
+    }
+  }
 }

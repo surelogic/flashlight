@@ -18,6 +18,7 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
+import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
 import org.eclipse.jdt.launching.IVMRunner;
 import org.eclipse.jdt.launching.VMRunnerConfiguration;
 import org.eclipse.ui.progress.UIJob;
@@ -53,17 +54,21 @@ final class FlashlightVMRunner implements IVMRunner {
   private final File sitesFile;
   private final File logFile;
   private final File filtersFile;
-  private final Map<String, String> projectEntries;
+  private final Map<String, String> userEntries;
+  private final Map<String, String> bootEntries;
   private final Set<IProject> interestingProjects;
   private final String datePostfix;
+  private final String pathToFlashlightLib;
   
   /* We are guaranteed that the outDir exists in the file system already */
   public FlashlightVMRunner(
       final IVMRunner other, final File outDir, final Map<String, String> dirs,
-      final Set<IProject> prjs, final String main, final String date) {
+      final Map<String, String> bdirs, final Set<IProject> prjs,
+      final String main, final String date) throws CoreException {
     delegateRunner = other;
     runOutputDir = outDir;
-    projectEntries = dirs;
+    userEntries = dirs;
+    bootEntries = bdirs;
     interestingProjects = prjs;
     mainTypeName = main;
     datePostfix = date;
@@ -71,7 +76,18 @@ final class FlashlightVMRunner implements IVMRunner {
     fieldsFile = new File(runOutputDir, FIELDS_FILE_NAME);
     sitesFile = new File(runOutputDir, SITES_FILE_NAME);
     logFile = new File(runOutputDir, LOG_FILE_NAME);
-    filtersFile = new File(runOutputDir, FILTERS_FILE_NAME); 
+    filtersFile = new File(runOutputDir, FILTERS_FILE_NAME);
+
+    // Get the path ot the flashlight-runtime.jar
+    final IPath bundleBase = Activator.getDefault().getBundleLocation();
+    if (bundleBase != null) {
+      final IPath jarLocation = bundleBase.append("lib/flashlight-runtime.jar");
+      pathToFlashlightLib = jarLocation.toOSString();
+    } else {
+      throw new CoreException(SLEclipseStatusUtility.createErrorStatus(0,
+          "No bundle location found for the Flashlight plug-in."));
+    }
+
   }
   
   public void run(final VMRunnerConfiguration configuration, final ILaunch launch,
@@ -81,7 +97,8 @@ final class FlashlightVMRunner implements IVMRunner {
      * Amount of work is 1 for each project we need to zip, 2 for each directory
      * we need to process, plus 1 remaining unit for the delegate.
      */
-    final int totalWork = interestingProjects.size() + (2 * projectEntries.size()) + 1;
+    final int totalWork =
+      interestingProjects.size() + (2 * (userEntries.size() + bootEntries.size())) + 1;
     final SubMonitor progress = SubMonitor.convert(monitor, totalWork);
 
     /* Create the source zip */
@@ -101,11 +118,12 @@ final class FlashlightVMRunner implements IVMRunner {
     /* Fix the classpath.
      */
     final String[] newClassPath = updateClassPath(configuration);
+    final String[] newBootClassPath = updateBootClassPath(configuration);
     
     /* Create an updated runner configuration. */
-    final VMRunnerConfiguration newConfig = 
-    	updateRunnerConfiguration(configuration, launch.getLaunchConfiguration(),
-    		                      newClassPath);
+    final VMRunnerConfiguration newConfig =	updateRunnerConfiguration(
+    	    configuration, launch.getLaunchConfiguration(), newClassPath,
+    	    newBootClassPath);
     
     /* Done with our set up, call the real runner */
     delegateRunner.run(newConfig, launch, monitor);
@@ -171,7 +189,10 @@ final class FlashlightVMRunner implements IVMRunner {
         new VMRewriteManager(rewriterConfig, messenger,
             fieldsFile, sitesFile, progress);
       
-      for (final Map.Entry<String, String> entry : projectEntries.entrySet()) {
+      for (final Map.Entry<String, String> entry : bootEntries.entrySet()) {
+        manager.addDirToJar(new File(entry.getKey()), new File(entry.getValue()), null);
+      }
+      for (final Map.Entry<String, String> entry : userEntries.entrySet()) {
         manager.addDirToJar(new File(entry.getKey()), new File(entry.getValue()), null);
       }
       
@@ -195,38 +216,62 @@ final class FlashlightVMRunner implements IVMRunner {
     return false;
   }
   
-  private String[] updateClassPath(final VMRunnerConfiguration configuration) 
-      throws CoreException {
+  private String[] updateClassPath(final VMRunnerConfiguration configuration) {
     /* (1) Replace each project "binary output directory" with
      * its corresponding instrumented directory.
      */
     final String[] classPath = configuration.getClassPath();
-    final List<String> newClassPathList = new ArrayList<String>(classPath.length + 1);
+    final List<String> newClassPathList = new ArrayList<String>(classPath.length+1);
     for (int i = 0; i < classPath.length; i++) {
-      final String newEntry = projectEntries.get(classPath[i]);
-      if (newEntry != null) newClassPathList.add(newEntry);
-      else newClassPathList.add(classPath[i]);
+      final String oldEntry = classPath[i];
+      final String newEntry = userEntries.get(oldEntry);
+      newClassPathList.add((newEntry == null) ? oldEntry : newEntry);
     }
     
-    /* (2) Also add the flashlight jar file to the classpath.
+    /* (2) Also add the flashlight jar file to the classpath, unless the 
+     * bootclasspath is non-empty
      */
-    final IPath bundleBase = Activator.getDefault().getBundleLocation();
-    if (bundleBase != null) {
-      final IPath jarLocation = bundleBase.append("lib/flashlight-runtime.jar");
-      newClassPathList.add(jarLocation.toOSString());
-    } else {
-      throw new CoreException(SLEclipseStatusUtility.createErrorStatus(0,
-          "No bundle location found for the Flashlight plug-in."));
+    if (bootEntries.isEmpty()) {
+      newClassPathList.add(pathToFlashlightLib);
     }
     
     final String[] newClassPath = new String[newClassPathList.size()];
     return newClassPathList.toArray(newClassPath);
   }
   
+  private String[] updateBootClassPath(final VMRunnerConfiguration configuration) {
+    /* (1) Replace each project "binary output directory" with
+     * its corresponding instrumented directory.
+     */
+    final String[] classPath = configuration.getBootClassPath();
+    if (classPath != null && classPath.length != 0) {
+      final List<String> newClassPathList = new ArrayList<String>(classPath.length+1);
+      for (int i = 0; i < classPath.length; i++) {
+        final String oldEntry = classPath[i];
+        final String newEntry = bootEntries.get(oldEntry);
+        newClassPathList.add((newEntry == null) ? oldEntry : newEntry);
+      }
+      
+      /* (2) Also add the flashlight jar file to the classpath, if the 
+       * bootclasspath is non-empty
+       */
+      if (!bootEntries.isEmpty()) {
+        newClassPathList.add(pathToFlashlightLib);
+      }
+      
+      final String[] newClassPath = new String[newClassPathList.size()];
+      return newClassPathList.toArray(newClassPath);
+    } else {
+      return classPath;
+    }
+  }
+  
   private VMRunnerConfiguration updateRunnerConfiguration(
-      final VMRunnerConfiguration original, ILaunchConfiguration launch, final String[] newClassPath) {
+      final VMRunnerConfiguration original, ILaunchConfiguration launch,
+      final String[] newClassPath, final String[] newBootClassPath) {
     // Create a new configuration and update the class path
-    final VMRunnerConfiguration newConfig = new VMRunnerConfiguration(original.getClassToLaunch(), newClassPath);
+    final VMRunnerConfiguration newConfig =
+      new VMRunnerConfiguration(original.getClassToLaunch(), newClassPath);
     
     // Update the VM arguments: We need to add parameters for the Flashlight Store
     final String[] vmArgs = original.getVMArguments();
@@ -347,13 +392,88 @@ final class FlashlightVMRunner implements IVMRunner {
     newConfig.setVMArguments(newVmArgsList.toArray(newVmArgs));
     
     // Copy the rest of the arguments unchanged
-    newConfig.setBootClassPath(original.getBootClassPath());
+    newConfig.setBootClassPath(newBootClassPath);
     newConfig.setEnvironment(original.getEnvironment());
     newConfig.setProgramArguments(original.getProgramArguments());
     newConfig.setResumeOnStartup(original.isResumeOnStartup());
-    newConfig.setVMSpecificAttributesMap(original.getVMSpecificAttributesMap());
+    newConfig.setVMSpecificAttributesMap(updateVMSpecificAttributesMap(original.getVMSpecificAttributesMap()));
     newConfig.setWorkingDirectory(original.getWorkingDirectory());
     return newConfig;
+  }
+  
+  private Map updateVMSpecificAttributesMap(final Map original) {
+    if (original == null) {
+      return null;
+    }
+    
+    final Map updated = new HashMap();
+    final String[] originalPrepend = (String[]) original.get(IJavaLaunchConfigurationConstants.ATTR_BOOTPATH_PREPEND);
+    final String[] originalBootpath = (String[]) original.get(IJavaLaunchConfigurationConstants.ATTR_BOOTPATH);
+    final String[] originalAppend = (String[]) original.get(IJavaLaunchConfigurationConstants.ATTR_BOOTPATH_APPEND);
+    
+    boolean needsFlashlightLib = false;
+    if (originalPrepend != null) {
+      final List<String> newPrependList = new ArrayList(originalPrepend.length);
+      needsFlashlightLib |= updateBootpathArray(originalPrepend, newPrependList);
+      if (newPrependList.size() != 0) {
+        final String[] newPrepend = new String[originalPrepend.length];
+        updated.put(IJavaLaunchConfigurationConstants.ATTR_BOOTPATH_PREPEND, newPrependList.toArray(newPrepend));
+      }
+    }
+    if (originalBootpath != null) {
+      final List<String> newBootpathList = new ArrayList(originalBootpath.length);
+      needsFlashlightLib |= updateBootpathArray(originalBootpath, newBootpathList);
+      for (final String entry : originalBootpath) {
+        final String newEntry = bootEntries.get(entry);
+        if (newEntry != null) {
+          newBootpathList.add(newEntry);
+          needsFlashlightLib = true;
+        } else {
+          newBootpathList.add(entry);
+        }
+      }
+      final String[] newBootpath = new String[originalBootpath.length];
+      updated.put(IJavaLaunchConfigurationConstants.ATTR_BOOTPATH, newBootpathList.toArray(newBootpath));
+    }
+    List<String> newAppendList = null;
+    if (originalAppend != null) {
+      newAppendList = new ArrayList(originalAppend.length+1);
+      for (final String entry : originalAppend) {
+        final String newEntry = bootEntries.get(entry);
+        if (newEntry != null) {
+          newAppendList.add(newEntry);
+          needsFlashlightLib = true;
+        } else {
+          newAppendList.add(entry);
+        }
+      }
+    }
+    if (needsFlashlightLib) {
+      if (newAppendList == null) {
+        newAppendList = new ArrayList(1);
+      }
+      newAppendList.add(pathToFlashlightLib);
+    }
+    if (newAppendList != null) {
+      final String[] newAppend = new String[newAppendList.size()];
+      updated.put(IJavaLaunchConfigurationConstants.ATTR_BOOTPATH_APPEND, newAppendList.toArray(newAppend));
+    }    
+    
+    return updated;
+  }
+  
+  private boolean updateBootpathArray(final String[] originalBoothpath, final List<String> newBootpath) {
+    boolean needsFlashlightLib = false;
+    for (final String entry : originalBoothpath) {
+      final String newEntry = bootEntries.get(entry);
+      if (newEntry != null) {
+        newBootpath.add(newEntry);
+        needsFlashlightLib = true;
+      } else {
+        newBootpath.add(entry);
+      }
+    }
+    return needsFlashlightLib;
   }
   
   private static final class CanceledException extends RuntimeException {

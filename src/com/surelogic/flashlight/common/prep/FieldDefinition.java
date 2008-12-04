@@ -25,6 +25,7 @@ public final class FieldDefinition extends AbstractPrep {
 
 	private PreparedStatement f_ps;
 	private ScanRawFilePreScan preScan;
+	private int count;
 
 	public String getXMLElementName() {
 		return "field-definition";
@@ -62,7 +63,10 @@ public final class FieldDefinition extends AbstractPrep {
 			f_ps.setString(idx++, isFinal ? "Y" : "N");
 			f_ps.setString(idx++, isVolatile ? "Y" : "N");
 			if (doInsert) {
-				f_ps.executeUpdate();
+				f_ps.addBatch();
+				if (++count == 10000) {
+					f_ps.executeBatch();
+				}
 			}
 		}
 	}
@@ -78,6 +82,10 @@ public final class FieldDefinition extends AbstractPrep {
 
 	@Override
 	public void flush(final long endTime) throws SQLException {
+		if (doInsert && count > 0) {
+			f_ps.executeBatch();
+			count = 0;
+		}
 		f_ps.close();
 		super.flush(endTime);
 	}

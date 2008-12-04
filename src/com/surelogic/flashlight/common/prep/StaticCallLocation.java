@@ -30,11 +30,11 @@ public final class StaticCallLocation extends AbstractPrep {
 		f_ps.setString(idx++, attributes.getString(FILE));
 		f_ps.setString(idx++, attributes.getString(LOCATION));
 		if (doInsert) {
-		f_ps.addBatch();
-		if (++count == 10000) {
-			f_ps.executeBatch();
-			count = 0;
-		}
+			f_ps.addBatch();
+			if (++count == 10000) {
+				f_ps.executeBatch();
+				count = 0;
+			}
 		}
 	}
 

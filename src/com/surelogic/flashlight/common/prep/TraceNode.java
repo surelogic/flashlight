@@ -31,11 +31,11 @@ public final class TraceNode extends AbstractPrep {
 		f_ps.setLong(idx++, attributes.getLong(SITE_ID));
 		f_ps.setLong(idx++, parent);
 		if (doInsert) {
-		f_ps.addBatch();
-		if (++count == 10000) {
-			f_ps.executeBatch();
-			count = 0;
-		}
+			f_ps.addBatch();
+			if (++count == 10000) {
+				f_ps.executeBatch();
+				count = 0;
+			}
 		}
 	}
 
@@ -52,8 +52,8 @@ public final class TraceNode extends AbstractPrep {
 	public void flush(final long endTime) throws SQLException {
 		if (count > 0) {
 			f_ps.executeBatch();
+			count = 0;
 		}
-		count = 0;
 		super.flush(endTime);
 		f_ps.close();
 	}

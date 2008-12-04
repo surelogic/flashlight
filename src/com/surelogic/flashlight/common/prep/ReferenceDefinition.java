@@ -71,12 +71,12 @@ public abstract class ReferenceDefinition extends AbstractPrep {
 				f_ps.setNull(idx++, Types.VARCHAR);
 			}
 			f_ps.setString(idx++, getFlag());
-						if (doInsert) {
-			f_ps.addBatch();
-			if (++count == 10000) {
-				f_ps.executeBatch();
-				count = 0;
-			}
+			if (doInsert) {
+				f_ps.addBatch();
+				if (++count == 10000) {
+					f_ps.executeBatch();
+					count = 0;
+				}
 			}
 		}
 	}

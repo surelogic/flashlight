@@ -79,14 +79,15 @@ public abstract class FieldAccess extends Event {
 			f_ps.setLong(idx++, receiver);
 		}
 		f_ps.setString(idx++, underConstruction ? "Y" : "N");
-if (doInsert) {
-		f_ps.addBatch();
-		if (++count == 10000) {
-			f_ps.executeBatch();
-			count = 0;
+		if (doInsert) {
+			f_ps.addBatch();
+			if (++count == 10000) {
+				f_ps.executeBatch();
+				count = 0;
+			}
 		}
 	}
-}
+
 	@Override
 	public final void setup(final Connection c, final Timestamp start,
 			final long startNS, final ScanRawFilePreScan scanResults)

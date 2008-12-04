@@ -26,6 +26,8 @@ public class ReadWriteLock extends Event {
 
 	private Timestamp startTime;
 
+	private int count;
+
 	@Override
 	public void setup(final Connection c, final Timestamp start,
 			final long startNS, final ScanRawFilePreScan scanResults)
@@ -62,12 +64,21 @@ public class ReadWriteLock extends Event {
 		f_ps.setLong(idx++, readLock);
 		f_ps.setLong(idx++, writeLock);
 		if (doInsert) {
+			f_ps.addBatch();
+			if (++count == 10000) {
+				f_ps.executeBatch();
+				count = 0;
+			}
 			f_ps.execute();
 		}
 	}
 
 	@Override
 	public void flush(final long endTime) throws SQLException {
+		if (count > 0) {
+			f_ps.executeBatch();
+			count = 0;
+		}
 		if (f_ps != null) {
 			f_ps.close();
 			f_ps = null;

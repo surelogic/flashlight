@@ -16,6 +16,7 @@ import com.surelogic._flashlight.common.PreppedAttributes;
 public final class StaticCallLocation extends AbstractPrep {
 
 	private PreparedStatement f_ps;
+	private int count;
 
 	public String getXMLElementName() {
 		return "static-call-location";
@@ -29,7 +30,11 @@ public final class StaticCallLocation extends AbstractPrep {
 		f_ps.setString(idx++, attributes.getString(FILE));
 		f_ps.setString(idx++, attributes.getString(LOCATION));
 		if (doInsert) {
-			f_ps.execute();
+		f_ps.addBatch();
+		if (++count == 10000) {
+			f_ps.executeBatch();
+			count = 0;
+		}
 		}
 	}
 
@@ -44,6 +49,10 @@ public final class StaticCallLocation extends AbstractPrep {
 
 	@Override
 	public void flush(final long endTime) throws SQLException {
+		if (count > 0) {
+			f_ps.executeBatch();
+		}
+		count = 0;
 		super.flush(endTime);
 		f_ps.close();
 	}

@@ -62,6 +62,8 @@ public abstract class FieldAccess extends Event {
 		inserted++;
 	}
 
+	private int count;
+
 	private void insert(final long nanoTime, final long inThread,
 			final long trace, final long field, final long receiver,
 			final boolean underConstruction) throws SQLException {
@@ -77,11 +79,14 @@ public abstract class FieldAccess extends Event {
 			f_ps.setLong(idx++, receiver);
 		}
 		f_ps.setString(idx++, underConstruction ? "Y" : "N");
-		if (doInsert) {
-			f_ps.executeUpdate();
+if (doInsert) {
+		f_ps.addBatch();
+		if (++count == 10000) {
+			f_ps.executeBatch();
+			count = 0;
 		}
 	}
-
+}
 	@Override
 	public final void setup(final Connection c, final Timestamp start,
 			final long startNS, final ScanRawFilePreScan scanResults)
@@ -101,6 +106,10 @@ public abstract class FieldAccess extends Event {
 
 	@Override
 	public void flush(final long endTime) throws SQLException {
+		if (count > 0) {
+			f_ps.executeBatch();
+			count = 0;
+		}
 		f_ps.close();
 		super.flush(endTime);
 	}

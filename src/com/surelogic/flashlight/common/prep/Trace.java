@@ -14,6 +14,7 @@ import com.surelogic._flashlight.common.PreppedAttributes;
 public final class Trace extends AbstractPrep {
 
 	private PreparedStatement f_ps;
+	private int count = 0;
 
 	public void parse(final PreppedAttributes attributes) throws SQLException {
 		final long parent = attributes.getLong(PARENT_ID);
@@ -24,7 +25,11 @@ public final class Trace extends AbstractPrep {
 		f_ps.setLong(idx++, site);
 		f_ps.setLong(idx++, parent);
 		if (doInsert) {
-			f_ps.execute();
+		f_ps.addBatch();
+		if (++count == 10000) {
+			f_ps.executeBatch();
+			count = 0;
+		}
 		}
 	}
 
@@ -43,6 +48,10 @@ public final class Trace extends AbstractPrep {
 
 	@Override
 	public void flush(final long endTime) throws SQLException {
+		if (count > 0) {
+			f_ps.executeBatch();
+		}
+		count = 0;
 		super.flush(endTime);
 		f_ps.close();
 	}

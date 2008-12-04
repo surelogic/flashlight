@@ -50,7 +50,7 @@ public final class RunDAO {
 		} finally {
 			s.close();
 		}
-		return find(c);
+		return new PrepRunDescription(run);
 	}
 
 	/**

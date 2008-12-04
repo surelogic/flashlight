@@ -38,6 +38,7 @@ public final class IntrinsicLockDurationRowInserter {
 			"INSERT INTO LOCKCYCLE (Component,LockHeld,LockAcquired,Count,FirstTime,LastTime) VALUES (?, ?, ?, ?, ?, ?)",
 			"INSERT INTO LOCK (Id,TS,InThread,Trace,Lock,Type,State,Success,LockIsThis,LockIsClass) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" };
 	private final PreparedStatement[] statements = new PreparedStatement[queries.length];
+	private final int[] counts = new int[queries.length];
 
 	static class State {
 		IntrinsicLockDurationState _lockState = IntrinsicLockDurationState.IDLE;
@@ -251,10 +252,20 @@ public final class IntrinsicLockDurationRowInserter {
 					f_cyclePS.setTimestamp(idx++, e.first);
 					f_cyclePS.setTimestamp(idx++, e.last);
 					if (doInsert) {
-						f_cyclePS.executeUpdate();
+					f_cyclePS.addBatch();
+					if (++counts[LOCK_CYCLE] == 10000) {
+						f_cyclePS.executeBatch();
+						counts[LOCK_CYCLE] = 0;
+					}
 					}
 				}
 				compId++;
+			}
+		}
+		for (int i = 0; i < queries.length; i++) {
+			if (counts[i] > 0) {
+				statements[i].executeBatch();
+				counts[i] = 0;
 			}
 		}
 	}
@@ -574,8 +585,10 @@ public final class IntrinsicLockDurationRowInserter {
 
 			f_ps.setLong(idx++, (1000000000 * secs) + nanos);
 			f_ps.setString(idx++, state.toString());
-			if (doInsert) {
-				f_ps.executeUpdate();
+			f_ps.addBatch();
+			if (++counts[LOCK_DURATION] == 10000) {
+				f_ps.executeBatch();
+				counts[LOCK_DURATION] = 0;
 			}
 		} catch (final SQLException e) {
 			SLLogger.getLogger().log(Level.SEVERE,
@@ -592,8 +605,10 @@ public final class IntrinsicLockDurationRowInserter {
 			f_heldLockPS.setLong(idx++, lock);
 			f_heldLockPS.setLong(idx++, acquired);
 			f_heldLockPS.setLong(idx++, thread);
-			if (doInsert) {
-				f_heldLockPS.executeUpdate();
+			f_heldLockPS.addBatch();
+			if (++counts[LOCKS_HELD] == 10000) {
+				f_heldLockPS.executeBatch();
+				counts[LOCKS_HELD] = 0;
 			}
 		} catch (final SQLException e) {
 			SLLogger.getLogger().log(Level.SEVERE, "Insert failed: ILOCKSHELD",
@@ -638,8 +653,10 @@ public final class IntrinsicLockDurationRowInserter {
 			f_threadStatusPS.setInt(idx++, blocking);
 			f_threadStatusPS.setInt(idx++, holding);
 			f_threadStatusPS.setInt(idx++, waiting);
-			if (doInsert) {
-				f_threadStatusPS.executeUpdate();
+			f_threadStatusPS.addBatch();
+			if (++counts[THREAD_STATS] == 10000) {
+				f_threadStatusPS.executeBatch();
+				counts[THREAD_STATS] = 0;
 			}
 		} catch (final SQLException e) {
 			SLLogger.getLogger().log(Level.SEVERE,
@@ -681,8 +698,10 @@ public final class IntrinsicLockDurationRowInserter {
 		JDBCUtils.setNullableBoolean(idx++, ps, success);
 		JDBCUtils.setNullableBoolean(idx++, ps, lockIsThis);
 		JDBCUtils.setNullableBoolean(idx++, ps, lockIsClass);
-		if (doInsert) {
-			ps.executeUpdate();
+		ps.addBatch();
+		if (++counts[INSERT_LOCK] == 10000) {
+			ps.executeBatch();
+			counts[INSERT_LOCK] = 0;
 		}
 		return f_lockId;
 	}

@@ -22,6 +22,7 @@ public abstract class ReferenceDefinition extends AbstractPrep {
 
 	private PreparedStatement f_ps;
 	private ScanRawFilePreScan preScan;
+	private int count;
 
 	public final void parse(final PreppedAttributes attributes)
 			throws SQLException {
@@ -70,8 +71,12 @@ public abstract class ReferenceDefinition extends AbstractPrep {
 				f_ps.setNull(idx++, Types.VARCHAR);
 			}
 			f_ps.setString(idx++, getFlag());
-			if (doInsert) {
-				f_ps.executeUpdate();
+						if (doInsert) {
+			f_ps.addBatch();
+			if (++count == 10000) {
+				f_ps.executeBatch();
+				count = 0;
+			}
 			}
 		}
 	}
@@ -91,6 +96,10 @@ public abstract class ReferenceDefinition extends AbstractPrep {
 
 	@Override
 	public void flush(final long endTime) throws SQLException {
+		if (count > 0) {
+			f_ps.executeBatch();
+		}
+		count = 0;
 		f_ps.close();
 		super.flush(endTime);
 	}

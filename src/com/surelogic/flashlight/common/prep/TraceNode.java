@@ -14,6 +14,7 @@ import com.surelogic._flashlight.common.PreppedAttributes;
 public final class TraceNode extends AbstractPrep {
 
 	private PreparedStatement f_ps;
+	private int count;
 
 	public String getXMLElementName() {
 		return EventType.Trace_Node.getLabel();
@@ -30,7 +31,11 @@ public final class TraceNode extends AbstractPrep {
 		f_ps.setLong(idx++, attributes.getLong(SITE_ID));
 		f_ps.setLong(idx++, parent);
 		if (doInsert) {
-			f_ps.execute();
+		f_ps.addBatch();
+		if (++count == 10000) {
+			f_ps.executeBatch();
+			count = 0;
+		}
 		}
 	}
 
@@ -45,6 +50,10 @@ public final class TraceNode extends AbstractPrep {
 
 	@Override
 	public void flush(final long endTime) throws SQLException {
+		if (count > 0) {
+			f_ps.executeBatch();
+		}
+		count = 0;
 		super.flush(endTime);
 		f_ps.close();
 	}

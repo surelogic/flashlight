@@ -66,6 +66,7 @@ public final class FieldDefinition extends AbstractPrep {
 				f_ps.addBatch();
 				if (++count == 10000) {
 					f_ps.executeBatch();
+					count = 0;
 				}
 			}
 		}

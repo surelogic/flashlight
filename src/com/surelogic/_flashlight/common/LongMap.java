@@ -231,6 +231,28 @@ public class LongMap<T> { //extends AbstractMap<Long,T> {
 		};
 	}
 
+	public Iterable<T> values() {
+		final Iterator<Map.Entry<Long, T>> entries = entrySet().iterator();
+		return new Iterable<T>() {
+			public Iterator<T> iterator() {				
+				return new Iterator<T>() {
+					public boolean hasNext() {
+						return entries.hasNext();
+					}
+
+					public T next() {
+						Map.Entry<Long, T> e = entries.next();
+						return e.getValue();
+					}
+
+					public void remove() {
+						throw new UnsupportedOperationException();
+					}					
+				};
+			}			
+		};
+	}
+		
 	public int size() {
 		return size;
 	}

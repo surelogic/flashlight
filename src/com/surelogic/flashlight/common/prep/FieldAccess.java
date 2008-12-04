@@ -66,7 +66,7 @@ public abstract class FieldAccess extends Event {
 			final long trace, final long field, final long receiver,
 			final boolean underConstruction) throws SQLException {
 		int idx = 1;
-		f_ps.setTimestamp(idx++, getTimestamp(nanoTime));
+		f_ps.setTimestamp(idx++, getTimestamp(nanoTime), now);
 		f_ps.setLong(idx++, inThread);
 		f_ps.setLong(idx++, trace);
 		f_ps.setLong(idx++, field);

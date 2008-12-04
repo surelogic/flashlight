@@ -88,7 +88,7 @@ public final class FlashlightDBConnection extends DerbyConnection {
 		// TODO we may want to consider doing this for all implementors of
 		// DerbyConnection
 		loggedBootAndCheckSchema();
-		return super.getConnection();
+		return DriverManager.getConnection(getConnectionURL());
 	}
 
 }

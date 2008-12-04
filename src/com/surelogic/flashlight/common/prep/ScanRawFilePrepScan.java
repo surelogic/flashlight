@@ -14,7 +14,7 @@ import com.surelogic._flashlight.common.PreppedAttributes;
 import com.surelogic.common.jobs.SLProgressMonitor;
 
 public final class ScanRawFilePrepScan extends AbstractDataScan {
-
+	private int f_elementCount = 0;
 	final Connection f_c;
 	final Map<String, IPrep> f_elementHandlers;
 	final Set<String> f_notParsed = new HashSet<String>();
@@ -40,15 +40,21 @@ public final class ScanRawFilePrepScan extends AbstractDataScan {
 	@Override
 	public void startElement(final String uri, final String localName,
 			final String name, final Attributes attributes) throws SAXException {
-		/*
-		 * Show progress to the user
-		 */
-		f_monitor.worked(1);
-		/*
-		 * Check for a user cancel.
-		 */
-		if (f_monitor.isCanceled()) {
-			throw new SAXException("cancelled");
+		f_elementCount++;
+
+		// modified to try and reduce computation overhead)
+		if ((f_elementCount & 0x1f) == 0x1f) {
+			/*
+			 * Show progress to the user
+			 */
+			f_monitor.worked(32);
+			
+			/*
+			 * Check for a user cancel.
+			 */
+			if (f_monitor.isCanceled()) {
+				throw new SAXException("canceled");
+			}
 		}
 		final PreppedAttributes attrs = preprocessAttributes(name, attributes);
 		final IPrep element = f_elementHandlers.get(name);

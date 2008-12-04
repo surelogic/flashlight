@@ -69,7 +69,6 @@ public class ReadWriteLock extends Event {
 				f_ps.executeBatch();
 				count = 0;
 			}
-			f_ps.execute();
 		}
 	}
 

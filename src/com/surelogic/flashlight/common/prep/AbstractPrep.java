@@ -11,6 +11,8 @@ public abstract class AbstractPrep implements IPrep {
 	protected static final Logger LOG = SLLogger
 			.getLoggerFor(AbstractPrep.class);
 
+	protected static final boolean doInsert = true;
+	
 	public void setup(final Connection c, final Timestamp start,
 			final long startNS, final ScanRawFilePreScan scanResults)
 			throws SQLException {

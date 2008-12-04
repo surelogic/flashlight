@@ -77,7 +77,9 @@ public abstract class FieldAccess extends Event {
 			f_ps.setLong(idx++, receiver);
 		}
 		f_ps.setString(idx++, underConstruction ? "Y" : "N");
-		f_ps.executeUpdate();
+		if (doInsert) {
+			f_ps.executeUpdate();
+		}
 	}
 
 	@Override

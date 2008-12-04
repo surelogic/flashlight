@@ -61,7 +61,9 @@ public final class FieldDefinition extends AbstractPrep {
 			f_ps.setString(idx++, isStatic ? "Y" : "N");
 			f_ps.setString(idx++, isFinal ? "Y" : "N");
 			f_ps.setString(idx++, isVolatile ? "Y" : "N");
-			f_ps.executeUpdate();
+			if (doInsert) {
+				f_ps.executeUpdate();
+			}
 		}
 	}
 

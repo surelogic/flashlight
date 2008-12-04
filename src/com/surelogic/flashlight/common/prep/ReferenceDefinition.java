@@ -70,7 +70,9 @@ public abstract class ReferenceDefinition extends AbstractPrep {
 				f_ps.setNull(idx++, Types.VARCHAR);
 			}
 			f_ps.setString(idx++, getFlag());
-			f_ps.executeUpdate();
+			if (doInsert) {
+				f_ps.executeUpdate();
+			}
 		}
 	}
 

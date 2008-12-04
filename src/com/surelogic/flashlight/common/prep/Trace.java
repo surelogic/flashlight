@@ -23,7 +23,9 @@ public final class Trace extends AbstractPrep {
 		f_ps.setLong(idx++, id);
 		f_ps.setLong(idx++, site);
 		f_ps.setLong(idx++, parent);
-		f_ps.execute();
+		if (doInsert) {
+			f_ps.execute();
+		}
 	}
 
 	public String getXMLElementName() {

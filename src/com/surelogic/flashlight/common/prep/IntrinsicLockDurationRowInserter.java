@@ -29,6 +29,7 @@ public final class IntrinsicLockDurationRowInserter {
 	private static final int THREAD_STATS = 2;
 	private static final int LOCK_CYCLE = 3;
 	private static final int INSERT_LOCK = 4;
+	private static final boolean doInsert = AbstractPrep.doInsert;
 
 	private static final String[] queries = {
 			"INSERT INTO LOCKDURATION (InThread,Lock,Start,StartEvent,Stop,StopEvent,Duration,State) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
@@ -249,7 +250,9 @@ public final class IntrinsicLockDurationRowInserter {
 					f_cyclePS.setLong(idx++, e.count);
 					f_cyclePS.setTimestamp(idx++, e.first);
 					f_cyclePS.setTimestamp(idx++, e.last);
-					f_cyclePS.executeUpdate();
+					if (doInsert) {
+						f_cyclePS.executeUpdate();
+					}
 				}
 				compId++;
 			}
@@ -571,7 +574,9 @@ public final class IntrinsicLockDurationRowInserter {
 
 			f_ps.setLong(idx++, (1000000000 * secs) + nanos);
 			f_ps.setString(idx++, state.toString());
-			f_ps.executeUpdate();
+			if (doInsert) {
+				f_ps.executeUpdate();
+			}
 		} catch (final SQLException e) {
 			SLLogger.getLogger().log(Level.SEVERE,
 					"Insert failed: ILOCKDURATION", e);
@@ -587,7 +592,9 @@ public final class IntrinsicLockDurationRowInserter {
 			f_heldLockPS.setLong(idx++, lock);
 			f_heldLockPS.setLong(idx++, acquired);
 			f_heldLockPS.setLong(idx++, thread);
-			f_heldLockPS.executeUpdate();
+			if (doInsert) {
+				f_heldLockPS.executeUpdate();
+			}
 		} catch (final SQLException e) {
 			SLLogger.getLogger().log(Level.SEVERE, "Insert failed: ILOCKSHELD",
 					e);
@@ -631,7 +638,9 @@ public final class IntrinsicLockDurationRowInserter {
 			f_threadStatusPS.setInt(idx++, blocking);
 			f_threadStatusPS.setInt(idx++, holding);
 			f_threadStatusPS.setInt(idx++, waiting);
-			f_threadStatusPS.executeUpdate();
+			if (doInsert) {
+				f_threadStatusPS.executeUpdate();
+			}
 		} catch (final SQLException e) {
 			SLLogger.getLogger().log(Level.SEVERE,
 					"Insert failed: ILOCKTHREADSTATS", e);
@@ -672,7 +681,9 @@ public final class IntrinsicLockDurationRowInserter {
 		JDBCUtils.setNullableBoolean(idx++, ps, success);
 		JDBCUtils.setNullableBoolean(idx++, ps, lockIsThis);
 		JDBCUtils.setNullableBoolean(idx++, ps, lockIsClass);
-		ps.executeUpdate();
+		if (doInsert) {
+			ps.executeUpdate();
+		}
 		return f_lockId;
 	}
 }

@@ -29,7 +29,9 @@ public final class TraceNode extends AbstractPrep {
 		f_ps.setLong(idx++, id);
 		f_ps.setLong(idx++, attributes.getLong(SITE_ID));
 		f_ps.setLong(idx++, parent);
-		f_ps.execute();
+		if (doInsert) {
+			f_ps.execute();
+		}
 	}
 
 	@Override

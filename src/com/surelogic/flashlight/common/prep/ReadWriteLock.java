@@ -61,7 +61,9 @@ public class ReadWriteLock extends Event {
 		f_ps.setLong(idx++, id);
 		f_ps.setLong(idx++, readLock);
 		f_ps.setLong(idx++, writeLock);
-		f_ps.execute();
+		if (doInsert) {
+			f_ps.execute();
+		}
 	}
 
 	@Override

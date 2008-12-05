@@ -13,7 +13,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -41,22 +40,6 @@ public final class Store {
 	 * thread.
 	 */
 	private static boolean f_flashlightIsNotInitialized = true;
-
-	/**
-	 * Flashlight can be turned off by defining the system property
-	 * <code>FL_OFF</code> (as any value). For example, adding
-	 * <code>-DFL_OFF</code> as and argument to the Java virtual machine will
-	 * turn Flashlight off.
-	 * <P>
-	 * This field is also used to indicate that all collection has been
-	 * terminated by being set to <code>true</code> by the {@link #shutdown()}
-	 * method.
-	 * <P>
-	 * It is an invariant of this field that it is monotonic towards
-	 * <code>true</code>.
-	 */
-	private static final AtomicBoolean FL_OFF = new AtomicBoolean(
-			StoreConfiguration.isOff());
 
 	/**
 	 * Output encoding.
@@ -281,7 +264,7 @@ public final class Store {
 	 * Flashlight startup code used to get everything running.
 	 */
 	static {
-		if (IdConstants.enableFlashlightToggle || !FL_OFF.get()) {
+		if (IdConstants.enableFlashlightToggle || !StoreDelegate.FL_OFF.get()) {
 			/*
 			 * Initialize final static fields. If Flashlight is off these fields
 			 * are all set to null to save memory.
@@ -503,14 +486,11 @@ public final class Store {
 	 * sure the store is loaded and initialized before creating phantom objects.
 	 */
   public static ClassPhantomReference getClassPhantom(Class<?> c) {
-	  return Phantom.ofClass(c);
+	  return StoreDelegate.getClassPhantom(c);
   }
 	
   public static ObjectPhantomReference getObjectPhantom(Object o, long id) {
-	  if (IdConstants.enableFlashlightToggle || !FL_OFF.get()) {
-		  return Phantom.ofObject(o, id);
-	  }
-	  return null;
+    return StoreDelegate.getObjectPhantom(o, id);
   }
   
   /**
@@ -532,7 +512,7 @@ public final class Store {
   public static void instanceFieldAccess(
       final boolean read, final Object receiver, final int fieldID,
       final long siteId) {
-	  if (FL_OFF.get())
+	  if (StoreDelegate.FL_OFF.get())
 		  return;
 	  if (!IdConstants.useFieldAccesses) {
 		  return;
@@ -606,7 +586,7 @@ public final class Store {
   public static void staticFieldAccess(final boolean read,
 		  final ClassPhantomReference ownerClass, final int fieldID,
 		  final long siteId) {
-	  if (FL_OFF.get())
+	  if (StoreDelegate.FL_OFF.get())
 		  return;
 	  if (!IdConstants.useFieldAccesses) {
 		  return;
@@ -678,7 +658,7 @@ public final class Store {
 	  }	  
     if (f_flashlightIsNotInitialized)
       return;
-    if (FL_OFF.get())
+    if (StoreDelegate.FL_OFF.get())
       return;
     final State flState = tl_withinStore.get();
     if (flState.inside)
@@ -746,7 +726,7 @@ public final class Store {
 	  }	  
     if (f_flashlightIsNotInitialized)
       return;
-    if (FL_OFF.get())
+    if (StoreDelegate.FL_OFF.get())
       return;
     final State flState = tl_withinStore.get();
     if (flState.inside)
@@ -807,7 +787,7 @@ public final class Store {
 	  }
 		if (f_flashlightIsNotInitialized)
 			return;
-		if (FL_OFF.get())
+		if (StoreDelegate.FL_OFF.get())
 			return;
 		final State flState = tl_withinStore.get();
 		if (flState.inside)
@@ -883,7 +863,7 @@ public final class Store {
 		
 		if (f_flashlightIsNotInitialized)
 			return;
-		if (FL_OFF.get())
+		if (StoreDelegate.FL_OFF.get())
 			return;
 		final State flState = tl_withinStore.get();
 		if (flState.inside)
@@ -935,7 +915,7 @@ public final class Store {
 	    final boolean before, final Object receiver, final long siteId) {
 		if (f_flashlightIsNotInitialized)
 			return;
-		if (FL_OFF.get())
+		if (StoreDelegate.FL_OFF.get())
 			return;
 		final State flState = tl_withinStore.get();
 		if (flState.inside)
@@ -993,7 +973,7 @@ public final class Store {
 	 */
 	public static void methodCall(
 	    final boolean before, final Object receiver, final long siteId) {
-		if (FL_OFF.get())
+		if (StoreDelegate.FL_OFF.get())
 			return;
 		
 		if (!IdConstants.useTraces) {
@@ -1073,7 +1053,7 @@ public final class Store {
 		}
 		if (f_flashlightIsNotInitialized)
 			return;
-		if (FL_OFF.get())
+		if (StoreDelegate.FL_OFF.get())
 			return;
 		final State flState = tl_withinStore.get();
 		if (flState.inside)
@@ -1121,7 +1101,7 @@ public final class Store {
 		}		
 		if (f_flashlightIsNotInitialized)
 			return;
-		if (FL_OFF.get())
+		if (StoreDelegate.FL_OFF.get())
 			return;
 		final State flState = tl_withinStore.get();
 		if (flState.inside)
@@ -1182,7 +1162,7 @@ public final class Store {
 		}
 		if (f_flashlightIsNotInitialized)
 			return;
-		if (FL_OFF.get())
+		if (StoreDelegate.FL_OFF.get())
 			return;
 		final State flState = tl_withinStore.get();
 		if (flState.inside)
@@ -1234,7 +1214,7 @@ public final class Store {
 		}
 		if (f_flashlightIsNotInitialized)
 			return;
-		if (FL_OFF.get())
+		if (StoreDelegate.FL_OFF.get())
 			return;
 		final State flState = tl_withinStore.get();
 		if (flState.inside)
@@ -1284,7 +1264,7 @@ public final class Store {
 		}
 		if (f_flashlightIsNotInitialized)
 			return;
-		if (FL_OFF.get())
+		if (StoreDelegate.FL_OFF.get())
 			return;
 		final State flState = tl_withinStore.get();
 		if (flState.inside)
@@ -1339,7 +1319,7 @@ public final class Store {
 		}
 		if (f_flashlightIsNotInitialized)
 			return;
-		if (FL_OFF.get())
+		if (StoreDelegate.FL_OFF.get())
 			return;
 		final State flState = tl_withinStore.get();
 		if (flState.inside)
@@ -1400,7 +1380,7 @@ public final class Store {
 		}
 		if (f_flashlightIsNotInitialized)
 			return;
-		if (FL_OFF.get())
+		if (StoreDelegate.FL_OFF.get())
 			return;
 		final State flState = tl_withinStore.get();
 		if (flState.inside)
@@ -1461,7 +1441,7 @@ public final class Store {
 		 * The below getAndSet(true) ensures that only one thread shuts down
 		 * Flashlight.
 		 */
-		if (FL_OFF.getAndSet(true))
+		if (StoreDelegate.FL_OFF.getAndSet(true))
 			return;
 
 		/*

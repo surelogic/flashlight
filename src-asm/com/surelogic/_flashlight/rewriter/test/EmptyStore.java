@@ -3,6 +3,7 @@ package com.surelogic._flashlight.rewriter.test;
 import com.surelogic._flashlight.ClassPhantomReference;
 import com.surelogic._flashlight.ObjectPhantomReference;
 import com.surelogic._flashlight.Phantom;
+import com.surelogic._flashlight.StoreDelegate;
 
 public class EmptyStore {
   /**
@@ -11,11 +12,11 @@ public class EmptyStore {
    * sure the store is loaded and initialized before creating phantom objects.
    */
   public static ClassPhantomReference getClassPhantom(Class<?> c) {
-    return Phantom.ofClass(c);
+    return StoreDelegate.getClassPhantom(c);
   }
   
   public static ObjectPhantomReference getObjectPhantom(Object o, long id) {
-    return Phantom.ofObject(o, id);
+    return StoreDelegate.getObjectPhantom(o, id);
   }
 
   public static void instanceFieldAccess(

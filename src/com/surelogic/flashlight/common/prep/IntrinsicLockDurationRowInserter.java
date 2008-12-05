@@ -8,6 +8,7 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 
+import org.jgrapht.DirectedGraph;
 import org.jgrapht.alg.*;
 import org.jgrapht.graph.*;
 
@@ -223,6 +224,136 @@ public final class IntrinsicLockDurationRowInserter {
 	private final List<RWLock> rwLocks = new ArrayList<RWLock>();	
 	private final LongMap<LongMap<Edge>> edgeStorage = new LongMap<LongMap<Edge>>();
 	
+	private static class LockGraph implements DirectedGraph<Long, Edge> {
+		public int inDegreeOf(Long vertex) {
+			throw new UnsupportedOperationException();
+		}
+
+		public Set<Edge> incomingEdgesOf(Long vertex) {
+			throw new UnsupportedOperationException();
+		}
+
+		public int outDegreeOf(Long vertex) {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+
+		public Set<Edge> outgoingEdgesOf(Long vertex) {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public Edge addEdge(Long sourceVertex, Long targetVertex) {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public boolean addEdge(Long sourceVertex, Long targetVertex, Edge e) {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		public boolean addVertex(Long v) {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		public boolean containsEdge(Edge e) {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		public boolean containsEdge(Long sourceVertex, Long targetVertex) {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		public boolean containsVertex(Long v) {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		public Set<Edge> edgeSet() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public Set<Edge> edgesOf(Long vertex) {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public Set<Edge> getAllEdges(Long sourceVertex, Long targetVertex) {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public Edge getEdge(Long sourceVertex, Long targetVertex) {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public org.jgrapht.EdgeFactory<Long, Edge> getEdgeFactory() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public Long getEdgeSource(Edge e) {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public Long getEdgeTarget(Edge e) {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public double getEdgeWeight(Edge e) {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+
+		public boolean removeAllEdges(Collection<? extends Edge> edges) {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		public Set<Edge> removeAllEdges(Long sourceVertex, Long targetVertex) {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public boolean removeAllVertices(Collection<? extends Long> vertices) {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		public boolean removeEdge(Edge e) {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		public Edge removeEdge(Long sourceVertex, Long targetVertex) {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public boolean removeVertex(Long v) {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		public Set<Long> vertexSet() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+	}
+	
+	private static class GraphInfo {
+		final LongSet destinations = new LongSet();
+		final LongSet rwSources = new LongSet();
+	}
+	
 	/**
 	 * Vertices = locks Edge weight = # of times the edge appears
 	 */
@@ -246,8 +377,9 @@ public final class IntrinsicLockDurationRowInserter {
 
 		handleNonIdleFinalState(endTime);
 
+		GraphInfo info = null;
 		if (useEdgeStorage) {
-			createGraphFromStorage();
+			info = createGraphFromStorage();
 		}
 		final CycleDetector<Long, Edge> detector = new CycleDetector<Long, Edge>(
 				lockGraph);
@@ -262,10 +394,19 @@ public final class IntrinsicLockDurationRowInserter {
 				// (since the library's inefficient at iterating over edges)
 				for(Long src : comp) {
 					final LongMap<Edge> edges = edgeStorage.get(src);
+					if (edges == null) {
+						/*
+						System.out.println("Destination: "+info.destinations.contains(src));
+						System.out.println("RW lock:     "+info.rwSources.contains(src));
+						*/
+						// Ignorable because it's (probably) part of a RW lock
+						continue;
+					}
 					// Only look at edges in the component
 					for(Long dest : comp) {						
 						Edge e = edges.get(dest);
 						if (e != null) {
+							//System.out.println("Edge from "+e.lockHeld+" -> "+e.lockAcquired);
 							outputCycleEdge(f_cyclePS, compId, e);
 						}
 					}
@@ -300,36 +441,36 @@ public final class IntrinsicLockDurationRowInserter {
 		}
 	}
 
-	private void createGraphFromStorage() {
+	private GraphInfo createGraphFromStorage() {
 		int edges = 0;
 		int omitted = 0;
-
+		final GraphInfo info = new GraphInfo();
+		
 		// Compute the set of destinations (used for pruning)
-		final LongSet destinations = new LongSet();
 		for(Map.Entry<Long,LongMap<Edge>> entry1 : edgeStorage.entrySet()) {				
 			for(Map.Entry<Long,Edge> entry2 : entry1.getValue().entrySet()) {
 				LongMap.Entry<Edge> e = (LongMap.Entry<Edge>) entry2;
-				destinations.add(e.key());
+				info.destinations.add(e.key());
 			}
 		}
 		
 		// Add dependency edges between the read and write locks
-		final LongSet rwSources = new LongSet();
 		for(RWLock l : rwLocks) {
+			//System.out.println("RW lock "+l.id+" = "+l.read+", "+l.write);
 			lockGraph.addVertex(l.read);
 			lockGraph.addVertex(l.write);
 			// Track which RW locks are used as edge sources
 			if (edgeStorage.get(l.read) != null ||
 			    edgeStorage.get(l.write) != null) {
-				rwSources.add(l.read);
-				rwSources.add(l.write);
+				info.rwSources.add(l.read);
+				info.rwSources.add(l.write);
 			}			
 			// Modify destinations to include RW lock "duals"
-			if (destinations.contains(l.read)) {
-				destinations.add(l.write);
+			if (info.destinations.contains(l.read)) {
+				info.destinations.add(l.write);
 			}
-			else if (destinations.contains(l.write)) {
-				destinations.add(l.read);
+			else if (info.destinations.contains(l.write)) {
+				info.destinations.add(l.read);
 			}
 			
 			final Edge addedEdge1 = lockGraph.addEdge(l.read, l.write);
@@ -348,7 +489,7 @@ public final class IntrinsicLockDurationRowInserter {
 			Long source = null;
 			
 			// Note: destinations already compensates for some of these being RW locks			
-			if (!destinations.contains(src)) {				
+			if (!info.destinations.contains(src)) {				
 				// The source is a root lock, so we can omit its edges
 				// (e.g. always the first lock acquired)
 				int num = e1.getValue().size();
@@ -360,7 +501,7 @@ public final class IntrinsicLockDurationRowInserter {
 			for(Map.Entry<Long,Edge> entry2 : entry1.getValue().entrySet()) {
 				final LongMap.Entry<Edge> e2 = (LongMap.Entry<Edge>) entry2;
 				final long dest = e2.key();
-				if (edgeStorage.get(dest) == null && !rwSources.contains(dest)) {					
+				if (edgeStorage.get(dest) == null && !info.rwSources.contains(dest)) {					
 					// The destination is a leaf lock, so we can omit it
 					// (e.g. no more locks are acquired after holding it)
 					
@@ -382,6 +523,7 @@ public final class IntrinsicLockDurationRowInserter {
 		}
 		//edgeStorage.clear();
 		System.out.println("Total edges = "+edges+", omitted = "+omitted);
+		return info;
 	}
 
 	private void handleNonIdleFinalState(final Timestamp endTime)

@@ -224,131 +224,6 @@ public final class IntrinsicLockDurationRowInserter {
 	private final List<RWLock> rwLocks = new ArrayList<RWLock>();	
 	private final LongMap<LongMap<Edge>> edgeStorage = new LongMap<LongMap<Edge>>();
 	
-	private static class LockGraph implements DirectedGraph<Long, Edge> {
-		public int inDegreeOf(Long vertex) {
-			throw new UnsupportedOperationException();
-		}
-
-		public Set<Edge> incomingEdgesOf(Long vertex) {
-			throw new UnsupportedOperationException();
-		}
-
-		public int outDegreeOf(Long vertex) {
-			// TODO Auto-generated method stub
-			return 0;
-		}
-
-		public Set<Edge> outgoingEdgesOf(Long vertex) {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		public Edge addEdge(Long sourceVertex, Long targetVertex) {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		public boolean addEdge(Long sourceVertex, Long targetVertex, Edge e) {
-			// TODO Auto-generated method stub
-			return false;
-		}
-
-		public boolean addVertex(Long v) {
-			// TODO Auto-generated method stub
-			return false;
-		}
-
-		public boolean containsEdge(Edge e) {
-			// TODO Auto-generated method stub
-			return false;
-		}
-
-		public boolean containsEdge(Long sourceVertex, Long targetVertex) {
-			// TODO Auto-generated method stub
-			return false;
-		}
-
-		public boolean containsVertex(Long v) {
-			// TODO Auto-generated method stub
-			return false;
-		}
-
-		public Set<Edge> edgeSet() {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		public Set<Edge> edgesOf(Long vertex) {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		public Set<Edge> getAllEdges(Long sourceVertex, Long targetVertex) {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		public Edge getEdge(Long sourceVertex, Long targetVertex) {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		public org.jgrapht.EdgeFactory<Long, Edge> getEdgeFactory() {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		public Long getEdgeSource(Edge e) {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		public Long getEdgeTarget(Edge e) {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		public double getEdgeWeight(Edge e) {
-			// TODO Auto-generated method stub
-			return 0;
-		}
-
-		public boolean removeAllEdges(Collection<? extends Edge> edges) {
-			// TODO Auto-generated method stub
-			return false;
-		}
-
-		public Set<Edge> removeAllEdges(Long sourceVertex, Long targetVertex) {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		public boolean removeAllVertices(Collection<? extends Long> vertices) {
-			// TODO Auto-generated method stub
-			return false;
-		}
-
-		public boolean removeEdge(Edge e) {
-			// TODO Auto-generated method stub
-			return false;
-		}
-
-		public Edge removeEdge(Long sourceVertex, Long targetVertex) {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		public boolean removeVertex(Long v) {
-			// TODO Auto-generated method stub
-			return false;
-		}
-
-		public Set<Long> vertexSet() {
-			// TODO Auto-generated method stub
-			return null;
-		}
-	}
-	
 	private static class GraphInfo {
 		final LongSet destinations = new LongSet();
 		final LongSet rwSources = new LongSet();
@@ -377,6 +252,7 @@ public final class IntrinsicLockDurationRowInserter {
 
 		handleNonIdleFinalState(endTime);
 
+		// FIX replace the graph w/ own implementation from CLR 23.5
 		GraphInfo info = null;
 		if (useEdgeStorage) {
 			info = createGraphFromStorage();

@@ -1615,7 +1615,7 @@ final class FlashlightMethodRewriter implements MethodVisitor {
       methodCall.popReceiverAndArguments(mv);
       instrumenter.instrumentMethodCall();
       
-      updateStackDepthDelta(7);
+      updateStackDepthDelta(5);
   	} else {
       /* Create the wrapper method information and add it to the list of wrappers */
       final MethodCallWrapper wrapper;

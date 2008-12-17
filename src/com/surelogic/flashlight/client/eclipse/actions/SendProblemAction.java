@@ -7,6 +7,7 @@ import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 
 import com.surelogic.common.eclipse.SWTUtility;
 import com.surelogic.common.eclipse.dialogs.SendProblemReportDialog;
+import com.surelogic.common.images.CommonImages;
 
 public final class SendProblemAction implements IWorkbenchWindowActionDelegate {
 
@@ -19,7 +20,8 @@ public final class SendProblemAction implements IWorkbenchWindowActionDelegate {
 	}
 
 	public void run(IAction action) {
-		SendProblemReportDialog.open(SWTUtility.getShell(), "Flashlight");
+		SendProblemReportDialog.open(SWTUtility.getShell(), "Flashlight",
+				CommonImages.IMG_FL_LOGO);
 	}
 
 	public void selectionChanged(IAction action, ISelection selection) {

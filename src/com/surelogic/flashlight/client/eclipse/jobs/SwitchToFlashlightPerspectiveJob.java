@@ -9,7 +9,7 @@ import com.surelogic.common.eclipse.SWTUtility;
 import com.surelogic.common.eclipse.ViewUtility;
 import com.surelogic.common.eclipse.jobs.SLUIJob;
 import com.surelogic.flashlight.client.eclipse.dialogs.ConfirmPerspectiveSwitch;
-import com.surelogic.flashlight.client.eclipse.perspectives.FlashlightPerspectiveFactory;
+import com.surelogic.flashlight.client.eclipse.perspectives.FlashlightPerspective;
 import com.surelogic.flashlight.common.model.RunManager;
 
 public final class SwitchToFlashlightPerspectiveJob extends SLUIJob {
@@ -33,12 +33,12 @@ public final class SwitchToFlashlightPerspectiveJob extends SLUIJob {
 		 * are not already in it.
 		 */
 		final boolean inFlashlightPerspective = ViewUtility
-				.isPerspectiveOpen(FlashlightPerspectiveFactory.class.getName());
+				.isPerspectiveOpen(FlashlightPerspective.class.getName());
 		if (!inFlashlightPerspective) {
 			final boolean change = ConfirmPerspectiveSwitch
 					.toFlashlight(SWTUtility.getShell());
 			if (change) {
-				ViewUtility.showPerspective(FlashlightPerspectiveFactory.class
+				ViewUtility.showPerspective(FlashlightPerspective.class
 						.getName());
 			}
 		}

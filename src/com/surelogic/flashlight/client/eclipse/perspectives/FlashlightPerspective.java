@@ -10,7 +10,7 @@ import com.surelogic.flashlight.client.eclipse.views.adhoc.QueryResultsView;
 import com.surelogic.flashlight.client.eclipse.views.run.RunView;
 import com.surelogic.flashlight.client.eclipse.views.source.HistoricalSourceView;
 
-public final class FlashlightPerspectiveFactory implements IPerspectiveFactory {
+public final class FlashlightPerspective implements IPerspectiveFactory {
 
 	public void createInitialLayout(IPageLayout layout) {
 		final String editorArea = layout.getEditorArea();

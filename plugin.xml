@@ -60,14 +60,14 @@
 	<extension point="org.eclipse.ui.perspectives">
 		<perspective name="Flashlight"
 			icon="platform:/plugin/com.surelogic.common/src/com/surelogic/common/images/fl_logo.gif"
-			class="com.surelogic.flashlight.client.eclipse.perspectives.FlashlightPerspectiveFactory"
-			id="com.surelogic.flashlight.client.eclipse.perspectives.FlashlightPerspectiveFactory">
+			class="com.surelogic.flashlight.client.eclipse.perspectives.FlashlightPerspective"
+			id="com.surelogic.flashlight.client.eclipse.perspectives.FlashlightPerspective">
 		</perspective>
 	</extension>
 
 	<extension point="org.eclipse.ui.perspectiveExtensions">
 		<perspectiveExtension
-			targetID="com.surelogic.flashlight.client.eclipse.perspectives.FlashlightPerspectiveFactory">
+			targetID="com.surelogic.flashlight.client.eclipse.perspectives.FlashlightPerspective">
 			<perspectiveShortcut id="org.eclipse.jdt.ui.JavaPerspective">
 			</perspectiveShortcut>
 			<viewShortcut
@@ -76,6 +76,14 @@
 			<viewShortcut
 				id="com.surelogic.flashlight.client.eclipse.views.source.HistoricalSourceView">
 			</viewShortcut>
+		</perspectiveExtension>
+	</extension>
+
+	<extension point="org.eclipse.ui.perspectiveExtensions">
+		<perspectiveExtension targetID="org.eclipse.jdt.ui.JavaPerspective">
+			<perspectiveShortcut
+				id="com.surelogic.flashlight.client.eclipse.perspectives.FlashlightPerspective">
+			</perspectiveShortcut>
 		</perspectiveExtension>
 	</extension>
 

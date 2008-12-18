@@ -6,7 +6,7 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 
 import com.surelogic.common.eclipse.ViewUtility;
-import com.surelogic.flashlight.client.eclipse.perspectives.FlashlightPerspectiveFactory;
+import com.surelogic.flashlight.client.eclipse.perspectives.FlashlightPerspective;
 
 public final class ShowFlashlightPerspectiveAction implements
 		IWorkbenchWindowActionDelegate {
@@ -20,7 +20,7 @@ public final class ShowFlashlightPerspectiveAction implements
 	}
 
 	public void run(IAction action) {
-		ViewUtility.showPerspective(FlashlightPerspectiveFactory.class.getName());
+		ViewUtility.showPerspective(FlashlightPerspective.class.getName());
 	}
 
 	public void selectionChanged(IAction action, ISelection selection) {

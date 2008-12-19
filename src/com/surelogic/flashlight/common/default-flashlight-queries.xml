@@ -105,10 +105,10 @@ ORDER BY A.TS ASC</query>
   <query id='Q0028' description='Show stack trace for a field access' display='true'>SELECT s.PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;, s.CLASSNAME &quot;Class__(&apos;class.gif&apos;)&quot;, s.INFILE &quot;File&quot;, s.LOCATION &quot;Location&quot;, s.ATLINE &quot;Line__(r)&quot;
 FROM TABLE (STACKTRACE(?ATRACE?)) s
 </query>
-  <query id='Q0027' description='Show stack trace for a lock acquisition' display='true'>SELECT s.PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;, s.CLASSNAME &quot;Class__(&apos;class.gif&apos;)&quot;, s.INFILE &quot;File&quot;, s.LOCATION &quot;Location&quot;, s.ATLINE &quot;Line__(r_)&quot;
+  <query id='Q0027' description='Show stack trace for a lock acquisition' display='true'>SELECT s.PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;, s.CLASSNAME &quot;Class__(&apos;class.gif&apos;)&quot;, s.INFILE &quot;File&quot;, s.LOCATION &quot;Location&quot;, s.ATLINE &quot;Line__(r)&quot;
 FROM TABLE (STACKTRACE(?LATRACE?)) s
 </query>
-  <query id='Q0013' description='Show stack trace for a lock event' display='true'>SELECT s.PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;, s.CLASSNAME &quot;Class__(&apos;class.gif&apos;)&quot;, s.INFILE &quot;File&quot;, s.LOCATION &quot;Location&quot;, s.ATLINE &quot;Line__(r_)&quot;
+  <query id='Q0013' description='Show stack trace for a lock event' display='true'>SELECT s.PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;, s.CLASSNAME &quot;Class__(&apos;class.gif&apos;)&quot;, s.INFILE &quot;File&quot;, s.LOCATION &quot;Location&quot;, s.ATLINE &quot;Line__(r)&quot;
 FROM TABLE (STACKTRACE(?LETRACE?)) s</query>
   <query id='Q0030' description='Show Tables'>select st.TABLENAME &quot;Table&quot;,sco.columnname &quot;COLUMN__|&quot;,sco.columndatatype,sco.autoincrementvalue,sco.autoincrementstart,sco.autoincrementinc
    from sys.sysschemas sc,sys.systables st,sys.syscolumns sco 
@@ -289,8 +289,8 @@ where ld.State = &apos;BLOCKING&apos;
   and le.AtLine=?AtLine?
 order by ld.Duration desc
   </query>
-  <query id='Q0009' description='Where does a thread hold a lock and acquire another?' display='true' display-at-root='true'>select lh.LockEvent &quot;LockEvent__(hide)&quot;, count(LockHeld) &quot;Number of Locks Already Held&quot;,
-  tho.ThreadName &quot;ThreadName&quot;, lo.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;, lo.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;, s.AtLine &quot;Line__(r)&quot;, le.trace &quot;LETRACE__(hide)&quot;
+  <query id='Q0009' description='Where does a thread hold a lock and acquire another?' display='true' display-at-root='true'>select count(LockHeld) &quot;Number of Locks Already Held&quot;,
+  tho.ThreadName &quot;ThreadName&quot;, lo.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;, lo.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;, s.AtLine &quot;Line__(r)&quot;, lh.LockEvent &quot;LockEvent__(hide)&quot;, le.trace &quot;LETRACE__(hide)&quot;
 from LOCKSHELD lh, LOCK le, TRACE tr, SITE s, OBJECT lo, OBJECT tho
 where lh.LockEvent = le.Id
   and tr.Id = le.Trace

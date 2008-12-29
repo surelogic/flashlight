@@ -12,8 +12,6 @@ import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.widgets.Display;
 
-import com.surelogic.flashlight.client.eclipse.Activator;
-
 public final class JavaSyntaxHighlighter {
 	private static final int NOT_FOUND = -1;
 
@@ -26,11 +24,13 @@ public final class JavaSyntaxHighlighter {
 	private final Color f_problemColor;
 
 	private final Color f_lineNumberColor;
-	
+
 	public JavaSyntaxHighlighter(final Display display) {
 		final IColorManager manager = JavaUI.getColorManager();
-		f_multiLineCommentColor = manager.getColor(IJavaColorConstants.JAVA_MULTI_LINE_COMMENT);
-		f_commentColor = manager.getColor(IJavaColorConstants.JAVA_SINGLE_LINE_COMMENT);
+		f_multiLineCommentColor = manager
+				.getColor(IJavaColorConstants.JAVA_MULTI_LINE_COMMENT);
+		f_commentColor = manager
+				.getColor(IJavaColorConstants.JAVA_SINGLE_LINE_COMMENT);
 		f_doubleQuoteColor = manager.getColor(IJavaColorConstants.JAVA_STRING);
 		f_keyWordColor = manager.getColor(IJavaColorConstants.JAVA_KEYWORD);
 		f_problemColor = display.getSystemColor(SWT.COLOR_RED);
@@ -40,13 +40,13 @@ public final class JavaSyntaxHighlighter {
 	private String text;
 	private int lineStart, lineEnd;
 	private ArrayList<StyleRange> f_result;
-	
+
 	public StyleRange[] computeRanges(String text) {
 		this.text = text;
 		f_result = new ArrayList<StyleRange>();
 		lineEnd = text.length();
-		highlightMultilineComment(0);		
-		
+		highlightMultilineComment(0);
+
 		lineStart = 0;
 		while (true) {
 			lineEnd = text.indexOf('\n', lineStart);
@@ -54,18 +54,18 @@ public final class JavaSyntaxHighlighter {
 				break;
 			}
 			findLineNumber(lineStart, true);
-			
+
 			final String line = text.substring(lineStart, lineEnd);
 			highlightComment(line, 0);
 			highlightQuotedText(line, 0);
 			for (String word : RESERVED_WORDS) {
 				highlightWord(line, word);
 			}
-			lineStart = lineEnd+1;		
+			lineStart = lineEnd + 1;
 		}
 		StyleRange[] ranges = f_result.toArray(new StyleRange[f_result.size()]);
 		f_result = null;
-		
+
 		Arrays.sort(ranges, new Comparator<StyleRange>() {
 			public int compare(StyleRange r1, StyleRange r2) {
 				return r1.start - r2.start;
@@ -78,7 +78,7 @@ public final class JavaSyntaxHighlighter {
 	 * @return index of the space after the line number
 	 */
 	private int findLineNumber(final int lineStart, boolean mark) {
-		int i = lineStart; 
+		int i = lineStart;
 		while (text.charAt(i) == ' ') {
 			i++;
 		}
@@ -86,11 +86,11 @@ public final class JavaSyntaxHighlighter {
 			i++;
 		}
 		if (mark) {
-			setUnchecked(f_lineNumberColor, SWT.NORMAL, lineStart, i-1);
+			setUnchecked(f_lineNumberColor, SWT.NORMAL, lineStart, i - 1);
 		}
 		return i;
 	}
-	
+
 	private void highlightMultilineComment(int fromIndex) {
 		if (fromIndex >= text.length())
 			return;
@@ -101,9 +101,9 @@ public final class JavaSyntaxHighlighter {
 		final int ci2 = text.indexOf("*/", ci1 + 2);
 		if (ci2 == NOT_FOUND) {
 			return;
-		} else {			
-			//set(f_commentColor, SWT.NORMAL, ci1, ci2 + 1);
-			
+		} else {
+			// set(f_commentColor, SWT.NORMAL, ci1, ci2 + 1);
+
 			int start = ci1;
 			// Find next line break
 			int nextBreak;
@@ -114,15 +114,15 @@ public final class JavaSyntaxHighlighter {
 				}
 				// Color last line and skip line number
 				set(f_multiLineCommentColor, SWT.NORMAL, start, nextBreak);
-				start = findLineNumber(nextBreak+1, false);
-				
+				start = findLineNumber(nextBreak + 1, false);
+
 			}
 			// No more line breaks
-			set(f_multiLineCommentColor, SWT.NORMAL, start, ci2 + 1);			
+			set(f_multiLineCommentColor, SWT.NORMAL, start, ci2 + 1);
 		}
 		highlightMultilineComment(ci2 + 2);
 	}
-	
+
 	private void highlightComment(String text, int fromIndex) {
 		if (fromIndex >= text.length())
 			return;
@@ -177,14 +177,15 @@ public final class JavaSyntaxHighlighter {
 		highlightQuotedText(text, afterQuote);
 	}
 
-	private int finishQuote(String text, int fromIndex, final Color color, String endQuote) {
+	private int finishQuote(String text, int fromIndex, final Color color,
+			String endQuote) {
 		if (fromIndex >= text.length()) {
 			return NOT_FOUND;
 		}
 		int dq = text.indexOf(endQuote, fromIndex);
 		if (dq != NOT_FOUND) {
-			while (text.charAt(dq-1) == '\\') {
-				dq = text.indexOf(endQuote, dq+1);
+			while (text.charAt(dq - 1) == '\\') {
+				dq = text.indexOf(endQuote, dq + 1);
 			}
 		}
 		if (dq == NOT_FOUND) {
@@ -198,10 +199,10 @@ public final class JavaSyntaxHighlighter {
 		}
 	}
 
-	private void highlightWord(final String lineText, String word) {		
+	private void highlightWord(final String lineText, String word) {
 		final int wordLength = word.length();
 		int index = 0;
-		while (true) {			
+		while (true) {
 			index = lineText.indexOf(word, index);
 			if (index == NOT_FOUND)
 				break;
@@ -231,30 +232,33 @@ public final class JavaSyntaxHighlighter {
 	}
 
 	private boolean isWhiteSpaceOrPunc(final char c) {
-		return c == ' ' || c == '\n' || c == '\t' || c == ',' || c == ';' || 
-		       c == '(' || c == ')';
+		return c == ' ' || c == '\n' || c == '\t' || c == ',' || c == ';'
+				|| c == '(' || c == ')';
 	}
 
-	private void set_relative(Color color, int style, int beginIndex, int endIndex) { 
-		set(color, style, lineStart+beginIndex, lineStart+endIndex);
+	private void set_relative(Color color, int style, int beginIndex,
+			int endIndex) {
+		set(color, style, lineStart + beginIndex, lineStart + endIndex);
 	}
-	
-	private void set(Color color, int style, int beginIndex, int endIndex) { 
+
+	private void set(Color color, int style, int beginIndex, int endIndex) {
 		if (beginIndex >= lineEnd)
 			return;
 		StyleRange sr = makeStyleRange(color, style, beginIndex, endIndex);
 		if (!isNested(sr))
 			f_result.add(sr);
 	}
-	
-	private void setUnchecked(Color color, int style, int beginIndex, int endIndex) { 
+
+	private void setUnchecked(Color color, int style, int beginIndex,
+			int endIndex) {
 		if (beginIndex >= lineEnd)
 			return;
 		StyleRange sr = makeStyleRange(color, style, beginIndex, endIndex);
 		f_result.add(sr);
 	}
 
-	private StyleRange makeStyleRange(Color color, int style, int beginIndex, int endIndex) {
+	private StyleRange makeStyleRange(Color color, int style, int beginIndex,
+			int endIndex) {
 		StyleRange sr = new StyleRange();
 		sr.start = beginIndex;
 		sr.length = (endIndex - beginIndex) + 1;
@@ -267,9 +271,9 @@ public final class JavaSyntaxHighlighter {
 	}
 
 	private void setToEndOfLine_relative(int beginIndex, Color color) {
-		setToEndOfLine(lineStart+beginIndex, color);
+		setToEndOfLine(lineStart + beginIndex, color);
 	}
-	
+
 	private void setToEndOfLine(int beginIndex, Color color) {
 		if (beginIndex >= lineEnd)
 			return;
@@ -291,73 +295,26 @@ public final class JavaSyntaxHighlighter {
 			boolean overlaps = false;
 			if (srB <= esrB) {
 				overlaps = srE >= esrB;
-			} 
-			else if (srB <= esrE){
+			} else if (srB <= esrE) {
 				overlaps = true;
 			}
-			/*	= (srB <= esrB && srE >= esrB)
-					|| (srB >= esrB && srE <= esrE)
-					|| (srB <= esrB && srE >= esrE)
-					|| (srB <= esrE && srE >= esrE);
-					*/
+			/*
+			 * = (srB <= esrB && srE >= esrB) || (srB >= esrB && srE <= esrE) ||
+			 * (srB <= esrB && srE >= esrE) || (srB <= esrE && srE >= esrE);
+			 */
 			if (overlaps)
 				return true;
 		}
 		return false;
 	}
 
-	static private final String[] RESERVED_WORDS = { 
-		  "abstract",
-		  "assert",
-		  "boolean",
-		  "break",
-		  "byte",
-		  "case",
-		  "catch",
-		  "char",
-		  "class",
-		  "const",
-		  "continue",
-		  "default",
-		  "do",
-		  "double",
-		  "else",
-		  "extends",
-		  "false",
-		  "final",
-		  "finally",
-		  "float",
-		  "for",
-		  "goto",
-		  "if",
-		  "implements",
-		  "import",
-		  "instanceof",
-		  "int",
-		  "interface",
-		  "long",
-		  "native",
-		  "new",
-		  "null",
-		  "package",
-		  "private",
-		  "protected",
-		  "public",
-		  "return",
-		  "short",
-		  "static",
-		  "strictfp",
-		  "super",
-		  "switch",
-		  "synchronized",
-		  "this",
-		  "throw",
-		  "throws",
-		  "transient",
-		  "true",
-		  "try",
-		  "void",
-		  "volatile",
-		  "while",
-	};
+	static private final String[] RESERVED_WORDS = { "abstract", "assert",
+			"boolean", "break", "byte", "case", "catch", "char", "class",
+			"const", "continue", "default", "do", "double", "else", "extends",
+			"false", "final", "finally", "float", "for", "goto", "if",
+			"implements", "import", "instanceof", "int", "interface", "long",
+			"native", "new", "null", "package", "private", "protected",
+			"public", "return", "short", "static", "strictfp", "super",
+			"switch", "synchronized", "this", "throw", "throws", "transient",
+			"true", "try", "void", "volatile", "while", };
 }

@@ -143,7 +143,16 @@ public final class HistoricalSourceView extends ViewPart {
 					.showView(HistoricalSourceView.class.getName(), null,
 							IWorkbenchPage.VIEW_VISIBLE);
 			view.showSourceFile(dir, pkg + '.' + type);
-			view.source.setTopIndex(lineNumber < 5 ? 0 : lineNumber - 5);
+			/*
+			 * The line numbers passed to this method are typically 1 based
+			 * relative to the first line of the content. We need to change this
+			 * to be 0 based.
+			 */
+			if (lineNumber > 0)
+				lineNumber--;
+			if (lineNumber < 0)
+				lineNumber = 0;
+			showAndSelectLine(view, lineNumber);
 		}
 	}
 
@@ -154,9 +163,41 @@ public final class HistoricalSourceView extends ViewPart {
 					.showView(HistoricalSourceView.class.getName(), null,
 							IWorkbenchPage.VIEW_VISIBLE);
 			view.showSourceFile(dir, pkg + '.' + type);
-			int lineNumber = computeLine(view.source.getText(), field);
-			view.source.setTopIndex(lineNumber < 5 ? 0 : lineNumber - 5);
+			final int lineNumber = computeLine(view.source.getText(), field);
+			showAndSelectLine(view, lineNumber);
 		}
+	}
+
+	/**
+	 * Shows the passed line number in the passed view and highlights the line
+	 * via selection.
+	 * 
+	 * @param view
+	 *            the historical source view.
+	 * @param lineNumber
+	 *            index of the line, 0 based relative to the first line in the
+	 *            content.
+	 */
+	private static void showAndSelectLine(final HistoricalSourceView view,
+			final int lineNumber) {
+		if (view == null)
+			return;
+		/*
+		 * Show the line, move up a bit if we can.
+		 */
+		view.source.setTopIndex(lineNumber < 5 ? 0 : lineNumber - 5);
+
+		/*
+		 * Highlight the line by selecting it in the widget.
+		 */
+		final int start = view.source.getOffsetAtLine(lineNumber);
+		final int end;
+		if (lineNumber + 1 > view.source.getLineCount()) {
+			end = view.source.getCharCount();
+		} else {
+			end = view.source.getOffsetAtLine(lineNumber + 1);
+		}
+		view.source.setSelection(start, end);
 	}
 
 	/**

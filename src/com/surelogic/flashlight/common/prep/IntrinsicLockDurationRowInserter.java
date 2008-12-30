@@ -227,6 +227,15 @@ public final class IntrinsicLockDurationRowInserter {
 	private static class GraphInfo {
 		final LongSet destinations = new LongSet();
 		final LongSet rwSources = new LongSet();
+		final LongMap<Long> origRWLocks = new LongMap<Long>();
+		
+		long mapLock(long id) {
+		    Long l = origRWLocks.get(id);
+		    if (l == null) {
+		        return id;
+		    }
+		    return l;
+		}
 	}
 	
 	/**
@@ -318,50 +327,60 @@ public final class IntrinsicLockDurationRowInserter {
 	}
 
 	private GraphInfo createGraphFromStorage() {
+	    final boolean useOrigRWLock = true;
 		int edges = 0;
 		int omitted = 0;
 		final GraphInfo info = new GraphInfo();
+		
+		if (useOrigRWLock) {
+		    for(RWLock l : rwLocks) {
+		        Long orig = l.id;
+		        info.origRWLocks.put(l.read, orig);
+		        info.origRWLocks.put(l.write, orig);
+		    }
+		}
 		
 		// Compute the set of destinations (used for pruning)
 		for(Map.Entry<Long,LongMap<Edge>> entry1 : edgeStorage.entrySet()) {				
 			for(Map.Entry<Long,Edge> entry2 : entry1.getValue().entrySet()) {
 				LongMap.Entry<Edge> e = (LongMap.Entry<Edge>) entry2;
-				info.destinations.add(e.key());
+				info.destinations.add(useOrigRWLock ? info.mapLock(e.key()) : e.key());
 			}
 		}
-		
-		// Add dependency edges between the read and write locks
-		for(RWLock l : rwLocks) {
-			//System.out.println("RW lock "+l.id+" = "+l.read+", "+l.write);
-			lockGraph.addVertex(l.read);
-			lockGraph.addVertex(l.write);
-			// Track which RW locks are used as edge sources
-			if (edgeStorage.get(l.read) != null ||
-			    edgeStorage.get(l.write) != null) {
-				info.rwSources.add(l.read);
-				info.rwSources.add(l.write);
-			}			
-			// Modify destinations to include RW lock "duals"
-			if (info.destinations.contains(l.read)) {
-				info.destinations.add(l.write);
-			}
-			else if (info.destinations.contains(l.write)) {
-				info.destinations.add(l.read);
-			}
-			
-			final Edge addedEdge1 = lockGraph.addEdge(l.read, l.write);
-			addedEdge1.setFirst(l.time);
-		
-			final Edge addedEdge2 = lockGraph.addEdge(l.write, l.read);
-			addedEdge2.setFirst(l.time);
-			edges += 2;
+		if (!useOrigRWLock) {
+		    // Add dependency edges between the read and write locks
+		    for(RWLock l : rwLocks) {
+		        //System.out.println("RW lock "+l.id+" = "+l.read+", "+l.write);
+		        lockGraph.addVertex(l.read);
+		        lockGraph.addVertex(l.write);
+		        // Track which RW locks are used as edge sources
+		        if (edgeStorage.get(l.read) != null ||
+		                edgeStorage.get(l.write) != null) {
+		            info.rwSources.add(l.read);
+		            info.rwSources.add(l.write);
+		        }			
+		        // Modify destinations to include RW lock "duals"
+		        if (info.destinations.contains(l.read)) {
+		            info.destinations.add(l.write);
+		        }
+		        else if (info.destinations.contains(l.write)) {
+		            info.destinations.add(l.read);
+		        }
+
+		        final Edge addedEdge1 = lockGraph.addEdge(l.read, l.write);
+		        addedEdge1.setFirst(l.time);
+
+		        final Edge addedEdge2 = lockGraph.addEdge(l.write, l.read);
+		        addedEdge2.setFirst(l.time);
+		        edges += 2;
+		    }
+		    //rwLocks.clear();
 		}
-		//rwLocks.clear();
 		
 		// Create edges from storage
 		for(Map.Entry<Long,LongMap<Edge>> entry1 : edgeStorage.entrySet()) {	
 			final LongMap.Entry<LongMap<Edge>> e1 = (LongMap.Entry<LongMap<Edge>>) entry1;
-			final long src = e1.key();
+			final long src = useOrigRWLock ? info.mapLock(e1.key()) : e1.key();
 			Long source = null;
 			
 			// Note: destinations already compensates for some of these being RW locks			
@@ -376,8 +395,9 @@ public final class IntrinsicLockDurationRowInserter {
 	
 			for(Map.Entry<Long,Edge> entry2 : entry1.getValue().entrySet()) {
 				final LongMap.Entry<Edge> e2 = (LongMap.Entry<Edge>) entry2;
-				final long dest = e2.key();
-				if (edgeStorage.get(dest) == null && !info.rwSources.contains(dest)) {					
+				final long dest = useOrigRWLock ? info.mapLock(e2.key()) : e2.key();
+				if (edgeStorage.get(dest) == null && 
+				    (useOrigRWLock || !info.rwSources.contains(dest))) {					
 					// The destination is a leaf lock, so we can omit it
 					// (e.g. no more locks are acquired after holding it)
 					

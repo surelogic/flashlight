@@ -39,15 +39,14 @@ WHERE
    A.FIELD = ?FieldId? AND 
    A.RECEIVER IS NULL
 ORDER BY O.THREADNAME ASC, A.TS ASC, D.Start DESC</query>
-  <query id='Q0010' description='A new query'>SELECT * FROM LOCKSHELD</query>
+  <query id='Q0010' description='A new query'>SELECT * FROM LOCK</query>
   <query id='Q0018' description='How often is a lock held when this instance field is accessed?' display='true'>SELECT LOCKS.*, CAST ((CAST (LOCKS.&quot;Lock Count&quot; AS FLOAT)) / (CAST (ACCESSES.ACCESSCOUNT AS FLOAT)) AS DECIMAL (4,3)) &quot;Frequency&quot;
 FROM
-(SELECT D.Lock &quot;Lock&quot;,RW.ID &quot;R/W Lock&quot;, COUNT(D.Lock) &quot;Lock Count&quot;
+(SELECT D.Lock &quot;Lock&quot;, COUNT(D.Lock) &quot;Lock Count&quot;
  FROM ACCESS A
       INNER JOIN LOCKDURATION D ON D.InThread = A.InThread AND D.Start &lt; A.TS AND D.Stop &gt; A.TS AND State = &apos;HOLDING&apos; 
-      LEFT OUTER JOIN RWLOCK RW ON RW.ReadLock = D.LOCK OR RW.WRITELOCK = D.LOCK
     WHERE A.FIELD = ?FieldId? AND A.RECEIVER = ?Receiver?
- GROUP BY D.LOCK,RW.ID) AS LOCKS,
+ GROUP BY D.LOCK) AS LOCKS,
 (SELECT COUNT(*) &quot;ACCESSCOUNT&quot; FROM ACCESS A WHERE A.FIELD = ?FieldId? AND A.RECEIVER = ?Receiver?) AS ACCESSES</query>
   <query id='Q0024' description='How often is a lock held when this static field is accessed?' display='true'>SELECT LOCKS.*, (CAST (LOCKS.LOCKCOUNT AS FLOAT)) / (CAST (ACCESSES.ACCESSCOUNT AS FLOAT))
 FROM
@@ -326,42 +325,42 @@ order by ld.Start
   <sub-query id='Q0017' sub-query='Q0028'/>
   <sub-query id='Q0023' sub-query='Q0027'/>
   <sub-query id='Q0023' sub-query='Q0028'/>
-  <sub-query id='Q0033' sub-query='Q0034'/>
   <sub-query id='Q0033' sub-query='Q0028'/>
-  <sub-query id='Q0031' sub-query='Q0034'/>
+  <sub-query id='Q0033' sub-query='Q0034'/>
   <sub-query id='Q0031' sub-query='Q0028'/>
+  <sub-query id='Q0031' sub-query='Q0034'/>
+  <sub-query id='Q0012' sub-query='Q0014'/>
   <sub-query id='Q0012' sub-query='Q0029'/>
   <sub-query id='Q0012' sub-query='Q0013'/>
-  <sub-query id='Q0012' sub-query='Q0014'/>
   <sub-query id='Q0005' sub-query='Q0006'/>
   <sub-query id='Q0034' sub-query='Q0027'/>
   <sub-query id='Q0034' sub-query='Q0028'/>
   <sub-query id='Q0011' sub-query='Q0012'/>
-  <sub-query id='Q0002' sub-query='Q0033'/>
   <sub-query id='Q0002' sub-query='Q0017'/>
-  <sub-query id='Q0002' sub-query='Q0019'/>
   <sub-query id='Q0002' sub-query='Q0018'/>
-  <sub-query id='Q0015' sub-query='Q0033'/>
+  <sub-query id='Q0002' sub-query='Q0019'/>
+  <sub-query id='Q0002' sub-query='Q0033'/>
   <sub-query id='Q0015' sub-query='Q0017'/>
-  <sub-query id='Q0015' sub-query='Q0019'/>
   <sub-query id='Q0015' sub-query='Q0018'/>
-  <sub-query id='Q0016' sub-query='Q0033'/>
+  <sub-query id='Q0015' sub-query='Q0019'/>
+  <sub-query id='Q0015' sub-query='Q0033'/>
   <sub-query id='Q0016' sub-query='Q0017'/>
-  <sub-query id='Q0016' sub-query='Q0019'/>
   <sub-query id='Q0016' sub-query='Q0018'/>
+  <sub-query id='Q0016' sub-query='Q0019'/>
+  <sub-query id='Q0016' sub-query='Q0033'/>
   <sub-query id='Q0001' sub-query='Q0023'/>
-  <sub-query id='Q0001' sub-query='Q0031'/>
   <sub-query id='Q0001' sub-query='Q0025'/>
+  <sub-query id='Q0001' sub-query='Q0031'/>
   <sub-query id='Q0001' sub-query='Q0024'/>
   <sub-query id='Q0021' sub-query='Q0023'/>
-  <sub-query id='Q0021' sub-query='Q0031'/>
   <sub-query id='Q0021' sub-query='Q0025'/>
+  <sub-query id='Q0021' sub-query='Q0031'/>
   <sub-query id='Q0021' sub-query='Q0024'/>
   <sub-query id='Q0022' sub-query='Q0023'/>
-  <sub-query id='Q0022' sub-query='Q0031'/>
   <sub-query id='Q0022' sub-query='Q0025'/>
+  <sub-query id='Q0022' sub-query='Q0031'/>
   <sub-query id='Q0022' sub-query='Q0024'/>
-  <sub-query id='Q0009' sub-query='Q0013'/>
   <sub-query id='Q0009' sub-query='Q0014'/>
+  <sub-query id='Q0009' sub-query='Q0013'/>
   <sub-query id='Q0006' sub-query='Q0027'/>
 </ad-hoc>

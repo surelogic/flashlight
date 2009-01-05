@@ -276,7 +276,7 @@ public class BinaryAttributes extends PreppedAttributes implements Attributes {
 		lockId = l;
 	}
 	@Override
-	public long getLockId() {
+	public long getLockObjectId() {
 		return lockId;
 	}
 	

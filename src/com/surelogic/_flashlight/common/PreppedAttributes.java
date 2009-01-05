@@ -1,83 +1,89 @@
 package com.surelogic._flashlight.common;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 //public class PreppedAttributes extends TreeMap<IAttributeType,Object> {
-public class PreppedAttributes extends HashMap<IAttributeType,Object> {
+public class PreppedAttributes extends HashMap<IAttributeType, Object> {
 	private static final long serialVersionUID = 2176197907020676264L;
-	private static final Map<String,IAttributeType> xmlMap = new HashMap<String,IAttributeType>();
+	private static final Map<String, IAttributeType> xmlMap = new HashMap<String, IAttributeType>();
 	static {
-		for(FlagType f : FlagType.values()) {
+		for (final FlagType f : FlagType.values()) {
 			if (xmlMap.put(f.label(), f) != null) {
-				throw new IllegalStateException("Duplicate label: "+f.label());
+				throw new IllegalStateException("Duplicate label: " + f.label());
 			}
 		}
-		for(AttributeType f : AttributeType.values()) {
+		for (final AttributeType f : AttributeType.values()) {
 			if (xmlMap.put(f.label(), f) != null) {
-				throw new IllegalStateException("Duplicate label: "+f.label());
+				throw new IllegalStateException("Duplicate label: " + f.label());
 			}
 		}
 	}
-	public static IAttributeType mapAttr(String name) {
+
+	public static IAttributeType mapAttr(final String name) {
 		return xmlMap.get(name);
 	}
-	
+
 	public PreppedAttributes() {
-		//super(IAttributeType.comparator);
+		// super(IAttributeType.comparator);
 		super(4);
 	}
-	
-	public String getString(IAttributeType key) {
-		Object o = this.get(key);
+
+	public String getString(final IAttributeType key) {
+		final Object o = this.get(key);
 		if (o == null) {
 			return null;
 		}
-		return o.toString(); 
+		return o.toString();
 	}
-	
-	public long getLong(IAttributeType key) {
-		Object o = this.get(key);
+
+	public long getLong(final IAttributeType key) {
+		final Object o = this.get(key);
 		if (o == null) {
 			/*
-			if (key != AttributeType.TYPE) {
-				System.out.println("No value for "+key);
-			}
-			*/
+			 * if (key != AttributeType.TYPE) {
+			 * System.out.println("No value for "+key); }
+			 */
 			return Long.MIN_VALUE;
 		}
-		return (o instanceof Long) ? (Long) o : Long.parseLong(o.toString()); 
+		return (o instanceof Long) ? (Long) o : Long.parseLong(o.toString());
 	}
-	
-	public int getInt(IAttributeType key) {
-		Object o = this.get(key);
+
+	public int getInt(final IAttributeType key) {
+		final Object o = this.get(key);
 		if (o == null) {
 			return Integer.MIN_VALUE;
 		}
-		return (o instanceof Integer) ? (Integer) o : Integer.parseInt(o.toString()); 		
+		return (o instanceof Integer) ? (Integer) o : Integer.parseInt(o
+				.toString());
 	}
-	
-	public boolean getBoolean(IAttributeType key) {
-		Object o = this.get(key);
+
+	public boolean getBoolean(final IAttributeType key) {
+		final Object o = this.get(key);
 		if (o == null) {
 			return false;
 		}
-		return (o instanceof Boolean) ? (Boolean) o : "yes".equals(o) || "true".equals(o); 		
+		return (o instanceof Boolean) ? (Boolean) o : "yes".equals(o)
+				|| "true".equals(o);
 	}
-	
+
 	public long getEventTime() {
 		return getLong(AttributeType.TIME);
 	}
+
 	public long getTraceId() {
-		long l = getLong(AttributeType.TRACE);
+		final long l = getLong(AttributeType.TRACE);
 		if (l != IdConstants.ILLEGAL_ID) {
 			return l;
 		}
 		// Backup for old traces
 		return getLong(AttributeType.ID);
 	}
-	public long getLockId() {
+
+	public long getLockObjectId() {
 		return getLong(AttributeType.LOCK);
 	}
+
 	public long getThreadId() {
 		return getLong(AttributeType.THREAD);
 	}

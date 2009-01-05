@@ -1,14 +1,20 @@
 package com.surelogic.flashlight.common.prep;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
 import java.util.logging.Level;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
+import com.surelogic._flashlight.common.AttributeType;
+import com.surelogic._flashlight.common.ILongSet;
+import com.surelogic._flashlight.common.IdConstants;
+import com.surelogic._flashlight.common.LongMap;
+import com.surelogic._flashlight.common.LongSet;
+import com.surelogic._flashlight.common.PreppedAttributes;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.logging.SLLogger;
-import com.surelogic._flashlight.common.*;
 
 public final class ScanRawFilePreScan extends AbstractDataScan {
 
@@ -43,9 +49,9 @@ public final class ScanRawFilePreScan extends AbstractDataScan {
 	}
 
 	private final LongSet f_referencedObjects = new LongSet();
-	
+
 	private void newObject(final long id) {
-		//f_unreferencedObjects.add(id);
+		// f_unreferencedObjects.add(id);
 		// What is there to do?
 	}
 
@@ -61,6 +67,20 @@ public final class ScanRawFilePreScan extends AbstractDataScan {
 	 */
 	public boolean couldBeReferencedObject(final long id) {
 		return f_referencedObjects.contains(id);
+	}
+
+	private final LongMap<Long> f_rwLocks = new LongMap<Long>();
+
+	/**
+	 * Returns the lock id, given the locked object. These id's may be the same,
+	 * but are different in the case of read-write locks.
+	 * 
+	 * @param object
+	 * @return
+	 */
+	public long getLockFromObject(final long object) {
+		final Long lock = f_rwLocks.get(object);
+		return lock == null ? object : lock;
 	}
 
 	/*
@@ -138,7 +158,7 @@ public final class ScanRawFilePreScan extends AbstractDataScan {
 			 * Show progress to the user
 			 */
 			f_monitor.worked(32);
-			
+
 			/*
 			 * Check for a user cancel.
 			 */
@@ -147,7 +167,7 @@ public final class ScanRawFilePreScan extends AbstractDataScan {
 			}
 		}
 
-		PreppedAttributes attrs = preprocessAttributes(name, attributes);
+		final PreppedAttributes attrs = preprocessAttributes(name, attributes);
 		if ("time".equals(name)) {
 			if (f_firstTimeEventFound) {
 				f_endTime = attrs.getEventTime();
@@ -158,7 +178,7 @@ public final class ScanRawFilePreScan extends AbstractDataScan {
 			// We used the class
 			useObject(attrs.getLong(AttributeType.IN_CLASS));
 		} else if ("field-read".equals(name) || "field-write".equals(name)) {
-			final long field  = attrs.getLong(AttributeType.FIELD);
+			final long field = attrs.getLong(AttributeType.FIELD);
 			final long thread = attrs.getThreadId();
 			final long receiver = attrs.getLong(AttributeType.RECEIVER);
 			if (receiver != IdConstants.ILLEGAL_RECEIVER_ID) {
@@ -170,11 +190,16 @@ public final class ScanRawFilePreScan extends AbstractDataScan {
 			useObject(thread);
 		} else if (locks.contains(name)) {
 			useObject(attrs.getThreadId());
-			useObject(attrs.getLockId());
+			useObject(attrs.getLockObjectId());
 		} else if ("read-write-lock-definition".equals(name)) {
-			useObject(attrs.getLong(AttributeType.ID));
-			useObject(attrs.getLong(AttributeType.READ_LOCK_ID));
-			useObject(attrs.getLong(AttributeType.WRITE_LOCK_ID));
+			final long id = attrs.getLong(AttributeType.ID);
+			final long rLock = attrs.getLong(AttributeType.READ_LOCK_ID);
+			final long wLock = attrs.getLong(AttributeType.WRITE_LOCK_ID);
+			f_rwLocks.put(rLock, id);
+			f_rwLocks.put(wLock, id);
+			useObject(id);
+			useObject(rLock);
+			useObject(wLock);
 		} else if ("field-definition".equals(name)) {
 			useObject(attrs.getLong(AttributeType.TYPE));
 		} else if ("class-definition".equals(name)) {

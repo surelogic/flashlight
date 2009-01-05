@@ -255,8 +255,8 @@ public final class PrepSLJob extends AbstractSLJob {
 						}
 					});
 				} catch (final TransactionException e) {
+					f_database.destroy();
 					if (e.getCause() instanceof CanceledException) {
-						f_database.destroy();
 						return SLStatus.CANCEL_STATUS;
 					} else {
 						throw e;
@@ -303,7 +303,9 @@ public final class PrepSLJob extends AbstractSLJob {
 			return SLStatus.createErrorStatus(code, msg, e);
 		} finally {
 			try {
-				RunManager.getInstance().refresh();
+				if (exc != null) {
+					RunManager.getInstance().refresh();
+				}
 			} catch (final RuntimeException t) {
 				if (exc == null) {
 					throw t;

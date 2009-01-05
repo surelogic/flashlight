@@ -16,6 +16,7 @@ import com.surelogic.common.logging.SLLogger;
 
 public abstract class Lock extends Event {
 	static final long FINAL_EVENT = Long.MAX_VALUE;
+	private ScanRawFilePreScan preScan;
 
 	public Lock(final IntrinsicLockDurationRowInserter i) {
 		super(i);
@@ -25,7 +26,8 @@ public abstract class Lock extends Event {
 		final long nanoTime = attributes.getEventTime();
 		final long inThread = attributes.getThreadId();
 		final long trace = attributes.getTraceId();
-		final long lock = attributes.getLockId();
+		final long object = attributes.getLockObjectId();
+		final long lock = preScan.getLockFromObject(object);
 		Boolean lockIsThis = attributes.getBoolean(THIS_LOCK);
 		Boolean lockIsClass = attributes.getBoolean(CLASS_LOCK);
 		if (getType() == LockType.UTIL) {
@@ -47,9 +49,10 @@ public abstract class Lock extends Event {
 		}
 		final Timestamp time = getTimestamp(nanoTime);
 		final long id = f_rowInserter.insertLock(false, time, inThread, trace,
-				lock, getType(), getState(), success, lockIsThis, lockIsClass);
-		f_rowInserter.event(id, time, inThread, trace, lock, getState(),
-				success != Boolean.FALSE);
+				lock, object, getType(), getState(), success, lockIsThis,
+				lockIsClass);
+		f_rowInserter.event(id, time, inThread, trace, lock, object,
+				getState(), success != Boolean.FALSE);
 	}
 
 	@Override
@@ -57,6 +60,7 @@ public abstract class Lock extends Event {
 			final long startNS, final ScanRawFilePreScan scanResults)
 			throws SQLException {
 		super.setup(c, start, startNS, scanResults);
+		preScan = scanResults;
 	}
 
 	@Override

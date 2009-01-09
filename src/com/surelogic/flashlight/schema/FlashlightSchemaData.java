@@ -53,7 +53,7 @@ public class FlashlightSchemaData implements SchemaData {
 	}
 
 	private String getSchemaResourcePath(final String resource) {
-		return schemaPackage.replace(".", "/") + "/" + resource;
+		return "/" + schemaPackage.replace(".", "/") + "/" + resource;
 	}
 
 	public String getLicenseSubject() {

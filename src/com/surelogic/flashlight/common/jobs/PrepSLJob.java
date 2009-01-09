@@ -284,8 +284,8 @@ public final class PrepSLJob extends AbstractSLJob {
 					}
 				});
 				System.out.println(scanResults);
+				RunManager.getInstance().refresh();
 				return SLStatus.OK_STATUS;
-
 			} finally {
 				stream.close();
 			}
@@ -302,15 +302,6 @@ public final class PrepSLJob extends AbstractSLJob {
 			final String msg = I18N.err(code, dataFileName);
 			return SLStatus.createErrorStatus(code, msg, e);
 		} finally {
-			try {
-				if (exc != null) {
-					RunManager.getInstance().refresh();
-				}
-			} catch (final RuntimeException t) {
-				if (exc == null) {
-					throw t;
-				}
-			}
 			monitor.done();
 		}
 	}

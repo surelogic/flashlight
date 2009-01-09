@@ -14,6 +14,8 @@ import java.util.Map.Entry;
 import com.surelogic.common.jdbc.ConnectionQuery;
 import com.surelogic.common.jdbc.NullDBQuery;
 import com.surelogic.common.jdbc.NullResultHandler;
+import com.surelogic.common.jdbc.NullRowHandler;
+import com.surelogic.common.jdbc.Nulls;
 import com.surelogic.common.jdbc.Query;
 import com.surelogic.common.jdbc.Queryable;
 import com.surelogic.common.jdbc.Result;
@@ -35,8 +37,23 @@ public class LockSetAnalysis extends NullDBQuery implements IPostPrep {
 
 	@Override
 	public void doPerform(final Query q) {
-		q.prepared("LockSet.v2.badPublishes").call();
-		q.prepared("LockSet.v2.interestingFields").call();
+		q.prepared("LockSet.v2.badPublishes", new NullRowHandler() {
+			Queryable<Void> insert = q.prepared("LockSet.v2.insertBadPublish");
+
+			@Override
+			protected void doHandle(final Row r) {
+				insert.call(r.nextLong(), r.nextLong());
+			}
+		}).call();
+		q.prepared("LockSet.v2.interestingFields", new NullRowHandler() {
+			Queryable<Void> insert = q
+					.prepared("LockSet.v2.insertInterestingField");
+
+			@Override
+			protected void doHandle(final Row r) {
+				insert.call(r.nextLong(), Nulls.coerce(r.nullableLong()));
+			}
+		}).call();
 		q.prepared("LockSet.v2.lockDurations", new NullResultHandler() {
 			@Override
 			public void doHandle(final Result lockDurations) {

@@ -14,6 +14,7 @@ import org.osgi.framework.BundleContext;
 import com.surelogic.common.eclipse.logging.SLEclipseStatusUtility;
 import com.surelogic.common.serviceability.UsageMeter;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
+import com.surelogic.flashlight.common.model.FlashlightDBConnection;
 
 /**
  * The activator class controls the plug-in life cycle
@@ -62,6 +63,7 @@ public class Activator extends AbstractUIPlugin {
 		plugin = null;
 		AdHocDataSource.getInstance().dispose();
 		UsageMeter.getInstance().persist();
+		FlashlightDBConnection.shutdownConnections();
 		super.stop(context);
 	}
 

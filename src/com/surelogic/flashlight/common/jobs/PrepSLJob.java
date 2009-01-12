@@ -116,7 +116,6 @@ public final class PrepSLJob extends AbstractSLJob {
 				+ FLUSH_WORK + (EACH_POST_PREP * postPrepWork.length)
 				+ ADD_CONSTRAINT_WORK);
 
-		Exception exc = null;
 		try {
 			final SLStatus failed = SLLicenseUtility.validateSLJob(
 					SLLicenseUtility.FLASHLIGHT_SUBJECT, monitor);
@@ -290,7 +289,6 @@ public final class PrepSLJob extends AbstractSLJob {
 				stream.close();
 			}
 		} catch (final Exception e) {
-			exc = e;
 			/*
 			 * We check for a cancel here because a SAXException is thrown out
 			 * of the parser when the user presses cancel.

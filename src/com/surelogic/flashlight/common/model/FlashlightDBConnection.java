@@ -22,10 +22,28 @@ public final class FlashlightDBConnection extends DerbyConnection {
 	private final String dbLocation;
 
 	/**
-	 * Create a new connection.
+	 * Create a new connection to a database at the given location. If the
+	 * folder specified does not exist, it will be created when the database is
+	 * booted.
+	 * 
+	 * @param dbLoc
+	 *            a valid path name
 	 */
 	private FlashlightDBConnection(final String dbLoc) {
 		dbLocation = dbLoc;
+	}
+
+	/**
+	 * Create a new connection to a database at the given location. If the
+	 * folder specified does not exist, it will be created when the database is
+	 * booted.
+	 * 
+	 * @param dbLoc
+	 *            a file pointing to a non-existent location or a derby
+	 *            database.
+	 */
+	public static DBConnection getInstance(final File dbLoc) {
+		return getInstance(dbLoc.getAbsolutePath());
 	}
 
 	/**
@@ -60,13 +78,6 @@ public final class FlashlightDBConnection extends DerbyConnection {
 				}
 			}
 		}
-	}
-
-	/**
-	 * Create a new connection.
-	 */
-	public static DBConnection getInstance(final File dbLoc) {
-		return getInstance(dbLoc.getAbsolutePath());
 	}
 
 	@Override

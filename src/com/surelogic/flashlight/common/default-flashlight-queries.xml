@@ -153,7 +153,7 @@ ORDER BY O.THREADNAME ASC, A.TS ASC, D.Start DESC
   LockAcquired &quot;LockAcquired__(r)&quot;,
   Count &quot;Count__(r)&quot;, FirstTime &quot;FirstTime&quot;, LastTime &quot;LastTime&quot;
 from lockcycle
-where count &gt; 1
+where count &gt; 0
 order by count desc</query>
   <query id='Q0002' description='What non-static fields are shared?' display='true' display-at-root='true'>select
   O.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;,

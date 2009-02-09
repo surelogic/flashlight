@@ -54,6 +54,8 @@ public class Activator extends AbstractUIPlugin {
 		 * "Touch" common-eclipse so the logging gets Eclipse-ified.
 		 */
 		SLEclipseStatusUtility.touch();
+		System.setProperty("derby.stream.error.file", getDerbyLogFile());
+		System.setProperty("derby.language.logQueryPlan", "true");
 
 		UsageMeter.getInstance().tickUse("Flashlight Eclipse plug-in loaded");
 	}
@@ -80,5 +82,10 @@ public class Activator extends AbstractUIPlugin {
 		}
 		final String fullPath = new File(local.getPath()).getAbsolutePath();
 		return Path.fromOSString(fullPath);
+	}
+
+	private String getDerbyLogFile() {
+		final IPath pluginState = Activator.getDefault().getStateLocation();
+		return pluginState.toOSString() + File.separator + "derby.log";
 	}
 }

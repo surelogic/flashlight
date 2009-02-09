@@ -4,12 +4,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
@@ -234,29 +232,18 @@ public final class IntrinsicLockDurationRowInserter {
 		}
 	}
 
-	private static final boolean useEdgeStorage = true;
-	private final List<RWLock> rwLocks = new ArrayList<RWLock>();
 	private final LongMap<LongMap<Edge>> edgeStorage = new LongMap<LongMap<Edge>>();
 
 	private static class GraphInfo {
 		final LongSet destinations = new LongSet();
-		final LongSet rwSources = new LongSet();
-		final LongMap<Long> origRWLocks = new LongMap<Long>();
 
-		long mapLock(final long id) {
-			final Long l = origRWLocks.get(id);
-			if (l == null) {
-				return id;
-			}
-			return l;
-		}
+		/**
+		 * Vertices = locks Edge weight = # of times the edge appears
+		 */
+		final DefaultDirectedGraph<Long, Edge> lockGraph = 
+			new DefaultDirectedGraph<Long, Edge>(new EdgeFactory());
 	}
 
-	/**
-	 * Vertices = locks Edge weight = # of times the edge appears
-	 */
-	private final DefaultDirectedGraph<Long, Edge> lockGraph = new DefaultDirectedGraph<Long, Edge>(
-			new EdgeFactory());
 	private boolean flushed = false;
 
 	public IntrinsicLockDurationRowInserter(final Connection c)
@@ -276,17 +263,14 @@ public final class IntrinsicLockDurationRowInserter {
 		handleNonIdleFinalState(endTime);
 
 		// FIX replace the graph w/ own implementation from CLR 23.5
-		GraphInfo info = null;
-		if (useEdgeStorage) {
-			info = createGraphFromStorage();
-		}
-		final CycleDetector<Long, Edge> detector = new CycleDetector<Long, Edge>(
-				lockGraph);
+		final GraphInfo info = createGraphFromStorage();	
+		final CycleDetector<Long, Edge> detector = 
+			new CycleDetector<Long, Edge>(info.lockGraph);
 		if (detector.detectCycles()) {
 			final PreparedStatement f_cyclePS = statements[LOCK_CYCLE];
 
-			final StrongConnectivityInspector<Long, Edge> inspector = new StrongConnectivityInspector<Long, Edge>(
-					lockGraph);
+			final StrongConnectivityInspector<Long, Edge> inspector = 
+				new StrongConnectivityInspector<Long, Edge>(info.lockGraph);
 			int compId = 0;
 			for (final Set<Long> comp : inspector.stronglyConnectedSets()) {
 				// Compute the set of edges myself
@@ -343,18 +327,9 @@ public final class IntrinsicLockDurationRowInserter {
 	}
 
 	private GraphInfo createGraphFromStorage() {
-		final boolean useOrigRWLock = true;
 		int edges = 0;
 		int omitted = 0;
 		final GraphInfo info = new GraphInfo();
-
-		if (useOrigRWLock) {
-			for (final RWLock l : rwLocks) {
-				final Long orig = l.id;
-				info.origRWLocks.put(l.read, orig);
-				info.origRWLocks.put(l.write, orig);
-			}
-		}
 
 		// Compute the set of destinations (used for pruning)
 		for (final Map.Entry<Long, LongMap<Edge>> entry1 : edgeStorage
@@ -362,44 +337,15 @@ public final class IntrinsicLockDurationRowInserter {
 			for (final Map.Entry<Long, Edge> entry2 : entry1.getValue()
 					.entrySet()) {
 				final LongMap.Entry<Edge> e = (LongMap.Entry<Edge>) entry2;
-				info.destinations.add(useOrigRWLock ? info.mapLock(e.key()) : e
-						.key());
+				info.destinations.add(e.key());
 			}
-		}
-		if (!useOrigRWLock) {
-			// Add dependency edges between the read and write locks
-			for (final RWLock l : rwLocks) {
-				// System.out.println("RW lock "+l.id+" = "+l.read+", "+l.write);
-				lockGraph.addVertex(l.read);
-				lockGraph.addVertex(l.write);
-				// Track which RW locks are used as edge sources
-				if (edgeStorage.get(l.read) != null
-						|| edgeStorage.get(l.write) != null) {
-					info.rwSources.add(l.read);
-					info.rwSources.add(l.write);
-				}
-				// Modify destinations to include RW lock "duals"
-				if (info.destinations.contains(l.read)) {
-					info.destinations.add(l.write);
-				} else if (info.destinations.contains(l.write)) {
-					info.destinations.add(l.read);
-				}
-
-				final Edge addedEdge1 = lockGraph.addEdge(l.read, l.write);
-				addedEdge1.setFirst(l.time);
-
-				final Edge addedEdge2 = lockGraph.addEdge(l.write, l.read);
-				addedEdge2.setFirst(l.time);
-				edges += 2;
-			}
-			// rwLocks.clear();
 		}
 
 		// Create edges from storage
 		for (final Map.Entry<Long, LongMap<Edge>> entry1 : edgeStorage
 				.entrySet()) {
 			final LongMap.Entry<LongMap<Edge>> e1 = (LongMap.Entry<LongMap<Edge>>) entry1;
-			final long src = useOrigRWLock ? info.mapLock(e1.key()) : e1.key();
+			final long src = e1.key();
 			Long source = null;
 
 			// Note: destinations already compensates for some of these being RW
@@ -416,10 +362,8 @@ public final class IntrinsicLockDurationRowInserter {
 			for (final Map.Entry<Long, Edge> entry2 : entry1.getValue()
 					.entrySet()) {
 				final LongMap.Entry<Edge> e2 = (LongMap.Entry<Edge>) entry2;
-				final long dest = useOrigRWLock ? info.mapLock(e2.key()) : e2
-						.key();
-				if (edgeStorage.get(dest) == null
-						&& (useOrigRWLock || !info.rwSources.contains(dest))) {
+				final long dest = e2.key();
+				if (edgeStorage.get(dest) == null) {
 					// The destination is a leaf lock, so we can omit it
 					// (e.g. no more locks are acquired after holding it)
 
@@ -430,16 +374,15 @@ public final class IntrinsicLockDurationRowInserter {
 				final Edge e = entry2.getValue();
 				if (source == null) {
 					source = e.lockHeld;
-					lockGraph.addVertex(source);
+					info.lockGraph.addVertex(source);
 				}
-				lockGraph.addVertex(e.lockAcquired);
+				info.lockGraph.addVertex(e.lockAcquired);
 
-				lockGraph.addEdge(source, e.lockAcquired, e);
+				//System.out.println(source+" -> "+e.lockAcquired);
+				info.lockGraph.addEdge(source, e.lockAcquired, e);
 				edges++;
 			}
-			// entry1.getValue().clear();
 		}
-		// edgeStorage.clear();
 		System.out.println("Total edges = " + edges + ", omitted = " + omitted);
 		return info;
 	}
@@ -796,54 +739,25 @@ public final class IntrinsicLockDurationRowInserter {
 					e);
 		}
 		final Long acq = acquired;
-		if (useEdgeStorage) {
-			LongMap<Edge> edges = edgeStorage.get(lock);
-			if (edges == null) {
-				edges = new LongMap<Edge>();
-				edgeStorage.put(lock, edges);
-			}
-			Edge e = edges.get(acquired);
-			if (e == null) {
-				e = new Edge(lock, acq);
-				e.setFirst(time);
-				edges.put(acq, e);
-			} else {
-				e.updateLast(time);
-			}
-			return;
+		LongMap<Edge> edges = edgeStorage.get(lock);
+		if (edges == null) {
+			edges = new LongMap<Edge>();
+			edgeStorage.put(lock, edges);
 		}
-		lockGraph.addVertex(lock);
-
-		lockGraph.addVertex(acq);
-
-		Edge addedEdge = lockGraph.addEdge(lock, acq);
-		if (addedEdge != null) {
-			addedEdge.setFirst(time);
+		Edge e = edges.get(acquired);
+		if (e == null) {
+			e = new Edge(lock, acq);
+			e.setFirst(time);
+			edges.put(acq, e);
 		} else {
-			addedEdge = lockGraph.getEdge(lock, acq);
-			addedEdge.updateLast(time);
+			e.updateLast(time);
 		}
 	}
 
 	public void defineRWLock(final long id, final Long readLock,
-			final Long writeLock, final Timestamp startTime) {
-		if (useEdgeStorage) {
-			final RWLock l = new RWLock(id, readLock, writeLock, startTime);
-			rwLocks.add(l);
-			return;
-		}
-		// Add dependency edges between the read and write locks
-		lockGraph.addVertex(readLock);
-		lockGraph.addVertex(writeLock);
-		final Edge addedEdge1 = lockGraph.addEdge(readLock, writeLock);
-		if (addedEdge1 != null) {
-			addedEdge1.setFirst(startTime);
-		}
-		final Edge addedEdge2 = lockGraph.addEdge(writeLock, readLock);
-		if (addedEdge2 != null) {
-			addedEdge2.setFirst(startTime);
-		}
-	}
+			final Long writeLock, final Timestamp startTime) {	
+	   // Nothing to do right now
+    }
 
 	private void recordThreadStats(final long eventId, final Timestamp t,
 			final int blocking, final int holding, final int waiting) {
@@ -904,8 +818,8 @@ public final class IntrinsicLockDurationRowInserter {
 		ps.setTimestamp(idx++, time, here);
 		ps.setLong(idx++, inThread);
 		ps.setLong(idx++, trace);
-		ps.setLong(idx++, lock);
-		ps.setLong(idx++, object);
+		ps.setLong(idx++, lock);   // The aggregate
+		ps.setLong(idx++, object); // The actual object locked on
 		ps.setString(idx++, lockType.getFlag());
 		ps.setString(idx++, lockState.toString().replace('_', ' '));
 		JDBCUtils.setNullableBoolean(idx++, ps, success);

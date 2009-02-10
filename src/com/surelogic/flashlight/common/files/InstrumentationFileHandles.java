@@ -51,6 +51,9 @@ public final class InstrumentationFileHandles {
     final File sitesFile = new File(runDir, SITES_FILE_NAME);
     final File logFile = new File(runDir, INSTRUMENTATION_LOG_FILE_NAME);
     
+    if (runDir == null || !runDir.exists()) {
+    	return null;
+    }
     boolean failed = false;
     if (!fieldsFile.exists()) {
       failed = true;

@@ -46,6 +46,10 @@ public final class SourceZipFileHandles {
    */
   /* Package private: only to be called from RunDirectory */
   static SourceZipFileHandles getFor(final File runDir) {
+	if (runDir == null || !runDir.exists()) {
+		return null;
+	}	  
+	  
     final File sourceDir = new File(runDir, SOURCE_DIR_NAME);
     if (!sourceDir.exists()) {
       SLLogger.getLogger().log(Level.WARNING,

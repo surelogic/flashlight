@@ -22,7 +22,7 @@ import org.eclipse.swt.widgets.*;
 import org.eclipse.swt.widgets.List;
 
 import com.surelogic.common.eclipse.SLImages;
-import com.surelogic.common.images.CommonImages;
+import com.surelogic.common.CommonImages;
 import com.surelogic.flashlight.client.eclipse.Activator;
 import com.surelogic.flashlight.client.eclipse.preferences.FlashlightInstrumentationWidgets;
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;

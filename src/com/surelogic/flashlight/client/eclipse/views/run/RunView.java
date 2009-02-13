@@ -17,7 +17,7 @@ import com.surelogic.common.eclipse.ColumnViewerSorter;
 import com.surelogic.common.eclipse.SLImages;
 import com.surelogic.common.eclipse.SWTUtility;
 import com.surelogic.common.i18n.I18N;
-import com.surelogic.common.images.CommonImages;
+import com.surelogic.common.CommonImages;
 import com.surelogic.common.serviceability.UsageMeter;
 import com.surelogic.flashlight.common.model.RunDescription;
 import com.surelogic.flashlight.common.model.RunManager;

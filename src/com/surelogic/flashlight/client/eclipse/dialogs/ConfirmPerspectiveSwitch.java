@@ -6,7 +6,7 @@ import org.eclipse.swt.widgets.Shell;
 import com.surelogic.common.eclipse.SLImages;
 import com.surelogic.common.eclipse.dialogs.ConfirmPerspectiveSwitchDialog;
 import com.surelogic.common.i18n.I18N;
-import com.surelogic.common.images.CommonImages;
+import com.surelogic.common.CommonImages;
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
 
 public final class ConfirmPerspectiveSwitch {

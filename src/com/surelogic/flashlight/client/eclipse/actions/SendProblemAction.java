@@ -5,9 +5,9 @@ import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 
+import com.surelogic.common.CommonImages;
 import com.surelogic.common.eclipse.SWTUtility;
 import com.surelogic.common.eclipse.dialogs.SendProblemReportDialog;
-import com.surelogic.common.images.CommonImages;
 
 public final class SendProblemAction implements IWorkbenchWindowActionDelegate {
 

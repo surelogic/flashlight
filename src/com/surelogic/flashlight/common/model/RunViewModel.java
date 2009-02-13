@@ -6,7 +6,7 @@ import java.util.List;
 
 import com.surelogic.common.Justification;
 import com.surelogic.common.SLUtility;
-import com.surelogic.common.images.CommonImages;
+import com.surelogic.common.CommonImages;
 import com.surelogic.flashlight.common.files.RawFileHandles;
 
 /**

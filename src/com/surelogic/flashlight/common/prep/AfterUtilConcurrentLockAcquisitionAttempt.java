@@ -1,5 +1,9 @@
 package com.surelogic.flashlight.common.prep;
 
+import static com.surelogic._flashlight.common.FlagType.GOT_LOCK;
+
+import com.surelogic._flashlight.common.PreppedAttributes;
+
 public final class AfterUtilConcurrentLockAcquisitionAttempt extends Lock {
 
 	public AfterUtilConcurrentLockAcquisitionAttempt(
@@ -19,5 +23,10 @@ public final class AfterUtilConcurrentLockAcquisitionAttempt extends Lock {
 	@Override
 	protected LockType getType() {
 		return LockType.UTIL;
+	}
+
+	@Override
+	protected Boolean isSuccess(PreppedAttributes attr) {
+		return attr.getBoolean(GOT_LOCK);
 	}
 }

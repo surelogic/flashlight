@@ -1,5 +1,9 @@
 package com.surelogic.flashlight.common.prep;
 
+import static com.surelogic._flashlight.common.FlagType.RELEASED_LOCK;
+
+import com.surelogic._flashlight.common.PreppedAttributes;
+
 public final class AfterUtilConcurrentLockReleaseAttempt extends Lock {
 
 	public AfterUtilConcurrentLockReleaseAttempt(
@@ -21,4 +25,8 @@ public final class AfterUtilConcurrentLockReleaseAttempt extends Lock {
 		return LockState.AFTER_RELEASE;
 	}
 
+	@Override
+	protected Boolean isSuccess(PreppedAttributes attr) {
+		return attr.getBoolean(RELEASED_LOCK);
+	}
 }

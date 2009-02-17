@@ -1,5 +1,6 @@
 package com.surelogic.flashlight.common.prep;
 
+
 public final class AfterIntrinsicLockRelease extends Lock {
 
 	public AfterIntrinsicLockRelease(final IntrinsicLockDurationRowInserter i) {
@@ -19,4 +20,5 @@ public final class AfterIntrinsicLockRelease extends Lock {
 	protected LockType getType() {
 		return LockType.INTRINSIC;
 	}
+
 }

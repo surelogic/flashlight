@@ -1,5 +1,6 @@
 package com.surelogic.flashlight.common.prep;
 
+
 public final class AfterIntrinsicLockAcquisition extends Lock {
 
 	public AfterIntrinsicLockAcquisition(
@@ -20,4 +21,5 @@ public final class AfterIntrinsicLockAcquisition extends Lock {
 	protected LockType getType() {
 		return LockType.INTRINSIC;
 	}
+
 }

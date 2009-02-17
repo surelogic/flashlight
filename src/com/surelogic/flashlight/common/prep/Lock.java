@@ -1,8 +1,6 @@
 package com.surelogic.flashlight.common.prep;
 
 import static com.surelogic._flashlight.common.FlagType.CLASS_LOCK;
-import static com.surelogic._flashlight.common.FlagType.GOT_LOCK;
-import static com.surelogic._flashlight.common.FlagType.RELEASED_LOCK;
 import static com.surelogic._flashlight.common.FlagType.THIS_LOCK;
 import static com.surelogic._flashlight.common.IdConstants.ILLEGAL_ID;
 
@@ -34,11 +32,7 @@ public abstract class Lock extends Event {
 			lockIsThis = null;
 			lockIsClass = null;
 		}
-		Boolean success = null;
-		if (attributes.getBoolean(GOT_LOCK)
-				|| attributes.getBoolean(RELEASED_LOCK)) {
-			success = true;
-		}
+		final Boolean success = isSuccess(attributes);
 		if ((nanoTime == ILLEGAL_ID) || (inThread == ILLEGAL_ID)
 				|| (trace == ILLEGAL_ID) || (lock == ILLEGAL_ID)) {
 			SLLogger.getLogger().log(
@@ -53,6 +47,18 @@ public abstract class Lock extends Event {
 				lockIsClass);
 		f_rowInserter.event(id, time, inThread, trace, lock, object,
 				getState(), success != Boolean.FALSE);
+	}
+
+	/**
+	 * If the lock event is capable of failing, returns <code>true</code> when
+	 * it succeeds and <code>false</code> when it fails. If the lock event
+	 * always succeeds regardless this method should return null.
+	 * 
+	 * @param attr
+	 * @return
+	 */
+	protected Boolean isSuccess(PreppedAttributes attr) {
+		return null;
 	}
 
 	@Override

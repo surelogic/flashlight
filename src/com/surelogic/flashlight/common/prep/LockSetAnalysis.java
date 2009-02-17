@@ -287,6 +287,9 @@ public class LockSetAnalysis extends NullDBQuery implements IPostPrep {
 			if (this == obj) {
 				return true;
 			}
+			if(obj == null) {
+				return false;
+			}
 			final FieldInstance other = (FieldInstance) obj;
 			if (field != other.field) {
 				return false;

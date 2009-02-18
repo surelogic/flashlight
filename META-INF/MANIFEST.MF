@@ -1,9 +1,9 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: Flashlight Eclipse Client
+Bundle-Name: Flashlight Client
 Bundle-SymbolicName: com.surelogic.flashlight;singleton:=true
 Bundle-Vendor: SureLogic
-Bundle-Version: 2.2.0.qualifier
+Bundle-Version: 2.2.1.qualifier
 Bundle-Activator: com.surelogic.flashlight.client.eclipse.Activator
 Bundle-Localization: plugin
 Require-Bundle: org.eclipse.ui,

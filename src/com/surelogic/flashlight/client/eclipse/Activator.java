@@ -81,9 +81,4 @@ public class Activator extends AbstractUIPlugin {
 		final String fullPath = new File(local.getPath()).getAbsolutePath();
 		return Path.fromOSString(fullPath);
 	}
-
-	private String getDerbyLogFile() {
-		final IPath pluginState = Activator.getDefault().getStateLocation();
-		return pluginState.toOSString() + File.separator + "derby.log";
-	}
 }

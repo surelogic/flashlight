@@ -4,7 +4,8 @@
  FROM ACCESS A
  INNER JOIN OBJECT O ON
    O.Id = A.InThread 
- LEFT OUTER JOIN LOCKDURATION D ON
+ LEFT OUTER JOIN LOCKDURATION D --DERBY-PROPERTIES index=LOCKDURATION_TIME_INDEX
+  ON
    D.InThread = A.InThread AND 
    (A.TS BETWEEN D.Start AND D.Stop)
  LEFT OUTER JOIN LOCK L ON
@@ -18,13 +19,13 @@
 WHERE 
    A.FIELD = ?FieldId? AND 
    A.RECEIVER = ?Receiver? 
-ORDER BY O.THREADNAME ASC, A.TS ASC, D.Start DESC
-</query>
+ORDER BY O.THREADNAME ASC, A.TS ASC, D.Start DESC</query>
   <query id='Q0023' description='* What locks are held for each access of this static field? *' display='true'>SELECT O.THREADNAME &quot;Thread&quot;,A.TS &quot;Time&quot;,D.Lock &quot;Lock__|&quot;,LO.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;, LO.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;, S.AtLine &quot;Line__(r)&quot;,D.ID &quot;LDID__(hide)&quot;,A.TRACE &quot;ATRACE__(hide)&quot;,L.TRACE &quot;LATRACE__(hide)&quot;
  FROM ACCESS A
  INNER JOIN OBJECT O ON
    O.Id = A.InThread 
- LEFT OUTER JOIN LOCKDURATION D ON
+ LEFT OUTER JOIN LOCKDURATION D --DERBY-PROPERTIES index=LOCKDURATION_TIME_INDEX
+  ON 
    D.InThread = A.InThread AND 
    (A.TS BETWEEN D.Start AND D.Stop)
  LEFT OUTER JOIN LOCK L ON
@@ -301,7 +302,7 @@ order by 2 desc, 1
 
 </query>
   <query id='Q0006' description='Which threads and what code are contending for a lock?' display='true'>select lo.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;, lo.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;, s.AtLine &quot;Line__]&quot;,
-  tho.ThreadName &quot;Thread__|&quot;, ld.id &quot;LDID__(hide)&quot;,(trim(cast(sum(ld.Duration) as char(10))) || &apos; ns&apos;) &quot;BlockTime__(sum &apos; ns&apos;)(r)&quot;, le.trace &quot;LATRACE__(hide)&quot;
+  tho.ThreadName &quot;Thread__|&quot;, (trim(cast(sum(ld.Duration) as char(10))) || &apos; ns&apos;) &quot;BlockTime__(sum &apos; ns&apos;)(r)&quot;, le.trace &quot;LATRACE__(hide)&quot;
 from LOCKDURATION ld, LOCK le, TRACE tr, SITE s, OBJECT lo, OBJECT tho
 where ld.Lock=?Lock?
   and ld.State = &apos;BLOCKING&apos;
@@ -310,7 +311,7 @@ where ld.Lock=?Lock?
   and s.Id = tr.Site
   and lo.Id = s.InClass
   and tho.Id = ld.InThread
-group by lo.PackageName,lo.ClassName, s.AtLine, tho.ThreadName, ld.Id, ld.State, le.trace
+group by lo.PackageName,lo.ClassName, s.AtLine, tho.ThreadName, le.trace
 order by lo.PackageName, lo.ClassName, s.AtLine, sum(ld.Duration) desc
   </query>
   <query id='Q0008' description='Who is interacting with that lock at that moment?' display='true'>select ld.InThread &quot;InThread&quot;, ld.State &quot;State&quot;, ld.Start &quot;Start&quot;, ld.Stop &quot;Stop&quot;, ld.Duration &quot;Duration&quot;, 
@@ -325,41 +326,41 @@ order by ld.Start
   <sub-query id='Q0017' sub-query='Q0028'/>
   <sub-query id='Q0023' sub-query='Q0027'/>
   <sub-query id='Q0023' sub-query='Q0028'/>
-  <sub-query id='Q0033' sub-query='Q0028'/>
   <sub-query id='Q0033' sub-query='Q0034'/>
-  <sub-query id='Q0031' sub-query='Q0028'/>
+  <sub-query id='Q0033' sub-query='Q0028'/>
   <sub-query id='Q0031' sub-query='Q0034'/>
-  <sub-query id='Q0012' sub-query='Q0014'/>
+  <sub-query id='Q0031' sub-query='Q0028'/>
   <sub-query id='Q0012' sub-query='Q0029'/>
+  <sub-query id='Q0012' sub-query='Q0014'/>
   <sub-query id='Q0012' sub-query='Q0013'/>
   <sub-query id='Q0005' sub-query='Q0006'/>
   <sub-query id='Q0034' sub-query='Q0027'/>
   <sub-query id='Q0034' sub-query='Q0028'/>
   <sub-query id='Q0011' sub-query='Q0012'/>
-  <sub-query id='Q0002' sub-query='Q0017'/>
+  <sub-query id='Q0002' sub-query='Q0033'/>
   <sub-query id='Q0002' sub-query='Q0018'/>
   <sub-query id='Q0002' sub-query='Q0019'/>
-  <sub-query id='Q0002' sub-query='Q0033'/>
-  <sub-query id='Q0015' sub-query='Q0017'/>
+  <sub-query id='Q0002' sub-query='Q0017'/>
+  <sub-query id='Q0015' sub-query='Q0033'/>
   <sub-query id='Q0015' sub-query='Q0018'/>
   <sub-query id='Q0015' sub-query='Q0019'/>
-  <sub-query id='Q0015' sub-query='Q0033'/>
-  <sub-query id='Q0016' sub-query='Q0017'/>
+  <sub-query id='Q0015' sub-query='Q0017'/>
+  <sub-query id='Q0016' sub-query='Q0033'/>
   <sub-query id='Q0016' sub-query='Q0018'/>
   <sub-query id='Q0016' sub-query='Q0019'/>
-  <sub-query id='Q0016' sub-query='Q0033'/>
-  <sub-query id='Q0001' sub-query='Q0023'/>
-  <sub-query id='Q0001' sub-query='Q0025'/>
+  <sub-query id='Q0016' sub-query='Q0017'/>
   <sub-query id='Q0001' sub-query='Q0031'/>
   <sub-query id='Q0001' sub-query='Q0024'/>
-  <sub-query id='Q0021' sub-query='Q0023'/>
-  <sub-query id='Q0021' sub-query='Q0025'/>
+  <sub-query id='Q0001' sub-query='Q0025'/>
+  <sub-query id='Q0001' sub-query='Q0023'/>
   <sub-query id='Q0021' sub-query='Q0031'/>
   <sub-query id='Q0021' sub-query='Q0024'/>
-  <sub-query id='Q0022' sub-query='Q0023'/>
-  <sub-query id='Q0022' sub-query='Q0025'/>
+  <sub-query id='Q0021' sub-query='Q0025'/>
+  <sub-query id='Q0021' sub-query='Q0023'/>
   <sub-query id='Q0022' sub-query='Q0031'/>
   <sub-query id='Q0022' sub-query='Q0024'/>
+  <sub-query id='Q0022' sub-query='Q0025'/>
+  <sub-query id='Q0022' sub-query='Q0023'/>
   <sub-query id='Q0009' sub-query='Q0014'/>
   <sub-query id='Q0009' sub-query='Q0013'/>
   <sub-query id='Q0006' sub-query='Q0027'/>

@@ -230,4 +230,18 @@
 			name="Historical Source Snapshot">
 		</view>
 	</extension>
+ <extension
+       point="org.eclipse.ui.handlers">
+    <handler
+          class="com.surelogic.adhoc.views.results.QueryResultsCopyHandler"
+          commandId="org.eclipse.ui.edit.copy">
+          <activeWhen>
+          	<with
+                 variable="activePartId">
+                 <equals
+                       value="com.surelogic.flashlight.client.eclipse.views.adhoc.QueryResultsView" />
+          	</with>
+          </activeWhen>
+    </handler>
+ </extension>
 </plugin>

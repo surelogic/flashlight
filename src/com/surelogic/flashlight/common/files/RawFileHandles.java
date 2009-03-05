@@ -73,6 +73,9 @@ public final class RawFileHandles {
 	 */
 	public boolean isLogClean() {
 		try {
+			if (!f_log.exists()) {
+				return true;
+			}
 			final BufferedReader r = new BufferedReader(new FileReader(f_log));
 			try {
 				while (true) {

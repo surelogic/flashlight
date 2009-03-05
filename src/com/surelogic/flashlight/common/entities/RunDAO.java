@@ -69,8 +69,12 @@ public final class RunDAO {
 		final PreparedStatement s = c.prepareStatement(QB.get("RunDAO.select"));
 		try {
 			final ResultSet rs = s.executeQuery();
-			if (rs.next()) {
-				return convertRowToObject(rs);
+			try {
+				if (rs.next()) {
+					return convertRowToObject(rs);
+				}
+			} finally {
+				rs.close();
 			}
 		} finally {
 			s.close();

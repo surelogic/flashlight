@@ -9,7 +9,7 @@ import org.xml.sax.helpers.DefaultHandler;
 
 public class BinaryEventReader extends SAXParser {	
 	static final boolean debug = false;
-	static boolean showRawData = false;
+	boolean showRawData = false;
 	
 	public void showRawData(boolean b) {
 		showRawData = b;

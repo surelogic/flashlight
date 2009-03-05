@@ -330,8 +330,9 @@ final class FlashlightVMRunner implements IVMRunner {
     final boolean useFiltering = launch.getAttribute(PreferenceConstants.P_USE_FILTERING, 
                                                      prefs.getBoolean(PreferenceConstants.P_USE_FILTERING));
     if (useFiltering) {
+    	PrintWriter out = null;
 		try {
-			final PrintWriter out = new PrintWriter(filtersFile);
+			out = new PrintWriter(filtersFile);
 	    	for(Object o : launch.getAttributes().entrySet()) {
 	    		Map.Entry e = (Map.Entry) o;
 	    		String key  = (String) e.getKey();
@@ -343,11 +344,15 @@ final class FlashlightVMRunner implements IVMRunner {
 	    		}
 	    	}
 	    	out.println();
-	    	out.close();
+	
 	    	newVmArgsList.add("-D"+FL_FILTERS_FILE+"=" + filtersFile.getAbsolutePath());
 		} catch (FileNotFoundException ex) {
 			SLLogger.getLogger().log(Level.SEVERE, "Couldn't create filters file: "+filtersFile.getAbsolutePath(), ex);
-		}    	
+		} finally {
+			if (out != null) {
+				out.close();
+			}
+		}
 
     }
     newVmArgsList.add("-DFL_RUN=" + mainTypeName);

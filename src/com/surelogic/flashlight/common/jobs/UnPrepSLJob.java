@@ -10,12 +10,13 @@ import com.surelogic.flashlight.common.entities.PrepRunDescription;
 import com.surelogic.flashlight.common.model.RunManager;
 
 public final class UnPrepSLJob extends AbstractSLJob {
-
+	private final boolean f_refresh;
 	private final DBConnection f_database;
 
-	public UnPrepSLJob(final PrepRunDescription prep) {
+	public UnPrepSLJob(final PrepRunDescription prep, boolean refresh) {
 		super("Removing preparing data " + prep.getDescription().getName());
 		f_database = prep.getDescription().getDB();
+		f_refresh = refresh;
 	}
 
 	public SLStatus run(final SLProgressMonitor monitor) {
@@ -29,7 +30,10 @@ public final class UnPrepSLJob extends AbstractSLJob {
 
 			UsageMeter.getInstance().tickUse("Flashlight ran UnPrepSLJob");
 			f_database.destroy();
-			RunManager.getInstance().refresh();
+
+			if (f_refresh) {
+				RunManager.getInstance().refresh();
+			}
 		} finally {
 			monitor.done();
 		}

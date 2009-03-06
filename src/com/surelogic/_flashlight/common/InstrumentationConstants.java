@@ -40,4 +40,6 @@ public final class InstrumentationConstants {
 	public static final OutputType FL_OUTPUT_TYPE_DEFAULT = OutputType.FL_GZ;
 
 	public static final String FL_DEBUG = "FL_DEBUG";
+	
+	public static final String FL_COMPLETE_RUN = "Run.Complete";
 }

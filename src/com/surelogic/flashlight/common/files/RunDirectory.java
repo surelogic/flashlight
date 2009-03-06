@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.util.logging.Level;
 
+import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.common.model.RunDescription;
@@ -114,7 +115,12 @@ public final class RunDirectory {
 	 */
 	/* Package private: Only created by RawFileUtility */
 	static RunDirectory getFor(final File runDir) {
-		assert runDir != null; // Caller checks if this null
+		assert runDir != null && runDir.exists(); // Caller checks if this null
+		final File tag = new File(runDir, InstrumentationConstants.FL_COMPLETE_RUN);
+		if (!tag.exists()) {
+			// Ignore this directory; it's not done (yet)
+			return null;
+		}
 		final InstrumentationFileHandles instrumentation = InstrumentationFileHandles
 				.getFor(runDir);
 		final SourceZipFileHandles source = SourceZipFileHandles.getFor(runDir);
@@ -138,10 +144,14 @@ public final class RunDirectory {
 				 */
 				final File rawDataFile = getFileFrom(runDir,
 						flashlightRawDataFileFilter, 146, 147);
-				final RawDataFilePrefix prefixInfo = rawDataFile != null ? RawFileUtility
-						.getPrefixFor(rawDataFile)
-						: null;
-
+				if (rawDataFile == null) {
+					return null;
+				}
+				final RawDataFilePrefix prefixInfo = RawFileUtility.getPrefixFor(rawDataFile);
+				if (!prefixInfo.isWellFormed()) {
+					return null;
+				}
+											
 				if (instrumentation != null && source != null
 						&& projects != null) {
 					/*
@@ -150,9 +160,8 @@ public final class RunDirectory {
 					 */
 					final RunDescription run = RawFileUtility
 							.getRunDescriptionFor(headerInfo);
-					final RawFileHandles profile = prefixInfo == null
-							|| !prefixInfo.isWellFormed() ? null
-							: RawFileUtility.getRawFileHandlesFor(prefixInfo);
+			
+					final RawFileHandles profile = RawFileUtility.getRawFileHandlesFor(prefixInfo);
 					final File db = new File(runDir.getAbsoluteFile()
 							+ File.separator + DB_NAME);
 					return new RunDirectory(run, runDir, headerFile, db,

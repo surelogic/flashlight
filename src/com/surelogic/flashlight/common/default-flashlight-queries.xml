@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes'?>
-<ad-hoc version='2.0'>
-  <query id='Q0017' description='* What locks are held for each access of this non-static field? *' display='true'>SELECT O.THREADNAME &quot;Thread&quot;,A.TS &quot;Time&quot;,D.Lock &quot;Lock__|&quot;,LO.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;, LO.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;, S.AtLine &quot;Line__(r)&quot;,D.ID &quot;LDID__(hide)&quot;,A.TRACE &quot;ATRACE__(hide)&quot;,L.TRACE &quot;LATRACE__(hide)&quot;
+<ad-hoc version='3.0'>
+  <query id='2611037a-f205-43d8-bd64-4da1e96f4807' description='* What locks are held for each access of this non-static field? *' revision='1' display='true'>SELECT O.THREADNAME &quot;Thread&quot;,A.TS &quot;Time&quot;,D.Lock &quot;Lock__|&quot;,LO.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;, LO.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;, S.AtLine &quot;Line__(r)&quot;,D.ID &quot;LDID__(hide)&quot;,A.TRACE &quot;ATRACE__(hide)&quot;,L.TRACE &quot;LATRACE__(hide)&quot;
  FROM ACCESS A
  INNER JOIN OBJECT O ON
    O.Id = A.InThread 
  LEFT OUTER JOIN LOCKDURATION D --DERBY-PROPERTIES index=LOCKDURATION_TIME_INDEX
-  ON
+  ON 
    D.InThread = A.InThread AND 
    (A.TS BETWEEN D.Start AND D.Stop)
  LEFT OUTER JOIN LOCK L ON
@@ -20,7 +20,7 @@ WHERE
    A.FIELD = ?FieldId? AND 
    A.RECEIVER = ?Receiver? 
 ORDER BY O.THREADNAME ASC, A.TS ASC, D.Start DESC</query>
-  <query id='Q0023' description='* What locks are held for each access of this static field? *' display='true'>SELECT O.THREADNAME &quot;Thread&quot;,A.TS &quot;Time&quot;,D.Lock &quot;Lock__|&quot;,LO.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;, LO.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;, S.AtLine &quot;Line__(r)&quot;,D.ID &quot;LDID__(hide)&quot;,A.TRACE &quot;ATRACE__(hide)&quot;,L.TRACE &quot;LATRACE__(hide)&quot;
+  <query id='4ab4618a-c379-4099-b763-052b7ba269c5' description='* What locks are held for each access of this static field? *' revision='1' display='true'>SELECT O.THREADNAME &quot;Thread&quot;,A.TS &quot;Time&quot;,D.Lock &quot;Lock__|&quot;,LO.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;, LO.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;, S.AtLine &quot;Line__(r)&quot;,D.ID &quot;LDID__(hide)&quot;,A.TRACE &quot;ATRACE__(hide)&quot;,L.TRACE &quot;LATRACE__(hide)&quot;
  FROM ACCESS A
  INNER JOIN OBJECT O ON
    O.Id = A.InThread 
@@ -40,8 +40,8 @@ WHERE
    A.FIELD = ?FieldId? AND 
    A.RECEIVER IS NULL
 ORDER BY O.THREADNAME ASC, A.TS ASC, D.Start DESC</query>
-  <query id='Q0010' description='A new query'>SELECT * FROM LOCK</query>
-  <query id='Q0018' description='How often is a lock held when this instance field is accessed?' display='true'>SELECT LOCKS.*, CAST ((CAST (LOCKS.&quot;Lock Count&quot; AS FLOAT)) / (CAST (ACCESSES.ACCESSCOUNT AS FLOAT)) AS DECIMAL (4,3)) &quot;Frequency&quot;
+  <query id='29b5a2b5-671d-4721-94bb-9552cda1c77d' description='A new query' revision='0'>SELECT * FROM LOCK</query>
+  <query id='a1e89392-cd0c-4a41-85f1-44251d7a5e71' description='How often is a lock held when this instance field is accessed?' revision='0' display='true'>SELECT LOCKS.*, CAST ((CAST (LOCKS.&quot;Lock Count&quot; AS FLOAT)) / (CAST (ACCESSES.ACCESSCOUNT AS FLOAT)) AS DECIMAL (4,3)) &quot;Frequency&quot;
 FROM
 (SELECT D.Lock &quot;Lock&quot;, COUNT(D.Lock) &quot;Lock Count&quot;
  FROM ACCESS A
@@ -49,7 +49,7 @@ FROM
     WHERE A.FIELD = ?FieldId? AND A.RECEIVER = ?Receiver?
  GROUP BY D.LOCK) AS LOCKS,
 (SELECT COUNT(*) &quot;ACCESSCOUNT&quot; FROM ACCESS A WHERE A.FIELD = ?FieldId? AND A.RECEIVER = ?Receiver?) AS ACCESSES</query>
-  <query id='Q0024' description='How often is a lock held when this static field is accessed?' display='true'>SELECT LOCKS.*, (CAST (LOCKS.LOCKCOUNT AS FLOAT)) / (CAST (ACCESSES.ACCESSCOUNT AS FLOAT))
+  <query id='6a39e6ca-29e9-4093-ba03-0e9bd9503a1a' description='How often is a lock held when this static field is accessed?' revision='0' display='true'>SELECT LOCKS.*, (CAST (LOCKS.LOCKCOUNT AS FLOAT)) / (CAST (ACCESSES.ACCESSCOUNT AS FLOAT))
 FROM
 (SELECT D.Lock &quot;LOCK&quot;,COUNT(D.Lock) &quot;LOCKCOUNT&quot;
  FROM ACCESS A
@@ -57,7 +57,7 @@ FROM
     WHERE A.FIELD = ?FieldId? AND A.RECEIVER IS NULL
  GROUP BY D.LOCK) AS LOCKS,
 (SELECT COUNT(*) &quot;ACCESSCOUNT&quot; FROM ACCESS A WHERE A.FIELD = ?FieldId? AND A.RECEIVER IS NULL) AS ACCESSES</query>
-  <query id='Q0029' description='Show details about this lock event' display='true'>select l.TS, t.ThreadName, l.Lock, lkType.ClassName as LockClass, 
+  <query id='67a08763-cefe-4193-908c-9dc8d1ca4245' description='Show details about this lock event' revision='0' display='true'>select l.TS, t.ThreadName, l.Lock, lkType.ClassName as LockClass, 
 l.LockIsThis as IsThis, l.LockIsClass as IsClass,
 l.State, cl.PackageName, cl.ClassName, s.AtLine
 from LOCK as l, TRACE tr, SITE s, OBJECT as cl, OBJECT as lk, OBJECT as t, OBJECT as lkType
@@ -68,7 +68,7 @@ and s.InClass = cl.Id
 and l.Lock = lk.Id
 and l.InThread = t.Id
 and lk.Type = lkType.Id</query>
-  <query id='Q0014' description='Show lock trace for a lock event' display='true'>SELECT D.Lock &quot;Lock__(r)&quot;, LO.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;, LO.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;, S.AtLine &quot;Line__(r)&quot;, D.Start &quot;Time&quot;
+  <query id='fb317a0c-d9c5-41e2-811b-d6236f63fae1' description='Show lock trace for a lock event' revision='0' display='true'>SELECT D.Lock &quot;Lock__(r)&quot;, LO.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;, LO.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;, S.AtLine &quot;Line__(r)&quot;, D.Start &quot;Time&quot;
 FROM LOCK L
  INNER JOIN LOCKDURATION D ON
    D.InThread = L.InThread AND 
@@ -84,7 +84,7 @@ FROM LOCK L
    LO.ID = S.InClass
 WHERE L.Id = ?LockEvent?
 ORDER BY D.START DESC</query>
-  <query id='Q0033' description='Show me all accesses of this non-static field' display='true'>SELECT &apos;?Package?&apos; &quot;Package__(&apos;package.gif&apos;)&quot;, &apos;?Class?&apos; &quot;Class__(&apos;class.gif&apos;)&quot;, &apos;?FieldName?&apos; &quot;FieldName__&quot;, 
+  <query id='8034f80b-aefb-4255-98b6-0ccd73ab1696' description='Show me all accesses of this non-static field' revision='0' display='true'>SELECT &apos;?Package?&apos; &quot;Package__(&apos;package.gif&apos;)&quot;, &apos;?Class?&apos; &quot;Class__(&apos;class.gif&apos;)&quot;, &apos;?FieldName?&apos; &quot;FieldName__&quot;, 
        O.THREADNAME &quot;Thread__|&quot;, A.TS &quot;Time&quot;, A.ID &quot;AID__(hide)&quot;, A.TRACE &quot;ATRACE__(hide)&quot;
  FROM ACCESS A
  INNER JOIN OBJECT O ON
@@ -93,7 +93,7 @@ WHERE
    A.FIELD = ?FieldId? AND 
    A.RECEIVER = ?Receiver?
 ORDER BY A.TS ASC</query>
-  <query id='Q0031' description='Show me all accesses of this static field' display='true'>SELECT &apos;?Package?&apos; &quot;Package__(&apos;package.gif&apos;)&quot;, &apos;?Class?&apos; &quot;Class__(&apos;class.gif&apos;)&quot;, &apos;?FieldName?&apos; &quot;FieldName__&quot;, 
+  <query id='1fcd4578-f20e-4671-8f55-b6bec64f4249' description='Show me all accesses of this static field' revision='0' display='true'>SELECT &apos;?Package?&apos; &quot;Package__(&apos;package.gif&apos;)&quot;, &apos;?Class?&apos; &quot;Class__(&apos;class.gif&apos;)&quot;, &apos;?FieldName?&apos; &quot;FieldName__&quot;, 
        O.THREADNAME &quot;Thread__|&quot;, A.TS &quot;Time&quot;, A.ID &quot;AID__(hide)&quot;, A.TRACE &quot;ATRACE__(hide)&quot;
  FROM ACCESS A
  INNER JOIN OBJECT O ON
@@ -102,19 +102,19 @@ WHERE
    A.FIELD = ?FieldId? AND 
    A.RECEIVER IS NULL
 ORDER BY A.TS ASC</query>
-  <query id='Q0028' description='Show stack trace for a field access' display='true'>SELECT s.PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;, s.CLASSNAME &quot;Class__(&apos;class.gif&apos;)&quot;, s.INFILE &quot;File&quot;, s.LOCATION &quot;Location&quot;, s.ATLINE &quot;Line__(r)&quot;
+  <query id='83d613b3-283e-4100-9a82-e42adf107fe6' description='Show stack trace for a field access' revision='0' display='true'>SELECT s.PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;, s.CLASSNAME &quot;Class__(&apos;class.gif&apos;)&quot;, s.INFILE &quot;File&quot;, s.LOCATION &quot;Location&quot;, s.ATLINE &quot;Line__(r)&quot;
 FROM TABLE (STACKTRACE(?ATRACE?)) s
 </query>
-  <query id='Q0027' description='Show stack trace for a lock acquisition' display='true'>SELECT s.PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;, s.CLASSNAME &quot;Class__(&apos;class.gif&apos;)&quot;, s.INFILE &quot;File&quot;, s.LOCATION &quot;Location&quot;, s.ATLINE &quot;Line__(r)&quot;
+  <query id='10477928-cf86-4416-9118-34eea8cd7e38' description='Show stack trace for a lock acquisition' revision='0' display='true'>SELECT s.PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;, s.CLASSNAME &quot;Class__(&apos;class.gif&apos;)&quot;, s.INFILE &quot;File&quot;, s.LOCATION &quot;Location&quot;, s.ATLINE &quot;Line__(r)&quot;
 FROM TABLE (STACKTRACE(?LATRACE?)) s
 </query>
-  <query id='Q0013' description='Show stack trace for a lock event' display='true'>SELECT s.PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;, s.CLASSNAME &quot;Class__(&apos;class.gif&apos;)&quot;, s.INFILE &quot;File&quot;, s.LOCATION &quot;Location&quot;, s.ATLINE &quot;Line__(r)&quot;
+  <query id='432b76db-c751-4bd8-8b2f-ef5986334514' description='Show stack trace for a lock event' revision='0' display='true'>SELECT s.PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;, s.CLASSNAME &quot;Class__(&apos;class.gif&apos;)&quot;, s.INFILE &quot;File&quot;, s.LOCATION &quot;Location&quot;, s.ATLINE &quot;Line__(r)&quot;
 FROM TABLE (STACKTRACE(?LETRACE?)) s</query>
-  <query id='Q0030' description='Show Tables'>select st.TABLENAME &quot;Table&quot;,sco.columnname &quot;COLUMN__|&quot;,sco.columndatatype,sco.autoincrementvalue,sco.autoincrementstart,sco.autoincrementinc
+  <query id='e353c660-c044-43c3-8f29-df5edb359d2d' description='Show Tables' revision='0'>select st.TABLENAME &quot;Table&quot;,sco.columnname &quot;COLUMN__|&quot;,sco.columndatatype,sco.autoincrementvalue,sco.autoincrementstart,sco.autoincrementinc
    from sys.sysschemas sc,sys.systables st,sys.syscolumns sco 
    where sc.schemaname = &apos;FLASHLIGHT&apos; and st.schemaid = sc.schemaid and sco.referenceid = st.tableid 
    order by st.tablename,sco.columnnumber</query>
-  <query id='Q0012' description='Show the lock events for a lock graph edge' display='true'>select lo.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;, lo.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;, s.AtLine &quot;Line__]&quot;, tho.ThreadName &quot;Thread__|&quot;, lh.LockEvent &quot;LockEvent__(r)&quot;
+  <query id='4fce8390-7307-45dc-b779-5701ee7f23a1' description='Show the lock events for a lock graph edge' revision='0' display='true'>select lo.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;, lo.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;, s.AtLine &quot;Line__]&quot;, tho.ThreadName &quot;Thread__|&quot;, lh.LockEvent &quot;LockEvent__(r)&quot;
 from LOCKSHELD as lh, LOCK l, TRACE tr, SITE s, OBJECT lo, OBJECT tho
 where lh.LockHeld=?LockHeld?
   and lh.LockAcquired=?LockAcquired?
@@ -125,13 +125,13 @@ where lh.LockHeld=?LockHeld?
   and tho.Id = l.InThread
 order by lo.PackageName,lo.ClassName, s.AtLine, tho.ThreadName, lh.LockEvent
   </query>
-  <query id='Q0005' description='What locks are contended for the longest time?' display='true' display-at-root='true'>select Lock &quot;Lock__(c)&quot;, (trim (cast(sum(Duration) as char(20)))) || &apos; ns&apos; as &quot;Block Time__(r)&quot;
+  <query id='cb38a427-c259-4690-abe2-acea9661f737' description='What locks are contended for the longest time?' revision='0' display='true' display-at-root='true'>select Lock &quot;Lock__(c)&quot;, (trim (cast(sum(Duration) as char(20)))) || &apos; ns&apos; as &quot;Block Time__(r)&quot;
 from LOCKDURATION    
 where State = &apos;BLOCKING&apos;
 group by Lock
 order by sum(duration) desc
   </query>
-  <query id='Q0034' description='What locks are held during this field access?' display='true'>SELECT O.THREADNAME &quot;Thread&quot;, A.TS &quot;Time&quot;, D.Lock &quot;Lock__|&quot;, LO.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;, LO.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;, S.AtLine &quot;Line__(r)&quot;, D.ID &quot;LDID__(hide)&quot;, A.TRACE &quot;ATRACE__(hide)&quot;,L.TRACE &quot;LATRACE__(hide)&quot;
+  <query id='ae2c5715-740e-4850-a404-38bdc8cde6b6' description='What locks are held during this field access?' revision='0' display='true'>SELECT O.THREADNAME &quot;Thread&quot;, A.TS &quot;Time&quot;, D.Lock &quot;Lock__|&quot;, LO.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;, LO.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;, S.AtLine &quot;Line__(r)&quot;, D.ID &quot;LDID__(hide)&quot;, A.TRACE &quot;ATRACE__(hide)&quot;,L.TRACE &quot;LATRACE__(hide)&quot;
  FROM ACCESS A
  INNER JOIN OBJECT O ON
    O.Id = A.InThread 
@@ -150,13 +150,13 @@ WHERE
    A.ID = ?AID?
 ORDER BY O.THREADNAME ASC, A.TS ASC, D.Start DESC
 </query>
-  <query id='Q0011' description='What locks could potentially cause deadlock?' display='true' display-at-root='true'>select Component &quot;Component&quot;, LockHeld &quot;LockHeld__(r)|&quot;,
+  <query id='803ca72a-f303-4319-8a35-9494eccc3d26' description='What locks could potentially cause deadlock?' revision='0' display='true' display-at-root='true'>select Component &quot;Component&quot;, LockHeld &quot;LockHeld__(r)|&quot;,
   LockAcquired &quot;LockAcquired__(r)&quot;,
   Count &quot;Count__(r)&quot;, FirstTime &quot;FirstTime&quot;, LastTime &quot;LastTime&quot;
 from lockcycle
 where count &gt; 0
 order by count desc</query>
-  <query id='Q0002' description='What non-static fields are shared?' display='true' display-at-root='true'>select
+  <query id='b82d393a-0d04-4daf-9716-1d88047e2585' description='What non-static fields are shared?' revision='0' display='true' display-at-root='true'>select
   O.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;,
   O.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;,
   F.FieldName &quot;FieldName__]&quot;,
@@ -176,7 +176,7 @@ where
   and FI.FIELD = F.ID 
   and THO.ID = FI.Thread
 order by O.PackageName,O.ClassName,F.FieldName,FI.Receiver,THO.ThreadName</query>
-  <query id='Q0015' description='What non-static fields have a lock set?' display='true' display-at-root='true'>SELECT 
+  <query id='adbe7424-776f-4903-86e2-a0f38f69c7f5' description='What non-static fields have a lock set?' revision='0' display='true' display-at-root='true'>SELECT 
   O.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;,
   O.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;,
   FI.FieldName &quot;FieldName__]&quot;,
@@ -186,7 +186,7 @@ order by O.PackageName,O.ClassName,F.FieldName,FI.Receiver,THO.ThreadName</query
  INNER JOIN INTERESTINGFIELD I ON FI.STATIC = &apos;N&apos; AND I.FIELD=FI.ID
  INNER JOIN FIELDINSTANCELOCKSET F ON F.FIELD = I.FIELD AND F.RECEIVER = I.RECEIVER 
  ORDER BY O.PackageName,O.ClassName,FI.FieldName,I.Receiver</query>
-  <query id='Q0016' description='What non-static fields have an empty lock set?' display='true' display-at-root='true'>SELECT 
+  <query id='7eabaf47-9614-400f-bb4e-fd9e0f13e793' description='What non-static fields have an empty lock set?' revision='0' display='true' display-at-root='true'>SELECT 
   O.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;,
   O.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;,
   FI.FieldName &quot;FieldName__]&quot;,
@@ -197,12 +197,12 @@ order by O.PackageName,O.ClassName,F.FieldName,FI.Receiver,THO.ThreadName</query
  LEFT OUTER JOIN FIELDINSTANCELOCKSET F ON F.FIELD = I.FIELD AND F.RECEIVER = I.RECEIVER 
  WHERE F.LOCK IS NULL
  ORDER BY O.PackageName, O.ClassName, FI.FieldName</query>
-  <query id='Q0003' description='What objects are threads?' display='true'>select t.Id, t.ThreadName, cl.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;,
+  <query id='d5b7c435-3a93-46e1-98ec-e5c8289df564' description='What objects are threads?' revision='0' display='true'>select t.Id, t.ThreadName, cl.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;,
        cl.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;
 from OBJECT as t, OBJECT as cl   
 where t.ThreadName is not null
   and t.Type=cl.Id</query>
-  <query id='Q0001' description='What static fields are shared?' display='true' display-at-root='true'>select
+  <query id='419c927e-a87c-4364-b4a9-2e8f50f728f6' description='What static fields are shared?' revision='0' display='true' display-at-root='true'>select
   O.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;,
   O.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;,
   F.FieldName &quot;FieldName__]&quot;,
@@ -219,7 +219,7 @@ where
   and FS.FIELD = F.ID 
   and THO.ID = FS.Thread
 order by O.PackageName,O.ClassName,F.FieldName,THO.ThreadName</query>
-  <query id='Q0021' description='What static fields have a lock set?' display='true' display-at-root='true'>SELECT 
+  <query id='2f505921-50fb-405b-bc78-4a5fe9228957' description='What static fields have a lock set?' revision='0' display='true' display-at-root='true'>SELECT 
   O.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;,
   O.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;,
   FI.FieldName &quot;FieldName&quot;,
@@ -230,7 +230,7 @@ order by O.PackageName,O.ClassName,F.FieldName,THO.ThreadName</query>
  INNER JOIN INTERESTINGFIELD I ON I.RECEIVER IS NULL AND I.FIELD=FI.ID
  INNER JOIN FIELDLOCKSET F ON F.FIELD = I.FIELD
  ORDER BY O.PackageName,O.ClassName,FI.FieldName</query>
-  <query id='Q0022' description='What static fields have an empty lock set?' display='true' display-at-root='true'>SELECT 
+  <query id='c744b5b5-15f0-4f72-a344-7e52bcac5071' description='What static fields have an empty lock set?' revision='0' display='true' display-at-root='true'>SELECT 
   O.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;,
   O.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;,
   FI.FieldName &quot;FieldName__|&quot;,
@@ -241,7 +241,7 @@ order by O.PackageName,O.ClassName,F.FieldName,THO.ThreadName</query>
  LEFT OUTER JOIN FIELDLOCKSET F ON F.FIELD = I.FIELD
  WHERE F.LOCK IS NULL
  ORDER BY O.PackageName,O.ClassName,FI.FieldName</query>
-  <query id='Q0025' description='What threads read and write a static field?' display='true'>SELECT
+  <query id='ce90be0d-9d7a-49a6-8334-c6f37112fa4b' description='What threads read and write a static field?' revision='0' display='true'>SELECT
   CO.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;,
   CO.ClassName   &quot;Class__(&apos;class.gif&apos;)&quot;,
   F.FieldName    &quot;FieldName&quot;,
@@ -253,7 +253,7 @@ order by O.PackageName,O.ClassName,F.FieldName,THO.ThreadName</query>
    THO.ID = FI.THREAD AND 
    F.ID = FI.FIELD AND
    CO.ID = F.DECLARINGTYPE</query>
-  <query id='Q0019' description='What threads read and write this non-static field?' display='true'>SELECT
+  <query id='598a178b-7153-4e1c-978e-1b78b1d95799' description='What threads read and write this non-static field?' revision='0' display='true'>SELECT
   CO.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;,
   CO.ClassName   &quot;Class__(&apos;class.gif&apos;)&quot;,
   F.FieldName    &quot;FieldName&quot;,
@@ -268,7 +268,7 @@ order by O.PackageName,O.ClassName,F.FieldName,THO.ThreadName</query>
    THO.ID = FI.THREAD AND 
    F.ID = FI.FIELD AND
    CO.ID = F.DECLARINGTYPE</query>
-  <query id='Q0004' description='What threads use each lock?' display='true'>select 
+  <query id='be10177b-bce3-498c-ad83-c394d9264fc2' description='What threads use each lock?' revision='0' display='true'>select 
   L.LOCK &quot;Lock&quot;, 
   O.THREADNAME &quot;Thread Name__|&quot;,
   count(*) &quot;Acquisition Count&quot;
@@ -278,7 +278,7 @@ where L.INTHREAD = O.ID
 group by l.lock, O.THREADNAME
 order by 1, 2
 </query>
-  <query id='Q0007' description='When and where is this thread contending for that lock?' display='true'>select ld.StartEvent as LockEvent,
+  <query id='330ba83b-9e6a-42d4-9eda-32f98f00a85f' description='When and where is this thread contending for that lock?' revision='0' display='true'>select ld.StartEvent as LockEvent,
    ld.Start,ld.Duration 
 from LOCKDURATION AS ld, LOCK as le
 where ld.State = &apos;BLOCKING&apos;
@@ -289,7 +289,7 @@ where ld.State = &apos;BLOCKING&apos;
   and le.AtLine=?AtLine?
 order by ld.Duration desc
   </query>
-  <query id='Q0009' description='Where does a thread hold a lock and acquire another?' display='true' display-at-root='true'>select count(LockHeld) &quot;Number of Locks Already Held&quot;,
+  <query id='9d05ac24-20c2-436e-af6b-2bd0bc7dbcfb' description='Where does a thread hold a lock and acquire another?' revision='0' display='true' display-at-root='true'>select count(LockHeld) &quot;Number of Locks Already Held&quot;,
   tho.ThreadName &quot;ThreadName&quot;, lo.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;, lo.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;, s.AtLine &quot;Line__(r)&quot;, lh.LockEvent &quot;LockEvent__(hide)&quot;, le.trace &quot;LETRACE__(hide)&quot;
 from LOCKSHELD lh, LOCK le, TRACE tr, SITE s, OBJECT lo, OBJECT tho
 where lh.LockEvent = le.Id
@@ -301,7 +301,7 @@ group by lh.LockEvent, lo.ClassName, lo.PackageName, s.AtLine, tho.ThreadName, l
 order by 2 desc, 1
 
 </query>
-  <query id='Q0006' description='Which threads and what code are contending for a lock?' display='true'>select lo.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;, lo.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;, s.AtLine &quot;Line__]&quot;,
+  <query id='c9453327-b892-4324-a6b8-2dceb32e1901' description='Which threads and what code are contending for a lock?' revision='0' display='true'>select lo.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;, lo.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;, s.AtLine &quot;Line__]&quot;,
   tho.ThreadName &quot;Thread__|&quot;, (trim(cast(sum(ld.Duration) as char(10))) || &apos; ns&apos;) &quot;BlockTime__(sum &apos; ns&apos;)(r)&quot;, le.trace &quot;LATRACE__(hide)&quot;
 from LOCKDURATION ld, LOCK le, TRACE tr, SITE s, OBJECT lo, OBJECT tho
 where ld.Lock=?Lock?
@@ -314,7 +314,7 @@ where ld.Lock=?Lock?
 group by lo.PackageName,lo.ClassName, s.AtLine, tho.ThreadName, le.trace
 order by lo.PackageName, lo.ClassName, s.AtLine, sum(ld.Duration) desc
   </query>
-  <query id='Q0008' description='Who is interacting with that lock at that moment?' display='true'>select ld.InThread &quot;InThread&quot;, ld.State &quot;State&quot;, ld.Start &quot;Start&quot;, ld.Stop &quot;Stop&quot;, ld.Duration &quot;Duration&quot;, 
+  <query id='e749d463-2424-4ca3-8b70-1857b7fdc0d6' description='Who is interacting with that lock at that moment?' revision='0' display='true'>select ld.InThread &quot;InThread&quot;, ld.State &quot;State&quot;, ld.Start &quot;Start&quot;, ld.Stop &quot;Stop&quot;, ld.Duration &quot;Duration&quot;, 
   ld.StartEvent &quot;LockEvent&quot;
 from LOCK as le, LOCKDURATION AS ld
 where le.Id=?LockEvent?
@@ -322,46 +322,54 @@ where le.Id=?LockEvent?
   and le.ts between ld.Start and ld.Stop
 order by ld.Start 
   </query>
-  <sub-query id='Q0017' sub-query='Q0027'/>
-  <sub-query id='Q0017' sub-query='Q0028'/>
-  <sub-query id='Q0023' sub-query='Q0027'/>
-  <sub-query id='Q0023' sub-query='Q0028'/>
-  <sub-query id='Q0033' sub-query='Q0034'/>
-  <sub-query id='Q0033' sub-query='Q0028'/>
-  <sub-query id='Q0031' sub-query='Q0034'/>
-  <sub-query id='Q0031' sub-query='Q0028'/>
-  <sub-query id='Q0012' sub-query='Q0029'/>
-  <sub-query id='Q0012' sub-query='Q0014'/>
-  <sub-query id='Q0012' sub-query='Q0013'/>
-  <sub-query id='Q0005' sub-query='Q0006'/>
-  <sub-query id='Q0034' sub-query='Q0027'/>
-  <sub-query id='Q0034' sub-query='Q0028'/>
-  <sub-query id='Q0011' sub-query='Q0012'/>
-  <sub-query id='Q0002' sub-query='Q0033'/>
-  <sub-query id='Q0002' sub-query='Q0018'/>
-  <sub-query id='Q0002' sub-query='Q0019'/>
-  <sub-query id='Q0002' sub-query='Q0017'/>
-  <sub-query id='Q0015' sub-query='Q0033'/>
-  <sub-query id='Q0015' sub-query='Q0018'/>
-  <sub-query id='Q0015' sub-query='Q0019'/>
-  <sub-query id='Q0015' sub-query='Q0017'/>
-  <sub-query id='Q0016' sub-query='Q0033'/>
-  <sub-query id='Q0016' sub-query='Q0018'/>
-  <sub-query id='Q0016' sub-query='Q0019'/>
-  <sub-query id='Q0016' sub-query='Q0017'/>
-  <sub-query id='Q0001' sub-query='Q0031'/>
-  <sub-query id='Q0001' sub-query='Q0024'/>
-  <sub-query id='Q0001' sub-query='Q0025'/>
-  <sub-query id='Q0001' sub-query='Q0023'/>
-  <sub-query id='Q0021' sub-query='Q0031'/>
-  <sub-query id='Q0021' sub-query='Q0024'/>
-  <sub-query id='Q0021' sub-query='Q0025'/>
-  <sub-query id='Q0021' sub-query='Q0023'/>
-  <sub-query id='Q0022' sub-query='Q0031'/>
-  <sub-query id='Q0022' sub-query='Q0024'/>
-  <sub-query id='Q0022' sub-query='Q0025'/>
-  <sub-query id='Q0022' sub-query='Q0023'/>
-  <sub-query id='Q0009' sub-query='Q0014'/>
-  <sub-query id='Q0009' sub-query='Q0013'/>
-  <sub-query id='Q0006' sub-query='Q0027'/>
+  <query id='5b6077b8-238e-44d7-baa8-3e3a09634c6d' description='Who is interacting with that lock at that moment?' revision='0' display='true'>select ld.InThread &quot;InThread&quot;, ld.State &quot;State&quot;, ld.Start &quot;Start&quot;, ld.Stop &quot;Stop&quot;, ld.Duration &quot;Duration&quot;, 
+  ld.StartEvent &quot;LockEvent&quot;
+from LOCK as le, LOCKDURATION AS ld
+where le.Id=?LockEvent?
+  and ld.Lock=?Lock?
+  and le.ts between ld.Start and ld.Stop
+order by ld.Start 
+  </query>
+  <sub-query id='2611037a-f205-43d8-bd64-4da1e96f4807' sub-query='83d613b3-283e-4100-9a82-e42adf107fe6'/>
+  <sub-query id='2611037a-f205-43d8-bd64-4da1e96f4807' sub-query='10477928-cf86-4416-9118-34eea8cd7e38'/>
+  <sub-query id='4ab4618a-c379-4099-b763-052b7ba269c5' sub-query='83d613b3-283e-4100-9a82-e42adf107fe6'/>
+  <sub-query id='4ab4618a-c379-4099-b763-052b7ba269c5' sub-query='10477928-cf86-4416-9118-34eea8cd7e38'/>
+  <sub-query id='8034f80b-aefb-4255-98b6-0ccd73ab1696' sub-query='83d613b3-283e-4100-9a82-e42adf107fe6'/>
+  <sub-query id='8034f80b-aefb-4255-98b6-0ccd73ab1696' sub-query='ae2c5715-740e-4850-a404-38bdc8cde6b6'/>
+  <sub-query id='1fcd4578-f20e-4671-8f55-b6bec64f4249' sub-query='83d613b3-283e-4100-9a82-e42adf107fe6'/>
+  <sub-query id='1fcd4578-f20e-4671-8f55-b6bec64f4249' sub-query='ae2c5715-740e-4850-a404-38bdc8cde6b6'/>
+  <sub-query id='4fce8390-7307-45dc-b779-5701ee7f23a1' sub-query='67a08763-cefe-4193-908c-9dc8d1ca4245'/>
+  <sub-query id='4fce8390-7307-45dc-b779-5701ee7f23a1' sub-query='432b76db-c751-4bd8-8b2f-ef5986334514'/>
+  <sub-query id='4fce8390-7307-45dc-b779-5701ee7f23a1' sub-query='fb317a0c-d9c5-41e2-811b-d6236f63fae1'/>
+  <sub-query id='cb38a427-c259-4690-abe2-acea9661f737' sub-query='c9453327-b892-4324-a6b8-2dceb32e1901'/>
+  <sub-query id='ae2c5715-740e-4850-a404-38bdc8cde6b6' sub-query='83d613b3-283e-4100-9a82-e42adf107fe6'/>
+  <sub-query id='ae2c5715-740e-4850-a404-38bdc8cde6b6' sub-query='10477928-cf86-4416-9118-34eea8cd7e38'/>
+  <sub-query id='803ca72a-f303-4319-8a35-9494eccc3d26' sub-query='4fce8390-7307-45dc-b779-5701ee7f23a1'/>
+  <sub-query id='b82d393a-0d04-4daf-9716-1d88047e2585' sub-query='598a178b-7153-4e1c-978e-1b78b1d95799'/>
+  <sub-query id='b82d393a-0d04-4daf-9716-1d88047e2585' sub-query='2611037a-f205-43d8-bd64-4da1e96f4807'/>
+  <sub-query id='b82d393a-0d04-4daf-9716-1d88047e2585' sub-query='8034f80b-aefb-4255-98b6-0ccd73ab1696'/>
+  <sub-query id='b82d393a-0d04-4daf-9716-1d88047e2585' sub-query='a1e89392-cd0c-4a41-85f1-44251d7a5e71'/>
+  <sub-query id='adbe7424-776f-4903-86e2-a0f38f69c7f5' sub-query='598a178b-7153-4e1c-978e-1b78b1d95799'/>
+  <sub-query id='adbe7424-776f-4903-86e2-a0f38f69c7f5' sub-query='2611037a-f205-43d8-bd64-4da1e96f4807'/>
+  <sub-query id='adbe7424-776f-4903-86e2-a0f38f69c7f5' sub-query='8034f80b-aefb-4255-98b6-0ccd73ab1696'/>
+  <sub-query id='adbe7424-776f-4903-86e2-a0f38f69c7f5' sub-query='a1e89392-cd0c-4a41-85f1-44251d7a5e71'/>
+  <sub-query id='7eabaf47-9614-400f-bb4e-fd9e0f13e793' sub-query='598a178b-7153-4e1c-978e-1b78b1d95799'/>
+  <sub-query id='7eabaf47-9614-400f-bb4e-fd9e0f13e793' sub-query='2611037a-f205-43d8-bd64-4da1e96f4807'/>
+  <sub-query id='7eabaf47-9614-400f-bb4e-fd9e0f13e793' sub-query='8034f80b-aefb-4255-98b6-0ccd73ab1696'/>
+  <sub-query id='7eabaf47-9614-400f-bb4e-fd9e0f13e793' sub-query='a1e89392-cd0c-4a41-85f1-44251d7a5e71'/>
+  <sub-query id='419c927e-a87c-4364-b4a9-2e8f50f728f6' sub-query='ce90be0d-9d7a-49a6-8334-c6f37112fa4b'/>
+  <sub-query id='419c927e-a87c-4364-b4a9-2e8f50f728f6' sub-query='6a39e6ca-29e9-4093-ba03-0e9bd9503a1a'/>
+  <sub-query id='419c927e-a87c-4364-b4a9-2e8f50f728f6' sub-query='4ab4618a-c379-4099-b763-052b7ba269c5'/>
+  <sub-query id='419c927e-a87c-4364-b4a9-2e8f50f728f6' sub-query='1fcd4578-f20e-4671-8f55-b6bec64f4249'/>
+  <sub-query id='2f505921-50fb-405b-bc78-4a5fe9228957' sub-query='ce90be0d-9d7a-49a6-8334-c6f37112fa4b'/>
+  <sub-query id='2f505921-50fb-405b-bc78-4a5fe9228957' sub-query='6a39e6ca-29e9-4093-ba03-0e9bd9503a1a'/>
+  <sub-query id='2f505921-50fb-405b-bc78-4a5fe9228957' sub-query='4ab4618a-c379-4099-b763-052b7ba269c5'/>
+  <sub-query id='2f505921-50fb-405b-bc78-4a5fe9228957' sub-query='1fcd4578-f20e-4671-8f55-b6bec64f4249'/>
+  <sub-query id='c744b5b5-15f0-4f72-a344-7e52bcac5071' sub-query='ce90be0d-9d7a-49a6-8334-c6f37112fa4b'/>
+  <sub-query id='c744b5b5-15f0-4f72-a344-7e52bcac5071' sub-query='6a39e6ca-29e9-4093-ba03-0e9bd9503a1a'/>
+  <sub-query id='c744b5b5-15f0-4f72-a344-7e52bcac5071' sub-query='4ab4618a-c379-4099-b763-052b7ba269c5'/>
+  <sub-query id='c744b5b5-15f0-4f72-a344-7e52bcac5071' sub-query='1fcd4578-f20e-4671-8f55-b6bec64f4249'/>
+  <sub-query id='9d05ac24-20c2-436e-af6b-2bd0bc7dbcfb' sub-query='432b76db-c751-4bd8-8b2f-ef5986334514'/>
+  <sub-query id='9d05ac24-20c2-436e-af6b-2bd0bc7dbcfb' sub-query='fb317a0c-d9c5-41e2-811b-d6236f63fae1'/>
+  <sub-query id='c9453327-b892-4324-a6b8-2dceb32e1901' sub-query='10477928-cf86-4416-9118-34eea8cd7e38'/>
 </ad-hoc>

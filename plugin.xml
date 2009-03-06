@@ -209,25 +209,25 @@
 			class="com.surelogic.flashlight.client.eclipse.views.adhoc.QueryEditorView"
 			icon="platform:/plugin/com.surelogic.common/src/com/surelogic/common/images/query.gif"
 			id="com.surelogic.flashlight.client.eclipse.views.adhoc.QueryEditorView"
-			name="Flashlight Query Editor">
+			name="Query Editor">
 		</view>
 		<view allowMultiple="false" category="com.surelogic.flashlight.Flashlight"
 			class="com.surelogic.flashlight.client.eclipse.views.adhoc.QueryMenuView"
 			icon="platform:/plugin/com.surelogic.common/src/com/surelogic/common/images/query_gray.gif"
 			id="com.surelogic.flashlight.client.eclipse.views.adhoc.QueryMenuView"
-			name="Query Flashlight">
+			name="Query Menu">
 		</view>
 		<view allowMultiple="false" category="com.surelogic.flashlight.Flashlight"
 			class="com.surelogic.flashlight.client.eclipse.views.adhoc.QueryResultExplorerView"
 			icon="platform:/plugin/com.surelogic.common/src/com/surelogic/common/images/drum_explorer.gif"
 			id="com.surelogic.flashlight.client.eclipse.views.adhoc.QueryResultExplorerView"
-			name="Flashlight Query Results Explorer">
+			name="Query Results Explorer">
 		</view>
 		<view allowMultiple="false" category="com.surelogic.flashlight.Flashlight"
 			class="com.surelogic.flashlight.client.eclipse.views.adhoc.QueryResultsView"
 			icon="platform:/plugin/com.surelogic.common/src/com/surelogic/common/images/drum.gif"
 			id="com.surelogic.flashlight.client.eclipse.views.adhoc.QueryResultsView"
-			name="Flashlight Query Results">
+			name="Query Results">
 		</view>
 		<view allowMultiple="false" category="com.surelogic.flashlight.Flashlight"
 			class="com.surelogic.flashlight.client.eclipse.views.source.HistoricalSourceView"

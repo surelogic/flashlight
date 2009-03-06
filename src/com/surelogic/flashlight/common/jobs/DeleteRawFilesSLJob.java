@@ -9,8 +9,10 @@ import com.surelogic.common.serviceability.UsageMeter;
 import com.surelogic.flashlight.common.files.RawFileUtility;
 import com.surelogic.flashlight.common.files.RunDirectory;
 import com.surelogic.flashlight.common.model.RunDescription;
-import com.surelogic.flashlight.common.model.RunManager;
 
+/**
+ * Note that the RunManager needs to be refreshed after this
+ */
 public class DeleteRawFilesSLJob extends AbstractSLJob {
 
 	private final RunDescription f_description;
@@ -35,7 +37,6 @@ public class DeleteRawFilesSLJob extends AbstractSLJob {
 			final RunDirectory runDir = RawFileUtility
 					.getRunDirectoryFor(f_description);
 			FileUtility.recursiveDelete(runDir.getRunDirectory());
-			RunManager.getInstance().refresh();
 		} finally {
 			monitor.done();
 		}

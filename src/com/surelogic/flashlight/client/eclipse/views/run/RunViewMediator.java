@@ -274,7 +274,7 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 					
 					final boolean deleteRaw = hasRawFiles && d.deleteRawDataFiles();
 					if (hasPrep) {
-						jobs.add(new UnPrepSLJob(prep, !deleteRaw));
+						jobs.add(new UnPrepSLJob(prep));
 					}
 					if (deleteRaw) {
 						jobs.add(new DeleteRawFilesSLJob(description));
@@ -292,6 +292,9 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 				} else {
 					jobName = I18N.msg("flashlight.jobs.delete.many");
 				}
+				// To make the deletes seem atomic
+				jobs.add(new RefreshRunManagerSLJob());
+				
 				final SLJob job = new AggregateSLJob(jobName, jobs);
 				EclipseJob.getInstance().scheduleDb(job, true, false);
 			}

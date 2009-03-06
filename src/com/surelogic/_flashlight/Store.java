@@ -3,6 +3,7 @@ package com.surelogic._flashlight;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
@@ -19,6 +20,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.zip.GZIPOutputStream;
 
 import com.surelogic._flashlight.common.IdConstants;
+import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic._flashlight.common.LongMap;
 import com.surelogic._flashlight.trace.TraceNode;
 
@@ -1475,10 +1477,40 @@ public final class Store {
 		if (f_spy != null)
 			f_spy.requestShutdown();
 
+		final long endTime      = System.nanoTime();
+		final long totalTime    = endTime - f_start_nano;	
+		final StringBuilder sb  = new StringBuilder(" (duration of collection was ");
+		formatNanoTime(sb, totalTime);
+		sb.append(')');
+		final String duration   = sb.toString();
+		final long problemCount = f_problemCount.get();	
+		if (problemCount < 1)
+			log("collection shutdown" + duration);
+		else
+			log("collection shutdown with " + problemCount
+					+ " problem(s) reported" + duration);
+
+		
+		File done = new File(StoreConfiguration.getDirectory(),
+				             InstrumentationConstants.FL_COMPLETE_RUN);
+		try {
+			FileWriter w = new FileWriter(done);
+			sb.delete(0, sb.length()); // clear
+			sb.append("Completed: ");
+			formatNanoTime(sb, endTime);
+			w.write(sb.toString());
+			w.close();
+		} catch (IOException e) {
+			log(e.getMessage()+", while writing final file");
+		}
+		logComplete();
+	}
+
+	private static void formatNanoTime(StringBuilder sb, long totalTime) {
 		final long nsPerSecond  = 1000000000L;	
 		final long nsPerMinute  = 60000000000L;
 		final long nsPerHour    = 3600000000000L;
-		final long totalTime    = System.nanoTime() - f_start_nano;
+		
 		long timeLeft = totalTime;
 		final long totalHours   = timeLeft / nsPerHour;
 		timeLeft -= (totalHours * nsPerHour);
@@ -1487,8 +1519,7 @@ public final class Store {
 		timeLeft -= (totalMins * nsPerMinute);
 		
 		final float totalSecs   = timeLeft / (float) nsPerSecond;
-	
-		final StringBuilder sb  = new StringBuilder(" (duration of collection was ");
+		
 		sb.append(totalHours).append(':');
 		if (totalMins < 10) {
 			sb.append('0');
@@ -1497,17 +1528,9 @@ public final class Store {
 		if (totalSecs < 10) {
 			sb.append('0');
 		}
-		sb.append(totalSecs).append(')');
-		final String duration   = sb.toString();
-		final long problemCount = f_problemCount.get();	
-		if (problemCount < 1)
-			log("collection shutdown" + duration);
-		else
-			log("collection shutdown with " + problemCount
-					+ " problem(s) reported" + duration);
-		logComplete();
+		sb.append(totalSecs);
 	}
-
+	
 	/**
 	 * Only used for testing, this method sets the output strategy of the
 	 * depository thread.

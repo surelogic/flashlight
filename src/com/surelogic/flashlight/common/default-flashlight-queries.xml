@@ -1,15 +1,7 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes'?>
 <ad-hoc version='3.0'>
   <query id='29b5a2b5-671d-4721-94bb-9552cda1c77d' description='A new query' revision='0'>SELECT * FROM LOCK</query>
-  <query id='a1e89392-cd0c-4a41-85f1-44251d7a5e71' description='How often is a lock held when this field (non-static) is accessed? ' revision='2' display='true'>SELECT LOCKS.*, CAST ((CAST (LOCKS.&quot;Lock Count&quot; AS FLOAT)) / (CAST (ACCESSES.ACCESSCOUNT AS FLOAT)) AS DECIMAL (4,3)) &quot;Frequency&quot;
-FROM
-(SELECT D.Lock &quot;Lock&quot;, COUNT(D.Lock) &quot;Lock Count&quot;
- FROM ACCESS A
-      INNER JOIN LOCKDURATION D ON D.InThread = A.InThread AND D.Start &lt; A.TS AND D.Stop &gt; A.TS AND State = &apos;HOLDING&apos; 
-    WHERE A.FIELD = ?FieldId? AND A.RECEIVER = ?Receiver?
- GROUP BY D.LOCK) AS LOCKS,
-(SELECT COUNT(*) &quot;ACCESSCOUNT&quot; FROM ACCESS A WHERE A.FIELD = ?FieldId? AND A.RECEIVER = ?Receiver?) AS ACCESSES</query>
-  <query id='6a39e6ca-29e9-4093-ba03-0e9bd9503a1a' description='How often is a lock held when this field (static) is accessed?' revision='2' display='true'>SELECT LOCKS.*, (CAST (LOCKS.LOCKCOUNT AS FLOAT)) / (CAST (ACCESSES.ACCESSCOUNT AS FLOAT))
+  <query id='6a39e6ca-29e9-4093-ba03-0e9bd9503a1a' description='How often is a lock held when this field is accessed?' revision='3' display='true'>SELECT LOCKS.*, (CAST (LOCKS.LOCKCOUNT AS FLOAT)) / (CAST (ACCESSES.ACCESSCOUNT AS FLOAT))
 FROM
 (SELECT D.Lock &quot;LOCK&quot;,COUNT(D.Lock) &quot;LOCKCOUNT&quot;
  FROM ACCESS A
@@ -17,6 +9,14 @@ FROM
     WHERE A.FIELD = ?FieldId? AND A.RECEIVER IS NULL
  GROUP BY D.LOCK) AS LOCKS,
 (SELECT COUNT(*) &quot;ACCESSCOUNT&quot; FROM ACCESS A WHERE A.FIELD = ?FieldId? AND A.RECEIVER IS NULL) AS ACCESSES</query>
+  <query id='a1e89392-cd0c-4a41-85f1-44251d7a5e71' description='How often is a lock held when this field is accessed? ' revision='3' display='true'>SELECT LOCKS.*, CAST ((CAST (LOCKS.&quot;Lock Count&quot; AS FLOAT)) / (CAST (ACCESSES.ACCESSCOUNT AS FLOAT)) AS DECIMAL (4,3)) &quot;Frequency&quot;
+FROM
+(SELECT D.Lock &quot;Lock&quot;, COUNT(D.Lock) &quot;Lock Count&quot;
+ FROM ACCESS A
+      INNER JOIN LOCKDURATION D ON D.InThread = A.InThread AND D.Start &lt; A.TS AND D.Stop &gt; A.TS AND State = &apos;HOLDING&apos; 
+    WHERE A.FIELD = ?FieldId? AND A.RECEIVER = ?Receiver?
+ GROUP BY D.LOCK) AS LOCKS,
+(SELECT COUNT(*) &quot;ACCESSCOUNT&quot; FROM ACCESS A WHERE A.FIELD = ?FieldId? AND A.RECEIVER = ?Receiver?) AS ACCESSES</query>
   <query id='67a08763-cefe-4193-908c-9dc8d1ca4245' description='Show details about this lock event' revision='0' display='true'>select l.TS, t.ThreadName, l.Lock, lkType.ClassName as LockClass, 
 l.LockIsThis as IsThis, l.LockIsClass as IsClass,
 l.State, cl.PackageName, cl.ClassName, s.AtLine
@@ -44,16 +44,7 @@ FROM LOCK L
    LO.ID = S.InClass
 WHERE L.Id = ?LockEvent?
 ORDER BY D.START DESC</query>
-  <query id='8034f80b-aefb-4255-98b6-0ccd73ab1696' description='Show me all accesses of this field (non-static)' revision='1' display='true'>SELECT &apos;?Package?&apos; &quot;Package__(&apos;package.gif&apos;)&quot;, &apos;?Class?&apos; &quot;Class__(&apos;class.gif&apos;)&quot;, &apos;?FieldName?&apos; &quot;FieldName__&quot;, 
-       O.THREADNAME &quot;Thread__|&quot;, A.TS &quot;Time&quot;, A.ID &quot;AID__(hide)&quot;, A.TRACE &quot;ATRACE__(hide)&quot;
- FROM ACCESS A
- INNER JOIN OBJECT O ON
-   O.Id = A.InThread 
-WHERE 
-   A.FIELD = ?FieldId? AND 
-   A.RECEIVER = ?Receiver?
-ORDER BY A.TS ASC</query>
-  <query id='1fcd4578-f20e-4671-8f55-b6bec64f4249' description='Show me all accesses of this field (static)' revision='1' display='true'>SELECT &apos;?Package?&apos; &quot;Package__(&apos;package.gif&apos;)&quot;, &apos;?Class?&apos; &quot;Class__(&apos;class.gif&apos;)&quot;, &apos;?FieldName?&apos; &quot;FieldName__&quot;, 
+  <query id='1fcd4578-f20e-4671-8f55-b6bec64f4249' description='Show me all accesses of this field' revision='2' display='true'>SELECT &apos;?Package?&apos; &quot;Package__(&apos;package.gif&apos;)&quot;, &apos;?Class?&apos; &quot;Class__(&apos;class.gif&apos;)&quot;, &apos;?FieldName?&apos; &quot;FieldName__&quot;, 
        O.THREADNAME &quot;Thread__|&quot;, A.TS &quot;Time&quot;, A.ID &quot;AID__(hide)&quot;, A.TRACE &quot;ATRACE__(hide)&quot;
  FROM ACCESS A
  INNER JOIN OBJECT O ON
@@ -61,6 +52,15 @@ ORDER BY A.TS ASC</query>
 WHERE 
    A.FIELD = ?FieldId? AND 
    A.RECEIVER IS NULL
+ORDER BY A.TS ASC</query>
+  <query id='8034f80b-aefb-4255-98b6-0ccd73ab1696' description='Show me all accesses of this field' revision='2' display='true'>SELECT &apos;?Package?&apos; &quot;Package__(&apos;package.gif&apos;)&quot;, &apos;?Class?&apos; &quot;Class__(&apos;class.gif&apos;)&quot;, &apos;?FieldName?&apos; &quot;FieldName__&quot;, 
+       O.THREADNAME &quot;Thread__|&quot;, A.TS &quot;Time&quot;, A.ID &quot;AID__(hide)&quot;, A.TRACE &quot;ATRACE__(hide)&quot;
+ FROM ACCESS A
+ INNER JOIN OBJECT O ON
+   O.Id = A.InThread 
+WHERE 
+   A.FIELD = ?FieldId? AND 
+   A.RECEIVER = ?Receiver?
 ORDER BY A.TS ASC</query>
   <query id='83d613b3-283e-4100-9a82-e42adf107fe6' description='Show stack trace for a field access' revision='0' display='true'>SELECT s.PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;, s.CLASSNAME &quot;Class__(&apos;class.gif&apos;)&quot;, s.INFILE &quot;File&quot;, s.LOCATION &quot;Location&quot;, s.ATLINE &quot;Line__(r)&quot;
 FROM TABLE (STACKTRACE(?ATRACE?)) s
@@ -190,27 +190,7 @@ WHERE
    A.ID = ?AID?
 ORDER BY O.THREADNAME ASC, A.TS ASC, D.Start DESC
 </query>
-  <query id='2611037a-f205-43d8-bd64-4da1e96f4807' description='What locks are held for each access of this field? (non-static) ***' revision='2' display='true'>SELECT O.THREADNAME &quot;Thread&quot;,A.TS &quot;Time&quot;,D.Lock &quot;Lock__|&quot;,LO.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;, LO.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;, S.AtLine &quot;Line__(r)&quot;,D.ID &quot;LDID__(hide)&quot;,A.TRACE &quot;ATRACE__(hide)&quot;,L.TRACE &quot;LATRACE__(hide)&quot;
- FROM ACCESS A
- INNER JOIN OBJECT O ON
-   O.Id = A.InThread 
- LEFT OUTER JOIN LOCKDURATION D --DERBY-PROPERTIES index=LOCKDURATION_TIME_INDEX
-  ON 
-   D.InThread = A.InThread AND 
-   (A.TS BETWEEN D.Start AND D.Stop)
- LEFT OUTER JOIN LOCK L ON
-   L.Id = D.StartEvent
- LEFT OUTER JOIN TRACE TR ON
-   TR.Id = L.TRACE
- LEFT OUTER JOIN SITE S ON
-   S.Id = TR.SITE
- LEFT OUTER JOIN OBJECT LO ON
-   LO.Id = S.InClass
-WHERE 
-   A.FIELD = ?FieldId? AND 
-   A.RECEIVER = ?Receiver? 
-ORDER BY O.THREADNAME ASC, A.TS ASC, D.Start DESC</query>
-  <query id='4ab4618a-c379-4099-b763-052b7ba269c5' description='What locks are held for each access of this field? (static) ***' revision='2' display='true'>SELECT O.THREADNAME &quot;Thread&quot;,A.TS &quot;Time&quot;,D.Lock &quot;Lock__|&quot;,LO.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;, LO.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;, S.AtLine &quot;Line__(r)&quot;,D.ID &quot;LDID__(hide)&quot;,A.TRACE &quot;ATRACE__(hide)&quot;,L.TRACE &quot;LATRACE__(hide)&quot;
+  <query id='4ab4618a-c379-4099-b763-052b7ba269c5' description='What locks are held for each access of this field? ***' revision='3' display='true'>SELECT O.THREADNAME &quot;Thread&quot;,A.TS &quot;Time&quot;,D.Lock &quot;Lock__|&quot;,LO.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;, LO.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;, S.AtLine &quot;Line__(r)&quot;,D.ID &quot;LDID__(hide)&quot;,A.TRACE &quot;ATRACE__(hide)&quot;,L.TRACE &quot;LATRACE__(hide)&quot;
  FROM ACCESS A
  INNER JOIN OBJECT O ON
    O.Id = A.InThread 
@@ -230,6 +210,26 @@ WHERE
    A.FIELD = ?FieldId? AND 
    A.RECEIVER IS NULL
 ORDER BY O.THREADNAME ASC, A.TS ASC, D.Start DESC</query>
+  <query id='2611037a-f205-43d8-bd64-4da1e96f4807' description='What locks are held for each access of this field? ***' revision='3' display='true'>SELECT O.THREADNAME &quot;Thread&quot;,A.TS &quot;Time&quot;,D.Lock &quot;Lock__|&quot;,LO.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;, LO.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;, S.AtLine &quot;Line__(r)&quot;,D.ID &quot;LDID__(hide)&quot;,A.TRACE &quot;ATRACE__(hide)&quot;,L.TRACE &quot;LATRACE__(hide)&quot;
+ FROM ACCESS A
+ INNER JOIN OBJECT O ON
+   O.Id = A.InThread 
+ LEFT OUTER JOIN LOCKDURATION D --DERBY-PROPERTIES index=LOCKDURATION_TIME_INDEX
+  ON 
+   D.InThread = A.InThread AND 
+   (A.TS BETWEEN D.Start AND D.Stop)
+ LEFT OUTER JOIN LOCK L ON
+   L.Id = D.StartEvent
+ LEFT OUTER JOIN TRACE TR ON
+   TR.Id = L.TRACE
+ LEFT OUTER JOIN SITE S ON
+   S.Id = TR.SITE
+ LEFT OUTER JOIN OBJECT LO ON
+   LO.Id = S.InClass
+WHERE 
+   A.FIELD = ?FieldId? AND 
+   A.RECEIVER = ?Receiver? 
+ORDER BY O.THREADNAME ASC, A.TS ASC, D.Start DESC</query>
   <query id='803ca72a-f303-4319-8a35-9494eccc3d26' description='What locks could potentially cause deadlock?' revision='0' display='true' display-at-root='true'>select Component &quot;Component&quot;, LockHeld &quot;LockHeld__(r)|&quot;,
   LockAcquired &quot;LockAcquired__(r)&quot;,
   Count &quot;Count__(r)&quot;, FirstTime &quot;FirstTime&quot;, LastTime &quot;LastTime&quot;
@@ -241,7 +241,7 @@ order by count desc</query>
 from OBJECT as t, OBJECT as cl   
 where t.ThreadName is not null
   and t.Type=cl.Id</query>
-  <query id='ce90be0d-9d7a-49a6-8334-c6f37112fa4b' description='What threads read and write a field (static)?' revision='2' display='true'>SELECT
+  <query id='ce90be0d-9d7a-49a6-8334-c6f37112fa4b' description='What threads read and write a field?' revision='3' display='true'>SELECT
   CO.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;,
   CO.ClassName   &quot;Class__(&apos;class.gif&apos;)&quot;,
   F.FieldName    &quot;FieldName&quot;,
@@ -253,7 +253,7 @@ where t.ThreadName is not null
    THO.ID = FI.THREAD AND 
    F.ID = FI.FIELD AND
    CO.ID = F.DECLARINGTYPE</query>
-  <query id='598a178b-7153-4e1c-978e-1b78b1d95799' description='What threads read and write this field (non-static)?' revision='2' display='true'>SELECT
+  <query id='598a178b-7153-4e1c-978e-1b78b1d95799' description='What threads read and write this field?' revision='3' display='true'>SELECT
   CO.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;,
   CO.ClassName   &quot;Class__(&apos;class.gif&apos;)&quot;,
   F.FieldName    &quot;FieldName&quot;,
@@ -322,46 +322,46 @@ where le.Id=?LockEvent?
   and le.ts between ld.Start and ld.Stop
 order by ld.Start 
   </query>
-  <sub-query id='8034f80b-aefb-4255-98b6-0ccd73ab1696' sub-query='83d613b3-283e-4100-9a82-e42adf107fe6'/>
-  <sub-query id='8034f80b-aefb-4255-98b6-0ccd73ab1696' sub-query='ae2c5715-740e-4850-a404-38bdc8cde6b6'/>
   <sub-query id='1fcd4578-f20e-4671-8f55-b6bec64f4249' sub-query='83d613b3-283e-4100-9a82-e42adf107fe6'/>
   <sub-query id='1fcd4578-f20e-4671-8f55-b6bec64f4249' sub-query='ae2c5715-740e-4850-a404-38bdc8cde6b6'/>
-  <sub-query id='4fce8390-7307-45dc-b779-5701ee7f23a1' sub-query='fb317a0c-d9c5-41e2-811b-d6236f63fae1'/>
+  <sub-query id='8034f80b-aefb-4255-98b6-0ccd73ab1696' sub-query='83d613b3-283e-4100-9a82-e42adf107fe6'/>
+  <sub-query id='8034f80b-aefb-4255-98b6-0ccd73ab1696' sub-query='ae2c5715-740e-4850-a404-38bdc8cde6b6'/>
   <sub-query id='4fce8390-7307-45dc-b779-5701ee7f23a1' sub-query='67a08763-cefe-4193-908c-9dc8d1ca4245'/>
   <sub-query id='4fce8390-7307-45dc-b779-5701ee7f23a1' sub-query='432b76db-c751-4bd8-8b2f-ef5986334514'/>
+  <sub-query id='4fce8390-7307-45dc-b779-5701ee7f23a1' sub-query='fb317a0c-d9c5-41e2-811b-d6236f63fae1'/>
+  <sub-query id='b82d393a-0d04-4daf-9716-1d88047e2585' sub-query='598a178b-7153-4e1c-978e-1b78b1d95799'/>
   <sub-query id='b82d393a-0d04-4daf-9716-1d88047e2585' sub-query='2611037a-f205-43d8-bd64-4da1e96f4807'/>
   <sub-query id='b82d393a-0d04-4daf-9716-1d88047e2585' sub-query='a1e89392-cd0c-4a41-85f1-44251d7a5e71'/>
-  <sub-query id='b82d393a-0d04-4daf-9716-1d88047e2585' sub-query='598a178b-7153-4e1c-978e-1b78b1d95799'/>
   <sub-query id='b82d393a-0d04-4daf-9716-1d88047e2585' sub-query='8034f80b-aefb-4255-98b6-0ccd73ab1696'/>
+  <sub-query id='adbe7424-776f-4903-86e2-a0f38f69c7f5' sub-query='598a178b-7153-4e1c-978e-1b78b1d95799'/>
   <sub-query id='adbe7424-776f-4903-86e2-a0f38f69c7f5' sub-query='2611037a-f205-43d8-bd64-4da1e96f4807'/>
   <sub-query id='adbe7424-776f-4903-86e2-a0f38f69c7f5' sub-query='a1e89392-cd0c-4a41-85f1-44251d7a5e71'/>
-  <sub-query id='adbe7424-776f-4903-86e2-a0f38f69c7f5' sub-query='598a178b-7153-4e1c-978e-1b78b1d95799'/>
   <sub-query id='adbe7424-776f-4903-86e2-a0f38f69c7f5' sub-query='8034f80b-aefb-4255-98b6-0ccd73ab1696'/>
+  <sub-query id='7eabaf47-9614-400f-bb4e-fd9e0f13e793' sub-query='598a178b-7153-4e1c-978e-1b78b1d95799'/>
   <sub-query id='7eabaf47-9614-400f-bb4e-fd9e0f13e793' sub-query='2611037a-f205-43d8-bd64-4da1e96f4807'/>
   <sub-query id='7eabaf47-9614-400f-bb4e-fd9e0f13e793' sub-query='a1e89392-cd0c-4a41-85f1-44251d7a5e71'/>
-  <sub-query id='7eabaf47-9614-400f-bb4e-fd9e0f13e793' sub-query='598a178b-7153-4e1c-978e-1b78b1d95799'/>
   <sub-query id='7eabaf47-9614-400f-bb4e-fd9e0f13e793' sub-query='8034f80b-aefb-4255-98b6-0ccd73ab1696'/>
-  <sub-query id='419c927e-a87c-4364-b4a9-2e8f50f728f6' sub-query='6a39e6ca-29e9-4093-ba03-0e9bd9503a1a'/>
   <sub-query id='419c927e-a87c-4364-b4a9-2e8f50f728f6' sub-query='4ab4618a-c379-4099-b763-052b7ba269c5'/>
-  <sub-query id='419c927e-a87c-4364-b4a9-2e8f50f728f6' sub-query='ce90be0d-9d7a-49a6-8334-c6f37112fa4b'/>
+  <sub-query id='419c927e-a87c-4364-b4a9-2e8f50f728f6' sub-query='6a39e6ca-29e9-4093-ba03-0e9bd9503a1a'/>
   <sub-query id='419c927e-a87c-4364-b4a9-2e8f50f728f6' sub-query='1fcd4578-f20e-4671-8f55-b6bec64f4249'/>
-  <sub-query id='2f505921-50fb-405b-bc78-4a5fe9228957' sub-query='6a39e6ca-29e9-4093-ba03-0e9bd9503a1a'/>
+  <sub-query id='419c927e-a87c-4364-b4a9-2e8f50f728f6' sub-query='ce90be0d-9d7a-49a6-8334-c6f37112fa4b'/>
   <sub-query id='2f505921-50fb-405b-bc78-4a5fe9228957' sub-query='4ab4618a-c379-4099-b763-052b7ba269c5'/>
-  <sub-query id='2f505921-50fb-405b-bc78-4a5fe9228957' sub-query='ce90be0d-9d7a-49a6-8334-c6f37112fa4b'/>
+  <sub-query id='2f505921-50fb-405b-bc78-4a5fe9228957' sub-query='6a39e6ca-29e9-4093-ba03-0e9bd9503a1a'/>
   <sub-query id='2f505921-50fb-405b-bc78-4a5fe9228957' sub-query='1fcd4578-f20e-4671-8f55-b6bec64f4249'/>
-  <sub-query id='c744b5b5-15f0-4f72-a344-7e52bcac5071' sub-query='6a39e6ca-29e9-4093-ba03-0e9bd9503a1a'/>
+  <sub-query id='2f505921-50fb-405b-bc78-4a5fe9228957' sub-query='ce90be0d-9d7a-49a6-8334-c6f37112fa4b'/>
   <sub-query id='c744b5b5-15f0-4f72-a344-7e52bcac5071' sub-query='4ab4618a-c379-4099-b763-052b7ba269c5'/>
-  <sub-query id='c744b5b5-15f0-4f72-a344-7e52bcac5071' sub-query='ce90be0d-9d7a-49a6-8334-c6f37112fa4b'/>
+  <sub-query id='c744b5b5-15f0-4f72-a344-7e52bcac5071' sub-query='6a39e6ca-29e9-4093-ba03-0e9bd9503a1a'/>
   <sub-query id='c744b5b5-15f0-4f72-a344-7e52bcac5071' sub-query='1fcd4578-f20e-4671-8f55-b6bec64f4249'/>
+  <sub-query id='c744b5b5-15f0-4f72-a344-7e52bcac5071' sub-query='ce90be0d-9d7a-49a6-8334-c6f37112fa4b'/>
   <sub-query id='cb38a427-c259-4690-abe2-acea9661f737' sub-query='c9453327-b892-4324-a6b8-2dceb32e1901'/>
-  <sub-query id='ae2c5715-740e-4850-a404-38bdc8cde6b6' sub-query='10477928-cf86-4416-9118-34eea8cd7e38'/>
   <sub-query id='ae2c5715-740e-4850-a404-38bdc8cde6b6' sub-query='83d613b3-283e-4100-9a82-e42adf107fe6'/>
-  <sub-query id='2611037a-f205-43d8-bd64-4da1e96f4807' sub-query='10477928-cf86-4416-9118-34eea8cd7e38'/>
-  <sub-query id='2611037a-f205-43d8-bd64-4da1e96f4807' sub-query='83d613b3-283e-4100-9a82-e42adf107fe6'/>
-  <sub-query id='4ab4618a-c379-4099-b763-052b7ba269c5' sub-query='10477928-cf86-4416-9118-34eea8cd7e38'/>
+  <sub-query id='ae2c5715-740e-4850-a404-38bdc8cde6b6' sub-query='10477928-cf86-4416-9118-34eea8cd7e38'/>
   <sub-query id='4ab4618a-c379-4099-b763-052b7ba269c5' sub-query='83d613b3-283e-4100-9a82-e42adf107fe6'/>
+  <sub-query id='4ab4618a-c379-4099-b763-052b7ba269c5' sub-query='10477928-cf86-4416-9118-34eea8cd7e38'/>
+  <sub-query id='2611037a-f205-43d8-bd64-4da1e96f4807' sub-query='83d613b3-283e-4100-9a82-e42adf107fe6'/>
+  <sub-query id='2611037a-f205-43d8-bd64-4da1e96f4807' sub-query='10477928-cf86-4416-9118-34eea8cd7e38'/>
   <sub-query id='803ca72a-f303-4319-8a35-9494eccc3d26' sub-query='4fce8390-7307-45dc-b779-5701ee7f23a1'/>
-  <sub-query id='9d05ac24-20c2-436e-af6b-2bd0bc7dbcfb' sub-query='fb317a0c-d9c5-41e2-811b-d6236f63fae1'/>
   <sub-query id='9d05ac24-20c2-436e-af6b-2bd0bc7dbcfb' sub-query='432b76db-c751-4bd8-8b2f-ef5986334514'/>
+  <sub-query id='9d05ac24-20c2-436e-af6b-2bd0bc7dbcfb' sub-query='fb317a0c-d9c5-41e2-811b-d6236f63fae1'/>
   <sub-query id='c9453327-b892-4324-a6b8-2dceb32e1901' sub-query='10477928-cf86-4416-9118-34eea8cd7e38'/>
 </ad-hoc>

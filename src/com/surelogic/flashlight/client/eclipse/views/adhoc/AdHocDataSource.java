@@ -54,8 +54,11 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements
 	}
 
 	public URL getDefaultQueryUrl() {
-		return AdHocDataSource.class
-				.getResource("/com/surelogic/flashlight/common/default-flashlight-queries.xml");
+		return Thread
+				.currentThread()
+				.getContextClassLoader()
+				.getResource(
+						"/com/surelogic/flashlight/common/default-flashlight-queries.xml");
 	}
 
 	public void badQuerySaveFileNotification(final Exception e) {

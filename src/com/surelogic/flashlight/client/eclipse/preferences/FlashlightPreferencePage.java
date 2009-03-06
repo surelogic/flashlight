@@ -1,8 +1,11 @@
 package com.surelogic.flashlight.client.eclipse.preferences;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
-import org.eclipse.jface.preference.*;
+import org.eclipse.jface.preference.BooleanFieldEditor;
+import org.eclipse.jface.preference.FieldEditor;
+import org.eclipse.jface.preference.IntegerFieldEditor;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -15,12 +18,16 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.ui.IWorkbench;
 
+import com.surelogic.adhoc.views.ExportQueryDialog;
+import com.surelogic.common.CommonImages;
+import com.surelogic.common.XUtil;
 import com.surelogic.common.eclipse.SLImages;
+import com.surelogic.common.eclipse.SWTUtility;
 import com.surelogic.common.eclipse.dialogs.ChangeDataDirectoryDialog;
 import com.surelogic.common.eclipse.preferences.AbstractCommonPreferencePage;
 import com.surelogic.common.i18n.I18N;
-import com.surelogic.common.CommonImages;
 import com.surelogic.common.serviceability.UsageMeter;
+import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
 import com.surelogic.flashlight.common.FlashlightUtility;
 import com.surelogic.flashlight.common.jobs.DisconnectAllDatabases;
 
@@ -33,9 +40,9 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 	public FlashlightPreferencePage() {
 		super("flashlight.", PreferenceConstants.prototype);
 	}
-	
+
 	@Override
-	public void init(IWorkbench workbench) {
+	public void init(final IWorkbench workbench) {
 		super.init(workbench);
 
 		UsageMeter.getInstance().tickUse(
@@ -43,9 +50,9 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 	}
 
 	@Override
-	protected Control createContents(Composite parent) {
+	protected Control createContents(final Composite parent) {
 		final Composite panel = new Composite(parent, SWT.NONE);
-		GridLayout grid = new GridLayout();
+		final GridLayout grid = new GridLayout();
 		panel.setLayout(grid);
 
 		final Group dataGroup = new Group(panel, SWT.NONE);
@@ -64,7 +71,7 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 		change.setLayoutData(new GridData(SWT.DEFAULT, SWT.DEFAULT, false,
 				false));
 		change.addListener(SWT.Selection, new Listener() {
-			public void handleEvent(Event event) {
+			public void handleEvent(final Event event) {
 				ChangeDataDirectoryDialog
 						.open(
 								change.getShell(),
@@ -96,9 +103,9 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 		iGroup.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 		iGroup.setText(I18N.msg("flashlight.preference.page.group.inst"));
 
-		FlashlightInstrumentationWidgets instr = 
-			new FlashlightInstrumentationWidgets(this, getPreferenceStore(), iGroup);
-		for(FieldEditor e : instr.getEditors()) {
+		final FlashlightInstrumentationWidgets instr = new FlashlightInstrumentationWidgets(
+				this, getPreferenceStore(), iGroup);
+		for (final FieldEditor e : instr.getEditors()) {
 			e.load();
 		}
 		f_editors.addAll(instr.getEditors());
@@ -114,15 +121,26 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 				qGroup);
 		f_maxRowsPerQuery.setValidRange(1024, 65535);
 		finishSetup(f_maxRowsPerQuery);
-		
+		if (XUtil.useExperimental()) {
+			final Button exportButton = new Button(parent, SWT.PUSH);
+			exportButton.setText("Export New Queries File");
+			exportButton.setLayoutData(new GridData(SWT.DEFAULT, SWT.DEFAULT,
+					false, false));
+			exportButton.addListener(SWT.Selection, new Listener() {
+				public void handleEvent(final Event event) {
+					new ExportQueryDialog(SWTUtility.getShell(),
+							AdHocDataSource.getManager()).open();
+				}
+			});
+		}
 		return panel;
 	}
 
-	private void finishSetup(FieldEditor editor) {
+	private void finishSetup(final FieldEditor editor) {
 		editor.setPage(this);
 		editor.setPreferenceStore(getPreferenceStore());
 		editor.load();
-		
+
 		f_editors.add(editor);
 	}
 
@@ -133,7 +151,7 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 
 	@Override
 	protected void performDefaults() {
-		for(FieldEditor editor : f_editors) {
+		for (final FieldEditor editor : f_editors) {
 			editor.loadDefault();
 		}
 		super.performDefaults();
@@ -141,7 +159,7 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 
 	@Override
 	public boolean performOk() {
-		for(FieldEditor editor : f_editors) {
+		for (final FieldEditor editor : f_editors) {
 			editor.store();
 		}
 		return super.performOk();

@@ -4,6 +4,7 @@ import org.eclipse.swt.widgets.Composite;
 
 import com.surelogic.adhoc.views.menu.AbstractQueryMenuView;
 import com.surelogic.common.adhoc.AdHocManager;
+import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.serviceability.UsageMeter;
 
 public final class QueryMenuView extends AbstractQueryMenuView {
@@ -17,5 +18,10 @@ public final class QueryMenuView extends AbstractQueryMenuView {
 	@Override
 	public AdHocManager getManager() {
 		return AdHocDataSource.getManager();
+	}
+
+	@Override
+	public String getNoDatabaseMessage() {
+		return I18N.msg("flashlight.query.menu.label.noDatabaseSelected");
 	}
 }

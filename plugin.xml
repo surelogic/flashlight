@@ -213,7 +213,7 @@
 		</view>
 		<view allowMultiple="false" category="com.surelogic.flashlight.Flashlight"
 			class="com.surelogic.flashlight.client.eclipse.views.adhoc.QueryMenuView"
-			icon="platform:/plugin/com.surelogic.common/src/com/surelogic/common/images/query_gray.gif"
+			icon="platform:/plugin/com.surelogic.common/src/com/surelogic/common/images/fl_logo.gif"
 			id="com.surelogic.flashlight.client.eclipse.views.adhoc.QueryMenuView"
 			name="Query Menu">
 		</view>

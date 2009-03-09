@@ -1,19 +1,16 @@
 package com.surelogic.flashlight.client.eclipse.launch;
 
-import org.eclipse.core.resources.IResource;
-import org.eclipse.debug.core.ILaunchConfiguration;
-import org.eclipse.debug.ui.ILaunchShortcut2;
-import org.eclipse.jdt.debug.ui.launchConfigurations.JavaLaunchShortcut;
+import org.eclipse.debug.ui.ILaunchShortcut;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.ui.IEditorPart;
 
-public class JavaApplicationLaunchWrapper implements ILaunchShortcut2 {
+public class JavaApplicationLaunchWrapper implements ILaunchShortcut {
 	private static final String ClassUnder3_3 = 
 		"org.eclipse.jdt.internal.debug.ui.launcher.JavaApplicationLaunchShortcut";
 	private static final String ClassUnder3_4 = 
 		"org.eclipse.jdt.debug.ui.launchConfigurations.JavaApplicationLaunchShortcut";
 	
-	private final JavaLaunchShortcut realShortCut;	
+	private final ILaunchShortcut realShortCut;	
 	
 	public JavaApplicationLaunchWrapper() throws InstantiationException, IllegalAccessException, ClassNotFoundException {
 		Class<?> cls = null;
@@ -22,9 +19,10 @@ public class JavaApplicationLaunchWrapper implements ILaunchShortcut2 {
 		} catch (ClassNotFoundException e) {
 			cls = Class.forName(ClassUnder3_3);
 		}
-		realShortCut = (JavaLaunchShortcut) cls.newInstance();		
+		realShortCut = (ILaunchShortcut) cls.newInstance();		
 	}
 
+	/*
 	public ILaunchConfiguration[] getLaunchConfigurations(ISelection selection) {
 		return realShortCut.getLaunchConfigurations(selection);
 	}
@@ -40,6 +38,7 @@ public class JavaApplicationLaunchWrapper implements ILaunchShortcut2 {
 	public IResource getLaunchableResource(IEditorPart editorpart) {
 		return realShortCut.getLaunchableResource(editorpart);
 	}
+    */
 
 	public void launch(ISelection selection, String mode) {
 		realShortCut.launch(selection, mode);

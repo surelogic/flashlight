@@ -172,7 +172,7 @@
 			icon="platform:/plugin/com.surelogic.common/src/com/surelogic/common/images/fl_app.gif"
 			helpContextId="org.eclipse.jdt.debug.ui.shortcut_local_java_application"
 			modes="flashlight"
-			class="org.eclipse.jdt.internal.debug.ui.launcher.JavaApplicationLaunchShortcut"
+			class="com.surelogic.flashlight.client.eclipse.launch.JavaApplicationLaunchWrapper"
 			id="com.surelogic.flashlight.localJavaShortcut">
 			<contextualLaunch>
 				<enablement>

@@ -82,7 +82,7 @@ where
   and FI.FIELD = F.ID 
   and THO.ID = FI.Thread
 order by O.PackageName,O.ClassName,F.FieldName,FI.Receiver,THO.ThreadName</query>
-  <query id='adbe7424-776f-4903-86e2-a0f38f69c7f5' description='What fields (non-static) have a lock set? ' revision='3' display='true' display-at-root='true'>-- NO-ROWS-MSG=No non-static fields have a common lock held for each access.
+  <query id='adbe7424-776f-4903-86e2-a0f38f69c7f5' description='What fields (non-static) have a lock set? ' revision='4' display='true' display-at-root='true'>-- NO-ROWS-MSG=No non-final non-volatile non-static fields that are shared after object construction have a common lock held for each access.
 SELECT 
   O.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;,
   O.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;,
@@ -93,7 +93,7 @@ SELECT
  INNER JOIN INTERESTINGFIELD I ON FI.STATIC = &apos;N&apos; AND I.FIELD=FI.ID
  INNER JOIN FIELDINSTANCELOCKSET F ON F.FIELD = I.FIELD AND F.RECEIVER = I.RECEIVER 
  ORDER BY O.PackageName,O.ClassName,FI.FieldName,I.Receiver</query>
-  <query id='7eabaf47-9614-400f-bb4e-fd9e0f13e793' description='What fields (non-static) have an empty lock set?' revision='3' display='true' display-at-root='true'>-- NO-ROWS-MSG=All non-static fields have a common lock held for each access.
+  <query id='7eabaf47-9614-400f-bb4e-fd9e0f13e793' description='What fields (non-static) have an empty lock set?' revision='4' display='true' display-at-root='true'>-- NO-ROWS-MSG=All non-final non-volatile non-static fields that are shared after object construction have a common lock held for each access.
 SELECT 
   O.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;,
   O.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;,
@@ -124,7 +124,7 @@ where
   and FS.FIELD = F.ID 
   and THO.ID = FS.Thread
 order by O.PackageName,O.ClassName,F.FieldName,THO.ThreadName</query>
-  <query id='2f505921-50fb-405b-bc78-4a5fe9228957' description='What fields (static) have a lock set? ' revision='3' display='true' display-at-root='true'>-- NO-ROWS-MSG=No static fields have a common lock held for each access.
+  <query id='2f505921-50fb-405b-bc78-4a5fe9228957' description='What fields (static) have a lock set? ' revision='4' display='true' display-at-root='true'>-- NO-ROWS-MSG=No non-final non-volatile static fields that are shared have a common lock held for each access.
 SELECT 
   O.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;,
   O.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;,
@@ -136,7 +136,7 @@ SELECT
  INNER JOIN INTERESTINGFIELD I ON I.RECEIVER IS NULL AND I.FIELD=FI.ID
  INNER JOIN FIELDLOCKSET F ON F.FIELD = I.FIELD
  ORDER BY O.PackageName,O.ClassName,FI.FieldName</query>
-  <query id='c744b5b5-15f0-4f72-a344-7e52bcac5071' description='What fields (static) have an empty lock set?' revision='3' display='true' display-at-root='true'>-- NO-ROWS-MSG=All static fields have a common lock held for each access.
+  <query id='c744b5b5-15f0-4f72-a344-7e52bcac5071' description='What fields (static) have an empty lock set?' revision='4' display='true' display-at-root='true'>-- NO-ROWS-MSG=All non-final non-volatile static fields that are shared have a common lock held for each access.
 SELECT 
   O.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;,
   O.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;,
@@ -391,31 +391,31 @@ order by ld.Start
   <sub-query id='4fce8390-7307-45dc-b779-5701ee7f23a1' sub-query='67a08763-cefe-4193-908c-9dc8d1ca4245'/>
   <sub-query id='4fce8390-7307-45dc-b779-5701ee7f23a1' sub-query='fb317a0c-d9c5-41e2-811b-d6236f63fae1'/>
   <sub-query id='4fce8390-7307-45dc-b779-5701ee7f23a1' sub-query='432b76db-c751-4bd8-8b2f-ef5986334514'/>
-  <sub-query id='b82d393a-0d04-4daf-9716-1d88047e2585' sub-query='1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a'/>
-  <sub-query id='b82d393a-0d04-4daf-9716-1d88047e2585' sub-query='a1e89392-cd0c-4a41-85f1-44251d7a5e71'/>
-  <sub-query id='b82d393a-0d04-4daf-9716-1d88047e2585' sub-query='2611037a-f205-43d8-bd64-4da1e96f4807'/>
   <sub-query id='b82d393a-0d04-4daf-9716-1d88047e2585' sub-query='8034f80b-aefb-4255-98b6-0ccd73ab1696'/>
   <sub-query id='b82d393a-0d04-4daf-9716-1d88047e2585' sub-query='598a178b-7153-4e1c-978e-1b78b1d95799'/>
-  <sub-query id='adbe7424-776f-4903-86e2-a0f38f69c7f5' sub-query='1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a'/>
-  <sub-query id='adbe7424-776f-4903-86e2-a0f38f69c7f5' sub-query='a1e89392-cd0c-4a41-85f1-44251d7a5e71'/>
-  <sub-query id='adbe7424-776f-4903-86e2-a0f38f69c7f5' sub-query='2611037a-f205-43d8-bd64-4da1e96f4807'/>
+  <sub-query id='b82d393a-0d04-4daf-9716-1d88047e2585' sub-query='2611037a-f205-43d8-bd64-4da1e96f4807'/>
+  <sub-query id='b82d393a-0d04-4daf-9716-1d88047e2585' sub-query='1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a'/>
+  <sub-query id='b82d393a-0d04-4daf-9716-1d88047e2585' sub-query='a1e89392-cd0c-4a41-85f1-44251d7a5e71'/>
   <sub-query id='adbe7424-776f-4903-86e2-a0f38f69c7f5' sub-query='8034f80b-aefb-4255-98b6-0ccd73ab1696'/>
   <sub-query id='adbe7424-776f-4903-86e2-a0f38f69c7f5' sub-query='598a178b-7153-4e1c-978e-1b78b1d95799'/>
-  <sub-query id='7eabaf47-9614-400f-bb4e-fd9e0f13e793' sub-query='1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a'/>
-  <sub-query id='7eabaf47-9614-400f-bb4e-fd9e0f13e793' sub-query='a1e89392-cd0c-4a41-85f1-44251d7a5e71'/>
-  <sub-query id='7eabaf47-9614-400f-bb4e-fd9e0f13e793' sub-query='2611037a-f205-43d8-bd64-4da1e96f4807'/>
+  <sub-query id='adbe7424-776f-4903-86e2-a0f38f69c7f5' sub-query='2611037a-f205-43d8-bd64-4da1e96f4807'/>
+  <sub-query id='adbe7424-776f-4903-86e2-a0f38f69c7f5' sub-query='1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a'/>
+  <sub-query id='adbe7424-776f-4903-86e2-a0f38f69c7f5' sub-query='a1e89392-cd0c-4a41-85f1-44251d7a5e71'/>
   <sub-query id='7eabaf47-9614-400f-bb4e-fd9e0f13e793' sub-query='8034f80b-aefb-4255-98b6-0ccd73ab1696'/>
   <sub-query id='7eabaf47-9614-400f-bb4e-fd9e0f13e793' sub-query='598a178b-7153-4e1c-978e-1b78b1d95799'/>
-  <sub-query id='419c927e-a87c-4364-b4a9-2e8f50f728f6' sub-query='1fcd4578-f20e-4671-8f55-b6bec64f4249'/>
+  <sub-query id='7eabaf47-9614-400f-bb4e-fd9e0f13e793' sub-query='2611037a-f205-43d8-bd64-4da1e96f4807'/>
+  <sub-query id='7eabaf47-9614-400f-bb4e-fd9e0f13e793' sub-query='1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a'/>
+  <sub-query id='7eabaf47-9614-400f-bb4e-fd9e0f13e793' sub-query='a1e89392-cd0c-4a41-85f1-44251d7a5e71'/>
   <sub-query id='419c927e-a87c-4364-b4a9-2e8f50f728f6' sub-query='6a39e6ca-29e9-4093-ba03-0e9bd9503a1a'/>
+  <sub-query id='419c927e-a87c-4364-b4a9-2e8f50f728f6' sub-query='1fcd4578-f20e-4671-8f55-b6bec64f4249'/>
   <sub-query id='419c927e-a87c-4364-b4a9-2e8f50f728f6' sub-query='ce90be0d-9d7a-49a6-8334-c6f37112fa4b'/>
   <sub-query id='419c927e-a87c-4364-b4a9-2e8f50f728f6' sub-query='4ab4618a-c379-4099-b763-052b7ba269c5'/>
-  <sub-query id='2f505921-50fb-405b-bc78-4a5fe9228957' sub-query='1fcd4578-f20e-4671-8f55-b6bec64f4249'/>
   <sub-query id='2f505921-50fb-405b-bc78-4a5fe9228957' sub-query='6a39e6ca-29e9-4093-ba03-0e9bd9503a1a'/>
+  <sub-query id='2f505921-50fb-405b-bc78-4a5fe9228957' sub-query='1fcd4578-f20e-4671-8f55-b6bec64f4249'/>
   <sub-query id='2f505921-50fb-405b-bc78-4a5fe9228957' sub-query='ce90be0d-9d7a-49a6-8334-c6f37112fa4b'/>
   <sub-query id='2f505921-50fb-405b-bc78-4a5fe9228957' sub-query='4ab4618a-c379-4099-b763-052b7ba269c5'/>
-  <sub-query id='c744b5b5-15f0-4f72-a344-7e52bcac5071' sub-query='1fcd4578-f20e-4671-8f55-b6bec64f4249'/>
   <sub-query id='c744b5b5-15f0-4f72-a344-7e52bcac5071' sub-query='6a39e6ca-29e9-4093-ba03-0e9bd9503a1a'/>
+  <sub-query id='c744b5b5-15f0-4f72-a344-7e52bcac5071' sub-query='1fcd4578-f20e-4671-8f55-b6bec64f4249'/>
   <sub-query id='c744b5b5-15f0-4f72-a344-7e52bcac5071' sub-query='ce90be0d-9d7a-49a6-8334-c6f37112fa4b'/>
   <sub-query id='c744b5b5-15f0-4f72-a344-7e52bcac5071' sub-query='4ab4618a-c379-4099-b763-052b7ba269c5'/>
   <sub-query id='cb38a427-c259-4690-abe2-acea9661f737' sub-query='c9453327-b892-4324-a6b8-2dceb32e1901'/>
@@ -426,10 +426,10 @@ order by ld.Start
   <sub-query id='4ab4618a-c379-4099-b763-052b7ba269c5' sub-query='83d613b3-283e-4100-9a82-e42adf107fe6'/>
   <sub-query id='4ab4618a-c379-4099-b763-052b7ba269c5' sub-query='10477928-cf86-4416-9118-34eea8cd7e38'/>
   <sub-query id='803ca72a-f303-4319-8a35-9494eccc3d26' sub-query='4fce8390-7307-45dc-b779-5701ee7f23a1'/>
-  <sub-query id='1fcd4578-f20e-4671-8f55-b6bec64f4249' sub-query='83d613b3-283e-4100-9a82-e42adf107fe6'/>
   <sub-query id='1fcd4578-f20e-4671-8f55-b6bec64f4249' sub-query='ae2c5715-740e-4850-a404-38bdc8cde6b6'/>
-  <sub-query id='8034f80b-aefb-4255-98b6-0ccd73ab1696' sub-query='83d613b3-283e-4100-9a82-e42adf107fe6'/>
+  <sub-query id='1fcd4578-f20e-4671-8f55-b6bec64f4249' sub-query='83d613b3-283e-4100-9a82-e42adf107fe6'/>
   <sub-query id='8034f80b-aefb-4255-98b6-0ccd73ab1696' sub-query='ae2c5715-740e-4850-a404-38bdc8cde6b6'/>
+  <sub-query id='8034f80b-aefb-4255-98b6-0ccd73ab1696' sub-query='83d613b3-283e-4100-9a82-e42adf107fe6'/>
   <sub-query id='9d05ac24-20c2-436e-af6b-2bd0bc7dbcfb' sub-query='fb317a0c-d9c5-41e2-811b-d6236f63fae1'/>
   <sub-query id='9d05ac24-20c2-436e-af6b-2bd0bc7dbcfb' sub-query='432b76db-c751-4bd8-8b2f-ef5986334514'/>
   <sub-query id='c9453327-b892-4324-a6b8-2dceb32e1901' sub-query='10477928-cf86-4416-9118-34eea8cd7e38'/>

@@ -17,6 +17,7 @@ import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.*;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.*;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.swt.widgets.List;
@@ -254,6 +255,11 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 
 	public String getName() {
 		return "Flashlight";
+	}
+	
+	@Override
+  public Image getImage() {
+	  return SLImages.getImage(CommonImages.IMG_FL_LOGO);
 	}
 
 	// Copy from configuration to widgets

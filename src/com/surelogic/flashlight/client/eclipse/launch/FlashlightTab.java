@@ -422,6 +422,7 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 					}
 				}
 			}
+			zf.close();
 		}		
 	}
 

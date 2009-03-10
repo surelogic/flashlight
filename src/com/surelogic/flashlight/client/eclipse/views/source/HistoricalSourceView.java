@@ -68,6 +68,7 @@ public final class HistoricalSourceView extends ViewPart {
 						return true;
 					}
 				}
+				zf.close();
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -90,6 +91,7 @@ public final class HistoricalSourceView extends ViewPart {
 						return true;
 					}
 				}
+				zf.close();
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

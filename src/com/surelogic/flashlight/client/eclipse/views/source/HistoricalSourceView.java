@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Map;
 import java.util.StringTokenizer;
+import java.util.logging.Level;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -19,6 +20,7 @@ import org.eclipse.ui.part.ViewPart;
 
 import com.surelogic.common.AbstractJavaZip;
 import com.surelogic.common.eclipse.ViewUtility;
+import com.surelogic.common.logging.SLLogger;
 import com.surelogic.common.serviceability.UsageMeter;
 import com.surelogic.flashlight.common.files.RawFileUtility;
 import com.surelogic.flashlight.common.files.RunDirectory;
@@ -57,18 +59,21 @@ public final class HistoricalSourceView extends ViewPart {
 		for (File f : zips.getSourceZips()) {
 			try {
 				ZipFile zf = new ZipFile(f);
-				Map<String, Map<String, String>> fileMap = AbstractJavaZip
-						.readSourceFileMappings(zf);
-				// AbstractJavaZip.readClassMappings(zf);
-				Map<String, String> map = fileMap.get(pkg);
-				if (map != null) {
-					String path = map.get(name);
-					if (path != null) {
-						populate(zf, path);
-						return true;
+				try {
+					Map<String, Map<String, String>> fileMap = AbstractJavaZip
+							.readSourceFileMappings(zf);
+					// AbstractJavaZip.readClassMappings(zf);
+					Map<String, String> map = fileMap.get(pkg);
+					if (map != null) {
+						String path = map.get(name);
+						if (path != null) {
+							populate(zf, path);
+							return true;
+						}
 					}
+				} finally {
+					zf.close();
 				}
-				zf.close();
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -82,19 +87,22 @@ public final class HistoricalSourceView extends ViewPart {
 		for (File f : zips.getSourceZips()) {
 			try {
 				ZipFile zf = new ZipFile(f);
-				Map<String, String> fileMap = AbstractJavaZip
-						.readClassMappings(zf);
-				if (fileMap != null) {
-					String path = fileMap.get(qname);
-					if (path != null) {
-						populate(zf, path);
-						return true;
+				try {
+					Map<String, String> fileMap = AbstractJavaZip
+							.readClassMappings(zf);
+					if (fileMap != null) {
+						String path = fileMap.get(qname);
+						if (path != null) {
+							populate(zf, path);
+							return true;
+						}
 					}
+				} finally {
+					zf.close();
 				}
-				zf.close();
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				SLLogger.getLogger().log(Level.WARNING,
+						"Unexcepted exception trying to read a source file", e);
 			}
 		}
 		return false;

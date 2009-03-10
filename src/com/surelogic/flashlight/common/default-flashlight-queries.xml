@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes'?>
 <ad-hoc version='3.0'>
+  <query id='29b5a2b5-671d-4721-94bb-9552cda1c77d' description='A new query' revision='2'>SELECT * FROM LOCKDURATION WHERE LOCK = 14</query>
   <query id='f4dfba42-c2c9-472f-87b0-4a37e21c4833' description='A new query' revision='1'>SELECT LD.LOCK,
 FROM LOCKDURATION LD</query>
-  <query id='29b5a2b5-671d-4721-94bb-9552cda1c77d' description='A new query' revision='2'>SELECT * FROM LOCKDURATION WHERE LOCK = 14</query>
   <query id='6a39e6ca-29e9-4093-ba03-0e9bd9503a1a' description='How often is a lock held when this field is accessed?' revision='5' display='true'>-- NO-ROWS-MSG=No locks are ever held when this field is accessed.
 SELECT
   LOCKS.*,
@@ -313,17 +313,32 @@ where ld.State = &apos;BLOCKING&apos;
   and le.AtLine=?AtLine?
 order by ld.Duration desc
   </query>
-  <query id='9d05ac24-20c2-436e-af6b-2bd0bc7dbcfb' description='Where does a thread hold a lock and acquire another?' revision='1' display='true' display-at-root='true'>-- NO-ROWS-MSG=No locks are acquired while another is already held.
+  <query id='9d05ac24-20c2-436e-af6b-2bd0bc7dbcfb' description='Where does a thread hold a lock and acquire another?' revision='2' display='true' display-at-root='true'>-- NO-ROWS-MSG=No locks are acquired while another is already held.
 select count(LockHeld) &quot;Number of Locks Already Held&quot;,
-  tho.ThreadName &quot;ThreadName&quot;, lo.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;, lo.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;, s.AtLine &quot;Line__(r)&quot;, lh.LockEvent &quot;LockEvent__(hide)&quot;, le.trace &quot;LETRACE__(hide)&quot;
-from LOCKSHELD lh, LOCK le, TRACE tr, SITE s, OBJECT lo, OBJECT tho
+  tho.ThreadName &quot;ThreadName&quot;, 
+  lo.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;, 
+  lo.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;, 
+  s.AtLine &quot;Line__(r)&quot;, 
+  lh.LockEvent &quot;LockEvent__(hide)&quot;, 
+  le.trace &quot;LETRACE__(hide)&quot;
+from LOCKSHELD lh, 
+     LOCK le,
+     TRACE tr,
+     SITE s,
+     OBJECT lo,
+     OBJECT tho
 where lh.LockEvent = le.Id
-  and tr.Id = le.Trace
-  and s.Id = tr.Site
-  and lo.Id = s.InClass
-  and tho.Id = le.InThread
-group by lh.LockEvent, lo.ClassName, lo.PackageName, s.AtLine, tho.ThreadName, le.trace
-order by 2 desc, 1
+    and tr.Id = le.Trace
+    and s.Id = tr.Site
+    and lo.Id = s.InClass
+    and tho.Id = lh.InThread
+group by lh.LockEvent, 
+         lo.ClassName, 
+         lo.PackageName, 
+         s.AtLine, 
+         tho.ThreadName,
+         le.trace
+order by 1 desc, 2
 
 </query>
   <query id='c9453327-b892-4324-a6b8-2dceb32e1901' description='Which threads and what code are contending for a lock?' revision='3' display='true'>-- NO-ROWS-MSG=No threads were forced to wait for this lock.
@@ -355,33 +370,33 @@ where le.Id=?LockEvent?
   and le.ts between ld.Start and ld.Stop
 order by ld.Start 
   </query>
-  <sub-query id='4fce8390-7307-45dc-b779-5701ee7f23a1' sub-query='432b76db-c751-4bd8-8b2f-ef5986334514'/>
   <sub-query id='4fce8390-7307-45dc-b779-5701ee7f23a1' sub-query='fb317a0c-d9c5-41e2-811b-d6236f63fae1'/>
   <sub-query id='4fce8390-7307-45dc-b779-5701ee7f23a1' sub-query='67a08763-cefe-4193-908c-9dc8d1ca4245'/>
-  <sub-query id='b82d393a-0d04-4daf-9716-1d88047e2585' sub-query='a1e89392-cd0c-4a41-85f1-44251d7a5e71'/>
-  <sub-query id='b82d393a-0d04-4daf-9716-1d88047e2585' sub-query='598a178b-7153-4e1c-978e-1b78b1d95799'/>
+  <sub-query id='4fce8390-7307-45dc-b779-5701ee7f23a1' sub-query='432b76db-c751-4bd8-8b2f-ef5986334514'/>
   <sub-query id='b82d393a-0d04-4daf-9716-1d88047e2585' sub-query='2611037a-f205-43d8-bd64-4da1e96f4807'/>
+  <sub-query id='b82d393a-0d04-4daf-9716-1d88047e2585' sub-query='a1e89392-cd0c-4a41-85f1-44251d7a5e71'/>
   <sub-query id='b82d393a-0d04-4daf-9716-1d88047e2585' sub-query='8034f80b-aefb-4255-98b6-0ccd73ab1696'/>
-  <sub-query id='adbe7424-776f-4903-86e2-a0f38f69c7f5' sub-query='a1e89392-cd0c-4a41-85f1-44251d7a5e71'/>
-  <sub-query id='adbe7424-776f-4903-86e2-a0f38f69c7f5' sub-query='598a178b-7153-4e1c-978e-1b78b1d95799'/>
+  <sub-query id='b82d393a-0d04-4daf-9716-1d88047e2585' sub-query='598a178b-7153-4e1c-978e-1b78b1d95799'/>
   <sub-query id='adbe7424-776f-4903-86e2-a0f38f69c7f5' sub-query='2611037a-f205-43d8-bd64-4da1e96f4807'/>
+  <sub-query id='adbe7424-776f-4903-86e2-a0f38f69c7f5' sub-query='a1e89392-cd0c-4a41-85f1-44251d7a5e71'/>
   <sub-query id='adbe7424-776f-4903-86e2-a0f38f69c7f5' sub-query='8034f80b-aefb-4255-98b6-0ccd73ab1696'/>
-  <sub-query id='7eabaf47-9614-400f-bb4e-fd9e0f13e793' sub-query='a1e89392-cd0c-4a41-85f1-44251d7a5e71'/>
-  <sub-query id='7eabaf47-9614-400f-bb4e-fd9e0f13e793' sub-query='598a178b-7153-4e1c-978e-1b78b1d95799'/>
+  <sub-query id='adbe7424-776f-4903-86e2-a0f38f69c7f5' sub-query='598a178b-7153-4e1c-978e-1b78b1d95799'/>
   <sub-query id='7eabaf47-9614-400f-bb4e-fd9e0f13e793' sub-query='2611037a-f205-43d8-bd64-4da1e96f4807'/>
+  <sub-query id='7eabaf47-9614-400f-bb4e-fd9e0f13e793' sub-query='a1e89392-cd0c-4a41-85f1-44251d7a5e71'/>
   <sub-query id='7eabaf47-9614-400f-bb4e-fd9e0f13e793' sub-query='8034f80b-aefb-4255-98b6-0ccd73ab1696'/>
+  <sub-query id='7eabaf47-9614-400f-bb4e-fd9e0f13e793' sub-query='598a178b-7153-4e1c-978e-1b78b1d95799'/>
   <sub-query id='419c927e-a87c-4364-b4a9-2e8f50f728f6' sub-query='ce90be0d-9d7a-49a6-8334-c6f37112fa4b'/>
   <sub-query id='419c927e-a87c-4364-b4a9-2e8f50f728f6' sub-query='4ab4618a-c379-4099-b763-052b7ba269c5'/>
-  <sub-query id='419c927e-a87c-4364-b4a9-2e8f50f728f6' sub-query='6a39e6ca-29e9-4093-ba03-0e9bd9503a1a'/>
   <sub-query id='419c927e-a87c-4364-b4a9-2e8f50f728f6' sub-query='1fcd4578-f20e-4671-8f55-b6bec64f4249'/>
+  <sub-query id='419c927e-a87c-4364-b4a9-2e8f50f728f6' sub-query='6a39e6ca-29e9-4093-ba03-0e9bd9503a1a'/>
   <sub-query id='2f505921-50fb-405b-bc78-4a5fe9228957' sub-query='ce90be0d-9d7a-49a6-8334-c6f37112fa4b'/>
   <sub-query id='2f505921-50fb-405b-bc78-4a5fe9228957' sub-query='4ab4618a-c379-4099-b763-052b7ba269c5'/>
-  <sub-query id='2f505921-50fb-405b-bc78-4a5fe9228957' sub-query='6a39e6ca-29e9-4093-ba03-0e9bd9503a1a'/>
   <sub-query id='2f505921-50fb-405b-bc78-4a5fe9228957' sub-query='1fcd4578-f20e-4671-8f55-b6bec64f4249'/>
+  <sub-query id='2f505921-50fb-405b-bc78-4a5fe9228957' sub-query='6a39e6ca-29e9-4093-ba03-0e9bd9503a1a'/>
   <sub-query id='c744b5b5-15f0-4f72-a344-7e52bcac5071' sub-query='ce90be0d-9d7a-49a6-8334-c6f37112fa4b'/>
   <sub-query id='c744b5b5-15f0-4f72-a344-7e52bcac5071' sub-query='4ab4618a-c379-4099-b763-052b7ba269c5'/>
-  <sub-query id='c744b5b5-15f0-4f72-a344-7e52bcac5071' sub-query='6a39e6ca-29e9-4093-ba03-0e9bd9503a1a'/>
   <sub-query id='c744b5b5-15f0-4f72-a344-7e52bcac5071' sub-query='1fcd4578-f20e-4671-8f55-b6bec64f4249'/>
+  <sub-query id='c744b5b5-15f0-4f72-a344-7e52bcac5071' sub-query='6a39e6ca-29e9-4093-ba03-0e9bd9503a1a'/>
   <sub-query id='cb38a427-c259-4690-abe2-acea9661f737' sub-query='c9453327-b892-4324-a6b8-2dceb32e1901'/>
   <sub-query id='ae2c5715-740e-4850-a404-38bdc8cde6b6' sub-query='83d613b3-283e-4100-9a82-e42adf107fe6'/>
   <sub-query id='ae2c5715-740e-4850-a404-38bdc8cde6b6' sub-query='10477928-cf86-4416-9118-34eea8cd7e38'/>
@@ -390,11 +405,11 @@ order by ld.Start
   <sub-query id='4ab4618a-c379-4099-b763-052b7ba269c5' sub-query='83d613b3-283e-4100-9a82-e42adf107fe6'/>
   <sub-query id='4ab4618a-c379-4099-b763-052b7ba269c5' sub-query='10477928-cf86-4416-9118-34eea8cd7e38'/>
   <sub-query id='803ca72a-f303-4319-8a35-9494eccc3d26' sub-query='4fce8390-7307-45dc-b779-5701ee7f23a1'/>
-  <sub-query id='1fcd4578-f20e-4671-8f55-b6bec64f4249' sub-query='83d613b3-283e-4100-9a82-e42adf107fe6'/>
   <sub-query id='1fcd4578-f20e-4671-8f55-b6bec64f4249' sub-query='ae2c5715-740e-4850-a404-38bdc8cde6b6'/>
-  <sub-query id='8034f80b-aefb-4255-98b6-0ccd73ab1696' sub-query='83d613b3-283e-4100-9a82-e42adf107fe6'/>
+  <sub-query id='1fcd4578-f20e-4671-8f55-b6bec64f4249' sub-query='83d613b3-283e-4100-9a82-e42adf107fe6'/>
   <sub-query id='8034f80b-aefb-4255-98b6-0ccd73ab1696' sub-query='ae2c5715-740e-4850-a404-38bdc8cde6b6'/>
-  <sub-query id='9d05ac24-20c2-436e-af6b-2bd0bc7dbcfb' sub-query='432b76db-c751-4bd8-8b2f-ef5986334514'/>
+  <sub-query id='8034f80b-aefb-4255-98b6-0ccd73ab1696' sub-query='83d613b3-283e-4100-9a82-e42adf107fe6'/>
   <sub-query id='9d05ac24-20c2-436e-af6b-2bd0bc7dbcfb' sub-query='fb317a0c-d9c5-41e2-811b-d6236f63fae1'/>
+  <sub-query id='9d05ac24-20c2-436e-af6b-2bd0bc7dbcfb' sub-query='432b76db-c751-4bd8-8b2f-ef5986334514'/>
   <sub-query id='c9453327-b892-4324-a6b8-2dceb32e1901' sub-query='10477928-cf86-4416-9118-34eea8cd7e38'/>
 </ad-hoc>

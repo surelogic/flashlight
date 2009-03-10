@@ -55,6 +55,7 @@ final class FlashlightVMRunner implements IVMRunner {
   private final File logFile;
   private final File filtersFile;
   private final Map<String, String> userEntries;
+  private final Map<String, String> userJars;
   private final Map<String, String> bootEntries;
   private final Set<IProject> interestingProjects;
   private final String datePostfix;
@@ -63,11 +64,13 @@ final class FlashlightVMRunner implements IVMRunner {
   /* We are guaranteed that the outDir exists in the file system already */
   public FlashlightVMRunner(
       final IVMRunner other, final File outDir, final Map<String, String> dirs,
-      final Map<String, String> bdirs, final Set<IProject> prjs,
-      final String main, final String date) throws CoreException {
+      final Map<String, String> jars, final Map<String, String> bdirs,
+      final Set<IProject> prjs, final String main, final String date)
+  throws CoreException {
     delegateRunner = other;
     runOutputDir = outDir;
     userEntries = dirs;
+    userJars = jars;
     bootEntries = bdirs;
     interestingProjects = prjs;
     mainTypeName = main;
@@ -98,7 +101,7 @@ final class FlashlightVMRunner implements IVMRunner {
      * we need to process, plus 1 remaining unit for the delegate.
      */
     final int totalWork =
-      interestingProjects.size() + (2 * (userEntries.size() + bootEntries.size())) + 1;
+      interestingProjects.size() + (2 * (userEntries.size() + userJars.size() + bootEntries.size())) + 1;
     final SubMonitor progress = SubMonitor.convert(monitor, totalWork);
 
     /* Create the source zip */
@@ -190,10 +193,19 @@ final class FlashlightVMRunner implements IVMRunner {
             fieldsFile, sitesFile, progress);
       
       for (final Map.Entry<String, String> entry : bootEntries.entrySet()) {
-        manager.addDirToJar(new File(entry.getKey()), new File(entry.getValue()), null);
+        if (entry.getValue() != null) {
+          manager.addDirToJar(new File(entry.getKey()), new File(entry.getValue()), null);
+        }
+      }
+      for (final Map.Entry<String, String> entry : userJars.entrySet()) {
+        if (entry.getValue() != null) {
+          manager.addJarToJar(new File(entry.getKey()), new File(entry.getValue()), null);
+        }
       }
       for (final Map.Entry<String, String> entry : userEntries.entrySet()) {
-        manager.addDirToJar(new File(entry.getKey()), new File(entry.getValue()), null);
+        if (entry.getValue() != null) {
+          manager.addDirToJar(new File(entry.getKey()), new File(entry.getValue()), null);
+        }
       }
       
       try {
@@ -225,7 +237,12 @@ final class FlashlightVMRunner implements IVMRunner {
     for (int i = 0; i < classPath.length; i++) {
       final String oldEntry = classPath[i];
       final String newEntry = userEntries.get(oldEntry);
-      newClassPathList.add((newEntry == null) ? oldEntry : newEntry);
+      if (newEntry != null) {
+        newClassPathList.add(newEntry);
+      } else {
+        final String jarEntry = userJars.get(oldEntry);
+        newClassPathList.add(jarEntry != null ? jarEntry : oldEntry);
+      }
     }
     
     /* (2) Also add the flashlight jar file to the classpath, unless the 

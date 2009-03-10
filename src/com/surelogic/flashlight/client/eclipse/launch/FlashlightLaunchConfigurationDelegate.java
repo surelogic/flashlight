@@ -55,8 +55,9 @@ public final class FlashlightLaunchConfigurationDelegate extends
      * classpath, respectively.
      */
     final Map<String, String> userEntries = new HashMap<String, String>();
+    final Map<String, String> userJars = new HashMap<String, String>();
     final Map<String, String> bootstrapEntries = new HashMap<String, String>();
-    getClasspathEntries(configuration, userEntries, bootstrapEntries);
+    getClasspathEntries(configuration, userEntries, userJars, bootstrapEntries);
 
 		/*
 		 * Go through each open project and see which of the binary output
@@ -75,9 +76,9 @@ public final class FlashlightLaunchConfigurationDelegate extends
       runOutputDir.mkdirs();
     }
 		final Set<IProject> interestingProjects = computeInstrumentationDirs(
-		    configuration, runOutputDir, userEntries, bootstrapEntries);
+		    configuration, runOutputDir, userEntries, userJars, bootstrapEntries);
 
-		return new FlashlightVMRunner(runner, runOutputDir, userEntries,
+		return new FlashlightVMRunner(runner, runOutputDir, userEntries, userJars,
 		    bootstrapEntries,	interestingProjects, mainTypeName, datePostfix);
 	}
 
@@ -108,7 +109,7 @@ public final class FlashlightLaunchConfigurationDelegate extends
   }
 
   private void getClasspathEntries(final ILaunchConfiguration configuration,
-      final Map<String, String> userEntries,
+      final Map<String, String> userEntries, final Map<String, String> userJars,
       final Map<String, String> bootstrapEntries) throws CoreException {
     /* This use of JavaRuntime.computeUnresolvedRuntimeClasspath() and
      * JavaRuntime.resolveRuntimeClasspath() is taken from
@@ -121,10 +122,13 @@ public final class FlashlightLaunchConfigurationDelegate extends
     for (final IRuntimeClasspathEntry entry : entries) {
       final int where = entry.getClasspathProperty();
       final Map<String, String> entriesMap;
+      final Map<String, String> jarsMap;
       if (where == IRuntimeClasspathEntry.USER_CLASSES) {
         entriesMap = userEntries;
+        jarsMap = userJars;
       } else if (where == IRuntimeClasspathEntry.BOOTSTRAP_CLASSES) {
         entriesMap = bootstrapEntries;
+        jarsMap = null;
       } else {
         // Standard (that is, system library) entry; ignore it
         continue;
@@ -145,7 +149,10 @@ public final class FlashlightLaunchConfigurationDelegate extends
           final File locationAsFile = new File(location);
           if (locationAsFile.isDirectory()) {
             entriesMap.put(location, null);
+          } else {
+            if (jarsMap != null) jarsMap.put(location, null);
           }
+          
         }
       }
     }
@@ -153,7 +160,7 @@ public final class FlashlightLaunchConfigurationDelegate extends
   
   private Set<IProject> computeInstrumentationDirs(
       final ILaunchConfiguration configuration, final File runOutputDir,
-      final Map<String, String> userEntries,
+      final Map<String, String> userEntries, final Map<String, String> userJars,
       final Map<String, String> bootstrapEntries) throws CoreException {
     final File projectOutputDir = new File(runOutputDir, "projects");
     if (!projectOutputDir.exists()) {
@@ -163,15 +170,16 @@ public final class FlashlightLaunchConfigurationDelegate extends
     final Set<IProject> interestingProjects = new HashSet<IProject>();
     final IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
     final IProject[] projects = root.getProjects();
-    scanProjects(projects, projectOutputDir, interestingProjects, userEntries);
-    scanProjects(projects, projectOutputDir, interestingProjects, bootstrapEntries);
+    scanProjects(projects, projectOutputDir, interestingProjects, userEntries, false);
+    scanProjects(projects, projectOutputDir, interestingProjects, userJars, true);
+    scanProjects(projects, projectOutputDir, interestingProjects, bootstrapEntries, false);
    
     return interestingProjects;
   }
 
   private void scanProjects(final IProject[] projects,
       final File projectOutputDir, final Set<IProject> interestingProjects,
-      final Map<String, String> classpathEntries) {
+      final Map<String, String> classpathEntries, final boolean isJars) {
     for (final IProject project : projects) {
       if (project.isOpen()) {
         final String projectLocation = project.getLocation().toOSString();
@@ -184,11 +192,11 @@ public final class FlashlightLaunchConfigurationDelegate extends
             final String projectDirName = projectLocation
                 .substring(projectLocation
                     .lastIndexOf(File.separatorChar) + 1);
-            final String binaryDirName = originalLocation
+            final String binaryName = originalLocation
                 .substring(projectLocation.length() + 1);
+            final String jarName = !isJars ? binaryName + ".jar" : binaryName;
             final File newLocation = new File(new File(
-                projectOutputDir, projectDirName),
-                binaryDirName + ".jar");
+                projectOutputDir, projectDirName), jarName);
             entry.setValue(newLocation.getAbsolutePath());
             interestingProjects.add(project);
           }

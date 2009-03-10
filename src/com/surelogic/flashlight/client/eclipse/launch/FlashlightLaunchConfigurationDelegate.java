@@ -53,6 +53,11 @@ public final class FlashlightLaunchConfigurationDelegate extends
      * to the instrumented binary output directory we create later for entries
      * on the standard user classpath and user entries on the bootstrap
      * classpath, respectively.
+     * 
+     * The functionality of getClasspathEntries() and computeInstrumenationDirs()
+     * can be merged.  It would be more efficient, but I think separating makes
+     * the program intent cleaner.  Also, I am afraid that merging them would
+     * break things.
      */
     final Map<String, String> userEntries = new HashMap<String, String>();
     final Map<String, String> userJars = new HashMap<String, String>();
@@ -163,6 +168,7 @@ public final class FlashlightLaunchConfigurationDelegate extends
       final Map<String, String> userEntries, final Map<String, String> userJars,
       final Map<String, String> bootstrapEntries) throws CoreException {
     final File projectOutputDir = new File(runOutputDir, "projects");
+    final File externalOutputDir = new File(runOutputDir, "external");
     if (!projectOutputDir.exists()) {
       projectOutputDir.mkdir();
     }
@@ -170,15 +176,16 @@ public final class FlashlightLaunchConfigurationDelegate extends
     final Set<IProject> interestingProjects = new HashSet<IProject>();
     final IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
     final IProject[] projects = root.getProjects();
-    scanProjects(projects, projectOutputDir, interestingProjects, userEntries, false);
-    scanProjects(projects, projectOutputDir, interestingProjects, userJars, true);
-    scanProjects(projects, projectOutputDir, interestingProjects, bootstrapEntries, false);
+    scanProjects(projects, projectOutputDir, externalOutputDir, interestingProjects, userEntries, false);
+    scanProjects(projects, projectOutputDir, externalOutputDir, interestingProjects, userJars, true);
+    scanProjects(projects, projectOutputDir, externalOutputDir, interestingProjects, bootstrapEntries, false);
    
     return interestingProjects;
   }
 
   private void scanProjects(final IProject[] projects,
-      final File projectOutputDir, final Set<IProject> interestingProjects,
+      final File projectOutputDir, final File externalOutputDir,
+      final Set<IProject> interestingProjects,
       final Map<String, String> classpathEntries, final boolean isJars) {
     for (final IProject project : projects) {
       if (project.isOpen()) {
@@ -201,6 +208,19 @@ public final class FlashlightLaunchConfigurationDelegate extends
             interestingProjects.add(project);
           }
         }
+      }
+    }
+    
+    /* Go through one more time and look for entries that weren't matched
+     * with a project entry.  These correspond to classpath items that are
+     * outside the workspace.  Map them to an "external" directory.
+     */
+    for (final Map.Entry<String, String> entry : classpathEntries.entrySet()) {
+      if (entry.getValue() == null) {
+        final File newLocation =
+          new File(externalOutputDir,
+              isJars ? entry.getKey() : (entry.getKey() + ".jar"));
+        entry.setValue(newLocation.getAbsolutePath());
       }
     }
   }

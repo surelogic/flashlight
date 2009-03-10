@@ -193,19 +193,13 @@ final class FlashlightVMRunner implements IVMRunner {
             fieldsFile, sitesFile, progress);
       
       for (final Map.Entry<String, String> entry : bootEntries.entrySet()) {
-        if (entry.getValue() != null) {
-          manager.addDirToJar(new File(entry.getKey()), new File(entry.getValue()), null);
-        }
+        manager.addDirToJar(new File(entry.getKey()), new File(entry.getValue()), null);
       }
       for (final Map.Entry<String, String> entry : userJars.entrySet()) {
-        if (entry.getValue() != null) {
-          manager.addJarToJar(new File(entry.getKey()), new File(entry.getValue()), null);
-        }
+        manager.addJarToJar(new File(entry.getKey()), new File(entry.getValue()), null);
       }
       for (final Map.Entry<String, String> entry : userEntries.entrySet()) {
-        if (entry.getValue() != null) {
-          manager.addDirToJar(new File(entry.getKey()), new File(entry.getValue()), null);
-        }
+        manager.addDirToJar(new File(entry.getKey()), new File(entry.getValue()), null);
       }
       
       try {
@@ -246,7 +240,9 @@ final class FlashlightVMRunner implements IVMRunner {
     }
     
     /* (2) Also add the flashlight jar file to the classpath, unless the 
-     * bootclasspath is non-empty
+     * bootclasspath is non-empty.  If it's not empty we add the
+     * flashlight lib to the bootclasspath so it is accessible to the
+     * instrumented bootclasspath items. 
      */
     if (bootEntries.isEmpty()) {
       newClassPathList.add(pathToFlashlightLib);

@@ -286,6 +286,11 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 		return outer;
 
 	}
+	
+	@Override
+	public String getId() {
+	  return "com.surelogic.flashlight.client.eclipse.launch.FlashlightTab";	  
+	}
 
 	public String getName() {
 		return "Flashlight";

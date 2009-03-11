@@ -2,9 +2,12 @@ package com.surelogic.flashlight.client.eclipse.launch;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -18,9 +21,9 @@ import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.launching.IVMInstall2;
 import org.eclipse.jdt.launching.IVMRunner;
 import org.eclipse.jdt.launching.JavaLaunchDelegate;
-import org.eclipse.jdt.launching.JavaRuntime;
 
 import com.surelogic.common.eclipse.logging.SLEclipseStatusUtility;
+import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
 import com.surelogic.flashlight.common.FlashlightUtility;
 
 public final class FlashlightLaunchConfigurationDelegate extends
@@ -82,7 +85,7 @@ public final class FlashlightLaunchConfigurationDelegate extends
     }
 		final Set<IProject> interestingProjects = computeInstrumentationDirs(
 		    configuration, runOutputDir, userEntries, userJars, bootstrapEntries);
-
+		
 		return new FlashlightVMRunner(runner, runOutputDir, userEntries, userJars,
 		    bootstrapEntries,	interestingProjects, mainTypeName, datePostfix);
 	}
@@ -115,15 +118,8 @@ public final class FlashlightLaunchConfigurationDelegate extends
 
   private void getClasspathEntries(final ILaunchConfiguration configuration,
       final Map<String, String> userEntries, final Map<String, String> userJars,
-      final Map<String, String> bootstrapEntries) throws CoreException {
-    /* This use of JavaRuntime.computeUnresolvedRuntimeClasspath() and
-     * JavaRuntime.resolveRuntimeClasspath() is taken from
-     * AbstractJavaLaunchConfigurationDelegate.getClasspath().
-     */
-    final IRuntimeClasspathEntry[] rawEntries =
-      JavaRuntime.computeUnresolvedRuntimeClasspath(configuration);
-    final IRuntimeClasspathEntry[] entries =
-      JavaRuntime.resolveRuntimeClasspath(rawEntries, configuration);
+      final Map<String, String> bootstrapEntries) {
+    final IRuntimeClasspathEntry[] entries = LaunchUtils.getClasspath(configuration);
     for (final IRuntimeClasspathEntry entry : entries) {
       final int where = entry.getClasspathProperty();
       final Map<String, String> entriesMap;
@@ -180,6 +176,43 @@ public final class FlashlightLaunchConfigurationDelegate extends
     scanProjects(projects, projectOutputDir, externalOutputDir, interestingProjects, userJars, true);
     scanProjects(projects, projectOutputDir, externalOutputDir, interestingProjects, bootstrapEntries, false);
    
+    /* Filter class path items based on the user settings from the launch dialog
+     * This whole process needs to be integrated better, but I'm afraid of 
+     * breaking things at the moment.
+     */
+    List configUser = null;
+    List configBootpath = null;
+    try {
+      configUser = configuration.getAttribute(
+          PreferenceConstants.P_CLASSPATH_ENTRIES_TO_INSTRUMENT,
+          Collections.emptyList());
+      configBootpath = configuration.getAttribute(
+          PreferenceConstants.P_BOOTPATH_ENTRIES_TO_INSTRUMENT,
+          Collections.emptyList());    
+    } catch (final CoreException e) {
+      configUser = Collections.emptyList();
+      configBootpath = Collections.emptyList();
+    }
+
+    /* This is horribly sloppy: Remove any items from the map that are not
+     * in the configuration settings
+     */ 
+    final Iterator<Map.Entry<String, String>> userIter = userEntries.entrySet().iterator();
+    while (userIter.hasNext()) {
+      final Map.Entry<String, String> entry = userIter.next();
+      if (!configUser.contains(entry.getKey())) userIter.remove();      
+    }
+    final Iterator<Map.Entry<String, String>> userJarIter = userJars.entrySet().iterator();
+    while (userJarIter.hasNext()) {
+      final Map.Entry<String, String> entry = userJarIter.next();
+      if (!configUser.contains(entry.getKey())) userJarIter.remove();      
+    }
+    final Iterator<Map.Entry<String, String>> bootIter = bootstrapEntries.entrySet().iterator();
+    while (bootIter.hasNext()) {
+      final Map.Entry<String, String> entry = bootIter.next();
+      if (!configBootpath.contains(entry.getKey())) bootIter.remove();      
+    }
+
     return interestingProjects;
   }
 

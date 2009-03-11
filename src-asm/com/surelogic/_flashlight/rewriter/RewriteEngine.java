@@ -61,6 +61,8 @@ import com.surelogic._flashlight.rewriter.MethodIdentifier;
 public final class RewriteEngine {
   public static final String DEFAULT_FLASHLIGHT_RUNTIME_JAR = "flashlight-runtime.jar";
   private static final String ZIP_FILE_NAME_SEPERATOR = "/";
+  private static final String MANIFEST_DIR = 
+	  JarFile.MANIFEST_NAME.substring(0, JarFile.MANIFEST_NAME.indexOf('/')+1);
   private static final char SPACE = ' ';
   private static final int BUFSIZE = 10240;
   
@@ -270,7 +272,11 @@ public final class RewriteEngine {
       final BufferedOutputStream bos = new BufferedOutputStream(fos);
       JarOutputStream jarOut = null;
       try {
-        jarOut = new JarOutputStream(bos, outManifest);
+    	if (outManifest == null) {
+          jarOut = new JarOutputStream(bos);
+    	} else {
+          jarOut = new JarOutputStream(bos, outManifest);
+    	}
         final Enumeration jarEnum = jarFile.entries(); 
         while (jarEnum.hasMoreElements()) {
           final JarEntry jarEntryIn = (JarEntry) jarEnum.nextElement();
@@ -279,7 +285,8 @@ public final class RewriteEngine {
           /* Skip the manifest file, it has already been written by the
            * JarOutputStream constructor
            */
-          if (!entryName.equals(JarFile.MANIFEST_NAME)) {
+          if (!entryName.equals(MANIFEST_DIR) || 
+        	  !entryName.equals(JarFile.MANIFEST_NAME)) {
             final JarEntry jarEntryOut = copyJarEntry(jarEntryIn);
             jarOut.putNextEntry(jarEntryOut);
             rewriteFileStream(new RewriteHelper() {

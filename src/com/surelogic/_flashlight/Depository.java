@@ -40,12 +40,11 @@ final class Depository extends Thread {
 	}
 	
 	private final ClassVisitor classVisitor = new ClassVisitor();
-	
-	//private final Map<String,List<FieldInfo>> fieldDefs = loadFieldInfo();
-	private final Map<String,ClassInfo> classDefs = loadClassInfo();	
+
+	private final Map<String,List<ClassInfo>> classDefs = loadClassInfo();	
 	private final Set<String> passFilters = loadPassFilters();
 	
-	static class ClassInfo {
+	static class ClassInfo extends AbstractList<ClassInfo> {
 		final String fileName;
 		final String className;
 		final SiteInfo[] sites;
@@ -56,6 +55,19 @@ final class Depository extends Thread {
 			className = clazz;
 			this.sites = sites;
 			this.fields = fields;
+		}
+
+		@Override
+		public ClassInfo get(int index) {
+			if (index == 0) {
+				return this;
+			}
+			throw new NoSuchElementException();
+		}
+
+		@Override
+		public int size() {
+			return 1;
 		}
 	}
 	
@@ -190,8 +202,8 @@ final class Depository extends Thread {
 	}
 
 	int outputClassDefs(String name, long id, EventVisitor strategy) {
-		ClassInfo info = classDefs.remove(name);
-		if (info == null) {
+		List<ClassInfo> infos = classDefs.remove(name);
+		if (infos == null) {
 			/*
 			if (name.startsWith("java")) {
 				return 0;
@@ -203,16 +215,19 @@ final class Depository extends Thread {
 			*/
 			return 0;
 		}
-		int events = outputFieldDefs(id, strategy, info);
-		for(SiteInfo site : info.sites) {
-			//System.err.println("Site "+site.id+" at line "+site.line);
-			site.accept(id, strategy, info);
-			events++;			
+		int events = 0;
+		for(ClassInfo info : infos) {
+			events += outputFieldDefs(id, strategy, info);
+			for(SiteInfo site : info.sites) {
+				//System.err.println("Site "+site.id+" at line "+site.line);
+				site.accept(id, strategy, info);
+				events++;			
+			}
 		}
 		return events;
 	}
 		
-	private static Map<String,ClassInfo> loadClassInfo() {
+	private static Map<String,List<ClassInfo>> loadClassInfo() {
 		String name = StoreConfiguration.getSitesFile();
 		File f;
 		if (name != null) {
@@ -239,7 +254,7 @@ final class Depository extends Thread {
 	static class SitesReader implements LineHandler {
 		final StringTable strings = new StringTable(); 
 		final Map<String,List<FieldInfo>> fields = loadFieldInfo(strings);		
-		final Map<String,ClassInfo> classes = new HashMap<String,ClassInfo>();
+		final Map<String,List<ClassInfo>> classes = new HashMap<String,List<ClassInfo>>();
 		List<SiteInfo> sites = new ArrayList<SiteInfo>();
 		String lastFileName;
 		String lastClassName;
@@ -274,15 +289,26 @@ final class Depository extends Thread {
 				List<FieldInfo> finfo = this.fields.remove(lastClassName);
 				FieldInfo[] fields = finfo == null ? noFields : finfo.toArray(noFields);
 				ClassInfo info = new ClassInfo(lastFileName, lastClassName, 
-						                       sites.toArray(noSites), fields);				
-				classes.put(lastClassName, info);
+						                       sites.toArray(noSites), fields);	
+				List<ClassInfo> infos = classes.get(lastClassName);
+				if (infos == null) {
+					classes.put(lastClassName, info);
+				} else {
+					if (infos instanceof ClassInfo) {
+						ClassInfo firstInfo = (ClassInfo) infos;
+						infos = new ArrayList<ClassInfo>();
+						classes.put(lastClassName, infos);
+						infos.add(firstInfo);
+					}
+					infos.add(info);
+				}
 				sites.clear();
 			}
 		}
 		
-		public Map<String, ClassInfo> getMap() {
+		public Map<String, List<ClassInfo>> getMap() {
 			makeClassInfo();
-			return classes.isEmpty() ? Collections.<String,ClassInfo>emptyMap() : classes;
+			return classes.isEmpty() ? Collections.<String,List<ClassInfo>>emptyMap() : classes;
 		}		
 	}
 	
@@ -375,7 +401,7 @@ final class Depository extends Thread {
 	
 	public LongMap<String> mapFieldsToFilters() {
 		LongMap<String> map = new LongMap<String>();
-		for(Map.Entry<String,ClassInfo> e : classDefs.entrySet()) {
+		for(Map.Entry<String,List<ClassInfo>> e : classDefs.entrySet()) {
 			final String declaringType = e.getKey();
 			final String declaringPackage;
 			if (declaringType == null) {
@@ -389,8 +415,10 @@ final class Depository extends Thread {
 				}
 			}
 			String filter = declaringPackage;
-			for(FieldInfo f : e.getValue().fields) {
-				map.put(f.id, filter);
+			for(ClassInfo info : e.getValue()) {
+				for(FieldInfo f : info.fields) {
+					map.put(f.id, filter);
+				}
 			}
 		}
 		return map;

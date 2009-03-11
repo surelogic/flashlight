@@ -15,6 +15,10 @@ public class PreferenceConstants implements IPreferenceConstants {
 	public static final String P_FILTER_PKG_PREFIX = PREFIX + "filter.";
 
 	public static final String P_USE_FILTERING = PREFIX + "use.filtering";
+	
+	public static final String P_INSTRUMENT_JARS = PREFIX + "use.instrument.jars";
+	
+	public static final String P_INSTRUMENT_JAR_PREFIX = PREFIX + "instrument.";
 
 	public static final String P_OUTPUT_TYPE = PREFIX + "output.type";
 

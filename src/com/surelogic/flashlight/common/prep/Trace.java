@@ -11,6 +11,7 @@ import java.sql.Timestamp;
 
 import com.surelogic._flashlight.common.PreppedAttributes;
 
+// Not used?
 public final class Trace extends AbstractPrep {
 
 	private PreparedStatement f_ps;

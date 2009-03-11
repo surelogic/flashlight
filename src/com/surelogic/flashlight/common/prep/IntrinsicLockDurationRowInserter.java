@@ -262,6 +262,18 @@ public final class IntrinsicLockDurationRowInserter {
 
 		handleNonIdleFinalState(endTime);
 
+		if (StaticCallLocation.checkSites) {
+			Set<Entry<Long, Boolean>> refd = TraceNode.refdSites.entrySet();
+			for(Entry<Long, Boolean> e : refd) {
+				final long id = e.getKey();
+				if (!StaticCallLocation.validSites.contains(id)) {
+					System.err.println("Couldn't find site "+id);
+				}
+			}
+		} else {
+			System.err.println("Sites are all good");
+		}
+		
 		// FIX replace the graph w/ own implementation from CLR 23.5
 		final GraphInfo info = createGraphFromStorage();	
 		final CycleDetector<Long, Edge> detector = 
@@ -291,7 +303,7 @@ public final class IntrinsicLockDurationRowInserter {
 					for (final Long dest : comp) {
 						final Edge e = edges.get(dest);
 						if (e != null) {
-							// System.out.println("Edge from "+e.lockHeld+" -> "+e.lockAcquired);
+							System.out.println("Edge from "+e.lockHeld+" -> "+e.lockAcquired);
 							outputCycleEdge(f_cyclePS, compId, e);
 						}
 					}
@@ -326,6 +338,8 @@ public final class IntrinsicLockDurationRowInserter {
 		}
 	}
 
+	private static final boolean omitEdges = true;
+	
 	private GraphInfo createGraphFromStorage() {
 		int edges = 0;
 		int omitted = 0;
@@ -350,7 +364,7 @@ public final class IntrinsicLockDurationRowInserter {
 
 			// Note: destinations already compensates for some of these being RW
 			// locks
-			if (!info.destinations.contains(src)) {
+			if (omitEdges && !info.destinations.contains(src)) {
 				// The source is a root lock, so we can omit its edges
 				// (e.g. always the first lock acquired)
 				final int num = e1.getValue().size();
@@ -363,7 +377,7 @@ public final class IntrinsicLockDurationRowInserter {
 					.entrySet()) {
 				final LongMap.Entry<Edge> e2 = (LongMap.Entry<Edge>) entry2;
 				final long dest = e2.key();
-				if (edgeStorage.get(dest) == null) {
+				if (omitEdges && edgeStorage.get(dest) == null) {
 					// The destination is a leaf lock, so we can omit it
 					// (e.g. no more locks are acquired after holding it)
 
@@ -378,7 +392,7 @@ public final class IntrinsicLockDurationRowInserter {
 				}
 				info.lockGraph.addVertex(e.lockAcquired);
 
-				//System.out.println(source+" -> "+e.lockAcquired);
+				System.out.println(source+" -> "+e.lockAcquired);
 				info.lockGraph.addEdge(source, e.lockAcquired, e);
 				edges++;
 			}

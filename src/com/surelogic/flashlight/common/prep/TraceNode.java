@@ -9,10 +9,12 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 
 import com.surelogic._flashlight.common.EventType;
+import com.surelogic._flashlight.common.LongSet;
 import com.surelogic._flashlight.common.PreppedAttributes;
 
 public final class TraceNode extends AbstractPrep {
-
+	public static LongSet refdSites = new LongSet();
+	
 	private PreparedStatement f_ps;
 	private int count;
 
@@ -27,8 +29,12 @@ public final class TraceNode extends AbstractPrep {
 		if (parent == 0) {
 			parent = id;
 		}
+		final long site = attributes.getLong(SITE_ID);
+		if (StaticCallLocation.checkSites) {
+			refdSites.add(site);
+		}
 		f_ps.setLong(idx++, id);
-		f_ps.setLong(idx++, attributes.getLong(SITE_ID));
+		f_ps.setLong(idx++, site);
 		f_ps.setLong(idx++, parent);
 		if (doInsert) {
 			f_ps.addBatch();

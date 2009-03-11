@@ -11,10 +11,13 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 
+import com.surelogic._flashlight.common.LongSet;
 import com.surelogic._flashlight.common.PreppedAttributes;
 
 public final class StaticCallLocation extends AbstractPrep {
-
+	public static final boolean checkSites = false;
+	public static LongSet validSites = new LongSet();
+	
 	private PreparedStatement f_ps;
 	private int count;
 
@@ -24,7 +27,11 @@ public final class StaticCallLocation extends AbstractPrep {
 
 	public void parse(final PreppedAttributes attributes) throws SQLException {
 		int idx = 1;
-		f_ps.setLong(idx++, attributes.getLong(ID));
+		final long id = attributes.getLong(ID);
+		if (checkSites) {
+			validSites.add(id);
+		}
+		f_ps.setLong(idx++, id);
 		f_ps.setInt(idx++, attributes.getInt(LINE));
 		f_ps.setLong(idx++, attributes.getLong(IN_CLASS));
 		f_ps.setString(idx++, attributes.getString(FILE));

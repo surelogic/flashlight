@@ -47,7 +47,7 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 	private final Collection<FieldEditor> f_editors = new ArrayList<FieldEditor>();
 	private final IPreferenceStore prefs = new PreferenceStore();
 	private java.util.List<String> packages;
-	private SelectionControls instrumentationControls, filterControls;
+	private SelectionControls filterControls;
 	private FieldEditor[] refineryControls;
 	private Group advanced;
 
@@ -80,8 +80,6 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 		advanced.setLayout(new GridLayout(3, false));
 
 		f_editors.addAll(widgets.getEditors());
-		instrumentationControls = new SelectionControls(instrumentation, "Jars", 
-                                                        PreferenceConstants.P_INSTRUMENT_JAR_PREFIX);
 		filterControls = new SelectionControls(filtering, "packages", 
 				                               PreferenceConstants.P_FILTER_PKG_PREFIX);
 		setControl(scroll);
@@ -101,18 +99,13 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 		for (final FieldEditor e : f_editors) {
 			final boolean filter = PreferenceConstants.P_USE_FILTERING.equals(e
 					.getPreferenceName());
-			final boolean instrument = PreferenceConstants.P_INSTRUMENT_JARS.equals(e
-					.getPreferenceName());
 			final boolean useRefinery = PreferenceConstants.P_USE_REFINERY
 					.equals(e.getPreferenceName());
 			e.setPropertyChangeListener(new IPropertyChangeListener() {
 				public void propertyChange(PropertyChangeEvent event) {
 					if ("field_editor_value".equals(event.getProperty())) {
 						Boolean value = (Boolean) event.getNewValue();					
-						if (instrument) {
-							instrumentationControls.setEnabled(value);
-						} 
-						else if (filter) {
+						if (filter) {
 							// System.out.println("New value: "+value);
 							filterControls.setEnabled(value);	
 						} 

@@ -285,7 +285,7 @@ public final class RewriteEngine {
           /* Skip the manifest file, it has already been written by the
            * JarOutputStream constructor
            */
-          if (!entryName.equals(MANIFEST_DIR) || 
+          if (!entryName.equals(MANIFEST_DIR) && 
         	  !entryName.equals(JarFile.MANIFEST_NAME)) {
             final JarEntry jarEntryOut = copyJarEntry(jarEntryIn);
             jarOut.putNextEntry(jarEntryOut);

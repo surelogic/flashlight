@@ -46,9 +46,8 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 	// For use with field editors
 	private final Collection<FieldEditor> f_editors = new ArrayList<FieldEditor>();
 	private final IPreferenceStore prefs = new PreferenceStore();
-	private List availableList, activeList;
-	private Collection<String> packages;
-	private Control[] filterControls;
+	private java.util.List<String> packages;
+	private SelectionControls instrumentationControls, filterControls;
 	private FieldEditor[] refineryControls;
 	private Group advanced;
 
@@ -68,18 +67,23 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 		scroll.setExpandVertical(true);
 		scroll.setAlwaysShowScrollBars(true);
 
-		final Group filtering = createFilteringGroup(outer);
-		final Group output = createOutputGroup(outer);
-		advanced = createAdvancedGroup(outer);
+		final Group instrumentation = createSelectionGroup(outer, "Instrumentation");
+		final Group filtering = createSelectionGroup(outer, "Filtering");
+		final Group output = createNamedGroup(outer, "Output", 3);
+		advanced = createNamedGroup(outer, "Advanced", 2);
 
 		FlashlightInstrumentationWidgets widgets = new FlashlightInstrumentationWidgets(
 				null, prefs, filtering, output, advanced);
-		filtering.setLayout(new GridLayout(3, false));
+		instrumentation.setLayout(new GridLayout(3, false));
+		filtering.setLayout(new GridLayout(3, false));		
 		output.setLayout(new GridLayout(3, false));
 		advanced.setLayout(new GridLayout(3, false));
 
 		f_editors.addAll(widgets.getEditors());
-		filterControls = finishFilteringGroup(filtering);
+		instrumentationControls = new SelectionControls(instrumentation, "Jars", 
+                                                        PreferenceConstants.P_INSTRUMENT_JAR_PREFIX);
+		filterControls = new SelectionControls(filtering, "packages", 
+				                               PreferenceConstants.P_FILTER_PKG_PREFIX);
 		setControl(scroll);
 
 		ArrayList<FieldEditor> refineryEditors = new ArrayList<FieldEditor>();
@@ -97,19 +101,22 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 		for (final FieldEditor e : f_editors) {
 			final boolean filter = PreferenceConstants.P_USE_FILTERING.equals(e
 					.getPreferenceName());
+			final boolean instrument = PreferenceConstants.P_INSTRUMENT_JARS.equals(e
+					.getPreferenceName());
 			final boolean useRefinery = PreferenceConstants.P_USE_REFINERY
 					.equals(e.getPreferenceName());
 			e.setPropertyChangeListener(new IPropertyChangeListener() {
 				public void propertyChange(PropertyChangeEvent event) {
 					if ("field_editor_value".equals(event.getProperty())) {
-						if (filter) {
-							Boolean value = (Boolean) event.getNewValue();
+						Boolean value = (Boolean) event.getNewValue();					
+						if (instrument) {
+							instrumentationControls.setEnabled(value);
+						} 
+						else if (filter) {
 							// System.out.println("New value: "+value);
-							for (Control c : filterControls) {
-								c.setEnabled(value);
-							}
-						} else if (useRefinery) {
-							Boolean value = (Boolean) event.getNewValue();
+							filterControls.setEnabled(value);	
+						} 
+						else if (useRefinery) {
 							for (FieldEditor e : refineryControls) {
 								e.setEnabled(value, advanced);
 							}
@@ -133,7 +140,7 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 		});
 	}
 
-	private Group createFilteringGroup(Composite parent) {
+	private Group createSelectionGroup(Composite parent, String name) {
 		final Group outer = new Group(parent, SWT.NONE);
 		GridData outerData = new GridData(SWT.FILL, SWT.FILL, true, true);
 		outerData.minimumHeight = 200;
@@ -141,60 +148,95 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 
 		GridLayout gridLayout = new GridLayout(3, false);
 		outer.setLayout(gridLayout);
-		outer.setText("Filtering");
+		outer.setText(name);
 		return outer;
 	}
 
-	private Control[] finishFilteringGroup(Group parent) {
-		final Composite outer = new Composite(parent, SWT.NONE);
-		GridData outerData = new GridData(SWT.FILL, SWT.FILL, true, true);
-		outer.setLayoutData(outerData);
+	class SelectionControls {
+		private final String prefPrefix;
+		private final List availableList, activeList;
+		private final ArrayList<Control> controls = new ArrayList<Control>();
+		
+		public SelectionControls(Group parent, String units, String prefix) { 
+			prefPrefix = prefix;
+			
+			final Composite outer = new Composite(parent, SWT.NONE);
+			GridData outerData = new GridData(SWT.FILL, SWT.FILL, true, true);
+			outer.setLayoutData(outerData);
 
-		GridLayout gridLayout = new GridLayout();
-		gridLayout.numColumns = 3;
-		outer.setLayout(gridLayout);
+			GridLayout gridLayout = new GridLayout();
+			gridLayout.numColumns = 3;
+			outer.setLayout(gridLayout);
 
-		Label available = new Label(outer, SWT.NONE);
-		available.setText("Available packages");
-		new Label(outer, SWT.NONE);
-		Label active = new Label(outer, SWT.NONE);
-		active.setText("Active packages");
+			Label available = new Label(outer, SWT.NONE);
+			available.setText("Available "+units);
+			new Label(outer, SWT.NONE);
+			Label active = new Label(outer, SWT.NONE);
+			active.setText("Active "+units);
 
-		availableList = new List(outer, SWT.CHECK | SWT.V_SCROLL | SWT.MULTI);
+			availableList = new List(outer, SWT.CHECK | SWT.V_SCROLL | SWT.MULTI);
 
-		Composite middle = new Composite(outer, SWT.NONE);
-		FillLayout fillLayout = new FillLayout();
-		fillLayout.type = SWT.VERTICAL;
-		middle.setLayout(fillLayout);
+			Composite middle = new Composite(outer, SWT.NONE);
+			FillLayout fillLayout = new FillLayout();
+			fillLayout.type = SWT.VERTICAL;
+			middle.setLayout(fillLayout);
 
-		Button toActive = new Button(middle, SWT.NONE);
-		toActive
-				.setImage(SLImages.getImage(CommonImages.IMG_RIGHT_ARROW_SMALL));
+			Button toActive = new Button(middle, SWT.NONE);
+			toActive
+			.setImage(SLImages.getImage(CommonImages.IMG_RIGHT_ARROW_SMALL));
 
-		Button toAvailable = new Button(middle, SWT.NONE);
-		toAvailable.setImage(SLImages
-				.getImage(CommonImages.IMG_LEFT_ARROW_SMALL));
+			Button toAvailable = new Button(middle, SWT.NONE);
+			toAvailable.setImage(SLImages
+					.getImage(CommonImages.IMG_LEFT_ARROW_SMALL));
 
-		activeList = new List(outer, SWT.CHECK | SWT.V_SCROLL | SWT.MULTI);
+			activeList = new List(outer, SWT.CHECK | SWT.V_SCROLL | SWT.MULTI);
 
-		// Needs to follow creation of referenced lists
-		toActive.addMouseListener(new TransferListener(availableList,
-				activeList));
-		toAvailable.addMouseListener(new TransferListener(activeList,
-				availableList));
+			// Needs to follow creation of referenced lists
+			toActive.addMouseListener(new TransferListener(availableList,
+					activeList));
+			toAvailable.addMouseListener(new TransferListener(activeList,
+					availableList));
 
-		GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
-		availableList.setLayoutData(gridData);
-		activeList.setLayoutData(gridData);
+			GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
+			availableList.setLayoutData(gridData);
+			activeList.setLayoutData(gridData);
 
-		final ArrayList<Control> controls = new ArrayList<Control>();
-		controls.add(available);
-		controls.add(active);
-		controls.add(availableList);
-		controls.add(activeList);
-		controls.add(toActive);
-		controls.add(toAvailable);
-		return controls.toArray(new Control[controls.size()]);
+			controls.add(available);
+			controls.add(active);
+			controls.add(availableList);
+			controls.add(activeList);
+			controls.add(toActive);
+			controls.add(toAvailable);
+		}
+
+		public void setEnabled(boolean value) {
+			for(Control c : controls) {
+				c.setEnabled(value);
+			}
+		}
+		
+		public void initializeFrom(ILaunchConfiguration config, java.util.List<String> names) 
+		throws CoreException {
+			activeList.removeAll();
+			availableList.removeAll();
+			for (String name : names) {
+				boolean active = config.getAttribute(prefPrefix + name, false);
+				if (active) {
+					activeList.add(name);
+				} else {
+					availableList.add(name);
+				}
+			}
+		}
+		
+		public void performApply(ILaunchConfigurationWorkingCopy config) {
+			for (String name : availableList.getItems()) {
+				config.setAttribute(prefPrefix + name, false);
+			}
+			for (String name : activeList.getItems()) {
+				config.setAttribute(prefPrefix + name, true);
+			}
+		}
 	}
 
 	class TransferListener extends MouseAdapter {
@@ -234,23 +276,15 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 			}
 		}
 	}
-
-	private Group createOutputGroup(Composite parent) {
+	
+	private static Group createNamedGroup(Composite parent, String name, int columns) {
 		final Group outer = new Group(parent, SWT.NONE);
 		GridLayout gridLayout = new GridLayout();
-		gridLayout.numColumns = 3;
+		gridLayout.numColumns = columns;
 		outer.setLayout(gridLayout);
-		outer.setText("Output");
+		outer.setText(name);
 		return outer;
-	}
 
-	private Group createAdvancedGroup(Composite parent) {
-		final Group outer = new Group(parent, SWT.NONE);
-		GridLayout gridLayout = new GridLayout();
-		gridLayout.numColumns = 2;
-		outer.setLayout(gridLayout);
-		outer.setText("Advanced");
-		return outer;
 	}
 
 	public String getName() {
@@ -277,24 +311,12 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 		packages = collectAvailablePackages(config);
 		try {
 			if (packages != null) {
-				activeList.removeAll();
-				availableList.removeAll();
-				for (String pkg : packages) {
-					boolean active = config.getAttribute(
-							PreferenceConstants.P_FILTER_PKG_PREFIX + pkg,
-							false);
-					if (active) {
-						activeList.add(pkg);
-					} else {
-						availableList.add(pkg);
-					}
-				}
+				filterControls.initializeFrom(config, packages);
 			}
 			final boolean useFiltering = config.getAttribute(
 					PreferenceConstants.P_USE_FILTERING, false);
-			for (Control c : filterControls) {
-				c.setEnabled(useFiltering);
-			}
+			filterControls.setEnabled(useFiltering);
+
 			final boolean useRefinery = config.getAttribute(
 					PreferenceConstants.P_USE_REFINERY, true);
 			for (FieldEditor e : refineryControls) {
@@ -336,14 +358,8 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 	public void performApply(ILaunchConfigurationWorkingCopy config) {
 		// System.err.println("performApply(): "+config.getName());
 		// Copy from widgets to config
-		for (String pkg : availableList.getItems()) {
-			config.setAttribute(PreferenceConstants.P_FILTER_PKG_PREFIX + pkg,
-					false);
-		}
-		for (String pkg : activeList.getItems()) {
-			config.setAttribute(PreferenceConstants.P_FILTER_PKG_PREFIX + pkg,
-					true);
-		}
+		filterControls.performApply(config);
+
 		for (FieldEditor e : f_editors) {
 			e.store();
 		}
@@ -391,7 +407,7 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 		}
 	}
 
-	private Collection<String> collectAvailablePackages(
+	private java.util.List<String> collectAvailablePackages(
 			ILaunchConfiguration configuration) {
 		final Collection<String> paths = new HashSet<String>();
 		IRuntimeClasspathEntry[] entries;
@@ -409,7 +425,7 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 		} catch (CoreException e) {
 			e.printStackTrace();
 		}
-		return Collections.emptySet();
+		return Collections.emptyList();
 	}
 
 	private Collection<String> collectAvailablePackages(Collection<String> paths) {

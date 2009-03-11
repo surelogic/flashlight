@@ -57,12 +57,14 @@ public class LockSetAnalysis extends NullDBQuery implements IPostPrep {
 		q.prepared("LockSet.v2.lockDurations", new NullResultHandler() {
 			@Override
 			public void doHandle(final Result lockDurations) {
-				final LockSets sets = new LockSets(lockDurations);
+				final LockSets sets = new LockSets(lockDurations, q
+						.prepared("LockSet.v2.updateAccessLocksHeld"));
 				q.prepared("LockSet.v2.accesses", new NullResultHandler() {
 					@Override
 					public void doHandle(final Result accesses) {
 						for (final Row r : accesses) {
 							// TS, InThread, Field, Receiver
+							final long id = r.nextLong();
 							final Timestamp ts = r.nextTimestamp();
 							final long thread = r.nextLong();
 							final long field = r.nextLong();
@@ -71,12 +73,12 @@ public class LockSetAnalysis extends NullDBQuery implements IPostPrep {
 							final boolean underConstruction = "Y".equals(r
 									.nextString());
 							if (underConstruction) {
-								sets.instanceUnderConstruction(thread, field,
-										receiver, read);
+								sets.instanceUnderConstruction(id, ts, thread,
+										field, receiver, read);
 							} else if (receiver == null) {
-								sets.staticAccess(ts, thread, field, read);
+								sets.staticAccess(id, ts, thread, field, read);
 							} else {
-								sets.instanceAccess(ts, thread, field,
+								sets.instanceAccess(id, ts, thread, field,
 										receiver, read);
 							}
 
@@ -95,28 +97,16 @@ public class LockSetAnalysis extends NullDBQuery implements IPostPrep {
 		private final Map<StaticInstance, StaticCount> staticCounts;
 		private final Map<FieldInstance, Count> counts;
 		final ThreadLocks locks;
+		final Queryable<?> updateAccess;
 
-		public LockSets(final Result lockDurations) {
+		public LockSets(final Result lockDurations,
+				final Queryable<?> updateAccess) {
 			fields = new HashMap<Long, Set<Long>>();
 			locks = new ThreadLocks(lockDurations);
 			instances = new HashMap<Long, Map<Long, Set<Long>>>();
 			staticCounts = new HashMap<StaticInstance, StaticCount>();
 			counts = new HashMap<FieldInstance, Count>();
-		}
-
-		public void instanceUnderConstruction(final long thread,
-				final long field, final Long receiver, final boolean read) {
-			final FieldInstance fi = new FieldInstance(thread, field, receiver);
-			Count count = counts.get(fi);
-			if (count == null) {
-				count = new Count();
-				counts.put(fi, count);
-			}
-			if (read) {
-				count.readUC++;
-			} else {
-				count.writeUC++;
-			}
+			this.updateAccess = updateAccess;
 		}
 
 		public void writeStatistics(final Query q) {
@@ -169,9 +159,10 @@ public class LockSetAnalysis extends NullDBQuery implements IPostPrep {
 			}
 		}
 
-		public void staticAccess(final Timestamp ts, final long thread,
-				final long field, final boolean read) {
+		public void staticAccess(final long id, final Timestamp ts,
+				final long thread, final long field, final boolean read) {
 			locks.ensureTime(ts);
+			updateAccess.call(locks.getLocks(thread).size(), id);
 			Set<Long> fieldSet = fields.get(field);
 			final Collection<Long> lockSet = locks.getLocks(thread);
 			if (fieldSet == null) {
@@ -193,9 +184,29 @@ public class LockSetAnalysis extends NullDBQuery implements IPostPrep {
 			}
 		}
 
-		public void instanceAccess(final Timestamp ts, final long thread,
-				final long field, final long receiver, final boolean read) {
+		public void instanceUnderConstruction(final long id,
+				final Timestamp ts, final long thread, final long field,
+				final Long receiver, final boolean read) {
 			locks.ensureTime(ts);
+			updateAccess.call(locks.getLocks(thread).size(), id);
+			final FieldInstance fi = new FieldInstance(thread, field, receiver);
+			Count count = counts.get(fi);
+			if (count == null) {
+				count = new Count();
+				counts.put(fi, count);
+			}
+			if (read) {
+				count.readUC++;
+			} else {
+				count.writeUC++;
+			}
+		}
+
+		public void instanceAccess(final long id, final Timestamp ts,
+				final long thread, final long field, final long receiver,
+				final boolean read) {
+			locks.ensureTime(ts);
+			updateAccess.call(locks.getLocks(thread).size(), id);
 			Map<Long, Set<Long>> fieldMap = instances.get(field);
 			if (fieldMap == null) {
 				fieldMap = new HashMap<Long, Set<Long>>();
@@ -287,7 +298,7 @@ public class LockSetAnalysis extends NullDBQuery implements IPostPrep {
 			if (this == obj) {
 				return true;
 			}
-			if(obj == null) {
+			if (obj == null) {
 				return false;
 			}
 			final FieldInstance other = (FieldInstance) obj;
@@ -335,6 +346,12 @@ public class LockSetAnalysis extends NullDBQuery implements IPostPrep {
 			this.threads = new HashMap<Long, Set<Long>>();
 		}
 
+		/**
+		 * Get the collection of locks a thread currently holds.
+		 * 
+		 * @param thread
+		 * @return
+		 */
 		public Collection<Long> getLocks(final long thread) {
 			return getThreadSet(thread);
 		}

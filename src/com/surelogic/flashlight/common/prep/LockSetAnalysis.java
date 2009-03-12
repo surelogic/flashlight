@@ -86,6 +86,8 @@ public class LockSetAnalysis extends NullDBQuery implements IPostPrep {
 					}
 				}).call();
 				sets.writeStatistics(q);
+				//Add foreign key to ACCESSLOCKSHELD table
+				q.prepared("LockSet.v2.accessLocksHeldConstraint").call();
 			}
 		}).call();
 	}

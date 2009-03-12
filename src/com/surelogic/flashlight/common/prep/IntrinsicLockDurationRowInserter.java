@@ -84,11 +84,11 @@ public final class IntrinsicLockDurationRowInserter {
 		}
 
 		public void lockReleased() {
-			++_timesEntered;
+			--_timesEntered;
 		}
 
 		public void lockAcquired() {
-			--_timesEntered;
+			++_timesEntered;
 		}
 
 		public long getLockObject() {
@@ -240,8 +240,8 @@ public final class IntrinsicLockDurationRowInserter {
 		/**
 		 * Vertices = locks Edge weight = # of times the edge appears
 		 */
-		final DefaultDirectedGraph<Long, Edge> lockGraph = 
-			new DefaultDirectedGraph<Long, Edge>(new EdgeFactory());
+		final DefaultDirectedGraph<Long, Edge> lockGraph = new DefaultDirectedGraph<Long, Edge>(
+				new EdgeFactory());
 	}
 
 	private boolean flushed = false;
@@ -263,26 +263,27 @@ public final class IntrinsicLockDurationRowInserter {
 		handleNonIdleFinalState(endTime);
 
 		if (StaticCallLocation.checkSites) {
-			Set<Entry<Long, Boolean>> refd = TraceNode.refdSites.entrySet();
-			for(Entry<Long, Boolean> e : refd) {
+			final Set<Entry<Long, Boolean>> refd = TraceNode.refdSites
+					.entrySet();
+			for (final Entry<Long, Boolean> e : refd) {
 				final long id = e.getKey();
 				if (!StaticCallLocation.validSites.contains(id)) {
-					System.err.println("Couldn't find site "+id);
+					System.err.println("Couldn't find site " + id);
 				}
 			}
 		} else {
 			System.err.println("Sites are all good");
 		}
-		
+
 		// FIX replace the graph w/ own implementation from CLR 23.5
-		final GraphInfo info = createGraphFromStorage();	
-		final CycleDetector<Long, Edge> detector = 
-			new CycleDetector<Long, Edge>(info.lockGraph);
+		final GraphInfo info = createGraphFromStorage();
+		final CycleDetector<Long, Edge> detector = new CycleDetector<Long, Edge>(
+				info.lockGraph);
 		if (detector.detectCycles()) {
 			final PreparedStatement f_cyclePS = statements[LOCK_CYCLE];
 
-			final StrongConnectivityInspector<Long, Edge> inspector = 
-				new StrongConnectivityInspector<Long, Edge>(info.lockGraph);
+			final StrongConnectivityInspector<Long, Edge> inspector = new StrongConnectivityInspector<Long, Edge>(
+					info.lockGraph);
 			int compId = 0;
 			for (final Set<Long> comp : inspector.stronglyConnectedSets()) {
 				// Compute the set of edges myself
@@ -303,7 +304,8 @@ public final class IntrinsicLockDurationRowInserter {
 					for (final Long dest : comp) {
 						final Edge e = edges.get(dest);
 						if (e != null) {
-							System.out.println("Edge from "+e.lockHeld+" -> "+e.lockAcquired);
+							System.out.println("Edge from " + e.lockHeld
+									+ " -> " + e.lockAcquired);
 							outputCycleEdge(f_cyclePS, compId, e);
 						}
 					}
@@ -339,7 +341,7 @@ public final class IntrinsicLockDurationRowInserter {
 	}
 
 	private static final boolean omitEdges = true;
-	
+
 	private GraphInfo createGraphFromStorage() {
 		int edges = 0;
 		int omitted = 0;
@@ -392,7 +394,7 @@ public final class IntrinsicLockDurationRowInserter {
 				}
 				info.lockGraph.addVertex(e.lockAcquired);
 
-				System.out.println(source+" -> "+e.lockAcquired);
+				System.out.println(source + " -> " + e.lockAcquired);
 				info.lockGraph.addEdge(source, e.lockAcquired, e);
 				edges++;
 			}
@@ -769,9 +771,9 @@ public final class IntrinsicLockDurationRowInserter {
 	}
 
 	public void defineRWLock(final long id, final Long readLock,
-			final Long writeLock, final Timestamp startTime) {	
-	   // Nothing to do right now
-    }
+			final Long writeLock, final Timestamp startTime) {
+		// Nothing to do right now
+	}
 
 	private void recordThreadStats(final long eventId, final Timestamp t,
 			final int blocking, final int holding, final int waiting) {
@@ -832,7 +834,7 @@ public final class IntrinsicLockDurationRowInserter {
 		ps.setTimestamp(idx++, time, here);
 		ps.setLong(idx++, inThread);
 		ps.setLong(idx++, trace);
-		ps.setLong(idx++, lock);   // The aggregate
+		ps.setLong(idx++, lock); // The aggregate
 		ps.setLong(idx++, object); // The actual object locked on
 		ps.setString(idx++, lockType.getFlag());
 		ps.setString(idx++, lockState.toString().replace('_', ' '));

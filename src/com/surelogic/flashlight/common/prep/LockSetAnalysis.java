@@ -2,7 +2,9 @@ package com.surelogic.flashlight.common.prep;
 
 import java.sql.Connection;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -86,8 +88,9 @@ public class LockSetAnalysis extends NullDBQuery implements IPostPrep {
 					}
 				}).call();
 				sets.writeStatistics(q);
-				//Add foreign key to ACCESSLOCKSHELD table
+				// Add foreign key to ACCESSLOCKSHELD table
 				q.prepared("LockSet.v2.accessLocksHeldConstraint").call();
+				q.prepared("LockSet.v2.accessLockAcquisitionConstraint").call();
 			}
 		}).call();
 	}
@@ -164,9 +167,10 @@ public class LockSetAnalysis extends NullDBQuery implements IPostPrep {
 		public void staticAccess(final long id, final Timestamp ts,
 				final long thread, final long field, final boolean read) {
 			locks.ensureTime(ts);
-			updateAccess.call(locks.getLocks(thread).size(), id);
 			Set<Long> fieldSet = fields.get(field);
 			final Collection<Long> lockSet = locks.getLocks(thread);
+			updateAccess.call(id, lockSet.size(), Nulls.coerce(locks
+					.getLastAcquisition(thread)));
 			if (fieldSet == null) {
 				fieldSet = new HashSet<Long>(lockSet);
 				fields.put(field, fieldSet);
@@ -190,7 +194,8 @@ public class LockSetAnalysis extends NullDBQuery implements IPostPrep {
 				final Timestamp ts, final long thread, final long field,
 				final Long receiver, final boolean read) {
 			locks.ensureTime(ts);
-			updateAccess.call(locks.getLocks(thread).size(), id);
+			updateAccess.call(id, locks.getLocks(thread).size(), Nulls
+					.coerce(locks.getLastAcquisition(thread)));
 			final FieldInstance fi = new FieldInstance(thread, field, receiver);
 			Count count = counts.get(fi);
 			if (count == null) {
@@ -207,8 +212,10 @@ public class LockSetAnalysis extends NullDBQuery implements IPostPrep {
 		public void instanceAccess(final long id, final Timestamp ts,
 				final long thread, final long field, final long receiver,
 				final boolean read) {
+			if (id == 2221) {
+				System.out.println("foo");
+			}
 			locks.ensureTime(ts);
-			updateAccess.call(locks.getLocks(thread).size(), id);
 			Map<Long, Set<Long>> fieldMap = instances.get(field);
 			if (fieldMap == null) {
 				fieldMap = new HashMap<Long, Set<Long>>();
@@ -216,6 +223,8 @@ public class LockSetAnalysis extends NullDBQuery implements IPostPrep {
 			}
 			Set<Long> instance = fieldMap.get(receiver);
 			final Collection<Long> lockSet = locks.getLocks(thread);
+			updateAccess.call(id, lockSet.size(), Nulls.coerce(locks
+					.getLastAcquisition(thread)));
 			if (instance == null) {
 				instance = new HashSet<Long>(lockSet);
 				fieldMap.put(receiver, instance);
@@ -338,14 +347,18 @@ public class LockSetAnalysis extends NullDBQuery implements IPostPrep {
 	 */
 	private static class ThreadLocks {
 		private final Iterator<Row> locks;
-		private final Map<Long, Set<Long>> threads;
+		private final Map<Long, TreeSet<Lock>> threads;
 		private final TreeSet<Lock> activeLocks;
 		private Lock lock;
 
 		ThreadLocks(final Result lockDurations) {
 			this.locks = lockDurations.iterator();
-			this.activeLocks = new TreeSet<Lock>();
-			this.threads = new HashMap<Long, Set<Long>>();
+			this.activeLocks = new TreeSet<Lock>(new Comparator<Lock>() {
+				public int compare(final Lock o1, final Lock o2) {
+					return o1.end.compareTo(o2.end);
+				}
+			});
+			this.threads = new HashMap<Long, TreeSet<Lock>>();
 		}
 
 		/**
@@ -355,7 +368,24 @@ public class LockSetAnalysis extends NullDBQuery implements IPostPrep {
 		 * @return
 		 */
 		public Collection<Long> getLocks(final long thread) {
-			return getThreadSet(thread);
+			final Collection<Lock> set = getThreadSet(thread);
+			final ArrayList<Long> locks = new ArrayList<Long>(set.size());
+			for (final Lock l : set) {
+				locks.add(l.lock);
+			}
+			return locks;
+		}
+
+		/**
+		 * Get the lock event id of the last lock acquisition made in this
+		 * thread before the given time.
+		 * 
+		 * @param thread
+		 * @return
+		 */
+		public Long getLastAcquisition(final long thread) {
+			final TreeSet<Lock> set = getThreadSet(thread);
+			return set.size() == 0 ? null : set.last().startEvent;
 		}
 
 		/**
@@ -367,7 +397,7 @@ public class LockSetAnalysis extends NullDBQuery implements IPostPrep {
 			Lock oldLock;
 			for (final Iterator<Lock> li = activeLocks.iterator(); li.hasNext()
 					&& (oldLock = li.next()).end.before(time);) {
-				getThreadSet(oldLock.thread).remove(oldLock.lock);
+				getThreadSet(oldLock.thread).remove(oldLock);
 				li.remove();
 			}
 			// Check to see if we already have one, and if so, do we need to
@@ -376,7 +406,7 @@ public class LockSetAnalysis extends NullDBQuery implements IPostPrep {
 				if (lock.start.before(time)) {
 					if (lock.end.after(time)) {
 						activeLocks.add(lock);
-						getThreadSet(lock.thread).add(lock.lock);
+						getThreadSet(lock.thread).add(lock);
 					}
 				} else {
 					return;
@@ -389,7 +419,7 @@ public class LockSetAnalysis extends NullDBQuery implements IPostPrep {
 				if (l.start.before(time)) {
 					if (l.end.after(time)) {
 						activeLocks.add(l);
-						getThreadSet(l.thread).add(l.lock);
+						getThreadSet(l.thread).add(l);
 					}
 				} else {
 					lock = l;
@@ -404,10 +434,14 @@ public class LockSetAnalysis extends NullDBQuery implements IPostPrep {
 		 * @param id
 		 * @return
 		 */
-		private Set<Long> getThreadSet(final long id) {
-			Set<Long> threadSet = threads.get(id);
+		private TreeSet<Lock> getThreadSet(final long id) {
+			TreeSet<Lock> threadSet = threads.get(id);
 			if (threadSet == null) {
-				threadSet = new HashSet<Long>();
+				threadSet = new TreeSet<Lock>(new Comparator<Lock>() {
+					public int compare(final Lock o1, final Lock o2) {
+						return o1.start.compareTo(o2.start);
+					}
+				});
 				threads.put(id, threadSet);
 			}
 			return threadSet;
@@ -415,9 +449,10 @@ public class LockSetAnalysis extends NullDBQuery implements IPostPrep {
 
 	}
 
-	private static class Lock implements Comparable<Lock> {
-		long thread;
-		long lock;
+	private static class Lock {
+		final long thread;
+		final long lock;
+		final long startEvent;
 		final Timestamp start;
 		final Timestamp end;
 
@@ -426,6 +461,7 @@ public class LockSetAnalysis extends NullDBQuery implements IPostPrep {
 			this.thread = 0;
 			this.lock = 0;
 			this.start = null;
+			this.startEvent = 0;
 		}
 
 		Lock(final Row row) {
@@ -433,56 +469,8 @@ public class LockSetAnalysis extends NullDBQuery implements IPostPrep {
 			this.lock = row.nextLong();
 			this.start = row.nextTimestamp();
 			this.end = row.nextTimestamp();
+			this.startEvent = row.nextLong();
 		}
 
-		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + ((end == null) ? 0 : end.hashCode());
-			result = prime * result + (int) (lock ^ (lock >>> 32));
-			result = prime * result + ((start == null) ? 0 : start.hashCode());
-			result = prime * result + (int) (thread ^ (thread >>> 32));
-			return result;
-		}
-
-		@Override
-		public boolean equals(final Object obj) {
-			if (this == obj) {
-				return true;
-			}
-			if (obj == null) {
-				return false;
-			}
-			if (getClass() != obj.getClass()) {
-				return false;
-			}
-			final Lock other = (Lock) obj;
-			if (end == null) {
-				if (other.end != null) {
-					return false;
-				}
-			} else if (!end.equals(other.end)) {
-				return false;
-			}
-			if (lock != other.lock) {
-				return false;
-			}
-			if (start == null) {
-				if (other.start != null) {
-					return false;
-				}
-			} else if (!start.equals(other.start)) {
-				return false;
-			}
-			if (thread != other.thread) {
-				return false;
-			}
-			return true;
-		}
-
-		public int compareTo(final Lock o) {
-			return end.compareTo(o.end);
-		}
 	}
 }

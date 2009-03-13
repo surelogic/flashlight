@@ -115,7 +115,8 @@ public final class RunDirectory {
 	 */
 	/* Package private: Only created by RawFileUtility */
 	static RunDirectory getFor(final File runDir) {
-		assert runDir != null && runDir.exists(); // Caller checks if this null
+		// Caller checks if this null
+		assert runDir != null && runDir.exists() && runDir.isDirectory(); 
 		final File tag = new File(runDir, InstrumentationConstants.FL_COMPLETE_RUN);
 		if (!tag.exists()) {
 			// Ignore this directory; it's not done (yet)
@@ -177,6 +178,21 @@ public final class RunDirectory {
 		return null;
 	}
 
+	// FL, but not good 
+	public static boolean isInvalid(File runDir) {
+		// Caller checks if this null
+		assert runDir != null && runDir.exists() && runDir.isDirectory(); 
+
+		final File tag = new File(runDir, InstrumentationConstants.FL_COMPLETE_RUN);
+		if (tag.exists()) {
+			return false; // It should be ok
+		}
+		final File[] headers = runDir.listFiles(flashlightHeaderFileFilter);	
+		final File[] data = runDir.listFiles(flashlightRawDataFileFilter);
+		// Return true if it has a header file
+		return headers.length + data.length > 1;
+	}
+	
 	private static File getFileFrom(final File runDir, final FileFilter filter,
 			final int noFileErr, final int manyFilesErr) {
 		final File[] files = runDir.listFiles(filter);
@@ -244,5 +260,4 @@ public final class RunDirectory {
 	public File getDatabaseDirectory() {
 		return dbHandle;
 	}
-
 }

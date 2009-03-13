@@ -8,8 +8,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
@@ -105,6 +107,11 @@ public final class RawFileUtility {
 		return runDescriptionBuilder.getRunDescriptions();
 	}
 
+	public static List<File> findInvalidRunDirectories() {
+		final RawDataDirectoryReader runDescriptionBuilder = new RawDataDirectoryReader();
+		return runDescriptionBuilder.findBadDirs();
+	}
+	
 	// /**
 	// * Examines the Flashlight data directory and returns file handles
 	// * corresponding to the passed run description, or {@code null} if no file
@@ -256,11 +263,15 @@ public final class RawFileUtility {
 			return f_runToHandles.get(description);
 		}
 
-		void read() {
+		private File[] getRunDirs() {
 			final File directory = FlashlightUtility
-					.getFlashlightDataDirectory();
+			.getFlashlightDataDirectory();
 			final File[] runDirs = directory.listFiles(f_directoryFilter);
-			for (final File runDir : runDirs) {
+			return runDirs;
+		}
+				
+		void read() {
+			for (final File runDir : getRunDirs()) {
 				final RunDirectory runDirectory = RunDirectory.getFor(runDir);
 				if (runDirectory != null) {
 					final RunDescription run = runDirectory.getRunDescription();
@@ -268,6 +279,17 @@ public final class RawFileUtility {
 					f_runToHandles.put(run, runDirectory);
 				}
 			}
+		}
+		
+		List<File> findBadDirs() {
+			List<File> bad = new ArrayList<File>();
+			for (final File runDir : getRunDirs()) {
+				// FL, but not good 
+				if (RunDirectory.isInvalid(runDir)) {
+					bad.add(runDir);
+				}
+			}
+			return bad;
 		}
 	}
 

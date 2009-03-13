@@ -250,9 +250,18 @@ public final class FlashlightLaunchConfigurationDelegate extends
      */
     for (final Map.Entry<String, String> entry : classpathEntries.entrySet()) {
       if (entry.getValue() == null) {
+    	  String entryLoc = entry.getKey();
+    	  // handle Windows drive locations
+    	  if (entryLoc.length() > 0) {
+    	    final char driveLetter = entryLoc.charAt(0);
+    	    if (driveLetter != '\\' && driveLetter != '/') {
+    	      // we have a windows drive letter
+    	      entryLoc = driveLetter + "-drive" + entryLoc.substring(2);
+    	    }
+    	  }
         final File newLocation =
           new File(externalOutputDir,
-              isJars ? entry.getKey() : (entry.getKey() + ".jar"));
+              isJars ? entryLoc : (entryLoc + ".jar"));
         entry.setValue(newLocation.getAbsolutePath());
       }
     }

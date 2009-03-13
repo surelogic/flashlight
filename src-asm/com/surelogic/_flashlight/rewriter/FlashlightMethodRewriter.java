@@ -76,6 +76,9 @@ final class FlashlightMethodRewriter implements MethodVisitor {
   /** The fully qualified name of the class being rewritten. */
   private final String classBeingAnalyzedFullyQualified;
   
+  /** The internal name of the superclass of the class being rewritten. */
+  private final String superClassInternal;
+  
   /** The simple name of the method being rewritten. */
   private final String methodName;
   
@@ -243,11 +246,12 @@ final class FlashlightMethodRewriter implements MethodVisitor {
       final ClassAndFieldModel model, final boolean java5, final boolean inInt,
       final boolean update, final boolean mustImpl, final String fname,
       final String nameInternal, final String nameFullyQualified,
+      final String superInternal,
       final Set<MethodCallWrapper> wrappers) {
     final FlashlightMethodRewriter methodRewriter =
       new FlashlightMethodRewriter(access, mname, desc, mv, conf, csif, msg,
           model, java5, inInt, update, mustImpl, fname, nameInternal, nameFullyQualified,
-          wrappers);
+          superInternal, wrappers);
     methodRewriter.lvs = new LocalVariablesSorter(access, desc, methodRewriter);
     return methodRewriter.lvs;
   }
@@ -276,6 +280,7 @@ final class FlashlightMethodRewriter implements MethodVisitor {
       final ClassAndFieldModel model, final boolean java5, final boolean inInt,
       final boolean update, final boolean mustImpl, final String fname,
       final String nameInternal, final String nameFullyQualified,
+      final String superInternal,
       final Set<MethodCallWrapper> wrappers) {
     this.mv = mv;
     config = conf;
@@ -294,6 +299,7 @@ final class FlashlightMethodRewriter implements MethodVisitor {
     sourceFileName = fname;
     classBeingAnalyzedInternal = nameInternal;
     classBeingAnalyzedFullyQualified = nameFullyQualified;
+    superClassInternal = superInternal;
     wrapperMethods = wrappers;
     
     isAccessMethod = ((access & Opcodes.ACC_SYNTHETIC) != 0) && isStatic && 
@@ -1600,7 +1606,26 @@ final class FlashlightMethodRewriter implements MethodVisitor {
   	 */  
   	final boolean isClone = (opcode == Opcodes.INVOKEVIRTUAL)
   		&& name.equals("clone") && desc.startsWith("()");
-  	if (inInterface || isClone) {
+  	
+  	/* We have encountered code that uses invokevirtual in class D to 
+  	 * invoke methods on the receiver inherited from superclass C by naming class C 
+  	 * directly as the owner, instead of D as the owner, which is what
+  	 * would normally be done.  When this happens, a static wrapper
+  	 * might be illegal depending on the visibility of the method being
+  	 * invoked.  So we have to use in-place instrumentation in this case.
+  	 * 
+  	 * Sadly, this casts the net to wide, because we will also use in-place
+  	 * instrumentation for regular objects of class C used within D.  It remains
+  	 * to be seen if this is a big deal or not.
+  	 */
+  	final boolean ownerIsSuper = owner.equals(superClassInternal);
+  	if (ownerIsSuper) {
+  	  System.out.println("OWNER IS SUPER: Class "
+          + classBeingAnalyzedFullyQualified + ", method " + methodName
+          + ", invoking " + owner + " " + name + " " + desc);
+  	}
+  	
+  	if (inInterface || isClone || ownerIsSuper) {
       final InPlaceMethodInstrumentation methodCall;
       if (opcode == Opcodes.INVOKESTATIC) {
         methodCall = new InPlaceStaticMethodInstrumentation(siteId, 

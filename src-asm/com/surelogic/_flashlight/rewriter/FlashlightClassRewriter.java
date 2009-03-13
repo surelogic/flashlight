@@ -68,6 +68,9 @@ final class FlashlightClassRewriter extends ClassAdapter {
   /** The fully qualified name of the class being rewritten. */
   private String classNameFullyQualified;
   
+  /** The internal name of the superclass of the class being rewritten. */
+  private String superClassInternal;
+  
   /**
    * Do we need to add a class initializer?  If the class already had one,
    * we modify it.  Otherwise we need to add one.
@@ -171,7 +174,8 @@ final class FlashlightClassRewriter extends ClassAdapter {
     atLeastJava5 = (version & 0x0000FFFF) >= Opcodes.V1_5;
     classNameInternal = name;
     classNameFullyQualified = ByteCodeUtils.internal2FullyQualified(name);
-
+    superClassInternal = superName;
+    
     /* We have to modify root classes to insert object id information. We only
      * care about those classes that extend object, or whose superclass is a
      * class not being instrumented.
@@ -246,7 +250,7 @@ final class FlashlightClassRewriter extends ClassAdapter {
       return FlashlightMethodRewriter.create(access,
           name, desc, cse, config, callSiteIdFactory, messenger, classModel, atLeastJava5, isInterface,
           updateSuperCall, mustImplementIIdObject, sourceFileName, classNameInternal, classNameFullyQualified,
-          wrapperMethods);
+          superClassInternal, wrapperMethods);
     }
   }
   
@@ -328,7 +332,7 @@ final class FlashlightClassRewriter extends ClassAdapter {
     final MethodVisitor rewriter_mv = FlashlightMethodRewriter.create(Opcodes.ACC_STATIC,
         CLASS_INITIALIZER, CLASS_INITIALIZER_DESC, mv, config, callSiteIdFactory, messenger,
         classModel, atLeastJava5, isInterface, updateSuperCall, mustImplementIIdObject, sourceFileName,
-        classNameInternal, classNameFullyQualified, wrapperMethods);
+        classNameInternal, classNameFullyQualified, superClassInternal, wrapperMethods);
     rewriter_mv.visitCode(); // start code section
     rewriter_mv.visitInsn(Opcodes.RETURN); // empty method, just return
     rewriter_mv.visitMaxs(0, 0); // Don't need any stack or variables

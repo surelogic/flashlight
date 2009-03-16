@@ -148,18 +148,7 @@ public final class FlashlightInstrumentationTab extends
 
 		public String getColumnText(final Object element, final int columnIndex) {
 			final IRuntimeClasspathEntry elt = (IRuntimeClasspathEntry) element;
-
-			final String postfix;
-			final int where = elt.getClasspathProperty();
-			if (where == IRuntimeClasspathEntry.BOOTSTRAP_CLASSES) {
-				postfix = " [BOOTSTRAP]";
-			} else if (where == IRuntimeClasspathEntry.STANDARD_CLASSES) {
-				postfix = " [SYSTEM]";
-			} else { // == IRuntimeClasspathEntry.USER_CLASSES
-				postfix = "";
-			}
-
-			return elt.getLocation() + postfix;
+			return elt.getLocation();
 		}
 
 		public void dispose() {

@@ -19,14 +19,18 @@ public class FlashlightClassWriter extends ClassWriter {
   
   @Override
   protected String getCommonSuperClass(final String type1, final String type2) {
+    final String t1Fixed = type1.replace('/', '.');
+    final String t2Fixed = type2.replace('/', '.');
     ClassAndFieldModel.Clazz c, d;
-    c = classModel.getClass(type1.replace('/', '.'));
-    d = classModel.getClass(type2.replace('/', '.'));
-
-    if (c.isAssignableFrom(type2)) {
+    c = classModel.getClass(t1Fixed);
+    d = classModel.getClass(t2Fixed);
+System.out.println("getCommonSuperClass(" + type1 + ", " + type2 + ")");
+System.out.println("  c = " + c);
+System.out.println("  d = " + d);
+    if (c.isAssignableFrom(t2Fixed)) {
       return type1;
     }
-    if (d.isAssignableFrom(type1)) {
+    if (d.isAssignableFrom(t1Fixed)) {
       return type2;
     }
     if (c.isInterface() || d.isInterface()) {
@@ -36,7 +40,7 @@ public class FlashlightClassWriter extends ClassWriter {
       do {
         cType = c.getSuperClass();
         c = classModel.getClass(cType);
-      } while (!c.isAssignableFrom(type2));
+      } while (!c.isAssignableFrom(t2Fixed));
       return cType.replace('.', '/');
     }
   }

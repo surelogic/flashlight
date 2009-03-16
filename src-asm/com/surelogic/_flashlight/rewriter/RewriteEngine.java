@@ -218,7 +218,7 @@ public final class RewriteEngine {
    * field model from them to be used in the second rewrite pass of the 
    * instrumentation.
    */
-  public void scanDirectory(final File inDir) throws IOException {
+  public void scanDirectory(final File inDir, final boolean willBeInstrumented) throws IOException {
     final String[] files = inDir.list();
     if (files == null) {
       throw new IOException("Source directory " + inDir + " is bad");
@@ -226,13 +226,13 @@ public final class RewriteEngine {
     for (final String name : files) {
       final File nextIn = new File(inDir, name);
       if (nextIn.isDirectory()) {
-        scanDirectory(nextIn);
+        scanDirectory(nextIn, willBeInstrumented);
       } else {
         scanFileStream(new RewriteHelper() {
           public BufferedInputStream getInputStream() throws IOException {
             return new BufferedInputStream(new FileInputStream(nextIn));
           }
-        }, nextIn.getPath());
+        }, nextIn.getPath(), willBeInstrumented);
       }
     }
   }  
@@ -401,7 +401,7 @@ public final class RewriteEngine {
    * and field model from them to be used in the second rewrite pass of the
    * instrumentation.
    */
-  public void scanJar(final File inJarFile) throws IOException {
+  public void scanJar(final File inJarFile, final boolean willBeInstrumented) throws IOException {
     final JarFile jarFile = new JarFile(inJarFile);
     try {
       final Enumeration jarEnum = jarFile.entries(); 
@@ -414,7 +414,7 @@ public final class RewriteEngine {
             public BufferedInputStream getInputStream() throws IOException {
               return new BufferedInputStream(jarFile.getInputStream(jarEntryIn));
             }
-          }, entryName);
+          }, entryName, willBeInstrumented);
         }
       }
     } finally {
@@ -541,7 +541,7 @@ public final class RewriteEngine {
     final int classWriterFlags =
       (classfileMajorVersion >= CLASSFILE_1_6) ? ClassWriter.COMPUTE_FRAMES : 0;
     final ClassReader input = new ClassReader(inClassfile);
-    final ClassWriter output = new ClassWriter(input, classWriterFlags);
+    final ClassWriter output = new FlashlightClassWriter(input, classWriterFlags, classModel);
     final FlashlightClassRewriter xformer =
       new FlashlightClassRewriter(config, callSiteIdFactory, msgr, output, classModel, ignoreMethods);
     // Skip stack map frames: Either the classfiles don't have them, or we will recompute them
@@ -593,26 +593,27 @@ public final class RewriteEngine {
   // == Scan helpers
   // =======================================================================
 
-  public void scanFileStream(final RewriteHelper helper, final String fname)
+  public void scanFileStream(final RewriteHelper helper, final String fname, final boolean willBeInstrumented)
       throws IOException {
     if (isClassfileName(fname)) {
       messenger.verbose("Scanning classfile " + fname);
       try {
         messenger.increaseNesting();
-        scanClassfileStream(fname, helper);
+        scanClassfileStream(helper, fname, willBeInstrumented);
       } finally {
         messenger.decreaseNesting();
       }
     }          
   }
 
-  public void scanClassfileStream(final String classname, final RewriteHelper helper)
+  public void scanClassfileStream(final RewriteHelper helper,
+      final String classname, final boolean willBeInstrumented)
       throws IOException {
     final InputStream inClassfile = helper.getInputStream();
     try {
       final ClassReader input = new ClassReader(inClassfile);
       final FieldCataloger cataloger =
-        new FieldCataloger(fieldOutput, classModel);
+        new FieldCataloger(willBeInstrumented, fieldOutput, classModel);
       input.accept(cataloger, ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
     } finally {
       try {

@@ -12,14 +12,45 @@ import java.util.List;
  * the common cases.
  */
 public abstract class RewriteManager {
-  private static enum How {
-    DIR_TO_DIR {
+  private static enum HowToScan {
+    DIR_SCAN_ONLY {
       @Override
       public void scan(final RewriteEngine engine, final File src)
           throws IOException {
-        engine.scanDirectory(src);
+        engine.scanDirectory(src, false);
       }
-      
+    },
+    
+    DIR {
+      @Override
+      public void scan(final RewriteEngine engine, final File src)
+          throws IOException {
+        engine.scanDirectory(src, true);
+      }
+    },
+    
+    JAR_SCAN_ONLY {
+      @Override
+      public void scan(final RewriteEngine engine, final File src)
+          throws IOException {
+        engine.scanJar(src, false);
+      }
+    },
+    
+    JAR {
+      @Override
+      public void scan(final RewriteEngine engine, final File src)
+          throws IOException {
+        engine.scanJar(src, true);
+      }
+    };    
+    
+    public abstract void scan(
+        RewriteEngine engine, File src) throws IOException;
+  }
+
+  private static enum HowToInstrument {
+    DIR_TO_DIR(HowToScan.DIR) {
       @Override
       public void instrument(final RewriteEngine engine,
           final File src, final File dest, final String runtime)
@@ -28,13 +59,7 @@ public abstract class RewriteManager {
       }
     },
     
-    DIR_TO_JAR {
-      @Override
-      public void scan(final RewriteEngine engine, final File src)
-          throws IOException {
-        engine.scanDirectory(src);
-      }
-      
+    DIR_TO_JAR(HowToScan.DIR) {
       @Override
       public void instrument(final RewriteEngine engine,
           final File src, final File dest, final String runtime)
@@ -43,14 +68,7 @@ public abstract class RewriteManager {
       }
     },
     
-    
-    JAR_TO_DIR {
-      @Override
-      public void scan(final RewriteEngine engine, final File src)
-          throws IOException {
-        engine.scanJar(src);
-      }
-      
+    JAR_TO_DIR(HowToScan.JAR) {
       @Override
       public void instrument(final RewriteEngine engine,
           final File src, final File dest, final String runtime)
@@ -59,13 +77,7 @@ public abstract class RewriteManager {
       }
     },
     
-    JAR_TO_JAR {
-      @Override
-      public void scan(final RewriteEngine engine, final File src)
-          throws IOException {
-        engine.scanJar(src);
-      }
-      
+    JAR_TO_JAR(HowToScan.JAR) {
       @Override
       public void instrument(final RewriteEngine engine,
           final File src, final File dest, final String runtime)
@@ -74,33 +86,50 @@ public abstract class RewriteManager {
       }
     };
     
+    private HowToInstrument(final HowToScan scan) {
+      scanHow = scan;
+    }
     
-    public abstract void scan(
-        RewriteEngine engine, File src) throws IOException;
+    public final HowToScan scanHow;
+    
     public abstract void instrument(
         RewriteEngine engine, File src, File dest, String runtime)
         throws IOException;
   }
   
-  private static final class Entry {
-    public final How how;
+  
+  
+  private static class ScannableEntry {
+    public final HowToScan scanHow;
     public final File src;
+    
+    public ScannableEntry(final HowToScan h, final File s) {
+      scanHow = h;
+      src = s;
+    }
+    
+    public void scan(final RewriteEngine engine) throws IOException {
+      scanHow.scan(engine, src);
+    }
+  }
+  
+  
+  
+  private static final class InstrumentableEntry extends ScannableEntry {
+    public final HowToInstrument instrumentHow;
     public final File dest;
     public final String runtime;
     
-    public Entry(final How h, final File s, final File d, final String r) {
-      how = h;
-      src = s;
+    public InstrumentableEntry(final HowToInstrument instr,
+        final File s, final File d, final String r) {
+      super(instr.scanHow, s);
+      instrumentHow = instr;
       dest = d;
       runtime = r;
     }
     
-    public void scan(final RewriteEngine engine) throws IOException {
-      how.scan(engine, src);
-    }
-    
     public void instrument(final RewriteEngine engine) throws IOException {
-      how.instrument(engine, src, dest, runtime);
+      instrumentHow.instrument(engine, src, dest, runtime);
     }
   }
   
@@ -110,7 +139,10 @@ public abstract class RewriteManager {
   private final EngineMessenger messenger;
   private final File fieldsFile;
   private final File sitesFile;
-  private final List<Entry> entries = new LinkedList<Entry>();
+  private final List<ScannableEntry> otherClasspathEntries =
+    new LinkedList<ScannableEntry>();
+  private final List<InstrumentableEntry> entriesToInstrument =
+    new LinkedList<InstrumentableEntry>();
   
   
   
@@ -124,20 +156,28 @@ public abstract class RewriteManager {
   
   
   
+  public final void addClasspathDir(final File src) {
+    otherClasspathEntries.add(new ScannableEntry(HowToScan.DIR_SCAN_ONLY, src));
+  }
+  
+  public final void addClasspathJar(final File src) {
+    otherClasspathEntries.add(new ScannableEntry(HowToScan.JAR_SCAN_ONLY, src));
+  }
+  
   public final void addDirToDir(final File src, final File dest) {
-    entries.add(new Entry(How.DIR_TO_DIR, src, dest, null));
+    entriesToInstrument.add(new InstrumentableEntry(HowToInstrument.DIR_TO_DIR, src, dest, null));
   }
   
   public final void addDirToJar(final File src, final File dest, final String runtime) {
-    entries.add(new Entry(How.DIR_TO_JAR, src, dest, runtime));
+    entriesToInstrument.add(new InstrumentableEntry(HowToInstrument.DIR_TO_JAR, src, dest, runtime));
   }
   
   public final void addJarToJar(final File src, final File dest, final String runtime) {
-    entries.add(new Entry(How.JAR_TO_JAR, src, dest, runtime));
+    entriesToInstrument.add(new InstrumentableEntry(HowToInstrument.JAR_TO_JAR, src, dest, runtime));
   }
   
   public final void addJarToDir(final File src, final File dest, final String runtime) {
-    entries.add(new Entry(How.JAR_TO_DIR, src, dest, runtime));
+    entriesToInstrument.add(new InstrumentableEntry(HowToInstrument.JAR_TO_DIR, src, dest, runtime));
   }
   
   public final void execute() {
@@ -155,23 +195,15 @@ public abstract class RewriteManager {
           new RewriteEngine(config, messenger, fieldsOut, sitesOut);
         
         if (!skipScan) {
-          for (final Entry entry : entries) {
-            final String srcPath = entry.src.getAbsolutePath();
-            messenger.info("Scanning classfiles in " + srcPath);
-            messenger.increaseNesting();
-            preScan(srcPath);
-            try {
-              entry.scan(engine);
-            } catch (final IOException e) {
-              exceptionScan(srcPath, e);
-            } finally {
-              messenger.decreaseNesting();
-              postScan(srcPath);
-            }
+          for (final ScannableEntry entry : otherClasspathEntries) {
+            scan(engine, entry);
+          }
+          for (final ScannableEntry entry : entriesToInstrument) {
+            scan(engine, entry);
           }
         }
 
-        for (final Entry entry : entries) {
+        for (final InstrumentableEntry entry : entriesToInstrument) {
           final String srcPath = entry.src.getAbsolutePath();
           final String destPath = entry.dest.getAbsolutePath();
           messenger.info("Instrumenting classfiles in " + srcPath + " to " + destPath);
@@ -201,6 +233,23 @@ public abstract class RewriteManager {
       }
     }
   }
+  
+  private void scan(final RewriteEngine engine, final ScannableEntry entry) {
+    final String srcPath = entry.src.getAbsolutePath();
+    messenger.info("Scanning classfiles in " + srcPath);
+    messenger.increaseNesting();
+    preScan(srcPath);
+    try {
+      entry.scan(engine);
+    } catch (final IOException e) {
+      exceptionScan(srcPath, e);
+    } finally {
+      messenger.decreaseNesting();
+      postScan(srcPath);
+    }
+  }
+  
+  
   
   protected void preScan(final String srcPath) {
     // do nothing

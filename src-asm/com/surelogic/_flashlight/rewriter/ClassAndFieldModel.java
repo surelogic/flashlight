@@ -1,6 +1,7 @@
 package com.surelogic._flashlight.rewriter;
 
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
 
 
@@ -37,6 +38,17 @@ final class ClassAndFieldModel {
    */
   public final class Clazz {
     /**
+     * Does this represent a class that is meant to be instrumented by
+     * Flashlight?
+     */
+    private final boolean isInstrumented;
+    
+    /**
+     * Is it an inteface?
+     */
+    private final boolean isInterface;
+    
+    /**
      * The fully qualified name of the superclass of this class.  May only
      * be {@code null} if the class represent "java.lang.Object".
      */
@@ -55,9 +67,16 @@ final class ClassAndFieldModel {
     
     
     
-    public Clazz(final String superClass, final String[] interfaces) {
+    public Clazz(final boolean isInterface, final boolean isInstrumented,
+        final String superClass, final String[] interfaces) {
+      this.isInterface = isInterface;
+      this.isInstrumented = isInstrumented;
       this.superClass = superClass;
       this.interfaces = interfaces;
+    }
+    
+    public boolean isInterface() {
+      return isInterface;
     }
     
     public String getSuperClass() {
@@ -77,6 +96,52 @@ final class ClassAndFieldModel {
     public Integer getField(final String fieldName) {
       return fields.get(fieldName);
     }
+    
+    /**
+     * Determines if the class or interface represented by this
+     * <code>Clazz</code> object is either the same as, or is a superclass or
+     * superinterface of, the class or interface represented by the specified
+     * <code>Class</code> parameter. It returns <code>true</code> if so;
+     * otherwise it returns <code>false</code>.
+     * 
+     * <p> Specifically, this method tests whether the type represented by the
+     * specified <code>Clazz</code> parameter can be converted to the type
+     * represented by this <code>Clazz</code> object via an identity
+     * conversion. See <em>The Java Language Specification</em>, sections
+     * 5.1.1 and 5.1.4 , for details.
+     * 
+     * @param other
+     *          the <code>Clazz</code> object to be checked
+     * @return the <code>boolean</code> value indicating whether objects of
+     *         the type <code>other</code> can be assigned to objects of this
+     *         class
+     * @exception NullPointerException Thrown if one of the ancestor classes
+     * of <code>otherName</code> is not in the class model.
+     */
+    public boolean isAssignableFrom(final String otherName) {
+      /* We keep a list of ancestors of other to be tested.
+       * We start with other itself as the seed.
+       */
+      final LinkedList<String> toBeTested = new LinkedList<String>();
+      toBeTested.addLast(otherName);
+      
+      while (!toBeTested.isEmpty()) {
+        final String testName = toBeTested.removeFirst();
+        final Clazz testClass = classes.get(testName);
+        if (this == testClass) {
+          return true;
+        }
+        
+        /* add the superclass and superinterfaces */
+        if (testClass.superClass != null) {
+          toBeTested.addLast(testClass.superClass);
+        }
+        for (final String superInterface : testClass.interfaces) {
+          toBeTested.addLast(superInterface);
+        }
+      }
+      return false;
+    }
   }
 
   
@@ -95,22 +160,38 @@ final class ClassAndFieldModel {
    * @return The class model object for the class.
    */
   public Clazz addClass(
-      final String name, final String superClass, final String[] interfaces) {
-    final Clazz c = new Clazz(superClass, interfaces);
+      final String name, final boolean isInterface, 
+      final boolean isInstrumented,
+      final String superClass, final String[] interfaces) {
+    final Clazz c = new Clazz(isInterface, isInstrumented, superClass, interfaces);
     classes.put(name, c);
     return c;
   }
   
   /**
-   * Does the class model contain an entry for this class?  In other words, is
-   * the named class part of the set of classes being instrumented.
+   * Lookup a class in the model.
    * 
    * @param name
    *          The fully qualified name of the class.
-   * @return {@code true} if and only if the class is part of the model.
+   * @return The class, or {@code null} if the class is not in the model.
+   */
+  public Clazz getClass(final String name) {
+    return classes.get(name);
+  }
+  
+  /**
+   * Is the named class part of the set of classes being instrumented.
+   * 
+   * @param name
+   *          The fully qualified name of the class.
    */
   public boolean isInstrumentedClass(final String name) {
-    return classes.containsKey(name);
+    final Clazz c = classes.get(name);
+    if (c != null) {
+      return c.isInstrumented;
+    } else {
+      return false;
+    }
   }
   
   /**

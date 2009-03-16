@@ -29,6 +29,15 @@ import org.objectweb.asm.Opcodes;
  */
 final class FieldCataloger implements ClassVisitor {
   /**
+   * Is the scanned class going to be instrumented?  Classes that are 
+   * not instrumented are in the class model only for supertype information
+   * needed to maintain stack map frames.
+   * Class that are not instrumented do not have field information, and do
+   * not contribute to the field catalog.
+   */
+  private final boolean isInstrumented;
+  
+  /**
    * The PrintWriter to which to write the field catalog.
    */
   private final PrintWriter out;
@@ -52,7 +61,9 @@ final class FieldCataloger implements ClassVisitor {
   
   
   
-  public FieldCataloger(final PrintWriter pw, final ClassAndFieldModel model) {
+  public FieldCataloger(final boolean isInstrumented,
+      final PrintWriter pw, final ClassAndFieldModel model) {
+    this.isInstrumented = isInstrumented;
     out = pw;
     classModel = model;
   }
@@ -61,31 +72,36 @@ final class FieldCataloger implements ClassVisitor {
       final String signature, final String superName,
       final String[] interfaces) {
     classNameFullyQualified = ByteCodeUtils.internal2FullyQualified(name);
-    final String superFullyQualified = ByteCodeUtils.internal2FullyQualified(superName);
+    final String superFullyQualified = 
+      superName == null ? null : ByteCodeUtils.internal2FullyQualified(superName);
     final String[] ifaces = new String[interfaces.length];
     for (int i = 0; i < interfaces.length; i++) {
       ifaces[i] = ByteCodeUtils.internal2FullyQualified(interfaces[i]);
     }
-    clazz = classModel.addClass(classNameFullyQualified, superFullyQualified, ifaces);
+    final boolean isInterface = (access & Opcodes.ACC_INTERFACE) != 0;
+    clazz = classModel.addClass(classNameFullyQualified,
+        isInterface, isInstrumented, superFullyQualified, ifaces);
   }
 
   public FieldVisitor visitField(final int access, final String name,
       final String desc, final String signature, final Object value) {
-    final Integer id = clazz.addField(name);
-    final boolean isFinal = (access & Opcodes.ACC_FINAL) != 0;
-    final boolean isVolatile = (access & Opcodes.ACC_VOLATILE) != 0;
-    final boolean isStatic = (access & Opcodes.ACC_STATIC) != 0;
-    out.print(id.intValue());
-    out.print(' ');
-    out.print(classNameFullyQualified);
-    out.print(' ');
-    out.print(name);
-    out.print(' ');
-    out.print(isStatic);
-    out.print(' ');
-    out.print(isFinal);
-    out.print(' ');
-    out.println(isVolatile);
+    if (isInstrumented) {
+      final Integer id = clazz.addField(name);
+      final boolean isFinal = (access & Opcodes.ACC_FINAL) != 0;
+      final boolean isVolatile = (access & Opcodes.ACC_VOLATILE) != 0;
+      final boolean isStatic = (access & Opcodes.ACC_STATIC) != 0;
+      out.print(id.intValue());
+      out.print(' ');
+      out.print(classNameFullyQualified);
+      out.print(' ');
+      out.print(name);
+      out.print(' ');
+      out.print(isStatic);
+      out.print(' ');
+      out.print(isFinal);
+      out.print(' ');
+      out.println(isVolatile);
+    }
     return null;
   }
 

@@ -57,6 +57,7 @@ final class FlashlightVMRunner implements IVMRunner {
   private final Map<String, String> userEntries;
   private final Map<String, String> userJars;
   private final Map<String, String> bootEntries;
+  private final Set<String> everythingElse;
   private final Set<IProject> interestingProjects;
   private final String datePostfix;
   private final String pathToFlashlightLib;
@@ -65,6 +66,7 @@ final class FlashlightVMRunner implements IVMRunner {
   public FlashlightVMRunner(
       final IVMRunner other, final File outDir, final Map<String, String> dirs,
       final Map<String, String> jars, final Map<String, String> bdirs,
+      final Set<String> ee,
       final Set<IProject> prjs, final String main, final String date)
   throws CoreException {
     delegateRunner = other;
@@ -72,6 +74,7 @@ final class FlashlightVMRunner implements IVMRunner {
     userEntries = dirs;
     userJars = jars;
     bootEntries = bdirs;
+    everythingElse = ee;
     interestingProjects = prjs;
     mainTypeName = main;
     datePostfix = date;
@@ -101,7 +104,10 @@ final class FlashlightVMRunner implements IVMRunner {
      * we need to process, plus 1 remaining unit for the delegate.
      */
     final int totalWork =
-      interestingProjects.size() + (2 * (userEntries.size() + userJars.size() + bootEntries.size())) + 1;
+      interestingProjects.size() +
+      everythingElse.size() + 
+      (2 * (userEntries.size() + userJars.size() + bootEntries.size())) + 
+      1;
     final SubMonitor progress = SubMonitor.convert(monitor, totalWork);
 
     /* Create the source zip */
@@ -191,7 +197,14 @@ final class FlashlightVMRunner implements IVMRunner {
       final RewriteManager manager =
         new VMRewriteManager(rewriterConfig, messenger,
             fieldsFile, sitesFile, progress);
-      
+      for (final String nonInstruntedEntry: everythingElse) {
+        final File asFile = new File(nonInstruntedEntry);
+        if (asFile.isDirectory()) {
+          manager.addClasspathDir(asFile);
+        } else {
+          manager.addClasspathJar(asFile);
+        }
+      }
       for (final Map.Entry<String, String> entry : bootEntries.entrySet()) {
         manager.addDirToJar(new File(entry.getKey()), new File(entry.getValue()), null);
       }

@@ -65,7 +65,9 @@ public final class FlashlightLaunchConfigurationDelegate extends
     final Map<String, String> userEntries = new HashMap<String, String>();
     final Map<String, String> userJars = new HashMap<String, String>();
     final Map<String, String> bootstrapEntries = new HashMap<String, String>();
-    getClasspathEntries(configuration, userEntries, userJars, bootstrapEntries);
+    final Set<String> everythingElse = new HashSet<String>();
+    getClasspathEntries(
+        configuration, userEntries, userJars, bootstrapEntries, everythingElse);
 
 		/*
 		 * Go through each open project and see which of the binary output
@@ -87,7 +89,7 @@ public final class FlashlightLaunchConfigurationDelegate extends
 		    configuration, runOutputDir, userEntries, userJars, bootstrapEntries);
 		
 		return new FlashlightVMRunner(runner, runOutputDir, userEntries, userJars,
-		    bootstrapEntries,	interestingProjects, mainTypeName, datePostfix);
+		    bootstrapEntries,	everythingElse, interestingProjects, mainTypeName, datePostfix);
 	}
 
   private IVMRunner checkRequirements(final ILaunchConfiguration configuration)
@@ -118,7 +120,7 @@ public final class FlashlightLaunchConfigurationDelegate extends
 
   private void getClasspathEntries(final ILaunchConfiguration configuration,
       final Map<String, String> userEntries, final Map<String, String> userJars,
-      final Map<String, String> bootstrapEntries) {
+      final Map<String, String> bootstrapEntries, final Set<String> everythingElse) {
     final IRuntimeClasspathEntry[] entries = LaunchUtils.getClasspath(configuration);
     for (final IRuntimeClasspathEntry entry : entries) {
       final int where = entry.getClasspathProperty();
@@ -132,6 +134,8 @@ public final class FlashlightLaunchConfigurationDelegate extends
         jarsMap = null;
       } else {
         // Standard (that is, system library) entry; ignore it
+//        continue;
+        everythingElse.add(entry.getLocation());
         continue;
       }
       

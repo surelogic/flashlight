@@ -65,9 +65,10 @@ public final class RewriteEngine {
 	  JarFile.MANIFEST_NAME.substring(0, JarFile.MANIFEST_NAME.indexOf('/')+1);
   private static final char SPACE = ' ';
   private static final int BUFSIZE = 10240;
+  private static final int CLASSFILE_1_6 = 50;
   
   private final byte[] buffer = new byte[BUFSIZE];
-
+  
   private final Configuration config;
   private final SiteIdFactory callSiteIdFactory;
   private final EngineMessenger messenger;
@@ -131,7 +132,7 @@ public final class RewriteEngine {
             new FileOutputStream(nextOut));
         try {
           rewriteFileStream(new RewriteHelper() {
-            public InputStream getInputStream() throws IOException {
+            public BufferedInputStream getInputStream() throws IOException {
               return new BufferedInputStream(new FileInputStream(nextIn));
             }
           }, nextIn.getPath(), bos);
@@ -204,7 +205,7 @@ public final class RewriteEngine {
         final JarEntry jarEntryOut = new JarEntry(entryName);
         jarOut.putNextEntry(jarEntryOut);
         rewriteFileStream(new RewriteHelper() {
-          public InputStream getInputStream() throws IOException {
+          public BufferedInputStream getInputStream() throws IOException {
             return new BufferedInputStream(new FileInputStream(nextIn));
           }
         }, nextIn.getPath(), jarOut);
@@ -228,7 +229,7 @@ public final class RewriteEngine {
         scanDirectory(nextIn);
       } else {
         scanFileStream(new RewriteHelper() {
-          public InputStream getInputStream() throws IOException {
+          public BufferedInputStream getInputStream() throws IOException {
             return new BufferedInputStream(new FileInputStream(nextIn));
           }
         }, nextIn.getPath());
@@ -290,7 +291,7 @@ public final class RewriteEngine {
             final JarEntry jarEntryOut = copyJarEntry(jarEntryIn);
             jarOut.putNextEntry(jarEntryOut);
             rewriteFileStream(new RewriteHelper() {
-              public InputStream getInputStream() throws IOException {
+              public BufferedInputStream getInputStream() throws IOException {
                 return new BufferedInputStream(jarFile.getInputStream(jarEntryIn));
               }
             }, entryName, jarOut);
@@ -370,7 +371,7 @@ public final class RewriteEngine {
               new BufferedOutputStream(new FileOutputStream(outFile));
             try {
               rewriteFileStream(new RewriteHelper() {
-                public InputStream getInputStream() throws IOException {
+                public BufferedInputStream getInputStream() throws IOException {
                   return new BufferedInputStream(jarFile.getInputStream(jarEntryIn));
                 }
               }, entryName, bos);
@@ -410,7 +411,7 @@ public final class RewriteEngine {
         
         if (!jarEntryIn.isDirectory()) {
           scanFileStream(new RewriteHelper() {
-            public InputStream getInputStream() throws IOException {
+            public BufferedInputStream getInputStream() throws IOException {
               return new BufferedInputStream(jarFile.getInputStream(jarEntryIn));
             }
           }, entryName);
@@ -433,7 +434,7 @@ public final class RewriteEngine {
   // =======================================================================
 
   public static interface RewriteHelper {
-    public InputStream getInputStream() throws IOException;
+    public BufferedInputStream getInputStream() throws IOException;
   }
   
   private static final class OversizedMethodsException extends Exception {
@@ -487,7 +488,7 @@ public final class RewriteEngine {
     Set<MethodIdentifier> badMethods =
       Collections.<MethodIdentifier>emptySet();
     while (!done) {
-      final InputStream inClassfile = helper.getInputStream();
+      final BufferedInputStream inClassfile = helper.getInputStream();
       try {
         tryToRewriteClassfileStream(inClassfile, outClassfile, msgr, badMethods);
         done = true;
@@ -528,14 +529,23 @@ public final class RewriteEngine {
    *           exception is thrown.
    */
   private void tryToRewriteClassfileStream(
-      final InputStream inClassfile, final OutputStream outClassfile,
+      final BufferedInputStream inClassfile, final OutputStream outClassfile,
       final EngineMessenger msgr, final Set<MethodIdentifier> ignoreMethods)
       throws IOException, OversizedMethodsException {
+    /* Get the classfile version first so we can fine tune the ASM flags.
+     * ASM is stupid: if we tell it to compute stack frames, it will do it
+     * even if the classfile is from before 1.6.  So we only tell it to
+     * compute stack frames if the classfile is 1.6 or higher.
+     */
+    final int classfileMajorVersion = getMajorVersion(inClassfile);
+    final int classWriterFlags =
+      (classfileMajorVersion >= CLASSFILE_1_6) ? ClassWriter.COMPUTE_FRAMES : 0;
     final ClassReader input = new ClassReader(inClassfile);
-    final ClassWriter output = new ClassWriter(input, 0); //ClassWriter.COMPUTE_FRAMES);
+    final ClassWriter output = new ClassWriter(input, classWriterFlags);
     final FlashlightClassRewriter xformer =
       new FlashlightClassRewriter(config, callSiteIdFactory, msgr, output, classModel, ignoreMethods);
-    input.accept(xformer, ClassReader.EXPAND_FRAMES);
+    // Skip stack map frames: Either the classfiles don't have them, or we will recompute them
+    input.accept(xformer, ClassReader.SKIP_FRAMES);
     final Set<MethodIdentifier> badMethods = xformer.getOversizedMethods();
     if (!badMethods.isEmpty()) {
       throw new OversizedMethodsException(
@@ -545,6 +555,38 @@ public final class RewriteEngine {
     }
   }
 
+  /**
+   * Get the classfile major version number.
+   * 
+   * @param inClassfile
+   *          The classfile. Assumes nothing has been read from the classfile
+   *          yet. When this method returns the read index is reset to the start
+   *          of the classfile.
+   * @return The major version number
+   * @throws IOException
+   *           If there is a problem getting the version number
+   */
+  private int getMajorVersion(final BufferedInputStream inClassfile) throws IOException {
+    // Remember the start of the classfile
+    inClassfile.mark(10);
+    
+    /* Read the first 8 bytes.  We only care about bytes 7 and 8.
+     * Bytes 1 to 4 == 0xCAFEBABE
+     * Bytes 5 & 6 == minor version number
+     * Bytes 7 & 8 == major version number
+     */
+    int totalRead = 0;
+    while (totalRead < 8) {
+      totalRead += inClassfile.read(buffer, totalRead, 8 - totalRead);
+    }
+    
+    // Reset the stream
+    inClassfile.reset();
+    
+    // Return the major version number;
+    return (buffer[6] << 8) + buffer[7];
+  }
+  
   
   
   // =======================================================================

@@ -1620,8 +1620,7 @@ final class FlashlightMethodRewriter implements MethodVisitor {
   	 */
   	final boolean ownerIsSuper = owner.equals(superClassInternal);
   	if (ownerIsSuper) {
-  	  System.out.println("OWNER IS SUPER: Class "
-          + classBeingAnalyzedFullyQualified + ", method " + methodName
+  	  messenger.info("OWNER IS SUPER: method " + methodName
           + ", invoking " + owner + " " + name + " " + desc);
   	}
   	

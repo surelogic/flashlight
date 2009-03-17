@@ -15,9 +15,8 @@ import org.apache.tools.ant.Task;
 
 import com.surelogic._flashlight.rewriter.AbstractIndentingMessager;
 import com.surelogic._flashlight.rewriter.Configuration;
-import com.surelogic._flashlight.rewriter.EngineMessenger;
-import com.surelogic._flashlight.rewriter.RewriteEngine;
 import com.surelogic._flashlight.rewriter.RewriteManager;
+import com.surelogic._flashlight.rewriter.RewriteMessenger;
 
 /**
  * Ant task for rewriting classes to apply flashlight instrumentation. Rewrites
@@ -43,7 +42,7 @@ public final class Instrument extends Task {
   
   private String sitesFileName = null;
   
-  private boolean onePass = false;
+//  private boolean onePass = false;
   
   
   
@@ -55,7 +54,7 @@ public final class Instrument extends Task {
     private String destDirPattern;
     private String destFilePattern;
     private String replace;
-    private String runtime = RewriteEngine.DEFAULT_FLASHLIGHT_RUNTIME_JAR;
+    private String runtime = RewriteManager.DEFAULT_FLASHLIGHT_RUNTIME_JAR;
     
     public Directories() { super(); }
     
@@ -101,7 +100,7 @@ public final class Instrument extends Task {
     private String srcdir = null;
     private String destdir = null;
     private String destfile = null;
-    private String runtime = RewriteEngine.DEFAULT_FLASHLIGHT_RUNTIME_JAR;
+    private String runtime = RewriteManager.DEFAULT_FLASHLIGHT_RUNTIME_JAR;
 
     public Directory() { super(); }
     
@@ -146,7 +145,7 @@ public final class Instrument extends Task {
     private String srcfile = null;
     private String destfile = null;
     private String destdir = null;
-    private String runtime = RewriteEngine.DEFAULT_FLASHLIGHT_RUNTIME_JAR;
+    private String runtime = RewriteManager.DEFAULT_FLASHLIGHT_RUNTIME_JAR;
     private boolean update = true;
     
     public Jar() { super(); }
@@ -205,7 +204,7 @@ public final class Instrument extends Task {
   }
   
   public void setOnepass(final boolean flag) {
-    onePass = flag;
+//    onePass = flag;
   }
   
   /**
@@ -527,7 +526,7 @@ public final class Instrument extends Task {
 		for (final InstrumentationSubTask subTask : subTasks) {
 			subTask.add(manager);
 		}    
-		manager.execute(onePass);
+		manager.execute();
 	} catch (Throwable t) {
 		t.printStackTrace();
 		throw new BuildException(t);
@@ -565,7 +564,7 @@ public final class Instrument extends Task {
   
   
   private final class AntRewriteManager extends RewriteManager {
-    public AntRewriteManager(final Configuration c, final EngineMessenger m,
+    public AntRewriteManager(final Configuration c, final RewriteMessenger m,
         final File ff, final File sf) {
       super(c, m, ff, sf);
     }

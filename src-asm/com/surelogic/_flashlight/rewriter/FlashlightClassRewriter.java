@@ -51,7 +51,7 @@ final class FlashlightClassRewriter extends ClassAdapter {
   private final Configuration config;
 
   /** Messenger for status reports. */
-  private final EngineMessenger messenger;
+  private final RewriteMessenger messenger;
   
   /** Is the current class file an interface? */
   private boolean isInterface;
@@ -142,7 +142,7 @@ final class FlashlightClassRewriter extends ClassAdapter {
    *          be obtained by calling {@link #getOversizedMethods()}.
    */
   public FlashlightClassRewriter(final Configuration conf,
-      final SiteIdFactory csif, final EngineMessenger msg,
+      final SiteIdFactory csif, final RewriteMessenger msg,
       final ClassVisitor cv, final ClassAndFieldModel model,
       final Set<MethodIdentifier> ignore) {
     super(cv);

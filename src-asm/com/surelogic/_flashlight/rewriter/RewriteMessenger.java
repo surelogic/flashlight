@@ -3,7 +3,7 @@ package com.surelogic._flashlight.rewriter;
 /**
  * Interface used by {@link RewriteEngine} to report status messages.
  */
-public interface EngineMessenger {
+public interface RewriteMessenger {
   public void increaseNesting();
   public void decreaseNesting();
   public void error(String message);

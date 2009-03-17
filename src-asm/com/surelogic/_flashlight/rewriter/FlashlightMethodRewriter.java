@@ -59,7 +59,7 @@ final class FlashlightMethodRewriter implements MethodVisitor {
   private final Configuration config;
 
   /** Messenger for reporting status */
-  private final EngineMessenger messenger;
+  private final RewriteMessenger messenger;
   
   /** Is the current classfile at least from Java 5? */
   private final boolean atLeastJava5;
@@ -242,7 +242,7 @@ final class FlashlightMethodRewriter implements MethodVisitor {
    */
   public static MethodVisitor create(final int access, final String mname,
       final String desc, final MethodVisitor mv, final Configuration conf,
-      final SiteIdFactory csif, final EngineMessenger msg,
+      final SiteIdFactory csif, final RewriteMessenger msg,
       final ClassAndFieldModel model, final boolean java5, final boolean inInt,
       final boolean update, final boolean mustImpl, final String fname,
       final String nameInternal, final String nameFullyQualified,
@@ -276,7 +276,7 @@ final class FlashlightMethodRewriter implements MethodVisitor {
    */
   private FlashlightMethodRewriter(final int access, final String mname,
       final String desc, final MethodVisitor mv, final Configuration conf,
-      final SiteIdFactory csif, final EngineMessenger msg,
+      final SiteIdFactory csif, final RewriteMessenger msg,
       final ClassAndFieldModel model, final boolean java5, final boolean inInt,
       final boolean update, final boolean mustImpl, final String fname,
       final String nameInternal, final String nameFullyQualified,

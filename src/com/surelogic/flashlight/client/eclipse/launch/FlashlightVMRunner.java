@@ -5,10 +5,12 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 //import java.util.Properties;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.logging.Level;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -36,6 +38,8 @@ import com.surelogic.flashlight.client.eclipse.Activator;
 import com.surelogic.flashlight.client.eclipse.jobs.LaunchTerminationDetectionJob;
 import com.surelogic.flashlight.client.eclipse.jobs.SwitchToFlashlightPerspectiveJob;
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
+import com.surelogic.flashlight.common.FlashlightUtility;
+
 import static com.surelogic._flashlight.common.InstrumentationConstants.*;
 
 final class FlashlightVMRunner implements IVMRunner {
@@ -50,41 +54,38 @@ final class FlashlightVMRunner implements IVMRunner {
   private final IVMRunner delegateRunner;
   private final File runOutputDir;
   private final String mainTypeName;
+  
+  private final File projectOutputDir;
+  private final File externalOutputDir;
+  private final File sourceDir;
   private final File fieldsFile;
   private final File sitesFile;
   private final File logFile;
   private final File filtersFile;
-  private final Map<String, String> userEntries;
-  private final Map<String, String> userJars;
-  private final Map<String, String> bootEntries;
-  private final Set<String> everythingElse;
-  private final Set<IProject> interestingProjects;
+  
   private final String datePostfix;
   private final String pathToFlashlightLib;
+
+  private final List<String> user;
+  private final List<String> boot;
+  private final List<String> system;
+  private final List<String> instrumentUser;
+  private final List<String> instrumentBoot;
   
-  /* We are guaranteed that the outDir exists in the file system already */
-  public FlashlightVMRunner(
-      final IVMRunner other, final File outDir, final Map<String, String> dirs,
-      final Map<String, String> jars, final Map<String, String> bdirs,
-      final Set<String> ee,
-      final Set<IProject> prjs, final String main, final String date)
+  
+  
+  public FlashlightVMRunner(final IVMRunner other, final String mainType,
+      final List<String> user, final List<String> boot, final List<String> system,
+      final List<String> iUser, final List<String> iBoot)
   throws CoreException {
     delegateRunner = other;
-    runOutputDir = outDir;
-    userEntries = dirs;
-    userJars = jars;
-    bootEntries = bdirs;
-    everythingElse = ee;
-    interestingProjects = prjs;
-    mainTypeName = main;
-    datePostfix = date;
+    this.user = user;
+    this.boot = boot;
+    this.system = system;
+    instrumentUser = iUser;
+    instrumentBoot = iBoot;
     
-    fieldsFile = new File(runOutputDir, FIELDS_FILE_NAME);
-    sitesFile = new File(runOutputDir, SITES_FILE_NAME);
-    logFile = new File(runOutputDir, LOG_FILE_NAME);
-    filtersFile = new File(runOutputDir, FILTERS_FILE_NAME);
-
-    // Get the path ot the flashlight-runtime.jar
+    // Get the path to the flashlight-runtime.jar
     final IPath bundleBase = Activator.getDefault().getBundleLocation();
     if (bundleBase != null) {
       final IPath jarLocation = bundleBase.append("lib/flashlight-runtime.jar");
@@ -94,24 +95,53 @@ final class FlashlightVMRunner implements IVMRunner {
           "No bundle location found for the Flashlight plug-in."));
     }
 
+    mainTypeName = mainType;
+    final SimpleDateFormat dateFormat =
+      new SimpleDateFormat("-yyyy.MM.dd-'at'-HH.mm.ss.SSS");
+    datePostfix = dateFormat.format(new Date());
+    final String runName = mainTypeName + datePostfix;
+    final File flashlightDataDir =
+      FlashlightUtility.getFlashlightDataDirectory();
+    runOutputDir = new File(flashlightDataDir, runName);
+    if (!runOutputDir.exists()) runOutputDir.mkdirs();
+
+    /* Init references to the different components of the output directory */
+    projectOutputDir = new File(runOutputDir, "projects");
+    externalOutputDir = new File(runOutputDir, "external");
+    sourceDir = new File(runOutputDir, "source");
+    fieldsFile = new File(runOutputDir, FIELDS_FILE_NAME);
+    sitesFile = new File(runOutputDir, SITES_FILE_NAME);
+    logFile = new File(runOutputDir, LOG_FILE_NAME);
+    filtersFile = new File(runOutputDir, FILTERS_FILE_NAME);
+    if (!projectOutputDir.exists()) projectOutputDir.mkdir();
+    if (!externalOutputDir.exists()) externalOutputDir.mkdir();
+    if (!sourceDir.exists()) sourceDir.mkdir();
   }
+  
+  
   
   public void run(final VMRunnerConfiguration configuration, final ILaunch launch,
       final IProgressMonitor monitor) throws CoreException {
-    
+    /* Build the set of projects used by the application being run, and
+     * build the map of original to instrumented names.
+     */
+    final Set<IProject> interestingProjects= new HashSet<IProject>();
+    final Map<String, String> classpathEntryMap = new HashMap<String, String>();
+    getInterestingProjectsAndBuildEntryMap(interestingProjects, classpathEntryMap);
+
     /*
      * Amount of work is 1 for each project we need to zip, 2 for each directory
      * we need to process, plus 1 remaining unit for the delegate.
      */
     final int totalWork =
-      interestingProjects.size() +
-      everythingElse.size() + 
-      (2 * (userEntries.size() + userJars.size() + bootEntries.size())) + 
-      1;
+      interestingProjects.size() + // source zips
+      user.size() + boot.size() + system.size() + // scanning
+      instrumentUser.size() + instrumentBoot.size() + // instrumenting
+      1; // running
     final SubMonitor progress = SubMonitor.convert(monitor, totalWork);
 
     /* Create the source zip */
-    if (createSourceZips(progress)) {
+    if (createSourceZips(interestingProjects, progress)) {
       // Canceled, abort early
       return;
     }
@@ -119,20 +149,20 @@ final class FlashlightVMRunner implements IVMRunner {
     /* Build the instrumented class files.  First we scan each directory
      * to the build the field database, and then we instrument each directory.
      */
-    if (instrumentClassfiles(progress)) {
+    if (instrumentClassfiles(classpathEntryMap, progress)) {
       // Canceled, abort early
       return;
     }
     
     /* Fix the classpath.
      */
-    final String[] newClassPath = updateClassPath(configuration);
-    final String[] newBootClassPath = updateBootClassPath(configuration);
+    final String[] newClassPath = updateClassPath(configuration, classpathEntryMap);
+    final String[] newBootClassPath = updateBootClassPath(configuration, classpathEntryMap);
     
     /* Create an updated runner configuration. */
     final VMRunnerConfiguration newConfig =	updateRunnerConfiguration(
-    	    configuration, launch.getLaunchConfiguration(), newClassPath,
-    	    newBootClassPath);
+    	    configuration, launch.getLaunchConfiguration(),
+    	    newClassPath, newBootClassPath, classpathEntryMap);
     
     /* Done with our set up, call the real runner */
     delegateRunner.run(newConfig, launch, monitor);
@@ -152,11 +182,11 @@ final class FlashlightVMRunner implements IVMRunner {
     terminationDetector.reschedule();
   }
   
-  private boolean createSourceZips(final SubMonitor progress) {
-    final File sourceDir = new File(runOutputDir, "source");
-    sourceDir.mkdir();
-    
-    for (final IProject project : interestingProjects) {
+  
+  
+  private boolean createSourceZips(
+      final Set<IProject> projects, final SubMonitor progress) {
+    for (final IProject project : projects) {
       final String projectName = project.getName();
       progress.subTask("Creating source zip for " + projectName);
       final SourceZip srcZip = new SourceZip(project);
@@ -181,7 +211,8 @@ final class FlashlightVMRunner implements IVMRunner {
    * @param progress
    * @return Whether instrumentation was canceled.
    */
-  private boolean instrumentClassfiles(final SubMonitor progress) {
+  private boolean instrumentClassfiles(
+      final Map<String, String> entryMap, final SubMonitor progress) {
     runOutputDir.mkdirs();
     PrintWriter logOut = null;
     try {
@@ -197,23 +228,15 @@ final class FlashlightVMRunner implements IVMRunner {
       final RewriteManager manager =
         new VMRewriteManager(rewriterConfig, messenger,
             fieldsFile, sitesFile, progress);
-      for (final String nonInstruntedEntry: everythingElse) {
-        final File asFile = new File(nonInstruntedEntry);
-        if (asFile.isDirectory()) {
-          manager.addClasspathDir(asFile);
-        } else {
-          manager.addClasspathJar(asFile);
-        }
-      }
-      for (final Map.Entry<String, String> entry : bootEntries.entrySet()) {
-        manager.addDirToJar(new File(entry.getKey()), new File(entry.getValue()), null);
-      }
-      for (final Map.Entry<String, String> entry : userJars.entrySet()) {
-        manager.addJarToJar(new File(entry.getKey()), new File(entry.getValue()), null);
-      }
-      for (final Map.Entry<String, String> entry : userEntries.entrySet()) {
-        manager.addDirToJar(new File(entry.getKey()), new File(entry.getValue()), null);
-      }
+      
+      // Scan everything on the classpath
+      addToScan(manager, user);
+      addToScan(manager, boot);
+      addToScan(manager, system);
+      
+      // Add the entries to be instrumented
+      addToInstrument(manager, instrumentUser, entryMap);
+      addToInstrument(manager, instrumentBoot, entryMap);
       
       try {
         manager.execute();
@@ -235,29 +258,51 @@ final class FlashlightVMRunner implements IVMRunner {
     return false;
   }
   
-  private String[] updateClassPath(final VMRunnerConfiguration configuration) {
+  /**
+   * Add each entry in the given classpath segment to the scan-only list
+   * if it is NOT selected to be instrumented.
+   */
+  private void addToScan(final RewriteManager manager, final List<String> classpath) {
+    for (final String entry : classpath) {
+      if (!instrumentUser.contains(entry) && !instrumentBoot.contains(entry)) {
+        final File asFile = new File(entry);
+        if (asFile.isDirectory()) {
+          manager.addClasspathDir(asFile);
+        } else {
+          manager.addClasspathJar(asFile);
+        }
+      }
+    }
+  }
+  
+  private void addToInstrument(final RewriteManager manager,
+      final List<String> toBeInstrumented, final Map<String, String> entryMap) {
+    for (final String instrument : toBeInstrumented) {
+      final File asFile = new File(instrument);
+      final File destFile = new File(entryMap.get(instrument));
+      if (asFile.isDirectory()) {
+        manager.addDirToJar(asFile, destFile, null);
+      } else {
+        manager.addJarToJar(asFile, destFile, null);
+      }
+    }
+  }
+  
+  private String[] updateClassPath(final VMRunnerConfiguration configuration,
+      final Map<String, String> entryMap) {
     /* (1) Replace each project "binary output directory" with
      * its corresponding instrumented directory.
      */
     final String[] classPath = configuration.getClassPath();
     final List<String> newClassPathList = new ArrayList<String>(classPath.length+1);
-    for (int i = 0; i < classPath.length; i++) {
-      final String oldEntry = classPath[i];
-      final String newEntry = userEntries.get(oldEntry);
-      if (newEntry != null) {
-        newClassPathList.add(newEntry);
-      } else {
-        final String jarEntry = userJars.get(oldEntry);
-        newClassPathList.add(jarEntry != null ? jarEntry : oldEntry);
-      }
-    }
+    replaceClasspathEntries(classPath, entryMap, newClassPathList, instrumentUser);
     
     /* (2) Also add the flashlight jar file to the classpath, unless the 
      * bootclasspath is non-empty.  If it's not empty we add the
      * flashlight lib to the bootclasspath so it is accessible to the
      * instrumented bootclasspath items. 
      */
-    if (bootEntries.isEmpty()) {
+    if (instrumentBoot.isEmpty()) {
       newClassPathList.add(pathToFlashlightLib);
     }
     
@@ -265,23 +310,20 @@ final class FlashlightVMRunner implements IVMRunner {
     return newClassPathList.toArray(newClassPath);
   }
   
-  private String[] updateBootClassPath(final VMRunnerConfiguration configuration) {
+  private String[] updateBootClassPath(final VMRunnerConfiguration configuration,
+      final Map<String, String> entryMap) {
     /* (1) Replace each project "binary output directory" with
      * its corresponding instrumented directory.
      */
     final String[] classPath = configuration.getBootClassPath();
     if (classPath != null && classPath.length != 0) {
       final List<String> newClassPathList = new ArrayList<String>(classPath.length+1);
-      for (int i = 0; i < classPath.length; i++) {
-        final String oldEntry = classPath[i];
-        final String newEntry = bootEntries.get(oldEntry);
-        newClassPathList.add((newEntry == null) ? oldEntry : newEntry);
-      }
+      replaceClasspathEntries(classPath, entryMap, newClassPathList, instrumentBoot);
       
       /* (2) Also add the flashlight jar file to the classpath, if the 
        * bootclasspath is non-empty
        */
-      if (!bootEntries.isEmpty()) {
+      if (!instrumentBoot.isEmpty()) {
         newClassPathList.add(pathToFlashlightLib);
       }
       
@@ -291,10 +333,25 @@ final class FlashlightVMRunner implements IVMRunner {
       return classPath;
     }
   }
+
+  private static void replaceClasspathEntries(
+      final String[] classPath, final Map<String, String> entryMap,
+      final List<String> newClassPathList, final List<String> toInstrument) {
+    for (int i = 0; i < classPath.length; i++) {
+      final String oldEntry = classPath[i];
+      if (toInstrument.contains(oldEntry)) {
+        final String newEntry = entryMap.get(oldEntry);
+        newClassPathList.add(newEntry);
+      } else {
+        newClassPathList.add(oldEntry);
+      }
+    }
+  }
   
   private VMRunnerConfiguration updateRunnerConfiguration(
       final VMRunnerConfiguration original, ILaunchConfiguration launch,
-      final String[] newClassPath, final String[] newBootClassPath) {
+      final String[] newClassPath, final String[] newBootClassPath,
+      final Map<String, String> entryMap) {
     // Create a new configuration and update the class path
     final VMRunnerConfiguration newConfig =
       new VMRunnerConfiguration(original.getClassToLaunch(), newClassPath);
@@ -427,12 +484,14 @@ final class FlashlightVMRunner implements IVMRunner {
     newConfig.setEnvironment(original.getEnvironment());
     newConfig.setProgramArguments(original.getProgramArguments());
     newConfig.setResumeOnStartup(original.isResumeOnStartup());
-    newConfig.setVMSpecificAttributesMap(updateVMSpecificAttributesMap(original.getVMSpecificAttributesMap()));
+    newConfig.setVMSpecificAttributesMap(
+        updateVMSpecificAttributesMap(original.getVMSpecificAttributesMap(), entryMap));
     newConfig.setWorkingDirectory(original.getWorkingDirectory());
     return newConfig;
   }
   
-  private Map updateVMSpecificAttributesMap(final Map original) {
+  private Map updateVMSpecificAttributesMap(
+      final Map original, final Map<String, String> entryMap) {
     if (original == null) {
       return null;
     }
@@ -445,39 +504,22 @@ final class FlashlightVMRunner implements IVMRunner {
     boolean needsFlashlightLib = false;
     if (originalPrepend != null) {
       final List<String> newPrependList = new ArrayList(originalPrepend.length);
-      needsFlashlightLib |= updateBootpathArray(originalPrepend, newPrependList);
-      if (newPrependList.size() != 0) {
-        final String[] newPrepend = new String[originalPrepend.length];
-        updated.put(IJavaLaunchConfigurationConstants.ATTR_BOOTPATH_PREPEND, newPrependList.toArray(newPrepend));
-      }
+      needsFlashlightLib |= updateBootpathArray(entryMap, originalPrepend, newPrependList);
+      final String[] newPrepend = new String[originalPrepend.length];
+      updated.put(IJavaLaunchConfigurationConstants.ATTR_BOOTPATH_PREPEND, newPrependList.toArray(newPrepend));
     }
+    
     if (originalBootpath != null) {
       final List<String> newBootpathList = new ArrayList(originalBootpath.length);
-      needsFlashlightLib |= updateBootpathArray(originalBootpath, newBootpathList);
-      for (final String entry : originalBootpath) {
-        final String newEntry = bootEntries.get(entry);
-        if (newEntry != null) {
-          newBootpathList.add(newEntry);
-          needsFlashlightLib = true;
-        } else {
-          newBootpathList.add(entry);
-        }
-      }
+      needsFlashlightLib |= updateBootpathArray(entryMap, originalBootpath, newBootpathList);
       final String[] newBootpath = new String[originalBootpath.length];
       updated.put(IJavaLaunchConfigurationConstants.ATTR_BOOTPATH, newBootpathList.toArray(newBootpath));
     }
+    
     List<String> newAppendList = null;
     if (originalAppend != null) {
       newAppendList = new ArrayList(originalAppend.length+1);
-      for (final String entry : originalAppend) {
-        final String newEntry = bootEntries.get(entry);
-        if (newEntry != null) {
-          newAppendList.add(newEntry);
-          needsFlashlightLib = true;
-        } else {
-          newAppendList.add(entry);
-        }
-      }
+      needsFlashlightLib |= updateBootpathArray(entryMap, originalAppend, newAppendList);
     }
     if (needsFlashlightLib) {
       if (newAppendList == null) {
@@ -493,11 +535,12 @@ final class FlashlightVMRunner implements IVMRunner {
     return updated;
   }
   
-  private boolean updateBootpathArray(final String[] originalBoothpath, final List<String> newBootpath) {
+  private boolean updateBootpathArray(final Map<String, String> entryMap,
+      final String[] originalBoothpath, final List<String> newBootpath) {
     boolean needsFlashlightLib = false;
     for (final String entry : originalBoothpath) {
-      final String newEntry = bootEntries.get(entry);
-      if (newEntry != null) {
+      if (instrumentBoot.contains(entry)) {
+        final String newEntry = entryMap.get(entry);
         newBootpath.add(newEntry);
         needsFlashlightLib = true;
       } else {
@@ -579,5 +622,88 @@ final class FlashlightVMRunner implements IVMRunner {
       SLLogger.getLogger().log(Level.SEVERE,
           "Unable to create sites file " + sitesFile.getAbsolutePath(), e);
     }
+  }
+
+
+
+  private void getInterestingProjectsAndBuildEntryMap(
+      final Set<IProject> interestingProjects,
+      final Map<String, String> classpathEntryMap) {
+    // Get the list of open projects in the workpace
+    final List<IProject> openProjects = getOpenProjects();
+    
+    /* For each classpath entry we see if it is from a workspace project.
+     * If so, we add the project to the list of interesting projects.
+     * Also, we compute the location of the instrumentation for the 
+     * classpath entry.
+     */
+    scanProjects(user, openProjects, interestingProjects, classpathEntryMap);
+    scanProjects(boot, openProjects, interestingProjects, classpathEntryMap);
+    scanProjects(system, openProjects, interestingProjects, classpathEntryMap);
+  }
+
+  private static List<IProject> getOpenProjects() {
+    final List<IProject> openProjects = new ArrayList<IProject>();
+    for (final IProject p : ResourcesPlugin.getWorkspace().getRoot().getProjects()) {
+      if (p.isOpen()) openProjects.add(p);
+    }
+    return openProjects;
+  }
+
+  private void scanProjects(
+      final List<String> classpathEntries, final List<IProject> projects, 
+      final Set<IProject> interestingProjects,
+      final Map<String, String> classpathEntryMap) {
+    for (final String entry : classpathEntries) {
+      final boolean isJar = !(new File(entry)).isDirectory();
+      boolean foundProject = false;
+      for (final IProject project : projects) {
+        final String projectLoc = project.getLocation().toOSString();
+        if (isFromProject(projectLoc, entry)) {
+          final File newEntry = buildInstrumentedName(entry, projectLoc, isJar);
+          classpathEntryMap.put(entry, newEntry.getAbsolutePath());
+          interestingProjects.add(project);
+          foundProject = true;
+          break;
+        } 
+      }
+      
+      /* If we didn't find the project, then the entry exists outside of the
+       * workspace.
+       */
+      if (!foundProject) {
+        String correctedEntry = fixLeadingDriveLetter(entry);
+        final File newLocation = new File(externalOutputDir,
+              isJar ? correctedEntry : (correctedEntry + ".jar"));
+        classpathEntryMap.put(entry, newLocation.getAbsolutePath());
+      }
+    }
+  }
+
+  private static boolean isFromProject(final String projectLoc, final String entry) {
+    return entry.startsWith(projectLoc) &&
+        entry.charAt(projectLoc.length()) == File.separatorChar;
+  }
+
+  private File buildInstrumentedName(
+      final String entry, final String projectLoc, final boolean isJar) {
+    final String projectDirName =
+      projectLoc.substring(projectLoc.lastIndexOf(File.separatorChar) + 1);
+    final String binaryName = entry.substring(projectLoc.length() + 1);
+    final String jarName = !isJar ? binaryName + ".jar" : binaryName;
+    final File newEntry =
+      new File(new File(projectOutputDir, projectDirName), jarName);
+    return newEntry;
+  }
+
+  private static String fixLeadingDriveLetter(final String entry) {
+    String correctedEntry = entry;
+    if (entry.length() > 0) {
+      final char driveLetter = entry.charAt(0);
+      if (driveLetter != '\\' && driveLetter != '/') {
+        correctedEntry = driveLetter + "-drive" + entry.substring(2);
+      }
+    }
+    return correctedEntry;
   }
 }

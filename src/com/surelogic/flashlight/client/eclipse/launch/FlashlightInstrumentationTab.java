@@ -181,10 +181,10 @@ public final class FlashlightInstrumentationTab extends
 	public void initializeFrom(final ILaunchConfiguration config) {
 		final java.util.List<IRuntimeClasspathEntry> user = new ArrayList<IRuntimeClasspathEntry>();
 		final java.util.List<IRuntimeClasspathEntry> boot = new ArrayList<IRuntimeClasspathEntry>();
-
-		final IRuntimeClasspathEntry[] entries = LaunchUtils
-				.getClasspath(config);
-		LaunchUtils.divideClasspath(entries, user, boot);
+		final java.util.List<IRuntimeClasspathEntry> system = new ArrayList<IRuntimeClasspathEntry>();
+		
+		final IRuntimeClasspathEntry[] entries = LaunchUtils.getClasspath(config);
+		LaunchUtils.divideClasspath(entries, user, boot, system);
 
 		userEntries = user;
 		userTable.setInput(user);
@@ -271,11 +271,12 @@ public final class FlashlightInstrumentationTab extends
 		// Enable instrumentation for all the user classpath items
 		// Disable instrumentation for all the bootpath items
 		final java.util.List<IRuntimeClasspathEntry> user = new ArrayList<IRuntimeClasspathEntry>();
-		final java.util.List<IRuntimeClasspathEntry> boot = new ArrayList<IRuntimeClasspathEntry>();
+    final java.util.List<IRuntimeClasspathEntry> boot = new ArrayList<IRuntimeClasspathEntry>();
+    final java.util.List<IRuntimeClasspathEntry> system = new ArrayList<IRuntimeClasspathEntry>();
 
 		final IRuntimeClasspathEntry[] entries = LaunchUtils
 				.getClasspath(config);
-		LaunchUtils.divideClasspath(entries, user, boot);
+		LaunchUtils.divideClasspath(entries, user, boot, system);
 
 		config.setAttribute(
 				PreferenceConstants.P_CLASSPATH_ENTRIES_TO_INSTRUMENT,

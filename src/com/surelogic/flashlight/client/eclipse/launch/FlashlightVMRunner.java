@@ -25,9 +25,9 @@ import org.eclipse.ui.progress.UIJob;
 
 import com.surelogic._flashlight.common.*;
 import com.surelogic._flashlight.rewriter.Configuration;
-import com.surelogic._flashlight.rewriter.EngineMessenger;
 import com.surelogic._flashlight.rewriter.PrintWriterMessenger;
 import com.surelogic._flashlight.rewriter.RewriteManager;
+import com.surelogic._flashlight.rewriter.RewriteMessenger;
 import com.surelogic.common.eclipse.MemoryUtility;
 import com.surelogic.common.eclipse.SourceZip;
 import com.surelogic.common.eclipse.logging.SLEclipseStatusUtility;
@@ -186,7 +186,7 @@ final class FlashlightVMRunner implements IVMRunner {
     PrintWriter logOut = null;
     try {
       logOut = new PrintWriter(logFile);
-      final EngineMessenger messenger = new PrintWriterMessenger(logOut);
+      final RewriteMessenger messenger = new PrintWriterMessenger(logOut);
       final Configuration rewriterConfig = new Configuration();
       
 //      final Properties p = new Properties();
@@ -519,7 +519,7 @@ final class FlashlightVMRunner implements IVMRunner {
     private final SubMonitor progress;
     
     public VMRewriteManager(
-        final Configuration c, final EngineMessenger m, final File ff,
+        final Configuration c, final RewriteMessenger m, final File ff,
         final File sf, final SubMonitor sub) {
       super(c, m, ff, sf);
       progress = sub;

@@ -772,8 +772,11 @@ public final class Instrument extends Task {
   private List<File> getJARFiles(final String[] dirs) {
     final List<File> jarFiles = new ArrayList<File>();
     for (final String dir : dirs) {
-      for (final File jar : new File(dir).listFiles(JAR_FILTER)) {
-        jarFiles.add(jar);
+      final File dirAsFile = new File(dir);
+      if (dirAsFile.exists()) {
+        for (final File jar : dirAsFile.listFiles(JAR_FILTER)) {
+          jarFiles.add(jar);
+        }
       }
     }
     return jarFiles;

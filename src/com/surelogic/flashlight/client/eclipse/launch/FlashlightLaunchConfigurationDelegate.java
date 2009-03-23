@@ -49,7 +49,7 @@ public final class FlashlightLaunchConfigurationDelegate extends
     /* Get the entries that the user wants instrumented */
     final List instrumentUser = configuration.getAttribute(
           PreferenceConstants.P_CLASSPATH_ENTRIES_TO_INSTRUMENT,
-          Collections.emptyList());
+          user);
     final List instrumentBoot = configuration.getAttribute(
           PreferenceConstants.P_BOOTPATH_ENTRIES_TO_INSTRUMENT,
           Collections.emptyList());

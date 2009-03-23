@@ -1040,6 +1040,7 @@ public abstract class RewriteManager {
        * and field model.  Record the field identifiers in the fields
        * file.
        */
+      fieldsFile.getParentFile().mkdirs();
       fieldsOut = new PrintWriter(fieldsFile);
       final Scanner scanner = new Scanner(fieldsOut);
       for (final ScannableEntry entry : otherClasspathEntries) {
@@ -1051,6 +1052,7 @@ public abstract class RewriteManager {
       
       PrintWriter sitesOut = null;
       try {
+        sitesFile.getParentFile().mkdirs();
         sitesOut = new PrintWriter(sitesFile);
         final SiteIdFactory callSiteIdFactory = new SiteIdFactory(sitesOut);
         final Instrumenter instrumenter = new Instrumenter(callSiteIdFactory);

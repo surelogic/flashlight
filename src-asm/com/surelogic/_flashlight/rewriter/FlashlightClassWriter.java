@@ -24,9 +24,6 @@ public class FlashlightClassWriter extends ClassWriter {
     ClassAndFieldModel.Clazz c, d;
     c = classModel.getClass(t1Fixed);
     d = classModel.getClass(t2Fixed);
-System.out.println("getCommonSuperClass(" + type1 + ", " + type2 + ")");
-System.out.println("  c = " + c);
-System.out.println("  d = " + d);
     if (c.isAssignableFrom(t2Fixed)) {
       return type1;
     }

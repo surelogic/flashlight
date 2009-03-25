@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes'?>
 <ad-hoc version='3.0'>
-  <query id='f4dfba42-c2c9-472f-87b0-4a37e21c4833' description='A new query' revision='3'>SELECT COUNT(DISTINCT FIELD) FROM ACCESS</query>
+  <query id='f4dfba42-c2c9-472f-87b0-4a37e21c4833' description='A new query' revision='4'>SELECT * FROM LOCK </query>
   <query id='29b5a2b5-671d-4721-94bb-9552cda1c77d' description='A new query' revision='4'>SELECT ALH.*, A.TS, DT.PACKAGENAME,DT.CLASSNAME,F.FIELDNAME, L.LOCK &quot;Lock&quot;, A.TRACE &quot;ATRACE&quot;, ALH.LASTACQUISITION &quot;LockEvent&quot;,  L.TRACE &quot;LETRACE&quot;, L.TRACE &quot;LATRACE&quot;
 FROM ACCESSLOCKSHELD ALH, ACCESS A, FIELD F, OBJECT DT, LOCK L
 WHERE A.ID = ALH.ACCESS AND F.ID = A.FIELD AND DT.ID = F.DECLARINGTYPE AND L.ID = ALH.LASTACQUISITION
@@ -68,34 +68,7 @@ where lh.LockHeld=?LockHeld?
   and tho.Id = l.InThread
 order by lo.PackageName,lo.ClassName, s.AtLine, tho.ThreadName, lh.LockEvent
   </query>
-  <query id='6d8d0985-0830-4f18-a655-fa7b43703d5f' description='What are the individual instances of this non-static field?' revision='1' display='true'>SELECT COUNTS.RECEIVER &quot;Receiver&quot;,
-       COUNTS.READS &quot;Reads&quot;,
-       COUNTS.WRITES &quot;Writes&quot;, 
-       COUNTS.READSUC &quot;Reads Under Construction&quot;, 
-       COUNTS.WRITESUC &quot;Writes Under Construction&quot;, 
-       CASE WHEN LOCKS.COUNT IS NULL THEN 0 ELSE LOCKS.COUNT END &quot;Lock Set Size&quot;,
-       ?FieldId? &quot;FieldId__(hide)&quot;
- FROM 
-  (SELECT RECEIVER, SUM(READCOUNT) &quot;READS&quot;, SUM(WRITECOUNT) &quot;WRITES&quot;, SUM(READUCCOUNT) &quot;READSUC&quot;, SUM(WRITEUCCOUNT) &quot;WRITESUC&quot; 
-    FROM FIELDINSTANCETHREAD 
-    WHERE FIELD = ?FieldId? 
-    GROUP BY RECEIVER) AS COUNTS
-  LEFT OUTER JOIN
-  (SELECT RECEIVER, COUNT(LOCK) &quot;COUNT&quot; 
-    FROM FIELDINSTANCELOCKSET 
-    WHERE FIELD = ?FieldId? 
-    GROUP BY RECEIVER) AS LOCKS
-  ON COUNTS.RECEIVER = LOCKS.RECEIVER       </query>
-  <query id='e6477143-977b-4c8d-b3d5-3d09c919cb94' description='What data is accessed during this particular lock acquisition?' revision='1' display='true'>-- NO-ROWS-MSG=No accesses occur while this lock is held 
-SELECT DISTINCT CO.PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;, CO.CLASSNAME &quot;Class__(&apos;class.gif&apos;)&quot;, S.ATLINE &quot;Line__(r)&quot;
-  FROM LOCKDURATION D, ACCESS A, TRACE T, SITE S, OBJECT CO
-  WHERE D.STARTEVENT = ?LockEvent? AND
-        A.INTHREAD = D.INTHREAD AND
-        A.TS BETWEEN D.START AND D.STOP AND
-        S.ID = T.SITE AND 
-        CO.ID = S.INCLASS
-ORDER BY 1,2,3</query>
-  <query id='732daa1f-dac0-4f40-b714-8190f903d323' description='What data is accessed while this lock is held?' revision='1' display='true'>-- NO-ROWS-MSG=No accesses occur while this lock is held 
+  <query id='732daa1f-dac0-4f40-b714-8190f903d323' description='What are fields accessed while this lock is held?' revision='2' display='true'>-- NO-ROWS-MSG=No accesses occur while this lock is held 
 SELECT DISTINCT PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;, CLASSNAME &quot;Class__(&apos;class.gif&apos;)&quot;, ATLINE &quot;Line__(r)|&quot; FROM
 (SELECT CO.PACKAGENAME, CO.CLASSNAME, S.ATLINE
   FROM LOCKSHELD LH, ACCESSLOCKSHELD ALH, ACCESS A, TRACE T, SITE S, OBJECT CO
@@ -115,6 +88,24 @@ UNION
         S.ID = T.SITE AND
         CO.ID = S.INCLASS) AS ACCESSES
 ORDER BY 1,2,3</query>
+  <query id='6d8d0985-0830-4f18-a655-fa7b43703d5f' description='What are the individual instances of this non-static field?' revision='1' display='true'>SELECT COUNTS.RECEIVER &quot;Receiver&quot;,
+       COUNTS.READS &quot;Reads&quot;,
+       COUNTS.WRITES &quot;Writes&quot;, 
+       COUNTS.READSUC &quot;Reads Under Construction&quot;, 
+       COUNTS.WRITESUC &quot;Writes Under Construction&quot;, 
+       CASE WHEN LOCKS.COUNT IS NULL THEN 0 ELSE LOCKS.COUNT END &quot;Lock Set Size&quot;,
+       ?FieldId? &quot;FieldId__(hide)&quot;
+ FROM 
+  (SELECT RECEIVER, SUM(READCOUNT) &quot;READS&quot;, SUM(WRITECOUNT) &quot;WRITES&quot;, SUM(READUCCOUNT) &quot;READSUC&quot;, SUM(WRITEUCCOUNT) &quot;WRITESUC&quot; 
+    FROM FIELDINSTANCETHREAD 
+    WHERE FIELD = ?FieldId? 
+    GROUP BY RECEIVER) AS COUNTS
+  LEFT OUTER JOIN
+  (SELECT RECEIVER, COUNT(LOCK) &quot;COUNT&quot; 
+    FROM FIELDINSTANCELOCKSET 
+    WHERE FIELD = ?FieldId? 
+    GROUP BY RECEIVER) AS LOCKS
+  ON COUNTS.RECEIVER = LOCKS.RECEIVER       </query>
   <query id='bd72a5e4-42aa-415d-aa72-28d351f629a4' description='What fields (non-static) are shared?' revision='1' display='true' display-at-root='true'>-- NO-ROWS-MSG=No non-static fields are shared between two or more threads.
 select
   O.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;,
@@ -430,6 +421,15 @@ WHERE O.CLASSNAME = &apos;?Class?&apos; AND
       THO.ID = LH.INTHREAD
 GROUP BY LH.LOCKEVENT,L.TS,THO.THREADNAME,TR.ID
 ORDER BY 5 DESC,4</query>
+  <query id='e6477143-977b-4c8d-b3d5-3d09c919cb94' description='Where are fields accessed during this particular lock acquisition?' revision='2' display='true'>-- NO-ROWS-MSG=No accesses occur while this lock is held 
+SELECT DISTINCT CO.PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;, CO.CLASSNAME &quot;Class__(&apos;class.gif&apos;)&quot;, S.ATLINE &quot;Line__(r)&quot;
+  FROM LOCKDURATION D, ACCESS A, TRACE T, SITE S, OBJECT CO
+  WHERE D.STARTEVENT = ?LockEvent? AND
+        A.INTHREAD = D.INTHREAD AND
+        A.TS BETWEEN D.START AND D.STOP AND
+        S.ID = T.SITE AND 
+        CO.ID = S.INCLASS
+ORDER BY 1,2,3</query>
   <query id='9d05ac24-20c2-436e-af6b-2bd0bc7dbcfb' description='Where does a thread hold a lock and acquire another?' revision='6' display='true' display-at-root='true'>-- NO-ROWS-MSG=No locks were observed to be acquired while another was already held during this run of the program.
 SELECT PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;,
        CLASSNAME &quot;Class__(&apos;class.gif&apos;)&quot;,
@@ -454,24 +454,21 @@ GROUP BY CLASSNAME,PACKAGENAME,ATLINE
 
 
 </query>
-  <query id='12592a6f-1b1e-4e22-b17a-56b2e4ff0495' description='Where is this lock acquired in the code?' revision='5' display='true'>SELECT DISTINCT
+  <query id='12592a6f-1b1e-4e22-b17a-56b2e4ff0495' description='Where is this lock acquired in the code?' revision='6' display='true'>SELECT DISTINCT
     CO.PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;,
     CO.CLASSNAME   &quot;Class__(&apos;class.gif&apos;)&quot;,
     S.ATLINE       &quot;Line__(r)|&quot;,
-    CASE WHEN L.TYPE = &apos;U&apos; AND L.LOCK != L.OBJECT THEN &apos;r/w lock&apos;
-         WHEN L.TYPE = &apos;I&apos; THEN &apos;intrinsic&apos;
-         ELSE &apos;java.util.concurrent&apos;
+    CASE WHEN L.TYPE = &apos;U&apos; AND L.LOCK != L.OBJECT AND L.OBJECT = RW.READLOCK THEN &apos;java.util.concurrent ReadWriteLock.readLock()&apos;
+         WHEN L.TYPE = &apos;U&apos; AND L.LOCK != L.OBJECT AND L.OBJECT = RW.WRITELOCK THEN &apos;java.util.concurrent ReadWriteLock.writeLock()&apos;
+         WHEN L.TYPE = &apos;I&apos; THEN &apos;Intrinsic&apos;
+         ELSE &apos;java.util.concurrent Lock&apos;
     END            &quot;Type&quot;
-FROM LOCK L,
-     TRACE TR,
-     SITE S,
-     OBJECT CO
+FROM LOCK L 
+     INNER JOIN TRACE TR ON TR.ID = L.TRACE
+     INNER JOIN SITE S ON S.ID = TR.SITE
+     INNER JOIN OBJECT CO ON CO.ID = S.INCLASS
 WHERE L.LOCK = ?Lock? AND
-      L.STATE = &apos;AFTER ACQUISITION&apos; AND
-      TR.ID = L.TRACE AND
-      S.ID = TR.SITE AND 
-      CO.ID = S.INCLASS
-
+      L.STATE = &apos;AFTER ACQUISITION&apos;
 </query>
   <query id='c9453327-b892-4324-a6b8-2dceb32e1901' description='Which threads and what code contend for this lock?' revision='5' display='true'>-- NO-ROWS-MSG=No threads were forced to wait for this lock.
 -- This query shows the locations and threads of all places this lock 

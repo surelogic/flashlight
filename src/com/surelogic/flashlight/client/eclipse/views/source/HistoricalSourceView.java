@@ -54,8 +54,11 @@ public final class HistoricalSourceView extends ViewPart {
 	// Find valid flashlight run directory
 	// Find project zip under /source
 	// Find sourceFiles.xml, classMapping.xml in zip
-	public boolean showSourceFile(final RunDirectory dir, final String pkg,
+	public boolean showSourceFile(final RunDirectory dir, String pkg,
 			final String name) {
+		if (pkg == null) {
+			pkg = "(default)";
+		}
 		final SourceZipFileHandles zips = dir.getSourceHandles();
 		for (final File f : zips.getSourceZips()) {
 			try {

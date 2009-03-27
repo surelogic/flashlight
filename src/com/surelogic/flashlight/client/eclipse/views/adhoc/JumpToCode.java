@@ -29,11 +29,15 @@ public final class JumpToCode extends AdHocManagerAdapter {
 	}
 
 	@Override
-	public void notifyResultVariableValueChange(AdHocQueryResultSqlData result) {
-		Map<String, String> variableValues = result.getVariableValues();
-		final String packageName = variableValues.get("Package");
+	public void notifyResultVariableValueChange(
+			final AdHocQueryResultSqlData result) {
+		final Map<String, String> variableValues = result.getVariableValues();
+		String packageName = variableValues.get("Package");
 		final String typeName = variableValues.get("Class");
 		if (packageName != null && typeName != null) {
+			if (packageName.equals("(default)")) {
+				packageName = null;
+			}
 			final String line = variableValues.get("Line");
 			/*
 			 * Try to open an editor if the variables package, class, and line
@@ -43,24 +47,28 @@ public final class JumpToCode extends AdHocManagerAdapter {
 				int lineNumber = 0;
 				try {
 					lineNumber = Integer.parseInt(line);
-				} catch (NumberFormatException e) {
+				} catch (final NumberFormatException e) {
 					// couldn't convert the line number so just use 0
 				}
-				HistoricalSourceView.tryToOpenInEditor(packageName, typeName, lineNumber);
-				
+				HistoricalSourceView.tryToOpenInEditor(packageName, typeName,
+						lineNumber);
+
 				if (JDTUtility.tryToOpenInEditor(packageName, typeName,
-						lineNumber))
+						lineNumber)) {
 					return;
+				}
 			}
 			/*
 			 * Try to open an editor if the variables package, class, and field
 			 * name are defined.
 			 */
 			String fieldName = variableValues.get("FieldName");
-			if (fieldName == null)
+			if (fieldName == null) {
 				fieldName = variableValues.get("Field Name");
+			}
 			if (fieldName != null) {
-				HistoricalSourceView.tryToOpenInEditor(packageName, typeName, fieldName);
+				HistoricalSourceView.tryToOpenInEditor(packageName, typeName,
+						fieldName);
 				JDTUtility.tryToOpenInEditor(packageName, typeName, fieldName);
 			}
 		}

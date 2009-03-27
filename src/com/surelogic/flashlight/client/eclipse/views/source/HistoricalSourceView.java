@@ -35,7 +35,7 @@ public final class HistoricalSourceView extends ViewPart {
 	JavaSyntaxHighlighter highlighter;
 
 	@Override
-	public void createPartControl(Composite parent) {
+	public void createPartControl(final Composite parent) {
 		UsageMeter.getInstance().tickUse("Flashlight SourceView opened");
 		source = new StyledText(parent, SWT.V_SCROLL | SWT.H_SCROLL
 				| SWT.BORDER | SWT.READ_ONLY);
@@ -54,18 +54,19 @@ public final class HistoricalSourceView extends ViewPart {
 	// Find valid flashlight run directory
 	// Find project zip under /source
 	// Find sourceFiles.xml, classMapping.xml in zip
-	public boolean showSourceFile(RunDirectory dir, String pkg, String name) {
-		SourceZipFileHandles zips = dir.getSourceHandles();
-		for (File f : zips.getSourceZips()) {
+	public boolean showSourceFile(final RunDirectory dir, final String pkg,
+			final String name) {
+		final SourceZipFileHandles zips = dir.getSourceHandles();
+		for (final File f : zips.getSourceZips()) {
 			try {
-				ZipFile zf = new ZipFile(f);
+				final ZipFile zf = new ZipFile(f);
 				try {
-					Map<String, Map<String, String>> fileMap = AbstractJavaZip
+					final Map<String, Map<String, String>> fileMap = AbstractJavaZip
 							.readSourceFileMappings(zf);
 					// AbstractJavaZip.readClassMappings(zf);
-					Map<String, String> map = fileMap.get(pkg);
+					final Map<String, String> map = fileMap.get(pkg);
 					if (map != null) {
-						String path = map.get(name);
+						final String path = map.get(name);
 						if (path != null) {
 							populate(zf, path);
 							return true;
@@ -74,7 +75,7 @@ public final class HistoricalSourceView extends ViewPart {
 				} finally {
 					zf.close();
 				}
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
@@ -82,16 +83,16 @@ public final class HistoricalSourceView extends ViewPart {
 		return false;
 	}
 
-	public boolean showSourceFile(RunDirectory dir, String qname) {
-		SourceZipFileHandles zips = dir.getSourceHandles();
-		for (File f : zips.getSourceZips()) {
+	public boolean showSourceFile(final RunDirectory dir, final String qname) {
+		final SourceZipFileHandles zips = dir.getSourceHandles();
+		for (final File f : zips.getSourceZips()) {
 			try {
-				ZipFile zf = new ZipFile(f);
+				final ZipFile zf = new ZipFile(f);
 				try {
-					Map<String, String> fileMap = AbstractJavaZip
+					final Map<String, String> fileMap = AbstractJavaZip
 							.readClassMappings(zf);
 					if (fileMap != null) {
-						String path = fileMap.get(qname);
+						final String path = fileMap.get(qname);
 						if (path != null) {
 							populate(zf, path);
 							return true;
@@ -100,7 +101,7 @@ public final class HistoricalSourceView extends ViewPart {
 				} finally {
 					zf.close();
 				}
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				SLLogger.getLogger().log(Level.WARNING,
 						"Unexcepted exception trying to read a source file", e);
 			}
@@ -108,8 +109,9 @@ public final class HistoricalSourceView extends ViewPart {
 		return false;
 	}
 
-	private void populate(ZipFile zf, String path) throws IOException {
-		ZipEntry ze = zf.getEntry(path);
+	private void populate(final ZipFile zf, final String path)
+			throws IOException {
+		final ZipEntry ze = zf.getEntry(path);
 		InputStream in = zf.getInputStream(ze);
 		BufferedReader br = new BufferedReader(new InputStreamReader(in));
 		// Count the number of lines
@@ -142,37 +144,43 @@ public final class HistoricalSourceView extends ViewPart {
 		source.setStyleRanges(highlighter.computeRanges(source.getText()));
 	}
 
-	public static void setRunDescription(RunDescription desc) {
+	public static void setRunDescription(final RunDescription desc) {
 		currentRun = desc;
 	}
 
-	public static void tryToOpenInEditor(String pkg, String type, int lineNumber) {
+	public static void tryToOpenInEditor(final String pkg, final String type,
+			int lineNumber) {
 		if (currentRun != null) {
-			RunDirectory dir = RawFileUtility.getRunDirectoryFor(currentRun);
-			HistoricalSourceView view = (HistoricalSourceView) ViewUtility
+			final RunDirectory dir = RawFileUtility
+					.getRunDirectoryFor(currentRun);
+			final HistoricalSourceView view = (HistoricalSourceView) ViewUtility
 					.showView(HistoricalSourceView.class.getName(), null,
 							IWorkbenchPage.VIEW_VISIBLE);
-			view.showSourceFile(dir, pkg + '.' + type);
+			view.showSourceFile(dir, pkg == null ? type : pkg + '.' + type);
 			/*
 			 * The line numbers passed to this method are typically 1 based
 			 * relative to the first line of the content. We need to change this
 			 * to be 0 based.
 			 */
-			if (lineNumber > 0)
+			if (lineNumber > 0) {
 				lineNumber--;
-			if (lineNumber < 0)
+			}
+			if (lineNumber < 0) {
 				lineNumber = 0;
+			}
 			showAndSelectLine(view, lineNumber);
 		}
 	}
 
-	public static void tryToOpenInEditor(String pkg, String type, String field) {
+	public static void tryToOpenInEditor(final String pkg, final String type,
+			final String field) {
 		if (currentRun != null) {
-			RunDirectory dir = RawFileUtility.getRunDirectoryFor(currentRun);
-			HistoricalSourceView view = (HistoricalSourceView) ViewUtility
+			final RunDirectory dir = RawFileUtility
+					.getRunDirectoryFor(currentRun);
+			final HistoricalSourceView view = (HistoricalSourceView) ViewUtility
 					.showView(HistoricalSourceView.class.getName(), null,
 							IWorkbenchPage.VIEW_VISIBLE);
-			view.showSourceFile(dir, pkg + '.' + type);
+			view.showSourceFile(dir, pkg == null ? type : pkg + '.' + type);
 			final int lineNumber = computeLine(view.source.getText(), field);
 			showAndSelectLine(view, lineNumber);
 		}
@@ -190,8 +198,9 @@ public final class HistoricalSourceView extends ViewPart {
 	 */
 	private static void showAndSelectLine(final HistoricalSourceView view,
 			final int lineNumber) {
-		if (view == null)
+		if (view == null) {
 			return;
+		}
 		/*
 		 * Show the line, move up a bit if we can.
 		 */
@@ -215,12 +224,12 @@ public final class HistoricalSourceView extends ViewPart {
 	 */
 	// FIX to parse comp unit and find appropriate field
 	private static int computeLine(final String source, final String field) {
-		StringTokenizer st = new StringTokenizer(source, "\n");
+		final StringTokenizer st = new StringTokenizer(source, "\n");
 		int lineNum = 0;
 		int firstNonInitializedField = -1;
 		int firstInitializedField = -1;
 		while (st.hasMoreTokens()) {
-			String line = st.nextToken();
+			final String line = st.nextToken();
 			// Search for field w/o initializer
 			int fieldLoc = line.indexOf(field + ';');
 			if (fieldLoc >= 0) {
@@ -239,10 +248,10 @@ public final class HistoricalSourceView extends ViewPart {
 					final int here = fieldLoc;
 					final int rest = here + field.length();
 					fieldLoc = -1;
-					StringTokenizer st2 = new StringTokenizer(line
+					final StringTokenizer st2 = new StringTokenizer(line
 							.substring(rest));
 					if (st2.hasMoreTokens()) {
-						String next = st2.nextToken();
+						final String next = st2.nextToken();
 						if (next.startsWith("=")) {
 							if (next.startsWith("==")) {
 								fieldLoc = -1;
@@ -284,8 +293,9 @@ public final class HistoricalSourceView extends ViewPart {
 	private static final String[] modifiers = { "static", "public", "private",
 			"protected", "volatile", "transient" };
 
-	private static boolean hasNonfinalModifiers(String line, int here) {
-		for (String mod : modifiers) {
+	private static boolean hasNonfinalModifiers(final String line,
+			final int here) {
+		for (final String mod : modifiers) {
 			if (line.lastIndexOf(mod, here) >= 0) {
 				return true;
 			}

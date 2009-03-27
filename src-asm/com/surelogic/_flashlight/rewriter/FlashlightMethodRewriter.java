@@ -665,6 +665,9 @@ final class FlashlightMethodRewriter implements MethodVisitor {
   }
 
   public void visitEnd() {
+    /* Output the site identifiers */
+    siteIdFactory.closeMethod();
+    
     /* visitMaxs already cleared out the remaining delayed instructions. */
     mv.visitEnd();
   }

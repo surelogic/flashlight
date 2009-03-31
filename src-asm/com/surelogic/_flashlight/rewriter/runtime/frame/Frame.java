@@ -121,7 +121,8 @@ public final class Frame {
   }
   
   public void aload(final int localIdx) {
-    stack[++topOfStack] = new FromLocalVariable(currentSourceLine, locals[localIdx]);
+//    stack[++topOfStack] = new FromLocalVariable(currentSourceLine, locals[localIdx]);
+    stack[++topOfStack] = new FromLocalVariable(currentSourceLine, localIdx);
   }
   
   public void arraylength() {

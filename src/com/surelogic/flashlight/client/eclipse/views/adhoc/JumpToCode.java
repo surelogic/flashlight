@@ -62,7 +62,10 @@ public final class JumpToCode extends AdHocManagerAdapter {
 			 * Try to open an editor if the variables package, class, and field
 			 * name are defined.
 			 */
-			String fieldName = variableValues.get("FieldName");
+			String fieldName = variableValues.get("Field");
+			if (fieldName == null) {
+				fieldName = variableValues.get("FieldName");
+			}
 			if (fieldName == null) {
 				fieldName = variableValues.get("Field Name");
 			}

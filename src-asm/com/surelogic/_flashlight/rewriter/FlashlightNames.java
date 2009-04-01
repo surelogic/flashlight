@@ -28,7 +28,7 @@ final class FlashlightNames {
     Method.getMethod("void afterUtilConcurrentLockReleaseAttempt(boolean, Object, long)");
   
   public static final Method BEFORE_INTRINSIC_LOCK_ACQUISITION =
-    Method.getMethod("void beforeIntrinsicLockAcquisition(boolean, Object, boolean, boolean, long)");
+    Method.getMethod("void beforeIntrinsicLockAcquisition(Object, boolean, boolean, long)");
   
   public static final Method BEFORE_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT =
     Method.getMethod("void beforeUtilConcurrentLockAcquisitionAttempt(Object, long)");
@@ -61,7 +61,7 @@ final class FlashlightNames {
     Method.getMethod("com.surelogic._flashlight.ClassPhantomReference getClassPhantom(Class)");
   
   public static final Method GET_OBJECT_PHANTOM =
-    Method.getMethod("com.surelogic._flashlight.ObjectPhantonReference getObjectPhantom(Object, long)");
+    Method.getMethod("com.surelogic._flashlight.ObjectPhantomReference getObjectPhantom(Object, long)");
 
   // Flashlight IIdObject interface
   public static final String I_ID_OBJECT = "com/surelogic/_flashlight/rewriter/runtime/IIdObject";

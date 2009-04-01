@@ -3,6 +3,7 @@ package com.surelogic._flashlight.rewriter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.commons.Method;
 
 /**
  * Home to static utility functions for generation of bytecode operations.
@@ -120,5 +121,14 @@ final class ByteCodeUtils {
       final MethodVisitor mv, final String internalClassName) {
     mv.visitFieldInsn(Opcodes.GETSTATIC, internalClassName,
         FlashlightNames.FLASHLIGHT_PHANTOM_CLASS_OBJECT, FlashlightNames.FLASHLIGHT_PHANTOM_CLASS_OBJECT_DESC);
+  }
+  
+  /**
+   * Generate code to call a method from the Store
+   */
+  public static void callStoreMethod(
+      final MethodVisitor mv, final Configuration config, final Method method) {
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
+        method.getName(), method.getDescriptor());
   }
 }

@@ -11,6 +11,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.LocalVariablesSorter;
+import org.objectweb.asm.commons.Method;
 
 import com.surelogic._flashlight.rewriter.ConstructorInitStateMachine.Callback;
 
@@ -791,8 +792,8 @@ final class FlashlightMethodRewriter implements MethodVisitor {
       // className
       mv.visitMethodInsn(Opcodes.INVOKESTATIC,
           FlashlightNames.JAVA_LANG_CLASS,
-          FlashlightNames.FOR_NAME,
-          FlashlightNames.FOR_NAME_SIGNATURE);
+          FlashlightNames.FOR_NAME.getName(),
+          FlashlightNames.FOR_NAME.getDescriptor());
       // Class
       mv.visitFieldInsn(Opcodes.PUTSTATIC, classBeingAnalyzedInternal,
           FlashlightNames.FLASHLIGHT_CLASS_OBJECT,
@@ -805,10 +806,7 @@ final class FlashlightMethodRewriter implements MethodVisitor {
      */
     ByteCodeUtils.pushClass(mv, atLeastJava5, classBeingAnalyzedInternal);
     // Class
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC,
-        config.storeClassName,
-        FlashlightNames.GET_CLASS_PHANTOM,
-        FlashlightNames.GET_CLASS_PHANTOM_SIGNATURE);
+    ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.GET_CLASS_PHANTOM);
     // ClassPhantomReference
     mv.visitFieldInsn(Opcodes.PUTSTATIC, classBeingAnalyzedInternal,
         FlashlightNames.FLASHLIGHT_PHANTOM_CLASS_OBJECT,
@@ -820,8 +818,8 @@ final class FlashlightMethodRewriter implements MethodVisitor {
     // Class
     mv.visitMethodInsn(Opcodes.INVOKESTATIC,
         FlashlightNames.FLASHLIGHT_RUNTIME_SUPPORT,
-        FlashlightNames.GET_CLASSLOADER_INFO,
-        FlashlightNames.GET_CLASSLOADER_INFO_SIGNATURE);
+        FlashlightNames.GET_CLASSLOADER_INFO.getName(),
+        FlashlightNames.GET_CLASSLOADER_INFO.getDescriptor());
     // ClassLoaderInfo
     mv.visitFieldInsn(Opcodes.PUTSTATIC, classBeingAnalyzedInternal,
         FlashlightNames.FLASHLIGHT_CLASS_LOADER_INFO,
@@ -857,7 +855,7 @@ final class FlashlightMethodRewriter implements MethodVisitor {
     mv.visitLabel(startOfExceptionHandler);
     
     // exception (+1)
-    insertConstructorExecution(false); // +4 on stack (thus needs +5 becaues of exception already on stack)
+    insertConstructorExecution(false); // +4 on stack (thus needs +5 because of exception already on stack)
     // exception
     
     /* Rethrow the exception */
@@ -876,9 +874,7 @@ final class FlashlightMethodRewriter implements MethodVisitor {
     // ..., before, this
     pushSiteIdentifier();
     // ..., before, this, siteId
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
-        FlashlightNames.CONSTRUCTOR_EXECUTION,
-        FlashlightNames.CONSTRUCTOR_EXECUTION_SIGNATURE);
+    ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.CONSTRUCTOR_EXECUTION);
     // ...
   }
   
@@ -901,9 +897,7 @@ final class FlashlightMethodRewriter implements MethodVisitor {
       // ..., true
       pushSiteIdentifier();
       // ..., true, siteId
-      mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
-          FlashlightNames.CONSTRUCTOR_CALL,
-          FlashlightNames.CONSTRUCTOR_CALL_SIGNATURE);
+      ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.CONSTRUCTOR_CALL);
 
       final Label start = new Label();
       final Label end = new Label();
@@ -922,9 +916,7 @@ final class FlashlightMethodRewriter implements MethodVisitor {
       // ..., false
       pushSiteIdentifier();
       // ..., false, siteId
-      mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
-          FlashlightNames.CONSTRUCTOR_CALL,
-          FlashlightNames.CONSTRUCTOR_CALL_SIGNATURE);
+      ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.CONSTRUCTOR_CALL);
       // ...
       mv.visitJumpInsn(Opcodes.GOTO, resume);
       
@@ -935,9 +927,7 @@ final class FlashlightMethodRewriter implements MethodVisitor {
       // ex, false
       pushSiteIdentifier();
       // ex, false, siteId
-      mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
-          FlashlightNames.CONSTRUCTOR_CALL,
-          FlashlightNames.CONSTRUCTOR_CALL_SIGNATURE);
+      ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.CONSTRUCTOR_CALL);
       // rethrow exception
       mv.visitInsn(Opcodes.ATHROW);
       
@@ -1025,9 +1015,7 @@ final class FlashlightMethodRewriter implements MethodVisitor {
     final int pushed = finishFieldAccess(false,
         owner, fullyQualifiedOwner, name,
         FlashlightNames.INSTANCE_FIELD_ACCESS,
-        FlashlightNames.INSTANCE_FIELD_ACCESS_SIGNATURE,
-        FlashlightNames.INSTANCE_FIELD_ACCESS_LOOKUP,
-        FlashlightNames.INSTANCE_FIELD_ACCESS_LOOKUP_SIGNATURE);
+        FlashlightNames.INSTANCE_FIELD_ACCESS_LOOKUP);
     
     // Update stack depth
     updateStackDepthDelta(2 + pushed);
@@ -1085,9 +1073,7 @@ final class FlashlightMethodRewriter implements MethodVisitor {
     final int pushed = finishFieldAccess(false,
         owner, fullyQualifiedOwner, name,
         FlashlightNames.INSTANCE_FIELD_ACCESS,
-        FlashlightNames.INSTANCE_FIELD_ACCESS_SIGNATURE,
-        FlashlightNames.INSTANCE_FIELD_ACCESS_LOOKUP,
-        FlashlightNames.INSTANCE_FIELD_ACCESS_LOOKUP_SIGNATURE);
+        FlashlightNames.INSTANCE_FIELD_ACCESS_LOOKUP);
     
     /* Update stack depth: Works because pushed >= 1.  We need the stack depth
      * to increase by at least 3 in the case of value being category 2.
@@ -1127,9 +1113,7 @@ final class FlashlightMethodRewriter implements MethodVisitor {
     final int pushed = finishFieldAccess(true,
         owner, fullyQualifiedOwner, name,
         FlashlightNames.STATIC_FIELD_ACCESS,
-        FlashlightNames.STATIC_FIELD_ACCESS_SIGNATURE,
-        FlashlightNames.STATIC_FIELD_ACCESS_LOOKUP,
-        FlashlightNames.STATIC_FIELD_ACCESS_LOOKUP_SIGNATURE);
+        FlashlightNames.STATIC_FIELD_ACCESS_LOOKUP);
     
     /* Update stack depth. Depends on the category of the original value on the
      * stack.
@@ -1166,9 +1150,7 @@ final class FlashlightMethodRewriter implements MethodVisitor {
     final int pushed = finishFieldAccess(true,
         owner, fullyQualifiedOwner, name,
         FlashlightNames.STATIC_FIELD_ACCESS,
-        FlashlightNames.STATIC_FIELD_ACCESS_SIGNATURE,
-        FlashlightNames.STATIC_FIELD_ACCESS_LOOKUP,
-        FlashlightNames.STATIC_FIELD_ACCESS_LOOKUP_SIGNATURE);
+        FlashlightNames.STATIC_FIELD_ACCESS_LOOKUP);
     
     // Update stack depth
     updateStackDepthDelta(1+pushed);
@@ -1208,12 +1190,10 @@ final class FlashlightMethodRewriter implements MethodVisitor {
    */
   private int finishFieldAccess(final boolean isStatic,
       final String owner, final String fullyQualifiedOwner, final String name,
-      final String foundMethodName, final String foundMethodSignature,
-      final String lookupMethodName, final String lookupMethodSignature) {
+      final Method foundMethod, final Method lookupMethod) {
     // Stack is "..., isRead, [receiver]"
 
-    final String storeMethodName;
-    final String storeMethodSignature;
+    final Method storeMethod;
     final int pushed;
     final Integer fid = classModel.getFieldID(fullyQualifiedOwner, name);
     if (fid != ClassAndFieldModel.FIELD_NOT_FOUND) {
@@ -1227,8 +1207,7 @@ final class FlashlightMethodRewriter implements MethodVisitor {
       ByteCodeUtils.pushIntegerConstant(mv, fid);
       // Stack is "..., isRead, [receiver/ownerPhantom], field_id
       
-      storeMethodName = foundMethodName;
-      storeMethodSignature = foundMethodSignature;
+      storeMethod = foundMethod;
     } else {
       messenger.verbose("Field " + fullyQualifiedOwner + "." + name
           + " needs reflection at " + classBeingAnalyzedFullyQualified + "."
@@ -1247,16 +1226,15 @@ final class FlashlightMethodRewriter implements MethodVisitor {
       // ..., isRead, [receiver], classLoaderInfo, className
       mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, 
           FlashlightNames.CLASS_LOADER_INFO,
-          FlashlightNames.GET_CLASS,
-          FlashlightNames.GET_CLASS_SIGNATURE);
+          FlashlightNames.GET_CLASS.getName(),
+          FlashlightNames.GET_CLASS.getDescriptor());
       // ..., isRead, [receiver], class object
       
       /* Push the field name */
       mv.visitLdcInsn(name);
       // ..., isRead, [receiver], class object, fieldName
       
-      storeMethodName = lookupMethodName;
-      storeMethodSignature = lookupMethodSignature;
+      storeMethod = lookupMethod;
       pushed = 4;
     }
     
@@ -1270,7 +1248,7 @@ final class FlashlightMethodRewriter implements MethodVisitor {
         
     /* We can now call the store method */
     mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
-        storeMethodName, storeMethodSignature);    
+        storeMethod.getName(), storeMethod.getDescriptor());    
     // Stack is "..."
 
     // Resume
@@ -1353,9 +1331,7 @@ final class FlashlightMethodRewriter implements MethodVisitor {
     /* Push the site identifier and call the pre-method */
     pushSiteIdentifier();
     // ..., obj, obj, isThis, isClass, siteId (+4, +5)
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
-        FlashlightNames.BEFORE_INTRINSIC_LOCK_ACQUISITION,
-        FlashlightNames.BEFORE_INTRINSIC_LOCK_ACQUISITION_SIGNATURE);
+    ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.BEFORE_INTRINSIC_LOCK_ACQUISITION);
     // ..., obj (-1, 0)
 
     /* Duplicate the lock object to have it for the post-synchronized method */
@@ -1393,9 +1369,7 @@ final class FlashlightMethodRewriter implements MethodVisitor {
         /* Push the site identifier and call the post-method */
         pushSiteIdentifier(originalSiteId);
         // ..., obj, siteId
-        mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
-            FlashlightNames.AFTER_INTRINSIC_LOCK_ACQUISITION,
-            FlashlightNames.AFTER_INTRINSIC_LOCK_ACQUISITION_SIGNATURE);
+        ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.AFTER_INTRINSIC_LOCK_ACQUISITION);
         // ...
       }
     });
@@ -1449,8 +1423,7 @@ final class FlashlightMethodRewriter implements MethodVisitor {
       public void insertCode() {
         pushSiteIdentifier(originalSiteId);
         // ..., obj, siteId
-        mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
-            FlashlightNames.AFTER_INTRINSIC_LOCK_RELEASE, FlashlightNames.AFTER_INTRINSIC_LOCK_RELEASE_SIGNATURE);
+        ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.AFTER_INTRINSIC_LOCK_ACQUISITION);
         // ...
       }
     });      
@@ -1484,9 +1457,7 @@ final class FlashlightMethodRewriter implements MethodVisitor {
     // lockObj, isReceiver, isStatic
     pushSiteIdentifier();
     // lockObj, isReceiver, isStatic, siteid
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
-        FlashlightNames.BEFORE_INTRINSIC_LOCK_ACQUISITION,
-        FlashlightNames.BEFORE_INTRINSIC_LOCK_ACQUISITION_SIGNATURE);
+    ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.BEFORE_INTRINSIC_LOCK_ACQUISITION);
     // empty stack
     
     /* Insert the explicit monitor acquisition.  Even though we already know
@@ -1517,9 +1488,7 @@ final class FlashlightMethodRewriter implements MethodVisitor {
     // lockObj
     pushSiteIdentifier();
     // lockObj, siteId
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
-        FlashlightNames.AFTER_INTRINSIC_LOCK_ACQUISITION,
-        FlashlightNames.AFTER_INTRINSIC_LOCK_ACQUISITION_SIGNATURE);
+    ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.AFTER_INTRINSIC_LOCK_ACQUISITION);
     // empty stack
     
     // Resume code
@@ -1572,8 +1541,7 @@ final class FlashlightMethodRewriter implements MethodVisitor {
     // ..., lockObj
     pushSiteIdentifier();
     // ..., lockObj, siteId
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
-        FlashlightNames.AFTER_INTRINSIC_LOCK_RELEASE, FlashlightNames.AFTER_INTRINSIC_LOCK_RELEASE_SIGNATURE);
+    ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.AFTER_INTRINSIC_LOCK_RELEASE);
     // ...
     
     // Resume code
@@ -1678,10 +1646,8 @@ final class FlashlightMethodRewriter implements MethodVisitor {
     mv.visitVarInsn(Opcodes.ALOAD, 0);
     mv.visitVarInsn(Opcodes.ALOAD, 0);
     mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.ID_OBJECT,
-        FlashlightNames.GET_NEW_ID, FlashlightNames.GET_NEW_ID_SIGNATURE);
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
-        FlashlightNames.GET_OBJECT_PHANTOM,
-        FlashlightNames.GET_OBJECT_PHANTOM_SIGNATURE);
+        FlashlightNames.GET_NEW_ID.getName(), FlashlightNames.GET_NEW_ID.getDescriptor());
+    ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.GET_OBJECT_PHANTOM);
     mv.visitFieldInsn(Opcodes.PUTFIELD, classBeingAnalyzedInternal,
         FlashlightNames.FLASHLIGHT_PHANTOM_OBJECT,
         FlashlightNames.FLASHLIGHT_PHANTOM_OBJECT_DESC);

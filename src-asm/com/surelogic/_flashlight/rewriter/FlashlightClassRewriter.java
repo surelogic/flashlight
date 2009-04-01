@@ -344,16 +344,16 @@ final class FlashlightClassRewriter extends ClassAdapter {
   private void addIIdObjectMethods() {
     final MethodVisitor identityHashCode =
       cv.visitMethod(FlashlightNames.IDENTITY_HASHCODE_ACCESS,
-          FlashlightNames.IDENTITY_HASHCODE,
-          FlashlightNames.IDENTITY_HASHCODE_SIGNATURE, null, null);
+          FlashlightNames.IDENTITY_HASHCODE.getName(),
+          FlashlightNames.IDENTITY_HASHCODE.getDescriptor(), null, null);
     identityHashCode.visitCode();
     identityHashCode.visitVarInsn(Opcodes.ALOAD, 0);
     identityHashCode.visitFieldInsn(Opcodes.GETFIELD, classNameInternal,
         FlashlightNames.FLASHLIGHT_PHANTOM_OBJECT,
         FlashlightNames.FLASHLIGHT_PHANTOM_OBJECT_DESC);
     identityHashCode.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
-        FlashlightNames.OBJECT_PHANTOM_REFERENCE, FlashlightNames.GET_ID,
-        FlashlightNames.GET_ID_SIGNATURE);
+        FlashlightNames.OBJECT_PHANTOM_REFERENCE, FlashlightNames.GET_ID.getName(),
+        FlashlightNames.GET_ID.getDescriptor());
     identityHashCode.visitInsn(Opcodes.L2I);
     identityHashCode.visitInsn(Opcodes.IRETURN);
     identityHashCode.visitMaxs(2, 1);
@@ -361,8 +361,8 @@ final class FlashlightClassRewriter extends ClassAdapter {
     
     final MethodVisitor getPhantomReference =
       cv.visitMethod(FlashlightNames.GET_PHANTOM_REFERENCE_ACCESS,
-          FlashlightNames.GET_PHANTOM_REFERENCE,
-          FlashlightNames.GET_PHANTOM_REFERENCE_SIGNATURE, null, null);
+          FlashlightNames.GET_PHANTOM_REFERENCE.getName(),
+          FlashlightNames.GET_PHANTOM_REFERENCE.getDescriptor(), null, null);
     getPhantomReference.visitCode();
     getPhantomReference.visitVarInsn(Opcodes.ALOAD, 0);
     getPhantomReference.visitFieldInsn(Opcodes.GETFIELD, classNameInternal,

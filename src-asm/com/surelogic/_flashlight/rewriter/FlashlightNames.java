@@ -1,6 +1,7 @@
 package com.surelogic._flashlight.rewriter;
 
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.commons.Method;
 
 /**
  * Constants for names introduced into class files by the Flashlight classfile
@@ -14,84 +15,81 @@ final class FlashlightNames {
 
   public static final String FLASHLIGHT_STORE = "com/surelogic/_flashlight/Store";
   
-  public static final String AFTER_INTRINSIC_LOCK_ACQUISITION = "afterIntrinsicLockAcquisition";
-  public static final String AFTER_INTRINSIC_LOCK_ACQUISITION_SIGNATURE = "(Ljava/lang/Object;J)V";
+  public static final Method AFTER_INTRINSIC_LOCK_ACQUISITION = 
+    Method.getMethod("void afterIntrinsicLockAcquisition(Object, long)");
   
-  public static final String AFTER_INTRINSIC_LOCK_RELEASE = "afterIntrinsicLockRelease";
-  public static final String AFTER_INTRINSIC_LOCK_RELEASE_SIGNATURE = "(Ljava/lang/Object;J)V";
+  public static final Method AFTER_INTRINSIC_LOCK_RELEASE =
+    Method.getMethod("void afterIntrinsicLockRelease(Object, long)");
   
-  public static final String AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT = "afterUtilConcurrentLockAcquisitionAttempt";
-  public static final String AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT_SIGNATURE = "(ZLjava/lang/Object;J)V";
+  public static final Method AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT =
+    Method.getMethod("void afterUtilConcurrentLockAcquisitionAttempt(boolean, Object, long)");
   
-  public static final String AFTER_UTIL_CONCURRENT_LOCK_RELEASE_ATTEMPT = "afterUtilConcurrentLockReleaseAttempt";
-  public static final String AFTER_UTIL_CONCURRENT_LOCK_RELEASE_ATTEMPT_SIGNATURE = "(ZLjava/lang/Object;J)V";
+  public static final Method AFTER_UTIL_CONCURRENT_LOCK_RELEASE_ATTEMPT =
+    Method.getMethod("void afterUtilConcurrentLockReleaseAttempt(boolean, Object, long)");
   
-  public static final String BEFORE_INTRINSIC_LOCK_ACQUISITION = "beforeIntrinsicLockAcquisition";
-  public static final String BEFORE_INTRINSIC_LOCK_ACQUISITION_SIGNATURE = "(Ljava/lang/Object;ZZJ)V";
+  public static final Method BEFORE_INTRINSIC_LOCK_ACQUISITION =
+    Method.getMethod("void beforeIntrinsicLockAcquisition(boolean, Object, boolean, boolean, long)");
   
-  public static final String BEFORE_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT = "beforeUtilConcurrentLockAcquisitionAttempt";
-  public static final String BEFORE_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT_SIGNATURE = "(Ljava/lang/Object;J)V";
+  public static final Method BEFORE_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT =
+    Method.getMethod("void beforeUtilConcurrentLockAcquisitionAttempt(Object, long)");
   
-  public static final String CONSTRUCTOR_CALL = "constructorCall";
-  public static final String CONSTRUCTOR_CALL_SIGNATURE = "(ZJ)V";
+  public static final Method CONSTRUCTOR_CALL =
+    Method.getMethod("void constructorCall(boolean, long)");
 
-  public static final String CONSTRUCTOR_EXECUTION = "constructorExecution";
-  public static final String CONSTRUCTOR_EXECUTION_SIGNATURE = "(ZLjava/lang/Object;J)V";
+  public static final Method CONSTRUCTOR_EXECUTION =
+    Method.getMethod("void constructorExecution(boolean, Object, long)");
   
-  public static final String INSTANCE_FIELD_ACCESS = "instanceFieldAccess";
-  public static final String INSTANCE_FIELD_ACCESS_SIGNATURE = "(ZLjava/lang/Object;IJ)V";
+  public static final Method INSTANCE_FIELD_ACCESS =
+    Method.getMethod("void instanceFieldAccess(boolean, Object, int, long)");
   
-  public static final String STATIC_FIELD_ACCESS = "staticFieldAccess";
-  public static final String STATIC_FIELD_ACCESS_SIGNATURE = "(ZLcom/surelogic/_flashlight/ClassPhantomReference;IJ)V";
+  public static final Method STATIC_FIELD_ACCESS =
+    Method.getMethod("void staticFieldAccess(boolean, com.surelogic._flashlight.ClassPhantomReference, int, long)");
   
-  public static final String INSTANCE_FIELD_ACCESS_LOOKUP = "instanceFieldAccessLookup";
-  public static final String INSTANCE_FIELD_ACCESS_LOOKUP_SIGNATURE = "(ZLjava/lang/Object;Ljava/lang/Class;Ljava/lang/String;J)V";
+  public static final Method INSTANCE_FIELD_ACCESS_LOOKUP =
+    Method.getMethod("void instanceFieldAccessLookup(boolean, Object, Class, String, long)");
   
-  public static final String STATIC_FIELD_ACCESS_LOOKUP = "staticFieldAccessLookup";
-  public static final String STATIC_FIELD_ACCESS_LOOKUP_SIGNATURE = "(ZLjava/lang/Class;Ljava/lang/String;J)V";
+  public static final Method STATIC_FIELD_ACCESS_LOOKUP =
+    Method.getMethod("void staticFieldAccessLookup(boolean, Class, String, long)");
   
-  public static final String INTRINSIC_LOCK_WAIT = "intrinsicLockWait";
-  public static final String INTRINSIC_LOCK_WAIT_SIGNATURE = "(ZLjava/lang/Object;J)V";
+  public static final Method INTRINSIC_LOCK_WAIT =
+    Method.getMethod("void intrinsicLockWait(boolean, Object, long)");
   
-  public static final String METHOD_CALL = "methodCall";
-  public static final String METHOD_CALL_SIGNATURE = "(ZLjava/lang/Object;J)V";
+  public static final Method METHOD_CALL =
+    Method.getMethod("void methodCall(boolean, Object, long)");
   
-  public static final String GET_CLASS_PHANTOM = "getClassPhantom";
-  public static final String GET_CLASS_PHANTOM_SIGNATURE = "(Ljava/lang/Class;)Lcom/surelogic/_flashlight/ClassPhantomReference;";
+  public static final Method GET_CLASS_PHANTOM =
+    Method.getMethod("com.surelogic._flashlight.ClassPhantomReference getClassPhantom(Class)");
   
-  public static final String GET_OBJECT_PHANTOM = "getObjectPhantom";
-  public static final String GET_OBJECT_PHANTOM_SIGNATURE = "(Ljava/lang/Object;J)Lcom/surelogic/_flashlight/ObjectPhantomReference;";
+  public static final Method GET_OBJECT_PHANTOM =
+    Method.getMethod("com.surelogic._flashlight.ObjectPhantonReference getObjectPhantom(Object, long)");
 
   // Flashlight IIdObject interface
   public static final String I_ID_OBJECT = "com/surelogic/_flashlight/rewriter/runtime/IIdObject";
   
-  public static final String IDENTITY_HASHCODE = "identity$HashCode";
-  public static final String IDENTITY_HASHCODE_SIGNATURE = "()I";
+  public static final Method IDENTITY_HASHCODE =
+    Method.getMethod("int identity$HashCode()");
   public static final int    IDENTITY_HASHCODE_ACCESS = Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL;
 
-  public static final String GET_PHANTOM_REFERENCE = "getPhantom$Reference";
-  public static final String GET_PHANTOM_REFERENCE_SIGNATURE = "()Lcom/surelogic/_flashlight/ObjectPhantomReference;";
+  public static final Method GET_PHANTOM_REFERENCE =
+    Method.getMethod("com.surelogic._flashlight.ObjectPhantomReference getPhantom$Reference()");
   public static final int    GET_PHANTOM_REFERENCE_ACCESS = Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL;
 
   // Flashlight IdObject class
   public static final String ID_OBJECT = "com/surelogic/_flashlight/rewriter/runtime/IdObject";
 
-  public static final String GET_NEW_ID = "getNewId";
-  public static final String GET_NEW_ID_SIGNATURE = "()J";
+  public static final Method GET_NEW_ID = Method.getMethod("long getNewId()");
   
   // Flashlight ObjectPhantomReference class
   public static final String OBJECT_PHANTOM_REFERENCE = "com/surelogic/_flashlight/ObjectPhantomReference";
-  public static final String GET_ID = "getId";
-  public static final String GET_ID_SIGNATURE = "()J";
+  public static final Method GET_ID = Method.getMethod("long getId()");
   
   // Flashlight classes and methods  
   public static final String FLASHLIGHT_RUNTIME_SUPPORT = "com/surelogic/_flashlight/rewriter/runtime/FlashlightRuntimeSupport";
-  public static final String GET_CLASSLOADER_INFO = "getClassLoaderInfo";
-  public static final String GET_CLASSLOADER_INFO_SIGNATURE = "(Ljava/lang/Class;)Lcom/surelogic/_flashlight/rewriter/runtime/ClassLoaderInfo;";
+  public static final Method GET_CLASSLOADER_INFO = 
+    Method.getMethod("com.surelogic._flashlight.rewriter.runtime.ClassLoaderInfo getClassLoaderInfo(Class)");
   
   public static final String CLASS_LOADER_INFO = "com/surelogic/_flashlight/rewriter/runtime/ClassLoaderInfo";
-  public static final String GET_CLASS = "getClass";
-  public static final String GET_CLASS_SIGNATURE = "(Ljava/lang/String;)Ljava/lang/Class;";
+  public static final Method GET_CLASS = Method.getMethod("Class getClass(String)");
   
     
   // Other Java classes and methods
@@ -104,8 +102,7 @@ final class FlashlightNames {
   public static final String WAIT_SIGNATURE_2_ARGS = "(JI)V";
   
   public static final String JAVA_LANG_CLASS = "java/lang/Class";
-  public static final String FOR_NAME = "forName";
-  public static final String FOR_NAME_SIGNATURE = "(Ljava/lang/String;)Ljava/lang/Class;";
+  public static final Method FOR_NAME = Method.getMethod("Class forName(String)");
 
   public static final String JAVA_LANG_CLASS_NOT_FOUND_EXCEPTION = "java/lang/ClassNotFoundException";
   
@@ -116,6 +113,11 @@ final class FlashlightNames {
   public static final String LOCK_INTERRUPTIBLY = "lockInterruptibly";
   public static final String TRY_LOCK = "tryLock";
   public static final String UNLOCK = "unlock";
+  
+  
+  
+  /* constants for the frame class */
+  public static final String FRAME = "com/surelogic/_flashlight/rewriter/runtime/frame/Frame";
   
   
   

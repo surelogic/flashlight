@@ -33,7 +33,9 @@ public final class HistoricalSourceView extends ViewPart {
 	// FIX replace with SourceViewer?
 	StyledText source;
 	JavaSyntaxHighlighter highlighter;
-
+	RunDirectory lastRunDir = null;
+	String lastType = null;	
+	
 	@Override
 	public void createPartControl(final Composite parent) {
 		UsageMeter.getInstance().tickUse("Flashlight SourceView opened");
@@ -54,7 +56,8 @@ public final class HistoricalSourceView extends ViewPart {
 	// Find valid flashlight run directory
 	// Find project zip under /source
 	// Find sourceFiles.xml, classMapping.xml in zip
-	public boolean showSourceFile(final RunDirectory dir, String pkg,
+	/*
+	private boolean showSourceFile(final RunDirectory dir, String pkg,
 			final String name) {
 		if (pkg == null) {
 			pkg = "(default)";
@@ -85,8 +88,15 @@ public final class HistoricalSourceView extends ViewPart {
 		}
 		return false;
 	}
+    */
 
-	public boolean showSourceFile(final RunDirectory dir, final String qname) {
+	/**
+	 * @return true if the view is populated 
+	 */
+	private boolean showSourceFile(final RunDirectory dir, final String qname) {
+		if (lastRunDir == dir && lastType == qname) {
+			return true; // Should be populated from before
+		}
 		final SourceZipFileHandles zips = dir.getSourceHandles();
 		for (final File f : zips.getSourceZips()) {
 			try {
@@ -97,7 +107,9 @@ public final class HistoricalSourceView extends ViewPart {
 					if (fileMap != null) {
 						final String path = fileMap.get(qname);
 						if (path != null) {
-							populate(zf, path);
+							populate(zf, path);							
+							lastRunDir = dir;
+							lastType   = qname;
 							return true;
 						}
 					}
@@ -159,19 +171,21 @@ public final class HistoricalSourceView extends ViewPart {
 			final HistoricalSourceView view = (HistoricalSourceView) ViewUtility
 					.showView(HistoricalSourceView.class.getName(), null,
 							IWorkbenchPage.VIEW_VISIBLE);
-			view.showSourceFile(dir, pkg == null ? type : pkg + '.' + type);
-			/*
-			 * The line numbers passed to this method are typically 1 based
-			 * relative to the first line of the content. We need to change this
-			 * to be 0 based.
-			 */
-			if (lineNumber > 0) {
-				lineNumber--;
+			if (view != null) {
+				view.showSourceFile(dir, pkg == null ? type : pkg + '.' + type);
+				/*
+				 * The line numbers passed to this method are typically 1 based
+				 * relative to the first line of the content. We need to change this
+				 * to be 0 based.
+				 */
+				if (lineNumber > 0) {
+					lineNumber--;
+				}
+				if (lineNumber < 0) {
+					lineNumber = 0;
+				}
+				view.showAndSelectLine(lineNumber);
 			}
-			if (lineNumber < 0) {
-				lineNumber = 0;
-			}
-			showAndSelectLine(view, lineNumber);
 		}
 	}
 
@@ -183,9 +197,11 @@ public final class HistoricalSourceView extends ViewPart {
 			final HistoricalSourceView view = (HistoricalSourceView) ViewUtility
 					.showView(HistoricalSourceView.class.getName(), null,
 							IWorkbenchPage.VIEW_VISIBLE);
-			view.showSourceFile(dir, pkg == null ? type : pkg + '.' + type);
-			final int lineNumber = computeLine(view.source.getText(), field);
-			showAndSelectLine(view, lineNumber);
+			if (view != null) {
+				view.showSourceFile(dir, pkg == null ? type : pkg + '.' + type);
+				final int lineNumber = computeLine(view.source.getText(), field);
+				view.showAndSelectLine(lineNumber);
+			}
 		}
 	}
 
@@ -199,27 +215,23 @@ public final class HistoricalSourceView extends ViewPart {
 	 *            index of the line, 0 based relative to the first line in the
 	 *            content.
 	 */
-	private static void showAndSelectLine(final HistoricalSourceView view,
-			final int lineNumber) {
-		if (view == null) {
-			return;
-		}
+	private void showAndSelectLine(final int lineNumber) {
 		/*
 		 * Show the line, move up a bit if we can.
 		 */
-		view.source.setTopIndex(lineNumber < 5 ? 0 : lineNumber - 5);
+		source.setTopIndex(lineNumber < 5 ? 0 : lineNumber - 5);
 
 		/*
 		 * Highlight the line by selecting it in the widget.
 		 */
-		final int start = view.source.getOffsetAtLine(lineNumber);
+		final int start = source.getOffsetAtLine(lineNumber);
 		final int end;
-		if (lineNumber + 1 > view.source.getLineCount()) {
-			end = view.source.getCharCount();
+		if (lineNumber + 1 > source.getLineCount()) {
+			end = source.getCharCount();
 		} else {
-			end = view.source.getOffsetAtLine(lineNumber + 1);
+			end = source.getOffsetAtLine(lineNumber + 1);
 		}
-		view.source.setSelection(start, end);
+		source.setSelection(start, end);
 	}
 
 	/**

@@ -20,6 +20,8 @@ import org.eclipse.ui.PlatformUI;
 import com.surelogic.common.ILifecycle;
 import com.surelogic.common.SLUtility;
 import com.surelogic.common.adhoc.AdHocManager;
+import com.surelogic.common.adhoc.AdHocManagerAdapter;
+import com.surelogic.common.adhoc.AdHocQueryResult;
 import com.surelogic.common.eclipse.ViewUtility;
 import com.surelogic.common.eclipse.jobs.EclipseJob;
 import com.surelogic.common.i18n.I18N;
@@ -44,7 +46,8 @@ import com.surelogic.flashlight.common.model.RunManager;
 /**
  * Mediator for the {@link RunView}.
  */
-public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
+public final class RunViewMediator extends AdHocManagerAdapter implements
+		IRunManagerObserver, ILifecycle {
 
 	private final TableViewer f_tableViewer;
 	private final Table f_table;
@@ -101,6 +104,8 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 		});
 
 		RunManager.getInstance().addObserver(this);
+		AdHocManager.getInstance(AdHocDataSource.getInstance()).addObserver(
+				this);
 		packColumns();
 		setToolbarState();
 	}
@@ -129,6 +134,19 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 
 		}
 		return results;
+	}
+
+	private void setSelectedRunDescription(RunDescription run) {
+		if (run == null)
+			return;
+		final TableItem[] items = f_table.getItems();
+		for (int i = 0; i < items.length; i++) {
+			final RunDescription itemData = getData(items[i]);
+			if (run.equals(itemData)) {
+				f_table.setSelection(i);
+				break;
+			}
+		}
 	}
 
 	private final Action f_refreshAction = new Action() {
@@ -271,8 +289,9 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 					if (Window.CANCEL == d.getReturnCode()) {
 						return;
 					}
-					
-					final boolean deleteRaw = hasRawFiles && d.deleteRawDataFiles();
+
+					final boolean deleteRaw = hasRawFiles
+							&& d.deleteRawDataFiles();
 					if (hasPrep) {
 						jobs.add(new UnPrepSLJob(prep));
 					}
@@ -294,7 +313,7 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 				}
 				// To make the deletes seem atomic
 				jobs.add(new RefreshRunManagerSLJob());
-				
+
 				final SLJob job = new AggregateSLJob(jobName, jobs);
 				EclipseJob.getInstance().scheduleDb(job, true, false);
 			}
@@ -358,8 +377,8 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 			HistoricalSourceView.setRunDescription(o);
 			RunManager.getInstance().setSelectedRun(o);
 			AdHocDataSource.getManager().setGlobalVariableValue(
-					AdHocManager.DATABASE,
-					o.getName() + " - " + o.getStartTimeOfRun());
+					AdHocManager.DATABASE, o.toIdentityString());
+			AdHocDataSource.getManager().setSelectedResult(null);
 		}
 		f_prepAction.setEnabled(rawActionsEnabled);
 		f_showLogAction.setEnabled(rawActionsEnabled);
@@ -379,9 +398,31 @@ public final class RunViewMediator implements IRunManagerObserver, ILifecycle {
 
 	public void dispose() {
 		RunManager.getInstance().removeObserver(this);
+		AdHocManager.getInstance(AdHocDataSource.getInstance()).removeObserver(
+				this);
 	}
 
 	public void setFocus() {
 		f_table.setFocus();
+	}
+
+	@Override
+	public void notifySelectedResultChange(AdHocQueryResult result) {
+		if (result != null) {
+			final String db = result.getQueryFullyBound().getVariableValues()
+					.get(AdHocManager.DATABASE);
+
+			final RunDescription selected = RunManager.getInstance()
+					.getSelectedRun();
+			for (RunDescription runDescription : RunManager.getInstance()
+					.getRunDescriptions()) {
+				if (runDescription.toIdentityString().equals(db)) {
+					if (!runDescription.equals(selected)) {
+						RunManager.getInstance().setSelectedRun(runDescription);
+						setSelectedRunDescription(runDescription);
+					}
+				}
+			}
+		}
 	}
 }

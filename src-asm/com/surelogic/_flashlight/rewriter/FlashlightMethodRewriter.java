@@ -1,6 +1,8 @@
 package com.surelogic._flashlight.rewriter;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -48,6 +50,25 @@ final class FlashlightMethodRewriter implements MethodVisitor {
       if (config.rewriteConstructorExecution) {
         insertConstructorExecutionPrefix();
       }
+      
+      // Init the JVM Frame model
+      if (isModelingJVMFrame()) {
+        createFrameModel();
+      }
+    }
+  }
+  
+  
+  
+  private final static class LocalVariable {
+    public final int index;
+    public final String name;
+    public final String description;
+    
+    public LocalVariable(final int i, final String n, final String d) {
+      index = i;
+      name = n;
+      description = d;
     }
   }
   
@@ -82,6 +103,9 @@ final class FlashlightMethodRewriter implements MethodVisitor {
   
   /** The simple name of the method being rewritten. */
   private final String methodName;
+  
+  /** The method's argument types */
+  private final Type[] arguments;
   
   /** Are we visiting a constructor? */
   private final boolean isConstructor;
@@ -164,28 +188,35 @@ final class FlashlightMethodRewriter implements MethodVisitor {
    * instruction, if that instruction is a label. Otherwise, the operations are
    * inserted before the next instruction. See
    * {@link #delayForLabel(com.surelogic._flashlight.rewriter.FlashlightMethodRewriter.DelayedOutput)}.
-   * Once the thunk has been executed, this is reset to {@code null}.
+   * Once the thunk has been executed, this is reset to {@value null}.
    */
   private DelayedOutput delayedForLabel = null;
 
   /**
    * If the previously visited element was an ASTORE instruction, this is set to
-   * the index of the local variable stored. Otherwise, it is {@code -1}.
+   * the index of the local variable stored. Otherwise, it is {@value -1}.
    */
   private int previousStore = -1;
   
   /**
    * If the previously visited element was an ALOAD instruction, this is set to
-   * the index of the local variable loaded. Otherwise, it is {@code -1}.
+   * the index of the local variable loaded. Otherwise, it is {@value -1}.
    */
   private int previousLoad = -1;
   
   /**
    * When rewriting a synchronized method to use explicit locking, this 
    * holds the id of the local variable that stores the lock object.  Otherwise,
-   * it is {@code -1}.
+   * it is {@value -1}.
    */
   private int syncMethodLockVariable = -1;
+  
+  /**
+   * When modeling the JVM Frame, this holds the id of the local variable that
+   * stores the {@link com.surelogic._flashlight.runtime.frame.Frame} object.
+   * If modeling is not being used, then this is {@value -1}.
+   */
+  private int frameModelVariable = -1;
   
   /**
    * Map from one label to another. The key label is a label we receive as a
@@ -234,6 +265,23 @@ final class FlashlightMethodRewriter implements MethodVisitor {
    */
   private final String firstArgInternal;  
 
+  /**
+   * The debug information for this class, may be {@link null}.
+   */
+  private final DebugInfo.MethodInfo debugInfo;
+
+  /**
+   * The index of the next label we visit.
+   */
+  private int nextLabel = 0;
+  
+  /**
+   * List of local variables that need to be added to the JVM frame model.
+   * This are queued up when instrumenting constructors because the 
+   * frame model isn't created until after the super constructor is called,
+   * but the debug information is processed before the super constructor is called.
+   */
+  private List<LocalVariable> delayedLocalVariables = new ArrayList<LocalVariable>();
   
   
   
@@ -244,14 +292,15 @@ final class FlashlightMethodRewriter implements MethodVisitor {
   public static MethodVisitor create(final int access, final String mname,
       final String desc, final MethodVisitor mv, final Configuration conf,
       final SiteIdFactory csif, final RewriteMessenger msg,
-      final ClassAndFieldModel model, final boolean java5, final boolean inInt,
+      final ClassAndFieldModel model, final DebugInfo.MethodInfo di, 
+      final boolean java5, final boolean inInt,
       final boolean update, final boolean mustImpl, final String fname,
       final String nameInternal, final String nameFullyQualified,
       final String superInternal,
       final Set<MethodCallWrapper> wrappers) {
     final FlashlightMethodRewriter methodRewriter =
       new FlashlightMethodRewriter(access, mname, desc, mv, conf, csif, msg,
-          model, java5, inInt, update, mustImpl, fname, nameInternal, nameFullyQualified,
+          model, di, java5, inInt, update, mustImpl, fname, nameInternal, nameFullyQualified,
           superInternal, wrappers);
     methodRewriter.lvs = new LocalVariablesSorter(access, desc, methodRewriter);
     return methodRewriter.lvs;
@@ -278,7 +327,8 @@ final class FlashlightMethodRewriter implements MethodVisitor {
   private FlashlightMethodRewriter(final int access, final String mname,
       final String desc, final MethodVisitor mv, final Configuration conf,
       final SiteIdFactory csif, final RewriteMessenger msg,
-      final ClassAndFieldModel model, final boolean java5, final boolean inInt,
+      final ClassAndFieldModel model, final DebugInfo.MethodInfo di,
+      final boolean java5, final boolean inInt,
       final boolean update, final boolean mustImpl, final String fname,
       final String nameInternal, final String nameFullyQualified,
       final String superInternal,
@@ -288,6 +338,7 @@ final class FlashlightMethodRewriter implements MethodVisitor {
     siteIdFactory = csif;
     messenger = msg;
     classModel = model;
+    debugInfo = di;
     atLeastJava5 = java5;
     inInterface = inInt;
     updateSuperCall = update;
@@ -295,6 +346,7 @@ final class FlashlightMethodRewriter implements MethodVisitor {
     wasSynchronized = (access & Opcodes.ACC_SYNCHRONIZED) != 0;
     isStatic = (access & Opcodes.ACC_STATIC) != 0;
     methodName = mname;
+    arguments = Type.getArgumentTypes(desc);
     isConstructor = mname.equals(INITIALIZER);
     isClassInitializer = mname.equals(CLASS_INITIALIZER);
     sourceFileName = fname;
@@ -306,11 +358,10 @@ final class FlashlightMethodRewriter implements MethodVisitor {
     isAccessMethod = ((access & Opcodes.ACC_SYNTHETIC) != 0) && isStatic && 
         methodName.startsWith("access$");
     if (isAccessMethod) {
-      final Type[] types = Type.getArgumentTypes(desc);
-      if (types.length > 0) {
-        final int sort = types[0].getSort();
+      if (arguments.length > 0) {
+        final int sort = arguments[0].getSort();
         if (sort == Type.ARRAY || sort == Type.OBJECT) {
-          firstArgInternal = types[0].getInternalName();
+          firstArgInternal = arguments[0].getInternalName();
         } else {
           firstArgInternal = null;
         }        
@@ -352,6 +403,16 @@ final class FlashlightMethodRewriter implements MethodVisitor {
     if (wasSynchronized && config.rewriteSynchronizedMethod) {
       insertSynchronizedMethodPrefix();
     }
+    
+    /* Create the JVM Frame model if we are a method.  For constructors it
+     * is created in the callback object after the super constructor has been
+     * called.
+     */
+    if (!isConstructor) {
+      if (isModelingJVMFrame()) {
+        createFrameModel();
+      }
+    }
   }
   
   public void visitLineNumber(final int line, final Label start) {
@@ -362,6 +423,11 @@ final class FlashlightMethodRewriter implements MethodVisitor {
     mv.visitLineNumber(line, start);
     currentSrcLine = line;
     updateSiteIdentifier();
+    
+    // Update the JVM Frame model, but only if it has been created already
+    if (isModelingJVMFrame() && frameModelVariable != -1) {
+      updateFrameLineNumber(line);
+    }
   }
   
   public void visitTypeInsn(final int opcode, final String type) {
@@ -543,6 +609,22 @@ final class FlashlightMethodRewriter implements MethodVisitor {
     insertDelayedCode();
     if (newLabel != null) {
       mv.visitLabel(label);
+    }
+    
+    /* Update the JVM frame model */
+    if (isModelingJVMFrame()) {
+      final int currentLabelIdx = nextLabel++;
+      for (int varIdx = 0; varIdx < debugInfo.getNumLocals(); varIdx++) {
+        final DebugInfo.VarInfo varInfo = debugInfo.getVariableInfo(varIdx, currentLabelIdx);
+        if (varInfo != null) {
+          final String startsAs = varInfo.variableStartsAs();
+          if (startsAs != null) {
+            updateFrameVariable(varIdx, startsAs, varInfo.variableDescription());
+          } else if (varInfo.variableDies()) {
+            updateFrameVariable(varIdx);
+          }
+        }
+      }
     }
   }
   
@@ -1471,7 +1553,7 @@ final class FlashlightMethodRewriter implements MethodVisitor {
     // lockObj
     mv.visitInsn(Opcodes.DUP);
     // lockObj, lockObj
-    syncMethodLockVariable = lvs.newLocal(Type.getObjectType("java/lang/Object"));
+    syncMethodLockVariable = lvs.newLocal(FlashlightNames.JAVA_LANG_OBJECT_TYPE);
     mv.visitVarInsn(Opcodes.ASTORE, syncMethodLockVariable);
     // lockObj
     mv.visitInsn(Opcodes.MONITORENTER);
@@ -1662,10 +1744,93 @@ final class FlashlightMethodRewriter implements MethodVisitor {
   
   private void pushSiteIdentifier(final long id) {
     ByteCodeUtils.pushLongConstant(mv, id);
-//    mv.visitLdcInsn(Long.valueOf(id));
   }
   
   private void pushSiteIdentifier() {
     pushSiteIdentifier(siteId);
+  }
+  
+  
+  
+  // =========================================================================
+  // == For Modeling the JVM Frame
+  // =========================================================================
+
+  /**
+   * Are we bothering to model the JVM frame.
+   */
+  private boolean isModelingJVMFrame() {
+    return (debugInfo != null);
+  }
+  
+  /**
+   * Create a new frame object and store it in a local variable.
+   * It is a precondition of this method that {@link #debugInfo} is not 
+   * {@value null}.
+   */
+  private void createFrameModel() {
+    // Create a new Frame Object
+    mv.visitTypeInsn(Opcodes.NEW, FlashlightNames.FRAME);
+    mv.visitInsn(Opcodes.DUP);
+    ByteCodeUtils.pushIntegerConstant(mv, debugInfo.getNumLocals());
+    ByteCodeUtils.pushIntegerConstant(mv, debugInfo.getStackSize());
+    mv.visitMethodInsn(Opcodes.INVOKESPECIAL, FlashlightNames.FRAME, 
+        FlashlightNames.CONSTRUCTOR, FlashlightNames.FRAME_INIT_DESCRIPTION);
+    
+    // Store in a new local variable
+    frameModelVariable = lvs.newLocal(FlashlightNames.FRAME_TYPE);
+    mv.visitVarInsn(Opcodes.ASTORE, frameModelVariable);
+    
+    /* Don't have to add labels for arguments because it is already in the 
+     * debug info.  But we do have output any local variables that were
+     * processed before the frame model was created.  This happens in constructors
+     * because we delay the creation of the frame model until after the
+     * super constructor is called.
+     */
+    for (final LocalVariable lv : delayedLocalVariables) {
+      updateFrameVariable(lv.index, lv.name, lv.description);
+    }
+  }
+  
+  /**
+   * Generate code to update the line number of the frame model.
+   */
+  private void updateFrameLineNumber(final int lineNumber) {
+    mv.visitVarInsn(Opcodes.ALOAD, frameModelVariable);
+    ByteCodeUtils.pushIntegerConstant(mv, lineNumber);
+    callFrameMethod(FlashlightNames.SET_CURRENT_SOURCE_LINE);
+  }
+  
+  /**
+   * Generate code to update the identity of a local variable.
+   */
+  private void updateFrameVariable(
+      final int idx, final String name, final String desc) {
+    if (frameModelVariable == -1) {
+      delayedLocalVariables.add(new LocalVariable(idx, name, desc));
+    } else {
+      mv.visitVarInsn(Opcodes.ALOAD, frameModelVariable);
+      ByteCodeUtils.pushIntegerConstant(mv, idx);
+      mv.visitLdcInsn(name);
+      mv.visitLdcInsn(desc);
+      callFrameMethod(FlashlightNames.SET_LOCAL_VARIABLE);
+    }
+  }
+  
+  /**
+   * Generate code to remove the identity of a local variable.
+   */
+  private void updateFrameVariable(final int idx) {
+    mv.visitVarInsn(Opcodes.ALOAD, frameModelVariable);
+    ByteCodeUtils.pushIntegerConstant(mv, idx);
+    callFrameMethod(FlashlightNames.CLEAR_LOCAL_VARIABLE);
+  }
+  
+  /**
+   * Generate code to call a method from the Frame object
+   */
+  private void callFrameMethod(final Method method) {
+    mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, FlashlightNames.FRAME,
+        method.getName(), method.getDescriptor());
   }
 }

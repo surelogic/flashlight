@@ -14,6 +14,7 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.jar.Attributes;
@@ -753,9 +754,8 @@ public abstract class RewriteManager {
       Set<MethodIdentifier> badMethods =
         Collections.<MethodIdentifier>emptySet();
       while (!done) {
-        final BufferedInputStream inClassfile = provider.getInputStream();
         try {
-          tryToRewriteClassfileStream(inClassfile, outClassfile, msgr, badMethods);
+          tryToRewriteClassfileStream(provider, outClassfile, msgr, badMethods);
           done = true;
         } catch (final OversizedMethodsException e) {
           badMethods = e.getOversizedMethods();
@@ -763,12 +763,6 @@ public abstract class RewriteManager {
            * the same warning messages all over again.
            */
           msgr = NullMessenger.prototype;
-        } finally {
-          try {
-            inClassfile.close();
-          } catch (final IOException e) {
-            // Doesn't want to close, what can we do?
-          }
         }
       }
     }
@@ -794,29 +788,55 @@ public abstract class RewriteManager {
      *           exception is thrown.
      */
     private void tryToRewriteClassfileStream(
-        final BufferedInputStream inClassfile, final OutputStream outClassfile,
+        final StreamProvider provider, final OutputStream outClassfile,
         final RewriteMessenger msgr, final Set<MethodIdentifier> ignoreMethods)
         throws IOException, OversizedMethodsException {
+      /* First extract the debug information */
+      BufferedInputStream inClassfile = provider.getInputStream();
+      Map<String, DebugInfo.MethodInfo> methodInfos = null;
+      try {
+        final ClassReader input = new ClassReader(inClassfile);
+        final DebugExtractor debugExtractor = new DebugExtractor();
+        input.accept(debugExtractor, ClassReader.SKIP_FRAMES);
+        methodInfos = debugExtractor.getDebugInfo();
+        System.out.println(methodInfos);
+      } finally {
+        try {
+          inClassfile.close();
+        } catch (final IOException e) {
+          // doesn't want to close, what can we do?
+        }
+      }
+      
       /* Get the classfile version first so we can fine tune the ASM flags.
        * ASM is stupid: if we tell it to compute stack frames, it will do it
        * even if the classfile is from before 1.6.  So we only tell it to
        * compute stack frames if the classfile is 1.6 or higher.
        */
-      final int classfileMajorVersion = getMajorVersion(inClassfile);
-      final int classWriterFlags =
-        (classfileMajorVersion >= CLASSFILE_1_6) ? ClassWriter.COMPUTE_FRAMES : 0;
-      final ClassReader input = new ClassReader(inClassfile);
-      final ClassWriter output = new FlashlightClassWriter(input, classWriterFlags, classModel);
-      final FlashlightClassRewriter xformer =
-        new FlashlightClassRewriter(config, callSiteIdFactory, msgr, output, classModel, ignoreMethods);
-      // Skip stack map frames: Either the classfiles don't have them, or we will recompute them
-      input.accept(xformer, ClassReader.SKIP_FRAMES);
-      final Set<MethodIdentifier> badMethods = xformer.getOversizedMethods();
-      if (!badMethods.isEmpty()) {
-        throw new OversizedMethodsException(
-            "Instrumentation generates oversized methods", badMethods);
-      } else {
-        outClassfile.write(output.toByteArray());
+      inClassfile = provider.getInputStream();
+      try {
+        final int classfileMajorVersion = getMajorVersion(inClassfile);
+        final int classWriterFlags =
+          (classfileMajorVersion >= CLASSFILE_1_6) ? ClassWriter.COMPUTE_FRAMES : ClassWriter.COMPUTE_MAXS;
+        final ClassReader input = new ClassReader(inClassfile);
+        final ClassWriter output = new FlashlightClassWriter(input, classWriterFlags, classModel);
+        final FlashlightClassRewriter xformer =
+          new FlashlightClassRewriter(config, callSiteIdFactory, msgr, output, classModel, methodInfos, ignoreMethods);
+        // Skip stack map frames: Either the classfiles don't have them, or we will recompute them
+        input.accept(xformer, ClassReader.SKIP_FRAMES);
+        final Set<MethodIdentifier> badMethods = xformer.getOversizedMethods();
+        if (!badMethods.isEmpty()) {
+          throw new OversizedMethodsException(
+              "Instrumentation generates oversized methods", badMethods);
+        } else {
+          outClassfile.write(output.toByteArray());
+        }
+      } finally {
+        try {
+          inClassfile.close();
+        } catch (final IOException e) {
+          // doesn't want to close, what can we do?
+        }
       }
     }
 

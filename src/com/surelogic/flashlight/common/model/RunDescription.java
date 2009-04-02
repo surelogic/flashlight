@@ -144,6 +144,20 @@ public final class RunDescription {
 		return b.toString();
 	}
 
+	/**
+	 * Returns a string that can be used to identify this run description. This
+	 * call is a shortcut for the below code.
+	 * 
+	 * <pre>
+	 * getName() + &quot; - &quot; + getStartTimeOfRun()
+	 * </pre>
+	 * 
+	 * @return a string that can be used to identify this run description.
+	 */
+	public String toIdentityString() {
+		return getName() + " - " + getStartTimeOfRun();
+	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;

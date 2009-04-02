@@ -306,11 +306,10 @@ public final class RunDescription {
 	/**
 	 * Returns a {@link DBConnection} to the database represented by this run.
 	 * 
-	 * @return
+	 * @return a {@link DBConnection} to the database represented by this run.
 	 */
 	public DBConnection getDB() {
 		return FlashlightDBConnection.getInstance(getRunDirectory()
 				.getDatabaseDirectory());
 	}
-
 }

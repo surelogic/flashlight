@@ -1,6 +1,7 @@
 package com.surelogic.flashlight.client.eclipse.launch;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -218,7 +219,27 @@ final class FlashlightVMRunner implements IVMRunner {
     try {
       logOut = new PrintWriter(logFile);
       final RewriteMessenger messenger = new PrintWriterMessenger(logOut);
-      final Configuration rewriterConfig = new Configuration();
+      
+      // Read the property file
+      Properties flashlightProps = new Properties();
+      try {
+        flashlightProps.load(
+            new FileInputStream(
+                new File(System.getProperty("user.home"),
+                    "flashlight-rewriter.properties")));
+      } catch (final IOException e) {
+        SLLogger.getLogger().log(Level.INFO, "Error reading the flashlight properties file, using defaults", e);
+        // Create a new object in case the old one contains crap
+        flashlightProps = new Properties();
+        Configuration.writeDefaultProperties(flashlightProps);
+      } catch (final IllegalArgumentException e) {
+        SLLogger.getLogger().log(Level.INFO, "Error reading the flashlight properties file, using defaults", e);
+        // Create a new object in case the old one contains crap
+        flashlightProps = new Properties();
+        Configuration.writeDefaultProperties(flashlightProps);
+      }
+      
+      final Configuration rewriterConfig = new Configuration(flashlightProps);
       
 //      final Properties p = new Properties();
 //      Configuration.writeDefaultProperties(p);

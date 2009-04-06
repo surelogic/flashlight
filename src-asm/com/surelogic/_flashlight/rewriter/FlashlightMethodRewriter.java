@@ -2258,7 +2258,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
    * Are we bothering to model the JVM frame.
    */
   private boolean isModelingJVMFrame() {
-    return false; //(debugInfo != null);
+    return config.modelFrames && (debugInfo != null);
   }
   
   /**

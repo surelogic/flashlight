@@ -3,6 +3,8 @@ package com.surelogic._flashlight.rewriter;
 import java.util.Properties;
 
 public final class Configuration {
+  public static final String MODEL_FRAMES = "com.surelogic._flashlight.rewriter.model.frame";
+  
   public static final String REWRITE_DEFAULT_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.default";
   public static final String REWRITE_INVOKEINTERFACE_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.invokeinterface";
   public static final String REWRITE_INVOKESPECIAL_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.invokespecial";
@@ -37,6 +39,8 @@ public final class Configuration {
   public static final String FALSE = "false";
   
   
+  
+  public final boolean modelFrames;
   
   public final boolean rewriteInvokeinterface;
   public final boolean rewriteInvokespecial;
@@ -77,31 +81,33 @@ public final class Configuration {
   
   
   public static void writeDefaultProperties(final Properties props) {
-    props.setProperty(REWRITE_DEFAULT_PROPERTY, "true");
-    props.setProperty(INSTRUMENT_DEFAULT_PROPERTY, "true");
+    props.setProperty(MODEL_FRAMES, FALSE);
     
-    props.setProperty(REWRITE_INVOKEINTERFACE_PROPERTY, "true");
-    props.setProperty(REWRITE_INVOKESPECIAL_PROPERTY, "true");
-    props.setProperty(REWRITE_INVOKESTATIC_PROPERTY, "true");
-    props.setProperty(REWRITE_INVOKEVIRTUAL_PROPERTY, "true");
-    props.setProperty(REWRITE_SYNCHRONIZED_METHOD_PROPERTY, "true");
-    props.setProperty(REWRITE_MONITOREXIT_PROPERTY, "true");
-    props.setProperty(REWRITE_MONITORENTER_PROPERTY, "true");
-    props.setProperty(REWRITE_GETSTATIC_PROPERTY, "true");
-    props.setProperty(REWRITE_PUTSTATIC_PROPERTY, "true");
-    props.setProperty(REWRITE_GETFIELD_PROPERTY, "true");
-    props.setProperty(REWRITE_PUTFIELD_PROPERTY, "true");
-    props.setProperty(REWRITE_INIT_PROPERTY, "true");
-    props.setProperty(REWRITE_CONSTRUCTOR_EXECUTION_PROPERTY, "true");
+    props.setProperty(REWRITE_DEFAULT_PROPERTY, TRUE);
+    props.setProperty(INSTRUMENT_DEFAULT_PROPERTY, TRUE);
+    
+    props.setProperty(REWRITE_INVOKEINTERFACE_PROPERTY, TRUE);
+    props.setProperty(REWRITE_INVOKESPECIAL_PROPERTY, TRUE);
+    props.setProperty(REWRITE_INVOKESTATIC_PROPERTY, TRUE);
+    props.setProperty(REWRITE_INVOKEVIRTUAL_PROPERTY, TRUE);
+    props.setProperty(REWRITE_SYNCHRONIZED_METHOD_PROPERTY, TRUE);
+    props.setProperty(REWRITE_MONITOREXIT_PROPERTY, TRUE);
+    props.setProperty(REWRITE_MONITORENTER_PROPERTY, TRUE);
+    props.setProperty(REWRITE_GETSTATIC_PROPERTY, TRUE);
+    props.setProperty(REWRITE_PUTSTATIC_PROPERTY, TRUE);
+    props.setProperty(REWRITE_GETFIELD_PROPERTY, TRUE);
+    props.setProperty(REWRITE_PUTFIELD_PROPERTY, TRUE);
+    props.setProperty(REWRITE_INIT_PROPERTY, TRUE);
+    props.setProperty(REWRITE_CONSTRUCTOR_EXECUTION_PROPERTY, TRUE);
   
-    props.setProperty(INSTRUMENT_BEFORE_CALL_PROPERTY, "true");
-    props.setProperty(INSTRUMENT_AFTER_CALL_PROPERTY, "true");
-    props.setProperty(INSTRUMENT_BEFORE_WAIT_PROPERTY, "true");
-    props.setProperty(INSTRUMENT_AFTER_WAIT_PROPERTY, "true");
-    props.setProperty(INSTRUMENT_BEFORE_JUC_LOCK_PROPERTY, "true");
-    props.setProperty(INSTRUMENT_AFTER_LOCK_PROPERTY, "true");
-    props.setProperty(INSTRUMENT_AFTER_TRYLOCK_PROPERTY, "true");
-    props.setProperty(INSTRUMENT_AFTER_UNLOCK_PROPERTY, "true");
+    props.setProperty(INSTRUMENT_BEFORE_CALL_PROPERTY, TRUE);
+    props.setProperty(INSTRUMENT_AFTER_CALL_PROPERTY, TRUE);
+    props.setProperty(INSTRUMENT_BEFORE_WAIT_PROPERTY, TRUE);
+    props.setProperty(INSTRUMENT_AFTER_WAIT_PROPERTY, TRUE);
+    props.setProperty(INSTRUMENT_BEFORE_JUC_LOCK_PROPERTY, TRUE);
+    props.setProperty(INSTRUMENT_AFTER_LOCK_PROPERTY, TRUE);
+    props.setProperty(INSTRUMENT_AFTER_TRYLOCK_PROPERTY, TRUE);
+    props.setProperty(INSTRUMENT_AFTER_UNLOCK_PROPERTY, TRUE);
   
     props.setProperty(STORE_CLASS_NAME_PROPERTY, FlashlightNames.FLASHLIGHT_STORE);
   }
@@ -132,6 +138,8 @@ public final class Configuration {
    * property dictionary.
    */
   public Configuration(final Properties props) {
+    modelFrames = getBoolean(props, MODEL_FRAMES, FALSE);
+    
     final String rewriteDefault = props.getProperty(REWRITE_DEFAULT_PROPERTY, TRUE);
     
     rewriteInvokeinterface = getBoolean(props, REWRITE_INVOKEINTERFACE_PROPERTY, rewriteDefault);

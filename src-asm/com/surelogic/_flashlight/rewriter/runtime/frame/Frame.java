@@ -6,10 +6,15 @@ public final class Frame {
   
   
   /**
-   * The local variables. Array elements must never be {@code null}; use
-   * {@link LocalVariable#UNKNOWN} if the id is not known.
+   * The identity of the local variables. Array elements must never be
+   * {@code null}; use {@link LocalVariable#UNKNOWN} if the id is not known.
    */
   private final LocalVariable[] locals;
+
+  /**
+   * The values of the local variables.
+   */
+  private final StackItem[] localValues;
   
   /**
    * The stack.  Grows upwards from the zero index.
@@ -38,6 +43,7 @@ public final class Frame {
   
   public Frame(final int numLocals, final int stackSize) {
     locals = new LocalVariable[numLocals];
+    localValues = new StackItem[numLocals];
     stack = new StackItem[stackSize];
     topOfStack = -1;
     currentSourceLine = -1;
@@ -65,6 +71,21 @@ public final class Frame {
     locals[index] = LocalVariable.create(name, description);
   }
   
+  /**
+   * Initialize the receiver. 
+   */
+  public void initReceiver() {
+    localValues[0] = FromReceiver.PROTOTYPE;
+  }
+  
+  
+  /**
+   * Initialize a local variable holding a parameter value.
+   */
+  public void initParameter(final int localIdx, final int argIdx) {
+    localValues[localIdx] = new FromParameter(argIdx);
+  }
+  
   
   
   /**
@@ -76,22 +97,28 @@ public final class Frame {
 
   
   
-  private static <T> StringBuilder dump(final T[] array, final StringBuilder sb) {
-    for (int i = 0; i < array.length; i++) {
+  public String dumpLocals() {
+    final StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < locals.length; i++) {
       sb.append(i);
       sb.append(": ");
-      sb.append(array[i]);
+      sb.append(locals[i]);
+      sb.append(" = ");
+      sb.append(localValues[i]);
       sb.append(EOL);
     }    
-    return sb;
-  }
-
-  public String dumpLocals() {
-    return dump(locals, new StringBuilder()).toString();
+    return sb.toString();
   }
   
   public String dumpStack() {
-    return dump(stack, new StringBuilder()).toString();
+    final StringBuilder sb = new StringBuilder();
+    for (int i = 0; i <= topOfStack; i++) {
+      sb.append(i);
+      sb.append(": ");
+      sb.append(stack[i]);
+      sb.append(EOL);
+    }    
+    return sb.toString();
   }
   
   public String dump() {
@@ -101,9 +128,10 @@ public final class Frame {
     sb.append(EOL);
     sb.append("Locals:");
     sb.append(EOL);
-    dump(locals, sb);
+    sb.append(dumpLocals());
     sb.append("Stack:");
-    dump(stack, sb);
+    sb.append(EOL);
+    sb.append(dumpStack());
     return sb.toString();
   }
   
@@ -121,13 +149,17 @@ public final class Frame {
   }
   
   public void aload(final int localIdx) {
-//    stack[++topOfStack] = new FromLocalVariable(currentSourceLine, locals[localIdx]);
-    stack[++topOfStack] = new FromLocalVariable(currentSourceLine, localIdx);
+    stack[++topOfStack] = new FromLocalVariable(
+        currentSourceLine, locals[localIdx], localValues[localIdx]);
   }
   
   public void arraylength() {
     /* convert the top element to a primitive */
     stack[topOfStack] = IsPrimitive.PROTOTYPE;
+  }
+
+  public void astore(final int localIdx) {
+    localValues[localIdx] = stack[topOfStack--];
   }
   
   public void athrow() {
@@ -193,35 +225,35 @@ public final class Frame {
     stack[++topOfStack] = value1;
   }
 
-  public void getfield(
+  public void getfieldObject(
       final String owner, final String name, final String description) {
-    // Test if the field has an object type
-    final char firstChar = description.charAt(0);
-    if (firstChar == '[' || firstChar == 'L') {
-      stack[topOfStack] = new FromFieldReference(
-          currentSourceLine, stack[topOfStack],
-          new OwnedName(owner, name, description));
-    } else {
-      stack[topOfStack] = IsPrimitive.PROTOTYPE;
-      if (firstChar == 'D' || firstChar == 'J') {
-        stack[++topOfStack] = IsPrimitive.PROTOTYPE;
-      }
-    }
+    stack[topOfStack] = new FromFieldReference(
+        currentSourceLine, stack[topOfStack],
+        new OwnedName(owner, name, description));
   }
 
-  public void getstatic(
+  public void getfieldPrimitive() {
+    stack[topOfStack] = IsPrimitive.PROTOTYPE;
+  }
+
+  public void getfieldPrimitive2() {
+    stack[topOfStack] = IsPrimitive.PROTOTYPE;
+    stack[++topOfStack] = IsPrimitive.PROTOTYPE;
+  }
+
+  public void getstaticObject(
       final String owner, final String name, final String description) {
-    // Test if the field has an object type
-    final char firstChar = description.charAt(0);
-    if (firstChar == '[' || firstChar == 'L') {
-      stack[++topOfStack] = new FromStaticFieldReference(
-          currentSourceLine, new OwnedName(owner, name, description));
-    } else {
-      stack[++topOfStack] = IsPrimitive.PROTOTYPE;
-      if (firstChar == 'D' || firstChar == 'J') {
-        stack[++topOfStack] = IsPrimitive.PROTOTYPE;
-      }
-    }
+    stack[++topOfStack] = new FromStaticFieldReference(currentSourceLine,
+        new OwnedName(owner, name, description));
+  }
+  
+  public void getstaticPrimitive() {
+    stack[++topOfStack] = IsPrimitive.PROTOTYPE;
+  }
+  
+  public void getstaticPrimitive2() {
+    stack[++topOfStack] = IsPrimitive.PROTOTYPE;
+    stack[++topOfStack] = IsPrimitive.PROTOTYPE;
   }
   
   public void instanceOf() {
@@ -236,9 +268,14 @@ public final class Frame {
     stack[++topOfStack] = new FromClassConstant(currentSourceLine, classname);
   }
   
-  public void multianewarray(final String description, final int dims) {
+  /**
+   * @param elementType The type of the array elements.  Must be derived from
+   *  the type in the raw instruction.
+   * @param dims The number of dimensions on the stack
+   */
+  public void multianewarray(final String elementType, final int dims) {
     topOfStack -= dims;
-    stack[++topOfStack] = new FromNewArray(currentSourceLine, description.substring(1));
+    stack[++topOfStack] = new FromNewArray(currentSourceLine, elementType);
   }
   
   public void newObject(final String description) {
@@ -255,6 +292,18 @@ public final class Frame {
   // == Generic manipulation
   // ======================================================================
  
+  /** For exception handlers */
+  public void exceptionHandler(final String type) {
+    topOfStack = 0;
+    stack[0] = new FromException(currentSourceLine, type);
+  }
+  
+  /** For finally handlers */
+  public void finallyHandler() {
+    topOfStack = 0;
+    stack[0] = new FromException(currentSourceLine, "Ljava/lang/Throwable;");
+  }
+  
   public void pop() {
     topOfStack -= 1;
   }
@@ -291,14 +340,6 @@ public final class Frame {
   }
   
   /**
-   * Handle method returns
-   */
-  public void methodReturn() {
-    /* Clear the stack */
-    topOfStack = -1;
-  }
-  
-  /**
    * Handle loads from primitively typed arrays.
    */
   public void primitiveArrayLoad() {
@@ -331,12 +372,24 @@ public final class Frame {
   public void invokeMethodReturnsObject(
       final int opcode, final int argumentsSize,
       final String owner, final String name, final String description) {
+//    System.out.println(dump());
     // pop args
     topOfStack -= argumentsSize;
     // replace receiver with return value
     stack[topOfStack] = new FromMethodCall(
         currentSourceLine, opcode, stack[topOfStack],
         new OwnedName(owner, name, description));
+  }
+  
+  /**
+   * Handle an instance method invocation that doesn't return a value.
+   * 
+   * @param argumentsSize
+   *          The total size of all the method arguments.
+   */
+  public void invokeMethodReturnsVoid(final int argumentsSize) {
+    topOfStack -= argumentsSize; // pop arguments
+    topOfStack -= 1; // pop receiver
   }
   
   /**
@@ -349,7 +402,7 @@ public final class Frame {
     topOfStack -= argumentsSize;
     stack[topOfStack] = IsPrimitive.PROTOTYPE;
   }
-  
+
   /**
    * Handle an instance method invocation that returns a long or double.
    * 
@@ -363,7 +416,7 @@ public final class Frame {
   }
   
   /**
-   * Handle an instance method invocation that returns an object or array.
+   * Handle an static method invocation that returns an object or array.
    * 
    * @param opcode
    *          The opcode of the method call.
@@ -376,8 +429,7 @@ public final class Frame {
    * @param description
    *          The method's description
    */
-  public void invokeStaticMethodReturnsObject(
-      final int opcode, final int argumentsSize,
+  public void invokeStaticMethodReturnsObject(final int argumentsSize,
       final String owner, final String name, final String description) {
     // pop args
     topOfStack -= argumentsSize;
@@ -387,7 +439,17 @@ public final class Frame {
   }
   
   /**
-   * Handle an instance method invocation that returns a primitive type.
+   * Handle an static method invocation that doesn't return a value.
+   * 
+   * @param argumentsSize
+   *          The total size of all the method arguments.
+   */
+  public void invokeStaticMethodReturnsVoid(final int argumentsSize) {
+    topOfStack -= argumentsSize;
+  }
+  
+  /**
+   * Handle an static method invocation that returns a primitive type.
    * 
    * @param argumentsSize
    *          The total size of all the method arguments.
@@ -398,7 +460,7 @@ public final class Frame {
   }
   
   /**
-   * Handle an instance method invocation that returns a long or double.
+   * Handle an static method invocation that returns a long or double.
    * 
    * @param argumentsSize
    *          The total size of all the method arguments.

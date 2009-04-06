@@ -12,6 +12,9 @@ public interface StackItem {
     STATIC_METHOD_CALL,
     NEW_ARRAY,
     NEW_OBJECT,
+    EXCEPTION,
+    PARAMETER,
+    RECEIVER,
     PRIMITIVE }
   
   public Type getType();

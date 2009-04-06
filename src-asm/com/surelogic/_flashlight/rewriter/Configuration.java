@@ -77,6 +77,9 @@ public final class Configuration {
   
   
   public static void writeDefaultProperties(final Properties props) {
+    props.setProperty(REWRITE_DEFAULT_PROPERTY, "true");
+    props.setProperty(INSTRUMENT_DEFAULT_PROPERTY, "true");
+    
     props.setProperty(REWRITE_INVOKEINTERFACE_PROPERTY, "true");
     props.setProperty(REWRITE_INVOKESPECIAL_PROPERTY, "true");
     props.setProperty(REWRITE_INVOKESTATIC_PROPERTY, "true");

@@ -3,7 +3,6 @@ package com.surelogic._flashlight.rewriter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.commons.LocalVariablesSorter;
 
 class InPlaceInstanceMethodInstrumentation extends
     InPlaceMethodInstrumentation {
@@ -11,13 +10,13 @@ class InPlaceInstanceMethodInstrumentation extends
   private int rcvrLocal;
   final Type[] argTypes;
   final int[] argLocals;
-  final LocalVariablesSorter varSorter;
+  final LocalVariableGenerator varGenerator;
   
   public InPlaceInstanceMethodInstrumentation(final long callSiteId, final int opcode,
       final String owner, final String name, final String descriptor,
-      final LocalVariablesSorter lvs) {
+      final LocalVariableGenerator vg) {
     super(callSiteId, opcode, owner, name, descriptor);
-    this.varSorter = lvs;
+    this.varGenerator = vg;
     this.rcvrType = Type.getObjectType(owner);
     this.rcvrLocal = -1;
     this.argTypes = Type.getArgumentTypes(descriptor);
@@ -28,9 +27,9 @@ class InPlaceInstanceMethodInstrumentation extends
   @Override
   public void popReceiverAndArguments(final MethodVisitor mv) {
     /* First allocate the local variables we need */
-    rcvrLocal = varSorter.newLocal(rcvrType);
+    rcvrLocal = varGenerator.newLocal(rcvrType);
     for (int i = 0; i < argTypes.length; i++) {
-      argLocals[i] = varSorter.newLocal(argTypes[i]);
+      argLocals[i] = varGenerator.newLocal(argTypes[i]);
     }
 
     // ..., rcvr, [args]

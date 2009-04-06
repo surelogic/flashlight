@@ -2,7 +2,9 @@ package com.surelogic._flashlight.rewriter;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.objectweb.asm.Label;
 
@@ -26,7 +28,7 @@ final class DebugInfo {
      * label, and whether a new variable begins.
      */
     private final Map<Integer, Map<Integer, VarInfo>> varToLabelToInfo;
-    
+        
     
     
     private MethodInfo(final int num, final int size,
@@ -46,8 +48,7 @@ final class DebugInfo {
       return stackSize;
     }
     
-    public VarInfo getVariableInfo(final int varIdx, final int labelIdx) {
-      // Use autoboxing for the indices
+    public VarInfo getVariableInfo(final int varIdx, final Integer labelIdx) {
       final Map<Integer, VarInfo> labelToInfo = varToLabelToInfo.get(varIdx);
       if (labelToInfo != null) {
         return labelToInfo.get(labelIdx);
@@ -100,7 +101,10 @@ final class DebugInfo {
   
   private Map<Integer, Map<Integer, VarInfo>> varInfo;
     
-
+  private Map<Integer, String> exceptionHandlers;
+  private Set<Integer> finallyHandlers;
+  
+  
   
   /**
    * We are about to receive information for a new method.
@@ -110,6 +114,8 @@ final class DebugInfo {
     labels.clear();
     nextLabel = 0;
     varInfo = new HashMap<Integer, Map<Integer, VarInfo>>();
+    exceptionHandlers = new HashMap<Integer, String>();
+    finallyHandlers = new HashSet<Integer>();
     currentKey = name + desc;
   }
   
@@ -124,7 +130,7 @@ final class DebugInfo {
   /**
    * Visit a local variable clause.
    */
-  public void vistLocalVariable(
+  public void visitLocalVariable(
       final int index, final String name, final String desc,
       final Label start, final Label end) {
     final Map<Integer, VarInfo> m = getVarInfo(index);
@@ -136,12 +142,13 @@ final class DebugInfo {
     final VarInfo endInfo = getInfo(m, labels.get(end));
     endInfo.varEnds = true;
   }
-
+  
   /**
    * Visit the end of the method.
    */
   public void visitSizes(final int numLocals, final int stackSize) {
-    final MethodInfo mi = new MethodInfo(numLocals, stackSize, varInfo);
+    final MethodInfo mi = new MethodInfo(
+        numLocals, stackSize, varInfo);
     methods.put(currentKey, mi);
   }
   

@@ -35,7 +35,6 @@ final class DebugExtractor implements ClassVisitor {
   public void visit(final int version, final int access, final String name,
       final String signature, final String superName,
       final String[] interfaces) {
-    System.out.println("Extracting from " + name);
     // don't care
   }
 
@@ -67,7 +66,6 @@ final class DebugExtractor implements ClassVisitor {
   public MethodVisitor visitMethod(
       final int access, final String name, final String desc,
       final String signature, final String[] exceptions) {
-    System.out.println("  method " + name);
     debugInfo.newMethod(name, desc);
     
     return new MethodVisitor() {
@@ -138,7 +136,7 @@ final class DebugExtractor implements ClassVisitor {
           final String name, final String desc,
           final String signature, final Label start, final Label end,
           final int index) {
-        debugInfo.vistLocalVariable(index, name, desc, start, end);
+        debugInfo.visitLocalVariable(index, name, desc, start, end);
       }
 
       public void visitLookupSwitchInsn(Label dflt, int[] keys, Label[] labels) {

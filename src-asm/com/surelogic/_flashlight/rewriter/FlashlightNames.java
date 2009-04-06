@@ -128,10 +128,13 @@ final class FlashlightNames {
   public static final Method SET_CURRENT_SOURCE_LINE = Method.getMethod("void setCurrentSourceLine(int)");
   public static final Method CLEAR_LOCAL_VARIABLE = Method.getMethod("void clearLocalVariable(int)");
   public static final Method SET_LOCAL_VARIABLE = Method.getMethod("void setLocalVariable(int, String, String)");
+  public static final Method INIT_RECEIVER = Method.getMethod("void initReceiver()");
+  public static final Method INIT_PARAMETER = Method.getMethod("void initParameter(int, int)");
   
   public static final Method AALOAD = Method.getMethod("void aaload()");
   public static final Method ALOAD = Method.getMethod("void aload(int)");
   public static final Method ARRAYLENGTH = Method.getMethod("void arraylength()");
+  public static final Method ASTORE = Method.getMethod("void astore(int)");
   public static final Method ATHROW = Method.getMethod("void athrow()");
   public static final Method DUP = Method.getMethod("void dup()");
   public static final Method DUP_X1 = Method.getMethod("void dup_x1()");
@@ -139,8 +142,12 @@ final class FlashlightNames {
   public static final Method DUP2 = Method.getMethod("void dup2()");
   public static final Method DUP2_X1 = Method.getMethod("void dup2_x1()");
   public static final Method DUP2_X2 = Method.getMethod("void dup2_x2()");
-  public static final Method GETFIELD = Method.getMethod("void getfield(String, String, String)");
-  public static final Method GETSTATIC = Method.getMethod("void getstatic(String, String, String)");
+  public static final Method GETFIELD_OBJECT = Method.getMethod("void getfieldObject(String, String, String)");
+  public static final Method GETFIELD_PRIMITIVE = Method.getMethod("void getfieldPrimitive()");
+  public static final Method GETFIELD_PRIMITIVE2 = Method.getMethod("void getfieldPrimitive2()");
+  public static final Method GETSTATIC_OBJECT = Method.getMethod("void getstaticObject(String, String, String)");
+  public static final Method GETSTATIC_PRIMITIVE = Method.getMethod("void getstaticPrimitive()");
+  public static final Method GETSTATIC_PRIMITIVE2 = Method.getMethod("void getstaticPrimitive2()");
   public static final Method INSTANCEOF = Method.getMethod("void instanceOf()");
   public static final Method LDC_STRING = Method.getMethod("void ldcString(String)");
   public static final Method LDC_CLASS = Method.getMethod("void ldcClass(String)");
@@ -148,6 +155,8 @@ final class FlashlightNames {
   public static final Method NEWOBJECT = Method.getMethod("void newObject(String)");
   public static final Method SWAP = Method.getMethod("void swap()");
 
+  public static final Method EXCEPTION_HANDLER = Method.getMethod("void exceptionHandler(String)");
+  public static final Method FINALLY_HANDLER = Method.getMethod("void finallyHandler()");
   public static final Method POP = Method.getMethod("void pop()");
   public static final Method POP2 = Method.getMethod("void pop2()");
   public static final Method POP3 = Method.getMethod("void pop3()");
@@ -158,11 +167,13 @@ final class FlashlightNames {
   public static final Method PRIMITIVE_ARRAY_LOAD = Method.getMethod("void primitiveArrayLoad()");
   public static final Method PRIMITIVE_ARRAY_LOAD2 = Method.getMethod("void primitiveArrayLoad2()");
   public static final Method INVOKE_METHOD_RETURNS_OBJECT = Method.getMethod("void invokeMethodReturnsObject(int, int, String, String, String)");
+  public static final Method INVOKE_METHOD_RETURNS_VOID = Method.getMethod("void invokeMethodReturnsVoid(int)");
   public static final Method INVOKE_METHOD_RETURNS_PRIMITIVE = Method.getMethod("void invokeMethodReturnsPrimitive(int)");
-  public static final Method INVOKE_METHOD_RETURNS_PRIMITIVE2 = Method.getMethod("void invokeMethodReturnsObject(int)");
-  public static final Method INVOKE_STATIC_METHOD_RETURNS_OBJECT = Method.getMethod("void invokeStaticMethodReturnsObject(int, int, String, String, String)");
+  public static final Method INVOKE_METHOD_RETURNS_PRIMITIVE2 = Method.getMethod("void invokeMethodReturnsPrimitive2(int)");
+  public static final Method INVOKE_STATIC_METHOD_RETURNS_OBJECT = Method.getMethod("void invokeStaticMethodReturnsObject(int, String, String, String)");
+  public static final Method INVOKE_STATIC_METHOD_RETURNS_VOID = Method.getMethod("void invokeStaticMethodReturnsVoid(int)");
   public static final Method INVOKE_STATIC_METHOD_RETURNS_PRIMITIVE = Method.getMethod("void invokeStaticMethodReturnsPrimitive(int)");
-  public static final Method INVOKE_STATIC_METHOD_RETURNS_PRIMITIVE2 = Method.getMethod("void invokeStaticMethodReturnsObject(int)");
+  public static final Method INVOKE_STATIC_METHOD_RETURNS_PRIMITIVE2 = Method.getMethod("void invokeStaticMethodReturnsPrimitive2(int)");
   
   
   /* We add the static final field "flashlight$classObject" to store the Class

@@ -799,7 +799,6 @@ public abstract class RewriteManager {
         final DebugExtractor debugExtractor = new DebugExtractor();
         input.accept(debugExtractor, ClassReader.SKIP_FRAMES);
         methodInfos = debugExtractor.getDebugInfo();
-        System.out.println(methodInfos);
       } finally {
         try {
           inClassfile.close();

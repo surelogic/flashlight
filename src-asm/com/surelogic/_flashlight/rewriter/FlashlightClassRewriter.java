@@ -255,7 +255,6 @@ final class FlashlightClassRewriter extends ClassAdapter {
         cv.visitMethod(newAccess, name, desc, signature, exceptions);
       final CodeSizeEvaluator cse = new CodeSizeEvaluator(original);
       methodSizes.put(methodId, cse);
-      System.out.println("visting " + name);
       final DebugInfo.MethodInfo mi = methodInfos.get(name + desc);
       return FlashlightMethodRewriter.create(access,
           name, desc, cse, config, callSiteIdFactory, messenger, classModel, mi, atLeastJava5, isInterface,

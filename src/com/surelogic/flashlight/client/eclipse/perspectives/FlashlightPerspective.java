@@ -27,11 +27,11 @@ public final class FlashlightPerspective implements IPerspectiveFactory {
 		final IFolderLayout resultsArea = layout.createFolder("resultsArea",
 				IPageLayout.TOP, 0.6f, editorArea);
 		resultsArea.addView(QueryResultsView.class.getName());
+		resultsArea.addPlaceholder(QueryEditorView.class.getName());
 
 		final IFolderLayout menuArea = layout.createFolder("menuArea",
 				IPageLayout.LEFT, 0.25f, "resultsArea");
 		menuArea.addView(QueryMenuView.class.getName());
-		menuArea.addPlaceholder(QueryEditorView.class.getName());
 
 		final IFolderLayout sourceArea = layout.createFolder("sourceArea",
 				IPageLayout.RIGHT, 0.5f, editorArea);

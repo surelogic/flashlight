@@ -104,4 +104,8 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements
 		};
 		job.schedule();
 	}
+
+	public String getEditorViewId() {
+		return QueryEditorView.class.getName();
+	}
 }

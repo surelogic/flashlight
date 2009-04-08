@@ -40,8 +40,9 @@ public class LongSet extends LongMap<Boolean> implements ILongSet {
 	public void retainAll(final LongSet ls) {
 		final Iterator<Long> it = this.iterator();
 		while (it.hasNext()) {
-			if (!ls.contains(it.next())) {
-				it.remove();
+			final long l = it.next();
+			if (!ls.contains(l)) {
+				remove(l);
 			}
 		}
 	}
@@ -55,8 +56,9 @@ public class LongSet extends LongMap<Boolean> implements ILongSet {
 	public void retainAll(final Collection<Long> ls) {
 		final Iterator<Long> it = this.iterator();
 		while (it.hasNext()) {
-			if (!ls.contains(it.next())) {
-				it.remove();
+			final long l = it.next();
+			if (!ls.contains(l)) {
+				remove(l);
 			}
 		}
 	}

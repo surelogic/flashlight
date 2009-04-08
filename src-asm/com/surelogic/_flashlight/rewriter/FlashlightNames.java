@@ -151,7 +151,7 @@ final class FlashlightNames {
   public static final Method INSTANCEOF = Method.getMethod("void instanceOf()");
   public static final Method LDC_STRING = Method.getMethod("void ldcString(String)");
   public static final Method LDC_CLASS = Method.getMethod("void ldcClass(String)");
-  public static final Method MULTINEWARRAY = Method.getMethod("void multinewarray(String, int)");
+  public static final Method MULTIANEWARRAY = Method.getMethod("void multianewarray(String, int)");
   public static final Method NEWOBJECT = Method.getMethod("void newObject(String)");
   public static final Method SWAP = Method.getMethod("void swap()");
 

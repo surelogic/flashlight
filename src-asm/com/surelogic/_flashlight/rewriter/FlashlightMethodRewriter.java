@@ -410,7 +410,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     insertDelayedCode();
     
     // Update the JVM Frame model
-    if (isModelingJVMFrame() && frameModelVariable != -1) {
+    if (isModelingJVMFrame(opcode) && frameModelVariable != -1) {
       switch (opcode) {
       case Opcodes.CHECKCAST:
         // nop
@@ -447,13 +447,13 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
       handlePreviousAload();
       // previous store is dealt with in rewriteMonitorenter
       insertDelayedCode();
-      visitInsnUpdateJVMFrameModel(opcode);
+      // Frame modeling is dealt with in rewriteMonitorenter
       rewriteMonitorenter();
     } else if (opcode == Opcodes.MONITOREXIT && config.rewriteMonitorexit) {
       // previous load is dealt with in rewriteMonitorexit()
       handlePreviousAstore();
       insertDelayedCode();
-      visitInsnUpdateJVMFrameModel(opcode);
+      // Frame modeling is dealt with in rewriteMonitorenter
       rewriteMonitorexit();
     } else if ((opcode >= Opcodes.IRETURN && opcode <= Opcodes.RETURN)) {
       handlePreviousAload();
@@ -464,7 +464,6 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
       }
       if (isConstructor && config.rewriteConstructorExecution) {
         insertConstructorExecution(false);
-        // Max Stack height is already updated because insertConstructorExecutionPrefix() must have been run 
       }
       visitInsnUpdateJVMFrameModel(opcode);
       mv.visitInsn(opcode);
@@ -488,9 +487,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
   }
   
   private void visitInsnUpdateJVMFrameModel(final int opcode) {
-    if (isModelingJVMFrame() && frameModelVariable != -1) {
-      /* MONITORENTER, or MONITOREXIT.
-       */
+    if (isModelingJVMFrame(opcode) && frameModelVariable != -1) {
       switch (opcode) {
       case Opcodes.AALOAD:
         mv.visitVarInsn(Opcodes.ALOAD, frameModelVariable);
@@ -682,7 +679,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     insertDelayedCode();
 
     // Update JVM Frame model
-    if (isModelingJVMFrame() && frameModelVariable != -1) {
+    if (isModelingJVMFrame(opcode) && frameModelVariable != -1) {
       final Type fieldType = Type.getType(desc);
       final int sort = fieldType.getSort();
       
@@ -766,7 +763,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     insertDelayedCode();
     
     // update the JVM frame model
-    if (isModelingJVMFrame() && frameModelVariable != -1) {
+    if (isModelingJVMFrame(opcode) && frameModelVariable != -1) {
       final Type returnType = Type.getReturnType(desc);
       final Type[] args = Type.getArgumentTypes(desc);
       int argsSize = 0;
@@ -940,7 +937,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     handlePreviousAstore();
     insertDelayedCode();
     
-    if (isModelingJVMFrame() && frameModelVariable != -1) {
+    if (isModelingJVMFrame(opcode) && frameModelVariable != -1) {
       if (opcode == Opcodes.BIPUSH || opcode == Opcodes.SIPUSH) {
         mv.visitVarInsn(Opcodes.ALOAD, frameModelVariable);
         callFrameMethod(FlashlightNames.PUSH_PRIMITIVE);
@@ -964,7 +961,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     if (stateMachine != null) stateMachine.visitJumpInsn(opcode, label);
     
     /* Update the JVM frame model. */
-    if (isModelingJVMFrame() && frameModelVariable != -1) {
+    if (isModelingJVMFrame(opcode) && frameModelVariable != -1) {
       switch (opcode) {
       case Opcodes.IFEQ:
       case Opcodes.IFGE:
@@ -1061,7 +1058,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     insertDelayedCode();
     
     /* Update the JVM Frame model */
-    if (isModelingJVMFrame() && frameModelVariable != -1) {
+    if (isModelingJVMFrame(Opcodes.LDC) && frameModelVariable != -1) {
       if (cst instanceof Integer || cst instanceof Float) {
         mv.visitVarInsn(Opcodes.ALOAD, frameModelVariable);
         callFrameMethod(FlashlightNames.PUSH_PRIMITIVE);
@@ -1095,7 +1092,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     /* Update the JVM frame model.  Must do it before the instruction
      * because of the nature of jumps.
      */
-    if (isModelingJVMFrame() && frameModelVariable != -1) {
+    if (isModelingJVMFrame(Opcodes.LOOKUPSWITCH) && frameModelVariable != -1) {
       mv.visitVarInsn(Opcodes.ALOAD, frameModelVariable);
       callFrameMethod(FlashlightNames.POP);
     }
@@ -1109,11 +1106,11 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     insertDelayedCode();
     
     // Update the JVM Frame model
-    if (isModelingJVMFrame() && frameModelVariable != -1) {
+    if (isModelingJVMFrame(Opcodes.MULTIANEWARRAY) && frameModelVariable != -1) {
       mv.visitVarInsn(Opcodes.ALOAD, frameModelVariable);
       mv.visitLdcInsn(desc.substring(1));
       ByteCodeUtils.pushIntegerConstant(mv, dims);
-      callFrameMethod(FlashlightNames.MULTINEWARRAY);
+      callFrameMethod(FlashlightNames.MULTIANEWARRAY);
     }
 
     if (stateMachine != null) stateMachine.visitMultiANewArrayInsn(desc, dims);
@@ -1130,7 +1127,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     /* Update the JVM frame model.  Must do it before the instruction
      * because of the nature of jumps.
      */
-    if (isModelingJVMFrame() && frameModelVariable != -1) {
+    if (isModelingJVMFrame(Opcodes.TABLESWITCH) && frameModelVariable != -1) {
       mv.visitVarInsn(Opcodes.ALOAD, frameModelVariable);
       callFrameMethod(FlashlightNames.POP);
     }
@@ -1149,11 +1146,13 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
       previousLoad = var;
     } else {
       // Update JVM Frame model
-      if (isModelingJVMFrame() && frameModelVariable != -1) {
+      if (isModelingJVMFrame(opcode) && frameModelVariable != -1) {
         switch (opcode) {
         case Opcodes.ALOAD:
         case Opcodes.ASTORE:
-          // Handled by handlePreviousAload() and handlePreviousAstore()
+          /* Handled by handlePreviousAload() and handlePreviousAstore()
+           * rewriteMontitorenter() and rewriteMonitorexit()
+           */
           break;
           
         case Opcodes.FSTORE:
@@ -1237,7 +1236,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     insertDelayedCode();
     
     // Update JVM frame model
-    if (isModelingJVMFrame() && frameModelVariable != -1) {
+    if (isModelingJVMFrame(Opcodes.IINC) && frameModelVariable != -1) {
       // nop
     }
 
@@ -1355,7 +1354,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
   private void handlePreviousAload() {
     if (previousLoad != -1) {
       // Update the JVM Frame model
-      if (isModelingJVMFrame() && frameModelVariable != -1) {
+      if (isModelingJVMFrame(Opcodes.ALOAD) && frameModelVariable != -1) {
         mv.visitVarInsn(Opcodes.ALOAD, frameModelVariable);
         ByteCodeUtils.pushIntegerConstant(mv, previousLoad);
         callFrameMethod(FlashlightNames.ALOAD);
@@ -1381,7 +1380,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
   private void handlePreviousAstore() {
     if (previousStore != -1) {
       // Update the JVM frame model
-      if (isModelingJVMFrame() && frameModelVariable != -1) {
+      if (isModelingJVMFrame(Opcodes.ASTORE) && frameModelVariable != -1) {
         mv.visitVarInsn(Opcodes.ALOAD, frameModelVariable);
         ByteCodeUtils.pushIntegerConstant(mv, previousStore);
         callFrameMethod(FlashlightNames.ASTORE);
@@ -1860,8 +1859,38 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
        * to delay the output of the ASTORE until immediately before the monitorenter
        * that we output.  In this case the stack is already "..., obj, obj"
        */
+      
+      /* update the JVM Frame model.  Do this before all the instrumentation,
+       * and *before* the ASTORE and MONITORENTER opcodes are emitted because
+       * we do not want to interfere with the pattern the JIT compiler looks for.
+       */
+      if (isModelingJVMFrame() && frameModelVariable != -1) {
+        // ASTORE
+        if (isModelingJVMFrame(Opcodes.ASTORE)) {
+          mv.visitVarInsn(Opcodes.ALOAD, frameModelVariable);
+          ByteCodeUtils.pushIntegerConstant(mv, previousStore);
+          callFrameMethod(FlashlightNames.ASTORE);
+        }
+        
+        if (isModelingJVMFrame(Opcodes.MONITORENTER)) {
+          // MONITORENTER
+          mv.visitVarInsn(Opcodes.ALOAD, frameModelVariable);
+          callFrameMethod(FlashlightNames.POP);        
+        }
+      }
+      
       // ..., obj, obj (+0,)
     } else {
+      /* update the JVM Frame model.  Do this before all the instrumentation,
+       * and *before* the MONITORENTER is emitted because
+       * we do not want to interfere with the pattern the JIT compiler looks for.
+       */
+      if (isModelingJVMFrame(Opcodes.MONITORENTER) && frameModelVariable != -1) {
+        // MONITORENTER
+        mv.visitVarInsn(Opcodes.ALOAD, frameModelVariable);
+        callFrameMethod(FlashlightNames.POP);        
+      }
+
       /* Copy the lock object to use for comparison purposes */
       // ..., obj
       mv.visitInsn(Opcodes.DUP);
@@ -1971,6 +2000,25 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     if (previousLoad != -1) {
       // ...
       
+      /* update the JVM Frame model.  Do this before all the instrumentation,
+       * and *before* the ALOAD and MONITOREXIT opcodes are emitted because
+       * we do not want to interfere with the pattern the JIT compiler looks for.
+       */
+      if (isModelingJVMFrame() && frameModelVariable != -1) {
+        if (isModelingJVMFrame(Opcodes.ALOAD)) {
+          // ALOAD
+          mv.visitVarInsn(Opcodes.ALOAD, frameModelVariable);
+          ByteCodeUtils.pushIntegerConstant(mv, previousStore);
+          callFrameMethod(FlashlightNames.ALOAD);
+        }
+        
+        if (isModelingJVMFrame(Opcodes.MONITOREXIT)) {
+          // MONITOREXIT
+          mv.visitVarInsn(Opcodes.ALOAD, frameModelVariable);
+          callFrameMethod(FlashlightNames.POP);        
+        }
+      }
+      
       /* There was an ALOAD immediately preceding this monitorexit, but
        * we haven't output it yet.  We need two copies of the object, one
        * for the monitorexit, and one for our post-call that follows it, so 
@@ -1986,6 +2034,16 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
       previousLoad = -1;
     } else {
       // ..., obj  
+      
+      /* update the JVM Frame model.  Do this before all the instrumentation,
+       * and *before* the ALOAD and MONITOREXIT opcodes are emitted because
+       * we do not want to interfere with the pattern the JIT compiler looks for.
+       */
+      if (isModelingJVMFrame(Opcodes.MONITOREXIT) && frameModelVariable != -1) {
+        // MONITOREXIT
+        mv.visitVarInsn(Opcodes.ALOAD, frameModelVariable);
+        callFrameMethod(FlashlightNames.POP);        
+      }
       
       /* Copy the object being locked for use as the first parameter to
        * Store.afterInstrinsicLockRelease().
@@ -2261,6 +2319,10 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     return config.modelFrames && (debugInfo != null);
   }
   
+  private boolean isModelingJVMFrame(final int opcode) {
+    return isModelingJVMFrame();
+  }
+  
   /**
    * Create a new frame object and store it in a local variable.
    * It is a precondition of this method that {@link #debugInfo} is not 
@@ -2331,7 +2393,12 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
    * Generate code to call a method from the Frame object
    */
   private void callFrameMethod(final Method method) {
+//    if (called.add(method)) {
+//      System.out.println("frame method: " + method);
+//    }
     mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, FlashlightNames.FRAME,
         method.getName(), method.getDescriptor());
   }
+  
+//  private static Set<Method> called = new HashSet<Method>();
 }

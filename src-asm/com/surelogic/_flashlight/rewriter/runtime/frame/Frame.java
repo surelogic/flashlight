@@ -1,9 +1,5 @@
 package com.surelogic._flashlight.rewriter.runtime.frame;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
-
 public final class Frame {
   private static final String EOL = System.getProperty("line.separator");
   
@@ -45,17 +41,17 @@ public final class Frame {
   
   
   
-  private static PrintWriter printWriter;
-  
-  
-  static {
-    try {
-      final File f = File.createTempFile("frameOutput", ".txt", new File(System.getProperty("user.home")));
-      printWriter = new PrintWriter(f);
-    } catch (final IOException e) {
-      System.exit(0);
-    }
-  }
+//  private static PrintWriter printWriter;
+//  
+//  
+//  static {
+//    try {
+//      final File f = File.createTempFile("frameOutput", ".txt", new File(System.getProperty("user.home")));
+//      printWriter = new PrintWriter(f);
+//    } catch (final IOException e) {
+//      System.exit(0);
+//    }
+//  }
   
   
   public Frame(final int numLocals, final int stackSize) {
@@ -300,9 +296,13 @@ public final class Frame {
   }
   
   public void swap() {
-    final StackItem temp = stack[topOfStack];
-    stack[topOfStack] = stack[topOfStack-1];
-    stack[topOfStack-1] = temp;
+    final StackItem x = stack[topOfStack--];
+    final StackItem y = stack[topOfStack--];
+    stack[++topOfStack] = x;
+    stack[++topOfStack] = y;
+//    final StackItem temp = stack[topOfStack];
+//    stack[topOfStack] = stack[topOfStack-1];
+//    stack[topOfStack-1] = temp;
   }
   
   // ======================================================================
@@ -389,7 +389,7 @@ public final class Frame {
   public void invokeMethodReturnsObject(
       final int opcode, final int argumentsSize,
       final String owner, final String name, final String description) {
-    printWriter.println(dump());
+//    printWriter.println(dump());
     // pop args
     topOfStack -= argumentsSize;
     // replace receiver with return value
@@ -405,7 +405,7 @@ public final class Frame {
    *          The total size of all the method arguments.
    */
   public void invokeMethodReturnsVoid(final int argumentsSize) {
-    printWriter.println(dump());
+//    printWriter.println(dump());
     topOfStack -= argumentsSize; // pop arguments
     topOfStack -= 1; // pop receiver
   }
@@ -417,7 +417,7 @@ public final class Frame {
    *          The total size of all the method arguments.
    */
   public void invokeMethodReturnsPrimitive(final int argumentsSize) {
-    printWriter.println(dump());
+//    printWriter.println(dump());
     topOfStack -= argumentsSize;
     stack[topOfStack] = IsPrimitive.PROTOTYPE;
   }
@@ -429,7 +429,7 @@ public final class Frame {
    *          The total size of all the method arguments.
    */
   public void invokeMethodReturnsPrimitive2(final int argumentsSize) {
-    printWriter.println(dump());
+//    printWriter.println(dump());
     topOfStack -= argumentsSize;
     stack[topOfStack] = IsPrimitive.PROTOTYPE;
     stack[++topOfStack] = IsPrimitive.PROTOTYPE;
@@ -451,7 +451,7 @@ public final class Frame {
    */
   public void invokeStaticMethodReturnsObject(final int argumentsSize,
       final String owner, final String name, final String description) {
-    printWriter.println(dump());
+//    printWriter.println(dump());
     // pop args
     topOfStack -= argumentsSize;
     // push return value
@@ -466,7 +466,7 @@ public final class Frame {
    *          The total size of all the method arguments.
    */
   public void invokeStaticMethodReturnsVoid(final int argumentsSize) {
-    printWriter.println(dump());
+//    printWriter.println(dump());
     topOfStack -= argumentsSize;
   }
   
@@ -477,7 +477,7 @@ public final class Frame {
    *          The total size of all the method arguments.
    */
   public void invokeStaticMethodReturnsPrimitive(final int argumentsSize) {
-    printWriter.println(dump());
+//    printWriter.println(dump());
     topOfStack -= argumentsSize;
     stack[++topOfStack] = IsPrimitive.PROTOTYPE;
   }
@@ -489,7 +489,7 @@ public final class Frame {
    *          The total size of all the method arguments.
    */
   public void invokeStaticMethodReturnsPrimitive2(final int argumentsSize) {
-    printWriter.println(dump());
+//    printWriter.println(dump());
     topOfStack -= argumentsSize;
     stack[++topOfStack] = IsPrimitive.PROTOTYPE;
     stack[++topOfStack] = IsPrimitive.PROTOTYPE;

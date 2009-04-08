@@ -5,7 +5,7 @@ package com.surelogic._flashlight.rewriter.runtime.frame;
  * name and description (type) of the variable.
  */
 abstract class LocalVariable extends DescribedName {
-  public static final LocalVariable UNKNOWN = new LocalVariable(null, null) {
+  public static final LocalVariable UNKNOWN = new LocalVariable("unknown", "unknown") {
     @Override
     public String toString() {
       return "Unknown";

@@ -6,15 +6,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeSet;
 import java.util.Map.Entry;
 
+import com.surelogic._flashlight.common.LongMap;
+import com.surelogic._flashlight.common.LongSet;
 import com.surelogic.common.jdbc.ConnectionQuery;
-import com.surelogic.common.jdbc.NullDBQuery;
 import com.surelogic.common.jdbc.NullResultHandler;
 import com.surelogic.common.jdbc.NullRowHandler;
 import com.surelogic.common.jdbc.Nulls;
@@ -22,23 +21,23 @@ import com.surelogic.common.jdbc.Query;
 import com.surelogic.common.jdbc.Queryable;
 import com.surelogic.common.jdbc.Result;
 import com.surelogic.common.jdbc.Row;
+import com.surelogic.common.jobs.SLProgressMonitor;
 
 /**
  * The lock set analysis looks for bad field publishes during construction of an
  * object and for field access that hold an inconsistent set of locks.
  */
-public class LockSetAnalysis extends NullDBQuery implements IPostPrep {
+public class LockSetAnalysis implements IPostPrep {
 
 	public String getDescription() {
 		return "Performing lock set analysis";
 	}
 
-	public void doPostPrep(final Connection c) {
-		perform(new ConnectionQuery(c));
+	public void doPostPrep(final Connection c, final SLProgressMonitor mon) {
+		doPerform(new ConnectionQuery(c), mon);
 	}
 
-	@Override
-	public void doPerform(final Query q) {
+	public void doPerform(final Query q, final SLProgressMonitor mon) {
 		q.prepared("LockSet.v2.badPublishes", new NullRowHandler() {
 			Queryable<Void> insert = q.prepared("LockSet.v2.insertBadPublish");
 
@@ -47,6 +46,9 @@ public class LockSetAnalysis extends NullDBQuery implements IPostPrep {
 				insert.call(r.nextLong(), r.nextLong());
 			}
 		}).call();
+		if (mon.isCanceled()) {
+			return;
+		}
 		q.prepared("LockSet.v2.interestingFields", new NullRowHandler() {
 			Queryable<Void> insert = q
 					.prepared("LockSet.v2.insertInterestingField");
@@ -56,6 +58,9 @@ public class LockSetAnalysis extends NullDBQuery implements IPostPrep {
 				insert.call(r.nextLong(), Nulls.coerce(r.nullableLong()));
 			}
 		}).call();
+		if (mon.isCanceled()) {
+			return;
+		}
 		q.prepared("LockSet.v2.lockDurations", new NullResultHandler() {
 			@Override
 			public void doHandle(final Result lockDurations) {
@@ -64,7 +69,13 @@ public class LockSetAnalysis extends NullDBQuery implements IPostPrep {
 				q.prepared("LockSet.v2.accesses", new NullResultHandler() {
 					@Override
 					public void doHandle(final Result accesses) {
+						int count = 0;
 						for (final Row r : accesses) {
+							if (++count % 10000 == 0) {
+								if (mon.isCanceled()) {
+									return;
+								}
+							}
 							// TS, InThread, Field, Receiver
 							final long id = r.nextLong();
 							final Timestamp ts = r.nextTimestamp();
@@ -83,10 +94,12 @@ public class LockSetAnalysis extends NullDBQuery implements IPostPrep {
 								sets.instanceAccess(id, ts, thread, field,
 										receiver, read);
 							}
-
 						}
 					}
 				}).call();
+				if (mon.isCanceled()) {
+					return;
+				}
 				sets.writeStatistics(q);
 				// Add foreign key to ACCESSLOCKSHELD table
 				q.prepared("LockSet.v2.accessLocksHeldConstraint").call();
@@ -97,8 +110,8 @@ public class LockSetAnalysis extends NullDBQuery implements IPostPrep {
 
 	private class LockSets {
 
-		private final Map<Long, Set<Long>> fields;
-		private final Map<Long, Map<Long, Set<Long>>> instances;
+		private final LongMap<LongSet> fields;
+		private final LongMap<LongMap<LongSet>> instances;
 		private final Map<StaticInstance, StaticCount> staticCounts;
 		private final Map<FieldInstance, Count> counts;
 		final ThreadLocks locks;
@@ -106,9 +119,9 @@ public class LockSetAnalysis extends NullDBQuery implements IPostPrep {
 
 		public LockSets(final Result lockDurations,
 				final Queryable<?> updateAccess) {
-			fields = new HashMap<Long, Set<Long>>();
+			fields = new LongMap<LongSet>();
 			locks = new ThreadLocks(lockDurations);
-			instances = new HashMap<Long, Map<Long, Set<Long>>>();
+			instances = new LongMap<LongMap<LongSet>>();
 			staticCounts = new HashMap<StaticInstance, StaticCount>();
 			counts = new HashMap<FieldInstance, Count>();
 			this.updateAccess = updateAccess;
@@ -119,21 +132,20 @@ public class LockSetAnalysis extends NullDBQuery implements IPostPrep {
 					.prepared("LockSet.v2.insertFieldLockSets");
 			final Queryable<Void> insertInstanceLockSets = q
 					.prepared("LockSet.v2.insertInstanceLockSets");
-			for (final Entry<Long, Set<Long>> e : fields.entrySet()) {
+			for (final Entry<Long, LongSet> e : fields.entrySet()) {
 				final long field = e.getKey();
 				for (final long lock : e.getValue()) {
 					insertFieldLockSets.call(field, lock);
 				}
 			}
-			for (final Entry<Long, Map<Long, Set<Long>>> e : instances
-					.entrySet()) {
+			for (final Entry<Long, LongMap<LongSet>> e : instances.entrySet()) {
 				final long field = e.getKey();
-				Set<Long> fieldSet = null;
-				for (final Entry<Long, Set<Long>> e1 : e.getValue().entrySet()) {
+				LongSet fieldSet = null;
+				for (final Entry<Long, LongSet> e1 : e.getValue().entrySet()) {
 					final long receiver = e1.getKey();
-					final Set<Long> instanceSet = e1.getValue();
+					final LongSet instanceSet = e1.getValue();
 					if (fieldSet == null) {
-						fieldSet = new HashSet<Long>(instanceSet.size());
+						fieldSet = new LongSet(instanceSet.size());
 						fieldSet.addAll(instanceSet);
 					} else {
 						fieldSet.retainAll(instanceSet);
@@ -167,12 +179,12 @@ public class LockSetAnalysis extends NullDBQuery implements IPostPrep {
 		public void staticAccess(final long id, final Timestamp ts,
 				final long thread, final long field, final boolean read) {
 			locks.ensureTime(ts);
-			Set<Long> fieldSet = fields.get(field);
+			LongSet fieldSet = fields.get(field);
 			final Collection<Long> lockSet = locks.getLocks(thread);
 			updateAccess.call(id, lockSet.size(), Nulls.coerce(locks
 					.getLastAcquisition(thread)));
 			if (fieldSet == null) {
-				fieldSet = new HashSet<Long>(lockSet);
+				fieldSet = new LongSet(lockSet);
 				fields.put(field, fieldSet);
 			} else {
 				fieldSet.retainAll(lockSet);
@@ -216,17 +228,17 @@ public class LockSetAnalysis extends NullDBQuery implements IPostPrep {
 				System.out.println("foo");
 			}
 			locks.ensureTime(ts);
-			Map<Long, Set<Long>> fieldMap = instances.get(field);
+			LongMap<LongSet> fieldMap = instances.get(field);
 			if (fieldMap == null) {
-				fieldMap = new HashMap<Long, Set<Long>>();
+				fieldMap = new LongMap<LongSet>();
 				instances.put(field, fieldMap);
 			}
-			Set<Long> instance = fieldMap.get(receiver);
+			LongSet instance = fieldMap.get(receiver);
 			final Collection<Long> lockSet = locks.getLocks(thread);
 			updateAccess.call(id, lockSet.size(), Nulls.coerce(locks
 					.getLastAcquisition(thread)));
 			if (instance == null) {
-				instance = new HashSet<Long>(lockSet);
+				instance = new LongSet(lockSet);
 				fieldMap.put(receiver, instance);
 			} else {
 				instance.retainAll(lockSet);

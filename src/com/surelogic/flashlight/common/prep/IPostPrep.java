@@ -3,6 +3,7 @@ package com.surelogic.flashlight.common.prep;
 import java.sql.Connection;
 import java.sql.SQLException;
 
+import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.flashlight.common.jobs.PrepSLJob;
 
 /**
@@ -31,5 +32,6 @@ public interface IPostPrep {
 	 * @param runId
 	 *            the database run identifier.
 	 */
-	void doPostPrep(final Connection c) throws SQLException;
+	void doPostPrep(final Connection c, final SLProgressMonitor mon)
+			throws SQLException;
 }

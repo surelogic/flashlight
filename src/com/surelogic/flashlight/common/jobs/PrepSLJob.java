@@ -276,13 +276,16 @@ public final class PrepSLJob extends AbstractSLJob {
 									monitor, postPrep.getDescription(),
 									EACH_POST_PREP);
 							postPrepMonitor.begin();
-							postPrep.doPostPrep(conn);
+							postPrep.doPostPrep(conn, monitor);
 							postPrepMonitor.done();
 						}
 
 					}
 				});
-				System.out.println(scanResults);
+				if (monitor.isCanceled()) {
+					f_database.destroy();
+					return SLStatus.CANCEL_STATUS;
+				}
 				RunManager.getInstance().refresh();
 				return SLStatus.OK_STATUS;
 			} finally {

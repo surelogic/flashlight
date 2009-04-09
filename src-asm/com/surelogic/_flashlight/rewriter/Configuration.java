@@ -3,7 +3,8 @@ package com.surelogic._flashlight.rewriter;
 import java.util.Properties;
 
 public final class Configuration {
-  public static final String MODEL_FRAMES = "com.surelogic._flashlight.rewriter.model.frame";
+  public static final String MODEL_FRAMES_PROPERTY = "com.surelogic._flashlight.rewriter.model.frame";
+  public static final String FRAME_MODEL_CLASS_NAME_PROPERTY = "com.surelogic._flashlight.rewriter.frame";
   
   public static final String REWRITE_DEFAULT_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.default";
   public static final String REWRITE_INVOKEINTERFACE_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.invokeinterface";
@@ -41,6 +42,7 @@ public final class Configuration {
   
   
   public final boolean modelFrames;
+  public final String frameClassName;
   
   public final boolean rewriteInvokeinterface;
   public final boolean rewriteInvokespecial;
@@ -81,7 +83,8 @@ public final class Configuration {
   
   
   public static void writeDefaultProperties(final Properties props) {
-    props.setProperty(MODEL_FRAMES, FALSE);
+    props.setProperty(MODEL_FRAMES_PROPERTY, FALSE);
+    props.setProperty(FRAME_MODEL_CLASS_NAME_PROPERTY, FlashlightNames.FRAME);
     
     props.setProperty(REWRITE_DEFAULT_PROPERTY, TRUE);
     props.setProperty(INSTRUMENT_DEFAULT_PROPERTY, TRUE);
@@ -138,7 +141,8 @@ public final class Configuration {
    * property dictionary.
    */
   public Configuration(final Properties props) {
-    modelFrames = getBoolean(props, MODEL_FRAMES, FALSE);
+    modelFrames = getBoolean(props, MODEL_FRAMES_PROPERTY, FALSE);
+    frameClassName = props.getProperty(FRAME_MODEL_CLASS_NAME_PROPERTY, FlashlightNames.FRAME);
     
     final String rewriteDefault = props.getProperty(REWRITE_DEFAULT_PROPERTY, TRUE);
     

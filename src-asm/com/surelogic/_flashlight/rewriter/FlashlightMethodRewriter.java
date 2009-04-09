@@ -2330,13 +2330,13 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
    */
   private void createFrameModel() {
     // Create a new Frame Object
-    mv.visitTypeInsn(Opcodes.NEW, FlashlightNames.FRAME);
+    mv.visitTypeInsn(Opcodes.NEW, config.frameClassName);
 
     // Init the frame object
     mv.visitInsn(Opcodes.DUP);
     ByteCodeUtils.pushIntegerConstant(mv, debugInfo.getNumLocals());
     ByteCodeUtils.pushIntegerConstant(mv, debugInfo.getStackSize());
-    mv.visitMethodInsn(Opcodes.INVOKESPECIAL, FlashlightNames.FRAME, 
+    mv.visitMethodInsn(Opcodes.INVOKESPECIAL, config.frameClassName, 
         FlashlightNames.CONSTRUCTOR, FlashlightNames.FRAME_INIT_DESCRIPTION);
     
     // Store in a new local variable
@@ -2396,7 +2396,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
 //    if (called.add(method)) {
 //      System.out.println("frame method: " + method);
 //    }
-    mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, FlashlightNames.FRAME,
+    mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, config.frameClassName,
         method.getName(), method.getDescriptor());
   }
   

@@ -796,7 +796,7 @@ public abstract class RewriteManager {
       Map<String, DebugInfo.MethodInfo> methodInfos = null;
       try {
         final ClassReader input = new ClassReader(inClassfile);
-        final DebugExtractor debugExtractor = new DebugExtractor();
+        final DebugExtractor debugExtractor = new DebugExtractor(accessMethods);
         input.accept(debugExtractor, ClassReader.SKIP_FRAMES);
         methodInfos = debugExtractor.getDebugInfo();
       } finally {
@@ -820,7 +820,7 @@ public abstract class RewriteManager {
         final ClassReader input = new ClassReader(inClassfile);
         final ClassWriter output = new FlashlightClassWriter(input, classWriterFlags, classModel);
         final FlashlightClassRewriter xformer =
-          new FlashlightClassRewriter(config, callSiteIdFactory, msgr, output, classModel, methodInfos, ignoreMethods);
+          new FlashlightClassRewriter(config, callSiteIdFactory, msgr, output, classModel, accessMethods, methodInfos, ignoreMethods);
         // Skip stack map frames: Either the classfiles don't have them, or we will recompute them
         input.accept(xformer, ClassReader.SKIP_FRAMES);
         final Set<MethodIdentifier> badMethods = xformer.getOversizedMethods();
@@ -966,6 +966,7 @@ public abstract class RewriteManager {
 
   private final byte[] buffer = new byte[BUFSIZE];
   private final ClassAndFieldModel classModel = new ClassAndFieldModel();
+  private final IndirectAccessMethods accessMethods = new IndirectAccessMethods();
   private final Configuration config;
   private final RewriteMessenger messenger;
   private final File fieldsFile;

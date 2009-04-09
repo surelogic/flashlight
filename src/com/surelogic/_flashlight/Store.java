@@ -22,6 +22,7 @@ import java.util.zip.GZIPOutputStream;
 import com.surelogic._flashlight.common.IdConstants;
 import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic._flashlight.common.LongMap;
+import com.surelogic._flashlight.rewriter.runtime.frame.StackItem;
 import com.surelogic._flashlight.trace.TraceNode;
 
 /**
@@ -765,6 +766,18 @@ public final class Store {
     }
   }
 
+  public static void indirectAccess(
+      final String owner, final String name, final String description,
+      final int arg, final StackItem object, final long siteId) {
+    System.out.println("Indirect access");
+    System.out.println("  " + siteId);
+    System.out.println("  " + owner);
+    System.out.println("  " + name);
+    System.out.println("  " + description);
+    System.out.println("  " + arg);
+    System.out.println("  " + object);
+  }
+  
 	/**
 	 * Records that a field access occurred within the instrumented program.
 	 * 
@@ -781,6 +794,7 @@ public final class Store {
 	 * @param line
 	 *            the line number where the event occurred.
 	 */
+  // XXX: Only used by old tests
   @Deprecated
 	public static void fieldAccess(final boolean read, final Object receiver,
 			final Field field, ClassPhantomReference withinClass, final int line) {

@@ -131,4 +131,13 @@ final class ByteCodeUtils {
     mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
         method.getName(), method.getDescriptor());
   }
+  
+  /**
+   * Generate code to call a method from the Frame object
+   */
+  public static void callFrameMethod(
+      final MethodVisitor mv, final Configuration config, final Method method) {
+    mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, config.frameClassName,
+        method.getName(), method.getDescriptor());
+  }
 }

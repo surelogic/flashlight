@@ -52,6 +52,9 @@ final class FlashlightNames {
   public static final Method STATIC_FIELD_ACCESS_LOOKUP =
     Method.getMethod("void staticFieldAccessLookup(boolean, Class, String, long)");
   
+  public static final Method INDIRECT_ACCESS =
+    Method.getMethod("void indirectAccess(String, String, String, int, com.surelogic._flashlight.rewriter.runtime.frame.StackItem, long)");
+  
   public static final Method INTRINSIC_LOCK_WAIT =
     Method.getMethod("void intrinsicLockWait(boolean, Object, long)");
   
@@ -130,6 +133,8 @@ final class FlashlightNames {
   public static final Method SET_LOCAL_VARIABLE = Method.getMethod("void setLocalVariable(int, String, String)");
   public static final Method INIT_RECEIVER = Method.getMethod("void initReceiver()");
   public static final Method INIT_PARAMETER = Method.getMethod("void initParameter(int, int)");
+  
+  public static final Method PEEK = Method.getMethod("com.surelogic._flashlight.rewriter.runtime.frame.StackItem peek(int)");
   
   public static final Method AALOAD = Method.getMethod("void aaload()");
   public static final Method ALOAD = Method.getMethod("void aload(int)");

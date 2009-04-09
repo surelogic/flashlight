@@ -17,11 +17,12 @@ import org.objectweb.asm.MethodVisitor;
  */
 final class DebugExtractor implements ClassVisitor {
   private final DebugInfo debugInfo = new DebugInfo();
-
+  private final IndirectAccessMethods accessMethods;
   
   
-  public DebugExtractor() {
-    // do nothing
+  
+  public DebugExtractor(final IndirectAccessMethods am) {
+    accessMethods = am;
   }
   
   
@@ -147,9 +148,13 @@ final class DebugExtractor implements ClassVisitor {
         debugInfo.visitSizes(maxLocals, maxStack);
       }
 
-      public void visitMethodInsn(
-          int opcode, String owner, String name, String desc) {
-        // don't care
+      public void visitMethodInsn(final int opcode,
+          final String owner, final String name, final String desc) {
+        // Look for indirect state access
+        if (accessMethods.get(owner, name, desc) != null) {
+          debugInfo.foundIndirectAccess();
+          System.out.println("Indirect access found: Calls " + owner + " " + name + " " + desc);
+        }
       }
 
       public void visitMultiANewArrayInsn(String desc, int dims) {

@@ -2,9 +2,7 @@ package com.surelogic._flashlight.rewriter;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import org.objectweb.asm.Label;
 
@@ -28,14 +26,22 @@ final class DebugInfo {
      * label, and whether a new variable begins.
      */
     private final Map<Integer, Map<Integer, VarInfo>> varToLabelToInfo;
-        
+    
+    /**
+     * Does the method contain calls to methods that access shared state
+     * indirectly?
+     */
+    private final boolean hasIndirect;
+    
     
     
     private MethodInfo(final int num, final int size,
-        final Map<Integer, Map<Integer, VarInfo>> records) {
+        final Map<Integer, Map<Integer, VarInfo>> records,
+        final boolean hasI) {
       numLocals = num;
       stackSize = size;
       varToLabelToInfo = records;
+      hasIndirect = hasI;
     }
     
     
@@ -55,6 +61,10 @@ final class DebugInfo {
       } else { 
         return null;
       }
+    }
+    
+    public boolean hasIndirectAccess() {
+      return hasIndirect;
     }
   }
   
@@ -100,10 +110,8 @@ final class DebugInfo {
   private int nextLabel = 0;
   
   private Map<Integer, Map<Integer, VarInfo>> varInfo;
-    
-  private Map<Integer, String> exceptionHandlers;
-  private Set<Integer> finallyHandlers;
   
+  private boolean hasIndirect;
   
   
   /**
@@ -114,8 +122,7 @@ final class DebugInfo {
     labels.clear();
     nextLabel = 0;
     varInfo = new HashMap<Integer, Map<Integer, VarInfo>>();
-    exceptionHandlers = new HashMap<Integer, String>();
-    finallyHandlers = new HashSet<Integer>();
+    hasIndirect = false;
     currentKey = name + desc;
   }
   
@@ -144,11 +151,18 @@ final class DebugInfo {
   }
   
   /**
+   * Found an indirect state access.
+   */
+  public void foundIndirectAccess() {
+    hasIndirect = true;
+  }
+  
+  /**
    * Visit the end of the method.
    */
   public void visitSizes(final int numLocals, final int stackSize) {
     final MethodInfo mi = new MethodInfo(
-        numLocals, stackSize, varInfo);
+        numLocals, stackSize, varInfo, hasIndirect);
     methods.put(currentKey, mi);
   }
   

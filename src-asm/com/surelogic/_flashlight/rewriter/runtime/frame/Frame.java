@@ -147,8 +147,24 @@ public final class Frame {
     sb.append(dumpStack());
     return sb.toString();
   }
+
+  // ======================================================================
+  // == Get objects out of the stack for the Store
+  // ======================================================================
   
+  /**
+   * Peek at the contents of the stack.
+   * 
+   * @param offset
+   *          The offset from the top of the stack of the object to return; that
+   *          is, {@value 0} means the top element, {@value 1} means the item
+   *          below the top element, etc.
+   */
+  public StackItem peek(final int offset) {
+    return stack[topOfStack - offset];
+  }
   
+
   
   // ======================================================================
   // == Handle specific opcodes

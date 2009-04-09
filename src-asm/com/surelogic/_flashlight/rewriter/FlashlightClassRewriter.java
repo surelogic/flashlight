@@ -122,6 +122,11 @@ final class FlashlightClassRewriter extends ClassAdapter {
    */
   private final ClassAndFieldModel classModel;
   
+  /**
+   * The set of methods that indirectly access aggregated state.
+   */
+  private final IndirectAccessMethods accessMethods;
+  
   /** Factory for unique call site identifiers */
   private final SiteIdFactory callSiteIdFactory;
   
@@ -150,6 +155,7 @@ final class FlashlightClassRewriter extends ClassAdapter {
   public FlashlightClassRewriter(final Configuration conf,
       final SiteIdFactory csif, final RewriteMessenger msg,
       final ClassVisitor cv, final ClassAndFieldModel model,
+      final IndirectAccessMethods am,
       final Map<String, DebugInfo.MethodInfo> infos,
       final Set<MethodIdentifier> ignore) {
     super(cv);
@@ -157,6 +163,7 @@ final class FlashlightClassRewriter extends ClassAdapter {
     callSiteIdFactory = csif;
     messenger = msg;
     classModel = model;
+    accessMethods = am;
     methodInfos = infos;
     methodsToIgnore = ignore;
   }
@@ -257,7 +264,7 @@ final class FlashlightClassRewriter extends ClassAdapter {
       methodSizes.put(methodId, cse);
       final DebugInfo.MethodInfo mi = methodInfos.get(name + desc);
       return FlashlightMethodRewriter.create(access,
-          name, desc, cse, config, callSiteIdFactory, messenger, classModel, mi, atLeastJava5, isInterface,
+          name, desc, cse, config, callSiteIdFactory, messenger, classModel, mi, accessMethods, atLeastJava5, isInterface,
           updateSuperCall, mustImplementIIdObject, sourceFileName, classNameInternal, classNameFullyQualified,
           superClassInternal, wrapperMethods);
     }
@@ -340,7 +347,7 @@ final class FlashlightClassRewriter extends ClassAdapter {
      */
     final MethodVisitor rewriter_mv = FlashlightMethodRewriter.create(Opcodes.ACC_STATIC,
         CLASS_INITIALIZER, CLASS_INITIALIZER_DESC, mv, config, callSiteIdFactory, messenger,
-        classModel, null, atLeastJava5, isInterface, updateSuperCall, mustImplementIIdObject, sourceFileName,
+        classModel, null, accessMethods, atLeastJava5, isInterface, updateSuperCall, mustImplementIIdObject, sourceFileName,
         classNameInternal, classNameFullyQualified, superClassInternal, wrapperMethods);
     rewriter_mv.visitCode(); // start code section
     rewriter_mv.visitInsn(Opcodes.RETURN); // empty method, just return

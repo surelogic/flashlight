@@ -1809,7 +1809,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     // Stack is "..., isRead, [receiver]"
 
     final Method storeMethod;
-    final Integer fid = classModel.getFieldID(fullyQualifiedOwner, name);
+    final Integer fid = classModel.getFieldID(owner, name);
     if (fid != ClassAndFieldModel.FIELD_NOT_FOUND) {
       if (isStatic) {
         ByteCodeUtils.pushPhantomClass(mv, owner);

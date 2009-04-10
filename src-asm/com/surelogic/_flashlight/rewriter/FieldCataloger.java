@@ -72,15 +72,9 @@ final class FieldCataloger implements ClassVisitor {
       final String signature, final String superName,
       final String[] interfaces) {
     classNameFullyQualified = ByteCodeUtils.internal2FullyQualified(name);
-    final String superFullyQualified = 
-      superName == null ? null : ByteCodeUtils.internal2FullyQualified(superName);
-    final String[] ifaces = new String[interfaces.length];
-    for (int i = 0; i < interfaces.length; i++) {
-      ifaces[i] = ByteCodeUtils.internal2FullyQualified(interfaces[i]);
-    }
     final boolean isInterface = (access & Opcodes.ACC_INTERFACE) != 0;
-    clazz = classModel.addClass(classNameFullyQualified,
-        isInterface, isInstrumented, superFullyQualified, ifaces);
+    clazz = classModel.addClass(name,
+        isInterface, isInstrumented, superName, interfaces);
   }
 
   public FieldVisitor visitField(final int access, final String name,

@@ -20,7 +20,7 @@ final class ClassAndFieldModel {
   public static final Integer FIELD_NOT_FOUND = null;
 
   /**
-   * Map from fully qualified class names to class model objects.
+   * Map from internal class names to class model objects.
    */
   private final Map<String, Clazz> classes = new HashMap<String, Clazz>();
   
@@ -49,13 +49,13 @@ final class ClassAndFieldModel {
     private final boolean isInterface;
     
     /**
-     * The fully qualified name of the superclass of this class.  May only
-     * be {@code null} if the class represent "java.lang.Object".
+     * The internal class name of the superclass of this class.  May only
+     * be {@code null} if the class represents "java/lang/Object".
      */
     private final String superClass;
     
     /**
-     * The fully qualified names of any interfaces implemented by this class.
+     * The internal class names of any interfaces implemented by this class.
      * May not be {@code null}; use a zero-length array instead.
      */
     private final String[] interfaces;
@@ -72,7 +72,8 @@ final class ClassAndFieldModel {
       this.isInterface = isInterface;
       this.isInstrumented = isInstrumented;
       this.superClass = superClass;
-      this.interfaces = interfaces;
+      this.interfaces = new String[interfaces.length];
+      System.arraycopy(interfaces, 0, this.interfaces, 0, interfaces.length);
     }
     
     public boolean isInterface() {
@@ -110,8 +111,8 @@ final class ClassAndFieldModel {
      * conversion. See <em>The Java Language Specification</em>, sections
      * 5.1.1 and 5.1.4 , for details.
      * 
-     * @param other
-     *          the <code>Clazz</code> object to be checked
+     * @param otherName
+     *          The internal class name of the other class.
      * @return the <code>boolean</code> value indicating whether objects of
      *         the type <code>other</code> can be assigned to objects of this
      *         class
@@ -151,11 +152,11 @@ final class ClassAndFieldModel {
    * encountered.
    * 
    * @param name
-   *          The fully qualified name of the class.
+   *          The internal name of the class.
    * @param superClass
-   *          The fully qualified name of the class's superclass.
+   *          The internal name of the class's superclass.
    * @param interfaces
-   *          The fully qualified names of the interfaces implemented by the
+   *          The internal names of the interfaces implemented by the
    *          class. May not be {@code null}; use a zero-length array instead.
    * @return The class model object for the class.
    */
@@ -172,7 +173,7 @@ final class ClassAndFieldModel {
    * Lookup a class in the model.
    * 
    * @param name
-   *          The fully qualified name of the class.
+   *          The internal name of the class.
    * @return The class, or {@code null} if the class is not in the model.
    */
   public Clazz getClass(final String name) {
@@ -183,7 +184,7 @@ final class ClassAndFieldModel {
    * Is the named class part of the set of classes being instrumented.
    * 
    * @param name
-   *          The fully qualified name of the class.
+   *          The internal name of the class.
    */
   public boolean isInstrumentedClass(final String name) {
     final Clazz c = classes.get(name);
@@ -198,7 +199,7 @@ final class ClassAndFieldModel {
    * Get the unique identifier for the given field in the given class.
    * 
    * @param className
-   *          The fully qualified name of the class in which to search for the
+   *          The internal name of the class in which to search for the
    *          field.
    * @param fieldName
    *          The name of the field.

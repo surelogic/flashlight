@@ -208,7 +208,7 @@ final class FlashlightClassRewriter extends ClassAdapter {
       newInterfaces = interfaces;
       updateSuperCall = true;
       mustImplementIIdObject = false;
-    } else if (!classModel.isInstrumentedClass(ByteCodeUtils.internal2FullyQualified(superName))) {
+    } else if (!classModel.isInstrumentedClass(superName)) {
       /* Class extends a class that is not being instrumented.  Add the
        * IIdObject interface, and we need to add the methods to implement it.
        */

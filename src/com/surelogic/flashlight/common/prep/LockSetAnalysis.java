@@ -381,7 +381,7 @@ public class LockSetAnalysis implements IPostPrep {
 	 */
 	private static class ThreadLocks {
 		private final Iterator<Row> locks;
-		private final Map<Long, TreeSet<Lock>> threads;
+		private final TLongObjectHashMap<TreeSet<Lock>> threads;
 		private final TreeSet<Lock> activeLocks;
 		private Lock lock;
 
@@ -392,7 +392,7 @@ public class LockSetAnalysis implements IPostPrep {
 					return o1.end.compareTo(o2.end);
 				}
 			});
-			this.threads = new HashMap<Long, TreeSet<Lock>>();
+			this.threads = new TLongObjectHashMap<TreeSet<Lock>>();
 		}
 
 		/**

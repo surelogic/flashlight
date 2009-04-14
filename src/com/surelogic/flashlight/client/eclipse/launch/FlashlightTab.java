@@ -67,14 +67,12 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 		scroll.setExpandVertical(true);
 		scroll.setAlwaysShowScrollBars(true);
 
-		final Group instrumentation = createSelectionGroup(outer, "Instrumentation");
 		final Group filtering = createSelectionGroup(outer, "Filtering");
 		final Group output = createNamedGroup(outer, "Output", 3);
 		advanced = createNamedGroup(outer, "Advanced", 2);
 
 		FlashlightInstrumentationWidgets widgets = new FlashlightInstrumentationWidgets(
 				null, prefs, filtering, output, advanced);
-		instrumentation.setLayout(new GridLayout(3, false));
 		filtering.setLayout(new GridLayout(3, false));		
 		output.setLayout(new GridLayout(3, false));
 		advanced.setLayout(new GridLayout(3, false));

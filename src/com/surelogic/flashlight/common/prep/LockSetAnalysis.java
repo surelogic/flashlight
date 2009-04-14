@@ -6,6 +6,7 @@ import gnu.trove.TLongObjectHashMap;
 import gnu.trove.TLongObjectProcedure;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Collection;
 import java.util.Comparator;
@@ -14,6 +15,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.Map.Entry;
+import java.util.logging.Logger;
 
 import com.surelogic.common.jdbc.ConnectionQuery;
 import com.surelogic.common.jdbc.NullResultHandler;
@@ -24,6 +26,7 @@ import com.surelogic.common.jdbc.Queryable;
 import com.surelogic.common.jdbc.Result;
 import com.surelogic.common.jdbc.Row;
 import com.surelogic.common.jobs.SLProgressMonitor;
+import com.surelogic.common.logging.SLLogger;
 
 /**
  * The lock set analysis looks for bad field publishes during construction of an
@@ -31,15 +34,29 @@ import com.surelogic.common.jobs.SLProgressMonitor;
  */
 public class LockSetAnalysis implements IPostPrep {
 
+	private final Logger log = SLLogger.getLoggerFor(LockSetAnalysis.class);
+
+	private Connection c;
+
 	public String getDescription() {
 		return "Performing lock set analysis";
 	}
 
+	private void commit() {
+		try {
+			c.commit();
+		} catch (final SQLException e) {
+			throw new IllegalStateException(e);
+		}
+	}
+
 	public void doPostPrep(final Connection c, final SLProgressMonitor mon) {
+		this.c = c;
 		doPerform(new ConnectionQuery(c), mon);
 	}
 
 	public void doPerform(final Query q, final SLProgressMonitor mon) {
+		log.fine("Inserting bad publishes.");
 		q.prepared("LockSet.v2.badPublishes", new NullRowHandler() {
 			Queryable<Void> insert = q.prepared("LockSet.v2.insertBadPublish");
 
@@ -48,9 +65,11 @@ public class LockSetAnalysis implements IPostPrep {
 				insert.call(r.nextLong(), r.nextLong());
 			}
 		}).call();
+		commit();
 		if (mon.isCanceled()) {
 			return;
 		}
+		log.fine("Inserting interesting fields.");
 		q.prepared("LockSet.v2.interestingFields", new NullRowHandler() {
 			Queryable<Void> insert = q
 					.prepared("LockSet.v2.insertInterestingField");
@@ -60,9 +79,11 @@ public class LockSetAnalysis implements IPostPrep {
 				insert.call(r.nextLong(), Nulls.coerce(r.nullableLong()));
 			}
 		}).call();
+		commit();
 		if (mon.isCanceled()) {
 			return;
 		}
+		log.fine("Scanning lock durations and accesses.");
 		q.prepared("LockSet.v2.lockDurations", new NullResultHandler() {
 			@Override
 			public void doHandle(final Result lockDurations) {
@@ -102,8 +123,11 @@ public class LockSetAnalysis implements IPostPrep {
 				if (mon.isCanceled()) {
 					return;
 				}
+				log.fine("Writing out locking statistics.");
 				sets.writeStatistics(q);
 				// Add foreign key to ACCESSLOCKSHELD table
+				commit();
+				log.fine("Adding locking statistic constraints");
 				q.prepared("LockSet.v2.accessLocksHeldConstraint").call();
 				q.prepared("LockSet.v2.accessLockAcquisitionConstraint").call();
 			}
@@ -134,18 +158,27 @@ public class LockSetAnalysis implements IPostPrep {
 					.prepared("LockSet.v2.insertFieldLockSets");
 			final Queryable<Void> insertInstanceLockSets = q
 					.prepared("LockSet.v2.insertInstanceLockSets");
+			log.fine("Static field lock sets.");
 			fields.forEachEntry(new TLongObjectProcedure<TLongHashSet>() {
+				int count = 0;
+
 				public boolean execute(final long field,
 						final TLongHashSet locks) {
 					for (final TLongIterator it = locks.iterator(); it
 							.hasNext();) {
 						insertFieldLockSets.call(field, it.next());
+						if (++count % 10000 == 0) {
+							commit();
+						}
 					}
 					return true;
 				}
 			});
+			log.fine("Instance lock sets.");
 			instances
 					.forEachEntry(new TLongObjectProcedure<TLongObjectHashMap<TLongHashSet>>() {
+						int count;
+
 						public boolean execute(final long field,
 								final TLongObjectHashMap<TLongHashSet> instance) {
 							final TLongHashSet fieldSet = new TLongHashSet();
@@ -170,12 +203,18 @@ public class LockSetAnalysis implements IPostPrep {
 														field, receiver, it
 																.next());
 											}
+											if (++count % 10000 == 0) {
+												commit();
+											}
 											return true;
 										}
 									});
 							for (final TLongIterator it = fieldSet.iterator(); it
 									.hasNext();) {
 								insertFieldLockSets.call(field, it.next());
+								if (++count % 10000 == 0) {
+									commit();
+								}
 							}
 							return true;
 						}
@@ -185,17 +224,25 @@ public class LockSetAnalysis implements IPostPrep {
 					.prepared("LockSet.v2.insertStaticCounts");
 			final Queryable<Void> insertFieldCounts = q
 					.prepared("LockSet.v2.insertFieldCounts");
+			int count = 0;
+			log.fine("Locking counts.");
 			for (final Entry<StaticInstance, StaticCount> e : staticCounts
 					.entrySet()) {
 				final StaticInstance si = e.getKey();
 				final StaticCount c = e.getValue();
 				insertStaticCounts.call(si.thread, si.field, c.read, c.write);
+				if (++count % 10000 == 0) {
+					commit();
+				}
 			}
 			for (final Entry<FieldInstance, Count> e : counts.entrySet()) {
 				final FieldInstance fi = e.getKey();
 				final Count c = e.getValue();
 				insertFieldCounts.call(fi.thread, fi.field, fi.receiver,
 						c.read, c.write, c.readUC, c.writeUC);
+				if (++count % 10000 == 0) {
+					commit();
+				}
 			}
 		}
 

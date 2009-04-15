@@ -191,8 +191,17 @@ public class OutputStrategyBinary extends EventVisitor {
 	}
 	
 	@Override
-	void visit(IndirectAccess indirectAccess) {
-		// TODO
+	void visit(IndirectAccess e) {
+		try {
+			writeTracedEvent(IndirectAccess.getByte(), e);
+			final long id = e.getReceiver().getId();
+//			final boolean same = isSameReceiver(id);
+//			if (!same) {
+				writeCompressedLong(id);
+//			}
+		} catch (IOException ioe) {
+			handleIOException(ioe);
+		}
 	}
 	
 	private class DefinitionVisitor extends IdPhantomReferenceVisitor {
@@ -381,7 +390,7 @@ public class OutputStrategyBinary extends EventVisitor {
 		}
 	}
 	
-	@SuppressWarnings("unused")
+	@SuppressWarnings({ "unused", "deprecation" })
 	private void writeTrace(final long tid) throws IOException {
 		/*
 		if (lastWasTraceNode) {

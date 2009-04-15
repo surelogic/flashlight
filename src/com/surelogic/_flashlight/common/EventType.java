@@ -177,6 +177,13 @@ public enum EventType {
 			attrs.put(ID, readCompressedLong(in));
 		}
 	},
+	IndirectAccess("indirect-access") {
+		@Override
+		void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
+			readTracedEvent(in, attrs);
+			attrs.put(RECEIVER, readCompressedLong(in));
+		}
+	},
 	Lock("lock") {
 	    @Override
 	    void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {

@@ -8,6 +8,12 @@
 	<classpathentry kind="lib" path="lib/asm-3.1.jar" sourcepath="/Users/aarong/Work/Frameworks Used/ASM/asm-3.1/src.zip"/>
 	<classpathentry kind="lib" path="lib/servlet-2_5-api.jar"/>
 	<classpathentry kind="lib" path="lib/asm-commons-3.1.jar" sourcepath="/Users/aarong/Work/Frameworks Used/ASM/asm-3.1/src.zip"/>
+	<classpathentry kind="lib" path="lib/jaxb1-impl.jar"/>
+	<classpathentry kind="lib" path="lib/jaxb-api.jar"/>
+	<classpathentry kind="lib" path="lib/jaxb-impl.jar"/>
+	<classpathentry kind="lib" path="lib/jaxb-xjc.jar"/>
+	<classpathentry kind="lib" path="lib/jsr173_1.0_api.jar"/>
+	<classpathentry kind="lib" path="lib/activation.jar"/>
 	<classpathentry kind="src" path="/flashlight-common">
 		<accessrules>
 			<accessrule kind="accessible" pattern="com/surelogic/_flashlight/**"/>

@@ -774,10 +774,14 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
        * aggregated state.
        */
       if (debugInfo.hasIndirectAccess()) { // we might have indirect access
-        final IndirectAccessMethod method = accessMethods.get(owner, name, desc);
-        if (method != null) {
-          // We have indirect access
-          method.callStore(mv, config, owner, siteId);
+        try {
+          final IndirectAccessMethod method = accessMethods.get(owner, name, desc);
+          if (method != null) {
+            // We have indirect access
+            method.callStore(mv, config, frameModelVariable, owner, siteId);
+          }
+        } catch (final IllegalStateException e) {
+          // Problem looking up the method.  Just skip it.
         }
       }
       
@@ -1050,8 +1054,6 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
           final String startsAs = varInfo.variableStartsAs();
           if (startsAs != null) {
             updateFrameVariable(varIdx, startsAs, varInfo.variableDescription());
-          } else if (varInfo.variableDies()) {
-            updateFrameVariable(varIdx);
           }
         }
       }
@@ -2025,7 +2027,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
         if (isModelingJVMFrame(Opcodes.ALOAD)) {
           // ALOAD
           mv.visitVarInsn(Opcodes.ALOAD, frameModelVariable);
-          ByteCodeUtils.pushIntegerConstant(mv, previousStore);
+          ByteCodeUtils.pushIntegerConstant(mv, previousLoad);
           ByteCodeUtils.callFrameMethod(mv, config, FlashlightNames.ALOAD);
         }
         
@@ -2333,7 +2335,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
    * Are we bothering to model the JVM frame.
    */
   private boolean isModelingJVMFrame() {
-    return config.modelFrames && (debugInfo != null);
+    return config.indirectRecord && (debugInfo != null) && debugInfo.hasIndirectAccess();
   }
   
   private boolean isModelingJVMFrame(final int opcode) {
@@ -2395,14 +2397,5 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     mv.visitLdcInsn(name);
     mv.visitLdcInsn(desc);
     ByteCodeUtils.callFrameMethod(mv, config, FlashlightNames.SET_LOCAL_VARIABLE);
-  }
-  
-  /**
-   * Generate code to remove the identity of a local variable.
-   */
-  private void updateFrameVariable(final int idx) {
-    mv.visitVarInsn(Opcodes.ALOAD, frameModelVariable);
-    ByteCodeUtils.pushIntegerConstant(mv, idx);
-    ByteCodeUtils.callFrameMethod(mv, config, FlashlightNames.CLEAR_LOCAL_VARIABLE);
   }
 }

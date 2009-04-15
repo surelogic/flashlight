@@ -769,13 +769,13 @@ public final class Store {
   public static void indirectAccess(
       final String owner, final String name, final String description,
       final int arg, final StackItem object, final long siteId) {
-    System.out.println("Indirect access");
-    System.out.println("  " + siteId);
-    System.out.println("  " + owner);
-    System.out.println("  " + name);
-    System.out.println("  " + description);
-    System.out.println("  " + arg);
-    System.out.println("  " + object);
+//    System.out.println("Indirect access");
+//    System.out.println("  " + siteId);
+//    System.out.println("  " + owner);
+//    System.out.println("  " + name);
+//    System.out.println("  " + description);
+//    System.out.println("  " + arg);
+//    System.out.println("  " + object);
   }
   
   /**

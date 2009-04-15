@@ -116,7 +116,7 @@ final class ClassAndFieldModel {
      * @return the <code>boolean</code> value indicating whether objects of
      *         the type <code>other</code> can be assigned to objects of this
      *         class
-     * @exception NullPointerException Thrown if one of the ancestor classes
+     * @exception IllegalStateException Thrown if one of the ancestor classes
      * of <code>otherName</code> is not in the class model.
      */
     public boolean isAssignableFrom(final String otherName) {
@@ -129,6 +129,9 @@ final class ClassAndFieldModel {
       while (!toBeTested.isEmpty()) {
         final String testName = toBeTested.removeFirst();
         final Clazz testClass = classes.get(testName);
+        if (testClass == null) {
+          throw new IllegalStateException("Couldn't find class " + testName);
+        }
         if (this == testClass) {
           return true;
         }

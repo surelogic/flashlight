@@ -24,9 +24,10 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 
+import javax.xml.bind.JAXBException;
+
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
-
 
 /**
  * Wrapper around a {@link RewriteEngine} that makes it easier to use for
@@ -37,6 +38,8 @@ public abstract class RewriteManager {
   // == Constants
   // ======================================================================
 
+  public static final String DEFAULT_METHODS_FILE = "/resources/indirectAccessMethods.xml";
+  
   public static final String DEFAULT_FLASHLIGHT_RUNTIME_JAR = "flashlight-runtime.jar";
   private static final String ZIP_FILE_NAME_SEPERATOR = "/";
   private static final String MANIFEST_DIR = 
@@ -796,7 +799,7 @@ public abstract class RewriteManager {
       Map<String, DebugInfo.MethodInfo> methodInfos = null;
       try {
         final ClassReader input = new ClassReader(inClassfile);
-        final DebugExtractor debugExtractor = new DebugExtractor(accessMethods);
+        final DebugExtractor debugExtractor = new DebugExtractor(accessMethods, msgr);
         input.accept(debugExtractor, ClassReader.SKIP_FRAMES);
         methodInfos = debugExtractor.getDebugInfo();
       } finally {
@@ -990,7 +993,45 @@ public abstract class RewriteManager {
     messenger = m;
     fieldsFile = ff;
     sitesFile = sf;
-  }
+    
+    final InputStream defaultMethods = 
+      RewriteManager.class.getResourceAsStream(DEFAULT_METHODS_FILE);
+    try {
+      accessMethods.loadFromXML(defaultMethods, new File[0]);
+    } catch (final JAXBException e) {
+      // Access methods list is left empty
+      e.printStackTrace();
+//      exceptionLoadingMethodsFile(methodsFile, e);
+    }
+    
+//    accessMethods.put(false, "java/util/Collection",
+//        Method.getMethod("int size()"), new int[] { 0 });
+//    accessMethods.put(false, "java/util/Collection",
+//        Method.getMethod("boolean isEmpty()"), new int[] { 0 });
+//    accessMethods.put(false, "java/util/Collection",
+//        Method.getMethod("boolean contains(Object)"), new int[] { 0 });
+//    accessMethods.put(false, "java/util/Collection",
+//        Method.getMethod("java.util.Iterator iterator()"), new int[] { 0 });
+//    accessMethods.put(false, "java/util/Collection",
+//        Method.getMethod("Object[] toArray()"), new int[] { 0 });
+//    accessMethods.put(false, "java/util/Collection",
+//        Method.getMethod("Object[] toArray(Object[])"), new int[] { 0 });
+//    accessMethods.put(false, "java/util/Collection",
+//        Method.getMethod("boolean add(Object)"), new int[] { 0 });
+//    accessMethods.put(false, "java/util/Collection",
+//        Method.getMethod("boolean remove(Object)"), new int[] { 0 });
+//    accessMethods.put(false, "java/util/Collection",
+//        Method.getMethod("boolean containsAll(java.util.Collection)"), new int[] { 0, 1 });
+//    accessMethods.put(false, "java/util/Collection",
+//        Method.getMethod("boolean addAll(java.util.Collection)"), new int[] { 0, 1 });
+//    accessMethods.put(false, "java/util/Collection",
+//        Method.getMethod("boolean removeAll(java.util.Collection)"), new int[] { 0, 1 });
+//    accessMethods.put(false, "java/util/Collection",
+//        Method.getMethod("boolean retainAll(java.util.Collection)"), new int[] { 0, 1 });
+//    accessMethods.put(false, "java/util/Collection",
+//        Method.getMethod("void clear()"), new int[] { 0 });
+}
+  
   
   
   
@@ -1070,6 +1111,10 @@ public abstract class RewriteManager {
         scan(entry, scanner);
       }
       
+      /* Finish initializing interesting methods using the class model */
+      accessMethods.initClazz(classModel);
+      
+      /* Second pass: Instrument the classfiles */
       PrintWriter sitesOut = null;
       try {
         sitesFile.getParentFile().mkdirs();
@@ -1179,6 +1224,11 @@ public abstract class RewriteManager {
    * Called if there is an exception while instrumenting a file.
    */
   protected abstract void exceptionInstrument(String srcPath, String destPath, IOException e);
+
+  /**
+   * Called if there is an exception trying to create the fields database file.
+   */
+  protected abstract void exceptionLoadingMethodsFile(File methodsFile, JAXBException e);
 
   /**
    * Called if there is an exception trying to create the fields database file.

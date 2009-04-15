@@ -70,11 +70,6 @@ final class DebugInfo {
   
   public static final class VarInfo {
     /**
-     * True if a previous use ends at this label.
-     */
-    private boolean varEnds = false;
-    
-    /**
      * The name of the use that starts at this label, or null if no new
      * use starts.
      */
@@ -87,10 +82,6 @@ final class DebugInfo {
     private String description = null;
     
     
-    
-    public boolean variableDies() {
-      return varEnds;
-    }
     
     public String variableStartsAs() {
       return startsAs;
@@ -139,15 +130,12 @@ final class DebugInfo {
    */
   public void visitLocalVariable(
       final int index, final String name, final String desc,
-      final Label start, final Label end) {
+      final Label start) {
     final Map<Integer, VarInfo> m = getVarInfo(index);
       
     final VarInfo startInfo = getInfo(m, labels.get(start));
     startInfo.startsAs = name;
     startInfo.description = desc;
-
-    final VarInfo endInfo = getInfo(m, labels.get(end));
-    endInfo.varEnds = true;
   }
   
   /**

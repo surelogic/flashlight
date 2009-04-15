@@ -165,6 +165,11 @@ public final class BogusFrame {
     // do nothing
   }
   
+  public StackItem peek(final int offset) {
+    // do nothing
+    return null;
+  }
+
   public void pop() {
     // do nothing
   }

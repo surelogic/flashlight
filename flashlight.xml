@@ -3,6 +3,7 @@
 	<property environment="env" />
 
 	<property name="lib" value="${basedir}/lib" />
+  <property name="resources" value="${basedir}/resources"/>
 	<property name="classes" value="${basedir}/bin" />
 	
 	<property name="src" value="${basedir}/src" />
@@ -21,6 +22,16 @@
 	<property name="flashlight-servlet.jar" value="${basedir}/flashlight-servlet.jar" />
 	<property name="flashlight-rewriter.jar" value="${basedir}/flashlight-rewriter.jar" />
 
+  
+  <path id="jaxb.classpath">
+    <pathelement path="${lib}/jaxb1-impl.jar"/>
+    <pathelement path="${lib}/jaxb-api.jar"/>
+    <pathelement path="${lib}/jaxb-impl.jar"/>
+    <pathelement path="${lib}/jaxb-xjc.jar"/>
+    <pathelement path="${lib}/jsr173_1.0_api.jar"/>
+    <pathelement path="${lib}/activation.jar"/>
+  </path>
+    
 	
 	
 	<target name="clean">
@@ -41,11 +52,15 @@
 		  <src path="${src-rt}" />
 		  <exclude name="com/surelogic/flashlight/**"/>
 			<classpath>
+			  <path refid="jaxb.classpath"/> 
 				<pathelement location="${asm.jar}" />
 				<pathelement location="${asm-commons.jar}" />
 				<pathelement location="${servlet.jar}" />
 			</classpath>
 		</javac>
+	  <copy todir="${classes}/resources">
+	     <fileset dir="${resources}"/>
+	   </copy>
 	</target>
 
 	<target name="build-all-jar">
@@ -66,7 +81,7 @@
 		  <include name="**/com/surelogic/_flashlight/common/**" />
 			<include name="**/com/surelogic/_flashlight/emory/**" />
 			<include name="**/com/surelogic/_flashlight/jsr166y/**" />
-			<include name="**/com/surelogic/_flashlight/rewriter/runtime/**" />
+      <include name="**/com/surelogic/_flashlight/rewriter/runtime/**" />
 			<include name="**/com/surelogic/_flashlight/rewriter/test/**" />
   		<include name="**/com/surelogic/_flashlight/trace/**" />
 			<manifest>
@@ -88,7 +103,9 @@
 
 	<target name="build-rewriter-jar">
 		<jar destfile="${flashlight-rewriter.jar}" basedir="${classes}">
+		  <include name="**/resources/**" />
 			<include name="**/com/surelogic/_flashlight/rewriter/*" />
+      <include name="**/com/surelogic/_flashlight/rewriter/xml/*" />
 			<manifest>
 			  <attribute name="Manifest-Version" value="1.0"/>
 				<attribute name="Class-Path" value="asm-3.1.jar asm-commons-3.1.jar"/>

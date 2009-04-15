@@ -1,5 +1,6 @@
 package com.surelogic._flashlight.rewriter;
 
+import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -24,6 +25,17 @@ final class ByteCodeUtils {
    */
   public static String internal2FullyQualified(final String name) {
     return name.replace('/', '.');
+  }
+  
+  /**
+   * Convert a fully qualified class name to an internal class name.
+   * 
+   * @param name
+   *          An fully qualified class name
+   * @return The internal class name that corresponds to the given name.
+   */
+  public static String fullyQualified2Internal(final String name) {
+    return name.replace('.', '/');
   }
   
   /**
@@ -137,7 +149,22 @@ final class ByteCodeUtils {
    */
   public static void callFrameMethod(
       final MethodVisitor mv, final Configuration config, final Method method) {
+//    Label start = new Label();
+//    Label end = new Label();
+//    Label handler = new Label();
+//    Label resume = new Label();
+//    mv.visitTryCatchBlock(start, end, handler, "java/lang/ArrayIndexOutOfBoundsException");
+//    mv.visitLabel(start);
+//
     mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, config.frameClassName,
         method.getName(), method.getDescriptor());
+//
+//    mv.visitLabel(end);
+//    mv.visitJumpInsn(Opcodes.GOTO, resume);
+//    mv.visitLabel(handler);
+//    mv.visitInsn(Opcodes.DUP);
+//    mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/ArrayIndexOutOfBoundsException", "printStackTrace", "()V");
+//    mv.visitInsn(Opcodes.ATHROW);
+//    mv.visitLabel(resume);
   }
 }

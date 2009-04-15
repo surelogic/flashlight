@@ -18,11 +18,14 @@ import org.objectweb.asm.MethodVisitor;
 final class DebugExtractor implements ClassVisitor {
   private final DebugInfo debugInfo = new DebugInfo();
   private final IndirectAccessMethods accessMethods;
+  private final RewriteMessenger messenger;
+  
+  private String currentMethod = null;
   
   
-  
-  public DebugExtractor(final IndirectAccessMethods am) {
+  public DebugExtractor(final IndirectAccessMethods am, final RewriteMessenger m) {
     accessMethods = am;
+    messenger = m;
   }
   
   
@@ -36,6 +39,7 @@ final class DebugExtractor implements ClassVisitor {
   public void visit(final int version, final int access, final String name,
       final String signature, final String superName,
       final String[] interfaces) {
+//    System.err.println("Debug Extractor class " + name);
     // don't care
   }
 
@@ -67,6 +71,7 @@ final class DebugExtractor implements ClassVisitor {
   public MethodVisitor visitMethod(
       final int access, final String name, final String desc,
       final String signature, final String[] exceptions) {
+    currentMethod = name + " " + desc;
     debugInfo.newMethod(name, desc);
     
     return new MethodVisitor() {
@@ -137,7 +142,7 @@ final class DebugExtractor implements ClassVisitor {
           final String name, final String desc,
           final String signature, final Label start, final Label end,
           final int index) {
-        debugInfo.visitLocalVariable(index, name, desc, start, end);
+        debugInfo.visitLocalVariable(index, name, desc, start);
       }
 
       public void visitLookupSwitchInsn(Label dflt, int[] keys, Label[] labels) {
@@ -151,9 +156,19 @@ final class DebugExtractor implements ClassVisitor {
       public void visitMethodInsn(final int opcode,
           final String owner, final String name, final String desc) {
         // Look for indirect state access
-        if (accessMethods.get(owner, name, desc) != null) {
-          debugInfo.foundIndirectAccess();
-          System.out.println("Indirect access found: Calls " + owner + " " + name + " " + desc);
+        try {
+          if (accessMethods.get(owner, name, desc) != null) {
+            debugInfo.foundIndirectAccess();
+//            System.out.println("Indirect access found: Calls " + owner + " " + name + " " + desc);
+          }
+        } catch (final IllegalStateException e) {
+          /* We get here if there is a problem looking up an ancestor class.
+           * This only happens if rewriter is provided with a fully close
+           * classpath.  The dbBenchmark example makes reference to a class
+           * that it doesn't provide, but apparently that section is code is
+           * not executed by the example.
+           */
+          messenger.warning("In method " + currentMethod + ": " + e.getMessage());
         }
       }
 

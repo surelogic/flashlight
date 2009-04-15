@@ -1,6 +1,7 @@
 package com.surelogic._flashlight.rewriter;
 
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.Method;
 
 /**
@@ -10,7 +11,10 @@ import org.objectweb.asm.commons.Method;
  */
 final class IndirectAccessMethod {
   /** The method's owning class. */
-  private final ClassAndFieldModel.Clazz owner;
+  private ClassAndFieldModel.Clazz owner;
+  
+  /** The method's owning class internal name */
+  private final String ownerName; 
   
   /** The method name. */
   private final String name;
@@ -36,20 +40,24 @@ final class IndirectAccessMethod {
   
   
   public IndirectAccessMethod(final boolean isStatic,
-      final ClassAndFieldModel.Clazz o, final Method m, final int[] args) {
-    owner = o;
+      final String on, final Method m, final int[] args) {
+    ownerName = on;
     name = m.getName();
     description = m.getDescriptor();
     numArgs = m.getArgumentTypes().length + (isStatic ? 0 : 1);
     interestingArgs = args;
   }
 
+  public void initClazz(final ClassAndFieldModel classModel) {
+    owner = classModel.getClass(ownerName);
+  }
+  
   public boolean matches(final String o, final String n, final String d) {
     return owner.isAssignableFrom(o) && n.equals(name) && d.equals(description);
   }
   
   public void callStore(final MethodVisitor mv, final Configuration config,
-      final String calledOwner, final long siteId) {
+      final int frameModel, final String calledOwner, final long siteId) {
     for (final int arg : interestingArgs) {
       // Push the called methods owner, name, desc
       mv.visitLdcInsn(calledOwner);
@@ -61,6 +69,7 @@ final class IndirectAccessMethod {
       
       // Push the argument object
       final int stackOffset = numArgs - arg - 1;
+      mv.visitVarInsn(Opcodes.ALOAD, frameModel);
       ByteCodeUtils.pushIntegerConstant(mv, stackOffset);
       ByteCodeUtils.callFrameMethod(mv, config, FlashlightNames.PEEK);
       

@@ -9,6 +9,7 @@ import com.surelogic._flashlight.ClassPhantomReference;
 import com.surelogic._flashlight.ObjectPhantomReference;
 import com.surelogic._flashlight.Phantom;
 import com.surelogic._flashlight.StoreDelegate;
+import com.surelogic._flashlight.rewriter.runtime.frame.StackItem;
 
 public class DebugStore {
   /**
@@ -54,7 +55,7 @@ public class DebugStore {
     }
   }
   
-  public static void instanceFieldAccess(
+  public static synchronized void instanceFieldAccess(
       final boolean read, final Object receiver, final int fieldID,
       final long siteId) {
     stdOut.println("instanceFieldAccess");
@@ -65,7 +66,7 @@ public class DebugStore {
     stdOut.flush();
   }
 
-  public static void staticFieldAccess(final boolean read,
+  public static synchronized void staticFieldAccess(final boolean read,
       final ClassPhantomReference fieldClass, final int fieldID,
       final long siteId) {
     stdOut.println("staticFieldAccess");
@@ -76,7 +77,7 @@ public class DebugStore {
     stdOut.flush();
   }
 
-  public static void instanceFieldAccessLookup(
+  public static synchronized void instanceFieldAccessLookup(
       final boolean read, final Object receiver,
       final Class clazz, final String fieldName,
       final long siteId) {
@@ -89,7 +90,7 @@ public class DebugStore {
     stdOut.flush();
   }
 
-  public static void staticFieldAccessLookup(final boolean read,
+  public static synchronized void staticFieldAccessLookup(final boolean read,
       final Class clazz, final String fieldName,
       final long siteId) {
     stdOut.println("staticFieldAccessLookup");
@@ -98,6 +99,18 @@ public class DebugStore {
     stdOut.println("  fieldName = " + fieldName);
     stdOut.println("  siteID = " + siteId);
     stdOut.flush();
+  }
+
+  public static synchronized void indirectAccess(
+      final String owner, final String name, final String description,
+      final int arg, final StackItem object, final long siteId) {
+    stdOut.println("indirectAccess");
+    stdOut.println("  owner = " + owner);
+    stdOut.println("  name = " + name);
+    stdOut.println("  description = " + description);
+    stdOut.println("  arg = " + arg);
+    stdOut.println("  object = " + object);
+    stdOut.println("  siteId = " + siteId);
   }
 
   public static synchronized void beforeIntrinsicLockAcquisition(

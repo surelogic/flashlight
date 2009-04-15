@@ -1,9 +1,15 @@
 package com.surelogic._flashlight.rewriter;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
+import java.util.StringTokenizer;
 
 public final class Configuration {
-  public static final String MODEL_FRAMES_PROPERTY = "com.surelogic._flashlight.rewriter.model.frame";
+  public static final String INDIRECT_ACCESS_PROPERTY = "com.surelogic._flashlight.rewriter.indirectAccess.record";
+  public static final String INDIRECT_ACCESS_USE_DEFAULT_PROPERTY = "com.surelogic._flashlight.rewriter.indirectAccess.useDefault";
+  public static final String INDIRECT_ACCESS_ADDITIONAL_PROPERTY = "com.surelogic._flashlight.rewriter.indirectAccess.additional";
+  
   public static final String FRAME_MODEL_CLASS_NAME_PROPERTY = "com.surelogic._flashlight.rewriter.frame";
   
   public static final String REWRITE_DEFAULT_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.default";
@@ -41,7 +47,10 @@ public final class Configuration {
   
   
   
-  public final boolean modelFrames;
+  public final boolean indirectRecord;
+  public final boolean indirectUseDefault;
+  public final String[] indirectAdditional;
+  
   public final String frameClassName;
   
   public final boolean rewriteInvokeinterface;
@@ -75,15 +84,29 @@ public final class Configuration {
 
   
   
-  private static boolean getBoolean(final java.util.Properties props,
+  private static boolean getBoolean(final Properties props,
       final String propName, final String defaultValue) {
     return Boolean.valueOf(props.getProperty(propName, defaultValue));
   }
 
+  private static String[] getStringArray(final Properties props,
+      final String propName, final String defaultValue) {
+    final String propValue = props.getProperty(propName, defaultValue);
+    final List<String> strings = new ArrayList<String>();
+    final StringTokenizer st = new StringTokenizer(propValue, ", ");
+    while (st.hasMoreTokens()) {
+      strings.add(st.nextToken());
+    }
+    final String[] array = new String[strings.size()];
+    return strings.toArray(array);
+  }
   
   
   public static void writeDefaultProperties(final Properties props) {
-    props.setProperty(MODEL_FRAMES_PROPERTY, FALSE);
+    props.setProperty(INDIRECT_ACCESS_PROPERTY, TRUE);
+    props.setProperty(INDIRECT_ACCESS_USE_DEFAULT_PROPERTY, TRUE);
+    props.setProperty(INDIRECT_ACCESS_ADDITIONAL_PROPERTY, "");
+    
     props.setProperty(FRAME_MODEL_CLASS_NAME_PROPERTY, FlashlightNames.FRAME);
     
     props.setProperty(REWRITE_DEFAULT_PROPERTY, TRUE);
@@ -141,7 +164,10 @@ public final class Configuration {
    * property dictionary.
    */
   public Configuration(final Properties props) {
-    modelFrames = getBoolean(props, MODEL_FRAMES_PROPERTY, FALSE);
+    indirectRecord = getBoolean(props, INDIRECT_ACCESS_PROPERTY, TRUE);
+    indirectUseDefault = getBoolean(props, INDIRECT_ACCESS_USE_DEFAULT_PROPERTY, TRUE);
+    indirectAdditional = getStringArray(props, INDIRECT_ACCESS_ADDITIONAL_PROPERTY, "");
+    
     frameClassName = props.getProperty(FRAME_MODEL_CLASS_NAME_PROPERTY, FlashlightNames.FRAME);
     
     final String rewriteDefault = props.getProperty(REWRITE_DEFAULT_PROPERTY, TRUE);

@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Properties;
 import java.util.StringTokenizer;
 
+import javax.xml.bind.JAXBException;
+
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Task;
@@ -829,6 +831,12 @@ public final class Instrument extends Task {
       final String msg = "Error instrumenting classfiles in " + srcPath;
       log(msg, Project.MSG_ERR);
       throw new BuildException(msg, e, getLocation());
+    }
+    
+    @Override
+    protected void exceptionLoadingMethodsFile(
+        final File methodsFile, final JAXBException e) {
+      throw new BuildException("Problem parsing XML in " + methodsFile.getAbsolutePath(), e);
     }
     
     @Override

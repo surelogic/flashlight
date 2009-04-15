@@ -4,7 +4,6 @@ import com.surelogic._flashlight.ClassPhantomReference;
 import com.surelogic._flashlight.ObjectPhantomReference;
 import com.surelogic._flashlight.Phantom;
 import com.surelogic._flashlight.StoreDelegate;
-import com.surelogic._flashlight.rewriter.runtime.frame.StackItem;
 
 public class EmptyStore {
   /**
@@ -39,18 +38,17 @@ public class EmptyStore {
     // do nothing
   }
 
-  public static void indirectAccess(
-      final String owner, final String name, final String description,
-      final int arg, final StackItem object, final long siteId) {
-    // do nothing
-    }
-
   public static void staticFieldAccessLookup(final boolean read,
       final Class clazz, final String fieldName,
       final long siteId) {
     // do nothing
   }
 
+  public static void indirectAccess(
+      final Object receiver, final long siteId) {
+    // do nothing
+  }
+    
   public static void beforeIntrinsicLockAcquisition(final Object lockObject,
       final boolean lockIsThis, final boolean lockIsClass,
       final long siteId) {

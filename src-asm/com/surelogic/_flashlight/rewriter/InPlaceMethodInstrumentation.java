@@ -9,7 +9,7 @@ import org.objectweb.asm.MethodVisitor;
  * We could do it for all cases, but it causes code bloat.
  */
 abstract class InPlaceMethodInstrumentation extends MethodCall {
-  private final long callSiteId;
+  protected final long callSiteId;
 
   /**
    * 

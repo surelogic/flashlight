@@ -6,11 +6,8 @@ import java.util.Properties;
 import java.util.StringTokenizer;
 
 public final class Configuration {
-  public static final String INDIRECT_ACCESS_PROPERTY = "com.surelogic._flashlight.rewriter.indirectAccess.record";
   public static final String INDIRECT_ACCESS_USE_DEFAULT_PROPERTY = "com.surelogic._flashlight.rewriter.indirectAccess.useDefault";
   public static final String INDIRECT_ACCESS_ADDITIONAL_PROPERTY = "com.surelogic._flashlight.rewriter.indirectAccess.additional";
-  
-  public static final String FRAME_MODEL_CLASS_NAME_PROPERTY = "com.surelogic._flashlight.rewriter.frame";
   
   public static final String REWRITE_DEFAULT_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.default";
   public static final String REWRITE_INVOKEINTERFACE_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.invokeinterface";
@@ -47,11 +44,8 @@ public final class Configuration {
   
   
   
-  public final boolean indirectRecord;
   public final boolean indirectUseDefault;
   public final String[] indirectAdditional;
-  
-  public final String frameClassName;
   
   public final boolean rewriteInvokeinterface;
   public final boolean rewriteInvokespecial;
@@ -103,11 +97,8 @@ public final class Configuration {
   
   
   public static void writeDefaultProperties(final Properties props) {
-    props.setProperty(INDIRECT_ACCESS_PROPERTY, TRUE);
     props.setProperty(INDIRECT_ACCESS_USE_DEFAULT_PROPERTY, TRUE);
     props.setProperty(INDIRECT_ACCESS_ADDITIONAL_PROPERTY, "");
-    
-    props.setProperty(FRAME_MODEL_CLASS_NAME_PROPERTY, FlashlightNames.FRAME);
     
     props.setProperty(REWRITE_DEFAULT_PROPERTY, TRUE);
     props.setProperty(INSTRUMENT_DEFAULT_PROPERTY, TRUE);
@@ -164,11 +155,8 @@ public final class Configuration {
    * property dictionary.
    */
   public Configuration(final Properties props) {
-    indirectRecord = getBoolean(props, INDIRECT_ACCESS_PROPERTY, TRUE);
     indirectUseDefault = getBoolean(props, INDIRECT_ACCESS_USE_DEFAULT_PROPERTY, TRUE);
     indirectAdditional = getStringArray(props, INDIRECT_ACCESS_ADDITIONAL_PROPERTY, "");
-    
-    frameClassName = props.getProperty(FRAME_MODEL_CLASS_NAME_PROPERTY, FlashlightNames.FRAME);
     
     final String rewriteDefault = props.getProperty(REWRITE_DEFAULT_PROPERTY, TRUE);
     

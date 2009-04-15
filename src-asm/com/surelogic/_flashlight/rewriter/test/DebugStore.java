@@ -9,7 +9,6 @@ import com.surelogic._flashlight.ClassPhantomReference;
 import com.surelogic._flashlight.ObjectPhantomReference;
 import com.surelogic._flashlight.Phantom;
 import com.surelogic._flashlight.StoreDelegate;
-import com.surelogic._flashlight.rewriter.runtime.frame.StackItem;
 
 public class DebugStore {
   /**
@@ -102,17 +101,13 @@ public class DebugStore {
   }
 
   public static synchronized void indirectAccess(
-      final String owner, final String name, final String description,
-      final int arg, final StackItem object, final long siteId) {
+      final Object receiver, final long siteId) {
     stdOut.println("indirectAccess");
-    stdOut.println("  owner = " + owner);
-    stdOut.println("  name = " + name);
-    stdOut.println("  description = " + description);
-    stdOut.println("  arg = " + arg);
-    stdOut.println("  object = " + object);
-    stdOut.println("  siteId = " + siteId);
+    stdOut.println("  receiver = " + objectToString(receiver));
+    stdOut.println("  siteID = " + siteId);
+    stdOut.flush();
   }
-
+  
   public static synchronized void beforeIntrinsicLockAcquisition(
       final Object lockObject, final boolean lockIsThis,
       final boolean lockIsClass, final long siteId) {

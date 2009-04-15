@@ -22,7 +22,6 @@ import java.util.zip.GZIPOutputStream;
 import com.surelogic._flashlight.common.IdConstants;
 import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic._flashlight.common.LongMap;
-import com.surelogic._flashlight.rewriter.runtime.frame.StackItem;
 import com.surelogic._flashlight.trace.TraceNode;
 
 /**
@@ -765,18 +764,6 @@ public final class Store {
 		flState.inside = false;
     }
   }
-
-  public static void indirectAccess(
-      final String owner, final String name, final String description,
-      final int arg, final StackItem object, final long siteId) {
-//    System.out.println("Indirect access");
-//    System.out.println("  " + siteId);
-//    System.out.println("  " + owner);
-//    System.out.println("  " + name);
-//    System.out.println("  " + description);
-//    System.out.println("  " + arg);
-//    System.out.println("  " + object);
-  }
   
   /**
    * Record that the given object was  accessed indirectly (via method call)
@@ -790,6 +777,12 @@ public final class Store {
 
 	  if (f_flashlightIsNotInitialized)
 		  return;
+
+    System.out.println("indirectAccess");
+    System.out.println("  receiver = " + receiver.getClass().getName() + "@"
+        + Integer.toHexString(receiver.hashCode()));
+    System.out.println("  siteID = " + siteId);
+    System.out.flush();
 
 	  final State flState = tl_withinStore.get();
 	  if (flState.inside)

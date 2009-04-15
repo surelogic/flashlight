@@ -1,6 +1,5 @@
 package com.surelogic._flashlight.rewriter;
 
-import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -142,29 +141,5 @@ final class ByteCodeUtils {
       final MethodVisitor mv, final Configuration config, final Method method) {
     mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
         method.getName(), method.getDescriptor());
-  }
-  
-  /**
-   * Generate code to call a method from the Frame object
-   */
-  public static void callFrameMethod(
-      final MethodVisitor mv, final Configuration config, final Method method) {
-//    Label start = new Label();
-//    Label end = new Label();
-//    Label handler = new Label();
-//    Label resume = new Label();
-//    mv.visitTryCatchBlock(start, end, handler, "java/lang/ArrayIndexOutOfBoundsException");
-//    mv.visitLabel(start);
-//
-    mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, config.frameClassName,
-        method.getName(), method.getDescriptor());
-//
-//    mv.visitLabel(end);
-//    mv.visitJumpInsn(Opcodes.GOTO, resume);
-//    mv.visitLabel(handler);
-//    mv.visitInsn(Opcodes.DUP);
-//    mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/ArrayIndexOutOfBoundsException", "printStackTrace", "()V");
-//    mv.visitInsn(Opcodes.ATHROW);
-//    mv.visitLabel(resume);
   }
 }

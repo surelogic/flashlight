@@ -23,12 +23,6 @@ final class IndirectAccessMethod {
   private final String description;
   
   /**
-   * The total number of arguments this method has, including the receiver, if
-   * any.
-   */
-  private final int numArgs;
-  
-  /**
    * The argument positions that are interesting. If the method is
    * {@code static} {@value 0} refers to the first explicit argument in the
    * method description. Otherwise, {@value 0} refers to the method's implicit
@@ -41,10 +35,10 @@ final class IndirectAccessMethod {
   
   public IndirectAccessMethod(final boolean isStatic,
       final String on, final Method m, final int[] args) {
+    /* Is static is not currently used, but might be useful in the future */
     ownerName = on;
     name = m.getName();
     description = m.getDescriptor();
-    numArgs = m.getArgumentTypes().length + (isStatic ? 0 : 1);
     interestingArgs = args;
   }
 
@@ -56,26 +50,13 @@ final class IndirectAccessMethod {
     return owner.isAssignableFrom(o) && n.equals(name) && d.equals(description);
   }
   
-  public void callStore(final MethodVisitor mv, final Configuration config,
-      final int frameModel, final String calledOwner, final long siteId) {
+  public void callStore(final MethodVisitor mv, final Configuration config, 
+      final long siteId, final int[] argLocals) {
     for (final int arg : interestingArgs) {
-      // Push the called methods owner, name, desc
-      mv.visitLdcInsn(calledOwner);
-      mv.visitLdcInsn(name);
-      mv.visitLdcInsn(description);
-      
-      // Push the argument position
-      ByteCodeUtils.pushIntegerConstant(mv, arg);
-      
-      // Push the argument object
-      final int stackOffset = numArgs - arg - 1;
-      mv.visitVarInsn(Opcodes.ALOAD, frameModel);
-      ByteCodeUtils.pushIntegerConstant(mv, stackOffset);
-      ByteCodeUtils.callFrameMethod(mv, config, FlashlightNames.PEEK);
-      
+      // Push the object
+      mv.visitVarInsn(Opcodes.ALOAD, argLocals[arg]);
       // Push the site identifier
       ByteCodeUtils.pushLongConstant(mv, siteId);
-      
       // Call the store
       ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.INDIRECT_ACCESS);
     }

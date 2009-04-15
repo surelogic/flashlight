@@ -10,6 +10,8 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.logging.Level;
 
+import javax.xml.bind.JAXBException;
+
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
@@ -634,6 +636,13 @@ final class FlashlightVMRunner implements IVMRunner {
           "Error instrumenting classfiles in " + srcPath, e);
     }
   
+    @Override
+    protected void exceptionLoadingMethodsFile(
+        final File methodsFile, final JAXBException e) {
+      SLLogger.getLogger().log(Level.SEVERE,
+          "Unable to parse methdods file " + methodsFile.getAbsolutePath(), e);
+    }
+    
     @Override
     protected void exceptionCreatingFieldsFile(
         final File fieldsFile, final FileNotFoundException e) {

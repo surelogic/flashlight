@@ -137,6 +137,11 @@ final class OutputStrategyXML extends EventVisitor {
 	}
 
 	@Override
+	void visit(IndirectAccess e) {
+		o(e.toString());
+	}
+	
+	@Override
 	void visit(ObjectDefinition e) {
 		o(e.toString());
 	}

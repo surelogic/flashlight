@@ -190,6 +190,11 @@ public class OutputStrategyBinary extends EventVisitor {
 		writeLong(GarbageCollected_Object.getByte(), e.getObjectId(), true);
 	}
 	
+	@Override
+	void visit(IndirectAccess indirectAccess) {
+		// TODO
+	}
+	
 	private class DefinitionVisitor extends IdPhantomReferenceVisitor {
 		@Override
 		void visit(final ClassPhantomReference r) {

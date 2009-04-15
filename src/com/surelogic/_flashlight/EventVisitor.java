@@ -65,6 +65,10 @@ public abstract class EventVisitor {
 	void visit(GarbageCollectedObject e) {
 		// do nothing
 	}
+	
+	void visit(IndirectAccess indirectAccess) {
+		// do nothing
+	}
 
 	void visit(final ObjectDefinition e) {
 		// do nothing

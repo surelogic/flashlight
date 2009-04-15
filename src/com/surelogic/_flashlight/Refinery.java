@@ -3,7 +3,6 @@ package com.surelogic._flashlight;
 import java.lang.ref.PhantomReference;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.atomic.AtomicLong;
 
 import com.surelogic._flashlight.common.IdConstants;
 
@@ -71,7 +70,8 @@ final class Refinery extends AbstractRefinery {
 				} else {
 					continue;
 				}
-				int num = f_rawQueue.drainTo(buf);
+				//int num = 
+				f_rawQueue.drainTo(buf);
 				// Caused lots of sync overhead 
 				// buf.add(Store.flushLocalQueues());
 				

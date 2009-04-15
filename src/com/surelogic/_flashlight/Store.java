@@ -802,8 +802,8 @@ public final class Store {
 		  }
 		  /*
 		   * Record this access in the trace.
-		   */
-		  // TODO
+		   */		  
+		  putInQueue(flState, new IndirectAccess(receiver, siteId, flState));
 	  } finally {
 		  flState.inside = false;
 	  }

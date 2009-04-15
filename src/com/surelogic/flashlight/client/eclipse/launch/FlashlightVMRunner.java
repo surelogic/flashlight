@@ -300,7 +300,11 @@ final class FlashlightVMRunner implements IVMRunner {
       final List<String> toBeInstrumented, final Map<String, String> entryMap) {
     for (final String instrument : toBeInstrumented) {
       final File asFile = new File(instrument);
-      final File destFile = new File(entryMap.get(instrument));
+      String mapped = entryMap.get(instrument);
+      if (mapped == null) {
+    	  System.out.println("No mapping for "+instrument);
+      }
+      final File destFile = new File(mapped);
       if (asFile.isDirectory()) {
         manager.addDirToJar(asFile, destFile, null);
       } else {

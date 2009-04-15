@@ -778,11 +778,11 @@ public final class Store {
 	  if (f_flashlightIsNotInitialized)
 		  return;
 
-    System.out.println("indirectAccess");
-    System.out.println("  receiver = " + receiver.getClass().getName() + "@"
-        + Integer.toHexString(receiver.hashCode()));
-    System.out.println("  siteID = " + siteId);
-    System.out.flush();
+//    System.out.println("indirectAccess");
+//    System.out.println("  receiver = " + receiver.getClass().getName() + "@"
+//        + Integer.toHexString(receiver.hashCode()));
+//    System.out.println("  siteID = " + siteId);
+//    System.out.flush();
 
 	  final State flState = tl_withinStore.get();
 	  if (flState.inside)

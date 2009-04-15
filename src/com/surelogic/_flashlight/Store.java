@@ -778,6 +778,37 @@ public final class Store {
     System.out.println("  " + object);
   }
   
+  /**
+   * Record that the given object was  accessed indirectly (via method call)
+   * at the given site
+   * 
+   * @param receiver non-null
+   */
+  public static void indirectAccess(final Object receiver, final long siteId) {
+	  if (StoreDelegate.FL_OFF.get())
+		  return;
+
+	  if (f_flashlightIsNotInitialized)
+		  return;
+
+	  final State flState = tl_withinStore.get();
+	  if (flState.inside)
+		  return;
+	  flState.inside = true;
+	  try {
+		  if (DEBUG) {
+			  final String fmt = "Store.indirectAccess(%n\t\treceiver=%s%n\t\tlocation=%s)";
+			  log(String.format(fmt, safeToString(receiver), siteId));
+		  }
+		  /*
+		   * Record this access in the trace.
+		   */
+		  // TODO
+	  } finally {
+		  flState.inside = false;
+	  }
+  }
+  
 	/**
 	 * Records that a field access occurred within the instrumented program.
 	 * 
@@ -1029,7 +1060,15 @@ public final class Store {
 								.writeLock()));
 						putInQueue(flState, e);
 					}
+				} 
+				// If uninstrumented, check if we have an indirect access of interest
+				// TODO 
+				/*
+				else if (!(receiver instanceof IIdObject)) {
+					final ObjectPhantomReference p = Phantom.ofObject(receiver);
+					flState.thread;
 				}
+				*/
 			}
 			/*
 			 * Record this call in the trace.

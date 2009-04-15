@@ -4,10 +4,13 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+import com.surelogic.common.FileUtility;
 import com.surelogic.common.Justification;
 import com.surelogic.common.SLUtility;
 import com.surelogic.common.CommonImages;
+import com.surelogic.flashlight.common.entities.PrepRunDescription;
 import com.surelogic.flashlight.common.files.RawFileHandles;
+import com.surelogic.flashlight.common.files.RunDirectory;
 
 /**
  * IDE independent data model for the table of Flashlight runs displayed in the
@@ -139,14 +142,8 @@ public final class RunViewModel {
 			String getText(RunDescription rowData) {
 				final RawFileHandles handles = rowData.getRawFileHandles();
 				if (handles != null) {
-					final long sizeKb = handles.getDataFile().length() / 1024;
-					String dataFileSizeText;
-					if (sizeKb < 1024) {
-						dataFileSizeText = "(" + sizeKb + " KB)";
-					} else {
-						dataFileSizeText = "(" + (sizeKb / 1024) + " MB)";
-					}
-					return dataFileSizeText;
+					final long sizeInBytes = handles.getDataFile().length();
+					return FileUtility.bytesToHumanReadableString(sizeInBytes);
 				}
 				return super.getText(rowData);
 			}
@@ -164,6 +161,20 @@ public final class RunViewModel {
 			@Override
 			String getColumnTitle() {
 				return "Prep";
+			}
+
+			@Override
+			String getText(RunDescription rowData) {
+				final PrepRunDescription runDescription = rowData
+						.getPrepRunDescription();
+				if (runDescription != null) {
+					final RunDirectory runDirectory = runDescription
+							.getDescription().getRunDirectory();
+					if (runDirectory != null) {
+						return runDirectory.getHumanReadableSize();
+					}
+				}
+				return super.getText(rowData);
 			}
 
 			@Override

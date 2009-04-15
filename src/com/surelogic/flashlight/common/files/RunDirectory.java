@@ -5,6 +5,7 @@ import java.io.FileFilter;
 import java.util.logging.Level;
 
 import com.surelogic._flashlight.common.InstrumentationConstants;
+import com.surelogic.common.FileUtility;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.common.model.RunDescription;
@@ -116,8 +117,9 @@ public final class RunDirectory {
 	/* Package private: Only created by RawFileUtility */
 	static RunDirectory getFor(final File runDir) {
 		// Caller checks if this null
-		assert runDir != null && runDir.exists() && runDir.isDirectory(); 
-		final File tag = new File(runDir, InstrumentationConstants.FL_COMPLETE_RUN);
+		assert runDir != null && runDir.exists() && runDir.isDirectory();
+		final File tag = new File(runDir,
+				InstrumentationConstants.FL_COMPLETE_RUN);
 		if (!tag.exists()) {
 			// Ignore this directory; it's not done (yet)
 			return null;
@@ -148,11 +150,12 @@ public final class RunDirectory {
 				if (rawDataFile == null) {
 					return null;
 				}
-				final RawDataFilePrefix prefixInfo = RawFileUtility.getPrefixFor(rawDataFile);
+				final RawDataFilePrefix prefixInfo = RawFileUtility
+						.getPrefixFor(rawDataFile);
 				if (!prefixInfo.isWellFormed()) {
 					return null;
 				}
-											
+
 				if (instrumentation != null && source != null
 						&& projects != null) {
 					/*
@@ -161,8 +164,9 @@ public final class RunDirectory {
 					 */
 					final RunDescription run = RawFileUtility
 							.getRunDescriptionFor(headerInfo);
-			
-					final RawFileHandles profile = RawFileUtility.getRawFileHandlesFor(prefixInfo);
+
+					final RawFileHandles profile = RawFileUtility
+							.getRawFileHandlesFor(prefixInfo);
 					final File db = new File(runDir.getAbsoluteFile()
 							+ File.separator + DB_NAME);
 					return new RunDirectory(run, runDir, headerFile, db,
@@ -178,21 +182,22 @@ public final class RunDirectory {
 		return null;
 	}
 
-	// FL, but not good 
+	// FL, but not good
 	public static boolean isInvalid(File runDir) {
 		// Caller checks if this null
-		assert runDir != null && runDir.exists() && runDir.isDirectory(); 
+		assert runDir != null && runDir.exists() && runDir.isDirectory();
 
-		final File tag = new File(runDir, InstrumentationConstants.FL_COMPLETE_RUN);
+		final File tag = new File(runDir,
+				InstrumentationConstants.FL_COMPLETE_RUN);
 		if (tag.exists()) {
 			return false; // It should be ok
 		}
-		final File[] headers = runDir.listFiles(flashlightHeaderFileFilter);	
+		final File[] headers = runDir.listFiles(flashlightHeaderFileFilter);
 		final File[] data = runDir.listFiles(flashlightRawDataFileFilter);
 		// Return true if it has a header file
 		return headers.length + data.length > 1;
 	}
-	
+
 	private static File getFileFrom(final File runDir, final FileFilter filter,
 			final int noFileErr, final int manyFilesErr) {
 		final File[] files = runDir.listFiles(filter);
@@ -224,6 +229,15 @@ public final class RunDirectory {
 	/** Get the handle for the run directory. Never returns {@code null}. */
 	public File getRunDirectory() {
 		return runDirHandle;
+	}
+
+	/**
+	 * Gets a human readable size of the run directory. Never returns {@code
+	 * null}.
+	 */
+	public String getHumanReadableSize() {
+		return FileUtility.bytesToHumanReadableString(FileUtility
+				.recursiveSizeInBytes(runDirHandle));
 	}
 
 	/** Get the handle for the header file. Never returns {@code null}. */

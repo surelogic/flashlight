@@ -13,9 +13,12 @@ final class StaticIndirectAccessMethodInstrumentation extends
     super(callSiteId, opcode, am, owner, name, descriptor, vg);
   }
 
-  @Override 
-  protected Type[] getArgumentTypes(final String owner, final String descriptor) {
-    return Type.getArgumentTypes(descriptor);
+  @Override
+  protected PoppedArguments getPoppedArgs(
+      final String owner, final String descriptor,
+      final LocalVariableGenerator vg) {
+    return PoppedArguments.staticArguments(
+        Type.getArgumentTypes(descriptor), vg);
   }
 
   @Override

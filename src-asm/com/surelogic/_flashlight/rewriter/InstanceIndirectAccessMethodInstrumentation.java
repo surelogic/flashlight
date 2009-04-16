@@ -1,7 +1,6 @@
 package com.surelogic._flashlight.rewriter;
 
 import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
 final class InstanceIndirectAccessMethodInstrumentation extends
@@ -14,16 +13,15 @@ final class InstanceIndirectAccessMethodInstrumentation extends
   }
 
   @Override
-  protected Type[] getArgumentTypes(final String owner, final String descriptor) {
-    final Type[] argTypes = Type.getArgumentTypes(descriptor);
-    final Type[] allArgTypes = new Type[1 + argTypes.length];
-    allArgTypes[0] = Type.getObjectType(owner);
-    System.arraycopy(argTypes, 0, allArgTypes, 1, argTypes.length);
-    return allArgTypes;
-  }
-  
-  @Override
   public void pushReceiverForEvent(final MethodVisitor mv) {
-    mv.visitVarInsn(Opcodes.ALOAD, argLocals[0]);
+    poppedArgs.pushReceiver(mv);
+  }
+
+  @Override
+  protected PoppedArguments getPoppedArgs(
+      final String owner, final String descriptor,
+      final LocalVariableGenerator vg) {
+    return PoppedArguments.instanceArguments(
+        Type.getObjectType(owner), Type.getArgumentTypes(descriptor), vg);
   }
 }

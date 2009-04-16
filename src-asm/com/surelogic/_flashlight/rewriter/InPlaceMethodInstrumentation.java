@@ -1,6 +1,8 @@
 package com.surelogic._flashlight.rewriter;
 
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 
 /**
  * Abstract representation of a method call that will instrumented in place,
@@ -9,7 +11,69 @@ import org.objectweb.asm.MethodVisitor;
  * We could do it for all cases, but it causes code bloat.
  */
 abstract class InPlaceMethodInstrumentation extends MethodCall {
-  protected final long callSiteId;
+  final static class PoppedArguments {
+    private final LocalVariableGenerator varGenerator;
+    private final Type[] argTypes;
+    private final int[] argLocals;
+
+    
+    
+    private PoppedArguments(final Type[] types, final LocalVariableGenerator vg) {
+      argTypes = types;
+      argLocals = new int[types.length];
+      varGenerator = vg;
+    }
+    
+    public static PoppedArguments staticArguments(
+        final Type[] types, final LocalVariableGenerator vg) {
+      return new PoppedArguments(types, vg);
+    }
+    
+    public static PoppedArguments instanceArguments(
+        final Type rtype, final Type[] types, final LocalVariableGenerator vg) {
+      final Type[] allTypes = new Type[types.length+1];
+      allTypes[0] = rtype;
+      System.arraycopy(types, 0, allTypes, 1, types.length);
+      return new PoppedArguments(allTypes, vg);
+    }
+
+    
+    
+    public void popReceiverAndArguments(final MethodVisitor mv) {
+      /* First allocate the local variables we need */
+      for (int i = 0; i < argLocals.length; i++) {
+        argLocals[i] = varGenerator.newLocal(argTypes[i]);
+      }
+
+      // ..., [args]
+
+      /* Pop the arguments: the last argument is the first on the stack */
+      for (int i = argLocals.length-1; i >= 0; i--) {
+        mv.visitVarInsn(argTypes[i].getOpcode(Opcodes.ISTORE), argLocals[i]);
+      }
+      // ...
+    }
+
+    public void pushReceiverAndArguments(final MethodVisitor mv) {
+      // ...
+      for (int i = 0; i < argLocals.length; i++) {
+        mv.visitVarInsn(argTypes[i].getOpcode(Opcodes.ILOAD), argLocals[i]);
+      }
+      // ..., [args]
+    }
+    
+    public void pushReceiver(final MethodVisitor mv) {
+      mv.visitVarInsn(Opcodes.ALOAD, argLocals[0]);
+    }
+    
+    public int[] getLocals() {
+      return argLocals;
+    }
+  }
+  
+  
+  
+  final long callSiteId;
 
   /**
    * 

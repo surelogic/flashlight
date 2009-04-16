@@ -121,6 +121,7 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 						.msg("flashlight.preference.page.maxRowsPerQuery"),
 				qGroup);
 		f_maxRowsPerQuery.setValidRange(1024, 65535);
+		f_maxRowsPerQuery.fillIntoGrid(qGroup, 2);
 		finishSetup(f_maxRowsPerQuery);
 
 		f_promptAboutLotsOfSavedQueries = new BooleanFieldEditor(
@@ -128,7 +129,10 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 				I18N
 						.msg("flashlight.preference.page.promptAboutLotsOfSavedQueries"),
 				qGroup);
+		f_promptAboutLotsOfSavedQueries.fillIntoGrid(qGroup, 2);
 		finishSetup(f_promptAboutLotsOfSavedQueries);
+		
+		qGroup.setLayout(new GridLayout(2, false));
 
 		if (XUtil.useExperimental()) {
 			final Button exportButton = new Button(parent, SWT.PUSH);

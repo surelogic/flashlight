@@ -35,6 +35,7 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 	private final List<FieldEditor> f_editors = new ArrayList<FieldEditor>();
 	private BooleanFieldEditor f_autoIncreaseHeap;
 	private IntegerFieldEditor f_maxRowsPerQuery;
+	private BooleanFieldEditor f_promptAboutLotsOfSavedQueries;
 	private Label f_dataDirectory;
 
 	public FlashlightPreferencePage() {
@@ -121,6 +122,14 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 				qGroup);
 		f_maxRowsPerQuery.setValidRange(1024, 65535);
 		finishSetup(f_maxRowsPerQuery);
+
+		f_promptAboutLotsOfSavedQueries = new BooleanFieldEditor(
+				PreferenceConstants.P_PROMPT_ABOUT_LOTS_OF_SAVED_QUERIES,
+				I18N
+						.msg("flashlight.preference.page.promptAboutLotsOfSavedQueries"),
+				qGroup);
+		finishSetup(f_promptAboutLotsOfSavedQueries);
+
 		if (XUtil.useExperimental()) {
 			final Button exportButton = new Button(parent, SWT.PUSH);
 			exportButton.setText("Export New Queries File");

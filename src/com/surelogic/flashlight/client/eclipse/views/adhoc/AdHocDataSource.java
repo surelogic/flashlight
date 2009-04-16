@@ -11,6 +11,7 @@ import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.progress.UIJob;
 
+import com.surelogic.adhoc.eclipse.dialogs.LotsOfSavedQueriesDialog;
 import com.surelogic.common.ILifecycle;
 import com.surelogic.common.adhoc.AdHocManager;
 import com.surelogic.common.adhoc.AdHocManagerAdapter;
@@ -103,6 +104,26 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements
 			}
 		};
 		job.schedule();
+	}
+
+	@Override
+	public void notifyResultModelChange(AdHocManager manager) {
+		if (manager.getHasALotOfSqlDataResults()) {
+			if (PreferenceConstants.getPromptAboutLotsOfSavedQueries()) {
+				final UIJob job = new SLUIJob() {
+					@Override
+					public IStatus runInUIThread(IProgressMonitor monitor) {
+						boolean doNotPromptAgain = LotsOfSavedQueriesDialog
+								.show();
+						if (doNotPromptAgain)
+							PreferenceConstants
+									.setPromptAboutLotsOfSavedQueries(false);
+						return Status.OK_STATUS;
+					}
+				};
+				job.schedule();
+			}
+		}
 	}
 
 	public String getEditorViewId() {

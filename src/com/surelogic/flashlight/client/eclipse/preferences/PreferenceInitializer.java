@@ -29,5 +29,6 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		store.setDefault(PreferenceConstants.P_OUTPUT_TYPE, FL_OUTPUT_TYPE_DEFAULT.isBinary());
 		store.setDefault(PreferenceConstants.P_COMPRESS_OUTPUT, FL_OUTPUT_TYPE_DEFAULT.isCompressed());
 		store.setDefault(PreferenceConstants.P_USE_FILTERING, false);
+		store.setDefault(PreferenceConstants.P_PROMPT_ABOUT_LOTS_OF_SAVED_QUERIES, true);
 	}
 }

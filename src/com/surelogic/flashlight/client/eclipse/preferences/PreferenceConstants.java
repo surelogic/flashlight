@@ -15,10 +15,10 @@ public class PreferenceConstants implements IPreferenceConstants {
 	public static final String P_FILTER_PKG_PREFIX = PREFIX + "filter.";
 
 	public static final String P_USE_FILTERING = PREFIX + "use.filtering";
-	
-    public static final String P_CLASSPATH_ENTRIES_TO_INSTRUMENT = "classpathEntriesToInstrument";
-  
-    public static final String P_BOOTPATH_ENTRIES_TO_INSTRUMENT = "bootpathEntriesToInstrument";
+
+	public static final String P_CLASSPATH_ENTRIES_TO_INSTRUMENT = "classpathEntriesToInstrument";
+
+	public static final String P_BOOTPATH_ENTRIES_TO_INSTRUMENT = "bootpathEntriesToInstrument";
 
 	public static final String P_OUTPUT_TYPE = PREFIX + "output.type";
 
@@ -72,11 +72,24 @@ public class PreferenceConstants implements IPreferenceConstants {
 		return Activator.getDefault().getPluginPreferences().getBoolean(
 				P_AUTO_INCREASE_HEAP_AT_LAUNCH);
 	}
-	
+
+	public static final String P_PROMPT_ABOUT_LOTS_OF_SAVED_QUERIES = PREFIX
+			+ "prompt.about.lots.of.saved.queries";
+
+	public static boolean getPromptAboutLotsOfSavedQueries() {
+		return Activator.getDefault().getPluginPreferences().getBoolean(
+				P_PROMPT_ABOUT_LOTS_OF_SAVED_QUERIES);
+	}
+
+	public static void setPromptAboutLotsOfSavedQueries(boolean value) {
+		Activator.getDefault().getPluginPreferences().setValue(
+				P_PROMPT_ABOUT_LOTS_OF_SAVED_QUERIES, value);
+	}
+
 	private PreferenceConstants() {
 		// Nothing to do
 	}
-	
+
 	public static final PreferenceConstants prototype = new PreferenceConstants();
 
 	public String getPrefConstant(String suffix) {

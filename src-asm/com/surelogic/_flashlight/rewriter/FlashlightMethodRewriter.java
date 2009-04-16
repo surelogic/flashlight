@@ -455,7 +455,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
      * aggregated state.
      */
     IndirectAccessMethod indirectAccess = null;
-    if (debugInfo.hasIndirectAccess()) { // we might have indirect access
+    if (config.instrumentIndirectAccess && debugInfo.hasIndirectAccess()) { // we might have indirect access
       try {
         indirectAccess = accessMethods.get(owner, name, desc);
       } catch (final IllegalStateException e) {

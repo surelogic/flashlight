@@ -34,6 +34,7 @@ public final class Configuration {
   public static final String INSTRUMENT_AFTER_LOCK_PROPERTY = "com.surelogic._flashlight.rewriter.instrument.lock.after";
   public static final String INSTRUMENT_AFTER_TRYLOCK_PROPERTY = "com.surelogic._flashlight.rewriter.instrument.trylock.after";
   public static final String INSTRUMENT_AFTER_UNLOCK_PROPERTY = "com.surelogic._flashlight.rewriter.instrument.unlock.after";
+  public static final String INSTRUMENT_INDIRECT_ACCESS = "com.surelogic._flashlight.rewriter.instrument.indirectAccess";
   
   public static final String STORE_CLASS_NAME_PROPERTY = "com.surelogic._flashlight.rewriter.store";
 
@@ -73,6 +74,7 @@ public final class Configuration {
   public final boolean instrumentAfterLock;
   public final boolean instrumentAfterTryLock;
   public final boolean instrumentAfterUnlock;
+  public final boolean instrumentIndirectAccess;
   
   public final String storeClassName;
 
@@ -125,7 +127,8 @@ public final class Configuration {
     props.setProperty(INSTRUMENT_AFTER_LOCK_PROPERTY, TRUE);
     props.setProperty(INSTRUMENT_AFTER_TRYLOCK_PROPERTY, TRUE);
     props.setProperty(INSTRUMENT_AFTER_UNLOCK_PROPERTY, TRUE);
-  
+    props.setProperty(INSTRUMENT_INDIRECT_ACCESS, TRUE);
+    
     props.setProperty(STORE_CLASS_NAME_PROPERTY, FlashlightNames.FLASHLIGHT_STORE);
   }
   
@@ -188,6 +191,7 @@ public final class Configuration {
     instrumentAfterLock = getBoolean(props, INSTRUMENT_AFTER_LOCK_PROPERTY, instrumentDefault);
     instrumentAfterTryLock = getBoolean(props, INSTRUMENT_AFTER_TRYLOCK_PROPERTY, instrumentDefault);
     instrumentAfterUnlock = getBoolean(props, INSTRUMENT_AFTER_UNLOCK_PROPERTY, instrumentDefault);
+    instrumentIndirectAccess = getBoolean(props, INSTRUMENT_INDIRECT_ACCESS, instrumentDefault);
     
     storeClassName = props.getProperty(STORE_CLASS_NAME_PROPERTY, FlashlightNames.FLASHLIGHT_STORE);
   }

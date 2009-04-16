@@ -479,8 +479,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
           lastInitOwner = owner;
           if (config.rewriteInit) {
             outputOriginalCall = false;
-            // TODO: Handle indirect access here too
-            rewriteConstructorCall(owner, name, desc);
+            rewriteConstructorCall(indirectAccess, owner, name, desc);
           } else {
             if (isConstructor && stateMachine != null) {
               outputOriginalCall = false;
@@ -914,11 +913,21 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     }
   }
   
-  private void rewriteConstructorCall(
+  private void rewriteConstructorCall(final IndirectAccessMethod indirectAccess,
       final String owner, final String name, final String desc) {
     if (isConstructor && stateMachine != null) {
       updateSuperCall(owner, name, desc);
     } else {
+      if (indirectAccess != null) {
+        final IndirectAccessMethodInstrumentation method =
+          new InstanceIndirectAccessMethodInstrumentation(
+              siteId, Opcodes.INVOKESPECIAL, indirectAccess,
+              owner, name, desc, this);
+        method.popReceiverAndArguments(mv);
+        method.recordIndirectAccesses(mv, config);
+        method.pushReceiverAndArguments(mv);
+      }
+      
       // ...
       ByteCodeUtils.pushBooleanConstant(mv, true);
       // ..., true

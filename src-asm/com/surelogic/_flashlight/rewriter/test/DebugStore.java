@@ -50,7 +50,8 @@ public class DebugStore {
     if (o == null) {
       return "null";
     } else {
-      return o.getClass().getName() + "@" + Integer.toHexString(o.hashCode());
+      return o.getClass().getName() + "@" +
+        Integer.toHexString(System.identityHashCode(o));
     }
   }
   

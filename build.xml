@@ -17,6 +17,15 @@
 	
 	<property name="flashlight-ant.jar" value="${basedir}/flashlight-ant.jar" />
 	<property name="flashlight-ant.jar.manifest" value="${lib}/ANT-MANIFEST.MF" />
+  
+  <path id="jaxb.classpath">
+    <pathelement path="${lib}/jaxb1-impl.jar"/>
+    <pathelement path="${lib}/jaxb-api.jar"/>
+    <pathelement path="${lib}/jaxb-impl.jar"/>
+    <pathelement path="${lib}/jaxb-xjc.jar"/>
+    <pathelement path="${lib}/jsr173_1.0_api.jar"/>
+    <pathelement path="${lib}/activation.jar"/>
+  </path>
 
 	
 	<target name="clean">
@@ -29,6 +38,7 @@
 		<javac destdir="${classes}" debug="true" source="1.5" target="1.5">
 			<src path="${src}" />
 			<classpath>
+        <path refid="jaxb.classpath"/> 
 				<pathelement location="${ant.jar}" />
 				<pathelement location="${flashlight-instrumentation-project}"/>
 				<pathelement location="${flashlight-common-project}"/>

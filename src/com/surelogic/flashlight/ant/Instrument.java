@@ -417,6 +417,14 @@ public final class Instrument extends Task {
   }
 
   /**
+   * Set the "com.surelogic._flashlight.rewriter.instrument.indirectAccess"
+   * property.
+   */
+  public void setInstrumentIndirectAccess(final boolean flag) {
+    setBooleanProperty(Configuration.INSTRUMENT_INDIRECT_ACCESS, flag);
+  }
+  
+  /**
    * Set the "com.surelogic._flashlight.rewriter.store" property.
    */
   public void setStore(final String className) {

@@ -68,6 +68,12 @@ public final class Instrument extends Task {
   private File sitesFileName = null;
   
   /**
+   * Additional files to parse containing the names of methods that
+   * indirectly access aggregated state.
+   */
+  private List<File> additionalMethodFiles = new ArrayList<File>();
+  
+  /**
    * The boot class path for the instrumented application. If this is not set,
    * then the task gets the boot class path using a RuntimeMXBean. This value
    * can come from both an attribute and a nested element. If both an attribute
@@ -223,6 +229,20 @@ public final class Instrument extends Task {
     }
   }
 
+  /**
+   * Record for a user-declared file that names additional methods
+   * that indirectly access aggregated state.
+   */
+  public static final class MethodFile {
+    private File file = null;
+    
+    public MethodFile() { super(); }
+    
+    public void setFile(final File f) { file = f; }
+    
+    File getFile() { return file; }
+  }
+  
   
   
   /**
@@ -249,12 +269,18 @@ public final class Instrument extends Task {
     setProperty(propName, value);
   }
   
-  /**
-   */
   private void setProperty(final String propName, final String value) {
     log("Setting " + propName + " to " + value, Project.MSG_DEBUG);
     properties.setProperty(propName, value);
   }    
+
+  /**
+   * Set the "com.surelogic._flashlight.rewriter.indirectAccess.useDefault"
+   * property.
+   */
+  public void setUsedefaultindirectaccessmethods(final boolean flag) {
+    setBooleanProperty(Configuration.INDIRECT_ACCESS_USE_DEFAULT_PROPERTY, flag);
+  }
   
   /**
    * Set the "com.surelogic._flashlight.rewriter.rewrite.invokeinterface"
@@ -421,7 +447,7 @@ public final class Instrument extends Task {
    * property.
    */
   public void setInstrumentIndirectAccess(final boolean flag) {
-    setBooleanProperty(Configuration.INSTRUMENT_INDIRECT_ACCESS, flag);
+    setBooleanProperty(Configuration.INSTRUMENT_INDIRECT_ACCESS_PROPERTY, flag);
   }
   
   /**
@@ -637,6 +663,15 @@ public final class Instrument extends Task {
     subTasks.add(jar);
   }
   
+  /**
+   * Add a new user declared file that names additional methods that 
+   * indirectly access shared state.
+   */
+  public void addConfiguredMethodFile(final MethodFile mf) {
+    additionalMethodFiles.add(mf.getFile());
+  }
+  
+  
   
   private void checkParameters() throws BuildException {
     if (fieldsFileName == null) {
@@ -842,9 +877,8 @@ public final class Instrument extends Task {
     }
     
     @Override
-    protected void exceptionLoadingMethodsFile(
-        final File methodsFile, final JAXBException e) {
-      throw new BuildException("Problem parsing XML in " + methodsFile.getAbsolutePath(), e);
+    protected void exceptionLoadingMethodsFile(final JAXBException e) {
+      throw new BuildException("Problem loading indirect access methods", e);
     }
     
     @Override

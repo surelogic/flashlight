@@ -172,19 +172,21 @@ public final class HistoricalSourceView extends ViewPart {
 					.showView(HistoricalSourceView.class.getName(), null,
 							IWorkbenchPage.VIEW_VISIBLE);
 			if (view != null) {
-				view.showSourceFile(dir, pkg == null ? type : pkg + '.' + type);
-				/*
-				 * The line numbers passed to this method are typically 1 based
-				 * relative to the first line of the content. We need to change this
-				 * to be 0 based.
-				 */
-				if (lineNumber > 0) {
-					lineNumber--;
+				final boolean loaded = view.showSourceFile(dir, pkg == null ? type : pkg + '.' + type);
+				if (loaded) {
+					/*
+					 * The line numbers passed to this method are typically 1 based
+					 * relative to the first line of the content. We need to change this
+					 * to be 0 based.
+					 */
+					if (lineNumber > 0) {
+						lineNumber--;
+					}
+					if (lineNumber < 0) {
+						lineNumber = 0;
+					}
+					view.showAndSelectLine(lineNumber);
 				}
-				if (lineNumber < 0) {
-					lineNumber = 0;
-				}
-				view.showAndSelectLine(lineNumber);
 			}
 		}
 	}
@@ -198,9 +200,11 @@ public final class HistoricalSourceView extends ViewPart {
 					.showView(HistoricalSourceView.class.getName(), null,
 							IWorkbenchPage.VIEW_VISIBLE);
 			if (view != null) {
-				view.showSourceFile(dir, pkg == null ? type : pkg + '.' + type);
-				final int lineNumber = computeLine(view.source.getText(), field);
-				view.showAndSelectLine(lineNumber);
+				final boolean loaded = view.showSourceFile(dir, pkg == null ? type : pkg + '.' + type);
+				if (loaded) {
+					final int lineNumber = computeLine(view.source.getText(), field);
+					view.showAndSelectLine(lineNumber);
+				}
 			}
 		}
 	}
@@ -222,13 +226,13 @@ public final class HistoricalSourceView extends ViewPart {
 		source.setTopIndex(lineNumber < 5 ? 0 : lineNumber - 5);
 
 		if (lineNumber < 0) {
-			SLLogger.getLogger().info("Ignoring showAndSelectLine() for "+lineNumber);
+			SLLogger.getLogger().info("Line number is too small for HistoricalSourceView: "+lineNumber);
 			return;
 		}
 		/*
 		 * Highlight the line by selecting it in the widget.
 		 */
-		try {
+		try {			
 			final int start = source.getOffsetAtLine(lineNumber);
 			final int end;
 			if (lineNumber + 1 > source.getLineCount()) {
@@ -238,7 +242,7 @@ public final class HistoricalSourceView extends ViewPart {
 			}
 			source.setSelection(start, end);
 		} catch(IllegalArgumentException e) {
-			SLLogger.getLogger().log(Level.INFO, "Error in showAndSelectLine() for "+lineNumber, e);
+			SLLogger.getLogger().log(Level.INFO, "Could not find line "+lineNumber+" in HistoricalSourceView", e);
 		}
 	}
 

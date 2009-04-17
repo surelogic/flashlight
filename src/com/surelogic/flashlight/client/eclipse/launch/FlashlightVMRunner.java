@@ -709,12 +709,9 @@ final class FlashlightVMRunner implements IVMRunner {
 		}
 
 		@Override
-		protected void exceptionLoadingMethodsFile(final File methodsFile,
-				final JAXBException e) {
+		protected void exceptionLoadingMethodsFile(final JAXBException e) {
 			SLLogger.getLogger().log(
-					Level.SEVERE,
-					"Unable to parse methdods file "
-							+ methodsFile.getAbsolutePath(), e);
+					Level.SEVERE, "Problem loading indirect access methods", e);
 		}
 
 		@Override

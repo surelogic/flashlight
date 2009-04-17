@@ -1,13 +1,47 @@
 package com.surelogic._flashlight.rewriter;
 
+import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.StringTokenizer;
 
 public final class Configuration {
+  public final static String STORE_CLASS_NAME_DEFAULT = FlashlightNames.FLASHLIGHT_STORE;
+  public final static boolean INDIRECT_ACCESS_USE_DEFAULT_DEFAULT = true;
+      
+  public final static boolean REWRITE_DEFAULT_DEFAULT = true;
+  public final static boolean INSTRUMENT_DEFAULT_DEFAULT = true;
+      
+  public final static boolean REWRITE_INVOKEINTERFACE_DEFAULT = true;
+  public final static boolean REWRITE_INVOKESPECIAL_DEFAULT = true;
+  public final static boolean REWRITE_INVOKESTATIC_DEFAULT = true;
+  public final static boolean REWRITE_INVOKEVIRTUAL_DEFAULT = true;
+  public final static boolean REWRITE_SYNCHRONIZED_METHOD_DEFAULT = true;
+  public final static boolean REWRITE_MONITOREXIT_DEFAULT = true;
+  public final static boolean REWRITE_MONITORENTER_DEFAULT = true;
+  public final static boolean REWRITE_GETSTATIC_DEFAULT = true;
+  public final static boolean REWRITE_PUTSTATIC_DEFAULT = true;
+  public final static boolean REWRITE_GETFIELD_DEFAULT = true;
+  public final static boolean REWRITE_PUTFIELD_DEFAULT = true;
+  public final static boolean REWRITE_INIT_DEFAULT = true;
+  public final static boolean REWRITE_CONSTRUCTOR_EXECUTION_DEFAULT = true;
+    
+  public final static boolean INSTRUMENT_BEFORE_CALL_DEFAULT = true;
+  public final static boolean INSTRUMENT_AFTER_CALL_DEFAULT = true;
+  public final static boolean INSTRUMENT_BEFORE_WAIT_DEFAULT = true;
+  public final static boolean INSTRUMENT_AFTER_WAIT_DEFAULT = true;
+  public final static boolean INSTRUMENT_BEFORE_JUC_LOCK_DEFAULT = true;
+  public final static boolean INSTRUMENT_AFTER_LOCK_DEFAULT = true;
+  public final static boolean INSTRUMENT_AFTER_TRYLOCK_DEFAULT = true;
+  public final static boolean INSTRUMENT_AFTER_UNLOCK_DEFAULT = true;
+  public final static boolean INSTRUMENT_INDIRECT_ACCESS_DEFAULT = true;
+      
+
+  
   public static final String INDIRECT_ACCESS_USE_DEFAULT_PROPERTY = "com.surelogic._flashlight.rewriter.indirectAccess.useDefault";
-  public static final String INDIRECT_ACCESS_ADDITIONAL_PROPERTY = "com.surelogic._flashlight.rewriter.indirectAccess.additional";
+  public static final String INDIRECT_ACCESS_ADDITIONAL_PROPERTY = "com.surelogic._flashlight.rewriter.indirectAccess.additionalMethods";
   
   public static final String REWRITE_DEFAULT_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.default";
   public static final String REWRITE_INVOKEINTERFACE_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.invokeinterface";
@@ -34,19 +68,17 @@ public final class Configuration {
   public static final String INSTRUMENT_AFTER_LOCK_PROPERTY = "com.surelogic._flashlight.rewriter.instrument.lock.after";
   public static final String INSTRUMENT_AFTER_TRYLOCK_PROPERTY = "com.surelogic._flashlight.rewriter.instrument.trylock.after";
   public static final String INSTRUMENT_AFTER_UNLOCK_PROPERTY = "com.surelogic._flashlight.rewriter.instrument.unlock.after";
-  public static final String INSTRUMENT_INDIRECT_ACCESS = "com.surelogic._flashlight.rewriter.instrument.indirectAccess";
+  public static final String INSTRUMENT_INDIRECT_ACCESS_PROPERTY = "com.surelogic._flashlight.rewriter.instrument.indirectAccess";
   
   public static final String STORE_CLASS_NAME_PROPERTY = "com.surelogic._flashlight.rewriter.store";
 
-  
-  
   public static final String TRUE = "true";
   public static final String FALSE = "false";
   
   
   
   public final boolean indirectUseDefault;
-  public final String[] indirectAdditional;
+  public final List<File> indirectAdditionalMethods;
   
   public final boolean rewriteInvokeinterface;
   public final boolean rewriteInvokespecial;
@@ -85,16 +117,15 @@ public final class Configuration {
     return Boolean.valueOf(props.getProperty(propName, defaultValue));
   }
 
-  private static String[] getStringArray(final Properties props,
+  private static List<File> getFileList(final Properties props,
       final String propName, final String defaultValue) {
     final String propValue = props.getProperty(propName, defaultValue);
-    final List<String> strings = new ArrayList<String>();
+    final List<File> files = new ArrayList<File>();
     final StringTokenizer st = new StringTokenizer(propValue, ", ");
     while (st.hasMoreTokens()) {
-      strings.add(st.nextToken());
+      files.add(new File(st.nextToken()));
     }
-    final String[] array = new String[strings.size()];
-    return strings.toArray(array);
+    return Collections.unmodifiableList(files);
   }
   
   
@@ -127,7 +158,7 @@ public final class Configuration {
     props.setProperty(INSTRUMENT_AFTER_LOCK_PROPERTY, TRUE);
     props.setProperty(INSTRUMENT_AFTER_TRYLOCK_PROPERTY, TRUE);
     props.setProperty(INSTRUMENT_AFTER_UNLOCK_PROPERTY, TRUE);
-    props.setProperty(INSTRUMENT_INDIRECT_ACCESS, TRUE);
+    props.setProperty(INSTRUMENT_INDIRECT_ACCESS_PROPERTY, TRUE);
     
     props.setProperty(STORE_CLASS_NAME_PROPERTY, FlashlightNames.FLASHLIGHT_STORE);
   }
@@ -159,7 +190,7 @@ public final class Configuration {
    */
   public Configuration(final Properties props) {
     indirectUseDefault = getBoolean(props, INDIRECT_ACCESS_USE_DEFAULT_PROPERTY, TRUE);
-    indirectAdditional = getStringArray(props, INDIRECT_ACCESS_ADDITIONAL_PROPERTY, "");
+    indirectAdditionalMethods = getFileList(props, INDIRECT_ACCESS_ADDITIONAL_PROPERTY, "");
     
     final String rewriteDefault = props.getProperty(REWRITE_DEFAULT_PROPERTY, TRUE);
     
@@ -191,8 +222,61 @@ public final class Configuration {
     instrumentAfterLock = getBoolean(props, INSTRUMENT_AFTER_LOCK_PROPERTY, instrumentDefault);
     instrumentAfterTryLock = getBoolean(props, INSTRUMENT_AFTER_TRYLOCK_PROPERTY, instrumentDefault);
     instrumentAfterUnlock = getBoolean(props, INSTRUMENT_AFTER_UNLOCK_PROPERTY, instrumentDefault);
-    instrumentIndirectAccess = getBoolean(props, INSTRUMENT_INDIRECT_ACCESS, instrumentDefault);
+    instrumentIndirectAccess = getBoolean(props, INSTRUMENT_INDIRECT_ACCESS_PROPERTY, instrumentDefault);
     
     storeClassName = props.getProperty(STORE_CLASS_NAME_PROPERTY, FlashlightNames.FLASHLIGHT_STORE);
+  }
+
+  public Configuration(
+      final String storeClassName,
+      final boolean indirectUseDefault,
+      final List<File> indirectAdditionalMethods,
+      final boolean rewriteInvokeinterface,
+      final boolean rewriteInvokespecial,
+      final boolean rewriteInvokestatic,
+      final boolean rewriteInvokevirtual,
+      final boolean rewritePutfield,
+      final boolean rewriteGetfield,
+      final boolean rewritePutstatic,
+      final boolean rewriteGetstatic,
+      final boolean rewriteSynchronizedMethod,
+      final boolean rewriteMonitorenter,
+      final boolean rewriteMonitorexit,
+      final boolean rewriteInit,
+      final boolean rewriteConstructorExecution,
+      final boolean instrumentBeforeCall,
+      final boolean instrumentAfterCall,
+      final boolean instrumentBeforeWait,
+      final boolean instrumentAfterWait,
+      final boolean instrumentBeforeJUCLock,
+      final boolean instrumentAfterLock,
+      final boolean instrumentAfterTryLock,
+      final boolean instrumentAfterUnlock,
+      final boolean instrumentIndirectAccess) {
+    this.storeClassName = storeClassName;
+    this.indirectUseDefault = indirectUseDefault;
+    this.indirectAdditionalMethods = indirectAdditionalMethods;
+    this.rewriteInvokeinterface = rewriteInvokeinterface;
+    this.rewriteInvokespecial = rewriteInvokespecial;
+    this.rewriteInvokestatic = rewriteInvokestatic;
+    this.rewriteInvokevirtual = rewriteInvokevirtual;
+    this.rewritePutfield = rewritePutfield;
+    this.rewriteGetfield = rewriteGetfield;
+    this.rewritePutstatic = rewritePutstatic;
+    this.rewriteGetstatic = rewriteGetstatic;
+    this.rewriteSynchronizedMethod = rewriteSynchronizedMethod;
+    this.rewriteMonitorenter = rewriteMonitorenter;
+    this.rewriteMonitorexit = rewriteMonitorexit;
+    this.rewriteInit = rewriteInit;
+    this.rewriteConstructorExecution = rewriteConstructorExecution;
+    this.instrumentBeforeCall = instrumentBeforeCall;
+    this.instrumentAfterCall = instrumentAfterCall;
+    this.instrumentBeforeWait = instrumentBeforeWait;
+    this.instrumentAfterWait = instrumentAfterWait;
+    this.instrumentBeforeJUCLock = instrumentBeforeJUCLock;
+    this.instrumentAfterLock = instrumentAfterLock;
+    this.instrumentAfterTryLock = instrumentAfterTryLock;
+    this.instrumentAfterUnlock = instrumentAfterUnlock;
+    this.instrumentIndirectAccess = instrumentIndirectAccess;
   }
 }

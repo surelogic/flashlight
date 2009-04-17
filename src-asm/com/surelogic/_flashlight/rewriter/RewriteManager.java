@@ -994,43 +994,15 @@ public abstract class RewriteManager {
     fieldsFile = ff;
     sitesFile = sf;
     
-    final InputStream defaultMethods = 
-      RewriteManager.class.getResourceAsStream(DEFAULT_METHODS_FILE);
+    final InputStream defaultMethods = config.indirectUseDefault ?
+        RewriteManager.class.getResourceAsStream(DEFAULT_METHODS_FILE)
+        : null;
     try {
-      accessMethods.loadFromXML(defaultMethods, new File[0]);
+      accessMethods.loadFromXML(defaultMethods, config.indirectAdditionalMethods);
     } catch (final JAXBException e) {
-      // Access methods list is left empty
-      e.printStackTrace();
-//      exceptionLoadingMethodsFile(methodsFile, e);
+      exceptionLoadingMethodsFile(e);
     }
-    
-//    accessMethods.put(false, "java/util/Collection",
-//        Method.getMethod("int size()"), new int[] { 0 });
-//    accessMethods.put(false, "java/util/Collection",
-//        Method.getMethod("boolean isEmpty()"), new int[] { 0 });
-//    accessMethods.put(false, "java/util/Collection",
-//        Method.getMethod("boolean contains(Object)"), new int[] { 0 });
-//    accessMethods.put(false, "java/util/Collection",
-//        Method.getMethod("java.util.Iterator iterator()"), new int[] { 0 });
-//    accessMethods.put(false, "java/util/Collection",
-//        Method.getMethod("Object[] toArray()"), new int[] { 0 });
-//    accessMethods.put(false, "java/util/Collection",
-//        Method.getMethod("Object[] toArray(Object[])"), new int[] { 0 });
-//    accessMethods.put(false, "java/util/Collection",
-//        Method.getMethod("boolean add(Object)"), new int[] { 0 });
-//    accessMethods.put(false, "java/util/Collection",
-//        Method.getMethod("boolean remove(Object)"), new int[] { 0 });
-//    accessMethods.put(false, "java/util/Collection",
-//        Method.getMethod("boolean containsAll(java.util.Collection)"), new int[] { 0, 1 });
-//    accessMethods.put(false, "java/util/Collection",
-//        Method.getMethod("boolean addAll(java.util.Collection)"), new int[] { 0, 1 });
-//    accessMethods.put(false, "java/util/Collection",
-//        Method.getMethod("boolean removeAll(java.util.Collection)"), new int[] { 0, 1 });
-//    accessMethods.put(false, "java/util/Collection",
-//        Method.getMethod("boolean retainAll(java.util.Collection)"), new int[] { 0, 1 });
-//    accessMethods.put(false, "java/util/Collection",
-//        Method.getMethod("void clear()"), new int[] { 0 });
-}
+  }
   
   
   
@@ -1228,7 +1200,7 @@ public abstract class RewriteManager {
   /**
    * Called if there is an exception trying to create the fields database file.
    */
-  protected abstract void exceptionLoadingMethodsFile(File methodsFile, JAXBException e);
+  protected abstract void exceptionLoadingMethodsFile(JAXBException e);
 
   /**
    * Called if there is an exception trying to create the fields database file.

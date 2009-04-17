@@ -178,7 +178,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
   /**
    * Map from one label to another. The key label is a label we receive as a
    * start label in {@link #visitTryCatchBlock}. The value label is the label
-   * we remap it to when we call {@code visitTryCatchBlock} to our delegae
+   * we remap it to when we call {@code visitTryCatchBlock} to our delegate
    * method visitor. We do this because the compiled code can reuse these labels
    * for jump points, and we are sensitive to the start of try blocks that
    * follow monitorenter operations. In particular, we insert instrumentation
@@ -1429,7 +1429,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
       public void insertCode() {
         pushSiteIdentifier(originalSiteId);
         // ..., obj, siteId
-        ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.AFTER_INTRINSIC_LOCK_ACQUISITION);
+        ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.AFTER_INTRINSIC_LOCK_RELEASE);
         // ...
       }
     });      

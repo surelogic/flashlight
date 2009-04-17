@@ -1037,8 +1037,8 @@
 	</class>
 
 	<class name="java.util.LinkedHashMap">
-		<method signature="void &lt;init&gt;(int, float, boolean)">
-			<arg>0</arg>
+		<method signature="void &lt;init&gt;(java.util.Map)">
+			<arg>1</arg>
 		</method>
 
 		<method signature="boolean removeEldestEntry(java.util.Map$Entry)">

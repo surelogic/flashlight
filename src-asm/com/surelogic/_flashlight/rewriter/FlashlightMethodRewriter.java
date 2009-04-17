@@ -1589,12 +1589,9 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
         methodCall = new InstanceIndirectAccessMethodInstrumentation(
             siteId, opcode, indirectMethod, owner, name, desc, this);
       }
-      
-      final MethodCallInstrumenter instrumenter =
-        new MethodCallInstrumenter(config, mv, methodCall);
       methodCall.popReceiverAndArguments(mv);
       methodCall.recordIndirectAccesses(mv, config);
-      instrumenter.instrumentMethodCall();
+      methodCall.instrumentMethodCall(mv, config);
     } else {
     	/* The clone() method is a special case due to its retarded 
     	 * semantics.  If the class of the object being used as the receiver,
@@ -1636,11 +1633,8 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
           methodCall = new InPlaceInstanceMethodInstrumentation(siteId, 
               opcode, owner, name, desc, this);
         }
-        
-        final MethodCallInstrumenter instrumenter =
-          new MethodCallInstrumenter(config, mv, methodCall);
         methodCall.popReceiverAndArguments(mv);
-        instrumenter.instrumentMethodCall();
+        methodCall.instrumentMethodCall(mv, config);
     	} else {
         /* Create the wrapper method information and add it to the list of wrappers */
         final MethodCallWrapper wrapper;

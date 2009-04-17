@@ -398,9 +398,7 @@ final class FlashlightClassRewriter extends ClassAdapter {
     // empty stack
 
     /* Instrument the method call */
-    final MethodCallInstrumenter instrumenter =
-      new MethodCallInstrumenter(config, mv, wrapper);
-    instrumenter.instrumentMethodCall();
+    wrapper.instrumentMethodCall(mv, config);
     
     /* Return from method */
     wrapper.methodReturn(mv);

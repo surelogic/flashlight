@@ -221,17 +221,25 @@ public final class HistoricalSourceView extends ViewPart {
 		 */
 		source.setTopIndex(lineNumber < 5 ? 0 : lineNumber - 5);
 
+		if (lineNumber < 0) {
+			SLLogger.getLogger().info("Ignoring showAndSelectLine() for "+lineNumber);
+			return;
+		}
 		/*
 		 * Highlight the line by selecting it in the widget.
 		 */
-		final int start = source.getOffsetAtLine(lineNumber);
-		final int end;
-		if (lineNumber + 1 > source.getLineCount()) {
-			end = source.getCharCount();
-		} else {
-			end = source.getOffsetAtLine(lineNumber + 1);
+		try {
+			final int start = source.getOffsetAtLine(lineNumber);
+			final int end;
+			if (lineNumber + 1 > source.getLineCount()) {
+				end = source.getCharCount();
+			} else {
+				end = source.getOffsetAtLine(lineNumber + 1);
+			}
+			source.setSelection(start, end);
+		} catch(IllegalArgumentException e) {
+			SLLogger.getLogger().log(Level.INFO, "Error in showAndSelectLine() for "+lineNumber, e);
 		}
-		source.setSelection(start, end);
 	}
 
 	/**

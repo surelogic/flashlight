@@ -10,6 +10,7 @@ public class IndirectAccess extends TracedEvent {
 	IndirectAccess(final Object receiver, final long siteId, Store.State state) {
 		super(siteId, state);
 		f_receiver = Phantom.ofObject(receiver);
+		f_receiver.setLastThread(getWithinThread());
 	}
 
 	@Override

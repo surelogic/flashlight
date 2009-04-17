@@ -1,7 +1,6 @@
 package com.surelogic._flashlight;
 
 import java.lang.ref.ReferenceQueue;
-import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
 import com.surelogic._flashlight.jsr166y.ConcurrentReferenceHashMap;
@@ -12,7 +11,7 @@ import com.surelogic._flashlight.jsr166y.ConcurrentReferenceHashMap.*;
  * @lock ObjectPRInstanceMapLock is f_objectToPhantom protects
  *       ObjectPRInstanceMap
  */
-public class ObjectPhantomReference extends IdPhantomReference {
+public class ObjectPhantomReference extends IdPhantomReference {	
 	/**
 	 * Map from an {@link Object} to its associated
 	 * {@link ObjectPhantomReference}. The key of this map is not prevented
@@ -42,6 +41,11 @@ public class ObjectPhantomReference extends IdPhantomReference {
 	*/	
 	
 	private boolean underConstruction = false;
+	
+	/**
+	 * TODO may want to put it somewhere else to optimize space
+	 */
+	private IdPhantomReference f_thread = null;
 	
 	/**
 	 * Mapping from fields to the thread it's used by (or SHARED_FIELD)
@@ -84,14 +88,18 @@ public class ObjectPhantomReference extends IdPhantomReference {
 		return "[ObjectPhantom: id=" + getId() /*+ " type=" + getType()*/ + "]";
 	}
 	
-	static Set<SingleThreadedField> getAllSingleThreadedFields() {
-		Set<SingleThreadedField> fields = new HashSet<SingleThreadedField>();
+	static SingleThreadedRefs getAllSingleThreadedFields() {
+		SingleThreadedRefs refs = new SingleThreadedRefs();
 		for(ObjectPhantomReference obj : f_objectToPhantom.values()) {
-			IFieldInfo info = obj.getFieldInfo();
-			info.getSingleThreadedFields(fields);
+			IFieldInfo info = obj.getFieldInfo();			
+			info.getSingleThreadedFields(refs);
 			info.clear();
+			
+			if (!obj.sharedByThreads()) {
+				refs.addSingleThreadedObject(obj);
+			}
 		}
-		return fields;
+		return refs;
 	}
 
 	synchronized boolean isUnderConstruction() {
@@ -100,5 +108,19 @@ public class ObjectPhantomReference extends IdPhantomReference {
 
 	synchronized void setUnderConstruction(boolean constructing) {
 		underConstruction = constructing;
+	}
+
+	synchronized void setLastThread(IdPhantomReference withinThread) {
+		//System.out.println("Setting last thread in OPR");
+		if (f_thread == null) {
+			f_thread = withinThread;
+		} 
+		else if (f_thread != withinThread) {
+			f_thread = IFieldInfo.SHARED_BY_THREADS;
+		}
+	}
+	
+	synchronized boolean sharedByThreads() {
+		return f_thread == IFieldInfo.SHARED_BY_THREADS;
 	}
 }

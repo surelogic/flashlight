@@ -235,7 +235,7 @@ abstract class ObservedField {
 	//private static int numInfos = 0, numFields = 0;
 	
 	/**
-	 * Mapping from fields to the thread it's used by (or SHARED_FIELD)
+	 * Mapping from fields to the thread it's used by (or SHARED_BY_THREADS)
 	 */
 	static class FieldInfo extends LongMap<IdPhantomReference> implements IFieldInfo {
 		FieldInfo() {
@@ -266,7 +266,11 @@ abstract class ObservedField {
 			}
 		}
 		
-		public void getSingleThreadedFields(Collection<SingleThreadedField> fields) {
+		/**
+		 * @return true if adding something
+		 */
+		public boolean getSingleThreadedFields(SingleThreadedRefs refs) {
+			boolean added = false;
 			/*
 			Iterator<Map.Entry<Long, IdPhantomReference>> it = this.entrySet().iterator();
 			while (it.hasNext()) {
@@ -275,9 +279,11 @@ abstract class ObservedField {
 			for(Map.Entry<Long, IdPhantomReference> me : this.entrySet()) {
 				LongMap.Entry<IdPhantomReference> e = (LongMap.Entry<IdPhantomReference>) me;
 				if (e.getValue() != SHARED_BY_THREADS) {
-					fields.add(ObservedField.getSingleThreadedEventAbout(e.key(), getReceiver()));
+					added = true;
+					refs.addField(ObservedField.getSingleThreadedEventAbout(e.key(), getReceiver()));
 				}
 			}
+			return added;
 		}
 		
 		public ObjectPhantomReference getReceiver() {

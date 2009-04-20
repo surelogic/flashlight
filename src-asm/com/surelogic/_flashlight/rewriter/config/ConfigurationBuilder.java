@@ -2,48 +2,47 @@ package com.surelogic._flashlight.rewriter.config;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.StringTokenizer;
 
 public final class ConfigurationBuilder {
-  public static final String TRUE = "true";
+  private static final String TRUE = "true";
 
   
   
-  public boolean indirectUseDefault;
-  public List<File> indirectAdditionalMethods;
+  private boolean indirectUseDefault;
+  private List<File> indirectAdditionalMethods;
   
-  public boolean rewriteInvokeinterface;
-  public boolean rewriteInvokespecial;
-  public boolean rewriteInvokestatic;
-  public boolean rewriteInvokevirtual;
+  private boolean rewriteInvokeinterface;
+  private boolean rewriteInvokespecial;
+  private boolean rewriteInvokestatic;
+  private boolean rewriteInvokevirtual;
   
-  public boolean rewritePutfield;
-  public boolean rewriteGetfield;
+  private boolean rewritePutfield;
+  private boolean rewriteGetfield;
 
-  public boolean rewritePutstatic;
-  public boolean rewriteGetstatic;
+  private boolean rewritePutstatic;
+  private boolean rewriteGetstatic;
 
-  public boolean rewriteSynchronizedMethod;
-  public boolean rewriteMonitorenter;
-  public boolean rewriteMonitorexit;
+  private boolean rewriteSynchronizedMethod;
+  private boolean rewriteMonitorenter;
+  private boolean rewriteMonitorexit;
 
-  public boolean rewriteInit;
-  public boolean rewriteConstructorExecution;
+  private boolean rewriteInit;
+  private boolean rewriteConstructorExecution;
 
-  public boolean instrumentBeforeCall;
-  public boolean instrumentAfterCall;
-  public boolean instrumentBeforeWait;
-  public boolean instrumentAfterWait;
-  public boolean instrumentBeforeJUCLock;
-  public boolean instrumentAfterLock;
-  public boolean instrumentAfterTryLock;
-  public boolean instrumentAfterUnlock;
-  public boolean instrumentIndirectAccess;
+  private boolean instrumentBeforeCall;
+  private boolean instrumentAfterCall;
+  private boolean instrumentBeforeWait;
+  private boolean instrumentAfterWait;
+  private boolean instrumentBeforeJUCLock;
+  private boolean instrumentAfterLock;
+  private boolean instrumentAfterTryLock;
+  private boolean instrumentAfterUnlock;
+  private boolean instrumentIndirectAccess;
   
-  public String storeClassName;
+  private String storeClassName;
   
   
   
@@ -53,7 +52,7 @@ public final class ConfigurationBuilder {
   public ConfigurationBuilder() {
     this.storeClassName = Configuration.STORE_CLASS_NAME_DEFAULT;
     this.indirectUseDefault = Configuration.INDIRECT_ACCESS_USE_DEFAULT_DEFAULT;
-    this.indirectAdditionalMethods = Configuration.INDIRECT_ACCESS_ADDITIONAL_DEFAULT;
+    this.indirectAdditionalMethods = new ArrayList(Configuration.INDIRECT_ACCESS_ADDITIONAL_DEFAULT);
     this.rewriteInvokeinterface = Configuration.REWRITE_INVOKEINTERFACE_DEFAULT;
     this.rewriteInvokespecial = Configuration.REWRITE_INVOKESPECIAL_DEFAULT;
     this.rewriteInvokestatic = Configuration.REWRITE_INVOKESTATIC_DEFAULT;
@@ -87,7 +86,7 @@ public final class ConfigurationBuilder {
     
     final String propValue = props.getProperty(Configuration.INDIRECT_ACCESS_ADDITIONAL_PROPERTY);
     if (propValue == null) {
-      indirectAdditionalMethods = Configuration.INDIRECT_ACCESS_ADDITIONAL_DEFAULT;
+      indirectAdditionalMethods = new ArrayList(Configuration.INDIRECT_ACCESS_ADDITIONAL_DEFAULT);
     } else {
       indirectAdditionalMethods = getFileList(propValue);
     }
@@ -138,7 +137,7 @@ public final class ConfigurationBuilder {
     while (st.hasMoreTokens()) {
       files.add(new File(st.nextToken()));
     }
-    return Collections.unmodifiableList(files);
+    return files;
   }
   
   
@@ -162,7 +161,15 @@ public final class ConfigurationBuilder {
   }
 
   public void setIndirectAdditionalMethods(final List<File> indirectAdditionalMethods) {
-    this.indirectAdditionalMethods = indirectAdditionalMethods;
+    this.indirectAdditionalMethods = new ArrayList(indirectAdditionalMethods);
+  }
+  
+  public List<File> getIndirectAdditionalMethods() {
+    return this.indirectAdditionalMethods;
+  }
+  
+  public void addAdditionalMethods(final File file) {
+    this.indirectAdditionalMethods.add(file);
   }
 
   public void setRewriteInvokeinterface(final boolean rewriteInvokeinterface) {

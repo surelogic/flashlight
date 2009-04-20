@@ -67,12 +67,6 @@ public final class Instrument extends Task {
   private File sitesFileName = null;
   
   /**
-   * Additional files to parse containing the names of methods that
-   * indirectly access aggregated state.
-   */
-  private List<File> additionalMethodFiles = new ArrayList<File>();
-  
-  /**
    * The boot class path for the instrumented application. If this is not set,
    * then the task gets the boot class path using a RuntimeMXBean. This value
    * can come from both an attribute and a nested element. If both an attribute
@@ -647,7 +641,7 @@ public final class Instrument extends Task {
    * indirectly access shared state.
    */
   public void addConfiguredMethodFile(final MethodFile mf) {
-    additionalMethodFiles.add(mf.getFile());
+    configBuilder.addAdditionalMethods(mf.getFile());
   }
   
   

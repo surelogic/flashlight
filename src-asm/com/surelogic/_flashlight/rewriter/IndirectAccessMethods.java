@@ -2,7 +2,7 @@ package com.surelogic._flashlight.rewriter;
 
 import java.io.File;
 import java.io.InputStream;
-import java.io.PrintWriter;
+//import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -78,20 +78,20 @@ final class IndirectAccessMethods {
         Classes.class, ClassRecord.class, MethodRecord.class);
     final Unmarshaller unmarshaller = ctxt.createUnmarshaller();
     
-    final PrintWriter pw = new PrintWriter(System.out);
-    pw.println("From default:");
+//    final PrintWriter pw = new PrintWriter(System.out);
+//    pw.println("From default:");
     if (defaultMethods != null) {
       final Classes classes =
         (Classes) unmarshaller.unmarshal(defaultMethods);
-      classes.dump(pw);
+//      classes.dump(pw);
       addFromClasses(classes);
     }
     
     for (final File f : files) {
-      pw.println("From " + f + ":");
+//      pw.println("From " + f + ":");
       final Classes classes =
         (Classes) unmarshaller.unmarshal(f);
-      classes.dump(pw);
+//      classes.dump(pw);
       addFromClasses(classes);
     }
   }

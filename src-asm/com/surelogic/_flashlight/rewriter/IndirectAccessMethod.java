@@ -4,6 +4,8 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.Method;
 
+import com.surelogic._flashlight.rewriter.config.Configuration;
+
 /**
  * Class representing a method that makes indirect access to some
  * aggregated state, for example, the methods of the <code>java.util.Set</code>

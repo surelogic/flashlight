@@ -2,6 +2,8 @@ package com.surelogic._flashlight.rewriter;
 
 import org.objectweb.asm.MethodVisitor;
 
+import com.surelogic._flashlight.rewriter.config.Configuration;
+
 abstract class IndirectAccessMethodInstrumentation extends
     InPlaceMethodInstrumentation {
   final IndirectAccessMethod indirectAccess;

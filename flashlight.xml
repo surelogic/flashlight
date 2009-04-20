@@ -105,6 +105,7 @@
 		<jar destfile="${flashlight-rewriter.jar}" basedir="${classes}">
 		  <include name="**/resources/**" />
 			<include name="**/com/surelogic/_flashlight/rewriter/*" />
+      <include name="**/com/surelogic/_flashlight/rewriter/config/*" />
       <include name="**/com/surelogic/_flashlight/rewriter/xml/*" />
 			<manifest>
 			  <attribute name="Manifest-Version" value="1.0"/>

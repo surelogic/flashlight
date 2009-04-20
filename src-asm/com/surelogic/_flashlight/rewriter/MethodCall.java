@@ -4,6 +4,8 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import com.surelogic._flashlight.rewriter.config.Configuration;
+
 /**
  * Abstract representation of a method call that needs to be instrumented.
  * Generic enough to accommodate both method calls that are instrumented by being

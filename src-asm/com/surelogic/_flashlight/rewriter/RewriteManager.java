@@ -29,6 +29,8 @@ import javax.xml.bind.JAXBException;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 
+import com.surelogic._flashlight.rewriter.config.Configuration;
+
 /**
  * Wrapper around a {@link RewriteEngine} that makes it easier to use for
  * the common cases.

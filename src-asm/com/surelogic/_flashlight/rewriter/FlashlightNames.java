@@ -8,7 +8,7 @@ import org.objectweb.asm.commons.Method;
  * Constants for names introduced into class files by the Flashlight classfile
  * rewriter.
  */
-final class FlashlightNames {
+public final class FlashlightNames {
   // Prevent instantiation
   private FlashlightNames() {
     // do nothing

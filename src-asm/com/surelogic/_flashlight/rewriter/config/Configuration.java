@@ -1,16 +1,17 @@
-package com.surelogic._flashlight.rewriter;
+package com.surelogic._flashlight.rewriter.config;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Properties;
-import java.util.StringTokenizer;
+
+import com.surelogic._flashlight.rewriter.FlashlightNames;
 
 public final class Configuration {
   public final static String STORE_CLASS_NAME_DEFAULT = FlashlightNames.FLASHLIGHT_STORE;
+  
   public final static boolean INDIRECT_ACCESS_USE_DEFAULT_DEFAULT = true;
-      
+  public final static List<File> INDIRECT_ACCESS_ADDITIONAL_DEFAULT = Collections.emptyList();
+  
   public final static boolean REWRITE_DEFAULT_DEFAULT = true;
   public final static boolean INSTRUMENT_DEFAULT_DEFAULT = true;
       
@@ -71,9 +72,6 @@ public final class Configuration {
   public static final String INSTRUMENT_INDIRECT_ACCESS_PROPERTY = "com.surelogic._flashlight.rewriter.instrument.indirectAccess";
   
   public static final String STORE_CLASS_NAME_PROPERTY = "com.surelogic._flashlight.rewriter.store";
-
-  public static final String TRUE = "true";
-  public static final String FALSE = "false";
   
   
   
@@ -110,124 +108,10 @@ public final class Configuration {
   
   public final String storeClassName;
 
-  
-  
-  private static boolean getBoolean(final Properties props,
-      final String propName, final String defaultValue) {
-    return Boolean.valueOf(props.getProperty(propName, defaultValue));
-  }
-
-  private static List<File> getFileList(final Properties props,
-      final String propName, final String defaultValue) {
-    final String propValue = props.getProperty(propName, defaultValue);
-    final List<File> files = new ArrayList<File>();
-    final StringTokenizer st = new StringTokenizer(propValue, ", ");
-    while (st.hasMoreTokens()) {
-      files.add(new File(st.nextToken()));
-    }
-    return Collections.unmodifiableList(files);
-  }
-  
-  
-  public static void writeDefaultProperties(final Properties props) {
-    props.setProperty(INDIRECT_ACCESS_USE_DEFAULT_PROPERTY, TRUE);
-    props.setProperty(INDIRECT_ACCESS_ADDITIONAL_PROPERTY, "");
-    
-    props.setProperty(REWRITE_DEFAULT_PROPERTY, TRUE);
-    props.setProperty(INSTRUMENT_DEFAULT_PROPERTY, TRUE);
-    
-    props.setProperty(REWRITE_INVOKEINTERFACE_PROPERTY, TRUE);
-    props.setProperty(REWRITE_INVOKESPECIAL_PROPERTY, TRUE);
-    props.setProperty(REWRITE_INVOKESTATIC_PROPERTY, TRUE);
-    props.setProperty(REWRITE_INVOKEVIRTUAL_PROPERTY, TRUE);
-    props.setProperty(REWRITE_SYNCHRONIZED_METHOD_PROPERTY, TRUE);
-    props.setProperty(REWRITE_MONITOREXIT_PROPERTY, TRUE);
-    props.setProperty(REWRITE_MONITORENTER_PROPERTY, TRUE);
-    props.setProperty(REWRITE_GETSTATIC_PROPERTY, TRUE);
-    props.setProperty(REWRITE_PUTSTATIC_PROPERTY, TRUE);
-    props.setProperty(REWRITE_GETFIELD_PROPERTY, TRUE);
-    props.setProperty(REWRITE_PUTFIELD_PROPERTY, TRUE);
-    props.setProperty(REWRITE_INIT_PROPERTY, TRUE);
-    props.setProperty(REWRITE_CONSTRUCTOR_EXECUTION_PROPERTY, TRUE);
-  
-    props.setProperty(INSTRUMENT_BEFORE_CALL_PROPERTY, TRUE);
-    props.setProperty(INSTRUMENT_AFTER_CALL_PROPERTY, TRUE);
-    props.setProperty(INSTRUMENT_BEFORE_WAIT_PROPERTY, TRUE);
-    props.setProperty(INSTRUMENT_AFTER_WAIT_PROPERTY, TRUE);
-    props.setProperty(INSTRUMENT_BEFORE_JUC_LOCK_PROPERTY, TRUE);
-    props.setProperty(INSTRUMENT_AFTER_LOCK_PROPERTY, TRUE);
-    props.setProperty(INSTRUMENT_AFTER_TRYLOCK_PROPERTY, TRUE);
-    props.setProperty(INSTRUMENT_AFTER_UNLOCK_PROPERTY, TRUE);
-    props.setProperty(INSTRUMENT_INDIRECT_ACCESS_PROPERTY, TRUE);
-    
-    props.setProperty(STORE_CLASS_NAME_PROPERTY, FlashlightNames.FLASHLIGHT_STORE);
-  }
-  
-  private static Properties getDefaultProperties() {
-    final Properties defaults = new Properties();
-    writeDefaultProperties(defaults);
-    return defaults;
-  }
 
   
-  
-  /**
-   * Initialize the configuration to use all the default values:
-   * <ul>
-   * <li>All the rewriting and instrumenting is performed.
-   * <li>The debug store is not used.
-   * </ul>
-   */
-  public Configuration() {
-    this(getDefaultProperties());
-  }
-  
-  
-  
-  /**
-   * Initialize the configuration based on property values in the given
-   * property dictionary.
-   */
-  public Configuration(final Properties props) {
-    indirectUseDefault = getBoolean(props, INDIRECT_ACCESS_USE_DEFAULT_PROPERTY, TRUE);
-    indirectAdditionalMethods = getFileList(props, INDIRECT_ACCESS_ADDITIONAL_PROPERTY, "");
-    
-    final String rewriteDefault = props.getProperty(REWRITE_DEFAULT_PROPERTY, TRUE);
-    
-    rewriteInvokeinterface = getBoolean(props, REWRITE_INVOKEINTERFACE_PROPERTY, rewriteDefault);
-    rewriteInvokespecial = getBoolean(props, REWRITE_INVOKESPECIAL_PROPERTY, rewriteDefault);
-    rewriteInvokestatic = getBoolean(props, REWRITE_INVOKESTATIC_PROPERTY, rewriteDefault);
-    rewriteInvokevirtual = getBoolean(props, REWRITE_INVOKEVIRTUAL_PROPERTY, rewriteDefault);
-    
-    rewritePutfield = getBoolean(props, REWRITE_PUTFIELD_PROPERTY, rewriteDefault);
-    rewriteGetfield = getBoolean(props, REWRITE_GETFIELD_PROPERTY, rewriteDefault);
-
-    rewritePutstatic = getBoolean(props, REWRITE_PUTSTATIC_PROPERTY, rewriteDefault);
-    rewriteGetstatic = getBoolean(props, REWRITE_GETSTATIC_PROPERTY, rewriteDefault);
-
-    rewriteSynchronizedMethod = getBoolean(props, REWRITE_SYNCHRONIZED_METHOD_PROPERTY, rewriteDefault);
-    rewriteMonitorenter = getBoolean(props, REWRITE_MONITORENTER_PROPERTY, rewriteDefault);
-    rewriteMonitorexit = getBoolean(props, REWRITE_MONITOREXIT_PROPERTY, rewriteDefault);
-
-    rewriteInit = getBoolean(props, REWRITE_INIT_PROPERTY, rewriteDefault);
-    rewriteConstructorExecution = getBoolean(props, REWRITE_CONSTRUCTOR_EXECUTION_PROPERTY, rewriteDefault);
-
-    final String instrumentDefault = props.getProperty(INSTRUMENT_DEFAULT_PROPERTY, TRUE);
-
-    instrumentBeforeCall = getBoolean(props, INSTRUMENT_BEFORE_CALL_PROPERTY, instrumentDefault);
-    instrumentAfterCall = getBoolean(props, INSTRUMENT_AFTER_CALL_PROPERTY, instrumentDefault);
-    instrumentBeforeWait = getBoolean(props, INSTRUMENT_BEFORE_WAIT_PROPERTY, instrumentDefault);
-    instrumentAfterWait = getBoolean(props, INSTRUMENT_AFTER_WAIT_PROPERTY, instrumentDefault);
-    instrumentBeforeJUCLock = getBoolean(props, INSTRUMENT_BEFORE_JUC_LOCK_PROPERTY, instrumentDefault);
-    instrumentAfterLock = getBoolean(props, INSTRUMENT_AFTER_LOCK_PROPERTY, instrumentDefault);
-    instrumentAfterTryLock = getBoolean(props, INSTRUMENT_AFTER_TRYLOCK_PROPERTY, instrumentDefault);
-    instrumentAfterUnlock = getBoolean(props, INSTRUMENT_AFTER_UNLOCK_PROPERTY, instrumentDefault);
-    instrumentIndirectAccess = getBoolean(props, INSTRUMENT_INDIRECT_ACCESS_PROPERTY, instrumentDefault);
-    
-    storeClassName = props.getProperty(STORE_CLASS_NAME_PROPERTY, FlashlightNames.FLASHLIGHT_STORE);
-  }
-
-  public Configuration(
+  /* Use ConfigurationBuilder to make an instance */
+  Configuration(
       final String storeClassName,
       final boolean indirectUseDefault,
       final List<File> indirectAdditionalMethods,

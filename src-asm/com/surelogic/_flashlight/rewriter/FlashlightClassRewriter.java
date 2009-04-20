@@ -14,6 +14,8 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.CodeSizeEvaluator;
 
+import com.surelogic._flashlight.rewriter.config.Configuration;
+
 /**
  * Visits a classfile and rewrites it to contain Flashlight instrumentation.
  * This is the second pass of the instrumentation process. The first pass is

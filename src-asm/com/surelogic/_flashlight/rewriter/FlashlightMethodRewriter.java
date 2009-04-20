@@ -13,6 +13,7 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.Method;
 
 import com.surelogic._flashlight.rewriter.ConstructorInitStateMachine.Callback;
+import com.surelogic._flashlight.rewriter.config.Configuration;
 
 
 /**

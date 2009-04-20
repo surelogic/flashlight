@@ -5,6 +5,8 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.Method;
 
+import com.surelogic._flashlight.rewriter.config.Configuration;
+
 /**
  * Home to static utility functions for generation of bytecode operations.
  */

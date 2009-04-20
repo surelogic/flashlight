@@ -28,10 +28,11 @@ import org.eclipse.jdt.launching.VMRunnerConfiguration;
 import org.eclipse.ui.progress.UIJob;
 
 import com.surelogic._flashlight.common.*;
-import com.surelogic._flashlight.rewriter.Configuration;
 import com.surelogic._flashlight.rewriter.PrintWriterMessenger;
 import com.surelogic._flashlight.rewriter.RewriteManager;
 import com.surelogic._flashlight.rewriter.RewriteMessenger;
+import com.surelogic._flashlight.rewriter.config.Configuration;
+import com.surelogic._flashlight.rewriter.config.ConfigurationBuilder;
 import com.surelogic.common.eclipse.MemoryUtility;
 import com.surelogic.common.eclipse.SourceZip;
 import com.surelogic.common.eclipse.logging.SLEclipseStatusUtility;
@@ -244,16 +245,15 @@ final class FlashlightVMRunner implements IVMRunner {
 			} catch (final IllegalArgumentException e) {
 				failed = true;
 			}
+			
+			final ConfigurationBuilder configBuilder;
 			if (failed) {
 				SLLogger.getLogger().log(Level.INFO,
 						I18N.err(162, flashlightPropFile));
-				// Create a new object in case the old one contains crap
-				flashlightProps = new Properties();
-				Configuration.writeDefaultProperties(flashlightProps);
+				configBuilder = new ConfigurationBuilder();
+			} else {
+			  configBuilder = new ConfigurationBuilder(flashlightProps);
 			}
-
-			final Configuration rewriterConfig = new Configuration(
-					flashlightProps);
 
 			// final Properties p = new Properties();
 			// Configuration.writeDefaultProperties(p);
@@ -261,7 +261,8 @@ final class FlashlightVMRunner implements IVMRunner {
 			// "com/surelogic/_flashlight/rewriter/test/DebugStore");
 			// final Configuration rewriterConfig = new Configuration(p);
 
-			final RewriteManager manager = new VMRewriteManager(rewriterConfig,
+			final RewriteManager manager =
+			  new VMRewriteManager(configBuilder.getConfiguration(),
 					messenger, fieldsFile, sitesFile, progress);
 
 			// Scan everything on the classpath

@@ -251,7 +251,9 @@ final class Refinery extends AbstractRefinery {
 			for(int i=0; i<size; i++) {
 				Event e = l.get(i);
 				if (e instanceof FieldAccess) {
+					//System.out.println("Looking at field access");
 					if (refs.containsField(e)) {
+						//System.out.println("Removed field access");
 						l.set(i, null);
 						/*
 					filtered++;
@@ -262,8 +264,10 @@ final class Refinery extends AbstractRefinery {
 					}
 				}
 				else if (e instanceof IndirectAccess) {
+					//System.out.println("Looking at indirect access");
 					IndirectAccess a = (IndirectAccess) e;
 					if (refs.containsObject(a.getReceiver())) {
+						//System.out.println("Removed indirect access");
 						l.set(i, null);
 					}
 				}

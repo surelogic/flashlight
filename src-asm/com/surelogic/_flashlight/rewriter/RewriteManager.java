@@ -712,7 +712,7 @@ public abstract class RewriteManager {
     private void rewriteFileStream(final StreamProvider provider, 
         final String fname, final OutputStream outFile)
         throws IOException {
-      if (isClassfileName(fname)) {
+      if (isClassfileName(fname) && !isBlackListed(fname)) {
         messenger.verbose("Rewriting classfile " + fname);
         try {
           messenger.increaseNesting();
@@ -1153,6 +1153,14 @@ public abstract class RewriteManager {
    */
   private static boolean isClassfileName(final String name) {
     return name.endsWith(".class");
+  }
+  
+  /**
+   * Is the classfile blacklisted?
+   */
+  private boolean isBlackListed(final String classfileName) {
+    final String internalName = classfileName.substring(0, classfileName.length() - 6);
+    return config.classBlacklist.contains(internalName);
   }
   
   

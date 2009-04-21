@@ -2,8 +2,10 @@ package com.surelogic._flashlight.rewriter.config;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 import java.util.StringTokenizer;
 
 public final class ConfigurationBuilder {
@@ -43,7 +45,9 @@ public final class ConfigurationBuilder {
   private boolean instrumentIndirectAccess;
   
   private String storeClassName;
-  
+
+  private Set<String> classBlacklist;
+
   
   
   /**
@@ -75,6 +79,7 @@ public final class ConfigurationBuilder {
     this.instrumentAfterTryLock = Configuration.INSTRUMENT_AFTER_TRYLOCK_DEFAULT;
     this.instrumentAfterUnlock = Configuration.INSTRUMENT_AFTER_UNLOCK_DEFAULT;
     this.instrumentIndirectAccess = Configuration.INSTRUMENT_INDIRECT_ACCESS_DEFAULT;
+    this.classBlacklist = Configuration.BLACKLISTED_CLASSES_DEFAULT;
   }
   
   /**
@@ -86,7 +91,7 @@ public final class ConfigurationBuilder {
     
     final String propValue = props.getProperty(Configuration.INDIRECT_ACCESS_ADDITIONAL_PROPERTY);
     if (propValue == null) {
-      indirectAdditionalMethods = new ArrayList(Configuration.INDIRECT_ACCESS_ADDITIONAL_DEFAULT);
+      indirectAdditionalMethods = new ArrayList<File>(Configuration.INDIRECT_ACCESS_ADDITIONAL_DEFAULT);
     } else {
       indirectAdditionalMethods = getFileList(propValue);
     }
@@ -124,6 +129,13 @@ public final class ConfigurationBuilder {
     instrumentIndirectAccess = getBoolean(props, Configuration.INSTRUMENT_INDIRECT_ACCESS_PROPERTY, instrumentDefault);
     
     storeClassName = props.getProperty(Configuration.STORE_CLASS_NAME_PROPERTY, Configuration.STORE_CLASS_NAME_DEFAULT);
+
+    final String propValue2 = props.getProperty(Configuration.BLACKLISTED_CLASSES_PROPERTY);
+    if (propValue2 == null) {
+      classBlacklist = new HashSet<String>(Configuration.BLACKLISTED_CLASSES_DEFAULT);
+    } else {
+      classBlacklist = getStringSet(propValue2);
+    }
   }
   
   private static boolean getBoolean(final Properties props,
@@ -139,6 +151,15 @@ public final class ConfigurationBuilder {
     }
     return files;
   }
+
+  private static Set<String> getStringSet(final String propValue) {
+    final Set<String> strings = new HashSet<String>();
+    final StringTokenizer st = new StringTokenizer(propValue, ", ");
+    while (st.hasMoreTokens()) {
+      strings.add(st.nextToken());
+    }
+    return strings;
+  }
   
   
   
@@ -151,7 +172,7 @@ public final class ConfigurationBuilder {
         rewriteInit, rewriteConstructorExecution, instrumentBeforeCall,
         instrumentAfterCall, instrumentBeforeWait, instrumentAfterWait,
         instrumentBeforeJUCLock, instrumentAfterLock, instrumentAfterTryLock,
-        instrumentAfterUnlock, instrumentIndirectAccess);
+        instrumentAfterUnlock, instrumentIndirectAccess, classBlacklist);
   }
 
   
@@ -262,5 +283,17 @@ public final class ConfigurationBuilder {
 
   public void setStoreClassName(final String storeClassName) {
     this.storeClassName = storeClassName;
+  }
+  
+  public Set<String> getClassBlacklist() {
+    return this.classBlacklist;
+  }
+  
+  public void setClassBlacklist(final Set<String> blacklist) {
+    this.classBlacklist = new HashSet(blacklist);
+  }
+  
+  public void addToBlacklist(final String internalClassName) {
+    this.classBlacklist.add(internalClassName);
   }
 }

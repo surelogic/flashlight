@@ -3,6 +3,7 @@ package com.surelogic._flashlight.rewriter.config;
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import com.surelogic._flashlight.rewriter.FlashlightNames;
 
@@ -38,6 +39,8 @@ public final class Configuration {
   public final static boolean INSTRUMENT_AFTER_TRYLOCK_DEFAULT = true;
   public final static boolean INSTRUMENT_AFTER_UNLOCK_DEFAULT = true;
   public final static boolean INSTRUMENT_INDIRECT_ACCESS_DEFAULT = true;
+  
+  public final static Set<String> BLACKLISTED_CLASSES_DEFAULT = Collections.emptySet();
       
 
   
@@ -72,6 +75,8 @@ public final class Configuration {
   public static final String INSTRUMENT_INDIRECT_ACCESS_PROPERTY = "com.surelogic._flashlight.rewriter.instrument.indirectAccess";
   
   public static final String STORE_CLASS_NAME_PROPERTY = "com.surelogic._flashlight.rewriter.store";
+  
+  public static final String BLACKLISTED_CLASSES_PROPERTY = "com.surelogic._flashlight.rewriter.blacklist.classes";
   
   
   
@@ -108,6 +113,8 @@ public final class Configuration {
   
   public final String storeClassName;
 
+  public final Set<String> classBlacklist;
+  
 
   
   /* Use ConfigurationBuilder to make an instance */
@@ -136,7 +143,8 @@ public final class Configuration {
       final boolean instrumentAfterLock,
       final boolean instrumentAfterTryLock,
       final boolean instrumentAfterUnlock,
-      final boolean instrumentIndirectAccess) {
+      final boolean instrumentIndirectAccess,
+      final Set<String> classBlacklist) {
     this.storeClassName = storeClassName;
     this.indirectUseDefault = indirectUseDefault;
     this.indirectAdditionalMethods = indirectAdditionalMethods;
@@ -162,5 +170,6 @@ public final class Configuration {
     this.instrumentAfterTryLock = instrumentAfterTryLock;
     this.instrumentAfterUnlock = instrumentAfterUnlock;
     this.instrumentIndirectAccess = instrumentIndirectAccess;
+    this.classBlacklist = classBlacklist;
   }
 }

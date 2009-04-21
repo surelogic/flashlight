@@ -267,6 +267,8 @@ public final class Store {
 	 */
 	static {
 		if (IdConstants.enableFlashlightToggle || !StoreDelegate.FL_OFF.get()) {
+			//new Throwable("Store CL = "+Store.class.getClassLoader()).printStackTrace(System.out);
+			
 			/*
 			 * Initialize final static fields. If Flashlight is off these fields
 			 * are all set to null to save memory.
@@ -1485,6 +1487,8 @@ public final class Store {
 					+ "before the Store class is initialized");
 			return;
 		}
+		//System.out.println("FL_OFF = "+StoreDelegate.FL_OFF.hashCode()+" "+StoreDelegate.FL_OFF.get());
+		
 		/*
 		 * The below getAndSet(true) ensures that only one thread shuts down
 		 * Flashlight.
@@ -1492,6 +1496,9 @@ public final class Store {
 		if (StoreDelegate.FL_OFF.getAndSet(true))
 			return;
 
+		//new Throwable("Calling shutdown()").printStackTrace(System.out);
+		//System.out.flush();
+		
 		/*
 		 * Finish up data output.
 		 */

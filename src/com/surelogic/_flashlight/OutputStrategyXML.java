@@ -129,6 +129,7 @@ final class OutputStrategyXML extends EventVisitor {
 		o("</flashlight>");
 		//System.out.println("Closed.");
 		f_out.close();
+		//new Throwable("Visiting FinalEvent").printStackTrace(System.out);
 	}
 
 	@Override

@@ -157,7 +157,7 @@ final class FlashlightVMRunner implements IVMRunner {
 		 * Build the instrumented class files. First we scan each directory to
 		 * the build the field database, and then we instrument each directory.
 		 */
-		if (instrumentClassfiles(classpathEntryMap, progress)) {
+		if (instrumentClassfiles(launch.getLaunchConfiguration(), classpathEntryMap, progress)) {
 			// Canceled, abort early
 			return;
 		}
@@ -225,7 +225,9 @@ final class FlashlightVMRunner implements IVMRunner {
 	 * @param progress
 	 * @return Whether instrumentation was canceled.
 	 */
-	private boolean instrumentClassfiles(final Map<String, String> entryMap,
+	@SuppressWarnings("cast")
+  private boolean instrumentClassfiles(final ILaunchConfiguration launch,
+	    final Map<String, String> entryMap,
 			final SubMonitor progress) {
 		runOutputDir.mkdirs();
 		PrintWriter logOut = null;
@@ -235,8 +237,9 @@ final class FlashlightVMRunner implements IVMRunner {
 
 			// Read the property file
 			Properties flashlightProps = new Properties();
-			final File flashlightPropFile = new File(System
-					.getProperty("user.home"), "flashlight-rewriter.properties");
+			final File flashlightPropFile =
+			  new File(System.getProperty("user.home"),
+			      "flashlight-rewriter.properties");
 			boolean failed = false;
 			try {
 				flashlightProps.load(new FileInputStream(flashlightPropFile));
@@ -255,12 +258,24 @@ final class FlashlightVMRunner implements IVMRunner {
 			  configBuilder = new ConfigurationBuilder(flashlightProps);
 			}
 
-			// final Properties p = new Properties();
-			// Configuration.writeDefaultProperties(p);
-			// p.put(Configuration.STORE_CLASS_NAME_PROPERTY,
-			// "com/surelogic/_flashlight/rewriter/test/DebugStore");
-			// final Configuration rewriterConfig = new Configuration(p);
-
+			try {
+  			configBuilder.setIndirectUseDefault(
+  			    launch.getAttribute(
+  			        PreferenceConstants.P_USE_DEFAULT_INDIRECT_ACCESS_METHODS, true));
+			} catch (final CoreException e) {
+			  // eat it
+			}
+      try {
+        final List<String> xtraMethods = (List<String>) launch.getAttribute(
+            PreferenceConstants.P_ADDITIONAL_INDIRECT_ACCESS_METHDOS,
+            Collections.emptyList());
+        for (final String s : xtraMethods) {
+          configBuilder.addAdditionalMethods(new File(s));
+        }
+      } catch (final CoreException e) {
+        // eat it
+      }
+			
 			final RewriteManager manager =
 			  new VMRewriteManager(configBuilder.getConfiguration(),
 					messenger, fieldsFile, sitesFile, progress);

@@ -2,10 +2,8 @@ package com.surelogic._flashlight.rewriter.config;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
-import java.util.Set;
 import java.util.StringTokenizer;
 
 public final class ConfigurationBuilder {
@@ -46,7 +44,7 @@ public final class ConfigurationBuilder {
   
   private String storeClassName;
 
-  private Set<String> classBlacklist;
+  private List<String> classBlacklist;
 
   
   
@@ -132,9 +130,9 @@ public final class ConfigurationBuilder {
 
     final String propValue2 = props.getProperty(Configuration.BLACKLISTED_CLASSES_PROPERTY);
     if (propValue2 == null) {
-      classBlacklist = new HashSet<String>(Configuration.BLACKLISTED_CLASSES_DEFAULT);
+      classBlacklist = new ArrayList<String>(Configuration.BLACKLISTED_CLASSES_DEFAULT);
     } else {
-      classBlacklist = getStringSet(propValue2);
+      classBlacklist = getStringList(propValue2);
     }
   }
   
@@ -152,8 +150,8 @@ public final class ConfigurationBuilder {
     return files;
   }
 
-  private static Set<String> getStringSet(final String propValue) {
-    final Set<String> strings = new HashSet<String>();
+  private static List<String> getStringList(final String propValue) {
+    final List<String> strings = new ArrayList<String>();
     final StringTokenizer st = new StringTokenizer(propValue, ", ");
     while (st.hasMoreTokens()) {
       strings.add(st.nextToken());
@@ -285,12 +283,12 @@ public final class ConfigurationBuilder {
     this.storeClassName = storeClassName;
   }
   
-  public Set<String> getClassBlacklist() {
+  public List<String> getClassBlacklist() {
     return this.classBlacklist;
   }
   
-  public void setClassBlacklist(final Set<String> blacklist) {
-    this.classBlacklist = new HashSet(blacklist);
+  public void setClassBlacklist(final List<String> blacklist) {
+    this.classBlacklist = new ArrayList<String>(blacklist);
   }
   
   public void addToBlacklist(final String internalClassName) {

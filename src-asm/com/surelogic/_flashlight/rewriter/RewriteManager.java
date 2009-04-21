@@ -1159,8 +1159,14 @@ public abstract class RewriteManager {
    * Is the classfile blacklisted?
    */
   private boolean isBlackListed(final String classfileName) {
-    final String internalName = classfileName.substring(0, classfileName.length() - 6);
-    return config.classBlacklist.contains(internalName);
+    final String stripOffDotClass =
+      classfileName.substring(0, classfileName.length() - 6);
+    for (final String blackListed : config.classBlacklist) {
+      if (stripOffDotClass.endsWith(blackListed)) {
+        return true;
+      }
+    }
+    return false;
   }
   
   

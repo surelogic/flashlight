@@ -75,6 +75,8 @@ final class FlashlightVMRunner implements IVMRunner {
 	private final List<String> system;
 	private final List<String> instrumentUser;
 	private final List<String> instrumentBoot;
+	
+	private final boolean ALWAYS_APPEND_TO_BOOT = true;
 
 	public FlashlightVMRunner(final IVMRunner other, final String mainType,
 			final List<String> user, final List<String> boot,
@@ -367,7 +369,7 @@ final class FlashlightVMRunner implements IVMRunner {
 		 * lib to the bootclasspath so it is accessible to the instrumented
 		 * bootclasspath items.
 		 */
-		if (instrumentBoot.isEmpty()) {
+		if (!ALWAYS_APPEND_TO_BOOT && instrumentBoot.isEmpty()) {
 			newClassPathList.add(pathToFlashlightLib);
 		}
 
@@ -594,10 +596,14 @@ final class FlashlightVMRunner implements IVMRunner {
 		return newConfig;
 	}
 
-	private Map updateVMSpecificAttributesMap(final Map original,
+	private Map updateVMSpecificAttributesMap(final Map originalMap,
 			final Map<String, String> entryMap) {
+		Map original = originalMap;
 		if (original == null) {
-			return null;
+			if (!ALWAYS_APPEND_TO_BOOT) {
+				return null;
+			}
+			original = Collections.EMPTY_MAP;			
 		}
 
 		final Map updated = new HashMap();
@@ -636,7 +642,7 @@ final class FlashlightVMRunner implements IVMRunner {
 			needsFlashlightLib |= updateBootpathArray(entryMap, originalAppend,
 					newAppendList);
 		}
-		if (needsFlashlightLib) {
+		if (ALWAYS_APPEND_TO_BOOT || needsFlashlightLib) {
 			if (newAppendList == null) {
 				newAppendList = new ArrayList(1);
 			}

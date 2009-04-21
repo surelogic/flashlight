@@ -2,10 +2,10 @@ package com.surelogic.flashlight.client.eclipse.launch;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.*;
@@ -26,7 +26,6 @@ import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.PlatformUI;
 
 import com.surelogic.common.eclipse.SLImages;
-import com.surelogic.common.logging.SLLogger;
 import com.surelogic.common.CommonImages;
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
 
@@ -203,42 +202,30 @@ public final class FlashlightInstrumentationTab extends
 			bootpathMap.put(entry.getLocation(), entry);
 		}
 
-		java.util.List configUserEntries;
-		java.util.List configBootpathEntries;
+		java.util.List configUserEntries = Collections.emptyList();
+		java.util.List configBootpathEntries = LaunchUtils.convertToLocations(boot);
 
 		try {
 			configUserEntries = config.getAttribute(
-					PreferenceConstants.P_CLASSPATH_ENTRIES_TO_INSTRUMENT,
-					LaunchUtils.convertToLocations(userEntries));
+					PreferenceConstants.P_CLASSPATH_ENTRIES_TO_NOT_INSTRUMENT,
+					configUserEntries);
 		} catch (final CoreException e) {
-			configUserEntries = Collections.emptyList();
-			SLLogger
-					.getLogger()
-					.log(
-							Level.WARNING,
-							"Error reading classpath entries to instrument from launch configuration",
-							e);
+		  // CommonTab ignores this; so do we
 		}
 
 		try {
 			configBootpathEntries = config.getAttribute(
-					PreferenceConstants.P_BOOTPATH_ENTRIES_TO_INSTRUMENT,
-					Collections.emptyList());
+					PreferenceConstants.P_BOOTPATH_ENTRIES_TO_NOT_INSTRUMENT,
+					configBootpathEntries);
 		} catch (final CoreException e) {
-			configBootpathEntries = Collections.emptyList();
-			SLLogger
-					.getLogger()
-					.log(
-							Level.WARNING,
-							"Error reading bootpath entries to instrument from launch configuration",
-							e);
+      // CommonTab ignores this; so do we
 		}
 
-		for (final Object userLoc : configUserEntries) {
-			userTable.setChecked(userMap.get(userLoc), true);
+		for (final IRuntimeClasspathEntry e : userEntries) {
+		  userTable.setChecked(e, !configUserEntries.contains(e.getLocation()));
 		}
-		for (final Object bootLoc : configBootpathEntries) {
-			bootpathTable.setChecked(bootpathMap.get(bootLoc), true);
+		for (final IRuntimeClasspathEntry e : bootpathEntries) {
+			bootpathTable.setChecked(e, !configBootpathEntries.contains(e.getLocation()));
 		}
 	}
 
@@ -249,13 +236,19 @@ public final class FlashlightInstrumentationTab extends
 	 *            launch configuration
 	 */
 	public void performApply(final ILaunchConfigurationWorkingCopy config) {
+	  final java.util.List<IRuntimeClasspathEntry> user =
+	    new ArrayList<IRuntimeClasspathEntry>(userEntries); 
+	  user.removeAll(Arrays.asList(userTable.getCheckedElements()));
 		config.setAttribute(
-				PreferenceConstants.P_CLASSPATH_ENTRIES_TO_INSTRUMENT,
-				LaunchUtils.convertToLocations(userTable.getCheckedElements()));
+				PreferenceConstants.P_CLASSPATH_ENTRIES_TO_NOT_INSTRUMENT,
+				LaunchUtils.convertToLocations(user));
+		
+    final java.util.List<IRuntimeClasspathEntry> boot =
+      new ArrayList<IRuntimeClasspathEntry>(bootpathEntries); 
+    user.removeAll(Arrays.asList(bootpathTable.getCheckedElements()));
 		config.setAttribute(
-				PreferenceConstants.P_BOOTPATH_ENTRIES_TO_INSTRUMENT,
-				LaunchUtils.convertToLocations(bootpathTable
-						.getCheckedElements()));
+				PreferenceConstants.P_BOOTPATH_ENTRIES_TO_NOT_INSTRUMENT,
+				LaunchUtils.convertToLocations(boot));
 	}
 
 	/**
@@ -274,15 +267,15 @@ public final class FlashlightInstrumentationTab extends
     final java.util.List<IRuntimeClasspathEntry> boot = new ArrayList<IRuntimeClasspathEntry>();
     final java.util.List<IRuntimeClasspathEntry> system = new ArrayList<IRuntimeClasspathEntry>();
 
-		final IRuntimeClasspathEntry[] entries = LaunchUtils
-				.getClasspath(config);
+		final IRuntimeClasspathEntry[] entries =
+		  LaunchUtils.getClasspath(config);
 		LaunchUtils.divideClasspath(entries, user, boot, system);
 
 		config.setAttribute(
-				PreferenceConstants.P_CLASSPATH_ENTRIES_TO_INSTRUMENT,
-				LaunchUtils.convertToLocations(user));
-		config.setAttribute(
-				PreferenceConstants.P_BOOTPATH_ENTRIES_TO_INSTRUMENT,
+				PreferenceConstants.P_CLASSPATH_ENTRIES_TO_NOT_INSTRUMENT,
 				Collections.emptyList());
+		config.setAttribute(
+				PreferenceConstants.P_BOOTPATH_ENTRIES_TO_NOT_INSTRUMENT,
+				LaunchUtils.convertToLocations(boot));
 	}
 }

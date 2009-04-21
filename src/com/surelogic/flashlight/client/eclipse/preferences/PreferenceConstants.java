@@ -16,9 +16,9 @@ public class PreferenceConstants implements IPreferenceConstants {
 
 	public static final String P_USE_FILTERING = PREFIX + "use.filtering";
 
-	public static final String P_CLASSPATH_ENTRIES_TO_INSTRUMENT = PREFIX + "classpathEntriesToInstrument";
+	public static final String P_CLASSPATH_ENTRIES_TO_NOT_INSTRUMENT = PREFIX + "classpathEntriesToNotInstrument";
 
-	public static final String P_BOOTPATH_ENTRIES_TO_INSTRUMENT = PREFIX + "bootpathEntriesToInstrument";
+  public static final String P_BOOTPATH_ENTRIES_TO_NOT_INSTRUMENT = PREFIX + "bootpathEntriesToNotInstrument";
 
 	public static final String P_USE_DEFAULT_INDIRECT_ACCESS_METHODS = PREFIX + "useDefaultIndirectAccessMethods";
 	

@@ -46,13 +46,19 @@ public final class FlashlightLaunchConfigurationDelegate extends
 		final IRuntimeClasspathEntry[] classpath = LaunchUtils.getClasspath(configuration);
 		LaunchUtils.divideClasspathAsLocations(classpath, user, boot, system);
     
-    /* Get the entries that the user wants instrumented */
-    final List instrumentUser = configuration.getAttribute(
-          PreferenceConstants.P_CLASSPATH_ENTRIES_TO_INSTRUMENT,
+    /* Get the entries that the user does not want instrumented */
+    final List noInstrumentUser = configuration.getAttribute(
+          PreferenceConstants.P_CLASSPATH_ENTRIES_TO_NOT_INSTRUMENT,
           user);
-    final List instrumentBoot = configuration.getAttribute(
-          PreferenceConstants.P_BOOTPATH_ENTRIES_TO_INSTRUMENT,
+    final List noInstrumentBoot = configuration.getAttribute(
+          PreferenceConstants.P_BOOTPATH_ENTRIES_TO_NOT_INSTRUMENT,
           Collections.emptyList());
+    
+    /* Convert to the entries that the user does want instrumented */
+    final List<String> instrumentUser = new ArrayList<String>(user);
+    final List<String> instrumentBoot = new ArrayList<String>(boot);
+    instrumentUser.removeAll(noInstrumentUser);
+    instrumentBoot.removeAll(noInstrumentBoot);
     
     return new FlashlightVMRunner(runner, getMainTypeName(configuration),
         user, boot, system, instrumentUser, instrumentBoot);

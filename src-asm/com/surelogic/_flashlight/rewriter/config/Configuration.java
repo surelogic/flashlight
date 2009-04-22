@@ -3,6 +3,7 @@ package com.surelogic._flashlight.rewriter.config;
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import com.surelogic._flashlight.rewriter.FlashlightNames;
 
@@ -39,7 +40,7 @@ public final class Configuration {
   public final static boolean INSTRUMENT_AFTER_UNLOCK_DEFAULT = true;
   public final static boolean INSTRUMENT_INDIRECT_ACCESS_DEFAULT = true;
   
-  public final static List<String> BLACKLISTED_CLASSES_DEFAULT = Collections.emptyList();
+  public final static Set<String> BLACKLISTED_CLASSES_DEFAULT = Collections.emptySet();
       
 
   
@@ -112,7 +113,7 @@ public final class Configuration {
   
   public final String storeClassName;
 
-  public final List<String> classBlacklist;
+  public final Set<String> classBlacklist;
   
 
   
@@ -143,7 +144,7 @@ public final class Configuration {
       final boolean instrumentAfterTryLock,
       final boolean instrumentAfterUnlock,
       final boolean instrumentIndirectAccess,
-      final List<String> classBlacklist) {
+      final Set<String> classBlacklist) {
     this.storeClassName = storeClassName;
     this.indirectUseDefault = indirectUseDefault;
     this.indirectAdditionalMethods = indirectAdditionalMethods;

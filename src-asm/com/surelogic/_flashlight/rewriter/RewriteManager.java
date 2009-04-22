@@ -132,7 +132,7 @@ public abstract class RewriteManager {
       public void instrument(final Instrumenter instrumenter,
           final File src, final File dest, final String runtime)
           throws IOException {
-        instrumenter.rewriteDirectoryToDirectory(src, dest);
+        instrumenter.rewriteDirectoryToDirectory(src, "", dest);
       }
     },
     
@@ -440,7 +440,8 @@ public abstract class RewriteManager {
      *           Thrown when there is a problem with any of the directories or
      *           files.
      */
-    public void rewriteDirectoryToDirectory(final File inDir, final File outDir)
+    public void rewriteDirectoryToDirectory(
+        final File inDir, final String relativePath, final File outDir)
         throws IOException {
       final String[] files = inDir.list();
       if (files == null) {
@@ -452,8 +453,10 @@ public abstract class RewriteManager {
         final File nextIn = new File(inDir, name);
         final File nextOut = new File(outDir, name);
         if (nextIn.isDirectory()) {
-          rewriteDirectoryToDirectory(nextIn, nextOut);
+          final String nextRelative = relativePath + name + File.separator;
+          rewriteDirectoryToDirectory(nextIn, nextRelative, nextOut);
         } else {
+          final String nextRelative = relativePath + name;
           final BufferedOutputStream bos = new BufferedOutputStream(
               new FileOutputStream(nextOut));
           try {
@@ -461,7 +464,7 @@ public abstract class RewriteManager {
               public BufferedInputStream getInputStream() throws IOException {
                 return new BufferedInputStream(new FileInputStream(nextIn));
               }
-            }, nextIn.getPath(), bos);
+            }, nextIn.getPath(), nextRelative, bos);
           } finally {
             try {
               bos.close();
@@ -504,7 +507,7 @@ public abstract class RewriteManager {
       JarOutputStream jarOut = null;
       try {
         jarOut = new JarOutputStream(bos, outManifest);
-        rewriteDirectoryToJarHelper(inDir, jarOut, "");
+        rewriteDirectoryToJarHelper(inDir, "", jarOut, "");
       } finally {
         final OutputStream streamToClose = (jarOut != null) ? jarOut : bos;
         try {
@@ -516,7 +519,8 @@ public abstract class RewriteManager {
     }
   
     private void rewriteDirectoryToJarHelper(
-        final File inDir, final JarOutputStream jarOut, final String jarPathPrefix) 
+        final File inDir, final String relativePath,
+        final JarOutputStream jarOut, final String jarPathPrefix) 
         throws IOException {
       final String[] files = inDir.list();
       if (files == null) {
@@ -525,11 +529,13 @@ public abstract class RewriteManager {
       for (final String name : files) {
         final File nextIn = new File(inDir, name);
         if (nextIn.isDirectory()) {
+          final String nextRelative = relativePath + name + File.separator;
           final String entryName = jarPathPrefix + name + "/";
           final JarEntry jarEntryOut = new JarEntry(entryName);
           jarOut.putNextEntry(jarEntryOut);
-          rewriteDirectoryToJarHelper(nextIn, jarOut, entryName);
+          rewriteDirectoryToJarHelper(nextIn, nextRelative, jarOut, entryName);
         } else {
+          final String nextRelative = relativePath + name;
           final String entryName = jarPathPrefix + name;
           final JarEntry jarEntryOut = new JarEntry(entryName);
           jarOut.putNextEntry(jarEntryOut);
@@ -537,7 +543,7 @@ public abstract class RewriteManager {
             public BufferedInputStream getInputStream() throws IOException {
               return new BufferedInputStream(new FileInputStream(nextIn));
             }
-          }, nextIn.getPath(), jarOut);
+          }, nextIn.getPath(), nextRelative, jarOut);
         }
       }
     }
@@ -593,7 +599,7 @@ public abstract class RewriteManager {
                 public BufferedInputStream getInputStream() throws IOException {
                   return new BufferedInputStream(jarFile.getInputStream(jarEntryIn));
                 }
-              }, entryName, jarOut);
+              }, entryName, entryName, jarOut);
             }
           }
         } finally {
@@ -673,7 +679,7 @@ public abstract class RewriteManager {
                   public BufferedInputStream getInputStream() throws IOException {
                     return new BufferedInputStream(jarFile.getInputStream(jarEntryIn));
                   }
-                }, entryName, bos);
+                }, entryName, entryName, bos);
               } finally {
                 // Close the output stream if possible
                 try {
@@ -703,16 +709,18 @@ public abstract class RewriteManager {
      * @param provider
      *          The stream provider.
      * @param fname
-     *          The name of the file whose contents are being provided.
+     *          The full path of the file whose contents are being provided.
+     * @param relativeName
+     *          The path of the file relative to the root of the class directory.
      * @param outFile
      *          The output stream to use.
      * @throws IOException
      *           Thrown if an IO error occurs.
      */
     private void rewriteFileStream(final StreamProvider provider, 
-        final String fname, final OutputStream outFile)
+        final String fname, final String relativeName, final OutputStream outFile)
         throws IOException {
-      if (isClassfileName(fname) && !isBlackListed(fname)) {
+      if (isClassfileName(relativeName) && !isBlackListed(relativeName)) {
         messenger.verbose("Rewriting classfile " + fname);
         try {
           messenger.increaseNesting();
@@ -1159,14 +1167,13 @@ public abstract class RewriteManager {
    * Is the classfile blacklisted?
    */
   private boolean isBlackListed(final String classfileName) {
-    final String stripOffDotClass =
+    /* classfileName is path of the classfile relative to the root of the
+     * current classfile directory.  By removing the ".class" extension (-6) 
+     * we generate an internal class name.
+     */
+    final String internalClassName =
       classfileName.substring(0, classfileName.length() - 6);
-    for (final String blackListed : config.classBlacklist) {
-      if (stripOffDotClass.endsWith(blackListed)) {
-        return true;
-      }
-    }
-    return false;
+    return config.classBlacklist.contains(internalClassName);
   }
   
   

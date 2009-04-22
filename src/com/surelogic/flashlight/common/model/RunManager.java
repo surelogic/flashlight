@@ -54,6 +54,16 @@ public final class RunManager {
 		}
 	}
 
+	private final AtomicReference<File> f_dataDir =
+		new AtomicReference<File>();
+	
+	public void setDataDirectory(File dir) {
+		if (dir != null && dir.exists() && dir.isDirectory()) {
+			f_dataDir.set(dir);
+			refresh();
+		}
+	}
+	
 	/**
 	 * Holds a mapping from all known run descriptions (in files or in the
 	 * database) to prepared run descriptions. Not all run descriptions have an
@@ -92,10 +102,14 @@ public final class RunManager {
 	 * all observers if that set has changed.
 	 */
 	public void refresh() {
+		final File dataDir = f_dataDir.get();
+		if (dataDir == null) {
+			return; // Nothing to do
+		}		
 		boolean isChanged = false; // assume nothing changed
 		final Map<RunDescription, PrepRunDescription> descToPrep = new HashMap<RunDescription, PrepRunDescription>();
 		final Set<RunDescription> rawDescriptions = RawFileUtility
-				.getRunDescriptions();
+				.getRunDescriptions(dataDir);
 		/*
 		 * Put in all the raw descriptions with a null. This indicates that
 		 * there is no prepared description associated with them.
@@ -112,7 +126,7 @@ public final class RunManager {
 					@Override
 					public void doPerform(final Connection conn)
 							throws Exception {
-						descToPrep.put(key, RunDAO.find(conn));
+						descToPrep.put(key, RunDAO.find(dataDir, conn));
 					}
 				});
 			}

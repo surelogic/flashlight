@@ -27,7 +27,6 @@ import com.surelogic._flashlight.common.BinaryEventReader;
 import com.surelogic.common.SLUtility;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.logging.SLLogger;
-import com.surelogic.flashlight.common.FlashlightUtility;
 import com.surelogic.flashlight.common.model.RunDescription;
 
 /**
@@ -101,14 +100,14 @@ public final class RawFileUtility {
 	 * @return a set of descriptions for all the raw data files found in the
 	 *         Flashlight data directory.
 	 */
-	public static Set<RunDescription> getRunDescriptions() {
-		final RawDataDirectoryReader runDescriptionBuilder = new RawDataDirectoryReader();
+	public static Set<RunDescription> getRunDescriptions(File dataDir) {
+		final RawDataDirectoryReader runDescriptionBuilder = new RawDataDirectoryReader(dataDir);
 		runDescriptionBuilder.read();
 		return runDescriptionBuilder.getRunDescriptions();
 	}
 
-	public static List<File> findInvalidRunDirectories() {
-		final RawDataDirectoryReader runDescriptionBuilder = new RawDataDirectoryReader();
+	public static List<File> findInvalidRunDirectories(File dataDir) {
+		final RawDataDirectoryReader runDescriptionBuilder = new RawDataDirectoryReader(dataDir);
 		return runDescriptionBuilder.findBadDirs();
 	}
 	
@@ -135,19 +134,19 @@ public final class RawFileUtility {
 	// return runDescriptionBuilder.getRawFileHandlesFor(description);
 	// }
 
-	public static RunDirectory getRunDirectoryFor(
+	public static RunDirectory getRunDirectoryFor(File dataDir,
 			final RunDescription description) {
 		if (description == null) {
 			throw new IllegalArgumentException(I18N.err(44, "description"));
 		}
-		final RawDataDirectoryReader runDescriptionBuilder = new RawDataDirectoryReader();
+		final RawDataDirectoryReader runDescriptionBuilder = new RawDataDirectoryReader(dataDir);
 		runDescriptionBuilder.read();
 		return runDescriptionBuilder.getRunDirectoryFor(description);
 	}
 
 	public static RunDirectory getRunDirectoryFor(
 			final RawDataFilePrefix prefixInfo) {
-		return getRunDirectoryFor(getRunDescriptionFor(prefixInfo));
+		return getRunDirectoryFor(prefixInfo.getDataDir(), getRunDescriptionFor(prefixInfo));
 	}
 
 	/**
@@ -161,8 +160,8 @@ public final class RawFileUtility {
 		if (dataFile == null) {
 			throw new IllegalArgumentException(I18N.err(44, "dataFile"));
 		}
-
-		final RawDataFilePrefix prefixInfo = new RawDataFilePrefix();
+		File dataDir = dataFile.getParentFile().getParentFile();
+		final RawDataFilePrefix prefixInfo = new RawDataFilePrefix(dataDir);
 		prefixInfo.read(dataFile);
 
 		return prefixInfo;
@@ -189,7 +188,8 @@ public final class RawFileUtility {
 
 			final Timestamp started = new Timestamp(prefixInfo
 					.getWallClockTime().getTime());
-			final RunDescription run = new RunDescription(prefixInfo.getName(),
+			final RunDescription run = new RunDescription(prefixInfo.getDataDir(), 
+					prefixInfo.getName(),
 					prefixInfo.getRawDataVersion(), prefixInfo.getUserName(),
 					prefixInfo.getJavaVersion(), prefixInfo.getJavaVendor(),
 					prefixInfo.getOSName(), prefixInfo.getOSArch(), prefixInfo
@@ -251,10 +251,16 @@ public final class RawFileUtility {
 	 * data directory.
 	 */
 	private static final class RawDataDirectoryReader {
-		final Set<RunDescription> f_runs = new HashSet<RunDescription>();
+		private final Set<RunDescription> f_runs = new HashSet<RunDescription>();
 
 		private final Map<RunDescription, RunDirectory> f_runToHandles = new HashMap<RunDescription, RunDirectory>();
 
+		private final File dataDir;
+		
+		RawDataDirectoryReader(File dataDir) {
+			this.dataDir = dataDir;
+		}
+		
 		Set<RunDescription> getRunDescriptions() {
 			return f_runs;
 		}
@@ -264,9 +270,7 @@ public final class RawFileUtility {
 		}
 
 		private File[] getRunDirs() {
-			final File directory = FlashlightUtility
-			.getFlashlightDataDirectory();
-			final File[] runDirs = directory.listFiles(f_directoryFilter);
+			final File[] runDirs = dataDir.listFiles(f_directoryFilter);
 			return runDirs;
 		}
 				

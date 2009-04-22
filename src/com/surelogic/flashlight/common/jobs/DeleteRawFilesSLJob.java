@@ -1,5 +1,7 @@
 package com.surelogic.flashlight.common.jobs;
 
+import java.io.File;
+
 import com.surelogic.common.FileUtility;
 import com.surelogic.common.jobs.AbstractSLJob;
 import com.surelogic.common.jobs.SLProgressMonitor;
@@ -14,11 +16,12 @@ import com.surelogic.flashlight.common.model.RunDescription;
  * Note that the RunManager needs to be refreshed after this
  */
 public class DeleteRawFilesSLJob extends AbstractSLJob {
-
+	private final File dataDir;
 	private final RunDescription f_description;
 
-	public DeleteRawFilesSLJob(final RunDescription description) {
+	public DeleteRawFilesSLJob(File dir, final RunDescription description) {
 		super("Removing raw data " + description.getName());
+		dataDir = dir;
 		f_description = description;
 	}
 
@@ -35,7 +38,7 @@ public class DeleteRawFilesSLJob extends AbstractSLJob {
 					"Flashlight ran DeleteRawFilesSLJob");
 
 			final RunDirectory runDir = RawFileUtility
-					.getRunDirectoryFor(f_description);
+					.getRunDirectoryFor(dataDir, f_description);
 			FileUtility.recursiveDelete(runDir.getRunDirectory());
 		} finally {
 			monitor.done();

@@ -1,5 +1,6 @@
 package com.surelogic.flashlight.common.model;
 
+import java.io.File;
 import java.sql.Timestamp;
 
 import com.surelogic.common.i18n.I18N;
@@ -15,11 +16,17 @@ import com.surelogic.flashlight.common.files.RunDirectory;
  */
 public final class RunDescription {
 
-	public RunDescription(final String name, final String rawDataVersion,
+	public RunDescription(File dataDir, final String name, final String rawDataVersion,
 			final String userName, final String javaVersion,
 			final String javaVendor, final String osName, final String osArch,
 			final String osVersion, final int maxMemoryMb,
 			final int processors, final Timestamp started) {
+		if (dataDir != null && dataDir.exists() && dataDir.isDirectory()) {
+			f_dataDir = dataDir;
+		} else {
+			throw new IllegalArgumentException(I18N.err(44, "dataDir"));
+		}
+		
 		if (name == null) {
 			throw new IllegalArgumentException(I18N.err(44, "name"));
 		}
@@ -60,6 +67,8 @@ public final class RunDescription {
 		f_started = started;
 	}
 
+	private final File f_dataDir;
+	
 	private final String f_name;
 
 	public String getName() {
@@ -314,7 +323,7 @@ public final class RunDescription {
 	 *         directory or {@code null} if no file handles exist.
 	 */
 	public RunDirectory getRunDirectory() {
-		return RawFileUtility.getRunDirectoryFor(this);
+		return RawFileUtility.getRunDirectoryFor(f_dataDir, this);
 	}
 
 	/**

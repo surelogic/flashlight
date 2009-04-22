@@ -16,6 +16,7 @@ import com.surelogic.common.serviceability.UsageMeter;
 import com.surelogic.flashlight.client.eclipse.jobs.FlashlightCleanupJob;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
 import com.surelogic.flashlight.common.model.FlashlightDBConnection;
+import com.surelogic.flashlight.common.model.RunManager;
 
 /**
  * The activator class controls the plug-in life cycle
@@ -57,6 +58,7 @@ public class Activator extends AbstractUIPlugin {
 		SLEclipseStatusUtility.touch();
 
 		UsageMeter.getInstance().tickUse("Flashlight Eclipse plug-in loaded");
+		RunManager.getInstance().setDataDirectory(FlashlightEclipseUtility.getFlashlightDataDirectory());
 		new FlashlightCleanupJob().schedule();
 	}
 

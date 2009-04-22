@@ -22,6 +22,7 @@ import com.surelogic.common.AbstractJavaZip;
 import com.surelogic.common.eclipse.ViewUtility;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.common.serviceability.UsageMeter;
+import com.surelogic.flashlight.client.eclipse.FlashlightEclipseUtility;
 import com.surelogic.flashlight.common.files.RawFileUtility;
 import com.surelogic.flashlight.common.files.RunDirectory;
 import com.surelogic.flashlight.common.files.SourceZipFileHandles;
@@ -166,8 +167,9 @@ public final class HistoricalSourceView extends ViewPart {
 	public static void tryToOpenInEditor(final String pkg, final String type,
 			int lineNumber) {
 		if (currentRun != null) {
+			final File dataDir = FlashlightEclipseUtility.getFlashlightDataDirectory();
 			final RunDirectory dir = RawFileUtility
-					.getRunDirectoryFor(currentRun);
+					.getRunDirectoryFor(dataDir, currentRun);
 			final HistoricalSourceView view = (HistoricalSourceView) ViewUtility
 					.showView(HistoricalSourceView.class.getName(), null,
 							IWorkbenchPage.VIEW_VISIBLE);
@@ -194,8 +196,9 @@ public final class HistoricalSourceView extends ViewPart {
 	public static void tryToOpenInEditor(final String pkg, final String type,
 			final String field) {
 		if (currentRun != null) {
+			final File dataDir = FlashlightEclipseUtility.getFlashlightDataDirectory();
 			final RunDirectory dir = RawFileUtility
-					.getRunDirectoryFor(currentRun);
+					.getRunDirectoryFor(dataDir, currentRun);
 			final HistoricalSourceView view = (HistoricalSourceView) ViewUtility
 					.showView(HistoricalSourceView.class.getName(), null,
 							IWorkbenchPage.VIEW_VISIBLE);

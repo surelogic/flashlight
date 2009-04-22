@@ -39,10 +39,10 @@ import com.surelogic.common.eclipse.logging.SLEclipseStatusUtility;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.client.eclipse.Activator;
+import com.surelogic.flashlight.client.eclipse.FlashlightEclipseUtility;
 import com.surelogic.flashlight.client.eclipse.jobs.LaunchTerminationDetectionJob;
 import com.surelogic.flashlight.client.eclipse.jobs.SwitchToFlashlightPerspectiveJob;
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
-import com.surelogic.flashlight.common.FlashlightUtility;
 
 import static com.surelogic._flashlight.common.InstrumentationConstants.*;
 
@@ -105,7 +105,7 @@ final class FlashlightVMRunner implements IVMRunner {
 				"-yyyy.MM.dd-'at'-HH.mm.ss.SSS");
 		datePostfix = dateFormat.format(new Date());
 		final String runName = mainTypeName + datePostfix;
-		final File flashlightDataDir = FlashlightUtility
+		final File flashlightDataDir = FlashlightEclipseUtility
 				.getFlashlightDataDirectory();
 		runOutputDir = new File(flashlightDataDir, runName);
 		if (!runOutputDir.exists())

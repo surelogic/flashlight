@@ -23,8 +23,8 @@ import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jdbc.DBConnection;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.client.eclipse.Activator;
+import com.surelogic.flashlight.client.eclipse.FlashlightEclipseUtility;
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
-import com.surelogic.flashlight.common.FlashlightUtility;
 import com.surelogic.flashlight.common.model.RunDescription;
 import com.surelogic.flashlight.common.model.RunManager;
 
@@ -50,7 +50,7 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements
 	}
 
 	public File getQuerySaveFile() {
-		return new File(FlashlightUtility.getFlashlightDataDirectory(),
+		return new File(FlashlightEclipseUtility.getFlashlightDataDirectory(),
 				"flashlight-queries.xml");
 	}
 

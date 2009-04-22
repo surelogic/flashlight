@@ -7,18 +7,33 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.*;
 import org.eclipse.debug.ui.*;
+import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
 import org.eclipse.jdt.launching.IRuntimeClasspathEntry;
 import org.eclipse.jface.viewers.CheckStateChangedEvent;
 import org.eclipse.jface.viewers.CheckboxTableViewer;
 import org.eclipse.jface.viewers.ICheckStateListener;
+import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.jface.viewers.ILabelProviderListener;
+import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
+import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITableLabelProvider;
+import org.eclipse.jface.viewers.ListViewer;
+import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.*;
 import org.eclipse.swt.widgets.*;
@@ -26,6 +41,7 @@ import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.PlatformUI;
 
 import com.surelogic.common.eclipse.SLImages;
+import com.surelogic.common.eclipse.dialogs.TypeSelectionDialog;
 import com.surelogic.common.CommonImages;
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
 
@@ -39,27 +55,39 @@ public final class FlashlightInstrumentationTab extends
 
 	private java.util.List<IRuntimeClasspathEntry> bootpathEntries;
 	private CheckboxTableViewer bootpathTable;
-
+	
+	private ListViewer blacklistViewer;
+	private java.util.List<String> blacklist;
+	
+	private Button addButton;
+	private Button removeButton;
+	
+	private IJavaProject currentProject = null;
+	
+	
+	
 	public void createControl(final Composite parent) {
 		Composite comp = new Composite(parent, SWT.NONE);
 		setControl(comp);
 
-		final FillLayout fill = new FillLayout();
-		fill.type = SWT.VERTICAL;
-		comp.setLayout(fill);
+		final GridLayout glayout = new GridLayout();
+		glayout.numColumns = 1;
+		comp.setLayout(glayout);
 
-		userTable = createClasspathEntryTable(comp, "Classpath Entries");
-		bootpathTable = createClasspathEntryTable(comp, "Bootpath Entries");
+		userTable = createClasspathEntryTable(comp, "Classpath Entries:");
+		bootpathTable = createClasspathEntryTable(comp, "Bootpath Entries:");
+		createBlacklist(comp);
 	}
 
 	private CheckboxTableViewer createClasspathEntryTable(
 			final Composite parent, final String groupTitle) {
 		final Group group = createNamedGroup(parent, groupTitle, 1);
+    group.setLayoutData(new GridData(GridData.FILL_BOTH));
+    
 		final CheckboxTableViewer viewer = CheckboxTableViewer.newCheckList(
 				group, SWT.CHECK | SWT.BORDER | SWT.MULTI | SWT.FULL_SELECTION);
 		final Control table = viewer.getControl();
-		final GridData gd = new GridData(GridData.FILL_BOTH);
-		table.setLayoutData(gd);
+		table.setLayoutData(new GridData(GridData.FILL_BOTH));
 		table.setFont(parent.getFont());
 		viewer.setContentProvider(CLASSPATH_ITEMS_CONTENT_PROVIDER);
 		viewer.setLabelProvider(CLASSPATH_ITEMS_LABEL_PROVIDER);
@@ -72,15 +100,118 @@ public final class FlashlightInstrumentationTab extends
 		return viewer;
 	}
 
+	private void createBlacklist(final Composite parent) {
+    final Group group = createNamedGroup(parent, "Classes Not to be Instrumented:", 2);
+    group.setLayoutData(new GridData(GridData.FILL_BOTH));
+    createList(group);
+    createButtons(group);
+	}
+
+	private void createList(final Composite parent) {
+    blacklistViewer = new ListViewer(parent);
+    blacklistViewer.getList().setLayoutData(new GridData(GridData.FILL_BOTH));
+
+    blacklistViewer.setContentProvider(new IStructuredContentProvider() {
+      public Object[] getElements(Object inputElement) {
+        return ((java.util.List<String>) inputElement).toArray();
+      }
+      public void dispose() { /* do nothing */ }
+      public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
+        /* do nothing */
+      }
+    });
+    blacklistViewer.setLabelProvider(new ILabelProvider() {
+      public Image getImage(Object element) { return null;  }
+      public String getText(Object element) {
+        return (String) element;
+      }
+      public void addListener(ILabelProviderListener listener) {
+        /* do nothing */
+      }
+      public void dispose() { /* do nothing */ }
+      public boolean isLabelProperty(Object element, String property) {
+        return false;
+      }
+      public void removeListener(ILabelProviderListener listener) {
+        /* do nothing */
+      }
+    });
+    blacklistViewer.addSelectionChangedListener(new ISelectionChangedListener() {
+      public void selectionChanged(final SelectionChangedEvent event) {
+        removeButton.setEnabled(!event.getSelection().isEmpty());
+      }
+    });
+    blacklistViewer.setInput(blacklist);
+  }
+	  
+  private void createButtons(final Composite parent) {
+    final Composite buttonComposite = new Composite(parent, SWT.NONE);
+    final GridLayout buttonLayout = new GridLayout();
+    buttonLayout.marginHeight = 0;
+    buttonLayout.marginWidth = 0;
+    buttonLayout.numColumns = 1;
+    final GridData gdata = new GridData(GridData.VERTICAL_ALIGN_BEGINNING | GridData.HORIZONTAL_ALIGN_END);
+    buttonComposite.setLayout(buttonLayout);
+    buttonComposite.setLayoutData(gdata);
+    buttonComposite.setFont(parent.getFont());
+
+    addButton = createPushButton(buttonComposite, "Add", null); 
+    addButton.addSelectionListener(new SelectionAdapter() {
+      @Override
+      public void widgetSelected(final SelectionEvent event) {
+        handleAddButtonSelected();
+      }
+    });
+    
+    removeButton = createPushButton(buttonComposite, "Remove", null); 
+    removeButton.addSelectionListener(new SelectionAdapter() {
+      @Override
+      public void widgetSelected(SelectionEvent event) {
+        handleRemoveButtonSelected();
+      }
+    });
+    removeButton.setEnabled(false);
+  }
+	  
+  private void handleAddButtonSelected() {
+    final TypeSelectionDialog typeDialog =
+      new TypeSelectionDialog(getShell(), currentProject);
+    if (typeDialog.open() == Window.OK) {
+      final Object[] types = typeDialog.getResult();
+      if (types.length != 0) {
+        for (final Object o : types) {
+          final IType type = (IType) o;
+          final String internalTypeName =
+            type.getFullyQualifiedName('$').replace('.', '/');
+          blacklist.add(internalTypeName);
+          blacklistViewer.add(internalTypeName);
+        }
+        setDirty(true);
+        updateLaunchConfigurationDialog();
+      }
+    }
+  }
+	  
+  private void handleRemoveButtonSelected() {
+    final ISelection selection = blacklistViewer.getSelection();
+    if (selection instanceof IStructuredSelection) {
+      final IStructuredSelection ss = (IStructuredSelection) selection;
+      blacklist.removeAll(ss.toList());
+      blacklistViewer.remove(ss.toArray());
+      setDirty(true);
+      updateLaunchConfigurationDialog();
+    }
+  }
+
 	private static Group createNamedGroup(Composite parent, String name,
 			int columns) {
 		final Group outer = new Group(parent, SWT.NONE);
+		outer.setFont(parent.getFont());
 		GridLayout gridLayout = new GridLayout();
 		gridLayout.numColumns = columns;
 		outer.setLayout(gridLayout);
 		outer.setText(name);
 		return outer;
-
 	}
 
 	@Override
@@ -204,7 +335,8 @@ public final class FlashlightInstrumentationTab extends
 
 		java.util.List configUserEntries = Collections.emptyList();
 		java.util.List configBootpathEntries = LaunchUtils.convertToLocations(boot);
-
+		java.util.List classes = Collections.emptyList();
+		
 		try {
 			configUserEntries = config.getAttribute(
 					PreferenceConstants.P_CLASSPATH_ENTRIES_TO_NOT_INSTRUMENT,
@@ -226,6 +358,26 @@ public final class FlashlightInstrumentationTab extends
 		}
 		for (final IRuntimeClasspathEntry e : bootpathEntries) {
 			bootpathTable.setChecked(e, !configBootpathEntries.contains(e.getLocation()));
+		}
+		
+		try {
+		 classes = config.getAttribute(PreferenceConstants.P_CLASS_BLACKLIST, classes); 
+		} catch (final CoreException e) {
+      // CommonTab ignores this; so do we		  
+		}
+		
+		blacklist = new ArrayList(classes);
+		blacklistViewer.setInput(blacklist);
+		
+		// Get the current project
+		try {
+		  final String projectName =
+		    config.getAttribute(IJavaLaunchConfigurationConstants.ATTR_PROJECT_NAME, "");
+		  final IProject project =
+		    ResourcesPlugin.getWorkspace().getRoot().getProject(projectName);
+		  currentProject = JavaCore.create(project);
+		} catch (final CoreException e) {
+		  // CommonTab ignores this; so do we
 		}
 	}
 
@@ -249,6 +401,8 @@ public final class FlashlightInstrumentationTab extends
 		config.setAttribute(
 				PreferenceConstants.P_BOOTPATH_ENTRIES_TO_NOT_INSTRUMENT,
 				LaunchUtils.convertToLocations(boot));
+		
+		config.setAttribute(PreferenceConstants.P_CLASS_BLACKLIST, blacklist);
 	}
 
 	/**
@@ -277,5 +431,7 @@ public final class FlashlightInstrumentationTab extends
 		config.setAttribute(
 				PreferenceConstants.P_BOOTPATH_ENTRIES_TO_NOT_INSTRUMENT,
 				LaunchUtils.convertToLocations(boot));
+    config.setAttribute(
+        PreferenceConstants.P_CLASS_BLACKLIST, Collections.emptyList());
 	}
 }

@@ -96,7 +96,7 @@ public final class FlashlightMethodsTab extends
 	  // Create label
 	  final Label label = new Label(listComposite, SWT.NONE);
 	  label.setFont(parent.getFont());
-	  label.setText("Files declaring additional indirect access methods"); 
+	  label.setText("Files declaring additional indirect access methods:"); 
 
     extraFilesViewer = new ListViewer(listComposite);
     gridData = new GridData(GridData.FILL_BOTH);

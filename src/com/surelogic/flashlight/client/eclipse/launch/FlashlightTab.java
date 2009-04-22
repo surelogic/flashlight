@@ -133,6 +133,7 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 
 	private Group createSelectionGroup(Composite parent, String name) {
 		final Group outer = new Group(parent, SWT.NONE);
+    outer.setFont(parent.getFont());
 		GridData outerData = new GridData(SWT.FILL, SWT.FILL, true, true);
 		outerData.minimumHeight = 200;
 		outer.setLayoutData(outerData);
@@ -270,6 +271,7 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 	
 	private static Group createNamedGroup(Composite parent, String name, int columns) {
 		final Group outer = new Group(parent, SWT.NONE);
+    outer.setFont(parent.getFont());
 		GridLayout gridLayout = new GridLayout();
 		gridLayout.numColumns = columns;
 		outer.setLayout(gridLayout);

@@ -278,6 +278,16 @@ final class FlashlightVMRunner implements IVMRunner {
         // eat it
       }
 			
+      try {
+        final List<String> blacklist = (List<String>) launch.getAttribute(
+            PreferenceConstants.P_CLASS_BLACKLIST, Collections.emptyList());
+        for (final String internalTypeName : blacklist) {
+          configBuilder.addToBlacklist(internalTypeName);
+        }
+      } catch (final CoreException e) {
+        // eat it
+      }
+      
 			final RewriteManager manager =
 			  new VMRewriteManager(configBuilder.getConfiguration(),
 					messenger, fieldsFile, sitesFile, progress);

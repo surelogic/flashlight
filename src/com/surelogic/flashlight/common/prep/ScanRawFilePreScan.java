@@ -188,6 +188,8 @@ public final class ScanRawFilePreScan extends AbstractDataScan {
 				useField(field, thread);
 			}
 			useObject(thread);
+		} else if ("indirect-access".equals(name)) {
+			useObject(attrs.getLong(AttributeType.RECEIVER));
 		} else if (locks.contains(name)) {
 			useObject(attrs.getThreadId());
 			useObject(attrs.getLockObjectId());

@@ -1,5 +1,7 @@
 package com.surelogic.flashlight.client.eclipse.preferences;
 
+import java.io.File;
+
 import org.eclipse.jface.preference.IPreferenceStore;
 
 import com.surelogic.common.eclipse.preferences.IPreferenceConstants;
@@ -92,6 +94,27 @@ public class PreferenceConstants implements IPreferenceConstants {
 				P_PROMPT_ABOUT_LOTS_OF_SAVED_QUERIES, value);
 	}
 
+	
+	public static final String P_DATA_DIRECTORY_ANCHOR = PREFIX + "data-directory-anchor";
+	
+	public static File getFlashlightDataDirectoryAnchor() {
+		String path = Activator.getDefault().getPluginPreferences().getString(
+				P_DATA_DIRECTORY_ANCHOR);
+		if (path.length() == 0 || path == null) {
+			return null;
+		}
+		return new File(path);
+	}
+	
+	public static void setFlashlightDataDirectoryAnchor(File dir) {
+		if (dir != null && dir.exists() && dir.isDirectory()) {
+			Activator.getDefault().getPluginPreferences().setValue(
+					P_DATA_DIRECTORY_ANCHOR, dir.getAbsolutePath());
+		} else {
+			throw new IllegalArgumentException("Bad directory: "+dir);
+		}
+	}
+	
 	private PreferenceConstants() {
 		// Nothing to do
 	}

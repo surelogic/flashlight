@@ -2,6 +2,8 @@ package com.surelogic.flashlight.client.eclipse;
 
 import java.io.File;
 
+import com.surelogic.common.FileUtility;
+import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
 import com.surelogic.flashlight.common.FlashlightUtility;
 
 public final class FlashlightEclipseUtility {
@@ -13,6 +15,10 @@ public final class FlashlightEclipseUtility {
 	 * @return the non-null anchor for the Flashlight data directory.
 	 */
 	static public File getFlashlightDataDirectoryAnchor() {
+		File dir = PreferenceConstants.getFlashlightDataDirectoryAnchor();
+		if (dir != null) {
+			return dir;
+		}
 		return FlashlightUtility.getFlashlightDataDirectoryAnchor();
 	}
 	
@@ -21,6 +27,6 @@ public final class FlashlightEclipseUtility {
 	 * directory exists.
 	 */
 	static public File getFlashlightDataDirectory() {
-		return FlashlightUtility.getFlashlightDataDirectory();
+		return FileUtility.getDataDirectory(getFlashlightDataDirectoryAnchor());
 	}
 }

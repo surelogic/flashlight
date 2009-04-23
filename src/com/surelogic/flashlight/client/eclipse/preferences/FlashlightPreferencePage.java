@@ -1,5 +1,6 @@
 package com.surelogic.flashlight.client.eclipse.preferences;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -62,7 +63,7 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 		dataGroup.setLayout(new GridLayout(2, false));
 
 		f_dataDirectory = new Label(dataGroup, SWT.NONE);
-		updateDataDirectory();
+		updateDataDirectory(null);
 		f_dataDirectory.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true,
 				false));
 
@@ -73,7 +74,7 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 				false));
 		change.addListener(SWT.Selection, new Listener() {
 			public void handleEvent(final Event event) {
-				ChangeDataDirectoryDialog
+				File loc = ChangeDataDirectoryDialog
 						.open(
 								change.getShell(),
 								FlashlightEclipseUtility
@@ -84,7 +85,7 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 								I18N
 										.msg("flashlight.change.data.directory.dialog.information"),
 								new DisconnectAllDatabases(), null);
-				updateDataDirectory();
+				updateDataDirectory(loc);
 			}
 		});
 
@@ -157,7 +158,10 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 		f_editors.add(editor);
 	}
 
-	private void updateDataDirectory() {
+	private void updateDataDirectory(File loc) {
+		if (loc != null) {
+			PreferenceConstants.setFlashlightDataDirectoryAnchor(loc);
+		}
 		f_dataDirectory.setText(FlashlightEclipseUtility.getFlashlightDataDirectory()
 				.getAbsolutePath());
 	}

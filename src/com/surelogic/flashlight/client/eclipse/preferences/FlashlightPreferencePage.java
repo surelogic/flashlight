@@ -29,7 +29,6 @@ import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.serviceability.UsageMeter;
 import com.surelogic.flashlight.client.eclipse.FlashlightEclipseUtility;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
-import com.surelogic.flashlight.common.FlashlightUtility;
 import com.surelogic.flashlight.common.jobs.DisconnectAllDatabases;
 
 public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
@@ -77,7 +76,7 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 				ChangeDataDirectoryDialog
 						.open(
 								change.getShell(),
-								FlashlightUtility
+								FlashlightEclipseUtility
 										.getFlashlightDataDirectoryAnchor(),
 								I18N
 										.msg("flashlight.change.data.directory.dialog.title"),

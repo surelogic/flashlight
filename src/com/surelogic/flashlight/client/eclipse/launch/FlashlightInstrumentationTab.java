@@ -70,10 +70,12 @@ public final class FlashlightInstrumentationTab extends
 		Composite comp = new Composite(parent, SWT.NONE);
 		setControl(comp);
 
-		final GridLayout glayout = new GridLayout();
-		glayout.numColumns = 1;
-		comp.setLayout(glayout);
+		final FillLayout fillLayout = new FillLayout();
+		fillLayout.type = SWT.VERTICAL;
+		fillLayout.spacing = 10;
+		comp.setLayout(fillLayout);
 
+		
 		userTable = createClasspathEntryTable(comp, "Classpath Entries:");
 		bootpathTable = createClasspathEntryTable(comp, "Bootpath Entries:");
 		createBlacklist(comp);
@@ -82,8 +84,7 @@ public final class FlashlightInstrumentationTab extends
 	private CheckboxTableViewer createClasspathEntryTable(
 			final Composite parent, final String groupTitle) {
 		final Group group = createNamedGroup(parent, groupTitle, 1);
-    group.setLayoutData(new GridData(GridData.FILL_BOTH));
-    
+
 		final CheckboxTableViewer viewer = CheckboxTableViewer.newCheckList(
 				group, SWT.CHECK | SWT.BORDER | SWT.MULTI | SWT.FULL_SELECTION);
 		final Control table = viewer.getControl();
@@ -102,7 +103,6 @@ public final class FlashlightInstrumentationTab extends
 
 	private void createBlacklist(final Composite parent) {
     final Group group = createNamedGroup(parent, "Classes Not to be Instrumented:", 2);
-    group.setLayoutData(new GridData(GridData.FILL_BOTH));
     createList(group);
     createButtons(group);
 	}

@@ -79,7 +79,11 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 				final ChangedDataDirectoryJob after = new ChangedDataDirectoryJob("") {
 					public SLStatus run(SLProgressMonitor monitor) {
 						monitor.begin();
-						updateDataDirectory(dataDir);
+						change.getDisplay().syncExec(new Runnable() {
+							public void run() {
+								updateDataDirectory(dataDir);
+							}							
+						});
 						return SLStatus.OK_STATUS;
 					}
 				};

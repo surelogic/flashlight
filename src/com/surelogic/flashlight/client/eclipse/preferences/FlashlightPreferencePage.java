@@ -25,8 +25,10 @@ import com.surelogic.common.XUtil;
 import com.surelogic.common.eclipse.SLImages;
 import com.surelogic.common.eclipse.SWTUtility;
 import com.surelogic.common.eclipse.dialogs.ChangeDataDirectoryDialog;
+import com.surelogic.common.eclipse.jobs.ChangedDataDirectoryJob;
 import com.surelogic.common.eclipse.preferences.AbstractCommonPreferencePage;
 import com.surelogic.common.i18n.I18N;
+import com.surelogic.common.jobs.*;
 import com.surelogic.common.serviceability.UsageMeter;
 import com.surelogic.flashlight.client.eclipse.FlashlightEclipseUtility;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
@@ -74,7 +76,14 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 				false));
 		change.addListener(SWT.Selection, new Listener() {
 			public void handleEvent(final Event event) {
-				File loc = ChangeDataDirectoryDialog
+				final ChangedDataDirectoryJob after = new ChangedDataDirectoryJob("") {
+					public SLStatus run(SLProgressMonitor monitor) {
+						monitor.begin();
+						updateDataDirectory(dataDir);
+						return SLStatus.OK_STATUS;
+					}
+				};
+				ChangeDataDirectoryDialog
 						.open(
 								change.getShell(),
 								FlashlightEclipseUtility
@@ -84,8 +93,7 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 								SLImages.getImage(CommonImages.IMG_FL_LOGO),
 								I18N
 										.msg("flashlight.change.data.directory.dialog.information"),
-								new DisconnectAllDatabases(), null);
-				updateDataDirectory(loc);
+								new DisconnectAllDatabases(), after);
 			}
 		});
 

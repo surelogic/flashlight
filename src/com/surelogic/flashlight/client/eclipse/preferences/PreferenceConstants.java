@@ -98,6 +98,9 @@ public class PreferenceConstants implements IPreferenceConstants {
 	public static final String P_DATA_DIRECTORY_ANCHOR = PREFIX + "data-directory-anchor";
 	
 	public static File getFlashlightDataDirectoryAnchor() {
+		if (Activator.getDefault() == null) {
+			throw new IllegalStateException("No Activator");
+		}
 		String path = Activator.getDefault().getPluginPreferences().getString(
 				P_DATA_DIRECTORY_ANCHOR);
 		if (path.length() == 0 || path == null) {

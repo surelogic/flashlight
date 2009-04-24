@@ -29,7 +29,9 @@ public final class Configuration {
   public final static boolean REWRITE_PUTFIELD_DEFAULT = true;
   public final static boolean REWRITE_INIT_DEFAULT = true;
   public final static boolean REWRITE_CONSTRUCTOR_EXECUTION_DEFAULT = true;
-    
+  public final static boolean REWRITE_ARRAY_LOAD_DEFAULT = true;
+  public final static boolean REWRITE_ARRAY_STORE_DEFAULT = true;
+  
   public final static boolean INSTRUMENT_BEFORE_CALL_DEFAULT = true;
   public final static boolean INSTRUMENT_AFTER_CALL_DEFAULT = true;
   public final static boolean INSTRUMENT_BEFORE_WAIT_DEFAULT = true;
@@ -61,6 +63,8 @@ public final class Configuration {
   public static final String REWRITE_PUTFIELD_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.putfield";
   public static final String REWRITE_INIT_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.<init>";
   public static final String REWRITE_CONSTRUCTOR_EXECUTION_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.<init>.execution";
+  public static final String REWRITE_ARRAY_LOAD_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.array.load";
+  public static final String REWRITE_ARRAY_STORE_PROPERTY = "com.surelogic._flashlight.rewriter.rewrite.array.store";
   
   /* These properties require that the REWRITE_INVOKE*_PROPERITES be true. */
   public static final String INSTRUMENT_DEFAULT_PROPERTY = "com.surelogic._flashlight.rewriter.instrument.default";
@@ -94,6 +98,9 @@ public final class Configuration {
   public final boolean rewritePutstatic;
   public final boolean rewriteGetstatic;
 
+  public final boolean rewriteArrayLoad;
+  public final boolean rewriteArrayStore;
+  
   public final boolean rewriteSynchronizedMethod;
   public final boolean rewriteMonitorenter;
   public final boolean rewriteMonitorexit;
@@ -130,6 +137,8 @@ public final class Configuration {
       final boolean rewriteGetfield,
       final boolean rewritePutstatic,
       final boolean rewriteGetstatic,
+      final boolean rewriteArrayLoad,
+      final boolean rewriteArrayStore,
       final boolean rewriteSynchronizedMethod,
       final boolean rewriteMonitorenter,
       final boolean rewriteMonitorexit,
@@ -156,6 +165,8 @@ public final class Configuration {
     this.rewriteGetfield = rewriteGetfield;
     this.rewritePutstatic = rewritePutstatic;
     this.rewriteGetstatic = rewriteGetstatic;
+    this.rewriteArrayLoad = rewriteArrayLoad;
+    this.rewriteArrayStore = rewriteArrayStore;
     this.rewriteSynchronizedMethod = rewriteSynchronizedMethod;
     this.rewriteMonitorenter = rewriteMonitorenter;
     this.rewriteMonitorexit = rewriteMonitorexit;

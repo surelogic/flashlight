@@ -48,7 +48,11 @@ public class EmptyStore {
       final Object receiver, final long siteId) {
     // do nothing
   }
-    
+  public static void arrayAccess(
+      final boolean read, final Object receiver, final int index, final long siteId) {
+    // do nothing
+  }
+  
   public static void beforeIntrinsicLockAcquisition(final Object lockObject,
       final boolean lockIsThis, final boolean lockIsClass,
       final long siteId) {

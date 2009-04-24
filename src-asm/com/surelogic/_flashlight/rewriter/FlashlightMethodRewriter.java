@@ -416,6 +416,16 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
         mv.visitTryCatchBlock(startOfTryBlock, endOfTryBlock, startOfExceptionHandler, null);
         mv.visitLabel(startOfTryBlock);
       }
+    } else if (opcode >= Opcodes.IALOAD && opcode <= Opcodes.SALOAD) {
+      handlePreviousAload();
+      handlePreviousAstore();
+      insertDelayedCode();
+      rewriteArrayLoad(opcode, opcode == Opcodes.LALOAD || opcode == Opcodes.DALOAD);
+    } else if (opcode >= Opcodes.IASTORE && opcode <= Opcodes.SASTORE) {      
+      handlePreviousAload();
+      handlePreviousAstore();
+      insertDelayedCode();
+      rewriteArrayStore(opcode, opcode == Opcodes.LASTORE || opcode == Opcodes.DASTORE);
     } else {
       handlePreviousAload();
       handlePreviousAstore();
@@ -1266,11 +1276,96 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     // "..., isRead, [receiver], class object, fieldName, siteId"
         
     /* We can now call the store method */
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
-        storeMethod.getName(), storeMethod.getDescriptor());    
+    ByteCodeUtils.callStoreMethod(mv, config, storeMethod);
     // Stack is "..."
 
     // Resume
+  }
+
+  
+  
+  // =========================================================================
+  // == Rewrite array access
+  // =========================================================================
+
+  private void rewriteArrayLoad(final int opcode, final boolean isCat2) {
+    // ..., ref, idx
+    mv.visitInsn(Opcodes.DUP2);
+    // ..., ref, idx, ref, idx
+    
+    /* Execute the original instruction */
+    mv.visitInsn(opcode);
+    // ..., ref, idx, value
+    
+    if (isCat2) {
+      mv.visitInsn(Opcodes.DUP2_X2);
+      // ..., value, ref, idx, value
+      mv.visitInsn(Opcodes.POP2);
+    } else {
+      mv.visitInsn(Opcodes.DUP_X2);
+      // ..., value, ref, idx, value
+      mv.visitInsn(Opcodes.POP);
+    }
+    // ..., value, ref, idx
+    
+    ByteCodeUtils.pushBooleanConstant(mv, true);
+    // ..., value, ref, idx, true
+    mv.visitInsn(Opcodes.DUP_X2);
+    // ..., value, true, ref, idx, true
+    mv.visitInsn(Opcodes.POP);
+    // ..., value, true, ref, idx
+    pushSiteIdentifier();
+    // ..., value, true, ref, idx, siteId
+    
+    ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.ARRAY_ACCESS);
+    // ..., value
+    
+    /* Resume */
+  }
+  
+  private void rewriteArrayStore(final int opcode, final boolean isCat2) {
+    // ..., ref, idx, value
+    
+    if (isCat2) {
+      mv.visitInsn(Opcodes.DUP2_X2);
+      // ..., value, ref, idx, value
+      mv.visitInsn(Opcodes.POP2);
+      // ..., value, ref, idx
+      mv.visitInsn(Opcodes.DUP2_X2);
+      // ..., ref, idx, value, ref, idx
+      mv.visitInsn(Opcodes.DUP2_X2);
+      // ..., ref, idx, ref, idx, value, ref, idx
+    } else {
+      mv.visitInsn(Opcodes.DUP_X2);
+      // ..., value, ref, idx, value
+      mv.visitInsn(Opcodes.POP);
+      // ..., value, ref, idx
+      mv.visitInsn(Opcodes.DUP2_X1);
+      // ..., ref, idx, value, ref, idx
+      mv.visitInsn(Opcodes.DUP2_X1);
+      // ..., ref, idx, ref, idx, value, ref, idx
+    }
+    
+    mv.visitInsn(Opcodes.POP2);
+    // ..., ref, idx, ref, idx, value
+    
+    /* Execute the original instruction */
+    mv.visitInsn(opcode);
+    // ..., ref, idx
+    
+    ByteCodeUtils.pushBooleanConstant(mv, false);
+    // ..., ref, idx, false
+    mv.visitInsn(Opcodes.DUP_X2);
+    // ..., false, ref, idx, false
+    mv.visitInsn(Opcodes.POP);
+    // ..., false, ref, idx
+    pushSiteIdentifier();
+    // ..., false, ref, idx, siteId
+    
+    ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.ARRAY_ACCESS);
+    // ...
+    
+    /* Resume */
   }
 
   

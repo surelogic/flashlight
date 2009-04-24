@@ -27,6 +27,9 @@ public final class ConfigurationBuilder {
   private boolean rewritePutstatic;
   private boolean rewriteGetstatic;
 
+  public boolean rewriteArrayLoad;
+  public boolean rewriteArrayStore;
+
   private boolean rewriteSynchronizedMethod;
   private boolean rewriteMonitorenter;
   private boolean rewriteMonitorexit;
@@ -65,6 +68,8 @@ public final class ConfigurationBuilder {
     this.rewriteGetfield = Configuration.REWRITE_GETFIELD_DEFAULT;
     this.rewritePutstatic = Configuration.REWRITE_PUTSTATIC_DEFAULT;
     this.rewriteGetstatic = Configuration.REWRITE_GETSTATIC_DEFAULT;
+    this.rewriteArrayLoad = Configuration.REWRITE_ARRAY_LOAD_DEFAULT;
+    this.rewriteArrayStore = Configuration.REWRITE_ARRAY_STORE_DEFAULT;
     this.rewriteSynchronizedMethod = Configuration.REWRITE_SYNCHRONIZED_METHOD_DEFAULT;
     this.rewriteMonitorenter = Configuration.REWRITE_MONITORENTER_DEFAULT;
     this.rewriteMonitorexit = Configuration.REWRITE_MONITOREXIT_DEFAULT;
@@ -108,6 +113,9 @@ public final class ConfigurationBuilder {
 
     rewritePutstatic = getBoolean(props, Configuration.REWRITE_PUTSTATIC_PROPERTY, rewriteDefault);
     rewriteGetstatic = getBoolean(props, Configuration.REWRITE_GETSTATIC_PROPERTY, rewriteDefault);
+
+    rewriteArrayLoad = getBoolean(props, Configuration.REWRITE_ARRAY_LOAD_PROPERTY, rewriteDefault);
+    rewriteArrayStore = getBoolean(props, Configuration.REWRITE_ARRAY_STORE_PROPERTY, rewriteDefault);
 
     rewriteSynchronizedMethod = getBoolean(props, Configuration.REWRITE_SYNCHRONIZED_METHOD_PROPERTY, rewriteDefault);
     rewriteMonitorenter = getBoolean(props, Configuration.REWRITE_MONITORENTER_PROPERTY, rewriteDefault);
@@ -167,7 +175,8 @@ public final class ConfigurationBuilder {
     return new Configuration(storeClassName, indirectUseDefault,
         indirectAdditionalMethods, rewriteInvokeinterface,
         rewriteInvokespecial, rewriteInvokestatic, rewriteInvokevirtual,
-        rewritePutfield, rewriteGetfield, rewritePutstatic, rewriteGetstatic,
+        rewritePutfield, rewriteGetfield, rewriteArrayLoad, rewriteArrayStore,
+        rewritePutstatic, rewriteGetstatic,
         rewriteSynchronizedMethod, rewriteMonitorenter, rewriteMonitorexit,
         rewriteInit, rewriteConstructorExecution, instrumentBeforeCall,
         instrumentAfterCall, instrumentBeforeWait, instrumentAfterWait,
@@ -225,6 +234,14 @@ public final class ConfigurationBuilder {
     this.rewriteGetstatic = rewriteGetstatic;
   }
 
+  public void setRewriteArrayLoad(final boolean flag) {
+    this.rewriteArrayLoad = flag;
+  }
+  
+  public void setRewriteArrayStore(final boolean flag) {
+    this.rewriteArrayStore = flag;
+  }
+  
   public void setRewriteSynchronizedMethod(final boolean rewriteSynchronizedMethod) {
     this.rewriteSynchronizedMethod = rewriteSynchronizedMethod;
   }

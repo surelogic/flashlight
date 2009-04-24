@@ -804,6 +804,28 @@ public final class Store {
 	  }
   }
   
+  /**
+   * Records that an array element is being accessed.
+   * 
+   * @param read
+   *            {@code true} indicates the element is being <i>read</i>, {@code false}
+   *            indicates the element is being <i>written</i>.
+   * @param receiver
+   *            the array instance whose element is being accessed.
+   * @param index
+   *            The index of the array element being accessed.
+   * @param siteId 
+   *            The site in the code of the array access.
+   */
+  public static void arrayAccess(
+      final boolean read, final Object receiver, final int index, final long siteId) {
+//    System.out.println("arrayAccess");
+//    System.out.println("  read = " + read);
+//    System.out.println("  receiver = " + receiver);
+//    System.out.println("  index = " + index);
+//    System.out.println("  siteId = " + siteId);
+  }
+  
 	/**
 	 * Records that a field access occurred within the instrumented program.
 	 * 

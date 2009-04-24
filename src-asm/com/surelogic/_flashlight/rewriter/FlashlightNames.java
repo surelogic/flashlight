@@ -55,6 +55,9 @@ public final class FlashlightNames {
   public static final Method INDIRECT_ACCESS =
     Method.getMethod("void indirectAccess(Object, long)");
   
+  public static final Method ARRAY_ACCESS =
+    Method.getMethod("void arrayAccess(boolean, Object, int, long)");
+  
   public static final Method INTRINSIC_LOCK_WAIT =
     Method.getMethod("void intrinsicLockWait(boolean, Object, long)");
   

@@ -109,6 +109,16 @@ public class DebugStore {
     stdOut.flush();
   }
   
+  public static synchronized void arrayAccess(
+      final boolean read, final Object receiver, final int index, final long siteId) {
+    stdOut.println("arrayAccess");
+    stdOut.println("  read = " + read);
+    stdOut.println("  receiver = " + receiver);
+    stdOut.println("  index = " + index);
+    stdOut.println("  siteId = " + siteId);
+    stdOut.flush();
+  }
+  
   public static synchronized void beforeIntrinsicLockAcquisition(
       final Object lockObject, final boolean lockIsThis,
       final boolean lockIsClass, final long siteId) {

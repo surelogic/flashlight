@@ -336,6 +336,14 @@ public final class Instrument extends Task {
     configBuilder.setRewritePutfield(flag);
   }
   
+  public void setRewritearrayload(final boolean flag) {
+    configBuilder.setRewriteArrayLoad(flag);
+  }
+  
+  public void setRewritearraystore(final boolean flag) {
+    configBuilder.setRewriteArrayStore(flag);
+  }
+  
   /**
    * Set the "com.surelogic._flashlight.rewriter.rewrite.<init>" property.
    */

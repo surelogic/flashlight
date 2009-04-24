@@ -49,6 +49,10 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements
 		return AdHocManager.getInstance(INSTANCE);
 	}
 
+	private boolean isValid() {
+		return Activator.getDefault() != null;
+	}
+	
 	public File getQuerySaveFile() {
 		return new File(FlashlightEclipseUtility.getFlashlightDataDirectory(),
 				"flashlight-queries.xml");
@@ -63,8 +67,13 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements
 	}
 
 	public void badQuerySaveFileNotification(final Exception e) {
-		SLLogger.getLogger().log(Level.SEVERE,
-				I18N.err(4, getQuerySaveFile().getAbsolutePath()), e);
+		try {
+			SLLogger.getLogger().log(Level.SEVERE,
+					I18N.err(4, getQuerySaveFile().getAbsolutePath()), e);
+		} catch(Exception e2) {
+			SLLogger.getLogger().log(Level.SEVERE,
+					I18N.err(4, "(unavailable)"), e);
+		}
 	}
 
 	public final DBConnection getDB() {
@@ -78,16 +87,20 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements
 	}
 
 	public void init() {
-		getManager().addObserver(this);
-		getManager().addObserver(JumpToCode.getInstance());
+		if (isValid()) {
+			getManager().addObserver(this);
+			getManager().addObserver(JumpToCode.getInstance());
+		}
 	}
 
 	public void dispose() {
-		getManager().removeObserver(JumpToCode.getInstance());
-		getManager().removeObserver(this);
-		AdHocManager.shutdown();
+		if (isValid()) {
+			getManager().removeObserver(JumpToCode.getInstance());
+			getManager().removeObserver(this);
+			AdHocManager.shutdown();
+		}
 	}
-
+	
 	@Override
 	public void notifySelectedResultChange(final AdHocQueryResult result) {
 		final UIJob job = new SLUIJob() {

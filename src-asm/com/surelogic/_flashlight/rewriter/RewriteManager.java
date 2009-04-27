@@ -10,8 +10,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -566,12 +568,7 @@ public abstract class RewriteManager {
       final JarFile jarFile = new JarFile(inJarFile);
       try {
         final Manifest inManifest = jarFile.getManifest();
-        final Manifest outManifest;
-        if (runtimeJarName != null) {
-          outManifest = updateManifest(inManifest, runtimeJarName);
-        } else {
-          outManifest = inManifest;
-        }
+        final Manifest outManifest = updateManifest(inManifest, runtimeJarName);
         
         outJarFile.getParentFile().mkdirs();
         final FileOutputStream fos = new FileOutputStream(outJarFile);
@@ -591,8 +588,7 @@ public abstract class RewriteManager {
             /* Skip the manifest file, it has already been written by the
              * JarOutputStream constructor
              */
-            if (!entryName.equals(MANIFEST_DIR) && 
-              !entryName.equals(JarFile.MANIFEST_NAME)) {
+            if (!entryName.equals(JarFile.MANIFEST_NAME) && !isSignatureFile(entryName)) {
               final JarEntry jarEntryOut = copyJarEntry(jarEntryIn);
               jarOut.putNextEntry(jarEntryOut);
               rewriteFileStream(new StreamProvider() {
@@ -636,12 +632,7 @@ public abstract class RewriteManager {
       final JarFile jarFile = new JarFile(inJarFile);
       try {
         final Manifest inManifest = jarFile.getManifest();
-        final Manifest outManifest;
-        if (runtimeJarName != null) {
-          outManifest = updateManifest(inManifest, runtimeJarName);
-        } else {
-          outManifest = inManifest;
-        }
+        final Manifest outManifest = updateManifest(inManifest, runtimeJarName);
         
         final File outManifestFile = composeFile(outDir, JarFile.MANIFEST_NAME);
         outManifestFile.getParentFile().mkdirs();
@@ -663,7 +654,7 @@ public abstract class RewriteManager {
           final String entryName = jarEntryIn.getName();
           
           /* Skip the manifest file, it has already been written above */
-          if (!entryName.equals(JarFile.MANIFEST_NAME)) {
+          if (!entryName.equals(JarFile.MANIFEST_NAME) && !isSignatureFile(entryName)) {
             final File outFile = composeFile(outDir, entryName);
             if (jarEntryIn.isDirectory()) {
               if (!outFile.exists()) outFile.mkdirs();
@@ -937,9 +928,21 @@ public abstract class RewriteManager {
       return result;
     }
   
+    private boolean isSignatureFile(final String entryName) {
+      if (entryName.startsWith(MANIFEST_DIR)) {
+        final String fname = entryName.substring(MANIFEST_DIR.length());
+        if (fname.indexOf('/') == -1) {
+          return fname.endsWith(".SF") || fname.endsWith(".DSA") ||
+            fname.endsWith(".RSA") || fname.startsWith("SIG-");
+        }
+      }
+      return false;
+    }
+    
     /**
      * Given a JAR file manifest, update the <tt>Class-Path</tt> attribute to
-     * ensure that it contains a reference to the Flashlight runtime JAR.
+     * ensure that it contains a reference to the Flashlight runtime JAR.  Also
+     * strips out all signing related attributes.
      * 
      * @param manifest
      *          The original JAR manifest. This object is not modified by this
@@ -948,25 +951,45 @@ public abstract class RewriteManager {
      *          The name of the flashlight runtime JAR.
      * @return A new manifest object identical to {@code manifest} except that the
      *         <tt>Class-Path</tt> attribute is guaranteed to contain a
-     *         reference to {@code runtimeJarName}.
+     *         reference to {@code runtimeJarName}, and all "x-Digest-y" and 
+     *         "Magic" per-entry attributes are removed.
      */
     private Manifest updateManifest(
         final Manifest manifest, final String runtimeJarName) {
       final Manifest newManifest = new Manifest(manifest);
-      final Attributes mainAttrs = newManifest.getMainAttributes();
-      final String classpath = mainAttrs.getValue(Attributes.Name.CLASS_PATH);
-      final StringBuilder newClasspath = new StringBuilder();
       
-      if (classpath == null) {
-        newClasspath.append(runtimeJarName);
-      } else {
-        newClasspath.append(classpath);
-        if (classpath.indexOf(runtimeJarName) == -1) {
-          newClasspath.append(SPACE);
+      // Update the classpath to include the Flashlight runtime Jar
+      if (runtimeJarName != null) {
+        final Attributes mainAttrs = newManifest.getMainAttributes();
+        final String classpath = mainAttrs.getValue(Attributes.Name.CLASS_PATH);
+        final StringBuilder newClasspath = new StringBuilder();
+        
+        if (classpath == null) {
           newClasspath.append(runtimeJarName);
+        } else {
+          newClasspath.append(classpath);
+          if (classpath.indexOf(runtimeJarName) == -1) {
+            newClasspath.append(SPACE);
+            newClasspath.append(runtimeJarName);
+          }
+        }
+        mainAttrs.put(Attributes.Name.CLASS_PATH, newClasspath.toString());
+      }      
+      
+      // Removing signing-related information
+      final Collection<Attributes> values = newManifest.getEntries().values();
+      for (final Iterator<Attributes> iter = values.iterator(); iter.hasNext();) {
+        final Attributes attrs = iter.next();
+        for (final Iterator<Map.Entry<Object, Object>> attrIter = attrs.entrySet().iterator(); attrIter.hasNext();) {
+          final Map.Entry<Object, Object> entry = attrIter.next();
+          final String attribute = ((Attributes.Name) entry.getKey()).toString();             
+          if (attribute.equals("Magic") || attribute.endsWith("-Digest") ||
+              (attribute.indexOf("-Digest-") != -1)) {
+            // Signing-related attribute, kill it
+            attrIter.remove();
+          }
         }
       }
-      mainAttrs.put(Attributes.Name.CLASS_PATH, newClasspath.toString());
       return newManifest;
     }
   }

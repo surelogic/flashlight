@@ -85,53 +85,112 @@ public class LockSetAnalysis implements IPostPrep {
 		}
 		log.fine("Scanning lock durations and accesses.");
 		q.prepared("LockSet.v2.lockDurations", new NullResultHandler() {
-			@Override
-			public void doHandle(final Result lockDurations) {
-				final LockSets sets = new LockSets(lockDurations, q
-						.prepared("LockSet.v2.updateAccessLocksHeld"));
-				q.prepared("LockSet.v2.accesses", new NullResultHandler() {
-					@Override
-					public void doHandle(final Result accesses) {
-						int count = 0;
-						for (final Row r : accesses) {
-							if (++count % 10000 == 0) {
-								if (mon.isCanceled()) {
-									return;
-								}
-							}
-							// TS, InThread, Field, Receiver
-							final long id = r.nextLong();
-							final Timestamp ts = r.nextTimestamp();
-							final long thread = r.nextLong();
-							final long field = r.nextLong();
-							final Long receiver = r.nullableLong();
-							final boolean read = "R".equals(r.nextString());
-							final boolean underConstruction = "Y".equals(r
-									.nextString());
-							if (underConstruction) {
-								sets.instanceUnderConstruction(id, ts, thread,
-										field, receiver, read);
-							} else if (receiver == null) {
-								sets.staticAccess(id, ts, thread, field, read);
-							} else {
-								sets.instanceAccess(id, ts, thread, field,
-										receiver, read);
-							}
+
+			private void handleAccesses(final LockSets sets,
+					final Result indirectAccesses, final Result accesses) {
+				final Iterator<Row> iaRow = indirectAccesses.iterator();
+				final Iterator<Row> aRow = accesses.iterator();
+				Access a = null;
+				IndirectAccess ia = null;
+				int count = 0;
+				while (aRow.hasNext() || iaRow.hasNext()) {
+					if (++count % 10000 == 0) {
+						if (mon.isCanceled()) {
+							return;
+						} else {
+							commit();
 						}
 					}
-				}).call();
+					if (a == null && aRow.hasNext()) {
+						a = new Access(aRow.next());
+					}
+					if (ia == null && iaRow.hasNext()) {
+						ia = new IndirectAccess(iaRow.next());
+					}
+					if (a == null) {
+						sets.indirectAccess(ia);
+						ia = null;
+					} else if (ia == null || a.ts.before(ia.ts)) {
+						sets.access(a);
+						a = null;
+					} else {
+						sets.indirectAccess(ia);
+						ia = null;
+					}
+				}
 				if (mon.isCanceled()) {
 					return;
 				}
 				log.fine("Writing out locking statistics.");
 				sets.writeStatistics(q);
 				// Add foreign key to ACCESSLOCKSHELD table
-				commit();
-				log.fine("Adding locking statistic constraints");
-				q.prepared("LockSet.v2.accessLocksHeldConstraint").call();
-				q.prepared("LockSet.v2.accessLockAcquisitionConstraint").call();
+			}
+
+			@Override
+			public void doHandle(final Result lockDurations) {
+				final LockSets sets = new LockSets(lockDurations, q
+						.prepared("LockSet.v2.updateAccessLocksHeld"), q
+						.prepared("LockSet.v2.updateIndirectAccessLocksHeld"));
+				q.prepared("LockSet.v2.indirectAccesses",
+						new NullResultHandler() {
+							@Override
+							protected void doHandle(
+									final Result indirectAccesses) {
+								q.prepared("LockSet.v2.accesses",
+										new NullResultHandler() {
+											@Override
+											public void doHandle(
+													final Result accesses) {
+												handleAccesses(sets,
+														indirectAccesses,
+														accesses);
+											}
+										}).call();
+							}
+						}).call();
+
 			}
 		}).call();
+		commit();
+		log.fine("Adding locking statistic constraints");
+		q.prepared("LockSet.v2.accessLocksHeldConstraint").call();
+		q.prepared("LockSet.v2.accessLockAcquisitionConstraint").call();
+		q.prepared("LockSet.v2.indirectAccessLocksHeldConstraint").call();
+		q.prepared("LockSet.v2.indirectAccessLockAcquisitionConstraint").call();
+	}
+
+	static class IndirectAccess {
+		final long id;
+		final Timestamp ts;
+		final long thread;
+		final long receiver;
+
+		public IndirectAccess(final Row r) {
+			id = r.nextLong();
+			ts = r.nextTimestamp();
+			thread = r.nextLong();
+			receiver = r.nextLong();
+		}
+	}
+
+	static class Access {
+		final long id;
+		final Timestamp ts;
+		final long thread;
+		final long field;
+		final Long receiver;
+		final boolean read;
+		final boolean underConstruction;
+
+		public Access(final Row r) {
+			id = r.nextLong();
+			ts = r.nextTimestamp();
+			thread = r.nextLong();
+			field = r.nextLong();
+			receiver = r.nullableLong();
+			read = "R".equals(r.nextString());
+			underConstruction = "Y".equals(r.nextString());
+		}
 	}
 
 	private class LockSets {
@@ -142,15 +201,18 @@ public class LockSetAnalysis implements IPostPrep {
 		private final Map<FieldInstance, Count> counts;
 		final ThreadLocks locks;
 		final Queryable<?> updateAccess;
+		final Queryable<?> updateIndirectAccess;
 
 		public LockSets(final Result lockDurations,
-				final Queryable<?> updateAccess) {
+				final Queryable<?> updateAccess,
+				final Queryable<?> updateIndirectAccess) {
 			fields = new TLongObjectHashMap<TLongHashSet>();
 			locks = new ThreadLocks(lockDurations);
 			instances = new TLongObjectHashMap<TLongObjectHashMap<TLongHashSet>>();
 			staticCounts = new HashMap<StaticInstance, StaticCount>();
 			counts = new HashMap<FieldInstance, Count>();
 			this.updateAccess = updateAccess;
+			this.updateIndirectAccess = updateIndirectAccess;
 		}
 
 		public void writeStatistics(final Query q) {
@@ -246,8 +308,27 @@ public class LockSetAnalysis implements IPostPrep {
 			}
 		}
 
-		public void staticAccess(final long id, final Timestamp ts,
-				final long thread, final long field, final boolean read) {
+		public void access(final Access a) {
+			if (a.underConstruction) {
+				instanceUnderConstruction(a.id, a.ts, a.thread, a.field,
+						a.receiver, a.read);
+			} else if (a.receiver == null) {
+				staticAccess(a.id, a.ts, a.thread, a.field, a.read);
+			} else {
+				instanceAccess(a.id, a.ts, a.thread, a.field, a.receiver,
+						a.read);
+			}
+		}
+
+		public void indirectAccess(final IndirectAccess ia) {
+			locks.ensureTime(ia.ts);
+			final long[] lockSet = locks.getLocks(ia.thread);
+			updateIndirectAccess.call(ia.id, lockSet.length, Nulls.coerce(locks
+					.getLastAcquisition(ia.thread)));
+		}
+
+		void staticAccess(final long id, final Timestamp ts, final long thread,
+				final long field, final boolean read) {
 			locks.ensureTime(ts);
 			TLongHashSet fieldSet = fields.get(field);
 			final long[] lockSet = locks.getLocks(thread);
@@ -273,9 +354,9 @@ public class LockSetAnalysis implements IPostPrep {
 			}
 		}
 
-		public void instanceUnderConstruction(final long id,
-				final Timestamp ts, final long thread, final long field,
-				final Long receiver, final boolean read) {
+		void instanceUnderConstruction(final long id, final Timestamp ts,
+				final long thread, final long field, final Long receiver,
+				final boolean read) {
 			locks.ensureTime(ts);
 			updateAccess.call(id, locks.getLocks(thread).length, Nulls
 					.coerce(locks.getLastAcquisition(thread)));
@@ -292,7 +373,7 @@ public class LockSetAnalysis implements IPostPrep {
 			}
 		}
 
-		public void instanceAccess(final long id, final Timestamp ts,
+		void instanceAccess(final long id, final Timestamp ts,
 				final long thread, final long field, final long receiver,
 				final boolean read) {
 			locks.ensureTime(ts);

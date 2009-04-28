@@ -58,17 +58,21 @@ public class Activator extends AbstractUIPlugin {
 		SLEclipseStatusUtility.touch();
 
 		UsageMeter.getInstance().tickUse("Flashlight Eclipse plug-in loaded");
-		RunManager.getInstance().setDataDirectory(FlashlightEclipseUtility.getFlashlightDataDirectory());
+		RunManager.getInstance().setDataDirectory(
+				FlashlightEclipseUtility.getFlashlightDataDirectory());
 		new FlashlightCleanupJob().schedule();
 	}
 
 	@Override
 	public void stop(final BundleContext context) throws Exception {
-		plugin = null;
-		AdHocDataSource.getInstance().dispose();
-		UsageMeter.getInstance().persist();
-		FlashlightDBConnection.shutdownConnections();
-		super.stop(context);
+		try {
+			AdHocDataSource.getInstance().dispose();
+			UsageMeter.getInstance().persist();
+			FlashlightDBConnection.shutdownConnections();
+			plugin = null;
+		} finally {
+			super.stop(context);
+		}
 	}
 
 	public IPath getBundleLocation() {

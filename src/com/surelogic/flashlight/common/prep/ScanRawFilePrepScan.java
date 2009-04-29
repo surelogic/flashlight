@@ -48,7 +48,7 @@ public final class ScanRawFilePrepScan extends AbstractDataScan {
 			 * Show progress to the user
 			 */
 			f_monitor.worked(32);
-			
+
 			/*
 			 * Check for a user cancel.
 			 */
@@ -64,6 +64,13 @@ public final class ScanRawFilePrepScan extends AbstractDataScan {
 			} catch (final Exception e) {
 				e.printStackTrace();
 				throw new SAXException(e);
+			}
+		}
+		if (f_elementCount % 10000 == 0) {
+			try {
+				f_c.commit();
+			} catch (final SQLException e) {
+				throw new IllegalStateException(e);
 			}
 		}
 	}

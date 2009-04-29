@@ -304,8 +304,6 @@ public final class IntrinsicLockDurationRowInserter {
 					for (final Long dest : comp) {
 						final Edge e = edges.get(dest);
 						if (e != null) {
-							System.out.println("Edge from " + e.lockHeld
-									+ " -> " + e.lockAcquired);
 							outputCycleEdge(f_cyclePS, compId, e);
 						}
 					}

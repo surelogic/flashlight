@@ -392,7 +392,6 @@ public final class IntrinsicLockDurationRowInserter {
 				}
 				info.lockGraph.addVertex(e.lockAcquired);
 
-				System.out.println(source + " -> " + e.lockAcquired);
 				info.lockGraph.addEdge(source, e.lockAcquired, e);
 				edges++;
 			}

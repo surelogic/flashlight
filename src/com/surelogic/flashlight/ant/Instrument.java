@@ -695,6 +695,10 @@ public final class Instrument extends Task {
         }
       }
     }
+    
+    if (libraries == null) {
+      libraries = new Path(getProject());
+    }
   }
   
   /**

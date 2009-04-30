@@ -50,6 +50,9 @@ public final class ConfigurationBuilder {
   private String storeClassName;
 
   private Set<String> classBlacklist;
+  
+  private boolean filterFields;
+  private Set<String> filterFieldsInPackages;
 
   
   
@@ -85,6 +88,8 @@ public final class ConfigurationBuilder {
     this.instrumentAfterUnlock = Configuration.INSTRUMENT_AFTER_UNLOCK_DEFAULT;
     this.instrumentIndirectAccess = Configuration.INSTRUMENT_INDIRECT_ACCESS_DEFAULT;
     this.classBlacklist = Configuration.BLACKLISTED_CLASSES_DEFAULT;
+    this.filterFields = Configuration.FILTER_FIELDS_DEFAULT;
+    this.filterFieldsInPackages = Configuration.FILTER_FIELDS_IN_PACKAGES_DEFAULT;
   }
   
   /**
@@ -144,6 +149,16 @@ public final class ConfigurationBuilder {
     } else {
       classBlacklist = getStringSet(propValue2);
     }
+    
+    filterFields = getBoolean(props, Configuration.FILTER_FIELDS_PROPERTY,
+        Boolean.toString(Configuration.FILTER_FIELDS_DEFAULT));
+    final String propValue3 = props.getProperty(Configuration.FILTER_FIELDS_IN_PACKAGES_PROPERTY);
+    if (!filterFields || propValue3 == null) {
+      filterFields = false;
+      filterFieldsInPackages = new HashSet<String>();
+    } else {
+      filterFieldsInPackages = getStringSet(propValue3);
+    }
   }
   
   private static boolean getBoolean(final Properties props,
@@ -181,7 +196,8 @@ public final class ConfigurationBuilder {
         rewriteInit, rewriteConstructorExecution, instrumentBeforeCall,
         instrumentAfterCall, instrumentBeforeWait, instrumentAfterWait,
         instrumentBeforeJUCLock, instrumentAfterLock, instrumentAfterTryLock,
-        instrumentAfterUnlock, instrumentIndirectAccess, classBlacklist);
+        instrumentAfterUnlock, instrumentIndirectAccess, classBlacklist,
+        filterFields, filterFieldsInPackages);
   }
 
   
@@ -312,5 +328,17 @@ public final class ConfigurationBuilder {
   
   public void addToBlacklist(final String internalClassName) {
     this.classBlacklist.add(internalClassName);
+  }
+  
+  public void setFilterFields(final boolean value) {
+    filterFields = value;
+  }
+  
+  public Set<String> getFilterFieldsInPackages() {
+    return filterFieldsInPackages;
+  }
+  
+  public void addToFilterFieldsInPackages(final String pack) {
+    filterFieldsInPackages.add(pack);
   }
 }

@@ -43,7 +43,10 @@ public final class Configuration {
   public final static boolean INSTRUMENT_INDIRECT_ACCESS_DEFAULT = true;
   
   public final static Set<String> BLACKLISTED_CLASSES_DEFAULT = Collections.emptySet();
-      
+
+  public final static boolean FILTER_FIELDS_DEFAULT = false;
+  public final static Set<String> FILTER_FIELDS_IN_PACKAGES_DEFAULT = Collections.emptySet();
+  
 
   
   public static final String INDIRECT_ACCESS_USE_DEFAULT_PROPERTY = "com.surelogic._flashlight.rewriter.indirectAccess.useDefault";
@@ -81,6 +84,9 @@ public final class Configuration {
   public static final String STORE_CLASS_NAME_PROPERTY = "com.surelogic._flashlight.rewriter.store";
   
   public static final String BLACKLISTED_CLASSES_PROPERTY = "com.surelogic._flashlight.rewriter.blacklist.classes";
+  
+  public static final String FILTER_FIELDS_PROPERTY = "com.surelogic._flashlight.rewriter.filter.fields";
+  public static final String FILTER_FIELDS_IN_PACKAGES_PROPERTY = "com.surelogic._flashlight.rewriter.filter.fields.inPackages";
   
   
   
@@ -120,7 +126,17 @@ public final class Configuration {
   
   public final String storeClassName;
 
+  /**
+   * The internal class names of the classes not be instrumented at all.
+   */
   public final Set<String> classBlacklist;
+  
+  public final boolean filterFields;
+  /**
+   * The internal package names of the packages whose classes are to have
+   * their fields instrumented.
+   */
+  public final Set<String> filterFieldsInPackages;
   
 
   
@@ -153,7 +169,9 @@ public final class Configuration {
       final boolean instrumentAfterTryLock,
       final boolean instrumentAfterUnlock,
       final boolean instrumentIndirectAccess,
-      final Set<String> classBlacklist) {
+      final Set<String> classBlacklist,
+      final boolean filterFields,
+      final Set<String> filterFieldsInPackages) {
     this.storeClassName = storeClassName;
     this.indirectUseDefault = indirectUseDefault;
     this.indirectAdditionalMethods = indirectAdditionalMethods;
@@ -182,5 +200,7 @@ public final class Configuration {
     this.instrumentAfterUnlock = instrumentAfterUnlock;
     this.instrumentIndirectAccess = instrumentIndirectAccess;
     this.classBlacklist = classBlacklist;
+    this.filterFields = filterFields;
+    this.filterFieldsInPackages = filterFieldsInPackages;
   }
 }

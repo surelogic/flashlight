@@ -800,7 +800,7 @@ public abstract class RewriteManager {
       Map<String, DebugInfo.MethodInfo> methodInfos = null;
       try {
         final ClassReader input = new ClassReader(inClassfile);
-        final DebugExtractor debugExtractor = new DebugExtractor(accessMethods, msgr);
+        final DebugExtractor debugExtractor = new DebugExtractor(accessMethods);
         input.accept(debugExtractor, ClassReader.SKIP_FRAMES);
         methodInfos = debugExtractor.getDebugInfo();
       } finally {

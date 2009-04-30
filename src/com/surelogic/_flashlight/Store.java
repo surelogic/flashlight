@@ -578,8 +578,6 @@ public final class Store {
    * @param read
    *            {@code true} indicates a field <i>read</i>, {@code false}
    *            indicates a field <i>write</i>.
-   * @param ownerClass
-   *            the phantom class object of the class that declares the field.
    * @param fieldID
    *            the statically assigned id for the accessed field.
    * @param withinClass
@@ -587,8 +585,7 @@ public final class Store {
    * @param line
    *            the line number where the event occurred.
    */
-  public static void staticFieldAccess(final boolean read,
-		  final ClassPhantomReference ownerClass, final int fieldID,
+  public static void staticFieldAccess(final boolean read, final int fieldID,
 		  final long siteId) {
 	  if (StoreDelegate.FL_OFF.get())
 		  return;

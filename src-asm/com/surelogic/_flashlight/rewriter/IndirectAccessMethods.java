@@ -5,6 +5,7 @@ import java.io.InputStream;
 //import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -14,6 +15,7 @@ import javax.xml.bind.Unmarshaller;
 
 import org.objectweb.asm.commons.Method;
 
+import com.surelogic._flashlight.rewriter.ClassAndFieldModel.ClassNotFoundException;
 import com.surelogic._flashlight.rewriter.xml.ClassRecord;
 import com.surelogic._flashlight.rewriter.xml.Classes;
 import com.surelogic._flashlight.rewriter.xml.MethodRecord;
@@ -39,14 +41,21 @@ final class IndirectAccessMethods {
   
   public void initClazz(final ClassAndFieldModel classModel) {
     for (final Map.Entry<String, List<IndirectAccessMethod>> entry : methods.entrySet()) {
-      for (final IndirectAccessMethod method : entry.getValue()) {
-        method.initClazz(classModel);
+      final Iterator<IndirectAccessMethod> iter = entry.getValue().iterator();
+      while (iter.hasNext()) {
+        final IndirectAccessMethod method = iter.next();
+        /* Try to initialize the object; remove it from the set if
+         * initialization fails.
+         */
+        if (!method.initClazz(classModel)) {
+          iter.remove();
+        }
       }
     }
   }
   
   /**
-   * @exception IllegalStateException
+   * @exception ClassNotFoundException
    *              Thrown if there is a problem looking up one of the ancestor
    *              classes while searching the methods. This only happens if the
    *              complete classpath has not been specified to the code
@@ -54,17 +63,26 @@ final class IndirectAccessMethods {
    *              dbBenchmark example we use seems to be broken.
    */
   public IndirectAccessMethod get(
-      final String owner, final String name, final String desc) {
-    final List<IndirectAccessMethod> methodList = methods.get(name);
-    if (methodList == null) {
+      final String owner, final String name, final String desc)
+  throws ClassNotFoundException {
+    /* If owner is an array class, then we return null.  It means the
+     * method must be "clone()", and we don't care about that.
+     * XXX: This may bite us in the butt in the future
+     */
+    if (owner.charAt(0) == '[') {
       return null;
     } else {
-      for (final IndirectAccessMethod method : methodList) {
-        if (method.matches(owner, name, desc)) {
-          return method;
+      final List<IndirectAccessMethod> methodList = methods.get(name);
+      if (methodList == null) {
+        return null;
+      } else {
+        for (final IndirectAccessMethod method : methodList) {
+          if (method.matches(owner, name, desc)) {
+            return method;
+          }
         }
+        return null;
       }
-      return null;
     }
   }
   

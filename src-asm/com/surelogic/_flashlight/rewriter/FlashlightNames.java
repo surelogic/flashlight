@@ -44,13 +44,7 @@ public final class FlashlightNames {
     Method.getMethod("void instanceFieldAccess(boolean, Object, int, long)");
   
   public static final Method STATIC_FIELD_ACCESS =
-    Method.getMethod("void staticFieldAccess(boolean, com.surelogic._flashlight.ClassPhantomReference, int, long)");
-  
-  public static final Method INSTANCE_FIELD_ACCESS_LOOKUP =
-    Method.getMethod("void instanceFieldAccessLookup(boolean, Object, Class, String, long)");
-  
-  public static final Method STATIC_FIELD_ACCESS_LOOKUP =
-    Method.getMethod("void staticFieldAccessLookup(boolean, Class, String, long)");
+    Method.getMethod("void staticFieldAccess(boolean, int, long)");
   
   public static final Method INDIRECT_ACCESS =
     Method.getMethod("void indirectAccess(Object, long)");
@@ -70,6 +64,9 @@ public final class FlashlightNames {
   public static final Method GET_OBJECT_PHANTOM =
     Method.getMethod("com.surelogic._flashlight.ObjectPhantomReference getObjectPhantom(Object, long)");
 
+  // Flashlight runtime error
+  public static final String FLASHLIGHT_RUNTIME_ERROR = "com/surelogic/_flashlight/rewriter/runtime/FlashlightRuntimeError";
+  
   // Flashlight IIdObject interface
   public static final String I_ID_OBJECT = "com/surelogic/_flashlight/rewriter/runtime/IIdObject";
   

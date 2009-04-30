@@ -9,6 +9,8 @@ import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 
+import com.surelogic._flashlight.rewriter.ClassAndFieldModel.ClassNotFoundException;
+
 
 /**
  * Class visitor makes a scan over the methods in the class to extract the
@@ -18,14 +20,11 @@ import org.objectweb.asm.MethodVisitor;
 final class DebugExtractor implements ClassVisitor {
   private final DebugInfo debugInfo = new DebugInfo();
   private final IndirectAccessMethods accessMethods;
-  private final RewriteMessenger messenger;
-  
-  private String currentMethod = null;
+
   
   
-  public DebugExtractor(final IndirectAccessMethods am, final RewriteMessenger m) {
+  public DebugExtractor(final IndirectAccessMethods am) {
     accessMethods = am;
-    messenger = m;
   }
   
   
@@ -39,7 +38,6 @@ final class DebugExtractor implements ClassVisitor {
   public void visit(final int version, final int access, final String name,
       final String signature, final String superName,
       final String[] interfaces) {
-//    System.err.println("Debug Extractor class " + name);
     // don't care
   }
 
@@ -71,7 +69,6 @@ final class DebugExtractor implements ClassVisitor {
   public MethodVisitor visitMethod(
       final int access, final String name, final String desc,
       final String signature, final String[] exceptions) {
-    currentMethod = name + " " + desc;
     debugInfo.newMethod(name, desc);
     
     return new MethodVisitor() {
@@ -159,16 +156,17 @@ final class DebugExtractor implements ClassVisitor {
         try {
           if (accessMethods.get(owner, name, desc) != null) {
             debugInfo.foundIndirectAccess();
-//            System.out.println("Indirect access found: Calls " + owner + " " + name + " " + desc);
           }
-        } catch (final IllegalStateException e) {
+        } catch (final ClassNotFoundException e) {
           /* We get here if there is a problem looking up an ancestor class.
-           * This only happens if rewriter is provided with a fully close
+           * This only happens if rewriter is not provided with a fully closed
            * classpath.  The dbBenchmark example makes reference to a class
            * that it doesn't provide, but apparently that section is code is
            * not executed by the example.
+           * 
+           * We eat the error here, because the warning will be output
+           * by FlashlightMethodRewriter.visitMethodInsn().
            */
-          messenger.warning("In method " + currentMethod + ": " + e.getMessage());
         }
       }
 

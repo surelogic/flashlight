@@ -4,6 +4,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.Method;
 
+import com.surelogic._flashlight.rewriter.ClassAndFieldModel.ClassNotFoundException;
 import com.surelogic._flashlight.rewriter.config.Configuration;
 
 /**
@@ -44,11 +45,26 @@ final class IndirectAccessMethod {
     interestingArgs = args;
   }
 
-  public void initClazz(final ClassAndFieldModel classModel) {
-    owner = classModel.getClass(ownerName);
+  /**
+   * Initialize the class by having it look up the model object for the owner
+   * class. Fails if the owner class is not present in the model.
+   * 
+   * @param classModel
+   *          The class model
+   * @return {@value true} if the owner class was successfully looked up, or
+   *         {@value false} if the owner class could not be found in the model.
+   */
+  public boolean initClazz(final ClassAndFieldModel classModel) {
+    try {
+      owner = classModel.getClass(ownerName);
+      return true;
+    } catch (final ClassNotFoundException e) {
+      return false;
+    }
   }
   
-  public boolean matches(final String o, final String n, final String d) {
+  public boolean matches(final String o, final String n, final String d)
+  throws ClassNotFoundException {
     return owner.isAssignableFrom(o) && n.equals(name) && d.equals(description);
   }
   

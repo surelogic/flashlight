@@ -1,5 +1,6 @@
 package com.surelogic._flashlight.rewriter;
 
+import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -12,6 +13,8 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.Method;
 
+import com.surelogic._flashlight.rewriter.ClassAndFieldModel.ClassNotFoundException;
+import com.surelogic._flashlight.rewriter.ClassAndFieldModel.FieldNotFoundException;
 import com.surelogic._flashlight.rewriter.ConstructorInitStateMachine.Callback;
 import com.surelogic._flashlight.rewriter.config.Configuration;
 
@@ -20,6 +23,9 @@ import com.surelogic._flashlight.rewriter.config.Configuration;
  * Class visitor that inserts flashlight instrumentation into a method.
  */
 final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGenerator {
+  private static final String MISSING_CLASS_MESSAGE = "The Flashlight class model is missing class {0} because the classpath provided during instrumentation is incomplete or incorrect.  If the same classpath is provided at runtime, then the application would throw java.lang.NoClassDefFoundError.";
+  private static final String MISSING_FIELD_MESSAGE = "The Flashlight class model is missing field {0} in class {1} because the classpath provided during instrumentation is incomplete or incorrect.  if the same classpath is provided at runtime, then the application would throw java.lang.NoSuchFieldError.";
+    
   private static final String CLASS_INITIALIZER = "<clinit>";
   private static final String INITIALIZER = "<init>";
   
@@ -470,8 +476,8 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     if (config.instrumentIndirectAccess && debugInfo.hasIndirectAccess()) { // we might have indirect access
       try {
         indirectAccess = accessMethods.get(owner, name, desc);
-      } catch (final IllegalStateException e) {
-        // Problem looking up the method.  Just skip it.
+      } catch (final ClassNotFoundException e) {
+        throwMissingClass(e.getMissingClass());
       }
     }
     
@@ -1019,54 +1025,55 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
       return;
     }
         
-    final String fullyQualifiedOwner = ByteCodeUtils.internal2FullyQualified(owner);
-    
-    /* We need to manipulate the stack to make a copy of the object being
-     * accessed so that we can have it for the call to the Store.
-     * How we do this depends on whether the top value on the stack is a
-     * catagory 1 or a category 2 value.  We have to test the type descriptor
-     * of the field to determine this.
-     */
-    if (ByteCodeUtils.isCategory2(desc)) {
-      // At the start the stack is "..., objectref, value"
-      mv.visitInsn(Opcodes.DUP2_X1);
-      // Stack is "..., value, objectref, value" (+2)
-      mv.visitInsn(Opcodes.POP2);
-      // Stack is "..., value, objectref" (+0)
-      mv.visitInsn(Opcodes.DUP_X2);
-      // Stack is "..., objectref, value, objectref" (+1)
-      mv.visitInsn(Opcodes.DUP_X2);
-      // Stack is "..., objectref, objectref, value, objectref" (+2)
-      mv.visitInsn(Opcodes.POP);
-      // Stack is "..., objectref, objectref, value" (+1)      
-    } else { // Category 1
-      // At the start the stack is "..., objectref, value"
+    final Integer fieldID = getFieldID(owner, name);
+    if (fieldID != null) {
+      /* We need to manipulate the stack to make a copy of the object being
+       * accessed so that we can have it for the call to the Store.
+       * How we do this depends on whether the top value on the stack is a
+       * category 1 or a category 2 value.  We have to test the type descriptor
+       * of the field to determine this.
+       */
+      if (ByteCodeUtils.isCategory2(desc)) {
+        // At the start the stack is "..., objectref, value"
+        mv.visitInsn(Opcodes.DUP2_X1);
+        // Stack is "..., value, objectref, value" (+2)
+        mv.visitInsn(Opcodes.POP2);
+        // Stack is "..., value, objectref" (+0)
+        mv.visitInsn(Opcodes.DUP_X2);
+        // Stack is "..., objectref, value, objectref" (+1)
+        mv.visitInsn(Opcodes.DUP_X2);
+        // Stack is "..., objectref, objectref, value, objectref" (+2)
+        mv.visitInsn(Opcodes.POP);
+        // Stack is "..., objectref, objectref, value" (+1)      
+      } else { // Category 1
+        // At the start the stack is "..., objectref, value"
+        mv.visitInsn(Opcodes.SWAP);
+        // Stack is "..., value, objectref" (+0)
+        mv.visitInsn(Opcodes.DUP_X1);
+        // Stack is "..., objectref, value, objectref" (+1)
+        mv.visitInsn(Opcodes.SWAP);
+        // Stack is "..., objectref, objectref, value" (+1)
+      }
+      
+      // Execute the original PUTFIELD instruction
+      mv.visitFieldInsn(Opcodes.PUTFIELD, owner, name, desc);
+      // Stack is "..., objectref"
+      
+      /* Again manipulate the stack so that we can set up the first two
+       * arguments to the Store.fieldAccess() call.  The first argument
+       * is a boolean "isRead" flag.  The second argument is the object being
+       * accessed.
+       */
+      ByteCodeUtils.pushBooleanConstant(mv, false);
+      // Stack is "..., objectref, false"
       mv.visitInsn(Opcodes.SWAP);
-      // Stack is "..., value, objectref" (+0)
-      mv.visitInsn(Opcodes.DUP_X1);
-      // Stack is "..., objectref, value, objectref" (+1)
-      mv.visitInsn(Opcodes.SWAP);
-      // Stack is "..., objectref, objectref, value" (+1)
+      // Stack is "..., false, objectref"
+      
+      finishFieldAccess(owner, fieldID, FlashlightNames.INSTANCE_FIELD_ACCESS);
+    } else {
+      // Execute the original PUTFIELD instruction
+      mv.visitFieldInsn(Opcodes.PUTFIELD, owner, name, desc);
     }
-    
-    // Execute the original PUTFIELD instruction
-    mv.visitFieldInsn(Opcodes.PUTFIELD, owner, name, desc);
-    // Stack is "..., objectref"
-    
-    /* Again manipulate the stack so that we can set up the first two
-     * arguments to the Store.fieldAccess() call.  The first argument
-     * is a boolean "isRead" flag.  The second argument is the object being
-     * accessed.
-     */
-    ByteCodeUtils.pushBooleanConstant(mv, false);
-    // Stack is "..., objectref, false"
-    mv.visitInsn(Opcodes.SWAP);
-    // Stack is "..., false, objectref"
-    
-    finishFieldAccess(false,
-        owner, fullyQualifiedOwner, name,
-        FlashlightNames.INSTANCE_FIELD_ACCESS,
-        FlashlightNames.INSTANCE_FIELD_ACCESS_LOOKUP);
   }
 
 
@@ -1084,44 +1091,46 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
    */
   private void rewriteGetfield(
       final String owner, final String name, final String desc) {
-    final String fullyQualifiedOwner = ByteCodeUtils.internal2FullyQualified(owner);
-    // Stack is "..., objectref"
-    
-    /* We need to manipulate the stack to make a copy of the object being
-     * accessed so that we can have it for the call to the Store.
-     */
-    mv.visitInsn(Opcodes.DUP);
-    // Stack is "..., objectref, objectref"
-    
-    // Execute the original GETFIELD instruction
-    mv.visitFieldInsn(Opcodes.GETFIELD, owner, name, desc);
-    // Stack is "..., objectref, value"   [Value could be cat1 or cat2!]
-    
-    /* Again manipulate the stack so that we push the value below the objectref
-     * so that we have the objectref for the call to Store.fieldAccess().  Also
-     * need to insert "true" for the "isRead" parameter to fieldAccess().  How
-     * we do this depends on whether the value is category1 or category2.
-     */
-    if (ByteCodeUtils.isCategory2(desc)) {
-      // Category 2
-      mv.visitInsn(Opcodes.DUP2_X1);
-      // Stack is "..., value, objectref, value"
-      mv.visitInsn(Opcodes.POP2);
-      // Stack is "..., value, objectref"
-    } else {
-      // Category 1
+    final Integer fieldID = getFieldID(owner, name);
+    if (fieldID != null) {
+      // Stack is "..., objectref"
+      
+      /* We need to manipulate the stack to make a copy of the object being
+       * accessed so that we can have it for the call to the Store.
+       */
+      mv.visitInsn(Opcodes.DUP);
+      // Stack is "..., objectref, objectref"
+      
+      // Execute the original GETFIELD instruction
+      mv.visitFieldInsn(Opcodes.GETFIELD, owner, name, desc);
+      // Stack is "..., objectref, value"   [Value could be cat1 or cat2!]
+      
+      /* Again manipulate the stack so that we push the value below the objectref
+       * so that we have the objectref for the call to Store.fieldAccess().  Also
+       * need to insert "true" for the "isRead" parameter to fieldAccess().  How
+       * we do this depends on whether the value is category1 or category2.
+       */
+      if (ByteCodeUtils.isCategory2(desc)) {
+        // Category 2
+        mv.visitInsn(Opcodes.DUP2_X1);
+        // Stack is "..., value, objectref, value"
+        mv.visitInsn(Opcodes.POP2);
+        // Stack is "..., value, objectref"
+      } else {
+        // Category 1
+        mv.visitInsn(Opcodes.SWAP);
+        // Stack is "..., value, objectref"
+      }
+      ByteCodeUtils.pushBooleanConstant(mv, true);
+      // Stack is "..., value, objectref, true"
       mv.visitInsn(Opcodes.SWAP);
-      // Stack is "..., value, objectref"
+      // Stack is "..., value, true, objectref"
+      
+      finishFieldAccess(owner, fieldID, FlashlightNames.INSTANCE_FIELD_ACCESS);
+    } else {
+      // Execute the original GETFIELD instruction
+      mv.visitFieldInsn(Opcodes.GETFIELD, owner, name, desc);
     }
-    ByteCodeUtils.pushBooleanConstant(mv, true);
-    // Stack is "..., value, objectref, true"
-    mv.visitInsn(Opcodes.SWAP);
-    // Stack is "..., value, true, objectref"
-    
-    finishFieldAccess(false,
-        owner, fullyQualifiedOwner, name,
-        FlashlightNames.INSTANCE_FIELD_ACCESS,
-        FlashlightNames.INSTANCE_FIELD_ACCESS_LOOKUP);
   }
 
 
@@ -1139,24 +1148,25 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
    */
   private void rewritePutstatic(
       final String owner, final String name, final String desc) {
-    final String fullyQualifiedOwner = ByteCodeUtils.internal2FullyQualified(owner);
-    
-    // Stack is "..., value"
-    
-    // Execute the original PUTSTATIC instruction
-    mv.visitFieldInsn(Opcodes.PUTSTATIC, owner, name, desc);
-    // Stack is "..."
-    
-    /* Push the first arguments on the stack for the call to the
-     * Store.
-     */
-    ByteCodeUtils.pushBooleanConstant(mv, false);
-    // Stack is "..., false"
-    
-    finishFieldAccess(true,
-        owner, fullyQualifiedOwner, name,
-        FlashlightNames.STATIC_FIELD_ACCESS,
-        FlashlightNames.STATIC_FIELD_ACCESS_LOOKUP);
+    final Integer fieldID = getFieldID(owner, name);
+    if (fieldID != null) {
+      // Stack is "..., value"
+      
+      // Execute the original PUTSTATIC instruction
+      mv.visitFieldInsn(Opcodes.PUTSTATIC, owner, name, desc);
+      // Stack is "..."
+      
+      /* Push the first arguments on the stack for the call to the
+       * Store.
+       */
+      ByteCodeUtils.pushBooleanConstant(mv, false);
+      // Stack is "..., false"
+      
+      finishFieldAccess(owner, fieldID, FlashlightNames.STATIC_FIELD_ACCESS);
+    } else {
+      // Execute the original PUTSTATIC instruction
+      mv.visitFieldInsn(Opcodes.PUTSTATIC, owner, name, desc);
+    }
   }
   
   /**
@@ -1172,26 +1182,44 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
    */
   private void rewriteGetstatic(
       final String owner, final String name, final String desc) {
-    final String fullyQualifiedOwner = ByteCodeUtils.internal2FullyQualified(owner);
     // Stack is "..."
-    
-    // Execute the original GETFIELD instruction
-    mv.visitFieldInsn(Opcodes.GETSTATIC, owner, name, desc);
-    // Stack is "..., value"   [Value could be cat1 or cat2!]
-    
-    /* Manipulate the stack so that we push the first argument to 
-     * the Store method.
-     */
-    ByteCodeUtils.pushBooleanConstant(mv, true);
-    // Stack is "..., value, true"
-    
-    finishFieldAccess(true,
-        owner, fullyQualifiedOwner, name,
-        FlashlightNames.STATIC_FIELD_ACCESS,
-        FlashlightNames.STATIC_FIELD_ACCESS_LOOKUP);
+    final Integer fieldID = getFieldID(owner, name);
+    if (fieldID != null) {
+      // Execute the original GETFIELD instruction
+      mv.visitFieldInsn(Opcodes.GETSTATIC, owner, name, desc);
+      // Stack is "..., value"   [Value could be cat1 or cat2!]
+      
+      /* Manipulate the stack so that we push the first argument to 
+       * the Store method.
+       */
+      ByteCodeUtils.pushBooleanConstant(mv, true);
+      // Stack is "..., value, true"
+      
+      finishFieldAccess(owner, fieldID, FlashlightNames.STATIC_FIELD_ACCESS);
+    } else {
+      // Execute the original GETFIELD instruction
+      mv.visitFieldInsn(Opcodes.GETSTATIC, owner, name, desc);
+    }
   }
 
-
+  /**
+   * Get the field id for the given field. If the field id lookup fails, then
+   * this inserts code that throws a FlashlightRuntimeError.
+   * 
+   * @return The field id, or {@value null} if the lookup failed an exception
+   *         was inserted into the code.
+   */
+  private Integer getFieldID(final String className, final String fieldName) {
+    try {
+      return classModel.getFieldID(className, fieldName);
+    } catch (final ClassNotFoundException e) {
+      throwMissingClass(e.getMissingClass());
+      return null;
+    } catch (final FieldNotFoundException e) {
+      throwMissingField(e.getMissingField(), e.getClassName());
+      return null;
+    }
+  }
 
   /**
    * All the field access rewrites end in the same general way once the "isRead"
@@ -1203,78 +1231,19 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
    * When called for an instance field the stack should be "..., isRead,
    * receiver". When called for a static field, the stack should be "...,
    * isRead".
-   * 
-   * @param name
-   *          The name of the field being accessed.
-   * @param fullyQualifiedOwner
-   *          The fully qualified class name of the class that declares the
-   *          field being accessed.
-   * @param foundMethodName
-   *          The name of the Store method to call if we found the field's
-   *          unique identifier.
-   * @param foundMethodSignature
-   *          The signature of the Store method to call if we found the field's
-   *          unique identifier.
-   * @param lookupMethodName
-   *          The name of the Store method to call if we didn't find the field's
-   *          unique identifier and need to use reflection.
-   * @param lookupMethodSignature
-   *          The signature of the Store method to call if we didn't find the
-   *          field's unique identifier and need to use reflection.
    */
-  private void finishFieldAccess(final boolean isStatic,
-      final String owner, final String fullyQualifiedOwner, final String name,
-      final Method foundMethod, final Method lookupMethod) {
+  private void finishFieldAccess(
+      final String owner, final Integer fieldID, final Method storeMethod) {
     // Stack is "..., isRead, [receiver]"
-
-    final Method storeMethod;
-    final Integer fid = classModel.getFieldID(owner, name);
-    if (fid != ClassAndFieldModel.FIELD_NOT_FOUND) {
-      if (isStatic) {
-        ByteCodeUtils.pushPhantomClass(mv, owner);
-      }
-      /* Push the id of the field */
-      ByteCodeUtils.pushIntegerConstant(mv, fid);
-      // Stack is "..., isRead, [receiver/ownerPhantom], field_id
-      
-      storeMethod = foundMethod;
-    } else {
-      messenger.verbose("Field " + fullyQualifiedOwner + "." + name
-          + " needs reflection at " + classBeingAnalyzedFullyQualified + "."
-          + methodName + "():" + currentSrcLine);
-
-      // Stack is "..., isRead, [receiver]"
-  
-      /* Push the class object for the owner class.  We get the class object
-       * by invoking flashlight$classLoaderInfo.getClass().
-       */
-      mv.visitFieldInsn(Opcodes.GETSTATIC, classBeingAnalyzedInternal,
-          FlashlightNames.FLASHLIGHT_CLASS_LOADER_INFO,
-          FlashlightNames.FLASHLIGHT_CLASS_LOADER_INFO_DESC);
-      // ..., isRead, [receiver], classLoaderInfo
-      mv.visitLdcInsn(fullyQualifiedOwner);
-      // ..., isRead, [receiver], classLoaderInfo, className
-      mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, 
-          FlashlightNames.CLASS_LOADER_INFO,
-          FlashlightNames.GET_CLASS.getName(),
-          FlashlightNames.GET_CLASS.getDescriptor());
-      // ..., isRead, [receiver], class object
-      
-      /* Push the field name */
-      mv.visitLdcInsn(name);
-      // ..., isRead, [receiver], class object, fieldName
-      
-      storeMethod = lookupMethod;
-    }
     
-    // Stack is "..., isRead, [receiver/ownerPhantom], field_id" or
-    // "..., isRead, [receiver], class object, fieldName"
+    /* Push the id of the field */
+    ByteCodeUtils.pushIntegerConstant(mv, fieldID);
+    // Stack is "..., isRead, [receiver], field_id
     
     /* Push the site identifier */
     pushSiteIdentifier();
-    // Stack is "..., isRead, [receiver/ownerPhantom], field_id, siteId" or
-    // "..., isRead, [receiver], class object, fieldName, siteId"
-        
+    // Stack is "..., isRead, [receiver], field_id, siteId"
+
     /* We can now call the store method */
     ByteCodeUtils.callStoreMethod(mv, config, storeMethod);
     // Stack is "..."
@@ -1784,5 +1753,32 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
   
   private void pushSiteIdentifier() {
     pushSiteIdentifier(siteId);
+  }
+  
+  private void throwMissingClass(final String missingClassName) {
+    messenger.warning("In Method " + methodName + 
+        ": Couldn't find class " + missingClassName +
+        ".  Inserting code to throw a FlashlightRuntimeError.");
+    throwFlashlightRuntimeError(
+        MessageFormat.format(MISSING_CLASS_MESSAGE, missingClassName));
+  }
+  
+  private void throwMissingField(
+      final String missingFieldName, final String className) {
+    messenger.warning("In Method " + methodName + 
+        ": Couldn't find field " + missingFieldName + " in class " + className +
+        ".  Inserting code to throw a FlashlightRuntimeError.");
+    throwFlashlightRuntimeError(
+        MessageFormat.format(MISSING_FIELD_MESSAGE, missingFieldName, className));
+  }
+  
+  private void throwFlashlightRuntimeError(final String msg) {
+    mv.visitTypeInsn(Opcodes.NEW, FlashlightNames.FLASHLIGHT_RUNTIME_ERROR);
+    mv.visitInsn(Opcodes.DUP);
+    mv.visitLdcInsn(msg);
+    mv.visitMethodInsn(
+        Opcodes.INVOKESPECIAL, FlashlightNames.FLASHLIGHT_RUNTIME_ERROR,
+        FlashlightNames.CONSTRUCTOR, "(Ljava/lang/String;)V");
+    mv.visitInsn(Opcodes.ATHROW);
   }
 }

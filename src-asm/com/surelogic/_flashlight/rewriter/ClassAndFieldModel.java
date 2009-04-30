@@ -1,5 +1,6 @@
 package com.surelogic._flashlight.rewriter;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -14,12 +15,6 @@ import java.util.Map;
  */
 final class ClassAndFieldModel {
   /**
-   * Return value for {@link #getFieldID(String, String)} indicating that a
-   * field with the given name could not be found in the class.
-   */
-  public static final Integer FIELD_NOT_FOUND = null;
-
-  /**
    * Map from internal class names to class model objects.
    */
   private final Map<String, Clazz> classes = new HashMap<String, Clazz>();
@@ -28,6 +23,47 @@ final class ClassAndFieldModel {
    * The next unique id to assign to a field. 
    */
   private int nextID = 0;
+  
+  
+  
+  /**
+   * Thrown when a class lookup fails.
+   */
+  public final class ClassNotFoundException extends Exception {
+    private final String internalClassName; 
+    public ClassNotFoundException(final String internalClassName) {
+      super("Could not find class " + internalClassName);
+      this.internalClassName = internalClassName;
+    }
+    
+    public String getMissingClass() {
+      return internalClassName;
+    }
+  }
+  
+  /**
+   * Thrown when a field lookup fails.
+   */
+  public final class FieldNotFoundException extends Exception {
+    private final String internalClassName;
+    private final String fieldName;
+    
+    public FieldNotFoundException(
+        final String internalClassName, final String fieldName) {
+      super("Could not find field " + fieldName + " in class "
+          + internalClassName);
+      this.internalClassName = internalClassName;
+      this.fieldName = fieldName;
+    }
+    
+    public String getClassName() {
+      return internalClassName;
+    }
+    
+    public String getMissingField() {
+      return fieldName;
+    }
+  }
   
   
   
@@ -94,10 +130,6 @@ final class ClassAndFieldModel {
       return id;
     }
     
-    public Integer getField(final String fieldName) {
-      return fields.get(fieldName);
-    }
-    
     /**
      * Determines if the class or interface represented by this
      * <code>Clazz</code> object is either the same as, or is a superclass or
@@ -116,10 +148,11 @@ final class ClassAndFieldModel {
      * @return the <code>boolean</code> value indicating whether objects of
      *         the type <code>other</code> can be assigned to objects of this
      *         class
-     * @exception IllegalStateException Thrown if one of the ancestor classes
+     * @exception ClassNotFoundException Thrown if one of the ancestor classes
      * of <code>otherName</code> is not in the class model.
      */
-    public boolean isAssignableFrom(final String otherName) {
+    public boolean isAssignableFrom(final String otherName)
+        throws ClassNotFoundException {
       /* We keep a list of ancestors of other to be tested.
        * We start with other itself as the seed.
        */
@@ -128,10 +161,7 @@ final class ClassAndFieldModel {
       
       while (!toBeTested.isEmpty()) {
         final String testName = toBeTested.removeFirst();
-        final Clazz testClass = classes.get(testName);
-        if (testClass == null) {
-          throw new IllegalStateException("Couldn't find class " + testName);
-        }
+        final Clazz testClass = ClassAndFieldModel.this.getClass(testName);
         if (this == testClass) {
           return true;
         }
@@ -177,10 +207,16 @@ final class ClassAndFieldModel {
    * 
    * @param name
    *          The internal name of the class.
-   * @return The class, or {@code null} if the class is not in the model.
+   * @return The class.  Never {@value null}.
+   * @exception ClassNotFoundException Thrown if the class is not in the model
    */
-  public Clazz getClass(final String name) {
-    return classes.get(name);
+  public Clazz getClass(final String name) throws ClassNotFoundException {
+    final Clazz clazz = classes.get(name);
+    if (clazz == null) {
+      throw new ClassNotFoundException(name);
+    } else {
+      return clazz;
+    }
   }
   
   /**
@@ -190,6 +226,10 @@ final class ClassAndFieldModel {
    *          The internal name of the class.
    */
   public boolean isInstrumentedClass(final String name) {
+    /* Don't care here if the class is not in the model.  If it is not in the
+     * model, it is not going to be instrumented, so we just return false in
+     * that case.
+     */
     final Clazz c = classes.get(name);
     if (c != null) {
       return c.isInstrumented;
@@ -202,41 +242,45 @@ final class ClassAndFieldModel {
    * Get the unique identifier for the given field in the given class.
    * 
    * @param className
-   *          The internal name of the class in which to search for the
-   *          field.
+   *          The internal name of the class in which to search for the field.
    * @param fieldName
    *          The name of the field.
-   * @return The unique identifier of the field or {@link #FIELD_NOT_FOUND} if
-   *         the field could not be found.
+   * @return The unique identifier of the field.
+   * @exception ClassNotFoundException
+   *              Thrown if the class or one of its ancestors is missing from
+   *              the model.
+   * @exception FieldNotFoundException
+   *              Thrown if the field is not found.
    */
-  public Integer getFieldID(final String className, final String fieldName) {
+  public Integer getFieldID(final String className, final String fieldName)
+      throws ClassNotFoundException, FieldNotFoundException {
     // Try the class itself first, then the superclass, then any interfaces
     
-    final Clazz c = classes.get(className);
-    if (c == null) {
-      return FIELD_NOT_FOUND;
+    final Clazz c = getClass(className);
+    final Integer id = c.fields.get(fieldName);
+    if (id != null) {
+      return id;
     } else {
-      Integer id = c.getField(fieldName);
-      if (id != null) {
-        return id;
-      } else {
-        // try superclass
-        id = getFieldID(c.superClass, fieldName);
-        if (id != FIELD_NOT_FOUND) {
-          return id;
-        } else {
-          // try interfaces
-          for (String iface : c.getInterfaces()) {
-            id = getFieldID(iface, fieldName);
-            if (id != FIELD_NOT_FOUND) {
-              return id;
-            }
-          }
-          
-          // Field not found
-          return FIELD_NOT_FOUND;
+      // Try the superclass, if it exists
+      if (c.superClass != null) {
+        try {
+          return getFieldID(c.superClass, fieldName);
+        } catch (final FieldNotFoundException e) {
+          // Eat it and try the interfaces
         }
       }
+      
+      // try the interfaces
+      for (final String iface : c.getInterfaces()) {
+        try {
+          return getFieldID(iface, fieldName);
+        } catch (final FieldNotFoundException e2) {
+          // Eat it, and try the next interface
+        }
+      }
+      
+      // Fail!
+      throw new FieldNotFoundException(className, fieldName);
     }
   }
 }

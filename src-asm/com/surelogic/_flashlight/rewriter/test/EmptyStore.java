@@ -25,9 +25,8 @@ public class EmptyStore {
     // do nothing
   }
 
-  public static void staticFieldAccess(final boolean read,
-      final ClassPhantomReference fieldClass, final int fieldID,
-      final long siteId) {
+  public static void staticFieldAccess(
+      final boolean read, final int fieldID, final long siteId) {
     // do nothing
   }
 

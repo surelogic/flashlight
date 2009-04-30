@@ -66,12 +66,10 @@ public class DebugStore {
     stdOut.flush();
   }
 
-  public static synchronized void staticFieldAccess(final boolean read,
-      final ClassPhantomReference fieldClass, final int fieldID,
-      final long siteId) {
+  public static synchronized void staticFieldAccess(
+      final boolean read, final int fieldID, final long siteId) {
     stdOut.println("staticFieldAccess");
     stdOut.println("  read = " + read);
-    stdOut.println("  fieldClass = " + fieldClass);
     stdOut.println("  fieldID = " + fieldID);
     stdOut.println("  siteID = " + siteId);
     stdOut.flush();

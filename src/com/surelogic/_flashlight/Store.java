@@ -632,137 +632,137 @@ public final class Store {
 	  }  
   }
 
-  /**
-   * Records that a instance field that needs to be assigned a dynamic field id
-   * was accessed within the instrumented program.
-   * 
-   * @param read
-   *            {@code true} indicates a field <i>read</i>, {@code false}
-   *            indicates a field <i>write</i>.
-   * @param receiver
-   *            the object instance the field is part of the state of.
-   * @param clazz
-   *            The class object of the class in which the search
-   *            for the field should begin.
-   * @param fieldName
-   *            the name of the field.
-   * @param withinClass
-   *            the phantom class object for the class where the event occurred, may be {@code null}.
-   * @param line
-   *            the line number where the event occurred.
-   */
-  public static void instanceFieldAccessLookup(
-      final boolean read, final Object receiver,
-      final Class clazz, final String fieldName, final long siteId) {
-	  if (!IdConstants.useFieldAccesses) {
-		  return;
-	  }	  
-    if (f_flashlightIsNotInitialized)
-      return;
-    if (StoreDelegate.FL_OFF.get())
-      return;
-    final State flState = tl_withinStore.get();
-    if (flState.inside)
-    	return;
-    flState.inside = true;
-    try {
-      if (filterOutFieldAccess(clazz, siteId)) {
-    	return;
-      }
-      if (DEBUG) {
-        final String fmt = "Store.instanceFieldAccessLookup(%n\t\t%s%n\t\treceiver=%s%n\t\tfield=%s%n\t\tlocation=%s)";
-        log(String.format(fmt, read ? "read" : "write",
-            safeToString(receiver), clazz.getName()+'.'+fieldName, siteId));
-      }
-      final ObservedField oField = ObservedField.getInstance(clazz, fieldName,
-    		  flState);
-      /*
-       * Check that the parameters are valid, gather needed information,
-       * and put an event in the raw queue.
-       */
-      if (oField == null) {
-        final String fmt = "field cannot be null...instrumentation bug detected by Store.instanceFieldAccessLookup(%s, receiver=%s, field=%s, withinClass, line=%s)";
-        logAProblem(String.format(fmt, read ? "read" : "write",
-            safeToString(receiver), clazz.getName()+'.'+fieldName, siteId));
-        return;
-      }
-      final Event e;
-      if (receiver == null) {
-        final String fmt = "instance field %s access reported with a null receiver...instrumentation bug detected by Store.instanceFieldAccessLookup(%s, receiver=%s, field=%s, location=%s)";
-        logAProblem(String.format(fmt, oField, read ? "read"
-            : "write", safeToString(receiver), clazz.getName()+'.'+fieldName, siteId));
-        return;
-      }
-      if (read)
-        e = new FieldReadInstance(receiver, oField.getId(), siteId, flState);
-      else
-        e = new FieldWriteInstance(receiver, oField.getId(), siteId, flState);
-      putInQueue(flState, e);
-    } finally {
-    	flState.inside = false;
-    }
-  }
+//  /**
+//   * Records that a instance field that needs to be assigned a dynamic field id
+//   * was accessed within the instrumented program.
+//   * 
+//   * @param read
+//   *            {@code true} indicates a field <i>read</i>, {@code false}
+//   *            indicates a field <i>write</i>.
+//   * @param receiver
+//   *            the object instance the field is part of the state of.
+//   * @param clazz
+//   *            The class object of the class in which the search
+//   *            for the field should begin.
+//   * @param fieldName
+//   *            the name of the field.
+//   * @param withinClass
+//   *            the phantom class object for the class where the event occurred, may be {@code null}.
+//   * @param line
+//   *            the line number where the event occurred.
+//   */
+//  public static void instanceFieldAccessLookup(
+//      final boolean read, final Object receiver,
+//      final Class clazz, final String fieldName, final long siteId) {
+//	  if (!IdConstants.useFieldAccesses) {
+//		  return;
+//	  }	  
+//    if (f_flashlightIsNotInitialized)
+//      return;
+//    if (StoreDelegate.FL_OFF.get())
+//      return;
+//    final State flState = tl_withinStore.get();
+//    if (flState.inside)
+//    	return;
+//    flState.inside = true;
+//    try {
+//      if (filterOutFieldAccess(clazz, siteId)) {
+//    	return;
+//      }
+//      if (DEBUG) {
+//        final String fmt = "Store.instanceFieldAccessLookup(%n\t\t%s%n\t\treceiver=%s%n\t\tfield=%s%n\t\tlocation=%s)";
+//        log(String.format(fmt, read ? "read" : "write",
+//            safeToString(receiver), clazz.getName()+'.'+fieldName, siteId));
+//      }
+//      final ObservedField oField = ObservedField.getInstance(clazz, fieldName,
+//    		  flState);
+//      /*
+//       * Check that the parameters are valid, gather needed information,
+//       * and put an event in the raw queue.
+//       */
+//      if (oField == null) {
+//        final String fmt = "field cannot be null...instrumentation bug detected by Store.instanceFieldAccessLookup(%s, receiver=%s, field=%s, withinClass, line=%s)";
+//        logAProblem(String.format(fmt, read ? "read" : "write",
+//            safeToString(receiver), clazz.getName()+'.'+fieldName, siteId));
+//        return;
+//      }
+//      final Event e;
+//      if (receiver == null) {
+//        final String fmt = "instance field %s access reported with a null receiver...instrumentation bug detected by Store.instanceFieldAccessLookup(%s, receiver=%s, field=%s, location=%s)";
+//        logAProblem(String.format(fmt, oField, read ? "read"
+//            : "write", safeToString(receiver), clazz.getName()+'.'+fieldName, siteId));
+//        return;
+//      }
+//      if (read)
+//        e = new FieldReadInstance(receiver, oField.getId(), siteId, flState);
+//      else
+//        e = new FieldWriteInstance(receiver, oField.getId(), siteId, flState);
+//      putInQueue(flState, e);
+//    } finally {
+//    	flState.inside = false;
+//    }
+//  }
 
-  /**
-   * Records that a instance field that needs to be assigned a dynamic field id
-   * was accessed within the instrumented program.
-   * 
-   * @param read
-   *            {@code true} indicates a field <i>read</i>, {@code false}
-   *            indicates a field <i>write</i>.
-   * @param clazz
-   *            The class object of the class in which the search
-   *            for the field should begin.
-   * @param fieldName
-   *            the name of the field.
-   * @param withinClass
-   *            the phantom class object for the class where the event occurred, may be {@code null}.
-   * @param line
-   *            the line number where the event occurred.
-   */
-  public static void staticFieldAccessLookup(final boolean read,
-      final Class clazz, final String fieldName, final long siteId) {
-	  if (!IdConstants.useFieldAccesses) {
-		  return;
-	  }	  
-    if (f_flashlightIsNotInitialized)
-      return;
-    if (StoreDelegate.FL_OFF.get())
-      return;
-    final State flState = tl_withinStore.get();
-    if (flState.inside)
-    	return;
-    flState.inside = true;
-    try {
-      if (filterOutFieldAccess(clazz, siteId)) {
-       	return;
-      }	
-      if (DEBUG) {
-        final String fmt = "Store.staticFieldAccessLookup(%n\t\t%s%n\t\tfield=%s%n\t\tlocation=%s)";
-        log(String.format(fmt, read ? "read" : "write", clazz.getName()+'.'+fieldName, siteId));
-      }
-      final ObservedField oField = ObservedField.getInstance(clazz, fieldName,
-    		  flState);
-      /*
-       * Check that the parameters are valid, gather needed information,
-       * and put an event in the raw queue.
-       */
-      if (oField == null) {
-        final String fmt = "field cannot be null...instrumentation bug detected by Store.staticFieldAccessLookup(%s, field=%s, location=%s)";
-        logAProblem(String.format(fmt, read ? "read" : "write", clazz.getName()+'.'+fieldName, siteId));
-        return;
-      }
-
-      final Event e;
-      if (read)
-        e = new FieldReadStatic(oField.getId(), siteId, flState);
-      else
-        e = new FieldWriteStatic(oField.getId(), siteId, flState);
-      putInQueue(flState, e);
-    } finally {
-		flState.inside = false;
-    }
-  }
+//  /**
+//   * Records that a instance field that needs to be assigned a dynamic field id
+//   * was accessed within the instrumented program.
+//   * 
+//   * @param read
+//   *            {@code true} indicates a field <i>read</i>, {@code false}
+//   *            indicates a field <i>write</i>.
+//   * @param clazz
+//   *            The class object of the class in which the search
+//   *            for the field should begin.
+//   * @param fieldName
+//   *            the name of the field.
+//   * @param withinClass
+//   *            the phantom class object for the class where the event occurred, may be {@code null}.
+//   * @param line
+//   *            the line number where the event occurred.
+//   */
+//  public static void staticFieldAccessLookup(final boolean read,
+//      final Class clazz, final String fieldName, final long siteId) {
+//	  if (!IdConstants.useFieldAccesses) {
+//		  return;
+//	  }	  
+//    if (f_flashlightIsNotInitialized)
+//      return;
+//    if (StoreDelegate.FL_OFF.get())
+//      return;
+//    final State flState = tl_withinStore.get();
+//    if (flState.inside)
+//    	return;
+//    flState.inside = true;
+//    try {
+//      if (filterOutFieldAccess(clazz, siteId)) {
+//       	return;
+//      }	
+//      if (DEBUG) {
+//        final String fmt = "Store.staticFieldAccessLookup(%n\t\t%s%n\t\tfield=%s%n\t\tlocation=%s)";
+//        log(String.format(fmt, read ? "read" : "write", clazz.getName()+'.'+fieldName, siteId));
+//      }
+//      final ObservedField oField = ObservedField.getInstance(clazz, fieldName,
+//    		  flState);
+//      /*
+//       * Check that the parameters are valid, gather needed information,
+//       * and put an event in the raw queue.
+//       */
+//      if (oField == null) {
+//        final String fmt = "field cannot be null...instrumentation bug detected by Store.staticFieldAccessLookup(%s, field=%s, location=%s)";
+//        logAProblem(String.format(fmt, read ? "read" : "write", clazz.getName()+'.'+fieldName, siteId));
+//        return;
+//      }
+//
+//      final Event e;
+//      if (read)
+//        e = new FieldReadStatic(oField.getId(), siteId, flState);
+//      else
+//        e = new FieldWriteStatic(oField.getId(), siteId, flState);
+//      putInQueue(flState, e);
+//    } finally {
+//		flState.inside = false;
+//    }
+//  }
   
   /**
    * Record that the given object was  accessed indirectly (via method call)
@@ -1795,25 +1795,25 @@ public final class Store {
 		boolean rv = !f_passFilters.contains(filter);
 		return rv;
 	}
-	private static synchronized boolean filterOutFieldAccess(Class declaringType, long siteId) {
-		if (f_passFilters == null) {
-			return false;
-		}
-		String filter;
-		if (filterBySite) {
-			if (f_site2Filter == null) {
-				return false;
-			}
-			filter = f_site2Filter.get(siteId);
-		} else {
-			filter = declaringType.getPackage().getName();
-		}
-		if (f_passFilters.isEmpty()) {
-			return true;
-		}		 
-		boolean rv = !f_passFilters.contains(filter);
-		return rv;
-	}
+//	private static synchronized boolean filterOutFieldAccess(Class declaringType, long siteId) {
+//		if (f_passFilters == null) {
+//			return false;
+//		}
+//		String filter;
+//		if (filterBySite) {
+//			if (f_site2Filter == null) {
+//				return false;
+//			}
+//			filter = f_site2Filter.get(siteId);
+//		} else {
+//			filter = declaringType.getPackage().getName();
+//		}
+//		if (f_passFilters.isEmpty()) {
+//			return true;
+//		}		 
+//		boolean rv = !f_passFilters.contains(filter);
+//		return rv;
+//	}
 	
 	private static synchronized boolean filterOutFieldAccess(Class declaringType, String siteType) {	
 		if (f_passFilters == null) {

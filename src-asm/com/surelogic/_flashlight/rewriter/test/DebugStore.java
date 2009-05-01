@@ -75,29 +75,29 @@ public class DebugStore {
     stdOut.flush();
   }
 
-  public static synchronized void instanceFieldAccessLookup(
-      final boolean read, final Object receiver,
-      final Class clazz, final String fieldName,
-      final long siteId) {
-    stdOut.println("instanceFieldAccessLookup");
-    stdOut.println("  read = " + read);
-    stdOut.println("  receiver = " + objectToString(receiver));
-    stdOut.println("  class = " + clazz);
-    stdOut.println("  fieldName = " + fieldName);
-    stdOut.println("  siteID = " + siteId);
-    stdOut.flush();
-  }
+//  public static synchronized void instanceFieldAccessLookup(
+//      final boolean read, final Object receiver,
+//      final Class clazz, final String fieldName,
+//      final long siteId) {
+//    stdOut.println("instanceFieldAccessLookup");
+//    stdOut.println("  read = " + read);
+//    stdOut.println("  receiver = " + objectToString(receiver));
+//    stdOut.println("  class = " + clazz);
+//    stdOut.println("  fieldName = " + fieldName);
+//    stdOut.println("  siteID = " + siteId);
+//    stdOut.flush();
+//  }
 
-  public static synchronized void staticFieldAccessLookup(final boolean read,
-      final Class clazz, final String fieldName,
-      final long siteId) {
-    stdOut.println("staticFieldAccessLookup");
-    stdOut.println("  read = " + read);
-    stdOut.println("  class = " + clazz);
-    stdOut.println("  fieldName = " + fieldName);
-    stdOut.println("  siteID = " + siteId);
-    stdOut.flush();
-  }
+//  public static synchronized void staticFieldAccessLookup(final boolean read,
+//      final Class clazz, final String fieldName,
+//      final long siteId) {
+//    stdOut.println("staticFieldAccessLookup");
+//    stdOut.println("  read = " + read);
+//    stdOut.println("  class = " + clazz);
+//    stdOut.println("  fieldName = " + fieldName);
+//    stdOut.println("  siteID = " + siteId);
+//    stdOut.flush();
+//  }
 
   public static synchronized void indirectAccess(
       final Object receiver, final long siteId) {

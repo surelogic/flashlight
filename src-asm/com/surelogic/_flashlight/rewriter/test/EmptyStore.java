@@ -30,18 +30,18 @@ public class EmptyStore {
     // do nothing
   }
 
-  public static void instanceFieldAccessLookup(
-      final boolean read, final Object receiver,
-      final Class clazz, final String fieldName,
-      final long siteId) {
-    // do nothing
-  }
+//  public static void instanceFieldAccessLookup(
+//      final boolean read, final Object receiver,
+//      final Class clazz, final String fieldName,
+//      final long siteId) {
+//    // do nothing
+//  }
 
-  public static void staticFieldAccessLookup(final boolean read,
-      final Class clazz, final String fieldName,
-      final long siteId) {
-    // do nothing
-  }
+//  public static void staticFieldAccessLookup(final boolean read,
+//      final Class clazz, final String fieldName,
+//      final long siteId) {
+//    // do nothing
+//  }
 
   public static void indirectAccess(
       final Object receiver, final long siteId) {

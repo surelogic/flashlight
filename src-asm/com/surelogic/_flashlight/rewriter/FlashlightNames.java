@@ -121,17 +121,6 @@ public final class FlashlightNames {
   public static final String UNLOCK = "unlock";
 
   
-  
-  /* We add the static final field "flashlight$classObject" to store the Class
-   * object of the class for use in logging calls.  We make the field public so
-   * that any class can look up the Class object of any other class.  The
-   * field cannot be accessed from Java code though because of the '$' in the
-   * field's name.
-   */ 
-  public static final String FLASHLIGHT_CLASS_OBJECT = "flashlight$classObject";
-  public static final int FLASHLIGHT_CLASS_OBJECT_ACCESS = 
-    Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL | Opcodes.ACC_SYNTHETIC;
-  public static final String FLASHLIGHT_CLASS_OBJECT_DESC = "Ljava/lang/Class;";
 
   /* We add the static final field "flashlight$phantomClassObject" to store the Class
    * object of the class for use in logging calls.  We make the field public so

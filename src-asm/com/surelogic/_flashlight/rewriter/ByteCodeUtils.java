@@ -118,8 +118,8 @@ final class ByteCodeUtils {
       final MethodVisitor mv, final boolean atLeastJava5, 
       final String internalClassName) {
     if (!atLeastJava5) {
-      mv.visitFieldInsn(Opcodes.GETSTATIC, internalClassName,
-          FlashlightNames.FLASHLIGHT_CLASS_OBJECT, FlashlightNames.FLASHLIGHT_CLASS_OBJECT_DESC);
+//      mv.visitFieldInsn(Opcodes.GETSTATIC, internalClassName,
+//          FlashlightNames.FLASHLIGHT_CLASS_OBJECT, FlashlightNames.FLASHLIGHT_CLASS_OBJECT_DESC);
     } else {
       mv.visitLdcInsn(Type.getType("L"+internalClassName+";"));
     }

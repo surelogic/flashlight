@@ -65,9 +65,6 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
 
   /** Messenger for reporting status */
   private final RewriteMessenger messenger;
-  
-  /** Is the current classfile at least from Java 5? */
-  private final boolean atLeastJava5;
 
   /** Is the current classfile an interface? */
   private final boolean inInterface;
@@ -255,14 +252,14 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
       final String desc, final MethodVisitor mv, final Configuration conf,
       final SiteIdFactory csif, final RewriteMessenger msg,
       final ClassAndFieldModel model, final DebugInfo.MethodInfo di, 
-      final IndirectAccessMethods am, final boolean java5, final boolean inInt,
+      final IndirectAccessMethods am, final boolean inInt,
       final boolean update, final boolean mustImpl, final String fname,
       final String nameInternal, final String nameFullyQualified,
       final String superInternal,
       final Set<MethodCallWrapper> wrappers) {
     final FlashlightMethodRewriter methodRewriter =
       new FlashlightMethodRewriter(access, mname, desc, mv, conf, csif, msg,
-          model, di, am, java5, inInt, update, mustImpl, fname, nameInternal, nameFullyQualified,
+          model, di, am, inInt, update, mustImpl, fname, nameInternal, nameFullyQualified,
           superInternal, wrappers);
     return methodRewriter;
   }
@@ -289,7 +286,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
       final String desc, final MethodVisitor mv, final Configuration conf,
       final SiteIdFactory csif, final RewriteMessenger msg,
       final ClassAndFieldModel model, final DebugInfo.MethodInfo di,
-      final IndirectAccessMethods am, final boolean java5, final boolean inInt,
+      final IndirectAccessMethods am, final boolean inInt,
       final boolean update, final boolean mustImpl, final String fname,
       final String nameInternal, final String nameFullyQualified,
       final String superInternal,
@@ -301,7 +298,6 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     classModel = model;
     debugInfo = di;
     accessMethods = am;
-    atLeastJava5 = java5;
     inInterface = inInt;
     updateSuperCall = update;
     mustImplementIIdObject = mustImpl;
@@ -832,33 +828,11 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
 
   private void insertClassInitializerCode() {
     // Stack is empty (we are at the beginning of the method!)
-    
-    /* Initialize the flashlight$classObject field.  Do this first so that we
-     * can use it below to initialize the flashlight$withinClass field.  
-     * We only need this field if the classfile version is less than 49.0
-     * (pre-Java 5).
-     */
-    if (!atLeastJava5) {
-      /* We need to insert the expression "Class.forName(<fully-qualified-class-name>)"
-       * into the code, and set the static field flashlight$inClass
-       */
-      mv.visitLdcInsn(classBeingAnalyzedFullyQualified);
-      // className
-      mv.visitMethodInsn(Opcodes.INVOKESTATIC,
-          FlashlightNames.JAVA_LANG_CLASS,
-          FlashlightNames.FOR_NAME.getName(),
-          FlashlightNames.FOR_NAME.getDescriptor());
-      // Class
-      mv.visitFieldInsn(Opcodes.PUTSTATIC, classBeingAnalyzedInternal,
-          FlashlightNames.FLASHLIGHT_CLASS_OBJECT,
-          FlashlightNames.FLASHLIGHT_CLASS_OBJECT_DESC);
-    }
-    // empty stack
 
     /*
      * Set flashlight$withinClass by calling Store.getClassPhantom() 
      */
-    ByteCodeUtils.pushClass(mv, atLeastJava5, classBeingAnalyzedInternal);
+    ByteCodeUtils.pushClass(mv, true, classBeingAnalyzedInternal);
     // Class
     ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.GET_CLASS_PHANTOM);
     // ClassPhantomReference
@@ -868,7 +842,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     // empty stack
     
     /* Set the static field flashlight$classLoaderInfo */
-    ByteCodeUtils.pushClass(mv, atLeastJava5, classBeingAnalyzedInternal);
+    ByteCodeUtils.pushClass(mv, true, classBeingAnalyzedInternal);
     // Class
     mv.visitMethodInsn(Opcodes.INVOKESTATIC,
         FlashlightNames.FLASHLIGHT_RUNTIME_SUPPORT,
@@ -1390,7 +1364,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     // ..., obj, isThis, obj (+1, +2)
     mv.visitInsn(Opcodes.DUP_X1);
     // ..., obj, obj, isThis, obj (+2, +3)
-    ByteCodeUtils.pushClass(mv, atLeastJava5, classBeingAnalyzedInternal);
+    ByteCodeUtils.pushClass(mv, true, classBeingAnalyzedInternal);
     // ..., obj, obj, isThis, obj, inClass (+3, +4)
     final Label pushFalse2 = new Label();
     final Label afterPushIsClass = new Label();
@@ -1515,7 +1489,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
   
   private void pushSynchronizedMethodLockObject() {
     if (isStatic) {
-      ByteCodeUtils.pushClass(mv, atLeastJava5, classBeingAnalyzedInternal);
+      ByteCodeUtils.pushClass(mv, true, classBeingAnalyzedInternal);
     } else {
       mv.visitVarInsn(Opcodes.ALOAD, 0);
     }

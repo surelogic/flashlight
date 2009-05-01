@@ -226,11 +226,6 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
    * access method and has at least one argument.  Otherwise this is {@code null}.
    */
   private final String firstArgInternal;  
-
-  /**
-   * The debug information for this class, may be {@link null}.
-   */
-  private final DebugInfo.MethodInfo debugInfo;
   
   /**
    * The index of the next new local variable to allocate.
@@ -249,17 +244,18 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
    * manage the local variables sorter used by the instance.
    */
   public static MethodVisitor create(final int access, final String mname,
-      final String desc, final MethodVisitor mv, final Configuration conf,
+      final String desc, final int numLocals, 
+      final MethodVisitor mv, final Configuration conf,
       final SiteIdFactory csif, final RewriteMessenger msg,
-      final ClassAndFieldModel model, final DebugInfo.MethodInfo di, 
+      final ClassAndFieldModel model, 
       final IndirectAccessMethods am, final boolean inInt,
       final boolean update, final boolean mustImpl, final String fname,
       final String nameInternal, final String nameFullyQualified,
       final String superInternal,
       final Set<MethodCallWrapper> wrappers) {
     final FlashlightMethodRewriter methodRewriter =
-      new FlashlightMethodRewriter(access, mname, desc, mv, conf, csif, msg,
-          model, di, am, inInt, update, mustImpl, fname, nameInternal, nameFullyQualified,
+      new FlashlightMethodRewriter(access, mname, desc, numLocals, mv, conf, csif, msg,
+          model, am, inInt, update, mustImpl, fname, nameInternal, nameFullyQualified,
           superInternal, wrappers);
     return methodRewriter;
   }
@@ -283,9 +279,10 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
    *          The set of wrapper methods that this visitor should add to.
    */
   private FlashlightMethodRewriter(final int access, final String mname,
-      final String desc, final MethodVisitor mv, final Configuration conf,
+      final String desc, final int numLocals, 
+      final MethodVisitor mv, final Configuration conf,
       final SiteIdFactory csif, final RewriteMessenger msg,
-      final ClassAndFieldModel model, final DebugInfo.MethodInfo di,
+      final ClassAndFieldModel model,
       final IndirectAccessMethods am, final boolean inInt,
       final boolean update, final boolean mustImpl, final String fname,
       final String nameInternal, final String nameFullyQualified,
@@ -296,7 +293,6 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     siteIdFactory = csif;
     messenger = msg;
     classModel = model;
-    debugInfo = di;
     accessMethods = am;
     inInterface = inInt;
     updateSuperCall = update;
@@ -312,10 +308,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     classBeingAnalyzedFullyQualified = nameFullyQualified;
     superClassInternal = superInternal;
     wrapperMethods = wrappers;
-    /* XXX: Sloppy: di is only null when inserting a new static initializer,
-     * in which case we know there aren't any preexisting local variables.
-     */ 
-    nextNewLocal = (di == null) ? 0 : di.getNumLocals();
+    nextNewLocal = numLocals;
     
     isAccessMethod = ((access & Opcodes.ACC_SYNTHETIC) != 0) && isStatic && 
         methodName.startsWith("access$");
@@ -469,7 +462,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
      * aggregated state.
      */
     IndirectAccessMethod indirectAccess = null;
-    if (config.instrumentIndirectAccess && debugInfo.hasIndirectAccess()) { // we might have indirect access
+    if (config.instrumentIndirectAccess) { // we might have indirect access
       try {
         indirectAccess = accessMethods.get(owner, name, desc);
       } catch (final ClassNotFoundException e) {

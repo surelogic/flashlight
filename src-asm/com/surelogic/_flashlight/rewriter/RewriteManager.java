@@ -798,12 +798,12 @@ public abstract class RewriteManager {
         throws IOException, OversizedMethodsException {
       /* First extract the debug information */
       BufferedInputStream inClassfile = provider.getInputStream();
-      Map<String, DebugInfo.MethodInfo> methodInfos = null;
+      Map<String, Integer> method2numLocals = null;
       try {
         final ClassReader input = new ClassReader(inClassfile);
-        final DebugExtractor debugExtractor = new DebugExtractor(accessMethods);
-        input.accept(debugExtractor, ClassReader.SKIP_FRAMES);
-        methodInfos = debugExtractor.getDebugInfo();
+        final DebugExtractor debugExtractor = new DebugExtractor();
+        input.accept(debugExtractor, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+        method2numLocals = debugExtractor.getNumLocalsMap();
       } finally {
         try {
           inClassfile.close();
@@ -837,7 +837,7 @@ public abstract class RewriteManager {
         final ClassWriter output = new FlashlightClassWriter(input, classWriterFlags, classModel);
         final FlashlightClassRewriter xformer =
           new FlashlightClassRewriter(config, callSiteIdFactory, msgr, output,
-              classModel, promoteToJava5, accessMethods, methodInfos, ignoreMethods);
+              classModel, promoteToJava5, accessMethods, method2numLocals, ignoreMethods);
         // Skip stack map frames: Either the classfiles don't have them, or we will recompute them
         input.accept(xformer, ClassReader.SKIP_FRAMES);
         final Set<MethodIdentifier> badMethods = xformer.getOversizedMethods();

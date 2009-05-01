@@ -133,10 +133,10 @@ final class FlashlightClassRewriter extends ClassAdapter {
   private final SiteIdFactory callSiteIdFactory;
   
   /**
-   * The method debug information, in the order that the methods appear
-   * in the class to be visited.
+   * Mapping from (name + desc) to maxLocals.  The orignal number of 
+   * local variables for each method in the class.
    */
-  private final Map<String, DebugInfo.MethodInfo> methodInfos;
+  private final Map<String, Integer> method2numLocals;
   
   
   
@@ -158,7 +158,7 @@ final class FlashlightClassRewriter extends ClassAdapter {
       final SiteIdFactory csif, final RewriteMessenger msg,
       final ClassVisitor cv, final ClassAndFieldModel model,
       final boolean promote, final IndirectAccessMethods am,
-      final Map<String, DebugInfo.MethodInfo> infos,
+      final Map<String, Integer> m2locals,
       final Set<MethodIdentifier> ignore) {
     super(cv);
     config = conf;
@@ -167,7 +167,7 @@ final class FlashlightClassRewriter extends ClassAdapter {
     classModel = model;
     promoteToJava5 = promote;
     accessMethods = am;
-    methodInfos = infos;
+    method2numLocals = m2locals;
     methodsToIgnore = ignore;
   }
   
@@ -265,9 +265,14 @@ final class FlashlightClassRewriter extends ClassAdapter {
         cv.visitMethod(newAccess, name, desc, signature, exceptions);
       final CodeSizeEvaluator cse = new CodeSizeEvaluator(original);
       methodSizes.put(methodId, cse);
-      final DebugInfo.MethodInfo mi = methodInfos.get(name + desc);
+      /* Get the number of locals in the original method.  If the method is
+       * not found in the map, then the method is abstract and thus as 0 
+       * local variables.
+       */
+      final Integer numLocalsInteger = method2numLocals.get(name + desc);
+      final int numLocals = numLocalsInteger == null ? 0 : numLocalsInteger.intValue();
       return FlashlightMethodRewriter.create(access,
-          name, desc, cse, config, callSiteIdFactory, messenger, classModel, mi, accessMethods, isInterface,
+          name, desc, numLocals, cse, config, callSiteIdFactory, messenger, classModel, accessMethods, isInterface,
           updateSuperCall, mustImplementIIdObject, sourceFileName, classNameInternal, classNameFullyQualified,
           superClassInternal, wrapperMethods);
     }
@@ -340,8 +345,8 @@ final class FlashlightClassRewriter extends ClassAdapter {
      * traversal through the rewriter visitor.
      */
     final MethodVisitor rewriter_mv = FlashlightMethodRewriter.create(Opcodes.ACC_STATIC,
-        CLASS_INITIALIZER, CLASS_INITIALIZER_DESC, mv, config, callSiteIdFactory, messenger,
-        classModel, null, accessMethods, isInterface, updateSuperCall, mustImplementIIdObject, sourceFileName,
+        CLASS_INITIALIZER, CLASS_INITIALIZER_DESC, 0, mv, config, callSiteIdFactory, messenger,
+        classModel, accessMethods, isInterface, updateSuperCall, mustImplementIIdObject, sourceFileName,
         classNameInternal, classNameFullyQualified, superClassInternal, wrapperMethods);
     rewriter_mv.visitCode(); // start code section
     rewriter_mv.visitInsn(Opcodes.RETURN); // empty method, just return

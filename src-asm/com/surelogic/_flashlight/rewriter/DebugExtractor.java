@@ -1,5 +1,7 @@
 package com.surelogic._flashlight.rewriter;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.objectweb.asm.AnnotationVisitor;
@@ -9,7 +11,6 @@ import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 
-import com.surelogic._flashlight.rewriter.ClassAndFieldModel.ClassNotFoundException;
 
 
 /**
@@ -18,19 +19,19 @@ import com.surelogic._flashlight.rewriter.ClassAndFieldModel.ClassNotFoundExcept
  * and stack size for each method.
  */
 final class DebugExtractor implements ClassVisitor {
-  private final DebugInfo debugInfo = new DebugInfo();
-  private final IndirectAccessMethods accessMethods;
+  private final Map<String, Integer> method2numLocals =
+    new HashMap<String, Integer>();
 
   
   
-  public DebugExtractor(final IndirectAccessMethods am) {
-    accessMethods = am;
+  public DebugExtractor() {
+    super();
   }
   
   
   
-  public Map<String, DebugInfo.MethodInfo> getDebugInfo() {
-    return debugInfo.getMethodList();
+  public Map<String, Integer> getNumLocalsMap() {
+    return Collections.unmodifiableMap(method2numLocals);
   }
   
   
@@ -69,7 +70,7 @@ final class DebugExtractor implements ClassVisitor {
   public MethodVisitor visitMethod(
       final int access, final String name, final String desc,
       final String signature, final String[] exceptions) {
-    debugInfo.newMethod(name, desc);
+    final String key = name + desc;
     
     return new MethodVisitor() {
       public AnnotationVisitor visitAnnotation(
@@ -124,7 +125,7 @@ final class DebugExtractor implements ClassVisitor {
       }
 
       public void visitLabel(final Label label) {
-        debugInfo.visitLabel(label);
+        // don't care
       }
 
       public void visitLdcInsn(Object cst) {
@@ -139,7 +140,7 @@ final class DebugExtractor implements ClassVisitor {
           final String name, final String desc,
           final String signature, final Label start, final Label end,
           final int index) {
-        debugInfo.visitLocalVariable(index, name, desc, start);
+        // don't care
       }
 
       public void visitLookupSwitchInsn(Label dflt, int[] keys, Label[] labels) {
@@ -147,27 +148,12 @@ final class DebugExtractor implements ClassVisitor {
       }
 
       public void visitMaxs(int maxStack, int maxLocals) {
-        debugInfo.visitSizes(maxLocals, maxStack);
+        method2numLocals.put(key, Integer.valueOf(maxLocals));
       }
 
       public void visitMethodInsn(final int opcode,
           final String owner, final String name, final String desc) {
-        // Look for indirect state access
-        try {
-          if (accessMethods.get(owner, name, desc) != null) {
-            debugInfo.foundIndirectAccess();
-          }
-        } catch (final ClassNotFoundException e) {
-          /* We get here if there is a problem looking up an ancestor class.
-           * This only happens if rewriter is not provided with a fully closed
-           * classpath.  The dbBenchmark example makes reference to a class
-           * that it doesn't provide, but apparently that section is code is
-           * not executed by the example.
-           * 
-           * We eat the error here, because the warning will be output
-           * by FlashlightMethodRewriter.visitMethodInsn().
-           */
-        }
+        // don't care
       }
 
       public void visitMultiANewArrayInsn(String desc, int dims) {

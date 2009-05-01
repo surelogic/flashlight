@@ -107,13 +107,6 @@ public final class FlashlightNames {
   public static final String WAIT_SIGNATURE_1_ARG = "(J)V";
   public static final String WAIT_SIGNATURE_2_ARGS = "(JI)V";
   
-  public static final String JAVA_LANG_CLASS = "java/lang/Class";
-  public static final Method FOR_NAME = Method.getMethod("Class forName(String)");
-
-  public static final String JAVA_LANG_CLASS_NOT_FOUND_EXCEPTION = "java/lang/ClassNotFoundException";
-  
-  public static final String JAVA_LANG_NO_SUCH_FIELD_EXCEPTION = "java/lang/NoSuchFieldException";
-
   public static final String JAVA_UTIL_CONCURRENT_LOCKS_LOCK = "java/util/concurrent/locks/Lock";
   public static final String LOCK = "lock";
   public static final String LOCK_INTERRUPTIBLY = "lockInterruptibly";

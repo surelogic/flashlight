@@ -832,7 +832,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     /*
      * Set flashlight$withinClass by calling Store.getClassPhantom() 
      */
-    ByteCodeUtils.pushClass(mv, true, classBeingAnalyzedInternal);
+    ByteCodeUtils.pushClass(mv, classBeingAnalyzedInternal);
     // Class
     ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.GET_CLASS_PHANTOM);
     // ClassPhantomReference
@@ -842,7 +842,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     // empty stack
     
     /* Set the static field flashlight$classLoaderInfo */
-    ByteCodeUtils.pushClass(mv, true, classBeingAnalyzedInternal);
+    ByteCodeUtils.pushClass(mv, classBeingAnalyzedInternal);
     // Class
     mv.visitMethodInsn(Opcodes.INVOKESTATIC,
         FlashlightNames.FLASHLIGHT_RUNTIME_SUPPORT,
@@ -1364,7 +1364,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     // ..., obj, isThis, obj (+1, +2)
     mv.visitInsn(Opcodes.DUP_X1);
     // ..., obj, obj, isThis, obj (+2, +3)
-    ByteCodeUtils.pushClass(mv, true, classBeingAnalyzedInternal);
+    ByteCodeUtils.pushClass(mv, classBeingAnalyzedInternal);
     // ..., obj, obj, isThis, obj, inClass (+3, +4)
     final Label pushFalse2 = new Label();
     final Label afterPushIsClass = new Label();
@@ -1489,7 +1489,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
   
   private void pushSynchronizedMethodLockObject() {
     if (isStatic) {
-      ByteCodeUtils.pushClass(mv, true, classBeingAnalyzedInternal);
+      ByteCodeUtils.pushClass(mv, classBeingAnalyzedInternal);
     } else {
       mv.visitVarInsn(Opcodes.ALOAD, 0);
     }

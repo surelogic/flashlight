@@ -286,12 +286,6 @@ final class FlashlightClassRewriter extends ClassAdapter {
         FlashlightNames.FLASHLIGHT_PHANTOM_CLASS_OBJECT,
         FlashlightNames.FLASHLIGHT_PHANTOM_CLASS_OBJECT_DESC, null, null);
     fv.visitEnd();
-   
-    fv = cv.visitField(
-        FlashlightNames.FLASHLIGHT_CLASS_LOADER_INFO_ACCESS,
-        FlashlightNames.FLASHLIGHT_CLASS_LOADER_INFO,
-        FlashlightNames.FLASHLIGHT_CLASS_LOADER_INFO_DESC, null, null);
-    fv.visitEnd();
     
     // Add the class initializer if needed
     if (needsClassInitializer) {

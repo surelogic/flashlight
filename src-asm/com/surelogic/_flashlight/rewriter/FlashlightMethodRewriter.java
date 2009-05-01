@@ -834,18 +834,6 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
         FlashlightNames.FLASHLIGHT_PHANTOM_CLASS_OBJECT_DESC);
     // empty stack
     
-    /* Set the static field flashlight$classLoaderInfo */
-    ByteCodeUtils.pushClass(mv, classBeingAnalyzedInternal);
-    // Class
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC,
-        FlashlightNames.FLASHLIGHT_RUNTIME_SUPPORT,
-        FlashlightNames.GET_CLASSLOADER_INFO.getName(),
-        FlashlightNames.GET_CLASSLOADER_INFO.getDescriptor());
-    // ClassLoaderInfo
-    mv.visitFieldInsn(Opcodes.PUTSTATIC, classBeingAnalyzedInternal,
-        FlashlightNames.FLASHLIGHT_CLASS_LOADER_INFO,
-        FlashlightNames.FLASHLIGHT_CLASS_LOADER_INFO_DESC);    
-    
     // resume    
   }
 

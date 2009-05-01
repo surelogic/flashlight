@@ -86,15 +86,6 @@ public final class FlashlightNames {
   // Flashlight ObjectPhantomReference class
   public static final String OBJECT_PHANTOM_REFERENCE = "com/surelogic/_flashlight/ObjectPhantomReference";
   public static final Method GET_ID = Method.getMethod("long getId()");
-  
-  // Flashlight classes and methods  
-  public static final String FLASHLIGHT_RUNTIME_SUPPORT = "com/surelogic/_flashlight/rewriter/runtime/FlashlightRuntimeSupport";
-  public static final Method GET_CLASSLOADER_INFO = 
-    Method.getMethod("com.surelogic._flashlight.rewriter.runtime.ClassLoaderInfo getClassLoaderInfo(Class)");
-  
-  public static final String CLASS_LOADER_INFO = "com/surelogic/_flashlight/rewriter/runtime/ClassLoaderInfo";
-  public static final Method GET_CLASS = Method.getMethod("Class getClass(String)");
-  
     
   // Other Java classes and methods
   public static final String CONSTRUCTOR = "<init>";
@@ -125,15 +116,6 @@ public final class FlashlightNames {
   public static final int FLASHLIGHT_PHANTOM_CLASS_OBJECT_ACCESS = 
     Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL | Opcodes.ACC_SYNTHETIC;
   public static final String FLASHLIGHT_PHANTOM_CLASS_OBJECT_DESC = "Lcom/surelogic/_flashlight/ClassPhantomReference;";
-  
-  /* We add a static final field "flashlight$classLoaderInfo" to store the
-   * cache of class names to class objects used when dealing with field 
-   * access that must be dynamically identified.
-   */
-  public static final String FLASHLIGHT_CLASS_LOADER_INFO = "flashlight$classLoaderInfo";
-  public static final int FLASHLIGHT_CLASS_LOADER_INFO_ACCESS =
-    Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL | Opcodes.ACC_SYNTHETIC;
-  public static final String FLASHLIGHT_CLASS_LOADER_INFO_DESC = "Lcom/surelogic/_flashlight/rewriter/runtime/ClassLoaderInfo;";
   
   /* When implementing the IIdObject interface, we need to add a private final
    * field "flashlight$phantomObject" to store the phantom object referenced for

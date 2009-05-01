@@ -801,9 +801,9 @@ public abstract class RewriteManager {
       Map<String, Integer> method2numLocals = null;
       try {
         final ClassReader input = new ClassReader(inClassfile);
-        final DebugExtractor debugExtractor = new DebugExtractor();
-        input.accept(debugExtractor, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
-        method2numLocals = debugExtractor.getNumLocalsMap();
+        final NumLocalsExtractor numLocalsExtractor = new NumLocalsExtractor();
+        input.accept(numLocalsExtractor, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+        method2numLocals = numLocalsExtractor.getNumLocalsMap();
       } finally {
         try {
           inClassfile.close();

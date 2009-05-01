@@ -118,17 +118,6 @@ final class ByteCodeUtils {
       final MethodVisitor mv, final String internalClassName) {
     mv.visitLdcInsn(Type.getType("L"+internalClassName+";"));
   }
-
-  /**
-   * Generate code to push the phantom object for the Class object of the named class.
-   * @param mv
-   * @param internalClassName
-   */
-  public static void pushPhantomClass(
-      final MethodVisitor mv, final String internalClassName) {
-    mv.visitFieldInsn(Opcodes.GETSTATIC, internalClassName,
-        FlashlightNames.FLASHLIGHT_PHANTOM_CLASS_OBJECT, FlashlightNames.FLASHLIGHT_PHANTOM_CLASS_OBJECT_DESC);
-  }
   
   /**
    * Generate code to call a method from the Store

@@ -37,9 +37,6 @@ import com.surelogic._flashlight.rewriter.config.Configuration;
 final class FlashlightClassRewriter extends ClassAdapter {
   private static final String UNKNOWN_SOURCE_FILE = "<unknown>";
   
-  private static final String CLASS_INITIALIZER = "<clinit>";
-  private static final String CLASS_INITIALIZER_DESC = "()V";
-  
   /**
    * The maximum size in bytes that a method code section is allowed to be.
    * Methods that end up larger than this after instrumentation are not 
@@ -72,12 +69,6 @@ final class FlashlightClassRewriter extends ClassAdapter {
   
   /** The internal name of the superclass of the class being rewritten. */
   private String superClassInternal;
-  
-  /**
-   * Do we need to add a class initializer?  If the class already had one,
-   * we modify it.  Otherwise we need to add one.
-   */
-  private boolean needsClassInitializer = true;
   
   /**
    * Should the super constructor call be updated from {@code java.lang.Object}
@@ -246,11 +237,6 @@ final class FlashlightClassRewriter extends ClassAdapter {
   @Override
   public MethodVisitor visitMethod(final int access, final String name,
       final String desc, final String signature, final String[] exceptions) {
-    final boolean isClassInit = name.equals(CLASS_INITIALIZER);
-    if (isClassInit) {
-      needsClassInitializer = false;
-    }
-    
     final MethodIdentifier methodId = new MethodIdentifier(name, desc);
     if (methodsToIgnore.contains(methodId)) {
       return cv.visitMethod(access, name, desc, signature, exceptions);
@@ -280,18 +266,6 @@ final class FlashlightClassRewriter extends ClassAdapter {
   
   @Override
   public void visitEnd() {
-    // Insert the withinClass field (always) and inClass field (when needed)
-    FieldVisitor fv = cv.visitField(
-        FlashlightNames.FLASHLIGHT_PHANTOM_CLASS_OBJECT_ACCESS,
-        FlashlightNames.FLASHLIGHT_PHANTOM_CLASS_OBJECT,
-        FlashlightNames.FLASHLIGHT_PHANTOM_CLASS_OBJECT_DESC, null, null);
-    fv.visitEnd();
-    
-    // Add the class initializer if needed
-    if (needsClassInitializer) {
-      addClassInitializer();
-    }
-    
     // Add the wrapper methods
     for (final MethodCallWrapper wrapper : wrapperMethods) {
       addWrapperMethod(wrapper);
@@ -302,15 +276,8 @@ final class FlashlightClassRewriter extends ClassAdapter {
      * flashlight$phantomObject field.
      */
     if (mustImplementIIdObject) {
-      // Insert the flashlight$phantomObject field
-      fv = cv.visitField(
-          FlashlightNames.FLASHLIGHT_PHANTOM_OBJECT_ACCESS,
-          FlashlightNames.FLASHLIGHT_PHANTOM_OBJECT,
-          FlashlightNames.FLASHLIGHT_PHANTOM_OBJECT_DESC, null, null);
-      fv.visitEnd();
-      
       // insert methods
-      addIIdObjectMethods();
+      addIIdObjectFieldsAndMethods();
     }
     
     // Find any oversized methods
@@ -330,27 +297,14 @@ final class FlashlightClassRewriter extends ClassAdapter {
   
   
   
-  private void addClassInitializer() {
-    /* Create a new <clinit> method to visit */
-    final MethodVisitor mv =
-      cv.visitMethod(Opcodes.ACC_STATIC, CLASS_INITIALIZER,
-          CLASS_INITIALIZER_DESC, null, null);
-    /* Proceed as if visitMethod() were called on us, and simulate the method
-     * traversal through the rewriter visitor.
-     */
-    final MethodVisitor rewriter_mv = FlashlightMethodRewriter.create(Opcodes.ACC_STATIC,
-        CLASS_INITIALIZER, CLASS_INITIALIZER_DESC, 0, mv, config, callSiteIdFactory, messenger,
-        classModel, accessMethods, isInterface, updateSuperCall, mustImplementIIdObject, sourceFileName,
-        classNameInternal, classNameFullyQualified, superClassInternal, wrapperMethods);
-    rewriter_mv.visitCode(); // start code section
-    rewriter_mv.visitInsn(Opcodes.RETURN); // empty method, just return
-    rewriter_mv.visitMaxs(0, 0); // Don't need any stack or variables
-    rewriter_mv.visitEnd(); // end of method
-  }
-  
-  
-  
-  private void addIIdObjectMethods() {
+  private void addIIdObjectFieldsAndMethods() {
+    // Insert the flashlight$phantomObject field
+    final FieldVisitor fv = cv.visitField(
+        FlashlightNames.FLASHLIGHT_PHANTOM_OBJECT_ACCESS,
+        FlashlightNames.FLASHLIGHT_PHANTOM_OBJECT,
+        FlashlightNames.FLASHLIGHT_PHANTOM_OBJECT_DESC, null, null);
+    fv.visitEnd();
+    
     final MethodVisitor identityHashCode =
       cv.visitMethod(FlashlightNames.IDENTITY_HASHCODE_ACCESS,
           FlashlightNames.IDENTITY_HASHCODE.getName(),

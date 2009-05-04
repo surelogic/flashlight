@@ -21,6 +21,7 @@ import org.apache.tools.ant.types.Path;
 import com.surelogic._flashlight.rewriter.AbstractIndentingMessager;
 import com.surelogic._flashlight.rewriter.config.Configuration;
 import com.surelogic._flashlight.rewriter.config.ConfigurationBuilder;
+import com.surelogic._flashlight.rewriter.config.Configuration.FieldFilter;
 import com.surelogic._flashlight.rewriter.RewriteManager;
 import com.surelogic._flashlight.rewriter.RewriteMessenger;
 
@@ -236,6 +237,19 @@ public final class Instrument extends Task {
     File getFile() { return file; }
   }
   
+  /**
+   * Record for a package used for field access filtering.
+   */
+  public static final class FilterPackage {
+    private String pkg;
+    
+    public FilterPackage() { super(); }
+    
+    public void setPackage(final String p) { pkg = p; }
+      
+    String getPackage() { return pkg; }
+  }
+  
   
   
   /**
@@ -436,6 +450,10 @@ public final class Instrument extends Task {
    */
   public void setStore(final String className) {
     configBuilder.setStoreClassName(className);
+  }
+  
+  public void setFieldFilter(final FieldFilter value) {
+    configBuilder.setFieldFilter(value);
   }
   
   /**
@@ -649,7 +667,23 @@ public final class Instrument extends Task {
    * indirectly access shared state.
    */
   public void addConfiguredMethodFile(final MethodFile mf) {
-    configBuilder.addAdditionalMethods(mf.getFile());
+    final File file = mf.getFile();
+    if (file == null) {
+      throw new BuildException("No file specified");
+    }
+    configBuilder.addAdditionalMethods(file);
+  }
+  
+  /**
+   * Add a package to the list of packages used for field instrumentation
+   * filtering.
+   */
+  public void addConfiguredFilter(final FilterPackage fp) {
+    final String pkg = fp.getPackage();
+    if (pkg == null) {
+      throw new BuildException("No package specified");
+    }
+    configBuilder.addToFilterPackages(pkg);
   }
   
   

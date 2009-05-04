@@ -14,9 +14,11 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.Method;
 
 import com.surelogic._flashlight.rewriter.ClassAndFieldModel.ClassNotFoundException;
+import com.surelogic._flashlight.rewriter.ClassAndFieldModel.Field;
 import com.surelogic._flashlight.rewriter.ClassAndFieldModel.FieldNotFoundException;
 import com.surelogic._flashlight.rewriter.ConstructorInitStateMachine.Callback;
 import com.surelogic._flashlight.rewriter.config.Configuration;
+import com.surelogic._flashlight.rewriter.config.Configuration.FieldFilter;
 
 
 /**
@@ -70,6 +72,12 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
   
   /** The internal name of the class being rewritten. */
   private final String classBeingAnalyzedInternal;
+  
+  /** The internal package name of the class being rewritten.  Derived from
+   * {@link #classBeingAnalyzedInternal}, but cached as a separate field 
+   * so we don't have to recomputed it for every field access.
+   */
+  private final String packageNameInternal;
   
   /** The internal name of the superclass of the class being rewritten. */
   private final String superClassInternal;
@@ -283,6 +291,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     methodName = mname;
     isConstructor = mname.equals(INITIALIZER);
     classBeingAnalyzedInternal = nameInternal;
+    packageNameInternal = ClassAndFieldModel.getPackage(nameInternal);
     superClassInternal = superInternal;
     wrapperMethods = wrappers;
     nextNewLocal = numLocals;
@@ -931,8 +940,8 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
       return;
     }
         
-    final Integer fieldID = getFieldID(owner, name);
-    if (fieldID != null) {
+    final Field field = getField(owner, name);
+    if (field != null && instrumentField(field)) {
       /* We need to manipulate the stack to make a copy of the object being
        * accessed so that we can have it for the call to the Store.
        * How we do this depends on whether the top value on the stack is a
@@ -975,7 +984,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
       mv.visitInsn(Opcodes.SWAP);
       // Stack is "..., false, objectref"
       
-      finishFieldAccess(owner, fieldID, FlashlightNames.INSTANCE_FIELD_ACCESS);
+      finishFieldAccess(owner, field.id, FlashlightNames.INSTANCE_FIELD_ACCESS);
     } else {
       // Execute the original PUTFIELD instruction
       mv.visitFieldInsn(Opcodes.PUTFIELD, owner, name, desc);
@@ -997,8 +1006,8 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
    */
   private void rewriteGetfield(
       final String owner, final String name, final String desc) {
-    final Integer fieldID = getFieldID(owner, name);
-    if (fieldID != null) {
+    final Field field = getField(owner, name);
+    if (field != null && instrumentField(field)) {
       // Stack is "..., objectref"
       
       /* We need to manipulate the stack to make a copy of the object being
@@ -1032,7 +1041,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
       mv.visitInsn(Opcodes.SWAP);
       // Stack is "..., value, true, objectref"
       
-      finishFieldAccess(owner, fieldID, FlashlightNames.INSTANCE_FIELD_ACCESS);
+      finishFieldAccess(owner, field.id, FlashlightNames.INSTANCE_FIELD_ACCESS);
     } else {
       // Execute the original GETFIELD instruction
       mv.visitFieldInsn(Opcodes.GETFIELD, owner, name, desc);
@@ -1054,8 +1063,8 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
    */
   private void rewritePutstatic(
       final String owner, final String name, final String desc) {
-    final Integer fieldID = getFieldID(owner, name);
-    if (fieldID != null) {
+    final Field field = getField(owner, name);
+    if (field != null && instrumentField(field)) {
       // Stack is "..., value"
       
       // Execute the original PUTSTATIC instruction
@@ -1068,7 +1077,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
       ByteCodeUtils.pushBooleanConstant(mv, false);
       // Stack is "..., false"
       
-      finishFieldAccess(owner, fieldID, FlashlightNames.STATIC_FIELD_ACCESS);
+      finishFieldAccess(owner, field.id, FlashlightNames.STATIC_FIELD_ACCESS);
     } else {
       // Execute the original PUTSTATIC instruction
       mv.visitFieldInsn(Opcodes.PUTSTATIC, owner, name, desc);
@@ -1089,8 +1098,8 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
   private void rewriteGetstatic(
       final String owner, final String name, final String desc) {
     // Stack is "..."
-    final Integer fieldID = getFieldID(owner, name);
-    if (fieldID != null) {
+    final Field field = getField(owner, name);
+    if (field != null && instrumentField(field)) {
       // Execute the original GETFIELD instruction
       mv.visitFieldInsn(Opcodes.GETSTATIC, owner, name, desc);
       // Stack is "..., value"   [Value could be cat1 or cat2!]
@@ -1101,7 +1110,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
       ByteCodeUtils.pushBooleanConstant(mv, true);
       // Stack is "..., value, true"
       
-      finishFieldAccess(owner, fieldID, FlashlightNames.STATIC_FIELD_ACCESS);
+      finishFieldAccess(owner, field.id, FlashlightNames.STATIC_FIELD_ACCESS);
     } else {
       // Execute the original GETFIELD instruction
       mv.visitFieldInsn(Opcodes.GETSTATIC, owner, name, desc);
@@ -1115,7 +1124,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
    * @return The field id, or {@value null} if the lookup failed an exception
    *         was inserted into the code.
    */
-  private Integer getFieldID(final String className, final String fieldName) {
+  private Field getField(final String className, final String fieldName) {
     try {
       return classModel.getFieldID(className, fieldName);
     } catch (final ClassNotFoundException e) {
@@ -1127,6 +1136,32 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     }
   }
 
+  /**
+   * Determine if the field access should be instrumented based on 
+   * filter settings.
+   */
+  private boolean instrumentField(final Field field) {
+    /* I could make the elements in the FieldFilter enumeration have a filter()
+     * method, but this would require me to add too much implementation detail
+     * into a class that is meant to be used to convey settings information.
+     * While this method is ugly, I think using a filter() method on the
+     * enumeration would be uglier.
+     */
+    if (config.fieldFilter == FieldFilter.NONE) {
+      // Instrument all fields
+      return true;
+    } else if (config.fieldFilter == FieldFilter.DECLARATION) {
+      // Instrument fields declared in classes in the named packages
+      return config.filterPackages.contains(field.clazz.getPackage());
+    } else if (config.fieldFilter == FieldFilter.USE) {
+      // Instrument fields accessed in classes in the named packages
+      return config.filterPackages.contains(packageNameInternal);
+    } else {
+      throw new IllegalArgumentException(
+          "Unknown field filter: " + config.fieldFilter);
+    }
+  }
+  
   /**
    * All the field access rewrites end in the same general way once the "isRead"
    * and "receiver" (if any) parameters are pushed onto the stack. This pushes

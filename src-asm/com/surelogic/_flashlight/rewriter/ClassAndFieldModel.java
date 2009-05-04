@@ -1,6 +1,5 @@
 package com.surelogic._flashlight.rewriter;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -68,11 +67,34 @@ final class ClassAndFieldModel {
   
   
   /**
+   * A Field.
+   */
+  public final class Field {
+    /** The class that declares the field. */
+    public final Clazz clazz;
+    /** The name of the field. */
+    public final String name;    
+    /** The globally unique id of the field. */
+    public final int id;
+    
+    public Field(final Clazz c, final String n, final int i) {
+      clazz = c;
+      name = n;
+      id = i;
+    }
+  }
+  
+  
+  
+  /**
    * A class in the system being instrumented.  Contains the names of the 
    * superclass and any implemented interfaces.  Contains a map from all the 
    * fields directly declared in the class to unique identifiers. 
    */
   public final class Clazz {
+    /** The internal class name */
+    private final String name;
+    
     /**
      * Does this represent a class that is meant to be instrumented by
      * Flashlight?
@@ -97,19 +119,28 @@ final class ClassAndFieldModel {
     private final String[] interfaces;
     
     /**
-     * Map from field names to unique identifiers.
+     * Map from field names to fields.
      */
-    private final Map<String, Integer> fields = new HashMap<String, Integer>();
+    private final Map<String, Field> fields = new HashMap<String, Field>();
     
     
     
-    public Clazz(final boolean isInterface, final boolean isInstrumented,
+    public Clazz(final String name, final boolean isInterface, final boolean isInstrumented,
         final String superClass, final String[] interfaces) {
+      this.name = name;
       this.isInterface = isInterface;
       this.isInstrumented = isInstrumented;
       this.superClass = superClass;
       this.interfaces = new String[interfaces.length];
       System.arraycopy(interfaces, 0, this.interfaces, 0, interfaces.length);
+    }
+    
+    public String getName() {
+      return name;
+    }
+    
+    public String getPackage() {
+      return ClassAndFieldModel.getPackage(name);
     }
     
     public boolean isInterface() {
@@ -124,10 +155,11 @@ final class ClassAndFieldModel {
       return interfaces;
     }
     
-    public Integer addField(final String fieldName) {
-      final Integer id = new Integer(nextID++);
-      fields.put(fieldName, id);
-      return id;
+    public Field addField(final String fieldName) {
+      final int fid = nextID++;
+      final Field f = new Field(this, fieldName, fid);
+      fields.put(fieldName, f);
+      return f;
     }
     
     /**
@@ -179,6 +211,21 @@ final class ClassAndFieldModel {
   }
 
   
+  /**
+   * Get the internal package package name from a class name.
+   * 
+   * @return The package name. This is the empty string for the default package.
+   */
+  public static String getPackage(final String className) {
+    final int lastSlash = className.lastIndexOf('/');
+    // deal with default package
+    if (lastSlash == -1) {
+      return "";
+    } else {
+      return className.substring(0, lastSlash);
+    }
+  }
+  
 
   /**
    * Add a new class to the model. This should be called when a new classfile is
@@ -197,7 +244,7 @@ final class ClassAndFieldModel {
       final String name, final boolean isInterface, 
       final boolean isInstrumented,
       final String superClass, final String[] interfaces) {
-    final Clazz c = new Clazz(isInterface, isInstrumented, superClass, interfaces);
+    final Clazz c = new Clazz(name, isInterface, isInstrumented, superClass, interfaces);
     classes.put(name, c);
     return c;
   }
@@ -245,21 +292,21 @@ final class ClassAndFieldModel {
    *          The internal name of the class in which to search for the field.
    * @param fieldName
    *          The name of the field.
-   * @return The unique identifier of the field.
+   * @return The field.
    * @exception ClassNotFoundException
    *              Thrown if the class or one of its ancestors is missing from
    *              the model.
    * @exception FieldNotFoundException
    *              Thrown if the field is not found.
    */
-  public Integer getFieldID(final String className, final String fieldName)
+  public Field getFieldID(final String className, final String fieldName)
       throws ClassNotFoundException, FieldNotFoundException {
     // Try the class itself first, then the superclass, then any interfaces
     
     final Clazz c = getClass(className);
-    final Integer id = c.fields.get(fieldName);
-    if (id != null) {
-      return id;
+    final Field f = c.fields.get(fieldName);
+    if (f != null) {
+      return f;
     } else {
       // Try the superclass, if it exists
       if (c.superClass != null) {

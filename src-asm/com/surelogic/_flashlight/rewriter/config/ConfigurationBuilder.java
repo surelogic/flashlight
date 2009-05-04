@@ -8,6 +8,8 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.StringTokenizer;
 
+import com.surelogic._flashlight.rewriter.config.Configuration.FieldFilter;
+
 public final class ConfigurationBuilder {
   private static final String TRUE = "true";
 
@@ -51,8 +53,8 @@ public final class ConfigurationBuilder {
 
   private Set<String> classBlacklist;
   
-  private boolean filterFields;
-  private Set<String> filterFieldsInPackages;
+  private FieldFilter fieldFilter;
+  private Set<String> filterPackages;
 
   
   
@@ -87,9 +89,9 @@ public final class ConfigurationBuilder {
     this.instrumentAfterTryLock = Configuration.INSTRUMENT_AFTER_TRYLOCK_DEFAULT;
     this.instrumentAfterUnlock = Configuration.INSTRUMENT_AFTER_UNLOCK_DEFAULT;
     this.instrumentIndirectAccess = Configuration.INSTRUMENT_INDIRECT_ACCESS_DEFAULT;
-    this.classBlacklist = Configuration.BLACKLISTED_CLASSES_DEFAULT;
-    this.filterFields = Configuration.FILTER_FIELDS_DEFAULT;
-    this.filterFieldsInPackages = Configuration.FILTER_FIELDS_IN_PACKAGES_DEFAULT;
+    this.classBlacklist = new HashSet(Configuration.BLACKLISTED_CLASSES_DEFAULT);
+    this.fieldFilter = Configuration.FILTER_FIELDS_DEFAULT;
+    this.filterPackages = new HashSet(Configuration.FILTER_FIELDS_IN_PACKAGES_DEFAULT);
   }
   
   /**
@@ -150,14 +152,17 @@ public final class ConfigurationBuilder {
       classBlacklist = getStringSet(propValue2);
     }
     
-    filterFields = getBoolean(props, Configuration.FILTER_FIELDS_PROPERTY,
-        Boolean.toString(Configuration.FILTER_FIELDS_DEFAULT));
+    final String filterSetting = props.getProperty(
+        Configuration.FILTER_FIELDS_PROPERTY,
+        Configuration.FILTER_FIELDS_DEFAULT.name());
+    fieldFilter = Enum.valueOf(FieldFilter.class, filterSetting.toUpperCase());
+    
     final String propValue3 = props.getProperty(Configuration.FILTER_FIELDS_IN_PACKAGES_PROPERTY);
-    if (!filterFields || propValue3 == null) {
-      filterFields = false;
-      filterFieldsInPackages = new HashSet<String>();
+    if (fieldFilter == FieldFilter.NONE || propValue3 == null) {
+      fieldFilter = FieldFilter.NONE;
+      filterPackages = new HashSet<String>();
     } else {
-      filterFieldsInPackages = getStringSet(propValue3);
+      filterPackages = getStringSet(propValue3);
     }
   }
   
@@ -197,7 +202,7 @@ public final class ConfigurationBuilder {
         instrumentAfterCall, instrumentBeforeWait, instrumentAfterWait,
         instrumentBeforeJUCLock, instrumentAfterLock, instrumentAfterTryLock,
         instrumentAfterUnlock, instrumentIndirectAccess, classBlacklist,
-        filterFields, filterFieldsInPackages);
+        fieldFilter, filterPackages);
   }
 
   
@@ -330,15 +335,15 @@ public final class ConfigurationBuilder {
     this.classBlacklist.add(internalClassName);
   }
   
-  public void setFilterFields(final boolean value) {
-    filterFields = value;
+  public void setFieldFilter(final FieldFilter value) {
+    fieldFilter = value;
   }
   
-  public Set<String> getFilterFieldsInPackages() {
-    return filterFieldsInPackages;
+  public Set<String> getFilterPackages() {
+    return filterPackages;
   }
   
-  public void addToFilterFieldsInPackages(final String pack) {
-    filterFieldsInPackages.add(pack);
+  public void addToFilterPackages(final String pack) {
+    filterPackages.add(pack);
   }
 }

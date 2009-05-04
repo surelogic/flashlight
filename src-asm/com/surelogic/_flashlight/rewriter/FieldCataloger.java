@@ -9,6 +9,8 @@ import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import com.surelogic._flashlight.rewriter.ClassAndFieldModel.Field;
+
 
 /**
  * Class visitor that implements the first pass of the classfile instrumentation.
@@ -79,11 +81,11 @@ final class FieldCataloger implements ClassVisitor {
 
   public FieldVisitor visitField(final int access, final String name,
       final String desc, final String signature, final Object value) {
-    final Integer id = clazz.addField(name);
+    final Field f = clazz.addField(name);
     final boolean isFinal = (access & Opcodes.ACC_FINAL) != 0;
     final boolean isVolatile = (access & Opcodes.ACC_VOLATILE) != 0;
     final boolean isStatic = (access & Opcodes.ACC_STATIC) != 0;
-    out.print(id.intValue());
+    out.print(f.id);
     out.print(' ');
     out.print(classNameFullyQualified);
     out.print(' ');

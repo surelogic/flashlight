@@ -8,6 +8,23 @@ import java.util.Set;
 import com.surelogic._flashlight.rewriter.FlashlightNames;
 
 public final class Configuration {
+  public enum FieldFilter {
+    /**
+     * No filtering of field access should be performed.  All field accesses
+     * should be instrumented.
+     */
+    NONE,
+    
+    /**
+     * Instrument field accesses where the field is declared in one of the
+     * named packages only.
+     */
+    DECLARATION,
+    
+    /** Instrument field accesses in the named packages only. */
+    USE
+  }
+  
   public final static String STORE_CLASS_NAME_DEFAULT = FlashlightNames.FLASHLIGHT_STORE;
   
   public final static boolean INDIRECT_ACCESS_USE_DEFAULT_DEFAULT = true;
@@ -44,7 +61,7 @@ public final class Configuration {
   
   public final static Set<String> BLACKLISTED_CLASSES_DEFAULT = Collections.emptySet();
 
-  public final static boolean FILTER_FIELDS_DEFAULT = false;
+  public final static FieldFilter FILTER_FIELDS_DEFAULT = FieldFilter.NONE;
   public final static Set<String> FILTER_FIELDS_IN_PACKAGES_DEFAULT = Collections.emptySet();
   
 
@@ -131,12 +148,12 @@ public final class Configuration {
    */
   public final Set<String> classBlacklist;
   
-  public final boolean filterFields;
+  public final FieldFilter fieldFilter;
   /**
    * The internal package names of the packages whose classes are to have
    * their fields instrumented.
    */
-  public final Set<String> filterFieldsInPackages;
+  public final Set<String> filterPackages;
   
 
   
@@ -170,7 +187,7 @@ public final class Configuration {
       final boolean instrumentAfterUnlock,
       final boolean instrumentIndirectAccess,
       final Set<String> classBlacklist,
-      final boolean filterFields,
+      final FieldFilter filterFields,
       final Set<String> filterFieldsInPackages) {
     this.storeClassName = storeClassName;
     this.indirectUseDefault = indirectUseDefault;
@@ -200,7 +217,7 @@ public final class Configuration {
     this.instrumentAfterUnlock = instrumentAfterUnlock;
     this.instrumentIndirectAccess = instrumentIndirectAccess;
     this.classBlacklist = classBlacklist;
-    this.filterFields = filterFields;
-    this.filterFieldsInPackages = filterFieldsInPackages;
+    this.fieldFilter = filterFields;
+    this.filterPackages = filterFieldsInPackages;
   }
 }

@@ -68,23 +68,14 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
   /** Is the current classfile an interface? */
   private final boolean inInterface;
   
-  /** The name of the source file that contains the class being rewritten. */
-  private final String sourceFileName;
-  
   /** The internal name of the class being rewritten. */
   private final String classBeingAnalyzedInternal;
-
-  /** The fully qualified name of the class being rewritten. */
-  private final String classBeingAnalyzedFullyQualified;
   
   /** The internal name of the superclass of the class being rewritten. */
   private final String superClassInternal;
   
   /** The simple name of the method being rewritten. */
   private final String methodName;
-  
-  /** The method's argument types */
-  private final Type[] arguments;
   
   /** Are we visiting a constructor? */
   private final boolean isConstructor;
@@ -212,12 +203,6 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
   private String lastInitOwner = null;
   
   /**
-   * Whether the method is a static synthetic method whose name begins with 
-   * "access$".
-   */
-  private final boolean isAccessMethod;
-  
-  /**
    * The internal type name of the first argument if this method is an
    * access method and has at least one argument.  Otherwise this is {@code null}.
    */
@@ -280,8 +265,8 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
       final SiteIdFactory csif, final RewriteMessenger msg,
       final ClassAndFieldModel model,
       final IndirectAccessMethods am, final boolean inInt,
-      final boolean update, final boolean mustImpl, final String fname,
-      final String nameInternal, final String nameFullyQualified,
+      final boolean update, final boolean mustImpl, final String sourceFileName,
+      final String nameInternal, final String classBeingAnalyzedFullyQualified,
       final String superInternal,
       final Set<MethodCallWrapper> wrappers) {
     this.mv = mv;
@@ -296,18 +281,17 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     wasSynchronized = (access & Opcodes.ACC_SYNCHRONIZED) != 0;
     isStatic = (access & Opcodes.ACC_STATIC) != 0;
     methodName = mname;
-    arguments = Type.getArgumentTypes(desc);
     isConstructor = mname.equals(INITIALIZER);
-    sourceFileName = fname;
     classBeingAnalyzedInternal = nameInternal;
-    classBeingAnalyzedFullyQualified = nameFullyQualified;
     superClassInternal = superInternal;
     wrapperMethods = wrappers;
     nextNewLocal = numLocals;
     
-    isAccessMethod = ((access & Opcodes.ACC_SYNTHETIC) != 0) && isStatic && 
+    final boolean isAccessMethod =
+      ((access & Opcodes.ACC_SYNTHETIC) != 0) && isStatic && 
         methodName.startsWith("access$");
     if (isAccessMethod) {
+      final Type[] arguments = Type.getArgumentTypes(desc);
       if (arguments.length > 0) {
         final int sort = arguments[0].getSort();
         if (sort == Type.ARRAY || sort == Type.OBJECT) {

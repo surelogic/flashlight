@@ -220,7 +220,7 @@ public final class FlashlightMethodsTab extends
 
 		try {
 		  xtraFiles = config.getAttribute(
-          PreferenceConstants.P_ADDITIONAL_INDIRECT_ACCESS_METHDOS, xtraFiles);
+          PreferenceConstants.P_ADDITIONAL_INDIRECT_ACCESS_METHODS, xtraFiles);
     } catch (final CoreException e) {
       // Eclipse CommonTab is silent here, so are we
     }
@@ -241,7 +241,7 @@ public final class FlashlightMethodsTab extends
 	      PreferenceConstants.P_USE_DEFAULT_INDIRECT_ACCESS_METHODS,
 	      useDefaultMethods.getSelection());
 	  config.setAttribute(
-	      PreferenceConstants.P_ADDITIONAL_INDIRECT_ACCESS_METHDOS,
+	      PreferenceConstants.P_ADDITIONAL_INDIRECT_ACCESS_METHODS,
 	      extraFiles);
 	}
 
@@ -258,7 +258,7 @@ public final class FlashlightMethodsTab extends
     config.setAttribute(
         PreferenceConstants.P_USE_DEFAULT_INDIRECT_ACCESS_METHODS, true);
     config.setAttribute(
-        PreferenceConstants.P_ADDITIONAL_INDIRECT_ACCESS_METHDOS,
+        PreferenceConstants.P_ADDITIONAL_INDIRECT_ACCESS_METHODS,
         Collections.emptyList());
 	}
 }

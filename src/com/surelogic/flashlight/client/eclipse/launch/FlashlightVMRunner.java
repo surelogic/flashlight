@@ -33,6 +33,7 @@ import com.surelogic._flashlight.rewriter.RewriteManager;
 import com.surelogic._flashlight.rewriter.RewriteMessenger;
 import com.surelogic._flashlight.rewriter.config.Configuration;
 import com.surelogic._flashlight.rewriter.config.ConfigurationBuilder;
+import com.surelogic._flashlight.rewriter.config.Configuration.FieldFilter;
 import com.surelogic.common.eclipse.MemoryUtility;
 import com.surelogic.common.eclipse.SourceZip;
 import com.surelogic.common.eclipse.logging.SLEclipseStatusUtility;
@@ -53,7 +54,6 @@ final class FlashlightVMRunner implements IVMRunner {
 	private static final String LOG_FILE_NAME = "instrumentation.log";
 	private static final String FIELDS_FILE_NAME = "fields.txt";
 	private static final String SITES_FILE_NAME = "sites.txt";
-	private static final String FILTERS_FILE_NAME = "filters.txt";
 
 	private final IVMRunner delegateRunner;
 	private final File runOutputDir;
@@ -65,7 +65,6 @@ final class FlashlightVMRunner implements IVMRunner {
 	private final File fieldsFile;
 	private final File sitesFile;
 	private final File logFile;
-	private final File filtersFile;
 
 	private final String datePostfix;
 	private final String pathToFlashlightLib;
@@ -118,7 +117,6 @@ final class FlashlightVMRunner implements IVMRunner {
 		fieldsFile = new File(runOutputDir, FIELDS_FILE_NAME);
 		sitesFile = new File(runOutputDir, SITES_FILE_NAME);
 		logFile = new File(runOutputDir, LOG_FILE_NAME);
-		filtersFile = new File(runOutputDir, FILTERS_FILE_NAME);
 		if (!projectOutputDir.exists())
 			projectOutputDir.mkdir();
 		if (!externalOutputDir.exists())
@@ -269,7 +267,7 @@ final class FlashlightVMRunner implements IVMRunner {
 			}
       try {
         final List<String> xtraMethods = (List<String>) launch.getAttribute(
-            PreferenceConstants.P_ADDITIONAL_INDIRECT_ACCESS_METHDOS,
+            PreferenceConstants.P_ADDITIONAL_INDIRECT_ACCESS_METHODS,
             Collections.emptyList());
         for (final String s : xtraMethods) {
           configBuilder.addAdditionalMethods(new File(s));
@@ -284,6 +282,23 @@ final class FlashlightVMRunner implements IVMRunner {
         for (final String internalTypeName : blacklist) {
           configBuilder.addToBlacklist(internalTypeName);
         }
+      } catch (final CoreException e) {
+        // eat it
+      }
+      
+      try {
+        final String filterName = launch.getAttribute(
+            PreferenceConstants.P_FIELD_FILTER, FieldFilter.NONE.name());
+        configBuilder.setFieldFilter(Enum.valueOf(FieldFilter.class, filterName));
+        
+        final List<String> filterPkgs = launch.getAttribute(
+            PreferenceConstants.P_FIELD_FILTER_PACKAGES, 
+            Collections.emptyList());
+        configBuilder.getFilterPackages().clear();
+        for (final String pkg : filterPkgs) {
+          configBuilder.addToFilterPackages(pkg.replace('.', '/'));
+        }
+        
       } catch (final CoreException e) {
         // eat it
       }
@@ -505,43 +520,7 @@ final class FlashlightVMRunner implements IVMRunner {
 			final boolean useRefinery = launch.getAttribute(
 					PreferenceConstants.P_USE_REFINERY, prefs
 							.getBoolean(PreferenceConstants.P_USE_REFINERY));
-			final boolean useFiltering = launch.getAttribute(
-					PreferenceConstants.P_USE_FILTERING, prefs
-							.getBoolean(PreferenceConstants.P_USE_FILTERING));
-			if (useFiltering) {
-				PrintWriter out = null;
-				try {
-					out = new PrintWriter(filtersFile);
-					for (Object o : launch.getAttributes().entrySet()) {
-						Map.Entry e = (Map.Entry) o;
-						String key = (String) e.getKey();
-						Object val = e.getValue();
-						if (key
-								.startsWith(PreferenceConstants.P_FILTER_PKG_PREFIX)
-								&& Boolean.TRUE.equals(val)) {
-							// System.out.println(key+": "+e.getValue());
-							out
-									.println(key
-											.substring(PreferenceConstants.P_FILTER_PKG_PREFIX
-													.length()));
-						}
-					}
-					out.println();
 
-					newVmArgsList.add("-D" + FL_FILTERS_FILE + "="
-							+ filtersFile.getAbsolutePath());
-				} catch (FileNotFoundException ex) {
-					SLLogger.getLogger().log(
-							Level.SEVERE,
-							"Couldn't create filters file: "
-									+ filtersFile.getAbsolutePath(), ex);
-				} finally {
-					if (out != null) {
-						out.close();
-					}
-				}
-
-			}
 			newVmArgsList.add("-DFL_RUN=" + mainTypeName);
 			newVmArgsList.add("-D" + FL_DIR + "="
 					+ runOutputDir.getAbsolutePath());

@@ -191,7 +191,7 @@
         group="org.eclipse.jdt.debug.ui.launchConfigurationTabGroup.localJavaApplication"
         id="com.surelogic.flashlight.client.eclipse.launch.FlashlightInstrumentationTab"
         name="Instrument">
-      <placement after="org.eclipse.jdt.debug.ui.javaMainTab"/>
+      <placement after="com.surelogic.flashlight.client.eclipse.launch.FlashlightTab"/>
       <associatedDelegate delegate="com.surelogic.flashlight.client.eclipse.launch.FlashlightLaunchConfigurationDelegate"/>
     </tab>
     <tab
@@ -199,7 +199,15 @@
         group="org.eclipse.jdt.debug.ui.launchConfigurationTabGroup.localJavaApplication"
         id="com.surelogic.flashlight.client.eclipse.launch.FlashlightMethodsTab"
         name="Methods">
-      <placement after="org.eclipse.jdt.debug.ui.javaMainTab"/>
+      <placement after="com.surelogic.flashlight.client.eclipse.launch.FlashlightInstrumentationTab"/>
+      <associatedDelegate delegate="com.surelogic.flashlight.client.eclipse.launch.FlashlightLaunchConfigurationDelegate"/>
+    </tab>
+    <tab
+        class="com.surelogic.flashlight.client.eclipse.launch.FlashlightFieldsTab"
+        group="org.eclipse.jdt.debug.ui.launchConfigurationTabGroup.localJavaApplication"
+        id="com.surelogic.flashlight.client.eclipse.launch.FlashlightFieldsTab"
+        name="Fields">
+      <placement after="com.surelogic.flashlight.client.eclipse.launch.FlashlightMethodsTab"/>
       <associatedDelegate delegate="com.surelogic.flashlight.client.eclipse.launch.FlashlightLaunchConfigurationDelegate"/>
     </tab>
 	</extension>

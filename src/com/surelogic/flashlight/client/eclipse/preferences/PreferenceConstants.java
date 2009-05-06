@@ -14,19 +14,23 @@ public class PreferenceConstants implements IPreferenceConstants {
 
 	private static final String PREFIX = "com.surelogic.flashlight.";
 
-	public static final String P_FILTER_PKG_PREFIX = PREFIX + "filter.";
-
-	public static final String P_USE_FILTERING = PREFIX + "use.filtering";
-
+//	public static final String P_FILTER_PKG_PREFIX = PREFIX + "filter.";
+//
+//	public static final String P_USE_FILTERING = PREFIX + "use.filtering";
+//
 	public static final String P_CLASSPATH_ENTRIES_TO_NOT_INSTRUMENT = PREFIX + "classpathEntriesToNotInstrument";
 
   public static final String P_BOOTPATH_ENTRIES_TO_NOT_INSTRUMENT = PREFIX + "bootpathEntriesToNotInstrument";
+  
+  public static final String P_FIELD_FILTER = PREFIX + "filter.fields";
+  
+  public static final String P_FIELD_FILTER_PACKAGES = PREFIX + "filter.fields.inPackages";
   
   public static final String P_CLASS_BLACKLIST = PREFIX + "classBlacklist";
 
 	public static final String P_USE_DEFAULT_INDIRECT_ACCESS_METHODS = PREFIX + "useDefaultIndirectAccessMethods";
 	
-	public static final String P_ADDITIONAL_INDIRECT_ACCESS_METHDOS = PREFIX + "additionalIndirectAccessMethods";
+	public static final String P_ADDITIONAL_INDIRECT_ACCESS_METHODS = PREFIX + "additionalIndirectAccessMethods";
 	
 	public static final String P_OUTPUT_TYPE = PREFIX + "output.type";
 

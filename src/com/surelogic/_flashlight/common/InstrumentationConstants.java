@@ -30,8 +30,6 @@ public final class InstrumentationConstants {
 
 	public static final String FL_SITES_FILE = "FL_SITES_FILE";
 
-	public static final String FL_FILTERS_FILE = "FL_FILTERS_FILE";
-
 	public static final String FL_DATE_OVERRIDE = "FL_DATE_OVERRIDE";
 
 	public static final String FL_REFINERY_OFF = "FL_REFINERY_OFF";

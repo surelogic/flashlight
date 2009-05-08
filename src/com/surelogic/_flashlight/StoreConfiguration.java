@@ -25,7 +25,6 @@ public class StoreConfiguration {
   private static volatile int consolePort;
   private static volatile String fieldsFile;
   private static volatile String sitesFile;
-  private static volatile String filtersFile;
   private static volatile String dateOverride;
   private static volatile boolean isRefineryOff;
   private static volatile OutputType outputType;
@@ -43,7 +42,6 @@ public class StoreConfiguration {
     setConsolePort(getIntProperty(FL_CONSOLE_PORT, FL_CONSOLE_PORT_DEFAULT));
     setFieldsFile(System.getProperty(FL_FIELDS_FILE));
     setSitesFile(System.getProperty(FL_SITES_FILE));
-    setFiltersFile(System.getProperty(FL_FILTERS_FILE));
     setDateOverride(System.getProperty(FL_DATE_OVERRIDE));
     setRefineryOff(System.getProperty(FL_REFINERY_OFF, null) != null);
     setOutputType(OutputType.valueOf(System.getProperty(FL_OUTPUT_TYPE), FL_OUTPUT_TYPE_DEFAULT));
@@ -251,14 +249,6 @@ public class StoreConfiguration {
   
   public static void setSitesFile(final String file) {
     sitesFile = file;   
-  }
-  
-  public static String getFiltersFile() {
-	return filtersFile;
-  }
-
-  public static void setFiltersFile(final String file) {
-	filtersFile = file;   
   }
   
   public static String getDateOverride() {

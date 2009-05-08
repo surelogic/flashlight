@@ -21,7 +21,6 @@ import java.util.zip.GZIPOutputStream;
 
 import com.surelogic._flashlight.common.IdConstants;
 import com.surelogic._flashlight.common.InstrumentationConstants;
-import com.surelogic._flashlight.common.LongMap;
 import com.surelogic._flashlight.trace.TraceNode;
 
 /**
@@ -188,21 +187,6 @@ public final class Store {
 	 * is part of the instrumented program.
 	 */
 	private final static ThreadLocal<State> tl_withinStore;
-
-	private static final boolean filterBySite = false;
-	private static final LongMap<String> f_field2Filter;	
-	private static final LongMap<String> f_site2Filter = null;
-	
-	/**
-	 * Currently describes the set of packages to be traced
-	 * All if null, none if empty
-	 */
-	private static Set<String> f_passFilters;
-	/*
-	static {
-		f_filteredClasses.add("com.surelogic.tree.SyntaxTreeNode");
-	}
-	*/
 	
 	public static final class State {
 		boolean inside = false;
@@ -415,8 +399,6 @@ public final class Store {
 				f_refinery.start();
 				f_depository = new Depository(f_rawQueue, outputStrategy);
 			}
-			f_field2Filter = f_depository.mapFieldsToFilters();
-			f_passFilters  = f_depository.getPassFilters();
 			f_depository.start();
 			log("collection started (rawQ=" + rawQueueSize + " : refinery="
 					+ refinerySize + " : outQ=" + outQueueSize + ")");
@@ -463,7 +445,6 @@ public final class Store {
 			f_console = null;
 			f_spy = null;
 			f_start_nano = 0;
-			f_field2Filter = null;
 		}
 		f_flashlightIsNotInitialized = false;
 	}
@@ -529,9 +510,6 @@ public final class Store {
 		  return;
 	  flState.inside = true;
 	  try {
-		  if (filterOutFieldAccess(fieldID, siteId)) {
-			  return;
-		  }
 		  /*
 		  if (DEBUG) {
 			  final String fmt = "Store.instanceFieldAccessLookup(%n\t\t%s%n\t\treceiver=%s%n\t\tfield=%s%n\t\tlocation=%s)";
@@ -600,9 +578,6 @@ public final class Store {
 		  return;
 	  flState.inside = true;
 	  try {
-		  if (filterOutFieldAccess(fieldID, siteId)) {
-			  return;
-		  }
 		  /*
 		  if (DEBUG) {
 			  final String fmt = "Store.staticFieldAccessLookup(%n\t\t%s%n\t\tfield=%s%n\t\tlocation=%s)";
@@ -855,9 +830,6 @@ public final class Store {
 			return;
 		flState.inside = true;
 		try {			
-		    if (filterOutFieldAccess(field.getDeclaringClass(), withinClass.getName())) {
-		      return;
-		    }
 			if (DEBUG) {
 				final String fmt = "Store.fieldAccess(%n\t\t%s%n\t\treceiver=%s%n\t\tfield=%s%n\t\tlocation=%s)";
 				log(String.format(fmt, read ? "read" : "write",
@@ -1761,98 +1733,5 @@ public final class Store {
 
 	private Store() {
 		// no instances
-	}
-	
-	//static int total, filtered;
-	
-	/**
-	 * An alternative to make this one lookup is to keep a map 
-	 * from class name to field ids, so that you can dynamically
-	 * add/remove field ids from a set of filtered fields
-	 * @param siteId 
-	 */
-	private static synchronized boolean filterOutFieldAccess(long fieldId, long siteId) {		
-		if (f_passFilters == null) {
-			return false;
-		}
-		final LongMap<String> idToFilter;
-		final long id;
-		if (filterBySite) {
-			idToFilter = f_site2Filter; 
-			id = siteId;
-		} else {
-			idToFilter = f_field2Filter;
-			id = fieldId;
-		}
-		if (idToFilter == null) {		
-			return false;
-		}
-		if (f_passFilters.isEmpty()) {
-			return true;
-		}
-		// FIX why returning null?
-		String filter = idToFilter.get(id);		
-		boolean rv = !f_passFilters.contains(filter);
-		return rv;
-	}
-//	private static synchronized boolean filterOutFieldAccess(Class declaringType, long siteId) {
-//		if (f_passFilters == null) {
-//			return false;
-//		}
-//		String filter;
-//		if (filterBySite) {
-//			if (f_site2Filter == null) {
-//				return false;
-//			}
-//			filter = f_site2Filter.get(siteId);
-//		} else {
-//			filter = declaringType.getPackage().getName();
-//		}
-//		if (f_passFilters.isEmpty()) {
-//			return true;
-//		}		 
-//		boolean rv = !f_passFilters.contains(filter);
-//		return rv;
-//	}
-	
-	private static synchronized boolean filterOutFieldAccess(Class declaringType, String siteType) {	
-		if (f_passFilters == null) {
-			return false;
-		}
-		if (f_passFilters.isEmpty()) {
-			return true;
-		}
-		// FIX why returning null?
-		String filter;
-		if (filterBySite) {
-			final int lastDot = siteType.lastIndexOf('.');
-			filter = lastDot < 0 ? siteType : siteType.substring(0, lastDot);		
-		} else {
-			filter = declaringType.getPackage().getName();
-		}
-		boolean rv = !f_passFilters.contains(filter);
-		return rv;
-	}
-
-	public static synchronized Collection<String> getPassFilters() {
-		return f_passFilters;
-	}
-
-	public static synchronized void clearPassFilters() {
-		f_passFilters = null;
-	}
-
-	public static synchronized void addPassFilter(String pkg) {
-		if (f_passFilters == null) {
-			f_passFilters = new HashSet<String>();
-		}
-		f_passFilters.add(pkg);
-	}
-
-	public static synchronized void removePassFilter(String pkg) {
-		if (f_passFilters == null) {
-			return; // Nothing to do
-		}
-		f_passFilters.remove(pkg);
 	}
 }

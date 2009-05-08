@@ -17,10 +17,6 @@ class Console extends Thread {
 	private static final String STOP = "stop";
 	private static final String EXIT = "exit";
 	private static final String QUIT = "quit";
-	private static final String SHOW_FILTERS  = "show-filters";
-	private static final String CLEAR_FILTERS = "clear-filters";
-	private static final String ADD_FILTER    = "add-filter";
-	private static final String REMOVE_FILTER = "remove-filter";
 	
 	Console() {
 		super("flashlight-console");
@@ -178,7 +174,7 @@ class Console extends Thread {
 								|| nextLine.equalsIgnoreCase(QUIT)) {
 							f_shutdownRequested = true;
 							f_client.close();
-						} else if (!processedFilterCommand(outputStream, nextLine)){
+						} else {
 							sendResponse(outputStream,
 									"invalid command...please use \""+STOP+"\" when you want to halt collection");
 						}
@@ -195,56 +191,6 @@ class Console extends Thread {
 				Store.logAProblem("general I/O failure on socket used by "
 						+ getName(), e);
 			}
-		}
-
-		private boolean processedFilterCommand(final BufferedWriter outputStream, final String line) {
-			final StringTokenizer st = new StringTokenizer(line);
-			if (!st.hasMoreTokens()) {
-				return false;
-			}
-			final String command = st.nextToken();
-			if (SHOW_FILTERS.equals(command)) {
-				final StringBuilder response = new StringBuilder();
-				final Collection<String> filters = Store.getPassFilters();
-				if (filters == null) {
-					response.append("All packages selected.");
-				}
-				else if (filters.isEmpty()) {
-					response.append("No packages selected.");
-				} 
-				else {
-					response.append("Current pass filters (by package):\n\r");
-				}				
-				sendResponse(outputStream, response.toString());
-				return true;
-			}
-			else if (ADD_FILTER.equals(command)) {
-				String pkg = getArgument(st);
-				if (pkg != null) {
-					Store.addPassFilter(pkg);
-				}
-				return true;
-			}
-			else if (CLEAR_FILTERS.equals(command)) {
-				Store.clearPassFilters();
-				return true;
-			}
-			else if (REMOVE_FILTER.equals(command)) {
-				String pkg = getArgument(st);
-				if (pkg != null) {
-					Store.removePassFilter(pkg);
-				}
-				return true;
-			}
-			return false;
-		}
-		
-		private String getArgument(StringTokenizer st) {
-			if (st.hasMoreTokens()) {
-				// FIX check for more arguments?
-				return st.nextToken();
-			}			
-			return null;
 		}
 
 		/**

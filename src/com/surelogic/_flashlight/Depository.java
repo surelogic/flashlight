@@ -4,8 +4,6 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 
-import com.surelogic._flashlight.common.LongMap;
-
 /**
  * Takes events from the out queue and persists them according to an output
  * strategy.
@@ -42,7 +40,6 @@ final class Depository extends Thread {
 	private final ClassVisitor classVisitor = new ClassVisitor();
 
 	private final Map<String,List<ClassInfo>> classDefs = loadClassInfo();	
-	private final Set<String> passFilters = loadPassFilters();
 	
 	static class ClassInfo extends AbstractList<ClassInfo> {
 		final String fileName;
@@ -353,74 +350,5 @@ final class Depository extends Thread {
 			f_outputStrategy.visit(FinalEvent.FINAL_EVENT);
 		}
 		f_outputStrategy = outputStrategy;
-	}
-	
-	public Set<String> getPassFilters() {
-		return passFilters;
-	}
-	
-	private static Set<String> loadPassFilters() {
-		String name = StoreConfiguration.getFiltersFile();
-		File f;
-		if (name != null) {
-			f = new File(name);
-		} else {
-			// Try to use fields file to find the sites file
-			name = StoreConfiguration.getFieldsFile();
-			if (name == null) {
-				if (StoreConfiguration.debugOn()) {
-					System.err.println("No filters file.");
-				}
-				return null;
-			}
-			f = new File(name);
-			f = new File(f.getParentFile(), "filtersfile.txt");
-		}
-		if (StoreConfiguration.debugOn()) {
-			System.err.println("Loading filters file: "+f.getAbsolutePath());
-		}
-		return loadFileContents(f, new FiltersReader()).getSet();
-	}
-	
-	static class FiltersReader implements LineHandler {
-		final Set<String> filters = new HashSet<String>();
-		boolean run;
-		
-		public Set<String> getSet() {
-			if (!run) {
-				return null;
-			}
-			return filters;
-		}
-
-		public void readLine(String line) {
-			run = true;
-			filters.add(line.trim());			
-		}
-	}
-	
-	public LongMap<String> mapFieldsToFilters() {
-		LongMap<String> map = new LongMap<String>();
-		for(Map.Entry<String,List<ClassInfo>> e : classDefs.entrySet()) {
-			final String declaringType = e.getKey();
-			final String declaringPackage;
-			if (declaringType == null) {
-				declaringPackage = null;
-			} else {
-				final int lastDot = declaringType.lastIndexOf('.');
-				if (lastDot < 0) {
-					declaringPackage = ""; 
-				} else {
-					declaringPackage = declaringType.substring(0, lastDot);
-				}
-			}
-			String filter = declaringPackage;
-			for(ClassInfo info : e.getValue()) {
-				for(FieldInfo f : info.fields) {
-					map.put(f.id, filter);
-				}
-			}
-		}
-		return map;
 	}
 }

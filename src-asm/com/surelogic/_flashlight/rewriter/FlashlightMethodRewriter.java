@@ -28,6 +28,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
   private static final String MISSING_CLASS_MESSAGE = "The Flashlight class model is missing class {0} because the classpath provided during instrumentation is incomplete or incorrect.  If the same classpath is provided at runtime, then the application would throw java.lang.NoClassDefFoundError.";
   private static final String MISSING_FIELD_MESSAGE = "The Flashlight class model is missing field {0} in class {1} because the classpath provided during instrumentation is incomplete or incorrect.  if the same classpath is provided at runtime, then the application would throw java.lang.NoSuchFieldError.";
     
+  private static final String CLASS_INITIALIZER = "<clinit>";
   private static final String INITIALIZER = "<init>";
   
   /**
@@ -87,6 +88,9 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
   
   /** Are we visiting a constructor? */
   private final boolean isConstructor;
+  
+  /** Are we visiting the class initializer method? */
+  private final boolean isClassInitializer;
   
   /** Was the method originally synchronized? */
   private final boolean wasSynchronized;
@@ -290,6 +294,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     isStatic = (access & Opcodes.ACC_STATIC) != 0;
     methodName = mname;
     isConstructor = mname.equals(INITIALIZER);
+    isClassInitializer = mname.equals(CLASS_INITIALIZER);
     classBeingAnalyzedInternal = nameInternal;
     packageNameInternal = ClassAndFieldModel.getPackage(nameInternal);
     superClassInternal = superInternal;
@@ -339,6 +344,10 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
      */
     updateSiteIdentifier();
     
+    // Initialize the flashlight$withinClass field
+    if (isClassInitializer) {
+      insertClassInitializerCode();
+    }
     if (wasSynchronized && config.rewriteSynchronizedMethod) {
       insertSynchronizedMethodPrefix();
     }
@@ -797,6 +806,30 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     }
   }
   
+  
+  
+  // =========================================================================
+  // == Insert Bookkeeping code
+  // =========================================================================
+
+  private void insertClassInitializerCode() {
+    // Stack is empty (we are at the beginning of the method!)
+
+    /*
+     * Set flashlight$withinClass by calling Store.getClassPhantom() 
+     */
+    ByteCodeUtils.pushClass(mv, classBeingAnalyzedInternal);
+    // Class
+    ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.GET_CLASS_PHANTOM);
+    // ClassPhantomReference
+    mv.visitFieldInsn(Opcodes.PUTSTATIC, classBeingAnalyzedInternal,
+        FlashlightNames.FLASHLIGHT_PHANTOM_CLASS_OBJECT,
+        FlashlightNames.FLASHLIGHT_PHANTOM_CLASS_OBJECT_DESC);
+    // empty stack
+    
+    // resume    
+  }
+
   
   
   // =========================================================================

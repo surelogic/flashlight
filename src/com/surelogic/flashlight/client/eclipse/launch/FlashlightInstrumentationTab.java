@@ -42,6 +42,7 @@ import org.eclipse.ui.PlatformUI;
 
 import com.surelogic.common.eclipse.SLImages;
 import com.surelogic.common.eclipse.dialogs.TypeSelectionDialog;
+import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.CommonImages;
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
 
@@ -76,8 +77,8 @@ public final class FlashlightInstrumentationTab extends
 		comp.setLayout(fillLayout);
 
 		
-		userTable = createClasspathEntryTable(comp, "Classpath entries to instrument:");
-		bootpathTable = createClasspathEntryTable(comp, "Bootpath entries to instrument:");
+		userTable = createClasspathEntryTable(comp, I18N.msg("flashlight.launch.instrumentation.classpath.title"));
+		bootpathTable = createClasspathEntryTable(comp, I18N.msg("flashlight.launch.instrumentation.bootpath.title"));
 		createBlacklist(comp);
 	}
 
@@ -102,7 +103,7 @@ public final class FlashlightInstrumentationTab extends
 	}
 
 	private void createBlacklist(final Composite parent) {
-    final Group group = createNamedGroup(parent, "Classes Not to be Instrumented:", 2);
+    final Group group = createNamedGroup(parent, I18N.msg("flashlight.launch.instrumentation.classes.title"), 2);
     createList(group);
     createButtons(group);
 	}
@@ -155,7 +156,7 @@ public final class FlashlightInstrumentationTab extends
     buttonComposite.setLayoutData(gdata);
     buttonComposite.setFont(parent.getFont());
 
-    addButton = createPushButton(buttonComposite, "Add", null); 
+    addButton = createPushButton(buttonComposite, I18N.msg("flashlight.launch.instrumentation.classes.add"), null); 
     addButton.addSelectionListener(new SelectionAdapter() {
       @Override
       public void widgetSelected(final SelectionEvent event) {
@@ -163,7 +164,7 @@ public final class FlashlightInstrumentationTab extends
       }
     });
     
-    removeButton = createPushButton(buttonComposite, "Remove", null); 
+    removeButton = createPushButton(buttonComposite, I18N.msg("flashlight.launch.instrumentation.classes.remove"), null); 
     removeButton.addSelectionListener(new SelectionAdapter() {
       @Override
       public void widgetSelected(SelectionEvent event) {

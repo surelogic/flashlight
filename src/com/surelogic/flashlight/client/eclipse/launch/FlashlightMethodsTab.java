@@ -30,6 +30,7 @@ import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
 
 import com.surelogic.common.eclipse.SLImages;
+import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.CommonImages;
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
 
@@ -55,7 +56,7 @@ public final class FlashlightMethodsTab extends
     useDefaultMethods = new Button(comp, SWT.CHECK);
     final GridData gridData = new GridData(GridData.FILL_HORIZONTAL);
     useDefaultMethods.setLayoutData(gridData);
-    useDefaultMethods.setText("Use default indirect access methods");
+    useDefaultMethods.setText(I18N.msg("flashlight.launch.methods.useDefaultMethods"));
     useDefaultMethods.setFont(parent.getFont());
     useDefaultMethods.addSelectionListener(new SelectionAdapter() {
       @Override
@@ -96,7 +97,7 @@ public final class FlashlightMethodsTab extends
 	  // Create label
 	  final Label label = new Label(listComposite, SWT.NONE);
 	  label.setFont(parent.getFont());
-	  label.setText("Files declaring additional indirect access methods:"); 
+	  label.setText(I18N.msg("flashlight.launch.methods.files.title")); 
 
     extraFilesViewer = new ListViewer(listComposite);
     gridData = new GridData(GridData.FILL_BOTH);
@@ -138,7 +139,7 @@ public final class FlashlightMethodsTab extends
 
     createVerticalSpacer(buttonComposite, 1);
 
-    addButton = createPushButton(buttonComposite, "Add", null); 
+    addButton = createPushButton(buttonComposite, I18N.msg("flashlight.launch.methods.files.add"), null); 
     addButton.addSelectionListener(new SelectionAdapter() {
       @Override
       public void widgetSelected(final SelectionEvent event) {
@@ -146,7 +147,7 @@ public final class FlashlightMethodsTab extends
       }
     });
     
-    removeButton = createPushButton(buttonComposite, "Remove", null); 
+    removeButton = createPushButton(buttonComposite, I18N.msg("flashlight.launch.methods.files.remove"), null); 
     removeButton.addSelectionListener(new SelectionAdapter() {
       @Override
       public void widgetSelected(SelectionEvent event) {

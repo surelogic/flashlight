@@ -39,6 +39,7 @@ import org.eclipse.swt.widgets.Group;
 import com.surelogic._flashlight.rewriter.config.Configuration;
 import com.surelogic._flashlight.rewriter.config.Configuration.FieldFilter;
 import com.surelogic.common.eclipse.SLImages;
+import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.CommonImages;
 import com.surelogic.common.StringComparators;
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
@@ -76,20 +77,20 @@ public final class FlashlightFieldsTab extends AbstractLaunchConfigurationTab {
 	
 	private void createRadioButtons(final Composite parent) {
 	  final Group group = new Group(parent, SWT.NONE);
-	  group.setText("Instrument fields:");
+	  group.setText(I18N.msg("flashlight.launch.fields.filter.title"));
 	  group.setFont(parent.getFont());
 	  group.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 	  
 	  group.setLayout(new GridLayout(1, false));
-    noFilteringButton = createRadioButton(group, "Instrument all field accesses");
-    declarationFilteringButton = createRadioButton(group, "Instrument accesses to fields declared in the selected packages only");
-    useFilteringButton = createRadioButton(group, "Instrument accesses to fields used in the selected packages only");
+    noFilteringButton = createRadioButton(group, I18N.msg("flashlight.launch.fields.filter.noFiltering"));
+    declarationFilteringButton = createRadioButton(group, I18N.msg("flashlight.launch.fields.filter.declared"));
+    useFilteringButton = createRadioButton(group, I18N.msg("flashlight.launch.fields.filter.use"));
 	}
 
 	private void createList(final Composite parent) {
 	  final Group group = new Group(parent, SWT.NONE);
 	  listGroup = group;
-	  group.setText("Select packages:");
+	  group.setText(I18N.msg("flashlight.launch.fields.packages.title"));
 	  group.setFont(parent.getFont());
 	  group.setLayoutData(new GridData(GridData.FILL_BOTH));
 	  group.setLayout(new GridLayout(1, false));
@@ -104,13 +105,13 @@ public final class FlashlightFieldsTab extends AbstractLaunchConfigurationTab {
 	  final RowLayout rowLayout = new RowLayout();
     buttons.setLayout(rowLayout);
 	  buttons.setLayoutData(new RowData());
-	  selectAll = createPushButton(buttons, "Select All", null);
+	  selectAll = createPushButton(buttons, I18N.msg("flashlight.launch.fields.packages.selectAll"), null);
 	  selectAll.setLayoutData(new RowData());
 	  selectAll.addSelectionListener(new SelectAllAction(true));
-	  selectNone = createPushButton(buttons, "Select None", null);
+	  selectNone = createPushButton(buttons, I18N.msg("flashlight.launch.fields.packages.selectNone"), null);
 	  selectNone.setLayoutData(new RowData());
 	  selectNone.addSelectionListener(new SelectAllAction(false));
-	  invertSelection = createPushButton(buttons, "Invert Selection", null);
+	  invertSelection = createPushButton(buttons, I18N.msg("flashlight.launch.fields.packages.invert"), null);
 	  invertSelection.setLayoutData(new RowData());
 	  invertSelection.addSelectionListener(new InvertSelectionAction());
 	  
@@ -134,12 +135,6 @@ public final class FlashlightFieldsTab extends AbstractLaunchConfigurationTab {
     
     allPackages = new ArrayList<String>();
     packageViewer.setInput(allPackages);
-    for (int i = 0; i < 10; i++) {
-      final String s = "x.y.z.p" + i;
-      allPackages.add(s);
-      packageViewer.add(s);
-      packageViewer.setChecked(s, true);
-    }
 	}
 	
 	private final class ViewerEnablementAction extends SelectionAdapter {

@@ -51,8 +51,6 @@ public final class FlashlightMethodsTab extends
     final GridLayout layout = new GridLayout();
     layout.numColumns = 1;
 		comp.setLayout(layout);
-
-		createListAndButtons(comp);
 		
     useDefaultMethods = new Button(comp, SWT.CHECK);
     final GridData gridData = new GridData(GridData.FILL_HORIZONTAL);
@@ -66,6 +64,8 @@ public final class FlashlightMethodsTab extends
         updateLaunchConfigurationDialog();
       }
     });
+
+    createListAndButtons(comp);
 	}
 	
 	private void createListAndButtons(final Composite parent) {

@@ -11,7 +11,6 @@ import org.eclipse.jface.preference.PreferenceStore;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.*;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.*;
@@ -44,22 +43,17 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 
 	public void createControl(Composite parent) {
 		// First
-		parent.setLayout(new FillLayout());
-
-		final ScrolledComposite scroll = new ScrolledComposite(parent,
-				SWT.V_SCROLL);
-		final Composite outer = new Composite(scroll, SWT.NONE);
-		GridLayout layout = new GridLayout(1, false);
+		final Composite outer = new Composite(parent, SWT.NONE);
+		GridLayout layout = new GridLayout();
+		layout.numColumns = 1;
+		layout.verticalSpacing = 10;
 		outer.setLayout(layout);
-		scroll.setContent(outer);
+    setControl(outer);
 
-		// Expand both horizontally and vertically
-		scroll.setExpandHorizontal(true);
-		scroll.setExpandVertical(true);
-		scroll.setAlwaysShowScrollBars(true);
-
-		final Group output = createNamedGroup(outer, "Output", 3);
-		advanced = createNamedGroup(outer, "Advanced", 2);
+		final Group output = createNamedGroup(outer, "Data file options:", 2);
+    output.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		advanced = createNamedGroup(outer, "Data collection options:", 2);
+		advanced.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
 		FlashlightInstrumentationWidgets widgets = new FlashlightInstrumentationWidgets(
 				null, prefs, output, advanced);
@@ -67,7 +61,6 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 		advanced.setLayout(new GridLayout(3, false));
 
 		f_editors.addAll(widgets.getEditors());
-		setControl(scroll);
 
 		ArrayList<FieldEditor> refineryEditors = new ArrayList<FieldEditor>();
 		for (final FieldEditor e : f_editors) {
@@ -129,7 +122,7 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 	}
 
 	public String getName() {
-		return "Flashlight";
+		return "Data Collection";
 	}
 	
 	@Override

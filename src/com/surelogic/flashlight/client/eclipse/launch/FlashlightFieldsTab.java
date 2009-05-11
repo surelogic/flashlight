@@ -67,6 +67,7 @@ public final class FlashlightFieldsTab extends AbstractLaunchConfigurationTab {
 
     final GridLayout layout = new GridLayout();
     layout.numColumns = 1;
+    layout.verticalSpacing = 10;
 		comp.setLayout(layout);
 
 		createRadioButtons(comp);

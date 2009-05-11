@@ -13,8 +13,11 @@ public class FlashlightAppTabGroup extends AbstractLaunchConfigurationTabGroup {
 	public void createTabs(ILaunchConfigurationDialog dialog, String mode) {
 		ILaunchConfigurationTab[] tabs = new ILaunchConfigurationTab[] {
 				new JavaMainTab(),
+        new JavaArgumentsTab(),
+        new FlashlightInstrumentationTab(),
 				new FlashlightTab(),
-				new JavaArgumentsTab(),
+				new FlashlightMethodsTab(),
+				new FlashlightFieldsTab(),
 				new JavaJRETab(),
 				new JavaClasspathTab(),
 				new SourceLookupTab(),

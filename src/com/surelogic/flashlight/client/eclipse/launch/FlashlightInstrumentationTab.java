@@ -76,8 +76,8 @@ public final class FlashlightInstrumentationTab extends
 		comp.setLayout(fillLayout);
 
 		
-		userTable = createClasspathEntryTable(comp, "Classpath Entries:");
-		bootpathTable = createClasspathEntryTable(comp, "Bootpath Entries:");
+		userTable = createClasspathEntryTable(comp, "Classpath entries to instrument:");
+		bootpathTable = createClasspathEntryTable(comp, "Bootpath entries to instrument:");
 		createBlacklist(comp);
 	}
 
@@ -220,7 +220,7 @@ public final class FlashlightInstrumentationTab extends
 	}
 
 	public String getName() {
-		return "Instrument";
+		return "Instrumentation";
 	}
 
 	@Override

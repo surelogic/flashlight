@@ -152,7 +152,7 @@
 	</extension>
 
 	<!-- I have to add a tab group for my mode...I just use jdt's class -->
-   <extension
+   <!--extension
          point="org.eclipse.debug.ui.launchConfigurationTabGroups">
       <launchConfigurationTabGroup
             type="org.eclipse.jdt.launching.localJavaApplication"
@@ -163,8 +163,8 @@
         description="%fl.localJavaApplicationTabGroupDescription">
       </launchMode>
       </launchConfigurationTabGroup>
-    </extension>
-	<!--extension point="org.eclipse.debug.ui.launchConfigurationTabGroups">
+    </extension-->
+	<extension point="org.eclipse.debug.ui.launchConfigurationTabGroups">
 		<launchConfigurationTabGroup
 			type="org.eclipse.jdt.launching.localJavaApplication"
 			helpContextId="org.eclipse.jdt.debug.ui.launchConfigHelpContext.local_java_application"
@@ -174,32 +174,33 @@
 				description="%fl.localJavaApplicationTabGroupDescription">
 			</launchMode>
 		</launchConfigurationTabGroup>
-	</extension-->
+	</extension>
 	
-	<!-- Also add an additional tab to the launch tab group -->
-	<extension point="org.eclipse.debug.ui.launchConfigurationTabs">
-	  <tab
-	      class="com.surelogic.flashlight.client.eclipse.launch.FlashlightTab"
-	      group="org.eclipse.jdt.debug.ui.launchConfigurationTabGroup.localJavaApplication"
-	      id="com.surelogic.flashlight.client.eclipse.launch.FlashlightTab"
-	      name="Flashlight">
-	    <placement after="org.eclipse.jdt.debug.ui.javaMainTab"/>
-	    <associatedDelegate delegate="com.surelogic.flashlight.client.eclipse.launch.FlashlightLaunchConfigurationDelegate"/>
-	  </tab>
+	<!-- Adding additional tabs using the launchConfigurationTabs extension point
+       results in unreliable tab ordering. -->
+	<!--extension point="org.eclipse.debug.ui.launchConfigurationTabs">
     <tab
         class="com.surelogic.flashlight.client.eclipse.launch.FlashlightInstrumentationTab"
         group="org.eclipse.jdt.debug.ui.launchConfigurationTabGroup.localJavaApplication"
         id="com.surelogic.flashlight.client.eclipse.launch.FlashlightInstrumentationTab"
         name="Instrument">
-      <placement after="com.surelogic.flashlight.client.eclipse.launch.FlashlightTab"/>
+      <placement after="org.eclipse.jdt.debug.ui.javaArgumentsTab"/>
       <associatedDelegate delegate="com.surelogic.flashlight.client.eclipse.launch.FlashlightLaunchConfigurationDelegate"/>
     </tab>
+	  <tab
+	      class="com.surelogic.flashlight.client.eclipse.launch.FlashlightTab"
+	      group="org.eclipse.jdt.debug.ui.launchConfigurationTabGroup.localJavaApplication"
+	      id="com.surelogic.flashlight.client.eclipse.launch.FlashlightTab"
+	      name="Flashlight">
+	    <placement after="com.surelogic.flashlight.client.eclipse.launch.FlashlightInstrumentationTab"/>
+	    <associatedDelegate delegate="com.surelogic.flashlight.client.eclipse.launch.FlashlightLaunchConfigurationDelegate"/>
+	  </tab>
     <tab
         class="com.surelogic.flashlight.client.eclipse.launch.FlashlightMethodsTab"
         group="org.eclipse.jdt.debug.ui.launchConfigurationTabGroup.localJavaApplication"
         id="com.surelogic.flashlight.client.eclipse.launch.FlashlightMethodsTab"
         name="Methods">
-      <placement after="com.surelogic.flashlight.client.eclipse.launch.FlashlightInstrumentationTab"/>
+      <placement after="com.surelogic.flashlight.client.eclipse.launch.FlashlightTab"/>
       <associatedDelegate delegate="com.surelogic.flashlight.client.eclipse.launch.FlashlightLaunchConfigurationDelegate"/>
     </tab>
     <tab
@@ -210,7 +211,7 @@
       <placement after="com.surelogic.flashlight.client.eclipse.launch.FlashlightMethodsTab"/>
       <associatedDelegate delegate="com.surelogic.flashlight.client.eclipse.launch.FlashlightLaunchConfigurationDelegate"/>
     </tab>
-	</extension>
+	</extension-->
 	
 	<!--
 		Causes the "Flashlight as" menus to work properly (launch shortcut

@@ -22,6 +22,7 @@ import com.surelogic._flashlight.rewriter.AbstractIndentingMessager;
 import com.surelogic._flashlight.rewriter.config.Configuration;
 import com.surelogic._flashlight.rewriter.config.ConfigurationBuilder;
 import com.surelogic._flashlight.rewriter.config.Configuration.FieldFilter;
+import com.surelogic._flashlight.rewriter.ClassNameUtil;
 import com.surelogic._flashlight.rewriter.RewriteManager;
 import com.surelogic._flashlight.rewriter.RewriteMessenger;
 
@@ -69,32 +70,34 @@ public final class Instrument extends Task {
   
   /**
    * The boot class path for the instrumented application. If this is not set,
-   * then the task gets the boot class path using a RuntimeMXBean. This value
-   * can come from both an attribute and a nested element. If both an attribute
-   * and a nested element are used then the results are merged. This path must
-   * refer exclusively to files. The files are scanned but not instrumented.
+   * then the task gets the boot class path using a RuntimeMXBean. This path
+   * must refer exclusively to files. The files are scanned but not
+   * instrumented.
    */
   private Path bootclasspath = null;
 
   /**
    * The set of extensions dirs used by the instrumented application. If this is
    * not set, then the task gets it form the system property
-   * <tt>java.ext.dirs</tt>. This value can come from both an attribute and a
-   * nested element. If both an attribute and a nested element are used then the
-   * results are merged. The path must refer exclusively to directories. The
-   * directories are searched for jar files, and these jar files are scanned but
-   * not instrumented.
+   * <tt>java.ext.dirs</tt>. The path must refer exclusively to directories.
+   * The directories are searched for jar files, and these jar files are scanned
+   * but not instrumented.
    */
   private Path extdirs = null;
   
   /**
    * The paths to directories and jar files that are used as libraries by the
    * application being instrumented. These items are scanned only, and not
-   * instrumented. This value can come from both an attribute and a nested
-   * element. If both an attribute and a nested element are used then the
-   * results are merged.
+   * instrumented.
    */
   private Path libraries = null;
+  
+  /**
+   * The paths to files declaring additional methods that indirectly access
+   * state aggregated into their arguments. The path must refer exclusively to
+   * files.
+   */
+  private Path methodFiles = null;
   
 
   
@@ -222,32 +225,41 @@ public final class Instrument extends Task {
       }
     }
   }
-
-  /**
-   * Record for a user-declared file that names additional methods
-   * that indirectly access aggregated state.
-   */
-  public static final class MethodFile {
-    private File file = null;
-    
-    public MethodFile() { super(); }
-    
-    public void setFile(final File f) { file = f; }
-    
-    File getFile() { return file; }
-  }
   
   /**
    * Record for a package used for field access filtering.
    */
   public static final class FilterPackage {
     private String pkg;
+    private String pkgs;
     
     public FilterPackage() { super(); }
     
     public void setPackage(final String p) { pkg = p; }
+    
+    public void setPackages(final String p) { pkgs = p; }
       
     String getPackage() { return pkg; }
+    
+    String getPackages() { return pkgs; }
+  }
+  
+  /**
+   * Record for blacklisting classes from instrumentation.
+   */
+  public static final class Blacklist {
+    private String clazz;
+    private String classes;
+    
+    public Blacklist() { super(); }
+    
+    public void setClass(final String c) { clazz = c; }
+    
+    public void setClasses(final String c) { classes = c; }
+    
+    String getClazz() { return clazz; }
+    
+    String getClasses() { return classes; }
   }
   
   
@@ -265,7 +277,7 @@ public final class Instrument extends Task {
    * Set the "com.surelogic._flashlight.rewriter.indirectAccess.useDefault"
    * property.
    */
-  public void setUsedefaultindirectaccessmethods(final boolean flag) {
+  public void setUseDefaultIndirectAccessMethods(final boolean flag) {
     configBuilder.setIndirectUseDefault(flag);
   }
   
@@ -273,7 +285,7 @@ public final class Instrument extends Task {
    * Set the "com.surelogic._flashlight.rewriter.rewrite.invokeinterface"
    * property.
    */
-  public void setRewriteinvokeinterface(final boolean flag) {
+  public void setRewriteInvokeinterface(final boolean flag) {
     configBuilder.setRewriteInvokeinterface(flag);
   }
   
@@ -281,14 +293,14 @@ public final class Instrument extends Task {
    * Set the "com.surelogic._flashlight.rewriter.rewrite.invokespecial"
    * property.
    */
-  public void setRewriteinvokespecial(final boolean flag) {
+  public void setRewriteInvokespecial(final boolean flag) {
     configBuilder.setRewriteInvokespecial(flag);
   }
   
   /**
    * Set the "com.surelogic._flashlight.rewriter.rewrite.invokestatic" property.
    */
-  public void setRewriteinvokestatic(final boolean flag) {
+  public void setRewriteInvokestatic(final boolean flag) {
     configBuilder.setRewriteInvokestatic(flag);
   }
   
@@ -296,7 +308,7 @@ public final class Instrument extends Task {
    * Set the "com.surelogic._flashlight.rewriter.rewrite.invokevirtual"
    * property.
    */
-  public void setRewriteinvokevirtual(final boolean flag) {
+  public void setRewriteInvokevirtual(final boolean flag) {
     configBuilder.setRewriteInvokevirtual(flag);
   }
   
@@ -304,64 +316,64 @@ public final class Instrument extends Task {
    * Set the "com.surelogic._flashlight.rewriter.rewrite.synchronizedmethod"
    * property.
    */
-  public void setRewritesynchronizedmethod(final boolean flag) {
+  public void setRewriteSynchronizedMethod(final boolean flag) {
     configBuilder.setRewriteSynchronizedMethod(flag);
   }
   
   /**
    * Set the "com.surelogic._flashlight.rewriter.rewrite.monitorenter" property.
    */
-  public void setRewritemonitorenter(final boolean flag) {
+  public void setRewriteMonitorenter(final boolean flag) {
     configBuilder.setRewriteMonitorenter(flag);
   }
   
   /**
    * Set the "com.surelogic._flashlight.rewriter.rewrite.monitorexit" property.
    */
-  public void setRewritemonitorexit(final boolean flag) {
+  public void setRewriteMonitorexit(final boolean flag) {
     configBuilder.setRewriteMonitorexit(flag);
   }
   
   /**
    * Set the "com.surelogic._flashlight.rewriter.rewrite.getstatic" property.
    */
-  public void setRewritegetstatic(final boolean flag) {
+  public void setRewriteGetstatic(final boolean flag) {
     configBuilder.setRewriteGetstatic(flag);
   }
   
   /**
    * Set the "com.surelogic._flashlight.rewriter.rewrite.putstatic" property.
    */
-  public void setRewriteputstatic(final boolean flag) {
+  public void setRewritePutstatic(final boolean flag) {
     configBuilder.setRewritePutstatic(flag);
   }
   
   /**
    * Set the "com.surelogic._flashlight.rewriter.rewrite.getfield" property.
    */
-  public void setRewritegetfield(final boolean flag) {
+  public void setRewriteGetfield(final boolean flag) {
     configBuilder.setRewriteGetfield(flag);
   }
   
   /**
    * Set the "com.surelogic._flashlight.rewriter.rewrite.putfield" property.
    */
-  public void setRewriteputfield(final boolean flag) {
+  public void setRewritePutfield(final boolean flag) {
     configBuilder.setRewritePutfield(flag);
   }
   
-  public void setRewritearrayload(final boolean flag) {
+  public void setRewriteArrayLoad(final boolean flag) {
     configBuilder.setRewriteArrayLoad(flag);
   }
   
-  public void setRewritearraystore(final boolean flag) {
+  public void setRewriteArrayStore(final boolean flag) {
     configBuilder.setRewriteArrayStore(flag);
   }
   
   /**
    * Set the "com.surelogic._flashlight.rewriter.rewrite.<init>" property.
    */
-  public void setRewriteinit(final boolean flag) {
+  public void setRewriteInit(final boolean flag) {
     configBuilder.setRewriteInit(flag);
   }
   
@@ -369,7 +381,7 @@ public final class Instrument extends Task {
    * Set the "com.surelogic._flashlight.rewriter.rewrite.<init>.execution"
    * property.
    */
-  public void setRewriteconstructorexecution(final boolean flag) {
+  public void setRewriteConstructorExecution(final boolean flag) {
     configBuilder.setRewriteConstructorExecution(flag);
   }
   
@@ -377,7 +389,7 @@ public final class Instrument extends Task {
    * Set the "com.surelogic._flashlight.rewriter.instrument.call.before"
    * property.
    */
-  public void setInstrumentbeforecall(final boolean flag) {
+  public void setInstrumentBeforeCall(final boolean flag) {
     configBuilder.setInstrumentBeforeCall(flag);
   }
   
@@ -385,7 +397,7 @@ public final class Instrument extends Task {
    * Set the "com.surelogic._flashlight.rewriter.instrument.call.after"
    * property.
    */
-  public void setInstrumentaftercall(final boolean flag) {
+  public void setInstrumentAfterCall(final boolean flag) {
     configBuilder.setInstrumentAfterCall(flag);
   }
   
@@ -393,7 +405,7 @@ public final class Instrument extends Task {
    * Set the "com.surelogic._flashlight.rewriter.instrument.wait.before"
    * property.
    */
-  public void setInstrumentbeforewait(final boolean flag) {
+  public void setInstrumentBeforeWait(final boolean flag) {
     configBuilder.setInstrumentBeforeWait(flag);
   }
   
@@ -401,7 +413,7 @@ public final class Instrument extends Task {
    * Set the "com.surelogic._flashlight.rewriter.instrument.wait.after"
    * property.
    */
-  public void setInstrumentafterwait(final boolean flag) {
+  public void setInstrumentAfterWait(final boolean flag) {
     configBuilder.setInstrumentAfterWait(flag);
   }
   
@@ -409,7 +421,7 @@ public final class Instrument extends Task {
    * Set the "com.surelogic._flashlight.rewriter.instrument.lock.before"
    * property.
    */
-  public void setInstrumentbeforejuclock(final boolean flag) {
+  public void setInstrumentBeforeJUCLock(final boolean flag) {
     configBuilder.setInstrumentBeforeJUCLock(flag);
   }
   
@@ -417,7 +429,7 @@ public final class Instrument extends Task {
    * Set the "com.surelogic._flashlight.rewriter.instrument.lock.after"
    * property.
    */
-  public void setInstrumentafterlock(final boolean flag) {
+  public void setInstrumentAfterLock(final boolean flag) {
     configBuilder.setInstrumentAfterLock(flag);
   }
   
@@ -425,7 +437,7 @@ public final class Instrument extends Task {
    * Set the "com.surelogic._flashlight.rewriter.instrument.trylock.after"
    * property.
    */
-  public void setInstrumentaftertrylock(final boolean flag) {
+  public void setInstrumentAfterTryLock(final boolean flag) {
     configBuilder.setInstrumentAfterTryLock(flag);
   }
   
@@ -433,7 +445,7 @@ public final class Instrument extends Task {
    * Set the "com.surelogic._flashlight.rewriter.instrument.unlock.after"
    * property.
    */
-  public void setInstrumentafterunlock(final boolean flag) {
+  public void setInstrumentAfterUnlock(final boolean flag) {
     configBuilder.setInstrumentAfterUnlock(flag);
   }
 
@@ -449,7 +461,7 @@ public final class Instrument extends Task {
    * Set the "com.surelogic._flashlight.rewriter.store" property.
    */
   public void setStore(final String className) {
-    configBuilder.setStoreClassName(className);
+    configBuilder.setStoreClassName(ClassNameUtil.fullyQualified2Internal(className));
   }
   
   public void setFieldFilter(final FieldFilter value) {
@@ -459,7 +471,7 @@ public final class Instrument extends Task {
   /**
    * Set the path of the field identifiers database file to create.
    */
-  public void setFieldsfile(final File fileName) {
+  public void setFieldsFile(final File fileName) {
     fieldsFileName = fileName;
   }
   
@@ -467,31 +479,12 @@ public final class Instrument extends Task {
    * Set the path of the call site identifiers database file to create.
    * @param fileName
    */
-  public void setSitesfile(final File fileName) {
+  public void setSitesFile(final File fileName) {
     sitesFileName = fileName;
-  }
-  
-  /**
-   * Set the boot classpath used by the application being instrumented.
-   * May also be set using a nested element, in which case the results are
-   * merged.
-   * 
-   * @see #createBootclasspath()
-   */
-  public void setBootclasspath(final Path path) {
-    if (bootclasspath == null) {
-      bootclasspath = path;
-    } else {
-      bootclasspath.append(path);
-    }
   }
 
   /**
    * Set the boot classpath used by the application being instrumented.
-   * May also be set using an attribute, in which case the results are
-   * merged.
-   * 
-   * @see #setBootclasspath(Path)
    */
   public Path createBootclasspath() {
     if (bootclasspath == null) {
@@ -502,23 +495,8 @@ public final class Instrument extends Task {
 
   /**
    * Set the extension directories used by the instrumented application.
-   * May also be set using a nested element, in which case the results are
-   * merged.
    */
-  public void setExtdirs(final Path path) {
-    if (extdirs == null) {
-      extdirs = path;
-    } else {
-      extdirs.append(path);
-    }
-  }
-
-  /**
-   * Set the extension directories used by the instrumented application.
-   * May also be set using an attribute, in which case the results are
-   * merged.
-   */
-  public Path createExtdirs() {
+  public Path createExtDirs() {
     if (extdirs == null) {
       extdirs = new Path(getProject());
     }
@@ -527,27 +505,22 @@ public final class Instrument extends Task {
 
   /**
    * Set the libraries used by the instrumented application.
-   * May also be set using a nested element, in which case the results are
-   * merged.
-   */
-  public void setLibraries(final Path path) {
-    if (libraries == null) {
-      libraries = path;
-    } else {
-      libraries.append(path);
-    }
-  }
-
-  /**
-   * Set the libraries used by the instrumented application.
-   * May also be set using an attribute, in which case the results are
-   * merged.
    */
   public Path createLibraries() {
     if (libraries == null) {
       libraries = new Path(getProject());
     }
     return libraries.createPath();
+  }
+
+  /**
+   * Set the method files list.
+   */
+  public Path createMethodFiles() {
+    if (methodFiles == null) {
+      methodFiles = new Path(getProject());
+    }
+    return methodFiles.createPath();
   }
   
   /**
@@ -663,27 +636,52 @@ public final class Instrument extends Task {
   }
   
   /**
-   * Add a new user declared file that names additional methods that 
-   * indirectly access shared state.
-   */
-  public void addConfiguredMethodFile(final MethodFile mf) {
-    final File file = mf.getFile();
-    if (file == null) {
-      throw new BuildException("No file specified");
-    }
-    configBuilder.addAdditionalMethods(file);
-  }
-  
-  /**
    * Add a package to the list of packages used for field instrumentation
    * filtering.
    */
   public void addConfiguredFilter(final FilterPackage fp) {
     final String pkg = fp.getPackage();
-    if (pkg == null) {
-      throw new BuildException("No package specified");
+    final String pkgs = fp.getPackages();
+    if (pkg == null && pkgs == null) {
+      throw new BuildException("No packages specified: use either the package or packages attribute");
     }
-    configBuilder.addToFilterPackages(pkg);
+    if (pkg != null && pkgs != null) {
+      throw new BuildException("Cannot use both the package and packages attributes");
+    }
+    
+    if (pkg != null) {
+      configBuilder.addToFilterPackages(ClassNameUtil.fullyQualified2Internal(pkg));
+    } else {
+      final StringTokenizer tokens = new StringTokenizer(pkgs, ", ");
+      while (tokens.hasMoreTokens()) {
+        final String p = tokens.nextToken();
+        configBuilder.addToFilterPackages(ClassNameUtil.fullyQualified2Internal(p));
+      }
+    }
+  }
+  
+  /**
+   * Add classes to the list of classes that should not be instrumented.
+   */
+  public void addConfiguredBlacklist(final Blacklist blacklist) {
+    final String clazz = blacklist.getClazz();
+    final String classes = blacklist.getClasses();
+    if (clazz == null && classes == null) {
+      throw new BuildException("No classes specified: use either the class or classes attribute");
+    }
+    if (clazz != null && classes != null) {
+      throw new BuildException("Cannot use both the class and classes attributes");
+    }
+    
+    if (clazz != null) {
+      configBuilder.addToBlacklist(ClassNameUtil.fullyQualified2Internal(clazz));
+    } else {
+      final StringTokenizer tokens = new StringTokenizer(classes, ", ");
+      while (tokens.hasMoreTokens()) {
+        final String c= tokens.nextToken();
+        configBuilder.addToBlacklist(ClassNameUtil.fullyQualified2Internal(c));
+      }
+    }
   }
   
   
@@ -732,6 +730,29 @@ public final class Instrument extends Task {
     
     if (libraries == null) {
       libraries = new Path(getProject());
+    } else {
+      // check that all the entries exist
+      for (final String p : libraries.list()) {
+        final File f = new File(p);
+        if (!f.exists()) {
+          throw new BuildException("Library entry " + p + " does not exist");
+        }
+      }
+    }
+    
+    if (methodFiles == null) {
+      methodFiles = new Path(getProject());
+    } else {
+      // check that all the entries exist and are files
+      for (final String p : methodFiles.list()) {
+        final File f = new File(p);
+        if (!f.exists()) {
+          throw new BuildException("Method file entry " + p + " does not exist");
+        }
+        if (f.isDirectory()) {
+          throw new BuildException("Method file entry " + p + " is not a file");
+        }
+      }
     }
   }
   
@@ -758,6 +779,16 @@ public final class Instrument extends Task {
         log(INDENT + p, Project.MSG_VERBOSE);
       }
   		
+      log("methods files is ", Project.MSG_VERBOSE);
+      for (final String p : methodFiles.list()) {
+        log(INDENT + p, Project.MSG_VERBOSE);
+      }
+      
+      // Add the method files to the configuration
+      for (final String p : methodFiles.list()) {
+        configBuilder.addAdditionalMethods(new File(p));
+      }
+      
   		final Configuration config = configBuilder.getConfiguration();
   		final AntLogMessenger messenger = new AntLogMessenger();
   		final RewriteManager manager = new AntRewriteManager(

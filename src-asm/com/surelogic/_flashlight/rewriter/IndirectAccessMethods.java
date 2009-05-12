@@ -117,7 +117,7 @@ final class IndirectAccessMethods {
   private void addFromClasses(final Classes classes) {
     // Process the XML
     for (final ClassRecord cr : classes.getClasses()) {
-      final String internalName = ByteCodeUtils.fullyQualified2Internal(cr.getName());
+      final String internalName = ClassNameUtil.fullyQualified2Internal(cr.getName());
       for (final MethodRecord mr : cr.getMethods()) {
         final boolean isStatic = mr.getIsStatic();
         final Method method = Method.getMethod(mr.getSignature());

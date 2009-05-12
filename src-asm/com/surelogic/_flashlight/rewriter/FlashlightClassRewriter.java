@@ -190,7 +190,7 @@ final class FlashlightClassRewriter extends ClassAdapter {
       final String[] interfaces) {
     isInterface = (access & Opcodes.ACC_INTERFACE) != 0;
     classNameInternal = name;
-    classNameFullyQualified = ByteCodeUtils.internal2FullyQualified(name);
+    classNameFullyQualified = ClassNameUtil.internal2FullyQualified(name);
     superClassInternal = superName;
     
     /* We have to modify root classes to insert object id information. We only

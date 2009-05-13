@@ -40,6 +40,7 @@ import org.eclipse.swt.widgets.*;
 import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.PlatformUI;
 
+import com.surelogic._flashlight.rewriter.ClassNameUtil;
 import com.surelogic.common.eclipse.SLImages;
 import com.surelogic.common.eclipse.dialogs.TypeSelectionDialog;
 import com.surelogic.common.i18n.I18N;
@@ -182,8 +183,7 @@ public final class FlashlightInstrumentationTab extends
       if (types.length != 0) {
         for (final Object o : types) {
           final IType type = (IType) o;
-          final String internalTypeName =
-            type.getFullyQualifiedName('$').replace('.', '/');
+          final String internalTypeName = type.getFullyQualifiedName('$');
           blacklist.add(internalTypeName);
           blacklistViewer.add(internalTypeName);
         }
@@ -367,7 +367,11 @@ public final class FlashlightInstrumentationTab extends
       // CommonTab ignores this; so do we		  
 		}
 		
-		blacklist = new ArrayList(classes);
+		blacklist = new ArrayList<String>(classes.size());
+		for (final Object internalClassName : classes) {
+		  blacklist.add(
+		      ClassNameUtil.internal2FullyQualified((String) internalClassName));
+		}
 		blacklistViewer.setInput(blacklist);
 		
 		// Get the current project
@@ -403,7 +407,12 @@ public final class FlashlightInstrumentationTab extends
 				PreferenceConstants.P_BOOTPATH_ENTRIES_TO_NOT_INSTRUMENT,
 				LaunchUtils.convertToLocations(boot));
 		
-		config.setAttribute(PreferenceConstants.P_CLASS_BLACKLIST, blacklist);
+    final java.util.List blacklistInternalNames = new ArrayList(blacklist.size());
+    for (final String fqClassName : blacklist) {
+      blacklistInternalNames.add(
+          ClassNameUtil.fullyQualified2Internal(fqClassName));
+    }
+		config.setAttribute(PreferenceConstants.P_CLASS_BLACKLIST, blacklistInternalNames);
 	}
 
 	/**

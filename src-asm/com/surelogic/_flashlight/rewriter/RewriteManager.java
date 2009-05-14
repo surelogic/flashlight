@@ -272,12 +272,8 @@ public abstract class RewriteManager {
    * database.
    */
   private final class Scanner {
-    private final PrintWriter fieldOutput;
-    
-    
-    
-    public Scanner(final PrintWriter fo) {
-      fieldOutput = fo;
+    public Scanner() {
+      super();
     }
     
     
@@ -404,7 +400,7 @@ public abstract class RewriteManager {
       try {
         final ClassReader input = new ClassReader(inClassfile);
         final FieldCataloger cataloger =
-          new FieldCataloger(willBeInstrumented, fieldOutput, classModel);
+          new FieldCataloger(willBeInstrumented, classModel);
         input.accept(cataloger, ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES
             | ClassReader.SKIP_DEBUG);
       } finally {
@@ -1113,55 +1109,60 @@ public abstract class RewriteManager {
    * Execute the rewrite.
    */
   public final void execute() {
+    /* First pass: Scan all the classfiles to build the class
+     * and field model.  Record the field identifiers in the fields
+     * file.
+     */
+    final Scanner scanner = new Scanner();
+    for (final ScannableEntry entry : otherClasspathEntries) {
+      scan(entry, scanner);
+    }
+    for (final ScannableEntry entry : entriesToInstrument) {
+      scan(entry, scanner);
+    }
+      
+    /* Finish initializing interesting methods using the class model */
+    accessMethods.initClazz(classModel);
+    
+    /* Second pass: Instrument the classfiles */
+    PrintWriter sitesOut = null;
+    try {
+      sitesFile.getParentFile().mkdirs();
+      sitesOut = new PrintWriter(sitesFile);
+      final SiteIdFactory callSiteIdFactory = new SiteIdFactory(sitesOut);
+      final Instrumenter instrumenter = new Instrumenter(callSiteIdFactory);
+      
+      for (final InstrumentableEntry entry : entriesToInstrument) {
+        final String srcPath = entry.src.getAbsolutePath();
+        final String destPath = entry.dest.getAbsolutePath();
+        messenger.info("Instrumenting classfiles in " + srcPath + " to " + destPath);
+        messenger.increaseNesting();
+        preInstrument(srcPath, destPath);
+        try {
+          entry.instrument(instrumenter);
+        } catch (final IOException e) {
+          exceptionInstrument(srcPath, destPath, e);
+        } finally {
+          messenger.decreaseNesting();
+          postInstrument(srcPath, destPath);
+        }
+      }
+    } catch (final FileNotFoundException e) {
+      exceptionCreatingSitesFile(sitesFile, e);
+    } finally {
+      if (sitesOut != null) {
+        sitesOut.close();
+      }
+    }
+      
+    /* Output the fields database: Done last, because instrumentation marks
+     * the fields that are worth recording.
+     */
     PrintWriter fieldsOut = null;
     try {
-      /* First pass: Scan all the classfiles to build the class
-       * and field model.  Record the field identifiers in the fields
-       * file.
-       */
       fieldsFile.getParentFile().mkdirs();
       fieldsOut = new PrintWriter(fieldsFile);
-      final Scanner scanner = new Scanner(fieldsOut);
-      for (final ScannableEntry entry : otherClasspathEntries) {
-        scan(entry, scanner);
-      }
-      for (final ScannableEntry entry : entriesToInstrument) {
-        scan(entry, scanner);
-      }
-      
-      /* Finish initializing interesting methods using the class model */
-      accessMethods.initClazz(classModel);
-      
-      /* Second pass: Instrument the classfiles */
-      PrintWriter sitesOut = null;
-      try {
-        sitesFile.getParentFile().mkdirs();
-        sitesOut = new PrintWriter(sitesFile);
-        final SiteIdFactory callSiteIdFactory = new SiteIdFactory(sitesOut);
-        final Instrumenter instrumenter = new Instrumenter(callSiteIdFactory);
-        
-        for (final InstrumentableEntry entry : entriesToInstrument) {
-          final String srcPath = entry.src.getAbsolutePath();
-          final String destPath = entry.dest.getAbsolutePath();
-          messenger.info("Instrumenting classfiles in " + srcPath + " to " + destPath);
-          messenger.increaseNesting();
-          preInstrument(srcPath, destPath);
-          try {
-            entry.instrument(instrumenter);
-          } catch (final IOException e) {
-            exceptionInstrument(srcPath, destPath, e);
-          } finally {
-            messenger.decreaseNesting();
-            postInstrument(srcPath, destPath);
-          }
-        }
-      } catch (final FileNotFoundException e) {
-        exceptionCreatingSitesFile(sitesFile, e);
-      } finally {
-        if (sitesOut != null) {
-          sitesOut.close();
-        }
-      }
+      classModel.writeReferencedFields(fieldsOut);
     } catch(final FileNotFoundException e) {
       exceptionCreatingFieldsFile(fieldsFile, e);
     } finally {

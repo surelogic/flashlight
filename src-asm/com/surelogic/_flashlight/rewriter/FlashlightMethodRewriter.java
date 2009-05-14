@@ -975,6 +975,9 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
         
     final Field field = getField(owner, name);
     if (field != null && instrumentField(field)) {
+      // Mark the field as referenced
+      field.setReferenced();
+      
       /* We need to manipulate the stack to make a copy of the object being
        * accessed so that we can have it for the call to the Store.
        * How we do this depends on whether the top value on the stack is a
@@ -1017,7 +1020,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
       mv.visitInsn(Opcodes.SWAP);
       // Stack is "..., false, objectref"
       
-      finishFieldAccess(owner, field.id, FlashlightNames.INSTANCE_FIELD_ACCESS);
+      finishFieldAccess(owner, field.id, field.clazz.isInstrumented() ? null : owner, FlashlightNames.INSTANCE_FIELD_ACCESS);
     } else {
       // Execute the original PUTFIELD instruction
       mv.visitFieldInsn(Opcodes.PUTFIELD, owner, name, desc);
@@ -1041,6 +1044,9 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
       final String owner, final String name, final String desc) {
     final Field field = getField(owner, name);
     if (field != null && instrumentField(field)) {
+      // Mark the field as referenced
+      field.setReferenced();
+      
       // Stack is "..., objectref"
       
       /* We need to manipulate the stack to make a copy of the object being
@@ -1074,7 +1080,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
       mv.visitInsn(Opcodes.SWAP);
       // Stack is "..., value, true, objectref"
       
-      finishFieldAccess(owner, field.id, FlashlightNames.INSTANCE_FIELD_ACCESS);
+      finishFieldAccess(owner, field.id, field.clazz.isInstrumented() ? null : owner, FlashlightNames.INSTANCE_FIELD_ACCESS);
     } else {
       // Execute the original GETFIELD instruction
       mv.visitFieldInsn(Opcodes.GETFIELD, owner, name, desc);
@@ -1098,6 +1104,9 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
       final String owner, final String name, final String desc) {
     final Field field = getField(owner, name);
     if (field != null && instrumentField(field)) {
+      // Mark the field as referenced
+      field.setReferenced();
+      
       // Stack is "..., value"
       
       // Execute the original PUTSTATIC instruction
@@ -1110,7 +1119,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
       ByteCodeUtils.pushBooleanConstant(mv, false);
       // Stack is "..., false"
       
-      finishFieldAccess(owner, field.id, FlashlightNames.STATIC_FIELD_ACCESS);
+      finishFieldAccess(owner, field.id, field.clazz.isInstrumented() ? null : owner, FlashlightNames.STATIC_FIELD_ACCESS);
     } else {
       // Execute the original PUTSTATIC instruction
       mv.visitFieldInsn(Opcodes.PUTSTATIC, owner, name, desc);
@@ -1133,6 +1142,9 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     // Stack is "..."
     final Field field = getField(owner, name);
     if (field != null && instrumentField(field)) {
+      // Mark the field as referenced
+      field.setReferenced();
+      
       // Execute the original GETFIELD instruction
       mv.visitFieldInsn(Opcodes.GETSTATIC, owner, name, desc);
       // Stack is "..., value"   [Value could be cat1 or cat2!]
@@ -1143,7 +1155,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
       ByteCodeUtils.pushBooleanConstant(mv, true);
       // Stack is "..., value, true"
       
-      finishFieldAccess(owner, field.id, FlashlightNames.STATIC_FIELD_ACCESS);
+      finishFieldAccess(owner, field.id, field.clazz.isInstrumented() ? null : owner, FlashlightNames.STATIC_FIELD_ACCESS);
     } else {
       // Execute the original GETFIELD instruction
       mv.visitFieldInsn(Opcodes.GETSTATIC, owner, name, desc);
@@ -1207,7 +1219,8 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
    * isRead".
    */
   private void finishFieldAccess(
-      final String owner, final Integer fieldID, final Method storeMethod) {
+      final String owner, final Integer fieldID,
+      final String declaringClassInternalName, final Method storeMethod) {
     // Stack is "..., isRead, [receiver]"
     
     /* Push the id of the field */
@@ -1218,6 +1231,13 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     pushSiteIdentifier();
     // Stack is "..., isRead, [receiver], field_id, siteId"
 
+    /* Push the name of the declaring class or null */
+    if (declaringClassInternalName == null) {
+      mv.visitInsn(Opcodes.ACONST_NULL);
+    } else {
+      ByteCodeUtils.pushClass(mv, declaringClassInternalName);
+    }
+    
     /* We can now call the store method */
     ByteCodeUtils.callStoreMethod(mv, config, storeMethod);
     // Stack is "..."

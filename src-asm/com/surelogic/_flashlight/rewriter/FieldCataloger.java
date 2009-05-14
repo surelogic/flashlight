@@ -1,15 +1,11 @@
 package com.surelogic._flashlight.rewriter;
 
-import java.io.PrintWriter;
-
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Attribute;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
-
-import com.surelogic._flashlight.rewriter.ClassAndFieldModel.Field;
 
 
 /**
@@ -40,11 +36,6 @@ final class FieldCataloger implements ClassVisitor {
   private final boolean isInstrumented;
   
   /**
-   * The PrintWriter to which to write the field catalog.
-   */
-  private final PrintWriter out;
-  
-  /**
    * The class and field model we are building.
    */
   private final ClassAndFieldModel classModel;
@@ -55,25 +46,17 @@ final class FieldCataloger implements ClassVisitor {
    */
   private ClassAndFieldModel.Clazz clazz = null;
   
-  /**
-   * The fully qualified name of the class. Set by the
-   * {@link #visit(int, int, String, String, String, String[])} method.
-   */
-  private String classNameFullyQualified = null;
   
   
-  
-  public FieldCataloger(final boolean isInstrumented,
-      final PrintWriter pw, final ClassAndFieldModel model) {
+  public FieldCataloger(
+      final boolean isInstrumented, final ClassAndFieldModel model) {
     this.isInstrumented = isInstrumented;
-    out = pw;
     classModel = model;
   }
 
   public void visit(final int version, final int access, final String name,
       final String signature, final String superName,
       final String[] interfaces) {
-    classNameFullyQualified = ClassNameUtil.internal2FullyQualified(name);
     final boolean isInterface = (access & Opcodes.ACC_INTERFACE) != 0;
     clazz = classModel.addClass(name,
         isInterface, isInstrumented, superName, interfaces);
@@ -81,21 +64,7 @@ final class FieldCataloger implements ClassVisitor {
 
   public FieldVisitor visitField(final int access, final String name,
       final String desc, final String signature, final Object value) {
-    final Field f = clazz.addField(name);
-    final boolean isFinal = (access & Opcodes.ACC_FINAL) != 0;
-    final boolean isVolatile = (access & Opcodes.ACC_VOLATILE) != 0;
-    final boolean isStatic = (access & Opcodes.ACC_STATIC) != 0;
-    out.print(f.id);
-    out.print(' ');
-    out.print(classNameFullyQualified);
-    out.print(' ');
-    out.print(name);
-    out.print(' ');
-    out.print(isStatic);
-    out.print(' ');
-    out.print(isFinal);
-    out.print(' ');
-    out.println(isVolatile);
+    clazz.addField(name, access);
     return null;
   }
 

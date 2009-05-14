@@ -21,12 +21,12 @@ public class EmptyStore {
 
   public static void instanceFieldAccess(
       final boolean read, final Object receiver, final int fieldID,
-      final long siteId) {
+      final long siteId, final Class<?> declaringClass) {
     // do nothing
   }
 
   public static void staticFieldAccess(
-      final boolean read, final int fieldID, final long siteId) {
+      final boolean read, final int fieldID, final long siteId, final Class<?> declaringClass) {
     // do nothing
   }
 

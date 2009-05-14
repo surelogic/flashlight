@@ -41,10 +41,10 @@ public final class FlashlightNames {
     Method.getMethod("void constructorExecution(boolean, Object, long)");
   
   public static final Method INSTANCE_FIELD_ACCESS =
-    Method.getMethod("void instanceFieldAccess(boolean, Object, int, long)");
+    Method.getMethod("void instanceFieldAccess(boolean, Object, int, long, java.lang.Class)");
   
   public static final Method STATIC_FIELD_ACCESS =
-    Method.getMethod("void staticFieldAccess(boolean, int, long)");
+    Method.getMethod("void staticFieldAccess(boolean, int, long, java.lang.Class)");
   
   public static final Method INDIRECT_ACCESS =
     Method.getMethod("void indirectAccess(Object, long)");

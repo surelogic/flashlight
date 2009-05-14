@@ -1,8 +1,15 @@
 package com.surelogic._flashlight.rewriter;
 
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+
+import org.objectweb.asm.Opcodes;
 
 
 /**
@@ -73,14 +80,48 @@ final class ClassAndFieldModel {
     /** The class that declares the field. */
     public final Clazz clazz;
     /** The name of the field. */
-    public final String name;    
+    public final String name;
+    /** The access modifiers of the field. */
+    public final int access;
     /** The globally unique id of the field. */
     public final int id;
     
-    public Field(final Clazz c, final String n, final int i) {
+    /** Whether the field is actually referenced by instrumented code. */
+    private boolean isReferenced;
+    
+    
+    
+    public Field(final Clazz c, final String n, final int a, final int i) {
       clazz = c;
       name = n;
+      access = a;
       id = i;
+      isReferenced = false;
+    }
+    
+    public boolean isReferenced() {
+      return isReferenced;
+    }
+    
+    public void setReferenced() {
+      isReferenced = true;
+    }
+    
+    public void writeFieldInfo(final PrintWriter out) {
+      final boolean isFinal = (access & Opcodes.ACC_FINAL) != 0;
+      final boolean isVolatile = (access & Opcodes.ACC_VOLATILE) != 0;
+      final boolean isStatic = (access & Opcodes.ACC_STATIC) != 0;
+      out.print(id);
+      out.print(' ');
+      out.print(ClassNameUtil.internal2FullyQualified(clazz.name));
+      out.print(' ');
+      out.print(name);
+      out.print(' ');
+      out.print(isStatic);
+      out.print(' ');
+      out.print(isFinal);
+      out.print(' ');
+      out.println(isVolatile);
     }
   }
   
@@ -143,6 +184,10 @@ final class ClassAndFieldModel {
       return ClassAndFieldModel.getPackage(name);
     }
     
+    public boolean isInstrumented() {
+      return isInstrumented;
+    }
+    
     public boolean isInterface() {
       return isInterface;
     }
@@ -155,9 +200,9 @@ final class ClassAndFieldModel {
       return interfaces;
     }
     
-    public Field addField(final String fieldName) {
+    public Field addField(final String fieldName, final int access) {
       final int fid = nextID++;
-      final Field f = new Field(this, fieldName, fid);
+      final Field f = new Field(this, fieldName, access, fid);
       fields.put(fieldName, f);
       return f;
     }
@@ -207,6 +252,23 @@ final class ClassAndFieldModel {
         }
       }
       return false;
+    }
+    
+//    public void writeReferencedFields(final PrintWriter out) {
+//      final String fqName = ClassNameUtil.internal2FullyQualified(name);
+//      for (final Field f : fields.values()) {
+//        if (f.isReferenced()) {
+//          f.writeFieldInfo(out, fqName);
+//        }
+//      }
+//    }
+    
+    public void collectReferencedFields(final List<Field> referencedFields) {
+      for (final Field f : fields.values()) {
+        if (f.isReferenced()) {
+          referencedFields.add(f);
+        }
+      }
     }
   }
 
@@ -328,6 +390,29 @@ final class ClassAndFieldModel {
       
       // Fail!
       throw new FieldNotFoundException(className, fieldName);
+    }
+  }
+  
+  /**
+   * Write the field information for all the fields that are referenced 
+   * by instrumented classes.
+   */
+  public void writeReferencedFields(final PrintWriter out) {
+    final List<Field> referencedFields = new ArrayList<Field>();
+    for (final Clazz c : classes.values()) {
+      c.collectReferencedFields(referencedFields);
+    }
+    
+    Collections.sort(referencedFields, new Comparator<Field>() {
+      public int compare(final Field f1, final Field f2) {
+        final int id1 = f1.id;
+        final int id2 = f2.id;
+        return (id1 < id2 ? -1 : (id1 == id2 ? 0 : 1));
+      }
+    });
+    
+    for (final Field f : referencedFields) {
+      f.writeFieldInfo(out);
     }
   }
 }

@@ -238,7 +238,33 @@ final class Depository extends Thread {
 			f = new File(name);
 			f = new File(f.getParentFile(), "sitesfile.txt");
 		}
-		return loadFileContents(f, new SitesReader()).getMap();
+		final SitesReader sitesReader = loadFileContents(f, new SitesReader());
+		final Map<String, List<ClassInfo>> classesMap = sitesReader.getMap();
+		final Map<String, List<FieldInfo>> fieldsMap = sitesReader.getFieldsMap();
+		
+		/* Create ClassInfo objects for the remaining site-less classes.  These
+		 * are classes that are not instrumented, but possibly referenced by
+		 * instrumented code.  (We know they might be used because the fields file
+		 * only contains fields that are actually used somewhere in instrumented
+		 * code.)
+		 */
+		for (final Map.Entry<String, List<FieldInfo>> entry : fieldsMap.entrySet()) {
+		  final String classname = entry.getKey();
+		  final List<FieldInfo> finfo = entry.getValue();
+      Store.log("Preserving information for class " + classname);
+
+      /* Copied from makeClassInfo() below */
+		  final FieldInfo[] fields = finfo == null ? noFields : finfo.toArray(noFields);
+		  final ClassInfo info = new ClassInfo("<unknown>", classname, noSites, fields);
+      List<ClassInfo> infos = classesMap.get(classname);
+      if (infos == null) {
+        classesMap.put(classname, info);
+      } else {
+        infos.add(info);
+      }
+		}
+
+    return classesMap.isEmpty() ? Collections.<String,List<ClassInfo>>emptyMap() : classesMap;
 	}
 	
 	private interface LineHandler {
@@ -305,8 +331,13 @@ final class Depository extends Thread {
 		
 		public Map<String, List<ClassInfo>> getMap() {
 			makeClassInfo();
-			return classes.isEmpty() ? Collections.<String,List<ClassInfo>>emptyMap() : classes;
-		}		
+			return classes;
+//			return classes.isEmpty() ? Collections.<String,List<ClassInfo>>emptyMap() : classes;
+		}
+		
+		public Map<String, List<FieldInfo>> getFieldsMap() {
+		  return fields.isEmpty() ? Collections.<String, List<FieldInfo>>emptyMap() : fields;
+		}
 	}
 	
 	private static <T extends LineHandler> T loadFileContents(File f, T handler) {

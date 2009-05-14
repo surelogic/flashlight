@@ -496,7 +496,7 @@ public final class Store {
    */
   public static void instanceFieldAccess(
       final boolean read, final Object receiver, final int fieldID,
-      final long siteId) {
+      final long siteId, final Class<?> declaringClass) {
 	  if (StoreDelegate.FL_OFF.get())
 		  return;
 	  if (!IdConstants.useFieldAccesses) {
@@ -539,6 +539,13 @@ public final class Store {
 					  */
 			  return;
 		  }
+		  /* if the field is not from an instrumented class then force creation
+		   * of the phantom class object.
+		   */
+		  if (declaringClass != null) {
+		    log("Generating phantom class for " + declaringClass.getCanonicalName());
+		    Phantom.ofClass(declaringClass);
+		  }
 		  if (read)
 			  e = new FieldReadInstance(receiver, fieldID, siteId, flState);
 		  else
@@ -564,7 +571,7 @@ public final class Store {
    *            the line number where the event occurred.
    */
   public static void staticFieldAccess(final boolean read, final int fieldID,
-		  final long siteId) {
+		  final long siteId, final Class<?> declaringClass) {
 	  if (StoreDelegate.FL_OFF.get())
 		  return;
 	  if (!IdConstants.useFieldAccesses) {
@@ -596,6 +603,10 @@ public final class Store {
 			  return;
 		  }
           */
+      if (declaringClass != null) {
+        log("Generating phantom class for " + declaringClass.getCanonicalName());
+        Phantom.ofClass(declaringClass);
+      }
 		  final Event e;
 		  if (read)
 			  e = new FieldReadStatic(fieldID, siteId, flState);

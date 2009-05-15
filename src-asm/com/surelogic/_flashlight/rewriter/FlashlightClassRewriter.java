@@ -230,9 +230,20 @@ final class FlashlightClassRewriter extends ClassAdapter {
     
     /* If the class extends from java.lang.Object, we change it to extend
      * com.surelogic._flashlight.rewriter.runtime.IdObject.
+     * 
+     * We also have to sanitize the access bits.  Some very old classfiles
+     * have the SUPER bit set together with the INTERFACE bit.  This is 
+     * illegal, but passes in old JVMs, and even under Java 6 in some 
+     * circumstances.  What we do know is that if the classfile version is
+     * java 5, and the SUPER and INTERFACE bits are both set, then the Java 6
+     * JVM rejects the classfile.  Because we make sure the classfile is at
+     * least java 5 version, we must fix the access bits as well.  Once again,
+     * we can thank the crazy classfiles in the dbBenchmark example for 
+     * uncovering this problem.
      */
+    final int newAccess = isInterface ? access & ~Opcodes.ACC_SUPER : access;
     cv.visit(promoteToJava5 ? Opcodes.V1_5 : version,
-        access, name, signature, newSuperName, newInterfaces);
+        newAccess, name, signature, newSuperName, newInterfaces);
   }
 
   @Override

@@ -1020,7 +1020,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
       mv.visitInsn(Opcodes.SWAP);
       // Stack is "..., false, objectref"
       
-      finishFieldAccess(owner, field.id, field.clazz.isInstrumented() ? null : owner, FlashlightNames.INSTANCE_FIELD_ACCESS);
+      finishFieldAccess(owner, field.id, field.clazz.isInstrumented() ? null : field.clazz.getName(), FlashlightNames.INSTANCE_FIELD_ACCESS);
     } else {
       // Execute the original PUTFIELD instruction
       mv.visitFieldInsn(Opcodes.PUTFIELD, owner, name, desc);
@@ -1080,7 +1080,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
       mv.visitInsn(Opcodes.SWAP);
       // Stack is "..., value, true, objectref"
       
-      finishFieldAccess(owner, field.id, field.clazz.isInstrumented() ? null : owner, FlashlightNames.INSTANCE_FIELD_ACCESS);
+      finishFieldAccess(owner, field.id, field.clazz.isInstrumented() ? null : field.clazz.getName(), FlashlightNames.INSTANCE_FIELD_ACCESS);
     } else {
       // Execute the original GETFIELD instruction
       mv.visitFieldInsn(Opcodes.GETFIELD, owner, name, desc);
@@ -1119,7 +1119,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
       ByteCodeUtils.pushBooleanConstant(mv, false);
       // Stack is "..., false"
       
-      finishFieldAccess(owner, field.id, field.clazz.isInstrumented() ? null : owner, FlashlightNames.STATIC_FIELD_ACCESS);
+      finishFieldAccess(owner, field.id, field.clazz.isInstrumented() ? null : field.clazz.getName(), FlashlightNames.STATIC_FIELD_ACCESS);
     } else {
       // Execute the original PUTSTATIC instruction
       mv.visitFieldInsn(Opcodes.PUTSTATIC, owner, name, desc);
@@ -1155,7 +1155,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
       ByteCodeUtils.pushBooleanConstant(mv, true);
       // Stack is "..., value, true"
       
-      finishFieldAccess(owner, field.id, field.clazz.isInstrumented() ? null : owner, FlashlightNames.STATIC_FIELD_ACCESS);
+      finishFieldAccess(owner, field.id, field.clazz.isInstrumented() ? null : field.clazz.getName(), FlashlightNames.STATIC_FIELD_ACCESS);
     } else {
       // Execute the original GETFIELD instruction
       mv.visitFieldInsn(Opcodes.GETSTATIC, owner, name, desc);

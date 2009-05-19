@@ -9,7 +9,6 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.lang.reflect.Field;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -809,81 +808,6 @@ public final class Store {
 //    System.out.println("  siteId = " + siteId);
   }
   
-	/**
-	 * Records that a field access occurred within the instrumented program.
-	 * 
-	 * @param read
-	 *            {@code true} indicates a field <i>read</i>, {@code false}
-	 *            indicates a field <i>write</i>.
-	 * @param receiver
-	 *            the object instance the field is part of the state of, or
-	 *            {@code null} if the field is {@code static}.
-	 * @param field
-	 *            a field within the instrumented program.
-	 * @param withinClass
-	 *            the class where the event occurred, may be {@code null}.
-	 * @param line
-	 *            the line number where the event occurred.
-	 */
-  // XXX: Only used by old tests
-  @Deprecated
-	public static void fieldAccess(final boolean read, final Object receiver,
-			final Field field, ClassPhantomReference withinClass, final int line) {
-	  if (!IdConstants.useFieldAccesses) {
-		  return;
-	  }
-		if (f_flashlightIsNotInitialized)
-			return;
-		if (StoreDelegate.FL_OFF.get())
-			return;
-		final State flState = tl_withinStore.get();
-		if (flState.inside)
-			return;
-		flState.inside = true;
-		try {			
-			if (DEBUG) {
-				final String fmt = "Store.fieldAccess(%n\t\t%s%n\t\treceiver=%s%n\t\tfield=%s%n\t\tlocation=%s)";
-				log(String.format(fmt, read ? "read" : "write",
-						safeToString(receiver), field, SrcLoc.toString(withinClass, line)));
-			}
-			/*
-			 * Check that the parameters are valid, gather needed information,
-			 * and put an event in the raw queue.
-			 */
-			if (field == null) {
-				final String fmt = "field cannot be null...instrumentation bug detected by Store.fieldAccess(%s, receiver=%s, field=%s, location=%s)";
-				logAProblem(String.format(fmt, read ? "read" : "write",
-						safeToString(receiver), field, SrcLoc.toString(withinClass, line)));
-				return;
-			}
-			final ObservedField oField = ObservedField.getInstance(field.getDeclaringClass().getName(),
-					                                               field.getName(),
-					                                               flState);
-			final ObservedCallLocation loc = ObservedCallLocation.getInstance(withinClass, line, flState);
-			final Event e;
-			if (oField.isStatic()) {
-				if (read)
-					e = new FieldReadStatic(oField.getId(), loc.getSiteId(), flState);
-				else
-					e = new FieldWriteStatic(oField.getId(), loc.getSiteId(), flState);
-			} else {
-				if (receiver == null) {
-					final String fmt = "instance field %s access reported with a null receiver...instrumentation bug detected by Store.fieldAccess(%s, receiver=%s, field=%s, location=%s)";
-					logAProblem(String.format(fmt, oField, read ? "read"
-							: "write", safeToString(receiver), field, SrcLoc.toString(withinClass, line)));
-					return;
-				}
-				if (read)
-					e = new FieldReadInstance(receiver, oField.getId(), loc.getSiteId(), flState);
-				else
-					e = new FieldWriteInstance(receiver, oField.getId(), loc.getSiteId(), flState);
-			}
-			putInQueue(flState, e);
-		} finally {
-			flState.inside = false;
-		}
-	}
-
 	/**
 	 * Records that a constructor call occurred within the instrumented program.
 	 * 

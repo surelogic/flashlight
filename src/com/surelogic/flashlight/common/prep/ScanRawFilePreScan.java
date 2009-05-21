@@ -1,5 +1,9 @@
 package com.surelogic.flashlight.common.prep;
 
+import gnu.trove.TLongHashSet;
+import gnu.trove.TLongLongHashMap;
+import gnu.trove.TLongObjectHashMap;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
@@ -8,10 +12,7 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
 import com.surelogic._flashlight.common.AttributeType;
-import com.surelogic._flashlight.common.ILongSet;
 import com.surelogic._flashlight.common.IdConstants;
-import com.surelogic._flashlight.common.LongMap;
-import com.surelogic._flashlight.common.LongSet;
 import com.surelogic._flashlight.common.PreppedAttributes;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.logging.SLLogger;
@@ -48,7 +49,7 @@ public final class ScanRawFilePreScan extends AbstractDataScan {
 		return f_endTime;
 	}
 
-	private final LongSet f_referencedObjects = new LongSet();
+	private final TLongHashSet f_referencedObjects = new TLongHashSet();
 
 	private void newObject(final long id) {
 		// f_unreferencedObjects.add(id);
@@ -69,7 +70,7 @@ public final class ScanRawFilePreScan extends AbstractDataScan {
 		return f_referencedObjects.contains(id);
 	}
 
-	private final LongMap<Long> f_rwLocks = new LongMap<Long>();
+	private final TLongLongHashMap f_rwLocks = new TLongLongHashMap();
 
 	/**
 	 * Returns the lock id, given the locked object. These id's may be the same,
@@ -79,29 +80,29 @@ public final class ScanRawFilePreScan extends AbstractDataScan {
 	 * @return
 	 */
 	public long getLockFromObject(final long object) {
-		final Long lock = f_rwLocks.get(object);
-		return lock == null ? object : lock;
+		final long lock = f_rwLocks.get(object);
+		return lock == 0 ? object : lock;
 	}
 
 	/*
 	 * Collection of non-static fields accessed by multiple threads and the
 	 * objects that contain them, keyed by field
 	 */
-	private final LongMap<ILongSet> f_usedFields = new LongMap<ILongSet>();
+	private final TLongObjectHashMap<TLongHashSet> f_usedFields = new TLongObjectHashMap<TLongHashSet>();
 	/*
 	 * Collection of static fields accessed by multiple threads
 	 */
-	private final ILongSet f_usedStatics = new LongSet();
+	private final TLongHashSet f_usedStatics = new TLongHashSet();
 
-	private final LongMap<Long> f_currentStatics = new LongMap<Long>();
-	private final LongMap<LongMap<Long>> f_currentFields = new LongMap<LongMap<Long>>();
+	private final TLongLongHashMap f_currentStatics = new TLongLongHashMap();
+	private final TLongObjectHashMap<TLongLongHashMap> f_currentFields = new TLongObjectHashMap<TLongLongHashMap>();
 
 	/*
 	 * Static field accesses
 	 */
 	private void useField(final long field, final long thread) {
-		final Long _thread = f_currentStatics.get(field);
-		if (_thread == null) {
+		final long _thread = f_currentStatics.get(field);
+		if (_thread == 0) {
 			f_currentStatics.put(field, thread);
 		} else {
 			if (_thread != thread) {
@@ -115,21 +116,21 @@ public final class ScanRawFilePreScan extends AbstractDataScan {
 	 */
 	private void useField(final long field, final long thread,
 			final long receiver) {
-		final LongMap<Long> objectFields = f_currentFields.get(receiver);
+		final TLongLongHashMap objectFields = f_currentFields.get(receiver);
 		if (objectFields != null) {
-			final Long _thread = objectFields.get(field);
-			if (_thread == null) {
+			final long _thread = objectFields.get(field);
+			if (_thread == 0) {
 				objectFields.put(field, thread);
 			} else if (_thread != thread) {
-				ILongSet receivers = f_usedFields.get(field);
+				TLongHashSet receivers = f_usedFields.get(field);
 				if (receivers == null) {
-					receivers = new LongSet();
+					receivers = new TLongHashSet();
 					f_usedFields.put(field, receivers);
 				}
 				receivers.add(receiver);
 			}
 		} else {
-			final LongMap<Long> map = new LongMap<Long>();
+			final TLongLongHashMap map = new TLongLongHashMap();
 			map.put(field, thread);
 			f_currentFields.put(receiver, map);
 		}
@@ -248,7 +249,7 @@ public final class ScanRawFilePreScan extends AbstractDataScan {
 	 * @return
 	 */
 	public boolean isThreadedField(final long field, final long receiver) {
-		final ILongSet receivers = f_usedFields.get(field);
+		final TLongHashSet receivers = f_usedFields.get(field);
 		if (receivers != null) {
 			return receivers.contains(receiver);
 		}

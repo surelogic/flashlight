@@ -3,6 +3,7 @@ package com.surelogic.flashlight.common.prep;
 import gnu.trove.TLongHashSet;
 import gnu.trove.TLongLongHashMap;
 import gnu.trove.TLongObjectHashMap;
+import gnu.trove.TObjectProcedure;
 
 import java.util.Arrays;
 import java.util.List;
@@ -87,14 +88,21 @@ public final class ScanRawFilePreScan extends AbstractDataScan {
 	/*
 	 * Collection of non-static fields accessed by multiple threads and the
 	 * objects that contain them, keyed by field
+	 * 
+	 * Field -> Receivers
 	 */
 	private final TLongObjectHashMap<TLongHashSet> f_usedFields = new TLongObjectHashMap<TLongHashSet>();
 	/*
 	 * Collection of static fields accessed by multiple threads
 	 */
 	private final TLongHashSet f_usedStatics = new TLongHashSet();
-
+	/*
+	 * Field -> Thread
+	 */
 	private final TLongLongHashMap f_currentStatics = new TLongLongHashMap();
+	/*
+	 * Receiver -> Field -> Thread
+	 */
 	private final TLongObjectHashMap<TLongLongHashMap> f_currentFields = new TLongObjectHashMap<TLongLongHashMap>();
 
 	/*
@@ -167,7 +175,9 @@ public final class ScanRawFilePreScan extends AbstractDataScan {
 				throw new SAXException("canceled");
 			}
 		}
-
+		if (f_elementCount % 1000000 == 0) {
+			logState();
+		}
 		final PreppedAttributes attrs = preprocessAttributes(name, attributes);
 		if ("time".equals(name)) {
 			if (f_firstTimeEventFound) {
@@ -216,11 +226,54 @@ public final class ScanRawFilePreScan extends AbstractDataScan {
 		}
 	}
 
+	private void logState() {
+		SLLogger.getLoggerFor(ScanRawFilePreScan.class).info(
+				"f_referencedObjects: " + f_referencedObjects.size()
+						+ "\n\tf_rwLocks " + f_rwLocks.size()
+						+ "\n\tf_usedFields " + nestedSum1(f_usedFields)
+						+ "\n\tf_usedStatics " + f_usedStatics.size()
+						+ "\n\tf_currentStatics " + f_currentStatics.size()
+						+ "\n\tf_currentFields " + nestedSum(f_currentFields));
+	}
+
+	static class Sum1 implements TObjectProcedure<TLongHashSet> {
+		int sum;
+
+		public boolean execute(final TLongHashSet object) {
+			sum += object.size();
+			return true;
+		}
+
+	}
+
+	private String nestedSum1(final TLongObjectHashMap<TLongHashSet> fields) {
+		final Sum1 sum = new Sum1();
+		fields.forEachValue(sum);
+		return Integer.toString(sum.sum);
+	}
+
+	static class Sum implements TObjectProcedure<TLongLongHashMap> {
+		int sum;
+
+		public boolean execute(final TLongLongHashMap object) {
+			sum += object.size();
+			return true;
+		}
+
+	}
+
+	private String nestedSum(final TLongObjectHashMap<TLongLongHashMap> fields) {
+		final Sum sum = new Sum();
+		fields.forEachValue(sum);
+		return Integer.toString(sum.sum);
+	}
+
 	@Override
 	public void endDocument() throws SAXException {
 		if (f_endTime == -1) {
 			SLLogger.getLogger().log(Level.SEVERE, "Missing end time element");
 		}
+		logState();
 	}
 
 	@Override

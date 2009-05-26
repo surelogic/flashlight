@@ -28,7 +28,8 @@ import com.surelogic.common.eclipse.dialogs.ChangeDataDirectoryDialog;
 import com.surelogic.common.eclipse.jobs.ChangedDataDirectoryJob;
 import com.surelogic.common.eclipse.preferences.AbstractCommonPreferencePage;
 import com.surelogic.common.i18n.I18N;
-import com.surelogic.common.jobs.*;
+import com.surelogic.common.jobs.SLProgressMonitor;
+import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.common.serviceability.UsageMeter;
 import com.surelogic.flashlight.client.eclipse.FlashlightEclipseUtility;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
@@ -40,6 +41,7 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 	private IntegerFieldEditor f_maxRowsPerQuery;
 	private BooleanFieldEditor f_promptAboutLotsOfSavedQueries;
 	private Label f_dataDirectory;
+	private IntegerFieldEditor f_objectWindowSize;
 
 	public FlashlightPreferencePage() {
 		super("flashlight.", PreferenceConstants.prototype);
@@ -76,13 +78,14 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 				false));
 		change.addListener(SWT.Selection, new Listener() {
 			public void handleEvent(final Event event) {
-				final ChangedDataDirectoryJob after = new ChangedDataDirectoryJob("") {
-					public SLStatus run(SLProgressMonitor monitor) {
+				final ChangedDataDirectoryJob after = new ChangedDataDirectoryJob(
+						"") {
+					public SLStatus run(final SLProgressMonitor monitor) {
 						monitor.begin();
 						change.getDisplay().syncExec(new Runnable() {
 							public void run() {
 								updateDataDirectory(dataDir);
-							}							
+							}
 						});
 						return SLStatus.OK_STATUS;
 					}
@@ -129,6 +132,13 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 		qGroup.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 		qGroup.setText(I18N.msg("flashlight.preference.page.group.query"));
 
+		f_objectWindowSize = new IntegerFieldEditor(
+				PreferenceConstants.P_OBJECT_WINDOW_SIZE, I18N
+						.msg("flashlight.preference.page.objectWindowSize"),
+				qGroup);
+		f_objectWindowSize.setValidRange(10000, 1000000);
+		f_objectWindowSize.fillIntoGrid(qGroup, 2);
+		finishSetup(f_objectWindowSize);
 		f_maxRowsPerQuery = new IntegerFieldEditor(
 				PreferenceConstants.P_MAX_ROWS_PER_QUERY, I18N
 						.msg("flashlight.preference.page.maxRowsPerQuery"),
@@ -144,7 +154,7 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 				qGroup);
 		f_promptAboutLotsOfSavedQueries.fillIntoGrid(qGroup, 2);
 		finishSetup(f_promptAboutLotsOfSavedQueries);
-		
+
 		qGroup.setLayout(new GridLayout(2, false));
 
 		if (XUtil.useExperimental()) {
@@ -170,12 +180,12 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 		f_editors.add(editor);
 	}
 
-	private void updateDataDirectory(File loc) {
+	private void updateDataDirectory(final File loc) {
 		if (loc != null) {
 			PreferenceConstants.setFlashlightDataDirectoryAnchor(loc);
 		}
-		f_dataDirectory.setText(FlashlightEclipseUtility.getFlashlightDataDirectory()
-				.getAbsolutePath());
+		f_dataDirectory.setText(FlashlightEclipseUtility
+				.getFlashlightDataDirectory().getAbsolutePath());
 	}
 
 	@Override

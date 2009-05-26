@@ -14,24 +14,29 @@ public class PreferenceConstants implements IPreferenceConstants {
 
 	private static final String PREFIX = "com.surelogic.flashlight.";
 
-//	public static final String P_FILTER_PKG_PREFIX = PREFIX + "filter.";
-//
-//	public static final String P_USE_FILTERING = PREFIX + "use.filtering";
-//
-	public static final String P_CLASSPATH_ENTRIES_TO_NOT_INSTRUMENT = PREFIX + "classpathEntriesToNotInstrument";
+	// public static final String P_FILTER_PKG_PREFIX = PREFIX + "filter.";
+	//
+	// public static final String P_USE_FILTERING = PREFIX + "use.filtering";
+	//
+	public static final String P_CLASSPATH_ENTRIES_TO_NOT_INSTRUMENT = PREFIX
+			+ "classpathEntriesToNotInstrument";
 
-  public static final String P_BOOTPATH_ENTRIES_TO_NOT_INSTRUMENT = PREFIX + "bootpathEntriesToNotInstrument";
-  
-  public static final String P_FIELD_FILTER = PREFIX + "filter.fields";
-  
-  public static final String P_FIELD_FILTER_PACKAGES = PREFIX + "filter.fields.inPackages";
-  
-  public static final String P_CLASS_BLACKLIST = PREFIX + "classBlacklist";
+	public static final String P_BOOTPATH_ENTRIES_TO_NOT_INSTRUMENT = PREFIX
+			+ "bootpathEntriesToNotInstrument";
 
-	public static final String P_USE_DEFAULT_INDIRECT_ACCESS_METHODS = PREFIX + "useDefaultIndirectAccessMethods";
-	
-	public static final String P_ADDITIONAL_INDIRECT_ACCESS_METHODS = PREFIX + "additionalIndirectAccessMethods";
-	
+	public static final String P_FIELD_FILTER = PREFIX + "filter.fields";
+
+	public static final String P_FIELD_FILTER_PACKAGES = PREFIX
+			+ "filter.fields.inPackages";
+
+	public static final String P_CLASS_BLACKLIST = PREFIX + "classBlacklist";
+
+	public static final String P_USE_DEFAULT_INDIRECT_ACCESS_METHODS = PREFIX
+			+ "useDefaultIndirectAccessMethods";
+
+	public static final String P_ADDITIONAL_INDIRECT_ACCESS_METHODS = PREFIX
+			+ "additionalIndirectAccessMethods";
+
 	public static final String P_OUTPUT_TYPE = PREFIX + "output.type";
 
 	public static final String P_COMPRESS_OUTPUT = PREFIX + "compress.output";
@@ -54,12 +59,15 @@ public class PreferenceConstants implements IPreferenceConstants {
 	public static final String P_PROMPT_PERSPECTIVE_SWITCH = PREFIX
 			+ PROMPT_PERSPECTIVE_SWITCH;
 
+	public static final String P_OBJECT_WINDOW_SIZE = PREFIX
+			+ "object.window.size";
+
 	public boolean getPromptForPerspectiveSwitch() {
 		return Activator.getDefault().getPluginPreferences().getBoolean(
 				P_PROMPT_PERSPECTIVE_SWITCH);
 	}
 
-	public void setPromptForPerspectiveSwitch(boolean value) {
+	public void setPromptForPerspectiveSwitch(final boolean value) {
 		Activator.getDefault().getPluginPreferences().setValue(
 				P_PROMPT_PERSPECTIVE_SWITCH, value);
 	}
@@ -72,7 +80,7 @@ public class PreferenceConstants implements IPreferenceConstants {
 				P_AUTO_PERSPECTIVE_SWITCH);
 	}
 
-	public void setAutoPerspectiveSwitch(boolean value) {
+	public void setAutoPerspectiveSwitch(final boolean value) {
 		Activator.getDefault().getPluginPreferences().setValue(
 				P_AUTO_PERSPECTIVE_SWITCH, value);
 	}
@@ -93,42 +101,42 @@ public class PreferenceConstants implements IPreferenceConstants {
 				P_PROMPT_ABOUT_LOTS_OF_SAVED_QUERIES);
 	}
 
-	public static void setPromptAboutLotsOfSavedQueries(boolean value) {
+	public static void setPromptAboutLotsOfSavedQueries(final boolean value) {
 		Activator.getDefault().getPluginPreferences().setValue(
 				P_PROMPT_ABOUT_LOTS_OF_SAVED_QUERIES, value);
 	}
 
-	
-	public static final String P_DATA_DIRECTORY_ANCHOR = PREFIX + "data-directory-anchor";
-	
+	public static final String P_DATA_DIRECTORY_ANCHOR = PREFIX
+			+ "data-directory-anchor";
+
 	public static File getFlashlightDataDirectoryAnchor() {
 		if (Activator.getDefault() == null) {
 			throw new IllegalStateException("No Activator");
 		}
-		String path = Activator.getDefault().getPluginPreferences().getString(
-				P_DATA_DIRECTORY_ANCHOR);
+		final String path = Activator.getDefault().getPluginPreferences()
+				.getString(P_DATA_DIRECTORY_ANCHOR);
 		if (path.length() == 0 || path == null) {
 			return null;
 		}
 		return new File(path);
 	}
-	
-	public static void setFlashlightDataDirectoryAnchor(File dir) {
+
+	public static void setFlashlightDataDirectoryAnchor(final File dir) {
 		if (dir != null && dir.exists() && dir.isDirectory()) {
 			Activator.getDefault().getPluginPreferences().setValue(
 					P_DATA_DIRECTORY_ANCHOR, dir.getAbsolutePath());
 		} else {
-			throw new IllegalArgumentException("Bad directory: "+dir);
+			throw new IllegalArgumentException("Bad directory: " + dir);
 		}
 	}
-	
+
 	private PreferenceConstants() {
 		// Nothing to do
 	}
 
 	public static final PreferenceConstants prototype = new PreferenceConstants();
 
-	public String getPrefConstant(String suffix) {
+	public String getPrefConstant(final String suffix) {
 		return PREFIX + suffix;
 	}
 

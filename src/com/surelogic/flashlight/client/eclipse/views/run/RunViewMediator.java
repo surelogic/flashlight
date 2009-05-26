@@ -27,9 +27,11 @@ import com.surelogic.common.eclipse.jobs.EclipseJob;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jobs.AggregateSLJob;
 import com.surelogic.common.jobs.SLJob;
+import com.surelogic.flashlight.client.eclipse.Activator;
 import com.surelogic.flashlight.client.eclipse.FlashlightEclipseUtility;
 import com.surelogic.flashlight.client.eclipse.dialogs.DeleteRunDialog;
 import com.surelogic.flashlight.client.eclipse.dialogs.LogDialog;
+import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.QueryMenuView;
 import com.surelogic.flashlight.client.eclipse.views.source.HistoricalSourceView;
@@ -137,9 +139,10 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 		return results;
 	}
 
-	private void setSelectedRunDescription(RunDescription run) {
-		if (run == null)
+	private void setSelectedRunDescription(final RunDescription run) {
+		if (run == null) {
 			return;
+		}
 		final TableItem[] items = f_table.getItems();
 		for (int i = 0; i < items.length; i++) {
 			final RunDescription itemData = getData(items[i]);
@@ -172,10 +175,12 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 		public void run() {
 			final ArrayList<SLJob> jobs = new ArrayList<SLJob>();
 			final RunDescription[] selected = getSelectedRunDescriptions();
-			boolean hasPrep = false;
+			final boolean hasPrep = false;
 			for (final RunDescription description : selected) {
 				if (description != null) {
-					jobs.add(new PrepSLJob(description));
+					jobs.add(new PrepSLJob(description, Activator.getDefault()
+							.getPluginPreferences().getInt(
+									PreferenceConstants.P_OBJECT_WINDOW_SIZE)));
 				}
 			}
 			if (!jobs.isEmpty()) {
@@ -297,7 +302,8 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 						jobs.add(new UnPrepSLJob(prep));
 					}
 					if (deleteRaw) {
-						File dataDir = FlashlightEclipseUtility.getFlashlightDataDirectory();
+						final File dataDir = FlashlightEclipseUtility
+								.getFlashlightDataDirectory();
 						jobs.add(new DeleteRawFilesSLJob(dataDir, description));
 					}
 				}
@@ -409,14 +415,14 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 	}
 
 	@Override
-	public void notifySelectedResultChange(AdHocQueryResult result) {
+	public void notifySelectedResultChange(final AdHocQueryResult result) {
 		if (result != null) {
 			final String db = result.getQueryFullyBound().getVariableValues()
 					.get(AdHocManager.DATABASE);
 
 			final RunDescription selected = RunManager.getInstance()
 					.getSelectedRun();
-			for (RunDescription runDescription : RunManager.getInstance()
+			for (final RunDescription runDescription : RunManager.getInstance()
 					.getRunDescriptions()) {
 				if (runDescription.toIdentityString().equals(db)) {
 					if (!runDescription.equals(selected)) {

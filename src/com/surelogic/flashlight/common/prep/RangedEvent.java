@@ -8,21 +8,13 @@ import java.util.GregorianCalendar;
 
 import com.surelogic.common.SLUtility;
 
-public abstract class Event extends AbstractPrep {
+public abstract class RangedEvent implements IRangePrep {
 	protected final Calendar now = new GregorianCalendar();
-	private Timestamp f_start = null;
-
-	private long f_startNS;
-
-	protected final IntrinsicLockDurationRowInserter f_rowInserter;
-
-	Event() {
-		f_rowInserter = null;
-	}
-
-	Event(final IntrinsicLockDurationRowInserter i) {
-		f_rowInserter = i;
-	}
+	protected Timestamp f_start = null;
+	protected long f_begin = -1L;
+	protected long f_end = -1L;
+	protected long f_startNS;
+	protected ScanRawFileFieldsPreScan f_scanResults;
 
 	protected Timestamp getTimestamp(final long timeNS) {
 		if (f_start == null) {
@@ -32,12 +24,13 @@ public abstract class Event extends AbstractPrep {
 		return SLUtility.getWall(f_start, f_startNS, timeNS);
 	}
 
-	@Override
 	public void setup(final Connection c, final Timestamp start,
-			final long startNS, final ScanRawFilePreScan scanResults)
-			throws SQLException {
-		super.setup(c, start, startNS, scanResults);
+			final long startNS, final ScanRawFileFieldsPreScan scanResults,
+			final long begin, final long end) throws SQLException {
+		f_begin = begin;
+		f_end = end;
 		f_start = start;
 		f_startNS = startNS;
+		f_scanResults = scanResults;
 	}
 }

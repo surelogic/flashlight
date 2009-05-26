@@ -16,12 +16,12 @@ import java.util.logging.Level;
 import com.surelogic._flashlight.common.PreppedAttributes;
 import com.surelogic.common.logging.SLLogger;
 
-public abstract class ReferenceDefinition extends AbstractPrep {
+public abstract class ReferenceDefinition extends RangedEvent {
 
 	private static final String f_psQ = "INSERT INTO OBJECT (Id,Type,Threadname,PackageName,ClassName,Flag) VALUES (?, ?, ?, ?, ?, ?)";
 
 	private PreparedStatement f_ps;
-	private ScanRawFilePreScan preScan;
+
 	private int count;
 
 	public final void parse(final PreppedAttributes attributes)
@@ -54,7 +54,7 @@ public abstract class ReferenceDefinition extends AbstractPrep {
 	private void insert(final long id, final long type,
 			final String threadName, final String packageName,
 			final String className) throws SQLException {
-		if (!filterUnused() || preScan.couldBeReferencedObject(id)) {
+		if (!filterUnused() || f_scanResults.couldBeReferencedObject(id)) {
 			int idx = 1;
 			f_ps.setLong(idx++, id);
 			f_ps.setLong(idx++, type);
@@ -71,12 +71,10 @@ public abstract class ReferenceDefinition extends AbstractPrep {
 				f_ps.setNull(idx++, Types.VARCHAR);
 			}
 			f_ps.setString(idx++, getFlag());
-			if (doInsert) {
-				f_ps.addBatch();
-				if (++count == 10000) {
-					f_ps.executeBatch();
-					count = 0;
-				}
+			f_ps.addBatch();
+			if (++count == 10000) {
+				f_ps.executeBatch();
+				count = 0;
 			}
 		}
 	}
@@ -86,21 +84,23 @@ public abstract class ReferenceDefinition extends AbstractPrep {
 	protected abstract boolean filterUnused();
 
 	@Override
-	public final void setup(final Connection c, final Timestamp start,
-			final long startNS, final ScanRawFilePreScan scanResults)
-			throws SQLException {
-		super.setup(c, start, startNS, scanResults);
+	public void setup(final Connection c, final Timestamp start,
+			final long startNS, final ScanRawFileFieldsPreScan scanResults,
+			final long begin, final long end) throws SQLException {
+		super.setup(c, start, startNS, scanResults, begin, end);
 		f_ps = c.prepareStatement(f_psQ);
-		preScan = scanResults;
 	}
 
-	@Override
 	public void flush(final long endTime) throws SQLException {
 		if (count > 0) {
 			f_ps.executeBatch();
 		}
 		count = 0;
 		f_ps.close();
-		super.flush(endTime);
 	}
+
+	public void printStats() {
+
+	}
+
 }

@@ -8,6 +8,7 @@ import java.util.logging.Level;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
+import com.surelogic._flashlight.common.AttributeType;
 import com.surelogic._flashlight.common.PreppedAttributes;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.logging.SLLogger;
@@ -15,7 +16,7 @@ import com.surelogic.common.logging.SLLogger;
 public class ScanRawFileInfoPreScan extends AbstractDataScan {
 
 	private boolean f_firstTimeEventFound = false;
-
+	private long f_maxReceiverId;
 	private final TObjectLongHashMap<PrepEvent> f_elementCounts = new TObjectLongHashMap<PrepEvent>();
 	private long f_endTime = -1;
 
@@ -50,6 +51,17 @@ public class ScanRawFileInfoPreScan extends AbstractDataScan {
 	}
 
 	/**
+	 * Gets the number of XML elements of the given type found in the raw file.
+	 * 
+	 * @param e
+	 * @return
+	 */
+
+	public long getElementCount(final PrepEvent e) {
+		return f_elementCounts.get(e);
+	}
+
+	/**
 	 * Gets the <tt>nano-time</tt> value from the final <tt>time</tt> event at
 	 * the end of the raw data file.
 	 * 
@@ -58,6 +70,16 @@ public class ScanRawFileInfoPreScan extends AbstractDataScan {
 	 */
 	public long getEndNanoTime() {
 		return f_endTime;
+	}
+
+	/**
+	 * Gets the maximum object id reported by a thread, object, or class
+	 * definition.
+	 * 
+	 * @return
+	 */
+	public long getMaxReceiverId() {
+		return f_maxReceiverId;
 	}
 
 	int f_counter = 0;
@@ -84,12 +106,20 @@ public class ScanRawFileInfoPreScan extends AbstractDataScan {
 		final PrepEvent e = PrepEvent.getEvent(name);
 		f_elementCounts.increment(e);
 		final PreppedAttributes attrs = preprocessAttributes(name, attributes);
-		if ("time".equals(name)) {
+		switch (e) {
+		case TIME:
 			if (f_firstTimeEventFound) {
 				f_endTime = attrs.getEventTime();
 			} else {
 				f_firstTimeEventFound = true;
 			}
+			break;
+		case OBJECTDEFINITION:
+		case THREADDEFINITION:
+		case CLASSDEFINITION:
+			final long id = attrs.getLong(AttributeType.ID);
+			f_maxReceiverId = Math.max(f_maxReceiverId, id);
+			break;
 		}
 	}
 

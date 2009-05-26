@@ -1,6 +1,6 @@
 package com.surelogic.flashlight.common.prep;
 
-public final class FieldRead extends FieldAccess {
+public class StaticFieldRead extends StaticFieldAccess {
 
 	public String getXMLElementName() {
 		return "field-read";

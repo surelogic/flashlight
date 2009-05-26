@@ -30,7 +30,37 @@ import com.surelogic.flashlight.common.files.RawDataFilePrefix;
 import com.surelogic.flashlight.common.files.RawFileUtility;
 import com.surelogic.flashlight.common.model.RunDescription;
 import com.surelogic.flashlight.common.model.RunManager;
-import com.surelogic.flashlight.common.prep.*;
+import com.surelogic.flashlight.common.prep.AfterIntrinsicLockAcquisition;
+import com.surelogic.flashlight.common.prep.AfterIntrinsicLockRelease;
+import com.surelogic.flashlight.common.prep.AfterIntrinsicLockWait;
+import com.surelogic.flashlight.common.prep.AfterUtilConcurrentLockAcquisitionAttempt;
+import com.surelogic.flashlight.common.prep.AfterUtilConcurrentLockReleaseAttempt;
+import com.surelogic.flashlight.common.prep.BeforeIntrinsicLockAcquisition;
+import com.surelogic.flashlight.common.prep.BeforeIntrinsicLockWait;
+import com.surelogic.flashlight.common.prep.BeforeUtilConcurrentLockAquisitionAttempt;
+import com.surelogic.flashlight.common.prep.ClassDefinition;
+import com.surelogic.flashlight.common.prep.FieldDefinition;
+import com.surelogic.flashlight.common.prep.FieldRead;
+import com.surelogic.flashlight.common.prep.FieldWrite;
+import com.surelogic.flashlight.common.prep.IOneTimePrep;
+import com.surelogic.flashlight.common.prep.IPostPrep;
+import com.surelogic.flashlight.common.prep.IPrep;
+import com.surelogic.flashlight.common.prep.IRangePrep;
+import com.surelogic.flashlight.common.prep.IndirectAccess;
+import com.surelogic.flashlight.common.prep.IntrinsicLockDurationRowInserter;
+import com.surelogic.flashlight.common.prep.LockSetAnalysis;
+import com.surelogic.flashlight.common.prep.ObjectDefinition;
+import com.surelogic.flashlight.common.prep.ReadWriteLock;
+import com.surelogic.flashlight.common.prep.ScanRawFileFieldsPreScan;
+import com.surelogic.flashlight.common.prep.ScanRawFileInfoPreScan;
+import com.surelogic.flashlight.common.prep.ScanRawFilePreScan;
+import com.surelogic.flashlight.common.prep.ScanRawFilePrepScan;
+import com.surelogic.flashlight.common.prep.StaticCallLocation;
+import com.surelogic.flashlight.common.prep.StaticFieldRead;
+import com.surelogic.flashlight.common.prep.StaticFieldWrite;
+import com.surelogic.flashlight.common.prep.ThreadDefinition;
+import com.surelogic.flashlight.common.prep.Trace;
+import com.surelogic.flashlight.common.prep.TraceNode;
 
 public final class PrepSLJob extends AbstractSLJob {
 
@@ -43,20 +73,26 @@ public final class PrepSLJob extends AbstractSLJob {
 	private static final int EACH_POST_PREP = 50;
 	private static final int ADD_CONSTRAINT_WORK = 100;
 
-	private IPrep[] getParseHandlers(final IntrinsicLockDurationRowInserter i) {
-		return new IPrep[] { new Trace(), new AfterIntrinsicLockAcquisition(i),
+	private IOneTimePrep[] getOneTimeHandlers(
+			final IntrinsicLockDurationRowInserter i) {
+		return new IOneTimePrep[] { new Trace(),
+				new AfterIntrinsicLockAcquisition(i),
 				new AfterIntrinsicLockWait(i),
 				new AfterIntrinsicLockRelease(i),
 				new BeforeIntrinsicLockAcquisition(i),
 				new BeforeIntrinsicLockWait(i),
 				new BeforeUtilConcurrentLockAquisitionAttempt(i),
 				new AfterUtilConcurrentLockAcquisitionAttempt(i),
-				new AfterUtilConcurrentLockReleaseAttempt(i), new FieldRead(i),
-				new FieldWrite(i), new ReadWriteLock(i), new ClassDefinition(),
-				new FieldDefinition(), new ThreadDefinition(), new TraceNode(),
-				new StaticCallLocation(), new ObjectDefinition(),
-				new IndirectAccess(i),
-		};
+				new AfterUtilConcurrentLockReleaseAttempt(i),
+				new ReadWriteLock(i), new StaticFieldRead(),
+				new StaticFieldWrite(), new FieldDefinition(), new TraceNode(),
+				new StaticCallLocation(), new IndirectAccess(i) };
+	}
+
+	private IRangePrep[] getRangeHandlers() {
+		return new IRangePrep[] { new FieldRead(), new FieldWrite(),
+				new ObjectDefinition(), new ThreadDefinition(),
+				new ClassDefinition() };
 	}
 
 	private IPostPrep[] getPostPrep() {
@@ -65,11 +101,20 @@ public final class PrepSLJob extends AbstractSLJob {
 
 	private final File f_dataFile;
 	private final DBConnection f_database;
+	private final int f_windowSize;
 
-	public PrepSLJob(final RunDescription run) {
+	/**
+	 * Constructs a job instance that will prep the target run description.
+	 * 
+	 * @param run
+	 * @param windowSize
+	 *            the number of receivers to scan at one time.
+	 */
+	public PrepSLJob(final RunDescription run, final int windowSize) {
 		super("Preparing " + run.getName());
 		f_dataFile = run.getRawFileHandles().getDataFile();
 		f_database = run.getDB();
+		f_windowSize = windowSize;
 	}
 
 	/**
@@ -79,10 +124,12 @@ public final class PrepSLJob extends AbstractSLJob {
 	 * @param dataFile
 	 *            a raw data file, either <tt>.fl</tt> or <tt>.fl.gz</tt>.
 	 */
-	public PrepSLJob(final File dataFile, final DBConnection database) {
+	public PrepSLJob(final File dataFile, final DBConnection database,
+			final int windowSize) {
 		super("Preparing " + dataFile.getName());
 		f_dataFile = dataFile;
 		f_database = database;
+		f_windowSize = windowSize;
 	}
 
 	public SLStatus run(final SLProgressMonitor monitor) {
@@ -111,6 +158,23 @@ public final class PrepSLJob extends AbstractSLJob {
 					.getPrefixFor(f_dataFile);
 			final RunDescription runDescription = RawFileUtility
 					.getRunDescriptionFor(rawFilePrefix);
+
+			final SLProgressMonitor preScanInfoMonitor = new SubSLProgressMonitor(
+					monitor, "Collecting raw file info", PRE_SCAN_WORK);
+
+			final ScanRawFileInfoPreScan preScanInfo = new ScanRawFileInfoPreScan(
+					preScanInfoMonitor);
+			final SAXParser infoSaxParser = RawFileUtility
+					.getParser(f_dataFile);
+			final InputStream infoStream = RawFileUtility
+					.getInputStreamFor(f_dataFile);
+			try {
+				infoSaxParser.parse(infoStream, preScanInfo);
+				SLLogger.getLoggerFor(PrepSLJob.class).info(
+						preScanInfo.toString());
+			} finally {
+				infoStream.close();
+			}
 			final InputStream stream = RawFileUtility
 					.getInputStreamFor(f_dataFile);
 			try {
@@ -175,12 +239,12 @@ public final class PrepSLJob extends AbstractSLJob {
 							 */
 							final IntrinsicLockDurationRowInserter i = new IntrinsicLockDurationRowInserter(
 									c);
-							final IPrep[] f_parseElements = getParseHandlers(i);
+							final IOneTimePrep[] f_parseElements = getOneTimeHandlers(i);
 							final SLProgressMonitor setupMonitor = new SubSLProgressMonitor(
 									monitor, "Setting up event handlers",
 									SETUP_WORK);
 							setupMonitor.begin(f_parseElements.length);
-							for (final IPrep element : f_parseElements) {
+							for (final IOneTimePrep element : f_parseElements) {
 								element.setup(c, start, startNS, scanResults);
 								setupMonitor.worked(1);
 							}
@@ -223,7 +287,43 @@ public final class PrepSLJob extends AbstractSLJob {
 							if (monitor.isCanceled()) {
 								throw new CanceledException();
 							}
-
+							final SLProgressMonitor rprepMonitor = new SubSLProgressMonitor(
+									monitor, "Preparing the raw file",
+									PREP_WORK);
+							final int numWindows = (int) (preScanInfo
+									.getMaxReceiverId() / f_windowSize)
+									+ ((preScanInfo.getMaxReceiverId()
+											% f_windowSize > 0) ? 1 : 0);
+							final IRangePrep[] rpElements = getRangeHandlers();
+							for (int j = 0; j < numWindows; j++) {
+								final long begin = f_windowSize * j;
+								final long end = f_windowSize * (j + 1) - 1;
+								final ScanRawFileFieldsPreScan preScan = new ScanRawFileFieldsPreScan(
+										rprepMonitor, begin, end);
+								final InputStream infoStream = RawFileUtility
+										.getInputStreamFor(f_dataFile);
+								try {
+									saxParser.parse(infoStream, preScan);
+								} finally {
+									infoStream.close();
+								}
+								for (final IRangePrep prep : rpElements) {
+									prep.setup(c, start, startNS, preScan,
+											begin, end);
+								}
+								final InputStream rangeStream = RawFileUtility
+										.getInputStreamFor(f_dataFile);
+								try {
+									final ScanRawFilePrepScan rangeHandler = new ScanRawFilePrepScan(
+											c, rprepMonitor, rpElements);
+									saxParser.parse(rangeStream, rangeHandler);
+								} finally {
+									rangeStream.close();
+								}
+								for (final IPrep prep : rpElements) {
+									prep.flush(scanResults.getEndNanoTime());
+								}
+							}
 							if (SLLogger.getLogger().isLoggable(Level.FINE)) {
 								for (final IPrep element : f_parseElements) {
 									element.printStats();

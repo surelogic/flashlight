@@ -5,6 +5,7 @@ import java.sql.Connection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -54,16 +55,15 @@ public final class RunManager {
 		}
 	}
 
-	private final AtomicReference<File> f_dataDir =
-		new AtomicReference<File>();
-	
+	private final AtomicReference<File> f_dataDir = new AtomicReference<File>();
+
 	public void setDataDirectory(File dir) {
 		if (dir != null && dir.exists() && dir.isDirectory()) {
 			f_dataDir.set(dir);
 			refresh();
 		}
 	}
-	
+
 	/**
 	 * Holds a mapping from all known run descriptions (in files or in the
 	 * database) to prepared run descriptions. Not all run descriptions have an
@@ -82,6 +82,24 @@ public final class RunManager {
 	 */
 	public Set<RunDescription> getRunDescriptions() {
 		return new HashSet<RunDescription>(f_descToPrep.get().keySet());
+	}
+
+	/**
+	 * Gets the set of run descriptions known to this manager that have not been
+	 * prepped. This set can be empty.
+	 * 
+	 * @return the non-null set of run descriptions known to this manager that
+	 *         have not been prepped. This is a copy of the set maintained by
+	 *         this manager so it can be freely mutated by callers.
+	 */
+	public Set<RunDescription> getUnPreppedRunDescriptions() {
+		final Set<RunDescription> result = getRunDescriptions();
+		for (Iterator<RunDescription> i = result.iterator(); i.hasNext();) {
+			RunDescription runDescription = (RunDescription) i.next();
+			if (getPrepRunDescriptionFor(runDescription) != null)
+				i.remove();
+		}
+		return result;
 	}
 
 	/**
@@ -105,7 +123,7 @@ public final class RunManager {
 		final File dataDir = f_dataDir.get();
 		if (dataDir == null) {
 			return; // Nothing to do
-		}		
+		}
 		boolean isChanged = false; // assume nothing changed
 		final Map<RunDescription, PrepRunDescription> descToPrep = new HashMap<RunDescription, PrepRunDescription>();
 		final Set<RunDescription> rawDescriptions = RawFileUtility

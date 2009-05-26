@@ -27,7 +27,6 @@ import com.surelogic.common.eclipse.jobs.EclipseJob;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jobs.AggregateSLJob;
 import com.surelogic.common.jobs.SLJob;
-import com.surelogic.flashlight.client.eclipse.Activator;
 import com.surelogic.flashlight.client.eclipse.FlashlightEclipseUtility;
 import com.surelogic.flashlight.client.eclipse.dialogs.DeleteRunDialog;
 import com.surelogic.flashlight.client.eclipse.dialogs.LogDialog;
@@ -180,9 +179,8 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 			final boolean hasPrep = false;
 			for (final RunDescription description : selected) {
 				if (description != null) {
-					jobs.add(new PrepSLJob(description, Activator.getDefault()
-							.getPluginPreferences().getInt(
-									PreferenceConstants.P_OBJECT_WINDOW_SIZE)));
+					jobs.add(new PrepSLJob(description, PreferenceConstants
+							.getPrepObjectWindowSize()));
 				}
 			}
 			if (!jobs.isEmpty()) {

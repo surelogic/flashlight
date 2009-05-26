@@ -59,8 +59,13 @@ public class PreferenceConstants implements IPreferenceConstants {
 	public static final String P_PROMPT_PERSPECTIVE_SWITCH = PREFIX
 			+ PROMPT_PERSPECTIVE_SWITCH;
 
-	public static final String P_OBJECT_WINDOW_SIZE = PREFIX
+	public static final String P_PREP_OBJECT_WINDOW_SIZE = PREFIX
 			+ "object.window.size";
+
+	public static int getPrepObjectWindowSize() {
+		return Activator.getDefault().getPluginPreferences().getInt(
+				P_PREP_OBJECT_WINDOW_SIZE);
+	}
 
 	public boolean getPromptForPerspectiveSwitch() {
 		return Activator.getDefault().getPluginPreferences().getBoolean(

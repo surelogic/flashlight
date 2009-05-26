@@ -133,7 +133,7 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 		qGroup.setText(I18N.msg("flashlight.preference.page.group.query"));
 
 		f_objectWindowSize = new IntegerFieldEditor(
-				PreferenceConstants.P_OBJECT_WINDOW_SIZE, I18N
+				PreferenceConstants.P_PREP_OBJECT_WINDOW_SIZE, I18N
 						.msg("flashlight.preference.page.objectWindowSize"),
 				qGroup);
 		f_objectWindowSize.setValidRange(10000, 1000000);

@@ -38,6 +38,9 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 				FL_OUTPUT_TYPE_DEFAULT.isCompressed());
 		store.setDefault(
 				PreferenceConstants.P_PROMPT_ABOUT_LOTS_OF_SAVED_QUERIES, true);
+		store.setDefault(PreferenceConstants.P_PROMPT_TO_PREP_ALL_RAW_DATA,
+				true);
+		store.setDefault(PreferenceConstants.P_AUTO_PREP_ALL_RAW_DATA, false);
 		store.setDefault(PreferenceConstants.P_PREP_OBJECT_WINDOW_SIZE, 300000);
 	}
 }

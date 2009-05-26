@@ -14,10 +14,6 @@ public class PreferenceConstants implements IPreferenceConstants {
 
 	private static final String PREFIX = "com.surelogic.flashlight.";
 
-	// public static final String P_FILTER_PKG_PREFIX = PREFIX + "filter.";
-	//
-	// public static final String P_USE_FILTERING = PREFIX + "use.filtering";
-	//
 	public static final String P_CLASSPATH_ENTRIES_TO_NOT_INSTRUMENT = PREFIX
 			+ "classpathEntriesToNotInstrument";
 
@@ -133,6 +129,32 @@ public class PreferenceConstants implements IPreferenceConstants {
 		} else {
 			throw new IllegalArgumentException("Bad directory: " + dir);
 		}
+	}
+
+	public static final String P_PROMPT_TO_PREP_ALL_RAW_DATA = PREFIX
+			+ "prompt.to.prep.all.raw.data";
+
+	public static boolean getPromptToPrepAllRawData() {
+		return Activator.getDefault().getPluginPreferences().getBoolean(
+				P_PROMPT_TO_PREP_ALL_RAW_DATA);
+	}
+
+	public static void setPromptToPrepAllRawData(final boolean value) {
+		Activator.getDefault().getPluginPreferences().setValue(
+				P_PROMPT_TO_PREP_ALL_RAW_DATA, value);
+	}
+
+	public static final String P_AUTO_PREP_ALL_RAW_DATA = PREFIX
+			+ "auto.prep.all.raw.data";
+
+	public static boolean getAutoPrepAllRawData() {
+		return Activator.getDefault().getPluginPreferences().getBoolean(
+				P_AUTO_PREP_ALL_RAW_DATA);
+	}
+
+	public static void setAutoPrepAllRawData(final boolean value) {
+		Activator.getDefault().getPluginPreferences().setValue(
+				P_AUTO_PREP_ALL_RAW_DATA, value);
 	}
 
 	private PreferenceConstants() {

@@ -40,6 +40,8 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 	private BooleanFieldEditor f_autoIncreaseHeap;
 	private IntegerFieldEditor f_maxRowsPerQuery;
 	private BooleanFieldEditor f_promptAboutLotsOfSavedQueries;
+	private BooleanFieldEditor f_promptToPrepAllRawData;
+	private BooleanFieldEditor f_autoPrepAllRawData;
 	private Label f_dataDirectory;
 	private IntegerFieldEditor f_objectWindowSize;
 
@@ -128,17 +130,38 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 		f_editors.addAll(instr.getEditors());
 		iGroup.setLayout(new GridLayout(3, false));
 
-		final Group qGroup = new Group(panel, SWT.NONE);
-		qGroup.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
-		qGroup.setText(I18N.msg("flashlight.preference.page.group.query"));
+		final Group pGroup = new Group(panel, SWT.NONE);
+		pGroup.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
+		pGroup.setText(I18N.msg("flashlight.preference.page.group.prep"));
 
 		f_objectWindowSize = new IntegerFieldEditor(
 				PreferenceConstants.P_PREP_OBJECT_WINDOW_SIZE, I18N
 						.msg("flashlight.preference.page.objectWindowSize"),
-				qGroup);
+				pGroup);
 		f_objectWindowSize.setValidRange(10000, 1000000);
-		f_objectWindowSize.fillIntoGrid(qGroup, 2);
+		f_objectWindowSize.fillIntoGrid(pGroup, 2);
 		finishSetup(f_objectWindowSize);
+
+		f_promptToPrepAllRawData = new BooleanFieldEditor(
+				PreferenceConstants.P_PROMPT_TO_PREP_ALL_RAW_DATA,
+				I18N.msg("flashlight.preference.page.promptToPrepAllRawData"),
+				pGroup);
+		f_promptToPrepAllRawData.fillIntoGrid(pGroup, 2);
+		finishSetup(f_promptToPrepAllRawData);
+
+		f_autoPrepAllRawData = new BooleanFieldEditor(
+				PreferenceConstants.P_AUTO_PREP_ALL_RAW_DATA, I18N
+						.msg("flashlight.preference.page.autoPrepAllRawData"),
+				pGroup);
+		f_autoPrepAllRawData.fillIntoGrid(pGroup, 2);
+		finishSetup(f_autoPrepAllRawData);
+
+		pGroup.setLayout(new GridLayout(2, false));
+
+		final Group qGroup = new Group(panel, SWT.NONE);
+		qGroup.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
+		qGroup.setText(I18N.msg("flashlight.preference.page.group.query"));
+
 		f_maxRowsPerQuery = new IntegerFieldEditor(
 				PreferenceConstants.P_MAX_ROWS_PER_QUERY, I18N
 						.msg("flashlight.preference.page.maxRowsPerQuery"),

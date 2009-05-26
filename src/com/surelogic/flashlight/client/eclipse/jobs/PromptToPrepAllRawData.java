@@ -15,6 +15,7 @@ import com.surelogic.common.eclipse.jobs.SLUIJob;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jobs.AggregateSLJob;
 import com.surelogic.common.jobs.SLJob;
+import com.surelogic.flashlight.client.eclipse.dialogs.ConfirmPrepAllRawDataDialog;
 import com.surelogic.flashlight.client.eclipse.perspectives.FlashlightPerspective;
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
 import com.surelogic.flashlight.common.jobs.PrepSLJob;
@@ -47,45 +48,41 @@ public final class PromptToPrepAllRawData extends SLUIJob {
 			final LinkedList<RunDescription> notPrepped = new LinkedList<RunDescription>(
 					RunManager.getInstance().getUnPreppedRunDescriptions());
 			if (!notPrepped.isEmpty()) {
-				System.out.println("PromptToPrepAllRawData: need to prep: "
-						+ notPrepped);
-
 				/*
 				 * Prompt the user
 				 */
+				final boolean runPrepJob = ConfirmPrepAllRawDataDialog.check();
 
-				final ArrayList<SLJob> jobs = new ArrayList<SLJob>();
-				for (final RunDescription description : notPrepped) {
-					if (description != null) {
-						jobs.add(new PrepSLJob(description, PreferenceConstants
-								.getPrepObjectWindowSize()));
+				if (runPrepJob) {
+
+					final ArrayList<SLJob> jobs = new ArrayList<SLJob>();
+					for (final RunDescription description : notPrepped) {
+						if (description != null) {
+							jobs.add(new PrepSLJob(description,
+									PreferenceConstants
+											.getPrepObjectWindowSize()));
+						}
 					}
-				}
 
-				final RunDescription one;
-				if (notPrepped.size() == 1) {
-					one = notPrepped.getFirst();
-				} else {
-					one = null;
-				}
+					final RunDescription one;
+					if (notPrepped.size() == 1) {
+						one = notPrepped.getFirst();
+					} else {
+						one = null;
+					}
 
-				final String jobName;
-				if (one != null) {
-					jobName = I18N.msg("flashlight.jobs.prep.one", one
-							.getName(), SLUtility.toStringHMS(one
-							.getStartTimeOfRun()));
-				} else {
-					jobName = I18N.msg("flashlight.jobs.prep.many");
+					final String jobName;
+					if (one != null) {
+						jobName = I18N.msg("flashlight.jobs.prep.one", one
+								.getName(), SLUtility.toStringHMS(one
+								.getStartTimeOfRun()));
+					} else {
+						jobName = I18N.msg("flashlight.jobs.prep.many");
+					}
+					final SLJob job = new AggregateSLJob(jobName, jobs);
+					EclipseJob.getInstance().scheduleDb(job, true, false);
 				}
-				final SLJob job = new AggregateSLJob(jobName, jobs);
-				EclipseJob.getInstance().scheduleDb(job, true, false);
-			} else {
-				System.out
-						.println("PromptToPrepAllRawData: everything is prepped");
 			}
-		} else {
-			System.out
-					.println("PromptToPrepAllRawData: Flashlight persective is closed");
 		}
 		return Status.OK_STATUS;
 	}

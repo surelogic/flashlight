@@ -125,7 +125,6 @@ public final class ScanRawFilePreScan extends AbstractDataScan {
 			final long wLock = attrs.getLong(AttributeType.WRITE_LOCK_ID);
 			f_rwLocks.put(rLock, id);
 			f_rwLocks.put(wLock, id);
-
 		}
 	}
 

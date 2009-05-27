@@ -19,14 +19,14 @@ import java.util.logging.Level;
 import com.surelogic._flashlight.common.PreppedAttributes;
 import com.surelogic.common.logging.SLLogger;
 
-public class FieldDefinition implements IRangePrep {
+public class FieldDefinition extends AbstractPrep {
 
 	private static final String f_psQ = "INSERT INTO FIELD VALUES (?, ?, ?, ?, ?, ?)";
 
 	private PreparedStatement f_ps;
-	private ScanRawFileFieldsPreScan preScan;
 	private int count;
 
+	@Override
 	public void flush(final long endTime) throws SQLException {
 		if (count > 0) {
 			f_ps.executeBatch();
@@ -51,44 +51,42 @@ public class FieldDefinition implements IRangePrep {
 					"Missing id, type, or field in field-definition");
 			return;
 		}
-		if (!isStatic) {
-			insert(id, type, field, isFinal, isVolatile);
-		}
+		insert(id, type, field, isStatic, isFinal, isVolatile);
 	}
 
 	private void insert(final long id, final long type, final String field,
-			final boolean isFinal, final boolean isVolatile)
-			throws SQLException {
-		if (preScan.isThreadedField(id)) {
-			int idx = 1;
-			f_ps.setLong(idx++, id);
-			if (field != null) {
-				f_ps.setString(idx++, field);
-			} else {
-				f_ps.setNull(idx++, Types.VARCHAR);
-			}
-			f_ps.setLong(idx++, type);
-			f_ps.setString(idx++, "N");
-			f_ps.setString(idx++, isFinal ? "Y" : "N");
-			f_ps.setString(idx++, isVolatile ? "Y" : "N");
-			f_ps.addBatch();
-			if (++count == 10000) {
-				f_ps.executeBatch();
-				count = 0;
-			}
+			final boolean isStatic, final boolean isFinal,
+			final boolean isVolatile) throws SQLException {
+		int idx = 1;
+		f_ps.setLong(idx++, id);
+		if (field != null) {
+			f_ps.setString(idx++, field);
+		} else {
+			f_ps.setNull(idx++, Types.VARCHAR);
+		}
+		f_ps.setLong(idx++, type);
+		f_ps.setString(idx++, "N");
+		f_ps.setString(idx++, isFinal ? "Y" : "N");
+		f_ps.setString(idx++, isVolatile ? "Y" : "N");
+		f_ps.addBatch();
+		if (++count == 10000) {
+			f_ps.executeBatch();
+			count = 0;
 		}
 	}
 
+	@Override
 	public void printStats() {
 		// TODO Auto-generated method stub
 
 	}
 
+	@Override
 	public void setup(final Connection c, final Timestamp start,
-			final long startNS, final ScanRawFileFieldsPreScan st,
-			final long begin, final long end) throws SQLException {
+			final long startNS, final ScanRawFilePreScan scanResults)
+			throws SQLException {
+		super.setup(c, start, startNS, scanResults);
 		f_ps = c.prepareStatement(f_psQ);
-		preScan = st;
 	}
 
 }

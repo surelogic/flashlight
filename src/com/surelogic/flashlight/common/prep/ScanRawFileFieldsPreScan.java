@@ -169,17 +169,6 @@ public class ScanRawFileFieldsPreScan extends AbstractDataScan {
 	}
 
 	/**
-	 * Returns whether or not this field is accessed by multipleThreads for any
-	 * receiver
-	 * 
-	 * @param id
-	 * @return
-	 */
-	public boolean isThreadedField(final long field) {
-		return f_usedFields.get(field) != null;
-	}
-
-	/**
 	 * Returns whether or not this object might be referenced.
 	 * 
 	 * @param id

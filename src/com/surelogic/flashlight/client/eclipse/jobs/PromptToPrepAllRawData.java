@@ -44,7 +44,10 @@ public final class PromptToPrepAllRawData extends SLUIJob {
 		 */
 		final boolean inFlashlightPerspective = ViewUtility
 				.isPerspectiveOpen(FlashlightPerspective.class.getName());
-		if (inFlashlightPerspective) {
+		final boolean noPrepJobRunning = !EclipseJob.getInstance()
+				.isActiveOfType(PrepSLJob.class);
+		System.out.println("noPrepJobRunning=" + noPrepJobRunning);
+		if (inFlashlightPerspective && noPrepJobRunning) {
 			final LinkedList<RunDescription> notPrepped = new LinkedList<RunDescription>(
 					RunManager.getInstance().getUnPreppedRunDescriptions());
 			if (!notPrepped.isEmpty()) {

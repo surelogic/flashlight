@@ -70,7 +70,8 @@ public class ScanRawFileFieldsPreScan extends AbstractDataScan {
 		f_currentFields.remove(objectId);
 	}
 
-	@Override
+	@SuppressWarnings("fallthrough")
+  @Override
 	public void startElement(final String uri, final String localName,
 			final String name, final Attributes attributes) throws SAXException {
 		f_elementCount++;

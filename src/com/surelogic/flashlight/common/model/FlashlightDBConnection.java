@@ -8,6 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
 import com.surelogic.common.derby.DerbyConnection;
+import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jdbc.DBConnection;
 import com.surelogic.common.jdbc.SchemaData;
 import com.surelogic.common.logging.SLLogger;
@@ -98,8 +99,15 @@ public final class FlashlightDBConnection extends DerbyConnection {
 	public Connection getConnection() throws SQLException {
 		// TODO we may want to consider doing this for all implementors of
 		// DerbyConnection
-		loggedBootAndCheckSchema();
-		return DriverManager.getConnection(getConnectionURL());
+		try {
+			loggedBootAndCheckSchema();
+			return DriverManager.getConnection(getConnectionURL());
+		} catch (final SQLException e) {
+			if ("".equals(e.getSQLState())) {
+				throw new IllegalStateException(I18N.err(163, dbLocation));
+			} else {
+				throw e;
+			}
+		}
 	}
-
 }

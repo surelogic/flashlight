@@ -3,6 +3,7 @@ package com.surelogic.flashlight.common.prep;
 import gnu.trove.TLongHashSet;
 import gnu.trove.TLongLongHashMap;
 import gnu.trove.TLongObjectHashMap;
+import gnu.trove.TObjectProcedure;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -11,6 +12,7 @@ import com.surelogic._flashlight.common.AttributeType;
 import com.surelogic._flashlight.common.IdConstants;
 import com.surelogic._flashlight.common.PreppedAttributes;
 import com.surelogic.common.jobs.SLProgressMonitor;
+import com.surelogic.common.logging.SLLogger;
 
 public class ScanRawFileFieldsPreScan extends AbstractDataScan {
 
@@ -71,7 +73,7 @@ public class ScanRawFileFieldsPreScan extends AbstractDataScan {
 	}
 
 	@SuppressWarnings("fallthrough")
-  @Override
+	@Override
 	public void startElement(final String uri, final String localName,
 			final String name, final Attributes attributes) throws SAXException {
 		f_elementCount++;
@@ -89,6 +91,9 @@ public class ScanRawFileFieldsPreScan extends AbstractDataScan {
 			if (f_monitor.isCanceled()) {
 				throw new SAXException("canceled");
 			}
+		}
+		if (f_elementCount % 1000000 == 0) {
+			logState();
 		}
 		final PreppedAttributes attrs = preprocessAttributes(name, attributes);
 		final PrepEvent e = PrepEvent.getEvent(name);
@@ -142,6 +147,11 @@ public class ScanRawFileFieldsPreScan extends AbstractDataScan {
 		}
 	}
 
+	@Override
+	public void endDocument() throws SAXException {
+		logState();
+	}
+
 	/**
 	 * Returns whether or not this field is accessed by multiple threads for the
 	 * given receiver.
@@ -177,6 +187,47 @@ public class ScanRawFileFieldsPreScan extends AbstractDataScan {
 	 */
 	public boolean couldBeReferencedObject(final long id) {
 		return f_referencedObjects.contains(id);
+	}
+
+	private void logState() {
+		SLLogger.getLoggerFor(ScanRawFilePreScan.class).info(
+				"Range " + f_start + " to " + f_end
+						+ "\n\tf_referencedObjects: "
+						+ f_referencedObjects.size() + "\n\tf_usedFields "
+						+ nestedSum1(f_usedFields) + "\n\tf_currentFields "
+						+ nestedSum(f_currentFields));
+	}
+
+	static class Sum1 implements TObjectProcedure<TLongHashSet> {
+		int sum;
+
+		public boolean execute(final TLongHashSet object) {
+			sum += object.size();
+			return true;
+		}
+
+	}
+
+	private String nestedSum1(final TLongObjectHashMap<TLongHashSet> fields) {
+		final Sum1 sum = new Sum1();
+		fields.forEachValue(sum);
+		return Integer.toString(sum.sum);
+	}
+
+	static class Sum implements TObjectProcedure<TLongLongHashMap> {
+		int sum;
+
+		public boolean execute(final TLongLongHashMap object) {
+			sum += object.size();
+			return true;
+		}
+
+	}
+
+	private String nestedSum(final TLongObjectHashMap<TLongLongHashMap> fields) {
+		final Sum sum = new Sum();
+		fields.forEachValue(sum);
+		return Integer.toString(sum.sum);
 	}
 
 }

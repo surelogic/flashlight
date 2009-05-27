@@ -130,7 +130,7 @@ public final class ScanRawFilePreScan extends AbstractDataScan {
 	}
 
 	private void logState() {
-		SLLogger.getLoggerFor(ScanRawFilePreScan.class).info(
+		SLLogger.getLoggerFor(ScanRawFilePreScan.class).fine(
 				"f_rwLocks " + f_rwLocks.size() + "\n\tf_usedStatics "
 						+ f_usedStatics.size() + "\n\tf_currentStatics "
 						+ f_currentStatics.size());

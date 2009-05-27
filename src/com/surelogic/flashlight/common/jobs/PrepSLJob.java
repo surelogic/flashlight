@@ -39,7 +39,7 @@ import com.surelogic.flashlight.common.prep.BeforeIntrinsicLockAcquisition;
 import com.surelogic.flashlight.common.prep.BeforeIntrinsicLockWait;
 import com.surelogic.flashlight.common.prep.BeforeUtilConcurrentLockAquisitionAttempt;
 import com.surelogic.flashlight.common.prep.ClassDefinition;
-import com.surelogic.flashlight.common.prep.FieldDefinition;
+import com.surelogic.flashlight.common.prep.StaticFieldDefinition;
 import com.surelogic.flashlight.common.prep.FieldRead;
 import com.surelogic.flashlight.common.prep.FieldWrite;
 import com.surelogic.flashlight.common.prep.IOneTimePrep;
@@ -85,7 +85,7 @@ public final class PrepSLJob extends AbstractSLJob {
 				new AfterUtilConcurrentLockAcquisitionAttempt(i),
 				new AfterUtilConcurrentLockReleaseAttempt(i),
 				new ReadWriteLock(i), new StaticFieldRead(),
-				new StaticFieldWrite(), new FieldDefinition(), new TraceNode(),
+				new StaticFieldWrite(), new StaticFieldDefinition(), new TraceNode(),
 				new StaticCallLocation(), new IndirectAccess(i) };
 	}
 

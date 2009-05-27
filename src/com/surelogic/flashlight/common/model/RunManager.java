@@ -57,7 +57,7 @@ public final class RunManager {
 
 	private final AtomicReference<File> f_dataDir = new AtomicReference<File>();
 
-	public void setDataDirectory(File dir) {
+	public void setDataDirectory(final File dir) {
 		if (dir != null && dir.exists() && dir.isDirectory()) {
 			f_dataDir.set(dir);
 			refresh();
@@ -94,10 +94,11 @@ public final class RunManager {
 	 */
 	public Set<RunDescription> getUnPreppedRunDescriptions() {
 		final Set<RunDescription> result = getRunDescriptions();
-		for (Iterator<RunDescription> i = result.iterator(); i.hasNext();) {
-			RunDescription runDescription = (RunDescription) i.next();
-			if (getPrepRunDescriptionFor(runDescription) != null)
+		for (final Iterator<RunDescription> i = result.iterator(); i.hasNext();) {
+			final RunDescription runDescription = i.next();
+			if (getPrepRunDescriptionFor(runDescription) != null) {
 				i.remove();
+			}
 		}
 		return result;
 	}

@@ -15,6 +15,7 @@ import com.surelogic.common.eclipse.jobs.SLUIJob;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jobs.AggregateSLJob;
 import com.surelogic.common.jobs.SLJob;
+import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.client.eclipse.dialogs.ConfirmPrepAllRawDataDialog;
 import com.surelogic.flashlight.client.eclipse.perspectives.FlashlightPerspective;
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
@@ -46,7 +47,9 @@ public final class PromptToPrepAllRawData extends SLUIJob {
 				.isPerspectiveOpen(FlashlightPerspective.class.getName());
 		final boolean noPrepJobRunning = !EclipseJob.getInstance()
 				.isActiveOfType(PrepSLJob.class);
-		System.out.println("noPrepJobRunning=" + noPrepJobRunning);
+		SLLogger.getLogger().info(
+				"[PromptToPrepAllRawData] noPrepJobRunning = "
+						+ noPrepJobRunning);
 		if (inFlashlightPerspective && noPrepJobRunning) {
 			final LinkedList<RunDescription> notPrepped = new LinkedList<RunDescription>(
 					RunManager.getInstance().getUnPreppedRunDescriptions());

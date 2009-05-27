@@ -15,7 +15,6 @@ import com.surelogic.common.eclipse.logging.SLEclipseStatusUtility;
 import com.surelogic.common.serviceability.UsageMeter;
 import com.surelogic.flashlight.client.eclipse.jobs.FlashlightCleanupJob;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
-import com.surelogic.flashlight.common.model.FlashlightDBConnection;
 import com.surelogic.flashlight.common.model.RunManager;
 
 /**
@@ -68,7 +67,6 @@ public class Activator extends AbstractUIPlugin {
 		try {
 			AdHocDataSource.getInstance().dispose();
 			UsageMeter.getInstance().persist();
-			FlashlightDBConnection.shutdownConnections();
 			plugin = null;
 		} finally {
 			super.stop(context);

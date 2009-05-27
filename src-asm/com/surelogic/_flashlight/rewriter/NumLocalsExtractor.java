@@ -16,7 +16,7 @@ import org.objectweb.asm.MethodVisitor;
 /**
  * Class visitor makes a scan over the methods in the class to extract the
  * debug information for local variables and logs the number of local variables
- * and stack size for each method.
+ * allocated for each method.
  */
 final class NumLocalsExtractor implements ClassVisitor {
   private final Map<String, Integer> method2numLocals =

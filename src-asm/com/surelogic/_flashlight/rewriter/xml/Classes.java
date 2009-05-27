@@ -14,7 +14,7 @@ import javax.xml.bind.annotation.XmlType;
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
 public final class Classes {
-  @XmlElement(name="class")
+  @XmlElement(name="class", required=true)
   private List<ClassRecord> classes = new ArrayList<ClassRecord>();
   
   public List<ClassRecord> getClasses() {

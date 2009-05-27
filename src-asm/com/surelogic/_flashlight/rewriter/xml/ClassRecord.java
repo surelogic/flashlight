@@ -16,7 +16,7 @@ public final class ClassRecord {
   @XmlAttribute(required=true)
   private String name;
   
-  @XmlElement(name="method")
+  @XmlElement(name="method", required=true)
   private List<MethodRecord> methods = new ArrayList<MethodRecord>();
 
   

@@ -54,7 +54,7 @@ public abstract class ReferenceDefinition extends RangedEvent {
 	private void insert(final long id, final long type,
 			final String threadName, final String packageName,
 			final String className) throws SQLException {
-		if (!filterUnused() || f_scanResults.couldBeReferencedObject(id)) {
+		if (f_scanResults.couldBeReferencedObject(id)) {
 			int idx = 1;
 			f_ps.setLong(idx++, id);
 			f_ps.setLong(idx++, type);
@@ -80,8 +80,6 @@ public abstract class ReferenceDefinition extends RangedEvent {
 	}
 
 	protected abstract String getFlag();
-
-	protected abstract boolean filterUnused();
 
 	@Override
 	public void setup(final Connection c, final Timestamp start,

@@ -11,8 +11,4 @@ public final class ObjectDefinition extends ReferenceDefinition {
 		return "O";
 	}
 
-	@Override
-	protected boolean filterUnused() {
-		return true;
-	}
 }

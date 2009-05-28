@@ -11,9 +11,4 @@ public final class ThreadDefinition extends ReferenceDefinition {
 		return "T";
 	}
 
-	@Override
-	protected boolean filterUnused() {
-		return true;
-	}
-
 }

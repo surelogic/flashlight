@@ -86,13 +86,13 @@ public final class PrepSLJob extends AbstractSLJob {
 				new AfterUtilConcurrentLockReleaseAttempt(i),
 				new ReadWriteLock(i), new StaticFieldRead(),
 				new StaticFieldWrite(), new FieldDefinition(), new TraceNode(),
-				new StaticCallLocation(), new IndirectAccess(i) };
+				new StaticCallLocation(), new IndirectAccess(i),
+				new ClassDefinition() };
 	}
 
 	private IRangePrep[] getRangeHandlers() {
 		return new IRangePrep[] { new FieldRead(), new FieldWrite(),
-				new ObjectDefinition(), new ThreadDefinition(),
-				new ClassDefinition() };
+				new ObjectDefinition(), new ThreadDefinition() };
 	}
 
 	private IPostPrep[] getPostPrep() {

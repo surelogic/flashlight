@@ -14,6 +14,7 @@ import org.osgi.framework.BundleContext;
 import com.surelogic.common.eclipse.logging.SLEclipseStatusUtility;
 import com.surelogic.common.serviceability.UsageMeter;
 import com.surelogic.flashlight.client.eclipse.jobs.FlashlightCleanupJob;
+import com.surelogic.flashlight.client.eclipse.jobs.PromptToPrepAllRawData;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
 import com.surelogic.flashlight.common.model.RunManager;
 
@@ -60,6 +61,7 @@ public class Activator extends AbstractUIPlugin {
 		RunManager.getInstance().setDataDirectory(
 				FlashlightEclipseUtility.getFlashlightDataDirectory());
 		new FlashlightCleanupJob().schedule();
+		PromptToPrepAllRawData.addFlashlightPerspectiveAdapter();
 	}
 
 	@Override

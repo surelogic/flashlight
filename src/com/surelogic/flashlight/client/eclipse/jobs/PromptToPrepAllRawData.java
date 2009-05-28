@@ -2,14 +2,21 @@ package com.surelogic.flashlight.client.eclipse.jobs;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.logging.Level;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.ui.IPerspectiveDescriptor;
+import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.PerspectiveAdapter;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.progress.UIJob;
 
 import com.surelogic.common.SLUtility;
 import com.surelogic.common.eclipse.ViewUtility;
+import com.surelogic.common.eclipse.EclipseUtility;
 import com.surelogic.common.eclipse.jobs.EclipseJob;
 import com.surelogic.common.eclipse.jobs.SLUIJob;
 import com.surelogic.common.i18n.I18N;
@@ -35,7 +42,29 @@ public final class PromptToPrepAllRawData extends SLUIJob {
 	 */
 	public static void createAndSchedule() {
 		final UIJob job = new PromptToPrepAllRawData();
-		job.schedule();
+		job.schedule(10);
+	}
+
+	public static void addFlashlightPerspectiveAdapter() {
+		System.out.println("addFlashlightPerspectiveAdapter()");
+		final IWorkbenchWindow workbenchWindow = PlatformUI.getWorkbench()
+				.getActiveWorkbenchWindow();
+		if (workbenchWindow != null) {
+			final PerspectiveAdapter flashlightPerspectiveListener = new PerspectiveAdapter() {
+				@Override
+				public void perspectiveActivated(IWorkbenchPage page,
+						IPerspectiveDescriptor perspective) {
+					if (FlashlightPerspective.class.getName().equals(
+							perspective.getId())) {
+						createAndSchedule();
+					}
+				}
+			};
+			workbenchWindow
+					.addPerspectiveListener(flashlightPerspectiveListener);
+		} else {
+			SLLogger.getLogger().log(Level.WARNING, I18N.err(164));
+		}
 	}
 
 	@Override
@@ -50,7 +79,18 @@ public final class PromptToPrepAllRawData extends SLUIJob {
 		SLLogger.getLogger().fine(
 				"[PromptToPrepAllRawData] noPrepJobRunning = "
 						+ noPrepJobRunning);
-		if (inFlashlightPerspective && noPrepJobRunning) {
+		/*
+		 * The below check that we are the only job of this type running is
+		 * trying to avoid double prompting the user to prepare data. It may not
+		 * work in all cases but should eliminate most of them.
+		 */
+		final boolean onlyPromptToPrepAllRawDataJobRunning = EclipseUtility
+				.getActiveJobCountOfType(PromptToPrepAllRawData.class) == 1;
+		SLLogger.getLogger().fine(
+				"[PromptToPrepAllRawData] onlyPromptToPrepAllRawDataJobRunning = "
+						+ onlyPromptToPrepAllRawDataJobRunning);
+		if (inFlashlightPerspective && noPrepJobRunning
+				&& onlyPromptToPrepAllRawDataJobRunning) {
 			final LinkedList<RunDescription> notPrepped = new LinkedList<RunDescription>(
 					RunManager.getInstance().getUnPreppedRunDescriptions());
 			if (!notPrepped.isEmpty()) {

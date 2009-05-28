@@ -40,7 +40,6 @@ public final class SwitchToFlashlightPerspectiveJob extends SLUIJob {
 			if (change) {
 				ViewUtility.showPerspective(FlashlightPerspective.class
 						.getName());
-				PromptToPrepAllRawData.createAndSchedule();
 			}
 		}
 		return Status.OK_STATUS;

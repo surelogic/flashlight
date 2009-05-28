@@ -251,7 +251,6 @@ final class Depository extends Thread {
 		for (final Map.Entry<String, List<FieldInfo>> entry : fieldsMap.entrySet()) {
 		  final String classname = entry.getKey();
 		  final List<FieldInfo> finfo = entry.getValue();
-      Store.log("Preserving information for class " + classname);
 
       /* Copied from makeClassInfo() below */
 		  final FieldInfo[] fields = finfo == null ? noFields : finfo.toArray(noFields);

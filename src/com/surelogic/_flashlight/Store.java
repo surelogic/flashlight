@@ -542,7 +542,6 @@ public final class Store {
 		   * of the phantom class object.
 		   */
 		  if (declaringClass != null) {
-		    log("Generating phantom class for " + declaringClass.getCanonicalName());
 		    Phantom.ofClass(declaringClass);
 		  }
 		  if (read)
@@ -603,7 +602,6 @@ public final class Store {
 		  }
           */
       if (declaringClass != null) {
-        log("Generating phantom class for " + declaringClass.getCanonicalName());
         Phantom.ofClass(declaringClass);
       }
 		  final Event e;

@@ -892,6 +892,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
       if (indirectAccess != null) {
         final IndirectAccessMethodInstrumentation method =
           new InstanceIndirectAccessMethodInstrumentation(
+              messenger, classModel,
               siteId, Opcodes.INVOKESPECIAL, indirectAccess,
               owner, name, desc, this);
         method.popReceiverAndArguments(mv);
@@ -1643,10 +1644,10 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
       final IndirectAccessMethodInstrumentation methodCall;
       if (opcode == Opcodes.INVOKESTATIC) {
         methodCall = new StaticIndirectAccessMethodInstrumentation(
-            siteId, opcode, indirectMethod, owner, name, desc, this);
+            messenger, classModel, siteId, opcode, indirectMethod, owner, name, desc, this);
       } else {
         methodCall = new InstanceIndirectAccessMethodInstrumentation(
-            siteId, opcode, indirectMethod, owner, name, desc, this);
+            messenger, classModel, siteId, opcode, indirectMethod, owner, name, desc, this);
       }
       methodCall.popReceiverAndArguments(mv);
       methodCall.recordIndirectAccesses(mv, config);
@@ -1686,11 +1687,11 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     	if (inInterface || isClone || ownerIsSuper) {
         final InPlaceMethodInstrumentation methodCall;
         if (opcode == Opcodes.INVOKESTATIC) {
-          methodCall = new InPlaceStaticMethodInstrumentation(siteId, 
-              opcode, owner, name, desc);
+          methodCall = new InPlaceStaticMethodInstrumentation(
+              messenger, classModel, siteId, opcode, owner, name, desc);
         } else {
-          methodCall = new InPlaceInstanceMethodInstrumentation(siteId, 
-              opcode, owner, name, desc, this);
+          methodCall = new InPlaceInstanceMethodInstrumentation(
+              messenger, classModel, siteId, opcode, owner, name, desc, this);
         }
         methodCall.popReceiverAndArguments(mv);
         methodCall.instrumentMethodCall(mv, config);
@@ -1698,13 +1699,13 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
         /* Create the wrapper method information and add it to the list of wrappers */
         final MethodCallWrapper wrapper;
         if (opcode == Opcodes.INVOKESPECIAL) {
-          wrapper = new SpecialCallWrapper(owner, name, desc);
+          wrapper = new SpecialCallWrapper(messenger, classModel, owner, name, desc);
         } else if (opcode == Opcodes.INVOKESTATIC){
-          wrapper = new StaticCallWrapper(owner, name, desc);
+          wrapper = new StaticCallWrapper(messenger, classModel, owner, name, desc);
         } else if (opcode == Opcodes.INVOKEINTERFACE) {
-          wrapper = new InterfaceCallWrapper(owner, name, desc);
+          wrapper = new InterfaceCallWrapper(messenger, classModel, owner, name, desc);
         } else { // virtual call
-          wrapper = new VirtualCallWrapper(firstArgInternal, owner, name, desc);
+          wrapper = new VirtualCallWrapper(messenger, classModel, firstArgInternal, owner, name, desc);
         }
         
         wrapperMethods.add(wrapper);

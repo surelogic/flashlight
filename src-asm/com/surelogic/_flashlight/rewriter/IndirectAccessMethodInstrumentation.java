@@ -10,10 +10,11 @@ abstract class IndirectAccessMethodInstrumentation extends
   final PoppedArguments poppedArgs;
   
   public IndirectAccessMethodInstrumentation(
+      final RewriteMessenger messenger, final ClassAndFieldModel classModel,
       final long callSiteId, final int opcode, final IndirectAccessMethod am,
       final String owner, final String name, final String descriptor,
       final LocalVariableGenerator vg) {
-    super(callSiteId, opcode, owner, name, descriptor);
+    super(messenger, classModel, callSiteId, opcode, owner, name, descriptor);
     indirectAccess = am;
     poppedArgs = getPoppedArgs(owner, descriptor, vg);
   }

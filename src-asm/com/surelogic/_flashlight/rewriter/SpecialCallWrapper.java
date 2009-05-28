@@ -13,8 +13,9 @@ final class SpecialCallWrapper extends MethodCallWrapper {
   
   
   public SpecialCallWrapper(
+      final RewriteMessenger messenger, final ClassAndFieldModel classModel,
       final String owner, final String originalName, final String originalSignature) {
-    super(Opcodes.INVOKESPECIAL, null, owner, originalName, originalSignature, true);
+    super(messenger, classModel, Opcodes.INVOKESPECIAL, null, owner, originalName, originalSignature, true);
   }
 
   

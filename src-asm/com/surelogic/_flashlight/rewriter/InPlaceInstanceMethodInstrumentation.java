@@ -7,10 +7,12 @@ class InPlaceInstanceMethodInstrumentation extends
     InPlaceMethodInstrumentation {
   private final PoppedArguments poppedArgs;
   
-  public InPlaceInstanceMethodInstrumentation(final long callSiteId, final int opcode,
+  public InPlaceInstanceMethodInstrumentation(
+      final RewriteMessenger messenger, final ClassAndFieldModel classModel,
+      final long callSiteId, final int opcode,
       final String owner, final String name, final String descriptor,
       final LocalVariableGenerator vg) {
-    super(callSiteId, opcode, owner, name, descriptor);
+    super(messenger, classModel, callSiteId, opcode, owner, name, descriptor);
     poppedArgs = PoppedArguments.instanceArguments(
         Type.getObjectType(owner), Type.getArgumentTypes(descriptor), vg);
   }

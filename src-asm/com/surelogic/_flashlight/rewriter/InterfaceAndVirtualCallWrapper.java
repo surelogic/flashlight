@@ -14,9 +14,10 @@ abstract class InterfaceAndVirtualCallWrapper extends MethodCallWrapper {
   
   
   public InterfaceAndVirtualCallWrapper(
+      final RewriteMessenger messenger, final ClassAndFieldModel classModel,
       final String rcvrTypeInternal, final String owner, final String originalName,
       final String originalSignature, final int opcode) {
-    super(opcode, rcvrTypeInternal, owner, originalName, originalSignature, false);
+    super(messenger, classModel, opcode, rcvrTypeInternal, owner, originalName, originalSignature, false);
   }
 
   

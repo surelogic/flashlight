@@ -4,6 +4,7 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import com.surelogic._flashlight.rewriter.ClassAndFieldModel.ClassNotFoundException;
 import com.surelogic._flashlight.rewriter.config.Configuration;
 
 /**
@@ -18,6 +19,8 @@ abstract class MethodCall {
   protected final String name;
   protected final String descriptor;
   
+  protected final RewriteMessenger messenger;
+  protected final ClassAndFieldModel classModel;
   
   
   /**
@@ -26,19 +29,24 @@ abstract class MethodCall {
    * @param originalName The name of the method.
    * @param originalDesc The descriptor of the method.
    */
-  public MethodCall(final int opcode, final String owner,
+  public MethodCall(final RewriteMessenger msg,
+      final ClassAndFieldModel model, final int opcode, final String owner,
       final String originalName, final String originalDesc) {
     this.opcode = opcode;
     this.owner = owner;
     this.name = originalName;
     this.descriptor = originalDesc;
+    
+    messenger = msg;
+    classModel = model;
   }
 
   
   
-  public final boolean testCalledMethodName(
-      final String testOwner, final String testName) {
-    return owner.equals(testOwner) && name.equals(testName);
+  private final boolean testCalledMethodName(
+      final String testOwner, final String testName)
+  throws ClassNotFoundException {
+    return classModel.getClass(testOwner).isAssignableFrom(owner) && name.equals(testName);
   }
 
   /**
@@ -70,7 +78,8 @@ abstract class MethodCall {
    * Insert the original method call surrounded by the appropriate 
    * instrumentation.
    */
-  public final void instrumentMethodCall(final MethodVisitor mv, final Configuration config) {
+  public final void instrumentMethodCall(
+      final MethodVisitor mv, final Configuration config) {
     // ...
     
     /* before method all event */
@@ -160,124 +169,160 @@ abstract class MethodCall {
   }
 
   // +4 Stack
-  private void instrumentBeforeWait(final MethodVisitor mv, final Configuration config) {
-    if (this.testCalledMethodName(
-        FlashlightNames.JAVA_LANG_OBJECT, FlashlightNames.WAIT)
-        && config.instrumentBeforeWait) {
-      // ...
-      ByteCodeUtils.pushBooleanConstant(mv, true);
-      // ..., true
-      this.pushReceiverForEvent(mv);
-      // ..., true, objRef
-      this.pushSiteId(mv);
-      // ..., true, objRef, callSiteId (long)
-      ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.INTRINSIC_LOCK_WAIT);      
+  private void instrumentBeforeWait(
+      final MethodVisitor mv, final Configuration config) {
+    try {
+      if (this.testCalledMethodName(
+          FlashlightNames.JAVA_LANG_OBJECT, FlashlightNames.WAIT)
+          && config.instrumentBeforeWait) {
+        // ...
+        ByteCodeUtils.pushBooleanConstant(mv, true);
+        // ..., true
+        this.pushReceiverForEvent(mv);
+        // ..., true, objRef
+        this.pushSiteId(mv);
+        // ..., true, objRef, callSiteId (long)
+        ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.INTRINSIC_LOCK_WAIT);      
+      }
+    } catch (final ClassNotFoundException e) {
+      messenger.warning("Provided classpath is incomplete: couldn't find class " + e.getMissingClass());
     }
   }
   
   // +4 Stack
-  private void instrumentAfterWait(final MethodVisitor mv, final Configuration config) {
-    if (this.testCalledMethodName(
-        FlashlightNames.JAVA_LANG_OBJECT, FlashlightNames.WAIT)
-        && config.instrumentAfterWait) {
-      // ...
-      ByteCodeUtils.pushBooleanConstant(mv, false);
-      // ..., false
-      this.pushReceiverForEvent(mv);
-      // ..., false, objRef
-      this.pushSiteId(mv);
-      // ..., false, objRef, callSiteId (long)
-      ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.INTRINSIC_LOCK_WAIT);
+  private void instrumentAfterWait(
+      final MethodVisitor mv, final Configuration config) {
+    try {
+      if (this.testCalledMethodName(
+          FlashlightNames.JAVA_LANG_OBJECT, FlashlightNames.WAIT)
+          && config.instrumentAfterWait) {
+        // ...
+        ByteCodeUtils.pushBooleanConstant(mv, false);
+        // ..., false
+        this.pushReceiverForEvent(mv);
+        // ..., false, objRef
+        this.pushSiteId(mv);
+        // ..., false, objRef, callSiteId (long)
+        ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.INTRINSIC_LOCK_WAIT);
+      }
+    } catch (final ClassNotFoundException e) {
+      messenger.warning("Provided classpath is incomplete: couldn't find class " + e.getMissingClass());
     }
   }
   
   // +3 Stack
-  private void instrumentBeforeAnyJUCLockAcquisition(final MethodVisitor mv, final Configuration config) {
-    if ((this.testCalledMethodName(
-        FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK, FlashlightNames.LOCK)
-        || this.testCalledMethodName(
-            FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK,
-            FlashlightNames.LOCK_INTERRUPTIBLY)
-        || this.testCalledMethodName(
-            FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK,
-            FlashlightNames.TRY_LOCK))
-        && config.instrumentBeforeJUCLock) {
-      // ...
-      this.pushReceiverForEvent(mv);
-      // ..., objRef
-      this.pushSiteId(mv);
-      // ..., objRef, callSiteId (long)
-      ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.BEFORE_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT);
+  private void instrumentBeforeAnyJUCLockAcquisition(
+      final MethodVisitor mv, final Configuration config) {
+    try {
+      if ((this.testCalledMethodName(
+          FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK, FlashlightNames.LOCK)
+          || this.testCalledMethodName(
+              FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK,
+              FlashlightNames.LOCK_INTERRUPTIBLY)
+          || this.testCalledMethodName(
+              FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK,
+              FlashlightNames.TRY_LOCK))
+          && config.instrumentBeforeJUCLock) {
+        // ...
+        this.pushReceiverForEvent(mv);
+        // ..., objRef
+        this.pushSiteId(mv);
+        // ..., objRef, callSiteId (long)
+        ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.BEFORE_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT);
+      }
+    } catch (final ClassNotFoundException e) {
+      messenger.warning("Provided classpath is incomplete: couldn't find class " + e.getMissingClass());
     }
   }
   
   // +4 Stack
-  private void instrumentAfterLockAndLockInterruptibly(final MethodVisitor mv, final Configuration config, final boolean gotTheLock) {
-    if ((this.testCalledMethodName(
-        FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK, FlashlightNames.LOCK)
-        || this.testCalledMethodName(
-            FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK,
-            FlashlightNames.LOCK_INTERRUPTIBLY))
-        && config.instrumentAfterLock) {
-      // ...
-      ByteCodeUtils.pushBooleanConstant(mv, gotTheLock);
-      // ..., gotTheLock
-      this.pushReceiverForEvent(mv);
-      // ..., gotTheLock, objRef
-      this.pushSiteId(mv);
-      // ..., gotTheLock, objRef, callSiteId (long)
-      ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT);      
+  private void instrumentAfterLockAndLockInterruptibly(final MethodVisitor mv,
+      final Configuration config, final boolean gotTheLock) {
+    try {
+      if ((this.testCalledMethodName(
+          FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK, FlashlightNames.LOCK)
+          || this.testCalledMethodName(
+              FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK,
+              FlashlightNames.LOCK_INTERRUPTIBLY))
+          && config.instrumentAfterLock) {
+        // ...
+        ByteCodeUtils.pushBooleanConstant(mv, gotTheLock);
+        // ..., gotTheLock
+        this.pushReceiverForEvent(mv);
+        // ..., gotTheLock, objRef
+        this.pushSiteId(mv);
+        // ..., gotTheLock, objRef, callSiteId (long)
+        ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT);      
+      }
+    } catch (final ClassNotFoundException e) {
+      messenger.warning("Provided classpath is incomplete: couldn't find class " + e.getMissingClass());
     }
   }
   
   // +4 Stack
-  private void instrumentAfterTryLockNormal(final MethodVisitor mv, final Configuration config) {
-    if (this.testCalledMethodName(
-        FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK,
-        FlashlightNames.TRY_LOCK) && config.instrumentAfterTryLock) {
-      // ..., gotTheLock
-      
-      /* We need to make a copy of tryLock()'s return value */
-      mv.visitInsn(Opcodes.DUP);
-      // ..., gotTheLock, gotTheLock      
-      this.pushReceiverForEvent(mv);
-      // ..., gotTheLock, gotTheLock, objRef
-      this.pushSiteId(mv);
-      // ..., gotTheLock, gotTheLock, objRef, callSiteId (long)
-      ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT);
-      // ..., gotTheLock
+  private void instrumentAfterTryLockNormal(
+      final MethodVisitor mv, final Configuration config) {
+    try {
+      if (this.testCalledMethodName(
+          FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK,
+          FlashlightNames.TRY_LOCK) && config.instrumentAfterTryLock) {
+        // ..., gotTheLock
+        
+        /* We need to make a copy of tryLock()'s return value */
+        mv.visitInsn(Opcodes.DUP);
+        // ..., gotTheLock, gotTheLock      
+        this.pushReceiverForEvent(mv);
+        // ..., gotTheLock, gotTheLock, objRef
+        this.pushSiteId(mv);
+        // ..., gotTheLock, gotTheLock, objRef, callSiteId (long)
+        ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT);
+        // ..., gotTheLock
+      }
+    } catch (final ClassNotFoundException e) {
+      messenger.warning("Provided classpath is incomplete: couldn't find class " + e.getMissingClass());
     }
   }
   
   //+4 Stack
-  private void instrumentAfterTryLockException(final MethodVisitor mv, final Configuration config) {
-    if (this.testCalledMethodName(
-        FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK,
-        FlashlightNames.TRY_LOCK) && config.instrumentAfterTryLock) {
-      // ...
-      ByteCodeUtils.pushBooleanConstant(mv, false);
-      // ..., false
-      this.pushReceiverForEvent(mv);
-      // ..., false, objRef
-      this.pushSiteId(mv);
-      // ..., false, objRef, callSiteId (false)
-      ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT);      
+  private void instrumentAfterTryLockException(
+      final MethodVisitor mv, final Configuration config) {
+    try {
+      if (this.testCalledMethodName(
+          FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK,
+          FlashlightNames.TRY_LOCK) && config.instrumentAfterTryLock) {
+        // ...
+        ByteCodeUtils.pushBooleanConstant(mv, false);
+        // ..., false
+        this.pushReceiverForEvent(mv);
+        // ..., false, objRef
+        this.pushSiteId(mv);
+        // ..., false, objRef, callSiteId (false)
+        ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT);      
+      }
+    } catch (final ClassNotFoundException e) {
+      messenger.warning("Provided classpath is incomplete: couldn't find class " + e.getMissingClass());
     }
   }
   
   // +4 Stack
-  private void instrumentAfterUnlock(final MethodVisitor mv, final Configuration config, final boolean releasedTheLock) {
-    if (this.testCalledMethodName(
-        FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK,
-        FlashlightNames.UNLOCK) && config.instrumentAfterUnlock) {
-      // ...
-      ByteCodeUtils.pushBooleanConstant(mv, releasedTheLock);
-      // ..., gotTheLock
-      this.pushReceiverForEvent(mv);
-      // ..., gotTheLock, objRef
-      this.pushSiteId(mv);
-      // ..., gotTheLock, objRef, callSiteId (long)
-      ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_RELEASE_ATTEMPT);
+  private void instrumentAfterUnlock(
+      final MethodVisitor mv, final Configuration config,
+      final boolean releasedTheLock) {
+    try {
+      if (this.testCalledMethodName(
+          FlashlightNames.JAVA_UTIL_CONCURRENT_LOCKS_LOCK,
+          FlashlightNames.UNLOCK) && config.instrumentAfterUnlock) {
+        // ...
+        ByteCodeUtils.pushBooleanConstant(mv, releasedTheLock);
+        // ..., gotTheLock
+        this.pushReceiverForEvent(mv);
+        // ..., gotTheLock, objRef
+        this.pushSiteId(mv);
+        // ..., gotTheLock, objRef, callSiteId (long)
+        ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_RELEASE_ATTEMPT);
+      }
+    } catch (final ClassNotFoundException e) {
+      messenger.warning("Provided classpath is incomplete: couldn't find class " + e.getMissingClass());
     }
   }  
 }

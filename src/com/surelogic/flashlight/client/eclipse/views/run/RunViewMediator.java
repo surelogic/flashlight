@@ -30,7 +30,6 @@ import com.surelogic.common.jobs.SLJob;
 import com.surelogic.flashlight.client.eclipse.FlashlightEclipseUtility;
 import com.surelogic.flashlight.client.eclipse.dialogs.DeleteRunDialog;
 import com.surelogic.flashlight.client.eclipse.dialogs.LogDialog;
-import com.surelogic.flashlight.client.eclipse.jobs.PromptToPrepAllRawData;
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.QueryMenuView;
@@ -168,7 +167,6 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 		f_tableViewer.refresh();
 		packColumns();
 		setToolbarState();
-		PromptToPrepAllRawData.createAndSchedule();
 	}
 
 	private final Action f_prepAction = new Action() {

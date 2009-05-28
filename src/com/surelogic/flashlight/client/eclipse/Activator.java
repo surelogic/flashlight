@@ -61,12 +61,13 @@ public class Activator extends AbstractUIPlugin {
 		RunManager.getInstance().setDataDirectory(
 				FlashlightEclipseUtility.getFlashlightDataDirectory());
 		new FlashlightCleanupJob().schedule();
-		PromptToPrepAllRawData.addFlashlightPerspectiveAdapter();
+		PromptToPrepAllRawData.start();
 	}
 
 	@Override
 	public void stop(final BundleContext context) throws Exception {
 		try {
+			PromptToPrepAllRawData.stop();
 			AdHocDataSource.getInstance().dispose();
 			UsageMeter.getInstance().persist();
 			plugin = null;

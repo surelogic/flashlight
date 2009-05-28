@@ -103,7 +103,9 @@ public final class FlashlightDBConnection extends DerbyConnection {
 			loggedBootAndCheckSchema();
 			return DriverManager.getConnection(getConnectionURL());
 		} catch (final SQLException e) {
-			if ("".equals(e.getSQLState())) {
+			if ("XJ040".equals(e.getSQLState())
+					&& "XSDB6".equals(((SQLException) e.getCause().getCause())
+							.getSQLState())) {
 				throw new IllegalStateException(I18N.err(163, dbLocation));
 			} else {
 				throw e;

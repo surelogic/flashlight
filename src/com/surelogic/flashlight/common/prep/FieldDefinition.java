@@ -65,7 +65,7 @@ public class FieldDefinition extends AbstractPrep {
 			f_ps.setNull(idx++, Types.VARCHAR);
 		}
 		f_ps.setLong(idx++, type);
-		f_ps.setString(idx++, "N");
+		f_ps.setString(idx++, isStatic ? "Y" : "N");
 		f_ps.setString(idx++, isFinal ? "Y" : "N");
 		f_ps.setString(idx++, isVolatile ? "Y" : "N");
 		f_ps.addBatch();

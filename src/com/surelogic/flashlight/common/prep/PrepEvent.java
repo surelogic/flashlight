@@ -31,7 +31,12 @@ public enum PrepEvent {
 	}
 
 	public static PrepEvent getEvent(final String xml) {
-		return map.get(xml);
+		final PrepEvent e = map.get(xml);
+		if (e == null) {
+			throw new IllegalArgumentException(xml
+					+ " is not a recognized tag.");
+		}
+		return e;
 	}
 
 	PrepEvent(final String xmlName) {

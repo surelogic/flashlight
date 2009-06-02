@@ -120,6 +120,8 @@ public class ScanRawFileInfoPreScan extends AbstractDataScan {
 			final long id = attrs.getLong(AttributeType.ID);
 			f_maxReceiverId = Math.max(f_maxReceiverId, id);
 			break;
+		default:
+			break;
 		}
 	}
 

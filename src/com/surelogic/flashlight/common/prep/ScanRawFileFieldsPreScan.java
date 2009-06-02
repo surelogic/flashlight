@@ -97,9 +97,6 @@ public class ScanRawFileFieldsPreScan extends AbstractDataScan {
 		}
 		final PreppedAttributes attrs = preprocessAttributes(name, attributes);
 		final PrepEvent e = PrepEvent.getEvent(name);
-		if (e == null) {
-			throw new IllegalStateException(name + " is not a recognized tag.");
-		}
 		switch (e) {
 		case FIELDREAD:
 		case FIELDWRITE:

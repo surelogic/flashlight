@@ -1,12 +1,14 @@
 package com.surelogic.flashlight.common.jobs;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -329,7 +331,6 @@ public final class PrepSLJob extends AbstractSLJob {
 									element.printStats();
 								}
 							}
-							addConstraints(monitor).perform(c);
 						}
 					});
 				} catch (final TransactionException e) {
@@ -340,7 +341,15 @@ public final class PrepSLJob extends AbstractSLJob {
 						throw e;
 					}
 				}
-
+				final SLProgressMonitor constraintMonitor = new SubSLProgressMonitor(
+						monitor, "Generating indexes", ADD_CONSTRAINT_WORK);
+				final List<NullDBTransaction> constraints = addConstraints(constraintMonitor);
+				constraintMonitor.begin(constraints.size());
+				for (final NullDBTransaction constraint : constraints) {
+					f_database.withTransaction(constraint);
+					f_database.shutdown();
+				}
+				constraintMonitor.done();
 				if (monitor.isCanceled()) {
 					f_database.destroy();
 					return SLStatus.CANCEL_STATUS;
@@ -386,35 +395,39 @@ public final class PrepSLJob extends AbstractSLJob {
 		}
 	}
 
-	private NullDBTransaction addConstraints(final SLProgressMonitor monitor) {
-		return new NullDBTransaction() {
-
-			@Override
-			public void doPerform(final Connection conn) throws Exception {
-				final SLProgressMonitor constraintMonitor = new SubSLProgressMonitor(
-						monitor, "Generating indexes", ADD_CONSTRAINT_WORK);
-				final URL script = f_database.getSchemaLoader()
-						.getSchemaResource("add_constraints.sql");
-				final List<StringBuilder> statements = SchemaUtility
-						.getSQLStatements(script);
-				constraintMonitor.begin(statements.size());
-				final Statement addSt = conn.createStatement();
-				try {
-					for (final StringBuilder statement : statements) {
+	private List<NullDBTransaction> addConstraints(
+			final SLProgressMonitor monitor) {
+		final URL script = f_database.getSchemaLoader().getSchemaResource(
+				"add_constraints.sql");
+		final List<NullDBTransaction> transactions = new ArrayList<NullDBTransaction>();
+		try {
+			for (final StringBuilder statement : SchemaUtility
+					.getSQLStatements(script)) {
+				transactions.add(new NullDBTransaction() {
+					@Override
+					public void doPerform(final Connection conn)
+							throws Exception {
 						try {
-							addSt.execute(statement.toString());
+							SLLogger.getLoggerFor(PrepSLJob.class).fine(
+									statement.toString());
+							final Statement addSt = conn.createStatement();
+							try {
+								addSt.execute(statement.toString());
+							} finally {
+								addSt.close();
+							}
 						} catch (final SQLException e) {
 							throw new IllegalStateException(I18N.err(12,
 									statement.toString(), script), e);
 						}
-						constraintMonitor.worked(1);
+						monitor.worked(1);
 					}
-				} finally {
-					addSt.close();
-				}
-				constraintMonitor.done();
+				});
 			}
-		};
+		} catch (final IOException e) {
+			throw new IllegalStateException(e);
+		}
+		return transactions;
 	}
 
 	private static class CanceledException extends RuntimeException {

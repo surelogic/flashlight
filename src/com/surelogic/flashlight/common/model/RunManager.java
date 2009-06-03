@@ -121,6 +121,7 @@ public final class RunManager {
 	 * all observers if that set has changed.
 	 */
 	public void refresh() {
+		System.out.println("RunManger.refresh()");
 		final File dataDir = f_dataDir.get();
 		if (dataDir == null) {
 			return; // Nothing to do
@@ -160,6 +161,7 @@ public final class RunManager {
 		if (!descToPrepOld.equals(descToPrep)) {
 			isChanged = true;
 		}
+		System.out.println("RunManger.refresh() isChanged=" + isChanged);
 		if (isChanged) {
 			f_descToPrep.set(Collections.unmodifiableMap(descToPrep));
 			notifyObservers();

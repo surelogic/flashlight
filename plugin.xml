@@ -108,7 +108,7 @@
 	<extension point="org.eclipse.debug.ui.launchGroups">
 		<launchGroup bannerImage="/lib/images/fl_wiz.png"
 			id="com.surelogic.flashlight.launchGroup.flashlight"
-			image="platform:/plugin/com.surelogic.common/src/com/surelogic/common/images/fl_logo.gif"
+			image="icons/fl_logo.gif"
 			label="Flashlight" mode="flashlight" title="%fl.launchGroup.title" />
 	</extension>
 
@@ -219,7 +219,7 @@
 	-->
 	<extension point="org.eclipse.debug.ui.launchShortcuts">
 		<shortcut label="%fl.javaApplicationShortcut.label"
-			icon="platform:/plugin/com.surelogic.common/src/com/surelogic/common/images/fl_app.gif"
+			icon="icons/fl_app.gif"
 			helpContextId="org.eclipse.jdt.debug.ui.shortcut_local_java_application"
 			modes="flashlight"
 			class="com.surelogic.flashlight.client.eclipse.launch.JavaApplicationLaunchWrapper"
@@ -241,6 +241,9 @@
 					</with>
 				</enablement>
 			</contextualLaunch>
+      <configurationType
+        id="org.eclipse.jdt.launching.localJavaApplication">
+      </configurationType>
 		</shortcut>
 	</extension>
 	<extension point="org.eclipse.ui.views">

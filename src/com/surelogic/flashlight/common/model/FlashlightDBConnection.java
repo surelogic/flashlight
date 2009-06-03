@@ -73,7 +73,7 @@ public final class FlashlightDBConnection extends DerbyConnection {
 				DriverManager.getConnection("jdbc:derby:;shutdown=true");
 			} catch (final SQLException e) {
 				if (e.getErrorCode() == 50000) {
-					SLLogger.getLogger().log(Level.FINE, "Derby shut down", e);
+					SLLogger.getLogger().log(Level.FINE, e.getMessage());
 				} else {
 					throw new IllegalStateException(e);
 				}

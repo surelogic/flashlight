@@ -16,7 +16,7 @@ EXTERNAL NAME 'com.surelogic.flashlight.schema.Functions.stackTrace'
 
 CREATE FUNCTION OBJID 
        (OBJECT_ID BIGINT)
-RETURNS CHAR(254)
+RETURNS VARCHAR(100)
 PARAMETER STYLE JAVA
 READS SQL DATA LANGUAGE JAVA
 EXTERNAL NAME 'com.surelogic.flashlight.schema.Functions.objId'

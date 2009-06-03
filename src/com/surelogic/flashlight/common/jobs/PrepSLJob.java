@@ -347,7 +347,6 @@ public final class PrepSLJob extends AbstractSLJob {
 				constraintMonitor.begin(constraints.size());
 				for (final NullDBTransaction constraint : constraints) {
 					f_database.withTransaction(constraint);
-					f_database.shutdown();
 				}
 				constraintMonitor.done();
 				if (monitor.isCanceled()) {

@@ -4,9 +4,11 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.preference.BooleanFieldEditor;
 import org.eclipse.jface.preference.FieldEditor;
 import org.eclipse.jface.preference.IntegerFieldEditor;
+import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -21,19 +23,23 @@ import org.eclipse.ui.IWorkbench;
 
 import com.surelogic.adhoc.views.ExportQueryDialog;
 import com.surelogic.common.CommonImages;
+import com.surelogic.common.FileUtility;
 import com.surelogic.common.XUtil;
 import com.surelogic.common.eclipse.SLImages;
 import com.surelogic.common.eclipse.SWTUtility;
 import com.surelogic.common.eclipse.dialogs.ChangeDataDirectoryDialog;
-import com.surelogic.common.eclipse.jobs.ChangedDataDirectoryJob;
+import com.surelogic.common.eclipse.dialogs.ErrorDialogUtility;
+import com.surelogic.common.eclipse.logging.SLEclipseStatusUtility;
 import com.surelogic.common.eclipse.preferences.AbstractCommonPreferencePage;
 import com.surelogic.common.i18n.I18N;
-import com.surelogic.common.jobs.SLProgressMonitor;
+import com.surelogic.common.jobs.NullSLProgressMonitor;
+import com.surelogic.common.jobs.SLJob;
+import com.surelogic.common.jobs.SLSeverity;
 import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.common.serviceability.UsageMeter;
-import com.surelogic.flashlight.client.eclipse.FlashlightEclipseUtility;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
 import com.surelogic.flashlight.common.jobs.DisconnectAllDatabases;
+import com.surelogic.flashlight.common.model.RunManager;
 
 public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 	private final List<FieldEditor> f_editors = new ArrayList<FieldEditor>();
@@ -69,7 +75,7 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 		dataGroup.setLayout(new GridLayout(2, false));
 
 		f_dataDirectory = new Label(dataGroup, SWT.NONE);
-		updateDataDirectory(null);
+		updateDataDirectory();
 		f_dataDirectory.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true,
 				false));
 
@@ -80,29 +86,43 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 				false));
 		change.addListener(SWT.Selection, new Listener() {
 			public void handleEvent(final Event event) {
-				final ChangedDataDirectoryJob after = new ChangedDataDirectoryJob(
-						"") {
-					public SLStatus run(final SLProgressMonitor monitor) {
-						monitor.begin();
-						change.getDisplay().syncExec(new Runnable() {
-							public void run() {
-								updateDataDirectory(dataDir);
-							}
-						});
-						return SLStatus.OK_STATUS;
-					}
-				};
-				ChangeDataDirectoryDialog
-						.open(
-								change.getShell(),
-								FlashlightEclipseUtility
-										.getFlashlightDataDirectoryAnchor(),
-								I18N
-										.msg("flashlight.change.data.directory.dialog.title"),
-								SLImages.getImage(CommonImages.IMG_FL_LOGO),
-								I18N
-										.msg("flashlight.change.data.directory.dialog.information"),
-								new DisconnectAllDatabases(), after);
+				final File existing = PreferenceConstants
+						.getFlashlightDataDirectory();
+				final ChangeDataDirectoryDialog dialog = new ChangeDataDirectoryDialog(
+						change.getShell(),
+						existing,
+						I18N
+								.msg("flashlight.change.data.directory.dialog.title"),
+						SLImages.getImage(CommonImages.IMG_FL_LOGO),
+						I18N
+								.msg("flashlight.change.data.directory.dialog.information"));
+
+				if (dialog.open() != Window.OK)
+					return;
+
+				if (!dialog.isValidChangeToDataDirectory())
+					return;
+
+				final File destination = dialog.getNewDataDirectory();
+				final boolean moveOldToNew = dialog.moveOldToNew();
+
+				SLJob moveJob = FileUtility.moveDataDirectory(existing,
+						destination, moveOldToNew,
+						new DisconnectAllDatabases(), null);
+				SLStatus result = moveJob.run(new NullSLProgressMonitor());
+				if (result.getSeverity() == SLSeverity.OK) {
+					PreferenceConstants.setFlashlightDataDirectory(destination);
+					updateDataDirectory();
+					RunManager.getInstance().setDataDirectory(destination);
+				} else {
+					IStatus status = SLEclipseStatusUtility.convert(result);
+					ErrorDialogUtility
+							.open(
+									change.getShell(),
+									I18N
+											.msg("flashlight.change.data.directory.dialog.failed"),
+									status);
+				}
 			}
 		});
 
@@ -203,11 +223,8 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 		f_editors.add(editor);
 	}
 
-	private void updateDataDirectory(final File loc) {
-		if (loc != null) {
-			PreferenceConstants.setFlashlightDataDirectoryAnchor(loc);
-		}
-		f_dataDirectory.setText(FlashlightEclipseUtility
+	private void updateDataDirectory() {
+		f_dataDirectory.setText(PreferenceConstants
 				.getFlashlightDataDirectory().getAbsolutePath());
 	}
 

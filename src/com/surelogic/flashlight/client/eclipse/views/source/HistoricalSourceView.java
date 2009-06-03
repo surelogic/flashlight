@@ -22,7 +22,7 @@ import com.surelogic.common.AbstractJavaZip;
 import com.surelogic.common.eclipse.ViewUtility;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.common.serviceability.UsageMeter;
-import com.surelogic.flashlight.client.eclipse.FlashlightEclipseUtility;
+import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
 import com.surelogic.flashlight.common.files.RawFileUtility;
 import com.surelogic.flashlight.common.files.RunDirectory;
 import com.surelogic.flashlight.common.files.SourceZipFileHandles;
@@ -35,8 +35,8 @@ public final class HistoricalSourceView extends ViewPart {
 	StyledText source;
 	JavaSyntaxHighlighter highlighter;
 	RunDirectory lastRunDir = null;
-	String lastType = null;	
-	
+	String lastType = null;
+
 	@Override
 	public void createPartControl(final Composite parent) {
 		UsageMeter.getInstance().tickUse("Flashlight SourceView opened");
@@ -58,41 +58,21 @@ public final class HistoricalSourceView extends ViewPart {
 	// Find project zip under /source
 	// Find sourceFiles.xml, classMapping.xml in zip
 	/*
-	private boolean showSourceFile(final RunDirectory dir, String pkg,
-			final String name) {
-		if (pkg == null) {
-			pkg = "(default)";
-		}
-		final SourceZipFileHandles zips = dir.getSourceHandles();
-		for (final File f : zips.getSourceZips()) {
-			try {
-				final ZipFile zf = new ZipFile(f);
-				try {
-					final Map<String, Map<String, String>> fileMap = AbstractJavaZip
-							.readSourceFileMappings(zf);
-					// AbstractJavaZip.readClassMappings(zf);
-					final Map<String, String> map = fileMap.get(pkg);
-					if (map != null) {
-						final String path = map.get(name);
-						if (path != null) {
-							populate(zf, path);
-							return true;
-						}
-					}
-				} finally {
-					zf.close();
-				}
-			} catch (final Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-		return false;
-	}
-    */
+	 * private boolean showSourceFile(final RunDirectory dir, String pkg, final
+	 * String name) { if (pkg == null) { pkg = "(default)"; } final
+	 * SourceZipFileHandles zips = dir.getSourceHandles(); for (final File f :
+	 * zips.getSourceZips()) { try { final ZipFile zf = new ZipFile(f); try {
+	 * final Map<String, Map<String, String>> fileMap = AbstractJavaZip
+	 * .readSourceFileMappings(zf); // AbstractJavaZip.readClassMappings(zf);
+	 * final Map<String, String> map = fileMap.get(pkg); if (map != null) {
+	 * final String path = map.get(name); if (path != null) { populate(zf,
+	 * path); return true; } } } finally { zf.close(); } } catch (final
+	 * Exception e) { // TODO Auto-generated catch block e.printStackTrace(); }
+	 * } return false; }
+	 */
 
 	/**
-	 * @return true if the view is populated 
+	 * @return true if the view is populated
 	 */
 	private boolean showSourceFile(final RunDirectory dir, final String qname) {
 		if (lastRunDir == dir && lastType == qname) {
@@ -108,9 +88,9 @@ public final class HistoricalSourceView extends ViewPart {
 					if (fileMap != null) {
 						final String path = fileMap.get(qname);
 						if (path != null) {
-							populate(zf, path);							
+							populate(zf, path);
 							lastRunDir = dir;
-							lastType   = qname;
+							lastType = qname;
 							return true;
 						}
 					}
@@ -167,19 +147,21 @@ public final class HistoricalSourceView extends ViewPart {
 	public static void tryToOpenInEditor(final String pkg, final String type,
 			int lineNumber) {
 		if (currentRun != null) {
-			final File dataDir = FlashlightEclipseUtility.getFlashlightDataDirectory();
-			final RunDirectory dir = RawFileUtility
-					.getRunDirectoryFor(dataDir, currentRun);
+			final File dataDir = PreferenceConstants
+					.getFlashlightDataDirectory();
+			final RunDirectory dir = RawFileUtility.getRunDirectoryFor(dataDir,
+					currentRun);
 			final HistoricalSourceView view = (HistoricalSourceView) ViewUtility
 					.showView(HistoricalSourceView.class.getName(), null,
 							IWorkbenchPage.VIEW_VISIBLE);
 			if (view != null) {
-				final boolean loaded = view.showSourceFile(dir, pkg == null ? type : pkg + '.' + type);
+				final boolean loaded = view.showSourceFile(dir,
+						pkg == null ? type : pkg + '.' + type);
 				if (loaded) {
 					/*
-					 * The line numbers passed to this method are typically 1 based
-					 * relative to the first line of the content. We need to change this
-					 * to be 0 based.
+					 * The line numbers passed to this method are typically 1
+					 * based relative to the first line of the content. We need
+					 * to change this to be 0 based.
 					 */
 					if (lineNumber > 0) {
 						lineNumber--;
@@ -196,16 +178,19 @@ public final class HistoricalSourceView extends ViewPart {
 	public static void tryToOpenInEditor(final String pkg, final String type,
 			final String field) {
 		if (currentRun != null) {
-			final File dataDir = FlashlightEclipseUtility.getFlashlightDataDirectory();
-			final RunDirectory dir = RawFileUtility
-					.getRunDirectoryFor(dataDir, currentRun);
+			final File dataDir = PreferenceConstants
+					.getFlashlightDataDirectory();
+			final RunDirectory dir = RawFileUtility.getRunDirectoryFor(dataDir,
+					currentRun);
 			final HistoricalSourceView view = (HistoricalSourceView) ViewUtility
 					.showView(HistoricalSourceView.class.getName(), null,
 							IWorkbenchPage.VIEW_VISIBLE);
 			if (view != null) {
-				final boolean loaded = view.showSourceFile(dir, pkg == null ? type : pkg + '.' + type);
+				final boolean loaded = view.showSourceFile(dir,
+						pkg == null ? type : pkg + '.' + type);
 				if (loaded) {
-					final int lineNumber = computeLine(view.source.getText(), field);
+					final int lineNumber = computeLine(view.source.getText(),
+							field);
 					view.showAndSelectLine(lineNumber);
 				}
 			}
@@ -229,13 +214,15 @@ public final class HistoricalSourceView extends ViewPart {
 		source.setTopIndex(lineNumber < 5 ? 0 : lineNumber - 5);
 
 		if (lineNumber < 0) {
-			SLLogger.getLogger().info("Line number is too small for HistoricalSourceView: "+lineNumber);
+			SLLogger.getLogger().info(
+					"Line number is too small for HistoricalSourceView: "
+							+ lineNumber);
 			return;
 		}
 		/*
 		 * Highlight the line by selecting it in the widget.
 		 */
-		try {			
+		try {
 			final int start = source.getOffsetAtLine(lineNumber);
 			final int end;
 			if (lineNumber + 1 > source.getLineCount()) {
@@ -244,8 +231,11 @@ public final class HistoricalSourceView extends ViewPart {
 				end = source.getOffsetAtLine(lineNumber + 1);
 			}
 			source.setSelection(start, end);
-		} catch(IllegalArgumentException e) {
-			SLLogger.getLogger().log(Level.INFO, "Could not find line "+lineNumber+" in HistoricalSourceView", e);
+		} catch (IllegalArgumentException e) {
+			SLLogger.getLogger().log(
+					Level.INFO,
+					"Could not find line " + lineNumber
+							+ " in HistoricalSourceView", e);
 		}
 	}
 

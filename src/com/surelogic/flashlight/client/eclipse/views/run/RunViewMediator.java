@@ -27,7 +27,6 @@ import com.surelogic.common.eclipse.jobs.EclipseJob;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jobs.AggregateSLJob;
 import com.surelogic.common.jobs.SLJob;
-import com.surelogic.flashlight.client.eclipse.FlashlightEclipseUtility;
 import com.surelogic.flashlight.client.eclipse.dialogs.DeleteRunDialog;
 import com.surelogic.flashlight.client.eclipse.dialogs.LogDialog;
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
@@ -300,7 +299,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 						jobs.add(new UnPrepSLJob(prep));
 					}
 					if (deleteRaw) {
-						final File dataDir = FlashlightEclipseUtility
+						final File dataDir = PreferenceConstants
 								.getFlashlightDataDirectory();
 						jobs.add(new DeleteRawFilesSLJob(dataDir, description));
 					}

@@ -11,10 +11,13 @@ import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 
+import com.surelogic.common.FileUtility;
 import com.surelogic.common.eclipse.logging.SLEclipseStatusUtility;
+import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.serviceability.UsageMeter;
 import com.surelogic.flashlight.client.eclipse.jobs.FlashlightCleanupJob;
 import com.surelogic.flashlight.client.eclipse.jobs.PromptToPrepAllRawData;
+import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
 import com.surelogic.flashlight.common.model.RunManager;
 
@@ -58,8 +61,18 @@ public class Activator extends AbstractUIPlugin {
 		SLEclipseStatusUtility.touch();
 
 		UsageMeter.getInstance().tickUse("Flashlight Eclipse plug-in loaded");
-		RunManager.getInstance().setDataDirectory(
-				FlashlightEclipseUtility.getFlashlightDataDirectory());
+
+		/*
+		 * Get the data directory and ensure that it actually exists.
+		 */
+		final String path = getPluginPreferences().getString(
+				PreferenceConstants.P_DATA_DIRECTORY);
+		if (path == null)
+			throw new IllegalStateException(I18N.err(44, "P_DATA_DIRECTORY"));
+		final File dataDir = new File(path);
+		FileUtility.createDirectory(dataDir);
+
+		RunManager.getInstance().setDataDirectory(dataDir);
 		new FlashlightCleanupJob().schedule();
 		PromptToPrepAllRawData.start();
 	}

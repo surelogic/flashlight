@@ -6,9 +6,13 @@ import static com.surelogic._flashlight.common.InstrumentationConstants.FL_OUTQ_
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_RAWQ_SIZE_DEFAULT;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_REFINERY_SIZE_DEFAULT;
 
+import java.io.File;
+
 import org.eclipse.core.runtime.preferences.AbstractPreferenceInitializer;
 import org.eclipse.jface.preference.IPreferenceStore;
 
+import com.surelogic.common.FileUtility;
+import com.surelogic.common.eclipse.EclipseUtility;
 import com.surelogic.flashlight.client.eclipse.Activator;
 
 /**
@@ -42,5 +46,13 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 				true);
 		store.setDefault(PreferenceConstants.P_AUTO_PREP_ALL_RAW_DATA, false);
 		store.setDefault(PreferenceConstants.P_PREP_OBJECT_WINDOW_SIZE, 300000);
+		store.setDefault(PreferenceConstants.P_DATA_DIRECTORY,
+				getDefaultDataDirectory());
+	}
+
+	private String getDefaultDataDirectory() {
+		final File root = EclipseUtility.getWorspacePath();
+		final File path = new File(root, FileUtility.FLASHLIGHT_DATA);
+		return path.getAbsolutePath();
 	}
 }

@@ -1,12 +1,32 @@
 package com.surelogic.flashlight.client.eclipse.launch;
 
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_CONSOLE_PORT;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_DATE_OVERRIDE;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_DIR;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_FIELDS_FILE;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_NO_SPY;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_OUTPUT_TYPE;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_OUTQ_SIZE;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_RAWQ_SIZE;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_REFINERY_OFF;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_REFINERY_SIZE;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_SITES_FILE;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintWriter; //import java.util.Properties;
+import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 import java.util.logging.Level;
 
 import javax.xml.bind.JAXBException;
@@ -27,7 +47,7 @@ import org.eclipse.jdt.launching.IVMRunner;
 import org.eclipse.jdt.launching.VMRunnerConfiguration;
 import org.eclipse.ui.progress.UIJob;
 
-import com.surelogic._flashlight.common.*;
+import com.surelogic._flashlight.common.OutputType;
 import com.surelogic._flashlight.rewriter.PrintWriterMessenger;
 import com.surelogic._flashlight.rewriter.RewriteManager;
 import com.surelogic._flashlight.rewriter.RewriteMessenger;
@@ -40,12 +60,9 @@ import com.surelogic.common.eclipse.logging.SLEclipseStatusUtility;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.client.eclipse.Activator;
-import com.surelogic.flashlight.client.eclipse.FlashlightEclipseUtility;
 import com.surelogic.flashlight.client.eclipse.jobs.LaunchTerminationDetectionJob;
 import com.surelogic.flashlight.client.eclipse.jobs.SwitchToFlashlightPerspectiveJob;
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
-
-import static com.surelogic._flashlight.common.InstrumentationConstants.*;
 
 final class FlashlightVMRunner implements IVMRunner {
 	private static final String MAX_HEAP_PREFIX = "-Xmx";
@@ -74,7 +91,7 @@ final class FlashlightVMRunner implements IVMRunner {
 	private final List<String> system;
 	private final List<String> instrumentUser;
 	private final List<String> instrumentBoot;
-	
+
 	private final boolean ALWAYS_APPEND_TO_BOOT = true;
 
 	public FlashlightVMRunner(final IVMRunner other, final String mainType,
@@ -104,9 +121,8 @@ final class FlashlightVMRunner implements IVMRunner {
 				"-yyyy.MM.dd-'at'-HH.mm.ss.SSS");
 		datePostfix = dateFormat.format(new Date());
 		final String runName = mainTypeName + datePostfix;
-		final File flashlightDataDir = FlashlightEclipseUtility
-				.getFlashlightDataDirectory();
-		runOutputDir = new File(flashlightDataDir, runName);
+		final File dataDir = PreferenceConstants.getFlashlightDataDirectory();
+		runOutputDir = new File(dataDir, runName);
 		if (!runOutputDir.exists())
 			runOutputDir.mkdirs();
 
@@ -157,7 +173,8 @@ final class FlashlightVMRunner implements IVMRunner {
 		 * Build the instrumented class files. First we scan each directory to
 		 * the build the field database, and then we instrument each directory.
 		 */
-		if (instrumentClassfiles(launch.getLaunchConfiguration(), classpathEntryMap, progress)) {
+		if (instrumentClassfiles(launch.getLaunchConfiguration(),
+				classpathEntryMap, progress)) {
 			// Canceled, abort early
 			return;
 		}
@@ -226,9 +243,8 @@ final class FlashlightVMRunner implements IVMRunner {
 	 * @return Whether instrumentation was canceled.
 	 */
 	@SuppressWarnings("cast")
-  private boolean instrumentClassfiles(final ILaunchConfiguration launch,
-	    final Map<String, String> entryMap,
-			final SubMonitor progress) {
+	private boolean instrumentClassfiles(final ILaunchConfiguration launch,
+			final Map<String, String> entryMap, final SubMonitor progress) {
 		runOutputDir.mkdirs();
 		PrintWriter logOut = null;
 		try {
@@ -237,9 +253,8 @@ final class FlashlightVMRunner implements IVMRunner {
 
 			// Read the property file
 			Properties flashlightProps = new Properties();
-			final File flashlightPropFile =
-			  new File(System.getProperty("user.home"),
-			      "flashlight-rewriter.properties");
+			final File flashlightPropFile = new File(System
+					.getProperty("user.home"), "flashlight-rewriter.properties");
 			boolean failed = false;
 			try {
 				flashlightProps.load(new FileInputStream(flashlightPropFile));
@@ -248,64 +263,70 @@ final class FlashlightVMRunner implements IVMRunner {
 			} catch (final IllegalArgumentException e) {
 				failed = true;
 			}
-			
+
 			final ConfigurationBuilder configBuilder;
 			if (failed) {
 				SLLogger.getLogger().log(Level.INFO,
 						I18N.err(162, flashlightPropFile));
 				configBuilder = new ConfigurationBuilder();
 			} else {
-			  configBuilder = new ConfigurationBuilder(flashlightProps);
+				configBuilder = new ConfigurationBuilder(flashlightProps);
 			}
 
 			try {
-  			configBuilder.setIndirectUseDefault(
-  			    launch.getAttribute(
-  			        PreferenceConstants.P_USE_DEFAULT_INDIRECT_ACCESS_METHODS, true));
+				configBuilder
+						.setIndirectUseDefault(launch
+								.getAttribute(
+										PreferenceConstants.P_USE_DEFAULT_INDIRECT_ACCESS_METHODS,
+										true));
 			} catch (final CoreException e) {
-			  // eat it
+				// eat it
 			}
-      try {
-        final List<String> xtraMethods = (List<String>) launch.getAttribute(
-            PreferenceConstants.P_ADDITIONAL_INDIRECT_ACCESS_METHODS,
-            Collections.emptyList());
-        for (final String s : xtraMethods) {
-          configBuilder.addAdditionalMethods(new File(s));
-        }
-      } catch (final CoreException e) {
-        // eat it
-      }
-			
-      try {
-        final List<String> blacklist = (List<String>) launch.getAttribute(
-            PreferenceConstants.P_CLASS_BLACKLIST, Collections.emptyList());
-        for (final String internalTypeName : blacklist) {
-          configBuilder.addToBlacklist(internalTypeName);
-        }
-      } catch (final CoreException e) {
-        // eat it
-      }
-      
-      try {
-        final String filterName = launch.getAttribute(
-            PreferenceConstants.P_FIELD_FILTER, FieldFilter.NONE.name());
-        configBuilder.setFieldFilter(Enum.valueOf(FieldFilter.class, filterName));
-        
-        final List<String> filterPkgs = launch.getAttribute(
-            PreferenceConstants.P_FIELD_FILTER_PACKAGES, 
-            Collections.emptyList());
-        configBuilder.getFilterPackages().clear();
-        for (final String pkg : filterPkgs) {
-          configBuilder.addToFilterPackages(pkg.replace('.', '/'));
-        }
-        
-      } catch (final CoreException e) {
-        // eat it
-      }
-      
-			final RewriteManager manager =
-			  new VMRewriteManager(configBuilder.getConfiguration(),
-					messenger, fieldsFile, sitesFile, progress);
+			try {
+				final List<String> xtraMethods = (List<String>) launch
+						.getAttribute(
+								PreferenceConstants.P_ADDITIONAL_INDIRECT_ACCESS_METHODS,
+								Collections.emptyList());
+				for (final String s : xtraMethods) {
+					configBuilder.addAdditionalMethods(new File(s));
+				}
+			} catch (final CoreException e) {
+				// eat it
+			}
+
+			try {
+				final List<String> blacklist = (List<String>) launch
+						.getAttribute(PreferenceConstants.P_CLASS_BLACKLIST,
+								Collections.emptyList());
+				for (final String internalTypeName : blacklist) {
+					configBuilder.addToBlacklist(internalTypeName);
+				}
+			} catch (final CoreException e) {
+				// eat it
+			}
+
+			try {
+				final String filterName = launch.getAttribute(
+						PreferenceConstants.P_FIELD_FILTER, FieldFilter.NONE
+								.name());
+				configBuilder.setFieldFilter(Enum.valueOf(FieldFilter.class,
+						filterName));
+
+				final List<String> filterPkgs = launch.getAttribute(
+						PreferenceConstants.P_FIELD_FILTER_PACKAGES,
+						Collections.emptyList());
+				configBuilder.getFilterPackages().clear();
+				for (final String pkg : filterPkgs) {
+					configBuilder.addToFilterPackages(pkg.replace('.', '/'));
+				}
+
+			} catch (final CoreException e) {
+				// eat it
+			}
+
+			final RewriteManager manager = new VMRewriteManager(configBuilder
+					.getConfiguration(), messenger, fieldsFile, sitesFile,
+					progress);
 
 			// Scan everything on the classpath
 			addToScan(manager, user);
@@ -592,7 +613,7 @@ final class FlashlightVMRunner implements IVMRunner {
 			if (!ALWAYS_APPEND_TO_BOOT) {
 				return null;
 			}
-			original = Collections.EMPTY_MAP;			
+			original = Collections.EMPTY_MAP;
 		}
 
 		final Map updated = new HashMap();
@@ -721,8 +742,8 @@ final class FlashlightVMRunner implements IVMRunner {
 
 		@Override
 		protected void exceptionLoadingMethodsFile(final JAXBException e) {
-			SLLogger.getLogger().log(
-					Level.SEVERE, "Problem loading indirect access methods", e);
+			SLLogger.getLogger().log(Level.SEVERE,
+					"Problem loading indirect access methods", e);
 		}
 
 		@Override

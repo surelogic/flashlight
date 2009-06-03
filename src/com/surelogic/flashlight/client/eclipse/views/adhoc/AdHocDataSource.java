@@ -23,7 +23,6 @@ import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jdbc.DBConnection;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.client.eclipse.Activator;
-import com.surelogic.flashlight.client.eclipse.FlashlightEclipseUtility;
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
 import com.surelogic.flashlight.common.model.RunDescription;
 import com.surelogic.flashlight.common.model.RunManager;
@@ -52,9 +51,9 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements
 	private boolean isValid() {
 		return Activator.getDefault() != null;
 	}
-	
+
 	public File getQuerySaveFile() {
-		return new File(FlashlightEclipseUtility.getFlashlightDataDirectory(),
+		return new File(PreferenceConstants.getFlashlightDataDirectory(),
 				"flashlight-queries.xml");
 	}
 
@@ -70,7 +69,7 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements
 		try {
 			SLLogger.getLogger().log(Level.SEVERE,
 					I18N.err(4, getQuerySaveFile().getAbsolutePath()), e);
-		} catch(Exception e2) {
+		} catch (Exception e2) {
 			SLLogger.getLogger().log(Level.SEVERE,
 					I18N.err(4, "(unavailable)"), e);
 		}
@@ -100,7 +99,7 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements
 			AdHocManager.shutdown();
 		}
 	}
-	
+
 	@Override
 	public void notifySelectedResultChange(final AdHocQueryResult result) {
 		final UIJob job = new SLUIJob() {

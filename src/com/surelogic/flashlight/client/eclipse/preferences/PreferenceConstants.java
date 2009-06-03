@@ -107,25 +107,21 @@ public class PreferenceConstants implements IPreferenceConstants {
 				P_PROMPT_ABOUT_LOTS_OF_SAVED_QUERIES, value);
 	}
 
-	public static final String P_DATA_DIRECTORY_ANCHOR = PREFIX
-			+ "data-directory-anchor";
+	public static final String P_DATA_DIRECTORY = PREFIX + "data-directory";
 
-	public static File getFlashlightDataDirectoryAnchor() {
-		if (Activator.getDefault() == null) {
-			throw new IllegalStateException("No Activator");
-		}
+	public static File getFlashlightDataDirectory() {
 		final String path = Activator.getDefault().getPluginPreferences()
-				.getString(P_DATA_DIRECTORY_ANCHOR);
+				.getString(P_DATA_DIRECTORY);
 		if (path.length() == 0 || path == null) {
 			return null;
 		}
 		return new File(path);
 	}
 
-	public static void setFlashlightDataDirectoryAnchor(final File dir) {
+	public static void setFlashlightDataDirectory(final File dir) {
 		if (dir != null && dir.exists() && dir.isDirectory()) {
 			Activator.getDefault().getPluginPreferences().setValue(
-					P_DATA_DIRECTORY_ANCHOR, dir.getAbsolutePath());
+					P_DATA_DIRECTORY, dir.getAbsolutePath());
 		} else {
 			throw new IllegalArgumentException("Bad directory: " + dir);
 		}

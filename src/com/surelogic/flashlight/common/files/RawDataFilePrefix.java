@@ -23,9 +23,6 @@ import com.surelogic.common.logging.SLLogger;
  */
 public final class RawDataFilePrefix {
 
-	public RawDataFilePrefix() {
-	}
-
 	private File f_dataFile;
 
 	public File getFile() {

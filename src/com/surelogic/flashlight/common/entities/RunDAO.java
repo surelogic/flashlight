@@ -1,6 +1,5 @@
 package com.surelogic.flashlight.common.entities;
 
-import java.io.File;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -56,24 +55,21 @@ public final class RunDAO {
 
 	/**
 	 * Looks up the run in the database by its identifier.
-	 * @param dataDir 
 	 * 
 	 * @param c
 	 *            the database connection to use.
-	 * @param run
-	 *            the run identifier.
 	 * @return the run, or <code>null</code> if no such run exists.
 	 * @throws SQLException
 	 *             if something goes wrong interacting with the database.
 	 */
-	public static PrepRunDescription find(File dataDir, final Connection c)
+	public static PrepRunDescription find(final Connection c)
 			throws SQLException {
 		final PreparedStatement s = c.prepareStatement(QB.get("RunDAO.select"));
 		try {
 			final ResultSet rs = s.executeQuery();
 			try {
 				if (rs.next()) {
-					return convertRowToObject(dataDir, rs);
+					return convertRowToObject(rs);
 				}
 			} finally {
 				rs.close();
@@ -84,7 +80,7 @@ public final class RunDAO {
 		return null;
 	}
 
-	private static PrepRunDescription convertRowToObject(File dataDir, final ResultSet rs)
+	private static PrepRunDescription convertRowToObject(final ResultSet rs)
 			throws SQLException {
 		int i = 1;
 		final String name = rs.getString(i++);
@@ -98,7 +94,7 @@ public final class RunDAO {
 		final int maxMemoryMb = rs.getInt(i++);
 		final int processors = rs.getInt(i++);
 		final Timestamp started = rs.getTimestamp(i++);
-		final RunDescription description = new RunDescription(dataDir, name,
+		final RunDescription description = new RunDescription(name,
 				rawDataVersion, userName, javaVersion, javaVendor, osName,
 				osArch, osVersion, maxMemoryMb, processors, started);
 		return new PrepRunDescription(description);

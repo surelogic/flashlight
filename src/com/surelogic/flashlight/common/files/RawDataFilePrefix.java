@@ -22,16 +22,10 @@ import com.surelogic.common.logging.SLLogger;
  * loads in the information from a specified raw data file.
  */
 public final class RawDataFilePrefix {
-	private final File dataDir;
-	
-	public RawDataFilePrefix(File dataDir) {
-		this.dataDir = dataDir;
+
+	public RawDataFilePrefix() {
 	}
-	
-	File getDataDir() {
-		return dataDir;
-	}
-	
+
 	private File f_dataFile;
 
 	public File getFile() {
@@ -241,7 +235,8 @@ public final class RawDataFilePrefix {
 				final PrefixHandler handler = new PrefixHandler();
 				try {
 					// Parse the input
-					final SAXParser saxParser = RawFileUtility.getParser(f_dataFile);
+					final SAXParser saxParser = RawFileUtility
+							.getParser(f_dataFile);
 					saxParser.parse(stream, handler);
 				} catch (final SAXException e) {
 					/*

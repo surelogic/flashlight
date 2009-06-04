@@ -28,6 +28,7 @@ import com.surelogic.common.SLUtility;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.common.model.RunDescription;
+import com.surelogic.flashlight.common.model.RunManager;
 
 /**
  * A utility designed to work with Flashlight data files and the contents of the
@@ -101,16 +102,18 @@ public final class RawFileUtility {
 	 *         Flashlight data directory.
 	 */
 	public static Set<RunDescription> getRunDescriptions(File dataDir) {
-		final RawDataDirectoryReader runDescriptionBuilder = new RawDataDirectoryReader(dataDir);
+		final RawDataDirectoryReader runDescriptionBuilder = new RawDataDirectoryReader(
+				dataDir);
 		runDescriptionBuilder.read();
 		return runDescriptionBuilder.getRunDescriptions();
 	}
 
 	public static List<File> findInvalidRunDirectories(File dataDir) {
-		final RawDataDirectoryReader runDescriptionBuilder = new RawDataDirectoryReader(dataDir);
+		final RawDataDirectoryReader runDescriptionBuilder = new RawDataDirectoryReader(
+				dataDir);
 		return runDescriptionBuilder.findBadDirs();
 	}
-	
+
 	// /**
 	// * Examines the Flashlight data directory and returns file handles
 	// * corresponding to the passed run description, or {@code null} if no file
@@ -139,14 +142,16 @@ public final class RawFileUtility {
 		if (description == null) {
 			throw new IllegalArgumentException(I18N.err(44, "description"));
 		}
-		final RawDataDirectoryReader runDescriptionBuilder = new RawDataDirectoryReader(dataDir);
+		final RawDataDirectoryReader runDescriptionBuilder = new RawDataDirectoryReader(
+				dataDir);
 		runDescriptionBuilder.read();
 		return runDescriptionBuilder.getRunDirectoryFor(description);
 	}
 
 	public static RunDirectory getRunDirectoryFor(
 			final RawDataFilePrefix prefixInfo) {
-		return getRunDirectoryFor(prefixInfo.getDataDir(), getRunDescriptionFor(prefixInfo));
+		return getRunDirectoryFor(RunManager.getInstance().getDataDirectory(),
+				getRunDescriptionFor(prefixInfo));
 	}
 
 	/**
@@ -160,8 +165,7 @@ public final class RawFileUtility {
 		if (dataFile == null) {
 			throw new IllegalArgumentException(I18N.err(44, "dataFile"));
 		}
-		File dataDir = dataFile.getParentFile().getParentFile();
-		final RawDataFilePrefix prefixInfo = new RawDataFilePrefix(dataDir);
+		final RawDataFilePrefix prefixInfo = new RawDataFilePrefix();
 		prefixInfo.read(dataFile);
 
 		return prefixInfo;
@@ -188,8 +192,7 @@ public final class RawFileUtility {
 
 			final Timestamp started = new Timestamp(prefixInfo
 					.getWallClockTime().getTime());
-			final RunDescription run = new RunDescription(prefixInfo.getDataDir(), 
-					prefixInfo.getName(),
+			final RunDescription run = new RunDescription(prefixInfo.getName(),
 					prefixInfo.getRawDataVersion(), prefixInfo.getUserName(),
 					prefixInfo.getJavaVersion(), prefixInfo.getJavaVendor(),
 					prefixInfo.getOSName(), prefixInfo.getOSArch(), prefixInfo
@@ -256,11 +259,11 @@ public final class RawFileUtility {
 		private final Map<RunDescription, RunDirectory> f_runToHandles = new HashMap<RunDescription, RunDirectory>();
 
 		private final File dataDir;
-		
+
 		RawDataDirectoryReader(File dataDir) {
 			this.dataDir = dataDir;
 		}
-		
+
 		Set<RunDescription> getRunDescriptions() {
 			return f_runs;
 		}
@@ -270,11 +273,11 @@ public final class RawFileUtility {
 		}
 
 		private File[] getRunDirs() {
-			System.out.println("getRunDirs() "+dataDir.getAbsolutePath());
+			System.out.println("getRunDirs() " + dataDir.getAbsolutePath());
 			final File[] runDirs = dataDir.listFiles(f_directoryFilter);
 			return runDirs;
 		}
-				
+
 		void read() {
 			for (final File runDir : getRunDirs()) {
 				final RunDirectory runDirectory = RunDirectory.getFor(runDir);
@@ -285,11 +288,11 @@ public final class RawFileUtility {
 				}
 			}
 		}
-		
+
 		List<File> findBadDirs() {
 			List<File> bad = new ArrayList<File>();
 			for (final File runDir : getRunDirs()) {
-				// FL, but not good 
+				// FL, but not good
 				if (RunDirectory.isInvalid(runDir)) {
 					bad.add(runDir);
 				}

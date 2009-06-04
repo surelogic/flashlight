@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jdbc.DBConnection;
 import com.surelogic.common.jdbc.NullDBTransaction;
 import com.surelogic.flashlight.common.entities.PrepRunDescription;
@@ -55,13 +56,41 @@ public final class RunManager {
 		}
 	}
 
+	/**
+	 * A reference to the Flashlight data directory, the plug-in will notify
+	 * this model if this changes.
+	 */
 	private final AtomicReference<File> f_dataDir = new AtomicReference<File>();
 
-	public void setDataDirectory(final File dir) {
-		if (dir != null && dir.exists() && dir.isDirectory()) {
-			f_dataDir.set(dir);
+	/**
+	 * Updates the location of the Flashlight data directory.
+	 * 
+	 * @param dataDir
+	 *            the new location of the Flashlight data directory.
+	 */
+	public void setDataDirectory(final File dataDir) {
+		if (dataDir == null)
+			throw new IllegalArgumentException(I18N.err(44, "dataDir"));
+		if (dataDir.exists() && dataDir.isDirectory()) {
+			f_dataDir.set(dataDir);
 			refresh();
-		}
+		} else
+			throw new IllegalArgumentException(I18N.err(167, dataDir));
+	}
+
+	/**
+	 * Gets the location of the Flashlight data directory.
+	 * 
+	 * @return the non-null location of the Flashlight data directory.
+	 * @throws IllegalStateException
+	 *             if {@link RunManager#setDataDirectory(File)} has not been
+	 *             called with a valid directory.
+	 */
+	public File getDataDirectory() {
+		final File result = f_dataDir.get();
+		if (result == null)
+			throw new IllegalStateException(I18N.err(168));
+		return result;
 	}
 
 	/**
@@ -146,7 +175,7 @@ public final class RunManager {
 					@Override
 					public void doPerform(final Connection conn)
 							throws Exception {
-						descToPrep.put(key, RunDAO.find(dataDir, conn));
+						descToPrep.put(key, RunDAO.find(conn));
 					}
 				});
 			}

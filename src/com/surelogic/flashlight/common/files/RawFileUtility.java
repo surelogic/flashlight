@@ -273,7 +273,6 @@ public final class RawFileUtility {
 		}
 
 		private File[] getRunDirs() {
-			System.out.println("getRunDirs() " + dataDir.getAbsolutePath());
 			final File[] runDirs = dataDir.listFiles(f_directoryFilter);
 			return runDirs;
 		}

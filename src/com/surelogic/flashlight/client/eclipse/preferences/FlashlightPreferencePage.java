@@ -114,12 +114,7 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 					PreferenceConstants.setFlashlightDataDirectory(destination);
 					updateDataDirectory();
 					RunManager.getInstance().setDataDirectory(destination);
-					if (!moveOldToNew) {
-						/*
-						 * We need to clear all query results
-						 */
-						AdHocDataSource.getManager().deleteAllResults();
-					}
+					AdHocDataSource.getManager().deleteAllResults();
 				} else {
 					IStatus status = SLEclipseStatusUtility.convert(result);
 					ErrorDialogUtility

@@ -115,10 +115,10 @@ public final class RunManager {
 
 	/**
 	 * Gets the set of run descriptions known to this manager that have not been
-	 * prepped. This set can be empty.
+	 * prepared. This set can be empty.
 	 * 
 	 * @return the non-null set of run descriptions known to this manager that
-	 *         have not been prepped. This is a copy of the set maintained by
+	 *         have not been prepared. This is a copy of the set maintained by
 	 *         this manager so it can be freely mutated by callers.
 	 */
 	public Set<RunDescription> getUnPreppedRunDescriptions() {

@@ -14,7 +14,8 @@ public enum PrepEvent {
 			"before-util-concurrent-lock-acquisition-attempt"), CLASSDEFINITION(
 			"class-definition"), ENVIRONMENT("environment"), FIELDDEFINITION(
 			"field-definition"), FIELDREAD("field-read"), FIELDWRITE(
-			"field-write"), FLASHLIGHT("flashlight"), GARBAGECOLLECTEDOBJECT(
+			"field-write"), FINAL("final"),
+			FLASHLIGHT("flashlight"), GARBAGECOLLECTEDOBJECT(
 			"garbage-collected-object"), INDIRECTACCESS("indirect-access"), OBJECTDEFINITION(
 			"object-definition"), READWRITELOCK("read-write-lock-definition"), SELECTEDPACKAGE(
 			"selected-package"), STATICCALLLOCATION("static-call-location"), SINGLETHREADEFIELD(

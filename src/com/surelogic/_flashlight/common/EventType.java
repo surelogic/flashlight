@@ -184,7 +184,7 @@ public enum EventType {
 			attrs.put(RECEIVER, readCompressedLong(in));
 		}
 	},
-	Lock("lock") {
+	Lock("lock", false) {
 	    @Override
 	    void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
 	        attrs.setLockId(readCompressedLong(in));
@@ -196,7 +196,7 @@ public enum EventType {
 		}
 		*/
 	},
-	Not_Under_Construction("not-under-construction") {
+	Not_Under_Construction("not-under-construction", false) {
 		@Override
 		void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
 			  attrs.put(UNDER_CONSTRUCTION, Boolean.FALSE);
@@ -229,7 +229,7 @@ public enum EventType {
 			attrs.put(WRITE_LOCK_ID, readCompressedLong(in));
 		}
 	},
-	Receiver("receiver") {
+	Receiver("receiver", false) {
 	    @Override
 	    void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
 	        attrs.put(RECEIVER, readCompressedLong(in));
@@ -269,7 +269,7 @@ public enum EventType {
 			attrs.put(LOCATION, in.readUTF());
 	    }
 	},
-	Thread("thread") {
+	Thread("thread", false) {
 	    @Override
 	    void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
 	        attrs.setThreadId(readCompressedLong(in));
@@ -335,7 +335,7 @@ public enum EventType {
 		}
 		*/
 	},
-	Under_Construction("under-construction") {
+	Under_Construction("under-construction", false) {
 		@Override
 		void read(ObjectInputStream in, BinaryAttributes attrs) throws IOException {
 			  attrs.put(UNDER_CONSTRUCTION, Boolean.TRUE);
@@ -359,9 +359,23 @@ public enum EventType {
 		}
 	}
 	private final String label;
+	/**
+	 * Whether this event should be processed by XML handlers
+	 */
+	private final boolean process;
 	
 	private EventType(String l) {
+		this(l, true);
+	}
+	private EventType(String l, boolean process) {
 		label = l;
+		this.process = process;
+	}
+	/**
+	 * @return true if this event should be processed by XML handlers
+	 */
+	public boolean processEvent() {
+		return process;
 	}
 	public String getLabel() {
 		return label;

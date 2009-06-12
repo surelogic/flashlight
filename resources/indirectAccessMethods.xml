@@ -5,289 +5,13 @@
 		</method>
 	</class>
 
-	<class name="java.util.Collection">
-		<method signature="int size()">
-			<arg>0</arg>
-		</method>
-
-		<method signature="boolean isEmpty()">
-			<arg>0</arg>
-		</method>
-
-		<method signature="boolean contains(java.lang.Object)">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.lang.Object[] toArray()">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.lang.Object[] toArray(java.lang.Object[])">
-			<arg>0</arg>
-			<arg>1</arg>
-		</method>
-
-		<method signature="boolean add(java.lang.Object)">
-			<arg>0</arg>
-		</method>
-
-		<method signature="boolean remove(java.lang.Object)">
-			<arg>0</arg>
-		</method>
-
-		<method signature="boolean containsAll(java.util.Collection)">
-			<arg>0</arg>
-			<arg>1</arg>
-		</method>
-
-		<method signature="boolean addAll(java.util.Collection)">
-			<arg>0</arg>
-			<arg>1</arg>
-		</method>
-
-		<method signature="boolean removeAll(java.util.Collection)">
-			<arg>0</arg>
-			<arg>1</arg>
-		</method>
-
-		<method signature="boolean retainAll(java.util.Collection)">
-			<arg>0</arg>
-			<arg>1</arg>
-		</method>
-
-		<method signature="void clear()">
-			<arg>0</arg>
-		</method>
-	</class>
-
-	<class name="java.util.Enumeration">
-		<method signature="boolean hasMoreElements()">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.lang.Object nextElement()">
-			<arg>0</arg>
-		</method>
-	</class>
-
-	<class name="java.util.Iterator">
-		<method signature="boolean hasNext()">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.lang.Object next()">
-			<arg>0</arg>
-		</method>
-
-		<method signature="void remove()">
-			<arg>0</arg>
-		</method>
-	</class>
-
-	<class name="java.util.List">
-		<method signature="boolean addAll(int, java.util.Collection)">
+	<class name="java.lang.System">
+		<method signature="void arraycopy(java.lang.Object, int, java.lang.Object, int, int)" isStatic="true">
 			<arg>0</arg>
 			<arg>2</arg>
 		</method>
 
-		<method signature="java.lang.Object get(int)">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.lang.Object set(int, java.lang.Object)">
-			<arg>0</arg>
-		</method>
-
-		<method signature="void add(int, java.lang.Object)">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.lang.Object remove(int)">
-			<arg>0</arg>
-		</method>
-
-		<method signature="int indexOf(java.lang.Object)">
-			<arg>0</arg>
-		</method>
-
-		<method signature="int lastIndexOf(java.lang.Object)">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.util.ListIterator listIterator()">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.util.ListIterator listIterator(int)">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.util.List subList(int, int)">
-			<arg>0</arg>
-		</method>
-	</class>
-
-	<class name="java.util.ListIterator">
-		<method signature="boolean hasPrevious()">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.lang.Object previous()">
-			<arg>0</arg>
-		</method>
-
-		<method signature="int nextIndex()">
-			<arg>0</arg>
-		</method>
-
-		<method signature="int previousIndex()">
-			<arg>0</arg>
-		</method>
-
-		<method signature="void set(java.lang.Object)">
-			<arg>0</arg>
-		</method>
-
-		<method signature="void add(java.lang.Object)">
-			<arg>0</arg>
-		</method>
-	</class>
-
-	<class name="java.util.Map">
-		<method signature="int size()">
-			<arg>0</arg>
-		</method>
-
-		<method signature="boolean isEmpty()">
-			<arg>0</arg>
-		</method>
-
-		<method signature="boolean containsKey(java.lang.Object)">
-			<arg>0</arg>
-		</method>
-
-		<method signature="boolean containsValue(java.lang.Object)">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.lang.Object get(java.lang.Object)">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.lang.Object put(java.lang.Object, java.lang.Object)">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.lang.Object remove(java.lang.Object)">
-			<arg>0</arg>
-		</method>
-
-		<method signature="void putAll(java.util.Map)">
-			<arg>0</arg>
-			<arg>1</arg>
-		</method>
-
-		<method signature="void clear()">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.util.Set keySet()">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.util.Collection values()">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.util.Set entrySet()">
-			<arg>0</arg>
-		</method>
-	</class>
-
-	<class name="java.util.Map$Entry">
-		<method signature="java.lang.Object getKey()">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.lang.Object getValue()">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.lang.Object setValue(java.lang.Object)">
-			<arg>0</arg>
-		</method>
-	</class>
-
-	<class name="java.util.Queue">
-		<method signature="boolean offer(java.lang.Object)">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.lang.Object poll()">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.lang.Object remove()">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.lang.Object peek()">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.lang.Object element()">
-			<arg>0</arg>
-		</method>
-	</class>
-
-	<class name="java.util.SortedMap">
-		<method signature="java.util.Comparator comparator()">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.util.SortedMap subMap(java.lang.Object, java.lang.Object)">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.util.SortedMap headMap(java.lang.Object)">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.util.SortedMap tailMap(java.lang.Object)">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.lang.Object firstKey()">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.lang.Object lastKey()">
-			<arg>0</arg>
-		</method>
-	</class>
-
-	<class name="java.util.SortedSet">
-		<method signature="java.util.Comparator comparator()">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.util.SortedSet subSet(java.lang.Object, java.lang.Object)">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.util.SortedSet headSet(java.lang.Object)">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.util.SortedSet tailSet(java.lang.Object)">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.lang.Object first()">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.lang.Object last()">
+		<method signature="void setProperties(java.util.Properties)" isStatic="true">
 			<arg>0</arg>
 		</method>
 	</class>
@@ -303,7 +27,7 @@
 			<arg>1</arg>
 		</method>
 
-		<method signature="void trimToSize()">
+		<method signature="java.lang.Object clone()">
 			<arg>0</arg>
 		</method>
 
@@ -311,101 +35,21 @@
 			<arg>0</arg>
 		</method>
 
-		<method signature="java.lang.Object clone()">
+		<method signature="void trimToSize()">
 			<arg>0</arg>
 		</method>
 	</class>
 
 	<class name="java.util.Arrays">
-		<method signature="void sort(long[])" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="void sort(long[], int, int)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="void sort(int[])" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="void sort(int[], int, int)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="void sort(short[])" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="void sort(short[], int, int)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="void sort(char[])" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="void sort(char[], int, int)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="void sort(byte[])" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="void sort(byte[], int, int)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="void sort(double[])" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="void sort(double[], int, int)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="void sort(float[])" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="void sort(float[], int, int)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="void sort(java.lang.Object[])" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="void sort(java.lang.Object[], int, int)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="void sort(java.lang.Object[], java.util.Comparator)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="void sort(java.lang.Object[], int, int, java.util.Comparator)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="int binarySearch(long[], long)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="int binarySearch(int[], int)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="int binarySearch(short[], short)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="int binarySearch(char[], char)" isStatic="true">
+		<method signature="java.util.List asList(java.lang.Object[])" isStatic="true">
 			<arg>0</arg>
 		</method>
 
 		<method signature="int binarySearch(byte[], byte)" isStatic="true">
+			<arg>0</arg>
+		</method>
+
+		<method signature="int binarySearch(char[], char)" isStatic="true">
 			<arg>0</arg>
 		</method>
 
@@ -417,6 +61,10 @@
 			<arg>0</arg>
 		</method>
 
+		<method signature="int binarySearch(int[], int)" isStatic="true">
+			<arg>0</arg>
+		</method>
+
 		<method signature="int binarySearch(java.lang.Object[], java.lang.Object)" isStatic="true">
 			<arg>0</arg>
 		</method>
@@ -425,22 +73,28 @@
 			<arg>0</arg>
 		</method>
 
-		<method signature="boolean equals(long[], long[])" isStatic="true">
+		<method signature="int binarySearch(long[], long)" isStatic="true">
+			<arg>0</arg>
+		</method>
+
+		<method signature="int binarySearch(short[], short)" isStatic="true">
+			<arg>0</arg>
+		</method>
+
+		<method signature="boolean deepEquals(java.lang.Object[], java.lang.Object[])" isStatic="true">
 			<arg>0</arg>
 			<arg>1</arg>
 		</method>
 
-		<method signature="boolean equals(int[], int[])" isStatic="true">
+		<method signature="int deepHashCode(java.lang.Object[])" isStatic="true">
 			<arg>0</arg>
-			<arg>1</arg>
 		</method>
 
-		<method signature="boolean equals(short[], short[])" isStatic="true">
+		<method signature="java.lang.String deepToString(java.lang.Object[])" isStatic="true">
 			<arg>0</arg>
-			<arg>1</arg>
 		</method>
 
-		<method signature="boolean equals(char[], char[])" isStatic="true">
+		<method signature="boolean equals(boolean[], boolean[])" isStatic="true">
 			<arg>0</arg>
 			<arg>1</arg>
 		</method>
@@ -450,7 +104,7 @@
 			<arg>1</arg>
 		</method>
 
-		<method signature="boolean equals(boolean[], boolean[])" isStatic="true">
+		<method signature="boolean equals(char[], char[])" isStatic="true">
 			<arg>0</arg>
 			<arg>1</arg>
 		</method>
@@ -465,40 +119,31 @@
 			<arg>1</arg>
 		</method>
 
+		<method signature="boolean equals(int[], int[])" isStatic="true">
+			<arg>0</arg>
+			<arg>1</arg>
+		</method>
+
 		<method signature="boolean equals(java.lang.Object[], java.lang.Object[])" isStatic="true">
 			<arg>0</arg>
 			<arg>1</arg>
 		</method>
 
-		<method signature="void fill(long[], long)" isStatic="true">
+		<method signature="boolean equals(long[], long[])" isStatic="true">
+			<arg>0</arg>
+			<arg>1</arg>
+		</method>
+
+		<method signature="boolean equals(short[], short[])" isStatic="true">
+			<arg>0</arg>
+			<arg>1</arg>
+		</method>
+
+		<method signature="void fill(boolean[], boolean)" isStatic="true">
 			<arg>0</arg>
 		</method>
 
-		<method signature="void fill(long[], int, int, long)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="void fill(int[], int)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="void fill(int[], int, int, int)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="void fill(short[], short)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="void fill(short[], int, int, short)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="void fill(char[], char)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="void fill(char[], int, int, char)" isStatic="true">
+		<method signature="void fill(boolean[], int, int, boolean)" isStatic="true">
 			<arg>0</arg>
 		</method>
 
@@ -510,11 +155,11 @@
 			<arg>0</arg>
 		</method>
 
-		<method signature="void fill(boolean[], boolean)" isStatic="true">
+		<method signature="void fill(char[], char)" isStatic="true">
 			<arg>0</arg>
 		</method>
 
-		<method signature="void fill(boolean[], int, int, boolean)" isStatic="true">
+		<method signature="void fill(char[], int, int, char)" isStatic="true">
 			<arg>0</arg>
 		</method>
 
@@ -534,7 +179,11 @@
 			<arg>0</arg>
 		</method>
 
-		<method signature="void fill(java.lang.Object[], java.lang.Object)" isStatic="true">
+		<method signature="void fill(int[], int)" isStatic="true">
+			<arg>0</arg>
+		</method>
+
+		<method signature="void fill(int[], int, int, int)" isStatic="true">
 			<arg>0</arg>
 		</method>
 
@@ -542,27 +191,23 @@
 			<arg>0</arg>
 		</method>
 
-		<method signature="java.util.List asList(java.lang.Object[])" isStatic="true">
+		<method signature="void fill(java.lang.Object[], java.lang.Object)" isStatic="true">
 			<arg>0</arg>
 		</method>
 
-		<method signature="int hashCode(long[])" isStatic="true">
+		<method signature="void fill(long[], int, int, long)" isStatic="true">
 			<arg>0</arg>
 		</method>
 
-		<method signature="int hashCode(int[])" isStatic="true">
+		<method signature="void fill(long[], long)" isStatic="true">
 			<arg>0</arg>
 		</method>
 
-		<method signature="int hashCode(short[])" isStatic="true">
+		<method signature="void fill(short[], int, int, short)" isStatic="true">
 			<arg>0</arg>
 		</method>
 
-		<method signature="int hashCode(char[])" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="int hashCode(byte[])" isStatic="true">
+		<method signature="void fill(short[], short)" isStatic="true">
 			<arg>0</arg>
 		</method>
 
@@ -570,7 +215,11 @@
 			<arg>0</arg>
 		</method>
 
-		<method signature="int hashCode(float[])" isStatic="true">
+		<method signature="int hashCode(byte[])" isStatic="true">
+			<arg>0</arg>
+		</method>
+
+		<method signature="int hashCode(char[])" isStatic="true">
 			<arg>0</arg>
 		</method>
 
@@ -578,36 +227,95 @@
 			<arg>0</arg>
 		</method>
 
+		<method signature="int hashCode(float[])" isStatic="true">
+			<arg>0</arg>
+		</method>
+
+		<method signature="int hashCode(int[])" isStatic="true">
+			<arg>0</arg>
+		</method>
+
 		<method signature="int hashCode(java.lang.Object[])" isStatic="true">
 			<arg>0</arg>
 		</method>
 
-		<method signature="int deepHashCode(java.lang.Object[])" isStatic="true">
+		<method signature="int hashCode(long[])" isStatic="true">
 			<arg>0</arg>
 		</method>
 
-		<method signature="boolean deepEquals(java.lang.Object[], java.lang.Object[])" isStatic="true">
-			<arg>0</arg>
-			<arg>1</arg>
-		</method>
-
-		<method signature="java.lang.String toString(long[])" isStatic="true">
+		<method signature="int hashCode(short[])" isStatic="true">
 			<arg>0</arg>
 		</method>
 
-		<method signature="java.lang.String toString(int[])" isStatic="true">
+		<method signature="void sort(byte[])" isStatic="true">
 			<arg>0</arg>
 		</method>
 
-		<method signature="java.lang.String toString(short[])" isStatic="true">
+		<method signature="void sort(byte[], int, int)" isStatic="true">
 			<arg>0</arg>
 		</method>
 
-		<method signature="java.lang.String toString(char[])" isStatic="true">
+		<method signature="void sort(char[])" isStatic="true">
 			<arg>0</arg>
 		</method>
 
-		<method signature="java.lang.String toString(byte[])" isStatic="true">
+		<method signature="void sort(char[], int, int)" isStatic="true">
+			<arg>0</arg>
+		</method>
+
+		<method signature="void sort(double[])" isStatic="true">
+			<arg>0</arg>
+		</method>
+
+		<method signature="void sort(double[], int, int)" isStatic="true">
+			<arg>0</arg>
+		</method>
+
+		<method signature="void sort(float[])" isStatic="true">
+			<arg>0</arg>
+		</method>
+
+		<method signature="void sort(float[], int, int)" isStatic="true">
+			<arg>0</arg>
+		</method>
+
+		<method signature="void sort(int[])" isStatic="true">
+			<arg>0</arg>
+		</method>
+
+		<method signature="void sort(int[], int, int)" isStatic="true">
+			<arg>0</arg>
+		</method>
+
+		<method signature="void sort(java.lang.Object[])" isStatic="true">
+			<arg>0</arg>
+		</method>
+
+		<method signature="void sort(java.lang.Object[], int, int)" isStatic="true">
+			<arg>0</arg>
+		</method>
+
+		<method signature="void sort(java.lang.Object[], int, int, java.util.Comparator)" isStatic="true">
+			<arg>0</arg>
+		</method>
+
+		<method signature="void sort(java.lang.Object[], java.util.Comparator)" isStatic="true">
+			<arg>0</arg>
+		</method>
+
+		<method signature="void sort(long[])" isStatic="true">
+			<arg>0</arg>
+		</method>
+
+		<method signature="void sort(long[], int, int)" isStatic="true">
+			<arg>0</arg>
+		</method>
+
+		<method signature="void sort(short[])" isStatic="true">
+			<arg>0</arg>
+		</method>
+
+		<method signature="void sort(short[], int, int)" isStatic="true">
 			<arg>0</arg>
 		</method>
 
@@ -615,7 +323,11 @@
 			<arg>0</arg>
 		</method>
 
-		<method signature="java.lang.String toString(float[])" isStatic="true">
+		<method signature="java.lang.String toString(byte[])" isStatic="true">
+			<arg>0</arg>
+		</method>
+
+		<method signature="java.lang.String toString(char[])" isStatic="true">
 			<arg>0</arg>
 		</method>
 
@@ -623,22 +335,107 @@
 			<arg>0</arg>
 		</method>
 
+		<method signature="java.lang.String toString(float[])" isStatic="true">
+			<arg>0</arg>
+		</method>
+
+		<method signature="java.lang.String toString(int[])" isStatic="true">
+			<arg>0</arg>
+		</method>
+
 		<method signature="java.lang.String toString(java.lang.Object[])" isStatic="true">
 			<arg>0</arg>
 		</method>
 
-		<method signature="java.lang.String deepToString(java.lang.Object[])" isStatic="true">
+		<method signature="java.lang.String toString(long[])" isStatic="true">
+			<arg>0</arg>
+		</method>
+
+		<method signature="java.lang.String toString(short[])" isStatic="true">
 			<arg>0</arg>
 		</method>
 	</class>
 
 	<class name="java.util.BitSet">
+		<method signature="void and(java.util.BitSet)">
+			<arg>0</arg>
+			<arg>1</arg>
+		</method>
+
+		<method signature="void andNot(java.util.BitSet)">
+			<arg>0</arg>
+			<arg>1</arg>
+		</method>
+
+		<method signature="int cardinality()">
+			<arg>0</arg>
+		</method>
+
+		<method signature="void clear()">
+			<arg>0</arg>
+		</method>
+
+		<method signature="void clear(int)">
+			<arg>0</arg>
+		</method>
+
+		<method signature="void clear(int, int)">
+			<arg>0</arg>
+		</method>
+
+		<method signature="java.lang.Object clone()">
+			<arg>0</arg>
+		</method>
+
+		<method signature="boolean equals(java.lang.Object)">
+			<arg>0</arg>
+			<arg>1</arg>
+		</method>
+
 		<method signature="void flip(int)">
 			<arg>0</arg>
 		</method>
 
 		<method signature="void flip(int, int)">
 			<arg>0</arg>
+		</method>
+
+		<method signature="boolean get(int)">
+			<arg>0</arg>
+		</method>
+
+		<method signature="java.util.BitSet get(int, int)">
+			<arg>0</arg>
+		</method>
+
+		<method signature="int hashCode()">
+			<arg>0</arg>
+		</method>
+
+		<method signature="boolean intersects(java.util.BitSet)">
+			<arg>0</arg>
+			<arg>1</arg>
+		</method>
+
+		<method signature="boolean isEmpty()">
+			<arg>0</arg>
+		</method>
+
+		<method signature="int length()">
+			<arg>0</arg>
+		</method>
+
+		<method signature="int nextClearBit(int)">
+			<arg>0</arg>
+		</method>
+
+		<method signature="int nextSetBit(int)">
+			<arg>0</arg>
+		</method>
+
+		<method signature="void or(java.util.BitSet)">
+			<arg>0</arg>
+			<arg>1</arg>
 		</method>
 
 		<method signature="void set(int)">
@@ -657,35 +454,49 @@
 			<arg>0</arg>
 		</method>
 
-		<method signature="void clear(int)">
+		<method signature="int size()">
 			<arg>0</arg>
 		</method>
 
-		<method signature="void clear(int, int)">
+		<method signature="java.lang.String toString()">
 			<arg>0</arg>
+		</method>
+
+		<method signature="void xor(java.util.BitSet)">
+			<arg>0</arg>
+			<arg>1</arg>
+		</method>
+	</class>
+
+	<class name="java.util.Collection">
+		<method signature="boolean add(java.lang.Object)">
+			<arg>0</arg>
+		</method>
+
+		<method signature="boolean addAll(java.util.Collection)">
+			<arg>0</arg>
+			<arg>1</arg>
 		</method>
 
 		<method signature="void clear()">
 			<arg>0</arg>
 		</method>
 
-		<method signature="boolean get(int)">
+		<method signature="boolean contains(java.lang.Object)">
 			<arg>0</arg>
 		</method>
 
-		<method signature="java.util.BitSet get(int, int)">
+		<method signature="boolean containsAll(java.util.Collection)">
 			<arg>0</arg>
+			<arg>1</arg>
 		</method>
 
-		<method signature="int nextSetBit(int)">
+		<method signature="boolean equals(java.lang.Object)">
 			<arg>0</arg>
+			<arg>1</arg>
 		</method>
 
-		<method signature="int nextClearBit(int)">
-			<arg>0</arg>
-		</method>
-
-		<method signature="int length()">
+		<method signature="int hashCode()">
 			<arg>0</arg>
 		</method>
 
@@ -693,31 +504,16 @@
 			<arg>0</arg>
 		</method>
 
-		<method signature="boolean intersects(java.util.BitSet)">
+		<method signature="boolean remove(java.lang.Object)">
+			<arg>0</arg>
+		</method>
+
+		<method signature="boolean removeAll(java.util.Collection)">
 			<arg>0</arg>
 			<arg>1</arg>
 		</method>
 
-		<method signature="int cardinality()">
-			<arg>0</arg>
-		</method>
-
-		<method signature="void and(java.util.BitSet)">
-			<arg>0</arg>
-			<arg>1</arg>
-		</method>
-
-		<method signature="void or(java.util.BitSet)">
-			<arg>0</arg>
-			<arg>1</arg>
-		</method>
-
-		<method signature="void xor(java.util.BitSet)">
-			<arg>0</arg>
-			<arg>1</arg>
-		</method>
-
-		<method signature="void andNot(java.util.BitSet)">
+		<method signature="boolean retainAll(java.util.Collection)">
 			<arg>0</arg>
 			<arg>1</arg>
 		</method>
@@ -725,15 +521,25 @@
 		<method signature="int size()">
 			<arg>0</arg>
 		</method>
-	</class>
 
-	<class name="java.util.Collections">
-		<method signature="void sort(java.util.List)" isStatic="true">
+		<method signature="java.lang.Object[] toArray()">
 			<arg>0</arg>
 		</method>
 
-		<method signature="void sort(java.util.List, java.util.Comparator)" isStatic="true">
+		<method signature="java.lang.Object[] toArray(java.lang.Object[])">
 			<arg>0</arg>
+			<arg>1</arg>
+		</method>
+		
+		<method signature="java.lang.String toString()">
+			<arg>0</arg>
+		</method>
+	</class>
+
+	<class name="java.util.Collections">
+		<method signature="boolean addAll(java.util.Collection, java.lang.Object[])" isStatic="true">
+			<arg>0</arg>
+			<arg>1</arg>
 		</method>
 
 		<method signature="int binarySearch(java.util.List, java.lang.Object)" isStatic="true">
@@ -744,19 +550,17 @@
 			<arg>0</arg>
 		</method>
 
-		<method signature="void reverse(java.util.List)" isStatic="true">
+		<method signature="void copy(java.util.List, java.util.List)" isStatic="true">
 			<arg>0</arg>
+			<arg>1</arg>
 		</method>
 
-		<method signature="void shuffle(java.util.List)" isStatic="true">
+		<method signature="boolean disjoint(java.util.Collection, java.util.Collection)" isStatic="true">
 			<arg>0</arg>
+			<arg>1</arg>
 		</method>
 
-		<method signature="void shuffle(java.util.List, java.util.Random)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="void swap(java.util.List, int, int)" isStatic="true">
+		<method signature="java.util.Enumeration enumeration(java.util.Collection)" isStatic="true">
 			<arg>0</arg>
 		</method>
 
@@ -764,32 +568,7 @@
 			<arg>0</arg>
 		</method>
 
-		<method signature="void copy(java.util.List, java.util.List)" isStatic="true">
-			<arg>0</arg>
-			<arg>1</arg>
-		</method>
-
-		<method signature="java.lang.Object min(java.util.Collection)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.lang.Object min(java.util.Collection, java.util.Comparator)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.lang.Object max(java.util.Collection)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.lang.Object max(java.util.Collection, java.util.Comparator)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="void rotate(java.util.List, int)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="boolean replaceAll(java.util.List, java.lang.Object, java.lang.Object)" isStatic="true">
+		<method signature="int frequency(java.util.Collection, java.lang.Object)" isStatic="true">
 			<arg>0</arg>
 		</method>
 
@@ -803,115 +582,65 @@
 			<arg>1</arg>
 		</method>
 
-		<method signature="java.util.Collection unmodifiableCollection(java.util.Collection)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.util.Set unmodifiableSet(java.util.Set)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.util.SortedSet unmodifiableSortedSet(java.util.SortedSet)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.util.List unmodifiableList(java.util.List)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.util.Map unmodifiableMap(java.util.Map)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.util.SortedMap unmodifiableSortedMap(java.util.SortedMap)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.util.Collection synchronizedCollection(java.util.Collection)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.util.Collection synchronizedCollection(java.util.Collection, java.lang.Object)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.util.Set synchronizedSet(java.util.Set)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.util.Set synchronizedSet(java.util.Set, java.lang.Object)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.util.SortedSet synchronizedSortedSet(java.util.SortedSet)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.util.List synchronizedList(java.util.List)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.util.List synchronizedList(java.util.List, java.lang.Object)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.util.Map synchronizedMap(java.util.Map)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.util.SortedMap synchronizedSortedMap(java.util.SortedMap)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.util.Collection checkedCollection(java.util.Collection, java.lang.Class)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.util.Set checkedSet(java.util.Set, java.lang.Class)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.util.SortedSet checkedSortedSet(java.util.SortedSet, java.lang.Class)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.util.List checkedList(java.util.List, java.lang.Class)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.util.Map checkedMap(java.util.Map, java.lang.Class, java.lang.Class)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.util.SortedMap checkedSortedMap(java.util.SortedMap, java.lang.Class, java.lang.Class)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.util.Enumeration enumeration(java.util.Collection)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
 		<method signature="java.util.ArrayList list(java.util.Enumeration)" isStatic="true">
 			<arg>0</arg>
 		</method>
 
-		<method signature="int frequency(java.util.Collection, java.lang.Object)" isStatic="true">
+		<method signature="java.lang.Object max(java.util.Collection)" isStatic="true">
 			<arg>0</arg>
 		</method>
 
-		<method signature="boolean disjoint(java.util.Collection, java.util.Collection)" isStatic="true">
+		<method signature="java.lang.Object max(java.util.Collection, java.util.Comparator)" isStatic="true">
 			<arg>0</arg>
-			<arg>1</arg>
 		</method>
 
-		<method signature="boolean addAll(java.util.Collection, java.lang.Object[])" isStatic="true">
+		<method signature="java.lang.Object min(java.util.Collection)" isStatic="true">
 			<arg>0</arg>
-			<arg>1</arg>
+		</method>
+
+		<method signature="java.lang.Object min(java.util.Collection, java.util.Comparator)" isStatic="true">
+			<arg>0</arg>
+		</method>
+
+		<method signature="boolean replaceAll(java.util.List, java.lang.Object, java.lang.Object)" isStatic="true">
+			<arg>0</arg>
+		</method>
+
+		<method signature="void reverse(java.util.List)" isStatic="true">
+			<arg>0</arg>
+		</method>
+
+		<method signature="void rotate(java.util.List, int)" isStatic="true">
+			<arg>0</arg>
+		</method>
+
+		<method signature="void shuffle(java.util.List)" isStatic="true">
+			<arg>0</arg>
+		</method>
+
+		<method signature="void shuffle(java.util.List, java.util.Random)" isStatic="true">
+			<arg>0</arg>
+		</method>
+
+		<method signature="void sort(java.util.List)" isStatic="true">
+			<arg>0</arg>
+		</method>
+
+		<method signature="void sort(java.util.List, java.util.Comparator)" isStatic="true">
+			<arg>0</arg>
+		</method>
+
+		<method signature="void swap(java.util.List, int, int)" isStatic="true">
+			<arg>0</arg>
 		</method>
 	</class>
 
 	<class name="java.util.Dictionary">
-		<method signature="int size()">
+		<method signature="java.util.Enumeration elements()">
+			<arg>0</arg>
+		</method>
+
+		<method signature="java.lang.Object get(java.lang.Object)">
 			<arg>0</arg>
 		</method>
 
@@ -923,14 +652,6 @@
 			<arg>0</arg>
 		</method>
 
-		<method signature="java.util.Enumeration elements()">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.lang.Object get(java.lang.Object)">
-			<arg>0</arg>
-		</method>
-
 		<method signature="java.lang.Object put(java.lang.Object, java.lang.Object)">
 			<arg>0</arg>
 		</method>
@@ -938,15 +659,29 @@
 		<method signature="java.lang.Object remove(java.lang.Object)">
 			<arg>0</arg>
 		</method>
+
+		<method signature="int size()">
+			<arg>0</arg>
+		</method>
+	</class>
+
+	<class name="java.util.Enumeration">
+		<method signature="boolean hasMoreElements()">
+			<arg>0</arg>
+		</method>
+
+		<method signature="java.lang.Object nextElement()">
+			<arg>0</arg>
+		</method>
 	</class>
 
 	<class name="java.util.EnumMap">
 		<method signature="void &lt;init&gt;(java.util.EnumMap)">
-			<arg>0</arg>
+			<arg>1</arg>
 		</method>
 
 		<method signature="void &lt;init&gt;(java.util.Map)">
-			<arg>0</arg>
+			<arg>1</arg>
 		</method>
 
 		<method signature="java.lang.Object put(java.lang.Enum, java.lang.Object)">
@@ -955,27 +690,7 @@
 	</class>
 
 	<class name="java.util.EnumSet">
-		<method signature="void &lt;init&gt;(java.lang.Class, java.lang.Enum[])">
-			<arg>1</arg>
-		</method>
-
-		<method signature="java.util.EnumSet noneOf(java.lang.Class)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.util.EnumSet allOf(java.lang.Class)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="void addAll()">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.util.EnumSet copyOf(java.util.EnumSet)" isStatic="true">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.util.EnumSet copyOf(java.util.Collection)" isStatic="true">
+		<method signature="java.util.EnumSet clone()">
 			<arg>0</arg>
 		</method>
 
@@ -983,24 +698,16 @@
 			<arg>0</arg>
 		</method>
 
-		<method signature="java.util.EnumSet of(java.lang.Enum)" isStatic="true">
+		<method signature="java.util.EnumSet copyOf(java.util.Collection)" isStatic="true">
+			<arg>0</arg>
+		</method>
+
+		<method signature="java.util.EnumSet copyOf(java.util.EnumSet)" isStatic="true">
 			<arg>0</arg>
 		</method>
 
 		<method signature="java.util.EnumSet of(java.lang.Enum, java.lang.Enum[])" isStatic="true">
 			<arg>1</arg>
-		</method>
-
-		<method signature="void addRange(java.lang.Enum, java.lang.Enum)">
-			<arg>0</arg>
-		</method>
-
-		<method signature="void complement()">
-			<arg>0</arg>
-		</method>
-
-		<method signature="void typeCheck(java.lang.Enum)">
-			<arg>0</arg>
 		</method>
 	</class>
 
@@ -1014,11 +721,19 @@
 		<method signature="void &lt;init&gt;(java.util.Collection)">
 			<arg>1</arg>
 		</method>
+
+		<method signature="java.lang.Object clone()">
+			<arg>0</arg>
+		</method>
 	</class>
 
 	<class name="java.util.Hashtable">
 		<method signature="void &lt;init&gt;(java.util.Map)">
 			<arg>1</arg>
+		</method>
+
+		<method signature="java.lang.Object clone()">
+			<arg>0</arg>
 		</method>
 
 		<method signature="boolean contains(java.lang.Object)">
@@ -1032,6 +747,20 @@
 
 	<class name="java.util.IdentityHashMap">
 		<method signature="void &lt;init&gt;(java.util.Map)">
+			<arg>1</arg>
+		</method>
+	</class>
+
+	<class name="java.util.Iterator">
+		<method signature="boolean hasNext()">
+			<arg>0</arg>
+		</method>
+
+		<method signature="java.lang.Object next()">
+			<arg>0</arg>
+		</method>
+
+		<method signature="void remove()">
 			<arg>0</arg>
 		</method>
 	</class>
@@ -1043,12 +772,25 @@
 
 		<method signature="boolean removeEldestEntry(java.util.Map$Entry)">
 			<arg>0</arg>
+			<arg>1</arg>
 		</method>
 	</class>
 
 	<class name="java.util.LinkedList">
 		<method signature="void &lt;init&gt;(java.util.Collection)">
 			<arg>1</arg>
+		</method>
+
+		<method signature="void addFirst(java.lang.Object)">
+			<arg>0</arg>
+		</method>
+
+		<method signature="void addLast(java.lang.Object)">
+			<arg>0</arg>
+		</method>
+
+		<method signature="java.lang.Object clone()">
+			<arg>0</arg>
 		</method>
 
 		<method signature="java.lang.Object getFirst()">
@@ -1066,12 +808,160 @@
 		<method signature="java.lang.Object removeLast()">
 			<arg>0</arg>
 		</method>
+	</class>
 
-		<method signature="void addFirst(java.lang.Object)">
+	<class name="java.util.List">
+		<method signature="void add(int, java.lang.Object)">
 			<arg>0</arg>
 		</method>
 
-		<method signature="void addLast(java.lang.Object)">
+		<method signature="boolean addAll(int, java.util.Collection)">
+			<arg>0</arg>
+			<arg>2</arg>
+		</method>
+
+		<method signature="java.lang.Object get(int)">
+			<arg>0</arg>
+		</method>
+
+		<method signature="int indexOf(java.lang.Object)">
+			<arg>0</arg>
+		</method>
+
+		<method signature="int lastIndexOf(java.lang.Object)">
+			<arg>0</arg>
+		</method>
+
+		<method signature="java.util.ListIterator listIterator()">
+			<arg>0</arg>
+		</method>
+
+		<method signature="java.util.ListIterator listIterator(int)">
+			<arg>0</arg>
+		</method>
+
+		<method signature="java.lang.Object remove(int)">
+			<arg>0</arg>
+		</method>
+
+		<method signature="java.lang.Object set(int, java.lang.Object)">
+			<arg>0</arg>
+		</method>
+
+		<method signature="java.util.List subList(int, int)">
+			<arg>0</arg>
+		</method>
+	</class>
+
+	<class name="java.util.ListIterator">
+		<method signature="void add(java.lang.Object)">
+			<arg>0</arg>
+		</method>
+
+		<method signature="boolean hasPrevious()">
+			<arg>0</arg>
+		</method>
+
+		<method signature="int nextIndex()">
+			<arg>0</arg>
+		</method>
+
+		<method signature="java.lang.Object previous()">
+			<arg>0</arg>
+		</method>
+
+		<method signature="int previousIndex()">
+			<arg>0</arg>
+		</method>
+
+		<method signature="void set(java.lang.Object)">
+			<arg>0</arg>
+		</method>
+	</class>
+
+	<class name="java.util.Map">
+		<method signature="void clear()">
+			<arg>0</arg>
+		</method>
+
+		<method signature="boolean containsKey(java.lang.Object)">
+			<arg>0</arg>
+		</method>
+
+		<method signature="boolean containsValue(java.lang.Object)">
+			<arg>0</arg>
+		</method>
+
+		<method signature="java.util.Set entrySet()">
+			<arg>0</arg>
+		</method>
+
+		<method signature="boolean equals(java.lang.Object)">
+			<arg>0</arg>
+			<arg>1</arg>
+		</method>
+
+		<method signature="java.lang.Object get(java.lang.Object)">
+			<arg>0</arg>
+		</method>
+
+		<method signature="int hashCode()">
+			<arg>0</arg>
+		</method>
+
+		<method signature="boolean isEmpty()">
+			<arg>0</arg>
+		</method>
+
+		<method signature="java.util.Set keySet()">
+			<arg>0</arg>
+		</method>
+
+		<method signature="java.lang.Object put(java.lang.Object, java.lang.Object)">
+			<arg>0</arg>
+		</method>
+
+		<method signature="void putAll(java.util.Map)">
+			<arg>0</arg>
+			<arg>1</arg>
+		</method>
+
+		<method signature="java.lang.Object remove(java.lang.Object)">
+			<arg>0</arg>
+		</method>
+
+		<method signature="int size()">
+			<arg>0</arg>
+		</method>
+
+		<method signature="java.lang.String toString()">
+			<arg>0</arg>
+		</method>
+
+		<method signature="java.util.Collection values()">
+			<arg>0</arg>
+		</method>
+	</class>
+
+	<class name="java.util.Map$Entry">
+		<method signature="boolean equals(java.lang.Object)">
+			<arg>0</arg>
+			<arg>1</arg>
+		</method>
+
+		<method signature="java.lang.Object getKey()">
+			<arg>0</arg>
+		</method>
+
+		<method signature="java.lang.Object getValue()">
+			<arg>0</arg>
+		</method>
+
+		<method signature="int hashCode()">
+			<arg>0</arg>
+		</method>
+
+		<method signature="java.lang.Object setValue(java.lang.Object)">
 			<arg>0</arg>
 		</method>
 	</class>
@@ -1079,34 +969,6 @@
 	<class name="java.util.Properties">
 		<method signature="void &lt;init&gt;(java.util.Properties)">
 			<arg>1</arg>
-		</method>
-
-		<method signature="java.lang.Object setProperty(java.lang.String, java.lang.String)">
-			<arg>0</arg>
-		</method>
-
-		<method signature="void load(java.io.InputStream)">
-			<arg>0</arg>
-		</method>
-
-		<method signature="void save(java.io.OutputStream, java.lang.String)">
-			<arg>0</arg>
-		</method>
-
-		<method signature="void store(java.io.OutputStream, java.lang.String)">
-			<arg>0</arg>
-		</method>
-
-		<method signature="void loadFromXML(java.io.InputStream)">
-			<arg>0</arg>
-		</method>
-
-		<method signature="void storeToXML(java.io.OutputStream, java.lang.String)">
-			<arg>0</arg>
-		</method>
-
-		<method signature="void storeToXML(java.io.OutputStream, java.lang.String, java.lang.String)">
-			<arg>0</arg>
 		</method>
 
 		<method signature="java.lang.String getProperty(java.lang.String)">
@@ -1117,10 +979,6 @@
 			<arg>0</arg>
 		</method>
 
-		<method signature="java.util.Enumeration propertyNames()">
-			<arg>0</arg>
-		</method>
-
 		<method signature="void list(java.io.PrintStream)">
 			<arg>0</arg>
 		</method>
@@ -1128,89 +986,46 @@
 		<method signature="void list(java.io.PrintWriter)">
 			<arg>0</arg>
 		</method>
-	</class>
 
-	<class name="java.util.Vector">
-		<method signature="void &lt;init&gt;(java.util.Collection)">
-			<arg>1</arg>
-		</method>
-
-		<method signature="void copyInto(java.lang.Object[])">
-			<arg>0</arg>
-			<arg>1</arg>
-		</method>
-
-		<method signature="void trimToSize()">
+		<method signature="void load(java.io.InputStream)">
 			<arg>0</arg>
 		</method>
 
-		<method signature="void ensureCapacity(int)">
+		<method signature="void loadFromXML(java.io.InputStream)">
 			<arg>0</arg>
 		</method>
 
-		<method signature="void setSize(int)">
+		<method signature="java.util.Enumeration propertyNames()">
 			<arg>0</arg>
 		</method>
 
-		<method signature="int capacity()">
+		<method signature="void save(java.io.OutputStream, java.lang.String)">
 			<arg>0</arg>
 		</method>
 
-		<method signature="java.util.Enumeration elements()">
+		<method signature="java.lang.Object setProperty(java.lang.String, java.lang.String)">
 			<arg>0</arg>
 		</method>
 
-		<method signature="int indexOf(java.lang.Object, int)">
+		<method signature="void store(java.io.OutputStream, java.lang.String)">
 			<arg>0</arg>
 		</method>
 
-		<method signature="int lastIndexOf(java.lang.Object, int)">
+		<method signature="void storeToXML(java.io.OutputStream, java.lang.String)">
 			<arg>0</arg>
 		</method>
 
-		<method signature="java.lang.Object elementAt(int)">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.lang.Object firstElement()">
-			<arg>0</arg>
-		</method>
-
-		<method signature="java.lang.Object lastElement()">
-			<arg>0</arg>
-		</method>
-
-		<method signature="void setElementAt(java.lang.Object, int)">
-			<arg>0</arg>
-		</method>
-
-		<method signature="void removeElementAt(int)">
-			<arg>0</arg>
-		</method>
-
-		<method signature="void insertElementAt(java.lang.Object, int)">
-			<arg>0</arg>
-		</method>
-
-		<method signature="void addElement(java.lang.Object)">
-			<arg>0</arg>
-		</method>
-
-		<method signature="boolean removeElement(java.lang.Object)">
-			<arg>0</arg>
-		</method>
-
-		<method signature="void removeAllElements()">
+		<method signature="void storeToXML(java.io.OutputStream, java.lang.String, java.lang.String)">
 			<arg>0</arg>
 		</method>
 	</class>
 
-	<class name="java.util.Stack">
-		<method signature="java.lang.Object push(java.lang.Object)">
+	<class name="java.util.Queue">
+		<method signature="java.lang.Object element()">
 			<arg>0</arg>
 		</method>
 
-		<method signature="java.lang.Object pop()">
+		<method signature="boolean offer(java.lang.Object)">
 			<arg>0</arg>
 		</method>
 
@@ -1218,7 +1033,73 @@
 			<arg>0</arg>
 		</method>
 
+		<method signature="java.lang.Object poll()">
+			<arg>0</arg>
+		</method>
+
+		<method signature="java.lang.Object remove()">
+			<arg>0</arg>
+		</method>
+	</class>
+
+	<class name="java.util.SortedMap">
+		<method signature="java.lang.Object firstKey()">
+			<arg>0</arg>
+		</method>
+
+		<method signature="java.util.SortedMap headMap(java.lang.Object)">
+			<arg>0</arg>
+		</method>
+
+		<method signature="java.lang.Object lastKey()">
+			<arg>0</arg>
+		</method>
+
+		<method signature="java.util.SortedMap subMap(java.lang.Object, java.lang.Object)">
+			<arg>0</arg>
+		</method>
+
+		<method signature="java.util.SortedMap tailMap(java.lang.Object)">
+			<arg>0</arg>
+		</method>
+	</class>
+
+	<class name="java.util.SortedSet">
+		<method signature="java.lang.Object first()">
+			<arg>0</arg>
+		</method>
+
+		<method signature="java.util.SortedSet headSet(java.lang.Object)">
+			<arg>0</arg>
+		</method>
+
+		<method signature="java.lang.Object last()">
+			<arg>0</arg>
+		</method>
+
+		<method signature="java.util.SortedSet subSet(java.lang.Object, java.lang.Object)">
+			<arg>0</arg>
+		</method>
+
+		<method signature="java.util.SortedSet tailSet(java.lang.Object)">
+			<arg>0</arg>
+		</method>
+	</class>
+
+	<class name="java.util.Stack">
 		<method signature="boolean empty()">
+			<arg>0</arg>
+		</method>
+
+		<method signature="java.lang.Object peek()">
+			<arg>0</arg>
+		</method>
+
+		<method signature="java.lang.Object pop()">
+			<arg>0</arg>
+		</method>
+
+		<method signature="java.lang.Object push(java.lang.Object)">
 			<arg>0</arg>
 		</method>
 
@@ -1245,22 +1126,94 @@
 		<method signature="void &lt;init&gt;(java.util.SortedSet)">
 			<arg>1</arg>
 		</method>
+
+		<method signature="java.lang.Object clone()">
+			<arg>0</arg>
+		</method>
+	</class>
+
+	<class name="java.util.Vector">
+		<method signature="void &lt;init&gt;(java.util.Collection)">
+			<arg>1</arg>
+		</method>
+
+		<method signature="void addElement(java.lang.Object)">
+			<arg>0</arg>
+		</method>
+
+		<method signature="int capacity()">
+			<arg>0</arg>
+		</method>
+
+		<method signature="java.lang.Object clone()">
+			<arg>0</arg>
+		</method>
+
+		<method signature="void copyInto(java.lang.Object[])">
+			<arg>0</arg>
+			<arg>1</arg>
+		</method>
+
+		<method signature="java.lang.Object elementAt(int)">
+			<arg>0</arg>
+		</method>
+
+		<method signature="java.util.Enumeration elements()">
+			<arg>0</arg>
+		</method>
+
+		<method signature="void ensureCapacity(int)">
+			<arg>0</arg>
+		</method>
+
+		<method signature="java.lang.Object firstElement()">
+			<arg>0</arg>
+		</method>
+
+		<method signature="int indexOf(java.lang.Object, int)">
+			<arg>0</arg>
+		</method>
+
+		<method signature="void insertElementAt(java.lang.Object, int)">
+			<arg>0</arg>
+		</method>
+
+		<method signature="java.lang.Object lastElement()">
+			<arg>0</arg>
+		</method>
+
+		<method signature="int lastIndexOf(java.lang.Object, int)">
+			<arg>0</arg>
+		</method>
+
+		<method signature="void removeAllElements()">
+			<arg>0</arg>
+		</method>
+
+		<method signature="boolean removeElement(java.lang.Object)">
+			<arg>0</arg>
+		</method>
+
+		<method signature="void removeElementAt(int)">
+			<arg>0</arg>
+		</method>
+
+		<method signature="void setElementAt(java.lang.Object, int)">
+			<arg>0</arg>
+		</method>
+
+		<method signature="void setSize(int)">
+			<arg>0</arg>
+		</method>
+
+		<method signature="void trimToSize()">
+			<arg>0</arg>
+		</method>
 	</class>
 
 	<class name="java.util.WeakHashMap">
 		<method signature="void &lt;init&gt;(java.util.Map)">
 			<arg>1</arg>
-		</method>
-	</class>
-
-	<class name="java.lang.System">
-		<method signature="void arraycopy(java.lang.Object, int, java.lang.Object, int, int)" isStatic="true">
-			<arg>0</arg>
-			<arg>2</arg>
-		</method>
-
-		<method signature="void setProperties(java.util.Properties)" isStatic="true">
-			<arg>0</arg>
 		</method>
 	</class>
 </classes>

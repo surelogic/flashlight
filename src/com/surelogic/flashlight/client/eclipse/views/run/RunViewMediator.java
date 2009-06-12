@@ -211,7 +211,8 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 					jobName = I18N.msg("flashlight.jobs.prep.many");
 				}
 				final SLJob job = new AggregateSLJob(jobName, jobs);
-				EclipseJob.getInstance().scheduleDb(job, true, false, JobConstants.ACCESS_KEY);
+				EclipseJob.getInstance().scheduleDb(job, true, false,
+						JobConstants.ACCESS_KEY);
 			}
 		}
 	};
@@ -232,8 +233,8 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 						final File logFile = handles.getLogFile();
 						if (logFile != null) {
 							/*
-							 * This dialog is modeless so we can open more than
-							 * one.
+							 * This dialog is modeless so that we can open more
+							 * than one.
 							 */
 							final LogDialog d = new LogDialog(f_table
 									.getShell(), handles.getLogFile(),
@@ -321,7 +322,8 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 				jobs.add(new RefreshRunManagerSLJob());
 
 				final SLJob job = new AggregateSLJob(jobName, jobs);
-				EclipseJob.getInstance().scheduleDb(job, true, false, JobConstants.ACCESS_KEY);
+				EclipseJob.getInstance().scheduleDb(job, true, false,
+						JobConstants.ACCESS_KEY);
 			}
 		}
 	};

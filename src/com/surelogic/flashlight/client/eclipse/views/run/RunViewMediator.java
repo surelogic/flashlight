@@ -29,6 +29,7 @@ import com.surelogic.common.jobs.AggregateSLJob;
 import com.surelogic.common.jobs.SLJob;
 import com.surelogic.flashlight.client.eclipse.dialogs.DeleteRunDialog;
 import com.surelogic.flashlight.client.eclipse.dialogs.LogDialog;
+import com.surelogic.flashlight.client.eclipse.jobs.JobConstants;
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.QueryMenuView;
@@ -210,7 +211,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 					jobName = I18N.msg("flashlight.jobs.prep.many");
 				}
 				final SLJob job = new AggregateSLJob(jobName, jobs);
-				EclipseJob.getInstance().scheduleDb(job, true, false);
+				EclipseJob.getInstance().scheduleDb(job, true, false, JobConstants.ACCESS_KEY);
 			}
 		}
 	};
@@ -320,7 +321,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 				jobs.add(new RefreshRunManagerSLJob());
 
 				final SLJob job = new AggregateSLJob(jobName, jobs);
-				EclipseJob.getInstance().scheduleDb(job, true, false);
+				EclipseJob.getInstance().scheduleDb(job, true, false, JobConstants.ACCESS_KEY);
 			}
 		}
 	};

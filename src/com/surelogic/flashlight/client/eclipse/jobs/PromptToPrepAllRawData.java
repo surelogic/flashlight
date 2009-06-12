@@ -159,7 +159,7 @@ public final class PromptToPrepAllRawData extends SLUIJob {
 					jobName = I18N.msg("flashlight.jobs.prep.many");
 				}
 				final SLJob job = new AggregateSLJob(jobName, jobs);
-				EclipseJob.getInstance().scheduleDb(job, true, false);
+				EclipseJob.getInstance().scheduleDb(job, true, false, JobConstants.ACCESS_KEY);
 			}
 		}
 		return Status.OK_STATUS;

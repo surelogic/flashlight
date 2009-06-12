@@ -153,7 +153,7 @@ public final class RunManager {
 	public void refresh() {
 		final File dataDir = f_dataDir.get();
 		if (dataDir == null) {
-			SLLogger.getLogger().warning(I18N.err(270));
+			SLLogger.getLogger().warning(I18N.err(170));
 			return; // Nothing to do
 		}
 		boolean isChanged = false; // assume nothing changed

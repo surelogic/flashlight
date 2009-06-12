@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jdbc.DBConnection;
 import com.surelogic.common.jdbc.NullDBTransaction;
+import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.common.entities.PrepRunDescription;
 import com.surelogic.flashlight.common.entities.RunDAO;
 import com.surelogic.flashlight.common.files.RawFileUtility;
@@ -152,6 +153,7 @@ public final class RunManager {
 	public void refresh() {
 		final File dataDir = f_dataDir.get();
 		if (dataDir == null) {
+			SLLogger.getLogger().warning(I18N.err(270));
 			return; // Nothing to do
 		}
 		boolean isChanged = false; // assume nothing changed

@@ -201,7 +201,7 @@ public final class RunManager {
 	 * The currently selected run, may be {@code null} which indicates that no
 	 * run is selected.
 	 */
-	private volatile RunDescription selectedRun;
+	private volatile RunDescription f_selectedRun;
 
 	/**
 	 * Gets the currently selected run.
@@ -210,7 +210,7 @@ public final class RunManager {
 	 *         selected.
 	 */
 	public RunDescription getSelectedRun() {
-		return selectedRun;
+		return f_selectedRun;
 	}
 
 	/**
@@ -221,6 +221,6 @@ public final class RunManager {
 	 *            selected.
 	 */
 	public void setSelectedRun(final RunDescription runDescription) {
-		selectedRun = runDescription;
+		f_selectedRun = runDescription;
 	}
 }

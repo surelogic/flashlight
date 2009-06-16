@@ -343,7 +343,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 
 	private final void updateRunManager() {
 		final RunDescription[] selected = getSelectedRunDescriptions();
-		RunManager.getInstance().setSelectedRun(
+		AdHocDataSource.getInstance().setSelectedRun(
 				selected.length == 0 ? null : selected[0]);
 	}
 
@@ -377,13 +377,13 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 		 */
 		if (selected.length == 0
 				|| (selected[0].getPrepRunDescription() == null)) {
-			RunManager.getInstance().setSelectedRun(null);
+			AdHocDataSource.getInstance().setSelectedRun(null);
 			AdHocDataSource.getManager().setGlobalVariableValue(
 					AdHocManager.DATABASE, null);
 		} else {
 			final RunDescription o = selected[0];
 			HistoricalSourceView.setRunDescription(o);
-			RunManager.getInstance().setSelectedRun(o);
+			AdHocDataSource.getInstance().setSelectedRun(o);
 			AdHocDataSource.getManager().setGlobalVariableValue(
 					AdHocManager.DATABASE, o.toIdentityString());
 			AdHocDataSource.getManager().setSelectedResult(null);
@@ -420,13 +420,14 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 			final String db = result.getQueryFullyBound().getVariableValues()
 					.get(AdHocManager.DATABASE);
 
-			final RunDescription selected = RunManager.getInstance()
+			final RunDescription selected = AdHocDataSource.getInstance()
 					.getSelectedRun();
 			for (final RunDescription runDescription : RunManager.getInstance()
 					.getRunDescriptions()) {
 				if (runDescription.toIdentityString().equals(db)) {
 					if (!runDescription.equals(selected)) {
-						RunManager.getInstance().setSelectedRun(runDescription);
+						AdHocDataSource.getInstance().setSelectedRun(
+								runDescription);
 						setSelectedRunDescription(runDescription);
 					}
 				}

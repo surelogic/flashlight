@@ -357,6 +357,15 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 	}
 
 	private final void setToolbarState() {
+		/*
+		 * Consider auto-selecting the run if one and only one run exists.
+		 */
+		final boolean autoSelectRun = f_table.getSelectionCount() == 0
+				&& f_table.getItemCount() == 1;
+		if (autoSelectRun) {
+			f_table.setSelection(0);
+		}
+
 		final RunDescription[] selected = getSelectedRunDescriptions();
 		final boolean somethingIsSelected = selected.length > 0;
 		f_deleteAction.setEnabled(somethingIsSelected);

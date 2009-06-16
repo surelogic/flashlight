@@ -426,6 +426,11 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 	@Override
 	public void notifySelectedResultChange(final AdHocQueryResult result) {
 		if (result != null) {
+			/*
+			 * This method is trying to change the selected run in the run view
+			 * when the user selects a query result that is not using the data
+			 * from the run currently selected.
+			 */
 			final String db = result.getQueryFullyBound().getVariableValues()
 					.get(AdHocManager.DATABASE);
 

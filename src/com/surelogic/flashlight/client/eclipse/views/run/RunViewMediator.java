@@ -112,6 +112,15 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 		setToolbarState();
 	}
 
+	/**
+	 * Gets the run description attached to the passed table item or returns
+	 * {@code null} if one does not exist.
+	 * 
+	 * @param item
+	 *            a table item.
+	 * @return the run description attached to the passed table item, or {@code
+	 *         null} if one does not exist.
+	 */
 	private RunDescription getData(final TableItem item) {
 		if (item != null) {
 			final Object o = item.getData();

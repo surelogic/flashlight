@@ -196,31 +196,4 @@ public final class RunManager {
 			notifyObservers();
 		}
 	}
-
-	/**
-	 * The currently selected run, may be {@code null} which indicates that no
-	 * run is selected.
-	 */
-	private volatile RunDescription f_selectedRun;
-
-	/**
-	 * Gets the currently selected run.
-	 * 
-	 * @return the currently selected run, or {@code null} if no run is
-	 *         selected.
-	 */
-	public RunDescription getSelectedRun() {
-		return f_selectedRun;
-	}
-
-	/**
-	 * Sets the currently selected run.
-	 * 
-	 * @param runDescription
-	 *            the run that is now selected, or {@code null} if no run is now
-	 *            selected.
-	 */
-	public void setSelectedRun(final RunDescription runDescription) {
-		f_selectedRun = runDescription;
-	}
 }

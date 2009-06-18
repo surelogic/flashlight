@@ -1,5 +1,6 @@
 package com.surelogic.flashlight.common.jobs;
 
+import com.surelogic.common.adhoc.AdHocManager;
 import com.surelogic.common.jdbc.DBConnection;
 import com.surelogic.common.jobs.AbstractSLJob;
 import com.surelogic.common.jobs.SLProgressMonitor;
@@ -13,10 +14,12 @@ import com.surelogic.flashlight.common.entities.PrepRunDescription;
  */
 public final class UnPrepSLJob extends AbstractSLJob {
 	private final DBConnection f_database;
+	private final AdHocManager f_man;
 
-	public UnPrepSLJob(final PrepRunDescription prep) {
+	public UnPrepSLJob(final PrepRunDescription prep, final AdHocManager man) {
 		super("Removing preparing data " + prep.getDescription().getName());
 		f_database = prep.getDescription().getDB();
+		f_man = man;
 	}
 
 	public SLStatus run(final SLProgressMonitor monitor) {
@@ -29,6 +32,7 @@ public final class UnPrepSLJob extends AbstractSLJob {
 			}
 
 			UsageMeter.getInstance().tickUse("Flashlight ran UnPrepSLJob");
+			f_man.deleteAllResults(f_database);
 			f_database.destroy();
 		} finally {
 			monitor.done();

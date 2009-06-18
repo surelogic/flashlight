@@ -37,6 +37,7 @@ import com.surelogic.common.jobs.SLJob;
 import com.surelogic.common.jobs.SLSeverity;
 import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.common.serviceability.UsageMeter;
+import com.surelogic.flashlight.client.eclipse.Activator;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
 import com.surelogic.flashlight.common.jobs.DisconnectAllDatabases;
 import com.surelogic.flashlight.common.model.RunManager;
@@ -116,7 +117,7 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 					RunManager.getInstance().setDataDirectory(destination);
 					AdHocDataSource.getManager().deleteAllResults();
 				} else {
-					IStatus status = SLEclipseStatusUtility.convert(result);
+					IStatus status = SLEclipseStatusUtility.convert(result, Activator.getDefault());
 					ErrorDialogUtility
 							.open(
 									change.getShell(),

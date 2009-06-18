@@ -307,7 +307,8 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 					final boolean deleteRaw = hasRawFiles
 							&& d.deleteRawDataFiles();
 					if (hasPrep) {
-						jobs.add(new UnPrepSLJob(prep));
+						jobs.add(new UnPrepSLJob(prep, AdHocDataSource
+								.getManager()));
 					}
 					if (deleteRaw) {
 						final File dataDir = PreferenceConstants

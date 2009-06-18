@@ -164,6 +164,13 @@ public class DebugStore {
     stdOut.flush();
   }
 
+  public synchronized static void classInit(final boolean before, final Class<?> clazz) {
+    stdOut.println("classInit");
+    stdOut.println("  before = " + before);
+    stdOut.println("  clazz = " + objectToString(clazz));
+    stdOut.flush();
+  }
+  
   public static synchronized void constructorCall(
       final boolean before, final long siteId) {
     stdOut.println("constructorCall");

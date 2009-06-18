@@ -34,6 +34,9 @@ public final class FlashlightNames {
   public static final Method BEFORE_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT =
     Method.getMethod("void beforeUtilConcurrentLockAcquisitionAttempt(Object, long)");
   
+  public static final Method CLASS_INIT =
+    Method.getMethod("void classInit(boolean, java.lang.Class)");
+  
   public static final Method CONSTRUCTOR_CALL =
     Method.getMethod("void constructorCall(boolean, long)");
 

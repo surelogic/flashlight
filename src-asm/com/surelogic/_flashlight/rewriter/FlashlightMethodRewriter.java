@@ -127,7 +127,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
   
   /**
    * Label for marking the start of the exception handler used when
-   * rewriting constructors and synchronized methods.
+   * rewriting class initializers, constructors and synchronized methods.
    */
   private Label startOfExceptionHandler = null;
   
@@ -347,6 +347,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     // Initialize the flashlight$withinClass field
     if (isClassInitializer) {
       insertClassInitializerCode();
+      insertClassInitPrefix();
     }
     if (wasSynchronized && config.rewriteSynchronizedMethod) {
       insertSynchronizedMethodPrefix();
@@ -394,6 +395,9 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
       }
       if (isConstructor && config.rewriteConstructorExecution) {
         insertConstructorExecution(false);
+      }
+      if (isClassInitializer) {
+        insertClassInit(false);
       }
       mv.visitInsn(opcode);
       
@@ -529,6 +533,10 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     insertDelayedCode();
     if (wasSynchronized && config.rewriteSynchronizedMethod) {
       insertSynchronizedMethodPostfix();
+    }
+    
+    if (isClassInitializer) {
+      insertClassInitPostfix();
     }
     
     if (isConstructor && config.rewriteConstructorExecution) {
@@ -812,6 +820,11 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
   // == Insert Bookkeeping code
   // =========================================================================
 
+  /**
+   * Insert code into the class initializer that inits any flashlight-specific
+   * state that must be set before any calls to the Store can be made from
+   * this class.
+   */
   private void insertClassInitializerCode() {
     // Stack is empty (we are at the beginning of the method!)
 
@@ -835,6 +848,41 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
   // =========================================================================
   // == Rewrite new/<init>
   // =========================================================================
+  
+  private void insertClassInitPrefix() {
+    /* Create event */
+    insertClassInit(true);
+    
+    /* Set up finally handler */
+    final Label startOfInitializer = new Label();
+    startOfExceptionHandler = new Label();
+    mv.visitTryCatchBlock(startOfInitializer,
+        startOfExceptionHandler, startOfExceptionHandler, null);
+    
+    /* Start of initializer */
+    mv.visitLabel(startOfInitializer);
+  }
+  
+  private void insertClassInitPostfix() {
+    // exception
+    mv.visitLabel(startOfExceptionHandler);    
+    insertClassInit(false); 
+    // exception
+    
+    /* Rethrow the exception */
+    mv.visitInsn(Opcodes.ATHROW);
+    startOfExceptionHandler = null;
+  }
+  
+  private void insertClassInit(final boolean before) {
+    // ...
+    ByteCodeUtils.pushBooleanConstant(mv, before);
+    // ..., before
+    ByteCodeUtils.pushClass(mv, classBeingAnalyzedInternal);
+    // ..., before, clazz
+    ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.CLASS_INIT);
+    // ...
+  }
   
   private void insertConstructorExecutionPrefix() {
     /* Create event */

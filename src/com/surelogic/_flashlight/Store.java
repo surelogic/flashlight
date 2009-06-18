@@ -806,6 +806,23 @@ public final class Store {
 //    System.out.println("  siteId = " + siteId);
   }
   
+  /**
+   * Records that a class initializer is about to begin execution, or has
+   * completed execution.
+   * 
+   * @param before
+   *          {@value true} if the the class initializer is about to begin
+   *          execution; {@value false} if the class initializers has already
+   *          completed execution.
+   * @param class
+   *          The class object of the class being initialized.
+   */
+  public static void classInit(final boolean before, final Class<?> clazz) {
+    final String fmt = "Store.classInit(%n\t\tbefore=%s%n\t\tclass=%s)";
+    System.out.println(
+        String.format(fmt, before ? "true" : "false", clazz.getName()));
+  }
+  
 	/**
 	 * Records that a constructor call occurred within the instrumented program.
 	 * 

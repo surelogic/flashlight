@@ -509,16 +509,16 @@ public final class Store {
 	 *            the object instance the field is part of the state of.
 	 * @param fieldID
 	 *            the statically assigned id for the accessed field.
-   * @param siteId
-   *          The id of the program location that is accessing the field
-   * @param dcPhantom
-   *          The phantom class object for the class that declares the field
-   *          being accessed, or {@value null} if the field is declared in an
-   *          uninstrumented class.
-   * @param declaringClass
-   *          The class object for the class that declares the field being
-   *          access when {@code dcPhantom} is {@value null}. If the
-   *          {@code dcPhantom} is non-{@value null} then this is {@value null}.
+	 * @param siteId
+	 *            The id of the program location that is accessing the field
+	 * @param dcPhantom
+	 *            The phantom class object for the class that declares the field
+	 *            being accessed, or null} if the field is declared in an
+	 *            uninstrumented class.
+	 * @param declaringClass
+	 *            The class object for the class that declares the field being
+	 *            access when {@code dcPhantom} is null} . If the {@code
+	 *            dcPhantom} is non- null} then this is null} .
 	 */
 	public static void instanceFieldAccess(final boolean read,
 			final Object receiver, final int fieldID, final long siteId,
@@ -589,28 +589,28 @@ public final class Store {
 	}
 
 	/**
-   * Records that a statically numbered static field was accessed within the
-   * instrumented program.
-   * 
-   * @param read
-   *          {@code true} indicates a field <i>read</i>, {@code false}
-   *          indicates a field <i>write</i>.
-   * @param fieldID
-   *          the statically assigned id for the accessed field.
-   * @param siteId
-   *          The id of the program location that is accessing the field
-   * @param dcPhantom
-   *          The phantom class object for the class that declares the field
-   *          being accessed, or {@value null} if the field is declared in an
-   *          uninstrumented class.
-   * @param declaringClass
-   *          The class object for the class that declares the field being
-   *          access when {@code dcPhantom} is {@value null}. If the
-   *          {@code dcPhantom} is non-{@value null} then this is {@value null}.
-   */
-	public static void staticFieldAccess(
-	    final boolean read, final int fieldID, final long siteId,
-      final ClassPhantomReference dcPhantom, final Class<?> declaringClass) {
+	 * Records that a statically numbered static field was accessed within the
+	 * instrumented program.
+	 * 
+	 * @param read
+	 *            {@code true} indicates a field <i>read</i>, {@code false}
+	 *            indicates a field <i>write</i>.
+	 * @param fieldID
+	 *            the statically assigned id for the accessed field.
+	 * @param siteId
+	 *            The id of the program location that is accessing the field
+	 * @param dcPhantom
+	 *            The phantom class object for the class that declares the field
+	 *            being accessed, or null} if the field is declared in an
+	 *            uninstrumented class.
+	 * @param declaringClass
+	 *            The class object for the class that declares the field being
+	 *            access when {@code dcPhantom} is null} . If the {@code
+	 *            dcPhantom} is non- null} then this is null} .
+	 */
+	public static void staticFieldAccess(final boolean read, final int fieldID,
+			final long siteId, final ClassPhantomReference dcPhantom,
+			final Class<?> declaringClass) {
 		if (StoreDelegate.FL_OFF.get()) {
 			return;
 		}
@@ -647,9 +647,11 @@ public final class Store {
 			 * line))); return; }
 			 */
 			boolean underConstruction = false;
+			if (dcPhantom != null) {
+				underConstruction = dcPhantom.isUnderConstruction();
+			}
 			if (declaringClass != null) {
-				underConstruction = Phantom.ofClass(declaringClass)
-						.isUnderConstruction();
+				Phantom.ofClass(declaringClass);
 			}
 			final Event e;
 			if (read) {

@@ -2,8 +2,9 @@ package com.surelogic._flashlight;
 
 final class FieldWriteStatic extends FieldAccessStatic {
 
-	FieldWriteStatic(final long field, final long siteId, Store.State state) {
-		super(field, siteId, state);
+	FieldWriteStatic(final long field, final long siteId,
+			final Store.State state, final boolean underConstruction) {
+		super(field, siteId, state, underConstruction);
 	}
 
 	@Override
@@ -18,6 +19,7 @@ final class FieldWriteStatic extends FieldAccessStatic {
 		addNanoTime(b);
 		addThread(b);
 		addField(b);
+		addClassUnderConstruction(b);
 		b.append("/>");
 		return b.toString();
 	}

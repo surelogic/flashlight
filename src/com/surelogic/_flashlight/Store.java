@@ -11,8 +11,11 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -66,8 +69,9 @@ public final class Store {
 	 *            the message to log.
 	 */
 	static void log(final String msg) {
-		if (f_log != null)
+		if (f_log != null) {
 			f_log.println("[Flashlight] " + msg);
+		}
 	}
 
 	/**
@@ -112,16 +116,18 @@ public final class Store {
 	 * Flush the log.
 	 */
 	static void logFlush() {
-		if (f_log != null)
+		if (f_log != null) {
 			f_log.flush();
+		}
 	}
 
 	/**
 	 * Closes the log.
 	 */
 	static void logComplete() {
-		if (f_log != null)
+		if (f_log != null) {
 			f_log.close();
+		}
 	}
 
 	/**
@@ -167,7 +173,7 @@ public final class Store {
 	 * The depository thread.
 	 */
 	private static final Depository f_depository;
-	
+
 	/**
 	 * The console thread.
 	 */
@@ -186,16 +192,18 @@ public final class Store {
 	 * is part of the instrumented program.
 	 */
 	private final static ThreadLocal<State> tl_withinStore;
-	
+
 	public static final class State {
 		boolean inside = false;
 		final ThreadPhantomReference thread;
 		public final TraceNode.Header traceHeader;
 		final List<Event> eventQueue;
 		final BlockingQueue<List<Event>> rawQueue;
-		final List<IdPhantomReference> locksHeld = IdConstants.trackLocks ? new ArrayList<IdPhantomReference>() : null;
-		
-		State(BlockingQueue<List<Event>> q, List<Event> l, boolean flashlightThread) {
+		final List<IdPhantomReference> locksHeld = IdConstants.trackLocks ? new ArrayList<IdPhantomReference>()
+				: null;
+
+		State(final BlockingQueue<List<Event>> q, final List<Event> l,
+				final boolean flashlightThread) {
 			rawQueue = q;
 			eventQueue = l;
 			if (flashlightThread) {
@@ -207,12 +215,12 @@ public final class Store {
 				traceHeader = TraceNode.makeHeader();
 			}
 		}
-		
-		TraceNode getCurrentTrace(long siteId) {
+
+		TraceNode getCurrentTrace(final long siteId) {
 			return traceHeader.getCurrentNode(siteId, this);
 		}
 	}
-	
+
 	private static final boolean useLocks = true;
 
 	/**
@@ -232,12 +240,12 @@ public final class Store {
 	 * store immediately return.
 	 */
 	final static State flashlightThread() {
-		State s = createState(true);
+		final State s = createState(true);
 		tl_withinStore.set(s);
-		return s; 
+		return s;
 	}
-	
-	private static State createState(boolean flashlightThread) {
+
+	private static State createState(final boolean flashlightThread) {
 		final List<Event> l = new ArrayList<Event>(LOCAL_QUEUE_MAX);
 		synchronized (localQueueList) {
 			localQueueList.add(l);
@@ -250,14 +258,15 @@ public final class Store {
 	 */
 	static {
 		if (IdConstants.enableFlashlightToggle || !StoreDelegate.FL_OFF.get()) {
-			//new Throwable("Store CL = "+Store.class.getClassLoader()).printStackTrace(System.out);
-			
+			// new
+			// Throwable("Store CL = "+Store.class.getClassLoader()).printStackTrace(System.out);
+
 			/*
 			 * Initialize final static fields. If Flashlight is off these fields
 			 * are all set to null to save memory.
 			 */
-			final File flashlightDir =
-			  new File(StoreConfiguration.getDirectory());
+			final File flashlightDir = new File(StoreConfiguration
+					.getDirectory());
 			if (!flashlightDir.exists()) {
 				flashlightDir.mkdirs();
 			}
@@ -267,44 +276,46 @@ public final class Store {
 			fileName.append(System.getProperty("file.separator"));
 			f_run = StoreConfiguration.getRun();
 			fileName.append(f_run);
-			
-			
-			/* Get the start time of the data collection.  This time is embedded in
-			 * the time event in the output as well as in the names of the data
-			 * and log files.  The time can be provided in the configuration parameter
-			 * "date override" so that we use the same start time in the data file as
-			 * we use in the name of the flashlight run directory as constructed by
-			 * the executing IDE.
+
+			/*
+			 * Get the start time of the data collection. This time is embedded
+			 * in the time event in the output as well as in the names of the
+			 * data and log files. The time can be provided in the configuration
+			 * parameter "date override" so that we use the same start time in
+			 * the data file as we use in the name of the flashlight run
+			 * directory as constructed by the executing IDE.
 			 */
-      final SimpleDateFormat dateFormat =
-        new SimpleDateFormat("-yyyy.MM.dd-'at'-HH.mm.ss.SSS");
+			final SimpleDateFormat dateFormat = new SimpleDateFormat(
+					"-yyyy.MM.dd-'at'-HH.mm.ss.SSS");
 			final String dateOverride = StoreConfiguration.getDateOverride();
 			Date startTime;
 			if (dateOverride == null) {
-			  /* No time is provided, use the current time */
-			  startTime = new Date();
+				/* No time is provided, use the current time */
+				startTime = new Date();
 			} else {
-			  /* We have an externally provided time.  Try to parse it.  If we cannot
-			   * parse it, use the current time.
-			   */
-			  try {
-          startTime = dateFormat.parse(dateOverride);
-        } catch (ParseException e) {
-          System.err.println(
-              "[Flashlight] couldn't parse date string \"" + dateOverride + "\"");
-          startTime = new Date();
-        }
+				/*
+				 * We have an externally provided time. Try to parse it. If we
+				 * cannot parse it, use the current time.
+				 */
+				try {
+					startTime = dateFormat.parse(dateOverride);
+				} catch (final ParseException e) {
+					System.err
+							.println("[Flashlight] couldn't parse date string \""
+									+ dateOverride + "\"");
+					startTime = new Date();
+				}
 			}
 			final Time timeEvent = new Time(startTime);
-      fileName.append(dateFormat.format(timeEvent.getDate()));        
-			
-			File logFile = new File(fileName.toString() + ".flog");
+			fileName.append(dateFormat.format(timeEvent.getDate()));
+
+			final File logFile = new File(fileName.toString() + ".flog");
 			PrintWriter w = null;
 			try {
 				OutputStream stream = new FileOutputStream(logFile);
 				stream = new BufferedOutputStream(stream);
 				w = new PrintWriter(stream);
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				System.err.println("[Flashlight] unable to log to \""
 						+ logFile.getAbsolutePath() + "\"");
 				e.printStackTrace(System.err);
@@ -314,58 +325,64 @@ public final class Store {
 			// still incremented even if logging is off.
 			f_problemCount = new AtomicLong();
 
-			final boolean outputBinary = StoreConfiguration.getOutputType().isBinary();
-			final boolean compress = StoreConfiguration.getOutputType().isCompressed();
+			final boolean outputBinary = StoreConfiguration.getOutputType()
+					.isBinary();
+			final boolean compress = StoreConfiguration.getOutputType()
+					.isCompressed();
 			final String extension = outputBinary ? ".flb" : ".fl";
-			File dataFile = new File(fileName.toString() + extension + (compress ? ".gz" : ""));
+			final File dataFile = new File(fileName.toString() + extension
+					+ (compress ? ".gz" : ""));
 			w = null;
 			if (StoreConfiguration.debugOn()) {
-				System.err.println("Output XML = "+!outputBinary);
+				System.err.println("Output XML = " + !outputBinary);
 			}
 			OutputStream stream = null;
 			ObjectOutputStream objStream = null;
-			try {				
-				PrintWriter headerW = new PrintWriter(fileName.toString()+".flh");
-				OutputStrategyXML.outputHeader(headerW, timeEvent, 
-						                       outputBinary ? OutputStrategyBinary.version : 
-						                    	              OutputStrategyXML.version);
+			try {
+				final PrintWriter headerW = new PrintWriter(fileName.toString()
+						+ ".flh");
+				OutputStrategyXML.outputHeader(headerW, timeEvent,
+						outputBinary ? OutputStrategyBinary.version
+								: OutputStrategyXML.version);
 				headerW.close();
-				
+
 				stream = new FileOutputStream(dataFile);
 				if (StoreConfiguration.debugOn()) {
-					System.err.println("Compress stream = "+compress);
+					System.err.println("Compress stream = " + compress);
 				}
 				if (compress) {
-				  stream = new GZIPOutputStream(stream, 32768);
+					stream = new GZIPOutputStream(stream, 32768);
 				} else {
-			      stream = new BufferedOutputStream(stream, 32768);
-				}				
+					stream = new BufferedOutputStream(stream, 32768);
+				}
 				if (!outputBinary) {
-				OutputStreamWriter osw = new OutputStreamWriter(stream,
-						ENCODING);
-				w = new PrintWriter(osw);
+					final OutputStreamWriter osw = new OutputStreamWriter(
+							stream, ENCODING);
+					w = new PrintWriter(osw);
 				} else {
 					objStream = new ObjectOutputStream(stream);
 				}
-			} catch (IOException e) {
-				
+			} catch (final IOException e) {
+
 				logAProblem("unable to output to \""
 						+ dataFile.getAbsolutePath() + "\"", e);
 				System.exit(1); // bail
 			}
-			final EventVisitor outputStrategy = 
-			//	outputBinary ? new EventVisitor() {} : new OutputStrategyXML(w);
-				outputBinary ? new OutputStrategyBinary(objStream, timeEvent) : new OutputStrategyXML(w);
-				
-			final int rawQueueSize = StoreConfiguration.getRawQueueSize();			
+			final EventVisitor outputStrategy =
+			// outputBinary ? new EventVisitor() {} : new OutputStrategyXML(w);
+			outputBinary ? new OutputStrategyBinary(objStream, timeEvent)
+					: new OutputStrategyXML(w);
+
+			final int rawQueueSize = StoreConfiguration.getRawQueueSize();
 			final int outQueueSize = StoreConfiguration.getOutQueueSize();
-			f_rawQueue = new ArrayBlockingQueue<List<Event>>(StoreConfiguration.isRefineryOff()?
-					                                         outQueueSize : rawQueueSize);
+			f_rawQueue = new ArrayBlockingQueue<List<Event>>(StoreConfiguration
+					.isRefineryOff() ? outQueueSize : rawQueueSize);
 			putInQueue(f_rawQueue, singletonList(timeEvent));
 			putInQueue(f_rawQueue, singletonList(new SelectedPackage("*")));
-			
+
 			if (StoreConfiguration.debugOn()) {
-				System.err.println("Using refinery = "+!StoreConfiguration.isRefineryOff());
+				System.err.println("Using refinery = "
+						+ !StoreConfiguration.isRefineryOff());
 			}
 			if (!StoreConfiguration.isRefineryOff()) {
 				f_outQueue = new ArrayBlockingQueue<List<Event>>(outQueueSize);
@@ -380,7 +397,8 @@ public final class Store {
 			};
 			IdPhantomReference
 					.addObserver(new IdPhantomReferenceCreationObserver() {
-						public void notify(ClassPhantomReference o, IdPhantomReference r) {
+						public void notify(final ClassPhantomReference o,
+								final IdPhantomReference r) {
 							/*
 							 * Create an event to define this object.
 							 */
@@ -451,13 +469,14 @@ public final class Store {
 	public static BlockingQueue<List<Event>> getRawQueue() {
 		return f_rawQueue;
 	}
-	
+
 	static int getIntProperty(final String key, int def, final int min) {
 		try {
-			String intString = System.getProperty(key);
-			if (intString != null)
+			final String intString = System.getProperty(key);
+			if (intString != null) {
 				def = Integer.parseInt(intString);
-		} catch (NumberFormatException e) {
+			}
+		} catch (final NumberFormatException e) {
 			// ignore, go with the default
 		}
 		// ensure the result isn't less than the minimum
@@ -466,363 +485,403 @@ public final class Store {
 
 	/**
 	 * Get the phantom object reference for the given {@code Class} object.
-	 * Cannot use {@link Phantom#ofClass(Class)} directly because we need to make
-	 * sure the store is loaded and initialized before creating phantom objects.
+	 * Cannot use {@link Phantom#ofClass(Class)} directly because we need to
+	 * make sure the store is loaded and initialized before creating phantom
+	 * objects.
 	 */
-  public static ClassPhantomReference getClassPhantom(Class<?> c) {
-	  return StoreDelegate.getClassPhantom(c);
-  }
-	
-  public static ObjectPhantomReference getObjectPhantom(Object o, long id) {
-    return StoreDelegate.getObjectPhantom(o, id);
-  }
-  
-  /**
-   * Records that a statically numbered instance field was accessed within the
-   * instrumented program.
-   * 
-   * @param read
-   *            {@code true} indicates a field <i>read</i>, {@code false}
-   *            indicates a field <i>write</i>.
-   * @param receiver
-   *            the object instance the field is part of the state of.
-   * @param fieldID
-   *            the statically assigned id for the accessed field.
-   * @param withinClass
-   *            the phantom class object for the class where the event occurred, may be {@code null}.
-   * @param line
-   *            the line number where the event occurred.
-   */
-  public static void instanceFieldAccess(
-      final boolean read, final Object receiver, final int fieldID,
-      final long siteId, final Class<?> declaringClass) {
-	  if (StoreDelegate.FL_OFF.get())
-		  return;
-	  if (!IdConstants.useFieldAccesses) {
-		  return;
-	  }
-	  if (f_flashlightIsNotInitialized)
-		  return;
+	public static ClassPhantomReference getClassPhantom(final Class<?> c) {
+		return StoreDelegate.getClassPhantom(c);
+	}
 
-	  final State flState = tl_withinStore.get();
-	  if (flState.inside)
-		  return;
-	  flState.inside = true;
-	  try {
-		  /*
-		  if (DEBUG) {
-			  final String fmt = "Store.instanceFieldAccessLookup(%n\t\t%s%n\t\treceiver=%s%n\t\tfield=%s%n\t\tlocation=%s)";
-			  log(String.format(fmt, read ? "read" : "write",
-					  safeToString(receiver), clazz.getName()+'.'+fieldName, SrcLoc.toString(withinClass, line)));
-		  }
-		  */
+	public static ObjectPhantomReference getObjectPhantom(final Object o,
+			final long id) {
+		return StoreDelegate.getObjectPhantom(o, id);
+	}
 
-		  /*
-		   * Check that the parameters are valid, gather needed information,
-		   * and put an event in the raw queue.
-		   */
-		  /*
-		  if (oField == null) {
-			  final String fmt = "field cannot be null...instrumentation bug detected by Store.instanceFieldAccessLookup(%s, receiver=%s, field=%s, withinClass, line=%s)";
-			  logAProblem(String.format(fmt, read ? "read" : "write",
-					  safeToString(receiver), clazz.getName()+'.'+fieldName, SrcLoc.toString(withinClass, line)));
-			  return;
-		  }
-		  */
-		  final Event e;
-		  if (receiver == null) {
-			  /*
-			  final String fmt = "instance field %s access reported with a null receiver...instrumentation bug detected by Store.instanceFieldAccessLookup(%s, receiver=%s, field=%s, location=%s)";
-			  logAProblem(String.format(fmt, oField, read ? "read"
-					  : "write", safeToString(receiver), clazz.getName()+'.'+fieldName, SrcLoc.toString(withinClass, line)));
-					  */
-			  return;
-		  }
-		  /* if the field is not from an instrumented class then force creation
-		   * of the phantom class object.
-		   */
-		  if (declaringClass != null) {
-		    Phantom.ofClass(declaringClass);
-		  }
-		  if (read)
-			  e = new FieldReadInstance(receiver, fieldID, siteId, flState);
-		  else
-			  e = new FieldWriteInstance(receiver, fieldID, siteId, flState);
-		  putInQueue(flState, e);
-	  } finally {
-		  flState.inside = false;
-	  }
-  }
+	/**
+	 * Records that a statically numbered instance field was accessed within the
+	 * instrumented program.
+	 * 
+	 * @param read
+	 *            {@code true} indicates a field <i>read</i>, {@code false}
+	 *            indicates a field <i>write</i>.
+	 * @param receiver
+	 *            the object instance the field is part of the state of.
+	 * @param fieldID
+	 *            the statically assigned id for the accessed field.
+	 * @param withinClass
+	 *            the phantom class object for the class where the event
+	 *            occurred, may be {@code null}.
+	 * @param line
+	 *            the line number where the event occurred.
+	 */
+	public static void instanceFieldAccess(final boolean read,
+			final Object receiver, final int fieldID, final long siteId,
+			final Class<?> declaringClass) {
+		if (StoreDelegate.FL_OFF.get()) {
+			return;
+		}
+		if (!IdConstants.useFieldAccesses) {
+			return;
+		}
+		if (f_flashlightIsNotInitialized) {
+			return;
+		}
 
-  /**
-   * Records that a statically numbered static field was accessed within the
-   * instrumented program.
-   * 
-   * @param read
-   *            {@code true} indicates a field <i>read</i>, {@code false}
-   *            indicates a field <i>write</i>.
-   * @param fieldID
-   *            the statically assigned id for the accessed field.
-   * @param withinClass
-   *            the phantom class object for the class where the event occurred, may be {@code null}.
-   * @param line
-   *            the line number where the event occurred.
-   */
-  public static void staticFieldAccess(final boolean read, final int fieldID,
-		  final long siteId, final Class<?> declaringClass) {
-	  if (StoreDelegate.FL_OFF.get())
-		  return;
-	  if (!IdConstants.useFieldAccesses) {
-		  return;
-	  }	  
-	  if (f_flashlightIsNotInitialized)
-		  return;
+		final State flState = tl_withinStore.get();
+		if (flState.inside) {
+			return;
+		}
+		flState.inside = true;
+		try {
+			/*
+			 * if (DEBUG) { final String fmt =
+			 * "Store.instanceFieldAccessLookup(%n\t\t%s%n\t\treceiver=%s%n\t\tfield=%s%n\t\tlocation=%s)"
+			 * ; log(String.format(fmt, read ? "read" : "write",
+			 * safeToString(receiver), clazz.getName()+'.'+fieldName,
+			 * SrcLoc.toString(withinClass, line))); }
+			 */
 
-	  final State flState = tl_withinStore.get();
-	  if (flState.inside)
-		  return;
-	  flState.inside = true;
-	  try {
-		  /*
-		  if (DEBUG) {
-			  final String fmt = "Store.staticFieldAccessLookup(%n\t\t%s%n\t\tfield=%s%n\t\tlocation=%s)";
-			  log(String.format(fmt, read ? "read" : "write", clazz.getName()+'.'+fieldName, SrcLoc.toString(withinClass, line)));
-		  }
-		  */
+			/*
+			 * Check that the parameters are valid, gather needed information,
+			 * and put an event in the raw queue.
+			 */
+			/*
+			 * if (oField == null) { final String fmt =
+			 * "field cannot be null...instrumentation bug detected by Store.instanceFieldAccessLookup(%s, receiver=%s, field=%s, withinClass, line=%s)"
+			 * ; logAProblem(String.format(fmt, read ? "read" : "write",
+			 * safeToString(receiver), clazz.getName()+'.'+fieldName,
+			 * SrcLoc.toString(withinClass, line))); return; }
+			 */
+			final Event e;
+			if (receiver == null) {
+				/*
+				 * final String fmt =
+				 * "instance field %s access reported with a null receiver...instrumentation bug detected by Store.instanceFieldAccessLookup(%s, receiver=%s, field=%s, location=%s)"
+				 * ; logAProblem(String.format(fmt, oField, read ? "read" :
+				 * "write", safeToString(receiver),
+				 * clazz.getName()+'.'+fieldName, SrcLoc.toString(withinClass,
+				 * line)));
+				 */
+				return;
+			}
+			/*
+			 * if the field is not from an instrumented class then force
+			 * creation of the phantom class object.
+			 */
+			if (declaringClass != null) {
+				Phantom.ofClass(declaringClass);
+			}
+			if (read) {
+				e = new FieldReadInstance(receiver, fieldID, siteId, flState);
+			} else {
+				e = new FieldWriteInstance(receiver, fieldID, siteId, flState);
+			}
+			putInQueue(flState, e);
+		} finally {
+			flState.inside = false;
+		}
+	}
 
-		  /*
-		   * Check that the parameters are valid, gather needed information,
-		   * and put an event in the raw queue.
-		   */
-		  /*
-		  if (oField == null) {
-			  final String fmt = "field cannot be null...instrumentation bug detected by Store.staticFieldAccessLookup(%s, field=%s, location=%s)";
-			  logAProblem(String.format(fmt, read ? "read" : "write", clazz.getName()+'.'+fieldName, SrcLoc.toString(withinClass, line)));
-			  return;
-		  }
-          */
-      if (declaringClass != null) {
-        Phantom.ofClass(declaringClass);
-      }
-		  final Event e;
-		  if (read)
-			  e = new FieldReadStatic(fieldID, siteId, flState);
-		  else
-			  e = new FieldWriteStatic(fieldID, siteId, flState);
-		  putInQueue(flState, e);
-	  } finally {
-		  flState.inside = false;
-	  }  
-  }
+	/**
+	 * Records that a statically numbered static field was accessed within the
+	 * instrumented program.
+	 * 
+	 * @param read
+	 *            {@code true} indicates a field <i>read</i>, {@code false}
+	 *            indicates a field <i>write</i>.
+	 * @param fieldID
+	 *            the statically assigned id for the accessed field.
+	 * @param withinClass
+	 *            the phantom class object for the class where the event
+	 *            occurred, may be {@code null}.
+	 * @param line
+	 *            the line number where the event occurred.
+	 */
+	public static void staticFieldAccess(final boolean read, final int fieldID,
+			final long siteId, final Class<?> declaringClass) {
+		if (StoreDelegate.FL_OFF.get()) {
+			return;
+		}
+		if (!IdConstants.useFieldAccesses) {
+			return;
+		}
+		if (f_flashlightIsNotInitialized) {
+			return;
+		}
 
-//  /**
-//   * Records that a instance field that needs to be assigned a dynamic field id
-//   * was accessed within the instrumented program.
-//   * 
-//   * @param read
-//   *            {@code true} indicates a field <i>read</i>, {@code false}
-//   *            indicates a field <i>write</i>.
-//   * @param receiver
-//   *            the object instance the field is part of the state of.
-//   * @param clazz
-//   *            The class object of the class in which the search
-//   *            for the field should begin.
-//   * @param fieldName
-//   *            the name of the field.
-//   * @param withinClass
-//   *            the phantom class object for the class where the event occurred, may be {@code null}.
-//   * @param line
-//   *            the line number where the event occurred.
-//   */
-//  public static void instanceFieldAccessLookup(
-//      final boolean read, final Object receiver,
-//      final Class clazz, final String fieldName, final long siteId) {
-//	  if (!IdConstants.useFieldAccesses) {
-//		  return;
-//	  }	  
-//    if (f_flashlightIsNotInitialized)
-//      return;
-//    if (StoreDelegate.FL_OFF.get())
-//      return;
-//    final State flState = tl_withinStore.get();
-//    if (flState.inside)
-//    	return;
-//    flState.inside = true;
-//    try {
-//      if (filterOutFieldAccess(clazz, siteId)) {
-//    	return;
-//      }
-//      if (DEBUG) {
-//        final String fmt = "Store.instanceFieldAccessLookup(%n\t\t%s%n\t\treceiver=%s%n\t\tfield=%s%n\t\tlocation=%s)";
-//        log(String.format(fmt, read ? "read" : "write",
-//            safeToString(receiver), clazz.getName()+'.'+fieldName, siteId));
-//      }
-//      final ObservedField oField = ObservedField.getInstance(clazz, fieldName,
-//    		  flState);
-//      /*
-//       * Check that the parameters are valid, gather needed information,
-//       * and put an event in the raw queue.
-//       */
-//      if (oField == null) {
-//        final String fmt = "field cannot be null...instrumentation bug detected by Store.instanceFieldAccessLookup(%s, receiver=%s, field=%s, withinClass, line=%s)";
-//        logAProblem(String.format(fmt, read ? "read" : "write",
-//            safeToString(receiver), clazz.getName()+'.'+fieldName, siteId));
-//        return;
-//      }
-//      final Event e;
-//      if (receiver == null) {
-//        final String fmt = "instance field %s access reported with a null receiver...instrumentation bug detected by Store.instanceFieldAccessLookup(%s, receiver=%s, field=%s, location=%s)";
-//        logAProblem(String.format(fmt, oField, read ? "read"
-//            : "write", safeToString(receiver), clazz.getName()+'.'+fieldName, siteId));
-//        return;
-//      }
-//      if (read)
-//        e = new FieldReadInstance(receiver, oField.getId(), siteId, flState);
-//      else
-//        e = new FieldWriteInstance(receiver, oField.getId(), siteId, flState);
-//      putInQueue(flState, e);
-//    } finally {
-//    	flState.inside = false;
-//    }
-//  }
+		final State flState = tl_withinStore.get();
+		if (flState.inside) {
+			return;
+		}
+		flState.inside = true;
+		try {
+			/*
+			 * if (DEBUG) { final String fmt =
+			 * "Store.staticFieldAccessLookup(%n\t\t%s%n\t\tfield=%s%n\t\tlocation=%s)"
+			 * ; log(String.format(fmt, read ? "read" : "write",
+			 * clazz.getName()+'.'+fieldName, SrcLoc.toString(withinClass,
+			 * line))); }
+			 */
 
-//  /**
-//   * Records that a instance field that needs to be assigned a dynamic field id
-//   * was accessed within the instrumented program.
-//   * 
-//   * @param read
-//   *            {@code true} indicates a field <i>read</i>, {@code false}
-//   *            indicates a field <i>write</i>.
-//   * @param clazz
-//   *            The class object of the class in which the search
-//   *            for the field should begin.
-//   * @param fieldName
-//   *            the name of the field.
-//   * @param withinClass
-//   *            the phantom class object for the class where the event occurred, may be {@code null}.
-//   * @param line
-//   *            the line number where the event occurred.
-//   */
-//  public static void staticFieldAccessLookup(final boolean read,
-//      final Class clazz, final String fieldName, final long siteId) {
-//	  if (!IdConstants.useFieldAccesses) {
-//		  return;
-//	  }	  
-//    if (f_flashlightIsNotInitialized)
-//      return;
-//    if (StoreDelegate.FL_OFF.get())
-//      return;
-//    final State flState = tl_withinStore.get();
-//    if (flState.inside)
-//    	return;
-//    flState.inside = true;
-//    try {
-//      if (filterOutFieldAccess(clazz, siteId)) {
-//       	return;
-//      }	
-//      if (DEBUG) {
-//        final String fmt = "Store.staticFieldAccessLookup(%n\t\t%s%n\t\tfield=%s%n\t\tlocation=%s)";
-//        log(String.format(fmt, read ? "read" : "write", clazz.getName()+'.'+fieldName, siteId));
-//      }
-//      final ObservedField oField = ObservedField.getInstance(clazz, fieldName,
-//    		  flState);
-//      /*
-//       * Check that the parameters are valid, gather needed information,
-//       * and put an event in the raw queue.
-//       */
-//      if (oField == null) {
-//        final String fmt = "field cannot be null...instrumentation bug detected by Store.staticFieldAccessLookup(%s, field=%s, location=%s)";
-//        logAProblem(String.format(fmt, read ? "read" : "write", clazz.getName()+'.'+fieldName, siteId));
-//        return;
-//      }
-//
-//      final Event e;
-//      if (read)
-//        e = new FieldReadStatic(oField.getId(), siteId, flState);
-//      else
-//        e = new FieldWriteStatic(oField.getId(), siteId, flState);
-//      putInQueue(flState, e);
-//    } finally {
-//		flState.inside = false;
-//    }
-//  }
-  
-  /**
-   * Record that the given object was  accessed indirectly (via method call)
-   * at the given site
-   * 
-   * @param receiver non-null
-   */
-  public static void indirectAccess(final Object receiver, final long siteId) {
-	  if (StoreDelegate.FL_OFF.get())
-		  return;
+			/*
+			 * Check that the parameters are valid, gather needed information,
+			 * and put an event in the raw queue.
+			 */
+			/*
+			 * if (oField == null) { final String fmt =
+			 * "field cannot be null...instrumentation bug detected by Store.staticFieldAccessLookup(%s, field=%s, location=%s)"
+			 * ; logAProblem(String.format(fmt, read ? "read" : "write",
+			 * clazz.getName()+'.'+fieldName, SrcLoc.toString(withinClass,
+			 * line))); return; }
+			 */
+			boolean underConstruction = false;
+			if (declaringClass != null) {
+				underConstruction = Phantom.ofClass(declaringClass)
+						.isUnderConstruction();
+			}
+			final Event e;
+			if (read) {
+				e = new FieldReadStatic(fieldID, siteId, flState,
+						underConstruction);
+			} else {
+				e = new FieldWriteStatic(fieldID, siteId, flState,
+						underConstruction);
+			}
+			putInQueue(flState, e);
+		} finally {
+			flState.inside = false;
+		}
+	}
 
-	  if (f_flashlightIsNotInitialized)
-		  return;
+	// /**
+	// * Records that a instance field that needs to be assigned a dynamic field
+	// id
+	// * was accessed within the instrumented program.
+	// *
+	// * @param read
+	// * {@code true} indicates a field <i>read</i>, {@code false}
+	// * indicates a field <i>write</i>.
+	// * @param receiver
+	// * the object instance the field is part of the state of.
+	// * @param clazz
+	// * The class object of the class in which the search
+	// * for the field should begin.
+	// * @param fieldName
+	// * the name of the field.
+	// * @param withinClass
+	// * the phantom class object for the class where the event occurred, may be
+	// {@code null}.
+	// * @param line
+	// * the line number where the event occurred.
+	// */
+	// public static void instanceFieldAccessLookup(
+	// final boolean read, final Object receiver,
+	// final Class clazz, final String fieldName, final long siteId) {
+	// if (!IdConstants.useFieldAccesses) {
+	// return;
+	// }
+	// if (f_flashlightIsNotInitialized)
+	// return;
+	// if (StoreDelegate.FL_OFF.get())
+	// return;
+	// final State flState = tl_withinStore.get();
+	// if (flState.inside)
+	// return;
+	// flState.inside = true;
+	// try {
+	// if (filterOutFieldAccess(clazz, siteId)) {
+	// return;
+	// }
+	// if (DEBUG) {
+	// final String fmt =
+	// "Store.instanceFieldAccessLookup(%n\t\t%s%n\t\treceiver=%s%n\t\tfield=%s%n\t\tlocation=%s)";
+	// log(String.format(fmt, read ? "read" : "write",
+	// safeToString(receiver), clazz.getName()+'.'+fieldName, siteId));
+	// }
+	// final ObservedField oField = ObservedField.getInstance(clazz, fieldName,
+	// flState);
+	// /*
+	// * Check that the parameters are valid, gather needed information,
+	// * and put an event in the raw queue.
+	// */
+	// if (oField == null) {
+	// final String fmt =
+	// "field cannot be null...instrumentation bug detected by Store.instanceFieldAccessLookup(%s, receiver=%s, field=%s, withinClass, line=%s)";
+	// logAProblem(String.format(fmt, read ? "read" : "write",
+	// safeToString(receiver), clazz.getName()+'.'+fieldName, siteId));
+	// return;
+	// }
+	// final Event e;
+	// if (receiver == null) {
+	// final String fmt =
+	// "instance field %s access reported with a null receiver...instrumentation bug detected by Store.instanceFieldAccessLookup(%s, receiver=%s, field=%s, location=%s)";
+	// logAProblem(String.format(fmt, oField, read ? "read"
+	// : "write", safeToString(receiver), clazz.getName()+'.'+fieldName,
+	// siteId));
+	// return;
+	// }
+	// if (read)
+	// e = new FieldReadInstance(receiver, oField.getId(), siteId, flState);
+	// else
+	// e = new FieldWriteInstance(receiver, oField.getId(), siteId, flState);
+	// putInQueue(flState, e);
+	// } finally {
+	// flState.inside = false;
+	// }
+	// }
 
-//    System.out.println("indirectAccess");
-//    System.out.println("  receiver = " + receiver.getClass().getName() + "@"
-//        + Integer.toHexString(System.identityHashCode(receiver)));
-//    System.out.println("  siteID = " + siteId);
-//    System.out.flush();
+	// /**
+	// * Records that a instance field that needs to be assigned a dynamic field
+	// id
+	// * was accessed within the instrumented program.
+	// *
+	// * @param read
+	// * {@code true} indicates a field <i>read</i>, {@code false}
+	// * indicates a field <i>write</i>.
+	// * @param clazz
+	// * The class object of the class in which the search
+	// * for the field should begin.
+	// * @param fieldName
+	// * the name of the field.
+	// * @param withinClass
+	// * the phantom class object for the class where the event occurred, may be
+	// {@code null}.
+	// * @param line
+	// * the line number where the event occurred.
+	// */
+	// public static void staticFieldAccessLookup(final boolean read,
+	// final Class clazz, final String fieldName, final long siteId) {
+	// if (!IdConstants.useFieldAccesses) {
+	// return;
+	// }
+	// if (f_flashlightIsNotInitialized)
+	// return;
+	// if (StoreDelegate.FL_OFF.get())
+	// return;
+	// final State flState = tl_withinStore.get();
+	// if (flState.inside)
+	// return;
+	// flState.inside = true;
+	// try {
+	// if (filterOutFieldAccess(clazz, siteId)) {
+	// return;
+	// }
+	// if (DEBUG) {
+	// final String fmt =
+	// "Store.staticFieldAccessLookup(%n\t\t%s%n\t\tfield=%s%n\t\tlocation=%s)";
+	// log(String.format(fmt, read ? "read" : "write",
+	// clazz.getName()+'.'+fieldName, siteId));
+	// }
+	// final ObservedField oField = ObservedField.getInstance(clazz, fieldName,
+	// flState);
+	// /*
+	// * Check that the parameters are valid, gather needed information,
+	// * and put an event in the raw queue.
+	// */
+	// if (oField == null) {
+	// final String fmt =
+	// "field cannot be null...instrumentation bug detected by Store.staticFieldAccessLookup(%s, field=%s, location=%s)";
+	// logAProblem(String.format(fmt, read ? "read" : "write",
+	// clazz.getName()+'.'+fieldName, siteId));
+	// return;
+	// }
+	//
+	// final Event e;
+	// if (read)
+	// e = new FieldReadStatic(oField.getId(), siteId, flState);
+	// else
+	// e = new FieldWriteStatic(oField.getId(), siteId, flState);
+	// putInQueue(flState, e);
+	// } finally {
+	// flState.inside = false;
+	// }
+	// }
 
-	  final State flState = tl_withinStore.get();
-	  if (flState.inside)
-		  return;
-	  flState.inside = true;
-	  try {
-		  if (DEBUG) {
-			  final String fmt = "Store.indirectAccess(%n\t\treceiver=%s%n\t\tlocation=%s)";
-			  log(String.format(fmt, safeToString(receiver), siteId));
-		  }
-		  /*
-		   * Record this access in the trace.
-		   */		  
-		  putInQueue(flState, new IndirectAccess(receiver, siteId, flState));
-	  } finally {
-		  flState.inside = false;
-	  }
-  }
-  
-  /**
-   * Records that an array element is being accessed.
-   * 
-   * @param read
-   *            {@code true} indicates the element is being <i>read</i>, {@code false}
-   *            indicates the element is being <i>written</i>.
-   * @param receiver
-   *            the array instance whose element is being accessed.
-   * @param index
-   *            The index of the array element being accessed.
-   * @param siteId 
-   *            The site in the code of the array access.
-   */
-  public static void arrayAccess(
-      final boolean read, final Object receiver, final int index, final long siteId) {
-//    System.out.println("arrayAccess");
-//    System.out.println("  read = " + read);
-//    System.out.println("  receiver = " + receiver);
-//    System.out.println("  index = " + index);
-//    System.out.println("  siteId = " + siteId);
-  }
-  
-  /**
-   * Records that a class initializer is about to begin execution, or has
-   * completed execution.
-   * 
-   * @param before
-   *          {@value true} if the the class initializer is about to begin
-   *          execution; {@value false} if the class initializers has already
-   *          completed execution.
-   * @param class
-   *          The class object of the class being initialized.
-   */
-  public static void classInit(final boolean before, final Class<?> clazz) {
-    final String fmt = "Store.classInit(%n\t\tbefore=%s%n\t\tclass=%s)";
-    System.out.println(
-        String.format(fmt, before ? "true" : "false", clazz.getName()));
-  }
-  
+	/**
+	 * Record that the given object was accessed indirectly (via method call) at
+	 * the given site
+	 * 
+	 * @param receiver
+	 *            non-null
+	 */
+	public static void indirectAccess(final Object receiver, final long siteId) {
+		if (StoreDelegate.FL_OFF.get()) {
+			return;
+		}
+
+		if (f_flashlightIsNotInitialized) {
+			return;
+		}
+
+		// System.out.println("indirectAccess");
+		// System.out.println("  receiver = " + receiver.getClass().getName() +
+		// "@"
+		// + Integer.toHexString(System.identityHashCode(receiver)));
+		// System.out.println("  siteID = " + siteId);
+		// System.out.flush();
+
+		final State flState = tl_withinStore.get();
+		if (flState.inside) {
+			return;
+		}
+		flState.inside = true;
+		try {
+			if (DEBUG) {
+				final String fmt = "Store.indirectAccess(%n\t\treceiver=%s%n\t\tlocation=%s)";
+				log(String.format(fmt, safeToString(receiver), siteId));
+			}
+			/*
+			 * Record this access in the trace.
+			 */
+			putInQueue(flState, new IndirectAccess(receiver, siteId, flState));
+		} finally {
+			flState.inside = false;
+		}
+	}
+
+	/**
+	 * Records that an array element is being accessed.
+	 * 
+	 * @param read
+	 *            {@code true} indicates the element is being <i>read</i>,
+	 *            {@code false} indicates the element is being <i>written</i>.
+	 * @param receiver
+	 *            the array instance whose element is being accessed.
+	 * @param index
+	 *            The index of the array element being accessed.
+	 * @param siteId
+	 *            The site in the code of the array access.
+	 */
+	public static void arrayAccess(final boolean read, final Object receiver,
+			final int index, final long siteId) {
+		// System.out.println("arrayAccess");
+		// System.out.println("  read = " + read);
+		// System.out.println("  receiver = " + receiver);
+		// System.out.println("  index = " + index);
+		// System.out.println("  siteId = " + siteId);
+	}
+
+	/**
+	 * Records that a class initializer is about to begin execution, or has
+	 * completed execution.
+	 * 
+	 * @param before
+	 *            true} if the the class initializer is about to begin
+	 *            execution; false} if the class initializers has already
+	 *            completed execution.
+	 * @param class The class object of the class being initialized.
+	 */
+	public static void classInit(final boolean before, final Class<?> clazz) {
+		final ClassPhantomReference p = Phantom.ofClass(clazz);
+		p.setUnderConstruction(before);
+		if (DEBUG) {
+			final String fmt = "Store.classInit(%n\t\tbefore=%s%n\t\tclass=%s)";
+			System.out.println(String.format(fmt, before ? "true" : "false",
+					clazz.getName()));
+		}
+	}
+
 	/**
 	 * Records that a constructor call occurred within the instrumented program.
 	 * 
@@ -843,14 +902,17 @@ public final class Store {
 		if (!IdConstants.useTraces) {
 			return;
 		}
-		
-		if (f_flashlightIsNotInitialized)
+
+		if (f_flashlightIsNotInitialized) {
 			return;
-		if (StoreDelegate.FL_OFF.get())
+		}
+		if (StoreDelegate.FL_OFF.get()) {
 			return;
+		}
 		final State flState = tl_withinStore.get();
-		if (flState.inside)
+		if (flState.inside) {
 			return;
+		}
 		flState.inside = true;
 		try {
 			if (DEBUG) {
@@ -863,7 +925,7 @@ public final class Store {
 			 */
 			if (before) {
 				TraceNode.pushTraceNode(siteId, flState);
-			} else {	
+			} else {
 				TraceNode.popTraceNode(siteId, flState);
 			}
 		} finally {
@@ -894,15 +956,18 @@ public final class Store {
 	 * @param line
 	 *            the line number where the event occurred.
 	 */
-	public static void constructorExecution(
-	    final boolean before, final Object receiver, final long siteId) {
-		if (f_flashlightIsNotInitialized)
+	public static void constructorExecution(final boolean before,
+			final Object receiver, final long siteId) {
+		if (f_flashlightIsNotInitialized) {
 			return;
-		if (StoreDelegate.FL_OFF.get())
+		}
+		if (StoreDelegate.FL_OFF.get()) {
 			return;
+		}
 		final State flState = tl_withinStore.get();
-		if (flState.inside)
+		if (flState.inside) {
 			return;
+		}
 		flState.inside = true;
 		try {
 			if (DEBUG) {
@@ -954,21 +1019,24 @@ public final class Store {
 	 * @param line
 	 *            the line number where the event occurred.
 	 */
-	public static void methodCall(
-	    final boolean before, final Object receiver, final long siteId) {
-		if (StoreDelegate.FL_OFF.get())
+	public static void methodCall(final boolean before, final Object receiver,
+			final long siteId) {
+		if (StoreDelegate.FL_OFF.get()) {
 			return;
-		
+		}
+
 		if (!IdConstants.useTraces) {
 			return;
 		}
-		
-		if (f_flashlightIsNotInitialized)
+
+		if (f_flashlightIsNotInitialized) {
 			return;
+		}
 
 		final State flState = tl_withinStore.get();
-		if (flState.inside)
+		if (flState.inside) {
 			return;
+		}
 		flState.inside = true;
 		try {
 			if (DEBUG) {
@@ -996,22 +1064,22 @@ public final class Store {
 								.writeLock()));
 						putInQueue(flState, e);
 					}
-				} 
-				// If uninstrumented, check if we have an indirect access of interest
-				// TODO 
-				/*
-				else if (!(receiver instanceof IIdObject)) {
-					final ObjectPhantomReference p = Phantom.ofObject(receiver);
-					flState.thread;
 				}
-				*/
+				// If uninstrumented, check if we have an indirect access of
+				// interest
+				// TODO
+				/*
+				 * else if (!(receiver instanceof IIdObject)) { final
+				 * ObjectPhantomReference p = Phantom.ofObject(receiver);
+				 * flState.thread; }
+				 */
 			}
 			/*
 			 * Record this call in the trace.
 			 */
 			if (before) {
 				TraceNode.pushTraceNode(siteId, flState);
-			} else {	
+			} else {
 				TraceNode.popTraceNode(siteId, flState);
 			}
 		} finally {
@@ -1038,17 +1106,21 @@ public final class Store {
 	 *            the line number where the event occurred.
 	 */
 	public static void beforeIntrinsicLockAcquisition(final Object lockObject,
-			final boolean lockIsThis, final boolean lockIsClass, final long siteId) {
+			final boolean lockIsThis, final boolean lockIsClass,
+			final long siteId) {
 		if (!useLocks) {
 			return;
 		}
-		if (f_flashlightIsNotInitialized)
+		if (f_flashlightIsNotInitialized) {
 			return;
-		if (StoreDelegate.FL_OFF.get())
+		}
+		if (StoreDelegate.FL_OFF.get()) {
 			return;
+		}
 		final State flState = tl_withinStore.get();
-		if (flState.inside)
+		if (flState.inside) {
 			return;
+		}
 		flState.inside = true;
 		try {
 			if (DEBUG) {
@@ -1085,18 +1157,21 @@ public final class Store {
 	 * @param line
 	 *            the line number where the event occurred.
 	 */
-	public static void afterIntrinsicLockAcquisition(
-	    final Object lockObject, final long siteId) {
+	public static void afterIntrinsicLockAcquisition(final Object lockObject,
+			final long siteId) {
 		if (!useLocks) {
 			return;
-		}		
-		if (f_flashlightIsNotInitialized)
+		}
+		if (f_flashlightIsNotInitialized) {
 			return;
-		if (StoreDelegate.FL_OFF.get())
+		}
+		if (StoreDelegate.FL_OFF.get()) {
 			return;
+		}
 		final State flState = tl_withinStore.get();
-		if (flState.inside)
+		if (flState.inside) {
 			return;
+		}
 		flState.inside = true;
 		try {
 			if (DEBUG) {
@@ -1109,15 +1184,16 @@ public final class Store {
 			 */
 			if (lockObject == null) {
 				final String fmt = "intrinsic lock object cannot be null...instrumentation bug detected by Store.afterIntrinsicLockAcquisition(lockObject=%s, location=%s)";
-				logAProblem(String.format(fmt, safeToString(lockObject),
-						siteId));
+				logAProblem(String
+						.format(fmt, safeToString(lockObject), siteId));
 				return;
 			}
 			if (IdConstants.trackLocks) {
-				IdPhantomReference lockPhantom = Phantom.of(lockObject); 
+				final IdPhantomReference lockPhantom = Phantom.of(lockObject);
 				flState.locksHeld.add(lockPhantom);
 			}
-			final Event e = new AfterIntrinsicLockAcquisition(lockObject, siteId, flState);
+			final Event e = new AfterIntrinsicLockAcquisition(lockObject,
+					siteId, flState);
 			putInQueue(flState, e);
 		} finally {
 			flState.inside = false;
@@ -1128,7 +1204,9 @@ public final class Store {
 	 * Records that the instrumented program is entering a call to one of the
 	 * following methods:
 	 * <ul>
-	 * <li>{@link Object#wait()}</li> <li>{@link Object#wait(long)}</li> <li>
+	 * <li>{@link Object#wait()}</li>
+	 * <li>{@link Object#wait(long)}</li>
+	 * <li>
 	 * {@link Object#wait(long, int)}</li>
 	 * </ul>
 	 * See the Java Language Specification (3rd edition) section 17.8 <i>Wait
@@ -1151,13 +1229,16 @@ public final class Store {
 		if (!useLocks) {
 			return;
 		}
-		if (f_flashlightIsNotInitialized)
+		if (f_flashlightIsNotInitialized) {
 			return;
-		if (StoreDelegate.FL_OFF.get())
+		}
+		if (StoreDelegate.FL_OFF.get()) {
 			return;
+		}
 		final State flState = tl_withinStore.get();
-		if (flState.inside)
+		if (flState.inside) {
 			return;
+		}
 		flState.inside = true;
 		try {
 			if (DEBUG) {
@@ -1177,7 +1258,7 @@ public final class Store {
 			}
 			final Event e;
 			if (before) {
-				e = new BeforeIntrinsicLockWait(lockObject, siteId, flState);				
+				e = new BeforeIntrinsicLockWait(lockObject, siteId, flState);
 			} else {
 				e = new AfterIntrinsicLockWait(lockObject, siteId, flState);
 			}
@@ -1198,18 +1279,21 @@ public final class Store {
 	 * @param line
 	 *            the line number where the event occurred.
 	 */
-	public static void afterIntrinsicLockRelease(
-	    final Object lockObject, final long siteId) {
+	public static void afterIntrinsicLockRelease(final Object lockObject,
+			final long siteId) {
 		if (!useLocks) {
 			return;
 		}
-		if (f_flashlightIsNotInitialized)
+		if (f_flashlightIsNotInitialized) {
 			return;
-		if (StoreDelegate.FL_OFF.get())
+		}
+		if (StoreDelegate.FL_OFF.get()) {
 			return;
+		}
 		final State flState = tl_withinStore.get();
-		if (flState.inside)
+		if (flState.inside) {
 			return;
+		}
 		flState.inside = true;
 		try {
 			if (DEBUG) {
@@ -1222,15 +1306,16 @@ public final class Store {
 			 */
 			if (lockObject == null) {
 				final String fmt = "intrinsic lock object cannot be null...instrumentation bug detected by Store.afterIntrinsicLockRelease(lockObject=%s, location=%s)";
-				logAProblem(String.format(fmt, safeToString(lockObject),
-						siteId));
+				logAProblem(String
+						.format(fmt, safeToString(lockObject), siteId));
 				return;
 			}
 			if (IdConstants.trackLocks) {
-				final IdPhantomReference lockPhantom = Phantom.of(lockObject); 
+				final IdPhantomReference lockPhantom = Phantom.of(lockObject);
 				flState.locksHeld.remove(lockPhantom);
 			}
-			final Event e = new AfterIntrinsicLockRelease(lockObject, siteId, flState);
+			final Event e = new AfterIntrinsicLockRelease(lockObject, siteId,
+					flState);
 			putInQueue(flState, e);
 		} finally {
 			flState.inside = false;
@@ -1253,13 +1338,16 @@ public final class Store {
 		if (!useLocks) {
 			return;
 		}
-		if (f_flashlightIsNotInitialized)
+		if (f_flashlightIsNotInitialized) {
 			return;
-		if (StoreDelegate.FL_OFF.get())
+		}
+		if (StoreDelegate.FL_OFF.get()) {
 			return;
+		}
 		final State flState = tl_withinStore.get();
-		if (flState.inside)
+		if (flState.inside) {
 			return;
+		}
 		flState.inside = true;
 		try {
 			if (DEBUG) {
@@ -1308,13 +1396,16 @@ public final class Store {
 		if (!useLocks) {
 			return;
 		}
-		if (f_flashlightIsNotInitialized)
+		if (f_flashlightIsNotInitialized) {
 			return;
-		if (StoreDelegate.FL_OFF.get())
+		}
+		if (StoreDelegate.FL_OFF.get()) {
 			return;
+		}
 		final State flState = tl_withinStore.get();
-		if (flState.inside)
+		if (flState.inside) {
 			return;
+		}
 		flState.inside = true;
 		try {
 			if (DEBUG) {
@@ -1329,9 +1420,10 @@ public final class Store {
 			}
 			if (lockObject instanceof Lock) {
 				if (IdConstants.trackLocks && gotTheLock) {
-					final ObjectPhantomReference lockPhantom = Phantom.ofObject(lockObject); 
+					final ObjectPhantomReference lockPhantom = Phantom
+							.ofObject(lockObject);
 					flState.locksHeld.add(lockPhantom);
-				}				
+				}
 				final Lock ucLock = (Lock) lockObject;
 				final Event e = new AfterUtilConcurrentLockAcquisitionAttempt(
 						gotTheLock, ucLock, siteId, flState);
@@ -1369,13 +1461,16 @@ public final class Store {
 		if (!useLocks) {
 			return;
 		}
-		if (f_flashlightIsNotInitialized)
+		if (f_flashlightIsNotInitialized) {
 			return;
-		if (StoreDelegate.FL_OFF.get())
+		}
+		if (StoreDelegate.FL_OFF.get()) {
 			return;
+		}
 		final State flState = tl_withinStore.get();
-		if (flState.inside)
+		if (flState.inside) {
 			return;
+		}
 		flState.inside = true;
 		try {
 			if (DEBUG) {
@@ -1390,10 +1485,11 @@ public final class Store {
 			}
 			if (lockObject instanceof Lock) {
 				if (IdConstants.trackLocks && releasedTheLock) {
-					final ObjectPhantomReference lockPhantom = Phantom.ofObject(lockObject); 
+					final ObjectPhantomReference lockPhantom = Phantom
+							.ofObject(lockObject);
 					flState.locksHeld.remove(lockPhantom);
-				}				
-				
+				}
+
 				final Lock ucLock = (Lock) lockObject;
 				final Event e = new AfterUtilConcurrentLockReleaseAttempt(
 						releasedTheLock, ucLock, siteId, flState);
@@ -1414,11 +1510,12 @@ public final class Store {
 	 * may be called from within the following thread contexts:
 	 * <ul>
 	 * <li>A direct call from a program thread, i.e., a call was added to the
-	 * program code </li> <li>The {@link Spy} thread if it detected the
-	 * instrumented program completed and only flashlight threads remain
-	 * running.</li> <li>A client handler thread created by the {@link Console}
-	 * thread that was told to shutdown flashlight via socket.</li> <li>The
-	 * thread created to run our shutdown hook.</li>
+	 * program code</li>
+	 * <li>The {@link Spy} thread if it detected the instrumented program
+	 * completed and only flashlight threads remain running.</li>
+	 * <li>A client handler thread created by the {@link Console} thread that
+	 * was told to shutdown flashlight via socket.</li>
+	 * <li>The thread created to run our shutdown hook.</li>
 	 * </ul>
 	 */
 	public static void shutdown() {
@@ -1428,32 +1525,33 @@ public final class Store {
 					+ "before the Store class is initialized");
 			return;
 		}
-		//System.out.println("FL_OFF = "+StoreDelegate.FL_OFF.hashCode()+" "+StoreDelegate.FL_OFF.get());
-		
+		// System.out.println("FL_OFF = "+StoreDelegate.FL_OFF.hashCode()+" "+StoreDelegate.FL_OFF.get());
+
 		/*
 		 * The below getAndSet(true) ensures that only one thread shuts down
 		 * Flashlight.
 		 */
-		if (StoreDelegate.FL_OFF.getAndSet(true))
+		if (StoreDelegate.FL_OFF.getAndSet(true)) {
 			return;
+		}
 
-		//new Throwable("Calling shutdown()").printStackTrace(System.out);
-		//System.out.flush();
-		
+		// new Throwable("Calling shutdown()").printStackTrace(System.out);
+		// System.out.flush();
+
 		/*
 		 * Finish up data output.
 		 */
 		if (StoreConfiguration.isRefineryOff()) {
-			// Need to shutdown the minimal refinery in a different way than 
+			// Need to shutdown the minimal refinery in a different way than
 			// the normal refinery
 			f_refinery.requestShutdown();
 		}
 		Thread.yield();
-		
+
 		putInQueue(f_rawQueue, flushLocalQueues());
 		putInQueue(f_rawQueue, singletonList(FinalEvent.FINAL_EVENT));
 		if (!StoreConfiguration.isRefineryOff()) {
-			join(f_refinery);		
+			join(f_refinery);
 		}
 		join(f_depository);
 
@@ -1468,52 +1566,55 @@ public final class Store {
 		 * Note that the spy thread could have been the thread that called this
 		 * method.
 		 */
-		if (f_spy != null)
+		if (f_spy != null) {
 			f_spy.requestShutdown();
+		}
 
-		final long endTime      = System.nanoTime();
-		final long totalTime    = endTime - f_start_nano;	
-		final StringBuilder sb  = new StringBuilder(" (duration of collection was ");
+		final long endTime = System.nanoTime();
+		final long totalTime = endTime - f_start_nano;
+		final StringBuilder sb = new StringBuilder(
+				" (duration of collection was ");
 		formatNanoTime(sb, totalTime);
 		sb.append(')');
-		final String duration   = sb.toString();
-		final long problemCount = f_problemCount.get();	
-		if (problemCount < 1)
+		final String duration = sb.toString();
+		final long problemCount = f_problemCount.get();
+		if (problemCount < 1) {
 			log("collection shutdown" + duration);
-		else
+		} else {
 			log("collection shutdown with " + problemCount
 					+ " problem(s) reported" + duration);
+		}
 
-		
-		File done = new File(StoreConfiguration.getDirectory(),
-				             InstrumentationConstants.FL_COMPLETE_RUN);
+		final File done = new File(StoreConfiguration.getDirectory(),
+				InstrumentationConstants.FL_COMPLETE_RUN);
 		try {
-			FileWriter w = new FileWriter(done);
+			final FileWriter w = new FileWriter(done);
 			sb.delete(0, sb.length()); // clear
 			sb.append("Completed: ");
 			formatNanoTime(sb, endTime);
 			w.write(sb.toString());
 			w.close();
-		} catch (IOException e) {
-			log(e.getMessage()+", while writing final file");
+		} catch (final IOException e) {
+			log(e.getMessage() + ", while writing final file");
 		}
 		logComplete();
 	}
 
-	private static void formatNanoTime(StringBuilder sb, long totalTime) {
-		final long nsPerSecond  = 1000000000L;	
-		final long nsPerMinute  = 60000000000L;
-		final long nsPerHour    = 3600000000000L;
-		
+	private static void formatNanoTime(final StringBuilder sb,
+			final long totalTime) {
+		final long nsPerSecond = 1000000000L;
+		final long nsPerMinute = 60000000000L;
+		final long nsPerHour = 3600000000000L;
+
 		long timeLeft = totalTime;
-		final long totalHours   = timeLeft / nsPerHour;
+		final long totalHours = timeLeft / nsPerHour;
 		timeLeft -= (totalHours * nsPerHour);
-		
-		final long totalMins    = timeLeft / nsPerMinute;
+
+		final long totalMins = timeLeft / nsPerMinute;
 		timeLeft -= (totalMins * nsPerMinute);
-		
-		final float totalSecs   = timeLeft / (float) nsPerSecond;
-		
+
+		final float totalSecs = timeLeft / (float) nsPerSecond;
+
 		sb.append(totalHours).append(':');
 		if (totalMins < 10) {
 			sb.append('0');
@@ -1524,7 +1625,7 @@ public final class Store {
 		}
 		sb.append(totalSecs);
 	}
-	
+
 	/**
 	 * Only used for testing, this method sets the output strategy of the
 	 * depository thread.
@@ -1532,7 +1633,7 @@ public final class Store {
 	 * @param outputStrategy
 	 *            an output strategy.
 	 */
-	static void setOutputStrategy(EventVisitor outputStrategy) {
+	static void setOutputStrategy(final EventVisitor outputStrategy) {
 		assert outputStrategy != null;
 		f_depository.setOutputStrategy(outputStrategy);
 	}
@@ -1552,7 +1653,7 @@ public final class Store {
 			try {
 				queue.put(e);
 				done = true;
-			} catch (InterruptedException e1) {
+			} catch (final InterruptedException e1) {
 				/*
 				 * We are within a program thread, so another program thread
 				 * interrupted us. I think it is OK to ignore this, however, we
@@ -1564,56 +1665,50 @@ public final class Store {
 	}
 
 	static final int LOCAL_QUEUE_MAX = 256;
-	
+
 	/**
 	 * Used by the refinery to flush all the local queues upon shutdown
 	 */
 	static final List<List<Event>> localQueueList = new ArrayList<List<Event>>();
-	
-	public static void putInQueue(State state, final Event e) {
+
+	public static void putInQueue(final State state, final Event e) {
 		putInQueue(state, e, false);
 	}
-	
+
 	static void putInQueue(State state, final Event e, final boolean flush) {
 		/*
-		if (e instanceof ObjectDefinition) {
-			ObjectDefinition od = (ObjectDefinition) e;
-			if (od.getObject() instanceof ClassPhantomReference) {
-				System.err.println("Local queue: "+od.getObject());
-			}
-		}
-		*/
+		 * if (e instanceof ObjectDefinition) { ObjectDefinition od =
+		 * (ObjectDefinition) e; if (od.getObject() instanceof
+		 * ClassPhantomReference) {
+		 * System.err.println("Local queue: "+od.getObject()); } }
+		 */
 		if (state == null) {
 			state = tl_withinStore.get();
 		}
-		List<Event> localQ = state.eventQueue;
-		List<Event> copy   = null;
+		final List<Event> localQ = state.eventQueue;
+		List<Event> copy = null;
 		synchronized (localQ) {
 			localQ.add(e);
-			if (/*flush ||*/ localQ.size() >= LOCAL_QUEUE_MAX) {
+			if (/* flush || */localQ.size() >= LOCAL_QUEUE_MAX) {
 				copy = new ArrayList<Event>(localQ);
 				localQ.clear();
 			}
 		}
 		if (copy != null) {
 			/*
-			for(Event ev : copy) {
-				if (ev instanceof ObjectDefinition) {
-					ObjectDefinition od = (ObjectDefinition) ev;
-					if (od.getObject() instanceof ClassPhantomReference) {
-						System.err.println("Queuing: "+od.getObject());
-					}
-				}
-			}
-			*/
+			 * for(Event ev : copy) { if (ev instanceof ObjectDefinition) {
+			 * ObjectDefinition od = (ObjectDefinition) ev; if (od.getObject()
+			 * instanceof ClassPhantomReference) {
+			 * System.err.println("Queuing: "+od.getObject()); } } }
+			 */
 			putInQueue(state.rawQueue, copy);
-		}		
- 	}
-	
+		}
+	}
+
 	static List<Event> flushLocalQueues() {
-		List<Event> buf = new ArrayList<Event>(LOCAL_QUEUE_MAX);
+		final List<Event> buf = new ArrayList<Event>(LOCAL_QUEUE_MAX);
 		synchronized (localQueueList) {
-			for(List<Event> q : localQueueList) {
+			for (final List<Event> q : localQueueList) {
 				synchronized (q) {
 					buf.addAll(q);
 					q.clear();
@@ -1621,24 +1716,20 @@ public final class Store {
 			}
 		}
 		/*
-		for(Event ev : buf) {
-			if (ev instanceof ObjectDefinition) {
-				ObjectDefinition od = (ObjectDefinition) ev;
-				if (od.getObject() instanceof ClassPhantomReference) {
-					System.err.println("Flushing: "+od.getObject());
-				}
-			}
-		}
-        */
+		 * for(Event ev : buf) { if (ev instanceof ObjectDefinition) {
+		 * ObjectDefinition od = (ObjectDefinition) ev; if (od.getObject()
+		 * instanceof ClassPhantomReference) {
+		 * System.err.println("Flushing: "+od.getObject()); } } }
+		 */
 		return buf;
 	}
-	
-	static List<Event> singletonList(Event e) {
-		List<Event> l = new ArrayList<Event>(1);
+
+	static List<Event> singletonList(final Event e) {
+		final List<Event> l = new ArrayList<Event>(1);
 		l.add(e);
 		return l;
 	}
-	
+
 	/**
 	 * Joins on the given thread ignoring any interruptions.
 	 * 
@@ -1654,7 +1745,7 @@ public final class Store {
 			try {
 				t.join();
 				done = true;
-			} catch (InterruptedException e1) {
+			} catch (final InterruptedException e1) {
 				// ignore, we expect to be interrupted
 			}
 		}
@@ -1674,11 +1765,12 @@ public final class Store {
 	 * @return a string representing the passed object.
 	 */
 	private static String safeToString(final Object o) {
-		if (o == null)
+		if (o == null) {
 			return "null";
-		else
+		} else {
 			return o.getClass().getName() + "@"
 					+ Integer.toHexString(o.hashCode());
+		}
 	}
 
 	private Store() {

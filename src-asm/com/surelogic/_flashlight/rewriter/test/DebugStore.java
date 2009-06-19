@@ -57,22 +57,26 @@ public class DebugStore {
   
   public static synchronized void instanceFieldAccess(
       final boolean read, final Object receiver, final int fieldID,
-      final long siteId, final Class<?> declaringClass) {
+      final long siteId, final ClassPhantomReference dcPhantom, 
+      final Class<?> declaringClass) {
     stdOut.println("instanceFieldAccess");
     stdOut.println("  read = " + read);
     stdOut.println("  receiver = " + objectToString(receiver));
     stdOut.println("  fieldID = " + fieldID);
     stdOut.println("  siteID = " + siteId);
+    stdOut.println("  dcPhantom = " + objectToString(dcPhantom));
     stdOut.println("  declaringClass = " + objectToString(declaringClass));
     stdOut.flush();
   }
 
   public static synchronized void staticFieldAccess(
-      final boolean read, final int fieldID, final long siteId, final Class<?> declaringClass) {
+      final boolean read, final int fieldID, final long siteId,
+      final ClassPhantomReference dcPhantom, final Class<?> declaringClass) {
     stdOut.println("staticFieldAccess");
     stdOut.println("  read = " + read);
     stdOut.println("  fieldID = " + fieldID);
     stdOut.println("  siteID = " + siteId);
+    stdOut.println("  dcPhantom = " + objectToString(dcPhantom));
     stdOut.println("  declaringClass = " + objectToString(declaringClass));
     stdOut.flush();
   }

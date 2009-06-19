@@ -1069,7 +1069,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
       mv.visitInsn(Opcodes.SWAP);
       // Stack is "..., false, objectref"
       
-      finishFieldAccess(owner, field.id, field.clazz.isInstrumented() ? null : field.clazz.getName(), FlashlightNames.INSTANCE_FIELD_ACCESS);
+      finishFieldAccess(owner, field.id, field.clazz.isInstrumented(), field.clazz.getName(), FlashlightNames.INSTANCE_FIELD_ACCESS);
     } else {
       // Execute the original PUTFIELD instruction
       mv.visitFieldInsn(Opcodes.PUTFIELD, owner, name, desc);
@@ -1129,7 +1129,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
       mv.visitInsn(Opcodes.SWAP);
       // Stack is "..., value, true, objectref"
       
-      finishFieldAccess(owner, field.id, field.clazz.isInstrumented() ? null : field.clazz.getName(), FlashlightNames.INSTANCE_FIELD_ACCESS);
+      finishFieldAccess(owner, field.id, field.clazz.isInstrumented(), field.clazz.getName(), FlashlightNames.INSTANCE_FIELD_ACCESS);
     } else {
       // Execute the original GETFIELD instruction
       mv.visitFieldInsn(Opcodes.GETFIELD, owner, name, desc);
@@ -1168,7 +1168,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
       ByteCodeUtils.pushBooleanConstant(mv, false);
       // Stack is "..., false"
       
-      finishFieldAccess(owner, field.id, field.clazz.isInstrumented() ? null : field.clazz.getName(), FlashlightNames.STATIC_FIELD_ACCESS);
+      finishFieldAccess(owner, field.id, field.clazz.isInstrumented(), field.clazz.getName(), FlashlightNames.STATIC_FIELD_ACCESS);
     } else {
       // Execute the original PUTSTATIC instruction
       mv.visitFieldInsn(Opcodes.PUTSTATIC, owner, name, desc);
@@ -1204,7 +1204,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
       ByteCodeUtils.pushBooleanConstant(mv, true);
       // Stack is "..., value, true"
       
-      finishFieldAccess(owner, field.id, field.clazz.isInstrumented() ? null : field.clazz.getName(), FlashlightNames.STATIC_FIELD_ACCESS);
+      finishFieldAccess(owner, field.id, field.clazz.isInstrumented(), field.clazz.getName(), FlashlightNames.STATIC_FIELD_ACCESS);
     } else {
       // Execute the original GETFIELD instruction
       mv.visitFieldInsn(Opcodes.GETSTATIC, owner, name, desc);
@@ -1268,7 +1268,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
    * isRead".
    */
   private void finishFieldAccess(
-      final String owner, final Integer fieldID,
+      final String owner, final Integer fieldID, final boolean isInstrumented,
       final String declaringClassInternalName, final Method storeMethod) {
     // Stack is "..., isRead, [receiver]"
     
@@ -1280,10 +1280,17 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     pushSiteIdentifier();
     // Stack is "..., isRead, [receiver], field_id, siteId"
 
-    /* Push the name of the declaring class or null */
-    if (declaringClassInternalName == null) {
-      mv.visitInsn(Opcodes.ACONST_NULL);
+    /* If the class that declares the field is instrumented, then we push
+     * the class phantom reference and then null.  Otherwise we push
+     * null and then the Class object for the class.
+     */
+    if (isInstrumented) {
+      mv.visitFieldInsn(Opcodes.GETSTATIC, declaringClassInternalName,
+          FlashlightNames.FLASHLIGHT_PHANTOM_CLASS_OBJECT,
+          FlashlightNames.FLASHLIGHT_PHANTOM_CLASS_OBJECT_DESC);
+      mv.visitInsn(Opcodes.ACONST_NULL);      
     } else {
+      mv.visitInsn(Opcodes.ACONST_NULL);
       ByteCodeUtils.pushClass(mv, declaringClassInternalName);
     }
     

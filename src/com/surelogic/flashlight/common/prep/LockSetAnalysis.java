@@ -309,14 +309,21 @@ public class LockSetAnalysis implements IPostPrep {
 		}
 
 		public void access(final Access a) {
-			if (a.underConstruction) {
-				instanceUnderConstruction(a.id, a.ts, a.thread, a.field,
-						a.receiver, a.read);
-			} else if (a.receiver == null) {
-				staticAccess(a.id, a.ts, a.thread, a.field, a.read);
+			if (a.receiver == null) {
+				if (a.underConstruction) {
+					classUnderConstruction(a.id, a.ts, a.thread, a.field,
+							a.read);
+				} else {
+					staticAccess(a.id, a.ts, a.thread, a.field, a.read);
+				}
 			} else {
-				instanceAccess(a.id, a.ts, a.thread, a.field, a.receiver,
-						a.read);
+				if (a.underConstruction) {
+					instanceUnderConstruction(a.id, a.ts, a.thread, a.field,
+							a.receiver, a.read);
+				} else {
+					instanceAccess(a.id, a.ts, a.thread, a.field, a.receiver,
+							a.read);
+				}
 			}
 		}
 
@@ -341,6 +348,25 @@ public class LockSetAnalysis implements IPostPrep {
 			} else {
 				fieldSet.retainAll(lockSet);
 			}
+			final StaticInstance si = new StaticInstance(thread, field);
+			StaticCount c = staticCounts.get(si);
+			if (c == null) {
+				c = new StaticCount();
+				staticCounts.put(si, c);
+			}
+			if (read) {
+				c.read++;
+			} else {
+				c.write++;
+			}
+		}
+
+		void classUnderConstruction(final long id, final Timestamp ts,
+				final long thread, final long field, final boolean read) {
+			locks.ensureTime(ts);
+			final long[] lockSet = locks.getLocks(thread);
+			updateAccess.call(id, lockSet.length, Nulls.coerce(locks
+					.getLastAcquisition(thread)));
 			final StaticInstance si = new StaticInstance(thread, field);
 			StaticCount c = staticCounts.get(si);
 			if (c == null) {

@@ -9,6 +9,10 @@ abstract class FieldAccessStatic extends FieldAccess {
 
 	private final boolean f_classUnderConstruction;
 
+	boolean classUnderConstruction() {
+		return f_classUnderConstruction;
+	}
+
 	@Override
 	IFieldInfo getFieldInfo() {
 		return ObservedField.getFieldInfo();

@@ -166,7 +166,7 @@ public class OutputStrategyBinary extends EventVisitor {
 	
 	@Override	
 	void visit(final FieldReadStatic e) {
-		writeFieldAccess(FieldRead_Static.getByte(), e);
+		writeFieldAccessStatic(FieldRead_Static.getByte(), e);
 	}
 	@Override
 	void visit(final FieldWriteInstance e) {
@@ -174,7 +174,7 @@ public class OutputStrategyBinary extends EventVisitor {
 	}
 	@Override
 	void visit(final FieldWriteStatic e) {
-		writeFieldAccess(FieldWrite_Static.getByte(), e);
+		writeFieldAccessStatic(FieldWrite_Static.getByte(), e);
 	}
 	@Override
 	void visit(final FinalEvent e) {
@@ -477,8 +477,9 @@ public class OutputStrategyBinary extends EventVisitor {
 		/*fieldBytes +=*/ writeCompressedMaybeNegativeLong(e.getFieldId());
 	}
 	
-	private void writeFieldAccess(byte header, FieldAccess e)  {
+	private void writeFieldAccessStatic(byte header, FieldAccessStatic e) {
 		try {
+			writeUnderConstruction(e.classUnderConstruction());
 			writeFieldAccess_unsafe(header, e);
 		} catch (IOException ioe) {
 			handleIOException(ioe);

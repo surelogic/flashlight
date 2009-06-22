@@ -40,4 +40,7 @@ public final class InstrumentationConstants {
 	public static final String FL_DEBUG = "FL_DEBUG";
 	
 	public static final String FL_COMPLETE_RUN = "Run.Complete";
+	
+	public static final String FL_COLLECTION_TYPE = "FL_COLLECTION_TYPE";
+	public static final CollectionType FL_COLLECTION_TYPE_DEFAULT = CollectionType.ALL;
 }

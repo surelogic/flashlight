@@ -3,7 +3,6 @@ package com.surelogic._flashlight.common;
 public final class IdConstants {
 	public static final boolean enableFlashlightToggle = false;
 	public static final boolean useTraces = true;
-	public static final boolean useFieldAccesses = true;
 	public static final boolean keepLocationInTracedEvents = true;
 	public static final boolean filterEvents = true;
 	

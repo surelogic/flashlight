@@ -526,7 +526,8 @@ public final class Store {
 		if (StoreDelegate.FL_OFF.get()) {
 			return;
 		}
-		if (!IdConstants.useFieldAccesses) {
+		if (!StoreConfiguration.getCollectionType().processFieldAccesses()) {
+			//System.out.println("Omitting field access");
 			return;
 		}
 		if (f_flashlightIsNotInitialized) {
@@ -537,6 +538,8 @@ public final class Store {
 		if (flState.inside) {
 			return;
 		}
+		//System.out.println("Handling field access");
+		
 		flState.inside = true;
 		try {
 			/*
@@ -614,9 +617,10 @@ public final class Store {
 		if (StoreDelegate.FL_OFF.get()) {
 			return;
 		}
-		if (!IdConstants.useFieldAccesses) {
+		if (!StoreConfiguration.getCollectionType().processFieldAccesses()) {
+			//System.out.println("Omitting field access");
 			return;
-		}
+		}		
 		if (f_flashlightIsNotInitialized) {
 			return;
 		}
@@ -625,6 +629,8 @@ public final class Store {
 		if (flState.inside) {
 			return;
 		}
+		//System.out.println("Handling field access");
+		
 		flState.inside = true;
 		try {
 			/*

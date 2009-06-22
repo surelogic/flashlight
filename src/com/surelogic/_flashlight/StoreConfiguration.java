@@ -28,6 +28,7 @@ public class StoreConfiguration {
   private static volatile String dateOverride;
   private static volatile boolean isRefineryOff;
   private static volatile OutputType outputType;
+  private static volatile CollectionType collectionType;
   private static volatile boolean debug;
   
   static {
@@ -46,6 +47,8 @@ public class StoreConfiguration {
     setRefineryOff(System.getProperty(FL_REFINERY_OFF, null) != null);
     setOutputType(OutputType.valueOf(System.getProperty(FL_OUTPUT_TYPE), FL_OUTPUT_TYPE_DEFAULT));
     setDebug("ON".equalsIgnoreCase(System.getProperty(FL_DEBUG, "OFF")));
+    setCollectionType(CollectionType.valueOf(System.getProperty(FL_COLLECTION_TYPE), FL_COLLECTION_TYPE_DEFAULT));
+
   }
   
   private static int getIntProperty(final String key, int def) {
@@ -281,5 +284,13 @@ public class StoreConfiguration {
   
   public static void setDebug(boolean dbg) {
 	  debug = dbg;
+  }
+  
+  public static CollectionType getCollectionType() {
+	  return collectionType;
+  }
+
+  public static void setCollectionType(CollectionType type) {
+	  collectionType = type;
   }
 }

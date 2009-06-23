@@ -1,9 +1,8 @@
 package com.surelogic._flashlight.common;
 
 public enum CollectionType {
-	ONLY_LOCKS(true) {
-		// FIX
-		public boolean processFieldAccesses() { return false; }
+	ONLY_LOCKS(false) {
+		// FIX to turn on locks
 	},
 	ALL(true);
 	
@@ -14,6 +13,10 @@ public enum CollectionType {
 	}
 	
 	public boolean processFieldAccesses() {
+		return defaultValue;
+	}
+	
+	public boolean processIndirectAccesses() {
 		return defaultValue;
 	}
 	

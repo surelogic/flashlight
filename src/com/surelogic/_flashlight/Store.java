@@ -828,7 +828,9 @@ public final class Store {
 		if (StoreDelegate.FL_OFF.get()) {
 			return;
 		}
-
+		if (!StoreConfiguration.getCollectionType().processIndirectAccesses()) {
+			return;
+		}	
 		if (f_flashlightIsNotInitialized) {
 			return;
 		}

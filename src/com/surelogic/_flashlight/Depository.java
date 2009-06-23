@@ -153,6 +153,10 @@ final class Depository extends Thread {
 		}
 		f_outputStrategy.flush();
 		Store.log("depository flushed (" + f_outputCount + " events(s) output)");
+		
+		if (StoreConfiguration.debugOn()) {
+			f_outputStrategy.printStats();
+		}
 	}
 
 	private static Map<String,List<FieldInfo>> loadFieldInfo(final StringTable strings) {

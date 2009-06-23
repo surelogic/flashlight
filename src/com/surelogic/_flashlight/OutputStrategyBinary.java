@@ -24,6 +24,8 @@ public class OutputStrategyBinary extends EventVisitor {
 	private long lastReceiver = NO_VALUE;
 	private long lastLock = NO_VALUE;
 	private Boolean lastUnderConstruction = null;
+	private int[] stats = new int[EventType.values().length];
+	
 	/*
 	private boolean lastWasTraceNode = false;
 	private int total = 0, same = 0;
@@ -68,6 +70,16 @@ public class OutputStrategyBinary extends EventVisitor {
 		f_out.writeUTF(prop);
 	}
 
+	@Override
+	void printStats() {
+		System.out.println("Event stats:");
+		for(int i=0; i<stats.length; i++) {
+			if (stats[i] > 0) {
+				System.out.println(stats[i]+"\t : "+EventType.getEvent(i));
+			}
+		}
+	}
+	
 	@Override
 	void flush() {
 		try {
@@ -330,6 +342,7 @@ public class OutputStrategyBinary extends EventVisitor {
 		if (debug) {
 			System.out.println("Writing event: "+EventType.getEvent(header));
 		}
+		stats[header]++;
 		/*
 		counts[header]++;
 		total++;

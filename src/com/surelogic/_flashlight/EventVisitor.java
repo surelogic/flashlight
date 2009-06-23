@@ -109,4 +109,8 @@ public abstract class EventVisitor {
 	void flush() {
 		// do nothing
 	}
+	
+	void printStats() {
+		// do nothing
+	}
 }

@@ -8,7 +8,7 @@ final class OutputStrategyXML extends EventVisitor {
 	static final String version = "1.0";
 	private final PrintWriter f_out;
 	private String f_indent = "";
-
+	
 	private void o(final String s) {
 		f_out.print(f_indent);
 		f_out.println(s);

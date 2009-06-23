@@ -3,6 +3,9 @@ package com.surelogic.flashlight.client.eclipse.views.run;
 import java.io.File;
 import java.util.ArrayList;
 
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.TableViewer;
@@ -16,6 +19,7 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.progress.UIJob;
 
 import com.surelogic.common.ILifecycle;
 import com.surelogic.common.SLUtility;
@@ -24,6 +28,7 @@ import com.surelogic.common.adhoc.AdHocManagerAdapter;
 import com.surelogic.common.adhoc.AdHocQueryResult;
 import com.surelogic.common.eclipse.ViewUtility;
 import com.surelogic.common.eclipse.jobs.EclipseJob;
+import com.surelogic.common.eclipse.jobs.SLUIJob;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jobs.AggregateSLJob;
 import com.surelogic.common.jobs.SLJob;
@@ -452,7 +457,15 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 					if (!runDescription.equals(selected)) {
 						AdHocDataSource.getInstance().setSelectedRun(
 								runDescription);
-						setSelectedRunDescription(runDescription);
+						final UIJob job = new SLUIJob() {
+							@Override
+							public IStatus runInUIThread(
+									final IProgressMonitor monitor) {
+								setSelectedRunDescription(runDescription);
+								return Status.OK_STATUS;
+							}
+						};
+						job.schedule();
 					}
 				}
 			}

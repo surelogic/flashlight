@@ -138,8 +138,14 @@ public final class PromptToPrepAllRawData extends SLUIJob {
 				final ArrayList<SLJob> jobs = new ArrayList<SLJob>();
 				for (final RunDescription description : notPrepped) {
 					if (description != null) {
-						jobs.add(new PrepSLJob(description, PreferenceConstants
-								.getPrepObjectWindowSize()));
+						if (description.getRawFileHandles().numDataFiles() > 1) {
+							// FIX
+							SLLogger.getLogger().warning("Unable to prep multiple data files: "+
+									                     description.getName());
+						} else {
+							jobs.add(new PrepSLJob(description, PreferenceConstants
+									.getPrepObjectWindowSize()));
+						}
 					}
 				}
 
@@ -158,8 +164,10 @@ public final class PromptToPrepAllRawData extends SLUIJob {
 				} else {
 					jobName = I18N.msg("flashlight.jobs.prep.many");
 				}
-				final SLJob job = new AggregateSLJob(jobName, jobs);
-				EclipseJob.getInstance().scheduleDb(job, true, false, JobConstants.ACCESS_KEY);
+				if (jobs.size() > 0) {
+					final SLJob job = new AggregateSLJob(jobName, jobs);
+					EclipseJob.getInstance().scheduleDb(job, true, false, JobConstants.ACCESS_KEY);
+				}
 			}
 		}
 		return Status.OK_STATUS;

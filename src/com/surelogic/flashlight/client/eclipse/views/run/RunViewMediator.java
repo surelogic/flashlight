@@ -32,6 +32,7 @@ import com.surelogic.common.eclipse.jobs.SLUIJob;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jobs.AggregateSLJob;
 import com.surelogic.common.jobs.SLJob;
+import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.client.eclipse.dialogs.DeleteRunDialog;
 import com.surelogic.flashlight.client.eclipse.dialogs.LogDialog;
 import com.surelogic.flashlight.client.eclipse.jobs.JobConstants;
@@ -191,8 +192,14 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 			final boolean hasPrep = false;
 			for (final RunDescription description : selected) {
 				if (description != null) {
-					jobs.add(new PrepSLJob(description, PreferenceConstants
-							.getPrepObjectWindowSize()));
+					if (description.getRawFileHandles().numDataFiles() > 1) {
+						// FIX
+						SLLogger.getLogger().warning("Unable to prep multiple data files: "+
+								                     description.getName());
+					} else {
+						jobs.add(new PrepSLJob(description, PreferenceConstants
+								.getPrepObjectWindowSize()));
+					}
 				}
 			}
 			if (!jobs.isEmpty()) {
@@ -274,9 +281,10 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 					final RawFileHandles handles = description
 							.getRawFileHandles();
 					if (handles != null) {
-						final File dataFile = handles.getDataFile();
-						EclipseJob.getInstance().schedule(
-								new ConvertBinaryToXMLJob(dataFile));
+						for (final File dataFile : handles.getDataFiles()) {
+							EclipseJob.getInstance().schedule(
+									new ConvertBinaryToXMLJob(dataFile));
+						}
 					}
 				}
 			}

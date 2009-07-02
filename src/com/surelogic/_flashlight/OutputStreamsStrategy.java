@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import com.surelogic._flashlight.common.OutputType;
 import com.surelogic._flashlight.trace.TraceNode;
+import static com.surelogic._flashlight.common.InstrumentationConstants.*;
 
 final class OutputStreamsStrategy extends EventVisitor {
 	/**
@@ -29,11 +30,11 @@ final class OutputStreamsStrategy extends EventVisitor {
 	
 	OutputStreamsStrategy(String prefix, String encoding, Time time, Factory factory) throws IOException {
 		final OutputType type = StoreConfiguration.getOutputType();
-		lockStream = factory.create(createStream(prefix+".locks", type), encoding, time);
-		accessStream = factory.create(createStream(prefix+".accesses", type), encoding, time);
-		objectStream = factory.create(createStream(prefix+".objects", type), encoding, time);
-		indirectStream = factory.create(createStream(prefix+".indirect", type), encoding, time);
-		otherStream = factory.create(createStream(prefix+".other", type), encoding, time);
+		lockStream = factory.create(createStream(prefix+FL_LOCK_SUFFIX, type), encoding, time);
+		accessStream = factory.create(createStream(prefix+FL_ACCESS_SUFFIX, type), encoding, time);
+		objectStream = factory.create(createStream(prefix+FL_OBJECT_SUFFIX, type), encoding, time);
+		indirectStream = factory.create(createStream(prefix+FL_INDIRECT_SUFFIX, type), encoding, time);
+		otherStream = factory.create(createStream(prefix+FL_OTHER_SUFFIX, type), encoding, time);
 	}
 	
 	@Override

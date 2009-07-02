@@ -43,4 +43,6 @@ public final class InstrumentationConstants {
 	
 	public static final String FL_COLLECTION_TYPE = "FL_COLLECTION_TYPE";
 	public static final CollectionType FL_COLLECTION_TYPE_DEFAULT = CollectionType.ALL;
+	
+	public static final String FL_SEPARATE_STREAMS = "FL_SEPARATE_STREAMS";
 }

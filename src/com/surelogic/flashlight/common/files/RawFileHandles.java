@@ -3,39 +3,77 @@ package com.surelogic.flashlight.common.files;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.util.Iterator;
 import java.util.logging.Level;
 
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.logging.SLLogger;
 
 /**
- * Holds file handles to the data file and the log file of a Flashlight run as
+ * Holds file handles to the data file(s) and the log file of a Flashlight run as
  * well as time information.
  * 
  * @see RawFileUtility
  */
 public final class RawFileHandles {
 
-	RawFileHandles(final File data, final File log) {
+	RawFileHandles(final RawDataFilePrefix[] data, final File log) {
 		if (data == null)
 			throw new IllegalArgumentException(I18N.err(44, "data"));
-		f_data = data;
+		f_data = new File[data.length];
+		int i = 0;
+		for(RawDataFilePrefix p : data) {
+			if (p == null) {
+				throw new IllegalArgumentException(I18N.err(44, "data"));
+			} else {
+				f_data[i] = p.getFile();
+				i++;
+			}
+		}
+		
 		/*
 		 * The log file can be null.
 		 */
 		f_log = log;
 	}
 
-	private final File f_data;
+	private final File[] f_data;
 
-	/**
-	 * A handle to the data file.
-	 * 
-	 * @return a non-null handle to the data file.
-	 */
-	public File getDataFile() {
-		return f_data;
+	public int numDataFiles() {
+		return f_data.length;
 	}
+	
+	public File getFirstDataFile() {
+		return f_data[0];
+	}
+	
+	/**
+	 * A handle to the data files.
+	 * 
+	 * @return a non-null handle to the data files.
+	 */	
+	public Iterable<File> getDataFiles() {
+		return new Iterable<File>() {
+			public Iterator<File> iterator() {
+				return new Iterator<File>() {
+					int i = 0;
+					public boolean hasNext() {
+						return i < f_data.length;
+					}
+					public File next() {
+						try {
+							return f_data[i];
+						} finally {
+							i++;
+						}
+					}
+					public void remove() {
+						throw new UnsupportedOperationException();
+					}
+				};
+			}
+		};
+	}	
 
 	/**
 	 * Checks if the data file is compressed.
@@ -44,11 +82,11 @@ public final class RawFileHandles {
 	 *         otherwise.
 	 */
 	public boolean isDataFileGzip() {
-		return RawFileUtility.isRawFileGzip(f_data);
+		return RawFileUtility.isRawFileGzip(f_data[0]);
 	}
 
 	public boolean isDataFileBinary() {
-		return RawFileUtility.isBinary(f_data);
+		return RawFileUtility.isBinary(f_data[0]);
 	}
 	
 	private final File f_log;

@@ -114,7 +114,7 @@ public final class PrepSLJob extends AbstractSLJob {
 	 */
 	public PrepSLJob(final RunDescription run, final int windowSize) {
 		super("Preparing " + run.getName());
-		f_dataFile = run.getRawFileHandles().getDataFile();
+		f_dataFile = run.getRawFileHandles().getFirstDataFile();
 		f_database = run.getDB();
 		f_windowSize = windowSize;
 	}

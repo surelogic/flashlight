@@ -43,7 +43,7 @@ public final class RawFileUtility {
 	public static final String BIN_SUFFIX = ".flb";
 	public static final String COMPRESSED_BIN_SUFFIX = ".flb.gz";
 
-	private static final String[] suffixes = { COMPRESSED_SUFFIX, BIN_SUFFIX,
+	static final String[] suffixes = { COMPRESSED_SUFFIX, BIN_SUFFIX,
 			SUFFIX, COMPRESSED_BIN_SUFFIX };
 
 	/**
@@ -171,6 +171,22 @@ public final class RawFileUtility {
 		return prefixInfo;
 	}
 
+	public static RawDataFilePrefix[] getPrefixesFor(final File[] dataFiles) {
+		if (dataFiles == null) {
+			throw new IllegalArgumentException(I18N.err(44, "dataFiles"));
+		}
+		for(File f : dataFiles) {
+			if (f == null) {
+				throw new IllegalArgumentException(I18N.err(44, "dataFiles"));
+			}
+		}
+		RawDataFilePrefix[] rv = new RawDataFilePrefix[dataFiles.length];
+		for(int i=0; i<dataFiles.length; i++) {
+			rv[i] = getPrefixFor(dataFiles[i]);
+		}
+		return rv;
+	}
+	
 	/**
 	 * Obtains the corresponding run description for the passed raw file prefix.
 	 * 
@@ -220,12 +236,21 @@ public final class RawFileUtility {
 	 *             if the prefix is {@code null}.
 	 */
 	public static RawFileHandles getRawFileHandlesFor(
-			final RawDataFilePrefix prefixInfo) {
-		if (prefixInfo == null) {
-			throw new IllegalArgumentException(I18N.err(44, "prefixInfo"));
+			final RawDataFilePrefix[] prefixInfos) {
+		if (prefixInfos == null) {
+			throw new IllegalArgumentException(I18N.err(44, "prefixInfos"));
+		}
+		boolean wellFormed = true;
+		for(RawDataFilePrefix p : prefixInfos) {
+			if (p == null) {
+				throw new IllegalArgumentException(I18N.err(44, "prefixInfos"));
+			} else if (!p.isWellFormed()) {
+				wellFormed = false;
+			}
 		}
 
-		if (prefixInfo.isWellFormed()) {
+		if (wellFormed) {
+			/*
 			String fileNamePrefix = prefixInfo.getFile().getAbsolutePath();
 			for (final String suffix : suffixes) {
 				if (fileNamePrefix.endsWith(suffix)) {
@@ -240,15 +265,42 @@ public final class RawFileUtility {
 				SLLogger.getLogger().log(Level.WARNING,
 						I18N.err(108, prefixInfo.getFile().getAbsolutePath()));
 			}
-			final RawFileHandles handles = new RawFileHandles(prefixInfo
-					.getFile(), logFile);
+			*/
+			
+			// Find log file
+			final File dir    = prefixInfos[0].getFile().getParentFile();
+			final File[] logs = dir.listFiles(new LogFilter());
+			final File logFile;
+			if (logs == null || logs.length != 1) {
+				SLLogger.getLogger().log(Level.WARNING,
+						I18N.err(108, prefixInfos[0].getFile().getAbsolutePath()));
+				logFile = null;
+			} else {
+				logFile = logs[0];				
+
+				// Remove ".flog"				
+				final String fileNamePrefix = logFile.getName().substring(0, logFile.getName().length()-5);
+				for(RawDataFilePrefix p : prefixInfos) {
+					if (!p.getFile().getName().startsWith(fileNamePrefix)) {
+						SLLogger.getLogger().log(Level.WARNING, "Log name "+fileNamePrefix+
+								                                " doesn't match data: "+p.getFile().getName());						
+					}
+				}
+			}
+			final RawFileHandles handles = new RawFileHandles(prefixInfos, logFile);
 			return handles;
 		} else {
-			throw new IllegalStateException(I18N.err(107, prefixInfo.getFile()
+			throw new IllegalStateException(I18N.err(107, prefixInfos[0].getFile()
 					.getAbsolutePath()));
 		}
 	}
 
+	private static final class LogFilter implements FilenameFilter {
+		public boolean accept(File dir, String name) {
+			return name.endsWith(".flog");
+		}
+	}
+	
 	/**
 	 * Used to get all the run descriptions and file handles in the Flashlight
 	 * data directory.

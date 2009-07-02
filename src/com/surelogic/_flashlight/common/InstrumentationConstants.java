@@ -45,4 +45,12 @@ public final class InstrumentationConstants {
 	public static final CollectionType FL_COLLECTION_TYPE_DEFAULT = CollectionType.ALL;
 	
 	public static final String FL_SEPARATE_STREAMS = "FL_SEPARATE_STREAMS";
+	public static final String FL_LOCK_SUFFIX = ".locks";
+	public static final String FL_ACCESS_SUFFIX = ".accesses";
+	public static final String FL_OBJECT_SUFFIX = ".objects";
+	public static final String FL_INDIRECT_SUFFIX = ".indirect";
+	public static final String FL_OTHER_SUFFIX = ".other";
+	public static final String[] FL_STREAM_SUFFIXES = {
+		FL_LOCK_SUFFIX, FL_ACCESS_SUFFIX, FL_OBJECT_SUFFIX, FL_INDIRECT_SUFFIX, FL_OTHER_SUFFIX
+	};
 }

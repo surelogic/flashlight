@@ -1,5 +1,6 @@
 package com.surelogic.flashlight.common.model;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -142,7 +143,10 @@ public final class RunViewModel {
 			String getText(RunDescription rowData) {
 				final RawFileHandles handles = rowData.getRawFileHandles();
 				if (handles != null) {
-					final long sizeInBytes = handles.getDataFile().length();
+					long sizeInBytes = 0;
+					for(File f : handles.getDataFiles()) {
+						sizeInBytes += f.length();
+					}
 					return FileUtility.bytesToHumanReadableString(sizeInBytes);
 				}
 				return super.getText(rowData);

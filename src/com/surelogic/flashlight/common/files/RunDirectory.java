@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.util.logging.Level;
 
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_STREAM_SUFFIXES;
 import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic.common.FileUtility;
 import com.surelogic.common.i18n.I18N;
@@ -31,6 +32,15 @@ public final class RunDirectory {
 			SUFFIX, COMPRESSED_BIN_SUFFIX };
 
 	public static final String HEADER_SUFFIX = ".flh";
+	
+	private static String idValidSuffix(final String name) {
+		for (final String suffix : suffixes) {
+			if (name.endsWith(suffix)) {
+				return suffix;
+			}
+		}
+		return null;
+	}
 
 	/**
 	 * Filter used to identify files that may be raw flashlight data files.
@@ -40,13 +50,7 @@ public final class RunDirectory {
 			if (pathname.isDirectory()) {
 				return false;
 			}
-			final String name = pathname.getName();
-			for (final String suffix : suffixes) {
-				if (name.endsWith(suffix)) {
-					return true;
-				}
-			}
-			return false;
+			return idValidSuffix(pathname.getName()) != null;
 		}
 	};
 
@@ -145,15 +149,17 @@ public final class RunDirectory {
 				 * If we get here the profile data files are okay, now check
 				 * that the other files are okay too.
 				 */
-				final File rawDataFile = getFileFrom(runDir,
+				final File[] rawDataFiles = getFilesFrom(runDir,
 						flashlightRawDataFileFilter, 146, 147);
-				if (rawDataFile == null) {
+				if (rawDataFiles == null) {
 					return null;
 				}
-				final RawDataFilePrefix prefixInfo = RawFileUtility
-						.getPrefixFor(rawDataFile);
-				if (!prefixInfo.isWellFormed()) {
-					return null;
+				final RawDataFilePrefix[] prefixInfos = RawFileUtility
+						.getPrefixesFor(rawDataFiles);
+				for(RawDataFilePrefix prefixInfo : prefixInfos) {
+					if (!prefixInfo.isWellFormed()) {
+						return null;
+					}
 				}
 
 				if (instrumentation != null && source != null
@@ -166,7 +172,7 @@ public final class RunDirectory {
 							.getRunDescriptionFor(headerInfo);
 
 					final RawFileHandles profile = RawFileUtility
-							.getRawFileHandlesFor(prefixInfo);
+							.getRawFileHandlesFor(prefixInfos);
 					final File db = new File(runDir.getAbsoluteFile()
 							+ File.separator + DB_NAME);
 					return new RunDirectory(run, runDir, headerFile, db,
@@ -220,7 +226,53 @@ public final class RunDirectory {
 		}
 		return null;
 	}
+	
+	private static File[] getFilesFrom(final File runDir, final FileFilter filter,
+			                           final int noFileErr, final int wrongNumFilesErr) {
+		final File[] files = runDir.listFiles(filter);
+		/*
+		 * files is either null, or should be a array of length >1. It should
+		 * only be null when we get here after a directory refresh has been
+		 * kicked off after a delete of a run directory.
+		 */
+		if (files != null) {
+			// Must have exactly one data file
+			if (files.length == 0) {
+				SLLogger.getLogger().log(Level.FINE,
+						I18N.err(noFileErr, runDir.getAbsolutePath()));
+			} else if (files.length == 1) {
+				return files;
+			} else if (files.length == FL_STREAM_SUFFIXES.length){ 	
+				final String suffix = idValidSuffix(files[0].getName());
+				if (suffix != null) { 
+					// Check if names match
+					boolean match = true;
+					for(File f : files) {
+						if (!isValidStreamName(f.getName(), suffix)) {
+							match = false;
+							break;
+						}
+					}
+					if (match) {
+						return files;
+					}
+				}
+			} 
+			SLLogger.getLogger().log(Level.FINE,
+					I18N.err(wrongNumFilesErr, runDir.getAbsolutePath()));			
+		}
+		return null;
+	}
 
+	private static boolean isValidStreamName(final String name, final String suffix) {
+		for (final String stream : FL_STREAM_SUFFIXES) {
+			if (name.endsWith(stream+suffix)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
 	/** Get the run description. Never returns {@code null}. */
 	public RunDescription getRunDescription() {
 		return runDescription;

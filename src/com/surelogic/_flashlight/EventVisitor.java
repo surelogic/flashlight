@@ -1,5 +1,9 @@
 package com.surelogic._flashlight;
 
+import java.io.*;
+import java.util.zip.GZIPOutputStream;
+
+import com.surelogic._flashlight.common.OutputType;
 import com.surelogic._flashlight.trace.TraceNode;
 
 /**
@@ -112,5 +116,25 @@ public abstract class EventVisitor {
 	
 	void printStats() {
 		// do nothing
+	}
+	
+	static File createStreamFile(String fileName, OutputType type) {
+		final String extension = type.isBinary() ? ".flb" : ".fl";
+		return new File(fileName + extension + (type.isCompressed() ? ".gz" : ""));
+	}
+	
+	static OutputStream createStream(String fileName, OutputType type) throws IOException {
+		final File dataFile = createStreamFile(fileName, type);
+		OutputStream stream = new FileOutputStream(dataFile);
+		if (type.isCompressed()) {
+			stream = new GZIPOutputStream(stream, 32768);
+		} else {
+			stream = new BufferedOutputStream(stream, 32768);
+		}
+		return stream;
+	}
+	
+	interface Factory {
+		EventVisitor create(OutputStream stream, String encoding, Time time) throws IOException;
 	}
 }

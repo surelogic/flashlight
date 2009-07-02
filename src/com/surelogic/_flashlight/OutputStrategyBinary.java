@@ -37,9 +37,14 @@ public class OutputStrategyBinary extends EventVisitor {
 	private int fieldBytes = 0;
 	private int totalInts = 0, compressedInts = 0;
 	*/
+	static final Factory factory = new Factory() {
+		public EventVisitor create(OutputStream stream, String encoding, Time time) throws IOException {
+			return new OutputStrategyBinary(stream, time);
+		}
+	};
 	
-	public OutputStrategyBinary(ObjectOutputStream stream, Time time) {
-		f_out = stream;
+	OutputStrategyBinary(OutputStream stream, Time time) throws IOException {
+		f_out = new ObjectOutputStream(stream);
 		start = time.getNanoTime();
 		try {
 			f_out.writeByte(First_Event.getByte());

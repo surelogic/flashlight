@@ -1,6 +1,6 @@
 package com.surelogic._flashlight;
 
-import java.io.PrintWriter;
+import java.io.*;
 
 import com.surelogic._flashlight.trace.TraceNode;
 
@@ -52,10 +52,18 @@ final class OutputStrategyXML extends EventVisitor {
 		}
 	}
 	
-	public OutputStrategyXML(final PrintWriter out) {
-		assert out != null;
-		f_out = out;
-		outputHeader(out, null, version);
+	static final Factory factory = new Factory() {
+		public EventVisitor create(OutputStream stream, String encoding, Time time) throws IOException {
+			return new OutputStrategyXML(stream, encoding);
+		}
+	};
+	
+	OutputStrategyXML(final OutputStream stream, String encoding) throws IOException {
+		assert stream != null;
+		
+		final OutputStreamWriter osw = new OutputStreamWriter(stream, encoding);
+		f_out = new PrintWriter(osw);
+		outputHeader(f_out, null, version);
 	}
 
 	@Override

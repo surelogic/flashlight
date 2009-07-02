@@ -1,14 +1,6 @@
 package com.surelogic._flashlight;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
+import java.io.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -19,10 +11,10 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
-import java.util.zip.GZIPOutputStream;
 
 import com.surelogic._flashlight.common.IdConstants;
 import com.surelogic._flashlight.common.InstrumentationConstants;
+import com.surelogic._flashlight.common.OutputType;
 import com.surelogic._flashlight.trace.TraceNode;
 
 /**
@@ -325,54 +317,40 @@ public final class Store {
 			// still incremented even if logging is off.
 			f_problemCount = new AtomicLong();
 
-			final boolean outputBinary = StoreConfiguration.getOutputType()
-					.isBinary();
-			final boolean compress = StoreConfiguration.getOutputType()
-					.isCompressed();
-			final String extension = outputBinary ? ".flb" : ".fl";
-			final File dataFile = new File(fileName.toString() + extension
-					+ (compress ? ".gz" : ""));
+			final OutputType outType = StoreConfiguration.getOutputType();
 			w = null;
 			if (StoreConfiguration.debugOn()) {
-				System.err.println("Output XML = " + !outputBinary);
+				System.err.println("Output XML = " + !outType.isBinary());
 			}
-			OutputStream stream = null;
-			ObjectOutputStream objStream = null;
+			final File dataFile = EventVisitor.createStreamFile(fileName.toString(), outType);
+			EventVisitor outputStrategy = null;
 			try {
 				final PrintWriter headerW = new PrintWriter(fileName.toString()
 						+ ".flh");
 				OutputStrategyXML.outputHeader(headerW, timeEvent,
-						outputBinary ? OutputStrategyBinary.version
-								: OutputStrategyXML.version);
+						outType.isBinary() ? OutputStrategyBinary.version
+								           : OutputStrategyXML.version);
 				headerW.close();
 
-				stream = new FileOutputStream(dataFile);
+	
 				if (StoreConfiguration.debugOn()) {
-					System.err.println("Compress stream = " + compress);
+					System.err.println("Compress stream = " + outType.isCompressed());
 				}
-				if (compress) {
-					stream = new GZIPOutputStream(stream, 32768);
+				final EventVisitor.Factory factory = outType.isBinary() ? 
+					OutputStrategyBinary.factory : OutputStrategyXML.factory;
+				if (StoreConfiguration.useSeparateStreams()) {
+					outputStrategy = new OutputStreamsStrategy(fileName.toString(), ENCODING, 
+							                                   timeEvent, factory);
 				} else {
-					stream = new BufferedOutputStream(stream, 32768);
-				}
-				if (!outputBinary) {
-					final OutputStreamWriter osw = new OutputStreamWriter(
-							stream, ENCODING);
-					w = new PrintWriter(osw);
-				} else {
-					objStream = new ObjectOutputStream(stream);
+					final OutputStream stream = EventVisitor.createStream(fileName.toString(), outType);					
+					outputStrategy = factory.create(stream, ENCODING, timeEvent);
 				}
 			} catch (final IOException e) {
-
 				logAProblem("unable to output to \""
 						+ dataFile.getAbsolutePath() + "\"", e);
 				System.exit(1); // bail
 			}
-			final EventVisitor outputStrategy =
-			// outputBinary ? new EventVisitor() {} : new OutputStrategyXML(w);
-			outputBinary ? new OutputStrategyBinary(objStream, timeEvent)
-					: new OutputStrategyXML(w);
-
+	
 			final int rawQueueSize = StoreConfiguration.getRawQueueSize();
 			final int outQueueSize = StoreConfiguration.getOutQueueSize();
 			f_rawQueue = new ArrayBlockingQueue<List<Event>>(StoreConfiguration

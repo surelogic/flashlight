@@ -29,6 +29,7 @@ public class StoreConfiguration {
   private static volatile boolean isRefineryOff;
   private static volatile OutputType outputType;
   private static volatile CollectionType collectionType;
+  private static volatile boolean useSeparateStreams;
   private static volatile boolean debug;
   
   static {
@@ -48,7 +49,7 @@ public class StoreConfiguration {
     setOutputType(OutputType.valueOf(System.getProperty(FL_OUTPUT_TYPE), FL_OUTPUT_TYPE_DEFAULT));
     setDebug("ON".equalsIgnoreCase(System.getProperty(FL_DEBUG, "OFF")));
     setCollectionType(CollectionType.valueOf(System.getProperty(FL_COLLECTION_TYPE), FL_COLLECTION_TYPE_DEFAULT));
-
+    useSeparateStreams("ON".equalsIgnoreCase(System.getProperty(FL_SEPARATE_STREAMS, "OFF")));
   }
   
   private static int getIntProperty(final String key, int def) {
@@ -292,5 +293,13 @@ public class StoreConfiguration {
 
   public static void setCollectionType(CollectionType type) {
 	  collectionType = type;
+  }
+  
+  public static boolean useSeparateStreams() {
+	  return useSeparateStreams;
+  }
+  
+  public static void useSeparateStreams(boolean separate) {
+	  useSeparateStreams = separate;
   }
 }

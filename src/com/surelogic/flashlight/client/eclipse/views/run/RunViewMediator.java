@@ -1,7 +1,7 @@
 package com.surelogic.flashlight.client.eclipse.views.run;
 
 import java.io.File;
-import java.util.ArrayList;
+import java.util.*;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -32,10 +32,10 @@ import com.surelogic.common.eclipse.jobs.SLUIJob;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jobs.AggregateSLJob;
 import com.surelogic.common.jobs.SLJob;
-import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.client.eclipse.dialogs.DeleteRunDialog;
 import com.surelogic.flashlight.client.eclipse.dialogs.LogDialog;
 import com.surelogic.flashlight.client.eclipse.jobs.JobConstants;
+import com.surelogic.flashlight.client.eclipse.jobs.PromptToPrepAllRawData;
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.QueryMenuView;
@@ -44,7 +44,6 @@ import com.surelogic.flashlight.common.entities.PrepRunDescription;
 import com.surelogic.flashlight.common.files.RawFileHandles;
 import com.surelogic.flashlight.common.jobs.ConvertBinaryToXMLJob;
 import com.surelogic.flashlight.common.jobs.DeleteRawFilesSLJob;
-import com.surelogic.flashlight.common.jobs.PrepSLJob;
 import com.surelogic.flashlight.common.jobs.RefreshRunManagerSLJob;
 import com.surelogic.flashlight.common.jobs.UnPrepSLJob;
 import com.surelogic.flashlight.common.model.IRunManagerObserver;
@@ -186,55 +185,37 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 
 	private final Action f_prepAction = new Action() {
 		@Override
-		public void run() {
-			final ArrayList<SLJob> jobs = new ArrayList<SLJob>();
-			final RunDescription[] selected = getSelectedRunDescriptions();
-			final boolean hasPrep = false;
-			for (final RunDescription description : selected) {
-				if (description != null) {
-					if (description.getRawFileHandles().numDataFiles() > 1) {
-						// FIX
-						SLLogger.getLogger().warning("Unable to prep multiple data files: "+
-								                     description.getName());
-					} else {
-						jobs.add(new PrepSLJob(description, PreferenceConstants
-								.getPrepObjectWindowSize()));
-					}
+		public void run() {			
+			final List<RunDescription> notPrepped = new ArrayList<RunDescription>();
+			RunDescription one = null;			
+			boolean hasPrep = false;
+			for(final RunDescription d : getSelectedRunDescriptions()) {
+				notPrepped.add(d);				
+				one = d;				
+				if (d.getPrepRunDescription() != null) {
+					hasPrep = true;
 				}
 			}
-			if (!jobs.isEmpty()) {
-				final RunDescription one = selected.length == 1 ? selected[0]
-						: null;
-				if (hasPrep) {
-					final String title;
-					final String msg;
-					if (one != null) {
-						title = I18N.msg("flashlight.dialog.reprep.title");
-						msg = I18N.msg("flashlight.dialog.reprep.msg", one
-								.getName(), SLUtility.toStringHMS(one
-								.getStartTimeOfRun()));
-					} else {
-						title = I18N
-								.msg("flashlight.dialog.reprep.multi.title");
-						msg = I18N.msg("flashlight.dialog.reprep.multi.msg");
-					}
-					if (!MessageDialog.openConfirm(f_table.getShell(), title,
-							msg)) {
-						return; // bail out on cancel
-					}
-				}
-				final String jobName;
-				if (one != null) {
-					jobName = I18N.msg("flashlight.jobs.prep.one", one
+			
+			if (hasPrep) {
+				final String title;
+				final String msg;
+				if (notPrepped.size() == 1) {
+					title = I18N.msg("flashlight.dialog.reprep.title");
+					msg = I18N.msg("flashlight.dialog.reprep.msg", one
 							.getName(), SLUtility.toStringHMS(one
 							.getStartTimeOfRun()));
 				} else {
-					jobName = I18N.msg("flashlight.jobs.prep.many");
+					title = I18N
+							.msg("flashlight.dialog.reprep.multi.title");
+					msg = I18N.msg("flashlight.dialog.reprep.multi.msg");
 				}
-				final SLJob job = new AggregateSLJob(jobName, jobs);
-				EclipseJob.getInstance().scheduleDb(job, true, false,
-						JobConstants.ACCESS_KEY);
+				if (!MessageDialog.openConfirm(f_table.getShell(), title,
+						msg)) {
+					return; // bail out on cancel
+				}
 			}
+			PromptToPrepAllRawData.runPrepJob(notPrepped);
 		}
 	};
 

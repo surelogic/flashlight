@@ -1,7 +1,6 @@
 package com.surelogic.flashlight.client.eclipse.jobs;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
+import java.util.*;
 import java.util.logging.Level;
 
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -134,42 +133,45 @@ public final class PromptToPrepAllRawData extends SLUIJob {
 			final boolean runPrepJob = ConfirmPrepAllRawDataDialog.check();
 
 			if (runPrepJob) {
-
-				final ArrayList<SLJob> jobs = new ArrayList<SLJob>();
-				for (final RunDescription description : notPrepped) {
-					if (description != null) {
-						if (description.getRawFileHandles().numDataFiles() > 1) {
-							// FIX
-							SLLogger.getLogger().warning("Unable to prep multiple data files: "+
-									                     description.getName());
-						} else {
-							jobs.add(new PrepSLJob(description, PreferenceConstants
-									.getPrepObjectWindowSize()));
-						}
-					}
-				}
-
-				final RunDescription one;
-				if (notPrepped.size() == 1) {
-					one = notPrepped.getFirst();
-				} else {
-					one = null;
-				}
-
-				final String jobName;
-				if (one != null) {
-					jobName = I18N.msg("flashlight.jobs.prep.one", one
-							.getName(), SLUtility.toStringHMS(one
-							.getStartTimeOfRun()));
-				} else {
-					jobName = I18N.msg("flashlight.jobs.prep.many");
-				}
-				if (jobs.size() > 0) {
-					final SLJob job = new AggregateSLJob(jobName, jobs);
-					EclipseJob.getInstance().scheduleDb(job, true, false, JobConstants.ACCESS_KEY);
-				}
+				runPrepJob(notPrepped);
 			}
 		}
 		return Status.OK_STATUS;
+	}
+	
+	public static void runPrepJob(List<RunDescription> notPrepped) {
+		final ArrayList<SLJob> jobs = new ArrayList<SLJob>();
+		for (final RunDescription description : notPrepped) {
+			if (description != null) {
+				if (description.getRawFileHandles().numDataFiles() > 1) {
+					// FIX
+					SLLogger.getLogger().warning("Unable to prep multiple data files: "+
+							                     description.getName());
+				} else {
+					jobs.add(new PrepSLJob(description, PreferenceConstants
+							.getPrepObjectWindowSize()));
+				}
+			}
+		}
+
+		final RunDescription one;
+		if (notPrepped.size() == 1) {
+			one = notPrepped.get(0);
+		} else {
+			one = null;
+		}
+
+		final String jobName;
+		if (one != null) {
+			jobName = I18N.msg("flashlight.jobs.prep.one", one
+					.getName(), SLUtility.toStringHMS(one
+					.getStartTimeOfRun()));
+		} else {
+			jobName = I18N.msg("flashlight.jobs.prep.many");
+		}
+		if (jobs.size() > 0) {
+			final SLJob job = new AggregateSLJob(jobName, jobs);
+			EclipseJob.getInstance().scheduleDb(job, true, false, JobConstants.ACCESS_KEY);
+		}
 	}
 }

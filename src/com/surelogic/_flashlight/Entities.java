@@ -157,6 +157,7 @@ public final class Entities {
     int copyFromIdx = 0;
     int testForIdx = 0;
     while (testForIdx < text.length()) {
+      boolean found = false;
       for (final Tuple t : f_NameValue) {
         if (t.testFor(text, testForIdx)) {
           // Copy test segment that is free of escapes
@@ -168,11 +169,14 @@ public final class Entities {
           testForIdx += t.getValueLength();
           copyFromIdx = testForIdx;
           // Found the escape at this position, so stop looping over escapes
+          found = true;
           break;
         }    
       }
-      // No escapes match at the current position
-      testForIdx += 1;
+      if (!found) {
+    	  // No escapes match at the current position    	  
+    	  testForIdx += 1;
+      }
     }
     // copy remaining text
     sb.append(text.substring(copyFromIdx));

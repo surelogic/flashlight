@@ -41,6 +41,12 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 	// For use with field editors
 	private final Collection<FieldEditor> f_editors = new ArrayList<FieldEditor>();
 	private final IPreferenceStore prefs = new PreferenceStore();
+	private final IPropertyChangeListener prefsListener = new IPropertyChangeListener() {
+		public void propertyChange(PropertyChangeEvent event) {
+			System.out.println(event.getProperty()+" => "+event.getNewValue());
+			setDirty(true);
+		}	
+	};
 	private FieldEditor[] refineryControls;
 	private Group advanced;
 
@@ -82,9 +88,9 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 					.equals(e.getPreferenceName());
 			e.setPropertyChangeListener(new IPropertyChangeListener() {
 				public void propertyChange(PropertyChangeEvent event) {
-					if ("field_editor_value".equals(event.getProperty())) {
-						Boolean value = (Boolean) event.getNewValue();					
+					if (FieldEditor.VALUE.equals(event.getProperty())) {				
 						if (useRefinery) {
+							Boolean value = (Boolean) event.getNewValue();	
 							for (FieldEditor e : refineryControls) {
 								e.setEnabled(value, advanced);
 							}
@@ -192,7 +198,7 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 
 	private void copyPrefsFromDefaults() {
 		final IPreferenceStore defaults = Activator.getDefault()
-				.getPreferenceStore();
+				.getPreferenceStore();		
 		for (String attr : StringAttrs) {
 			prefs.setValue(attr, defaults.getString(attr));
 		}

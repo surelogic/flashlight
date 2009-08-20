@@ -41,6 +41,13 @@ public class FlashlightInstrumentationWidgets {
 		this.page = page;
 		this.prefs = prefs;
 
+		final RadioGroupFieldEditor f_collectionType = new RadioGroupFieldEditor(
+				PreferenceConstants.P_COLLECTION_TYPE, I18N
+						.msg("flashlight.preference.page.collectionType"), 2,
+				new String[][] { { "All", "ALL" }, { "Only lock info", "ONLY_LOCKS" } },
+				group1);
+		finishSetup(group1, f_collectionType);
+		
 		final RadioGroupFieldEditor f_outputType = new RadioGroupFieldEditor(
 				PreferenceConstants.P_OUTPUT_TYPE, I18N
 						.msg("flashlight.preference.page.outputType"), 2,

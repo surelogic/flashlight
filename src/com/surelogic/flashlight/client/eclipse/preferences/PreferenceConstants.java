@@ -33,6 +33,8 @@ public class PreferenceConstants implements IPreferenceConstants {
 	public static final String P_ADDITIONAL_INDIRECT_ACCESS_METHODS = PREFIX
 			+ "additionalIndirectAccessMethods";
 
+	public static final String P_COLLECTION_TYPE = PREFIX + "collection.type";
+	
 	public static final String P_OUTPUT_TYPE = PREFIX + "output.type";
 
 	public static final String P_COMPRESS_OUTPUT = PREFIX + "compress.output";

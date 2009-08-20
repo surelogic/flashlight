@@ -23,6 +23,9 @@ import com.surelogic.flashlight.client.eclipse.preferences.FlashlightInstrumenta
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
 
 public class FlashlightTab extends AbstractLaunchConfigurationTab {
+	private static final String[] StringAttrs = {
+		PreferenceConstants.P_OUTPUT_TYPE, PreferenceConstants.P_COLLECTION_TYPE,
+	};
 	private static final String[] BooleanAttrs = {
 			PreferenceConstants.P_USE_REFINERY, PreferenceConstants.P_USE_SPY,
 			PreferenceConstants.P_COMPRESS_OUTPUT, };
@@ -150,9 +153,10 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 			// copy from config to prefs
 			final IPreferenceStore defaults = Activator.getDefault()
 					.getPreferenceStore();
-			prefs.setValue(PreferenceConstants.P_OUTPUT_TYPE, config
-					.getAttribute(PreferenceConstants.P_OUTPUT_TYPE, defaults
-							.getString(PreferenceConstants.P_OUTPUT_TYPE)));
+			for (String attr : StringAttrs) {
+				final String val = defaults.getString(attr);
+				prefs.setValue(attr, config.getAttribute(attr, val));
+			}
 			for (String attr : BooleanAttrs) {
 				final boolean val = defaults.getBoolean(attr);
 				// System.out.println(attr+" before: "+val);
@@ -189,8 +193,9 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 	private void copyPrefsFromDefaults() {
 		final IPreferenceStore defaults = Activator.getDefault()
 				.getPreferenceStore();
-		prefs.setValue(PreferenceConstants.P_OUTPUT_TYPE, defaults
-				.getString(PreferenceConstants.P_OUTPUT_TYPE));
+		for (String attr : StringAttrs) {
+			prefs.setValue(attr, defaults.getString(attr));
+		}
 		for (String attr : BooleanAttrs) {
 			prefs.setValue(attr, defaults.getBoolean(attr));
 		}
@@ -217,8 +222,9 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 	private static void copyFromPrefStore(
 			final ILaunchConfigurationWorkingCopy config,
 			final IPreferenceStore prefs) {
-		config.setAttribute(PreferenceConstants.P_OUTPUT_TYPE, prefs
-				.getString(PreferenceConstants.P_OUTPUT_TYPE));
+		for (String attr : StringAttrs) {
+			config.setAttribute(attr, prefs.getString(attr));
+		}
 		for (String attr : BooleanAttrs) {
 			config.setAttribute(attr, prefs.getBoolean(attr));
 		}

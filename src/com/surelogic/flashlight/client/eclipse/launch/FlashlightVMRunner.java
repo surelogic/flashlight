@@ -1,16 +1,6 @@
 package com.surelogic.flashlight.client.eclipse.launch;
 
-import static com.surelogic._flashlight.common.InstrumentationConstants.FL_CONSOLE_PORT;
-import static com.surelogic._flashlight.common.InstrumentationConstants.FL_DATE_OVERRIDE;
-import static com.surelogic._flashlight.common.InstrumentationConstants.FL_DIR;
-import static com.surelogic._flashlight.common.InstrumentationConstants.FL_FIELDS_FILE;
-import static com.surelogic._flashlight.common.InstrumentationConstants.FL_NO_SPY;
-import static com.surelogic._flashlight.common.InstrumentationConstants.FL_OUTPUT_TYPE;
-import static com.surelogic._flashlight.common.InstrumentationConstants.FL_OUTQ_SIZE;
-import static com.surelogic._flashlight.common.InstrumentationConstants.FL_RAWQ_SIZE;
-import static com.surelogic._flashlight.common.InstrumentationConstants.FL_REFINERY_OFF;
-import static com.surelogic._flashlight.common.InstrumentationConstants.FL_REFINERY_SIZE;
-import static com.surelogic._flashlight.common.InstrumentationConstants.FL_SITES_FILE;
+import static com.surelogic._flashlight.common.InstrumentationConstants.*;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -47,7 +37,7 @@ import org.eclipse.jdt.launching.IVMRunner;
 import org.eclipse.jdt.launching.VMRunnerConfiguration;
 import org.eclipse.ui.progress.UIJob;
 
-import com.surelogic._flashlight.common.OutputType;
+import com.surelogic._flashlight.common.*;
 import com.surelogic._flashlight.rewriter.PrintWriterMessenger;
 import com.surelogic._flashlight.rewriter.RewriteManager;
 import com.surelogic._flashlight.rewriter.RewriteMessenger;
@@ -540,6 +530,9 @@ final class FlashlightVMRunner implements IVMRunner {
 			final boolean compress = launch.getAttribute(
 					PreferenceConstants.P_COMPRESS_OUTPUT, prefs
 							.getBoolean(PreferenceConstants.P_COMPRESS_OUTPUT));
+			final String collectionType = launch.getAttribute(
+					PreferenceConstants.P_COLLECTION_TYPE, prefs
+							.getString(PreferenceConstants.P_COLLECTION_TYPE));
 			final boolean useSpy = launch.getAttribute(
 					PreferenceConstants.P_USE_SPY, prefs
 							.getBoolean(PreferenceConstants.P_USE_SPY));
@@ -561,6 +554,8 @@ final class FlashlightVMRunner implements IVMRunner {
 			newVmArgsList.add("-D" + FL_DATE_OVERRIDE + "=" + datePostfix);
 			newVmArgsList.add("-D" + FL_OUTPUT_TYPE + "="
 					+ OutputType.get(useBinary, compress));
+			newVmArgsList.add("-D" + FL_COLLECTION_TYPE + "="
+					+ CollectionType.valueOf(collectionType, CollectionType.ALL));
 			if (!useRefinery) {
 				newVmArgsList.add("-D" + FL_REFINERY_OFF + "=true");
 			}

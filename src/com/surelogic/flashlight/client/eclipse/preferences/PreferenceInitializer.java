@@ -1,10 +1,6 @@
 package com.surelogic.flashlight.client.eclipse.preferences;
 
-import static com.surelogic._flashlight.common.InstrumentationConstants.FL_CONSOLE_PORT_DEFAULT;
-import static com.surelogic._flashlight.common.InstrumentationConstants.FL_OUTPUT_TYPE_DEFAULT;
-import static com.surelogic._flashlight.common.InstrumentationConstants.FL_OUTQ_SIZE_DEFAULT;
-import static com.surelogic._flashlight.common.InstrumentationConstants.FL_RAWQ_SIZE_DEFAULT;
-import static com.surelogic._flashlight.common.InstrumentationConstants.FL_REFINERY_SIZE_DEFAULT;
+import static com.surelogic._flashlight.common.InstrumentationConstants.*;
 
 import java.io.File;
 
@@ -36,6 +32,8 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		store.setDefault(PreferenceConstants.P_AUTO_INCREASE_HEAP_AT_LAUNCH,
 				true);
 		store.setDefault(PreferenceConstants.P_USE_REFINERY, true);
+		store.setDefault(PreferenceConstants.P_COLLECTION_TYPE,
+				FL_COLLECTION_TYPE_DEFAULT.name());
 		store.setDefault(PreferenceConstants.P_OUTPUT_TYPE,
 				FL_OUTPUT_TYPE_DEFAULT.isBinary());
 		store.setDefault(PreferenceConstants.P_COMPRESS_OUTPUT,

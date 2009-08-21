@@ -28,15 +28,13 @@ public final class IntrinsicLockDurationRowInserter {
 	private static final long FINAL_EVENT = Lock.FINAL_EVENT;
 	private static final int LOCK_DURATION = 0;
 	private static final int LOCKS_HELD = 1;
-	private static final int THREAD_STATS = 2;
-	private static final int LOCK_CYCLE = 3;
-	private static final int INSERT_LOCK = 4;
+	private static final int LOCK_CYCLE = 2;
+	private static final int INSERT_LOCK = 3;
 	private static final boolean doInsert = AbstractPrep.doInsert;
 
 	private static final String[] queries = {
 			"INSERT INTO LOCKDURATION (InThread,Lock,Start,StartEvent,Stop,StopEvent,Duration,State) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
 			"INSERT INTO LOCKSHELD (LockEvent,LockHeld,LockAcquired,InThread) VALUES (?, ?, ?, ?)",
-			"INSERT INTO LOCKTHREADSTATS (LockEvent,Time,Blocking,Holding,Waiting) VALUES (?, ?, ?, ?, ?)",
 			"INSERT INTO LOCKCYCLE (Component,LockHeld,LockAcquired,Count,FirstTime,LastTime) VALUES (?, ?, ?, ?, ?, ?)",
 			"INSERT INTO LOCK (Id,TS,InThread,Trace,Lock,Object,Type,State,Success,LockIsThis,LockIsClass) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" };
 	private final PreparedStatement[] statements = new PreparedStatement[queries.length];
@@ -201,7 +199,7 @@ public final class IntrinsicLockDurationRowInserter {
 		}
 
 		public void updateLast(final Timestamp time) {
-			if ((time != null) && time.after(last)) {
+			if (time != null && time.after(last)) {
 				last = time;
 				count++;
 			}
@@ -447,9 +445,6 @@ public final class IntrinsicLockDurationRowInserter {
 				}
 			}
 		}
-		if (createdEvent) {
-			recordThreadStats(FINAL_EVENT, endTime, blocking, holding, waiting);
-		}
 	}
 
 	public void close() throws SQLException {
@@ -532,7 +527,6 @@ public final class IntrinsicLockDurationRowInserter {
 			default:
 			}
 		}
-		recordThreadStats(id, time, blocking, holding, waiting);
 	}
 
 	/**
@@ -577,7 +571,7 @@ public final class IntrinsicLockDurationRowInserter {
 			final long trace, final long lock, final long object,
 			final LockState lockEvent, final boolean success) {
 		// A failed release attempt changes no states.
-		if ((lockEvent == LockState.AFTER_RELEASE) && !success) {
+		if (lockEvent == LockState.AFTER_RELEASE && !success) {
 			return;
 		}
 		final ThreadState lockToState = getLockToStateMap(inThread);
@@ -712,11 +706,11 @@ public final class IntrinsicLockDurationRowInserter {
 			f_ps.setTimestamp(idx++, stopTime, here);
 			f_ps.setLong(idx++, stopEvent);
 
-			final long secs = (stopTime.getTime() / 1000)
-					- (startTime.getTime() / 1000);
+			final long secs = stopTime.getTime() / 1000 - startTime.getTime()
+					/ 1000;
 			final long nanos = stopTime.getNanos() - startTime.getNanos();
 
-			f_ps.setLong(idx++, (1000000000 * secs) + nanos);
+			f_ps.setLong(idx++, 1000000000 * secs + nanos);
 			f_ps.setString(idx++, state.toString());
 			if (doInsert) {
 				f_ps.addBatch();
@@ -770,29 +764,6 @@ public final class IntrinsicLockDurationRowInserter {
 	public void defineRWLock(final long id, final Long readLock,
 			final Long writeLock, final Timestamp startTime) {
 		// Nothing to do right now
-	}
-
-	private void recordThreadStats(final long eventId, final Timestamp t,
-			final int blocking, final int holding, final int waiting) {
-		final PreparedStatement f_threadStatusPS = statements[THREAD_STATS];
-		try {
-			int idx = 1;
-			f_threadStatusPS.setLong(idx++, eventId);
-			f_threadStatusPS.setTimestamp(idx++, t, here);
-			f_threadStatusPS.setInt(idx++, blocking);
-			f_threadStatusPS.setInt(idx++, holding);
-			f_threadStatusPS.setInt(idx++, waiting);
-			if (doInsert) {
-				f_threadStatusPS.addBatch();
-				if (++counts[THREAD_STATS] == 10000) {
-					f_threadStatusPS.executeBatch();
-					counts[THREAD_STATS] = 0;
-				}
-			}
-		} catch (final SQLException e) {
-			SLLogger.getLogger().log(Level.SEVERE,
-					"Insert failed: ILOCKTHREADSTATS", e);
-		}
 	}
 
 	/**

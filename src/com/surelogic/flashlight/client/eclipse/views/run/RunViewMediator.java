@@ -87,6 +87,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 							/*
 							 * Change the focus to the query menu view.
 							 */
+							ViewUtility.showView(RunStatusView.class.getName());
 							ViewUtility.showView(QueryMenuView.class.getName());
 						} else {
 							/*
@@ -397,6 +398,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 			final RunDescription o = selected[0];
 			HistoricalSourceView.setRunDescription(o);
 			AdHocDataSource.getInstance().setSelectedRun(o);
+			ViewUtility.showView(RunStatusView.class.getName());
 			AdHocDataSource.getManager().setGlobalVariableValue(
 					AdHocManager.DATABASE, o.toIdentityString());
 			AdHocDataSource.getManager().setSelectedResult(null);

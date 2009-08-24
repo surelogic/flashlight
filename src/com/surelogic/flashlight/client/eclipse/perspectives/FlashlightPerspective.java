@@ -8,6 +8,7 @@ import com.surelogic.flashlight.client.eclipse.views.adhoc.QueryEditorView;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.QueryMenuView;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.QueryResultExplorerView;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.QueryResultsView;
+import com.surelogic.flashlight.client.eclipse.views.run.RunStatusView;
 import com.surelogic.flashlight.client.eclipse.views.run.RunView;
 import com.surelogic.flashlight.client.eclipse.views.source.HistoricalSourceView;
 
@@ -36,5 +37,6 @@ public final class FlashlightPerspective implements IPerspectiveFactory {
 		final IFolderLayout sourceArea = layout.createFolder("sourceArea",
 				IPageLayout.RIGHT, 0.5f, editorArea);
 		sourceArea.addView(HistoricalSourceView.class.getName());
+		sourceArea.addView(RunStatusView.class.getName());
 	}
 }

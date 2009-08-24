@@ -1,10 +1,14 @@
 package com.surelogic.flashlight.client.eclipse.views.run;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.List;
+import org.eclipse.swt.widgets.Table;
+import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.ui.part.ViewPart;
 
+import com.surelogic.common.CommonImages;
+import com.surelogic.common.eclipse.SLImages;
 import com.surelogic.common.jdbc.*;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
 import com.surelogic.flashlight.common.model.RunDescription;
@@ -14,42 +18,55 @@ SELECT FIELD FROM INTERESTINGFIELD EXCEPT SELECT FIELD FROM FIELDLOCKSET
 SELECT FIELD FROM INTERESTINGFIELD EXCEPT SELECT FIELD FROM FIELDINSTANCELOCKSET
  */
 public class RunStatusView extends ViewPart {
-	List list;
+	Table table;
 	
 	@Override
 	public void createPartControl(Composite parent) {
-		list = new List(parent, SWT.NONE);
-		list.add("No run selected");
+		table = new Table(parent, SWT.NONE);
+		addItem("No run selected", null);
 	}
 
 	@Override
 	public void setFocus() {
 		refresh();
-		list.setFocus();
+		table.setFocus();
+	}
+	
+	private void addItem(String msg, Image img) {
+		TableItem item = new TableItem(table, SWT.NONE);
+		item.setText(msg);
+		if (img != null) {
+			item.setImage(img);
+		}
 	}
 	
 	private void refresh() {
-		list.removeAll();
+		table.removeAll();
 		
-		RunDescription run = AdHocDataSource.getInstance().getSelectedRun();
-		
+		final RunDescription run = AdHocDataSource.getInstance().getSelectedRun();
+		final Image warning = SLImages.getImage(CommonImages.IMG_WARNING);
+		final Image info = SLImages.getImage(CommonImages.IMG_INFO);
 		if (run != null) {
-			list.add(run.getName()+" "+run.getStartTimeOfRun());
+			addItem("Run: "+run.getName()+" @ "+run.getStartTimeOfRun(), null);
 			DBConnection dbc = run.getDB();
 			if (hasResult(dbc, "FlashlightStatus.checkForDeadlocks")) {
-				list.add("   Potential for deadlock");
+				addItem("Potential for deadlock", warning);
 			}
 			if (hasResult(dbc, "FlashlightStatus.checkForEmptyInstanceLocksets")) {
-				list.add("   Instance fields with empty locksets");
+				addItem("Instance fields with empty locksets", warning);
 			}
 			if (hasResult(dbc, "FlashlightStatus.checkForEmptyStaticLocksets")) {
-				list.add("   Static fields with empty locksets");
+				addItem("Static fields with empty locksets", warning);
 			}
-			if (list.getItemCount() <= 1) {
-				list.add("   No obvious issues");
+			if (hasResult(dbc, "FlashlightStatus.checkForFieldData")) {
+
+				addItem("No data available about field accesses", info);
+			}				
+			if (table.getItemCount() <= 1) {
+				addItem("No obvious issues", info);
 			}
 		} else {
-			list.add("No run selected");
+			addItem("No run selected", null);
 		}
 	}
 	

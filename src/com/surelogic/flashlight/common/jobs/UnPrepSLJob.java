@@ -17,7 +17,7 @@ public final class UnPrepSLJob extends AbstractSLJob {
 	private final AdHocManager f_man;
 
 	public UnPrepSLJob(final PrepRunDescription prep, final AdHocManager man) {
-		super("Removing preparing data " + prep.getDescription().getName());
+		super("Removing prepared data " + prep.getDescription().getName());
 		f_database = prep.getDescription().getDB();
 		f_man = man;
 	}

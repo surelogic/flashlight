@@ -939,7 +939,7 @@ public final class Instrument extends Task {
     
     @Override
     protected void exceptionCreatingSitesFile(
-        final File sitesFile, final FileNotFoundException e) {
+        final File sitesFile, final IOException e) {
       throw new BuildException("Couldn't open " + sitesFile.getAbsolutePath(), e);
     }
   }

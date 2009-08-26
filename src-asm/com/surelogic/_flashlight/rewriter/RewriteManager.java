@@ -965,6 +965,9 @@ public abstract class RewriteManager {
      */
     private Manifest updateManifest(
         final Manifest manifest, final String runtimeJarName) {
+      if (manifest == null) {
+    	  return null;
+      }
       final Manifest newManifest = new Manifest(manifest);
       
       // Update the classpath to include the Flashlight runtime Jar

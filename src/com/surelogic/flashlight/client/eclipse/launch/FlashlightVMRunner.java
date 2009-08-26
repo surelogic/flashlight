@@ -45,6 +45,7 @@ import com.surelogic._flashlight.rewriter.RewriteMessenger;
 import com.surelogic._flashlight.rewriter.config.Configuration;
 import com.surelogic._flashlight.rewriter.config.ConfigurationBuilder;
 import com.surelogic._flashlight.rewriter.config.Configuration.FieldFilter;
+import com.surelogic.common.FileUtility;
 import com.surelogic.common.eclipse.MemoryUtility;
 import com.surelogic.common.eclipse.SourceZip;
 import com.surelogic.common.eclipse.logging.SLEclipseStatusUtility;
@@ -119,7 +120,7 @@ final class FlashlightVMRunner implements IVMRunner {
 		externalOutputDir = new File(runOutputDir, "external");
 		sourceDir = new File(runOutputDir, "source");
 		fieldsFile = new File(runOutputDir, FIELDS_FILE_NAME);
-		sitesFile = new File(runOutputDir, SITES_FILE_NAME+".gz");
+		sitesFile = new File(runOutputDir, SITES_FILE_NAME+FileUtility.GZIP_SUFFIX);
 		logFile = new File(runOutputDir, INSTRUMENTATION_LOG_FILE_NAME);
 		if (!projectOutputDir.exists())
 			projectOutputDir.mkdir();

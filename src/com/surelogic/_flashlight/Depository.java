@@ -3,6 +3,8 @@ package com.surelogic._flashlight;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * Takes events from the out queue and persists them according to an output
@@ -351,7 +353,14 @@ final class Depository extends Thread {
 			return handler;
 		}
 		try {
-			Reader r = new FileReader(f);			
+			Reader r;
+			if (f.getName().endsWith(".gz")) {
+				FileInputStream fin = new FileInputStream(f);
+				GZIPInputStream gzip = new GZIPInputStream(fin);
+				r = new InputStreamReader(gzip);
+			} else {
+				r = new FileReader(f);						
+			}
 			BufferedReader br = new BufferedReader(r);
 			String line;
 			while ((line = br.readLine()) != null) {

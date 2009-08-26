@@ -24,6 +24,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
+import java.util.zip.GZIPOutputStream;
 import java.util.zip.ZipEntry;
 
 import javax.xml.bind.JAXBException;
@@ -1131,7 +1132,13 @@ public abstract class RewriteManager {
     PrintWriter sitesOut = null;
     try {
       sitesFile.getParentFile().mkdirs();
-      sitesOut = new PrintWriter(sitesFile);
+      if (sitesFile.getName().endsWith(".gz")) {
+    	  FileOutputStream fout = new FileOutputStream(sitesFile);
+          GZIPOutputStream gzip = new GZIPOutputStream(fout);  
+          sitesOut = new PrintWriter(gzip);
+      } else {
+          sitesOut = new PrintWriter(sitesFile);
+      }
       final SiteIdFactory callSiteIdFactory = new SiteIdFactory(sitesOut);
       final Instrumenter instrumenter = new Instrumenter(callSiteIdFactory);
       
@@ -1150,7 +1157,7 @@ public abstract class RewriteManager {
           postInstrument(srcPath, destPath);
         }
       }
-    } catch (final FileNotFoundException e) {
+    } catch (final IOException e) {
       exceptionCreatingSitesFile(sitesFile, e);
     } finally {
       if (sitesOut != null) {
@@ -1273,5 +1280,5 @@ public abstract class RewriteManager {
   /**
    * Called if there is an exception trying to create the sites database file.
    */
-  protected abstract void exceptionCreatingSitesFile(File sitesFile, FileNotFoundException e);
+  protected abstract void exceptionCreatingSitesFile(File sitesFile, IOException e);
 }

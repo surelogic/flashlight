@@ -1,6 +1,7 @@
 package com.surelogic.flashlight.client.eclipse.launch;
 
 import static com.surelogic._flashlight.common.InstrumentationConstants.*;
+import static com.surelogic.flashlight.common.files.InstrumentationFileHandles.*;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -58,10 +59,6 @@ import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
 final class FlashlightVMRunner implements IVMRunner {
 	private static final String MAX_HEAP_PREFIX = "-Xmx";
 	private static final long DEFAULT_MAX_HEAP_SIZE = 64 * 1024 * 1024;
-
-	private static final String LOG_FILE_NAME = "instrumentation.log";
-	private static final String FIELDS_FILE_NAME = "fields.txt";
-	private static final String SITES_FILE_NAME = "sites.txt";
 
 	private final IVMRunner delegateRunner;
 	private final File runOutputDir;
@@ -122,8 +119,8 @@ final class FlashlightVMRunner implements IVMRunner {
 		externalOutputDir = new File(runOutputDir, "external");
 		sourceDir = new File(runOutputDir, "source");
 		fieldsFile = new File(runOutputDir, FIELDS_FILE_NAME);
-		sitesFile = new File(runOutputDir, SITES_FILE_NAME);
-		logFile = new File(runOutputDir, LOG_FILE_NAME);
+		sitesFile = new File(runOutputDir, SITES_FILE_NAME+".gz");
+		logFile = new File(runOutputDir, INSTRUMENTATION_LOG_FILE_NAME);
 		if (!projectOutputDir.exists())
 			projectOutputDir.mkdir();
 		if (!externalOutputDir.exists())
@@ -757,7 +754,7 @@ final class FlashlightVMRunner implements IVMRunner {
 
 		@Override
 		protected void exceptionCreatingSitesFile(final File sitesFile,
-				final FileNotFoundException e) {
+				final IOException e) {
 			SLLogger.getLogger().log(
 					Level.SEVERE,
 					"Unable to create sites file "

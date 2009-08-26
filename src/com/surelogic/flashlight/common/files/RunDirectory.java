@@ -292,6 +292,15 @@ public final class RunDirectory {
 				.recursiveSizeInBytes(runDirHandle));
 	}
 
+	/**
+	 * Gets a human readable size of the database directory. Never returns {@code
+	 * null}.
+	 */
+	public String getHumanReadableDatabaseSize() {
+		return FileUtility.bytesToHumanReadableString(FileUtility
+				.recursiveSizeInBytes(dbHandle));
+	}
+	
 	/** Get the handle for the header file. Never returns {@code null}. */
 	public File getHeader() {
 		return headerHandle;

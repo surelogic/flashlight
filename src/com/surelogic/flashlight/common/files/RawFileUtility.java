@@ -24,6 +24,7 @@ import javax.xml.parsers.SAXParserFactory;
 import org.xml.sax.SAXException;
 
 import com.surelogic._flashlight.common.BinaryEventReader;
+import com.surelogic.common.FileUtility;
 import com.surelogic.common.SLUtility;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.logging.SLLogger;
@@ -38,10 +39,10 @@ public final class RawFileUtility {
 	public static final String DB_DIRECTORY = "db";
 
 	public static final String SUFFIX = ".fl";
-	public static final String COMPRESSED_SUFFIX = ".fl.gz";
+	public static final String COMPRESSED_SUFFIX = ".fl"+FileUtility.GZIP_SUFFIX;
 
 	public static final String BIN_SUFFIX = ".flb";
-	public static final String COMPRESSED_BIN_SUFFIX = ".flb.gz";
+	public static final String COMPRESSED_BIN_SUFFIX = ".flb"+FileUtility.GZIP_SUFFIX;
 
 	static final String[] suffixes = { COMPRESSED_SUFFIX, BIN_SUFFIX,
 			SUFFIX, COMPRESSED_BIN_SUFFIX };

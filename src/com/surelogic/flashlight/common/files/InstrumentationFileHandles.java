@@ -3,6 +3,7 @@ package com.surelogic.flashlight.common.files;
 import java.io.File;
 import java.util.logging.Level;
 
+import com.surelogic.common.FileUtility;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.logging.SLLogger;
 
@@ -49,7 +50,7 @@ public final class InstrumentationFileHandles {
   static InstrumentationFileHandles getFor(final File runDir) {
     final File fieldsFile = new File(runDir, FIELDS_FILE_NAME);
     final File sitesFile = new File(runDir, SITES_FILE_NAME);
-    final File sitesGzipFile = new File(runDir, SITES_FILE_NAME+".gz");
+    final File sitesGzipFile = new File(runDir, SITES_FILE_NAME+FileUtility.GZIP_SUFFIX);
     final File logFile = new File(runDir, INSTRUMENTATION_LOG_FILE_NAME);
     
     if (runDir == null || !runDir.exists()) {

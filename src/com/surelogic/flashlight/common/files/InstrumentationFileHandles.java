@@ -49,6 +49,7 @@ public final class InstrumentationFileHandles {
   static InstrumentationFileHandles getFor(final File runDir) {
     final File fieldsFile = new File(runDir, FIELDS_FILE_NAME);
     final File sitesFile = new File(runDir, SITES_FILE_NAME);
+    final File sitesGzipFile = new File(runDir, SITES_FILE_NAME+".gz");
     final File logFile = new File(runDir, INSTRUMENTATION_LOG_FILE_NAME);
     
     if (runDir == null || !runDir.exists()) {
@@ -60,7 +61,7 @@ public final class InstrumentationFileHandles {
       SLLogger.getLogger().log(Level.WARNING,
           I18N.err(148, runDir.getAbsolutePath(), FIELDS_FILE_NAME));
     }
-    if (!sitesFile.exists()) {
+    if (!sitesFile.exists() && !sitesGzipFile.exists()) {
       failed = true;
       SLLogger.getLogger().log(Level.WARNING,
           I18N.err(149, runDir.getAbsolutePath(), SITES_FILE_NAME));

@@ -14,7 +14,8 @@ import com.surelogic.flashlight.common.files.RunDirectory;
  * immutable and has value semantics.
  */
 public final class RunDescription {
-
+	private RunDirectory f_dir;
+	
 	public RunDescription(final String name, final String rawDataVersion,
 			final String userName, final String javaVersion,
 			final String javaVendor, final String osName, final String osArch,
@@ -314,6 +315,13 @@ public final class RunDescription {
 	 *         directory or {@code null} if no file handles exist.
 	 */
 	public RunDirectory getRunDirectory() {
+		if (f_dir == null) {
+			f_dir = createRunDirectory();
+		}
+		return f_dir;
+	}
+	
+    private RunDirectory createRunDirectory() {
 		return RawFileUtility.getRunDirectoryFor(RunManager.getInstance()
 				.getDataDirectory(), this);
 	}

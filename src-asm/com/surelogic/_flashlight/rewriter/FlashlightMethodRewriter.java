@@ -60,7 +60,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
   
 
   /** The delegate method visitor */
-  private final MethodVisitor mv;
+  private final ExceptionHandlerReorderingMethodAdapter mv;
   
   /** Configuration information, derived from properties. */
   private final Configuration config;
@@ -281,7 +281,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
       final String nameInternal, final String classBeingAnalyzedFullyQualified,
       final String superInternal,
       final Set<MethodCallWrapper> wrappers) {
-    this.mv = mv;
+    this.mv = new ExceptionHandlerReorderingMethodAdapter(mv);
     config = conf;
     siteIdFactory = csif;
     messenger = msg;
@@ -405,7 +405,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
         /* Start a new try-block */
         final Label startOfTryBlock = new Label();
         endOfTryBlock = new Label();
-        mv.visitTryCatchBlock(startOfTryBlock, endOfTryBlock, startOfExceptionHandler, null);
+        mv.appendTryCatchBlock(startOfTryBlock, endOfTryBlock, startOfExceptionHandler, null);
         mv.visitLabel(startOfTryBlock);
       }
     } else if (opcode >= Opcodes.IALOAD && opcode <= Opcodes.SALOAD) {
@@ -856,8 +856,10 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     /* Set up finally handler */
     final Label startOfInitializer = new Label();
     startOfExceptionHandler = new Label();
-    mv.visitTryCatchBlock(startOfInitializer,
+    mv.appendTryCatchBlock(startOfInitializer,
         startOfExceptionHandler, startOfExceptionHandler, null);
+//    mv.visitTryCatchBlock(startOfInitializer,
+//        startOfExceptionHandler, startOfExceptionHandler, null);
     
     /* Start of initializer */
     mv.visitLabel(startOfInitializer);
@@ -891,7 +893,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     /* Set up finally handler */
     final Label startOfOriginalConstructor = new Label();
     startOfExceptionHandler = new Label();
-    mv.visitTryCatchBlock(startOfOriginalConstructor,
+    mv.appendTryCatchBlock(startOfOriginalConstructor,
         startOfExceptionHandler, startOfExceptionHandler, null);
     
     /* Start of constructor */
@@ -959,7 +961,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
       final Label end = new Label();
       final Label handler = new Label();
       final Label resume = new Label();
-      mv.visitTryCatchBlock(start, end, handler, null);
+      mv.prependTryCatchBlock(start, end, handler, null);
       
       /* Original call */
       mv.visitLabel(start);
@@ -1606,7 +1608,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     final Label startOfTryBlock = new Label();
     endOfTryBlock = new Label();
     startOfExceptionHandler = new Label();
-    mv.visitTryCatchBlock(startOfTryBlock, endOfTryBlock, startOfExceptionHandler, null);
+    mv.appendTryCatchBlock(startOfTryBlock, endOfTryBlock, startOfExceptionHandler, null);
     mv.visitLabel(startOfTryBlock);
 
     /* Now call Store.afterIntrinsicLockAcquisition */

@@ -79,7 +79,7 @@ abstract class MethodCall {
    * instrumentation.
    */
   public final void instrumentMethodCall(
-      final MethodVisitor mv, final Configuration config) {
+      final ExceptionHandlerReorderingMethodAdapter mv, final Configuration config) {
     // ...
     
     /* before method all event */
@@ -95,7 +95,7 @@ abstract class MethodCall {
     final Label afterOriginalCall = new Label();
     final Label exceptionHandler = new Label();
     final Label resume = new Label();
-    mv.visitTryCatchBlock(beforeOriginalCall, afterOriginalCall, exceptionHandler, null);
+    mv.prependTryCatchBlock(beforeOriginalCall, afterOriginalCall, exceptionHandler, null);
     
     /* original method call */
     this.pushReceiverAndArguments(mv); // +X

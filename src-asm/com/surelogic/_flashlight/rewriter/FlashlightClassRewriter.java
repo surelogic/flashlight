@@ -395,7 +395,9 @@ final class FlashlightClassRewriter extends ClassAdapter {
   
   private void addWrapperMethod(final MethodCallWrapper wrapper) {
     /* Create the method header */
-    final MethodVisitor mv = wrapper.createMethodHeader(cv);
+    final ExceptionHandlerReorderingMethodAdapter mv = 
+      new ExceptionHandlerReorderingMethodAdapter(
+          wrapper.createMethodHeader(cv));
     mv.visitCode();
     
     // empty stack

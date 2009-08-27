@@ -86,6 +86,7 @@ public class RunStatusView extends ViewPart {
 			if (table.getItemCount() <= 1) {
 				addItem("No obvious issues", info, null);
 			}
+			dbc.shutdown();
 		} else {
 			addItem("No run selected", null, null);
 		}

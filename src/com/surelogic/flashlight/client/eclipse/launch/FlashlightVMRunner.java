@@ -8,6 +8,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -33,6 +34,7 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
+import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
 import org.eclipse.jdt.launching.IVMRunner;
 import org.eclipse.jdt.launching.VMRunnerConfiguration;
@@ -46,6 +48,7 @@ import com.surelogic._flashlight.rewriter.config.Configuration;
 import com.surelogic._flashlight.rewriter.config.ConfigurationBuilder;
 import com.surelogic._flashlight.rewriter.config.Configuration.FieldFilter;
 import com.surelogic.common.FileUtility;
+import com.surelogic.common.eclipse.JDTUtility;
 import com.surelogic.common.eclipse.MemoryUtility;
 import com.surelogic.common.eclipse.SourceZip;
 import com.surelogic.common.eclipse.logging.SLEclipseStatusUtility;
@@ -56,6 +59,9 @@ import com.surelogic.flashlight.client.eclipse.Activator;
 import com.surelogic.flashlight.client.eclipse.jobs.LaunchTerminationDetectionJob;
 import com.surelogic.flashlight.client.eclipse.jobs.SwitchToFlashlightPerspectiveJob;
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
+import com.surelogic.flashlight.common.files.RunDirectory;
+import com.surelogic.flashlight.common.model.RunDescription;
+import com.surelogic.flashlight.common.model.RunManager;
 
 final class FlashlightVMRunner implements IVMRunner {
 	private static final String MAX_HEAP_PREFIX = "-Xmx";
@@ -156,12 +162,14 @@ final class FlashlightVMRunner implements IVMRunner {
 				1; // running
 		final SubMonitor progress = SubMonitor.convert(monitor, totalWork);
 
-		/* Create the source zip */
-		if (createSourceZips(interestingProjects, progress)) {
+		// Check if projects changed since last Flashlight run?
+		final RunDirectory lastRun = findLastRunDirectory();
+		
+		if (createSourceZips(lastRun, interestingProjects, progress)) {
 			// Canceled, abort early
 			return;
 		}
-
+		
 		/*
 		 * Build the instrumented class files. First we scan each directory to
 		 * the build the field database, and then we instrument each directory.
@@ -205,15 +213,55 @@ final class FlashlightVMRunner implements IVMRunner {
 		terminationDetector.reschedule();
 	}
 
-	private boolean createSourceZips(final Set<IProject> projects,
-			final SubMonitor progress) {
+	private RunDirectory findLastRunDirectory() throws CoreException {
+		RunDescription latest = null;
+		for(RunDescription run : RunManager.getInstance().getRunDescriptions()) {
+			if (mainTypeName.equals(run.getName())) {
+				if (latest == null || 
+				    run.getStartTimeOfRun().after(latest.getStartTimeOfRun())) {
+					latest = run;
+				}
+			}
+		}
+		return latest == null ? null : latest.getRunDirectory();
+	}
+
+	/**
+	 * Create zips of the sources from the projects
+	 * Also checks to see if it can reuse an old one from the last run
+	 * 
+	 * @return Whether instrumentation was canceled.
+	 */
+	private boolean createSourceZips(final RunDirectory lastRun,
+			final Set<IProject> projects, final SubMonitor progress) 
+	{
+		final List<File> oldZips = lastRun == null ? 
+		    Collections.<File>emptyList() : lastRun.getSourceHandles().getSourceZips();
 		for (final IProject project : projects) {
 			final String projectName = project.getName();
 			progress.subTask("Creating source zip for " + projectName);
 			final SourceZip srcZip = new SourceZip(project);
 			final File zipFile = new File(sourceDir, projectName + ".src.zip");
 			try {
-				srcZip.generateSourceZip(zipFile.getAbsolutePath(), project);
+				// Check if old zip is up-to-date
+				File orig = null;
+				
+				for(File old : oldZips) {
+					if (old.getName().equals(zipFile.getName())) {
+						IJavaProject jp = JDTUtility.getJavaProject(project.getName());
+						if (JDTUtility.projectUpdatedSince(jp, old.lastModified())) {
+							orig = null;
+						} else {
+							orig = old;
+						}
+						break;
+					}
+				}
+				if (orig != null) {
+					FileUtility.copy(orig, zipFile);
+				} else {
+					srcZip.generateSourceZip(zipFile.getAbsolutePath(), project);
+				}
 			} catch (final IOException e) {
 				SLLogger.getLogger().log(
 						Level.SEVERE,

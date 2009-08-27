@@ -179,6 +179,7 @@ public final class RunManager {
 						descToPrep.put(key, RunDAO.find(conn));
 					}
 				});
+				conn.shutdown();
 			}
 		}
 

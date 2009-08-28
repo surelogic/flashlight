@@ -32,6 +32,7 @@ import javax.xml.bind.JAXBException;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 
+import com.surelogic._flashlight.common.FileChannelOutputStream;
 import com.surelogic._flashlight.rewriter.config.Configuration;
 
 /**
@@ -53,8 +54,7 @@ public abstract class RewriteManager {
   private static final int BUFSIZE = 10240;
   private static final int CLASSFILE_1_6 = 50;
   private static final int CLASSFILE_1_5 = 49;
-  
-  
+  private static final boolean useNIO = false;
   
   // ======================================================================
   // == Inner classes
@@ -428,7 +428,16 @@ public abstract class RewriteManager {
       callSiteIdFactory = idFactory;
     }
     
-    
+    private OutputStream newOutputStream(File file) throws IOException {
+    	final OutputStream os;
+    	if (useNIO) {
+    		os = new FileChannelOutputStream(file);    	
+        	return new BufferedOutputStream(os, 32768);
+    	} else {
+    		os = new FileOutputStream(file);
+        	return new BufferedOutputStream(os, 32768);
+    	}
+    }
     
     /**
      * Process the files in the given directory {@code inDir}, writing to the
@@ -457,8 +466,7 @@ public abstract class RewriteManager {
           rewriteDirectoryToDirectory(nextIn, nextRelative, nextOut);
         } else {
           final String nextRelative = relativePath + name;
-          final BufferedOutputStream bos = new BufferedOutputStream(
-              new FileOutputStream(nextOut));
+          final OutputStream bos = newOutputStream(nextOut);
           try {
             rewriteFileStream(new StreamProvider() {
               public BufferedInputStream getInputStream() throws IOException {
@@ -502,12 +510,13 @@ public abstract class RewriteManager {
       }
       
       outJarFile.getParentFile().mkdirs();
-      final FileOutputStream fos = new FileOutputStream(outJarFile);
-      final BufferedOutputStream bos = new BufferedOutputStream(fos);
+      final OutputStream bos = newOutputStream(outJarFile);
       JarOutputStream jarOut = null;
       try {
         jarOut = new JarOutputStream(bos, outManifest);
+        final long start = System.currentTimeMillis();
         rewriteDirectoryToJarHelper(inDir, "", jarOut, "");
+        System.out.println("Time for "+inDir.getName()+": "+(System.currentTimeMillis()-start)+" ms");
       } finally {
         final OutputStream streamToClose = (jarOut != null) ? jarOut : bos;
         try {
@@ -569,8 +578,7 @@ public abstract class RewriteManager {
         final Manifest outManifest = updateManifest(inManifest, runtimeJarName);
         
         outJarFile.getParentFile().mkdirs();
-        final FileOutputStream fos = new FileOutputStream(outJarFile);
-        final BufferedOutputStream bos = new BufferedOutputStream(fos);
+        final OutputStream bos = newOutputStream(outJarFile);
         JarOutputStream jarOut = null;
         try {
         if (outManifest == null) {
@@ -578,6 +586,7 @@ public abstract class RewriteManager {
         } else {
             jarOut = new JarOutputStream(bos, outManifest);
         }
+        final long start = System.currentTimeMillis();
           final Enumeration jarEnum = jarFile.entries(); 
           while (jarEnum.hasMoreElements()) {
             final JarEntry jarEntryIn = (JarEntry) jarEnum.nextElement();
@@ -596,6 +605,7 @@ public abstract class RewriteManager {
               }, entryName, entryName, jarOut);
             }
           }
+          System.out.println("Time for "+inJarFile.getName()+": "+(System.currentTimeMillis()-start)+" ms");
         } finally {
           final OutputStream streamToClose = (jarOut != null) ? jarOut : bos;
           try {
@@ -634,8 +644,7 @@ public abstract class RewriteManager {
         
         final File outManifestFile = composeFile(outDir, JarFile.MANIFEST_NAME);
         outManifestFile.getParentFile().mkdirs();
-        final BufferedOutputStream manifestOutputStream =
-          new BufferedOutputStream(new FileOutputStream(outManifestFile));
+        final OutputStream manifestOutputStream = newOutputStream(outManifestFile);
         try {
           outManifest.write(manifestOutputStream);
         } finally {
@@ -661,8 +670,7 @@ public abstract class RewriteManager {
               if (!outFileParentDirectory.exists()) {
                 outFileParentDirectory.mkdirs();
               }
-              final BufferedOutputStream bos = 
-                new BufferedOutputStream(new FileOutputStream(outFile));
+              final OutputStream bos = newOutputStream(outFile);
               try {
                 rewriteFileStream(new StreamProvider() {
                   public BufferedInputStream getInputStream() throws IOException {

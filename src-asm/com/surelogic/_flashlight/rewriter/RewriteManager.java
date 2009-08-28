@@ -514,9 +514,9 @@ public abstract class RewriteManager {
       JarOutputStream jarOut = null;
       try {
         jarOut = new JarOutputStream(bos, outManifest);
-        final long start = System.currentTimeMillis();
+        //final long start = System.currentTimeMillis();
         rewriteDirectoryToJarHelper(inDir, "", jarOut, "");
-        System.out.println("Time for "+inDir.getName()+": "+(System.currentTimeMillis()-start)+" ms");
+        //System.out.println("Time for "+inDir.getName()+": "+(System.currentTimeMillis()-start)+" ms");
       } finally {
         final OutputStream streamToClose = (jarOut != null) ? jarOut : bos;
         try {
@@ -586,7 +586,7 @@ public abstract class RewriteManager {
         } else {
             jarOut = new JarOutputStream(bos, outManifest);
         }
-        final long start = System.currentTimeMillis();
+        //final long start = System.currentTimeMillis();
           final Enumeration jarEnum = jarFile.entries(); 
           while (jarEnum.hasMoreElements()) {
             final JarEntry jarEntryIn = (JarEntry) jarEnum.nextElement();
@@ -605,7 +605,7 @@ public abstract class RewriteManager {
               }, entryName, entryName, jarOut);
             }
           }
-          System.out.println("Time for "+inJarFile.getName()+": "+(System.currentTimeMillis()-start)+" ms");
+          //System.out.println("Time for "+inJarFile.getName()+": "+(System.currentTimeMillis()-start)+" ms");
         } finally {
           final OutputStream streamToClose = (jarOut != null) ? jarOut : bos;
           try {

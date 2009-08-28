@@ -233,7 +233,7 @@ final class ExceptionHandlerReorderingMethodAdapter implements MethodVisitor {
 
   public void visitTryCatchBlock(
       final Label start, final Label end, final Label handler, final String type) {
-    System.out.println("***** normal handler: " + start + " " + end + " " + handler + " " + type);
+    //System.out.println("***** normal handler: " + start + " " + end + " " + handler + " " + type);
     exceptionHandlers.add(new TryCatchBlockMemo(start, end, handler, type));
   }
 

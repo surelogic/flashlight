@@ -2,6 +2,7 @@ package com.surelogic.flashlight.common.model;
 
 import java.io.File;
 import java.sql.Connection;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -18,6 +19,7 @@ import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.common.entities.PrepRunDescription;
 import com.surelogic.flashlight.common.entities.RunDAO;
 import com.surelogic.flashlight.common.files.RawFileUtility;
+import com.surelogic.flashlight.common.files.RunDirectory;
 
 /**
  * A singleton that manages the set of run description aggregates. This class
@@ -158,16 +160,17 @@ public final class RunManager {
 		}
 		boolean isChanged = false; // assume nothing changed
 		final Map<RunDescription, PrepRunDescription> descToPrep = new HashMap<RunDescription, PrepRunDescription>();
-		final Set<RunDescription> rawDescriptions = RawFileUtility
-				.getRunDescriptions(dataDir);
+		final Collection<RunDirectory> runDirs = RawFileUtility
+				.getRunDirectories(dataDir);
 		/*
 		 * Put in all the raw descriptions with a null. This indicates that
 		 * there is no prepared description associated with them.
 		 */
-		for (final RunDescription key : rawDescriptions) {
+		for (final RunDirectory dir : runDirs) {
+			final RunDescription key = dir.getRunDescription();
 			// Assume the run is not prepped until we find out otherwise
 			descToPrep.put(key, null);
-			final File dbDir = key.getRunDirectory().getDatabaseDirectory();
+			final File dbDir = dir.getDatabaseDirectory();
 			if (dbDir.exists()) {
 				// Check to see if there is a prepped run
 				final DBConnection conn = FlashlightDBConnection

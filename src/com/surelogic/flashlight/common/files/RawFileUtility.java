@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -93,50 +94,27 @@ public final class RawFileUtility {
 	}
 
 	/**
-	 * Gets descriptions for all the raw data files found in the Flashlight data
+	 * Gets RunDirectories for all the raw data files found in the Flashlight data
 	 * directory.
 	 * <p>
 	 * <i>Implementation Note:</i> This method scans the Flashlight data
 	 * directory.
 	 * 
-	 * @return a set of descriptions for all the raw data files found in the
+	 * @return a set of RunDirectories for all the raw data files found in the
 	 *         Flashlight data directory.
 	 */
-	public static Set<RunDescription> getRunDescriptions(File dataDir) {
+	public static Collection<RunDirectory> getRunDirectories(File dataDir) {
 		final RawDataDirectoryReader runDescriptionBuilder = new RawDataDirectoryReader(
 				dataDir);
 		runDescriptionBuilder.read();
-		return runDescriptionBuilder.getRunDescriptions();
+		return runDescriptionBuilder.getRunDirectories();
 	}
-
+	
 	public static List<File> findInvalidRunDirectories(File dataDir) {
 		final RawDataDirectoryReader runDescriptionBuilder = new RawDataDirectoryReader(
 				dataDir);
 		return runDescriptionBuilder.findBadDirs();
 	}
-
-	// /**
-	// * Examines the Flashlight data directory and returns file handles
-	// * corresponding to the passed run description, or {@code null} if no file
-	// * handles exist.
-	// * <p>
-	// * <i>Implementation Note:</i> This method scans the Flashlight data
-	// * directory.
-	// *
-	// * @param description
-	// * a non-null run description.
-	// * @return an object containing file handles to the raw data file and its
-	// * associated log file, or {@code null} if no file handles exist.
-	// */
-	// public static RawFileHandles getRawFileHandlesFor(
-	// final RunDescription description) {
-	// if (description == null)
-	// throw new IllegalArgumentException(I18N.err(44, "description"));
-	// final RawDataDirectoryReader runDescriptionBuilder = new
-	// RawDataDirectoryReader();
-	// runDescriptionBuilder.read();
-	// return runDescriptionBuilder.getRawFileHandlesFor(description);
-	// }
 
 	public static RunDirectory getRunDirectoryFor(File dataDir,
 			final RunDescription description) {
@@ -321,6 +299,10 @@ public final class RawFileUtility {
 			return f_runs;
 		}
 
+		Collection<RunDirectory> getRunDirectories() {
+			return f_runToHandles.values();
+		}
+		
 		RunDirectory getRunDirectoryFor(final RunDescription description) {
 			return f_runToHandles.get(description);
 		}

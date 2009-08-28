@@ -1,7 +1,9 @@
 package com.surelogic._flashlight.rewriter.config;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -219,5 +221,66 @@ public final class Configuration {
     this.classBlacklist = classBlacklist;
     this.fieldFilter = filterFields;
     this.filterPackages = filterFieldsInPackages;
+  }
+  
+  @Override
+  public boolean equals(Object o) {
+	if (!(o instanceof Configuration)) {
+		return false;
+	}
+	Configuration other = (Configuration) o;
+	return 
+		this.storeClassName.equals(storeClassName) &&
+		this.indirectUseDefault == other.indirectUseDefault &&
+		compareFileLists(this.indirectAdditionalMethods, other.indirectAdditionalMethods) &&
+		this.rewriteInvokeinterface == other.rewriteInvokeinterface &&
+		this.rewriteInvokespecial == other.rewriteInvokespecial &&
+		this.rewriteInvokestatic == other.rewriteInvokestatic &&
+		this.rewriteInvokevirtual == other.rewriteInvokevirtual &&
+		this.rewritePutfield == other.rewritePutfield &&
+		this.rewriteGetfield == other.rewriteGetfield &&
+		this.rewritePutstatic == other.rewritePutstatic &&
+		this.rewriteGetstatic == other.rewriteGetstatic &&
+		this.rewriteArrayLoad == other.rewriteArrayLoad &&
+		this.rewriteArrayStore == other.rewriteArrayStore &&
+		this.rewriteSynchronizedMethod == other.rewriteSynchronizedMethod &&
+		this.rewriteMonitorenter == other.rewriteMonitorenter &&
+		this.rewriteMonitorexit == other.rewriteMonitorexit &&
+		this.rewriteInit == other.rewriteInit &&
+		this.rewriteConstructorExecution == other.rewriteConstructorExecution &&
+		this.instrumentBeforeCall == other.instrumentBeforeCall &&
+		this.instrumentAfterCall == other.instrumentAfterCall &&
+		this.instrumentBeforeWait == other.instrumentBeforeWait &&
+		this.instrumentAfterWait == other.instrumentAfterWait &&
+		this.instrumentBeforeJUCLock == other.instrumentBeforeJUCLock &&
+		this.instrumentAfterLock == other.instrumentAfterLock &&
+		this.instrumentAfterTryLock == other.instrumentAfterTryLock &&
+		this.instrumentAfterUnlock == other.instrumentAfterUnlock &&
+		this.instrumentIndirectAccess == other.instrumentIndirectAccess &&
+		this.classBlacklist.equals(other.classBlacklist) &&
+		this.fieldFilter == other.fieldFilter &&
+	    this.filterPackages.equals(other.filterPackages);
+  }
+
+  private static boolean compareFileLists(List<File> list1, List<File> list2) {
+	  if (list1.size() != list2.size()) {
+		  return false;
+	  }
+	  try {
+		  Set<File> canonical1 = makeCanonicalFileSet(list1);
+		  Set<File> canonical2 = makeCanonicalFileSet(list2);		  
+		  return canonical1.equals(canonical2);
+	  } catch(IOException e) {
+		  // Can't check if equal
+		  return false;
+	  }
+  }
+  
+  private static Set<File> makeCanonicalFileSet(List<File> files) throws IOException {
+	  Set<File> canonical = new HashSet<File>();  
+	  for(File f : files) {
+		  canonical.add(f.getCanonicalFile());
+	  }
+	  return canonical;
   }
 }

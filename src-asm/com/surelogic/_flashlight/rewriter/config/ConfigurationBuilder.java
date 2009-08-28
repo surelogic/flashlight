@@ -12,8 +12,7 @@ import com.surelogic._flashlight.rewriter.config.Configuration.FieldFilter;
 
 public final class ConfigurationBuilder {
   private static final String TRUE = "true";
-
-  
+  private static final String FALSE = "false";
   
   private boolean indirectUseDefault;
   private List<File> indirectAdditionalMethods;
@@ -189,8 +188,82 @@ public final class ConfigurationBuilder {
     return strings;
   }
   
+  private String flattenFileList(List<File> files) {
+	  StringBuilder sb = new StringBuilder();
+	  for(File f : files) {
+		  if (sb.length() > 0) {
+			  sb.append(',');
+		  }
+		  sb.append(f.getAbsolutePath());
+	  }
+	  return sb.toString();
+  }
   
+  private String flattenStringSet(Set<String> strings) {
+	  StringBuilder sb = new StringBuilder();
+	  for(String s : strings) {
+		  if (sb.length() > 0) {
+			  sb.append(',');
+		  }
+		  sb.append(s);
+	  }
+	  return sb.toString();
+  }
   
+  private static void setBoolean(final Properties props,
+	      final String propName, final boolean value) {
+	  props.getProperty(propName, value ? TRUE : FALSE);
+  }
+  
+  /**
+   * Create a Properties object based on the current settings
+   */
+  public Properties getProperties() {
+	  final Properties props = new Properties();
+	  setBoolean(props, Configuration.INDIRECT_ACCESS_USE_DEFAULT_PROPERTY, indirectUseDefault);
+      props.setProperty(Configuration.INDIRECT_ACCESS_ADDITIONAL_PROPERTY, flattenFileList(indirectAdditionalMethods));
+
+	  setBoolean(props, Configuration.REWRITE_INVOKEINTERFACE_PROPERTY, rewriteInvokeinterface);
+	  setBoolean(props, Configuration.REWRITE_INVOKESPECIAL_PROPERTY, rewriteInvokespecial);
+	  setBoolean(props, Configuration.REWRITE_INVOKESTATIC_PROPERTY, rewriteInvokestatic);
+	  setBoolean(props, Configuration.REWRITE_INVOKEVIRTUAL_PROPERTY, rewriteInvokevirtual);
+
+	  setBoolean(props, Configuration.REWRITE_PUTFIELD_PROPERTY, rewritePutfield);
+	  setBoolean(props, Configuration.REWRITE_GETFIELD_PROPERTY, rewriteGetfield);
+
+	  setBoolean(props, Configuration.REWRITE_PUTSTATIC_PROPERTY, rewritePutstatic);
+	  setBoolean(props, Configuration.REWRITE_GETSTATIC_PROPERTY, rewriteGetstatic);
+
+	  setBoolean(props, Configuration.REWRITE_ARRAY_LOAD_PROPERTY, rewriteArrayLoad);
+	  setBoolean(props, Configuration.REWRITE_ARRAY_STORE_PROPERTY, rewriteArrayStore);
+
+	  setBoolean(props, Configuration.REWRITE_SYNCHRONIZED_METHOD_PROPERTY, rewriteSynchronizedMethod);
+	  setBoolean(props, Configuration.REWRITE_MONITORENTER_PROPERTY, rewriteMonitorenter);
+	  setBoolean(props, Configuration.REWRITE_MONITOREXIT_PROPERTY, rewriteMonitorexit);
+
+	  setBoolean(props, Configuration.REWRITE_INIT_PROPERTY, rewriteInit);
+	  setBoolean(props, Configuration.REWRITE_CONSTRUCTOR_EXECUTION_PROPERTY, rewriteConstructorExecution);
+
+	  setBoolean(props, Configuration.INSTRUMENT_BEFORE_CALL_PROPERTY, instrumentBeforeCall);
+	  setBoolean(props, Configuration.INSTRUMENT_AFTER_CALL_PROPERTY, instrumentAfterCall);
+	  setBoolean(props, Configuration.INSTRUMENT_BEFORE_WAIT_PROPERTY, instrumentBeforeWait);
+	  setBoolean(props, Configuration.INSTRUMENT_AFTER_WAIT_PROPERTY, instrumentAfterWait);
+	  setBoolean(props, Configuration.INSTRUMENT_BEFORE_JUC_LOCK_PROPERTY, instrumentBeforeJUCLock);
+	  setBoolean(props, Configuration.INSTRUMENT_AFTER_LOCK_PROPERTY, instrumentAfterLock);
+	  setBoolean(props, Configuration.INSTRUMENT_AFTER_TRYLOCK_PROPERTY, instrumentAfterTryLock);
+	  setBoolean(props, Configuration.INSTRUMENT_AFTER_UNLOCK_PROPERTY, instrumentAfterUnlock);
+	  setBoolean(props, Configuration.INSTRUMENT_INDIRECT_ACCESS_PROPERTY, instrumentIndirectAccess);
+
+	  props.setProperty(Configuration.STORE_CLASS_NAME_PROPERTY, storeClassName);
+
+	  props.setProperty(Configuration.BLACKLISTED_CLASSES_PROPERTY, flattenStringSet(classBlacklist));
+
+	  props.setProperty(Configuration.FILTER_FIELDS_PROPERTY, fieldFilter.name());
+
+	  props.setProperty(Configuration.FILTER_FIELDS_IN_PACKAGES_PROPERTY, flattenStringSet(filterPackages));
+	  return props;
+  }
+
   public Configuration getConfiguration() {
     return new Configuration(storeClassName, indirectUseDefault,
         indirectAdditionalMethods, rewriteInvokeinterface,

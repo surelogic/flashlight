@@ -46,7 +46,10 @@ abstract class MethodCall {
   private final boolean testCalledMethodName(
       final String testOwner, final String testName)
   throws ClassNotFoundException {
-    return classModel.getClass(testOwner).isAssignableFrom(owner) && name.equals(testName);
+    /* Test the method name first: no sense fooling with the class model if
+     * the method doesn't match.
+     */
+    return name.equals(testName) && classModel.getClass(testOwner).isAssignableFrom(owner);
   }
 
   /**

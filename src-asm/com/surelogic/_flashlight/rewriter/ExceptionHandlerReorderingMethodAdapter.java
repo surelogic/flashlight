@@ -1,5 +1,6 @@
 package com.surelogic._flashlight.rewriter;
 
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -70,6 +71,212 @@ import org.objectweb.asm.MethodVisitor;
  * to the list of exceptions. 
  */
 final class ExceptionHandlerReorderingMethodAdapter implements MethodVisitor {
+  private static final String[] OPCODES = new String[] {
+      "NOP",
+      "ACONST_NULL",
+      "ICONST_M1",
+      "ICONST_0",
+      "ICONST_1",
+      "ICONST_2",
+      "ICONST_3",
+      "ICONST_4",
+      "ICONST_5",
+      "LCONST_0",
+      "LCONST_1",
+      "FCONST_0",
+      "FCONST_1",
+      "FCONST_2",
+      "DCONST_0",
+      "DCONST_1",
+      "BIPUSH",
+      "SIPUSH",
+      "LDC",
+      "LDC_W",
+      "LDC2_W",
+      "ILOAD",
+      "LLOAD",
+      "FLOAD",
+      "DLOAD",
+      "ALOAD",
+      "ILOAD_0",
+      "ILOAD_1",
+      "ILOAD_2",
+      "ILOAD_3",
+      "LLOAD_0",
+      "LLOAD_1",
+      "LLOAD_2",
+      "LLOAD_3",
+      "FLOAD_0",
+      "FLOAD_1",
+      "FLOAD_2",
+      "FLOAD_3",
+      "DLOAD_0",
+      "DLOAD_1",
+      "DLOAD_2",
+      "DLOAD_3",
+      "ALOAD_0",
+      "ALOAD_1",
+      "ALOAD_2",
+      "ALOAD_3",
+      "IALOAD",
+      "LALOAD",
+      "FALOAD",
+      "DALOAD",
+      "AALOAD",
+      "BALOAD",
+      "CALOAD",
+      "SALOAD",
+      "ISTORE",
+      "LSTORE",
+      "FSTORE",
+      "DSTORE",
+      "ASTORE",
+      "ISTORE_0",
+      "ISTORE_1",
+      "ISTORE_2",
+      "ISTORE_3",
+      "LSTORE_0",
+      "LSTORE_1",
+      "LSTORE_2",
+      "LSTORE_3",
+      "FSTORE_0",
+      "FSTORE_1",
+      "FSTORE_2",
+      "FSTORE_3",
+      "DSTORE_0",
+      "DSTORE_1",
+      "DSTORE_2",
+      "DSTORE_3",
+      "ASTORE_0",
+      "ASTORE_1",
+      "ASTORE_2",
+      "ASTORE_3",
+      "IASTORE",
+      "LASTORE",
+      "FASTORE",
+      "DASTORE",
+      "AASTORE",
+      "BASTORE",
+      "CASTORE",
+      "SASTORE",
+      "POP",
+      "POP2",
+      "DUP",
+      "DUP_X1",
+      "DUP_X2",
+      "DUP2",
+      "DUP2_X1",
+      "DUP2_X2",
+      "SWAP",
+      "IADD",
+      "LADD",
+      "FADD",
+      "DADD",
+      "ISUB",
+      "LSUB",
+      "FSUB",
+      "DSUB",
+      "IMUL",
+      "LMUL",
+      "FMUL",
+      "DMUL",
+      "IDIV",
+      "LDIV",
+      "FDIV",
+      "DDIV",
+      "IREM",
+      "LREM",
+      "FREM",
+      "DREM",
+      "INEG",
+      "LNEG",
+      "FNEG",
+      "DNEG",
+      "ISHL",
+      "LSHL",
+      "ISHR",
+      "LSHR",
+      "IUSHR",
+      "LUSHR",
+      "IAND",
+      "LAND",
+      "IOR",
+      "LOR",
+      "IXOR",
+      "LXOR",
+      "IINC",
+      "I2L",
+      "I2F",
+      "I2D",
+      "L2I",
+      "L2F",
+      "L2D",
+      "F2I",
+      "F2L",
+      "F2D",
+      "D2I",
+      "D2L",
+      "D2F",
+      "I2B",
+      "I2C",
+      "I2S",
+      "LCMP",
+      "FCMPL",
+      "FCMPG",
+      "DCMPL",
+      "DCMPG",
+      "IFEQ",
+      "IFNE",
+      "IFLT",
+      "IFGE",
+      "IFGT",
+      "IFLE",
+      "IF_ICMPEQ",
+      "IF_ICMPNE",
+      "IF_ICMPLT",
+      "IF_ICMPGE",
+      "IF_ICMPGT",
+      "IF_ICMPLE",
+      "IF_ACMPEQ",
+      "IF_ACMPNE",
+      "GOTO",
+      "JSR",
+      "RET",
+      "TABLESWITCH",
+      "LOOKUPSWITCH",
+      "IRETURN",
+      "LRETURN",
+      "FRETURN",
+      "DRETURN",
+      "ARETURN",
+      "RETURN",
+      "GETSTATIC",
+      "PUTSTATIC",
+      "GETFIELD",
+      "PUTFIELD",
+      "INVOKEVIRTUAL",
+      "INVOKESPECIAL",
+      "INVOKESTATIC",
+      "INVOKEINTERFACE",
+      "INVOKEDYNAMIC",
+      "NEW",
+      "NEWARRAY",
+      "ANEWARRAY",
+      "ARRAYLENGTH",
+      "ATHROW",
+      "CHECKCAST",
+      "INSTANCEOF",
+      "MONITORENTER",
+      "MONITOREXIT",
+      "WIDE",
+      "MULTIANEWARRAY",
+      "IFNULL",
+      "IFNONNULL",
+      "GOTO_W",
+      "JSR_W" };
+
+  
+  
   /**
    * The visitor to adapt.
    */
@@ -157,6 +364,26 @@ final class ExceptionHandlerReorderingMethodAdapter implements MethodVisitor {
     mv.visitEnd();
   }
 
+  public void dump(final PrintWriter pw) {
+    // Output all the exception handlers first
+    for (final TryCatchBlockMemo tcb : prefix) {
+      pw.println(tcb);
+    }
+    for (final TryCatchBlockMemo tcb : exceptionHandlers) {
+      pw.println(tcb);
+    }
+    for (final TryCatchBlockMemo tcb : postfix) {
+      pw.println(tcb);
+    }
+    
+    // Output all the buffered instructions
+    for (final MethodMemo memo : memoizedCalls) {
+      pw.println(memo);
+    }
+    pw.flush();
+  }
+
+  
   public void visitFieldInsn(
       final int opcode, final String owner, final String name, final String desc) {
     memoizedCalls.add(new FieldInsnMemo(opcode, owner, name, desc));
@@ -268,6 +495,11 @@ final class ExceptionHandlerReorderingMethodAdapter implements MethodVisitor {
     public void forward(final MethodVisitor mv) {
       mv.visitFieldInsn(opcode, owner, name, desc);
     }
+    
+    @Override
+    public String toString() {
+      return OPCODES[opcode] + " " + owner + " " + name + " " + desc;
+    }
   }
   
   private final class FrameMemo implements MethodMemo {
@@ -289,6 +521,11 @@ final class ExceptionHandlerReorderingMethodAdapter implements MethodVisitor {
     public void forward(final MethodVisitor mv) {
       mv.visitFrame(type, nLocal, local, nStack, stack);
     }
+    
+    @Override
+    public String toString() {
+      return "frame";
+    }
   }
   
   private final class IncInsnMemo implements MethodMemo {
@@ -303,10 +540,15 @@ final class ExceptionHandlerReorderingMethodAdapter implements MethodVisitor {
     public void forward(final MethodVisitor mv) {
       mv.visitIincInsn(var, increment);
     }
+    
+    @Override
+    public String toString() {
+      return "INC " + var + " " + increment;
+    }
   }
   
   private final class InsnMemo implements MethodMemo {
-    private final  int opcode;
+    private final int opcode;
     
     public InsnMemo(final int opcode) {
       this.opcode = opcode;
@@ -315,11 +557,16 @@ final class ExceptionHandlerReorderingMethodAdapter implements MethodVisitor {
     public void forward(final MethodVisitor mv) {
       mv.visitInsn(opcode);
     }
+    
+    @Override
+    public String toString() {
+      return OPCODES[opcode];
+    }
   }
   
   private final class IntInsnMemo implements MethodMemo {
-    private final  int opcode;
-    private final  int operand;
+    private final int opcode;
+    private final int operand;
     
     public IntInsnMemo(final int opcode, final int operand) {
       this.opcode = opcode;
@@ -329,10 +576,15 @@ final class ExceptionHandlerReorderingMethodAdapter implements MethodVisitor {
     public void forward(final MethodVisitor mv) {
       mv.visitIntInsn(opcode, operand);
     }
+
+    @Override
+    public String toString() {
+      return OPCODES[opcode] + " " + operand;
+    }
   }
   
   private final class JumpInsnMemo implements MethodMemo {
-    private final  int opcode;
+    private final int opcode;
     private final Label label;
     
     public JumpInsnMemo(final int opcode, final Label label) {
@@ -342,6 +594,11 @@ final class ExceptionHandlerReorderingMethodAdapter implements MethodVisitor {
     
     public void forward(final MethodVisitor mv) {
       mv.visitJumpInsn(opcode, label);
+    }
+    
+    @Override
+    public String toString() {
+      return OPCODES[opcode] + " " + label;
     }
   }
   
@@ -355,6 +612,11 @@ final class ExceptionHandlerReorderingMethodAdapter implements MethodVisitor {
     public void forward(final MethodVisitor mv) {
       mv.visitLabel(label);
     }
+    
+    @Override
+    public String toString() {
+      return label.toString() + ":";
+    }
   }
   
   private final class LdcInsnMemo implements MethodMemo {
@@ -366,6 +628,11 @@ final class ExceptionHandlerReorderingMethodAdapter implements MethodVisitor {
     
     public void forward(final MethodVisitor mv) {
       mv.visitLdcInsn(cst);
+    }
+    
+    @Override
+    public String toString() {
+      return "LDC " + cst;
     }
   }
   
@@ -380,6 +647,11 @@ final class ExceptionHandlerReorderingMethodAdapter implements MethodVisitor {
     
     public void forward(final MethodVisitor mv) {
       mv.visitLineNumber(line, start);
+    }
+    
+    @Override
+    public String toString() {
+      return "Line " + line;
     }
   }
   
@@ -404,6 +676,11 @@ final class ExceptionHandlerReorderingMethodAdapter implements MethodVisitor {
     public void forward(final MethodVisitor mv) {
       mv.visitLocalVariable(name, desc, signature, start, end, index);
     }
+    
+    @Override
+    public String toString() {
+      return "var";
+    }
   }
   
   private final class LookupSwitchInsn implements MethodMemo {
@@ -421,6 +698,11 @@ final class ExceptionHandlerReorderingMethodAdapter implements MethodVisitor {
     public void forward(final MethodVisitor mv) {
       mv.visitLookupSwitchInsn(dflt, keys, labels);
     }
+    
+    @Override
+    public String toString() {
+      return "LOOKUPSWITCH " + dflt + " " + keys + " " + labels;
+    }
   }
   
   private final class MaxsMemo implements MethodMemo {
@@ -434,6 +716,11 @@ final class ExceptionHandlerReorderingMethodAdapter implements MethodVisitor {
     
     public void forward(final MethodVisitor mv) {
       mv.visitMaxs(maxStack, maxLocals);
+    }
+    
+    @Override
+    public String toString() {
+      return "maxs";
     }
   }
   
@@ -454,6 +741,11 @@ final class ExceptionHandlerReorderingMethodAdapter implements MethodVisitor {
     public void forward(final MethodVisitor mv) {
       mv.visitMethodInsn(opcode, owner, name, desc);
     }
+    
+    @Override
+    public String toString() {
+      return OPCODES[opcode] + " " + owner + " " + name + " " + desc;
+    }
   }
   
   private final class MultiANewArrayInsnMemo implements MethodMemo {
@@ -467,6 +759,11 @@ final class ExceptionHandlerReorderingMethodAdapter implements MethodVisitor {
     
     public void forward(final MethodVisitor mv) {
       mv.visitMultiANewArrayInsn(desc, dims);
+    }
+    
+    @Override
+    public String toString() {
+      return "MULTIANEWARRAY " + desc + " " + dims;
     }
   }
   
@@ -487,13 +784,18 @@ final class ExceptionHandlerReorderingMethodAdapter implements MethodVisitor {
     public void forward(final MethodVisitor mv) {
       mv.visitTableSwitchInsn(min, max, dflt, labels);
     }
+    
+    @Override
+    public String toString() {
+      return "TABLESWITCH " + min + " " + max + " " + dflt + " " + labels;
+    }
   }
   
   private final class TryCatchBlockMemo implements MethodMemo {
-    private final  Label start;
-    private final  Label end;
-    private final  Label handler;
-    private final  String type;
+    private final Label start;
+    private final Label end;
+    private final Label handler;
+    private final String type;
     
     public TryCatchBlockMemo(final Label start, final Label end, final Label handler, final String type) {
       this.start = start;
@@ -505,11 +807,16 @@ final class ExceptionHandlerReorderingMethodAdapter implements MethodVisitor {
     public void forward(final MethodVisitor mv) {
       mv.visitTryCatchBlock(start, end, handler, type);
     }
+    
+    @Override
+    public String toString() {
+      return "TRY" + start + " " + end + " " + handler + " " + type;
+    }
   }
   
   private final class TypeInsnMemo implements MethodMemo {
-    private final  int opcode;
-    private final  String type;
+    private final int opcode;
+    private final String type;
     
     public TypeInsnMemo(final int opcode, final String type) {
       this.opcode = opcode;
@@ -518,6 +825,11 @@ final class ExceptionHandlerReorderingMethodAdapter implements MethodVisitor {
     
     public void forward(final MethodVisitor mv) {
       mv.visitTypeInsn(opcode, type);
+    }
+    
+    @Override
+    public String toString() {
+      return OPCODES[opcode] + " " + type;
     }
   }
   
@@ -532,6 +844,11 @@ final class ExceptionHandlerReorderingMethodAdapter implements MethodVisitor {
     
     public void forward(final MethodVisitor mv) {
       mv.visitVarInsn(opcode, var);
+    }
+    
+    @Override
+    public String toString() {
+      return OPCODES[opcode] + " " + var;
     }
   }
 }

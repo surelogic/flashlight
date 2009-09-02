@@ -583,6 +583,14 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     mv.visitLabel((newLabel != null) ? newLabel : label);
     insertDelayedCode();
     if (newLabel != null) {
+      /* XXX Bug 314198 in ASM: ASM will throw a NullPointerException if there is
+       * a label before a JSR opcode that doesn't have a forward refernece.  We
+       * force the label to have a forward reference by inserting a goto 
+       * to it.  This makes silly looking bytecode were we have a GOTO to the
+       * immediately following instruction, but I don't know how else to fix
+       * the problem.
+       */
+      mv.visitJumpInsn(Opcodes.GOTO, label);
       mv.visitLabel(label);
     }
   }

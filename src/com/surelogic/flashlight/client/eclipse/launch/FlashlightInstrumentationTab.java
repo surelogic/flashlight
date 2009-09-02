@@ -402,7 +402,7 @@ public final class FlashlightInstrumentationTab extends
 		
     final java.util.List<IRuntimeClasspathEntry> boot =
       new ArrayList<IRuntimeClasspathEntry>(bootpathEntries); 
-    user.removeAll(Arrays.asList(bootpathTable.getCheckedElements()));
+    boot.removeAll(Arrays.asList(bootpathTable.getCheckedElements()));
 		config.setAttribute(
 				PreferenceConstants.P_BOOTPATH_ENTRIES_TO_NOT_INSTRUMENT,
 				LaunchUtils.convertToLocations(boot));

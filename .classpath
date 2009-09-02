@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
+	<classpathentry exported="true" kind="lib" path="lib/asm-commons-3.2.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/asm-3.2.jar" sourcepath="/ASM-3.2/src"/>
 	<classpathentry exported="true" kind="lib" path="lib/activation.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/jaxb1-impl.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/jaxb-api.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/jaxb-impl.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/jaxb-xjc.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/jsr173_1.0_api.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/asm-3.1.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/asm-commons-3.1.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
 	<classpathentry kind="lib" path="lib/flashlight-rewriter.jar" sourcepath="/flashlight-instrumentation-5.0"/>

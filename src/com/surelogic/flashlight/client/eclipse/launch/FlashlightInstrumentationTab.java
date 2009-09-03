@@ -32,8 +32,11 @@ import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.MenuDetectEvent;
+import org.eclipse.swt.events.MenuDetectListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.*;
 import org.eclipse.swt.widgets.*;
@@ -96,11 +99,59 @@ public final class FlashlightInstrumentationTab extends
 		viewer.setLabelProvider(CLASSPATH_ITEMS_LABEL_PROVIDER);
 		viewer.addCheckStateListener(new ICheckStateListener() {
 			public void checkStateChanged(final CheckStateChangedEvent event) {
-				setDirty(true);
-				updateLaunchConfigurationDialog();
+				setAsChanged();
+			}
+		});
+		viewer.getTable().addMenuDetectListener(new MenuDetectListener() {
+			public void menuDetected(MenuDetectEvent e) {
+				final Menu contextMenu = new Menu(viewer.getControl().getShell(), 
+						                          SWT.POP_UP);
+				setupContextMenu(viewer, contextMenu);
+				viewer.getTable().setMenu(contextMenu);
 			}
 		});
 		return viewer;
+	}
+
+	void setAsChanged() {
+		setDirty(true);
+		updateLaunchConfigurationDialog();
+	}
+	
+	void setupContextMenu(final CheckboxTableViewer viewer, Menu menu) {	
+		MenuItem item1 = new MenuItem(menu, SWT.PUSH);
+		item1.setText("Toggle selected");
+		item1.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				IStructuredSelection s = (IStructuredSelection) viewer.getSelection();
+				for(Object o : s.toList()) {
+					boolean checked = viewer.getChecked(o);
+					viewer.setChecked(o, !checked);
+				}
+				setAsChanged();
+			}
+		});
+		
+		MenuItem item2 = new MenuItem(menu, SWT.PUSH);
+		item2.setText("Check all");
+		item2.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				viewer.setAllChecked(true);
+				setAsChanged();
+			}
+		});
+		
+		MenuItem item3 = new MenuItem(menu, SWT.PUSH);
+		item3.setText("Clear all");
+		item3.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				viewer.setAllChecked(false);
+				setAsChanged();
+			}
+		});
 	}
 
 	private void createBlacklist(final Composite parent) {

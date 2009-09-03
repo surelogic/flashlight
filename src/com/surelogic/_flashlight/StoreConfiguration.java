@@ -33,7 +33,7 @@ public class StoreConfiguration {
   private static volatile boolean debug;
   
   static {
-	System.out.println("StoreConfiguration");
+	//System.out.println("StoreConfiguration");
 	
     // Initialize the settings base on Java System properties
     setOff(System.getProperty(FL_OFF, null) != null);

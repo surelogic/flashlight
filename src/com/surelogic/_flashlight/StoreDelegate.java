@@ -12,11 +12,12 @@ public final class StoreDelegate {
   private StoreDelegate() {
     // prevent instantiation
   }
-  
+  /*
   static {
 	  System.out.println("StoreDelegate");
 	  System.out.println("isOff = "+StoreConfiguration.isOff());
   }
+  */
   
 	/**
 	 * Flashlight can be turned off by defining the system property

@@ -252,7 +252,7 @@ public final class Store {
 	static {		
 		// Check if FL is on (and shutoff)
 		if (IdConstants.enableFlashlightToggle || !StoreDelegate.FL_OFF.getAndSet(true)) {
-			System.out.println("Store");
+			//System.out.println("Store");
 			// new
 			// Throwable("Store CL = "+Store.class.getClassLoader()).printStackTrace(System.out);
 

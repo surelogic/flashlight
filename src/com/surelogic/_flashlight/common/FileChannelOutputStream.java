@@ -33,7 +33,11 @@ public class FileChannelOutputStream extends OutputStream {
 
 	private void flushBuffer() throws IOException {
 		buffer.flip();
-		channel.write(buffer);
+		if (channel.isOpen()) {
+			channel.write(buffer);
+		} else {
+			throw new IOException("channel is closed");
+		}
 		buffer.clear();
 	}
 	
@@ -66,7 +70,9 @@ public class FileChannelOutputStream extends OutputStream {
 	
 	@Override
 	public void flush() throws IOException {
-		flushBuffer();
+		if (channel.isOpen()) {
+			flushBuffer();		
+		}
 		//FIX this is very slow
 		//channel.force(false);
     }
@@ -75,6 +81,17 @@ public class FileChannelOutputStream extends OutputStream {
 	public void close() throws IOException {
 		flush();
 		channel.close();
+    }
+	
+	public static OutputStream create(File file) throws IOException {
+    	final OutputStream os;
+    	if (false) {
+    		os = new FileChannelOutputStream(file);    	
+        	return new BufferedOutputStream(os, 32768);
+    	} else {
+    		os = new FileOutputStream(file);
+        	return new BufferedOutputStream(os, 32768);
+    	}
     }
 	
 	public static void main(String... args) throws IOException {

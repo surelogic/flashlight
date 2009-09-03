@@ -33,6 +33,8 @@ public class StoreConfiguration {
   private static volatile boolean debug;
   
   static {
+	System.out.println("StoreConfiguration");
+	
     // Initialize the settings base on Java System properties
     setOff(System.getProperty(FL_OFF, null) != null);
     setDirectory(System.getProperty(FL_DIR, System.getProperty(JAVA_IO_TMPDIR)));

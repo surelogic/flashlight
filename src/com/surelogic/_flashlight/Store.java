@@ -34,6 +34,7 @@ public final class Store {
 	 * of <code>false</code> should be publicized safely to the other program
 	 * thread.
 	 */
+	// (Re-)using StoreDelegate.FL_OFF for normal checks
 	private static boolean f_flashlightIsNotInitialized = true;
 
 	/**
@@ -248,8 +249,10 @@ public final class Store {
 	/*
 	 * Flashlight startup code used to get everything running.
 	 */
-	static {
-		if (IdConstants.enableFlashlightToggle || !StoreDelegate.FL_OFF.get()) {
+	static {		
+		// Check if FL is on (and shutoff)
+		if (IdConstants.enableFlashlightToggle || !StoreDelegate.FL_OFF.getAndSet(true)) {
+			System.out.println("Store");
 			// new
 			// Throwable("Store CL = "+Store.class.getClassLoader()).printStackTrace(System.out);
 
@@ -428,6 +431,9 @@ public final class Store {
 			f_console.start();
 
 			f_start_nano = System.nanoTime();
+			
+			f_flashlightIsNotInitialized = false;
+			StoreDelegate.FL_OFF.set(false);
 		} else {
 			f_run = null;
 			f_log = null;
@@ -440,8 +446,8 @@ public final class Store {
 			f_console = null;
 			f_spy = null;
 			f_start_nano = 0;
+			f_flashlightIsNotInitialized = false;
 		}
-		f_flashlightIsNotInitialized = false;
 	}
 
 	public static BlockingQueue<List<Event>> getRawQueue() {
@@ -508,10 +514,11 @@ public final class Store {
 			//System.out.println("Omitting field access");
 			return;
 		}
+		/*
 		if (f_flashlightIsNotInitialized) {
 			return;
 		}
-
+        */
 		final State flState = tl_withinStore.get();
 		if (flState.inside) {
 			return;
@@ -551,13 +558,7 @@ public final class Store {
 				 */
 				return;
 			}
-			/*
-			 * if the field is not from an instrumented class then force
-			 * creation of the phantom class object.
-			 */
-			if (declaringClass != null) {
-				Phantom.ofClass(declaringClass);
-			}
+
 			if (read) {
 				e = new FieldReadInstance(receiver, fieldID, siteId, flState);
 			} else {
@@ -599,9 +600,11 @@ public final class Store {
 			//System.out.println("Omitting field access");
 			return;
 		}		
+		/*
 		if (f_flashlightIsNotInitialized) {
 			return;
 		}
+        */
 
 		final State flState = tl_withinStore.get();
 		if (flState.inside) {
@@ -634,9 +637,7 @@ public final class Store {
 			if (dcPhantom != null) {
 				underConstruction = dcPhantom.isUnderConstruction();
 			}
-			if (declaringClass != null) {
-				Phantom.ofClass(declaringClass);
-			}
+
 			final Event e;
 			if (read) {
 				e = new FieldReadStatic(fieldID, siteId, flState,
@@ -809,9 +810,11 @@ public final class Store {
 		if (!StoreConfiguration.getCollectionType().processIndirectAccesses()) {
 			return;
 		}	
+		/*
 		if (f_flashlightIsNotInitialized) {
 			return;
 		}
+        */
 
 		// System.out.println("indirectAccess");
 		// System.out.println("  receiver = " + receiver.getClass().getName() +
@@ -898,13 +901,17 @@ public final class Store {
 	 *            the line number where the event occurred.
 	 */
 	public static void constructorCall(final boolean before, final long siteId) {
+		/*
 		if (!IdConstants.useTraces) {
 			return;
 		}
+		*/
 
+		/*
 		if (f_flashlightIsNotInitialized) {
 			return;
 		}
+        */
 		if (StoreDelegate.FL_OFF.get()) {
 			return;
 		}
@@ -957,9 +964,11 @@ public final class Store {
 	 */
 	public static void constructorExecution(final boolean before,
 			final Object receiver, final long siteId) {
+		/*
 		if (f_flashlightIsNotInitialized) {
 			return;
 		}
+        */
 		if (StoreDelegate.FL_OFF.get()) {
 			return;
 		}
@@ -1023,14 +1032,17 @@ public final class Store {
 		if (StoreDelegate.FL_OFF.get()) {
 			return;
 		}
-
+        /*
 		if (!IdConstants.useTraces) {
 			return;
 		}
+		*/
 
+		/*
 		if (f_flashlightIsNotInitialized) {
 			return;
 		}
+        */
 
 		final State flState = tl_withinStore.get();
 		if (flState.inside) {
@@ -1110,9 +1122,11 @@ public final class Store {
 		if (!useLocks) {
 			return;
 		}
+		/*
 		if (f_flashlightIsNotInitialized) {
 			return;
 		}
+        */
 		if (StoreDelegate.FL_OFF.get()) {
 			return;
 		}
@@ -1161,9 +1175,11 @@ public final class Store {
 		if (!useLocks) {
 			return;
 		}
+		/*
 		if (f_flashlightIsNotInitialized) {
 			return;
 		}
+        */
 		if (StoreDelegate.FL_OFF.get()) {
 			return;
 		}
@@ -1228,9 +1244,11 @@ public final class Store {
 		if (!useLocks) {
 			return;
 		}
+		/*
 		if (f_flashlightIsNotInitialized) {
 			return;
 		}
+        */
 		if (StoreDelegate.FL_OFF.get()) {
 			return;
 		}
@@ -1283,9 +1301,11 @@ public final class Store {
 		if (!useLocks) {
 			return;
 		}
+		/*
 		if (f_flashlightIsNotInitialized) {
 			return;
 		}
+        */
 		if (StoreDelegate.FL_OFF.get()) {
 			return;
 		}
@@ -1337,9 +1357,11 @@ public final class Store {
 		if (!useLocks) {
 			return;
 		}
+		/*
 		if (f_flashlightIsNotInitialized) {
 			return;
 		}
+        */
 		if (StoreDelegate.FL_OFF.get()) {
 			return;
 		}
@@ -1395,9 +1417,11 @@ public final class Store {
 		if (!useLocks) {
 			return;
 		}
+		/*
 		if (f_flashlightIsNotInitialized) {
 			return;
 		}
+        */
 		if (StoreDelegate.FL_OFF.get()) {
 			return;
 		}
@@ -1460,9 +1484,11 @@ public final class Store {
 		if (!useLocks) {
 			return;
 		}
+		/*
 		if (f_flashlightIsNotInitialized) {
 			return;
 		}
+        */
 		if (StoreDelegate.FL_OFF.get()) {
 			return;
 		}

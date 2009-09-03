@@ -15,7 +15,7 @@ import org.objectweb.asm.Type;
  */
 abstract class MethodCallWrapper extends MethodCall {
   private static final String WRAPPER_NAME_TEMPLATE_DEFAULT = "flashlight${0}${1}${2,choice,0#virtual|1#special|2#static|3#interface}Wrapper";
-  private static final String WRAPPER_NAME_TEMPLATE_RECEIVER = "flashlight${0}${1}${2}{3,choice,0#virtual|1#special|2#static|3#interface}Wrapper";
+  private static final String WRAPPER_NAME_TEMPLATE_RECEIVER = "flashlight${0}${1}${2}${3,choice,0#virtual|1#special|2#static|3#interface}Wrapper";
   private static final char INTERNAL_NAME_SEPARATOR = '/';
   private static final char UNDERSCORE = '_';
   private static final char END_OF_ARGS = ')';

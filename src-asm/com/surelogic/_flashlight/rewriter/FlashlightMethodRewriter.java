@@ -214,11 +214,11 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
    */
   private String lastInitOwner = null;
   
-  /**
-   * The internal type name of the first argument if this method is an
-   * access method and has at least one argument.  Otherwise this is {@code null}.
-   */
-  private final String firstArgInternal;  
+//  /**
+//   * The internal type name of the first argument if this method is an
+//   * access method and has at least one argument.  Otherwise this is {@code null}.
+//   */
+//  private final String firstArgInternal;  
   
   /**
    * The index of the next new local variable to allocate.
@@ -301,24 +301,24 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     wrapperMethods = wrappers;
     nextNewLocal = numLocals;
     
-    final boolean isAccessMethod =
-      ((access & Opcodes.ACC_SYNTHETIC) != 0) && isStatic && 
-        methodName.startsWith("access$");
-    if (isAccessMethod) {
-      final Type[] arguments = Type.getArgumentTypes(desc);
-      if (arguments.length > 0) {
-        final int sort = arguments[0].getSort();
-        if (sort == Type.ARRAY || sort == Type.OBJECT) {
-          firstArgInternal = arguments[0].getInternalName();
-        } else {
-          firstArgInternal = null;
-        }        
-      } else {
-        firstArgInternal = null;
-      }
-    } else {
-      firstArgInternal = null;
-    }
+//    final boolean isAccessMethod =
+//      ((access & Opcodes.ACC_SYNTHETIC) != 0) && isStatic && 
+//        methodName.startsWith("access$");
+//    if (isAccessMethod) {
+//      final Type[] arguments = Type.getArgumentTypes(desc);
+//      if (arguments.length > 0) {
+//        final int sort = arguments[0].getSort();
+//        if (sort == Type.ARRAY || sort == Type.OBJECT) {
+//          firstArgInternal = arguments[0].getInternalName();
+//        } else {
+//          firstArgInternal = null;
+//        }        
+//      } else {
+//        firstArgInternal = null;
+//      }
+//    } else {
+//      firstArgInternal = null;
+//    }
     
     if (isConstructor) {
       stateMachine = new ConstructorInitStateMachine(new ObjectInitCallback());
@@ -1770,7 +1770,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
         } else if (opcode == Opcodes.INVOKEINTERFACE) {
           wrapper = new InterfaceCallWrapper(messenger, classModel, owner, name, desc);
         } else { // virtual call
-          wrapper = new VirtualCallWrapper(messenger, classModel, firstArgInternal, owner, name, desc);
+          wrapper = new VirtualCallWrapper(messenger, classModel, null /*firstArgInternal*/, owner, name, desc);
         }
         
         wrapperMethods.add(wrapper);

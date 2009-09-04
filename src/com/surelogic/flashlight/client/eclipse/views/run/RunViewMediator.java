@@ -1,7 +1,8 @@
 package com.surelogic.flashlight.client.eclipse.views.run;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -34,7 +35,6 @@ import com.surelogic.common.jobs.AggregateSLJob;
 import com.surelogic.common.jobs.SLJob;
 import com.surelogic.flashlight.client.eclipse.dialogs.DeleteRunDialog;
 import com.surelogic.flashlight.client.eclipse.dialogs.LogDialog;
-import com.surelogic.flashlight.client.eclipse.jobs.JobConstants;
 import com.surelogic.flashlight.client.eclipse.jobs.PromptToPrepAllRawData;
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
@@ -186,18 +186,18 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 
 	private final Action f_prepAction = new Action() {
 		@Override
-		public void run() {			
+		public void run() {
 			final List<RunDescription> notPrepped = new ArrayList<RunDescription>();
-			RunDescription one = null;			
+			RunDescription one = null;
 			boolean hasPrep = false;
-			for(final RunDescription d : getSelectedRunDescriptions()) {
-				notPrepped.add(d);				
-				one = d;				
+			for (final RunDescription d : getSelectedRunDescriptions()) {
+				notPrepped.add(d);
+				one = d;
 				if (d.getPrepRunDescription() != null) {
 					hasPrep = true;
 				}
 			}
-			
+
 			if (hasPrep) {
 				final String title;
 				final String msg;
@@ -207,12 +207,10 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 							.getName(), SLUtility.toStringHMS(one
 							.getStartTimeOfRun()));
 				} else {
-					title = I18N
-							.msg("flashlight.dialog.reprep.multi.title");
+					title = I18N.msg("flashlight.dialog.reprep.multi.title");
 					msg = I18N.msg("flashlight.dialog.reprep.multi.msg");
 				}
-				if (!MessageDialog.openConfirm(f_table.getShell(), title,
-						msg)) {
+				if (!MessageDialog.openConfirm(f_table.getShell(), title, msg)) {
 					return; // bail out on cancel
 				}
 			}
@@ -280,25 +278,22 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 	private final Action f_deleteAction = new Action() {
 		@Override
 		public void run() {
-			final ArrayList<SLJob> jobs = new ArrayList<SLJob>();
 			final RunDescription[] selected = getSelectedRunDescriptions();
 			for (final RunDescription description : selected) {
 				if (description != null) {
+					final List<SLJob> jobs = new ArrayList<SLJob>(3);
 					final RawFileHandles handles = description
 							.getRawFileHandles();
 					final PrepRunDescription prep = description
 							.getPrepRunDescription();
-
 					final boolean hasRawFiles = handles != null;
 					final boolean hasPrep = prep != null;
-
 					final DeleteRunDialog d = new DeleteRunDialog(f_table
 							.getShell(), description, hasRawFiles, hasPrep);
 					d.open();
 					if (Window.CANCEL == d.getReturnCode()) {
 						return;
 					}
-
 					final boolean deleteRaw = hasRawFiles
 							&& d.deleteRawDataFiles();
 					if (hasPrep) {
@@ -310,25 +305,17 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 								.getFlashlightDataDirectory();
 						jobs.add(new DeleteRawFilesSLJob(dataDir, description));
 					}
+					// TODO we may just want to do this once at the end
+					jobs.add(new RefreshRunManagerSLJob());
+					final String jobName = I18N.msg(
+							"flashlight.jobs.delete.one",
+							description.getName(), SLUtility
+									.toStringHMS(description
+											.getStartTimeOfRun()));
+					final SLJob job = new AggregateSLJob(jobName, jobs);
+					EclipseJob.getInstance().scheduleDb(job, true, false,
+							description.getName());
 				}
-			}
-			if (!jobs.isEmpty()) {
-				final RunDescription one = selected.length == 1 ? selected[0]
-						: null;
-				final String jobName;
-				if (one != null) {
-					jobName = I18N.msg("flashlight.jobs.delete.one", one
-							.getName(), SLUtility.toStringHMS(one
-							.getStartTimeOfRun()));
-				} else {
-					jobName = I18N.msg("flashlight.jobs.delete.many");
-				}
-				// To make the deletes seem atomic
-				jobs.add(new RefreshRunManagerSLJob());
-
-				final SLJob job = new AggregateSLJob(jobName, jobs);
-				EclipseJob.getInstance().scheduleDb(job, true, false,
-						JobConstants.ACCESS_KEY);
 			}
 		}
 	};
@@ -389,8 +376,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 		 * if the selection changed inform the SourceView so it shows code from
 		 * that run.
 		 */
-		if (selected.length == 0
-				|| (selected[0].getPrepRunDescription() == null)) {
+		if (selected.length == 0 || selected[0].getPrepRunDescription() == null) {
 			AdHocDataSource.getInstance().setSelectedRun(null);
 			AdHocDataSource.getManager().setGlobalVariableValue(
 					AdHocManager.DATABASE, null);

@@ -1,6 +1,7 @@
 package com.surelogic.flashlight.client.eclipse.jobs;
 
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.logging.Level;
 
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -13,14 +14,11 @@ import org.eclipse.ui.PerspectiveAdapter;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.progress.UIJob;
 
-import com.surelogic.common.SLUtility;
 import com.surelogic.common.eclipse.EclipseUtility;
 import com.surelogic.common.eclipse.ViewUtility;
 import com.surelogic.common.eclipse.jobs.EclipseJob;
 import com.surelogic.common.eclipse.jobs.SLUIJob;
 import com.surelogic.common.i18n.I18N;
-import com.surelogic.common.jobs.AggregateSLJob;
-import com.surelogic.common.jobs.SLJob;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.client.eclipse.dialogs.ConfirmPrepAllRawDataDialog;
 import com.surelogic.flashlight.client.eclipse.perspectives.FlashlightPerspective;
@@ -37,15 +35,15 @@ import com.surelogic.flashlight.common.model.RunManager;
 public final class PromptToPrepAllRawData extends SLUIJob {
 
 	private static final IRunManagerObserver RMO = new IRunManagerObserver() {
-		public void notify(RunManager manager) {
+		public void notify(final RunManager manager) {
 			createAndSchedule();
 		}
 	};
 
 	private static final PerspectiveAdapter PA = new PerspectiveAdapter() {
 		@Override
-		public void perspectiveActivated(IWorkbenchPage page,
-				IPerspectiveDescriptor perspective) {
+		public void perspectiveActivated(final IWorkbenchPage page,
+				final IPerspectiveDescriptor perspective) {
 			if (FlashlightPerspective.class.getName().equals(
 					perspective.getId())) {
 				createAndSchedule();
@@ -83,7 +81,7 @@ public final class PromptToPrepAllRawData extends SLUIJob {
 	}
 
 	@Override
-	public IStatus runInUIThread(IProgressMonitor monitor) {
+	public IStatus runInUIThread(final IProgressMonitor monitor) {
 		/*
 		 * Ensure that we are in the Flashlight perspective.
 		 */
@@ -92,8 +90,9 @@ public final class PromptToPrepAllRawData extends SLUIJob {
 		SLLogger.getLogger().fine(
 				"[PromptToPrepAllRawData] inFlashlightPerspective = "
 						+ inFlashlightPerspective);
-		if (!inFlashlightPerspective)
+		if (!inFlashlightPerspective) {
 			return Status.OK_STATUS; // bail
+		}
 
 		/*
 		 * Check that no prep jobs are running...it would be rude to prompt the
@@ -103,8 +102,9 @@ public final class PromptToPrepAllRawData extends SLUIJob {
 				PrepSLJob.class);
 		SLLogger.getLogger().fine(
 				"[PromptToPrepAllRawData] prepJobRunning = " + prepJobRunning);
-		if (prepJobRunning)
+		if (prepJobRunning) {
 			return Status.OK_STATUS; // bail
+		}
 
 		/*
 		 * Check that we are the only job of this type running. This is trying
@@ -121,8 +121,9 @@ public final class PromptToPrepAllRawData extends SLUIJob {
 		SLLogger.getLogger().fine(
 				"[PromptToPrepAllRawData] onlyPromptToPrepAllRawDataJobRunning = "
 						+ onlyPromptToPrepAllRawDataJobRunning);
-		if (!onlyPromptToPrepAllRawDataJobRunning)
+		if (!onlyPromptToPrepAllRawDataJobRunning) {
 			return Status.OK_STATUS; // bail
+		}
 
 		final LinkedList<RunDescription> notPrepped = new LinkedList<RunDescription>(
 				RunManager.getInstance().getUnPreppedRunDescriptions());
@@ -138,40 +139,22 @@ public final class PromptToPrepAllRawData extends SLUIJob {
 		}
 		return Status.OK_STATUS;
 	}
-	
-	public static void runPrepJob(List<RunDescription> notPrepped) {
-		final ArrayList<SLJob> jobs = new ArrayList<SLJob>();
+
+	public static void runPrepJob(final List<RunDescription> notPrepped) {
 		for (final RunDescription description : notPrepped) {
 			if (description != null) {
 				if (description.getRawFileHandles().numDataFiles() > 1) {
 					// FIX
-					SLLogger.getLogger().warning("Unable to prep multiple data files: "+
-							                     description.getName());
+					SLLogger.getLogger().warning(
+							"Unable to prep multiple data files: "
+									+ description.getName());
 				} else {
-					jobs.add(new PrepSLJob(description, PreferenceConstants
-							.getPrepObjectWindowSize()));
+					EclipseJob.getInstance().scheduleDb(
+							new PrepSLJob(description, PreferenceConstants
+									.getPrepObjectWindowSize()), true, false,
+							description.getName());
 				}
 			}
-		}
-
-		final RunDescription one;
-		if (notPrepped.size() == 1) {
-			one = notPrepped.get(0);
-		} else {
-			one = null;
-		}
-
-		final String jobName;
-		if (one != null) {
-			jobName = I18N.msg("flashlight.jobs.prep.one", one
-					.getName(), SLUtility.toStringHMS(one
-					.getStartTimeOfRun()));
-		} else {
-			jobName = I18N.msg("flashlight.jobs.prep.many");
-		}
-		if (jobs.size() > 0) {
-			final SLJob job = new AggregateSLJob(jobName, jobs);
-			EclipseJob.getInstance().scheduleDb(job, true, false, JobConstants.ACCESS_KEY);
 		}
 	}
 }

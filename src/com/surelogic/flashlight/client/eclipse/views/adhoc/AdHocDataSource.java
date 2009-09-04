@@ -95,7 +95,7 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements
 		try {
 			SLLogger.getLogger().log(Level.SEVERE,
 					I18N.err(4, getQuerySaveFile().getAbsolutePath()), e);
-		} catch (Exception e2) {
+		} catch (final Exception e2) {
 			SLLogger.getLogger().log(Level.SEVERE,
 					I18N.err(4, "(unavailable)"), e);
 		}
@@ -145,17 +145,18 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements
 	}
 
 	@Override
-	public void notifyResultModelChange(AdHocManager manager) {
+	public void notifyResultModelChange(final AdHocManager manager) {
 		if (manager.getHasALotOfSqlDataResults()) {
 			if (PreferenceConstants.getPromptAboutLotsOfSavedQueries()) {
 				final UIJob job = new SLUIJob() {
 					@Override
-					public IStatus runInUIThread(IProgressMonitor monitor) {
-						boolean doNotPromptAgain = LotsOfSavedQueriesDialog
+					public IStatus runInUIThread(final IProgressMonitor monitor) {
+						final boolean doNotPromptAgain = LotsOfSavedQueriesDialog
 								.show();
-						if (doNotPromptAgain)
+						if (doNotPromptAgain) {
 							PreferenceConstants
 									.setPromptAboutLotsOfSavedQueries(false);
+						}
 						return Status.OK_STATUS;
 					}
 				};
@@ -166,5 +167,9 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements
 
 	public String getEditorViewId() {
 		return QueryEditorView.class.getName();
+	}
+
+	public String getCurrentAccessKey() {
+		return getSelectedRun().getName();
 	}
 }

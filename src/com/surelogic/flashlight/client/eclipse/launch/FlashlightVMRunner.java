@@ -872,15 +872,24 @@ final class FlashlightVMRunner implements IVMRunner {
 
 	private static boolean isFromProject(final String projectLoc,
 			final String entry) {
-		return entry.startsWith(projectLoc)
-				&& entry.charAt(projectLoc.length()) == File.separatorChar;
+		if (entry.startsWith(projectLoc)) {			
+			return entry.length() == projectLoc.length() ||
+				   entry.charAt(projectLoc.length()) == File.separatorChar;
+		}
+		return false;
 	}
 
 	private File buildInstrumentedName(final String entry,
 			final String projectLoc, final boolean isJar) {
 		final String projectDirName = projectLoc.substring(projectLoc
 				.lastIndexOf(File.separatorChar) + 1);
-		final String binaryName = entry.substring(projectLoc.length() + 1);
+		final String binaryName;		
+		if (projectLoc.length() == entry.length()) {
+			// e.g. no bin directory
+			binaryName = projectDirName;
+		} else {
+			binaryName = entry.substring(projectLoc.length() + 1);
+		}
 		final String jarName = !isJar ? binaryName + ".jar" : binaryName;
 		final File newEntry = new File(new File(projectOutputDir,
 				projectDirName), jarName);

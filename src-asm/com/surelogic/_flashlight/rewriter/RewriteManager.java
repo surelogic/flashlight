@@ -917,16 +917,17 @@ public abstract class RewriteManager {
      */
     private JarEntry copyJarEntry(final JarEntry original) {
       final JarEntry result = new JarEntry(original.getName());
-      result.setMethod(original.getMethod());
+      //result.setMethod(original.getMethod());
       result.setExtra(original.getExtra());
       result.setComment(original.getComment());
-      
+      /*
       if (original.getMethod() == ZipEntry.STORED) {
         // Make the zip output stream do all the work
         result.setSize(original.getSize());
         result.setCompressedSize(original.getCompressedSize());
         result.setCrc(original.getCrc());
       }
+      */
       return result;
     }
   

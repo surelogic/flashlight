@@ -559,6 +559,19 @@ public final class Store {
 				return;
 			}
 
+      /*
+       * if the field is not from an instrumented class then force
+       * creation of the phantom class object.  Declaring class is null if
+       * the field is not from an instrumente class.  We need to force the
+       * creation of the phantom object so that a listener somewhere else
+       * dumps the field definitions into the .fl file.
+       * 
+       * XXX This check is not redundant.  Edwin already removed this once
+       * before and broke things.
+       */
+      if (declaringClass != null) {
+        Phantom.ofClass(declaringClass);
+      }
 			if (read) {
 				e = new FieldReadInstance(receiver, fieldID, siteId, flState);
 			} else {
@@ -637,7 +650,19 @@ public final class Store {
 			if (dcPhantom != null) {
 				underConstruction = dcPhantom.isUnderConstruction();
 			}
-
+      /*
+       * if the field is not from an instrumented class then force
+       * creation of the phantom class object.  Declaring class is null if
+       * the field is not from an instrumente class.  We need to force the
+       * creation of the phantom object so that a listener somewhere else
+       * dumps the field definitions into the .fl file.
+       * 
+       * XXX This check is not redundant.  Edwin already removed this once
+       * before and broke things.
+       */
+      if (declaringClass != null) {
+        Phantom.ofClass(declaringClass);
+      }
 			final Event e;
 			if (read) {
 				e = new FieldReadStatic(fieldID, siteId, flState,

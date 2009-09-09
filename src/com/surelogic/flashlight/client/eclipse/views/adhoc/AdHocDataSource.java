@@ -24,6 +24,7 @@ import com.surelogic.common.jdbc.DBConnection;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.client.eclipse.Activator;
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
+import com.surelogic.flashlight.common.jobs.JobConstants;
 import com.surelogic.flashlight.common.model.RunDescription;
 
 public final class AdHocDataSource extends AdHocManagerAdapter implements
@@ -169,7 +170,8 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements
 		return QueryEditorView.class.getName();
 	}
 
-	public String getCurrentAccessKey() {
-		return getSelectedRun().getName();
+	public String[] getCurrentAccessKeys() {
+		return new String[] { getSelectedRun().toIdentityString(),
+				JobConstants.QUERY_KEY };
 	}
 }

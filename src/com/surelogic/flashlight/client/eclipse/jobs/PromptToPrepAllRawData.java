@@ -23,6 +23,7 @@ import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.client.eclipse.dialogs.ConfirmPrepAllRawDataDialog;
 import com.surelogic.flashlight.client.eclipse.perspectives.FlashlightPerspective;
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
+import com.surelogic.flashlight.common.jobs.JobConstants;
 import com.surelogic.flashlight.common.jobs.PrepSLJob;
 import com.surelogic.flashlight.common.model.IRunManagerObserver;
 import com.surelogic.flashlight.common.model.RunDescription;
@@ -152,7 +153,7 @@ public final class PromptToPrepAllRawData extends SLUIJob {
 					EclipseJob.getInstance().scheduleDb(
 							new PrepSLJob(description, PreferenceConstants
 									.getPrepObjectWindowSize()), true, false,
-							description.getName());
+							description.getName(), JobConstants.PREP_KEY);
 				}
 			}
 		}

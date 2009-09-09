@@ -20,6 +20,7 @@ import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.ui.IWorkbench;
+import org.eclipse.ui.PlatformUI;
 
 import com.surelogic.adhoc.views.ExportQueryDialog;
 import com.surelogic.common.CommonImages;
@@ -29,6 +30,7 @@ import com.surelogic.common.eclipse.SLImages;
 import com.surelogic.common.eclipse.SWTUtility;
 import com.surelogic.common.eclipse.dialogs.ChangeDataDirectoryDialog;
 import com.surelogic.common.eclipse.dialogs.ErrorDialogUtility;
+import com.surelogic.common.eclipse.jobs.EclipseJob;
 import com.surelogic.common.eclipse.logging.SLEclipseStatusUtility;
 import com.surelogic.common.eclipse.preferences.AbstractCommonPreferencePage;
 import com.surelogic.common.i18n.I18N;
@@ -40,6 +42,7 @@ import com.surelogic.common.serviceability.UsageMeter;
 import com.surelogic.flashlight.client.eclipse.Activator;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
 import com.surelogic.flashlight.common.jobs.DisconnectAllDatabases;
+import com.surelogic.flashlight.common.jobs.PrepSLJob;
 import com.surelogic.flashlight.common.model.RunManager;
 
 public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
@@ -106,7 +109,24 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 
 				final File destination = dialog.getNewDataDirectory();
 				final boolean moveOldToNew = dialog.moveOldToNew();
-
+				if (EclipseJob.getInstance().isActiveOfType(PrepSLJob.class)) {
+					// We can't do a move while we are prepping a job
+					PlatformUI.getWorkbench().getDisplay().asyncExec(
+							new Runnable() {
+								public void run() {
+									ErrorDialogUtility
+											.open(
+													null,
+													"Cannot move Flashlight data directory",
+													SLEclipseStatusUtility
+															.createWarningStatus(
+																	173,
+																	I18N
+																			.err(173)));
+								}
+							});
+					// FIXME we can't continue
+				}
 				SLJob moveJob = FileUtility.moveDataDirectory(existing,
 						destination, moveOldToNew,
 						new DisconnectAllDatabases(), null);
@@ -117,7 +137,8 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 					RunManager.getInstance().setDataDirectory(destination);
 					AdHocDataSource.getManager().deleteAllResults();
 				} else {
-					IStatus status = SLEclipseStatusUtility.convert(result, Activator.getDefault());
+					IStatus status = SLEclipseStatusUtility.convert(result,
+							Activator.getDefault());
 					ErrorDialogUtility
 							.open(
 									change.getShell(),

@@ -4,6 +4,7 @@ import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.MenuManager;
+import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.TableViewerColumn;
 import org.eclipse.jface.viewers.Viewer;
@@ -14,6 +15,7 @@ import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.part.ViewPart;
 
 import com.surelogic.common.eclipse.ColumnViewerSorter;
+import com.surelogic.common.eclipse.DemoProjectAction;
 import com.surelogic.common.eclipse.SLImages;
 import com.surelogic.common.eclipse.SWTUtility;
 import com.surelogic.common.i18n.I18N;
@@ -113,8 +115,11 @@ public final class RunView extends ViewPart {
 				.msg("flashlight.run.view.tooltip.delete"));
 		deleteRunAction.setEnabled(false);
 		actionBars.getToolBarManager().add(deleteRunAction);
-		actionBars.getMenuManager().add(deleteRunAction);
+		actionBars.getMenuManager().add(deleteRunAction);		
 
+		actionBars.getMenuManager().add(new Separator());
+		actionBars.getMenuManager().add(new DemoProjectAction("Create PlanetBaron", 
+				    getClass().getResource("/lib/PlanetBaron.zip")));
 		/**
 		 * Add a context menu to the table viewer.
 		 */

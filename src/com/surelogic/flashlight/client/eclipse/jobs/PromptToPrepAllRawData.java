@@ -1,5 +1,6 @@
 package com.surelogic.flashlight.client.eclipse.jobs;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
@@ -7,6 +8,7 @@ import java.util.logging.Level;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.ui.IPerspectiveDescriptor;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
@@ -22,8 +24,6 @@ import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.client.eclipse.dialogs.ConfirmPrepAllRawDataDialog;
 import com.surelogic.flashlight.client.eclipse.perspectives.FlashlightPerspective;
-import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
-import com.surelogic.flashlight.common.jobs.JobConstants;
 import com.surelogic.flashlight.common.jobs.PrepSLJob;
 import com.surelogic.flashlight.common.model.IRunManagerObserver;
 import com.surelogic.flashlight.common.model.RunDescription;
@@ -142,6 +142,7 @@ public final class PromptToPrepAllRawData extends SLUIJob {
 	}
 
 	public static void runPrepJob(final List<RunDescription> notPrepped) {
+		final List<RunDescription> toPrep = new ArrayList<RunDescription>();
 		for (final RunDescription description : notPrepped) {
 			if (description != null) {
 				if (description.getRawFileHandles().numDataFiles() > 1) {
@@ -150,12 +151,13 @@ public final class PromptToPrepAllRawData extends SLUIJob {
 							"Unable to prep multiple data files: "
 									+ description.getName());
 				} else {
-					EclipseJob.getInstance().scheduleDb(
-							new PrepSLJob(description, PreferenceConstants
-									.getPrepObjectWindowSize()), true, false,
-							description.getName(), JobConstants.PREP_KEY);
+					toPrep.add(description);
 				}
 			}
 		}
+		final Job job = new PrepMultipleRunsJob(toPrep);
+		job.setSystem(false);
+		job.setUser(true);
+		job.schedule();
 	}
 }

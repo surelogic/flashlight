@@ -72,13 +72,15 @@ public final class RunManager {
 	 *            the new location of the Flashlight data directory.
 	 */
 	public void setDataDirectory(final File dataDir) {
-		if (dataDir == null)
+		if (dataDir == null) {
 			throw new IllegalArgumentException(I18N.err(44, "dataDir"));
+		}
 		if (dataDir.exists() && dataDir.isDirectory()) {
 			f_dataDir.set(dataDir);
 			refresh();
-		} else
+		} else {
 			throw new IllegalArgumentException(I18N.err(167, dataDir));
+		}
 	}
 
 	/**
@@ -91,8 +93,9 @@ public final class RunManager {
 	 */
 	public File getDataDirectory() {
 		final File result = f_dataDir.get();
-		if (result == null)
+		if (result == null) {
 			throw new IllegalStateException(I18N.err(168));
+		}
 		return result;
 	}
 

@@ -174,7 +174,7 @@ public class RunStatusView extends ViewPart {
 				addItem("Static fields with empty locksets", warning,
 						EMPTY_STATIC_LOCKSETS_ID);
 			}
-			if (fieldData) {
+			if (!fieldData) {
 				addItem("No data available about field accesses", info, null);
 			}
 			if (table.getItemCount() <= 1) {

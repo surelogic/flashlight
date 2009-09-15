@@ -31,7 +31,6 @@ import com.surelogic.flashlight.common.entities.RunDAO;
 import com.surelogic.flashlight.common.files.RawDataFilePrefix;
 import com.surelogic.flashlight.common.files.RawFileUtility;
 import com.surelogic.flashlight.common.model.RunDescription;
-import com.surelogic.flashlight.common.model.RunManager;
 import com.surelogic.flashlight.common.prep.AfterIntrinsicLockAcquisition;
 import com.surelogic.flashlight.common.prep.AfterIntrinsicLockRelease;
 import com.surelogic.flashlight.common.prep.AfterIntrinsicLockWait;
@@ -373,7 +372,6 @@ public final class PrepSLJob extends AbstractSLJob {
 					f_database.destroy();
 					return SLStatus.CANCEL_STATUS;
 				}
-				RunManager.getInstance().refresh();
 				return SLStatus.OK_STATUS;
 			} finally {
 				stream.close();

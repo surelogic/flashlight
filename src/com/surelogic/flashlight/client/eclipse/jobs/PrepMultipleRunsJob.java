@@ -16,6 +16,7 @@ import com.surelogic.common.i18n.I18N;
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
 import com.surelogic.flashlight.common.jobs.JobConstants;
 import com.surelogic.flashlight.common.jobs.PrepSLJob;
+import com.surelogic.flashlight.common.jobs.RefreshRunManagerSLJob;
 import com.surelogic.flashlight.common.model.RunDescription;
 
 public class PrepMultipleRunsJob extends Job {
@@ -39,6 +40,15 @@ public class PrepMultipleRunsJob extends Job {
 						.run(new SLProgressMonitorWrapper(monitor, getName()));
 			} finally {
 				man.endRule(rule);
+			}
+			final ISchedulingRule rule2 = KeywordAccessRule
+					.getInstance(JobConstants.PREP_KEY);
+			try {
+				man.beginRule(rule2, monitor);
+				new RefreshRunManagerSLJob().run(new SLProgressMonitorWrapper(
+						monitor, getName()));
+			} finally {
+				man.endRule(rule2);
 			}
 		}
 		return Status.OK_STATUS;

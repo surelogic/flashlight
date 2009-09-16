@@ -150,36 +150,37 @@ public final class Instrument extends Task {
   public static final class Directory implements InstrumentationSubTask {
     private File srcdir = null;
     private File destdir = null;
-    private File destfile = null;
     private String runtime = RewriteManager.DEFAULT_FLASHLIGHT_RUNTIME_JAR;
-
+    private boolean jar = false;
+    
     public Directory() { super(); }
     
     Directory(final File src, final File dest) {
       srcdir = src;
       destdir = dest;
+      jar = false;
     }
     
     Directory(final File src, File dest, final String runtime) {
       srcdir = src;
-      destfile = dest;
+      destdir = dest;
       this.runtime = runtime;
+      jar = true;
     }
     
     public void setSrcdir(final File src) { this.srcdir = src; }
     public void setDestdir(final File dest) { this.destdir = dest; }
-    public void setDestfile(final File dest) { this.destfile = dest; }
     public void setRuntime(final String run) { this.runtime = run; }
-
+    public void setJar(final boolean flag) { this.jar = flag; }
+    
     File getSrcdir() { return srcdir; }
     File getDestdir() { return destdir; }
-    File getDestfile() { return destfile; }
     
     public void add(final RewriteManager manager) {
-      if (destdir != null) {
-        manager.addDirToDir(srcdir, destdir);
+      if (jar) {
+        manager.addDirToJar(srcdir, new File(destdir, srcdir.getName() + ".jar"), runtime);
       } else {
-        manager.addDirToJar(srcdir, destfile, runtime);
+        manager.addDirToDir(srcdir, destdir);
       }
     }
   }
@@ -193,21 +194,20 @@ public final class Instrument extends Task {
    */
   public static final class Jar implements InstrumentationSubTask {
     private File srcfile = null;
-    private File destfile = null;
     private File destdir = null;
     private String runtime = RewriteManager.DEFAULT_FLASHLIGHT_RUNTIME_JAR;
     private boolean update = true;
+    private boolean unjar = false;
     
     public Jar() { super(); }
-        
+    
     public void setSrcfile(final File src) { this.srcfile = src; }
-    public void setDestfile(final File dest) { this.destfile = dest; }
     public void setDestdir(final File dest) { this.destdir = dest; }
     public void setRuntime(final String run) { this.runtime = run; }
     public void setUpdatemanifest(final boolean flag) { this.update = flag; }
+    public void setUnjar(final boolean flag) { this.unjar = flag; }
     
     File getSrcfile() { return srcfile; }
-    File getDestfile() { return destfile; }
     File getDestdir() { return destdir; }
     
     public void add(final RewriteManager manager) {
@@ -218,12 +218,40 @@ public final class Instrument extends Task {
         runtimeJar = null;
       }
 
-      if (destdir != null) {
+      if (unjar) {
         manager.addJarToDir(srcfile, destdir, runtimeJar);
       } else {
-        manager.addJarToJar(srcfile, destfile, runtimeJar);
+        manager.addJarToJar(srcfile, new File(destdir, srcfile.getName()), runtimeJar);
       }
     }
+  }
+  
+  public static final class Jars {
+    private File srcdir = null;
+    private File destdir = null;
+    private String runtime = RewriteManager.DEFAULT_FLASHLIGHT_RUNTIME_JAR;
+    private boolean update = true;
+    private boolean unjar = false;
+    private boolean recurse = true;
+    private String exts = ".jar, .zip";
+    
+    public Jars() { super(); }
+    
+    public void setSrcdir(final File src) { this.srcdir = src; }
+    public void setDestdir(final File dest) { this.destdir = dest; }
+    public void setRuntime(final String run) { this.runtime = run; }
+    public void setUpdatemanifest(final boolean flag) { this.update = flag; }
+    public void setUnjar(final boolean flag) { this.unjar = flag; }
+    public void setRecurse(final boolean flag) { this.recurse = flag; }
+    public void setExtensions(final String exts) { this.exts = exts; }
+    
+    File getSrcdir() { return srcdir; }
+    File getDestdir() { return destdir; }
+    String getRuntime() { return runtime; }
+    boolean getUpdatemanifest() { return update; }
+    boolean getUnjar() { return unjar; }
+    boolean getRecurse() { return recurse; }
+    String getExtensions() { return exts; }
   }
   
   /**
@@ -533,17 +561,26 @@ public final class Instrument extends Task {
    *              Thrown if the source or destination directories are not set.
    */
   public void addConfiguredDir(final Directory dir) {
-    if (dir.getSrcdir() == null) {
+    final File srcdir = dir.getSrcdir();
+    if (srcdir == null) {
       throw new BuildException("Source directory is not set");
+    }
+    if (!srcdir.exists()) {
+      throw new BuildException("Source directory \"" + srcdir + "\" does not exist");
+    }
+    if (!srcdir.isDirectory()) {
+      throw new BuildException("Source directory \"" + srcdir + "\" is not a directory");
     }
     
     final File destdir = dir.getDestdir();
-    final File destfile = dir.getDestfile();
-    if (destfile != null && destdir != null) {
-      throw new BuildException("Cannot set both the destination jar file and destination directory");
+    if (destdir == null) {
+      throw new BuildException("Destination directory is not set");
     }
-    if (destfile == null && destdir == null) {
-      throw new BuildException("Must set either the destination jar file or the destination directory");
+    if (!destdir.exists()) {
+      throw new BuildException("Destination directory \"" + destdir + "\" does not exist");
+    }
+    if (!destdir.isDirectory()) {
+      throw new BuildException("Destination directory \"" + destdir + "\" does not refer to a directory");
     }
     subTasks.add(dir);
   }
@@ -620,19 +657,100 @@ public final class Instrument extends Task {
    *              set.
    */
   public void addConfiguredJar(final Jar jar) {
-    if (jar.getSrcfile() == null) {
+    final File srcfile = jar.getSrcfile();
+    if (srcfile == null) {
       throw new BuildException("Source jar file is not set");
     }
-    
-    final File destfile = jar.getDestfile();
-    final File destdir = jar.getDestdir();
-    if (destfile != null && destdir != null) {
-      throw new BuildException("Cannot set both the destination jar file and destination directory");
+    if (!srcfile.exists() ) {
+      throw new BuildException("Source jar file \"" + srcfile + "\" does not exist");
     }
-    if (destfile == null && destdir == null) {
-      throw new BuildException("Must set either the destination jar file or the destination directory");
+    if (!srcfile.isFile() ) {
+      throw new BuildException("Source jar file \"" + srcfile + "\" does not refer to a file");
+    }
+    
+    final File destdir = jar.getDestdir();
+    if (destdir == null) {
+      throw new BuildException("Destination directory is not set");
+    }
+    if (!destdir.exists()) {
+      throw new BuildException("Destination directory \"" + destdir + "\" does not exist");
+    }
+    if (!destdir.isDirectory()) {
+      throw new BuildException("Destination directory \"" + destdir + "\" does not refer to a directory");
     }
     subTasks.add(jar);
+  }
+  
+  public void addConfiguredJars(final Jars jars) {
+    final File srcdir = jars.getSrcdir();
+    final File destdir = jars.getDestdir();
+    final String runtime = jars.getRuntime();
+    final boolean update = jars.getUpdatemanifest();
+    final boolean unjar = jars.getUnjar();
+    final boolean recurse = jars.getRecurse();
+    final String exts = jars.getExtensions();
+    
+    if (srcdir == null) {
+      throw new BuildException("Source directory is not set");
+    }
+    if (!srcdir.exists() ) {
+      throw new BuildException("Source directory \"" + srcdir + "\" does not exist");
+    }
+    if (!srcdir.isDirectory()) {
+      throw new BuildException("Source directory \"" + srcdir + "\" does not refer to a directory");
+    }
+    
+    if (destdir == null) {
+      throw new BuildException("Destination directory is not set");
+    }
+    if (!destdir.exists() ) {
+      throw new BuildException("Destination directory \"" + destdir + "\" does not exist");
+    }
+    if (!destdir.isDirectory()) {
+      throw new BuildException("Destination directory \"" + destdir + "\" does not refer to a directory");
+    }
+    
+    final List<String> extensions = new ArrayList<String>();
+    final StringTokenizer st = new StringTokenizer(exts, ", ");
+    while (st.hasMoreTokens()) extensions.add(st.nextToken());
+    System.out.println("exts = " + extensions);
+    
+    processJars(srcdir, destdir, recurse, runtime, update, unjar, extensions);
+  }
+  
+  private void processJars(final File srcdir, final File destdir,
+      final boolean recurse, final String runtime, final boolean update,
+      final boolean unjar, final List<String> extensions) {
+    for (final File child : srcdir.listFiles()) {
+      System.out.println("Found " + child);
+      if (recurse && child.isDirectory()) {
+        System.out.println("--recurse");
+        final File newDest = unjar ? destdir : new File(destdir, child.getName());
+        processJars(child, newDest, recurse, runtime, update, unjar, extensions);
+      } else if (child.isFile()) {
+        if (endsWith(child, extensions)) {
+          final Jar jar = new Jar();
+          jar.setSrcfile(child);
+          jar.setDestdir(destdir);
+          jar.setRuntime(runtime);
+          jar.setUpdatemanifest(update);
+          jar.setUnjar(unjar);
+          subTasks.add(jar);
+        }
+      }
+    }    
+  }
+
+
+
+  private boolean endsWith(final File file, final List<String> extensions) {
+    final String name = file.getName().toLowerCase();
+    for (final String ext : extensions) {
+      if (name.endsWith(ext.toLowerCase())) {
+        return true;
+      }
+    }
+    return false;
   }
   
   /**

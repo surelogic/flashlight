@@ -1737,7 +1737,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     	 */
     	final boolean ownerIsSuper = owner.equals(superClassInternal);
     	if (ownerIsSuper) {
-    	  messenger.info("OWNER IS SUPER: method " + methodName
+    	  messenger.verbose("OWNER IS SUPER: method " + methodName
             + ", invoking " + owner + " " + name + " " + desc);
     	}
     	
@@ -1808,7 +1808,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
   }
   
   private void throwMissingClass(final String missingClassName) {
-    messenger.warning("In Method " + methodName + 
+    messenger.verbose("In Method " + methodName + 
         ": Couldn't find class " + missingClassName +
         ".  Inserting code to throw a FlashlightRuntimeError.");
     throwFlashlightRuntimeError(
@@ -1817,7 +1817,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
   
   private void throwMissingField(
       final String missingFieldName, final String className) {
-    messenger.warning("In Method " + methodName + 
+    messenger.verbose("In Method " + methodName + 
         ": Couldn't find field " + missingFieldName + " in class " + className +
         ".  Inserting code to throw a FlashlightRuntimeError.");
     throwFlashlightRuntimeError(

@@ -1,5 +1,6 @@
 package com.surelogic._flashlight.rewriter;
 
+import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.Method;
@@ -71,12 +72,23 @@ final class IndirectAccessMethod {
   public void callStore(final MethodVisitor mv, final Configuration config, 
       final long siteId, final int[] argLocals) {
     for (final int arg : interestingArgs) {
+      // Push the object and test for null
+      final Label isNull = new Label();
+      // push object
+      mv.visitVarInsn(Opcodes.ALOAD, argLocals[arg]);
+      // test for null
+      mv.visitJumpInsn(Opcodes.IFNULL, isNull);
+      
+      // Object reference is not null, record access to it
+      
       // Push the object
       mv.visitVarInsn(Opcodes.ALOAD, argLocals[arg]);
       // Push the site identifier
       ByteCodeUtils.pushLongConstant(mv, siteId);
       // Call the store
       ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.INDIRECT_ACCESS);
+      
+      mv.visitLabel(isNull);
     }
   }
 }

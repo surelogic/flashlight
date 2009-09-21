@@ -722,9 +722,7 @@ public final class Instrument extends Task {
       final boolean recurse, final String runtime, final boolean update,
       final boolean unjar, final List<String> extensions) {
     for (final File child : srcdir.listFiles()) {
-      System.out.println("Found " + child);
       if (recurse && child.isDirectory()) {
-        System.out.println("--recurse");
         final File newDest = unjar ? destdir : new File(destdir, child.getName());
         processJars(child, newDest, recurse, runtime, update, unjar, extensions);
       } else if (child.isFile()) {

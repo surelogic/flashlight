@@ -28,6 +28,10 @@ public class DebugStore {
   
   
   
+  public static void shutdown() {
+    // do nothing
+  }
+
   /**
    * Get the phantom object reference for the given {@code Class} object.
    * Cannot use {@link Phantom#ofClass(Class)} directly because we need to make

@@ -6,6 +6,10 @@ import com.surelogic._flashlight.Phantom;
 import com.surelogic._flashlight.StoreDelegate;
 
 public class EmptyStore {
+  public static void shutdown() {
+    // do nothing
+  }
+  
   /**
    * Get the phantom object reference for the given {@code Class} object.
    * Cannot use {@link Phantom#ofClass(Class)} directly because we need to make

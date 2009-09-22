@@ -455,7 +455,27 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     handlePreviousAstore();
     insertDelayedCode();
     
-    /* First check if we are calling an method makes indirect use of 
+    /* SPECIAL CASE: If the method being called in Runtime.halt(int), we need
+     * to insert a call to Store.shutdown().  No point in instrumenting the 
+     * halt call because it will occur after the Store and everything else
+     * has been stopped.
+     */
+    try {
+      if (name.equals("halt") && desc.equals("(I)V") &&
+          classModel.getClass("java/lang/Runtime").isAssignableFrom(owner)) {
+        // Insert call to Store.shutdown()
+        ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.SHUTDOWN);
+        
+        // Insert original call to halt(int)
+        mv.visitMethodInsn(opcode, owner, name, desc);
+        return;
+      }
+    } catch (final ClassNotFoundException e) {
+      messenger.warning("Provided classpath is incomplete: couldn't find class " + e.getMissingClass());
+    }
+    
+    
+    /* Check if we are calling an method makes indirect use of 
      * aggregated state.
      */
     IndirectAccessMethod indirectAccess = null;

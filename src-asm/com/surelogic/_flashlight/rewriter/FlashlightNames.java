@@ -61,6 +61,8 @@ public final class FlashlightNames {
   public static final Method METHOD_CALL =
     Method.getMethod("void methodCall(boolean, Object, long)");
   
+  public static final Method SHUTDOWN = Method.getMethod("void shutdown()");
+  
   public static final Method GET_CLASS_PHANTOM =
     Method.getMethod("com.surelogic._flashlight.ClassPhantomReference getClassPhantom(Class)");
   

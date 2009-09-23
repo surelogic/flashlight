@@ -367,7 +367,7 @@ public abstract class TraceNode extends AbstractCallLocation implements ITraceNo
 			return id;
 		}
 
-		private TraceNode getCurrentNode(Store.State state) {
+		public TraceNode getCurrentNode(Store.State state) {
 			final ITraceNode current = this.current;
 			if (current == null) {
 				return null;

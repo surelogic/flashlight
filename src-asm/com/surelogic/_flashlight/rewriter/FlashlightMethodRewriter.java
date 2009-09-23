@@ -13,6 +13,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.Method;
 
+import com.surelogic._flashlight.common.IdConstants;
 import com.surelogic._flashlight.rewriter.ClassAndFieldModel.ClassNotFoundException;
 import com.surelogic._flashlight.rewriter.ClassAndFieldModel.Field;
 import com.surelogic._flashlight.rewriter.ClassAndFieldModel.FieldNotFoundException;
@@ -97,6 +98,9 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
   
   /** Is the method static? */
   private final boolean isStatic;
+  
+  /** Is the method synthetic? */
+  private final boolean isSynthetic;
   
   /**
    * Should the super constructor call be updated from {@code java.lang.Object}
@@ -292,6 +296,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     mustImplementIIdObject = mustImpl;
     wasSynchronized = (access & Opcodes.ACC_SYNCHRONIZED) != 0;
     isStatic = (access & Opcodes.ACC_STATIC) != 0;
+    isSynthetic = (access & Opcodes.ACC_SYNTHETIC) != 0;
     methodName = mname;
     isConstructor = mname.equals(INITIALIZER);
     isClassInitializer = mname.equals(CLASS_INITIALIZER);
@@ -300,25 +305,6 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     superClassInternal = superInternal;
     wrapperMethods = wrappers;
     nextNewLocal = numLocals;
-    
-//    final boolean isAccessMethod =
-//      ((access & Opcodes.ACC_SYNTHETIC) != 0) && isStatic && 
-//        methodName.startsWith("access$");
-//    if (isAccessMethod) {
-//      final Type[] arguments = Type.getArgumentTypes(desc);
-//      if (arguments.length > 0) {
-//        final int sort = arguments[0].getSort();
-//        if (sort == Type.ARRAY || sort == Type.OBJECT) {
-//          firstArgInternal = arguments[0].getInternalName();
-//        } else {
-//          firstArgInternal = null;
-//        }        
-//      } else {
-//        firstArgInternal = null;
-//      }
-//    } else {
-//      firstArgInternal = null;
-//    }
     
     if (isConstructor) {
       stateMachine = new ConstructorInitStateMachine(new ObjectInitCallback());
@@ -474,71 +460,77 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
       messenger.warning("Provided classpath is incomplete: couldn't find class " + e.getMissingClass());
     }
     
-    
-    /* Check if we are calling an method makes indirect use of 
-     * aggregated state.
-     */
-    IndirectAccessMethod indirectAccess = null;
-    if (config.instrumentIndirectAccess) { // we might have indirect access
-      try {
-        indirectAccess = accessMethods.get(owner, name, desc);
-      } catch (final ClassNotFoundException e) {
-        throwMissingClass(e.getMissingClass());
+    /* We don't instrument calls to synthetic methods */
+    if (classModel.isSyntheticMethod(owner, name, desc, opcode == Opcodes.INVOKESTATIC)) {
+//      System.out.println("Calling synthetic method " + owner + " " + name + " " + desc);
+      // Insert original call
+      mv.visitMethodInsn(opcode, owner, name, desc);
+    } else {
+      /* Check if we are calling an method makes indirect use of 
+       * aggregated state.
+       */
+      IndirectAccessMethod indirectAccess = null;
+      if (config.instrumentIndirectAccess) { // we might have indirect access
+        try {
+          indirectAccess = accessMethods.get(owner, name, desc);
+        } catch (final ClassNotFoundException e) {
+          throwMissingClass(e.getMissingClass());
+        }
       }
-    }
-    
-    if (opcode == Opcodes.INVOKEVIRTUAL) {
-      if (config.rewriteInvokevirtual) {
-        rewriteMethodCall(Opcodes.INVOKEVIRTUAL, indirectAccess, owner, name, desc);
-      } else {
-        mv.visitMethodInsn(opcode, owner, name, desc);
-      }
-    } else if (opcode == Opcodes.INVOKESPECIAL) {
-      boolean outputOriginalCall = true;
-      if (config.rewriteInvokespecial) {
-        if (!name.equals(FlashlightNames.CONSTRUCTOR)) {
-          outputOriginalCall = false;
-          rewriteMethodCall(Opcodes.INVOKESPECIAL, indirectAccess, owner, name, desc);
+      
+      if (opcode == Opcodes.INVOKEVIRTUAL) {
+        if (config.rewriteInvokevirtual) {
+          rewriteMethodCall(Opcodes.INVOKEVIRTUAL, indirectAccess, owner, name, desc);
         } else {
-          lastInitOwner = owner;
-          if (config.rewriteInit) {
+          mv.visitMethodInsn(opcode, owner, name, desc);
+        }
+      } else if (opcode == Opcodes.INVOKESPECIAL) {
+        boolean outputOriginalCall = true;
+        if (config.rewriteInvokespecial) {
+          if (!name.equals(FlashlightNames.CONSTRUCTOR)) {
             outputOriginalCall = false;
-            rewriteConstructorCall(indirectAccess, owner, name, desc);
+            rewriteMethodCall(Opcodes.INVOKESPECIAL, indirectAccess, owner, name, desc);
           } else {
+            lastInitOwner = owner;
+            if (config.rewriteInit) {
+              outputOriginalCall = false;
+              rewriteConstructorCall(indirectAccess, owner, name, desc);
+            } else {
+              if (isConstructor && stateMachine != null) {
+                outputOriginalCall = false;
+                updateSuperCall(owner, name, desc);
+              }
+            }
+          }
+        } else {
+          if (name.equals(FlashlightNames.CONSTRUCTOR)) {
+            lastInitOwner = owner;
             if (isConstructor && stateMachine != null) {
               outputOriginalCall = false;
               updateSuperCall(owner, name, desc);
             }
           }
+        }      
+        if (outputOriginalCall) {
+          mv.visitMethodInsn(Opcodes.INVOKESPECIAL, owner, name, desc);
+        }      
+      } else if (opcode == Opcodes.INVOKEINTERFACE) {
+        if (config.rewriteInvokeinterface) {
+          rewriteMethodCall(Opcodes.INVOKEINTERFACE, indirectAccess, owner, name, desc);
+        } else {
+          mv.visitMethodInsn(opcode, owner, name, desc);
         }
-      } else {
-        if (name.equals(FlashlightNames.CONSTRUCTOR)) {
-          lastInitOwner = owner;
-          if (isConstructor && stateMachine != null) {
-            outputOriginalCall = false;
-            updateSuperCall(owner, name, desc);
-          }
+      } else if (opcode == Opcodes.INVOKESTATIC) {
+        if (config.rewriteInvokestatic) {
+          rewriteMethodCall(Opcodes.INVOKESTATIC, indirectAccess, owner, name, desc);
+        } else {
+          mv.visitMethodInsn(opcode, owner, name, desc);
         }
-      }      
-      if (outputOriginalCall) {
-        mv.visitMethodInsn(Opcodes.INVOKESPECIAL, owner, name, desc);
-      }      
-    } else if (opcode == Opcodes.INVOKEINTERFACE) {
-      if (config.rewriteInvokeinterface) {
-        rewriteMethodCall(Opcodes.INVOKEINTERFACE, indirectAccess, owner, name, desc);
-      } else {
+      } else { // Unknown, but safe
         mv.visitMethodInsn(opcode, owner, name, desc);
       }
-    } else if (opcode == Opcodes.INVOKESTATIC) {
-      if (config.rewriteInvokestatic) {
-        rewriteMethodCall(Opcodes.INVOKESTATIC, indirectAccess, owner, name, desc);
-      } else {
-        mv.visitMethodInsn(opcode, owner, name, desc);
-      }
-    } else { // Unknown, but safe
-      mv.visitMethodInsn(opcode, owner, name, desc);
     }
-
+    
     if (stateMachine != null) {
       stateMachine.visitMethodInsn(opcode, owner, name, desc);
     }
@@ -1298,10 +1290,17 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     ByteCodeUtils.pushIntegerConstant(mv, fieldID);
     // Stack is "..., isRead, [receiver], field_id
     
-    /* Push the site identifier */
-    pushSiteIdentifier();
+    /* Push the site identifier.  If the method is not synthetic we push the
+     * real site identifier.  If the method is synthetic we push a special
+     * site id that indicates that accessing method is synthetic.
+     */
+    if (isSynthetic) {
+      pushSiteIdentifier(FlashlightNames.SYNTHETIC_METHOD_SITE_ID);
+    } else {
+      pushSiteIdentifier();
+    }
     // Stack is "..., isRead, [receiver], field_id, siteId"
-
+    
     /* If the class that declares the field is instrumented, then we push
      * the class phantom reference and then null.  Otherwise we push
      * null and then the Class object for the class.

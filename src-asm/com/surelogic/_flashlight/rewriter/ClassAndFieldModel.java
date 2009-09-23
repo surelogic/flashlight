@@ -5,11 +5,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.commons.Method;
 
 
 /**
@@ -164,6 +167,11 @@ final class ClassAndFieldModel {
      */
     private final Map<String, Field> fields = new HashMap<String, Field>();
     
+    /**
+     * The member methods that are synthetic.
+     */
+    private final Set<Method> syntheticMethods = new HashSet<Method>();
+    
     
     
     public Clazz(final String name, final boolean isInterface, final boolean isInstrumented,
@@ -205,6 +213,10 @@ final class ClassAndFieldModel {
       final Field f = new Field(this, fieldName, access, fid);
       fields.put(fieldName, f);
       return f;
+    }
+    
+    public void addMethod(final String name, final String desc) {
+      syntheticMethods.add(new Method(name, desc));
     }
     
     /**
@@ -393,6 +405,26 @@ final class ClassAndFieldModel {
     }
   }
   
+  public boolean isSyntheticMethod(
+      final String owner, final String name, final String desc,
+      final boolean useStaticLookup) {
+    final Method m = new Method(name, desc);
+    Clazz current = classes.get(owner);
+    if (useStaticLookup) {
+      return current.syntheticMethods.contains(m);
+    } else {
+      while (current != null) {
+        if (current.syntheticMethods.contains(m)) {
+          return true;
+        } else {
+          final String parent = current.getSuperClass();
+          current = parent == null ? null : classes.get(parent);
+        }
+      }
+      return false;
+    }
+  }
+
   /**
    * Write the field information for all the fields that are referenced 
    * by instrumented classes.

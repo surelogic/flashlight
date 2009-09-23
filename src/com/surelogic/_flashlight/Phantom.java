@@ -69,13 +69,15 @@ public final class Phantom {
 	// made public so that the EmptyStore and DebugStore could call it
 	public static ObjectPhantomReference ofObject(final Object o, long id) {
 		assert o != null;
-		if (o instanceof Class)
+		if (o instanceof Thread) {
+			return ofThread((Thread) o, id);
+		}
+		else if (o instanceof Class) {
 			throw new IllegalArgumentException(
 					"the object cannot be an instance of Class");
-		if (o instanceof Thread)
-			return ofThread((Thread) o, id);
-		else
+		} else {		
 			return ObjectPhantomReference.getInstance(o, id, f_collected);
+		}
 	}
 	
 	/**

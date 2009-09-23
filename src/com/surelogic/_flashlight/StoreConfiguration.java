@@ -29,6 +29,7 @@ public class StoreConfiguration {
   private static volatile boolean isRefineryOff;
   private static volatile OutputType outputType;
   private static volatile CollectionType collectionType;
+  private static volatile boolean handleFieldAccesses;
   private static volatile boolean useSeparateStreams;
   private static volatile boolean debug;
   
@@ -295,6 +296,11 @@ public class StoreConfiguration {
 
   public static void setCollectionType(CollectionType type) {
 	  collectionType = type;
+	  handleFieldAccesses = collectionType.processFieldAccesses();
+  }
+  
+  public static boolean processFieldAccesses() {
+	  return handleFieldAccesses;
   }
   
   public static boolean useSeparateStreams() {

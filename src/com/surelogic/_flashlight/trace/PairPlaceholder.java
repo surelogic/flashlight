@@ -16,26 +16,25 @@ public class PairPlaceholder extends AbstractPlaceholder {
 		TraceNode n = f_caller == null ? null : f_caller.getNode(state);
 		if (size > 0) {
 			n = getNode(state, n, f_siteId1);
-		}
-		if (size > 1) {
-			n = getNode(state, n, f_siteId2);
+			
+			if (size > 1) {
+				n = getNode(state, n, f_siteId2);
+			}
 		}
 		return n;
 	}
 	
 	@Override
-	public ITraceNode pushCallee(long siteId) {			
+	public ITraceNode pushCallee(long siteId) {					
 		switch (size) {
-		case 0:
-			f_siteId1 = siteId;
-			break;
 		case 1:
 			f_siteId2 = siteId;
 			break;
 		case 2:
 			return new PairPlaceholder(this, siteId);
-		default:
-			throw new IllegalArgumentException("Bad size: "+size);
+		case 0:
+			f_siteId1 = siteId;
+			break;
 		}
 		size++;
 		return this;
@@ -43,15 +42,11 @@ public class PairPlaceholder extends AbstractPlaceholder {
 	
 	@Override
 	public ITraceNode popParent() {
-		switch (size) {
-		case 0:
+		if (size == 0) {
 			return f_caller.popParent();
-		case 1:
-		case 2:
+		} else {
 			size--;
 			return this;
-		default:
-			throw new IllegalArgumentException("Bad size: "+size);
 		}
 	}
 }

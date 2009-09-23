@@ -411,6 +411,9 @@ final class ClassAndFieldModel {
     final Method m = new Method(name, desc);
     Clazz current = classes.get(owner);
     if (useStaticLookup) {
+      if (current == null) {
+    	  return false;
+      }
       return current.syntheticMethods.contains(m);
     } else {
       while (current != null) {

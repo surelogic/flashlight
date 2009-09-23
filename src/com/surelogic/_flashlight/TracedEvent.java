@@ -1,6 +1,7 @@
 package com.surelogic._flashlight;
 
 import com.surelogic._flashlight.common.AttributeType;
+import com.surelogic._flashlight.common.IdConstants;
 import com.surelogic._flashlight.trace.*;
 
 public abstract class TracedEvent extends WithinThreadEvent {
@@ -16,7 +17,11 @@ public abstract class TracedEvent extends WithinThreadEvent {
 					           withinClass.getName()+":"+line);		 
 		}
 		*/
-		trace = state.getCurrentTrace(siteId);
+		if (siteId == IdConstants.SYNTHETIC_METHOD_SITE_ID) {
+			trace = state.getCurrentTrace();
+		} else {
+			trace = state.getCurrentTrace(siteId);
+		}
 	}
 	
 	long getTraceId() {

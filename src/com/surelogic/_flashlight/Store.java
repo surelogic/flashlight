@@ -212,6 +212,10 @@ public final class Store {
 		TraceNode getCurrentTrace(final long siteId) {
 			return traceHeader.getCurrentNode(siteId, this);
 		}
+		
+		TraceNode getCurrentTrace() {
+			return traceHeader.getCurrentNode(this);
+		}
 	}
 
 	private static final boolean useLocks = true;
@@ -507,13 +511,14 @@ public final class Store {
 	public static void instanceFieldAccess(final boolean read,
 			final Object receiver, final int fieldID, final long siteId,
 			final ClassPhantomReference dcPhantom, final Class<?> declaringClass) {
-		if (StoreDelegate.FL_OFF.get()) {
-			return;
-		}
-		if (!StoreConfiguration.getCollectionType().processFieldAccesses()) {
+		if (!StoreConfiguration.processFieldAccesses()) {
 			//System.out.println("Omitting field access");
 			return;
 		}
+		if (StoreDelegate.FL_OFF.get()) {
+			return;
+		}
+
 		/*
 		if (f_flashlightIsNotInitialized) {
 			return;
@@ -547,18 +552,6 @@ public final class Store {
 			 * SrcLoc.toString(withinClass, line))); return; }
 			 */
 			final Event e;
-			if (receiver == null) {
-				/*
-				 * final String fmt =
-				 * "instance field %s access reported with a null receiver...instrumentation bug detected by Store.instanceFieldAccessLookup(%s, receiver=%s, field=%s, location=%s)"
-				 * ; logAProblem(String.format(fmt, oField, read ? "read" :
-				 * "write", safeToString(receiver),
-				 * clazz.getName()+'.'+fieldName, SrcLoc.toString(withinClass,
-				 * line)));
-				 */
-				return;
-			}
-
       /*
        * if the field is not from an instrumented class then force
        * creation of the phantom class object.  Declaring class is null if
@@ -606,13 +599,15 @@ public final class Store {
 	public static void staticFieldAccess(final boolean read, final int fieldID,
 			final long siteId, final ClassPhantomReference dcPhantom,
 			final Class<?> declaringClass) {
+		if (!StoreConfiguration.processFieldAccesses()) {
+			//System.out.println("Omitting field access");
+			return;
+		}	
+		
 		if (StoreDelegate.FL_OFF.get()) {
 			return;
 		}
-		if (!StoreConfiguration.getCollectionType().processFieldAccesses()) {
-			//System.out.println("Omitting field access");
-			return;
-		}		
+	
 		/*
 		if (f_flashlightIsNotInitialized) {
 			return;
@@ -1080,36 +1075,28 @@ public final class Store {
 				log(String.format(fmt, before ? "before" : "after",
 						safeToString(receiver), siteId));
 			}
-			if (receiver != null) {
+
+			/*
+			 * Special handling for ReadWriteLocks
+			 */
+			if (receiver instanceof ReadWriteLock) {
 				/*
-				 * Special handling for ReadWriteLocks
+				 * Define the structure of the ReadWriteLock in an event.
 				 */
-				if (receiver instanceof ReadWriteLock) {
-					/*
-					 * Define the structure of the ReadWriteLock in an event.
-					 */
-					final ReadWriteLock rwl = (ReadWriteLock) receiver;
-					final ObjectPhantomReference p = Phantom.ofObject(rwl);
-					if (UtilConcurrent.addReadWriteLock(p)) {
-						if (DEBUG) {
-							final String fmt = "Defined ReadWriteLock id=%d";
-							log(String.format(fmt, p.getId()));
-						}
-						final Event e = new ReadWriteLockDefinition(p, Phantom
-								.ofObject(rwl.readLock()), Phantom.ofObject(rwl
-								.writeLock()));
-						putInQueue(flState, e);
+				final ReadWriteLock rwl = (ReadWriteLock) receiver;
+				final ObjectPhantomReference p = Phantom.ofObject(rwl);
+				if (UtilConcurrent.addReadWriteLock(p)) {
+					if (DEBUG) {
+						final String fmt = "Defined ReadWriteLock id=%d";
+						log(String.format(fmt, p.getId()));
 					}
+					final Event e = new ReadWriteLockDefinition(p, Phantom
+							.ofObject(rwl.readLock()), Phantom.ofObject(rwl
+									.writeLock()));
+					putInQueue(flState, e);
 				}
-				// If uninstrumented, check if we have an indirect access of
-				// interest
-				// TODO
-				/*
-				 * else if (!(receiver instanceof IIdObject)) { final
-				 * ObjectPhantomReference p = Phantom.ofObject(receiver);
-				 * flState.thread; }
-				 */
 			}
+
 			/*
 			 * Record this call in the trace.
 			 */
@@ -1732,9 +1719,11 @@ public final class Store {
 		 * ClassPhantomReference) {
 		 * System.err.println("Local queue: "+od.getObject()); } }
 		 */
+		/*
 		if (state == null) {
 			state = tl_withinStore.get();
 		}
+		*/
 		final List<Event> localQ = state.eventQueue;
 		List<Event> copy = null;
 		synchronized (localQ) {

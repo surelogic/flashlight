@@ -56,4 +56,9 @@ public class SingleThreadedRefs {
 			deadFields.clear();
 		}
 	}
+
+	public boolean isEmpty() {
+		return (deadFields == null || deadFields.isEmpty()) && 
+		       (deadObjects == null || deadObjects.isEmpty());
+	}
 }

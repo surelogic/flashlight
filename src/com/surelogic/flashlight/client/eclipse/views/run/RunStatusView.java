@@ -99,7 +99,6 @@ public class RunStatusView extends ViewPart {
 		}
 
 		public SLStatus run(final SLProgressMonitor monitor) {
-
 			Job job;
 			if (run != null) {
 				final DBConnection dbc = run.getDB();

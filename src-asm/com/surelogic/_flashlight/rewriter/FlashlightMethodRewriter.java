@@ -460,10 +460,8 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
       messenger.warning("Provided classpath is incomplete: couldn't find class " + e.getMissingClass());
     }
     
-    /* We don't instrument calls to synthetic methods */
-    if (classModel.isSyntheticMethod(owner, name, desc, opcode == Opcodes.INVOKESTATIC)) {
-//      System.out.println("Calling synthetic method " + owner + " " + name + " " + desc);
-      // Insert original call
+    /* We don't instrument calls from within synthetic methods */
+    if (isSynthetic) {
       mv.visitMethodInsn(opcode, owner, name, desc);
     } else {
       /* Check if we are calling an method makes indirect use of 

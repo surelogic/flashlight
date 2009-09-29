@@ -63,8 +63,10 @@ public class RunStatusView extends ViewPart {
 
 	@Override
 	public void setFocus() {
-		EclipseJob.getInstance().scheduleDb(new RefreshRunStatusViewSLJob(),
-				false, false, JobConstants.PREP_KEY);
+		final RunDescription run = AdHocDataSource.getInstance()
+				.getSelectedRun();
+		EclipseJob.getInstance().scheduleDb(new RefreshRunStatusViewSLJob(run),
+				false, false, JobConstants.QUERY_KEY, run.toIdentityString());
 		table.setFocus();
 	}
 
@@ -89,13 +91,15 @@ public class RunStatusView extends ViewPart {
 
 	private class RefreshRunStatusViewSLJob extends AbstractSLJob {
 
-		protected RefreshRunStatusViewSLJob() {
+		private final RunDescription run;
+
+		protected RefreshRunStatusViewSLJob(final RunDescription run) {
 			super("Refresh the Flashlight run status contents.");
+			this.run = run;
 		}
 
 		public SLStatus run(final SLProgressMonitor monitor) {
-			final RunDescription run = AdHocDataSource.getInstance()
-					.getSelectedRun();
+
 			Job job;
 			if (run != null) {
 				final DBConnection dbc = run.getDB();

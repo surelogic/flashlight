@@ -12,13 +12,18 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 
 import com.surelogic.common.FileUtility;
+import com.surelogic.common.eclipse.jobs.EclipseJob;
 import com.surelogic.common.eclipse.logging.SLEclipseStatusUtility;
 import com.surelogic.common.i18n.I18N;
+import com.surelogic.common.jobs.AbstractSLJob;
+import com.surelogic.common.jobs.SLProgressMonitor;
+import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.common.serviceability.UsageMeter;
 import com.surelogic.flashlight.client.eclipse.jobs.FlashlightCleanupJob;
 import com.surelogic.flashlight.client.eclipse.jobs.PromptToPrepAllRawData;
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
+import com.surelogic.flashlight.common.jobs.JobConstants;
 import com.surelogic.flashlight.common.model.RunManager;
 
 /**
@@ -67,12 +72,19 @@ public class Activator extends AbstractUIPlugin {
 		 */
 		final String path = getPluginPreferences().getString(
 				PreferenceConstants.P_DATA_DIRECTORY);
-		if (path == null)
+		if (path == null) {
 			throw new IllegalStateException(I18N.err(44, "P_DATA_DIRECTORY"));
+		}
 		final File dataDir = new File(path);
 		FileUtility.createDirectory(dataDir);
+		EclipseJob.getInstance().scheduleDb(
+				new AbstractSLJob("Set Flashlight Data Directory") {
 
-		RunManager.getInstance().setDataDirectory(dataDir);
+					public SLStatus run(final SLProgressMonitor monitor) {
+						RunManager.getInstance().setDataDirectory(dataDir);
+						return SLStatus.OK_STATUS;
+					}
+				}, false, true, JobConstants.PREP_KEY, JobConstants.QUERY_KEY);
 		new FlashlightCleanupJob().schedule();
 		PromptToPrepAllRawData.start();
 	}

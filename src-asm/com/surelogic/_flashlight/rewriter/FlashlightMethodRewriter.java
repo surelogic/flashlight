@@ -13,7 +13,6 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.Method;
 
-import com.surelogic._flashlight.common.IdConstants;
 import com.surelogic._flashlight.rewriter.ClassAndFieldModel.ClassNotFoundException;
 import com.surelogic._flashlight.rewriter.ClassAndFieldModel.Field;
 import com.surelogic._flashlight.rewriter.ClassAndFieldModel.FieldNotFoundException;

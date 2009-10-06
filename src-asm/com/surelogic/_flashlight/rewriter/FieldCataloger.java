@@ -88,11 +88,7 @@ final class FieldCataloger implements ClassVisitor {
 
   public MethodVisitor visitMethod(int access, String name, String desc,
       String signature, String[] exceptions) {
-    // Build set of synthetic methods
-    if ((access & Opcodes.ACC_SYNTHETIC) != 0) {
-      clazz.addMethod(name, desc);
-//      System.out.println("Method " + clazz.getName() + " " + name + " " + desc + " is synthetic; isStatic == " + ((access & Opcodes.ACC_STATIC) != 0));
-    }
+    // Don't care about
     return null;
   }
 

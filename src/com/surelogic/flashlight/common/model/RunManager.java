@@ -20,6 +20,7 @@ import com.surelogic.flashlight.common.entities.PrepRunDescription;
 import com.surelogic.flashlight.common.entities.RunDAO;
 import com.surelogic.flashlight.common.files.RawFileUtility;
 import com.surelogic.flashlight.common.files.RunDirectory;
+import com.surelogic.flashlight.common.jobs.RefreshRunManagerSLJob;
 
 /**
  * A singleton that manages the set of run description aggregates. This class
@@ -153,7 +154,9 @@ public final class RunManager {
 
 	/**
 	 * Refreshes the set of run descriptions managed by this class and notifies
-	 * all observers if that set has changed.
+	 * all observers if that set has changed. This method is invoked by
+	 * {@link RefreshRunManagerSLJob}, which is generally what you want to use
+	 * if you are in the Eclipse client.
 	 */
 	public void refresh() {
 		final File dataDir = f_dataDir.get();

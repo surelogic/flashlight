@@ -65,8 +65,11 @@ public class RunStatusView extends ViewPart {
 	public void setFocus() {
 		final RunDescription run = AdHocDataSource.getInstance()
 				.getSelectedRun();
-		EclipseJob.getInstance().scheduleDb(new RefreshRunStatusViewSLJob(run),
-				false, false, JobConstants.QUERY_KEY, run.toIdentityString());
+		if (run != null) {
+			EclipseJob.getInstance().scheduleDb(
+					new RefreshRunStatusViewSLJob(run), false, false,
+					JobConstants.QUERY_KEY, run.toIdentityString());
+		}
 		table.setFocus();
 	}
 

@@ -170,8 +170,18 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements
 		return QueryEditorView.class.getName();
 	}
 
+	/**
+	 * Returns the access keys that should be held when querying the currently
+	 * selected run.
+	 * 
+	 * @return an array of access key names, or if {@code null} if no run is
+	 *         currently selected
+	 */
 	public String[] getCurrentAccessKeys() {
-		return new String[] { getSelectedRun().toIdentityString(),
-				JobConstants.QUERY_KEY };
+		RunDescription desc = getSelectedRun();
+		if (desc == null) {
+			return null;
+		}
+		return new String[] { desc.toIdentityString(), JobConstants.QUERY_KEY };
 	}
 }

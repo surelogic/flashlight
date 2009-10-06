@@ -3,16 +3,17 @@ package com.surelogic.flashlight.client.eclipse.jobs;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.jobs.Job;
 
 import com.surelogic.common.eclipse.EclipseUtility;
 import com.surelogic.common.eclipse.SWTUtility;
 import com.surelogic.common.eclipse.ViewUtility;
+import com.surelogic.common.eclipse.jobs.EclipseJob;
 import com.surelogic.common.eclipse.jobs.SLUIJob;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.client.eclipse.dialogs.ConfirmPerspectiveSwitch;
 import com.surelogic.flashlight.client.eclipse.perspectives.FlashlightPerspective;
-import com.surelogic.flashlight.common.model.RunManager;
+import com.surelogic.flashlight.common.jobs.JobConstants;
+import com.surelogic.flashlight.common.jobs.RefreshRunManagerSLJob;
 
 public final class SwitchToFlashlightPerspectiveJob extends SLUIJob {
 
@@ -22,15 +23,10 @@ public final class SwitchToFlashlightPerspectiveJob extends SLUIJob {
 		 * First kick off a job to refresh the runs shown in the Flashlight Runs
 		 * view.
 		 */
-		final Job job = new Job("Refresh Runs") {
-			@Override
-			protected IStatus run(final IProgressMonitor monitor) {
-				RunManager.getInstance().refresh();
-				return Status.OK_STATUS;
-			}
-		};
-		job.schedule();
 
+		final RefreshRunManagerSLJob job = new RefreshRunManagerSLJob();
+		EclipseJob.getInstance().scheduleDb(job, false, true,
+				JobConstants.PREP_KEY);
 		/*
 		 * Ensure that we are not already in the Flashlight perspective.
 		 */
@@ -39,8 +35,9 @@ public final class SwitchToFlashlightPerspectiveJob extends SLUIJob {
 		SLLogger.getLogger().fine(
 				"[PromptToPrepAllRawData] inFlashlightPerspective = "
 						+ inFlashlightPerspective);
-		if (inFlashlightPerspective)
+		if (inFlashlightPerspective) {
 			return Status.OK_STATUS; // bail
+		}
 
 		/*
 		 * Check that we are the only job of this type running. This is trying
@@ -60,8 +57,9 @@ public final class SwitchToFlashlightPerspectiveJob extends SLUIJob {
 				.fine(
 						"[SwitchToFlashlightPerspectiveJob] onlySwitchToFlashlightPerspectiveJobRunning = "
 								+ onlySwitchToFlashlightPerspectiveJobRunning);
-		if (!onlySwitchToFlashlightPerspectiveJobRunning)
+		if (!onlySwitchToFlashlightPerspectiveJobRunning) {
 			return Status.OK_STATUS; // bail
+		}
 
 		final boolean change = ConfirmPerspectiveSwitch.toFlashlight(SWTUtility
 				.getShell());

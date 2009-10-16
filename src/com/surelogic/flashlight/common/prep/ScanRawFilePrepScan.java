@@ -6,12 +6,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
 import com.surelogic._flashlight.common.PreppedAttributes;
 import com.surelogic.common.jobs.SLProgressMonitor;
+import com.surelogic.common.logging.SLLogger;
 
 public final class ScanRawFilePrepScan extends AbstractDataScan {
 	private int f_elementCount = 0;
@@ -62,7 +64,7 @@ public final class ScanRawFilePrepScan extends AbstractDataScan {
 			try {
 				element.parse(attrs);
 			} catch (final Exception e) {
-				e.printStackTrace();
+				SLLogger.getLogger().log(Level.WARNING, "Problem parsing "+name, e);
 				throw new SAXException(e);
 			}
 		}

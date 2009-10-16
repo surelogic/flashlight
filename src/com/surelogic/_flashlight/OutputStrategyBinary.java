@@ -90,7 +90,7 @@ public class OutputStrategyBinary extends EventVisitor {
 		try {
 			f_out.flush();
 		} catch (IOException e) {
-			e.printStackTrace();
+			Store.logAProblem("Unable to flush output", e);
 		}
 	}
 	
@@ -568,7 +568,7 @@ public class OutputStrategyBinary extends EventVisitor {
 	}
     */
 	private void handleIOException(IOException e) {
-		e.printStackTrace();
+		Store.logAProblem("Problem while outputting", e);
 	}
 	
 	private int writeCompressedMaybeNegativeInt(int i) throws IOException {

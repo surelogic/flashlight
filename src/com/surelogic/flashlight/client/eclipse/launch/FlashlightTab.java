@@ -1,6 +1,7 @@
 package com.surelogic.flashlight.client.eclipse.launch;
 
 import java.util.*;
+import java.util.logging.Level;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.*;
@@ -17,6 +18,7 @@ import org.eclipse.swt.layout.*;
 import org.eclipse.swt.widgets.*;
 
 import com.surelogic.common.eclipse.SLImages;
+import com.surelogic.common.logging.SLLogger;
 import com.surelogic.common.CommonImages;
 import com.surelogic.flashlight.client.eclipse.Activator;
 import com.surelogic.flashlight.client.eclipse.preferences.FlashlightInstrumentationWidgets;
@@ -179,7 +181,7 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 				e.load();
 			}
 		} catch (CoreException e) {
-			e.printStackTrace();
+			SLLogger.getLogger().log(Level.INFO, "Problem initializing Flashlight tab", e);
 		}
 	}
 

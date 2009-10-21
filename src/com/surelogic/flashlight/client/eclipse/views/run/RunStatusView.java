@@ -132,6 +132,7 @@ public class RunStatusView extends ViewPart {
 
 		@Override
 		public IStatus runInUIThread(final IProgressMonitor monitor) {
+			table.removeAll();
 			addItem("No run selected", null, null);
 			return Status.OK_STATUS;
 		}

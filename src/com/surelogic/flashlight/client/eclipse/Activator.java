@@ -77,6 +77,7 @@ public class Activator extends AbstractUIPlugin {
 		}
 		final File dataDir = new File(path);
 		FileUtility.createDirectory(dataDir);
+		new FlashlightCleanupJob().schedule();
 		EclipseJob.getInstance().scheduleDb(
 				new AbstractSLJob("Set Flashlight Data Directory") {
 
@@ -85,7 +86,6 @@ public class Activator extends AbstractUIPlugin {
 						return SLStatus.OK_STATUS;
 					}
 				}, false, true, JobConstants.PREP_KEY, JobConstants.QUERY_KEY);
-		new FlashlightCleanupJob().schedule();
 		PromptToPrepAllRawData.start();
 	}
 

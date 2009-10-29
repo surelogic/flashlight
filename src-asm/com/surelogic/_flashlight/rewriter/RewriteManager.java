@@ -401,7 +401,7 @@ public abstract class RewriteManager {
       try {
         final ClassReader input = new ClassReader(inClassfile);
         final FieldCataloger cataloger =
-          new FieldCataloger(willBeInstrumented, classModel);
+          new FieldCataloger(willBeInstrumented, classModel, messenger);
         input.accept(cataloger, ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES
             | ClassReader.SKIP_DEBUG);
       } finally {

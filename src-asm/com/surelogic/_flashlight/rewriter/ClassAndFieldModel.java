@@ -300,15 +300,20 @@ final class ClassAndFieldModel {
    * @param interfaces
    *          The internal names of the interfaces implemented by the
    *          class. May not be {@code null}; use a zero-length array instead.
-   * @return The class model object for the class.
+   * @return The class model object for the class, or {@value null} if the
+   * class is already in the model.
    */
   public Clazz addClass(
       final String name, final boolean isInterface, 
       final boolean isInstrumented,
       final String superClass, final String[] interfaces) {
     final Clazz c = new Clazz(name, isInterface, isInstrumented, superClass, interfaces);
-    classes.put(name, c);
-    return c;
+    if (classes.containsKey(name)) {
+      return null;
+    } else {
+      classes.put(name, c);
+      return c;
+    }
   }
   
   /**

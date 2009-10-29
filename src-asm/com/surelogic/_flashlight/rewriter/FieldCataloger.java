@@ -40,6 +40,7 @@ final class FieldCataloger implements ClassVisitor {
    */
   private final ClassAndFieldModel classModel;
   
+  private final RewriteMessenger messenger;
   /**
    * The class model object for this class. Set by the
    * {@link #visit(int, int, String, String, String, String[])} method.
@@ -49,9 +50,11 @@ final class FieldCataloger implements ClassVisitor {
   
   
   public FieldCataloger(
-      final boolean isInstrumented, final ClassAndFieldModel model) {
+      final boolean isInstrumented, final ClassAndFieldModel model,
+      RewriteMessenger messenger) {
     this.isInstrumented = isInstrumented;
-    classModel = model;
+    this.classModel = model;
+    this.messenger = messenger;
   }
 
   public void visit(final int version, final int access, final String name,
@@ -60,11 +63,14 @@ final class FieldCataloger implements ClassVisitor {
     final boolean isInterface = (access & Opcodes.ACC_INTERFACE) != 0;
     clazz = classModel.addClass(name,
         isInterface, isInstrumented, superName, interfaces);
+    if (clazz == null) {
+      messenger.warning("Skipping class " + ClassNameUtil.internal2FullyQualified(name) + " because we already saw another copy of it");
+    }
   }
 
   public FieldVisitor visitField(final int access, final String name,
       final String desc, final String signature, final Object value) {
-    clazz.addField(name, access);
+    if (clazz != null) clazz.addField(name, access);
     return null;
   }
 

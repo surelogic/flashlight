@@ -4,12 +4,14 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
+import java.util.logging.Level;
 
 import javax.xml.bind.JAXBException;
 
@@ -23,8 +25,10 @@ import com.surelogic._flashlight.rewriter.config.Configuration;
 import com.surelogic._flashlight.rewriter.config.ConfigurationBuilder;
 import com.surelogic._flashlight.rewriter.config.Configuration.FieldFilter;
 import com.surelogic._flashlight.rewriter.ClassNameUtil;
+import com.surelogic._flashlight.rewriter.PrintWriterMessenger;
 import com.surelogic._flashlight.rewriter.RewriteManager;
 import com.surelogic._flashlight.rewriter.RewriteMessenger;
+import com.surelogic.common.logging.SLLogger;
 
 /**
  * Ant task for rewriting classes to apply flashlight instrumentation. Rewrites
@@ -67,6 +71,9 @@ public final class Instrument extends Task {
    * The pathname of the call site database file to create.
    */
   private File sitesFileName = null;
+  
+  /** The pathname of the log file to generated. */
+  private File logFileName = null;
   
   /**
    * The boot class path for the instrumented application. If this is not set,
@@ -512,6 +519,13 @@ public final class Instrument extends Task {
   }
 
   /**
+   * Set the path of the log file to create.
+   */
+  public void setLogFile(final File fileName) {
+	logFileName = fileName;
+  }
+  
+  /**
    * Set the boot classpath used by the application being instrumented.
    */
   public Path createBootclasspath() {
@@ -809,6 +823,9 @@ public final class Instrument extends Task {
     if (sitesFileName == null) {
       throw new BuildException("No file name specified for the sites database");
     }
+    if (logFileName == null) {
+      throw new BuildException("No file name specified for the log file");
+    }
     
     if (bootclasspath == null) {
       // get the boot classpath from the runtime system
@@ -877,36 +894,39 @@ public final class Instrument extends Task {
    */
   @Override
   public void execute() throws BuildException {
-  	try {
-  		checkParameters();
+		checkParameters();
   		
-  		log("bootclasspath is", Project.MSG_VERBOSE);
-  		for (final String p : bootclasspath.list()) {
-  		  log(INDENT + p, Project.MSG_VERBOSE);
-  		}
+		log("bootclasspath is", Project.MSG_VERBOSE);
+ 		for (final String p : bootclasspath.list()) {
+ 		  log(INDENT + p, Project.MSG_VERBOSE);
+ 		}
   		
-  		log("extdirs is ", Project.MSG_VERBOSE);
-  		for (final String p : extdirs.list()) {
-  		  log(INDENT + p, Project.MSG_VERBOSE);
-  		}
+ 		log("extdirs is ", Project.MSG_VERBOSE);
+ 		for (final String p : extdirs.list()) {
+ 		  log(INDENT + p, Project.MSG_VERBOSE);
+ 		}
       
-      log("libraries is ", Project.MSG_VERBOSE);
-      for (final String p : libraries.list()) {
-        log(INDENT + p, Project.MSG_VERBOSE);
-      }
+    log("libraries is ", Project.MSG_VERBOSE);
+    for (final String p : libraries.list()) {
+      log(INDENT + p, Project.MSG_VERBOSE);
+    }
   		
-      log("methods files is ", Project.MSG_VERBOSE);
-      for (final String p : methodFiles.list()) {
-        log(INDENT + p, Project.MSG_VERBOSE);
-      }
+    log("methods files is ", Project.MSG_VERBOSE);
+    for (final String p : methodFiles.list()) {
+      log(INDENT + p, Project.MSG_VERBOSE);
+    }
       
-      // Add the method files to the configuration
-      for (final String p : methodFiles.list()) {
-        configBuilder.addAdditionalMethods(new File(p));
-      }
+    // Add the method files to the configuration
+    for (final String p : methodFiles.list()) {
+      configBuilder.addAdditionalMethods(new File(p));
+    }
       
-  		final Configuration config = configBuilder.getConfiguration();
-  		final AntLogMessenger messenger = new AntLogMessenger();
+		final Configuration config = configBuilder.getConfiguration();
+//  		final AntLogMessenger messenger = new AntLogMessenger();
+ 		PrintWriter logOut = null;
+ 		try {
+  		logOut = new PrintWriter(logFileName);
+		  final RewriteMessenger messenger = new PrintWriterMessenger(logOut); 
   		final RewriteManager manager = new AntRewriteManager(
   		    config, messenger, fieldsFileName, sitesFileName);
   		
@@ -936,10 +956,15 @@ public final class Instrument extends Task {
   		}
   		
   		manager.execute();
-  	} catch (Throwable t) {
-  		t.printStackTrace();
-  		throw new BuildException(t);
-  	}
+    } catch (final FileNotFoundException e) {
+      final String msg = "Unable to create instrumentation log file " + logFileName;
+      log(msg, Project.MSG_ERR);
+      throw new BuildException(msg, e, getLocation());
+    } finally {
+      if (logOut != null) {
+        logOut.close();
+      }
+    }
   }
   
   /**

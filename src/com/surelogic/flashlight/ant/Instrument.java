@@ -11,7 +11,6 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
-import java.util.logging.Level;
 
 import javax.xml.bind.JAXBException;
 
@@ -20,7 +19,6 @@ import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Task;
 import org.apache.tools.ant.types.Path;
 
-import com.surelogic._flashlight.rewriter.AbstractIndentingMessager;
 import com.surelogic._flashlight.rewriter.config.Configuration;
 import com.surelogic._flashlight.rewriter.config.ConfigurationBuilder;
 import com.surelogic._flashlight.rewriter.config.Configuration.FieldFilter;
@@ -28,7 +26,6 @@ import com.surelogic._flashlight.rewriter.ClassNameUtil;
 import com.surelogic._flashlight.rewriter.PrintWriterMessenger;
 import com.surelogic._flashlight.rewriter.RewriteManager;
 import com.surelogic._flashlight.rewriter.RewriteMessenger;
-import com.surelogic.common.logging.SLLogger;
 
 /**
  * Ant task for rewriting classes to apply flashlight instrumentation. Rewrites
@@ -727,7 +724,6 @@ public final class Instrument extends Task {
     final List<String> extensions = new ArrayList<String>();
     final StringTokenizer st = new StringTokenizer(exts, ", ");
     while (st.hasMoreTokens()) extensions.add(st.nextToken());
-    System.out.println("exts = " + extensions);
     
     processJars(srcdir, destdir, recurse, runtime, update, unjar, extensions);
   }
@@ -1023,27 +1019,6 @@ public final class Instrument extends Task {
    * Messenger for the Rewrite Engine that directs engine messages to the ANT
    * log.
    */
-  private final class AntLogMessenger extends AbstractIndentingMessager {
-    public AntLogMessenger() {
-      super(INDENT);
-    }
-    
-    public void error(final String message) {
-      Instrument.this. log(indentMessage(message), Project.MSG_ERR);
-    }
-    
-    public void warning(final String message) {
-      Instrument.this. log(indentMessage(message), Project.MSG_WARN);
-    }
-    
-    public void verbose(final String message) {
-      Instrument.this. log(indentMessage(message), Project.MSG_VERBOSE);
-    }
-    
-    public void info(final String message) {
-      Instrument.this. log(indentMessage(message), Project.MSG_INFO);
-    }
-  }
   
   
   private final class AntRewriteManager extends RewriteManager {

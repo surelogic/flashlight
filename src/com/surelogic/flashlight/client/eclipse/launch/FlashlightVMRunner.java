@@ -8,7 +8,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -89,6 +88,19 @@ final class FlashlightVMRunner implements IVMRunner {
 
 	private final boolean ALWAYS_APPEND_TO_BOOT = true;
 
+	
+	
+	private static final class Entry {
+	  public final String outputName;
+	  public final boolean asJar;
+	  
+	  public Entry(final String name, final boolean jar) {
+	    outputName = name;
+	    asJar = jar;
+	  }
+	}
+	
+	
 	public FlashlightVMRunner(final IVMRunner other, final String mainType,
 			final List<String> user, final List<String> boot,
 			final List<String> system, final List<String> iUser,
@@ -148,7 +160,7 @@ final class FlashlightVMRunner implements IVMRunner {
 		 * build the map of original to instrumented names.
 		 */
 		final Set<IProject> interestingProjects = new HashSet<IProject>();
-		final Map<String, String> classpathEntryMap = new HashMap<String, String>();
+		final Map<String, Entry> classpathEntryMap = new HashMap<String, Entry>();
 		getInterestingProjectsAndBuildEntryMap(interestingProjects,
 				classpathEntryMap);
 
@@ -285,7 +297,7 @@ final class FlashlightVMRunner implements IVMRunner {
 	 */
 	@SuppressWarnings("cast")
 	private boolean instrumentClassfiles(final ILaunchConfiguration launch,
-			final Map<String, String> entryMap, final SubMonitor progress) {
+			final Map<String, Entry> entryMap, final SubMonitor progress) {
 		runOutputDir.mkdirs();
 		PrintWriter logOut = null;
 		try {
@@ -422,24 +434,32 @@ final class FlashlightVMRunner implements IVMRunner {
 
 	private void addToInstrument(final RewriteManager manager,
 			final List<String> toBeInstrumented,
-			final Map<String, String> entryMap) {
+			final Map<String, Entry> entryMap) {
 		for (final String instrument : toBeInstrumented) {
 			final File asFile = new File(instrument);
-			String mapped = entryMap.get(instrument);
+			final Entry mapped = entryMap.get(instrument);
 			if (mapped == null) {
 				System.out.println("No mapping for " + instrument);
 			}
-			final File destFile = new File(mapped);
+			final File destFile = new File(mapped.outputName);
 			if (asFile.isDirectory()) {
-				manager.addDirToJar(asFile, destFile, null);
+			  if (mapped.asJar) { 
+				  manager.addDirToJar(asFile, destFile, null);
+			  } else {
+			    manager.addDirToDir(asFile, destFile);
+			  }
 			} else {
-				manager.addJarToJar(asFile, destFile, null);
+			  if (mapped.asJar) {
+				  manager.addJarToJar(asFile, destFile, null);
+			  } else {
+			    manager.addJarToDir(asFile, destFile, null);
+			  }
 			}
 		}
 	}
 
 	private String[] updateClassPath(final VMRunnerConfiguration configuration,
-			final Map<String, String> entryMap) {
+			final Map<String, Entry> entryMap) {
 		/*
 		 * (1) Replace each project "binary output directory" with its
 		 * corresponding instrumented directory.
@@ -466,7 +486,7 @@ final class FlashlightVMRunner implements IVMRunner {
 
 	private String[] updateBootClassPath(
 			final VMRunnerConfiguration configuration,
-			final Map<String, String> entryMap) {
+			final Map<String, Entry> entryMap) {
 		/*
 		 * (1) Replace each project "binary output directory" with its
 		 * corresponding instrumented directory.
@@ -494,13 +514,13 @@ final class FlashlightVMRunner implements IVMRunner {
 	}
 
 	private static void replaceClasspathEntries(final String[] classPath,
-			final Map<String, String> entryMap,
+			final Map<String, Entry> entryMap,
 			final List<String> newClassPathList, final List<String> toInstrument) {
 		for (int i = 0; i < classPath.length; i++) {
 			final String oldEntry = classPath[i];
 			if (toInstrument.contains(oldEntry)) {
-				final String newEntry = entryMap.get(oldEntry);
-				newClassPathList.add(newEntry);
+				final Entry newEntry = entryMap.get(oldEntry);
+				newClassPathList.add(newEntry.outputName);
 			} else {
 				newClassPathList.add(oldEntry);
 			}
@@ -510,7 +530,7 @@ final class FlashlightVMRunner implements IVMRunner {
 	private VMRunnerConfiguration updateRunnerConfiguration(
 			final VMRunnerConfiguration original, ILaunchConfiguration launch,
 			final String[] newClassPath, final String[] newBootClassPath,
-			final Map<String, String> entryMap) {
+			final Map<String, Entry> entryMap) {
 		// Create a new configuration and update the class path
 		final VMRunnerConfiguration newConfig = new VMRunnerConfiguration(
 				original.getClassToLaunch(), newClassPath);
@@ -653,7 +673,7 @@ final class FlashlightVMRunner implements IVMRunner {
 	}
 
 	private Map updateVMSpecificAttributesMap(final Map originalMap,
-			final Map<String, String> entryMap) {
+			final Map<String, Entry> entryMap) {
 		Map original = originalMap;
 		if (original == null) {
 			if (!ALWAYS_APPEND_TO_BOOT) {
@@ -713,12 +733,12 @@ final class FlashlightVMRunner implements IVMRunner {
 		return updated;
 	}
 
-	private boolean updateBootpathArray(final Map<String, String> entryMap,
+	private boolean updateBootpathArray(final Map<String, Entry> entryMap,
 			final String[] originalBoothpath, final List<String> newBootpath) {
 		boolean needsFlashlightLib = false;
 		for (final String entry : originalBoothpath) {
 			if (instrumentBoot.contains(entry)) {
-				final String newEntry = entryMap.get(entry);
+				final String newEntry = entryMap.get(entry).outputName;
 				newBootpath.add(newEntry);
 				needsFlashlightLib = true;
 			} else {
@@ -813,7 +833,7 @@ final class FlashlightVMRunner implements IVMRunner {
 
 	private void getInterestingProjectsAndBuildEntryMap(
 			final Set<IProject> interestingProjects,
-			final Map<String, String> classpathEntryMap) {
+			final Map<String, Entry> classpathEntryMap) {
 		// Get the list of open projects in the workpace
 		final List<IProject> openProjects = getOpenProjects();
 
@@ -841,7 +861,7 @@ final class FlashlightVMRunner implements IVMRunner {
 	private void scanProjects(final List<String> classpathEntries,
 			final List<IProject> projects,
 			final Set<IProject> interestingProjects,
-			final Map<String, String> classpathEntryMap) {
+			final Map<String, Entry> classpathEntryMap) {
 		for (final String entry : classpathEntries) {
 			final boolean isJar = !(new File(entry)).isDirectory();
 			boolean foundProject = false;
@@ -850,7 +870,9 @@ final class FlashlightVMRunner implements IVMRunner {
 				if (isFromProject(projectLoc, entry)) {
 					final File newEntry = buildInstrumentedName(entry,
 							projectLoc, isJar);
-					classpathEntryMap.put(entry, newEntry.getAbsolutePath());
+					classpathEntryMap.put(
+					    entry, 
+					    new Entry(newEntry.getAbsolutePath(), isJar));
 					interestingProjects.add(project);
 					foundProject = true;
 					break;
@@ -863,9 +885,11 @@ final class FlashlightVMRunner implements IVMRunner {
 			 */
 			if (!foundProject) {
 				String correctedEntry = fixLeadingDriveLetter(entry);
-				final File newLocation = new File(externalOutputDir,
-						isJar ? correctedEntry : (correctedEntry + ".jar"));
-				classpathEntryMap.put(entry, newLocation.getAbsolutePath());
+				final File newLocation =
+//          new File(externalOutputDir, isJar ? correctedEntry : (correctedEntry + ".jar"));
+          new File(externalOutputDir, correctedEntry);
+				classpathEntryMap.put(
+				    entry, new Entry(newLocation.getAbsolutePath(), isJar));
 			}
 		}
 	}
@@ -890,9 +914,10 @@ final class FlashlightVMRunner implements IVMRunner {
 		} else {
 			binaryName = entry.substring(projectLoc.length() + 1);
 		}
-		final String jarName = !isJar ? binaryName + ".jar" : binaryName;
-		final File newEntry = new File(new File(projectOutputDir,
-				projectDirName), jarName);
+//		final String jarName = !isJar ? binaryName + ".jar" : binaryName;
+		final String jarName = binaryName;
+		final File newEntry =
+		  new File(new File(projectOutputDir, projectDirName), jarName);
 		return newEntry;
 	}
 

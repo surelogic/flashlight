@@ -27,11 +27,5 @@ Eclipse-LazyStart: true
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: .,
  lib/flashlight-rewriter.jar,
- lib/activation.jar,
- lib/jaxb1-impl.jar,
- lib/jaxb-api.jar,
- lib/jaxb-impl.jar,
- lib/jaxb-xjc.jar,
- lib/jsr173_1.0_api.jar,
  lib/asm-3.2.jar,
  lib/asm-commons-3.2.jar

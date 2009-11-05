@@ -109,6 +109,10 @@
 			delegate="com.surelogic.flashlight.client.eclipse.launch.FlashlightLaunchConfigurationDelegate"
 			id="com.surelogic.flashlight.client.eclipse.launch.FlashlightLaunchConfigurationDelegate"
 			modes="flashlight" type="org.eclipse.jdt.launching.localJavaApplication" />
+		<launchDelegate
+			delegate="com.surelogic.flashlight.client.eclipse.launch.FlashlightJUnitLaunchConfigurationDelegate"
+			id="com.surelogic.flashlight.client.eclipse.launch.FlashlightJUnitLaunchConfigurationDelegate"
+			modes="flashlight" type="org.eclipse.jdt.junit.launchconfig" />
 	</extension>
 
 	<!-- We need a launch group (the id string is in the actions code) -->
@@ -181,6 +185,15 @@
 				description="%fl.localJavaApplicationTabGroupDescription">
 			</launchMode>
 		</launchConfigurationTabGroup>
+		<launchConfigurationTabGroup
+			type="org.eclipse.jdt.junit.launchconfig"
+			helpContextId="org.eclipse.jdt.debug.ui.launchConfigHelpContext.local_java_application"
+			class="com.surelogic.flashlight.client.eclipse.launch.FlashlightJUnitAppTabGroup"
+			id="com.surelogic.flashlight.launchConfigurationTabGroup.localJUnitApplication">
+			<launchMode mode="flashlight"
+				description="%fl.localJUnitApplicationTabGroupDescription">
+			</launchMode>
+		</launchConfigurationTabGroup>
 	</extension>
 	
 	<!-- Adding additional tabs using the launchConfigurationTabs extension point
@@ -248,9 +261,33 @@
 					</with>
 				</enablement>
 			</contextualLaunch>
-      <configurationType
-        id="org.eclipse.jdt.launching.localJavaApplication">
-      </configurationType>
+      	<configurationType
+       	 	id="org.eclipse.jdt.launching.localJavaApplication">
+      	</configurationType>
+		</shortcut>
+		<shortcut label="%fl.junitApplicationShortcut.label"
+			icon="icons/fl_app.gif"
+			helpContextId="org.eclipse.jdt.junit.launch_shortcut"
+			modes="flashlight"
+			class="com.surelogic.flashlight.client.eclipse.launch.FlashlightJUnitLaunchWrapper"
+			id="com.surelogic.flashlight.localJUnitShortcut">
+	        <contextualLaunch>
+	            <enablement>
+    	           <with variable="selection">
+        	          <count value="1"/>
+            	   	  <iterate>
+                	     <adapt type="org.eclipse.jdt.core.IJavaElement">
+		            	    <test property="org.eclipse.jdt.core.isInJavaProject"/>
+		                	<test property="org.eclipse.jdt.core.hasTypeOnClasspath" value="junit.framework.Test"/>
+			                <test property="org.eclipse.jdt.junit.canLaunchAsJUnit" forcePluginActivation="true"/>
+			             </adapt>
+			          </iterate>
+            	   	</with>
+            	</enablement>
+         	</contextualLaunch>
+         	<configurationType
+        	       id="org.eclipse.jdt.junit.launchconfig">
+    	     </configurationType>
 		</shortcut>
 	</extension>
 	<extension point="org.eclipse.ui.views">

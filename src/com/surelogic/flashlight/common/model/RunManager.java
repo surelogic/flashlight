@@ -121,6 +121,21 @@ public final class RunManager {
 	}
 
 	/**
+	 * Returns the identity strings of all run descriptions known to this
+	 * manager.
+	 * 
+	 * @return
+	 */
+	public String[] getRunIdentities() {
+		final Set<RunDescription> descs = getRunDescriptions();
+		final Set<String> ids = new HashSet<String>(descs.size());
+		for (final RunDescription r : descs) {
+			ids.add(r.toIdentityString());
+		}
+		return ids.toArray(new String[0]);
+	}
+
+	/**
 	 * Gets the set of run descriptions known to this manager that have not been
 	 * prepared. This set can be empty.
 	 * 

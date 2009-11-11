@@ -21,13 +21,14 @@ public class ImportTutorialProjectAction implements
 	}
 
 	public void run(final IAction action) {
+		ClassLoader l = Thread.currentThread().getContextClassLoader();
 		InstallTutorialProjectsDialog.open(SWTUtility.getShell(),
 				CommonImages.IMG_FL_LOGO,
-				"/com.surelogic.flashlight.client.help/ch01s03.html", Thread
-						.currentThread().getContextClassLoader().getResource(
-								"/lib/PlanetBaron.zip"), Thread.currentThread()
-						.getContextClassLoader().getResource(
-								"/lib/jEdit-4.1.zip"));
+				"/com.surelogic.flashlight.client.help/ch01s03.html", l
+						.getResource("/lib/DiningPhilosophers.zip"), l
+						.getResource("/lib/jEdit-4.1.zip"), l
+						.getResource("/lib/PlanetBaron.zip"), l
+						.getResource("/lib/Zookeeper.zip"));
 	}
 
 	public void selectionChanged(final IAction action,

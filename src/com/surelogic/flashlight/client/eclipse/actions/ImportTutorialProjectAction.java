@@ -25,7 +25,9 @@ public class ImportTutorialProjectAction implements
 				CommonImages.IMG_FL_LOGO,
 				"/com.surelogic.flashlight.client.help/ch01s03.html", Thread
 						.currentThread().getContextClassLoader().getResource(
-								"/lib/PlanetBaron.zip"));
+								"/lib/PlanetBaron.zip"), Thread.currentThread()
+						.getContextClassLoader().getResource(
+								"/lib/jEdit-4.1.zip"));
 	}
 
 	public void selectionChanged(final IAction action,

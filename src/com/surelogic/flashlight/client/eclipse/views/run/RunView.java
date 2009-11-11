@@ -20,7 +20,6 @@ import com.surelogic.common.eclipse.SWTUtility;
 import com.surelogic.common.eclipse.jobs.EclipseJob;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.serviceability.UsageMeter;
-import com.surelogic.flashlight.common.jobs.JobConstants;
 import com.surelogic.flashlight.common.jobs.RefreshRunManagerSLJob;
 import com.surelogic.flashlight.common.model.RunDescription;
 import com.surelogic.flashlight.common.model.RunManager;
@@ -65,7 +64,7 @@ public final class RunView extends ViewPart {
 		tableViewer.getTable().setLinesVisible(true);
 		// Ensure that the run manager data is fresh
 		EclipseJob.getInstance().scheduleDb(new RefreshRunManagerSLJob(),
-				false, true, JobConstants.PREP_KEY, JobConstants.QUERY_KEY);
+				false, true, RunManager.getInstance().getRunIdentities());
 		// Set the input so we see data
 		tableViewer.setInput(RunManager.getInstance());
 

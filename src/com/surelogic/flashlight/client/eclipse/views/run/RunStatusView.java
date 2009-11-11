@@ -35,7 +35,6 @@ import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.QueryMenuView;
-import com.surelogic.flashlight.common.jobs.JobConstants;
 import com.surelogic.flashlight.common.model.RunDescription;
 
 /**
@@ -72,7 +71,7 @@ public class RunStatusView extends ViewPart {
 		if (run != null) {
 			EclipseJob.getInstance().scheduleDb(
 					new RefreshRunStatusViewSLJob(run), false, false,
-					JobConstants.QUERY_KEY, run.toIdentityString());
+					run.toIdentityString());
 		}
 		table.setFocus();
 	}

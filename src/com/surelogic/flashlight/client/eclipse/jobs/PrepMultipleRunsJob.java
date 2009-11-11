@@ -20,6 +20,7 @@ import com.surelogic.flashlight.common.jobs.JobConstants;
 import com.surelogic.flashlight.common.jobs.PrepSLJob;
 import com.surelogic.flashlight.common.jobs.RefreshRunManagerSLJob;
 import com.surelogic.flashlight.common.model.RunDescription;
+import com.surelogic.flashlight.common.model.RunManager;
 
 public class PrepMultipleRunsJob extends Job {
 
@@ -46,7 +47,7 @@ public class PrepMultipleRunsJob extends Job {
 				man.endRule(rule);
 			}
 			final ISchedulingRule rule2 = KeywordAccessRule
-					.getInstance(JobConstants.PREP_KEY);
+					.getInstance(RunManager.getInstance().getRunIdentities());
 			try {
 				man.beginRule(rule2, monitor);
 				new RefreshRunManagerSLJob().run(new SLProgressMonitorWrapper(

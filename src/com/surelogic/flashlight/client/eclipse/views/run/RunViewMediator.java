@@ -44,7 +44,6 @@ import com.surelogic.flashlight.common.entities.PrepRunDescription;
 import com.surelogic.flashlight.common.files.RawFileHandles;
 import com.surelogic.flashlight.common.jobs.ConvertBinaryToXMLJob;
 import com.surelogic.flashlight.common.jobs.DeleteRawFilesSLJob;
-import com.surelogic.flashlight.common.jobs.JobConstants;
 import com.surelogic.flashlight.common.jobs.RefreshRunManagerSLJob;
 import com.surelogic.flashlight.common.jobs.UnPrepSLJob;
 import com.surelogic.flashlight.common.model.IRunManagerObserver;
@@ -172,7 +171,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 		@Override
 		public void run() {
 			EclipseJob.getInstance().scheduleDb(new RefreshRunManagerSLJob(),
-					false, false, JobConstants.PREP_KEY);
+					false, false, RunManager.getInstance().getRunIdentities());
 		}
 	};
 
@@ -282,7 +281,6 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 		public void run() {
 			final ArrayList<SLJob> jobs = new ArrayList<SLJob>();
 			final ArrayList<String> keys = new ArrayList<String>();
-			keys.add(JobConstants.PREP_KEY);
 			final RunDescription[] selected = getSelectedRunDescriptions();
 			for (final RunDescription description : selected) {
 				if (description != null) {
@@ -326,12 +324,14 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 				} else {
 					jobName = I18N.msg("flashlight.jobs.delete.many");
 				}
-				// To make the deletes seem atomic
-				jobs.add(new RefreshRunManagerSLJob());
 
 				final SLJob job = new AggregateSLJob(jobName, jobs);
 				EclipseJob.getInstance().scheduleDb(job, true, false,
 						keys.toArray(new String[keys.size()]));
+				EclipseJob.getInstance().scheduleDb(
+						new RefreshRunManagerSLJob(), false, false,
+						RunManager.getInstance().getRunIdentities());
+
 			}
 		}
 	};

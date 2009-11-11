@@ -4,6 +4,8 @@ import static com.surelogic.flashlight.common.QueryConstants.DEADLOCK_ID;
 import static com.surelogic.flashlight.common.QueryConstants.EMPTY_INSTANCE_LOCKSETS_ID;
 import static com.surelogic.flashlight.common.QueryConstants.EMPTY_STATIC_LOCKSETS_ID;
 
+import java.util.logging.Level;
+
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -25,10 +27,12 @@ import com.surelogic.common.eclipse.jobs.EclipseJob;
 import com.surelogic.common.jdbc.DBConnection;
 import com.surelogic.common.jdbc.DBQuery;
 import com.surelogic.common.jdbc.HasResultHandler;
+import com.surelogic.common.jdbc.JDBCException;
 import com.surelogic.common.jdbc.Query;
 import com.surelogic.common.jobs.AbstractSLJob;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
+import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.QueryMenuView;
 import com.surelogic.flashlight.common.jobs.JobConstants;
@@ -104,17 +108,23 @@ public class RunStatusView extends ViewPart {
 		public SLStatus run(final SLProgressMonitor monitor) {
 			Job job;
 			if (run != null) {
-				final DBConnection dbc = run.getDB();
-				job = new RefreshRunStatusViewUIJob(
-						run.getName(),
-						run.getStartTimeOfRun().toString(),
-						hasResult(dbc, "FlashlightStatus.checkForDeadlocks"),
-						hasResult(dbc,
-								"FlashlightStatus.checkForEmptyInstanceLocksets"),
-						hasResult(dbc,
-								"FlashlightStatus.checkForEmptyStaticLocksets"),
-						hasResult(dbc, "FlashlightStatus.checkForFieldData"));
-				dbc.shutdown();
+				try {
+					final DBConnection dbc = run.getDB();
+					job = new RefreshRunStatusViewUIJob(
+							run.getName(),
+							run.getStartTimeOfRun().toString(),
+							hasResult(dbc, "FlashlightStatus.checkForDeadlocks"),
+							hasResult(dbc,
+							"FlashlightStatus.checkForEmptyInstanceLocksets"),
+							hasResult(dbc,
+							"FlashlightStatus.checkForEmptyStaticLocksets"),
+							hasResult(dbc, "FlashlightStatus.checkForFieldData"));
+					dbc.shutdown();
+				} catch (JDBCException e) {
+					SLLogger.getLogger().log(Level.WARNING, 
+							"Problem getting status for "+run.getName(), e);
+					job =  new RefreshEmptyRunStatusViewUIJob();
+				}
 			} else {
 				job = new RefreshEmptyRunStatusViewUIJob();
 			}

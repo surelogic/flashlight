@@ -26,7 +26,7 @@ public final class SwitchToFlashlightPerspectiveJob extends SLUIJob {
 
 		final RefreshRunManagerSLJob job = new RefreshRunManagerSLJob();
 		EclipseJob.getInstance().scheduleDb(job, false, true,
-				JobConstants.PREP_KEY);
+				JobConstants.PREP_KEY, JobConstants.QUERY_KEY);
 		/*
 		 * Ensure that we are not already in the Flashlight perspective.
 		 */

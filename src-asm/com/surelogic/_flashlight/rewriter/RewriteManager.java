@@ -74,7 +74,7 @@ public abstract class RewriteManager {
       @Override
       public void scan(final Scanner scanner, final File src)
           throws IOException {
-        scanner.scanDirectory(src, false);
+        scanner.scanDirectory(src, "", false);
       }
     },
 
@@ -86,7 +86,7 @@ public abstract class RewriteManager {
       @Override
       public void scan(final Scanner scanner, final File src)
           throws IOException {
-        scanner.scanDirectory(src, true);
+        scanner.scanDirectory(src, "", true);
       }
     },
     
@@ -292,7 +292,7 @@ public abstract class RewriteManager {
      *          not added to the model; only the supertype information is used.
      */
     public void scanDirectory(
-        final File inDir, final boolean willBeInstrumented)
+        final File inDir, final String relativePath, final boolean willBeInstrumented)
         throws IOException {
       final String[] files = inDir.list();
       if (files == null) {
@@ -301,13 +301,15 @@ public abstract class RewriteManager {
       for (final String name : files) {
         final File nextIn = new File(inDir, name);
         if (nextIn.isDirectory()) {
-          scanDirectory(nextIn, willBeInstrumented);
+          final String nextRelative = relativePath + name + File.separator;
+          scanDirectory(nextIn, nextRelative, willBeInstrumented);
         } else {
+          final String nextRelative = relativePath + name;
           scanFileStream(new StreamProvider() {
             public BufferedInputStream getInputStream() throws IOException {
               return new BufferedInputStream(new FileInputStream(nextIn));
             }
-          }, nextIn.getPath(), willBeInstrumented);
+          }, nextIn.getPath(), willBeInstrumented && !isBlackListed(nextRelative));
         }
       }
     }  
@@ -338,7 +340,7 @@ public abstract class RewriteManager {
               public BufferedInputStream getInputStream() throws IOException {
                 return new BufferedInputStream(jarFile.getInputStream(jarEntryIn));
               }
-            }, entryName, willBeInstrumented);
+            }, entryName, willBeInstrumented && !isBlackListed(entryName));
           }
         }
       } finally {

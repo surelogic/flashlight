@@ -349,10 +349,14 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 		}
 	}
 
+	private static void setSelectedRun(RunDescription rd) {
+		HistoricalSourceView.setRunDescription(rd);
+		AdHocDataSource.getInstance().setSelectedRun(rd);
+	}
+	
 	private final void updateRunManager() {
 		final RunDescription[] selected = getSelectedRunDescriptions();
-		AdHocDataSource.getInstance().setSelectedRun(
-				selected.length == 0 ? null : selected[0]);
+		setSelectedRun(selected.length == 0 ? null : selected[0]);
 	}
 
 	private final void setToolbarState() {
@@ -393,13 +397,12 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 		 * that run.
 		 */
 		if (selected.length == 0 || selected[0].getPrepRunDescription() == null) {
-			AdHocDataSource.getInstance().setSelectedRun(null);
+			setSelectedRun(null);
 			AdHocDataSource.getManager().setGlobalVariableValue(
 					AdHocManager.DATABASE, null);
 		} else {
 			final RunDescription o = selected[0];
-			HistoricalSourceView.setRunDescription(o);
-			AdHocDataSource.getInstance().setSelectedRun(o);
+			setSelectedRun(o);
 			ViewUtility.showView(RunStatusView.class.getName());
 			AdHocDataSource.getManager().setGlobalVariableValue(
 					AdHocManager.DATABASE, o.toIdentityString());
@@ -448,8 +451,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 					.getRunDescriptions()) {
 				if (runDescription.toIdentityString().equals(db)) {
 					if (!runDescription.equals(selected)) {
-						AdHocDataSource.getInstance().setSelectedRun(
-								runDescription);
+						setSelectedRun(runDescription);
 						final UIJob job = new SLUIJob() {
 							@Override
 							public IStatus runInUIThread(

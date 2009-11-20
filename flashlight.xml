@@ -19,9 +19,10 @@
 
 	<property name="flashlight-all.jar" value="${basedir}/flashlight-all.jar" />
 	<property name="flashlight-runtime.jar" value="${basedir}/flashlight-runtime.jar" />
+	<property name="flashlight-runtime-4.jar" value="${basedir}/flashlight-runtime.java1.4.jar" />
 	<property name="flashlight-servlet.jar" value="${basedir}/flashlight-servlet.jar" />
 	<property name="flashlight-rewriter.jar" value="${basedir}/flashlight-rewriter.jar" />
-
+    <property name="java1.4.lib" value="c:/Program Files/Java/j2re1.4.2_19/lib"/>
   
   <path id="jaxb.classpath">
     <pathelement path="${lib}/jaxb1-impl.jar"/>
@@ -91,6 +92,23 @@
 	  <copy file="${flashlight-runtime.jar}" todir="${basedir}/../flashlight-client-eclipse/lib"/>	  	  
 	</target>
 
+	<target name="translate-runtime-jar" depends="compile, build-runtime-jar">
+		<java jar="lib/build/retrotranslator-transformer-1.2.9.jar"
+		           fork="true"
+		           failonerror="true"
+		           maxmemory="128m">
+		    <arg value="-srcjar"/>
+			<arg value="${flashlight-runtime.jar}"/>
+		   	<arg value="-destjar"/>
+		   	<arg value="${flashlight-runtime-4.jar}"/>
+		   	<arg value="-embed"/>
+			<arg value="com.surelogic.internal"/>
+			<arg value="-verify"/>
+			<arg value="-classpath"/>
+			<arg value="${java1.4.lib}/rt.jar;lib/build/retrotranslator-runtime-1.2.9.jar;lib/build/backport-util-concurrent-3.1.jar"/>
+		</java>
+	</target>
+	
 	<target name="build-servlet-jar">
 		<jar destfile="${flashlight-servlet.jar}" basedir="${classes}">
 			<include name="**/com/surelogic/_flashlight/servlet/*" />
@@ -114,7 +132,7 @@
 	  </jar>
 	  <copy file="${flashlight-rewriter.jar}" todir="${basedir}/../flashlight-client-eclipse/lib"/>	  
 	</target>
-
+	
 	<target name="build-jars-eclipse" depends="build-all-jar, build-runtime-jar, build-servlet-jar, build-rewriter-jar" />
 
 	<target name="build-jars" depends="compile, build-all-jar, build-runtime-jar, build-servlet-jar, build-rewriter-jar" />

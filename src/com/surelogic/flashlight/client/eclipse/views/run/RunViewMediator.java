@@ -39,7 +39,6 @@ import com.surelogic.flashlight.client.eclipse.jobs.PromptToPrepAllRawData;
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.QueryMenuView;
-import com.surelogic.flashlight.client.eclipse.views.source.HistoricalSourceView;
 import com.surelogic.flashlight.common.entities.PrepRunDescription;
 import com.surelogic.flashlight.common.files.RawFileHandles;
 import com.surelogic.flashlight.common.jobs.ConvertBinaryToXMLJob;
@@ -349,14 +348,10 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 		}
 	}
 
-	private static void setSelectedRun(RunDescription rd) {
-		HistoricalSourceView.setRunDescription(rd);
-		AdHocDataSource.getInstance().setSelectedRun(rd);
-	}
-	
 	private final void updateRunManager() {
 		final RunDescription[] selected = getSelectedRunDescriptions();
-		setSelectedRun(selected.length == 0 ? null : selected[0]);
+		AdHocDataSource.getInstance().setSelectedRun(
+				selected.length == 0 ? null : selected[0]);
 	}
 
 	private final void setToolbarState() {
@@ -397,12 +392,12 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 		 * that run.
 		 */
 		if (selected.length == 0 || selected[0].getPrepRunDescription() == null) {
-			setSelectedRun(null);
+			AdHocDataSource.getInstance().setSelectedRun(null);
 			AdHocDataSource.getManager().setGlobalVariableValue(
 					AdHocManager.DATABASE, null);
 		} else {
 			final RunDescription o = selected[0];
-			setSelectedRun(o);
+			AdHocDataSource.getInstance().setSelectedRun(o);
 			ViewUtility.showView(RunStatusView.class.getName());
 			AdHocDataSource.getManager().setGlobalVariableValue(
 					AdHocManager.DATABASE, o.toIdentityString());
@@ -451,7 +446,8 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 					.getRunDescriptions()) {
 				if (runDescription.toIdentityString().equals(db)) {
 					if (!runDescription.equals(selected)) {
-						setSelectedRun(runDescription);
+						AdHocDataSource.getInstance().setSelectedRun(
+								runDescription);
 						final UIJob job = new SLUIJob() {
 							@Override
 							public IStatus runInUIThread(

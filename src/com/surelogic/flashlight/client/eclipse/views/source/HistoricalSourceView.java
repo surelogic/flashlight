@@ -27,9 +27,9 @@ import com.surelogic.flashlight.common.files.RawFileUtility;
 import com.surelogic.flashlight.common.files.RunDirectory;
 import com.surelogic.flashlight.common.files.SourceZipFileHandles;
 import com.surelogic.flashlight.common.model.RunDescription;
+import com.surelogic.flashlight.common.model.RunManager;
 
 public final class HistoricalSourceView extends ViewPart {
-	private static RunDescription currentRun;
 
 	// FIX replace with SourceViewer?
 	StyledText source;
@@ -75,9 +75,6 @@ public final class HistoricalSourceView extends ViewPart {
 	 * @return true if the view is populated
 	 */
 	private boolean showSourceFile(final RunDirectory dir, final String qname) {
-		if (dir == null) {
-			return false;
-		}
 		if (lastRunDir == dir && lastType == qname) {
 			return true; // Should be populated from before
 		}
@@ -143,12 +140,9 @@ public final class HistoricalSourceView extends ViewPart {
 		source.setStyleRanges(highlighter.computeRanges(source.getText()));
 	}
 
-	public static void setRunDescription(final RunDescription desc) {
-		currentRun = desc;
-	}
-
-	public static void tryToOpenInEditor(final String pkg, final String type,
-			int lineNumber) {
+	public static void tryToOpenInEditor(final String run, final String pkg,
+			final String type, int lineNumber) {
+		RunDescription currentRun = getRunDescription(run);
 		if (currentRun != null) {
 			final File dataDir = PreferenceConstants
 					.getFlashlightDataDirectory();
@@ -178,8 +172,9 @@ public final class HistoricalSourceView extends ViewPart {
 		}
 	}
 
-	public static void tryToOpenInEditor(final String pkg, final String type,
-			final String field) {
+	public static void tryToOpenInEditor(final String run, final String pkg,
+			final String type, final String field) {
+		RunDescription currentRun = getRunDescription(run);
 		if (currentRun != null) {
 			final File dataDir = PreferenceConstants
 					.getFlashlightDataDirectory();
@@ -198,6 +193,16 @@ public final class HistoricalSourceView extends ViewPart {
 				}
 			}
 		}
+	}
+
+	private static RunDescription getRunDescription(String run) {
+		for (final RunDescription runDescription : RunManager.getInstance()
+				.getRunDescriptions()) {
+			if (runDescription.toIdentityString().equals(run)) {
+				return runDescription;
+			}
+		}
+		return null;
 	}
 
 	/**

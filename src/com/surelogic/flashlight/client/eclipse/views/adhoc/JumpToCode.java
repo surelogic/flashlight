@@ -2,6 +2,7 @@ package com.surelogic.flashlight.client.eclipse.views.adhoc;
 
 import java.util.Map;
 
+import com.surelogic.common.adhoc.AdHocManager;
 import com.surelogic.common.adhoc.AdHocManagerAdapter;
 import com.surelogic.common.adhoc.AdHocQueryResultSqlData;
 import com.surelogic.common.eclipse.JDTUtility;
@@ -50,7 +51,8 @@ public final class JumpToCode extends AdHocManagerAdapter {
 				} catch (final NumberFormatException e) {
 					// couldn't convert the line number so just use 0
 				}
-				HistoricalSourceView.tryToOpenInEditor(packageName, typeName,
+				HistoricalSourceView.tryToOpenInEditor(variableValues
+						.get(AdHocManager.DATABASE), packageName, typeName,
 						lineNumber);
 
 				if (JDTUtility.tryToOpenInEditor(packageName, typeName,
@@ -70,7 +72,8 @@ public final class JumpToCode extends AdHocManagerAdapter {
 				fieldName = variableValues.get("Field Name");
 			}
 			if (fieldName != null) {
-				HistoricalSourceView.tryToOpenInEditor(packageName, typeName,
+				HistoricalSourceView.tryToOpenInEditor(variableValues
+						.get(AdHocManager.DATABASE), packageName, typeName,
 						fieldName);
 				JDTUtility.tryToOpenInEditor(packageName, typeName, fieldName);
 			}

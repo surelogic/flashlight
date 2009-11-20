@@ -75,6 +75,9 @@ public final class HistoricalSourceView extends ViewPart {
 	 * @return true if the view is populated
 	 */
 	private boolean showSourceFile(final RunDirectory dir, final String qname) {
+		if (dir == null) {
+			return false;
+		}
 		if (lastRunDir == dir && lastType == qname) {
 			return true; // Should be populated from before
 		}

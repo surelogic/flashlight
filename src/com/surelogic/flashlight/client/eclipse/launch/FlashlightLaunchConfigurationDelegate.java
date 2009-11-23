@@ -17,6 +17,9 @@ import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
 
 public final class FlashlightLaunchConfigurationDelegate extends
 		JavaLaunchDelegate {
+	private static final boolean allowJava14 = false;
+	private static final int MIN_JAVA_VERSION = allowJava14 ? 4 : 5;
+	
 	/**
 	 * Returns the VM runner for the given launch mode to use when launching the
 	 * given configuration.
@@ -33,60 +36,75 @@ public final class FlashlightLaunchConfigurationDelegate extends
 	 */
 	@Override
 	public IVMRunner getVMRunner(
-	    final ILaunchConfiguration configuration, final String mode)
+	    final ILaunchConfiguration config, final String mode)
 	throws CoreException {
-	  /* Check that the Eclipse environment meets our requirements. */
-		final IVMRunner runner = checkRequirements(configuration);
-
-		
-		/* Get the classpath. */
-    final List<String> user = new ArrayList<String>();
-    final List<String> boot = new ArrayList<String>();
-    final List<String> system = new ArrayList<String>();
-		final IRuntimeClasspathEntry[] classpath = LaunchUtils.getClasspath(configuration);
-		LaunchUtils.divideClasspathAsLocations(classpath, user, boot, system);
-    
-    /* Get the entries that the user does not want instrumented */
-    final List noInstrumentUser = configuration.getAttribute(
-          PreferenceConstants.P_CLASSPATH_ENTRIES_TO_NOT_INSTRUMENT,
-          Collections.emptyList());
-    final List noInstrumentBoot = configuration.getAttribute(
-          PreferenceConstants.P_BOOTPATH_ENTRIES_TO_NOT_INSTRUMENT,
-          boot);
-    
-    /* Convert to the entries that the user does want instrumented */
-    final List<String> instrumentUser = new ArrayList<String>(user);
-    final List<String> instrumentBoot = new ArrayList<String>(boot);
-    instrumentUser.removeAll(noInstrumentUser);
-    instrumentBoot.removeAll(noInstrumentBoot);
-    
-    return new FlashlightVMRunner(runner, getMainTypeName(configuration),
-        user, boot, system, instrumentUser, instrumentBoot);
+		final IVMInstall vm = verifyVMInstall(config);
+		return setupFlashlightVMRunner(config, vm, getMainTypeName(config));
 	}
 
-  private IVMRunner checkRequirements(final ILaunchConfiguration configuration)
-      throws CoreException {
-    IVMInstall vm = verifyVMInstall(configuration);
-    if (vm instanceof IVMInstall2) {
-      final IVMInstall2 vm2 = (IVMInstall2) vm;
-      final String javaVersion = vm2.getJavaVersion();
-      int majorRel = Integer.parseInt(javaVersion.substring(2, 3));
-      if (majorRel < 5) {
-        throw new CoreException(SLEclipseStatusUtility
-            .createErrorStatus(0,
-                "Flashlight requires minimum VM version 1.5 (VM version is "
-                    + javaVersion + ")."));
-      }
-    } else {
-      throw new CoreException(SLEclipseStatusUtility.createErrorStatus(0,
-          "Flashlight requires minimum VM version 1.5 "
-              + "(VM version is unknown)."));
-    }
-    IVMRunner runner = vm.getVMRunner("run");
-    if (runner == null) {
-      throw new CoreException(SLEclipseStatusUtility.createErrorStatus(0,
-          "Failed to configure the VM to run Flashlight."));
-    }
-    return runner;
-  }
+	static IVMRunner setupFlashlightVMRunner(final ILaunchConfiguration config,
+			final IVMInstall vm, final String mainType) throws CoreException {
+		  /* Check that the Eclipse environment meets our requirements. */
+		final IVMRunner runner = checkRequirements(vm);
+		
+		/* Get the classpath. */
+		final List<String> user = new ArrayList<String>();
+		final List<String> boot = new ArrayList<String>();
+		final List<String> system = new ArrayList<String>();
+		final IRuntimeClasspathEntry[] classpath = LaunchUtils.getClasspath(config);
+		LaunchUtils.divideClasspathAsLocations(classpath, user, boot, system);
+
+		/* Get the entries that the user does not want instrumented */
+		final List noInstrumentUser = config.getAttribute(
+				PreferenceConstants.P_CLASSPATH_ENTRIES_TO_NOT_INSTRUMENT,
+				Collections.emptyList());
+		final List noInstrumentBoot = config.getAttribute(
+				PreferenceConstants.P_BOOTPATH_ENTRIES_TO_NOT_INSTRUMENT,
+				boot);
+
+		/* Convert to the entries that the user does want instrumented */
+		final List<String> instrumentUser = new ArrayList<String>(user);
+		final List<String> instrumentBoot = new ArrayList<String>(boot);
+		instrumentUser.removeAll(noInstrumentUser);
+		instrumentBoot.removeAll(noInstrumentBoot);
+
+		final int version = getMajorJavaVersion(vm);
+		return new FlashlightVMRunner(runner, mainType,
+				user, boot, system, instrumentUser, instrumentBoot, version == 4);
+	}
+
+	static int getMajorJavaVersion(final IVMInstall vm) {
+		if (vm instanceof IVMInstall2) {
+			final IVMInstall2 vm2 = (IVMInstall2) vm;
+			final String javaVersion = vm2.getJavaVersion();
+			int majorRel = Integer.parseInt(javaVersion.substring(2, 3));
+			return majorRel;		
+		}
+		return 0;
+	}
+	
+	static IVMRunner checkRequirements(final IVMInstall vm) 
+	throws CoreException {
+		if (vm instanceof IVMInstall2) {
+			final IVMInstall2 vm2 = (IVMInstall2) vm;
+			final String javaVersion = vm2.getJavaVersion();
+			int majorRel = Integer.parseInt(javaVersion.substring(2, 3));
+			if (majorRel < MIN_JAVA_VERSION) {
+				throw new CoreException(SLEclipseStatusUtility
+						.createErrorStatus(0,
+								"Flashlight requires minimum VM version 1."+MIN_JAVA_VERSION+
+								" (VM version is "+javaVersion+")."));
+			}
+		} else {
+			throw new CoreException(SLEclipseStatusUtility.createErrorStatus(0,
+					"Flashlight requires minimum VM version 1."+MIN_JAVA_VERSION
+					+ " (VM version is unknown)."));
+		}
+		IVMRunner runner = vm.getVMRunner("run");
+		if (runner == null) {
+			throw new CoreException(SLEclipseStatusUtility.createErrorStatus(0,
+					"Failed to configure the VM to run Flashlight."));
+		}
+		return runner;
+	}
 }

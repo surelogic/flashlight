@@ -104,7 +104,7 @@ final class FlashlightVMRunner implements IVMRunner {
 	public FlashlightVMRunner(final IVMRunner other, final String mainType,
 			final List<String> user, final List<String> boot,
 			final List<String> system, final List<String> iUser,
-			final List<String> iBoot) throws CoreException {
+			final List<String> iBoot, boolean java14) throws CoreException {
 		delegateRunner = other;
 		this.user = user;
 		this.boot = boot;
@@ -115,8 +115,13 @@ final class FlashlightVMRunner implements IVMRunner {
 		// Get the path to the flashlight-runtime.jar
 		final IPath bundleBase = Activator.getDefault().getBundleLocation();
 		if (bundleBase != null) {
-			final IPath jarLocation = bundleBase
-					.append("lib/flashlight-runtime.jar");
+			final String name;
+			if (java14) {
+				name = "lib/flashlight-runtime.java1.4.jar";
+			} else {
+				name = "lib/flashlight-runtime.jar";
+			}
+			final IPath jarLocation = bundleBase.append(name);
 			pathToFlashlightLib = jarLocation.toOSString();
 		} else {
 			throw new CoreException(SLEclipseStatusUtility.createErrorStatus(0,

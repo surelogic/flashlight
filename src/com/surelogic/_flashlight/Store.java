@@ -555,7 +555,7 @@ public final class Store {
       /*
        * if the field is not from an instrumented class then force
        * creation of the phantom class object.  Declaring class is null if
-       * the field is not from an instrumente class.  We need to force the
+       * the field is not from an instrumented class.  We need to force the
        * creation of the phantom object so that a listener somewhere else
        * dumps the field definitions into the .fl file.
        * 

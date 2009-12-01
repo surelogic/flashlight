@@ -12,12 +12,13 @@ import org.eclipse.jdt.launching.IVMInstall2;
 import org.eclipse.jdt.launching.IVMRunner;
 import org.eclipse.jdt.launching.JavaLaunchDelegate;
 
+import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic.common.eclipse.logging.SLEclipseStatusUtility;
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
 
 public final class FlashlightLaunchConfigurationDelegate extends
 		JavaLaunchDelegate {
-	private static final boolean allowJava14 = false;
+	private static final boolean allowJava14 = InstrumentationConstants.allowJava14;
 	private static final int MIN_JAVA_VERSION = allowJava14 ? 4 : 5;
 	
 	/**

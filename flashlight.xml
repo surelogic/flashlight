@@ -92,7 +92,7 @@
 	  <copy file="${flashlight-runtime.jar}" todir="${basedir}/../flashlight-client-eclipse/lib"/>	  	  
 	</target>
 
-	<target name="translate-runtime-jar" depends="compile, build-runtime-jar">
+	<target name="translate-runtime-jar">
 		<java jar="lib/build/retrotranslator-transformer-1.2.9.jar"
 		           fork="true"
 		           failonerror="true"
@@ -134,9 +134,9 @@
 	  <copy file="${flashlight-rewriter.jar}" todir="${basedir}/../flashlight-client-eclipse/lib"/>	  
 	</target>
 	
-	<target name="build-jars-eclipse" depends="build-all-jar, build-runtime-jar, build-servlet-jar, build-rewriter-jar" />
+	<target name="build-jars-eclipse" depends="build-all-jar, build-runtime-jar, build-servlet-jar, build-rewriter-jar, translate-runtime-jar" />
 
-	<target name="build-jars" depends="compile, build-all-jar, build-runtime-jar, build-servlet-jar, build-rewriter-jar" />
+	<target name="build-jars" depends="compile, build-all-jar, build-runtime-jar, build-servlet-jar, build-rewriter-jar, translate-runtime-jar" />
 
 	<target name="compile-test-code" depends="build-jars">
 		<delete dir="${classes}" />

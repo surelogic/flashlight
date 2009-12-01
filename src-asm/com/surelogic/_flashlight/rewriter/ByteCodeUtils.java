@@ -94,7 +94,16 @@ final class ByteCodeUtils {
    */
   public static void pushClass(
       final MethodVisitor mv, final String internalClassName) {
-    mv.visitLdcInsn(Type.getType("L"+internalClassName+";"));
+//    mv.visitLdcInsn(Type.getType("L"+internalClassName+";"));
+    
+    mv.visitLdcInsn(ClassNameUtil.internal2FullyQualified(internalClassName));
+    // className
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC,
+        FlashlightNames.JAVA_LANG_CLASS,
+        FlashlightNames.FOR_NAME.getName(),
+        FlashlightNames.FOR_NAME.getDescriptor());
+    // Class
+
   }
   
   /**

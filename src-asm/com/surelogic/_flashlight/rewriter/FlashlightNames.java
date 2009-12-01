@@ -110,6 +110,10 @@ public final class FlashlightNames {
   public static final String UNLOCK = "unlock";
 
   
+  public static final String JAVA_LANG_CLASS = "java/lang/Class";
+  public static final Method FOR_NAME = Method.getMethod("Class forName(String)");
+
+  
 
   /* We add the static final field "flashlight$phantomClassObject" to store the Class
    * object of the class for use in logging calls.  We make the field public so

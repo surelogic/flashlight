@@ -25,7 +25,6 @@ import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.zip.GZIPOutputStream;
-import java.util.zip.ZipEntry;
 
 import javax.xml.bind.JAXBException;
 
@@ -33,6 +32,7 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 
 import com.surelogic._flashlight.common.FileChannelOutputStream;
+import static com.surelogic._flashlight.common.InstrumentationConstants.allowJava14;
 import com.surelogic._flashlight.rewriter.config.Configuration;
 
 /**
@@ -825,13 +825,17 @@ public abstract class RewriteManager {
          * we promote it so we can use Java 5 features. Flashlight must run 
          * in a Java 5 or higher environment, so this is safe.
          */
-        int classfileMajorVersion = getMajorVersion(inClassfile);
+      	int classfileMajorVersion = getMajorVersion(inClassfile);
         final boolean promoteToJava5;
-        if (classfileMajorVersion < CLASSFILE_1_5) {
-          classfileMajorVersion = CLASSFILE_1_5;
-          promoteToJava5 = true;
+        if (allowJava14) {
+        	promoteToJava5 = false;
         } else {
-          promoteToJava5 = false;
+        	if (classfileMajorVersion < CLASSFILE_1_5) {
+        		classfileMajorVersion = CLASSFILE_1_5;
+        		promoteToJava5 = true;
+        	} else {
+        		promoteToJava5 = false;
+        	}
         }
         
         /* ASM is stupid: if we tell it to compute stack frames, it will do it

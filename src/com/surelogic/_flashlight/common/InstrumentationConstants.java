@@ -1,6 +1,8 @@
 package com.surelogic._flashlight.common;
 
 public final class InstrumentationConstants {
+	public static final boolean allowJava14 = true;
+	
 	public static final String FL_OFF = "FL_OFF";
 
 	public static final String FL_DIR = "FL_DIR";

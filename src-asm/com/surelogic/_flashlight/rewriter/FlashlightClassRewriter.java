@@ -58,9 +58,6 @@ final class FlashlightClassRewriter extends ClassAdapter {
   /** Is the current class file an interface? */
   private boolean isInterface;
   
-  /** Should the classfile version be promoted to Java 5 */
-  private final boolean promoteToJava5;
-  
   /** The name of the source file that contains the class being rewritten. */
   private String sourceFileName = UNKNOWN_SOURCE_FILE;
 
@@ -157,15 +154,13 @@ final class FlashlightClassRewriter extends ClassAdapter {
   public FlashlightClassRewriter(final Configuration conf,
       final SiteIdFactory csif, final RewriteMessenger msg,
       final ClassVisitor cv, final ClassAndFieldModel model,
-      final boolean promote, final IndirectAccessMethods am,
-      final Map<String, Integer> m2locals,
+      final IndirectAccessMethods am, final Map<String, Integer> m2locals,
       final Set<MethodIdentifier> ignore) {
     super(cv);
     config = conf;
     callSiteIdFactory = csif;
     messenger = msg;
     classModel = model;
-    promoteToJava5 = promote;
     accessMethods = am;
     method2numLocals = m2locals;
     methodsToIgnore = ignore;
@@ -242,8 +237,7 @@ final class FlashlightClassRewriter extends ClassAdapter {
      * uncovering this problem.
      */
     final int newAccess = isInterface ? access & ~Opcodes.ACC_SUPER : access;
-    cv.visit(promoteToJava5 ? Opcodes.V1_5 : version,
-        newAccess, name, signature, newSuperName, newInterfaces);
+    cv.visit(version, newAccess, name, signature, newSuperName, newInterfaces);
   }
 
   @Override

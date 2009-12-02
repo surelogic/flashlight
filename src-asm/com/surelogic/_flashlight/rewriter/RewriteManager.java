@@ -32,7 +32,6 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 
 import com.surelogic._flashlight.common.FileChannelOutputStream;
-import static com.surelogic._flashlight.common.InstrumentationConstants.allowJava14;
 import com.surelogic._flashlight.rewriter.config.Configuration;
 
 /**
@@ -53,7 +52,6 @@ public abstract class RewriteManager {
   private static final char SPACE = ' ';
   private static final int BUFSIZE = 10240;
   private static final int CLASSFILE_1_6 = 50;
-  private static final int CLASSFILE_1_5 = 49;
   private static final boolean useNIO = false;
   
   // ======================================================================
@@ -821,22 +819,9 @@ public abstract class RewriteManager {
       
       inClassfile = provider.getInputStream();
       try {
-        /* Get the classfile version of the input file.  If it is before Java 5
-         * we promote it so we can use Java 5 features. Flashlight must run 
-         * in a Java 5 or higher environment, so this is safe.
+        /* Get the classfile version of the input file.
          */
-      	int classfileMajorVersion = getMajorVersion(inClassfile);
-        final boolean promoteToJava5;
-        if (allowJava14) {
-        	promoteToJava5 = false;
-        } else {
-        	if (classfileMajorVersion < CLASSFILE_1_5) {
-        		classfileMajorVersion = CLASSFILE_1_5;
-        		promoteToJava5 = true;
-        	} else {
-        		promoteToJava5 = false;
-        	}
-        }
+        final int classfileMajorVersion = getMajorVersion(inClassfile);
         
         /* ASM is stupid: if we tell it to compute stack frames, it will do it
          * even if the classfile is from before 1.6.  So we only tell it to
@@ -848,7 +833,7 @@ public abstract class RewriteManager {
         final ClassWriter output = new FlashlightClassWriter(input, classWriterFlags, classModel);
         final FlashlightClassRewriter xformer =
           new FlashlightClassRewriter(config, callSiteIdFactory, msgr, output,
-              classModel, promoteToJava5, accessMethods, method2numLocals, ignoreMethods);
+              classModel, accessMethods, method2numLocals, ignoreMethods);
         // Skip stack map frames: Either the classfiles don't have them, or we will recompute them
         input.accept(xformer, ClassReader.SKIP_FRAMES);
         final Set<MethodIdentifier> badMethods = xformer.getOversizedMethods();

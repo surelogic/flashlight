@@ -1,5 +1,7 @@
 package com.surelogic._flashlight.rewriter;
 
+import java.util.Set;
+
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Attribute;
 import org.objectweb.asm.ClassVisitor;
@@ -27,6 +29,12 @@ import org.objectweb.asm.Opcodes;
  */
 final class FieldCataloger implements ClassVisitor {
   /**
+   * The pathname of the classfile relative to the root of the classpath entry
+   * that contains it. 
+   */
+  private final String relativePath;
+  
+  /**
    * Is the scanned class going to be instrumented?  Classes that are 
    * not instrumented are in the class model only for supertype information
    * needed to maintain stack map frames.
@@ -41,30 +49,52 @@ final class FieldCataloger implements ClassVisitor {
   private final ClassAndFieldModel classModel;
   
   private final RewriteMessenger messenger;
+
   /**
    * The class model object for this class. Set by the
    * {@link #visit(int, int, String, String, String, String[])} method.
    */
   private ClassAndFieldModel.Clazz clazz = null;
   
+  /**
+   * Output field: May be set to true by {@link #visit} to indicated 
+   * that the class was not included in the model.
+   */
+  private boolean classIsBogus = false;
   
   
-  public FieldCataloger(
+  
+  public FieldCataloger(final String relativePath,
       final boolean isInstrumented, final ClassAndFieldModel model,
       RewriteMessenger messenger) {
+    this.relativePath = relativePath;
     this.isInstrumented = isInstrumented;
     this.classModel = model;
     this.messenger = messenger;
   }
 
+  public boolean isClassBogus() {
+    return classIsBogus;
+  }
+  
   public void visit(final int version, final int access, final String name,
       final String signature, final String superName,
       final String[] interfaces) {
-    final boolean isInterface = (access & Opcodes.ACC_INTERFACE) != 0;
-    clazz = classModel.addClass(name,
-        isInterface, isInstrumented, superName, interfaces);
-    if (clazz == null) {
-      messenger.warning("Skipping class " + ClassNameUtil.internal2FullyQualified(name) + " because we already saw another copy of it");
+    /* We check to see if the name of the class matches the name of the classfile,
+     * and whether the class is located in the correct location.  The RewriteManager
+     * guarantees that the relativePath ends with ".class" and that the 
+     * path separator is '/'.
+     */
+    if (name.equals(relativePath.substring(0, relativePath.length() - 6))) {
+      final boolean isInterface = (access & Opcodes.ACC_INTERFACE) != 0;
+      clazz = classModel.addClass(name,
+          isInterface, isInstrumented, superName, interfaces);
+      if (clazz == null) {
+        messenger.warning("Skipping class " + ClassNameUtil.internal2FullyQualified(name) + " because we already saw another copy of it");
+      }
+    } else {
+      messenger.warning("Skipping class " + ClassNameUtil.internal2FullyQualified(name) + " because it is not located in the proper directory or has the wrong classfile name");
+      classIsBogus = true;
     }
   }
 

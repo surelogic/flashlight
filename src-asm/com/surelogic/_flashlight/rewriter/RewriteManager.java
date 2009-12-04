@@ -13,6 +13,7 @@ import java.io.PrintWriter;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -47,6 +48,7 @@ public abstract class RewriteManager {
   
   public static final String DEFAULT_FLASHLIGHT_RUNTIME_JAR = "flashlight-runtime.jar";
   private static final String ZIP_FILE_NAME_SEPERATOR = "/";
+  private static final String INTERNAL_CLASSNAME_SEPARATOR = "/";
   private static final String MANIFEST_DIR = 
     JarFile.MANIFEST_NAME.substring(0, JarFile.MANIFEST_NAME.indexOf('/')+1);
   private static final char SPACE = ' ';
@@ -58,180 +60,6 @@ public abstract class RewriteManager {
   // == Inner classes
   // ======================================================================
 
-  /**
-   * Enumeration whose elements represent the different ways to scan 
-   * classpath entries to build the class and field model.
-   */
-  private static enum HowToScan {
-    /**
-     * Scan a directory of classfiles whose members are not going to be
-     * instrumented.  They are only used for supertype information, and
-     * their fields are not added to the model.
-     */
-    DIR_SCAN_ONLY {
-      @Override
-      public void scan(final Scanner scanner, final File src)
-          throws IOException {
-        scanner.scanDirectory(src, "", false);
-      }
-    },
-
-    /**
-     * Scan a directory of classfiles whose members are going to be
-     * instrumented.  Supertype and field information are used.
-     */
-    DIR {
-      @Override
-      public void scan(final Scanner scanner, final File src)
-          throws IOException {
-        scanner.scanDirectory(src, "", true);
-      }
-    },
-    
-    /**
-     * Scan a JAR file whose members are not going to be
-     * instrumented.  They are only used for supertype information, and
-     * their fields are not added to the model.
-     */
-    JAR_SCAN_ONLY {
-      @Override
-      public void scan(final Scanner scanner, final File src)
-          throws IOException {
-        scanner.scanJar(src, false);
-      }
-    },
-    
-    /**
-     * Scan a JAR file whose members are going to be
-     * instrumented.  Supertype and field information are used.
-     */
-    JAR {
-      @Override
-      public void scan(final Scanner scanner, final File src)
-          throws IOException {
-        scanner.scanJar(src, true);
-      }
-    };    
-    
-    public abstract void scan(
-        Scanner scanner, File src) throws IOException;
-  }
-
-  
-  
-  /**
-   * Enumeration whose elements represent the different ways to
-   * handle instrumentation of classfiles.
-   * 
-   */
-  private static enum HowToInstrument {
-    /**
-     * Instrumented a directory of classfiles and store the instrumented
-     * classfiles in a new directory.
-     */
-    DIR_TO_DIR(HowToScan.DIR) {
-      @Override
-      public void instrument(final Instrumenter instrumenter,
-          final File src, final File dest, final String runtime)
-          throws IOException {
-        instrumenter.rewriteDirectoryToDirectory(src, "", dest);
-      }
-    },
-    
-    /**
-     * Instrumented a directory of classfiles and store the instrumented
-     * classfiles in a new JAR file.
-     */
-    DIR_TO_JAR(HowToScan.DIR) {
-      @Override
-      public void instrument(final Instrumenter instrumenter,
-          final File src, final File dest, final String runtime)
-          throws IOException {
-        instrumenter.rewriteDirectoryToJar(src, dest, runtime);
-      }
-    },
-    
-    /**
-     * Instrumented a JAR file and store the instrumented
-     * classfiles in a new directory.
-     */
-    JAR_TO_DIR(HowToScan.JAR) {
-      @Override
-      public void instrument(final Instrumenter instrumenter,
-          final File src, final File dest, final String runtime)
-          throws IOException {
-        instrumenter.rewriteJarToDirectory(src, dest, runtime);
-      }
-    },
-    
-    /**
-     * Instrumented a JAR file and store the instrumented
-     * classfiles in a new JAR file.
-     */
-    JAR_TO_JAR(HowToScan.JAR) {
-      @Override
-      public void instrument(final Instrumenter instrumenter,
-          final File src, final File dest, final String runtime)
-          throws IOException {
-        instrumenter.rewriteJarToJar(src, dest, runtime);
-      }
-    };
-    
-    private HowToInstrument(final HowToScan scan) {
-      scanHow = scan;
-    }
-    
-    public final HowToScan scanHow;
-    
-    public abstract void instrument(
-        Instrumenter instrumenter, File src, File dest, String runtime)
-        throws IOException;
-  }
-  
-  
-  
-  /**
-   * A classpath element to be scanned.
-   */
-  private static class ScannableEntry {
-    public final HowToScan scanHow;
-    public final File src;
-    
-    public ScannableEntry(final HowToScan h, final File s) {
-      scanHow = h;
-      src = s;
-    }
-    
-    public final void scan(final Scanner scanner) throws IOException {
-      scanHow.scan(scanner, src);
-    }
-  }
-  
-  
-  
-  /**
-   * A classpath element to be instrumented; is also a scannable element.
-   */
-  private static final class InstrumentableEntry extends ScannableEntry {
-    public final HowToInstrument instrumentHow;
-    public final File dest;
-    public final String runtime;
-    
-    public InstrumentableEntry(final HowToInstrument instr,
-        final File s, final File d, final String r) {
-      super(instr.scanHow, s);
-      instrumentHow = instr;
-      dest = d;
-      runtime = r;
-    }
-    
-    public void instrument(final Instrumenter instrumenter) throws IOException {
-      instrumentHow.instrument(instrumenter, src, dest, runtime);
-    }
-  }
-  
-  
-  
   /**
    * Exception thrown during instrumentation indicating that the 
    * instrumented classfile contains oversized methods.  Contains a list
@@ -262,117 +90,75 @@ public abstract class RewriteManager {
     public BufferedInputStream getInputStream() throws IOException;
   }
 
-
-
+  
+  
   /**
    * Class that encapsulates the methods for scanning the classfiles to
    * produce the field and class model.  This class is primary a wrapper 
    * around the {@link PrintWriter} used to output the field identifier
    * database.
    */
-  private final class Scanner {
-    public Scanner() {
-      super();
+  private abstract class Scanner {
+    protected final File elementPath;
+    protected final boolean willBeInstrumented;
+    protected final Set<String> bogusClassfiles;
+    
+    /**
+     * Create a new abstract scanner.
+     * @param willBeInstrumented Whether the classpath element associated
+     * with this scanner is going to be instrumented.
+     */
+    public Scanner(
+        final File elementPath, final boolean willBeInstrumented) {
+      this.elementPath = elementPath;
+      this.willBeInstrumented = willBeInstrumented;
+      this.bogusClassfiles = new HashSet<String>();
     }
     
+    public final File getPath() {
+      return elementPath;
+    }
     
+    public final boolean isBogusClassfile(final String relativePath) {
+      return bogusClassfiles.contains(relativePath);
+    }
     
     /**
-     * Process the files in the given directory {@code inDir} and build a class
-     * and field model from them to be used in the second rewrite pass of the
-     * instrumentation.
-     * 
-     * @param inDir
-     *          the directory to be scanned
-     * @param willBeInstrumented
-     *          Whether the classes in the directory are also going to be
-     *          instrumented. If {@code false}, the fields of the classes are
-     *          not added to the model; only the supertype information is used.
-     */
-    public void scanDirectory(
-        final File inDir, final String relativePath, final boolean willBeInstrumented)
-        throws IOException {
-      final String[] files = inDir.list();
-      if (files == null) {
-        throw new IOException("Source directory " + inDir + " is bad");
-      }
-      for (final String name : files) {
-        final File nextIn = new File(inDir, name);
-        if (nextIn.isDirectory()) {
-          final String nextRelative = relativePath + name + File.separator;
-          scanDirectory(nextIn, nextRelative, willBeInstrumented);
-        } else {
-          final String nextRelative = relativePath + name;
-          scanFileStream(new StreamProvider() {
-            public BufferedInputStream getInputStream() throws IOException {
-              return new BufferedInputStream(new FileInputStream(nextIn));
-            }
-          }, nextIn.getPath(), willBeInstrumented && !isBlackListed(nextRelative));
-        }
-      }
-    }  
-  
-    /**
-     * Process the files in the given JAR file {@code inJarFile} and build a
-     * class and field model from them to be used in the second rewrite pass of
+     * Process the files in the given classpath element and add them to the
+     * class and field model to be used in the second rewrite pass of
      * the instrumentation.
-     * 
-     * @param inJarFile
-     *          the JAR file to be scanned
-     * @param willBeInstrumented
-     *          Whether the classes in the JAR are also going to be
-     *          instrumented. If {@code false}, the fields of the classes are
-     *          not added to the model; only the supertype information is used.
      */
-    public void scanJar(final File inJarFile, final boolean willBeInstrumented)
-        throws IOException {
-      final JarFile jarFile = new JarFile(inJarFile);
-      try {
-        final Enumeration jarEnum = jarFile.entries(); 
-        while (jarEnum.hasMoreElements()) {
-          final JarEntry jarEntryIn = (JarEntry) jarEnum.nextElement();
-          final String entryName = jarEntryIn.getName();
-          
-          if (!jarEntryIn.isDirectory()) {
-            scanFileStream(new StreamProvider() {
-              public BufferedInputStream getInputStream() throws IOException {
-                return new BufferedInputStream(jarFile.getInputStream(jarEntryIn));
-              }
-            }, entryName, willBeInstrumented && !isBlackListed(entryName));
-          }
-        }
-      } finally {
-        // Close the jarFile to be tidy
-        try {
-          jarFile.close();
-        } catch (final IOException e) {
-          // Doesn't want to close, what can we do?
-        }
-      }
-    }
+    public abstract void scan() throws IOException;
     
     /**
-     * Given StreamProvider, scan the file represented by its stream contents.
+     * Given a StreamProvider, scan the file represented by its stream contents.
      * If the given file is a classfile it is scanned, otherwise it is ignored.
+     * 
+     * <p>We maintain this separately from {@link #scanClassfileStream} to maintain
+     * a similar structure to that used by {@link Instrumenter}, where the
+     * {@link Instrumenter#rewriteFileStream} method 
+     * actually does something to the file stream regardless of whether it is 
+     * a classfile or not.
      * 
      * @param provider
      *          The stream provider.
      * @param fname
      *          The name of the file whose contents are being provided.
-     * @param willBeInstrumented
-     *          Whether the classfile is also going to be instrumented. If
-     *          {@code false}, the fields of the classes are not added to the
-     *          model; only the supertype information is used.
+     * @param isBlacklisted
+     *          Whether the classfile is on the instrumentation blacklist 
+     *          (that is, it should not be instrumented even though it's
+     *          contained in a classpath element marked for instrumentation).
      * @throws IOException
      *           Thrown if an IO error occurs.
      */
-    private void scanFileStream(final StreamProvider provider, final String fname,
-        final boolean willBeInstrumented) throws IOException {
+    protected final void scanFileStream(final StreamProvider provider,
+        final String relativePath, final String fname,
+        final boolean isBlacklisted) throws IOException {
       if (isClassfileName(fname)) {
         messenger.verbose("Scanning classfile " + fname);
         try {
           messenger.increaseNesting();
-          scanClassfileStream(provider, fname, willBeInstrumented);
+          scanClassfileStream(provider, relativePath, isBlacklisted);
         } finally {
           messenger.decreaseNesting();
         }
@@ -395,15 +181,18 @@ public abstract class RewriteManager {
      *           Thrown if an IO error occurs.
      */
     private void scanClassfileStream(final StreamProvider provider,
-        final String classname, final boolean willBeInstrumented)
+        final String relativePath, final boolean isBlacklisted)
         throws IOException {
       final InputStream inClassfile = provider.getInputStream();
       try {
         final ClassReader input = new ClassReader(inClassfile);
-        final FieldCataloger cataloger =
-          new FieldCataloger(willBeInstrumented, classModel, messenger);
-        input.accept(cataloger, ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES
-            | ClassReader.SKIP_DEBUG);
+        final FieldCataloger cataloger = new FieldCataloger(
+            relativePath, willBeInstrumented && !isBlacklisted, classModel, messenger);
+        input.accept(cataloger,
+            ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
+        if (cataloger.isClassBogus()) {
+          bogusClassfiles.add(relativePath);
+        }
       } finally {
         try {
           inClassfile.close();
@@ -412,124 +201,55 @@ public abstract class RewriteManager {
         }
       }
     }
+
+    /**
+     * Is the given file name a class file?  Simple test here
+     * because we use the scanning process to gather enough information
+     * to reject bad classfiles in {@link Instrumenter#isClassfileName}.
+     */
+    protected final boolean isClassfileName(final String name) {
+      return name.endsWith(".class");
+    }
   }
 
 
+  // ======================================================================
+  // == Fields
+  // ======================================================================
   
   /**
-   * Class that encapsulates the methods for instrumenting the classfiles. This
-   * class is primary a wrapper around the {@link SiteIdFactory} used to
-   * generate and maintain method call sites.
+   * Class that encapsulates the methods for scanning the classfiles to
+   * produce the field and class model.  This class is primary a wrapper 
+   * around the {@link PrintWriter} used to output the field identifier
+   * database.
    */
-  private final class Instrumenter {
-    private final SiteIdFactory callSiteIdFactory;
-    
-    public Instrumenter(final SiteIdFactory idFactory) {
-      callSiteIdFactory = idFactory;
+  private final class DirectoryScanner extends Scanner {
+    public DirectoryScanner(final File dirPath, final boolean willBeInstrumented) {
+      super(dirPath, willBeInstrumented);
     }
     
-    private OutputStream newOutputStream(File file) throws IOException {
-    	final OutputStream os;
-    	if (useNIO) {
-    		os = new FileChannelOutputStream(file);    	
-        	return new BufferedOutputStream(os, 32768);
-    	} else {
-    		os = new FileOutputStream(file);
-        	return new BufferedOutputStream(os, 32768);
-    	}
+    
+    
+    @Override
+    public void scan() throws IOException {
+      scanDirectory(elementPath, "");
     }
+    
+    
     
     /**
-     * Process the files in the given directory {@code inDir}, writing to the
-     * directory {@code outDir}. Class files are instrumented when they are
-     * copied. Other files are copied verbatim. Nested directories are processed
-     * recursively.
+     * Process the files in the given directory {@code inDir} and build a class
+     * and field model from them to be used in the second rewrite pass of the
+     * instrumentation.
      * 
-     * @throws IOException
-     *           Thrown when there is a problem with any of the directories or
-     *           files.
+     * @param inDir
+     *          the directory to be scanned
+     * @param willBeInstrumented
+     *          Whether the classes in the directory are also going to be
+     *          instrumented. If {@code false}, the fields of the classes are
+     *          not added to the model; only the supertype information is used.
      */
-    public void rewriteDirectoryToDirectory(
-        final File inDir, final String relativePath, final File outDir)
-        throws IOException {
-      final String[] files = inDir.list();
-      if (files == null) {
-        throw new IOException("Source directory " + inDir + " is bad");
-      }
-      // Make sure the output directory exists
-      if (!outDir.exists()) outDir.mkdirs();
-      for (final String name : files) {
-        final File nextIn = new File(inDir, name);
-        final File nextOut = new File(outDir, name);
-        if (nextIn.isDirectory()) {
-          final String nextRelative = relativePath + name + File.separator;
-          rewriteDirectoryToDirectory(nextIn, nextRelative, nextOut);
-        } else {
-          final String nextRelative = relativePath + name;
-          final OutputStream bos = newOutputStream(nextOut);
-          try {
-            rewriteFileStream(new StreamProvider() {
-              public BufferedInputStream getInputStream() throws IOException {
-                return new BufferedInputStream(new FileInputStream(nextIn));
-              }
-            }, nextIn.getPath(), nextRelative, bos);
-          } finally {
-            try {
-              bos.close();
-            } catch (final IOException e) {
-              // Doesn't want to close, what can we do?
-            }
-          }
-        }
-      }
-    }
-    
-    /**
-     * Process the files in the given directory {@code inDir}, writing to the
-     * jar file {@code outJar}. Class files are instrumented when they are
-     * stored. Other files are stored verbatim. Nested directories are processed
-     * recursively.  The jar file is given a simple manifest file that
-     * contains a "Manifest-Version" entry, and a "Class-Path" entry pointing 
-     * to the flashlight runtime jar.
-     * 
-     * @throws IOException
-     *           Thrown when there is a problem with any of the directories or
-     *           files.
-     */
-    /* This method sets up the various file streams, but delegates the real
-     * work to the recursive method rewriteDirectoryJarHelper().
-     */
-    public void rewriteDirectoryToJar(final File inDir, final File outJarFile,
-        final String runtimeJarName)
-        throws IOException {
-      /* Create the manifest object */
-      final Manifest outManifest = new Manifest();
-      outManifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
-      if (runtimeJarName != null) {
-        outManifest.getMainAttributes().put(Attributes.Name.CLASS_PATH, runtimeJarName);
-      }
-      
-      outJarFile.getParentFile().mkdirs();
-      final OutputStream bos = newOutputStream(outJarFile);
-      JarOutputStream jarOut = null;
-      try {
-        jarOut = new JarOutputStream(bos, outManifest);
-        //final long start = System.currentTimeMillis();
-        rewriteDirectoryToJarHelper(inDir, "", jarOut, "");
-        //System.out.println("Time for "+inDir.getName()+": "+(System.currentTimeMillis()-start)+" ms");
-      } finally {
-        final OutputStream streamToClose = (jarOut != null) ? jarOut : bos;
-        try {
-          streamToClose.close();
-        } catch (final IOException e) {
-          // Doesn't want to close, what can we do?
-        }
-      } 
-    }
-  
-    private void rewriteDirectoryToJarHelper(
-        final File inDir, final String relativePath,
-        final JarOutputStream jarOut, final String jarPathPrefix) 
+    private void scanDirectory(final File inDir, final String relativePath)
         throws IOException {
       final String[] files = inDir.list();
       if (files == null) {
@@ -538,154 +258,69 @@ public abstract class RewriteManager {
       for (final String name : files) {
         final File nextIn = new File(inDir, name);
         if (nextIn.isDirectory()) {
-          final String nextRelative = relativePath + name + File.separator;
-          final String entryName = jarPathPrefix + name + "/";
-          final JarEntry jarEntryOut = new JarEntry(entryName);
-          jarOut.putNextEntry(jarEntryOut);
-          rewriteDirectoryToJarHelper(nextIn, nextRelative, jarOut, entryName);
+          final String nextRelative = relativePath + name + INTERNAL_CLASSNAME_SEPARATOR;
+          scanDirectory(nextIn, nextRelative);
         } else {
           final String nextRelative = relativePath + name;
-          final String entryName = jarPathPrefix + name;
-          final JarEntry jarEntryOut = new JarEntry(entryName);
-          jarOut.putNextEntry(jarEntryOut);
-          rewriteFileStream(new StreamProvider() {
+          scanFileStream(new StreamProvider() {
             public BufferedInputStream getInputStream() throws IOException {
               return new BufferedInputStream(new FileInputStream(nextIn));
             }
-          }, nextIn.getPath(), nextRelative, jarOut);
+          }, nextRelative, nextIn.getPath(), isBlackListed(nextRelative));
         }
       }
     }
-  
-    /**
-     * Process the files in the given JAR file {@code inJarFile}, writing to the
-     * new JAR file {@code outJarFile}. Class files are instrumented when they
-     * are copied. Other files are copied verbatim. If {@code runtimeJarName} is
-     * not {@code null}, the manifest file of {@code outJarFile} is the same as
-     * the input manifest file except that {@code runtimeJarName} is added to the
-     * {@code Class-Path} attribute. If {@code runtimeJarName} is {@code null},
-     * the manifest file of {@code outJarFile} is identical to the that of
-     * {@code inJarFile}.
-     * 
-     * @throws IOException
-     *           Thrown when there is a problem with any of the files.
-     */
-    public void rewriteJarToJar(final File inJarFile, final File outJarFile,
-        final String runtimeJarName) throws IOException {
-      final JarFile jarFile = new JarFile(inJarFile);
-      try {
-        final Manifest inManifest = jarFile.getManifest();
-        final Manifest outManifest = updateManifest(inManifest, runtimeJarName);
-        
-        outJarFile.getParentFile().mkdirs();
-        final OutputStream bos = newOutputStream(outJarFile);
-        JarOutputStream jarOut = null;
-        try {
-        if (outManifest == null) {
-            jarOut = new JarOutputStream(bos);
-        } else {
-            jarOut = new JarOutputStream(bos, outManifest);
-        }
-        //final long start = System.currentTimeMillis();
-          final Enumeration jarEnum = jarFile.entries(); 
-          while (jarEnum.hasMoreElements()) {
-            final JarEntry jarEntryIn = (JarEntry) jarEnum.nextElement();
-            final String entryName = jarEntryIn.getName();
-            
-            /* Skip the manifest file, it has already been written by the
-             * JarOutputStream constructor
-             */
-            if (!entryName.equals(JarFile.MANIFEST_NAME) && !isSignatureFile(entryName)) {
-              final JarEntry jarEntryOut = copyJarEntry(jarEntryIn);
-              jarOut.putNextEntry(jarEntryOut);
-              rewriteFileStream(new StreamProvider() {
-                public BufferedInputStream getInputStream() throws IOException {
-                  return new BufferedInputStream(jarFile.getInputStream(jarEntryIn));
-                }
-              }, entryName, entryName, jarOut);
-            }
-          }
-          //System.out.println("Time for "+inJarFile.getName()+": "+(System.currentTimeMillis()-start)+" ms");
-        } finally {
-          final OutputStream streamToClose = (jarOut != null) ? jarOut : bos;
-          try {
-            streamToClose.close();
-          } catch (final IOException e) {
-            // Doesn't want to close, what can we do?
-          }
-        }  
-      } finally {
-        // Close the jarFile to be tidy
-        try {
-          jarFile.close();
-        } catch (final IOException e) {
-          // Doesn't want to close, what can we do?
-        }
-      }
+  }
+
+
+
+  /**
+   * Class that encapsulates the methods for scanning the classfiles to
+   * produce the field and class model.  This class is primary a wrapper 
+   * around the {@link PrintWriter} used to output the field identifier
+   * database.
+   */
+  private final class JarScanner extends Scanner {
+    public JarScanner(final File jarPath, final boolean willBeInstrumented) {
+      super(jarPath, willBeInstrumented);
     }
-  
+    
+    
+    
+    @Override
+    public void scan() throws IOException {
+      scanJar(elementPath);
+    }
+    
+    
+    
     /**
-     * Process the files in the given JAR file {@code inJarFile}, writing them to
-     * the directory {@code outDir}. Class files are instrumented when they are
-     * copied. Other files are copied verbatim. If {@code runtimeJarName} is not
-     * {@code null}, the manifest file is copied but has {@code runtimeJarName}
-     * added to the {@code Class-Path} attribute. If {@code runtimeJarName} is
-     * {@code null}, the manifest file is copied verbatim.
+     * Process the files in the given JAR file {@code inJarFile} and build a
+     * class and field model from them to be used in the second rewrite pass of
+     * the instrumentation.
      * 
-     * @throws IOException
-     *           Thrown when there is a problem with any of the files.
+     * @param inJarFile
+     *          the JAR file to be scanned
+     * @param willBeInstrumented
+     *          Whether the classes in the JAR are also going to be
+     *          instrumented. If {@code false}, the fields of the classes are
+     *          not added to the model; only the supertype information is used.
      */
-    public void rewriteJarToDirectory(final File inJarFile, final File outDir,
-        final String runtimeJarName) throws IOException {
+    public void scanJar(final File inJarFile)
+        throws IOException {
       final JarFile jarFile = new JarFile(inJarFile);
       try {
-        final Manifest inManifest = jarFile.getManifest();
-        final Manifest outManifest = updateManifest(inManifest, runtimeJarName);
-        
-        final File outManifestFile = composeFile(outDir, JarFile.MANIFEST_NAME);
-        outManifestFile.getParentFile().mkdirs();
-        final OutputStream manifestOutputStream = newOutputStream(outManifestFile);
-        try {
-          outManifest.write(manifestOutputStream);
-        } finally {
-          try {
-            manifestOutputStream.close();
-          } catch (final IOException e) {
-            // Doesn't want to close, what can we do?
-          }
-        }
-        
         final Enumeration jarEnum = jarFile.entries(); 
         while (jarEnum.hasMoreElements()) {
           final JarEntry jarEntryIn = (JarEntry) jarEnum.nextElement();
           final String entryName = jarEntryIn.getName();
           
-          /* Skip the manifest file, it has already been written above */
-          if (!entryName.equals(JarFile.MANIFEST_NAME) && !isSignatureFile(entryName)) {
-            final File outFile = composeFile(outDir, entryName);
-            if (jarEntryIn.isDirectory()) {
-              if (!outFile.exists()) outFile.mkdirs();
-            } else {
-              final File outFileParentDirectory = outFile.getParentFile();
-              if (!outFileParentDirectory.exists()) {
-                outFileParentDirectory.mkdirs();
+          if (!jarEntryIn.isDirectory()) {
+            scanFileStream(new StreamProvider() {
+              public BufferedInputStream getInputStream() throws IOException {
+                return new BufferedInputStream(jarFile.getInputStream(jarEntryIn));
               }
-              final OutputStream bos = newOutputStream(outFile);
-              try {
-                rewriteFileStream(new StreamProvider() {
-                  public BufferedInputStream getInputStream() throws IOException {
-                    return new BufferedInputStream(jarFile.getInputStream(jarEntryIn));
-                  }
-                }, entryName, entryName, bos);
-              } finally {
-                // Close the output stream if possible
-                try {
-                  bos.close();
-                } catch (final IOException e) {
-                  // Doesn't want to close, what can we do?
-                }
-              }
-            }
+            }, entryName, entryName, isBlackListed(entryName));
           }
         }
       } finally {
@@ -697,7 +332,51 @@ public abstract class RewriteManager {
         }
       }
     }
-  
+  }
+
+
+
+  /**
+   * Class that encapsulates the methods for instrumenting the classfiles. This
+   * class is primary a wrapper around the {@link SiteIdFactory} used to
+   * generate and maintain method call sites.
+   */
+  private abstract class Instrumenter {
+    private final Scanner scanner;
+    private SiteIdFactory callSiteIdFactory;
+    protected final File destFile;
+    
+    public Instrumenter(
+        final Scanner scanner, final File destFile) {
+      this.scanner = scanner;
+      this.destFile = destFile;
+    }
+    
+    public final void setSiteIdFactory(final SiteIdFactory idFactory) {
+      this.callSiteIdFactory = idFactory;
+    }
+    
+    public final Scanner getScanner() {
+      return scanner;
+    }
+    
+    public abstract void instrument() throws IOException;
+    
+    public final File getSrcFile() {
+      return scanner.getPath();
+    }
+    
+    public final File getDestFile() {
+      return destFile;
+    }
+    
+    /**
+     * Is the given file name a class file?
+     */
+    protected final boolean isClassfileName(final String relativePath) {
+      return relativePath.endsWith(".class") && !scanner.isBogusClassfile(relativePath);
+    }
+
     /**
      * Rewrite the file whose contents are provided by the given StreamProvider.
      * If the file is a classfile it is instrumented. Otherwise the file is
@@ -714,7 +393,7 @@ public abstract class RewriteManager {
      * @throws IOException
      *           Thrown if an IO error occurs.
      */
-    private void rewriteFileStream(final StreamProvider provider, 
+    protected final void rewriteFileStream(final StreamProvider provider,
         final String fname, final String relativeName, final OutputStream outFile)
         throws IOException {
       if (isClassfileName(relativeName) && !isBlackListed(relativeName)) {
@@ -853,6 +532,32 @@ public abstract class RewriteManager {
     }
 
     /**
+     * Copy the contents of an input stream to an output stream.
+     * 
+     * @throws IOException
+     *           Thrown if there is a problem with any of the streams.
+     */
+    private void copyStream(
+        final InputStream inStream, final OutputStream outStream)
+        throws IOException {
+      int count;
+      while ((count = inStream.read(buffer, 0, BUFSIZE)) != -1) {
+        outStream.write(buffer, 0, count);
+      }
+    }
+
+    protected final OutputStream newOutputStream(File file) throws IOException {
+    	final OutputStream os;
+    	if (useNIO) {
+    		os = new FileChannelOutputStream(file);    	
+        	return new BufferedOutputStream(os, 32768);
+    	} else {
+    		os = new FileOutputStream(file);
+        	return new BufferedOutputStream(os, 32768);
+    	}
+    }
+    
+    /**
      * Get the classfile major version number.
      * 
      * @param inClassfile
@@ -883,62 +588,176 @@ public abstract class RewriteManager {
       // Return the major version number;
       return (buffer[6] << 8) + buffer[7];
     }
+  }
 
-    /**
-     * Copy the contents of an input stream to an output stream.
-     * 
-     * @throws IOException
-     *           Thrown if there is a problem with any of the streams.
-     */
-    private void copyStream(
-        final InputStream inStream, final OutputStream outStream)
-        throws IOException {
-      int count;
-      while ((count = inStream.read(buffer, 0, BUFSIZE)) != -1) {
-        outStream.write(buffer, 0, count);
-      }
+  /**
+   * Class that encapsulates the methods for instrumenting the classfiles. This
+   * class is primary a wrapper around the {@link SiteIdFactory} used to
+   * generate and maintain method call sites.
+   */
+  private final class InstrumentDirToDir extends Instrumenter {
+    public InstrumentDirToDir(final File srcPath, final File destPath) {
+      super(new DirectoryScanner(srcPath, true), destPath);
+    }
+  
+    @Override
+    public void instrument() throws IOException {
+      rewriteDirectoryToDirectory(getSrcFile(), "", destFile);
     }
     
     /**
-     * Create a {@link JarEntry} suitable for use with a {@link JarOutputStream}
-     * from a JarEntry obtained from a {@link JarFile}. In particular, if the
-     * given entry is deflated, we leave the sizes and checksums of the return
-     * entry unset so that JarOutputStream will compute them. If the entry is
-     * stored, we set them explicitly by copying from the original.
+     * Process the files in the given directory {@code inDir}, writing to the
+     * directory {@code outDir}. Class files are instrumented when they are
+     * copied. Other files are copied verbatim. Nested directories are processed
+     * recursively.
+     * 
+     * @throws IOException
+     *           Thrown when there is a problem with any of the directories or
+     *           files.
      */
-    private JarEntry copyJarEntry(final JarEntry original) {
-      final JarEntry result = new JarEntry(original.getName());
-      //result.setMethod(original.getMethod());
-      result.setExtra(original.getExtra());
-      result.setComment(original.getComment());
-      /*
-      if (original.getMethod() == ZipEntry.STORED) {
-        // Make the zip output stream do all the work
-        result.setSize(original.getSize());
-        result.setCompressedSize(original.getCompressedSize());
-        result.setCrc(original.getCrc());
+    private void rewriteDirectoryToDirectory(
+        final File inDir, final String relativePath, final File outDir)
+        throws IOException {
+      final String[] files = inDir.list();
+      if (files == null) {
+        throw new IOException("Source directory " + inDir + " is bad");
       }
-      */
-      return result;
+      // Make sure the output directory exists
+      if (!outDir.exists()) outDir.mkdirs();
+      for (final String name : files) {
+        final File nextIn = new File(inDir, name);
+        final File nextOut = new File(outDir, name);
+        if (nextIn.isDirectory()) {
+          final String nextRelative = relativePath + name + INTERNAL_CLASSNAME_SEPARATOR;
+          rewriteDirectoryToDirectory(nextIn, nextRelative, nextOut);
+        } else {
+          final String nextRelative = relativePath + name;
+          final OutputStream bos = newOutputStream(nextOut);
+          try {
+            rewriteFileStream(new StreamProvider() {
+              public BufferedInputStream getInputStream() throws IOException {
+                return new BufferedInputStream(new FileInputStream(nextIn));
+              }
+            }, nextIn.getPath(), nextRelative, bos);
+          } finally {
+            try {
+              bos.close();
+            } catch (final IOException e) {
+              // Doesn't want to close, what can we do?
+            }
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Class that encapsulates the methods for instrumenting the classfiles. This
+   * class is primary a wrapper around the {@link SiteIdFactory} used to
+   * generate and maintain method call sites.
+   */
+  private final class InstrumentDirToJar extends Instrumenter {
+    private final String runtimeJarName;
+    
+    public InstrumentDirToJar(
+        final File dirPath, final File jarFile, final String runtimeJarName) {
+      super(new DirectoryScanner(dirPath, true), jarFile);
+      this.runtimeJarName = runtimeJarName;
+    }
+    
+    @Override
+    public void instrument() throws IOException {
+      rewriteDirectoryToJar(getSrcFile(), destFile);
     }
   
     /**
-     * Given a File naming an output directory and a file name from a {@link JarEntry},
-     * return a new File object that names the jar entry in the output directory.
-     * (Basically prepends the output directory to the file name.)
+     * Process the files in the given directory {@code inDir}, writing to the
+     * jar file {@code outJar}. Class files are instrumented when they are
+     * stored. Other files are stored verbatim. Nested directories are processed
+     * recursively.  The jar file is given a simple manifest file that
+     * contains a "Manifest-Version" entry, and a "Class-Path" entry pointing 
+     * to the flashlight runtime jar.
+     * 
+     * @throws IOException
+     *           Thrown when there is a problem with any of the directories or
+     *           files.
      */
-    private File composeFile(final File outDir, final String zipName) {
-      File result = outDir;
-      final StringTokenizer tokenizer =
-        new StringTokenizer(zipName, ZIP_FILE_NAME_SEPERATOR);
-      while (tokenizer.hasMoreTokens()) {
-        final String name = tokenizer.nextToken();
-        result = new File(result, name);
+    /* This method sets up the various file streams, but delegates the real
+     * work to the recursive method rewriteDirectoryJarHelper().
+     */
+    public void rewriteDirectoryToJar(final File inDir, final File outJarFile)
+        throws IOException {
+      /* Create the manifest object */
+      final Manifest outManifest = new Manifest();
+      outManifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
+      if (runtimeJarName != null) {
+        outManifest.getMainAttributes().put(Attributes.Name.CLASS_PATH, runtimeJarName);
       }
-      return result;
+      
+      outJarFile.getParentFile().mkdirs();
+      final OutputStream bos = newOutputStream(outJarFile);
+      JarOutputStream jarOut = null;
+      try {
+        jarOut = new JarOutputStream(bos, outManifest);
+        //final long start = System.currentTimeMillis();
+        rewriteDirectoryToJarHelper(inDir, "", jarOut, "");
+        //System.out.println("Time for "+inDir.getName()+": "+(System.currentTimeMillis()-start)+" ms");
+      } finally {
+        final OutputStream streamToClose = (jarOut != null) ? jarOut : bos;
+        try {
+          streamToClose.close();
+        } catch (final IOException e) {
+          // Doesn't want to close, what can we do?
+        }
+      } 
     }
   
-    private boolean isSignatureFile(final String entryName) {
+    private void rewriteDirectoryToJarHelper(
+        final File inDir, final String relativePath,
+        final JarOutputStream jarOut, final String jarPathPrefix) 
+        throws IOException {
+      final String[] files = inDir.list();
+      if (files == null) {
+        throw new IOException("Source directory " + inDir + " is bad");
+      }
+      for (final String name : files) {
+        final File nextIn = new File(inDir, name);
+        if (nextIn.isDirectory()) {
+          final String nextRelative = relativePath + name + INTERNAL_CLASSNAME_SEPARATOR;
+          final String entryName = jarPathPrefix + name + "/";
+          final JarEntry jarEntryOut = new JarEntry(entryName);
+          jarOut.putNextEntry(jarEntryOut);
+          rewriteDirectoryToJarHelper(nextIn, nextRelative, jarOut, entryName);
+        } else {
+          final String nextRelative = relativePath + name;
+          final String entryName = jarPathPrefix + name;
+          final JarEntry jarEntryOut = new JarEntry(entryName);
+          jarOut.putNextEntry(jarEntryOut);
+          rewriteFileStream(new StreamProvider() {
+            public BufferedInputStream getInputStream() throws IOException {
+              return new BufferedInputStream(new FileInputStream(nextIn));
+            }
+          }, nextIn.getPath(), nextRelative, jarOut);
+        }
+      }
+    }
+  }
+
+  /**
+   * Class that encapsulates the methods for instrumenting the classfiles. This
+   * class is primary a wrapper around the {@link SiteIdFactory} used to
+   * generate and maintain method call sites.
+   */
+  private abstract class JarInstrumenter extends Instrumenter {
+    protected final String runtimeJarName;
+    
+    public JarInstrumenter(
+        final File jarPath, final File destFile, final String runtimeJarName) {
+      super(new JarScanner(jarPath, true), destFile);
+      this.runtimeJarName = runtimeJarName;
+    }
+    
+    protected final boolean isSignatureFile(final String entryName) {
       if (entryName.startsWith(MANIFEST_DIR)) {
         final String fname = entryName.substring(MANIFEST_DIR.length());
         if (fname.indexOf('/') == -1) {
@@ -964,7 +783,7 @@ public abstract class RewriteManager {
      *         reference to {@code runtimeJarName}, and all "x-Digest-y" and 
      *         "Magic" per-entry attributes are removed.
      */
-    private Manifest updateManifest(
+    protected final Manifest updateManifest(
         final Manifest manifest, final String runtimeJarName) {
       if (manifest == null) {
     	  return null;
@@ -1007,11 +826,219 @@ public abstract class RewriteManager {
     }
   }
 
+  /**
+   * Class that encapsulates the methods for instrumenting the classfiles. This
+   * class is primary a wrapper around the {@link SiteIdFactory} used to
+   * generate and maintain method call sites.
+   */
+  private final class InstrumentJarToJar extends JarInstrumenter {
+    public InstrumentJarToJar(
+        final File jarPath, final File destJar, final String runtimeJarName) {
+      super(jarPath, destJar, runtimeJarName);
+    }
+    
+    @Override
+    public void instrument() throws IOException {
+      rewriteJarToJar(getSrcFile(), destFile, runtimeJarName);
+    }
+    
+    /**
+     * Process the files in the given JAR file {@code inJarFile}, writing to the
+     * new JAR file {@code outJarFile}. Class files are instrumented when they
+     * are copied. Other files are copied verbatim. If {@code runtimeJarName} is
+     * not {@code null}, the manifest file of {@code outJarFile} is the same as
+     * the input manifest file except that {@code runtimeJarName} is added to the
+     * {@code Class-Path} attribute. If {@code runtimeJarName} is {@code null},
+     * the manifest file of {@code outJarFile} is identical to the that of
+     * {@code inJarFile}.
+     * 
+     * @throws IOException
+     *           Thrown when there is a problem with any of the files.
+     */
+    private void rewriteJarToJar(final File inJarFile, final File outJarFile,
+        final String runtimeJarName) throws IOException {
+      final JarFile jarFile = new JarFile(inJarFile);
+      try {
+        final Manifest inManifest = jarFile.getManifest();
+        final Manifest outManifest = updateManifest(inManifest, runtimeJarName);
+        
+        outJarFile.getParentFile().mkdirs();
+        final OutputStream bos = newOutputStream(outJarFile);
+        JarOutputStream jarOut = null;
+        try {
+        if (outManifest == null) {
+            jarOut = new JarOutputStream(bos);
+        } else {
+            jarOut = new JarOutputStream(bos, outManifest);
+        }
+        //final long start = System.currentTimeMillis();
+          final Enumeration jarEnum = jarFile.entries(); 
+          while (jarEnum.hasMoreElements()) {
+            final JarEntry jarEntryIn = (JarEntry) jarEnum.nextElement();
+            final String entryName = jarEntryIn.getName();
+            
+            /* Skip the manifest file, it has already been written by the
+             * JarOutputStream constructor
+             */
+            if (!entryName.equals(JarFile.MANIFEST_NAME) && !isSignatureFile(entryName)) {
+              final JarEntry jarEntryOut = copyJarEntry(jarEntryIn);
+              jarOut.putNextEntry(jarEntryOut);
+              rewriteFileStream(new StreamProvider() {
+                public BufferedInputStream getInputStream() throws IOException {
+                  return new BufferedInputStream(jarFile.getInputStream(jarEntryIn));
+                }
+              }, entryName, entryName, jarOut);
+            }
+          }
+          //System.out.println("Time for "+inJarFile.getName()+": "+(System.currentTimeMillis()-start)+" ms");
+        } finally {
+          final OutputStream streamToClose = (jarOut != null) ? jarOut : bos;
+          try {
+            streamToClose.close();
+          } catch (final IOException e) {
+            // Doesn't want to close, what can we do?
+          }
+        }  
+      } finally {
+        // Close the jarFile to be tidy
+        try {
+          jarFile.close();
+        } catch (final IOException e) {
+          // Doesn't want to close, what can we do?
+        }
+      }
+    }
   
+    /**
+     * Create a {@link JarEntry} suitable for use with a {@link JarOutputStream}
+     * from a JarEntry obtained from a {@link JarFile}. In particular, if the
+     * given entry is deflated, we leave the sizes and checksums of the return
+     * entry unset so that JarOutputStream will compute them. If the entry is
+     * stored, we set them explicitly by copying from the original.
+     */
+    private JarEntry copyJarEntry(final JarEntry original) {
+      final JarEntry result = new JarEntry(original.getName());
+      //result.setMethod(original.getMethod());
+      result.setExtra(original.getExtra());
+      result.setComment(original.getComment());
+      /*
+      if (original.getMethod() == ZipEntry.STORED) {
+        // Make the zip output stream do all the work
+        result.setSize(original.getSize());
+        result.setCompressedSize(original.getCompressedSize());
+        result.setCrc(original.getCrc());
+      }
+      */
+      return result;
+    }
+  }
+
+  /**
+   * Class that encapsulates the methods for instrumenting the classfiles. This
+   * class is primary a wrapper around the {@link SiteIdFactory} used to
+   * generate and maintain method call sites.
+   */
+  private final class InstrumentJarToDir extends JarInstrumenter {
+    public InstrumentJarToDir(
+        final File jarPath, final File destJar, final String runtimeJarName) {
+      super(jarPath, destJar, runtimeJarName);
+    }
+    
+    @Override
+    public void instrument() throws IOException {
+      rewriteJarToDirectory(getSrcFile(), destFile, runtimeJarName);
+    }
+    
+    /**
+     * Process the files in the given JAR file {@code inJarFile}, writing them to
+     * the directory {@code outDir}. Class files are instrumented when they are
+     * copied. Other files are copied verbatim. If {@code runtimeJarName} is not
+     * {@code null}, the manifest file is copied but has {@code runtimeJarName}
+     * added to the {@code Class-Path} attribute. If {@code runtimeJarName} is
+     * {@code null}, the manifest file is copied verbatim.
+     * 
+     * @throws IOException
+     *           Thrown when there is a problem with any of the files.
+     */
+    public void rewriteJarToDirectory(final File inJarFile, final File outDir,
+        final String runtimeJarName) throws IOException {
+      final JarFile jarFile = new JarFile(inJarFile);
+      try {
+        final Manifest inManifest = jarFile.getManifest();
+        final Manifest outManifest = updateManifest(inManifest, runtimeJarName);
+        
+        final File outManifestFile = composeFile(outDir, JarFile.MANIFEST_NAME);
+        outManifestFile.getParentFile().mkdirs();
+        final OutputStream manifestOutputStream = newOutputStream(outManifestFile);
+        try {
+          outManifest.write(manifestOutputStream);
+        } finally {
+          try {
+            manifestOutputStream.close();
+          } catch (final IOException e) {
+            // Doesn't want to close, what can we do?
+          }
+        }
+        
+        final Enumeration jarEnum = jarFile.entries(); 
+        while (jarEnum.hasMoreElements()) {
+          final JarEntry jarEntryIn = (JarEntry) jarEnum.nextElement();
+          final String entryName = jarEntryIn.getName();
+          
+          /* Skip the manifest file, it has already been written above */
+          if (!entryName.equals(JarFile.MANIFEST_NAME) && !isSignatureFile(entryName)) {
+            final File outFile = composeFile(outDir, entryName);
+            if (jarEntryIn.isDirectory()) {
+              if (!outFile.exists()) outFile.mkdirs();
+            } else {
+              final File outFileParentDirectory = outFile.getParentFile();
+              if (!outFileParentDirectory.exists()) {
+                outFileParentDirectory.mkdirs();
+              }
+              final OutputStream bos = newOutputStream(outFile);
+              try {
+                rewriteFileStream(new StreamProvider() {
+                  public BufferedInputStream getInputStream() throws IOException {
+                    return new BufferedInputStream(jarFile.getInputStream(jarEntryIn));
+                  }
+                }, entryName, entryName, bos);
+              } finally {
+                // Close the output stream if possible
+                try {
+                  bos.close();
+                } catch (final IOException e) {
+                  // Doesn't want to close, what can we do?
+                }
+              }
+            }
+          }
+        }
+      } finally {
+        // Close the jarFile to be tidy
+        try {
+          jarFile.close();
+        } catch (final IOException e) {
+          // Doesn't want to close, what can we do?
+        }
+      }
+    }
   
-  // ======================================================================
-  // == Fields
-  // ======================================================================
+    /**
+     * Given a File naming an output directory and a file name from a {@link JarEntry},
+     * return a new File object that names the jar entry in the output directory.
+     * (Basically prepends the output directory to the file name.)
+     */
+    private File composeFile(final File outDir, final String zipName) {
+      File result = outDir;
+      final StringTokenizer tokenizer =
+        new StringTokenizer(zipName, ZIP_FILE_NAME_SEPERATOR);
+      while (tokenizer.hasMoreTokens()) {
+        final String name = tokenizer.nextToken();
+        result = new File(result, name);
+      }
+      return result;
+    }
+  }
 
   private final byte[] buffer = new byte[BUFSIZE];
   private final ClassAndFieldModel classModel = new ClassAndFieldModel();
@@ -1020,10 +1047,10 @@ public abstract class RewriteManager {
   private final RewriteMessenger messenger;
   private final File fieldsFile;
   private final File sitesFile;
-  private final List<ScannableEntry> otherClasspathEntries =
-    new LinkedList<ScannableEntry>();
-  private final List<InstrumentableEntry> entriesToInstrument =
-    new LinkedList<InstrumentableEntry>();
+  private final List<Scanner> otherClasspathEntries =
+    new LinkedList<Scanner>();
+  private final List<Instrumenter> entriesToInstrument =
+    new LinkedList<Instrumenter>();
   
   
   
@@ -1061,14 +1088,14 @@ public abstract class RewriteManager {
    * Add a directory whose contents are to be scanned but not instrumented.
    */
   public final void addClasspathDir(final File src) {
-    otherClasspathEntries.add(new ScannableEntry(HowToScan.DIR_SCAN_ONLY, src));
+    otherClasspathEntries.add(new DirectoryScanner(src, false));
   }
   
   /**
    * Add a JAR file whose contents are to be scanned but not instrumented.
    */
   public final void addClasspathJar(final File src) {
-    otherClasspathEntries.add(new ScannableEntry(HowToScan.JAR_SCAN_ONLY, src));
+    otherClasspathEntries.add(new JarScanner(src, false));
   }
 
   /**
@@ -1076,7 +1103,7 @@ public abstract class RewriteManager {
    * the instrumented files are placed in the given directory. 
    */
   public final void addDirToDir(final File src, final File dest) {
-    entriesToInstrument.add(new InstrumentableEntry(HowToInstrument.DIR_TO_DIR, src, dest, null));
+    entriesToInstrument.add(new InstrumentDirToDir(src, dest));
   }
   
   /**
@@ -1084,7 +1111,7 @@ public abstract class RewriteManager {
    * the instrumented files are placed in the given JAR file. 
    */
   public final void addDirToJar(final File src, final File dest, final String runtime) {
-    entriesToInstrument.add(new InstrumentableEntry(HowToInstrument.DIR_TO_JAR, src, dest, runtime));
+    entriesToInstrument.add(new InstrumentDirToJar(src, dest, runtime));
   }
   
   /**
@@ -1092,7 +1119,7 @@ public abstract class RewriteManager {
    * the instrumented files are placed in the given JAR file. 
    */
   public final void addJarToJar(final File src, final File dest, final String runtime) {
-    entriesToInstrument.add(new InstrumentableEntry(HowToInstrument.JAR_TO_JAR, src, dest, runtime));
+    entriesToInstrument.add(new InstrumentJarToJar(src, dest, runtime));
   }
   
   /**
@@ -1100,7 +1127,7 @@ public abstract class RewriteManager {
    * the instrumented files are placed in the given directory. 
    */
   public final void addJarToDir(final File src, final File dest, final String runtime) {
-    entriesToInstrument.add(new InstrumentableEntry(HowToInstrument.JAR_TO_DIR, src, dest, runtime));
+    entriesToInstrument.add(new InstrumentJarToDir(src, dest, runtime));
   }
 
 
@@ -1117,12 +1144,11 @@ public abstract class RewriteManager {
      * and field model.  Record the field identifiers in the fields
      * file.
      */
-    final Scanner scanner = new Scanner();
-    for (final ScannableEntry entry : otherClasspathEntries) {
-      scan(entry, scanner);
+    for (final Scanner entry : otherClasspathEntries) {
+      scan(entry);
     }
-    for (final ScannableEntry entry : entriesToInstrument) {
-      scan(entry, scanner);
+    for (final Instrumenter entry : entriesToInstrument) {
+      scan(entry.getScanner());
     }
       
     /* Finish initializing interesting methods using the class model */
@@ -1139,17 +1165,16 @@ public abstract class RewriteManager {
       } else {
           sitesOut = new PrintWriter(sitesFile);
       }
-      final SiteIdFactory callSiteIdFactory = new SiteIdFactory(sitesOut);
-      final Instrumenter instrumenter = new Instrumenter(callSiteIdFactory);
-      
-      for (final InstrumentableEntry entry : entriesToInstrument) {
-        final String srcPath = entry.src.getAbsolutePath();
-        final String destPath = entry.dest.getAbsolutePath();
+      final SiteIdFactory callSiteIdFactory = new SiteIdFactory(sitesOut);      
+      for (final Instrumenter entry : entriesToInstrument) {
+        final String srcPath = entry.getSrcFile().getAbsolutePath();
+        final String destPath = entry.getDestFile().getAbsolutePath();
         messenger.info("Instrumenting classfiles in " + srcPath + " to " + destPath);
         messenger.increaseNesting();
         preInstrument(srcPath, destPath);
         try {
-          entry.instrument(instrumenter);
+          entry.setSiteIdFactory(callSiteIdFactory);
+          entry.instrument();
         } catch (final IOException e) {
           exceptionInstrument(srcPath, destPath, e);
         } finally {
@@ -1182,13 +1207,13 @@ public abstract class RewriteManager {
     }
   }
   
-  private void scan(final ScannableEntry entry, final Scanner scanner) {
-    final String srcPath = entry.src.getAbsolutePath();
+  private void scan(final Scanner scanner) {
+    final String srcPath = scanner.getPath().getAbsolutePath();
     messenger.info("Scanning classfiles in " + srcPath);
     messenger.increaseNesting();
     preScan(srcPath);
     try {
-      entry.scan(scanner);
+      scanner.scan();
     } catch (final IOException e) {
       exceptionScan(srcPath, e);
     } finally {
@@ -1202,13 +1227,6 @@ public abstract class RewriteManager {
   // ======================================================================
   // == Helper method for the scanner/instrument classes
   // ======================================================================
-
-  /**
-   * Is the given file name a class file?
-   */
-  private static boolean isClassfileName(final String name) {
-    return name.endsWith(".class");
-  }
   
   /**
    * Is the classfile blacklisted?

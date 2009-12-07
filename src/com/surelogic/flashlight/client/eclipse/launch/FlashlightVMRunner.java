@@ -40,6 +40,8 @@ import org.eclipse.jdt.launching.VMRunnerConfiguration;
 import org.eclipse.ui.progress.UIJob;
 
 import com.surelogic._flashlight.common.*;
+import com.surelogic._flashlight.rewriter.ClassNameUtil;
+import com.surelogic._flashlight.rewriter.DuplicateClasses;
 import com.surelogic._flashlight.rewriter.PrintWriterMessenger;
 import com.surelogic._flashlight.rewriter.RewriteManager;
 import com.surelogic._flashlight.rewriter.RewriteMessenger;
@@ -396,7 +398,23 @@ final class FlashlightVMRunner implements IVMRunner {
 			addToInstrument(manager, instrumentBoot, entryMap);
 
 			try {
-				manager.execute();
+				final Map<String, Set<DuplicateClasses.DuplicateClass>> badDups = manager.execute();
+				if (badDups != null) { // uh oh
+				  final StringBuilder sb = new StringBuilder();
+				  for (final Map.Entry<String, Set<DuplicateClasses.DuplicateClass>> entry : badDups.entrySet()) {
+				    sb.append("Class ");
+				    sb.append(ClassNameUtil.internal2FullyQualified(entry.getKey()));
+				    sb.append(" appears on the classpath more than once, and only some entries are instrumented: ");
+				    for (final DuplicateClasses.DuplicateClass d : entry.getValue()) {
+				      sb.append("Is ");
+				      sb.append(d.isInstrumented ? "INSTRUMENTED" : "NOT INSTRUMENTED");
+				      sb.append(" on classpath entry ");
+				      sb.append(d.classpathEntry.getAbsolutePath());
+				      sb.append("; ");
+				    }				    
+				  }
+				  throw new RuntimeException(sb.toString());
+				}
 			} catch (final CanceledException e) {
 				/*
 				 * Do nothing, the user canceled the launch early. Caught to

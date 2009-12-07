@@ -186,12 +186,25 @@ public abstract class RewriteManager {
       final InputStream inClassfile = provider.getInputStream();
       try {
         final ClassReader input = new ClassReader(inClassfile);
-        final FieldCataloger cataloger = new FieldCataloger(
+        final FieldCataloger cataloger = new FieldCataloger(elementPath,
             relativePath, willBeInstrumented && !isBlacklisted, classModel, messenger);
         input.accept(cataloger,
             ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
         if (cataloger.isClassBogus()) {
           bogusClassfiles.add(relativePath);
+        }
+        final ClassAndFieldModel.Clazz dupOf = cataloger.getDuplicateOf();
+        if (dupOf != null) {
+          /* This class duplicates a class we already scanned, record its
+           * location.  If we haven't recorded a duplicate for this class yet,
+           * we need to add the original class (dupOf) as well.
+           */
+          final String className = dupOf.getName();
+          if (!duplicateClasses.hasDuplicatesFor(className)) {
+            duplicateClasses.addDuplicate(
+                className, dupOf.getClasspathEntry(), dupOf.isInstrumented());
+          }
+          duplicateClasses.addDuplicate(className, elementPath, willBeInstrumented);
         }
       } finally {
         try {
@@ -1042,6 +1055,7 @@ public abstract class RewriteManager {
 
   private final byte[] buffer = new byte[BUFSIZE];
   private final ClassAndFieldModel classModel = new ClassAndFieldModel();
+  private final DuplicateClasses duplicateClasses = new DuplicateClasses();
   private final IndirectAccessMethods accessMethods = new IndirectAccessMethods();
   private final Configuration config;
   private final RewriteMessenger messenger;
@@ -1138,8 +1152,14 @@ public abstract class RewriteManager {
   
   /**
    * Execute the rewrite.
+   * 
+   * @return Normal execution returns {@code null}.  If a class is 
+   * detected that appears more than once, and some occurrences are instrumented
+   * and some are not, then execution fails, and a Map is returned.  The map
+   * is indexed by internal class names, and the values are sets of records
+   * describing the locations of the duplicate entries.
    */
-  public final void execute() {
+  public final Map<String, Set<DuplicateClasses.DuplicateClass>> execute() {
     /* First pass: Scan all the classfiles to build the class
      * and field model.  Record the field identifiers in the fields
      * file.
@@ -1151,6 +1171,15 @@ public abstract class RewriteManager {
       scan(entry.getScanner());
     }
       
+    /* Look for duplicate classes, and abort if we find a duplicate
+     * class that is sometimes instrumented and sometimes not.
+     */
+    final Map<String, Set<DuplicateClasses.DuplicateClass>> inconsistentDuplicateClasses =
+      duplicateClasses.getInconsistentDuplicates();
+    if (!inconsistentDuplicateClasses.isEmpty()) {
+      return inconsistentDuplicateClasses;
+    }
+    
     /* Finish initializing interesting methods using the class model */
     accessMethods.initClazz(classModel);
     
@@ -1205,6 +1234,8 @@ public abstract class RewriteManager {
         fieldsOut.close();
       }
     }
+    
+    return null;
   }
   
   private void scan(final Scanner scanner) {

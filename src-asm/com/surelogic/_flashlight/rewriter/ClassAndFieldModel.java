@@ -1,5 +1,6 @@
 package com.surelogic._flashlight.rewriter;
 
+import java.io.File;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -133,6 +134,9 @@ final class ClassAndFieldModel {
    * fields directly declared in the class to unique identifiers. 
    */
   public final class Clazz {
+    /** The classpath entry that contains this class */
+    private final File where;
+    
     /** The internal class name */
     private final String name;
     
@@ -166,14 +170,19 @@ final class ClassAndFieldModel {
     
     
     
-    public Clazz(final String name, final boolean isInterface, final boolean isInstrumented,
-        final String superClass, final String[] interfaces) {
+    public Clazz(final File where, final String name, final boolean isInterface,
+        final boolean isInstrumented, final String superClass, final String[] interfaces) {
+      this.where = where;
       this.name = name;
       this.isInterface = isInterface;
       this.isInstrumented = isInstrumented;
       this.superClass = superClass;
       this.interfaces = new String[interfaces.length];
       System.arraycopy(interfaces, 0, this.interfaces, 0, interfaces.length);
+    }
+    
+    public File getClasspathEntry() {
+      return where;
     }
     
     public String getName() {
@@ -303,14 +312,14 @@ final class ClassAndFieldModel {
    * @return The class model object for the class, or {@value null} if the
    * class is already in the model.
    */
-  public Clazz addClass(
+  public Clazz addClass(final File where,
       final String name, final boolean isInterface, 
       final boolean isInstrumented,
       final String superClass, final String[] interfaces) {
-    final Clazz c = new Clazz(name, isInterface, isInstrumented, superClass, interfaces);
     if (classes.containsKey(name)) {
       return null;
     } else {
+      final Clazz c = new Clazz(where, name, isInterface, isInstrumented, superClass, interfaces);
       classes.put(name, c);
       return c;
     }

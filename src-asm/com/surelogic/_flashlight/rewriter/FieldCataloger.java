@@ -1,6 +1,6 @@
 package com.surelogic._flashlight.rewriter;
 
-import java.util.Set;
+import java.io.File;
 
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Attribute;
@@ -8,6 +8,8 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+
+import com.surelogic._flashlight.rewriter.ClassAndFieldModel.ClassNotFoundException;
 
 
 /**
@@ -28,6 +30,11 @@ import org.objectweb.asm.Opcodes;
  * @see ClassAndFieldModel.Clazz
  */
 final class FieldCataloger implements ClassVisitor {
+  /** 
+   * The classpath entry that contains the class being catalogged.
+   */
+  private final File where;
+  
   /**
    * The pathname of the classfile relative to the root of the classpath entry
    * that contains it. 
@@ -62,11 +69,19 @@ final class FieldCataloger implements ClassVisitor {
    */
   private boolean classIsBogus = false;
   
+  /**
+   * Output field: May be set to non-{@code null} to indicate that the
+   * class duplicates a class already found in the model.  Refers to the
+   * class record of the original class.
+   */
+  private ClassAndFieldModel.Clazz duplicateOf = null;
   
   
-  public FieldCataloger(final String relativePath,
+  
+  public FieldCataloger(final File where, final String relativePath,
       final boolean isInstrumented, final ClassAndFieldModel model,
       RewriteMessenger messenger) {
+    this.where = where;
     this.relativePath = relativePath;
     this.isInstrumented = isInstrumented;
     this.classModel = model;
@@ -75,6 +90,10 @@ final class FieldCataloger implements ClassVisitor {
 
   public boolean isClassBogus() {
     return classIsBogus;
+  }
+  
+  public ClassAndFieldModel.Clazz getDuplicateOf() {
+    return duplicateOf;
   }
   
   public void visit(final int version, final int access, final String name,
@@ -87,10 +106,16 @@ final class FieldCataloger implements ClassVisitor {
      */
     if (name.equals(relativePath.substring(0, relativePath.length() - 6))) {
       final boolean isInterface = (access & Opcodes.ACC_INTERFACE) != 0;
-      clazz = classModel.addClass(name,
+      clazz = classModel.addClass(where, name,
           isInterface, isInstrumented, superName, interfaces);
       if (clazz == null) {
         messenger.warning("Skipping class " + ClassNameUtil.internal2FullyQualified(name) + " because we already saw another copy of it");
+        try {
+          duplicateOf = classModel.getClass(name);
+        } catch (ClassNotFoundException e) {
+          /* Cannot happen because we already know from addClass that the
+           * class exists. */
+        }
       }
     } else {
       messenger.warning("Skipping class " + ClassNameUtil.internal2FullyQualified(name) + " because it is not located in the proper directory or has the wrong classfile name");

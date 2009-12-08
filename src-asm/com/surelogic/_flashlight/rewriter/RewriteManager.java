@@ -1061,9 +1061,19 @@ public abstract class RewriteManager {
   private final RewriteMessenger messenger;
   private final File fieldsFile;
   private final File sitesFile;
-  private final List<Scanner> otherClasspathEntries =
+  
+  /**
+   * The complete list of classpath entries to scan, in the order entries
+   * are added using the {@code add*} methods.
+   */
+  private final List<Scanner> scanners =
     new LinkedList<Scanner>();
-  private final List<Instrumenter> entriesToInstrument =
+
+  /**
+   * The complete list of classpath entries to instrument, in the order entries
+   * are added using the {@code addDir*} and {@code addJar*} methods.
+   */
+  private final List<Instrumenter> instrumenters =
     new LinkedList<Instrumenter>();
   
   
@@ -1102,22 +1112,27 @@ public abstract class RewriteManager {
    * Add a directory whose contents are to be scanned but not instrumented.
    */
   public final void addClasspathDir(final File src) {
-    otherClasspathEntries.add(new DirectoryScanner(src, false));
+    scanners.add(new DirectoryScanner(src, false));
   }
   
   /**
    * Add a JAR file whose contents are to be scanned but not instrumented.
    */
   public final void addClasspathJar(final File src) {
-    otherClasspathEntries.add(new JarScanner(src, false));
+    scanners.add(new JarScanner(src, false));
   }
 
+  private final void addInstrumenter(final Instrumenter instrumenter) {
+    scanners.add(instrumenter.getScanner());
+    instrumenters.add(instrumenter);
+  }
+  
   /**
    * Add a directory whose contents are to be scanned and instrumented, where
    * the instrumented files are placed in the given directory. 
    */
   public final void addDirToDir(final File src, final File dest) {
-    entriesToInstrument.add(new InstrumentDirToDir(src, dest));
+    addInstrumenter(new InstrumentDirToDir(src, dest));
   }
   
   /**
@@ -1125,7 +1140,7 @@ public abstract class RewriteManager {
    * the instrumented files are placed in the given JAR file. 
    */
   public final void addDirToJar(final File src, final File dest, final String runtime) {
-    entriesToInstrument.add(new InstrumentDirToJar(src, dest, runtime));
+    addInstrumenter(new InstrumentDirToJar(src, dest, runtime));
   }
   
   /**
@@ -1133,7 +1148,7 @@ public abstract class RewriteManager {
    * the instrumented files are placed in the given JAR file. 
    */
   public final void addJarToJar(final File src, final File dest, final String runtime) {
-    entriesToInstrument.add(new InstrumentJarToJar(src, dest, runtime));
+    addInstrumenter(new InstrumentJarToJar(src, dest, runtime));
   }
   
   /**
@@ -1141,7 +1156,7 @@ public abstract class RewriteManager {
    * the instrumented files are placed in the given directory. 
    */
   public final void addJarToDir(final File src, final File dest, final String runtime) {
-    entriesToInstrument.add(new InstrumentJarToDir(src, dest, runtime));
+    addInstrumenter(new InstrumentJarToDir(src, dest, runtime));
   }
 
 
@@ -1164,11 +1179,19 @@ public abstract class RewriteManager {
      * and field model.  Record the field identifiers in the fields
      * file.
      */
-    for (final Scanner entry : otherClasspathEntries) {
-      scan(entry);
-    }
-    for (final Instrumenter entry : entriesToInstrument) {
-      scan(entry.getScanner());
+    for (final Scanner scanner : scanners) {
+      final String srcPath = scanner.getPath().getAbsolutePath();
+      messenger.info("Scanning classfiles in " + srcPath);
+      messenger.increaseNesting();
+      preScan(srcPath);
+      try {
+        scanner.scan();
+      } catch (final IOException e) {
+        exceptionScan(srcPath, e);
+      } finally {
+        messenger.decreaseNesting();
+        postScan(srcPath);
+      }
     }
     
     /* Finish initializing interesting methods using the class model */
@@ -1186,7 +1209,7 @@ public abstract class RewriteManager {
           sitesOut = new PrintWriter(sitesFile);
       }
       final SiteIdFactory callSiteIdFactory = new SiteIdFactory(sitesOut);      
-      for (final Instrumenter entry : entriesToInstrument) {
+      for (final Instrumenter entry : instrumenters) {
         final String srcPath = entry.getSrcFile().getAbsolutePath();
         final String destPath = entry.getDestFile().getAbsolutePath();
         messenger.info("Instrumenting classfiles in " + srcPath + " to " + destPath);
@@ -1237,27 +1260,6 @@ public abstract class RewriteManager {
       return null;
     }
   }
-  
-  private void scan(final Scanner scanner) {
-    final String srcPath = scanner.getPath().getAbsolutePath();
-    messenger.info("Scanning classfiles in " + srcPath);
-    messenger.increaseNesting();
-    preScan(srcPath);
-    try {
-      scanner.scan();
-    } catch (final IOException e) {
-      exceptionScan(srcPath, e);
-    } finally {
-      messenger.decreaseNesting();
-      postScan(srcPath);
-    }
-  }
-  
-  
-  
-  // ======================================================================
-  // == Helper method for the scanner/instrument classes
-  // ======================================================================
   
   /**
    * Is the classfile blacklisted?

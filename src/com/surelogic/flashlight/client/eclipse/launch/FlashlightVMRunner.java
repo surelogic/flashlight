@@ -193,8 +193,8 @@ final class FlashlightVMRunner implements IVMRunner {
 		 * Build the instrumented class files. First we scan each directory to
 		 * the build the field database, and then we instrument each directory.
 		 */
-		if (instrumentClassfiles(launch.getLaunchConfiguration(),
-				classpathEntryMap, progress)) {
+		if (instrumentClassfiles(
+		    launch.getLaunchConfiguration(), classpathEntryMap, progress)) {
 			// Canceled, abort early
 			return;
 		}
@@ -202,10 +202,10 @@ final class FlashlightVMRunner implements IVMRunner {
 		/*
 		 * Fix the classpath.
 		 */
-		final String[] newClassPath = updateClassPath(configuration,
-				classpathEntryMap);
-		final String[] newBootClassPath = updateBootClassPath(configuration,
-				classpathEntryMap);
+		final String[] newClassPath =
+		  updateClassPath(configuration, classpathEntryMap);
+		final String[] newBootClassPath =
+		  updateBootClassPath(configuration, classpathEntryMap);
 
 		/* Create an updated runner configuration. */
 		final VMRunnerConfiguration newConfig = updateRunnerConfiguration(
@@ -313,8 +313,8 @@ final class FlashlightVMRunner implements IVMRunner {
 
 			// Read the property file
 			Properties flashlightProps = new Properties();
-			final File flashlightPropFile = new File(System
-					.getProperty("user.home"), "flashlight-rewriter.properties");
+			final File flashlightPropFile =
+			  new File(System.getProperty("user.home"), "flashlight-rewriter.properties");
 			boolean failed = false;
 			try {
 				flashlightProps.load(new FileInputStream(flashlightPropFile));
@@ -398,22 +398,33 @@ final class FlashlightVMRunner implements IVMRunner {
 			addToInstrument(manager, instrumentBoot, entryMap);
 
 			try {
-				final Map<String, Set<DuplicateClasses.DuplicateClass>> badDups = manager.execute();
+				final Map<String, Map<String, Boolean>> badDups = manager.execute();
 				if (badDups != null) { // uh oh
+				  final List<String> classpath =
+				    LaunchUtils.convertToLocations(LaunchUtils.getClasspath(launch));
 				  final StringBuilder sb = new StringBuilder();
-				  for (final Map.Entry<String, Set<DuplicateClasses.DuplicateClass>> entry : badDups.entrySet()) {
-				    sb.append("Class ");
-				    sb.append(ClassNameUtil.internal2FullyQualified(entry.getKey()));
-				    sb.append(" appears on the classpath more than once, and only some entries are instrumented: ");
-				    for (final DuplicateClasses.DuplicateClass d : entry.getValue()) {
-				      sb.append("Is ");
-				      sb.append(d.isInstrumented ? "INSTRUMENTED" : "NOT INSTRUMENTED");
-				      sb.append(" on classpath entry ");
-				      sb.append(d.classpathEntry.getAbsolutePath());
-				      sb.append("; ");
-				    }				    
+				  for (final Map.Entry<String, Map<String, Boolean>> entry : badDups.entrySet()) {
+				    /* Scan the classpath: if the first classpath entry that is in the
+				     * set is NOT instrumented, then we have a problem.
+				     */
+				    for (final String x : classpath) {
+				      final Boolean isInstrumented = entry.getValue().get(x);
+				      if (isInstrumented != null) {
+				        // Found the first entry
+				        if (!isInstrumented) {
+				          // It's not instrumented, record a problem
+			            sb.append("Class ");
+			            sb.append(ClassNameUtil.internal2FullyQualified(entry.getKey()));
+			            sb.append(" appears on the classpath more than once, only some entries are instrumented, and the first entry is NOT instrumented: ");
+			            sb.append(entry.getValue().toString());
+				        }
+				        break; // stop searching after finding the first match
+				      }
+				    }
 				  }
-				  throw new RuntimeException(sb.toString());
+				  if (sb.length() > 0) {
+				    throw new RuntimeException(sb.toString());
+				  }
 				}
 			} catch (final CanceledException e) {
 				/*
@@ -461,9 +472,6 @@ final class FlashlightVMRunner implements IVMRunner {
 		for (final String instrument : toBeInstrumented) {
 			final File asFile = new File(instrument);
 			final Entry mapped = entryMap.get(instrument);
-			if (mapped == null) {
-				System.out.println("No mapping for " + instrument);
-			}
 			final File destFile = new File(mapped.outputName);
 			if (asFile.isDirectory()) {
 			  if (mapped.asJar) { 
@@ -867,8 +875,7 @@ final class FlashlightVMRunner implements IVMRunner {
 		 */
 		scanProjects(user, openProjects, interestingProjects, classpathEntryMap);
 		scanProjects(boot, openProjects, interestingProjects, classpathEntryMap);
-		scanProjects(system, openProjects, interestingProjects,
-				classpathEntryMap);
+		scanProjects(system, openProjects, interestingProjects, classpathEntryMap);
 	}
 
 	private static List<IProject> getOpenProjects() {

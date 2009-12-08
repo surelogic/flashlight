@@ -1159,7 +1159,7 @@ public abstract class RewriteManager {
    * is indexed by internal class names, and the values are sets of records
    * describing the locations of the duplicate entries.
    */
-  public final Map<String, Set<DuplicateClasses.DuplicateClass>> execute() {
+  public final Map<String, Map<String, Boolean>> execute() {
     /* First pass: Scan all the classfiles to build the class
      * and field model.  Record the field identifiers in the fields
      * file.
@@ -1169,15 +1169,6 @@ public abstract class RewriteManager {
     }
     for (final Instrumenter entry : entriesToInstrument) {
       scan(entry.getScanner());
-    }
-      
-    /* Look for duplicate classes, and abort if we find a duplicate
-     * class that is sometimes instrumented and sometimes not.
-     */
-    final Map<String, Set<DuplicateClasses.DuplicateClass>> inconsistentDuplicateClasses =
-      duplicateClasses.getInconsistentDuplicates();
-    if (!inconsistentDuplicateClasses.isEmpty()) {
-      return inconsistentDuplicateClasses;
     }
     
     /* Finish initializing interesting methods using the class model */
@@ -1235,7 +1226,16 @@ public abstract class RewriteManager {
       }
     }
     
-    return null;
+    /* Look for duplicate classes, and report any duplicates
+     * that are sometimes instrumented and sometimes not.
+     */
+    final Map<String, Map<String, Boolean>> inconsistentDuplicateClasses =
+      duplicateClasses.getInconsistentDuplicates();
+    if (!inconsistentDuplicateClasses.isEmpty()) {
+      return inconsistentDuplicateClasses;
+    } else {
+      return null;
+    }
   }
   
   private void scan(final Scanner scanner) {

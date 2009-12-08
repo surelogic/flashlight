@@ -11,7 +11,6 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.StringTokenizer;
 
 import javax.xml.bind.JAXBException;
@@ -25,7 +24,6 @@ import com.surelogic._flashlight.rewriter.config.Configuration;
 import com.surelogic._flashlight.rewriter.config.ConfigurationBuilder;
 import com.surelogic._flashlight.rewriter.config.Configuration.FieldFilter;
 import com.surelogic._flashlight.rewriter.ClassNameUtil;
-import com.surelogic._flashlight.rewriter.DuplicateClasses;
 import com.surelogic._flashlight.rewriter.PrintWriterMessenger;
 import com.surelogic._flashlight.rewriter.RewriteManager;
 import com.surelogic._flashlight.rewriter.RewriteMessenger;
@@ -954,18 +952,18 @@ public final class Instrument extends Task {
   			subTask.add(manager);
   		}
   		
-      final Map<String, Set<DuplicateClasses.DuplicateClass>> badDups = manager.execute();
+      final Map<String, Map<String, Boolean>> badDups = manager.execute();
       if (badDups != null) { // uh oh
         final StringBuilder sb = new StringBuilder();
-        for (final Map.Entry<String, Set<DuplicateClasses.DuplicateClass>> entry : badDups.entrySet()) {
+        for (final Map.Entry<String, Map<String, Boolean>> entry : badDups.entrySet()) {
           sb.append("Class ");
           sb.append(ClassNameUtil.internal2FullyQualified(entry.getKey()));
           sb.append(" appears on the classpath more than once, but only some entries are instrumented: ");
-          for (final DuplicateClasses.DuplicateClass d : entry.getValue()) {
+          for (final Map.Entry<String, Boolean> d : entry.getValue().entrySet()) {
             sb.append("Is ");
-            sb.append(d.isInstrumented ? "INSTRUMENTED" : "NOT INSTRUMENTED");
+            sb.append(d.getValue() ? "INSTRUMENTED" : "NOT INSTRUMENTED");
             sb.append(" on classpath entry ");
-            sb.append(d.classpathEntry.getAbsolutePath());
+            sb.append(d.getKey());
             sb.append("; ");
           }
           log(sb.toString(), Project.MSG_ERR);

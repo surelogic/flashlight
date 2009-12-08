@@ -41,7 +41,6 @@ import org.eclipse.ui.progress.UIJob;
 
 import com.surelogic._flashlight.common.*;
 import com.surelogic._flashlight.rewriter.ClassNameUtil;
-import com.surelogic._flashlight.rewriter.DuplicateClasses;
 import com.surelogic._flashlight.rewriter.PrintWriterMessenger;
 import com.surelogic._flashlight.rewriter.RewriteManager;
 import com.surelogic._flashlight.rewriter.RewriteMessenger;
@@ -82,9 +81,8 @@ final class FlashlightVMRunner implements IVMRunner {
 	private final String datePostfix;
 	private final String pathToFlashlightLib;
 
-	private final List<String> user;
-	private final List<String> boot;
-	private final List<String> system;
+	private final List<String> classpath;
+	
 	private final List<String> instrumentUser;
 	private final List<String> instrumentBoot;
 
@@ -104,13 +102,10 @@ final class FlashlightVMRunner implements IVMRunner {
 	
 	
 	public FlashlightVMRunner(final IVMRunner other, final String mainType,
-			final List<String> user, final List<String> boot,
-			final List<String> system, final List<String> iUser,
+			final List<String> classpath, final List<String> iUser,
 			final List<String> iBoot, boolean java14) throws CoreException {
 		delegateRunner = other;
-		this.user = user;
-		this.boot = boot;
-		this.system = system;
+		this.classpath = classpath;
 		instrumentUser = iUser;
 		instrumentBoot = iBoot;
 
@@ -176,7 +171,7 @@ final class FlashlightVMRunner implements IVMRunner {
 		 * directory we need to process, plus 1 remaining unit for the delegate.
 		 */
 		final int totalWork = interestingProjects.size() + // source zips
-				user.size() + boot.size() + system.size() + // scanning
+				classpath.size() + // scanning
 				instrumentUser.size() + instrumentBoot.size() + // instrumenting
 				1; // running
 		final SubMonitor progress = SubMonitor.convert(monitor, totalWork);
@@ -387,21 +382,12 @@ final class FlashlightVMRunner implements IVMRunner {
 			final RewriteManager manager = new VMRewriteManager(configBuilder
 					.getConfiguration(), messenger, fieldsFile, sitesFile,
 					progress);
-
-			// Scan everything on the classpath
-			addToScan(manager, user);
-			addToScan(manager, boot);
-			addToScan(manager, system);
-
-			// Add the entries to be instrumented
-			addToInstrument(manager, instrumentUser, entryMap);
-			addToInstrument(manager, instrumentBoot, entryMap);
-
+			// Init the RewriteManager
+			initializeRewriteManager(manager, entryMap);
+			
 			try {
 				final Map<String, Map<String, Boolean>> badDups = manager.execute();
 				if (badDups != null) { // uh oh
-				  final List<String> classpath =
-				    LaunchUtils.convertToLocations(LaunchUtils.getClasspath(launch));
 				  final StringBuilder sb = new StringBuilder();
 				  for (final Map.Entry<String, Map<String, Boolean>> entry : badDups.entrySet()) {
 				    /* Scan the classpath: if the first classpath entry that is in the
@@ -447,48 +433,38 @@ final class FlashlightVMRunner implements IVMRunner {
 		return false;
 	}
 
-	/**
-	 * Add each entry in the given classpath segment to the scan-only list if it
-	 * is NOT selected to be instrumented.
-	 */
-	private void addToScan(final RewriteManager manager,
-			final List<String> classpath) {
-		for (final String entry : classpath) {
-			if (!instrumentUser.contains(entry)
-					&& !instrumentBoot.contains(entry)) {
-				final File asFile = new File(entry);
-				if (asFile.isDirectory()) {
-					manager.addClasspathDir(asFile);
-				} else {
-					manager.addClasspathJar(asFile);
-				}
-			}
-		}
+	private void initializeRewriteManager(
+	    final RewriteManager manager, final Map<String, Entry> entryMap) {
+	  for (final String cpEntry : classpath) {
+      final File asFile = new File(cpEntry);
+	    if (instrumentUser.contains(cpEntry) || instrumentBoot.contains(cpEntry)) {
+	      // Instrument the entry
+	      final Entry mapped = entryMap.get(cpEntry);
+	      final File destFile = new File(mapped.outputName);
+	      if (asFile.isDirectory()) {
+	        if (mapped.asJar) { 
+	          manager.addDirToJar(asFile, destFile, null);
+	        } else {
+	          manager.addDirToDir(asFile, destFile);
+	        }
+	      } else {
+	        if (mapped.asJar) {
+	          manager.addJarToJar(asFile, destFile, null);
+	        } else {
+	          manager.addJarToDir(asFile, destFile, null);
+	        }
+	      }
+	    } else {
+	      // Only scan it
+        if (asFile.isDirectory()) {
+          manager.addClasspathDir(asFile);
+        } else {
+          manager.addClasspathJar(asFile);
+        }
+	    }
+	  }
 	}
-
-	private void addToInstrument(final RewriteManager manager,
-			final List<String> toBeInstrumented,
-			final Map<String, Entry> entryMap) {
-		for (final String instrument : toBeInstrumented) {
-			final File asFile = new File(instrument);
-			final Entry mapped = entryMap.get(instrument);
-			final File destFile = new File(mapped.outputName);
-			if (asFile.isDirectory()) {
-			  if (mapped.asJar) { 
-				  manager.addDirToJar(asFile, destFile, null);
-			  } else {
-			    manager.addDirToDir(asFile, destFile);
-			  }
-			} else {
-			  if (mapped.asJar) {
-				  manager.addJarToJar(asFile, destFile, null);
-			  } else {
-			    manager.addJarToDir(asFile, destFile, null);
-			  }
-			}
-		}
-	}
-
+	
 	private String[] updateClassPath(final VMRunnerConfiguration configuration,
 			final Map<String, Entry> entryMap) {
 		/*
@@ -873,9 +849,7 @@ final class FlashlightVMRunner implements IVMRunner {
 		 * so, we add the project to the list of interesting projects. Also, we
 		 * compute the location of the instrumentation for the classpath entry.
 		 */
-		scanProjects(user, openProjects, interestingProjects, classpathEntryMap);
-		scanProjects(boot, openProjects, interestingProjects, classpathEntryMap);
-		scanProjects(system, openProjects, interestingProjects, classpathEntryMap);
+    scanProjects(classpath, openProjects, interestingProjects, classpathEntryMap);
 	}
 
 	private static List<IProject> getOpenProjects() {

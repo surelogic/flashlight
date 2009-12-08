@@ -71,7 +71,7 @@ public final class FlashlightLaunchConfigurationDelegate extends
 
 		final int version = getMajorJavaVersion(vm);
 		return new FlashlightVMRunner(runner, mainType,
-				user, boot, system, instrumentUser, instrumentBoot, version == 4);
+				LaunchUtils.convertToLocations(classpath), instrumentUser, instrumentBoot, version == 4);
 	}
 
 	static int getMajorJavaVersion(final IVMInstall vm) {

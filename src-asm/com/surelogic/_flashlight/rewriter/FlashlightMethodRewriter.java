@@ -455,9 +455,10 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     
     /* We don't instrument calls from within synthetic methods */
     if (isSynthetic) {
-      /* We need to check if the current method is a constructor and whether the
-       * called method is the call to the super constructor.  In this case, 
-       * we may still have to update the call if we changed the superclass
+      /*
+       * Bug 1612: We need to check if the current method is a constructor and
+       * whether the called method is the call to the super constructor. In this
+       * case, we may still have to update the call if we changed the superclass
        * of the class being instrumented.
        */
       boolean outputOriginalCall = true;

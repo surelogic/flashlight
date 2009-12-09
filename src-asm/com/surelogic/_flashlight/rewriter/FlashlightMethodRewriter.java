@@ -216,13 +216,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
    * which would have already initialized the field.
    */
   private String lastInitOwner = null;
-  
-//  /**
-//   * The internal type name of the first argument if this method is an
-//   * access method and has at least one argument.  Otherwise this is {@code null}.
-//   */
-//  private final String firstArgInternal;  
-  
+
   /**
    * The index of the next new local variable to allocate.
    */
@@ -461,7 +455,22 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     
     /* We don't instrument calls from within synthetic methods */
     if (isSynthetic) {
-      mv.visitMethodInsn(opcode, owner, name, desc);
+      /* We need to check if the current method is a constructor and whether the
+       * called method is the call to the super constructor.  In this case, 
+       * we may still have to update the call if we changed the superclass
+       * of the class being instrumented.
+       */
+      boolean outputOriginalCall = true;
+      if (name.equals(FlashlightNames.CONSTRUCTOR)) {
+        lastInitOwner = owner;
+        if (isConstructor && stateMachine != null) {
+          outputOriginalCall = false;
+          updateSuperCall(owner, name, desc);
+        }
+      }
+      if (outputOriginalCall) {
+        mv.visitMethodInsn(opcode, owner, name, desc);
+      }
     } else {
       /* Check if we are calling an method makes indirect use of 
        * aggregated state.

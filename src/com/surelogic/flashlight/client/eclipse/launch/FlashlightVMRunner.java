@@ -14,6 +14,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -300,6 +301,33 @@ final class FlashlightVMRunner implements IVMRunner {
 	@SuppressWarnings("cast")
 	private boolean instrumentClassfiles(final ILaunchConfiguration launch,
 			final Map<String, Entry> entryMap, final SubMonitor progress) {
+	  /*
+	   * Bug 1615: Sanity check the instrumented classpath entries first:
+	   * Check that no entry marked for instrumentation is a file system parent
+	   * of any other entry that is marked for instrumentation.
+	   * 
+	   * Could be expensive: O(n^2) 
+	   */
+	  final List<String> allInstrument = new LinkedList<String>();
+	  allInstrument.addAll(instrumentUser);
+	  allInstrument.addAll(instrumentBoot);
+	  final StringBuilder sb = new StringBuilder();
+	  for (final String potentialParent : allInstrument) {
+	    final String test = potentialParent + File.separator;
+	    for (final String potentialChild : allInstrument) {
+	      if (potentialChild.startsWith(test)) {
+	        sb.append("Classpath entry ");
+	        sb.append(potentialParent);
+	        sb.append(" is instrumented and nests the instrumented classpath entry ");
+	        sb.append(potentialChild);
+	        sb.append("  ");
+	      }
+	    }
+	  }
+	  if (sb.length() > 0) {
+	    throw new RuntimeException(sb.toString());
+	  }
+	  
 		runOutputDir.mkdirs();
 		PrintWriter logOut = null;
 		try {
@@ -388,7 +416,7 @@ final class FlashlightVMRunner implements IVMRunner {
 			try {
 				final Map<String, Map<String, Boolean>> badDups = manager.execute();
 				if (badDups != null) { // uh oh
-				  final StringBuilder sb = new StringBuilder();
+				  final StringBuilder sb2 = new StringBuilder();
 				  for (final Map.Entry<String, Map<String, Boolean>> entry : badDups.entrySet()) {
 				    /* Scan the classpath: if the first classpath entry that is in the
 				     * set is NOT instrumented, then we have a problem.
@@ -399,17 +427,18 @@ final class FlashlightVMRunner implements IVMRunner {
 				        // Found the first entry
 				        if (!isInstrumented) {
 				          // It's not instrumented, record a problem
-			            sb.append("Class ");
-			            sb.append(ClassNameUtil.internal2FullyQualified(entry.getKey()));
-			            sb.append(" appears on the classpath more than once, only some entries are instrumented, and the first entry is NOT instrumented: ");
-			            sb.append(entry.getValue().toString());
+			            sb2.append("Class ");
+			            sb2.append(ClassNameUtil.internal2FullyQualified(entry.getKey()));
+			            sb2.append(" appears on the classpath more than once, only some entries are instrumented, and the first entry is NOT instrumented: ");
+			            sb2.append(entry.getValue().toString());
+			            sb2.append("  ");
 				        }
 				        break; // stop searching after finding the first match
 				      }
 				    }
 				  }
-				  if (sb.length() > 0) {
-				    throw new RuntimeException(sb.toString());
+				  if (sb2.length() > 0) {
+				    throw new RuntimeException(sb2.toString());
 				  }
 				}
 			} catch (final CanceledException e) {

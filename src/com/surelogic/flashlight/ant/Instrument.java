@@ -41,8 +41,8 @@ public final class Instrument extends Task {
     public boolean accept(final File dir, final String name) {
       final String lowercase = name.toLowerCase();
       /* Test for jar and zip files.  I think the sun standard says the
-       * extenions must be .jar files, but apple provides at least one
-       * .zip file (QTJava.zip).
+       * extensions must be ".jar", but Apple provides at least one
+       * ".zip" file (QTJava.zip).
        */ 
       return lowercase.endsWith(".jar") || lowercase.endsWith(".zip");
     }

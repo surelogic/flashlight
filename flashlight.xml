@@ -22,7 +22,7 @@
 	<property name="flashlight-runtime-4.jar" value="${basedir}/flashlight-runtime.java1.4.jar" />
 	<property name="flashlight-servlet.jar" value="${basedir}/flashlight-servlet.jar" />
 	<property name="flashlight-rewriter.jar" value="${basedir}/flashlight-rewriter.jar" />
-    <property name="java1.4.lib" value="c:/Program Files/Java/j2re1.4.2_19/lib"/>
+    <property name="java1.4.lib" value="/System/Library/Frameworks/JavaVM.framework/Versions/1.4.2-leopard/Classes"/>
   
   <path id="jaxb.classpath">
     <pathelement path="${lib}/jaxb1-impl.jar"/>
@@ -105,7 +105,7 @@
 			<arg value="com.surelogic.internal"/>
 			<arg value="-verify"/>
 			<arg value="-classpath"/>
-			<arg value="${java1.4.lib}/rt.jar;lib/build/retrotranslator-runtime-1.2.9.jar;lib/build/backport-util-concurrent-3.1.jar"/>
+			<arg value="${java1.4.lib}/classes.jar:lib/build/retrotranslator-runtime-1.2.9.jar:lib/build/backport-util-concurrent-3.1.jar"/>
 		</java>
 		<copy file="${flashlight-runtime-4.jar}" todir="${basedir}/../flashlight-client-eclipse/lib"/>	  	  
 	</target>

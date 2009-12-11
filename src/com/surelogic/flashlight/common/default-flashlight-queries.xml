@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes'?>
 <ad-hoc version='3.0'>
-  <query id='094fc6db-5a5b-4495-aacd-54f5a5aa1691' description='What fields (static, non-final) are shared?' revision='5' display='true' display-at-root='true'>-- NO-ROWS-MSG=No static, non-final fields are shared between two or more threads.
+  <query id='094fc6db-5a5b-4495-aacd-54f5a5aa1691' description='What fields (static, non-final) are shared?' revision='6' display='true' display-at-root='true'>-- NO-ROWS-MSG=No static, non-final fields are shared between two or more threads.
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What fields (static, non-final) are shared?
@@ -39,6 +39,19 @@
 --      &lt;/tbody&gt;
 --  &lt;/table&gt;
 --&lt;/p&gt;
+--
+--&lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+--
+--&lt;img src=&quot;what-fields-static-non-final-are-shared.png&quot; /&gt;
+--
+--&lt;p&gt;
+--The above example shows one static field -
+--&lt;code&gt;LOGICAL_MAP_HEIGHT&lt;/code&gt; - that is shared across multiple
+--threads. &lt;code&gt;LOGICAL_MAP_HEIGHT&lt;/code&gt; is found in the
+--&lt;code&gt;Common&lt;/code&gt; class, and is accessed by the &apos;Thread-4&apos;,
+--&apos;Thread-5&apos;, and &apos;main&apos; threads.
+--&lt;/p&gt;
+
 --END-INFO
 select
   O.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;,
@@ -352,7 +365,7 @@ WHERE
    A.FIELD = ?FieldId? AND 
    A.RECEIVER IS NULL
 ORDER BY A.TS ASC</query>
-  <query id='213c73ad-b3f6-4aef-9a05-f0c31d8fdcde' description='What fields (non-static) have a lock set?' revision='5' display='true' display-at-root='true'>-- NO-ROWS-MSG=No non-final non-volatile non-static fields that are shared after object construction have a common lock held for each access.
+  <query id='213c73ad-b3f6-4aef-9a05-f0c31d8fdcde' description='What fields (non-static) have a lock set?' revision='6' display='true' display-at-root='true'>-- NO-ROWS-MSG=No non-final non-volatile non-static fields that are shared after object construction have a common lock held for each access.
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What fields (non-static) have a lock set?
@@ -386,6 +399,16 @@ ORDER BY A.TS ASC</query>
 --      &lt;/tbody&gt;
 --  &lt;/table&gt;
 --&lt;/p&gt;
+--
+--&lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+--
+--&lt;img src=&quot;what-fields-non-static-have-a-lockset.png&quot; /&gt;
+--
+--&lt;p&gt;
+--The above example shows two fields, both reported to have a lock set for
+--a single instance of the &lt;code&gt;MapView&lt;/code&gt; class.
+--&lt;/p&gt;
+
 --END-INFO
 SELECT 
   O.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;,
@@ -398,7 +421,7 @@ SELECT
  INNER JOIN FIELDINSTANCELOCKSET F ON F.FIELD = I.FIELD AND F.RECEIVER = I.RECEIVER 
  GROUP BY O.PackageName,O.ClassName,FI.FieldName,I.Field
  ORDER BY O.PackageName,O.ClassName,FI.FieldName</query>
-  <query id='2f505921-50fb-405b-bc78-4a5fe9228957' description='What fields (static) have a lock set? ' revision='8' display='true' display-at-root='true'>-- NO-ROWS-MSG=No non-final non-volatile static fields that are shared have a common lock held for each access.
+  <query id='2f505921-50fb-405b-bc78-4a5fe9228957' description='What fields (static) have a lock set? ' revision='9' display='true' display-at-root='true'>-- NO-ROWS-MSG=No non-final non-volatile static fields that are shared have a common lock held for each access.
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What fields (static) have a lock set?
@@ -430,6 +453,17 @@ SELECT
 --      &lt;/tbody&gt;
 --  &lt;/table&gt;
 --&lt;/p&gt;
+--
+--&lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+--
+--&lt;img src=&quot;what-fields-static-have-a-lockset.png&quot; /&gt;
+--
+--&lt;p&gt;
+--The above example shows the static field &lt;code&gt;copyComponents&lt;/code&gt; in
+--the &lt;code&gt;EditBus&lt;/code&gt; class.  A lock on a particular
+--&lt;code&gt;ArrayList&lt;/code&gt; object is always acquired before this field is
+--accessed.
+--&lt;/p&gt;
 --END-INFO
 SELECT 
   O.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;,
@@ -443,7 +477,7 @@ SELECT
  INNER JOIN INTERESTINGFIELD I ON I.RECEIVER IS NULL AND I.FIELD=FI.ID
  INNER JOIN FIELDLOCKSET F ON F.FIELD = I.FIELD
  ORDER BY O.PackageName,O.ClassName,FI.FieldName</query>
-  <query id='33868960-7df8-4bab-bb33-ffb230957940' description='What fields are accessed by multiple threads during object construction?' revision='2' display='true' display-at-root='true'>-- NO-ROWS-MSG=No fields are accessed by multiple threads during object construction.
+  <query id='33868960-7df8-4bab-bb33-ffb230957940' description='What fields are accessed by multiple threads during object construction?' revision='3' display='true' display-at-root='true'>-- NO-ROWS-MSG=No fields are accessed by multiple threads during object construction.
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What fields are accessed by multiple threads during object construction?
@@ -504,6 +538,32 @@ SELECT
 --      &lt;/tbody&gt;
 --  &lt;/table&gt;
 --&lt;/p&gt;
+--
+--&lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+--
+--&lt;img src=&quot;what-fields-are-accessed-by-multiple-threads-during-object-construction.png&quot; /&gt;
+--
+--&lt;p&gt;
+--The above example shows two fields that were accessed by multiple
+--threads during object construction. We can see from the
+--&lt;em&gt;Instances&lt;/em&gt; column that six &lt;code&gt;Zookeeper&lt;/code&gt; object had
+--the &lt;code&gt;state&lt;/code&gt; accessed by multiple threads.  Over all six objects, there
+--were 208 reads and 12 writes of &lt;code&gt;state&lt;/code&gt;, with three reads and
+--four writes occurring in the constructor.  To see the instances of
+--&lt;code&gt;Zookeeper&lt;/code&gt; that were actually seen by multiple threads while
+--being initialized, you would run the query &lt;code&gt;&quot;What are the
+--improperly published instances of this non-static field?&quot;&lt;/code&gt;
+--&lt;/p&gt;
+--&lt;p&gt;
+--It is important to note that the query does not prove either of these
+--fields were improperly published.  It may be that there is a
+--happens-before event of some sort between the reads and writes of each
+--field.  This would be the case if a thread was initialized in a
+--constructor and &lt;code&gt;this&lt;/code&gt; was passed into the new thread.  If
+--the state of &lt;code&gt;this&lt;/code&gt; is not modified afterwards, then there is
+--no danger that the program will behave unexpectedly.
+--&lt;/p&gt;
+--
 --END-INFO
 select
   O.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;,
@@ -581,7 +641,7 @@ WHERE A.FIELD = ?FieldId? AND
       L.LOCKEVENT = ALH.LASTACQUISITION AND
       L.LOCKHELD = ?Lock?
 ORDER BY 1,2,3</query>
-  <query id='419c927e-a87c-4364-b4a9-2e8f50f728f6' description='What fields (static) are shared?' revision='9' display='true' display-at-root='true'>-- NO-ROWS-MSG=No static fields are shared between two or more threads.
+  <query id='419c927e-a87c-4364-b4a9-2e8f50f728f6' description='What fields (static) are shared?' revision='10' display='true' display-at-root='true'>-- NO-ROWS-MSG=No static fields are shared between two or more threads.
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What fields (static) are shared?
@@ -618,6 +678,17 @@ ORDER BY 1,2,3</query>
 --	&lt;/tr&gt;
 --      &lt;/tbody&gt;
 --  &lt;/table&gt;
+--&lt;/p&gt;
+--
+--&lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+--
+--&lt;img src=&quot;what-fields-static-are-shared.png&quot; /&gt;
+--
+--&lt;p&gt;
+--The above example shows one static field - &lt;code&gt;INSTANCE&lt;/code&gt; - that
+--is shared across multiple threads.  &lt;code&gt;INSTANCE&lt;/code&gt; is found in
+--the &lt;code&gt;GameMap&lt;/code&gt; class, and is accessed by the
+--&apos;AWT-EventQueue-0&apos;, &apos;Thread-2&apos;, and &apos;main&apos; threads.
 --&lt;/p&gt;
 --END-INFO
 select
@@ -1167,7 +1238,7 @@ SELECT OBJID(COUNTS.RECEIVER) &quot;?Field? Object&quot;,
     WHERE FIELD = ?FieldId? 
     GROUP BY RECEIVER) AS LOCKS
   ON COUNTS.RECEIVER = LOCKS.RECEIVER</query>
-  <query id='71a6fb5b-e5e1-4d25-bdc8-67ab5df1f66e' description='What fields (non-static, non-final) are shared?' revision='6' display='true' display-at-root='true'>-- NO-ROWS-MSG=No non-static fields are shared between two or more threads.
+  <query id='71a6fb5b-e5e1-4d25-bdc8-67ab5df1f66e' description='What fields (non-static, non-final) are shared?' revision='7' display='true' display-at-root='true'>-- NO-ROWS-MSG=No non-static fields are shared between two or more threads.
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What fields (non-static, non-final) are shared?
@@ -1226,6 +1297,22 @@ SELECT OBJID(COUNTS.RECEIVER) &quot;?Field? Object&quot;,
 --	&lt;/tr&gt;
 --      &lt;/tbody&gt;
 --  &lt;/table&gt;
+--&lt;/p&gt;
+--
+--&lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+--
+--&lt;img src=&quot;what-fields-non-static-non-final-are-shared.png&quot; /&gt;
+--
+--&lt;p&gt;
+--The above example shows two non-static, non-final fields - one in the
+--&lt;code&gt;GameMap&lt;/code&gt; class and one in the &lt;code&gt;Planet&lt;/code&gt; class..
+--We can see from the &lt;em&gt;Instances&lt;/em&gt; column that only one
+--&lt;code&gt;GameMap&lt;/code&gt; object had these fields accessed by multiple
+--threads, whereas 30 different &lt;code&gt;Planet&lt;/code&gt; objects are accessed
+--by multiple threads.  In the one &lt;code&gt;GameMap&lt;/code&gt; object, the
+--&lt;code&gt;f_endOfTurnObservers&lt;/code&gt; field was accessed by two different
+--threads.  It was read 34 times and written one time in the
+--&lt;code&gt;GameMap&lt;/code&gt; constructor.
 --&lt;/p&gt;
 --END-INFO
 select
@@ -1348,7 +1435,7 @@ WHERE
    A.FIELD = ?FieldId? AND 
    A.RECEIVER = ?Receiver?
 ORDER BY A.TS ASC</query>
-  <query id='803ca72a-f303-4319-8a35-9494eccc3d26' description='What locks could potentially cause deadlock?' revision='5' display='true' display-at-root='true'>-- NO-ROWS-MSG=No potential lock cycles were observed during this run of the program.
+  <query id='803ca72a-f303-4319-8a35-9494eccc3d26' description='What locks could potentially cause deadlock?' revision='6' display='true' display-at-root='true'>-- NO-ROWS-MSG=No potential lock cycles were observed during this run of the program.
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What locks could potentially cause deadlock?
@@ -1370,7 +1457,7 @@ ORDER BY A.TS ASC</query>
 --    of deadlock.
 --  &lt;figure id=&quot;query-deadlock-example&quot;&gt;
 --    &lt;title&gt;Example of a potential deadlock&lt;/title&gt;
---    &lt;mediaobject&gt;&lt;imageobject&gt;&lt;imagedata fileref=&quot;images/query-deadlock-example.png&quot; /&gt;&lt;/imageobject&gt;&lt;/mediaobject&gt;
+--    &lt;mediaobject&gt;&lt;imageobject&gt;&lt;imagedata fileref=&quot;query-deadlock-example.png&quot; /&gt;&lt;/imageobject&gt;&lt;/mediaobject&gt;
 --  &lt;/figure&gt;
 --  &lt;table border=&quot;1&quot;&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
@@ -1408,6 +1495,25 @@ ORDER BY A.TS ASC</query>
 --	&lt;/tr&gt;
 --      &lt;/tbody&gt;
 --  &lt;/table&gt;
+--&lt;/p&gt;
+--
+--&lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+--
+--&lt;img src=&quot;what-locks-could-potentially-cause-deadlock.png&quot; /&gt;
+--
+--&lt;p&gt;
+--The above example displays a potential cycle, which in this case is
+--cycle number 7.  This number is only used for purposes of reference, and
+--doesn&apos;t have any particular meaning outside of the context of this
+--analysis.  The cycle itself is between four locks:
+--&lt;code&gt;NIOServerCnxn$Factory-855&lt;/code&gt;, &lt;code&gt;HashSet-4877&lt;/code&gt;,
+--&lt;code&gt;HashSet-4877&lt;/code&gt;, and &lt;code&gt;NIOServerCnxn-4895&lt;/code&gt;. Two
+--potential lock acquisition orders in the cycle below are
+--&amp;lt;&lt;code&gt;NIOServerCnxn$Factory-855&lt;/code&gt; - &lt;code&gt;HashSet-4877&lt;/code&gt;
+--and &amp;lt;&lt;code&gt;HashSet-4877&lt;/code&gt; - &lt;code&gt;NIOServerCnxn-4895&lt;/code&gt; -
+--&lt;code&gt;NIOServerCnxn$Factory-855&lt;/code&gt;&amp;gt;.  If these two orders were to
+--happen in different threads at the same time, then a deadlock would
+--occur.
 --&lt;/p&gt;
 --END-INFO
 select Component &quot;Cycle&quot;, OBJID(LockHeld) &quot;LockHeld__(r)|&quot;,
@@ -1542,7 +1648,7 @@ WHERE O.CLASSNAME = &apos;?Class?&apos; AND
       THO.ID = LH.INTHREAD
 GROUP BY LH.LOCKEVENT,L.TS,THO.THREADNAME,TR.ID
 ORDER BY 5 DESC,4</query>
-  <query id='976506a9-cf85-4907-8d7f-2fd9b5a28d6d' description='What fields are read by the AWT Event Dispatch Thread and written in others?' revision='2' display='true' display-at-root='true'>-- NO-ROWS-MSG=No fields read by the AWT Event Dispatch Thread were modified outside of it.
+  <query id='976506a9-cf85-4907-8d7f-2fd9b5a28d6d' description='What fields are read by the AWT Event Dispatch Thread and written in others?' revision='3' display='true' display-at-root='true'>-- NO-ROWS-MSG=No fields read by the AWT Event Dispatch Thread were modified outside of it.
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What fields are read by the AWT Event Dispatch Thread and written in others?
@@ -1607,6 +1713,21 @@ ORDER BY 5 DESC,4</query>
 --      &lt;/tbody&gt;
 --  &lt;/table&gt;
 --&lt;/p&gt;
+--
+--&lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+--
+--&lt;img src=&quot;what-fields-are-read-by-the-awt-edt-and-written-in-others.png&quot; /&gt;
+--
+--
+--&lt;p&gt;
+--The above example shows four fields that are read both inside and
+--outsied of the AWT Event Dispatch Thread.  We can see from the
+--&lt;em&gt;Threads Involved&lt;/em&gt; column that two different threads, one being
+--the AWT Event Dispatch Thread, accessed these fields in the
+--&lt;code&gt;ChatTestClient&lt;/code&gt; class had these fields accessed by multiple
+--threads.  It was read nine times and and written one times, with one of
+--those writes occurring in the &lt;code&gt;ChatTestClient&lt;/code&gt; constructor.
+--&lt;/p&gt;
 --END-INFO
 SELECT 
   O.PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;,
@@ -1616,7 +1737,6 @@ SELECT
   SUM(FI.WriteUCCount) + SUM(FI.WriteCount) &quot;Writes__(sum on 2,3)(r)&quot;,
   SUM(FI.ReadUCCount) &quot;Reads During Construction__(sum on 2,3)(r)&quot;,
   SUM(FI.WriteUCCount) &quot;Writes During Construction__(sum on 2,3)(r)&quot;,
-  COUNT(FI.Receiver) &quot;Instances__(r)&quot;,
   COUNT(DISTINCT THO.ThreadName) &quot;Threads Involved__(r)&quot;,
   F.Id &quot;FieldId__(hide)&quot;
 FROM
@@ -1636,13 +1756,14 @@ WHERE O.FLAG=&apos;T&apos; AND
       A.RW = &apos;W&apos;) AS MIXEDAWT,OBJECT O,FIELD F, FIELDINSTANCETHREAD FI, OBJECT THO
 WHERE F.ID = MIXEDAWT.FIELD AND 
       F.VOLATILE = &apos;N&apos; AND 
-      F.DECLARINGTYPE = O.ID AND
-      FI.FIELD = F.ID AND
+      O.ID = F.DECLARINGTYPE AND
+      FI.FIELD = MIXEDAWT.FIELD AND
+      FI.RECEIVER = MIXEDAWT.RECEIVER AND
       THO.ID = FI.Thread
 GROUP BY O.PACKAGENAME,O.CLASSNAME,F.FIELDNAME,F.ID
 ORDER BY 1,2,3
 </query>
-  <query id='9d05ac24-20c2-436e-af6b-2bd0bc7dbcfb' description='Where does a thread hold a lock and acquire another?' revision='8' display='true' display-at-root='true'>-- NO-ROWS-MSG=No locks were observed to be acquired while another was already held during this run of the program.
+  <query id='9d05ac24-20c2-436e-af6b-2bd0bc7dbcfb' description='Where does a thread hold a lock and acquire another?' revision='9' display='true' display-at-root='true'>-- NO-ROWS-MSG=No locks were observed to be acquired while another was already held during this run of the program.
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    Where does a thread hold a lock and acquire another?
@@ -1673,6 +1794,19 @@ ORDER BY 1,2,3
 --	&lt;/tr&gt;
 --      &lt;/tbody&gt;
 --  &lt;/table&gt;
+--&lt;/p&gt;
+--
+--&lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+--
+--&lt;img src=&quot;where-does-a-thread-hold-a-lock-and-acquire-another.png /&gt;
+--
+--&lt;p&gt;
+--The above example lists three different lines of code in three different
+--class files - line 121 of &lt;code&gt;CommandVisitor&lt;/code&gt;, line 210 of
+--&lt;code&gt;Server&lt;/code&gt;, and line 116 of &lt;code&gt;TurnCyclicBarrier&lt;/code&gt;.  On
+--each line a lock was acquired while some other lock was already held.
+--The maximum number of locks held before a lock was acquired on that
+--particular line was one, two, and two respectively.
 --&lt;/p&gt;
 --END-INFO
 SELECT PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;,
@@ -1920,7 +2054,7 @@ WHERE A.FIELD = ?FieldId? AND
          (NOT EXISTS (SELECT LOCKHELD FROM LOCKSHELD WHERE LOCKEVENT = ALH.LASTACQUISITION) OR
           (NOT ?Lock? IN (SELECT LOCKHELD FROM LOCKSHELD WHERE LOCKEVENT = ALH.LASTACQUISITION)))))
 </query>
-  <query id='bd72a5e4-42aa-415d-aa72-28d351f629a4' description='What fields (non-static) are shared?' revision='9' display='true' display-at-root='true'>-- NO-ROWS-MSG=No non-static fields are shared between two or more threads.
+  <query id='bd72a5e4-42aa-415d-aa72-28d351f629a4' description='What fields (non-static) are shared?' revision='10' display='true' display-at-root='true'>-- NO-ROWS-MSG=No non-static fields are shared between two or more threads.
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What fields (non-static) are shared?
@@ -1980,6 +2114,20 @@ WHERE A.FIELD = ?FieldId? AND
 --      &lt;/tbody&gt;
 --  &lt;/table&gt;
 --&lt;/p&gt;
+--&lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+--
+--&lt;img src=&quot;what-fields-non-static-are-shared.png&quot; /&gt;
+--
+--&lt;p&gt;
+--The above example shows several non-static fields in the
+--&lt;code&gt;ChatTestClient&lt;/code&gt; class.  We can see from the
+--&lt;em&gt;Instances&lt;/em&gt; column that only one &lt;code&gt;ChatTestClient&lt;/code&gt;
+--object had these fields accessed by multiple threads.  In this one
+--object, the &lt;code&gt;f_connectedToGameServer&lt;/code&gt; field was accessed by
+--three different threads .  It was read twice and written three times,
+--with one of those writes occurring in the &lt;code&gt;ChatTestClient&lt;/code&gt;
+--constructor.
+--&lt;/p&gt;
 --END-INFO
 select
   O.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;,
@@ -2004,7 +2152,7 @@ where
   and FIRC.FIELD = F.ID
 group by O.PackageName,O.ClassName,F.FieldName,F.Id
 order by O.PackageName,O.ClassName,F.FieldName</query>
-  <query id='c744b5b5-15f0-4f72-a344-7e52bcac5071' description='What fields (static) have an empty lock set?' revision='7' display='true' display-at-root='true'>-- NO-ROWS-MSG=All non-final non-volatile static fields that are shared have a common lock held for each access.
+  <query id='c744b5b5-15f0-4f72-a344-7e52bcac5071' description='What fields (static) have an empty lock set?' revision='8' display='true' display-at-root='true'>-- NO-ROWS-MSG=All non-final non-volatile static fields that are shared have a common lock held for each access.
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What fields (static) have an empty lock set?
@@ -2031,6 +2179,15 @@ order by O.PackageName,O.ClassName,F.FieldName</query>
 --	&lt;/tr&gt;
 --      &lt;/tbody&gt;
 --  &lt;/table&gt;
+--&lt;/p&gt;
+--
+--&lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+--
+--&lt;img src=&quot;what-fields-static-have-an-empty-lockset.png&quot; /&gt;
+--
+--&lt;p&gt;
+--The above example shows two static fields with no lock set -
+--&lt;code&gt;checkedForManager&lt;/code&gt; and &lt;code&gt;debug&lt;/code&gt;.
 --&lt;/p&gt;
 --END-INFO
 SELECT 
@@ -2113,7 +2270,7 @@ where ld.Lock=?Lock?
 group by lo.PackageName,lo.ClassName, s.AtLine, tho.ThreadName, le.trace
 order by lo.PackageName, lo.ClassName, s.AtLine, tho.ThreadName, sum(ld.Duration) desc
   </query>
-  <query id='cb38a427-c259-4690-abe2-acea9661f737' description='What locks are contended for the longest time?' revision='6' display='true' display-at-root='true'>-- NO-ROWS-MSG=No locks were observed to be acquired during this run of the program.
+  <query id='cb38a427-c259-4690-abe2-acea9661f737' description='What locks are contended for the longest time?' revision='7' display='true' display-at-root='true'>-- NO-ROWS-MSG=No locks were observed to be acquired during this run of the program.
 --    What locks are contended for the longest time?
 --&lt;/strong&gt;&lt;/p&gt;
 --&lt;p&gt;
@@ -2152,6 +2309,21 @@ order by lo.PackageName, lo.ClassName, s.AtLine, tho.ThreadName, sum(ld.Duration
 --	&lt;/tr&gt;
 --      &lt;/tbody&gt;
 --  &lt;/table&gt;
+--&lt;/p&gt;
+--
+--&lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+--
+--&lt;img src=&quot;what-locks-are-contended-for-the-longest-time.png&quot; /&gt;
+--
+--&lt;p&gt;
+--The above example lists some of the locks that were acquired during this
+--Flashlight run, sorted in descending order by average block time.
+--Threads acquiring &lt;code&gt;ReentrantReadWriteLock-1256&lt;/code&gt; waited an
+--average of 72 microseconds before the lock was acquired and the thread
+--could continue working.  We can see that most waited-on lock (on
+--average) has a significantly smaller block time, so it may be worth
+--investigating &lt;code&gt;ReentrantReadWriteLock-1256&lt;/code&gt; further to see
+--what is causing it to wait longer on average.
 --&lt;/p&gt;
 --END-INFO
 select OBJID(Lock) &quot;Lock__(c)&quot;,
@@ -2219,7 +2391,7 @@ SELECT
    THO.ID = FI.THREAD AND 
    F.ID = FI.FIELD AND
    CO.ID = F.DECLARINGTYPE</query>
-  <query id='d1176c97-e3b6-483b-a341-6914a6f64860' description='What kinds of objects are indirectly accessed by more than one thread?' revision='5' display='true' display-at-root='true'>--BEGIN-INFO
+  <query id='d1176c97-e3b6-483b-a341-6914a6f64860' description='What kinds of objects are indirectly accessed by more than one thread?' revision='6' display='true' display-at-root='true'>--BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What kinds of objects are indirectly accessed by more than one thread?
 --&lt;/strong&gt;&lt;/p&gt;
@@ -2258,6 +2430,19 @@ SELECT
 --      &lt;/tbody&gt;
 --  &lt;/table&gt;
 --&lt;/p&gt;
+--
+--&lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+--
+--&lt;img src=&quot;what-kinds-of-objects-are-indirectly-accessed-by-more-than-one-thread.png /&gt;
+--
+--&lt;p&gt;
+--The above example lists some of the types that were indirectly accessed
+--by more than one thread.  In this Flashlight run, instances of
+--&lt;code&gt;java.util.BitSet&lt;/code&gt; were accessed by two threads a total of
+--1995 times.  To get a breakdown per-object, we would run the query
+--&lt;code&gt;&quot;What instances of this class are indirectly accessed by more than
+--one thread?&quot;&lt;/code&gt;
+--&lt;/p&gt;
 --END-INFO
 SELECT T.PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;, T.CLASSNAME &quot;Class__(&apos;class.gif&apos;)|&quot;, COUNT(DISTINCT THO.THREADNAME) &quot;Threads__(r)&quot;, COUNT (IA.ID) &quot;Accesses__(sum on 3)(r)&quot;
  FROM  (SELECT RECEIVER 
@@ -2267,7 +2452,7 @@ SELECT T.PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;, T.CLASSNAME
  WHERE IA.RECEIVER = R.RECEIVER AND O.ID = IA.RECEIVER AND T.ID = O.TYPE AND THO.ID = IA.INTHREAD
  GROUP BY T.PACKAGENAME, T.CLASSNAME
  ORDER BY 1,2,3,4</query>
-  <query id='d4d2af9b-ce4d-4457-9e94-01972fcb58d3' description='What fields (non-static) have an empty lock set?' revision='7' display='true' display-at-root='true'>-- NO-ROWS-MSG=All non-final non-volatile non-static fields that are shared after object construction have a common lock held for each access.
+  <query id='d4d2af9b-ce4d-4457-9e94-01972fcb58d3' description='What fields (non-static) have an empty lock set?' revision='8' display='true' display-at-root='true'>-- NO-ROWS-MSG=All non-final non-volatile non-static fields that are shared after object construction have a common lock held for each access.
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What fields (non-static) have an empty lock set?
@@ -2300,6 +2485,15 @@ SELECT T.PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;, T.CLASSNAME
 --	&lt;/tr&gt;
 --      &lt;/tbody&gt;
 --  &lt;/table&gt;
+--&lt;/p&gt;
+--
+--&lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+--
+--&lt;img src=&quot;what-fields-non-static-have-an-empty-lockset.png&quot; /&gt;
+--
+--&lt;p&gt;
+--The above example shows four fields, all of which are reported to have
+--an empty lock set for a single instance of the &lt;code&gt;MapView&lt;/code&gt; class.
 --&lt;/p&gt;
 --END-INFO
 SELECT 
@@ -2525,104 +2719,104 @@ FROM
 WHERE F.ID = FA.FIELD AND A.FIELD = F.ID AND DT.ID = F.DECLARINGTYPE
 GROUP BY DT.PACKAGENAME,DT.CLASSNAME,F.FIELDNAME,F.ID,FA.HELD
 ORDER BY 1,2,3</query>
-  <sub-query id='094fc6db-5a5b-4495-aacd-54f5a5aa1691' sub-query='ce90be0d-9d7a-49a6-8334-c6f37112fa4b'/>
-  <sub-query id='094fc6db-5a5b-4495-aacd-54f5a5aa1691' sub-query='4c9fcdb0-e7dc-46a0-87b6-c00b3caa8a8a'/>
-  <sub-query id='094fc6db-5a5b-4495-aacd-54f5a5aa1691' sub-query='1fcd4578-f20e-4671-8f55-b6bec64f4249'/>
   <sub-query id='094fc6db-5a5b-4495-aacd-54f5a5aa1691' sub-query='6a39e6ca-29e9-4093-ba03-0e9bd9503a1a'/>
+  <sub-query id='094fc6db-5a5b-4495-aacd-54f5a5aa1691' sub-query='1fcd4578-f20e-4671-8f55-b6bec64f4249'/>
+  <sub-query id='094fc6db-5a5b-4495-aacd-54f5a5aa1691' sub-query='4c9fcdb0-e7dc-46a0-87b6-c00b3caa8a8a'/>
+  <sub-query id='094fc6db-5a5b-4495-aacd-54f5a5aa1691' sub-query='ce90be0d-9d7a-49a6-8334-c6f37112fa4b'/>
   <sub-query id='1a6082af-29c0-41af-b5bc-995ec6183787' sub-query='83d613b3-283e-4100-9a82-e42adf107fe6'/>
-  <sub-query id='1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a' sub-query='12592a6f-1b1e-4e22-b17a-56b2e4ff0495'/>
-  <sub-query id='1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a' sub-query='39872cb4-369c-4dd8-90fd-1847a3f05dc9'/>
   <sub-query id='1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a' sub-query='d84c1559-9336-4255-a15d-51413859a005'/>
-  <sub-query id='1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a' sub-query='fd49f015-3585-4602-a5d1-4e67ef7b6a55'/>
+  <sub-query id='1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a' sub-query='12592a6f-1b1e-4e22-b17a-56b2e4ff0495'/>
   <sub-query id='1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a' sub-query='5ebba191-8523-4253-b639-872d6da4dc92'/>
+  <sub-query id='1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a' sub-query='39872cb4-369c-4dd8-90fd-1847a3f05dc9'/>
+  <sub-query id='1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a' sub-query='fd49f015-3585-4602-a5d1-4e67ef7b6a55'/>
   <sub-query id='1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a' sub-query='732daa1f-dac0-4f40-b714-8190f903d323'/>
-  <sub-query id='1fcd4578-f20e-4671-8f55-b6bec64f4249' sub-query='83d613b3-283e-4100-9a82-e42adf107fe6'/>
   <sub-query id='1fcd4578-f20e-4671-8f55-b6bec64f4249' sub-query='ae2c5715-740e-4850-a404-38bdc8cde6b6'/>
+  <sub-query id='1fcd4578-f20e-4671-8f55-b6bec64f4249' sub-query='83d613b3-283e-4100-9a82-e42adf107fe6'/>
   <sub-query id='213c73ad-b3f6-4aef-9a05-f0c31d8fdcde' sub-query='708d1b8a-5274-4a25-b0b4-67f1a7a86690'/>
   <sub-query id='213c73ad-b3f6-4aef-9a05-f0c31d8fdcde' sub-query='6d8d0985-0830-4f18-a655-fa7b43703d5f'/>
-  <sub-query id='2f505921-50fb-405b-bc78-4a5fe9228957' sub-query='ce90be0d-9d7a-49a6-8334-c6f37112fa4b'/>
-  <sub-query id='2f505921-50fb-405b-bc78-4a5fe9228957' sub-query='4c9fcdb0-e7dc-46a0-87b6-c00b3caa8a8a'/>
-  <sub-query id='2f505921-50fb-405b-bc78-4a5fe9228957' sub-query='1fcd4578-f20e-4671-8f55-b6bec64f4249'/>
   <sub-query id='2f505921-50fb-405b-bc78-4a5fe9228957' sub-query='6a39e6ca-29e9-4093-ba03-0e9bd9503a1a'/>
+  <sub-query id='2f505921-50fb-405b-bc78-4a5fe9228957' sub-query='1fcd4578-f20e-4671-8f55-b6bec64f4249'/>
+  <sub-query id='2f505921-50fb-405b-bc78-4a5fe9228957' sub-query='4c9fcdb0-e7dc-46a0-87b6-c00b3caa8a8a'/>
+  <sub-query id='2f505921-50fb-405b-bc78-4a5fe9228957' sub-query='ce90be0d-9d7a-49a6-8334-c6f37112fa4b'/>
   <sub-query id='33868960-7df8-4bab-bb33-ffb230957940' sub-query='708d1b8a-5274-4a25-b0b4-67f1a7a86690'/>
   <sub-query id='33868960-7df8-4bab-bb33-ffb230957940' sub-query='6d8d0985-0830-4f18-a655-fa7b43703d5f'/>
-  <sub-query id='419c927e-a87c-4364-b4a9-2e8f50f728f6' sub-query='ce90be0d-9d7a-49a6-8334-c6f37112fa4b'/>
-  <sub-query id='419c927e-a87c-4364-b4a9-2e8f50f728f6' sub-query='4c9fcdb0-e7dc-46a0-87b6-c00b3caa8a8a'/>
-  <sub-query id='419c927e-a87c-4364-b4a9-2e8f50f728f6' sub-query='1fcd4578-f20e-4671-8f55-b6bec64f4249'/>
   <sub-query id='419c927e-a87c-4364-b4a9-2e8f50f728f6' sub-query='6a39e6ca-29e9-4093-ba03-0e9bd9503a1a'/>
+  <sub-query id='419c927e-a87c-4364-b4a9-2e8f50f728f6' sub-query='1fcd4578-f20e-4671-8f55-b6bec64f4249'/>
+  <sub-query id='419c927e-a87c-4364-b4a9-2e8f50f728f6' sub-query='4c9fcdb0-e7dc-46a0-87b6-c00b3caa8a8a'/>
+  <sub-query id='419c927e-a87c-4364-b4a9-2e8f50f728f6' sub-query='ce90be0d-9d7a-49a6-8334-c6f37112fa4b'/>
   <sub-query id='42031a55-4f1c-42dc-80dc-0fa141a32382' sub-query='12592a6f-1b1e-4e22-b17a-56b2e4ff0495'/>
-  <sub-query id='42031a55-4f1c-42dc-80dc-0fa141a32382' sub-query='fd49f015-3585-4602-a5d1-4e67ef7b6a55'/>
   <sub-query id='42031a55-4f1c-42dc-80dc-0fa141a32382' sub-query='5ebba191-8523-4253-b639-872d6da4dc92'/>
+  <sub-query id='42031a55-4f1c-42dc-80dc-0fa141a32382' sub-query='fd49f015-3585-4602-a5d1-4e67ef7b6a55'/>
   <sub-query id='42031a55-4f1c-42dc-80dc-0fa141a32382' sub-query='732daa1f-dac0-4f40-b714-8190f903d323'/>
   <sub-query id='4fce8390-7307-45dc-b779-5701ee7f23a1' sub-query='432b76db-c751-4bd8-8b2f-ef5986334514'/>
-  <sub-query id='4fce8390-7307-45dc-b779-5701ee7f23a1' sub-query='fb317a0c-d9c5-41e2-811b-d6236f63fae1'/>
   <sub-query id='4fce8390-7307-45dc-b779-5701ee7f23a1' sub-query='e6477143-977b-4c8d-b3d5-3d09c919cb94'/>
   <sub-query id='4fce8390-7307-45dc-b779-5701ee7f23a1' sub-query='67a08763-cefe-4193-908c-9dc8d1ca4245'/>
+  <sub-query id='4fce8390-7307-45dc-b779-5701ee7f23a1' sub-query='fb317a0c-d9c5-41e2-811b-d6236f63fae1'/>
   <sub-query id='5224d411-6ed3-432f-8b91-a1c43df22911' sub-query='598a178b-7153-4e1c-978e-1b78b1d95799'/>
-  <sub-query id='5224d411-6ed3-432f-8b91-a1c43df22911' sub-query='1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a'/>
+  <sub-query id='5224d411-6ed3-432f-8b91-a1c43df22911' sub-query='106c3818-78f2-4983-812a-0e83ca3cde89'/>
   <sub-query id='5224d411-6ed3-432f-8b91-a1c43df22911' sub-query='8034f80b-aefb-4255-98b6-0ccd73ab1696'/>
   <sub-query id='5224d411-6ed3-432f-8b91-a1c43df22911' sub-query='a1e89392-cd0c-4a41-85f1-44251d7a5e71'/>
-  <sub-query id='5224d411-6ed3-432f-8b91-a1c43df22911' sub-query='106c3818-78f2-4983-812a-0e83ca3cde89'/>
+  <sub-query id='5224d411-6ed3-432f-8b91-a1c43df22911' sub-query='1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a'/>
   <sub-query id='598a178b-7153-4e1c-978e-1b78b1d95799' sub-query='8034f80b-aefb-4255-98b6-0ccd73ab1696'/>
   <sub-query id='67a08763-cefe-4193-908c-9dc8d1ca4245' sub-query='fd49f015-3585-4602-a5d1-4e67ef7b6a55'/>
   <sub-query id='67a08763-cefe-4193-908c-9dc8d1ca4245' sub-query='732daa1f-dac0-4f40-b714-8190f903d323'/>
   <sub-query id='6a39e6ca-29e9-4093-ba03-0e9bd9503a1a' sub-query='12592a6f-1b1e-4e22-b17a-56b2e4ff0495'/>
-  <sub-query id='6a39e6ca-29e9-4093-ba03-0e9bd9503a1a' sub-query='b8689ed4-28e4-4e81-a89f-e5c511ba54b5'/>
-  <sub-query id='6a39e6ca-29e9-4093-ba03-0e9bd9503a1a' sub-query='ae568ab0-7c65-48cf-91a9-1ac97bd8221a'/>
-  <sub-query id='6a39e6ca-29e9-4093-ba03-0e9bd9503a1a' sub-query='fd49f015-3585-4602-a5d1-4e67ef7b6a55'/>
   <sub-query id='6a39e6ca-29e9-4093-ba03-0e9bd9503a1a' sub-query='5ebba191-8523-4253-b639-872d6da4dc92'/>
+  <sub-query id='6a39e6ca-29e9-4093-ba03-0e9bd9503a1a' sub-query='fd49f015-3585-4602-a5d1-4e67ef7b6a55'/>
+  <sub-query id='6a39e6ca-29e9-4093-ba03-0e9bd9503a1a' sub-query='ae568ab0-7c65-48cf-91a9-1ac97bd8221a'/>
+  <sub-query id='6a39e6ca-29e9-4093-ba03-0e9bd9503a1a' sub-query='b8689ed4-28e4-4e81-a89f-e5c511ba54b5'/>
   <sub-query id='6a39e6ca-29e9-4093-ba03-0e9bd9503a1a' sub-query='732daa1f-dac0-4f40-b714-8190f903d323'/>
   <sub-query id='6d8d0985-0830-4f18-a655-fa7b43703d5f' sub-query='598a178b-7153-4e1c-978e-1b78b1d95799'/>
-  <sub-query id='6d8d0985-0830-4f18-a655-fa7b43703d5f' sub-query='1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a'/>
+  <sub-query id='6d8d0985-0830-4f18-a655-fa7b43703d5f' sub-query='106c3818-78f2-4983-812a-0e83ca3cde89'/>
   <sub-query id='6d8d0985-0830-4f18-a655-fa7b43703d5f' sub-query='8034f80b-aefb-4255-98b6-0ccd73ab1696'/>
   <sub-query id='6d8d0985-0830-4f18-a655-fa7b43703d5f' sub-query='a1e89392-cd0c-4a41-85f1-44251d7a5e71'/>
-  <sub-query id='6d8d0985-0830-4f18-a655-fa7b43703d5f' sub-query='106c3818-78f2-4983-812a-0e83ca3cde89'/>
+  <sub-query id='6d8d0985-0830-4f18-a655-fa7b43703d5f' sub-query='1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a'/>
   <sub-query id='708d1b8a-5274-4a25-b0b4-67f1a7a86690' sub-query='598a178b-7153-4e1c-978e-1b78b1d95799'/>
-  <sub-query id='708d1b8a-5274-4a25-b0b4-67f1a7a86690' sub-query='1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a'/>
+  <sub-query id='708d1b8a-5274-4a25-b0b4-67f1a7a86690' sub-query='106c3818-78f2-4983-812a-0e83ca3cde89'/>
   <sub-query id='708d1b8a-5274-4a25-b0b4-67f1a7a86690' sub-query='8034f80b-aefb-4255-98b6-0ccd73ab1696'/>
   <sub-query id='708d1b8a-5274-4a25-b0b4-67f1a7a86690' sub-query='a1e89392-cd0c-4a41-85f1-44251d7a5e71'/>
-  <sub-query id='708d1b8a-5274-4a25-b0b4-67f1a7a86690' sub-query='106c3818-78f2-4983-812a-0e83ca3cde89'/>
+  <sub-query id='708d1b8a-5274-4a25-b0b4-67f1a7a86690' sub-query='1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a'/>
   <sub-query id='71a6fb5b-e5e1-4d25-bdc8-67ab5df1f66e' sub-query='708d1b8a-5274-4a25-b0b4-67f1a7a86690'/>
   <sub-query id='71a6fb5b-e5e1-4d25-bdc8-67ab5df1f66e' sub-query='6d8d0985-0830-4f18-a655-fa7b43703d5f'/>
-  <sub-query id='8034f80b-aefb-4255-98b6-0ccd73ab1696' sub-query='83d613b3-283e-4100-9a82-e42adf107fe6'/>
   <sub-query id='8034f80b-aefb-4255-98b6-0ccd73ab1696' sub-query='ae2c5715-740e-4850-a404-38bdc8cde6b6'/>
+  <sub-query id='8034f80b-aefb-4255-98b6-0ccd73ab1696' sub-query='83d613b3-283e-4100-9a82-e42adf107fe6'/>
   <sub-query id='803ca72a-f303-4319-8a35-9494eccc3d26' sub-query='4fce8390-7307-45dc-b779-5701ee7f23a1'/>
   <sub-query id='8f6cfa4a-8821-4166-adb0-94a17a7b8f1b' sub-query='432b76db-c751-4bd8-8b2f-ef5986334514'/>
-  <sub-query id='8f6cfa4a-8821-4166-adb0-94a17a7b8f1b' sub-query='fb317a0c-d9c5-41e2-811b-d6236f63fae1'/>
   <sub-query id='8f6cfa4a-8821-4166-adb0-94a17a7b8f1b' sub-query='e6477143-977b-4c8d-b3d5-3d09c919cb94'/>
+  <sub-query id='8f6cfa4a-8821-4166-adb0-94a17a7b8f1b' sub-query='fb317a0c-d9c5-41e2-811b-d6236f63fae1'/>
   <sub-query id='976506a9-cf85-4907-8d7f-2fd9b5a28d6d' sub-query='6d8d0985-0830-4f18-a655-fa7b43703d5f'/>
   <sub-query id='9d05ac24-20c2-436e-af6b-2bd0bc7dbcfb' sub-query='8f6cfa4a-8821-4166-adb0-94a17a7b8f1b'/>
-  <sub-query id='a1e89392-cd0c-4a41-85f1-44251d7a5e71' sub-query='12592a6f-1b1e-4e22-b17a-56b2e4ff0495'/>
-  <sub-query id='a1e89392-cd0c-4a41-85f1-44251d7a5e71' sub-query='39872cb4-369c-4dd8-90fd-1847a3f05dc9'/>
   <sub-query id='a1e89392-cd0c-4a41-85f1-44251d7a5e71' sub-query='d84c1559-9336-4255-a15d-51413859a005'/>
-  <sub-query id='a1e89392-cd0c-4a41-85f1-44251d7a5e71' sub-query='fd49f015-3585-4602-a5d1-4e67ef7b6a55'/>
+  <sub-query id='a1e89392-cd0c-4a41-85f1-44251d7a5e71' sub-query='12592a6f-1b1e-4e22-b17a-56b2e4ff0495'/>
   <sub-query id='a1e89392-cd0c-4a41-85f1-44251d7a5e71' sub-query='5ebba191-8523-4253-b639-872d6da4dc92'/>
+  <sub-query id='a1e89392-cd0c-4a41-85f1-44251d7a5e71' sub-query='39872cb4-369c-4dd8-90fd-1847a3f05dc9'/>
+  <sub-query id='a1e89392-cd0c-4a41-85f1-44251d7a5e71' sub-query='fd49f015-3585-4602-a5d1-4e67ef7b6a55'/>
   <sub-query id='a1e89392-cd0c-4a41-85f1-44251d7a5e71' sub-query='732daa1f-dac0-4f40-b714-8190f903d323'/>
-  <sub-query id='a3dcb49f-7586-42af-808c-9906c4ae1d03' sub-query='1a6082af-29c0-41af-b5bc-995ec6183787'/>
   <sub-query id='a3dcb49f-7586-42af-808c-9906c4ae1d03' sub-query='42031a55-4f1c-42dc-80dc-0fa141a32382'/>
+  <sub-query id='a3dcb49f-7586-42af-808c-9906c4ae1d03' sub-query='1a6082af-29c0-41af-b5bc-995ec6183787'/>
   <sub-query id='ae2c5715-740e-4850-a404-38bdc8cde6b6' sub-query='12592a6f-1b1e-4e22-b17a-56b2e4ff0495'/>
   <sub-query id='ae2c5715-740e-4850-a404-38bdc8cde6b6' sub-query='10477928-cf86-4416-9118-34eea8cd7e38'/>
   <sub-query id='ae2c5715-740e-4850-a404-38bdc8cde6b6' sub-query='83d613b3-283e-4100-9a82-e42adf107fe6'/>
   <sub-query id='ae2c5715-740e-4850-a404-38bdc8cde6b6' sub-query='732daa1f-dac0-4f40-b714-8190f903d323'/>
-  <sub-query id='bd72a5e4-42aa-415d-aa72-28d351f629a4' sub-query='5224d411-6ed3-432f-8b91-a1c43df22911'/>
   <sub-query id='bd72a5e4-42aa-415d-aa72-28d351f629a4' sub-query='708d1b8a-5274-4a25-b0b4-67f1a7a86690'/>
   <sub-query id='bd72a5e4-42aa-415d-aa72-28d351f629a4' sub-query='6d8d0985-0830-4f18-a655-fa7b43703d5f'/>
-  <sub-query id='c744b5b5-15f0-4f72-a344-7e52bcac5071' sub-query='ce90be0d-9d7a-49a6-8334-c6f37112fa4b'/>
-  <sub-query id='c744b5b5-15f0-4f72-a344-7e52bcac5071' sub-query='4c9fcdb0-e7dc-46a0-87b6-c00b3caa8a8a'/>
-  <sub-query id='c744b5b5-15f0-4f72-a344-7e52bcac5071' sub-query='1fcd4578-f20e-4671-8f55-b6bec64f4249'/>
+  <sub-query id='bd72a5e4-42aa-415d-aa72-28d351f629a4' sub-query='5224d411-6ed3-432f-8b91-a1c43df22911'/>
   <sub-query id='c744b5b5-15f0-4f72-a344-7e52bcac5071' sub-query='6a39e6ca-29e9-4093-ba03-0e9bd9503a1a'/>
+  <sub-query id='c744b5b5-15f0-4f72-a344-7e52bcac5071' sub-query='1fcd4578-f20e-4671-8f55-b6bec64f4249'/>
+  <sub-query id='c744b5b5-15f0-4f72-a344-7e52bcac5071' sub-query='4c9fcdb0-e7dc-46a0-87b6-c00b3caa8a8a'/>
+  <sub-query id='c744b5b5-15f0-4f72-a344-7e52bcac5071' sub-query='ce90be0d-9d7a-49a6-8334-c6f37112fa4b'/>
   <sub-query id='c9453327-b892-4324-a6b8-2dceb32e1901' sub-query='10477928-cf86-4416-9118-34eea8cd7e38'/>
   <sub-query id='cb38a427-c259-4690-abe2-acea9661f737' sub-query='12592a6f-1b1e-4e22-b17a-56b2e4ff0495'/>
-  <sub-query id='cb38a427-c259-4690-abe2-acea9661f737' sub-query='c9453327-b892-4324-a6b8-2dceb32e1901'/>
   <sub-query id='cb38a427-c259-4690-abe2-acea9661f737' sub-query='fd49f015-3585-4602-a5d1-4e67ef7b6a55'/>
+  <sub-query id='cb38a427-c259-4690-abe2-acea9661f737' sub-query='c9453327-b892-4324-a6b8-2dceb32e1901'/>
   <sub-query id='cb38a427-c259-4690-abe2-acea9661f737' sub-query='732daa1f-dac0-4f40-b714-8190f903d323'/>
   <sub-query id='ce90be0d-9d7a-49a6-8334-c6f37112fa4b' sub-query='1fcd4578-f20e-4671-8f55-b6bec64f4249'/>
   <sub-query id='d1176c97-e3b6-483b-a341-6914a6f64860' sub-query='a3dcb49f-7586-42af-808c-9906c4ae1d03'/>
-  <sub-query id='d4d2af9b-ce4d-4457-9e94-01972fcb58d3' sub-query='5224d411-6ed3-432f-8b91-a1c43df22911'/>
   <sub-query id='d4d2af9b-ce4d-4457-9e94-01972fcb58d3' sub-query='708d1b8a-5274-4a25-b0b4-67f1a7a86690'/>
+  <sub-query id='d4d2af9b-ce4d-4457-9e94-01972fcb58d3' sub-query='5224d411-6ed3-432f-8b91-a1c43df22911'/>
   <sub-query id='fb317a0c-d9c5-41e2-811b-d6236f63fae1' sub-query='12592a6f-1b1e-4e22-b17a-56b2e4ff0495'/>
   <sub-query id='fb317a0c-d9c5-41e2-811b-d6236f63fae1' sub-query='10477928-cf86-4416-9118-34eea8cd7e38'/>
-  <sub-query id='fd49f015-3585-4602-a5d1-4e67ef7b6a55' sub-query='ce90be0d-9d7a-49a6-8334-c6f37112fa4b'/>
-  <sub-query id='fd49f015-3585-4602-a5d1-4e67ef7b6a55' sub-query='1fcd4578-f20e-4671-8f55-b6bec64f4249'/>
   <sub-query id='fd49f015-3585-4602-a5d1-4e67ef7b6a55' sub-query='6a39e6ca-29e9-4093-ba03-0e9bd9503a1a'/>
+  <sub-query id='fd49f015-3585-4602-a5d1-4e67ef7b6a55' sub-query='1fcd4578-f20e-4671-8f55-b6bec64f4249'/>
+  <sub-query id='fd49f015-3585-4602-a5d1-4e67ef7b6a55' sub-query='ce90be0d-9d7a-49a6-8334-c6f37112fa4b'/>
 </ad-hoc>

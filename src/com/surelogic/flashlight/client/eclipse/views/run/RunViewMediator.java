@@ -53,413 +53,397 @@ import com.surelogic.flashlight.common.model.RunManager;
  * Mediator for the {@link RunView}.
  */
 public final class RunViewMediator extends AdHocManagerAdapter implements
-		IRunManagerObserver, ILifecycle {
+    IRunManagerObserver, ILifecycle {
 
-	private final TableViewer f_tableViewer;
-	private final Table f_table;
+  private final TableViewer f_tableViewer;
+  private final Table f_table;
 
-	RunViewMediator(final TableViewer tableViewer) {
-		f_tableViewer = tableViewer;
-		f_table = tableViewer.getTable();
-	}
+  RunViewMediator(final TableViewer tableViewer) {
+    f_tableViewer = tableViewer;
+    f_table = tableViewer.getTable();
+  }
 
-	public void init() {
-		f_table.addListener(SWT.Selection, new Listener() {
-			public void handleEvent(final Event event) {
-				updateRunManager();
-				setToolbarState();
-			}
-		});
-		f_table.addListener(SWT.MouseDoubleClick, new Listener() {
-			public void handleEvent(final Event event) {
-				final RunDescription[] selected = getSelectedRunDescriptions();
-				if (selected.length == 1) {
-					final RunDescription description = selected[0];
-					if (description != null) {
-						/*
-						 * Is it already prepared?
-						 */
-						final PrepRunDescription prep = description
-								.getPrepRunDescription();
-						final boolean hasPrep = prep != null;
-						if (hasPrep) {
-							/*
-							 * Change the focus to the query menu view.
-							 */
-							ViewUtility.showView(RunStatusView.class.getName());
-							ViewUtility.showView(QueryMenuView.class.getName());
-						} else {
-							/*
-							 * Prepare this run.
-							 */
-							f_prepAction.run();
-						}
-					}
-				}
-			}
-		});
-		f_table.addKeyListener(new KeyAdapter() {
+  public void init() {
+    f_table.addListener(SWT.Selection, new Listener() {
+      public void handleEvent(final Event event) {
+        updateRunManager();
+        setToolbarState();
+      }
+    });
+    f_table.addListener(SWT.MouseDoubleClick, new Listener() {
+      public void handleEvent(final Event event) {
+        final RunDescription[] selected = getSelectedRunDescriptions();
+        if (selected.length == 1) {
+          final RunDescription description = selected[0];
+          if (description != null) {
+            /*
+             * Is it already prepared?
+             */
+            final PrepRunDescription prep = description.getPrepRunDescription();
+            final boolean hasPrep = prep != null;
+            if (hasPrep) {
+              /*
+               * Change the focus to the query menu view.
+               */
+              ViewUtility.showView(RunStatusView.class.getName());
+              ViewUtility.showView(QueryMenuView.class.getName());
+            } else {
+              /*
+               * Prepare this run.
+               */
+              f_prepAction.run();
+            }
+          }
+        }
+      }
+    });
+    f_table.addKeyListener(new KeyAdapter() {
 
-			@Override
-			public void keyPressed(final KeyEvent e) {
-				if (e.character == SWT.DEL) {
-					if (f_deleteAction.isEnabled()) {
-						f_deleteAction.run();
-					}
-				}
-			}
-		});
+      @Override
+      public void keyPressed(final KeyEvent e) {
+        if (e.character == SWT.DEL) {
+          if (f_deleteAction.isEnabled()) {
+            f_deleteAction.run();
+          }
+        }
+      }
+    });
 
-		RunManager.getInstance().addObserver(this);
-		AdHocManager.getInstance(AdHocDataSource.getInstance()).addObserver(
-				this);
-		packColumns();
-		setToolbarState();
-	}
+    RunManager.getInstance().addObserver(this);
+    AdHocManager.getInstance(AdHocDataSource.getInstance()).addObserver(this);
+    packColumns();
+    setToolbarState();
+  }
 
-	/**
-	 * Gets the run description attached to the passed table item or returns
-	 * {@code null} if one does not exist.
-	 * 
-	 * @param item
-	 *            a table item.
-	 * @return the run description attached to the passed table item, or {@code
-	 *         null} if one does not exist.
-	 */
-	private RunDescription getData(final TableItem item) {
-		if (item != null) {
-			final Object o = item.getData();
-			if (o instanceof RunDescription) {
-				return (RunDescription) o;
-			}
-		}
-		return null;
-	}
+  /**
+   * Gets the run description attached to the passed table item or returns
+   * {@code null} if one does not exist.
+   * 
+   * @param item
+   *          a table item.
+   * @return the run description attached to the passed table item, or {@code
+   *         null} if one does not exist.
+   */
+  private RunDescription getData(final TableItem item) {
+    if (item != null) {
+      final Object o = item.getData();
+      if (o instanceof RunDescription) {
+        return (RunDescription) o;
+      }
+    }
+    return null;
+  }
 
-	/**
-	 * Gets the set of currently selected run descriptions.
-	 * 
-	 * @return the set of currently selected run descriptions, or an empty array
-	 *         if no row is selected.
-	 */
-	private RunDescription[] getSelectedRunDescriptions() {
-		final TableItem[] items = f_table.getSelection();
-		final RunDescription[] results = new RunDescription[items.length];
-		for (int i = 0; i < items.length; i++) {
-			results[i] = getData(items[i]);
+  /**
+   * Gets the set of currently selected run descriptions.
+   * 
+   * @return the set of currently selected run descriptions, or an empty array
+   *         if no row is selected.
+   */
+  private RunDescription[] getSelectedRunDescriptions() {
+    final TableItem[] items = f_table.getSelection();
+    final RunDescription[] results = new RunDescription[items.length];
+    for (int i = 0; i < items.length; i++) {
+      results[i] = getData(items[i]);
 
-		}
-		return results;
-	}
+    }
+    return results;
+  }
 
-	private void setSelectedRunDescription(final RunDescription run) {
-		if (run == null) {
-			return;
-		}
-		final TableItem[] items = f_table.getItems();
-		for (int i = 0; i < items.length; i++) {
-			final RunDescription itemData = getData(items[i]);
-			if (run.equals(itemData)) {
-				f_table.setSelection(i);
-				break;
-			}
-		}
-	}
+  private void setSelectedRunDescription(final RunDescription run) {
+    if (run == null) {
+      return;
+    }
+    final TableItem[] items = f_table.getItems();
+    for (int i = 0; i < items.length; i++) {
+      final RunDescription itemData = getData(items[i]);
+      if (run.equals(itemData)) {
+        f_table.setSelection(i);
+        break;
+      }
+    }
+  }
 
-	private final Action f_refreshAction = new Action() {
-		@Override
-		public void run() {
-			EclipseJob.getInstance().scheduleDb(new RefreshRunManagerSLJob(),
-					false, false, RunManager.getInstance().getRunIdentities());
-		}
-	};
+  private final Action f_refreshAction = new Action() {
+    @Override
+    public void run() {
+      EclipseJob.getInstance().scheduleDb(new RefreshRunManagerSLJob(), false,
+          false, RunManager.getInstance().getRunIdentities());
+    }
+  };
 
-	public Action getRefreshAction() {
-		return f_refreshAction;
-	}
+  public Action getRefreshAction() {
+    return f_refreshAction;
+  }
 
-	void refresh() {
-		f_tableViewer.refresh();
-		packColumns();
-		setToolbarState();
-	}
+  void refresh() {
+    f_tableViewer.refresh();
+    packColumns();
+    setToolbarState();
+  }
 
-	private final Action f_prepAction = new Action() {
-		@Override
-		public void run() {
-			final List<RunDescription> notPrepped = new ArrayList<RunDescription>();
-			RunDescription one = null;
-			boolean hasPrep = false;
-			for (final RunDescription d : getSelectedRunDescriptions()) {
-				notPrepped.add(d);
-				one = d;
-				if (d.getPrepRunDescription() != null) {
-					hasPrep = true;
-				}
-			}
+  private final Action f_prepAction = new Action() {
+    @Override
+    public void run() {
+      final List<RunDescription> notPrepped = new ArrayList<RunDescription>();
+      RunDescription one = null;
+      boolean hasPrep = false;
+      for (final RunDescription d : getSelectedRunDescriptions()) {
+        notPrepped.add(d);
+        one = d;
+        if (d.getPrepRunDescription() != null) {
+          hasPrep = true;
+        }
+      }
 
-			if (hasPrep) {
-				final String title;
-				final String msg;
-				if (notPrepped.size() == 1) {
-					title = I18N.msg("flashlight.dialog.reprep.title");
-					msg = I18N.msg("flashlight.dialog.reprep.msg", one
-							.getName(), SLUtility.toStringHMS(one
-							.getStartTimeOfRun()));
-				} else {
-					title = I18N.msg("flashlight.dialog.reprep.multi.title");
-					msg = I18N.msg("flashlight.dialog.reprep.multi.msg");
-				}
-				if (!MessageDialog.openConfirm(f_table.getShell(), title, msg)) {
-					return; // bail out on cancel
-				}
-			}
-			PromptToPrepAllRawData.runPrepJob(notPrepped);
-		}
-	};
+      if (hasPrep) {
+        final String title;
+        final String msg;
+        if (notPrepped.size() == 1) {
+          title = I18N.msg("flashlight.dialog.reprep.title");
+          msg = I18N.msg("flashlight.dialog.reprep.msg", one.getName(),
+              SLUtility.toStringHMS(one.getStartTimeOfRun()));
+        } else {
+          title = I18N.msg("flashlight.dialog.reprep.multi.title");
+          msg = I18N.msg("flashlight.dialog.reprep.multi.msg");
+        }
+        if (!MessageDialog.openConfirm(f_table.getShell(), title, msg)) {
+          return; // bail out on cancel
+        }
+      }
+      PromptToPrepAllRawData.runPrepJob(notPrepped);
+    }
+  };
 
-	public Action getPrepAction() {
-		return f_prepAction;
-	}
+  public Action getPrepAction() {
+    return f_prepAction;
+  }
 
-	private final Action f_showLogAction = new Action() {
-		@Override
-		public void run() {
-			final RunDescription[] selected = getSelectedRunDescriptions();
-			for (final RunDescription description : selected) {
-				if (description != null) {
-					final RawFileHandles handles = description
-							.getRawFileHandles();
-					if (handles != null) {
-						final File logFile = handles.getLogFile();
-						if (logFile != null) {
-							/*
-							 * This dialog is modeless so that we can open more
-							 * than one.
-							 */
-							final LogDialog d = new LogDialog(f_table
-									.getShell(), handles.getLogFile(),
-									description);
-							d.open();
-						}
-					}
-				}
-			}
-		}
-	};
+  private final Action f_showLogAction = new Action() {
+    @Override
+    public void run() {
+      final RunDescription[] selected = getSelectedRunDescriptions();
+      for (final RunDescription description : selected) {
+        if (description != null) {
+          final RawFileHandles handles = description.getRawFileHandles();
+          if (handles != null) {
+            final File logFile = handles.getLogFile();
+            if (logFile != null) {
+              /*
+               * This dialog is modeless so that we can open more than one.
+               */
+              final LogDialog d = new LogDialog(f_table.getShell(), handles
+                  .getLogFile(), description);
+              d.open();
+            }
+          }
+        }
+      }
+    }
+  };
 
-	public Action getShowLogAction() {
-		return f_showLogAction;
-	}
+  public Action getShowLogAction() {
+    return f_showLogAction;
+  }
 
-	private final Action f_convertToXmlAction = new Action() {
-		@Override
-		public void run() {
-			final RunDescription[] selected = getSelectedRunDescriptions();
-			for (final RunDescription description : selected) {
-				if (description != null) {
-					final RawFileHandles handles = description
-							.getRawFileHandles();
-					if (handles != null) {
-						for (final File dataFile : handles.getDataFiles()) {
-							EclipseJob.getInstance().schedule(
-									new ConvertBinaryToXMLJob(dataFile));
-						}
-					}
-				}
-			}
-		}
-	};
+  private final Action f_convertToXmlAction = new Action() {
+    @Override
+    public void run() {
+      final RunDescription[] selected = getSelectedRunDescriptions();
+      for (final RunDescription description : selected) {
+        if (description != null) {
+          final RawFileHandles handles = description.getRawFileHandles();
+          if (handles != null) {
+            for (final File dataFile : handles.getDataFiles()) {
+              EclipseJob.getInstance().schedule(
+                  new ConvertBinaryToXMLJob(dataFile));
+            }
+          }
+        }
+      }
+    }
+  };
 
-	public Action getConvertToXmlAction() {
-		return f_convertToXmlAction;
-	}
+  public Action getConvertToXmlAction() {
+    return f_convertToXmlAction;
+  }
 
-	private final Action f_deleteAction = new Action() {
-		@Override
-		public void run() {
-			final ArrayList<SLJob> jobs = new ArrayList<SLJob>();
-			final ArrayList<String> keys = new ArrayList<String>();
-			final RunDescription[] selected = getSelectedRunDescriptions();
-			for (final RunDescription description : selected) {
-				if (description != null) {
-					final RawFileHandles handles = description
-							.getRawFileHandles();
-					final PrepRunDescription prep = description
-							.getPrepRunDescription();
+  private final Action f_deleteAction = new Action() {
+    @Override
+    public void run() {
+      final ArrayList<SLJob> jobs = new ArrayList<SLJob>();
+      final ArrayList<String> keys = new ArrayList<String>();
+      final RunDescription[] selected = getSelectedRunDescriptions();
+      for (final RunDescription description : selected) {
+        if (description != null) {
+          final RawFileHandles handles = description.getRawFileHandles();
+          final PrepRunDescription prep = description.getPrepRunDescription();
 
-					final boolean hasRawFiles = handles != null;
-					final boolean hasPrep = prep != null;
+          final boolean hasRawFiles = handles != null;
+          final boolean hasPrep = prep != null;
 
-					final DeleteRunDialog d = new DeleteRunDialog(f_table
-							.getShell(), description, hasRawFiles, hasPrep);
-					d.open();
-					if (Window.CANCEL == d.getReturnCode()) {
-						return;
-					}
+          final DeleteRunDialog d = new DeleteRunDialog(f_table.getShell(),
+              description, hasRawFiles);
+          d.open();
+          if (Window.CANCEL == d.getReturnCode()) {
+            return;
+          }
 
-					final boolean deleteRaw = hasRawFiles
-							&& d.deleteRawDataFiles();
-					if (hasPrep) {
-						jobs.add(new UnPrepSLJob(prep, AdHocDataSource
-								.getManager()));
-					}
-					if (deleteRaw) {
-						final File dataDir = PreferenceConstants
-								.getFlashlightDataDirectory();
-						jobs.add(new DeleteRawFilesSLJob(dataDir, description));
-					}
-					keys.add(description.toIdentityString());
-				}
-			}
-			if (!jobs.isEmpty()) {
-				final RunDescription one = selected.length == 1 ? selected[0]
-						: null;
-				final String jobName;
-				if (one != null) {
-					jobName = I18N.msg("flashlight.jobs.delete.one", one
-							.getName(), SLUtility.toStringHMS(one
-							.getStartTimeOfRun()));
-				} else {
-					jobName = I18N.msg("flashlight.jobs.delete.many");
-				}
+          final boolean deleteRaw = hasRawFiles && d.deleteRawDataFiles();
+          if (hasPrep) {
+            jobs.add(new UnPrepSLJob(prep, AdHocDataSource.getManager()));
+          }
+          if (deleteRaw) {
+            final File dataDir = PreferenceConstants
+                .getFlashlightDataDirectory();
+            jobs.add(new DeleteRawFilesSLJob(dataDir, description));
+          }
+          keys.add(description.toIdentityString());
+        }
+      }
+      if (!jobs.isEmpty()) {
+        final RunDescription one = selected.length == 1 ? selected[0] : null;
+        final String jobName;
+        if (one != null) {
+          jobName = I18N.msg("flashlight.jobs.delete.one", one.getName(),
+              SLUtility.toStringHMS(one.getStartTimeOfRun()));
+        } else {
+          jobName = I18N.msg("flashlight.jobs.delete.many");
+        }
 
-				final SLJob job = new AggregateSLJob(jobName, jobs);
-				EclipseJob.getInstance().scheduleDb(job, true, false,
-						keys.toArray(new String[keys.size()]));
-				EclipseJob.getInstance().scheduleDb(
-						new RefreshRunManagerSLJob(), false, false,
-						RunManager.getInstance().getRunIdentities());
+        final SLJob job = new AggregateSLJob(jobName, jobs);
+        EclipseJob.getInstance().scheduleDb(job, true, false,
+            keys.toArray(new String[keys.size()]));
+        EclipseJob.getInstance().scheduleDb(new RefreshRunManagerSLJob(),
+            false, false, RunManager.getInstance().getRunIdentities());
 
-			}
-		}
-	};
+      }
+    }
+  };
 
-	public Action getDeleteAction() {
-		return f_deleteAction;
-	}
+  public Action getDeleteAction() {
+    return f_deleteAction;
+  }
 
-	/**
-	 * Pack the columns of our table to the ideal width.
-	 */
-	private final void packColumns() {
-		for (final TableColumn col : f_tableViewer.getTable().getColumns()) {
-			col.pack();
-		}
-	}
+  /**
+   * Pack the columns of our table to the ideal width.
+   */
+  private final void packColumns() {
+    for (final TableColumn col : f_tableViewer.getTable().getColumns()) {
+      col.pack();
+    }
+  }
 
-	private final void updateRunManager() {
-		final RunDescription[] selected = getSelectedRunDescriptions();
-		AdHocDataSource.getInstance().setSelectedRun(
-				selected.length == 0 ? null : selected[0]);
-	}
+  private final void updateRunManager() {
+    final RunDescription[] selected = getSelectedRunDescriptions();
+    AdHocDataSource.getInstance().setSelectedRun(
+        selected.length == 0 ? null : selected[0]);
+  }
 
-	private final void setToolbarState() {
-		/*
-		 * Consider auto-selecting the run if one and only one run exists.
-		 */
-		final boolean autoSelectRun = f_table.getSelectionCount() == 0
-				&& f_table.getItemCount() == 1;
-		if (autoSelectRun) {
-			f_table.setSelection(0);
-		}
+  private final void setToolbarState() {
+    /*
+     * Consider auto-selecting the run if one and only one run exists.
+     */
+    final boolean autoSelectRun = f_table.getSelectionCount() == 0
+        && f_table.getItemCount() == 1;
+    if (autoSelectRun) {
+      f_table.setSelection(0);
+    }
 
-		final RunDescription[] selected = getSelectedRunDescriptions();
-		final boolean somethingIsSelected = selected.length > 0;
-		f_deleteAction.setEnabled(somethingIsSelected);
-		boolean rawActionsEnabled = somethingIsSelected;
-		boolean binaryActionsEnabled = somethingIsSelected;
-		/*
-		 * Only enable raw actions if all the selected runs have raw data. Only
-		 * enable binary actions if all the selected runs have raw binary data.
-		 */
-		for (final RunDescription rd : selected) {
-			final RawFileHandles rfh = rd.getRawFileHandles();
-			if (rfh == null) {
-				rawActionsEnabled = false;
-				binaryActionsEnabled = false;
-			} else {
-				if (binaryActionsEnabled) {
-					if (!rfh.isDataFileBinary()) {
-						binaryActionsEnabled = false;
-					}
-				}
-			}
-		}
-		/*
-		 * If only one item is selected change the focus of the query menu and
-		 * if the selection changed inform the SourceView so it shows code from
-		 * that run.
-		 */
-		if (selected.length == 0 || selected[0].getPrepRunDescription() == null) {
-			AdHocDataSource.getInstance().setSelectedRun(null);
-			AdHocDataSource.getManager().setGlobalVariableValue(
-					AdHocManager.DATABASE, null);
-		} else {
-			final RunDescription o = selected[0];
-			AdHocDataSource.getInstance().setSelectedRun(o);
-			ViewUtility.showView(RunStatusView.class.getName());
-			AdHocDataSource.getManager().setGlobalVariableValue(
-					AdHocManager.DATABASE, o.toIdentityString());
-			AdHocDataSource.getManager().setSelectedResult(null);
-		}
-		f_prepAction.setEnabled(rawActionsEnabled);
-		f_showLogAction.setEnabled(rawActionsEnabled);
-		f_convertToXmlAction.setEnabled(binaryActionsEnabled);
-	}
+    final RunDescription[] selected = getSelectedRunDescriptions();
+    final boolean somethingIsSelected = selected.length > 0;
+    f_deleteAction.setEnabled(somethingIsSelected);
+    boolean rawActionsEnabled = somethingIsSelected;
+    boolean binaryActionsEnabled = somethingIsSelected;
+    /*
+     * Only enable raw actions if all the selected runs have raw data. Only
+     * enable binary actions if all the selected runs have raw binary data.
+     */
+    for (final RunDescription rd : selected) {
+      final RawFileHandles rfh = rd.getRawFileHandles();
+      if (rfh == null) {
+        rawActionsEnabled = false;
+        binaryActionsEnabled = false;
+      } else {
+        if (binaryActionsEnabled) {
+          if (!rfh.isDataFileBinary()) {
+            binaryActionsEnabled = false;
+          }
+        }
+      }
+    }
+    /*
+     * If only one item is selected change the focus of the query menu and if
+     * the selection changed inform the SourceView so it shows code from that
+     * run.
+     */
+    if (selected.length == 0 || selected[0].getPrepRunDescription() == null) {
+      AdHocDataSource.getInstance().setSelectedRun(null);
+      AdHocDataSource.getManager().setGlobalVariableValue(
+          AdHocManager.DATABASE, null);
+    } else {
+      final RunDescription o = selected[0];
+      AdHocDataSource.getInstance().setSelectedRun(o);
+      ViewUtility.showView(RunStatusView.class.getName());
+      AdHocDataSource.getManager().setGlobalVariableValue(
+          AdHocManager.DATABASE, o.toIdentityString());
+      AdHocDataSource.getManager().setSelectedResult(null);
+    }
+    f_prepAction.setEnabled(rawActionsEnabled);
+    f_showLogAction.setEnabled(rawActionsEnabled);
+    f_convertToXmlAction.setEnabled(binaryActionsEnabled);
+  }
 
-	/**
-	 * Probably we have not been called from the SWT event dispatch thread.
-	 */
-	public void notify(final RunManager manager) {
-		PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
-			public void run() {
-				refresh();
-			}
-		});
-	}
+  /**
+   * Probably we have not been called from the SWT event dispatch thread.
+   */
+  public void notify(final RunManager manager) {
+    PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
+      public void run() {
+        refresh();
+      }
+    });
+  }
 
-	public void dispose() {
-		RunManager.getInstance().removeObserver(this);
-		AdHocManager.getInstance(AdHocDataSource.getInstance()).removeObserver(
-				this);
-	}
+  public void dispose() {
+    RunManager.getInstance().removeObserver(this);
+    AdHocManager.getInstance(AdHocDataSource.getInstance())
+        .removeObserver(this);
+  }
 
-	public void setFocus() {
-		f_table.setFocus();
-	}
+  public void setFocus() {
+    f_table.setFocus();
+  }
 
-	@Override
-	public void notifySelectedResultChange(final AdHocQueryResult result) {
-		if (result != null) {
-			/*
-			 * This method is trying to change the selected run in the run view
-			 * when the user selects a query result that is not using the data
-			 * from the run currently selected.
-			 */
-			final String db = result.getQueryFullyBound().getVariableValues()
-					.get(AdHocManager.DATABASE);
+  @Override
+  public void notifySelectedResultChange(final AdHocQueryResult result) {
+    if (result != null) {
+      /*
+       * This method is trying to change the selected run in the run view when
+       * the user selects a query result that is not using the data from the run
+       * currently selected.
+       */
+      final String db = result.getQueryFullyBound().getVariableValues().get(
+          AdHocManager.DATABASE);
 
-			final RunDescription selected = AdHocDataSource.getInstance()
-					.getSelectedRun();
-			for (final RunDescription runDescription : RunManager.getInstance()
-					.getRunDescriptions()) {
-				if (runDescription.toIdentityString().equals(db)) {
-					if (!runDescription.equals(selected)) {
-						AdHocDataSource.getInstance().setSelectedRun(
-								runDescription);
-						final UIJob job = new SLUIJob() {
-							@Override
-							public IStatus runInUIThread(
-									final IProgressMonitor monitor) {
-								setSelectedRunDescription(runDescription);
-								return Status.OK_STATUS;
-							}
-						};
-						job.schedule();
-					}
-				}
-			}
-		}
-	}
+      final RunDescription selected = AdHocDataSource.getInstance()
+          .getSelectedRun();
+      for (final RunDescription runDescription : RunManager.getInstance()
+          .getRunDescriptions()) {
+        if (runDescription.toIdentityString().equals(db)) {
+          if (!runDescription.equals(selected)) {
+            AdHocDataSource.getInstance().setSelectedRun(runDescription);
+            final UIJob job = new SLUIJob() {
+              @Override
+              public IStatus runInUIThread(final IProgressMonitor monitor) {
+                setSelectedRunDescription(runDescription);
+                return Status.OK_STATUS;
+              }
+            };
+            job.schedule();
+          }
+        }
+      }
+    }
+  }
 }

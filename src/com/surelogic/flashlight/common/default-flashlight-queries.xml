@@ -10,7 +10,7 @@
 --    more than one thread, and the number of reads and writes made by
 --    each thread.  Clicking on a field will open its declarations in the
 --    code view.
---  &lt;table border=&quot;1&quot;&gt;
+--  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
 --      
@@ -80,7 +80,7 @@ order by O.PackageName,O.ClassName,F.FieldName,THO.ThreadName</query>
 --    Generates a stack trace of the method calls leading up to this lock
 --    acquisition, from most to least recent.  Clicking on each line will
 --    open the method call in the code view.
---  &lt;table border=&quot;1&quot;&gt;
+--  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
 --              
@@ -130,7 +130,7 @@ FROM TABLE (STACKTRACE(?LATRACE?)) s
 --    Lists all of the places in the program that access this field at
 --    some point in time.  Clicking on a line will open up the field
 --    access in the code view.
---  &lt;table border=&quot;1&quot;&gt;
+--  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
 --      
@@ -170,7 +170,7 @@ ORDER BY 1,2,3</query>
 --    &lt;classname&gt;ReadWriteLock&lt;/classname&gt; or
 --    &lt;classname&gt;Lock&lt;/classname&gt;). Clicking on a line will open it in the
 --    code view.
---  &lt;table border=&quot;1&quot;&gt;
+--  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
 --      
@@ -224,7 +224,7 @@ ORDER BY 1,2,3</query>
 --    Shows each call to this object and what thread it happened in,
 --    ordered by the time it occurred.  Clicking on an access will open
 --    the relevant line in the code view.
---  &lt;table border=&quot;1&quot;&gt;
+--  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
 --      
@@ -268,7 +268,7 @@ WHERE IA.RECEIVER = ?Receiver? AND
 --    of this query, as a safely published field usually doesn&apos;t need to
 --    have the same lock held during object construction as is held when
 --    it is accessed.
---  &lt;table border=&quot;1&quot;&gt;
+--  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
 --      
@@ -325,7 +325,7 @@ FROM
 --    the time it occurred.  Accesses marked as being &apos;Under Construction&apos;
 --    happened while the object was being initialized.  Clicking on an
 --    access will open the relevant line in the code view.
---  &lt;table border=&quot;1&quot;&gt;
+--  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
 --      
@@ -378,7 +378,7 @@ ORDER BY A.TS ASC</query>
 --    each field, as well as how many shared objects are created that
 --    contain this field.  Clicking on a field will open its declaration
 --    in the code view.
---  &lt;table border=&quot;1&quot;&gt;
+--  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
 --      
@@ -432,7 +432,7 @@ SELECT
 --    made by each thread.  A lock set guarantees that the field&apos;s data
 --    cannot be invalidated by a race condition.  Clicking on a field will
 --    open its declaration in the code view.
---  &lt;table border=&quot;1&quot;&gt;
+--  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
 --      
@@ -489,7 +489,7 @@ SELECT
 --    observed to be accessed by two or more threads before construction
 --    ended.  Clicking on a field will open its declaration in the code
 --    view.
---  &lt;table border=&quot;1&quot;&gt;
+--  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
 --      
@@ -596,7 +596,7 @@ order by O.PackageName,O.ClassName,F.FieldName</query>
 --    Lists all of the places in the program that access this field while
 --    the given lock is being held.  Clicking on a line will open up the
 --    field access in the code view.
---  &lt;table border=&quot;1&quot;&gt;
+--  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
 --      
@@ -650,7 +650,7 @@ ORDER BY 1,2,3</query>
 --    Lists all of the static fields in the program accessed by more than
 --    one thread, and the number of reads and writes made by each thread.
 --    Clicking on a field will open its declaration in the code view.
---  &lt;table border=&quot;1&quot;&gt;
+--  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
 --      
@@ -718,7 +718,7 @@ order by O.PackageName,O.ClassName,F.FieldName,THO.ThreadName</query>
 --    Lists how often each lock was held when a particular object was
 --    indirectly accessed, as well as what proportion of the total number
 --    of accesses that represents.
---  &lt;table border=&quot;1&quot;&gt;
+--  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
 --      
@@ -775,7 +775,7 @@ FROM
 --    Generates a stack trace of the method calls leading up to this lock
 --    event, from most to least recent.  Clicking on each line will open 
 --    the method call in the code view.
---  &lt;table border=&quot;1&quot;&gt;
+--  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
 --              
@@ -823,7 +823,7 @@ FROM TABLE (STACKTRACE(?LETRACE?)) s</query>
 --    Lists all of the places in the program that access this field at
 --    some point in time.  Clicking on a line will open up the field
 --    access in the code view.
---  &lt;table border=&quot;1&quot;&gt;
+--  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
 --      
@@ -859,7 +859,7 @@ ORDER BY 1,2,3</query>
 --    Lists all of the lock events that contribute to a particular edge of
 --    the lock cycle, and where they occur in the program.  Clicking on a
 --    lock event will open the line that acquired it in the code view.
---  &lt;table border=&quot;1&quot;&gt;
+--  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
 --      
@@ -900,7 +900,7 @@ order by lo.PackageName,lo.ClassName, s.AtLine, tho.ThreadName, lh.LockEvent
 --    Lists the objects containing the given field that are
 --    accessed by more than one thread in the program and have no
 --    lock set.  The number of reads/writes is also shown.
---  &lt;table border=&quot;1&quot;&gt;
+--  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
 --      
@@ -960,7 +960,7 @@ SELECT OBJID(FIT.RECEIVER) &quot;?Field? Object&quot;,
 --&lt;p&gt;
 --    Shows the number of reads and writes each thread that accesses this
 --    field makes.
---  &lt;table border=&quot;1&quot;&gt;
+--  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
 --      
@@ -1048,7 +1048,7 @@ and lk.Type = lkType.Id</query>
 --    we have an assurance that no race condition was observed for this
 --    field.
 --  
---  &lt;table border=&quot;1&quot;&gt;
+--  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
 --      
@@ -1103,7 +1103,7 @@ FROM
 --&lt;p&gt;
 --    Lists the shared objects containing a given field.  The number of
 --    reads/writes and the size of the lock set is also shown.
---  &lt;table border=&quot;1&quot;&gt;
+--  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
 --      
@@ -1176,7 +1176,7 @@ SELECT OBJID(COUNTS.RECEIVER) &quot;?Field? Object&quot;,
 --    &lt;varname&gt;this&lt;/varname&gt; reference to another object during
 --    construction.  The number of reads/writes and the size of the lock
 --    set is also shown.
---  &lt;table border=&quot;1&quot;&gt;
+--  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
 --      
@@ -1249,7 +1249,7 @@ SELECT OBJID(COUNTS.RECEIVER) &quot;?Field? Object&quot;,
 --    and writes of each field, as well as how many shared objects are
 --    created that contain this field.  Clicking on a field will open its
 --    declaration in the code view.
---  &lt;table border=&quot;1&quot;&gt;
+--  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
 --      
@@ -1348,7 +1348,7 @@ order by O.PackageName,O.ClassName,F.FieldName</query>
 --    Lists all of the places in the program where a field is accessed
 --    while this lock is held.  Clicking on a line will open it in the
 --    code view.
---  &lt;table border=&quot;1&quot;&gt;
+--  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
 --      
@@ -1394,7 +1394,7 @@ ORDER BY 1,2,3</query>
 --    the time it occurred.  Accesses marked as being &apos;Under Construction&apos;
 --    happened while the object was being initialized.  Clicking on an
 --    access will open the relevant line in the code view.
---  &lt;table border=&quot;1&quot;&gt;
+--  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
 --      
@@ -1459,7 +1459,7 @@ ORDER BY A.TS ASC</query>
 --    &lt;title&gt;Example of a potential deadlock&lt;/title&gt;
 --    &lt;mediaobject&gt;&lt;imageobject&gt;&lt;imagedata fileref=&quot;query-deadlock-example.png&quot; /&gt;&lt;/imageobject&gt;&lt;/mediaobject&gt;
 --  &lt;/figure&gt;
---  &lt;table border=&quot;1&quot;&gt;
+--  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
 --      
@@ -1530,7 +1530,7 @@ order by count desc</query>
 --    Generates a stack trace of the method calls leading up to this field
 --    access or method call, from most to least recent.  Clicking on each
 --    line will open the method call in the code view.
---  &lt;table border=&quot;1&quot;&gt;
+--  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
 --              
@@ -1597,7 +1597,7 @@ ORDER BY 1,2,3,4
 --&lt;p&gt;
 --    Lists each time and by what thread the program acquires a lock at
 --    this line in the code.
---  &lt;table border=&quot;1&quot;&gt;
+--  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
 --      
@@ -1664,7 +1664,7 @@ ORDER BY 5 DESC,4</query>
 --    general idea as to what portions of the program interact
 --    with Swing and AWT and can help identify violations of the
 --    threading policy.
---  &lt;table border=&quot;1&quot;&gt;
+--  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
 --      
@@ -1773,7 +1773,7 @@ ORDER BY 1,2,3
 --    Lists every line of code where a lock is acquired while already
 --    holding at least one lock.  Next to each line is listed the most
 --    locks the program ever holds at this point.
---  &lt;table border=&quot;1&quot;&gt;
+--  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
 --      
@@ -1844,7 +1844,7 @@ GROUP BY CLASSNAME,PACKAGENAME,ATLINE
 --    we have an assurance that no race condition was observed for this
 --    field.
 --  
---  &lt;table border=&quot;1&quot;&gt;
+--  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
 --      
@@ -1899,7 +1899,7 @@ FROM
 --&lt;p&gt;
 --    Lists the objects in this class called by more than one thread, and
 --    gives a breakdown of the accesses made by each thread.
---  &lt;table border=&quot;1&quot;&gt;
+--  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
 --      
@@ -1970,7 +1970,7 @@ ORDER BY O.THREADNAME ASC, A.TS ASC, D.Start DESC
 --    Lists all of the places in the program that access this field while
 --    the given lock is being held.  Clicking on a line will open up the
 --    field access in the code view.
---  &lt;table border=&quot;1&quot;&gt;
+--  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
 --      
@@ -2021,7 +2021,7 @@ ORDER BY 1,2,3</query>
 --    Lists all of the places in the program that access this field while
 --    a given lock is not held.  Clicking on a line will open up the field
 --    access in the code view.
---  &lt;table border=&quot;1&quot;&gt;
+--  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
 --      
@@ -2065,7 +2065,7 @@ WHERE A.FIELD = ?FieldId? AND
 --    writes of each field, as well as how many shared objects are created
 --    that contain this field.  Clicking on a field opens its
 --    declaration in the code view.
---  &lt;table border=&quot;1&quot;&gt;
+--  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
 --      
@@ -2164,7 +2164,7 @@ order by O.PackageName,O.ClassName,F.FieldName</query>
 --    Flashlight&apos;s lock set analysis could not find a common lock held
 --    each time this field is accessed.  Clicking on a field will open its
 --    declaration in the code view.
---  &lt;table border=&quot;1&quot;&gt;
+--  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
 --      
@@ -2216,7 +2216,7 @@ SELECT
 --    different stack traces.  For each entry, the amount of time that the
 --    thread blocks and the number of times the lock is acquired is
 --    listed.
---  &lt;table border=&quot;1&quot;&gt;
+--  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
 --      
@@ -2279,7 +2279,7 @@ order by lo.PackageName, lo.ClassName, s.AtLine, tho.ThreadName, sum(ld.Duration
 --    acquired.  Locks with a high average block time usually indicate
 --    high contention in part of your program, and may be a source of
 --    slowdown.
---  &lt;table border=&quot;1&quot;&gt;
+--  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
 --      
@@ -2343,7 +2343,7 @@ order by sum(duration) / count (lock) desc
 --&lt;p&gt;
 --    Shows the number of reads and writes each thread that accesses this
 --    field makes.
---  &lt;table border=&quot;1&quot;&gt;
+--  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
 --      
@@ -2405,7 +2405,7 @@ SELECT
 --    &lt;package&gt;java.util&lt;/package&gt; and
 --    &lt;classname&gt;java.lang.System&lt;/classname&gt;. For more information about
 --    indirect accesses, see &lt;xref linkend=&quot;flashlight-method-files&quot; /&gt;.
---  &lt;table border=&quot;1&quot;&gt;
+--  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
 --      
@@ -2465,7 +2465,7 @@ SELECT T.PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;, T.CLASSNAME
 --    about the number of reads and writes of each field, as well as how
 --    many shared objects are created that contain this field.  Clicking
 --    on a field will open its declaration in the code view.
---  &lt;table border=&quot;1&quot;&gt;
+--  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
 --      
@@ -2516,7 +2516,7 @@ SELECT
 --    Lists all of the places in the program that access this field while
 --    a given lock is not held.  Clicking on a line will open up the field
 --    access in the code view.
---  &lt;table border=&quot;1&quot;&gt;
+--  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
 --      
@@ -2575,7 +2575,7 @@ order by st.tablename,sco.columnnumber</query>
 --    Lists all of the places in the program where a field is held during
 --    this and only this time the lock is acquired.  Clicking on a line
 --    will open it in the code view.
---  &lt;table border=&quot;1&quot;&gt;
+--  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
 --      
@@ -2622,7 +2622,7 @@ INNER JOIN FIELD F ON
 --    to this lock event, from most to least recent.  Clicking on each
 --    entry will open up the line that acquired that lock in the code
 --    view.
---  &lt;table border=&quot;1&quot;&gt;
+--  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
 --              
@@ -2674,7 +2674,7 @@ ORDER BY D.START DESC</query>
 --    Lists all of the fields that were accessed while this lock was held
 --    and how often each was accessed with or without the lock being held.
 --    Clicking on a field will open its declaration in the code view.
---  &lt;table border=&quot;1&quot;&gt;
+--  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
 --      

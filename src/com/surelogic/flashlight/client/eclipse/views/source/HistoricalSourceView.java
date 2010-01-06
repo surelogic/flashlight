@@ -5,12 +5,24 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
-import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import org.eclipse.jdt.core.dom.AST;
+import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.ASTParser;
+import org.eclipse.jdt.core.dom.ASTVisitor;
+import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
+import org.eclipse.jdt.core.dom.BodyDeclaration;
+import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.FieldDeclaration;
+import org.eclipse.jdt.core.dom.TypeDeclaration;
+import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyledText;
@@ -188,7 +200,7 @@ public final class HistoricalSourceView extends ViewPart {
 						pkg == null ? type : pkg + '.' + type);
 				if (loaded) {
 					final int lineNumber = computeLine(view.source.getText(),
-							field);
+							type, field);
 					view.showAndSelectLine(lineNumber);
 				}
 			}
@@ -247,87 +259,156 @@ public final class HistoricalSourceView extends ViewPart {
 		}
 	}
 
-	/**
-	 * Need to distinguish the field from a local var decl
-	 */
-	// FIX to parse comp unit and find appropriate field
-	private static int computeLine(final String source, final String field) {
-		final StringTokenizer st = new StringTokenizer(source, "\n");
-		int lineNum = 0;
-		int firstNonInitializedField = -1;
-		int firstInitializedField = -1;
-		while (st.hasMoreTokens()) {
-			final String line = st.nextToken();
-			// Search for field w/o initializer
-			int fieldLoc = line.indexOf(field + ';');
-			if (fieldLoc >= 0) {
-				if (hasNonfinalModifiers(line, fieldLoc)) {
-					return lineNum;
-				} else if (firstNonInitializedField < 0) {
-					firstNonInitializedField = lineNum;
-				}
+	private static int computeLine(final String source, final String type,
+			final String field) {
+		ASTParser parser = ASTParser.newParser(AST.JLS3);
+		parser.setSource(source.toCharArray());
+		parser.setUnitName("temp____");
+		parser.setProject(null);
+		CompilationUnit cu = (CompilationUnit) parser.createAST(null);
+		// ComputePositionVisitor v = new ComputePositionVisitor(type, field);
+		// cu.accept(v);
+		List<String> types = new ArrayList<String>();
+		for (String typeName : type.replace('$', '.').split("\\.")) {
+			try {
+				// Strip anonymous classes
+				Integer.parseInt(typeName);
+			} catch (NumberFormatException e) {
+				types.add(typeName);
 			}
-			// Search for field with initializer
-			fieldLoc = line.indexOf(field + '=');
-			if (fieldLoc < 0) {
-				fieldLoc = line.indexOf(field);
-				if (fieldLoc >= 0) {
-					// Look for whitespace before the =
-					final int here = fieldLoc;
-					final int rest = here + field.length();
-					fieldLoc = -1;
-					final StringTokenizer st2 = new StringTokenizer(line
-							.substring(rest));
-					if (st2.hasMoreTokens()) {
-						final String next = st2.nextToken();
-						if (next.startsWith("=")) {
-							if (next.startsWith("==")) {
-								fieldLoc = -1;
-							} else {
-								fieldLoc = here;
-							}
+		}
+		// Subtract one because we are zero-based instead of one-based.
+		return cu
+				.getLineNumber(computePositionHelper(cu.types(), types, field)) - 1;
+	}
+
+	private static int computePositionHelper(List<BodyDeclaration> decls,
+			final List<String> types, final String field) {
+		if (types.isEmpty()) {
+			// Look for the field
+			for (BodyDeclaration bd : decls) {
+				if (bd.getNodeType() == ASTNode.FIELD_DECLARATION) {
+					FieldDeclaration fd = (FieldDeclaration) bd;
+					List<VariableDeclarationFragment> fragments = fd
+							.fragments();
+					for (VariableDeclarationFragment fragment : fragments) {
+						if (fragment.getName().getIdentifier().equals(field)) {
+							return fragment.getStartPosition();
 						}
 					}
 				}
-			} else if (line.startsWith(field + "==", fieldLoc)) {
-				// Ensure it's not ==
-				fieldLoc = -1;
 			}
-			if (fieldLoc >= 0) {
-				if (hasNonfinalModifiers(line, fieldLoc)) {
-					return lineNum;
-				} else if (firstInitializedField < 0) {
-					firstInitializedField = lineNum;
+		} else {
+			String type = types.remove(0);
+			// Find the next type and keep going
+			for (BodyDeclaration bd : decls) {
+				if (bd instanceof AbstractTypeDeclaration) {
+					AbstractTypeDeclaration td = (AbstractTypeDeclaration) bd;
+					if (td.getName().getIdentifier().equals(type)) {
+						return computePositionHelper(td.bodyDeclarations(),
+								types, field);
+					}
 				}
 			}
-			lineNum++;
-		}
-		if (firstInitializedField > 0) {
-			if (firstNonInitializedField > 0) {
-				// return whichever is first
-				if (firstInitializedField < firstNonInitializedField) {
-					return firstInitializedField;
+			// We still haven't found out why, but the parser is bugging out on
+			// some cases, so we will put the type back and look inside these
+			// type declarations
+			types.add(0, type);
+			for (BodyDeclaration bd : decls) {
+				if (bd instanceof AbstractTypeDeclaration) {
+					AbstractTypeDeclaration td = (AbstractTypeDeclaration) bd;
+					int pos = computePositionHelper(td.bodyDeclarations(),
+							types, field);
+					if (pos > 0) {
+						return pos;
+					}
 				}
-				return firstNonInitializedField;
 			}
-			return firstInitializedField;
-		}
-		if (firstNonInitializedField > 0) {
-			return firstNonInitializedField;
 		}
 		return 0;
 	}
 
-	private static final String[] modifiers = { "static", "public", "private",
-			"protected", "volatile", "transient" };
+	/**
+	 * A visitor that will compute the position of a given field in a given
+	 * type.
+	 * 
+	 * @author nathan
+	 * 
+	 */
+	private static class ComputePositionVisitor extends ASTVisitor {
 
-	private static boolean hasNonfinalModifiers(final String line,
-			final int here) {
-		for (final String mod : modifiers) {
-			if (line.lastIndexOf(mod, here) >= 0) {
-				return true;
+		private final String targetField;
+		private final LinkedList<String> targetType;
+		private final LinkedList<String> types;
+		private int position;
+
+		/**
+		 * 
+		 * @param type
+		 *            a fully qualified type name, using either <code>$</code>
+		 *            or <code>.</code> as a separator.
+		 * @param field
+		 */
+		ComputePositionVisitor(String type, String field) {
+			targetType = new LinkedList<String>();
+			for (String s : type.replace('$', '.').split("\\.")) {
+				try {
+					Integer.parseInt(s);
+				} catch (NumberFormatException e) {
+					targetType.push(s);
+				}
 			}
+			this.targetField = field;
+			types = new LinkedList<String>();
 		}
-		return false;
+
+		@Override
+		public void endVisit(TypeDeclaration node) {
+			System.err.println(String.format("Exit: %s", node.getName()
+					.getFullyQualifiedName()));
+			types.pop();
+		}
+
+		@Override
+		public boolean visit(TypeDeclaration node) {
+			System.err.println(String.format("Enter: %s", node.getName()
+					.getIdentifier()));
+			types.push(node.getName().getIdentifier());
+			return true;
+		}
+
+		@Override
+		public boolean visit(VariableDeclarationFragment node) {
+			if (isFieldDeclaration
+					&& node.getName().getIdentifier().equals(targetField)
+					&& targetType.equals(types)) {
+				position = node.getStartPosition();
+			}
+			return true;
+		}
+
+		boolean isFieldDeclaration;
+
+		@Override
+		public boolean visit(FieldDeclaration node) {
+			isFieldDeclaration = true;
+			return true;
+		}
+
+		@Override
+		public void endVisit(FieldDeclaration node) {
+			isFieldDeclaration = false;
+		}
+
+		@Override
+		public boolean preVisit2(ASTNode node) {
+			return position < 1;
+		}
+
+		public int getPosition() {
+			return position;
+		}
+
 	}
+
 }

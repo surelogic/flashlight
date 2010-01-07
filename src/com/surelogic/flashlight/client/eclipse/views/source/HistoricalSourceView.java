@@ -6,22 +6,20 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
+import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
-import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.BodyDeclaration;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
-import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.swt.SWT;
@@ -82,11 +80,13 @@ public final class HistoricalSourceView extends ViewPart {
 	 * Exception e) { // TODO Auto-generated catch block e.printStackTrace(); }
 	 * } return false; }
 	 */
+	Pattern ANON = Pattern.compile("\\$\\d+");
 
 	/**
 	 * @return true if the view is populated
 	 */
-	private boolean showSourceFile(final RunDirectory dir, final String qname) {
+	private boolean showSourceFile(final RunDirectory dir, String qname) {
+		qname = ANON.matcher(qname).replaceAll("");
 		if (lastRunDir == dir && lastType == qname) {
 			return true; // Should be populated from before
 		}
@@ -326,89 +326,6 @@ public final class HistoricalSourceView extends ViewPart {
 			}
 		}
 		return 0;
-	}
-
-	/**
-	 * A visitor that will compute the position of a given field in a given
-	 * type.
-	 * 
-	 * @author nathan
-	 * 
-	 */
-	private static class ComputePositionVisitor extends ASTVisitor {
-
-		private final String targetField;
-		private final LinkedList<String> targetType;
-		private final LinkedList<String> types;
-		private int position;
-
-		/**
-		 * 
-		 * @param type
-		 *            a fully qualified type name, using either <code>$</code>
-		 *            or <code>.</code> as a separator.
-		 * @param field
-		 */
-		ComputePositionVisitor(String type, String field) {
-			targetType = new LinkedList<String>();
-			for (String s : type.replace('$', '.').split("\\.")) {
-				try {
-					Integer.parseInt(s);
-				} catch (NumberFormatException e) {
-					targetType.push(s);
-				}
-			}
-			this.targetField = field;
-			types = new LinkedList<String>();
-		}
-
-		@Override
-		public void endVisit(TypeDeclaration node) {
-			System.err.println(String.format("Exit: %s", node.getName()
-					.getFullyQualifiedName()));
-			types.pop();
-		}
-
-		@Override
-		public boolean visit(TypeDeclaration node) {
-			System.err.println(String.format("Enter: %s", node.getName()
-					.getIdentifier()));
-			types.push(node.getName().getIdentifier());
-			return true;
-		}
-
-		@Override
-		public boolean visit(VariableDeclarationFragment node) {
-			if (isFieldDeclaration
-					&& node.getName().getIdentifier().equals(targetField)
-					&& targetType.equals(types)) {
-				position = node.getStartPosition();
-			}
-			return true;
-		}
-
-		boolean isFieldDeclaration;
-
-		@Override
-		public boolean visit(FieldDeclaration node) {
-			isFieldDeclaration = true;
-			return true;
-		}
-
-		@Override
-		public void endVisit(FieldDeclaration node) {
-			isFieldDeclaration = false;
-		}
-
-		@Override
-		public boolean preVisit2(ASTNode node) {
-			return position < 1;
-		}
-
-		public int getPosition() {
-			return position;
-		}
-
 	}
 
 }

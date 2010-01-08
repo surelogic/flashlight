@@ -5,7 +5,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -16,10 +16,13 @@ import java.util.zip.ZipFile;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
+import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
-import org.eclipse.jdt.core.dom.BodyDeclaration;
+import org.eclipse.jdt.core.dom.AnonymousClassDeclaration;
+import org.eclipse.jdt.core.dom.Block;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
+import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.swt.SWT;
@@ -63,30 +66,23 @@ public final class HistoricalSourceView extends ViewPart {
 		source.setFocus();
 	}
 
-	// Get flashlight directory
-	// Find valid flashlight run directory
-	// Find project zip under /source
-	// Find sourceFiles.xml, classMapping.xml in zip
 	/*
-	 * private boolean showSourceFile(final RunDirectory dir, String pkg, final
-	 * String name) { if (pkg == null) { pkg = "(default)"; } final
-	 * SourceZipFileHandles zips = dir.getSourceHandles(); for (final File f :
-	 * zips.getSourceZips()) { try { final ZipFile zf = new ZipFile(f); try {
-	 * final Map<String, Map<String, String>> fileMap = AbstractJavaZip
-	 * .readSourceFileMappings(zf); // AbstractJavaZip.readClassMappings(zf);
-	 * final Map<String, String> map = fileMap.get(pkg); if (map != null) {
-	 * final String path = map.get(name); if (path != null) { populate(zf,
-	 * path); return true; } } } finally { zf.close(); } } catch (final
-	 * Exception e) { // TODO Auto-generated catch block e.printStackTrace(); }
-	 * } return false; }
+	 * Pattern matching an anonymous class in a type signature
 	 */
-	Pattern ANON = Pattern.compile("\\$\\d+");
+	private static final Pattern ANON = Pattern.compile("[.$]\\d+");
+	/*
+	 * Pattern matching an anonymous class in a type signature, as well as
+	 * everything that follows
+	 */
+	private static final Pattern ANON_ONWARDS = Pattern.compile("[.$]\\d.*");
 
 	/**
 	 * @return true if the view is populated
 	 */
 	private boolean showSourceFile(final RunDirectory dir, String qname) {
-		qname = ANON.matcher(qname).replaceAll("");
+		// FIXME We use ANON_ONWARDS, b/c we don't record any type location info
+		// about types defined within an anonymous class
+		qname = ANON_ONWARDS.matcher(qname).replaceFirst("");
 		if (lastRunDir == dir && lastType == qname) {
 			return true; // Should be populated from before
 		}
@@ -265,67 +261,157 @@ public final class HistoricalSourceView extends ViewPart {
 		parser.setSource(source.toCharArray());
 		parser.setUnitName("temp____");
 		parser.setProject(null);
+		parser.setKind(ASTParser.K_COMPILATION_UNIT);
+		parser.setStatementsRecovery(true);
 		CompilationUnit cu = (CompilationUnit) parser.createAST(null);
-		// ComputePositionVisitor v = new ComputePositionVisitor(type, field);
-		// cu.accept(v);
-		List<String> types = new ArrayList<String>();
-		for (String typeName : type.replace('$', '.').split("\\.")) {
-			try {
-				// Strip anonymous classes
-				Integer.parseInt(typeName);
-			} catch (NumberFormatException e) {
-				types.add(typeName);
+		List<AbstractTypeDeclaration> decls = cu.types();
+		for (AbstractTypeDeclaration decl : decls) {
+			// decl.accept(new ASTVisitorRecorder());
+			FieldFinderVisitor v = new FieldFinderVisitor(type, field);
+			decl.accept(v);
+			if (v.getPosition() != 0) {
+				// Subtract one because we are zero-based instead of one-based.
+				return cu.getLineNumber(v.getPosition()) - 1;
 			}
 		}
-		// Subtract one because we are zero-based instead of one-based.
-		return cu
-				.getLineNumber(computePositionHelper(cu.types(), types, field)) - 1;
+		return cu.getLineNumber(0) - 1;
 	}
 
-	private static int computePositionHelper(List<BodyDeclaration> decls,
-			final List<String> types, final String field) {
-		if (types.isEmpty()) {
-			// Look for the field
-			for (BodyDeclaration bd : decls) {
-				if (bd.getNodeType() == ASTNode.FIELD_DECLARATION) {
-					FieldDeclaration fd = (FieldDeclaration) bd;
-					List<VariableDeclarationFragment> fragments = fd
-							.fragments();
-					for (VariableDeclarationFragment fragment : fragments) {
-						if (fragment.getName().getIdentifier().equals(field)) {
-							return fragment.getStartPosition();
-						}
-					}
-				}
+	/**
+	 * {@link ASTVisitor} that finds a given field in a given type.
+	 * 
+	 * @author nathan
+	 * 
+	 */
+	private static class FieldFinderVisitor extends ASTVisitor {
+		private final LinkedList<String> typeList;
+		private final LinkedList<String> currentType;
+		private final String field;
+		private int position;
+		private int possiblePosition;
+		private int unlikelyPosition;
+		private boolean inField;
+
+		/**
+		 * Construct a new field finder
+		 * 
+		 * @param type
+		 *            a type signature. It may contain anonymous classes and use
+		 *            either $ or . as a delimiter.
+		 * @param field
+		 *            the field name
+		 */
+		FieldFinderVisitor(final String type, final String field) {
+			this.field = field;
+			typeList = new LinkedList<String>();
+			for (String typePart : ANON.matcher(type).replaceAll("").split(
+					"[.$]")) {
+				typeList.push(typePart);
 			}
-		} else {
-			String type = types.remove(0);
-			// Find the next type and keep going
-			for (BodyDeclaration bd : decls) {
-				if (bd instanceof AbstractTypeDeclaration) {
-					AbstractTypeDeclaration td = (AbstractTypeDeclaration) bd;
-					if (td.getName().getIdentifier().equals(type)) {
-						return computePositionHelper(td.bodyDeclarations(),
-								types, field);
-					}
-				}
-			}
-			// We still haven't found out why, but the parser is bugging out on
-			// some cases, so we will put the type back and look inside these
-			// type declarations
-			types.add(0, type);
-			for (BodyDeclaration bd : decls) {
-				if (bd instanceof AbstractTypeDeclaration) {
-					AbstractTypeDeclaration td = (AbstractTypeDeclaration) bd;
-					int pos = computePositionHelper(td.bodyDeclarations(),
-							types, field);
-					if (pos > 0) {
-						return pos;
-					}
-				}
-			}
+			currentType = new LinkedList<String>();
 		}
-		return 0;
+
+		@Override
+		public void endVisit(TypeDeclaration node) {
+			currentType.pop();
+		}
+
+		@Override
+		public boolean visit(AnonymousClassDeclaration node) {
+			return super.visit(node);
+		}
+
+		@Override
+		public boolean visit(TypeDeclaration node) {
+			currentType.push(node.getName().getIdentifier());
+			return true;
+		}
+
+		@Override
+		public boolean visit(FieldDeclaration node) {
+			inField = true;
+			return true;
+		}
+
+		@Override
+		public void endVisit(FieldDeclaration node) {
+			inField = false;
+		}
+
+		@Override
+		public boolean visit(VariableDeclarationFragment node) {
+			if (inField && node.getName().getIdentifier().equals(field)) {
+				int nodePosition = node.getStartPosition();
+				if (currentType.equals(typeList)) {
+					// Definite match
+					position = nodePosition;
+				} else if (currentType.containsAll(typeList)) {
+					// Possible match. The parser sometimes gets confused
+					// about when types begin and end, so since this type
+					// hierarchy does include all of the types in our target
+					// hierarchy we will use it.
+					possiblePosition = nodePosition;
+				} else {
+					// Probably not our match, but if we don't find any other
+					// matching fields we will use it as a best guess.
+					unlikelyPosition = nodePosition;
+				}
+
+			}
+			return true;
+		}
+
+		/**
+		 * Returns the most likely position of the field
+		 * 
+		 * @return
+		 */
+		public int getPosition() {
+			return position != 0 ? position
+					: (possiblePosition != 0 ? possiblePosition
+							: unlikelyPosition);
+		}
+
+	}
+
+	/**
+	 * Prints out a representation of the Abstract Syntax Tree
+	 * 
+	 * @author nathan
+	 * 
+	 */
+	static class ASTVisitorRecorder extends ASTVisitor {
+
+		int tabs;
+
+		@Override
+		public void postVisit(ASTNode node) {
+			tabs--;
+		}
+
+		@Override
+		public void preVisit(ASTNode node) {
+			StringBuilder b = new StringBuilder();
+			for (int i = 0; i < tabs; i++) {
+				b.append('\t');
+			}
+			b.append(ASTNode.nodeClassForType(node.getNodeType())
+					.getSimpleName());
+			System.out.println(b.toString());
+			tabs++;
+		}
+
+		@Override
+		public boolean visit(Block node) {
+			StringBuilder b = new StringBuilder();
+			for (int i = 0; i < tabs; i++) {
+				b.append('\t');
+			}
+			b.append(node.statements().size());
+			System.out.println(b.toString());
+			return true;
+		}
+
 	}
 
 }

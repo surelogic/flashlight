@@ -54,7 +54,6 @@ public class ReadWriteLock extends Event {
 			return;
 		}
 		insert(id, readLock, writeLock);
-		f_rowInserter.defineRWLock(id, readLock, writeLock, startTime);
 	}
 
 	private void insert(final long id, final long readLock, final long writeLock)

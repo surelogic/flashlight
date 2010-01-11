@@ -761,11 +761,6 @@ public final class IntrinsicLockDurationRowInserter {
 		}
 	}
 
-	public void defineRWLock(final long id, final Long readLock,
-			final Long writeLock, final Timestamp startTime) {
-		// Nothing to do right now
-	}
-
 	/**
 	 * Clear out state for the Object
 	 */

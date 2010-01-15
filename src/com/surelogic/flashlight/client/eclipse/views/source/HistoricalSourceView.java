@@ -306,14 +306,14 @@ public final class HistoricalSourceView extends ViewPart {
 			typeList = new LinkedList<String>();
 			for (String typePart : ANON.matcher(type).replaceAll("").split(
 					"[.$]")) {
-				typeList.push(typePart);
+				typeList.addFirst(typePart);
 			}
 			currentType = new LinkedList<String>();
 		}
 
 		@Override
 		public void endVisit(TypeDeclaration node) {
-			currentType.pop();
+			currentType.removeFirst();
 		}
 
 		@Override
@@ -323,7 +323,7 @@ public final class HistoricalSourceView extends ViewPart {
 
 		@Override
 		public boolean visit(TypeDeclaration node) {
-			currentType.push(node.getName().getIdentifier());
+			currentType.addFirst(node.getName().getIdentifier());
 			return true;
 		}
 

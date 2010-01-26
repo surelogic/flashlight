@@ -1815,4 +1815,16 @@ public final class Store {
 	private Store() {
 		// no instances
 	}
+	
+
+	public static void instanceFieldInit(
+	    final Object receiver, final int fieldId, final Object value) {
+    // do nothing for now
+//    System.out.println("Init instance field: <" + receiver + ">.<" + fieldId + "> to " + value);
+	}
+	
+	public static void staticFieldInit(final int fieldId, final Object value) {
+	  // do nothing for now
+//	  System.out.println("Init static field: " + fieldId + " to " + value);
+	}
 }

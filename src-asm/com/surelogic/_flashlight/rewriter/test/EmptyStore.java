@@ -100,4 +100,13 @@ public class EmptyStore {
       final long siteId) {
     // do nothing
   }
+
+  public static void instanceFieldInit(
+      final Object receiver, final int fieldId, final Object value) {
+    // do nothing
+  }
+  
+  public static void staticFieldInit(final int fieldId, final Object value) {
+    // do nothing
+  }
 }

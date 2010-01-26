@@ -1044,53 +1044,110 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     }
         
     final Field field = getField(owner, name);
-    if (field != null && instrumentField(field)) {
-      // Mark the field as referenced
-      field.setReferenced();
-      
-      /* We need to manipulate the stack to make a copy of the object being
-       * accessed so that we can have it for the call to the Store.
-       * How we do this depends on whether the top value on the stack is a
-       * category 1 or a category 2 value.  We have to test the type descriptor
-       * of the field to determine this.
+    if (field != null) {
+      /* If we are inside a constructor, the field type is an object or array,
+       * and the receiver of the field reference is the receiver of the
+       * constructor, we record the initialization
        */
-      if (ByteCodeUtils.isCategory2(desc)) {
-        // At the start the stack is "..., objectref, value"
-        mv.visitInsn(Opcodes.DUP2_X1);
-        // Stack is "..., value, objectref, value" (+2)
-        mv.visitInsn(Opcodes.POP2);
-        // Stack is "..., value, objectref" (+0)
-        mv.visitInsn(Opcodes.DUP_X2);
-        // Stack is "..., objectref, value, objectref" (+1)
-        mv.visitInsn(Opcodes.DUP_X2);
-        // Stack is "..., objectref, objectref, value, objectref" (+2)
-        mv.visitInsn(Opcodes.POP);
-        // Stack is "..., objectref, objectref, value" (+1)      
-      } else { // Category 1
-        // At the start the stack is "..., objectref, value"
+      final int sort = Type.getType(desc).getSort();
+      if (isConstructor && (sort == Type.ARRAY || sort == Type.OBJECT)) {
+        // Mark the field as referenced, because we are going to use it here
+        field.setReferenced();
+
+        /* We still need to test the receiver.  We know we have a category 1
+         * value because we are dealing with an object.
+         */
+        
+        // stack is "..., objectref, value"
         mv.visitInsn(Opcodes.SWAP);
-        // Stack is "..., value, objectref" (+0)
+        // stack is "..., value, objectref"
         mv.visitInsn(Opcodes.DUP_X1);
-        // Stack is "..., objectref, value, objectref" (+1)
+        // stack is "..., objectref, value, objectref"
+        mv.visitVarInsn(Opcodes.ALOAD, 0);
+        // stack is "..., objectref, value, objectref, <rcvr>"
+        
+        /* Jump around the call to instanceFieldInit() if the field is not
+         * from the object being constructed.
+         */
+        final Label afterInitCall = new Label();
+        mv.visitJumpInsn(Opcodes.IF_ACMPNE, afterInitCall);        
+        // stack is "..., objectref, value"
+        
+        /* Here we know that the field being assigned is from the object
+         * being constructed, so we need to be record this.
+         * 
+         * We need to copies of both the object and the value.
+         */
+        mv.visitInsn(Opcodes.DUP_X1);
+        // stack is "..., value, objectref, value"
         mv.visitInsn(Opcodes.SWAP);
-        // Stack is "..., objectref, objectref, value" (+1)
+        // stack is "..., value, value, objectref"
+        mv.visitInsn(Opcodes.DUP_X2);
+        // stack is "..., objectref, value, value, objectref"
+        mv.visitInsn(Opcodes.SWAP);
+        // stack is "..., objectref, value, objectref, value"
+        ByteCodeUtils.pushIntegerConstant(mv, field.id);
+        // stack is "..., objectref, value, objectref, value, fieldId"
+        mv.visitInsn(Opcodes.SWAP);
+        // stack is "..., objectref, value, objectref, fieldId, value"
+        ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.INSTANCE_FIELD_INIT);
+        // stack is "..., objectref, value"
+        
+        mv.visitLabel(afterInitCall);
+        // stack is "..., objectref, value"
       }
       
-      // Execute the original PUTFIELD instruction
-      mv.visitFieldInsn(Opcodes.PUTFIELD, owner, name, desc);
-      // Stack is "..., objectref"
-      
-      /* Again manipulate the stack so that we can set up the first two
-       * arguments to the Store.fieldAccess() call.  The first argument
-       * is a boolean "isRead" flag.  The second argument is the object being
-       * accessed.
-       */
-      ByteCodeUtils.pushBooleanConstant(mv, false);
-      // Stack is "..., objectref, false"
-      mv.visitInsn(Opcodes.SWAP);
-      // Stack is "..., false, objectref"
-      
-      finishFieldAccess(owner, field.id, field.clazz.isInstrumented(), field.clazz.getName(), FlashlightNames.INSTANCE_FIELD_ACCESS);
+      if (instrumentField(field)) {
+        // Mark the field as referenced
+        field.setReferenced();
+        
+        /* We need to manipulate the stack to make a copy of the object being
+         * accessed so that we can have it for the call to the Store.
+         * How we do this depends on whether the top value on the stack is a
+         * category 1 or a category 2 value.  We have to test the type descriptor
+         * of the field to determine this.
+         */
+        if (ByteCodeUtils.isCategory2(desc)) {
+          // At the start the stack is "..., objectref, value"
+          mv.visitInsn(Opcodes.DUP2_X1);
+          // Stack is "..., value, objectref, value" (+2)
+          mv.visitInsn(Opcodes.POP2);
+          // Stack is "..., value, objectref" (+0)
+          mv.visitInsn(Opcodes.DUP_X2);
+          // Stack is "..., objectref, value, objectref" (+1)
+          mv.visitInsn(Opcodes.DUP_X2);
+          // Stack is "..., objectref, objectref, value, objectref" (+2)
+          mv.visitInsn(Opcodes.POP);
+          // Stack is "..., objectref, objectref, value" (+1)      
+        } else { // Category 1
+          // At the start the stack is "..., objectref, value"
+          mv.visitInsn(Opcodes.SWAP);
+          // Stack is "..., value, objectref" (+0)
+          mv.visitInsn(Opcodes.DUP_X1);
+          // Stack is "..., objectref, value, objectref" (+1)
+          mv.visitInsn(Opcodes.SWAP);
+          // Stack is "..., objectref, objectref, value" (+1)
+        }
+        
+        // Execute the original PUTFIELD instruction
+        mv.visitFieldInsn(Opcodes.PUTFIELD, owner, name, desc);
+        // Stack is "..., objectref"
+        
+        /* Again manipulate the stack so that we can set up the first two
+         * arguments to the Store.fieldAccess() call.  The first argument
+         * is a boolean "isRead" flag.  The second argument is the object being
+         * accessed.
+         */
+        ByteCodeUtils.pushBooleanConstant(mv, false);
+        // Stack is "..., objectref, false"
+        mv.visitInsn(Opcodes.SWAP);
+        // Stack is "..., false, objectref"
+        
+        finishFieldAccess(owner, field.id, field.clazz.isInstrumented(), field.clazz.getName(), FlashlightNames.INSTANCE_FIELD_ACCESS);
+      } else {
+        // Execute the original PUTFIELD instruction
+        mv.visitFieldInsn(Opcodes.PUTFIELD, owner, name, desc);
+      }
     } else {
       // Execute the original PUTFIELD instruction
       mv.visitFieldInsn(Opcodes.PUTFIELD, owner, name, desc);
@@ -1173,23 +1230,50 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
   private void rewritePutstatic(
       final String owner, final String name, final String desc) {
     final Field field = getField(owner, name);
-    if (field != null && instrumentField(field)) {
-      // Mark the field as referenced
-      field.setReferenced();
-      
-      // Stack is "..., value"
-      
-      // Execute the original PUTSTATIC instruction
-      mv.visitFieldInsn(Opcodes.PUTSTATIC, owner, name, desc);
-      // Stack is "..."
-      
-      /* Push the first arguments on the stack for the call to the
-       * Store.
+    if (field != null) {
+      /* If we are inside the class initializer, the field is from the
+       * class being instrumented, and the type is an object or array,
+       * we record the initialization
        */
-      ByteCodeUtils.pushBooleanConstant(mv, false);
-      // Stack is "..., false"
+      if (isClassInitializer && field.clazz.getName().equals(classBeingAnalyzedInternal)) {
+        final int sort = Type.getType(desc).getSort();
+        if (sort == Type.ARRAY || sort == Type.OBJECT) {
+          // Mark the field as referenced
+          field.setReferenced();
+          
+          // stack is "..., value"
+          mv.visitInsn(Opcodes.DUP);
+          // stack is "..., value, value"
+          ByteCodeUtils.pushIntegerConstant(mv, field.id);
+          // stack is "..., value, value, fieldId"
+          mv.visitInsn(Opcodes.SWAP);
+          // stack is "..., value, fieldId, value"
+          ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.STATIC_FIELD_INIT);
+          // static is "..., value"
+        }
+      }
       
-      finishFieldAccess(owner, field.id, field.clazz.isInstrumented(), field.clazz.getName(), FlashlightNames.STATIC_FIELD_ACCESS);
+      if (instrumentField(field)) {
+        // Mark the field as referenced
+        field.setReferenced();
+        
+        // Stack is "..., value"
+        
+        // Execute the original PUTSTATIC instruction
+        mv.visitFieldInsn(Opcodes.PUTSTATIC, owner, name, desc);
+        // Stack is "..."
+        
+        /* Push the first arguments on the stack for the call to the
+         * Store.
+         */
+        ByteCodeUtils.pushBooleanConstant(mv, false);
+        // Stack is "..., false"
+        
+        finishFieldAccess(owner, field.id, field.clazz.isInstrumented(), field.clazz.getName(), FlashlightNames.STATIC_FIELD_ACCESS);
+      } else {
+        // Execute the original PUTSTATIC instruction
+        mv.visitFieldInsn(Opcodes.PUTSTATIC, owner, name, desc);
+      }
     } else {
       // Execute the original PUTSTATIC instruction
       mv.visitFieldInsn(Opcodes.PUTSTATIC, owner, name, desc);

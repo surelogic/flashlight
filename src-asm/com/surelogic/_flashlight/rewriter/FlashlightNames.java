@@ -49,6 +49,12 @@ public final class FlashlightNames {
   public static final Method STATIC_FIELD_ACCESS =
     Method.getMethod("void staticFieldAccess(boolean, int, long, com.surelogic._flashlight.ClassPhantomReference, java.lang.Class)");
   
+  public static final Method STATIC_FIELD_INIT =
+    Method.getMethod("void staticFieldInit(int, java.lang.Object)");
+  
+  public static final Method INSTANCE_FIELD_INIT =
+    Method.getMethod("void instanceFieldInit(java.lang.Object, int, java.lang.Object)");
+  
   public static final Method INDIRECT_ACCESS =
     Method.getMethod("void indirectAccess(Object, long)");
   

@@ -221,4 +221,18 @@ public class DebugStore {
     stdOut.println("  siteID = " + siteId);
     stdOut.flush();
   }
+
+  public static void instanceFieldInit(
+      final Object receiver, final int fieldId, final Object value) {
+    stdOut.println("instanceFieldInit");
+    stdOut.println("  receiver = " + objectToString(receiver));
+    stdOut.println("  fieldId = " + fieldId);
+    stdOut.println("  value = " + objectToString(value));
+  }
+  
+  public static void staticFieldInit(final int fieldId, final Object value) {
+    stdOut.println("staticFieldInit");
+    stdOut.println("  fieldId = " + fieldId);
+    stdOut.println("  value = " + objectToString(value));
+  }
 }

@@ -31,3 +31,4 @@ Bundle-ClassPath: .,
  lib/flashlight-rewriter.jar,
  lib/asm-3.2.jar,
  lib/asm-commons-3.2.jar
+Export-Package: com.surelogic.flashlight.client.eclipse

@@ -72,10 +72,10 @@ public final class JumpToCode extends AdHocManagerAdapter {
 				fieldName = variableValues.get("Field Name");
 			}
 			if (fieldName != null) {
+				JDTUtility.tryToOpenInEditor(packageName, typeName, fieldName);
 				HistoricalSourceView.tryToOpenInEditor(variableValues
 						.get(AdHocManager.DATABASE), packageName, typeName,
 						fieldName);
-				JDTUtility.tryToOpenInEditor(packageName, typeName, fieldName);
 			}
 		}
 	}

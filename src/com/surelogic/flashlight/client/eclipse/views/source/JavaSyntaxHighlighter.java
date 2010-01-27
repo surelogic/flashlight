@@ -184,7 +184,7 @@ public final class JavaSyntaxHighlighter {
 		}
 		int dq = text.indexOf(endQuote, fromIndex);
 		if (dq != NOT_FOUND) {
-			while (text.charAt(dq - 1) == '\\') {
+			while (isEscapedChar(text, dq)) {
 				dq = text.indexOf(endQuote, dq + 1);
 			}
 		}
@@ -197,6 +197,17 @@ public final class JavaSyntaxHighlighter {
 			set_relative(color, SWT.NORMAL, fromIndex, dq);
 			return dq + 1;
 		}
+	}
+
+	private boolean isEscapedChar(String text, int idx) {
+		if (idx == -1) {
+			return false;
+		}
+		int escapes = 0;
+		while (idx > 0 && text.charAt(--idx) == '\\') {
+			escapes++;
+		}
+		return (escapes % 2) != 0;
 	}
 
 	private void highlightWord(final String lineText, String word) {

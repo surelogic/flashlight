@@ -15,6 +15,7 @@ Export-Package: com.surelogic._flashlight.common,
  com.surelogic.flashlight.common.jobs,
  com.surelogic.flashlight.common.model,
  com.surelogic.flashlight.common.prep,
+ com.surelogic.flashlight.recommend,
  com.surelogic.flashlight.schema,
  gnu.trove,
  gnu.trove.decorator

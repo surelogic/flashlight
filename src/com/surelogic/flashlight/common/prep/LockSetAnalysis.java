@@ -592,8 +592,8 @@ public class LockSetAnalysis implements IPostPrep {
 			// Check to see if we already have one, and if so, do we need to
 			// get more
 			if (lock != null) {
-				if (lock.start.before(time)) {
-					if (lock.end.after(time)) {
+				if (!lock.start.after(time)) {
+					if (!lock.end.before(time)) {
 						activeLocks.add(lock);
 						getThreadSet(lock.thread).add(lock);
 					}
@@ -605,8 +605,8 @@ public class LockSetAnalysis implements IPostPrep {
 			// after the given time
 			while (locks.hasNext()) {
 				final Lock l = new Lock(locks.next());
-				if (l.start.before(time)) {
-					if (l.end.after(time)) {
+				if (!l.start.after(time)) {
+					if (!l.end.before(time)) {
 						activeLocks.add(l);
 						getThreadSet(l.thread).add(l);
 					}

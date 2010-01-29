@@ -40,6 +40,7 @@ import com.surelogic.flashlight.common.prep.BeforeIntrinsicLockAcquisition;
 import com.surelogic.flashlight.common.prep.BeforeIntrinsicLockWait;
 import com.surelogic.flashlight.common.prep.BeforeUtilConcurrentLockAquisitionAttempt;
 import com.surelogic.flashlight.common.prep.ClassDefinition;
+import com.surelogic.flashlight.common.prep.FieldAssignment;
 import com.surelogic.flashlight.common.prep.FieldDefinition;
 import com.surelogic.flashlight.common.prep.FieldRead;
 import com.surelogic.flashlight.common.prep.FieldWrite;
@@ -93,7 +94,8 @@ public final class PrepSLJob extends AbstractSLJob {
 
 	private IRangePrep[] getRangeHandlers() {
 		return new IRangePrep[] { new FieldRead(), new FieldWrite(),
-				new ObjectDefinition(), new ThreadDefinition() };
+				new ObjectDefinition(), new ThreadDefinition(),
+				new FieldAssignment() };
 	}
 
 	private IPostPrep[] getPostPrep() {

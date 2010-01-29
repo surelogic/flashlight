@@ -1,6 +1,10 @@
 package com.surelogic._flashlight;
 
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.zip.GZIPOutputStream;
 
 import com.surelogic._flashlight.common.FileChannelOutputStream;
@@ -14,7 +18,7 @@ public abstract class EventVisitor {
 	void visit(final AfterIntrinsicLockAcquisition e) {
 		// do nothing
 	}
-	
+
 	void visit(final AfterIntrinsicLockRelease e) {
 		// do nothing
 	}
@@ -40,6 +44,10 @@ public abstract class EventVisitor {
 	}
 
 	void visit(BeforeUtilConcurrentLockAcquisitionAttempt e) {
+		// do nothing
+	}
+
+	void visit(final FieldAssignment e) {
 		// do nothing
 	}
 
@@ -70,7 +78,7 @@ public abstract class EventVisitor {
 	void visit(GarbageCollectedObject e) {
 		// do nothing
 	}
-	
+
 	void visit(IndirectAccess indirectAccess) {
 		// do nothing
 	}
@@ -82,15 +90,15 @@ public abstract class EventVisitor {
 	void visit(final ObservedCallLocation e) {
 		// do nothing
 	}
-	
+
 	void visit(final ReadWriteLockDefinition e) {
 		// do nothing
 	}
 
 	void visit(final SelectedPackage e) {
 		// do nothing
-	}	
-	
+	}
+
 	void visit(final SingleThreadedFieldInstance e) {
 		// do nothing
 	}
@@ -98,33 +106,35 @@ public abstract class EventVisitor {
 	void visit(final SingleThreadedFieldStatic e) {
 		// do nothing
 	}
-	
+
 	void visit(final StaticCallLocation e) {
 		// do nothing
 	}
-	
+
 	void visit(final Time e) {
 		// do nothing
 	}
 
 	public void visit(final TraceNode e) {
-	    // do nothing
+		// do nothing
 	}
-	
+
 	void flush() {
 		// do nothing
 	}
-	
+
 	void printStats() {
 		// do nothing
 	}
-	
+
 	static File createStreamFile(String fileName, OutputType type) {
 		final String extension = type.isBinary() ? ".flb" : ".fl";
-		return new File(fileName + extension + (type.isCompressed() ? ".gz" : ""));
+		return new File(fileName + extension
+				+ (type.isCompressed() ? ".gz" : ""));
 	}
-	
-	static OutputStream createStream(String fileName, OutputType type) throws IOException {
+
+	static OutputStream createStream(String fileName, OutputType type)
+			throws IOException {
 		final File dataFile = createStreamFile(fileName, type);
 		OutputStream stream;
 		if (true) {
@@ -139,8 +149,9 @@ public abstract class EventVisitor {
 		}
 		return stream;
 	}
-	
+
 	interface Factory {
-		EventVisitor create(OutputStream stream, String encoding, Time time) throws IOException;
+		EventVisitor create(OutputStream stream, String encoding, Time time)
+				throws IOException;
 	}
 }

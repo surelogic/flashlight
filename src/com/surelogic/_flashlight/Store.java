@@ -1,6 +1,12 @@
 package com.surelogic._flashlight;
 
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -212,7 +218,7 @@ public final class Store {
 		TraceNode getCurrentTrace(final long siteId) {
 			return traceHeader.getCurrentNode(siteId, this);
 		}
-		
+
 		TraceNode getCurrentTrace() {
 			return traceHeader.getCurrentNode(this);
 		}
@@ -253,10 +259,11 @@ public final class Store {
 	/*
 	 * Flashlight startup code used to get everything running.
 	 */
-	static {		
+	static {
 		// Check if FL is on (and shutoff)
-		if (IdConstants.enableFlashlightToggle || !StoreDelegate.FL_OFF.getAndSet(true)) {
-			//System.out.println("Store");
+		if (IdConstants.enableFlashlightToggle
+				|| !StoreDelegate.FL_OFF.getAndSet(true)) {
+			// System.out.println("Store");
 			// new
 			// Throwable("Store CL = "+Store.class.getClassLoader()).printStackTrace(System.out);
 
@@ -329,35 +336,38 @@ public final class Store {
 			if (StoreConfiguration.debugOn()) {
 				System.err.println("Output XML = " + !outType.isBinary());
 			}
-			final File dataFile = EventVisitor.createStreamFile(fileName.toString(), outType);
+			final File dataFile = EventVisitor.createStreamFile(fileName
+					.toString(), outType);
 			EventVisitor outputStrategy = null;
 			try {
 				final PrintWriter headerW = new PrintWriter(fileName.toString()
 						+ ".flh");
-				OutputStrategyXML.outputHeader(headerW, timeEvent,
-						outType.isBinary() ? OutputStrategyBinary.version
-								           : OutputStrategyXML.version);
+				OutputStrategyXML.outputHeader(headerW, timeEvent, outType
+						.isBinary() ? OutputStrategyBinary.version
+						: OutputStrategyXML.version);
 				headerW.close();
 
-	
 				if (StoreConfiguration.debugOn()) {
-					System.err.println("Compress stream = " + outType.isCompressed());
+					System.err.println("Compress stream = "
+							+ outType.isCompressed());
 				}
-				final EventVisitor.Factory factory = outType.isBinary() ? 
-					OutputStrategyBinary.factory : OutputStrategyXML.factory;
+				final EventVisitor.Factory factory = outType.isBinary() ? OutputStrategyBinary.factory
+						: OutputStrategyXML.factory;
 				if (StoreConfiguration.useSeparateStreams()) {
-					outputStrategy = new OutputStreamsStrategy(fileName.toString(), ENCODING, 
-							                                   timeEvent, factory);
+					outputStrategy = new OutputStreamsStrategy(fileName
+							.toString(), ENCODING, timeEvent, factory);
 				} else {
-					final OutputStream stream = EventVisitor.createStream(fileName.toString(), outType);					
-					outputStrategy = factory.create(stream, ENCODING, timeEvent);
+					final OutputStream stream = EventVisitor.createStream(
+							fileName.toString(), outType);
+					outputStrategy = factory
+							.create(stream, ENCODING, timeEvent);
 				}
 			} catch (final IOException e) {
 				logAProblem("unable to output to \""
 						+ dataFile.getAbsolutePath() + "\"", e);
 				System.exit(1); // bail
 			}
-	
+
 			final int rawQueueSize = StoreConfiguration.getRawQueueSize();
 			final int outQueueSize = StoreConfiguration.getOutQueueSize();
 			f_rawQueue = new ArrayBlockingQueue<List<Event>>(StoreConfiguration
@@ -435,7 +445,7 @@ public final class Store {
 			f_console.start();
 
 			f_start_nano = System.nanoTime();
-			
+
 			f_flashlightIsNotInitialized = false;
 			StoreDelegate.FL_OFF.set(false);
 		} else {
@@ -512,7 +522,7 @@ public final class Store {
 			final Object receiver, final int fieldID, final long siteId,
 			final ClassPhantomReference dcPhantom, final Class<?> declaringClass) {
 		if (!StoreConfiguration.processFieldAccesses()) {
-			//System.out.println("Omitting field access");
+			// System.out.println("Omitting field access");
 			return;
 		}
 		if (StoreDelegate.FL_OFF.get()) {
@@ -520,16 +530,14 @@ public final class Store {
 		}
 
 		/*
-		if (f_flashlightIsNotInitialized) {
-			return;
-		}
-        */
+		 * if (f_flashlightIsNotInitialized) { return; }
+		 */
 		final State flState = tl_withinStore.get();
 		if (flState.inside) {
 			return;
 		}
-		//System.out.println("Handling field access");
-		
+		// System.out.println("Handling field access");
+
 		flState.inside = true;
 		try {
 			/*
@@ -552,19 +560,19 @@ public final class Store {
 			 * SrcLoc.toString(withinClass, line))); return; }
 			 */
 			final Event e;
-      /*
-       * if the field is not from an instrumented class then force
-       * creation of the phantom class object.  Declaring class is null if
-       * the field is not from an instrumented class.  We need to force the
-       * creation of the phantom object so that a listener somewhere else
-       * dumps the field definitions into the .fl file.
-       * 
-       * XXX This check is not redundant.  Edwin already removed this once
-       * before and broke things.
-       */
-      if (declaringClass != null) {
-        Phantom.ofClass(declaringClass);
-      }
+			/*
+			 * if the field is not from an instrumented class then force
+			 * creation of the phantom class object. Declaring class is null if
+			 * the field is not from an instrumented class. We need to force the
+			 * creation of the phantom object so that a listener somewhere else
+			 * dumps the field definitions into the .fl file.
+			 * 
+			 * XXX This check is not redundant. Edwin already removed this once
+			 * before and broke things.
+			 */
+			if (declaringClass != null) {
+				Phantom.ofClass(declaringClass);
+			}
 			if (read) {
 				e = new FieldReadInstance(receiver, fieldID, siteId, flState);
 			} else {
@@ -600,26 +608,24 @@ public final class Store {
 			final long siteId, final ClassPhantomReference dcPhantom,
 			final Class<?> declaringClass) {
 		if (!StoreConfiguration.processFieldAccesses()) {
-			//System.out.println("Omitting field access");
+			// System.out.println("Omitting field access");
 			return;
-		}	
-		
+		}
+
 		if (StoreDelegate.FL_OFF.get()) {
 			return;
 		}
-	
+
 		/*
-		if (f_flashlightIsNotInitialized) {
-			return;
-		}
-        */
+		 * if (f_flashlightIsNotInitialized) { return; }
+		 */
 
 		final State flState = tl_withinStore.get();
 		if (flState.inside) {
 			return;
 		}
-		//System.out.println("Handling field access");
-		
+		// System.out.println("Handling field access");
+
 		flState.inside = true;
 		try {
 			/*
@@ -645,19 +651,19 @@ public final class Store {
 			if (dcPhantom != null) {
 				underConstruction = dcPhantom.isUnderConstruction();
 			}
-      /*
-       * if the field is not from an instrumented class then force
-       * creation of the phantom class object.  Declaring class is null if
-       * the field is not from an instrumente class.  We need to force the
-       * creation of the phantom object so that a listener somewhere else
-       * dumps the field definitions into the .fl file.
-       * 
-       * XXX This check is not redundant.  Edwin already removed this once
-       * before and broke things.
-       */
-      if (declaringClass != null) {
-        Phantom.ofClass(declaringClass);
-      }
+			/*
+			 * if the field is not from an instrumented class then force
+			 * creation of the phantom class object. Declaring class is null if
+			 * the field is not from an instrumente class. We need to force the
+			 * creation of the phantom object so that a listener somewhere else
+			 * dumps the field definitions into the .fl file.
+			 * 
+			 * XXX This check is not redundant. Edwin already removed this once
+			 * before and broke things.
+			 */
+			if (declaringClass != null) {
+				Phantom.ofClass(declaringClass);
+			}
 			final Event e;
 			if (read) {
 				e = new FieldReadStatic(fieldID, siteId, flState,
@@ -829,12 +835,10 @@ public final class Store {
 		}
 		if (!StoreConfiguration.getCollectionType().processIndirectAccesses()) {
 			return;
-		}	
-		/*
-		if (f_flashlightIsNotInitialized) {
-			return;
 		}
-        */
+		/*
+		 * if (f_flashlightIsNotInitialized) { return; }
+		 */
 
 		// System.out.println("indirectAccess");
 		// System.out.println("  receiver = " + receiver.getClass().getName() +
@@ -922,16 +926,12 @@ public final class Store {
 	 */
 	public static void constructorCall(final boolean before, final long siteId) {
 		/*
-		if (!IdConstants.useTraces) {
-			return;
-		}
-		*/
+		 * if (!IdConstants.useTraces) { return; }
+		 */
 
 		/*
-		if (f_flashlightIsNotInitialized) {
-			return;
-		}
-        */
+		 * if (f_flashlightIsNotInitialized) { return; }
+		 */
 		if (StoreDelegate.FL_OFF.get()) {
 			return;
 		}
@@ -985,10 +985,8 @@ public final class Store {
 	public static void constructorExecution(final boolean before,
 			final Object receiver, final long siteId) {
 		/*
-		if (f_flashlightIsNotInitialized) {
-			return;
-		}
-        */
+		 * if (f_flashlightIsNotInitialized) { return; }
+		 */
 		if (StoreDelegate.FL_OFF.get()) {
 			return;
 		}
@@ -1052,17 +1050,13 @@ public final class Store {
 		if (StoreDelegate.FL_OFF.get()) {
 			return;
 		}
-        /*
-		if (!IdConstants.useTraces) {
-			return;
-		}
-		*/
+		/*
+		 * if (!IdConstants.useTraces) { return; }
+		 */
 
 		/*
-		if (f_flashlightIsNotInitialized) {
-			return;
-		}
-        */
+		 * if (f_flashlightIsNotInitialized) { return; }
+		 */
 
 		final State flState = tl_withinStore.get();
 		if (flState.inside) {
@@ -1092,7 +1086,7 @@ public final class Store {
 					}
 					final Event e = new ReadWriteLockDefinition(p, Phantom
 							.ofObject(rwl.readLock()), Phantom.ofObject(rwl
-									.writeLock()));
+							.writeLock()));
 					putInQueue(flState, e);
 				}
 			}
@@ -1135,10 +1129,8 @@ public final class Store {
 			return;
 		}
 		/*
-		if (f_flashlightIsNotInitialized) {
-			return;
-		}
-        */
+		 * if (f_flashlightIsNotInitialized) { return; }
+		 */
 		if (StoreDelegate.FL_OFF.get()) {
 			return;
 		}
@@ -1188,10 +1180,8 @@ public final class Store {
 			return;
 		}
 		/*
-		if (f_flashlightIsNotInitialized) {
-			return;
-		}
-        */
+		 * if (f_flashlightIsNotInitialized) { return; }
+		 */
 		if (StoreDelegate.FL_OFF.get()) {
 			return;
 		}
@@ -1257,10 +1247,8 @@ public final class Store {
 			return;
 		}
 		/*
-		if (f_flashlightIsNotInitialized) {
-			return;
-		}
-        */
+		 * if (f_flashlightIsNotInitialized) { return; }
+		 */
 		if (StoreDelegate.FL_OFF.get()) {
 			return;
 		}
@@ -1314,10 +1302,8 @@ public final class Store {
 			return;
 		}
 		/*
-		if (f_flashlightIsNotInitialized) {
-			return;
-		}
-        */
+		 * if (f_flashlightIsNotInitialized) { return; }
+		 */
 		if (StoreDelegate.FL_OFF.get()) {
 			return;
 		}
@@ -1370,10 +1356,8 @@ public final class Store {
 			return;
 		}
 		/*
-		if (f_flashlightIsNotInitialized) {
-			return;
-		}
-        */
+		 * if (f_flashlightIsNotInitialized) { return; }
+		 */
 		if (StoreDelegate.FL_OFF.get()) {
 			return;
 		}
@@ -1430,10 +1414,8 @@ public final class Store {
 			return;
 		}
 		/*
-		if (f_flashlightIsNotInitialized) {
-			return;
-		}
-        */
+		 * if (f_flashlightIsNotInitialized) { return; }
+		 */
 		if (StoreDelegate.FL_OFF.get()) {
 			return;
 		}
@@ -1497,10 +1479,8 @@ public final class Store {
 			return;
 		}
 		/*
-		if (f_flashlightIsNotInitialized) {
-			return;
-		}
-        */
+		 * if (f_flashlightIsNotInitialized) { return; }
+		 */
 		if (StoreDelegate.FL_OFF.get()) {
 			return;
 		}
@@ -1720,10 +1700,8 @@ public final class Store {
 		 * System.err.println("Local queue: "+od.getObject()); } }
 		 */
 		/*
-		if (state == null) {
-			state = tl_withinStore.get();
-		}
-		*/
+		 * if (state == null) { state = tl_withinStore.get(); }
+		 */
 		final List<Event> localQ = state.eventQueue;
 		List<Event> copy = null;
 		synchronized (localQ) {
@@ -1815,16 +1793,54 @@ public final class Store {
 	private Store() {
 		// no instances
 	}
-	
 
-	public static void instanceFieldInit(
-	    final Object receiver, final int fieldId, final Object value) {
-    // do nothing for now
-//    System.out.println("Init instance field: <" + receiver + ">.<" + fieldId + "> to " + value);
+	public static void instanceFieldInit(final Object receiver,
+			final int fieldId, final Object value) {
+		if (!StoreConfiguration.processFieldAccesses()) {
+			return;
+		}
+		if (DEBUG) {
+			final String fmt = "Store.instanceFieldInit%n\t\treceiver=%s%n\t\field=%s%n\t\tvalue=%s)";
+			log(String.format(fmt, safeToString(receiver), fieldId,
+					safeToString(value)));
+		}
+		// Ignore null assignments
+		if (value == null) {
+			return;
+		}
+		State state = tl_withinStore.get();
+		if (state.inside) {
+			return;
+		}
+		state.inside = true;
+		try {
+			putInQueue(state, new FieldAssignment(receiver, fieldId, value));
+		} finally {
+			state.inside = false;
+		}
 	}
-	
+
 	public static void staticFieldInit(final int fieldId, final Object value) {
-	  // do nothing for now
-//	  System.out.println("Init static field: " + fieldId + " to " + value);
+		if (!StoreConfiguration.processFieldAccesses()) {
+			return;
+		}
+		if (DEBUG) {
+			final String fmt = "Store.instanceFieldInit%n\t\field=%s%n\t\tvalue=%s)";
+			log(String.format(fmt, fieldId, safeToString(value)));
+		}
+		// Ignore null assignments
+		if (value == null) {
+			return;
+		}
+		State state = tl_withinStore.get();
+		if (state.inside) {
+			return;
+		}
+		state.inside = true;
+		try {
+			putInQueue(state, new FieldAssignment(fieldId, value));
+		} finally {
+			state.inside = false;
+		}
 	}
 }

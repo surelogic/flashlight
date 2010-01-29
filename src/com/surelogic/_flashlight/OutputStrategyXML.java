@@ -1,6 +1,9 @@
 package com.surelogic._flashlight;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 
 import com.surelogic._flashlight.trace.TraceNode;
 
@@ -8,7 +11,7 @@ final class OutputStrategyXML extends EventVisitor {
 	static final String version = "1.0";
 	private final PrintWriter f_out;
 	private String f_indent = "";
-	
+
 	private void o(final String s) {
 		f_out.print(f_indent);
 		f_out.println(s);
@@ -21,7 +24,8 @@ final class OutputStrategyXML extends EventVisitor {
 		Entities.addAttribute(key.replaceAll("\\.", "-"), prop, b);
 	}
 
-	public static void outputHeader(final PrintWriter out, Time time, String version) {
+	public static void outputHeader(final PrintWriter out, Time time,
+			String version) {
 		assert out != null;
 		out.println("<?xml version='1.0' encoding='" + Store.ENCODING
 				+ "' standalone='yes'?>");
@@ -51,16 +55,18 @@ final class OutputStrategyXML extends EventVisitor {
 			out.println("</flashlight>");
 		}
 	}
-	
+
 	static final Factory factory = new Factory() {
-		public EventVisitor create(OutputStream stream, String encoding, Time time) throws IOException {
+		public EventVisitor create(OutputStream stream, String encoding,
+				Time time) throws IOException {
 			return new OutputStrategyXML(stream, encoding);
 		}
 	};
-	
-	OutputStrategyXML(final OutputStream stream, String encoding) throws IOException {
+
+	OutputStrategyXML(final OutputStream stream, String encoding)
+			throws IOException {
 		assert stream != null;
-		
+
 		final OutputStreamWriter osw = new OutputStreamWriter(stream, encoding);
 		f_out = new PrintWriter(osw);
 		outputHeader(f_out, null, version);
@@ -107,6 +113,11 @@ final class OutputStrategyXML extends EventVisitor {
 	}
 
 	@Override
+	public void visit(FieldAssignment e) {
+		o(e.toString());
+	}
+
+	@Override
 	void visit(FieldDefinition e) {
 		o(e.toString());
 	}
@@ -135,9 +146,9 @@ final class OutputStrategyXML extends EventVisitor {
 	void visit(FinalEvent e) {
 		f_indent = "";
 		o("</flashlight>");
-		//System.out.println("Closed.");
+		// System.out.println("Closed.");
 		f_out.close();
-		//new Throwable("Visiting FinalEvent").printStackTrace(System.out);
+		// new Throwable("Visiting FinalEvent").printStackTrace(System.out);
 	}
 
 	@Override
@@ -149,7 +160,7 @@ final class OutputStrategyXML extends EventVisitor {
 	void visit(IndirectAccess e) {
 		o(e.toString());
 	}
-	
+
 	@Override
 	void visit(ObjectDefinition e) {
 		o(e.toString());
@@ -164,7 +175,7 @@ final class OutputStrategyXML extends EventVisitor {
 	void visit(final SelectedPackage e) {
 		o(e.toString());
 	}
-	
+
 	@Override
 	void visit(SingleThreadedFieldInstance e) {
 		o(e.toString());
@@ -179,20 +190,20 @@ final class OutputStrategyXML extends EventVisitor {
 	void visit(final StaticCallLocation e) {
 		o(e.toString());
 	}
-	
+
 	@Override
 	void visit(Time e) {
 		o(e.toString());
 	}
-	
+
 	@Override
 	public void visit(TraceNode e) {
 		o(e.toString());
 	}
-	
+
 	@Override
 	void flush() {
-		//System.out.println("Flushed.");
+		// System.out.println("Flushed.");
 		f_out.flush();
 	}
 }

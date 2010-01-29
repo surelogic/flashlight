@@ -109,7 +109,7 @@ public class PreferenceConstants implements IPreferenceConstants {
 				P_PROMPT_ABOUT_LOTS_OF_SAVED_QUERIES, value);
 	}
 
-	public static final String P_DATA_DIRECTORY = PREFIX + "data-directory";
+	public static final String P_DATA_DIRECTORY = PREFIX + DATA_DIRECTORY;
 
 	public static File getFlashlightDataDirectory() {
 		final String path = Activator.getDefault().getPluginPreferences()

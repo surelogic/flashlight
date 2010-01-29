@@ -2,19 +2,16 @@ package com.surelogic.flashlight.client.eclipse.preferences;
 
 import static com.surelogic._flashlight.common.InstrumentationConstants.*;
 
-import java.io.File;
-
-import org.eclipse.core.runtime.preferences.AbstractPreferenceInitializer;
 import org.eclipse.jface.preference.IPreferenceStore;
 
 import com.surelogic.common.FileUtility;
-import com.surelogic.common.eclipse.EclipseUtility;
+import com.surelogic.common.eclipse.preferences.AbstractPrefInitializer;
 import com.surelogic.flashlight.client.eclipse.Activator;
 
 /**
  * Class used to initialize default preference values.
  */
-public class PreferenceInitializer extends AbstractPreferenceInitializer {
+public class PreferenceInitializer extends AbstractPrefInitializer {
 	@Override
 	public void initializeDefaultPreferences() {
 		final IPreferenceStore store = Activator.getDefault()
@@ -45,12 +42,11 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		store.setDefault(PreferenceConstants.P_AUTO_PREP_ALL_RAW_DATA, false);
 		store.setDefault(PreferenceConstants.P_PREP_OBJECT_WINDOW_SIZE, 300000);
 		store.setDefault(PreferenceConstants.P_DATA_DIRECTORY,
-				getDefaultDataDirectory());
-	}
-
-	private String getDefaultDataDirectory() {
-		final File root = EclipseUtility.getWorspacePath();
-		final File path = new File(root, FileUtility.FLASHLIGHT_DATA_PATH_FRAGMENT);
-		return path.getAbsolutePath();
+				getDefaultDataDirectory(FileUtility.FLASHLIGHT_DATA_PATH_FRAGMENT));
+		
+		// Get the data directory and ensure that it actually exists.
+		final String path = store
+				.getString(PreferenceConstants.P_DATA_DIRECTORY);
+		ensureDataDirectoryExists(path);
 	}
 }

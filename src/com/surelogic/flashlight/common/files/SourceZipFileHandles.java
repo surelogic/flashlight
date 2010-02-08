@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 
+import com.surelogic.common.ISourceZipFileHandles;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.logging.SLLogger;
 
@@ -16,7 +17,7 @@ import com.surelogic.common.logging.SLLogger;
  * 
  * @see RunDirectory
  */
-public final class SourceZipFileHandles {
+public final class SourceZipFileHandles implements ISourceZipFileHandles {
   /** The standard name for the source zip directory. */
   public static final String SOURCE_DIR_NAME = "source";
 

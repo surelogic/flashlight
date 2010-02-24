@@ -213,6 +213,9 @@ public final class RunViewModel {
 
 			@Override
 			String getText(RunDescription rowData) {
+				if (rowData == null || rowData.getRunDirectory() == null) {
+					return "Unknown";
+				}
 				return rowData.getRunDirectory().getHumanReadableSize();
 			}
 

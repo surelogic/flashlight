@@ -112,6 +112,7 @@ final class ClassAndFieldModel {
       final boolean isFinal = (access & Opcodes.ACC_FINAL) != 0;
       final boolean isVolatile = (access & Opcodes.ACC_VOLATILE) != 0;
       final boolean isStatic = (access & Opcodes.ACC_STATIC) != 0;
+      final int viz = access & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED | Opcodes.ACC_PRIVATE); 
       out.print(id);
       out.print(' ');
       out.print(ClassNameUtil.internal2FullyQualified(clazz.name));
@@ -122,7 +123,10 @@ final class ClassAndFieldModel {
       out.print(' ');
       out.print(isFinal);
       out.print(' ');
-      out.println(isVolatile);
+      out.print(isVolatile);
+      out.print(' ');
+      out.print(viz);
+      out.println();
     }
   }
   

@@ -1,40 +1,61 @@
 package com.surelogic._flashlight.trace;
 
 import com.surelogic._flashlight.Store;
+import com.surelogic._flashlight.monitor.MonitorStore;
 
-public abstract class AbstractPlaceholder implements ITraceNode {	
+public abstract class AbstractPlaceholder implements ITraceNode {
 	final ITraceNode f_caller;
-	
-	AbstractPlaceholder(ITraceNode caller) {
+
+	AbstractPlaceholder(final ITraceNode caller) {
 		f_caller = caller;
 	}
-	
-	public final ITraceNode getCallee(long key) {
+
+	public final ITraceNode getCallee(final long key) {
 		return null;
 	}
-	
-	static TraceNode getNode(Store.State state, TraceNode caller, long siteId) {
+
+	static TraceNode getNode(final Store.State state, final TraceNode caller,
+			final long siteId) {
 		// First, try to see if I've cached a matching TraceNode
 		ITraceNode callee;
-		if (caller != null) {			
-			// There's already a caller	
+		if (caller != null) {
+			// There's already a caller
 			callee = caller.getCallee(siteId);
 		} else {
 			// No caller yet
-			synchronized (TraceNode.roots) {	
-				callee = TraceNode.roots.get(siteId);	
+			synchronized (TraceNode.roots) {
+				callee = TraceNode.roots.get(siteId);
 			}
 		}
 		if (callee != null) {
 			return callee.getNode(state);
-		}		
+		}
 		return TraceNode.newTraceNode(caller, siteId, state);
 	}
-	
-	public ITraceNode pushCallee(long siteId) {
+
+	static TraceNode getNode(final MonitorStore.State state,
+			final TraceNode caller, final long siteId) {
+		// First, try to see if I've cached a matching TraceNode
+		ITraceNode callee;
+		if (caller != null) {
+			// There's already a caller
+			callee = caller.getCallee(siteId);
+		} else {
+			// No caller yet
+			synchronized (TraceNode.roots) {
+				callee = TraceNode.roots.get(siteId);
+			}
+		}
+		if (callee != null) {
+			return callee.getNode(state);
+		}
+		return TraceNode.newTraceNode(caller, siteId, state);
+	}
+
+	public ITraceNode pushCallee(final long siteId) {
 		return new Placeholder(this, siteId);
 	}
-	
+
 	public ITraceNode popParent() {
 		return f_caller;
 	}
@@ -42,12 +63,12 @@ public abstract class AbstractPlaceholder implements ITraceNode {
 	public final ITraceNode peekParent() {
 		throw new UnsupportedOperationException();
 	}
-	
+
 	public final int getAndClearUnpropagated() {
 		return 0;
 	}
-	
-	public final int addToUnpropagated(int count) {
+
+	public final int addToUnpropagated(final int count) {
 		return 0;
 	}
 }

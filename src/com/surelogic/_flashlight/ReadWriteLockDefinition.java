@@ -1,6 +1,6 @@
 package com.surelogic._flashlight;
 
-final class ReadWriteLockDefinition extends DefinitionalEvent {
+public final class ReadWriteLockDefinition extends DefinitionalEvent {
 
 	private final long f_readWriteLockId;
 
@@ -33,7 +33,7 @@ final class ReadWriteLockDefinition extends DefinitionalEvent {
 	}
 
 	@Override
-	void accept(EventVisitor v) {
+	void accept(final EventVisitor v) {
 		v.visit(this);
 	}
 

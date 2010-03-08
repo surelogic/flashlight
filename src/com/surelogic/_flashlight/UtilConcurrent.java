@@ -20,7 +20,7 @@ public final class UtilConcurrent {
 	 * @return {@code true} if this set did not already contain the specified
 	 *         element
 	 */
-	static boolean addReadWriteLock(final IdPhantomReference o) {
+	public static boolean addReadWriteLock(final IdPhantomReference o) {
 		synchronized (f_knownReadWriteLockIds) {
 			return f_knownReadWriteLockIds.add(o);
 		}

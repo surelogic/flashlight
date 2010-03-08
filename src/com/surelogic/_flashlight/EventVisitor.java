@@ -27,11 +27,11 @@ public abstract class EventVisitor {
 		// do nothing
 	}
 
-	void visit(AfterUtilConcurrentLockAcquisitionAttempt e) {
+	void visit(final AfterUtilConcurrentLockAcquisitionAttempt e) {
 		// do nothing
 	}
 
-	void visit(AfterUtilConcurrentLockReleaseAttempt e) {
+	void visit(final AfterUtilConcurrentLockReleaseAttempt e) {
 		// do nothing
 	}
 
@@ -43,7 +43,7 @@ public abstract class EventVisitor {
 		// do nothing
 	}
 
-	void visit(BeforeUtilConcurrentLockAcquisitionAttempt e) {
+	void visit(final BeforeUtilConcurrentLockAcquisitionAttempt e) {
 		// do nothing
 	}
 
@@ -75,11 +75,11 @@ public abstract class EventVisitor {
 		// do nothing
 	}
 
-	void visit(GarbageCollectedObject e) {
+	void visit(final GarbageCollectedObject e) {
 		// do nothing
 	}
 
-	void visit(IndirectAccess indirectAccess) {
+	void visit(final IndirectAccess indirectAccess) {
 		// do nothing
 	}
 
@@ -127,14 +127,15 @@ public abstract class EventVisitor {
 		// do nothing
 	}
 
-	static File createStreamFile(String fileName, OutputType type) {
+	public static File createStreamFile(final String fileName,
+			final OutputType type) {
 		final String extension = type.isBinary() ? ".flb" : ".fl";
 		return new File(fileName + extension
 				+ (type.isCompressed() ? ".gz" : ""));
 	}
 
-	static OutputStream createStream(String fileName, OutputType type)
-			throws IOException {
+	static OutputStream createStream(final String fileName,
+			final OutputType type) throws IOException {
 		final File dataFile = createStreamFile(fileName, type);
 		OutputStream stream;
 		if (true) {

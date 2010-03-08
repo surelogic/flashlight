@@ -81,11 +81,11 @@ public final class ClassPhantomReference extends IdPhantomReference {
 
 	private boolean f_underConstruction = false;
 
-	synchronized boolean isUnderConstruction() {
+	public synchronized boolean isUnderConstruction() {
 		return f_underConstruction;
 	}
 
-	synchronized void setUnderConstruction(final boolean constructing) {
+	public synchronized void setUnderConstruction(final boolean constructing) {
 		f_underConstruction = constructing;
 	}
 }

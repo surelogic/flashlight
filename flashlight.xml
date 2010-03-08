@@ -79,6 +79,7 @@
 	<target name="build-runtime-jar">
 		<jar destfile="${flashlight-runtime.jar}" basedir="${classes}">
 			<include name="**/com/surelogic/_flashlight/*" />
+			<include name="**/com/surelogic/_flashlight/monitor/*" />
 		  <include name="**/com/surelogic/_flashlight/common/**" />
 			<include name="**/com/surelogic/_flashlight/emory/**" />
 			<include name="**/com/surelogic/_flashlight/jsr166y/**" />
@@ -134,9 +135,9 @@
 	  <copy file="${flashlight-rewriter.jar}" todir="${basedir}/../flashlight-client-eclipse/lib"/>	  
 	</target>
 	
-	<target name="build-jars-eclipse" depends="build-all-jar, build-runtime-jar, build-servlet-jar, build-rewriter-jar, translate-runtime-jar" />
+	<target name="build-jars-eclipse" depends="build-all-jar, build-runtime-jar, build-servlet-jar, build-rewriter-jar" />
 
-	<target name="build-jars" depends="compile, build-all-jar, build-runtime-jar, build-servlet-jar, build-rewriter-jar, translate-runtime-jar" />
+	<target name="build-jars" depends="compile, build-all-jar, build-runtime-jar, build-servlet-jar, build-rewriter-jar" />
 
 	<target name="compile-test-code" depends="build-jars">
 		<delete dir="${classes}" />

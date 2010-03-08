@@ -4,7 +4,7 @@ import java.lang.ref.ReferenceQueue;
 import java.util.concurrent.ConcurrentMap;
 
 import com.surelogic._flashlight.jsr166y.ConcurrentReferenceHashMap;
-import com.surelogic._flashlight.jsr166y.ConcurrentReferenceHashMap.*;
+import com.surelogic._flashlight.jsr166y.ConcurrentReferenceHashMap.ReferenceType;
 
 /**
  * @region private static ThreadPRInstanceMap
@@ -23,14 +23,14 @@ public final class ThreadPhantomReference extends ObjectPhantomReference {
 	 * @unique
 	 * @aggregate Instance into ThreadPRInstanceMap
 	 */
-	private static final ConcurrentMap<Thread,ThreadPhantomReference> f_threadToPhantom = 
-		new ConcurrentReferenceHashMap<Thread,ThreadPhantomReference>(ReferenceType.WEAK, ReferenceType.STRONG, hasher);
+	private static final ConcurrentMap<Thread, ThreadPhantomReference> f_threadToPhantom = new ConcurrentReferenceHashMap<Thread, ThreadPhantomReference>(
+			ReferenceType.WEAK, ReferenceType.STRONG, hasher);
 
-	private static final RefFactory<Thread,ThreadPhantomReference> f_factory = 
-		new AbstractRefFactory<Thread,ThreadPhantomReference>() {
-			public ThreadPhantomReference newReference(Thread o, ReferenceQueue q, long id) {
-				return new ThreadPhantomReference(o, q, id);
-			}		
+	private static final RefFactory<Thread, ThreadPhantomReference> f_factory = new AbstractRefFactory<Thread, ThreadPhantomReference>() {
+		public ThreadPhantomReference newReference(final Thread o,
+				final ReferenceQueue q, final long id) {
+			return new ThreadPhantomReference(o, q, id);
+		}
 	};
 
 	private final String f_threadName;
@@ -40,28 +40,29 @@ public final class ThreadPhantomReference extends ObjectPhantomReference {
 	 * 
 	 * @return the name of this thread.
 	 */
-	String getName() {
+	public String getName() {
 		return f_threadName;
 	}
 
-	private ThreadPhantomReference(final Thread referent, final ReferenceQueue q, long id) {
+	private ThreadPhantomReference(final Thread referent,
+			final ReferenceQueue q, final long id) {
 		super(referent, q, id);
 		f_threadName = referent.getName();
 	}
 
 	static ThreadPhantomReference getInstance(final Thread c,
-			final ReferenceQueue q, long id) {
+			final ReferenceQueue q, final long id) {
 		return getInstance(c, q, id, f_threadToPhantom, f_factory);
 	}
 
 	@Override
-	void accept(final ObjectDefinition defn, IdPhantomReferenceVisitor v) {
+	void accept(final ObjectDefinition defn, final IdPhantomReferenceVisitor v) {
 		v.visit(defn, this);
 	}
 
 	@Override
 	public String toString() {
 		return "[ThreadPhantom: id=" + getId() + " name=" + getName()
-				/*+ " type=" + getType()*/ + "]";
+		/* + " type=" + getType() */+ "]";
 	}
 }

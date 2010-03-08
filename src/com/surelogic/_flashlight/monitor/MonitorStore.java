@@ -1,7 +1,9 @@
-package com.surelogic._flashlight;
+package com.surelogic._flashlight.monitor;
 
 import java.io.BufferedOutputStream;
+import java.io.Console;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -9,15 +11,24 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 
+import com.surelogic._flashlight.ClassPhantomReference;
+import com.surelogic._flashlight.EventVisitor;
+import com.surelogic._flashlight.IdPhantomReference;
+import com.surelogic._flashlight.ObjectPhantomReference;
+import com.surelogic._flashlight.Phantom;
+import com.surelogic._flashlight.ReadWriteLockDefinition;
+import com.surelogic._flashlight.Spy;
+import com.surelogic._flashlight.StoreConfiguration;
+import com.surelogic._flashlight.StoreDelegate;
+import com.surelogic._flashlight.ThreadPhantomReference;
+import com.surelogic._flashlight.UtilConcurrent;
 import com.surelogic._flashlight.common.IdConstants;
 import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic._flashlight.common.OutputType;
@@ -28,7 +39,7 @@ import com.surelogic._flashlight.trace.TraceNode;
  * 
  * @policyLock Console is java.lang.System:out
  */
-public final class Store {
+public final class MonitorStore {
 
 	/**
 	 * This <i>must</i> be declared first within this class so that it can avoid
@@ -42,11 +53,6 @@ public final class Store {
 	 */
 	// (Re-)using StoreDelegate.FL_OFF for normal checks
 	private static boolean f_flashlightIsNotInitialized = true;
-
-	/**
-	 * Output encoding.
-	 */
-	static final String ENCODING = "UTF-8";
 
 	/**
 	 * Non-null if Flashlight should log to the console, <code>null</code>
@@ -152,59 +158,38 @@ public final class Store {
 	private static final long f_start_nano;
 
 	/**
-	 * A queue to buffer raw event records from the instrumented program to the
-	 * {@link Refinery}.
-	 */
-	private static final BlockingQueue<List<Event>> f_rawQueue;
-
-	/**
-	 * A queue to buffer refined event records from the {@link Refinery} to the
-	 * {@link Depository}.
-	 */
-	private static final BlockingQueue<List<Event>> f_outQueue;
-
-	/**
-	 * The refinery thread.
-	 */
-	private static final AbstractRefinery f_refinery;
-
-	/**
-	 * The depository thread.
-	 */
-	private static final Depository f_depository;
-
-	/**
 	 * The console thread.
 	 */
-	private static final Console f_console;
+	private static final MonitorConsole f_console;
 
 	/**
 	 * A periodic task that checks to see if Flashlight should shutdown by
 	 * spying on the running program's threads.
 	 */
-	private static final Spy f_spy;
+	private static final MonitorSpy f_spy;
+
+	private static final FieldDefs f_defs;
+
+	public static FieldDefs getFieldDefinitions() {
+		return f_defs;
+	}
 
 	/**
 	 * This thread-local (tl) flag is used to ensure that we to not, within a
 	 * thread, reenter the store. This situation can occur if we call methods on
 	 * the objects passed into the store and the implementation of those methods
 	 * is part of the instrumented program.
+	 * 
+	 * It also holds the thread-local lock set values.
 	 */
 	private final static ThreadLocal<State> tl_withinStore;
 
-	public static final class State {
+	public static class State {
 		boolean inside = false;
 		final ThreadPhantomReference thread;
 		public final TraceNode.Header traceHeader;
-		final List<Event> eventQueue;
-		final BlockingQueue<List<Event>> rawQueue;
-		final List<IdPhantomReference> locksHeld = IdConstants.trackLocks ? new ArrayList<IdPhantomReference>()
-				: null;
 
-		State(final BlockingQueue<List<Event>> q, final List<Event> l,
-				final boolean flashlightThread) {
-			rawQueue = q;
-			eventQueue = l;
+		public State(final boolean flashlightThread) {
 			if (flashlightThread) {
 				inside = true;
 				thread = null;
@@ -215,13 +200,34 @@ public final class Store {
 			}
 		}
 
-		TraceNode getCurrentTrace(final long siteId) {
-			return traceHeader.getCurrentNode(siteId, this);
-		}
+	}
 
-		TraceNode getCurrentTrace() {
-			return traceHeader.getCurrentNode(this);
+	public static void updateSpec(final MonitorSpec spec) {
+		f_spec = spec;
+	}
+
+	private static volatile MonitorSpec f_spec;
+
+	private final static ThreadLocal<ThreadLockSet> tl_lockSet;
+	final static CopyOnWriteArrayList<ThreadLockSet> f_lockSets;
+
+	CopyOnWriteArrayList<ThreadLockSet> lockSets() {
+		return f_lockSets;
+	}
+
+	/**
+	 * Gets the current lock set information, but does so in a destructive
+	 * fashion (The results held in the current list of lock sets will not be
+	 * available to any later analysis.
+	 * 
+	 * @param out
+	 */
+	static void destructivePrintLockSetInfo(final PrintWriter out) {
+		final MasterLockSet master = new MasterLockSet(new SharedFields());
+		for (final ThreadLockSet slave : f_lockSets) {
+			master.drain(slave);
 		}
+		out.println(master);
 	}
 
 	private static final boolean useLocks = true;
@@ -249,11 +255,7 @@ public final class Store {
 	}
 
 	private static State createState(final boolean flashlightThread) {
-		final List<Event> l = new ArrayList<Event>(LOCAL_QUEUE_MAX);
-		synchronized (localQueueList) {
-			localQueueList.add(l);
-		}
-		return new State(f_rawQueue, l, flashlightThread);
+		return new State(flashlightThread);
 	}
 
 	/*
@@ -263,10 +265,8 @@ public final class Store {
 		// Check if FL is on (and shutoff)
 		if (IdConstants.enableFlashlightToggle
 				|| !StoreDelegate.FL_OFF.getAndSet(true)) {
-			// System.out.println("Store");
-			// new
-			// Throwable("Store CL = "+Store.class.getClassLoader()).printStackTrace(System.out);
-
+			f_defs = new FieldDefs();
+			f_spec = new MonitorSpec("", f_defs);
 			/*
 			 * Initialize final static fields. If Flashlight is off these fields
 			 * are all set to null to save memory.
@@ -294,26 +294,23 @@ public final class Store {
 			final SimpleDateFormat dateFormat = new SimpleDateFormat(
 					"-yyyy.MM.dd-'at'-HH.mm.ss.SSS");
 			final String dateOverride = StoreConfiguration.getDateOverride();
-			Date startTime;
 			if (dateOverride == null) {
-				/* No time is provided, use the current time */
-				startTime = new Date();
+				new Date();
 			} else {
 				/*
 				 * We have an externally provided time. Try to parse it. If we
 				 * cannot parse it, use the current time.
 				 */
 				try {
-					startTime = dateFormat.parse(dateOverride);
+					dateFormat.parse(dateOverride);
 				} catch (final ParseException e) {
 					System.err
 							.println("[Flashlight] couldn't parse date string \""
 									+ dateOverride + "\"");
-					startTime = new Date();
+					new Date();
 				}
 			}
-			final Time timeEvent = new Time(startTime);
-			fileName.append(dateFormat.format(timeEvent.getDate()));
+			fileName.append(dateFormat.format(new Date()));
 
 			final File logFile = new File(fileName.toString() + ".flog");
 			PrintWriter w = null;
@@ -338,83 +335,30 @@ public final class Store {
 			}
 			final File dataFile = EventVisitor.createStreamFile(fileName
 					.toString(), outType);
-			EventVisitor outputStrategy = null;
-			try {
-				final PrintWriter headerW = new PrintWriter(fileName.toString()
-						+ ".flh");
-				OutputStrategyXML.outputHeader(headerW, timeEvent, outType
-						.isBinary() ? OutputStrategyBinary.version
-						: OutputStrategyXML.version);
-				headerW.close();
 
-				if (StoreConfiguration.debugOn()) {
-					System.err.println("Compress stream = "
-							+ outType.isCompressed());
-				}
-				final EventVisitor.Factory factory = outType.isBinary() ? OutputStrategyBinary.factory
-						: OutputStrategyXML.factory;
-				if (StoreConfiguration.useSeparateStreams()) {
-					outputStrategy = new OutputStreamsStrategy(fileName
-							.toString(), ENCODING, timeEvent, factory);
-				} else {
-					final OutputStream stream = EventVisitor.createStream(
-							fileName.toString(), outType);
-					outputStrategy = factory
-							.create(stream, ENCODING, timeEvent);
-				}
-			} catch (final IOException e) {
-				logAProblem("unable to output to \""
-						+ dataFile.getAbsolutePath() + "\"", e);
-				System.exit(1); // bail
-			}
-
-			final int rawQueueSize = StoreConfiguration.getRawQueueSize();
-			final int outQueueSize = StoreConfiguration.getOutQueueSize();
-			f_rawQueue = new ArrayBlockingQueue<List<Event>>(StoreConfiguration
-					.isRefineryOff() ? outQueueSize : rawQueueSize);
-			putInQueue(f_rawQueue, singletonList(timeEvent));
-			putInQueue(f_rawQueue, singletonList(new SelectedPackage("*")));
-
-			if (StoreConfiguration.debugOn()) {
-				System.err.println("Using refinery = "
-						+ !StoreConfiguration.isRefineryOff());
-			}
-			if (!StoreConfiguration.isRefineryOff()) {
-				f_outQueue = new ArrayBlockingQueue<List<Event>>(outQueueSize);
-			} else {
-				f_outQueue = null;
-			}
 			tl_withinStore = new ThreadLocal<State>() {
 				@Override
 				protected State initialValue() {
 					return createState(false);
 				}
 			};
-			IdPhantomReference
-					.addObserver(new IdPhantomReferenceCreationObserver() {
-						public void notify(final ClassPhantomReference o,
-								final IdPhantomReference r) {
-							/*
-							 * Create an event to define this object.
-							 */
-							Store.putInQueue(tl_withinStore.get(),
-									new ObjectDefinition(o, r));
-						}
-					});
-			final int refinerySize = StoreConfiguration.getRefinerySize();
-			if (!StoreConfiguration.isRefineryOff()) {
-				f_refinery = new Refinery(f_rawQueue, f_outQueue, refinerySize);
-				f_refinery.start();
-				f_depository = new Depository(f_outQueue, outputStrategy);
-			} else {
-				f_refinery = new MinimalRefinery();
-				f_refinery.start();
-				f_depository = new Depository(f_rawQueue, outputStrategy);
-			}
-			f_depository.start();
-			log("collection started (rawQ=" + rawQueueSize + " : refinery="
-					+ refinerySize + " : outQ=" + outQueueSize + ")");
-			log("to \"" + dataFile.getAbsolutePath() + "\"");
+			/*
+			 * Initialize lock set analysis thread locals
+			 */
+			tl_lockSet = new ThreadLocal<ThreadLockSet>() {
+
+				@Override
+				protected ThreadLockSet initialValue() {
+					final ThreadPhantomReference thread = tl_withinStore.get().thread;
+					final ThreadLockSet ls = new ThreadLockSet(
+							thread.getName(), thread.getId());
+					f_lockSets.add(ls);
+					return ls;
+				}
+
+			};
+			f_lockSets = new CopyOnWriteArrayList<ThreadLockSet>();
+			log("collection started to \"" + dataFile.getAbsolutePath() + "\"");
 			/*
 			 * The spy periodically checks the state of the instrumented program
 			 * and shuts down flashlight if the program is finished.
@@ -423,7 +367,7 @@ public final class Store {
 			if (noSpy) {
 				f_spy = null;
 			} else {
-				f_spy = new Spy();
+				f_spy = new MonitorSpy();
 				f_spy.start();
 			}
 			/*
@@ -434,38 +378,35 @@ public final class Store {
 			Runtime.getRuntime().addShutdownHook(new Thread() {
 				@Override
 				public void run() {
-					Store.shutdown();
+					MonitorStore.shutdown();
 				}
 			});
 			/*
 			 * The console lets someone attach to flashlight and command it to
 			 * shutdown.
 			 */
-			f_console = new Console();
-			f_console.start();
 
+			f_console = new MonitorConsole();
+			f_console.start();
+			// Start up looking at no fields.
+			Analysis.reviseSpec(f_spec);
 			f_start_nano = System.nanoTime();
 
 			f_flashlightIsNotInitialized = false;
 			StoreDelegate.FL_OFF.set(false);
 		} else {
+			f_defs = null;
 			f_run = null;
 			f_log = null;
 			f_problemCount = null;
-			f_rawQueue = null;
-			f_outQueue = null;
 			tl_withinStore = null;
-			f_refinery = null;
-			f_depository = null;
+			tl_lockSet = null;
+			f_lockSets = null;
 			f_console = null;
 			f_spy = null;
 			f_start_nano = 0;
 			f_flashlightIsNotInitialized = false;
 		}
-	}
-
-	public static BlockingQueue<List<Event>> getRawQueue() {
-		return f_rawQueue;
 	}
 
 	static int getIntProperty(final String key, int def, final int min) {
@@ -542,24 +483,12 @@ public final class Store {
 		try {
 			/*
 			 * if (DEBUG) { final String fmt =
-			 * "Store.instanceFieldAccessLookup(%n\t\t%s%n\t\treceiver=%s%n\t\tfield=%s%n\t\tlocation=%s)"
+			 * "LockSetStore.instanceFieldAccessLookup(%n\t\t%s%n\t\treceiver=%s%n\t\tfield=%s%n\t\tlocation=%s)"
 			 * ; log(String.format(fmt, read ? "read" : "write",
 			 * safeToString(receiver), clazz.getName()+'.'+fieldName,
 			 * SrcLoc.toString(withinClass, line))); }
 			 */
 
-			/*
-			 * Check that the parameters are valid, gather needed information,
-			 * and put an event in the raw queue.
-			 */
-			/*
-			 * if (oField == null) { final String fmt =
-			 * "field cannot be null...instrumentation bug detected by Store.instanceFieldAccessLookup(%s, receiver=%s, field=%s, withinClass, line=%s)"
-			 * ; logAProblem(String.format(fmt, read ? "read" : "write",
-			 * safeToString(receiver), clazz.getName()+'.'+fieldName,
-			 * SrcLoc.toString(withinClass, line))); return; }
-			 */
-			final Event e;
 			/*
 			 * if the field is not from an instrumented class then force
 			 * creation of the phantom class object. Declaring class is null if
@@ -573,12 +502,10 @@ public final class Store {
 			if (declaringClass != null) {
 				Phantom.ofClass(declaringClass);
 			}
-			if (read) {
-				e = new FieldReadInstance(receiver, fieldID, siteId, flState);
-			} else {
-				e = new FieldWriteInstance(receiver, fieldID, siteId, flState);
+			final long receiverId = Phantom.ofObject(receiver).getId();
+			if (f_spec.isMonitoring(fieldID)) {
+				tl_lockSet.get().field(fieldID, receiverId);
 			}
-			putInQueue(flState, e);
 		} finally {
 			flState.inside = false;
 		}
@@ -630,26 +557,14 @@ public final class Store {
 		try {
 			/*
 			 * if (DEBUG) { final String fmt =
-			 * "Store.staticFieldAccessLookup(%n\t\t%s%n\t\tfield=%s%n\t\tlocation=%s)"
+			 * "LockSetStore.staticFieldAccessLookup(%n\t\t%s%n\t\tfield=%s%n\t\tlocation=%s)"
 			 * ; log(String.format(fmt, read ? "read" : "write",
 			 * clazz.getName()+'.'+fieldName, SrcLoc.toString(withinClass,
 			 * line))); }
 			 */
 
-			/*
-			 * Check that the parameters are valid, gather needed information,
-			 * and put an event in the raw queue.
-			 */
-			/*
-			 * if (oField == null) { final String fmt =
-			 * "field cannot be null...instrumentation bug detected by Store.staticFieldAccessLookup(%s, field=%s, location=%s)"
-			 * ; logAProblem(String.format(fmt, read ? "read" : "write",
-			 * clazz.getName()+'.'+fieldName, SrcLoc.toString(withinClass,
-			 * line))); return; }
-			 */
-			boolean underConstruction = false;
 			if (dcPhantom != null) {
-				underConstruction = dcPhantom.isUnderConstruction();
+				dcPhantom.isUnderConstruction();
 			}
 			/*
 			 * if the field is not from an instrumented class then force
@@ -664,15 +579,9 @@ public final class Store {
 			if (declaringClass != null) {
 				Phantom.ofClass(declaringClass);
 			}
-			final Event e;
-			if (read) {
-				e = new FieldReadStatic(fieldID, siteId, flState,
-						underConstruction);
-			} else {
-				e = new FieldWriteStatic(fieldID, siteId, flState,
-						underConstruction);
+			if (f_spec.isMonitoring(fieldID)) {
+				tl_lockSet.get().field(fieldID);
 			}
-			putInQueue(flState, e);
 		} finally {
 			flState.inside = false;
 		}
@@ -719,7 +628,7 @@ public final class Store {
 	// }
 	// if (DEBUG) {
 	// final String fmt =
-	// "Store.instanceFieldAccessLookup(%n\t\t%s%n\t\treceiver=%s%n\t\tfield=%s%n\t\tlocation=%s)";
+	// "LockSetStore.instanceFieldAccessLookup(%n\t\t%s%n\t\treceiver=%s%n\t\tfield=%s%n\t\tlocation=%s)";
 	// log(String.format(fmt, read ? "read" : "write",
 	// safeToString(receiver), clazz.getName()+'.'+fieldName, siteId));
 	// }
@@ -731,7 +640,7 @@ public final class Store {
 	// */
 	// if (oField == null) {
 	// final String fmt =
-	// "field cannot be null...instrumentation bug detected by Store.instanceFieldAccessLookup(%s, receiver=%s, field=%s, withinClass, line=%s)";
+	// "field cannot be null...instrumentation bug detected by LockSetStore.instanceFieldAccessLookup(%s, receiver=%s, field=%s, withinClass, line=%s)";
 	// logAProblem(String.format(fmt, read ? "read" : "write",
 	// safeToString(receiver), clazz.getName()+'.'+fieldName, siteId));
 	// return;
@@ -739,7 +648,7 @@ public final class Store {
 	// final Event e;
 	// if (receiver == null) {
 	// final String fmt =
-	// "instance field %s access reported with a null receiver...instrumentation bug detected by Store.instanceFieldAccessLookup(%s, receiver=%s, field=%s, location=%s)";
+	// "instance field %s access reported with a null receiver...instrumentation bug detected by LockSetStore.instanceFieldAccessLookup(%s, receiver=%s, field=%s, location=%s)";
 	// logAProblem(String.format(fmt, oField, read ? "read"
 	// : "write", safeToString(receiver), clazz.getName()+'.'+fieldName,
 	// siteId));
@@ -793,7 +702,7 @@ public final class Store {
 	// }
 	// if (DEBUG) {
 	// final String fmt =
-	// "Store.staticFieldAccessLookup(%n\t\t%s%n\t\tfield=%s%n\t\tlocation=%s)";
+	// "LockSetStore.staticFieldAccessLookup(%n\t\t%s%n\t\tfield=%s%n\t\tlocation=%s)";
 	// log(String.format(fmt, read ? "read" : "write",
 	// clazz.getName()+'.'+fieldName, siteId));
 	// }
@@ -805,7 +714,7 @@ public final class Store {
 	// */
 	// if (oField == null) {
 	// final String fmt =
-	// "field cannot be null...instrumentation bug detected by Store.staticFieldAccessLookup(%s, field=%s, location=%s)";
+	// "field cannot be null...instrumentation bug detected by LockSetStore.staticFieldAccessLookup(%s, field=%s, location=%s)";
 	// logAProblem(String.format(fmt, read ? "read" : "write",
 	// clazz.getName()+'.'+fieldName, siteId));
 	// return;
@@ -854,13 +763,10 @@ public final class Store {
 		flState.inside = true;
 		try {
 			if (DEBUG) {
-				final String fmt = "Store.indirectAccess(%n\t\treceiver=%s%n\t\tlocation=%s)";
+				final String fmt = "LockSetStore.indirectAccess(%n\t\treceiver=%s%n\t\tlocation=%s)";
 				log(String.format(fmt, safeToString(receiver), siteId));
 			}
-			/*
-			 * Record this access in the trace.
-			 */
-			putInQueue(flState, new IndirectAccess(receiver, siteId, flState));
+			// Do nothing currently
 		} finally {
 			flState.inside = false;
 		}
@@ -902,7 +808,7 @@ public final class Store {
 		final ClassPhantomReference p = Phantom.ofClass(clazz);
 		p.setUnderConstruction(before);
 		if (DEBUG) {
-			final String fmt = "Store.classInit(%n\t\tbefore=%s%n\t\tclass=%s)";
+			final String fmt = "LockSetStore.classInit(%n\t\tbefore=%s%n\t\tclass=%s)";
 			System.out.println(String.format(fmt, before ? "true" : "false",
 					clazz.getName()));
 		}
@@ -942,7 +848,7 @@ public final class Store {
 		flState.inside = true;
 		try {
 			if (DEBUG) {
-				final String fmt = "Store.constructorCall(%n\t\t%s%n\t\tlocation=%s)";
+				final String fmt = "LockSetStore.constructorCall(%n\t\t%s%n\t\tlocation=%s)";
 				log(String.format(fmt, before ? "before" : "after", siteId));
 			}
 			/*
@@ -997,7 +903,7 @@ public final class Store {
 		flState.inside = true;
 		try {
 			if (DEBUG) {
-				final String fmt = "Store.constructorExecution(%n\t\t%s%n\t\treceiver=%s%n\t\tlocation=%s)";
+				final String fmt = "LockSetStore.constructorExecution(%n\t\t%s%n\t\treceiver=%s%n\t\tlocation=%s)";
 				log(String.format(fmt, before ? "before" : "after",
 						safeToString(receiver), siteId));
 			}
@@ -1006,7 +912,7 @@ public final class Store {
 			 * and put an event in the raw queue.
 			 */
 			if (receiver == null) {
-				final String fmt = "constructor cannot be null...instrumentation bug detected by Store.constructorExecution(%s, receiver=%s, location=%s)";
+				final String fmt = "constructor cannot be null...instrumentation bug detected by LockSetStore.constructorExecution(%s, receiver=%s, location=%s)";
 				logAProblem(String.format(fmt, before ? "before" : "after",
 						safeToString(receiver), siteId));
 			} else {
@@ -1065,7 +971,7 @@ public final class Store {
 		flState.inside = true;
 		try {
 			if (DEBUG) {
-				final String fmt = "Store.methodCall(%n\t\t%s%n\t\treceiver=%s%n\t\tlocation=%s)";
+				final String fmt = "LockSetStore.methodCall(%n\t\t%s%n\t\treceiver=%s%n\t\tlocation=%s)";
 				log(String.format(fmt, before ? "before" : "after",
 						safeToString(receiver), siteId));
 			}
@@ -1084,10 +990,9 @@ public final class Store {
 						final String fmt = "Defined ReadWriteLock id=%d";
 						log(String.format(fmt, p.getId()));
 					}
-					final Event e = new ReadWriteLockDefinition(p, Phantom
-							.ofObject(rwl.readLock()), Phantom.ofObject(rwl
-							.writeLock()));
-					putInQueue(flState, e);
+					// FIXME most of this may be unnecessary.
+					new ReadWriteLockDefinition(p, Phantom.ofObject(rwl
+							.readLock()), Phantom.ofObject(rwl.writeLock()));
 				}
 			}
 
@@ -1141,7 +1046,7 @@ public final class Store {
 		flState.inside = true;
 		try {
 			if (DEBUG) {
-				final String fmt = "Store.beforeIntrinsicLockAcquisition(%n\t\tlockObject=%s%n\t\tlockIsThis=%b%n\t\tlockIsClass=%b%n\t\tlocation=%s)";
+				final String fmt = "LockSetStore.beforeIntrinsicLockAcquisition(%n\t\tlockObject=%s%n\t\tlockIsThis=%b%n\t\tlockIsClass=%b%n\t\tlocation=%s)";
 				log(String.format(fmt, safeToString(lockObject), lockIsThis,
 						lockIsClass, siteId));
 			}
@@ -1150,14 +1055,12 @@ public final class Store {
 			 * and put an event in the raw queue.
 			 */
 			if (lockObject == null) {
-				final String fmt = "intrinsic lock object cannot be null...instrumentation bug detected by Store.beforeIntrinsicLockAcquisition(lockObject=%s, lockIsThis=%b, lockIsClass=%b, location=%s)";
+				final String fmt = "intrinsic lock object cannot be null...instrumentation bug detected by LockSetStore.beforeIntrinsicLockAcquisition(lockObject=%s, lockIsThis=%b, lockIsClass=%b, location=%s)";
 				logAProblem(String.format(fmt, safeToString(lockObject),
 						lockIsThis, lockIsClass, siteId));
 				return;
 			}
-			final Event e = new BeforeIntrinsicLockAcquisition(lockObject,
-					lockIsThis, lockIsClass, siteId, flState);
-			putInQueue(flState, e, true);
+			// Do nothing for now
 		} finally {
 			flState.inside = false;
 		}
@@ -1192,7 +1095,7 @@ public final class Store {
 		flState.inside = true;
 		try {
 			if (DEBUG) {
-				final String fmt = "Store.afterIntrinsicLockAcquisition(%n\t\tlockObject=%s%n\t\tlocation=%s)";
+				final String fmt = "LockSetStore.afterIntrinsicLockAcquisition(%n\t\tlockObject=%s%n\t\tlocation=%s)";
 				log(String.format(fmt, safeToString(lockObject), siteId));
 			}
 			/*
@@ -1200,18 +1103,14 @@ public final class Store {
 			 * and put an event in the raw queue.
 			 */
 			if (lockObject == null) {
-				final String fmt = "intrinsic lock object cannot be null...instrumentation bug detected by Store.afterIntrinsicLockAcquisition(lockObject=%s, location=%s)";
+				final String fmt = "intrinsic lock object cannot be null...instrumentation bug detected by LockSetStore.afterIntrinsicLockAcquisition(lockObject=%s, location=%s)";
 				logAProblem(String
 						.format(fmt, safeToString(lockObject), siteId));
 				return;
 			}
-			if (IdConstants.trackLocks) {
-				final IdPhantomReference lockPhantom = Phantom.of(lockObject);
-				flState.locksHeld.add(lockPhantom);
-			}
-			final Event e = new AfterIntrinsicLockAcquisition(lockObject,
-					siteId, flState);
-			putInQueue(flState, e);
+			final IdPhantomReference lockPhantom = Phantom.of(lockObject);
+
+			tl_lockSet.get().enterLock(lockPhantom.getId());
 		} finally {
 			flState.inside = false;
 		}
@@ -1246,6 +1145,7 @@ public final class Store {
 		if (!useLocks) {
 			return;
 		}
+
 		/*
 		 * if (f_flashlightIsNotInitialized) { return; }
 		 */
@@ -1259,7 +1159,7 @@ public final class Store {
 		flState.inside = true;
 		try {
 			if (DEBUG) {
-				final String fmt = "Store.intrinsicLockWait(%n\t\t%s%n\t\tlockObject=%s%n\t\tlocation=%s)";
+				final String fmt = "LockSetStore.intrinsicLockWait(%n\t\t%s%n\t\tlockObject=%s%n\t\tlocation=%s)";
 				log(String.format(fmt, before ? "before" : "after",
 						safeToString(lockObject), siteId));
 			}
@@ -1268,18 +1168,16 @@ public final class Store {
 			 * and put an event in the raw queue.
 			 */
 			if (lockObject == null) {
-				final String fmt = "intrinsic lock object cannot be null...instrumentation bug detected by Store.intrinsicLockWait(%s, lockObject=%s, location=%s)";
+				final String fmt = "intrinsic lock object cannot be null...instrumentation bug detected by LockSetStore.intrinsicLockWait(%s, lockObject=%s, location=%s)";
 				logAProblem(String.format(fmt, before ? "before" : "after",
 						safeToString(lockObject), siteId));
 				return;
 			}
-			final Event e;
 			if (before) {
-				e = new BeforeIntrinsicLockWait(lockObject, siteId, flState);
+				// Do nothing
 			} else {
-				e = new AfterIntrinsicLockWait(lockObject, siteId, flState);
+				// Do nothing
 			}
-			putInQueue(flState, e, true);
 		} finally {
 			flState.inside = false;
 		}
@@ -1314,7 +1212,7 @@ public final class Store {
 		flState.inside = true;
 		try {
 			if (DEBUG) {
-				final String fmt = "Store.afterIntrinsicLockRelease(%n\t\tlockObject=%s%n\t\tlocation=%s)";
+				final String fmt = "LockSetStore.afterIntrinsicLockRelease(%n\t\tlockObject=%s%n\t\tlocation=%s)";
 				log(String.format(fmt, safeToString(lockObject), siteId));
 			}
 			/*
@@ -1322,18 +1220,13 @@ public final class Store {
 			 * and put an event in the raw queue.
 			 */
 			if (lockObject == null) {
-				final String fmt = "intrinsic lock object cannot be null...instrumentation bug detected by Store.afterIntrinsicLockRelease(lockObject=%s, location=%s)";
+				final String fmt = "intrinsic lock object cannot be null...instrumentation bug detected by LockSetStore.afterIntrinsicLockRelease(lockObject=%s, location=%s)";
 				logAProblem(String
 						.format(fmt, safeToString(lockObject), siteId));
 				return;
 			}
-			if (IdConstants.trackLocks) {
-				final IdPhantomReference lockPhantom = Phantom.of(lockObject);
-				flState.locksHeld.remove(lockPhantom);
-			}
-			final Event e = new AfterIntrinsicLockRelease(lockObject, siteId,
-					flState);
-			putInQueue(flState, e);
+			final IdPhantomReference lockPhantom = Phantom.of(lockObject);
+			tl_lockSet.get().leaveLock(lockPhantom.getId());
 		} finally {
 			flState.inside = false;
 		}
@@ -1373,16 +1266,13 @@ public final class Store {
 				 * the util.concurrent Lock object to not have a bad toString()
 				 * method.
 				 */
-				final String fmt = "Store.beforeUtilConcurrentLockAcquisitionAttempt(%n\t\tlockObject=%s%n\t\tlocation=%s)";
+				final String fmt = "LockSetStore.beforeUtilConcurrentLockAcquisitionAttempt(%n\t\tlockObject=%s%n\t\tlocation=%s)";
 				log(String.format(fmt, lockObject, siteId));
 			}
 			if (lockObject instanceof Lock) {
-				final Lock ucLock = (Lock) lockObject;
-				final Event e = new BeforeUtilConcurrentLockAcquisitionAttempt(
-						ucLock, siteId, flState);
-				putInQueue(flState, e, true);
+				// Do nothing
 			} else {
-				final String fmt = "lock object must be a java.util.concurrent.locks.Lock...instrumentation bug detected by Store.beforeUtilConcurrentLockAcquisitionAttempt(lockObject=%s, location=%s)";
+				final String fmt = "lock object must be a java.util.concurrent.locks.Lock...instrumentation bug detected by LockSetStore.beforeUtilConcurrentLockAcquisitionAttempt(lockObject=%s, location=%s)";
 				logAProblem(String.format(fmt, lockObject, siteId));
 				return;
 			}
@@ -1431,22 +1321,18 @@ public final class Store {
 				 * the util.concurrent Lock object to not have a bad toString()
 				 * method.
 				 */
-				final String fmt = "Store.afterUtilConcurrentLockAcquisitionAttempt(%n\t\t%s%n\t\tlockObject=%s%n\t\tlocation=%s)";
+				final String fmt = "LockSetStore.afterUtilConcurrentLockAcquisitionAttempt(%n\t\t%s%n\t\tlockObject=%s%n\t\tlocation=%s)";
 				log(String.format(fmt, gotTheLock ? "holding"
 						: "failed-to-acquire", lockObject, siteId));
 			}
 			if (lockObject instanceof Lock) {
-				if (IdConstants.trackLocks && gotTheLock) {
+				if (gotTheLock) {
 					final ObjectPhantomReference lockPhantom = Phantom
 							.ofObject(lockObject);
-					flState.locksHeld.add(lockPhantom);
+					tl_lockSet.get().enterLock(lockPhantom.getId());
 				}
-				final Lock ucLock = (Lock) lockObject;
-				final Event e = new AfterUtilConcurrentLockAcquisitionAttempt(
-						gotTheLock, ucLock, siteId, flState);
-				putInQueue(flState, e);
 			} else {
-				final String fmt = "lock object must be a java.util.concurrent.locks.Lock...instrumentation bug detected by Store.afterUtilConcurrentLockAcquisitionAttempt(%s, lockObject=%s, location=%s)";
+				final String fmt = "lock object must be a java.util.concurrent.locks.Lock...instrumentation bug detected by LockSetStore.afterUtilConcurrentLockAcquisitionAttempt(%s, lockObject=%s, location=%s)";
 				logAProblem(String.format(fmt, gotTheLock ? "holding"
 						: "failed-to-acquire", lockObject, siteId));
 				return;
@@ -1496,23 +1382,18 @@ public final class Store {
 				 * the util.concurrent Lock object to not have a bad toString()
 				 * method.
 				 */
-				final String fmt = "Store.afterUtilConcurrentLockReleaseAttempt(%n\t\t%s%n\t\tlockObject=%s%n\t\tlocation=%s)";
+				final String fmt = "LockSetStore.afterUtilConcurrentLockReleaseAttempt(%n\t\t%s%n\t\tlockObject=%s%n\t\tlocation=%s)";
 				log(String.format(fmt, releasedTheLock ? "released"
 						: "failed-to-release", lockObject, siteId));
 			}
 			if (lockObject instanceof Lock) {
-				if (IdConstants.trackLocks && releasedTheLock) {
+				if (releasedTheLock) {
 					final ObjectPhantomReference lockPhantom = Phantom
 							.ofObject(lockObject);
-					flState.locksHeld.remove(lockPhantom);
+					tl_lockSet.get().leaveLock(lockPhantom.getId());
 				}
-
-				final Lock ucLock = (Lock) lockObject;
-				final Event e = new AfterUtilConcurrentLockReleaseAttempt(
-						releasedTheLock, ucLock, siteId, flState);
-				putInQueue(flState, e);
 			} else {
-				final String fmt = "lock object must be a java.util.concurrent.locks.Lock...instrumentation bug detected by Store.afterUtilConcurrentLockReleaseAttempt(%s, lockObject=%s, location=%s)";
+				final String fmt = "lock object must be a java.util.concurrent.locks.Lock...instrumentation bug detected by LockSetStore.afterUtilConcurrentLockReleaseAttempt(%s, lockObject=%s, location=%s)";
 				logAProblem(String.format(fmt, releasedTheLock ? "released"
 						: "failed-to-release", lockObject, siteId));
 				return;
@@ -1538,7 +1419,7 @@ public final class Store {
 	public static void shutdown() {
 		if (f_flashlightIsNotInitialized) {
 			System.err.println("[Flashlight] !SERIOUS ERROR! "
-					+ "Store.shutdown() invoked "
+					+ "LockSetStore.shutdown() invoked "
 					+ "before the Store class is initialized");
 			return;
 		}
@@ -1554,23 +1435,26 @@ public final class Store {
 
 		// new Throwable("Calling shutdown()").printStackTrace(System.out);
 		// System.out.flush();
-
-		/*
-		 * Finish up data output.
-		 */
-		if (StoreConfiguration.isRefineryOff()) {
-			// Need to shutdown the minimal refinery in a different way than
-			// the normal refinery
-			f_refinery.requestShutdown();
+		final File f = new File("/tmp/locks");
+		if (f.exists()) {
+			f.delete();
 		}
-		Thread.yield();
 
-		putInQueue(f_rawQueue, flushLocalQueues());
-		putInQueue(f_rawQueue, singletonList(FinalEvent.FINAL_EVENT));
-		if (!StoreConfiguration.isRefineryOff()) {
-			join(f_refinery);
+		final Analysis analysis = Analysis.getAnalysis();
+		analysis.wrapUp();
+		join(analysis);
+
+		PrintWriter p;
+		try {
+			p = new PrintWriter(f);
+			try {
+				p.println(analysis.toString());
+			} finally {
+				p.close();
+			}
+		} catch (final FileNotFoundException e1) {
+			e1.printStackTrace();
 		}
-		join(f_depository);
 
 		/*
 		 * Note that a client handler for the console could have been the thread
@@ -1644,18 +1528,6 @@ public final class Store {
 	}
 
 	/**
-	 * Only used for testing, this method sets the output strategy of the
-	 * depository thread.
-	 * 
-	 * @param outputStrategy
-	 *            an output strategy.
-	 */
-	static void setOutputStrategy(final EventVisitor outputStrategy) {
-		assert outputStrategy != null;
-		f_depository.setOutputStrategy(outputStrategy);
-	}
-
-	/**
 	 * Puts an event into a blocking queue. This operation will block if the
 	 * queue is full and it will ignore any interruptions.
 	 * 
@@ -1682,70 +1554,6 @@ public final class Store {
 	}
 
 	static final int LOCAL_QUEUE_MAX = 256;
-
-	/**
-	 * Used by the refinery to flush all the local queues upon shutdown
-	 */
-	static final List<List<Event>> localQueueList = new ArrayList<List<Event>>();
-
-	public static void putInQueue(final State state, final Event e) {
-		putInQueue(state, e, false);
-	}
-
-	static void putInQueue(final State state, final Event e, final boolean flush) {
-		/*
-		 * if (e instanceof ObjectDefinition) { ObjectDefinition od =
-		 * (ObjectDefinition) e; if (od.getObject() instanceof
-		 * ClassPhantomReference) {
-		 * System.err.println("Local queue: "+od.getObject()); } }
-		 */
-		/*
-		 * if (state == null) { state = tl_withinStore.get(); }
-		 */
-		final List<Event> localQ = state.eventQueue;
-		List<Event> copy = null;
-		synchronized (localQ) {
-			localQ.add(e);
-			if (/* flush || */localQ.size() >= LOCAL_QUEUE_MAX) {
-				copy = new ArrayList<Event>(localQ);
-				localQ.clear();
-			}
-		}
-		if (copy != null) {
-			/*
-			 * for(Event ev : copy) { if (ev instanceof ObjectDefinition) {
-			 * ObjectDefinition od = (ObjectDefinition) ev; if (od.getObject()
-			 * instanceof ClassPhantomReference) {
-			 * System.err.println("Queuing: "+od.getObject()); } } }
-			 */
-			putInQueue(state.rawQueue, copy);
-		}
-	}
-
-	static List<Event> flushLocalQueues() {
-		final List<Event> buf = new ArrayList<Event>(LOCAL_QUEUE_MAX);
-		synchronized (localQueueList) {
-			for (final List<Event> q : localQueueList) {
-				synchronized (q) {
-					buf.addAll(q);
-					q.clear();
-				}
-			}
-		}
-		/*
-		 * for(Event ev : buf) { if (ev instanceof ObjectDefinition) {
-		 * ObjectDefinition od = (ObjectDefinition) ev; if (od.getObject()
-		 * instanceof ClassPhantomReference) {
-		 * System.err.println("Flushing: "+od.getObject()); } } }
-		 */
-		return buf;
-	}
-
-	static List<Event> singletonList(final Event e) {
-		final List<Event> l = new ArrayList<Event>(1);
-		l.add(e);
-		return l;
-	}
 
 	/**
 	 * Joins on the given thread ignoring any interruptions.
@@ -1790,7 +1598,7 @@ public final class Store {
 		}
 	}
 
-	private Store() {
+	private MonitorStore() {
 		// no instances
 	}
 
@@ -1800,7 +1608,7 @@ public final class Store {
 			return;
 		}
 		if (DEBUG) {
-			final String fmt = "Store.instanceFieldInit%n\t\treceiver=%s%n\t\field=%s%n\t\tvalue=%s)";
+			final String fmt = "LockSetStore.instanceFieldInit%n\t\treceiver=%s%n\t\field=%s%n\t\tvalue=%s)";
 			log(String.format(fmt, safeToString(receiver), fieldId,
 					safeToString(value)));
 		}
@@ -1814,7 +1622,7 @@ public final class Store {
 		}
 		state.inside = true;
 		try {
-			putInQueue(state, new FieldAssignment(receiver, fieldId, value));
+			// Do nothing
 		} finally {
 			state.inside = false;
 		}
@@ -1825,7 +1633,7 @@ public final class Store {
 			return;
 		}
 		if (DEBUG) {
-			final String fmt = "Store.instanceFieldInit%n\t\field=%s%n\t\tvalue=%s)";
+			final String fmt = "LockSetStore.instanceFieldInit%n\t\field=%s%n\t\tvalue=%s)";
 			log(String.format(fmt, fieldId, safeToString(value)));
 		}
 		// Ignore null assignments
@@ -1838,9 +1646,10 @@ public final class Store {
 		}
 		state.inside = true;
 		try {
-			putInQueue(state, new FieldAssignment(fieldId, value));
+			// Do nothing
 		} finally {
 			state.inside = false;
 		}
 	}
+
 }

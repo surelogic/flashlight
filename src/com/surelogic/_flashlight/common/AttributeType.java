@@ -11,7 +11,7 @@ public enum AttributeType implements IAttributeType {
 			"java-version"), JAVA_VENDOR("java-vendor"), OS_NAME("os-name"), OS_ARCH(
 			"os-arch"), OS_VERSION("os-version"), WALL_CLOCK("wall-clock-time"), PARENT_ID(
 			"parent-id"), TRACE("trace"), START_TIME("start-time"), PACKAGE(
-			"package"), VALUE("value");
+			"package"), VALUE("value"), VISIBILITY("visibility");
 
 	private final String label;
 

@@ -3,6 +3,7 @@ package com.surelogic.flashlight.common.prep;
 import static com.surelogic._flashlight.common.AttributeType.FIELD;
 import static com.surelogic._flashlight.common.AttributeType.ID;
 import static com.surelogic._flashlight.common.AttributeType.TYPE;
+import static com.surelogic._flashlight.common.AttributeType.VISIBILITY;
 import static com.surelogic._flashlight.common.FlagType.IS_FINAL;
 import static com.surelogic._flashlight.common.FlagType.IS_STATIC;
 import static com.surelogic._flashlight.common.FlagType.IS_VOLATILE;
@@ -21,7 +22,7 @@ import com.surelogic.common.logging.SLLogger;
 
 public class FieldDefinition extends AbstractPrep {
 
-	private static final String f_psQ = "INSERT INTO FIELD VALUES (?, ?, ?, ?, ?, ?)";
+	private static final String f_psQ = "INSERT INTO FIELD VALUES (?, ?, ?, ?, ?, ?, ?)";
 
 	private PreparedStatement f_ps;
 	private int count;
@@ -43,20 +44,21 @@ public class FieldDefinition extends AbstractPrep {
 		final long id = attributes.getLong(ID);
 		final long type = attributes.getLong(TYPE);
 		final String field = attributes.getString(FIELD);
+		final int visibility = attributes.getInt(VISIBILITY);
 		final boolean isStatic = attributes.getBoolean(IS_STATIC);
 		final boolean isFinal = attributes.getBoolean(IS_FINAL);
 		final boolean isVolatile = attributes.getBoolean(IS_VOLATILE);
-		if ((id == ILLEGAL_FIELD_ID) || (type == ILLEGAL_ID) || (field == null)) {
+		if (id == ILLEGAL_FIELD_ID || type == ILLEGAL_ID || field == null) {
 			SLLogger.getLogger().log(Level.SEVERE,
 					"Missing id, type, or field in field-definition");
 			return;
 		}
-		insert(id, type, field, isStatic, isFinal, isVolatile);
+		insert(id, type, field, isStatic, isFinal, isVolatile, visibility);
 	}
 
 	private void insert(final long id, final long type, final String field,
 			final boolean isStatic, final boolean isFinal,
-			final boolean isVolatile) throws SQLException {
+			final boolean isVolatile, final int visibility) throws SQLException {
 		int idx = 1;
 		f_ps.setLong(idx++, id);
 		if (field != null) {
@@ -65,6 +67,7 @@ public class FieldDefinition extends AbstractPrep {
 			f_ps.setNull(idx++, Types.VARCHAR);
 		}
 		f_ps.setLong(idx++, type);
+		f_ps.setInt(idx++, visibility);
 		f_ps.setString(idx++, isStatic ? "Y" : "N");
 		f_ps.setString(idx++, isFinal ? "Y" : "N");
 		f_ps.setString(idx++, isVolatile ? "Y" : "N");

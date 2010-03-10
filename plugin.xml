@@ -147,6 +147,7 @@
 		Put a "Flashlight As" entry in the popup menu. This is based on what
 		YourKit does.
 	-->
+	
 	<extension point="org.eclipse.ui.popupMenus">
 		<objectContribution objectClass="java.lang.Object"
 			id="org.eclipse.debug.ui.contextualLaunch.flashlight">
@@ -157,7 +158,19 @@
 				id="org.eclipse.debug.ui.contextualLaunch.flashlight.submenu">
 			</action>
 			<enablement>
-				<test property="org.eclipse.debug.ui.launchable" value="flashlight" />
+					<with variable="selection">
+						<count value="1" />
+						<iterate>
+							<or>
+								<test property="org.eclipse.jdt.launching.hasMain" />
+								<and>
+									<test property="org.eclipse.jdt.launching.isContainer" />
+									<test property="org.eclipse.jdt.launching.hasProjectNature"
+										args="org.eclipse.jdt.core.javanature" />
+								</and>
+							</or>
+						</iterate>
+					</with>
 			</enablement>
 		</objectContribution>
 	</extension>
@@ -326,6 +339,14 @@
 			id="com.surelogic.flashlight.client.eclipse.views.adhoc.QueryResultExplorerView"
 			name="Query Results Explorer">
 		</view>
+<!--
+		<view allowMultiple="false" category="com.surelogic.flashlight.Flashlight"
+			class="com.surelogic.flashlight.client.eclipse.views.monitor.MonitorView"
+			icon="platform:/plugin/com.surelogic.common/src/com/surelogic/common/images/fl_logo.gif"
+			id="com.surelogic.flashlight.client.eclipse.views.monitor.MonitorView"
+			name="Monitor">
+		</view>
+-->
 		<view allowMultiple="false" category="com.surelogic.flashlight.Flashlight"
 			class="com.surelogic.flashlight.client.eclipse.views.adhoc.QueryResultsView"
 			icon="platform:/plugin/com.surelogic.common/src/com/surelogic/common/images/drum.gif"

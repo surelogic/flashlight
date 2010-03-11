@@ -147,9 +147,8 @@
 		Put a "Flashlight As" entry in the popup menu. This is based on what
 		YourKit does.
 	-->
-	
 	<extension point="org.eclipse.ui.popupMenus">
-		<objectContribution objectClass="java.lang.Object"
+		<objectContribution objectClass="org.eclipse.jdt.core.IJavaElement"
 			id="org.eclipse.debug.ui.contextualLaunch.flashlight">
 			<action label="Flashlight As" style="pulldown"
 				icon="platform:/plugin/com.surelogic.common/src/com/surelogic/common/images/fl_logo.gif"
@@ -158,19 +157,7 @@
 				id="org.eclipse.debug.ui.contextualLaunch.flashlight.submenu">
 			</action>
 			<enablement>
-					<with variable="selection">
-						<count value="1" />
-						<iterate>
-							<or>
-								<test property="org.eclipse.jdt.launching.hasMain" />
-								<and>
-									<test property="org.eclipse.jdt.launching.isContainer" />
-									<test property="org.eclipse.jdt.launching.hasProjectNature"
-										args="org.eclipse.jdt.core.javanature" />
-								</and>
-							</or>
-						</iterate>
-					</with>
+				<test property="org.eclipse.debug.ui.launchable" value="flashlight" />
 			</enablement>
 		</objectContribution>
 	</extension>

@@ -21,15 +21,15 @@ public class RecommendedRegion {
 	private final String pakkage;
 	private final String clazz;
 	private final String lock;
-	private final Map<String, Field> fields;
-	private final Set<Method> methods;
+	private final Map<String, FieldLoc> fields;
+	private final Set<MethodLoc> methods;
 
 	public RecommendedRegion(final String p, final String c, final String l) {
 		pakkage = p;
 		clazz = c;
 		lock = l;
-		fields = new HashMap<String, Field>();
-		methods = new HashSet<Method>();
+		fields = new HashMap<String, FieldLoc>();
+		methods = new HashSet<MethodLoc>();
 	}
 
 	public RecommendedRegion(final String p, final String c,
@@ -55,16 +55,16 @@ public class RecommendedRegion {
 	 * 
 	 * @return
 	 */
-	public Collection<Field> getFields() {
+	public Collection<FieldLoc> getFields() {
 		return fields.values();
 	}
 
-	public void addField(final Field f) {
+	public void addField(final FieldLoc f) {
 		fields.put(f.getField(), f);
 	}
 
-	public void addFields(final Collection<Field> fields) {
-		for (final Field f : fields) {
+	public void addFields(final Collection<FieldLoc> fields) {
+		for (final FieldLoc f : fields) {
 			addField(f);
 		}
 	}
@@ -85,7 +85,7 @@ public class RecommendedRegion {
 	 * @param name
 	 * @return
 	 */
-	public Field getField(final String name) {
+	public FieldLoc getField(final String name) {
 		return fields.get(name);
 	}
 
@@ -95,7 +95,7 @@ public class RecommendedRegion {
 	 * 
 	 * @return
 	 */
-	public Set<Method> getRequiresLockMethods() {
+	public Set<MethodLoc> getRequiresLockMethods() {
 		return methods;
 	}
 

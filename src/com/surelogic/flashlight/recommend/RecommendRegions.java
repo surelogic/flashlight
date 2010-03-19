@@ -108,7 +108,7 @@ public final class RecommendRegions {
 										curS = s;
 										regions.add(region);
 									}
-									region.addField(new Field(f, Visibility
+									region.addField(new FieldLoc(f, Visibility
 											.fromFlag(viz), isS, isF, isV));
 								}
 							}
@@ -169,7 +169,7 @@ public final class RecommendRegions {
 					region = new RecommendedRegion(p, c, l);
 					regions.add(region);
 				}
-				region.addField(new Field(f, Visibility.fromFlag(viz), isS,
+				region.addField(new FieldLoc(f, Visibility.fromFlag(viz), isS,
 						isF, isV));
 				fs.add(fid);
 				ls.add(lid);
@@ -188,12 +188,12 @@ public final class RecommendRegions {
 	 * @param fieldId
 	 * @return
 	 */
-	private static DBQuery<Set<Method>> traces(final TLongHashSet locks,
+	private static DBQuery<Set<MethodLoc>> traces(final TLongHashSet locks,
 			final TLongHashSet fields) {
-		return new DBQuery<Set<Method>>() {
-			public Set<Method> perform(final Query q) {
+		return new DBQuery<Set<MethodLoc>>() {
+			public Set<MethodLoc> perform(final Query q) {
 				final long ms = System.currentTimeMillis();
-				final Set<Method> methods = new HashSet<Method>();
+				final Set<MethodLoc> methods = new HashSet<MethodLoc>();
 				/*
 				 * The trace algorithm works like this.
 				 * 
@@ -268,7 +268,7 @@ public final class RecommendRegions {
 					}
 					for (final Trace t : fieldTrace.subList(bestFit, fieldTrace
 							.size())) {
-						methods.add(new Method(t.getPackage(), t.getClazz(), t
+						methods.add(new MethodLoc(t.getPackage(), t.getClazz(), t
 								.getLoc()));
 					}
 				}

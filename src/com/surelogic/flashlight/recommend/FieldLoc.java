@@ -3,14 +3,14 @@
  */
 package com.surelogic.flashlight.recommend;
 
-public final class Field implements Comparable<Field> {
+public final class FieldLoc implements Comparable<FieldLoc> {
 	private final String field;
 	private final Visibility visibility;
 	private final boolean isFinal;
 	private final boolean isStatic;
 	private final boolean isVolatile;
 
-	Field(final String field, final Visibility visibility,
+	FieldLoc(final String field, final Visibility visibility,
 			final boolean isStatic, final boolean isFinal,
 			final boolean isVolatile) {
 		this.field = field;
@@ -45,7 +45,7 @@ public final class Field implements Comparable<Field> {
 		return visibility;
 	}
 
-	public int compareTo(final Field o) {
+	public int compareTo(final FieldLoc o) {
 		return field.compareTo(o.field);
 	}
 
@@ -68,7 +68,7 @@ public final class Field implements Comparable<Field> {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final Field other = (Field) obj;
+		final FieldLoc other = (FieldLoc) obj;
 		if (field == null) {
 			if (other.field != null) {
 				return false;

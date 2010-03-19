@@ -3,15 +3,27 @@
  */
 package com.surelogic.flashlight.recommend;
 
-public final class Method {
+public final class MethodLoc {
 	private final String pakkage;
 	private final String clazz;
 	private final String loc;
 
-	public Method(final String p, final String c, final String l) {
+	public MethodLoc(final String p, final String c, final String l) {
 		this.pakkage = p;
 		this.clazz = c;
 		this.loc = l;
+	}
+
+	public String getPackage() {
+		return pakkage;
+	}
+
+	public String getClazz() {
+		return clazz;
+	}
+
+	public String getMethod() {
+		return loc;
 	}
 
 	@Override
@@ -20,8 +32,7 @@ public final class Method {
 		int result = 1;
 		result = prime * result + (clazz == null ? 0 : clazz.hashCode());
 		result = prime * result + (loc == null ? 0 : loc.hashCode());
-		result = prime * result
-				+ (pakkage == null ? 0 : pakkage.hashCode());
+		result = prime * result + (pakkage == null ? 0 : pakkage.hashCode());
 		return result;
 	}
 
@@ -36,7 +47,7 @@ public final class Method {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final Method other = (Method) obj;
+		final MethodLoc other = (MethodLoc) obj;
 		if (clazz == null) {
 			if (other.clazz != null) {
 				return false;

@@ -79,24 +79,33 @@ final class Analysis extends Thread {
 			master.drain(other);
 		}
 		for (final IdPhantomReference ref : f_references) {
-			final Map<Long, Set<Long>> fields = master.purge(ref.getId());
+			final long receiverId = ref.getId();
+			// Compute final lock set results
+			final Map<Long, Set<Long>> fields = master.purge(receiverId);
 			if (fields != null) {
 				for (final Entry<Long, Set<Long>> e : fields.entrySet()) {
-					if (e.getValue().isEmpty()) {
-						noLockSetFields.add(e.getKey());
-					} else {
-						lockSetFields.add(e.getKey());
+					final long fieldId = e.getKey();
+					if (shared.isShared(receiverId, fieldId)) {
+						if (e.getValue().isEmpty()) {
+							noLockSetFields.add(fieldId);
+						} else {
+							lockSetFields.add(fieldId);
+						}
 					}
 				}
 			}
+			shared.remove(receiverId);
 		}
 		f_references.clear();
 		for (final Entry<Long, Set<Long>> e : master.getStaticLockSets()
 				.entrySet()) {
-			if (e.getValue().isEmpty()) {
-				noLockSetFields.add(e.getKey());
-			} else {
-				lockSetFields.add(e.getKey());
+			final long fieldId = e.getKey();
+			if (shared.isShared(fieldId)) {
+				if (e.getValue().isEmpty()) {
+					noLockSetFields.add(fieldId);
+				} else {
+					lockSetFields.add(fieldId);
+				}
 			}
 		}
 		for (final Entry<Long, Map<Long, Set<Long>>> e : master.getLockSets()
@@ -114,6 +123,10 @@ final class Analysis extends Thread {
 	@Override
 	public synchronized String toString() {
 		final StringBuilder b = new StringBuilder();
+		b.append("Shared Fields:\n");
+
+		b.append("Unshared Fields:\n");
+
 		b.append("Fields that ALWAYS have a  Lock Set:\n");
 		b.append("Instance:\n");
 		HashSet<Long> set = new HashSet<Long>(lockSetFields);

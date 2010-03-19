@@ -77,6 +77,7 @@ public class MasterLockSet {
 	 * collected.
 	 * 
 	 * @param receiverId
+	 * @return a map of lock sets keyed by field id
 	 */
 	synchronized Map<Long, Set<Long>> purge(final long receiverId) {
 		final Map<Long, Set<Long>> map = lockSets.get(receiverId);

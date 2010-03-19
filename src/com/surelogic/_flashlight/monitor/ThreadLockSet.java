@@ -88,7 +88,7 @@ final class ThreadLockSet {
 	 * 
 	 * @return
 	 */
-	public Map<Long, Set<Long>> clearStaticLockSets() {
+	Map<Long, Set<Long>> clearStaticLockSets() {
 		try {
 			return staticLockSets;
 		} finally {
@@ -101,7 +101,7 @@ final class ThreadLockSet {
 	 * 
 	 * @return
 	 */
-	public Map<Long, Map<Long, Set<Long>>> clearLockSets() {
+	Map<Long, Map<Long, Set<Long>>> clearLockSets() {
 		try {
 			return lockSets;
 		} finally {

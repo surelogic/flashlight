@@ -70,4 +70,32 @@ public class SharedFields {
 		}
 		return true;
 	}
+
+	/**
+	 * Remove the object with the given id from consideration. This should be
+	 * called when an object is garbage collected.
+	 * 
+	 * @param receiverId
+	 */
+	void remove(final long receiverId) {
+		sharedFields.remove(receiverId);
+	}
+
+	/**
+	 * Calculate the set of fields that are shared my multiple threads.
+	 * 
+	 * @return
+	 */
+	Set<Long> calculateSharedFields() {
+		return null;// FIXME
+	}
+
+	/**
+	 * Calculate the set of fields that are not shared my multiple threads.
+	 * 
+	 * @return
+	 */
+	Set<Long> calculateUnsharedFields() {
+		return null;// FIXME
+	}
 }

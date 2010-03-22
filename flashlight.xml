@@ -135,9 +135,9 @@
 	  <copy file="${flashlight-rewriter.jar}" todir="${basedir}/../flashlight-client-eclipse/lib"/>	  
 	</target>
 	
-	<target name="build-jars-eclipse" depends="build-all-jar, build-runtime-jar, build-servlet-jar, build-rewriter-jar, translate-runtime-jar" />
+	<target name="build-jars-eclipse" depends="build-all-jar, build-runtime-jar, build-servlet-jar, build-rewriter-jar" />
 
-	<target name="build-jars" depends="compile, build-all-jar, build-runtime-jar, build-servlet-jar, build-rewriter-jar, translate-runtime-jar" />
+	<target name="build-jars" depends="compile, build-all-jar, build-runtime-jar, build-servlet-jar, build-rewriter-jar" />
 
 	<target name="compile-test-code" depends="build-jars">
 		<delete dir="${classes}" />

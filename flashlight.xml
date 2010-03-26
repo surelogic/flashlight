@@ -138,6 +138,8 @@
 	<target name="build-jars-eclipse" depends="build-all-jar, build-runtime-jar, build-servlet-jar, build-rewriter-jar, translate-runtime-jar" />
 
 	<target name="build-jars" depends="compile, build-all-jar, build-runtime-jar, build-servlet-jar, build-rewriter-jar, translate-runtime-jar" />
+	
+	<target name="build-jars-no-1.4-eclipse" depends="build-all-jar, build-runtime-jar" />
 
 	<target name="compile-test-code" depends="build-jars">
 		<delete dir="${classes}" />

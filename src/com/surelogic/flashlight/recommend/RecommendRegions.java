@@ -151,6 +151,7 @@ public final class RecommendRegions {
 				final String c = r.nextString();
 				final String l = r.nextString();
 				final long lid = r.nextLong();
+				final boolean lIsS = r.nextBoolean();
 				final String f = r.nextString();
 				final long fid = r.nextLong();
 				final int viz = r.nextInt();
@@ -161,12 +162,13 @@ public final class RecommendRegions {
 						|| !c.equals(region.getClazz())
 						|| !l.equals(region.getLock())) {
 					if (region != null) {
+						// TODO performance
 						region.getRequiresLockMethods().addAll(
 								traces(ls, fs).perform(q));
 					}
 					fs = new TLongHashSet();
 					ls = new TLongHashSet();
-					region = new RecommendedRegion(p, c, l);
+					region = new RecommendedRegion(p, c, l, lIsS);
 					regions.add(region);
 				}
 				region.addField(new FieldLoc(f, Visibility.fromFlag(viz), isS,
@@ -268,8 +270,8 @@ public final class RecommendRegions {
 					}
 					for (final Trace t : fieldTrace.subList(bestFit, fieldTrace
 							.size())) {
-						methods.add(new MethodLoc(t.getPackage(), t.getClazz(), t
-								.getLoc()));
+						methods.add(new MethodLoc(t.getPackage(), t.getClazz(),
+								t.getLoc()));
 					}
 				}
 				final long newMs = System.currentTimeMillis();

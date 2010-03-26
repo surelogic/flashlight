@@ -23,18 +23,29 @@ public class RecommendedRegion {
 	private final String lock;
 	private final Map<String, FieldLoc> fields;
 	private final Set<MethodLoc> methods;
+	private final boolean isStatic;
 
-	public RecommendedRegion(final String p, final String c, final String l) {
+	public RecommendedRegion(final String p, final String c, final String l,
+			final boolean isStatic) {
 		pakkage = p;
 		clazz = c;
 		lock = l;
 		fields = new HashMap<String, FieldLoc>();
 		methods = new HashSet<MethodLoc>();
+		this.isStatic = isStatic;
 	}
 
+	/**
+	 * Construct a region without an explicit lock, meaning that it locks on
+	 * either {@code class} or {@code this}.
+	 * 
+	 * @param p
+	 * @param c
+	 * @param isStatic
+	 */
 	public RecommendedRegion(final String p, final String c,
 			final boolean isStatic) {
-		this(p, c, isStatic ? "class" : "this");
+		this(p, c, isStatic ? "class" : "this", isStatic);
 	}
 
 	public String getPackage() {
@@ -108,6 +119,10 @@ public class RecommendedRegion {
 	 */
 	public String getLock() {
 		return lock;
+	}
+
+	public boolean isStatic() {
+		return isStatic;
 	}
 
 	@Override

@@ -75,7 +75,7 @@ final class Analysis extends Thread {
 
 	public synchronized void process() {
 		Phantom.drainTo(f_references);
-		for (final ThreadLockSet other : MonitorStore.f_lockSets) {
+		for (final ThreadLocks other : MonitorStore.f_lockSets) {
 			master.drain(other);
 		}
 		for (final IdPhantomReference ref : f_references) {
@@ -102,9 +102,9 @@ final class Analysis extends Thread {
 			final long fieldId = e.getKey();
 			if (shared.isShared(fieldId)) {
 				if (e.getValue().isEmpty()) {
-					noLockSetFields.add(fieldId);
+					noStaticLockSetFields.add(fieldId);
 				} else {
-					lockSetFields.add(fieldId);
+					staticLockSetFields.add(fieldId);
 				}
 			}
 		}
@@ -112,9 +112,9 @@ final class Analysis extends Thread {
 				.entrySet()) {
 			for (final Entry<Long, Set<Long>> e1 : e.getValue().entrySet()) {
 				if (e1.getValue().isEmpty()) {
-					noStaticLockSetFields.add(e1.getKey());
+					noLockSetFields.add(e1.getKey());
 				} else {
-					staticLockSetFields.add(e1.getKey());
+					lockSetFields.add(e1.getKey());
 				}
 			}
 		}
@@ -123,24 +123,30 @@ final class Analysis extends Thread {
 	@Override
 	public synchronized String toString() {
 		final StringBuilder b = new StringBuilder();
+		b.append("Deadlocks:\n");
+		final Set<Long> deadlocks = master.getDeadlocks();
+		b.append(deadlocks);
+		b.append("\n");
 		b.append("Shared Fields:\n");
 
 		b.append("Unshared Fields:\n");
 
 		b.append("Fields that ALWAYS have a  Lock Set:\n");
 		b.append("Instance:\n");
-		HashSet<Long> set = new HashSet<Long>(lockSetFields);
-		set.removeAll(noLockSetFields);
-		appendFields(b, set);
+		final HashSet<Long> instanceSet = new HashSet<Long>(lockSetFields);
+		instanceSet.removeAll(noLockSetFields);
+		appendFields(b, instanceSet);
 		b.append("Static:\n");
-		set = new HashSet<Long>(staticLockSetFields);
-		set.removeAll(staticLockSetFields);
-		appendFields(b, set);
+		final HashSet<Long> staticSet = new HashSet<Long>(staticLockSetFields);
+		staticSet.removeAll(noStaticLockSetFields);
+		appendFields(b, staticSet);
+
 		b.append("Fields With Lock Sets:\n");
 		b.append("Instance:\n");
 		appendFields(b, lockSetFields);
 		b.append("Static:\n");
 		appendFields(b, staticLockSetFields);
+
 		b.append("Fields With No Lock Set:\n");
 		b.append("Instance:\n");
 		appendFields(b, noLockSetFields);

@@ -33,16 +33,12 @@
     <pathelement path="${lib}/activation.jar"/>
   </path>
     
-	
-	
 	<target name="clean">
 		<delete file="${flashlight-all.jar}"/>
 		<delete file="${flashlight-runtime.jar}"/>
 		<delete file="${flashlight-servlet.jar}"/>
 		<delete file="${flashlight-rewriter.jar}"/>
 	</target>
-		
-	
 
 	<target name="compile">
 		<delete dir="${classes}" />
@@ -139,7 +135,7 @@
 
 	<target name="build-jars" depends="compile, build-all-jar, build-runtime-jar, build-servlet-jar, build-rewriter-jar, translate-runtime-jar" />
 	
-	<target name="build-jars-no-1.4-eclipse" depends="build-all-jar, build-runtime-jar" />
+	<target name="build-jars-no-1.4" depends="compile, build-all-jar, build-runtime-jar, build-servlet-jar, build-rewriter-jar" />
 
 	<target name="compile-test-code" depends="build-jars">
 		<delete dir="${classes}" />

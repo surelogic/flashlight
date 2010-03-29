@@ -1,9 +1,14 @@
 package com.surelogic._flashlight.monitor;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
+
+import com.surelogic._flashlight.monitor.ThreadLocks.LockStack;
 
 /**
  * The master lock set analysis.
@@ -15,11 +20,15 @@ public class MasterLockSet {
 	private final Map<Long, Set<Long>> staticLockSets;
 	private final Map<Long, Map<Long, Set<Long>>> lockSets;
 	private final SharedFields shared;
+	private final Graph graph;
+	private Set<Long> badLocks;
 
 	MasterLockSet(final SharedFields sf) {
 		lockSets = new HashMap<Long, Map<Long, Set<Long>>>();
 		staticLockSets = new HashMap<Long, Set<Long>>();
 		this.shared = sf;
+		graph = new Graph();
+		badLocks = new HashSet<Long>();
 	}
 
 	/**
@@ -29,13 +38,15 @@ public class MasterLockSet {
 	 * 
 	 * @param other
 	 */
-	synchronized void drain(final ThreadLockSet other) {
+	synchronized void drain(final ThreadLocks other) {
 		Map<Long, Set<Long>> otherStaticLockSets;
 		Map<Long, Map<Long, Set<Long>>> otherLockSets;
+		Set<LockStack> otherStacks;
 		long threadId;
 		synchronized (other) {
 			otherStaticLockSets = other.clearStaticLockSets();
 			otherLockSets = other.clearLockSets();
+			otherStacks = other.clearLockStacks();
 			threadId = other.getThreadId();
 		}
 		for (final Entry<Long, Set<Long>> e : otherStaticLockSets.entrySet()) {
@@ -69,6 +80,49 @@ public class MasterLockSet {
 				}
 			}
 		}
+		for (final LockStack stack : otherStacks) {
+			graph.add(stack);
+		}
+		badLocks = graph.cycles();
+	}
+
+	static class Graph {
+
+		final Map<Long, Set<Long>> reachable;
+		final Set<LockStack> stacks;
+
+		Graph() {
+			reachable = new HashMap<Long, Set<Long>>();
+			stacks = new HashSet<LockStack>();
+		}
+
+		void add(LockStack stack) {
+			stacks.add(stack);
+			final List<Long> ids = new ArrayList<Long>();
+			for (; stack.lockId != LockStack.HEAD; stack = stack.parentLock) {
+				final long id = stack.lockId;
+				Set<Long> set = reachable.get(id);
+				if (set == null) {
+					set = new HashSet<Long>();
+					reachable.put(id, set);
+				}
+				set.addAll(ids);
+				ids.add(id);
+			}
+		}
+
+		Set<Long> cycles() {
+			final Set<Long> cycleLocks = new HashSet<Long>();
+			for (final Entry<Long, Set<Long>> vertex : reachable.entrySet()) {
+				for (final long lock : vertex.getValue()) {
+					if (reachable.get(lock).contains(vertex.getKey())) {
+						cycleLocks.add(lock);
+						cycleLocks.add(vertex.getKey());
+					}
+				}
+			}
+			return cycleLocks;
+		}
 	}
 
 	/**
@@ -91,6 +145,10 @@ public class MasterLockSet {
 
 	Map<Long, Map<Long, Set<Long>>> getLockSets() {
 		return lockSets;
+	}
+
+	public Set<Long> getDeadlocks() {
+		return badLocks;
 	}
 
 }

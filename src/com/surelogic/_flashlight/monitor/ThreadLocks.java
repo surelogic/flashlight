@@ -8,19 +8,23 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-final class ThreadLockSet {
+final class ThreadLocks {
 	private final HashSet<Long> locks;
 	private final String thread;
 	private final long threadId;
 	private Map<Long, Set<Long>> staticLockSets;
 	private Map<Long, Map<Long, Set<Long>>> lockSets;
+	private Set<LockStack> stacks;
+	private LockStack stack;
 
-	ThreadLockSet(final String threadName, final long threadId) {
+	ThreadLocks(final String threadName, final long threadId) {
 		thread = threadName;
 		this.threadId = threadId;
 		locks = new HashSet<Long>();
 		lockSets = new HashMap<Long, Map<Long, Set<Long>>>();
 		staticLockSets = new HashMap<Long, Set<Long>>();
+		stack = new LockStack();
+		stacks = new HashSet<LockStack>();
 	}
 
 	/**
@@ -63,7 +67,10 @@ final class ThreadLockSet {
 	 * @param lock
 	 */
 	synchronized void enterLock(final long lock) {
-		locks.add(lock);
+		if (locks.add(lock)) {
+			stack = stack.acquire(lock);
+			stacks.add(stack);
+		}
 	}
 
 	/**
@@ -73,6 +80,8 @@ final class ThreadLockSet {
 	 */
 	synchronized void leaveLock(final long lock) {
 		locks.remove(lock);
+		stack = stack.release(lock);
+		stacks.add(stack);
 	}
 
 	String getThread() {
@@ -107,6 +116,93 @@ final class ThreadLockSet {
 		} finally {
 			lockSets = new HashMap<Long, Map<Long, Set<Long>>>();
 		}
+	}
+
+	public Set<LockStack> clearLockStacks() {
+		try {
+			return stacks;
+		} finally {
+			stacks = new HashSet<LockStack>();
+		}
+	}
+
+	static class LockStack {
+		static final int HEAD = -1;
+		final LockStack parentLock;
+		final long lockId;
+
+		LockStack() {
+			lockId = HEAD;
+			parentLock = null;
+			hash = _hashCode();
+		}
+
+		LockStack release(final long lock) {
+			if (lockId == lock) {
+				return parentLock;
+			} else if (lockId == HEAD) {
+				return this;
+			} else {
+				return new LockStack(release(lock), lockId);
+			}
+		}
+
+		LockStack(final LockStack stack, final long id) {
+			parentLock = stack;
+			lockId = id;
+			hash = _hashCode();
+		}
+
+		LockStack acquire(final long lockId) {
+			if (contains(lockId)) {
+				return this;
+			} else {
+				return new LockStack(this, lockId);
+			}
+		}
+
+		boolean contains(final long testId) {
+			if (lockId == testId) {
+				return true;
+			} else if (lockId == HEAD) {
+				return false;
+			} else {
+				return parentLock.contains(testId);
+			}
+		}
+
+		private final int hash;
+
+		@Override
+		public int hashCode() {
+			return hash;
+		}
+
+		public int _hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + (int) (lockId ^ lockId >>> 32);
+			result = prime * result
+					+ (parentLock == null ? 0 : parentLock.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(final Object obj) {
+			final LockStack other = (LockStack) obj;
+			if (lockId != other.lockId) {
+				return false;
+			}
+			if (parentLock == null) {
+				if (other.parentLock != null) {
+					return false;
+				}
+			} else if (!parentLock.equals(other.parentLock)) {
+				return false;
+			}
+			return true;
+		}
+
 	}
 
 }

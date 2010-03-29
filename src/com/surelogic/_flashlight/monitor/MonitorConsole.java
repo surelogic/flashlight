@@ -26,6 +26,7 @@ class MonitorConsole extends Thread {
 	private static final String PING = "ping";
 	private static final Pattern SET = Pattern.compile("set ([^=]*)=(.*)");
 	private static final String FIELD_SPEC = "fieldSpec";
+	private static final String LOCK_SPEC = "lockSpec";
 	private long startTime;
 
 	public MonitorConsole() {

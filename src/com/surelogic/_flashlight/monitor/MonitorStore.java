@@ -208,10 +208,10 @@ public final class MonitorStore {
 
 	private static volatile MonitorSpec f_spec;
 
-	private final static ThreadLocal<ThreadLockSet> tl_lockSet;
-	final static CopyOnWriteArrayList<ThreadLockSet> f_lockSets;
+	private final static ThreadLocal<ThreadLocks> tl_lockSet;
+	final static CopyOnWriteArrayList<ThreadLocks> f_lockSets;
 
-	CopyOnWriteArrayList<ThreadLockSet> lockSets() {
+	CopyOnWriteArrayList<ThreadLocks> threadLocks() {
 		return f_lockSets;
 	}
 
@@ -224,7 +224,7 @@ public final class MonitorStore {
 	 */
 	static void destructivePrintLockSetInfo(final PrintWriter out) {
 		final MasterLockSet master = new MasterLockSet(new SharedFields());
-		for (final ThreadLockSet slave : f_lockSets) {
+		for (final ThreadLocks slave : f_lockSets) {
 			master.drain(slave);
 		}
 		out.println(master);
@@ -345,20 +345,21 @@ public final class MonitorStore {
 			/*
 			 * Initialize lock set analysis thread locals
 			 */
-			tl_lockSet = new ThreadLocal<ThreadLockSet>() {
+			tl_lockSet = new ThreadLocal<ThreadLocks>() {
 
 				@Override
-				protected ThreadLockSet initialValue() {
+				protected ThreadLocks initialValue() {
 					final ThreadPhantomReference thread = tl_withinStore.get().thread;
-					final ThreadLockSet ls = new ThreadLockSet(
-							thread.getName(), thread.getId());
+					final ThreadLocks ls = new ThreadLocks(thread.getName(),
+							thread.getId());
 					f_lockSets.add(ls);
 					return ls;
 				}
 
 			};
-			f_lockSets = new CopyOnWriteArrayList<ThreadLockSet>();
+			f_lockSets = new CopyOnWriteArrayList<ThreadLocks>();
 			log("collection started to \"" + dataFile.getAbsolutePath() + "\"");
+
 			/*
 			 * The spy periodically checks the state of the instrumented program
 			 * and shuts down flashlight if the program is finished.
@@ -1060,7 +1061,7 @@ public final class MonitorStore {
 						lockIsThis, lockIsClass, siteId));
 				return;
 			}
-			// Do nothing for now
+			// Do nothing right now
 		} finally {
 			flState.inside = false;
 		}
@@ -1108,9 +1109,8 @@ public final class MonitorStore {
 						.format(fmt, safeToString(lockObject), siteId));
 				return;
 			}
-			final IdPhantomReference lockPhantom = Phantom.of(lockObject);
-
-			tl_lockSet.get().enterLock(lockPhantom.getId());
+			final long lockId = Phantom.of(lockObject).getId();
+			tl_lockSet.get().enterLock(lockId);
 		} finally {
 			flState.inside = false;
 		}

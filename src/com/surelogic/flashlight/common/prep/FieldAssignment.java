@@ -33,14 +33,14 @@ public class FieldAssignment extends RangedEvent {
 	public void printStats() {
 		System.out.println(getClass().getName() + " Skipped   = " + skipped);
 		System.out.println(getClass().getName() + " Inserted  = " + inserted);
-		System.out.println(getClass().getName() + " %Inserted = "
-				+ (inserted * 100.0 / (skipped + inserted)));
+		System.out.println(getClass().getName() + " %Inserted = " + inserted
+				* 100.0 / (skipped + inserted));
 	}
 
 	@Override
-	public void setup(Connection c, Timestamp start, long startNS,
-			ScanRawFileFieldsPreScan scanResults, long begin, long end)
-			throws SQLException {
+	public void setup(final Connection c, final Timestamp start,
+			final long startNS, final ScanRawFileFieldsPreScan scanResults,
+			final long begin, final long end) throws SQLException {
 		super.setup(c, start, startNS, scanResults, begin, end);
 		f_ps = c.prepareStatement(f_psQ);
 	}
@@ -49,28 +49,26 @@ public class FieldAssignment extends RangedEvent {
 		return "field-assignment";
 	}
 
-	public void parse(PreppedAttributes attributes) throws SQLException {
-		long field = attributes.getLong(AttributeType.FIELD);
-		long value = attributes.getLong(AttributeType.VALUE);
-		Long receiver = attributes.containsKey(AttributeType.RECEIVER) ? attributes
+	public void parse(final PreppedAttributes attributes) throws SQLException {
+		final long field = attributes.getLong(AttributeType.FIELD);
+		final long value = attributes.getLong(AttributeType.VALUE);
+		final Long receiver = attributes.containsKey(AttributeType.RECEIVER) ? attributes
 				.getLong(AttributeType.RECEIVER)
 				: null;
-		if (field == ILLEGAL_FIELD_ID
-				|| (receiver != null && receiver == ILLEGAL_RECEIVER_ID)) {
+		if (field == ILLEGAL_FIELD_ID || receiver != null
+				&& receiver == ILLEGAL_RECEIVER_ID) {
 			SLLogger.getLogger().log(Level.SEVERE,
-					"Missing id, type, or field in field-definition");
+					"Missing field or receiver in field-assignment");
 		}
-		if (value == ILLEGAL_RECEIVER_ID || value < f_begin || value > f_end) {
-			return;
-		}
-		// FIXME We check to see if the object could be referenced.
-		// Unfortunately, we can't check both field and receiver, and so we are
-		// going to put some entries into the database that have invalid
-		// receivers. Because of this, we won't have a foreign key constraint on
-		// receiver in add_constraints.sql
-		if (!f_scanResults.couldBeReferencedObject(value)) {
-			skipped++;
-			return;
+		if (receiver != null) {
+			if (receiver == ILLEGAL_RECEIVER_ID || receiver < f_begin
+					|| receiver > f_end) {
+				return;
+			}
+			if (!f_scanResults.couldBeReferencedObject(receiver)) {
+				skipped++;
+				return;
+			}
 		}
 		inserted++;
 		insert(field, value, receiver);

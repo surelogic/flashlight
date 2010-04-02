@@ -71,6 +71,7 @@ public final class RecommendRegions {
 	 * 
 	 * @return a list of proposed regions
 	 */
+	@Deprecated
 	public static DBQuery<Map<String, List<RecommendedRegion>>> observedRegions() {
 		return new DBQuery<Map<String, List<RecommendedRegion>>>() {
 
@@ -109,7 +110,8 @@ public final class RecommendRegions {
 										regions.add(region);
 									}
 									region.addField(new FieldLoc(f, Visibility
-											.fromFlag(viz), isS, isF, isV));
+											.fromFlag(viz), isS, isF, isV,
+											false));
 								}
 							}
 						}).call();
@@ -158,6 +160,7 @@ public final class RecommendRegions {
 				final boolean isS = r.nextBoolean();
 				final boolean isF = r.nextBoolean();
 				final boolean isV = r.nextBoolean();
+				final boolean isA = r.nextBoolean();
 				if (region == null || !p.equals(region.getPackage())
 						|| !c.equals(region.getClazz())
 						|| !l.equals(region.getLock())) {
@@ -172,9 +175,14 @@ public final class RecommendRegions {
 					regions.add(region);
 				}
 				region.addField(new FieldLoc(f, Visibility.fromFlag(viz), isS,
-						isF, isV));
+						isF, isV, isA));
 				fs.add(fid);
 				ls.add(lid);
+			}
+			// Finally, add the requires lock methods for the last region
+			if (region != null) {
+				region.getRequiresLockMethods().addAll(
+						traces(ls, fs).perform(q));
 			}
 			return regions;
 

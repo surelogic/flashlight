@@ -33,8 +33,8 @@ public abstract class FieldAccess extends RangedEvent {
 		final long receiver = attributes.getLong(RECEIVER);
 		final boolean underConstruction = attributes
 				.getBoolean(UNDER_CONSTRUCTION);
-		if ((nanoTime == ILLEGAL_ID) || (inThread == ILLEGAL_ID)
-				|| (trace == ILLEGAL_ID) || (field == ILLEGAL_FIELD_ID)) {
+		if (nanoTime == ILLEGAL_ID || inThread == ILLEGAL_ID
+				|| trace == ILLEGAL_ID || field == ILLEGAL_FIELD_ID) {
 			SLLogger.getLogger().log(
 					Level.SEVERE,
 					"Missing nano-time, thread, site, or field in "
@@ -81,8 +81,8 @@ public abstract class FieldAccess extends RangedEvent {
 	public void printStats() {
 		System.out.println(getClass().getName() + " Skipped   = " + skipped);
 		System.out.println(getClass().getName() + " Inserted  = " + inserted);
-		System.out.println(getClass().getName() + " %Inserted = "
-				+ (inserted * 100.0 / (skipped + inserted)));
+		System.out.println(getClass().getName() + " %Inserted = " + inserted
+				* 100.0 / (skipped + inserted));
 	}
 
 	@Override

@@ -9,15 +9,17 @@ public final class FieldLoc implements Comparable<FieldLoc> {
 	private final boolean isFinal;
 	private final boolean isStatic;
 	private final boolean isVolatile;
+	private final boolean isAggregate;
 
 	FieldLoc(final String field, final Visibility visibility,
 			final boolean isStatic, final boolean isFinal,
-			final boolean isVolatile) {
+			final boolean isVolatile, final boolean isAggregate) {
 		this.field = field;
 		this.visibility = visibility;
 		this.isFinal = isFinal;
 		this.isStatic = isStatic;
 		this.isVolatile = isVolatile;
+		this.isAggregate = isAggregate;
 	}
 
 	@Override
@@ -43,6 +45,10 @@ public final class FieldLoc implements Comparable<FieldLoc> {
 
 	public Visibility getVisibility() {
 		return visibility;
+	}
+
+	public boolean isAggregate() {
+		return isAggregate;
 	}
 
 	public int compareTo(final FieldLoc o) {

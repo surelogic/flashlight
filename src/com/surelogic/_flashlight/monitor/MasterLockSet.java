@@ -1,6 +1,7 @@
 package com.surelogic._flashlight.monitor;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -21,14 +22,12 @@ public class MasterLockSet {
 	private final Map<Long, Map<Long, Set<Long>>> lockSets;
 	private final SharedFields shared;
 	private final Graph graph;
-	private Set<Long> badLocks;
 
 	MasterLockSet(final SharedFields sf) {
 		lockSets = new HashMap<Long, Map<Long, Set<Long>>>();
 		staticLockSets = new HashMap<Long, Set<Long>>();
 		this.shared = sf;
 		graph = new Graph();
-		badLocks = new HashSet<Long>();
 	}
 
 	/**
@@ -83,7 +82,6 @@ public class MasterLockSet {
 		for (final LockStack stack : otherStacks) {
 			graph.add(stack);
 		}
-		badLocks = graph.cycles();
 	}
 
 	static class Graph {
@@ -147,8 +145,12 @@ public class MasterLockSet {
 		return lockSets;
 	}
 
+	public Set<LockStack> getLockOrders() {
+		return Collections.unmodifiableSet(graph.stacks);
+	}
+
 	public Set<Long> getDeadlocks() {
-		return badLocks;
+		return graph.cycles();
 	}
 
 }

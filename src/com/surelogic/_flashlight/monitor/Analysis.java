@@ -15,6 +15,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import com.surelogic._flashlight.IdPhantomReference;
 import com.surelogic._flashlight.Phantom;
+import com.surelogic._flashlight.monitor.ThreadLocks.LockStack;
 
 /**
  * The Analysis thread periodically collects events from every program thread
@@ -123,14 +124,6 @@ final class Analysis extends Thread {
 	@Override
 	public synchronized String toString() {
 		final StringBuilder b = new StringBuilder();
-		b.append("Deadlocks:\n");
-		final Set<Long> deadlocks = master.getDeadlocks();
-		b.append(deadlocks);
-		b.append("\n");
-		b.append("Shared Fields:\n");
-
-		b.append("Unshared Fields:\n");
-
 		b.append("Fields that ALWAYS have a  Lock Set:\n");
 		b.append("Instance:\n");
 		final HashSet<Long> instanceSet = new HashSet<Long>(lockSetFields);
@@ -152,7 +145,36 @@ final class Analysis extends Thread {
 		appendFields(b, noLockSetFields);
 		b.append("Static:\n");
 		appendFields(b, noStaticLockSetFields);
+
+		b.append("Lock Orderings:\n");
+		appendLockOrders(b, master.getLockOrders());
+		b.append("Potential Deadlocks:\n");
+		final Set<Long> deadlocks = master.getDeadlocks();
+		b.append(deadlocks);
+		b.append("\n");
+		b.append("Shared Fields:\n");
+		appendFields(b, shared.calculateSharedFields());
+		b.append("Unshared Fields:\n");
+		appendFields(b, shared.calculateUnsharedFields());
 		return b.toString();
+	}
+
+	private void appendLockOrders(final StringBuilder b,
+			final Set<LockStack> lockOrders) {
+		final List<String> strs = new ArrayList<String>();
+		for (LockStack stack : lockOrders) {
+			String s = "";
+			for (; stack.getLockId() != LockStack.HEAD; stack = stack
+					.getParentLock()) {
+				s = "-> " + stack.getLockId() + s;
+			}
+			strs.add(s);
+		}
+		Collections.sort(strs);
+		for (final String s : strs) {
+			b.append(s);
+			b.append('\n');
+		}
 	}
 
 	void appendFields(final StringBuilder b, final Set<Long> fields) {

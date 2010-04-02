@@ -137,13 +137,21 @@ final class ThreadLocks {
 			hash = _hashCode();
 		}
 
+		public LockStack getParentLock() {
+			return parentLock;
+		}
+
+		public long getLockId() {
+			return lockId;
+		}
+
 		LockStack release(final long lock) {
 			if (lockId == lock) {
 				return parentLock;
 			} else if (lockId == HEAD) {
 				return this;
 			} else {
-				return new LockStack(release(lock), lockId);
+				return new LockStack(parentLock.release(lock), lockId);
 			}
 		}
 

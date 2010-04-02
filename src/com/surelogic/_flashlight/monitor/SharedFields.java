@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 
 public class SharedFields {
 
@@ -87,7 +88,23 @@ public class SharedFields {
 	 * @return
 	 */
 	Set<Long> calculateSharedFields() {
-		return null;// FIXME
+		final Set<Long> set = new HashSet<Long>();
+		for (final Entry<Long, Set<Long>> e : sharedStatics.entrySet()) {
+			final long fieldId = e.getKey();
+			if (e.getValue().size() > 1) {
+				set.add(fieldId);
+			}
+		}
+		for (final Entry<Long, Map<Long, Set<Long>>> e : sharedFields
+				.entrySet()) {
+			for (final Entry<Long, Set<Long>> e1 : e.getValue().entrySet()) {
+				final long fieldId = e1.getKey();
+				if (e1.getValue().size() > 1) {
+					set.add(fieldId);
+				}
+			}
+		}
+		return set;
 	}
 
 	/**
@@ -96,6 +113,22 @@ public class SharedFields {
 	 * @return
 	 */
 	Set<Long> calculateUnsharedFields() {
-		return null;// FIXME
+		final Set<Long> set = new HashSet<Long>();
+		for (final Entry<Long, Set<Long>> e : sharedStatics.entrySet()) {
+			final long fieldId = e.getKey();
+			if (e.getValue().size() <= 1) {
+				set.add(fieldId);
+			}
+		}
+		for (final Entry<Long, Map<Long, Set<Long>>> e : sharedFields
+				.entrySet()) {
+			for (final Entry<Long, Set<Long>> e1 : e.getValue().entrySet()) {
+				final long fieldId = e1.getKey();
+				if (e1.getValue().size() <= 1) {
+					set.add(fieldId);
+				}
+			}
+		}
+		return set;
 	}
 }

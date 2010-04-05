@@ -33,11 +33,15 @@ final class Analysis extends Thread {
 	private volatile boolean f_done;
 	final Map<Long, Set<String>> fields;
 	final SharedFields shared;
-	final Set<Long> sharedFields;
+
+	private AlertSpec alerts;
+
 	final Set<Long> lockSetFields;
 	final Set<Long> staticLockSetFields;
 	final Set<Long> noLockSetFields;
 	final Set<Long> noStaticLockSetFields;
+
+	private Set<Long> edtViolations;
 
 	Analysis(final FieldDefs fields) {
 		super("flashlight-analysis");
@@ -45,11 +49,12 @@ final class Analysis extends Thread {
 		this.fields = new HashMap<Long, Set<String>>();
 		shared = new SharedFields();
 		master = new MasterLockSet(shared);
-		sharedFields = new HashSet<Long>();
 		lockSetFields = new HashSet<Long>();
 		staticLockSetFields = new HashSet<Long>();
 		noLockSetFields = new HashSet<Long>();
 		noStaticLockSetFields = new HashSet<Long>();
+		edtViolations = new HashSet<Long>();
+		alerts = new AlertSpec(fields);
 	}
 
 	@Override
@@ -76,7 +81,11 @@ final class Analysis extends Thread {
 
 	public synchronized void process() {
 		Phantom.drainTo(f_references);
+		final Set<Long> edtThreads = new HashSet<Long>();
 		for (final ThreadLocks other : MonitorStore.f_lockSets) {
+			if (other.isEDT()) {
+				edtThreads.add(other.getThreadId());
+			}
 			master.drain(other);
 		}
 		for (final IdPhantomReference ref : f_references) {
@@ -119,11 +128,18 @@ final class Analysis extends Thread {
 				}
 			}
 		}
+		for (final FieldDef field : alerts.getEDTFields()) {
+			if (!shared.isConfinedTo(field, edtThreads)) {
+				edtViolations.add(field.getId());
+			}
+		}
 	}
 
 	@Override
 	public synchronized String toString() {
 		final StringBuilder b = new StringBuilder();
+		b.append("EDT thread alerts:\n");
+		appendFields(b, edtViolations);
 		b.append("Fields that ALWAYS have a  Lock Set:\n");
 		b.append("Instance:\n");
 		final HashSet<Long> instanceSet = new HashSet<Long>(lockSetFields);
@@ -180,7 +196,7 @@ final class Analysis extends Thread {
 	void appendFields(final StringBuilder b, final Set<Long> fields) {
 		final List<String> list = new ArrayList<String>();
 		for (final long f : fields) {
-			list.add(String.format("\t%s - %d", fieldDefs.get((int) f), f));
+			list.add(String.format("\t%s - %d", fieldDefs.get(f), f));
 		}
 		Collections.sort(list);
 		for (final String s : list) {
@@ -191,6 +207,20 @@ final class Analysis extends Thread {
 
 	private static Analysis activeAnalysis;
 	private static final ReentrantLock analysisLock = new ReentrantLock();
+
+	synchronized void setAlerts(final AlertSpec spec) {
+		this.alerts = spec;
+		edtViolations = new HashSet<Long>();
+	}
+
+	static void reviseAlerts(final AlertSpec spec) {
+		analysisLock.lock();
+		try {
+			activeAnalysis.setAlerts(spec);
+		} finally {
+			analysisLock.unlock();
+		}
+	}
 
 	/**
 	 * Change the monitor specification that we are looking at

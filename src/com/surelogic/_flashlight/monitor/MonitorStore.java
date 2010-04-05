@@ -18,6 +18,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 
+import javax.swing.SwingUtilities;
+
 import com.surelogic._flashlight.ClassPhantomReference;
 import com.surelogic._flashlight.EventVisitor;
 import com.surelogic._flashlight.IdPhantomReference;
@@ -266,7 +268,8 @@ public final class MonitorStore {
 		if (IdConstants.enableFlashlightToggle
 				|| !StoreDelegate.FL_OFF.getAndSet(true)) {
 			f_defs = new FieldDefs();
-			f_spec = new MonitorSpec("", f_defs);
+			f_spec = new MonitorSpec(System.getProperty(
+					"com.surelogic.fieldSpec", ""), f_defs);
 			/*
 			 * Initialize final static fields. If Flashlight is off these fields
 			 * are all set to null to save memory.
@@ -351,7 +354,8 @@ public final class MonitorStore {
 				protected ThreadLocks initialValue() {
 					final ThreadPhantomReference thread = tl_withinStore.get().thread;
 					final ThreadLocks ls = new ThreadLocks(thread.getName(),
-							thread.getId());
+							thread.getId(), SwingUtilities
+									.isEventDispatchThread());
 					f_lockSets.add(ls);
 					return ls;
 				}

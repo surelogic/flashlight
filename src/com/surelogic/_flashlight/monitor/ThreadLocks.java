@@ -12,12 +12,14 @@ final class ThreadLocks {
 	private final HashSet<Long> locks;
 	private final String thread;
 	private final long threadId;
+	private final boolean isEDT;
 	private Map<Long, Set<Long>> staticLockSets;
 	private Map<Long, Map<Long, Set<Long>>> lockSets;
 	private Set<LockStack> stacks;
 	private LockStack stack;
 
-	ThreadLocks(final String threadName, final long threadId) {
+	ThreadLocks(final String threadName, final long threadId,
+			final boolean isEDT) {
 		thread = threadName;
 		this.threadId = threadId;
 		locks = new HashSet<Long>();
@@ -25,6 +27,7 @@ final class ThreadLocks {
 		staticLockSets = new HashMap<Long, Set<Long>>();
 		stack = new LockStack();
 		stacks = new HashSet<LockStack>();
+		this.isEDT = isEDT;
 	}
 
 	/**
@@ -34,14 +37,14 @@ final class ThreadLocks {
 	 * @param receiverId
 	 */
 	synchronized void field(final long fieldId, final long receiverId) {
-		Map<Long, Set<Long>> receiverSets = lockSets.get(receiverId);
-		if (receiverSets == null) {
-			receiverSets = new HashMap<Long, Set<Long>>();
-			lockSets.put(fieldId, receiverSets);
+		Map<Long, Set<Long>> receiverMap = lockSets.get(receiverId);
+		if (receiverMap == null) {
+			receiverMap = new HashMap<Long, Set<Long>>();
+			lockSets.put(receiverId, receiverMap);
 		}
-		final Set<Long> lockSet = receiverSets.get(fieldId);
+		final Set<Long> lockSet = receiverMap.get(fieldId);
 		if (lockSet == null) {
-			receiverSets.put(fieldId, new HashSet<Long>(locks));
+			receiverMap.put(fieldId, new HashSet<Long>(locks));
 		} else {
 			lockSet.retainAll(locks);
 		}
@@ -90,6 +93,10 @@ final class ThreadLocks {
 
 	long getThreadId() {
 		return threadId;
+	}
+
+	public boolean isEDT() {
+		return isEDT;
 	}
 
 	/**

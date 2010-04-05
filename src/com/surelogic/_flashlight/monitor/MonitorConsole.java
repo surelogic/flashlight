@@ -27,6 +27,7 @@ class MonitorConsole extends Thread {
 	private static final Pattern SET = Pattern.compile("set ([^=]*)=(.*)");
 	private static final String FIELD_SPEC = "fieldSpec";
 	private static final String LOCK_SPEC = "lockSpec";
+	private static final String EDT_FIELDS = "swingFieldAlerts";
 	private long startTime;
 
 	public MonitorConsole() {
@@ -211,6 +212,19 @@ class MonitorConsole extends Thread {
 													val,
 													MonitorStore
 															.getFieldDefinitions()));
+								} else if (EDT_FIELDS.equalsIgnoreCase(prop)) {
+									sendResponse(
+											outputStream,
+											String
+													.format(
+															"Monitoring fields matching %s for Swing policy violations.",
+															val));
+									Analysis
+											.reviseAlerts(new AlertSpec(
+													val,
+													MonitorStore
+															.getFieldDefinitions()));
+
 								}
 							} else {
 								sendResponse(

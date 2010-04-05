@@ -12,23 +12,32 @@ import java.util.regex.Pattern;
  */
 class MonitorSpec {
 
-	final String fieldSpec;
-	final FieldDefs defs;
-	final Set<Integer> fieldIds;
+	private final String fieldSpec;
+	private final Set<Long> fieldIds;
 
 	MonitorSpec(final String fieldSpec, final FieldDefs defs) {
 		this.fieldSpec = fieldSpec;
-		this.defs = defs;
-		this.fieldIds = new HashSet<Integer>();
+		this.fieldIds = new HashSet<Long>();
 		final Pattern c = Pattern.compile(fieldSpec);
-		for (final Entry<Integer, String> field : defs.entrySet()) {
-			if (c.matcher(field.getValue()).matches()) {
+		for (final Entry<Long, FieldDef> field : defs.entrySet()) {
+			if (c.matcher(field.getValue().getQualifiedFieldName()).matches()) {
 				fieldIds.add(field.getKey());
 			}
 		}
 	}
 
+	/**
+	 * Whether or not the current field is being monitored.
+	 * 
+	 * @param fieldId
+	 * @return
+	 */
 	boolean isMonitoring(final long fieldId) {
-		return fieldIds.contains((int) fieldId);
+		return fieldIds.contains(fieldId);
 	}
+
+	public String getFieldSpec() {
+		return fieldSpec;
+	}
+
 }

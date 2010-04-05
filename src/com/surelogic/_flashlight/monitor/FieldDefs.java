@@ -9,7 +9,13 @@ import java.util.StringTokenizer;
 
 import com.surelogic._flashlight.StoreConfiguration;
 
-public class FieldDefs extends HashMap<Integer, String> {
+/**
+ * A map of all of the run's field definitions.
+ * 
+ * @author nathan
+ * 
+ */
+class FieldDefs extends HashMap<Long, FieldDef> {
 	FieldDefs() {
 		try {
 			final BufferedReader fr = new BufferedReader(new FileReader(
@@ -20,7 +26,11 @@ public class FieldDefs extends HashMap<Integer, String> {
 				final int id = Integer.parseInt(st.nextToken());
 				final String clazz = st.nextToken();
 				final String field = st.nextToken();
-				put(id, clazz + "." + field);
+				final boolean isS = Boolean.parseBoolean(st.nextToken());
+				final boolean isF = Boolean.parseBoolean(st.nextToken());
+				final boolean isV = Boolean.parseBoolean(st.nextToken());
+				final FieldDef f = new FieldDef(id, clazz, field, isS, isF, isV);
+				put(f.getId(), f);
 			}
 		} catch (final FileNotFoundException e) {
 			MonitorStore.logAProblem(e.getMessage(), e);

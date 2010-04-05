@@ -10,11 +10,14 @@ public class SharedFields {
 
 	final Map<Long, Set<Long>> sharedStatics;
 
-	final Map<Long, Map<Long, Set<Long>>> sharedFields;
+	final Map<Long, Map<Long, Set<Long>>> sharedFieldsByReceiver;
+
+	final Map<Long, Map<Long, Set<Long>>> sharedFieldsByField;
 
 	SharedFields() {
 		this.sharedStatics = new HashMap<Long, Set<Long>>();
-		this.sharedFields = new HashMap<Long, Map<Long, Set<Long>>>();
+		this.sharedFieldsByReceiver = new HashMap<Long, Map<Long, Set<Long>>>();
+		this.sharedFieldsByField = new HashMap<Long, Map<Long, Set<Long>>>();
 	}
 
 	/**
@@ -40,14 +43,21 @@ public class SharedFields {
 	 */
 	void sharedField(final long receiverId, final long fieldId,
 			final long threadId) {
-		Map<Long, Set<Long>> shared = sharedFields.get(receiverId);
+		Map<Long, Set<Long>> shared = sharedFieldsByReceiver.get(receiverId);
 		if (shared == null) {
 			shared = new HashMap<Long, Set<Long>>();
+			sharedFieldsByReceiver.put(receiverId, shared);
 		}
 		Set<Long> set = shared.get(fieldId);
 		if (set == null) {
 			set = new HashSet<Long>();
 			shared.put(fieldId, set);
+			Map<Long, Set<Long>> receiverMap = sharedFieldsByField.get(fieldId);
+			if (receiverMap == null) {
+				receiverMap = new HashMap<Long, Set<Long>>();
+				sharedFieldsByField.put(fieldId, receiverMap);
+			}
+			receiverMap.put(receiverId, set);
 		}
 		set.add(threadId);
 	}
@@ -61,7 +71,8 @@ public class SharedFields {
 	}
 
 	boolean isShared(final long receiverId, final long fieldId) {
-		final Map<Long, Set<Long>> shared = sharedFields.get(receiverId);
+		final Map<Long, Set<Long>> shared = sharedFieldsByReceiver
+				.get(receiverId);
 		if (shared == null) {
 			return false;
 		}
@@ -73,13 +84,46 @@ public class SharedFields {
 	}
 
 	/**
+	 * Returns whether or not the given static field is confined to the given
+	 * set of threads.
+	 * 
+	 * @param fieldId
+	 * @param allowedThreads
+	 * @return
+	 */
+	boolean isConfinedTo(final FieldDef field, final Set<Long> allowedThreads) {
+		if (field.isStatic()) {
+			final Set<Long> set = sharedStatics.get(field.getId());
+			if (set != null) {
+				return allowedThreads.containsAll(set);
+			}
+			return true;
+		} else {
+			final Map<Long, Set<Long>> map = sharedFieldsByField.get(field
+					.getId());
+			if (map != null) {
+				for (final Set<Long> set : map.values()) {
+					if (!allowedThreads.containsAll(set)) {
+						return false;
+					}
+				}
+			}
+			return true;
+		}
+	}
+
+	/**
 	 * Remove the object with the given id from consideration. This should be
 	 * called when an object is garbage collected.
 	 * 
 	 * @param receiverId
 	 */
 	void remove(final long receiverId) {
-		sharedFields.remove(receiverId);
+		final Map<Long, Set<Long>> remove = sharedFieldsByReceiver
+				.remove(receiverId);
+		for (final long fieldId : remove.keySet()) {
+			sharedFieldsByField.get(fieldId).remove(receiverId);
+		}
 	}
 
 	/**
@@ -95,7 +139,7 @@ public class SharedFields {
 				set.add(fieldId);
 			}
 		}
-		for (final Entry<Long, Map<Long, Set<Long>>> e : sharedFields
+		for (final Entry<Long, Map<Long, Set<Long>>> e : sharedFieldsByReceiver
 				.entrySet()) {
 			for (final Entry<Long, Set<Long>> e1 : e.getValue().entrySet()) {
 				final long fieldId = e1.getKey();
@@ -120,7 +164,7 @@ public class SharedFields {
 				set.add(fieldId);
 			}
 		}
-		for (final Entry<Long, Map<Long, Set<Long>>> e : sharedFields
+		for (final Entry<Long, Map<Long, Set<Long>>> e : sharedFieldsByReceiver
 				.entrySet()) {
 			for (final Entry<Long, Set<Long>> e1 : e.getValue().entrySet()) {
 				final long fieldId = e1.getKey();

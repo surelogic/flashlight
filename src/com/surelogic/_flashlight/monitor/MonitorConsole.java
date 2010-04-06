@@ -24,6 +24,7 @@ class MonitorConsole extends Thread {
 	private static final String QUIT = "quit";
 	private static final String LIST = "list";
 	private static final String PING = "ping";
+	private static final String ALERTS = "alerts";
 	private static final Pattern SET = Pattern.compile("set ([^=]*)=(.*)");
 	private static final String FIELD_SPEC = "fieldSpec";
 	private static final String EDT_FIELDS = "swingFieldAlerts";
@@ -199,6 +200,9 @@ class MonitorConsole extends Thread {
 						} else if (nextLine.equalsIgnoreCase(LIST)) {
 							sendResponse(outputStream, Analysis.getAnalysis()
 									.toString());
+						} else if (nextLine.equalsIgnoreCase(ALERTS)) {
+							sendResponse(outputStream, Analysis.getAnalysis()
+									.getAlerts().toString());
 						} else {
 							final Matcher m = SET.matcher(nextLine);
 							if (m.matches()) {

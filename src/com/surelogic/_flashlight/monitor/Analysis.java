@@ -39,9 +39,9 @@ final class Analysis extends Thread {
 	private final Set<Long> noLockSetFields;
 	private final Set<Long> noStaticLockSetFields;
 
-	private Set<Long> edtViolations;
-	private Set<Long> sharedFieldViolations;
-	private Set<Long> lockSetViolations;
+	private Set<FieldDef> edtViolations;
+	private Set<FieldDef> sharedFieldViolations;
+	private Set<FieldDef> lockSetViolations;
 
 	Analysis(final FieldDefs fields) {
 		super("flashlight-analysis");
@@ -52,9 +52,9 @@ final class Analysis extends Thread {
 		staticLockSetFields = new HashSet<Long>();
 		noLockSetFields = new HashSet<Long>();
 		noStaticLockSetFields = new HashSet<Long>();
-		edtViolations = new HashSet<Long>();
-		sharedFieldViolations = new HashSet<Long>();
-		lockSetViolations = new HashSet<Long>();
+		edtViolations = new HashSet<FieldDef>();
+		sharedFieldViolations = new HashSet<FieldDef>();
+		lockSetViolations = new HashSet<FieldDef>();
 		alerts = new AlertSpec(fields);
 	}
 
@@ -134,37 +134,45 @@ final class Analysis extends Thread {
 		}
 		for (final FieldDef field : alerts.getEDTFields()) {
 			if (!shared.isConfinedTo(field, edtThreads)) {
-				edtViolations.add(field.getId());
+				edtViolations.add(field);
 			}
 		}
 		for (final FieldDef field : alerts.getSharedFields()) {
 			if (shared.isShared(field)) {
-				sharedFieldViolations.add(field.getId());
+				sharedFieldViolations.add(field);
 			}
 		}
 		for (final FieldDef field : alerts.getLockSetFields()) {
 			if (field.isStatic()) {
 				if (noStaticLockSetFields.contains(field)) {
-					lockSetViolations.add(field.getId());
+					lockSetViolations.add(field);
 				}
 			} else {
 				if (noLockSetFields.contains(field)) {
-					lockSetViolations.add(field.getId());
+					lockSetViolations.add(field);
 				}
 			}
 
 		}
 	}
 
+	public synchronized AlertInfo getAlerts() {
+		final Set<FieldDef> edts = new HashSet<FieldDef>(edtViolations);
+		final Set<FieldDef> shared = new HashSet<FieldDef>(
+				sharedFieldViolations);
+		final Set<FieldDef> lockSets = new HashSet<FieldDef>(lockSetViolations);
+		return new AlertInfo(edts, shared, lockSets);
+	}
+
 	@Override
 	public synchronized String toString() {
 		final StringBuilder b = new StringBuilder();
 		b.append("EDT thread alerts:\n");
-		appendFields(b, edtViolations);
+		FieldDefs.appendFieldDefs(b, edtViolations);
 		b.append("Shared field alerts:\n");
-		appendFields(b, sharedFieldViolations);
+		FieldDefs.appendFieldDefs(b, sharedFieldViolations);
 		b.append("Empty lock set alerts:\n");
-		appendFields(b, lockSetViolations);
+		FieldDefs.appendFieldDefs(b, lockSetViolations);
 		b.append("Fields that ALWAYS have a  Lock Set:\n");
 		b.append("Instance:\n");
 		final HashSet<Long> instanceSet = new HashSet<Long>(lockSetFields);
@@ -218,7 +226,7 @@ final class Analysis extends Thread {
 		}
 	}
 
-	void appendFields(final StringBuilder b, final Set<Long> fields) {
+	private void appendFields(final StringBuilder b, final Set<Long> fields) {
 		final List<String> list = new ArrayList<String>();
 		for (final long f : fields) {
 			list.add(String.format("\t%s - %d", fieldDefs.get(f), f));
@@ -239,9 +247,9 @@ final class Analysis extends Thread {
 		} else {
 			this.alerts = spec;
 		}
-		edtViolations = new HashSet<Long>();
-		sharedFieldViolations = new HashSet<Long>();
-		lockSetViolations = new HashSet<Long>();
+		edtViolations = new HashSet<FieldDef>();
+		sharedFieldViolations = new HashSet<FieldDef>();
+		lockSetViolations = new HashSet<FieldDef>();
 	}
 
 	static void reviseAlerts(final AlertSpec spec) {

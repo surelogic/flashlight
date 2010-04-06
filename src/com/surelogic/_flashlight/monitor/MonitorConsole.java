@@ -26,8 +26,9 @@ class MonitorConsole extends Thread {
 	private static final String PING = "ping";
 	private static final Pattern SET = Pattern.compile("set ([^=]*)=(.*)");
 	private static final String FIELD_SPEC = "fieldSpec";
-	private static final String LOCK_SPEC = "lockSpec";
 	private static final String EDT_FIELDS = "swingFieldAlerts";
+	private static final String SHARED_FIELDS = "sharedFieldAlerts";
+	private static final String LOCKSET_FIELDS = "lockSetAlerts";
 	private long startTime;
 
 	public MonitorConsole() {
@@ -222,6 +223,27 @@ class MonitorConsole extends Thread {
 											null, null, MonitorStore
 													.getFieldDefinitions()));
 
+								} else if (SHARED_FIELDS.equalsIgnoreCase(prop)) {
+									sendResponse(
+											outputStream,
+											String
+													.format(
+															"Ensuring fields matching %s are not shared.",
+															val));
+									Analysis.reviseAlerts(new AlertSpec(null,
+											val, null, MonitorStore
+													.getFieldDefinitions()));
+								} else if (LOCKSET_FIELDS
+										.equalsIgnoreCase(prop)) {
+									sendResponse(
+											outputStream,
+											String
+													.format(
+															"Ensuring fields matching %s always have a lock set.",
+															val));
+									Analysis.reviseAlerts(new AlertSpec(null,
+											null, val, MonitorStore
+													.getFieldDefinitions()));
 								}
 							} else {
 								sendResponse(

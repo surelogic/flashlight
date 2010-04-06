@@ -5,7 +5,6 @@ package com.surelogic._flashlight.monitor;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -27,12 +26,11 @@ import com.surelogic._flashlight.monitor.ThreadLocks.LockStack;
 final class Analysis extends Thread {
 	private static final long PERIOD = 1000L;
 
-	private final List<IdPhantomReference> f_references = new ArrayList<IdPhantomReference>();
 	private final MasterLockSet master;
 	private final FieldDefs fieldDefs;
-	private volatile boolean f_done;
-	private final Map<Long, Set<String>> fields;
 	private final SharedFields shared;
+
+	private volatile boolean f_done;
 
 	private AlertSpec alerts;
 
@@ -48,7 +46,6 @@ final class Analysis extends Thread {
 	Analysis(final FieldDefs fields) {
 		super("flashlight-analysis");
 		this.fieldDefs = fields;
-		this.fields = new HashMap<Long, Set<String>>();
 		shared = new SharedFields();
 		master = new MasterLockSet(shared);
 		lockSetFields = new HashSet<Long>();
@@ -81,8 +78,10 @@ final class Analysis extends Thread {
 		f_done = true;
 	}
 
+	private final List<IdPhantomReference> references = new ArrayList<IdPhantomReference>();
+
 	public synchronized void process() {
-		Phantom.drainTo(f_references);
+		Phantom.drainTo(references);
 		final Set<Long> edtThreads = new HashSet<Long>();
 		for (final ThreadLocks other : MonitorStore.f_lockSets) {
 			if (other.isEDT()) {
@@ -90,7 +89,8 @@ final class Analysis extends Thread {
 			}
 			master.drain(other);
 		}
-		for (final IdPhantomReference ref : f_references) {
+		// Take care of garbage collected objects
+		for (final IdPhantomReference ref : references) {
 			final long receiverId = ref.getId();
 			// Compute final lock set results
 			final Map<Long, Set<Long>> fields = master.purge(receiverId);
@@ -108,7 +108,7 @@ final class Analysis extends Thread {
 			}
 			shared.remove(receiverId);
 		}
-		f_references.clear();
+		references.clear();
 		for (final Entry<Long, Set<Long>> e : master.getStaticLockSets()
 				.entrySet()) {
 			final long fieldId = e.getKey();
@@ -159,6 +159,10 @@ final class Analysis extends Thread {
 		final StringBuilder b = new StringBuilder();
 		b.append("EDT thread alerts:\n");
 		appendFields(b, edtViolations);
+		b.append("Shared field alerts:\n");
+		appendFields(b, sharedFieldViolations);
+		b.append("Empty lock set alerts:\n");
+		appendFields(b, lockSetViolations);
 		b.append("Fields that ALWAYS have a  Lock Set:\n");
 		b.append("Instance:\n");
 		final HashSet<Long> instanceSet = new HashSet<Long>(lockSetFields);
@@ -228,8 +232,14 @@ final class Analysis extends Thread {
 	private static final ReentrantLock analysisLock = new ReentrantLock();
 
 	synchronized void setAlerts(final AlertSpec spec) {
-		this.alerts = spec;
+		if (alerts != null) {
+			alerts = alerts.merge(spec);
+		} else {
+			this.alerts = spec;
+		}
 		edtViolations = new HashSet<Long>();
+		sharedFieldViolations = new HashSet<Long>();
+		lockSetViolations = new HashSet<Long>();
 	}
 
 	static void reviseAlerts(final AlertSpec spec) {

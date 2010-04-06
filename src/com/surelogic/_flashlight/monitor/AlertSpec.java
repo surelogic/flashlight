@@ -5,6 +5,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
+/**
+ * The conditions in which the user should be notified by the monitor.
+ * 
+ * @author nathan
+ * 
+ */
 public class AlertSpec {
 
 	private final String edtFields;
@@ -13,6 +19,7 @@ public class AlertSpec {
 	private final List<FieldDef> edtFieldDefs;
 	private final List<FieldDef> sharedFieldDefs;
 	private final List<FieldDef> lockSetFieldDefs;
+	private final FieldDefs defs;
 
 	AlertSpec(final FieldDefs defs) {
 		this(System.getProperty("com.surelogic.swingFieldAlerts", ""), System
@@ -26,6 +33,7 @@ public class AlertSpec {
 		this.sharedFields = sharedFields;
 		this.lockSetFields = lockSetFields;
 		this.edtFieldDefs = new ArrayList<FieldDef>();
+		this.defs = defs;
 		sharedFieldDefs = new ArrayList<FieldDef>();
 		lockSetFieldDefs = new ArrayList<FieldDef>();
 		final Pattern edtPattern = Pattern.compile(edtFields);
@@ -67,6 +75,23 @@ public class AlertSpec {
 
 	public String getLockSetSpec() {
 		return lockSetFields;
+	}
+
+	/**
+	 * Merge a new spec with the existing one. Old spec entries are kept if the
+	 * new entry is null.
+	 * 
+	 * @param spec
+	 * @return
+	 */
+	public AlertSpec merge(final AlertSpec spec) {
+		final String newEdt = spec.edtFields == null ? edtFields
+				: spec.edtFields;
+		final String newShared = spec.sharedFields == null ? sharedFields
+				: spec.sharedFields;
+		final String newLockSet = spec.lockSetFields == null ? lockSetFields
+				: spec.lockSetFields;
+		return new AlertSpec(newEdt, newShared, newLockSet, spec.defs);
 	}
 
 }

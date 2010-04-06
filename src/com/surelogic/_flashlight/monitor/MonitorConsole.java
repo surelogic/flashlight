@@ -55,7 +55,6 @@ class MonitorConsole extends Thread {
 	@Override
 	public void run() {
 		MonitorStore.flashlightThread();
-		StoreConfiguration.getFieldsFile();
 		startTime = System.currentTimeMillis();
 		// start listening on a port
 		boolean listening = false;
@@ -219,11 +218,9 @@ class MonitorConsole extends Thread {
 													.format(
 															"Monitoring fields matching %s for Swing policy violations.",
 															val));
-									Analysis
-											.reviseAlerts(new AlertSpec(
-													val,
-													MonitorStore
-															.getFieldDefinitions()));
+									Analysis.reviseAlerts(new AlertSpec(val,
+											null, null, MonitorStore
+													.getFieldDefinitions()));
 
 								}
 							} else {

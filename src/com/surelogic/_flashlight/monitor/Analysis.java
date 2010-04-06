@@ -31,17 +31,19 @@ final class Analysis extends Thread {
 	private final MasterLockSet master;
 	private final FieldDefs fieldDefs;
 	private volatile boolean f_done;
-	final Map<Long, Set<String>> fields;
-	final SharedFields shared;
+	private final Map<Long, Set<String>> fields;
+	private final SharedFields shared;
 
 	private AlertSpec alerts;
 
-	final Set<Long> lockSetFields;
-	final Set<Long> staticLockSetFields;
-	final Set<Long> noLockSetFields;
-	final Set<Long> noStaticLockSetFields;
+	private final Set<Long> lockSetFields;
+	private final Set<Long> staticLockSetFields;
+	private final Set<Long> noLockSetFields;
+	private final Set<Long> noStaticLockSetFields;
 
 	private Set<Long> edtViolations;
+	private Set<Long> sharedFieldViolations;
+	private Set<Long> lockSetViolations;
 
 	Analysis(final FieldDefs fields) {
 		super("flashlight-analysis");
@@ -132,6 +134,23 @@ final class Analysis extends Thread {
 			if (!shared.isConfinedTo(field, edtThreads)) {
 				edtViolations.add(field.getId());
 			}
+		}
+		for (final FieldDef field : alerts.getSharedFields()) {
+			if (shared.isShared(field)) {
+				sharedFieldViolations.add(field.getId());
+			}
+		}
+		for (final FieldDef field : alerts.getLockSetFields()) {
+			if (field.isStatic()) {
+				if (noStaticLockSetFields.contains(field)) {
+					lockSetViolations.add(field.getId());
+				}
+			} else {
+				if (noLockSetFields.contains(field)) {
+					lockSetViolations.add(field.getId());
+				}
+			}
+
 		}
 	}
 

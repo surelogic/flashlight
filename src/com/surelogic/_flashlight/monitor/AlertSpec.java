@@ -49,7 +49,24 @@ public class AlertSpec {
 		return Collections.unmodifiableList(edtFieldDefs);
 	}
 
+	public List<FieldDef> getSharedFields() {
+		return sharedFieldDefs;
+	}
+
+	public List<FieldDef> getLockSetFields() {
+		return lockSetFieldDefs;
+	}
+
 	String getEDTSpec() {
 		return edtFields;
 	}
+
+	public String getSharedSpec() {
+		return sharedFields;
+	}
+
+	public String getLockSetSpec() {
+		return lockSetFields;
+	}
+
 }

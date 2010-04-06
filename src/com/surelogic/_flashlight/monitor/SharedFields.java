@@ -6,6 +6,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 
+/**
+ * Keeps track of what fields are currently shared by what threads.
+ * 
+ * @author nathan
+ * 
+ */
 public class SharedFields {
 
 	final Map<Long, Set<Long>> sharedStatics;
@@ -60,6 +66,29 @@ public class SharedFields {
 			receiverMap.put(receiverId, set);
 		}
 		set.add(threadId);
+	}
+
+	/**
+	 * Whether or not the field matching this definition is ever shared.
+	 * 
+	 * @param field
+	 * @return
+	 */
+	public boolean isShared(final FieldDef field) {
+		if (field.isStatic()) {
+			return isShared(field.getId());
+		} else {
+			final Map<Long, Set<Long>> map = sharedFieldsByField.get(field
+					.getId());
+			if (map != null) {
+				for (final Set<Long> set : map.values()) {
+					if (set.size() > 1) {
+						return true;
+					}
+				}
+			}
+			return false;
+		}
 	}
 
 	boolean isShared(final long fieldId) {
@@ -175,4 +204,5 @@ public class SharedFields {
 		}
 		return set;
 	}
+
 }

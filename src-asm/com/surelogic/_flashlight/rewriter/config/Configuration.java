@@ -27,7 +27,7 @@ public final class Configuration {
 		USE
 	}
 
-	public final static String STORE_CLASS_NAME_DEFAULT = FlashlightNames.FLASHLIGHT_MONITOR_STORE;
+	public final static String STORE_CLASS_NAME_DEFAULT = FlashlightNames.FLASHLIGHT_STORE;
 
 	public final static boolean INDIRECT_ACCESS_USE_DEFAULT_DEFAULT = true;
 	public final static List<File> INDIRECT_ACCESS_ADDITIONAL_DEFAULT = Collections

@@ -53,6 +53,8 @@ final class Analysis extends Thread {
 		noLockSetFields = new HashSet<Long>();
 		noStaticLockSetFields = new HashSet<Long>();
 		edtViolations = new HashSet<Long>();
+		sharedFieldViolations = new HashSet<Long>();
+		lockSetViolations = new HashSet<Long>();
 		alerts = new AlertSpec(fields);
 	}
 

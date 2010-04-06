@@ -150,8 +150,10 @@ public class SharedFields {
 	void remove(final long receiverId) {
 		final Map<Long, Set<Long>> remove = sharedFieldsByReceiver
 				.remove(receiverId);
-		for (final long fieldId : remove.keySet()) {
-			sharedFieldsByField.get(fieldId).remove(receiverId);
+		if (remove != null) {
+			for (final long fieldId : remove.keySet()) {
+				sharedFieldsByField.get(fieldId).remove(receiverId);
+			}
 		}
 	}
 

@@ -1,5 +1,6 @@
 package com.surelogic._flashlight.monitor;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -31,6 +32,30 @@ public final class AlertInfo {
 
 	public Set<FieldDef> getEdtViolations() {
 		return edtViolations;
+	}
+
+	/**
+	 * Returns the alerts that are in this object, but not in the given
+	 * AlertInfo object.
+	 * 
+	 * @param info
+	 * @return
+	 */
+	public AlertInfo alertsSince(final AlertInfo info) {
+		final HashSet<FieldDef> edts = new HashSet<FieldDef>(edtViolations);
+		final HashSet<FieldDef> shared = new HashSet<FieldDef>(
+				sharedFieldViolations);
+		final HashSet<FieldDef> lockSet = new HashSet<FieldDef>(
+				lockSetViolations);
+		edts.removeAll(info.edtViolations);
+		shared.removeAll(info.sharedFieldViolations);
+		lockSet.removeAll(info.lockSetViolations);
+		return new AlertInfo(edts, shared, lockSet);
+	}
+
+	public boolean isEmpty() {
+		return edtViolations.isEmpty() && sharedFieldViolations.isEmpty()
+				&& lockSetViolations.isEmpty();
 	}
 
 	@Override

@@ -36,9 +36,12 @@ public class AlertSpec {
 		this.defs = defs;
 		sharedFieldDefs = new ArrayList<FieldDef>();
 		lockSetFieldDefs = new ArrayList<FieldDef>();
-		final Pattern edtPattern = Pattern.compile(edtFields);
-		final Pattern sharedFieldPattern = Pattern.compile(sharedFields);
-		final Pattern lockSetPattern = Pattern.compile(lockSetFields);
+		final Pattern edtPattern = Pattern.compile(edtFields == null ? ""
+				: edtFields);
+		final Pattern sharedFieldPattern = Pattern
+				.compile(sharedFields == null ? "" : sharedFields);
+		final Pattern lockSetPattern = Pattern
+				.compile(lockSetFields == null ? "" : lockSetFields);
 		for (final FieldDef field : defs.values()) {
 			final String name = field.getQualifiedFieldName();
 			if (edtPattern.matcher(name).matches()) {

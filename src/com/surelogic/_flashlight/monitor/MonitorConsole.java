@@ -11,6 +11,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
@@ -201,8 +202,24 @@ class MonitorConsole extends Thread {
 							sendResponse(outputStream, Analysis.getAnalysis()
 									.toString());
 						} else if (nextLine.equalsIgnoreCase(ALERTS)) {
-							sendResponse(outputStream, Analysis.getAnalysis()
-									.getAlerts().toString());
+							AlertInfo alerts = Analysis.getAnalysis()
+									.getAlerts();
+							sendResponse(outputStream, new Date() + "\n\r"
+									+ alerts.toString());
+							for (;;) {
+								try {
+									Thread.sleep(1000L);
+								} catch (final InterruptedException e) {
+									// Do nothing
+								}
+								final AlertInfo old = alerts;
+								alerts = Analysis.getAnalysis().getAlerts();
+								final AlertInfo fresh = alerts.alertsSince(old);
+								if (!fresh.isEmpty()) {
+									sendResponse(outputStream, new Date()
+											+ "\n\r" + alerts.toString());
+								}
+							}
 						} else {
 							final Matcher m = SET.matcher(nextLine);
 							if (m.matches()) {

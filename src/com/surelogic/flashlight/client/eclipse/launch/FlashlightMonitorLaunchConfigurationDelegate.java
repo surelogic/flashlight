@@ -16,7 +16,7 @@ import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic.common.eclipse.logging.SLEclipseStatusUtility;
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
 
-public final class FlashlightLaunchConfigurationDelegate extends
+public class FlashlightMonitorLaunchConfigurationDelegate extends
 		JavaLaunchDelegate {
 	private static final boolean allowJava14 = InstrumentationConstants.allowJava14;
 	private static final int MIN_JAVA_VERSION = allowJava14 ? 4 : 5;
@@ -71,7 +71,7 @@ public final class FlashlightLaunchConfigurationDelegate extends
 		final int version = getMajorJavaVersion(vm);
 		return new FlashlightVMRunner(runner, mainType, LaunchUtils
 				.convertToLocations(classpath), instrumentUser, instrumentBoot,
-				version == 4, false);
+				version == 4, true);
 	}
 
 	static int getMajorJavaVersion(final IVMInstall vm) {

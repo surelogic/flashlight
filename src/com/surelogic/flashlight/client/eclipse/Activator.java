@@ -19,6 +19,7 @@ import com.surelogic.flashlight.client.eclipse.jobs.FlashlightCleanupJob;
 import com.surelogic.flashlight.client.eclipse.jobs.PromptToPrepAllRawData;
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
+import com.surelogic.flashlight.client.eclipse.views.monitor.MonitorThread;
 import com.surelogic.flashlight.common.model.RunManager;
 
 /**
@@ -75,6 +76,7 @@ public class Activator extends AbstractUIPlugin {
 		new FlashlightCleanupJob().schedule();
 		RunManager.getInstance().setDataDirectory(dataDir);
 		PromptToPrepAllRawData.start();
+		MonitorThread.begin();
 	}
 
 	@Override

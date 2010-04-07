@@ -8,13 +8,14 @@ import com.surelogic.flashlight.client.eclipse.views.adhoc.QueryEditorView;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.QueryMenuView;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.QueryResultExplorerView;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.QueryResultsView;
+import com.surelogic.flashlight.client.eclipse.views.monitor.MonitorView;
 import com.surelogic.flashlight.client.eclipse.views.run.RunStatusView;
 import com.surelogic.flashlight.client.eclipse.views.run.RunView;
 import com.surelogic.flashlight.client.eclipse.views.source.HistoricalSourceView;
 
 public final class FlashlightPerspective implements IPerspectiveFactory {
 
-	public void createInitialLayout(IPageLayout layout) {
+	public void createInitialLayout(final IPageLayout layout) {
 		final String editorArea = layout.getEditorArea();
 
 		final IFolderLayout runArea = layout.createFolder("runArea",
@@ -24,6 +25,7 @@ public final class FlashlightPerspective implements IPerspectiveFactory {
 		final IFolderLayout explorerArea = layout.createFolder("explorerArea",
 				IPageLayout.RIGHT, 0.6f, "runArea");
 		explorerArea.addView(QueryResultExplorerView.class.getName());
+		explorerArea.addView(MonitorView.class.getName());
 
 		final IFolderLayout resultsArea = layout.createFolder("resultsArea",
 				IPageLayout.TOP, 0.6f, editorArea);

@@ -47,8 +47,7 @@ class FieldDefs extends HashMap<Long, FieldDef> {
 			final Set<FieldDef> fields) {
 		final List<String> list = new ArrayList<String>();
 		for (final FieldDef f : fields) {
-			list.add(String.format("\t%s - %d", f.getQualifiedFieldName(), f
-					.getId()));
+			list.add(String.format("\t%s", f.getQualifiedFieldName()));
 		}
 		Collections.sort(list);
 		for (final String s : list) {

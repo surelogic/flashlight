@@ -26,6 +26,8 @@ class MonitorConsole extends Thread {
 	private static final String LIST = "list";
 	private static final String PING = "ping";
 	private static final String ALERTS = "alerts";
+	private static final String ALL_ALERTS = "allAlerts";
+	private static final String DEADLOCKS = "deadlocks";
 	private static final Pattern SET = Pattern.compile("set ([^=]*)=(.*)");
 	private static final String FIELD_SPEC = "fieldSpec";
 	private static final String EDT_FIELDS = "swingFieldAlerts";
@@ -201,6 +203,10 @@ class MonitorConsole extends Thread {
 						} else if (nextLine.equalsIgnoreCase(LIST)) {
 							sendResponse(outputStream, Analysis.getAnalysis()
 									.toString());
+						} else if (nextLine.equalsIgnoreCase(ALL_ALERTS)) {
+							final AlertInfo alerts = Analysis.getAnalysis()
+									.getAlerts();
+							sendResponse(outputStream, alerts.toString());
 						} else if (nextLine.equalsIgnoreCase(ALERTS)) {
 							AlertInfo alerts = Analysis.getAnalysis()
 									.getAlerts();
@@ -220,6 +226,9 @@ class MonitorConsole extends Thread {
 											+ "\n\r" + alerts.toString());
 								}
 							}
+						} else if (nextLine.equalsIgnoreCase(DEADLOCKS)) {
+							sendResponse(outputStream, Analysis.getAnalysis()
+									.getDeadlocks().toString());
 						} else {
 							final Matcher m = SET.matcher(nextLine);
 							if (m.matches()) {

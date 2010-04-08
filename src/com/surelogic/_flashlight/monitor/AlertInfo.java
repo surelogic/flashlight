@@ -61,12 +61,18 @@ public final class AlertInfo {
 	@Override
 	public String toString() {
 		final StringBuilder b = new StringBuilder();
-		b.append("EDT thread alerts:\n");
-		FieldDefs.appendFieldDefs(b, edtViolations);
-		b.append("Shared field alerts:\n");
-		FieldDefs.appendFieldDefs(b, sharedFieldViolations);
-		b.append("Empty lock set alerts:\n");
-		FieldDefs.appendFieldDefs(b, lockSetViolations);
+		if (edtViolations.size() > 0) {
+			b.append("Swing Event Dispatch Thread violations:\n");
+			FieldDefs.appendFieldDefs(b, edtViolations);
+		}
+		if (sharedFieldViolations.size() > 0) {
+			b.append("Shared field alerts:\n");
+			FieldDefs.appendFieldDefs(b, sharedFieldViolations);
+		}
+		if (lockSetViolations.size() > 0) {
+			b.append("Empty lock set alerts:\n");
+			FieldDefs.appendFieldDefs(b, lockSetViolations);
+		}
 		return b.toString();
 	}
 }

@@ -14,7 +14,6 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import com.surelogic._flashlight.IdPhantomReference;
 import com.surelogic._flashlight.Phantom;
-import com.surelogic._flashlight.monitor.ThreadLocks.LockStack;
 
 /**
  * The Analysis thread periodically collects events from every program thread
@@ -115,10 +114,12 @@ final class Analysis extends Thread {
 				.entrySet()) {
 			final long fieldId = e.getKey();
 			if (shared.isShared(fieldId)) {
-				if (e.getValue().isEmpty()) {
-					noStaticLockSetFields.add(fieldId);
-				} else {
-					staticLockSetFields.add(fieldId);
+				if (!noStaticLockSetFields.contains(fieldId)) {
+					if (e.getValue().isEmpty()) {
+						noStaticLockSetFields.add(fieldId);
+					} else {
+						staticLockSetFields.add(fieldId);
+					}
 				}
 			}
 		}
@@ -164,30 +165,30 @@ final class Analysis extends Thread {
 		return new AlertInfo(edts, shared, lockSets);
 	}
 
+	public synchronized DeadlockInfo getDeadlocks() {
+		return new DeadlockInfo(master.getLockOrders(), master.getDeadlocks());
+	}
+
 	@Override
 	public synchronized String toString() {
 		final StringBuilder b = new StringBuilder();
-		b.append("EDT thread alerts:\n");
-		FieldDefs.appendFieldDefs(b, edtViolations);
-		b.append("Shared field alerts:\n");
-		FieldDefs.appendFieldDefs(b, sharedFieldViolations);
-		b.append("Empty lock set alerts:\n");
-		FieldDefs.appendFieldDefs(b, lockSetViolations);
-		b.append("Fields that ALWAYS have a  Lock Set:\n");
-		b.append("Instance:\n");
-		final HashSet<Long> instanceSet = new HashSet<Long>(lockSetFields);
-		instanceSet.removeAll(noLockSetFields);
-		appendFields(b, instanceSet);
+		b.append(getAlerts().toString());
 		b.append("Static:\n");
 		final HashSet<Long> staticSet = new HashSet<Long>(staticLockSetFields);
 		staticSet.removeAll(noStaticLockSetFields);
 		appendFields(b, staticSet);
 
 		b.append("Fields With Lock Sets:\n");
-		b.append("Instance:\n");
-		appendFields(b, lockSetFields);
-		b.append("Static:\n");
+		b.append("Static Fields:\n");
 		appendFields(b, staticLockSetFields);
+
+		b.append("Instance Fields that ALWAYS have a  Lock Set:\n");
+		final HashSet<Long> instanceSet = new HashSet<Long>(lockSetFields);
+		instanceSet.removeAll(noLockSetFields);
+		appendFields(b, instanceSet);
+
+		b.append("Instance Fields that SOMETIMES have a Lock Set:\n");
+		appendFields(b, lockSetFields);
 
 		b.append("Fields With No Lock Set:\n");
 		b.append("Instance:\n");
@@ -195,35 +196,12 @@ final class Analysis extends Thread {
 		b.append("Static:\n");
 		appendFields(b, noStaticLockSetFields);
 
-		b.append("Lock Orderings:\n");
-		appendLockOrders(b, master.getLockOrders());
-		b.append("Potential Deadlocks:\n");
-		final Set<Long> deadlocks = master.getDeadlocks();
-		b.append(deadlocks);
-		b.append("\n");
+		b.append(getDeadlocks().toString());
 		b.append("Shared Fields:\n");
 		appendFields(b, shared.calculateSharedFields());
 		b.append("Unshared Fields:\n");
 		appendFields(b, shared.calculateUnsharedFields());
 		return b.toString();
-	}
-
-	private void appendLockOrders(final StringBuilder b,
-			final Set<LockStack> lockOrders) {
-		final List<String> strs = new ArrayList<String>();
-		for (LockStack stack : lockOrders) {
-			String s = "";
-			for (; stack.getLockId() != LockStack.HEAD; stack = stack
-					.getParentLock()) {
-				s = "-> " + stack.getLockId() + s;
-			}
-			strs.add(s);
-		}
-		Collections.sort(strs);
-		for (final String s : strs) {
-			b.append(s);
-			b.append('\n');
-		}
 	}
 
 	private void appendFields(final StringBuilder b, final Set<Long> fields) {

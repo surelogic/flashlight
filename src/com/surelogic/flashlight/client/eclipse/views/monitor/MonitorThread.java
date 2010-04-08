@@ -49,7 +49,7 @@ public class MonitorThread extends Thread {
 				}
 
 				while (f_go) {
-					writer.println("list");
+					writer.println("allAlerts");
 					writer.flush();
 					final StringBuilder msg = new StringBuilder();
 					String line = reader.readLine();

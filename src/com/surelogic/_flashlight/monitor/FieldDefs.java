@@ -55,4 +55,19 @@ class FieldDefs extends HashMap<Long, FieldDef> {
 			b.append('\n');
 		}
 	}
+	
+
+	public void appendFields(final StringBuilder b, final Set<Long> fields) {
+		final List<String> list = new ArrayList<String>();
+		for (final long f : fields) {
+			FieldDef fieldDef = get(f);
+			list.add(String.format("\t%s - %s", fieldDef, fieldDef.isFinal() ? "final" : ""));
+		}
+		Collections.sort(list);
+		for (final String s : list) {
+			b.append(s);
+			b.append('\n');
+		}
+	}
+
 }

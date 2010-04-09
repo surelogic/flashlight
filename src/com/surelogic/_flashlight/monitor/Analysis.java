@@ -169,51 +169,22 @@ final class Analysis extends Thread {
 		return new DeadlockInfo(master.getLockOrders(), master.getDeadlocks());
 	}
 
+	public synchronized LockSetInfo getLockSets() {
+		return new LockSetInfo(fieldDefs,staticLockSetFields, noStaticLockSetFields, lockSetFields, noLockSetFields);
+	}
+	
+	public synchronized SharedFieldInfo getShared() {
+		return new SharedFieldInfo(fieldDefs, shared.calculateSharedFields(), shared.calculateUnsharedFields());
+	}
 	@Override
 	public synchronized String toString() {
 		final StringBuilder b = new StringBuilder();
 		b.append(getAlerts().toString());
-		b.append("Static:\n");
-		final HashSet<Long> staticSet = new HashSet<Long>(staticLockSetFields);
-		staticSet.removeAll(noStaticLockSetFields);
-		appendFields(b, staticSet);
-
-		b.append("Fields With Lock Sets:\n");
-		b.append("Static Fields:\n");
-		appendFields(b, staticLockSetFields);
-
-		b.append("Instance Fields that ALWAYS have a  Lock Set:\n");
-		final HashSet<Long> instanceSet = new HashSet<Long>(lockSetFields);
-		instanceSet.removeAll(noLockSetFields);
-		appendFields(b, instanceSet);
-
-		b.append("Instance Fields that SOMETIMES have a Lock Set:\n");
-		appendFields(b, lockSetFields);
-
-		b.append("Fields With No Lock Set:\n");
-		b.append("Instance:\n");
-		appendFields(b, noLockSetFields);
-		b.append("Static:\n");
-		appendFields(b, noStaticLockSetFields);
-
+		b.append(getLockSets().toString());
 		b.append(getDeadlocks().toString());
-		b.append("Shared Fields:\n");
-		appendFields(b, shared.calculateSharedFields());
-		b.append("Unshared Fields:\n");
-		appendFields(b, shared.calculateUnsharedFields());
+		b.append(getShared().toString());
+		
 		return b.toString();
-	}
-
-	private void appendFields(final StringBuilder b, final Set<Long> fields) {
-		final List<String> list = new ArrayList<String>();
-		for (final long f : fields) {
-			list.add(String.format("\t%s - %d", fieldDefs.get(f), f));
-		}
-		Collections.sort(list);
-		for (final String s : list) {
-			b.append(s);
-			b.append('\n');
-		}
 	}
 
 	private static Analysis activeAnalysis;
@@ -277,5 +248,6 @@ final class Analysis extends Thread {
 			analysisLock.unlock();
 		}
 	}
+
 
 }

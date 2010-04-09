@@ -28,6 +28,8 @@ class MonitorConsole extends Thread {
 	private static final String ALERTS = "alerts";
 	private static final String ALL_ALERTS = "allAlerts";
 	private static final String DEADLOCKS = "deadlocks";
+	private static final String LOCKSETS = "lockSets";
+	private static final String SHARED = "shared";
 	private static final Pattern SET = Pattern.compile("set ([^=]*)=(.*)");
 	private static final String FIELD_SPEC = "fieldSpec";
 	private static final String EDT_FIELDS = "swingFieldAlerts";
@@ -229,6 +231,12 @@ class MonitorConsole extends Thread {
 						} else if (nextLine.equalsIgnoreCase(DEADLOCKS)) {
 							sendResponse(outputStream, Analysis.getAnalysis()
 									.getDeadlocks().toString());
+						} else if (nextLine.equalsIgnoreCase(LOCKSETS)) {
+							sendResponse(outputStream, Analysis.getAnalysis()
+									.getLockSets().toString());
+						} else if (nextLine.equalsIgnoreCase(SHARED)) {
+							sendResponse(outputStream, Analysis.getAnalysis()
+									.getShared().toString());
 						} else {
 							final Matcher m = SET.matcher(nextLine);
 							if (m.matches()) {
@@ -261,7 +269,7 @@ class MonitorConsole extends Thread {
 															"Ensuring fields matching %s are not shared.",
 															val));
 									Analysis.reviseAlerts(new AlertSpec(null,
-											val, null, MonitorStore
+											null, val, MonitorStore
 													.getFieldDefinitions()));
 								} else if (LOCKSET_FIELDS
 										.equalsIgnoreCase(prop)) {

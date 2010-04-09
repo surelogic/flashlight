@@ -5,7 +5,7 @@ import java.util.Map;
 import com.surelogic.common.adhoc.AdHocManager;
 import com.surelogic.common.adhoc.AdHocManagerAdapter;
 import com.surelogic.common.adhoc.AdHocQueryResultSqlData;
-import com.surelogic.common.eclipse.JDTUtility;
+import com.surelogic.common.eclipse.JDTUIUtility;
 import com.surelogic.flashlight.client.eclipse.views.source.HistoricalSourceView;
 
 /**
@@ -55,7 +55,7 @@ public final class JumpToCode extends AdHocManagerAdapter {
 						.get(AdHocManager.DATABASE), packageName, typeName,
 						lineNumber);
 
-				if (JDTUtility.tryToOpenInEditor(packageName, typeName,
+				if (JDTUIUtility.tryToOpenInEditor(packageName, typeName,
 						lineNumber)) {
 					return;
 				}
@@ -72,7 +72,7 @@ public final class JumpToCode extends AdHocManagerAdapter {
 				fieldName = variableValues.get("Field Name");
 			}
 			if (fieldName != null) {
-				JDTUtility.tryToOpenInEditor(packageName, typeName, fieldName);
+				JDTUIUtility.tryToOpenInEditor(packageName, typeName, fieldName);
 				HistoricalSourceView.tryToOpenInEditor(variableValues
 						.get(AdHocManager.DATABASE), packageName, typeName,
 						fieldName);

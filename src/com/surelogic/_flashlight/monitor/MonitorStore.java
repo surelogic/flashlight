@@ -13,6 +13,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
@@ -25,7 +26,6 @@ import com.surelogic._flashlight.EventVisitor;
 import com.surelogic._flashlight.IdPhantomReference;
 import com.surelogic._flashlight.ObjectPhantomReference;
 import com.surelogic._flashlight.Phantom;
-import com.surelogic._flashlight.ReadWriteLockDefinition;
 import com.surelogic._flashlight.Spy;
 import com.surelogic._flashlight.StoreConfiguration;
 import com.surelogic._flashlight.StoreDelegate;
@@ -34,6 +34,8 @@ import com.surelogic._flashlight.UtilConcurrent;
 import com.surelogic._flashlight.common.IdConstants;
 import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic._flashlight.common.OutputType;
+import com.surelogic._flashlight.jsr166y.ConcurrentReferenceHashMap;
+import com.surelogic._flashlight.jsr166y.ConcurrentReferenceHashMap.ReferenceType;
 import com.surelogic._flashlight.trace.TraceNode;
 
 /**
@@ -176,6 +178,12 @@ public final class MonitorStore {
 		return f_defs;
 	}
 
+	private static final ConcurrentMap<Long, ReadWriteLockIds> f_rwLocks;
+
+	public static ConcurrentMap<Long, ReadWriteLockIds> getRWLocks() {
+		return f_rwLocks;
+	}
+
 	/**
 	 * This thread-local (tl) flag is used to ensure that we to not, within a
 	 * thread, reenter the store. This situation can occur if we call methods on
@@ -225,7 +233,8 @@ public final class MonitorStore {
 	 * @param out
 	 */
 	static void destructivePrintLockSetInfo(final PrintWriter out) {
-		final MasterLockSet master = new MasterLockSet(new SharedFields());
+		final MasterLockSet master = new MasterLockSet(new SharedFields(),
+				f_rwLocks);
 		for (final ThreadLocks slave : f_lockSets) {
 			master.drain(slave);
 		}
@@ -268,6 +277,10 @@ public final class MonitorStore {
 		if (IdConstants.enableFlashlightToggle
 				|| !StoreDelegate.FL_OFF.getAndSet(true)) {
 			f_defs = new FieldDefs();
+			f_rwLocks = new ConcurrentReferenceHashMap<Long, ReadWriteLockIds>(
+					ReferenceType.STRONG, ReferenceType.STRONG,
+					ConcurrentReferenceHashMap.STANDARD_HASH);
+
 			f_spec = new MonitorSpec(System.getProperty(
 					"com.surelogic.fieldSpec", ""), f_defs);
 			/*
@@ -401,6 +414,7 @@ public final class MonitorStore {
 			StoreDelegate.FL_OFF.set(false);
 		} else {
 			f_defs = null;
+			f_rwLocks = null;
 			f_run = null;
 			f_log = null;
 			f_problemCount = null;
@@ -507,10 +521,11 @@ public final class MonitorStore {
 			if (declaringClass != null) {
 				Phantom.ofClass(declaringClass);
 			}
-			ObjectPhantomReference of = Phantom.ofObject(receiver);
-			final long receiverId = Phantom.ofObject(receiver).getId();
+			final ObjectPhantomReference rec = Phantom.ofObject(receiver);
+			final long receiverId = rec.getId();
 			if (f_spec.isMonitoring(fieldID)) {
-				tl_lockSet.get().field(fieldID, of.getId(), of.isUnderConstruction());
+				tl_lockSet.get().field(fieldID, receiverId,
+						rec.isUnderConstruction());
 			}
 		} finally {
 			flState.inside = false;
@@ -996,9 +1011,14 @@ public final class MonitorStore {
 						final String fmt = "Defined ReadWriteLock id=%d";
 						log(String.format(fmt, p.getId()));
 					}
-					// FIXME most of this may be unnecessary.
-					new ReadWriteLockDefinition(p, Phantom.ofObject(rwl
-							.readLock()), Phantom.ofObject(rwl.writeLock()));
+					final long id = p.getId();
+					final long read = Phantom.ofObject(rwl.readLock()).getId();
+					final long write = Phantom.ofObject(rwl.writeLock())
+							.getId();
+					final ReadWriteLockIds ids = new ReadWriteLockIds(id, read,
+							write);
+					f_rwLocks.put(read, ids);
+					f_rwLocks.put(write, ids);
 				}
 			}
 
@@ -1334,7 +1354,8 @@ public final class MonitorStore {
 				if (gotTheLock) {
 					final ObjectPhantomReference lockPhantom = Phantom
 							.ofObject(lockObject);
-					tl_lockSet.get().enterLock(lockPhantom.getId());
+					final long id = lockPhantom.getId();
+					tl_lockSet.get().enterLock(id);
 				}
 			} else {
 				final String fmt = "lock object must be a java.util.concurrent.locks.Lock...instrumentation bug detected by LockSetStore.afterUtilConcurrentLockAcquisitionAttempt(%s, lockObject=%s, location=%s)";
@@ -1395,7 +1416,8 @@ public final class MonitorStore {
 				if (releasedTheLock) {
 					final ObjectPhantomReference lockPhantom = Phantom
 							.ofObject(lockObject);
-					tl_lockSet.get().leaveLock(lockPhantom.getId());
+					final long id = lockPhantom.getId();
+					tl_lockSet.get().leaveLock(id);
 				}
 			} else {
 				final String fmt = "lock object must be a java.util.concurrent.locks.Lock...instrumentation bug detected by LockSetStore.afterUtilConcurrentLockReleaseAttempt(%s, lockObject=%s, location=%s)";

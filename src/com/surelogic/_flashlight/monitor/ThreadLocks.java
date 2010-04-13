@@ -13,11 +13,11 @@ final class ThreadLocks {
 	private final String thread;
 	private final long threadId;
 	private final boolean isEDT;
-	private Set<Long> sharedStatics;
-	private Map<Long, Set<Long>> shared;
 	private Map<Long, Set<Long>> staticLockSets;
 	private Map<Long, Map<Long, Set<Long>>> lockSets;
 	private Set<LockStack> stacks;
+	private Set<Long> sharedStatics;
+	private Map<Long, Set<Long>> shared;
 	private LockStack stack;
 
 	ThreadLocks(final String threadName, final long threadId,
@@ -29,8 +29,8 @@ final class ThreadLocks {
 		staticLockSets = new HashMap<Long, Set<Long>>();
 		stack = new LockStack();
 		stacks = new HashSet<LockStack>();
-		shared = new HashMap<Long, Set<Long>>();
 		sharedStatics = new HashSet<Long>();
+		shared = new HashMap<Long, Set<Long>>();
 		this.isEDT = isEDT;
 	}
 
@@ -43,7 +43,7 @@ final class ThreadLocks {
 	synchronized void field(final long fieldId, final long receiverId,
 			final boolean underConstruction) {
 		Set<Long> set = shared.get(receiverId);
-		if(set == null){
+		if (set == null) {
 			set = new HashSet<Long>();
 			shared.put(receiverId, set);
 		}

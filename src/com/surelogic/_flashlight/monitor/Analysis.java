@@ -4,12 +4,12 @@
 package com.surelogic._flashlight.monitor;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.surelogic._flashlight.IdPhantomReference;
@@ -42,11 +42,12 @@ final class Analysis extends Thread {
 	private Set<FieldDef> sharedFieldViolations;
 	private Set<FieldDef> lockSetViolations;
 
-	Analysis(final FieldDefs fields) {
+	Analysis(final FieldDefs fields,
+			final ConcurrentMap<Long, ReadWriteLockIds> rwLocks) {
 		super("flashlight-analysis");
 		this.fieldDefs = fields;
 		shared = new SharedFields();
-		master = new MasterLockSet(shared);
+		master = new MasterLockSet(shared, rwLocks);
 		lockSetFields = new HashSet<Long>();
 		staticLockSetFields = new HashSet<Long>();
 		noLockSetFields = new HashSet<Long>();
@@ -158,7 +159,6 @@ final class Analysis extends Thread {
 					lockSetViolations.add(field);
 				}
 			}
-
 		}
 	}
 
@@ -235,7 +235,8 @@ final class Analysis extends Thread {
 							"Exception while changing analyses", e);
 				}
 			}
-			activeAnalysis = new Analysis(MonitorStore.getFieldDefinitions());
+			activeAnalysis = new Analysis(MonitorStore.getFieldDefinitions(),
+					MonitorStore.getRWLocks());
 			MonitorStore.updateSpec(spec);
 			activeAnalysis.start();
 		} finally {

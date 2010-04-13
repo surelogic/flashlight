@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentMap;
 
 import com.surelogic._flashlight.monitor.ThreadLocks.LockStack;
 
@@ -22,11 +23,14 @@ public class MasterLockSet {
 	private final Map<Long, Map<Long, Set<Long>>> lockSets;
 	private final SharedFields shared;
 	private final Graph graph;
+	private final ConcurrentMap<Long, ReadWriteLockIds> rwLocks;
 
-	MasterLockSet(final SharedFields sf) {
+	MasterLockSet(final SharedFields sf,
+			final ConcurrentMap<Long, ReadWriteLockIds> rwLocks) {
 		lockSets = new HashMap<Long, Map<Long, Set<Long>>>();
 		staticLockSets = new HashMap<Long, Set<Long>>();
 		this.shared = sf;
+		this.rwLocks = rwLocks;
 		graph = new Graph();
 	}
 
@@ -41,34 +45,39 @@ public class MasterLockSet {
 		Map<Long, Set<Long>> otherStaticLockSets;
 		Map<Long, Map<Long, Set<Long>>> otherLockSets;
 		Set<LockStack> otherStacks;
-		Set<Long> sharedStatics;
-		Map<Long,Set<Long>> sharedInstances;
+		Set<Long> otherSharedStatics;
+		Map<Long, Set<Long>> otherShared;
 		long threadId;
 		synchronized (other) {
 			otherStaticLockSets = other.clearStaticLockSets();
 			otherLockSets = other.clearLockSets();
 			otherStacks = other.clearLockStacks();
-			sharedStatics = other.clearSharedStatics();
-			sharedInstances = other.clearShared();
+			otherSharedStatics = other.clearSharedStatics();
+			otherShared = other.clearShared();
 			threadId = other.getThreadId();
 		}
-		for(final long fieldId : sharedStatics){
+		for (final long fieldId : otherSharedStatics) {
 			shared.sharedField(fieldId, threadId);
 		}
-		for(Entry<Long,Set<Long>> e : sharedInstances.entrySet()) {
-			long receiverId = e.getKey();
-			for(long fieldId : e.getValue()){
+		for (final Entry<Long, Set<Long>> e : otherShared.entrySet()) {
+			final long receiverId = e.getKey();
+			for (final long fieldId : e.getValue()) {
 				shared.sharedField(receiverId, fieldId, threadId);
 			}
 		}
 		for (final Entry<Long, Set<Long>> e : otherStaticLockSets.entrySet()) {
 			final long fieldId = e.getKey();
 			final Set<Long> otherLocks = e.getValue();
+			final Set<Long> toCheck = new HashSet<Long>(otherLocks.size());
+			for (final long l : otherLocks) {
+				final ReadWriteLockIds ids = rwLocks.get(l);
+				toCheck.add(ids == null ? l : ids.getId());
+			}
 			final Set<Long> locks = staticLockSets.get(fieldId);
 			if (locks == null) {
-				staticLockSets.put(fieldId, otherLocks);
+				staticLockSets.put(fieldId, toCheck);
 			} else {
-				locks.retainAll(otherLocks);
+				locks.retainAll(toCheck);
 			}
 		}
 		for (final Entry<Long, Map<Long, Set<Long>>> e : otherLockSets
@@ -81,13 +90,17 @@ public class MasterLockSet {
 			}
 			for (final Entry<Long, Set<Long>> e1 : e.getValue().entrySet()) {
 				final long fieldId = e1.getKey();
-				shared.sharedField(receiverId, fieldId, threadId);
 				final Set<Long> otherLocks = e1.getValue();
+				final Set<Long> toCheck = new HashSet<Long>(otherLocks.size());
+				for (final long l : otherLocks) {
+					final ReadWriteLockIds ids = rwLocks.get(l);
+					toCheck.add(ids == null ? l : ids.getId());
+				}
 				final Set<Long> locks = receiverMap.get(fieldId);
 				if (locks == null) {
-					receiverMap.put(fieldId, otherLocks);
+					receiverMap.put(fieldId, toCheck);
 				} else {
-					locks.retainAll(otherLocks);
+					locks.retainAll(toCheck);
 				}
 			}
 		}

@@ -165,9 +165,9 @@ public final class RecommendRegions {
 						|| !c.equals(region.getClazz())
 						|| !l.equals(region.getLock())) {
 					if (region != null) {
-						// TODO performance
-						region.getRequiresLockMethods().addAll(
-								traces(ls, fs).perform(q));
+						// FIXME performance
+						// region.getRequiresLockMethods().addAll(
+						// traces(ls, fs).perform(q));
 					}
 					fs = new TLongHashSet();
 					ls = new TLongHashSet();

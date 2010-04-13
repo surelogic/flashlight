@@ -13,6 +13,8 @@ final class ThreadLocks {
 	private final String thread;
 	private final long threadId;
 	private final boolean isEDT;
+	private Set<Long> sharedStatics;
+	private Map<Long, Set<Long>> shared;
 	private Map<Long, Set<Long>> staticLockSets;
 	private Map<Long, Map<Long, Set<Long>>> lockSets;
 	private Set<LockStack> stacks;
@@ -27,6 +29,8 @@ final class ThreadLocks {
 		staticLockSets = new HashMap<Long, Set<Long>>();
 		stack = new LockStack();
 		stacks = new HashSet<LockStack>();
+		shared = new HashMap<Long, Set<Long>>();
+		sharedStatics = new HashSet<Long>();
 		this.isEDT = isEDT;
 	}
 
@@ -36,17 +40,26 @@ final class ThreadLocks {
 	 * @param fieldId
 	 * @param receiverId
 	 */
-	synchronized void field(final long fieldId, final long receiverId) {
-		Map<Long, Set<Long>> receiverMap = lockSets.get(receiverId);
-		if (receiverMap == null) {
-			receiverMap = new HashMap<Long, Set<Long>>();
-			lockSets.put(receiverId, receiverMap);
+	synchronized void field(final long fieldId, final long receiverId,
+			final boolean underConstruction) {
+		Set<Long> set = shared.get(receiverId);
+		if(set == null){
+			set = new HashSet<Long>();
+			shared.put(receiverId, set);
 		}
-		final Set<Long> lockSet = receiverMap.get(fieldId);
-		if (lockSet == null) {
-			receiverMap.put(fieldId, new HashSet<Long>(locks));
-		} else {
-			lockSet.retainAll(locks);
+		set.add(fieldId);
+		if (!underConstruction) {
+			Map<Long, Set<Long>> receiverMap = lockSets.get(receiverId);
+			if (receiverMap == null) {
+				receiverMap = new HashMap<Long, Set<Long>>();
+				lockSets.put(receiverId, receiverMap);
+			}
+			final Set<Long> lockSet = receiverMap.get(fieldId);
+			if (lockSet == null) {
+				receiverMap.put(fieldId, new HashSet<Long>(locks));
+			} else {
+				lockSet.retainAll(locks);
+			}
 		}
 	}
 
@@ -55,12 +68,15 @@ final class ThreadLocks {
 	 * 
 	 * @param fieldId
 	 */
-	synchronized void field(final long fieldId) {
-		final Set<Long> lockSet = staticLockSets.get(fieldId);
-		if (lockSet == null) {
-			staticLockSets.put(fieldId, new HashSet<Long>(locks));
-		} else {
-			lockSet.retainAll(locks);
+	synchronized void field(final long fieldId, final boolean underConstruction) {
+		sharedStatics.add(fieldId);
+		if (!underConstruction) {
+			final Set<Long> lockSet = staticLockSets.get(fieldId);
+			if (lockSet == null) {
+				staticLockSets.put(fieldId, new HashSet<Long>(locks));
+			} else {
+				lockSet.retainAll(locks);
+			}
 		}
 	}
 
@@ -130,6 +146,22 @@ final class ThreadLocks {
 			return stacks;
 		} finally {
 			stacks = new HashSet<LockStack>();
+		}
+	}
+
+	public Set<Long> clearSharedStatics() {
+		try {
+			return sharedStatics;
+		} finally {
+			sharedStatics = new HashSet<Long>();
+		}
+	}
+
+	public Map<Long, Set<Long>> clearShared() {
+		try {
+			return shared;
+		} finally {
+			shared = new HashMap<Long, Set<Long>>();
 		}
 	}
 

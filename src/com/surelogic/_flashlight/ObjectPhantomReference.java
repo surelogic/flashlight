@@ -102,7 +102,7 @@ public class ObjectPhantomReference extends IdPhantomReference {
 		return refs;
 	}
 
-	synchronized boolean isUnderConstruction() {
+	public synchronized boolean isUnderConstruction() {
 		return underConstruction;
 	}
 

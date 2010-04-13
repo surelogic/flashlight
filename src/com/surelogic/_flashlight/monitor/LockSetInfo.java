@@ -22,6 +22,12 @@ public class LockSetInfo {
 	@Override
 	public String toString() {
 		StringBuilder b = new StringBuilder();
+		b.append("Fields With No Lock Set:\n");
+		b.append("Static:\n");
+		defs.appendFields(b, noStaticLockSetFields);
+		b.append("Instance:\n");
+		defs.appendFields(b, noLockSetFields);
+		b.append("\n");
 		b.append("Fields With Lock Sets:\n");
 		b.append("Static Fields:\n");
 		defs.appendFields(b, staticLockSetFields);
@@ -31,12 +37,6 @@ public class LockSetInfo {
 		defs.appendFields(b, instanceSet);
 		b.append("Instance Fields that SOMETIMES have a Lock Set:\n");
 		defs.appendFields(b, lockSetFields);
-		b.append("\n");
-		b.append("Fields With No Lock Set:\n");
-		b.append("Static:\n");
-		defs.appendFields(b, noStaticLockSetFields);
-		b.append("Instance:\n");
-		defs.appendFields(b, noLockSetFields);
 		return b.toString();
 	}
 }

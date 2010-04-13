@@ -507,9 +507,10 @@ public final class MonitorStore {
 			if (declaringClass != null) {
 				Phantom.ofClass(declaringClass);
 			}
+			ObjectPhantomReference of = Phantom.ofObject(receiver);
 			final long receiverId = Phantom.ofObject(receiver).getId();
 			if (f_spec.isMonitoring(fieldID)) {
-				tl_lockSet.get().field(fieldID, receiverId);
+				tl_lockSet.get().field(fieldID, of.getId(), of.isUnderConstruction());
 			}
 		} finally {
 			flState.inside = false;
@@ -567,9 +568,9 @@ public final class MonitorStore {
 			 * clazz.getName()+'.'+fieldName, SrcLoc.toString(withinClass,
 			 * line))); }
 			 */
-
+			boolean underConstruction = false;
 			if (dcPhantom != null) {
-				dcPhantom.isUnderConstruction();
+				underConstruction = dcPhantom.isUnderConstruction();
 			}
 			/*
 			 * if the field is not from an instrumented class then force
@@ -585,7 +586,7 @@ public final class MonitorStore {
 				Phantom.ofClass(declaringClass);
 			}
 			if (f_spec.isMonitoring(fieldID)) {
-				tl_lockSet.get().field(fieldID);
+				tl_lockSet.get().field(fieldID, underConstruction);
 			}
 		} finally {
 			flState.inside = false;

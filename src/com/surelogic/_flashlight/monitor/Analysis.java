@@ -116,6 +116,7 @@ final class Analysis extends Thread {
 			if (shared.isShared(fieldId)) {
 				if (!noStaticLockSetFields.contains(fieldId)) {
 					if (e.getValue().isEmpty()) {
+						staticLockSetFields.remove(fieldId);
 						noStaticLockSetFields.add(fieldId);
 					} else {
 						staticLockSetFields.add(fieldId);
@@ -126,10 +127,14 @@ final class Analysis extends Thread {
 		for (final Entry<Long, Map<Long, Set<Long>>> e : master.getLockSets()
 				.entrySet()) {
 			for (final Entry<Long, Set<Long>> e1 : e.getValue().entrySet()) {
-				if (e1.getValue().isEmpty()) {
-					noLockSetFields.add(e1.getKey());
-				} else {
-					lockSetFields.add(e1.getKey());
+				long receiverId = e.getKey();
+				long fieldId = e1.getKey();
+				if (shared.isShared(receiverId, fieldId)) {
+					if (e1.getValue().isEmpty()) {
+						noLockSetFields.add(e1.getKey());
+					} else {
+						lockSetFields.add(e1.getKey());
+					}
 				}
 			}
 		}
@@ -145,11 +150,11 @@ final class Analysis extends Thread {
 		}
 		for (final FieldDef field : alerts.getLockSetFields()) {
 			if (field.isStatic()) {
-				if (noStaticLockSetFields.contains(field)) {
+				if (noStaticLockSetFields.contains(field.getId())) {
 					lockSetViolations.add(field);
 				}
 			} else {
-				if (noLockSetFields.contains(field)) {
+				if (noLockSetFields.contains(field.getId())) {
 					lockSetViolations.add(field);
 				}
 			}
@@ -170,12 +175,15 @@ final class Analysis extends Thread {
 	}
 
 	public synchronized LockSetInfo getLockSets() {
-		return new LockSetInfo(fieldDefs,staticLockSetFields, noStaticLockSetFields, lockSetFields, noLockSetFields);
+		return new LockSetInfo(fieldDefs, staticLockSetFields,
+				noStaticLockSetFields, lockSetFields, noLockSetFields);
 	}
-	
+
 	public synchronized SharedFieldInfo getShared() {
-		return new SharedFieldInfo(fieldDefs, shared.calculateSharedFields(), shared.calculateUnsharedFields());
+		return new SharedFieldInfo(fieldDefs, shared.calculateSharedFields(),
+				shared.calculateUnsharedFields());
 	}
+
 	@Override
 	public synchronized String toString() {
 		final StringBuilder b = new StringBuilder();
@@ -183,7 +191,7 @@ final class Analysis extends Thread {
 		b.append(getLockSets().toString());
 		b.append(getDeadlocks().toString());
 		b.append(getShared().toString());
-		
+
 		return b.toString();
 	}
 
@@ -248,6 +256,5 @@ final class Analysis extends Thread {
 			analysisLock.unlock();
 		}
 	}
-
 
 }

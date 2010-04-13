@@ -41,16 +41,28 @@ public class MasterLockSet {
 		Map<Long, Set<Long>> otherStaticLockSets;
 		Map<Long, Map<Long, Set<Long>>> otherLockSets;
 		Set<LockStack> otherStacks;
+		Set<Long> sharedStatics;
+		Map<Long,Set<Long>> sharedInstances;
 		long threadId;
 		synchronized (other) {
 			otherStaticLockSets = other.clearStaticLockSets();
 			otherLockSets = other.clearLockSets();
 			otherStacks = other.clearLockStacks();
+			sharedStatics = other.clearSharedStatics();
+			sharedInstances = other.clearShared();
 			threadId = other.getThreadId();
+		}
+		for(final long fieldId : sharedStatics){
+			shared.sharedField(fieldId, threadId);
+		}
+		for(Entry<Long,Set<Long>> e : sharedInstances.entrySet()) {
+			long receiverId = e.getKey();
+			for(long fieldId : e.getValue()){
+				shared.sharedField(receiverId, fieldId, threadId);
+			}
 		}
 		for (final Entry<Long, Set<Long>> e : otherStaticLockSets.entrySet()) {
 			final long fieldId = e.getKey();
-			shared.sharedField(fieldId, threadId);
 			final Set<Long> otherLocks = e.getValue();
 			final Set<Long> locks = staticLockSets.get(fieldId);
 			if (locks == null) {

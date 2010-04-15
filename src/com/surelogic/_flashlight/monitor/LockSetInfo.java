@@ -42,4 +42,13 @@ public class LockSetInfo {
 		defs.appendFields(b, instanceSet);
 		return b.toString();
 	}
+
+	public boolean hasLockSet(final FieldDef field) {
+		if (field.isStatic()) {
+			return staticLockSetFields.contains(field.getId());
+		}
+		return lockSetFields.contains(field.getId())
+				&& !noLockSetFields.contains(field.getId());
+	}
+
 }

@@ -7,8 +7,12 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 
 final class ThreadLocks {
+
+	private final ConcurrentMap<Long, ReadWriteLockIds> rwLocks;
+
 	private final HashSet<Long> locks;
 	private final String thread;
 	private final long threadId;
@@ -21,7 +25,8 @@ final class ThreadLocks {
 	private LockStack stack;
 
 	ThreadLocks(final String threadName, final long threadId,
-			final boolean isEDT) {
+			final boolean isEDT,
+			final ConcurrentMap<Long, ReadWriteLockIds> rwLocks) {
 		thread = threadName;
 		this.threadId = threadId;
 		locks = new HashSet<Long>();
@@ -31,6 +36,7 @@ final class ThreadLocks {
 		stacks = new HashSet<LockStack>();
 		sharedStatics = new HashSet<Long>();
 		shared = new HashMap<Long, Set<Long>>();
+		this.rwLocks = rwLocks;
 		this.isEDT = isEDT;
 	}
 
@@ -85,11 +91,12 @@ final class ThreadLocks {
 	 * 
 	 * @param lock
 	 */
-	synchronized void enterLock(final long lock) {
-		if (locks.add(lock)) {
-			stack = stack.acquire(lock);
-			stacks.add(stack);
-		}
+	synchronized void enterLock(long lock) {
+		final ReadWriteLockIds rw = rwLocks.get(lock);
+		lock = rw == null ? lock : rw.getId();
+		locks.add(lock);
+		stack = stack.acquire(lock);
+		stacks.add(stack);
 	}
 
 	/**
@@ -97,9 +104,13 @@ final class ThreadLocks {
 	 * 
 	 * @param lock
 	 */
-	synchronized void leaveLock(final long lock) {
-		locks.remove(lock);
+	synchronized void leaveLock(long lock) {
+		final ReadWriteLockIds rw = rwLocks.get(lock);
+		lock = rw == null ? lock : rw.getId();
 		stack = stack.release(lock);
+		if (stack.count(lock) == 0) {
+			locks.remove(lock);
+		}
 		stacks.add(stack);
 	}
 
@@ -201,11 +212,7 @@ final class ThreadLocks {
 		}
 
 		LockStack acquire(final long lockId) {
-			if (contains(lockId)) {
-				return this;
-			} else {
-				return new LockStack(this, lockId);
-			}
+			return new LockStack(this, lockId);
 		}
 
 		boolean contains(final long testId) {
@@ -215,6 +222,16 @@ final class ThreadLocks {
 				return false;
 			} else {
 				return parentLock.contains(testId);
+			}
+		}
+
+		int count(final long testId) {
+			if (lockId == testId) {
+				return 1 + parentLock.count(testId);
+			} else if (lockId == HEAD) {
+				return 0;
+			} else {
+				return parentLock.count(testId);
 			}
 		}
 

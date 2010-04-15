@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentMap;
 
 import com.surelogic._flashlight.monitor.ThreadLocks.LockStack;
 
@@ -21,17 +20,24 @@ import com.surelogic._flashlight.monitor.ThreadLocks.LockStack;
 public class MasterLockSet {
 	private final Map<Long, Set<Long>> staticLockSets;
 	private final Map<Long, Map<Long, Set<Long>>> lockSets;
+	private final FieldDefs defs;
 	private final SharedFields shared;
 	private final Graph graph;
-	private final ConcurrentMap<Long, ReadWriteLockIds> rwLocks;
 
-	MasterLockSet(final SharedFields sf,
-			final ConcurrentMap<Long, ReadWriteLockIds> rwLocks) {
+	/*
+	 * Keeps track of the results from objects that have been garbage collected.
+	 */
+	private final Set<Long> lockSetFields;
+	private final Set<Long> noLockSetFields;
+
+	MasterLockSet(final FieldDefs defs, final SharedFields sf) {
 		lockSets = new HashMap<Long, Map<Long, Set<Long>>>();
 		staticLockSets = new HashMap<Long, Set<Long>>();
 		this.shared = sf;
-		this.rwLocks = rwLocks;
+		this.defs = defs;
 		graph = new Graph();
+		lockSetFields = new HashSet<Long>();
+		noLockSetFields = new HashSet<Long>();
 	}
 
 	/**
@@ -68,16 +74,11 @@ public class MasterLockSet {
 		for (final Entry<Long, Set<Long>> e : otherStaticLockSets.entrySet()) {
 			final long fieldId = e.getKey();
 			final Set<Long> otherLocks = e.getValue();
-			final Set<Long> toCheck = new HashSet<Long>(otherLocks.size());
-			for (final long l : otherLocks) {
-				final ReadWriteLockIds ids = rwLocks.get(l);
-				toCheck.add(ids == null ? l : ids.getId());
-			}
 			final Set<Long> locks = staticLockSets.get(fieldId);
 			if (locks == null) {
-				staticLockSets.put(fieldId, toCheck);
+				staticLockSets.put(fieldId, otherLocks);
 			} else {
-				locks.retainAll(toCheck);
+				locks.retainAll(otherLocks);
 			}
 		}
 		for (final Entry<Long, Map<Long, Set<Long>>> e : otherLockSets
@@ -91,16 +92,11 @@ public class MasterLockSet {
 			for (final Entry<Long, Set<Long>> e1 : e.getValue().entrySet()) {
 				final long fieldId = e1.getKey();
 				final Set<Long> otherLocks = e1.getValue();
-				final Set<Long> toCheck = new HashSet<Long>(otherLocks.size());
-				for (final long l : otherLocks) {
-					final ReadWriteLockIds ids = rwLocks.get(l);
-					toCheck.add(ids == null ? l : ids.getId());
-				}
 				final Set<Long> locks = receiverMap.get(fieldId);
 				if (locks == null) {
-					receiverMap.put(fieldId, toCheck);
+					receiverMap.put(fieldId, otherLocks);
 				} else {
-					locks.retainAll(toCheck);
+					locks.retainAll(otherLocks);
 				}
 			}
 		}
@@ -157,25 +153,93 @@ public class MasterLockSet {
 	 * @return a map of lock sets keyed by field id
 	 */
 	synchronized Map<Long, Set<Long>> purge(final long receiverId) {
-		final Map<Long, Set<Long>> map = lockSets.get(receiverId);
+		final Map<Long, Set<Long>> fields = lockSets.get(receiverId);
 		lockSets.remove(receiverId);
-		return map;
+		if (fields != null) {
+			for (final Entry<Long, Set<Long>> e : fields.entrySet()) {
+				final long fieldId = e.getKey();
+				if (shared.isShared(receiverId, fieldId)) {
+					if (e.getValue().isEmpty()) {
+						noLockSetFields.add(fieldId);
+					} else {
+						lockSetFields.add(fieldId);
+					}
+				}
+			}
+		}
+		return fields;
 	}
 
-	Map<Long, Set<Long>> getStaticLockSets() {
-		return staticLockSets;
-	}
-
-	Map<Long, Map<Long, Set<Long>>> getLockSets() {
-		return lockSets;
-	}
-
-	public Set<LockStack> getLockOrders() {
+	Set<LockStack> getLockOrders() {
 		return Collections.unmodifiableSet(graph.stacks);
 	}
 
-	public Set<Long> getDeadlocks() {
+	Set<Long> getDeadlocks() {
 		return graph.cycles();
+	}
+
+	LockSetInfo2 getLockSetsInfo2() {
+		final Map<Long, Set<Long>> statics = new HashMap<Long, Set<Long>>(
+				staticLockSets.size());
+		for (final Entry<Long, Set<Long>> e : staticLockSets.entrySet()) {
+			statics.put(e.getKey(), new HashSet<Long>(e.getValue()));
+		}
+		// We reverse the lock set map here, as querying by field is generally
+		// what we want
+		final Map<Long, Map<Long, Set<Long>>> instances = new HashMap<Long, Map<Long, Set<Long>>>(
+				lockSets.size());
+		for (final Entry<Long, Map<Long, Set<Long>>> e : lockSets.entrySet()) {
+			final long receiver = e.getKey();
+			final Map<Long, Set<Long>> recMap = e.getValue();
+			for (final Entry<Long, Set<Long>> e1 : recMap.entrySet()) {
+				final long field = e1.getKey();
+				Map<Long, Set<Long>> fieldMap = instances.get(field);
+				if (fieldMap == null) {
+					fieldMap = new HashMap<Long, Set<Long>>();
+					instances.put(field, fieldMap);
+				}
+				fieldMap.put(receiver, new HashSet<Long>(e1.getValue()));
+			}
+		}
+		return new LockSetInfo2(defs, statics,
+				new HashSet<Long>(lockSetFields), new HashSet<Long>(
+						noLockSetFields), instances);
+	}
+
+	LockSetInfo getLockSetsInfo() {
+		final Set<Long> noStaticLockSetFields = new HashSet<Long>();
+		final Set<Long> staticLockSetFields = new HashSet<Long>();
+		final Set<Long> lockSetFields = new HashSet<Long>(this.lockSetFields);
+		final Set<Long> noLockSetFields = new HashSet<Long>(
+				this.noLockSetFields);
+		for (final Entry<Long, Set<Long>> e : staticLockSets.entrySet()) {
+			final long fieldId = e.getKey();
+			if (shared.isShared(fieldId)) {
+				if (!noStaticLockSetFields.contains(fieldId)) {
+					if (e.getValue().isEmpty()) {
+						staticLockSetFields.remove(fieldId);
+						noStaticLockSetFields.add(fieldId);
+					} else {
+						staticLockSetFields.add(fieldId);
+					}
+				}
+			}
+		}
+		for (final Entry<Long, Map<Long, Set<Long>>> e : lockSets.entrySet()) {
+			for (final Entry<Long, Set<Long>> e1 : e.getValue().entrySet()) {
+				final long receiverId = e.getKey();
+				final long fieldId = e1.getKey();
+				if (shared.isShared(receiverId, fieldId)) {
+					if (e1.getValue().isEmpty()) {
+						noLockSetFields.add(e1.getKey());
+					} else {
+						lockSetFields.add(e1.getKey());
+					}
+				}
+			}
+		}
+		return new LockSetInfo(defs, staticLockSetFields,
+				noStaticLockSetFields, lockSetFields, noLockSetFields);
 	}
 
 }

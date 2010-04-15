@@ -31,6 +31,7 @@ class MonitorConsole extends Thread {
 	private static final String LOCKSETS = "lockSets";
 	private static final String SHARED = "shared";
 	private static final Pattern SET = Pattern.compile("set ([^=]*)=(.*)");
+	private static final Pattern DESCRIBE = Pattern.compile("describe (.*)");
 	private static final String FIELD_SPEC = "fieldSpec";
 	private static final String EDT_FIELDS = "swingFieldAlerts";
 	private static final String SHARED_FIELDS = "sharedFieldAlerts";
@@ -284,11 +285,29 @@ class MonitorConsole extends Thread {
 													.getFieldDefinitions()));
 								}
 							} else {
-								sendResponse(
-										outputStream,
-										"invalid command...please use \""
-												+ STOP
-												+ "\" when you want to halt collection");
+								final Matcher d = DESCRIBE.matcher(nextLine);
+								if (d.matches()) {
+									final Pattern test = Pattern.compile(d
+											.group(1));
+									final LockSetInfo2 lockSets2 = Analysis
+											.getAnalysis().getLockSets2();
+									final FieldDefs defs = MonitorStore
+											.getFieldDefinitions();
+									for (final FieldDef def : defs.values()) {
+										if (test.matcher(
+												def.getQualifiedFieldName())
+												.matches()) {
+											sendResponse(outputStream,
+													lockSets2.lockSetInfo(def));
+										}
+									}
+								} else {
+									sendResponse(
+											outputStream,
+											"invalid command...please use \""
+													+ STOP
+													+ "\" when you want to halt collection");
+								}
 							}
 						}
 					}

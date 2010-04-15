@@ -178,6 +178,12 @@ public final class MonitorStore {
 		return f_defs;
 	}
 
+	private static final ConcurrentMap<Long, String> f_lockNames;
+
+	public static ConcurrentMap<Long, String> getLockNames() {
+		return f_lockNames;
+	}
+
 	private static final ConcurrentMap<Long, ReadWriteLockIds> f_rwLocks;
 
 	public static ConcurrentMap<Long, ReadWriteLockIds> getRWLocks() {
@@ -225,22 +231,6 @@ public final class MonitorStore {
 		return f_lockSets;
 	}
 
-	/**
-	 * Gets the current lock set information, but does so in a destructive
-	 * fashion (The results held in the current list of lock sets will not be
-	 * available to any later analysis.
-	 * 
-	 * @param out
-	 */
-	static void destructivePrintLockSetInfo(final PrintWriter out) {
-		final MasterLockSet master = new MasterLockSet(new SharedFields(),
-				f_rwLocks);
-		for (final ThreadLocks slave : f_lockSets) {
-			master.drain(slave);
-		}
-		out.println(master);
-	}
-
 	private static final boolean useLocks = true;
 
 	/**
@@ -277,6 +267,10 @@ public final class MonitorStore {
 		if (IdConstants.enableFlashlightToggle
 				|| !StoreDelegate.FL_OFF.getAndSet(true)) {
 			f_defs = new FieldDefs();
+			f_lockNames = new ConcurrentReferenceHashMap<Long, String>(
+					ReferenceType.STRONG, ReferenceType.STRONG,
+					ConcurrentReferenceHashMap.STANDARD_HASH);
+
 			f_rwLocks = new ConcurrentReferenceHashMap<Long, ReadWriteLockIds>(
 					ReferenceType.STRONG, ReferenceType.STRONG,
 					ConcurrentReferenceHashMap.STANDARD_HASH);
@@ -368,7 +362,7 @@ public final class MonitorStore {
 					final ThreadPhantomReference thread = tl_withinStore.get().thread;
 					final ThreadLocks ls = new ThreadLocks(thread.getName(),
 							thread.getId(), SwingUtilities
-									.isEventDispatchThread());
+									.isEventDispatchThread(), f_rwLocks);
 					f_lockSets.add(ls);
 					return ls;
 				}
@@ -414,6 +408,7 @@ public final class MonitorStore {
 			StoreDelegate.FL_OFF.set(false);
 		} else {
 			f_defs = null;
+			f_lockNames = null;
 			f_rwLocks = null;
 			f_run = null;
 			f_log = null;
@@ -1135,6 +1130,10 @@ public final class MonitorStore {
 				return;
 			}
 			final long lockId = Phantom.of(lockObject).getId();
+			if (!f_lockNames.containsKey(lockId)) {
+				f_lockNames.put(lockId, lockObject.getClass().toString()
+						+ lockObject.hashCode());
+			}
 			tl_lockSet.get().enterLock(lockId);
 		} finally {
 			flState.inside = false;

@@ -6,10 +6,8 @@ package com.surelogic._flashlight.monitor;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.surelogic._flashlight.IdPhantomReference;
@@ -33,25 +31,15 @@ final class Analysis extends Thread {
 
 	private AlertSpec alerts;
 
-	private final Set<Long> lockSetFields;
-	private final Set<Long> staticLockSetFields;
-	private final Set<Long> noLockSetFields;
-	private final Set<Long> noStaticLockSetFields;
-
 	private Set<FieldDef> edtViolations;
 	private Set<FieldDef> sharedFieldViolations;
 	private Set<FieldDef> lockSetViolations;
 
-	Analysis(final FieldDefs fields,
-			final ConcurrentMap<Long, ReadWriteLockIds> rwLocks) {
+	Analysis(final FieldDefs fields) {
 		super("flashlight-analysis");
 		this.fieldDefs = fields;
 		shared = new SharedFields();
-		master = new MasterLockSet(shared, rwLocks);
-		lockSetFields = new HashSet<Long>();
-		staticLockSetFields = new HashSet<Long>();
-		noLockSetFields = new HashSet<Long>();
-		noStaticLockSetFields = new HashSet<Long>();
+		master = new MasterLockSet(fieldDefs, shared);
 		edtViolations = new HashSet<FieldDef>();
 		sharedFieldViolations = new HashSet<FieldDef>();
 		lockSetViolations = new HashSet<FieldDef>();
@@ -95,50 +83,11 @@ final class Analysis extends Thread {
 		for (final IdPhantomReference ref : references) {
 			final long receiverId = ref.getId();
 			// Compute final lock set results
-			final Map<Long, Set<Long>> fields = master.purge(receiverId);
-			if (fields != null) {
-				for (final Entry<Long, Set<Long>> e : fields.entrySet()) {
-					final long fieldId = e.getKey();
-					if (shared.isShared(receiverId, fieldId)) {
-						if (e.getValue().isEmpty()) {
-							noLockSetFields.add(fieldId);
-						} else {
-							lockSetFields.add(fieldId);
-						}
-					}
-				}
-			}
+			master.purge(receiverId);
 			shared.remove(receiverId);
 		}
 		references.clear();
-		for (final Entry<Long, Set<Long>> e : master.getStaticLockSets()
-				.entrySet()) {
-			final long fieldId = e.getKey();
-			if (shared.isShared(fieldId)) {
-				if (!noStaticLockSetFields.contains(fieldId)) {
-					if (e.getValue().isEmpty()) {
-						staticLockSetFields.remove(fieldId);
-						noStaticLockSetFields.add(fieldId);
-					} else {
-						staticLockSetFields.add(fieldId);
-					}
-				}
-			}
-		}
-		for (final Entry<Long, Map<Long, Set<Long>>> e : master.getLockSets()
-				.entrySet()) {
-			for (final Entry<Long, Set<Long>> e1 : e.getValue().entrySet()) {
-				long receiverId = e.getKey();
-				long fieldId = e1.getKey();
-				if (shared.isShared(receiverId, fieldId)) {
-					if (e1.getValue().isEmpty()) {
-						noLockSetFields.add(e1.getKey());
-					} else {
-						lockSetFields.add(e1.getKey());
-					}
-				}
-			}
-		}
+
 		for (final FieldDef field : alerts.getEDTFields()) {
 			if (!shared.isConfinedTo(field, edtThreads)) {
 				edtViolations.add(field);
@@ -149,13 +98,11 @@ final class Analysis extends Thread {
 				sharedFieldViolations.add(field);
 			}
 		}
-		for (final FieldDef field : alerts.getLockSetFields()) {
-			if (field.isStatic()) {
-				if (noStaticLockSetFields.contains(field.getId())) {
-					lockSetViolations.add(field);
-				}
-			} else {
-				if (noLockSetFields.contains(field.getId())) {
+		final List<FieldDef> lockSetFields = alerts.getLockSetFields();
+		if (!lockSetFields.isEmpty()) {
+			final LockSetInfo lockSets = getLockSets();
+			for (final FieldDef field : alerts.getLockSetFields()) {
+				if (!lockSets.hasLockSet(field)) {
 					lockSetViolations.add(field);
 				}
 			}
@@ -175,8 +122,11 @@ final class Analysis extends Thread {
 	}
 
 	public synchronized LockSetInfo getLockSets() {
-		return new LockSetInfo(fieldDefs, staticLockSetFields,
-				noStaticLockSetFields, lockSetFields, noLockSetFields);
+		return master.getLockSetsInfo();
+	}
+
+	public synchronized LockSetInfo2 getLockSets2() {
+		return master.getLockSetsInfo2();
 	}
 
 	public synchronized SharedFieldInfo getShared() {
@@ -188,15 +138,14 @@ final class Analysis extends Thread {
 	public synchronized String toString() {
 		final StringBuilder b = new StringBuilder();
 		b.append(getAlerts().toString());
-		b.append(getLockSets().toString());
+		b.append(master.getLockSetsInfo().toString());
 		b.append(getDeadlocks().toString());
 		b.append(getShared().toString());
-
 		return b.toString();
 	}
 
 	private static Analysis activeAnalysis;
-	private static final ReentrantLock analysisLock = new ReentrantLock();
+	private static final Lock analysisLock = new ReentrantLock();
 
 	synchronized void setAlerts(final AlertSpec spec) {
 		if (alerts != null) {
@@ -235,8 +184,7 @@ final class Analysis extends Thread {
 							"Exception while changing analyses", e);
 				}
 			}
-			activeAnalysis = new Analysis(MonitorStore.getFieldDefinitions(),
-					MonitorStore.getRWLocks());
+			activeAnalysis = new Analysis(MonitorStore.getFieldDefinitions());
 			MonitorStore.updateSpec(spec);
 			activeAnalysis.start();
 		} finally {

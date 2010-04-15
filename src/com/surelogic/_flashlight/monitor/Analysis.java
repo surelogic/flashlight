@@ -122,10 +122,6 @@ final class Analysis extends Thread {
 	}
 
 	public synchronized LockSetInfo getLockSets() {
-		return master.getLockSetsInfo();
-	}
-
-	public synchronized LockSetInfo2 getLockSets2() {
 		return master.getLockSetsInfo2();
 	}
 
@@ -138,7 +134,7 @@ final class Analysis extends Thread {
 	public synchronized String toString() {
 		final StringBuilder b = new StringBuilder();
 		b.append(getAlerts().toString());
-		b.append(master.getLockSetsInfo().toString());
+		b.append(master.getLockSetsInfo2().toString());
 		b.append(getDeadlocks().toString());
 		b.append(getShared().toString());
 		return b.toString();

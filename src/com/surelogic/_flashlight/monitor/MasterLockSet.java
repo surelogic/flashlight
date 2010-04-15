@@ -178,7 +178,7 @@ public class MasterLockSet {
 		return graph.cycles();
 	}
 
-	LockSetInfo2 getLockSetsInfo2() {
+	LockSetInfo getLockSetsInfo2() {
 		final Map<Long, Set<Long>> statics = new HashMap<Long, Set<Long>>(
 				staticLockSets.size());
 		for (final Entry<Long, Set<Long>> e : staticLockSets.entrySet()) {
@@ -201,45 +201,9 @@ public class MasterLockSet {
 				fieldMap.put(receiver, new HashSet<Long>(e1.getValue()));
 			}
 		}
-		return new LockSetInfo2(defs, statics,
+		return new LockSetInfo(defs, statics,
 				new HashSet<Long>(lockSetFields), new HashSet<Long>(
 						noLockSetFields), instances);
-	}
-
-	LockSetInfo getLockSetsInfo() {
-		final Set<Long> noStaticLockSetFields = new HashSet<Long>();
-		final Set<Long> staticLockSetFields = new HashSet<Long>();
-		final Set<Long> lockSetFields = new HashSet<Long>(this.lockSetFields);
-		final Set<Long> noLockSetFields = new HashSet<Long>(
-				this.noLockSetFields);
-		for (final Entry<Long, Set<Long>> e : staticLockSets.entrySet()) {
-			final long fieldId = e.getKey();
-			if (shared.isShared(fieldId)) {
-				if (!noStaticLockSetFields.contains(fieldId)) {
-					if (e.getValue().isEmpty()) {
-						staticLockSetFields.remove(fieldId);
-						noStaticLockSetFields.add(fieldId);
-					} else {
-						staticLockSetFields.add(fieldId);
-					}
-				}
-			}
-		}
-		for (final Entry<Long, Map<Long, Set<Long>>> e : lockSets.entrySet()) {
-			for (final Entry<Long, Set<Long>> e1 : e.getValue().entrySet()) {
-				final long receiverId = e.getKey();
-				final long fieldId = e1.getKey();
-				if (shared.isShared(receiverId, fieldId)) {
-					if (e1.getValue().isEmpty()) {
-						noLockSetFields.add(e1.getKey());
-					} else {
-						lockSetFields.add(e1.getKey());
-					}
-				}
-			}
-		}
-		return new LockSetInfo(defs, staticLockSetFields,
-				noStaticLockSetFields, lockSetFields, noLockSetFields);
 	}
 
 }

@@ -289,8 +289,8 @@ class MonitorConsole extends Thread {
 								if (d.matches()) {
 									final Pattern test = Pattern.compile(d
 											.group(1));
-									final LockSetInfo2 lockSets2 = Analysis
-											.getAnalysis().getLockSets2();
+									final LockSetInfo lockSets2 = Analysis
+											.getAnalysis().getLockSets();
 									final FieldDefs defs = MonitorStore
 											.getFieldDefinitions();
 									for (final FieldDef def : defs.values()) {

@@ -4,6 +4,7 @@ import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.MenuManager;
+import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.TableViewerColumn;
 import org.eclipse.jface.viewers.Viewer;
@@ -118,6 +119,15 @@ public final class RunView extends ViewPart {
 		actionBars.getToolBarManager().add(deleteRunAction);
 		actionBars.getMenuManager().add(deleteRunAction);
 
+		final Action inferJSureAnnoAction = f_mediator
+				.getInferJSureAnnoAction();
+		inferJSureAnnoAction.setText(I18N
+				.msg("flashlight.run.view.text.inferJSureAnno"));
+		inferJSureAnnoAction.setToolTipText(I18N
+				.msg("flashlight.run.view.tooltip.inferJSureAnno"));
+		inferJSureAnnoAction.setEnabled(false);
+		actionBars.getMenuManager().add(inferJSureAnnoAction);
+
 		/**
 		 * Add a context menu to the table viewer.
 		 */
@@ -127,7 +137,10 @@ public final class RunView extends ViewPart {
 			public void menuAboutToShow(final IMenuManager manager) {
 				manager.add(prepAction);
 				manager.add(showLogAction);
-				manager.add(convertToXmlAction);
+				//manager.add(convertToXmlAction);
+				manager.add(new Separator());
+				manager.add(inferJSureAnnoAction);
+				manager.add(new Separator());
 				manager.add(deleteRunAction);
 			}
 		});

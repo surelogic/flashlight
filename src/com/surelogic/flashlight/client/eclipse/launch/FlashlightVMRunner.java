@@ -79,7 +79,7 @@ import com.surelogic.flashlight.common.files.RunDirectory;
 import com.surelogic.flashlight.common.model.RunDescription;
 import com.surelogic.flashlight.common.model.RunManager;
 
-final class FlashlightVMRunner implements IVMRunner {
+public final class FlashlightVMRunner implements IVMRunner {
 	private static final String MAX_HEAP_PREFIX = "-Xmx";
 	private static final long DEFAULT_MAX_HEAP_SIZE = 64 * 1024 * 1024;
 

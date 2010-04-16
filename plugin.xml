@@ -115,14 +115,6 @@
 			delegate="com.surelogic.flashlight.client.eclipse.launch.FlashlightJUnitLaunchConfigurationDelegate"
 			id="com.surelogic.flashlight.client.eclipse.launch.FlashlightJUnitLaunchConfigurationDelegate"
 			modes="flashlight" type="org.eclipse.jdt.junit.launchconfig" />
-		<launchDelegate
-			delegate="com.surelogic.flashlight.client.eclipse.launch.FlashlightMonitorLaunchConfigurationDelegate"
-			id="com.surelogic.flashlight.client.eclipse.launch.FlashlightMonitorLaunchConfigurationDelegate"
-			modes="flashlight-monitor" type="org.eclipse.jdt.launching.localJavaApplication" />
-		<launchDelegate
-			delegate="com.surelogic.flashlight.client.eclipse.launch.FlashlightMonitorJUnitLaunchConfigurationDelegate"
-			id="com.surelogic.flashlight.client.eclipse.launch.FlashlightMonitorJUnitLaunchConfigurationDelegate"
-			modes="flashlight-monitor" type="org.eclipse.jdt.junit.launchconfig" />
 	</extension>
 
 	<!-- We need a launch group (the id string is in the actions code) -->
@@ -131,10 +123,6 @@
 			id="com.surelogic.flashlight.launchGroup.flashlight"
 			image="icons/fl_logo.gif"
 			label="Flashlight" mode="flashlight" title="%fl.launchGroup.title" />
-		<launchGroup bannerImage="/lib/images/fl_wiz.png"
-			id="com.surelogic.flashlight.launchGroup.flashlightMon"
-			image="icons/fl_logo_mon.gif"
-			label="Flashlight Monitor" mode="flashlight-monitor" title="%fl.launchGroup.title" />
 	</extension>
 
 	<!-- UI for launching Java applications in Flashlight -->
@@ -155,22 +143,6 @@
 				style="pulldown">
 			</action>
 		</actionSet>
-		<actionSet label="%fl.launchMonActionSet.label" visible="true"
-			id="com.surelogic.flashlight.launchMonActionSet">
-			<action label="%fl.runMon" style="pulldown"
-				icon="platform:/plugin/com.surelogic.common/src/com/surelogic/common/images/fl_logo_mon.gif"
-				class="com.surelogic.flashlight.client.eclipse.actions.RunMonitorToolbarAction"
-				menubarPath="org.eclipse.ui.run/ExternalToolsGroup" id="com.surelogic.flashlight.FlashlightMonitorMenuDelegateMenu">
-			</action>
-			<action id="com.surelogic.flashlight.actions.RunMonitorToolbarAction"
-				toolbarPath="org.eclipse.debug.ui.launchActionSet/debug"
-				hoverIcon="platform:/plugin/com.surelogic.common/src/com/surelogic/common/images/fl_logo_mon.gif"
-				class="com.surelogic.flashlight.client.eclipse.actions.RunMonitorToolbarAction"
-				icon="platform:/plugin/com.surelogic.common/src/com/surelogic/common/images/fl_logo_mon.gif"
-				helpContextId="run_action_context" label="%fl.runMonDropDownAction.label"
-				style="pulldown">
-			</action>
-		</actionSet>
 	</extension>
 
 	<!--
@@ -188,18 +160,6 @@
 			</action>
 			<enablement>
 				<test property="org.eclipse.debug.ui.launchable" value="flashlight" />
-			</enablement>
-		</objectContribution>
-		<objectContribution objectClass="org.eclipse.jdt.core.IJavaElement"
-			id="org.eclipse.debug.ui.contextualLaunch.flashlightMon">
-			<action label="Monitor As" style="pulldown"
-				icon="platform:/plugin/com.surelogic.common/src/com/surelogic/common/images/fl_logo_mon.gif"
-				class="com.surelogic.flashlight.client.eclipse.launch.FlashlightMonitorContextualLaunchAction"
-			    menubarPath="additions" enablesFor="+"
-				id="org.eclipse.debug.ui.contextualLaunch.flashlightMon.submenu">
-			</action>
-			<enablement>
-				<test property="org.eclipse.debug.ui.launchable" value="flashlight-monitor" />
 			</enablement>
 		</objectContribution>
 	</extension>
@@ -371,12 +331,6 @@
 			icon="platform:/plugin/com.surelogic.common/src/com/surelogic/common/images/drum_explorer.gif"
 			id="com.surelogic.flashlight.client.eclipse.views.adhoc.QueryResultExplorerView"
 			name="Query Results Explorer">
-		</view>
-		<view allowMultiple="false" category="com.surelogic.flashlight.Flashlight"
-			class="com.surelogic.flashlight.client.eclipse.views.monitor.MonitorView"
-			icon="platform:/plugin/com.surelogic.common/src/com/surelogic/common/images/fl_logo.gif"
-			id="com.surelogic.flashlight.client.eclipse.views.monitor.MonitorView"
-			name="Monitor">
 		</view>
 		<view allowMultiple="false" category="com.surelogic.flashlight.Flashlight"
 			class="com.surelogic.flashlight.client.eclipse.views.adhoc.QueryResultsView"

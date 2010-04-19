@@ -2,15 +2,21 @@ package com.surelogic.flashlight.client.eclipse.views.run;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
 
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jface.action.Action;
+import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.window.Window;
+import org.eclipse.ltk.ui.refactoring.RefactoringWizardOpenOperation;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
@@ -27,12 +33,15 @@ import com.surelogic.common.SLUtility;
 import com.surelogic.common.adhoc.AdHocManager;
 import com.surelogic.common.adhoc.AdHocManagerAdapter;
 import com.surelogic.common.adhoc.AdHocQueryResult;
+import com.surelogic.common.eclipse.JDTUtility;
+import com.surelogic.common.eclipse.SWTUtility;
 import com.surelogic.common.eclipse.ViewUtility;
 import com.surelogic.common.eclipse.jobs.EclipseJob;
 import com.surelogic.common.eclipse.jobs.SLUIJob;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jobs.AggregateSLJob;
 import com.surelogic.common.jobs.SLJob;
+import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.client.eclipse.dialogs.DeleteRunDialog;
 import com.surelogic.flashlight.client.eclipse.dialogs.LogDialog;
 import com.surelogic.flashlight.client.eclipse.jobs.PromptToPrepAllRawData;
@@ -48,6 +57,12 @@ import com.surelogic.flashlight.common.jobs.UnPrepSLJob;
 import com.surelogic.flashlight.common.model.IRunManagerObserver;
 import com.surelogic.flashlight.common.model.RunDescription;
 import com.surelogic.flashlight.common.model.RunManager;
+import com.surelogic.flashlight.recommend.refactor.RegionModelRefactoring;
+import com.surelogic.flashlight.recommend.refactor.RegionRefactoringInfo;
+import com.surelogic.flashlight.recommend.refactor.RegionRefactoringWizard;
+import com.surelogic.jsure.client.eclipse.listeners.ClearProjectListener;
+
+import edu.cmu.cs.fluid.dc.Nature;
 
 /**
  * Mediator for the {@link RunView}.
@@ -330,7 +345,6 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 				EclipseJob.getInstance().scheduleDb(
 						new RefreshRunManagerSLJob(), false, false,
 						RunManager.getInstance().getRunIdentities());
-
 			}
 		}
 	};
@@ -342,7 +356,77 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 	private final Action f_inferJSureAnnoAction = new Action() {
 		@Override
 		public void run() {
-			// TODO
+			final RunDescription[] selectedRunDescriptions = getSelectedRunDescriptions();
+			final List<PrepRunDescription> runs = new ArrayList<PrepRunDescription>(
+					selectedRunDescriptions.length);
+			boolean hasRun = false;
+			for (final RunDescription d : selectedRunDescriptions) {
+				final PrepRunDescription prep = d.getPrepRunDescription();
+				if (prep != null) {
+					hasRun = true;
+					runs.add(prep);
+				}
+			}
+			if (hasRun) {
+				for (final IJavaProject p : JDTUtility.getJavaProjects()) {
+					for (final PrepRunDescription run : runs) {
+						final String runName = run.getDescription().getName();
+						final int idx = runName.lastIndexOf('.');
+						final String runPackage = runName.substring(0, idx);
+						final String runClass = runName.substring(idx + 1);
+						if (JDTUtility.findIType(p.getElementName(),
+								runPackage, runClass) != null) {
+							final RegionRefactoringInfo info = new RegionRefactoringInfo(
+									Collections.singletonList(p), runs);
+							info.setSelectedProject(p);
+							info.setSelectedRuns(runs);
+							final RegionModelRefactoring refactoring = new RegionModelRefactoring(
+									info);
+							final RegionRefactoringWizard wizard = new RegionRefactoringWizard(
+									refactoring, info, false);
+							final RefactoringWizardOpenOperation op = new RefactoringWizardOpenOperation(
+									wizard);
+							try {
+								if (op
+										.run(
+												SWTUtility.getShell(),
+												I18N
+														.msg("flashlight.recommend.refactor.regionIsThis")) == IDialogConstants.OK_ID) {
+									try {
+										if (!Nature.hasNature(p.getProject())) {
+											ClearProjectListener
+													.clearNatureFromAllOpenProjects();
+											try {
+												Nature.addNatureToProject(p
+														.getProject());
+											} catch (final CoreException e) {
+												SLLogger
+														.getLogger()
+														.log(
+																Level.SEVERE,
+																"Failure adding JSure nature to "
+																		+ p
+																				.getElementName(),
+																e);
+											}
+											ClearProjectListener
+													.postNatureChangeUtility();
+										}
+									} catch (final NoClassDefFoundError e) {
+										// This is expected if jsure is not
+										// installed
+									}
+								}
+							} catch (final InterruptedException e) {
+								// Operation was cancelled. Whatever floats
+								// their
+								// boat.
+							}
+							return;
+						}
+					}
+				}
+			}
 		}
 	};
 

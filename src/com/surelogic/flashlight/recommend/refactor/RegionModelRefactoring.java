@@ -39,7 +39,7 @@ public class RegionModelRefactoring extends Refactoring {
 	private Map<String, Map<String, RecommendedRegion>> targetClassRegions;
 	private Map<String, Map<String, List<RecommendedRegion>>> targetFieldRegions;
 
-	RegionModelRefactoring(final RegionRefactoringInfo info) {
+	public RegionModelRefactoring(final RegionRefactoringInfo info) {
 		this.info = info;
 	}
 

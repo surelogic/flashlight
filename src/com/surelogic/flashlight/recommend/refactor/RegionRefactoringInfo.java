@@ -13,8 +13,8 @@ public class RegionRefactoringInfo {
 	private final List<PrepRunDescription> runs;
 	private List<PrepRunDescription> selectedRuns;
 
-	RegionRefactoringInfo(List<IJavaProject> projects,
-			List<PrepRunDescription> runs) {
+	public RegionRefactoringInfo(final List<IJavaProject> projects,
+			final List<PrepRunDescription> runs) {
 		this.projects = projects;
 		this.runs = runs;
 	}
@@ -23,7 +23,7 @@ public class RegionRefactoringInfo {
 		return selectedProject;
 	}
 
-	public void setSelectedProject(IJavaProject project) {
+	public void setSelectedProject(final IJavaProject project) {
 		this.selectedProject = project;
 	}
 
@@ -39,7 +39,7 @@ public class RegionRefactoringInfo {
 		return selectedRuns;
 	}
 
-	public void setSelectedRuns(List<PrepRunDescription> selectedRuns) {
+	public void setSelectedRuns(final List<PrepRunDescription> selectedRuns) {
 		this.selectedRuns = selectedRuns;
 	}
 

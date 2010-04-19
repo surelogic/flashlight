@@ -16,6 +16,8 @@ Require-Bundle: org.eclipse.ui,
  org.eclipse.ui.externaltools,
  org.eclipse.jdt.junit,
  org.eclipse.jdt.ui,
+ org.eclipse.ui.ide,
+ org.eclipse.ui.editors,
  com.surelogic.common.eclipse,
  com.surelogic.common,
  com.surelogic.adhoc.eclipse,
@@ -24,6 +26,9 @@ Require-Bundle: org.eclipse.ui,
  com.surelogic.common.adhoc,
  org.eclipse.jdt.core,
  org.eclipse.jface.text,
+ org.eclipse.ltk.core.refactoring,
+ org.eclipse.ltk.ui.refactoring,
+ com.surelogic.jsure.client.eclipse;resolution:=optional,
  com.surelogic.sierra.java5.compatibility;resolution:=optional
 Eclipse-LazyStart: true
 Bundle-ActivationPolicy: lazy

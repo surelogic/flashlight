@@ -1,0 +1,110 @@
+package com.surelogic.flashlight.recommend.refactor;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.logging.Level;
+
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jface.action.IAction;
+import org.eclipse.jface.dialogs.IDialogConstants;
+import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.ltk.ui.refactoring.RefactoringWizardOpenOperation;
+import org.eclipse.ui.IObjectActionDelegate;
+import org.eclipse.ui.IWorkbenchPart;
+import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.IWorkbenchWindowActionDelegate;
+
+import com.surelogic.common.eclipse.JDTUtility;
+import com.surelogic.common.eclipse.SWTUtility;
+import com.surelogic.common.i18n.I18N;
+import com.surelogic.common.logging.SLLogger;
+import com.surelogic.flashlight.common.entities.PrepRunDescription;
+import com.surelogic.flashlight.common.model.RunDescription;
+import com.surelogic.flashlight.common.model.RunManager;
+import com.surelogic.jsure.client.eclipse.listeners.ClearProjectListener;
+
+import edu.cmu.cs.fluid.dc.Nature;
+
+public class RegionModelRefactoringAction implements IObjectActionDelegate,
+		IWorkbenchWindowActionDelegate {
+
+	private IJavaProject f_javaProject = null;
+
+	public void setActivePart(final IAction action,
+			final IWorkbenchPart targetPart) {
+		// Do nothing
+	}
+
+	public void run(final IAction action) {
+		final Set<RunDescription> runDescriptions = RunManager.getInstance()
+				.getRunDescriptions();
+		final List<PrepRunDescription> preppedRuns = new ArrayList<PrepRunDescription>();
+		for (final RunDescription rd : runDescriptions) {
+			final PrepRunDescription prepRunDescription = rd
+					.getPrepRunDescription();
+			if (prepRunDescription != null) {
+				preppedRuns.add(prepRunDescription);
+			}
+		}
+
+		final RegionRefactoringInfo info = new RegionRefactoringInfo(JDTUtility
+				.getJavaProjects(), preppedRuns);
+		info.setSelectedProject(f_javaProject);
+		final RegionModelRefactoring refactoring = new RegionModelRefactoring(
+				info);
+		final RegionRefactoringWizard wizard = new RegionRefactoringWizard(
+				refactoring, info);
+		final RefactoringWizardOpenOperation op = new RefactoringWizardOpenOperation(
+				wizard);
+		try {
+			if (op.run(SWTUtility.getShell(), I18N
+					.msg("flashlight.recommend.refactor.regionIsThis")) == IDialogConstants.OK_ID) {
+				try {
+					if (!Nature.hasNature(f_javaProject.getProject())) {
+						ClearProjectListener.clearNatureFromAllOpenProjects();
+						try {
+							Nature.addNatureToProject(f_javaProject
+									.getProject());
+						} catch (final CoreException e) {
+							SLLogger.getLogger()
+									.log(
+											Level.SEVERE,
+											"Failure adding JSure nature to "
+													+ f_javaProject
+															.getElementName(),
+											e);
+						}
+						ClearProjectListener.postNatureChangeUtility();
+					}
+				} catch (final NoClassDefFoundError e) {
+					// This is expected if jsure is not installed
+				}
+			}
+		} catch (final InterruptedException e) {
+			// Operation was cancelled. Whatever floats their boat.
+		}
+	}
+
+	public void selectionChanged(final IAction action,
+			final ISelection selection) {
+		if (selection instanceof IStructuredSelection) {
+			final Object o = ((IStructuredSelection) selection)
+					.getFirstElement();
+			if (o instanceof IJavaProject) {
+				f_javaProject = (IJavaProject) o;
+				// FIXME action.setEnabled(noCompilationErrors(f_javaProject));
+			}
+		}
+	}
+
+	public void dispose() {
+		// Do nothing
+	}
+
+	public void init(final IWorkbenchWindow window) {
+		// Do nothing
+	}
+}

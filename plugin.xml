@@ -60,6 +60,13 @@
 				label="Open Flashlight Perspective" menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/client"
 				helpContextId="menu-open-flashlight-perspective">
 			</action>
+			<action
+				class="com.surelogic.flashlight.recommend.refactor.RegionModelRefactoringAction"
+				id="com.surelogic.flashlight.recommend.menu.inferRegionsRefactoring"
+				label="Infer JSure Annotations"
+				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/additions"
+				helpContextId="menu-manage-licenses">
+			</action>
 		</actionSet>
 	</extension>
 

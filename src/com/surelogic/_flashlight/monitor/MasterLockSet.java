@@ -130,6 +130,11 @@ public class MasterLockSet {
 			}
 		}
 
+		/**
+		 * Compute the set of locks involved in some sort of deadlock cycle
+		 * 
+		 * @return
+		 */
 		Set<Long> cycles() {
 			final Set<Long> cycleLocks = new HashSet<Long>();
 			for (final Entry<Long, Set<Long>> vertex : reachable.entrySet()) {
@@ -201,9 +206,8 @@ public class MasterLockSet {
 				fieldMap.put(receiver, new HashSet<Long>(e1.getValue()));
 			}
 		}
-		return new LockSetInfo(defs, statics,
-				new HashSet<Long>(lockSetFields), new HashSet<Long>(
-						noLockSetFields), instances);
+		return new LockSetInfo(defs, statics, new HashSet<Long>(lockSetFields),
+				new HashSet<Long>(noLockSetFields), instances);
 	}
 
 }

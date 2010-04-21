@@ -46,7 +46,7 @@ public class TypeReconciler extends ASTVisitor {
 	 * @return
 	 */
 	public Map<String, TypeNode> typeMap() {
-		final TypeNode root = names.peek();
+		final TypeNode root = names.getFirst();
 		final Map<String, TypeNode> typeMap = new HashMap<String, TypeNode>();
 		if (ROOT.equals(root.type)) {
 			for (final TypeNode t : root.children) {
@@ -78,7 +78,7 @@ public class TypeReconciler extends ASTVisitor {
 
 	@Override
 	public boolean visit(final CompilationUnit node) {
-		names.push(new TypeNode(ROOT, null));
+		names.addFirst(new TypeNode(ROOT, null));
 		return true;
 	}
 
@@ -119,8 +119,8 @@ public class TypeReconciler extends ASTVisitor {
 			type = new TypeContext(inMethod, name);
 			inMethod = null;
 		}
-		final TypeNode parent = names.peek();
-		names.push(parent.addChild(name, type));
+		final TypeNode parent = names.getFirst();
+		names.addFirst(parent.addChild(name, type));
 	}
 
 	@Override
@@ -132,7 +132,7 @@ public class TypeReconciler extends ASTVisitor {
 			params[i] = fromType(paramDecls[i]);
 		}
 		inMethod = new Method(type, node.getName().getIdentifier(), params);
-		names.peek().addMethod(inMethod.getMethod(), inMethod);
+		names.getFirst().addMethod(inMethod.getMethod(), inMethod);
 		return true;
 	}
 
@@ -157,7 +157,7 @@ public class TypeReconciler extends ASTVisitor {
 	}
 
 	private void endTypeContext() {
-		names.pop();
+		names.removeFirst();
 		if (type.getMethod() != null) {
 			inMethod = type.getMethod();
 		}

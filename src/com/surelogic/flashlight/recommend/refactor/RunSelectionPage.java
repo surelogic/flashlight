@@ -12,9 +12,8 @@ import org.eclipse.swt.layout.FormAttachment;
 import org.eclipse.swt.layout.FormData;
 import org.eclipse.swt.layout.FormLayout;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Tree;
-import org.eclipse.swt.widgets.TreeColumn;
-import org.eclipse.swt.widgets.TreeItem;
+import org.eclipse.swt.widgets.Table;
+import org.eclipse.swt.widgets.TableItem;
 
 import com.surelogic.common.eclipse.JDTUtility;
 import com.surelogic.common.i18n.I18N;
@@ -28,8 +27,8 @@ import com.surelogic.flashlight.common.entities.PrepRunDescription;
  */
 public class RunSelectionPage extends UserInputWizardPage {
 
-	private Tree f_runTree;
-	private TreeColumn f_nameColumn;
+	private Table f_runTable;
+	// private TableColumn f_nameColumn;
 	private final RegionRefactoringInfo f_info;
 	private String selected;
 
@@ -44,16 +43,16 @@ public class RunSelectionPage extends UserInputWizardPage {
 		final Composite container = new Composite(parent, SWT.NONE);
 		container.setLayout(new FormLayout());
 		setControl(container);
-		f_runTree = new Tree(container, SWT.MULTI);
+		f_runTable = new Table(container, SWT.FULL_SELECTION | SWT.CHECK);
 		final FormData formData = new FormData();
 		formData.bottom = new FormAttachment(100, 0);
 		formData.right = new FormAttachment(100, 0);
 		formData.top = new FormAttachment(0, 0);
 		formData.left = new FormAttachment(0, 0);
-		f_runTree.setLayoutData(formData);
-		f_runTree.setHeaderVisible(true);
-		f_runTree.setLinesVisible(true);
-		f_runTree.addSelectionListener(new SelectionListener() {
+		f_runTable.setLayoutData(formData);
+		f_runTable.setHeaderVisible(true);
+		f_runTable.setLinesVisible(true);
+		f_runTable.addSelectionListener(new SelectionListener() {
 
 			public void widgetSelected(final SelectionEvent e) {
 				validate();
@@ -63,26 +62,26 @@ public class RunSelectionPage extends UserInputWizardPage {
 				validate();
 			}
 		});
-		f_nameColumn = new TreeColumn(f_runTree, SWT.NONE);
-		f_nameColumn.setText(I18N.msg("flashlight.recommend.dialog.runCol"));
-		f_nameColumn.pack();
+
+		// f_nameColumn = new TableColumn(f_runTable, SWT.NONE);
+		// f_nameColumn.setText(I18N.msg("flashlight.recommend.dialog.runCol"));
+
 		Dialog.applyDialogFont(container);
 		validate();
 	}
 
 	void validate() {
 		final List<PrepRunDescription> selected = new ArrayList<PrepRunDescription>();
-		for (final TreeItem item : f_runTree.getSelection()) {
+		for (final TableItem item : f_runTable.getSelection()) {
 			selected.add((PrepRunDescription) item.getData());
 		}
 		f_info.setSelectedRuns(selected);
 		setPageComplete(!selected.isEmpty());
-		f_nameColumn.pack();
 	}
 
 	@Override
 	public void setVisible(final boolean visible) {
-		f_runTree.removeAll();
+		f_runTable.removeAll();
 		final String project = f_info.getSelectedProject().getElementName();
 		if (!project.equals(selected)) {
 			selected = project;
@@ -93,12 +92,12 @@ public class RunSelectionPage extends UserInputWizardPage {
 				final String runPackage = runName.substring(0, idx);
 				final String runClass = runName.substring(idx + 1);
 				if (JDTUtility.findIType(project, runPackage, runClass) != null) {
-					final TreeItem item = new TreeItem(f_runTree, SWT.NONE);
+					final TableItem item = new TableItem(f_runTable, SWT.NONE);
 					item.setText(run.getDescription().getName());
 					item.setData(run);
 					if (noneSelected) {
 						noneSelected = false;
-						f_runTree.setSelection(item);
+						f_runTable.setSelection(item);
 					}
 				}
 			}

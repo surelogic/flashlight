@@ -1,7 +1,6 @@
 package com.surelogic._flashlight.monitor;
 
 import java.io.BufferedOutputStream;
-import java.io.Console;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -1437,8 +1436,8 @@ public final class MonitorStore {
 	 * program code</li>
 	 * <li>The {@link Spy} thread if it detected the instrumented program
 	 * completed and only flashlight threads remain running.</li>
-	 * <li>A client handler thread created by the {@link Console} thread that
-	 * was told to shutdown flashlight via socket.</li>
+	 * <li>A client handler thread created by the {@link MonitorConsole} thread
+	 * that was told to shutdown flashlight via socket.</li>
 	 * <li>The thread created to run our shutdown hook.</li>
 	 * </ul>
 	 */

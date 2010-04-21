@@ -77,6 +77,7 @@ public class RunSelectionPage extends UserInputWizardPage {
 		}
 		f_info.setSelectedRuns(selected);
 		setPageComplete(!selected.isEmpty());
+		f_nameColumn.pack();
 	}
 
 	@Override

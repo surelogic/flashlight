@@ -122,7 +122,7 @@ final class ThreadLocks {
 		return threadId;
 	}
 
-	public boolean isEDT() {
+	boolean isEDT() {
 		return isEDT;
 	}
 
@@ -152,7 +152,7 @@ final class ThreadLocks {
 		}
 	}
 
-	public Set<LockStack> clearLockStacks() {
+	Set<LockStack> clearLockStacks() {
 		try {
 			return stacks;
 		} finally {
@@ -160,7 +160,7 @@ final class ThreadLocks {
 		}
 	}
 
-	public Set<Long> clearSharedStatics() {
+	Set<Long> clearSharedStatics() {
 		try {
 			return sharedStatics;
 		} finally {
@@ -168,7 +168,7 @@ final class ThreadLocks {
 		}
 	}
 
-	public Map<Long, Set<Long>> clearShared() {
+	Map<Long, Set<Long>> clearShared() {
 		try {
 			return shared;
 		} finally {

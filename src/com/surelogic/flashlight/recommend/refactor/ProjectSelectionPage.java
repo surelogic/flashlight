@@ -10,15 +10,14 @@ import org.eclipse.swt.layout.FormAttachment;
 import org.eclipse.swt.layout.FormData;
 import org.eclipse.swt.layout.FormLayout;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Tree;
-import org.eclipse.swt.widgets.TreeColumn;
-import org.eclipse.swt.widgets.TreeItem;
+import org.eclipse.swt.widgets.Table;
+import org.eclipse.swt.widgets.TableItem;
 
 import com.surelogic.common.i18n.I18N;
 
 public class ProjectSelectionPage extends UserInputWizardPage {
 
-	private Tree f_projectTree;
+	private Table f_projectTable;
 	private final RegionRefactoringInfo f_info;
 
 	public ProjectSelectionPage(final RegionRefactoringInfo info) {
@@ -33,17 +32,16 @@ public class ProjectSelectionPage extends UserInputWizardPage {
 		container.setLayout(new FormLayout());
 		setControl(container);
 
-		f_projectTree = new Tree(container, SWT.SINGLE);
-		f_projectTree.setHeaderVisible(true);
-		f_projectTree.setLinesVisible(true);
+		f_projectTable = new Table(container, SWT.NONE);
+		f_projectTable.setHeaderVisible(false);
+		f_projectTable.setLinesVisible(true);
 		final FormData formData = new FormData();
 		formData.bottom = new FormAttachment(100, 0);
 		formData.right = new FormAttachment(100, 0);
 		formData.top = new FormAttachment(0, 0);
 		formData.left = new FormAttachment(0, 0);
-		f_projectTree.setLayoutData(formData);
-		f_projectTree.addSelectionListener(new SelectionListener() {
-
+		f_projectTable.setLayoutData(formData);
+		f_projectTable.addSelectionListener(new SelectionListener() {
 			public void widgetSelected(final SelectionEvent e) {
 				validate();
 			}
@@ -52,25 +50,22 @@ public class ProjectSelectionPage extends UserInputWizardPage {
 				validate();
 			}
 		});
-		final TreeColumn nameColumn = new TreeColumn(f_projectTree, SWT.NONE);
-		nameColumn.setText(I18N.msg("flashlight.recommend.dialog.projectCol"));
 		for (final IJavaProject project : f_info.getProjects()) {
-			final TreeItem item = new TreeItem(f_projectTree, SWT.NONE);
+			final TableItem item = new TableItem(f_projectTable, SWT.NONE);
 			item.setText(project.getProject().getName());
 			item.setData(project);
 			if (project.equals(f_info.getSelectedProject())) {
-				f_projectTree.setSelection(item);
+				f_projectTable.setSelection(item);
 			}
 		}
-		nameColumn.pack();
 		Dialog.applyDialogFont(container);
 		validate();
 	}
 
 	void validate() {
-		final TreeItem[] items = f_projectTree.getSelection();
+		final TableItem[] items = f_projectTable.getSelection();
 		setPageComplete(items.length > 0);
-		for (final TreeItem item : items) {
+		for (final TableItem item : items) {
 			f_info.setSelectedProject((IJavaProject) item.getData());
 		}
 	}

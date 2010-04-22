@@ -50,7 +50,7 @@ public class RunSelectionPage extends UserInputWizardPage {
 		formData.top = new FormAttachment(0, 0);
 		formData.left = new FormAttachment(0, 0);
 		f_runTable.setLayoutData(formData);
-		f_runTable.setHeaderVisible(true);
+		f_runTable.setHeaderVisible(false);
 		f_runTable.setLinesVisible(true);
 		f_runTable.addSelectionListener(new SelectionListener() {
 
@@ -72,8 +72,10 @@ public class RunSelectionPage extends UserInputWizardPage {
 
 	void validate() {
 		final List<PrepRunDescription> selected = new ArrayList<PrepRunDescription>();
-		for (final TableItem item : f_runTable.getSelection()) {
-			selected.add((PrepRunDescription) item.getData());
+		for (final TableItem item : f_runTable.getItems()) {
+			if (item.getChecked()) {
+				selected.add((PrepRunDescription) item.getData());
+			}
 		}
 		f_info.setSelectedRuns(selected);
 		setPageComplete(!selected.isEmpty());

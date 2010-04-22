@@ -13,6 +13,8 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableItem;
 
+import com.surelogic.common.CommonImages;
+import com.surelogic.common.eclipse.SLImages;
 import com.surelogic.common.i18n.I18N;
 
 public class ProjectSelectionPage extends UserInputWizardPage {
@@ -53,6 +55,7 @@ public class ProjectSelectionPage extends UserInputWizardPage {
 		for (final IJavaProject project : f_info.getProjects()) {
 			final TableItem item = new TableItem(f_projectTable, SWT.NONE);
 			item.setText(project.getProject().getName());
+			item.setImage(SLImages.getImage(CommonImages.IMG_PROJECT));
 			item.setData(project);
 			if (project.equals(f_info.getSelectedProject())) {
 				f_projectTable.setSelection(item);

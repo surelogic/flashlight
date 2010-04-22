@@ -63,9 +63,6 @@ public class RunSelectionPage extends UserInputWizardPage {
 			}
 		});
 
-		// f_nameColumn = new TableColumn(f_runTable, SWT.NONE);
-		// f_nameColumn.setText(I18N.msg("flashlight.recommend.dialog.runCol"));
-
 		Dialog.applyDialogFont(container);
 		validate();
 	}

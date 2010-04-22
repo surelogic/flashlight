@@ -81,27 +81,30 @@ public class RunSelectionPage extends UserInputWizardPage {
 
 	@Override
 	public void setVisible(final boolean visible) {
-		f_runTable.removeAll();
-		final String project = f_info.getSelectedProject().getElementName();
-		if (!project.equals(selected)) {
-			selected = project;
-			for (final PrepRunDescription run : f_info.getRuns()) {
-				boolean noneSelected = true;
-				final String runName = run.getDescription().getName();
-				final int idx = runName.lastIndexOf('.');
-				final String runPackage = runName.substring(0, idx);
-				final String runClass = runName.substring(idx + 1);
-				if (JDTUtility.findIType(project, runPackage, runClass) != null) {
-					final TableItem item = new TableItem(f_runTable, SWT.NONE);
-					item.setText(run.getDescription().getName());
-					item.setData(run);
-					if (noneSelected) {
-						noneSelected = false;
-						f_runTable.setSelection(item);
+		if (visible) {
+			final String project = f_info.getSelectedProject().getElementName();
+			if (!project.equals(selected)) {
+				f_runTable.removeAll();
+				selected = project;
+				for (final PrepRunDescription run : f_info.getRuns()) {
+					boolean noneSelected = true;
+					final String runName = run.getDescription().getName();
+					final int idx = runName.lastIndexOf('.');
+					final String runPackage = runName.substring(0, idx);
+					final String runClass = runName.substring(idx + 1);
+					if (JDTUtility.findIType(project, runPackage, runClass) != null) {
+						final TableItem item = new TableItem(f_runTable,
+								SWT.NONE);
+						item.setText(run.getDescription().getName());
+						item.setData(run);
+						if (noneSelected) {
+							noneSelected = false;
+							f_runTable.setSelection(item);
+						}
 					}
 				}
+				validate();
 			}
-			validate();
 		}
 		super.setVisible(visible);
 	}

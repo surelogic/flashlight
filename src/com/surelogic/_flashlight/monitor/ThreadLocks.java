@@ -242,28 +242,34 @@ final class ThreadLocks {
 			return hash;
 		}
 
-		public int _hashCode() {
+		private int _hashCode() {
 			final int prime = 31;
 			int result = 1;
-			result = prime * result + (int) (lockId ^ lockId >>> 32);
+			result = prime * result + hash;
+			result = prime * result + (int) (lockId ^ (lockId >>> 32));
 			result = prime * result
-					+ (parentLock == null ? 0 : parentLock.hashCode());
+					+ ((parentLock == null) ? 0 : parentLock.hashCode());
 			return result;
 		}
 
 		@Override
-		public boolean equals(final Object obj) {
-			final LockStack other = (LockStack) obj;
-			if (lockId != other.lockId) {
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
 				return false;
-			}
+			if (getClass() != obj.getClass())
+				return false;
+			LockStack other = (LockStack) obj;
+			if (hash != other.hash)
+				return false;
+			if (lockId != other.lockId)
+				return false;
 			if (parentLock == null) {
-				if (other.parentLock != null) {
+				if (other.parentLock != null)
 					return false;
-				}
-			} else if (!parentLock.equals(other.parentLock)) {
+			} else if (!parentLock.equals(other.parentLock))
 				return false;
-			}
 			return true;
 		}
 

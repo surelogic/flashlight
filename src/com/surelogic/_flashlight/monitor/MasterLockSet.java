@@ -108,10 +108,12 @@ public class MasterLockSet {
 	static class Graph {
 
 		final Map<Long, Set<Long>> reachable;
+		final Map<Long, Set<Long>> reachedBy;
 		final Set<LockStack> stacks;
 
 		Graph() {
 			reachable = new HashMap<Long, Set<Long>>();
+			reachedBy = new HashMap<Long, Set<Long>>();
 			stacks = new HashSet<LockStack>();
 		}
 
@@ -119,14 +121,23 @@ public class MasterLockSet {
 			stacks.add(stack);
 			final List<Long> ids = new ArrayList<Long>();
 			for (; stack.lockId != LockStack.HEAD; stack = stack.parentLock) {
-				final long id = stack.lockId;
+				ids.add(stack.lockId);
+			}
+			final int len = ids.size();
+			for (int i = 0; i < len; i++) {
+				final long id = ids.get(i);
 				Set<Long> set = reachable.get(id);
 				if (set == null) {
 					set = new HashSet<Long>();
 					reachable.put(id, set);
 				}
-				set.addAll(ids);
-				ids.add(id);
+				set.addAll(ids.subList(0, i));
+				set = reachedBy.get(id);
+				if (set == null) {
+					set = new HashSet<Long>();
+					reachedBy.put(id, set);
+				}
+				set.addAll(ids.subList(i + 1, len));
 			}
 		}
 
@@ -146,6 +157,21 @@ public class MasterLockSet {
 				}
 			}
 			return cycleLocks;
+		}
+
+		/**
+		 * Purges the given lock id from the graph. This will change the
+		 * representation of the existing lock stacks.
+		 * 
+		 * @param lockId
+		 */
+		void purge(final long lockId) {
+			final Set<Long> reached = reachedBy.remove(lockId);
+			if (reached != null) {
+				for (final long id : reached) {
+					reachable.get(id).remove(lockId);
+				}
+			}
 		}
 	}
 
@@ -172,6 +198,7 @@ public class MasterLockSet {
 				}
 			}
 		}
+		graph.purge(receiverId);
 		return fields;
 	}
 
@@ -183,7 +210,7 @@ public class MasterLockSet {
 		return graph.cycles();
 	}
 
-	LockSetInfo getLockSetsInfo2() {
+	LockSetInfo getLockSetInfo() {
 		final Map<Long, Set<Long>> statics = new HashMap<Long, Set<Long>>(
 				staticLockSets.size());
 		for (final Entry<Long, Set<Long>> e : staticLockSets.entrySet()) {

@@ -57,7 +57,6 @@ public class LockSetInfo {
 		Collections.sort(list);
 		for (final String s : list) {
 			b.append(s);
-			b.append('\n');
 		}
 		b.append("Instances:\n");
 		b.append("Active Fields that have a lock set:\n");

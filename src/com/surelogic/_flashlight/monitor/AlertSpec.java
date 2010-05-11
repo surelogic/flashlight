@@ -56,7 +56,7 @@ public class AlertSpec {
 		}
 	}
 
-	List<FieldDef> getEDTFields() {
+	public List<FieldDef> getEDTFields() {
 		return Collections.unmodifiableList(edtFieldDefs);
 	}
 
@@ -68,7 +68,7 @@ public class AlertSpec {
 		return Collections.unmodifiableList(lockSetFieldDefs);
 	}
 
-	String getEDTSpec() {
+	public String getEDTSpec() {
 		return edtFields;
 	}
 

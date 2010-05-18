@@ -1,9 +1,7 @@
 package com.surelogic._flashlight.monitor;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
@@ -48,36 +46,14 @@ public class LockSetInfo {
 	@Override
 	public String toString() {
 		final StringBuilder b = new StringBuilder();
-		b.append("Static Fields:\n");
-		final List<String> list = new ArrayList<String>();
-		for (final Entry<Long, Set<Long>> e1 : statics.entrySet()) {
-			final FieldDef fieldDef = defs.get(e1.getKey());
-			list.add(fieldInfo(fieldDef));
-		}
-		Collections.sort(list);
-		for (final String s : list) {
-			b.append(s);
-		}
-		b.append("Instances:\n");
-		b.append("Active Fields that have a lock set:\n");
-		for (final Entry<Long, Map<Long, Set<Long>>> e : instances.entrySet()) {
-			final FieldDef f = defs.get(e.getKey());
-			for (final Entry<Long, Set<Long>> e1 : e.getValue().entrySet()) {
-				if (!e1.getValue().isEmpty()) {
-					b.append(fieldInfo(f));
-					break;
-				}
-			}
-		}
-		b.append("Active Fields that have no lock sets:\n");
-		for (final Entry<Long, Map<Long, Set<Long>>> e : instances.entrySet()) {
-			final FieldDef f = defs.get(e.getKey());
-			for (final Entry<Long, Set<Long>> e1 : e.getValue().entrySet()) {
-				if (e1.getValue().isEmpty()) {
-					b.append(fieldInfo(f));
-					break;
-				}
-			}
+		b.append(raceInfo());
+		b.append("\n");
+		final Set<FieldDef> activeProtectedFields = activeProtectedFields();
+		if (activeProtectedFields.isEmpty()) {
+			b.append("No actively protected fields:\n");
+		} else {
+			b.append("Actively protected fields:\n");
+			FieldDefs.appendFieldDefs(b, activeProtectedFields);
 		}
 		b.append("Garbage Collected Fields:\n");
 		b.append("Fields With No Lock Set:\n");
@@ -120,6 +96,61 @@ public class LockSetInfo {
 	}
 
 	/**
+	 * The set of fields where potential race conditions have currently been
+	 * observed.
+	 * 
+	 * @return
+	 */
+	Set<FieldDef> potentialRaceConditions() {
+		final Set<FieldDef> raceFields = new HashSet<FieldDef>();
+		for (final Entry<Long, Set<Long>> e : statics.entrySet()) {
+			if (e.getValue().isEmpty()) {
+				final FieldDef fieldDef = defs.get(e.getKey());
+				if (!(fieldDef.isFinal() || fieldDef.isVolatile())) {
+					raceFields.add(fieldDef);
+				}
+			}
+		}
+		for (final Entry<Long, Map<Long, Set<Long>>> e : instances.entrySet()) {
+			final FieldDef f = defs.get(e.getKey());
+			if (!(f.isFinal() || f.isVolatile())) {
+				for (final Entry<Long, Set<Long>> e1 : e.getValue().entrySet()) {
+					if (e1.getValue().isEmpty()) {
+						raceFields.add(f);
+						break;
+					}
+				}
+			}
+		}
+		return raceFields;
+	}
+
+	/**
+	 * The set of fields that are protected by one or more locks at all times.
+	 * This may include non-static fields that are sometimes observed to be
+	 * protected, and sometimes not.
+	 * 
+	 * @return
+	 */
+	Set<FieldDef> activeProtectedFields() {
+		final Set<FieldDef> set = new HashSet<FieldDef>();
+		for (final Entry<Long, Set<Long>> e : statics.entrySet()) {
+			if (!e.getValue().isEmpty()) {
+				set.add(defs.get(e.getKey()));
+			}
+		}
+		for (final Entry<Long, Map<Long, Set<Long>>> e : instances.entrySet()) {
+			for (final Entry<Long, Set<Long>> e1 : e.getValue().entrySet()) {
+				if (!e1.getValue().isEmpty()) {
+					set.add(defs.get(e.getKey()));
+					break;
+				}
+			}
+		}
+		return set;
+	}
+
+	/**
 	 * Return a string displaying lock set information about the given field.
 	 * 
 	 * @param field
@@ -150,4 +181,25 @@ public class LockSetInfo {
 		return String.format("%s - %s\n", field.getQualifiedFieldName(), field
 				.isFinal() ? "final" : "");
 	}
+
+	public String raceInfo() {
+		final StringBuilder b = new StringBuilder();
+		final Set<FieldDef> raceFields = potentialRaceConditions();
+		if (!raceFields.isEmpty()) {
+			b.append("Potential Race Conditions\n");
+			hline(b);
+			FieldDefs.appendFieldDefs(b, raceFields);
+		} else {
+			b.append("No potential race conditions found.\n");
+		}
+		return b.toString();
+	}
+
+	void hline(final StringBuilder b) {
+		for (int i = 0; i < 80; i++) {
+			b.append('-');
+		}
+		b.append('\n');
+	}
+
 }

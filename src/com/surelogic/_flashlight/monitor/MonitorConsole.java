@@ -29,6 +29,7 @@ class MonitorConsole extends Thread {
 	private static final String ALL_ALERTS = "allAlerts";
 	private static final String DEADLOCKS = "deadlocks";
 	private static final String LOCKSETS = "lockSets";
+	private static final String RACECONDITIONS = "show races";
 	private static final String SHARED = "shared";
 	private static final Pattern SET = Pattern.compile("set ([^=]*)=(.*)");
 	private static final Pattern DESCRIBE = Pattern.compile("describe (.*)");
@@ -235,6 +236,9 @@ class MonitorConsole extends Thread {
 						} else if (nextLine.equalsIgnoreCase(LOCKSETS)) {
 							sendResponse(outputStream, Analysis.getAnalysis()
 									.getLockSets().toString());
+						} else if (nextLine.equalsIgnoreCase(RACECONDITIONS)) {
+							sendResponse(outputStream, Analysis.getAnalysis()
+									.getLockSets().raceInfo());
 						} else if (nextLine.equalsIgnoreCase(SHARED)) {
 							sendResponse(outputStream, Analysis.getAnalysis()
 									.getShared().toString());
@@ -359,7 +363,7 @@ class MonitorConsole extends Thread {
 		private String prompt(final BufferedReader inputStream,
 				final BufferedWriter outputStream) {
 			try {
-				outputStream.write(">\r\n");
+				outputStream.write(">");
 				outputStream.flush();
 				return inputStream.readLine(); // blocks
 			} catch (final IOException e) {

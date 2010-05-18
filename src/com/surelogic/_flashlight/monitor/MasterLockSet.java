@@ -210,11 +210,19 @@ public class MasterLockSet {
 		return graph.cycles();
 	}
 
+	/**
+	 * Return a {@link LockSetInfo} showing the lock sets for all fields that
+	 * are actively shared in the program.
+	 * 
+	 * @return
+	 */
 	LockSetInfo getLockSetInfo() {
 		final Map<Long, Set<Long>> statics = new HashMap<Long, Set<Long>>(
 				staticLockSets.size());
 		for (final Entry<Long, Set<Long>> e : staticLockSets.entrySet()) {
-			statics.put(e.getKey(), new HashSet<Long>(e.getValue()));
+			if (shared.isShared(e.getKey())) {
+				statics.put(e.getKey(), new HashSet<Long>(e.getValue()));
+			}
 		}
 		// We reverse the lock set map here, as querying by field is generally
 		// what we want
@@ -225,12 +233,14 @@ public class MasterLockSet {
 			final Map<Long, Set<Long>> recMap = e.getValue();
 			for (final Entry<Long, Set<Long>> e1 : recMap.entrySet()) {
 				final long field = e1.getKey();
-				Map<Long, Set<Long>> fieldMap = instances.get(field);
-				if (fieldMap == null) {
-					fieldMap = new HashMap<Long, Set<Long>>();
-					instances.put(field, fieldMap);
+				if (shared.isShared(receiver, field)) {
+					Map<Long, Set<Long>> fieldMap = instances.get(field);
+					if (fieldMap == null) {
+						fieldMap = new HashMap<Long, Set<Long>>();
+						instances.put(field, fieldMap);
+					}
+					fieldMap.put(receiver, new HashSet<Long>(e1.getValue()));
 				}
-				fieldMap.put(receiver, new HashSet<Long>(e1.getValue()));
 			}
 		}
 		return new LockSetInfo(defs, statics, new HashSet<Long>(lockSetFields),

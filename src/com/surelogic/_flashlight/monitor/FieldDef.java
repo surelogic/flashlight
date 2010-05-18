@@ -3,7 +3,7 @@
  */
 package com.surelogic._flashlight.monitor;
 
-final class FieldDef {
+final class FieldDef implements Comparable<FieldDef> {
 	private final long id;
 	private final String clazz;
 	private final String field;
@@ -79,5 +79,18 @@ final class FieldDef {
 	@Override
 	public String toString() {
 		return getQualifiedFieldName();
+	}
+
+	public int compareTo(final FieldDef o) {
+		if (isStatic && !o.isStatic) {
+			return 1;
+		} else if (!isStatic && o.isStatic) {
+			return -1;
+		}
+		int compareTo = clazz.compareTo(o.clazz);
+		if (compareTo == 0) {
+			compareTo = field.compareTo(o.field);
+		}
+		return compareTo;
 	}
 }

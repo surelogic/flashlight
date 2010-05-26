@@ -1,7 +1,6 @@
 package com.surelogic.flashlight.ant;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
@@ -10,6 +9,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.apache.tools.ant.BuildException;
+import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Task;
 import org.apache.tools.ant.types.CommandlineJava;
 import org.apache.tools.ant.types.Path;
@@ -17,11 +17,20 @@ import org.apache.tools.ant.types.Commandline.Argument;
 import org.apache.tools.ant.types.Path.PathElement;
 
 import com.surelogic._flashlight.common.InstrumentationConstants;
-import com.surelogic.common.AbstractJavaZip;
+import com.surelogic._flashlight.rewriter.config.Configuration.FieldFilter;
 import com.surelogic.common.FileUtility;
+import com.surelogic.flashlight.ant.Instrument.Blacklist;
 import com.surelogic.flashlight.ant.Instrument.Directory;
+import com.surelogic.flashlight.ant.Instrument.FilterPackage;
 import com.surelogic.flashlight.ant.Instrument.Jar;
 
+/**
+ * An ant task that is designed to instrument and execute a run in a way that
+ * allows the Flashlight eclipse client to prepare and view the results.
+ * 
+ * @author nathan
+ * 
+ */
 public class Record extends Task {
 
 	final SimpleDateFormat dateFormat = new SimpleDateFormat(
@@ -51,24 +60,18 @@ public class Record extends Task {
 	 * must refer exclusively to files. The files are scanned but not
 	 * instrumented.
 	 */
-	private Path bootclasspath = null;
+	private BootClassPath bootclasspath;
 
 	private final List<Inspect> inspects;
-	private final List<File> source;
 
 	private final Instrument i;
 	private final CommandlineJava j;
 	private File jarfile;
 	private String classname;
-	private File input;
-	private String inputString;
-	private File output;
-	private String outputProperty;
 
 	public Record() {
 		super();
 		inspects = new ArrayList<Inspect>();
-		source = new ArrayList<File>();
 		i = new Instrument();
 		j = new CommandlineJava();
 	}
@@ -108,12 +111,26 @@ public class Record extends Task {
 
 	}
 
+	public static class BootClassPath extends Path {
+
+		boolean useCurrentPath = false;
+
+		public BootClassPath(final Project project) {
+			super(project);
+		}
+
+		void setUseCurrentPath(final boolean val) {
+			this.useCurrentPath = val;
+		}
+
+	}
+
 	public void setDataDir(final File dataDir) {
 		this.dataDir = dataDir;
 	}
 
-	public Path createBootclasspath() {
-		bootclasspath = i.createBootclasspath();
+	public BootClassPath createBootclasspath() {
+		bootclasspath = new BootClassPath(getProject());
 		return bootclasspath;
 	}
 
@@ -133,22 +150,120 @@ public class Record extends Task {
 		i.setStore(className);
 	}
 
-	/**
-	 * Set the input to use for the task.
-	 * 
-	 * @param input
-	 */
-	public void setInput(final File input) {
-		this.input = input;
+	public void addConfiguredBlacklist(final Blacklist blacklist) {
+		i.addConfiguredBlacklist(blacklist);
 	}
 
-	/**
-	 * Set the string to use as input.
-	 * 
-	 * @param inputString
-	 */
-	public void setInputString(final String inputString) {
-		this.inputString = inputString;
+	public void addConfiguredFilter(final FilterPackage fp) {
+		i.addConfiguredFilter(fp);
+	}
+
+	public Path createMethodFiles() {
+		return i.createMethodFiles();
+	}
+
+	public void setFieldFilter(final FieldFilter value) {
+		i.setFieldFilter(value);
+	}
+
+	public void setInstrumentAfterCall(final boolean flag) {
+		i.setInstrumentAfterCall(flag);
+	}
+
+	public void setInstrumentAfterLock(final boolean flag) {
+		i.setInstrumentAfterLock(flag);
+	}
+
+	public void setInstrumentAfterTryLock(final boolean flag) {
+		i.setInstrumentAfterTryLock(flag);
+	}
+
+	public void setInstrumentAfterUnlock(final boolean flag) {
+		i.setInstrumentAfterUnlock(flag);
+	}
+
+	public void setInstrumentAfterWait(final boolean flag) {
+		i.setInstrumentAfterWait(flag);
+	}
+
+	public void setInstrumentBeforeCall(final boolean flag) {
+		i.setInstrumentBeforeCall(flag);
+	}
+
+	public void setInstrumentBeforeJUCLock(final boolean flag) {
+		i.setInstrumentBeforeJUCLock(flag);
+	}
+
+	public void setInstrumentBeforeWait(final boolean flag) {
+		i.setInstrumentBeforeWait(flag);
+	}
+
+	public void setInstrumentIndirectAccess(final boolean flag) {
+		i.setInstrumentIndirectAccess(flag);
+	}
+
+	public void setRewriteArrayLoad(final boolean flag) {
+		i.setRewriteArrayLoad(flag);
+	}
+
+	public void setRewriteArrayStore(final boolean flag) {
+		i.setRewriteArrayStore(flag);
+	}
+
+	public void setRewriteConstructorExecution(final boolean flag) {
+		i.setRewriteConstructorExecution(flag);
+	}
+
+	public void setRewriteGetfield(final boolean flag) {
+		i.setRewriteGetfield(flag);
+	}
+
+	public void setRewriteGetstatic(final boolean flag) {
+		i.setRewriteGetstatic(flag);
+	}
+
+	public void setRewriteInit(final boolean flag) {
+		i.setRewriteInit(flag);
+	}
+
+	public void setRewriteInvokeinterface(final boolean flag) {
+		i.setRewriteInvokeinterface(flag);
+	}
+
+	public void setRewriteInvokespecial(final boolean flag) {
+		i.setRewriteInvokespecial(flag);
+	}
+
+	public void setRewriteInvokestatic(final boolean flag) {
+		i.setRewriteInvokestatic(flag);
+	}
+
+	public void setRewriteInvokevirtual(final boolean flag) {
+		i.setRewriteInvokevirtual(flag);
+	}
+
+	public void setRewriteMonitorenter(final boolean flag) {
+		i.setRewriteMonitorenter(flag);
+	}
+
+	public void setRewriteMonitorexit(final boolean flag) {
+		i.setRewriteMonitorexit(flag);
+	}
+
+	public void setRewritePutfield(final boolean flag) {
+		i.setRewritePutfield(flag);
+	}
+
+	public void setRewritePutstatic(final boolean flag) {
+		i.setRewritePutstatic(flag);
+	}
+
+	public void setRewriteSynchronizedMethod(final boolean flag) {
+		i.setRewriteSynchronizedMethod(flag);
+	}
+
+	public void setUseDefaultIndirectAccessMethods(final boolean flag) {
+		i.setUseDefaultIndirectAccessMethods(flag);
 	}
 
 	/**
@@ -170,25 +285,6 @@ public class Record extends Task {
 	public void setClassname(final String s) throws BuildException {
 		classname = s;
 		j.setClassname(s);
-	}
-
-	/**
-	 * Set the File to which the output of the process is redirected.
-	 * 
-	 * @param out
-	 */
-	public void setOutput(final File out) {
-		this.output = out;
-	}
-
-	/**
-	 * Set the property name whose value should be set to the output of the
-	 * process.
-	 * 
-	 * @param outputProp
-	 */
-	public void setOutputproperty(final String outputProp) {
-		this.outputProperty = outputProp;
 	}
 
 	public Argument createArg() {
@@ -216,6 +312,7 @@ public class Record extends Task {
 
 	private Path instrumentFiles(final File runFolder) {
 		i.setProject(getProject());
+		i.createBootclasspath().add(bootclasspath);
 		i.setFieldsFile(new File(runFolder, FIELDS_TXT));
 		i.setLogFile(new File(runFolder, INSTRUMENTATION_LOG));
 		i.setSitesFile(new File(runFolder, SITES_TXT));
@@ -258,21 +355,7 @@ public class Record extends Task {
 		}
 		final File externalFolder = new File(runFolder, EXTERNAL_FOLDER);
 		externalFolder.mkdir();
-		// for (final External e : external) {
-		// final File l = e.getLoc();
-		// if (l.isDirectory()) {
-		// final File dest = new File(projectFolder, l.getName());
-		// i.addConfiguredDir(new Directory(l, dest));
-		// final PathElement el = instrumented.createPathElement();
-		// el.setLocation(dest);
-		// } else {
-		// // TODO we might want to check here to make sure this is really
-		// // a jar
-		// i.addConfiguredJar(new Jar(l, externalFolder));
-		// final PathElement el = instrumented.createPathElement();
-		// el.setLocation(new File(projectFolder, l.getName()));
-		// }
-		// }
+
 		i.execute();
 		return instrumented;
 	}
@@ -341,63 +424,6 @@ public class Record extends Task {
 		} catch (final IOException e) {
 			throw new BuildException(e);
 		}
-
 	}
 
-	private static class SourceZip extends AbstractJavaZip<File> {
-
-		@Override
-		protected InputStream getFileContents(final File res)
-				throws IOException {
-			return new FileInputStream(res);
-		}
-
-		@Override
-		protected String getFullPath(final File res) throws IOException {
-			return res.getAbsolutePath();
-		}
-
-		@Override
-		protected String[] getIncludedTypes(final File res) {
-
-			return null;
-		}
-
-		@Override
-		protected String getJavaPackageNameOrNull(final File res) {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		@Override
-		protected File[] getMembers(final File res) throws IOException {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		@Override
-		protected String getName(final File res) {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		@Override
-		protected File getRoot() {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		@Override
-		protected boolean isAccessible(final File res) {
-			// TODO Auto-generated method stub
-			return false;
-		}
-
-		@Override
-		protected boolean isFile(final File res) {
-			// TODO Auto-generated method stub
-			return false;
-		}
-
-	}
 }

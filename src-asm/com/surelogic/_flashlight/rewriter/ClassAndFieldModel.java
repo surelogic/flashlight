@@ -10,9 +10,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.objectweb.asm.Opcodes;
-
-
 /**
  * A simple class model built during the first pass of the classfile
  * instrumentation.  Used to model which fields are in which classes, and to
@@ -109,23 +106,33 @@ final class ClassAndFieldModel {
     }
     
     public void writeFieldInfo(final PrintWriter out) {
-      final boolean isFinal = (access & Opcodes.ACC_FINAL) != 0;
-      final boolean isVolatile = (access & Opcodes.ACC_VOLATILE) != 0;
-      final boolean isStatic = (access & Opcodes.ACC_STATIC) != 0;
-      final int viz = access & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED | Opcodes.ACC_PRIVATE); 
+//      final boolean isFinal = (access & Opcodes.ACC_FINAL) != 0;
+//      final boolean isVolatile = (access & Opcodes.ACC_VOLATILE) != 0;
+//      final boolean isStatic = (access & Opcodes.ACC_STATIC) != 0;
+//      final int viz = access & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED | Opcodes.ACC_PRIVATE); 
+//      out.print(id);
+//      out.print(' ');
+//      out.print(ClassNameUtil.internal2FullyQualified(clazz.name));
+//      out.print(' ');
+//      out.print(name);
+//      out.print(' ');
+//      out.print(isStatic);
+//      out.print(' ');
+//      out.print(isFinal);
+//      out.print(' ');
+//      out.print(isVolatile);
+//      out.print(' ');
+//      out.print(viz);
+//      out.println();
+      
+      // Simplified
       out.print(id);
       out.print(' ');
       out.print(ClassNameUtil.internal2FullyQualified(clazz.name));
       out.print(' ');
       out.print(name);
       out.print(' ');
-      out.print(isStatic);
-      out.print(' ');
-      out.print(isFinal);
-      out.print(' ');
-      out.print(isVolatile);
-      out.print(' ');
-      out.print(viz);
+      out.print(Integer.toString(access, 16).toUpperCase());
       out.println();
     }
   }

@@ -9,6 +9,7 @@ import static com.surelogic._flashlight.common.AttributeType.IN_CLASS;
 import static com.surelogic._flashlight.common.AttributeType.LINE;
 import static com.surelogic._flashlight.common.AttributeType.LOCATION;
 import static com.surelogic._flashlight.common.AttributeType.MEMORY_MB;
+import static com.surelogic._flashlight.common.AttributeType.MODIFIER;
 import static com.surelogic._flashlight.common.AttributeType.PACKAGE;
 import static com.surelogic._flashlight.common.AttributeType.PARENT_ID;
 import static com.surelogic._flashlight.common.AttributeType.READ_LOCK_ID;
@@ -20,14 +21,10 @@ import static com.surelogic._flashlight.common.AttributeType.TIME;
 import static com.surelogic._flashlight.common.AttributeType.TYPE;
 import static com.surelogic._flashlight.common.AttributeType.VALUE;
 import static com.surelogic._flashlight.common.AttributeType.VERSION;
-import static com.surelogic._flashlight.common.AttributeType.VISIBILITY;
 import static com.surelogic._flashlight.common.AttributeType.WALL_CLOCK;
 import static com.surelogic._flashlight.common.AttributeType.WRITE_LOCK_ID;
 import static com.surelogic._flashlight.common.FlagType.CLASS_LOCK;
 import static com.surelogic._flashlight.common.FlagType.GOT_LOCK;
-import static com.surelogic._flashlight.common.FlagType.IS_FINAL;
-import static com.surelogic._flashlight.common.FlagType.IS_STATIC;
-import static com.surelogic._flashlight.common.FlagType.IS_VOLATILE;
 import static com.surelogic._flashlight.common.FlagType.RELEASED_LOCK;
 import static com.surelogic._flashlight.common.FlagType.THIS_LOCK;
 import static com.surelogic._flashlight.common.FlagType.UNDER_CONSTRUCTION;
@@ -156,11 +153,7 @@ public enum EventType {
 			attrs.put(ID, readCompressedLong(in));
 			attrs.put(TYPE, readCompressedLong(in));
 			attrs.put(FIELD, in.readUTF());
-			attrs.put(VISIBILITY, readCompressedInt(in));
-			final int flags = readCompressedInt(in);
-			readFlag(flags, IS_STATIC, attrs);
-			readFlag(flags, IS_FINAL, attrs);
-			readFlag(flags, IS_VOLATILE, attrs);
+			attrs.put(MODIFIER, readCompressedInt(in));
 		}
 	},
 	// ////////////////////////////////////////////

@@ -2,14 +2,12 @@ package com.surelogic.flashlight.common.prep;
 
 import static com.surelogic._flashlight.common.AttributeType.FIELD;
 import static com.surelogic._flashlight.common.AttributeType.ID;
+import static com.surelogic._flashlight.common.AttributeType.MODIFIER;
 import static com.surelogic._flashlight.common.AttributeType.TYPE;
-import static com.surelogic._flashlight.common.AttributeType.VISIBILITY;
-import static com.surelogic._flashlight.common.FlagType.IS_FINAL;
-import static com.surelogic._flashlight.common.FlagType.IS_STATIC;
-import static com.surelogic._flashlight.common.FlagType.IS_VOLATILE;
 import static com.surelogic._flashlight.common.IdConstants.ILLEGAL_FIELD_ID;
 import static com.surelogic._flashlight.common.IdConstants.ILLEGAL_ID;
 
+import java.lang.reflect.Modifier;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -19,6 +17,7 @@ import java.util.logging.Level;
 
 import com.surelogic._flashlight.common.PreppedAttributes;
 import com.surelogic.common.logging.SLLogger;
+import com.surelogic.flashlight.recommend.Visibility;
 
 public class FieldDefinition extends AbstractPrep {
 
@@ -44,15 +43,16 @@ public class FieldDefinition extends AbstractPrep {
 		final long id = attributes.getLong(ID);
 		final long type = attributes.getLong(TYPE);
 		final String field = attributes.getString(FIELD);
-		final int visibility = attributes.getInt(VISIBILITY);
-		final boolean isStatic = attributes.getBoolean(IS_STATIC);
-		final boolean isFinal = attributes.getBoolean(IS_FINAL);
-		final boolean isVolatile = attributes.getBoolean(IS_VOLATILE);
+		final int mod = attributes.getInt(MODIFIER);
 		if (id == ILLEGAL_FIELD_ID || type == ILLEGAL_ID || field == null) {
 			SLLogger.getLogger().log(Level.SEVERE,
 					"Missing id, type, or field in field-definition");
 			return;
 		}
+		final boolean isStatic = Modifier.isStatic(mod);
+		final boolean isFinal = Modifier.isFinal(mod);
+		final boolean isVolatile = Modifier.isVolatile(mod);
+		final int visibility = Visibility.toFlag(mod);
 		insert(id, type, field, isStatic, isFinal, isVolatile, visibility);
 	}
 

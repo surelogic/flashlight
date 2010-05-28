@@ -11,11 +11,12 @@ public enum AttributeType implements IAttributeType {
 			"java-version"), JAVA_VENDOR("java-vendor"), OS_NAME("os-name"), OS_ARCH(
 			"os-arch"), OS_VERSION("os-version"), WALL_CLOCK("wall-clock-time"), PARENT_ID(
 			"parent-id"), TRACE("trace"), START_TIME("start-time"), PACKAGE(
-			"package"), VALUE("value"), VISIBILITY("visibility");
+			"package"), VALUE("value"), VISIBILITY("visibility"), MODIFIER(
+			"mod");
 
 	private final String label;
 
-	private AttributeType(String l) {
+	private AttributeType(final String l) {
 		label = l;
 	}
 
@@ -27,13 +28,13 @@ public enum AttributeType implements IAttributeType {
 		return label;
 	}
 
-	public boolean matches(String name) {
+	public boolean matches(final String name) {
 		return label.equals(name);
 	}
 
 	public static AttributeType getType(String name) {
 		name = name.replace('.', '-');
-		for (AttributeType t : values()) {
+		for (final AttributeType t : values()) {
 			if (t.label().equals(name)) {
 				return t;
 			}

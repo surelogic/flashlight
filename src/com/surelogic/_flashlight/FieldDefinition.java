@@ -1,6 +1,5 @@
 package com.surelogic._flashlight;
 
-import java.lang.reflect.Modifier;
 
 /**
  * This event defines an identifier for a field so that all other events can
@@ -11,19 +10,15 @@ final class FieldDefinition extends DefinitionalEvent {
 	private final long id;
 	private final long declaringType;
 	private final String name;
-	private final boolean isStatic, isFinal, isVolatile;
-	private final int visibility;
+
+	private final int modifier;
 
 	FieldDefinition(final long id, final long declaringType, final String name,
-			final boolean isStatic, final boolean isFinal,
-			final boolean isVolatile, final int viz) {
+			final int mod) {
 		this.id = id;
 		this.declaringType = declaringType;
 		this.name = name;
-		this.isStatic = isStatic;
-		this.isFinal = isFinal;
-		this.isVolatile = isVolatile;
-		this.visibility = viz;
+		this.modifier = mod;
 	}
 
 	FieldDefinition(final ObservedField field) {
@@ -31,10 +26,7 @@ final class FieldDefinition extends DefinitionalEvent {
 		id = field.getId();
 		declaringType = field.getDeclaringType().getId();
 		name = field.getName();
-		isStatic = field.isStatic();
-		isFinal = field.isFinal();
-		isVolatile = field.isVolatile();
-		visibility = field.getVisibility();
+		modifier = field.getModifier();
 	}
 
 	long getId() {
@@ -49,20 +41,8 @@ final class FieldDefinition extends DefinitionalEvent {
 		return name;
 	}
 
-	boolean isStatic() {
-		return isStatic;
-	}
-
-	boolean isFinal() {
-		return isFinal;
-	}
-
-	boolean isVolatile() {
-		return isVolatile;
-	}
-
-	public int getVisibility() {
-		return visibility;
+	public int getModifier() {
+		return modifier;
 	}
 
 	@Override
@@ -77,36 +57,9 @@ final class FieldDefinition extends DefinitionalEvent {
 		Entities.addAttribute("id", id, b);
 		Entities.addAttribute("type", declaringType, b);
 		Entities.addAttribute("field", name, b);
-		Entities.addAttribute("visibility", visibility, b);
-		if (isStatic) {
-			Entities.addAttribute("static", "yes", b);
-		}
-		if (isFinal) {
-			Entities.addAttribute("final", "yes", b);
-		}
-		if (isVolatile) {
-			Entities.addAttribute("volatile", "yes", b);
-		}
+		Entities.addAttribute("mod", modifier, b);
 		b.append("/>");
 		return b.toString();
-	}
-
-	/**
-	 * Return the 'visibility' value of a field from the modifier.
-	 * 
-	 * @param mod
-	 * @return
-	 */
-	public static int fromModifier(final int mod) {
-		if (Modifier.isPrivate(mod)) {
-			return Modifier.PRIVATE;
-		} else if (Modifier.isProtected(mod)) {
-			return Modifier.PROTECTED;
-		} else if (Modifier.isPublic(mod)) {
-			return Modifier.PUBLIC;
-		} else {
-			return 0;
-		}
 	}
 
 }

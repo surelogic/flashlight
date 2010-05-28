@@ -117,24 +117,19 @@ final class Depository extends Thread {
 		final int id;
 		final String declaringType;
 		final String name;
-		final boolean isStatic, isFinal, isVolatile;
-		final int visibility;
+		final int modifier;
 
 		FieldInfo(final StringTable strings, final String line) {
 			final StringTokenizer st = new StringTokenizer(line);
 			id = Integer.parseInt(st.nextToken());
 			declaringType = strings.intern(st.nextToken());
 			name = strings.intern(st.nextToken());
-			isStatic = Boolean.parseBoolean(st.nextToken());
-			isFinal = Boolean.parseBoolean(st.nextToken());
-			isVolatile = Boolean.parseBoolean(st.nextToken());
-			visibility = FieldDefinition.fromModifier(Integer.parseInt(st
-					.nextToken()));
+			modifier = Integer.parseInt(st.nextToken(), 16);
 		}
 
 		void accept(final long declaringType, final EventVisitor strategy) {
 			strategy.visit(new FieldDefinition(id, declaringType, name,
-					isStatic, isFinal, isVolatile, visibility));
+					modifier));
 		}
 	}
 

@@ -44,24 +44,10 @@ abstract class ObservedField {
 		return f_fieldName;
 	}
 
-	private final boolean f_isFinal;
+	private final int f_modifier;
 
-	boolean isFinal() {
-		return f_isFinal;
-	}
-
-	abstract boolean isStatic();
-
-	private final boolean f_isVolatile;
-
-	boolean isVolatile() {
-		return f_isVolatile;
-	}
-
-	private final int f_visibility;
-
-	int getVisibility() {
-		return f_visibility;
+	int getModifier() {
+		return f_modifier;
 	}
 
 	static final SingleThreadedField getSingleThreadedEventAbout(
@@ -74,8 +60,7 @@ abstract class ObservedField {
 	}
 
 	private ObservedField(final ClassPhantomReference declaringType,
-			final String fieldName, final boolean isFinal,
-			final boolean isVolatile, final int visibility) {
+			final String fieldName, final int modifier) {
 		/*
 		 * We create a lot of instances that we don't use to allow getInstance()
 		 * to run concurrently. It is possible, however unlikely, that we could
@@ -84,9 +69,7 @@ abstract class ObservedField {
 		f_id = f_observedFieldCount.getAndDecrement();
 		f_declaringType = declaringType;
 		f_fieldName = fieldName;
-		f_isFinal = isFinal;
-		f_isVolatile = isVolatile;
-		f_visibility = visibility;
+		f_modifier = modifier;
 	}
 
 	/**
@@ -157,13 +140,9 @@ abstract class ObservedField {
 			return null;
 		}
 		final int mod = field.getModifiers();
-		final boolean isFinal = Modifier.isFinal(mod);
-		final boolean isVolatile = Modifier.isVolatile(mod);
-		final int visibility = FieldDefinition.fromModifier(mod);
 		final ObservedField result = Modifier.isStatic(mod) ? new Static(
-				pDeclaringType, fieldName, isFinal, isVolatile, visibility)
-				: new Instance(pDeclaringType, fieldName, isFinal, isVolatile,
-						visibility);
+				pDeclaringType, fieldName, mod) : new Instance(pDeclaringType,
+				fieldName, mod);
 		final ObservedField sResult = fieldNameToField.putIfAbsent(fieldName,
 				result);
 		if (sResult != null) {
@@ -220,28 +199,18 @@ abstract class ObservedField {
 
 	private static class Instance extends ObservedField {
 		public Instance(final ClassPhantomReference declaringType,
-				final String fieldName, final boolean isFinal,
-				final boolean isVolatile, final int visibility) {
-			super(declaringType, fieldName, isFinal, isVolatile, visibility);
+				final String fieldName, final int modifier) {
+			super(declaringType, fieldName, modifier);
 		}
 
-		@Override
-		boolean isStatic() {
-			return false;
-		}
 	}
 
 	private static class Static extends ObservedField {
 		public Static(final ClassPhantomReference declaringType,
-				final String fieldName, final boolean isFinal,
-				final boolean isVolatile, final int visibility) {
-			super(declaringType, fieldName, isFinal, isVolatile, visibility);
+				final String fieldName, final int modifier) {
+			super(declaringType, fieldName, modifier);
 		}
 
-		@Override
-		boolean isStatic() {
-			return true;
-		}
 	}
 
 	public static IFieldInfo getFieldInfo() {

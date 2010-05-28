@@ -1,7 +1,11 @@
 package com.surelogic._flashlight;
 
 import java.lang.reflect.Field;
-import java.util.*;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
@@ -16,11 +20,12 @@ public class TestObservedField extends TestCase {
 	 * {@link ObservedField#getInstance(Field, BlockingQueue)} uses
 	 * {@link BlockingQueue#put(Object)} which can block.
 	 */
-	private static final BlockingQueue<List<Event>> Q = 
-		new ArrayBlockingQueue<List<Event>>(4);
+	private static final BlockingQueue<List<Event>> Q = new ArrayBlockingQueue<List<Event>>(
+			4);
 
-	private static final Store.State state = new Store.State(Q, new ArrayList<Event>(), false);
-	
+	private static final Store.State state = new Store.State(Q,
+			new ArrayList<Event>(), false);
+
 	private final static int THREADS = 30;
 
 	static volatile int JUNK = 10;
@@ -39,7 +44,7 @@ public class TestObservedField extends TestCase {
 		public void run() {
 			try {
 				startGate.await();
-			} catch (InterruptedException e) {
+			} catch (final InterruptedException e) {
 				// ignore, just go
 			}
 			try {
@@ -47,9 +52,11 @@ public class TestObservedField extends TestCase {
 				for (int i = 0; i < 10; i++) {
 					of = ObservedField.getInstance(f_threads, state);
 					l.add(of);
-					if (last != null)
-						if (last != of)
+					if (last != null) {
+						if (last != of) {
 							failureInProgThreadChecks = true;
+						}
+					}
 					last = of;
 				}
 			} finally {
@@ -66,7 +73,7 @@ public class TestObservedField extends TestCase {
 			f_junk = this.getClass().getDeclaredField("JUNK");
 			f_startGate = this.getClass().getDeclaredField("startGate");
 			f_endGate = this.getClass().getDeclaredField("endGate");
-		} catch (NoSuchFieldException e1) {
+		} catch (final NoSuchFieldException e1) {
 			fail();
 		}
 		/*
@@ -75,7 +82,7 @@ public class TestObservedField extends TestCase {
 		 * problem.
 		 */
 		for (int i = 0; i < THREADS; i++) {
-			Thread t = new ProgThread();
+			final Thread t = new ProgThread();
 			t.start();
 		}
 		startGate.countDown();
@@ -86,37 +93,39 @@ public class TestObservedField extends TestCase {
 					failureInProgThreadChecks);
 
 			ObservedField of = ObservedField.getInstance(f_threads, state);
-			assertTrue(of.isFinal());
-			assertTrue(of.isStatic());
-			assertFalse(of.isVolatile());
+
+			assertTrue(Modifier.isFinal(of.getModifier()));
+			assertTrue(Modifier.isStatic(of.getModifier()));
+			assertTrue(Modifier.isVolatile(of.getModifier()));
 			assertEquals("com.surelogic._flashlight.TestObservedField", of
 					.getDeclaringType().getName());
 
-			for (ObservedField f : l)
+			for (final ObservedField f : l) {
 				assertSame(of, f);
+			}
 
 			of = ObservedField.getInstance(f_junk, state);
-			assertFalse(of.isFinal());
-			assertTrue(of.isStatic());
-			assertTrue(of.isVolatile());
+			assertTrue(Modifier.isFinal(of.getModifier()));
+			assertTrue(Modifier.isStatic(of.getModifier()));
+			assertTrue(Modifier.isVolatile(of.getModifier()));
 			assertEquals("com.surelogic._flashlight.TestObservedField", of
 					.getDeclaringType().getName());
 
 			of = ObservedField.getInstance(f_startGate, state);
-			assertTrue(of.isFinal());
-			assertFalse(of.isStatic());
-			assertFalse(of.isVolatile());
+			assertTrue(Modifier.isFinal(of.getModifier()));
+			assertTrue(Modifier.isStatic(of.getModifier()));
+			assertTrue(Modifier.isVolatile(of.getModifier()));
 			assertEquals("com.surelogic._flashlight.TestObservedField", of
 					.getDeclaringType().getName());
 
 			of = ObservedField.getInstance(f_endGate, state);
-			assertFalse(of.isFinal());
-			assertFalse(of.isStatic());
-			assertTrue(of.isVolatile());
+			assertTrue(Modifier.isFinal(of.getModifier()));
+			assertTrue(Modifier.isStatic(of.getModifier()));
+			assertTrue(Modifier.isVolatile(of.getModifier()));
 			assertEquals("com.surelogic._flashlight.TestObservedField", of
 					.getDeclaringType().getName());
 
-		} catch (InterruptedException e) {
+		} catch (final InterruptedException e) {
 			fail("interrupted during end gate await");
 		}
 	}

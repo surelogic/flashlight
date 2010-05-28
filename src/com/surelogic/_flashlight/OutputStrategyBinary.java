@@ -41,9 +41,6 @@ import static com.surelogic._flashlight.common.EventType.Trace_Node;
 import static com.surelogic._flashlight.common.EventType.Under_Construction;
 import static com.surelogic._flashlight.common.FlagType.CLASS_LOCK;
 import static com.surelogic._flashlight.common.FlagType.GOT_LOCK;
-import static com.surelogic._flashlight.common.FlagType.IS_FINAL;
-import static com.surelogic._flashlight.common.FlagType.IS_STATIC;
-import static com.surelogic._flashlight.common.FlagType.IS_VOLATILE;
 import static com.surelogic._flashlight.common.FlagType.RELEASED_LOCK;
 import static com.surelogic._flashlight.common.FlagType.THIS_LOCK;
 
@@ -226,18 +223,7 @@ public class OutputStrategyBinary extends EventVisitor {
 			writeCompressedMaybeNegativeLong(e.getId());
 			writeCompressedLong(e.getTypeId());
 			writeUTF(e.getName());
-			writeCompressedInt(e.getVisibility());
-			int flags = 0;
-			if (e.isStatic()) {
-				flags |= IS_STATIC.mask();
-			}
-			if (e.isFinal()) {
-				flags |= IS_FINAL.mask();
-			}
-			if (e.isVolatile()) {
-				flags |= IS_VOLATILE.mask();
-			}
-			writeCompressedInt(flags);
+			writeCompressedInt(e.getModifier());
 		} catch (final IOException ioe) {
 			handleIOException(ioe);
 		}

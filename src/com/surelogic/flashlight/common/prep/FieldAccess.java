@@ -43,7 +43,8 @@ public abstract class FieldAccess extends RangedEvent {
 		}
 		if (receiver != ILLEGAL_RECEIVER_ID && f_begin <= receiver
 				&& receiver <= f_end) {
-			if (f_scanResults.isThreadedField(field, receiver)) {
+			if (f_scanResults.isThreadedField(field, receiver)
+					&& !f_scanResults.isSynthetic(field)) {
 				insert(nanoTime, inThread, trace, field, receiver,
 						underConstruction);
 				inserted++;

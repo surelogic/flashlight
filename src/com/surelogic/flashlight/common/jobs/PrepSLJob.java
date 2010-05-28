@@ -1,5 +1,7 @@
 package com.surelogic.flashlight.common.jobs;
 
+import gnu.trove.TLongHashSet;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -142,7 +144,7 @@ public final class PrepSLJob extends AbstractSLJob {
 
 		monitor.begin(PRE_SCAN_WORK + DROP_CONSTRAINT_WORK
 				+ PERSIST_RUN_DESCRIPTION_WORK + SETUP_WORK + PREP_WORK
-				+ FLUSH_WORK + (EACH_POST_PREP * postPrepWork.length)
+				+ FLUSH_WORK + EACH_POST_PREP * postPrepWork.length
 				+ ADD_CONSTRAINT_WORK);
 
 		try {
@@ -295,14 +297,16 @@ public final class PrepSLJob extends AbstractSLJob {
 									PREP_WORK);
 							final int numWindows = (int) (preScanInfo
 									.getMaxReceiverId() / f_windowSize)
-									+ ((preScanInfo.getMaxReceiverId()
-											% f_windowSize > 0) ? 1 : 0);
+									+ (preScanInfo.getMaxReceiverId()
+											% f_windowSize > 0 ? 1 : 0);
+							final TLongHashSet synthetics = scanResults
+									.getSynthetics();
 							final IRangePrep[] rpElements = getRangeHandlers();
 							for (int j = 0; j < numWindows; j++) {
 								final long begin = f_windowSize * j;
 								final long end = f_windowSize * (j + 1) - 1;
 								final ScanRawFileFieldsPreScan preScan = new ScanRawFileFieldsPreScan(
-										rprepMonitor, begin, end);
+										rprepMonitor, synthetics, begin, end);
 								final InputStream infoStream = RawFileUtility
 										.getInputStreamFor(f_dataFile);
 								try {

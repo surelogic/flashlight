@@ -21,6 +21,8 @@ import com.surelogic.flashlight.recommend.Visibility;
 
 public class FieldDefinition extends AbstractPrep {
 
+	private static final int SYNTHETIC = 0x00001000;
+
 	private static final String f_psQ = "INSERT INTO FIELD VALUES (?, ?, ?, ?, ?, ?, ?)";
 
 	private PreparedStatement f_ps;
@@ -53,7 +55,9 @@ public class FieldDefinition extends AbstractPrep {
 		final boolean isFinal = Modifier.isFinal(mod);
 		final boolean isVolatile = Modifier.isVolatile(mod);
 		final int visibility = Visibility.toFlag(mod);
-		insert(id, type, field, isStatic, isFinal, isVolatile, visibility);
+		if ((mod & SYNTHETIC) == 0 || !isStatic) {// FIXME
+			insert(id, type, field, isStatic, isFinal, isVolatile, visibility);
+		}
 	}
 
 	private void insert(final long id, final long type, final String field,
@@ -80,8 +84,7 @@ public class FieldDefinition extends AbstractPrep {
 
 	@Override
 	public void printStats() {
-		// TODO Auto-generated method stub
-
+		// Do nothing
 	}
 
 	@Override

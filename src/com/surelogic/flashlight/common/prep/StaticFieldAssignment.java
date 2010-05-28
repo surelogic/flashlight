@@ -1,7 +1,6 @@
 package com.surelogic.flashlight.common.prep;
 
 import static com.surelogic._flashlight.common.IdConstants.ILLEGAL_FIELD_ID;
-import static com.surelogic._flashlight.common.IdConstants.ILLEGAL_RECEIVER_ID;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -14,14 +13,15 @@ import com.surelogic._flashlight.common.AttributeType;
 import com.surelogic._flashlight.common.PreppedAttributes;
 import com.surelogic.common.logging.SLLogger;
 
-public class FieldAssignment extends RangedEvent {
+public class StaticFieldAssignment extends AbstractPrep {
 	private static final String f_psQ = "INSERT INTO FIELDASSIGNMENT VALUES (?, ?, ?)";
-
 	private PreparedStatement f_ps;
 	private int count;
-
 	private long skipped, inserted;
 
+	private ScanRawFilePreScan f_scanResults;
+
+	@Override
 	public void flush(final long endTime) throws SQLException {
 		if (count > 0) {
 			f_ps.executeBatch();
@@ -30,6 +30,7 @@ public class FieldAssignment extends RangedEvent {
 		f_ps.close();
 	}
 
+	@Override
 	public void printStats() {
 		System.out.println(getClass().getName() + " Skipped   = " + skipped);
 		System.out.println(getClass().getName() + " Inserted  = " + inserted);
@@ -39,9 +40,10 @@ public class FieldAssignment extends RangedEvent {
 
 	@Override
 	public void setup(final Connection c, final Timestamp start,
-			final long startNS, final ScanRawFileFieldsPreScan scanResults,
-			final long begin, final long end) throws SQLException {
-		super.setup(c, start, startNS, scanResults, begin, end);
+			final long startNS, final ScanRawFilePreScan scanResults)
+			throws SQLException {
+		super.setup(c, start, startNS, scanResults);
+		f_scanResults = scanResults;
 		f_ps = c.prepareStatement(f_psQ);
 	}
 
@@ -55,19 +57,14 @@ public class FieldAssignment extends RangedEvent {
 		final Long receiver = attributes.containsKey(AttributeType.RECEIVER) ? attributes
 				.getLong(AttributeType.RECEIVER)
 				: null;
-		if (receiver == null) {
+		if (receiver != null) {
 			return;
 		}
-		if (field == ILLEGAL_FIELD_ID || receiver == ILLEGAL_RECEIVER_ID) {
+		if (field == ILLEGAL_FIELD_ID) {
 			SLLogger.getLogger().log(Level.SEVERE,
 					"Missing field or receiver in field-assignment");
 		}
-		if (receiver == ILLEGAL_RECEIVER_ID || receiver < f_begin
-				|| receiver > f_end) {
-			return;
-		}
-		if (!f_scanResults.couldBeReferencedObject(receiver)
-				|| f_scanResults.isSynthetic(field)) {
+		if (f_scanResults.isSynthetic(field)) {
 			skipped++;
 			return;
 		}
@@ -91,5 +88,4 @@ public class FieldAssignment extends RangedEvent {
 			count = 0;
 		}
 	}
-
 }

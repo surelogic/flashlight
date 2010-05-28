@@ -21,12 +21,14 @@ public class ScanRawFileFieldsPreScan extends AbstractDataScan {
 	private final long f_end;
 
 	private final TLongHashSet f_referencedObjects = new TLongHashSet();
+
 	/*
 	 * Collection of non-static fields accessed by multiple threads and the
 	 * objects that contain them, keyed by field
 	 */
 	private final TLongObjectHashMap<TLongHashSet> f_usedFields = new TLongObjectHashMap<TLongHashSet>();
 	private final TLongObjectHashMap<TLongLongHashMap> f_currentFields = new TLongObjectHashMap<TLongLongHashMap>();
+	private final TLongHashSet f_synthetics;
 
 	private void useObject(final long id) {
 		if (f_start <= id && id <= f_end) {
@@ -35,10 +37,11 @@ public class ScanRawFileFieldsPreScan extends AbstractDataScan {
 	}
 
 	public ScanRawFileFieldsPreScan(final SLProgressMonitor monitor,
-			final long start, final long end) {
+			final TLongHashSet synthetics, final long start, final long end) {
 		super(monitor);
 		f_start = start;
 		f_end = end;
+		f_synthetics = synthetics;
 	}
 
 	/*
@@ -173,6 +176,10 @@ public class ScanRawFileFieldsPreScan extends AbstractDataScan {
 	 */
 	public boolean couldBeReferencedObject(final long id) {
 		return f_referencedObjects.contains(id);
+	}
+
+	public boolean isSynthetic(final long field) {
+		return f_synthetics.contains(field);
 	}
 
 	private void logState() {

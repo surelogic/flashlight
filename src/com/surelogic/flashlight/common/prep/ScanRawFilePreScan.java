@@ -16,6 +16,8 @@ import com.surelogic.common.logging.SLLogger;
 
 public final class ScanRawFilePreScan extends AbstractDataScan {
 
+	private static final int SYNTHETIC = 0x00001000;
+
 	private boolean f_firstTimeEventFound = false;
 
 	public ScanRawFilePreScan(final SLProgressMonitor monitor) {
@@ -44,6 +46,27 @@ public final class ScanRawFilePreScan extends AbstractDataScan {
 	 */
 	public long getEndNanoTime() {
 		return f_endTime;
+	}
+
+	private final TLongHashSet f_synthetics = new TLongHashSet();
+
+	/**
+	 * Returns the full set of synthetic fields.
+	 * 
+	 * @return
+	 */
+	public TLongHashSet getSynthetics() {
+		return f_synthetics;
+	}
+
+	/**
+	 * Returns whether or not this field was defined as a synthetic field.
+	 * 
+	 * @param field
+	 * @return
+	 */
+	public boolean isSynthetic(final long field) {
+		return f_synthetics.contains(field);
 	}
 
 	private final TLongLongHashMap f_rwLocks = new TLongLongHashMap();
@@ -125,6 +148,11 @@ public final class ScanRawFilePreScan extends AbstractDataScan {
 			final long wLock = attrs.getLong(AttributeType.WRITE_LOCK_ID);
 			f_rwLocks.put(rLock, id);
 			f_rwLocks.put(wLock, id);
+		} else if ("field-definition".equals(name)) {
+			final int mod = attrs.getInt(AttributeType.MODIFIER);
+			if ((mod & SYNTHETIC) != 0) {
+				f_synthetics.add(attrs.getLong(AttributeType.ID));
+			}
 		}
 	}
 

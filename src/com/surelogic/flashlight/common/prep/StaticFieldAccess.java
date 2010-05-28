@@ -40,15 +40,16 @@ public abstract class StaticFieldAccess extends Event {
 			final long field = attributes.getLong(FIELD);
 			final boolean underConstruction = attributes
 					.getBoolean(UNDER_CONSTRUCTION);
-			if ((nanoTime == ILLEGAL_ID) || (inThread == ILLEGAL_ID)
-					|| (trace == ILLEGAL_ID) || (field == ILLEGAL_FIELD_ID)) {
+			if (nanoTime == ILLEGAL_ID || inThread == ILLEGAL_ID
+					|| trace == ILLEGAL_ID || field == ILLEGAL_FIELD_ID) {
 				SLLogger.getLogger().log(
 						Level.SEVERE,
 						"Missing nano-time, thread, site, or field in "
 								+ getXMLElementName());
 				return;
 			}
-			if (f_scanResults.isThreadedStaticField(field)) {
+			if (!f_scanResults.isSynthetic(field)
+					&& f_scanResults.isThreadedStaticField(field)) {
 				insert(nanoTime, inThread, trace, field, receiver,
 						underConstruction);
 				inserted++;
@@ -97,8 +98,8 @@ public abstract class StaticFieldAccess extends Event {
 	public void printStats() {
 		System.out.println(getClass().getName() + " Skipped   = " + skipped);
 		System.out.println(getClass().getName() + " Inserted  = " + inserted);
-		System.out.println(getClass().getName() + " %Inserted = "
-				+ (inserted * 100.0 / (skipped + inserted)));
+		System.out.println(getClass().getName() + " %Inserted = " + inserted
+				* 100.0 / (skipped + inserted));
 	}
 
 	@Override

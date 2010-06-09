@@ -88,7 +88,7 @@ public final class LogDialog extends Dialog {
 				event.styles = result.toArray(new StyleRange[result.size()]);
 			}
 		});
-		text.setText(FileUtility.getFileContents(f_log));
+		text.setText(FileUtility.getFileContentsAsString(f_log));
 		return c;
 	}
 

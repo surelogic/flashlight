@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -34,9 +35,10 @@ class FieldDefs extends HashMap<Long, FieldDef> {
 				final int id = Integer.parseInt(st.nextToken());
 				final String clazz = st.nextToken();
 				final String field = st.nextToken();
-				final boolean isS = Boolean.parseBoolean(st.nextToken());
-				final boolean isF = Boolean.parseBoolean(st.nextToken());
-				final boolean isV = Boolean.parseBoolean(st.nextToken());
+				final int mod = Integer.parseInt(st.nextToken(), 16);
+				final boolean isS = Modifier.isStatic(mod);
+				final boolean isF = Modifier.isFinal(mod);
+				final boolean isV = Modifier.isVolatile(mod);
 				final FieldDef f = new FieldDef(id, clazz, field, isS, isF, isV);
 				put(f.getId(), f);
 			}

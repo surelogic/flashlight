@@ -3,6 +3,7 @@ package com.surelogic.flashlight.common.jobs;
 import com.surelogic.common.jobs.AbstractSLJob;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
+import com.surelogic.common.license.SLLicenseProduct;
 import com.surelogic.common.license.SLLicenseUtility;
 import com.surelogic.common.serviceability.UsageMeter;
 import com.surelogic.flashlight.common.model.RunManager;
@@ -17,7 +18,7 @@ public final class RefreshRunManagerSLJob extends AbstractSLJob {
 		monitor.begin();
 		try {
 			final SLStatus failed = SLLicenseUtility.validateSLJob(
-					SLLicenseUtility.FLASHLIGHT_SUBJECT, monitor);
+					SLLicenseProduct.FLASHLIGHT, monitor);
 			if (failed != null) {
 				return failed;
 			}

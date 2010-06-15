@@ -3,13 +3,13 @@ package com.surelogic.flashlight.schema;
 import java.io.InputStream;
 import java.net.URL;
 
-import com.surelogic.common.license.SLLicenseUtility;
+import com.surelogic.common.license.SLLicenseProduct;
 
 public class FlashlightSchemaData extends AbstractSchemaData {
 	public FlashlightSchemaData() {
 		super("com.surelogic.flashlight.schema",
 			  Thread.currentThread().getContextClassLoader(),
-			  SLLicenseUtility.FLASHLIGHT_SUBJECT);
+			  SLLicenseProduct.FLASHLIGHT);
 	}
 
 	protected Object newInstance(String qname) 

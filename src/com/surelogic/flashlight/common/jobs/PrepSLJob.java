@@ -26,6 +26,7 @@ import com.surelogic.common.jobs.AbstractSLJob;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.common.jobs.SubSLProgressMonitor;
+import com.surelogic.common.license.SLLicenseProduct;
 import com.surelogic.common.license.SLLicenseUtility;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.common.serviceability.UsageMeter;
@@ -149,7 +150,7 @@ public final class PrepSLJob extends AbstractSLJob {
 
 		try {
 			final SLStatus failed = SLLicenseUtility.validateSLJob(
-					SLLicenseUtility.FLASHLIGHT_SUBJECT, monitor);
+					SLLicenseProduct.FLASHLIGHT, monitor);
 			if (failed != null) {
 				return failed;
 			}

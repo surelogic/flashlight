@@ -69,6 +69,7 @@ import com.surelogic.common.eclipse.MemoryUtility;
 import com.surelogic.common.eclipse.SourceZip;
 import com.surelogic.common.eclipse.logging.SLEclipseStatusUtility;
 import com.surelogic.common.i18n.I18N;
+import com.surelogic.common.license.SLLicenseProduct;
 import com.surelogic.common.license.SLLicenseUtility;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.client.eclipse.Activator;
@@ -174,7 +175,7 @@ public final class FlashlightVMRunner implements IVMRunner {
 	public void run(final VMRunnerConfiguration configuration,
 			final ILaunch launch, final IProgressMonitor monitor)
 			throws CoreException {
-		if (!SLLicenseUtility.validate(SLLicenseUtility.FLASHLIGHT_SUBJECT)) {
+		if (!SLLicenseUtility.validate(SLLicenseProduct.FLASHLIGHT)) {
 			return;
 		}
 

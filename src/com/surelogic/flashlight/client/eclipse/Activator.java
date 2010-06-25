@@ -12,8 +12,10 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 
 import com.surelogic.common.FileUtility;
+import com.surelogic.common.eclipse.EclipseUtility;
 import com.surelogic.common.eclipse.logging.SLEclipseStatusUtility;
 import com.surelogic.common.i18n.I18N;
+import com.surelogic.common.license.SLLicenseProduct;
 import com.surelogic.common.serviceability.UsageMeter;
 import com.surelogic.flashlight.client.eclipse.jobs.FlashlightCleanupJob;
 import com.surelogic.flashlight.client.eclipse.jobs.PromptToPrepAllRawData;
@@ -73,6 +75,8 @@ public class Activator extends AbstractUIPlugin {
 		final File dataDir = new File(path);
 		FileUtility.createDirectory(dataDir);
 		new FlashlightCleanupJob().schedule();
+		EclipseUtility.getProductReleaseDateJob(SLLicenseProduct.FLASHLIGHT,
+				this).schedule();
 		RunManager.getInstance().setDataDirectory(dataDir);
 		PromptToPrepAllRawData.start();
 	}

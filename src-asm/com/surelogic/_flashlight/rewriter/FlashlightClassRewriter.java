@@ -199,13 +199,13 @@ final class FlashlightClassRewriter extends ClassAdapter {
       newInterfaces = interfaces;
       updateSuperCall = false;
       mustImplementIIdObject = false;
-    } else if (superName.equals(FlashlightNames.JAVA_LANG_OBJECT)) {
-      /* Class extends object, make it extend IdObject instead */
-      newSuperName = FlashlightNames.ID_OBJECT;
-      newInterfaces = interfaces;
-      updateSuperCall = true;
-      mustImplementIIdObject = false;
-    } else if (!classModel.isInstrumentedClass(superName)) {
+//    } else if (superName.equals(FlashlightNames.JAVA_LANG_OBJECT)) {
+//      /* Class extends object, make it extend IdObject instead */
+//      newSuperName = FlashlightNames.ID_OBJECT;
+//      newInterfaces = interfaces;
+//      updateSuperCall = true;
+//      mustImplementIIdObject = false;
+    } else if (superName.equals(FlashlightNames.JAVA_LANG_OBJECT) || !classModel.isInstrumentedClass(superName)) {
       /* Class extends a class that is not being instrumented.  Add the
        * IIdObject interface, and we need to add the methods to implement it.
        */

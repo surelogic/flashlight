@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassAdapter;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
@@ -286,10 +287,12 @@ final class FlashlightClassRewriter extends ClassAdapter {
   @Override
   public void visitEnd() {
     // Insert the withinClass field (always) and inClass field (when needed)
-    FieldVisitor fv = cv.visitField(
+    final FieldVisitor fv = cv.visitField(
         FlashlightNames.FLASHLIGHT_PHANTOM_CLASS_OBJECT_ACCESS,
         FlashlightNames.FLASHLIGHT_PHANTOM_CLASS_OBJECT,
         FlashlightNames.FLASHLIGHT_PHANTOM_CLASS_OBJECT_DESC, null, null);
+    final AnnotationVisitor av = fv.visitAnnotation("Ljavax/xml/bind/annotation/XmlTransient;", true);
+    av.visitEnd();
     fv.visitEnd();
     
     // Add the class initializer if needed
@@ -353,6 +356,8 @@ final class FlashlightClassRewriter extends ClassAdapter {
         FlashlightNames.FLASHLIGHT_PHANTOM_OBJECT_ACCESS,
         FlashlightNames.FLASHLIGHT_PHANTOM_OBJECT,
         FlashlightNames.FLASHLIGHT_PHANTOM_OBJECT_DESC, null, null);
+    final AnnotationVisitor av = fv.visitAnnotation("Ljavax/xml/bind/annotation/XmlTransient;", true);
+    av.visitEnd();
     fv.visitEnd();
     
     final MethodVisitor identityHashCode =

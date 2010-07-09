@@ -292,7 +292,7 @@ public final class Store {
 			 * directory as constructed by the executing IDE.
 			 */
 			final SimpleDateFormat dateFormat = new SimpleDateFormat(
-					"-yyyy.MM.dd-'at'-HH.mm.ss.SSS");
+					InstrumentationConstants.DATE_FORMAT);
 			final String dateOverride = StoreConfiguration.getDateOverride();
 			Date startTime;
 			if (dateOverride == null) {

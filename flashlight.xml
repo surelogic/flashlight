@@ -13,17 +13,16 @@
 
 	<property name="asm.jar" value="${lib}/asm-3.2.jar" />
 	<property name="asm-commons.jar" value="${lib}/asm-commons-3.2.jar" />
-	<property name="servlet.jar" value="${lib}/servlet-2_5-api.jar" />
 
 	<property name="junit.jar" value="${lib}/junit-4.3.1.jar" />
 
 	<property name="flashlight-all.jar" value="${basedir}/flashlight-all.jar" />
 	<property name="flashlight-runtime.jar" value="${basedir}/flashlight-runtime.jar" />
 	<property name="flashlight-runtime-4.jar" value="${basedir}/flashlight-runtime.java1.4.jar" />
-	<property name="flashlight-servlet.jar" value="${basedir}/flashlight-servlet.jar" />
+
 	<property name="flashlight-rewriter.jar" value="${basedir}/flashlight-rewriter.jar" />
     <property name="java1.4.lib" value="${basedir}/lib/1.4"/>
-  
+
   <path id="jaxb.classpath">
     <pathelement path="${lib}/jaxb1-impl.jar"/>
     <pathelement path="${lib}/jaxb-api.jar"/>
@@ -36,7 +35,6 @@
 	<target name="clean">
 		<delete file="${flashlight-all.jar}"/>
 		<delete file="${flashlight-runtime.jar}"/>
-		<delete file="${flashlight-servlet.jar}"/>
 		<delete file="${flashlight-rewriter.jar}"/>
 	</target>
 
@@ -52,7 +50,6 @@
 			  <path refid="jaxb.classpath"/> 
 				<pathelement location="${asm.jar}" />
 				<pathelement location="${asm-commons.jar}" />
-				<pathelement location="${servlet.jar}" />
 			</classpath>
 		</javac>
 	  <copy todir="${classes}/resources">
@@ -106,16 +103,6 @@
 		</java>
 		<copy file="${flashlight-runtime-4.jar}" todir="${basedir}/../flashlight-client-eclipse/lib"/>	  	  
 	</target>
-	
-	<target name="build-servlet-jar">
-		<jar destfile="${flashlight-servlet.jar}" basedir="${classes}">
-			<include name="**/com/surelogic/_flashlight/servlet/*" />
-			<manifest>
-			  <attribute name="Manifest-Version" value="1.0"/>
-				<attribute name="Class-Path" value="flashlight-runtime.jar"/>
-			</manifest>
-	  </jar>
-	</target>
 
 	<target name="build-rewriter-jar">
 		<jar destfile="${flashlight-rewriter.jar}" basedir="${classes}">
@@ -130,12 +117,12 @@
 	  </jar>
 	  <copy file="${flashlight-rewriter.jar}" todir="${basedir}/../flashlight-client-eclipse/lib"/>	  
 	</target>
-	
-	<target name="build-jars-eclipse" depends="build-all-jar, build-runtime-jar, build-servlet-jar, build-rewriter-jar, translate-runtime-jar" />
 
-	<target name="build-jars" depends="compile, build-all-jar, build-runtime-jar, build-servlet-jar, build-rewriter-jar, translate-runtime-jar" />
+	<target name="build-jars-eclipse" depends="build-all-jar, build-runtime-jar,  build-rewriter-jar, translate-runtime-jar" />
+
+	<target name="build-jars" depends="compile, build-all-jar, build-runtime-jar,  build-rewriter-jar, translate-runtime-jar" />
 	
-	<target name="build-jars-no-1.4" depends="compile, build-all-jar, build-runtime-jar, build-servlet-jar, build-rewriter-jar" />
+	<target name="build-jars-no-1.4" depends="compile, build-all-jar, build-runtime-jar, build-rewriter-jar" />
 
 	<target name="compile-test-code" depends="build-jars">
 		<delete dir="${classes}" />

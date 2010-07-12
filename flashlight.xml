@@ -31,7 +31,7 @@
     <pathelement path="${lib}/jsr173_1.0_api.jar"/>
     <pathelement path="${lib}/activation.jar"/>
   </path>
-    
+
 	<target name="clean">
 		<delete file="${flashlight-all.jar}"/>
 		<delete file="${flashlight-runtime.jar}"/>

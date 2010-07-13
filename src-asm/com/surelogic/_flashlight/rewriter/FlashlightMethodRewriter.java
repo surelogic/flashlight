@@ -102,12 +102,6 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
   private final boolean isSynthetic;
   
   /**
-   * Should the super constructor call be updated from {@code java.lang.Object}
-   * to {@code com.surelogic._flashlight.rewriter.runtime.IdObject}.
-   */
-  private final boolean updateSuperCall;
-  
-  /**
    * Must the class that contains the method implement the IIdObject interface.
    * If so, we need to update the constructors to initialize the field
    * flashlight$phantomObject.
@@ -239,13 +233,13 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
       final SiteIdFactory csif, final RewriteMessenger msg,
       final ClassAndFieldModel model, 
       final IndirectAccessMethods am, final boolean inInt,
-      final boolean update, final boolean mustImpl, final String fname,
+      final boolean mustImpl, final String fname,
       final String nameInternal, final String nameFullyQualified,
       final String superInternal,
       final Set<MethodCallWrapper> wrappers) {
     final FlashlightMethodRewriter methodRewriter =
       new FlashlightMethodRewriter(access, mname, desc, numLocals, mv, conf, csif, msg,
-          model, am, inInt, update, mustImpl, fname, nameInternal, nameFullyQualified,
+          model, am, inInt, mustImpl, fname, nameInternal, nameFullyQualified,
           superInternal, wrappers);
     return methodRewriter;
   }
@@ -274,7 +268,7 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
       final SiteIdFactory csif, final RewriteMessenger msg,
       final ClassAndFieldModel model,
       final IndirectAccessMethods am, final boolean inInt,
-      final boolean update, final boolean mustImpl, final String sourceFileName,
+      final boolean mustImpl, final String sourceFileName,
       final String nameInternal, final String classBeingAnalyzedFullyQualified,
       final String superInternal,
       final Set<MethodCallWrapper> wrappers) {
@@ -285,7 +279,6 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     classModel = model;
     accessMethods = am;
     inInterface = inInt;
-    updateSuperCall = update;
     mustImplementIIdObject = mustImpl;
     wasSynchronized = (access & Opcodes.ACC_SYNCHRONIZED) != 0;
     isStatic = (access & Opcodes.ACC_STATIC) != 0;
@@ -455,23 +448,12 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     
     /* We don't instrument calls from within synthetic methods */
     if (isSynthetic) {
-      /*
-       * Bug 1612: We need to check if the current method is a constructor and
-       * whether the called method is the call to the super constructor. In this
-       * case, we may still have to update the call if we changed the superclass
-       * of the class being instrumented.
+      /* Still track the last init call.
        */
-      boolean outputOriginalCall = true;
       if (name.equals(FlashlightNames.CONSTRUCTOR)) {
         lastInitOwner = owner;
-        if (isConstructor && stateMachine != null) {
-          outputOriginalCall = false;
-          updateSuperCall(owner, name, desc);
-        }
       }
-      if (outputOriginalCall) {
-        mv.visitMethodInsn(opcode, owner, name, desc);
-      }
+      mv.visitMethodInsn(opcode, owner, name, desc);
     } else {
       /* Check if we are calling an method makes indirect use of 
        * aggregated state.
@@ -503,19 +485,12 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
               outputOriginalCall = false;
               rewriteConstructorCall(indirectAccess, owner, name, desc);
             } else {
-              if (isConstructor && stateMachine != null) {
-                outputOriginalCall = false;
-                updateSuperCall(owner, name, desc);
-              }
+              // output the original instruction
             }
           }
         } else {
           if (name.equals(FlashlightNames.CONSTRUCTOR)) {
             lastInitOwner = owner;
-            if (isConstructor && stateMachine != null) {
-              outputOriginalCall = false;
-              updateSuperCall(owner, name, desc);
-            }
           }
         }      
         if (outputOriginalCall) {
@@ -944,19 +919,10 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     // ...
   }
   
-  private void updateSuperCall(
-      final String owner, final String name, final String desc) {
-    if (owner.equals(FlashlightNames.JAVA_LANG_OBJECT) && updateSuperCall) {
-      mv.visitMethodInsn(Opcodes.INVOKESPECIAL, FlashlightNames.ID_OBJECT, name, desc);
-    } else {
-      mv.visitMethodInsn(Opcodes.INVOKESPECIAL, owner, name, desc);
-    }
-  }
-  
   private void rewriteConstructorCall(final IndirectAccessMethod indirectAccess,
       final String owner, final String name, final String desc) {
     if (isConstructor && stateMachine != null) {
-      updateSuperCall(owner, name, desc);
+      mv.visitMethodInsn(Opcodes.INVOKESPECIAL, owner, name, desc);
     } else {
       if (indirectAccess != null) {
         final IndirectAccessMethodInstrumentation method =

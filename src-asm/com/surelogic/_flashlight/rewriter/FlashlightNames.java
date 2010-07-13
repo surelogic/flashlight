@@ -141,7 +141,7 @@ public final class FlashlightNames {
 	 */
 	public static final String FLASHLIGHT_PHANTOM_OBJECT = "flashlight$phantomObject";
 	public static final int FLASHLIGHT_PHANTOM_OBJECT_ACCESS = Opcodes.ACC_PRIVATE
-			| Opcodes.ACC_FINAL | Opcodes.ACC_SYNTHETIC;
+			| Opcodes.ACC_FINAL | Opcodes.ACC_TRANSIENT | Opcodes.ACC_SYNTHETIC;
 	public static final String FLASHLIGHT_PHANTOM_OBJECT_DESC = "Lcom/surelogic/_flashlight/ObjectPhantomReference;";
 
 	/* Must be kept in sync with IdConstants.SYNTHETIC_METHOD_SITE_ID */

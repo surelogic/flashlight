@@ -78,12 +78,6 @@ final class FlashlightClassRewriter extends ClassAdapter {
   private boolean needsClassInitializer = true;
   
   /**
-   * Should the super constructor call be updated from {@code java.lang.Object}
-   * to {@code com.surelogic._flashlight.rewriter.runtime.IdObject}.
-   */
-  private boolean updateSuperCall;
-  
-  /**
    * Do we need to implement the IIdObject interface?  This is set by the
    * {@link #visit} method.
    */
@@ -190,37 +184,24 @@ final class FlashlightClassRewriter extends ClassAdapter {
     superClassInternal = superName;
     
     /* We have to modify root classes to insert object id information. We only
-     * care about those classes that extend object, or whose superclass is a
+     * care about those classes that extend object, or those  whose superclass is a
      * class not being instrumented.
      */
-    final String newSuperName;
     final String[] newInterfaces;
     if (isInterface) { // Interface, leave alone
-      newSuperName = superName;
       newInterfaces = interfaces;
-      updateSuperCall = false;
       mustImplementIIdObject = false;
-//    } else if (superName.equals(FlashlightNames.JAVA_LANG_OBJECT)) {
-//      /* Class extends object, make it extend IdObject instead */
-//      newSuperName = FlashlightNames.ID_OBJECT;
-//      newInterfaces = interfaces;
-//      updateSuperCall = true;
-//      mustImplementIIdObject = false;
     } else if (superName.equals(FlashlightNames.JAVA_LANG_OBJECT) || !classModel.isInstrumentedClass(superName)) {
-      /* Class extends a class that is not being instrumented.  Add the
+      /* Class extends Object or a class that is not being instrumented.  Add the
        * IIdObject interface, and we need to add the methods to implement it.
        */
-      newSuperName = superName;
       newInterfaces = new String[interfaces.length+1];
       newInterfaces[0] = FlashlightNames.I_ID_OBJECT;
       System.arraycopy(interfaces, 0, newInterfaces, 1, interfaces.length);
-      updateSuperCall = false;
       mustImplementIIdObject = true;
     } else {
       /* Class already has a parent that implements IIdObject */
-      newSuperName = superName;
       newInterfaces = interfaces;
-      updateSuperCall = false;      
       mustImplementIIdObject = false;
     }
     
@@ -238,7 +219,7 @@ final class FlashlightClassRewriter extends ClassAdapter {
      * uncovering this problem.
      */
     final int newAccess = isInterface ? access & ~Opcodes.ACC_SUPER : access;
-    cv.visit(version, newAccess, name, signature, newSuperName, newInterfaces);
+    cv.visit(version, newAccess, name, signature, superName, newInterfaces);
   }
 
   @Override
@@ -279,7 +260,7 @@ final class FlashlightClassRewriter extends ClassAdapter {
       final int numLocals = numLocalsInteger == null ? 0 : numLocalsInteger.intValue();
       return FlashlightMethodRewriter.create(access,
           name, desc, numLocals, cse, config, callSiteIdFactory, messenger, classModel, accessMethods, isInterface,
-          updateSuperCall, mustImplementIIdObject, sourceFileName, classNameInternal, classNameFullyQualified,
+          mustImplementIIdObject, sourceFileName, classNameInternal, classNameFullyQualified,
           superClassInternal, wrapperMethods);
     }
   }
@@ -340,7 +321,7 @@ final class FlashlightClassRewriter extends ClassAdapter {
      */
     final MethodVisitor rewriter_mv = FlashlightMethodRewriter.create(Opcodes.ACC_STATIC,
         CLASS_INITIALIZER, CLASS_INITIALIZER_DESC, 0, mv, config, callSiteIdFactory, messenger,
-        classModel, accessMethods, isInterface, updateSuperCall, mustImplementIIdObject, sourceFileName,
+        classModel, accessMethods, isInterface, mustImplementIIdObject, sourceFileName,
         classNameInternal, classNameFullyQualified, superClassInternal, wrapperMethods);
     rewriter_mv.visitCode(); // start code section
     rewriter_mv.visitInsn(Opcodes.RETURN); // empty method, just return

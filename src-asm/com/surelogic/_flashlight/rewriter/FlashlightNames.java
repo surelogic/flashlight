@@ -119,9 +119,17 @@ public final class FlashlightNames {
 	public static final String UNLOCK = "unlock";
 
 	public static final String JAVA_LANG_CLASS = "java/lang/Class";
-	public static final Method FOR_NAME = Method
-			.getMethod("Class forName(String)");
-
+	public static final Method FOR_NAME = Method.getMethod("Class forName(String)");
+	
+	public static final String JAVA_IO_SERIALIZABLE = "java/io/Serializable";
+	public static final Method READ_OBJECT = Method.getMethod("void readObject(java.io.ObjectInputStream)");
+	public static final int READ_OBJECT_ACCESS = Opcodes.ACC_PRIVATE;
+	public static final Method READ_OBJECT_NO_DATA = Method.getMethod("void readObjectNoData()");
+	
+	public static final String JAVA_IO_IOEXCEPTION = "java/io/IOException";
+	public static final String JAVA_LANG_CLASSNOTFOUNDEXCEPTION = "java/lang/ClassNotFoundException";
+	public static final String JAVA_IO_OBJECTSTREAMEXCEPTION = "java/io/ObjectStreamException";
+	
 	/*
 	 * We add the static final field "flashlight$phantomClassObject" to store
 	 * the Class object of the class for use in logging calls. We make the field

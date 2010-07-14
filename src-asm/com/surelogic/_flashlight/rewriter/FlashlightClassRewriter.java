@@ -15,6 +15,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.CodeSizeEvaluator;
 
+import com.surelogic._flashlight.rewriter.ClassAndFieldModel.ClassNotFoundException;
 import com.surelogic._flashlight.rewriter.config.Configuration;
 
 /**
@@ -82,6 +83,16 @@ final class FlashlightClassRewriter extends ClassAdapter {
    * {@link #visit} method.
    */
   private boolean mustImplementIIdObject = false;
+  
+  /**
+   * Do we need to fix the serialization "read" methods?
+   */
+  private boolean mustFixReadObject = false;
+  
+  /**
+   * Does the original class implementation have a readObject method?
+   */
+  private boolean hasReadObjectMethod = false;
   
   /**
    * The wrapper methods that we need to generate to instrument calls to
@@ -199,6 +210,17 @@ final class FlashlightClassRewriter extends ClassAdapter {
       newInterfaces[0] = FlashlightNames.I_ID_OBJECT;
       System.arraycopy(interfaces, 0, newInterfaces, 1, interfaces.length);
       mustImplementIIdObject = true;
+      
+      // Now test for serializable
+      try {
+        if (classModel.implementsInterface(name, FlashlightNames.JAVA_IO_SERIALIZABLE)) {
+          mustFixReadObject = true;
+          System.out.println("Class " + name + " is serializable");
+        }
+      } catch (final ClassNotFoundException e) {
+        messenger.verbose("In class " + classNameFullyQualified
+            + ": Couldn't find class " + e.getMissingClass() + ".");
+      }
     } else {
       /* Class already has a parent that implements IIdObject */
       newInterfaces = interfaces;
@@ -237,6 +259,11 @@ final class FlashlightClassRewriter extends ClassAdapter {
     if (isClassInit) {
       needsClassInitializer = false;
     }
+    
+    final boolean isReadObject = 
+      name.equals(FlashlightNames.READ_OBJECT.getName()) &&
+      desc.equals(FlashlightNames.READ_OBJECT.getDescriptor());
+    hasReadObjectMethod |= isReadObject;
     
     final MethodIdentifier methodId = new MethodIdentifier(name, desc);
     if (methodsToIgnore.contains(methodId)) {
@@ -279,6 +306,11 @@ final class FlashlightClassRewriter extends ClassAdapter {
     // Add the class initializer if needed
     if (needsClassInitializer) {
       addClassInitializer();
+    }
+    
+    // Add readObject() if needed
+    if (mustFixReadObject && !hasReadObjectMethod) {
+      addReadObjectMethod();
     }
     
     // Add the wrapper methods
@@ -327,6 +359,60 @@ final class FlashlightClassRewriter extends ClassAdapter {
     rewriter_mv.visitInsn(Opcodes.RETURN); // empty method, just return
     rewriter_mv.visitMaxs(0, 0); // Don't need any stack or variables
     rewriter_mv.visitEnd(); // end of method
+  }
+  
+  private void addReadObjectMethod() {
+    // Mark as synthetic because it does not appear in the original source code
+    final MethodVisitor mv =
+      cv.visitMethod(FlashlightNames.READ_OBJECT_ACCESS, // | Opcodes.ACC_SYNTHETIC,
+          FlashlightNames.READ_OBJECT.getName(),
+          FlashlightNames.READ_OBJECT.getDescriptor(), null, 
+          new String[] {
+            FlashlightNames.JAVA_IO_IOEXCEPTION,
+            FlashlightNames.JAVA_LANG_CLASSNOTFOUNDEXCEPTION });
+    
+    mv.visitCode();
+    // []
+    ByteCodeUtils.pushClass(mv, classNameInternal);
+    // [C.class]
+    mv.visitLdcInsn(FlashlightNames.FLASHLIGHT_PHANTOM_OBJECT);
+    // [C.class, "flashlight$phantomObject"]
+    mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Class", "getDeclaredField", "(Ljava/lang/String;)Ljava/lang/reflect/Field;");
+    // [Field]
+    mv.visitInsn(Opcodes.DUP);
+    // [Field, Field]
+    mv.visitInsn(Opcodes.DUP);
+    // [Field, Field, Field]
+    mv.visitInsn(Opcodes.ICONST_1);
+    // [Field, Field, Field, true]
+    mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/reflect/Field", "setAccessible", "(Z)V");
+    // [Field, Field]
+    mv.visitVarInsn(Opcodes.ALOAD, 0);
+    // [Field, Field, this]
+        
+    mv.visitVarInsn(Opcodes.ALOAD, 0);
+    // [Field, Field, this, this]
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.ID_OBJECT,
+        FlashlightNames.GET_NEW_ID.getName(), FlashlightNames.GET_NEW_ID.getDescriptor());
+    // [Field, Field, this, this, id (x2)]
+    ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.GET_OBJECT_PHANTOM);
+    // [Field, Field, this, phantomRef]
+    
+    mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/reflect/Field", "set", "(Ljava/lang/Object;Ljava/lang/Object;)V");
+    // [Field]    
+    mv.visitInsn(Opcodes.ICONST_0);
+    // [Field, false]
+    mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/reflect/Field", "setAccessible", "(Z)V");
+    // []
+
+    mv.visitVarInsn(Opcodes.ALOAD, 1);
+    // [ObjectInputStream]
+    mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/io/ObjectInputStream", "defaultReadObject", "()V");
+    // []
+
+    mv.visitInsn(Opcodes.RETURN);
+    mv.visitMaxs(6, 2);
+    mv.visitEnd();
   }
 
   

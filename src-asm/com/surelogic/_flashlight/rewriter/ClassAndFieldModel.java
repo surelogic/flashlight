@@ -274,6 +274,18 @@ final class ClassAndFieldModel {
       return false;
     }
     
+    /**
+     * Test if the class directly implements an interface
+     */
+    public boolean implementsInterface(final String interfaceName) {
+      for (final String i : interfaces) {
+        if (i.equals(interfaceName)) {
+          return true;
+        }
+      }
+      return false;
+    }
+    
 //    public void writeReferencedFields(final PrintWriter out) {
 //      final String fqName = ClassNameUtil.internal2FullyQualified(name);
 //      for (final Field f : fields.values()) {
@@ -415,6 +427,41 @@ final class ClassAndFieldModel {
       
       // Fail!
       throw new FieldNotFoundException(className, fieldName);
+    }
+  }
+  
+  /**
+   * Test if a class or one of its ancestors implements a given interface.
+   * 
+   * @param className
+   *          The internal name of the class to test.
+   * @param interfaceName
+   *          The name of the interface to test for.
+   * @return Whether the class, or one of its ancestors, implements the given
+   *         interface.
+   * @exception ClassNotFoundException
+   *              Thrown if the class or one of its ancestors is missing from
+   *              the model.
+   */
+  public boolean implementsInterface(final String className, final String interfaceName)
+      throws ClassNotFoundException {
+    // Try the class itself first, then the superclass, then any interfaces
+    
+    final Clazz c = getClass(className);
+    if (c.implementsInterface(interfaceName)) {
+      return true;
+    } else {
+      if ((c.superClass == null) ? false : implementsInterface(c.superClass, interfaceName)) {
+        return true;
+      } else {
+        // Try the interfaces
+        for (final String i : c.getInterfaces()) {
+          if (implementsInterface(i, interfaceName)) {
+            return true;
+          }
+        }
+        return false;
+      }
     }
   }
 

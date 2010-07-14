@@ -290,8 +290,8 @@ public final class FlashlightVMRunner implements IVMRunner {
 					if (old.getName().equals(zipFile.getName())) {
 						final IJavaProject jp = JDTUtility
 								.getJavaProject(project.getName());
-						if (JDTUtility.projectUpdatedSince(jp, old
-								.lastModified())) {
+						if (JDTUtility.projectUpdatedSince(jp,
+								old.lastModified())) {
 							orig = null;
 						} else {
 							orig = old;
@@ -302,9 +302,7 @@ public final class FlashlightVMRunner implements IVMRunner {
 				if (orig != null) {
 					FileUtility.copy(orig, zipFile);
 				} else {
-					srcZip
-							.generateSourceZip(zipFile.getAbsolutePath(),
-									project);
+					srcZip.generateSourceZip(zipFile.getAbsolutePath(), project);
 				}
 			} catch (final IOException e) {
 				SLLogger.getLogger().log(
@@ -347,8 +345,7 @@ public final class FlashlightVMRunner implements IVMRunner {
 				if (potentialChild.startsWith(test)) {
 					sb.append("Classpath entry ");
 					sb.append(potentialParent);
-					sb
-							.append(" is instrumented and nests the instrumented classpath entry ");
+					sb.append(" is instrumented and nests the instrumented classpath entry ");
 					sb.append(potentialChild);
 					sb.append("  ");
 				}
@@ -366,8 +363,9 @@ public final class FlashlightVMRunner implements IVMRunner {
 
 			// Read the property file
 			final Properties flashlightProps = new Properties();
-			final File flashlightPropFile = new File(System
-					.getProperty("user.home"), "flashlight-rewriter.properties");
+			final File flashlightPropFile = new File(
+					System.getProperty("user.home"),
+					"flashlight-rewriter.properties");
 			boolean failed = false;
 			try {
 				flashlightProps.load(new FileInputStream(flashlightPropFile));
@@ -386,10 +384,10 @@ public final class FlashlightVMRunner implements IVMRunner {
 				configBuilder = new ConfigurationBuilder(flashlightProps);
 			}
 
-			// Set whether or not we are a monitor explicitly
-			configBuilder
-					.setStoreClassName(isMonitor ? FlashlightNames.FLASHLIGHT_MONITOR_STORE
-							: FlashlightNames.FLASHLIGHT_STORE);
+			if (isMonitor) {
+				configBuilder
+						.setStoreClassName(FlashlightNames.FLASHLIGHT_MONITOR_STORE);
+			}
 			try {
 				configBuilder
 						.setIndirectUseDefault(launch
@@ -424,8 +422,8 @@ public final class FlashlightVMRunner implements IVMRunner {
 
 			try {
 				final String filterName = launch.getAttribute(
-						PreferenceConstants.P_FIELD_FILTER, FieldFilter.NONE
-								.name());
+						PreferenceConstants.P_FIELD_FILTER,
+						FieldFilter.NONE.name());
 				configBuilder.setFieldFilter(Enum.valueOf(FieldFilter.class,
 						filterName));
 
@@ -441,9 +439,9 @@ public final class FlashlightVMRunner implements IVMRunner {
 				// eat it
 			}
 
-			final RewriteManager manager = new VMRewriteManager(configBuilder
-					.getConfiguration(), messenger, fieldsFile, sitesFile,
-					progress);
+			final RewriteManager manager = new VMRewriteManager(
+					configBuilder.getConfiguration(), messenger, fieldsFile,
+					sitesFile, progress);
 			// Init the RewriteManager
 			initializeRewriteManager(manager, entryMap);
 
@@ -470,8 +468,7 @@ public final class FlashlightVMRunner implements IVMRunner {
 									sb2.append(ClassNameUtil
 											.internal2FullyQualified(entry
 													.getKey()));
-									sb2
-											.append(" appears on the classpath more than once, only some entries are instrumented, and the first entry is NOT instrumented: ");
+									sb2.append(" appears on the classpath more than once, only some entries are instrumented, and the first entry is NOT instrumented: ");
 									sb2.append(entry.getValue().toString());
 									sb2.append("  ");
 								}
@@ -659,32 +656,32 @@ public final class FlashlightVMRunner implements IVMRunner {
 			final Preferences prefs = Activator.getDefault()
 					.getPluginPreferences();
 			final int rawQSize = launch.getAttribute(
-					PreferenceConstants.P_RAWQ_SIZE, prefs
-							.getInt(PreferenceConstants.P_RAWQ_SIZE));
+					PreferenceConstants.P_RAWQ_SIZE,
+					prefs.getInt(PreferenceConstants.P_RAWQ_SIZE));
 			final int refSize = launch.getAttribute(
-					PreferenceConstants.P_REFINERY_SIZE, prefs
-							.getInt(PreferenceConstants.P_REFINERY_SIZE));
+					PreferenceConstants.P_REFINERY_SIZE,
+					prefs.getInt(PreferenceConstants.P_REFINERY_SIZE));
 			final int outQSize = launch.getAttribute(
-					PreferenceConstants.P_OUTQ_SIZE, prefs
-							.getInt(PreferenceConstants.P_OUTQ_SIZE));
+					PreferenceConstants.P_OUTQ_SIZE,
+					prefs.getInt(PreferenceConstants.P_OUTQ_SIZE));
 			final int cPort = launch.getAttribute(
-					PreferenceConstants.P_CONSOLE_PORT, prefs
-							.getInt(PreferenceConstants.P_CONSOLE_PORT));
+					PreferenceConstants.P_CONSOLE_PORT,
+					prefs.getInt(PreferenceConstants.P_CONSOLE_PORT));
 			final String useBinary = launch.getAttribute(
-					PreferenceConstants.P_OUTPUT_TYPE, prefs
-							.getString(PreferenceConstants.P_OUTPUT_TYPE));
+					PreferenceConstants.P_OUTPUT_TYPE,
+					prefs.getString(PreferenceConstants.P_OUTPUT_TYPE));
 			final boolean compress = launch.getAttribute(
-					PreferenceConstants.P_COMPRESS_OUTPUT, prefs
-							.getBoolean(PreferenceConstants.P_COMPRESS_OUTPUT));
+					PreferenceConstants.P_COMPRESS_OUTPUT,
+					prefs.getBoolean(PreferenceConstants.P_COMPRESS_OUTPUT));
 			final String collectionType = launch.getAttribute(
-					PreferenceConstants.P_COLLECTION_TYPE, prefs
-							.getString(PreferenceConstants.P_COLLECTION_TYPE));
+					PreferenceConstants.P_COLLECTION_TYPE,
+					prefs.getString(PreferenceConstants.P_COLLECTION_TYPE));
 			final boolean useSpy = launch.getAttribute(
-					PreferenceConstants.P_USE_SPY, prefs
-							.getBoolean(PreferenceConstants.P_USE_SPY));
+					PreferenceConstants.P_USE_SPY,
+					prefs.getBoolean(PreferenceConstants.P_USE_SPY));
 			final boolean useRefinery = launch.getAttribute(
-					PreferenceConstants.P_USE_REFINERY, prefs
-							.getBoolean(PreferenceConstants.P_USE_REFINERY));
+					PreferenceConstants.P_USE_REFINERY,
+					prefs.getBoolean(PreferenceConstants.P_USE_REFINERY));
 
 			newVmArgsList.add("-DFL_RUN=" + mainTypeName);
 			newVmArgsList.add("-D" + FL_DIR + "="
@@ -954,8 +951,8 @@ public final class FlashlightVMRunner implements IVMRunner {
 				if (isFromProject(projectLoc, entry)) {
 					final File newEntry = buildInstrumentedName(entry,
 							projectLoc, isJar);
-					classpathEntryMap.put(entry, new Entry(newEntry
-							.getAbsolutePath(), isJar));
+					classpathEntryMap.put(entry,
+							new Entry(newEntry.getAbsolutePath(), isJar));
 					interestingProjects.add(project);
 					foundProject = true;
 					break;
@@ -972,8 +969,8 @@ public final class FlashlightVMRunner implements IVMRunner {
 				// new File(externalOutputDir, isJar ? correctedEntry :
 				// (correctedEntry + ".jar"));
 				new File(externalOutputDir, correctedEntry);
-				classpathEntryMap.put(entry, new Entry(newLocation
-						.getAbsolutePath(), isJar));
+				classpathEntryMap.put(entry,
+						new Entry(newLocation.getAbsolutePath(), isJar));
 			}
 		}
 	}

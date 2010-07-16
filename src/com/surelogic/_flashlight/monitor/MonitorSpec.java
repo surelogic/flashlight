@@ -5,6 +5,9 @@ import java.util.Set;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
+import com.surelogic._flashlight.FieldDef;
+import com.surelogic._flashlight.FieldDefs;
+
 /**
  * 
  * @author nathan

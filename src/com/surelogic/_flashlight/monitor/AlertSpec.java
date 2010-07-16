@@ -5,6 +5,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import com.surelogic._flashlight.FieldDef;
+import com.surelogic._flashlight.FieldDefs;
+
 /**
  * The conditions in which the user should be notified by the monitor.
  * 

@@ -22,6 +22,7 @@ import javax.swing.SwingUtilities;
 
 import com.surelogic._flashlight.ClassPhantomReference;
 import com.surelogic._flashlight.EventVisitor;
+import com.surelogic._flashlight.FieldDefs;
 import com.surelogic._flashlight.IdPhantomReference;
 import com.surelogic._flashlight.ObjectPhantomReference;
 import com.surelogic._flashlight.Phantom;
@@ -65,8 +66,8 @@ public final class MonitorStore {
 
 	/**
 	 * Flags if helpful debug information should be output to the console log.
-	 * This flag generates a lot of output and should only be set to {@code
-	 * true} for small test programs.
+	 * This flag generates a lot of output and should only be set to
+	 * {@code true} for small test programs.
 	 */
 	public static final boolean DEBUG = false;
 
@@ -265,7 +266,14 @@ public final class MonitorStore {
 		// Check if FL is on (and shutoff)
 		if (IdConstants.enableFlashlightToggle
 				|| !StoreDelegate.FL_OFF.getAndSet(true)) {
-			f_defs = new FieldDefs();
+			FieldDefs defs;
+			try {
+				defs = new FieldDefs();
+			} catch (IOException e) {
+				defs = null;
+				logAProblem(e.getMessage(), e);
+			}
+			f_defs = defs;
 			f_lockNames = new ConcurrentReferenceHashMap<Long, String>(
 					ReferenceType.STRONG, ReferenceType.STRONG,
 					ConcurrentReferenceHashMap.STANDARD_HASH);
@@ -280,8 +288,8 @@ public final class MonitorStore {
 			 * Initialize final static fields. If Flashlight is off these fields
 			 * are all set to null to save memory.
 			 */
-			final File flashlightDir = new File(StoreConfiguration
-					.getDirectory());
+			final File flashlightDir = new File(
+					StoreConfiguration.getDirectory());
 			if (!flashlightDir.exists()) {
 				flashlightDir.mkdirs();
 			}
@@ -342,8 +350,8 @@ public final class MonitorStore {
 			if (StoreConfiguration.debugOn()) {
 				System.err.println("Output XML = " + !outType.isBinary());
 			}
-			final File dataFile = EventVisitor.createStreamFile(fileName
-					.toString(), outType);
+			final File dataFile = EventVisitor.createStreamFile(
+					fileName.toString(), outType);
 
 			tl_withinStore = new ThreadLocal<State>() {
 				@Override
@@ -360,8 +368,8 @@ public final class MonitorStore {
 				protected ThreadLocks initialValue() {
 					final ThreadPhantomReference thread = tl_withinStore.get().thread;
 					final ThreadLocks ls = new ThreadLocks(thread.getName(),
-							thread.getId(), SwingUtilities
-									.isEventDispatchThread(), f_rwLocks);
+							thread.getId(),
+							SwingUtilities.isEventDispatchThread(), f_rwLocks);
 					f_lockSets.add(ls);
 					return ls;
 				}
@@ -469,8 +477,8 @@ public final class MonitorStore {
 	 *            uninstrumented class.
 	 * @param declaringClass
 	 *            The class object for the class that declares the field being
-	 *            access when {@code dcPhantom} is null} . If the {@code
-	 *            dcPhantom} is non- null} then this is null} .
+	 *            access when {@code dcPhantom} is null} . If the
+	 *            {@code dcPhantom} is non- null} then this is null} .
 	 */
 	public static void instanceFieldAccess(final boolean read,
 			final Object receiver, final int fieldID, final long siteId,
@@ -543,8 +551,8 @@ public final class MonitorStore {
 	 *            uninstrumented class.
 	 * @param declaringClass
 	 *            The class object for the class that declares the field being
-	 *            access when {@code dcPhantom} is null} . If the {@code
-	 *            dcPhantom} is non- null} then this is null} .
+	 *            access when {@code dcPhantom} is null} . If the
+	 *            {@code dcPhantom} is non- null} then this is null} .
 	 */
 	public static void staticFieldAccess(final boolean read, final int fieldID,
 			final long siteId, final ClassPhantomReference dcPhantom,
@@ -947,15 +955,15 @@ public final class MonitorStore {
 	 * This method also dispatches this event properly if the method call is to
 	 * an <i>interesting</i> method with regard to the program's concurrency.
 	 * Interesting methods include calls to {@link Object#wait()},
-	 * {@link Object#wait(long)}, {@link Object#wait(long, int)}, and {@code
-	 * java.util.concurrent} locks.
+	 * {@link Object#wait(long)}, {@link Object#wait(long, int)}, and
+	 * {@code java.util.concurrent} locks.
 	 * 
 	 * @param before
-	 *            {@code true} indicates <i>before</i> the method call, {@code
-	 *            false} indicates <i>after</i> the method call.
+	 *            {@code true} indicates <i>before</i> the method call,
+	 *            {@code false} indicates <i>after</i> the method call.
 	 * @param receiver
-	 *            the object instance the method is being called on, or {@code
-	 *            null} if the method is {@code static}.
+	 *            the object instance the method is being called on, or
+	 *            {@code null} if the method is {@code static}.
 	 * @param enclosingFileName
 	 *            the name of the file where the method call occurred.
 	 * @param enclosingLocationName
@@ -1153,8 +1161,8 @@ public final class MonitorStore {
 	 * lock. An intrinsic lock is a {@code synchronized} block or method.
 	 * 
 	 * @param before
-	 *            {@code true} indicates <i>before</i> the method call, {@code
-	 *            false} indicates <i>after</i> the method call.
+	 *            {@code true} indicates <i>before</i> the method call,
+	 *            {@code false} indicates <i>after</i> the method call.
 	 * @param lockObject
 	 *            the object being waited on (i.e., the thread should be holding
 	 *            a lock on this object).

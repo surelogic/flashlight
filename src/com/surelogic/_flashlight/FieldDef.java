@@ -1,9 +1,9 @@
 /**
  * 
  */
-package com.surelogic._flashlight.monitor;
+package com.surelogic._flashlight;
 
-final class FieldDef implements Comparable<FieldDef> {
+public final class FieldDef implements Comparable<FieldDef> {
 	private final long id;
 	private final String clazz;
 	private final String field;

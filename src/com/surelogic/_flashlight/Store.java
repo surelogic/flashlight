@@ -11,7 +11,10 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
@@ -184,6 +187,8 @@ public final class Store {
 	 */
 	private static final Spy f_spy;
 
+	private static final Map<String, Integer> f_defs;
+
 	/**
 	 * This thread-local (tl) flag is used to ensure that we to not, within a
 	 * thread, reenter the store. This situation can occur if we call methods on
@@ -266,6 +271,16 @@ public final class Store {
 			// System.out.println("Store");
 			// new
 			// Throwable("Store CL = "+Store.class.getClassLoader()).printStackTrace(System.out);
+			f_defs = new HashMap<String, Integer>();
+			try {
+				FieldDefs defs = new FieldDefs();
+				for (Entry<Long, FieldDef> def : defs.entrySet()) {
+					f_defs.put(def.getValue().getQualifiedFieldName(), def
+							.getKey().intValue());
+				}
+			} catch (IOException e) {
+				logAProblem(e.getMessage(), e);
+			}
 
 			/*
 			 * Initialize final static fields. If Flashlight is off these fields
@@ -461,6 +476,7 @@ public final class Store {
 			f_depository = null;
 			f_console = null;
 			f_spy = null;
+			f_defs = null;
 			f_start_nano = 0;
 			f_flashlightIsNotInitialized = false;
 		}
@@ -475,7 +491,8 @@ public final class Store {
 	 * @return a positive integer, or -1 if the field is not found
 	 */
 	public static int getFieldId(final String clazz, final String field) {
-		return -1;
+		Integer id = f_defs.get(clazz + '.' + field);
+		return id == null ? -1 : id;
 	}
 
 	public static BlockingQueue<List<Event>> getRawQueue() {

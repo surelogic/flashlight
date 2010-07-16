@@ -17,6 +17,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.surelogic._flashlight.FieldDef;
+import com.surelogic._flashlight.FieldDefs;
 import com.surelogic._flashlight.StoreConfiguration;
 
 class MonitorConsole extends Thread {

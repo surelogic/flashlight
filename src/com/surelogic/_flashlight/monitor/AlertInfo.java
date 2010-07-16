@@ -3,6 +3,9 @@ package com.surelogic._flashlight.monitor;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.surelogic._flashlight.FieldDef;
+import com.surelogic._flashlight.FieldDefs;
+
 /**
  * Value object representing the current alerts in this program.
  * 

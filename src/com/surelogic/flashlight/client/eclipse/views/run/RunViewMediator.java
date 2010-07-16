@@ -25,6 +25,7 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
+import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.progress.UIJob;
 
@@ -101,7 +102,8 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 							/*
 							 * Change the focus to the query menu view.
 							 */
-							ViewUtility.showView(RunStatusView.class.getName());
+							ViewUtility.showView(RunStatusView.class.getName(),
+									null, IWorkbenchPage.VIEW_CREATE);
 							ViewUtility.showView(QueryMenuView.class.getName());
 						} else {
 							/*
@@ -114,10 +116,10 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 			}
 		});
 		f_table.addKeyListener(new KeyAdapter() {
-
 			@Override
 			public void keyPressed(final KeyEvent e) {
-				if (e.character == SWT.DEL) {
+				if ((e.character == SWT.DEL || e.character == SWT.BS)
+						&& e.stateMask == 0) {
 					if (f_deleteAction.isEnabled()) {
 						f_deleteAction.run();
 					}
@@ -494,7 +496,8 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 		} else {
 			final RunDescription o = selected[0];
 			AdHocDataSource.getInstance().setSelectedRun(o);
-			ViewUtility.showView(RunStatusView.class.getName());
+			ViewUtility.showView(RunStatusView.class.getName(), null,
+					IWorkbenchPage.VIEW_CREATE);
 			AdHocDataSource.getManager().setGlobalVariableValue(
 					AdHocManager.DATABASE, o.toIdentityString());
 			AdHocDataSource.getManager().setSelectedResult(null);

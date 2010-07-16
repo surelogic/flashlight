@@ -17,6 +17,7 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableItem;
+import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.part.ViewPart;
 import org.eclipse.ui.progress.UIJob;
 
@@ -55,7 +56,8 @@ public class RunStatusView extends ViewPart {
 					final String queryId = (String) item.getData();
 					if (queryId != null) {
 						final QueryMenuView view = (QueryMenuView) ViewUtility
-								.showView(QueryMenuView.class.getName());
+								.showView(QueryMenuView.class.getName(), null,
+										IWorkbenchPage.VIEW_CREATE);
 						view.runRootQuery(queryId);
 					}
 				}
@@ -114,15 +116,15 @@ public class RunStatusView extends ViewPart {
 							run.getStartTimeOfRun().toString(),
 							hasResult(dbc, "FlashlightStatus.checkForDeadlocks"),
 							hasResult(dbc,
-							"FlashlightStatus.checkForEmptyInstanceLocksets"),
+									"FlashlightStatus.checkForEmptyInstanceLocksets"),
 							hasResult(dbc,
-							"FlashlightStatus.checkForEmptyStaticLocksets"),
+									"FlashlightStatus.checkForEmptyStaticLocksets"),
 							hasResult(dbc, "FlashlightStatus.checkForFieldData"));
 					dbc.shutdown();
 				} catch (JDBCException e) {
-					SLLogger.getLogger().log(Level.WARNING, 
-							"Problem getting status for "+run.getName(), e);
-					job =  new RefreshEmptyRunStatusViewUIJob();
+					SLLogger.getLogger().log(Level.WARNING,
+							"Problem getting status for " + run.getName(), e);
+					job = new RefreshEmptyRunStatusViewUIJob();
 				}
 			} else {
 				job = new RefreshEmptyRunStatusViewUIJob();

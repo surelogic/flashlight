@@ -106,26 +106,6 @@ final class ClassAndFieldModel {
     }
     
     public void writeFieldInfo(final PrintWriter out) {
-//      final boolean isFinal = (access & Opcodes.ACC_FINAL) != 0;
-//      final boolean isVolatile = (access & Opcodes.ACC_VOLATILE) != 0;
-//      final boolean isStatic = (access & Opcodes.ACC_STATIC) != 0;
-//      final int viz = access & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED | Opcodes.ACC_PRIVATE); 
-//      out.print(id);
-//      out.print(' ');
-//      out.print(ClassNameUtil.internal2FullyQualified(clazz.name));
-//      out.print(' ');
-//      out.print(name);
-//      out.print(' ');
-//      out.print(isStatic);
-//      out.print(' ');
-//      out.print(isFinal);
-//      out.print(' ');
-//      out.print(isVolatile);
-//      out.print(' ');
-//      out.print(viz);
-//      out.println();
-      
-      // Simplified
       out.print(id);
       out.print(' ');
       out.print(ClassNameUtil.internal2FullyQualified(clazz.name));
@@ -285,15 +265,6 @@ final class ClassAndFieldModel {
       }
       return false;
     }
-    
-//    public void writeReferencedFields(final PrintWriter out) {
-//      final String fqName = ClassNameUtil.internal2FullyQualified(name);
-//      for (final Field f : fields.values()) {
-//        if (f.isReferenced()) {
-//          f.writeFieldInfo(out, fqName);
-//        }
-//      }
-//    }
     
     public void collectReferencedFields(final List<Field> referencedFields) {
       for (final Field f : fields.values()) {

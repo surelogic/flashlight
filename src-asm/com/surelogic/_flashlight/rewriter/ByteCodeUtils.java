@@ -114,4 +114,62 @@ final class ByteCodeUtils {
     mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
         method.getName(), method.getDescriptor());
   }
+
+  /**
+   * Output the code for initializing the flashlight$phantomObject field during
+   * deserialization of a class.
+   * 
+   * <p>
+   * Generates the bytecode for the Java statements
+   * 
+   * <pre>
+   * final Field f = <i>classNameInternal</i>.class.getDeclaredField("flashlight$phantomObject");
+   * f.setAccessible(true);
+   * f.set(this, Store.getObjectPhantom(this, IdObject.getNewId()));
+   * f.setAccessible(false);
+   * </pre>
+   * 
+   * <p>Needs a stack size of 6.
+   * 
+   * @param mv
+   *          The method visitor
+   * @param classNameInternal
+   *          The internal class name of the class being deserialized.
+   */
+  public static void initializePhantomObject(
+      final MethodVisitor mv, final Configuration config,
+      final String classNameInternal) {
+    // []
+    ByteCodeUtils.pushClass(mv, classNameInternal);
+    // [C.class]
+    mv.visitLdcInsn(FlashlightNames.FLASHLIGHT_PHANTOM_OBJECT);
+    // [C.class, "flashlight$phantomObject"]
+    mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Class", "getDeclaredField", "(Ljava/lang/String;)Ljava/lang/reflect/Field;");
+    // [Field]
+    mv.visitInsn(Opcodes.DUP);
+    // [Field, Field]
+    mv.visitInsn(Opcodes.DUP);
+    // [Field, Field, Field]
+    mv.visitInsn(Opcodes.ICONST_1);
+    // [Field, Field, Field, true]
+    mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/reflect/Field", "setAccessible", "(Z)V");
+    // [Field, Field]
+    mv.visitVarInsn(Opcodes.ALOAD, 0);
+    // [Field, Field, this]
+        
+    mv.visitVarInsn(Opcodes.ALOAD, 0);
+    // [Field, Field, this, this]
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.ID_OBJECT,
+        FlashlightNames.GET_NEW_ID.getName(), FlashlightNames.GET_NEW_ID.getDescriptor());
+    // [Field, Field, this, this, id (x2)]
+    ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.GET_OBJECT_PHANTOM);
+    // [Field, Field, this, phantomRef]
+    
+    mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/reflect/Field", "set", "(Ljava/lang/Object;Ljava/lang/Object;)V");
+    // [Field]    
+    mv.visitInsn(Opcodes.ICONST_0);
+    // [Field, false]
+    mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/reflect/Field", "setAccessible", "(Z)V");
+    // []
+  }
 }

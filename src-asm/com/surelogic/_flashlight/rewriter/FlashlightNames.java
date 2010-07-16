@@ -126,6 +126,10 @@ public final class FlashlightNames {
 	public static final int READ_OBJECT_ACCESS = Opcodes.ACC_PRIVATE;
 	public static final Method READ_OBJECT_NO_DATA = Method.getMethod("void readObjectNoData()");
 	
+	public static final String JAVA_IO_OBJECTINPUTSTREAM = "java/io/ObjectInputStream";
+	public static final Method DEFAULT_READ_OBJECT = Method.getMethod("void defaultReadObject()");
+	public static final Method READ_FIELDS = Method.getMethod("java.lang.io.ObjectInputStream$GetField readFields()"); 
+	
 	public static final String JAVA_IO_IOEXCEPTION = "java/io/IOException";
 	public static final String JAVA_LANG_CLASSNOTFOUNDEXCEPTION = "java/lang/ClassNotFoundException";
 	public static final String JAVA_IO_OBJECTSTREAMEXCEPTION = "java/io/ObjectStreamException";

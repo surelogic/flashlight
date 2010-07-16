@@ -369,44 +369,15 @@ final class FlashlightClassRewriter extends ClassAdapter {
             FlashlightNames.JAVA_LANG_CLASSNOTFOUNDEXCEPTION });
     
     mv.visitCode();
-    // []
-    ByteCodeUtils.pushClass(mv, classNameInternal);
-    // [C.class]
-    mv.visitLdcInsn(FlashlightNames.FLASHLIGHT_PHANTOM_OBJECT);
-    // [C.class, "flashlight$phantomObject"]
-    mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Class", "getDeclaredField", "(Ljava/lang/String;)Ljava/lang/reflect/Field;");
-    // [Field]
-    mv.visitInsn(Opcodes.DUP);
-    // [Field, Field]
-    mv.visitInsn(Opcodes.DUP);
-    // [Field, Field, Field]
-    mv.visitInsn(Opcodes.ICONST_1);
-    // [Field, Field, Field, true]
-    mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/reflect/Field", "setAccessible", "(Z)V");
-    // [Field, Field]
-    mv.visitVarInsn(Opcodes.ALOAD, 0);
-    // [Field, Field, this]
-        
-    mv.visitVarInsn(Opcodes.ALOAD, 0);
-    // [Field, Field, this, this]
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.ID_OBJECT,
-        FlashlightNames.GET_NEW_ID.getName(), FlashlightNames.GET_NEW_ID.getDescriptor());
-    // [Field, Field, this, this, id (x2)]
-    ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.GET_OBJECT_PHANTOM);
-    // [Field, Field, this, phantomRef]
     
-    mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/reflect/Field", "set", "(Ljava/lang/Object;Ljava/lang/Object;)V");
-    // [Field]    
-    mv.visitInsn(Opcodes.ICONST_0);
-    // [Field, false]
-    mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/reflect/Field", "setAccessible", "(Z)V");
-    // []
+    // Init the phantomObject field
+    ByteCodeUtils.initializePhantomObject(mv, config, classNameInternal);
 
+    // Call ObjectInputStream.defaultReadObject()
     mv.visitVarInsn(Opcodes.ALOAD, 1);
-    // [ObjectInputStream]
     mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/io/ObjectInputStream", "defaultReadObject", "()V");
-    // []
 
+    // Return
     mv.visitInsn(Opcodes.RETURN);
     mv.visitMaxs(6, 2);
     mv.visitEnd();

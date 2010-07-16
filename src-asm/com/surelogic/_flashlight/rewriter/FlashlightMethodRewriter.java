@@ -92,6 +92,12 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
   /** Are we visiting the class initializer method? */
   private final boolean isClassInitializer;
   
+  /** Are we the method readObject(java.io.ObjectInputStream)? */
+  private final boolean isReadObject;
+  
+  /** Are we the method readObjectNoData()? */
+  private final boolean isReadObjectNoData;
+  
   /** Was the method originally synchronized? */
   private final boolean wasSynchronized;
   
@@ -286,6 +292,10 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     methodName = mname;
     isConstructor = mname.equals(INITIALIZER);
     isClassInitializer = mname.equals(CLASS_INITIALIZER);
+    isReadObject = mname.equals(FlashlightNames.READ_OBJECT.getName())
+        && desc.equals(FlashlightNames.READ_OBJECT.getDescriptor());
+    isReadObjectNoData = mname.equals(FlashlightNames.READ_OBJECT_NO_DATA.getName())
+        && desc.equals(FlashlightNames.READ_OBJECT_NO_DATA.getDescriptor());
     classBeingAnalyzedInternal = nameInternal;
     packageNameInternal = ClassAndFieldModel.getPackage(nameInternal);
     superClassInternal = superInternal;
@@ -316,13 +326,20 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
      */
     updateSiteIdentifier();
     
-    // Initialize the flashlight$withinClass field
+    // Initialize the flashlight$phantomClass field
     if (isClassInitializer) {
       insertClassInitializerCode();
       insertClassInitPrefix();
     }
     if (wasSynchronized && config.rewriteSynchronizedMethod) {
       insertSynchronizedMethodPrefix();
+    }
+    
+    /* If the method is readObject(ObjectInputStream) or readObjectNoData(),
+     * we need to insert code to initialize the flashlight$phantomObject field.
+     */
+    if (isReadObject || isReadObjectNoData) {
+      ByteCodeUtils.initializePhantomObject(mv, config, classBeingAnalyzedInternal);
     }
   }
   

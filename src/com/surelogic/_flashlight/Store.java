@@ -56,8 +56,8 @@ public final class Store {
 
 	/**
 	 * Flags if helpful debug information should be output to the console log.
-	 * This flag generates a lot of output and should only be set to {@code
-	 * true} for small test programs.
+	 * This flag generates a lot of output and should only be set to
+	 * {@code true} for small test programs.
 	 */
 	public static final boolean DEBUG = false;
 
@@ -271,8 +271,8 @@ public final class Store {
 			 * Initialize final static fields. If Flashlight is off these fields
 			 * are all set to null to save memory.
 			 */
-			final File flashlightDir = new File(StoreConfiguration
-					.getDirectory());
+			final File flashlightDir = new File(
+					StoreConfiguration.getDirectory());
 			if (!flashlightDir.exists()) {
 				flashlightDir.mkdirs();
 			}
@@ -336,8 +336,8 @@ public final class Store {
 			if (StoreConfiguration.debugOn()) {
 				System.err.println("Output XML = " + !outType.isBinary());
 			}
-			final File dataFile = EventVisitor.createStreamFile(fileName
-					.toString(), outType);
+			final File dataFile = EventVisitor.createStreamFile(
+					fileName.toString(), outType);
 			EventVisitor outputStrategy = null;
 			try {
 				final PrintWriter headerW = new PrintWriter(fileName.toString()
@@ -354,8 +354,8 @@ public final class Store {
 				final EventVisitor.Factory factory = outType.isBinary() ? OutputStrategyBinary.factory
 						: OutputStrategyXML.factory;
 				if (StoreConfiguration.useSeparateStreams()) {
-					outputStrategy = new OutputStreamsStrategy(fileName
-							.toString(), ENCODING, timeEvent, factory);
+					outputStrategy = new OutputStreamsStrategy(
+							fileName.toString(), ENCODING, timeEvent, factory);
 				} else {
 					final OutputStream stream = EventVisitor.createStream(
 							fileName.toString(), outType);
@@ -363,15 +363,17 @@ public final class Store {
 							.create(stream, ENCODING, timeEvent);
 				}
 			} catch (final IOException e) {
-				logAProblem("unable to output to \""
-						+ dataFile.getAbsolutePath() + "\"", e);
+				logAProblem(
+						"unable to output to \"" + dataFile.getAbsolutePath()
+								+ "\"", e);
 				System.exit(1); // bail
 			}
 
 			final int rawQueueSize = StoreConfiguration.getRawQueueSize();
 			final int outQueueSize = StoreConfiguration.getOutQueueSize();
-			f_rawQueue = new ArrayBlockingQueue<List<Event>>(StoreConfiguration
-					.isRefineryOff() ? outQueueSize : rawQueueSize);
+			f_rawQueue = new ArrayBlockingQueue<List<Event>>(
+					StoreConfiguration.isRefineryOff() ? outQueueSize
+							: rawQueueSize);
 			putInQueue(f_rawQueue, singletonList(timeEvent));
 			putInQueue(f_rawQueue, singletonList(new SelectedPackage("*")));
 
@@ -464,6 +466,18 @@ public final class Store {
 		}
 	}
 
+	/**
+	 * Return the id associated with the given field in the fields.txt file
+	 * 
+	 * @param clazz
+	 *            the fully-qualified class name.
+	 * @param field
+	 * @return a positive integer, or -1 if the field is not found
+	 */
+	public static int getFieldId(final String clazz, final String field) {
+		return -1;
+	}
+
 	public static BlockingQueue<List<Event>> getRawQueue() {
 		return f_rawQueue;
 	}
@@ -515,8 +529,8 @@ public final class Store {
 	 *            uninstrumented class.
 	 * @param declaringClass
 	 *            The class object for the class that declares the field being
-	 *            access when {@code dcPhantom} is null} . If the {@code
-	 *            dcPhantom} is non- null} then this is null} .
+	 *            access when {@code dcPhantom} is null} . If the
+	 *            {@code dcPhantom} is non- null} then this is null} .
 	 */
 	public static void instanceFieldAccess(final boolean read,
 			final Object receiver, final int fieldID, final long siteId,
@@ -601,8 +615,8 @@ public final class Store {
 	 *            uninstrumented class.
 	 * @param declaringClass
 	 *            The class object for the class that declares the field being
-	 *            access when {@code dcPhantom} is null} . If the {@code
-	 *            dcPhantom} is non- null} then this is null} .
+	 *            access when {@code dcPhantom} is null} . If the
+	 *            {@code dcPhantom} is non- null} then this is null} .
 	 */
 	public static void staticFieldAccess(final boolean read, final int fieldID,
 			final long siteId, final ClassPhantomReference dcPhantom,
@@ -1026,15 +1040,15 @@ public final class Store {
 	 * This method also dispatches this event properly if the method call is to
 	 * an <i>interesting</i> method with regard to the program's concurrency.
 	 * Interesting methods include calls to {@link Object#wait()},
-	 * {@link Object#wait(long)}, {@link Object#wait(long, int)}, and {@code
-	 * java.util.concurrent} locks.
+	 * {@link Object#wait(long)}, {@link Object#wait(long, int)}, and
+	 * {@code java.util.concurrent} locks.
 	 * 
 	 * @param before
-	 *            {@code true} indicates <i>before</i> the method call, {@code
-	 *            false} indicates <i>after</i> the method call.
+	 *            {@code true} indicates <i>before</i> the method call,
+	 *            {@code false} indicates <i>after</i> the method call.
 	 * @param receiver
-	 *            the object instance the method is being called on, or {@code
-	 *            null} if the method is {@code static}.
+	 *            the object instance the method is being called on, or
+	 *            {@code null} if the method is {@code static}.
 	 * @param enclosingFileName
 	 *            the name of the file where the method call occurred.
 	 * @param enclosingLocationName
@@ -1084,9 +1098,9 @@ public final class Store {
 						final String fmt = "Defined ReadWriteLock id=%d";
 						log(String.format(fmt, p.getId()));
 					}
-					final Event e = new ReadWriteLockDefinition(p, Phantom
-							.ofObject(rwl.readLock()), Phantom.ofObject(rwl
-							.writeLock()));
+					final Event e = new ReadWriteLockDefinition(p,
+							Phantom.ofObject(rwl.readLock()),
+							Phantom.ofObject(rwl.writeLock()));
 					putInQueue(flState, e);
 				}
 			}
@@ -1231,8 +1245,8 @@ public final class Store {
 	 * lock. An intrinsic lock is a {@code synchronized} block or method.
 	 * 
 	 * @param before
-	 *            {@code true} indicates <i>before</i> the method call, {@code
-	 *            false} indicates <i>after</i> the method call.
+	 *            {@code true} indicates <i>before</i> the method call,
+	 *            {@code false} indicates <i>after</i> the method call.
 	 * @param lockObject
 	 *            the object being waited on (i.e., the thread should be holding
 	 *            a lock on this object).

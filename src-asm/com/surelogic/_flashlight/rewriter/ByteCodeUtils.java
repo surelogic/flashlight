@@ -1,5 +1,6 @@
 package com.surelogic._flashlight.rewriter;
 
+import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -170,6 +171,85 @@ final class ByteCodeUtils {
     mv.visitInsn(Opcodes.ICONST_0);
     // [Field, false]
     mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/reflect/Field", "setAccessible", "(Z)V");
+    // []
+  }
+  
+  public static void insertPostDeserializationFieldWrites(
+      final MethodVisitor mv, final Configuration config,
+      final String classNameInternal, final long siteId,
+      final int fieldsVar, final int counterVar, final int fieldVar) {
+    // []
+    ByteCodeUtils.pushClass(mv, classNameInternal);
+    // [C.class]
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, "java/io/ObjectStreamClass",
+        "lookup", "(Ljava/lang/Class;)Ljava/io/ObjectStreamClass;");
+    // [ObjectStreamClass]
+    mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/io/ObjectStreamClass",
+        "getFields", "()[Ljava/io/ObjectStreamField;");
+    // [fields array]
+    mv.visitVarInsn(Opcodes.ASTORE, fieldsVar);
+    // []
+
+    mv.visitInsn(Opcodes.ICONST_0);
+    // [0]
+    mv.visitVarInsn(Opcodes.ISTORE, counterVar);
+    // []
+
+    final Label condition = new Label();
+    mv.visitJumpInsn(Opcodes.GOTO, condition);
+
+    // []
+    final Label topOfLoop = new Label();
+    mv.visitLabel(topOfLoop);
+    mv.visitVarInsn(Opcodes.ALOAD, fieldsVar);
+    // [fields array]
+    mv.visitVarInsn(Opcodes.ILOAD, counterVar);
+    // [field array, i]
+    mv.visitInsn(Opcodes.AALOAD);
+    // [fields[i]]
+    mv.visitVarInsn(Opcodes.ASTORE, fieldVar);
+    // []
+
+    /*
+     * Call Store.instanceFieldAccess(false, this, Store.getFieldId("C",
+     * field.getName()), siteId, C.flashlight$phantomClass, null)
+     */
+    ByteCodeUtils.pushBooleanConstant(mv, false);
+    // [false]
+    mv.visitVarInsn(Opcodes.ALOAD, 0);
+    // [false, this]
+    mv.visitLdcInsn(classNameInternal);
+    // [false, this, "C"]
+    mv.visitVarInsn(Opcodes.ALOAD, fieldVar);
+    // [false, this, "C", fields[i]]
+    mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/io/ObjectStreamField",
+        "getName", "()Ljava/lang/String;");
+    // [false, this, "C", field-name]
+    ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.GET_FIELD_ID);
+    // [false, this, fieldId]
+    ByteCodeUtils.pushLongConstant(mv, siteId);
+    // [false, this, fieldId, siteId]
+    mv.visitFieldInsn(Opcodes.GETSTATIC, classNameInternal,
+        FlashlightNames.FLASHLIGHT_PHANTOM_CLASS_OBJECT,
+        FlashlightNames.FLASHLIGHT_PHANTOM_CLASS_OBJECT_DESC);
+    // [false, this, fieldid, siteId, phantomClass]
+    mv.visitInsn(Opcodes.ACONST_NULL);
+    // [false, this, fieldid, siteId, phantomClass, null]
+    ByteCodeUtils.callStoreMethod(mv, config,
+        FlashlightNames.INSTANCE_FIELD_ACCESS);
+    // []
+
+    mv.visitIincInsn(counterVar, 1);
+    // []
+
+    mv.visitLabel(condition);
+    mv.visitVarInsn(Opcodes.ILOAD, counterVar);
+    // [i]
+    mv.visitVarInsn(Opcodes.ALOAD, fieldsVar);
+    // [i, fields array]
+    mv.visitInsn(Opcodes.ARRAYLENGTH);
+    // [i, array length]
+    mv.visitJumpInsn(Opcodes.IF_ICMPLT, topOfLoop);
     // []
   }
 }

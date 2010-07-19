@@ -67,6 +67,9 @@ public final class FlashlightNames {
 	public static final Method METHOD_CALL = Method
 			.getMethod("void methodCall(boolean, Object, long)");
 
+	public static final Method GET_FIELD_ID =
+	  Method.getMethod("int getFieldId(String, String)");
+	
 	public static final Method SHUTDOWN = Method.getMethod("void shutdown()");
 
 	public static final Method GET_CLASS_PHANTOM = Method
@@ -112,6 +115,9 @@ public final class FlashlightNames {
 	public static final String WAIT_SIGNATURE_1_ARG = "(J)V";
 	public static final String WAIT_SIGNATURE_2_ARGS = "(JI)V";
 
+	public static final String JAVA_LANG_RUNTIME = "java/lang/Runtime";
+	public static final Method HALT = Method.getMethod("void halt(int)");
+	
 	public static final String JAVA_UTIL_CONCURRENT_LOCKS_LOCK = "java/util/concurrent/locks/Lock";
 	public static final String LOCK = "lock";
 	public static final String LOCK_INTERRUPTIBLY = "lockInterruptibly";
@@ -128,7 +134,7 @@ public final class FlashlightNames {
 	
 	public static final String JAVA_IO_OBJECTINPUTSTREAM = "java/io/ObjectInputStream";
 	public static final Method DEFAULT_READ_OBJECT = Method.getMethod("void defaultReadObject()");
-	public static final Method READ_FIELDS = Method.getMethod("java.lang.io.ObjectInputStream$GetField readFields()"); 
+	public static final Method READ_FIELDS = Method.getMethod("java.io.ObjectInputStream$GetField readFields()"); 
 	
 	public static final String JAVA_IO_IOEXCEPTION = "java/io/IOException";
 	public static final String JAVA_LANG_CLASSNOTFOUNDEXCEPTION = "java/lang/ClassNotFoundException";

@@ -214,7 +214,6 @@ final class FlashlightClassRewriter extends ClassAdapter {
       try {
         if (classModel.implementsInterface(name, FlashlightNames.JAVA_IO_SERIALIZABLE)) {
           mustFixReadObject = true;
-          System.out.println("Class " + name + " is serializable");
         }
       } catch (final ClassNotFoundException e) {
         messenger.verbose("In class " + classNameFullyQualified
@@ -361,7 +360,7 @@ final class FlashlightClassRewriter extends ClassAdapter {
   private void addReadObjectMethod() {
     // Mark as synthetic because it does not appear in the original source code
     final MethodVisitor mv =
-      cv.visitMethod(FlashlightNames.READ_OBJECT_ACCESS, // | Opcodes.ACC_SYNTHETIC,
+      cv.visitMethod(FlashlightNames.READ_OBJECT_ACCESS | Opcodes.ACC_SYNTHETIC,
           FlashlightNames.READ_OBJECT.getName(),
           FlashlightNames.READ_OBJECT.getDescriptor(), null, 
           new String[] {
@@ -377,9 +376,14 @@ final class FlashlightClassRewriter extends ClassAdapter {
     mv.visitVarInsn(Opcodes.ALOAD, 1);
     mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/io/ObjectInputStream", "defaultReadObject", "()V");
 
+    // Insert code to generate write events for the deserialized fields
+    ByteCodeUtils.insertPostDeserializationFieldWrites(
+        mv, config, classNameInternal,
+        FlashlightNames.SYNTHETIC_METHOD_SITE_ID, 2, 3, 4);
+    
     // Return
     mv.visitInsn(Opcodes.RETURN);
-    mv.visitMaxs(6, 2);
+    mv.visitMaxs(6, 5);
     mv.visitEnd();
   }
 

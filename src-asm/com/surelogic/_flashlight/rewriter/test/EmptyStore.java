@@ -109,4 +109,8 @@ public class EmptyStore {
   public static void staticFieldInit(final int fieldId, final Object value) {
     // do nothing
   }
+
+  public static int getFieldId(final String clazz, final String field) {
+    return -1;
+  }
 }

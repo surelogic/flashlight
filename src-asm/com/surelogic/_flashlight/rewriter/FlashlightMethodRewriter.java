@@ -1,5 +1,7 @@
 package com.surelogic._flashlight.rewriter;
 
+import java.io.ObjectStreamClass;
+import java.io.ObjectStreamField;
 import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Map;
@@ -13,6 +15,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.Method;
 
+import com.surelogic._flashlight.ClassPhantomReference;
 import com.surelogic._flashlight.rewriter.ClassAndFieldModel.ClassNotFoundException;
 import com.surelogic._flashlight.rewriter.ClassAndFieldModel.Field;
 import com.surelogic._flashlight.rewriter.ClassAndFieldModel.FieldNotFoundException;
@@ -450,8 +453,10 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
      * has been stopped.
      */
     try {
-      if (name.equals("halt") && desc.equals("(I)V") &&
-          classModel.getClass("java/lang/Runtime").isAssignableFrom(owner)) {
+//    if (name.equals("halt") && desc.equals("(I)V") &&
+//    classModel.getClass("java/lang/Runtime").isAssignableFrom(owner)) {
+      if (callsMethod(FlashlightNames.JAVA_LANG_RUNTIME, FlashlightNames.HALT,
+          owner, name, desc)) {
         // Insert call to Store.shutdown()
         ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.SHUTDOWN);
         
@@ -532,6 +537,19 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
     
     if (stateMachine != null) {
       stateMachine.visitMethodInsn(opcode, owner, name, desc);
+    }
+    
+    /* If the called method is ObjectInputStream.defaultReadObject() or
+     * ObjectInputStream.readFields(), we need to generate field write 
+     * events for each serializable field in this class.
+     */
+    try {
+      if (callsMethod(FlashlightNames.JAVA_IO_OBJECTINPUTSTREAM, FlashlightNames.DEFAULT_READ_OBJECT, owner, name, desc) ||
+          callsMethod(FlashlightNames.JAVA_IO_OBJECTINPUTSTREAM, FlashlightNames.READ_FIELDS, owner, name, desc)) {
+        insertFieldWrites();
+      }
+    } catch (final ClassNotFoundException e) {
+      messenger.warning("Provided classpath is incomplete: couldn't find class " + e.getMissingClass());
     }
   }
   
@@ -1300,6 +1318,20 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
   }
 
   /**
+   * Insert code that generates field write events.  This is called after 
+   * we process a call to ObjectInputStream.defaultReadObject(), or
+   * ObjectInputStream.readFields().
+   */
+  private void insertFieldWrites() {
+    final int fieldsVar = newLocal(FlashlightNames.JAVA_LANG_OBJECT_TYPE);
+    final int counterVar = newLocal(Type.INT_TYPE);
+    final int fieldVar = newLocal(FlashlightNames.JAVA_LANG_OBJECT_TYPE);
+    ByteCodeUtils.insertPostDeserializationFieldWrites(
+        mv, config, classBeingAnalyzedInternal, siteId,
+        fieldsVar, counterVar, fieldVar);
+  }
+  
+  /**
    * Get the field id for the given field. If the field id lookup fails, then
    * this inserts code that throws a FlashlightRuntimeError.
    * 
@@ -1925,5 +1957,15 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
         Opcodes.INVOKESPECIAL, FlashlightNames.FLASHLIGHT_RUNTIME_ERROR,
         FlashlightNames.CONSTRUCTOR, "(Ljava/lang/String;)V");
     mv.visitInsn(Opcodes.ATHROW);
+  }
+  
+  
+  
+  private boolean callsMethod(
+      final String owner, final Method method,
+      final String siteOwner, final String siteName, final String siteDesc) throws ClassNotFoundException {
+    return classModel.getClass(owner).isAssignableFrom(siteOwner)
+        && method.getName().equals(siteName)
+        && method.getDescriptor().equals(siteDesc);
   }
 }

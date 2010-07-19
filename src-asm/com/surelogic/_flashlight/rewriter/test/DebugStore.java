@@ -235,4 +235,11 @@ public class DebugStore {
     stdOut.println("  fieldId = " + fieldId);
     stdOut.println("  value = " + objectToString(value));
   }
+
+  public static int getFieldId(final String clazz, final String field) {
+    stdOut.println("getFieldId");
+    stdOut.println("  class = " + clazz);
+    stdOut.println("  value = " + field);
+    return -1;
+  }
 }

@@ -210,9 +210,12 @@ final class FlashlightClassRewriter extends ClassAdapter {
       System.arraycopy(interfaces, 0, newInterfaces, 1, interfaces.length);
       mustImplementIIdObject = true;
       
-      // Now test for serializable
+      // Now test for serializable (but ignore externaliable classes)
       try {
-        if (classModel.implementsInterface(name, FlashlightNames.JAVA_IO_SERIALIZABLE)) {
+        if (classModel.implementsInterface(name,
+              FlashlightNames.JAVA_IO_SERIALIZABLE)
+            && !classModel.implementsInterface(name,
+                  FlashlightNames.JAVA_IO_EXTERNALIZABLE)) {
           mustFixReadObject = true;
         }
       } catch (final ClassNotFoundException e) {

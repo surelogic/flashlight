@@ -127,6 +127,8 @@ public final class FlashlightNames {
 	public static final String JAVA_LANG_CLASS = "java/lang/Class";
 	public static final Method FOR_NAME = Method.getMethod("Class forName(String)");
 	
+	public static final String JAVA_IO_EXTERNALIZABLE = "java/io/Externalizable";
+	
 	public static final String JAVA_IO_SERIALIZABLE = "java/io/Serializable";
 	public static final Method READ_OBJECT = Method.getMethod("void readObject(java.io.ObjectInputStream)");
 	public static final int READ_OBJECT_ACCESS = Opcodes.ACC_PRIVATE;

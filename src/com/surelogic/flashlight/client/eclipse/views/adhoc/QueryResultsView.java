@@ -38,6 +38,10 @@ public final class QueryResultsView extends AbstractQueryResultsView {
 		} else {
 			final Browser browser = new Browser(parent, SWT.NONE);
 
+			/*
+			 * Schedule a job to populate the browser with information about the
+			 * selected run.
+			 */
 			final Job job = new ObtainRunHtmlJob(run, browser);
 			job.schedule();
 

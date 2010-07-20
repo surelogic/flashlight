@@ -108,8 +108,7 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements
 	}
 
 	public int getMaxRowsPerQuery() {
-		return Activator.getDefault().getPluginPreferences().getInt(
-				PreferenceConstants.P_MAX_ROWS_PER_QUERY);
+		return PreferenceConstants.getMaxRowsPerQuery();
 	}
 
 	public void init() {

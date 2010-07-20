@@ -34,7 +34,7 @@ public class PreferenceConstants implements IPreferenceConstants {
 			+ "additionalIndirectAccessMethods";
 
 	public static final String P_COLLECTION_TYPE = PREFIX + "collection.type";
-	
+
 	public static final String P_OUTPUT_TYPE = PREFIX + "output.type";
 
 	public static final String P_COMPRESS_OUTPUT = PREFIX + "compress.output";
@@ -107,6 +107,11 @@ public class PreferenceConstants implements IPreferenceConstants {
 	public static void setPromptAboutLotsOfSavedQueries(final boolean value) {
 		Activator.getDefault().getPluginPreferences().setValue(
 				P_PROMPT_ABOUT_LOTS_OF_SAVED_QUERIES, value);
+	}
+
+	public static int getMaxRowsPerQuery() {
+		return Activator.getDefault().getPluginPreferences().getInt(
+				PreferenceConstants.P_MAX_ROWS_PER_QUERY);
 	}
 
 	public static final String P_DATA_DIRECTORY = PREFIX + DATA_DIRECTORY;

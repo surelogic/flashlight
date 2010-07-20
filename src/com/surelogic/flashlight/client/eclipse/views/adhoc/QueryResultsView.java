@@ -13,7 +13,7 @@ import org.eclipse.swt.widgets.Menu;
 import com.surelogic.adhoc.views.results.AbstractQueryResultsView;
 import com.surelogic.common.adhoc.AdHocManager;
 import com.surelogic.common.serviceability.UsageMeter;
-import com.surelogic.flashlight.client.eclipse.jobs.ObtainRunHtmlJob;
+import com.surelogic.flashlight.client.eclipse.jobs.PopulateBrowserWithRunInformationJob;
 import com.surelogic.flashlight.common.model.RunDescription;
 
 public final class QueryResultsView extends AbstractQueryResultsView {
@@ -42,7 +42,7 @@ public final class QueryResultsView extends AbstractQueryResultsView {
 			 * Schedule a job to populate the browser with information about the
 			 * selected run.
 			 */
-			final Job job = new ObtainRunHtmlJob(run, browser);
+			final Job job = new PopulateBrowserWithRunInformationJob(run, browser);
 			job.schedule();
 
 			browser.addLocationListener(new LocationListener() {

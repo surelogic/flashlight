@@ -12,7 +12,10 @@ import com.surelogic.common.eclipse.jobs.SLUIJob;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.flashlight.common.model.RunDescription;
 
-public final class ObtainRunHtmlJob extends Job {
+/**
+ * This job populates a browser with information about a Flashlight run.
+ */
+public final class PopulateBrowserWithRunInformationJob extends Job {
 
 	/**
 	 * The non-null run description to obtain the HTML overview of.
@@ -21,8 +24,8 @@ public final class ObtainRunHtmlJob extends Job {
 
 	private final Browser f_browser;
 
-	public ObtainRunHtmlJob(final RunDescription runDescription,
-			final Browser browser) {
+	public PopulateBrowserWithRunInformationJob(
+			final RunDescription runDescription, final Browser browser) {
 		super("Obtain run description HTML overview");
 		if (runDescription == null)
 			throw new IllegalArgumentException(I18N.err(44, "runDescription"));
@@ -46,7 +49,8 @@ public final class ObtainRunHtmlJob extends Job {
 					.toStringHMS(f_runDescription.getStartTimeOfRun()));
 			b.append("</h4>");
 
-			b.append("This is a <a href=\".#run_query_1\">link</a> to nowhere.");
+			b
+					.append("This is a <a href=\".#run_query_1\">link</a> to nowhere.");
 
 			b.append("</body></html>");
 			/*

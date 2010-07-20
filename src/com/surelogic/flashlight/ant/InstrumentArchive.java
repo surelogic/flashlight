@@ -21,8 +21,9 @@ import com.surelogic.flashlight.ant.Instrument.FilterPackage;
 import com.surelogic.flashlight.ant.Instrument.Jar;
 
 /**
- * This class cracks open a war, instruments its contents, and outputs a new war
- * that can be dropped into any commonly used web server.
+ * This task cracks open an executable jar, ejb jar, or war file. It then
+ * instruments its contents, and outputs a new archive file that can be dropped
+ * into any commonly used web server.
  * 
  * @author nathan
  * 
@@ -185,97 +186,134 @@ public class InstrumentArchive extends Task {
 		i.setUseDefaultIndirectAccessMethods(flag);
 	}
 
+	/**
+	 * This should turn an executable jar or ejb jar into a jar that will start
+	 * instrumenting when it is loaded up.
+	 * 
+	 * @param src
+	 * @param dest
+	 * @throws IOException
+	 */
+	private void instrumentStandardJar(final File src, final File dest)
+			throws IOException {
+		i.setProject(getProject());
+		i.createLibraries().add(extraLibs);
+		final Directory dir = new Directory(src, dest);
+		i.addConfiguredDir(dir);
+		setupFlashlightConf(dest);
+		i.execute();
+	}
+
+	/**
+	 * 1 - Crack open the war, and place the results in a temp directory.
+	 * 
+	 * 2 - Rewrite the contents into a second temp directory. Make sure that we
+	 * add the stuff in WEB-INF/classes to the RewriteManager before we add the
+	 * stuff in WEB-INF/lib, as this the order in which they will be found by
+	 * the classpath at runtime.
+	 * 
+	 * 3 - Zip it all back up
+	 * 
+	 * @throws IOException
+	 */
+	private void instrumentWar(final File src, final File dest)
+			throws IOException {
+
+		final File webInfSrc = new File(src, WEBINF);
+		final File webInfDest = new File(dest, WEBINF);
+		final File classesDirSrc = new File(webInfSrc, CLASSES);
+		final File classesDirDest = new File(webInfDest, "classes");
+		final File libDirSrc = new File(webInfSrc, LIB);
+		final File libDirDest = new File(webInfDest, LIB);
+
+		// Copy all the files over, but then remove the WEB-INF/classes and
+		// WEB-INF/lib folders.
+		if (!FileUtility.recursiveCopy(src, dest)) {
+			throw new BuildException(String.format(
+					"Build failed while copying %s to %s.", src, dest));
+		}
+
+		FileUtility.recursiveDelete(classesDirDest);
+		FileUtility.recursiveDelete(libDirDest);
+
+		i.setProject(getProject());
+		i.createLibraries().add(extraLibs);
+
+		classesDirDest.mkdir();
+		setupFlashlightConf(classesDirDest);
+
+		final Directory dir = new Directory(classesDirSrc, classesDirDest);
+		i.addConfiguredDir(dir);
+
+		libDirDest.mkdir();
+
+		FileUtility.copy(runtime, new File(libDirDest, runtime.getName()));
+
+		for (final File f : libDirSrc.listFiles()) {
+			final Jar j = new Jar(f, libDirDest);
+			i.addConfiguredJar(j);
+		}
+
+		i.execute();
+
+	}
+
+	/**
+	 * Configures the instrumentation job to write the appropriate flashlight
+	 * data files into a destination class folder.
+	 * 
+	 * @param classDir
+	 * @throws IOException
+	 */
+	private void setupFlashlightConf(final File classDir) throws IOException {
+
+		File fieldsFile = new File(classDir,
+				InstrumentationConstants.FL_FIELDS_RESOURCE);
+		fieldsFile.getParentFile().mkdirs();
+		i.setFieldsFile(fieldsFile);
+
+		File logFile = new File(classDir,
+				InstrumentationConstants.FL_LOG_RESOURCE);
+		logFile.getParentFile().mkdirs();
+		i.setLogFile(logFile);
+
+		File sitesFile = new File(classDir,
+				InstrumentationConstants.FL_SITES_RESOURCE);
+		sitesFile.getParentFile().mkdirs();
+		i.setSitesFile(sitesFile);
+
+		if (dataDir != null) {
+			Properties properties = new Properties();
+			properties.put(InstrumentationConstants.FL_RUN_FOLDER,
+					dataDir.getAbsolutePath());
+			File propsFile = new File(classDir,
+					InstrumentationConstants.FL_PROPERTIES_RESOURCE);
+			FileOutputStream out = new FileOutputStream(propsFile);
+			properties.store(out, null);
+			out.close();
+		}
+	}
+
 	@Override
 	public void execute() throws BuildException {
+		if (runtime == null) {
+			throw new BuildException("No Flashlight runtime specified");
+		}
+		if (!runtime.exists()) {
+			throw new BuildException(String.format("%s does not exist.",
+					runtime));
+		}
 		try {
 			final ZipFile src = getSrcZip();
-			/*
-			 * 1 - Crack open the war, and place the results in a temp
-			 * directory.
-			 * 
-			 * 2 - Rewrite the contents into a second temp directory. Make sure
-			 * that we add the stuff in WEB-INF/classes to the RewriteManager
-			 * before we add the stuff in WEB-INF/lib, as this the order in
-			 * which they will be found by the classpath at runtime.
-			 * 
-			 * 3 - Zip it all back up
-			 */
 			final File tmpSrc = tmpDir();
 			tmpSrc.mkdir();
-			final File tmpDest = tmpDir();
-			final File webInfSrc = new File(tmpSrc, WEBINF);
-			final File webInfDest = new File(tmpDest, WEBINF);
-			final File classesDirSrc = new File(webInfSrc, CLASSES);
-			final File classesDirDest = new File(webInfDest, "classes");
-			final File libDirSrc = new File(webInfSrc, LIB);
-			final File libDirDest = new File(webInfDest, LIB);
-
 			FileUtility.unzipFile(src, tmpSrc, null);
-			// Copy all the files over, but then remove the WEB-INF/classes and
-			// WEB-INF/lib folders.
-			if (!FileUtility.recursiveCopy(tmpSrc, tmpDest)) {
-				throw new BuildException(
-						String.format("Build failed while copying %s to %s.",
-								tmpSrc, tmpDest));
+			final File tmpDest = tmpDir();
+			if (new File(tmpSrc, WEBINF).exists()) {
+				instrumentWar(tmpSrc, tmpDest);
+			} else {
+				instrumentStandardJar(tmpSrc, tmpDest);
 			}
-
-			FileUtility.recursiveDelete(webInfDest);
-
-			webInfDest.mkdir();
-			final File webXmlSrc = new File(webInfSrc, WEBXML);
-			final File webXmlDest = new File(webInfDest, WEBXML);
-			FileUtility.copy(webXmlSrc, webXmlDest);
-
-			i.setProject(getProject());
-			i.createLibraries().add(extraLibs);
-
-			File fieldsFile = new File(classesDirDest,
-					InstrumentationConstants.FL_FIELDS_RESOURCE);
-			fieldsFile.getParentFile().mkdirs();
-			i.setFieldsFile(fieldsFile);
-
-			File logFile = new File(classesDirDest,
-					InstrumentationConstants.FL_LOG_RESOURCE);
-			logFile.getParentFile().mkdirs();
-			i.setLogFile(logFile);
-
-			File sitesFile = new File(classesDirDest,
-					InstrumentationConstants.FL_SITES_RESOURCE);
-			sitesFile.getParentFile().mkdirs();
-			i.setSitesFile(sitesFile);
-
-			classesDirDest.mkdir();
-			final Directory dir = new Directory(classesDirSrc, classesDirDest);
-			i.addConfiguredDir(dir);
-
-			libDirDest.mkdir();
-			if (runtime == null) {
-				throw new BuildException("No Flashlight runtime specified");
-			}
-			if (!runtime.exists()) {
-				throw new BuildException(String.format("%s does not exist.",
-						runtime));
-			}
-			FileUtility.copy(runtime, new File(libDirDest, runtime.getName()));
-
-			for (final File f : libDirSrc.listFiles()) {
-				final Jar j = new Jar(f, libDirDest);
-				i.addConfiguredJar(j);
-			}
-
-			if (dataDir != null) {
-				Properties properties = new Properties();
-				properties.put(InstrumentationConstants.FL_RUN_FOLDER,
-						dataDir.getAbsolutePath());
-				File propsFile = new File(classesDirDest,
-						InstrumentationConstants.FL_PROPERTIES_RESOURCE);
-				FileOutputStream out = new FileOutputStream(propsFile);
-				properties.store(out, null);
-				out.close();
-			}
-
-			i.execute();
-
 			FileUtility.zipDir(tmpDest, destFile);
 		} catch (final Exception e) {
 			throw new BuildException(e);

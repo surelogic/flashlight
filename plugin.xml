@@ -127,8 +127,7 @@
 	<!-- We need a launch group (the id string is in the actions code) -->
 	<extension point="org.eclipse.debug.ui.launchGroups">
 		<launchGroup bannerImage="/lib/images/fl_wiz.png"
-			id="com.surelogic.flashlight.launchGroup.flashlight"
-			image="icons/fl_logo.gif"
+			id="com.surelogic.flashlight.launchGroup.flashlight" image="icons/fl_logo.gif"
 			label="Flashlight" mode="flashlight" title="%fl.launchGroup.title" />
 	</extension>
 
@@ -172,18 +171,17 @@
 	</extension>
 
 	<!-- I have to add a tab group for my mode...I just use jdt's class -->
-   <!--extension
-         point="org.eclipse.debug.ui.launchConfigurationTabGroups">
-      <launchConfigurationTabGroup
-            type="org.eclipse.jdt.launching.localJavaApplication"
-            helpContextId="org.eclipse.jdt.debug.ui.launchConfigHelpContext.local_java_application"
-            class="org.eclipse.jdt.internal.debug.ui.launcher.LocalJavaApplicationTabGroup"
-            id="org.eclipse.jdt.debug.ui.launchConfigurationTabGroup.localJavaApplication">
-      <launchMode mode="flashlight"
-        description="%fl.localJavaApplicationTabGroupDescription">
-      </launchMode>
-      </launchConfigurationTabGroup>
-    </extension-->
+	<!--
+		extension point="org.eclipse.debug.ui.launchConfigurationTabGroups">
+		<launchConfigurationTabGroup
+		type="org.eclipse.jdt.launching.localJavaApplication"
+		helpContextId="org.eclipse.jdt.debug.ui.launchConfigHelpContext.local_java_application"
+		class="org.eclipse.jdt.internal.debug.ui.launcher.LocalJavaApplicationTabGroup"
+		id="org.eclipse.jdt.debug.ui.launchConfigurationTabGroup.localJavaApplication">
+		<launchMode mode="flashlight"
+		description="%fl.localJavaApplicationTabGroupDescription">
+		</launchMode> </launchConfigurationTabGroup> </extension
+	-->
 	<extension point="org.eclipse.debug.ui.launchConfigurationTabGroups">
 		<launchConfigurationTabGroup
 			type="org.eclipse.jdt.launching.localJavaApplication"
@@ -197,8 +195,7 @@
 				description="%fl.localJavaApplicationTabGroupDescription">
 			</launchMode>
 		</launchConfigurationTabGroup>
-		<launchConfigurationTabGroup
-			type="org.eclipse.jdt.junit.launchconfig"
+		<launchConfigurationTabGroup type="org.eclipse.jdt.junit.launchconfig"
 			helpContextId="org.eclipse.jdt.debug.ui.launchConfigHelpContext.local_java_application"
 			class="com.surelogic.flashlight.client.eclipse.launch.FlashlightJUnitAppTabGroup"
 			id="com.surelogic.flashlight.launchConfigurationTabGroup.localJUnitApplication">
@@ -211,50 +208,52 @@
 		</launchConfigurationTabGroup>
 	</extension>
 
-	<!-- Adding additional tabs using the launchConfigurationTabs extension point
-       results in unreliable tab ordering. -->
-	<!--extension point="org.eclipse.debug.ui.launchConfigurationTabs">
-    <tab
-        class="com.surelogic.flashlight.client.eclipse.launch.FlashlightInstrumentationTab"
-        group="org.eclipse.jdt.debug.ui.launchConfigurationTabGroup.localJavaApplication"
-        id="com.surelogic.flashlight.client.eclipse.launch.FlashlightInstrumentationTab"
-        name="Instrument">
-      <placement after="org.eclipse.jdt.debug.ui.javaArgumentsTab"/>
-      <associatedDelegate delegate="com.surelogic.flashlight.client.eclipse.launch.FlashlightLaunchConfigurationDelegate"/>
-    </tab>
-	  <tab
-	      class="com.surelogic.flashlight.client.eclipse.launch.FlashlightTab"
-	      group="org.eclipse.jdt.debug.ui.launchConfigurationTabGroup.localJavaApplication"
-	      id="com.surelogic.flashlight.client.eclipse.launch.FlashlightTab"
-	      name="Flashlight">
-	    <placement after="com.surelogic.flashlight.client.eclipse.launch.FlashlightInstrumentationTab"/>
-	    <associatedDelegate delegate="com.surelogic.flashlight.client.eclipse.launch.FlashlightLaunchConfigurationDelegate"/>
-	  </tab>
-    <tab
-        class="com.surelogic.flashlight.client.eclipse.launch.FlashlightMethodsTab"
-        group="org.eclipse.jdt.debug.ui.launchConfigurationTabGroup.localJavaApplication"
-        id="com.surelogic.flashlight.client.eclipse.launch.FlashlightMethodsTab"
-        name="Methods">
-      <placement after="com.surelogic.flashlight.client.eclipse.launch.FlashlightTab"/>
-      <associatedDelegate delegate="com.surelogic.flashlight.client.eclipse.launch.FlashlightLaunchConfigurationDelegate"/>
-    </tab>
-    <tab
-        class="com.surelogic.flashlight.client.eclipse.launch.FlashlightFieldsTab"
-        group="org.eclipse.jdt.debug.ui.launchConfigurationTabGroup.localJavaApplication"
-        id="com.surelogic.flashlight.client.eclipse.launch.FlashlightFieldsTab"
-        name="Fields">
-      <placement after="com.surelogic.flashlight.client.eclipse.launch.FlashlightMethodsTab"/>
-      <associatedDelegate delegate="com.surelogic.flashlight.client.eclipse.launch.FlashlightLaunchConfigurationDelegate"/>
-    </tab>
-	</extension-->
-	
+	<!--
+		Adding additional tabs using the launchConfigurationTabs extension
+		point results in unreliable tab ordering.
+	-->
+	<!--
+		extension point="org.eclipse.debug.ui.launchConfigurationTabs"> <tab
+		class="com.surelogic.flashlight.client.eclipse.launch.FlashlightInstrumentationTab"
+		group="org.eclipse.jdt.debug.ui.launchConfigurationTabGroup.localJavaApplication"
+		id="com.surelogic.flashlight.client.eclipse.launch.FlashlightInstrumentationTab"
+		name="Instrument"> <placement
+		after="org.eclipse.jdt.debug.ui.javaArgumentsTab"/>
+		<associatedDelegate
+		delegate="com.surelogic.flashlight.client.eclipse.launch.FlashlightLaunchConfigurationDelegate"/>
+		</tab> <tab
+		class="com.surelogic.flashlight.client.eclipse.launch.FlashlightTab"
+		group="org.eclipse.jdt.debug.ui.launchConfigurationTabGroup.localJavaApplication"
+		id="com.surelogic.flashlight.client.eclipse.launch.FlashlightTab"
+		name="Flashlight"> <placement
+		after="com.surelogic.flashlight.client.eclipse.launch.FlashlightInstrumentationTab"/>
+		<associatedDelegate
+		delegate="com.surelogic.flashlight.client.eclipse.launch.FlashlightLaunchConfigurationDelegate"/>
+		</tab> <tab
+		class="com.surelogic.flashlight.client.eclipse.launch.FlashlightMethodsTab"
+		group="org.eclipse.jdt.debug.ui.launchConfigurationTabGroup.localJavaApplication"
+		id="com.surelogic.flashlight.client.eclipse.launch.FlashlightMethodsTab"
+		name="Methods"> <placement
+		after="com.surelogic.flashlight.client.eclipse.launch.FlashlightTab"/>
+		<associatedDelegate
+		delegate="com.surelogic.flashlight.client.eclipse.launch.FlashlightLaunchConfigurationDelegate"/>
+		</tab> <tab
+		class="com.surelogic.flashlight.client.eclipse.launch.FlashlightFieldsTab"
+		group="org.eclipse.jdt.debug.ui.launchConfigurationTabGroup.localJavaApplication"
+		id="com.surelogic.flashlight.client.eclipse.launch.FlashlightFieldsTab"
+		name="Fields"> <placement
+		after="com.surelogic.flashlight.client.eclipse.launch.FlashlightMethodsTab"/>
+		<associatedDelegate
+		delegate="com.surelogic.flashlight.client.eclipse.launch.FlashlightLaunchConfigurationDelegate"/>
+		</tab> </extension
+	-->
+
 	<!--
 		Causes the "Flashlight as" menus to work properly (launch shortcut
 		actions)
 	-->
 	<extension point="org.eclipse.debug.ui.launchShortcuts">
-		<shortcut label="%fl.javaApplicationShortcut.label"
-			icon="icons/fl_app.gif"
+		<shortcut label="%fl.javaApplicationShortcut.label" icon="icons/fl_app.gif"
 			helpContextId="org.eclipse.jdt.debug.ui.shortcut_local_java_application"
 			modes="flashlight,flashlight-monitor"
 			class="com.surelogic.flashlight.client.eclipse.launch.JavaApplicationLaunchWrapper"
@@ -276,33 +275,31 @@
 					</with>
 				</enablement>
 			</contextualLaunch>
-      	<configurationType
-       	 	id="org.eclipse.jdt.launching.localJavaApplication">
-      	</configurationType>
+			<configurationType id="org.eclipse.jdt.launching.localJavaApplication">
+			</configurationType>
 		</shortcut>
-		<shortcut label="%fl.junitApplicationShortcut.label"
-			icon="icons/fl_app.gif"
-			helpContextId="org.eclipse.jdt.junit.launch_shortcut"
-			modes="flashlight, flashlight-monitor"
+		<shortcut label="%fl.junitApplicationShortcut.label" icon="icons/fl_app.gif"
+			helpContextId="org.eclipse.jdt.junit.launch_shortcut" modes="flashlight, flashlight-monitor"
 			class="com.surelogic.flashlight.client.eclipse.launch.FlashlightJUnitLaunchWrapper"
 			id="com.surelogic.flashlight.localJUnitShortcut">
-	        <contextualLaunch>
-	            <enablement>
-    	           <with variable="selection">
-        	          <count value="1"/>
-            	   	  <iterate>
-                	     <adapt type="org.eclipse.jdt.core.IJavaElement">
-		            	    <test property="org.eclipse.jdt.core.isInJavaProject"/>
-		                	<test property="org.eclipse.jdt.core.hasTypeOnClasspath" value="junit.framework.Test"/>
-			                <test property="org.eclipse.jdt.junit.canLaunchAsJUnit" forcePluginActivation="true"/>
-			             </adapt>
-			          </iterate>
-            	   	</with>
-            	</enablement>
-         	</contextualLaunch>
-         	<configurationType
-        	       id="org.eclipse.jdt.junit.launchconfig">
-    	     </configurationType>
+			<contextualLaunch>
+				<enablement>
+					<with variable="selection">
+						<count value="1" />
+						<iterate>
+							<adapt type="org.eclipse.jdt.core.IJavaElement">
+								<test property="org.eclipse.jdt.core.isInJavaProject" />
+								<test property="org.eclipse.jdt.core.hasTypeOnClasspath"
+									value="junit.framework.Test" />
+								<test property="org.eclipse.jdt.junit.canLaunchAsJUnit"
+									forcePluginActivation="true" />
+							</adapt>
+						</iterate>
+					</with>
+				</enablement>
+			</contextualLaunch>
+			<configurationType id="org.eclipse.jdt.junit.launchconfig">
+			</configurationType>
 		</shortcut>
 	</extension>
 	<extension point="org.eclipse.ui.views">
@@ -314,11 +311,6 @@
 			class="com.surelogic.flashlight.client.eclipse.views.run.RunView"
 			icon="platform:/plugin/com.surelogic.common/src/com/surelogic/common/images/fl_run_view.gif"
 			id="com.surelogic.flashlight.client.eclipse.views.run.RunView" name="Flashlight Runs">
-		</view>
-		<view allowMultiple="false" category="com.surelogic.flashlight.Flashlight"
-			class="com.surelogic.flashlight.client.eclipse.views.run.RunStatusView"
-			icon="platform:/plugin/com.surelogic.common/src/com/surelogic/common/images/fl_run_view.gif"
-			id="com.surelogic.flashlight.client.eclipse.views.run.RunStatusView" name="Flashlight Status">
 		</view>
 		<!-- UI for entering ad hoc queries -->
 		<view allowMultiple="false" category="com.surelogic.flashlight.Flashlight"

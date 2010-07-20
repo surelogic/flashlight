@@ -2,18 +2,15 @@ package com.surelogic.flashlight.client.eclipse.jobs;
 
 import java.util.List;
 
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.IJobManager;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.core.runtime.jobs.Job;
 
 import com.surelogic.common.SLUtility;
 import com.surelogic.common.eclipse.jobs.KeywordAccessRule;
-import com.surelogic.common.eclipse.jobs.SLProgressMonitorWrapper;
-import com.surelogic.common.eclipse.logging.SLEclipseStatusUtility;
 import com.surelogic.common.i18n.I18N;
+import com.surelogic.common.jobs.AbstractSLJob;
+import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
 import com.surelogic.flashlight.common.jobs.JobConstants;
@@ -22,44 +19,13 @@ import com.surelogic.flashlight.common.jobs.RefreshRunManagerSLJob;
 import com.surelogic.flashlight.common.model.RunDescription;
 import com.surelogic.flashlight.common.model.RunManager;
 
-public class PrepMultipleRunsJob extends Job {
+public class PrepMultipleRunsJob extends AbstractSLJob {
 
 	private final List<RunDescription> f_runs;
 
 	public PrepMultipleRunsJob(final List<RunDescription> runs) {
 		super(jobName(runs));
 		f_runs = runs;
-	}
-
-	@Override
-	protected IStatus run(final IProgressMonitor monitor) {
-		final IJobManager man = getJobManager();
-		for (final RunDescription rd : f_runs) {
-			final ISchedulingRule rule = KeywordAccessRule.getInstance(
-					JobConstants.PREP_KEY, rd.toIdentityString());
-			SLStatus status;
-			try {
-				man.beginRule(rule, monitor);
-				status = new PrepSLJob(rd, PreferenceConstants
-						.getPrepObjectWindowSize())
-						.run(new SLProgressMonitorWrapper(monitor, getName()));
-			} finally {
-				man.endRule(rule);
-			}
-			final ISchedulingRule rule2 = KeywordAccessRule
-					.getInstance(RunManager.getInstance().getRunIdentities());
-			try {
-				man.beginRule(rule2, monitor);
-				new RefreshRunManagerSLJob().run(new SLProgressMonitorWrapper(
-						monitor, getName()));
-			} finally {
-				man.endRule(rule2);
-			}
-			if (status != SLStatus.OK_STATUS) {
-				return SLEclipseStatusUtility.convert(status);
-			}
-		}
-		return Status.OK_STATUS;
 	}
 
 	private static String jobName(final List<RunDescription> runs) {
@@ -74,4 +40,36 @@ public class PrepMultipleRunsJob extends Job {
 		return jobName;
 	}
 
+	public SLStatus run(final SLProgressMonitor monitor) {
+		int perJobWork = 100;
+		int refreshWork = 1;
+		monitor.begin((perJobWork + refreshWork) * f_runs.size());
+		final IJobManager man = Job.getJobManager();
+		for (final RunDescription rd : f_runs) {
+			final ISchedulingRule rule = KeywordAccessRule.getInstance(
+					JobConstants.PREP_KEY, rd.toIdentityString());
+			SLStatus status;
+			try {
+				man.beginRule(rule, null);
+				status = invoke(
+						new PrepSLJob(rd,
+								PreferenceConstants.getPrepObjectWindowSize()),
+						monitor, perJobWork);
+			} finally {
+				man.endRule(rule);
+			}
+			final ISchedulingRule rule2 = KeywordAccessRule
+					.getInstance(RunManager.getInstance().getRunIdentities());
+			try {
+				man.beginRule(rule2, null);
+				invoke(new RefreshRunManagerSLJob(), monitor, refreshWork);
+			} finally {
+				man.endRule(rule2);
+			}
+			if (status != SLStatus.OK_STATUS) {
+				return status;
+			}
+		}
+		return SLStatus.OK_STATUS;
+	}
 }

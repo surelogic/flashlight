@@ -8,7 +8,6 @@ import java.util.logging.Level;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.ui.IPerspectiveDescriptor;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
@@ -21,6 +20,7 @@ import com.surelogic.common.eclipse.ViewUtility;
 import com.surelogic.common.eclipse.jobs.EclipseJob;
 import com.surelogic.common.eclipse.jobs.SLUIJob;
 import com.surelogic.common.i18n.I18N;
+import com.surelogic.common.jobs.SLJob;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.client.eclipse.dialogs.ConfirmPrepAllRawDataDialog;
 import com.surelogic.flashlight.client.eclipse.perspectives.FlashlightPerspective;
@@ -100,7 +100,9 @@ public final class PromptToPrepAllRawData extends SLUIJob {
 		 * user to do something that is already being done.
 		 */
 		final boolean prepJobRunning = EclipseJob.getInstance().isActiveOfType(
-				PrepSLJob.class);
+				PrepSLJob.class)
+				|| EclipseJob.getInstance().isActiveOfType(
+						PrepMultipleRunsJob.class);
 		SLLogger.getLogger().fine(
 				"[PromptToPrepAllRawData] prepJobRunning = " + prepJobRunning);
 		if (prepJobRunning) {
@@ -155,9 +157,7 @@ public final class PromptToPrepAllRawData extends SLUIJob {
 				}
 			}
 		}
-		final Job job = new PrepMultipleRunsJob(toPrep);
-		job.setSystem(false);
-		job.setUser(true);
-		job.schedule();
+		final SLJob job = new PrepMultipleRunsJob(toPrep);
+		EclipseJob.getInstance().schedule(job, true, false);
 	}
 }

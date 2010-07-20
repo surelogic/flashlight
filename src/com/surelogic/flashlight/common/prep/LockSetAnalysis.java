@@ -645,14 +645,6 @@ public class LockSetAnalysis implements IPostPrep {
 		final Timestamp start;
 		final Timestamp end;
 
-		Lock(final Timestamp endTime) {
-			this.end = endTime;
-			this.thread = 0;
-			this.lock = 0;
-			this.start = null;
-			this.startEvent = 0;
-		}
-
 		Lock(final Row row) {
 			this.thread = row.nextLong();
 			this.lock = row.nextLong();

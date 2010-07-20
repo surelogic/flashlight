@@ -12,6 +12,7 @@ import java.sql.Timestamp;
 import java.util.logging.Level;
 
 import com.surelogic._flashlight.common.PreppedAttributes;
+import com.surelogic.common.jdbc.QB;
 import com.surelogic.common.logging.SLLogger;
 
 public class ReadWriteLock extends Event {
@@ -20,11 +21,7 @@ public class ReadWriteLock extends Event {
 		super(i);
 	}
 
-	private static final String f_psQ = "INSERT INTO RWLOCK (Id,ReadLock,WriteLock) VALUES (?, ?, ?)";
-
 	private PreparedStatement f_ps;
-
-	private Timestamp startTime;
 
 	private int count;
 
@@ -33,8 +30,7 @@ public class ReadWriteLock extends Event {
 			final long startNS, final ScanRawFilePreScan scanResults)
 			throws SQLException {
 		super.setup(c, start, startNS, scanResults);
-		f_ps = c.prepareStatement(f_psQ);
-		startTime = start;
+		f_ps = c.prepareStatement(QB.get(25));
 	}
 
 	public String getXMLElementName() {

@@ -25,14 +25,14 @@ public final class RunDirectory {
 	/** Suffix for a compressed binary data file */
 	public static final String COMPRESSED_BIN_SUFFIX = ".flb.gz";
 	/** Name of database directory under the run directory */
-	public static final String DB_NAME = "db";
+	private static final String DB_DIR = "db";
 
 	/** Complete list of suffixes used to identify raw data files */
 	private static final String[] suffixes = { COMPRESSED_SUFFIX, BIN_SUFFIX,
 			SUFFIX, COMPRESSED_BIN_SUFFIX };
 
 	public static final String HEADER_SUFFIX = ".flh";
-	
+
 	private static String idValidSuffix(final String name) {
 		for (final String suffix : suffixes) {
 			if (name.endsWith(suffix)) {
@@ -77,6 +77,8 @@ public final class RunDirectory {
 	private final File runDirHandle;
 	/** The file handle for the database */
 	private final File dbHandle;
+	/** The file handles for the html directory */
+	private final HtmlHandles htmlHandles;
 	/** The file handle for the header file */
 	private final File headerHandle;
 
@@ -91,7 +93,7 @@ public final class RunDirectory {
 
 	/* Private constructor: use the factory method */
 	private RunDirectory(final RunDescription run, final File runDir,
-			final File header, final File db,
+			final File header, final File db, final HtmlHandles html,
 			final InstrumentationFileHandles instrumentation,
 			final SourceZipFileHandles source,
 			final ProjectsDirectoryHandles projects,
@@ -104,6 +106,7 @@ public final class RunDirectory {
 		projectDirHandles = projects;
 		rawFileHandles = profile;
 		dbHandle = db;
+		htmlHandles = html;
 	}
 
 	/**
@@ -156,7 +159,7 @@ public final class RunDirectory {
 				}
 				final RawDataFilePrefix[] prefixInfos = RawFileUtility
 						.getPrefixesFor(rawDataFiles);
-				for(RawDataFilePrefix prefixInfo : prefixInfos) {
+				for (RawDataFilePrefix prefixInfo : prefixInfos) {
 					if (!prefixInfo.isWellFormed()) {
 						return null;
 					}
@@ -173,9 +176,9 @@ public final class RunDirectory {
 
 					final RawFileHandles profile = RawFileUtility
 							.getRawFileHandlesFor(prefixInfos);
-					final File db = new File(runDir.getAbsoluteFile()
-							+ File.separator + DB_NAME);
-					return new RunDirectory(run, runDir, headerFile, db,
+					final File db = new File(runDir.getAbsoluteFile(), DB_DIR);
+					final HtmlHandles html = HtmlHandles.getFor(runDir);
+					return new RunDirectory(run, runDir, headerFile, db, html,
 							instrumentation, source, projects, profile);
 				}
 			} else {
@@ -226,9 +229,10 @@ public final class RunDirectory {
 		}
 		return null;
 	}
-	
-	private static File[] getFilesFrom(final File runDir, final FileFilter filter,
-			                           final int noFileErr, final int wrongNumFilesErr) {
+
+	private static File[] getFilesFrom(final File runDir,
+			final FileFilter filter, final int noFileErr,
+			final int wrongNumFilesErr) {
 		final File[] files = runDir.listFiles(filter);
 		/*
 		 * files is either null, or should be a array of length >1. It should
@@ -242,12 +246,12 @@ public final class RunDirectory {
 						I18N.err(noFileErr, runDir.getAbsolutePath()));
 			} else if (files.length == 1) {
 				return files;
-			} else if (files.length == FL_STREAM_SUFFIXES.length){ 	
+			} else if (files.length == FL_STREAM_SUFFIXES.length) {
 				final String suffix = idValidSuffix(files[0].getName());
-				if (suffix != null) { 
+				if (suffix != null) {
 					// Check if names match
 					boolean match = true;
-					for(File f : files) {
+					for (File f : files) {
 						if (!isValidStreamName(f.getName(), suffix)) {
 							match = false;
 							break;
@@ -257,22 +261,23 @@ public final class RunDirectory {
 						return files;
 					}
 				}
-			} 
+			}
 			SLLogger.getLogger().log(Level.FINE,
-					I18N.err(wrongNumFilesErr, runDir.getAbsolutePath()));			
+					I18N.err(wrongNumFilesErr, runDir.getAbsolutePath()));
 		}
 		return null;
 	}
 
-	private static boolean isValidStreamName(final String name, final String suffix) {
+	private static boolean isValidStreamName(final String name,
+			final String suffix) {
 		for (final String stream : FL_STREAM_SUFFIXES) {
-			if (name.endsWith(stream+suffix)) {
+			if (name.endsWith(stream + suffix)) {
 				return true;
 			}
 		}
 		return false;
 	}
-	
+
 	/** Get the run description. Never returns {@code null}. */
 	public RunDescription getRunDescription() {
 		return runDescription;
@@ -293,14 +298,14 @@ public final class RunDirectory {
 	}
 
 	/**
-	 * Gets a human readable size of the database directory. Never returns {@code
-	 * null}.
+	 * Gets a human readable size of the database directory. Never returns
+	 * {@code null}.
 	 */
 	public String getHumanReadableDatabaseSize() {
 		return FileUtility.bytesToHumanReadableString(FileUtility
 				.recursiveSizeInBytes(dbHandle));
 	}
-	
+
 	/** Get the handle for the header file. Never returns {@code null}. */
 	public File getHeader() {
 		return headerHandle;
@@ -332,7 +337,22 @@ public final class RunDirectory {
 		return rawFileHandles;
 	}
 
+	/**
+	 * Gets the database directory.
+	 * 
+	 * @return the non-null database directory.
+	 */
 	public File getDatabaseDirectory() {
 		return dbHandle;
+	}
+
+	/**
+	 * Gets the handles for the HTML directory containing an overview of the
+	 * findings for this run.
+	 * 
+	 * @return the non-null handles for the HTML directory.
+	 */
+	public HtmlHandles getHtmlHandles() {
+		return htmlHandles;
 	}
 }

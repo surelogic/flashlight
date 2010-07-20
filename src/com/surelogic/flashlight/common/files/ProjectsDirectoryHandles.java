@@ -45,10 +45,10 @@ public final class ProjectsDirectoryHandles {
    */
   /* Package private: only to be called from RunDirectory */
   static ProjectsDirectoryHandles getFor(final File runDir) {
-    final File projectsDir = new File(runDir, PROJECTS_DIR_NAME);
     if (runDir == null || !runDir.exists()) {
     	return null;
     }
+    final File projectsDir = new File(runDir, PROJECTS_DIR_NAME);
     if (!projectsDir.exists()) {
       SLLogger.getLogger().log(Level.WARNING,
           I18N.err(151, runDir.getAbsolutePath(), PROJECTS_DIR_NAME));

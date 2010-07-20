@@ -66,6 +66,7 @@ import com.surelogic.flashlight.common.prep.StaticFieldWrite;
 import com.surelogic.flashlight.common.prep.ThreadDefinition;
 import com.surelogic.flashlight.common.prep.Trace;
 import com.surelogic.flashlight.common.prep.TraceNode;
+import com.surelogic.flashlight.common.prep.WriteHtmlOverview;
 
 public final class PrepSLJob extends AbstractSLJob {
 
@@ -102,9 +103,11 @@ public final class PrepSLJob extends AbstractSLJob {
 	}
 
 	private IPostPrep[] getPostPrep() {
-		return new IPostPrep[] { new LockSetAnalysis() };
+		return new IPostPrep[] { new LockSetAnalysis(),
+				new WriteHtmlOverview(f_runDescription) };
 	}
 
+	private final RunDescription f_runDescription;
 	private final File f_dataFile;
 	private final DBConnection f_database;
 	private final int f_windowSize;
@@ -118,23 +121,9 @@ public final class PrepSLJob extends AbstractSLJob {
 	 */
 	public PrepSLJob(final RunDescription run, final int windowSize) {
 		super("Preparing " + run.getName());
+		f_runDescription = run;
 		f_dataFile = run.getRawFileHandles().getFirstDataFile();
 		f_database = run.getDB();
-		f_windowSize = windowSize;
-	}
-
-	/**
-	 * Constructs a job instance to prepare the passed raw data file into the
-	 * passed target database.
-	 * 
-	 * @param dataFile
-	 *            a raw data file, either <tt>.fl</tt> or <tt>.fl.gz</tt>.
-	 */
-	public PrepSLJob(final File dataFile, final DBConnection database,
-			final int windowSize) {
-		super("Preparing " + dataFile.getName());
-		f_dataFile = dataFile;
-		f_database = database;
 		f_windowSize = windowSize;
 	}
 

@@ -33,7 +33,6 @@ public class InstrumentArchive extends Task {
 	private static final String WEBINF = "WEB-INF";
 	private static final String CLASSES = "classes";
 	private static final String LIB = "lib";
-	private static final String WEBXML = "web.xml";
 	private final Instrument i;
 
 	private File destFile, srcFile, runtime, dataDir;
@@ -196,8 +195,11 @@ public class InstrumentArchive extends Task {
 	 */
 	private void instrumentStandardJar(final File src, final File dest)
 			throws IOException {
+		dest.mkdir();
 		i.setProject(getProject());
-		i.createLibraries().add(extraLibs);
+		if (extraLibs != null) {
+			i.createLibraries().add(extraLibs);
+		}
 		final Directory dir = new Directory(src, dest);
 		i.addConfiguredDir(dir);
 		setupFlashlightConf(dest);
@@ -327,11 +329,13 @@ public class InstrumentArchive extends Task {
 			try {
 				return new ZipFile(srcFile);
 			} catch (final IOException e) {
-				throw new BuildException(
-						"The source file must be a valid war.", e);
+				throw new BuildException(String.format(
+						"The source file '%s' must be a valid archive file.",
+						srcFile), e);
 			}
 		}
-		throw new BuildException("The source file must be a valid war.");
+		throw new BuildException(String.format(
+				"The source file '%s' must be a valid archive file.", srcFile));
 	}
 
 	final List<File> dirs = new ArrayList<File>();

@@ -183,8 +183,9 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 	private final Action f_refreshAction = new Action() {
 		@Override
 		public void run() {
-			EclipseJob.getInstance().scheduleDb(new RefreshRunManagerSLJob(true),
-					false, false, RunManager.getInstance().getRunIdentities());
+			EclipseJob.getInstance().scheduleDb(
+					new RefreshRunManagerSLJob(true), false, false,
+					RunManager.getInstance().getRunIdentities());
 		}
 	};
 
@@ -356,8 +357,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 		@Override
 		public void run() {
 			final RunDescription[] selectedRunDescriptions = getSelectedRunDescriptions();
-			final List<PrepRunDescription> runs = new ArrayList<PrepRunDescription>(
-					selectedRunDescriptions.length);
+			final List<PrepRunDescription> runs = new ArrayList<PrepRunDescription>();
 			boolean hasRun = false;
 			for (final RunDescription d : selectedRunDescriptions) {
 				final PrepRunDescription prep = d.getPrepRunDescription();
@@ -367,67 +367,71 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 				}
 			}
 			if (hasRun) {
-				for (final IJavaProject p : JDTUtility.getJavaProjects()) {
-					for (final PrepRunDescription run : runs) {
-						final String runName = run.getDescription().getName();
-						final int idx = runName.lastIndexOf('.');
-						final String runPackage = runName.substring(0, idx);
-						final String runClass = runName.substring(idx + 1);
-						if (JDTUtility.findIType(p.getElementName(),
-								runPackage, runClass) != null) {
-							final RegionRefactoringInfo info = new RegionRefactoringInfo(
-									Collections.singletonList(p), runs);
-							info.setSelectedProject(p);
-							info.setSelectedRuns(runs);
-							final RegionModelRefactoring refactoring = new RegionModelRefactoring(
-									info);
-							final RegionRefactoringWizard wizard = new RegionRefactoringWizard(
-									refactoring, info, false);
-							final RefactoringWizardOpenOperation op = new RefactoringWizardOpenOperation(
-									wizard);
-							try {
-								if (op
-										.run(
-												SWTUtility.getShell(),
-												I18N
-														.msg("flashlight.recommend.refactor.regionIsThis")) == IDialogConstants.OK_ID) {
-									try {
-										if (!Nature.hasNature(p.getProject())) {
-											ClearProjectListener
-													.clearNatureFromAllOpenProjects();
-											try {
-												Nature.addNatureToProject(p
-														.getProject());
-											} catch (final CoreException e) {
-												SLLogger
-														.getLogger()
-														.log(
-																Level.SEVERE,
-																"Failure adding JSure nature to "
-																		+ p
-																				.getElementName(),
-																e);
-											}
-											ClearProjectListener
-													.postNatureChangeUtility();
-										}
-									} catch (final NoClassDefFoundError e) {
-										// This is expected if jsure is not
-										// installed
-									}
-								}
-							} catch (final InterruptedException e) {
-								// Operation was cancelled. Whatever floats
-								// their
-								// boat.
-							}
-							return;
-						}
-					}
-				}
+				inferJSureAnnoHelper(runs);
 			}
 		}
 	};
+
+	private void inferJSureAnnoHelper(final List<PrepRunDescription> runs) {
+		for (final IJavaProject p : JDTUtility.getJavaProjects()) {
+			for (final PrepRunDescription run : runs) {
+				final String runName = run.getDescription().getName();
+				final int idx = runName.lastIndexOf('.');
+				final String runPackage = runName.substring(0, idx);
+				final String runClass = runName.substring(idx + 1);
+				if (JDTUtility.findIType(p.getElementName(), runPackage,
+						runClass) != null) {
+					final RegionRefactoringInfo info = new RegionRefactoringInfo(
+							Collections.singletonList(p), runs);
+					info.setSelectedProject(p);
+					info.setSelectedRuns(runs);
+					final RegionModelRefactoring refactoring = new RegionModelRefactoring(
+							info);
+					final RegionRefactoringWizard wizard = new RegionRefactoringWizard(
+							refactoring, info, false);
+					final RefactoringWizardOpenOperation op = new RefactoringWizardOpenOperation(
+							wizard);
+					try {
+						final String title = I18N
+								.msg("flashlight.recommend.refactor.regionIsThis");
+						final int answer = op.run(SWTUtility.getShell(), title);
+						if (answer == IDialogConstants.OK_ID) {
+							try {
+								if (!Nature.hasNature(p.getProject())) {
+									ClearProjectListener
+											.clearNatureFromAllOpenProjects();
+									try {
+										Nature.addNatureToProject(p
+												.getProject());
+									} catch (final CoreException e) {
+										SLLogger
+												.getLogger()
+												.log(
+														Level.SEVERE,
+														"Failure adding JSure nature to "
+																+ p
+																		.getElementName(),
+														e);
+									}
+									ClearProjectListener
+											.postNatureChangeUtility();
+								}
+							} catch (final NoClassDefFoundError ignore) {
+								/*
+								 * Expected if JSure is not installed
+								 */
+							}
+						}
+					} catch (final InterruptedException ignore) {
+						/*
+						 * The operation was cancelled by the user.
+						 */
+					}
+					return;
+				}
+			}
+		}
+	}
 
 	public Action getInferJSureAnnoAction() {
 		return f_inferJSureAnnoAction;

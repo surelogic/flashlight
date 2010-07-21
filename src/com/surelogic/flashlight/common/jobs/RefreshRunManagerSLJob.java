@@ -10,8 +10,11 @@ import com.surelogic.flashlight.common.model.RunManager;
 
 public final class RefreshRunManagerSLJob extends AbstractSLJob {
 
-	public RefreshRunManagerSLJob() {
+	private final boolean f_forceNotify;
+
+	public RefreshRunManagerSLJob(boolean forceNotify) {
 		super("Refresh the Flashlight run manager contents");
+		f_forceNotify = forceNotify;
 	}
 
 	public SLStatus run(final SLProgressMonitor monitor) {
@@ -26,7 +29,7 @@ public final class RefreshRunManagerSLJob extends AbstractSLJob {
 			UsageMeter.getInstance().tickUse(
 					"Flashlight ran RefreshRunManagerSLJob");
 
-			RunManager.getInstance().refresh();
+			RunManager.getInstance().refresh(f_forceNotify);
 		} catch (final Exception e) {
 			return SLStatus.createErrorStatus(SLStatus.OK,
 					"Refresh of run manager contents failed", e);

@@ -78,7 +78,7 @@ public final class RunManager {
 		}
 		if (dataDir.exists() && dataDir.isDirectory()) {
 			f_dataDir.set(dataDir);
-			refresh();
+			refresh(true);
 		} else {
 			throw new IllegalArgumentException(I18N.err(167, dataDir));
 		}
@@ -172,8 +172,15 @@ public final class RunManager {
 	 * all observers if that set has changed. This method is invoked by
 	 * {@link RefreshRunManagerSLJob}, which is generally what you want to use
 	 * if you are in the Eclipse client.
+	 * 
+	 * @param forceNotify
+	 *            {@code true} if a notification to observers is made even if no
+	 *            changes are noted, {@code false} if a notification to
+	 *            observers is only made if changes are noted.
+	 * 
+	 * @see RefreshRunManagerSLJob
 	 */
-	public void refresh() {
+	public void refresh(boolean forceNotify) {
 		final File dataDir = f_dataDir.get();
 		if (dataDir == null) {
 			SLLogger.getLogger().warning(I18N.err(170));
@@ -216,7 +223,7 @@ public final class RunManager {
 		if (!descToPrepOld.equals(descToPrep)) {
 			isChanged = true;
 		}
-		if (isChanged) {
+		if (isChanged || forceNotify) {
 			f_descToPrep.set(Collections.unmodifiableMap(descToPrep));
 			notifyObservers();
 		}

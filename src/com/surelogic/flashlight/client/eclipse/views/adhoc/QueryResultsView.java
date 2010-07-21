@@ -1,6 +1,6 @@
 package com.surelogic.flashlight.client.eclipse.views.adhoc;
 
-import java.util.Map;
+import java.util.logging.Level;
 
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.swt.SWT;
@@ -15,8 +15,9 @@ import org.eclipse.swt.widgets.Menu;
 import com.surelogic.adhoc.eclipse.EclipseQueryUtility;
 import com.surelogic.adhoc.views.results.AbstractQueryResultsView;
 import com.surelogic.common.adhoc.AdHocManager;
-import com.surelogic.common.adhoc.AdHocQuery;
 import com.surelogic.common.adhoc.AdHocQueryFullyBound;
+import com.surelogic.common.i18n.I18N;
+import com.surelogic.common.logging.SLLogger;
 import com.surelogic.common.serviceability.UsageMeter;
 import com.surelogic.flashlight.client.eclipse.jobs.PopulateBrowserWithRunInformationJob;
 import com.surelogic.flashlight.common.model.RunDescription;
@@ -58,29 +59,20 @@ public final class QueryResultsView extends AbstractQueryResultsView {
 			browser.addLocationListener(new LocationListener() {
 
 				public void changing(LocationEvent event) {
-					// nothing
+					int index = event.location.indexOf(QUERY_PAT);
+					if (index != -1) {
+						/*
+						 * We need to run a query
+						 */
+						event.doit = false; // don't really open the link
+						final String queryUrl = event.location.substring(index
+								+ QUERY_PAT.length());
+						parseAndRunQuery(queryUrl);
+					}
 				}
 
 				public void changed(LocationEvent event) {
-					final String q = "?query=";
-					int index = event.location.indexOf(q);
-					if (index != -1) {
-						final String id = event.location.substring(index
-								+ q.length());
-						AdHocManager manager = getManager();
-						if (manager.contains(id)) {
-							System.out.println("id is good for query run");
-							final AdHocQuery query = manager.get(id);
-							final Map<String, String> variables = manager
-									.getGlobalVariableValues();
-							AdHocQueryFullyBound boundQuery = new AdHocQueryFullyBound(
-									query, variables);
-							System.out.println("...scheduling...");
-							EclipseQueryUtility.scheduleQuery(boundQuery,
-									manager.getDataSource()
-											.getCurrentAccessKeys());
-						}
-					}
+					// nothing
 				}
 			});
 
@@ -92,6 +84,20 @@ public final class QueryResultsView extends AbstractQueryResultsView {
 
 			// Replace browser's built-in context menu with none
 			browser.setMenu(new Menu(parent.getShell(), SWT.NONE));
+		}
+	}
+
+	public static final String QUERY_PAT = "?query=";
+
+	private void parseAndRunQuery(final String queryUrl) {
+		try {
+			final AdHocQueryFullyBound query = getManager().parseQueryUrl(
+					queryUrl);
+			EclipseQueryUtility.scheduleQuery(query, getManager()
+					.getDataSource().getCurrentAccessKeys());
+		} catch (IllegalStateException problem) {
+			SLLogger.getLogger().log(Level.WARNING, I18N.err(212, queryUrl),
+					problem);
 		}
 	}
 }

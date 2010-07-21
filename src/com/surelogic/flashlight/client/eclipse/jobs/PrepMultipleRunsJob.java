@@ -62,7 +62,7 @@ public class PrepMultipleRunsJob extends AbstractSLJob {
 					.getInstance(RunManager.getInstance().getRunIdentities());
 			try {
 				man.beginRule(rule2, null);
-				invoke(new RefreshRunManagerSLJob(), monitor, refreshWork);
+				invoke(new RefreshRunManagerSLJob(true), monitor, refreshWork);
 			} finally {
 				man.endRule(rule2);
 			}

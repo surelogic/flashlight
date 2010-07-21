@@ -1,5 +1,8 @@
 package com.surelogic.flashlight.client.eclipse.jobs;
 
+import java.io.File;
+import java.net.MalformedURLException;
+
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -7,7 +10,9 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.ui.progress.UIJob;
 
+import com.surelogic.common.SLUtility;
 import com.surelogic.common.eclipse.jobs.SLUIJob;
+import com.surelogic.common.eclipse.logging.SLEclipseStatusUtility;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.flashlight.common.model.RunDescription;
 
@@ -38,8 +43,9 @@ public final class PopulateBrowserWithRunInformationJob extends Job {
 	protected IStatus run(IProgressMonitor monitor) {
 		monitor.beginTask(getName(), IProgressMonitor.UNKNOWN);
 		try {
-			final String indexHtmlContents = f_runDescription.getRunDirectory()
-					.getHtmlHandles().readIndexHtml();
+			final File indexHtml = f_runDescription.getRunDirectory()
+					.getHtmlHandles().getIndexHtmlFile();
+			final String url = indexHtml.toURI().toURL().toString();
 			/*
 			 * Update the browser if it is still on the screen. This needs to be
 			 * done in a UI job.
@@ -48,12 +54,17 @@ public final class PopulateBrowserWithRunInformationJob extends Job {
 				@Override
 				public IStatus runInUIThread(IProgressMonitor monitor) {
 					if (!f_browser.isDisposed())
-						f_browser.setText(indexHtmlContents);
-					// TODO Auto-generated method stub
+						f_browser.setUrl(url);
 					return Status.OK_STATUS;
 				}
 			};
 			job.schedule();
+		} catch (MalformedURLException e) {
+			final int code = 210;
+			return SLEclipseStatusUtility
+					.createErrorStatus(code, I18N.err(code, f_runDescription
+							.getName(), SLUtility.toStringHMS(f_runDescription
+							.getStartTimeOfRun())), e);
 		} finally {
 			monitor.done();
 		}

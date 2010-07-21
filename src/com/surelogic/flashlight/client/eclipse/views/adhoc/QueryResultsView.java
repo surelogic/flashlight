@@ -37,12 +37,17 @@ public final class QueryResultsView extends AbstractQueryResultsView {
 			super.setupNoResultsPane(parent);
 		} else {
 			final Browser browser = new Browser(parent, SWT.NONE);
+			browser.setForeground(parent.getDisplay().getSystemColor(
+					SWT.COLOR_INFO_FOREGROUND));
+			browser.setBackground(parent.getDisplay().getSystemColor(
+					SWT.COLOR_INFO_BACKGROUND));
 
 			/*
 			 * Schedule a job to populate the browser with information about the
 			 * selected run.
 			 */
-			final Job job = new PopulateBrowserWithRunInformationJob(run, browser);
+			final Job job = new PopulateBrowserWithRunInformationJob(run,
+					browser);
 			job.schedule();
 
 			browser.addLocationListener(new LocationListener() {

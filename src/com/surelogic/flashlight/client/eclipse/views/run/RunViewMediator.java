@@ -183,7 +183,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 	private final Action f_refreshAction = new Action() {
 		@Override
 		public void run() {
-			EclipseJob.getInstance().scheduleDb(new RefreshRunManagerSLJob(),
+			EclipseJob.getInstance().scheduleDb(new RefreshRunManagerSLJob(true),
 					false, false, RunManager.getInstance().getRunIdentities());
 		}
 	};
@@ -342,7 +342,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 				EclipseJob.getInstance().scheduleDb(job, true, false,
 						keys.toArray(new String[keys.size()]));
 				EclipseJob.getInstance().scheduleDb(
-						new RefreshRunManagerSLJob(), false, false,
+						new RefreshRunManagerSLJob(false), false, false,
 						RunManager.getInstance().getRunIdentities());
 			}
 		}

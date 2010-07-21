@@ -65,9 +65,7 @@ public final class QueryResultsView extends AbstractQueryResultsView {
 						 * We need to run a query
 						 */
 						event.doit = false; // don't really open the link
-						final String queryUrl = event.location.substring(index
-								+ QUERY_PAT.length());
-						parseAndRunQuery(queryUrl);
+						parseAndRunQuery(event.location);
 					}
 				}
 
@@ -96,7 +94,7 @@ public final class QueryResultsView extends AbstractQueryResultsView {
 			EclipseQueryUtility.scheduleQuery(query, getManager()
 					.getDataSource().getCurrentAccessKeys());
 		} catch (IllegalStateException problem) {
-			SLLogger.getLogger().log(Level.WARNING, I18N.err(212, queryUrl),
+			SLLogger.getLogger().log(Level.WARNING, I18N.err(213, queryUrl),
 					problem);
 		}
 	}

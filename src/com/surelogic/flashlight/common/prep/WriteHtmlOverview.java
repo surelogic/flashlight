@@ -40,7 +40,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 			b.append("</h1>");
 
 			b
-					.append("This is a <a href=\".#run_query_1\">link</a> to nowhere.");
+					.append("There are <a href=\"index.html?query=bd72a5e4-42aa-415d-aa72-28d351f629a4\">shared instance fields</a>.");
 
 			SimpleHTMLPrinter.addPageEpilog(b);
 

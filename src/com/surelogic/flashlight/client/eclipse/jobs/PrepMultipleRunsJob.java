@@ -13,6 +13,7 @@ import com.surelogic.common.jobs.AbstractSLJob;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
+import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
 import com.surelogic.flashlight.common.jobs.JobConstants;
 import com.surelogic.flashlight.common.jobs.PrepSLJob;
 import com.surelogic.flashlight.common.jobs.RefreshRunManagerSLJob;
@@ -53,8 +54,10 @@ public class PrepMultipleRunsJob extends AbstractSLJob {
 				man.beginRule(rule, null);
 				status = invoke(
 						new PrepSLJob(rd,
-								PreferenceConstants.getPrepObjectWindowSize()),
-						monitor, perJobWork);
+								PreferenceConstants.getPrepObjectWindowSize(),
+								AdHocDataSource.getManager()
+										.getTopLevelQueries()), monitor,
+						perJobWork);
 			} finally {
 				man.endRule(rule);
 			}

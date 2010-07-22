@@ -3,20 +3,25 @@ package com.surelogic.flashlight.common.jobs;
 import gnu.trove.TLongHashSet;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.net.URL;
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 
 import javax.xml.parsers.SAXParser;
 
 import com.surelogic.common.SLUtility;
+import com.surelogic.common.adhoc.AdHocQuery;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jdbc.DBConnection;
 import com.surelogic.common.jdbc.NullDBTransaction;
@@ -108,6 +113,7 @@ public final class PrepSLJob extends AbstractSLJob {
 	}
 
 	private final RunDescription f_runDescription;
+	private final Set<AdHocQuery> f_queries;
 	private final File f_dataFile;
 	private final DBConnection f_database;
 	private final int f_windowSize;
@@ -118,13 +124,18 @@ public final class PrepSLJob extends AbstractSLJob {
 	 * @param run
 	 * @param windowSize
 	 *            the number of receivers to scan at one time.
+	 * @param queries
+	 *            an optional set of queries that will be run and checked
+	 *            against results
 	 */
-	public PrepSLJob(final RunDescription run, final int windowSize) {
+	public PrepSLJob(final RunDescription run, final int windowSize,
+			final Set<AdHocQuery> queries) {
 		super("Preparing " + run.getName());
 		f_runDescription = run;
 		f_dataFile = run.getRawFileHandles().getFirstDataFile();
 		f_database = run.getDB();
 		f_windowSize = windowSize;
+		f_queries = queries;
 	}
 
 	public SLStatus run(final SLProgressMonitor monitor) {
@@ -207,8 +218,7 @@ public final class PrepSLJob extends AbstractSLJob {
 						@Override
 						public void doPerform(final Connection c)
 								throws Exception {
-							c
-									.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
+							c.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
 							/*
 							 * Persist the run and obtain its database
 							 * identifier, start time stamp, and the start time
@@ -364,6 +374,29 @@ public final class PrepSLJob extends AbstractSLJob {
 
 					}
 				});
+				final PrintWriter writer = new PrintWriter(new FileWriter(
+						f_runDescription.getRunDirectory().getQueriesFile()));
+				try {
+					f_database.withReadOnly(new NullDBTransaction() {
+
+						@Override
+						public void doPerform(final Connection conn)
+								throws Exception {
+							Statement st = conn.createStatement();
+							for (AdHocQuery a : f_queries) {
+								f_runDescription.getRunDirectory();
+								ResultSet set = st.executeQuery(a.getSql());
+								writer.print(a.getId());
+								writer.print('\t');
+								writer.print(set.next());
+								writer.print('\n');
+							}
+							st.close();
+						}
+					});
+				} finally {
+					writer.close();
+				}
 				if (monitor.isCanceled()) {
 					f_database.destroy();
 					return SLStatus.CANCEL_STATUS;

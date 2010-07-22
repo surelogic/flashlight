@@ -1,10 +1,11 @@
 package com.surelogic.flashlight.common.files;
 
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_STREAM_SUFFIXES;
+
 import java.io.File;
 import java.io.FileFilter;
 import java.util.logging.Level;
 
-import static com.surelogic._flashlight.common.InstrumentationConstants.FL_STREAM_SUFFIXES;
 import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic.common.FileUtility;
 import com.surelogic.common.i18n.I18N;
@@ -26,7 +27,7 @@ public final class RunDirectory {
 	public static final String COMPRESSED_BIN_SUFFIX = ".flb.gz";
 	/** Name of database directory under the run directory */
 	private static final String DB_DIR = "db";
-
+	private static final String QUERIES_FILE = "queries.txt";
 	/** Complete list of suffixes used to identify raw data files */
 	private static final String[] suffixes = { COMPRESSED_SUFFIX, BIN_SUFFIX,
 			SUFFIX, COMPRESSED_BIN_SUFFIX };
@@ -81,7 +82,6 @@ public final class RunDirectory {
 	private final HtmlHandles htmlHandles;
 	/** The file handle for the header file */
 	private final File headerHandle;
-
 	/** The file handles for the instrumentation files. */
 	private final InstrumentationFileHandles instrumentationFileHandles;
 	/** The file handles for the source zips. */
@@ -192,7 +192,7 @@ public final class RunDirectory {
 	}
 
 	// FL, but not good
-	public static boolean isInvalid(File runDir) {
+	public static boolean isInvalid(final File runDir) {
 		// Caller checks if this null
 		assert runDir != null && runDir.exists() && runDir.isDirectory();
 
@@ -289,8 +289,8 @@ public final class RunDirectory {
 	}
 
 	/**
-	 * Gets a human readable size of the run directory. Never returns {@code
-	 * null}.
+	 * Gets a human readable size of the run directory. Never returns
+	 * {@code null}.
 	 */
 	public String getHumanReadableSize() {
 		return FileUtility.bytesToHumanReadableString(FileUtility
@@ -312,8 +312,8 @@ public final class RunDirectory {
 	}
 
 	/**
-	 * Get the handles for the instrumentation artifacts. Never returns {@code
-	 * null}.
+	 * Get the handles for the instrumentation artifacts. Never returns
+	 * {@code null}.
 	 */
 	public InstrumentationFileHandles getInstrumentationHandles() {
 		return instrumentationFileHandles;
@@ -354,5 +354,12 @@ public final class RunDirectory {
 	 */
 	public HtmlHandles getHtmlHandles() {
 		return htmlHandles;
+	}
+
+	/**
+	 * The file handle for the top-level queries info.
+	 */
+	public File getQueriesFile() {
+		return new File(runDirHandle, QUERIES_FILE);
 	}
 }

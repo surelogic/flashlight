@@ -11,14 +11,17 @@ import org.eclipse.swt.browser.OpenWindowListener;
 import org.eclipse.swt.browser.WindowEvent;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.Shell;
 
 import com.surelogic.adhoc.eclipse.EclipseQueryUtility;
 import com.surelogic.adhoc.views.results.AbstractQueryResultsView;
 import com.surelogic.common.adhoc.AdHocManager;
 import com.surelogic.common.adhoc.AdHocQueryFullyBound;
+import com.surelogic.common.eclipse.tooltip.ToolTip;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.common.serviceability.UsageMeter;
+import com.surelogic.flashlight.client.eclipse.images.FlashlightImageLoader;
 import com.surelogic.flashlight.client.eclipse.jobs.PopulateBrowserWithRunInformationJob;
 import com.surelogic.flashlight.common.model.RunDescription;
 
@@ -58,7 +61,7 @@ public final class QueryResultsView extends AbstractQueryResultsView {
 
 			browser.addLocationListener(new LocationListener() {
 
-				public void changing(LocationEvent event) {
+				public void changing(final LocationEvent event) {
 					int index = event.location.indexOf(QUERY_PAT);
 					if (index != -1) {
 						/*
@@ -69,7 +72,7 @@ public final class QueryResultsView extends AbstractQueryResultsView {
 					}
 				}
 
-				public void changed(LocationEvent event) {
+				public void changed(final LocationEvent event) {
 					// nothing
 				}
 			});
@@ -98,4 +101,10 @@ public final class QueryResultsView extends AbstractQueryResultsView {
 					problem);
 		}
 	}
+
+	@Override
+	public ToolTip getToolTip(final Shell shell) {
+		return new ToolTip(shell, FlashlightImageLoader.getInstance());
+	}
+
 }

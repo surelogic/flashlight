@@ -27,7 +27,7 @@ public final class RunDirectory {
 	public static final String COMPRESSED_BIN_SUFFIX = ".flb.gz";
 	/** Name of database directory under the run directory */
 	private static final String DB_DIR = "db";
-	private static final String QUERIES_FILE = "queries.txt";
+	private static final String QUERIES_FILE = "empty-queries.txt";
 	/** Complete list of suffixes used to identify raw data files */
 	private static final String[] suffixes = { COMPRESSED_SUFFIX, BIN_SUFFIX,
 			SUFFIX, COMPRESSED_BIN_SUFFIX };
@@ -357,9 +357,9 @@ public final class RunDirectory {
 	}
 
 	/**
-	 * The file handle for the top-level queries info.
+	 * The file handle for the list of queries containing no data.
 	 */
-	public File getQueriesFile() {
+	public File getEmptyQueriesFile() {
 		return new File(runDirHandle, QUERIES_FILE);
 	}
 }

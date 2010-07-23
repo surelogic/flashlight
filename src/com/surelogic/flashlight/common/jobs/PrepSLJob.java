@@ -3,13 +3,10 @@ package com.surelogic.flashlight.common.jobs;
 import gnu.trove.TLongHashSet;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintWriter;
 import java.net.URL;
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
@@ -48,6 +45,7 @@ import com.surelogic.flashlight.common.prep.BeforeIntrinsicLockAcquisition;
 import com.surelogic.flashlight.common.prep.BeforeIntrinsicLockWait;
 import com.surelogic.flashlight.common.prep.BeforeUtilConcurrentLockAquisitionAttempt;
 import com.surelogic.flashlight.common.prep.ClassDefinition;
+import com.surelogic.flashlight.common.prep.EmptyQueries;
 import com.surelogic.flashlight.common.prep.FieldAssignment;
 import com.surelogic.flashlight.common.prep.FieldDefinition;
 import com.surelogic.flashlight.common.prep.FieldRead;
@@ -109,7 +107,8 @@ public final class PrepSLJob extends AbstractSLJob {
 
 	private IPostPrep[] getPostPrep() {
 		return new IPostPrep[] { new LockSetAnalysis(),
-				new WriteHtmlOverview(f_runDescription) };
+				new WriteHtmlOverview(f_runDescription),
+				new EmptyQueries(f_runDescription, f_queries) };
 	}
 
 	private final RunDescription f_runDescription;
@@ -374,29 +373,6 @@ public final class PrepSLJob extends AbstractSLJob {
 
 					}
 				});
-				final PrintWriter writer = new PrintWriter(new FileWriter(
-						f_runDescription.getRunDirectory().getQueriesFile()));
-				try {
-					f_database.withReadOnly(new NullDBTransaction() {
-
-						@Override
-						public void doPerform(final Connection conn)
-								throws Exception {
-							Statement st = conn.createStatement();
-							for (AdHocQuery a : f_queries) {
-								f_runDescription.getRunDirectory();
-								ResultSet set = st.executeQuery(a.getSql());
-								writer.print(a.getId());
-								writer.print('\t');
-								writer.print(set.next());
-								writer.print('\n');
-							}
-							st.close();
-						}
-					});
-				} finally {
-					writer.close();
-				}
 				if (monitor.isCanceled()) {
 					f_database.destroy();
 					return SLStatus.CANCEL_STATUS;

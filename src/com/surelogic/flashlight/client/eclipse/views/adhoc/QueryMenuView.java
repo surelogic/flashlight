@@ -12,6 +12,7 @@ import com.surelogic.common.eclipse.tooltip.ToolTip;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.serviceability.UsageMeter;
 import com.surelogic.flashlight.client.eclipse.images.FlashlightImageLoader;
+import com.surelogic.flashlight.common.model.EmptyQueriesCache;
 import com.surelogic.flashlight.common.model.RunDescription;
 import com.surelogic.flashlight.common.model.RunManager;
 
@@ -33,19 +34,23 @@ public final class QueryMenuView extends AbstractQueryMenuView {
 		return I18N.msg("flashlight.query.menu.label.noDatabaseSelected");
 	}
 
-	int jj = 0;
-
 	@Override
 	public boolean queryResultWillBeEmpty(AdHocQuery query) {
+		/*
+		 * Determine what run we are dealing with from the query.
+		 */
 		final AdHocManager manager = query.getManager();
 		final Map<String, String> variableValues = manager
 				.getGlobalVariableValues();
 		final String db = variableValues.get(AdHocManager.DATABASE);
-		final RunDescription runDescription = RunManager.getInstance()
-				.getRunByIdentityString(db);
+		if (db != null) {
+			final RunDescription runDescription = RunManager.getInstance()
+					.getRunByIdentityString(db);
 
-		// TODO Auto-generated method stub
-		return jj++ % 2 == 0;
+			return EmptyQueriesCache.getInstance().queryResultWillBeEmpty(
+					runDescription, query);
+		}
+		return super.queryResultWillBeEmpty(query);
 	}
 
 	@Override

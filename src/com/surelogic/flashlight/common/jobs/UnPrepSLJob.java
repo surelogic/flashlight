@@ -8,7 +8,7 @@ import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.common.license.SLLicenseProduct;
 import com.surelogic.common.license.SLLicenseUtility;
 import com.surelogic.common.serviceability.UsageMeter;
-import com.surelogic.flashlight.common.entities.PrepRunDescription;
+import com.surelogic.flashlight.common.model.RunDescription;
 
 /**
  * Note that the RunManager needs to be refreshed after this
@@ -17,9 +17,9 @@ public final class UnPrepSLJob extends AbstractSLJob {
 	private final DBConnection f_database;
 	private final AdHocManager f_man;
 
-	public UnPrepSLJob(final PrepRunDescription prep, final AdHocManager man) {
-		super("Removing prepared data " + prep.getDescription().getName());
-		f_database = prep.getDescription().getDB();
+	public UnPrepSLJob(final RunDescription run, final AdHocManager man) {
+		super("Removing prepared data " + run.getName());
+		f_database = run.getDB();
 		f_man = man;
 	}
 

@@ -4,7 +4,6 @@ import java.sql.Timestamp;
 
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jdbc.DBConnection;
-import com.surelogic.flashlight.common.entities.PrepRunDescription;
 import com.surelogic.flashlight.common.files.RawFileHandles;
 import com.surelogic.flashlight.common.files.RawFileUtility;
 import com.surelogic.flashlight.common.files.RunDirectory;
@@ -15,7 +14,7 @@ import com.surelogic.flashlight.common.files.RunDirectory;
  */
 public final class RunDescription {
 	private RunDirectory f_dir;
-	
+
 	public RunDescription(final String name, final String rawDataVersion,
 			final String userName, final String javaVersion,
 			final String javaVendor, final String osName, final String osArch,
@@ -271,17 +270,13 @@ public final class RunDescription {
 	}
 
 	/**
-	 * Gets the prepared run description corresponding to this run description,
-	 * or {@code null} if there is not one.
-	 * <p>
-	 * The prepared run description is not considered part of the state of this
-	 * object. The {@link RunManager} is used to perform this lookup.
+	 * Gets if this run description has been prepared or not.
 	 * 
-	 * @return the prepared run description corresponding to this, or {@code
-	 *         null} if there is none.
+	 * @return {@code true} if this run has been prepared, {@code false}
+	 *         otherwise.
 	 */
-	public PrepRunDescription getPrepRunDescription() {
-		return RunManager.getInstance().getPrepRunDescriptionFor(this);
+	public boolean isPrepared() {
+		return RunManager.getInstance().isPrepared(this);
 	}
 
 	/**
@@ -320,8 +315,8 @@ public final class RunDescription {
 		}
 		return f_dir;
 	}
-	
-    private RunDirectory createRunDirectory() {
+
+	private RunDirectory createRunDirectory() {
 		return RawFileUtility.getRunDirectoryFor(RunManager.getInstance()
 				.getDataDirectory(), this);
 	}

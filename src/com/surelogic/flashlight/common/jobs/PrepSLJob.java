@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
@@ -22,6 +23,7 @@ import com.surelogic.common.adhoc.AdHocQuery;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jdbc.DBConnection;
 import com.surelogic.common.jdbc.NullDBTransaction;
+import com.surelogic.common.jdbc.QB;
 import com.surelogic.common.jdbc.SchemaUtility;
 import com.surelogic.common.jdbc.TransactionException;
 import com.surelogic.common.jobs.AbstractSLJob;
@@ -32,7 +34,6 @@ import com.surelogic.common.license.SLLicenseProduct;
 import com.surelogic.common.license.SLLicenseUtility;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.common.serviceability.UsageMeter;
-import com.surelogic.flashlight.common.entities.RunDAO;
 import com.surelogic.flashlight.common.files.RawDataFilePrefix;
 import com.surelogic.flashlight.common.files.RawFileUtility;
 import com.surelogic.flashlight.common.model.RunDescription;
@@ -217,7 +218,8 @@ public final class PrepSLJob extends AbstractSLJob {
 						@Override
 						public void doPerform(final Connection c)
 								throws Exception {
-							c.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
+							c
+									.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
 							/*
 							 * Persist the run and obtain its database
 							 * identifier, start time stamp, and the start time
@@ -230,7 +232,7 @@ public final class PrepSLJob extends AbstractSLJob {
 							final Timestamp start = new Timestamp(rawFilePrefix
 									.getWallClockTime().getTime());
 							final long startNS = rawFilePrefix.getNanoTime();
-							RunDAO.create(c, runDescription);
+							saveRunDescription(c, runDescription);
 							persistRunDescriptionMonitor.done();
 
 							if (monitor.isCanceled()) {
@@ -394,6 +396,28 @@ public final class PrepSLJob extends AbstractSLJob {
 			return SLStatus.createErrorStatus(code, msg, e);
 		} finally {
 			monitor.done();
+		}
+	}
+
+	private void saveRunDescription(final Connection c, final RunDescription run)
+			throws SQLException {
+		final PreparedStatement s = c.prepareStatement(QB.get("RunDAO.insert"));
+		try {
+			int i = 1;
+			s.setString(i++, run.getName());
+			s.setString(i++, run.getRawDataVersion());
+			s.setString(i++, run.getUserName());
+			s.setString(i++, run.getJavaVersion());
+			s.setString(i++, run.getJavaVendor());
+			s.setString(i++, run.getOSName());
+			s.setString(i++, run.getOSArch());
+			s.setString(i++, run.getOSVersion());
+			s.setInt(i++, run.getMaxMemoryMb());
+			s.setInt(i++, run.getProcessors());
+			s.setTimestamp(i++, run.getStartTimeOfRun());
+			s.executeUpdate();
+		} finally {
+			s.close();
 		}
 	}
 

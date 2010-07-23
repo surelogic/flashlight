@@ -5,12 +5,11 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+import com.surelogic.common.CommonImages;
 import com.surelogic.common.FileUtility;
 import com.surelogic.common.Justification;
 import com.surelogic.common.SLUtility;
-import com.surelogic.common.CommonImages;
 import com.surelogic.common.XUtil;
-import com.surelogic.flashlight.common.entities.PrepRunDescription;
 import com.surelogic.flashlight.common.files.RawFileHandles;
 import com.surelogic.flashlight.common.files.RunDirectory;
 
@@ -146,10 +145,11 @@ public final class RunViewModel {
 					final RawFileHandles handles = rowData.getRawFileHandles();
 					if (handles != null) {
 						long sizeInBytes = 0;
-						for(File f : handles.getDataFiles()) {
+						for (File f : handles.getDataFiles()) {
 							sizeInBytes += f.length();
 						}
-						return FileUtility.bytesToHumanReadableString(sizeInBytes);
+						return FileUtility
+								.bytesToHumanReadableString(sizeInBytes);
 					}
 					return super.getText(rowData);
 				}
@@ -171,11 +171,9 @@ public final class RunViewModel {
 
 				@Override
 				String getText(RunDescription rowData) {
-					final PrepRunDescription runDescription = rowData
-					.getPrepRunDescription();
-					if (runDescription != null) {
-						final RunDirectory runDirectory = runDescription
-						.getDescription().getRunDirectory();
+					if (rowData != null) {
+						final RunDirectory runDirectory = rowData
+								.getRunDirectory();
 						if (runDirectory != null) {
 							return runDirectory.getHumanReadableDatabaseSize();
 						}
@@ -185,7 +183,7 @@ public final class RunViewModel {
 
 				@Override
 				String getImageSymbolicName(RunDescription rowData) {
-					if (rowData.getPrepRunDescription() != null) {
+					if (rowData.isPrepared()) {
 						return CommonImages.IMG_DRUM;
 					}
 					return super.getImageSymbolicName(rowData);
@@ -193,8 +191,8 @@ public final class RunViewModel {
 
 				private final Comparator<RunDescription> f_defaultComparator = new Comparator<RunDescription>() {
 					public int compare(RunDescription o1, RunDescription o2) {
-						final int i1 = o1.getPrepRunDescription() != null ? 0 : 1;
-						final int i2 = o2.getPrepRunDescription() != null ? 0 : 1;
+						final int i1 = o1.isPrepared() ? 0 : 1;
+						final int i2 = o2.isPrepared() ? 0 : 1;
 						return i1 - i2;
 					}
 				};
@@ -221,7 +219,7 @@ public final class RunViewModel {
 
 			@Override
 			String getImageSymbolicName(RunDescription rowData) {
-				if (rowData.getPrepRunDescription() != null) {
+				if (rowData.isPrepared()) {
 					return CommonImages.IMG_DRUM;
 				}
 				return CommonImages.IMG_FILE;
@@ -229,8 +227,10 @@ public final class RunViewModel {
 
 			private final Comparator<RunDescription> f_defaultComparator = new Comparator<RunDescription>() {
 				public int compare(RunDescription o1, RunDescription o2) {
-					long size1 = FileUtility.recursiveSizeInBytes(o1.getRunDirectory().getRunDirectory());
-					long size2 = FileUtility.recursiveSizeInBytes(o2.getRunDirectory().getRunDirectory());
+					long size1 = FileUtility.recursiveSizeInBytes(o1
+							.getRunDirectory().getRunDirectory());
+					long size2 = FileUtility.recursiveSizeInBytes(o2
+							.getRunDirectory().getRunDirectory());
 					if (size1 < size2) {
 						return -1;
 					} else if (size1 == size2) {
@@ -246,7 +246,7 @@ public final class RunViewModel {
 				return f_defaultComparator;
 			}
 		});
-		
+
 		f_columnData.add(new ColumnDataAdaptor() {
 			@Override
 			String getColumnTitle() {

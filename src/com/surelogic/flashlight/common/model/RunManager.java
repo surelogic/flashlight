@@ -1,23 +1,15 @@
 package com.surelogic.flashlight.common.model;
 
 import java.io.File;
-import java.sql.Connection;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.surelogic.common.i18n.I18N;
-import com.surelogic.common.jdbc.DBConnection;
-import com.surelogic.common.jdbc.NullDBTransaction;
 import com.surelogic.common.logging.SLLogger;
-import com.surelogic.flashlight.common.entities.PrepRunDescription;
-import com.surelogic.flashlight.common.entities.RunDAO;
 import com.surelogic.flashlight.common.files.RawFileUtility;
 import com.surelogic.flashlight.common.files.RunDirectory;
 import com.surelogic.flashlight.common.jobs.RefreshRunManagerSLJob;
@@ -101,13 +93,16 @@ public final class RunManager {
 	}
 
 	/**
-	 * Holds a mapping from all known run descriptions (in files or in the
-	 * database) to prepared run descriptions. Not all run descriptions have an
-	 * associated prepared run description, these entries will have a value of
-	 * {@code null}.
+	 * Holds the set of all known run descriptions.
 	 */
-	private final AtomicReference<Map<RunDescription, PrepRunDescription>> f_descToPrep = new AtomicReference<Map<RunDescription, PrepRunDescription>>(
-			new HashMap<RunDescription, PrepRunDescription>());
+	private final AtomicReference<Set<RunDescription>> f_runs = new AtomicReference<Set<RunDescription>>(
+			new HashSet<RunDescription>());
+
+	/**
+	 * Holds the set of all known prepared run descriptions.
+	 */
+	private final AtomicReference<Set<RunDescription>> f_preparedRuns = new AtomicReference<Set<RunDescription>>(
+			new HashSet<RunDescription>());
 
 	/**
 	 * Gets the set of run descriptions known to this manager.
@@ -117,14 +112,38 @@ public final class RunManager {
 	 *         freely mutated by callers.
 	 */
 	public Set<RunDescription> getRunDescriptions() {
-		return new HashSet<RunDescription>(f_descToPrep.get().keySet());
+		return new HashSet<RunDescription>(f_runs.get());
 	}
 
 	/**
-	 * Returns the identity strings of all run descriptions known to this
-	 * manager.
+	 * Gets the set of prepared run descriptions known to this manager.
 	 * 
-	 * @return
+	 * @return the non-null set of prepared run descriptions known to this
+	 *         manager. This is a copy of the set maintained by this manager so
+	 *         it can be freely mutated by callers.
+	 */
+	public Set<RunDescription> getPreparedRunDescriptions() {
+		return new HashSet<RunDescription>(f_preparedRuns.get());
+	}
+
+	/**
+	 * Gets if a run description has been prepared or not.
+	 * 
+	 * @param runDescription
+	 *            a run description.
+	 * @return {@code true} if the run has been prepared, {@code false}
+	 *         otherwise.
+	 */
+	public boolean isPrepared(final RunDescription runDescription) {
+		return f_preparedRuns.get().contains(runDescription);
+	}
+
+	/**
+	 * Gets an array containing the identity strings of all run descriptions
+	 * known to this manager.
+	 * 
+	 * @return the identity strings of all run descriptions known to this
+	 *         manager.
 	 */
 	public String[] getRunIdentities() {
 		final Set<RunDescription> descs = getRunDescriptions();
@@ -136,8 +155,26 @@ public final class RunManager {
 	}
 
 	/**
+	 * Looks up a run with a given identity string. Results in {@code null} if
+	 * no such run can be found.
+	 * 
+	 * @param idString
+	 *            an identity string.
+	 * @return a run with <tt>idString</tt>, or {@code null} if no such run can
+	 *         be found.
+	 */
+	public RunDescription getRunByIdentityString(final String idString) {
+		for (final RunDescription runDescription : f_runs.get()) {
+			if (runDescription.toIdentityString().equals(idString)) {
+				return runDescription;
+			}
+		}
+		return null;
+	}
+
+	/**
 	 * Gets the set of run descriptions known to this manager that have not been
-	 * prepared. This set can be empty.
+	 * prepared. This set can be empty, but will not be {@code null}.
 	 * 
 	 * @return the non-null set of run descriptions known to this manager that
 	 *         have not been prepared. This is a copy of the set maintained by
@@ -145,26 +182,8 @@ public final class RunManager {
 	 */
 	public Set<RunDescription> getUnPreppedRunDescriptions() {
 		final Set<RunDescription> result = getRunDescriptions();
-		for (final Iterator<RunDescription> i = result.iterator(); i.hasNext();) {
-			final RunDescription runDescription = i.next();
-			if (getPrepRunDescriptionFor(runDescription) != null) {
-				i.remove();
-			}
-		}
+		result.removeAll(getPreparedRunDescriptions());
 		return result;
-	}
-
-	/**
-	 * Gets the prepared run description corresponding to the given run
-	 * description, or {@code null} if there is none.
-	 * 
-	 * @param description
-	 *            the run description.
-	 * @return the prepared run description corresponding to the given run
-	 *         description, or {@code null} if there is none.
-	 */
-	PrepRunDescription getPrepRunDescriptionFor(final RunDescription description) {
-		return f_descToPrep.get().get(description);
 	}
 
 	/**
@@ -186,8 +205,18 @@ public final class RunManager {
 			SLLogger.getLogger().warning(I18N.err(170));
 			return; // Nothing to do
 		}
-		boolean isChanged = false; // assume nothing changed
-		final Map<RunDescription, PrepRunDescription> descToPrep = new HashMap<RunDescription, PrepRunDescription>();
+
+		/*
+		 * Assume nothing changed
+		 */
+		boolean isChanged = false;
+
+		/*
+		 * Examine the run directory
+		 */
+		final Set<RunDescription> runs = new HashSet<RunDescription>();
+		final Set<RunDescription> preparedRuns = new HashSet<RunDescription>();
+
 		final Collection<RunDirectory> runDirs = RawFileUtility
 				.getRunDirectories(dataDir);
 		/*
@@ -197,34 +226,28 @@ public final class RunManager {
 		for (final RunDirectory dir : runDirs) {
 			final RunDescription key = dir.getRunDescription();
 			// Assume the run is not prepped until we find out otherwise
-			descToPrep.put(key, null);
+			runs.add(key);
 			final File dbDir = dir.getDatabaseDirectory();
 			if (dbDir.exists()) {
 				// Check to see if there is a prepped run
-				final DBConnection conn = FlashlightDBConnection
-						.getInstance(dbDir);
-				conn.withReadOnly(new NullDBTransaction() {
-					@Override
-					public void doPerform(final Connection conn)
-							throws Exception {
-						descToPrep.put(key, RunDAO.find(conn));
-					}
-				});
-				conn.shutdown();
+				preparedRuns.add(key);
 			}
 		}
 
 		/*
-		 * Check if anything changed...if so, update the map and notify
+		 * Check if anything changed...if so, update the fields and notify
 		 * observers.
 		 */
-		final Map<RunDescription, PrepRunDescription> descToPrepOld = f_descToPrep
-				.get();
-		if (!descToPrepOld.equals(descToPrep)) {
+		if (!f_runs.get().equals(runs)) {
 			isChanged = true;
+			f_runs.set(Collections.unmodifiableSet(runs));
 		}
+		if (!f_preparedRuns.get().equals(preparedRuns)) {
+			isChanged = true;
+			f_preparedRuns.set(Collections.unmodifiableSet(preparedRuns));
+		}
+
 		if (isChanged || forceNotify) {
-			f_descToPrep.set(Collections.unmodifiableMap(descToPrep));
 			notifyObservers();
 		}
 	}

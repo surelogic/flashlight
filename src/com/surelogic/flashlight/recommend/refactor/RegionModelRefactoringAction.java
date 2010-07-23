@@ -2,7 +2,6 @@ package com.surelogic.flashlight.recommend.refactor;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.logging.Level;
 
 import org.eclipse.core.runtime.CoreException;
@@ -21,7 +20,6 @@ import com.surelogic.common.eclipse.JDTUtility;
 import com.surelogic.common.eclipse.SWTUtility;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.logging.SLLogger;
-import com.surelogic.flashlight.common.entities.PrepRunDescription;
 import com.surelogic.flashlight.common.model.RunDescription;
 import com.surelogic.flashlight.common.model.RunManager;
 import com.surelogic.jsure.client.eclipse.listeners.ClearProjectListener;
@@ -39,16 +37,8 @@ public class RegionModelRefactoringAction implements IObjectActionDelegate,
 	}
 
 	public void run(final IAction action) {
-		final Set<RunDescription> runDescriptions = RunManager.getInstance()
-				.getRunDescriptions();
-		final List<PrepRunDescription> preppedRuns = new ArrayList<PrepRunDescription>();
-		for (final RunDescription rd : runDescriptions) {
-			final PrepRunDescription prepRunDescription = rd
-					.getPrepRunDescription();
-			if (prepRunDescription != null) {
-				preppedRuns.add(prepRunDescription);
-			}
-		}
+		final List<RunDescription> preppedRuns = new ArrayList<RunDescription>(
+				RunManager.getInstance().getPreparedRunDescriptions());
 
 		final RegionRefactoringInfo info = new RegionRefactoringInfo(JDTUtility
 				.getJavaProjects(), preppedRuns);

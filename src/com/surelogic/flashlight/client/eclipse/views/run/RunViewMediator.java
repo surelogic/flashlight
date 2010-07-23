@@ -48,7 +48,6 @@ import com.surelogic.flashlight.client.eclipse.jobs.PromptToPrepAllRawData;
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.QueryMenuView;
-import com.surelogic.flashlight.common.entities.PrepRunDescription;
 import com.surelogic.flashlight.common.files.RawFileHandles;
 import com.surelogic.flashlight.common.jobs.ConvertBinaryToXMLJob;
 import com.surelogic.flashlight.common.jobs.DeleteRawFilesSLJob;
@@ -94,10 +93,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 						/*
 						 * Is it already prepared?
 						 */
-						final PrepRunDescription prep = description
-								.getPrepRunDescription();
-						final boolean hasPrep = prep != null;
-						if (hasPrep) {
+						if (description.isPrepared()) {
 							/*
 							 * Change the focus to the query menu view.
 							 */
@@ -208,7 +204,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 			for (final RunDescription d : getSelectedRunDescriptions()) {
 				notPrepped.add(d);
 				one = d;
-				if (d.getPrepRunDescription() != null) {
+				if (d.isPrepared()) {
 					hasPrep = true;
 				}
 			}
@@ -300,11 +296,8 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 				if (description != null) {
 					final RawFileHandles handles = description
 							.getRawFileHandles();
-					final PrepRunDescription prep = description
-							.getPrepRunDescription();
 
 					final boolean hasRawFiles = handles != null;
-					final boolean hasPrep = prep != null;
 
 					final DeleteRunDialog d = new DeleteRunDialog(f_table
 							.getShell(), description, hasRawFiles);
@@ -315,8 +308,8 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 
 					final boolean deleteRaw = hasRawFiles
 							&& d.deleteRawDataFiles();
-					if (hasPrep) {
-						jobs.add(new UnPrepSLJob(prep, AdHocDataSource
+					if (description.isPrepared()) {
+						jobs.add(new UnPrepSLJob(description, AdHocDataSource
 								.getManager()));
 					}
 					if (deleteRaw) {
@@ -357,13 +350,12 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 		@Override
 		public void run() {
 			final RunDescription[] selectedRunDescriptions = getSelectedRunDescriptions();
-			final List<PrepRunDescription> runs = new ArrayList<PrepRunDescription>();
+			final List<RunDescription> runs = new ArrayList<RunDescription>();
 			boolean hasRun = false;
 			for (final RunDescription d : selectedRunDescriptions) {
-				final PrepRunDescription prep = d.getPrepRunDescription();
-				if (prep != null) {
+				if (d.isPrepared()) {
 					hasRun = true;
-					runs.add(prep);
+					runs.add(d);
 				}
 			}
 			if (hasRun) {
@@ -372,10 +364,10 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 		}
 	};
 
-	private void inferJSureAnnoHelper(final List<PrepRunDescription> runs) {
+	private void inferJSureAnnoHelper(final List<RunDescription> runs) {
 		for (final IJavaProject p : JDTUtility.getJavaProjects()) {
-			for (final PrepRunDescription run : runs) {
-				final String runName = run.getDescription().getName();
+			for (final RunDescription run : runs) {
+				final String runName = run.getName();
 				final int idx = runName.lastIndexOf('.');
 				final String runPackage = runName.substring(0, idx);
 				final String runClass = runName.substring(idx + 1);
@@ -490,7 +482,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 		 * if the selection changed inform the SourceView so it shows code from
 		 * that run.
 		 */
-		if (selected.length == 0 || selected[0].getPrepRunDescription() == null) {
+		if (selected.length == 0 || selected[0].isPrepared()) {
 			AdHocDataSource.getInstance().setSelectedRun(null);
 			AdHocDataSource.getManager().setGlobalVariableValue(
 					AdHocManager.DATABASE, null);
@@ -537,25 +529,24 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 			 */
 			final String db = result.getQueryFullyBound().getVariableValues()
 					.get(AdHocManager.DATABASE);
+			final RunDescription desired = RunManager.getInstance()
+					.getRunByIdentityString(db);
 
 			final RunDescription selected = AdHocDataSource.getInstance()
 					.getSelectedRun();
-			for (final RunDescription runDescription : RunManager.getInstance()
-					.getRunDescriptions()) {
-				if (runDescription.toIdentityString().equals(db)) {
-					if (!runDescription.equals(selected)) {
-						AdHocDataSource.getInstance().setSelectedRun(
-								runDescription);
-						final UIJob job = new SLUIJob() {
-							@Override
-							public IStatus runInUIThread(
-									final IProgressMonitor monitor) {
-								setSelectedRunDescription(runDescription);
-								return Status.OK_STATUS;
-							}
-						};
-						job.schedule();
-					}
+
+			if (desired != null) {
+				if (!desired.equals(selected)) {
+					AdHocDataSource.getInstance().setSelectedRun(desired);
+					final UIJob job = new SLUIJob() {
+						@Override
+						public IStatus runInUIThread(
+								final IProgressMonitor monitor) {
+							setSelectedRunDescription(desired);
+							return Status.OK_STATUS;
+						}
+					};
+					job.schedule();
 				}
 			}
 		}

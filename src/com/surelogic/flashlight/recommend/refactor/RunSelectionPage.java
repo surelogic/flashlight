@@ -17,7 +17,7 @@ import org.eclipse.swt.widgets.TableItem;
 
 import com.surelogic.common.eclipse.JDTUtility;
 import com.surelogic.common.i18n.I18N;
-import com.surelogic.flashlight.common.entities.PrepRunDescription;
+import com.surelogic.flashlight.common.model.RunDescription;
 
 /**
  * Choose one or more runs from those currently available in Flashlight.
@@ -68,10 +68,10 @@ public class RunSelectionPage extends UserInputWizardPage {
 	}
 
 	void validate() {
-		final List<PrepRunDescription> selected = new ArrayList<PrepRunDescription>();
+		final List<RunDescription> selected = new ArrayList<RunDescription>();
 		for (final TableItem item : f_runTable.getItems()) {
 			if (item.getChecked()) {
-				selected.add((PrepRunDescription) item.getData());
+				selected.add((RunDescription) item.getData());
 			}
 		}
 		f_info.setSelectedRuns(selected);
@@ -85,16 +85,16 @@ public class RunSelectionPage extends UserInputWizardPage {
 			if (!project.equals(selected)) {
 				f_runTable.removeAll();
 				selected = project;
-				for (final PrepRunDescription run : f_info.getRuns()) {
+				for (final RunDescription run : f_info.getRuns()) {
 					boolean noneSelected = true;
-					final String runName = run.getDescription().getName();
+					final String runName = run.getName();
 					final int idx = runName.lastIndexOf('.');
 					final String runPackage = runName.substring(0, idx);
 					final String runClass = runName.substring(idx + 1);
 					if (JDTUtility.findIType(project, runPackage, runClass) != null) {
 						final TableItem item = new TableItem(f_runTable,
 								SWT.NONE);
-						item.setText(run.getDescription().getName());
+						item.setText(run.getName());
 						item.setData(run);
 						if (noneSelected) {
 							noneSelected = false;

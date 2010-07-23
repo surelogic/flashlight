@@ -4,17 +4,17 @@ import java.util.List;
 
 import org.eclipse.jdt.core.IJavaProject;
 
-import com.surelogic.flashlight.common.entities.PrepRunDescription;
+import com.surelogic.flashlight.common.model.RunDescription;
 
 public class RegionRefactoringInfo {
 
 	private IJavaProject selectedProject;
 	private final List<IJavaProject> projects;
-	private final List<PrepRunDescription> runs;
-	private List<PrepRunDescription> selectedRuns;
+	private final List<RunDescription> runs;
+	private List<RunDescription> selectedRuns;
 
 	public RegionRefactoringInfo(final List<IJavaProject> projects,
-			final List<PrepRunDescription> runs) {
+			final List<RunDescription> runs) {
 		this.projects = projects;
 		this.runs = runs;
 	}
@@ -31,15 +31,15 @@ public class RegionRefactoringInfo {
 		return projects;
 	}
 
-	public List<PrepRunDescription> getRuns() {
+	public List<RunDescription> getRuns() {
 		return runs;
 	}
 
-	public List<PrepRunDescription> getSelectedRuns() {
+	public List<RunDescription> getSelectedRuns() {
 		return selectedRuns;
 	}
 
-	public void setSelectedRuns(final List<PrepRunDescription> selectedRuns) {
+	public void setSelectedRuns(final List<RunDescription> selectedRuns) {
 		this.selectedRuns = selectedRuns;
 	}
 

@@ -1,6 +1,5 @@
 package com.surelogic.flashlight.common.model;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -9,17 +8,14 @@ import com.surelogic.common.CommonImages;
 import com.surelogic.common.FileUtility;
 import com.surelogic.common.Justification;
 import com.surelogic.common.SLUtility;
-import com.surelogic.common.XUtil;
 import com.surelogic.flashlight.common.files.RawFileHandles;
-import com.surelogic.flashlight.common.files.RunDirectory;
 
 /**
  * IDE independent data model for the table of Flashlight runs displayed in the
  * run view. The columns of this table are shown in the list below:
  * 
  * <ul>
- * <li>Raw</li>
- * <li>Prep</li>
+ * <li>Size</li>
  * <li>Run</li>
  * <li>Time</li>
  * <li>By</li>
@@ -133,76 +129,6 @@ public final class RunViewModel {
 	private final List<ColumnDataAdaptor> f_columnData = new ArrayList<ColumnDataAdaptor>();
 
 	public RunViewModel() {
-		if (XUtil.useDeveloperMode()) {
-			f_columnData.add(new ColumnDataAdaptor() {
-				@Override
-				String getColumnTitle() {
-					return "Raw";
-				}
-
-				@Override
-				String getText(RunDescription rowData) {
-					final RawFileHandles handles = rowData.getRawFileHandles();
-					if (handles != null) {
-						long sizeInBytes = 0;
-						for (File f : handles.getDataFiles()) {
-							sizeInBytes += f.length();
-						}
-						return FileUtility
-								.bytesToHumanReadableString(sizeInBytes);
-					}
-					return super.getText(rowData);
-				}
-
-				@Override
-				String getImageSymbolicName(RunDescription rowData) {
-					if (rowData.getRawFileHandles() != null) {
-						return CommonImages.IMG_FILE;
-					}
-					return super.getImageSymbolicName(rowData);
-				}
-			});
-
-			f_columnData.add(new ColumnDataAdaptor() {
-				@Override
-				String getColumnTitle() {
-					return "Prep";
-				}
-
-				@Override
-				String getText(RunDescription rowData) {
-					if (rowData != null) {
-						final RunDirectory runDirectory = rowData
-								.getRunDirectory();
-						if (runDirectory != null) {
-							return runDirectory.getHumanReadableDatabaseSize();
-						}
-					}
-					return super.getText(rowData);
-				}
-
-				@Override
-				String getImageSymbolicName(RunDescription rowData) {
-					if (rowData.isPrepared()) {
-						return CommonImages.IMG_DRUM;
-					}
-					return super.getImageSymbolicName(rowData);
-				}
-
-				private final Comparator<RunDescription> f_defaultComparator = new Comparator<RunDescription>() {
-					public int compare(RunDescription o1, RunDescription o2) {
-						final int i1 = o1.isPrepared() ? 0 : 1;
-						final int i2 = o2.isPrepared() ? 0 : 1;
-						return i1 - i2;
-					}
-				};
-
-				@Override
-				Comparator<RunDescription> getColumnComparator() {
-					return f_defaultComparator;
-				}
-			});
-		}
 		f_columnData.add(new ColumnDataAdaptor() {
 			@Override
 			String getColumnTitle() {

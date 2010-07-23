@@ -133,8 +133,8 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 	 * 
 	 * @param item
 	 *            a table item.
-	 * @return the run description attached to the passed table item, or {@code
-	 *         null} if one does not exist.
+	 * @return the run description attached to the passed table item, or
+	 *         {@code null} if one does not exist.
 	 */
 	private RunDescription getData(final TableItem item) {
 		if (item != null) {
@@ -214,9 +214,9 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 				final String msg;
 				if (notPrepped.size() == 1) {
 					title = I18N.msg("flashlight.dialog.reprep.title");
-					msg = I18N.msg("flashlight.dialog.reprep.msg", one
-							.getName(), SLUtility.toStringHMS(one
-							.getStartTimeOfRun()));
+					msg = I18N.msg("flashlight.dialog.reprep.msg",
+							one.getName(),
+							SLUtility.toStringHMS(one.getStartTimeOfRun()));
 				} else {
 					title = I18N.msg("flashlight.dialog.reprep.multi.title");
 					msg = I18N.msg("flashlight.dialog.reprep.multi.msg");
@@ -248,8 +248,8 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 							 * This dialog is modeless so that we can open more
 							 * than one.
 							 */
-							final LogDialog d = new LogDialog(f_table
-									.getShell(), handles.getLogFile(),
+							final LogDialog d = new LogDialog(
+									f_table.getShell(), handles.getLogFile(),
 									description);
 							d.open();
 						}
@@ -299,8 +299,8 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 
 					final boolean hasRawFiles = handles != null;
 
-					final DeleteRunDialog d = new DeleteRunDialog(f_table
-							.getShell(), description, hasRawFiles);
+					final DeleteRunDialog d = new DeleteRunDialog(
+							f_table.getShell(), description, hasRawFiles);
 					d.open();
 					if (Window.CANCEL == d.getReturnCode()) {
 						return;
@@ -325,9 +325,9 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 						: null;
 				final String jobName;
 				if (one != null) {
-					jobName = I18N.msg("flashlight.jobs.delete.one", one
-							.getName(), SLUtility.toStringHMS(one
-							.getStartTimeOfRun()));
+					jobName = I18N.msg("flashlight.jobs.delete.one",
+							one.getName(),
+							SLUtility.toStringHMS(one.getStartTimeOfRun()));
 				} else {
 					jobName = I18N.msg("flashlight.jobs.delete.many");
 				}
@@ -396,13 +396,10 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 										Nature.addNatureToProject(p
 												.getProject());
 									} catch (final CoreException e) {
-										SLLogger
-												.getLogger()
-												.log(
-														Level.SEVERE,
+										SLLogger.getLogger()
+												.log(Level.SEVERE,
 														"Failure adding JSure nature to "
-																+ p
-																		.getElementName(),
+																+ p.getElementName(),
 														e);
 									}
 									ClearProjectListener
@@ -482,7 +479,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 		 * if the selection changed inform the SourceView so it shows code from
 		 * that run.
 		 */
-		if (selected.length == 0 || selected[0].isPrepared()) {
+		if (selected.length == 0 || !selected[0].isPrepared()) {
 			AdHocDataSource.getInstance().setSelectedRun(null);
 			AdHocDataSource.getManager().setGlobalVariableValue(
 					AdHocManager.DATABASE, null);

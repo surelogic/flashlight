@@ -17,6 +17,7 @@ import com.surelogic.flashlight.schema.FlashlightSchemaData;
 public final class FlashlightDBConnection extends DerbyConnection {
 
 	private static final ConcurrentHashMap<String, FlashlightDBConnection> INSTANCES = new ConcurrentHashMap<String, FlashlightDBConnection>();
+
 	/**
 	 * Path name of where the flashlight database is located.
 	 */

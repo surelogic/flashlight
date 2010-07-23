@@ -42,7 +42,7 @@ public final class QueryResultsView extends AbstractQueryResultsView {
 	protected void setupNoResultsPane(final Composite parent) {
 		final RunDescription run = AdHocDataSource.getInstance()
 				.getSelectedRun();
-		if (run == null) {
+		if (run == null || !run.isPrepared()) {
 			super.setupNoResultsPane(parent);
 		} else {
 			final Browser browser = new Browser(parent, SWT.NONE);

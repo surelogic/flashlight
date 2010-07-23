@@ -350,16 +350,16 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 		@Override
 		public void run() {
 			final RunDescription[] selectedRunDescriptions = getSelectedRunDescriptions();
-			final List<RunDescription> runs = new ArrayList<RunDescription>();
+			final List<RunDescription> preparedRuns = new ArrayList<RunDescription>();
 			boolean hasRun = false;
-			for (final RunDescription d : selectedRunDescriptions) {
-				if (d.isPrepared()) {
+			for (final RunDescription description : selectedRunDescriptions) {
+				if (description.isPrepared()) {
 					hasRun = true;
-					runs.add(d);
+					preparedRuns.add(description);
 				}
 			}
 			if (hasRun) {
-				inferJSureAnnoHelper(runs);
+				inferJSureAnnoHelper(preparedRuns);
 			}
 		}
 	};

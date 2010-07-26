@@ -59,6 +59,101 @@ public class SummaryInfo {
 		return classCount;
 	}
 
+	public static class Field implements Comparable<Field> {
+		private final String pakkage;
+		private final String clazz;
+		private final String name;
+		private final boolean isStatic;
+
+		public Field(final String pakkage, final String clazz,
+				final String name, final boolean isStatic) {
+			super();
+			this.pakkage = pakkage;
+			this.clazz = clazz;
+			this.name = name;
+			this.isStatic = isStatic;
+		}
+
+		public String getPackage() {
+			return pakkage;
+		}
+
+		public String getClazz() {
+			return clazz;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public boolean isStatic() {
+			return isStatic;
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + (clazz == null ? 0 : clazz.hashCode());
+			result = prime * result + (isStatic ? 1231 : 1237);
+			result = prime * result + (name == null ? 0 : name.hashCode());
+			result = prime * result
+					+ (pakkage == null ? 0 : pakkage.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(final Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null) {
+				return false;
+			}
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
+			Field other = (Field) obj;
+			if (clazz == null) {
+				if (other.clazz != null) {
+					return false;
+				}
+			} else if (!clazz.equals(other.clazz)) {
+				return false;
+			}
+			if (isStatic != other.isStatic) {
+				return false;
+			}
+			if (name == null) {
+				if (other.name != null) {
+					return false;
+				}
+			} else if (!name.equals(other.name)) {
+				return false;
+			}
+			if (pakkage == null) {
+				if (other.pakkage != null) {
+					return false;
+				}
+			} else if (!pakkage.equals(other.pakkage)) {
+				return false;
+			}
+			return true;
+		}
+
+		public int compareTo(final Field o) {
+			int cmp = pakkage.compareTo(o.pakkage);
+			if (cmp == 0) {
+				cmp = clazz.compareTo(o.clazz);
+				if (cmp == 0) {
+					cmp = name.compareTo(o.name);
+				}
+			}
+			return cmp;
+		}
+
+	}
+
 	public static class SummaryQuery implements DBQuery<SummaryInfo> {
 
 		public SummaryInfo perform(final Query q) {

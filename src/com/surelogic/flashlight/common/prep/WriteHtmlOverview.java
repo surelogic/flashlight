@@ -7,6 +7,7 @@ import java.net.URL;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
+import java.util.List;
 
 import com.surelogic.common.SLUtility;
 import com.surelogic.common.html.SimpleHTMLPrinter;
@@ -61,7 +62,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 					new SimpleDateFormat(DATE_FORMAT).format(f_runDescription
 							.getStartTimeOfRun()));
 			def("# Observed Threads", info.getThreadCount());
-			beginTable();
+			beginTable("Thread", "Time Spent Blocked");
 			for (SummaryInfo.Thread thread : info.getThreads()) {
 				row(thread.getName(), thread.getBlockTime());
 			}
@@ -70,7 +71,9 @@ public final class WriteHtmlOverview implements IPostPrep {
 			def("# Observed Objects", info.getObjectCount());
 			b.append("</dl>");
 			b.append("There are <a href=\"index.html?query=bd72a5e4-42aa-415d-aa72-28d351f629a4\">shared instance fields</a>.");
-			beginTable();
+			beginTable("Lock Held", "Lock Acquired", "Count", "First Time",
+					"Last Time");
+			List<Cycle> cycles = info.getCycles();
 			for (Cycle cycle : info.getCycles()) {
 				for (Edge e : cycle.getEdges()) {
 					row(link(e.getHeld(),
@@ -82,7 +85,8 @@ public final class WriteHtmlOverview implements IPostPrep {
 			}
 			b.append("</table>");
 
-			beginTable();
+			beginTable("Lock", "Times Acquired", "Total Block Time",
+					"Average Block Time");
 			for (SummaryInfo.Lock lock : info.getLocks()) {
 				row(link(lock.getName(),
 						"fd49f015-3585-4602-a5d1-4e67ef7b6a55", "Lock",
@@ -112,13 +116,15 @@ public final class WriteHtmlOverview implements IPostPrep {
 
 	private StringBuilder beginTable(final String... columns) {
 		b.append("<table>");
-		b.append("<tr>");
-		for (String name : columns) {
-			b.append("<th>");
-			b.append(name);
-			b.append("</th>");
+		if (columns.length > 0) {
+			b.append("<tr>");
+			for (String name : columns) {
+				b.append("<th>");
+				b.append(name);
+				b.append("</th>");
+			}
+			b.append("</tr>");
 		}
-		b.append("</tr>");
 		return b;
 	}
 

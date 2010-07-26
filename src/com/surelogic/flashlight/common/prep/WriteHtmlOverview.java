@@ -7,6 +7,7 @@ import java.net.URL;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
+import java.util.Iterator;
 import java.util.List;
 
 import com.surelogic.common.SLUtility;
@@ -18,6 +19,7 @@ import com.surelogic.flashlight.common.files.HtmlHandles;
 import com.surelogic.flashlight.common.model.RunDescription;
 import com.surelogic.flashlight.common.prep.SummaryInfo.Cycle;
 import com.surelogic.flashlight.common.prep.SummaryInfo.Edge;
+import com.surelogic.flashlight.common.prep.SummaryInfo.Field;
 
 public final class WriteHtmlOverview implements IPostPrep {
 	private static final String DATE_FORMAT = "yyyy.MM.dd-'at'-HH.mm.ss.SSS";
@@ -44,23 +46,22 @@ public final class WriteHtmlOverview implements IPostPrep {
 			 * TODO Add real page information/generation/read from a file here.
 			 */
 			b.append("<h1>").append(f_runDescription.getName()).append(' ');
-			b.append(SLUtility.toStringHMS(f_runDescription.getStartTimeOfRun()));
+			b.append(SLUtility
+					.toStringHMS(f_runDescription.getStartTimeOfRun()));
 			b.append("</h1>");
 			b.append("<p></p>");
 			b.append("<dl>");
 			def("Vendor: ", f_runDescription.getJavaVendor());
 			def("Version: ", f_runDescription.getJavaVersion());
-			def("OS", String.format("%s (%s) on %s",
-					f_runDescription.getOSName(),
-					f_runDescription.getOSVersion(),
+			def("OS", String.format("%s (%s) on %s", f_runDescription
+					.getOSName(), f_runDescription.getOSVersion(),
 					f_runDescription.getOSArch()));
-			def("Max Memory",
-					Integer.toString(f_runDescription.getMaxMemoryMb()));
-			def("Processors",
-					Integer.toString(f_runDescription.getProcessors()));
-			def("Start Time",
-					new SimpleDateFormat(DATE_FORMAT).format(f_runDescription
-							.getStartTimeOfRun()));
+			def("Max Memory", Integer.toString(f_runDescription
+					.getMaxMemoryMb()));
+			def("Processors", Integer
+					.toString(f_runDescription.getProcessors()));
+			def("Start Time", new SimpleDateFormat(DATE_FORMAT)
+					.format(f_runDescription.getStartTimeOfRun()));
 			def("# Observed Threads", info.getThreadCount());
 			beginTable("Thread", "Time Spent Blocked");
 			for (SummaryInfo.Thread thread : info.getThreads()) {
@@ -69,8 +70,11 @@ public final class WriteHtmlOverview implements IPostPrep {
 			endTable();
 			def("# Observed Classes", info.getClassCount());
 			def("# Observed Objects", info.getObjectCount());
+			dd("Empty Lock Sets");
+
 			b.append("</dl>");
-			b.append("There are <a href=\"index.html?query=bd72a5e4-42aa-415d-aa72-28d351f629a4\">shared instance fields</a>.");
+			b
+					.append("There are <a href=\"index.html?query=bd72a5e4-42aa-415d-aa72-28d351f629a4\">shared instance fields</a>.");
 			beginTable("Lock Held", "Lock Acquired", "Count", "First Time",
 					"Last Time");
 			List<Cycle> cycles = info.getCycles();
@@ -79,19 +83,22 @@ public final class WriteHtmlOverview implements IPostPrep {
 					row(link(e.getHeld(),
 							"4fce8390-7307-45dc-b779-5701ee7f23a1", "LockHeld",
 							e.getHeldId(), "LockAcquired", e.getAcquiredId()),
-							e.getAcquired(), e.getCount(), e.getFirst(),
-							e.getLast());
+							e.getAcquired(), e.getCount(), e.getFirst(), e
+									.getLast());
 				}
 			}
-			b.append("</table>");
-
+			endTable();
+			dt("Fields With No Lock Set");
+			b.append("<dd>");
+			displayLockSet(info);
+			b.append("</dd>");
 			beginTable("Lock", "Times Acquired", "Total Block Time",
 					"Average Block Time");
 			for (SummaryInfo.Lock lock : info.getLocks()) {
 				row(link(lock.getName(),
-						"fd49f015-3585-4602-a5d1-4e67ef7b6a55", "Lock",
-						lock.getId()), lock.getAcquired(), lock.getBlockTime(),
-						lock.getAverageBlock());
+						"fd49f015-3585-4602-a5d1-4e67ef7b6a55", "Lock", lock
+								.getId()), lock.getAcquired(), lock
+						.getBlockTime(), lock.getAverageBlock());
 			}
 			endTable();
 			SimpleHTMLPrinter.addPageEpilog(b);
@@ -104,17 +111,69 @@ public final class WriteHtmlOverview implements IPostPrep {
 		}
 	}
 
-	private StringBuilder def(final String term, final String definition) {
+	private void displayLockSet(final SummaryInfo info) {
+		Iterator<Field> fields = info.getEmptyLockSetFields().iterator();
+		if (fields.hasNext()) {
+			Field field = fields.next();
+			String pakkage = field.getPackage();
+			String clazz = field.getClazz();
+			b.append("<dl><dt>");
+			b.append(pakkage);
+			b.append("</dt><dd><dl><dt>");
+			b.append(clazz);
+			b.append("</dt><dd><ul><li>");
+			b.append(field.getName());
+			b.append("</li>");
+			while (fields.hasNext()) {
+				field = fields.next();
+				if (!pakkage.equals(field.getPackage())) {
+					b.append("</ul></dd></dd><dt>");
+					b.append(pakkage);
+					b.append("</dt><dd><dl><dt>");
+					b.append(clazz);
+					b.append("</dt><dd><ul><li>");
+				} else if (!clazz.equals(field.getClazz())) {
+					b.append("</ul></dd><dt>");
+					b.append(clazz);
+					b.append("</dt><dd><ul>");
+				}
+				b.append("<li>");
+				b.append(field.getName());
+				b.append("</li>");
+			}
+			b.append("</ul></dd></dl></dd></dl>");
+		} else {
+			b
+					.append("There are no fields accessed concurrently with an empty lock set in this run.");
+		}
+
+	}
+
+	private WriteHtmlOverview def(final String term, final String definition) {
 		b.append("<dt>");
 		b.append(term);
 		b.append("</dt>");
 		b.append("<dd>");
 		b.append(definition);
 		b.append("</dd>");
-		return b;
+		return this;
 	}
 
-	private StringBuilder beginTable(final String... columns) {
+	private WriteHtmlOverview dd(final String definition) {
+		b.append("<dd>");
+		b.append(definition);
+		b.append("</dd>");
+		return this;
+	}
+
+	private WriteHtmlOverview dt(final String term) {
+		b.append("<dt>");
+		b.append(term);
+		b.append("</dt>");
+		return this;
+	}
+
+	private WriteHtmlOverview beginTable(final String... columns) {
 		b.append("<table>");
 		if (columns.length > 0) {
 			b.append("<tr>");
@@ -125,15 +184,15 @@ public final class WriteHtmlOverview implements IPostPrep {
 			}
 			b.append("</tr>");
 		}
-		return b;
+		return this;
 	}
 
-	private StringBuilder endTable() {
+	private WriteHtmlOverview endTable() {
 		b.append("</table>");
-		return b;
+		return this;
 	}
 
-	private StringBuilder row(final Object... columns) {
+	private WriteHtmlOverview row(final Object... columns) {
 		b.append("<tr>");
 		for (Object col : columns) {
 			b.append("<td>");
@@ -141,7 +200,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 			b.append("</td>");
 		}
 		b.append("</tr>");
-		return b;
+		return this;
 	}
 
 	/**
@@ -192,8 +251,8 @@ public final class WriteHtmlOverview implements IPostPrep {
 		if (styleSheetURL != null) {
 			BufferedReader reader = null;
 			try {
-				reader = new BufferedReader(new InputStreamReader(
-						styleSheetURL.openStream()));
+				reader = new BufferedReader(new InputStreamReader(styleSheetURL
+						.openStream()));
 				final StringBuffer buffer = new StringBuffer(1500);
 				String line = reader.readLine();
 				while (line != null) {

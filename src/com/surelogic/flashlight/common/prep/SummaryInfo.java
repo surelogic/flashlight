@@ -2,6 +2,7 @@ package com.surelogic.flashlight.common.prep;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -19,17 +20,20 @@ public class SummaryInfo {
 	private final List<Cycle> cycles;
 	private final List<Lock> locks;
 	private final List<Thread> threads;
+	private final List<Field> emptyLockSetFields;
 	private final String threadCount;
 	private final String objectCount;
 	private final String classCount;
 
 	public SummaryInfo(final List<Cycle> cycles, final List<Lock> locks,
-			final List<Thread> threads, final String threadCount,
-			final String objectCount, final String classCount) {
+			final List<Thread> threads, final List<Field> emptyLockSetFields,
+			final String threadCount, final String objectCount,
+			final String classCount) {
 		super();
 		this.cycles = cycles;
 		this.locks = locks;
 		this.threads = threads;
+		this.emptyLockSetFields = emptyLockSetFields;
 		this.threadCount = threadCount;
 		this.objectCount = objectCount;
 		this.classCount = classCount;
@@ -47,6 +51,10 @@ public class SummaryInfo {
 		return threads;
 	}
 
+	public List<Field> getEmptyLockSetFields() {
+		return emptyLockSetFields;
+	}
+
 	public String getThreadCount() {
 		return threadCount;
 	}
@@ -59,18 +67,46 @@ public class SummaryInfo {
 		return classCount;
 	}
 
+	public static class SummaryQuery implements DBQuery<SummaryInfo> {
+
+		public SummaryInfo perform(final Query q) {
+			List<Cycle> cycles = q.prepared("Deadlock.lockCycles",
+					new DeadlockHandler()).call();
+			List<Lock> locks = q.prepared("Deadlock.lockContention",
+					new LockContentionHandler()).call();
+			List<Thread> threads = q.prepared("SummaryInfo.threads",
+					new ThreadContentionHandler()).call();
+			List<Field> fields = new ArrayList<Field>();
+			fields.addAll(q.prepared("SummaryInfo.emptyLockSets",
+					new FieldHandler()).call());
+			fields.addAll(q.prepared("SummaryInfo.emptyStaticLockSets",
+					new FieldHandler()).call());
+			Collections.sort(fields);
+			String threadCount = q.prepared("SummaryInfo.threadCount",
+					new StringResultHandler()).call();
+			String classCount = q.prepared("SummaryInfo.classCount",
+					new StringResultHandler()).call();
+			String objectCount = q.prepared("SummaryInfo.objectCount",
+					new StringResultHandler()).call();
+			return new SummaryInfo(cycles, locks, threads, fields, threadCount,
+					objectCount, classCount);
+		}
+
+	}
+
 	public static class Field implements Comparable<Field> {
 		private final String pakkage;
 		private final String clazz;
 		private final String name;
+		private final long id;
 		private final boolean isStatic;
 
 		public Field(final String pakkage, final String clazz,
-				final String name, final boolean isStatic) {
-			super();
+				final String name, final long id, final boolean isStatic) {
 			this.pakkage = pakkage;
 			this.clazz = clazz;
 			this.name = name;
+			this.id = id;
 			this.isStatic = isStatic;
 		}
 
@@ -84,6 +120,10 @@ public class SummaryInfo {
 
 		public String getName() {
 			return name;
+		}
+
+		public long getId() {
+			return id;
 		}
 
 		public boolean isStatic() {
@@ -154,23 +194,11 @@ public class SummaryInfo {
 
 	}
 
-	public static class SummaryQuery implements DBQuery<SummaryInfo> {
+	private static class FieldHandler implements RowHandler<Field> {
 
-		public SummaryInfo perform(final Query q) {
-			List<Cycle> cycles = q.prepared("Deadlock.lockCycles",
-					new DeadlockHandler()).call();
-			List<Lock> locks = q.prepared("Deadlock.lockContention",
-					new LockContentionHandler()).call();
-			List<Thread> threads = q.prepared("SummaryInfo.threads",
-					new ThreadContentionHandler()).call();
-			String threadCount = q.prepared("SummaryInfo.threadCount",
-					new StringResultHandler()).call();
-			String classCount = q.prepared("SummaryInfo.classCount",
-					new StringResultHandler()).call();
-			String objectCount = q.prepared("SummaryInfo.objectCount",
-					new StringResultHandler()).call();
-			return new SummaryInfo(cycles, locks, threads, threadCount,
-					objectCount, classCount);
+		public Field handle(final Row r) {
+			return new Field(r.nextString(), r.nextString(), r.nextString(), r
+					.nextLong(), r.nextBoolean());
 		}
 
 	}
@@ -243,8 +271,8 @@ public class SummaryInfo {
 	private static class LockContentionHandler implements RowHandler<Lock> {
 
 		public Lock handle(final Row r) {
-			return new Lock(r.nextString(), r.nextInt(), r.nextLong(),
-					r.nextLong(), r.nextLong());
+			return new Lock(r.nextString(), r.nextInt(), r.nextLong(), r
+					.nextLong(), r.nextLong());
 		}
 
 	}

@@ -12,18 +12,27 @@ import com.surelogic.common.jdbc.Result;
 import com.surelogic.common.jdbc.ResultHandler;
 import com.surelogic.common.jdbc.Row;
 import com.surelogic.common.jdbc.RowHandler;
+import com.surelogic.common.jdbc.StringResultHandler;
 
 public class SummaryInfo {
 
 	private final List<Cycle> cycles;
 	private final List<Lock> locks;
 	private final List<Thread> threads;
+	private final String threadCount;
+	private final String objectCount;
+	private final String classCount;
 
-	private SummaryInfo(final List<Cycle> cycles, final List<Lock> locks,
-			final List<Thread> threads) {
+	public SummaryInfo(final List<Cycle> cycles, final List<Lock> locks,
+			final List<Thread> threads, final String threadCount,
+			final String objectCount, final String classCount) {
+		super();
 		this.cycles = cycles;
 		this.locks = locks;
 		this.threads = threads;
+		this.threadCount = threadCount;
+		this.objectCount = objectCount;
+		this.classCount = classCount;
 	}
 
 	public List<Cycle> getCycles() {
@@ -38,6 +47,18 @@ public class SummaryInfo {
 		return threads;
 	}
 
+	public String getThreadCount() {
+		return threadCount;
+	}
+
+	public String getObjectCount() {
+		return objectCount;
+	}
+
+	public String getClassCount() {
+		return classCount;
+	}
+
 	public static class SummaryQuery implements DBQuery<SummaryInfo> {
 
 		public SummaryInfo perform(final Query q) {
@@ -47,7 +68,14 @@ public class SummaryInfo {
 					new LockContentionHandler()).call();
 			List<Thread> threads = q.prepared("SummaryInfo.threads",
 					new ThreadContentionHandler()).call();
-			return new SummaryInfo(cycles, locks, threads);
+			String threadCount = q.prepared("SummaryInfo.threadCount",
+					new StringResultHandler()).call();
+			String classCount = q.prepared("SummaryInfo.classCount",
+					new StringResultHandler()).call();
+			String objectCount = q.prepared("SummaryInfo.objectCount",
+					new StringResultHandler()).call();
+			return new SummaryInfo(cycles, locks, threads, threadCount,
+					objectCount, classCount);
 		}
 
 	}
@@ -81,12 +109,14 @@ public class SummaryInfo {
 
 	public static class Lock {
 		private final String name;
+		private final String id;
 		private final int acquired;
 		private final long blockTime;
 		private final long averageBlock;
 
 		public Lock(final String name, final int acquired,
-				final long blockTime, final long averageBlock) {
+				final long blockTime, final long averageBlock, final long id) {
+			this.id = Long.toString(id);
 			this.name = name;
 			this.acquired = acquired;
 			this.blockTime = blockTime;
@@ -95,6 +125,10 @@ public class SummaryInfo {
 
 		public String getName() {
 			return name;
+		}
+
+		public String getId() {
+			return id;
 		}
 
 		public int getAcquired() {
@@ -115,7 +149,7 @@ public class SummaryInfo {
 
 		public Lock handle(final Row r) {
 			return new Lock(r.nextString(), r.nextInt(), r.nextLong(),
-					r.nextLong());
+					r.nextLong(), r.nextLong());
 		}
 
 	}
@@ -149,15 +183,20 @@ public class SummaryInfo {
 
 	public static class Edge implements Comparable<Edge> {
 		private final String held;
+		private final String heldId;
 		private final String acquired;
+		private final String acquiredId;
 		private final int count;
 		private final Timestamp first;
 		private final Timestamp last;
 
-		Edge(final String held, final String acquired, final int count,
+		Edge(final String held, final String heldId, final String acquired,
+				final String acquiredId, final int count,
 				final Timestamp first, final Timestamp last) {
 			this.held = held;
+			this.heldId = heldId;
 			this.acquired = acquired;
+			this.acquiredId = acquiredId;
 			this.count = count;
 			this.first = first;
 			this.last = last;
@@ -183,6 +222,14 @@ public class SummaryInfo {
 			return last;
 		}
 
+		public String getHeldId() {
+			return heldId;
+		}
+
+		public String getAcquiredId() {
+			return acquiredId;
+		}
+
 		public int compareTo(final Edge o) {
 			int cmp = held.compareTo(o.held);
 			if (cmp == 0) {
@@ -205,12 +252,15 @@ public class SummaryInfo {
 					cycles.add(curCycle);
 				}
 				final String held = r.nextString();
+				final String heldId = r.nextString();
 				final String acquired = r.nextString();
+				final String acquiredId = r.nextString();
 				final int count = r.nextInt();
 				final Timestamp first = r.nextTimestamp();
 				final Timestamp last = r.nextTimestamp();
 				curCycle.getEdges().add(
-						new Edge(held, acquired, count, first, last));
+						new Edge(held, heldId, acquired, acquiredId, count,
+								first, last));
 			}
 
 			return cycles;

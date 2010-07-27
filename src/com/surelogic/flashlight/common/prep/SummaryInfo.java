@@ -29,7 +29,6 @@ public class SummaryInfo {
 			final List<Thread> threads, final List<Field> emptyLockSetFields,
 			final String threadCount, final String objectCount,
 			final String classCount) {
-		super();
 		this.cycles = cycles;
 		this.locks = locks;
 		this.threads = threads;
@@ -98,7 +97,7 @@ public class SummaryInfo {
 		private final String pakkage;
 		private final String clazz;
 		private final String name;
-		private final long id;
+		private final String id;
 		private final boolean isStatic;
 
 		public Field(final String pakkage, final String clazz,
@@ -106,7 +105,7 @@ public class SummaryInfo {
 			this.pakkage = pakkage;
 			this.clazz = clazz;
 			this.name = name;
-			this.id = id;
+			this.id = Long.toString(id);
 			this.isStatic = isStatic;
 		}
 
@@ -122,7 +121,7 @@ public class SummaryInfo {
 			return name;
 		}
 
-		public long getId() {
+		public String getId() {
 			return id;
 		}
 
@@ -197,8 +196,8 @@ public class SummaryInfo {
 	private static class FieldHandler implements RowHandler<Field> {
 
 		public Field handle(final Row r) {
-			return new Field(r.nextString(), r.nextString(), r.nextString(), r
-					.nextLong(), r.nextBoolean());
+			return new Field(r.nextString(), r.nextString(), r.nextString(),
+					r.nextLong(), r.nextBoolean());
 		}
 
 	}
@@ -271,8 +270,8 @@ public class SummaryInfo {
 	private static class LockContentionHandler implements RowHandler<Lock> {
 
 		public Lock handle(final Row r) {
-			return new Lock(r.nextString(), r.nextInt(), r.nextLong(), r
-					.nextLong(), r.nextLong());
+			return new Lock(r.nextString(), r.nextInt(), r.nextLong(),
+					r.nextLong(), r.nextLong());
 		}
 
 	}

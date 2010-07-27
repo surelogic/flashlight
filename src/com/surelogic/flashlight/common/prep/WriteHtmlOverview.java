@@ -8,7 +8,6 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Iterator;
-import java.util.List;
 
 import com.surelogic.common.SLUtility;
 import com.surelogic.common.html.SimpleHTMLPrinter;
@@ -23,6 +22,9 @@ import com.surelogic.flashlight.common.prep.SummaryInfo.Field;
 
 public final class WriteHtmlOverview implements IPostPrep {
 	private static final String DATE_FORMAT = "yyyy.MM.dd-'at'-HH.mm.ss.SSS";
+	private static final String LOCK_EDGE_QUERY = "fd49f015-3585-4602-a5d1-4e67ef7b6a55";
+	private static final String EMPTY_LOCK_SET_INSTANCES = "5224d411-6ed3-432f-8b91-a1c43df22911";
+	private static final String STATIC_LOCK_FREQUENCY_QUERY = "6a39e6ca-29e9-4093-ba03-0e9bd9503a1a";
 	private final RunDescription f_runDescription;
 	private final StringBuilder b;
 
@@ -46,22 +48,23 @@ public final class WriteHtmlOverview implements IPostPrep {
 			 * TODO Add real page information/generation/read from a file here.
 			 */
 			b.append("<h1>").append(f_runDescription.getName()).append(' ');
-			b.append(SLUtility
-					.toStringHMS(f_runDescription.getStartTimeOfRun()));
+			b.append(SLUtility.toStringHMS(f_runDescription.getStartTimeOfRun()));
 			b.append("</h1>");
 			b.append("<p></p>");
 			b.append("<dl>");
 			def("Vendor: ", f_runDescription.getJavaVendor());
 			def("Version: ", f_runDescription.getJavaVersion());
-			def("OS", String.format("%s (%s) on %s", f_runDescription
-					.getOSName(), f_runDescription.getOSVersion(),
+			def("OS", String.format("%s (%s) on %s",
+					f_runDescription.getOSName(),
+					f_runDescription.getOSVersion(),
 					f_runDescription.getOSArch()));
-			def("Max Memory", Integer.toString(f_runDescription
-					.getMaxMemoryMb()));
-			def("Processors", Integer
-					.toString(f_runDescription.getProcessors()));
-			def("Start Time", new SimpleDateFormat(DATE_FORMAT)
-					.format(f_runDescription.getStartTimeOfRun()));
+			def("Max Memory",
+					Integer.toString(f_runDescription.getMaxMemoryMb()));
+			def("Processors",
+					Integer.toString(f_runDescription.getProcessors()));
+			def("Start Time",
+					new SimpleDateFormat(DATE_FORMAT).format(f_runDescription
+							.getStartTimeOfRun()));
 			def("# Observed Threads", info.getThreadCount());
 			beginTable("Thread", "Time Spent Blocked");
 			for (SummaryInfo.Thread thread : info.getThreads()) {
@@ -70,21 +73,19 @@ public final class WriteHtmlOverview implements IPostPrep {
 			endTable();
 			def("# Observed Classes", info.getClassCount());
 			def("# Observed Objects", info.getObjectCount());
-			dd("Empty Lock Sets");
+
+			dt("Empty Lock Sets");
 
 			b.append("</dl>");
-			b
-					.append("There are <a href=\"index.html?query=bd72a5e4-42aa-415d-aa72-28d351f629a4\">shared instance fields</a>.");
 			beginTable("Lock Held", "Lock Acquired", "Count", "First Time",
 					"Last Time");
-			List<Cycle> cycles = info.getCycles();
 			for (Cycle cycle : info.getCycles()) {
 				for (Edge e : cycle.getEdges()) {
 					row(link(e.getHeld(),
 							"4fce8390-7307-45dc-b779-5701ee7f23a1", "LockHeld",
 							e.getHeldId(), "LockAcquired", e.getAcquiredId()),
-							e.getAcquired(), e.getCount(), e.getFirst(), e
-									.getLast());
+							e.getAcquired(), e.getCount(), e.getFirst(),
+							e.getLast());
 				}
 			}
 			endTable();
@@ -95,10 +96,9 @@ public final class WriteHtmlOverview implements IPostPrep {
 			beginTable("Lock", "Times Acquired", "Total Block Time",
 					"Average Block Time");
 			for (SummaryInfo.Lock lock : info.getLocks()) {
-				row(link(lock.getName(),
-						"fd49f015-3585-4602-a5d1-4e67ef7b6a55", "Lock", lock
-								.getId()), lock.getAcquired(), lock
-						.getBlockTime(), lock.getAverageBlock());
+				row(link(lock.getName(), LOCK_EDGE_QUERY, "Lock", lock.getId()),
+						lock.getAcquired(), lock.getBlockTime(),
+						lock.getAverageBlock());
 			}
 			endTable();
 			SimpleHTMLPrinter.addPageEpilog(b);
@@ -122,29 +122,43 @@ public final class WriteHtmlOverview implements IPostPrep {
 			b.append("</dt><dd><dl><dt>");
 			b.append(clazz);
 			b.append("</dt><dd><ul><li>");
-			b.append(field.getName());
+			if (field.isStatic()) {
+				b.append(link(field.getName(), STATIC_LOCK_FREQUENCY_QUERY,
+						"Field", field.getId()));
+			} else {
+				b.append(link(field.getName(), EMPTY_LOCK_SET_INSTANCES,
+						"FieldId", field.getId()));
+			}
 			b.append("</li>");
 			while (fields.hasNext()) {
 				field = fields.next();
 				if (!pakkage.equals(field.getPackage())) {
-					b.append("</ul></dd></dd><dt>");
+					pakkage = field.getPackage();
+					clazz = field.getClazz();
+					b.append("</ul></dd></dl></dd><dt>");
 					b.append(pakkage);
 					b.append("</dt><dd><dl><dt>");
 					b.append(clazz);
-					b.append("</dt><dd><ul><li>");
+					b.append("</dt><dd><ul>");
 				} else if (!clazz.equals(field.getClazz())) {
+					clazz = field.getClazz();
 					b.append("</ul></dd><dt>");
 					b.append(clazz);
 					b.append("</dt><dd><ul>");
 				}
 				b.append("<li>");
-				b.append(field.getName());
+				if (field.isStatic()) {
+					b.append(link(field.getName(), STATIC_LOCK_FREQUENCY_QUERY,
+							"Field", field.getId()));
+				} else {
+					b.append(link(field.getName(), EMPTY_LOCK_SET_INSTANCES,
+							"FieldId", field.getId()));
+				}
 				b.append("</li>");
 			}
 			b.append("</ul></dd></dl></dd></dl>");
 		} else {
-			b
-					.append("There are no fields accessed concurrently with an empty lock set in this run.");
+			b.append("There are no fields accessed concurrently with an empty lock set in this run.");
 		}
 
 	}
@@ -251,8 +265,8 @@ public final class WriteHtmlOverview implements IPostPrep {
 		if (styleSheetURL != null) {
 			BufferedReader reader = null;
 			try {
-				reader = new BufferedReader(new InputStreamReader(styleSheetURL
-						.openStream()));
+				reader = new BufferedReader(new InputStreamReader(
+						styleSheetURL.openStream()));
 				final StringBuffer buffer = new StringBuffer(1500);
 				String line = reader.readLine();
 				while (line != null) {

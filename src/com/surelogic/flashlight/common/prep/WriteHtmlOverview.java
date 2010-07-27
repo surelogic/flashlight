@@ -23,7 +23,7 @@ import com.surelogic.flashlight.common.prep.SummaryInfo.Field;
 public final class WriteHtmlOverview implements IPostPrep {
 	private static final String DATE_FORMAT = "yyyy.MM.dd-'at'-HH.mm.ss.SSS";
 	private static final String LOCK_EDGE_QUERY = "fd49f015-3585-4602-a5d1-4e67ef7b6a55";
-	private static final String EMPTY_LOCK_SET_INSTANCES = "5224d411-6ed3-432f-8b91-a1c43df22911";
+	private static final String EMPTY_LOCK_SET_INSTANCES_QUERY = "5224d411-6ed3-432f-8b91-a1c43df22911";
 	private static final String STATIC_LOCK_FREQUENCY_QUERY = "6a39e6ca-29e9-4093-ba03-0e9bd9503a1a";
 	private final RunDescription f_runDescription;
 	private final StringBuilder b;
@@ -122,13 +122,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 			b.append("</dt><dd><dl><dt>");
 			b.append(clazz);
 			b.append("</dt><dd><ul><li>");
-			if (field.isStatic()) {
-				b.append(link(field.getName(), STATIC_LOCK_FREQUENCY_QUERY,
-						"Field", field.getId()));
-			} else {
-				b.append(link(field.getName(), EMPTY_LOCK_SET_INSTANCES,
-						"FieldId", field.getId()));
-			}
+			b.append(fieldLink(field));
 			b.append("</li>");
 			while (fields.hasNext()) {
 				field = fields.next();
@@ -147,13 +141,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 					b.append("</dt><dd><ul>");
 				}
 				b.append("<li>");
-				if (field.isStatic()) {
-					b.append(link(field.getName(), STATIC_LOCK_FREQUENCY_QUERY,
-							"Field", field.getId()));
-				} else {
-					b.append(link(field.getName(), EMPTY_LOCK_SET_INSTANCES,
-							"FieldId", field.getId()));
-				}
+				b.append(fieldLink(field));
 				b.append("</li>");
 			}
 			b.append("</ul></dd></dl></dd></dl>");
@@ -161,6 +149,14 @@ public final class WriteHtmlOverview implements IPostPrep {
 			b.append("There are no fields accessed concurrently with an empty lock set in this run.");
 		}
 
+	}
+
+	private String fieldLink(final Field field) {
+		return link(field.getName(),
+				field.isStatic() ? STATIC_LOCK_FREQUENCY_QUERY
+						: EMPTY_LOCK_SET_INSTANCES_QUERY, "Package",
+				field.getPackage(), "Class", field.getClazz(), "Field",
+				field.getName(), "FieldId", field.getId());
 	}
 
 	private WriteHtmlOverview def(final String term, final String definition) {

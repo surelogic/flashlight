@@ -12,8 +12,12 @@ public final class HtmlHandles {
 
 	private final File f_htmlDirectory;
 
-	private HtmlHandles(File htmlDirectory) {
+	private HtmlHandles(final File htmlDirectory) {
 		f_htmlDirectory = htmlDirectory;
+	}
+
+	public File getHtmlDirectory() {
+		return f_htmlDirectory;
 	}
 
 	public File getIndexHtmlFile() {

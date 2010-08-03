@@ -8,10 +8,12 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Iterator;
+import java.util.List;
 
 import com.surelogic.common.SLUtility;
 import com.surelogic.common.html.SimpleHTMLPrinter;
 import com.surelogic.common.i18n.I18N;
+import com.surelogic.common.images.ImageWriter;
 import com.surelogic.common.jdbc.ConnectionQuery;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.flashlight.common.files.HtmlHandles;
@@ -19,14 +21,25 @@ import com.surelogic.flashlight.common.model.RunDescription;
 import com.surelogic.flashlight.common.prep.SummaryInfo.Cycle;
 import com.surelogic.flashlight.common.prep.SummaryInfo.Edge;
 import com.surelogic.flashlight.common.prep.SummaryInfo.Field;
+import com.surelogic.flashlight.common.prep.SummaryInfo.Lock;
 
 public final class WriteHtmlOverview implements IPostPrep {
+
+	private static final int TABLE_LIMIT = 10;
+
+	private static final String IMG_PACKAGE = "package.gif";
+	private static final String IMG_CLASS = "class.gif";
+	private static final String ALT_CLASS = "class";
+	private static final String ALT_PACKAGE = "package";
 	private static final String DATE_FORMAT = "yyyy.MM.dd-'at'-HH.mm.ss.SSS";
-	private static final String LOCK_EDGE_QUERY = "fd49f015-3585-4602-a5d1-4e67ef7b6a55";
 	private static final String EMPTY_LOCK_SET_INSTANCES_QUERY = "5224d411-6ed3-432f-8b91-a1c43df22911";
+	private static final String LOCK_CONTENTION_QUERY = "cb38a427-c259-4690-abe2-acea9661f737";
+	private static final String LOCK_EDGE_QUERY = "fd49f015-3585-4602-a5d1-4e67ef7b6a55";
 	private static final String STATIC_LOCK_FREQUENCY_QUERY = "6a39e6ca-29e9-4093-ba03-0e9bd9503a1a";
+	private static final String THREAD_BLOCKING_QUERY = "4e026769-1b0b-42bd-8893-f3b92add093f";
 	private final RunDescription f_runDescription;
 	private final StringBuilder b;
+	private final ImageWriter writer;
 
 	public WriteHtmlOverview(final RunDescription runDescription) {
 		if (runDescription == null) {
@@ -34,6 +47,8 @@ public final class WriteHtmlOverview implements IPostPrep {
 		}
 		f_runDescription = runDescription;
 		b = new StringBuilder();
+		writer = new ImageWriter(f_runDescription.getRunDirectory()
+				.getHtmlHandles().getHtmlDirectory());
 	}
 
 	public void doPostPrep(final Connection c, final SLProgressMonitor mon)
@@ -43,7 +58,9 @@ public final class WriteHtmlOverview implements IPostPrep {
 			SummaryInfo info = new SummaryInfo.SummaryQuery()
 					.perform(new ConnectionQuery(c));
 			final String styleSheet = loadStyleSheet();
-			SimpleHTMLPrinter.addPageProlog(b, styleSheet);
+			final String javaScript = loadJavaScript();
+			SimpleHTMLPrinter.addPageProlog(b, styleSheet, javaScript,
+					"outlineInit()");
 			/*
 			 * TODO Add real page information/generation/read from a file here.
 			 */
@@ -67,16 +84,24 @@ public final class WriteHtmlOverview implements IPostPrep {
 							.getStartTimeOfRun()));
 			def("# Observed Threads", info.getThreadCount());
 			beginTable("Thread", "Time Spent Blocked");
+			int count = 0;
+			int threadCount = info.getThreads().size();
 			for (SummaryInfo.Thread thread : info.getThreads()) {
 				row(thread.getName(), thread.getBlockTime());
+				if (++count == TABLE_LIMIT) {
+					break;
+				}
 			}
 			endTable();
+			if (threadCount > TABLE_LIMIT) {
+				b.append(link(
+						String.format("%d more results.", threadCount
+								- TABLE_LIMIT), THREAD_BLOCKING_QUERY));
+
+			}
 			def("# Observed Classes", info.getClassCount());
 			def("# Observed Objects", info.getObjectCount());
-
-			dt("Empty Lock Sets");
-
-			b.append("</dl>");
+			dt("Potential Deadlocks");
 			beginTable("Lock Held", "Lock Acquired", "Count", "First Time",
 					"Last Time");
 			for (Cycle cycle : info.getCycles()) {
@@ -93,19 +118,36 @@ public final class WriteHtmlOverview implements IPostPrep {
 			b.append("<dd>");
 			displayLockSet(info);
 			b.append("</dd>");
+			dt("Observed Locks");
 			beginTable("Lock", "Times Acquired", "Total Block Time",
 					"Average Block Time");
-			for (SummaryInfo.Lock lock : info.getLocks()) {
+			List<Lock> locks = info.getLocks();
+			count = 0;
+			for (SummaryInfo.Lock lock : locks) {
 				row(link(lock.getName(), LOCK_EDGE_QUERY, "Lock", lock.getId()),
 						lock.getAcquired(), lock.getBlockTime(),
 						lock.getAverageBlock());
+				if (++count == TABLE_LIMIT) {
+					break;
+				}
 			}
 			endTable();
+			if (locks.size() > TABLE_LIMIT) {
+				b.append(link(
+						String.format("%d more results.", locks.size()
+								- TABLE_LIMIT), LOCK_CONTENTION_QUERY));
+			}
+			b.append("</dl>");
 			SimpleHTMLPrinter.addPageEpilog(b);
 
 			final HtmlHandles html = f_runDescription.getRunDirectory()
 					.getHtmlHandles();
 			html.writeIndexHtml(b.toString());
+			writer.addImage("package.gif");
+			writer.addImage("class.gif");
+			writer.addImage("arrow_right.gif");
+			writer.addImage("arrow_down.gif");
+			writer.writeImages();
 		} finally {
 			mon.done();
 		}
@@ -117,11 +159,13 @@ public final class WriteHtmlOverview implements IPostPrep {
 			Field field = fields.next();
 			String pakkage = field.getPackage();
 			String clazz = field.getClazz();
-			b.append("<dl><dt>");
+			b.append("<ul class=\"outline\"><li>");
+			b.append(writer.imageTag(IMG_PACKAGE, ALT_PACKAGE));
 			b.append(pakkage);
-			b.append("</dt><dd><dl><dt>");
+			b.append("<ul><li>");
+			b.append(writer.imageTag(IMG_CLASS, ALT_CLASS));
 			b.append(clazz);
-			b.append("</dt><dd><ul><li>");
+			b.append("<ul><li>");
 			b.append(fieldLink(field));
 			b.append("</li>");
 			while (fields.hasNext()) {
@@ -129,22 +173,25 @@ public final class WriteHtmlOverview implements IPostPrep {
 				if (!pakkage.equals(field.getPackage())) {
 					pakkage = field.getPackage();
 					clazz = field.getClazz();
-					b.append("</ul></dd></dl></dd><dt>");
+					b.append("</ul></li></ul></li><li>");
+					b.append(writer.imageTag(IMG_PACKAGE, ALT_PACKAGE));
 					b.append(pakkage);
-					b.append("</dt><dd><dl><dt>");
+					b.append("<ul><li>");
+					b.append(writer.imageTag(IMG_CLASS, ALT_CLASS));
 					b.append(clazz);
-					b.append("</dt><dd><ul>");
+					b.append("<ul>");
 				} else if (!clazz.equals(field.getClazz())) {
 					clazz = field.getClazz();
-					b.append("</ul></dd><dt>");
+					b.append("</ul></li><li>");
+					b.append(writer.imageTag(IMG_CLASS, ALT_CLASS));
 					b.append(clazz);
-					b.append("</dt><dd><ul>");
+					b.append("<ul>");
 				}
 				b.append("<li>");
 				b.append(fieldLink(field));
 				b.append("</li>");
 			}
-			b.append("</ul></dd></dl></dd></dl>");
+			b.append("</ul></li></ul></li></ul>");
 		} else {
 			b.append("There are no fields accessed concurrently with an empty lock set in this run.");
 		}
@@ -263,6 +310,42 @@ public final class WriteHtmlOverview implements IPostPrep {
 			try {
 				reader = new BufferedReader(new InputStreamReader(
 						styleSheetURL.openStream()));
+				final StringBuffer buffer = new StringBuffer(1500);
+				String line = reader.readLine();
+				while (line != null) {
+					buffer.append(line);
+					buffer.append('\n');
+					line = reader.readLine();
+				}
+				return buffer.toString();
+			} catch (final IOException ex) {
+				throw new IllegalStateException(ex);
+			} finally {
+				try {
+					if (reader != null) {
+						reader.close();
+					}
+				} catch (final IOException e) {
+				}
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Loads and returns the outline JavaScript script.
+	 * 
+	 * @return the style sheet, or <code>null</code> if unable to load
+	 */
+	private static String loadJavaScript() {
+		final URL javaScriptURL = Thread.currentThread()
+				.getContextClassLoader()
+				.getResource("/com/surelogic/common/js/outline.js");
+		if (javaScriptURL != null) {
+			BufferedReader reader = null;
+			try {
+				reader = new BufferedReader(new InputStreamReader(
+						javaScriptURL.openStream()));
 				final StringBuffer buffer = new StringBuffer(1500);
 				String line = reader.readLine();
 				while (line != null) {

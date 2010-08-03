@@ -144,7 +144,7 @@ public final class PrepSLJob extends AbstractSLJob {
 		final IPostPrep[] postPrepWork = getPostPrep();
 
 		monitor.begin(PRE_SCAN_WORK + DROP_CONSTRAINT_WORK
-				+ PERSIST_RUN_DESCRIPTION_WORK + SETUP_WORK + PREP_WORK
+				+ PERSIST_RUN_DESCRIPTION_WORK + SETUP_WORK + PREP_WORK * 2
 				+ FLUSH_WORK + EACH_POST_PREP * postPrepWork.length
 				+ ADD_CONSTRAINT_WORK);
 
@@ -218,8 +218,7 @@ public final class PrepSLJob extends AbstractSLJob {
 						@Override
 						public void doPerform(final Connection c)
 								throws Exception {
-							c
-									.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
+							c.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
 							/*
 							 * Persist the run and obtain its database
 							 * identifier, start time stamp, and the start time
@@ -300,6 +299,8 @@ public final class PrepSLJob extends AbstractSLJob {
 									.getMaxReceiverId() / f_windowSize)
 									+ (preScanInfo.getMaxReceiverId()
 											% f_windowSize > 0 ? 1 : 0);
+							rprepMonitor
+									.begin(eventsInRawFile * 2 * numWindows);
 							final TLongHashSet synthetics = scanResults
 									.getSynthetics();
 							final IRangePrep[] rpElements = getRangeHandlers();

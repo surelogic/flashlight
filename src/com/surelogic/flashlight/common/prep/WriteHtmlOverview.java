@@ -10,10 +10,10 @@ import java.text.SimpleDateFormat;
 import java.util.Iterator;
 import java.util.List;
 
+import com.surelogic.common.ImageWriter;
 import com.surelogic.common.SLUtility;
 import com.surelogic.common.html.SimpleHTMLPrinter;
 import com.surelogic.common.i18n.I18N;
-import com.surelogic.common.images.ImageWriter;
 import com.surelogic.common.jdbc.ConnectionQuery;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.flashlight.common.files.HtmlHandles;

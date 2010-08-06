@@ -53,6 +53,17 @@ public class Activator extends AbstractUIPlugin {
 		plugin = this;
 	}
 
+	/**
+	 * Gets the identifier for this plug in.
+	 * 
+	 * @return an identifier, such as <tt>com.surelogic.common</tt>. In rare
+	 *         cases, for example bad plug in XML, it may be {@code null}.
+	 * @see Bundle#getSymbolicName()
+	 */
+	public String getPlugInId() {
+		return plugin.getBundle().getSymbolicName();
+	}
+
 	@Override
 	public void start(final BundleContext context) throws Exception {
 		super.start(context);
@@ -67,7 +78,7 @@ public class Activator extends AbstractUIPlugin {
 		/*
 		 * Get the data directory and ensure that it actually exists.
 		 */
-		final String path = getPluginPreferences().getString(
+		final String path = getPreferenceStore().getString(
 				PreferenceConstants.P_DATA_DIRECTORY);
 		if (path == null) {
 			throw new IllegalStateException(I18N.err(44, "P_DATA_DIRECTORY"));

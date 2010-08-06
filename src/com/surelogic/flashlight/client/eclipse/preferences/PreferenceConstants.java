@@ -2,6 +2,7 @@ package com.surelogic.flashlight.client.eclipse.preferences;
 
 import java.io.File;
 
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jface.preference.IPreferenceStore;
 
 import com.surelogic.common.eclipse.preferences.IAutoPerspectiveSwitchPreferences;
@@ -61,17 +62,17 @@ public class PreferenceConstants implements IAutoPerspectiveSwitchPreferences {
 			+ "object.window.size";
 
 	public static int getPrepObjectWindowSize() {
-		return Activator.getDefault().getPluginPreferences().getInt(
+		return Activator.getDefault().getPreferenceStore().getInt(
 				P_PREP_OBJECT_WINDOW_SIZE);
 	}
 
 	public boolean getPromptForPerspectiveSwitch() {
-		return Activator.getDefault().getPluginPreferences().getBoolean(
+		return Activator.getDefault().getPreferenceStore().getBoolean(
 				P_PROMPT_PERSPECTIVE_SWITCH);
 	}
 
 	public void setPromptForPerspectiveSwitch(final boolean value) {
-		Activator.getDefault().getPluginPreferences().setValue(
+		Activator.getDefault().getPreferenceStore().setValue(
 				P_PROMPT_PERSPECTIVE_SWITCH, value);
 	}
 
@@ -79,12 +80,12 @@ public class PreferenceConstants implements IAutoPerspectiveSwitchPreferences {
 			+ AUTO_PERSPECTIVE_SWITCH;
 
 	public boolean getAutoPerspectiveSwitch() {
-		return Activator.getDefault().getPluginPreferences().getBoolean(
+		return Activator.getDefault().getPreferenceStore().getBoolean(
 				P_AUTO_PERSPECTIVE_SWITCH);
 	}
 
 	public void setAutoPerspectiveSwitch(final boolean value) {
-		Activator.getDefault().getPluginPreferences().setValue(
+		Activator.getDefault().getPreferenceStore().setValue(
 				P_AUTO_PERSPECTIVE_SWITCH, value);
 	}
 
@@ -92,7 +93,7 @@ public class PreferenceConstants implements IAutoPerspectiveSwitchPreferences {
 			+ "auto.increase.heap.at.launch";
 
 	public static boolean getAutoIncreaseHeapAtLaunch() {
-		return Activator.getDefault().getPluginPreferences().getBoolean(
+		return Activator.getDefault().getPreferenceStore().getBoolean(
 				P_AUTO_INCREASE_HEAP_AT_LAUNCH);
 	}
 
@@ -100,24 +101,24 @@ public class PreferenceConstants implements IAutoPerspectiveSwitchPreferences {
 			+ "prompt.about.lots.of.saved.queries";
 
 	public static boolean getPromptAboutLotsOfSavedQueries() {
-		return Activator.getDefault().getPluginPreferences().getBoolean(
+		return Activator.getDefault().getPreferenceStore().getBoolean(
 				P_PROMPT_ABOUT_LOTS_OF_SAVED_QUERIES);
 	}
 
 	public static void setPromptAboutLotsOfSavedQueries(final boolean value) {
-		Activator.getDefault().getPluginPreferences().setValue(
+		Activator.getDefault().getPreferenceStore().setValue(
 				P_PROMPT_ABOUT_LOTS_OF_SAVED_QUERIES, value);
 	}
 
 	public static int getMaxRowsPerQuery() {
-		return Activator.getDefault().getPluginPreferences().getInt(
+		return Activator.getDefault().getPreferenceStore().getInt(
 				PreferenceConstants.P_MAX_ROWS_PER_QUERY);
 	}
 
 	public static final String P_DATA_DIRECTORY = PREFIX + DATA_DIRECTORY;
 
 	public static File getFlashlightDataDirectory() {
-		final String path = Activator.getDefault().getPluginPreferences()
+		final String path = Activator.getDefault().getPreferenceStore()
 				.getString(P_DATA_DIRECTORY);
 		if (path.length() == 0 || path == null) {
 			return null;
@@ -127,7 +128,8 @@ public class PreferenceConstants implements IAutoPerspectiveSwitchPreferences {
 
 	public static void setFlashlightDataDirectory(final File dir) {
 		if (dir != null && dir.exists() && dir.isDirectory()) {
-			Activator.getDefault().getPluginPreferences().setValue(
+			final InstanceScope is = new InstanceScope();
+			is.getNode(Activator.getDefault().getPlugInId()).put(
 					P_DATA_DIRECTORY, dir.getAbsolutePath());
 		} else {
 			throw new IllegalArgumentException("Bad directory: " + dir);
@@ -138,12 +140,12 @@ public class PreferenceConstants implements IAutoPerspectiveSwitchPreferences {
 			+ "prompt.to.prep.all.raw.data";
 
 	public static boolean getPromptToPrepAllRawData() {
-		return Activator.getDefault().getPluginPreferences().getBoolean(
+		return Activator.getDefault().getPreferenceStore().getBoolean(
 				P_PROMPT_TO_PREP_ALL_RAW_DATA);
 	}
 
 	public static void setPromptToPrepAllRawData(final boolean value) {
-		Activator.getDefault().getPluginPreferences().setValue(
+		Activator.getDefault().getPreferenceStore().setValue(
 				P_PROMPT_TO_PREP_ALL_RAW_DATA, value);
 	}
 
@@ -151,12 +153,12 @@ public class PreferenceConstants implements IAutoPerspectiveSwitchPreferences {
 			+ "auto.prep.all.raw.data";
 
 	public static boolean getAutoPrepAllRawData() {
-		return Activator.getDefault().getPluginPreferences().getBoolean(
+		return Activator.getDefault().getPreferenceStore().getBoolean(
 				P_AUTO_PREP_ALL_RAW_DATA);
 	}
 
 	public static void setAutoPrepAllRawData(final boolean value) {
-		Activator.getDefault().getPluginPreferences().setValue(
+		Activator.getDefault().getPreferenceStore().setValue(
 				P_AUTO_PREP_ALL_RAW_DATA, value);
 	}
 

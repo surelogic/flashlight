@@ -13,5 +13,7 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/common"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/derby-common"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/flashlight-common"/>
+	<classpathentry kind="lib" path="lib/javac.jar"/>
+	<classpathentry kind="lib" path="lib/javadoc.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

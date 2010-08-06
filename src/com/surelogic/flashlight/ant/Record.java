@@ -1,24 +1,26 @@
 package com.surelogic.flashlight.ant;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.zip.ZipOutputStream;
 
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Task;
+import org.apache.tools.ant.types.Commandline.Argument;
 import org.apache.tools.ant.types.CommandlineJava;
 import org.apache.tools.ant.types.Path;
-import org.apache.tools.ant.types.Commandline.Argument;
 import org.apache.tools.ant.types.Path.PathElement;
 
 import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic._flashlight.rewriter.config.Configuration.FieldFilter;
-import com.surelogic.common.FileUtility;
 import com.surelogic.flashlight.ant.Instrument.Blacklist;
 import com.surelogic.flashlight.ant.Instrument.Directory;
 import com.surelogic.flashlight.ant.Instrument.FilterPackage;
@@ -312,7 +314,9 @@ public class Record extends Task {
 
 	private Path instrumentFiles(final File runFolder) {
 		i.setProject(getProject());
-		i.createBootclasspath().add(bootclasspath);
+		if (bootclasspath != null) {
+			i.createBootclasspath().add(bootclasspath);
+		}
 		i.setFieldsFile(new File(runFolder, FIELDS_TXT));
 		i.setLogFile(new File(runFolder, INSTRUMENTATION_LOG));
 		i.setSitesFile(new File(runFolder, SITES_TXT));
@@ -344,13 +348,8 @@ public class Record extends Task {
 				el.setLocation(new File(projectFolder, l.getName()));
 			}
 			final File src = p.getSource();
-			if (src.isDirectory()) {
-				// TODO
-			} else {
-				// TODO we might want to check here to make sure this is really
-				// a zip
-				final File newSrc = new File(sourceFolder, src.getName());
-				FileUtility.copy(src, newSrc);
+			if (src != null) {
+				generateSource(src, sourceFolder);
 			}
 		}
 		final File externalFolder = new File(runFolder, EXTERNAL_FOLDER);
@@ -358,6 +357,61 @@ public class Record extends Task {
 
 		i.execute();
 		return instrumented;
+	}
+
+	public static void main(final String[] args) {
+		Project p = new Project();
+		p.setBaseDir(new File("/home/nathan/workspace/zzzfactory"));
+		Record r = new Record();
+		r.setDataDir(new File("/home/nathan/.flashlight-data"));
+		r.setClassname("edu.afit.planetbaron.server.Server");
+		Inspect i = new Inspect();
+		i.setLoc(new File("/home/nathan/testspace/PlanetBaron/bin"));
+		i.setSource(new File("/home/nathan/testspace/PlanetBaron/src"));
+		r.addConfiguredInspect(i);
+		r.createLibraries()
+				.add(new Path(p,
+						"/home/nathan/workspace/zzzfactory/lib/fl/flashlight-runtime.jar"));
+		r.execute();
+		// new Record()
+		// .generateSource(
+		// new File("/home/nathan/testspace/PlanetBaron/src"),
+		// new File(
+		// "/home/nathan/.flashlight-data/edu.afit.planetbaron.server.Server-2010.08.06-at-13.54.33.692/source"));
+	}
+
+	/**
+	 * Generates an archive of the given source information, and places it in
+	 * the source folder
+	 * 
+	 * @param src
+	 * @param sourceFolder
+	 */
+	private void generateSource(final File src, final File sourceFolder) {
+		String name = src.getName();
+		File dest = new File(sourceFolder, name + ".src.zip");
+		// Avoid overwriting source zips created from others
+		for (int i = 1; dest.exists(); i++) {
+			dest = new File(sourceFolder, name + '(' + i + ')' + ".src.zip");
+		}
+		if (src.isDirectory()) {
+			SourceFolderZip zip = new SourceFolderZip(src);
+			try {
+				ZipOutputStream out = new ZipOutputStream(new FileOutputStream(
+						dest));
+				zip.generateSourceZipContents(out);
+				out.close();
+			} catch (FileNotFoundException e) {
+				throw new BuildException(e);
+			} catch (IOException e) {
+				throw new BuildException(e);
+			}
+		} else {
+			throw new BuildException(
+					String.format(
+							"Could not produce source zip.  Expected %s to be a source folder.",
+							src.toString()));
+		}
 	}
 
 	void addVMArg(final String prop, final String value) {
@@ -394,14 +448,16 @@ public class Record extends Task {
 		final String datePostfix = dateFormat.format(now);
 		addVMArg(InstrumentationConstants.FL_DATE_OVERRIDE, datePostfix);
 		addVMArg(InstrumentationConstants.FL_DIR, runFolder.getAbsolutePath());
-		addVMArg(InstrumentationConstants.FL_RAWQ_SIZE, Integer
-				.toString(InstrumentationConstants.FL_RAWQ_SIZE_DEFAULT));
-		addVMArg(InstrumentationConstants.FL_REFINERY_SIZE, Integer
-				.toString(InstrumentationConstants.FL_REFINERY_SIZE_DEFAULT));
-		addVMArg(InstrumentationConstants.FL_OUTQ_SIZE, Integer
-				.toString(InstrumentationConstants.FL_OUTQ_SIZE_DEFAULT));
-		addVMArg(InstrumentationConstants.FL_CONSOLE_PORT, Integer
-				.toString(InstrumentationConstants.FL_CONSOLE_PORT_DEFAULT));
+		addVMArg(InstrumentationConstants.FL_RAWQ_SIZE,
+				Integer.toString(InstrumentationConstants.FL_RAWQ_SIZE_DEFAULT));
+		addVMArg(
+				InstrumentationConstants.FL_REFINERY_SIZE,
+				Integer.toString(InstrumentationConstants.FL_REFINERY_SIZE_DEFAULT));
+		addVMArg(InstrumentationConstants.FL_OUTQ_SIZE,
+				Integer.toString(InstrumentationConstants.FL_OUTQ_SIZE_DEFAULT));
+		addVMArg(
+				InstrumentationConstants.FL_CONSOLE_PORT,
+				Integer.toString(InstrumentationConstants.FL_CONSOLE_PORT_DEFAULT));
 		addVMArg(InstrumentationConstants.FL_OUTPUT_TYPE,
 				InstrumentationConstants.FL_OUTPUT_TYPE_DEFAULT.toString());
 		addVMArg(InstrumentationConstants.FL_COLLECTION_TYPE,

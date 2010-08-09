@@ -50,7 +50,6 @@ public final class JumpToCode extends AdHocManagerAdapter {
 					HistoricalSourceView.tryToOpenInEditor(
 							variableValues.get(AdHocManager.DATABASE),
 							packageName, typeName, lineNumber);
-
 					return JDTUIUtility.tryToOpenInEditor(packageName,
 							typeName, lineNumber);
 				} else {

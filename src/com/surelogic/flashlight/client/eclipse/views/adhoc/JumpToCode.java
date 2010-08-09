@@ -130,7 +130,7 @@ public final class JumpToCode extends AdHocManagerAdapter {
 			 */
 			final LinkedList<Strategy> strategy = new LinkedList<Strategy>();
 			strategy.add(Strategy.LINE);
-			final String prefer = variableValues.get("JumpPreference");
+			final String prefer = variableValues.get("JumpToCodePreference");
 			if ("method".equalsIgnoreCase(prefer)) {
 				strategy.addFirst(Strategy.METHOD);
 				strategy.addLast(Strategy.FIELD);

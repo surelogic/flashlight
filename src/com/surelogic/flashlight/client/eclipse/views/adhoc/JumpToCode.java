@@ -33,8 +33,8 @@ public final class JumpToCode extends AdHocManagerAdapter {
 	private enum Strategy {
 		LINE {
 			@Override
-			boolean tryToJump(String packageName, String typeName,
-					Map<String, String> variableValues) {
+			boolean tryToJump(final String packageName, final String typeName,
+					final Map<String, String> variableValues) {
 				final String line = variableValues.get("Line");
 				/*
 				 * Try to open an editor if the variables package, class, and
@@ -47,21 +47,22 @@ public final class JumpToCode extends AdHocManagerAdapter {
 					} catch (final NumberFormatException e) {
 						// couldn't convert the line number so just use 1
 					}
-					HistoricalSourceView.tryToOpenInEditor(variableValues
-							.get(AdHocManager.DATABASE), packageName, typeName,
-							lineNumber);
+					HistoricalSourceView.tryToOpenInEditor(
+							variableValues.get(AdHocManager.DATABASE),
+							packageName, typeName, lineNumber);
 
 					return JDTUIUtility.tryToOpenInEditor(packageName,
 							typeName, lineNumber);
-				} else
+				} else {
 					return false;
+				}
 			}
 		},
 
 		FIELD {
 			@Override
-			boolean tryToJump(String packageName, String typeName,
-					Map<String, String> variableValues) {
+			boolean tryToJump(final String packageName, final String typeName,
+					final Map<String, String> variableValues) {
 				/*
 				 * Try to open an editor if the variables package, class, and
 				 * field name are defined.
@@ -74,9 +75,9 @@ public final class JumpToCode extends AdHocManagerAdapter {
 					fieldName = variableValues.get("Field Name");
 				}
 				if (fieldName != null) {
-					HistoricalSourceView.tryToOpenInEditor(variableValues
-							.get(AdHocManager.DATABASE), packageName, typeName,
-							fieldName);
+					HistoricalSourceView.tryToOpenInEditorUsingFieldName(
+							variableValues.get(AdHocManager.DATABASE),
+							packageName, typeName, fieldName);
 					return JDTUIUtility.tryToOpenInEditorUsingFieldName(
 							packageName, typeName, fieldName);
 				}
@@ -86,8 +87,8 @@ public final class JumpToCode extends AdHocManagerAdapter {
 
 		METHOD {
 			@Override
-			boolean tryToJump(String packageName, String typeName,
-					Map<String, String> variableValues) {
+			boolean tryToJump(final String packageName, final String typeName,
+					final Map<String, String> variableValues) {
 				/*
 				 * Try to open an editor if the variables package, class, and
 				 * method name are defined.
@@ -100,8 +101,9 @@ public final class JumpToCode extends AdHocManagerAdapter {
 					methodName = variableValues.get("Method Name");
 				}
 				if (methodName != null) {
-					// TODO: Jump to the right line in the historical source
-					// view
+					HistoricalSourceView.tryToOpenInEditorUsingMethodName(
+							variableValues.get(AdHocManager.DATABASE),
+							packageName, typeName, methodName);
 					return JDTUIUtility.tryToOpenInEditorUsingMethodName(
 							packageName, typeName, methodName);
 				}
@@ -146,8 +148,9 @@ public final class JumpToCode extends AdHocManagerAdapter {
 			 * Try to jump to a position in the code based upon the strategy.
 			 */
 			for (Strategy s : strategy) {
-				if (s.tryToJump(packageName, typeName, variableValues))
+				if (s.tryToJump(packageName, typeName, variableValues)) {
 					return;
+				}
 			}
 		}
 	}

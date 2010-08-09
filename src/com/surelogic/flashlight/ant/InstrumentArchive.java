@@ -35,7 +35,7 @@ public class InstrumentArchive extends Task {
 	private static final String LIB = "lib";
 	private final Instrument i;
 
-	private File destFile, srcFile, runtime, dataDir;
+	private File destFile, srcFile, runtime, dataDir, sources;
 	private Path extraLibs;
 
 	public InstrumentArchive() {
@@ -56,6 +56,10 @@ public class InstrumentArchive extends Task {
 
 	public void setDataDir(final File dataDir) {
 		this.dataDir = dataDir;
+	}
+
+	public void setSources(final File sources) {
+		this.sources = sources;
 	}
 
 	public Path createLibs() {

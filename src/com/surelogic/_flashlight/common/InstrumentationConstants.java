@@ -4,11 +4,12 @@ public final class InstrumentationConstants {
 	public static final boolean allowJava14 = true;
 
 	public static final String DATE_FORMAT = "-yyyy.MM.dd-'at'-HH.mm.ss.SSS";
- 
+
 	public static final String FL_PROPERTIES_RESOURCE = "com/surelogic/_flashlight/fl.properties";
 	public static final String FL_SITES_RESOURCE = "com/surelogic/_flashlight/sites.txt.gz";
 	public static final String FL_FIELDS_RESOURCE = "com/surelogic/_flashlight/fields.txt";
 	public static final String FL_LOG_RESOURCE = "com/surelogic/_flashlight/instrumentation.log";
+	public static final String FL_SOURCE_RESOURCE = "com/surelogic/_flashlight/sources.zip";
 	public static final String FL_LOG_FILE_NAME = "instrumentation.log";
 
 	public static final String FL_OFF = "FL_OFF";

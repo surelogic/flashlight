@@ -1,5 +1,6 @@
 package com.surelogic.flashlight.client.eclipse.views.adhoc;
 
+import java.util.LinkedList;
 import java.util.Map;
 
 import com.surelogic.common.adhoc.AdHocManager;
@@ -29,6 +30,89 @@ public final class JumpToCode extends AdHocManagerAdapter {
 		// singleton
 	}
 
+	private enum Strategy {
+		LINE {
+			@Override
+			boolean tryToJump(String packageName, String typeName,
+					Map<String, String> variableValues) {
+				final String line = variableValues.get("Line");
+				/*
+				 * Try to open an editor if the variables package, class, and
+				 * line are defined.
+				 */
+				if (line != null) {
+					int lineNumber = 1;
+					try {
+						lineNumber = Integer.parseInt(line);
+					} catch (final NumberFormatException e) {
+						// couldn't convert the line number so just use 1
+					}
+					HistoricalSourceView.tryToOpenInEditor(variableValues
+							.get(AdHocManager.DATABASE), packageName, typeName,
+							lineNumber);
+
+					return JDTUIUtility.tryToOpenInEditor(packageName,
+							typeName, lineNumber);
+				} else
+					return false;
+			}
+		},
+
+		FIELD {
+			@Override
+			boolean tryToJump(String packageName, String typeName,
+					Map<String, String> variableValues) {
+				/*
+				 * Try to open an editor if the variables package, class, and
+				 * field name are defined.
+				 */
+				String fieldName = variableValues.get("Field");
+				if (fieldName == null) {
+					fieldName = variableValues.get("FieldName");
+				}
+				if (fieldName == null) {
+					fieldName = variableValues.get("Field Name");
+				}
+				if (fieldName != null) {
+					HistoricalSourceView.tryToOpenInEditor(variableValues
+							.get(AdHocManager.DATABASE), packageName, typeName,
+							fieldName);
+					return JDTUIUtility.tryToOpenInEditorUsingFieldName(
+							packageName, typeName, fieldName);
+				}
+				return false;
+			}
+		},
+
+		METHOD {
+			@Override
+			boolean tryToJump(String packageName, String typeName,
+					Map<String, String> variableValues) {
+				/*
+				 * Try to open an editor if the variables package, class, and
+				 * method name are defined.
+				 */
+				String methodName = variableValues.get("Method");
+				if (methodName == null) {
+					methodName = variableValues.get("MethodName");
+				}
+				if (methodName == null) {
+					methodName = variableValues.get("Method Name");
+				}
+				if (methodName != null) {
+					// TODO: Jump to the right line in the historical source
+					// view
+					return JDTUIUtility.tryToOpenInEditorUsingMethodName(
+							packageName, typeName, methodName);
+				}
+				return false;
+			}
+		};
+
+		abstract boolean tryToJump(String packageName, String typeName,
+				Map<String, String> variableValues);
+	}
+
 	@Override
 	public void notifyResultVariableValueChange(
 			final AdHocQueryResultSqlData result) {
@@ -39,61 +123,31 @@ public final class JumpToCode extends AdHocManagerAdapter {
 			if (packageName.equals("(default)")) {
 				packageName = null;
 			}
-			final String line = variableValues.get("Line");
-			/*
-			 * Try to open an editor if the variables package, class, and line
-			 * are defined.
-			 */
-			if (line != null) {
-				int lineNumber = 0;
-				try {
-					lineNumber = Integer.parseInt(line);
-				} catch (final NumberFormatException e) {
-					// couldn't convert the line number so just use 0
-				}
-				HistoricalSourceView.tryToOpenInEditor(variableValues
-						.get(AdHocManager.DATABASE), packageName, typeName,
-						lineNumber);
 
-				if (JDTUIUtility.tryToOpenInEditor(packageName, typeName,
-						lineNumber)) {
-					return;
-				}
-			}
 			/*
-			 * Try to open an editor if the variables package, class, and field
-			 * name are defined.
+			 * Determine the preference to jump to a line a field declaration or
+			 * a method declaration.
 			 */
-			String fieldName = variableValues.get("Field");
-			if (fieldName == null) {
-				fieldName = variableValues.get("FieldName");
+			final LinkedList<Strategy> strategy = new LinkedList<Strategy>();
+			strategy.add(Strategy.LINE);
+			final String prefer = variableValues.get("JumpPreference");
+			if ("method".equalsIgnoreCase(prefer)) {
+				strategy.addFirst(Strategy.METHOD);
+				strategy.addLast(Strategy.FIELD);
+			} else if ("field".equalsIgnoreCase(prefer)) {
+				strategy.addFirst(Strategy.FIELD);
+				strategy.addLast(Strategy.METHOD);
+			} else {
+				strategy.add(Strategy.FIELD);
+				strategy.add(Strategy.METHOD);
 			}
-			if (fieldName == null) {
-				fieldName = variableValues.get("Field Name");
-			}
-			if (fieldName != null) {
-				HistoricalSourceView.tryToOpenInEditor(variableValues
-						.get(AdHocManager.DATABASE), packageName, typeName,
-						fieldName);
-				if (JDTUIUtility.tryToOpenInEditorUsingFieldName(packageName,
-						typeName, fieldName))
-					return;
-			}
+
 			/*
-			 * Try to open an editor if the variables package, class, and method
-			 * name are defined.
+			 * Try to jump to a position in the code based upon the strategy.
 			 */
-			String methodName = variableValues.get("Method");
-			if (methodName == null) {
-				methodName = variableValues.get("MethodName");
-			}
-			if (methodName == null) {
-				methodName = variableValues.get("Method Name");
-			}
-			if (methodName != null) {
-				JDTUIUtility.tryToOpenInEditorUsingMethodName(packageName,
-						typeName, methodName);
-				// TODO: Jump to the right line in the historical source view
+			for (Strategy s : strategy) {
+				if (s.tryToJump(packageName, typeName, variableValues))
+					return;
 			}
 		}
 	}

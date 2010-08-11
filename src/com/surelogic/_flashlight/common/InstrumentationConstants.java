@@ -10,6 +10,7 @@ public final class InstrumentationConstants {
 	public static final String FL_FIELDS_RESOURCE = "com/surelogic/_flashlight/fields.txt";
 	public static final String FL_LOG_RESOURCE = "com/surelogic/_flashlight/instrumentation.log";
 	public static final String FL_SOURCE_RESOURCE = "com/surelogic/_flashlight/sources.zip";
+	public static final String FL_SOURCE_FOLDER_NAME = "source";
 	public static final String FL_LOG_FILE_NAME = "instrumentation.log";
 
 	public static final String FL_OFF = "FL_OFF";

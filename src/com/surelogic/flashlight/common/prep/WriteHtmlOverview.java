@@ -1,6 +1,7 @@
 package com.surelogic.flashlight.common.prep;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
@@ -10,6 +11,7 @@ import java.text.SimpleDateFormat;
 import java.util.Iterator;
 import java.util.List;
 
+import com.surelogic.common.FileUtility;
 import com.surelogic.common.ImageWriter;
 import com.surelogic.common.SLUtility;
 import com.surelogic.common.html.SimpleHTMLPrinter;
@@ -40,6 +42,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 	private final RunDescription f_runDescription;
 	private final StringBuilder b;
 	private final ImageWriter writer;
+	private final File htmlDirectory;
 
 	public WriteHtmlOverview(final RunDescription runDescription) {
 		if (runDescription == null) {
@@ -47,8 +50,9 @@ public final class WriteHtmlOverview implements IPostPrep {
 		}
 		f_runDescription = runDescription;
 		b = new StringBuilder();
-		writer = new ImageWriter(f_runDescription.getRunDirectory()
-				.getHtmlHandles().getHtmlDirectory());
+		htmlDirectory = f_runDescription.getRunDirectory().getHtmlHandles()
+				.getHtmlDirectory();
+		writer = new ImageWriter(htmlDirectory);
 	}
 
 	public void doPostPrep(final Connection c, final SLProgressMonitor mon)
@@ -67,27 +71,26 @@ public final class WriteHtmlOverview implements IPostPrep {
 			b.append("<h1>").append(f_runDescription.getName()).append(' ');
 			b.append(SLUtility.toStringHMS(f_runDescription.getStartTimeOfRun()));
 			b.append("</h1>");
-			b.append("<p></p>");
-			b.append("<dl>");
-			def("Vendor: ", f_runDescription.getJavaVendor());
-			def("Version: ", f_runDescription.getJavaVersion());
-			def("OS", String.format("%s (%s) on %s",
+			beginTable("Vendor", "Version", "OS", "Max Memory", "Processors",
+					"Start Time");
+			String os = String.format("%s (%s) on %s",
 					f_runDescription.getOSName(),
 					f_runDescription.getOSVersion(),
-					f_runDescription.getOSArch()));
-			def("Max Memory",
-					Integer.toString(f_runDescription.getMaxMemoryMb()));
-			def("Processors",
-					Integer.toString(f_runDescription.getProcessors()));
-			def("Start Time",
-					new SimpleDateFormat(DATE_FORMAT).format(f_runDescription
+					f_runDescription.getOSArch());
+			row(f_runDescription.getJavaVendor(),
+					f_runDescription.getJavaVersion(), os,
+					f_runDescription.getMaxMemoryMb(),
+					f_runDescription.getProcessors(), new SimpleDateFormat(
+							DATE_FORMAT).format(f_runDescription
 							.getStartTimeOfRun()));
+			endTable();
+			b.append("<dl>");
 			def("# Observed Threads", info.getThreadCount());
 			beginTable("Thread", "Time Spent Blocked");
 			int count = 0;
 			int threadCount = info.getThreads().size();
 			for (SummaryInfo.Thread thread : info.getThreads()) {
-				row(thread.getName(), thread.getBlockTime());
+				row(thread.getName(), thread.getBlockTime() + " ns");
 				if (++count == TABLE_LIMIT) {
 					break;
 				}
@@ -102,6 +105,35 @@ public final class WriteHtmlOverview implements IPostPrep {
 			def("# Observed Classes", info.getClassCount());
 			def("# Observed Objects", info.getObjectCount());
 			dt("Potential Deadlocks");
+			b.append("<script type=\"text/javascript+protovis\">"
+					+ "var deadlocks = {"
+					+ "  nodes:["
+					+ "    {nodeName:\"Object-42\", group:1},"
+					+ "    {nodeName:\"ReentrantReadWriteLock-51\", group:1}],"
+					+ "  links:["
+					+ "    {source:0, target:1, value: 242},"
+					+ "    {source:1, target:0, value: 164}]"
+					+ "};"
+					+ "var vis = new pv.Panel()"
+					+ "    .width(880)"
+					+ "    .height(310)"
+					+ "    .bottom(90);"
+					+ ""
+					+ "var arc = vis.add(pv.Layout.Arc)"
+					+ "    .nodes(deadlocks.nodes)"
+					+ "    .links(deadlocks.links)"
+					+ "    .sort(function(a, b) a.group == b.group"
+					+ "        ? b.linkDegree - a.linkDegree"
+					+ "        : b.group - a.group);"
+					+ ""
+					+ "arc.link.add(pv.Line);"
+					+ ""
+					+ "arc.node.add(pv.Dot)"
+					+ "    .size(function(d) d.linkDegree + 4)"
+					+ "    .fillStyle(pv.Colors.category19().by(function(d) d.group))"
+					+ "    .strokeStyle(function() this.fillStyle().darker());"
+					+ "" + "arc.label.add(pv.Label);" + "" + "vis.render();"
+					+ "" + "</script>");
 			beginTable("Lock Held", "Lock Acquired", "Count", "First Time",
 					"Last Time");
 			for (Cycle cycle : info.getCycles()) {
@@ -337,9 +369,13 @@ public final class WriteHtmlOverview implements IPostPrep {
 	 * 
 	 * @return the style sheet, or <code>null</code> if unable to load
 	 */
-	private static String loadJavaScript() {
-		final URL javaScriptURL = Thread.currentThread()
-				.getContextClassLoader()
+	private String loadJavaScript() {
+		final ClassLoader loader = Thread.currentThread()
+				.getContextClassLoader();
+		final URL protoURL = loader
+				.getResource("/com/surelogic/common/js/protovis-r3.2.js");
+		FileUtility.copy(protoURL, new File(htmlDirectory, "protovis-r3.2.js"));
+		final URL javaScriptURL = loader
 				.getResource("/com/surelogic/common/js/outline.js");
 		if (javaScriptURL != null) {
 			BufferedReader reader = null;

@@ -99,7 +99,7 @@
 			<arg value="com.surelogic.internal"/>
 			<arg value="-verify"/>
 			<arg value="-classpath"/>
-			<arg value="${java1.4.lib}/rt.jar:lib/build/retrotranslator-runtime-1.2.9.jar:lib/build/backport-util-concurrent-3.1.jar"/>
+			<arg value="${java1.4.lib}/rt.jar${path.separator}lib/build/retrotranslator-runtime-1.2.9.jar${path.separator}lib/build/backport-util-concurrent-3.1.jar"/>
 		</java>
 		<copy file="${flashlight-runtime-4.jar}" todir="${basedir}/../flashlight-client-eclipse/lib"/>	  	  
 	</target>

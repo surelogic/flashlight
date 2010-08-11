@@ -374,6 +374,19 @@ public final class WriteHtmlOverview implements IPostPrep {
 				.getContextClassLoader();
 		final URL protoURL = loader
 				.getResource("/com/surelogic/common/js/protovis-r3.2.js");
+		final URL lsrURL = loader
+				.getResource("/com/surelogic/common/js/LiberationSans-Regular.svg");
+		final URL svghtcURL = loader
+				.getResource("/com/surelogic/common/js/svg.htc");
+		final URL svgjsURL = loader
+				.getResource("/com/surelogic/common/js/svg.js");
+		final URL svgswfURL = loader
+				.getResource("/com/surelogic/common/js/svg.swf");
+		FileUtility.copy(lsrURL, new File(htmlDirectory,
+				"LiberationSans-Regular.svg"));
+		FileUtility.copy(svghtcURL, new File(htmlDirectory, "svg.htc"));
+		FileUtility.copy(svgjsURL, new File(htmlDirectory, "svg.js"));
+		FileUtility.copy(svgswfURL, new File(htmlDirectory, "svg.swf"));
 		FileUtility.copy(protoURL, new File(htmlDirectory, "protovis-r3.2.js"));
 		final URL javaScriptURL = loader
 				.getResource("/com/surelogic/common/js/outline.js");

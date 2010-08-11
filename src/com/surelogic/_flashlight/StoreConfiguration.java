@@ -32,6 +32,8 @@ import static com.surelogic._flashlight.common.InstrumentationConstants.FL_SEPAR
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_SITES_FILE;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_SITES_FILE_NAME;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_SITES_RESOURCE;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_SOURCE_FOLDER_NAME;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_SOURCE_RESOURCE;
 import static com.surelogic._flashlight.common.InstrumentationConstants.JAVA_IO_TMPDIR;
 
 import java.io.BufferedInputStream;
@@ -45,6 +47,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import com.surelogic._flashlight.common.CollectionType;
 import com.surelogic._flashlight.common.OutputType;
@@ -143,7 +147,7 @@ public class StoreConfiguration {
 					.getResourceAsStream(FL_FIELDS_RESOURCE);
 			if (resource != null) {
 				File fieldsFile = new File(getDirectory(), FL_FIELDS_FILE_NAME);
-				copy(resource, fieldsFile);
+				copy(resource, fieldsFile, true);
 				setFieldsFile(fieldsFile.getAbsolutePath());
 			}
 		}
@@ -154,16 +158,28 @@ public class StoreConfiguration {
 					.getResourceAsStream(FL_SITES_RESOURCE);
 			if (resource != null) {
 				File sitesFile = new File(getDirectory(), FL_SITES_FILE_NAME);
-				copy(resource, sitesFile);
+				copy(resource, sitesFile, true);
 				setSitesFile(sitesFile.getAbsolutePath());
 			}
 		}
 		InputStream resource = context.getResourceAsStream(FL_LOG_RESOURCE);
 		if (resource != null) {
 			File logFile = new File(getDirectory(), FL_LOG_FILE_NAME);
-			copy(resource, logFile);
+			copy(resource, logFile, true);
 		}
-
+		InputStream sources = context.getResourceAsStream(FL_SOURCE_RESOURCE);
+		if (sources != null) {
+			ZipInputStream zf = new ZipInputStream(sources);
+			File sourceFolder = new File(getDirectory(), FL_SOURCE_FOLDER_NAME);
+			try {
+				for (ZipEntry entry = zf.getNextEntry(); entry != null; entry = zf
+						.getNextEntry()) {
+					copy(zf, new File(sourceFolder, entry.getName()), false);
+				}
+			} catch (IOException e) {
+				throw new IllegalStateException(e);
+			}
+		}
 		setRawQueueSize(getIntProperty(props, FL_RAWQ_SIZE,
 				FL_RAWQ_SIZE_DEFAULT));
 		setOutQueueSize(getIntProperty(props, FL_OUTQ_SIZE,
@@ -455,7 +471,8 @@ public class StoreConfiguration {
 	 * @return {@code true} if and only if the copy is successful, {@code false}
 	 *         otherwise.
 	 */
-	public static boolean copy(InputStream is, final File to) {
+	public static boolean copy(InputStream is, final File to,
+			final boolean closeStream) {
 		boolean success = true;
 		try {
 			OutputStream os = null;
@@ -469,7 +486,7 @@ public class StoreConfiguration {
 					os.write(buf, 0, num);
 				}
 			} finally {
-				if (is != null) {
+				if (is != null && closeStream) {
 					is.close();
 				}
 				if (os != null) {

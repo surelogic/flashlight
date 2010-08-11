@@ -1,12 +1,15 @@
 package com.surelogic.flashlight.ant;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import java.util.zip.ZipOutputStream;
 
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Task;
@@ -35,8 +38,8 @@ public class InstrumentArchive extends Task {
 	private static final String LIB = "lib";
 	private final Instrument i;
 
-	private File destFile, srcFile, runtime, dataDir, sources;
-	private Path extraLibs;
+	private File destFile, srcFile, runtime, dataDir;
+	private Path extraLibs, sources;
 
 	public InstrumentArchive() {
 		i = new Instrument();
@@ -58,8 +61,8 @@ public class InstrumentArchive extends Task {
 		this.dataDir = dataDir;
 	}
 
-	public void setSources(final File sources) {
-		this.sources = sources;
+	public Path createSources() {
+		return sources = new Path(getProject());
 	}
 
 	public Path createLibs() {
@@ -288,6 +291,24 @@ public class InstrumentArchive extends Task {
 		sitesFile.getParentFile().mkdirs();
 		i.setSitesFile(sitesFile);
 
+		if (sources != null) {
+			File sourceDir = File.createTempFile("source", null);
+			sourceDir.delete();
+			sourceDir.mkdir();
+			for (String source : sources.list()) {
+				SourceFolderZip.generateSource(new File(source), sourceDir);
+			}
+			ZipOutputStream zo = new ZipOutputStream(new FileOutputStream(
+					new File(classDir,
+							InstrumentationConstants.FL_SOURCE_RESOURCE)));
+			for (File f : sourceDir.listFiles()) {
+				zo.putNextEntry(new ZipEntry(f.getName()));
+				FileUtility.copyToStream(f.getName(), new FileInputStream(f),
+						f.getName(), zo, false);
+				zo.closeEntry();
+			}
+			zo.close();
+		}
 		if (dataDir != null) {
 			Properties properties = new Properties();
 			properties.put(InstrumentationConstants.FL_RUN_FOLDER,

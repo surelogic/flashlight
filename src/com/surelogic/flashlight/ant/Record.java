@@ -1,15 +1,12 @@
 package com.surelogic.flashlight.ant;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.zip.ZipOutputStream;
 
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
@@ -349,7 +346,7 @@ public class Record extends Task {
 			}
 			final File src = p.getSource();
 			if (src != null) {
-				generateSource(src, sourceFolder);
+				SourceFolderZip.generateSource(src, sourceFolder);
 			}
 		}
 		final File externalFolder = new File(runFolder, EXTERNAL_FOLDER);
@@ -378,40 +375,6 @@ public class Record extends Task {
 		// new File("/home/nathan/testspace/PlanetBaron/src"),
 		// new File(
 		// "/home/nathan/.flashlight-data/edu.afit.planetbaron.server.Server-2010.08.06-at-13.54.33.692/source"));
-	}
-
-	/**
-	 * Generates an archive of the given source information, and places it in
-	 * the source folder
-	 * 
-	 * @param src
-	 * @param sourceFolder
-	 */
-	private void generateSource(final File src, final File sourceFolder) {
-		String name = src.getName();
-		File dest = new File(sourceFolder, name + ".src.zip");
-		// Avoid overwriting source zips created from others
-		for (int i = 1; dest.exists(); i++) {
-			dest = new File(sourceFolder, name + '(' + i + ')' + ".src.zip");
-		}
-		if (src.isDirectory()) {
-			SourceFolderZip zip = new SourceFolderZip(src);
-			try {
-				ZipOutputStream out = new ZipOutputStream(new FileOutputStream(
-						dest));
-				zip.generateSourceZipContents(out);
-				out.close();
-			} catch (FileNotFoundException e) {
-				throw new BuildException(e);
-			} catch (IOException e) {
-				throw new BuildException(e);
-			}
-		} else {
-			throw new BuildException(
-					String.format(
-							"Could not produce source zip.  Expected %s to be a source folder.",
-							src.toString()));
-		}
 	}
 
 	void addVMArg(final String prop, final String value) {

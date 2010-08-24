@@ -1,9 +1,8 @@
 package com.surelogic.flashlight.common.prep;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -13,26 +12,27 @@ import java.util.List;
 
 import com.surelogic.common.FileUtility;
 import com.surelogic.common.ImageWriter;
-import com.surelogic.common.SLUtility;
-import com.surelogic.common.html.SimpleHTMLPrinter;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jdbc.ConnectionQuery;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.flashlight.common.files.HtmlHandles;
 import com.surelogic.flashlight.common.model.RunDescription;
+import com.surelogic.flashlight.common.prep.HTMLBuilder.Body;
+import com.surelogic.flashlight.common.prep.HTMLBuilder.Container;
+import com.surelogic.flashlight.common.prep.HTMLBuilder.HTMLList;
+import com.surelogic.flashlight.common.prep.HTMLBuilder.Head;
+import com.surelogic.flashlight.common.prep.HTMLBuilder.LI;
+import com.surelogic.flashlight.common.prep.HTMLBuilder.Row;
+import com.surelogic.flashlight.common.prep.HTMLBuilder.Table;
+import com.surelogic.flashlight.common.prep.HTMLBuilder.UL;
 import com.surelogic.flashlight.common.prep.SummaryInfo.Cycle;
 import com.surelogic.flashlight.common.prep.SummaryInfo.Edge;
 import com.surelogic.flashlight.common.prep.SummaryInfo.Field;
-import com.surelogic.flashlight.common.prep.SummaryInfo.Lock;
 
 public final class WriteHtmlOverview implements IPostPrep {
 
 	private static final int TABLE_LIMIT = 10;
 
-	private static final String IMG_PACKAGE = "package.gif";
-	private static final String IMG_CLASS = "class.gif";
-	private static final String ALT_CLASS = "class";
-	private static final String ALT_PACKAGE = "package";
 	private static final String DATE_FORMAT = "yyyy.MM.dd-'at'-HH.mm.ss.SSS";
 	private static final String EMPTY_LOCK_SET_INSTANCES_QUERY = "5224d411-6ed3-432f-8b91-a1c43df22911";
 	private static final String LOCK_CONTENTION_QUERY = "cb38a427-c259-4690-abe2-acea9661f737";
@@ -40,7 +40,6 @@ public final class WriteHtmlOverview implements IPostPrep {
 	private static final String STATIC_LOCK_FREQUENCY_QUERY = "6a39e6ca-29e9-4093-ba03-0e9bd9503a1a";
 	private static final String THREAD_BLOCKING_QUERY = "4e026769-1b0b-42bd-8893-f3b92add093f";
 	private final RunDescription f_runDescription;
-	private final StringBuilder b;
 	private final ImageWriter writer;
 	private final File htmlDirectory;
 
@@ -49,7 +48,6 @@ public final class WriteHtmlOverview implements IPostPrep {
 			throw new IllegalArgumentException(I18N.err(44, "runDescription"));
 		}
 		f_runDescription = runDescription;
-		b = new StringBuilder();
 		htmlDirectory = f_runDescription.getRunDirectory().getHtmlHandles()
 				.getHtmlDirectory();
 		writer = new ImageWriter(htmlDirectory);
@@ -61,120 +59,118 @@ public final class WriteHtmlOverview implements IPostPrep {
 		try {
 			SummaryInfo info = new SummaryInfo.SummaryQuery()
 					.perform(new ConnectionQuery(c));
-			final String styleSheet = loadStyleSheet();
-			final String javaScript = loadJavaScript();
-			SimpleHTMLPrinter.addPageProlog(b, styleSheet, javaScript,
-					"outlineInit()");
-			/*
-			 * TODO Add real page information/generation/read from a file here.
-			 */
-			b.append("<h1>").append(f_runDescription.getName()).append(' ');
-			b.append(SLUtility.toStringHMS(f_runDescription.getStartTimeOfRun()));
-			b.append("</h1>");
-			beginTable("Vendor", "Version", "OS", "Max Memory", "Processors",
-					"Start Time");
+
+			HTMLBuilder builder = new HTMLBuilder();
+			Head head = builder.head(f_runDescription.getName());
+			loadStyleSheet(head);
+			loadJavaScript(head);
+			Body body = builder.body();
+			body.div().id("header").h(1).text(f_runDescription.getName());
+
+			Container main = body.div().id("main");
+			Container sidebar = main.div().id("bar");
+			sidebar.h(2).a("#locks").text("Locks");
+			sidebar.h(2).a("#fields").text("Fields");
+			sidebar.h(2).a("#threads").text("Threads");
+			Container content = main.div().id("content");
+			Table runTable = content.table().id("run-table");
+			runTable.header().th("Vendor").th("Version").th("OS")
+					.th("Max Memory").th("Processors").th("Start Time");
 			String os = String.format("%s (%s) on %s",
 					f_runDescription.getOSName(),
 					f_runDescription.getOSVersion(),
 					f_runDescription.getOSArch());
-			row(f_runDescription.getJavaVendor(),
-					f_runDescription.getJavaVersion(), os,
-					f_runDescription.getMaxMemoryMb(),
-					f_runDescription.getProcessors(), new SimpleDateFormat(
-							DATE_FORMAT).format(f_runDescription
-							.getStartTimeOfRun()));
-			endTable();
-			b.append("<dl>");
-			def("# Observed Threads", info.getThreadCount());
-			beginTable("Thread", "Time Spent Blocked");
-			int count = 0;
-			int threadCount = info.getThreads().size();
-			for (SummaryInfo.Thread thread : info.getThreads()) {
-				row(thread.getName(), thread.getBlockTime() + " ns");
-				if (++count == TABLE_LIMIT) {
-					break;
-				}
-			}
-			endTable();
-			if (threadCount > TABLE_LIMIT) {
-				b.append(link(
-						String.format("%d more results.", threadCount
-								- TABLE_LIMIT), THREAD_BLOCKING_QUERY));
+			runTable.row()
+					.td(f_runDescription.getJavaVendor())
+					.td(f_runDescription.getJavaVersion())
+					.td(os)
+					.td(Integer.toString(f_runDescription.getMaxMemoryMb()))
+					.td(Integer.toString(f_runDescription.getProcessors()))
+					.td(new SimpleDateFormat(DATE_FORMAT)
+							.format(f_runDescription.getStartTimeOfRun()));
 
-			}
-			def("# Observed Classes", info.getClassCount());
-			def("# Observed Objects", info.getObjectCount());
-			dt("Potential Deadlocks");
-			b.append("<script type=\"text/javascript+protovis\">"
-					+ "var deadlocks = {"
-					+ "  nodes:["
-					+ "    {nodeName:\"Object-42\", group:1},"
-					+ "    {nodeName:\"ReentrantReadWriteLock-51\", group:1}],"
-					+ "  links:["
-					+ "    {source:0, target:1, value: 242},"
-					+ "    {source:1, target:0, value: 164}]"
-					+ "};"
-					+ "var vis = new pv.Panel()"
-					+ "    .width(880)"
-					+ "    .height(310)"
-					+ "    .bottom(90);"
-					+ ""
-					+ "var arc = vis.add(pv.Layout.Arc)"
-					+ "    .nodes(deadlocks.nodes)"
-					+ "    .links(deadlocks.links)"
-					+ "    .sort(function(a, b) a.group == b.group"
-					+ "        ? b.linkDegree - a.linkDegree"
-					+ "        : b.group - a.group);"
-					+ ""
-					+ "arc.link.add(pv.Line);"
-					+ ""
-					+ "arc.node.add(pv.Dot)"
-					+ "    .size(function(d) d.linkDegree + 4)"
-					+ "    .fillStyle(pv.Colors.category19().by(function(d) d.group))"
-					+ "    .strokeStyle(function() this.fillStyle().darker());"
-					+ "" + "arc.label.add(pv.Label);" + "" + "vis.render();"
-					+ "" + "</script>");
-			beginTable("Lock Held", "Lock Acquired", "Count", "First Time",
-					"Last Time");
-			for (Cycle cycle : info.getCycles()) {
-				for (Edge e : cycle.getEdges()) {
-					row(link(e.getHeld(),
-							"4fce8390-7307-45dc-b779-5701ee7f23a1", "LockHeld",
-							e.getHeldId(), "LockAcquired", e.getAcquiredId()),
-							e.getAcquired(), e.getCount(), e.getFirst(),
-							e.getLast());
-				}
-			}
-			endTable();
-			dt("Fields With No Lock Set");
-			b.append("<dd>");
-			displayLockSet(info);
-			b.append("</dd>");
-			dt("Observed Locks");
-			beginTable("Lock", "Times Acquired", "Total Block Time",
-					"Average Block Time");
-			List<Lock> locks = info.getLocks();
-			count = 0;
+			Container lockDiv = content.div().id("locks");
+			lockDiv.h(2).text("Locks");
+			lockDiv.h(3).text("Lock Contention");
+
+			Table lockTable = lockDiv.table();
+			lockTable.header().th("Lock").th("Times Acquired")
+					.th("Total Block Time").th("AverageBlockTime");
+
+			List<SummaryInfo.Lock> locks = info.getLocks();
+			int count = 0;
 			for (SummaryInfo.Lock lock : locks) {
-				row(link(lock.getName(), LOCK_EDGE_QUERY, "Lock", lock.getId()),
-						lock.getAcquired(), lock.getBlockTime(),
-						lock.getAverageBlock());
+				Row r = lockTable.row();
+				link(r.td(), lock.getName(), LOCK_EDGE_QUERY, "Lock",
+						lock.getId());
+				r.td(Integer.toString(lock.getAcquired()))
+						.td(Long.toString(lock.getBlockTime()) + " ns")
+						.td(Long.toString(lock.getAverageBlock()) + " ns");
 				if (++count == TABLE_LIMIT) {
 					break;
 				}
 			}
-			endTable();
 			if (locks.size() > TABLE_LIMIT) {
-				b.append(link(
+				link(lockDiv,
 						String.format("%d more results.", locks.size()
-								- TABLE_LIMIT), LOCK_CONTENTION_QUERY));
+								- TABLE_LIMIT), LOCK_CONTENTION_QUERY);
 			}
-			b.append("</dl>");
-			SimpleHTMLPrinter.addPageEpilog(b);
+
+			lockDiv.h(3).text("Potential Deadlocks");
+			HTMLList deadlockList = lockDiv.ul().id("deadlock-list");
+			List<Cycle> cycles = info.getCycles();
+			for (Cycle cycle : cycles) {
+				deadlockList.li().id("cycle" + cycle.getNum())
+						.text(String.format("Cycle %d", cycle.getNum()));
+			}
+			writeCycles(cycles);
+			lockDiv.div().id("deadlock-widget");
+			// beginTable("Lock Held", "Lock Acquired", "Count", "First Time",
+			// "Last Time");
+			// for (Cycle cycle : info.getCycles()) {
+			// for (Edge e : cycle.getEdges()) {
+			// row(link(e.getHeld(),
+			// "4fce8390-7307-45dc-b779-5701ee7f23a1", "LockHeld",
+			// e.getHeldId(), "LockAcquired", e.getAcquiredId()),
+			// e.getAcquired(), e.getCount(), e.getFirst(),
+			// e.getLast());
+			// }
+			// }
+			// endTable();
+
+			Container fieldDiv = content.div().id("fields");
+			fieldDiv.h(2).text("Fields");
+			fieldDiv.h(3).text("Shared Fields With No Lock Set");
+			displayLockSet(info, fieldDiv);
+			Container threadDiv = content.div().id("threads");
+			threadDiv.h(2).text("Threads");
+			int threadCount = info.getThreads().size();
+			threadDiv.p(String.format(
+					"%d threads were observed in this run of the program.",
+					threadCount));
+			threadDiv.h(3).text("Thread Liveness");
+
+			Table threadTable = threadDiv.table();
+			threadTable.header().th("Thread").th("Time Blocked");
+			count = 0;
+			for (SummaryInfo.Thread thread : info.getThreads()) {
+				threadTable.row().td(thread.getName())
+						.td(thread.getBlockTime() + " ns");
+				if (++count == TABLE_LIMIT) {
+					break;
+				}
+			}
+			if (threadCount > TABLE_LIMIT) {
+				link(threadDiv,
+						String.format("%d more results.", threadCount
+								- TABLE_LIMIT), THREAD_BLOCKING_QUERY);
+			}
+			// def("# Observed Classes", info.getClassCount());
+			// def("# Observed Objects", info.getObjectCount());
 
 			final HtmlHandles html = f_runDescription.getRunDirectory()
 					.getHtmlHandles();
-			html.writeIndexHtml(b.toString());
+			html.writeIndexHtml(builder.build());
 			writer.addImage("package.gif");
 			writer.addImage("class.gif");
 			writer.addImage("arrow_right.gif");
@@ -185,111 +181,86 @@ public final class WriteHtmlOverview implements IPostPrep {
 		}
 	}
 
-	private void displayLockSet(final SummaryInfo info) {
+	private void writeCycles(final List<Cycle> cycles) {
+		try {
+			PrintWriter writer = new PrintWriter(new File(htmlDirectory,
+					"cycles-data.js"));
+			writer.println("var deadlocks = {");
+			for (Iterator<Cycle> ci = cycles.iterator(); ci.hasNext();) {
+				Cycle c = ci.next();
+				writer.printf("\tcycle%d : [", c.getNum());
+				for (Iterator<Edge> ei = c.getEdges().iterator(); ei.hasNext();) {
+					Edge e = ei.next();
+					writer.println("{");
+					writer.printf("\t\t\"id\": \"%s\",\n", e.getHeld());
+					writer.printf("\t\t\"name\": \"%s\",\n", e.getHeld());
+					writer.printf(
+							"\t\t\"adjacencies\": [{\"nodeTo\": \"%2$s\", \"data\": { \"$type\": \"arrow\", \"$direction\": [\"%1$s\",\"%2$s\"]}}]\n",
+							e.getHeld(), e.getAcquired());
+					writer.println("}");
+					if (ei.hasNext()) {
+						writer.print(", ");
+					}
+				}
+				writer.println("]");
+				if (ci.hasNext()) {
+					writer.print(", ");
+				}
+			}
+			writer.println("};");
+			writer.close();
+		} catch (FileNotFoundException e) {
+			throw new IllegalStateException(e);
+		}
+	}
+
+	private void displayLockSet(final SummaryInfo info, final Container c) {
+		UL packageList = c.ul();
+
 		Iterator<Field> fields = info.getEmptyLockSetFields().iterator();
 		if (fields.hasNext()) {
 			Field field = fields.next();
 			String pakkage = field.getPackage();
 			String clazz = field.getClazz();
-			b.append("<ul class=\"outline\"><li>");
-			b.append(writer.imageTag(IMG_PACKAGE, ALT_PACKAGE));
-			b.append(pakkage);
-			b.append("<ul><li>");
-			b.append(writer.imageTag(IMG_CLASS, ALT_CLASS));
-			b.append(clazz);
-			b.append("<ul><li>");
-			b.append(fieldLink(field));
-			b.append("</li>");
+			LI packageLI = packageList.li();
+			packageLI.h(4).text(pakkage);
+			UL classList = packageLI.ul();
+			LI classLI = classList.li();
+			classLI.h(4).text(clazz);
+			UL fieldList = classLI.ul();
+			LI fieldLI = fieldList.li();
+			fieldLink(fieldLI, field);
 			while (fields.hasNext()) {
 				field = fields.next();
 				if (!pakkage.equals(field.getPackage())) {
 					pakkage = field.getPackage();
 					clazz = field.getClazz();
-					b.append("</ul></li></ul></li><li>");
-					b.append(writer.imageTag(IMG_PACKAGE, ALT_PACKAGE));
-					b.append(pakkage);
-					b.append("<ul><li>");
-					b.append(writer.imageTag(IMG_CLASS, ALT_CLASS));
-					b.append(clazz);
-					b.append("<ul>");
+					packageLI = packageList.li();
+					packageLI.h(4).text(pakkage);
+					classList = packageLI.ul();
+					classLI = classList.li();
+					classLI.h(4).text(clazz);
+					fieldList = classLI.ul();
 				} else if (!clazz.equals(field.getClazz())) {
 					clazz = field.getClazz();
-					b.append("</ul></li><li>");
-					b.append(writer.imageTag(IMG_CLASS, ALT_CLASS));
-					b.append(clazz);
-					b.append("<ul>");
+					classLI = classList.li();
+					classLI.h(4).text(clazz);
+					fieldList = classLI.ul();
 				}
-				b.append("<li>");
-				b.append(fieldLink(field));
-				b.append("</li>");
+				fieldLI = fieldList.li();
+				fieldLink(fieldLI, field);
 			}
-			b.append("</ul></li></ul></li></ul>");
 		} else {
-			b.append("There are no fields accessed concurrently with an empty lock set in this run.");
+			c.p("There are no fields accessed concurrently with an empty lock set in this run.");
 		}
 
 	}
 
-	private String fieldLink(final Field field) {
-		return link(field.getName(),
-				field.isStatic() ? STATIC_LOCK_FREQUENCY_QUERY
-						: EMPTY_LOCK_SET_INSTANCES_QUERY, "Package",
+	private void fieldLink(final Container c, final Field field) {
+		link(c, field.getName(), field.isStatic() ? STATIC_LOCK_FREQUENCY_QUERY
+				: EMPTY_LOCK_SET_INSTANCES_QUERY, "Package",
 				field.getPackage(), "Class", field.getClazz(), "Field",
 				field.getName(), "FieldId", field.getId());
-	}
-
-	private WriteHtmlOverview def(final String term, final String definition) {
-		b.append("<dt>");
-		b.append(term);
-		b.append("</dt>");
-		b.append("<dd>");
-		b.append(definition);
-		b.append("</dd>");
-		return this;
-	}
-
-	private WriteHtmlOverview dd(final String definition) {
-		b.append("<dd>");
-		b.append(definition);
-		b.append("</dd>");
-		return this;
-	}
-
-	private WriteHtmlOverview dt(final String term) {
-		b.append("<dt>");
-		b.append(term);
-		b.append("</dt>");
-		return this;
-	}
-
-	private WriteHtmlOverview beginTable(final String... columns) {
-		b.append("<table>");
-		if (columns.length > 0) {
-			b.append("<tr>");
-			for (String name : columns) {
-				b.append("<th>");
-				b.append(name);
-				b.append("</th>");
-			}
-			b.append("</tr>");
-		}
-		return this;
-	}
-
-	private WriteHtmlOverview endTable() {
-		b.append("</table>");
-		return this;
-	}
-
-	private WriteHtmlOverview row(final Object... columns) {
-		b.append("<tr>");
-		for (Object col : columns) {
-			b.append("<td>");
-			b.append(col);
-			b.append("</td>");
-		}
-		b.append("</tr>");
-		return this;
 	}
 
 	/**
@@ -301,14 +272,14 @@ public final class WriteHtmlOverview implements IPostPrep {
 	 * @param args
 	 * @return
 	 */
-	private static String link(final String text, final String query,
-			final String... args) {
+	private static void link(final Container c, final String text,
+			final String query, final String... args) {
 		StringBuilder b = new StringBuilder();
 		if (args.length % 2 != 0) {
 			throw new IllegalArgumentException(
 					"There must be an even number of arguments");
 		}
-		b.append("<a href=\"index.html?query=");
+		b.append("index.html?query=");
 		b.append(query);
 		for (int i = 0; i < args.length; i = i + 2) {
 			b.append('&');
@@ -316,10 +287,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 			b.append('=');
 			b.append(args[i + 1]);
 		}
-		b.append("\">");
-		b.append(text);
-		b.append("</a>");
-		return b.toString();
+		c.a(b.toString()).text(text);
 	}
 
 	public String getDescription() {
@@ -327,41 +295,19 @@ public final class WriteHtmlOverview implements IPostPrep {
 	}
 
 	/**
-	 * Loads and returns the Javadoc hover style sheet.
+	 * Loads and includes the Javadoc hover style sheet.
 	 * 
 	 * @return the style sheet, or <code>null</code> if unable to load
 	 */
-	private static String loadStyleSheet() {
+	private void loadStyleSheet(final Head head) {
 		final URL styleSheetURL = Thread
 				.currentThread()
 				.getContextClassLoader()
 				.getResource(
 						"/com/surelogic/flashlight/common/prep/RunOverviewStyleSheet.css");
-		if (styleSheetURL != null) {
-			BufferedReader reader = null;
-			try {
-				reader = new BufferedReader(new InputStreamReader(
-						styleSheetURL.openStream()));
-				final StringBuffer buffer = new StringBuffer(1500);
-				String line = reader.readLine();
-				while (line != null) {
-					buffer.append(line);
-					buffer.append('\n');
-					line = reader.readLine();
-				}
-				return buffer.toString();
-			} catch (final IOException ex) {
-				throw new IllegalStateException(ex);
-			} finally {
-				try {
-					if (reader != null) {
-						reader.close();
-					}
-				} catch (final IOException e) {
-				}
-			}
-		}
-		return null;
+		FileUtility.copy(styleSheetURL, new File(htmlDirectory,
+				"RunOverviewStyleSheet.css"));
+		head.styleSheet("RunOverviewStyleSheet.css");
 	}
 
 	/**
@@ -369,51 +315,27 @@ public final class WriteHtmlOverview implements IPostPrep {
 	 * 
 	 * @return the style sheet, or <code>null</code> if unable to load
 	 */
-	private String loadJavaScript() {
+	private void loadJavaScript(final Head head) {
 		final ClassLoader loader = Thread.currentThread()
 				.getContextClassLoader();
-		final URL protoURL = loader
-				.getResource("/com/surelogic/common/js/protovis-r3.2.js");
-		final URL lsrURL = loader
-				.getResource("/com/surelogic/common/js/LiberationSans-Regular.svg");
-		final URL svghtcURL = loader
-				.getResource("/com/surelogic/common/js/svg.htc");
-		final URL svgjsURL = loader
-				.getResource("/com/surelogic/common/js/svg.js");
-		final URL svgswfURL = loader
-				.getResource("/com/surelogic/common/js/svg.swf");
-		FileUtility.copy(lsrURL, new File(htmlDirectory,
-				"LiberationSans-Regular.svg"));
-		FileUtility.copy(svghtcURL, new File(htmlDirectory, "svg.htc"));
-		FileUtility.copy(svgjsURL, new File(htmlDirectory, "svg.js"));
-		FileUtility.copy(svgswfURL, new File(htmlDirectory, "svg.swf"));
-		FileUtility.copy(protoURL, new File(htmlDirectory, "protovis-r3.2.js"));
-		final URL javaScriptURL = loader
-				.getResource("/com/surelogic/common/js/outline.js");
-		if (javaScriptURL != null) {
-			BufferedReader reader = null;
-			try {
-				reader = new BufferedReader(new InputStreamReader(
-						javaScriptURL.openStream()));
-				final StringBuffer buffer = new StringBuffer(1500);
-				String line = reader.readLine();
-				while (line != null) {
-					buffer.append(line);
-					buffer.append('\n');
-					line = reader.readLine();
-				}
-				return buffer.toString();
-			} catch (final IOException ex) {
-				throw new IllegalStateException(ex);
-			} finally {
-				try {
-					if (reader != null) {
-						reader.close();
-					}
-				} catch (final IOException e) {
-				}
-			}
-		}
-		return null;
+		final URL vis = loader.getResource("/com/surelogic/common/js/jit.js");
+		final URL jquery = loader
+				.getResource("/com/surelogic/common/js/jquery-1.4.2.min.js");
+		final URL canvas = loader
+				.getResource("/com/surelogic/common/js/excanvas.js");
+		final URL cycles = loader
+				.getResource("/com/surelogic/flashlight/common/prep/cycles.js");
+		FileUtility.copy(cycles, new File(htmlDirectory, "cycles.js"));
+		FileUtility.copy(canvas, new File(htmlDirectory, "excanvas.js"));
+		FileUtility.copy(vis, new File(htmlDirectory, "jit.js"));
+		FileUtility
+				.copy(jquery, new File(htmlDirectory, "jquery-1.4.2.min.js"));
+
+		head.javaScript("excanvas.js", true);
+		head.javaScript("jit.js");
+		head.javaScript("jquery-1.4.2.min.js");
+		head.javaScript("cycles-data.js");
+		head.javaScript("cycles.js");
 	}
+
 }

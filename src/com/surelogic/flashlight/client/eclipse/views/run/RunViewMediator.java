@@ -390,8 +390,8 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 						if (answer == IDialogConstants.OK_ID) {
 							try {
 								if (!Nature.hasNature(p.getProject())) {
-									ClearProjectListener
-											.clearNatureFromAllOpenProjects();
+									final boolean removedNature = 
+										!ClearProjectListener.clearNatureFromAllOpenProjects().isEmpty();
 									try {
 										Nature.addNatureToProject(p
 												.getProject());
@@ -403,7 +403,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 														e);
 									}
 									ClearProjectListener
-											.postNatureChangeUtility();
+											.postNatureChangeUtility(removedNature);
 								}
 							} catch (final NoClassDefFoundError ignore) {
 								/*

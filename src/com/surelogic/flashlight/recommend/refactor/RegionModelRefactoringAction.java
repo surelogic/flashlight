@@ -54,7 +54,8 @@ public class RegionModelRefactoringAction implements IObjectActionDelegate,
 					.msg("flashlight.recommend.refactor.regionIsThis")) == IDialogConstants.OK_ID) {
 				try {
 					if (!Nature.hasNature(f_javaProject.getProject())) {
-						ClearProjectListener.clearNatureFromAllOpenProjects();
+						final boolean removedNature = 
+							!ClearProjectListener.clearNatureFromAllOpenProjects().isEmpty();
 						try {
 							Nature.addNatureToProject(f_javaProject
 									.getProject());
@@ -67,7 +68,7 @@ public class RegionModelRefactoringAction implements IObjectActionDelegate,
 															.getElementName(),
 											e);
 						}
-						ClearProjectListener.postNatureChangeUtility();
+						ClearProjectListener.postNatureChangeUtility(removedNature);
 					}
 				} catch (final NoClassDefFoundError e) {
 					// This is expected if jsure is not installed

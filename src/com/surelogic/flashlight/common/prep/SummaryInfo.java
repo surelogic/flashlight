@@ -3,6 +3,7 @@ package com.surelogic.flashlight.common.prep;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -204,10 +205,15 @@ public class SummaryInfo {
 
 	public static class Thread {
 		private final String name;
+		private final Date start;
+		private final Date stop;
 		private final long blockTime;
 
-		public Thread(final String name, final long blockTime) {
+		public Thread(final String name, final Date start, final Date stop,
+				final long blockTime) {
 			this.name = name;
+			this.start = start;
+			this.stop = stop;
 			this.blockTime = blockTime;
 		}
 
@@ -219,12 +225,21 @@ public class SummaryInfo {
 			return blockTime;
 		}
 
+		public Date getStart() {
+			return start;
+		}
+
+		public Date getStop() {
+			return stop;
+		}
+
 	}
 
 	private static class ThreadContentionHandler implements RowHandler<Thread> {
 
 		public Thread handle(final Row r) {
-			return new Thread(r.nextString(), r.nextLong());
+			return new Thread(r.nextString(), r.nextTimestamp(),
+					r.nextTimestamp(), r.nextLong());
 		}
 
 	}
@@ -353,9 +368,9 @@ public class SummaryInfo {
 		}
 
 		public int compareTo(final Edge o) {
-			int cmp = held.compareTo(o.held);
+			int cmp = heldId.compareTo(o.heldId);
 			if (cmp == 0) {
-				cmp = acquired.compareTo(o.acquired);
+				cmp = acquiredId.compareTo(o.acquiredId);
 			}
 			return cmp;
 		}

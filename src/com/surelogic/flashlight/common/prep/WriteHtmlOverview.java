@@ -9,6 +9,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -49,6 +50,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 	private final RunDescription f_runDescription;
 	private final ImageWriter writer;
 	private final File htmlDirectory;
+	private final Calendar c;
 
 	public WriteHtmlOverview(final RunDescription runDescription) {
 		if (runDescription == null) {
@@ -58,6 +60,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 		htmlDirectory = f_runDescription.getRunDirectory().getHtmlHandles()
 				.getHtmlDirectory();
 		writer = new ImageWriter(htmlDirectory);
+		c = Calendar.getInstance();
 	}
 
 	public void doPostPrep(final Connection c, final SLProgressMonitor mon)
@@ -87,8 +90,6 @@ public final class WriteHtmlOverview implements IPostPrep {
 			sidebar.h(2).a("#fields").text("Fields");
 			sidebar.h(2).a("#threads").text("Threads");
 			Container content = main.div().id("content");
-			content.div().id("tl");
-			writeThreadTimeline(graphs, info);
 
 			Table runTable = content.table().id("run-table");
 			runTable.header().th("Vendor").th("Version").th("OS")
@@ -105,6 +106,9 @@ public final class WriteHtmlOverview implements IPostPrep {
 					.td(Integer.toString(f_runDescription.getProcessors()))
 					.td(new SimpleDateFormat(DATE_FORMAT)
 							.format(f_runDescription.getStartTimeOfRun()));
+
+			content.div().id("tl");
+			writeThreadTimeline(graphs, info);
 
 			Container lockDiv = content.div().id("locks");
 
@@ -142,19 +146,13 @@ public final class WriteHtmlOverview implements IPostPrep {
 						.text(String.format("Cycle %d", cycle.getNum()));
 			}
 			writeCycles(graphs, cycles);
-			lockDiv.div().id("deadlock-widget");
-			// beginTable("Lock Held", "Lock Acquired", "Count", "First Time",
-			// "Last Time");
-			// for (Cycle cycle : info.getCycles()) {
-			// for (Edge e : cycle.getEdges()) {
-			// row(link(e.getHeld(),
-			// "4fce8390-7307-45dc-b779-5701ee7f23a1", "LockHeld",
-			// e.getHeldId(), "LockAcquired", e.getAcquiredId()),
-			// e.getAcquired(), e.getCount(), e.getFirst(),
-			// e.getLast());
-			// }
-			// }
-			// endTable();
+			Table dTable = lockDiv.table().id("deadlock-container");
+			Row dRow = dTable.row();
+			dRow.td().id("deadlock-widget");
+			Container threads = dRow.td().id("deadlock-threads");
+
+			threads.h(3).text("Foo-4");
+			threads.h(3).text("Foo-5");
 
 			Container fieldDiv = content.div().id("fields");
 			fieldDiv.h(2).text("Fields");
@@ -217,22 +215,39 @@ public final class WriteHtmlOverview implements IPostPrep {
 			}
 		}
 		writer.println("var timeline_data = {");
-		writer.println(String.format("'first': '%s',", df.format(first)));
-		writer.println(String.format("'last': '%s',", df.format(last)));
-		writer.println("'dateTimeFormat': 'iso8601', ");
+		writer.println(String.format(
+				"'first': Timeline.DateTime.parseGregorianDateTime('%s'),",
+				df.format(first)));
+		writer.println(String.format(
+				"'last': Timeline.DateTime.parseGregorianDateTime('%s'),",
+				df.format(last)));
+		writer.println("'dateTimeFormat': 'javascriptnative', ");
 		writer.println("'events': [");
 		for (Iterator<SummaryInfo.Thread> iter = info.getThreads().iterator(); iter
 				.hasNext();) {
 			SummaryInfo.Thread t = iter.next();
 			writer.print(String
-					.format("{'start': '%s\', 'end': '%s', 'title': \"%s\", 'description': '%s', 'isDuration': true, 'color': 'blue' }",
-							df.format(t.getStart()), df.format(t.getStop()),
-							t.getName(), t.getBlockTime()));
-			if (iter.hasNext()) {
-				writer.println(",");
-			}
+					.format("{'start': %s, 'end': %s, 'title': \"%s\", 'description': 'Thread Duration: %(,.3f seconds', 'durationEvent': true, 'color': 'blue' }",
+							jsDate(t.getStart()), jsDate(t.getStop()), t
+									.getName(),
+							(float) (t.getStop().getTime() - t.getStart()
+									.getTime()) / 1000));
+			writer.println(",");
 		}
+		writer.print(String
+				.format("{'start': %s, 'end': %s, 'title': \"%s\", 'description': 'Program Duration: %(,.3f seconds', 'durationEvent': true, 'color': 'red' }",
+						jsDate(first), jsDate(last), "Program Run Time",
+						(float) (last.getTime() - first.getTime()) / 1000));
 		writer.println("]};");
+	}
+
+	private String jsDate(final Date date) {
+		c.setTime(date);
+		return String.format("new Date(%d,%d,%d,%d,%d,%d, %d)",
+				c.get(Calendar.YEAR), c.get(Calendar.MONTH),
+				c.get(Calendar.DAY_OF_MONTH), c.get(Calendar.HOUR_OF_DAY),
+				c.get(Calendar.MINUTE), c.get(Calendar.SECOND),
+				c.get(Calendar.MILLISECOND));
 	}
 
 	/**
@@ -459,34 +474,39 @@ public final class WriteHtmlOverview implements IPostPrep {
 				edges.add(new EdgeEntry(e.getHeldId(), e.getAcquiredId()));
 			}
 			writer.printf("\tcycle%d : [", c.getNum());
+			String heldId = null;
 			for (Iterator<Edge> ei = c.getEdges().iterator(); ei.hasNext();) {
 				Edge e = ei.next();
 				EdgeEntry entry = new EdgeEntry(e.getAcquiredId(),
 						e.getHeldId());
 				String arrowType;
+				if (!e.getHeldId().equals(heldId)) {
+					if (heldId != null) {
+						writer.println("]\n}, ");
+					}
+					heldId = e.getHeldId();
+					writer.println("{");
+					writer.printf("\t\t\"id\": \"%s\",\n", e.getHeld());
+					writer.printf("\t\t\"name\": \"%s\",\n", e.getHeld());
+					writer.print("\t\t\"adjacencies\": [");
+				} else {
+					writer.print(", ");
+				}
 				if (edges.contains(entry)) {
 					arrowType = "doubleArrow";
 					if (completed.contains(entry)) {
-						// We are going to ignore edges that we have already
-						// reported
+						// We have already marked this edge on a previous node
 						continue;
 					}
 				} else {
 					arrowType = "arrow";
 				}
-				writer.println("{");
-				writer.printf("\t\t\"id\": \"%s\",\n", e.getHeld());
-				writer.printf("\t\t\"name\": \"%s\",\n", e.getHeld());
 				writer.printf(
-						"\t\t\"adjacencies\": [{\"nodeTo\": \"%3$s\", \"data\": { \"$type\": \"%1$s\", \"$direction\": [\"%2$s\",\"%3$s\"]}}]\n",
+						"{\"nodeTo\": \"%3$s\", \"data\": { \"$type\": \"%1$s\", \"$direction\": [\"%2$s\",\"%3$s\"]}}\n",
 						arrowType, e.getHeld(), e.getAcquired());
-				writer.println("}");
-				if (ei.hasNext()) {
-					writer.print(", ");
-				}
 				completed.add(new EdgeEntry(e.getHeldId(), e.getAcquiredId()));
 			}
-			writer.println("]");
+			writer.println("]\n}]");
 			if (ci.hasNext()) {
 				writer.print(", ");
 			}
@@ -496,7 +516,6 @@ public final class WriteHtmlOverview implements IPostPrep {
 
 	private void displayLockSet(final SummaryInfo info, final Container c) {
 		UL packageList = c.ul();
-
 		Iterator<Field> fields = info.getEmptyLockSetFields().iterator();
 		if (fields.hasNext()) {
 			Field field = fields.next();
@@ -632,9 +651,8 @@ public final class WriteHtmlOverview implements IPostPrep {
 			throw new IllegalStateException(e);
 		}
 		tlZip.delete();
-		// head.styleSheet("http://yui.yahooapis.com/2.7.0/build/reset-fonts-grids/reset-fonts-grids.css");
-		// head.styleSheet("http://yui.yahooapis.com/2.7.0/build/base/base-min.css");
 		head.javaScript("timeline_2.3.0/timeline_js/timeline-api.js?bundle=true");
+		// head.javaScript("http://static.simile.mit.edu/timeline/api-2.3.0/timeline-api.js?bundle=true");
 	}
 
 }

@@ -76,6 +76,7 @@ public class SummaryInfo {
 					new LockContentionHandler()).call();
 			List<Thread> threads = q.prepared("SummaryInfo.threads",
 					new ThreadContentionHandler()).call();
+			Collections.sort(threads);
 			List<Field> fields = new ArrayList<Field>();
 			fields.addAll(q.prepared("SummaryInfo.emptyLockSets",
 					new FieldHandler()).call());
@@ -203,7 +204,7 @@ public class SummaryInfo {
 
 	}
 
-	public static class Thread {
+	public static class Thread implements Comparable<Thread> {
 		private final String name;
 		private final Date start;
 		private final Date stop;
@@ -231,6 +232,13 @@ public class SummaryInfo {
 
 		public Date getStop() {
 			return stop;
+		}
+
+		public int compareTo(final Thread o) {
+			if (o == null) {
+				return 1;
+			}
+			return name.compareTo(o.name);
 		}
 
 	}
@@ -373,6 +381,12 @@ public class SummaryInfo {
 				cmp = acquiredId.compareTo(o.acquiredId);
 			}
 			return cmp;
+		}
+
+		@Override
+		public String toString() {
+			return "Edge [held=" + held + ", acquired=" + acquired + ", count="
+					+ count + ", first=" + first + ", last=" + last + "]";
 		}
 
 	}

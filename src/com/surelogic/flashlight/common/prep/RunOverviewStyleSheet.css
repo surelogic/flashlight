@@ -38,8 +38,9 @@ h4,h5 {
 }
 
 #tl {
-	height: 300px; 
-	border: 1px solid #aaa;	
+	height: 200px;
+	border: 1px solid #aaa;
+	width: 100%;
 }
 
 ul {

@@ -334,10 +334,12 @@ public class SummaryInfo {
 		private final int count;
 		private final Timestamp first;
 		private final Timestamp last;
+		private final List<String> threads;
 
 		Edge(final String held, final String heldId, final String acquired,
 				final String acquiredId, final int count,
-				final Timestamp first, final Timestamp last) {
+				final Timestamp first, final Timestamp last,
+				final List<String> threads) {
 			this.held = held;
 			this.heldId = heldId;
 			this.acquired = acquired;
@@ -345,6 +347,7 @@ public class SummaryInfo {
 			this.count = count;
 			this.first = first;
 			this.last = last;
+			this.threads = threads;
 		}
 
 		public String getHeld() {
@@ -411,7 +414,7 @@ public class SummaryInfo {
 				final Timestamp last = r.nextTimestamp();
 				curCycle.getEdges().add(
 						new Edge(held, heldId, acquired, acquiredId, count,
-								first, last));
+								first, last, new ArrayList<String>()));
 			}
 
 			return cycles;

@@ -207,13 +207,16 @@ public final class WriteHtmlOverview implements IPostPrep {
 		SimpleDateFormat df = new SimpleDateFormat(GRAPH_DATE_FORMAT);
 		Date first = null, last = null;
 		for (SummaryInfo.Thread t : info.getThreads()) {
-			if (first == null || t.getStart().before(first)) {
+			Date start = t.getStart();
+			Date stop = t.getStop();
+			if (first == null || start.getTime() < first.getTime()) {
 				first = t.getStart();
 			}
-			if (last == null || t.getStop().after(last)) {
+			if (last == null || last.getTime() > stop.getTime()) {
 				last = t.getStop();
 			}
 		}
+
 		writer.println("var timeline_data = {");
 		writer.println(String.format(
 				"'first': Timeline.DateTime.parseGregorianDateTime('%s'),",
@@ -223,15 +226,13 @@ public final class WriteHtmlOverview implements IPostPrep {
 				df.format(last)));
 		writer.println("'dateTimeFormat': 'javascriptnative', ");
 		writer.println("'events': [");
-		for (Iterator<SummaryInfo.Thread> iter = info.getThreads().iterator(); iter
-				.hasNext();) {
-			SummaryInfo.Thread t = iter.next();
+		for (SummaryInfo.Thread t : info.getThreads()) {
+			Date start = t.getStart();
+			Date stop = t.getStop();
 			writer.print(String
 					.format("{'start': %s, 'end': %s, 'title': \"%s\", 'description': 'Thread Duration: %(,.3f seconds', 'durationEvent': true, 'color': 'blue' }",
-							jsDate(t.getStart()), jsDate(t.getStop()), t
-									.getName(),
-							(float) (t.getStop().getTime() - t.getStart()
-									.getTime()) / 1000));
+							jsDate(start), jsDate(stop), t.getName(),
+							(float) (stop.getTime() - start.getTime()) / 1000));
 			writer.println(",");
 		}
 		writer.print(String
@@ -475,6 +476,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 			}
 			writer.printf("\tcycle%d : [", c.getNum());
 			String heldId = null;
+			boolean first = true;
 			for (Iterator<Edge> ei = c.getEdges().iterator(); ei.hasNext();) {
 				Edge e = ei.next();
 				EdgeEntry entry = new EdgeEntry(e.getAcquiredId(),
@@ -489,8 +491,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 					writer.printf("\t\t\"id\": \"%s\",\n", e.getHeld());
 					writer.printf("\t\t\"name\": \"%s\",\n", e.getHeld());
 					writer.print("\t\t\"adjacencies\": [");
-				} else {
-					writer.print(", ");
+					first = true;
 				}
 				if (edges.contains(entry)) {
 					arrowType = "doubleArrow";
@@ -501,6 +502,10 @@ public final class WriteHtmlOverview implements IPostPrep {
 				} else {
 					arrowType = "arrow";
 				}
+				if (!first) {
+					writer.print(", ");
+				}
+				first = false;
 				writer.printf(
 						"{\"nodeTo\": \"%3$s\", \"data\": { \"$type\": \"%1$s\", \"$direction\": [\"%2$s\",\"%3$s\"]}}\n",
 						arrowType, e.getHeld(), e.getAcquired());

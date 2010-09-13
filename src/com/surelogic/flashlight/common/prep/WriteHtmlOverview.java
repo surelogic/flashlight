@@ -10,6 +10,7 @@ import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -149,10 +150,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 			Table dTable = lockDiv.table().id("deadlock-container");
 			Row dRow = dTable.row();
 			dRow.td().id("deadlock-widget");
-			Container threads = dRow.td().id("deadlock-threads");
-
-			threads.h(3).text("Foo-4");
-			threads.h(3).text("Foo-5");
+			dRow.td().id("deadlock-threads");
 
 			Container fieldDiv = content.div().id("fields");
 			fieldDiv.h(2).text("Fields");
@@ -240,6 +238,21 @@ public final class WriteHtmlOverview implements IPostPrep {
 						jsDate(first), jsDate(last), "Program Run Time",
 						(float) (last.getTime() - first.getTime()) / 1000));
 		writer.println("]};");
+	}
+
+	private String jsList(final Collection<? extends Object> list) {
+		StringBuilder b = new StringBuilder();
+		b.append('[');
+		for (Iterator<? extends Object> iter = list.iterator(); iter.hasNext();) {
+			b.append('\"');
+			b.append(iter.next().toString());
+			b.append('\"');
+			if (iter.hasNext()) {
+				b.append(',');
+			}
+		}
+		b.append(']');
+		return b.toString();
 	}
 
 	private String jsDate(final Date date) {
@@ -507,8 +520,9 @@ public final class WriteHtmlOverview implements IPostPrep {
 				}
 				first = false;
 				writer.printf(
-						"{\"nodeTo\": \"%3$s\", \"data\": { \"$type\": \"%1$s\", \"$direction\": [\"%2$s\",\"%3$s\"]}}\n",
-						arrowType, e.getHeld(), e.getAcquired());
+						"{\"nodeTo\": \"%3$s\", \"data\": { \"$type\": \"%1$s\", \"$direction\": [\"%2$s\",\"%3$s\"], \"threads\": %4$s}}\n",
+						arrowType, e.getHeld(), e.getAcquired(),
+						jsList(e.getThreads()));
 				completed.add(new EdgeEntry(e.getHeldId(), e.getAcquiredId()));
 			}
 			writer.println("]\n}]");
@@ -517,6 +531,11 @@ public final class WriteHtmlOverview implements IPostPrep {
 			}
 		}
 		writer.println("};");
+		int i = 0;
+		for (Cycle c : cycles) {
+			writer.println("deadlocks.cycle" + i++ + ".threads = "
+					+ jsList(c.getThreads()) + ";");
+		}
 	}
 
 	private void displayLockSet(final SummaryInfo info, final Container c) {

@@ -202,7 +202,7 @@ function initSquarified() {
         style.border = '1px solid transparent';  
       };  
   }  
-});  
+});
 tm.loadJSON(packages2);  
 tm.refresh();  
 	tm1 = new $jit.TM.Squarified({  
@@ -490,8 +490,7 @@ function initGraphs() {
 }
 
 function loadDeadlockGraph(data) {
-   
-   // load JSON data.  
+      // load JSON data.  
    fd.loadJSON(data);
    // compute positions incrementally and animate.  
    fd.computeIncremental({  
@@ -505,10 +504,13 @@ function loadDeadlockGraph(data) {
 					     modes: ['linear'],  
 					     transition: $jit.Trans.Elastic.easeOut,  
 					     duration: 2500  
-					  });  
+					  });
 			    }  
-			 });  
-
+			 });
+   $('#deadlock-threads').empty();
+   data.threads.forEach(function (thread) {
+	   $('#deadlock-threads').append('<h3 class="deadlockThread">' + thread + '</h3>');
+   });
 }
 
 var eventSource;
@@ -556,7 +558,6 @@ function loadTimeline() {
     tl.layout(); // display the Timeline
 }
 
-
 $(document).ready(
    function() {
 	  // For some reason there is a history piece that doesn't work, I should look into this.  For now, disable.
@@ -567,8 +568,14 @@ $(document).ready(
     			  loadDeadlockGraph(deadlocks[val]);
     		  });
       initGraphs();
-      loadDeadlockGraph(deadlocks[$("#deadlock-list li").first().attr("id")]);
+      var cyc = $("#deadlock-list li").first().attr("id");
+      if(cyc != undefined) {
+    	  loadDeadlockGraph(deadlocks[cyc]);
+      }
       loadTimeline();
+      $("#deadlock-threads h3").hover(function (elem) {
+    	  console.log(elem.html());
+      });
    });
 
 var resizeTimerID = null;

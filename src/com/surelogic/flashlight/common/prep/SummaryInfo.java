@@ -4,6 +4,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -15,6 +16,7 @@ import com.surelogic.common.jdbc.ResultHandler;
 import com.surelogic.common.jdbc.Row;
 import com.surelogic.common.jdbc.RowHandler;
 import com.surelogic.common.jdbc.StringResultHandler;
+import com.surelogic.common.jdbc.StringRowHandler;
 
 public class SummaryInfo {
 
@@ -71,7 +73,7 @@ public class SummaryInfo {
 
 		public SummaryInfo perform(final Query q) {
 			List<Cycle> cycles = q.prepared("Deadlock.lockCycles",
-					new DeadlockHandler()).call();
+					new DeadlockHandler(q)).call();
 			List<Lock> locks = q.prepared("Deadlock.lockContention",
 					new LockContentionHandler()).call();
 			List<Thread> threads = q.prepared("SummaryInfo.threads",
@@ -324,6 +326,13 @@ public class SummaryInfo {
 			return locks;
 		}
 
+		Set<String> getThreads() {
+			Set<String> set = new HashSet<String>();
+			for (Edge e : edges) {
+				set.addAll(e.getThreads());
+			}
+			return set;
+		}
 	}
 
 	public static class Edge implements Comparable<Edge> {
@@ -378,6 +387,10 @@ public class SummaryInfo {
 			return acquiredId;
 		}
 
+		public List<String> getThreads() {
+			return threads;
+		}
+
 		public int compareTo(final Edge o) {
 			int cmp = heldId.compareTo(o.heldId);
 			if (cmp == 0) {
@@ -395,6 +408,12 @@ public class SummaryInfo {
 	}
 
 	private static class DeadlockHandler implements ResultHandler<List<Cycle>> {
+
+		private final Query q;
+
+		public DeadlockHandler(final Query q) {
+			this.q = q;
+		}
 
 		public List<Cycle> handle(final Result result) {
 			List<Cycle> cycles = new ArrayList<Cycle>();
@@ -414,7 +433,10 @@ public class SummaryInfo {
 				final Timestamp last = r.nextTimestamp();
 				curCycle.getEdges().add(
 						new Edge(held, heldId, acquired, acquiredId, count,
-								first, last, new ArrayList<String>()));
+								first, last, q.prepared(
+										"Deadlock.lockEdgeThreads",
+										new StringRowHandler()).call(heldId,
+										acquiredId)));
 			}
 
 			return cycles;

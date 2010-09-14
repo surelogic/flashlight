@@ -1,4 +1,4 @@
-  
+
 var fd, icicle, sb, tm;
 
 (function() {
@@ -6,7 +6,7 @@ var fd, icicle, sb, tm;
     iStuff = ua.match(/iPhone/i) || ua.match(/iPad/i),
     typeOfCanvas = typeof HTMLCanvasElement,
     nativeCanvasSupport = (typeOfCanvas == 'object' || typeOfCanvas == 'function'),
-    textSupport = nativeCanvasSupport 
+    textSupport = nativeCanvasSupport
        && (typeof document.createElement('canvas').getContext('2d').fillText == 'function');
     //I'm setting this based on the fact that ExCanvas provides text support for IE
     //and that as of today iPhone/iPad current text support is lame
@@ -18,7 +18,7 @@ var fd, icicle, sb, tm;
 
 // Edge type used to represent a bidirectional edge
 $jit.ForceDirected.Plot.EdgeTypes.implement(
-   {  
+   {
       'doubleArrow': {
 	   'render': function(adj, canvas) {
 	   		var from = adj.nodeFrom.pos.getc(true),
@@ -32,7 +32,7 @@ $jit.ForceDirected.Plot.EdgeTypes.implement(
       	'contains': function(adj, pos) {
       		var from = adj.nodeFrom.pos.getc(true),
       		to = adj.nodeTo.pos.getc(true);
-      		return this.edgeHelper.arrow.contains(from, to, pos, this.edge.epsilon) || 
+      		return this.edgeHelper.arrow.contains(from, to, pos, this.edge.epsilon) ||
       			this.edgeHelper.arrow.contains(to, from, pos, this.edge.epsilon);
       	}
 	   }
@@ -41,445 +41,445 @@ $jit.ForceDirected.Plot.EdgeTypes.implement(
 function initForceDirected() {
    fd = new $jit.ForceDirected(
       {
-	 //id of the visualization container  
-	 injectInto: 'deadlock-widget',  
-	 //Enable zooming and panning  
-	 //by scrolling and DnD  
-	 Navigation: {  
-	    enable: true,  
-	    //Enable panning events only if we're dragging the empty  
-	    //canvas (and not a node).  
-	    panning: 'avoid nodes',  
-	    zooming: 10 //zoom speed. higher is more sensible  
-	 },  
-	 // Change node and edge styles such as  
-	 // color and width.  
-	 // These properties are also set per node  
-	 // with dollar prefixed data-properties in the  
-	 // JSON structure.  
-	 Node: {  
-	    overridable: true  
-	 },  
-	 Edge: {
-	    overridable: true,  
-	    color: '#23A4FF',  
-	    lineWidth: 0.4  
+	 //id of the visualization container
+	 injectInto: 'deadlock-widget',
+	 //Enable zooming and panning
+	 //by scrolling and DnD
+	 Navigation: {
+	    enable: true,
+	    //Enable panning events only if we're dragging the empty
+	    //canvas (and not a node).
+	    panning: 'avoid nodes',
+	    zooming: 10 //zoom speed. higher is more sensible
 	 },
-	 //Native canvas text styling  
-	 Label: {  
-	    type: labelType, //Native or HTML  
-	    size: 10,  
-	    style: 'bold'  
-	 },  
-	 //Add Tips  
-	 //	    Tips: {  
-	 //	       enable: true,  
-	 //	       onShow: function(tip, node) {  
-	 //count connections  
-	 //		  var count = 0;  
-	 //		  node.eachAdjacency(function() { count++; });  
-	 //display node info in tooltip  
-	 //		  tip.innerHTML = "<div class=\"tip-title\">" + node.name + "</div>"  
-	 //		     + "<div class=\"tip-text\"><b>connections:</b> " + count + "</div>";  
-	 //	       }  
-	 //	    },  
-	 // Add node events  
+	 // Change node and edge styles such as
+	 // color and width.
+	 // These properties are also set per node
+	 // with dollar prefixed data-properties in the
+	 // JSON structure.
+	 Node: {
+	    overridable: true
+	 },
+	 Edge: {
+	    overridable: true,
+	    color: '#23A4FF',
+	    lineWidth: 0.4
+	 },
+	 //Native canvas text styling
+	 Label: {
+	    type: labelType, //Native or HTML
+	    size: 10,
+	    style: 'bold'
+	 },
+	 //Add Tips
+	 //	    Tips: {
+	 //	       enable: true,
+	 //	       onShow: function(tip, node) {
+	 //count connections
+	 //		  var count = 0;
+	 //		  node.eachAdjacency(function() { count++; });
+	 //display node info in tooltip
+	 //		  tip.innerHTML = "<div class=\"tip-title\">" + node.name + "</div>"
+	 //		     + "<div class=\"tip-text\"><b>connections:</b> " + count + "</div>";
+	 //	       }
+	 //	    },
+	 // Add node events
 	 Events: {
 	    enable: true,
-	    //Change cursor style when hovering a node  
-	    onMouseEnter: function() {  
+	    //Change cursor style when hovering a node
+	    onMouseEnter: function() {
 	       fd.canvas.getElement().style.cursor = 'move';
 	    },
 	    onMouseLeave: function() {
 	       fd.canvas.getElement().style.cursor = '';
 	    },
-	    //Update node positions when dragged  
+	    //Update node positions when dragged
 	    onDragMove: function(node, eventInfo, e) {
 	       var pos = eventInfo.getPos();
 	       node.pos.setc(pos.x, pos.y);
-	       fd.plot();  
+	       fd.plot();
 	    },
-	    //Implement the same handler for touchscreens  
-	    onTouchMove: function(node, eventInfo, e) {  
-	       $jit.util.event.stop(e); //stop default touchmove event  
-	       this.onDragMove(node, eventInfo, e);  
+	    //Implement the same handler for touchscreens
+	    onTouchMove: function(node, eventInfo, e) {
+	       $jit.util.event.stop(e); //stop default touchmove event
+	       this.onDragMove(node, eventInfo, e);
 	    },
-	    //Add also a click handler to nodes  
-	    onClick: function(node) {  
-	       if(!node) return;  
-	       // Build the right column relations list.  
-	       // This is done by traversing the clicked node connections.  
-	       var html = "<h4>" + node.name + "</h4><b> connections:</b><ul><li>",  
-	       list = [];  
-	       node.eachAdjacency(function(adj){  
-				     list.push(adj.nodeTo.name);  
-				  });  
-	       //append connections information  
-	       //$jit.id('inner-details').innerHTML = html + list.join("</li><li>") + "</li></ul>";  
+	    //Add also a click handler to nodes
+	    onClick: function(node) {
+	       if(!node) return;
+	       // Build the right column relations list.
+	       // This is done by traversing the clicked node connections.
+	       var html = "<h4>" + node.name + "</h4><b> connections:</b><ul><li>",
+	       list = [];
+	       node.eachAdjacency(function(adj){
+				     list.push(adj.nodeTo.name);
+				  });
+	       //append connections information
+	       //$jit.id('inner-details').innerHTML = html + list.join("</li><li>") + "</li></ul>";
 	    }
 	 },
-	 //Number of iterations for the FD algorithm  
+	 //Number of iterations for the FD algorithm
 	 iterations: 200,
-	 //Edge length  
+	 //Edge length
 	 levelDistance: 130,
-	 // Add text to the labels. This method is only triggered  
-	 // on label creation and only for DOM labels (not native canvas ones).  
-	 onCreateLabel: function(domElement, node){  
-	    domElement.innerHTML = node.name;  
-	    var style = domElement.style;  
-	    style.fontSize = "0.8em";  
+	 // Add text to the labels. This method is only triggered
+	 // on label creation and only for DOM labels (not native canvas ones).
+	 onCreateLabel: function(domElement, node){
+	    domElement.innerHTML = node.name;
+	    var style = domElement.style;
+	    style.fontSize = "0.8em";
 	    style.color = "#ddd";
 	 },
-	 // Change node styles when DOM labels are placed  
-	 // or moved.  
-	 onPlaceLabel: function(domElement, node){  
-	    var style = domElement.style;  
-	    var left = parseInt(style.left);  
-	    var top = parseInt(style.top);  
-	    var w = domElement.offsetWidth;  
-	    style.left = (left - w / 2) + 'px';  
-	    style.top = (top + 10) + 'px';  
-	    style.display = '';  
-	 }  
+	 // Change node styles when DOM labels are placed
+	 // or moved.
+	 onPlaceLabel: function(domElement, node){
+	    var style = domElement.style;
+	    var left = parseInt(style.left);
+	    var top = parseInt(style.top);
+	    var w = domElement.offsetWidth;
+	    style.left = (left - w / 2) + 'px';
+	    style.top = (top + 10) + 'px';
+	    style.display = '';
+	 }
       });
 }
 
 
 function initSquarified() {
-	tm = new $jit.TM.Squarified({  
-  //where to inject the visualization  
-  injectInto: 'packages2',  
-  //parent box title heights  
-  titleHeight: 15,  
-  //enable animations  
-  animate: animate,  
-  //box offsets  
-  offset: 1,  
-  //Attach left and right click events  
-  Events: {  
-    enable: true,  
-    onClick: function(node) {  
-      if(node) tm.enter(node);  
-    },  
-    onRightClick: function() {  
-      tm.out();  
-    }  
-  },  
-  duration: 1000,  
-  //Enable tips  
-  Tips: {  
-    enable: true,  
-    //add positioning offsets  
-    offsetX: 20,  
-    offsetY: 20,  
-    //implement the onShow method to  
-    //add content to the tooltip when a node  
-    //is hovered  
-    onShow: function(tip, node, isLeaf, domElement) {  
-      var html = "<div class=\"tip-title\">" + node.name   
-        + "</div><div class=\"tip-text\">";  
-      var data = node.data;  
-      if(data.playcount) {  
-        html += "play count: " + data.playcount;  
-      }  
-      if(data.image) {  
-        html += "<img src=\""+ data.image +"\" class=\"album\" />";  
-      }  
-      tip.innerHTML =  html;   
-    }    
-  },  
-  //Add the name of the node in the correponding label  
-  //This method is called once, on label creation.  
-  onCreateLabel: function(domElement, node){  
-      domElement.innerHTML = node.name;  
-      var style = domElement.style;  
-      style.display = '';  
-      style.border = '1px solid transparent';  
-      domElement.onmouseover = function() {  
-        style.border = '1px solid #9FD4FF';  
-      };  
-      domElement.onmouseout = function() {  
-        style.border = '1px solid transparent';  
-      };  
-  }  
+	tm = new $jit.TM.Squarified({
+  //where to inject the visualization
+  injectInto: 'packages2',
+  //parent box title heights
+  titleHeight: 15,
+  //enable animations
+  animate: animate,
+  //box offsets
+  offset: 1,
+  //Attach left and right click events
+  Events: {
+    enable: true,
+    onClick: function(node) {
+      if(node) tm.enter(node);
+    },
+    onRightClick: function() {
+      tm.out();
+    }
+  },
+  duration: 1000,
+  //Enable tips
+  Tips: {
+    enable: true,
+    //add positioning offsets
+    offsetX: 20,
+    offsetY: 20,
+    //implement the onShow method to
+    //add content to the tooltip when a node
+    //is hovered
+    onShow: function(tip, node, isLeaf, domElement) {
+      var html = "<div class=\"tip-title\">" + node.name
+        + "</div><div class=\"tip-text\">";
+      var data = node.data;
+      if(data.playcount) {
+        html += "play count: " + data.playcount;
+      }
+      if(data.image) {
+        html += "<img src=\""+ data.image +"\" class=\"album\" />";
+      }
+      tip.innerHTML =  html;
+    }
+  },
+  //Add the name of the node in the correponding label
+  //This method is called once, on label creation.
+  onCreateLabel: function(domElement, node){
+      domElement.innerHTML = node.name;
+      var style = domElement.style;
+      style.display = '';
+      style.border = '1px solid transparent';
+      domElement.onmouseover = function() {
+        style.border = '1px solid #9FD4FF';
+      };
+      domElement.onmouseout = function() {
+        style.border = '1px solid transparent';
+      };
+  }
 });
-tm.loadJSON(packages2);  
-tm.refresh();  
-	tm1 = new $jit.TM.Squarified({  
-  //where to inject the visualization  
-  injectInto: 'packages3',  
-  //parent box title heights  
-  titleHeight: 15,  
-  //enable animations  
-  animate: animate,  
-  //box offsets  
-  offset: 1,  
-  //Attach left and right click events  
-  Events: {  
-    enable: true,  
-    onClick: function(node) {  
-      if(node) tm.enter(node);  
-    },  
-    onRightClick: function() {  
-      tm.out();  
-    }  
-  },  
-  duration: 1000,  
-  //Enable tips  
-  Tips: {  
-    enable: true,  
-    //add positioning offsets  
-    offsetX: 20,  
-    offsetY: 20,  
-    //implement the onShow method to  
-    //add content to the tooltip when a node  
-    //is hovered  
-    onShow: function(tip, node, isLeaf, domElement) {  
-      var html = "<div class=\"tip-title\">" + node.name   
-        + "</div><div class=\"tip-text\">";  
-      var data = node.data;  
-      if(data.playcount) {  
-        html += "play count: " + data.playcount;  
-      }  
-      if(data.image) {  
-        html += "<img src=\""+ data.image +"\" class=\"album\" />";  
-      }  
-      tip.innerHTML =  html;   
-    }    
-  },  
-  //Add the name of the node in the correponding label  
-  //This method is called once, on label creation.  
-  onCreateLabel: function(domElement, node){  
-      domElement.innerHTML = node.name;  
-      var style = domElement.style;  
-      style.display = '';  
-      style.border = '1px solid transparent';  
-      domElement.onmouseover = function() {  
-        style.border = '1px solid #9FD4FF';  
-      };  
-      domElement.onmouseout = function() {  
-        style.border = '1px solid transparent';  
-      };  
-  }  
-});  
-tm1.loadJSON(packages2);  
-tm1.refresh();  
+tm.loadJSON(packages2);
+tm.refresh();
+	tm1 = new $jit.TM.Squarified({
+  //where to inject the visualization
+  injectInto: 'packages3',
+  //parent box title heights
+  titleHeight: 15,
+  //enable animations
+  animate: animate,
+  //box offsets
+  offset: 1,
+  //Attach left and right click events
+  Events: {
+    enable: true,
+    onClick: function(node) {
+      if(node) tm.enter(node);
+    },
+    onRightClick: function() {
+      tm.out();
+    }
+  },
+  duration: 1000,
+  //Enable tips
+  Tips: {
+    enable: true,
+    //add positioning offsets
+    offsetX: 20,
+    offsetY: 20,
+    //implement the onShow method to
+    //add content to the tooltip when a node
+    //is hovered
+    onShow: function(tip, node, isLeaf, domElement) {
+      var html = "<div class=\"tip-title\">" + node.name
+        + "</div><div class=\"tip-text\">";
+      var data = node.data;
+      if(data.playcount) {
+        html += "play count: " + data.playcount;
+      }
+      if(data.image) {
+        html += "<img src=\""+ data.image +"\" class=\"album\" />";
+      }
+      tip.innerHTML =  html;
+    }
+  },
+  //Add the name of the node in the correponding label
+  //This method is called once, on label creation.
+  onCreateLabel: function(domElement, node){
+      domElement.innerHTML = node.name;
+      var style = domElement.style;
+      style.display = '';
+      style.border = '1px solid transparent';
+      domElement.onmouseover = function() {
+        style.border = '1px solid #9FD4FF';
+      };
+      domElement.onmouseout = function() {
+        style.border = '1px solid transparent';
+      };
+  }
+});
+tm1.loadJSON(packages2);
+tm1.refresh();
 }
 
 function initSunburst() {
-		 sb = new $jit.Sunburst({  
-	     //id container for the visualization  
-	     injectInto: 'packages1',  
-	     //Distance between levels  
-	     levelDistance: 90,  
-	     //Change node and edge styles such as  
-	     //color, width and dimensions.  
-	     Node: {  
-	       overridable: true,  
-	       type: useGradients? 'gradient-multipie' : 'multipie'  
-	     },  
-	     //Select canvas labels  
-	     //'HTML', 'SVG' and 'Native' are possible options  
-	     Label: {  
-	       type: labelType  
-	     },  
-	     //Change styles when hovering and clicking nodes  
-	     NodeStyles: {  
-	       enable: true,  
-	       type: 'Native',  
-	       stylesClick: {  
-	         'color': '#33dddd'  
-	       },  
-	       stylesHover: {  
-	         'color': '#dd3333'  
-	       }  
-	     },  
-	     //Add tooltips  
-	     Tips: {  
-	       enable: true,  
-	       onShow: function(tip, node) {  
-	         var html = "<div class=\"tip-title\">" + node.name + "</div>";   
-	         var data = node.data;  
-	         if("days" in data) {  
-	           html += "<b>Last modified:</b> " + data.days + " days ago";  
-	         }  
-	         if("size" in data) {  
-	           html += "<br /><b>File size:</b> " + Math.round(data.size / 1024) + "KB";  
-	         }  
-	         tip.innerHTML = html;  
-	       }  
-	     },  
-	     //implement event handlers  
-	     Events: {  
-	       enable: true,  
-	       onClick: function(node) {  
-	         if(!node) return;  
-	         //Build detailed information about the file/folder  
-	         //and place it in the right column.  
-	         var html = "<h4>" + node.name + "</h4>", data = node.data;  
-	         if("days" in data) {  
-	           html += "<b>Last modified:</b> " + data.days + " days ago";  
-	         }  
-	         if("size" in data) {  
-	           html += "<br /><br /><b>File size:</b> " + Math.round(data.size / 1024) + "KB";  
-	         }  
-	         if("description" in data) {  
-	           html += "<br /><br /><b>Last commit was:</b><br /><pre>" + data.description + "</pre>";  
-	         }  
-//	         $jit.id('inner-details').innerHTML = html;  
-	         //hide tip  
-	         sb.tips.hide();  
-	         //rotate  
-	         sb.rotate(node, animate? 'animate' : 'replot', {  
-	           duration: 1000,  
-	           transition: $jit.Trans.Quart.easeInOut  
-	         });  
-	       }  
-	     },  
-	     // Only used when Label type is 'HTML' or 'SVG'  
-	     // Add text to the labels.   
-	     // This method is only triggered on label creation  
-	     onCreateLabel: function(domElement, node){  
-	       var labels = sb.config.Label.type,  
-	           aw = node.getData('angularWidth');  
-	       if (labels === 'HTML' && (node._depth < 2 || aw > 2000)) {  
-	         domElement.innerHTML = node.name;  
-	       } else if (labels === 'SVG' && (node._depth < 2 || aw > 2000)) {  
-	         domElement.firstChild.appendChild(document.createTextNode(node.name));  
-	       }  
-	     },  
-	     // Only used when Label type is 'HTML' or 'SVG'  
-	     // Change node styles when labels are placed  
-	     // or moved.  
-	     onPlaceLabel: function(domElement, node){  
-	       var labels = sb.config.Label.type;  
-	       if (labels === 'SVG') {  
-	         var fch = domElement.firstChild;  
-	         var style = fch.style;  
-	         style.display = '';  
-	         style.cursor = 'pointer';  
-	         style.fontSize = "0.8em";  
-	         fch.setAttribute('fill', "#fff");  
-	       } else if (labels === 'HTML') {  
-	         var style = domElement.style;  
-	         style.display = '';  
-	         style.cursor = 'pointer';  
-	         style.fontSize = "0.8em";  
-	         style.color = "#ddd";  
-	         var left = parseInt(style.left);  
-	         var w = domElement.offsetWidth;  
-	         style.left = (left - w / 2) + 'px';  
-	       }  
-	     }  
-	});  
-	 //load JSON data.  
-	 sb.loadJSON(packages2);  
-	 //compute positions and plot.  
-	 sb.refresh();  
+		 sb = new $jit.Sunburst({
+	     //id container for the visualization
+	     injectInto: 'packages1',
+	     //Distance between levels
+	     levelDistance: 90,
+	     //Change node and edge styles such as
+	     //color, width and dimensions.
+	     Node: {
+	       overridable: true,
+	       type: useGradients? 'gradient-multipie' : 'multipie'
+	     },
+	     //Select canvas labels
+	     //'HTML', 'SVG' and 'Native' are possible options
+	     Label: {
+	       type: labelType
+	     },
+	     //Change styles when hovering and clicking nodes
+	     NodeStyles: {
+	       enable: true,
+	       type: 'Native',
+	       stylesClick: {
+	         'color': '#33dddd'
+	       },
+	       stylesHover: {
+	         'color': '#dd3333'
+	       }
+	     },
+	     //Add tooltips
+	     Tips: {
+	       enable: true,
+	       onShow: function(tip, node) {
+	         var html = "<div class=\"tip-title\">" + node.name + "</div>";
+	         var data = node.data;
+	         if("days" in data) {
+	           html += "<b>Last modified:</b> " + data.days + " days ago";
+	         }
+	         if("size" in data) {
+	           html += "<br /><b>File size:</b> " + Math.round(data.size / 1024) + "KB";
+	         }
+	         tip.innerHTML = html;
+	       }
+	     },
+	     //implement event handlers
+	     Events: {
+	       enable: true,
+	       onClick: function(node) {
+	         if(!node) return;
+	         //Build detailed information about the file/folder
+	         //and place it in the right column.
+	         var html = "<h4>" + node.name + "</h4>", data = node.data;
+	         if("days" in data) {
+	           html += "<b>Last modified:</b> " + data.days + " days ago";
+	         }
+	         if("size" in data) {
+	           html += "<br /><br /><b>File size:</b> " + Math.round(data.size / 1024) + "KB";
+	         }
+	         if("description" in data) {
+	           html += "<br /><br /><b>Last commit was:</b><br /><pre>" + data.description + "</pre>";
+	         }
+//	         $jit.id('inner-details').innerHTML = html;
+	         //hide tip
+	         sb.tips.hide();
+	         //rotate
+	         sb.rotate(node, animate? 'animate' : 'replot', {
+	           duration: 1000,
+	           transition: $jit.Trans.Quart.easeInOut
+	         });
+	       }
+	     },
+	     // Only used when Label type is 'HTML' or 'SVG'
+	     // Add text to the labels.
+	     // This method is only triggered on label creation
+	     onCreateLabel: function(domElement, node){
+	       var labels = sb.config.Label.type,
+	           aw = node.getData('angularWidth');
+	       if (labels === 'HTML' && (node._depth < 2 || aw > 2000)) {
+	         domElement.innerHTML = node.name;
+	       } else if (labels === 'SVG' && (node._depth < 2 || aw > 2000)) {
+	         domElement.firstChild.appendChild(document.createTextNode(node.name));
+	       }
+	     },
+	     // Only used when Label type is 'HTML' or 'SVG'
+	     // Change node styles when labels are placed
+	     // or moved.
+	     onPlaceLabel: function(domElement, node){
+	       var labels = sb.config.Label.type;
+	       if (labels === 'SVG') {
+	         var fch = domElement.firstChild;
+	         var style = fch.style;
+	         style.display = '';
+	         style.cursor = 'pointer';
+	         style.fontSize = "0.8em";
+	         fch.setAttribute('fill', "#fff");
+	       } else if (labels === 'HTML') {
+	         var style = domElement.style;
+	         style.display = '';
+	         style.cursor = 'pointer';
+	         style.fontSize = "0.8em";
+	         style.color = "#ddd";
+	         var left = parseInt(style.left);
+	         var w = domElement.offsetWidth;
+	         style.left = (left - w / 2) + 'px';
+	       }
+	     }
+	});
+	 //load JSON data.
+	 sb.loadJSON(packages2);
+	 //compute positions and plot.
+	 sb.refresh();
 }
 
 function initIcicle() {
   icicle = new $jit.Icicle(
-      {  
-	 // id of the visualization container  
-	 injectInto: 'packages',  
-	 // whether to add transition animations  
-	 animate: animate,  
-	 // nodes offset  
-	 offset: 1,  
-	 // whether to add cushion type nodes  
-	 cushion: false,  
-	 //show only three levels at a time  
-	 constrained: true,  
-	 levelsToShow: 3,  
-	 // enable tips  
-	 Tips: {  
-	    enable: true,  
-	    type: 'Native',  
-	    // add positioning offsets  
-	    offsetX: 20,  
-	    offsetY: 20,  
-	    // implement the onShow method to  
-	    // add content to the tooltip when a node  
-	    // is hovered  
-	    onShow: function(tip, node){  
-	       // count children  
-	       var count = 0;  
-	       node.eachSubnode(function(){  
-				   count++;  
-				});  
-	       // add tooltip info  
-	       tip.innerHTML = "<div class=\"tip-title\"><b>Name:</b> " + node.name  
-		  + "</div><div class=\"tip-text\">" + count + " children</div>";  
-	    }  
-	 },  
-	 // Add events to nodes  
-	 Events: {  
-	    enable: true,  
-	    onMouseEnter: function(node) {  
-	       //add border and replot node  
+      {
+	 // id of the visualization container
+	 injectInto: 'packages',
+	 // whether to add transition animations
+	 animate: animate,
+	 // nodes offset
+	 offset: 1,
+	 // whether to add cushion type nodes
+	 cushion: false,
+	 //show only three levels at a time
+	 constrained: true,
+	 levelsToShow: 3,
+	 // enable tips
+	 Tips: {
+	    enable: true,
+	    type: 'Native',
+	    // add positioning offsets
+	    offsetX: 20,
+	    offsetY: 20,
+	    // implement the onShow method to
+	    // add content to the tooltip when a node
+	    // is hovered
+	    onShow: function(tip, node){
+	       // count children
+	       var count = 0;
+	       node.eachSubnode(function(){
+				   count++;
+				});
+	       // add tooltip info
+	       tip.innerHTML = "<div class=\"tip-title\"><b>Name:</b> " + node.name
+		  + "</div><div class=\"tip-text\">" + count + " children</div>";
+	    }
+	 },
+	 // Add events to nodes
+	 Events: {
+	    enable: true,
+	    onMouseEnter: function(node) {
+	       //add border and replot node
 	       node.setData('border', '#33dddd');
-	       icicle.fx.plotNode(node, icicle.canvas);  
-	       icicle.labels.plotLabel(icicle.canvas, node, icicle.controller);  
+	       icicle.fx.plotNode(node, icicle.canvas);
+	       icicle.labels.plotLabel(icicle.canvas, node, icicle.controller);
 	    },
-	    onMouseLeave: function(node) {  
-	       node.removeData('border');  
-	       icicle.fx.plot();  
-	    },  
-	    onClick: function(node){  
-	       if (node) {  
-		  //hide tips and selections  
-		  icicle.tips.hide();  
-		  if(icicle.events.hoveredNode)  
-		     this.onMouseLeave(icicle.events.hoveredNode);  
-		  //perform the enter animation  
-		  icicle.enter(node);  
-	       }  
+	    onMouseLeave: function(node) {
+	       node.removeData('border');
+	       icicle.fx.plot();
 	    },
-	    onRightClick: function(){  
-	       //hide tips and selections  
-	       icicle.tips.hide();  
-	       if(icicle.events.hoveredNode)  
-	    	   this.onMouseLeave(icicle.events.hoveredNode);  
-	       //perform the out animation  
-	       icicle.out();  
-	    }  
+	    onClick: function(node){
+	       if (node) {
+		  //hide tips and selections
+		  icicle.tips.hide();
+		  if(icicle.events.hoveredNode)
+		     this.onMouseLeave(icicle.events.hoveredNode);
+		  //perform the enter animation
+		  icicle.enter(node);
+	       }
+	    },
+	    onRightClick: function(){
+	       //hide tips and selections
+	       icicle.tips.hide();
+	       if(icicle.events.hoveredNode)
+	    	   this.onMouseLeave(icicle.events.hoveredNode);
+	       //perform the out animation
+	       icicle.out();
+	    }
 	 },
-	 // Add canvas label styling  
-	 Label: {  
-	    type: labelType // "Native" or "HTML"  
-	 },  
-	 // Add the name of the node in the corresponding label  
-	 // This method is called once, on label creation and only for DOM and not  
-	 // Native labels.  
-	 onCreateLabel: function(domElement, node){  
-	    domElement.innerHTML = node.name;  
-	    var style = domElement.style;  
-	    style.fontSize = '0.9em';  
-	    style.display = '';  
-	    style.cursor = 'pointer';  
-	    style.color = '#333';  
-	    style.overflow = 'hidden';  
+	 // Add canvas label styling
+	 Label: {
+	    type: labelType // "Native" or "HTML"
 	 },
-	 // Change some label dom properties.  
-	 // This method is called each time a label is plotted.  
+	 // Add the name of the node in the corresponding label
+	 // This method is called once, on label creation and only for DOM and not
+	 // Native labels.
+	 onCreateLabel: function(domElement, node){
+	    domElement.innerHTML = node.name;
+	    var style = domElement.style;
+	    style.fontSize = '0.9em';
+	    style.display = '';
+	    style.cursor = 'pointer';
+	    style.color = '#333';
+	    style.overflow = 'hidden';
+	 },
+	 // Change some label dom properties.
+	 // This method is called each time a label is plotted.
 	 onPlaceLabel: function(domElement, node){
-	    var style = domElement.style,  
-	    width = node.getData('width'),  
-	    height = node.getData('height');  
+	    var style = domElement.style,
+	    width = node.getData('width'),
+	    height = node.getData('height');
 	    if(width < 7 || height < 7) {
 	       style.display = 'none';
 	    } else {
-	       style.display = '';  
-	       style.width = width + 'px';  
-	       style.height = height + 'px';  
-	    }  
-	 }  
-      });  
-   // load data  
-   icicle.loadJSON(packages2);  
-   // compute positions and plot  
-   icicle.refresh();  
+	       style.display = '';
+	       style.width = width + 'px';
+	       style.height = height + 'px';
+	    }
+	 }
+      });
+   // load data
+   icicle.loadJSON(packages2);
+   // compute positions and plot
+   icicle.refresh();
 }
 
 function initGraphs() {
@@ -490,22 +490,22 @@ function initGraphs() {
 }
 
 function loadDeadlockGraph(data) {
-      // load JSON data.  
+      // load JSON data.
    fd.loadJSON(data);
-   // compute positions incrementally and animate.  
-   fd.computeIncremental({  
-			    iter: 40,  
-			    property: 'end',  
-			    onStep: function(perc){  
+   // compute positions incrementally and animate.
+   fd.computeIncremental({
+			    iter: 40,
+			    property: 'end',
+			    onStep: function(perc){
 
-			    },  
-			    onComplete: function(){  
-			       fd.animate({  
-					     modes: ['linear'],  
-					     transition: $jit.Trans.Elastic.easeOut,  
-					     duration: 2500  
+			    },
+			    onComplete: function(){
+			       fd.animate({
+					     modes: ['linear'],
+					     transition: $jit.Trans.Elastic.easeOut,
+					     duration: 2500
 					  });
-			    }  
+			    }
 			 });
    $('#deadlock-threads').empty();
    data.threads.forEach(function (thread) {
@@ -516,7 +516,7 @@ function loadDeadlockGraph(data) {
 var eventSource;
 function loadTimeline() {
     eventSource = new Timeline.DefaultEventSource();
-    var tl_el = document.getElementById("tl"); 
+    var tl_el = document.getElementById("tl");
     var theme1 = Timeline.ClassicTheme.create();
     theme1.autoWidth = true; // Set the Timeline's "width" automatically.
                              // Set autoWidth on the Timeline's first band's theme,
@@ -528,7 +528,7 @@ function loadTimeline() {
     var bandInfos = [
         Timeline.createBandInfo({
             width:          40, //"70%", // set to a minimum, autoWidth will then adjust
-            intervalUnit:   Timeline.DateTime.SECOND, 
+            intervalUnit:   Timeline.DateTime.SECOND,
             intervalPixels: 200,
             eventSource:    eventSource,
             date:           d,
@@ -537,7 +537,7 @@ function loadTimeline() {
         }),
         Timeline.createBandInfo({
             width:          40, //"30%", // set to a minimum, autoWidth will then adjust
-            intervalUnit:   Timeline.DateTime.MINUTE, 
+            intervalUnit:   Timeline.DateTime.MINUTE,
             intervalPixels: 200,
             eventSource:    eventSource,
             date:           d,
@@ -552,11 +552,17 @@ function loadTimeline() {
 
     var url = '.'; // The base url for image, icon and background image
                    // references in the data
-    eventSource.loadJSON(timeline_data, url); // The data was stored into the 
+    eventSource.loadJSON(timeline_data, url); // The data was stored into the
                                                // timeline_data variable.
     tl.finishedEventLoading();
     tl.layout(); // display the Timeline
 }
+
+
+var ACTIVE_COL = '0000FF';
+var INACTIVE_COL = 'FF0000';
+var ACTIVE_WIDTH = 3;
+var INACTIVE_WIDTH = 1;
 
 $(document).ready(
    function() {
@@ -573,8 +579,27 @@ $(document).ready(
     	  loadDeadlockGraph(deadlocks[cyc]);
       }
       loadTimeline();
-      $("#deadlock-threads h3").hover(function (elem) {
-    	  console.log(elem.html());
+      $("#deadlock-threads .deadlockThread").hover(function () {
+          var thread = $(this).html();
+          fd.graph.eachNode(function (n) {
+        	  n.eachAdjacency(function (adj) {
+        		  if(adj.data.threads.indexOf(thread) >= 0) {
+        			  adj.setDataset('end', {
+        				  'color': ACTIVE_COL,
+        				  'lineWidth': ACTIVE_WIDTH
+        			  });
+        		  } else {
+        			  adj.setDataset('end', {
+        				  'color': INACTIVE_COL,
+        				  'lineWidth': INACTIVE_WIDTH
+        			  });
+        		  }
+        	  });
+          });
+          fd.fx.animate({
+        	  modes: ['edge-property:lineWidth:color'],
+        	  duration: 500
+    	  });
       });
    });
 

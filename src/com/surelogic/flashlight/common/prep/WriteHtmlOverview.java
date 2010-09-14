@@ -208,10 +208,10 @@ public final class WriteHtmlOverview implements IPostPrep {
 			Date start = t.getStart();
 			Date stop = t.getStop();
 			if (first == null || start.getTime() < first.getTime()) {
-				first = t.getStart();
+				first = start;
 			}
-			if (last == null || last.getTime() > stop.getTime()) {
-				last = t.getStop();
+			if (last == null || last.getTime() < stop.getTime()) {
+				last = stop;
 			}
 		}
 
@@ -531,9 +531,8 @@ public final class WriteHtmlOverview implements IPostPrep {
 			}
 		}
 		writer.println("};");
-		int i = 0;
 		for (Cycle c : cycles) {
-			writer.println("deadlocks.cycle" + i++ + ".threads = "
+			writer.println("deadlocks.cycle" + c.getNum() + ".threads = "
 					+ jsList(c.getThreads()) + ";");
 		}
 	}

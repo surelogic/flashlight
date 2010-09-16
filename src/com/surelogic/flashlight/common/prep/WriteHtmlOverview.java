@@ -115,50 +115,59 @@ public final class WriteHtmlOverview implements IPostPrep {
 
 			lockDiv.h(2).text("Locks");
 			lockDiv.h(3).text("Lock Contention");
-
-			Table lockTable = lockDiv.table();
-			lockTable.header().th("Lock").th("Times Acquired")
-					.th("Total Block Time").th("Average Block Time");
-
 			List<SummaryInfo.Lock> locks = info.getLocks();
-			int count = 0;
-			for (SummaryInfo.Lock lock : locks) {
-				Row r = lockTable.row();
-				link(r.td(), lock.getName(), LOCK_EDGE_QUERY, "Lock",
-						lock.getId());
-				r.td(Integer.toString(lock.getAcquired()))
-						.td(Long.toString(lock.getBlockTime()) + " ns")
-						.td(Long.toString(lock.getAverageBlock()) + " ns");
-				if (++count == TABLE_LIMIT) {
-					break;
+			if (locks.isEmpty()) {
+				lockDiv.p()
+						.clazz("nothing")
+						.text("No locks were detected in this run of the program.");
+			} else {
+				Table lockTable = lockDiv.table();
+				lockTable.header().th("Lock").th("Times Acquired")
+						.th("Total Block Time").th("Average Block Time");
+
+				int count = 0;
+				for (SummaryInfo.Lock lock : locks) {
+					Row r = lockTable.row();
+					link(r.td(), lock.getName(), LOCK_EDGE_QUERY, "Lock",
+							lock.getId());
+					r.td(Integer.toString(lock.getAcquired()))
+							.td(Long.toString(lock.getBlockTime()) + " ns")
+							.td(Long.toString(lock.getAverageBlock()) + " ns");
+					if (++count == TABLE_LIMIT) {
+						break;
+					}
+				}
+				if (locks.size() > TABLE_LIMIT) {
+					link(lockDiv,
+							String.format("%d more results.", locks.size()
+									- TABLE_LIMIT), LOCK_CONTENTION_QUERY);
 				}
 			}
-			if (locks.size() > TABLE_LIMIT) {
-				link(lockDiv,
-						String.format("%d more results.", locks.size()
-								- TABLE_LIMIT), LOCK_CONTENTION_QUERY);
-			}
-
 			lockDiv.h(3).text("Potential Deadlocks");
-			HTMLList deadlockList = lockDiv.ul().id("deadlock-list");
 			List<Cycle> cycles = info.getCycles();
-			for (Cycle cycle : cycles) {
-				deadlockList.li().id("cycle" + cycle.getNum())
-						.text(String.format("Cycle %d", cycle.getNum()));
+			if (cycles.isEmpty()) {
+				lockDiv.p()
+						.clazz("nothing")
+						.text("No lock cycles were detected in this run of the program.");
+			} else {
+				HTMLList deadlockList = lockDiv.ul().id("deadlock-list");
+				for (Cycle cycle : cycles) {
+					deadlockList.li().id("cycle" + cycle.getNum())
+							.text(String.format("Cycle %d", cycle.getNum()));
+				}
+				writeCycles(graphs, cycles);
+				Table dTable = lockDiv.table().id("deadlock-container");
+				Row dRow = dTable.row();
+				dRow.td().id("deadlock-widget");
+				dRow.td().id("deadlock-threads");
 			}
-			writeCycles(graphs, cycles);
-			Table dTable = lockDiv.table().id("deadlock-container");
-			Row dRow = dTable.row();
-			dRow.td().id("deadlock-widget");
-			dRow.td().id("deadlock-threads");
-
 			Container fieldDiv = content.div().id("fields");
 			fieldDiv.h(2).text("Fields");
 			fieldDiv.h(3).text("Shared Fields With No Lock Set");
-			fieldDiv.div().id("packages");
-			fieldDiv.div().id("packages1");
-			fieldDiv.div().id("packages2");
-			fieldDiv.div().id("packages3");
+			// fieldDiv.div().id("packages");
+			// fieldDiv.div().id("packages1");
+			// fieldDiv.div().id("packages2");
+			// fieldDiv.div().id("packages3");
 			writeLockSet(graphs, info);
 			displayLockSet(info, fieldDiv);
 			Container threadDiv = content.div().id("threads");
@@ -171,7 +180,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 
 			Table threadTable = threadDiv.table();
 			threadTable.header().th("Thread").th("Time Blocked");
-			count = 0;
+			int count = 0;
 			for (SummaryInfo.Thread thread : info.getThreads()) {
 				threadTable.row().td(thread.getName())
 						.td(thread.getBlockTime() + " ns");
@@ -228,9 +237,11 @@ public final class WriteHtmlOverview implements IPostPrep {
 			Date start = t.getStart();
 			Date stop = t.getStop();
 			writer.print(String
-					.format("{'start': %s, 'end': %s, 'title': \"%s\", 'description': 'Thread Duration: %(,.3f seconds', 'durationEvent': true, 'color': 'blue' }",
+					.format("{'start': %s, 'end': %s, 'title': \"%s\", 'description': 'Thread Duration: %(,.3f seconds\\nTime Blocked: %(,.3f seconds', 'durationEvent': true, 'color': 'blue' }",
 							jsDate(start), jsDate(stop), t.getName(),
-							(float) (stop.getTime() - start.getTime()) / 1000));
+							(float) (stop.getTime() - start.getTime()) / 1000,
+							(float) t.getBlockTime() / 1000000000));
+			// FIXME this block time is reporting at double what it should be
 			writer.println(",");
 		}
 		writer.print(String
@@ -381,7 +392,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 							+ newPackage + f.getName()));
 					b.append(String.format("\"name\": \"%s\",", f.getName()));
 					b.append(String
-							.format("\"data\": { \"$area\": %d, \"$color\": \"#1165f1\" }",
+							.format("\"data\": { \"$area\": %d, \"$color\": \"#FF0000\", \"$lineWidth\": 1 }",
 									AREA));
 					b.append("}");
 					if (iter.hasNext()) {
@@ -573,7 +584,9 @@ public final class WriteHtmlOverview implements IPostPrep {
 				fieldLink(fieldLI, field);
 			}
 		} else {
-			c.p("There are no fields accessed concurrently with an empty lock set in this run.");
+			c.p()
+					.clazz("nothing")
+					.text("There are no fields accessed concurrently with an empty lock set in this run.");
 		}
 
 	}

@@ -7,6 +7,12 @@ h4,h5 {
  margin-bottom: 0px;
 }
 
+.nothing {
+	font-style: italic;
+	color: graytext;
+	text-indent: 3em;
+}
+
 #bar {
  float: left;
  width: 100px;

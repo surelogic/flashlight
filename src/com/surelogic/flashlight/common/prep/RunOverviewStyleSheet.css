@@ -2,14 +2,18 @@ body {
  font-family: sans-serif; font-size: 9pt;
 }
 
-h4,h5 {
- margin-top: 0px;
- margin-bottom: 0px;
+h1, h2 {
+ font-size: 1.34em;
+ margin: 0.33em 0px;
+}
+
+h3, h4, h5 {
+ margin: 0px 0px;
 }
 
 .nothing {
 	font-style: italic;
-	color: graytext;
+	color: graytext;  
 	text-indent: 3em;
 }
 
@@ -44,9 +48,9 @@ h4,h5 {
 }
 
 #tl {
-	height: 200px;
 	border: 1px solid #aaa;
 	width: 100%;
+	margin: 0.33em 0px;
 }
 
 ul {

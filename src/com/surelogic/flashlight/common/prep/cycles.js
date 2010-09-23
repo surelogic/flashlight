@@ -617,6 +617,12 @@ $(document).ready(
     	  loadDeadlockGraph(deadlocks[cyc]);
       }
       loadTimeline();
+      $(".tab").hide();
+      $("#main #bar a").click(function() {
+    	  var div = $(this).attr("href");
+    	  $(".tab").hide();
+    	  $(div).fadeIn('slow');
+      });
    });
 
 var resizeTimerID = null;

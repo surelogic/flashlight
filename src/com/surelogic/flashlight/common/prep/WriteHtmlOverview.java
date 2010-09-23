@@ -108,10 +108,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 					.td(new SimpleDateFormat(DATE_FORMAT)
 							.format(f_runDescription.getStartTimeOfRun()));
 
-			content.div().id("tl");
-			writeThreadTimeline(graphs, info);
-
-			Container lockDiv = content.div().id("locks");
+			Container lockDiv = content.div().id("locks").clazz("tab");
 
 			lockDiv.h(2).text("Locks");
 			lockDiv.h(3).text("Lock Contention");
@@ -161,7 +158,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 				dRow.td().id("deadlock-widget");
 				dRow.td().id("deadlock-threads");
 			}
-			Container fieldDiv = content.div().id("fields");
+			Container fieldDiv = content.div().id("fields").clazz("tab");
 			fieldDiv.h(2).text("Fields");
 			fieldDiv.h(3).text("Shared Fields With No Lock Set");
 			// fieldDiv.div().id("packages");
@@ -170,12 +167,16 @@ public final class WriteHtmlOverview implements IPostPrep {
 			// fieldDiv.div().id("packages3");
 			writeLockSet(graphs, info);
 			displayLockSet(info, fieldDiv);
-			Container threadDiv = content.div().id("threads");
+			Container threadDiv = content.div().id("threads").clazz("tab");
 			threadDiv.h(2).text("Threads");
+
 			int threadCount = info.getThreads().size();
 			threadDiv.p(String.format(
 					"%d threads were observed in this run of the program.",
 					threadCount));
+			threadDiv.div().id("tl");
+			writeThreadTimeline(graphs, info);
+
 			threadDiv.h(3).text("Thread Liveness");
 
 			Table threadTable = threadDiv.table();

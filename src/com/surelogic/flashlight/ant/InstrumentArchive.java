@@ -332,17 +332,18 @@ public class InstrumentArchive extends Task {
 					runtime));
 		}
 		try {
-			final ZipFile src = getSrcZip();
-			final File tmpSrc = tmpDir();
-			tmpSrc.mkdir();
-			FileUtility.unzipFile(src, tmpSrc, null);
-			final File tmpDest = tmpDir();
+
+			final File tmpSrc = getSrcDir();
+			final File tmpDest = getDestDir();
 			if (new File(tmpSrc, WEBINF).exists()) {
 				instrumentWar(tmpSrc, tmpDest);
 			} else {
 				instrumentStandardJar(tmpSrc, tmpDest);
 			}
-			FileUtility.zipDir(tmpDest, destFile);
+			if (tmpDest != destFile) {
+				System.out.println("Zipping directory");
+				FileUtility.zipDir(tmpDest, destFile);
+			}
 		} catch (final Exception e) {
 			throw new BuildException(e);
 		} finally {
@@ -350,18 +351,44 @@ public class InstrumentArchive extends Task {
 		}
 	}
 
-	private ZipFile getSrcZip() {
-		if (srcFile.exists()) {
+	private File getDestDir() {
+		final String name = destFile.getName();
+		if (name.endsWith(".jar") || name.endsWith(".war")) {
+			System.out.println("Using tmp directory");
+			return tmpDir();
+		} 
+		return destFile;		
+		/*
+		throw new BuildException(String.format(
+				"The destination '%s' must be a valid archive file or directory.", destFile));
+		*/
+	}
+	
+	private File getSrcDir() {
+		if (!srcFile.exists()) {
+			throw new BuildException(String.format(
+					"The source '%s' must be a valid archive file or directory.", srcFile));
+		}
+		final File tmpSrc;
+		if (srcFile.isFile()) { // Assume to be a zip file
 			try {
-				return new ZipFile(srcFile);
+				final ZipFile src = new ZipFile(srcFile);
+				tmpSrc = tmpDir();
+				tmpSrc.mkdir();
+				FileUtility.unzipFile(src, tmpSrc, null);
 			} catch (final IOException e) {
 				throw new BuildException(String.format(
 						"The source file '%s' must be a valid archive file.",
 						srcFile), e);
 			}
 		}
-		throw new BuildException(String.format(
-				"The source file '%s' must be a valid archive file.", srcFile));
+		else if (srcFile.isDirectory()) {
+			tmpSrc = srcFile;
+		} else {
+			throw new BuildException(String.format(
+					"The source '%s' must be a valid archive file or directory.", srcFile));
+		}
+		return tmpSrc;
 	}
 
 	final List<File> dirs = new ArrayList<File>();

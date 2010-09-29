@@ -246,8 +246,9 @@ public class InstrumentArchive extends Task {
 		FileUtility.recursiveDelete(libDirDest);
 
 		i.setProject(getProject());
-		i.createLibraries().add(extraLibs);
-
+		if (extraLibs != null) {
+			i.createLibraries().add(extraLibs);
+		}
 		classesDirDest.mkdir();
 		setupFlashlightConf(classesDirDest);
 

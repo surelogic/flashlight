@@ -1149,14 +1149,18 @@ public final class Instrument extends Task {
 
 			final Map<String, Map<String, Boolean>> badDups = manager.execute();
 			if (badDups != null) { // uh oh
-				final StringBuilder sb = new StringBuilder();
-				for (final Map.Entry<String, Map<String, Boolean>> entry : badDups
-						.entrySet()) {
-					sb.append("Class ");
-					sb.append(ClassNameUtil.internal2FullyQualified(entry
-							.getKey()));
-					sb
-							.append(" appears on the classpath more than once, but only some entries are instrumented: ");
+				// TODO change to match FlashlightVMRunner.instrumentClassfiles()
+				// when we finally get the classpath info
+				log("Some classes appear on the classpath more than once, but not all were instrumented.", 
+				    Project.MSG_WARN);
+				log("This could be a problem if an uninstrumented class appears on the classpath first:",
+				    Project.MSG_WARN);
+				final StringBuilder sb = new StringBuilder();				
+				for (final Map.Entry<String, Map<String, Boolean>> entry : badDups.entrySet()) {
+					sb.append('\t');
+					sb.append(ClassNameUtil.internal2FullyQualified(entry.getKey()));
+					sb.append(" : first uninstrumented in ");					
+					/*
 					for (final Map.Entry<String, Boolean> d : entry.getValue()
 							.entrySet()) {
 						sb.append("Is ");
@@ -1166,9 +1170,19 @@ public final class Instrument extends Task {
 						sb.append(d.getKey());
 						sb.append("; ");
 					}
-					log(sb.toString(), Project.MSG_ERR);
+					*/
+					for (final Map.Entry<String, Boolean> d : entry.getValue()
+							.entrySet()) {
+						Boolean val = d.getValue();
+						if (val == null || !val) { // Uninstrumented
+							sb.append(d.getKey());
+							break;
+						}
+					}
+					log(sb.toString(), Project.MSG_WARN);
+					sb.setLength(0);
 				}
-				throw new RuntimeException(sb.toString());
+				//throw new RuntimeException(sb.toString());
 			}
 		} catch (final FileNotFoundException e) {
 			final String msg = "Unable to create instrumentation log file "

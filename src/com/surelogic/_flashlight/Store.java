@@ -268,6 +268,9 @@ public final class Store {
 		// Check if FL is on (and shutoff)
 		if (IdConstants.enableFlashlightToggle
 				|| !StoreDelegate.FL_OFF.getAndSet(true)) {
+			// still incremented even if logging is off.
+			f_problemCount = new AtomicLong();
+			
 			// System.out.println("Store");
 			// new
 			// Throwable("Store CL = "+Store.class.getClassLoader()).printStackTrace(System.out);
@@ -343,8 +346,6 @@ public final class Store {
 				System.exit(1); // bail
 			}
 			f_log = w;
-			// still incremented even if logging is off.
-			f_problemCount = new AtomicLong();
 
 			final OutputType outType = StoreConfiguration.getOutputType();
 			w = null;

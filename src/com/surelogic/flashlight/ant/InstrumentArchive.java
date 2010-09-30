@@ -335,9 +335,12 @@ public class InstrumentArchive extends Task {
 
 			final File tmpSrc = getSrcDir();
 			final File tmpDest = getDestDir();
+			// TODO is there a good way to detect if the war is created incorrectly?
 			if (new File(tmpSrc, WEBINF).exists()) {
+				System.out.println("Instrumenting war");
 				instrumentWar(tmpSrc, tmpDest);
 			} else {
+				System.out.println("Instrumenting ordinary jar");
 				instrumentStandardJar(tmpSrc, tmpDest);
 			}
 			if (tmpDest != destFile) {
@@ -354,9 +357,10 @@ public class InstrumentArchive extends Task {
 	private File getDestDir() {
 		final String name = destFile.getName();
 		if (name.endsWith(".jar") || name.endsWith(".war")) {
-			System.out.println("Using tmp directory");
+			System.out.println("Using tmp directory for archive");
 			return tmpDir();
 		} 
+		System.out.println("Assuming destination is a directory");
 		return destFile;		
 		/*
 		throw new BuildException(String.format(
@@ -371,6 +375,7 @@ public class InstrumentArchive extends Task {
 		}
 		final File tmpSrc;
 		if (srcFile.isFile()) { // Assume to be a zip file
+			System.out.println("Assuming source is a archive");
 			try {
 				final ZipFile src = new ZipFile(srcFile);
 				tmpSrc = tmpDir();
@@ -383,6 +388,7 @@ public class InstrumentArchive extends Task {
 			}
 		}
 		else if (srcFile.isDirectory()) {
+			System.out.println("Using source as a directory");
 			tmpSrc = srcFile;
 		} else {
 			throw new BuildException(String.format(

@@ -40,11 +40,16 @@ public class InstrumentArchive extends Task {
 
 	private File destFile, srcFile, runtime, dataDir;
 	private Path extraLibs, sources;
-
+	private String collectionType;
+	
 	public InstrumentArchive() {
 		i = new Instrument();
 	}
 
+	public void setCollectionType(final String type) {
+		collectionType = type;
+	}
+	
 	public void setDestFile(final File destFile) {
 		this.destFile = destFile;
 	}
@@ -312,6 +317,12 @@ public class InstrumentArchive extends Task {
 		}
 		if (dataDir != null) {
 			Properties properties = new Properties();
+			// TODO how to set other props like setting the collection type?
+			// include those that start with FL_?
+			// insert a properties file?
+			if (collectionType != null) {
+				properties.put(InstrumentationConstants.FL_COLLECTION_TYPE, collectionType);
+			}
 			properties.put(InstrumentationConstants.FL_RUN_FOLDER,
 					dataDir.getAbsolutePath());
 			File propsFile = new File(classDir,

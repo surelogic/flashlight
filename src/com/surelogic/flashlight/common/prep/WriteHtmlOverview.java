@@ -225,30 +225,52 @@ public final class WriteHtmlOverview implements IPostPrep {
 			}
 		}
 
+		
 		writer.println("var timeline_data = {");
-		writer.println(String.format(
+		if (first == null) {
+			writer.println("?,");
+		} else {
+			writer.println(String.format(
 				"'first': Timeline.DateTime.parseGregorianDateTime('%s'),",
 				df.format(first)));
-		writer.println(String.format(
+		}
+		if (last == null) {
+			
+		} else {
+			writer.println(String.format(
 				"'last': Timeline.DateTime.parseGregorianDateTime('%s'),",
 				df.format(last)));
+		}
 		writer.println("'dateTimeFormat': 'javascriptnative', ");
 		writer.println("'events': [");
 		for (SummaryInfo.Thread t : info.getThreads()) {
 			Date start = t.getStart();
 			Date stop = t.getStop();
-			writer.print(String
+			if (start == null || stop == null) {
+				writer.print(String
+						.format("{'start': %s, 'end': %s, 'title': \"%s\", 'description': 'Thread Duration: unknown\\nTime Blocked: %(,.3f seconds', 'durationEvent': true, 'color': 'blue' }",
+								jsDate(start), jsDate(stop), t.getName(),
+								(float) t.getBlockTime() / 1000000000));
+			} else {
+				writer.print(String
 					.format("{'start': %s, 'end': %s, 'title': \"%s\", 'description': 'Thread Duration: %(,.3f seconds\\nTime Blocked: %(,.3f seconds', 'durationEvent': true, 'color': 'blue' }",
 							jsDate(start), jsDate(stop), t.getName(),
 							(float) (stop.getTime() - start.getTime()) / 1000,
 							(float) t.getBlockTime() / 1000000000));
+			}
 			// FIXME this block time is reporting at double what it should be
 			writer.println(",");
-		}
-		writer.print(String
+		}		
+		if (first == null || last == null) {
+			writer.print(String
+					.format("{'start': %s, 'end': %s, 'title': \"%s\", 'description': 'Program Duration: unknown', 'durationEvent': true, 'color': 'red' }",
+							jsDate(first), jsDate(last), "Program Run Time"));
+		} else {
+			writer.print(String
 				.format("{'start': %s, 'end': %s, 'title': \"%s\", 'description': 'Program Duration: %(,.3f seconds', 'durationEvent': true, 'color': 'red' }",
 						jsDate(first), jsDate(last), "Program Run Time",
 						(float) (last.getTime() - first.getTime()) / 1000));
+		}
 		writer.println("]};");
 	}
 
@@ -268,6 +290,9 @@ public final class WriteHtmlOverview implements IPostPrep {
 	}
 
 	private String jsDate(final Date date) {
+		if (date == null) {
+			return "?";
+		}
 		c.setTime(date);
 		return String.format("new Date(%d,%d,%d,%d,%d,%d, %d)",
 				c.get(Calendar.YEAR), c.get(Calendar.MONTH),

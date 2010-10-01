@@ -3,6 +3,7 @@ package com.surelogic.flashlight.ant;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +39,7 @@ public class InstrumentArchive extends Task {
 	private static final String LIB = "lib";
 	private final Instrument i;
 
-	private File destFile, srcFile, runtime, dataDir;
+	private File destFile, srcFile, runtime, dataDir, properties;
 	private Path extraLibs, sources;
 	private String collectionType;
 	
@@ -46,6 +47,10 @@ public class InstrumentArchive extends Task {
 		i = new Instrument();
 	}
 
+	public void setProperties(final File props) {
+		properties = props;
+	}
+	
 	public void setCollectionType(final String type) {
 		collectionType = type;
 	}
@@ -316,10 +321,14 @@ public class InstrumentArchive extends Task {
 			zo.close();
 		}
 		if (dataDir != null) {
-			Properties properties = new Properties();
+			final Properties properties = new Properties();
 			// TODO how to set other props like setting the collection type?
 			// include those that start with FL_?
+			
 			// insert a properties file?
+			if (this.properties.exists() && this.properties.isFile()) {
+				properties.load(new FileReader(this.properties));
+			}
 			if (collectionType != null) {
 				properties.put(InstrumentationConstants.FL_COLLECTION_TYPE, collectionType);
 			}

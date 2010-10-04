@@ -326,7 +326,7 @@ public class InstrumentArchive extends Task {
 			// include those that start with FL_?
 			
 			// insert a properties file?
-			if (this.properties.exists() && this.properties.isFile()) {
+			if (this.properties != null && this.properties.exists() && this.properties.isFile()) {
 				properties.load(new FileReader(this.properties));
 			}
 			if (collectionType != null) {

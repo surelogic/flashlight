@@ -618,7 +618,8 @@ $(document).ready(
       }
       loadTimeline();
       $(".tab").hide();
-      $("#main #bar a").click(function() {
+      $("#main #bar a").click(function(event) {
+          event.preventDefault();
     	  var div = $(this).attr("href");
     	  $(".tab").hide();
     	  $(div).fadeIn('slow');

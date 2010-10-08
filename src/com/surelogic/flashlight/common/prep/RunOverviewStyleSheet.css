@@ -81,3 +81,12 @@ ul {
    margin-left: 10px;
    vertical-align: middle;
 }
+
+.deadlockThread {
+   cursor: pointer;
+}
+
+.deadlockThread:hover {
+   background-color: blue;
+   color: white;
+}

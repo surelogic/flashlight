@@ -4,7 +4,7 @@ var INACTIVE_COL = 'CCCCCC';
 var ACTIVE_WIDTH = 3;
 var INACTIVE_WIDTH = 1;
 
-var fd, icicle, sb, tm;
+var fd, icicle, sb, tm, tl;
 
 (function() {
     var ua = navigator.userAgent,
@@ -515,9 +515,10 @@ function loadDeadlockGraph(data) {
 			    }
 			 });
    $('#deadlock-threads').empty();
-   data.threads.forEach(function (thread) {
-	   $('#deadlock-threads').append('<h3 class="deadlockThread">' + thread + '</h3>');
-   });
+   for(var i = 0; i < data.threads.length; i++) {
+      $('#deadlock-threads').append('<h3 class="deadlockThread">' + data.threads[i] + '</h3>');
+   }
+
    $("#deadlock-threads .deadlockThread").hover(function () {
 	   var thread = $(this).html();
 	   fd.graph.eachNode(function (n) {

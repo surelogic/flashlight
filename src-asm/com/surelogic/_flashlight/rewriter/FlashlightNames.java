@@ -1,5 +1,7 @@
 package com.surelogic._flashlight.rewriter;
 
+import java.text.MessageFormat;
+
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.Method;
@@ -154,6 +156,11 @@ public final class FlashlightNames {
 			| Opcodes.ACC_STATIC | Opcodes.ACC_FINAL | Opcodes.ACC_SYNTHETIC;
 	public static final String FLASHLIGHT_PHANTOM_CLASS_OBJECT_DESC = "Lcom/surelogic/_flashlight/ClassPhantomReference;";
 
+  public static final int FLASHLIGHT_PHANTOM_CLASS_OBJECT_GETTER_ACCESS =
+    Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_SYNTHETIC;
+  public static final String FLASHLIGHT_PHANTOM_CLASS_OBJECT_GETTER_DESC =
+    "()Lcom/surelogic/_flashlight/ClassPhantomReference;";
+  
 	/*
 	 * When implementing the IIdObject interface, we need to add a private final
 	 * field "flashlight$phantomObject" to store the phantom object referenced
@@ -166,4 +173,11 @@ public final class FlashlightNames {
 
 	/* Must be kept in sync with IdConstants.SYNTHETIC_METHOD_SITE_ID */
 	public static final long SYNTHETIC_METHOD_SITE_ID = -42L;
+	
+	
+	
+	public static String getPhantomClassObjectGetterName(final String classNameInternal) {
+	  return MessageFormat.format("flashlight${0}$getPhantomClassObject",
+        classNameInternal.replace('/', '_'));
+	}
 }

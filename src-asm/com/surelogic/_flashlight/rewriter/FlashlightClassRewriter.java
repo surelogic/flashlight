@@ -295,12 +295,17 @@ final class FlashlightClassRewriter extends ClassAdapter {
   
   @Override
   public void visitEnd() {
-    // Insert the withinClass field (always) and inClass field (when needed)
+    // Insert the flashlight$phantomClassObject field
     final FieldVisitor fv = cv.visitField(
         FlashlightNames.FLASHLIGHT_PHANTOM_CLASS_OBJECT_ACCESS,
         FlashlightNames.FLASHLIGHT_PHANTOM_CLASS_OBJECT,
         FlashlightNames.FLASHLIGHT_PHANTOM_CLASS_OBJECT_DESC, null, null);
     fv.visitEnd();
+    
+    // Add the flashlight phantom class object getter method
+    if (!isInterface) {
+      addPhantomClassObjectGetter();
+    }
     
     // Add the class initializer if needed
     if (needsClassInitializer) {
@@ -341,6 +346,26 @@ final class FlashlightClassRewriter extends ClassAdapter {
     cv.visitEnd();
   }
   
+  private void addPhantomClassObjectGetter() {
+    // Mark as synthetic because it does not appear in the original source code
+    final MethodVisitor mv =
+      cv.visitMethod(FlashlightNames.FLASHLIGHT_PHANTOM_CLASS_OBJECT_GETTER_ACCESS,
+          FlashlightNames.getPhantomClassObjectGetterName(classNameInternal),
+          FlashlightNames.FLASHLIGHT_PHANTOM_CLASS_OBJECT_GETTER_DESC, null, null); 
+    
+    mv.visitCode();
+    
+    // read the phantom class object for this class
+    mv.visitFieldInsn(Opcodes.GETSTATIC, classNameInternal,
+        FlashlightNames.FLASHLIGHT_PHANTOM_CLASS_OBJECT, 
+        FlashlightNames.FLASHLIGHT_PHANTOM_CLASS_OBJECT_DESC);
+    
+    // return
+    mv.visitInsn(Opcodes.ARETURN);
+
+    mv.visitMaxs(1, 0);
+    mv.visitEnd();
+  }
   
   private void addClassInitializer() {
     /* Create a new <clinit> method to visit */

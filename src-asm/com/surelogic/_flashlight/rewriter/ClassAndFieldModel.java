@@ -253,7 +253,36 @@ final class ClassAndFieldModel {
       }
       return false;
     }
-    
+
+    /**
+     * Determines if the class represented by this
+     * <code>Clazz</code> object is a proper subclass of the class
+     * represented by the specified class.   It returns <code>true</code> if so;
+     * otherwise it returns <code>false</code>.
+     * 
+     * @param otherName
+     *          The internal class name of the other class.
+     * @return the <code>boolean</code> value indicating whether objects of
+     *         the type <code>other</code> can be assigned to objects of this
+     *         class
+     * @exception ClassNotFoundException Thrown if one of the ancestor classes
+     * of <code>otherName</code> is not in the class model.
+     */
+    public boolean isProperSubclassOf(final String otherName)
+        throws ClassNotFoundException {
+      final Clazz otherClass = ClassAndFieldModel.this.getClass(otherName);
+      String testMe = this.superClass;
+      
+      while (testMe != null) {
+        final Clazz testClass = ClassAndFieldModel.this.getClass(testMe);
+        if (testClass == otherClass) {
+          return true;
+        }
+        testMe = testClass.getSuperClass();
+      }
+      return false;
+    }
+
     /**
      * Test if the class directly implements an interface
      */

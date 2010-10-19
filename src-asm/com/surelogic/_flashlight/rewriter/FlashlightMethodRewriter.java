@@ -1,7 +1,5 @@
 package com.surelogic._flashlight.rewriter;
 
-import java.io.ObjectStreamClass;
-import java.io.ObjectStreamField;
 import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Map;
@@ -15,7 +13,6 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.Method;
 
-import com.surelogic._flashlight.ClassPhantomReference;
 import com.surelogic._flashlight.rewriter.ClassAndFieldModel.ClassNotFoundException;
 import com.surelogic._flashlight.rewriter.ClassAndFieldModel.Field;
 import com.surelogic._flashlight.rewriter.ClassAndFieldModel.FieldNotFoundException;
@@ -1412,9 +1409,28 @@ final class FlashlightMethodRewriter implements MethodVisitor, LocalVariableGene
      * null and then the Class object for the class.
      */
     if (isInstrumented) {
-      mv.visitFieldInsn(Opcodes.GETSTATIC, declaringClassInternalName,
-          FlashlightNames.FLASHLIGHT_PHANTOM_CLASS_OBJECT,
-          FlashlightNames.FLASHLIGHT_PHANTOM_CLASS_OBJECT_DESC);
+      /* Bug 1694: If the class whose phantom class object we want is an
+       * ancestor of the class being instrumented, then we use a special
+       * getter method to get the phantom class object.  Otherwise we
+       * access the field directly.
+       */
+      try {
+        if (classModel.getClass(classBeingAnalyzedInternal).isProperSubclassOf(declaringClassInternalName)) {
+          mv.visitMethodInsn(Opcodes.INVOKESTATIC, classBeingAnalyzedInternal,
+              FlashlightNames.getPhantomClassObjectGetterName(declaringClassInternalName),
+              FlashlightNames.FLASHLIGHT_PHANTOM_CLASS_OBJECT_GETTER_DESC);
+        } else {
+          mv.visitFieldInsn(Opcodes.GETSTATIC, declaringClassInternalName,
+              FlashlightNames.FLASHLIGHT_PHANTOM_CLASS_OBJECT,
+              FlashlightNames.FLASHLIGHT_PHANTOM_CLASS_OBJECT_DESC);
+        }
+      } catch (final ClassNotFoundException e) {
+        messenger.warning("Provided classpath is incomplete: couldn't find class " + e.getMissingClass());
+        // Still generated legal code.
+        mv.visitFieldInsn(Opcodes.GETSTATIC, declaringClassInternalName,
+            FlashlightNames.FLASHLIGHT_PHANTOM_CLASS_OBJECT,
+            FlashlightNames.FLASHLIGHT_PHANTOM_CLASS_OBJECT_DESC);
+      }
       mv.visitInsn(Opcodes.ACONST_NULL);      
     } else {
       mv.visitInsn(Opcodes.ACONST_NULL);

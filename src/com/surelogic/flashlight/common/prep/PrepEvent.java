@@ -27,7 +27,6 @@ public enum PrepEvent {
 		for (final PrepEvent p : PrepEvent.values()) {
 			map.put(p.xml, p);
 		}
-
 	}
 
 	public static PrepEvent getEvent(final String xml) {

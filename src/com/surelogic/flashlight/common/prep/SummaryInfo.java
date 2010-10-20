@@ -4,9 +4,15 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 import com.surelogic.common.jdbc.DBQuery;
@@ -17,6 +23,7 @@ import com.surelogic.common.jdbc.Row;
 import com.surelogic.common.jdbc.RowHandler;
 import com.surelogic.common.jdbc.StringResultHandler;
 import com.surelogic.common.jdbc.StringRowHandler;
+import com.surelogic.flashlight.schema.Trace;
 
 public class SummaryInfo {
 
@@ -27,11 +34,12 @@ public class SummaryInfo {
 	private final String threadCount;
 	private final String objectCount;
 	private final String classCount;
+	private final Site root;
 
 	public SummaryInfo(final List<Cycle> cycles, final List<Lock> locks,
 			final List<Thread> threads, final List<Field> emptyLockSetFields,
 			final String threadCount, final String objectCount,
-			final String classCount) {
+			final String classCount, final Site coverageRoot) {
 		this.cycles = cycles;
 		this.locks = locks;
 		this.threads = threads;
@@ -39,6 +47,7 @@ public class SummaryInfo {
 		this.threadCount = threadCount;
 		this.objectCount = objectCount;
 		this.classCount = classCount;
+		this.root = coverageRoot;
 	}
 
 	public List<Cycle> getCycles() {
@@ -69,6 +78,10 @@ public class SummaryInfo {
 		return classCount;
 	}
 
+	public Site getThreadCoverage() {
+		return root;
+	}
+
 	public static class SummaryQuery implements DBQuery<SummaryInfo> {
 
 		public SummaryInfo perform(final Query q) {
@@ -91,8 +104,27 @@ public class SummaryInfo {
 					new StringResultHandler()).call();
 			String objectCount = q.prepared("SummaryInfo.objectCount",
 					new StringResultHandler()).call();
+			Site root = new Site("", "", "");
+			process(q,
+					root,
+					q.prepared("CoverageInfo.fieldCoverage",
+							new CoverageHandler()).call());
+			process(q,
+					root,
+					q.prepared("CoverageInfo.lockCoverage",
+							new CoverageHandler()).call());
 			return new SummaryInfo(cycles, locks, threads, fields, threadCount,
-					objectCount, classCount);
+					objectCount, classCount, root);
+		}
+
+		void process(final Query q, final Site site,
+				final Map<Long, Set<Long>> map) {
+			for (Entry<Long, Set<Long>> e : map.entrySet()) {
+				long traceId = e.getKey();
+				LinkedList<Trace> trace = Trace.stackTrace(traceId).perform(q);
+				Set<Long> threads = e.getValue();
+				site.addTrace(trace.descendingIterator(), threads);
+			}
 		}
 
 	}
@@ -443,4 +475,148 @@ public class SummaryInfo {
 		}
 
 	}
+
+	static class Site implements Comparable<Site> {
+		private final String pakkage;
+		private final String clazz;
+		private final String loc;
+		private final Set<Long> threadsSeen;
+		private final Map<Site, Site> children;
+
+		public Site(final String pakkage, final String clazz, final String loc) {
+			this.pakkage = pakkage;
+			this.clazz = clazz;
+			this.loc = loc;
+			threadsSeen = new HashSet<Long>();
+			children = new TreeMap<Site, Site>();
+		}
+
+		public String getPackage() {
+			return pakkage;
+		}
+
+		public String getClazz() {
+			return clazz;
+		}
+
+		public String getLoc() {
+			return loc;
+		}
+
+		public Set<Long> getThreadsSeen() {
+			return threadsSeen;
+		}
+
+		public Set<Site> getChildren() {
+			return children.keySet();
+		}
+
+		/**
+		 * Update the sites along the given trace to include the given threads.
+		 * 
+		 * @param trace
+		 *            the stack trace from farthest to nearest
+		 * @param threads
+		 */
+		void addTrace(final Iterator<Trace> trace, final Set<Long> threads) {
+			threadsSeen.addAll(threads);
+			if (trace.hasNext()) {
+				Trace t = trace.next();
+				Site s = new Site(t.getPackage(), t.getClazz(), t.getLoc());
+				Site child = children.get(s);
+				if (child == null) {
+					children.put(s, s);
+					child = s;
+				}
+				child.addTrace(trace, threads);
+			}
+		}
+
+		@Override
+		public String toString() {
+			return "Site [pakkage=" + pakkage + ", clazz=" + clazz + ", name="
+					+ loc + "]";
+		}
+
+		public int compareTo(final Site o) {
+			if (o == null) {
+				return 1;
+			}
+			int cmp = pakkage.compareTo(o.pakkage);
+			if (cmp == 0) {
+				cmp = clazz.compareTo(o.clazz);
+				if (cmp == 0) {
+					cmp = loc.compareTo(o.loc);
+				}
+			}
+			return cmp;
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + (clazz == null ? 0 : clazz.hashCode());
+			result = prime * result + (loc == null ? 0 : loc.hashCode());
+			result = prime * result
+					+ (pakkage == null ? 0 : pakkage.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(final Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null) {
+				return false;
+			}
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
+			Site other = (Site) obj;
+			if (clazz == null) {
+				if (other.clazz != null) {
+					return false;
+				}
+			} else if (!clazz.equals(other.clazz)) {
+				return false;
+			}
+			if (loc == null) {
+				if (other.loc != null) {
+					return false;
+				}
+			} else if (!loc.equals(other.loc)) {
+				return false;
+			}
+			if (pakkage == null) {
+				if (other.pakkage != null) {
+					return false;
+				}
+			} else if (!pakkage.equals(other.pakkage)) {
+				return false;
+			}
+			return true;
+		}
+
+	}
+
+	private static class CoverageHandler implements
+			ResultHandler<Map<Long, Set<Long>>> {
+		public Map<Long, Set<Long>> handle(final Result result) {
+			Map<Long, Set<Long>> map = new HashMap<Long, Set<Long>>();
+			for (Row r : result) {
+				long trace = r.nextLong();
+				long thread = r.nextLong();
+				Set<Long> set = map.get(trace);
+				if (set == null) {
+					set = new HashSet<Long>();
+					map.put(trace, set);
+				}
+				set.add(thread);
+			}
+			return map;
+		}
+	}
+
 }

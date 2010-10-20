@@ -31,7 +31,7 @@ public class AbstractDataScan extends DefaultHandler {
 		final long withinClassId;
 		final int line;
 
-		SiteInfo(String location, String file, final long inClass,
+		SiteInfo(final String location, final String file, final long inClass,
 				final int line) {
 			this.location = location;
 			this.file = file;
@@ -52,11 +52,11 @@ public class AbstractDataScan extends DefaultHandler {
 	}
 
 	private void createSiteInfo(final PreppedAttributes attrs) {
-		final SiteInfo info = new SiteInfo(attrs
-				.getString(AttributeType.LOCATION), attrs
-				.getString(AttributeType.FILE), attrs
-				.getLong(AttributeType.IN_CLASS), attrs
-				.getInt(AttributeType.LINE));
+		final SiteInfo info = new SiteInfo(
+				attrs.getString(AttributeType.LOCATION),
+				attrs.getString(AttributeType.FILE),
+				attrs.getLong(AttributeType.IN_CLASS),
+				attrs.getInt(AttributeType.LINE));
 		final long site = attrs.getLong(AttributeType.ID);
 		if (site != IdConstants.ILLEGAL_SITE_ID) {
 			sites.put(site, info);

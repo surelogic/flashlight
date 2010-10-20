@@ -559,6 +559,9 @@ function loadDeadlockGraph(data) {
 
 var eventSource;
 function loadTimeline() {
+    if (timeline_data == 'none') {
+	return;
+    }
     eventSource = new Timeline.DefaultEventSource();
     var tl_el = document.getElementById("tl");
     var theme1 = Timeline.ClassicTheme.create();
@@ -569,28 +572,42 @@ function loadTimeline() {
     theme1.timeline_stop  = timeline_data.last;
 
     var d = timeline_data.first;
-    var bandInfos = [
-        Timeline.createBandInfo({
+    var bandInfos;
+    if(timeline_data.needsOverview) {
+       bandInfos = [
+          Timeline.createBandInfo({
             width:          40, //"70%", // set to a minimum, autoWidth will then adjust
-            intervalUnit:   Timeline.DateTime.SECOND,
+            intervalUnit:   timeline_data.mainBandInterval, // Timeline.DateTime.SECOND,
             intervalPixels: 200,
             eventSource:    eventSource,
             date:           d,
             theme:          theme1,
             layout:         'original'  // original, overview, detailed
-        }),
-        Timeline.createBandInfo({
+	  }),
+          Timeline.createBandInfo({
             width:          40, //"30%", // set to a minimum, autoWidth will then adjust
-            intervalUnit:   Timeline.DateTime.MINUTE,
+            intervalUnit:   timeline_data.overviewBandInterval, // Timeline.DateTime.MINUTE,
             intervalPixels: 200,
             eventSource:    eventSource,
             date:           d,
             theme:          theme1,
             layout:         'overview'  // original, overview, detailed
-        })
-    ];
-    bandInfos[1].syncWith = 0;
-    bandInfos[1].highlight= true;
+          })
+       ];
+       bandInfos[1].syncWith = 0;
+       bandInfos[1].highlight= true;
+    } else {
+       bandInfos = [
+          Timeline.createBandInfo({
+            width:          40, //"70%", // set to a minimum, autoWidth will then adjust
+            intervalUnit:   timeline_data.mainBandInterval, // Timeline.DateTime.SECOND,
+            intervalPixels: 200,
+            eventSource:    eventSource,
+            date:           d,
+            theme:          theme1,
+            layout:         'original'  // original, overview, detailed
+	  })];
+    }
     // create the Timeline
     tl = Timeline.create(tl_el, bandInfos);
 

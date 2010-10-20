@@ -183,7 +183,7 @@ public class ScanRawFileFieldsPreScan extends AbstractDataScan {
 	}
 
 	private void logState() {
-		SLLogger.getLoggerFor(ScanRawFilePreScan.class).fine(
+		SLLogger.getLoggerFor(ScanRawFileFieldsPreScan.class).fine(
 				"Range " + f_start + " to " + f_end
 						+ "\n\tf_referencedObjects: "
 						+ f_referencedObjects.size() + "\n\tf_usedFields "

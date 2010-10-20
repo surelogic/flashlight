@@ -27,6 +27,7 @@ import com.surelogic.common.jdbc.QB;
 import com.surelogic.common.jdbc.SchemaUtility;
 import com.surelogic.common.jdbc.TransactionException;
 import com.surelogic.common.jobs.AbstractSLJob;
+import com.surelogic.common.jobs.NullSLProgressMonitor;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.common.jobs.SubSLProgressMonitor;
@@ -46,6 +47,7 @@ import com.surelogic.flashlight.common.prep.BeforeIntrinsicLockAcquisition;
 import com.surelogic.flashlight.common.prep.BeforeIntrinsicLockWait;
 import com.surelogic.flashlight.common.prep.BeforeUtilConcurrentLockAquisitionAttempt;
 import com.surelogic.flashlight.common.prep.ClassDefinition;
+import com.surelogic.flashlight.common.prep.CodeCoverageDataScan;
 import com.surelogic.flashlight.common.prep.EmptyQueries;
 import com.surelogic.flashlight.common.prep.FieldAssignment;
 import com.surelogic.flashlight.common.prep.FieldDefinition;
@@ -167,6 +169,17 @@ public final class PrepSLJob extends AbstractSLJob {
 
 			final SLProgressMonitor preScanInfoMonitor = new SubSLProgressMonitor(
 					monitor, "Collecting raw file info", PRE_SCAN_WORK);
+			CodeCoverageDataScan coverageScan = new CodeCoverageDataScan(
+					new NullSLProgressMonitor());
+			final SAXParser coverageSaxParser = RawFileUtility
+					.getParser(f_dataFile);
+			final InputStream coverageStream = RawFileUtility
+					.getInputStreamFor(f_dataFile);
+			try {
+				coverageSaxParser.parse(coverageStream, coverageScan);
+			} finally {
+				coverageStream.close();
+			}
 
 			final ScanRawFileInfoPreScan preScanInfo = new ScanRawFileInfoPreScan(
 					preScanInfoMonitor);

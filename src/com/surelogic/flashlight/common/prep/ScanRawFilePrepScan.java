@@ -3,9 +3,7 @@ package com.surelogic.flashlight.common.prep;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.logging.Level;
 
 import org.xml.sax.Attributes;
@@ -19,7 +17,6 @@ public final class ScanRawFilePrepScan extends AbstractDataScan {
 	private int f_elementCount = 0;
 	final Connection f_c;
 	final Map<String, IPrep> f_elementHandlers;
-	final Set<String> f_notParsed = new HashSet<String>();
 
 	public ScanRawFilePrepScan(final Connection c,
 			final SLProgressMonitor monitor, final IPrep[] elementHandlers)
@@ -32,11 +29,6 @@ public final class ScanRawFilePrepScan extends AbstractDataScan {
 		for (final IPrep p : elementHandlers) {
 			f_elementHandlers.put(p.getXMLElementName(), p);
 		}
-		f_notParsed.add("environment");
-		f_notParsed.add("flashlight");
-		f_notParsed.add("garbage-collected-object");
-		f_notParsed.add("single-threaded-field");
-		f_notParsed.add("time");
 	}
 
 	@Override
@@ -64,7 +56,8 @@ public final class ScanRawFilePrepScan extends AbstractDataScan {
 			try {
 				element.parse(attrs);
 			} catch (final Exception e) {
-				SLLogger.getLogger().log(Level.WARNING, "Problem parsing "+name, e);
+				SLLogger.getLogger().log(Level.WARNING,
+						"Problem parsing " + name, e);
 				throw new SAXException(e);
 			}
 		}

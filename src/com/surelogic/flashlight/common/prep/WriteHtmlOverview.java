@@ -36,6 +36,7 @@ import com.surelogic.flashlight.common.prep.HTMLBuilder.UL;
 import com.surelogic.flashlight.common.prep.SummaryInfo.Cycle;
 import com.surelogic.flashlight.common.prep.SummaryInfo.Edge;
 import com.surelogic.flashlight.common.prep.SummaryInfo.Field;
+import com.surelogic.flashlight.common.prep.SummaryInfo.Site;
 
 public final class WriteHtmlOverview implements IPostPrep {
 
@@ -45,7 +46,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 	private static final String GRAPH_DATE_FORMAT = "MMM dd yyyy HH:mm:ss zz";
 	private static final String EMPTY_LOCK_SET_INSTANCES_QUERY = "5224d411-6ed3-432f-8b91-a1c43df22911";
 	private static final String LOCK_CONTENTION_QUERY = "cb38a427-c259-4690-abe2-acea9661f737";
-	private static final String LOCK_EDGE_QUERY = "fd49f015-3585-4602-a5d1-4e67ef7b6a55";
+	private static final String LOCK_EDGE_QUERY = "c9453327-b892-4324-a6b8-2dceb32e1901";
 	private static final String STATIC_LOCK_FREQUENCY_QUERY = "6a39e6ca-29e9-4093-ba03-0e9bd9503a1a";
 	private static final String THREAD_BLOCKING_QUERY = "4e026769-1b0b-42bd-8893-f3b92add093f";
 	private final RunDescription f_runDescription;
@@ -115,7 +116,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 			List<SummaryInfo.Lock> locks = info.getLocks();
 			if (locks.isEmpty()) {
 				lockDiv.p()
-						.clazz("nothing")
+						.clazz("info")
 						.text("No locks were detected in this run of the program.");
 			} else {
 				Table lockTable = lockDiv.table();
@@ -144,7 +145,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 			List<Cycle> cycles = info.getCycles();
 			if (cycles.isEmpty()) {
 				lockDiv.p()
-						.clazz("nothing")
+						.clazz("info")
 						.text("No lock cycles were detected in this run of the program.");
 			} else {
 				HTMLList deadlockList = lockDiv.ul().id("deadlock-list");
@@ -161,6 +162,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 			Container fieldDiv = content.div().id("fields").clazz("tab");
 			fieldDiv.h(2).text("Fields");
 			fieldDiv.h(3).text("Shared Fields With No Lock Set");
+			// FIXME take these out
 			// fieldDiv.div().id("packages");
 			// fieldDiv.div().id("packages1");
 			// fieldDiv.div().id("packages2");
@@ -171,11 +173,17 @@ public final class WriteHtmlOverview implements IPostPrep {
 			threadDiv.h(2).text("Threads");
 
 			int threadCount = info.getThreads().size();
-			threadDiv.p(String.format(
-					"%d threads were observed in this run of the program.",
-					threadCount));
-			threadDiv.div().id("tl");
+			threadDiv
+					.p(String
+							.format("%d threads were observed in this run of the program.",
+									threadCount)).clazz("info");
+			if (threadCount > 0) {
+				threadDiv.div().id("tl");
+			}
 			writeThreadTimeline(graphs, info);
+
+			threadDiv.h(3).text("Coverage");
+			displayThreadCoverage(threadDiv, info.getThreadCoverage());
 
 			threadDiv.h(3).text("Thread Liveness");
 
@@ -194,8 +202,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 						String.format("%d more results.", threadCount
 								- TABLE_LIMIT), THREAD_BLOCKING_QUERY);
 			}
-			// def("# Observed Classes", info.getClassCount());
-			// def("# Observed Objects", info.getObjectCount());
+
 			graphs.close();
 			final HtmlHandles html = f_runDescription.getRunDirectory()
 					.getHtmlHandles();
@@ -224,54 +231,63 @@ public final class WriteHtmlOverview implements IPostPrep {
 				last = stop;
 			}
 		}
-
-		
-		writer.println("var timeline_data = {");
 		if (first == null) {
-			writer.println("?,");
+			writer.println("var timeline_data = 'none'");
 		} else {
+			writer.println("var timeline_data = {");
 			writer.println(String.format(
-				"'first': Timeline.DateTime.parseGregorianDateTime('%s'),",
-				df.format(first)));
-		}
-		if (last == null) {
-			
-		} else {
+					"'first': Timeline.DateTime.parseGregorianDateTime('%s'),",
+					df.format(first)));
 			writer.println(String.format(
-				"'last': Timeline.DateTime.parseGregorianDateTime('%s'),",
-				df.format(last)));
-		}
-		writer.println("'dateTimeFormat': 'javascriptnative', ");
-		writer.println("'events': [");
-		for (SummaryInfo.Thread t : info.getThreads()) {
-			Date start = t.getStart();
-			Date stop = t.getStop();
-			if (start == null || stop == null) {
-				writer.print(String
-						.format("{'start': %s, 'end': %s, 'title': \"%s\", 'description': 'Thread Duration: unknown\\nTime Blocked: %(,.3f seconds', 'durationEvent': true, 'color': 'blue' }",
-								jsDate(start), jsDate(stop), t.getName(),
-								(float) t.getBlockTime() / 1000000000));
-			} else {
-				writer.print(String
-					.format("{'start': %s, 'end': %s, 'title': \"%s\", 'description': 'Thread Duration: %(,.3f seconds\\nTime Blocked: %(,.3f seconds', 'durationEvent': true, 'color': 'blue' }",
-							jsDate(start), jsDate(stop), t.getName(),
-							(float) (stop.getTime() - start.getTime()) / 1000,
-							(float) t.getBlockTime() / 1000000000));
+					"'last': Timeline.DateTime.parseGregorianDateTime('%s'),",
+					df.format(last)));
+			long duration = last.getTime() - first.getTime();
+			boolean hasOverviewBand = true;
+			String mainInterval = "SECOND";
+			String overviewInterval = "MINUTE";
+			if (duration < 1000) {
+				// Millisecond resolution
+				mainInterval = "MILLISECOND";
+				overviewInterval = "SECOND";
+			} else if (duration < 1000 * 45) {
+				// Second resolution
+				hasOverviewBand = false;
+			} else if (duration > 1000 * 60 * 30) {
+				mainInterval = "MINUTE";
+				overviewInterval = "HOUR";
 			}
-			// FIXME this block time is reporting at double what it should be
-			writer.println(",");
-		}		
-		if (first == null || last == null) {
+			writer.printf(
+					"'needsOverview': %s, 'mainBandInterval': Timeline.DateTime.%s, 'overviewBandInterval': Timeline.DateTime.%s,\n",
+					Boolean.toString(hasOverviewBand), mainInterval,
+					overviewInterval);
+			writer.println("'dateTimeFormat': 'javascriptnative', ");
+			writer.println("'events': [");
+			for (SummaryInfo.Thread t : info.getThreads()) {
+				Date start = t.getStart();
+				Date stop = t.getStop();
+				writer.print(String
+						.format("{'start': %s, 'end': %s, 'title': \"%s\", 'description': 'Thread Duration: %(,.3f seconds\\nTime Blocked: %(,.3f seconds', 'durationEvent': true, 'color': 'blue' }",
+								jsDate(start),
+								jsDate(stop),
+								t.getName(),
+								(float) (stop.getTime() - start.getTime()) / 1000,
+								(float) t.getBlockTime() / 1000000000));
+				writer.println(",");
+			}
 			writer.print(String
-					.format("{'start': %s, 'end': %s, 'title': \"%s\", 'description': 'Program Duration: unknown', 'durationEvent': true, 'color': 'red' }",
-							jsDate(first), jsDate(last), "Program Run Time"));
-		} else {
-			writer.print(String
-				.format("{'start': %s, 'end': %s, 'title': \"%s\", 'description': 'Program Duration: %(,.3f seconds', 'durationEvent': true, 'color': 'red' }",
-						jsDate(first), jsDate(last), "Program Run Time",
-						(float) (last.getTime() - first.getTime()) / 1000));
+					.format("{'start': %s, 'end': %s, 'title': \"%s\", 'description': 'Program Duration: %(,.3f seconds', 'durationEvent': true, 'color': 'red' }",
+							jsDate(first), jsDate(last), "Program Run Time",
+							(float) (last.getTime() - first.getTime()) / 1000));
+			writer.println("]};");
 		}
-		writer.println("]};");
+	}
+
+	private void displayThreadCoverage(final Container threadDiv,
+			final Site threadCoverage) {
+		UL ul = threadDiv.ul();
+		for (Site child : threadCoverage.getChildren()) {
+
+		}
 	}
 
 	private String jsList(final Collection<? extends Object> list) {
@@ -611,10 +627,9 @@ public final class WriteHtmlOverview implements IPostPrep {
 			}
 		} else {
 			c.p()
-					.clazz("nothing")
+					.clazz("info")
 					.text("There are no fields accessed concurrently with an empty lock set in this run.");
 		}
-
 	}
 
 	private void fieldLink(final Container c, final Field field) {

@@ -133,8 +133,7 @@ public class RegionModelRefactoring extends Refactoring {
 					.get(packageName);
 			final Map<String, List<RecommendedRegion>> targetFieldMap = targetFieldRegions
 					.get(packageName);
-			final PromisesAnnotationRewriter rewrite = new PromisesAnnotationRewriter(
-					info.getSelectedProject());
+			final PromisesAnnotationRewriter rewrite = new PromisesAnnotationRewriter();
 
 			for (final ICompilationUnit cu : fragment.getCompilationUnits()) {
 				final RegionModel model = new RegionModel();

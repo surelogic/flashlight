@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.StringTokenizer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
@@ -42,19 +43,44 @@ public class InstrumentArchive extends Task {
 	private File destFile, srcFile, runtime, dataDir, properties;
 	private Path extraLibs, sources;
 	private String collectionType;
-	
+
+	private final List<String> toIgnore;
+
+	public static final class Ignore {
+		String jar;
+		String jars;
+
+		public String getJar() {
+			return jar;
+		}
+
+		public void setJar(final String jar) {
+			this.jar = jar;
+		}
+
+		public String getJars() {
+			return jars;
+		}
+
+		public void setJars(final String jars) {
+			this.jars = jars;
+		}
+
+	}
+
 	public InstrumentArchive() {
 		i = new Instrument();
+		toIgnore = new ArrayList<String>();
 	}
 
 	public void setProperties(final File props) {
 		properties = props;
 	}
-	
+
 	public void setCollectionType(final String type) {
 		collectionType = type;
 	}
-	
+
 	public void setDestFile(final File destFile) {
 		this.destFile = destFile;
 	}
@@ -84,6 +110,20 @@ public class InstrumentArchive extends Task {
 	 */
 	public void setStore(final String className) {
 		i.setStore(className);
+	}
+
+	public void addConfiguredIgnore(final Ignore ignore) {
+		String jar = ignore.getJar();
+		if (jar != null) {
+			toIgnore.add(jar);
+		}
+		String jars = ignore.getJars();
+		if (jars != null) {
+			StringTokenizer tok = new StringTokenizer(jars, ",");
+			while (tok.hasMoreElements()) {
+				toIgnore.add(tok.nextToken());
+			}
+		}
 	}
 
 	public void addConfiguredBlacklist(final Blacklist blacklist) {
@@ -271,7 +311,11 @@ public class InstrumentArchive extends Task {
 
 		for (final File f : libDirSrc.listFiles()) {
 			final Jar j = new Jar(f, libDirDest);
-			i.addConfiguredJar(j);
+			if (toIgnore.contains(f.getName())) {
+				FileUtility.copy(f, new File(libDirDest, f.getName()));
+			} else {
+				i.addConfiguredJar(j);
+			}
 		}
 
 		i.execute();
@@ -324,13 +368,15 @@ public class InstrumentArchive extends Task {
 			final Properties properties = new Properties();
 			// TODO how to set other props like setting the collection type?
 			// include those that start with FL_?
-			
+
 			// insert a properties file?
-			if (this.properties != null && this.properties.exists() && this.properties.isFile()) {
+			if (this.properties != null && this.properties.exists()
+					&& this.properties.isFile()) {
 				properties.load(new FileReader(this.properties));
 			}
 			if (collectionType != null) {
-				properties.put(InstrumentationConstants.FL_COLLECTION_TYPE, collectionType);
+				properties.put(InstrumentationConstants.FL_COLLECTION_TYPE,
+						collectionType);
 			}
 			properties.put(InstrumentationConstants.FL_RUN_FOLDER,
 					dataDir.getAbsolutePath());
@@ -355,7 +401,8 @@ public class InstrumentArchive extends Task {
 
 			final File tmpSrc = getSrcDir();
 			final File tmpDest = getDestDir();
-			// TODO is there a good way to detect if the war is created incorrectly?
+			// TODO is there a good way to detect if the war is created
+			// incorrectly?
 			if (new File(tmpSrc, WEBINF).exists()) {
 				System.out.println("Instrumenting war");
 				instrumentWar(tmpSrc, tmpDest);
@@ -377,25 +424,28 @@ public class InstrumentArchive extends Task {
 	private File getDestDir() {
 		final String name = destFile.getName();
 		if (name.endsWith(".jar") || name.endsWith(".war")) {
-			System.out.println("Using tmp directory for archive");
+			log("Using tmp directory for archive");
 			return tmpDir();
-		} 
+		}
 		System.out.println("Assuming destination is a directory");
-		return destFile;		
+		return destFile;
 		/*
-		throw new BuildException(String.format(
-				"The destination '%s' must be a valid archive file or directory.", destFile));
-		*/
+		 * throw new BuildException(String.format(
+		 * "The destination '%s' must be a valid archive file or directory.",
+		 * destFile));
+		 */
 	}
-	
+
 	private File getSrcDir() {
 		if (!srcFile.exists()) {
-			throw new BuildException(String.format(
-					"The source '%s' must be a valid archive file or directory.", srcFile));
+			throw new BuildException(
+					String.format(
+							"The source '%s' must be a valid archive file or directory.",
+							srcFile));
 		}
 		final File tmpSrc;
 		if (srcFile.isFile()) { // Assume to be a zip file
-			System.out.println("Assuming source is a archive");
+			log("Assuming srcFile is an archive");
 			try {
 				final ZipFile src = new ZipFile(srcFile);
 				tmpSrc = tmpDir();
@@ -406,13 +456,14 @@ public class InstrumentArchive extends Task {
 						"The source file '%s' must be a valid archive file.",
 						srcFile), e);
 			}
-		}
-		else if (srcFile.isDirectory()) {
+		} else if (srcFile.isDirectory()) {
 			System.out.println("Using source as a directory");
 			tmpSrc = srcFile;
 		} else {
-			throw new BuildException(String.format(
-					"The source '%s' must be a valid archive file or directory.", srcFile));
+			throw new BuildException(
+					String.format(
+							"The source '%s' must be a valid archive file or directory.",
+							srcFile));
 		}
 		return tmpSrc;
 	}

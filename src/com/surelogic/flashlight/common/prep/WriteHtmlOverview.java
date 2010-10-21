@@ -11,12 +11,14 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
-import java.util.TreeSet;
 
 import com.surelogic.common.FileUtility;
 import com.surelogic.common.ImageWriter;
@@ -326,11 +328,53 @@ public final class WriteHtmlOverview implements IPostPrep {
 	 */
 	private static class EdgeEntry implements Comparable<EdgeEntry> {
 		final String from;
+		final String fromName;
 		final String to;
+		final String toName;
+		final Set<String> threads;
+		boolean bidirectional;
 
-		EdgeEntry(final String from, final String to) {
+		EdgeEntry(final String from, final String fromName, final String to,
+				final String toName, final Collection<String> threads) {
 			this.from = from;
+			this.fromName = fromName;
 			this.to = to;
+			this.toName = toName;
+			this.threads = new HashSet<String>(threads);
+		}
+
+		@SuppressWarnings("unchecked")
+		public EdgeEntry(final String from, final String to) {
+			this(from, null, to, null, Collections.EMPTY_LIST);
+		}
+
+		public String getFrom() {
+			return from;
+		}
+
+		public String getTo() {
+			return to;
+		}
+
+		public String getFromName() {
+			return fromName;
+		}
+
+		public String getToName() {
+			return toName;
+		}
+
+		public Set<String> getThreads() {
+			return threads;
+		}
+
+		public void makeBidirectional(final List<String> threads2) {
+			threads.addAll(threads2);
+			bidirectional = true;
+		}
+
+		public boolean isBidirectional() {
+			return bidirectional;
 		}
 
 		@Override
@@ -535,48 +579,45 @@ public final class WriteHtmlOverview implements IPostPrep {
 		writer.println("var deadlocks = {");
 		for (Iterator<Cycle> ci = cycles.iterator(); ci.hasNext();) {
 			Cycle c = ci.next();
-			TreeSet<EdgeEntry> edges = new TreeSet<EdgeEntry>();
-			TreeSet<EdgeEntry> completed = new TreeSet<EdgeEntry>();
+			Map<EdgeEntry, EdgeEntry> edges = new TreeMap<EdgeEntry, EdgeEntry>();
 			for (Edge e : c.getEdges()) {
-				edges.add(new EdgeEntry(e.getHeldId(), e.getAcquiredId()));
+				EdgeEntry reverse = new EdgeEntry(e.getAcquiredId(),
+						e.getHeldId());
+				if (edges.containsKey(reverse)) {
+					edges.get(reverse).makeBidirectional(e.getThreads());
+				} else {
+					EdgeEntry edge = new EdgeEntry(e.getHeldId(), e.getHeld(),
+							e.getAcquiredId(), e.getAcquired(), e.getThreads());
+					edges.put(edge, edge);
+				}
 			}
 			writer.printf("\tcycle%d : [", c.getNum());
 			String heldId = null;
 			boolean first = true;
-			for (Iterator<Edge> ei = c.getEdges().iterator(); ei.hasNext();) {
-				Edge e = ei.next();
-				EdgeEntry entry = new EdgeEntry(e.getAcquiredId(),
-						e.getHeldId());
-				String arrowType;
-				if (!e.getHeldId().equals(heldId)) {
+			for (Iterator<EdgeEntry> ei = edges.keySet().iterator(); ei
+					.hasNext();) {
+				EdgeEntry e = ei.next();
+				if (!e.getFrom().equals(heldId)) {
 					if (heldId != null) {
 						writer.println("]\n}, ");
 					}
-					heldId = e.getHeldId();
+					heldId = e.getFrom();
 					writer.println("{");
-					writer.printf("\t\t\"id\": \"%s\",\n", e.getHeld());
-					writer.printf("\t\t\"name\": \"%s\",\n", e.getHeld());
+					writer.printf("\t\t\"id\": \"%s\",\n", e.getFromName());
+					writer.printf("\t\t\"name\": \"%s\",\n", e.getFromName());
 					writer.print("\t\t\"adjacencies\": [");
 					first = true;
 				}
-				if (edges.contains(entry)) {
-					arrowType = "doubleArrow";
-					if (completed.contains(entry)) {
-						// We have already marked this edge on a previous node
-						continue;
-					}
-				} else {
-					arrowType = "arrow";
-				}
+				final String arrowType = e.isBidirectional() ? "doubleArrow"
+						: "arrow";
 				if (!first) {
 					writer.print(", ");
 				}
 				first = false;
 				writer.printf(
 						"{\"nodeTo\": \"%3$s\", \"data\": { \"$type\": \"%1$s\", \"$direction\": [\"%2$s\",\"%3$s\"], \"threads\": %4$s}}\n",
-						arrowType, e.getHeld(), e.getAcquired(),
+						arrowType, e.getFromName(), e.getToName(),
 						jsList(e.getThreads()));
-				completed.add(new EdgeEntry(e.getHeldId(), e.getAcquiredId()));
 			}
 			writer.println("]\n}]");
 			if (ci.hasNext()) {

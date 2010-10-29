@@ -104,7 +104,7 @@ public class SummaryInfo {
 					new StringResultHandler()).call();
 			String objectCount = q.prepared("SummaryInfo.objectCount",
 					new StringResultHandler()).call();
-			Site root = new Site("", "", "");
+			Site root = new Site("", "", "", 0, "");
 			process(q,
 					root,
 					q.prepared("CoverageInfo.fieldCoverage",
@@ -479,14 +479,19 @@ public class SummaryInfo {
 	static class Site implements Comparable<Site> {
 		private final String pakkage;
 		private final String clazz;
-		private final String loc;
+		private final String location;
+		private final int line;
+		private final String file;
 		private final Set<Long> threadsSeen;
 		private final Map<Site, Site> children;
 
-		public Site(final String pakkage, final String clazz, final String loc) {
+		public Site(final String pakkage, final String clazz,
+				final String location, final int line, final String file) {
 			this.pakkage = pakkage;
 			this.clazz = clazz;
-			this.loc = loc;
+			this.location = location;
+			this.line = line;
+			this.file = file;
 			threadsSeen = new HashSet<Long>();
 			children = new TreeMap<Site, Site>();
 		}
@@ -499,8 +504,16 @@ public class SummaryInfo {
 			return clazz;
 		}
 
-		public String getLoc() {
-			return loc;
+		public String getLocation() {
+			return location;
+		}
+
+		public int getLine() {
+			return line;
+		}
+
+		public String getFile() {
+			return file;
 		}
 
 		public Set<Long> getThreadsSeen() {
@@ -522,7 +535,8 @@ public class SummaryInfo {
 			threadsSeen.addAll(threads);
 			if (trace.hasNext()) {
 				Trace t = trace.next();
-				Site s = new Site(t.getPackage(), t.getClazz(), t.getLoc());
+				Site s = new Site(t.getPackage(), t.getClazz(), t.getLoc(),
+						t.getLine(), t.getFile());
 				Site child = children.get(s);
 				if (child == null) {
 					children.put(s, s);
@@ -535,7 +549,7 @@ public class SummaryInfo {
 		@Override
 		public String toString() {
 			return "Site [pakkage=" + pakkage + ", clazz=" + clazz + ", name="
-					+ loc + "]";
+					+ location + "]";
 		}
 
 		public int compareTo(final Site o) {
@@ -546,7 +560,7 @@ public class SummaryInfo {
 			if (cmp == 0) {
 				cmp = clazz.compareTo(o.clazz);
 				if (cmp == 0) {
-					cmp = loc.compareTo(o.loc);
+					cmp = location.compareTo(o.location);
 				}
 			}
 			return cmp;
@@ -557,7 +571,8 @@ public class SummaryInfo {
 			final int prime = 31;
 			int result = 1;
 			result = prime * result + (clazz == null ? 0 : clazz.hashCode());
-			result = prime * result + (loc == null ? 0 : loc.hashCode());
+			result = prime * result
+					+ (location == null ? 0 : location.hashCode());
 			result = prime * result
 					+ (pakkage == null ? 0 : pakkage.hashCode());
 			return result;
@@ -582,11 +597,11 @@ public class SummaryInfo {
 			} else if (!clazz.equals(other.clazz)) {
 				return false;
 			}
-			if (loc == null) {
-				if (other.loc != null) {
+			if (location == null) {
+				if (other.location != null) {
 					return false;
 				}
-			} else if (!loc.equals(other.loc)) {
+			} else if (!location.equals(other.location)) {
 				return false;
 			}
 			if (pakkage == null) {

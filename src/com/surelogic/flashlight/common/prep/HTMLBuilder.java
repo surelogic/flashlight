@@ -3,6 +3,8 @@ package com.surelogic.flashlight.common.prep;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.surelogic.common.xml.XMLUtil;
+
 /**
  * A simple builder for HTML pages.
  * 
@@ -45,7 +47,7 @@ public class HTMLBuilder {
 		}
 
 		public void display(final StringBuilder b, final int depth) {
-			b.append(text);
+			b.append(XMLUtil.escape(text));
 		}
 	}
 

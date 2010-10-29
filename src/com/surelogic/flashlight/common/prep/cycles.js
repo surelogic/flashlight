@@ -21,6 +21,13 @@ var fd, icicle, sb, tm, tl;
     animate = !(iStuff || !nativeCanvasSupport);
  })();
 
+function initOutline() {
+   $(".outline li").prepend("<img class='icon' alt='Icon'></img>");
+   $(".outline .icon").click(function() {
+                                $(this).parent().children('ul').toggle();
+                             });
+}
+
 // Edge type used to represent a bidirectional edge
 $jit.ForceDirected.Plot.EdgeTypes.implement(
    {
@@ -638,10 +645,13 @@ $(document).ready(
       $(".tab").hide();
       $("#main #bar a").click(function(event) {
           event.preventDefault();
+          $("#main #bar a").removeClass("selected");
+          $(this).addClass("selected");
     	  var div = $(this).attr("href");
     	  $(".tab").hide();
     	  $(div).fadeIn('slow');
       });
+      initOutline();
    });
 
 var resizeTimerID = null;

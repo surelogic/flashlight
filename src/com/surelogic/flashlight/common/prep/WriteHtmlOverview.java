@@ -90,11 +90,11 @@ public final class WriteHtmlOverview implements IPostPrep {
 
 			Container main = body.div().id("main");
 			Container sidebar = main.div().id("bar");
-			sidebar.h(2).a("#locks").text("Locks");
-			sidebar.h(2).a("#fields").text("Fields");
-			sidebar.h(2).a("#threads").text("Threads");
+			sidebar.a("#locks").h(2).text("Locks");
+			sidebar.a("#fields").h(2).text("Fields");
+			sidebar.a("#threads").h(2).text("Threads");
 			Container content = main.div().id("content");
-
+			main.div().clazz("clear");
 			Table runTable = content.table().id("run-table");
 			runTable.header().th("Vendor").th("Version").th("OS")
 					.th("Max Memory").th("Processors").th("Start Time");
@@ -206,13 +206,14 @@ public final class WriteHtmlOverview implements IPostPrep {
 			}
 
 			graphs.close();
+
 			final HtmlHandles html = f_runDescription.getRunDirectory()
 					.getHtmlHandles();
 			html.writeIndexHtml(builder.build());
 			writer.addImage("package.gif");
 			writer.addImage("class.gif");
-			writer.addImage("arrow_right.gif");
-			writer.addImage("arrow_down.gif");
+			writer.addImage("outline_right.gif");
+			writer.addImage("outline_down.gif");
 			writer.writeImages();
 		} finally {
 			mon.done();
@@ -286,9 +287,32 @@ public final class WriteHtmlOverview implements IPostPrep {
 
 	private void displayThreadCoverage(final Container threadDiv,
 			final Site threadCoverage) {
-		UL ul = threadDiv.ul();
-		for (Site child : threadCoverage.getChildren()) {
+		// The first node should be an anonymous root node, so we just do it's
+		// children
+		Set<Site> children = threadCoverage.getChildren();
+		if (children.isEmpty()) {
+			threadDiv.span().clazz("info")
+					.text("There is no coverage data for this run.");
+		} else {
+			UL list = threadDiv.ul();
+			for (Site child : children) {
+				displayThreadCoverageHelper(list, child);
+			}
+		}
+	}
 
+	private void displayThreadCoverageHelper(final UL list, final Site coverage) {
+		LI li = list.li();
+		li.text(coverage.getPackage() + ".");
+		li.span().clazz("emph")
+				.text(coverage.getClazz() + "." + coverage.getLocation());
+		Set<Site> children = coverage.getChildren();
+		if (children.isEmpty()) {
+			return;
+		}
+		UL ul = li.ul();
+		for (Site child : children) {
+			displayThreadCoverageHelper(ul, child);
 		}
 	}
 
@@ -350,10 +374,6 @@ public final class WriteHtmlOverview implements IPostPrep {
 
 		public String getFrom() {
 			return from;
-		}
-
-		public String getTo() {
-			return to;
 		}
 
 		public String getFromName() {
@@ -633,16 +653,17 @@ public final class WriteHtmlOverview implements IPostPrep {
 
 	private void displayLockSet(final SummaryInfo info, final Container c) {
 		UL packageList = c.ul();
+		packageList.clazz("outline");
 		Iterator<Field> fields = info.getEmptyLockSetFields().iterator();
 		if (fields.hasNext()) {
 			Field field = fields.next();
 			String pakkage = field.getPackage();
 			String clazz = field.getClazz();
 			LI packageLI = packageList.li();
-			packageLI.h(4).text(pakkage);
+			packageLI.clazz("emph").text(pakkage);
 			UL classList = packageLI.ul();
 			LI classLI = classList.li();
-			classLI.h(4).text(clazz);
+			classLI.clazz("emph").text(clazz);
 			UL fieldList = classLI.ul();
 			LI fieldLI = fieldList.li();
 			fieldLink(fieldLI, field);
@@ -652,15 +673,15 @@ public final class WriteHtmlOverview implements IPostPrep {
 					pakkage = field.getPackage();
 					clazz = field.getClazz();
 					packageLI = packageList.li();
-					packageLI.h(4).text(pakkage);
+					packageLI.clazz("emph").text(pakkage);
 					classList = packageLI.ul();
 					classLI = classList.li();
-					classLI.h(4).text(clazz);
+					classLI.clazz("emph").text(clazz);
 					fieldList = classLI.ul();
 				} else if (!clazz.equals(field.getClazz())) {
 					clazz = field.getClazz();
 					classLI = classList.li();
-					classLI.h(4).text(clazz);
+					classLI.clazz("emph").text(clazz);
 					fieldList = classLI.ul();
 				}
 				fieldLI = fieldList.li();

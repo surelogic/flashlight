@@ -247,23 +247,28 @@ public final class WriteHtmlOverview implements IPostPrep {
 					df.format(last)));
 			long duration = last.getTime() - first.getTime();
 			boolean hasOverviewBand = true;
+			int mainIntervalPixels = 100;
+			int overviewPixels = (int) Math.round(600 / (duration * .001 / 60));
 			String mainInterval = "SECOND";
 			String overviewInterval = "MINUTE";
 			if (duration < 1000) {
 				// Millisecond resolution
 				mainInterval = "MILLISECOND";
 				overviewInterval = "SECOND";
-			} else if (duration < 1000 * 15) {
+				overviewPixels = 600;
+			} else if (duration < 10000) {
 				// Second resolution
 				hasOverviewBand = false;
+				mainIntervalPixels = (int) (600 * 1000 / duration);
 			} else if (duration > 1000 * 60 * 30) {
 				mainInterval = "MINUTE";
 				overviewInterval = "HOUR";
+				overviewPixels = 100;
 			}
 			writer.printf(
-					"'needsOverview': %s, 'mainBandInterval': Timeline.DateTime.%s, 'overviewBandInterval': Timeline.DateTime.%s,\n",
+					"'needsOverview': %s, 'mainBandInterval': Timeline.DateTime.%s, 'mainBandIntervalPixels': %d, 'overviewBandInterval': Timeline.DateTime.%s, 'overviewBandIntervalPixels': %d,\n",
 					Boolean.toString(hasOverviewBand), mainInterval,
-					overviewInterval);
+					mainIntervalPixels, overviewInterval, overviewPixels);
 			writer.println("'dateTimeFormat': 'javascriptnative', ");
 			writer.println("'events': [");
 			for (SummaryInfo.Thread t : info.getThreads()) {

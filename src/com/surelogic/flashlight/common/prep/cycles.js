@@ -30,15 +30,18 @@ function initOutline() {
 
 function toggleThis() {
    var current = $(this).attr('src');
-   var toSet;
    if(current == O_RIGHT) {
-      toSet = O_DOWN;
-      $(this).parent().children('ul').show();
+      $(this).attr('src', O_DOWN);
+      var toShow = $(this).parent().children('ul');
+      var toHide = toShow.find('li > ul');
+      toShow.show();
+      toHide.hide();
+      toHide.parent().children('.icon').attr('src', O_RIGHT);
    } else {
-      toSet = O_RIGHT;
+      $(this).attr('src', O_RIGHT);
       $(this).parent().children('ul').hide();
    }
-   $(this).attr('src', toSet);
+
 }
 
 // Edge type used to represent a bidirectional edge

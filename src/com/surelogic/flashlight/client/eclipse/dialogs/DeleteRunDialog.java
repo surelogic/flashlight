@@ -21,65 +21,66 @@ import com.surelogic.flashlight.common.model.RunDescription;
  */
 public final class DeleteRunDialog extends Dialog {
 
-  private final String f_msg;
+	private final String f_msg;
 
-  private volatile boolean f_deleteRawFiles = true;
+	private volatile boolean f_deleteRawFiles = true;
 
-  private final boolean f_hasRawFiles;
+	private final boolean f_hasRawFiles;
 
-  public DeleteRunDialog(Shell parentShell, final RunDescription run,
-      final boolean hasRawFiles) {
-    super(parentShell);
-    setShellStyle(getShellStyle());
-    if (run == null)
-      throw new IllegalArgumentException(I18N.err(44, "run"));
-    f_msg = I18N.msg("flashlight.dialog.deleteRun.msg", run.getName(),
-        SLUtility.toStringHMS(run.getStartTimeOfRun()));
-    f_hasRawFiles = hasRawFiles;
-  }
+	public DeleteRunDialog(final Shell parentShell, final RunDescription run,
+			final boolean hasRawFiles) {
+		super(parentShell);
+		setShellStyle(getShellStyle());
+		if (run == null) {
+			throw new IllegalArgumentException(I18N.err(44, "run"));
+		}
+		f_msg = I18N.msg("flashlight.dialog.deleteRun.msg", run.getName(),
+				SLUtility.toStringHMS(run.getStartTimeOfRun()));
+		f_hasRawFiles = hasRawFiles;
+	}
 
-  @Override
-  protected Control createDialogArea(Composite parent) {
-    // GridData data;
+	@Override
+	protected Control createDialogArea(final Composite parent) {
+		// GridData data;
 
-    final Composite c = (Composite) super.createDialogArea(parent);
-    GridLayout gridLayout = new GridLayout();
-    gridLayout.numColumns = 2;
-    c.setLayout(gridLayout);
+		final Composite c = (Composite) super.createDialogArea(parent);
+		GridLayout gridLayout = new GridLayout();
+		gridLayout.numColumns = 2;
+		c.setLayout(gridLayout);
 
-    final Label l = new Label(c, SWT.NONE);
-    l.setImage(c.getDisplay().getSystemImage(SWT.ICON_WARNING));
+		final Label l = new Label(c, SWT.NONE);
+		l.setImage(c.getDisplay().getSystemImage(SWT.ICON_WARNING));
 
-    final Composite work = new Composite(c, SWT.NONE);
-    FillLayout fillLayout = new FillLayout(SWT.VERTICAL);
-    fillLayout.marginWidth = 20;
-    fillLayout.spacing = 20;
-    work.setLayout(fillLayout);
+		final Composite work = new Composite(c, SWT.NONE);
+		FillLayout fillLayout = new FillLayout(SWT.VERTICAL);
+		fillLayout.marginWidth = 20;
+		fillLayout.spacing = 20;
+		work.setLayout(fillLayout);
 
-    final Label msg = new Label(work, SWT.NONE);
-    msg.setText(f_msg);
-    if (f_hasRawFiles) {
-      final Button rawToo = new Button(work, SWT.CHECK);
-      rawToo.setText(I18N.msg("flashlight.dialog.deleteRun.raw.msg"));
-      rawToo.setSelection(f_deleteRawFiles);
-      rawToo.addListener(SWT.Selection, new Listener() {
-        public void handleEvent(Event event) {
-          f_deleteRawFiles = rawToo.getSelection();
-        }
-      });
-    }
+		final Label msg = new Label(work, SWT.NONE);
+		msg.setText(f_msg);
+		if (f_hasRawFiles) {
+			final Button rawToo = new Button(work, SWT.CHECK);
+			rawToo.setText(I18N.msg("flashlight.dialog.deleteRun.raw.msg"));
+			rawToo.setSelection(f_deleteRawFiles);
+			rawToo.addListener(SWT.Selection, new Listener() {
+				public void handleEvent(final Event event) {
+					f_deleteRawFiles = rawToo.getSelection();
+				}
+			});
+		}
 
-    c.pack();
-    return c;
-  }
+		c.pack();
+		return c;
+	}
 
-  @Override
-  protected void configureShell(Shell newShell) {
-    super.configureShell(newShell);
-    newShell.setText(I18N.msg("flashlight.dialog.deleteRun.title"));
-  }
+	@Override
+	protected void configureShell(final Shell newShell) {
+		super.configureShell(newShell);
+		newShell.setText(I18N.msg("flashlight.dialog.deleteRun.title"));
+	}
 
-  public boolean deleteRawDataFiles() {
-    return f_deleteRawFiles;
-  }
+	public boolean deleteRawDataFiles() {
+		return f_deleteRawFiles;
+	}
 }

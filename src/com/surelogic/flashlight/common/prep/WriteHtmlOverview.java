@@ -51,6 +51,10 @@ public final class WriteHtmlOverview implements IPostPrep {
 	private static final String LOCK_EDGE_QUERY = "c9453327-b892-4324-a6b8-2dceb32e1901";
 	private static final String STATIC_LOCK_FREQUENCY_QUERY = "6a39e6ca-29e9-4093-ba03-0e9bd9503a1a";
 	private static final String THREAD_BLOCKING_QUERY = "4e026769-1b0b-42bd-8893-f3b92add093f";
+
+	private static final String PACKAGE_IMG = "package.gif";
+	private static final String CLASS_IMG = "class.gif";
+
 	private final RunDescription f_runDescription;
 	private final ImageWriter writer;
 	private final File htmlDirectory;
@@ -164,11 +168,6 @@ public final class WriteHtmlOverview implements IPostPrep {
 			Container fieldDiv = content.div().id("fields").clazz("tab");
 			fieldDiv.h(2).text("Fields");
 			fieldDiv.h(3).text("Shared Fields With No Lock Set");
-			// FIXME take these out
-			// fieldDiv.div().id("packages");
-			// fieldDiv.div().id("packages1");
-			// fieldDiv.div().id("packages2");
-			// fieldDiv.div().id("packages3");
 			writeLockSet(graphs, info);
 			displayLockSet(info, fieldDiv);
 			Container threadDiv = content.div().id("threads").clazz("tab");
@@ -210,10 +209,11 @@ public final class WriteHtmlOverview implements IPostPrep {
 			final HtmlHandles html = f_runDescription.getRunDirectory()
 					.getHtmlHandles();
 			html.writeIndexHtml(builder.build());
-			writer.addImage("package.gif");
-			writer.addImage("class.gif");
-			writer.addImage("outline_right.gif");
-			writer.addImage("outline_down.gif");
+			writer.addImage(PACKAGE_IMG);
+			writer.addImage(CLASS_IMG);
+			writer.addImage("outline_right.png");
+			writer.addImage("outline_down.png");
+			writer.addImage("flashlight_overview_banner.png");
 			writer.writeImages();
 		} finally {
 			mon.done();
@@ -234,6 +234,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 				last = stop;
 			}
 		}
+
 		if (first == null) {
 			writer.println("var timeline_data = 'none'");
 		} else {
@@ -252,7 +253,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 				// Millisecond resolution
 				mainInterval = "MILLISECOND";
 				overviewInterval = "SECOND";
-			} else if (duration < 1000 * 45) {
+			} else if (duration < 1000 * 15) {
 				// Second resolution
 				hasOverviewBand = false;
 			} else if (duration > 1000 * 60 * 30) {
@@ -295,6 +296,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 					.text("There is no coverage data for this run.");
 		} else {
 			UL list = threadDiv.ul();
+			list.clazz("outline").clazz("collapsed");
 			for (Site child : children) {
 				displayThreadCoverageHelper(list, child);
 			}
@@ -660,10 +662,12 @@ public final class WriteHtmlOverview implements IPostPrep {
 			String pakkage = field.getPackage();
 			String clazz = field.getClazz();
 			LI packageLI = packageList.li();
-			packageLI.clazz("emph").text(pakkage);
+			packageLI.img(writer.imageLocation(PACKAGE_IMG)).alt("package");
+			packageLI.span().clazz("emph").text(pakkage);
 			UL classList = packageLI.ul();
 			LI classLI = classList.li();
-			classLI.clazz("emph").text(clazz);
+			classLI.img(writer.imageLocation(CLASS_IMG)).alt("class");
+			classLI.span().clazz("emph").text(clazz);
 			UL fieldList = classLI.ul();
 			LI fieldLI = fieldList.li();
 			fieldLink(fieldLI, field);
@@ -673,15 +677,19 @@ public final class WriteHtmlOverview implements IPostPrep {
 					pakkage = field.getPackage();
 					clazz = field.getClazz();
 					packageLI = packageList.li();
-					packageLI.clazz("emph").text(pakkage);
+					packageLI.img(writer.imageLocation(PACKAGE_IMG)).alt(
+							"package");
+					packageLI.span().clazz("emph").text(pakkage);
 					classList = packageLI.ul();
 					classLI = classList.li();
-					classLI.clazz("emph").text(clazz);
+					classLI.img(writer.imageLocation(CLASS_IMG)).alt("class");
+					classLI.span().clazz("emph").text(clazz);
 					fieldList = classLI.ul();
 				} else if (!clazz.equals(field.getClazz())) {
 					clazz = field.getClazz();
 					classLI = classList.li();
-					classLI.clazz("emph").text(clazz);
+					classLI.img(writer.imageLocation(CLASS_IMG)).alt("class");
+					classLI.span().clazz("emph").text(clazz);
 					fieldList = classLI.ul();
 				}
 				fieldLI = fieldList.li();
@@ -791,7 +799,6 @@ public final class WriteHtmlOverview implements IPostPrep {
 		}
 		tlZip.delete();
 		head.javaScript("timeline_2.3.0/timeline_js/timeline-api.js?bundle=true");
-		// head.javaScript("http://static.simile.mit.edu/timeline/api-2.3.0/timeline-api.js?bundle=true");
 	}
 
 }

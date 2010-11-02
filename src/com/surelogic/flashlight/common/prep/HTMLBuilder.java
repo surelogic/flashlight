@@ -1,6 +1,7 @@
 package com.surelogic.flashlight.common.prep;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import com.surelogic.common.xml.XMLUtil;
@@ -182,7 +183,7 @@ public class HTMLBuilder {
 
 	abstract static class Container {
 		private final List<BodyNode> nodes = new ArrayList<BodyNode>();
-		private String clazz;
+		private final List<String> classes = new ArrayList<String>();
 		private String id;
 
 		abstract String getContainerName();
@@ -192,7 +193,7 @@ public class HTMLBuilder {
 		}
 
 		public Container clazz(final String clazz) {
-			this.clazz = clazz;
+			classes.add(clazz);
 			return this;
 		}
 
@@ -203,7 +204,7 @@ public class HTMLBuilder {
 
 		public void display(final StringBuilder b, final int depth) {
 			nltabs(b, depth);
-			tag(b, getContainerName(), clazz, id, additionalAttributes());
+			tag(b, getContainerName(), classes, id, additionalAttributes());
 			for (BodyNode n : nodes) {
 				n.display(b, depth + 1);
 			}
@@ -217,6 +218,10 @@ public class HTMLBuilder {
 
 		public H h(final int level) {
 			return add(new H(level));
+		}
+
+		public IMG img(final String src) {
+			return add(new IMG(src));
 		}
 
 		public OL ol() {
@@ -283,12 +288,12 @@ public class HTMLBuilder {
 	public abstract static class HTMLList {
 		abstract String getListName();
 
-		private String clazz;
+		private final List<String> classes = new ArrayList<String>();
 		private String id;
 		private final List<LI> items = new ArrayList<LI>();
 
 		public HTMLList clazz(final String clazz) {
-			this.clazz = clazz;
+			classes.add(clazz);
 			return this;
 		}
 
@@ -299,7 +304,7 @@ public class HTMLBuilder {
 
 		public void display(final StringBuilder b, final int depth) {
 			nltabs(b, depth);
-			tag(b, getListName(), clazz, id, null);
+			tag(b, getListName(), classes, id, null);
 			for (LI item : items) {
 				item.display(b, depth + 1);
 			}
@@ -350,15 +355,35 @@ public class HTMLBuilder {
 
 	}
 
+	static class IMG implements BodyNode {
+		private final String src;
+		private String alt;
+
+		public IMG(final String src) {
+			this.src = src;
+		}
+
+		public IMG alt(final String altText) {
+			this.alt = altText;
+			return this;
+		}
+
+		public void display(final StringBuilder b, final int depth) {
+			nltabs(b, depth);
+			b.append(String.format("<img src=\"%s\" alt=\"%s\" />", src, alt));
+		}
+
+	}
+
 	static class Table implements BodyNode {
-		private String clazz;
+		private final List<String> classes = new ArrayList<String>();
 		private String id;
 		private Row header;
 		private final List<Row> rows = new ArrayList<Row>();;
 		private Row footer;
 
 		public Table clazz(final String clazz) {
-			this.clazz = clazz;
+			classes.add(clazz);
 			return this;
 		}
 
@@ -385,7 +410,7 @@ public class HTMLBuilder {
 
 		public void display(final StringBuilder b, final int depth) {
 			nltabs(b, depth);
-			tag(b, "table", clazz, id, null);
+			tag(b, "table", classes, id, null);
 			if (header != null) {
 				nltabs(b, depth + 1);
 				b.append("<thead>");
@@ -512,12 +537,18 @@ public class HTMLBuilder {
 	}
 
 	private static void tag(final StringBuilder b, final String name,
-			final String clazz, final String id, final String attrs) {
+			final List<String> classes, final String id, final String attrs) {
 		b.append('<');
 		b.append(name);
-		if (clazz != null) {
+		if (!classes.isEmpty()) {
 			b.append(" class=\"");
-			b.append(clazz);
+			for (Iterator<String> iter = classes.iterator(); iter.hasNext();) {
+				String clazz = iter.next();
+				b.append(clazz);
+				if (iter.hasNext()) {
+					b.append(' ');
+				}
+			}
 			b.append("\"");
 		}
 		if (id != null) {

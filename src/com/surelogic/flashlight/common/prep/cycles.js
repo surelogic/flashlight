@@ -3,7 +3,8 @@ var ACTIVE_COL = '0000FF';
 var INACTIVE_COL = 'CCCCCC';
 var ACTIVE_WIDTH = 3;
 var INACTIVE_WIDTH = 1;
-
+var O_RIGHT = 'image_files/outline_right.png';
+var O_DOWN = 'image_files/outline_down.png';
 var fd, icicle, sb, tm, tl;
 
 (function() {
@@ -22,10 +23,22 @@ var fd, icicle, sb, tm, tl;
  })();
 
 function initOutline() {
-   $(".outline li").prepend("<img class='icon' alt='Icon'></img>");
-   $(".outline .icon").click(function() {
-                                $(this).parent().children('ul').toggle();
-                             });
+   $(".outline li:has(ul)").prepend("<img class='icon' alt='Expand' src='" + O_DOWN + "'></img>");
+   $(".outline .icon").click(toggleThis);
+   $(".outline.collapsed > li > .icon").each(toggleThis);
+}
+
+function toggleThis() {
+   var current = $(this).attr('src');
+   var toSet;
+   if(current == O_RIGHT) {
+      toSet = O_DOWN;
+      $(this).parent().children('ul').show();
+   } else {
+      toSet = O_RIGHT;
+      $(this).parent().children('ul').hide();
+   }
+   $(this).attr('src', toSet);
 }
 
 // Edge type used to represent a bidirectional edge
@@ -585,7 +598,7 @@ function loadTimeline() {
           Timeline.createBandInfo({
             width:          40, //"70%", // set to a minimum, autoWidth will then adjust
             intervalUnit:   timeline_data.mainBandInterval, // Timeline.DateTime.SECOND,
-            intervalPixels: 200,
+            intervalPixels: timeline_data.mainBandIntervalPixels,
             eventSource:    eventSource,
             date:           d,
             theme:          theme1,
@@ -594,7 +607,7 @@ function loadTimeline() {
           Timeline.createBandInfo({
             width:          40, //"30%", // set to a minimum, autoWidth will then adjust
             intervalUnit:   timeline_data.overviewBandInterval, // Timeline.DateTime.MINUTE,
-            intervalPixels: 200,
+            intervalPixels: timeline_data.overviewBandIntervalPixels,
             eventSource:    eventSource,
             date:           d,
             theme:          theme1,
@@ -608,7 +621,7 @@ function loadTimeline() {
           Timeline.createBandInfo({
             width:          40, //"70%", // set to a minimum, autoWidth will then adjust
             intervalUnit:   timeline_data.mainBandInterval, // Timeline.DateTime.SECOND,
-            intervalPixels: 200,
+            intervalPixels: timeline_data.mainBandIntervalPixels,
             eventSource:    eventSource,
             date:           d,
             theme:          theme1,

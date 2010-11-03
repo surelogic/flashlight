@@ -145,7 +145,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 					}
 				}
 				if (locks.size() > TABLE_LIMIT) {
-					link(lockContentionDiv,
+					link(lockTable.row().td().colspan(4),
 							String.format("%d more results.", locks.size()
 									- TABLE_LIMIT), LOCK_CONTENTION_QUERY);
 				}
@@ -203,7 +203,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 				}
 			}
 			if (threadCount > TABLE_LIMIT) {
-				link(threadDiv,
+				link(threadTable.row().td().colspan(2),
 						String.format("%d more results.", threadCount
 								- TABLE_LIMIT), THREAD_BLOCKING_QUERY);
 			}

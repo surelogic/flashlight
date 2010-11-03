@@ -485,11 +485,25 @@ public class HTMLBuilder {
 
 	static class TD extends Container implements Col {
 
+		private int colspan;
+
 		@Override
 		String getContainerName() {
 			return "td";
 		}
 
+		TD colspan(final int num) {
+			this.colspan = num;
+			return this;
+		}
+
+		@Override
+		String additionalAttributes() {
+			if (colspan > 0) {
+				return String.format("colspan=%d", colspan);
+			}
+			return null;
+		}
 	}
 
 	static class TH extends Container implements Col {

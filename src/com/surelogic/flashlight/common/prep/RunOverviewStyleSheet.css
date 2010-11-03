@@ -8,19 +8,56 @@ html {
 }
 
 body {
- font-family: sans-serif; font-size: 9pt;
+ font-family: Helvetica,Verdana,Arial,sans-serif; 
+ font-size: 10pt;
  background: url('image_files/flashlight_overview_banner.png') repeat-y 0 1.67em;
  background-color: #E6DDD5;
 }
 
 
-h1, h2 {
- font-size: 1.34em;
- margin: 0.33em 0px;
+h1 {
+ font-size: 14pt;
+ margin: 4px 0px;
 }
 
-h3, h4, h5 {
- margin: 0px 0px;
+h2 {
+ font-size: 12pt;
+ margin: 4px 0px;
+}
+
+h3 {
+ font-size: 11pt;
+}
+
+table {
+ border-spacing: 0;
+ border-bottom: 1px solid #D3D3D3;
+}
+
+thead tr {
+ background-color: #7096B3;
+ color: white;
+ text-align: left;
+}
+
+thead th {
+ border-collapse: collapse;
+ font-size: 11pt;
+}
+
+tbody td {
+ border-collapse: collapse;
+ border-left: 1px solid #D3D3D3;
+ border-right: 1px solid #D3D3D3;
+ empty-cells: show;
+}
+
+th,td {
+ padding: 2px 5px;
+}
+
+ul {
+    padding-left: 10px;
 }
 
 .info {
@@ -30,7 +67,8 @@ h3, h4, h5 {
 }
 
 #header {
- margin-left: 108px
+ margin-left: 100px;
+ padding-left: 4px;
 }
 
 #bar {
@@ -80,10 +118,6 @@ h3, h4, h5 {
 	margin: 0.33em 0px;
 }
 
-ul {
-    padding-left: 10px;
-}
-
 #deadlock-list li {
    display: inline;
    color: #005596;
@@ -94,6 +128,10 @@ ul {
 
 .clear {
    clear: both;
+}
+
+#deadlock-threads {
+  vertical-align: middle;
 }
 
 .deadlockThread {

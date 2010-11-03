@@ -29,6 +29,7 @@ import com.surelogic.flashlight.common.files.HtmlHandles;
 import com.surelogic.flashlight.common.model.RunDescription;
 import com.surelogic.flashlight.common.prep.HTMLBuilder.Body;
 import com.surelogic.flashlight.common.prep.HTMLBuilder.Container;
+import com.surelogic.flashlight.common.prep.HTMLBuilder.Div;
 import com.surelogic.flashlight.common.prep.HTMLBuilder.HTMLList;
 import com.surelogic.flashlight.common.prep.HTMLBuilder.Head;
 import com.surelogic.flashlight.common.prep.HTMLBuilder.LI;
@@ -118,14 +119,16 @@ public final class WriteHtmlOverview implements IPostPrep {
 			Container lockDiv = content.div().id("locks").clazz("tab");
 
 			lockDiv.h(2).text("Locks");
-			lockDiv.h(3).text("Lock Contention");
+			Div lockContentionDiv = lockDiv.div();
+			lockContentionDiv.h(3).text("Lock Contention");
 			List<SummaryInfo.Lock> locks = info.getLocks();
 			if (locks.isEmpty()) {
-				lockDiv.p()
+				lockContentionDiv
+						.p()
 						.clazz("info")
 						.text("No locks were detected in this run of the program.");
 			} else {
-				Table lockTable = lockDiv.table();
+				Table lockTable = lockContentionDiv.table();
 				lockTable.header().th("Lock").th("Times Acquired")
 						.th("Total Block Time").th("Average Block Time");
 
@@ -142,7 +145,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 					}
 				}
 				if (locks.size() > TABLE_LIMIT) {
-					link(lockDiv,
+					link(lockContentionDiv,
 							String.format("%d more results.", locks.size()
 									- TABLE_LIMIT), LOCK_CONTENTION_QUERY);
 				}
@@ -167,9 +170,10 @@ public final class WriteHtmlOverview implements IPostPrep {
 			}
 			Container fieldDiv = content.div().id("fields").clazz("tab");
 			fieldDiv.h(2).text("Fields");
-			fieldDiv.h(3).text("Shared Fields With No Lock Set");
+			Div lockSetDiv = fieldDiv.div();
+			lockSetDiv.h(3).text("Shared Fields With No Lock Set");
 			writeLockSet(graphs, info);
-			displayLockSet(info, fieldDiv);
+			displayLockSet(info, lockSetDiv);
 			Container threadDiv = content.div().id("threads").clazz("tab");
 			threadDiv.h(2).text("Threads");
 

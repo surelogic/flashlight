@@ -101,8 +101,8 @@ public class RecommendedRegion {
 	}
 
 	/**
-	 * Get the set of methods that are use this region, but don't ensure the
-	 * needed locks are acquired themselves.
+	 * Get the set of methods that use this region, but don't ensure the needed
+	 * locks are acquired themselves.
 	 * 
 	 * @return
 	 */

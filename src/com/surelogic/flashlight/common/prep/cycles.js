@@ -5,6 +5,7 @@ var ACTIVE_WIDTH = 3;
 var INACTIVE_WIDTH = 1;
 var O_RIGHT = 'image_files/outline_right.png';
 var O_DOWN = 'image_files/outline_down.png';
+var O_FILLER = 'image_files/outline_filler.png';
 var fd, icicle, sb, tm, tl;
 
 (function() {
@@ -24,6 +25,7 @@ var fd, icicle, sb, tm, tl;
 
 function initOutline() {
    $(".outline li:has(ul)").prepend("<img class='icon' alt='Expand' src='" + O_DOWN + "'></img>");
+   $(".outline li:not(:has(ul))").prepend("<img class='filler' src='" + O_FILLER+ "'></img>");
    $(".outline .icon").click(toggleThis);
    $(".outline.collapsed > li > .icon").each(toggleThis);
 }

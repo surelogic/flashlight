@@ -213,11 +213,13 @@ public final class WriteHtmlOverview implements IPostPrep {
 			final HtmlHandles html = f_runDescription.getRunDirectory()
 					.getHtmlHandles();
 			html.writeIndexHtml(builder.build());
-			writer.addImage(PACKAGE_IMG);
 			writer.addImage(CLASS_IMG);
-			writer.addImage("outline_right.png");
-			writer.addImage("outline_down.png");
+			writer.addImage(PACKAGE_IMG);
 			writer.addImage("flashlight_overview_banner.png");
+			writer.addImage("outline_down.png");
+			writer.addImage("outline_filler.png");
+			writer.addImage("outline_right.png");
+
 			writer.writeImages();
 		} finally {
 			mon.done();

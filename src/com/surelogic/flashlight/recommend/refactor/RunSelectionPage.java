@@ -89,16 +89,18 @@ public class RunSelectionPage extends UserInputWizardPage {
 					boolean noneSelected = true;
 					final String runName = run.getName();
 					final int idx = runName.lastIndexOf('.');
-					final String runPackage = runName.substring(0, idx);
-					final String runClass = runName.substring(idx + 1);
-					if (JDTUtility.findIType(project, runPackage, runClass) != null) {
-						final TableItem item = new TableItem(f_runTable,
-								SWT.NONE);
-						item.setText(run.getName());
-						item.setData(run);
-						if (noneSelected) {
-							noneSelected = false;
-							f_runTable.setSelection(item);
+					if (idx > 0) {
+						final String runPackage = runName.substring(0, idx);
+						final String runClass = runName.substring(idx + 1);
+						if (JDTUtility.findIType(project, runPackage, runClass) != null) {
+							final TableItem item = new TableItem(f_runTable,
+									SWT.NONE);
+							item.setText(run.getName());
+							item.setData(run);
+							if (noneSelected) {
+								noneSelected = false;
+								f_runTable.setSelection(item);
+							}
 						}
 					}
 				}

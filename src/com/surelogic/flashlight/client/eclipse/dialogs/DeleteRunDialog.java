@@ -4,12 +4,9 @@ import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 
 import com.surelogic.common.SLUtility;
@@ -23,20 +20,20 @@ public final class DeleteRunDialog extends Dialog {
 
 	private final String f_msg;
 
-	private volatile boolean f_deleteRawFiles = true;
-
-	private final boolean f_hasRawFiles;
-
 	public DeleteRunDialog(final Shell parentShell, final RunDescription run,
-			final boolean hasRawFiles) {
+			final boolean hasMultipleDeletions) {
 		super(parentShell);
 		setShellStyle(getShellStyle());
 		if (run == null) {
 			throw new IllegalArgumentException(I18N.err(44, "run"));
 		}
-		f_msg = I18N.msg("flashlight.dialog.deleteRun.msg", run.getName(),
-				SLUtility.toStringHMS(run.getStartTimeOfRun()));
-		f_hasRawFiles = hasRawFiles;
+		if (hasMultipleDeletions) {
+			f_msg = I18N.msg("flashlight.dialog.deleteRun.multi.msg");
+		} else {
+			f_msg = I18N.msg("flashlight.dialog.deleteRun.msg", run.getName(),
+					SLUtility.toStringHMS(run.getStartTimeOfRun()));
+		}
+
 	}
 
 	@Override
@@ -59,16 +56,6 @@ public final class DeleteRunDialog extends Dialog {
 
 		final Label msg = new Label(work, SWT.NONE);
 		msg.setText(f_msg);
-		if (f_hasRawFiles) {
-			final Button rawToo = new Button(work, SWT.CHECK);
-			rawToo.setText(I18N.msg("flashlight.dialog.deleteRun.raw.msg"));
-			rawToo.setSelection(f_deleteRawFiles);
-			rawToo.addListener(SWT.Selection, new Listener() {
-				public void handleEvent(final Event event) {
-					f_deleteRawFiles = rawToo.getSelection();
-				}
-			});
-		}
 
 		c.pack();
 		return c;
@@ -80,7 +67,4 @@ public final class DeleteRunDialog extends Dialog {
 		newShell.setText(I18N.msg("flashlight.dialog.deleteRun.title"));
 	}
 
-	public boolean deleteRawDataFiles() {
-		return f_deleteRawFiles;
-	}
 }

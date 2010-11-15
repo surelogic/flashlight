@@ -292,27 +292,21 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 			final ArrayList<SLJob> jobs = new ArrayList<SLJob>();
 			final ArrayList<String> keys = new ArrayList<String>();
 			final RunDescription[] selected = getSelectedRunDescriptions();
-			for (final RunDescription description : selected) {
-				if (description != null) {
+			if (selected.length > 0) {
+				final DeleteRunDialog d = new DeleteRunDialog(
+						f_table.getShell(), selected[0], selected.length > 1);
+				d.open();
+				if (Window.CANCEL == d.getReturnCode()) {
+					return;
+				}
+				for (final RunDescription description : selected) {
 					final RawFileHandles handles = description
 							.getRawFileHandles();
-
-					final boolean hasRawFiles = handles != null;
-
-					final DeleteRunDialog d = new DeleteRunDialog(
-							f_table.getShell(), description, hasRawFiles);
-					d.open();
-					if (Window.CANCEL == d.getReturnCode()) {
-						return;
-					}
-
-					final boolean deleteRaw = hasRawFiles
-							&& d.deleteRawDataFiles();
 					if (description.isPrepared()) {
 						jobs.add(new UnPrepSLJob(description, AdHocDataSource
 								.getManager()));
 					}
-					if (deleteRaw) {
+					if (handles != null) {
 						final File dataDir = PreferenceConstants
 								.getFlashlightDataDirectory();
 						jobs.add(new DeleteRawFilesSLJob(dataDir, description));

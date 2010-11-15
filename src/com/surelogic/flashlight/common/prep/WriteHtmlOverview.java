@@ -52,7 +52,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 	private static final String LOCK_EDGE_QUERY = "c9453327-b892-4324-a6b8-2dceb32e1901";
 	private static final String STATIC_LOCK_FREQUENCY_QUERY = "6a39e6ca-29e9-4093-ba03-0e9bd9503a1a";
 	private static final String THREAD_BLOCKING_QUERY = "4e026769-1b0b-42bd-8893-f3b92add093f";
-
+	private static final String LINE_OF_CODE_QUERY = "bd88cc1d-b606-463d-af27-b71c66ede24e";
 	private static final String PACKAGE_IMG = "package.gif";
 	private static final String CLASS_IMG = "class.gif";
 
@@ -317,10 +317,15 @@ public final class WriteHtmlOverview implements IPostPrep {
 	private void displayThreadCoverageHelper(final UL list, final Site coverage) {
 		LI li = list.li();
 		li.text(coverage.getPackage() + ".");
-		li.span()
-				.clazz("emph")
-				.text(coverage.getClazz() + "." + coverage.getLocation() + ":"
-						+ coverage.getLine());
+		li.span().clazz("emph")
+				.text(coverage.getClazz() + "." + coverage.getLocation() + ":");
+		String line = Integer.toString(coverage.getLine());
+		link(li, line, LINE_OF_CODE_QUERY, "Package", coverage.getPackage(),
+				"Class", coverage.getClazz(), "Line", line);
+		li.a(coverage.getPackage() + "." + coverage.getClazz() + "."
+				+ coverage.getLocation() + ":" + coverage.getLine()).text(
+				Integer.toString(coverage.getLine()));
+
 		Set<Site> children = coverage.getChildren();
 		if (children.isEmpty()) {
 			return;

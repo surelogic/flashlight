@@ -317,15 +317,12 @@ public final class WriteHtmlOverview implements IPostPrep {
 	private void displayThreadCoverageHelper(final UL list, final Site coverage) {
 		LI li = list.li();
 		li.text(coverage.getPackage() + ".");
-		li.span().clazz("emph")
-				.text(coverage.getClazz() + "." + coverage.getLocation() + ":");
+		Container emph = li.span().clazz("emph");
+		emph.text(coverage.getClazz() + ".");
 		String line = Integer.toString(coverage.getLine());
-		link(li, line, LINE_OF_CODE_QUERY, "Package", coverage.getPackage(),
-				"Class", coverage.getClazz(), "Line", line);
-		li.a(coverage.getPackage() + "." + coverage.getClazz() + "."
-				+ coverage.getLocation() + ":" + coverage.getLine()).text(
-				Integer.toString(coverage.getLine()));
-
+		link(emph, coverage.getLocation(), LINE_OF_CODE_QUERY, "Package",
+				coverage.getPackage(), "Class", coverage.getClazz(), "Method",
+				coverage.getLocation(), "Line", line);
 		Set<Site> children = coverage.getChildren();
 		if (children.isEmpty()) {
 			return;

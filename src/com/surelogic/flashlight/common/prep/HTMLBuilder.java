@@ -58,11 +58,9 @@ public class HTMLBuilder {
 
 		public void display(final StringBuilder b, final int depth) {
 			b.append("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">");
-			nltabs(b, depth);
 			b.append("<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\" lang=\"en\">");
 			head.display(b, depth + 1);
 			body.display(b, depth + 1);
-			nltabs(b, depth);
 			b.append("</html>");
 		}
 
@@ -112,9 +110,7 @@ public class HTMLBuilder {
 		}
 
 		public void display(final StringBuilder b, final int depth) {
-			nltabs(b, depth);
 			b.append("<head>");
-			nltabs(b, depth + 1);
 			b.append(String.format("<title>%s</title>", title));
 			for (Link l : links) {
 				l.display(b, depth + 1);
@@ -122,7 +118,6 @@ public class HTMLBuilder {
 			for (Script s : scripts) {
 				s.display(b, depth + 1);
 			}
-			nltabs(b, depth);
 			b.append("</head>");
 		}
 
@@ -140,7 +135,6 @@ public class HTMLBuilder {
 		}
 
 		public void display(final StringBuilder b, final int depth) {
-			nltabs(b, depth);
 			b.append(String.format(
 					"<link rel=\"%s\" type=\"%s\" href=\"%s\" />", rel, type,
 					href));
@@ -167,7 +161,6 @@ public class HTMLBuilder {
 		}
 
 		public void display(final StringBuilder b, final int depth) {
-			nltabs(b, depth);
 			if (ieOnly) {
 				b.append("<!--[if IE]>");
 			}
@@ -203,12 +196,10 @@ public class HTMLBuilder {
 		}
 
 		public void display(final StringBuilder b, final int depth) {
-			nltabs(b, depth);
 			tag(b, getContainerName(), classes, id, additionalAttributes());
 			for (BodyNode n : nodes) {
 				n.display(b, depth + 1);
 			}
-			nltabs(b, depth);
 			b.append(String.format("</%s>", getContainerName()));
 		}
 
@@ -303,12 +294,10 @@ public class HTMLBuilder {
 		}
 
 		public void display(final StringBuilder b, final int depth) {
-			nltabs(b, depth);
 			tag(b, getListName(), classes, id, null);
 			for (LI item : items) {
 				item.display(b, depth + 1);
 			}
-			nltabs(b, depth);
 			b.append(String.format("</%s>", getListName()));
 		}
 
@@ -369,7 +358,6 @@ public class HTMLBuilder {
 		}
 
 		public void display(final StringBuilder b, final int depth) {
-			nltabs(b, depth);
 			b.append(String.format("<img src=\"%s\" alt=\"%s\" />", src, alt));
 		}
 
@@ -409,30 +397,22 @@ public class HTMLBuilder {
 		}
 
 		public void display(final StringBuilder b, final int depth) {
-			nltabs(b, depth);
 			tag(b, "table", classes, id, null);
 			if (header != null) {
-				nltabs(b, depth + 1);
 				b.append("<thead>");
 				header.display(b, depth + 2);
-				nltabs(b, depth + 1);
 				b.append("</thead>");
 			}
-			nltabs(b, depth + 1);
 			b.append("<tbody>");
 			for (Row r : rows) {
 				r.display(b, depth + 2);
 			}
-			nltabs(b, depth + 1);
 			b.append("</tbody>");
 			if (footer != null) {
-				nltabs(b, depth + 1);
 				b.append("<thead>");
 				footer.display(b, depth + 2);
-				nltabs(b, depth + 1);
 				b.append("</thead>");
 			}
-			nltabs(b, depth);
 			b.append("</table>");
 		}
 
@@ -468,12 +448,10 @@ public class HTMLBuilder {
 		}
 
 		public void display(final StringBuilder b, final int depth) {
-			nltabs(b, depth);
 			b.append("<tr>");
 			for (Col c : cols) {
 				c.display(b, depth + 2);
 			}
-			nltabs(b, depth);
 			b.append("</tr>");
 		}
 
@@ -541,13 +519,6 @@ public class HTMLBuilder {
 			return "p";
 		}
 
-	}
-
-	private static void nltabs(final StringBuilder b, final int depth) {
-		b.append('\n');
-		for (int i = 0; i < depth; i++) {
-			b.append('\t');
-		}
 	}
 
 	private static void tag(final StringBuilder b, final String name,

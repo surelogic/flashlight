@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 import com.surelogic._flashlight.trace.TraceNode;
 
@@ -19,13 +21,14 @@ final class OutputStrategyXML extends EventVisitor {
 
 	private static void addProperty(final String key, final StringBuilder b) {
 		String prop = System.getProperty(key);
-		if (prop == null)
+		if (prop == null) {
 			prop = "UNKNOWN";
+		}
 		Entities.addAttribute(key.replaceAll("\\.", "-"), prop, b);
 	}
 
-	public static void outputHeader(final PrintWriter out, Time time,
-			String version) {
+	public static void outputHeader(final PrintWriter out, final Time time,
+			final String version) {
 		assert out != null;
 		out.println("<?xml version='1.0' encoding='" + Store.ENCODING
 				+ "' standalone='yes'?>");
@@ -37,6 +40,12 @@ final class OutputStrategyXML extends EventVisitor {
 		out.println(b.toString());
 		b = new StringBuilder();
 		b.append("  <environment");
+		try {
+			Entities.addAttribute("hostname", InetAddress.getLocalHost()
+					.getHostName(), b);
+		} catch (UnknownHostException e) {
+			Entities.addAttribute("hostname", "unknown", b);
+		}
 		addProperty("user.name", b);
 		addProperty("java.version", b);
 		addProperty("java.vendor", b);
@@ -57,13 +66,13 @@ final class OutputStrategyXML extends EventVisitor {
 	}
 
 	static final Factory factory = new Factory() {
-		public EventVisitor create(OutputStream stream, String encoding,
-				Time time) throws IOException {
+		public EventVisitor create(final OutputStream stream,
+				final String encoding, final Time time) throws IOException {
 			return new OutputStrategyXML(stream, encoding);
 		}
 	};
 
-	OutputStrategyXML(final OutputStream stream, String encoding)
+	OutputStrategyXML(final OutputStream stream, final String encoding)
 			throws IOException {
 		assert stream != null;
 
@@ -73,77 +82,77 @@ final class OutputStrategyXML extends EventVisitor {
 	}
 
 	@Override
-	void visit(AfterIntrinsicLockAcquisition e) {
+	void visit(final AfterIntrinsicLockAcquisition e) {
 		o(e.toString());
 	}
 
 	@Override
-	void visit(AfterIntrinsicLockRelease e) {
+	void visit(final AfterIntrinsicLockRelease e) {
 		o(e.toString());
 	}
 
 	@Override
-	void visit(AfterIntrinsicLockWait e) {
+	void visit(final AfterIntrinsicLockWait e) {
 		o(e.toString());
 	}
 
 	@Override
-	void visit(AfterUtilConcurrentLockAcquisitionAttempt e) {
+	void visit(final AfterUtilConcurrentLockAcquisitionAttempt e) {
 		o(e.toString());
 	}
 
 	@Override
-	void visit(AfterUtilConcurrentLockReleaseAttempt e) {
+	void visit(final AfterUtilConcurrentLockReleaseAttempt e) {
 		o(e.toString());
 	}
 
 	@Override
-	void visit(BeforeIntrinsicLockAcquisition e) {
+	void visit(final BeforeIntrinsicLockAcquisition e) {
 		o(e.toString());
 	}
 
 	@Override
-	void visit(BeforeIntrinsicLockWait e) {
+	void visit(final BeforeIntrinsicLockWait e) {
 		o(e.toString());
 	}
 
 	@Override
-	void visit(BeforeUtilConcurrentLockAcquisitionAttempt e) {
+	void visit(final BeforeUtilConcurrentLockAcquisitionAttempt e) {
 		o(e.toString());
 	}
 
 	@Override
-	public void visit(FieldAssignment e) {
+	public void visit(final FieldAssignment e) {
 		o(e.toString());
 	}
 
 	@Override
-	void visit(FieldDefinition e) {
+	void visit(final FieldDefinition e) {
 		o(e.toString());
 	}
 
 	@Override
-	void visit(FieldReadInstance e) {
+	void visit(final FieldReadInstance e) {
 		o(e.toString());
 	}
 
 	@Override
-	void visit(FieldReadStatic e) {
+	void visit(final FieldReadStatic e) {
 		o(e.toString());
 	}
 
 	@Override
-	void visit(FieldWriteInstance e) {
+	void visit(final FieldWriteInstance e) {
 		o(e.toString());
 	}
 
 	@Override
-	void visit(FieldWriteStatic e) {
+	void visit(final FieldWriteStatic e) {
 		o(e.toString());
 	}
 
 	@Override
-	void visit(FinalEvent e) {
+	void visit(final FinalEvent e) {
 		f_indent = "";
 		o("</flashlight>");
 		// System.out.println("Closed.");
@@ -152,22 +161,22 @@ final class OutputStrategyXML extends EventVisitor {
 	}
 
 	@Override
-	void visit(GarbageCollectedObject e) {
+	void visit(final GarbageCollectedObject e) {
 		o(e.toString());
 	}
 
 	@Override
-	void visit(IndirectAccess e) {
+	void visit(final IndirectAccess e) {
 		o(e.toString());
 	}
 
 	@Override
-	void visit(ObjectDefinition e) {
+	void visit(final ObjectDefinition e) {
 		o(e.toString());
 	}
 
 	@Override
-	void visit(ReadWriteLockDefinition e) {
+	void visit(final ReadWriteLockDefinition e) {
 		o(e.toString());
 	}
 
@@ -177,12 +186,12 @@ final class OutputStrategyXML extends EventVisitor {
 	}
 
 	@Override
-	void visit(SingleThreadedFieldInstance e) {
+	void visit(final SingleThreadedFieldInstance e) {
 		o(e.toString());
 	}
 
 	@Override
-	void visit(SingleThreadedFieldStatic e) {
+	void visit(final SingleThreadedFieldStatic e) {
 		o(e.toString());
 	}
 
@@ -192,12 +201,12 @@ final class OutputStrategyXML extends EventVisitor {
 	}
 
 	@Override
-	void visit(Time e) {
+	void visit(final Time e) {
 		o(e.toString());
 	}
 
 	@Override
-	public void visit(TraceNode e) {
+	public void visit(final TraceNode e) {
 		o(e.toString());
 	}
 

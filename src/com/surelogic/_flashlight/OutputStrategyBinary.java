@@ -47,6 +47,8 @@ import static com.surelogic._flashlight.common.FlagType.THIS_LOCK;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 
 import com.surelogic._flashlight.common.EventType;
@@ -96,6 +98,12 @@ public class OutputStrategyBinary extends EventVisitor {
 			f_out.writeLong(Runtime.getRuntime().maxMemory() / (1024L * 1024L)); // "max-memory-mb"
 			f_out.writeInt(Runtime.getRuntime().availableProcessors());
 			f_out.writeByte(6); // num of properties following
+			f_out.writeUTF("hostname");
+			try {
+				f_out.writeUTF(InetAddress.getLocalHost().getHostName());
+			} catch (UnknownHostException e) {
+				f_out.writeUTF("unknown");
+			}
 			addProperty("user.name", f_out);
 			addProperty("java.version", f_out);
 			addProperty("java.vendor", f_out);
@@ -469,7 +477,7 @@ public class OutputStrategyBinary extends EventVisitor {
 		}
 	}
 
-	@SuppressWarnings( { "unused", "deprecation" })
+	@SuppressWarnings({ "unused", "deprecation" })
 	private void writeTrace(final long tid) throws IOException {
 		/*
 		 * if (lastWasTraceNode) { total++; if (tid != lastTrace) { same++; } if

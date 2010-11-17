@@ -41,6 +41,12 @@ public final class RawDataFilePrefix {
 		return f_rawDataVersion;
 	}
 
+	private String f_hostname;
+
+	public String getHostname() {
+		return f_hostname;
+	}
+
 	private String f_userName;
 
 	public String getUserName() {
@@ -149,8 +155,9 @@ public final class RawDataFilePrefix {
 
 	private class PrefixHandler extends DefaultHandler {
 		@Override
-		public void startElement(String uri, String localName, String name,
-				Attributes attributes) throws SAXException {
+		public void startElement(final String uri, final String localName,
+				final String name, final Attributes attributes)
+				throws SAXException {
 			boolean isPrefixElement = name.equals("flashlight")
 					|| name.equals("environment") || name.equals("time");
 			if (!isPrefixElement) {
@@ -169,6 +176,8 @@ public final class RawDataFilePrefix {
 						f_name = aValue;
 					} else if ("version".equals(aName)) {
 						f_rawDataVersion = aValue;
+					} else if ("hostname".equals(aName)) {
+						f_hostname = aValue;
 					} else if ("user-name".equals(aName)) {
 						f_userName = aValue;
 					} else if ("java-version".equals(aName)) {
@@ -210,8 +219,9 @@ public final class RawDataFilePrefix {
 	 *             if something goes wrong trying to read the file.
 	 */
 	public void read(final File dataFile) {
-		if (dataFile == null)
+		if (dataFile == null) {
 			throw new IllegalArgumentException(I18N.err(44, "dataFile"));
+		}
 
 		try {
 			if (!dataFile.exists()) {

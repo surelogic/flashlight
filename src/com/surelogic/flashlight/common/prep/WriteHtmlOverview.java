@@ -52,6 +52,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 	private static final String LOCK_EDGE_QUERY = "c9453327-b892-4324-a6b8-2dceb32e1901";
 	private static final String STATIC_LOCK_FREQUENCY_QUERY = "6a39e6ca-29e9-4093-ba03-0e9bd9503a1a";
 	private static final String THREAD_BLOCKING_QUERY = "4e026769-1b0b-42bd-8893-f3b92add093f";
+	private static final String THREAD_LOCKS_QUERY = "dc4b409d-6c6c-4d5f-87f6-c8223a9d40aa";
 	private static final String LINE_OF_CODE_QUERY = "bd88cc1d-b606-463d-af27-b71c66ede24e";
 	private static final String PACKAGE_IMG = "package.gif";
 	private static final String CLASS_IMG = "class.gif";
@@ -196,8 +197,10 @@ public final class WriteHtmlOverview implements IPostPrep {
 			threadTable.header().th("Thread").th("Time Blocked");
 			int count = 0;
 			for (SummaryInfo.Thread thread : info.getThreads()) {
-				threadTable.row().td(thread.getName())
-						.td(thread.getBlockTime() + " ns");
+				final Row row = threadTable.row();
+				link(row.td(), thread.getName(), THREAD_LOCKS_QUERY, "Thread",
+						thread.getName(), "ThreadId", thread.getId());
+				row.td(thread.getBlockTime() + " ns");
 				if (++count == TABLE_LIMIT) {
 					break;
 				}

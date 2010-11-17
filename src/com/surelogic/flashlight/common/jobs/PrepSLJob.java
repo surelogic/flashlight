@@ -407,6 +407,7 @@ public final class PrepSLJob extends AbstractSLJob {
 			int i = 1;
 			s.setString(i++, run.getName());
 			s.setString(i++, run.getRawDataVersion());
+			s.setString(i++, run.getHostname());
 			s.setString(i++, run.getUserName());
 			s.setString(i++, run.getJavaVersion());
 			s.setString(i++, run.getJavaVendor());

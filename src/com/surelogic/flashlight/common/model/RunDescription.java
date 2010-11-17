@@ -16,10 +16,10 @@ public final class RunDescription {
 	private RunDirectory f_dir;
 
 	public RunDescription(final String name, final String rawDataVersion,
-			final String userName, final String javaVersion,
-			final String javaVendor, final String osName, final String osArch,
-			final String osVersion, final int maxMemoryMb,
-			final int processors, final Timestamp started) {
+			final String hostname, final String userName,
+			final String javaVersion, final String javaVendor,
+			final String osName, final String osArch, final String osVersion,
+			final int maxMemoryMb, final int processors, final Timestamp started) {
 		if (name == null) {
 			throw new IllegalArgumentException(I18N.err(44, "name"));
 		}
@@ -28,6 +28,10 @@ public final class RunDescription {
 			throw new IllegalArgumentException(I18N.err(44, "rawDataVersion"));
 		}
 		f_rawDataVersion = rawDataVersion;
+		if (hostname == null) {
+			throw new IllegalArgumentException(I18N.err(44, "userName"));
+		}
+		f_hostname = hostname;
 		if (userName == null) {
 			throw new IllegalArgumentException(I18N.err(44, "userName"));
 		}
@@ -70,6 +74,12 @@ public final class RunDescription {
 
 	public String getRawDataVersion() {
 		return f_rawDataVersion;
+	}
+
+	private final String f_hostname;
+
+	public String getHostname() {
+		return f_hostname;
 	}
 
 	private final String f_userName;
@@ -163,25 +173,22 @@ public final class RunDescription {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result
-				+ ((f_javaVendor == null) ? 0 : f_javaVendor.hashCode());
+				+ (f_javaVendor == null ? 0 : f_javaVendor.hashCode());
 		result = prime * result
-				+ ((f_javaVersion == null) ? 0 : f_javaVersion.hashCode());
+				+ (f_javaVersion == null ? 0 : f_javaVersion.hashCode());
 		result = prime * result + f_maxMemoryMb;
-		result = prime * result + ((f_name == null) ? 0 : f_name.hashCode());
+		result = prime * result + (f_name == null ? 0 : f_name.hashCode());
+		result = prime * result + (f_osArch == null ? 0 : f_osArch.hashCode());
+		result = prime * result + (f_osName == null ? 0 : f_osName.hashCode());
 		result = prime * result
-				+ ((f_osArch == null) ? 0 : f_osArch.hashCode());
-		result = prime * result
-				+ ((f_osName == null) ? 0 : f_osName.hashCode());
-		result = prime * result
-				+ ((f_osVersion == null) ? 0 : f_osVersion.hashCode());
+				+ (f_osVersion == null ? 0 : f_osVersion.hashCode());
 		result = prime * result + f_processors;
-		result = prime
-				* result
-				+ ((f_rawDataVersion == null) ? 0 : f_rawDataVersion.hashCode());
 		result = prime * result
-				+ ((f_started == null) ? 0 : f_started.hashCode());
+				+ (f_rawDataVersion == null ? 0 : f_rawDataVersion.hashCode());
 		result = prime * result
-				+ ((f_userName == null) ? 0 : f_userName.hashCode());
+				+ (f_started == null ? 0 : f_started.hashCode());
+		result = prime * result
+				+ (f_userName == null ? 0 : f_userName.hashCode());
 		return result;
 	}
 

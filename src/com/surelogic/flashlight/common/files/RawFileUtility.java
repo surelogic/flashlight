@@ -105,20 +105,20 @@ public final class RawFileUtility {
 	 * @return a set of RunDirectories for all the raw data files found in the
 	 *         Flashlight data directory.
 	 */
-	public static Collection<RunDirectory> getRunDirectories(File dataDir) {
+	public static Collection<RunDirectory> getRunDirectories(final File dataDir) {
 		final RawDataDirectoryReader runDescriptionBuilder = new RawDataDirectoryReader(
 				dataDir);
 		runDescriptionBuilder.read();
 		return runDescriptionBuilder.getRunDirectories();
 	}
 
-	public static List<File> findInvalidRunDirectories(File dataDir) {
+	public static List<File> findInvalidRunDirectories(final File dataDir) {
 		final RawDataDirectoryReader runDescriptionBuilder = new RawDataDirectoryReader(
 				dataDir);
 		return runDescriptionBuilder.findBadDirs();
 	}
 
-	public static RunDirectory getRunDirectoryFor(File dataDir,
+	public static RunDirectory getRunDirectoryFor(final File dataDir,
 			final RunDescription description) {
 		if (description == null) {
 			throw new IllegalArgumentException(I18N.err(44, "description"));
@@ -190,11 +190,12 @@ public final class RawFileUtility {
 			final Timestamp started = new Timestamp(prefixInfo
 					.getWallClockTime().getTime());
 			final RunDescription run = new RunDescription(prefixInfo.getName(),
-					prefixInfo.getRawDataVersion(), prefixInfo.getUserName(),
-					prefixInfo.getJavaVersion(), prefixInfo.getJavaVendor(),
-					prefixInfo.getOSName(), prefixInfo.getOSArch(), prefixInfo
-							.getOSVersion(), prefixInfo.getMaxMemoryMb(),
-					prefixInfo.getProcessors(), started);
+					prefixInfo.getRawDataVersion(), prefixInfo.getHostname(),
+					prefixInfo.getUserName(), prefixInfo.getJavaVersion(),
+					prefixInfo.getJavaVendor(), prefixInfo.getOSName(),
+					prefixInfo.getOSArch(), prefixInfo.getOSVersion(),
+					prefixInfo.getMaxMemoryMb(), prefixInfo.getProcessors(),
+					started);
 
 			return run;
 		} else {
@@ -278,7 +279,7 @@ public final class RawFileUtility {
 	}
 
 	private static final class LogFilter implements FilenameFilter {
-		public boolean accept(File dir, String name) {
+		public boolean accept(final File dir, final String name) {
 			return name.endsWith(".flog");
 		}
 	}
@@ -294,7 +295,7 @@ public final class RawFileUtility {
 
 		private final File dataDir;
 
-		RawDataDirectoryReader(File dataDir) {
+		RawDataDirectoryReader(final File dataDir) {
 			this.dataDir = dataDir;
 		}
 
@@ -351,8 +352,8 @@ public final class RawFileUtility {
 	 */
 	public static int estimateNumEvents(final File dataFile) {
 		final long sizeInBytes = dataFile.length();
-		long estimatedEvents = (sizeInBytes / (RawFileUtility
-				.isRawFileGzip(dataFile) ? 7L : 130L));
+		long estimatedEvents = sizeInBytes
+				/ (RawFileUtility.isRawFileGzip(dataFile) ? 7L : 130L);
 		if (estimatedEvents <= 0) {
 			estimatedEvents = 10L;
 		}

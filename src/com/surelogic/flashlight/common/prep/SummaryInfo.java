@@ -239,13 +239,15 @@ public class SummaryInfo {
 	}
 
 	public static class Thread implements Comparable<Thread> {
+		private final String id;
 		private final String name;
 		private final Date start;
 		private final Date stop;
 		private final long blockTime;
 
-		public Thread(final String name, final Date start, final Date stop,
-				final long blockTime) {
+		public Thread(final String id, final String name, final Date start,
+				final Date stop, final long blockTime) {
+			this.id = id;
 			this.name = name;
 			this.start = start;
 			this.stop = stop;
@@ -275,13 +277,17 @@ public class SummaryInfo {
 			return name.compareTo(o.name);
 		}
 
+		public String getId() {
+			return id;
+		}
+
 	}
 
 	private static class ThreadContentionHandler implements RowHandler<Thread> {
 
 		public Thread handle(final Row r) {
-			return new Thread(r.nextString(), r.nextTimestamp(),
-					r.nextTimestamp(), r.nextLong());
+			return new Thread(r.nextString(), r.nextString(),
+					r.nextTimestamp(), r.nextTimestamp(), r.nextLong());
 		}
 
 	}

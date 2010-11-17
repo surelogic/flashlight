@@ -579,7 +579,7 @@ function loadDeadlockGraph(data) {
 		   modes: ['edge-property:lineWidth:color'],
 		   duration: 500
 	   });
-   })
+   });
 }
 
 var eventSource;

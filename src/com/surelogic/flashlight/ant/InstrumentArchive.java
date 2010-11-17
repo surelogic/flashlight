@@ -40,6 +40,7 @@ public class InstrumentArchive extends Task {
 	private static final String LIB = "lib";
 	private final Instrument i;
 
+	private String runName;
 	private File destFile, srcFile, runtime, dataDir, properties;
 	private Path extraLibs, sources;
 	private String collectionType;
@@ -75,6 +76,10 @@ public class InstrumentArchive extends Task {
 
 	public void setProperties(final File props) {
 		properties = props;
+	}
+
+	public void setName(final String name) {
+		runName = name;
 	}
 
 	public void setCollectionType(final String type) {
@@ -378,6 +383,9 @@ public class InstrumentArchive extends Task {
 				properties.put(InstrumentationConstants.FL_COLLECTION_TYPE,
 						collectionType);
 			}
+			if (runName != null) {
+				properties.put(InstrumentationConstants.FL_RUN, runName);
+			}
 			properties.put(InstrumentationConstants.FL_RUN_FOLDER,
 					dataDir.getAbsolutePath());
 			File propsFile = new File(classDir,
@@ -398,7 +406,6 @@ public class InstrumentArchive extends Task {
 					runtime));
 		}
 		try {
-
 			final File tmpSrc = getSrcDir();
 			final File tmpDest = getDestDir();
 			// TODO is there a good way to detect if the war is created

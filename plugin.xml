@@ -65,7 +65,14 @@
 				id="com.surelogic.flashlight.recommend.menu.inferRegionsRefactoring"
 				label="Infer JSure Annotations"
 				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/additions"
-				helpContextId="menu-manage-licenses">
+				helpContextId="menu-recommend-regions">
+			</action>
+			<action
+				class="com.surelogic.flashlight.client.eclipse.actions.ImportFlashlightRunAction"
+				id="com.surelogic.flashlight.client.eclipse.actions.ImportFlashlightRunAction"
+				label="Import Flashlight Run"
+				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/additions"
+				helpContextId="menu-import-run">
 			</action>
 		</actionSet>
 	</extension>

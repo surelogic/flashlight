@@ -72,6 +72,17 @@ public final class RawFileUtility {
 	}
 
 	/**
+	 * Checks to see if this folder is a valid run directory.
+	 * 
+	 * @param runDirectory
+	 * @return
+	 */
+	public static boolean isRunDirectory(final File runDirectory) {
+		return f_runDirectoryFilter.accept(runDirectory.getParentFile(),
+				runDirectory.getName());
+	}
+
+	/**
 	 * Gets an input stream to read the passed raw file. This method opens the
 	 * right kind of stream based upon if the raw file is compressed or not.
 	 * 
@@ -308,7 +319,7 @@ public final class RawFileUtility {
 		}
 
 		private File[] getRunDirs() {
-			final File[] runDirs = dataDir.listFiles(f_directoryFilter);
+			final File[] runDirs = dataDir.listFiles(f_runDirectoryFilter);
 			return runDirs;
 		}
 
@@ -335,7 +346,7 @@ public final class RawFileUtility {
 		}
 	}
 
-	private static final FilenameFilter f_directoryFilter = new FilenameFilter() {
+	private static final FilenameFilter f_runDirectoryFilter = new FilenameFilter() {
 		public boolean accept(final File root, final String name) {
 			final File dir = new File(root, name);
 			return dir.exists()

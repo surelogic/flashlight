@@ -306,7 +306,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 		// children
 		Set<Site> children = threadCoverage.getChildren();
 		if (children.isEmpty()) {
-			threadDiv.span().clazz("info")
+			threadDiv.p().clazz("info")
 					.text("There is no coverage data for this run.");
 		} else {
 			UL list = threadDiv.ul();

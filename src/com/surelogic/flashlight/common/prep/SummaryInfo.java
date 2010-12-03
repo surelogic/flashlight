@@ -30,21 +30,24 @@ public class SummaryInfo {
 	private final List<Cycle> cycles;
 	private final List<Lock> locks;
 	private final List<Thread> threads;
-	private final List<Field> emptyLockSetFields;
+
+	private final List<LockSetEvidence> emptyLockSets;
+
 	private final String threadCount;
 	private final String objectCount;
 	private final String classCount;
-	private final Site root;
+	private final CoverageSite root;
 
 	public SummaryInfo(final List<Cycle> cycles, final List<Lock> locks,
-			final List<Thread> threads, final List<Field> emptyLockSetFields,
-			final String threadCount, final String objectCount,
-			final String classCount, final Site coverageRoot) {
+			final List<Thread> threads,
+			final List<LockSetEvidence> emptyLockSetFields,
+			final String objectCount, final String classCount,
+			final CoverageSite coverageRoot) {
 		this.cycles = cycles;
 		this.locks = locks;
 		this.threads = threads;
-		this.emptyLockSetFields = emptyLockSetFields;
-		this.threadCount = threadCount;
+		this.threadCount = Integer.toString(threads.size());
+		this.emptyLockSets = emptyLockSetFields;
 		this.objectCount = objectCount;
 		this.classCount = classCount;
 		this.root = coverageRoot;
@@ -62,8 +65,8 @@ public class SummaryInfo {
 		return threads;
 	}
 
-	public List<Field> getEmptyLockSetFields() {
-		return emptyLockSetFields;
+	public List<LockSetEvidence> getEmptyLockSetFields() {
+		return emptyLockSets;
 	}
 
 	public String getThreadCount() {
@@ -78,7 +81,7 @@ public class SummaryInfo {
 		return classCount;
 	}
 
-	public Site getThreadCoverage() {
+	public CoverageSite getThreadCoverage() {
 		return root;
 	}
 
@@ -92,19 +95,27 @@ public class SummaryInfo {
 			List<Thread> threads = q.prepared("SummaryInfo.threads",
 					new ThreadContentionHandler()).call();
 			Collections.sort(threads);
-			List<Field> fields = new ArrayList<Field>();
-			fields.addAll(q.prepared("SummaryInfo.emptyLockSets",
-					new FieldHandler()).call());
-			fields.addAll(q.prepared("SummaryInfo.emptyStaticLockSets",
-					new FieldHandler()).call());
-			Collections.sort(fields);
-			String threadCount = q.prepared("SummaryInfo.threadCount",
-					new StringResultHandler()).call();
+
+			List<LockSetEvidence> emptyLockSets = new ArrayList<LockSetEvidence>();
+			List<Field> nonstatics = q.prepared("SummaryInfo.emptyLockSets",
+					new FieldHandler()).call();
+			for (Field f : nonstatics) {
+				emptyLockSets.add(q.prepared("SummaryInfo.likelyLocks",
+						new LockSetEvidenceHandler(q, f))
+						.call(f.id, f.id, f.id));
+			}
+			List<Field> statics = q.prepared("SummaryInfo.emptyStaticLockSets",
+					new FieldHandler()).call();
+			for (Field f : statics) {
+				emptyLockSets.add(q.prepared("SummaryInfo.likelyLocks",
+						new LockSetEvidenceHandler(q, f)).call(f.id));
+			}
+			Collections.sort(emptyLockSets);
 			String classCount = q.prepared("SummaryInfo.classCount",
 					new StringResultHandler()).call();
 			String objectCount = q.prepared("SummaryInfo.objectCount",
 					new StringResultHandler()).call();
-			Site root = new Site("", "", "", 0, "");
+			CoverageSite root = new CoverageSite("", "", "", 0, "");
 			process(q,
 					root,
 					q.prepared("CoverageInfo.fieldCoverage",
@@ -113,11 +124,11 @@ public class SummaryInfo {
 					root,
 					q.prepared("CoverageInfo.lockCoverage",
 							new CoverageHandler()).call());
-			return new SummaryInfo(cycles, locks, threads, fields, threadCount,
+			return new SummaryInfo(cycles, locks, threads, emptyLockSets,
 					objectCount, classCount, root);
 		}
 
-		void process(final Query q, final Site site,
+		void process(final Query q, final CoverageSite site,
 				final Map<Long, Set<Long>> map) {
 			for (Entry<Long, Set<Long>> e : map.entrySet()) {
 				long traceId = e.getKey();
@@ -129,11 +140,145 @@ public class SummaryInfo {
 
 	}
 
+	public static class LockSetEvidence implements Comparable<LockSetEvidence> {
+		private final Field field;
+		private final List<LockSetLock> likelyLocks;
+
+		public LockSetEvidence(final Field field) {
+			this.field = field;
+			this.likelyLocks = new ArrayList<LockSetLock>();
+		}
+
+		public Field getField() {
+			return field;
+		}
+
+		public List<LockSetLock> getLikelyLocks() {
+			return likelyLocks;
+		}
+
+		public int compareTo(final LockSetEvidence o) {
+			return field.compareTo(o.field);
+		}
+
+	}
+
+	public static class LockSetLock {
+		private final String name;
+		private final String id;
+		private final String heldPercentage;
+		private final List<Site> acquisitions;
+		private final List<Site> notHeldAt;
+
+		public LockSetLock(final String name, final String id,
+				final String heldPercentage) {
+			this.name = name;
+			this.id = id;
+			this.heldPercentage = heldPercentage;
+			this.acquisitions = new ArrayList<Site>();
+			this.notHeldAt = new ArrayList<Site>();
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public String getId() {
+			return id;
+		}
+
+		public String getHeldPercentage() {
+			return heldPercentage;
+		}
+
+		public List<Site> getAcquisitions() {
+			return acquisitions;
+		}
+
+		public List<Site> getNotHeldAt() {
+			return notHeldAt;
+		}
+
+		@Override
+		public String toString() {
+			return "LockSetLock [name=" + name + ", id=" + id
+					+ ", heldPercentage=" + heldPercentage + ", acquisitions="
+					+ acquisitions + ", notHeldAt=" + notHeldAt + "]";
+		}
+
+	}
+
+	private static class LockSetEvidenceHandler implements
+			ResultHandler<LockSetEvidence> {
+		private final Field field;
+		private final Query q;
+
+		LockSetEvidenceHandler(final Query q, final Field f) {
+			this.q = q;
+			this.field = f;
+		}
+
+		public LockSetEvidence handle(final Result result) {
+			LockSetEvidence e = new LockSetEvidence(field);
+			for (Row r : result) {
+				LockSetLock l = new LockSetLock(r.nextString(), r.nextString(),
+						r.nextString());
+				l.getAcquisitions().addAll(
+						q.prepared("SummaryInfo.lockAcquiredAt",
+								new SiteHandler()).call(l.getId()));
+				l.getNotHeldAt().addAll(
+						q.prepared("SummaryInfo.lockNotHeldAt",
+								new SiteHandler()).call(field.getId(),
+								l.getId(), l.getId()));
+				e.getLikelyLocks().add(l);
+			}
+			return e;
+		}
+
+	}
+
+	public static class DeadlockEvidence {
+
+	}
+
+	private static class DeadlockEvidenceHandler implements
+			RowHandler<DeadlockEvidence> {
+
+		public DeadlockEvidence handle(final Row r) {
+
+			return null;
+		}
+
+	}
+
+	public static class ContentionEvidence {
+
+	}
+
+	public static class BadPublishEvidence {
+		private final Field f;
+		private final List<List<Trace>> traces;
+
+		public BadPublishEvidence(final Field f) {
+			this.f = f;
+			traces = new ArrayList<List<Trace>>();
+		}
+
+		public Field getField() {
+			return f;
+		}
+
+		public List<List<Trace>> getTraces() {
+			return traces;
+		}
+
+	}
+
 	public static class Field implements Comparable<Field> {
 		private final String pakkage;
 		private final String clazz;
 		private final String name;
-		private final String id;
+		private final long id;
 		private final boolean isStatic;
 
 		public Field(final String pakkage, final String clazz,
@@ -141,7 +286,7 @@ public class SummaryInfo {
 			this.pakkage = pakkage;
 			this.clazz = clazz;
 			this.name = name;
-			this.id = Long.toString(id);
+			this.id = id;
 			this.isStatic = isStatic;
 		}
 
@@ -158,7 +303,7 @@ public class SummaryInfo {
 		}
 
 		public String getId() {
-			return id;
+			return Long.toString(id);
 		}
 
 		public boolean isStatic() {
@@ -482,14 +627,19 @@ public class SummaryInfo {
 
 	}
 
-	static class Site implements Comparable<Site> {
+	private static class SiteHandler implements RowHandler<Site> {
+		public Site handle(final Row r) {
+			return new Site(r.nextString(), r.nextString(), r.nextString(),
+					r.nextInt(), r.nextString());
+		}
+	}
+
+	public static class Site implements Comparable<Site> {
 		private final String pakkage;
 		private final String clazz;
 		private final String location;
 		private final int line;
 		private final String file;
-		private final Set<Long> threadsSeen;
-		private final Map<Site, Site> children;
 
 		public Site(final String pakkage, final String clazz,
 				final String location, final int line, final String file) {
@@ -498,8 +648,6 @@ public class SummaryInfo {
 			this.location = location;
 			this.line = line;
 			this.file = file;
-			threadsSeen = new HashSet<Long>();
-			children = new TreeMap<Site, Site>();
 		}
 
 		public String getPackage() {
@@ -522,54 +670,10 @@ public class SummaryInfo {
 			return file;
 		}
 
-		public Set<Long> getThreadsSeen() {
-			return threadsSeen;
-		}
-
-		public Set<Site> getChildren() {
-			return children.keySet();
-		}
-
-		/**
-		 * Update the sites along the given trace to include the given threads.
-		 * 
-		 * @param trace
-		 *            the stack trace from farthest to nearest
-		 * @param threads
-		 */
-		void addTrace(final Iterator<Trace> trace, final Set<Long> threads) {
-			threadsSeen.addAll(threads);
-			if (trace.hasNext()) {
-				Trace t = trace.next();
-				Site s = new Site(t.getPackage(), t.getClazz(), t.getLoc(),
-						t.getLine(), t.getFile());
-				Site child = children.get(s);
-				if (child == null) {
-					children.put(s, s);
-					child = s;
-				}
-				child.addTrace(trace, threads);
-			}
-		}
-
 		@Override
 		public String toString() {
 			return "Site [pakkage=" + pakkage + ", clazz=" + clazz + ", name="
 					+ location + "]";
-		}
-
-		public int compareTo(final Site o) {
-			if (o == null) {
-				return 1;
-			}
-			int cmp = pakkage.compareTo(o.pakkage);
-			if (cmp == 0) {
-				cmp = clazz.compareTo(o.clazz);
-				if (cmp == 0) {
-					cmp = location.compareTo(o.location);
-				}
-			}
-			return cmp;
 		}
 
 		@Override
@@ -577,6 +681,8 @@ public class SummaryInfo {
 			final int prime = 31;
 			int result = 1;
 			result = prime * result + (clazz == null ? 0 : clazz.hashCode());
+			result = prime * result + (file == null ? 0 : file.hashCode());
+			result = prime * result + line;
 			result = prime * result
 					+ (location == null ? 0 : location.hashCode());
 			result = prime * result
@@ -603,6 +709,16 @@ public class SummaryInfo {
 			} else if (!clazz.equals(other.clazz)) {
 				return false;
 			}
+			if (file == null) {
+				if (other.file != null) {
+					return false;
+				}
+			} else if (!file.equals(other.file)) {
+				return false;
+			}
+			if (line != other.line) {
+				return false;
+			}
 			if (location == null) {
 				if (other.location != null) {
 					return false;
@@ -615,6 +731,126 @@ public class SummaryInfo {
 					return false;
 				}
 			} else if (!pakkage.equals(other.pakkage)) {
+				return false;
+			}
+			return true;
+		}
+
+		public int compareTo(final Site site) {
+			if (site == null) {
+				return 1;
+			}
+			int cmp = pakkage.compareTo(site.pakkage);
+			if (cmp == 0) {
+				cmp = clazz.compareTo(site.clazz);
+				if (cmp == 0) {
+					cmp = location.compareTo(site.location);
+				}
+			}
+			return cmp;
+		}
+	}
+
+	public static class CoverageSite implements Comparable<CoverageSite> {
+
+		private final Site site;
+		private final Set<Long> threadsSeen;
+		private final Map<CoverageSite, CoverageSite> children;
+
+		public CoverageSite(final String pakkage, final String clazz,
+				final String location, final int line, final String file) {
+			site = new Site(pakkage, clazz, location, line, file);
+			threadsSeen = new HashSet<Long>();
+			children = new TreeMap<CoverageSite, CoverageSite>();
+		}
+
+		public Set<Long> getThreadsSeen() {
+			return threadsSeen;
+		}
+
+		public Set<CoverageSite> getChildren() {
+			return children.keySet();
+		}
+
+		public String getPackage() {
+			return site.getPackage();
+		}
+
+		public String getClazz() {
+			return site.getClazz();
+		}
+
+		public String getLocation() {
+			return site.getLocation();
+		}
+
+		public int getLine() {
+			return site.getLine();
+		}
+
+		public String getFile() {
+			return site.getFile();
+		}
+
+		/**
+		 * Update the sites along the given trace to include the given threads.
+		 * 
+		 * @param trace
+		 *            the stack trace from farthest to nearest
+		 * @param threads
+		 */
+		void addTrace(final Iterator<Trace> trace, final Set<Long> threads) {
+			threadsSeen.addAll(threads);
+			if (trace.hasNext()) {
+				Trace t = trace.next();
+				CoverageSite s = new CoverageSite(t.getPackage(), t.getClazz(),
+						t.getLoc(), t.getLine(), t.getFile());
+				CoverageSite child = children.get(s);
+				if (child == null) {
+					children.put(s, s);
+					child = s;
+				}
+				child.addTrace(trace, threads);
+			}
+		}
+
+		@Override
+		public String toString() {
+			return site.toString();
+		}
+
+		public int compareTo(final CoverageSite o) {
+			if (o == null) {
+				return 1;
+			}
+			return site.compareTo(o.site);
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + (site == null ? 0 : site.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(final Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null) {
+				return false;
+			}
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
+			CoverageSite other = (CoverageSite) obj;
+			if (site == null) {
+				if (other.site != null) {
+					return false;
+				}
+			} else if (!site.equals(other.site)) {
 				return false;
 			}
 			return true;

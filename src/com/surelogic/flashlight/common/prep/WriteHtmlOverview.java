@@ -36,10 +36,11 @@ import com.surelogic.flashlight.common.prep.HTMLBuilder.LI;
 import com.surelogic.flashlight.common.prep.HTMLBuilder.Row;
 import com.surelogic.flashlight.common.prep.HTMLBuilder.Table;
 import com.surelogic.flashlight.common.prep.HTMLBuilder.UL;
+import com.surelogic.flashlight.common.prep.SummaryInfo.CoverageSite;
 import com.surelogic.flashlight.common.prep.SummaryInfo.Cycle;
 import com.surelogic.flashlight.common.prep.SummaryInfo.Edge;
 import com.surelogic.flashlight.common.prep.SummaryInfo.Field;
-import com.surelogic.flashlight.common.prep.SummaryInfo.Site;
+import com.surelogic.flashlight.common.prep.SummaryInfo.LockSetEvidence;
 
 public final class WriteHtmlOverview implements IPostPrep {
 
@@ -301,23 +302,24 @@ public final class WriteHtmlOverview implements IPostPrep {
 	}
 
 	private void displayThreadCoverage(final Container threadDiv,
-			final Site threadCoverage) {
+			final CoverageSite threadCoverage) {
 		// The first node should be an anonymous root node, so we just do it's
 		// children
-		Set<Site> children = threadCoverage.getChildren();
+		Set<CoverageSite> children = threadCoverage.getChildren();
 		if (children.isEmpty()) {
 			threadDiv.p().clazz("info")
 					.text("There is no coverage data for this run.");
 		} else {
 			UL list = threadDiv.ul();
 			list.clazz("outline").clazz("collapsed");
-			for (Site child : children) {
+			for (CoverageSite child : children) {
 				displayThreadCoverageHelper(list, child);
 			}
 		}
 	}
 
-	private void displayThreadCoverageHelper(final UL list, final Site coverage) {
+	private void displayThreadCoverageHelper(final UL list,
+			final CoverageSite coverage) {
 		LI li = list.li();
 		li.text(coverage.getPackage() + ".");
 		Container emph = li.span().clazz("emph");
@@ -326,12 +328,12 @@ public final class WriteHtmlOverview implements IPostPrep {
 		link(emph, coverage.getLocation(), LINE_OF_CODE_QUERY, "Package",
 				coverage.getPackage(), "Class", coverage.getClazz(), "Method",
 				coverage.getLocation(), "Line", line);
-		Set<Site> children = coverage.getChildren();
+		Set<CoverageSite> children = coverage.getChildren();
 		if (children.isEmpty()) {
 			return;
 		}
 		UL ul = li.ul();
-		for (Site child : children) {
+		for (CoverageSite child : children) {
 			displayThreadCoverageHelper(ul, child);
 		}
 	}
@@ -585,8 +587,9 @@ public final class WriteHtmlOverview implements IPostPrep {
 
 	private void writeLockSet(final PrintWriter writer, final SummaryInfo info) {
 		PackageFrag root = new PackageFrag(f_runDescription.getName());
-		for (Field field : info.getEmptyLockSetFields()) {
+		for (LockSetEvidence evidence : info.getEmptyLockSetFields()) {
 			PackageFrag pkg = root;
+			Field field = evidence.getField();
 			for (String frag : field.getPackage().split("\\.")) {
 				pkg = pkg.frag(frag);
 			}
@@ -598,7 +601,8 @@ public final class WriteHtmlOverview implements IPostPrep {
 		writer.print(";");
 
 		root = new PackageFrag("");
-		for (Field field : info.getEmptyLockSetFields()) {
+		for (LockSetEvidence evidence : info.getEmptyLockSetFields()) {
+			Field field = evidence.getField();
 			PackageFrag pkg = root;
 			for (String frag : field.getPackage().split("\\.")) {
 				pkg = pkg.frag(frag);
@@ -674,9 +678,10 @@ public final class WriteHtmlOverview implements IPostPrep {
 	private void displayLockSet(final SummaryInfo info, final Container c) {
 		UL packageList = c.ul();
 		packageList.clazz("outline");
-		Iterator<Field> fields = info.getEmptyLockSetFields().iterator();
-		if (fields.hasNext()) {
-			Field field = fields.next();
+		Iterator<LockSetEvidence> lockSets = info.getEmptyLockSetFields()
+				.iterator();
+		if (lockSets.hasNext()) {
+			Field field = lockSets.next().getField();
 			String pakkage = field.getPackage();
 			String clazz = field.getClazz();
 			LI packageLI = packageList.li();
@@ -689,8 +694,8 @@ public final class WriteHtmlOverview implements IPostPrep {
 			UL fieldList = classLI.ul();
 			LI fieldLI = fieldList.li();
 			fieldLink(fieldLI, field);
-			while (fields.hasNext()) {
-				field = fields.next();
+			while (lockSets.hasNext()) {
+				field = lockSets.next().getField();
 				if (!pakkage.equals(field.getPackage())) {
 					pakkage = field.getPackage();
 					clazz = field.getClazz();

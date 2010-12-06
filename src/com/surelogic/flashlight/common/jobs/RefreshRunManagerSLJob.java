@@ -12,6 +12,16 @@ public final class RefreshRunManagerSLJob extends AbstractSLJob {
 
 	private final boolean f_forceNotify;
 
+	/**
+	 * Constructs an instance of this job to be executed.
+	 * 
+	 * @param forceNotify
+	 *            {@code true} if a notification to observers is made even if no
+	 *            changes are noted, {@code false} if a notification to
+	 *            observers is only made if changes are noted. This parameter is
+	 *            passed on to the call to the
+	 *            {@link RunManager#refresh(boolean)} method.
+	 */
 	public RefreshRunManagerSLJob(boolean forceNotify) {
 		super("Refresh the Flashlight run manager contents");
 		f_forceNotify = forceNotify;

@@ -11,9 +11,12 @@ import org.eclipse.jface.dialogs.MessageDialog;
 
 import com.surelogic.common.FileUtility;
 import com.surelogic.common.eclipse.SWTUtility;
+import com.surelogic.common.eclipse.jobs.EclipseJob;
 import com.surelogic.common.eclipse.jobs.SLUIJob;
+import com.surelogic.common.jobs.SLJob;
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
 import com.surelogic.flashlight.common.files.RawFileUtility;
+import com.surelogic.flashlight.common.jobs.RefreshRunManagerSLJob;
 
 public class FlashlightCleanupJob extends Job {
 	public FlashlightCleanupJob() {
@@ -40,6 +43,8 @@ public class FlashlightCleanupJob extends Job {
 						FileUtility.recursiveDelete(dir);
 					}
 				}
+				final SLJob job = new RefreshRunManagerSLJob(true);
+				EclipseJob.getInstance().scheduleDb(job);
 				return Status.OK_STATUS;
 			}
 		}.schedule();

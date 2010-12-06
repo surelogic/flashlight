@@ -85,7 +85,7 @@ public class Activator extends AbstractUIPlugin {
 		}
 		final File dataDir = new File(path);
 		FileUtility.createDirectory(dataDir);
-		new FlashlightCleanupJob().schedule();
+		new FlashlightCleanupJob().schedule(100L);
 		EclipseUtility.getProductReleaseDateJob(SLLicenseProduct.FLASHLIGHT,
 				this).schedule();
 		RunManager.getInstance().setDataDirectory(dataDir);

@@ -337,8 +337,8 @@ public final class RawFileUtility {
 		List<File> findBadDirs() {
 			List<File> bad = new ArrayList<File>();
 			for (final File runDir : getRunDirs()) {
-				// FL, but not good
-				if (RunDirectory.isInvalid(runDir)) {
+				final RunDirectory runDirectory = RunDirectory.getFor(runDir);
+				if (runDirectory == null) {
 					bad.add(runDir);
 				}
 			}

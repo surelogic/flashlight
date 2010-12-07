@@ -32,7 +32,8 @@ public class SummaryInfo {
 	private final List<Thread> threads;
 
 	private final List<LockSetEvidence> emptyLockSets;
-
+	private final List<BadPublishEvidence> badPublishes;
+	private final List<DeadlockEvidence> deadlocks;
 	private final String threadCount;
 	private final String objectCount;
 	private final String classCount;
@@ -41,13 +42,16 @@ public class SummaryInfo {
 	public SummaryInfo(final List<Cycle> cycles, final List<Lock> locks,
 			final List<Thread> threads,
 			final List<LockSetEvidence> emptyLockSetFields,
-			final String objectCount, final String classCount,
-			final CoverageSite coverageRoot) {
+			final List<BadPublishEvidence> badPublishes,
+			final List<DeadlockEvidence> deadlocks, final String objectCount,
+			final String classCount, final CoverageSite coverageRoot) {
 		this.cycles = cycles;
 		this.locks = locks;
 		this.threads = threads;
 		this.threadCount = Integer.toString(threads.size());
 		this.emptyLockSets = emptyLockSetFields;
+		this.badPublishes = badPublishes;
+		this.deadlocks = deadlocks;
 		this.objectCount = objectCount;
 		this.classCount = classCount;
 		this.root = coverageRoot;
@@ -67,6 +71,10 @@ public class SummaryInfo {
 
 	public List<LockSetEvidence> getEmptyLockSetFields() {
 		return emptyLockSets;
+	}
+
+	public List<BadPublishEvidence> getBadPublishes() {
+		return badPublishes;
 	}
 
 	public String getThreadCount() {
@@ -111,6 +119,10 @@ public class SummaryInfo {
 						new LockSetEvidenceHandler(q, f)).call(f.id));
 			}
 			Collections.sort(emptyLockSets);
+			List<BadPublishEvidence> badPublishes = q
+					.prepared("SummaryInfo.badPublishes",
+							new BadPublishEvidenceHandler()).call();
+			List<DeadlockEvidence> deadlocks = null;
 			String classCount = q.prepared("SummaryInfo.classCount",
 					new StringResultHandler()).call();
 			String objectCount = q.prepared("SummaryInfo.objectCount",
@@ -125,7 +137,7 @@ public class SummaryInfo {
 					q.prepared("CoverageInfo.lockCoverage",
 							new CoverageHandler()).call());
 			return new SummaryInfo(cycles, locks, threads, emptyLockSets,
-					objectCount, classCount, root);
+					badPublishes, deadlocks, objectCount, classCount, root);
 		}
 
 		void process(final Query q, final CoverageSite site,
@@ -238,6 +250,21 @@ public class SummaryInfo {
 	}
 
 	public static class DeadlockEvidence {
+		private final Cycle cycle;
+		private final List<List<Trace>> traces;
+
+		public DeadlockEvidence(final Cycle cycle) {
+			this.cycle = cycle;
+			this.traces = new ArrayList<List<Trace>>();
+		}
+
+		public Cycle getCycle() {
+			return cycle;
+		}
+
+		public List<List<Trace>> getTraces() {
+			return traces;
+		}
 
 	}
 
@@ -252,6 +279,19 @@ public class SummaryInfo {
 	}
 
 	public static class ContentionEvidence {
+
+	}
+
+	private static class BadPublishEvidenceHandler implements
+			RowHandler<BadPublishEvidence> {
+
+		public BadPublishEvidence handle(final Row r) {
+			Field f = new Field(r.nextString(), r.nextString(), r.nextString(),
+					r.nextLong(), r.nextBoolean());
+			BadPublishEvidence e = new BadPublishEvidence(f);
+			e.getTraces();
+			return e;
+		}
 
 	}
 
@@ -370,6 +410,12 @@ public class SummaryInfo {
 				}
 			}
 			return cmp;
+		}
+
+		@Override
+		public String toString() {
+			return "Field [pakkage=" + pakkage + ", clazz=" + clazz + ", name="
+					+ name + ", id=" + id + ", isStatic=" + isStatic + "]";
 		}
 
 	}

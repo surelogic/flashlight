@@ -36,6 +36,7 @@ import com.surelogic.flashlight.common.prep.HTMLBuilder.LI;
 import com.surelogic.flashlight.common.prep.HTMLBuilder.Row;
 import com.surelogic.flashlight.common.prep.HTMLBuilder.Table;
 import com.surelogic.flashlight.common.prep.HTMLBuilder.UL;
+import com.surelogic.flashlight.common.prep.SummaryInfo.BadPublishEvidence;
 import com.surelogic.flashlight.common.prep.SummaryInfo.CoverageSite;
 import com.surelogic.flashlight.common.prep.SummaryInfo.Cycle;
 import com.surelogic.flashlight.common.prep.SummaryInfo.Edge;
@@ -52,6 +53,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 	private static final String LOCK_CONTENTION_QUERY = "cb38a427-c259-4690-abe2-acea9661f737";
 	private static final String LOCK_EDGE_QUERY = "c9453327-b892-4324-a6b8-2dceb32e1901";
 	private static final String STATIC_LOCK_FREQUENCY_QUERY = "6a39e6ca-29e9-4093-ba03-0e9bd9503a1a";
+	private static final String BAD_PUBLISH_QUERY = "708d1b8a-5274-4a25-b0b4-67f1a7a86690";
 	private static final String THREAD_BLOCKING_QUERY = "4e026769-1b0b-42bd-8893-f3b92add093f";
 	private static final String THREAD_LOCKS_QUERY = "dc4b409d-6c6c-4d5f-87f6-c8223a9d40aa";
 	private static final String LINE_OF_CODE_QUERY = "bd88cc1d-b606-463d-af27-b71c66ede24e";
@@ -137,7 +139,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 				int count = 0;
 				for (SummaryInfo.Lock lock : locks) {
 					Row r = lockTable.row();
-					link(r.td(), lock.getName(), LOCK_EDGE_QUERY, "Lock",
+					buildLink(r.td(), lock.getName(), LOCK_EDGE_QUERY, "Lock",
 							lock.getId());
 					r.td(Integer.toString(lock.getAcquired()))
 							.td(Long.toString(lock.getBlockTime()) + " ns")
@@ -147,7 +149,8 @@ public final class WriteHtmlOverview implements IPostPrep {
 					}
 				}
 				if (locks.size() > TABLE_LIMIT) {
-					link(lockTable.row().td().colspan(4),
+					buildLink(
+							lockTable.row().td().colspan(4),
 							String.format("%d more results.", locks.size()
 									- TABLE_LIMIT), LOCK_CONTENTION_QUERY);
 				}
@@ -176,6 +179,11 @@ public final class WriteHtmlOverview implements IPostPrep {
 			lockSetDiv.h(3).text("Shared Fields With No Lock Set");
 			writeLockSet(graphs, info);
 			displayLockSet(info, lockSetDiv);
+
+			Div badPublishDiv = fieldDiv.div();
+			badPublishDiv.h(3).text("Improperly Published Fields");
+			displayBadPublishes(info, badPublishDiv);
+
 			Container threadDiv = content.div().id("threads").clazz("tab");
 			threadDiv.h(2).text("Threads");
 
@@ -199,15 +207,16 @@ public final class WriteHtmlOverview implements IPostPrep {
 			int count = 0;
 			for (SummaryInfo.Thread thread : info.getThreads()) {
 				final Row row = threadTable.row();
-				link(row.td(), thread.getName(), THREAD_LOCKS_QUERY, "Thread",
-						thread.getName(), "ThreadId", thread.getId());
+				buildLink(row.td(), thread.getName(), THREAD_LOCKS_QUERY,
+						"Thread", thread.getName(), "ThreadId", thread.getId());
 				row.td(thread.getBlockTime() + " ns");
 				if (++count == TABLE_LIMIT) {
 					break;
 				}
 			}
 			if (threadCount > TABLE_LIMIT) {
-				link(threadTable.row().td().colspan(2),
+				buildLink(
+						threadTable.row().td().colspan(2),
 						String.format("%d more results.", threadCount
 								- TABLE_LIMIT), THREAD_BLOCKING_QUERY);
 			}
@@ -325,7 +334,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 		Container emph = li.span().clazz("emph");
 		emph.text(coverage.getClazz() + ".");
 		String line = Integer.toString(coverage.getLine());
-		link(emph, coverage.getLocation(), LINE_OF_CODE_QUERY, "Package",
+		buildLink(emph, coverage.getLocation(), LINE_OF_CODE_QUERY, "Package",
 				coverage.getPackage(), "Class", coverage.getClazz(), "Method",
 				coverage.getLocation(), "Line", line);
 		Set<CoverageSite> children = coverage.getChildren();
@@ -598,25 +607,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 		}
 		writer.print("var packages = ");
 		writer.print(root.toString());
-		writer.print(";");
-
-		root = new PackageFrag("");
-		for (LockSetEvidence evidence : info.getEmptyLockSetFields()) {
-			Field field = evidence.getField();
-			PackageFrag pkg = root;
-			for (String frag : field.getPackage().split("\\.")) {
-				pkg = pkg.frag(frag);
-			}
-			pkg = pkg.frag(field.getClazz());
-			pkg.field(field);
-		}
-		writer.println();
-
-		writer.print(String
-				.format("var packages2 = { \"id\": \"%1$s\", \"name\": \"%1$s\", \"data\": {}, \"children\": [",
-						f_runDescription.getName()));
-		writer.print(root.buildNode(f_runDescription.getName(), ""));
-		writer.println("]};");
+		writer.println(";");
 	}
 
 	private void writeCycles(final PrintWriter writer, final List<Cycle> cycles) {
@@ -676,12 +667,48 @@ public final class WriteHtmlOverview implements IPostPrep {
 	}
 
 	private void displayLockSet(final SummaryInfo info, final Container c) {
-		UL packageList = c.ul();
-		packageList.clazz("outline");
-		Iterator<LockSetEvidence> lockSets = info.getEmptyLockSetFields()
-				.iterator();
-		if (lockSets.hasNext()) {
-			Field field = lockSets.next().getField();
+		List<Field> fields = new ArrayList<Field>();
+		for (LockSetEvidence e : info.getEmptyLockSetFields()) {
+			fields.add(e.getField());
+		}
+		if (!fields.isEmpty()) {
+			displayClassTree(fields, c, new LockSetLink());
+		} else {
+			c.p()
+					.clazz("info")
+					.text("There are no fields accessed concurrently with an empty lock set in this run.");
+		}
+	}
+
+	private void displayBadPublishes(final SummaryInfo info, final Container c) {
+		List<Field> fields = new ArrayList<Field>();
+		for (BadPublishEvidence b : info.getBadPublishes()) {
+			fields.add(b.getField());
+		}
+		if (!fields.isEmpty()) {
+			displayClassTree(fields, c, new BadPublishLink());
+		} else {
+			c.p()
+					.clazz("info")
+					.text("Flashlight detected no improperly published fields.");
+		}
+	}
+
+	/**
+	 * Displays a tree of fields.
+	 * 
+	 * @param fields
+	 *            a list of fields in alphabetical order by package/class/field
+	 * @param c
+	 *            the container to write to
+	 */
+	private void displayClassTree(final List<Field> fields, final Container c,
+			final LinkProvider<Field> lp) {
+		Iterator<Field> iter = fields.iterator();
+		if (iter.hasNext()) {
+			UL packageList = c.ul();
+			packageList.clazz("outline");
+			Field field = iter.next();
 			String pakkage = field.getPackage();
 			String clazz = field.getClazz();
 			LI packageLI = packageList.li();
@@ -693,9 +720,9 @@ public final class WriteHtmlOverview implements IPostPrep {
 			classLI.span().clazz("emph").text(clazz);
 			UL fieldList = classLI.ul();
 			LI fieldLI = fieldList.li();
-			fieldLink(fieldLI, field);
-			while (lockSets.hasNext()) {
-				field = lockSets.next().getField();
+			lp.link(fieldLI, field);
+			while (iter.hasNext()) {
+				field = iter.next();
 				if (!pakkage.equals(field.getPackage())) {
 					pakkage = field.getPackage();
 					clazz = field.getClazz();
@@ -716,20 +743,31 @@ public final class WriteHtmlOverview implements IPostPrep {
 					fieldList = classLI.ul();
 				}
 				fieldLI = fieldList.li();
-				fieldLink(fieldLI, field);
+				lp.link(fieldLI, field);
 			}
-		} else {
-			c.p()
-					.clazz("info")
-					.text("There are no fields accessed concurrently with an empty lock set in this run.");
 		}
 	}
 
-	private void fieldLink(final Container c, final Field field) {
-		link(c, field.getName(), field.isStatic() ? STATIC_LOCK_FREQUENCY_QUERY
-				: EMPTY_LOCK_SET_INSTANCES_QUERY, "Package",
-				field.getPackage(), "Class", field.getClazz(), "Field",
-				field.getName(), "FieldId", field.getId());
+	interface LinkProvider<T> {
+		void link(final Container c, T t);
+	}
+
+	static class LockSetLink implements LinkProvider<Field> {
+		public void link(final Container c, final Field field) {
+			buildLink(c, field.getName(),
+					field.isStatic() ? STATIC_LOCK_FREQUENCY_QUERY
+							: EMPTY_LOCK_SET_INSTANCES_QUERY, "Package",
+					field.getPackage(), "Class", field.getClazz(), "Field",
+					field.getName(), "FieldId", field.getId());
+		}
+	}
+
+	static class BadPublishLink implements LinkProvider<Field> {
+		public void link(final Container c, final Field field) {
+			buildLink(c, field.getName(), BAD_PUBLISH_QUERY, "Package",
+					field.getPackage(), "Class", field.getClazz(), "Field",
+					field.getName(), "FieldId", field.getId());
+		}
 	}
 
 	/**
@@ -741,7 +779,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 	 * @param args
 	 * @return
 	 */
-	private static void link(final Container c, final String text,
+	private static void buildLink(final Container c, final String text,
 			final String query, final String... args) {
 		StringBuilder b = new StringBuilder();
 		if (args.length % 2 != 0) {

@@ -34,7 +34,7 @@ public final class RunDirectory {
 
 	public static final String HEADER_SUFFIX = ".flh";
 
-	private static String idValidSuffix(final String name) {
+	private static String isValidSuffix(final String name) {
 		for (final String suffix : suffixes) {
 			if (name.endsWith(suffix)) {
 				return suffix;
@@ -51,7 +51,7 @@ public final class RunDirectory {
 			if (pathname.isDirectory()) {
 				return false;
 			}
-			return idValidSuffix(pathname.getName()) != null;
+			return isValidSuffix(pathname.getName()) != null;
 		}
 	};
 
@@ -191,20 +191,24 @@ public final class RunDirectory {
 		return null;
 	}
 
-	// FL, but not good
+	/**
+	 * Test to see whether or not a directory is not a valid run directory.
+	 * 
+	 * @param runDir
+	 * @return
+	 */
 	public static boolean isInvalid(final File runDir) {
 		// Caller checks if this null
 		assert runDir != null && runDir.exists() && runDir.isDirectory();
 
 		final File tag = new File(runDir,
 				InstrumentationConstants.FL_COMPLETE_RUN);
-		if (tag.exists()) {
-			return false; // It should be ok
-		}
-		final File[] headers = runDir.listFiles(flashlightHeaderFileFilter);
-		final File[] data = runDir.listFiles(flashlightRawDataFileFilter);
-		// Return true if it has a header file
-		return headers.length + data.length > 1;
+		boolean valid = true;
+		valid &= tag.exists();
+		valid &= InstrumentationFileHandles.hasValidHandles(runDir);
+		valid &= runDir.listFiles(flashlightHeaderFileFilter).length > 0;
+		valid &= runDir.listFiles(flashlightRawDataFileFilter).length > 0;
+		return !valid;
 	}
 
 	private static File getFileFrom(final File runDir, final FileFilter filter,
@@ -247,7 +251,7 @@ public final class RunDirectory {
 			} else if (files.length == 1) {
 				return files;
 			} else if (files.length == FL_STREAM_SUFFIXES.length) {
-				final String suffix = idValidSuffix(files[0].getName());
+				final String suffix = isValidSuffix(files[0].getName());
 				if (suffix != null) {
 					// Check if names match
 					boolean match = true;

@@ -208,16 +208,4 @@ public final class JsonBuilder {
 		abstract void write(StringBuilder b);
 	}
 
-	public static void main(final String[] args) {
-		JsonBuilder w = new JsonBuilder();
-		JsonObject o = w.var("foo").object();
-		o.prop("hello").value("dolly");
-		JsonArray a = w.var("bar").array();
-		a.value("foo");
-		a.value("bar");
-		a.value(3);
-		a.value(8.1f);
-		w.var("baz").value(3.00);
-	}
-
 }

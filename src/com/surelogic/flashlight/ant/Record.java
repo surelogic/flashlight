@@ -35,6 +35,9 @@ public class Record extends Task {
 	final SimpleDateFormat dateFormat = new SimpleDateFormat(
 			"-yyyy.MM.dd-'at'-HH.mm.ss.SSS");
 	private File dataDir;
+
+	private String name;
+
 	// The location that the run should be placed in
 
 	private final String FIELDS_TXT = "fields.txt";
@@ -126,6 +129,10 @@ public class Record extends Task {
 
 	public void setDataDir(final File dataDir) {
 		this.dataDir = dataDir;
+	}
+
+	public void setName(final String name) {
+		this.name = name;
 	}
 
 	public BootClassPath createBootclasspath() {
@@ -297,7 +304,9 @@ public class Record extends Task {
 	@Override
 	public void execute() throws BuildException {
 		final Date now = new Date();
-		final String name = classname == null ? jarfile.getName() : classname;
+		if (name == null) {
+			name = classname == null ? jarfile.getName() : classname;
+		}
 		final String datedName = name + dateFormat.format(now);
 		final File runFolder = new File(dataDir, datedName);
 		if (runFolder.exists()) {

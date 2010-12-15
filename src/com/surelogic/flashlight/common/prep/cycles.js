@@ -310,15 +310,14 @@ function loadTimeline() {
 
 $(document).ready(
    function() {
-	  // For some reason there is a history piece that doesn't work, I should look into this.  For now, disable.
-	  SimileAjax.History.enabled = false;
+      // For some reason there is a history piece that doesn't work, I should look into this.  For now, disable.
+      SimileAjax.History.enabled = false;
       $("#deadlock-list li").click(
     		  function (event) {
     			  var val = $(this).attr("id");
     			  loadDeadlockGraph(deadlocks[val]);
     		  });
       initGraphs();
-      loadTimeline();
       $(".tab").hide();
       $("#main #bar a").click(function(event) {
           event.preventDefault();
@@ -329,7 +328,19 @@ $(document).ready(
     	  $(div).fadeIn('slow');
       });
       initOutline();
+      // We load timeline separately b/c it takes too long to do on startup
+      var loaded = false;
+      $('#bar a[href=#threads]').click(
+         function () {
+            if (!loaded) {
+               loaded = true;
+               loadTimeline();
+            }
+         }
+      );
    });
+
+
 
 var resizeTimerID = null;
 $(document).resize(

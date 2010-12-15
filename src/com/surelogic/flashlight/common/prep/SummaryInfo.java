@@ -16,6 +16,8 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import com.surelogic.common.jdbc.DBQuery;
+import com.surelogic.common.jdbc.LimitRowHandler;
+import com.surelogic.common.jdbc.NullRowHandler;
 import com.surelogic.common.jdbc.Query;
 import com.surelogic.common.jdbc.Result;
 import com.surelogic.common.jdbc.ResultHandler;
@@ -27,38 +29,37 @@ import com.surelogic.flashlight.schema.Trace;
 
 public class SummaryInfo {
 
-	private final List<Cycle> cycles;
+	public static final int CONTENTION_SITE_LIMIT = 10;
+
 	private final List<Lock> locks;
 	private final List<Thread> threads;
 
 	private final List<LockSetEvidence> emptyLockSets;
 	private final List<BadPublishEvidence> badPublishes;
 	private final List<DeadlockEvidence> deadlocks;
+	private final List<ContentionSite> contentionSites;
 	private final String threadCount;
 	private final String objectCount;
 	private final String classCount;
 	private final CoverageSite root;
 
-	public SummaryInfo(final List<Cycle> cycles, final List<Lock> locks,
-			final List<Thread> threads,
+	public SummaryInfo(final List<Lock> locks, final List<Thread> threads,
 			final List<LockSetEvidence> emptyLockSetFields,
 			final List<BadPublishEvidence> badPublishes,
-			final List<DeadlockEvidence> deadlocks, final String objectCount,
-			final String classCount, final CoverageSite coverageRoot) {
-		this.cycles = cycles;
+			final List<DeadlockEvidence> deadlocks,
+			final List<ContentionSite> contentionSites,
+			final String objectCount, final String classCount,
+			final CoverageSite coverageRoot) {
 		this.locks = locks;
 		this.threads = threads;
 		this.threadCount = Integer.toString(threads.size());
 		this.emptyLockSets = emptyLockSetFields;
 		this.badPublishes = badPublishes;
 		this.deadlocks = deadlocks;
+		this.contentionSites = contentionSites;
 		this.objectCount = objectCount;
 		this.classCount = classCount;
 		this.root = coverageRoot;
-	}
-
-	public List<Cycle> getCycles() {
-		return cycles;
 	}
 
 	public List<Lock> getLocks() {
@@ -75,6 +76,14 @@ public class SummaryInfo {
 
 	public List<BadPublishEvidence> getBadPublishes() {
 		return badPublishes;
+	}
+
+	public List<DeadlockEvidence> getDeadlocks() {
+		return deadlocks;
+	}
+
+	public List<ContentionSite> getContentionSites() {
+		return contentionSites;
 	}
 
 	public String getThreadCount() {
@@ -96,8 +105,6 @@ public class SummaryInfo {
 	public static class SummaryQuery implements DBQuery<SummaryInfo> {
 
 		public SummaryInfo perform(final Query q) {
-			List<Cycle> cycles = q.prepared("Deadlock.lockCycles",
-					new DeadlockHandler(q)).call();
 			List<Lock> locks = q.prepared("Deadlock.lockContention",
 					new LockContentionHandler()).call();
 			List<Thread> threads = q.prepared("SummaryInfo.threads",
@@ -119,10 +126,18 @@ public class SummaryInfo {
 						new LockSetEvidenceHandler(q, f)).call(f.id));
 			}
 			Collections.sort(emptyLockSets);
-			List<BadPublishEvidence> badPublishes = q
-					.prepared("SummaryInfo.badPublishes",
-							new BadPublishEvidenceHandler()).call();
-			List<DeadlockEvidence> deadlocks = null;
+			List<BadPublishEvidence> badPublishes = q.prepared(
+					"SummaryInfo.badPublishes",
+					new BadPublishEvidenceHandler(q)).call();
+			List<DeadlockEvidence> deadlocks = q.prepared(
+					"Deadlock.lockCycles", new DeadlockEvidenceHandler(q))
+					.call();
+
+			List<ContentionSite> contentionSites = q.prepared(
+					"CoverageInfo.contentionHotSpots",
+					LimitRowHandler.from(new ContentionSitesHandler(),
+							CONTENTION_SITE_LIMIT)).call();
+
 			String classCount = q.prepared("SummaryInfo.classCount",
 					new StringResultHandler()).call();
 			String objectCount = q.prepared("SummaryInfo.objectCount",
@@ -136,8 +151,8 @@ public class SummaryInfo {
 					root,
 					q.prepared("CoverageInfo.lockCoverage",
 							new CoverageHandler()).call());
-			return new SummaryInfo(cycles, locks, threads, emptyLockSets,
-					badPublishes, deadlocks, objectCount, classCount, root);
+			return new SummaryInfo(locks, threads, emptyLockSets, badPublishes,
+					deadlocks, contentionSites, objectCount, classCount, root);
 		}
 
 		void process(final Query q, final CoverageSite site,
@@ -152,7 +167,8 @@ public class SummaryInfo {
 
 	}
 
-	public static class LockSetEvidence implements Comparable<LockSetEvidence> {
+	public static class LockSetEvidence implements Comparable<LockSetEvidence>,
+			FieldLoc {
 		private final Field field;
 		private final List<LockSetLock> likelyLocks;
 
@@ -161,8 +177,24 @@ public class SummaryInfo {
 			this.likelyLocks = new ArrayList<LockSetLock>();
 		}
 
-		public Field getField() {
-			return field;
+		public String getPackage() {
+			return field.getPackage();
+		}
+
+		public String getClazz() {
+			return field.getClazz();
+		}
+
+		public String getName() {
+			return field.getName();
+		}
+
+		public boolean isStatic() {
+			return field.isStatic();
+		}
+
+		public String getId() {
+			return field.getId();
 		}
 
 		public List<LockSetLock> getLikelyLocks() {
@@ -178,14 +210,16 @@ public class SummaryInfo {
 	public static class LockSetLock {
 		private final String name;
 		private final String id;
+		private final String timesAcquired;
 		private final String heldPercentage;
 		private final List<Site> acquisitions;
 		private final List<Site> notHeldAt;
 
 		public LockSetLock(final String name, final String id,
-				final String heldPercentage) {
+				final String timesAcquired, final String heldPercentage) {
 			this.name = name;
 			this.id = id;
+			this.timesAcquired = timesAcquired;
 			this.heldPercentage = heldPercentage;
 			this.acquisitions = new ArrayList<Site>();
 			this.notHeldAt = new ArrayList<Site>();
@@ -222,6 +256,9 @@ public class SummaryInfo {
 
 	private static class LockSetEvidenceHandler implements
 			ResultHandler<LockSetEvidence> {
+
+		private static final int LOCK_LIMIT = 5;
+
 		private final Field field;
 		private final Query q;
 
@@ -232,9 +269,13 @@ public class SummaryInfo {
 
 		public LockSetEvidence handle(final Result result) {
 			LockSetEvidence e = new LockSetEvidence(field);
+			int count = 0;
 			for (Row r : result) {
+				if (count++ == LOCK_LIMIT) {
+					return e;
+				}
 				LockSetLock l = new LockSetLock(r.nextString(), r.nextString(),
-						r.nextString());
+						r.nextString(), r.nextString());
 				l.getAcquisitions().addAll(
 						q.prepared("SummaryInfo.lockAcquiredAt",
 								new SiteHandler()).call(l.getId()));
@@ -251,70 +292,258 @@ public class SummaryInfo {
 
 	public static class DeadlockEvidence {
 		private final Cycle cycle;
-		private final List<List<Trace>> traces;
+		private final List<DeadlockTrace> traces;
 
 		public DeadlockEvidence(final Cycle cycle) {
 			this.cycle = cycle;
-			this.traces = new ArrayList<List<Trace>>();
+			this.traces = new ArrayList<SummaryInfo.DeadlockTrace>();
 		}
 
 		public Cycle getCycle() {
 			return cycle;
 		}
 
-		public List<List<Trace>> getTraces() {
+		public List<DeadlockTrace> getTraces() {
 			return traces;
 		}
 
 	}
 
-	private static class DeadlockEvidenceHandler implements
-			RowHandler<DeadlockEvidence> {
+	/**
+	 * Represents a single trace that contributes an edge to the deadlock graph.
+	 * 
+	 * @author nathan
+	 * 
+	 */
+	public static class DeadlockTrace {
+		private final Edge edge;
+		private final List<Trace> trace;
+		private final List<LockTrace> lockTrace;
 
-		public DeadlockEvidence handle(final Row r) {
+		public DeadlockTrace(final Edge edge, final List<Trace> trace,
+				final List<LockTrace> lockTrace) {
+			this.edge = edge;
+			this.trace = trace;
+			this.lockTrace = lockTrace;
+		}
 
-			return null;
+		/**
+		 * The edge this trace contributed to the deadlock graph
+		 * 
+		 * @return
+		 */
+		public Edge getEdge() {
+			return edge;
+		}
+
+		/**
+		 * The stack trace for this lock acquisition.
+		 * 
+		 * @return
+		 */
+		public List<Trace> getTrace() {
+			return trace;
+		}
+
+		/**
+		 * The lock trace for this lock acquisition, from most to least recently
+		 * acquired.
+		 * 
+		 * @return
+		 */
+		public List<LockTrace> getLockTrace() {
+			return lockTrace;
 		}
 
 	}
 
-	public static class ContentionEvidence {
+	public static class LockTrace {
+		private final String lock;
+		private final long id;
+		private final String pakkage;
+		private final String clazz;
+		private final int line;
+
+		public LockTrace(final long id, final String lock,
+				final String pakkage, final String clazz, final int line) {
+			this.id = id;
+			this.lock = lock;
+			this.pakkage = pakkage;
+			this.clazz = clazz;
+			this.line = line;
+		}
+
+		public String getId() {
+			return Long.toString(id);
+		}
+
+		public String getLock() {
+			return lock;
+		}
+
+		public String getPackage() {
+			return pakkage;
+		}
+
+		public String getClazz() {
+			return clazz;
+		}
+
+		public int getLine() {
+			return line;
+		}
+
+	}
+
+	static class LockTraceHandler implements RowHandler<LockTrace> {
+		public LockTrace handle(final Row r) {
+			return new LockTrace(r.nextLong(), r.nextString(), r.nextString(),
+					r.nextString(), r.nextInt());
+		}
+	}
+
+	public static class ContentionSite {
+		private final Site s;
+		private final long durationNs;
+
+		public ContentionSite(final Site s, final long durationNs) {
+			this.s = s;
+			this.durationNs = durationNs;
+		}
+
+		public Site getSite() {
+			return s;
+		}
+
+		public long getDurationNs() {
+			return durationNs;
+		}
+
+	}
+
+	private static class ContentionSitesHandler implements
+			RowHandler<ContentionSite> {
+		private final SiteHandler sh = new SiteHandler();
+
+		public ContentionSite handle(final Row r) {
+			long duration = r.nextLong();
+			Site site = sh.handle(r);
+			return new ContentionSite(site, duration);
+		}
 
 	}
 
 	private static class BadPublishEvidenceHandler implements
 			RowHandler<BadPublishEvidence> {
 
+		private final Query q;
+
+		BadPublishEvidenceHandler(final Query q) {
+			this.q = q;
+		}
+
 		public BadPublishEvidence handle(final Row r) {
 			Field f = new Field(r.nextString(), r.nextString(), r.nextString(),
 					r.nextLong(), r.nextBoolean());
-			BadPublishEvidence e = new BadPublishEvidence(f);
-			e.getTraces();
+			final BadPublishEvidence e = new BadPublishEvidence(f);
+			q.prepared("SummaryInfo.underConstructionAccesses",
+					new NullRowHandler() {
+						@Override
+						protected void doHandle(final Row r) {
+							String thread = r.nextString();
+							boolean isRead = r.nextBoolean();
+							Timestamp time = r.nextTimestamp();
+							List<Trace> trace = Trace.stackTrace(r.nextLong())
+									.perform(q);
+							e.getAccesses().add(
+									new BadPublishAccess(thread, isRead, time,
+											trace));
+						}
+					}).call(f.getId());
 			return e;
 		}
-
 	}
 
-	public static class BadPublishEvidence {
+	public static class BadPublishEvidence implements FieldLoc {
 		private final Field f;
-		private final List<List<Trace>> traces;
+		private final List<BadPublishAccess> accesses;
 
 		public BadPublishEvidence(final Field f) {
 			this.f = f;
-			traces = new ArrayList<List<Trace>>();
+			accesses = new ArrayList<BadPublishAccess>();
 		}
 
-		public Field getField() {
-			return f;
+		public String getPackage() {
+			return f.getPackage();
 		}
 
-		public List<List<Trace>> getTraces() {
-			return traces;
+		public String getClazz() {
+			return f.getClazz();
+		}
+
+		public String getName() {
+			return f.getName();
+		}
+
+		public String getId() {
+			return f.getId();
+		}
+
+		public boolean isStatic() {
+			return f.isStatic();
+		}
+
+		public List<BadPublishAccess> getAccesses() {
+			return accesses;
 		}
 
 	}
 
-	public static class Field implements Comparable<Field> {
+	public static class BadPublishAccess {
+		private final String thread;
+		private final boolean isRead;
+		private final Timestamp time;
+		private final List<Trace> trace;
+
+		public BadPublishAccess(final String thread, final boolean isRead,
+				final Timestamp time, final List<Trace> trace) {
+			this.thread = thread;
+			this.isRead = isRead;
+			this.time = time;
+			this.trace = trace;
+		}
+
+		public String getThread() {
+			return thread;
+		}
+
+		public boolean isRead() {
+			return isRead;
+		}
+
+		public Timestamp getTime() {
+			return time;
+		}
+
+		public List<Trace> getTrace() {
+			return trace;
+		}
+
+	}
+
+	public interface FieldLoc {
+		String getPackage();
+
+		String getClazz();
+
+		String getName();
+
+		String getId();
+
+		boolean isStatic();
+	}
+
+	public static class Field implements Comparable<Field>, FieldLoc {
 		private final String pakkage;
 		private final String clazz;
 		private final String name;
@@ -636,22 +865,25 @@ public class SummaryInfo {
 
 	}
 
-	private static class DeadlockHandler implements ResultHandler<List<Cycle>> {
+	private static class DeadlockEvidenceHandler implements
+			ResultHandler<List<DeadlockEvidence>> {
 
 		private final Query q;
 
-		public DeadlockHandler(final Query q) {
+		public DeadlockEvidenceHandler(final Query q) {
 			this.q = q;
 		}
 
-		public List<Cycle> handle(final Result result) {
-			List<Cycle> cycles = new ArrayList<Cycle>();
+		public List<DeadlockEvidence> handle(final Result result) {
+			List<DeadlockEvidence> deadlocks = new ArrayList<DeadlockEvidence>();
+			DeadlockEvidence deadlock = null;
 			Cycle curCycle = new Cycle(-1);
 			for (final Row r : result) {
 				final int cycle = r.nextInt();
 				if (curCycle.getNum() != cycle) {
 					curCycle = new Cycle(cycle);
-					cycles.add(curCycle);
+					deadlock = new DeadlockEvidence(curCycle);
+					deadlocks.add(deadlock);
 				}
 				final String held = r.nextString();
 				final String heldId = r.nextString();
@@ -660,15 +892,42 @@ public class SummaryInfo {
 				final int count = r.nextInt();
 				final Timestamp first = r.nextTimestamp();
 				final Timestamp last = r.nextTimestamp();
-				curCycle.getEdges().add(
-						new Edge(held, heldId, acquired, acquiredId, count,
-								first, last, q.prepared(
-										"Deadlock.lockEdgeThreads",
-										new StringRowHandler()).call(heldId,
-										acquiredId)));
+				Edge e = new Edge(held, heldId, acquired, acquiredId, count,
+						first, last, q.prepared("Deadlock.lockEdgeThreads",
+								new StringRowHandler())
+								.call(heldId, acquiredId));
+				curCycle.getEdges().add(e);
+				DeadlockTrace dt = q.prepared("Deadlock.lockEdgeTraces",
+						new DeadlockTraceHandler(q, e))
+						.call(heldId, acquiredId);
+				deadlock.getTraces().add(dt);
 			}
+			return deadlocks;
+		}
 
-			return cycles;
+	}
+
+	private static class DeadlockTraceHandler implements
+			ResultHandler<DeadlockTrace> {
+		private final Query q;
+		private final Edge edge;
+
+		DeadlockTraceHandler(final Query q, final Edge e) {
+			this.q = q;
+			this.edge = e;
+		}
+
+		public DeadlockTrace handle(final Result result) {
+			for (Row r : result) {
+				long traceId = r.nextLong();
+				long lockEventId = r.nextLong();
+				List<Trace> trace = Trace.stackTrace(traceId).perform(q);
+				List<LockTrace> lockTrace = q.prepared(
+						"Deadlock.lockEdgeLockTrace", new LockTraceHandler())
+						.call(lockEventId);
+				return new DeadlockTrace(edge, trace, lockTrace);
+			}
+			return null;
 		}
 
 	}

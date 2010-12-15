@@ -36,12 +36,15 @@ import com.surelogic.flashlight.common.prep.HTMLBuilder.LI;
 import com.surelogic.flashlight.common.prep.HTMLBuilder.Row;
 import com.surelogic.flashlight.common.prep.HTMLBuilder.Table;
 import com.surelogic.flashlight.common.prep.HTMLBuilder.UL;
+import com.surelogic.flashlight.common.prep.SummaryInfo.BadPublishAccess;
 import com.surelogic.flashlight.common.prep.SummaryInfo.BadPublishEvidence;
 import com.surelogic.flashlight.common.prep.SummaryInfo.CoverageSite;
 import com.surelogic.flashlight.common.prep.SummaryInfo.Cycle;
+import com.surelogic.flashlight.common.prep.SummaryInfo.DeadlockEvidence;
 import com.surelogic.flashlight.common.prep.SummaryInfo.Edge;
-import com.surelogic.flashlight.common.prep.SummaryInfo.Field;
+import com.surelogic.flashlight.common.prep.SummaryInfo.FieldLoc;
 import com.surelogic.flashlight.common.prep.SummaryInfo.LockSetEvidence;
+import com.surelogic.flashlight.common.prep.SummaryInfo.LockSetLock;
 
 public final class WriteHtmlOverview implements IPostPrep {
 
@@ -156,18 +159,20 @@ public final class WriteHtmlOverview implements IPostPrep {
 				}
 			}
 			lockDiv.h(3).text("Potential Deadlocks");
-			List<Cycle> cycles = info.getCycles();
-			if (cycles.isEmpty()) {
+			List<DeadlockEvidence> deadlocks = info.getDeadlocks();
+
+			if (deadlocks.isEmpty()) {
 				lockDiv.p()
 						.clazz("info")
 						.text("No lock cycles were detected in this run of the program.");
 			} else {
 				HTMLList deadlockList = lockDiv.ul().id("deadlock-list");
-				for (Cycle cycle : cycles) {
+				for (DeadlockEvidence deadlock : deadlocks) {
+					Cycle cycle = deadlock.getCycle();
 					deadlockList.li().id("cycle" + cycle.getNum())
 							.text(String.format("Cycle %d", cycle.getNum()));
 				}
-				writeCycles(graphs, cycles);
+				writeCycles(graphs, deadlocks);
 				Table dTable = lockDiv.table().id("deadlock-container");
 				Row dRow = dTable.row();
 				dRow.td().id("deadlock-widget");
@@ -484,7 +489,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 	private static class PackageFrag {
 		final String frag;
 		final Map<String, PackageFrag> frags = new TreeMap<String, PackageFrag>();
-		final List<Field> fields = new ArrayList<Field>();
+		final List<LockSetEvidence> fields = new ArrayList<LockSetEvidence>();
 
 		PackageFrag(final String f) {
 			this.frag = f;
@@ -499,59 +504,9 @@ public final class WriteHtmlOverview implements IPostPrep {
 			return frag;
 		}
 
-		PackageFrag field(final Field f) {
+		PackageFrag field(final LockSetEvidence f) {
 			fields.add(f);
 			return this;
-		}
-
-		private static final int AREA = 200;
-
-		// Calculates and caches the area
-		private int area() {
-			return fields.size() + AREA;
-		}
-
-		String buildNode(final String id, final String pakkage) {
-			StringBuilder b = new StringBuilder();
-			String newPackage = pakkage + "." + frag;
-			if (!fields.isEmpty()) {
-				b.append("{");
-				b.append(String
-						.format("\"id\": \"%s\",", id + "." + newPackage));
-				b.append(String.format("\"name\": \"%s\",", frag));
-				b.append(String.format("\"data\": {\"$area\": \"%d\" },",
-						area()));
-				b.append("\"children\": [");
-				for (Iterator<Field> iter = fields.iterator(); iter.hasNext();) {
-					Field f = iter.next();
-					b.append("{");
-					b.append(String.format("\"id\": \"%s\",", id + "."
-							+ newPackage + f.getName()));
-					b.append(String.format("\"name\": \"%s\",", f.getName()));
-					b.append(String
-							.format("\"data\": { \"$area\": %d, \"$color\": \"#FF0000\", \"$lineWidth\": 1 }",
-									AREA));
-					b.append("}");
-					if (iter.hasNext()) {
-						b.append(",");
-					}
-				}
-				b.append("]");
-				b.append("}");
-			}
-			boolean firstComma = fields.isEmpty();
-			for (PackageFrag frag : frags.values()) {
-				String node = frag.buildNode(id, newPackage);
-				if (!node.isEmpty()) {
-					if (firstComma) {
-						firstComma = false;
-					} else {
-						b.append(",");
-					}
-					b.append(node);
-				}
-			}
-			return b.toString();
 		}
 
 		String buildNode(final String parentId) {
@@ -560,8 +515,9 @@ public final class WriteHtmlOverview implements IPostPrep {
 			b.append(String.format("\"id\": \"%s\",", parentId + "." + frag));
 			b.append(String.format("\"name\": \"%s\",", frag));
 			b.append("\"children\": [");
-			for (Iterator<Field> iter = fields.iterator(); iter.hasNext();) {
-				Field f = iter.next();
+			for (Iterator<LockSetEvidence> iter = fields.iterator(); iter
+					.hasNext();) {
+				LockSetEvidence f = iter.next();
 				b.append("{");
 				b.append(String.format("\"id\": \"%s\",", parentId + "." + frag
 						+ f.getName()));
@@ -596,9 +552,8 @@ public final class WriteHtmlOverview implements IPostPrep {
 
 	private void writeLockSet(final PrintWriter writer, final SummaryInfo info) {
 		PackageFrag root = new PackageFrag(f_runDescription.getName());
-		for (LockSetEvidence evidence : info.getEmptyLockSetFields()) {
+		for (LockSetEvidence field : info.getEmptyLockSetFields()) {
 			PackageFrag pkg = root;
-			Field field = evidence.getField();
 			for (String frag : field.getPackage().split("\\.")) {
 				pkg = pkg.frag(frag);
 			}
@@ -610,10 +565,11 @@ public final class WriteHtmlOverview implements IPostPrep {
 		writer.println(";");
 	}
 
-	private void writeCycles(final PrintWriter writer, final List<Cycle> cycles) {
+	private void writeCycles(final PrintWriter writer,
+			final List<DeadlockEvidence> deadlocks) {
 		writer.println("var deadlocks = {");
-		for (Iterator<Cycle> ci = cycles.iterator(); ci.hasNext();) {
-			Cycle c = ci.next();
+		for (Iterator<DeadlockEvidence> ci = deadlocks.iterator(); ci.hasNext();) {
+			Cycle c = ci.next().getCycle();
 			Map<EdgeEntry, EdgeEntry> edges = new TreeMap<EdgeEntry, EdgeEntry>();
 			for (Edge e : c.getEdges()) {
 				EdgeEntry reverse = new EdgeEntry(e.getAcquiredId(),
@@ -660,17 +616,15 @@ public final class WriteHtmlOverview implements IPostPrep {
 			}
 		}
 		writer.println("};");
-		for (Cycle c : cycles) {
+		for (DeadlockEvidence de : deadlocks) {
+			Cycle c = de.getCycle();
 			writer.println("deadlocks.cycle" + c.getNum() + ".threads = "
 					+ jsList(c.getThreads()) + ";");
 		}
 	}
 
 	private void displayLockSet(final SummaryInfo info, final Container c) {
-		List<Field> fields = new ArrayList<Field>();
-		for (LockSetEvidence e : info.getEmptyLockSetFields()) {
-			fields.add(e.getField());
-		}
+		List<LockSetEvidence> fields = info.getEmptyLockSetFields();
 		if (!fields.isEmpty()) {
 			displayClassTree(fields, c, new LockSetLink());
 		} else {
@@ -681,12 +635,9 @@ public final class WriteHtmlOverview implements IPostPrep {
 	}
 
 	private void displayBadPublishes(final SummaryInfo info, final Container c) {
-		List<Field> fields = new ArrayList<Field>();
-		for (BadPublishEvidence b : info.getBadPublishes()) {
-			fields.add(b.getField());
-		}
-		if (!fields.isEmpty()) {
-			displayClassTree(fields, c, new BadPublishLink());
+		List<BadPublishEvidence> list = info.getBadPublishes();
+		if (!list.isEmpty()) {
+			displayClassTree(list, c, new BadPublishLink());
 		} else {
 			c.p()
 					.clazz("info")
@@ -702,13 +653,13 @@ public final class WriteHtmlOverview implements IPostPrep {
 	 * @param c
 	 *            the container to write to
 	 */
-	private void displayClassTree(final List<Field> fields, final Container c,
-			final LinkProvider<Field> lp) {
-		Iterator<Field> iter = fields.iterator();
+	private <T extends FieldLoc> void displayClassTree(final List<T> fields,
+			final Container c, final LinkProvider<T> lp) {
+		Iterator<T> iter = fields.iterator();
 		if (iter.hasNext()) {
 			UL packageList = c.ul();
 			packageList.clazz("outline");
-			Field field = iter.next();
+			T field = iter.next();
 			String pakkage = field.getPackage();
 			String clazz = field.getClazz();
 			LI packageLI = packageList.li();
@@ -721,6 +672,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 			UL fieldList = classLI.ul();
 			LI fieldLI = fieldList.li();
 			lp.link(fieldLI, field);
+
 			while (iter.hasNext()) {
 				field = iter.next();
 				if (!pakkage.equals(field.getPackage())) {
@@ -752,21 +704,36 @@ public final class WriteHtmlOverview implements IPostPrep {
 		void link(final Container c, T t);
 	}
 
-	static class LockSetLink implements LinkProvider<Field> {
-		public void link(final Container c, final Field field) {
+	static class LockSetLink implements LinkProvider<LockSetEvidence> {
+		public void link(final Container c, final LockSetEvidence field) {
 			buildLink(c, field.getName(),
 					field.isStatic() ? STATIC_LOCK_FREQUENCY_QUERY
 							: EMPTY_LOCK_SET_INSTANCES_QUERY, "Package",
 					field.getPackage(), "Class", field.getClazz(), "Field",
 					field.getName(), "FieldId", field.getId());
+			Table table = c.table();
+			table.row().th("Name").th("Held %");
+			for (LockSetLock lock : field.getLikelyLocks()) {
+				table.row().td(lock.getName()).td(lock.getHeldPercentage());
+				/*
+				 * for (Site s : lock.getAcquisitions()) { c.p(s.toString()); }
+				 * for (Site s : lock.getNotHeldAt()) { c.p(s.toString()); }
+				 */
+			}
 		}
 	}
 
-	static class BadPublishLink implements LinkProvider<Field> {
-		public void link(final Container c, final Field field) {
+	static class BadPublishLink implements LinkProvider<BadPublishEvidence> {
+		public void link(final Container c, final BadPublishEvidence field) {
 			buildLink(c, field.getName(), BAD_PUBLISH_QUERY, "Package",
 					field.getPackage(), "Class", field.getClazz(), "Field",
 					field.getName(), "FieldId", field.getId());
+			Table table = c.table();
+			table.row().th("Thread").th("Time").th("Access");
+			for (BadPublishAccess a : field.getAccesses()) {
+				table.row().td(a.getThread()).td(a.getTime().toString())
+						.td(a.isRead() ? "R" : "W");
+			}
 		}
 	}
 

@@ -237,6 +237,10 @@ public class SummaryInfo {
 			return heldPercentage;
 		}
 
+		public String getTimesAcquired() {
+			return timesAcquired;
+		}
+
 		public List<Site> getAcquisitions() {
 			return acquisitions;
 		}

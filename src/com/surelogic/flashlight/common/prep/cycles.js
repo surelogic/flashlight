@@ -30,6 +30,37 @@ function initOutline() {
    $(".outline.collapsed > li > .icon").each(toggleThis);
 }
 
+function outline() {
+   $(".outline > li:has(ul)")
+      .prepend("<img class='icon' alt='Expand' src='" + O_DOWN + "'></img>")
+      .find('> .icon')
+      .each(toggle)
+      .click(toggle);
+   $(".outline > li:not(:has(ul))").prepend("<img class='filler' src='" + O_FILLER+ "'></img>");
+}
+
+function toggle() {
+   var current = $(this).attr('src');
+   if(current == O_RIGHT) {
+      $(this).attr('src', O_DOWN);
+      var toShow = $(this).parent().children('ul');
+      var subtrees = toShow.find('> li:has(ul)');
+      subtrees.find('.icon').attr('src', O_RIGHT);
+      // Add the img icon to any trees that don't have it yet
+      var children = subtrees.not(':has(> .icon)');
+      children.prepend("<img class='icon' alt='Expand' src='" + O_RIGHT + "'></img>");
+      children.find('> .icon').click(toggle);
+      var leaves = toShow.find('> li:not(:has(ul))');
+      var toHide = toShow.find('li > ul');
+
+      toShow.show();
+      toHide.hide();
+   } else {
+      $(this).attr('src', O_RIGHT);
+      $(this).parent().children('ul').hide();
+   }
+}
+
 function toggleThis() {
    var current = $(this).attr('src');
    if(current == O_RIGHT) {
@@ -327,7 +358,8 @@ $(document).ready(
     	  $(".tab").hide();
     	  $(div).fadeIn('slow');
       });
-      initOutline();
+      //initOutline();
+      outline();
       // We load timeline separately b/c it takes too long to do on startup
       var loaded = false;
       $('#bar a[href=#threads]').click(

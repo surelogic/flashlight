@@ -10,8 +10,8 @@ html {
 body {
  font-family: Helvetica,Verdana,Arial,sans-serif; 
  font-size: 10pt;
- background: url('image_files/flashlight_overview_banner.png') repeat-y 0 1.67em;
- background-color: #E6DDD5;
+/* background: url('image_files/flashlight_overview_banner.png') repeat-y 0 1.67em; 
+ background-color: #E6DDD5; */
 }
 
 
@@ -34,8 +34,6 @@ h3 {
 
 table {
  border-spacing: 0;
- margin-left: auto;
- margin-right: auto;
  border-bottom: 1px solid #D3D3D3;
  border-top: 1px solid #D3D3D3;
 }
@@ -73,8 +71,8 @@ ul {
 }
 
 #header {
- margin-left: 100px;
- padding-left: 4px;
+/* margin-left: 100px; 
+ padding-left: 4px;*/
 }
 
 #bar {
@@ -88,7 +86,7 @@ ul {
 }
 
 #bar a.selected h2{
-   background-color: red;
+ background-color: red;
 }
 
 
@@ -129,8 +127,7 @@ ul {
    color: #005596;
    cursor: pointer;
    text-decoration: underline;
-   margin-left: auto;
-   margin-right: auto;
+   margin-right: 10px;
 }
 
 
@@ -169,4 +166,26 @@ ul {
    list-style-image: none;
    margin-left: 10px;
    vertical-align: middle;
+}
+
+.sectionList li {
+   display: inline-block;
+   margin-right: 10px;
+   margin-top: 4px;
+   border-left: 1px solid black;
+   border-right: 1px solid black;
+   border-top: 1px solid black;
+   padding-left: 2px;
+   padding-right: 2px;
+   padding-top: 1px;
+}
+
+.sectionList li.selected {
+   background-color: #deb887;
+}
+
+.sectionList li a {
+   text-decoration: none;
+   font-size: 12pt;
+   font-weight: bold;
 }

@@ -29,7 +29,6 @@ import com.surelogic.flashlight.common.files.HtmlHandles;
 import com.surelogic.flashlight.common.model.RunDescription;
 import com.surelogic.flashlight.common.prep.HTMLBuilder.Body;
 import com.surelogic.flashlight.common.prep.HTMLBuilder.Container;
-import com.surelogic.flashlight.common.prep.HTMLBuilder.Div;
 import com.surelogic.flashlight.common.prep.HTMLBuilder.HTMLList;
 import com.surelogic.flashlight.common.prep.HTMLBuilder.Head;
 import com.surelogic.flashlight.common.prep.HTMLBuilder.LI;
@@ -43,6 +42,7 @@ import com.surelogic.flashlight.common.prep.SummaryInfo.Cycle;
 import com.surelogic.flashlight.common.prep.SummaryInfo.DeadlockEvidence;
 import com.surelogic.flashlight.common.prep.SummaryInfo.Edge;
 import com.surelogic.flashlight.common.prep.SummaryInfo.FieldLoc;
+import com.surelogic.flashlight.common.prep.SummaryInfo.Lock;
 import com.surelogic.flashlight.common.prep.SummaryInfo.LockSetEvidence;
 import com.surelogic.flashlight.common.prep.SummaryInfo.LockSetLock;
 
@@ -85,57 +85,107 @@ public final class WriteHtmlOverview implements IPostPrep {
 		try {
 			SummaryInfo info = new SummaryInfo.SummaryQuery()
 					.perform(new ConnectionQuery(c));
-			PrintWriter graphs;
-			try {
-				graphs = new PrintWriter(new File(htmlDirectory,
-						"graph-data.js"));
-			} catch (FileNotFoundException e) {
-				throw new IllegalStateException(e);
+
+			List<Category> categories = new ArrayList<Category>();
+
+			Category locks = new Category("locks", "Locks");
+			locks.getSections().add(new LockSection(info.getLocks()));
+			locks.getSections().add(new DeadlocksSection(info.getDeadlocks()));
+
+			Category fields = new Category("fields", "Fields");
+			fields.getSections().add(
+					new LockSetSection(info.getEmptyLockSetFields()));
+			fields.getSections().add(
+					new BadPublishSection(info.getBadPublishes()));
+
+			Category threads = new Category("threads", "Threads");
+			threads.getSections().add(new TimelineSection(info.getThreads()));
+			threads.getSections().add(
+					new CoverageSection(info.getThreadCoverage()));
+			threads.getSections().add(new LivenessSection(info.getThreads()));
+			categories.add(locks);
+			categories.add(fields);
+			categories.add(threads);
+			HTMLBuilder builder = displayPage(categories);
+			final HtmlHandles html = f_runDescription.getRunDirectory()
+					.getHtmlHandles();
+			html.writeIndexHtml(builder.build());
+			writer.addImage(CLASS_IMG);
+			writer.addImage(PACKAGE_IMG);
+			writer.addImage("flashlight_overview_banner.png");
+			writer.addImage("outline_down.png");
+			writer.addImage("outline_filler.png");
+			writer.addImage("outline_right.png");
+
+			writer.writeImages();
+		} finally {
+			mon.done();
+		}
+	}
+
+	private HTMLBuilder displayPage(final List<Category> categories) {
+		HTMLBuilder builder = new HTMLBuilder();
+		Head head = builder.head(f_runDescription.getName());
+		loadStyleSheet(head);
+		loadTimeline(head);
+		loadJavaScript(head);
+		Body body = builder.body();
+		body.div().id("header").h(1).text(f_runDescription.getName());
+		Container main = body.div().id("main");
+		// Container sidebar = main.div().id("bar");
+		// for (Category c : categories) {
+		// sidebar.a('#' + c.getId()).h(2).text(c.getName());
+		// }
+		Container content = main.div().id("content");
+
+		main.div().clazz("clear");
+		/*
+		 * Table runTable = content.table().id("run-table");
+		 * runTable.header().th
+		 * ("Vendor").th("Version").th("OS").th("Max Memory")
+		 * .th("Processors").th("Start Time"); String os =
+		 * String.format("%s (%s) on %s", f_runDescription.getOSName(),
+		 * f_runDescription.getOSVersion(), f_runDescription.getOSArch());
+		 * runTable.row() .td(f_runDescription.getJavaVendor())
+		 * .td(f_runDescription.getJavaVersion()) .td(os)
+		 * .td(Integer.toString(f_runDescription.getMaxMemoryMb()))
+		 * .td(Integer.toString(f_runDescription.getProcessors())) .td(new
+		 * SimpleDateFormat(DATE_FORMAT).format(f_runDescription
+		 * .getStartTimeOfRun()));
+		 */
+		HTMLList sectionList = content.ul().clazz("sectionList");
+
+		for (Category c : categories) {
+			// Container div = content.div().id(c.getId()).clazz("tab");
+			// c.display(div);
+			int i = 0;
+			for (Section s : c.getSections()) {
+				sectionList.li().a('#' + c.getId() + i).text(s.getName());
+				++i;
 			}
-			HTMLBuilder builder = new HTMLBuilder();
-			Head head = builder.head(f_runDescription.getName());
-			loadStyleSheet(head);
-			loadTimeline(head);
-			loadJavaScript(head);
-			Body body = builder.body();
-			body.div().id("header").h(1).text(f_runDescription.getName());
+			c.display(content);
 
-			Container main = body.div().id("main");
-			Container sidebar = main.div().id("bar");
-			sidebar.a("#locks").h(2).text("Locks");
-			sidebar.a("#fields").h(2).text("Fields");
-			sidebar.a("#threads").h(2).text("Threads");
-			Container content = main.div().id("content");
-			main.div().clazz("clear");
-			Table runTable = content.table().id("run-table");
-			runTable.header().th("Vendor").th("Version").th("OS")
-					.th("Max Memory").th("Processors").th("Start Time");
-			String os = String.format("%s (%s) on %s",
-					f_runDescription.getOSName(),
-					f_runDescription.getOSVersion(),
-					f_runDescription.getOSArch());
-			runTable.row()
-					.td(f_runDescription.getJavaVendor())
-					.td(f_runDescription.getJavaVersion())
-					.td(os)
-					.td(Integer.toString(f_runDescription.getMaxMemoryMb()))
-					.td(Integer.toString(f_runDescription.getProcessors()))
-					.td(new SimpleDateFormat(DATE_FORMAT)
-							.format(f_runDescription.getStartTimeOfRun()));
+		}
+		return builder;
+	}
 
-			Container lockDiv = content.div().id("locks").clazz("tab");
+	private class LockSection extends Section {
 
-			lockDiv.h(2).text("Locks");
-			Div lockContentionDiv = lockDiv.div();
-			lockContentionDiv.h(3).text("Lock Contention");
-			List<SummaryInfo.Lock> locks = info.getLocks();
+		private final List<Lock> locks;
+
+		public LockSection(final List<SummaryInfo.Lock> locks) {
+			super("Lock Contention");
+			this.locks = locks;
+		}
+
+		@Override
+		void displaySection(final Container c) {
 			if (locks.isEmpty()) {
-				lockContentionDiv
-						.p()
+				c.p()
 						.clazz("info")
 						.text("No locks were detected in this run of the program.");
 			} else {
-				Table lockTable = lockContentionDiv.table();
+				Table lockTable = c.table();
 				lockTable.header().th("Lock").th("Times Acquired")
 						.th("Total Block Time").th("Average Block Time");
 
@@ -158,59 +208,334 @@ public final class WriteHtmlOverview implements IPostPrep {
 									- TABLE_LIMIT), LOCK_CONTENTION_QUERY);
 				}
 			}
-			lockDiv.h(3).text("Potential Deadlocks");
-			List<DeadlockEvidence> deadlocks = info.getDeadlocks();
 
+		}
+
+	}
+
+	private class DeadlocksSection extends Section {
+
+		private final List<DeadlockEvidence> deadlocks;
+
+		public DeadlocksSection(final List<DeadlockEvidence> deadlocks) {
+			super("Potential Deadlocks");
+			this.deadlocks = deadlocks;
+		}
+
+		@Override
+		void displaySection(final Container c) {
 			if (deadlocks.isEmpty()) {
-				lockDiv.p()
+				c.p()
 						.clazz("info")
 						.text("No lock cycles were detected in this run of the program.");
 			} else {
-				HTMLList deadlockList = lockDiv.ul().id("deadlock-list");
+				HTMLList deadlockList = c.ul().id("deadlock-list");
 				for (DeadlockEvidence deadlock : deadlocks) {
 					Cycle cycle = deadlock.getCycle();
 					deadlockList.li().id("cycle" + cycle.getNum())
 							.text(String.format("Cycle %d", cycle.getNum()));
 				}
-				writeCycles(graphs, deadlocks);
-				Table dTable = lockDiv.table().id("deadlock-container");
+
+				PrintWriter graphs = null;
+				try {
+					graphs = new PrintWriter(new File(htmlDirectory,
+							"graph-data.js"));
+					writeCycles(graphs, deadlocks);
+				} catch (FileNotFoundException e) {
+					throw new IllegalStateException(e);
+				} finally {
+					if (graphs != null) {
+						graphs.close();
+					}
+				}
+
+				Table dTable = c.table().id("deadlock-container");
 				Row dRow = dTable.row();
 				dRow.td().id("deadlock-widget");
 				dRow.td().id("deadlock-threads");
 			}
-			Container fieldDiv = content.div().id("fields").clazz("tab");
-			fieldDiv.h(2).text("Fields");
-			Div lockSetDiv = fieldDiv.div();
-			lockSetDiv.h(3).text("Shared Fields With No Lock Set");
-			writeLockSet(graphs, info);
-			displayLockSet(info, lockSetDiv);
 
-			Div badPublishDiv = fieldDiv.div();
-			badPublishDiv.h(3).text("Improperly Published Fields");
-			displayBadPublishes(info, badPublishDiv);
+		}
 
-			Container threadDiv = content.div().id("threads").clazz("tab");
-			threadDiv.h(2).text("Threads");
-
-			int threadCount = info.getThreads().size();
-			threadDiv
-					.p(String
-							.format("%d threads were observed in this run of the program.",
-									threadCount)).clazz("info");
-			if (threadCount > 0) {
-				threadDiv.div().id("tl");
+		private void writeCycles(final PrintWriter writer,
+				final List<DeadlockEvidence> deadlocks) {
+			writer.println("var deadlocks = {");
+			for (Iterator<DeadlockEvidence> ci = deadlocks.iterator(); ci
+					.hasNext();) {
+				Cycle c = ci.next().getCycle();
+				Map<EdgeEntry, EdgeEntry> edges = new TreeMap<EdgeEntry, EdgeEntry>();
+				for (Edge e : c.getEdges()) {
+					EdgeEntry reverse = new EdgeEntry(e.getAcquiredId(),
+							e.getHeldId());
+					if (edges.containsKey(reverse)) {
+						edges.get(reverse).makeBidirectional(e.getThreads());
+					} else {
+						EdgeEntry edge = new EdgeEntry(e.getHeldId(),
+								e.getHeld(), e.getAcquiredId(),
+								e.getAcquired(), e.getThreads());
+						edges.put(edge, edge);
+					}
+				}
+				writer.printf("\tcycle%d : [", c.getNum());
+				String heldId = null;
+				boolean first = true;
+				for (Iterator<EdgeEntry> ei = edges.keySet().iterator(); ei
+						.hasNext();) {
+					EdgeEntry e = ei.next();
+					if (!e.getFrom().equals(heldId)) {
+						if (heldId != null) {
+							writer.println("]\n}, ");
+						}
+						heldId = e.getFrom();
+						writer.println("{");
+						writer.printf("\t\t\"id\": \"%s\",\n", e.getFromName());
+						writer.printf("\t\t\"name\": \"%s\",\n",
+								e.getFromName());
+						writer.print("\t\t\"adjacencies\": [");
+						first = true;
+					}
+					final String arrowType = e.isBidirectional() ? "doubleArrow"
+							: "arrow";
+					if (!first) {
+						writer.print(", ");
+					}
+					first = false;
+					writer.printf(
+							"{\"nodeTo\": \"%3$s\", \"data\": { \"$type\": \"%1$s\", \"$direction\": [\"%2$s\",\"%3$s\"], \"threads\": %4$s}}\n",
+							arrowType, e.getFromName(), e.getToName(),
+							jsList(e.getThreads()));
+				}
+				writer.println("]\n}]");
+				if (ci.hasNext()) {
+					writer.print(", ");
+				}
 			}
-			writeThreadTimeline(graphs, info);
+			writer.println("};");
+			for (DeadlockEvidence de : deadlocks) {
+				Cycle c = de.getCycle();
+				writer.println("deadlocks.cycle" + c.getNum() + ".threads = "
+						+ jsList(c.getThreads()) + ";");
+			}
+		}
 
-			threadDiv.h(3).text("Coverage");
-			displayThreadCoverage(threadDiv, info.getThreadCoverage());
+	}
 
-			threadDiv.h(3).text("Thread Liveness");
+	private class LockSetSection extends Section {
+		private final List<LockSetEvidence> fields;
 
-			Table threadTable = threadDiv.table();
+		public LockSetSection(final List<LockSetEvidence> fields) {
+			super("Possible Race Conditions");
+			this.fields = fields;
+		}
+
+		@Override
+		void displaySection(final Container c) {
+			if (!fields.isEmpty()) {
+				displayClassTree(fields, c, new LockSetLink());
+			} else {
+				c.p()
+						.clazz("info")
+						.text("There are no fields accessed concurrently with an empty lock set in this run.");
+			}
+		}
+
+	}
+
+	class BadPublishSection extends Section {
+
+		private final List<BadPublishEvidence> badPublishes;
+
+		public BadPublishSection(final List<BadPublishEvidence> badPublishes) {
+			super("Improperly Published Fields");
+			this.badPublishes = badPublishes;
+		}
+
+		@Override
+		void displaySection(final Container c) {
+			if (!badPublishes.isEmpty()) {
+				displayClassTree(badPublishes, c, new BadPublishLink());
+			} else {
+				c.p()
+						.clazz("info")
+						.text("Flashlight detected no improperly published fields.");
+			}
+
+		}
+
+	}
+
+	class TimelineSection extends Section {
+
+		private final List<SummaryInfo.Thread> threads;
+
+		public TimelineSection(final List<SummaryInfo.Thread> threads) {
+			super("Program Timeline");
+			this.threads = threads;
+		}
+
+		@Override
+		void displaySection(final Container c) {
+			int threadCount = threads.size();
+			c.p(String.format(
+					"%d threads were observed in this run of the program.",
+					threadCount)).clazz("info");
+			if (threadCount > 0) {
+				c.div().id("tl");
+			}
+			PrintWriter graphs = null;
+			try {
+				graphs = new PrintWriter(new File(htmlDirectory,
+						"timeline-data.js"));
+				writeThreadTimeline(graphs);
+
+			} catch (FileNotFoundException e) {
+				throw new IllegalStateException(e);
+			} finally {
+				if (graphs != null) {
+					graphs.close();
+				}
+			}
+
+		}
+
+		private void writeThreadTimeline(final PrintWriter writer) {
+			SimpleDateFormat df = new SimpleDateFormat(GRAPH_DATE_FORMAT);
+			Date first = null, last = null;
+			for (SummaryInfo.Thread t : threads) {
+				Date start = t.getStart();
+				Date stop = t.getStop();
+				if (first == null || start.getTime() < first.getTime()) {
+					first = start;
+				}
+				if (last == null || last.getTime() < stop.getTime()) {
+					last = stop;
+				}
+			}
+
+			if (first == null) {
+				writer.println("var timeline_data = 'none'");
+			} else {
+				writer.println("var timeline_data = {");
+				writer.println(String
+						.format("'first': Timeline.DateTime.parseGregorianDateTime('%s'),",
+								df.format(first)));
+				writer.println(String
+						.format("'last': Timeline.DateTime.parseGregorianDateTime('%s'),",
+								df.format(last)));
+				long duration = last.getTime() - first.getTime();
+				boolean hasOverviewBand = true;
+				int mainIntervalPixels = 100;
+				int overviewPixels = (int) Math
+						.round(600 / (duration * .001 / 60));
+				String mainInterval = "SECOND";
+				String overviewInterval = "MINUTE";
+				if (duration < 1000) {
+					// Millisecond resolution
+					mainInterval = "MILLISECOND";
+					overviewInterval = "SECOND";
+					overviewPixels = 600;
+				} else if (duration < 10000) {
+					// Second resolution
+					hasOverviewBand = false;
+					mainIntervalPixels = (int) (600 * 1000 / duration);
+				} else if (duration > 1000 * 60 * 30) {
+					mainInterval = "MINUTE";
+					overviewInterval = "HOUR";
+					overviewPixels = 100;
+				}
+				writer.printf(
+						"'needsOverview': %s, 'mainBandInterval': Timeline.DateTime.%s, 'mainBandIntervalPixels': %d, 'overviewBandInterval': Timeline.DateTime.%s, 'overviewBandIntervalPixels': %d,\n",
+						Boolean.toString(hasOverviewBand), mainInterval,
+						mainIntervalPixels, overviewInterval, overviewPixels);
+				writer.println("'dateTimeFormat': 'javascriptnative', ");
+				writer.println("'events': [");
+				for (SummaryInfo.Thread t : threads) {
+					Date start = t.getStart();
+					Date stop = t.getStop();
+					writer.print(String
+							.format("{'start': %s, 'end': %s, 'title': \"%s\", 'description': 'Thread Duration: %(,.3f seconds\\nTime Blocked: %(,.3f seconds', 'durationEvent': true, 'color': 'blue' }",
+									jsDate(start),
+									jsDate(stop),
+									t.getName(),
+									(float) (stop.getTime() - start.getTime()) / 1000,
+									(float) t.getBlockTime() / 1000000000));
+					writer.println(",");
+				}
+				writer.print(String
+						.format("{'start': %s, 'end': %s, 'title': \"%s\", 'description': 'Program Duration: %(,.3f seconds', 'durationEvent': true, 'color': 'red' }",
+								jsDate(first),
+								jsDate(last),
+								"Program Run Time",
+								(float) (last.getTime() - first.getTime()) / 1000));
+				writer.println("]};");
+			}
+		}
+	}
+
+	class CoverageSection extends Section {
+
+		private final CoverageSite site;
+
+		public CoverageSection(final CoverageSite site) {
+			super("Coverage");
+			this.site = site;
+		}
+
+		@Override
+		void displaySection(final Container c) {
+			// The first node should be an anonymous root node, so we just do
+			// it's
+			// children
+			Set<CoverageSite> children = site.getChildren();
+			if (children.isEmpty()) {
+				c.p().clazz("info")
+						.text("There is no coverage data for this run.");
+			} else {
+				UL list = c.ul();
+				list.clazz("outline").clazz("collapsed");
+				for (CoverageSite child : children) {
+					displayThreadCoverageHelper(list, child);
+				}
+			}
+
+		}
+
+		private void displayThreadCoverageHelper(final UL list,
+				final CoverageSite coverage) {
+			LI li = list.li();
+			li.text(coverage.getPackage() + ".");
+			Container emph = li.span().clazz("emph");
+			emph.text(coverage.getClazz() + ".");
+			String line = Integer.toString(coverage.getLine());
+			buildLink(emph, coverage.getLocation(), LINE_OF_CODE_QUERY,
+					"Package", coverage.getPackage(), "Class",
+					coverage.getClazz(), "Method", coverage.getLocation(),
+					"Line", line);
+			Set<CoverageSite> children = coverage.getChildren();
+			if (children.isEmpty()) {
+				return;
+			}
+			UL ul = li.ul();
+			for (CoverageSite child : children) {
+				displayThreadCoverageHelper(ul, child);
+			}
+		}
+	}
+
+	class LivenessSection extends Section {
+		private final List<SummaryInfo.Thread> threads;
+
+		public LivenessSection(final List<SummaryInfo.Thread> threads) {
+			super("Thread Liveness");
+			this.threads = threads;
+		}
+
+		@Override
+		void displaySection(final Container c) {
+			Table threadTable = c.table();
 			threadTable.header().th("Thread").th("Time Blocked");
 			int count = 0;
-			for (SummaryInfo.Thread thread : info.getThreads()) {
+			for (SummaryInfo.Thread thread : threads) {
 				final Row row = threadTable.row();
 				buildLink(row.td(), thread.getName(), THREAD_LOCKS_QUERY,
 						"Thread", thread.getName(), "ThreadId", thread.getId());
@@ -219,140 +544,17 @@ public final class WriteHtmlOverview implements IPostPrep {
 					break;
 				}
 			}
-			if (threadCount > TABLE_LIMIT) {
+			if (threads.size() > TABLE_LIMIT) {
 				buildLink(
 						threadTable.row().td().colspan(2),
-						String.format("%d more results.", threadCount
+						String.format("%d more results.", threads.size()
 								- TABLE_LIMIT), THREAD_BLOCKING_QUERY);
 			}
 
-			graphs.close();
-
-			final HtmlHandles html = f_runDescription.getRunDirectory()
-					.getHtmlHandles();
-			html.writeIndexHtml(builder.build());
-			writer.addImage(CLASS_IMG);
-			writer.addImage(PACKAGE_IMG);
-			writer.addImage("flashlight_overview_banner.png");
-			writer.addImage("outline_down.png");
-			writer.addImage("outline_filler.png");
-			writer.addImage("outline_right.png");
-
-			writer.writeImages();
-		} finally {
-			mon.done();
 		}
 	}
 
-	private void writeThreadTimeline(final PrintWriter writer,
-			final SummaryInfo info) {
-		SimpleDateFormat df = new SimpleDateFormat(GRAPH_DATE_FORMAT);
-		Date first = null, last = null;
-		for (SummaryInfo.Thread t : info.getThreads()) {
-			Date start = t.getStart();
-			Date stop = t.getStop();
-			if (first == null || start.getTime() < first.getTime()) {
-				first = start;
-			}
-			if (last == null || last.getTime() < stop.getTime()) {
-				last = stop;
-			}
-		}
-
-		if (first == null) {
-			writer.println("var timeline_data = 'none'");
-		} else {
-			writer.println("var timeline_data = {");
-			writer.println(String.format(
-					"'first': Timeline.DateTime.parseGregorianDateTime('%s'),",
-					df.format(first)));
-			writer.println(String.format(
-					"'last': Timeline.DateTime.parseGregorianDateTime('%s'),",
-					df.format(last)));
-			long duration = last.getTime() - first.getTime();
-			boolean hasOverviewBand = true;
-			int mainIntervalPixels = 100;
-			int overviewPixels = (int) Math.round(600 / (duration * .001 / 60));
-			String mainInterval = "SECOND";
-			String overviewInterval = "MINUTE";
-			if (duration < 1000) {
-				// Millisecond resolution
-				mainInterval = "MILLISECOND";
-				overviewInterval = "SECOND";
-				overviewPixels = 600;
-			} else if (duration < 10000) {
-				// Second resolution
-				hasOverviewBand = false;
-				mainIntervalPixels = (int) (600 * 1000 / duration);
-			} else if (duration > 1000 * 60 * 30) {
-				mainInterval = "MINUTE";
-				overviewInterval = "HOUR";
-				overviewPixels = 100;
-			}
-			writer.printf(
-					"'needsOverview': %s, 'mainBandInterval': Timeline.DateTime.%s, 'mainBandIntervalPixels': %d, 'overviewBandInterval': Timeline.DateTime.%s, 'overviewBandIntervalPixels': %d,\n",
-					Boolean.toString(hasOverviewBand), mainInterval,
-					mainIntervalPixels, overviewInterval, overviewPixels);
-			writer.println("'dateTimeFormat': 'javascriptnative', ");
-			writer.println("'events': [");
-			for (SummaryInfo.Thread t : info.getThreads()) {
-				Date start = t.getStart();
-				Date stop = t.getStop();
-				writer.print(String
-						.format("{'start': %s, 'end': %s, 'title': \"%s\", 'description': 'Thread Duration: %(,.3f seconds\\nTime Blocked: %(,.3f seconds', 'durationEvent': true, 'color': 'blue' }",
-								jsDate(start),
-								jsDate(stop),
-								t.getName(),
-								(float) (stop.getTime() - start.getTime()) / 1000,
-								(float) t.getBlockTime() / 1000000000));
-				writer.println(",");
-			}
-			writer.print(String
-					.format("{'start': %s, 'end': %s, 'title': \"%s\", 'description': 'Program Duration: %(,.3f seconds', 'durationEvent': true, 'color': 'red' }",
-							jsDate(first), jsDate(last), "Program Run Time",
-							(float) (last.getTime() - first.getTime()) / 1000));
-			writer.println("]};");
-		}
-	}
-
-	private void displayThreadCoverage(final Container threadDiv,
-			final CoverageSite threadCoverage) {
-		// The first node should be an anonymous root node, so we just do it's
-		// children
-		Set<CoverageSite> children = threadCoverage.getChildren();
-		if (children.isEmpty()) {
-			threadDiv.p().clazz("info")
-					.text("There is no coverage data for this run.");
-		} else {
-			UL list = threadDiv.ul();
-			list.clazz("outline").clazz("collapsed");
-			for (CoverageSite child : children) {
-				displayThreadCoverageHelper(list, child);
-			}
-		}
-	}
-
-	private void displayThreadCoverageHelper(final UL list,
-			final CoverageSite coverage) {
-		LI li = list.li();
-		li.text(coverage.getPackage() + ".");
-		Container emph = li.span().clazz("emph");
-		emph.text(coverage.getClazz() + ".");
-		String line = Integer.toString(coverage.getLine());
-		buildLink(emph, coverage.getLocation(), LINE_OF_CODE_QUERY, "Package",
-				coverage.getPackage(), "Class", coverage.getClazz(), "Method",
-				coverage.getLocation(), "Line", line);
-		Set<CoverageSite> children = coverage.getChildren();
-		if (children.isEmpty()) {
-			return;
-		}
-		UL ul = li.ul();
-		for (CoverageSite child : children) {
-			displayThreadCoverageHelper(ul, child);
-		}
-	}
-
-	private String jsList(final Collection<? extends Object> list) {
+	private static String jsList(final Collection<? extends Object> list) {
 		StringBuilder b = new StringBuilder();
 		b.append('[');
 		for (Iterator<? extends Object> iter = list.iterator(); iter.hasNext();) {
@@ -484,165 +686,6 @@ public final class WriteHtmlOverview implements IPostPrep {
 			return "EdgeEntry [from=" + from + ", to=" + to + "]";
 		}
 
-	}
-
-	private static class PackageFrag {
-		final String frag;
-		final Map<String, PackageFrag> frags = new TreeMap<String, PackageFrag>();
-		final List<LockSetEvidence> fields = new ArrayList<LockSetEvidence>();
-
-		PackageFrag(final String f) {
-			this.frag = f;
-		}
-
-		PackageFrag frag(final String f) {
-			PackageFrag frag = frags.get(f);
-			if (frag == null) {
-				frag = new PackageFrag(f);
-				frags.put(f, frag);
-			}
-			return frag;
-		}
-
-		PackageFrag field(final LockSetEvidence f) {
-			fields.add(f);
-			return this;
-		}
-
-		String buildNode(final String parentId) {
-			StringBuilder b = new StringBuilder();
-			b.append("{");
-			b.append(String.format("\"id\": \"%s\",", parentId + "." + frag));
-			b.append(String.format("\"name\": \"%s\",", frag));
-			b.append("\"children\": [");
-			for (Iterator<LockSetEvidence> iter = fields.iterator(); iter
-					.hasNext();) {
-				LockSetEvidence f = iter.next();
-				b.append("{");
-				b.append(String.format("\"id\": \"%s\",", parentId + "." + frag
-						+ f.getName()));
-				b.append(String.format("\"name\": \"%s\",", f.getName()));
-				b.append("\"data\": { \"$area\": 200, \"$color\": \"#1165f1\" }");
-				b.append("}");
-				if (iter.hasNext()) {
-					b.append(",");
-				}
-			}
-			if (!fields.isEmpty() && !frags.isEmpty()) {
-				b.append(",");
-			}
-			for (Iterator<PackageFrag> iter = frags.values().iterator(); iter
-					.hasNext();) {
-				PackageFrag child = iter.next();
-				b.append(child.buildNode(parentId + "." + frag));
-				if (iter.hasNext()) {
-					b.append(",");
-				}
-			}
-			b.append("]");
-			b.append("}");
-			return b.toString();
-		}
-
-		@Override
-		public String toString() {
-			return buildNode("");
-		}
-	}
-
-	private void writeLockSet(final PrintWriter writer, final SummaryInfo info) {
-		PackageFrag root = new PackageFrag(f_runDescription.getName());
-		for (LockSetEvidence field : info.getEmptyLockSetFields()) {
-			PackageFrag pkg = root;
-			for (String frag : field.getPackage().split("\\.")) {
-				pkg = pkg.frag(frag);
-			}
-			pkg = pkg.frag(field.getClazz());
-			pkg.field(field);
-		}
-		writer.print("var packages = ");
-		writer.print(root.toString());
-		writer.println(";");
-	}
-
-	private void writeCycles(final PrintWriter writer,
-			final List<DeadlockEvidence> deadlocks) {
-		writer.println("var deadlocks = {");
-		for (Iterator<DeadlockEvidence> ci = deadlocks.iterator(); ci.hasNext();) {
-			Cycle c = ci.next().getCycle();
-			Map<EdgeEntry, EdgeEntry> edges = new TreeMap<EdgeEntry, EdgeEntry>();
-			for (Edge e : c.getEdges()) {
-				EdgeEntry reverse = new EdgeEntry(e.getAcquiredId(),
-						e.getHeldId());
-				if (edges.containsKey(reverse)) {
-					edges.get(reverse).makeBidirectional(e.getThreads());
-				} else {
-					EdgeEntry edge = new EdgeEntry(e.getHeldId(), e.getHeld(),
-							e.getAcquiredId(), e.getAcquired(), e.getThreads());
-					edges.put(edge, edge);
-				}
-			}
-			writer.printf("\tcycle%d : [", c.getNum());
-			String heldId = null;
-			boolean first = true;
-			for (Iterator<EdgeEntry> ei = edges.keySet().iterator(); ei
-					.hasNext();) {
-				EdgeEntry e = ei.next();
-				if (!e.getFrom().equals(heldId)) {
-					if (heldId != null) {
-						writer.println("]\n}, ");
-					}
-					heldId = e.getFrom();
-					writer.println("{");
-					writer.printf("\t\t\"id\": \"%s\",\n", e.getFromName());
-					writer.printf("\t\t\"name\": \"%s\",\n", e.getFromName());
-					writer.print("\t\t\"adjacencies\": [");
-					first = true;
-				}
-				final String arrowType = e.isBidirectional() ? "doubleArrow"
-						: "arrow";
-				if (!first) {
-					writer.print(", ");
-				}
-				first = false;
-				writer.printf(
-						"{\"nodeTo\": \"%3$s\", \"data\": { \"$type\": \"%1$s\", \"$direction\": [\"%2$s\",\"%3$s\"], \"threads\": %4$s}}\n",
-						arrowType, e.getFromName(), e.getToName(),
-						jsList(e.getThreads()));
-			}
-			writer.println("]\n}]");
-			if (ci.hasNext()) {
-				writer.print(", ");
-			}
-		}
-		writer.println("};");
-		for (DeadlockEvidence de : deadlocks) {
-			Cycle c = de.getCycle();
-			writer.println("deadlocks.cycle" + c.getNum() + ".threads = "
-					+ jsList(c.getThreads()) + ";");
-		}
-	}
-
-	private void displayLockSet(final SummaryInfo info, final Container c) {
-		List<LockSetEvidence> fields = info.getEmptyLockSetFields();
-		if (!fields.isEmpty()) {
-			displayClassTree(fields, c, new LockSetLink());
-		} else {
-			c.p()
-					.clazz("info")
-					.text("There are no fields accessed concurrently with an empty lock set in this run.");
-		}
-	}
-
-	private void displayBadPublishes(final SummaryInfo info, final Container c) {
-		List<BadPublishEvidence> list = info.getBadPublishes();
-		if (!list.isEmpty()) {
-			displayClassTree(list, c, new BadPublishLink());
-		} else {
-			c.p()
-					.clazz("info")
-					.text("Flashlight detected no improperly published fields.");
-		}
 	}
 
 	/**
@@ -809,6 +852,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 		head.javaScript("jit.js");
 		head.javaScript("jquery-1.4.2.min.js");
 		head.javaScript("graph-data.js");
+		head.javaScript("timeline-data.js");
 		head.javaScript("cycles.js");
 	}
 
@@ -829,4 +873,60 @@ public final class WriteHtmlOverview implements IPostPrep {
 		head.javaScript("timeline_2.3.0/timeline_js/timeline-api.js?bundle=true");
 	}
 
+	private class Category {
+
+		private final String id;
+		private final String name;
+		private final List<Section> sections;
+
+		public Category(final String id, final String name) {
+			this.name = name;
+			this.id = id;
+			sections = new ArrayList<Section>();
+		}
+
+		public String getId() {
+			return id;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public List<Section> getSections() {
+			return sections;
+		}
+
+		void display(final Container c) {
+			// c.h(2).text(name);
+			// HTMLList sectionList = c.ul().clazz("sectionList");
+			int i = 0;
+			for (Section s : sections) {
+				// sectionList.li().a('#' + id + i).text(s.getName());
+				Container sDiv = c.div().clazz("section").id(id + i);
+				s.display(sDiv);
+				++i;
+			}
+		}
+	}
+
+	private static abstract class Section {
+		private final String name;
+
+		public Section(final String name) {
+			this.name = name;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		void display(final Container c) {
+			c.h(3).text(name);
+			displaySection(c);
+		}
+
+		abstract void displaySection(final Container c);
+
+	}
 }

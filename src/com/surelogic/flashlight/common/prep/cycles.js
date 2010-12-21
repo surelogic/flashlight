@@ -23,13 +23,6 @@ var fd, icicle, sb, tm, tl;
     animate = !(iStuff || !nativeCanvasSupport);
  })();
 
-function initOutline() {
-   $(".outline li:has(ul)").prepend("<img class='icon' alt='Expand' src='" + O_DOWN + "'></img>");
-   $(".outline li:not(:has(ul))").prepend("<img class='filler' src='" + O_FILLER+ "'></img>");
-   $(".outline .icon").click(toggleThis);
-   $(".outline.collapsed > li > .icon").each(toggleThis);
-}
-
 function outline() {
    $(".outline > li:has(ul)")
       .prepend("<img class='icon' alt='Expand' src='" + O_DOWN + "'></img>")
@@ -47,12 +40,12 @@ function toggle() {
       var subtrees = toShow.find('> li:has(ul)');
       subtrees.find('.icon').attr('src', O_RIGHT);
       // Add the img icon to any trees that don't have it yet
-      var children = subtrees.not(':has(> .icon)');
-      children.prepend("<img class='icon' alt='Expand' src='" + O_RIGHT + "'></img>");
-      children.find('> .icon').click(toggle);
-      var leaves = toShow.find('> li:not(:has(ul))');
+      subtrees.not(':has(> .icon)')
+         .prepend("<img class='icon' alt='Expand' src='" + O_RIGHT + "'></img>")
+         .find('> .icon')
+         .click(toggle);
+      toShow.find('> li:not(:has(ul))').prepend("<img class='filler' src='" + O_FILLER+ "'></img>");
       var toHide = toShow.find('li > ul');
-
       toShow.show();
       toHide.hide();
    } else {
@@ -358,11 +351,21 @@ $(document).ready(
     	  $(".tab").hide();
     	  $(div).fadeIn('slow');
       });
+
+      $("#main #content .section").hide();
+      $("#main #content .sectionList a").click(function(event) {
+          event.preventDefault();
+          $(".sectionList").removeClass("selected");
+          $(this).parent().addClass("selected");
+    	  var div = $(this).attr("href");
+    	  $(".section").hide();
+    	  $(div).fadeIn('slow');
+      });
       //initOutline();
       outline();
       // We load timeline separately b/c it takes too long to do on startup
       var loaded = false;
-      $('#bar a[href=#threads]').click(
+      $('a[href=#threads0]').click(
          function () {
             if (!loaded) {
                loaded = true;

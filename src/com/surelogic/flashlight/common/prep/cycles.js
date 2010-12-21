@@ -355,7 +355,7 @@ $(document).ready(
       $("#main #content .section").hide();
       $("#main #content .sectionList a").click(function(event) {
           event.preventDefault();
-          $(".sectionList").removeClass("selected");
+          $(".sectionList li").removeClass("selected");
           $(this).parent().addClass("selected");
     	  var div = $(this).attr("href");
     	  $(".section").hide();

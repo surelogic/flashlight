@@ -922,7 +922,6 @@ public final class WriteHtmlOverview implements IPostPrep {
 		}
 
 		void display(final Container c) {
-			c.h(3).text(name);
 			displaySection(c);
 		}
 

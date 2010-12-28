@@ -108,10 +108,10 @@ ul {
   min-width: 900px;
 }
 
-#deadlock-widget, #packages, #packages1, #packages2, #packages3 {
+#deadlock-widget {
     position:relative;
-    width:600px;
-    height:600px;
+    width:500px;
+    height:300px;
     margin:auto;
     overflow:hidden;
     background: black;
@@ -166,6 +166,10 @@ ul {
    list-style-image: none;
    margin-left: 10px;
    vertical-align: middle;
+}
+
+ul.sectionList {
+   border-bottom: 1px solid black; 
 }
 
 .sectionList li {

@@ -154,7 +154,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 		 * .getStartTimeOfRun()));
 		 */
 		HTMLList sectionList = content.ul().clazz("sectionList");
-
+		content.div().clazz("clear");
 		for (Category c : categories) {
 			// Container div = content.div().id(c.getId()).clazz("tab");
 			// c.display(div);
@@ -332,6 +332,9 @@ public final class WriteHtmlOverview implements IPostPrep {
 		void displaySection(final Container c) {
 			if (!fields.isEmpty()) {
 				displayClassTree(fields, c, new LockSetLink());
+				Table table = c.table();
+				table.header().th("Class").th("Field");
+				displayClassTreeTable(fields, table, new LockSetRowProvider());
 			} else {
 				c.p()
 						.clazz("info")
@@ -686,6 +689,51 @@ public final class WriteHtmlOverview implements IPostPrep {
 			return "EdgeEntry [from=" + from + ", to=" + to + "]";
 		}
 
+	}
+
+	private <T extends FieldLoc> void displayClassTreeTable(
+			final List<T> fields, final Table t, final RowProvider<T> lp) {
+		String curPakkage = null, curClazz = null;
+		for (T f : fields) {
+			String pakkage = f.getPackage();
+			String clazz = f.getClazz();
+			if (!pakkage.equals(curPakkage)) {
+				curPakkage = pakkage;
+				curClazz = null;
+				t.row().td().colspan(lp.numCols(f)).clazz("package")
+						.text(pakkage);
+			}
+			if (!clazz.equals(curClazz)) {
+				curClazz = clazz;
+				t.row().td().colspan(lp.numCols(f)).text(clazz);
+			}
+			lp.row(t, f);
+		}
+	}
+
+	interface RowProvider<T> {
+		void row(final Table table, T t);
+
+		int numCols(T t);
+	}
+
+	static class LockSetRowProvider implements RowProvider<LockSetEvidence> {
+
+		public int numCols(final LockSetEvidence t) {
+			return 3;
+		}
+
+		public void row(final Table table, final LockSetEvidence e) {
+			table.row().td().colspan(numCols(e)).clazz("field")
+					.text(e.getName());
+			for (LockSetLock l : e.getLikelyLocks()) {
+				Row row = table.row();
+				row.td().clazz("lock").id(e.getId() + ":" + l.getId())
+						.text(l.getName());
+				row.td(l.getTimesAcquired());
+				row.td(l.getHeldPercentage());
+			}
+		}
 	}
 
 	/**

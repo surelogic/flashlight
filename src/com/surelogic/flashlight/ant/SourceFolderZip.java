@@ -198,6 +198,11 @@ public final class SourceFolderZip extends AbstractJavaZip<File> {
 	}
 
 	@Override
+	protected long getTimestamp(File res) {
+		return res.lastModified();
+	}
+	
+	@Override
 	protected String getFullPath(final File res) throws IOException {
 		String path = res.getCanonicalPath();
 		if (path.startsWith(rootPath)) {

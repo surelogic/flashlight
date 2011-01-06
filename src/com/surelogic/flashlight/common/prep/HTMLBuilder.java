@@ -249,6 +249,10 @@ public class HTMLBuilder {
 			return p;
 		}
 
+		public HR hr() {
+			return add(new HR());
+		}
+
 		private <T extends BodyNode> T add(final T b) {
 			nodes.add(b);
 			return b;
@@ -517,6 +521,14 @@ public class HTMLBuilder {
 		@Override
 		String getContainerName() {
 			return "p";
+		}
+
+	}
+
+	static class HR implements BodyNode {
+
+		public void display(final StringBuilder b, final int depth) {
+			b.append("<hr/>");
 		}
 
 	}

@@ -8,6 +8,11 @@ var O_DOWN = 'image_files/outline_down.png';
 var O_FILLER = 'image_files/outline_filler.png';
 var fd, icicle, sb, tm, tl;
 
+//Escaping function for selectors
+function jq(myid) {
+   return myid.replace(/(:|\.)/g,'\\$1');
+}
+
 (function() {
     var ua = navigator.userAgent,
     iStuff = ua.match(/iPhone/i) || ua.match(/iPad/i),
@@ -22,6 +27,62 @@ var fd, icicle, sb, tm, tl;
     useGradients = nativeCanvasSupport;
     animate = !(iStuff || !nativeCanvasSupport);
  })();
+
+function treeTable() {
+   $(".treeTable td:first-child:not(.leaf)")
+      .prepend("<img class='icon' src='" + O_DOWN + "'></img>")
+      .find("> .icon")
+      .click(toggleTree);
+   $(".treeTable td.leaf").prepend("<img class='icon' src='" + O_FILLER + "'></img>");
+   $(".treeTable td.depth1:not(.leaf) > .icon").each(toggleTree);
+}
+
+var depths = {
+   "depth1" : 1,
+   "depth2" : 2,
+   "depth3" : 3,
+   "depth4" : 4,
+   "depth5" : 5
+};
+var MAX_DEPTH = 5;
+
+function elemDepth(elem) {
+   for (d in depths) {
+      if(elem.hasClass(d)) {
+         return depths[d];
+      }
+   }
+  return MAX_DEPTH;
+};
+
+function toggleTree() {
+   var icon = $(this);
+   var doOpen = icon.attr('src') == O_RIGHT;
+   icon.attr('src', doOpen ? O_DOWN : O_RIGHT);
+   var elem = icon.parent();
+   var depth = elemDepth(elem);
+   var row = elem.parent().next();
+   while(row.length) {
+      var rowDepth = elemDepth(row.children().first());
+      if(rowDepth <= depth) {
+         return;
+      }
+      if(doOpen) {
+         if(rowDepth == depth + 1) {
+            var rowIcon = row.find('.icon');
+            if(rowIcon.attr('src') != O_FILLER) {
+               rowIcon.attr('src',O_RIGHT);
+            }
+            row.show();
+         } else {
+            row.hide();
+         }
+      } else {
+         row.hide();
+      }
+      row = row.next();
+   }
+}
 
 function outline() {
    $(".outline > li:has(ul)")
@@ -52,22 +113,6 @@ function toggle() {
       $(this).attr('src', O_RIGHT);
       $(this).parent().children('ul').hide();
    }
-}
-
-function toggleThis() {
-   var current = $(this).attr('src');
-   if(current == O_RIGHT) {
-      $(this).attr('src', O_DOWN);
-      var toShow = $(this).parent().children('ul');
-      var toHide = toShow.find('li > ul');
-      toShow.show();
-      toHide.hide();
-      toHide.parent().children('.icon').attr('src', O_RIGHT);
-   } else {
-      $(this).attr('src', O_RIGHT);
-      $(this).parent().children('ul').hide();
-   }
-
 }
 
 // Edge type used to represent a bidirectional edge
@@ -331,6 +376,24 @@ function loadTimeline() {
     tl.layout(); // display the Timeline
 }
 
+var selected = null;
+function initRaceConditionTab() {
+ $(".locksetoutline .depth3 > .icon").hide();
+ $(".locksetoutline").hide();
+ // Hack to make the filler icons not crap out
+ $(".locksetlink").click(
+    function(event) {
+       event.preventDefault();
+       if(selected) {
+          selected.hide();
+       }
+       selected = $(jq($(this).attr("href")));
+       selected.show();
+    }
+ );
+}
+var tlLoaded = false;
+var rcLoaded = false;
 
 $(document).ready(
    function() {
@@ -342,6 +405,7 @@ $(document).ready(
     			  loadDeadlockGraph(deadlocks[val]);
     		  });
       initGraphs();
+      //Tab setup
       $(".tab").hide();
       $("#main #bar a").click(function(event) {
           event.preventDefault();
@@ -361,15 +425,26 @@ $(document).ready(
     	  $(".section").hide();
     	  $(div).fadeIn('slow');
       });
-      //initOutline();
+      //Init outlines and tree tables
       outline();
+      treeTable();
+
       // We load timeline separately b/c it takes too long to do on startup
-      var loaded = false;
+
       $('a[href=#threads0]').click(
          function () {
-            if (!loaded) {
-               loaded = true;
+            if (!tlLoaded) {
+               tlLoaded = true;
                loadTimeline();
+            }
+         }
+      );
+      //Init race condition logic
+      $('a[href=#fields0]').click(
+         function () {
+            if (!rcLoaded) {
+               rcLoaded = true;
+               initRaceConditionTab();
             }
          }
       );

@@ -152,14 +152,43 @@ ul {
    font-weight: bold;
 }
 
+.package {
+  font-weight: bold;
+}
 
+.package:before {
+ content: url(image_files/package.gif);
+}
+
+.class {
+  font-weight: bold;
+}
+
+.class:before {
+ content: url(image_files/class.gif);
+}
+
+.depth1 {
+
+} 
+.depth2 {
+  padding-left: 16px;
+} 
+.depth3 {
+  padding-left: 32px;
+} 
+.depth4 {
+  padding-left: 48px;
+} 
+.depth5 {
+  padding-left: 54px;
+} 
 .outline ul { 
    list-style-type: none;
 }
 
-.outline .icon {
+.icon {
     display: inline;
-    
 }
 
 .outline li {

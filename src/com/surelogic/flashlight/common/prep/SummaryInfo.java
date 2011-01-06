@@ -168,7 +168,7 @@ public class SummaryInfo {
 	}
 
 	public static class LockSetEvidence implements Comparable<LockSetEvidence>,
-			FieldLoc {
+			Loc {
 		private final Field field;
 		private final List<LockSetLock> likelyLocks;
 
@@ -468,7 +468,7 @@ public class SummaryInfo {
 		}
 	}
 
-	public static class BadPublishEvidence implements FieldLoc {
+	public static class BadPublishEvidence implements Loc {
 		private final Field f;
 		private final List<BadPublishAccess> accesses;
 
@@ -535,19 +535,14 @@ public class SummaryInfo {
 
 	}
 
-	public interface FieldLoc {
+	public interface Loc {
 		String getPackage();
 
 		String getClazz();
 
-		String getName();
-
-		String getId();
-
-		boolean isStatic();
 	}
 
-	public static class Field implements Comparable<Field>, FieldLoc {
+	public static class Field implements Comparable<Field>, Loc {
 		private final String pakkage;
 		private final String clazz;
 		private final String name;
@@ -943,7 +938,7 @@ public class SummaryInfo {
 		}
 	}
 
-	public static class Site implements Comparable<Site> {
+	public static class Site implements Comparable<Site>, Loc {
 		private final String pakkage;
 		private final String clazz;
 		private final String location;
@@ -1058,6 +1053,7 @@ public class SummaryInfo {
 			}
 			return cmp;
 		}
+
 	}
 
 	public static class CoverageSite implements Comparable<CoverageSite> {

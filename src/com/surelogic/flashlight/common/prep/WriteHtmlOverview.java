@@ -41,10 +41,11 @@ import com.surelogic.flashlight.common.prep.SummaryInfo.CoverageSite;
 import com.surelogic.flashlight.common.prep.SummaryInfo.Cycle;
 import com.surelogic.flashlight.common.prep.SummaryInfo.DeadlockEvidence;
 import com.surelogic.flashlight.common.prep.SummaryInfo.Edge;
-import com.surelogic.flashlight.common.prep.SummaryInfo.FieldLoc;
+import com.surelogic.flashlight.common.prep.SummaryInfo.Loc;
 import com.surelogic.flashlight.common.prep.SummaryInfo.Lock;
 import com.surelogic.flashlight.common.prep.SummaryInfo.LockSetEvidence;
 import com.surelogic.flashlight.common.prep.SummaryInfo.LockSetLock;
+import com.surelogic.flashlight.common.prep.SummaryInfo.Site;
 
 public final class WriteHtmlOverview implements IPostPrep {
 
@@ -332,16 +333,83 @@ public final class WriteHtmlOverview implements IPostPrep {
 		void displaySection(final Container c) {
 			if (!fields.isEmpty()) {
 				displayClassTree(fields, c, new LockSetLink());
-				Table table = c.table();
-				table.header().th("Class").th("Field");
-				displayClassTreeTable(fields, table, new LockSetRowProvider());
+				c.hr();
+				for (LockSetEvidence field : fields) {
+					if (field.getLikelyLocks().isEmpty()) {
+						c.div()
+								.id("locksets-" + field.getPackage() + "."
+										+ field.getClazz() + "."
+										+ field.getName())
+								.clazz("info")
+								.clazz("locksetoutline")
+								.text("No locks were held when this field was accessed.");
+					} else {
+						displayTreeTable(
+								Collections.singletonList(field),
+								c.table()
+										.clazz("locksetoutline")
+										.id("locksets-" + field.getPackage()
+												+ "." + field.getClazz() + "."
+												+ field.getName()),
+								new LockSetRowProvider());
+					}
+				}
 			} else {
 				c.p()
 						.clazz("info")
 						.text("There are no fields accessed concurrently with an empty lock set in this run.");
 			}
 		}
+	}
 
+	static class LockSetLink implements LinkProvider<LockSetEvidence> {
+		public void link(final Container c, final LockSetEvidence field) {
+			c.a("#locksets-" + field.getPackage() + "." + field.getClazz()
+					+ "." + field.getName()).clazz("locksetlink")
+					.text(field.getName());
+		}
+	}
+
+	private static class LockSetRowProvider implements
+			RowProvider<LockSetEvidence> {
+		private final LinkProvider<Site> lp = new LinkProvider<Site>() {
+			public void link(final Container c, final Site t) {
+				c.span().text(t.getLocation() + ":" + t.getLine());
+			}
+		};
+
+		public int numCols(final LockSetEvidence t) {
+			return 3;
+		}
+
+		public void row(final Table table, final LockSetEvidence e) {
+			for (LockSetLock lock : e.getLikelyLocks()) {
+				Row lockRow = table.row();
+				lockRow.td().clazz("depth1").text(lock.getName());
+				lockRow.td(lock.getTimesAcquired());
+				lockRow.td(lock.getHeldPercentage());
+				Row heldRow = table.row();
+				heldRow.td().clazz("depth2").text("held at");
+				heldRow.td();
+				heldRow.td();
+				Row heldTreeRow = table.row();
+				displayClassTree(lock.getAcquisitions(), heldTreeRow.td()
+						.clazz("depth3").clazz("leaf"), lp);
+				heldTreeRow.td();
+				heldTreeRow.td();
+				Row notHeldRow = table.row();
+				notHeldRow.td().clazz("depth2").text("not held at");
+				Row notHeldTreeRow = table.row();
+				displayClassTree(lock.getNotHeldAt(), notHeldTreeRow.td()
+						.clazz("depth3").clazz("leaf"), lp);
+				notHeldTreeRow.td();
+				notHeldTreeRow.td();
+			}
+		}
+
+		public void headerRow(final Row row) {
+			row.th("Lock").th("# Acquisitions").th("% Held");
+		}
 	}
 
 	class BadPublishSection extends Section {
@@ -487,8 +555,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 		@Override
 		void displaySection(final Container c) {
 			// The first node should be an anonymous root node, so we just do
-			// it's
-			// children
+			// its children
 			Set<CoverageSite> children = site.getChildren();
 			if (children.isEmpty()) {
 				c.p().clazz("info")
@@ -691,8 +758,12 @@ public final class WriteHtmlOverview implements IPostPrep {
 
 	}
 
-	private <T extends FieldLoc> void displayClassTreeTable(
+	private static <T extends Loc> void displayClassTreeTable(
 			final List<T> fields, final Table t, final RowProvider<T> lp) {
+		t.clazz("treeTable");
+		Row header = t.header();
+		header.th("Package/Class/Field/Lock");
+		lp.headerRow(header);
 		String curPakkage = null, curClazz = null;
 		for (T f : fields) {
 			String pakkage = f.getPackage();
@@ -700,40 +771,39 @@ public final class WriteHtmlOverview implements IPostPrep {
 			if (!pakkage.equals(curPakkage)) {
 				curPakkage = pakkage;
 				curClazz = null;
-				t.row().td().colspan(lp.numCols(f)).clazz("package")
-						.text(pakkage);
+				Row r = t.row();
+				r.td().clazz("depth1").span().clazz("package").text(pakkage);
+				for (int i = 1; i < lp.numCols(f); i++) {
+					r.td();
+				}
 			}
 			if (!clazz.equals(curClazz)) {
 				curClazz = clazz;
-				t.row().td().colspan(lp.numCols(f)).text(clazz);
+				Row r = t.row();
+				r.td().clazz("depth2").span().clazz("class").text(clazz);
+				for (int i = 1; i < lp.numCols(f); i++) {
+					r.td();
+				}
 			}
 			lp.row(t, f);
 		}
 	}
 
+	private <T> void displayTreeTable(final List<T> ts, final Table table,
+			final RowProvider<T> rp) {
+		table.clazz("treeTable");
+		rp.headerRow(table.header());
+		for (T f : ts) {
+			rp.row(table, f);
+		}
+	}
+
 	interface RowProvider<T> {
+		void headerRow(final Row table);
+
 		void row(final Table table, T t);
 
 		int numCols(T t);
-	}
-
-	static class LockSetRowProvider implements RowProvider<LockSetEvidence> {
-
-		public int numCols(final LockSetEvidence t) {
-			return 3;
-		}
-
-		public void row(final Table table, final LockSetEvidence e) {
-			table.row().td().colspan(numCols(e)).clazz("field")
-					.text(e.getName());
-			for (LockSetLock l : e.getLikelyLocks()) {
-				Row row = table.row();
-				row.td().clazz("lock").id(e.getId() + ":" + l.getId())
-						.text(l.getName());
-				row.td(l.getTimesAcquired());
-				row.td(l.getHeldPercentage());
-			}
-		}
 	}
 
 	/**
@@ -744,7 +814,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 	 * @param c
 	 *            the container to write to
 	 */
-	private <T extends FieldLoc> void displayClassTree(final List<T> fields,
+	private static <T extends Loc> void displayClassTree(final List<T> fields,
 			final Container c, final LinkProvider<T> lp) {
 		Iterator<T> iter = fields.iterator();
 		if (iter.hasNext()) {
@@ -754,12 +824,10 @@ public final class WriteHtmlOverview implements IPostPrep {
 			String pakkage = field.getPackage();
 			String clazz = field.getClazz();
 			LI packageLI = packageList.li();
-			packageLI.img(writer.imageLocation(PACKAGE_IMG)).alt("package");
-			packageLI.span().clazz("emph").text(pakkage);
+			packageLI.span().clazz("package").text(pakkage);
 			UL classList = packageLI.ul();
 			LI classLI = classList.li();
-			classLI.img(writer.imageLocation(CLASS_IMG)).alt("class");
-			classLI.span().clazz("emph").text(clazz);
+			classLI.span().clazz("class").text(clazz);
 			UL fieldList = classLI.ul();
 			LI fieldLI = fieldList.li();
 			lp.link(fieldLI, field);
@@ -770,19 +838,15 @@ public final class WriteHtmlOverview implements IPostPrep {
 					pakkage = field.getPackage();
 					clazz = field.getClazz();
 					packageLI = packageList.li();
-					packageLI.img(writer.imageLocation(PACKAGE_IMG)).alt(
-							"package");
-					packageLI.span().clazz("emph").text(pakkage);
+					packageLI.span().clazz("package").text(pakkage);
 					classList = packageLI.ul();
 					classLI = classList.li();
-					classLI.img(writer.imageLocation(CLASS_IMG)).alt("class");
-					classLI.span().clazz("emph").text(clazz);
+					classLI.span().clazz("class").text(clazz);
 					fieldList = classLI.ul();
 				} else if (!clazz.equals(field.getClazz())) {
 					clazz = field.getClazz();
 					classLI = classList.li();
-					classLI.img(writer.imageLocation(CLASS_IMG)).alt("class");
-					classLI.span().clazz("emph").text(clazz);
+					classLI.span().clazz("class").text(clazz);
 					fieldList = classLI.ul();
 				}
 				fieldLI = fieldList.li();
@@ -793,25 +857,6 @@ public final class WriteHtmlOverview implements IPostPrep {
 
 	interface LinkProvider<T> {
 		void link(final Container c, T t);
-	}
-
-	static class LockSetLink implements LinkProvider<LockSetEvidence> {
-		public void link(final Container c, final LockSetEvidence field) {
-			buildLink(c, field.getName(),
-					field.isStatic() ? STATIC_LOCK_FREQUENCY_QUERY
-							: EMPTY_LOCK_SET_INSTANCES_QUERY, "Package",
-					field.getPackage(), "Class", field.getClazz(), "Field",
-					field.getName(), "FieldId", field.getId());
-			Table table = c.table();
-			table.row().th("Name").th("Held %");
-			for (LockSetLock lock : field.getLikelyLocks()) {
-				table.row().td(lock.getName()).td(lock.getHeldPercentage());
-				/*
-				 * for (Site s : lock.getAcquisitions()) { c.p(s.toString()); }
-				 * for (Site s : lock.getNotHeldAt()) { c.p(s.toString()); }
-				 */
-			}
-		}
 	}
 
 	static class BadPublishLink implements LinkProvider<BadPublishEvidence> {

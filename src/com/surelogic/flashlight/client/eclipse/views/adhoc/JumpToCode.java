@@ -118,6 +118,10 @@ public final class JumpToCode extends AdHocManagerAdapter {
 	public void notifyResultVariableValueChange(
 			final AdHocQueryResultSqlData result) {
 		final Map<String, String> variableValues = result.getVariableValues();
+		jumpToCode(variableValues);
+	}
+
+	public void jumpToCode(final Map<String, String> variableValues) {
 		String packageName = variableValues.get("Package");
 		final String typeName = variableValues.get("Class");
 		if (packageName != null && typeName != null) {

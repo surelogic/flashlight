@@ -1,5 +1,6 @@
 package com.surelogic.flashlight.client.eclipse.views.adhoc;
 
+import java.util.Map;
 import java.util.logging.Level;
 
 import org.eclipse.core.runtime.jobs.Job;
@@ -18,6 +19,7 @@ import com.surelogic.adhoc.views.results.AbstractQueryResultsView;
 import com.surelogic.common.adhoc.AdHocManager;
 import com.surelogic.common.adhoc.AdHocQueryFullyBound;
 import com.surelogic.common.eclipse.tooltip.ToolTip;
+import com.surelogic.common.html.SimpleHTMLPrinter;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.common.serviceability.UsageMeter;
@@ -69,6 +71,15 @@ public final class QueryResultsView extends AbstractQueryResultsView {
 						 */
 						event.doit = false; // don't really open the link
 						parseAndRunQuery(event.location);
+						// It's worth a shot, and we can't actually make two
+						// separate calls very easily
+						parseAndJumpToLine(run, event.location);
+					} else {
+						index = event.location.indexOf(LOC_PAT);
+						if (index != -1) {
+							event.doit = false;
+							parseAndJumpToLine(run, event.location);
+						}
 					}
 				}
 
@@ -88,6 +99,8 @@ public final class QueryResultsView extends AbstractQueryResultsView {
 		}
 	}
 
+	public static final String LOC_PAT = "?loc=";
+
 	public static final String QUERY_PAT = "?query=";
 
 	private void parseAndRunQuery(final String queryUrl) {
@@ -99,6 +112,18 @@ public final class QueryResultsView extends AbstractQueryResultsView {
 		} catch (IllegalStateException problem) {
 			SLLogger.getLogger().log(Level.WARNING, I18N.err(213, queryUrl),
 					problem);
+		}
+	}
+
+	private void parseAndJumpToLine(final RunDescription run, final String url) {
+		try {
+			Map<String, String> params = SimpleHTMLPrinter
+					.extractParametersFromURL(url);
+			params.put(AdHocManager.DATABASE, run.toIdentityString());
+			JumpToCode.getInstance().jumpToCode(params);
+		} catch (IllegalStateException problem) {
+			SLLogger.getLogger()
+					.log(Level.WARNING, I18N.err(213, url), problem);
 		}
 	}
 

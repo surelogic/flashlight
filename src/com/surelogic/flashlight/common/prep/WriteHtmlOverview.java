@@ -29,6 +29,7 @@ import com.surelogic.flashlight.common.files.HtmlHandles;
 import com.surelogic.flashlight.common.model.RunDescription;
 import com.surelogic.flashlight.common.prep.HTMLBuilder.Body;
 import com.surelogic.flashlight.common.prep.HTMLBuilder.Container;
+import com.surelogic.flashlight.common.prep.HTMLBuilder.Div;
 import com.surelogic.flashlight.common.prep.HTMLBuilder.HTMLList;
 import com.surelogic.flashlight.common.prep.HTMLBuilder.Head;
 import com.surelogic.flashlight.common.prep.HTMLBuilder.LI;
@@ -46,17 +47,17 @@ import com.surelogic.flashlight.common.prep.SummaryInfo.Lock;
 import com.surelogic.flashlight.common.prep.SummaryInfo.LockSetEvidence;
 import com.surelogic.flashlight.common.prep.SummaryInfo.LockSetLock;
 import com.surelogic.flashlight.common.prep.SummaryInfo.Site;
+import com.surelogic.flashlight.schema.Trace;
 
 public final class WriteHtmlOverview implements IPostPrep {
 
 	private static final int TABLE_LIMIT = 10;
 
+	@SuppressWarnings("unused")
 	private static final String DATE_FORMAT = "yyyy.MM.dd-'at'-HH.mm.ss.SSS";
 	private static final String GRAPH_DATE_FORMAT = "MMM dd yyyy HH:mm:ss zz";
-	private static final String EMPTY_LOCK_SET_INSTANCES_QUERY = "5224d411-6ed3-432f-8b91-a1c43df22911";
 	private static final String LOCK_CONTENTION_QUERY = "cb38a427-c259-4690-abe2-acea9661f737";
 	private static final String LOCK_EDGE_QUERY = "c9453327-b892-4324-a6b8-2dceb32e1901";
-	private static final String STATIC_LOCK_FREQUENCY_QUERY = "6a39e6ca-29e9-4093-ba03-0e9bd9503a1a";
 	private static final String BAD_PUBLISH_QUERY = "708d1b8a-5274-4a25-b0b4-67f1a7a86690";
 	private static final String THREAD_BLOCKING_QUERY = "4e026769-1b0b-42bd-8893-f3b92add093f";
 	private static final String THREAD_LOCKS_QUERY = "dc4b409d-6c6c-4d5f-87f6-c8223a9d40aa";
@@ -193,8 +194,8 @@ public final class WriteHtmlOverview implements IPostPrep {
 				int count = 0;
 				for (SummaryInfo.Lock lock : locks) {
 					Row r = lockTable.row();
-					buildLink(r.td(), lock.getName(), LOCK_EDGE_QUERY, "Lock",
-							lock.getId());
+					buildQueryLink(r.td(), lock.getName(), LOCK_EDGE_QUERY,
+							"Lock", lock.getId());
 					r.td(Integer.toString(lock.getAcquired()))
 							.td(Long.toString(lock.getBlockTime()) + " ns")
 							.td(Long.toString(lock.getAverageBlock()) + " ns");
@@ -203,7 +204,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 					}
 				}
 				if (locks.size() > TABLE_LIMIT) {
-					buildLink(
+					buildQueryLink(
 							lockTable.row().td().colspan(4),
 							String.format("%d more results.", locks.size()
 									- TABLE_LIMIT), LOCK_CONTENTION_QUERY);
@@ -219,7 +220,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 		private final List<DeadlockEvidence> deadlocks;
 
 		public DeadlocksSection(final List<DeadlockEvidence> deadlocks) {
-			super("Potential Deadlocks");
+			super("Deadlocks");
 			this.deadlocks = deadlocks;
 		}
 
@@ -325,7 +326,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 		private final List<LockSetEvidence> fields;
 
 		public LockSetSection(final List<LockSetEvidence> fields) {
-			super("Possible Race Conditions");
+			super("Race Conditions");
 			this.fields = fields;
 		}
 
@@ -366,7 +367,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 		public void link(final Container c, final LockSetEvidence field) {
 			c.a("#locksets-" + field.getPackage() + "." + field.getClazz()
 					+ "." + field.getName()).clazz("locksetlink")
-					.text(field.getName());
+					.clazz("field").text(field.getName());
 		}
 	}
 
@@ -417,14 +418,19 @@ public final class WriteHtmlOverview implements IPostPrep {
 		private final List<BadPublishEvidence> badPublishes;
 
 		public BadPublishSection(final List<BadPublishEvidence> badPublishes) {
-			super("Improperly Published Fields");
+			super("Bad Publishes");
 			this.badPublishes = badPublishes;
 		}
 
 		@Override
 		void displaySection(final Container c) {
 			if (!badPublishes.isEmpty()) {
-				displayClassTree(badPublishes, c, new BadPublishLink());
+				Table table = c.table();
+				c.hr();
+				Div div = c.div();
+				displayClassTreeTable(badPublishes, table, new BadPublishTable(
+						div));
+				// displayClassTree(badPublishes, c, new BadPublishLink());
 			} else {
 				c.p()
 						.clazz("info")
@@ -433,6 +439,76 @@ public final class WriteHtmlOverview implements IPostPrep {
 
 		}
 
+	}
+
+	private static class BadPublishTable implements
+			RowProvider<BadPublishEvidence> {
+
+		private final Container traces;
+
+		BadPublishTable(final Container traces) {
+			this.traces = traces;
+		}
+
+		public void headerRow(final Row row) {
+			row.th("Package/Class/Field/Time").th("Thread").th("Read");
+		}
+
+		public void row(final Table table, final BadPublishEvidence e) {
+			Row fieldRow = table.row();
+			fieldRow.td().clazz("depth3").clazz("field").text(e.getName());
+			fieldRow.td();
+			fieldRow.td();
+			SimpleDateFormat df = new SimpleDateFormat(DATE_FORMAT);
+			for (BadPublishAccess a : e.getAccesses()) {
+				Row accessRow = table.row();
+				String id = "badPublishTrace-"
+						+ a.getTime().toString().replace(' ', '-') + "-"
+						+ e.getPackage() + "." + e.getClazz() + "."
+						+ e.getName();
+				accessRow.td().clazz("leaf").clazz("depth4").clazz("thread")
+						.a('#' + id).clazz("badPublishTraceLink")
+						.text(df.format(a.getTime()));
+				accessRow.td().text(a.getThread());
+				accessRow.td().text(a.isRead() ? "R" : "W");
+				displayTrace(id, a.getTrace());
+			}
+		}
+
+		public int numCols(final BadPublishEvidence e) {
+			return 3;
+		}
+
+		void displayTrace(final String id, final List<Trace> trace) {
+			UL ul = traces.ul();
+			ul.clazz("badPublishTrace").id(id);
+			for (Trace t : trace) {
+				LI li = ul.li();
+				li.text(t.getPackage() + ".");
+				Container emph = li.span().clazz("emph");
+				emph.text(t.getClazz() + ".");
+				String line = Integer.toString(t.getLine());
+				buildCodeLink(emph, t.getLoc(), "Package", t.getPackage(),
+						"Class", t.getClazz(), "Method", t.getLoc(), "Line",
+						line);
+			}
+		}
+
+	}
+
+	private static class BadPublishLink implements
+			LinkProvider<BadPublishEvidence> {
+		public void link(final Container c, final BadPublishEvidence field) {
+			buildQueryLink(c, field.getName(), BAD_PUBLISH_QUERY, "Package",
+					field.getPackage(), "Class", field.getClazz(), "Field",
+					field.getName(), "FieldId", field.getId());
+			Table table = c.table();
+			table.row().th("Thread").th("Time").th("Access");
+			for (BadPublishAccess a : field.getAccesses()) {
+				table.row().td(a.getThread()).td(a.getTime().toString())
+						.td(a.isRead() ? "R" : "W");
+			}
+		}
 	}
 
 	class TimelineSection extends Section {
@@ -577,10 +653,9 @@ public final class WriteHtmlOverview implements IPostPrep {
 			Container emph = li.span().clazz("emph");
 			emph.text(coverage.getClazz() + ".");
 			String line = Integer.toString(coverage.getLine());
-			buildLink(emph, coverage.getLocation(), LINE_OF_CODE_QUERY,
-					"Package", coverage.getPackage(), "Class",
-					coverage.getClazz(), "Method", coverage.getLocation(),
-					"Line", line);
+			buildCodeLink(emph, coverage.getLocation(), "Package",
+					coverage.getPackage(), "Class", coverage.getClazz(),
+					"Method", coverage.getLocation(), "Line", line);
 			Set<CoverageSite> children = coverage.getChildren();
 			if (children.isEmpty()) {
 				return;
@@ -596,7 +671,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 		private final List<SummaryInfo.Thread> threads;
 
 		public LivenessSection(final List<SummaryInfo.Thread> threads) {
-			super("Thread Liveness");
+			super("Liveness");
 			this.threads = threads;
 		}
 
@@ -607,7 +682,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 			int count = 0;
 			for (SummaryInfo.Thread thread : threads) {
 				final Row row = threadTable.row();
-				buildLink(row.td(), thread.getName(), THREAD_LOCKS_QUERY,
+				buildQueryLink(row.td(), thread.getName(), THREAD_LOCKS_QUERY,
 						"Thread", thread.getName(), "ThreadId", thread.getId());
 				row.td(thread.getBlockTime() + " ns");
 				if (++count == TABLE_LIMIT) {
@@ -615,7 +690,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 				}
 			}
 			if (threads.size() > TABLE_LIMIT) {
-				buildLink(
+				buildQueryLink(
 						threadTable.row().td().colspan(2),
 						String.format("%d more results.", threads.size()
 								- TABLE_LIMIT), THREAD_BLOCKING_QUERY);
@@ -761,9 +836,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 	private static <T extends Loc> void displayClassTreeTable(
 			final List<T> fields, final Table t, final RowProvider<T> lp) {
 		t.clazz("treeTable");
-		Row header = t.header();
-		header.th("Package/Class/Field/Lock");
-		lp.headerRow(header);
+		lp.headerRow(t.header());
 		String curPakkage = null, curClazz = null;
 		for (T f : fields) {
 			String pakkage = f.getPackage();
@@ -789,8 +862,8 @@ public final class WriteHtmlOverview implements IPostPrep {
 		}
 	}
 
-	private <T> void displayTreeTable(final List<T> ts, final Table table,
-			final RowProvider<T> rp) {
+	private static <T> void displayTreeTable(final List<T> ts,
+			final Table table, final RowProvider<T> rp) {
 		table.clazz("treeTable");
 		rp.headerRow(table.header());
 		for (T f : ts) {
@@ -799,7 +872,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 	}
 
 	interface RowProvider<T> {
-		void headerRow(final Row table);
+		void headerRow(final Row row);
 
 		void row(final Table table, T t);
 
@@ -859,18 +932,31 @@ public final class WriteHtmlOverview implements IPostPrep {
 		void link(final Container c, T t);
 	}
 
-	static class BadPublishLink implements LinkProvider<BadPublishEvidence> {
-		public void link(final Container c, final BadPublishEvidence field) {
-			buildLink(c, field.getName(), BAD_PUBLISH_QUERY, "Package",
-					field.getPackage(), "Class", field.getClazz(), "Field",
-					field.getName(), "FieldId", field.getId());
-			Table table = c.table();
-			table.row().th("Thread").th("Time").th("Access");
-			for (BadPublishAccess a : field.getAccesses()) {
-				table.row().td(a.getThread()).td(a.getTime().toString())
-						.td(a.isRead() ? "R" : "W");
-			}
+	/**
+	 * Creates a link with the given params. Parameters are based in order.
+	 * First name, then value. For example:
+	 * <code>link(name, "bd72", "name", "foo")</code> would produce a link
+	 * pointing to <code>index.html?query=bd72&name=foo</code>
+	 * 
+	 * @param args
+	 * @return
+	 */
+
+	private static void buildCodeLink(final Container c, final String text,
+			final String... args) {
+		StringBuilder b = new StringBuilder();
+		if (args.length % 2 != 0) {
+			throw new IllegalArgumentException(
+					"There must be an even number of arguments");
 		}
+		b.append("index.html?loc=");
+		for (int i = 0; i < args.length; i = i + 2) {
+			b.append('&');
+			b.append(args[i]);
+			b.append('=');
+			b.append(args[i + 1]);
+		}
+		c.a(b.toString()).text(text);
 	}
 
 	/**
@@ -882,7 +968,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 	 * @param args
 	 * @return
 	 */
-	private static void buildLink(final Container c, final String text,
+	private static void buildQueryLink(final Container c, final String text,
 			final String query, final String... args) {
 		StringBuilder b = new StringBuilder();
 		if (args.length % 2 != 0) {

@@ -91,6 +91,15 @@ function outline() {
       .each(toggle)
       .click(toggle);
    $(".outline > li:not(:has(ul))").prepend("<img class='filler' src='" + O_FILLER+ "'></img>");
+   $(".outline .field").click(
+      function (event) {
+         event.preventDefault();
+         var fieldElem = $(this);
+         var classElem = fieldElem.parent().parent().prev();
+         var packageElem = classElem.parent().parent().prev();
+         var url = "index.html?loc=" + "&Field=" + fieldElem.text() + "&Package=" + packageElem.text() + "&Class=" + classElem.text();
+         $(window.location).attr('href',url);
+      });
 }
 
 function toggle() {
@@ -314,6 +323,7 @@ function loadDeadlockGraph(data) {
    });
 }
 
+var tlLoaded = false;
 var eventSource;
 function loadTimeline() {
     if (timeline_data == 'none') {
@@ -376,28 +386,44 @@ function loadTimeline() {
     tl.layout(); // display the Timeline
 }
 
-var selected = null;
-function initRaceConditionTab() {
- $(".locksetoutline .depth3 > .icon").hide();
- $(".locksetoutline").hide();
- // Hack to make the filler icons not crap out
- $(".locksetlink").click(
-    function(event) {
-       event.preventDefault();
-       if(selected) {
-          selected.hide();
-       }
-       selected = $(jq($(this).attr("href")));
-       selected.show();
-    }
- );
-}
-var tlLoaded = false;
 var rcLoaded = false;
+var rcSelected = null;
+function initRaceConditionTab() {
+   $(".locksetoutline .depth3 > .icon").hide();
+   $(".locksetoutline").hide();
+   // Hack to make the filler icons not crap out
+   $(".locksetlink").click(
+      function(event) {
+         event.preventDefault();
+         if(rcSelected) {
+            rcSelected.hide();
+         }
+         rcSelected = $(jq($(this).attr("href")));
+         rcSelected.show();
+      }
+   );
+}
+
+var bpLoaded = false;
+var bpSelected = null;
+function initBadPublishTab() {
+   $(".badPublishTrace").hide();
+   $(".badPublishTraceLink").click(
+      function(event) {
+         event.preventDefault();
+         if(bpSelected) {
+            bpSelected.hide();
+         }
+         bpSelected = $(jq($(this).attr("href")));
+         bpSelected.show();
+      }
+   );
+}
 
 $(document).ready(
    function() {
-      // For some reason there is a history piece that doesn't work, I should look into this.  For now, disable.
+      // For some reason there is a history piece that doesn't work, I should
+      // look into this.  For now, disable.
       SimileAjax.History.enabled = false;
       $("#deadlock-list li").click(
     		  function (event) {
@@ -445,6 +471,15 @@ $(document).ready(
             if (!rcLoaded) {
                rcLoaded = true;
                initRaceConditionTab();
+            }
+         }
+      );
+      //Init bad publishes logic
+      $('a[href=#fields1]').click(
+         function () {
+            if (!bpLoaded) {
+               bpLoaded = true;
+               initBadPublishTab();
             }
          }
       );

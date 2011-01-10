@@ -400,7 +400,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 				heldRow.td();
 				heldRow.td();
 				Row heldTreeRow = table.row();
-				displayClassTree(lock.getAcquisitions(), heldTreeRow.td()
+				displayClassTree(lock.getHeldAt(), heldTreeRow.td()
 						.clazz("depth3").clazz("leaf"), lp);
 				heldTreeRow.td();
 				heldTreeRow.td();
@@ -477,7 +477,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 						.text(df.format(a.getTime()));
 				accessRow.td().text(a.getThread());
 				accessRow.td().text(a.isRead() ? "R" : "W");
-				displayTrace(id, a.getTrace());
+				displayTrace(id, e, a);
 			}
 		}
 
@@ -485,9 +485,16 @@ public final class WriteHtmlOverview implements IPostPrep {
 			return 3;
 		}
 
-		void displayTrace(final String id, final List<Trace> trace) {
+		void displayTrace(final String id, final BadPublishEvidence e,
+				final BadPublishAccess a) {
+			List<Trace> trace = a.getTrace();
 			UL ul = traces.ul();
 			ul.clazz("badPublishTrace").id(id);
+			LI accessLi = ul.li();
+			accessLi.text(String.format("Access of %s.%s.%s", e.getPackage(),
+					e.getClazz(), e.getName()));
+			LI traceLI = ul.li();
+			ul = traceLI.ul();
 			for (Trace t : trace) {
 				LI li = ul.li();
 				li.text(" at " + t.getPackage() + ".");
@@ -500,7 +507,6 @@ public final class WriteHtmlOverview implements IPostPrep {
 						t.getLoc(), "Line", line);
 			}
 		}
-
 	}
 
 	private static class BadPublishLink implements

@@ -212,7 +212,7 @@ public class SummaryInfo {
 		private final String id;
 		private final String timesAcquired;
 		private final String heldPercentage;
-		private final List<Site> acquisitions;
+		private final List<Site> heldAt;
 		private final List<Site> notHeldAt;
 
 		public LockSetLock(final String name, final String id,
@@ -221,7 +221,7 @@ public class SummaryInfo {
 			this.id = id;
 			this.timesAcquired = timesAcquired;
 			this.heldPercentage = heldPercentage;
-			this.acquisitions = new ArrayList<Site>();
+			this.heldAt = new ArrayList<Site>();
 			this.notHeldAt = new ArrayList<Site>();
 		}
 
@@ -241,8 +241,8 @@ public class SummaryInfo {
 			return timesAcquired;
 		}
 
-		public List<Site> getAcquisitions() {
-			return acquisitions;
+		public List<Site> getHeldAt() {
+			return heldAt;
 		}
 
 		public List<Site> getNotHeldAt() {
@@ -253,7 +253,7 @@ public class SummaryInfo {
 		public String toString() {
 			return "LockSetLock [name=" + name + ", id=" + id
 					+ ", heldPercentage=" + heldPercentage + ", acquisitions="
-					+ acquisitions + ", notHeldAt=" + notHeldAt + "]";
+					+ heldAt + ", notHeldAt=" + notHeldAt + "]";
 		}
 
 	}
@@ -280,13 +280,25 @@ public class SummaryInfo {
 				}
 				LockSetLock l = new LockSetLock(r.nextString(), r.nextString(),
 						r.nextString(), r.nextString());
-				l.getAcquisitions().addAll(
-						q.prepared("SummaryInfo.lockAcquiredAt",
-								new SiteHandler()).call(l.getId()));
-				l.getNotHeldAt().addAll(
-						q.prepared("SummaryInfo.lockNotHeldAt",
-								new SiteHandler()).call(field.getId(),
-								l.getId(), l.getId()));
+				if (field.isStatic()) {
+					l.getHeldAt().addAll(
+							q.prepared("SummaryInfo.lockHeldAt",
+									new SiteHandler()).call(field.getId(),
+									l.getId(), field.getId(), l.getId()));
+					l.getNotHeldAt().addAll(
+							q.prepared("SummaryInfo.lockNotHeldAt",
+									new SiteHandler()).call(field.getId(),
+									l.getId(), l.getId()));
+				} else {
+					l.getHeldAt().addAll(
+							q.prepared("SummaryInfo.lockInstanceHeldAt",
+									new SiteHandler()).call(field.getId(),
+									l.getId(), field.getId(), l.getId()));
+					l.getNotHeldAt().addAll(
+							q.prepared("SummaryInfo.lockInstanceNotHeldAt",
+									new SiteHandler()).call(field.getId(),
+									l.getId(), l.getId()));
+				}
 				e.getLikelyLocks().add(l);
 			}
 			return e;

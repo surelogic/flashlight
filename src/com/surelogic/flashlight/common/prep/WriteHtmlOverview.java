@@ -34,6 +34,7 @@ import com.surelogic.flashlight.common.prep.HTMLBuilder.HTMLList;
 import com.surelogic.flashlight.common.prep.HTMLBuilder.Head;
 import com.surelogic.flashlight.common.prep.HTMLBuilder.LI;
 import com.surelogic.flashlight.common.prep.HTMLBuilder.Row;
+import com.surelogic.flashlight.common.prep.HTMLBuilder.Span;
 import com.surelogic.flashlight.common.prep.HTMLBuilder.Table;
 import com.surelogic.flashlight.common.prep.HTMLBuilder.UL;
 import com.surelogic.flashlight.common.prep.SummaryInfo.BadPublishAccess;
@@ -375,7 +376,12 @@ public final class WriteHtmlOverview implements IPostPrep {
 			RowProvider<LockSetEvidence> {
 		private final LinkProvider<Site> lp = new LinkProvider<Site>() {
 			public void link(final Container c, final Site t) {
-				c.span().text(t.getLocation() + ":" + t.getLine());
+				Span span = c.span();
+				span.text(" at " + t.getLocation());
+				buildCodeLink(span,
+						"(" + t.getFile() + ":" + t.getLine() + ")", "Package",
+						t.getPackage(), "Class", t.getClazz(), "Method",
+						t.getLocation(), "Line", Integer.toString(t.getLine()));
 			}
 		};
 
@@ -484,13 +490,14 @@ public final class WriteHtmlOverview implements IPostPrep {
 			ul.clazz("badPublishTrace").id(id);
 			for (Trace t : trace) {
 				LI li = ul.li();
-				li.text(t.getPackage() + ".");
-				Container emph = li.span().clazz("emph");
-				emph.text(t.getClazz() + ".");
+				li.text(" at " + t.getPackage() + ".");
+				Container emph = li.span();
+				emph.text(t.getClazz() + "." + t.getLoc());
 				String line = Integer.toString(t.getLine());
-				buildCodeLink(emph, t.getLoc(), "Package", t.getPackage(),
-						"Class", t.getClazz(), "Method", t.getLoc(), "Line",
-						line);
+				buildCodeLink(emph,
+						"(" + t.getFile() + ":" + t.getLine() + ")", "Package",
+						t.getPackage(), "Class", t.getClazz(), "Method",
+						t.getLoc(), "Line", line);
 			}
 		}
 

@@ -18,6 +18,7 @@ import com.surelogic.adhoc.eclipse.EclipseQueryUtility;
 import com.surelogic.adhoc.views.results.AbstractQueryResultsView;
 import com.surelogic.common.adhoc.AdHocManager;
 import com.surelogic.common.adhoc.AdHocQueryFullyBound;
+import com.surelogic.common.adhoc.AdHocQueryResult;
 import com.surelogic.common.eclipse.tooltip.ToolTip;
 import com.surelogic.common.html.SimpleHTMLPrinter;
 import com.surelogic.common.i18n.I18N;
@@ -41,12 +42,20 @@ public final class QueryResultsView extends AbstractQueryResultsView {
 	}
 
 	@Override
+	public void displayResult(final AdHocQueryResult result) {
+		showQueryTitle();
+		super.displayResult(result);
+	}
+
+	@Override
 	protected void setupNoResultsPane(final Composite parent) {
 		final RunDescription run = AdHocDataSource.getInstance()
 				.getSelectedRun();
 		if (run == null || !run.isPrepared()) {
+			showQueryTitle();
 			super.setupNoResultsPane(parent);
 		} else {
+			showOverviewTitle();
 			final Browser browser = new Browser(parent, SWT.NONE);
 			browser.setForeground(parent.getDisplay().getSystemColor(
 					SWT.COLOR_INFO_FOREGROUND));
@@ -125,6 +134,14 @@ public final class QueryResultsView extends AbstractQueryResultsView {
 			SLLogger.getLogger()
 					.log(Level.WARNING, I18N.err(213, url), problem);
 		}
+	}
+
+	private void showQueryTitle() {
+		setPartName(I18N.msg("flashlight.query.view.queryResultsTitle"));
+	}
+
+	private void showOverviewTitle() {
+		setPartName(I18N.msg("flashlight.query.view.overviewTitle"));
 	}
 
 	@Override

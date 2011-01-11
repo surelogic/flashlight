@@ -135,10 +135,6 @@ public final class WriteHtmlOverview implements IPostPrep {
 		Body body = builder.body();
 		body.div().id("header").h(1).text(f_runDescription.getName());
 		Container main = body.div().id("main");
-		// Container sidebar = main.div().id("bar");
-		// for (Category c : categories) {
-		// sidebar.a('#' + c.getId()).h(2).text(c.getName());
-		// }
 		Container content = main.div().id("content");
 
 		main.div().clazz("clear");

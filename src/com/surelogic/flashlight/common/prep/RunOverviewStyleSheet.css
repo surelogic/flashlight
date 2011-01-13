@@ -213,7 +213,7 @@ ul.sectionList li.selected a {
 }
 
 ul.sectionList li a {
-   padding: 3px 4px;
+   padding: 2px 4px;
    border: 1px solid black;
    background-color: white;
    text-decoration: none;

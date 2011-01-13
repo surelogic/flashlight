@@ -8,7 +8,7 @@ html {
 }
 
 body {
- font-family: Helvetica,Verdana,Arial,sans-serif; 
+ font-family: 100% Helvetica,Verdana,Arial,sans-serif; 
  font-size: 10pt;
 }
 
@@ -190,17 +190,14 @@ ul {
 ul.sectionList {
    text-align: left;
    margin: 1em 0 1em 0;
-   font-size: 11pt;
-   font-weight: bold;
    border-bottom: 1px solid black;
    list-style-type: none;
    padding: 3px 10px 3px 10px;
-
 }
 
 ul.sectionList li {
    display: inline;
-   margin: 0px 8px;
+   margin-right: 5px;
 }
 
 ul.sectionList li.selected {
@@ -210,7 +207,6 @@ ul.sectionList li.selected {
 
 ul.sectionList li.selected a {
    background-color: #deb887;
-   color: black;
    position: relative;
    top: 1px;
    padding-top: 4px;
@@ -220,10 +216,10 @@ ul.sectionList li a {
    padding: 3px 4px;
    border: 1px solid black;
    background-color: white;
-   color: #666;
-   margin-right: 0px;
    text-decoration: none;
    border-bottom: none;
+   font-size: 11pt;
+   font-weight: bold;
 }
 
 ul.sectionList a:hover {
@@ -233,3 +229,5 @@ ul.sectionList a:hover {
 .treeTable {
    width: 100%;
 }
+
+

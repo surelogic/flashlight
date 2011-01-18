@@ -17,7 +17,6 @@ import com.surelogic.common.eclipse.logging.SLEclipseStatusUtility;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.license.SLLicenseProduct;
 import com.surelogic.common.serviceability.UsageMeter;
-import com.surelogic.flashlight.client.eclipse.jobs.FlashlightCleanupJob;
 import com.surelogic.flashlight.client.eclipse.jobs.PromptToPrepAllRawData;
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
@@ -85,7 +84,6 @@ public class Activator extends AbstractUIPlugin {
 		}
 		final File dataDir = new File(path);
 		FileUtility.createDirectory(dataDir);
-		new FlashlightCleanupJob().schedule(100L);
 		EclipseUtility.getProductReleaseDateJob(SLLicenseProduct.FLASHLIGHT,
 				this).schedule();
 		RunManager.getInstance().setDataDirectory(dataDir);

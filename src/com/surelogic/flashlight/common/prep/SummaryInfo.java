@@ -29,7 +29,7 @@ import com.surelogic.flashlight.schema.Trace;
 
 public class SummaryInfo {
 
-	public static final int CONTENTION_SITE_LIMIT = 10;
+	private static final int CONTENTION_SITE_LIMIT = 100;
 
 	private final List<Lock> locks;
 	private final List<Thread> threads;

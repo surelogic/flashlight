@@ -21,12 +21,20 @@ public final class HtmlHandles {
 	}
 
 	public File getIndexHtmlFile() {
-		return new File(f_htmlDirectory, INDEX_HTML);
+		return getHtmlFile(INDEX_HTML);
+	}
+
+	public File getHtmlFile(final String fileName) {
+		return new File(f_htmlDirectory, fileName);
+	}
+
+	public void writeHtml(final String link, final String contents) {
+		final File htmlPage = getHtmlFile(link);
+		FileUtility.putStringIntoAFile(htmlPage, contents);
 	}
 
 	public void writeIndexHtml(final String contents) {
-		final File indexHtml = getIndexHtmlFile();
-		FileUtility.putStringIntoAFile(indexHtml, contents);
+		writeHtml(INDEX_HTML, contents);
 	}
 
 	public String readIndexHtml() {

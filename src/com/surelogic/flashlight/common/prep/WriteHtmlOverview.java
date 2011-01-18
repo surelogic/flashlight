@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -54,7 +55,6 @@ public final class WriteHtmlOverview implements IPostPrep {
 
 	private static final int TABLE_LIMIT = 10;
 
-	@SuppressWarnings("unused")
 	private static final String DATE_FORMAT = "yyyy.MM.dd-'at'-HH.mm.ss.SSS";
 	private static final String GRAPH_DATE_FORMAT = "MMM dd yyyy HH:mm:ss zz";
 	private static final String LOCK_CONTENTION_QUERY = "cb38a427-c259-4690-abe2-acea9661f737";
@@ -109,10 +109,9 @@ public final class WriteHtmlOverview implements IPostPrep {
 			categories.add(locks);
 			categories.add(fields);
 			categories.add(threads);
-			HTMLBuilder builder = displayPage(categories);
 			final HtmlHandles html = f_runDescription.getRunDirectory()
 					.getHtmlHandles();
-			html.writeIndexHtml(builder.build());
+			displayPages(html, categories);
 			writer.addImage(CLASS_IMG);
 			writer.addImage(PACKAGE_IMG);
 			writer.addImage("flashlight_overview_banner.png");
@@ -126,7 +125,19 @@ public final class WriteHtmlOverview implements IPostPrep {
 		}
 	}
 
-	private HTMLBuilder displayPage(final List<Category> categories) {
+	private static class HeaderName {
+		String name;
+		String link;
+
+		public HeaderName(final String name, final String link) {
+			this.name = name;
+			this.link = link;
+		}
+
+	}
+
+	private HTMLBuilder displayPage(final List<HeaderName> headers,
+			final Section s) {
 		HTMLBuilder builder = new HTMLBuilder();
 		Head head = builder.head(f_runDescription.getName());
 		loadStyleSheet(head);
@@ -136,36 +147,42 @@ public final class WriteHtmlOverview implements IPostPrep {
 		body.div().id("header").h(1).text(f_runDescription.getName());
 		Container main = body.div().id("main");
 		Container content = main.div().id("content");
-
 		main.div().clazz("clear");
-		/*
-		 * Table runTable = content.table().id("run-table");
-		 * runTable.header().th
-		 * ("Vendor").th("Version").th("OS").th("Max Memory")
-		 * .th("Processors").th("Start Time"); String os =
-		 * String.format("%s (%s) on %s", f_runDescription.getOSName(),
-		 * f_runDescription.getOSVersion(), f_runDescription.getOSArch());
-		 * runTable.row() .td(f_runDescription.getJavaVendor())
-		 * .td(f_runDescription.getJavaVersion()) .td(os)
-		 * .td(Integer.toString(f_runDescription.getMaxMemoryMb()))
-		 * .td(Integer.toString(f_runDescription.getProcessors())) .td(new
-		 * SimpleDateFormat(DATE_FORMAT).format(f_runDescription
-		 * .getStartTimeOfRun()));
-		 */
 		HTMLList sectionList = content.ul().clazz("sectionList");
-		content.div().clazz("clear");
-		for (Category c : categories) {
-			// Container div = content.div().id(c.getId()).clazz("tab");
-			// c.display(div);
-			int i = 0;
-			for (Section s : c.getSections()) {
-				sectionList.li().a('#' + c.getId() + i).text(s.getName());
-				++i;
+		for (HeaderName hn : headers) {
+			LI li = sectionList.li();
+			if (s != null && s.getName().equals(hn.name)) {
+				li.clazz("selected");
 			}
-			c.display(content);
-
+			li.a(hn.link).text(hn.name);
+		}
+		content.div().clazz("clear");
+		if (s != null) {
+			s.display(content);
 		}
 		return builder;
+	}
+
+	private void displayPages(final HtmlHandles html,
+			final List<Category> categories) {
+		List<HeaderName> headers = new ArrayList<HeaderName>();
+		int index = 1;
+		for (Category c : categories) {
+			for (Section s : c.getSections()) {
+				String name = s.getName();
+				String link = "index" + index++ + ".html";
+				HeaderName hn = new HeaderName(name, link);
+				headers.add(hn);
+			}
+		}
+		index = 0;
+		html.writeIndexHtml(displayPage(headers, null).build());
+		for (Category c : categories) {
+			for (Section s : c.getSections()) {
+				html.writeHtml(headers.get(index++).link,
+						displayPage(headers, s).build());
+			}
+		}
 	}
 
 	private class LockSection extends Section {
@@ -396,8 +413,8 @@ public final class WriteHtmlOverview implements IPostPrep {
 				heldRow.td();
 				heldRow.td();
 				Row heldTreeRow = table.row();
-				displayClassTree(lock.getHeldAt(), heldTreeRow.td()
-						.clazz("depth3").clazz("leaf"), lp);
+				displayClassTree(lock.getHeldAt(),
+						heldTreeRow.td().clazz("depth3").clazz("leaf"), lp);
 				heldTreeRow.td();
 				heldTreeRow.td();
 				Row notHeldRow = table.row();
@@ -493,31 +510,22 @@ public final class WriteHtmlOverview implements IPostPrep {
 			ul = traceLI.ul();
 			for (Trace t : trace) {
 				LI li = ul.li();
-				li.text(" at " + t.getPackage() + ".");
-				Container emph = li.span();
-				emph.text(t.getClazz() + "." + t.getLoc());
-				String line = Integer.toString(t.getLine());
-				buildCodeLink(emph,
-						"(" + t.getFile() + ":" + t.getLine() + ")", "Package",
-						t.getPackage(), "Class", t.getClazz(), "Method",
-						t.getLoc(), "Line", line);
+				li.text(" at ");
+				displayLocation(li, t.getPackage(), t.getClazz(), t.getLoc(),
+						t.getFile(), t.getLine());
 			}
 		}
 	}
 
-	private static class BadPublishLink implements
-			LinkProvider<BadPublishEvidence> {
-		public void link(final Container c, final BadPublishEvidence field) {
-			buildQueryLink(c, field.getName(), BAD_PUBLISH_QUERY, "Package",
-					field.getPackage(), "Class", field.getClazz(), "Field",
-					field.getName(), "FieldId", field.getId());
-			Table table = c.table();
-			table.row().th("Thread").th("Time").th("Access");
-			for (BadPublishAccess a : field.getAccesses()) {
-				table.row().td(a.getThread()).td(a.getTime().toString())
-						.td(a.isRead() ? "R" : "W");
-			}
-		}
+	static void displayLocation(final Container c, final String pakkage,
+			final String clazz, final String loc, final String file,
+			final int line) {
+		Container emph = c.span();
+		emph.text(pakkage + "." + clazz + "." + loc);
+		String lin = Integer.toString(line);
+		buildCodeLink(emph, "(" + file + ":" + lin + ")", "Package", pakkage,
+				"Class", clazz, "Method", loc, "Line", lin);
+
 	}
 
 	class TimelineSection extends Section {
@@ -658,13 +666,9 @@ public final class WriteHtmlOverview implements IPostPrep {
 		private void displayThreadCoverageHelper(final UL list,
 				final CoverageSite coverage) {
 			LI li = list.li();
-			li.text(coverage.getPackage() + ".");
-			Container emph = li.span().clazz("emph");
-			emph.text(coverage.getClazz() + ".");
-			String line = Integer.toString(coverage.getLine());
-			buildCodeLink(emph, coverage.getLocation(), "Package",
-					coverage.getPackage(), "Class", coverage.getClazz(),
-					"Method", coverage.getLocation(), "Line", line);
+			displayLocation(li, coverage.getPackage(), coverage.getClazz(),
+					coverage.getLocation(), coverage.getFile(),
+					coverage.getLine());
 			Set<CoverageSite> children = coverage.getChildren();
 			if (children.isEmpty()) {
 				return;
@@ -681,7 +685,15 @@ public final class WriteHtmlOverview implements IPostPrep {
 
 		public LivenessSection(final List<SummaryInfo.Thread> threads) {
 			super("Liveness");
-			this.threads = threads;
+			this.threads = new ArrayList<SummaryInfo.Thread>(threads);
+			Collections.sort(threads, new Comparator<SummaryInfo.Thread>() {
+				public int compare(final SummaryInfo.Thread o1,
+						final SummaryInfo.Thread o2) {
+					long t1 = o1.getBlockTime();
+					long t2 = o2.getBlockTime();
+					return t1 > t2 ? -1 : t1 == t2 ? 0 : 1;
+				}
+			});
 		}
 
 		@Override

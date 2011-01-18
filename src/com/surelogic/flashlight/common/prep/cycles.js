@@ -323,7 +323,6 @@ function loadDeadlockGraph(data) {
    });
 }
 
-var tlLoaded = false;
 var eventSource;
 function loadTimeline() {
     if (timeline_data == 'none') {
@@ -386,7 +385,6 @@ function loadTimeline() {
     tl.layout(); // display the Timeline
 }
 
-var rcLoaded = false;
 var rcSelected = null;
 function initRaceConditionTab() {
    $(".locksetoutline .depth3 > .icon").hide();
@@ -404,7 +402,6 @@ function initRaceConditionTab() {
    );
 }
 
-var bpLoaded = false;
 var bpSelected = null;
 function initBadPublishTab() {
    $(".badPublishTrace").hide();
@@ -443,44 +440,27 @@ $(document).ready(
       });
 
       $("#main #content .section").hide();
-      $("#main #content .sectionList a").click(function(event) {
-          event.preventDefault();
-          $(".sectionList li").removeClass("selected");
-          $(this).parent().addClass("selected");
-    	  var div = $(this).attr("href");
-    	  $(".section").hide();
-    	  $(div).fadeIn('slow');
-      });
       //Init outlines and tree tables
       outline();
       treeTable();
 
       // We load timeline separately b/c it takes too long to do on startup
 
-      $('a[href=#threads0]').click(
+      $('.sectionList > li.selected > a[href=index5.html]').each(
          function () {
-            if (!tlLoaded) {
-               tlLoaded = true;
                loadTimeline();
-            }
          }
       );
       //Init race condition logic
-      $('a[href=#fields0]').click(
+      $('.sectionList > li.selected > a[href=index3.html]').each(
          function () {
-            if (!rcLoaded) {
-               rcLoaded = true;
                initRaceConditionTab();
-            }
          }
       );
       //Init bad publishes logic
-      $('a[href=#fields1]').click(
+      $('.sectionList > li.selected > a[href=index4.html]').each(
          function () {
-            if (!bpLoaded) {
-               bpLoaded = true;
                initBadPublishTab();
-            }
          }
       );
    });

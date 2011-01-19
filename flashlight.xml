@@ -3,12 +3,12 @@
 	<property environment="env" />
 
 	<property name="lib" value="${basedir}/lib" />
-  <property name="resources" value="${basedir}/resources"/>
+	<property name="resources" value="${basedir}/resources" />
 	<property name="classes" value="${basedir}/bin" />
-	
+
 	<property name="src" value="${basedir}/src" />
 	<property name="src-asm" value="${basedir}/src-asm" />
-  <property name="src-rt" value="${basedir}/../flashlight-common/src" />
+	<property name="src-rt" value="${basedir}/../flashlight-common/src" />
 	<property name="test" value="${basedir}/test" />
 
 	<property name="asm.jar" value="${lib}/asm-3.2.jar" />
@@ -21,21 +21,21 @@
 	<property name="flashlight-runtime-4.jar" value="${basedir}/flashlight-runtime.java1.4.jar" />
 
 	<property name="flashlight-rewriter.jar" value="${basedir}/flashlight-rewriter.jar" />
-    <property name="java1.4.lib" value="${basedir}/lib/1.4"/>
+	<property name="java1.4.lib" value="${basedir}/lib/1.4" />
 
-  <path id="jaxb.classpath">
-    <pathelement path="${lib}/jaxb1-impl.jar"/>
-    <pathelement path="${lib}/jaxb-api.jar"/>
-    <pathelement path="${lib}/jaxb-impl.jar"/>
-    <pathelement path="${lib}/jaxb-xjc.jar"/>
-    <pathelement path="${lib}/jsr173_1.0_api.jar"/>
-    <pathelement path="${lib}/activation.jar"/>
-  </path>
+	<path id="jaxb.classpath">
+		<pathelement path="${lib}/jaxb1-impl.jar" />
+		<pathelement path="${lib}/jaxb-api.jar" />
+		<pathelement path="${lib}/jaxb-impl.jar" />
+		<pathelement path="${lib}/jaxb-xjc.jar" />
+		<pathelement path="${lib}/jsr173_1.0_api.jar" />
+		<pathelement path="${lib}/activation.jar" />
+	</path>
 
 	<target name="clean">
-		<delete file="${flashlight-all.jar}"/>
-		<delete file="${flashlight-runtime.jar}"/>
-		<delete file="${flashlight-rewriter.jar}"/>
+		<delete file="${flashlight-all.jar}" />
+		<delete file="${flashlight-runtime.jar}" />
+		<delete file="${flashlight-rewriter.jar}" />
 	</target>
 
 	<target name="compile">
@@ -44,85 +44,80 @@
 		<javac destdir="${classes}" debug="true" source="1.5" target="1.5">
 			<src path="${src}" />
 			<src path="${src-asm}" />
-		  <src path="${src-rt}" />
-		  <exclude name="com/surelogic/flashlight/**"/>
+			<src path="${src-rt}" />
+			<exclude name="com/surelogic/flashlight/**" />
 			<classpath>
-			  <path refid="jaxb.classpath"/> 
+				<path refid="jaxb.classpath" />
 				<pathelement location="${asm.jar}" />
 				<pathelement location="${asm-commons.jar}" />
 			</classpath>
 		</javac>
-	  <copy todir="${classes}/resources">
-	     <fileset dir="${resources}"/>
-	   </copy>
+		<copy todir="${classes}/resources">
+			<fileset dir="${resources}" />
+		</copy>
 	</target>
 
 	<target name="build-all-jar">
 		<unzip src="${asm.jar}" dest="${classes}" />
 		<unzip src="${asm-commons.jar}" dest="${classes}" />
 		<jar destfile="${flashlight-all.jar}" basedir="${classes}">
-		  <exclude name="**/com/surelogic/flashlight/**" />
+			<exclude name="**/com/surelogic/flashlight/**" />
 			<manifest>
-			  <attribute name="Manifest-Version" value="1.0"/>
+				<attribute name="Manifest-Version" value="1.0" />
 			</manifest>
-	  </jar>	  
-	  <!--copy file="${flashlight-all.jar}" todir="${basedir}/../flashlight-client-eclipse/lib"/ -->
+		</jar>
+		<!--copy file="${flashlight-all.jar}" todir="${basedir}/../flashlight-client-eclipse/lib"/ -->
 	</target>
 
 	<target name="build-runtime-jar">
 		<jar destfile="${flashlight-runtime.jar}" basedir="${classes}">
 			<include name="**/com/surelogic/_flashlight/*" />
 			<include name="**/com/surelogic/_flashlight/monitor/*" />
-		  <include name="**/com/surelogic/_flashlight/common/**" />
+			<include name="**/com/surelogic/_flashlight/common/**" />
 			<include name="**/com/surelogic/_flashlight/emory/**" />
 			<include name="**/com/surelogic/_flashlight/jsr166y/**" />
-      <include name="**/com/surelogic/_flashlight/rewriter/runtime/**" />
+			<include name="**/com/surelogic/_flashlight/rewriter/runtime/**" />
 			<include name="**/com/surelogic/_flashlight/rewriter/test/**" />
-  		<include name="**/com/surelogic/_flashlight/trace/**" />
+			<include name="**/com/surelogic/_flashlight/trace/**" />
 			<manifest>
-			  <attribute name="Manifest-Version" value="1.0"/>
+				<attribute name="Manifest-Version" value="1.0" />
 			</manifest>
-	  </jar>
-	  <copy file="${flashlight-runtime.jar}" todir="${basedir}/../flashlight-client-eclipse/lib"/>	  	  
+		</jar>
+		<copy file="${flashlight-runtime.jar}" todir="${basedir}/../flashlight-client-eclipse/lib" />
 	</target>
 
 	<target name="translate-runtime-jar">
-		<java jar="lib/build/retrotranslator-transformer-1.2.9.jar"
-		           fork="true"
-		           failonerror="true"
-		           maxmemory="128m">
-		    <arg value="-srcjar"/>
-			<arg value="${flashlight-runtime.jar}"/>
-		   	<arg value="-destjar"/>
-		   	<arg value="${flashlight-runtime-4.jar}"/>
-		   	<arg value="-embed"/>
-			<arg value="com.surelogic.internal"/>
-			<arg value="-verify"/>
-			<arg value="-classpath"/>
-			<arg value="${java1.4.lib}/rt.jar${path.separator}lib/build/retrotranslator-runtime-1.2.9.jar${path.separator}lib/build/backport-util-concurrent-3.1.jar"/>
+		<java jar="lib/build/retrotranslator-transformer-1.2.9.jar" fork="true" failonerror="true" maxmemory="128m">
+			<arg value="-srcjar" />
+			<arg value="${flashlight-runtime.jar}" />
+			<arg value="-destjar" />
+			<arg value="${flashlight-runtime-4.jar}" />
+			<arg value="-embed" />
+			<arg value="com.surelogic.internal" />
+			<arg value="-verify" />
+			<arg value="-classpath" />
+			<arg value="${java1.4.lib}/rt.jar${path.separator}lib/build/retrotranslator-runtime-1.2.9.jar${path.separator}lib/build/backport-util-concurrent-3.1.jar" />
 		</java>
-		<copy file="${flashlight-runtime-4.jar}" todir="${basedir}/../flashlight-client-eclipse/lib"/>	  	  
+		<copy file="${flashlight-runtime-4.jar}" todir="${basedir}/../flashlight-client-eclipse/lib" />
 	</target>
 
 	<target name="build-rewriter-jar">
 		<jar destfile="${flashlight-rewriter.jar}" basedir="${classes}">
-		  <include name="**/resources/**" />
+			<include name="**/resources/**" />
 			<include name="**/com/surelogic/_flashlight/rewriter/*" />
-      <include name="**/com/surelogic/_flashlight/rewriter/config/*" />
-      <include name="**/com/surelogic/_flashlight/rewriter/xml/*" />
+			<include name="**/com/surelogic/_flashlight/rewriter/config/*" />
+			<include name="**/com/surelogic/_flashlight/rewriter/xml/*" />
 			<manifest>
-			  <attribute name="Manifest-Version" value="1.0"/>
-				<attribute name="Class-Path" value="asm-3.2.jar asm-commons-3.2.jar"/>
+				<attribute name="Manifest-Version" value="1.0" />
+				<attribute name="Class-Path" value="asm-3.2.jar asm-commons-3.2.jar" />
 			</manifest>
-	  </jar>
-	  <copy file="${flashlight-rewriter.jar}" todir="${basedir}/../flashlight-client-eclipse/lib"/>	  
+		</jar>
+		<copy file="${flashlight-rewriter.jar}" todir="${basedir}/../flashlight-client-eclipse/lib" />
 	</target>
 
 	<target name="build-jars-eclipse" depends="build-all-jar, build-runtime-jar,  build-rewriter-jar, translate-runtime-jar" />
 
 	<target name="build-jars" depends="compile, build-all-jar, build-runtime-jar,  build-rewriter-jar, translate-runtime-jar" />
-	
-	<target name="build-jars-no-1.4" depends="compile, build-all-jar, build-runtime-jar, build-rewriter-jar" />
 
 	<target name="compile-test-code" depends="build-jars">
 		<delete dir="${classes}" />
@@ -135,7 +130,7 @@
 			</classpath>
 		</javac>
 	</target>
- 
+
 
 	<path id="test.classpath">
 		<pathelement location="${classes}" />

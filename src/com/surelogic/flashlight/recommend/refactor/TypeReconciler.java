@@ -131,7 +131,7 @@ public class TypeReconciler extends ASTVisitor {
 		for (int i = 0; i < params.length; i++) {
 			params[i] = fromType(paramDecls[i]);
 		}
-		inMethod = new Method(type, node.getName().getIdentifier(), params);
+		inMethod = new Method(type, node.getName().getIdentifier(), params, false); // TODO Should this ever be true?
 		names.getFirst().addMethod(inMethod.getMethod(), inMethod);
 		return true;
 	}

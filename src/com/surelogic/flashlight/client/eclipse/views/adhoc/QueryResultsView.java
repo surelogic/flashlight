@@ -5,6 +5,7 @@ import java.util.logging.Level;
 
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.SWTError;
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.browser.LocationEvent;
 import org.eclipse.swt.browser.LocationListener;
@@ -47,6 +48,22 @@ public final class QueryResultsView extends AbstractQueryResultsView {
 		super.displayResult(result);
 	}
 
+	private static final String BROWSER_FLAG = "com.surelogic.browserFlag";
+
+	private static Browser getBrowser(final Composite parent) {
+		String flag = System.getProperty(BROWSER_FLAG);
+		if (flag != null && flag.equalsIgnoreCase("DEFAULT")) {
+			return new Browser(parent, SWT.NONE);
+		}
+		try {
+			return new Browser(parent, SWT.MOZILLA);
+		} catch (SWTError e) {
+			// Do nothing
+		}
+
+		return new Browser(parent, SWT.NONE);
+	}
+
 	@Override
 	protected void setupNoResultsPane(final Composite parent) {
 		final RunDescription run = AdHocDataSource.getInstance()
@@ -56,7 +73,8 @@ public final class QueryResultsView extends AbstractQueryResultsView {
 			super.setupNoResultsPane(parent);
 		} else {
 			showOverviewTitle();
-			final Browser browser = new Browser(parent, SWT.NONE);
+
+			final Browser browser = getBrowser(parent);
 			browser.setForeground(parent.getDisplay().getSystemColor(
 					SWT.COLOR_INFO_FOREGROUND));
 			browser.setBackground(parent.getDisplay().getSystemColor(

@@ -9,7 +9,6 @@
 	<property name="flashlight-instrumentation-project" value="../flashlight-instrumentation-5.0/bin"/>
   <property name="flashlight-common-project" value="../flashlight-common/bin"/>
   <property name="common-project" value="../common/bin"/>
-  <property name="derby-common-project" value="../derby-common/bin"/>
 
 	<property name="ant.jar" value="${lib}/ant.jar" />
 
@@ -43,7 +42,6 @@
 				<pathelement location="${flashlight-instrumentation-project}"/>
 				<pathelement location="${flashlight-common-project}"/>
 				<pathelement location="${common-project}"/>
-  			<pathelement location="${derby-common-project}"/>
 			</classpath>
 		</javac>
 	</target>
@@ -62,9 +60,7 @@
 			<fileset dir="${classes}"/>
 			<!-- (2) Include the contents of common -->
 			<fileset dir="${common-project}"/>
-			<!-- (3) Include the contents of derby-common -->
-			<fileset dir="${derby-common-project}"/>
-			<!-- (4) Include the contents of flashlight-common -->
+			<!-- (3) Include the contents of flashlight-common -->
  		  <fileset dir="${flashlight-common-project}"/>
 	  </jar>
 	</target>

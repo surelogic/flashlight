@@ -128,137 +128,137 @@ function toggle() {
 $jit.ForceDirected.Plot.EdgeTypes.implement(
    {
       'doubleArrow': {
-	   'render': function(adj, canvas) {
-	   		var from = adj.nodeFrom.pos.getc(true),
-	   		to = adj.nodeTo.pos.getc(true),
-	   		dim = adj.getData('dim'),
-	   		direction = adj.data.$direction,
-	   		inv = (direction && direction.length>1 && direction[0] != adj.nodeFrom.id);
-	   		this.edgeHelper.arrow.render(from, to, dim, inv, canvas);
-	   		this.edgeHelper.arrow.render(to, from, dim, inv, canvas);
-      	},
-      	'contains': function(adj, pos) {
-      		var from = adj.nodeFrom.pos.getc(true),
-      		to = adj.nodeTo.pos.getc(true);
-      		return this.edgeHelper.arrow.contains(from, to, pos, this.edge.epsilon) ||
-      			this.edgeHelper.arrow.contains(to, from, pos, this.edge.epsilon);
-      	}
-	   }
+    'render': function(adj, canvas) {
+      var from = adj.nodeFrom.pos.getc(true),
+      to = adj.nodeTo.pos.getc(true),
+      dim = adj.getData('dim'),
+      direction = adj.data.$direction,
+      inv = (direction && direction.length>1 && direction[0] != adj.nodeFrom.id);
+      this.edgeHelper.arrow.render(from, to, dim, inv, canvas);
+      this.edgeHelper.arrow.render(to, from, dim, inv, canvas);
+       },
+       'contains': function(adj, pos) {
+        var from = adj.nodeFrom.pos.getc(true),
+        to = adj.nodeTo.pos.getc(true);
+        return this.edgeHelper.arrow.contains(from, to, pos, this.edge.epsilon) ||
+         this.edgeHelper.arrow.contains(to, from, pos, this.edge.epsilon);
+       }
+    }
    });
 
 function initForceDirected() {
-	if($('#deadlock-widget').val() != undefined) {
-	   fd = new $jit.ForceDirected(
-	      {
-		 //id of the visualization container
-		 injectInto: 'deadlock-widget',
-		 //Enable zooming and panning
-		 //by scrolling and DnD
-		 Navigation: {
-		    enable: true,
-		    //Enable panning events only if we're dragging the empty
-		    //canvas (and not a node).
-		    panning: 'avoid nodes',
-		    zooming: 10 //zoom speed. higher is more sensible
-		 },
-		 // Change node and edge styles such as
-		 // color and width.
-		 // These properties are also set per node
-		 // with dollar prefixed data-properties in the
-		 // JSON structure.
-		 Node: {
-		    overridable: true
-		 },
-		 Edge: {
-		    overridable: true,
-		    color: '#23A4FF',
-		    lineWidth: 0.4
-		 },
-		 //Native canvas text styling
-		 Label: {
-		    type: labelType, //Native or HTML
-		    size: 10,
-		    style: 'bold'
-		 },
-		 //Add Tips
-		 //	    Tips: {
-		 //	       enable: true,
-		 //	       onShow: function(tip, node) {
-		 //count connections
-		 //		  var count = 0;
-		 //		  node.eachAdjacency(function() { count++; });
-		 //display node info in tooltip
-		 //		  tip.innerHTML = "<div class=\"tip-title\">" + node.name + "</div>"
-		 //		     + "<div class=\"tip-text\"><b>connections:</b> " + count + "</div>";
-		 //	       }
-		 //	    },
-		 // Add node events
-		 Events: {
-		    enable: true,
-		    //Change cursor style when hovering a node
-		    onMouseEnter: function() {
-		       fd.canvas.getElement().style.cursor = 'move';
-		    },
-		    onMouseLeave: function() {
-		       fd.canvas.getElement().style.cursor = '';
-		    },
-		    //Update node positions when dragged
-		    onDragMove: function(node, eventInfo, e) {
-		       var pos = eventInfo.getPos();
-		       node.pos.setc(pos.x, pos.y);
-		       fd.plot();
-		    },
-		    //Implement the same handler for touchscreens
-		    onTouchMove: function(node, eventInfo, e) {
-		       $jit.util.event.stop(e); //stop default touchmove event
-		       this.onDragMove(node, eventInfo, e);
-		    },
-		    //Add also a click handler to nodes
-		    onClick: function(node) {
-		       if(!node) return;
-		       // Build the right column relations list.
-		       // This is done by traversing the clicked node connections.
-		       var html = "<h4>" + node.name + "</h4><b> connections:</b><ul><li>",
-		       list = [];
-		       node.eachAdjacency(function(adj){
-					     list.push(adj.nodeTo.name);
-					  });
-		       //append connections information
-		       //$jit.id('inner-details').innerHTML = html + list.join("</li><li>") + "</li></ul>";
-		    }
-		 },
-		 //Number of iterations for the FD algorithm
-		 iterations: 200,
-		 //Edge length
-		 levelDistance: 130,
-		 // Add text to the labels. This method is only triggered
-		 // on label creation and only for DOM labels (not native canvas ones).
-		 onCreateLabel: function(domElement, node){
-		    domElement.innerHTML = node.name;
-		    var style = domElement.style;
-		    style.fontSize = "0.8em";
-		    style.color = "#ddd";
-		 },
-		 // Change node styles when DOM labels are placed
-		 // or moved.
-		 onPlaceLabel: function(domElement, node){
-		    var style = domElement.style;
-		    var left = parseInt(style.left);
-		    var top = parseInt(style.top);
-		    var w = domElement.offsetWidth;
-		    style.left = (left - w / 2) + 'px';
-		    style.top = (top + 10) + 'px';
-		    style.display = '';
-		 }
-	      });
-	}
+ if($('#deadlock-widget').val() != undefined) {
+    fd = new $jit.ForceDirected(
+       {
+   //id of the visualization container
+   injectInto: 'deadlock-widget',
+   //Enable zooming and panning
+   //by scrolling and DnD
+   Navigation: {
+      enable: true,
+      //Enable panning events only if we're dragging the empty
+      //canvas (and not a node).
+      panning: 'avoid nodes',
+      zooming: 10 //zoom speed. higher is more sensible
+   },
+   // Change node and edge styles such as
+   // color and width.
+   // These properties are also set per node
+   // with dollar prefixed data-properties in the
+   // JSON structure.
+   Node: {
+      overridable: true
+   },
+   Edge: {
+      overridable: true,
+      color: '#23A4FF',
+      lineWidth: 0.4
+   },
+   //Native canvas text styling
+   Label: {
+      type: labelType, //Native or HTML
+      size: 10,
+      style: 'bold'
+   },
+   //Add Tips
+   //     Tips: {
+   //        enable: true,
+   //        onShow: function(tip, node) {
+   //count connections
+   //    var count = 0;
+   //    node.eachAdjacency(function() { count++; });
+   //display node info in tooltip
+   //    tip.innerHTML = "<div class=\"tip-title\">" + node.name + "</div>"
+   //       + "<div class=\"tip-text\"><b>connections:</b> " + count + "</div>";
+   //        }
+   //     },
+   // Add node events
+   Events: {
+      enable: true,
+      //Change cursor style when hovering a node
+      onMouseEnter: function() {
+         fd.canvas.getElement().style.cursor = 'move';
+      },
+      onMouseLeave: function() {
+         fd.canvas.getElement().style.cursor = '';
+      },
+      //Update node positions when dragged
+      onDragMove: function(node, eventInfo, e) {
+         var pos = eventInfo.getPos();
+         node.pos.setc(pos.x, pos.y);
+         fd.plot();
+      },
+      //Implement the same handler for touchscreens
+      onTouchMove: function(node, eventInfo, e) {
+         $jit.util.event.stop(e); //stop default touchmove event
+         this.onDragMove(node, eventInfo, e);
+      },
+      //Add also a click handler to nodes
+      onClick: function(node) {
+         if(!node) return;
+         // Build the right column relations list.
+         // This is done by traversing the clicked node connections.
+         var html = "<h4>" + node.name + "</h4><b> connections:</b><ul><li>",
+         list = [];
+         node.eachAdjacency(function(adj){
+          list.push(adj.nodeTo.name);
+       });
+         //append connections information
+         //$jit.id('inner-details').innerHTML = html + list.join("</li><li>") + "</li></ul>";
+      }
+   },
+   //Number of iterations for the FD algorithm
+   iterations: 200,
+   //Edge length
+   levelDistance: 130,
+   // Add text to the labels. This method is only triggered
+   // on label creation and only for DOM labels (not native canvas ones).
+   onCreateLabel: function(domElement, node){
+      domElement.innerHTML = node.name;
+      var style = domElement.style;
+      style.fontSize = "0.8em";
+      style.color = "#ddd";
+   },
+   // Change node styles when DOM labels are placed
+   // or moved.
+   onPlaceLabel: function(domElement, node){
+      var style = domElement.style;
+      var left = parseInt(style.left);
+      var top = parseInt(style.top);
+      var w = domElement.offsetWidth;
+      style.left = (left - w / 2) + 'px';
+      style.top = (top + 10) + 'px';
+      style.display = '';
+   }
+       });
+ }
 }
 
 function initGraphs() {
       initForceDirected();
       var cyc = $("#deadlock-list li").first().attr("id");
       if(cyc != undefined) {
-      	 loadDeadlockGraph(deadlocks[cyc]);
+        loadDeadlockGraph(deadlocks[cyc]);
       }
 }
 
@@ -267,81 +267,82 @@ function loadDeadlockGraph(data) {
    fd.loadJSON(data);
    // compute positions incrementally and animate.
    fd.computeIncremental({
-			    iter: 40,
-			    property: 'end',
-			    onStep: function(perc){
+       iter: 40,
+       property: 'end',
+       onStep: function(perc){
 
-			    },
-			    onComplete: function(){
-			       fd.animate({
-					     modes: ['linear'],
-					     transition: $jit.Trans.Elastic.easeOut,
-					     duration: 2500
-					  });
-			    }
-			 });
+       },
+       onComplete: function(){
+          fd.animate({
+          modes: ['linear'],
+          transition: $jit.Trans.Elastic.easeOut,
+          duration: 2500
+       });
+       }
+    });
    $('#deadlock-threads').empty();
    for(var i = 0; i < data.threads.length; i++) {
       $('#deadlock-threads').append('<h3 class="deadlockThread">' + data.threads[i] + '</h3>');
    }
 
    $("#deadlock-threads .deadlockThread").hover(function () {
-	   var thread = $(this).html();
-	   fd.graph.eachNode(function (n) {
-		   n.eachAdjacency(function (adj) {
-			   if(adj.data.threads.indexOf(thread) >= 0) {
-				   adj.setDataset('end', {
-					   'color': ACTIVE_COL,
-					   'lineWidth': ACTIVE_WIDTH
-				   });
-			   } else {
-				   adj.setDataset('end', {
-					   'color': INACTIVE_COL,
-					   'lineWidth': INACTIVE_WIDTH
-				   });
-			   }
-		   });
-	   });
-	   fd.fx.animate({
-		   modes: ['edge-property:lineWidth:color'],
-		   duration: 500
-	   });
+    var thread = $(this).html();
+    fd.graph.eachNode(function (n) {
+     n.eachAdjacency(function (adj) {
+      if(adj.data.threads.indexOf(thread) >= 0) {
+       adj.setDataset('end', {
+        'color': ACTIVE_COL,
+        'lineWidth': ACTIVE_WIDTH
+       });
+      } else {
+       adj.setDataset('end', {
+        'color': INACTIVE_COL,
+        'lineWidth': INACTIVE_WIDTH
+       });
+      }
+     });
+    });
+    fd.fx.animate({
+     modes: ['edge-property:lineWidth:color'],
+     duration: 500
+    });
    }, function () {
-	   var thread = $(this).html();
-	   fd.graph.eachNode(function (n) {
-		   n.eachAdjacency(function (adj) {
-			   adj.setDataset('end', {
-				   'color': INACTIVE_COL,
-				   'lineWidth': INACTIVE_WIDTH
-			   });
-		   });
-	   });
-	   fd.fx.animate({
-		   modes: ['edge-property:lineWidth:color'],
-		   duration: 500
-	   });
+      var thread = $(this).html();
+    fd.graph.eachNode(function (n) {
+     n.eachAdjacency(function (adj) {
+      adj.setDataset('end', {
+       'color': INACTIVE_COL,
+       'lineWidth': INACTIVE_WIDTH
+      });
+     });
+    });
+    fd.fx.animate({
+     modes: ['edge-property:lineWidth:color'],
+     duration: 500
+    });
    });
 }
 
 var eventSource;
 function loadTimeline() {
-    if (timeline_data == 'none') {
-	return;
-    }
-    eventSource = new Timeline.DefaultEventSource();
-    var tl_el = document.getElementById("tl");
-    var theme1 = Timeline.ClassicTheme.create();
-    theme1.autoWidth = true; // Set the Timeline's "width" automatically.
-                             // Set autoWidth on the Timeline's first band's theme,
-                             // will affect all bands.
-    theme1.timeline_start = timeline_data.first;
-    theme1.timeline_stop  = timeline_data.last;
+   SimileAjax.History.enabled = false;
+   if (timeline_data == 'none') {
+      return;
+   }
+   eventSource = new Timeline.DefaultEventSource();
+   var tl_el = document.getElementById("tl");
+   var theme1 = Timeline.ClassicTheme.create();
+   theme1.autoWidth = true; // Set the Timeline's "width" automatically.
+                            // Set autoWidth on the Timeline's first band's theme,
+                            // will affect all bands.
+   theme1.timeline_start = timeline_data.first;
+   theme1.timeline_stop  = timeline_data.last;
 
-    var d = timeline_data.first;
-    var bandInfos;
-    if(timeline_data.needsOverview) {
-       bandInfos = [
-          Timeline.createBandInfo({
+   var d = timeline_data.first;
+   var bandInfos;
+   if(timeline_data.needsOverview) {
+      bandInfos = [
+         Timeline.createBandInfo({
             width:          40, //"70%", // set to a minimum, autoWidth will then adjust
             intervalUnit:   timeline_data.mainBandInterval, // Timeline.DateTime.SECOND,
             intervalPixels: timeline_data.mainBandIntervalPixels,
@@ -349,8 +350,8 @@ function loadTimeline() {
             date:           d,
             theme:          theme1,
             layout:         'original'  // original, overview, detailed
-	  }),
-          Timeline.createBandInfo({
+                                 }),
+         Timeline.createBandInfo({
             width:          40, //"30%", // set to a minimum, autoWidth will then adjust
             intervalUnit:   timeline_data.overviewBandInterval, // Timeline.DateTime.MINUTE,
             intervalPixels: timeline_data.overviewBandIntervalPixels,
@@ -359,12 +360,12 @@ function loadTimeline() {
             theme:          theme1,
             layout:         'overview'  // original, overview, detailed
           })
-       ];
-       bandInfos[1].syncWith = 0;
-       bandInfos[1].highlight= true;
-    } else {
-       bandInfos = [
-          Timeline.createBandInfo({
+      ];
+      bandInfos[1].syncWith = 0;
+      bandInfos[1].highlight= true;
+   } else {
+      bandInfos = [
+         Timeline.createBandInfo({
             width:          40, //"70%", // set to a minimum, autoWidth will then adjust
             intervalUnit:   timeline_data.mainBandInterval, // Timeline.DateTime.SECOND,
             intervalPixels: timeline_data.mainBandIntervalPixels,
@@ -372,17 +373,17 @@ function loadTimeline() {
             date:           d,
             theme:          theme1,
             layout:         'original'  // original, overview, detailed
-	  })];
-    }
-    // create the Timeline
+   })];
+   }
+   // create the Timeline
     tl = Timeline.create(tl_el, bandInfos);
 
-    var url = '.'; // The base url for image, icon and background image
-                   // references in the data
-    eventSource.loadJSON(timeline_data, url); // The data was stored into the
-                                               // timeline_data variable.
-    tl.finishedEventLoading();
-    tl.layout(); // display the Timeline
+   var url = '.'; // The base url for image, icon and background image
+   // references in the data
+   eventSource.loadJSON(timeline_data, url); // The data was stored into the
+                                             // timeline_data variable.
+   tl.finishedEventLoading();
+   tl.layout(); // display the Timeline
 }
 
 var rcSelected = null;
@@ -419,25 +420,6 @@ function initBadPublishTab() {
 
 $(document).ready(
    function() {
-      // For some reason there is a history piece that doesn't work, I should
-      // look into this.  For now, disable.
-      SimileAjax.History.enabled = false;
-      $("#deadlock-list li").click(
-    		  function (event) {
-    			  var val = $(this).attr("id");
-    			  loadDeadlockGraph(deadlocks[val]);
-    		  });
-      initGraphs();
-      //Tab setup
-      $(".tab").hide();
-      $("#main #bar a").click(function(event) {
-          event.preventDefault();
-          $("#main #bar a").removeClass("selected");
-          $(this).addClass("selected");
-    	  var div = $(this).attr("href");
-    	  $(".tab").hide();
-    	  $(div).fadeIn('slow');
-      });
 
       $("#main #content .section").hide();
       //Init outlines and tree tables
@@ -446,9 +428,16 @@ $(document).ready(
 
       // We load timeline separately b/c it takes too long to do on startup
 
-      $('.sectionList > li.selected > a[href=index5.html]').each(
+      $('.sectionList > li.selected > a[href=index2.html]').each(
          function () {
-               loadTimeline();
+            // For some reason there is a history piece that doesn't work, I should
+            // look into this.  For now, disable.
+            $("#deadlock-list li").click(
+               function (event) {
+                  var val = $(this).attr("id");
+                  loadDeadlockGraph(deadlocks[val]);
+               });
+               initGraphs();
          }
       );
       //Init race condition logic
@@ -463,18 +452,23 @@ $(document).ready(
                initBadPublishTab();
          }
       );
+      $('.sectionList > li.selected > a[href=index5.html]').each(
+         function () {
+               loadTimeline();
+         }
+      );
    });
 
 
 
 var resizeTimerID = null;
 $(document).resize(
-	function() {
-		if (resizeTimerID == null) {
-	         resizeTimerID = window.setTimeout(function() {
-	             resizeTimerID = null;
-	             tl.layout();
-	         }, 500);
-	     }
-	}
+ function() {
+  if (resizeTimerID == null) {
+          resizeTimerID = window.setTimeout(function() {
+              resizeTimerID = null;
+              tl.layout();
+          }, 500);
+      }
+ }
 );

@@ -11,7 +11,7 @@ RETURNS TABLE
 )
 PARAMETER STYLE DERBY_JDBC_RESULT_SET
 READS SQL DATA LANGUAGE JAVA
-EXTERNAL NAME 'com.surelogic.flashlight.schema.Functions.stackTrace'
+EXTERNAL NAME 'com.surelogic.common.derby.sqlfunctions.Functions.stackTrace'
 <<>>
 
 CREATE FUNCTION OBJID 
@@ -19,5 +19,5 @@ CREATE FUNCTION OBJID
 RETURNS VARCHAR(100)
 PARAMETER STYLE JAVA
 READS SQL DATA LANGUAGE JAVA
-EXTERNAL NAME 'com.surelogic.flashlight.schema.Functions.objId'
+EXTERNAL NAME 'com.surelogic.common.derby.sqlfunctions.Functions.objId'
 <<>>

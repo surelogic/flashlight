@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.surelogic.common.derby.sqlfunctions.Trace;
 import com.surelogic.common.jdbc.DBQuery;
 import com.surelogic.common.jdbc.NullResultHandler;
 import com.surelogic.common.jdbc.Query;
@@ -20,7 +21,6 @@ import com.surelogic.common.jdbc.Queryable;
 import com.surelogic.common.jdbc.Result;
 import com.surelogic.common.jdbc.ResultHandler;
 import com.surelogic.common.jdbc.Row;
-import com.surelogic.flashlight.schema.Trace;
 
 public final class RecommendRegions {
 

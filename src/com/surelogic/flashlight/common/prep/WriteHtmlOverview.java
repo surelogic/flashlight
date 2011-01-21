@@ -23,6 +23,7 @@ import java.util.TreeMap;
 
 import com.surelogic.common.FileUtility;
 import com.surelogic.common.ImageWriter;
+import com.surelogic.common.derby.sqlfunctions.Trace;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jdbc.ConnectionQuery;
 import com.surelogic.common.jobs.SLProgressMonitor;
@@ -49,7 +50,6 @@ import com.surelogic.flashlight.common.prep.SummaryInfo.Lock;
 import com.surelogic.flashlight.common.prep.SummaryInfo.LockSetEvidence;
 import com.surelogic.flashlight.common.prep.SummaryInfo.LockSetLock;
 import com.surelogic.flashlight.common.prep.SummaryInfo.Site;
-import com.surelogic.flashlight.schema.Trace;
 
 public final class WriteHtmlOverview implements IPostPrep {
 

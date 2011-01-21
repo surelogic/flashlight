@@ -3,6 +3,7 @@ package com.surelogic.flashlight.schema;
 import java.io.InputStream;
 import java.net.URL;
 
+import com.surelogic.common.jdbc.AbstractSchemaData;
 import com.surelogic.common.license.SLLicenseProduct;
 
 public class FlashlightSchemaData extends AbstractSchemaData {

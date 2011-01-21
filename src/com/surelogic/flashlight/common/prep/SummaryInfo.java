@@ -15,6 +15,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import com.surelogic.common.derby.sqlfunctions.Trace;
 import com.surelogic.common.jdbc.DBQuery;
 import com.surelogic.common.jdbc.LimitRowHandler;
 import com.surelogic.common.jdbc.NullRowHandler;
@@ -25,7 +26,6 @@ import com.surelogic.common.jdbc.Row;
 import com.surelogic.common.jdbc.RowHandler;
 import com.surelogic.common.jdbc.StringResultHandler;
 import com.surelogic.common.jdbc.StringRowHandler;
-import com.surelogic.flashlight.schema.Trace;
 
 public class SummaryInfo {
 

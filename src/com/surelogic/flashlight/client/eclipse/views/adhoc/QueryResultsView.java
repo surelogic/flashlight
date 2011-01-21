@@ -60,7 +60,6 @@ public final class QueryResultsView extends AbstractQueryResultsView {
 		} catch (SWTError e) {
 			// Do nothing
 		}
-
 		return new Browser(parent, SWT.NONE);
 	}
 

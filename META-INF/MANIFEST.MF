@@ -20,4 +20,4 @@ Export-Package: com.surelogic._flashlight.common,
 Bundle-ClassPath: lib/jgrapht-jdk1.5.jar,
  lib/trove-2.0.4.jar,
  .
-Bundle-RequiredExecutionEnvironment: J2SE-1.5
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6

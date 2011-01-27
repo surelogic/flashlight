@@ -2,11 +2,17 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Flashlight Client
 Bundle-SymbolicName: com.surelogic.flashlight;singleton:=true
-Bundle-Vendor: SureLogic
+Bundle-Vendor: SureLogic, Inc.
 Bundle-Version: 4.0.0.qualifier
 Bundle-Activator: com.surelogic.flashlight.client.eclipse.Activator
 Bundle-Localization: plugin
-Require-Bundle: org.eclipse.ui,
+Require-Bundle: com.surelogic.common,
+ com.surelogic.common.eclipse,
+ com.surelogic.common.adhoc,
+ com.surelogic.adhoc.eclipse,
+ com.surelogic.flashlight.common,
+ com.surelogic.jsure.client.eclipse;resolution:=optional,
+ org.eclipse.ui,
  org.eclipse.core.runtime,
  org.eclipse.debug.core,
  org.eclipse.debug.ui,
@@ -18,16 +24,10 @@ Require-Bundle: org.eclipse.ui,
  org.eclipse.jdt.ui,
  org.eclipse.ui.ide,
  org.eclipse.ui.editors,
- com.surelogic.common.eclipse,
- com.surelogic.common,
- com.surelogic.adhoc.eclipse,
- com.surelogic.flashlight.common,
- com.surelogic.common.adhoc,
  org.eclipse.jdt.core,
  org.eclipse.jface.text,
  org.eclipse.ltk.core.refactoring,
- org.eclipse.ltk.ui.refactoring,
- com.surelogic.jsure.client.eclipse;resolution:=optional
+ org.eclipse.ltk.ui.refactoring
 Eclipse-LazyStart: true
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: .,

@@ -104,6 +104,7 @@ public class SummaryInfo {
 
 	public static class SummaryQuery implements DBQuery<SummaryInfo> {
 
+		@Override
 		public SummaryInfo perform(final Query q) {
 			List<Lock> locks = q.prepared("Deadlock.lockContention",
 					new LockContentionHandler()).call();
@@ -177,10 +178,12 @@ public class SummaryInfo {
 			this.likelyLocks = new ArrayList<LockSetLock>();
 		}
 
+		@Override
 		public String getPackage() {
 			return field.getPackage();
 		}
 
+		@Override
 		public String getClazz() {
 			return field.getClazz();
 		}
@@ -193,7 +196,7 @@ public class SummaryInfo {
 			return field.isStatic();
 		}
 
-		public String getId() {
+		public long getId() {
 			return field.getId();
 		}
 
@@ -201,6 +204,7 @@ public class SummaryInfo {
 			return likelyLocks;
 		}
 
+		@Override
 		public int compareTo(final LockSetEvidence o) {
 			return field.compareTo(o.field);
 		}
@@ -209,13 +213,13 @@ public class SummaryInfo {
 
 	public static class LockSetLock {
 		private final String name;
-		private final String id;
+		private final long id;
 		private final String timesAcquired;
 		private final String heldPercentage;
 		private final List<Site> heldAt;
 		private final List<Site> notHeldAt;
 
-		public LockSetLock(final String name, final String id,
+		public LockSetLock(final String name, final long id,
 				final String timesAcquired, final String heldPercentage) {
 			this.name = name;
 			this.id = id;
@@ -229,7 +233,7 @@ public class SummaryInfo {
 			return name;
 		}
 
-		public String getId() {
+		public long getId() {
 			return id;
 		}
 
@@ -271,6 +275,7 @@ public class SummaryInfo {
 			this.field = f;
 		}
 
+		@Override
 		public LockSetEvidence handle(final Result result) {
 			LockSetEvidence e = new LockSetEvidence(field);
 			int count = 0;
@@ -278,7 +283,7 @@ public class SummaryInfo {
 				if (count++ == LOCK_LIMIT) {
 					return e;
 				}
-				LockSetLock l = new LockSetLock(r.nextString(), r.nextString(),
+				LockSetLock l = new LockSetLock(r.nextString(), r.nextLong(),
 						r.nextString(), r.nextString());
 				if (field.isStatic()) {
 					l.getHeldAt().addAll(
@@ -412,6 +417,7 @@ public class SummaryInfo {
 	}
 
 	static class LockTraceHandler implements RowHandler<LockTrace> {
+		@Override
 		public LockTrace handle(final Row r) {
 			return new LockTrace(r.nextLong(), r.nextString(), r.nextString(),
 					r.nextString(), r.nextInt());
@@ -441,6 +447,7 @@ public class SummaryInfo {
 			RowHandler<ContentionSite> {
 		private final SiteHandler sh = new SiteHandler();
 
+		@Override
 		public ContentionSite handle(final Row r) {
 			long duration = r.nextLong();
 			Site site = sh.handle(r);
@@ -458,6 +465,7 @@ public class SummaryInfo {
 			this.q = q;
 		}
 
+		@Override
 		public BadPublishEvidence handle(final Row r) {
 			Field f = new Field(r.nextString(), r.nextString(), r.nextString(),
 					r.nextLong(), r.nextBoolean());
@@ -489,10 +497,12 @@ public class SummaryInfo {
 			accesses = new ArrayList<BadPublishAccess>();
 		}
 
+		@Override
 		public String getPackage() {
 			return f.getPackage();
 		}
 
+		@Override
 		public String getClazz() {
 			return f.getClazz();
 		}
@@ -501,7 +511,7 @@ public class SummaryInfo {
 			return f.getName();
 		}
 
-		public String getId() {
+		public long getId() {
 			return f.getId();
 		}
 
@@ -570,10 +580,12 @@ public class SummaryInfo {
 			this.isStatic = isStatic;
 		}
 
+		@Override
 		public String getPackage() {
 			return pakkage;
 		}
 
+		@Override
 		public String getClazz() {
 			return clazz;
 		}
@@ -582,8 +594,8 @@ public class SummaryInfo {
 			return name;
 		}
 
-		public String getId() {
-			return Long.toString(id);
+		public long getId() {
+			return id;
 		}
 
 		public boolean isStatic() {
@@ -641,6 +653,7 @@ public class SummaryInfo {
 			return true;
 		}
 
+		@Override
 		public int compareTo(final Field o) {
 			int cmp = pakkage.compareTo(o.pakkage);
 			if (cmp == 0) {
@@ -662,6 +675,7 @@ public class SummaryInfo {
 
 	private static class FieldHandler implements RowHandler<Field> {
 
+		@Override
 		public Field handle(final Row r) {
 			return new Field(r.nextString(), r.nextString(), r.nextString(),
 					r.nextLong(), r.nextBoolean());
@@ -701,6 +715,7 @@ public class SummaryInfo {
 			return stop;
 		}
 
+		@Override
 		public int compareTo(final Thread o) {
 			if (o == null) {
 				return 1;
@@ -716,6 +731,7 @@ public class SummaryInfo {
 
 	private static class ThreadContentionHandler implements RowHandler<Thread> {
 
+		@Override
 		public Thread handle(final Row r) {
 			return new Thread(r.nextString(), r.nextString(),
 					r.nextTimestamp(), r.nextTimestamp(), r.nextLong());
@@ -763,6 +779,7 @@ public class SummaryInfo {
 
 	private static class LockContentionHandler implements RowHandler<Lock> {
 
+		@Override
 		public Lock handle(final Row r) {
 			return new Lock(r.nextString(), r.nextInt(), r.nextLong(),
 					r.nextLong(), r.nextLong());
@@ -860,6 +877,7 @@ public class SummaryInfo {
 			return threads;
 		}
 
+		@Override
 		public int compareTo(final Edge o) {
 			int cmp = heldId.compareTo(o.heldId);
 			if (cmp == 0) {
@@ -885,6 +903,7 @@ public class SummaryInfo {
 			this.q = q;
 		}
 
+		@Override
 		public List<DeadlockEvidence> handle(final Result result) {
 			List<DeadlockEvidence> deadlocks = new ArrayList<DeadlockEvidence>();
 			DeadlockEvidence deadlock = null;
@@ -928,6 +947,7 @@ public class SummaryInfo {
 			this.edge = e;
 		}
 
+		@Override
 		public DeadlockTrace handle(final Result result) {
 			for (Row r : result) {
 				long traceId = r.nextLong();
@@ -944,6 +964,7 @@ public class SummaryInfo {
 	}
 
 	private static class SiteHandler implements RowHandler<Site> {
+		@Override
 		public Site handle(final Row r) {
 			return new Site(r.nextString(), r.nextString(), r.nextString(),
 					r.nextInt(), r.nextString());
@@ -966,10 +987,12 @@ public class SummaryInfo {
 			this.file = file;
 		}
 
+		@Override
 		public String getPackage() {
 			return pakkage;
 		}
 
+		@Override
 		public String getClazz() {
 			return clazz;
 		}
@@ -1052,6 +1075,7 @@ public class SummaryInfo {
 			return true;
 		}
 
+		@Override
 		public int compareTo(final Site site) {
 			if (site == null) {
 				return 1;
@@ -1136,6 +1160,7 @@ public class SummaryInfo {
 			return site.toString();
 		}
 
+		@Override
 		public int compareTo(final CoverageSite o) {
 			if (o == null) {
 				return 1;
@@ -1177,6 +1202,7 @@ public class SummaryInfo {
 
 	private static class CoverageHandler implements
 			ResultHandler<Map<Long, Set<Long>>> {
+		@Override
 		public Map<Long, Set<Long>> handle(final Result result) {
 			Map<Long, Set<Long>> map = new HashMap<Long, Set<Long>>();
 			for (Row r : result) {

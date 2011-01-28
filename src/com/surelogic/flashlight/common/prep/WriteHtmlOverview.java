@@ -82,6 +82,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 		c = Calendar.getInstance();
 	}
 
+	@Override
 	public void doPostPrep(final Connection c, final SLProgressMonitor mon)
 			throws SQLException {
 		mon.begin();
@@ -378,6 +379,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 	}
 
 	static class LockSetLink implements LinkProvider<LockSetEvidence> {
+		@Override
 		public void link(final Container c, final LockSetEvidence field) {
 			c.a("#locksets-" + field.getPackage() + "." + field.getClazz()
 					+ "." + field.getName()).clazz("locksetlink")
@@ -388,6 +390,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 	private static class LockSetRowProvider implements
 			RowProvider<LockSetEvidence> {
 		private final LinkProvider<Site> lp = new LinkProvider<Site>() {
+			@Override
 			public void link(final Container c, final Site t) {
 				Span span = c.span();
 				span.text(" at " + t.getLocation());
@@ -398,10 +401,12 @@ public final class WriteHtmlOverview implements IPostPrep {
 			}
 		};
 
+		@Override
 		public int numCols(final LockSetEvidence t) {
 			return 3;
 		}
 
+		@Override
 		public void row(final Table table, final LockSetEvidence e) {
 			for (LockSetLock lock : e.getLikelyLocks()) {
 				Row lockRow = table.row();
@@ -427,6 +432,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 			}
 		}
 
+		@Override
 		public void headerRow(final Row row) {
 			row.th("Lock").th("# Acquisitions").th("% Held");
 		}
@@ -469,10 +475,12 @@ public final class WriteHtmlOverview implements IPostPrep {
 			this.traces = traces;
 		}
 
+		@Override
 		public void headerRow(final Row row) {
 			row.th("Package/Class/Field/Time").th("Thread").th("Read");
 		}
 
+		@Override
 		public void row(final Table table, final BadPublishEvidence e) {
 			Row fieldRow = table.row();
 			fieldRow.td().clazz("depth3").clazz("field").text(e.getName());
@@ -494,6 +502,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 			}
 		}
 
+		@Override
 		public int numCols(final BadPublishEvidence e) {
 			return 3;
 		}
@@ -687,6 +696,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 			super("Liveness");
 			this.threads = new ArrayList<SummaryInfo.Thread>(threads);
 			Collections.sort(threads, new Comparator<SummaryInfo.Thread>() {
+				@Override
 				public int compare(final SummaryInfo.Thread o1,
 						final SummaryInfo.Thread o2) {
 					long t1 = o1.getBlockTime();
@@ -839,6 +849,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 			return true;
 		}
 
+		@Override
 		public int compareTo(final EdgeEntry o) {
 			int cmp = from.compareTo(o.from);
 			if (cmp == 0) {
@@ -1007,6 +1018,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 		c.a(b.toString()).text(text);
 	}
 
+	@Override
 	public String getDescription() {
 		return "Generating an HTML overview of the results of this run";
 	}

@@ -15,8 +15,8 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.Shell;
 
-import com.surelogic.adhoc.eclipse.EclipseQueryUtility;
-import com.surelogic.adhoc.views.results.AbstractQueryResultsView;
+import com.surelogic.common.eclipse.adhoc.EclipseQueryUtility;
+import com.surelogic.common.eclipse.adhoc.views.results.AbstractQueryResultsView;
 import com.surelogic.common.adhoc.AdHocManager;
 import com.surelogic.common.adhoc.AdHocQueryFullyBound;
 import com.surelogic.common.adhoc.AdHocQueryResult;

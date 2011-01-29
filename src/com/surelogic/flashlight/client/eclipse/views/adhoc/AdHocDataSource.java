@@ -11,7 +11,7 @@ import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.progress.UIJob;
 
-import com.surelogic.adhoc.eclipse.dialogs.LotsOfSavedQueriesDialog;
+import com.surelogic.common.eclipse.adhoc.dialogs.LotsOfSavedQueriesDialog;
 import com.surelogic.common.ILifecycle;
 import com.surelogic.common.adhoc.AdHocManager;
 import com.surelogic.common.adhoc.AdHocManagerAdapter;

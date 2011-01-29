@@ -22,7 +22,7 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
 
-import com.surelogic.adhoc.views.ExportQueryDialog;
+import com.surelogic.common.eclipse.adhoc.views.ExportQueryDialog;
 import com.surelogic.common.CommonImages;
 import com.surelogic.common.FileUtility;
 import com.surelogic.common.XUtil;

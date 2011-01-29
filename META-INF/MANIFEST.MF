@@ -8,8 +8,6 @@ Bundle-Activator: com.surelogic.flashlight.client.eclipse.Activator
 Bundle-Localization: plugin
 Require-Bundle: com.surelogic.common,
  com.surelogic.common.eclipse,
- com.surelogic.common.adhoc,
- com.surelogic.adhoc.eclipse,
  com.surelogic.flashlight.common,
  com.surelogic.jsure.client.eclipse;resolution:=optional,
  org.eclipse.ui,

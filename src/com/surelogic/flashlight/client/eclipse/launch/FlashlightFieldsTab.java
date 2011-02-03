@@ -38,7 +38,7 @@ import org.eclipse.swt.widgets.Group;
 
 import com.surelogic._flashlight.rewriter.config.Configuration;
 import com.surelogic._flashlight.rewriter.config.Configuration.FieldFilter;
-import com.surelogic.common.eclipse.SLImages;
+import com.surelogic.common.ui.SLImages;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.CommonImages;
 import com.surelogic.common.StringComparators;

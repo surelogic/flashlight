@@ -8,7 +8,7 @@ import java.util.Map;
 
 import com.surelogic.common.CommonImages;
 import com.surelogic.common.FileUtility;
-import com.surelogic.common.eclipse.tooltip.ToolTip;
+import com.surelogic.common.ui.tooltip.ToolTip;
 
 public class FlashlightImageLoader implements ToolTip.ImageLoader {
 

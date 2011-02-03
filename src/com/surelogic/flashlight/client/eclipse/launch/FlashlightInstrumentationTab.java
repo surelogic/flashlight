@@ -1,6 +1,6 @@
 package com.surelogic.flashlight.client.eclipse.launch;
 
-import java.io.*;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -10,8 +10,9 @@ import java.util.Map;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.debug.core.*;
-import org.eclipse.debug.ui.*;
+import org.eclipse.debug.core.ILaunchConfiguration;
+import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
+import org.eclipse.debug.ui.AbstractLaunchConfigurationTab;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
@@ -37,16 +38,23 @@ import org.eclipse.swt.events.MenuDetectListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.layout.*;
-import org.eclipse.swt.widgets.*;
+import org.eclipse.swt.layout.FillLayout;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Group;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.PlatformUI;
 
 import com.surelogic._flashlight.rewriter.ClassNameUtil;
-import com.surelogic.common.eclipse.SLImages;
-import com.surelogic.common.eclipse.dialogs.TypeSelectionDialog;
-import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.CommonImages;
+import com.surelogic.common.i18n.I18N;
+import com.surelogic.common.ui.SLImages;
+import com.surelogic.common.ui.dialogs.TypeSelectionDialog;
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
 
 public final class FlashlightInstrumentationTab extends

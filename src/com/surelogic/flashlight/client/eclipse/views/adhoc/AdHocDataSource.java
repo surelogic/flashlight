@@ -11,14 +11,14 @@ import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.progress.UIJob;
 
-import com.surelogic.common.eclipse.adhoc.dialogs.LotsOfSavedQueriesDialog;
+import com.surelogic.common.ui.adhoc.dialogs.LotsOfSavedQueriesDialog;
 import com.surelogic.common.ILifecycle;
 import com.surelogic.common.adhoc.AdHocManager;
 import com.surelogic.common.adhoc.AdHocManagerAdapter;
 import com.surelogic.common.adhoc.AdHocQueryResult;
 import com.surelogic.common.adhoc.IAdHocDataSource;
-import com.surelogic.common.eclipse.ViewUtility;
-import com.surelogic.common.eclipse.jobs.SLUIJob;
+import com.surelogic.common.ui.ViewUtility;
+import com.surelogic.common.ui.jobs.SLUIJob;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jdbc.DBConnection;
 import com.surelogic.common.logging.SLLogger;

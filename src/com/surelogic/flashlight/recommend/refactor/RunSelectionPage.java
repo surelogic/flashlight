@@ -15,15 +15,12 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableItem;
 
-import com.surelogic.common.eclipse.JDTUtility;
+import com.surelogic.common.core.JDTUtility;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.flashlight.common.model.RunDescription;
 
 /**
  * Choose one or more runs from those currently available in Flashlight.
- * 
- * @author nathan
- * 
  */
 public class RunSelectionPage extends UserInputWizardPage {
 

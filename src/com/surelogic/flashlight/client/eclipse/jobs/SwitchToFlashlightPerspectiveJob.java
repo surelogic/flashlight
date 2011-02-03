@@ -4,11 +4,11 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 
-import com.surelogic.common.eclipse.EclipseUtility;
-import com.surelogic.common.eclipse.SWTUtility;
-import com.surelogic.common.eclipse.ViewUtility;
-import com.surelogic.common.eclipse.jobs.EclipseJob;
-import com.surelogic.common.eclipse.jobs.SLUIJob;
+import com.surelogic.common.core.EclipseUtility;
+import com.surelogic.common.ui.SWTUtility;
+import com.surelogic.common.ui.ViewUtility;
+import com.surelogic.common.core.jobs.EclipseJob;
+import com.surelogic.common.ui.jobs.SLUIJob;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.client.eclipse.dialogs.ConfirmPerspectiveSwitch;
 import com.surelogic.flashlight.client.eclipse.perspectives.FlashlightPerspective;

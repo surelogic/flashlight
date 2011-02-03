@@ -16,8 +16,8 @@ import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 
-import com.surelogic.common.eclipse.JDTUtility;
-import com.surelogic.common.eclipse.SWTUtility;
+import com.surelogic.common.core.JDTUtility;
+import com.surelogic.common.ui.SWTUtility;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.common.model.RunDescription;

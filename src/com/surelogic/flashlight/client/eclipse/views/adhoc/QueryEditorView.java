@@ -3,9 +3,9 @@ package com.surelogic.flashlight.client.eclipse.views.adhoc;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Shell;
 
-import com.surelogic.common.eclipse.adhoc.views.editor.AbstractQueryEditorView;
+import com.surelogic.common.ui.adhoc.views.editor.AbstractQueryEditorView;
 import com.surelogic.common.adhoc.AdHocManager;
-import com.surelogic.common.eclipse.tooltip.ToolTip;
+import com.surelogic.common.ui.tooltip.ToolTip;
 import com.surelogic.common.serviceability.UsageMeter;
 import com.surelogic.flashlight.client.eclipse.images.FlashlightImageLoader;
 

@@ -7,7 +7,7 @@ import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.core.runtime.jobs.Job;
 
 import com.surelogic.common.SLUtility;
-import com.surelogic.common.eclipse.jobs.KeywordAccessRule;
+import com.surelogic.common.core.jobs.KeywordAccessRule;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jobs.AbstractSLJob;
 import com.surelogic.common.jobs.SLProgressMonitor;

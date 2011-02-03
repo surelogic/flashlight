@@ -7,7 +7,8 @@ Bundle-Version: 4.0.0.qualifier
 Bundle-Activator: com.surelogic.flashlight.client.eclipse.Activator
 Bundle-Localization: plugin
 Require-Bundle: com.surelogic.common,
- com.surelogic.common.eclipse,
+ com.surelogic.common.core,
+ com.surelogic.common.ui,
  com.surelogic.flashlight.common,
  com.surelogic.jsure.client.eclipse;resolution:=optional,
  org.eclipse.ui,

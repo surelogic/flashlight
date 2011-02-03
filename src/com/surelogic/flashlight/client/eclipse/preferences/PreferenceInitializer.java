@@ -5,7 +5,7 @@ import static com.surelogic._flashlight.common.InstrumentationConstants.*;
 import org.eclipse.jface.preference.IPreferenceStore;
 
 import com.surelogic.common.FileUtility;
-import com.surelogic.common.eclipse.preferences.AbstractPrefInitializer;
+import com.surelogic.common.core.preferences.AbstractPrefInitializer;
 import com.surelogic.flashlight.client.eclipse.Activator;
 
 /**

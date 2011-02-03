@@ -17,7 +17,7 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.*;
 import org.eclipse.swt.widgets.*;
 
-import com.surelogic.common.eclipse.SLImages;
+import com.surelogic.common.ui.SLImages;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.common.CommonImages;
 import com.surelogic.flashlight.client.eclipse.Activator;

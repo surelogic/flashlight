@@ -23,7 +23,7 @@ import org.eclipse.ltk.core.refactoring.TextFileChange;
 import org.eclipse.text.edits.TextEdit;
 import org.eclipse.text.edits.TextEditGroup;
 
-import com.surelogic.common.eclipse.refactor.PromisesAnnotationRewriter;
+import com.surelogic.common.ui.refactor.PromisesAnnotationRewriter;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jdbc.DBConnection;
 import com.surelogic.common.logging.SLLogger;

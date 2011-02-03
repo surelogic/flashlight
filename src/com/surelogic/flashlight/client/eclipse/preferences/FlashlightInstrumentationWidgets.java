@@ -16,7 +16,7 @@ import org.eclipse.jface.preference.RadioGroupFieldEditor;
 import org.eclipse.jface.preference.ScaleFieldEditor;
 import org.eclipse.swt.widgets.Composite;
 
-import com.surelogic.common.eclipse.preferences.LabeledScaleFieldEditor;
+import com.surelogic.common.ui.preferences.LabeledScaleFieldEditor;
 import com.surelogic.common.i18n.I18N;
 
 public class FlashlightInstrumentationWidgets {

@@ -5,7 +5,7 @@ import java.io.File;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jface.preference.IPreferenceStore;
 
-import com.surelogic.common.eclipse.preferences.IAutoPerspectiveSwitchPreferences;
+import com.surelogic.common.ui.preferences.IAutoPerspectiveSwitchPreferences;
 import com.surelogic.flashlight.client.eclipse.Activator;
 
 /**

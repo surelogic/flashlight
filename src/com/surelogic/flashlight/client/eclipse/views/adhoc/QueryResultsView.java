@@ -15,12 +15,12 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.Shell;
 
-import com.surelogic.common.eclipse.adhoc.EclipseQueryUtility;
-import com.surelogic.common.eclipse.adhoc.views.results.AbstractQueryResultsView;
+import com.surelogic.common.core.adhoc.EclipseQueryUtility;
+import com.surelogic.common.ui.adhoc.views.results.AbstractQueryResultsView;
 import com.surelogic.common.adhoc.AdHocManager;
 import com.surelogic.common.adhoc.AdHocQueryFullyBound;
 import com.surelogic.common.adhoc.AdHocQueryResult;
-import com.surelogic.common.eclipse.tooltip.ToolTip;
+import com.surelogic.common.ui.tooltip.ToolTip;
 import com.surelogic.common.html.SimpleHTMLPrinter;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.logging.SLLogger;

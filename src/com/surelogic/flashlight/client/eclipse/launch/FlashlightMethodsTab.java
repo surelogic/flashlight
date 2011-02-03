@@ -29,7 +29,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
 
-import com.surelogic.common.eclipse.SLImages;
+import com.surelogic.common.ui.SLImages;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.CommonImages;
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;

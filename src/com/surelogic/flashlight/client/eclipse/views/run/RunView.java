@@ -15,10 +15,10 @@ import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.part.ViewPart;
 
 import com.surelogic.common.CommonImages;
-import com.surelogic.common.eclipse.ColumnViewerSorter;
-import com.surelogic.common.eclipse.SLImages;
-import com.surelogic.common.eclipse.SWTUtility;
-import com.surelogic.common.eclipse.jobs.EclipseJob;
+import com.surelogic.common.ui.ColumnViewerSorter;
+import com.surelogic.common.ui.SLImages;
+import com.surelogic.common.ui.SWTUtility;
+import com.surelogic.common.core.jobs.EclipseJob;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.serviceability.UsageMeter;
 import com.surelogic.flashlight.common.jobs.RefreshRunManagerSLJob;

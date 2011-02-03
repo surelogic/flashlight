@@ -3,7 +3,7 @@ package com.surelogic.flashlight.client.eclipse.views.source;
 import java.io.File;
 
 import com.surelogic.common.ISourceZipFileHandles;
-import com.surelogic.common.eclipse.views.AbstractHistoricalSourceView;
+import com.surelogic.common.ui.views.AbstractHistoricalSourceView;
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
 import com.surelogic.flashlight.common.files.RawFileUtility;
 import com.surelogic.flashlight.common.files.RunDirectory;

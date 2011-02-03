@@ -13,7 +13,7 @@ import org.eclipse.jdt.launching.IVMRunner;
 import org.eclipse.jdt.launching.JavaLaunchDelegate;
 
 import com.surelogic._flashlight.common.InstrumentationConstants;
-import com.surelogic.common.eclipse.logging.SLEclipseStatusUtility;
+import com.surelogic.common.core.logging.SLEclipseStatusUtility;
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
 
 public final class FlashlightLaunchConfigurationDelegate extends

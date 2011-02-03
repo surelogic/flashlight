@@ -11,8 +11,8 @@ import org.eclipse.swt.browser.Browser;
 import org.eclipse.ui.progress.UIJob;
 
 import com.surelogic.common.SLUtility;
-import com.surelogic.common.eclipse.jobs.SLUIJob;
-import com.surelogic.common.eclipse.logging.SLEclipseStatusUtility;
+import com.surelogic.common.ui.jobs.SLUIJob;
+import com.surelogic.common.core.logging.SLEclipseStatusUtility;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.flashlight.common.model.RunDescription;
 

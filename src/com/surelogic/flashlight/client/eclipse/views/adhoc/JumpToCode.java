@@ -6,7 +6,7 @@ import java.util.Map;
 import com.surelogic.common.adhoc.AdHocManager;
 import com.surelogic.common.adhoc.AdHocManagerAdapter;
 import com.surelogic.common.adhoc.AdHocQueryResultSqlData;
-import com.surelogic.common.eclipse.JDTUIUtility;
+import com.surelogic.common.ui.JDTUIUtility;
 import com.surelogic.flashlight.client.eclipse.views.source.HistoricalSourceView;
 
 /**

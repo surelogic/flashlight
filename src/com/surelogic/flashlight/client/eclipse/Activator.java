@@ -12,11 +12,12 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 
 import com.surelogic.common.FileUtility;
-import com.surelogic.common.eclipse.EclipseUtility;
-import com.surelogic.common.eclipse.logging.SLEclipseStatusUtility;
+import com.surelogic.common.core.EclipseUtility;
+import com.surelogic.common.core.logging.SLEclipseStatusUtility;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.license.SLLicenseProduct;
 import com.surelogic.common.serviceability.UsageMeter;
+import com.surelogic.common.ui.DialogTouchNotificationUI;
 import com.surelogic.flashlight.client.eclipse.jobs.PromptToPrepAllRawData;
 import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
@@ -68,9 +69,9 @@ public class Activator extends AbstractUIPlugin {
 		super.start(context);
 
 		/*
-		 * "Touch" common-eclipse so the logging gets Eclipse-ified.
+		 * "Touch" common-core-eclipse so the logging gets Eclipse-ified.
 		 */
-		SLEclipseStatusUtility.touch();
+		SLEclipseStatusUtility.touch(new DialogTouchNotificationUI());
 
 		UsageMeter.getInstance().tickUse("Flashlight Eclipse plug-in loaded");
 

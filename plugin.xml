@@ -9,10 +9,6 @@
 			id="com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencePage"
 			name="Flashlight" />
 	</extension>
-	<extension point="org.eclipse.core.runtime.preferences">
-		<initializer
-			class="com.surelogic.flashlight.client.eclipse.preferences.PreferenceInitializer" />
-	</extension>
 
 	<!-- Flashlight menus -->
 	<extension point="org.eclipse.ui.actionSets">

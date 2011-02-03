@@ -78,8 +78,8 @@ public class Activator extends AbstractUIPlugin {
 		/*
 		 * Get the data directory and ensure that it actually exists.
 		 */
-		final String path = getPreferenceStore().getString(
-				FlashlightPreferencesUtility.P_DATA_DIRECTORY);
+		final String path = EclipseUtility.getPreferences().get(
+				FlashlightPreferencesUtility.P_DATA_DIRECTORY, null);
 		if (path == null) {
 			throw new IllegalStateException(I18N.err(44, "P_DATA_DIRECTORY"));
 		}

@@ -1,17 +1,24 @@
 package com.surelogic.flashlight.client.eclipse.preferences;
 
-import static com.surelogic._flashlight.common.InstrumentationConstants.*;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_COLLECTION_TYPE_DEFAULT;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_CONSOLE_PORT_DEFAULT;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_OUTPUT_TYPE_DEFAULT;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_OUTQ_SIZE_DEFAULT;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_RAWQ_SIZE_DEFAULT;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_REFINERY_SIZE_DEFAULT;
 
+import org.eclipse.core.runtime.preferences.AbstractPreferenceInitializer;
 import org.eclipse.jface.preference.IPreferenceStore;
 
 import com.surelogic.common.FileUtility;
-import com.surelogic.common.core.preferences.AbstractPrefInitializer;
+import com.surelogic.common.core.EclipseUtility;
 import com.surelogic.flashlight.client.eclipse.Activator;
 
 /**
  * Class used to initialize default preference values.
  */
-public class PreferenceInitializer extends AbstractPrefInitializer {
+public class PreferenceInitializer extends AbstractPreferenceInitializer {
+
 	@Override
 	public void initializeDefaultPreferences() {
 		final IPreferenceStore store = Activator.getDefault()
@@ -41,12 +48,14 @@ public class PreferenceInitializer extends AbstractPrefInitializer {
 				true);
 		store.setDefault(PreferenceConstants.P_AUTO_PREP_ALL_RAW_DATA, false);
 		store.setDefault(PreferenceConstants.P_PREP_OBJECT_WINDOW_SIZE, 300000);
-		store.setDefault(PreferenceConstants.P_DATA_DIRECTORY,
-				getDefaultDataDirectory(FileUtility.FLASHLIGHT_DATA_PATH_FRAGMENT));
-		
+		store.setDefault(
+				PreferenceConstants.P_DATA_DIRECTORY,
+				EclipseUtility
+						.getADataDirectoryPath(FileUtility.FLASHLIGHT_DATA_PATH_FRAGMENT));
+
 		// Get the data directory and ensure that it actually exists.
 		final String path = store
 				.getString(PreferenceConstants.P_DATA_DIRECTORY);
-		ensureDataDirectoryExists(path);
+		FileUtility.ensureDirectoryExists(path);
 	}
 }

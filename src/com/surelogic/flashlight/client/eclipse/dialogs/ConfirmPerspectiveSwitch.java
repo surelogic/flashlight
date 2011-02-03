@@ -5,7 +5,7 @@ import org.eclipse.swt.widgets.Shell;
 import com.surelogic.common.CommonImages;
 import com.surelogic.common.ui.dialogs.AbstractConfirmPerspectiveSwitch;
 import com.surelogic.flashlight.client.eclipse.perspectives.FlashlightPerspective;
-import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
+import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
 
 public final class ConfirmPerspectiveSwitch extends
 		AbstractConfirmPerspectiveSwitch {
@@ -14,7 +14,7 @@ public final class ConfirmPerspectiveSwitch extends
 
 	private ConfirmPerspectiveSwitch() {
 		super(FlashlightPerspective.class.toString(),
-				PreferenceConstants.prototype);
+				FlashlightPreferencesUtility.getSwitchPreferences());
 	}
 
 	@Override

@@ -12,10 +12,10 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 
 import com.surelogic.common.CommonImages;
+import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.ui.SLImages;
 import com.surelogic.common.ui.SWTUtility;
-import com.surelogic.common.i18n.I18N;
-import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
+import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
 
 /**
  * Confirms with the user, using a dialog, if all raw data should be prepared to
@@ -34,21 +34,21 @@ public final class ConfirmPrepAllRawDataDialog extends MessageDialog {
 	 *         started, {@code false} otherwise.
 	 */
 	public static boolean check() {
-		if (PreferenceConstants.getPromptToPrepAllRawData()) {
+		if (FlashlightPreferencesUtility.getPromptToPrepAllRawData()) {
 			final ConfirmPrepAllRawDataDialog dialog = new ConfirmPrepAllRawDataDialog(
-					SWTUtility.getShell(), SLImages
-							.getImage(CommonImages.IMG_FL_LOGO), I18N
-							.msg("flashlight.dialog.prep.all.text"));
+					SWTUtility.getShell(),
+					SLImages.getImage(CommonImages.IMG_FL_LOGO),
+					I18N.msg("flashlight.dialog.prep.all.text"));
 			final boolean result = dialog.open() == Window.OK;
 			final boolean rememberMyDecision = dialog.getRememberMyDecision();
 			if (rememberMyDecision) {
-				PreferenceConstants
+				FlashlightPreferencesUtility
 						.setPromptToPrepAllRawData(!rememberMyDecision);
-				PreferenceConstants.setAutoPrepAllRawData(result);
+				FlashlightPreferencesUtility.setAutoPrepAllRawData(result);
 			}
 			return result;
 		} else {
-			return PreferenceConstants.getAutoPrepAllRawData();
+			return FlashlightPreferencesUtility.getAutoPrepAllRawData();
 		}
 	}
 

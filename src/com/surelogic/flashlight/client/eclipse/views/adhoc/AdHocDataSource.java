@@ -11,19 +11,19 @@ import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.progress.UIJob;
 
-import com.surelogic.common.ui.adhoc.dialogs.LotsOfSavedQueriesDialog;
 import com.surelogic.common.ILifecycle;
 import com.surelogic.common.adhoc.AdHocManager;
 import com.surelogic.common.adhoc.AdHocManagerAdapter;
 import com.surelogic.common.adhoc.AdHocQueryResult;
 import com.surelogic.common.adhoc.IAdHocDataSource;
-import com.surelogic.common.ui.ViewUtility;
-import com.surelogic.common.ui.jobs.SLUIJob;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jdbc.DBConnection;
 import com.surelogic.common.logging.SLLogger;
+import com.surelogic.common.ui.ViewUtility;
+import com.surelogic.common.ui.adhoc.dialogs.LotsOfSavedQueriesDialog;
+import com.surelogic.common.ui.jobs.SLUIJob;
 import com.surelogic.flashlight.client.eclipse.Activator;
-import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
+import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
 import com.surelogic.flashlight.common.jobs.JobConstants;
 import com.surelogic.flashlight.common.model.RunDescription;
 
@@ -80,7 +80,8 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements
 	}
 
 	public File getQuerySaveFile() {
-		return new File(PreferenceConstants.getFlashlightDataDirectory(),
+		return new File(
+				FlashlightPreferencesUtility.getFlashlightDataDirectory(),
 				"flashlight-queries.xml");
 	}
 
@@ -108,7 +109,7 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements
 	}
 
 	public int getMaxRowsPerQuery() {
-		return PreferenceConstants.getMaxRowsPerQuery();
+		return FlashlightPreferencesUtility.getMaxRowsPerQuery();
 	}
 
 	public void init() {
@@ -147,14 +148,14 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements
 	@Override
 	public void notifyResultModelChange(final AdHocManager manager) {
 		if (manager.getHasALotOfSqlDataResults()) {
-			if (PreferenceConstants.getPromptAboutLotsOfSavedQueries()) {
+			if (FlashlightPreferencesUtility.getPromptAboutLotsOfSavedQueries()) {
 				final UIJob job = new SLUIJob() {
 					@Override
 					public IStatus runInUIThread(final IProgressMonitor monitor) {
 						final boolean doNotPromptAgain = LotsOfSavedQueriesDialog
 								.show();
 						if (doNotPromptAgain) {
-							PreferenceConstants
+							FlashlightPreferencesUtility
 									.setPromptAboutLotsOfSavedQueries(false);
 						}
 						return Status.OK_STATUS;

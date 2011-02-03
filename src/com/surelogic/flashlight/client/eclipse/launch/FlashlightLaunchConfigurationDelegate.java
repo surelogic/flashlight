@@ -14,7 +14,7 @@ import org.eclipse.jdt.launching.JavaLaunchDelegate;
 
 import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic.common.core.logging.SLEclipseStatusUtility;
-import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
+import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
 
 public final class FlashlightLaunchConfigurationDelegate extends
 		JavaLaunchDelegate {
@@ -57,10 +57,10 @@ public final class FlashlightLaunchConfigurationDelegate extends
 
 		/* Get the entries that the user does not want instrumented */
 		final List noInstrumentUser = config.getAttribute(
-				PreferenceConstants.P_CLASSPATH_ENTRIES_TO_NOT_INSTRUMENT,
+				FlashlightPreferencesUtility.P_CLASSPATH_ENTRIES_TO_NOT_INSTRUMENT,
 				Collections.emptyList());
 		final List noInstrumentBoot = config.getAttribute(
-				PreferenceConstants.P_BOOTPATH_ENTRIES_TO_NOT_INSTRUMENT, boot);
+				FlashlightPreferencesUtility.P_BOOTPATH_ENTRIES_TO_NOT_INSTRUMENT, boot);
 
 		/* Convert to the entries that the user does want instrumented */
 		final List<String> instrumentUser = new ArrayList<String>(user);

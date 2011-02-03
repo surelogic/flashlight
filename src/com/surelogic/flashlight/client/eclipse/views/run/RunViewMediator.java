@@ -34,18 +34,18 @@ import com.surelogic.common.adhoc.AdHocManager;
 import com.surelogic.common.adhoc.AdHocManagerAdapter;
 import com.surelogic.common.adhoc.AdHocQueryResult;
 import com.surelogic.common.core.JDTUtility;
-import com.surelogic.common.ui.SWTUtility;
-import com.surelogic.common.ui.ViewUtility;
 import com.surelogic.common.core.jobs.EclipseJob;
-import com.surelogic.common.ui.jobs.SLUIJob;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jobs.AggregateSLJob;
 import com.surelogic.common.jobs.SLJob;
 import com.surelogic.common.logging.SLLogger;
+import com.surelogic.common.ui.SWTUtility;
+import com.surelogic.common.ui.ViewUtility;
+import com.surelogic.common.ui.jobs.SLUIJob;
 import com.surelogic.flashlight.client.eclipse.dialogs.DeleteRunDialog;
 import com.surelogic.flashlight.client.eclipse.dialogs.LogDialog;
 import com.surelogic.flashlight.client.eclipse.jobs.PromptToPrepAllRawData;
-import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
+import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.QueryMenuView;
 import com.surelogic.flashlight.common.files.RawFileHandles;
@@ -307,7 +307,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 								.getManager()));
 					}
 					if (handles != null) {
-						final File dataDir = PreferenceConstants
+						final File dataDir = FlashlightPreferencesUtility
 								.getFlashlightDataDirectory();
 						jobs.add(new DeleteRawFilesSLJob(dataDir, description));
 					}

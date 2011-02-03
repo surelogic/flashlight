@@ -4,7 +4,7 @@ import java.io.File;
 
 import com.surelogic.common.ISourceZipFileHandles;
 import com.surelogic.common.ui.views.AbstractHistoricalSourceView;
-import com.surelogic.flashlight.client.eclipse.preferences.PreferenceConstants;
+import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
 import com.surelogic.flashlight.common.files.RawFileUtility;
 import com.surelogic.flashlight.common.files.RunDirectory;
 import com.surelogic.flashlight.common.model.RunDescription;
@@ -15,7 +15,7 @@ public final class HistoricalSourceView extends AbstractHistoricalSourceView {
 	protected ISourceZipFileHandles findSources(final String run) {
 		RunDescription currentRun = getRunDescription(run);
 		if (currentRun != null) {
-			final File dataDir = PreferenceConstants
+			final File dataDir = FlashlightPreferencesUtility
 					.getFlashlightDataDirectory();
 			final RunDirectory dir = RawFileUtility.getRunDirectoryFor(dataDir,
 					currentRun);

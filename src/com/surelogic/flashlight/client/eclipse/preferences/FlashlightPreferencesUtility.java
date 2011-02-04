@@ -57,7 +57,8 @@ public final class FlashlightPreferencesUtility {
 			+ "prompt.to.prep.all.raw.data";
 	public static final String AUTO_PREP_ALL_RAW_DATA = PREFIX
 			+ "auto.prep.all.raw.data";
-	public static final String FLASHLIGHT_DATA_DIRECTORY = PREFIX
+
+	private static final String FLASHLIGHT_DATA_DIRECTORY = PREFIX
 			+ "data.directory";
 
 	/**

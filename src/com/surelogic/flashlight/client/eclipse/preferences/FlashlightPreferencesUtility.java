@@ -101,7 +101,8 @@ public final class FlashlightPreferencesUtility {
 			EclipseUtility.setDefaultBooleanPreference(
 					PROMPT_TO_PREP_ALL_RAW_DATA, true);
 
-			EclipseUtility.setIntPreference(PREP_OBJECT_WINDOW_SIZE, 300000);
+			EclipseUtility.setDefaultIntPreference(PREP_OBJECT_WINDOW_SIZE,
+					300000);
 
 			EclipseUtility.setDefaultBooleanPreference(getSwitchPreferences()
 					.getPromptPerspectiveSwitchConstant(), true);

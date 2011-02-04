@@ -57,10 +57,10 @@ public final class FlashlightLaunchConfigurationDelegate extends
 
 		/* Get the entries that the user does not want instrumented */
 		final List noInstrumentUser = config.getAttribute(
-				FlashlightPreferencesUtility.P_CLASSPATH_ENTRIES_TO_NOT_INSTRUMENT,
+				FlashlightPreferencesUtility.CLASSPATH_ENTRIES_TO_NOT_INSTRUMENT,
 				Collections.emptyList());
 		final List noInstrumentBoot = config.getAttribute(
-				FlashlightPreferencesUtility.P_BOOTPATH_ENTRIES_TO_NOT_INSTRUMENT, boot);
+				FlashlightPreferencesUtility.BOOTPATH_ENTRIES_TO_NOT_INSTRUMENT, boot);
 
 		/* Convert to the entries that the user does want instrumented */
 		final List<String> instrumentUser = new ArrayList<String>(user);

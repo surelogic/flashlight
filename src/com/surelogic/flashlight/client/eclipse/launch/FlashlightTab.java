@@ -33,20 +33,20 @@ import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferences
 
 public class FlashlightTab extends AbstractLaunchConfigurationTab {
 	private static final String[] StringAttrs = {
-			FlashlightPreferencesUtility.P_OUTPUT_TYPE,
-			FlashlightPreferencesUtility.P_COLLECTION_TYPE, };
+			FlashlightPreferencesUtility.OUTPUT_TYPE,
+			FlashlightPreferencesUtility.COLLECTION_TYPE, };
 	private static final String[] BooleanAttrs = {
-			FlashlightPreferencesUtility.P_USE_REFINERY,
-			FlashlightPreferencesUtility.P_USE_SPY,
-			FlashlightPreferencesUtility.P_COMPRESS_OUTPUT, };
+			FlashlightPreferencesUtility.USE_REFINERY,
+			FlashlightPreferencesUtility.USE_SPY,
+			FlashlightPreferencesUtility.COMPRESS_OUTPUT, };
 	private static final String[] IntAttrs = {
-			FlashlightPreferencesUtility.P_CONSOLE_PORT,
-			FlashlightPreferencesUtility.P_RAWQ_SIZE,
-			FlashlightPreferencesUtility.P_REFINERY_SIZE,
-			FlashlightPreferencesUtility.P_OUTQ_SIZE, };
+			FlashlightPreferencesUtility.CONSOLE_PORT,
+			FlashlightPreferencesUtility.RAWQ_SIZE,
+			FlashlightPreferencesUtility.REFINERY_SIZE,
+			FlashlightPreferencesUtility.OUTQ_SIZE, };
 	private static final String[] RefineryAttrs = {
-			FlashlightPreferencesUtility.P_RAWQ_SIZE,
-			FlashlightPreferencesUtility.P_REFINERY_SIZE, };
+			FlashlightPreferencesUtility.RAWQ_SIZE,
+			FlashlightPreferencesUtility.REFINERY_SIZE, };
 
 	// For use with field editors
 	private final Collection<FieldEditor> f_editors = new ArrayList<FieldEditor>();
@@ -95,7 +95,7 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 				.toArray(new FieldEditor[refineryEditors.size()]);
 
 		for (final FieldEditor e : f_editors) {
-			final boolean useRefinery = FlashlightPreferencesUtility.P_USE_REFINERY
+			final boolean useRefinery = FlashlightPreferencesUtility.USE_REFINERY
 					.equals(e.getPreferenceName());
 			e.setPropertyChangeListener(new IPropertyChangeListener() {
 				public void propertyChange(PropertyChangeEvent event) {
@@ -163,7 +163,7 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 	public void initializeFrom(ILaunchConfiguration config) {
 		try {
 			final boolean useRefinery = config.getAttribute(
-					FlashlightPreferencesUtility.P_USE_REFINERY, true);
+					FlashlightPreferencesUtility.USE_REFINERY, true);
 			for (FieldEditor e : refineryControls) {
 				e.setEnabled(useRefinery, advanced);
 			}

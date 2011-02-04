@@ -12,6 +12,7 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 
 import com.surelogic.common.CommonImages;
+import com.surelogic.common.core.EclipseUtility;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.ui.SLImages;
 import com.surelogic.common.ui.SWTUtility;
@@ -34,7 +35,8 @@ public final class ConfirmPrepAllRawDataDialog extends MessageDialog {
 	 *         started, {@code false} otherwise.
 	 */
 	public static boolean check() {
-		if (FlashlightPreferencesUtility.getPromptToPrepAllRawData()) {
+		if (EclipseUtility
+				.getBooleanPreference(FlashlightPreferencesUtility.PROMPT_TO_PREP_ALL_RAW_DATA)) {
 			final ConfirmPrepAllRawDataDialog dialog = new ConfirmPrepAllRawDataDialog(
 					SWTUtility.getShell(),
 					SLImages.getImage(CommonImages.IMG_FL_LOGO),
@@ -42,13 +44,18 @@ public final class ConfirmPrepAllRawDataDialog extends MessageDialog {
 			final boolean result = dialog.open() == Window.OK;
 			final boolean rememberMyDecision = dialog.getRememberMyDecision();
 			if (rememberMyDecision) {
-				FlashlightPreferencesUtility
-						.setPromptToPrepAllRawData(!rememberMyDecision);
-				FlashlightPreferencesUtility.setAutoPrepAllRawData(result);
+				EclipseUtility
+						.setBooleanPreference(
+								FlashlightPreferencesUtility.PROMPT_TO_PREP_ALL_RAW_DATA,
+								!rememberMyDecision);
+				EclipseUtility.setBooleanPreference(
+						FlashlightPreferencesUtility.AUTO_PREP_ALL_RAW_DATA,
+						result);
 			}
 			return result;
 		} else {
-			return FlashlightPreferencesUtility.getAutoPrepAllRawData();
+			return EclipseUtility
+					.getBooleanPreference(FlashlightPreferencesUtility.AUTO_PREP_ALL_RAW_DATA);
 		}
 	}
 
@@ -72,6 +79,7 @@ public final class ConfirmPrepAllRawDataDialog extends MessageDialog {
 		rememberMyDecision.setText(I18N
 				.msg("flashlight.dialog.prep.all.remember"));
 		rememberMyDecision.addListener(SWT.Selection, new Listener() {
+			@Override
 			public void handleEvent(Event event) {
 				f_rememberMyDecision = rememberMyDecision.getSelection();
 			}

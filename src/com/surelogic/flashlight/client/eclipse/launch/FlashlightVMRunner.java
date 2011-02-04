@@ -381,7 +381,7 @@ public final class FlashlightVMRunner implements IVMRunner {
 				configBuilder
 						.setIndirectUseDefault(launch
 								.getAttribute(
-										FlashlightPreferencesUtility.P_USE_DEFAULT_INDIRECT_ACCESS_METHODS,
+										FlashlightPreferencesUtility.USE_DEFAULT_INDIRECT_ACCESS_METHODS,
 										true));
 			} catch (final CoreException e) {
 				// eat it
@@ -389,7 +389,7 @@ public final class FlashlightVMRunner implements IVMRunner {
 			try {
 				final List<String> xtraMethods = (List<String>) launch
 						.getAttribute(
-								FlashlightPreferencesUtility.P_ADDITIONAL_INDIRECT_ACCESS_METHODS,
+								FlashlightPreferencesUtility.ADDITIONAL_INDIRECT_ACCESS_METHODS,
 								Collections.emptyList());
 				for (final String s : xtraMethods) {
 					configBuilder.addAdditionalMethods(new File(s));
@@ -401,7 +401,7 @@ public final class FlashlightVMRunner implements IVMRunner {
 			try {
 				final List<String> blacklist = (List<String>) launch
 						.getAttribute(
-								FlashlightPreferencesUtility.P_CLASS_BLACKLIST,
+								FlashlightPreferencesUtility.CLASS_BLACKLIST,
 								Collections.emptyList());
 				for (final String internalTypeName : blacklist) {
 					configBuilder.addToBlacklist(internalTypeName);
@@ -412,13 +412,13 @@ public final class FlashlightVMRunner implements IVMRunner {
 
 			try {
 				final String filterName = launch.getAttribute(
-						FlashlightPreferencesUtility.P_FIELD_FILTER,
+						FlashlightPreferencesUtility.FIELD_FILTER,
 						FieldFilter.NONE.name());
 				configBuilder.setFieldFilter(Enum.valueOf(FieldFilter.class,
 						filterName));
 
 				final List<String> filterPkgs = launch.getAttribute(
-						FlashlightPreferencesUtility.P_FIELD_FILTER_PACKAGES,
+						FlashlightPreferencesUtility.FIELD_FILTER_PACKAGES,
 						Collections.emptyList());
 				configBuilder.getFilterPackages().clear();
 				for (final String pkg : filterPkgs) {
@@ -640,41 +640,40 @@ public final class FlashlightVMRunner implements IVMRunner {
 		}
 
 		// We will add at most eleven arguments, but maybe less
+		final IPreferenceStore prefs = EclipseUIUtility.getPreferences();
 		final List<String> newVmArgsList = new ArrayList<String>(
 				vmArgs.length + 11);
 		try {
-			final IPreferenceStore prefs = EclipseUIUtility.getPreferences();
 			final int rawQSize = launch.getAttribute(
-					FlashlightPreferencesUtility.P_RAWQ_SIZE,
-					prefs.getInt(FlashlightPreferencesUtility.P_RAWQ_SIZE));
+					FlashlightPreferencesUtility.RAWQ_SIZE,
+					prefs.getInt(FlashlightPreferencesUtility.RAWQ_SIZE));
 			final int refSize = launch.getAttribute(
-					FlashlightPreferencesUtility.P_REFINERY_SIZE,
-					prefs.getInt(FlashlightPreferencesUtility.P_REFINERY_SIZE));
+					FlashlightPreferencesUtility.REFINERY_SIZE,
+					prefs.getInt(FlashlightPreferencesUtility.REFINERY_SIZE));
 			final int outQSize = launch.getAttribute(
-					FlashlightPreferencesUtility.P_OUTQ_SIZE,
-					prefs.getInt(FlashlightPreferencesUtility.P_OUTQ_SIZE));
+					FlashlightPreferencesUtility.OUTQ_SIZE,
+					prefs.getInt(FlashlightPreferencesUtility.OUTQ_SIZE));
 			final int cPort = launch.getAttribute(
-					FlashlightPreferencesUtility.P_CONSOLE_PORT,
-					prefs.getInt(FlashlightPreferencesUtility.P_CONSOLE_PORT));
-			final String useBinary = launch
-					.getAttribute(
-							FlashlightPreferencesUtility.P_OUTPUT_TYPE,
-							prefs.getString(FlashlightPreferencesUtility.P_OUTPUT_TYPE));
+					FlashlightPreferencesUtility.CONSOLE_PORT,
+					prefs.getInt(FlashlightPreferencesUtility.CONSOLE_PORT));
+			final String useBinary = launch.getAttribute(
+					FlashlightPreferencesUtility.OUTPUT_TYPE,
+					prefs.getString(FlashlightPreferencesUtility.OUTPUT_TYPE));
 			final boolean compress = launch
 					.getAttribute(
-							FlashlightPreferencesUtility.P_COMPRESS_OUTPUT,
-							prefs.getBoolean(FlashlightPreferencesUtility.P_COMPRESS_OUTPUT));
+							FlashlightPreferencesUtility.COMPRESS_OUTPUT,
+							prefs.getBoolean(FlashlightPreferencesUtility.COMPRESS_OUTPUT));
 			final String collectionType = launch
 					.getAttribute(
-							FlashlightPreferencesUtility.P_COLLECTION_TYPE,
-							prefs.getString(FlashlightPreferencesUtility.P_COLLECTION_TYPE));
+							FlashlightPreferencesUtility.COLLECTION_TYPE,
+							prefs.getString(FlashlightPreferencesUtility.COLLECTION_TYPE));
 			final boolean useSpy = launch.getAttribute(
-					FlashlightPreferencesUtility.P_USE_SPY,
-					prefs.getBoolean(FlashlightPreferencesUtility.P_USE_SPY));
+					FlashlightPreferencesUtility.USE_SPY,
+					prefs.getBoolean(FlashlightPreferencesUtility.USE_SPY));
 			final boolean useRefinery = launch
 					.getAttribute(
-							FlashlightPreferencesUtility.P_USE_REFINERY,
-							prefs.getBoolean(FlashlightPreferencesUtility.P_USE_REFINERY));
+							FlashlightPreferencesUtility.USE_REFINERY,
+							prefs.getBoolean(FlashlightPreferencesUtility.USE_REFINERY));
 
 			newVmArgsList.add("-DFL_RUN=" + mainTypeName);
 			newVmArgsList.add("-D" + FL_DIR + "="
@@ -707,7 +706,8 @@ public final class FlashlightVMRunner implements IVMRunner {
 			return null;
 		}
 
-		if (FlashlightPreferencesUtility.getAutoIncreaseHeapAtLaunch()) {
+		if (prefs
+				.getBoolean(FlashlightPreferencesUtility.AUTO_INCREASE_HEAP_AT_LAUNCH)) {
 			final long maxSystemHeapSize = (long) MemoryUtility
 					.computeMaxMemorySizeInMb() << 20;
 			final long newHeapSizeRaw = Math.min(3 * maxHeapSize,

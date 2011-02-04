@@ -70,6 +70,7 @@ public final class LogDialog extends Dialog {
 		 */
 		text.addLineStyleListener(new LineStyleListener() {
 
+			@Override
 			public void lineGetStyle(LineStyleEvent event) {
 				ArrayList<StyleRange> result = new ArrayList<StyleRange>();
 				boolean highlight = event.lineText.indexOf("!PROBLEM!") != -1;

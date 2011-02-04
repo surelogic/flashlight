@@ -155,7 +155,7 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 		onGroup.setText(I18N.msg("flashlight.preference.page.group.onLaunch"));
 
 		f_autoIncreaseHeap = new BooleanFieldEditor(
-				FlashlightPreferencesUtility.P_AUTO_INCREASE_HEAP_AT_LAUNCH,
+				FlashlightPreferencesUtility.AUTO_INCREASE_HEAP_AT_LAUNCH,
 				I18N.msg("flashlight.preference.page.autoIncreaseHeap"),
 				onGroup);
 		finishSetup(f_autoIncreaseHeap);
@@ -179,21 +179,21 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 		pGroup.setText(I18N.msg("flashlight.preference.page.group.prep"));
 
 		f_objectWindowSize = new IntegerFieldEditor(
-				FlashlightPreferencesUtility.P_PREP_OBJECT_WINDOW_SIZE,
+				FlashlightPreferencesUtility.PREP_OBJECT_WINDOW_SIZE,
 				I18N.msg("flashlight.preference.page.objectWindowSize"), pGroup);
 		f_objectWindowSize.setValidRange(10000, 1000000);
 		f_objectWindowSize.fillIntoGrid(pGroup, 2);
 		finishSetup(f_objectWindowSize);
 
 		f_promptToPrepAllRawData = new BooleanFieldEditor(
-				FlashlightPreferencesUtility.P_PROMPT_TO_PREP_ALL_RAW_DATA,
+				FlashlightPreferencesUtility.PROMPT_TO_PREP_ALL_RAW_DATA,
 				I18N.msg("flashlight.preference.page.promptToPrepAllRawData"),
 				pGroup);
 		f_promptToPrepAllRawData.fillIntoGrid(pGroup, 2);
 		finishSetup(f_promptToPrepAllRawData);
 
 		f_autoPrepAllRawData = new BooleanFieldEditor(
-				FlashlightPreferencesUtility.P_AUTO_PREP_ALL_RAW_DATA,
+				FlashlightPreferencesUtility.AUTO_PREP_ALL_RAW_DATA,
 				I18N.msg("flashlight.preference.page.autoPrepAllRawData"),
 				pGroup);
 		f_autoPrepAllRawData.fillIntoGrid(pGroup, 2);
@@ -206,14 +206,14 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 		qGroup.setText(I18N.msg("flashlight.preference.page.group.query"));
 
 		f_maxRowsPerQuery = new IntegerFieldEditor(
-				FlashlightPreferencesUtility.P_MAX_ROWS_PER_QUERY,
+				FlashlightPreferencesUtility.MAX_ROWS_PER_QUERY,
 				I18N.msg("flashlight.preference.page.maxRowsPerQuery"), qGroup);
 		f_maxRowsPerQuery.setValidRange(1024, 65535);
 		f_maxRowsPerQuery.fillIntoGrid(qGroup, 2);
 		finishSetup(f_maxRowsPerQuery);
 
 		f_promptAboutLotsOfSavedQueries = new BooleanFieldEditor(
-				FlashlightPreferencesUtility.P_PROMPT_ABOUT_LOTS_OF_SAVED_QUERIES,
+				FlashlightPreferencesUtility.PROMPT_ABOUT_LOTS_OF_SAVED_QUERIES,
 				I18N.msg("flashlight.preference.page.promptAboutLotsOfSavedQueries"),
 				qGroup);
 		f_promptAboutLotsOfSavedQueries.fillIntoGrid(qGroup, 2);

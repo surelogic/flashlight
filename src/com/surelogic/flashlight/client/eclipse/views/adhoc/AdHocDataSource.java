@@ -16,9 +16,11 @@ import com.surelogic.common.adhoc.AdHocManager;
 import com.surelogic.common.adhoc.AdHocManagerAdapter;
 import com.surelogic.common.adhoc.AdHocQueryResult;
 import com.surelogic.common.adhoc.IAdHocDataSource;
+import com.surelogic.common.core.EclipseUtility;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jdbc.DBConnection;
 import com.surelogic.common.logging.SLLogger;
+import com.surelogic.common.ui.EclipseUIUtility;
 import com.surelogic.common.ui.ViewUtility;
 import com.surelogic.common.ui.adhoc.dialogs.LotsOfSavedQueriesDialog;
 import com.surelogic.common.ui.jobs.SLUIJob;
@@ -109,7 +111,8 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements
 	}
 
 	public int getMaxRowsPerQuery() {
-		return FlashlightPreferencesUtility.getMaxRowsPerQuery();
+		return EclipseUtility
+				.getIntPreference(FlashlightPreferencesUtility.MAX_ROWS_PER_QUERY);
 	}
 
 	public void init() {
@@ -148,15 +151,18 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements
 	@Override
 	public void notifyResultModelChange(final AdHocManager manager) {
 		if (manager.getHasALotOfSqlDataResults()) {
-			if (FlashlightPreferencesUtility.getPromptAboutLotsOfSavedQueries()) {
+			if (EclipseUtility
+					.getBooleanPreference(FlashlightPreferencesUtility.PROMPT_ABOUT_LOTS_OF_SAVED_QUERIES)) {
 				final UIJob job = new SLUIJob() {
 					@Override
 					public IStatus runInUIThread(final IProgressMonitor monitor) {
 						final boolean doNotPromptAgain = LotsOfSavedQueriesDialog
 								.show();
 						if (doNotPromptAgain) {
-							FlashlightPreferencesUtility
-									.setPromptAboutLotsOfSavedQueries(false);
+							EclipseUtility
+									.setBooleanPreference(
+											FlashlightPreferencesUtility.PROMPT_ABOUT_LOTS_OF_SAVED_QUERIES,
+											false);
 						}
 						return Status.OK_STATUS;
 					}

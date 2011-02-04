@@ -245,7 +245,7 @@ public final class FlashlightMethodsTab extends AbstractLaunchConfigurationTab {
 		try {
 			useDefault = config
 					.getAttribute(
-							FlashlightPreferencesUtility.P_USE_DEFAULT_INDIRECT_ACCESS_METHODS,
+							FlashlightPreferencesUtility.USE_DEFAULT_INDIRECT_ACCESS_METHODS,
 							useDefault);
 		} catch (final CoreException e) {
 			// Eclipse CommonTab is silent here, so are we
@@ -254,7 +254,7 @@ public final class FlashlightMethodsTab extends AbstractLaunchConfigurationTab {
 		try {
 			xtraFiles = config
 					.getAttribute(
-							FlashlightPreferencesUtility.P_ADDITIONAL_INDIRECT_ACCESS_METHODS,
+							FlashlightPreferencesUtility.ADDITIONAL_INDIRECT_ACCESS_METHODS,
 							xtraFiles);
 		} catch (final CoreException e) {
 			// Eclipse CommonTab is silent here, so are we
@@ -273,10 +273,10 @@ public final class FlashlightMethodsTab extends AbstractLaunchConfigurationTab {
 	 */
 	public void performApply(final ILaunchConfigurationWorkingCopy config) {
 		config.setAttribute(
-				FlashlightPreferencesUtility.P_USE_DEFAULT_INDIRECT_ACCESS_METHODS,
+				FlashlightPreferencesUtility.USE_DEFAULT_INDIRECT_ACCESS_METHODS,
 				useDefaultMethods.getSelection());
 		config.setAttribute(
-				FlashlightPreferencesUtility.P_ADDITIONAL_INDIRECT_ACCESS_METHODS,
+				FlashlightPreferencesUtility.ADDITIONAL_INDIRECT_ACCESS_METHODS,
 				extraFiles);
 	}
 
@@ -291,10 +291,10 @@ public final class FlashlightMethodsTab extends AbstractLaunchConfigurationTab {
 	 */
 	public void setDefaults(final ILaunchConfigurationWorkingCopy config) {
 		config.setAttribute(
-				FlashlightPreferencesUtility.P_USE_DEFAULT_INDIRECT_ACCESS_METHODS,
+				FlashlightPreferencesUtility.USE_DEFAULT_INDIRECT_ACCESS_METHODS,
 				true);
 		config.setAttribute(
-				FlashlightPreferencesUtility.P_ADDITIONAL_INDIRECT_ACCESS_METHODS,
+				FlashlightPreferencesUtility.ADDITIONAL_INDIRECT_ACCESS_METHODS,
 				Collections.emptyList());
 	}
 }

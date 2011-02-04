@@ -36,6 +36,7 @@ import com.surelogic.flashlight.common.model.RunManager;
 public final class PromptToPrepAllRawData extends SLUIJob {
 
 	private static final IRunManagerObserver RMO = new IRunManagerObserver() {
+		@Override
 		public void notify(final RunManager manager) {
 			createAndSchedule();
 		}

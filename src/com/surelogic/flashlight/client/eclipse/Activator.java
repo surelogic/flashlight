@@ -11,10 +11,8 @@ import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 
-import com.surelogic.common.FileUtility;
 import com.surelogic.common.core.EclipseUtility;
 import com.surelogic.common.core.logging.SLEclipseStatusUtility;
-import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.license.SLLicenseProduct;
 import com.surelogic.common.serviceability.UsageMeter;
 import com.surelogic.common.ui.DialogTouchNotificationUI;
@@ -73,18 +71,18 @@ public class Activator extends AbstractUIPlugin {
 		 */
 		SLEclipseStatusUtility.touch(new DialogTouchNotificationUI());
 
+		/*
+		 * "Touch" the JSure preference initialization.
+		 */
+		FlashlightPreferencesUtility.initializeDefaultScope();
+
 		UsageMeter.getInstance().tickUse("Flashlight Eclipse plug-in loaded");
 
 		/*
 		 * Get the data directory and ensure that it actually exists.
 		 */
-		final String path = EclipseUtility.getPreferences().get(
-				FlashlightPreferencesUtility.P_DATA_DIRECTORY, null);
-		if (path == null) {
-			throw new IllegalStateException(I18N.err(44, "P_DATA_DIRECTORY"));
-		}
-		final File dataDir = new File(path);
-		FileUtility.createDirectory(dataDir);
+		final File dataDir = FlashlightPreferencesUtility.getFlashlightDataDirectory();
+
 		EclipseUtility.getProductReleaseDateJob(SLLicenseProduct.FLASHLIGHT,
 				this).schedule();
 		RunManager.getInstance().setDataDirectory(dataDir);

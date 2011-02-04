@@ -7,6 +7,7 @@ import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.core.runtime.jobs.Job;
 
 import com.surelogic.common.SLUtility;
+import com.surelogic.common.core.EclipseUtility;
 import com.surelogic.common.core.jobs.KeywordAccessRule;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jobs.AbstractSLJob;
@@ -41,6 +42,7 @@ public class PrepMultipleRunsJob extends AbstractSLJob {
 		return jobName;
 	}
 
+	@Override
 	public SLStatus run(final SLProgressMonitor monitor) {
 		int perJobWork = 100;
 		int refreshWork = 1;
@@ -53,9 +55,10 @@ public class PrepMultipleRunsJob extends AbstractSLJob {
 			try {
 				man.beginRule(rule, null);
 				status = invoke(
-						new PrepSLJob(rd,
-								FlashlightPreferencesUtility
-										.getPrepObjectWindowSize(),
+						new PrepSLJob(
+								rd,
+								EclipseUtility
+										.getIntPreference(FlashlightPreferencesUtility.PREP_OBJECT_WINDOW_SIZE),
 								AdHocDataSource.getManager()
 										.getTopLevelQueries()), monitor,
 						perJobWork);

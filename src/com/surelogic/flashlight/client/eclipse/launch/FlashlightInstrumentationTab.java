@@ -423,7 +423,7 @@ public final class FlashlightInstrumentationTab extends
 		try {
 			configUserEntries = config
 					.getAttribute(
-							FlashlightPreferencesUtility.P_CLASSPATH_ENTRIES_TO_NOT_INSTRUMENT,
+							FlashlightPreferencesUtility.CLASSPATH_ENTRIES_TO_NOT_INSTRUMENT,
 							configUserEntries);
 		} catch (final CoreException e) {
 			// CommonTab ignores this; so do we
@@ -432,7 +432,7 @@ public final class FlashlightInstrumentationTab extends
 		try {
 			configBootpathEntries = config
 					.getAttribute(
-							FlashlightPreferencesUtility.P_BOOTPATH_ENTRIES_TO_NOT_INSTRUMENT,
+							FlashlightPreferencesUtility.BOOTPATH_ENTRIES_TO_NOT_INSTRUMENT,
 							configBootpathEntries);
 		} catch (final CoreException e) {
 			// CommonTab ignores this; so do we
@@ -449,7 +449,7 @@ public final class FlashlightInstrumentationTab extends
 
 		try {
 			classes = config.getAttribute(
-					FlashlightPreferencesUtility.P_CLASS_BLACKLIST, classes);
+					FlashlightPreferencesUtility.CLASS_BLACKLIST, classes);
 		} catch (final CoreException e) {
 			// CommonTab ignores this; so do we
 		}
@@ -484,14 +484,14 @@ public final class FlashlightInstrumentationTab extends
 				userEntries);
 		user.removeAll(Arrays.asList(userTable.getCheckedElements()));
 		config.setAttribute(
-				FlashlightPreferencesUtility.P_CLASSPATH_ENTRIES_TO_NOT_INSTRUMENT,
+				FlashlightPreferencesUtility.CLASSPATH_ENTRIES_TO_NOT_INSTRUMENT,
 				LaunchUtils.convertToLocations(user));
 
 		final java.util.List<IRuntimeClasspathEntry> boot = new ArrayList<IRuntimeClasspathEntry>(
 				bootpathEntries);
 		boot.removeAll(Arrays.asList(bootpathTable.getCheckedElements()));
 		config.setAttribute(
-				FlashlightPreferencesUtility.P_BOOTPATH_ENTRIES_TO_NOT_INSTRUMENT,
+				FlashlightPreferencesUtility.BOOTPATH_ENTRIES_TO_NOT_INSTRUMENT,
 				LaunchUtils.convertToLocations(boot));
 
 		final java.util.List blacklistInternalNames = new ArrayList(
@@ -500,7 +500,7 @@ public final class FlashlightInstrumentationTab extends
 			blacklistInternalNames.add(ClassNameUtil
 					.fullyQualified2Internal(fqClassName));
 		}
-		config.setAttribute(FlashlightPreferencesUtility.P_CLASS_BLACKLIST,
+		config.setAttribute(FlashlightPreferencesUtility.CLASS_BLACKLIST,
 				blacklistInternalNames);
 	}
 
@@ -525,12 +525,12 @@ public final class FlashlightInstrumentationTab extends
 		LaunchUtils.divideClasspath(entries, user, boot, system);
 
 		config.setAttribute(
-				FlashlightPreferencesUtility.P_CLASSPATH_ENTRIES_TO_NOT_INSTRUMENT,
+				FlashlightPreferencesUtility.CLASSPATH_ENTRIES_TO_NOT_INSTRUMENT,
 				Collections.emptyList());
 		config.setAttribute(
-				FlashlightPreferencesUtility.P_BOOTPATH_ENTRIES_TO_NOT_INSTRUMENT,
+				FlashlightPreferencesUtility.BOOTPATH_ENTRIES_TO_NOT_INSTRUMENT,
 				LaunchUtils.convertToLocations(boot));
-		config.setAttribute(FlashlightPreferencesUtility.P_CLASS_BLACKLIST,
+		config.setAttribute(FlashlightPreferencesUtility.CLASS_BLACKLIST,
 				Collections.emptyList());
 	}
 }

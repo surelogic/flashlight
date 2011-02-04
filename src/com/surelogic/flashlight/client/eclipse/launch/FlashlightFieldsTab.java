@@ -263,7 +263,7 @@ public final class FlashlightFieldsTab extends AbstractLaunchConfigurationTab {
 		String filter = FieldFilter.NONE.name();
 		try {
 			filter = config.getAttribute(
-					FlashlightPreferencesUtility.P_FIELD_FILTER, filter);
+					FlashlightPreferencesUtility.FIELD_FILTER, filter);
 		} catch (final CoreException e) {
 			// ignore
 		}
@@ -292,11 +292,11 @@ public final class FlashlightFieldsTab extends AbstractLaunchConfigurationTab {
 		try {
 			noInstrumentUser = config
 					.getAttribute(
-							FlashlightPreferencesUtility.P_CLASSPATH_ENTRIES_TO_NOT_INSTRUMENT,
+							FlashlightPreferencesUtility.CLASSPATH_ENTRIES_TO_NOT_INSTRUMENT,
 							Collections.emptyList());
 			noInstrumentBoot = config
 					.getAttribute(
-							FlashlightPreferencesUtility.P_BOOTPATH_ENTRIES_TO_NOT_INSTRUMENT,
+							FlashlightPreferencesUtility.BOOTPATH_ENTRIES_TO_NOT_INSTRUMENT,
 							boot);
 		} catch (final CoreException e) {
 			// ignore
@@ -325,7 +325,7 @@ public final class FlashlightFieldsTab extends AbstractLaunchConfigurationTab {
 		List<String> selectedPkgs = Collections.emptyList();
 		try {
 			selectedPkgs = config.getAttribute(
-					FlashlightPreferencesUtility.P_FIELD_FILTER_PACKAGES,
+					FlashlightPreferencesUtility.FIELD_FILTER_PACKAGES,
 					selectedPkgs);
 		} catch (final CoreException e) {
 			// ignore
@@ -389,22 +389,21 @@ public final class FlashlightFieldsTab extends AbstractLaunchConfigurationTab {
 	}
 
 	public void performApply(final ILaunchConfigurationWorkingCopy config) {
-		config.setAttribute(FlashlightPreferencesUtility.P_FIELD_FILTER,
+		config.setAttribute(FlashlightPreferencesUtility.FIELD_FILTER,
 				fieldFilter.name());
 
 		final List<String> pkgs = new ArrayList<String>();
 		for (final Object pkg : packageViewer.getCheckedElements()) {
 			pkgs.add((String) pkg);
 		}
-		config.setAttribute(
-				FlashlightPreferencesUtility.P_FIELD_FILTER_PACKAGES, pkgs);
+		config.setAttribute(FlashlightPreferencesUtility.FIELD_FILTER_PACKAGES,
+				pkgs);
 	}
 
 	public void setDefaults(final ILaunchConfigurationWorkingCopy config) {
-		config.setAttribute(FlashlightPreferencesUtility.P_FIELD_FILTER,
+		config.setAttribute(FlashlightPreferencesUtility.FIELD_FILTER,
 				FieldFilter.NONE.name());
-		config.setAttribute(
-				FlashlightPreferencesUtility.P_FIELD_FILTER_PACKAGES,
+		config.setAttribute(FlashlightPreferencesUtility.FIELD_FILTER_PACKAGES,
 				Collections.emptyList());
 	}
 }

@@ -24,43 +24,6 @@ public final class FlashlightPreferencesUtility {
 	private static final AtomicBoolean f_initializationNeeded = new AtomicBoolean(
 			true);
 
-	public static final String CLASSPATH_ENTRIES_TO_NOT_INSTRUMENT = PREFIX
-			+ "classpathEntriesToNotInstrument";
-	public static final String BOOTPATH_ENTRIES_TO_NOT_INSTRUMENT = PREFIX
-			+ "bootpathEntriesToNotInstrument";
-	public static final String FIELD_FILTER = PREFIX + "filter.fields";
-	public static final String FIELD_FILTER_PACKAGES = PREFIX
-			+ "filter.fields.inPackages";
-	public static final String CLASS_BLACKLIST = PREFIX + "classBlacklist";
-	public static final String USE_DEFAULT_INDIRECT_ACCESS_METHODS = PREFIX
-			+ "useDefaultIndirectAccessMethods";
-	public static final String ADDITIONAL_INDIRECT_ACCESS_METHODS = PREFIX
-			+ "additionalIndirectAccessMethods";
-	public static final String COLLECTION_TYPE = PREFIX + "collection.type";
-	public static final String OUTPUT_TYPE = PREFIX + "output.type";
-	public static final String COMPRESS_OUTPUT = PREFIX + "compress.output";
-	public static final String USE_REFINERY = PREFIX + "use.refinery";
-	public static final String RAWQ_SIZE = PREFIX + "rawq.size";
-	public static final String OUTQ_SIZE = PREFIX + "outq.size";
-	public static final String REFINERY_SIZE = PREFIX + "refinery.size";
-	public static final String USE_SPY = PREFIX + "use.spy";
-	public static final String CONSOLE_PORT = PREFIX + "console.port";
-	public static final String MAX_ROWS_PER_QUERY = PREFIX
-			+ "max.rows.per.query";
-	public static final String PREP_OBJECT_WINDOW_SIZE = PREFIX
-			+ "object.window.size";
-	public static final String AUTO_INCREASE_HEAP_AT_LAUNCH = PREFIX
-			+ "auto.increase.heap.at.launch";
-	public static final String PROMPT_ABOUT_LOTS_OF_SAVED_QUERIES = PREFIX
-			+ "prompt.about.lots.of.saved.queries";
-	public static final String PROMPT_TO_PREP_ALL_RAW_DATA = PREFIX
-			+ "prompt.to.prep.all.raw.data";
-	public static final String AUTO_PREP_ALL_RAW_DATA = PREFIX
-			+ "auto.prep.all.raw.data";
-
-	private static final String FLASHLIGHT_DATA_DIRECTORY = PREFIX
-			+ "data.directory";
-
 	/**
 	 * Sets up the default values for the JSure tool.
 	 * <p>
@@ -120,6 +83,43 @@ public final class FlashlightPreferencesUtility {
 			 */
 		}
 	}
+
+	public static final String CLASSPATH_ENTRIES_TO_NOT_INSTRUMENT = PREFIX
+			+ "classpathEntriesToNotInstrument";
+	public static final String BOOTPATH_ENTRIES_TO_NOT_INSTRUMENT = PREFIX
+			+ "bootpathEntriesToNotInstrument";
+	public static final String FIELD_FILTER = PREFIX + "filter.fields";
+	public static final String FIELD_FILTER_PACKAGES = PREFIX
+			+ "filter.fields.inPackages";
+	public static final String CLASS_BLACKLIST = PREFIX + "classBlacklist";
+	public static final String USE_DEFAULT_INDIRECT_ACCESS_METHODS = PREFIX
+			+ "useDefaultIndirectAccessMethods";
+	public static final String ADDITIONAL_INDIRECT_ACCESS_METHODS = PREFIX
+			+ "additionalIndirectAccessMethods";
+	public static final String COLLECTION_TYPE = PREFIX + "collection.type";
+	public static final String OUTPUT_TYPE = PREFIX + "output.type";
+	public static final String COMPRESS_OUTPUT = PREFIX + "compress.output";
+	public static final String USE_REFINERY = PREFIX + "use.refinery";
+	public static final String RAWQ_SIZE = PREFIX + "rawq.size";
+	public static final String OUTQ_SIZE = PREFIX + "outq.size";
+	public static final String REFINERY_SIZE = PREFIX + "refinery.size";
+	public static final String USE_SPY = PREFIX + "use.spy";
+	public static final String CONSOLE_PORT = PREFIX + "console.port";
+	public static final String MAX_ROWS_PER_QUERY = PREFIX
+			+ "max.rows.per.query";
+	public static final String PREP_OBJECT_WINDOW_SIZE = PREFIX
+			+ "object.window.size";
+	public static final String AUTO_INCREASE_HEAP_AT_LAUNCH = PREFIX
+			+ "auto.increase.heap.at.launch";
+	public static final String PROMPT_ABOUT_LOTS_OF_SAVED_QUERIES = PREFIX
+			+ "prompt.about.lots.of.saved.queries";
+	public static final String PROMPT_TO_PREP_ALL_RAW_DATA = PREFIX
+			+ "prompt.to.prep.all.raw.data";
+	public static final String AUTO_PREP_ALL_RAW_DATA = PREFIX
+			+ "auto.prep.all.raw.data";
+
+	private static final String FLASHLIGHT_DATA_DIRECTORY = PREFIX
+			+ "data.directory";
 
 	/**
 	 * Gets the Flashlight data directory. This method ensures that the

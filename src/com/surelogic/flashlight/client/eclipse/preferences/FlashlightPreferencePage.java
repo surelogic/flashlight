@@ -167,7 +167,7 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 		iGroup.setText(I18N.msg("flashlight.preference.page.group.inst"));
 
 		final FlashlightInstrumentationWidgets instr = new FlashlightInstrumentationWidgets(
-				this, getPreferenceStore(), iGroup);
+				this, EclipseUIUtility.getPreferences(), iGroup);
 		for (final FieldEditor e : instr.getEditors()) {
 			e.load();
 		}

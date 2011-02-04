@@ -8,7 +8,6 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
 import org.eclipse.debug.ui.AbstractLaunchConfigurationTab;
-import org.eclipse.jdt.ui.PreferenceConstants;
 import org.eclipse.jface.preference.FieldEditor;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.preference.PreferenceStore;
@@ -26,8 +25,8 @@ import org.eclipse.swt.widgets.Group;
 
 import com.surelogic.common.CommonImages;
 import com.surelogic.common.logging.SLLogger;
+import com.surelogic.common.ui.EclipseUIUtility;
 import com.surelogic.common.ui.SLImages;
-import com.surelogic.flashlight.client.eclipse.Activator;
 import com.surelogic.flashlight.client.eclipse.preferences.FlashlightInstrumentationWidgets;
 import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
 
@@ -169,8 +168,7 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 			}
 
 			// copy from config to prefs
-			final IPreferenceStore defaults = Activator.getDefault()
-					.getPreferenceStore();
+			final IPreferenceStore defaults = EclipseUIUtility.getPreferences();
 			for (String attr : StringAttrs) {
 				final String val = defaults.getString(attr);
 				prefs.setValue(attr, config.getAttribute(attr, val));
@@ -210,8 +208,7 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 	}
 
 	private void copyPrefsFromDefaults() {
-		final IPreferenceStore defaults = Activator.getDefault()
-				.getPreferenceStore();
+		final IPreferenceStore defaults = EclipseUIUtility.getPreferences();
 		for (String attr : StringAttrs) {
 			prefs.setValue(attr, defaults.getString(attr));
 		}
@@ -234,7 +231,7 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 	 */
 	public void setDefaults(ILaunchConfigurationWorkingCopy config) {
 		// System.err.println("setDefaults(): "+config.getName());
-		copyFromPrefStore(config, Activator.getDefault().getPreferenceStore());
+		copyFromPrefStore(config, EclipseUIUtility.getPreferences());
 	}
 
 	// Copy from preference store to config

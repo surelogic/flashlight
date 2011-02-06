@@ -166,8 +166,8 @@ public final class RecommendRegions {
 						|| !l.equals(region.getLock())) {
 					if (region != null) {
 						// FIXME performance
-						// region.getRequiresLockMethods().addAll(
-						// traces(ls, fs).perform(q));
+						region.getRequiresLockMethods().addAll(
+								traces(ls, fs).perform(q));
 					}
 					fs = new TLongHashSet();
 					ls = new TLongHashSet();
@@ -276,8 +276,8 @@ public final class RecommendRegions {
 						}
 						bestFit = Math.max(fit, bestFit);
 					}
-					for (final Trace t : fieldTrace.subList(bestFit, fieldTrace
-							.size())) {
+					for (final Trace t : fieldTrace.subList(bestFit,
+							fieldTrace.size())) {
 						methods.add(new MethodLoc(t.getPackage(), t.getClazz(),
 								t.getLoc()));
 					}

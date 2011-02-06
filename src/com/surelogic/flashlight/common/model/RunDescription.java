@@ -28,14 +28,18 @@ public final class RunDescription {
 			throw new IllegalArgumentException(I18N.err(44, "rawDataVersion"));
 		}
 		f_rawDataVersion = rawDataVersion;
+		// XXX hostname and user name are new fields. For reasons of passivity
+		// we will accept entries that do not have them.
 		if (hostname == null) {
-			throw new IllegalArgumentException(I18N.err(44, "userName"));
+			f_hostname = "unknown";
+		} else {
+			f_hostname = hostname;
 		}
-		f_hostname = hostname;
 		if (userName == null) {
-			throw new IllegalArgumentException(I18N.err(44, "userName"));
+			f_userName = "unknown";
+		} else {
+			f_userName = userName;
 		}
-		f_userName = userName;
 		if (javaVersion == null) {
 			throw new IllegalArgumentException(I18N.err(44, "javaVersion"));
 		}

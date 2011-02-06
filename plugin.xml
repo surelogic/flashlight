@@ -347,7 +347,7 @@
 		</view>
 	</extension>
 	<extension point="org.eclipse.ui.handlers">
-		<handler class="com.surelogic.adhoc.views.results.QueryResultsCopyHandler"
+		<handler class="com.surelogic.common.ui.adhoc.views.results.QueryResultsCopyHandler"
 			commandId="org.eclipse.ui.edit.copy">
 			<activeWhen>
 				<with variable="activePartId">

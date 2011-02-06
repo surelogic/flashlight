@@ -203,9 +203,11 @@ class MonitorConsole extends Thread {
 							f_shutdownRequested = true;
 							f_client.close();
 						} else if (nextLine.equalsIgnoreCase(PING)) {
-							sendResponse(outputStream, String.format(
-									"Uptime: %d", System.currentTimeMillis()
-											- startTime));
+							sendResponse(
+									outputStream,
+									String.format("Uptime: %d",
+											System.currentTimeMillis()
+													- startTime));
 						} else if (nextLine.equalsIgnoreCase(LIST)) {
 							sendResponse(outputStream, Analysis.getAnalysis()
 									.toString());
@@ -252,18 +254,14 @@ class MonitorConsole extends Thread {
 								if (FIELD_SPEC.equalsIgnoreCase(prop)) {
 									sendResponse(outputStream, String.format(
 											"Changing fieldSpec to be %s", val));
-									Analysis
-											.reviseSpec(new MonitorSpec(
-													val,
-													MonitorStore
-															.getFieldDefinitions()));
+									Analysis.reviseSpec(new MonitorSpec(val,
+											MonitorStore.getFieldDefinitions()));
 								} else if (EDT_FIELDS.equalsIgnoreCase(prop)) {
 									sendResponse(
 											outputStream,
-											String
-													.format(
-															"Monitoring fields matching %s for Swing policy violations.",
-															val));
+											String.format(
+													"Monitoring fields matching %s for Swing policy violations.",
+													val));
 									Analysis.reviseAlerts(new AlertSpec(val,
 											null, null, MonitorStore
 													.getFieldDefinitions()));
@@ -271,10 +269,9 @@ class MonitorConsole extends Thread {
 								} else if (SHARED_FIELDS.equalsIgnoreCase(prop)) {
 									sendResponse(
 											outputStream,
-											String
-													.format(
-															"Ensuring fields matching %s are not shared.",
-															val));
+											String.format(
+													"Ensuring fields matching %s are not shared.",
+													val));
 									Analysis.reviseAlerts(new AlertSpec(null,
 											null, val, MonitorStore
 													.getFieldDefinitions()));
@@ -282,10 +279,9 @@ class MonitorConsole extends Thread {
 										.equalsIgnoreCase(prop)) {
 									sendResponse(
 											outputStream,
-											String
-													.format(
-															"Ensuring fields matching %s always have a lock set.",
-															val));
+											String.format(
+													"Ensuring fields matching %s always have a lock set.",
+													val));
 									Analysis.reviseAlerts(new AlertSpec(null,
 											null, val, MonitorStore
 													.getFieldDefinitions()));
@@ -365,7 +361,7 @@ class MonitorConsole extends Thread {
 		private String prompt(final BufferedReader inputStream,
 				final BufferedWriter outputStream) {
 			try {
-				outputStream.write(">");
+				outputStream.write(">\n");
 				outputStream.flush();
 				return inputStream.readLine(); // blocks
 			} catch (final IOException e) {

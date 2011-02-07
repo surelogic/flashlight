@@ -4,9 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.logging.Level;
 
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -38,7 +36,6 @@ import com.surelogic.common.core.jobs.EclipseJob;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jobs.AggregateSLJob;
 import com.surelogic.common.jobs.SLJob;
-import com.surelogic.common.logging.SLLogger;
 import com.surelogic.common.ui.SWTUtility;
 import com.surelogic.common.ui.ViewUtility;
 import com.surelogic.common.ui.jobs.SLUIJob;
@@ -59,9 +56,6 @@ import com.surelogic.flashlight.common.model.RunManager;
 import com.surelogic.flashlight.recommend.refactor.RegionModelRefactoring;
 import com.surelogic.flashlight.recommend.refactor.RegionRefactoringInfo;
 import com.surelogic.flashlight.recommend.refactor.RegionRefactoringWizard;
-import com.surelogic.jsure.client.eclipse.listeners.ClearProjectListener;
-
-import edu.cmu.cs.fluid.dc.Nature;
 
 /**
  * Mediator for the {@link RunView}.
@@ -383,23 +377,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 						final int answer = op.run(SWTUtility.getShell(), title);
 						if (answer == IDialogConstants.OK_ID) {
 							try {
-								if (!Nature.hasNature(p.getProject())) {
-									final boolean removedNature = !ClearProjectListener
-											.clearNatureFromAllOpenProjects()
-											.isEmpty();
-									try {
-										Nature.addNatureToProject(p
-												.getProject());
-									} catch (final CoreException e) {
-										SLLogger.getLogger()
-												.log(Level.SEVERE,
-														"Failure adding JSure nature to "
-																+ p.getElementName(),
-														e);
-									}
-									ClearProjectListener
-											.postNatureChangeUtility(removedNature);
-								}
+								//TODO add jar and prompt to analyze
 							} catch (final NoClassDefFoundError ignore) {
 								/*
 								 * Expected if JSure is not installed

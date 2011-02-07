@@ -24,8 +24,6 @@ import com.surelogic.flashlight.common.model.RunDescription;
 import com.surelogic.flashlight.common.model.RunManager;
 import com.surelogic.jsure.client.eclipse.listeners.ClearProjectListener;
 
-import edu.cmu.cs.fluid.dc.Nature;
-
 public class RegionModelRefactoringAction implements IObjectActionDelegate,
 		IWorkbenchWindowActionDelegate {
 
@@ -53,23 +51,7 @@ public class RegionModelRefactoringAction implements IObjectActionDelegate,
 			if (op.run(SWTUtility.getShell(), I18N
 					.msg("flashlight.recommend.refactor.regionIsThis")) == IDialogConstants.OK_ID) {
 				try {
-					if (!Nature.hasNature(f_javaProject.getProject())) {
-						final boolean removedNature = 
-							!ClearProjectListener.clearNatureFromAllOpenProjects().isEmpty();
-						try {
-							Nature.addNatureToProject(f_javaProject
-									.getProject());
-						} catch (final CoreException e) {
-							SLLogger.getLogger()
-									.log(
-											Level.SEVERE,
-											"Failure adding JSure nature to "
-													+ f_javaProject
-															.getElementName(),
-											e);
-						}
-						ClearProjectListener.postNatureChangeUtility(removedNature);
-					}
+					//TODO add jar and prompt to analyze
 				} catch (final NoClassDefFoundError e) {
 					// This is expected if jsure is not installed
 				}

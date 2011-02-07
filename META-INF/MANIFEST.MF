@@ -31,8 +31,8 @@ Eclipse-LazyStart: true
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: .,
  lib/flashlight-rewriter.jar,
- lib/asm-3.2.jar,
- lib/asm-commons-3.2.jar
+ lib/asm-3.3.1.jar,
+ lib/asm-commons-3.3.1.jar
 Export-Package: com.surelogic.flashlight.client.eclipse,
  com.surelogic.flashlight.client.eclipse.launch,
  com.surelogic.flashlight.client.eclipse.preferences

@@ -3,6 +3,7 @@
 	<property environment="env" />
 
 	<property name="lib" value="${basedir}/lib" />
+	<property name="common.lib" value="${basedir}/../common/lib/runtime" />
 	<property name="resources" value="${basedir}/resources" />
 	<property name="classes" value="${basedir}/bin" />
 
@@ -11,8 +12,8 @@
 	<property name="src-rt" value="${basedir}/../flashlight-common/src" />
 	<property name="test" value="${basedir}/test" />
 
-	<property name="asm.jar" value="${lib}/asm-3.3.1.jar" />
-	<property name="asm-commons.jar" value="${lib}/asm-commons-3.3.1.jar" />
+	<property name="asm.jar" value="${common.lib}/asm-3.3.1.jar" />
+	<property name="asm-commons.jar" value="${common.lib}/asm-commons-3.3.1.jar" />
 
 	<property name="junit.jar" value="${lib}/junit-4.3.1.jar" />
 

@@ -17,6 +17,7 @@
 			<menu id="com.surelogic.flashlight.client.eclipse.workbenchMenu"
 				label="Flashlight" path="additions">
 				<groupMarker name="client" />
+				<separator name="jsure" />
 				<separator name="service" />
 				<separator name="license" />
 			</menu>
@@ -49,6 +50,13 @@
 				helpContextId="menu-send-tip-for-improvement">
 			</action>
 			<action
+				class="com.surelogic.flashlight.client.eclipse.refactoring.RegionModelRefactoringAction"
+				id="com.surelogic.flashlight.client.eclipse.refactoring.RegionModelRefactoringAction"
+				label="Infer JSure Annotations..."
+				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/jsure"
+				helpContextId="menu-recommend-regions">
+			</action>
+			<action
 				class="com.surelogic.flashlight.client.eclipse.actions.ShowFlashlightPerspectiveAction"
 				id="com.surelogic.flashlight.client.eclipse.actions.ShowFlashlightPerspectiveAction"
 				icon="platform:/plugin/com.surelogic.common/src/com/surelogic/common/images/fl_logo.gif"
@@ -61,13 +69,6 @@
 				label="Import Flashlight Run..."
 				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/client"
 				helpContextId="menu-import-run">
-			</action>
-			<action
-				class="com.surelogic.flashlight.client.eclipse.refactoring.RegionModelRefactoringAction"
-				id="com.surelogic.flashlight.client.eclipse.refactoring.RegionModelRefactoringAction"
-				label="Infer JSure Annotations..."
-				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/client"
-				helpContextId="menu-recommend-regions">
 			</action>
 		</actionSet>
 	</extension>

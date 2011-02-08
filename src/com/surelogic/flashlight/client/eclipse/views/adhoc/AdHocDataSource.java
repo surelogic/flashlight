@@ -21,7 +21,6 @@ import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jdbc.DBConnection;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.common.ui.EclipseUIUtility;
-import com.surelogic.common.ui.ViewUtility;
 import com.surelogic.common.ui.adhoc.dialogs.LotsOfSavedQueriesDialog;
 import com.surelogic.common.ui.jobs.SLUIJob;
 import com.surelogic.flashlight.client.eclipse.Activator;
@@ -135,7 +134,7 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements
 		final UIJob job = new SLUIJob() {
 			@Override
 			public IStatus runInUIThread(final IProgressMonitor monitor) {
-				final IViewPart view = ViewUtility.showView(
+				final IViewPart view = EclipseUIUtility.showView(
 						QueryResultsView.class.getName(), null,
 						IWorkbenchPage.VIEW_VISIBLE);
 				if (view instanceof QueryResultsView) {

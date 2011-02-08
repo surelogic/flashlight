@@ -36,8 +36,8 @@ import com.surelogic.common.core.jobs.EclipseJob;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jobs.AggregateSLJob;
 import com.surelogic.common.jobs.SLJob;
+import com.surelogic.common.ui.EclipseUIUtility;
 import com.surelogic.common.ui.SWTUtility;
-import com.surelogic.common.ui.ViewUtility;
 import com.surelogic.common.ui.jobs.SLUIJob;
 import com.surelogic.flashlight.client.eclipse.dialogs.DeleteRunDialog;
 import com.surelogic.flashlight.client.eclipse.dialogs.LogDialog;
@@ -91,7 +91,8 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 							/*
 							 * Change the focus to the query menu view.
 							 */
-							ViewUtility.showView(QueryMenuView.class.getName());
+							EclipseUIUtility.showView(QueryMenuView.class
+									.getName());
 						} else {
 							/*
 							 * Prepare this run.
@@ -377,7 +378,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 						final int answer = op.run(SWTUtility.getShell(), title);
 						if (answer == IDialogConstants.OK_ID) {
 							try {
-								//TODO add jar and prompt to analyze
+								// TODO add jar and prompt to analyze
 							} catch (final NoClassDefFoundError ignore) {
 								/*
 								 * Expected if JSure is not installed

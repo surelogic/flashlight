@@ -5,11 +5,11 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 
 import com.surelogic.common.core.EclipseUtility;
-import com.surelogic.common.ui.SWTUtility;
-import com.surelogic.common.ui.ViewUtility;
 import com.surelogic.common.core.jobs.EclipseJob;
-import com.surelogic.common.ui.jobs.SLUIJob;
 import com.surelogic.common.logging.SLLogger;
+import com.surelogic.common.ui.EclipseUIUtility;
+import com.surelogic.common.ui.SWTUtility;
+import com.surelogic.common.ui.jobs.SLUIJob;
 import com.surelogic.flashlight.client.eclipse.dialogs.ConfirmPerspectiveSwitch;
 import com.surelogic.flashlight.client.eclipse.perspectives.FlashlightPerspective;
 import com.surelogic.flashlight.common.jobs.RefreshRunManagerSLJob;
@@ -30,7 +30,7 @@ public final class SwitchToFlashlightPerspectiveJob extends SLUIJob {
 		/*
 		 * Ensure that we are not already in the Flashlight perspective.
 		 */
-		final boolean inFlashlightPerspective = ViewUtility
+		final boolean inFlashlightPerspective = EclipseUIUtility
 				.isPerspectiveOpen(FlashlightPerspective.class.getName());
 		SLLogger.getLogger().fine(
 				"[PromptToPrepAllRawData] inFlashlightPerspective = "
@@ -52,11 +52,9 @@ public final class SwitchToFlashlightPerspectiveJob extends SLUIJob {
 		 */
 		final boolean onlySwitchToFlashlightPerspectiveJobRunning = EclipseUtility
 				.getActiveJobCountOfType(SwitchToFlashlightPerspectiveJob.class) == 1;
-		SLLogger
-				.getLogger()
-				.fine(
-						"[SwitchToFlashlightPerspectiveJob] onlySwitchToFlashlightPerspectiveJobRunning = "
-								+ onlySwitchToFlashlightPerspectiveJobRunning);
+		SLLogger.getLogger()
+				.fine("[SwitchToFlashlightPerspectiveJob] onlySwitchToFlashlightPerspectiveJobRunning = "
+						+ onlySwitchToFlashlightPerspectiveJobRunning);
 		if (!onlySwitchToFlashlightPerspectiveJobRunning) {
 			return Status.OK_STATUS; // bail
 		}
@@ -64,7 +62,8 @@ public final class SwitchToFlashlightPerspectiveJob extends SLUIJob {
 		final boolean change = ConfirmPerspectiveSwitch.toFlashlight(SWTUtility
 				.getShell());
 		if (change) {
-			ViewUtility.showPerspective(FlashlightPerspective.class.getName());
+			EclipseUIUtility.showPerspective(FlashlightPerspective.class
+					.getName());
 		}
 		return Status.OK_STATUS;
 	}

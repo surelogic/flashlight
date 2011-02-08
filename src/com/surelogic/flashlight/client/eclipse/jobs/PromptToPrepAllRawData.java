@@ -20,7 +20,7 @@ import com.surelogic.common.core.jobs.EclipseJob;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jobs.SLJob;
 import com.surelogic.common.logging.SLLogger;
-import com.surelogic.common.ui.ViewUtility;
+import com.surelogic.common.ui.EclipseUIUtility;
 import com.surelogic.common.ui.jobs.SLUIJob;
 import com.surelogic.flashlight.client.eclipse.dialogs.ConfirmPrepAllRawDataDialog;
 import com.surelogic.flashlight.client.eclipse.perspectives.FlashlightPerspective;
@@ -87,7 +87,7 @@ public final class PromptToPrepAllRawData extends SLUIJob {
 		/*
 		 * Ensure that we are in the Flashlight perspective.
 		 */
-		final boolean inFlashlightPerspective = ViewUtility
+		final boolean inFlashlightPerspective = EclipseUIUtility
 				.isPerspectiveOpen(FlashlightPerspective.class.getName());
 		SLLogger.getLogger().fine(
 				"[PromptToPrepAllRawData] inFlashlightPerspective = "

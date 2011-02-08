@@ -49,6 +49,7 @@ import com.surelogic.flashlight.common.prep.SummaryInfo.Loc;
 import com.surelogic.flashlight.common.prep.SummaryInfo.Lock;
 import com.surelogic.flashlight.common.prep.SummaryInfo.LockSetEvidence;
 import com.surelogic.flashlight.common.prep.SummaryInfo.LockSetLock;
+import com.surelogic.flashlight.common.prep.SummaryInfo.LockSetSite;
 import com.surelogic.flashlight.common.prep.SummaryInfo.Site;
 
 public final class WriteHtmlOverview implements IPostPrep {
@@ -389,7 +390,18 @@ public final class WriteHtmlOverview implements IPostPrep {
 
 	private static class LockSetRowProvider implements
 			RowProvider<LockSetEvidence> {
-		private final LinkProvider<Site> lp = new LinkProvider<Site>() {
+		private final LinkProvider<LockSetSite> heldProvider = new LinkProvider<LockSetSite>() {
+			@Override
+			public void link(final Container c, final LockSetSite t) {
+				Span span = c.span();
+				span.text(" at " + t.getLocation());
+				buildCodeLink(span,
+						"(" + t.getFile() + ":" + t.getLine() + ")", "Package",
+						t.getPackage(), "Class", t.getClazz(), "Method",
+						t.getLocation(), "Line", Integer.toString(t.getLine()));
+			}
+		};
+		private final LinkProvider<Site> notHeldProvider = new LinkProvider<Site>() {
 			@Override
 			public void link(final Container c, final Site t) {
 				Span span = c.span();
@@ -419,14 +431,15 @@ public final class WriteHtmlOverview implements IPostPrep {
 				heldRow.td();
 				Row heldTreeRow = table.row();
 				displayClassTree(lock.getHeldAt(),
-						heldTreeRow.td().clazz("depth3").clazz("leaf"), lp);
+						heldTreeRow.td().clazz("depth3").clazz("leaf"),
+						heldProvider);
 				heldTreeRow.td();
 				heldTreeRow.td();
 				Row notHeldRow = table.row();
 				notHeldRow.td().clazz("depth2").text("not held at");
 				Row notHeldTreeRow = table.row();
 				displayClassTree(lock.getNotHeldAt(), notHeldTreeRow.td()
-						.clazz("depth3").clazz("leaf"), lp);
+						.clazz("depth3").clazz("leaf"), notHeldProvider);
 				notHeldTreeRow.td();
 				notHeldTreeRow.td();
 			}

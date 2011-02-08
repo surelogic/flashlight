@@ -216,7 +216,7 @@ public class SummaryInfo {
 		private final long id;
 		private final String timesAcquired;
 		private final String heldPercentage;
-		private final List<Site> heldAt;
+		private final List<LockSetSite> heldAt;
 		private final List<Site> notHeldAt;
 
 		public LockSetLock(final String name, final long id,
@@ -225,7 +225,7 @@ public class SummaryInfo {
 			this.id = id;
 			this.timesAcquired = timesAcquired;
 			this.heldPercentage = heldPercentage;
-			this.heldAt = new ArrayList<Site>();
+			this.heldAt = new ArrayList<LockSetSite>();
 			this.notHeldAt = new ArrayList<Site>();
 		}
 
@@ -245,7 +245,7 @@ public class SummaryInfo {
 			return timesAcquired;
 		}
 
-		public List<Site> getHeldAt() {
+		public List<LockSetSite> getHeldAt() {
 			return heldAt;
 		}
 
@@ -258,6 +258,76 @@ public class SummaryInfo {
 			return "LockSetLock [name=" + name + ", id=" + id
 					+ ", heldPercentage=" + heldPercentage + ", acquisitions="
 					+ heldAt + ", notHeldAt=" + notHeldAt + "]";
+		}
+
+	}
+
+	/**
+	 * Represents a site that has been accessed while a lock was held. It
+	 * behaves the same as the field access site would, but has a getter to see
+	 * where the lock was acquired.
+	 * 
+	 * @author nathan
+	 * 
+	 */
+	public static class LockSetSite implements Comparable<LockSetSite>, Loc {
+
+		private final Site access;
+		private final Site acquiredAt;
+
+		public LockSetSite(final Site access, final Site acquiredAt) {
+			this.access = access;
+			this.acquiredAt = acquiredAt;
+		}
+
+		public Site getAccess() {
+			return access;
+		}
+
+		public Site getAcquiredAt() {
+			return acquiredAt;
+		}
+
+		@Override
+		public String getPackage() {
+			return access.getPackage();
+		}
+
+		@Override
+		public String getClazz() {
+			return access.getClazz();
+		}
+
+		public String getLocation() {
+			return access.getLocation();
+		}
+
+		public int getLine() {
+			return access.getLine();
+		}
+
+		public String getFile() {
+			return access.getFile();
+		}
+
+		@Override
+		public String toString() {
+			return access.toString();
+		}
+
+		@Override
+		public int hashCode() {
+			return access.hashCode();
+		}
+
+		@Override
+		public boolean equals(final Object obj) {
+			return access.equals(obj);
+		}
+
+		@Override
+		public int compareTo(final LockSetSite site) {
+			return access.compareTo(site == null ? null : site.access);
 		}
 
 	}
@@ -288,8 +358,9 @@ public class SummaryInfo {
 				if (field.isStatic()) {
 					l.getHeldAt().addAll(
 							q.prepared("SummaryInfo.lockHeldAt",
-									new SiteHandler()).call(field.getId(),
-									l.getId(), field.getId(), l.getId()));
+									new LockSetSiteHandler()).call(
+									field.getId(), l.getId(), field.getId(),
+									l.getId()));
 					l.getNotHeldAt().addAll(
 							q.prepared("SummaryInfo.lockNotHeldAt",
 									new SiteHandler()).call(field.getId(),
@@ -297,8 +368,9 @@ public class SummaryInfo {
 				} else {
 					l.getHeldAt().addAll(
 							q.prepared("SummaryInfo.lockInstanceHeldAt",
-									new SiteHandler()).call(field.getId(),
-									l.getId(), field.getId(), l.getId()));
+									new LockSetSiteHandler()).call(
+									field.getId(), l.getId(), field.getId(),
+									l.getId()));
 					l.getNotHeldAt().addAll(
 							q.prepared("SummaryInfo.lockInstanceNotHeldAt",
 									new SiteHandler()).call(field.getId(),
@@ -969,6 +1041,17 @@ public class SummaryInfo {
 			return new Site(r.nextString(), r.nextString(), r.nextString(),
 					r.nextInt(), r.nextString());
 		}
+	}
+
+	private static class LockSetSiteHandler implements RowHandler<LockSetSite> {
+		private static final SiteHandler sh = new SiteHandler();
+
+		@Override
+		public LockSetSite handle(final Row r) {
+			// TODO Add a query to find where this lock was acquired
+			return new LockSetSite(sh.handle(r), null);
+		}
+
 	}
 
 	public static class Site implements Comparable<Site>, Loc {

@@ -26,8 +26,6 @@ import com.surelogic.flashlight.common.model.RunManager;
  */
 public class Activator extends AbstractUIPlugin {
 
-	public static final String PLUGIN_ID = "com.surelogic.flashlight";
-
 	// The shared instance
 	private static Activator plugin;
 
@@ -44,10 +42,9 @@ public class Activator extends AbstractUIPlugin {
 	 * The constructor
 	 */
 	public Activator() {
-		if (plugin != null) {
-			throw new IllegalStateException(PLUGIN_ID + " class instance ("
-					+ Activator.class.getName() + ") already exits");
-		}
+		if (plugin != null)
+			throw new IllegalStateException(Activator.class.getName()
+					+ " instance already exits, it should be a singleton.");
 		plugin = this;
 	}
 
@@ -81,7 +78,8 @@ public class Activator extends AbstractUIPlugin {
 		/*
 		 * Get the data directory and ensure that it actually exists.
 		 */
-		final File dataDir = FlashlightPreferencesUtility.getFlashlightDataDirectory();
+		final File dataDir = FlashlightPreferencesUtility
+				.getFlashlightDataDirectory();
 
 		EclipseUtility.getProductReleaseDateJob(SLLicenseProduct.FLASHLIGHT,
 				this).schedule();

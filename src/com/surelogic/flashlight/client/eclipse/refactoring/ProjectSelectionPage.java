@@ -1,4 +1,4 @@
-package com.surelogic.flashlight.recommend.refactor;
+package com.surelogic.flashlight.client.eclipse.refactoring;
 
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jface.dialogs.Dialog;

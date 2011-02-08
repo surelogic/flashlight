@@ -42,6 +42,9 @@ import com.surelogic.flashlight.client.eclipse.dialogs.DeleteRunDialog;
 import com.surelogic.flashlight.client.eclipse.dialogs.LogDialog;
 import com.surelogic.flashlight.client.eclipse.jobs.PromptToPrepAllRawData;
 import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
+import com.surelogic.flashlight.client.eclipse.refactoring.RegionModelRefactoring;
+import com.surelogic.flashlight.client.eclipse.refactoring.RegionRefactoringInfo;
+import com.surelogic.flashlight.client.eclipse.refactoring.RegionRefactoringWizard;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.QueryMenuView;
 import com.surelogic.flashlight.common.files.RawFileHandles;
@@ -52,9 +55,6 @@ import com.surelogic.flashlight.common.jobs.UnPrepSLJob;
 import com.surelogic.flashlight.common.model.IRunManagerObserver;
 import com.surelogic.flashlight.common.model.RunDescription;
 import com.surelogic.flashlight.common.model.RunManager;
-import com.surelogic.flashlight.recommend.refactor.RegionModelRefactoring;
-import com.surelogic.flashlight.recommend.refactor.RegionRefactoringInfo;
-import com.surelogic.flashlight.recommend.refactor.RegionRefactoringWizard;
 
 /**
  * Mediator for the {@link RunView}.

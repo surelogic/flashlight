@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.surelogic.flashlight.recommend.refactor;
+package com.surelogic.flashlight.client.eclipse.refactoring;
 
 import java.util.ArrayList;
 import java.util.Collections;

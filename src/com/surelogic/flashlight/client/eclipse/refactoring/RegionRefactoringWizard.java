@@ -1,4 +1,4 @@
-package com.surelogic.flashlight.recommend.refactor;
+package com.surelogic.flashlight.client.eclipse.refactoring;
 
 import org.eclipse.ltk.core.refactoring.Refactoring;
 import org.eclipse.ltk.ui.refactoring.RefactoringWizard;

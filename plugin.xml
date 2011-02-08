@@ -63,8 +63,8 @@
 				helpContextId="menu-import-run">
 			</action>
 			<action
-				class="com.surelogic.flashlight.recommend.refactor.RegionModelRefactoringAction"
-				id="com.surelogic.flashlight.recommend.menu.inferRegionsRefactoring"
+				class="com.surelogic.flashlight.client.eclipse.refactoring.RegionModelRefactoringAction"
+				id="com.surelogic.flashlight.client.eclipse.refactoring.RegionModelRefactoringAction"
 				label="Infer JSure Annotations..."
 				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/client"
 				helpContextId="menu-recommend-regions">

@@ -1,4 +1,4 @@
-package com.surelogic.flashlight.recommend.refactor;
+package com.surelogic.flashlight.client.eclipse.refactoring;
 
 import java.util.HashMap;
 import java.util.LinkedList;

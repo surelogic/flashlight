@@ -35,7 +35,6 @@ import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.common.serviceability.UsageMeter;
 import com.surelogic.common.ui.EclipseUIUtility;
 import com.surelogic.common.ui.SLImages;
-import com.surelogic.common.ui.SWTUtility;
 import com.surelogic.common.ui.adhoc.views.ExportQueryDialog;
 import com.surelogic.common.ui.dialogs.ChangeDataDirectoryDialog;
 import com.surelogic.common.ui.dialogs.ErrorDialogUtility;
@@ -229,7 +228,7 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 			exportButton.addListener(SWT.Selection, new Listener() {
 				@Override
 				public void handleEvent(final Event event) {
-					new ExportQueryDialog(SWTUtility.getShell(),
+					new ExportQueryDialog(EclipseUIUtility.getShell(),
 							AdHocDataSource.getManager()).open();
 				}
 			});

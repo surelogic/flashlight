@@ -2,9 +2,7 @@ package com.surelogic.flashlight.recommend.refactor;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
 
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.IDialogConstants;
@@ -17,12 +15,10 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 
 import com.surelogic.common.core.JDTUtility;
-import com.surelogic.common.ui.SWTUtility;
 import com.surelogic.common.i18n.I18N;
-import com.surelogic.common.logging.SLLogger;
+import com.surelogic.common.ui.EclipseUIUtility;
 import com.surelogic.flashlight.common.model.RunDescription;
 import com.surelogic.flashlight.common.model.RunManager;
-import com.surelogic.jsure.core.listeners.ClearProjectListener;
 
 public class RegionModelRefactoringAction implements IObjectActionDelegate,
 		IWorkbenchWindowActionDelegate {
@@ -38,8 +34,8 @@ public class RegionModelRefactoringAction implements IObjectActionDelegate,
 		final List<RunDescription> preppedRuns = new ArrayList<RunDescription>(
 				RunManager.getInstance().getPreparedRunDescriptions());
 
-		final RegionRefactoringInfo info = new RegionRefactoringInfo(JDTUtility
-				.getJavaProjects(), preppedRuns);
+		final RegionRefactoringInfo info = new RegionRefactoringInfo(
+				JDTUtility.getJavaProjects(), preppedRuns);
 		info.setSelectedProject(f_javaProject);
 		final RegionModelRefactoring refactoring = new RegionModelRefactoring(
 				info);
@@ -48,10 +44,10 @@ public class RegionModelRefactoringAction implements IObjectActionDelegate,
 		final RefactoringWizardOpenOperation op = new RefactoringWizardOpenOperation(
 				wizard);
 		try {
-			if (op.run(SWTUtility.getShell(), I18N
-					.msg("flashlight.recommend.refactor.regionIsThis")) == IDialogConstants.OK_ID) {
+			if (op.run(EclipseUIUtility.getShell(),
+					I18N.msg("flashlight.recommend.refactor.regionIsThis")) == IDialogConstants.OK_ID) {
 				try {
-					//TODO add jar and prompt to analyze
+					// TODO add jar and prompt to analyze
 				} catch (final NoClassDefFoundError e) {
 					// This is expected if jsure is not installed
 				}

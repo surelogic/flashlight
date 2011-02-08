@@ -37,7 +37,6 @@ import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jobs.AggregateSLJob;
 import com.surelogic.common.jobs.SLJob;
 import com.surelogic.common.ui.EclipseUIUtility;
-import com.surelogic.common.ui.SWTUtility;
 import com.surelogic.common.ui.jobs.SLUIJob;
 import com.surelogic.flashlight.client.eclipse.dialogs.DeleteRunDialog;
 import com.surelogic.flashlight.client.eclipse.dialogs.LogDialog;
@@ -375,7 +374,8 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 					try {
 						final String title = I18N
 								.msg("flashlight.recommend.refactor.regionIsThis");
-						final int answer = op.run(SWTUtility.getShell(), title);
+						final int answer = op.run(EclipseUIUtility.getShell(),
+								title);
 						if (answer == IDialogConstants.OK_ID) {
 							try {
 								// TODO add jar and prompt to analyze

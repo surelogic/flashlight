@@ -14,8 +14,8 @@ import org.eclipse.swt.widgets.Shell;
 import com.surelogic.common.CommonImages;
 import com.surelogic.common.core.EclipseUtility;
 import com.surelogic.common.i18n.I18N;
+import com.surelogic.common.ui.EclipseUIUtility;
 import com.surelogic.common.ui.SLImages;
-import com.surelogic.common.ui.SWTUtility;
 import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
 
 /**
@@ -38,7 +38,7 @@ public final class ConfirmPrepAllRawDataDialog extends MessageDialog {
 		if (EclipseUtility
 				.getBooleanPreference(FlashlightPreferencesUtility.PROMPT_TO_PREP_ALL_RAW_DATA)) {
 			final ConfirmPrepAllRawDataDialog dialog = new ConfirmPrepAllRawDataDialog(
-					SWTUtility.getShell(),
+					EclipseUIUtility.getShell(),
 					SLImages.getImage(CommonImages.IMG_FL_LOGO),
 					I18N.msg("flashlight.dialog.prep.all.text"));
 			final boolean result = dialog.open() == Window.OK;

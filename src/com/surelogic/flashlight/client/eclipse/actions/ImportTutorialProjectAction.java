@@ -6,7 +6,7 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 
 import com.surelogic.common.CommonImages;
-import com.surelogic.common.ui.SWTUtility;
+import com.surelogic.common.ui.EclipseUIUtility;
 import com.surelogic.common.ui.dialogs.InstallTutorialProjectsDialog;
 
 public class ImportTutorialProjectAction implements
@@ -22,13 +22,13 @@ public class ImportTutorialProjectAction implements
 
 	public void run(final IAction action) {
 		ClassLoader l = Thread.currentThread().getContextClassLoader();
-		InstallTutorialProjectsDialog.open(SWTUtility.getShell(),
+		InstallTutorialProjectsDialog.open(EclipseUIUtility.getShell(),
 				CommonImages.IMG_FL_LOGO,
-				"/com.surelogic.flashlight.client.help/ch01s03.html", l
-						.getResource("/lib/DiningPhilosophers.zip"), l
-						.getResource("/lib/jEdit-4.1.zip"), l
-						.getResource("/lib/PlanetBaron.zip"), l
-						.getResource("/lib/Zookeeper.zip"));
+				"/com.surelogic.flashlight.client.help/ch01s03.html",
+				l.getResource("/lib/DiningPhilosophers.zip"),
+				l.getResource("/lib/jEdit-4.1.zip"),
+				l.getResource("/lib/PlanetBaron.zip"),
+				l.getResource("/lib/Zookeeper.zip"));
 	}
 
 	public void selectionChanged(final IAction action,

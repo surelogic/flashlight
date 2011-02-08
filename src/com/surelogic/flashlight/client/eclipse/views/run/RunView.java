@@ -15,12 +15,12 @@ import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.part.ViewPart;
 
 import com.surelogic.common.CommonImages;
-import com.surelogic.common.ui.ColumnViewerSorter;
-import com.surelogic.common.ui.SLImages;
-import com.surelogic.common.ui.SWTUtility;
 import com.surelogic.common.core.jobs.EclipseJob;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.serviceability.UsageMeter;
+import com.surelogic.common.ui.ColumnViewerSorter;
+import com.surelogic.common.ui.EclipseUIUtility;
+import com.surelogic.common.ui.SLImages;
 import com.surelogic.flashlight.common.jobs.RefreshRunManagerSLJob;
 import com.surelogic.flashlight.common.model.RunDescription;
 import com.surelogic.flashlight.common.model.RunManager;
@@ -45,11 +45,11 @@ public final class RunView extends ViewPart {
 		for (int index = 0; index < model.getColumnCount(); index++) {
 			final int columnIndex = index;
 			final TableViewerColumn column = new TableViewerColumn(tableViewer,
-					SWTUtility.adaptJustification(model
+					EclipseUIUtility.adaptJustification(model
 							.getColumnJustification(columnIndex)));
 			column.getColumn().setText(model.getColumnTitle(index));
-			new ColumnViewerSorter<RunDescription>(tableViewer, column
-					.getColumn()) {
+			new ColumnViewerSorter<RunDescription>(tableViewer,
+					column.getColumn()) {
 				@Override
 				protected int doCompare(final Viewer viewer,
 						final RunDescription e1, final RunDescription e2) {
@@ -137,7 +137,7 @@ public final class RunView extends ViewPart {
 			public void menuAboutToShow(final IMenuManager manager) {
 				manager.add(prepAction);
 				manager.add(showLogAction);
-				//manager.add(convertToXmlAction);
+				// manager.add(convertToXmlAction);
 				manager.add(new Separator());
 				manager.add(inferJSureAnnoAction);
 				manager.add(new Separator());

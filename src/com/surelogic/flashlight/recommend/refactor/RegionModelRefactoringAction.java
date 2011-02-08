@@ -22,7 +22,7 @@ import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.common.model.RunDescription;
 import com.surelogic.flashlight.common.model.RunManager;
-import com.surelogic.jsure.client.eclipse.listeners.ClearProjectListener;
+import com.surelogic.jsure.core.listeners.ClearProjectListener;
 
 public class RegionModelRefactoringAction implements IObjectActionDelegate,
 		IWorkbenchWindowActionDelegate {

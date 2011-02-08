@@ -20,6 +20,7 @@ public class FlashlightImageLoader implements ToolTip.ImageLoader {
 
 	private final Map<String, File> fileMap = new HashMap<String, File>();
 
+	@Override
 	public File getImageFile(String imageName) {
 		synchronized (fileMap) {
 			File f = fileMap.get(imageName);
@@ -65,5 +66,4 @@ public class FlashlightImageLoader implements ToolTip.ImageLoader {
 	public static FlashlightImageLoader getInstance() {
 		return INSTANCE;
 	}
-
 }

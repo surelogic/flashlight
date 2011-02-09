@@ -117,8 +117,30 @@ ul {
 }
 
 
+#deadlock-edges {
+  vertical-align: middle;
+}
+
 #deadlock-threads {
   vertical-align: middle;
+}
+
+.deadlock-trace-menu {
+  vertical-align: middle;
+}
+
+.deadlock-trace-menu ul li a{
+  font-weight: bold;
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+.deadlock-trace-menu ul li {
+  text-weight: bold;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  cursor: pointer;
+  color: #005596;
 }
 
 .badPublishTrace {

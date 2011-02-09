@@ -42,14 +42,15 @@ import com.surelogic.flashlight.common.prep.HTMLBuilder.UL;
 import com.surelogic.flashlight.common.prep.SummaryInfo.BadPublishAccess;
 import com.surelogic.flashlight.common.prep.SummaryInfo.BadPublishEvidence;
 import com.surelogic.flashlight.common.prep.SummaryInfo.CoverageSite;
-import com.surelogic.flashlight.common.prep.SummaryInfo.Cycle;
 import com.surelogic.flashlight.common.prep.SummaryInfo.DeadlockEvidence;
+import com.surelogic.flashlight.common.prep.SummaryInfo.DeadlockTrace;
 import com.surelogic.flashlight.common.prep.SummaryInfo.Edge;
 import com.surelogic.flashlight.common.prep.SummaryInfo.Loc;
 import com.surelogic.flashlight.common.prep.SummaryInfo.Lock;
 import com.surelogic.flashlight.common.prep.SummaryInfo.LockSetEvidence;
 import com.surelogic.flashlight.common.prep.SummaryInfo.LockSetLock;
 import com.surelogic.flashlight.common.prep.SummaryInfo.LockSetSite;
+import com.surelogic.flashlight.common.prep.SummaryInfo.LockTrace;
 import com.surelogic.flashlight.common.prep.SummaryInfo.Site;
 
 public final class WriteHtmlOverview implements IPostPrep {
@@ -249,9 +250,8 @@ public final class WriteHtmlOverview implements IPostPrep {
 			} else {
 				HTMLList deadlockList = c.ul().id("deadlock-list");
 				for (DeadlockEvidence deadlock : deadlocks) {
-					Cycle cycle = deadlock.getCycle();
-					deadlockList.li().id("cycle" + cycle.getNum())
-							.text(String.format("Cycle %d", cycle.getNum()));
+					deadlockList.li().id("cycle" + deadlock.getNum())
+							.text(String.format("Cycle %d", deadlock.getNum()));
 				}
 
 				PrintWriter graphs = null;
@@ -269,8 +269,44 @@ public final class WriteHtmlOverview implements IPostPrep {
 
 				Table dTable = c.table().id("deadlock-container");
 				Row dRow = dTable.row();
-				dRow.td().id("deadlock-widget");
+				dRow.td().rowspan(2).id("deadlock-widget");
 				dRow.td().id("deadlock-threads");
+				Container edges = dTable.row().td().id("deadlock-edges");
+				Container traces = dTable.row().td().colspan(2)
+						.id("deadlock-traces");
+				for (DeadlockEvidence de : deadlocks) {
+					Div traceDiv = traces.div();
+					traceDiv.id("deadlock-traces-cycle" + de.getNum()).clazz(
+							"deadlock-cycle-traces");
+					Div edgeDiv = edges.div();
+					edgeDiv.id("deadlock-edges-cycle" + de.getNum()).clazz(
+							"deadlock-cycle-edges");
+					HTMLList menu = edgeDiv.ul().clazz("deadlock-trace-menu");
+					List<DeadlockTrace> traceList = new ArrayList<DeadlockTrace>(
+							de.getTraces().values());
+					Collections.sort(traceList);
+					for (DeadlockTrace t : traceList) {
+						Edge edge = t.getEdge();
+						String edgeId = "deadlock-trace-"
+								+ edge.getHeld().replace('$', '.') + "--"
+								+ edge.getAcquired().replace('$', '.');
+						menu.li()
+								.a("#" + edgeId)
+								.text(edge.getHeld() + " -> "
+										+ edge.getAcquired());
+						List<LockTrace> lockTrace = t.getLockTrace();
+						Div div = traceDiv.div();
+						div.clazz("deadlock-trace-edge").id(edgeId);
+						div.h(4).text("Held: ");
+						div.span().text(edge.getHeld());
+						UL ul = div.ul();
+						displayTraceList(ul, t.getHeldTrace());
+						div.h(4).text("Acquired: ");
+						div.span().text(edge.getAcquired());
+						ul = div.ul();
+						displayTraceList(ul, t.getTrace());
+					}
+				}
 			}
 
 		}
@@ -280,11 +316,15 @@ public final class WriteHtmlOverview implements IPostPrep {
 			writer.println("var deadlocks = {");
 			for (Iterator<DeadlockEvidence> ci = deadlocks.iterator(); ci
 					.hasNext();) {
-				Cycle c = ci.next().getCycle();
+				DeadlockEvidence c = ci.next();
 				Map<EdgeEntry, EdgeEntry> edges = new TreeMap<EdgeEntry, EdgeEntry>();
+				// Calculate edge entries from the deadlock graph
 				for (Edge e : c.getEdges()) {
 					EdgeEntry reverse = new EdgeEntry(e.getAcquiredId(),
 							e.getHeldId());
+					// Check to see if we have seen this edge's reverse. If so,
+					// make the existing edge entry bidirectional. Otherwise
+					// just add the edge entry as normal.
 					if (edges.containsKey(reverse)) {
 						edges.get(reverse).makeBidirectional(e.getThreads());
 					} else {
@@ -294,6 +334,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 						edges.put(edge, edge);
 					}
 				}
+				// Write out edge entries into the list of cycles
 				writer.printf("\tcycle%d : [", c.getNum());
 				String heldId = null;
 				boolean first = true;
@@ -330,9 +371,8 @@ public final class WriteHtmlOverview implements IPostPrep {
 			}
 			writer.println("};");
 			for (DeadlockEvidence de : deadlocks) {
-				Cycle c = de.getCycle();
-				writer.println("deadlocks.cycle" + c.getNum() + ".threads = "
-						+ jsList(c.getThreads()) + ";");
+				writer.println("deadlocks.cycle" + de.getNum() + ".threads = "
+						+ jsList(de.getThreads()) + ";");
 			}
 		}
 
@@ -536,12 +576,16 @@ public final class WriteHtmlOverview implements IPostPrep {
 					e.getClazz(), e.getName()));
 			LI traceLI = ul.li();
 			ul = traceLI.ul();
-			for (Trace t : trace) {
-				LI li = ul.li();
-				li.text(" at ");
-				displayLocation(li, t.getPackage(), t.getClazz(), t.getLoc(),
-						t.getFile(), t.getLine());
-			}
+			displayTraceList(ul, trace);
+		}
+	}
+
+	static void displayTraceList(final UL ul, final List<Trace> trace) {
+		for (Trace t : trace) {
+			LI li = ul.li();
+			li.text(" at ");
+			displayLocation(li, t.getPackage(), t.getClazz(), t.getLoc(),
+					t.getFile(), t.getLine());
 		}
 	}
 

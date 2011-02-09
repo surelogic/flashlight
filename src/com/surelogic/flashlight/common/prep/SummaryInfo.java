@@ -383,23 +383,72 @@ public class SummaryInfo {
 
 	}
 
+	/**
+	 * An evidence trail for a deadlock. It consists of a set of lock edges that
+	 * could potentially cause a deadlock, and supporting evidence for each edge
+	 * in the form of a stack trace. The stack trace shows where the lock was
+	 * acquired.
+	 * 
+	 * @author nathan
+	 * 
+	 */
 	public static class DeadlockEvidence {
-		private final Cycle cycle;
-		private final List<DeadlockTrace> traces;
 
-		public DeadlockEvidence(final Cycle cycle) {
-			this.cycle = cycle;
-			this.traces = new ArrayList<SummaryInfo.DeadlockTrace>();
+		private final Map<Edge, DeadlockTrace> traces;
+		private final Set<Edge> edges = new TreeSet<Edge>();
+		private final int num;
+
+		public DeadlockEvidence(final int num) {
+			this.num = num;
+			this.traces = new HashMap<Edge, DeadlockTrace>();
 		}
 
-		public Cycle getCycle() {
-			return cycle;
+		public Set<Edge> getEdges() {
+			return edges;
 		}
 
-		public List<DeadlockTrace> getTraces() {
+		public int getNum() {
+			return num;
+		}
+
+		/**
+		 * The set of locks contributing to this deadlock.
+		 * 
+		 * @return
+		 */
+		Set<String> getLocks() {
+			final Set<String> locks = new TreeSet<String>();
+			for (final Edge e : edges) {
+				locks.add(e.getHeld());
+				locks.add(e.getAcquired());
+			}
+			return locks;
+		}
+
+		/**
+		 * The set of threads contributing to this deadlock.
+		 * 
+		 * @return
+		 */
+		Set<String> getThreads() {
+			Set<String> set = new HashSet<String>();
+			for (Edge e : edges) {
+				set.addAll(e.getThreads());
+			}
+			return set;
+		}
+
+		public void addTrace(final DeadlockTrace trace) {
+			traces.put(trace.getEdge(), trace);
+		}
+
+		public DeadlockTrace getTrace(final Edge e) {
+			return traces.get(e);
+		}
+
+		public Map<Edge, DeadlockTrace> getTraces() {
 			return traces;
 		}
-
 	}
 
 	/**
@@ -408,15 +457,17 @@ public class SummaryInfo {
 	 * @author nathan
 	 * 
 	 */
-	public static class DeadlockTrace {
+	public static class DeadlockTrace implements Comparable<DeadlockTrace> {
 		private final Edge edge;
 		private final List<Trace> trace;
 		private final List<LockTrace> lockTrace;
+		private final List<Trace> heldTrace;
 
 		public DeadlockTrace(final Edge edge, final List<Trace> trace,
-				final List<LockTrace> lockTrace) {
+				final List<Trace> heldTrace, final List<LockTrace> lockTrace) {
 			this.edge = edge;
 			this.trace = trace;
+			this.heldTrace = heldTrace;
 			this.lockTrace = lockTrace;
 		}
 
@@ -430,12 +481,21 @@ public class SummaryInfo {
 		}
 
 		/**
-		 * The stack trace for this lock acquisition.
+		 * The stack trace for the acquired lock's acquisition.
 		 * 
 		 * @return
 		 */
 		public List<Trace> getTrace() {
 			return trace;
+		}
+
+		/**
+		 * The stack trace for the held lock's acquisition.
+		 * 
+		 * @return
+		 */
+		public List<Trace> getHeldTrace() {
+			return heldTrace;
 		}
 
 		/**
@@ -446,6 +506,11 @@ public class SummaryInfo {
 		 */
 		public List<LockTrace> getLockTrace() {
 			return lockTrace;
+		}
+
+		@Override
+		public int compareTo(final DeadlockTrace o) {
+			return edge.compareTo(o.getEdge());
 		}
 
 	}
@@ -859,40 +924,6 @@ public class SummaryInfo {
 
 	}
 
-	public static class Cycle {
-		private final Set<Edge> edges = new TreeSet<Edge>();
-		private final int num;
-
-		Cycle(final int num) {
-			this.num = num;
-		}
-
-		public Set<Edge> getEdges() {
-			return edges;
-		}
-
-		public int getNum() {
-			return num;
-		}
-
-		Set<String> getLocks() {
-			final Set<String> locks = new TreeSet<String>();
-			for (final Edge e : edges) {
-				locks.add(e.getHeld());
-				locks.add(e.getAcquired());
-			}
-			return locks;
-		}
-
-		Set<String> getThreads() {
-			Set<String> set = new HashSet<String>();
-			for (Edge e : edges) {
-				set.addAll(e.getThreads());
-			}
-			return set;
-		}
-	}
-
 	public static class Edge implements Comparable<Edge> {
 		private final String held;
 		private final String heldId;
@@ -966,6 +997,13 @@ public class SummaryInfo {
 
 	}
 
+	/**
+	 * Constructs a lock cycle graph, and adds supporting evidence for the graph
+	 * in the form of stack traces that lead to particular lock acquisitions.
+	 * 
+	 * @author nathan
+	 * 
+	 */
 	private static class DeadlockEvidenceHandler implements
 			ResultHandler<List<DeadlockEvidence>> {
 
@@ -978,13 +1016,12 @@ public class SummaryInfo {
 		@Override
 		public List<DeadlockEvidence> handle(final Result result) {
 			List<DeadlockEvidence> deadlocks = new ArrayList<DeadlockEvidence>();
-			DeadlockEvidence deadlock = null;
-			Cycle curCycle = new Cycle(-1);
+			DeadlockEvidence deadlock = new DeadlockEvidence(-1);
+
 			for (final Row r : result) {
 				final int cycle = r.nextInt();
-				if (curCycle.getNum() != cycle) {
-					curCycle = new Cycle(cycle);
-					deadlock = new DeadlockEvidence(curCycle);
+				if (deadlock.getNum() != cycle) {
+					deadlock = new DeadlockEvidence(cycle);
 					deadlocks.add(deadlock);
 				}
 				final String held = r.nextString();
@@ -998,11 +1035,11 @@ public class SummaryInfo {
 						first, last, q.prepared("Deadlock.lockEdgeThreads",
 								new StringRowHandler())
 								.call(heldId, acquiredId));
-				curCycle.getEdges().add(e);
+				deadlock.getEdges().add(e);
 				DeadlockTrace dt = q.prepared("Deadlock.lockEdgeTraces",
 						new DeadlockTraceHandler(q, e))
 						.call(heldId, acquiredId);
-				deadlock.getTraces().add(dt);
+				deadlock.addTrace(dt);
 			}
 			return deadlocks;
 		}
@@ -1024,11 +1061,14 @@ public class SummaryInfo {
 			for (Row r : result) {
 				long traceId = r.nextLong();
 				long lockEventId = r.nextLong();
+				long heldTraceId = r.nextLong();
 				List<Trace> trace = Trace.stackTrace(traceId).perform(q);
+				List<Trace> heldTrace = Trace.stackTrace(heldTraceId)
+						.perform(q);
 				List<LockTrace> lockTrace = q.prepared(
 						"Deadlock.lockEdgeLockTrace", new LockTraceHandler())
 						.call(lockEventId);
-				return new DeadlockTrace(edge, trace, lockTrace);
+				return new DeadlockTrace(edge, trace, heldTrace, lockTrace);
 			}
 			return null;
 		}

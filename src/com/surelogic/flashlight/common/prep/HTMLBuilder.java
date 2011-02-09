@@ -47,6 +47,7 @@ public class HTMLBuilder {
 			this.text = text;
 		}
 
+		@Override
 		public void display(final StringBuilder b, final int depth) {
 			b.append(XMLUtil.escape(text));
 		}
@@ -56,6 +57,7 @@ public class HTMLBuilder {
 		private Head head;
 		private Body body;
 
+		@Override
 		public void display(final StringBuilder b, final int depth) {
 			b.append("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">");
 			b.append("<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\" lang=\"en\">");
@@ -109,6 +111,7 @@ public class HTMLBuilder {
 			return link(new Link("stylesheet", "text/css", href));
 		}
 
+		@Override
 		public void display(final StringBuilder b, final int depth) {
 			b.append("<head>");
 			b.append(String.format("<title>%s</title>", title));
@@ -134,6 +137,7 @@ public class HTMLBuilder {
 			this.href = href;
 		}
 
+		@Override
 		public void display(final StringBuilder b, final int depth) {
 			b.append(String.format(
 					"<link rel=\"%s\" type=\"%s\" href=\"%s\" />", rel, type,
@@ -160,6 +164,7 @@ public class HTMLBuilder {
 			this.ieOnly = ieOnly;
 		}
 
+		@Override
 		public void display(final StringBuilder b, final int depth) {
 			if (ieOnly) {
 				b.append("<!--[if IE]>");
@@ -361,6 +366,7 @@ public class HTMLBuilder {
 			return this;
 		}
 
+		@Override
 		public void display(final StringBuilder b, final int depth) {
 			b.append(String.format("<img src=\"%s\" alt=\"%s\" />", src, alt));
 		}
@@ -400,6 +406,7 @@ public class HTMLBuilder {
 			return r;
 		}
 
+		@Override
 		public void display(final StringBuilder b, final int depth) {
 			tag(b, "table", classes, id, null);
 			if (header != null) {
@@ -451,6 +458,7 @@ public class HTMLBuilder {
 			return this;
 		}
 
+		@Override
 		public void display(final StringBuilder b, final int depth) {
 			b.append("<tr>");
 			for (Col c : cols) {
@@ -468,6 +476,7 @@ public class HTMLBuilder {
 	static class TD extends Container implements Col {
 
 		private int colspan;
+		private int rowspan;
 
 		@Override
 		String getContainerName() {
@@ -479,12 +488,27 @@ public class HTMLBuilder {
 			return this;
 		}
 
+		TD rowspan(final int num) {
+			this.rowspan = num;
+			return this;
+		}
+
 		@Override
 		String additionalAttributes() {
-			if (colspan > 0) {
-				return String.format("colspan=%d", colspan);
+			if (rowspan == 0) {
+				if (colspan == 0) {
+					return null;
+				} else {
+					return String.format("colspan='%d'", colspan);
+				}
+			} else {
+				if (colspan == 0) {
+					return String.format("rowspan='%d'", rowspan);
+				} else {
+					return String.format("colspan='%d' rowspan='%d'", colspan,
+							rowspan);
+				}
 			}
-			return null;
 		}
 	}
 
@@ -527,6 +551,7 @@ public class HTMLBuilder {
 
 	static class HR implements BodyNode {
 
+		@Override
 		public void display(final StringBuilder b, final int depth) {
 			b.append("<hr/>");
 		}

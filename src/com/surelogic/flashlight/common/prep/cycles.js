@@ -214,17 +214,8 @@ function initForceDirected() {
          this.onDragMove(node, eventInfo, e);
       },
       //Add also a click handler to nodes
-      onClick: function(node) {
-         if(!node) return;
-         // Build the right column relations list.
-         // This is done by traversing the clicked node connections.
-         var html = "<h4>" + node.name + "</h4><b> connections:</b><ul><li>",
-         list = [];
-         node.eachAdjacency(function(adj){
-          list.push(adj.nodeTo.name);
-       });
-         //append connections information
-         //$jit.id('inner-details').innerHTML = html + list.join("</li><li>") + "</li></ul>";
+      onClick: function(node, eventInfo, e) {
+         //TODO
       }
    },
    //Number of iterations for the FD algorithm
@@ -256,10 +247,6 @@ function initForceDirected() {
 
 function initGraphs() {
       initForceDirected();
-      var cyc = $("#deadlock-list li").first().attr("id");
-      if(cyc != undefined) {
-        loadDeadlockGraph(deadlocks[cyc]);
-      }
 }
 
 function loadDeadlockGraph(data) {
@@ -418,6 +405,33 @@ function initBadPublishTab() {
    );
 }
 
+
+function displayDeadlock(cyc) {
+   $('.deadlock-cycle-edges').hide();
+   $('#deadlock-edges-' + cyc).show();
+   $('.deadlock-cycle-traces').hide();
+   $("#deadlock-traces-" + cyc).show();
+   loadDeadlockGraph(deadlocks[cyc]);
+}
+
+function initDeadlockGraphTab() {
+   $("#deadlock-list li").click(
+      function (event) {
+         var val = $(this).attr("id");
+         displayDeadlock(val);
+      });
+   $(".deadlock-trace-menu li a").click(
+      function (event) {
+         event.preventDefault();
+         $('.deadlock-trace-edge').hide();
+         $(jq($(this).attr('href'))).show();
+      }
+   );
+   initGraphs();
+   var cyc = $("#deadlock-list li").first().attr("id");
+   displayDeadlock(cyc);
+}
+
 $(document).ready(
    function() {
 
@@ -430,14 +444,7 @@ $(document).ready(
 
       $('.sectionList > li.selected > a[href=index2.html]').each(
          function () {
-            // For some reason there is a history piece that doesn't work, I should
-            // look into this.  For now, disable.
-            $("#deadlock-list li").click(
-               function (event) {
-                  var val = $(this).attr("id");
-                  loadDeadlockGraph(deadlocks[val]);
-               });
-               initGraphs();
+               initDeadlockGraphTab();
          }
       );
       //Init race condition logic

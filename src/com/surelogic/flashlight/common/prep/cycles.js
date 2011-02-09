@@ -427,6 +427,7 @@ function initDeadlockGraphTab() {
          $(jq($(this).attr('href'))).show();
       }
    );
+   $('.deadlock-trace-edge').hide();
    initGraphs();
    var cyc = $("#deadlock-list li").first().attr("id");
    displayDeadlock(cyc);

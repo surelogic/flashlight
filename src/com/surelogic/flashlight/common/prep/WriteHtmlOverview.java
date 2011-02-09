@@ -399,6 +399,12 @@ public final class WriteHtmlOverview implements IPostPrep {
 						"(" + t.getFile() + ":" + t.getLine() + ")", "Package",
 						t.getPackage(), "Class", t.getClazz(), "Method",
 						t.getLocation(), "Line", Integer.toString(t.getLine()));
+				Site a = t.getAcquiredAt();
+				span.text(" via " + a.getLocation());
+				buildCodeLink(span,
+						"(" + a.getFile() + ":" + a.getLine() + ")", "Package",
+						a.getPackage(), "Class", a.getClazz(), "Method",
+						a.getLocation(), "Line", Integer.toString(a.getLine()));
 			}
 		};
 		private final LinkProvider<Site> notHeldProvider = new LinkProvider<Site>() {

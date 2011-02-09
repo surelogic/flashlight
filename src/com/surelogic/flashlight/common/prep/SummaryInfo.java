@@ -1048,8 +1048,7 @@ public class SummaryInfo {
 
 		@Override
 		public LockSetSite handle(final Row r) {
-			// TODO Add a query to find where this lock was acquired
-			return new LockSetSite(sh.handle(r), null);
+			return new LockSetSite(sh.handle(r), sh.handle(r));
 		}
 
 	}

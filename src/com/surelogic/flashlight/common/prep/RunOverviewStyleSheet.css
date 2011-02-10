@@ -117,30 +117,25 @@ ul {
 }
 
 
-#deadlock-edges {
+#deadlock-container td {
   vertical-align: middle;
 }
 
-#deadlock-threads {
-  vertical-align: middle;
+#deadlock-container h2 {
+  text-align: center;
+  text-decoration: underline;
+  color: grey;
+  padding-top: 4px;
 }
 
-.deadlock-trace-menu {
-  vertical-align: middle;
-}
-
-.deadlock-trace-menu ul li a{
+ul.deadlock-trace-menu li a {
   font-weight: bold;
-  padding-top: 4px;
-  padding-bottom: 4px;
 }
 
-.deadlock-trace-menu ul li {
-  text-weight: bold;
+ul.deadlock-trace-menu li {
+  text-align: center;
   padding-top: 4px;
   padding-bottom: 4px;
-  cursor: pointer;
-  color: #005596;
 }
 
 .badPublishTrace {

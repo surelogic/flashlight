@@ -37,6 +37,7 @@ import com.surelogic.flashlight.common.prep.HTMLBuilder.Head;
 import com.surelogic.flashlight.common.prep.HTMLBuilder.LI;
 import com.surelogic.flashlight.common.prep.HTMLBuilder.Row;
 import com.surelogic.flashlight.common.prep.HTMLBuilder.Span;
+import com.surelogic.flashlight.common.prep.HTMLBuilder.TD;
 import com.surelogic.flashlight.common.prep.HTMLBuilder.Table;
 import com.surelogic.flashlight.common.prep.HTMLBuilder.UL;
 import com.surelogic.flashlight.common.prep.SummaryInfo.BadPublishAccess;
@@ -269,9 +270,12 @@ public final class WriteHtmlOverview implements IPostPrep {
 
 				Table dTable = c.table().id("deadlock-container");
 				Row dRow = dTable.row();
-				dRow.td().rowspan(2).id("deadlock-widget");
-				dRow.td().id("deadlock-threads");
-				Container edges = dTable.row().td().id("deadlock-edges");
+				dRow.td().id("deadlock-widget");
+				TD col = dRow.td();
+				col.h(2).text("Edges");
+				Container edges = col.div().id("deadlock-edges");
+				col.h(2).text("Threads");
+				col.div().id("deadlock-threads");
 				Container traces = dTable.row().td().colspan(2)
 						.id("deadlock-traces");
 				for (DeadlockEvidence de : deadlocks) {
@@ -297,11 +301,11 @@ public final class WriteHtmlOverview implements IPostPrep {
 						List<LockTrace> lockTrace = t.getLockTrace();
 						Div div = traceDiv.div();
 						div.clazz("deadlock-trace-edge").id(edgeId);
-						div.h(4).text("Held: ");
+						div.h(4).text("Lock Held: ");
 						div.span().text(edge.getHeld());
 						UL ul = div.ul();
 						displayTraceList(ul, t.getHeldTrace());
-						div.h(4).text("Acquired: ");
+						div.h(4).text("Lock Acquired: ");
 						div.span().text(edge.getAcquired());
 						ul = div.ul();
 						displayTraceList(ul, t.getTrace());

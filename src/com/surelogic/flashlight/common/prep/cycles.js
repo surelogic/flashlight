@@ -271,7 +271,40 @@ function loadDeadlockGraph(data) {
    for(var i = 0; i < data.threads.length; i++) {
       $('#deadlock-threads').append('<h3 class="deadlockThread">' + data.threads[i] + '</h3>');
    }
-
+   var edgeUl = $('#deadlock-edges .deadlock-trace-menu');
+   edgeUl.empty();
+   for(var i = 0; i < data.edges.length; i++) {
+      edgeUl.append('<li><a href=\"#deadlock-trace-' + data.edges[i].id + '">' +
+                    data.edges[i].name + '</a></li>');
+   }
+   $(".deadlock-trace-menu li a").click(
+      function (event) {
+         event.preventDefault();
+         $('.deadlock-trace-edge').hide();
+         var edgeId = $(this).attr('href');
+         $(jq(edgeId)).show();
+         fd.graph.eachNode(function (n) {
+          n.eachAdjacency(function (adj) {
+           var edgeCheck = '#deadlock-trace-' + adj.data.edgeId;
+           if(edgeCheck == edgeId) {
+            adj.setDataset('end', {
+             'color': ACTIVE_COL,
+             'lineWidth': ACTIVE_WIDTH
+            });
+           } else {
+            adj.setDataset('end', {
+             'color': INACTIVE_COL,
+             'lineWidth': INACTIVE_WIDTH
+            });
+           }
+          });
+         });
+         fd.fx.animate({
+           modes: ['edge-property:lineWidth:color'],
+                   duration: 500
+         });
+      }
+   );
    $("#deadlock-threads .deadlockThread").hover(function () {
     var thread = $(this).html();
     fd.graph.eachNode(function (n) {
@@ -420,13 +453,6 @@ function initDeadlockGraphTab() {
          var val = $(this).attr("id");
          displayDeadlock(val);
       });
-   $(".deadlock-trace-menu li a").click(
-      function (event) {
-         event.preventDefault();
-         $('.deadlock-trace-edge').hide();
-         $(jq($(this).attr('href'))).show();
-      }
-   );
    $('.deadlock-trace-edge').hide();
    initGraphs();
    var cyc = $("#deadlock-list li").first().attr("id");

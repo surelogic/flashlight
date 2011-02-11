@@ -291,13 +291,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 					Collections.sort(traceList);
 					for (DeadlockTrace t : traceList) {
 						Edge edge = t.getEdge();
-						String edgeId = "deadlock-trace-"
-								+ edge.getHeld().replace('$', '.') + "--"
-								+ edge.getAcquired().replace('$', '.');
-						menu.li()
-								.a("#" + edgeId)
-								.text(edge.getHeld() + " -> "
-										+ edge.getAcquired());
+						String edgeId = "deadlock-trace-" + edgeId(edge);
 						List<LockTrace> lockTrace = t.getLockTrace();
 						Div div = traceDiv.div();
 						div.clazz("deadlock-trace-edge").id(edgeId);
@@ -309,7 +303,6 @@ public final class WriteHtmlOverview implements IPostPrep {
 						div.span().text(edge.getHeld());
 						ul = div.ul();
 						displayTraceList(ul, t.getHeldTrace());
-
 					}
 				}
 			}
@@ -333,8 +326,8 @@ public final class WriteHtmlOverview implements IPostPrep {
 					if (edges.containsKey(reverse)) {
 						edges.get(reverse).makeBidirectional(e.getThreads());
 					} else {
-						EdgeEntry edge = new EdgeEntry(e.getHeldId(),
-								e.getHeld(), e.getAcquiredId(),
+						EdgeEntry edge = new EdgeEntry(edgeId(e),
+								e.getHeldId(), e.getHeld(), e.getAcquiredId(),
 								e.getAcquired(), e.getThreads());
 						edges.put(edge, edge);
 					}
@@ -365,9 +358,9 @@ public final class WriteHtmlOverview implements IPostPrep {
 					}
 					first = false;
 					writer.printf(
-							"{\"nodeTo\": \"%3$s\", \"data\": { \"$type\": \"%1$s\", \"$direction\": [\"%2$s\",\"%3$s\"], \"threads\": %4$s}}\n",
+							"{'nodeTo': '%3$s', 'data': { '$type': '%1$s', '$direction': ['%2$s','%3$s'], 'threads': %4$s, 'edgeId': '%5$s'}}\n",
 							arrowType, e.getFromName(), e.getToName(),
-							jsList(e.getThreads()));
+							jsList(e.getThreads()), e.getId());
 				}
 				writer.println("]\n}]");
 				if (ci.hasNext()) {
@@ -378,9 +371,29 @@ public final class WriteHtmlOverview implements IPostPrep {
 			for (DeadlockEvidence de : deadlocks) {
 				writer.println("deadlocks.cycle" + de.getNum() + ".threads = "
 						+ jsList(de.getThreads()) + ";");
+
+				List<DeadlockTrace> traceList = new ArrayList<SummaryInfo.DeadlockTrace>(
+						de.getTraces().values());
+				Collections.sort(traceList);
+				List<String> traceObjects = new ArrayList<String>();
+				writer.print("deadlocks.cycle" + de.getNum() + ".edges = [");
+				for (DeadlockTrace t : traceList) {
+					Edge edge = t.getEdge();
+					String edgeName = edge.getHeld() + " -> "
+							+ edge.getAcquired();
+					writer.print(String.format("{'id': '%s', 'name': '%s'}, ",
+							edgeId(edge), edgeName));
+				}
+				writer.println("];");
 			}
+
 		}
 
+	}
+
+	private static String edgeId(final Edge edge) {
+		return edge.getHeld().replace('$', '.') + "--"
+				+ edge.getAcquired().replace('$', '.');
 	}
 
 	private class LockSetSection extends Section {
@@ -827,12 +840,14 @@ public final class WriteHtmlOverview implements IPostPrep {
 
 	/**
 	 * A little helper class to find 2-lock cycles and mark them differently in
-	 * the graph.
+	 * the graph. It has an optional id which is not used for equality, but is
+	 * used when an edge is written out to identify it.
 	 * 
 	 * @author nathan
 	 * 
 	 */
 	private static class EdgeEntry implements Comparable<EdgeEntry> {
+		final String id;
 		final String from;
 		final String fromName;
 		final String to;
@@ -840,8 +855,10 @@ public final class WriteHtmlOverview implements IPostPrep {
 		final Set<String> threads;
 		boolean bidirectional;
 
-		EdgeEntry(final String from, final String fromName, final String to,
-				final String toName, final Collection<String> threads) {
+		EdgeEntry(final String id, final String from, final String fromName,
+				final String to, final String toName,
+				final Collection<String> threads) {
+			this.id = id;
 			this.from = from;
 			this.fromName = fromName;
 			this.to = to;
@@ -851,7 +868,11 @@ public final class WriteHtmlOverview implements IPostPrep {
 
 		@SuppressWarnings("unchecked")
 		public EdgeEntry(final String from, final String to) {
-			this(from, null, to, null, Collections.EMPTY_LIST);
+			this("", from, null, to, null, Collections.EMPTY_LIST);
+		}
+
+		public String getId() {
+			return id;
 		}
 
 		public String getFrom() {

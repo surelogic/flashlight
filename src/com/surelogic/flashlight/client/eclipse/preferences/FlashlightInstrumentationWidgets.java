@@ -16,6 +16,7 @@ import org.eclipse.jface.preference.RadioGroupFieldEditor;
 import org.eclipse.jface.preference.ScaleFieldEditor;
 import org.eclipse.swt.widgets.Composite;
 
+import com.surelogic._flashlight.rewriter.FlashlightNames;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.ui.preferences.LabeledScaleFieldEditor;
 
@@ -32,14 +33,30 @@ public class FlashlightInstrumentationWidgets {
 
 	public FlashlightInstrumentationWidgets(final DialogPage page,
 			final IPreferenceStore prefs, final Composite group) {
-		this(page, prefs, group, group);
+		this(page, prefs, group, group, group);
 	}
 
 	public FlashlightInstrumentationWidgets(final DialogPage page,
-			final IPreferenceStore prefs, final Composite group1,
-			final Composite group2) {
+			final IPreferenceStore prefs, final Composite group3,
+			final Composite group1, final Composite group2) {
 		this.f_page = page;
 		this.f_preferences = prefs;
+
+		final RadioGroupFieldEditor f_storeType = new RadioGroupFieldEditor(
+				FlashlightPreferencesUtility.STORE_MODE,
+				I18N.msg("flashlight.preference.page.storeType"),
+				2,
+				new String[][] {
+						{ I18N.msg("flashlight.preference.page.monitorStore"),
+								FlashlightNames.FLASHLIGHT_MONITOR_STORE },
+						{
+								I18N.msg("flashlight.preference.page.postMortemStore"),
+								FlashlightNames.FLASHLIGHT_STORE } }, group3);
+		finishSetup(group3, f_storeType);
+		f_consolePort = new IntegerFieldEditor(
+				FlashlightPreferencesUtility.CONSOLE_PORT,
+				I18N.msg("flashlight.preference.page.consolePort"), group3);
+		finishIntSetup(group3, f_consolePort, 1024, 65535);
 
 		final RadioGroupFieldEditor f_collectionType = new RadioGroupFieldEditor(
 				FlashlightPreferencesUtility.COLLECTION_TYPE,
@@ -88,10 +105,6 @@ public class FlashlightInstrumentationWidgets {
 				I18N.msg("flashlight.preference.page.useSpyThread"), group2);
 		finishSetup(group2, f_useSpyThread);
 
-		f_consolePort = new IntegerFieldEditor(
-				FlashlightPreferencesUtility.CONSOLE_PORT,
-				I18N.msg("flashlight.preference.page.consolePort"), group2);
-		finishIntSetup(group2, f_consolePort, 1024, 65535);
 	}
 
 	private void finishScaleSetup(final Composite parent,

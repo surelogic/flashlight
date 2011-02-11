@@ -33,7 +33,8 @@ import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferences
 public class FlashlightTab extends AbstractLaunchConfigurationTab {
 	private static final String[] StringAttrs = {
 			FlashlightPreferencesUtility.OUTPUT_TYPE,
-			FlashlightPreferencesUtility.COLLECTION_TYPE, };
+			FlashlightPreferencesUtility.COLLECTION_TYPE,
+			FlashlightPreferencesUtility.STORE_MODE, };
 	private static final String[] BooleanAttrs = {
 			FlashlightPreferencesUtility.USE_REFINERY,
 			FlashlightPreferencesUtility.USE_SPY,
@@ -51,7 +52,8 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 	private final Collection<FieldEditor> f_editors = new ArrayList<FieldEditor>();
 	private final IPreferenceStore prefs = new PreferenceStore();
 	private final IPropertyChangeListener prefsListener = new IPropertyChangeListener() {
-		public void propertyChange(PropertyChangeEvent event) {
+		@Override
+		public void propertyChange(final PropertyChangeEvent event) {
 			System.out.println(event.getProperty() + " => "
 					+ event.getNewValue());
 			setDirty(true);
@@ -60,7 +62,8 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 	private FieldEditor[] refineryControls;
 	private Group advanced;
 
-	public void createControl(Composite parent) {
+	@Override
+	public void createControl(final Composite parent) {
 		// First
 		final Composite outer = new Composite(parent, SWT.NONE);
 		GridLayout layout = new GridLayout();
@@ -69,13 +72,16 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 		outer.setLayout(layout);
 		setControl(outer);
 
+		final Group store = createNamedGroup(outer, "Store options:", 2);
+		store.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		final Group output = createNamedGroup(outer, "Data file options:", 2);
 		output.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		advanced = createNamedGroup(outer, "Data collection options:", 2);
 		advanced.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
 		FlashlightInstrumentationWidgets widgets = new FlashlightInstrumentationWidgets(
-				null, prefs, output, advanced);
+				null, prefs, store, output, advanced);
+		store.setLayout(new GridLayout(3, false));
 		output.setLayout(new GridLayout(3, false));
 		advanced.setLayout(new GridLayout(3, false));
 
@@ -97,7 +103,8 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 			final boolean useRefinery = FlashlightPreferencesUtility.USE_REFINERY
 					.equals(e.getPreferenceName());
 			e.setPropertyChangeListener(new IPropertyChangeListener() {
-				public void propertyChange(PropertyChangeEvent event) {
+				@Override
+				public void propertyChange(final PropertyChangeEvent event) {
 					if (FieldEditor.VALUE.equals(event.getProperty())) {
 						if (useRefinery) {
 							Boolean value = (Boolean) event.getNewValue();
@@ -114,7 +121,7 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 		resetToDefaults.setText("Reset to defaults");
 		resetToDefaults.addSelectionListener(new SelectionAdapter() {
 			@Override
-			public void widgetSelected(SelectionEvent e) {
+			public void widgetSelected(final SelectionEvent e) {
 				copyPrefsFromDefaults();
 				for (FieldEditor fe : f_editors) {
 					fe.load();
@@ -124,8 +131,8 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 		});
 	}
 
-	private static Group createNamedGroup(Composite parent, String name,
-			int columns) {
+	private static Group createNamedGroup(final Composite parent,
+			final String name, final int columns) {
 		final Group outer = new Group(parent, SWT.NONE);
 		outer.setFont(parent.getFont());
 		GridLayout gridLayout = new GridLayout();
@@ -141,6 +148,7 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 		return "com.surelogic.flashlight.client.eclipse.launch.FlashlightTab";
 	}
 
+	@Override
 	public String getName() {
 		return "Data Collection";
 	}
@@ -159,7 +167,8 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 	 * @param configuration
 	 *            launch configuration
 	 */
-	public void initializeFrom(ILaunchConfiguration config) {
+	@Override
+	public void initializeFrom(final ILaunchConfiguration config) {
 		try {
 			final boolean useRefinery = config.getAttribute(
 					FlashlightPreferencesUtility.USE_REFINERY, true);
@@ -200,7 +209,8 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 	 * @param configuration
 	 *            launch configuration
 	 */
-	public void performApply(ILaunchConfigurationWorkingCopy config) {
+	@Override
+	public void performApply(final ILaunchConfigurationWorkingCopy config) {
 		for (FieldEditor e : f_editors) {
 			e.store();
 		}
@@ -229,7 +239,8 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 	 * @param configuration
 	 *            launch configuration
 	 */
-	public void setDefaults(ILaunchConfigurationWorkingCopy config) {
+	@Override
+	public void setDefaults(final ILaunchConfigurationWorkingCopy config) {
 		// System.err.println("setDefaults(): "+config.getName());
 		copyFromPrefStore(config, EclipseUIUtility.getPreferences());
 	}

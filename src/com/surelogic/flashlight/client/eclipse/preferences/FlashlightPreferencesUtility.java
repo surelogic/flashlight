@@ -1,10 +1,16 @@
 package com.surelogic.flashlight.client.eclipse.preferences;
 
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_COLLECTION_TYPE_DEFAULT;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_CONSOLE_PORT_DEFAULT;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_OUTPUT_TYPE_DEFAULT;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_OUTQ_SIZE_DEFAULT;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_RAWQ_SIZE_DEFAULT;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_REFINERY_SIZE_DEFAULT;
+
 import java.io.File;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.surelogic._flashlight.common.InstrumentationConstants.*;
-
+import com.surelogic._flashlight.rewriter.FlashlightNames;
 import com.surelogic.common.FileUtility;
 import com.surelogic.common.core.EclipseUtility;
 import com.surelogic.common.core.preferences.AutoPerspectiveSwitchPreferences;
@@ -38,8 +44,9 @@ public final class FlashlightPreferencesUtility {
 	public static void initializeDefaultScope() {
 		if (f_initializationNeeded.compareAndSet(true, false)) {
 			int cpuCount = Runtime.getRuntime().availableProcessors();
-			if (cpuCount < 1)
+			if (cpuCount < 1) {
 				cpuCount = 1;
+			}
 			EclipseUtility.setDefaultIntPreference(RAWQ_SIZE,
 					FL_RAWQ_SIZE_DEFAULT);
 			EclipseUtility.setDefaultIntPreference(OUTQ_SIZE,
@@ -53,6 +60,8 @@ public final class FlashlightPreferencesUtility {
 			EclipseUtility.setDefaultBooleanPreference(
 					AUTO_INCREASE_HEAP_AT_LAUNCH, true);
 			EclipseUtility.setDefaultBooleanPreference(USE_REFINERY, true);
+			EclipseUtility.setDefaultStringPreference(STORE_MODE,
+					FlashlightNames.FLASHLIGHT_STORE);
 			EclipseUtility.setDefaultStringPreference(COLLECTION_TYPE,
 					FL_COLLECTION_TYPE_DEFAULT.name());
 			EclipseUtility.setDefaultBooleanPreference(OUTPUT_TYPE,
@@ -117,6 +126,7 @@ public final class FlashlightPreferencesUtility {
 			+ "prompt.to.prep.all.raw.data";
 	public static final String AUTO_PREP_ALL_RAW_DATA = PREFIX
 			+ "auto.prep.all.raw.data";
+	public static final String STORE_MODE = PREFIX + "store.mode";
 
 	private static final String FLASHLIGHT_DATA_DIRECTORY = PREFIX
 			+ "data.directory";
@@ -173,7 +183,7 @@ public final class FlashlightPreferencesUtility {
 	public static AutoPerspectiveSwitchPreferences getSwitchPreferences() {
 		return new AutoPerspectiveSwitchPreferences() {
 			@Override
-			public String getConstant(String suffix) {
+			public String getConstant(final String suffix) {
 				return PREFIX + suffix;
 			}
 		};

@@ -13,6 +13,7 @@ import org.eclipse.jdt.launching.IVMRunner;
 import org.eclipse.jdt.launching.JavaLaunchDelegate;
 
 import com.surelogic._flashlight.common.InstrumentationConstants;
+import com.surelogic._flashlight.rewriter.FlashlightNames;
 import com.surelogic.common.core.logging.SLEclipseStatusUtility;
 import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
 
@@ -56,11 +57,14 @@ public final class FlashlightLaunchConfigurationDelegate extends
 		LaunchUtils.divideClasspathAsLocations(classpath, user, boot, system);
 
 		/* Get the entries that the user does not want instrumented */
-		final List noInstrumentUser = config.getAttribute(
-				FlashlightPreferencesUtility.CLASSPATH_ENTRIES_TO_NOT_INSTRUMENT,
-				Collections.emptyList());
-		final List noInstrumentBoot = config.getAttribute(
-				FlashlightPreferencesUtility.BOOTPATH_ENTRIES_TO_NOT_INSTRUMENT, boot);
+		final List noInstrumentUser = config
+				.getAttribute(
+						FlashlightPreferencesUtility.CLASSPATH_ENTRIES_TO_NOT_INSTRUMENT,
+						Collections.emptyList());
+		final List noInstrumentBoot = config
+				.getAttribute(
+						FlashlightPreferencesUtility.BOOTPATH_ENTRIES_TO_NOT_INSTRUMENT,
+						boot);
 
 		/* Convert to the entries that the user does want instrumented */
 		final List<String> instrumentUser = new ArrayList<String>(user);
@@ -68,10 +72,15 @@ public final class FlashlightLaunchConfigurationDelegate extends
 		instrumentUser.removeAll(noInstrumentUser);
 		instrumentBoot.removeAll(noInstrumentBoot);
 
+		String store = config.getAttribute(
+				FlashlightPreferencesUtility.STORE_MODE,
+				FlashlightNames.FLASHLIGHT_STORE);
+
 		final int version = getMajorJavaVersion(vm);
-		return new FlashlightVMRunner(runner, mainType, LaunchUtils
-				.convertToLocations(classpath), instrumentUser, instrumentBoot,
-				version == 4, false);
+
+		return new FlashlightVMRunner(runner, mainType,
+				LaunchUtils.convertToLocations(classpath), instrumentUser,
+				instrumentBoot, version == 4, store);
 	}
 
 	static int getMajorJavaVersion(final IVMInstall vm) {
@@ -91,8 +100,8 @@ public final class FlashlightLaunchConfigurationDelegate extends
 			final String javaVersion = vm2.getJavaVersion();
 			final int majorRel = Integer.parseInt(javaVersion.substring(2, 3));
 			if (majorRel < MIN_JAVA_VERSION) {
-				throw new CoreException(SLEclipseStatusUtility
-						.createErrorStatus(0,
+				throw new CoreException(
+						SLEclipseStatusUtility.createErrorStatus(0,
 								"Flashlight requires minimum VM version 1."
 										+ MIN_JAVA_VERSION + " (VM version is "
 										+ javaVersion + ")."));

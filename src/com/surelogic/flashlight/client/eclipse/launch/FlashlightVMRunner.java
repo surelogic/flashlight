@@ -1,7 +1,20 @@
 package com.surelogic.flashlight.client.eclipse.launch;
 
-import static com.surelogic._flashlight.common.InstrumentationConstants.*;
-import static com.surelogic.flashlight.common.files.InstrumentationFileHandles.*;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_COLLECTION_TYPE;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_CONSOLE_PORT;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_DATE_OVERRIDE;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_DIR;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_FIELDS_FILE;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_NO_SPY;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_OUTPUT_TYPE;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_OUTQ_SIZE;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_RAWQ_SIZE;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_REFINERY_OFF;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_REFINERY_SIZE;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_SITES_FILE;
+import static com.surelogic.flashlight.common.files.InstrumentationFileHandles.FIELDS_FILE_NAME;
+import static com.surelogic.flashlight.common.files.InstrumentationFileHandles.INSTRUMENTATION_LOG_FILE_NAME;
+import static com.surelogic.flashlight.common.files.InstrumentationFileHandles.SITES_FILE_NAME;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -92,7 +105,7 @@ public final class FlashlightVMRunner implements IVMRunner {
 	private final List<String> instrumentBoot;
 
 	private final boolean ALWAYS_APPEND_TO_BOOT = true;
-	private final boolean isMonitor;
+	private final String store;
 
 	private static final class Entry {
 		public final String outputName;
@@ -106,8 +119,8 @@ public final class FlashlightVMRunner implements IVMRunner {
 
 	public FlashlightVMRunner(final IVMRunner other, final String mainType,
 			final List<String> classpath, final List<String> iUser,
-			final List<String> iBoot, final boolean java14,
-			final boolean isMonitor) throws CoreException {
+			final List<String> iBoot, final boolean java14, final String store)
+			throws CoreException {
 		delegateRunner = other;
 		this.classpath = classpath;
 		instrumentUser = iUser;
@@ -158,9 +171,14 @@ public final class FlashlightVMRunner implements IVMRunner {
 		if (!sourceDir.exists()) {
 			sourceDir.mkdir();
 		}
-		this.isMonitor = isMonitor;
+		if (!(FlashlightNames.FLASHLIGHT_MONITOR_STORE.equals(store) || FlashlightNames.FLASHLIGHT_STORE
+				.equals(store))) {
+			throw new IllegalStateException("Invalid store: " + store);
+		}
+		this.store = store;
 	}
 
+	@Override
 	public void run(final VMRunnerConfiguration configuration,
 			final ILaunch launch, final IProgressMonitor monitor)
 			throws CoreException {
@@ -230,7 +248,7 @@ public final class FlashlightVMRunner implements IVMRunner {
 				launch, LaunchTerminationDetectionJob.DEFAULT_PERIOD) {
 			@Override
 			protected IStatus terminationAction() {
-				if (!isMonitor) {
+				if (!FlashlightNames.FLASHLIGHT_MONITOR_STORE.equals(store)) {
 					final UIJob job = new SwitchToFlashlightPerspectiveJob();
 					job.schedule();
 				}
@@ -372,11 +390,7 @@ public final class FlashlightVMRunner implements IVMRunner {
 			} else {
 				configBuilder = new ConfigurationBuilder(flashlightProps);
 			}
-
-			if (isMonitor) {
-				configBuilder
-						.setStoreClassName(FlashlightNames.FLASHLIGHT_MONITOR_STORE);
-			}
+			configBuilder.setStoreClassName(store);
 			try {
 				configBuilder
 						.setIndirectUseDefault(launch

@@ -301,14 +301,15 @@ public final class WriteHtmlOverview implements IPostPrep {
 						List<LockTrace> lockTrace = t.getLockTrace();
 						Div div = traceDiv.div();
 						div.clazz("deadlock-trace-edge").id(edgeId);
-						div.h(4).text("Lock Held: ");
-						div.span().text(edge.getHeld());
-						UL ul = div.ul();
-						displayTraceList(ul, t.getHeldTrace());
 						div.h(4).text("Lock Acquired: ");
 						div.span().text(edge.getAcquired());
-						ul = div.ul();
+						UL ul = div.ul();
 						displayTraceList(ul, t.getTrace());
+						div.h(4).text("Lock Held: ");
+						div.span().text(edge.getHeld());
+						ul = div.ul();
+						displayTraceList(ul, t.getHeldTrace());
+
 					}
 				}
 			}

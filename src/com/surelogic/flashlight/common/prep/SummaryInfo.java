@@ -561,6 +561,12 @@ public class SummaryInfo {
 		}
 	}
 
+	/**
+	 * The site of some amount of lock contention.
+	 * 
+	 * @author nathan
+	 * 
+	 */
 	public static class ContentionSite {
 		private final Site s;
 		private final long durationNs;

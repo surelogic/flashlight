@@ -2,6 +2,8 @@ package com.surelogic._flashlight.monitor;
 
 import java.util.Map;
 
+import com.surelogic._flashlight.FLStore;
+
 /**
  * A thread that periodically spies on the threads within the instrumented
  * program and shuts down flashlight if the program has completed.
@@ -31,7 +33,7 @@ public final class MonitorSpy extends Thread {
 
 	@Override
 	public void run() {
-		MonitorStore.flashlightThread();
+		FLStore.flashlightThread();
 
 		while (true) {
 			try {

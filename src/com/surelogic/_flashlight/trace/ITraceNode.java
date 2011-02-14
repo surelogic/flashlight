@@ -1,6 +1,6 @@
 package com.surelogic._flashlight.trace;
 
-import com.surelogic._flashlight.Store;
+import com.surelogic._flashlight.PostMortemStore;
 import com.surelogic._flashlight.monitor.MonitorStore;
 
 /**
@@ -15,7 +15,7 @@ interface ITraceNode {
 
 	ITraceNode peekParent();
 
-	TraceNode getNode(Store.State state);
+	TraceNode getNode(PostMortemStore.State state);
 
 	TraceNode getNode(MonitorStore.State state);
 

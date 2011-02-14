@@ -2,12 +2,13 @@ package com.surelogic._flashlight;
 
 final class AfterIntrinsicLockRelease extends IntrinsicLock {
 
-	AfterIntrinsicLockRelease(final Object lockObject, final long siteId, Store.State state) {
+	AfterIntrinsicLockRelease(final Object lockObject, final long siteId,
+			final PostMortemStore.State state) {
 		super(lockObject, siteId, state);
 	}
 
 	@Override
-	void accept(EventVisitor v) {
+	void accept(final EventVisitor v) {
 		v.visit(this);
 	}
 

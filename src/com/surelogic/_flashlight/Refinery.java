@@ -1,7 +1,9 @@
 package com.surelogic._flashlight;
 
 import java.lang.ref.PhantomReference;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 
 import com.surelogic._flashlight.common.IdConstants;
@@ -17,6 +19,9 @@ import com.surelogic._flashlight.common.IdConstants;
  * to be removed during data prep.
  */
 final class Refinery extends AbstractRefinery {
+
+	private final RunConf f_conf;
+
 	private final BlockingQueue<List<Event>> f_rawQueue;
 
 	private final BlockingQueue<List<Event>> f_outQueue;
@@ -26,9 +31,9 @@ final class Refinery extends AbstractRefinery {
 	 */
 	private final int f_size;
 
-	//private int filtered = 0, total = 0;
-	
-	Refinery(final BlockingQueue<List<Event>> rawQueue,
+	// private int filtered = 0, total = 0;
+
+	Refinery(final RunConf conf, final BlockingQueue<List<Event>> rawQueue,
 			final BlockingQueue<List<Event>> outQueue, final int size) {
 		super("flashlight-refinery");
 		assert rawQueue != null;
@@ -36,6 +41,7 @@ final class Refinery extends AbstractRefinery {
 		assert outQueue != null;
 		f_outQueue = outQueue;
 		f_size = size;
+		f_conf = conf;
 	}
 
 	private boolean f_finished = false;
@@ -44,14 +50,14 @@ final class Refinery extends AbstractRefinery {
 
 	private long f_garbageCollectedObjectCount = 0;
 
-	private long f_threadLocalFieldCount = 0;	
-		
+	private long f_threadLocalFieldCount = 0;
+
 	@Override
 	public void run() {
-		final boolean filter = IdConstants.filterEvents;		
-		Store.flashlightThread();
+		final boolean filter = IdConstants.filterEvents;
+		FLStore.flashlightThread();
 		if (StoreConfiguration.debugOn()) {
-			System.err.println("Filter events = "+filter);
+			System.err.println("Filter events = " + filter);
 		}
 
 		final List<List<Event>> buf = new ArrayList<List<Event>>();
@@ -62,7 +68,7 @@ final class Refinery extends AbstractRefinery {
 					first = f_rawQueue.take();
 				} catch (InterruptedException e) {
 					// Ignored
-					Store.logAProblem("Interrupted while calling take()", e);
+					f_conf.logAProblem("Interrupted while calling take()", e);
 					continue;
 				}
 				if (first != null) {
@@ -70,23 +76,22 @@ final class Refinery extends AbstractRefinery {
 				} else {
 					continue;
 				}
-				//int num = 
+				// int num =
 				f_rawQueue.drainTo(buf);
-				// Caused lots of sync overhead 
+				// Caused lots of sync overhead
 				// buf.add(Store.flushLocalQueues());
-				
+
 				/*
-				System.err.println("Refinery: got "+buf.size()+" lists ("+num+")");
-				if (buf.size() == 0) {
-					continue;
-				}
-				*/
-				for(List<Event> l : buf) {
-					for(Event e : l) {
+				 * System.err.println("Refinery: got "+buf.size()+" lists ("+num+
+				 * ")"); if (buf.size() == 0) { continue; }
+				 */
+				for (List<Event> l : buf) {
+					for (Event e : l) {
 						if (e == FinalEvent.FINAL_EVENT) {
 							/*
-							 * We need to delay putting the final event on the out queue
-							 * until all the thread-local events get added.
+							 * We need to delay putting the final event on the
+							 * out queue until all the thread-local events get
+							 * added.
 							 */
 							f_finished = true;
 							break;
@@ -97,26 +102,26 @@ final class Refinery extends AbstractRefinery {
 						}
 					}
 					f_eventCache.add(l);
-					//total += l.size();
-					//System.err.println("Refinery: added a list of "+l.size());
+					// total += l.size();
+					// System.err.println("Refinery: added a list of "+l.size());
 				}
 				buf.clear();
 
 				if (f_finished) {
 					final List<Event> l = Store.flushLocalQueues();
 					if (filter) {
-						for(Event e : l) {
+						for (Event e : l) {
 							e.accept(f_detectSharedFieldsVisitor);
 						}
 					}
 					f_eventCache.add(l);
-				}			
-				
+				}
+
 				processGarbageCollectedObjects(filter);
 				if (f_finished) {
 					removeRemainingThreadLocalFields();
 				}
-				
+
 				final boolean xferd = transferEventsToOutQueue();
 				if (!xferd) {
 					try {
@@ -126,19 +131,18 @@ final class Refinery extends AbstractRefinery {
 					}
 				}
 			} catch (IllegalArgumentException e) {
-				Store.logAProblem("refinery was interrupted...a bug");
+				f_conf.logAProblem("refinery was interrupted...a bug");
 			}
 		}
-		List<Event> last = new ArrayList<Event>();		
+		List<Event> last = new ArrayList<Event>();
 		last.add(FinalEvent.FINAL_EVENT);
 		Store.putInQueue(f_outQueue, last);
-		Store.log("refinery completed (" + f_garbageCollectedObjectCount
-				+ " object(s) garbage collected : "
-				+ f_threadLocalFieldCount
+		f_conf.log("refinery completed (" + f_garbageCollectedObjectCount
+				+ " object(s) garbage collected : " + f_threadLocalFieldCount
 				+ " thread-local fields observed)");
-	}	
-  
-	private final EventVisitor f_detectSharedFieldsVisitor = new EventVisitor() {		
+	}
+
+	private final EventVisitor f_detectSharedFieldsVisitor = new EventVisitor() {
 		@Override
 		void visit(final FieldReadInstance e) {
 			visitFieldAccess(e);
@@ -160,9 +164,9 @@ final class Refinery extends AbstractRefinery {
 		}
 
 		private void visitFieldAccess(final FieldAccess e) {
-			final IFieldInfo info   = e.getFieldInfo();
-			final long key          = e.getFieldId();
-			info.setLastThread(key, e.getWithinThread());	  
+			final IFieldInfo info = e.getFieldInfo();
+			final long key = e.getFieldId();
+			info.setLastThread(key, e.getWithinThread());
 		}
 	};
 
@@ -174,22 +178,24 @@ final class Refinery extends AbstractRefinery {
 	private final List<IdPhantomReference> f_deadList = new ArrayList<IdPhantomReference>();
 
 	private final SingleThreadedRefs f_singleThreadedList = new SingleThreadedRefs();
-	
+
 	/**
 	 * Examines each garbage collected object and cleans up our information
 	 * about shared fields and thread-local fields.
-	 * @param filter 
+	 * 
+	 * @param filter
 	 */
-	private void processGarbageCollectedObjects(boolean filter) {
+	private void processGarbageCollectedObjects(final boolean filter) {
 		f_deadList.clear();
 		if (Phantom.drainTo(f_deadList) > 0) {
 			final List<Event> events = new ArrayList<Event>();
-			final SingleThreadedRefs deadRefs = filter ? new SingleThreadedRefs() : null;
+			final SingleThreadedRefs deadRefs = filter ? new SingleThreadedRefs()
+					: null;
 			f_garbageCollectedObjectCount += f_deadList.size();
 			for (IdPhantomReference pr : f_deadList) {
 				if (pr.shouldBeIgnored()) {
 					continue;
-				}			
+				}
 				if (filter) {
 					deadRefs.addSingleThreadedObject(pr);
 					removeThreadLocalFieldsWithin(events, deadRefs, pr);
@@ -199,21 +205,21 @@ final class Refinery extends AbstractRefinery {
 			}
 			if (filter) {
 				removeEventsAbout(deadRefs);
-			}			
+			}
 			f_eventCache.add(events);
-			//System.err.println("Refinery: added a GC list of "+events.size());
+			// System.err.println("Refinery: added a GC list of "+events.size());
 		}
 	}
-	
+
 	/**
 	 * Remove all mappings within the {@link #f_fieldToThread} map that are
-	 * within the garbage collected object. 
+	 * within the garbage collected object.
 	 * 
 	 * @param pr
 	 *            the phantom of the object.
 	 */
 	private void removeThreadLocalFieldsWithin(final List<Event> events,
-			SingleThreadedRefs refs, final PhantomReference pr) {
+			final SingleThreadedRefs refs, final PhantomReference pr) {
 		/*
 		 * Collect up all the thread-local fields within the garbage collected
 		 * object.
@@ -221,53 +227,54 @@ final class Refinery extends AbstractRefinery {
 		if (pr instanceof ObjectPhantomReference) {
 			ObjectPhantomReference obj = (ObjectPhantomReference) pr;
 			f_singleThreadedList.clear();
-			
-			final boolean added = obj.getFieldInfo().getSingleThreadedFields(f_singleThreadedList);			
+
+			final boolean added = obj.getFieldInfo().getSingleThreadedFields(
+					f_singleThreadedList);
 			if (added) {
-				refs.addSingleThreadedFields(f_singleThreadedList.getSingleThreadedFields());
+				refs.addSingleThreadedFields(f_singleThreadedList
+						.getSingleThreadedFields());
 				markAsSingleThreaded(events, f_singleThreadedList);
 				f_singleThreadedList.clear();
 			}
-		}	
+		}
 	}
-	
-	private void markAsSingleThreaded(final List<Event> events, 
-			                          final SingleThreadedRefs refs) {
+
+	private void markAsSingleThreaded(final List<Event> events,
+			final SingleThreadedRefs refs) {
 		f_threadLocalFieldCount += refs.getSingleThreadedFields().size();
 		events.addAll(refs.getSingleThreadedFields());
 	}
 
 	/**
-	 * Removes all <code>FieldAccess</code> events in the event cache about
-	 * any field in the passed set.
+	 * Removes all <code>FieldAccess</code> events in the event cache about any
+	 * field in the passed set.
 	 * 
 	 * @param fields
 	 *            the set of fields to remove events about.
 	 */
 	private void removeEventsAbout(final SingleThreadedRefs refs) {
-		//final int cacheSize = f_eventCache.size();
-		for(List<Event> l : f_eventCache) {
+		// final int cacheSize = f_eventCache.size();
+		for (List<Event> l : f_eventCache) {
 			final int size = l.size();
-			for(int i=0; i<size; i++) {
+			for (int i = 0; i < size; i++) {
 				Event e = l.get(i);
 				if (e instanceof FieldAccess) {
-					//System.out.println("Looking at field access");
+					// System.out.println("Looking at field access");
 					if (refs.containsField(e)) {
-						//System.out.println("Removed field access");
+						// System.out.println("Removed field access");
 						l.set(i, null);
 						/*
-					filtered++;
-					if ((filtered & 0xff) == 0) {
-						System.err.println("Filtered "+filtered+" out of "+total+" ("+cacheSize+")");
-					}
+						 * filtered++; if ((filtered & 0xff) == 0) {
+						 * System.err.println
+						 * ("Filtered "+filtered+" out of "+total
+						 * +" ("+cacheSize+")"); }
 						 */
 					}
-				}
-				else if (e instanceof IndirectAccess) {
-					//System.out.println("Looking at indirect access");
+				} else if (e instanceof IndirectAccess) {
+					// System.out.println("Looking at indirect access");
 					IndirectAccess a = (IndirectAccess) e;
 					if (refs.containsObject(a.getReceiver())) {
-						//System.out.println("Removed indirect access");
+						// System.out.println("Removed indirect access");
 						l.set(i, null);
 					}
 				}
@@ -282,23 +289,26 @@ final class Refinery extends AbstractRefinery {
 	 * thread-local or shared.
 	 */
 	private void removeRemainingThreadLocalFields() {
-	  SingleThreadedRefs refs = ObjectPhantomReference.getAllSingleThreadedFields();
-	  ObservedField.getFieldInfo().getSingleThreadedFields(refs);
-	  removeEventsAbout(refs);
-	  
-	  final List<Event> events = new ArrayList<Event>();
-	  markAsSingleThreaded(events, refs);
-	  f_eventCache.add(events);
+		SingleThreadedRefs refs = ObjectPhantomReference
+				.getAllSingleThreadedFields();
+		ObservedField.getFieldInfo().getSingleThreadedFields(refs);
+		removeEventsAbout(refs);
+
+		final List<Event> events = new ArrayList<Event>();
+		markAsSingleThreaded(events, refs);
+		f_eventCache.add(events);
 	}
 
 	/**
 	 * Transfers events to the out queue. If we are finished then we add all
-	 * events, otherwise we just add enough to keep our cache at {@link #f_size}.
-	 * @param l 
+	 * events, otherwise we just add enough to keep our cache at {@link #f_size}
+	 * .
+	 * 
+	 * @param l
 	 */
 	private boolean transferEventsToOutQueue() {
-		int transferCount = f_finished ? f_eventCache.size() : 
-			                                   f_eventCache .size() - f_size;
+		int transferCount = f_finished ? f_eventCache.size() : f_eventCache
+				.size() - f_size;
 		while (transferCount > 0) {
 			final List<Event> buf = f_eventCache.removeFirst();
 			transferCount--;

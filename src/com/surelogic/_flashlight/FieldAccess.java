@@ -7,8 +7,9 @@ abstract class FieldAccess extends TracedEvent {
 	long getFieldId() {
 		return f_fieldId;
 	}
-	
-	FieldAccess(final long fieldId, final long siteId, Store.State state) {
+
+	FieldAccess(final long fieldId, final long siteId,
+			final PostMortemStore.State state) {
 		super(siteId, state);
 		f_fieldId = fieldId;
 	}
@@ -18,10 +19,10 @@ abstract class FieldAccess extends TracedEvent {
 	}
 
 	abstract IFieldInfo getFieldInfo();
-	
+
 	@Override
 	public abstract int hashCode();
-	
+
 	@Override
 	public abstract boolean equals(Object o);
 }

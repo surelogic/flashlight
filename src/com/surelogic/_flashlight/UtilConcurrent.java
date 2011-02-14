@@ -10,7 +10,7 @@ import java.util.concurrent.locks.ReadWriteLock;
  */
 public final class UtilConcurrent {
 
-	static private final Set<IdPhantomReference> f_knownReadWriteLockIds = new HashSet<IdPhantomReference>();
+	private final Set<IdPhantomReference> f_knownReadWriteLockIds = new HashSet<IdPhantomReference>();
 
 	/**
 	 * Adds a ReadWriteLock reference to the set of known instances.
@@ -20,19 +20,16 @@ public final class UtilConcurrent {
 	 * @return {@code true} if this set did not already contain the specified
 	 *         element
 	 */
-	public static boolean addReadWriteLock(final IdPhantomReference o) {
+	public boolean addReadWriteLock(final IdPhantomReference o) {
 		synchronized (f_knownReadWriteLockIds) {
 			return f_knownReadWriteLockIds.add(o);
 		}
 	}
 
-	static void remove(final IdPhantomReference o) {
+	void remove(final IdPhantomReference o) {
 		synchronized (f_knownReadWriteLockIds) {
 			f_knownReadWriteLockIds.remove(o);
 		}
 	}
 
-	private UtilConcurrent() {
-		// no instances
-	}
 }

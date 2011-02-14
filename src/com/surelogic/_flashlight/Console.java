@@ -10,14 +10,15 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 class Console extends Thread {
 	private static final String STOP = "stop";
 	private static final String EXIT = "exit";
 	private static final String QUIT = "quit";
-	
+
 	Console() {
 		super("flashlight-console");
 	}
@@ -42,7 +43,7 @@ class Console extends Thread {
 
 	@Override
 	public void run() {
-		Store.flashlightThread();
+		FLStore.flashlightThread();
 
 		// start listening on a port
 		boolean listening = false;
@@ -110,8 +111,9 @@ class Console extends Thread {
 	void requestShutdown() {
 		f_shutdownRequested = true;
 		try {
-			if (f_socket != null)
+			if (f_socket != null) {
 				f_socket.close();
+			}
 		} catch (IOException e) {
 			Store.logAProblem(
 					"unable to close the socket used by " + getName(), e);
@@ -139,7 +141,7 @@ class Console extends Thread {
 
 		@Override
 		public void run() {
-			Store.flashlightThread();
+			FLStore.flashlightThread();
 
 			try {
 				// create input and output connections
@@ -147,10 +149,10 @@ class Console extends Thread {
 						new InputStreamReader(f_client.getInputStream()));
 				BufferedWriter outputStream = new BufferedWriter(
 						new OutputStreamWriter(f_client.getOutputStream()));
-				sendResponse(outputStream, "Welcome to Flashlight! \""
-						+ Store.getRun() + "\"");
 				sendResponse(outputStream,
-						"(type \""+STOP+"\" to shutdown collection)");
+						"Welcome to Flashlight! \"" + Store.getRun() + "\"");
+				sendResponse(outputStream, "(type \"" + STOP
+						+ "\" to shutdown collection)");
 				while (!f_shutdownRequested) {
 					String nextLine = inputStream.readLine(); // blocks
 					if (nextLine == null) {
@@ -175,8 +177,11 @@ class Console extends Thread {
 							f_shutdownRequested = true;
 							f_client.close();
 						} else {
-							sendResponse(outputStream,
-									"invalid command...please use \""+STOP+"\" when you want to halt collection");
+							sendResponse(
+									outputStream,
+									"invalid command...please use \""
+											+ STOP
+											+ "\" when you want to halt collection");
 						}
 					}
 				}
@@ -203,7 +208,8 @@ class Console extends Thread {
 		 * @param response
 		 *            the data to write to the stream.
 		 */
-		private void sendResponse(BufferedWriter outputStream, String response) {
+		private void sendResponse(final BufferedWriter outputStream,
+				final String response) {
 			try {
 				outputStream.write(response + "\n\r");
 				outputStream.flush();

@@ -12,7 +12,7 @@ final class FinalEvent extends TimedEvent {
 	static final FinalEvent FINAL_EVENT = new FinalEvent();
 
 	private FinalEvent() {
-		// singleton
+		super(System.nanoTime());
 	}
 
 	@Override

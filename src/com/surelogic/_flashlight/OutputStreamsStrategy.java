@@ -1,10 +1,15 @@
 package com.surelogic._flashlight;
 
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_ACCESS_SUFFIX;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_INDIRECT_SUFFIX;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_LOCK_SUFFIX;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_OBJECT_SUFFIX;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_OTHER_SUFFIX;
+
 import java.io.IOException;
 
 import com.surelogic._flashlight.common.OutputType;
 import com.surelogic._flashlight.trace.TraceNode;
-import static com.surelogic._flashlight.common.InstrumentationConstants.*;
 
 final class OutputStreamsStrategy extends EventVisitor {
 	/**
@@ -27,81 +32,88 @@ final class OutputStreamsStrategy extends EventVisitor {
 	 * For the rest of the events
 	 */
 	final EventVisitor otherStream;
-	
-	OutputStreamsStrategy(String prefix, String encoding, Time time, Factory factory) throws IOException {
+
+	OutputStreamsStrategy(final RunConf conf, final Factory factory)
+			throws IOException {
 		final OutputType type = StoreConfiguration.getOutputType();
-		lockStream = factory.create(createStream(prefix+FL_LOCK_SUFFIX, type), encoding, time);
-		accessStream = factory.create(createStream(prefix+FL_ACCESS_SUFFIX, type), encoding, time);
-		objectStream = factory.create(createStream(prefix+FL_OBJECT_SUFFIX, type), encoding, time);
-		indirectStream = factory.create(createStream(prefix+FL_INDIRECT_SUFFIX, type), encoding, time);
-		otherStream = factory.create(createStream(prefix+FL_OTHER_SUFFIX, type), encoding, time);
+		final String prefix = conf.getFilePrefix();
+		lockStream = factory.create(conf,
+				createStream(prefix + FL_LOCK_SUFFIX, type));
+		accessStream = factory.create(conf,
+				createStream(prefix + FL_ACCESS_SUFFIX, type));
+		objectStream = factory.create(conf,
+				createStream(prefix + FL_OBJECT_SUFFIX, type));
+		indirectStream = factory.create(conf,
+				createStream(prefix + FL_INDIRECT_SUFFIX, type));
+		otherStream = factory.create(conf,
+				createStream(prefix + FL_OTHER_SUFFIX, type));
 	}
-	
+
 	@Override
 	void visit(final AfterIntrinsicLockAcquisition e) {
 		lockStream.visit(e);
 	}
-	
+
 	@Override
 	void visit(final AfterIntrinsicLockRelease e) {
 		lockStream.visit(e);
 	}
-	
+
 	@Override
 	void visit(final AfterIntrinsicLockWait e) {
 		lockStream.visit(e);
 	}
-	
+
 	@Override
-	void visit(AfterUtilConcurrentLockAcquisitionAttempt e) {
+	void visit(final AfterUtilConcurrentLockAcquisitionAttempt e) {
 		lockStream.visit(e);
 	}
-	
+
 	@Override
-	void visit(AfterUtilConcurrentLockReleaseAttempt e) {
+	void visit(final AfterUtilConcurrentLockReleaseAttempt e) {
 		lockStream.visit(e);
 	}
-	
+
 	@Override
 	void visit(final BeforeIntrinsicLockAcquisition e) {
 		lockStream.visit(e);
 	}
-	
+
 	@Override
 	void visit(final BeforeIntrinsicLockWait e) {
 		lockStream.visit(e);
 	}
-	
+
 	@Override
-	void visit(BeforeUtilConcurrentLockAcquisitionAttempt e) {
+	void visit(final BeforeUtilConcurrentLockAcquisitionAttempt e) {
 		lockStream.visit(e);
 	}
-	
+
 	@Override
 	void visit(final FieldDefinition e) {
 		otherStream.visit(e);
 	}
-	
+
 	@Override
 	void visit(final FieldReadInstance e) {
 		accessStream.visit(e);
 	}
-	
+
 	@Override
 	void visit(final FieldReadStatic e) {
 		accessStream.visit(e);
 	}
-	
+
 	@Override
 	void visit(final FieldWriteInstance e) {
 		accessStream.visit(e);
 	}
-	
+
 	@Override
 	void visit(final FieldWriteStatic e) {
 		accessStream.visit(e);
 	}
-	
+
 	@Override
 	void visit(final FinalEvent e) {
 		lockStream.visit(e);
@@ -110,52 +122,52 @@ final class OutputStreamsStrategy extends EventVisitor {
 		indirectStream.visit(e);
 		otherStream.visit(e);
 	}
-	
+
 	@Override
-	void visit(GarbageCollectedObject e) {
+	void visit(final GarbageCollectedObject e) {
 		lockStream.visit(e);
 	}
-	
-	@Override	
-	void visit(IndirectAccess e) {
+
+	@Override
+	void visit(final IndirectAccess e) {
 		indirectStream.visit(e);
 	}
-	
+
 	@Override
 	void visit(final ObjectDefinition e) {
 		objectStream.visit(e);
 	}
-	
+
 	@Override
 	void visit(final ObservedCallLocation e) {
 		otherStream.visit(e);
 	}
-	
+
 	@Override
 	void visit(final ReadWriteLockDefinition e) {
 		otherStream.visit(e);
 	}
-	
+
 	@Override
 	void visit(final SelectedPackage e) {
 		otherStream.visit(e);
-	}	
-	
+	}
+
 	@Override
 	void visit(final SingleThreadedFieldInstance e) {
 		otherStream.visit(e);
 	}
-	
+
 	@Override
 	void visit(final SingleThreadedFieldStatic e) {
 		otherStream.visit(e);
 	}
-	
+
 	@Override
 	void visit(final StaticCallLocation e) {
 		otherStream.visit(e);
 	}
-	
+
 	@Override
 	void visit(final Time e) {
 		lockStream.visit(e);
@@ -164,12 +176,12 @@ final class OutputStreamsStrategy extends EventVisitor {
 		indirectStream.visit(e);
 		otherStream.visit(e);
 	}
-	
+
 	@Override
 	public void visit(final TraceNode e) {
-	    otherStream.visit(e);
+		otherStream.visit(e);
 	}
-	
+
 	@Override
 	void flush() {
 		lockStream.flush();
@@ -178,7 +190,7 @@ final class OutputStreamsStrategy extends EventVisitor {
 		indirectStream.flush();
 		otherStream.flush();
 	}
-	
+
 	@Override
 	void printStats() {
 		lockStream.printStats();

@@ -59,6 +59,8 @@ public class OutputStrategyBinary extends EventVisitor {
 	private static final boolean debug = false;
 	static final String version = "1.1";
 	private static final long NO_VALUE = Long.MIN_VALUE;
+
+	private final RunConf conf;
 	private final SimpleDateFormat dateFormat = new SimpleDateFormat(
 			"yyyy-MM-dd HH:mm:ss.SSS");
 	private final IdPhantomReferenceVisitor refVisitor = new DefinitionVisitor();
@@ -80,20 +82,21 @@ public class OutputStrategyBinary extends EventVisitor {
 	 * totalInts = 0, compressedInts = 0;
 	 */
 	static final Factory factory = new Factory() {
-		public EventVisitor create(final OutputStream stream,
-				final String encoding, final Time time) throws IOException {
-			return new OutputStrategyBinary(stream, time);
+		public EventVisitor create(final RunConf conf,
+				final OutputStream stream) throws IOException {
+			return new OutputStrategyBinary(conf, stream);
 		}
 	};
 
-	OutputStrategyBinary(final OutputStream stream, final Time time)
+	OutputStrategyBinary(final RunConf conf, final OutputStream stream)
 			throws IOException {
+		this.conf = conf;
 		f_out = new ObjectOutputStream(stream);
-		start = time.getNanoTime();
+		start = conf.getStartNanoTime();
 		try {
 			f_out.writeByte(First_Event.getByte());
 			f_out.writeUTF(version);
-			f_out.writeUTF(Store.getRun());
+			f_out.writeUTF(conf.getRun());
 			f_out.writeByte(Environment.getByte());
 			f_out.writeLong(Runtime.getRuntime().maxMemory() / (1024L * 1024L)); // "max-memory-mb"
 			f_out.writeInt(Runtime.getRuntime().availableProcessors());
@@ -142,7 +145,7 @@ public class OutputStrategyBinary extends EventVisitor {
 		try {
 			f_out.flush();
 		} catch (final IOException e) {
-			Store.logAProblem("Unable to flush output", e);
+			conf.logAProblem("Unable to flush output", e);
 		}
 	}
 
@@ -627,7 +630,7 @@ public class OutputStrategyBinary extends EventVisitor {
 	 * } catch (IOException ioe) { handleIOException(ioe); } }
 	 */
 	private void handleIOException(final IOException e) {
-		Store.logAProblem("Problem while outputting", e);
+		conf.logAProblem("Problem while outputting", e);
 	}
 
 	private int writeCompressedMaybeNegativeInt(final int i) throws IOException {

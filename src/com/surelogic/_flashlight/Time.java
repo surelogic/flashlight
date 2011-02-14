@@ -17,16 +17,13 @@ final class Time extends TimedEvent {
 		return f_date;
 	}
 
-	Time() {
-		f_date = new Date();
-	}
-	
-	Time(final Date date) {
-	  f_date = date;
+	Time(final Date date, final long nanoTime) {
+		super(nanoTime);
+		f_date = date;
 	}
 
 	@Override
-	void accept(EventVisitor v) {
+	void accept(final EventVisitor v) {
 		v.visit(this);
 	}
 

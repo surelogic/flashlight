@@ -12,6 +12,7 @@ import com.surelogic._flashlight.trace.TraceNode;
 final class OutputStrategyXML extends EventVisitor {
 	static final String version = "1.0";
 	private final PrintWriter f_out;
+	private final RunConf conf;
 	private String f_indent = "";
 
 	private void o(final String s) {
@@ -27,15 +28,15 @@ final class OutputStrategyXML extends EventVisitor {
 		Entities.addAttribute(key.replaceAll("\\.", "-"), prop, b);
 	}
 
-	public static void outputHeader(final PrintWriter out, final Time time,
-			final String version) {
+	public static void outputHeader(final RunConf conf, final PrintWriter out,
+			final Time time, final String version) {
 		assert out != null;
-		out.println("<?xml version='1.0' encoding='" + Store.ENCODING
+		out.println("<?xml version='1.0' encoding='" + conf.getEncoding()
 				+ "' standalone='yes'?>");
 		StringBuilder b = new StringBuilder();
 		b.append("<flashlight");
 		Entities.addAttribute("version", version, b);
-		Entities.addAttribute("run", Store.getRun(), b);
+		Entities.addAttribute("run", conf.getRun(), b);
 		b.append(">"); // don't end this element
 		out.println(b.toString());
 		b = new StringBuilder();
@@ -66,19 +67,20 @@ final class OutputStrategyXML extends EventVisitor {
 	}
 
 	static final Factory factory = new Factory() {
-		public EventVisitor create(final OutputStream stream,
-				final String encoding, final Time time) throws IOException {
-			return new OutputStrategyXML(stream, encoding);
+		public EventVisitor create(final RunConf conf, final OutputStream stream)
+				throws IOException {
+			return new OutputStrategyXML(conf, stream);
 		}
 	};
 
-	OutputStrategyXML(final OutputStream stream, final String encoding)
+	OutputStrategyXML(final RunConf conf, final OutputStream stream)
 			throws IOException {
 		assert stream != null;
-
-		final OutputStreamWriter osw = new OutputStreamWriter(stream, encoding);
+		this.conf = conf;
+		final OutputStreamWriter osw = new OutputStreamWriter(stream,
+				conf.getEncoding());
 		f_out = new PrintWriter(osw);
-		outputHeader(f_out, null, version);
+		outputHeader(conf, f_out, null, version);
 	}
 
 	@Override

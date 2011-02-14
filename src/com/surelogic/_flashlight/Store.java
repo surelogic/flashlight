@@ -270,7 +270,7 @@ public final class Store {
 				|| !StoreDelegate.FL_OFF.getAndSet(true)) {
 			// still incremented even if logging is off.
 			f_problemCount = new AtomicLong();
-			
+
 			// System.out.println("Store");
 			// new
 			// Throwable("Store CL = "+Store.class.getClassLoader()).printStackTrace(System.out);
@@ -498,19 +498,6 @@ public final class Store {
 
 	public static BlockingQueue<List<Event>> getRawQueue() {
 		return f_rawQueue;
-	}
-
-	static int getIntProperty(final String key, int def, final int min) {
-		try {
-			final String intString = System.getProperty(key);
-			if (intString != null) {
-				def = Integer.parseInt(intString);
-			}
-		} catch (final NumberFormatException e) {
-			// ignore, go with the default
-		}
-		// ensure the result isn't less than the minimum
-		return def >= min ? def : min;
 	}
 
 	/**

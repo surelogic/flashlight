@@ -5,12 +5,13 @@ import java.util.concurrent.locks.Lock;
 final class BeforeUtilConcurrentLockAcquisitionAttempt extends
 		UtilConcurrentLock {
 
-	BeforeUtilConcurrentLockAcquisitionAttempt(final Lock lockObject, final long siteId, Store.State state) {
+	BeforeUtilConcurrentLockAcquisitionAttempt(final Lock lockObject,
+			final long siteId, final PostMortemStore.State state) {
 		super(lockObject, siteId, state);
 	}
 
 	@Override
-	void accept(EventVisitor v) {
+	void accept(final EventVisitor v) {
 		v.visit(this);
 	}
 

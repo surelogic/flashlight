@@ -31,7 +31,7 @@ public final class Spy extends Thread {
 
 	@Override
 	public void run() {
-		Store.flashlightThread();
+		FLStore.flashlightThread();
 
 		while (true) {
 			try {
@@ -40,8 +40,9 @@ public final class Spy extends Thread {
 				// ignore, likely during a shutdown that this thread doesn't
 				// initiate.
 			}
-			if (f_shutdownRequested)
+			if (f_shutdownRequested) {
 				break;
+			}
 			final Map<Thread, StackTraceElement[]> threadToStackTrace = Thread
 					.getAllStackTraces();
 			boolean timeToShutdown = true; // assumption
@@ -66,17 +67,16 @@ public final class Spy extends Thread {
 				}
 			}
 			if (timeToShutdown) {
-			    /*
-				StringBuilder sb = new StringBuilder();
-				sb.append("Shutting down with these threads:\n");
-				for (Thread t : threadToStackTrace.keySet()) {
-					ThreadGroup group = t.getThreadGroup();
-					String groupName = group == null ? "n/a" : group.getName();
-					sb.append('\t').append(t.getName()).append(' ').append(groupName).append('\n');
-				}
-				System.out.println(sb);
-				System.out.flush();
-                */
+				/*
+				 * StringBuilder sb = new StringBuilder();
+				 * sb.append("Shutting down with these threads:\n"); for (Thread
+				 * t : threadToStackTrace.keySet()) { ThreadGroup group =
+				 * t.getThreadGroup(); String groupName = group == null ? "n/a"
+				 * : group.getName();
+				 * sb.append('\t').append(t.getName()).append(
+				 * ' ').append(groupName).append('\n'); }
+				 * System.out.println(sb); System.out.flush();
+				 */
 				Store.shutdown();
 			} else {
 				Store.logFlush();

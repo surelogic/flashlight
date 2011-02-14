@@ -10,6 +10,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import com.surelogic._flashlight.AbstractCallLocation;
 import com.surelogic._flashlight.Entities;
 import com.surelogic._flashlight.EventVisitor;
+import com.surelogic._flashlight.PostMortemStore;
 import com.surelogic._flashlight.Store;
 import com.surelogic._flashlight.common.LongMap;
 import com.surelogic._flashlight.monitor.MonitorStore;
@@ -104,7 +105,7 @@ public abstract class TraceNode extends AbstractCallLocation implements
 	}
 
 	static TraceNode newTraceNode(final TraceNode caller, final long siteId,
-			final Store.State state) {
+			final PostMortemStore.State state) {
 		TraceNode callee = newTraceNode(state.traceHeader, caller, siteId);
 		TraceNode firstCallee;
 		if (caller != null) {
@@ -197,7 +198,8 @@ public abstract class TraceNode extends AbstractCallLocation implements
 		return callee;
 	}
 
-	public static void pushTraceNode(final long siteId, final Store.State state) {
+	public static void pushTraceNode(final long siteId,
+			final PostMortemStore.State state) {
 		final Header header = state.traceHeader;
 		final ITraceNode caller = header.current;
 		ITraceNode callee = null;
@@ -229,7 +231,8 @@ public abstract class TraceNode extends AbstractCallLocation implements
 		header.count++;
 	}
 
-	public static void popTraceNode(final long siteId, final Store.State state) {
+	public static void popTraceNode(final long siteId,
+			final PostMortemStore.State state) {
 		final Header header = state.traceHeader;
 		final ITraceNode callee = header.current;
 		if (callee != null) {
@@ -371,7 +374,7 @@ public abstract class TraceNode extends AbstractCallLocation implements
 		return f_caller;
 	}
 
-	public TraceNode getNode(final Store.State state) {
+	public TraceNode getNode(final PostMortemStore.State state) {
 		return this;
 	}
 
@@ -473,7 +476,7 @@ public abstract class TraceNode extends AbstractCallLocation implements
 			return id;
 		}
 
-		public TraceNode getCurrentNode(final Store.State state) {
+		public TraceNode getCurrentNode(final PostMortemStore.State state) {
 			final ITraceNode current = this.current;
 			if (current == null) {
 				return null;
@@ -487,7 +490,7 @@ public abstract class TraceNode extends AbstractCallLocation implements
 		}
 
 		public TraceNode getCurrentNode(final long siteId,
-				final Store.State state) {
+				final PostMortemStore.State state) {
 
 			TraceNode.pushTraceNode(siteId, state);
 			try {

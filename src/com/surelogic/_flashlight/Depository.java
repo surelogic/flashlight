@@ -24,17 +24,20 @@ import java.util.zip.GZIPInputStream;
  */
 final class Depository extends Thread {
 
+	private final RunConf conf;
+
 	private final BlockingQueue<List<Event>> f_outQueue;
 
 	private volatile EventVisitor f_outputStrategy;
 
-	Depository(final BlockingQueue<List<Event>> outQueue,
+	Depository(final RunConf conf, final BlockingQueue<List<Event>> outQueue,
 			final EventVisitor outputStrategy) {
 		super("flashlight-depository");
 		assert outQueue != null;
 		f_outQueue = outQueue;
 		assert outputStrategy != null;
 		f_outputStrategy = outputStrategy;
+		this.conf = conf;
 	}
 
 	private boolean f_finished = false;
@@ -135,7 +138,7 @@ final class Depository extends Thread {
 
 	@Override
 	public void run() {
-		Store.flashlightThread();
+		FLStore.flashlightThread();
 
 		while (!f_finished) {
 			try {
@@ -162,21 +165,18 @@ final class Depository extends Thread {
 				}
 				buf.clear();
 			} catch (final InterruptedException e) {
-				Store.logAProblem("depository was interrupted...a bug");
+				conf.logAProblem("depository was interrupted...a bug");
 			}
 		}
 		f_outputStrategy.flush();
-		Store
-				.log("depository flushed (" + f_outputCount
-						+ " events(s) output)");
+		conf.log("depository flushed (" + f_outputCount + " events(s) output)");
 
 		if (StoreConfiguration.debugOn()) {
 			f_outputStrategy.printStats();
 		}
 	}
 
-	private static Map<String, List<FieldInfo>> loadFieldInfo(
-			final StringTable strings) {
+	private Map<String, List<FieldInfo>> loadFieldInfo(final StringTable strings) {
 		final String name = StoreConfiguration.getFieldsFile();
 		if (name == null) {
 			return Collections.emptyMap();
@@ -200,7 +200,7 @@ final class Depository extends Thread {
 				l.add(fi);
 			}
 		} catch (final IOException e) {
-			Store.logAProblem("Couldn't read field definition file", e);
+			conf.logAProblem("Couldn't read field definition file", e);
 			map.clear();
 		}
 		return map;
@@ -244,7 +244,7 @@ final class Depository extends Thread {
 		return events;
 	}
 
-	private static Map<String, List<ClassInfo>> loadClassInfo() {
+	private Map<String, List<ClassInfo>> loadClassInfo() {
 		String name = StoreConfiguration.getSitesFile();
 		File f;
 		if (name != null) {
@@ -299,7 +299,7 @@ final class Depository extends Thread {
 	private static final SiteInfo[] noSites = new SiteInfo[0];
 	private static final FieldInfo[] noFields = new FieldInfo[0];
 
-	static class SitesReader implements LineHandler {
+	class SitesReader implements LineHandler {
 		final StringTable strings = new StringTable();
 		final Map<String, List<FieldInfo>> fields = loadFieldInfo(strings);
 		final Map<String, List<ClassInfo>> classes = new HashMap<String, List<ClassInfo>>();
@@ -368,7 +368,7 @@ final class Depository extends Thread {
 		}
 	}
 
-	private static <T extends LineHandler> T loadFileContents(final File f,
+	private <T extends LineHandler> T loadFileContents(final File f,
 			final T handler) {
 		if (!f.exists() || !f.isFile()) {
 			if (StoreConfiguration.debugOn()) {
@@ -391,7 +391,7 @@ final class Depository extends Thread {
 				handler.readLine(line);
 			}
 		} catch (final IOException e) {
-			Store.logAProblem("Couldn't read definition file" + f.getName(), e);
+			conf.logAProblem("Couldn't read definition file" + f.getName(), e);
 		}
 		return handler;
 	}

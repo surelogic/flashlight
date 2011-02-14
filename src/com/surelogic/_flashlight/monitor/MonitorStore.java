@@ -1,39 +1,30 @@
 package com.surelogic._flashlight.monitor;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 
 import javax.swing.SwingUtilities;
 
 import com.surelogic._flashlight.ClassPhantomReference;
-import com.surelogic._flashlight.EventVisitor;
-import com.surelogic._flashlight.FieldDefs;
 import com.surelogic._flashlight.IdPhantomReference;
 import com.surelogic._flashlight.ObjectPhantomReference;
 import com.surelogic._flashlight.Phantom;
+import com.surelogic._flashlight.RunConf;
 import com.surelogic._flashlight.Spy;
 import com.surelogic._flashlight.StoreConfiguration;
 import com.surelogic._flashlight.StoreDelegate;
+import com.surelogic._flashlight.StoreListener;
 import com.surelogic._flashlight.ThreadPhantomReference;
 import com.surelogic._flashlight.UtilConcurrent;
-import com.surelogic._flashlight.common.IdConstants;
 import com.surelogic._flashlight.common.InstrumentationConstants;
-import com.surelogic._flashlight.common.OutputType;
 import com.surelogic._flashlight.jsr166y.ConcurrentReferenceHashMap;
 import com.surelogic._flashlight.jsr166y.ConcurrentReferenceHashMap.ReferenceType;
 import com.surelogic._flashlight.trace.TraceNode;
@@ -43,150 +34,28 @@ import com.surelogic._flashlight.trace.TraceNode;
  * 
  * @policyLock Console is java.lang.System:out
  */
-public final class MonitorStore {
-
-	/**
-	 * This <i>must</i> be declared first within this class so that it can avoid
-	 * instrumented library calls made by the static initialization of this
-	 * class to recursively reenter the class during static initialization.
-	 * <P>
-	 * Normally this field would need to be <code>volatile</code>, however since
-	 * the class loader holds a lock during class initialization the final value
-	 * of <code>false</code> should be publicized safely to the other program
-	 * thread.
-	 */
-	// (Re-)using StoreDelegate.FL_OFF for normal checks
-	private static boolean f_flashlightIsNotInitialized = true;
-
-	/**
-	 * Non-null if Flashlight should log to the console, <code>null</code>
-	 * otherwise.
-	 */
-	private static final PrintWriter f_log;
-
-	/**
-	 * Flags if helpful debug information should be output to the console log.
-	 * This flag generates a lot of output and should only be set to
-	 * {@code true} for small test programs.
-	 */
-	public static final boolean DEBUG = false;
-
-	/**
-	 * Logs a message if logging is enabled.
-	 * 
-	 * @param msg
-	 *            the message to log.
-	 */
-	static void log(final String msg) {
-		if (f_log != null) {
-			f_log.println("[Flashlight] " + msg);
-		}
-	}
-
-	/**
-	 * Tracks the number off problems reported by the store.
-	 */
-	private static final AtomicLong f_problemCount;
-
-	/**
-	 * Logs a problem message if logging is enabled.
-	 * 
-	 * @param msg
-	 *            the message to log.
-	 */
-	static void logAProblem(final String msg) {
-		logAProblem(msg, new Exception());
-	}
-
-	/**
-	 * Logs a problem message if logging is enabled.
-	 * 
-	 * @param msg
-	 *            the message to log.
-	 * @param e
-	 *            reported exception.
-	 */
-	static void logAProblem(final String msg, final Exception e) {
-		f_problemCount.incrementAndGet();
-		if (f_log != null) {
-			/*
-			 * It is an undocumented lock policy that PrintStream locks on
-			 * itself. To make all of our output appear together on the console
-			 * we follow this policy.
-			 */
-			synchronized (f_log) {
-				f_log.println("[Flashlight] !PROBLEM! " + msg);
-				e.printStackTrace(f_log);
-			}
-		}
-	}
-
-	/**
-	 * Flush the log.
-	 */
-	static void logFlush() {
-		if (f_log != null) {
-			f_log.flush();
-		}
-	}
-
-	/**
-	 * Closes the log.
-	 */
-	static void logComplete() {
-		if (f_log != null) {
-			f_log.close();
-		}
-	}
-
-	/**
-	 * The string value of the <tt>FL_RUN</tt> property or <tt>"flashlight"</tt>
-	 * if this property is not set.
-	 */
-	private static final String f_run;
-
-	/**
-	 * Gets the string value of the <tt>FL_RUN</tt> property or
-	 * <tt>"flashlight"</tt> if this property is not set.
-	 * 
-	 * @return the string value of the <tt>FL_RUN</tt> property or
-	 *         <tt>"flashlight"</tt> if this property is not set.
-	 */
-	static String getRun() {
-		return f_run;
-	}
-
-	/**
-	 * The value of {@link System#nanoTime()} when we start collecting data.
-	 */
-	private static final long f_start_nano;
+public final class MonitorStore implements StoreListener {
 
 	/**
 	 * The console thread.
 	 */
-	private static final MonitorConsole f_console;
+	private final MonitorConsole f_console;
 
 	/**
 	 * A periodic task that checks to see if Flashlight should shutdown by
 	 * spying on the running program's threads.
 	 */
-	private static final MonitorSpy f_spy;
+	private final MonitorSpy f_spy;
 
-	private static final FieldDefs f_defs;
+	private final ConcurrentMap<Long, String> f_lockNames;
 
-	public static FieldDefs getFieldDefinitions() {
-		return f_defs;
-	}
-
-	private static final ConcurrentMap<Long, String> f_lockNames;
-
-	public static ConcurrentMap<Long, String> getLockNames() {
+	ConcurrentMap<Long, String> getLockNames() {
 		return f_lockNames;
 	}
 
-	private static final ConcurrentMap<Long, ReadWriteLockIds> f_rwLocks;
+	private final ConcurrentMap<Long, ReadWriteLockIds> f_rwLocks;
 
-	public static ConcurrentMap<Long, ReadWriteLockIds> getRWLocks() {
+	ConcurrentMap<Long, ReadWriteLockIds> getRWLocks() {
 		return f_rwLocks;
 	}
 
@@ -198,34 +67,27 @@ public final class MonitorStore {
 	 * 
 	 * It also holds the thread-local lock set values.
 	 */
-	private final static ThreadLocal<State> tl_withinStore;
+	private final ThreadLocal<State> tl_withinStore;
 
-	public static class State {
-		boolean inside = false;
+	public static final class State {
 		final ThreadPhantomReference thread;
 		public final TraceNode.Header traceHeader;
 
-		public State(final boolean flashlightThread) {
-			if (flashlightThread) {
-				inside = true;
-				thread = null;
-				traceHeader = null;
-			} else {
-				thread = Phantom.ofThread(Thread.currentThread());
-				traceHeader = TraceNode.makeHeader();
-			}
+		public State() {
+			thread = Phantom.ofThread(Thread.currentThread());
+			traceHeader = TraceNode.makeHeader();
 		}
 
 	}
 
-	public static void updateSpec(final MonitorSpec spec) {
+	void updateSpec(final MonitorSpec spec) {
 		f_spec = spec;
 	}
 
-	private static volatile MonitorSpec f_spec;
+	private volatile MonitorSpec f_spec;
 
-	private final static ThreadLocal<ThreadLocks> tl_lockSet;
-	final static CopyOnWriteArrayList<ThreadLocks> f_lockSets;
+	private final ThreadLocal<ThreadLocks> tl_lockSet;
+	final CopyOnWriteArrayList<ThreadLocks> f_lockSets;
 
 	CopyOnWriteArrayList<ThreadLocks> threadLocks() {
 		return f_lockSets;
@@ -233,201 +95,82 @@ public final class MonitorStore {
 
 	private static final boolean useLocks = true;
 
-	/**
-	 * This method must be called as the first statement by each flashlight
-	 * thread to ensure that it <i>never</i> has data about it collected by the
-	 * store. The flashlight threads don't call program code, however, they do
-	 * use the Java standard libraries so we need to be cautious about any
-	 * instrumentation on the Java standard library called from within these
-	 * treads.
-	 * <P>
-	 * The talk, <i>Java Instrumentation for Dynamic Analysis</i>, by Jeff
-	 * Perkins and Michael Ernst cautioned that "The instrumentation itself
-	 * should not use instrumented classes, i.e., If a heap analysis used an
-	 * instrumented version of HashMap it would recursively call itself."
-	 * Flashlight allows this dangerous situation to exist by setting the
-	 * thread-local flag so that all our instrumentation entry points to the
-	 * store immediately return.
-	 */
-	final static State flashlightThread() {
-		final State s = createState(true);
-		tl_withinStore.set(s);
-		return s;
-	}
-
-	private static State createState(final boolean flashlightThread) {
-		return new State(flashlightThread);
-	}
+	private UtilConcurrent f_knownRWLocks;
+	private RunConf f_conf;
 
 	/*
 	 * Flashlight startup code used to get everything running.
 	 */
-	static {
-		// Check if FL is on (and shutoff)
-		if (IdConstants.enableFlashlightToggle
-				|| !StoreDelegate.FL_OFF.getAndSet(true)) {
-			FieldDefs defs;
-			try {
-				defs = new FieldDefs();
-			} catch (IOException e) {
-				defs = null;
-				logAProblem(e.getMessage(), e);
+	MonitorStore() {
+		f_lockNames = new ConcurrentReferenceHashMap<Long, String>(
+				ReferenceType.STRONG, ReferenceType.STRONG,
+				ConcurrentReferenceHashMap.STANDARD_HASH);
+
+		f_rwLocks = new ConcurrentReferenceHashMap<Long, ReadWriteLockIds>(
+				ReferenceType.STRONG, ReferenceType.STRONG,
+				ConcurrentReferenceHashMap.STANDARD_HASH);
+
+		tl_withinStore = new ThreadLocal<State>() {
+			@Override
+			protected State initialValue() {
+				return new State();
 			}
-			f_defs = defs;
-			f_lockNames = new ConcurrentReferenceHashMap<Long, String>(
-					ReferenceType.STRONG, ReferenceType.STRONG,
-					ConcurrentReferenceHashMap.STANDARD_HASH);
+		};
+		/*
+		 * Initialize lock set analysis thread locals
+		 */
+		tl_lockSet = new ThreadLocal<ThreadLocks>() {
 
-			f_rwLocks = new ConcurrentReferenceHashMap<Long, ReadWriteLockIds>(
-					ReferenceType.STRONG, ReferenceType.STRONG,
-					ConcurrentReferenceHashMap.STANDARD_HASH);
-
-			f_spec = new MonitorSpec(System.getProperty(
-					"com.surelogic.fieldSpec", ""), f_defs);
-			/*
-			 * Initialize final static fields. If Flashlight is off these fields
-			 * are all set to null to save memory.
-			 */
-			final File flashlightDir = new File(
-					StoreConfiguration.getDirectory());
-			if (!flashlightDir.exists()) {
-				flashlightDir.mkdirs();
+			@Override
+			protected ThreadLocks initialValue() {
+				final ThreadPhantomReference thread = tl_withinStore.get().thread;
+				final ThreadLocks ls = new ThreadLocks(thread.getName(),
+						thread.getId(), SwingUtilities.isEventDispatchThread(),
+						f_rwLocks);
+				f_lockSets.add(ls);
+				return ls;
 			}
-			// ??? What to do if mkdirs() fails???
-			final StringBuilder fileName = new StringBuilder();
-			fileName.append(flashlightDir);
-			fileName.append(System.getProperty("file.separator"));
-			f_run = StoreConfiguration.getRun();
-			fileName.append(f_run);
 
-			/*
-			 * Get the start time of the data collection. This time is embedded
-			 * in the time event in the output as well as in the names of the
-			 * data and log files. The time can be provided in the configuration
-			 * parameter "date override" so that we use the same start time in
-			 * the data file as we use in the name of the flashlight run
-			 * directory as constructed by the executing IDE.
-			 */
-			final SimpleDateFormat dateFormat = new SimpleDateFormat(
-					"-yyyy.MM.dd-'at'-HH.mm.ss.SSS");
-			final String dateOverride = StoreConfiguration.getDateOverride();
-			if (dateOverride == null) {
-				new Date();
-			} else {
-				/*
-				 * We have an externally provided time. Try to parse it. If we
-				 * cannot parse it, use the current time.
-				 */
-				try {
-					dateFormat.parse(dateOverride);
-				} catch (final ParseException e) {
-					System.err
-							.println("[Flashlight] couldn't parse date string \""
-									+ dateOverride + "\"");
-					new Date();
-				}
-			}
-			fileName.append(dateFormat.format(new Date()));
+		};
+		f_lockSets = new CopyOnWriteArrayList<ThreadLocks>();
 
-			final File logFile = new File(fileName.toString() + ".flog");
-			PrintWriter w = null;
-			try {
-				OutputStream stream = new FileOutputStream(logFile);
-				stream = new BufferedOutputStream(stream);
-				w = new PrintWriter(stream);
-			} catch (final IOException e) {
-				System.err.println("[Flashlight] unable to log to \""
-						+ logFile.getAbsolutePath() + "\"");
-				e.printStackTrace(System.err);
-				System.exit(1); // bail
-			}
-			f_log = w;
-			// still incremented even if logging is off.
-			f_problemCount = new AtomicLong();
-
-			final OutputType outType = StoreConfiguration.getOutputType();
-			w = null;
-			if (StoreConfiguration.debugOn()) {
-				System.err.println("Output XML = " + !outType.isBinary());
-			}
-			final File dataFile = EventVisitor.createStreamFile(
-					fileName.toString(), outType);
-
-			tl_withinStore = new ThreadLocal<State>() {
-				@Override
-				protected State initialValue() {
-					return createState(false);
-				}
-			};
-			/*
-			 * Initialize lock set analysis thread locals
-			 */
-			tl_lockSet = new ThreadLocal<ThreadLocks>() {
-
-				@Override
-				protected ThreadLocks initialValue() {
-					final ThreadPhantomReference thread = tl_withinStore.get().thread;
-					final ThreadLocks ls = new ThreadLocks(thread.getName(),
-							thread.getId(),
-							SwingUtilities.isEventDispatchThread(), f_rwLocks);
-					f_lockSets.add(ls);
-					return ls;
-				}
-
-			};
-			f_lockSets = new CopyOnWriteArrayList<ThreadLocks>();
-			log("collection started to \"" + dataFile.getAbsolutePath() + "\"");
-
-			/*
-			 * The spy periodically checks the state of the instrumented program
-			 * and shuts down flashlight if the program is finished.
-			 */
-			final boolean noSpy = StoreConfiguration.getNoSpy();
-			if (noSpy) {
-				f_spy = null;
-			} else {
-				f_spy = new MonitorSpy();
-				f_spy.start();
-			}
-			/*
-			 * The shutdown hook is a last ditch effort to shutdown flashlight
-			 * cleanly when an abrupt termination occurs (e.g., System.exit is
-			 * invoked).
-			 */
-			Runtime.getRuntime().addShutdownHook(new Thread() {
-				@Override
-				public void run() {
-					MonitorStore.shutdown();
-				}
-			});
-			/*
-			 * The console lets someone attach to flashlight and command it to
-			 * shutdown.
-			 */
-
-			f_console = new MonitorConsole();
-			f_console.start();
-			// Start up looking at no fields.
-			Analysis.reviseSpec(f_spec);
-			f_start_nano = System.nanoTime();
-
-			f_flashlightIsNotInitialized = false;
-			StoreDelegate.FL_OFF.set(false);
-		} else {
-			f_defs = null;
-			f_lockNames = null;
-			f_rwLocks = null;
-			f_run = null;
-			f_log = null;
-			f_problemCount = null;
-			tl_withinStore = null;
-			tl_lockSet = null;
-			f_lockSets = null;
-			f_console = null;
+		/*
+		 * The spy periodically checks the state of the instrumented program and
+		 * shuts down flashlight if the program is finished.
+		 */
+		final boolean noSpy = StoreConfiguration.getNoSpy();
+		if (noSpy) {
 			f_spy = null;
-			f_start_nano = 0;
-			f_flashlightIsNotInitialized = false;
+		} else {
+			f_spy = new MonitorSpy();
+			f_spy.start();
 		}
+		/*
+		 * The shutdown hook is a last ditch effort to shutdown flashlight
+		 * cleanly when an abrupt termination occurs (e.g., System.exit is
+		 * invoked).
+		 */
+		Runtime.getRuntime().addShutdownHook(new Thread() {
+			@Override
+			public void run() {
+				MonitorStore.this.shutdown();
+			}
+		});
+		/*
+		 * The console lets someone attach to flashlight and command it to
+		 * shutdown.
+		 */
+		f_console = new MonitorConsole();
+		f_console.start();
+		// Start up looking at no fields.
+		Analysis.reviseSpec(f_spec);
+	}
+
+	public void init(final RunConf conf) {
+		f_spec = new MonitorSpec(System.getProperty("com.surelogic.fieldSpec",
+				""), conf.getFieldDefs());
+		f_knownRWLocks = new UtilConcurrent();
+		f_conf = conf;
 	}
 
 	static int getIntProperty(final String key, int def, final int min) {
@@ -449,12 +192,11 @@ public final class MonitorStore {
 	 * make sure the store is loaded and initialized before creating phantom
 	 * objects.
 	 */
-	public static ClassPhantomReference getClassPhantom(final Class<?> c) {
+	ClassPhantomReference getClassPhantom(final Class<?> c) {
 		return StoreDelegate.getClassPhantom(c);
 	}
 
-	public static ObjectPhantomReference getObjectPhantom(final Object o,
-			final long id) {
+	ObjectPhantomReference getObjectPhantom(final Object o, final long id) {
 		return StoreDelegate.getObjectPhantom(o, id);
 	}
 
@@ -480,58 +222,16 @@ public final class MonitorStore {
 	 *            access when {@code dcPhantom} is null} . If the
 	 *            {@code dcPhantom} is non- null} then this is null} .
 	 */
-	public static void instanceFieldAccess(final boolean read,
-			final Object receiver, final int fieldID, final long siteId,
+	public void instanceFieldAccess(final boolean read, final Object receiver,
+			final int fieldID, final long siteId,
 			final ClassPhantomReference dcPhantom, final Class<?> declaringClass) {
-		if (!StoreConfiguration.processFieldAccesses()) {
-			// System.out.println("Omitting field access");
-			return;
-		}
-		if (StoreDelegate.FL_OFF.get()) {
-			return;
+		final ObjectPhantomReference rec = Phantom.ofObject(receiver);
+		final long receiverId = rec.getId();
+		if (f_spec.isMonitoring(fieldID)) {
+			tl_lockSet.get().field(fieldID, receiverId,
+					rec.isUnderConstruction());
 		}
 
-		/*
-		 * if (f_flashlightIsNotInitialized) { return; }
-		 */
-		final State flState = tl_withinStore.get();
-		if (flState.inside) {
-			return;
-		}
-		// System.out.println("Handling field access");
-
-		flState.inside = true;
-		try {
-			/*
-			 * if (DEBUG) { final String fmt =
-			 * "LockSetStore.instanceFieldAccessLookup(%n\t\t%s%n\t\treceiver=%s%n\t\tfield=%s%n\t\tlocation=%s)"
-			 * ; log(String.format(fmt, read ? "read" : "write",
-			 * safeToString(receiver), clazz.getName()+'.'+fieldName,
-			 * SrcLoc.toString(withinClass, line))); }
-			 */
-
-			/*
-			 * if the field is not from an instrumented class then force
-			 * creation of the phantom class object. Declaring class is null if
-			 * the field is not from an instrumented class. We need to force the
-			 * creation of the phantom object so that a listener somewhere else
-			 * dumps the field definitions into the .fl file.
-			 * 
-			 * XXX This check is not redundant. Edwin already removed this once
-			 * before and broke things.
-			 */
-			if (declaringClass != null) {
-				Phantom.ofClass(declaringClass);
-			}
-			final ObjectPhantomReference rec = Phantom.ofObject(receiver);
-			final long receiverId = rec.getId();
-			if (f_spec.isMonitoring(fieldID)) {
-				tl_lockSet.get().field(fieldID, receiverId,
-						rec.isUnderConstruction());
-			}
-		} finally {
-			flState.inside = false;
-		}
 	}
 
 	/**
@@ -554,205 +254,18 @@ public final class MonitorStore {
 	 *            access when {@code dcPhantom} is null} . If the
 	 *            {@code dcPhantom} is non- null} then this is null} .
 	 */
-	public static void staticFieldAccess(final boolean read, final int fieldID,
+	public void staticFieldAccess(final boolean read, final int fieldID,
 			final long siteId, final ClassPhantomReference dcPhantom,
 			final Class<?> declaringClass) {
-		if (!StoreConfiguration.processFieldAccesses()) {
-			// System.out.println("Omitting field access");
-			return;
+		boolean underConstruction = false;
+		if (dcPhantom != null) {
+			underConstruction = dcPhantom.isUnderConstruction();
 		}
 
-		if (StoreDelegate.FL_OFF.get()) {
-			return;
-		}
-
-		/*
-		 * if (f_flashlightIsNotInitialized) { return; }
-		 */
-
-		final State flState = tl_withinStore.get();
-		if (flState.inside) {
-			return;
-		}
-		// System.out.println("Handling field access");
-
-		flState.inside = true;
-		try {
-			/*
-			 * if (DEBUG) { final String fmt =
-			 * "LockSetStore.staticFieldAccessLookup(%n\t\t%s%n\t\tfield=%s%n\t\tlocation=%s)"
-			 * ; log(String.format(fmt, read ? "read" : "write",
-			 * clazz.getName()+'.'+fieldName, SrcLoc.toString(withinClass,
-			 * line))); }
-			 */
-			boolean underConstruction = false;
-			if (dcPhantom != null) {
-				underConstruction = dcPhantom.isUnderConstruction();
-			}
-			/*
-			 * if the field is not from an instrumented class then force
-			 * creation of the phantom class object. Declaring class is null if
-			 * the field is not from an instrumente class. We need to force the
-			 * creation of the phantom object so that a listener somewhere else
-			 * dumps the field definitions into the .fl file.
-			 * 
-			 * XXX This check is not redundant. Edwin already removed this once
-			 * before and broke things.
-			 */
-			if (declaringClass != null) {
-				Phantom.ofClass(declaringClass);
-			}
-			if (f_spec.isMonitoring(fieldID)) {
-				tl_lockSet.get().field(fieldID, underConstruction);
-			}
-		} finally {
-			flState.inside = false;
+		if (f_spec.isMonitoring(fieldID)) {
+			tl_lockSet.get().field(fieldID, underConstruction);
 		}
 	}
-
-	// /**
-	// * Records that a instance field that needs to be assigned a dynamic field
-	// id
-	// * was accessed within the instrumented program.
-	// *
-	// * @param read
-	// * {@code true} indicates a field <i>read</i>, {@code false}
-	// * indicates a field <i>write</i>.
-	// * @param receiver
-	// * the object instance the field is part of the state of.
-	// * @param clazz
-	// * The class object of the class in which the search
-	// * for the field should begin.
-	// * @param fieldName
-	// * the name of the field.
-	// * @param withinClass
-	// * the phantom class object for the class where the event occurred, may be
-	// {@code null}.
-	// * @param line
-	// * the line number where the event occurred.
-	// */
-	// public static void instanceFieldAccessLookup(
-	// final boolean read, final Object receiver,
-	// final Class clazz, final String fieldName, final long siteId) {
-	// if (!IdConstants.useFieldAccesses) {
-	// return;
-	// }
-	// if (f_flashlightIsNotInitialized)
-	// return;
-	// if (StoreDelegate.FL_OFF.get())
-	// return;
-	// final State flState = tl_withinStore.get();
-	// if (flState.inside)
-	// return;
-	// flState.inside = true;
-	// try {
-	// if (filterOutFieldAccess(clazz, siteId)) {
-	// return;
-	// }
-	// if (DEBUG) {
-	// final String fmt =
-	// "LockSetStore.instanceFieldAccessLookup(%n\t\t%s%n\t\treceiver=%s%n\t\tfield=%s%n\t\tlocation=%s)";
-	// log(String.format(fmt, read ? "read" : "write",
-	// safeToString(receiver), clazz.getName()+'.'+fieldName, siteId));
-	// }
-	// final ObservedField oField = ObservedField.getInstance(clazz, fieldName,
-	// flState);
-	// /*
-	// * Check that the parameters are valid, gather needed information,
-	// * and put an event in the raw queue.
-	// */
-	// if (oField == null) {
-	// final String fmt =
-	// "field cannot be null...instrumentation bug detected by LockSetStore.instanceFieldAccessLookup(%s, receiver=%s, field=%s, withinClass, line=%s)";
-	// logAProblem(String.format(fmt, read ? "read" : "write",
-	// safeToString(receiver), clazz.getName()+'.'+fieldName, siteId));
-	// return;
-	// }
-	// final Event e;
-	// if (receiver == null) {
-	// final String fmt =
-	// "instance field %s access reported with a null receiver...instrumentation bug detected by LockSetStore.instanceFieldAccessLookup(%s, receiver=%s, field=%s, location=%s)";
-	// logAProblem(String.format(fmt, oField, read ? "read"
-	// : "write", safeToString(receiver), clazz.getName()+'.'+fieldName,
-	// siteId));
-	// return;
-	// }
-	// if (read)
-	// e = new FieldReadInstance(receiver, oField.getId(), siteId, flState);
-	// else
-	// e = new FieldWriteInstance(receiver, oField.getId(), siteId, flState);
-	// putInQueue(flState, e);
-	// } finally {
-	// flState.inside = false;
-	// }
-	// }
-
-	// /**
-	// * Records that a instance field that needs to be assigned a dynamic field
-	// id
-	// * was accessed within the instrumented program.
-	// *
-	// * @param read
-	// * {@code true} indicates a field <i>read</i>, {@code false}
-	// * indicates a field <i>write</i>.
-	// * @param clazz
-	// * The class object of the class in which the search
-	// * for the field should begin.
-	// * @param fieldName
-	// * the name of the field.
-	// * @param withinClass
-	// * the phantom class object for the class where the event occurred, may be
-	// {@code null}.
-	// * @param line
-	// * the line number where the event occurred.
-	// */
-	// public static void staticFieldAccessLookup(final boolean read,
-	// final Class clazz, final String fieldName, final long siteId) {
-	// if (!IdConstants.useFieldAccesses) {
-	// return;
-	// }
-	// if (f_flashlightIsNotInitialized)
-	// return;
-	// if (StoreDelegate.FL_OFF.get())
-	// return;
-	// final State flState = tl_withinStore.get();
-	// if (flState.inside)
-	// return;
-	// flState.inside = true;
-	// try {
-	// if (filterOutFieldAccess(clazz, siteId)) {
-	// return;
-	// }
-	// if (DEBUG) {
-	// final String fmt =
-	// "LockSetStore.staticFieldAccessLookup(%n\t\t%s%n\t\tfield=%s%n\t\tlocation=%s)";
-	// log(String.format(fmt, read ? "read" : "write",
-	// clazz.getName()+'.'+fieldName, siteId));
-	// }
-	// final ObservedField oField = ObservedField.getInstance(clazz, fieldName,
-	// flState);
-	// /*
-	// * Check that the parameters are valid, gather needed information,
-	// * and put an event in the raw queue.
-	// */
-	// if (oField == null) {
-	// final String fmt =
-	// "field cannot be null...instrumentation bug detected by LockSetStore.staticFieldAccessLookup(%s, field=%s, location=%s)";
-	// logAProblem(String.format(fmt, read ? "read" : "write",
-	// clazz.getName()+'.'+fieldName, siteId));
-	// return;
-	// }
-	//
-	// final Event e;
-	// if (read)
-	// e = new FieldReadStatic(oField.getId(), siteId, flState);
-	// else
-	// e = new FieldWriteStatic(oField.getId(), siteId, flState);
-	// putInQueue(flState, e);
-	// } finally {
-	// flState.inside = false;
-	// }
-	// }
 
 	/**
 	 * Record that the given object was accessed indirectly (via method call) at
@@ -761,38 +274,9 @@ public final class MonitorStore {
 	 * @param receiver
 	 *            non-null
 	 */
-	public static void indirectAccess(final Object receiver, final long siteId) {
-		if (StoreDelegate.FL_OFF.get()) {
-			return;
-		}
-		if (!StoreConfiguration.getCollectionType().processIndirectAccesses()) {
-			return;
-		}
-		/*
-		 * if (f_flashlightIsNotInitialized) { return; }
-		 */
+	public void indirectAccess(final Object receiver, final long siteId) {
 
-		// System.out.println("indirectAccess");
-		// System.out.println("  receiver = " + receiver.getClass().getName() +
-		// "@"
-		// + Integer.toHexString(System.identityHashCode(receiver)));
-		// System.out.println("  siteID = " + siteId);
-		// System.out.flush();
-
-		final State flState = tl_withinStore.get();
-		if (flState.inside) {
-			return;
-		}
-		flState.inside = true;
-		try {
-			if (DEBUG) {
-				final String fmt = "LockSetStore.indirectAccess(%n\t\treceiver=%s%n\t\tlocation=%s)";
-				log(String.format(fmt, safeToString(receiver), siteId));
-			}
-			// Do nothing currently
-		} finally {
-			flState.inside = false;
-		}
+		// Do nothing
 	}
 
 	/**
@@ -808,13 +292,9 @@ public final class MonitorStore {
 	 * @param siteId
 	 *            The site in the code of the array access.
 	 */
-	public static void arrayAccess(final boolean read, final Object receiver,
+	public void arrayAccess(final boolean read, final Object receiver,
 			final int index, final long siteId) {
-		// System.out.println("arrayAccess");
-		// System.out.println("  read = " + read);
-		// System.out.println("  receiver = " + receiver);
-		// System.out.println("  index = " + index);
-		// System.out.println("  siteId = " + siteId);
+		// Do nothing
 	}
 
 	/**
@@ -827,14 +307,8 @@ public final class MonitorStore {
 	 *            completed execution.
 	 * @param class The class object of the class being initialized.
 	 */
-	public static void classInit(final boolean before, final Class<?> clazz) {
-		final ClassPhantomReference p = Phantom.ofClass(clazz);
-		p.setUnderConstruction(before);
-		if (DEBUG) {
-			final String fmt = "LockSetStore.classInit(%n\t\tbefore=%s%n\t\tclass=%s)";
-			System.out.println(String.format(fmt, before ? "true" : "false",
-					clazz.getName()));
-		}
+	public void classInit(final boolean before, final Class<?> clazz) {
+		// Do nothing
 	}
 
 	/**
@@ -853,39 +327,18 @@ public final class MonitorStore {
 	 * @param line
 	 *            the line number where the event occurred.
 	 */
-	public static void constructorCall(final boolean before, final long siteId) {
+	public void constructorCall(final boolean before, final long siteId) {
+		State state = tl_withinStore.get();
 		/*
-		 * if (!IdConstants.useTraces) { return; }
+		 * Check that the parameters are valid, gather needed information, and
+		 * put an event in the raw queue.
 		 */
+		if (before) {
+			TraceNode.pushTraceNode(siteId, state);
+		} else {
+			TraceNode.popTraceNode(siteId, state);
+		}
 
-		/*
-		 * if (f_flashlightIsNotInitialized) { return; }
-		 */
-		if (StoreDelegate.FL_OFF.get()) {
-			return;
-		}
-		final State flState = tl_withinStore.get();
-		if (flState.inside) {
-			return;
-		}
-		flState.inside = true;
-		try {
-			if (DEBUG) {
-				final String fmt = "LockSetStore.constructorCall(%n\t\t%s%n\t\tlocation=%s)";
-				log(String.format(fmt, before ? "before" : "after", siteId));
-			}
-			/*
-			 * Check that the parameters are valid, gather needed information,
-			 * and put an event in the raw queue.
-			 */
-			if (before) {
-				TraceNode.pushTraceNode(siteId, flState);
-			} else {
-				TraceNode.popTraceNode(siteId, flState);
-			}
-		} finally {
-			flState.inside = false;
-		}
 	}
 
 	/**
@@ -911,40 +364,9 @@ public final class MonitorStore {
 	 * @param line
 	 *            the line number where the event occurred.
 	 */
-	public static void constructorExecution(final boolean before,
+	public void constructorExecution(final boolean before,
 			final Object receiver, final long siteId) {
-		/*
-		 * if (f_flashlightIsNotInitialized) { return; }
-		 */
-		if (StoreDelegate.FL_OFF.get()) {
-			return;
-		}
-		final State flState = tl_withinStore.get();
-		if (flState.inside) {
-			return;
-		}
-		flState.inside = true;
-		try {
-			if (DEBUG) {
-				final String fmt = "LockSetStore.constructorExecution(%n\t\t%s%n\t\treceiver=%s%n\t\tlocation=%s)";
-				log(String.format(fmt, before ? "before" : "after",
-						safeToString(receiver), siteId));
-			}
-			/*
-			 * Check that the parameters are valid, gather needed information,
-			 * and put an event in the raw queue.
-			 */
-			if (receiver == null) {
-				final String fmt = "constructor cannot be null...instrumentation bug detected by LockSetStore.constructorExecution(%s, receiver=%s, location=%s)";
-				logAProblem(String.format(fmt, before ? "before" : "after",
-						safeToString(receiver), siteId));
-			} else {
-				final ObjectPhantomReference p = Phantom.ofObject(receiver);
-				p.setUnderConstruction(before);
-			}
-		} finally {
-			flState.inside = false;
-		}
+		// Do nothing
 	}
 
 	/**
@@ -974,67 +396,42 @@ public final class MonitorStore {
 	 * @param line
 	 *            the line number where the event occurred.
 	 */
-	public static void methodCall(final boolean before, final Object receiver,
+	public void methodCall(final boolean before, final Object receiver,
 			final long siteId) {
-		if (StoreDelegate.FL_OFF.get()) {
-			return;
-		}
-		/*
-		 * if (!IdConstants.useTraces) { return; }
-		 */
 
 		/*
-		 * if (f_flashlightIsNotInitialized) { return; }
+		 * Special handling for ReadWriteLocks
 		 */
-
-		final State flState = tl_withinStore.get();
-		if (flState.inside) {
-			return;
-		}
-		flState.inside = true;
-		try {
-			if (DEBUG) {
-				final String fmt = "LockSetStore.methodCall(%n\t\t%s%n\t\treceiver=%s%n\t\tlocation=%s)";
-				log(String.format(fmt, before ? "before" : "after",
-						safeToString(receiver), siteId));
-			}
-
+		if (receiver instanceof ReadWriteLock) {
 			/*
-			 * Special handling for ReadWriteLocks
+			 * Define the structure of the ReadWriteLock in an event.
 			 */
-			if (receiver instanceof ReadWriteLock) {
-				/*
-				 * Define the structure of the ReadWriteLock in an event.
-				 */
-				final ReadWriteLock rwl = (ReadWriteLock) receiver;
-				final ObjectPhantomReference p = Phantom.ofObject(rwl);
-				if (UtilConcurrent.addReadWriteLock(p)) {
-					if (DEBUG) {
-						final String fmt = "Defined ReadWriteLock id=%d";
-						log(String.format(fmt, p.getId()));
-					}
-					final long id = p.getId();
-					final long read = Phantom.ofObject(rwl.readLock()).getId();
-					final long write = Phantom.ofObject(rwl.writeLock())
-							.getId();
-					final ReadWriteLockIds ids = new ReadWriteLockIds(id, read,
-							write);
-					f_rwLocks.put(read, ids);
-					f_rwLocks.put(write, ids);
+			final ReadWriteLock rwl = (ReadWriteLock) receiver;
+			final ObjectPhantomReference p = Phantom.ofObject(rwl);
+			if (f_knownRWLocks.addReadWriteLock(p)) {
+				if (f_conf.isDebug()) {
+					final String fmt = "Defined ReadWriteLock id=%d";
+					f_conf.log(String.format(fmt, p.getId()));
 				}
+				final long id = p.getId();
+				final long read = Phantom.ofObject(rwl.readLock()).getId();
+				final long write = Phantom.ofObject(rwl.writeLock()).getId();
+				final ReadWriteLockIds ids = new ReadWriteLockIds(id, read,
+						write);
+				f_rwLocks.put(read, ids);
+				f_rwLocks.put(write, ids);
 			}
-
-			/*
-			 * Record this call in the trace.
-			 */
-			if (before) {
-				TraceNode.pushTraceNode(siteId, flState);
-			} else {
-				TraceNode.popTraceNode(siteId, flState);
-			}
-		} finally {
-			flState.inside = false;
 		}
+		State state = tl_withinStore.get();
+		/*
+		 * Record this call in the trace.
+		 */
+		if (before) {
+			TraceNode.pushTraceNode(siteId, state);
+		} else {
+			TraceNode.popTraceNode(siteId, state);
+		}
+
 	}
 
 	/**
@@ -1055,7 +452,7 @@ public final class MonitorStore {
 	 * @param line
 	 *            the line number where the event occurred.
 	 */
-	public static void beforeIntrinsicLockAcquisition(final Object lockObject,
+	public void beforeIntrinsicLockAcquisition(final Object lockObject,
 			final boolean lockIsThis, final boolean lockIsClass,
 			final long siteId) {
 		if (!useLocks) {
@@ -1105,7 +502,7 @@ public final class MonitorStore {
 	 * @param line
 	 *            the line number where the event occurred.
 	 */
-	public static void afterIntrinsicLockAcquisition(final Object lockObject,
+	public void afterIntrinsicLockAcquisition(final Object lockObject,
 			final long siteId) {
 		if (!useLocks) {
 			return;
@@ -1171,7 +568,7 @@ public final class MonitorStore {
 	 * @param line
 	 *            the line number where the event occurred.
 	 */
-	public static void intrinsicLockWait(final boolean before,
+	public void intrinsicLockWait(final boolean before,
 			final Object lockObject, final long siteId) {
 		if (!useLocks) {
 			return;
@@ -1225,7 +622,7 @@ public final class MonitorStore {
 	 * @param line
 	 *            the line number where the event occurred.
 	 */
-	public static void afterIntrinsicLockRelease(final Object lockObject,
+	public void afterIntrinsicLockRelease(final Object lockObject,
 			final long siteId) {
 		if (!useLocks) {
 			return;
@@ -1274,7 +671,7 @@ public final class MonitorStore {
 	 * @param line
 	 *            the line number where the event occurred.
 	 */
-	public static void beforeUtilConcurrentLockAcquisitionAttempt(
+	public void beforeUtilConcurrentLockAcquisitionAttempt(
 			final Object lockObject, final long siteId) {
 		if (!useLocks) {
 			return;
@@ -1329,7 +726,7 @@ public final class MonitorStore {
 	 * @param line
 	 *            the line number where the event occurred.
 	 */
-	public static void afterUtilConcurrentLockAcquisitionAttempt(
+	public void afterUtilConcurrentLockAcquisitionAttempt(
 			final boolean gotTheLock, final Object lockObject, final long siteId) {
 		if (!useLocks) {
 			return;
@@ -1390,7 +787,7 @@ public final class MonitorStore {
 	 * @param line
 	 *            the line number where the event occurred.
 	 */
-	public static void afterUtilConcurrentLockReleaseAttempt(
+	public void afterUtilConcurrentLockReleaseAttempt(
 			final boolean releasedTheLock, final Object lockObject,
 			final long siteId) {
 		if (!useLocks) {
@@ -1449,7 +846,7 @@ public final class MonitorStore {
 	 * <li>The thread created to run our shutdown hook.</li>
 	 * </ul>
 	 */
-	public static void shutdown() {
+	public void shutdown() {
 		if (f_flashlightIsNotInitialized) {
 			System.err.println("[Flashlight] !SERIOUS ERROR! "
 					+ "LockSetStore.shutdown() invoked "
@@ -1609,34 +1006,8 @@ public final class MonitorStore {
 		}
 	}
 
-	/**
-	 * Produces a safe string representation of any object. Some overrides of
-	 * {@link Object#toString()} throw exceptions and behave badly. This method
-	 * avoids those problems by building the same string that would be built for
-	 * the object if {@link Object#toString()} was not overridden.
-	 * <p>
-	 * In a dynamic analysis, like Flashlight, it is not safe to be calling the
-	 * {@link Object#toString()} methods of objects where the class is unknown.
-	 * 
-	 * @param o
-	 *            the object to return a string representation of.
-	 * @return a string representing the passed object.
-	 */
-	private static String safeToString(final Object o) {
-		if (o == null) {
-			return "null";
-		} else {
-			return o.getClass().getName() + "@"
-					+ Integer.toHexString(o.hashCode());
-		}
-	}
-
-	private MonitorStore() {
-		// no instances
-	}
-
-	public static void instanceFieldInit(final Object receiver,
-			final int fieldId, final Object value) {
+	public void instanceFieldInit(final Object receiver, final int fieldId,
+			final Object value) {
 		if (!StoreConfiguration.processFieldAccesses()) {
 			return;
 		}
@@ -1661,7 +1032,7 @@ public final class MonitorStore {
 		}
 	}
 
-	public static void staticFieldInit(final int fieldId, final Object value) {
+	public void staticFieldInit(final int fieldId, final Object value) {
 		if (!StoreConfiguration.processFieldAccesses()) {
 			return;
 		}

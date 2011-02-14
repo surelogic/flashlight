@@ -13,8 +13,8 @@ final class BeforeIntrinsicLockAcquisition extends IntrinsicLock {
 	}
 
 	/**
-	 * <code>true</code> if the lock object is dynamically the same as the
-	 * class the method is declared within.
+	 * <code>true</code> if the lock object is dynamically the same as the class
+	 * the method is declared within.
 	 */
 	private final boolean f_lockIsClass;
 
@@ -24,14 +24,14 @@ final class BeforeIntrinsicLockAcquisition extends IntrinsicLock {
 
 	BeforeIntrinsicLockAcquisition(final Object lockObject,
 			final boolean lockIsThis, final boolean lockIsClass,
-			final long siteId, Store.State state) {
+			final long siteId, final PostMortemStore.State state) {
 		super(lockObject, siteId, state);
 		f_lockIsThis = lockIsThis;
 		f_lockIsClass = lockIsClass;
 	}
 
 	@Override
-	void accept(EventVisitor v) {
+	void accept(final EventVisitor v) {
 		v.visit(this);
 	}
 
@@ -42,10 +42,12 @@ final class BeforeIntrinsicLockAcquisition extends IntrinsicLock {
 		addNanoTime(b);
 		addThread(b);
 		addLock(b);
-		if (f_lockIsThis)
+		if (f_lockIsThis) {
 			Entities.addAttribute("lock-is-this", "yes", b);
-		if (f_lockIsClass)
+		}
+		if (f_lockIsClass) {
 			Entities.addAttribute("lock-is-class", "yes", b);
+		}
 		b.append("/>");
 		return b.toString();
 	}

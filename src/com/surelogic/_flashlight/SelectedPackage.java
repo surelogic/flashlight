@@ -5,11 +5,12 @@ package com.surelogic._flashlight;
  */
 public class SelectedPackage extends TimedEvent {
 	final String name;
-	
-	SelectedPackage(String name) {
+
+	SelectedPackage(final String name) {
+		super(System.nanoTime());
 		this.name = name;
 	}
-	
+
 	@Override
 	void accept(final EventVisitor v) {
 		v.visit(this);

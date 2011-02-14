@@ -10,7 +10,8 @@ abstract class Lock extends TracedEvent {
 		return f_lockObject;
 	}
 
-	Lock(final Object lockObject, final long siteId, final Store.State state) {
+	Lock(final Object lockObject, final long siteId,
+			final PostMortemStore.State state) {
 		super(siteId, state);
 		assert lockObject != null;
 		f_lockObject = Phantom.of(lockObject);

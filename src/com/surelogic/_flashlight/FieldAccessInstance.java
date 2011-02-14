@@ -15,7 +15,7 @@ abstract class FieldAccessInstance extends FieldAccess {
 	}
 
 	FieldAccessInstance(final Object receiver, final long field,
-			            final long siteId, Store.State state) {
+			final long siteId, final PostMortemStore.State state) {
 		super(field, siteId, state);
 		f_receiver = Phantom.ofObject(receiver);
 		f_receiverUnderConstruction = f_receiver.isUnderConstruction();
@@ -27,31 +27,30 @@ abstract class FieldAccessInstance extends FieldAccess {
 			Entities.addAttribute("under-construction", "yes", b);
 		}
 	}
-	
+
 	@Override
 	IFieldInfo getFieldInfo() {
 		return f_receiver.getFieldInfo();
 	}
-	 
+
 	@Override
 	public int hashCode() {
 		return (int) (getFieldId() + f_receiver.hashCode());
 	}
-	
+
 	@Override
-	public boolean equals(Object o) {
+	public boolean equals(final Object o) {
 		if (o instanceof FieldAccessInstance) {
 			FieldAccessInstance s = (FieldAccessInstance) o;
-			return this.getFieldId() == s.getFieldId() &&
-			       this.f_receiver == s.getReceiver();
-		}
-		else if (o instanceof SingleThreadedFieldInstance) {
+			return this.getFieldId() == s.getFieldId()
+					&& this.f_receiver == s.getReceiver();
+		} else if (o instanceof SingleThreadedFieldInstance) {
 			SingleThreadedFieldInstance s = (SingleThreadedFieldInstance) o;
-			return this.getFieldId() == s.getFieldId() &&
-		           this.f_receiver == s.getReceiver();
+			return this.getFieldId() == s.getFieldId()
+					&& this.f_receiver == s.getReceiver();
 		}
 		return false;
 	}
-	
+
 	abstract boolean isWrite();
 }

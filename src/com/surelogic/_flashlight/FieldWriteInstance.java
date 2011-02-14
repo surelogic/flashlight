@@ -3,7 +3,7 @@ package com.surelogic._flashlight;
 final class FieldWriteInstance extends FieldAccessInstance {
 
 	FieldWriteInstance(final Object receiver, final long field,
-			           final long siteId, Store.State state) {
+			final long siteId, final PostMortemStore.State state) {
 		super(receiver, field, siteId, state);
 	}
 
@@ -23,6 +23,7 @@ final class FieldWriteInstance extends FieldAccessInstance {
 		b.append("/>");
 		return b.toString();
 	}
+
 	@Override
 	boolean isWrite() {
 		return true;

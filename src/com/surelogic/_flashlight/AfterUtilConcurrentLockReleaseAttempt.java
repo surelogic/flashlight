@@ -4,8 +4,8 @@ import java.util.concurrent.locks.Lock;
 
 final class AfterUtilConcurrentLockReleaseAttempt extends UtilConcurrentLock {
 	/**
-	 * <code>true</code> if the acquisition attempt was successful and the
-	 * lock was obtained by the thread.
+	 * <code>true</code> if the acquisition attempt was successful and the lock
+	 * was obtained by the thread.
 	 */
 	private final boolean f_releasedTheLock;
 
@@ -14,13 +14,14 @@ final class AfterUtilConcurrentLockReleaseAttempt extends UtilConcurrentLock {
 	}
 
 	AfterUtilConcurrentLockReleaseAttempt(final boolean releasedTheLock,
-			final Lock lockObject, final long siteId, Store.State state) {
+			final Lock lockObject, final long siteId,
+			final PostMortemStore.State state) {
 		super(lockObject, siteId, state);
 		f_releasedTheLock = releasedTheLock;
 	}
 
 	@Override
-	void accept(EventVisitor v) {
+	void accept(final EventVisitor v) {
 		v.visit(this);
 	}
 

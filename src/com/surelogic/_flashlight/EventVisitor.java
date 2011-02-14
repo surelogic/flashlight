@@ -2,7 +2,6 @@ package com.surelogic._flashlight;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.zip.GZIPOutputStream;
@@ -138,11 +137,7 @@ public abstract class EventVisitor {
 			final OutputType type) throws IOException {
 		final File dataFile = createStreamFile(fileName, type);
 		OutputStream stream;
-		if (true) {
-			stream = new FileChannelOutputStream(dataFile);
-		} else {
-			stream = new FileOutputStream(dataFile);
-		}
+		stream = new FileChannelOutputStream(dataFile);
 		if (type.isCompressed()) {
 			stream = new GZIPOutputStream(stream, 32768);
 		} else {
@@ -152,7 +147,7 @@ public abstract class EventVisitor {
 	}
 
 	interface Factory {
-		EventVisitor create(OutputStream stream, String encoding, Time time)
+		EventVisitor create(RunConf conf, OutputStream stream)
 				throws IOException;
 	}
 }

@@ -6,15 +6,16 @@ public class IndirectAccess extends TracedEvent {
 	IdPhantomReference getReceiver() {
 		return f_receiver;
 	}
-	
-	IndirectAccess(final Object receiver, final long siteId, Store.State state) {
+
+	IndirectAccess(final Object receiver, final long siteId,
+			final PostMortemStore.State state) {
 		super(siteId, state);
 		f_receiver = Phantom.ofObject(receiver);
 		f_receiver.setLastThread(getWithinThread());
 	}
 
 	@Override
-	void accept(EventVisitor v) {
+	void accept(final EventVisitor v) {
 		v.visit(this);
 	}
 
@@ -28,7 +29,7 @@ public class IndirectAccess extends TracedEvent {
 		b.append("/>");
 		return b.toString();
 	}
-	
+
 	protected final void addReceiver(final StringBuilder b) {
 		Entities.addAttribute("receiver", f_receiver.getId(), b);
 	}

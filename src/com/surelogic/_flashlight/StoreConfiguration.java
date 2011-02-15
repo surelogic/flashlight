@@ -56,8 +56,8 @@ import com.surelogic._flashlight.common.OutputType;
 /**
  * This class is giant hack, but I don't know of a better way to do things. This
  * class cannot be instantiated, but contains various configuration attributes
- * for the {@link Store} class. These attributes must be set <em>before</em> the
- * {@code Store} class is initialized by the virtual machine because the
+ * for the {@link Store} class. These attributes must be set <em>before</em>
+ * the {@code FLStore} class is initialized by the virtual machine because the
  * attributes are accessed by the <code>static</code> initializer of the class.
  * 
  * <p>

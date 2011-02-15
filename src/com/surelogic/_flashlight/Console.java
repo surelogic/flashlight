@@ -50,7 +50,7 @@ class Console extends Thread {
 
 	@Override
 	public void run() {
-		FLStore.flashlightThread();
+		Store.flashlightThread();
 
 		// start listening on a port
 		boolean listening = false;
@@ -148,7 +148,7 @@ class Console extends Thread {
 
 		@Override
 		public void run() {
-			FLStore.flashlightThread();
+			Store.flashlightThread();
 
 			try {
 				// create input and output connections

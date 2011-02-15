@@ -58,7 +58,7 @@ final class Refinery extends AbstractRefinery {
 	@Override
 	public void run() {
 		final boolean filter = IdConstants.filterEvents;
-		FLStore.flashlightThread();
+		Store.flashlightThread();
 		if (StoreConfiguration.debugOn()) {
 			System.err.println("Filter events = " + filter);
 		}

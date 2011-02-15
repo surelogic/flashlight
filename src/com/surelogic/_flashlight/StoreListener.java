@@ -5,7 +5,7 @@ import java.util.Collection;
 /**
  * A {@link StoreListener} listens for events from the Flashlight
  * instrumentation. It expects to be created, initialized, and shutdown by the
- * {@link FLStore} class. Any implementor of {@link StoreListener} is expected
+ * {@link Store} class. Any implementor of {@link StoreListener} is expected
  * to be thread-safe in all respects. The {@link StoreListener} should expect to
  * be provided with only two guarantees:
  * 

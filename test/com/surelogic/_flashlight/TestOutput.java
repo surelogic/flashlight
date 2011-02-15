@@ -74,7 +74,7 @@ public class TestOutput extends TestCase {
 		startGate.countDown();
 		try {
 			endGate.await();
-			FLStore.shutdown();
+			Store.shutdown();
 		} catch (InterruptedException e) {
 			fail("interrupted during end gate await");
 		}

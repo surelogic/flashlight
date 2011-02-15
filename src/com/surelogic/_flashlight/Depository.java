@@ -139,7 +139,7 @@ final class Depository extends Thread {
 
 	@Override
 	public void run() {
-		FLStore.flashlightThread();
+		Store.flashlightThread();
 
 		while (!f_finished) {
 			try {

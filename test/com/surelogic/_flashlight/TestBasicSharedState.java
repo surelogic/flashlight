@@ -125,7 +125,7 @@ public class TestBasicSharedState extends TestCase {
 		} catch (NoSuchFieldException e1) {
 			fail();
 		}
-		FLStore.setOutputStrategy(f_osc);
+		Store.setOutputStrategy(f_osc);
 		for (int i = 0; i < THREADS; i++) {
 			Thread t = new ProgThread();
 			t.start();
@@ -133,7 +133,7 @@ public class TestBasicSharedState extends TestCase {
 		startGate.countDown();
 		try {
 			endGate.await();
-			FLStore.shutdown();
+			Store.shutdown();
 			Thread.sleep(1000);
 			/*
 			 * OK, now check the counters.

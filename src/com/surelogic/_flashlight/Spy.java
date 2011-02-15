@@ -31,7 +31,7 @@ public final class Spy extends Thread {
 
 	@Override
 	public void run() {
-		FLStore.flashlightThread();
+		Store.flashlightThread();
 
 		while (true) {
 			try {
@@ -67,7 +67,7 @@ public final class Spy extends Thread {
 				}
 			}
 			if (timeToShutdown) {
-				FLStore.shutdown();
+				Store.shutdown();
 			}
 		}
 	}

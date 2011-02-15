@@ -16,7 +16,7 @@ import com.surelogic._flashlight.monitor.MonitorStore;
  * 
  * @policyLock Console is java.lang.System:out
  */
-public class FLStore {
+public class Store {
 
 	/**
 	 * This <i>must</i> be declared first within this class so that it can avoid

@@ -18,7 +18,7 @@ public class MinimalRefinery extends AbstractRefinery {
 	 */
 	@Override
 	public void run() {
-		FLStore.flashlightThread();
+		Store.flashlightThread();
 		while (shutdown.get()) {
 			IdPhantomReference pr = Phantom.get();
 			if (pr != null) {

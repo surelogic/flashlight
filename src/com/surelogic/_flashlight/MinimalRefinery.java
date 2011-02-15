@@ -5,8 +5,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class MinimalRefinery extends AbstractRefinery {
 	private final AtomicBoolean shutdown = new AtomicBoolean(false);
 
-	MinimalRefinery() {
+	private final PostMortemStore store;
+
+	MinimalRefinery(final PostMortemStore store) {
 		super("flashlight-minimal-refinery");
+		this.store = store;
 	}
 
 	/**
@@ -15,11 +18,12 @@ public class MinimalRefinery extends AbstractRefinery {
 	 */
 	@Override
 	public void run() {
-		final Store.State state = FLStore.flashlightThread();
+		FLStore.flashlightThread();
 		while (shutdown.get()) {
 			IdPhantomReference pr = Phantom.get();
 			if (pr != null) {
-				Store.putInQueue(state, new GarbageCollectedObject(pr));
+				store.putInQueue(store.getState(), new GarbageCollectedObject(
+						pr));
 			}
 		}
 	}

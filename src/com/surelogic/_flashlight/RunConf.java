@@ -78,6 +78,10 @@ public class RunConf {
 	 */
 	private final AtomicLong f_problemCount;
 
+	public long getProblemCount() {
+		return f_problemCount.get();
+	}
+
 	/**
 	 * Logs a problem message if logging is enabled.
 	 * 

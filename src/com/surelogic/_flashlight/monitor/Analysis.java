@@ -7,13 +7,11 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import com.surelogic._flashlight.FieldDef;
-import com.surelogic._flashlight.FieldDefs;
 import com.surelogic._flashlight.IdPhantomReference;
 import com.surelogic._flashlight.Phantom;
+import com.surelogic._flashlight.RunConf;
 
 /**
  * The Analysis thread periodically collects events from every program thread
@@ -25,8 +23,9 @@ import com.surelogic._flashlight.Phantom;
 final class Analysis extends Thread {
 	private static final long PERIOD = 1000L;
 
+	private final MonitorStore store;
+	private final RunConf conf;
 	private final MasterLockSet master;
-	private final FieldDefs fieldDefs;
 	private final SharedFields shared;
 
 	private volatile boolean f_done;
@@ -37,15 +36,16 @@ final class Analysis extends Thread {
 	private Set<FieldDef> sharedFieldViolations;
 	private Set<FieldDef> lockSetViolations;
 
-	Analysis(final FieldDefs fields) {
+	Analysis(final MonitorStore store, final RunConf conf) {
 		super("flashlight-analysis");
-		this.fieldDefs = fields;
+		this.conf = conf;
+		this.store = store;
 		shared = new SharedFields();
-		master = new MasterLockSet(fieldDefs, shared);
+		master = new MasterLockSet(conf.getFieldDefs(), shared);
 		edtViolations = new HashSet<FieldDef>();
 		sharedFieldViolations = new HashSet<FieldDef>();
 		lockSetViolations = new HashSet<FieldDef>();
-		alerts = new AlertSpec(fields);
+		alerts = new AlertSpec(conf.getFieldDefs());
 	}
 
 	@Override
@@ -75,7 +75,7 @@ final class Analysis extends Thread {
 	public synchronized void process() {
 		Phantom.drainTo(references);
 		final Set<Long> edtThreads = new HashSet<Long>();
-		for (final ThreadLocks other : MonitorStore.f_lockSets) {
+		for (final ThreadLocks other : store.f_lockSets) {
 			if (other.isEDT()) {
 				edtThreads.add(other.getThreadId());
 			}
@@ -128,7 +128,8 @@ final class Analysis extends Thread {
 	}
 
 	public synchronized SharedFieldInfo getShared() {
-		return new SharedFieldInfo(fieldDefs, shared.calculateSharedFields(),
+		return new SharedFieldInfo(conf.getFieldDefs(),
+				shared.calculateSharedFields(),
 				shared.calculateUnsharedFields());
 	}
 
@@ -142,9 +143,6 @@ final class Analysis extends Thread {
 		return b.toString();
 	}
 
-	private static Analysis activeAnalysis;
-	private static final Lock analysisLock = new ReentrantLock();
-
 	synchronized void setAlerts(final AlertSpec spec) {
 		if (alerts != null) {
 			alerts = alerts.merge(spec);
@@ -154,54 +152,6 @@ final class Analysis extends Thread {
 		edtViolations = new HashSet<FieldDef>();
 		sharedFieldViolations = new HashSet<FieldDef>();
 		lockSetViolations = new HashSet<FieldDef>();
-	}
-
-	static void reviseAlerts(final AlertSpec spec) {
-		analysisLock.lock();
-		try {
-			activeAnalysis.setAlerts(spec);
-		} finally {
-			analysisLock.unlock();
-		}
-	}
-
-	/**
-	 * Change the monitor specification that we are looking at
-	 * 
-	 * @param spec
-	 */
-	static void reviseSpec(final MonitorSpec spec) {
-		analysisLock.lock();
-		try {
-			if (activeAnalysis != null) {
-				activeAnalysis.wrapUp();
-				try {
-					activeAnalysis.join();
-				} catch (final InterruptedException e) {
-					MonitorStore.logAProblem(
-							"Exception while changing analyses", e);
-				}
-			}
-			activeAnalysis = new Analysis(MonitorStore.getFieldDefinitions());
-			MonitorStore.updateSpec(spec);
-			activeAnalysis.start();
-		} finally {
-			analysisLock.unlock();
-		}
-	}
-
-	/**
-	 * Get the active analysis
-	 * 
-	 * @return
-	 */
-	static Analysis getAnalysis() {
-		analysisLock.lock();
-		try {
-			return activeAnalysis;
-		} finally {
-			analysisLock.unlock();
-		}
 	}
 
 }

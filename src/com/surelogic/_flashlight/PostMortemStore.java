@@ -5,9 +5,12 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 
 import com.surelogic._flashlight.common.IdConstants;
@@ -15,8 +18,6 @@ import com.surelogic._flashlight.common.OutputType;
 import com.surelogic._flashlight.trace.TraceNode;
 
 public class PostMortemStore implements StoreListener {
-
-	private static final boolean useLocks = true;
 
 	/**
 	 * A queue to buffer raw event records from the instrumented program to the
@@ -39,6 +40,18 @@ public class PostMortemStore implements StoreListener {
 	 * The depository thread.
 	 */
 	private Depository f_depository;
+
+	/**
+	 * Only used for testing, this method sets the output strategy of the
+	 * depository thread.
+	 * 
+	 * @param outputStrategy
+	 *            an output strategy.
+	 */
+	void setOutputStrategy(final EventVisitor outputStrategy) {
+		assert outputStrategy != null;
+		f_depository.setOutputStrategy(outputStrategy);
+	}
 
 	private UtilConcurrent f_rwLocks;
 
@@ -149,12 +162,12 @@ public class PostMortemStore implements StoreListener {
 		}
 		final int refinerySize = StoreConfiguration.getRefinerySize();
 		if (!StoreConfiguration.isRefineryOff()) {
-			f_refinery = new Refinery(f_conf, f_rawQueue, f_outQueue,
+			f_refinery = new Refinery(this, f_conf, f_rawQueue, f_outQueue,
 					refinerySize);
 			f_refinery.start();
 			f_depository = new Depository(f_conf, f_outQueue, outputStrategy);
 		} else {
-			f_refinery = new MinimalRefinery();
+			f_refinery = new MinimalRefinery(this);
 			f_refinery.start();
 			f_depository = new Depository(f_conf, f_rawQueue, outputStrategy);
 		}
@@ -268,60 +281,133 @@ public class PostMortemStore implements StoreListener {
 	public void beforeIntrinsicLockAcquisition(final Object lockObject,
 			final boolean lockIsThis, final boolean lockIsClass,
 			final long siteId) {
-		// TODO Auto-generated method stub
-
+		State state = tl_withinStore.get();
+		final Event e = new BeforeIntrinsicLockAcquisition(lockObject,
+				lockIsThis, lockIsClass, siteId, state);
+		putInQueue(state, e, true);
 	}
 
 	public void afterIntrinsicLockAcquisition(final Object lockObject,
 			final long siteId) {
-		// TODO Auto-generated method stub
-
+		State state = tl_withinStore.get();
+		if (IdConstants.trackLocks) {
+			final IdPhantomReference lockPhantom = Phantom.of(lockObject);
+			state.locksHeld.add(lockPhantom);
+		}
+		final Event e = new AfterIntrinsicLockAcquisition(lockObject, siteId,
+				state);
+		putInQueue(state, e);
 	}
 
 	public void intrinsicLockWait(final boolean before,
 			final Object lockObject, final long siteId) {
-		// TODO Auto-generated method stub
+		final Event e;
+		State state = tl_withinStore.get();
+		if (before) {
+			e = new BeforeIntrinsicLockWait(lockObject, siteId, state);
+		} else {
+			e = new AfterIntrinsicLockWait(lockObject, siteId, state);
+		}
+		putInQueue(state, e, true);
 
 	}
 
 	public void afterIntrinsicLockRelease(final Object lockObject,
 			final long siteId) {
-		// TODO Auto-generated method stub
-
+		State state = tl_withinStore.get();
+		if (IdConstants.trackLocks) {
+			final IdPhantomReference lockPhantom = Phantom.of(lockObject);
+			state.locksHeld.remove(lockPhantom);
+		}
+		final Event e = new AfterIntrinsicLockRelease(lockObject, siteId, state);
+		putInQueue(state, e);
 	}
 
 	public void beforeUtilConcurrentLockAcquisitionAttempt(
 			final Object lockObject, final long siteId) {
-		// TODO Auto-generated method stub
-
+		if (lockObject instanceof Lock) {
+			State state = tl_withinStore.get();
+			final Lock ucLock = (Lock) lockObject;
+			final Event e = new BeforeUtilConcurrentLockAcquisitionAttempt(
+					ucLock, siteId, state);
+			putInQueue(state, e, true);
+		} else {
+			final String fmt = "lock object must be a java.util.concurrent.locks.Lock...instrumentation bug detected by Store.beforeUtilConcurrentLockAcquisitionAttempt(lockObject=%s, location=%s)";
+			f_conf.logAProblem(String.format(fmt, lockObject, siteId));
+			return;
+		}
 	}
 
 	public void afterUtilConcurrentLockAcquisitionAttempt(
 			final boolean gotTheLock, final Object lockObject, final long siteId) {
-		// TODO Auto-generated method stub
+		if (lockObject instanceof Lock) {
+			State state = tl_withinStore.get();
+			if (IdConstants.trackLocks && gotTheLock) {
+				final ObjectPhantomReference lockPhantom = Phantom
+						.ofObject(lockObject);
+				state.locksHeld.add(lockPhantom);
+			}
+			final Lock ucLock = (Lock) lockObject;
+			final Event e = new AfterUtilConcurrentLockAcquisitionAttempt(
+					gotTheLock, ucLock, siteId, state);
+			putInQueue(state, e);
+		} else {
+			final String fmt = "lock object must be a java.util.concurrent.locks.Lock...instrumentation bug detected by Store.afterUtilConcurrentLockAcquisitionAttempt(%s, lockObject=%s, location=%s)";
+			f_conf.logAProblem(String.format(fmt, gotTheLock ? "holding"
+					: "failed-to-acquire", lockObject, siteId));
+			return;
+		}
 
 	}
 
 	public void afterUtilConcurrentLockReleaseAttempt(
 			final boolean releasedTheLock, final Object lockObject,
 			final long siteId) {
-		// TODO Auto-generated method stub
-
-	}
-
-	public void shutdown() {
-		// TODO Auto-generated method stub
-
+		if (lockObject instanceof Lock) {
+			State state = tl_withinStore.get();
+			if (IdConstants.trackLocks && releasedTheLock) {
+				final ObjectPhantomReference lockPhantom = Phantom
+						.ofObject(lockObject);
+				state.locksHeld.remove(lockPhantom);
+			}
+			final Lock ucLock = (Lock) lockObject;
+			final Event e = new AfterUtilConcurrentLockReleaseAttempt(
+					releasedTheLock, ucLock, siteId, state);
+			putInQueue(state, e);
+		} else {
+			final String fmt = "lock object must be a java.util.concurrent.locks.Lock...instrumentation bug detected by Store.afterUtilConcurrentLockReleaseAttempt(%s, lockObject=%s, location=%s)";
+			f_conf.logAProblem(String.format(fmt, releasedTheLock ? "released"
+					: "failed-to-release", lockObject, siteId));
+			return;
+		}
 	}
 
 	public void instanceFieldInit(final Object receiver, final int fieldId,
 			final Object value) {
-		// TODO Auto-generated method stub
-
+		putInQueue(tl_withinStore.get(), new FieldAssignment(receiver, fieldId,
+				value));
 	}
 
 	public void staticFieldInit(final int fieldId, final Object value) {
-		// TODO Auto-generated method stub
+		putInQueue(tl_withinStore.get(), new FieldAssignment(fieldId, value));
+	}
+
+	public void shutdown() {
+		/*
+		 * Finish up data output.
+		 */
+		if (StoreConfiguration.isRefineryOff()) {
+			// Need to shutdown the minimal refinery in a different way than
+			// the normal refinery
+			f_refinery.requestShutdown();
+		}
+		Thread.yield();
+		putInQueue(f_rawQueue, flushLocalQueues());
+		putInQueue(f_rawQueue, singletonList(FinalEvent.FINAL_EVENT));
+		if (!StoreConfiguration.isRefineryOff()) {
+			join(f_refinery);
+		}
+		join(f_depository);
 
 	}
 
@@ -330,22 +416,14 @@ public class PostMortemStore implements StoreListener {
 	/**
 	 * Used by the refinery to flush all the local queues upon shutdown
 	 */
-	static final List<List<Event>> localQueueList = new ArrayList<List<Event>>();
+	final List<List<Event>> localQueueList = new ArrayList<List<Event>>();
 
-	void putInQueue(final State state, final Event e) {
+	public static void putInQueue(final State state, final Event e) {
 		putInQueue(state, e, false);
 	}
 
-	void putInQueue(final State state, final Event e, final boolean flush) {
-		/*
-		 * if (e instanceof ObjectDefinition) { ObjectDefinition od =
-		 * (ObjectDefinition) e; if (od.getObject() instanceof
-		 * ClassPhantomReference) {
-		 * System.err.println("Local queue: "+od.getObject()); } }
-		 */
-		/*
-		 * if (state == null) { state = tl_withinStore.get(); }
-		 */
+	static void putInQueue(final State state, final Event e, final boolean flush) {
+
 		final List<Event> localQ = state.eventQueue;
 		List<Event> copy = null;
 		synchronized (localQ) {
@@ -356,12 +434,6 @@ public class PostMortemStore implements StoreListener {
 			}
 		}
 		if (copy != null) {
-			/*
-			 * for(Event ev : copy) { if (ev instanceof ObjectDefinition) {
-			 * ObjectDefinition od = (ObjectDefinition) ev; if (od.getObject()
-			 * instanceof ClassPhantomReference) {
-			 * System.err.println("Queuing: "+od.getObject()); } } }
-			 */
 			putInQueue(state.rawQueue, copy);
 		}
 	}
@@ -375,7 +447,7 @@ public class PostMortemStore implements StoreListener {
 	 * @param e
 	 *            the event to put into the raw queue.
 	 */
-	<T> void putInQueue(final BlockingQueue<T> queue, final T e) {
+	static <T> void putInQueue(final BlockingQueue<T> queue, final T e) {
 		boolean done = false;
 		while (!done) {
 			try {
@@ -387,12 +459,12 @@ public class PostMortemStore implements StoreListener {
 				 * interrupted us. I think it is OK to ignore this, however, we
 				 * do need to ensure the event gets put into the raw queue.
 				 */
-				f_conf.logAProblem("queue.put(e) was interrupted", e1);
+				// f_conf.logAProblem("queue.put(e) was interrupted", e1);
 			}
 		}
 	}
 
-	static List<Event> flushLocalQueues() {
+	List<Event> flushLocalQueues() {
 		final List<Event> buf = new ArrayList<Event>(LOCAL_QUEUE_MAX);
 		synchronized (localQueueList) {
 			for (final List<Event> q : localQueueList) {
@@ -402,12 +474,6 @@ public class PostMortemStore implements StoreListener {
 				}
 			}
 		}
-		/*
-		 * for(Event ev : buf) { if (ev instanceof ObjectDefinition) {
-		 * ObjectDefinition od = (ObjectDefinition) ev; if (od.getObject()
-		 * instanceof ClassPhantomReference) {
-		 * System.err.println("Flushing: "+od.getObject()); } } }
-		 */
 		return buf;
 	}
 
@@ -417,4 +483,47 @@ public class PostMortemStore implements StoreListener {
 		return l;
 	}
 
+	/**
+	 * Joins on the given thread ignoring any interruptions.
+	 * 
+	 * @param t
+	 *            the thread to join on.
+	 */
+	private static void join(final Thread t) {
+		if (t == null) {
+			return;
+		}
+		boolean done = false;
+		while (!done) {
+			try {
+				t.join();
+				done = true;
+			} catch (final InterruptedException e1) {
+				// ignore, we expect to be interrupted
+			}
+		}
+	}
+
+	/**
+	 * Used by the refinery, gets the {@link State} of the current thread.
+	 * 
+	 * @return
+	 */
+	public State getState() {
+		return tl_withinStore.get();
+	}
+
+	/**
+	 * Used by the refinery to notify the store of when a read/write lock has
+	 * been garbage collected.
+	 * 
+	 * @param pr
+	 */
+	public void gcRWLock(final IdPhantomReference pr) {
+		f_rwLocks.remove(pr);
+	}
+
+	public Collection<? extends ConsoleCommand> getCommands() {
+		return Collections.emptyList();
+	}
 }

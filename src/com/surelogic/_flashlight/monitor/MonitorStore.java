@@ -1,30 +1,30 @@
 package com.surelogic._flashlight.monitor;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.concurrent.BlockingQueue;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.swing.SwingUtilities;
 
 import com.surelogic._flashlight.ClassPhantomReference;
+import com.surelogic._flashlight.ConsoleCommand;
+import com.surelogic._flashlight.FieldDef;
+import com.surelogic._flashlight.FieldDefs;
 import com.surelogic._flashlight.IdPhantomReference;
 import com.surelogic._flashlight.ObjectPhantomReference;
 import com.surelogic._flashlight.Phantom;
 import com.surelogic._flashlight.RunConf;
 import com.surelogic._flashlight.Spy;
-import com.surelogic._flashlight.StoreConfiguration;
 import com.surelogic._flashlight.StoreDelegate;
 import com.surelogic._flashlight.StoreListener;
 import com.surelogic._flashlight.ThreadPhantomReference;
 import com.surelogic._flashlight.UtilConcurrent;
-import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic._flashlight.jsr166y.ConcurrentReferenceHashMap;
 import com.surelogic._flashlight.jsr166y.ConcurrentReferenceHashMap.ReferenceType;
 import com.surelogic._flashlight.trace.TraceNode;
@@ -35,17 +35,6 @@ import com.surelogic._flashlight.trace.TraceNode;
  * @policyLock Console is java.lang.System:out
  */
 public final class MonitorStore implements StoreListener {
-
-	/**
-	 * The console thread.
-	 */
-	private final MonitorConsole f_console;
-
-	/**
-	 * A periodic task that checks to see if Flashlight should shutdown by
-	 * spying on the running program's threads.
-	 */
-	private final MonitorSpy f_spy;
 
 	private final ConcurrentMap<Long, String> f_lockNames;
 
@@ -80,10 +69,6 @@ public final class MonitorStore implements StoreListener {
 
 	}
 
-	void updateSpec(final MonitorSpec spec) {
-		f_spec = spec;
-	}
-
 	private volatile MonitorSpec f_spec;
 
 	private final ThreadLocal<ThreadLocks> tl_lockSet;
@@ -93,15 +78,69 @@ public final class MonitorStore implements StoreListener {
 		return f_lockSets;
 	}
 
-	private static final boolean useLocks = true;
-
 	private UtilConcurrent f_knownRWLocks;
 	private RunConf f_conf;
+
+	private Analysis f_activeAnalysis;
+	private final Lock f_analysisLock = new ReentrantLock();
+
+	/**
+	 * Revise the set of alerts used by the active analysis.
+	 * 
+	 * @param spec
+	 */
+	void reviseAlerts(final AlertSpec spec) {
+		f_analysisLock.lock();
+		try {
+			f_activeAnalysis.setAlerts(spec);
+		} finally {
+			f_analysisLock.unlock();
+		}
+	}
+
+	/**
+	 * Change the monitor specification used by the active analysis.
+	 * 
+	 * @param spec
+	 */
+	void reviseSpec(final MonitorSpec spec) {
+		f_analysisLock.lock();
+		try {
+			if (f_activeAnalysis != null) {
+				f_activeAnalysis.wrapUp();
+				try {
+					f_activeAnalysis.join();
+				} catch (final InterruptedException e) {
+					f_conf.logAProblem("Exception while changing analyses", e);
+				}
+			}
+			f_activeAnalysis = new Analysis(this, f_conf);
+			f_spec = spec;
+			f_activeAnalysis.start();
+		} finally {
+			f_analysisLock.unlock();
+		}
+	}
+
+	/**
+	 * Get the active analysis. This is the only thread-safe way for a console
+	 * to get the active analysis.
+	 * 
+	 * @return
+	 */
+	Analysis getAnalysis() {
+		f_analysisLock.lock();
+		try {
+			return f_activeAnalysis;
+		} finally {
+			f_analysisLock.unlock();
+		}
+	}
 
 	/*
 	 * Flashlight startup code used to get everything running.
 	 */
-	MonitorStore() {
+	public MonitorStore() {
 		f_lockNames = new ConcurrentReferenceHashMap<Long, String>(
 				ReferenceType.STRONG, ReferenceType.STRONG,
 				ConcurrentReferenceHashMap.STANDARD_HASH);
@@ -134,36 +173,8 @@ public final class MonitorStore implements StoreListener {
 		};
 		f_lockSets = new CopyOnWriteArrayList<ThreadLocks>();
 
-		/*
-		 * The spy periodically checks the state of the instrumented program and
-		 * shuts down flashlight if the program is finished.
-		 */
-		final boolean noSpy = StoreConfiguration.getNoSpy();
-		if (noSpy) {
-			f_spy = null;
-		} else {
-			f_spy = new MonitorSpy();
-			f_spy.start();
-		}
-		/*
-		 * The shutdown hook is a last ditch effort to shutdown flashlight
-		 * cleanly when an abrupt termination occurs (e.g., System.exit is
-		 * invoked).
-		 */
-		Runtime.getRuntime().addShutdownHook(new Thread() {
-			@Override
-			public void run() {
-				MonitorStore.this.shutdown();
-			}
-		});
-		/*
-		 * The console lets someone attach to flashlight and command it to
-		 * shutdown.
-		 */
-		f_console = new MonitorConsole();
-		f_console.start();
 		// Start up looking at no fields.
-		Analysis.reviseSpec(f_spec);
+		reviseSpec(f_spec);
 	}
 
 	public void init(final RunConf conf) {
@@ -455,40 +466,7 @@ public final class MonitorStore implements StoreListener {
 	public void beforeIntrinsicLockAcquisition(final Object lockObject,
 			final boolean lockIsThis, final boolean lockIsClass,
 			final long siteId) {
-		if (!useLocks) {
-			return;
-		}
-		/*
-		 * if (f_flashlightIsNotInitialized) { return; }
-		 */
-		if (StoreDelegate.FL_OFF.get()) {
-			return;
-		}
-		final State flState = tl_withinStore.get();
-		if (flState.inside) {
-			return;
-		}
-		flState.inside = true;
-		try {
-			if (DEBUG) {
-				final String fmt = "LockSetStore.beforeIntrinsicLockAcquisition(%n\t\tlockObject=%s%n\t\tlockIsThis=%b%n\t\tlockIsClass=%b%n\t\tlocation=%s)";
-				log(String.format(fmt, safeToString(lockObject), lockIsThis,
-						lockIsClass, siteId));
-			}
-			/*
-			 * Check that the parameters are valid, gather needed information,
-			 * and put an event in the raw queue.
-			 */
-			if (lockObject == null) {
-				final String fmt = "intrinsic lock object cannot be null...instrumentation bug detected by LockSetStore.beforeIntrinsicLockAcquisition(lockObject=%s, lockIsThis=%b, lockIsClass=%b, location=%s)";
-				logAProblem(String.format(fmt, safeToString(lockObject),
-						lockIsThis, lockIsClass, siteId));
-				return;
-			}
-			// Do nothing right now
-		} finally {
-			flState.inside = false;
-		}
+		// Do nothing
 	}
 
 	/**
@@ -504,44 +482,12 @@ public final class MonitorStore implements StoreListener {
 	 */
 	public void afterIntrinsicLockAcquisition(final Object lockObject,
 			final long siteId) {
-		if (!useLocks) {
-			return;
+		final long lockId = Phantom.of(lockObject).getId();
+		if (!f_lockNames.containsKey(lockId)) {
+			f_lockNames.put(lockId, lockObject.getClass().toString()
+					+ lockObject.hashCode());
 		}
-		/*
-		 * if (f_flashlightIsNotInitialized) { return; }
-		 */
-		if (StoreDelegate.FL_OFF.get()) {
-			return;
-		}
-		final State flState = tl_withinStore.get();
-		if (flState.inside) {
-			return;
-		}
-		flState.inside = true;
-		try {
-			if (DEBUG) {
-				final String fmt = "LockSetStore.afterIntrinsicLockAcquisition(%n\t\tlockObject=%s%n\t\tlocation=%s)";
-				log(String.format(fmt, safeToString(lockObject), siteId));
-			}
-			/*
-			 * Check that the parameters are valid, gather needed information,
-			 * and put an event in the raw queue.
-			 */
-			if (lockObject == null) {
-				final String fmt = "intrinsic lock object cannot be null...instrumentation bug detected by LockSetStore.afterIntrinsicLockAcquisition(lockObject=%s, location=%s)";
-				logAProblem(String
-						.format(fmt, safeToString(lockObject), siteId));
-				return;
-			}
-			final long lockId = Phantom.of(lockObject).getId();
-			if (!f_lockNames.containsKey(lockId)) {
-				f_lockNames.put(lockId, lockObject.getClass().toString()
-						+ lockObject.hashCode());
-			}
-			tl_lockSet.get().enterLock(lockId);
-		} finally {
-			flState.inside = false;
-		}
+		tl_lockSet.get().enterLock(lockId);
 	}
 
 	/**
@@ -570,45 +516,7 @@ public final class MonitorStore implements StoreListener {
 	 */
 	public void intrinsicLockWait(final boolean before,
 			final Object lockObject, final long siteId) {
-		if (!useLocks) {
-			return;
-		}
-
-		/*
-		 * if (f_flashlightIsNotInitialized) { return; }
-		 */
-		if (StoreDelegate.FL_OFF.get()) {
-			return;
-		}
-		final State flState = tl_withinStore.get();
-		if (flState.inside) {
-			return;
-		}
-		flState.inside = true;
-		try {
-			if (DEBUG) {
-				final String fmt = "LockSetStore.intrinsicLockWait(%n\t\t%s%n\t\tlockObject=%s%n\t\tlocation=%s)";
-				log(String.format(fmt, before ? "before" : "after",
-						safeToString(lockObject), siteId));
-			}
-			/*
-			 * Check that the parameters are valid, gather needed information,
-			 * and put an event in the raw queue.
-			 */
-			if (lockObject == null) {
-				final String fmt = "intrinsic lock object cannot be null...instrumentation bug detected by LockSetStore.intrinsicLockWait(%s, lockObject=%s, location=%s)";
-				logAProblem(String.format(fmt, before ? "before" : "after",
-						safeToString(lockObject), siteId));
-				return;
-			}
-			if (before) {
-				// Do nothing
-			} else {
-				// Do nothing
-			}
-		} finally {
-			flState.inside = false;
-		}
+		// Do nothing
 	}
 
 	/**
@@ -624,40 +532,8 @@ public final class MonitorStore implements StoreListener {
 	 */
 	public void afterIntrinsicLockRelease(final Object lockObject,
 			final long siteId) {
-		if (!useLocks) {
-			return;
-		}
-		/*
-		 * if (f_flashlightIsNotInitialized) { return; }
-		 */
-		if (StoreDelegate.FL_OFF.get()) {
-			return;
-		}
-		final State flState = tl_withinStore.get();
-		if (flState.inside) {
-			return;
-		}
-		flState.inside = true;
-		try {
-			if (DEBUG) {
-				final String fmt = "LockSetStore.afterIntrinsicLockRelease(%n\t\tlockObject=%s%n\t\tlocation=%s)";
-				log(String.format(fmt, safeToString(lockObject), siteId));
-			}
-			/*
-			 * Check that the parameters are valid, gather needed information,
-			 * and put an event in the raw queue.
-			 */
-			if (lockObject == null) {
-				final String fmt = "intrinsic lock object cannot be null...instrumentation bug detected by LockSetStore.afterIntrinsicLockRelease(lockObject=%s, location=%s)";
-				logAProblem(String
-						.format(fmt, safeToString(lockObject), siteId));
-				return;
-			}
-			final IdPhantomReference lockPhantom = Phantom.of(lockObject);
-			tl_lockSet.get().leaveLock(lockPhantom.getId());
-		} finally {
-			flState.inside = false;
-		}
+		final IdPhantomReference lockPhantom = Phantom.of(lockObject);
+		tl_lockSet.get().leaveLock(lockPhantom.getId());
 	}
 
 	/**
@@ -673,40 +549,7 @@ public final class MonitorStore implements StoreListener {
 	 */
 	public void beforeUtilConcurrentLockAcquisitionAttempt(
 			final Object lockObject, final long siteId) {
-		if (!useLocks) {
-			return;
-		}
-		/*
-		 * if (f_flashlightIsNotInitialized) { return; }
-		 */
-		if (StoreDelegate.FL_OFF.get()) {
-			return;
-		}
-		final State flState = tl_withinStore.get();
-		if (flState.inside) {
-			return;
-		}
-		flState.inside = true;
-		try {
-			if (DEBUG) {
-				/*
-				 * Implementation note: We are counting on the implementer of
-				 * the util.concurrent Lock object to not have a bad toString()
-				 * method.
-				 */
-				final String fmt = "LockSetStore.beforeUtilConcurrentLockAcquisitionAttempt(%n\t\tlockObject=%s%n\t\tlocation=%s)";
-				log(String.format(fmt, lockObject, siteId));
-			}
-			if (lockObject instanceof Lock) {
-				// Do nothing
-			} else {
-				final String fmt = "lock object must be a java.util.concurrent.locks.Lock...instrumentation bug detected by LockSetStore.beforeUtilConcurrentLockAcquisitionAttempt(lockObject=%s, location=%s)";
-				logAProblem(String.format(fmt, lockObject, siteId));
-				return;
-			}
-		} finally {
-			flState.inside = false;
-		}
+		// Do nothing
 	}
 
 	/**
@@ -728,46 +571,18 @@ public final class MonitorStore implements StoreListener {
 	 */
 	public void afterUtilConcurrentLockAcquisitionAttempt(
 			final boolean gotTheLock, final Object lockObject, final long siteId) {
-		if (!useLocks) {
-			return;
-		}
-		/*
-		 * if (f_flashlightIsNotInitialized) { return; }
-		 */
-		if (StoreDelegate.FL_OFF.get()) {
-			return;
-		}
-		final State flState = tl_withinStore.get();
-		if (flState.inside) {
-			return;
-		}
-		flState.inside = true;
-		try {
-			if (DEBUG) {
-				/*
-				 * Implementation note: We are counting on the implementer of
-				 * the util.concurrent Lock object to not have a bad toString()
-				 * method.
-				 */
-				final String fmt = "LockSetStore.afterUtilConcurrentLockAcquisitionAttempt(%n\t\t%s%n\t\tlockObject=%s%n\t\tlocation=%s)";
-				log(String.format(fmt, gotTheLock ? "holding"
-						: "failed-to-acquire", lockObject, siteId));
+		if (lockObject instanceof Lock) {
+			if (gotTheLock) {
+				final ObjectPhantomReference lockPhantom = Phantom
+						.ofObject(lockObject);
+				final long id = lockPhantom.getId();
+				tl_lockSet.get().enterLock(id);
 			}
-			if (lockObject instanceof Lock) {
-				if (gotTheLock) {
-					final ObjectPhantomReference lockPhantom = Phantom
-							.ofObject(lockObject);
-					final long id = lockPhantom.getId();
-					tl_lockSet.get().enterLock(id);
-				}
-			} else {
-				final String fmt = "lock object must be a java.util.concurrent.locks.Lock...instrumentation bug detected by LockSetStore.afterUtilConcurrentLockAcquisitionAttempt(%s, lockObject=%s, location=%s)";
-				logAProblem(String.format(fmt, gotTheLock ? "holding"
-						: "failed-to-acquire", lockObject, siteId));
-				return;
-			}
-		} finally {
-			flState.inside = false;
+		} else {
+			final String fmt = "lock object must be a java.util.concurrent.locks.Lock...instrumentation bug detected by LockSetStore.afterUtilConcurrentLockAcquisitionAttempt(%s, lockObject=%s, location=%s)";
+			f_conf.logAProblem(String.format(fmt, gotTheLock ? "holding"
+					: "failed-to-acquire", lockObject, siteId));
+			return;
 		}
 	}
 
@@ -790,47 +605,28 @@ public final class MonitorStore implements StoreListener {
 	public void afterUtilConcurrentLockReleaseAttempt(
 			final boolean releasedTheLock, final Object lockObject,
 			final long siteId) {
-		if (!useLocks) {
-			return;
-		}
-		/*
-		 * if (f_flashlightIsNotInitialized) { return; }
-		 */
-		if (StoreDelegate.FL_OFF.get()) {
-			return;
-		}
-		final State flState = tl_withinStore.get();
-		if (flState.inside) {
-			return;
-		}
-		flState.inside = true;
-		try {
-			if (DEBUG) {
-				/*
-				 * Implementation note: We are counting on the implementer of
-				 * the util.concurrent Lock object to not have a bad toString()
-				 * method.
-				 */
-				final String fmt = "LockSetStore.afterUtilConcurrentLockReleaseAttempt(%n\t\t%s%n\t\tlockObject=%s%n\t\tlocation=%s)";
-				log(String.format(fmt, releasedTheLock ? "released"
-						: "failed-to-release", lockObject, siteId));
+		if (lockObject instanceof Lock) {
+			if (releasedTheLock) {
+				final ObjectPhantomReference lockPhantom = Phantom
+						.ofObject(lockObject);
+				final long id = lockPhantom.getId();
+				tl_lockSet.get().leaveLock(id);
 			}
-			if (lockObject instanceof Lock) {
-				if (releasedTheLock) {
-					final ObjectPhantomReference lockPhantom = Phantom
-							.ofObject(lockObject);
-					final long id = lockPhantom.getId();
-					tl_lockSet.get().leaveLock(id);
-				}
-			} else {
-				final String fmt = "lock object must be a java.util.concurrent.locks.Lock...instrumentation bug detected by LockSetStore.afterUtilConcurrentLockReleaseAttempt(%s, lockObject=%s, location=%s)";
-				logAProblem(String.format(fmt, releasedTheLock ? "released"
-						: "failed-to-release", lockObject, siteId));
-				return;
-			}
-		} finally {
-			flState.inside = false;
+		} else {
+			final String fmt = "lock object must be a java.util.concurrent.locks.Lock...instrumentation bug detected by LockSetStore.afterUtilConcurrentLockReleaseAttempt(%s, lockObject=%s, location=%s)";
+			f_conf.logAProblem(String.format(fmt, releasedTheLock ? "released"
+					: "failed-to-release", lockObject, siteId));
+			return;
 		}
+	}
+
+	public void instanceFieldInit(final Object receiver, final int fieldId,
+			final Object value) {
+		// Do nothing
+	}
+
+	public void staticFieldInit(final int fieldId, final Object value) {
+		// Do nothing
 	}
 
 	/**
@@ -847,213 +643,200 @@ public final class MonitorStore implements StoreListener {
 	 * </ul>
 	 */
 	public void shutdown() {
-		if (f_flashlightIsNotInitialized) {
-			System.err.println("[Flashlight] !SERIOUS ERROR! "
-					+ "LockSetStore.shutdown() invoked "
-					+ "before the Store class is initialized");
-			return;
-		}
-		// System.out.println("FL_OFF = "+StoreDelegate.FL_OFF.hashCode()+" "+StoreDelegate.FL_OFF.get());
-
-		/*
-		 * The below getAndSet(true) ensures that only one thread shuts down
-		 * Flashlight.
-		 */
-		if (StoreDelegate.FL_OFF.getAndSet(true)) {
-			return;
-		}
-
-		// new Throwable("Calling shutdown()").printStackTrace(System.out);
-		// System.out.flush();
-		final File f = new File("/tmp/locks");
-		if (f.exists()) {
-			f.delete();
-		}
-
-		final Analysis analysis = Analysis.getAnalysis();
-		analysis.wrapUp();
-		join(analysis);
-
-		PrintWriter p;
+		f_analysisLock.lock();
 		try {
-			p = new PrintWriter(f);
-			try {
-				p.println(analysis.toString());
-			} finally {
-				p.close();
-			}
-		} catch (final FileNotFoundException e1) {
-			e1.printStackTrace();
-		}
-
-		/*
-		 * Note that a client handler for the console could have been the thread
-		 * that called this method (i.e., we are running within a client handler
-		 * thread of the console...not the listener thread).
-		 */
-		f_console.requestShutdown();
-
-		/*
-		 * Note that the spy thread could have been the thread that called this
-		 * method.
-		 */
-		if (f_spy != null) {
-			f_spy.requestShutdown();
-		}
-
-		final long endTime = System.nanoTime();
-		final long totalTime = endTime - f_start_nano;
-		final StringBuilder sb = new StringBuilder(
-				" (duration of collection was ");
-		formatNanoTime(sb, totalTime);
-		sb.append(')');
-		final String duration = sb.toString();
-		final long problemCount = f_problemCount.get();
-		if (problemCount < 1) {
-			log("collection shutdown" + duration);
-		} else {
-			log("collection shutdown with " + problemCount
-					+ " problem(s) reported" + duration);
-		}
-
-		final File done = new File(StoreConfiguration.getDirectory(),
-				InstrumentationConstants.FL_COMPLETE_RUN);
-		try {
-			final FileWriter w = new FileWriter(done);
-			sb.delete(0, sb.length()); // clear
-			sb.append("Completed: ");
-			formatNanoTime(sb, endTime);
-			w.write(sb.toString());
-			w.close();
-		} catch (final IOException e) {
-			log(e.getMessage() + ", while writing final file");
-		}
-		logComplete();
-	}
-
-	private static void formatNanoTime(final StringBuilder sb,
-			final long totalTime) {
-		final long nsPerSecond = 1000000000L;
-		final long nsPerMinute = 60000000000L;
-		final long nsPerHour = 3600000000000L;
-
-		long timeLeft = totalTime;
-		final long totalHours = timeLeft / nsPerHour;
-		timeLeft -= totalHours * nsPerHour;
-
-		final long totalMins = timeLeft / nsPerMinute;
-		timeLeft -= totalMins * nsPerMinute;
-
-		final float totalSecs = timeLeft / (float) nsPerSecond;
-
-		sb.append(totalHours).append(':');
-		if (totalMins < 10) {
-			sb.append('0');
-		}
-		sb.append(totalMins).append(':');
-		if (totalSecs < 10) {
-			sb.append('0');
-		}
-		sb.append(totalSecs);
-	}
-
-	/**
-	 * Puts an event into a blocking queue. This operation will block if the
-	 * queue is full and it will ignore any interruptions.
-	 * 
-	 * @param queue
-	 *            the blocking queue to put the event into.
-	 * @param e
-	 *            the event to put into the raw queue.
-	 */
-	static <T> void putInQueue(final BlockingQueue<T> queue, final T e) {
-		boolean done = false;
-		while (!done) {
-			try {
-				queue.put(e);
-				done = true;
-			} catch (final InterruptedException e1) {
-				/*
-				 * We are within a program thread, so another program thread
-				 * interrupted us. I think it is OK to ignore this, however, we
-				 * do need to ensure the event gets put into the raw queue.
-				 */
-				logAProblem("queue.put(e) was interrupted", e1);
-			}
-		}
-	}
-
-	static final int LOCAL_QUEUE_MAX = 256;
-
-	/**
-	 * Joins on the given thread ignoring any interruptions.
-	 * 
-	 * @param t
-	 *            the thread to join on.
-	 */
-	private static void join(final Thread t) {
-		if (t == null) {
-			return;
-		}
-		boolean done = false;
-		while (!done) {
-			try {
-				t.join();
-				done = true;
-			} catch (final InterruptedException e1) {
-				// ignore, we expect to be interrupted
-			}
-		}
-	}
-
-	public void instanceFieldInit(final Object receiver, final int fieldId,
-			final Object value) {
-		if (!StoreConfiguration.processFieldAccesses()) {
-			return;
-		}
-		if (DEBUG) {
-			final String fmt = "LockSetStore.instanceFieldInit%n\t\treceiver=%s%n\t\field=%s%n\t\tvalue=%s)";
-			log(String.format(fmt, safeToString(receiver), fieldId,
-					safeToString(value)));
-		}
-		// Ignore null assignments
-		if (value == null) {
-			return;
-		}
-		final State state = tl_withinStore.get();
-		if (state.inside) {
-			return;
-		}
-		state.inside = true;
-		try {
-			// Do nothing
+			f_activeAnalysis.wrapUp();
 		} finally {
-			state.inside = false;
+			f_analysisLock.unlock();
 		}
 	}
 
-	public void staticFieldInit(final int fieldId, final Object value) {
-		if (!StoreConfiguration.processFieldAccesses()) {
-			return;
+	class ListCommand implements ConsoleCommand {
+		private static final String LIST = "list";
+
+		public String getDescription() {
+			return LIST + "- displays all results of the latest ";
 		}
-		if (DEBUG) {
-			final String fmt = "LockSetStore.instanceFieldInit%n\t\field=%s%n\t\tvalue=%s)";
-			log(String.format(fmt, fieldId, safeToString(value)));
+
+		public String handle(final String command) {
+			if ("list".equalsIgnoreCase(command)) {
+				return getAnalysis().toString();
+			}
+			return null;
 		}
-		// Ignore null assignments
-		if (value == null) {
-			return;
+
+	}
+
+	class AlertsCommand implements ConsoleCommand {
+		private static final String ALERTS = "alerts";
+
+		public String getDescription() {
+			return ALERTS
+					+ " - display any and all alerts that have been triggered.";
 		}
-		final State state = tl_withinStore.get();
-		if (state.inside) {
-			return;
+
+		public String handle(final String command) {
+			if (ALERTS.equalsIgnoreCase(command)) {
+				return getAnalysis().getAlerts().toString();
+			}
+			return null;
 		}
-		state.inside = true;
-		try {
-			// Do nothing
-		} finally {
-			state.inside = false;
+
+	}
+
+	class DeadlocksCommand implements ConsoleCommand {
+		private static final String DEADLOCKS = "deadlocks";
+
+		public String getDescription() {
+			return DEADLOCKS + " - display all detected potential deadlocks";
 		}
+
+		public String handle(final String command) {
+			if (DEADLOCKS.equalsIgnoreCase(command)) {
+				return getAnalysis().getDeadlocks().toString();
+			}
+			return null;
+		}
+
+	}
+
+	class LockSetsCommand implements ConsoleCommand {
+		private static final String LOCKSETS = "lockSets";
+
+		public String getDescription() {
+			return LOCKSETS
+					+ " - display known lock set information for all observed fields";
+		}
+
+		public String handle(final String command) {
+			if (LOCKSETS.equalsIgnoreCase(command)) {
+				return getAnalysis().getLockSets().toString();
+			}
+			return null;
+		}
+
+	}
+
+	class RaceConditionsCommand implements ConsoleCommand {
+		private static final String RACECONDITIONS = "dataRaces";
+
+		public String getDescription() {
+			return RACECONDITIONS
+					+ " - display all detected potential race conditions";
+		}
+
+		public String handle(final String command) {
+			if (RACECONDITIONS.equalsIgnoreCase(command)) {
+				return getAnalysis().getLockSets().raceInfo();
+			}
+			return null;
+		}
+
+	}
+
+	class SharedCommand implements ConsoleCommand {
+		private static final String SHARED = "shared";
+
+		public String getDescription() {
+			return SHARED
+					+ " - display all observed fields that are shared between threads";
+		}
+
+		public String handle(final String command) {
+			if (SHARED.equalsIgnoreCase(command)) {
+				return getAnalysis().getShared().toString();
+			}
+			return null;
+		}
+
+	}
+
+	class SetCommand implements ConsoleCommand {
+		private static final String SET = "set <prop>=<val>";
+
+		private static final String FIELD_SPEC = "fieldSpec";
+		private static final String EDT_FIELDS = "swingFieldAlerts";
+		private static final String SHARED_FIELDS = "sharedFieldAlerts";
+		private static final String LOCKSET_FIELDS = "lockSetAlerts";
+
+		private final Pattern SETP = Pattern.compile("set ([^=]*)=(.*)");
+
+		public String getDescription() {
+			return SET
+					+ "- Set one of the following properties: ["
+					+ new String[] { FIELD_SPEC, EDT_FIELDS, SHARED_FIELDS,
+							LOCKSET_FIELDS };
+		}
+
+		public String handle(final String command) {
+			final Matcher m = SETP.matcher(command);
+			if (m.matches()) {
+				final String prop = m.group(1);
+				final String val = m.group(2);
+				if (FIELD_SPEC.equalsIgnoreCase(prop)) {
+					reviseSpec(new MonitorSpec(val, f_conf.getFieldDefs()));
+					return String.format("Changing fieldSpec to be %s", val);
+				} else if (EDT_FIELDS.equalsIgnoreCase(prop)) {
+					reviseAlerts(new AlertSpec(val, null, null,
+							f_conf.getFieldDefs()));
+					String.format(
+							"Monitoring fields matching %s for Swing policy violations.",
+							val);
+
+				} else if (SHARED_FIELDS.equalsIgnoreCase(prop)) {
+					reviseAlerts(new AlertSpec(null, val, null,
+							f_conf.getFieldDefs()));
+					String.format(
+							"Ensuring fields matching %s are not shared.", val);
+
+				} else if (LOCKSET_FIELDS.equalsIgnoreCase(prop)) {
+					reviseAlerts(new AlertSpec(null, null, val,
+							f_conf.getFieldDefs()));
+					String.format(
+							"Ensuring fields matching %s always have a lock set.",
+							val);
+				} else {
+					return String.format("%s is not a valid property", prop);
+				}
+			}
+			return null;
+		}
+
+	}
+
+	class DescribeCommand implements ConsoleCommand {
+		private static final String DESCRIBE = "describe <field-regex>";
+		private final Pattern DESCRIBEP = Pattern.compile("describe (.*)");
+
+		public String getDescription() {
+			return DESCRIBE
+					+ " - describe all observed fields in the programming matching the given regular expression";
+		}
+
+		public String handle(final String command) {
+			final Matcher d = DESCRIBEP.matcher(command);
+			if (d.matches()) {
+				final Pattern test = Pattern.compile(d.group(1));
+				final LockSetInfo lockSets2 = getAnalysis().getLockSets();
+				final FieldDefs defs = f_conf.getFieldDefs();
+				StringBuilder response = new StringBuilder();
+				for (final FieldDef def : defs.values()) {
+					if (test.matcher(def.getQualifiedFieldName()).matches()) {
+						response.append(lockSets2.lockSetInfo(def));
+					}
+				}
+				return response.toString();
+			}
+			return null;
+		}
+
+	}
+
+	public Collection<? extends ConsoleCommand> getCommands() {
+		return Arrays.asList(new ConsoleCommand[] { new ListCommand(),
+				new AlertsCommand(), new DeadlocksCommand(),
+				new LockSetsCommand(), new RaceConditionsCommand(),
+				new SharedCommand(), new SetCommand(), new DescribeCommand() });
 	}
 
 }

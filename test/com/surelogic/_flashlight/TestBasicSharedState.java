@@ -32,10 +32,10 @@ public class TestBasicSharedState extends TestCase {
 				// ignore, just go
 			}
 			for (int i = 0; i < EVENTS; i++) {
-//				Store.fieldAccess(true, o1, f_i, null, 1);
-//				Store.fieldAccess(false, o1, f_i, null, 1);
-//				Store.fieldAccess(true, null, f_s, null, 1);
-//				Store.fieldAccess(false, null, f_s, null, 1);
+				// Store.fieldAccess(true, o1, f_i, null, 1);
+				// Store.fieldAccess(false, o1, f_i, null, 1);
+				// Store.fieldAccess(true, null, f_s, null, 1);
+				// Store.fieldAccess(false, null, f_s, null, 1);
 			}
 			endGate.countDown();
 		}
@@ -46,70 +46,70 @@ public class TestBasicSharedState extends TestCase {
 		public long fieldDefinitionCt = 0;
 
 		@Override
-		void visit(FieldDefinition e) {
+		void visit(final FieldDefinition e) {
 			fieldDefinitionCt++;
 		}
 
 		public long fieldReadInstanceCt = 0;
 
 		@Override
-		void visit(FieldReadInstance e) {
+		void visit(final FieldReadInstance e) {
 			fieldReadInstanceCt++;
 		}
 
 		public long fieldReadStaticCt = 0;
 
 		@Override
-		void visit(FieldReadStatic e) {
+		void visit(final FieldReadStatic e) {
 			fieldReadStaticCt++;
 		}
 
 		public long fieldWriteInstanceCt = 0;
 
 		@Override
-		void visit(FieldWriteInstance e) {
+		void visit(final FieldWriteInstance e) {
 			fieldWriteInstanceCt++;
 		}
 
 		public long fieldWriteStaticCt = 0;
 
 		@Override
-		void visit(FieldWriteStatic e) {
+		void visit(final FieldWriteStatic e) {
 			fieldWriteStaticCt++;
 		}
 
 		public long finalEventCt = 0;
 
 		@Override
-		void visit(FinalEvent e) {
+		void visit(final FinalEvent e) {
 			finalEventCt++;
 		}
 
 		public long objectDefinitionCt = 0;
 
 		@Override
-		void visit(ObjectDefinition e) {
+		void visit(final ObjectDefinition e) {
 			objectDefinitionCt++;
 		}
 
 		public long singleThreadedFieldInstanceCt = 0;
 
 		@Override
-		void visit(SingleThreadedFieldInstance e) {
+		void visit(final SingleThreadedFieldInstance e) {
 			singleThreadedFieldInstanceCt++;
 		}
 
 		public long singleThreadedFieldStaticCt = 0;
 
 		@Override
-		void visit(SingleThreadedFieldStatic e) {
+		void visit(final SingleThreadedFieldStatic e) {
 			singleThreadedFieldStaticCt++;
 		}
 
 		public long timeCt = 0;
 
 		@Override
-		void visit(Time e) {
+		void visit(final Time e) {
 			timeCt++;
 		}
 
@@ -125,7 +125,7 @@ public class TestBasicSharedState extends TestCase {
 		} catch (NoSuchFieldException e1) {
 			fail();
 		}
-		Store.setOutputStrategy(f_osc);
+		FLStore.setOutputStrategy(f_osc);
 		for (int i = 0; i < THREADS; i++) {
 			Thread t = new ProgThread();
 			t.start();
@@ -133,7 +133,7 @@ public class TestBasicSharedState extends TestCase {
 		startGate.countDown();
 		try {
 			endGate.await();
-			Store.shutdown();
+			FLStore.shutdown();
 			Thread.sleep(1000);
 			/*
 			 * OK, now check the counters.

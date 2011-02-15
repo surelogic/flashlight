@@ -39,8 +39,8 @@ public class TestBasicRefinery extends TestCase {
 			 * with up to (THREADS * 2) extra events.
 			 */
 			A o = new A();
-//			Store.fieldAccess(true, o, f_j, null, 1);
-//			Store.fieldAccess(true, o, f_j, null, 1);
+			// Store.fieldAccess(true, o, f_j, null, 1);
+			// Store.fieldAccess(true, o, f_j, null, 1);
 			o = null;
 			midGate.countDown();
 			try {
@@ -49,10 +49,10 @@ public class TestBasicRefinery extends TestCase {
 				// ignore, just go
 			}
 			for (int i = 0; i < EVENTS; i++) {
-//				Store.fieldAccess(true, o1, f_i, null, 1);
-//				Store.fieldAccess(false, o1, f_i, null, 1);
-//				Store.fieldAccess(true, null, f_s, null, 1);
-//				Store.fieldAccess(false, null, f_s, null, 1);
+				// Store.fieldAccess(true, o1, f_i, null, 1);
+				// Store.fieldAccess(false, o1, f_i, null, 1);
+				// Store.fieldAccess(true, null, f_s, null, 1);
+				// Store.fieldAccess(false, null, f_s, null, 1);
 			}
 			endGate.countDown();
 		}
@@ -69,7 +69,7 @@ public class TestBasicRefinery extends TestCase {
 		} catch (NoSuchFieldException e1) {
 			fail();
 		}
-		Store.setOutputStrategy(f_osc);
+		FLStore.setOutputStrategy(f_osc);
 		for (int i = 0; i < THREADS; i++) {
 			Thread t = new ProgThread();
 			t.start();
@@ -77,7 +77,7 @@ public class TestBasicRefinery extends TestCase {
 		startGate.countDown();
 		try {
 			endGate.await();
-			Store.shutdown();
+			FLStore.shutdown();
 			Thread.sleep(1000);
 			/*
 			 * OK, now check the counters.

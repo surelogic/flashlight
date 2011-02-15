@@ -96,7 +96,7 @@ abstract class ObservedField {
 	 *         specified field.
 	 */
 	static ObservedField getInstance(final String className,
-			final String fieldName, final Store.State state) {
+			final String fieldName, final PostMortemStore.State state) {
 		assert className != null && fieldName != null;
 		final Class declaringType;
 		try {
@@ -107,12 +107,13 @@ abstract class ObservedField {
 		return getInstance(declaringType, fieldName, state);
 	}
 
-	static ObservedField getInstance(final Field field, final Store.State state) {
+	static ObservedField getInstance(final Field field,
+			final PostMortemStore.State state) {
 		return getInstance(field.getDeclaringClass(), field.getName(), state);
 	}
 
 	static ObservedField getInstance(final Class declaringType,
-			final String fieldName, final Store.State state) {
+			final String fieldName, final PostMortemStore.State state) {
 		final ClassPhantomReference pDeclaringType = Phantom
 				.ofClass(declaringType);
 		ConcurrentHashMap<String, ObservedField> fieldNameToField = f_declaringTypeToFieldNameToField
@@ -149,7 +150,7 @@ abstract class ObservedField {
 			return sResult;
 		} else {
 			// put a field-definition event in the raw queue.
-			Store.putInQueue(state, new FieldDefinition(result));
+			PostMortemStore.putInQueue(state, new FieldDefinition(result));
 			return result;
 		}
 	}
@@ -267,8 +268,8 @@ abstract class ObservedField {
 				final LongMap.Entry<IdPhantomReference> e = (LongMap.Entry<IdPhantomReference>) me;
 				if (e.getValue() != SHARED_BY_THREADS) {
 					added = true;
-					refs.addField(ObservedField.getSingleThreadedEventAbout(e
-							.key(), getReceiver()));
+					refs.addField(ObservedField.getSingleThreadedEventAbout(
+							e.key(), getReceiver()));
 				}
 			}
 			return added;

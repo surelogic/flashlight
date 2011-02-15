@@ -11,7 +11,6 @@ import com.surelogic._flashlight.AbstractCallLocation;
 import com.surelogic._flashlight.Entities;
 import com.surelogic._flashlight.EventVisitor;
 import com.surelogic._flashlight.PostMortemStore;
-import com.surelogic._flashlight.Store;
 import com.surelogic._flashlight.common.LongMap;
 import com.surelogic._flashlight.monitor.MonitorStore;
 
@@ -131,7 +130,7 @@ public abstract class TraceNode extends AbstractCallLocation implements
 			} else {
 				callee.f_siblingNodes = caller.f_calleeNodes;
 				caller.f_calleeNodes = callee;
-				Store.putInQueue(state, callee);
+				PostMortemStore.putInQueue(state, callee);
 			}
 		} else {
 			// Insert into roots
@@ -145,7 +144,7 @@ public abstract class TraceNode extends AbstractCallLocation implements
 				// callee.unpropagated++;
 			}
 			if (firstCallee == null) {
-				Store.putInQueue(state, callee);
+				PostMortemStore.putInQueue(state, callee);
 			}
 		}
 		return callee;

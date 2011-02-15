@@ -1,5 +1,23 @@
 package com.surelogic._flashlight;
 
+import java.util.Collection;
+
+/**
+ * A {@link StoreListener} listens for events from the Flashlight
+ * instrumentation. It expects to be created, initialized, and shutdown by the
+ * {@link FLStore} class. Any implementor of {@link StoreListener} is expected
+ * to be thread-safe in all respects. The {@link StoreListener} should expect to
+ * be provided with only two guarantees:
+ * 
+ * <ol>
+ * <li>There is a happens-before relationship between init and any other method
+ * of the listener interface
+ * <li>No methods will be called after shutdown is called
+ * </ol>
+ * 
+ * @author nathan
+ * 
+ */
 public interface StoreListener {
 
 	/**
@@ -294,6 +312,10 @@ public interface StoreListener {
 
 	/**
 	 * Prepare for the collection of events about the instrumented program.
+	 * 
+	 * XXX The holder of this StoreListener guarantees that there will be a
+	 * happens before relationship between this initialization and any calls to
+	 * other methods of this interface.
 	 */
 	void init(RunConf conf);
 
@@ -316,4 +338,13 @@ public interface StoreListener {
 			final Object value);
 
 	void staticFieldInit(final int fieldId, final Object value);
+
+	/**
+	 * This will be called by the user of this listener. The listener should
+	 * return a list of commands that a user could use to modify or query this
+	 * listener.
+	 * 
+	 * @return a list of commands for this store listener.
+	 */
+	Collection<? extends ConsoleCommand> getCommands();
 }

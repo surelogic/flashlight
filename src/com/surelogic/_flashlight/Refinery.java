@@ -20,6 +20,7 @@ import com.surelogic._flashlight.common.IdConstants;
  */
 final class Refinery extends AbstractRefinery {
 
+	private final PostMortemStore f_store;
 	private final RunConf f_conf;
 
 	private final BlockingQueue<List<Event>> f_rawQueue;
@@ -33,7 +34,8 @@ final class Refinery extends AbstractRefinery {
 
 	// private int filtered = 0, total = 0;
 
-	Refinery(final RunConf conf, final BlockingQueue<List<Event>> rawQueue,
+	Refinery(final PostMortemStore store, final RunConf conf,
+			final BlockingQueue<List<Event>> rawQueue,
 			final BlockingQueue<List<Event>> outQueue, final int size) {
 		super("flashlight-refinery");
 		assert rawQueue != null;
@@ -42,6 +44,7 @@ final class Refinery extends AbstractRefinery {
 		f_outQueue = outQueue;
 		f_size = size;
 		f_conf = conf;
+		f_store = store;
 	}
 
 	private boolean f_finished = false;
@@ -108,7 +111,7 @@ final class Refinery extends AbstractRefinery {
 				buf.clear();
 
 				if (f_finished) {
-					final List<Event> l = Store.flushLocalQueues();
+					final List<Event> l = f_store.flushLocalQueues();
 					if (filter) {
 						for (Event e : l) {
 							e.accept(f_detectSharedFieldsVisitor);
@@ -136,7 +139,7 @@ final class Refinery extends AbstractRefinery {
 		}
 		List<Event> last = new ArrayList<Event>();
 		last.add(FinalEvent.FINAL_EVENT);
-		Store.putInQueue(f_outQueue, last);
+		f_store.putInQueue(f_outQueue, last);
 		f_conf.log("refinery completed (" + f_garbageCollectedObjectCount
 				+ " object(s) garbage collected : " + f_threadLocalFieldCount
 				+ " thread-local fields observed)");
@@ -200,7 +203,7 @@ final class Refinery extends AbstractRefinery {
 					deadRefs.addSingleThreadedObject(pr);
 					removeThreadLocalFieldsWithin(events, deadRefs, pr);
 				}
-				UtilConcurrent.remove(pr);
+				f_store.gcRWLock(pr);
 				events.add(new GarbageCollectedObject(pr));
 			}
 			if (filter) {
@@ -312,7 +315,7 @@ final class Refinery extends AbstractRefinery {
 		while (transferCount > 0) {
 			final List<Event> buf = f_eventCache.removeFirst();
 			transferCount--;
-			Store.putInQueue(f_outQueue, buf);
+			f_store.putInQueue(f_outQueue, buf);
 		}
 		return true;
 	}

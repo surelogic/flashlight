@@ -1,6 +1,6 @@
 package com.surelogic._flashlight.trace;
 
-import com.surelogic._flashlight.Store;
+import com.surelogic._flashlight.PostMortemStore;
 import com.surelogic._flashlight.monitor.MonitorStore;
 
 public class Placeholder extends AbstractPlaceholder {
@@ -11,7 +11,7 @@ public class Placeholder extends AbstractPlaceholder {
 		f_siteId = siteId;
 	}
 
-	public TraceNode getNode(final Store.State state) {
+	public TraceNode getNode(final PostMortemStore.State state) {
 		// First, try to see if I've cached a matching TraceNode
 		TraceNode caller;
 		ITraceNode callee;

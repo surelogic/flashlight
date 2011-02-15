@@ -11,16 +11,23 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 class Console extends Thread {
-	private static final String STOP = "stop";
-	private static final String EXIT = "exit";
-	private static final String QUIT = "quit";
 
-	Console() {
+	private static final String QUIT = "quit";
+	private static final String EXIT = "exit";
+
+	private final RunConf f_conf;
+
+	private final List<ConsoleCommand> f_command;
+
+	Console(final RunConf conf, final List<ConsoleCommand> commands) {
 		super("flashlight-console");
+		f_conf = conf;
+		f_command = commands;
 	}
 
 	private volatile boolean f_shutdownRequested = false;
@@ -59,12 +66,12 @@ class Console extends Thread {
 			}
 		} while (!listening && tryCount <= 100);
 		if (!listening) {
-			Store.logAProblem("unable to listen on any port between " + f_port
+			f_conf.logAProblem("unable to listen on any port between " + f_port
 					+ " and " + port
 					+ " (i.e., Flashlight cannot be shutdown via a console)");
 			return;
 		}
-		Store.log("console server listening on port " + port);
+		f_conf.log("console server listening on port " + port);
 
 		// until told to shutdown, listen for and handle client connections
 		while (!f_shutdownRequested) {
@@ -72,7 +79,7 @@ class Console extends Thread {
 				final Socket client = f_socket.accept(); // wait for a client
 				InetAddress address = client.getInetAddress();
 				final ClientHandler handler = new ClientHandler(client);
-				Store.log("console connect from "
+				f_conf.log("console connect from "
 						+ (address == null ? "UNKNOWN" : address
 								.getCanonicalHostName()) + " ("
 						+ handler.getName() + ")");
@@ -87,7 +94,7 @@ class Console extends Thread {
 				 * requestShutdown() method.
 				 */
 			} catch (IOException e) {
-				Store.logAProblem("failure listening for client connections "
+				f_conf.logAProblem("failure listening for client connections "
 						+ port, e);
 			}
 		}
@@ -115,18 +122,18 @@ class Console extends Thread {
 				f_socket.close();
 			}
 		} catch (IOException e) {
-			Store.logAProblem(
-					"unable to close the socket used by " + getName(), e);
+			f_conf.logAProblem("unable to close the socket used by "
+					+ getName(), e);
 		}
 	}
+
+	static AtomicInteger f_instanceCount = new AtomicInteger();
 
 	/**
 	 * A thread to handle request from console connections. More than one client
 	 * can be connected so there could be several instance of this class.
 	 */
-	static private class ClientHandler extends Thread {
-
-		static AtomicInteger f_instanceCount = new AtomicInteger();
+	private class ClientHandler extends Thread {
 
 		private volatile boolean f_shutdownRequested = false;
 
@@ -150,9 +157,13 @@ class Console extends Thread {
 				BufferedWriter outputStream = new BufferedWriter(
 						new OutputStreamWriter(f_client.getOutputStream()));
 				sendResponse(outputStream,
-						"Welcome to Flashlight! \"" + Store.getRun() + "\"");
-				sendResponse(outputStream, "(type \"" + STOP
-						+ "\" to shutdown collection)");
+						"Welcome to Flashlight! \"" + f_conf.getRun() + "\"");
+				sendResponse(outputStream,
+						"Type quit or exit to end this session.");
+				sendResponse(outputStream, "Available commands: ");
+				for (ConsoleCommand c : f_command) {
+					sendResponse(outputStream, c.getDescription());
+				}
 				while (!f_shutdownRequested) {
 					String nextLine = inputStream.readLine(); // blocks
 					if (nextLine == null) {
@@ -168,24 +179,34 @@ class Console extends Thread {
 					} else {
 						// process the command
 						nextLine = nextLine.trim();
-						if (nextLine.equalsIgnoreCase(STOP)) {
-							sendResponse(outputStream,
-									"Flashlight is shutting down...");
-							Store.shutdown();
-						} else if (nextLine.equalsIgnoreCase(EXIT)
+						if (nextLine.equalsIgnoreCase(EXIT)
 								|| nextLine.equalsIgnoreCase(QUIT)) {
 							f_shutdownRequested = true;
 							f_client.close();
 						} else {
-							sendResponse(
-									outputStream,
-									"invalid command...please use \""
-											+ STOP
-											+ "\" when you want to halt collection");
+							boolean matched = false;
+							Iterator<ConsoleCommand> iter = f_command
+									.iterator();
+							while (!matched && iter.hasNext()) {
+								String response = iter.next().handle(nextLine);
+								if (response != null) {
+									matched = true;
+									sendResponse(outputStream, response);
+								}
+							}
+							if (!matched) {
+								sendResponse(outputStream, "invalid command...");
+								sendResponse(outputStream,
+										"Available commands: ");
+								for (ConsoleCommand c : f_command) {
+									sendResponse(outputStream,
+											c.getDescription());
+								}
+							}
 						}
 					}
 				}
-				Store.log("console disconnect (" + getName() + ")");
+				f_conf.log("console disconnect (" + getName() + ")");
 			} catch (SocketException e) {
 				/*
 				 * ignore, this is normal behavior during a shutdown, i.e.,
@@ -193,7 +214,7 @@ class Console extends Thread {
 				 * requestShutdown() method.
 				 */
 			} catch (IOException e) {
-				Store.logAProblem("general I/O failure on socket used by "
+				f_conf.logAProblem("general I/O failure on socket used by "
 						+ getName(), e);
 			}
 		}
@@ -214,7 +235,7 @@ class Console extends Thread {
 				outputStream.write(response + "\n\r");
 				outputStream.flush();
 			} catch (IOException e) {
-				Store.logAProblem(
+				f_conf.logAProblem(
 						"general I/O failure writing to socket used by "
 								+ getName(), e);
 			}
@@ -230,9 +251,10 @@ class Console extends Thread {
 				this.interrupt(); // wake up
 				f_client.close();
 			} catch (IOException e) {
-				Store.logAProblem("unable to close the socket used by "
+				f_conf.logAProblem("unable to close the socket used by "
 						+ getName(), e);
 			}
 		}
 	}
+
 }

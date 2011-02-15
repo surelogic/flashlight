@@ -1,8 +1,15 @@
 package com.surelogic._flashlight;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.surelogic._flashlight.common.IdConstants;
+import com.surelogic._flashlight.common.InstrumentationConstants;
+import com.surelogic._flashlight.monitor.MonitorStore;
 
 /**
  * This class defines the interface into the Flashlight data store.
@@ -56,16 +63,22 @@ public class FLStore {
 		if (IdConstants.enableFlashlightToggle
 				|| !StoreDelegate.FL_OFF.getAndSet(true)) {
 			f_conf = new RunConf();
-			// TODO add listeners
+			// TODO add listeners based on properties
+			f_listeners.add(new PostMortemStore());
+			f_listeners.add(new MonitorStore());
+			List<ConsoleCommand> commands = new ArrayList<ConsoleCommand>();
+			commands.add(new ShutdownCommand());
+			commands.add(new PingCommand());
 			for (StoreListener l : f_listeners) {
 				l.init(f_conf);
+				commands.addAll(l.getCommands());
 			}
 
 			/*
 			 * The console lets someone attach to flashlight and command it to
 			 * shutdown.
 			 */
-			f_console = new Console();
+			f_console = new Console(f_conf, commands);
 			f_console.start();
 			tl_withinStore = new ThreadLocal<State>() {
 
@@ -90,7 +103,7 @@ public class FLStore {
 			Runtime.getRuntime().addShutdownHook(new Thread() {
 				@Override
 				public void run() {
-					Store.shutdown();
+					shutdown();
 				}
 			});
 			f_flashlightIsNotInitialized = false;
@@ -360,6 +373,21 @@ public class FLStore {
 			final long siteId) {
 		if (checkInside()) {
 			try {
+				if (f_conf.isDebug()) {
+					final String fmt = "Store.afterIntrinsicLockAcquisition(%n\t\tlockObject=%s%n\t\tlocation=%s)";
+					f_conf.log(String.format(fmt,
+							StoreDelegate.safeToString(lockObject), siteId));
+				}
+				/*
+				 * Check that the parameters are valid, gather needed
+				 * information, and put an event in the raw queue.
+				 */
+				if (lockObject == null) {
+					final String fmt = "intrinsic lock object cannot be null...instrumentation bug detected by Store.afterIntrinsicLockAcquisition(lockObject=%s, location=%s)";
+					f_conf.logAProblem(String.format(fmt,
+							StoreDelegate.safeToString(lockObject), siteId));
+					return;
+				}
 				for (StoreListener l : f_listeners) {
 					l.afterIntrinsicLockAcquisition(lockObject, siteId);
 				}
@@ -373,6 +401,22 @@ public class FLStore {
 			final Object lockObject, final long siteId) {
 		if (checkInside()) {
 			try {
+				if (f_conf.isDebug()) {
+					final String fmt = "Store.intrinsicLockWait(%n\t\t%s%n\t\tlockObject=%s%n\t\tlocation=%s)";
+					f_conf.log(String.format(fmt, before ? "before" : "after",
+							StoreDelegate.safeToString(lockObject), siteId));
+				}
+				/*
+				 * Check that the parameters are valid, gather needed
+				 * information, and put an event in the raw queue.
+				 */
+				if (lockObject == null) {
+					final String fmt = "intrinsic lock object cannot be null...instrumentation bug detected by Store.intrinsicLockWait(%s, lockObject=%s, location=%s)";
+					f_conf.logAProblem(String.format(fmt, before ? "before"
+							: "after", StoreDelegate.safeToString(lockObject),
+							siteId));
+					return;
+				}
 				for (StoreListener l : f_listeners) {
 					l.intrinsicLockWait(before, lockObject, siteId);
 				}
@@ -386,6 +430,21 @@ public class FLStore {
 			final long siteId) {
 		if (checkInside()) {
 			try {
+				if (RunConf.DEBUG) {
+					final String fmt = "Store.afterIntrinsicLockRelease(%n\t\tlockObject=%s%n\t\tlocation=%s)";
+					f_conf.log(String.format(fmt,
+							StoreDelegate.safeToString(lockObject), siteId));
+				}
+				/*
+				 * Check that the parameters are valid, gather needed
+				 * information, and put an event in the raw queue.
+				 */
+				if (lockObject == null) {
+					final String fmt = "intrinsic lock object cannot be null...instrumentation bug detected by Store.afterIntrinsicLockRelease(lockObject=%s, location=%s)";
+					f_conf.logAProblem(String.format(fmt,
+							StoreDelegate.safeToString(lockObject), siteId));
+					return;
+				}
 				for (StoreListener l : f_listeners) {
 					l.afterIntrinsicLockRelease(lockObject, siteId);
 				}
@@ -399,6 +458,15 @@ public class FLStore {
 			final Object lockObject, final long siteId) {
 		if (checkInside()) {
 			try {
+				if (f_conf.isDebug()) {
+					/*
+					 * Implementation note: We are counting on the implementer
+					 * of the util.concurrent Lock object to not have a bad
+					 * toString() method.
+					 */
+					final String fmt = "Store.beforeUtilConcurrentLockAcquisitionAttempt(%n\t\tlockObject=%s%n\t\tlocation=%s)";
+					f_conf.log(String.format(fmt, lockObject, siteId));
+				}
 				for (StoreListener l : f_listeners) {
 					l.beforeUtilConcurrentLockAcquisitionAttempt(lockObject,
 							siteId);
@@ -413,6 +481,16 @@ public class FLStore {
 			final boolean gotTheLock, final Object lockObject, final long siteId) {
 		if (checkInside()) {
 			try {
+				if (f_conf.isDebug()) {
+					/*
+					 * Implementation note: We are counting on the implementer
+					 * of the util.concurrent Lock object to not have a bad
+					 * toString() method.
+					 */
+					final String fmt = "Store.afterUtilConcurrentLockAcquisitionAttempt(%n\t\t%s%n\t\tlockObject=%s%n\t\tlocation=%s)";
+					f_conf.log(String.format(fmt, gotTheLock ? "holding"
+							: "failed-to-acquire", lockObject, siteId));
+				}
 				for (StoreListener l : f_listeners) {
 					l.afterUtilConcurrentLockAcquisitionAttempt(gotTheLock,
 							lockObject, siteId);
@@ -428,6 +506,16 @@ public class FLStore {
 			final long siteId) {
 		if (checkInside()) {
 			try {
+				if (f_conf.isDebug()) {
+					/*
+					 * Implementation note: We are counting on the implementer
+					 * of the util.concurrent Lock object to not have a bad
+					 * toString() method.
+					 */
+					final String fmt = "Store.afterUtilConcurrentLockReleaseAttempt(%n\t\t%s%n\t\tlockObject=%s%n\t\tlocation=%s)";
+					f_conf.log(String.format(fmt, releasedTheLock ? "released"
+							: "failed-to-release", lockObject, siteId));
+				}
 				for (StoreListener l : f_listeners) {
 					l.afterUtilConcurrentLockReleaseAttempt(releasedTheLock,
 							lockObject, siteId);
@@ -440,8 +528,21 @@ public class FLStore {
 
 	public void instanceFieldInit(final Object receiver, final int fieldId,
 			final Object value) {
+		if (!StoreConfiguration.processFieldAccesses()) {
+			return;
+		}
 		if (checkInside()) {
 			try {
+				if (f_conf.isDebug()) {
+					final String fmt = "Store.instanceFieldInit%n\t\treceiver=%s%n\t\field=%s%n\t\tvalue=%s)";
+					f_conf.log(String.format(fmt,
+							StoreDelegate.safeToString(receiver), fieldId,
+							StoreDelegate.safeToString(value)));
+				}
+				// Ignore null assignments
+				if (value == null) {
+					return;
+				}
 				for (StoreListener l : f_listeners) {
 					l.instanceFieldInit(receiver, fieldId, value);
 				}
@@ -452,8 +553,20 @@ public class FLStore {
 	}
 
 	public void staticFieldInit(final int fieldId, final Object value) {
+		if (!StoreConfiguration.processFieldAccesses()) {
+			return;
+		}
 		if (checkInside()) {
 			try {
+				if (f_conf.isDebug()) {
+					final String fmt = "Store.instanceFieldInit%n\t\field=%s%n\t\tvalue=%s)";
+					f_conf.log(String.format(fmt, fieldId,
+							StoreDelegate.safeToString(value)));
+				}
+				// Ignore null assignments
+				if (value == null) {
+					return;
+				}
 				for (StoreListener l : f_listeners) {
 					l.staticFieldInit(fieldId, value);
 				}
@@ -461,6 +574,150 @@ public class FLStore {
 				tl_withinStore.get().inside = false;
 			}
 		}
+	}
+
+	/**
+	 * Stops collection of events about the instrumented program. This method
+	 * may be called from within the following thread contexts:
+	 * <ul>
+	 * <li>A direct call from a program thread, i.e., a call was added to the
+	 * program code</li>
+	 * <li>The {@link Spy} thread if it detected the instrumented program
+	 * completed and only flashlight threads remain running.</li>
+	 * <li>A client handler thread created by the {@link Console} thread that
+	 * was told to shutdown flashlight via socket.</li>
+	 * <li>The thread created to run our shutdown hook.</li>
+	 * </ul>
+	 */
+	public static void shutdown() {
+		if (f_flashlightIsNotInitialized) {
+			System.err.println("[Flashlight] !SERIOUS ERROR! "
+					+ "Store.shutdown() invoked "
+					+ "before the Store class is initialized");
+			return;
+		}
+		/*
+		 * The below getAndSet(true) ensures that only one thread shuts down
+		 * Flashlight.
+		 */
+		if (StoreDelegate.FL_OFF.getAndSet(true)) {
+			return;
+		}
+
+		/*
+		 * Note that a client handler for the console could have been the thread
+		 * that called this method (i.e., we are running within a client handler
+		 * thread of the console...not the listener thread).
+		 */
+		f_console.requestShutdown();
+
+		/*
+		 * Note that the spy thread could have been the thread that called this
+		 * method.
+		 */
+		if (f_spy != null) {
+			f_spy.requestShutdown();
+		}
+
+		final long endTime = System.nanoTime();
+		final long totalTime = endTime - f_conf.getStartNanoTime();
+		final StringBuilder sb = new StringBuilder(
+				" (duration of collection was ");
+		formatNanoTime(sb, totalTime);
+		sb.append(')');
+		final String duration = sb.toString();
+		final long problemCount = f_conf.getProblemCount();
+		if (problemCount < 1) {
+			f_conf.log("collection shutdown" + duration);
+		} else {
+			f_conf.log("collection shutdown with " + problemCount
+					+ " problem(s) reported" + duration);
+		}
+
+		final File done = new File(StoreConfiguration.getDirectory(),
+				InstrumentationConstants.FL_COMPLETE_RUN);
+		try {
+			final FileWriter w = new FileWriter(done);
+			sb.delete(0, sb.length()); // clear
+			sb.append("Completed: ");
+			formatNanoTime(sb, endTime);
+			w.write(sb.toString());
+			w.close();
+		} catch (final IOException e) {
+			f_conf.log(e.getMessage() + ", while writing final file");
+		}
+		f_conf.logComplete();
+	}
+
+	private static void formatNanoTime(final StringBuilder sb,
+			final long totalTime) {
+		final long nsPerSecond = 1000000000L;
+		final long nsPerMinute = 60000000000L;
+		final long nsPerHour = 3600000000000L;
+
+		long timeLeft = totalTime;
+		final long totalHours = timeLeft / nsPerHour;
+		timeLeft -= totalHours * nsPerHour;
+
+		final long totalMins = timeLeft / nsPerMinute;
+		timeLeft -= totalMins * nsPerMinute;
+
+		final float totalSecs = timeLeft / (float) nsPerSecond;
+
+		sb.append(totalHours).append(':');
+		if (totalMins < 10) {
+			sb.append('0');
+		}
+		sb.append(totalMins).append(':');
+		if (totalSecs < 10) {
+			sb.append('0');
+		}
+		sb.append(totalSecs);
+	}
+
+	static class ShutdownCommand implements ConsoleCommand {
+		private static final String STOP = "stop";
+
+		public String getDescription() {
+			return "stop - shutdown the instrumentation";
+		}
+
+		public String handle(final String command) {
+			if (STOP.equals(command)) {
+				shutdown();
+				return "Flashlight instrumentation has shut down.";
+			}
+			return null;
+		}
+	}
+
+	static class PingCommand implements ConsoleCommand {
+
+		public String handle(final String command) {
+			if ("ping".equalsIgnoreCase(command)) {
+				return String.format("Uptime: %d", System.currentTimeMillis()
+						- f_conf.getStartTime().getTime());
+			}
+			return null;
+		}
+
+		public String getDescription() {
+			return "ping - displays instrumentation uptime";
+		}
+	}
+
+	/*
+	 * Used by one of the JUnit tests.
+	 */
+	public static void setOutputStrategy(final EventVisitor outputStrategy) {
+		for (StoreListener l : f_listeners) {
+			if (l instanceof PostMortemStore) {
+				PostMortemStore s = (PostMortemStore) l;
+				s.setOutputStrategy(outputStrategy);
+				return;
+			}
+		}
+
 	}
 
 }

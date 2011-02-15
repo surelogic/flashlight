@@ -10,6 +10,7 @@ import java.io.Reader;
 import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -150,7 +151,8 @@ final class Depository extends Thread {
 					if (e == FinalEvent.FINAL_EVENT) {
 						f_finished = true;
 						// System.err.println("Outputting final time");
-						new Time().accept(f_outputStrategy);
+						new Time(new Date(), System.nanoTime())
+								.accept(f_outputStrategy);
 					}
 					e.accept(f_outputStrategy);
 

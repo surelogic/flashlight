@@ -1,6 +1,6 @@
 package com.surelogic._flashlight.trace;
 
-import com.surelogic._flashlight.Store;
+import com.surelogic._flashlight.PostMortemStore;
 import com.surelogic._flashlight.monitor.MonitorStore;
 
 public class ArrayPlaceholder extends AbstractPlaceholder {
@@ -16,7 +16,7 @@ public class ArrayPlaceholder extends AbstractPlaceholder {
 		f_siteIds[1] = siteId;
 	}
 
-	public TraceNode getNode(final Store.State state) {
+	public TraceNode getNode(final PostMortemStore.State state) {
 		TraceNode n = f_caller == null ? null : f_caller.getNode(state);
 		for (int i = 0; i < size; i++) {
 			n = getNode(state, n, f_siteIds[i]);

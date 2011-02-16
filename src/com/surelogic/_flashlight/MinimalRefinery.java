@@ -22,8 +22,8 @@ public class MinimalRefinery extends AbstractRefinery {
 		while (shutdown.get()) {
 			IdPhantomReference pr = Phantom.get();
 			if (pr != null) {
-				store.putInQueue(store.getState(), new GarbageCollectedObject(
-						pr));
+				PostMortemStore.putInQueue(store.getState(),
+						new GarbageCollectedObject(pr));
 			}
 		}
 	}

@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import com.surelogic._flashlight.common.IdConstants;
@@ -64,8 +63,12 @@ public class Store {
 				|| !StoreDelegate.FL_OFF.getAndSet(true)) {
 			f_conf = new RunConf();
 			// TODO add listeners based on properties
-			f_listeners = Arrays.asList(new PostMortemStore(),
-					new MonitorStore());
+
+			f_listeners = new ArrayList<StoreListener>(2);
+			f_listeners.add(new MonitorStore());
+			if (StoreConfiguration.isPostmortemMode()) {
+				f_listeners.add(new PostMortemStore());
+			}
 			List<ConsoleCommand> commands = new ArrayList<ConsoleCommand>();
 			commands.add(new ShutdownCommand());
 			commands.add(new PingCommand());

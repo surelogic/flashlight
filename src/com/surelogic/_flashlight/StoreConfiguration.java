@@ -19,6 +19,8 @@ import static com.surelogic._flashlight.common.InstrumentationConstants.FL_OUTPU
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_OUTPUT_TYPE_DEFAULT;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_OUTQ_SIZE;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_OUTQ_SIZE_DEFAULT;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_POSTMORTEM;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_POSTMORTEM_DEFAULT;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_PROPERTIES_RESOURCE;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_RAWQ_SIZE;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_RAWQ_SIZE_DEFAULT;
@@ -56,8 +58,8 @@ import com.surelogic._flashlight.common.OutputType;
 /**
  * This class is giant hack, but I don't know of a better way to do things. This
  * class cannot be instantiated, but contains various configuration attributes
- * for the {@link Store} class. These attributes must be set <em>before</em>
- * the {@code FLStore} class is initialized by the virtual machine because the
+ * for the {@link Store} class. These attributes must be set <em>before</em> the
+ * {@code FLStore} class is initialized by the virtual machine because the
  * attributes are accessed by the <code>static</code> initializer of the class.
  * 
  * <p>
@@ -83,6 +85,7 @@ public class StoreConfiguration {
 	private static volatile boolean handleFieldAccesses;
 	private static volatile boolean useSeparateStreams;
 	private static volatile boolean debug;
+	private static volatile boolean isPostmortemMode;
 
 	static {
 		// System.out.println("StoreConfiguration");
@@ -109,6 +112,8 @@ public class StoreConfiguration {
 		setOff(props.getProperty(FL_OFF, null) != null);
 		setRun(props.getProperty(FL_RUN, FL_RUN_DEFAULT));
 
+		setPostmortemMode(Boolean.parseBoolean(props.getProperty(FL_POSTMORTEM,
+				FL_POSTMORTEM_DEFAULT)));
 		// Check for a date override
 		setDateOverride(props.getProperty(FL_DATE_OVERRIDE));
 
@@ -459,6 +464,14 @@ public class StoreConfiguration {
 
 	public static void useSeparateStreams(final boolean separate) {
 		useSeparateStreams = separate;
+	}
+
+	public static boolean isPostmortemMode() {
+		return isPostmortemMode;
+	}
+
+	public static void setPostmortemMode(final boolean isPostmortemMode) {
+		StoreConfiguration.isPostmortemMode = isPostmortemMode;
 	}
 
 	/**

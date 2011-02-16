@@ -649,6 +649,20 @@ public class Store {
 		f_conf.logComplete();
 	}
 
+	/**
+	 * Get the phantom object reference for the given {@code Class} object.
+	 * Cannot use {@link Phantom#ofClass(Class)} directly because we need to
+	 * make sure the store is loaded and initialized before creating phantom
+	 * objects.
+	 */
+	ClassPhantomReference getClassPhantom(final Class<?> c) {
+		return StoreDelegate.getClassPhantom(c);
+	}
+
+	ObjectPhantomReference getObjectPhantom(final Object o, final long id) {
+		return StoreDelegate.getObjectPhantom(o, id);
+	}
+
 	private static void formatNanoTime(final StringBuilder sb,
 			final long totalTime) {
 		final long nsPerSecond = 1000000000L;

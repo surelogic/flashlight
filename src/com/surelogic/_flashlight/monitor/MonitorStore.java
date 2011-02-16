@@ -21,7 +21,6 @@ import com.surelogic._flashlight.ObjectPhantomReference;
 import com.surelogic._flashlight.Phantom;
 import com.surelogic._flashlight.RunConf;
 import com.surelogic._flashlight.Spy;
-import com.surelogic._flashlight.StoreDelegate;
 import com.surelogic._flashlight.StoreListener;
 import com.surelogic._flashlight.ThreadPhantomReference;
 import com.surelogic._flashlight.UtilConcurrent;
@@ -195,20 +194,6 @@ public final class MonitorStore implements StoreListener {
 		}
 		// ensure the result isn't less than the minimum
 		return def >= min ? def : min;
-	}
-
-	/**
-	 * Get the phantom object reference for the given {@code Class} object.
-	 * Cannot use {@link Phantom#ofClass(Class)} directly because we need to
-	 * make sure the store is loaded and initialized before creating phantom
-	 * objects.
-	 */
-	ClassPhantomReference getClassPhantom(final Class<?> c) {
-		return StoreDelegate.getClassPhantom(c);
-	}
-
-	ObjectPhantomReference getObjectPhantom(final Object o, final long id) {
-		return StoreDelegate.getObjectPhantom(o, id);
 	}
 
 	/**

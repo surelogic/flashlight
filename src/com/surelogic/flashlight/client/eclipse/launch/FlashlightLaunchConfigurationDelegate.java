@@ -13,7 +13,6 @@ import org.eclipse.jdt.launching.IVMRunner;
 import org.eclipse.jdt.launching.JavaLaunchDelegate;
 
 import com.surelogic._flashlight.common.InstrumentationConstants;
-import com.surelogic._flashlight.rewriter.FlashlightNames;
 import com.surelogic.common.core.logging.SLEclipseStatusUtility;
 import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
 
@@ -72,15 +71,11 @@ public final class FlashlightLaunchConfigurationDelegate extends
 		instrumentUser.removeAll(noInstrumentUser);
 		instrumentBoot.removeAll(noInstrumentBoot);
 
-		String store = config.getAttribute(
-				FlashlightPreferencesUtility.STORE_MODE,
-				FlashlightNames.FLASHLIGHT_STORE);
-
 		final int version = getMajorJavaVersion(vm);
 
 		return new FlashlightVMRunner(runner, mainType,
 				LaunchUtils.convertToLocations(classpath), instrumentUser,
-				instrumentBoot, version == 4, store);
+				instrumentBoot, version == 4);
 	}
 
 	static int getMajorJavaVersion(final IVMInstall vm) {

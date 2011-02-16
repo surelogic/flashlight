@@ -10,7 +10,6 @@ import static com.surelogic._flashlight.common.InstrumentationConstants.FL_REFIN
 import java.io.File;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.surelogic._flashlight.rewriter.FlashlightNames;
 import com.surelogic.common.FileUtility;
 import com.surelogic.common.core.EclipseUtility;
 import com.surelogic.common.core.preferences.AutoPerspectiveSwitchPreferences;
@@ -60,8 +59,7 @@ public final class FlashlightPreferencesUtility {
 			EclipseUtility.setDefaultBooleanPreference(
 					AUTO_INCREASE_HEAP_AT_LAUNCH, true);
 			EclipseUtility.setDefaultBooleanPreference(USE_REFINERY, true);
-			EclipseUtility.setDefaultStringPreference(STORE_MODE,
-					FlashlightNames.FLASHLIGHT_STORE);
+			EclipseUtility.setDefaultBooleanPreference(POSTMORTEM_MODE, true);
 			EclipseUtility.setDefaultStringPreference(COLLECTION_TYPE,
 					FL_COLLECTION_TYPE_DEFAULT.name());
 			EclipseUtility.setDefaultBooleanPreference(OUTPUT_TYPE,
@@ -126,7 +124,7 @@ public final class FlashlightPreferencesUtility {
 			+ "prompt.to.prep.all.raw.data";
 	public static final String AUTO_PREP_ALL_RAW_DATA = PREFIX
 			+ "auto.prep.all.raw.data";
-	public static final String STORE_MODE = PREFIX + "store.mode";
+	public static final String POSTMORTEM_MODE = PREFIX + "store.postmortem";
 
 	private static final String FLASHLIGHT_DATA_DIRECTORY = PREFIX
 			+ "data.directory";

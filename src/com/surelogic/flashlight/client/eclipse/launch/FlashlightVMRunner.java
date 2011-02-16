@@ -8,6 +8,7 @@ import static com.surelogic._flashlight.common.InstrumentationConstants.FL_FIELD
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_NO_SPY;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_OUTPUT_TYPE;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_OUTQ_SIZE;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_POSTMORTEM;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_RAWQ_SIZE;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_REFINERY_OFF;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_REFINERY_SIZE;
@@ -56,7 +57,6 @@ import org.eclipse.ui.progress.UIJob;
 import com.surelogic._flashlight.common.CollectionType;
 import com.surelogic._flashlight.common.OutputType;
 import com.surelogic._flashlight.rewriter.ClassNameUtil;
-import com.surelogic._flashlight.rewriter.FlashlightNames;
 import com.surelogic._flashlight.rewriter.PrintWriterMessenger;
 import com.surelogic._flashlight.rewriter.RewriteManager;
 import com.surelogic._flashlight.rewriter.RewriteMessenger;
@@ -105,7 +105,6 @@ public final class FlashlightVMRunner implements IVMRunner {
 	private final List<String> instrumentBoot;
 
 	private final boolean ALWAYS_APPEND_TO_BOOT = true;
-	private final String store;
 
 	private static final class Entry {
 		public final String outputName;
@@ -119,7 +118,7 @@ public final class FlashlightVMRunner implements IVMRunner {
 
 	public FlashlightVMRunner(final IVMRunner other, final String mainType,
 			final List<String> classpath, final List<String> iUser,
-			final List<String> iBoot, final boolean java14, final String store)
+			final List<String> iBoot, final boolean java14)
 			throws CoreException {
 		delegateRunner = other;
 		this.classpath = classpath;
@@ -171,11 +170,7 @@ public final class FlashlightVMRunner implements IVMRunner {
 		if (!sourceDir.exists()) {
 			sourceDir.mkdir();
 		}
-		if (!(FlashlightNames.FLASHLIGHT_MONITOR_STORE.equals(store) || FlashlightNames.FLASHLIGHT_STORE
-				.equals(store))) {
-			throw new IllegalStateException("Invalid store: " + store);
-		}
-		this.store = store;
+
 	}
 
 	@Override
@@ -239,6 +234,11 @@ public final class FlashlightVMRunner implements IVMRunner {
 		/* Done with our set up, call the real runner */
 		delegateRunner.run(newConfig, launch, monitor);
 
+		final boolean postmortem = launch.getLaunchConfiguration()
+				.getAttribute(
+						FlashlightPreferencesUtility.POSTMORTEM_MODE,
+						EclipseUIUtility.getPreferences().getBoolean(
+								FlashlightPreferencesUtility.POSTMORTEM_MODE));
 		/*
 		 * Create and launch a job that detects when the instrumented run
 		 * terminates, and switches to the flashlight perspective on
@@ -248,7 +248,7 @@ public final class FlashlightVMRunner implements IVMRunner {
 				launch, LaunchTerminationDetectionJob.DEFAULT_PERIOD) {
 			@Override
 			protected IStatus terminationAction() {
-				if (!FlashlightNames.FLASHLIGHT_MONITOR_STORE.equals(store)) {
+				if (postmortem) {
 					final UIJob job = new SwitchToFlashlightPerspectiveJob();
 					job.schedule();
 				}
@@ -390,7 +390,7 @@ public final class FlashlightVMRunner implements IVMRunner {
 			} else {
 				configBuilder = new ConfigurationBuilder(flashlightProps);
 			}
-			configBuilder.setStoreClassName(store);
+
 			try {
 				configBuilder
 						.setIndirectUseDefault(launch
@@ -673,6 +673,10 @@ public final class FlashlightVMRunner implements IVMRunner {
 			final String useBinary = launch.getAttribute(
 					FlashlightPreferencesUtility.OUTPUT_TYPE,
 					prefs.getString(FlashlightPreferencesUtility.OUTPUT_TYPE));
+			final boolean postmortem = launch
+					.getAttribute(
+							FlashlightPreferencesUtility.POSTMORTEM_MODE,
+							prefs.getBoolean(FlashlightPreferencesUtility.POSTMORTEM_MODE));
 			final boolean compress = launch
 					.getAttribute(
 							FlashlightPreferencesUtility.COMPRESS_OUTPUT,
@@ -701,6 +705,8 @@ public final class FlashlightVMRunner implements IVMRunner {
 			newVmArgsList.add("-D" + FL_OUTQ_SIZE + "=" + outQSize);
 			newVmArgsList.add("-D" + FL_CONSOLE_PORT + "=" + cPort);
 			newVmArgsList.add("-D" + FL_DATE_OVERRIDE + "=" + datePostfix);
+			newVmArgsList.add("-D" + FL_POSTMORTEM + "="
+					+ Boolean.toString(postmortem));
 			newVmArgsList.add("-D" + FL_OUTPUT_TYPE + "="
 					+ OutputType.get(useBinary, compress));
 			newVmArgsList.add("-D"

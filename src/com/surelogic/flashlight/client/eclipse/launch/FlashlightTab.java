@@ -33,12 +33,12 @@ import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferences
 public class FlashlightTab extends AbstractLaunchConfigurationTab {
 	private static final String[] StringAttrs = {
 			FlashlightPreferencesUtility.OUTPUT_TYPE,
-			FlashlightPreferencesUtility.COLLECTION_TYPE,
-			FlashlightPreferencesUtility.STORE_MODE, };
+			FlashlightPreferencesUtility.COLLECTION_TYPE, };
 	private static final String[] BooleanAttrs = {
 			FlashlightPreferencesUtility.USE_REFINERY,
 			FlashlightPreferencesUtility.USE_SPY,
-			FlashlightPreferencesUtility.COMPRESS_OUTPUT, };
+			FlashlightPreferencesUtility.COMPRESS_OUTPUT,
+			FlashlightPreferencesUtility.POSTMORTEM_MODE, };
 	private static final String[] IntAttrs = {
 			FlashlightPreferencesUtility.CONSOLE_PORT,
 			FlashlightPreferencesUtility.RAWQ_SIZE,

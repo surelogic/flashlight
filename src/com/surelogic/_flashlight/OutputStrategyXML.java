@@ -12,7 +12,6 @@ import com.surelogic._flashlight.trace.TraceNode;
 final class OutputStrategyXML extends EventVisitor {
 	static final String version = "1.0";
 	private final PrintWriter f_out;
-	private final RunConf conf;
 	private String f_indent = "";
 
 	private void o(final String s) {
@@ -76,7 +75,6 @@ final class OutputStrategyXML extends EventVisitor {
 	OutputStrategyXML(final RunConf conf, final OutputStream stream)
 			throws IOException {
 		assert stream != null;
-		this.conf = conf;
 		final OutputStreamWriter osw = new OutputStreamWriter(stream,
 				conf.getEncoding());
 		f_out = new PrintWriter(osw);

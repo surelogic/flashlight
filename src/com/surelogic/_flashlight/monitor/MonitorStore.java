@@ -172,8 +172,6 @@ public final class MonitorStore implements StoreListener {
 		};
 		f_lockSets = new CopyOnWriteArrayList<ThreadLocks>();
 
-		// Start up looking at no fields.
-		reviseSpec(f_spec);
 	}
 
 	public void init(final RunConf conf) {
@@ -181,6 +179,9 @@ public final class MonitorStore implements StoreListener {
 				""), conf.getFieldDefs());
 		f_knownRWLocks = new UtilConcurrent();
 		f_conf = conf;
+
+		// Start up looking at no fields.
+		reviseSpec(f_spec);
 	}
 
 	static int getIntProperty(final String key, int def, final int min) {

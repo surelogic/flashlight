@@ -53,7 +53,7 @@ public class PostMortemStore implements StoreListener {
 		f_depository.setOutputStrategy(outputStrategy);
 	}
 
-	private UtilConcurrent f_rwLocks;
+	private final UtilConcurrent f_rwLocks;
 
 	private RunConf f_conf;
 
@@ -111,12 +111,12 @@ public class PostMortemStore implements StoreListener {
 		} else {
 			f_outQueue = null;
 		}
+		f_rwLocks = new UtilConcurrent();
 
 	}
 
 	public void init(final RunConf conf) {
 		f_conf = conf;
-		f_rwLocks = new UtilConcurrent();
 		// Create starting time event
 		Time timeEvent = new Time(conf.getStartTime(), conf.getStartNanoTime());
 

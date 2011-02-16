@@ -4,8 +4,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.surelogic._flashlight.common.IdConstants;
 import com.surelogic._flashlight.common.InstrumentationConstants;
@@ -44,7 +44,7 @@ public class Store {
 
 	private static final RunConf f_conf;
 
-	private static final CopyOnWriteArrayList<StoreListener> f_listeners = new CopyOnWriteArrayList<StoreListener>();
+	private static final List<StoreListener> f_listeners;
 
 	/**
 	 * This thread-local (tl) flag is used to ensure that we to not, within a
@@ -64,8 +64,8 @@ public class Store {
 				|| !StoreDelegate.FL_OFF.getAndSet(true)) {
 			f_conf = new RunConf();
 			// TODO add listeners based on properties
-			f_listeners.add(new PostMortemStore());
-			f_listeners.add(new MonitorStore());
+			f_listeners = Arrays.asList(new PostMortemStore(),
+					new MonitorStore());
 			List<ConsoleCommand> commands = new ArrayList<ConsoleCommand>();
 			commands.add(new ShutdownCommand());
 			commands.add(new PingCommand());
@@ -109,6 +109,7 @@ public class Store {
 			f_flashlightIsNotInitialized = false;
 			StoreDelegate.FL_OFF.set(false);
 		} else {
+			f_listeners = null;
 			f_console = null;
 			f_spy = null;
 			f_conf = null;
@@ -157,8 +158,8 @@ public class Store {
 		return true;
 	}
 
-	public void instanceFieldAccess(final boolean read, final Object receiver,
-			final int fieldID, final long siteId,
+	public static void instanceFieldAccess(final boolean read,
+			final Object receiver, final int fieldID, final long siteId,
 			final ClassPhantomReference dcPhantom, final Class<?> declaringClass) {
 		if (!StoreConfiguration.processFieldAccesses()) {
 			return;
@@ -188,7 +189,7 @@ public class Store {
 		}
 	}
 
-	public void staticFieldAccess(final boolean read, final int fieldID,
+	public static void staticFieldAccess(final boolean read, final int fieldID,
 			final long siteId, final ClassPhantomReference dcPhantom,
 			final Class<?> declaringClass) {
 		if (!StoreConfiguration.processFieldAccesses()) {
@@ -219,7 +220,7 @@ public class Store {
 		}
 	}
 
-	public void indirectAccess(final Object receiver, final long siteId) {
+	public static void indirectAccess(final Object receiver, final long siteId) {
 		if (!StoreConfiguration.getCollectionType().processIndirectAccesses()) {
 			return;
 		}
@@ -239,7 +240,7 @@ public class Store {
 		}
 	}
 
-	public void arrayAccess(final boolean read, final Object receiver,
+	public static void arrayAccess(final boolean read, final Object receiver,
 			final int index, final long siteId) {
 		if (checkInside()) {
 			try {
@@ -252,7 +253,7 @@ public class Store {
 		}
 	}
 
-	public void classInit(final boolean before, final Class<?> clazz) {
+	public static void classInit(final boolean before, final Class<?> clazz) {
 		if (checkInside()) {
 			try {
 				final ClassPhantomReference p = Phantom.ofClass(clazz);
@@ -271,7 +272,7 @@ public class Store {
 		}
 	}
 
-	public void constructorCall(final boolean before, final long siteId) {
+	public static void constructorCall(final boolean before, final long siteId) {
 		if (checkInside()) {
 			try {
 				if (f_conf.isDebug()) {
@@ -288,7 +289,7 @@ public class Store {
 		}
 	}
 
-	public void constructorExecution(final boolean before,
+	public static void constructorExecution(final boolean before,
 			final Object receiver, final long siteId) {
 		if (checkInside()) {
 			try {
@@ -319,7 +320,7 @@ public class Store {
 		}
 	}
 
-	public void methodCall(final boolean before, final Object receiver,
+	public static void methodCall(final boolean before, final Object receiver,
 			final long siteId) {
 		if (checkInside()) {
 			try {
@@ -337,7 +338,7 @@ public class Store {
 		}
 	}
 
-	public void beforeIntrinsicLockAcquisition(final Object lockObject,
+	public static void beforeIntrinsicLockAcquisition(final Object lockObject,
 			final boolean lockIsThis, final boolean lockIsClass,
 			final long siteId) {
 		if (checkInside()) {
@@ -369,7 +370,7 @@ public class Store {
 		}
 	}
 
-	public void afterIntrinsicLockAcquisition(final Object lockObject,
+	public static void afterIntrinsicLockAcquisition(final Object lockObject,
 			final long siteId) {
 		if (checkInside()) {
 			try {
@@ -397,7 +398,7 @@ public class Store {
 		}
 	}
 
-	public void intrinsicLockWait(final boolean before,
+	public static void intrinsicLockWait(final boolean before,
 			final Object lockObject, final long siteId) {
 		if (checkInside()) {
 			try {
@@ -426,7 +427,7 @@ public class Store {
 		}
 	}
 
-	public void afterIntrinsicLockRelease(final Object lockObject,
+	public static void afterIntrinsicLockRelease(final Object lockObject,
 			final long siteId) {
 		if (checkInside()) {
 			try {
@@ -454,7 +455,7 @@ public class Store {
 		}
 	}
 
-	public void beforeUtilConcurrentLockAcquisitionAttempt(
+	public static void beforeUtilConcurrentLockAcquisitionAttempt(
 			final Object lockObject, final long siteId) {
 		if (checkInside()) {
 			try {
@@ -477,7 +478,7 @@ public class Store {
 		}
 	}
 
-	public void afterUtilConcurrentLockAcquisitionAttempt(
+	public static void afterUtilConcurrentLockAcquisitionAttempt(
 			final boolean gotTheLock, final Object lockObject, final long siteId) {
 		if (checkInside()) {
 			try {
@@ -501,7 +502,7 @@ public class Store {
 		}
 	}
 
-	public void afterUtilConcurrentLockReleaseAttempt(
+	public static void afterUtilConcurrentLockReleaseAttempt(
 			final boolean releasedTheLock, final Object lockObject,
 			final long siteId) {
 		if (checkInside()) {
@@ -526,8 +527,8 @@ public class Store {
 		}
 	}
 
-	public void instanceFieldInit(final Object receiver, final int fieldId,
-			final Object value) {
+	public static void instanceFieldInit(final Object receiver,
+			final int fieldId, final Object value) {
 		if (!StoreConfiguration.processFieldAccesses()) {
 			return;
 		}
@@ -552,7 +553,7 @@ public class Store {
 		}
 	}
 
-	public void staticFieldInit(final int fieldId, final Object value) {
+	public static void staticFieldInit(final int fieldId, final Object value) {
 		if (!StoreConfiguration.processFieldAccesses()) {
 			return;
 		}
@@ -619,6 +620,13 @@ public class Store {
 			f_spy.requestShutdown();
 		}
 
+		/*
+		 * Shutdown store listeners
+		 */
+		for (StoreListener l : f_listeners) {
+			l.shutdown();
+		}
+
 		final long endTime = System.nanoTime();
 		final long totalTime = endTime - f_conf.getStartNanoTime();
 		final StringBuilder sb = new StringBuilder(
@@ -655,11 +663,12 @@ public class Store {
 	 * make sure the store is loaded and initialized before creating phantom
 	 * objects.
 	 */
-	ClassPhantomReference getClassPhantom(final Class<?> c) {
+	public static ClassPhantomReference getClassPhantom(final Class<?> c) {
 		return StoreDelegate.getClassPhantom(c);
 	}
 
-	ObjectPhantomReference getObjectPhantom(final Object o, final long id) {
+	public static ObjectPhantomReference getObjectPhantom(final Object o,
+			final long id) {
 		return StoreDelegate.getObjectPhantom(o, id);
 	}
 

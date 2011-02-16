@@ -140,7 +140,7 @@ final class Depository extends Thread {
 	@Override
 	public void run() {
 		Store.flashlightThread();
-
+		conf.log("Depository started.");
 		while (!f_finished) {
 			try {
 				final List<Event> buf = f_outQueue.take();
@@ -149,6 +149,7 @@ final class Depository extends Thread {
 						continue;
 					}
 					if (e == FinalEvent.FINAL_EVENT) {
+						conf.log("Final Event detected in depository.");
 						f_finished = true;
 						// System.err.println("Outputting final time");
 						new Time(new Date(), System.nanoTime())

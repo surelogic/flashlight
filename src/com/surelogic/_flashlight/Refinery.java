@@ -139,7 +139,7 @@ final class Refinery extends AbstractRefinery {
 		}
 		List<Event> last = new ArrayList<Event>();
 		last.add(FinalEvent.FINAL_EVENT);
-		f_store.putInQueue(f_outQueue, last);
+		PostMortemStore.putInQueue(f_outQueue, last);
 		f_conf.log("refinery completed (" + f_garbageCollectedObjectCount
 				+ " object(s) garbage collected : " + f_threadLocalFieldCount
 				+ " thread-local fields observed)");
@@ -315,7 +315,7 @@ final class Refinery extends AbstractRefinery {
 		while (transferCount > 0) {
 			final List<Event> buf = f_eventCache.removeFirst();
 			transferCount--;
-			f_store.putInQueue(f_outQueue, buf);
+			PostMortemStore.putInQueue(f_outQueue, buf);
 		}
 		return true;
 	}

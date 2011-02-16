@@ -85,7 +85,7 @@ public class PostMortemStore implements StoreListener {
 	 * A State object is kept for each instrumented thread. It is used to store
 	 * per-thread information needed to support the runtime.
 	 */
-	private ThreadLocal<State> tl_withinStore;
+	private final ThreadLocal<State> tl_withinStore;
 
 	private State createState() {
 		final List<Event> l = new ArrayList<Event>(LOCAL_QUEUE_MAX);
@@ -113,16 +113,18 @@ public class PostMortemStore implements StoreListener {
 		}
 		f_rwLocks = new UtilConcurrent();
 
+		tl_withinStore = new ThreadLocal<PostMortemStore.State>() {
+			@Override
+			protected State initialValue() {
+				return createState();
+			}
+		};
 	}
 
 	public void init(final RunConf conf) {
 		f_conf = conf;
 		// Create starting time event
 		Time timeEvent = new Time(conf.getStartTime(), conf.getStartNanoTime());
-
-		// Initialize Queues
-		putInQueue(f_rawQueue, singletonList(timeEvent));
-		putInQueue(f_rawQueue, singletonList(new SelectedPackage("*")));
 
 		// Initialize Refinery and Depository
 		final OutputType outType = StoreConfiguration.getOutputType();
@@ -160,6 +162,23 @@ public class PostMortemStore implements StoreListener {
 							+ "\"", e);
 			System.exit(1); // bail
 		}
+
+		// Initialize Queues
+		putInQueue(f_rawQueue, singletonList(timeEvent));
+		putInQueue(f_rawQueue, singletonList(new SelectedPackage("*")));
+		IdPhantomReference
+				.addObserver(new IdPhantomReferenceCreationObserver() {
+					public void notify(final ClassPhantomReference o,
+							final IdPhantomReference r) {
+						/*
+						 * Create an event to define this object.
+						 */
+						putInQueue(tl_withinStore.get(), new ObjectDefinition(
+								o, r));
+					}
+				});
+
+		// Start Refinery and Depository
 		final int refinerySize = StoreConfiguration.getRefinerySize();
 		if (!StoreConfiguration.isRefineryOff()) {
 			f_refinery = new Refinery(this, f_conf, f_rawQueue, f_outQueue,
@@ -171,13 +190,12 @@ public class PostMortemStore implements StoreListener {
 			f_refinery.start();
 			f_depository = new Depository(f_conf, f_rawQueue, outputStrategy);
 		}
-
-		tl_withinStore = new ThreadLocal<PostMortemStore.State>() {
-			@Override
-			protected State initialValue() {
-				return createState();
-			}
-		};
+		f_depository.start();
+		f_conf.log("collection started (rawQ="
+				+ StoreConfiguration.getRawQueueSize() + " : refinery="
+				+ refinerySize + " : outQ="
+				+ StoreConfiguration.getOutQueueSize() + ")");
+		f_conf.log("to \"" + dataFile.getAbsolutePath() + "\"");
 
 	}
 

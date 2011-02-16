@@ -17,7 +17,8 @@ public final class FlashlightNames {
 	}
 
 	public static final String FLASHLIGHT_STORE = "com/surelogic/_flashlight/Store";
-	public static final String FLASHLIGHT_MONITOR_STORE = "com/surelogic/_flashlight/monitor/MonitorStore";
+	public static final String FLASHLIGHT_MONITOR_LISTENER = "com/surelogic/_flashlight/monitor/MonitorStore";
+	public static final String FLASHLIGHT_POSTMORTEM_LISTENER = "com/surelogic/_flashlight/PostMortemStore";
 	public static final Method AFTER_INTRINSIC_LOCK_ACQUISITION = Method
 			.getMethod("void afterIntrinsicLockAcquisition(Object, long)");
 
@@ -69,9 +70,9 @@ public final class FlashlightNames {
 	public static final Method METHOD_CALL = Method
 			.getMethod("void methodCall(boolean, Object, long)");
 
-	public static final Method GET_FIELD_ID =
-	  Method.getMethod("int getFieldId(String, String)");
-	
+	public static final Method GET_FIELD_ID = Method
+			.getMethod("int getFieldId(String, String)");
+
 	public static final Method SHUTDOWN = Method.getMethod("void shutdown()");
 
 	public static final Method GET_CLASS_PHANTOM = Method
@@ -119,7 +120,7 @@ public final class FlashlightNames {
 
 	public static final String JAVA_LANG_RUNTIME = "java/lang/Runtime";
 	public static final Method HALT = Method.getMethod("void halt(int)");
-	
+
 	public static final String JAVA_UTIL_CONCURRENT_LOCKS_LOCK = "java/util/concurrent/locks/Lock";
 	public static final String LOCK = "lock";
 	public static final String LOCK_INTERRUPTIBLY = "lockInterruptibly";
@@ -127,23 +128,28 @@ public final class FlashlightNames {
 	public static final String UNLOCK = "unlock";
 
 	public static final String JAVA_LANG_CLASS = "java/lang/Class";
-	public static final Method FOR_NAME = Method.getMethod("Class forName(String)");
-	
+	public static final Method FOR_NAME = Method
+			.getMethod("Class forName(String)");
+
 	public static final String JAVA_IO_EXTERNALIZABLE = "java/io/Externalizable";
-	
+
 	public static final String JAVA_IO_SERIALIZABLE = "java/io/Serializable";
-	public static final Method READ_OBJECT = Method.getMethod("void readObject(java.io.ObjectInputStream)");
+	public static final Method READ_OBJECT = Method
+			.getMethod("void readObject(java.io.ObjectInputStream)");
 	public static final int READ_OBJECT_ACCESS = Opcodes.ACC_PRIVATE;
-	public static final Method READ_OBJECT_NO_DATA = Method.getMethod("void readObjectNoData()");
-	
+	public static final Method READ_OBJECT_NO_DATA = Method
+			.getMethod("void readObjectNoData()");
+
 	public static final String JAVA_IO_OBJECTINPUTSTREAM = "java/io/ObjectInputStream";
-	public static final Method DEFAULT_READ_OBJECT = Method.getMethod("void defaultReadObject()");
-	public static final Method READ_FIELDS = Method.getMethod("java.io.ObjectInputStream$GetField readFields()"); 
-	
+	public static final Method DEFAULT_READ_OBJECT = Method
+			.getMethod("void defaultReadObject()");
+	public static final Method READ_FIELDS = Method
+			.getMethod("java.io.ObjectInputStream$GetField readFields()");
+
 	public static final String JAVA_IO_IOEXCEPTION = "java/io/IOException";
 	public static final String JAVA_LANG_CLASSNOTFOUNDEXCEPTION = "java/lang/ClassNotFoundException";
 	public static final String JAVA_IO_OBJECTSTREAMEXCEPTION = "java/io/ObjectStreamException";
-	
+
 	/*
 	 * We add the static final field "flashlight$phantomClassObject" to store
 	 * the Class object of the class for use in logging calls. We make the field
@@ -156,11 +162,10 @@ public final class FlashlightNames {
 			| Opcodes.ACC_STATIC | Opcodes.ACC_FINAL | Opcodes.ACC_SYNTHETIC;
 	public static final String FLASHLIGHT_PHANTOM_CLASS_OBJECT_DESC = "Lcom/surelogic/_flashlight/ClassPhantomReference;";
 
-  public static final int FLASHLIGHT_PHANTOM_CLASS_OBJECT_GETTER_ACCESS =
-    Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_SYNTHETIC;
-  public static final String FLASHLIGHT_PHANTOM_CLASS_OBJECT_GETTER_DESC =
-    "()Lcom/surelogic/_flashlight/ClassPhantomReference;";
-  
+	public static final int FLASHLIGHT_PHANTOM_CLASS_OBJECT_GETTER_ACCESS = Opcodes.ACC_PUBLIC
+			| Opcodes.ACC_STATIC | Opcodes.ACC_SYNTHETIC;
+	public static final String FLASHLIGHT_PHANTOM_CLASS_OBJECT_GETTER_DESC = "()Lcom/surelogic/_flashlight/ClassPhantomReference;";
+
 	/*
 	 * When implementing the IIdObject interface, we need to add a private final
 	 * field "flashlight$phantomObject" to store the phantom object referenced
@@ -173,11 +178,10 @@ public final class FlashlightNames {
 
 	/* Must be kept in sync with IdConstants.SYNTHETIC_METHOD_SITE_ID */
 	public static final long SYNTHETIC_METHOD_SITE_ID = -42L;
-	
-	
-	
-	public static String getPhantomClassObjectGetterName(final String classNameInternal) {
-	  return MessageFormat.format("flashlight${0}$getPhantomClassObject",
-        classNameInternal.replace('/', '_'));
+
+	public static String getPhantomClassObjectGetterName(
+			final String classNameInternal) {
+		return MessageFormat.format("flashlight${0}$getPhantomClassObject",
+				classNameInternal.replace('/', '_'));
 	}
 }

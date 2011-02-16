@@ -68,4 +68,7 @@ public final class InstrumentationConstants {
 	public static final String[] FL_STREAM_SUFFIXES = { FL_LOCK_SUFFIX,
 			FL_ACCESS_SUFFIX, FL_OBJECT_SUFFIX, FL_INDIRECT_SUFFIX,
 			FL_OTHER_SUFFIX };
+
+	public static final String FL_POSTMORTEM = "FL_POSTMORTEM";
+	public static final String FL_POSTMORTEM_DEFAULT = "true";
 }

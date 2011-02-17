@@ -1,7 +1,6 @@
 package com.surelogic._flashlight.trace;
 
 import com.surelogic._flashlight.PostMortemStore;
-import com.surelogic._flashlight.monitor.MonitorStore;
 
 public abstract class AbstractPlaceholder implements ITraceNode {
 	final ITraceNode f_caller;
@@ -15,25 +14,6 @@ public abstract class AbstractPlaceholder implements ITraceNode {
 	}
 
 	static TraceNode getNode(final PostMortemStore.State state,
-			final TraceNode caller, final long siteId) {
-		// First, try to see if I've cached a matching TraceNode
-		ITraceNode callee;
-		if (caller != null) {
-			// There's already a caller
-			callee = caller.getCallee(siteId);
-		} else {
-			// No caller yet
-			synchronized (TraceNode.roots) {
-				callee = TraceNode.roots.get(siteId);
-			}
-		}
-		if (callee != null) {
-			return callee.getNode(state);
-		}
-		return TraceNode.newTraceNode(caller, siteId, state);
-	}
-
-	static TraceNode getNode(final MonitorStore.State state,
 			final TraceNode caller, final long siteId) {
 		// First, try to see if I've cached a matching TraceNode
 		ITraceNode callee;

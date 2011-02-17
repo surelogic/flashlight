@@ -12,7 +12,6 @@ import com.surelogic._flashlight.Entities;
 import com.surelogic._flashlight.EventVisitor;
 import com.surelogic._flashlight.PostMortemStore;
 import com.surelogic._flashlight.common.LongMap;
-import com.surelogic._flashlight.monitor.MonitorStore;
 
 public abstract class TraceNode extends AbstractCallLocation implements
 		ITraceNode {
@@ -150,53 +149,6 @@ public abstract class TraceNode extends AbstractCallLocation implements
 		return callee;
 	}
 
-	static TraceNode newTraceNode(final TraceNode caller, final long siteId,
-			final MonitorStore.State state) {
-		TraceNode callee = newTraceNode(state.traceHeader, caller, siteId);
-		TraceNode firstCallee;
-		if (caller != null) {
-			// Insert into caller
-			synchronized (caller) {
-				if (caller.f_calleeNodes == null) {
-					firstCallee = null;
-				} else {
-					firstCallee = (TraceNode) caller.getCallee(callee
-							.getSiteId());
-					/*
-					 * if (firstCallee != null && caller !=
-					 * firstCallee.getParent()) {
-					 * System.out.println("Parent doesn't match"); }
-					 */
-				}
-				// callee.unpropagated++;
-			}
-			if (firstCallee != null) {
-				// Already present, so use that one
-				callee = firstCallee;
-				// callee.unpropagated++;
-			} else {
-				callee.f_siblingNodes = caller.f_calleeNodes;
-				caller.f_calleeNodes = callee;
-				// FIXME Store.putInQueue(state, callee);
-			}
-		} else {
-			// Insert into roots
-			synchronized (roots) {
-				firstCallee = roots.get(callee.getSiteId());
-				if (firstCallee == null) {
-					roots.put(callee.getSiteId(), callee);
-				} else {
-					callee = firstCallee;
-				}
-				// callee.unpropagated++;
-			}
-			if (firstCallee == null) {
-				// FIXME Store.putInQueue(state, callee);
-			}
-		}
-		return callee;
-	}
-
 	public static void pushTraceNode(final long siteId,
 			final PostMortemStore.State state) {
 		final Header header = state.traceHeader;
@@ -232,72 +184,6 @@ public abstract class TraceNode extends AbstractCallLocation implements
 
 	public static void popTraceNode(final long siteId,
 			final PostMortemStore.State state) {
-		final Header header = state.traceHeader;
-		final ITraceNode callee = header.current;
-		if (callee != null) {
-			final ITraceNode parent = callee.popParent();
-			header.current = parent;
-			/*
-			 * if (callee instanceof Placeholder) { poppedPlaceHolders++; }
-			 */
-			if (parent != null && parent instanceof TraceNode) {
-				synchronized (parent) {
-					/*
-					 * int unprop = callee.getAndClearUnpropagated(); if (unprop
-					 * != 0) { int parentU = parent.addToUnpropagated(unprop);
-					 * if (parentU > 1000) {
-					 * System.err.println(unprop+" -> "+parentU
-					 * +"\t@ "+header.count); } }
-					 */
-					if (header.count > 10000000) {
-						header.count = 0;
-						((TraceNode) parent).pruneTree();
-					}
-				}
-			}
-		}
-		/*
-		 * poppedTotal++; if ((poppedTotal & 0xfff) == 0) {
-		 * System.err.println("Popped placeholders = "
-		 * +poppedPlaceHolders+" out of "+poppedTotal); }
-		 */
-	}
-
-	public static void pushTraceNode(final long siteId,
-			final MonitorStore.State state) {
-		final Header header = state.traceHeader;
-		final ITraceNode caller = header.current;
-		ITraceNode callee = null;
-		if (caller != null) {
-			// There's already a caller
-			callee = caller.getCallee(siteId);
-			if (callee == null) {
-				// Try to insert a new TraceNode
-				if (recordOnPush) {
-					callee = newTraceNode(caller.getNode(state), siteId, state);
-				} else {
-					callee = caller.pushCallee(siteId);
-				}
-			}
-		} else {
-			// No caller yet
-			synchronized (roots) {
-				callee = roots.get(siteId);
-				if (callee == null) {
-					if (recordOnPush) {
-						callee = newTraceNode(null, siteId, state);
-					} else {
-						callee = new PairPlaceholder(caller /* null */, siteId);
-					}
-				}
-			}
-		}
-		header.current = callee;
-		header.count++;
-	}
-
-	public static void popTraceNode(final long siteId,
-			final MonitorStore.State state) {
 		final Header header = state.traceHeader;
 		final ITraceNode callee = header.current;
 		if (callee != null) {
@@ -374,10 +260,6 @@ public abstract class TraceNode extends AbstractCallLocation implements
 	}
 
 	public TraceNode getNode(final PostMortemStore.State state) {
-		return this;
-	}
-
-	public TraceNode getNode(final MonitorStore.State state) {
 		return this;
 	}
 

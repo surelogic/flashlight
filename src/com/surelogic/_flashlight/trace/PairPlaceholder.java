@@ -1,7 +1,6 @@
 package com.surelogic._flashlight.trace;
 
 import com.surelogic._flashlight.PostMortemStore;
-import com.surelogic._flashlight.monitor.MonitorStore;
 
 public class PairPlaceholder extends AbstractPlaceholder {
 	long f_siteId1;
@@ -14,18 +13,6 @@ public class PairPlaceholder extends AbstractPlaceholder {
 	}
 
 	public TraceNode getNode(final PostMortemStore.State state) {
-		TraceNode n = f_caller == null ? null : f_caller.getNode(state);
-		if (size > 0) {
-			n = getNode(state, n, f_siteId1);
-
-			if (size > 1) {
-				n = getNode(state, n, f_siteId2);
-			}
-		}
-		return n;
-	}
-
-	public TraceNode getNode(final MonitorStore.State state) {
 		TraceNode n = f_caller == null ? null : f_caller.getNode(state);
 		if (size > 0) {
 			n = getNode(state, n, f_siteId1);

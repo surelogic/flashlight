@@ -26,7 +26,6 @@ import com.surelogic._flashlight.ThreadPhantomReference;
 import com.surelogic._flashlight.UtilConcurrent;
 import com.surelogic._flashlight.jsr166y.ConcurrentReferenceHashMap;
 import com.surelogic._flashlight.jsr166y.ConcurrentReferenceHashMap.ReferenceType;
-import com.surelogic._flashlight.trace.TraceNode;
 
 /**
  * This class defines the interface into the Flashlight data store.
@@ -59,11 +58,9 @@ public final class MonitorStore implements StoreListener {
 
 	public static final class State {
 		final ThreadPhantomReference thread;
-		public final TraceNode.Header traceHeader;
 
 		public State() {
 			thread = Phantom.ofThread(Thread.currentThread());
-			traceHeader = TraceNode.makeHeader();
 		}
 
 	}
@@ -182,19 +179,6 @@ public final class MonitorStore implements StoreListener {
 
 		// Start up looking at no fields.
 		reviseSpec(f_spec);
-	}
-
-	static int getIntProperty(final String key, int def, final int min) {
-		try {
-			final String intString = System.getProperty(key);
-			if (intString != null) {
-				def = Integer.parseInt(intString);
-			}
-		} catch (final NumberFormatException e) {
-			// ignore, go with the default
-		}
-		// ensure the result isn't less than the minimum
-		return def >= min ? def : min;
 	}
 
 	/**
@@ -325,17 +309,7 @@ public final class MonitorStore implements StoreListener {
 	 *            the line number where the event occurred.
 	 */
 	public void constructorCall(final boolean before, final long siteId) {
-		State state = tl_withinStore.get();
-		/*
-		 * Check that the parameters are valid, gather needed information, and
-		 * put an event in the raw queue.
-		 */
-		if (before) {
-			TraceNode.pushTraceNode(siteId, state);
-		} else {
-			TraceNode.popTraceNode(siteId, state);
-		}
-
+		// Do nothing
 	}
 
 	/**
@@ -419,16 +393,6 @@ public final class MonitorStore implements StoreListener {
 				f_rwLocks.put(write, ids);
 			}
 		}
-		State state = tl_withinStore.get();
-		/*
-		 * Record this call in the trace.
-		 */
-		if (before) {
-			TraceNode.pushTraceNode(siteId, state);
-		} else {
-			TraceNode.popTraceNode(siteId, state);
-		}
-
 	}
 
 	/**

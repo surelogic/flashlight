@@ -1,7 +1,6 @@
 package com.surelogic._flashlight.trace;
 
 import com.surelogic._flashlight.PostMortemStore;
-import com.surelogic._flashlight.monitor.MonitorStore;
 
 public class ArrayPlaceholder extends AbstractPlaceholder {
 	long[] f_siteIds = new long[4];
@@ -17,23 +16,6 @@ public class ArrayPlaceholder extends AbstractPlaceholder {
 	}
 
 	public TraceNode getNode(final PostMortemStore.State state) {
-		TraceNode n = f_caller == null ? null : f_caller.getNode(state);
-		for (int i = 0; i < size; i++) {
-			n = getNode(state, n, f_siteIds[i]);
-		}
-		total++;
-		sites[size]++;
-		if ((total & 0xffff) == 0) {
-			// System.err.println(sites+" sites for "+total+" placeholders");
-			System.err.println(total + " placeholders");
-			for (int i = 0; i < sites.length; i++) {
-				System.err.println(i + ":\t" + sites[i]);
-			}
-		}
-		return n;
-	}
-
-	public TraceNode getNode(final MonitorStore.State state) {
 		TraceNode n = f_caller == null ? null : f_caller.getNode(state);
 		for (int i = 0; i < size; i++) {
 			n = getNode(state, n, f_siteIds[i]);

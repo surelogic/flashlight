@@ -13,11 +13,16 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 
-import com.surelogic._flashlight.common.IdConstants;
+import com.surelogic._flashlight.Store.GCThread;
 import com.surelogic._flashlight.common.OutputType;
 import com.surelogic._flashlight.trace.TraceNode;
 
 public class PostMortemStore implements StoreListener {
+	/**
+	 * The size of the gcQueue. This governs how many cycles the refinery thread
+	 * can drift from the {@link GCThread}.
+	 */
+	private static final int GC_DRIFT = 16;
 
 	/**
 	 * A queue to buffer raw event records from the instrumented program to the
@@ -30,6 +35,10 @@ public class PostMortemStore implements StoreListener {
 	 * {@link Depository}.
 	 */
 	private final BlockingQueue<List<Event>> f_outQueue;
+	/**
+	 * The garbagecollection queue.
+	 */
+	private final BlockingQueue<List<? extends IdPhantomReference>> f_gcQueue;
 
 	/**
 	 * The refinery thread.
@@ -62,8 +71,6 @@ public class PostMortemStore implements StoreListener {
 		public final TraceNode.Header traceHeader;
 		final List<Event> eventQueue;
 		final BlockingQueue<List<Event>> rawQueue;
-		final List<IdPhantomReference> locksHeld = IdConstants.trackLocks ? new ArrayList<IdPhantomReference>()
-				: null;
 
 		State(final BlockingQueue<List<Event>> q, final List<Event> l) {
 			rawQueue = q;
@@ -111,6 +118,9 @@ public class PostMortemStore implements StoreListener {
 		} else {
 			f_outQueue = null;
 		}
+		f_gcQueue = new ArrayBlockingQueue<List<? extends IdPhantomReference>>(
+				GC_DRIFT);
+
 		f_rwLocks = new UtilConcurrent();
 
 		tl_withinStore = new ThreadLocal<PostMortemStore.State>() {
@@ -181,12 +191,12 @@ public class PostMortemStore implements StoreListener {
 		// Start Refinery and Depository
 		final int refinerySize = StoreConfiguration.getRefinerySize();
 		if (!StoreConfiguration.isRefineryOff()) {
-			f_refinery = new Refinery(this, f_conf, f_rawQueue, f_outQueue,
-					refinerySize);
+			f_refinery = new Refinery(this, f_conf, f_gcQueue, f_rawQueue,
+					f_outQueue, refinerySize);
 			f_refinery.start();
 			f_depository = new Depository(f_conf, f_outQueue, outputStrategy);
 		} else {
-			f_refinery = new MinimalRefinery(this);
+			f_refinery = new MinimalRefinery(this, f_gcQueue);
 			f_refinery.start();
 			f_depository = new Depository(f_conf, f_rawQueue, outputStrategy);
 		}
@@ -308,10 +318,6 @@ public class PostMortemStore implements StoreListener {
 	public void afterIntrinsicLockAcquisition(final Object lockObject,
 			final long siteId) {
 		State state = tl_withinStore.get();
-		if (IdConstants.trackLocks) {
-			final IdPhantomReference lockPhantom = Phantom.of(lockObject);
-			state.locksHeld.add(lockPhantom);
-		}
 		final Event e = new AfterIntrinsicLockAcquisition(lockObject, siteId,
 				state);
 		putInQueue(state, e);
@@ -333,10 +339,6 @@ public class PostMortemStore implements StoreListener {
 	public void afterIntrinsicLockRelease(final Object lockObject,
 			final long siteId) {
 		State state = tl_withinStore.get();
-		if (IdConstants.trackLocks) {
-			final IdPhantomReference lockPhantom = Phantom.of(lockObject);
-			state.locksHeld.remove(lockPhantom);
-		}
 		final Event e = new AfterIntrinsicLockRelease(lockObject, siteId, state);
 		putInQueue(state, e);
 	}
@@ -360,11 +362,6 @@ public class PostMortemStore implements StoreListener {
 			final boolean gotTheLock, final Object lockObject, final long siteId) {
 		if (lockObject instanceof Lock) {
 			State state = tl_withinStore.get();
-			if (IdConstants.trackLocks && gotTheLock) {
-				final ObjectPhantomReference lockPhantom = Phantom
-						.ofObject(lockObject);
-				state.locksHeld.add(lockPhantom);
-			}
 			final Lock ucLock = (Lock) lockObject;
 			final Event e = new AfterUtilConcurrentLockAcquisitionAttempt(
 					gotTheLock, ucLock, siteId, state);
@@ -383,11 +380,6 @@ public class PostMortemStore implements StoreListener {
 			final long siteId) {
 		if (lockObject instanceof Lock) {
 			State state = tl_withinStore.get();
-			if (IdConstants.trackLocks && releasedTheLock) {
-				final ObjectPhantomReference lockPhantom = Phantom
-						.ofObject(lockObject);
-				state.locksHeld.remove(lockPhantom);
-			}
 			final Lock ucLock = (Lock) lockObject;
 			final Event e = new AfterUtilConcurrentLockReleaseAttempt(
 					releasedTheLock, ucLock, siteId, state);
@@ -543,5 +535,17 @@ public class PostMortemStore implements StoreListener {
 
 	public Collection<? extends ConsoleCommand> getCommands() {
 		return Collections.emptyList();
+	}
+
+	public void garbageCollect(
+			final List<? extends IdPhantomReference> references) {
+		for (;;) {
+			try {
+				f_gcQueue.put(new ArrayList<IdPhantomReference>(references));
+				return;
+			} catch (InterruptedException e) {
+				// Just try again
+			}
+		}
 	}
 }

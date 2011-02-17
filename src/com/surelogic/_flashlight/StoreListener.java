@@ -1,13 +1,14 @@
 package com.surelogic._flashlight;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * A {@link StoreListener} listens for events from the Flashlight
  * instrumentation. It expects to be created, initialized, and shutdown by the
- * {@link Store} class. Any implementor of {@link StoreListener} is expected
- * to be thread-safe in all respects. The {@link StoreListener} should expect to
- * be provided with only two guarantees:
+ * {@link Store} class. Any implementor of {@link StoreListener} is expected to
+ * be thread-safe in all respects. The {@link StoreListener} should expect to be
+ * provided with only two guarantees:
  * 
  * <ol>
  * <li>There is a happens-before relationship between init and any other method
@@ -338,6 +339,17 @@ public interface StoreListener {
 			final Object value);
 
 	void staticFieldInit(final int fieldId, final Object value);
+
+	/**
+	 * This event is called periodically to report all recently garbage
+	 * collected objects. Listeners are *not* required to be non-blocking, but
+	 * they should process data in a timely fashion, as the phantom reference
+	 * queue will not be polled again until this completes.
+	 * 
+	 * @param references
+	 *            a list of references to garbage collected objects
+	 */
+	void garbageCollect(final List<? extends IdPhantomReference> references);
 
 	/**
 	 * This will be called by the user of this listener. The listener should

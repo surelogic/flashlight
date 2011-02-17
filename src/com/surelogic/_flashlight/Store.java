@@ -109,6 +109,11 @@ public class Store {
 					shutdown();
 				}
 			});
+			/*
+			 * Start garbage collection processing
+			 */
+			new GCThread().start();
+
 			f_flashlightIsNotInitialized = false;
 			StoreDelegate.FL_OFF.set(false);
 		} else {
@@ -138,6 +143,32 @@ public class Store {
 	 */
 	public final static void flashlightThread() {
 		tl_withinStore.get().inside = false;
+	}
+
+	/**
+	 * Garbage collection thread. It polls the phantom reference queues and
+	 * reports garbage collection events to the {@link StoreListener} listeners.
+	 * 
+	 * @author nathan
+	 * 
+	 */
+	static class GCThread extends Thread {
+
+		private final List<IdPhantomReference> references = new ArrayList<IdPhantomReference>();
+
+		@Override
+		public void run() {
+			for (;;) {
+				Phantom.drainTo(references);
+				if (references.size() > 0) {
+					for (StoreListener l : f_listeners) {
+						l.garbageCollect(references);
+					}
+					references.clear();
+				}
+				Thread.yield();
+			}
+		}
 	}
 
 	/**

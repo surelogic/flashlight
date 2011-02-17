@@ -35,9 +35,10 @@ final class Refinery extends AbstractRefinery {
 	// private int filtered = 0, total = 0;
 
 	Refinery(final PostMortemStore store, final RunConf conf,
+			final BlockingQueue<List<? extends IdPhantomReference>> gcQueue,
 			final BlockingQueue<List<Event>> rawQueue,
 			final BlockingQueue<List<Event>> outQueue, final int size) {
-		super("flashlight-refinery");
+		super("flashlight-refinery", gcQueue);
 		assert rawQueue != null;
 		f_rawQueue = rawQueue;
 		assert outQueue != null;
@@ -173,13 +174,6 @@ final class Refinery extends AbstractRefinery {
 		}
 	};
 
-	/**
-	 * Used to drain the garbage collected objects from {@link Phantom}. I hope
-	 * that this is more efficient than having a local variable within
-	 * {@link #processGarbageCollectedObjects()}.
-	 */
-	private final List<IdPhantomReference> f_deadList = new ArrayList<IdPhantomReference>();
-
 	private final SingleThreadedRefs f_singleThreadedList = new SingleThreadedRefs();
 
 	/**
@@ -189,13 +183,14 @@ final class Refinery extends AbstractRefinery {
 	 * @param filter
 	 */
 	private void processGarbageCollectedObjects(final boolean filter) {
-		f_deadList.clear();
-		if (Phantom.drainTo(f_deadList) > 0) {
+		List<List<? extends IdPhantomReference>> gcsList = new ArrayList<List<? extends IdPhantomReference>>();
+		gcQueue.drainTo(gcsList);
+		for (List<? extends IdPhantomReference> gcs : gcsList) {
 			final List<Event> events = new ArrayList<Event>();
 			final SingleThreadedRefs deadRefs = filter ? new SingleThreadedRefs()
 					: null;
-			f_garbageCollectedObjectCount += f_deadList.size();
-			for (IdPhantomReference pr : f_deadList) {
+			f_garbageCollectedObjectCount += gcs.size();
+			for (IdPhantomReference pr : gcs) {
 				if (pr.shouldBeIgnored()) {
 					continue;
 				}

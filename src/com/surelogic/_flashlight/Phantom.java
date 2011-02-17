@@ -41,8 +41,8 @@ public final class Phantom {
 	 * Gets the associated class phantom reference for the passed class.
 	 * 
 	 * <p>
-	 * This method is {@code public} so that it may be called from the {@code
-	 * getClassPhantom()} method of the {@link EmptyStore} and
+	 * This method is {@code public} so that it may be called from the
+	 * {@code getClassPhantom()} method of the {@link EmptyStore} and
 	 * {@link DebugStore} classes. This method should not be called directly
 	 * outside of the Store. Use {@code getClassPhantom(Class)} on the
 	 * approciate store class instead.
@@ -120,14 +120,6 @@ public final class Phantom {
 			}
 			c.add(pr);
 			count++;
-		}
-	}
-
-	static IdPhantomReference get() {
-		try {
-			return (IdPhantomReference) f_collected.remove();
-		} catch (final InterruptedException e) {
-			return null;
 		}
 	}
 

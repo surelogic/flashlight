@@ -1,6 +1,7 @@
 package com.surelogic._flashlight.monitor;
 
 public final class ReadWriteLockIds {
+
 	private final long id;
 	private final long readLock;
 	private final long writeLock;

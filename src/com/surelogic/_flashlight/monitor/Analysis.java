@@ -3,14 +3,12 @@
  */
 package com.surelogic._flashlight.monitor;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import com.surelogic._flashlight.FieldDef;
 import com.surelogic._flashlight.IdPhantomReference;
-import com.surelogic._flashlight.Phantom;
 import com.surelogic._flashlight.RunConf;
 
 /**
@@ -70,17 +68,8 @@ final class Analysis extends Thread {
 		f_done = true;
 	}
 
-	private final List<IdPhantomReference> references = new ArrayList<IdPhantomReference>();
-
-	public synchronized void process() {
-		Phantom.drainTo(references);
-		final Set<Long> edtThreads = new HashSet<Long>();
-		for (final ThreadLocks other : store.f_lockSets) {
-			if (other.isEDT()) {
-				edtThreads.add(other.getThreadId());
-			}
-			master.drain(other);
-		}
+	public synchronized void gcReferences(
+			final List<? extends IdPhantomReference> references) {
 		// Take care of garbage collected objects
 		for (final IdPhantomReference ref : references) {
 			final long receiverId = ref.getId();
@@ -88,8 +77,16 @@ final class Analysis extends Thread {
 			master.purge(receiverId);
 			shared.remove(receiverId);
 		}
-		references.clear();
+	}
 
+	public synchronized void process() {
+		final Set<Long> edtThreads = new HashSet<Long>();
+		for (final ThreadLocks other : store.f_lockSets) {
+			if (other.isEDT()) {
+				edtThreads.add(other.getThreadId());
+			}
+			master.drain(other);
+		}
 		for (final FieldDef field : alerts.getEDTFields()) {
 			if (!shared.isConfinedTo(field, edtThreads)) {
 				edtViolations.add(field);

@@ -1,7 +1,8 @@
 package com.surelogic._flashlight;
 
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 
 /**
@@ -10,7 +11,8 @@ import java.util.concurrent.locks.ReadWriteLock;
  */
 public final class UtilConcurrent {
 
-	private final Set<IdPhantomReference> f_knownReadWriteLockIds = new HashSet<IdPhantomReference>();
+	private final Set<IdPhantomReference> f_knownReadWriteLockIds = Collections
+			.newSetFromMap(new ConcurrentHashMap<IdPhantomReference, Boolean>());
 
 	/**
 	 * Adds a ReadWriteLock reference to the set of known instances.
@@ -21,15 +23,11 @@ public final class UtilConcurrent {
 	 *         element
 	 */
 	public boolean addReadWriteLock(final IdPhantomReference o) {
-		synchronized (f_knownReadWriteLockIds) {
-			return f_knownReadWriteLockIds.add(o);
-		}
+		return f_knownReadWriteLockIds.add(o);
 	}
 
 	void remove(final IdPhantomReference o) {
-		synchronized (f_knownReadWriteLockIds) {
-			f_knownReadWriteLockIds.remove(o);
-		}
+		f_knownReadWriteLockIds.remove(o);
 	}
 
 }

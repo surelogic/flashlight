@@ -2,6 +2,7 @@ package com.surelogic._flashlight.monitor;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.Lock;
@@ -41,6 +42,7 @@ public final class MonitorStore implements StoreListener {
 	}
 
 	private final ConcurrentMap<Long, ReadWriteLockIds> f_rwLocks;
+	private final UtilConcurrent f_knownRWLocks;
 
 	ConcurrentMap<Long, ReadWriteLockIds> getRWLocks() {
 		return f_rwLocks;
@@ -74,9 +76,11 @@ public final class MonitorStore implements StoreListener {
 		return f_lockSets;
 	}
 
-	private UtilConcurrent f_knownRWLocks;
 	private RunConf f_conf;
-
+	/**
+	 * The active analysis. You always need an analysis running, as it handles
+	 * garbage collection events for the MonitorStore
+	 */
 	private Analysis f_activeAnalysis;
 	private final Lock f_analysisLock = new ReentrantLock();
 
@@ -144,7 +148,7 @@ public final class MonitorStore implements StoreListener {
 		f_rwLocks = new ConcurrentReferenceHashMap<Long, ReadWriteLockIds>(
 				ReferenceType.STRONG, ReferenceType.STRONG,
 				ConcurrentReferenceHashMap.STANDARD_HASH);
-
+		f_knownRWLocks = new UtilConcurrent();
 		tl_withinStore = new ThreadLocal<State>() {
 			@Override
 			protected State initialValue() {
@@ -174,7 +178,6 @@ public final class MonitorStore implements StoreListener {
 	public void init(final RunConf conf) {
 		f_spec = new MonitorSpec(System.getProperty("com.surelogic.fieldSpec",
 				""), conf.getFieldDefs());
-		f_knownRWLocks = new UtilConcurrent();
 		f_conf = conf;
 
 		// Start up looking at no fields.
@@ -379,7 +382,7 @@ public final class MonitorStore implements StoreListener {
 			 */
 			final ReadWriteLock rwl = (ReadWriteLock) receiver;
 			final ObjectPhantomReference p = Phantom.ofObject(rwl);
-			if (f_knownRWLocks.addReadWriteLock(p)) {
+			if (!f_knownRWLocks.addReadWriteLock(p)) {
 				if (f_conf.isDebug()) {
 					final String fmt = "Defined ReadWriteLock id=%d";
 					f_conf.log(String.format(fmt, p.getId()));
@@ -391,6 +394,7 @@ public final class MonitorStore implements StoreListener {
 						write);
 				f_rwLocks.put(read, ids);
 				f_rwLocks.put(write, ids);
+				f_rwLocks.put(id, ids);
 			}
 		}
 	}
@@ -598,6 +602,21 @@ public final class MonitorStore implements StoreListener {
 			f_activeAnalysis.wrapUp();
 		} finally {
 			f_analysisLock.unlock();
+		}
+	}
+
+	public void garbageCollect(
+			final List<? extends IdPhantomReference> references) {
+		getAnalysis().gcReferences(references);
+		for (IdPhantomReference ref : references) {
+			f_lockNames.remove(ref);
+			long id = ref.getId();
+			final ReadWriteLockIds ids = f_rwLocks.get(ref.getId());
+			if (ids != null) {
+				f_rwLocks.remove(id);
+				f_rwLocks.remove(ids.getReadLock());
+				f_rwLocks.remove(ids.getWriteLock());
+			}
 		}
 	}
 

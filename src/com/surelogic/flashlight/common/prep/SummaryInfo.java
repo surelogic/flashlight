@@ -996,6 +996,45 @@ public class SummaryInfo {
 		}
 
 		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result
+					+ (acquiredId == null ? 0 : acquiredId.hashCode());
+			result = prime * result + (heldId == null ? 0 : heldId.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(final Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null) {
+				return false;
+			}
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
+			Edge other = (Edge) obj;
+			if (acquiredId == null) {
+				if (other.acquiredId != null) {
+					return false;
+				}
+			} else if (!acquiredId.equals(other.acquiredId)) {
+				return false;
+			}
+			if (heldId == null) {
+				if (other.heldId != null) {
+					return false;
+				}
+			} else if (!heldId.equals(other.heldId)) {
+				return false;
+			}
+			return true;
+		}
+
+		@Override
 		public String toString() {
 			return "Edge [held=" + held + ", acquired=" + acquired + ", count="
 					+ count + ", first=" + first + ", last=" + last + "]";
@@ -1203,6 +1242,55 @@ public class SummaryInfo {
 			return true;
 		}
 
+		public boolean equalsByLocation(final Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null) {
+				return false;
+			}
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
+			Site other = (Site) obj;
+			if (clazz == null) {
+				if (other.clazz != null) {
+					return false;
+				}
+			} else if (!clazz.equals(other.clazz)) {
+				return false;
+			}
+			if (location == null) {
+				if (other.location != null) {
+					return false;
+				}
+			} else if (!location.equals(other.location)) {
+				return false;
+			}
+			if (pakkage == null) {
+				if (other.pakkage != null) {
+					return false;
+				}
+			} else if (!pakkage.equals(other.pakkage)) {
+				return false;
+			}
+			return true;
+		}
+
+		public int compareToByLocation(final Site site) {
+			if (site == null) {
+				return 1;
+			}
+			int cmp = pakkage.compareTo(site.pakkage);
+			if (cmp == 0) {
+				cmp = clazz.compareTo(site.clazz);
+				if (cmp == 0) {
+					cmp = location.compareTo(site.location);
+				}
+			}
+			return cmp;
+		}
+
 		@Override
 		public int compareTo(final Site site) {
 			if (site == null) {
@@ -1213,6 +1301,12 @@ public class SummaryInfo {
 				cmp = clazz.compareTo(site.clazz);
 				if (cmp == 0) {
 					cmp = location.compareTo(site.location);
+					if (cmp == 0) {
+						cmp = line < site.line ? -1 : line == site.line ? 0 : 1;
+						if (cmp == 0) {
+							cmp = file.compareTo(site.file);
+						}
+					}
 				}
 			}
 			return cmp;
@@ -1269,17 +1363,35 @@ public class SummaryInfo {
 		 * @param threads
 		 */
 		void addTrace(final Iterator<Trace> trace, final Set<Long> threads) {
-			threadsSeen.addAll(threads);
 			if (trace.hasNext()) {
-				Trace t = trace.next();
-				CoverageSite s = new CoverageSite(t.getPackage(), t.getClazz(),
-						t.getLoc(), t.getLine(), t.getFile());
-				CoverageSite child = children.get(s);
-				if (child == null) {
-					children.put(s, s);
-					child = s;
+				addTraceHelper(trace.next(), trace, threads);
+			}
+		}
+
+		void addTraceHelper(final Trace t, final Iterator<Trace> rest,
+				final Set<Long> threads) {
+			CoverageSite s = new CoverageSite(t.getPackage(), t.getClazz(),
+					t.getLoc(), t.getLine(), t.getFile());
+			CoverageSite child = children.get(s);
+			if (child == null) {
+				children.put(s, s);
+				child = s;
+			}
+			child.threadsSeen.addAll(threads);
+			if (rest.hasNext()) {
+				// We don't want to show the full depth of recursive method
+				// invocations
+				Trace nextT = null;
+				CoverageSite nextS = s;
+				while (s.equals(nextS) && rest.hasNext()) {
+					nextT = rest.next();
+					nextS = new CoverageSite(nextT.getPackage(),
+							nextT.getClazz(), nextT.getLoc(), nextT.getLine(),
+							nextT.getFile());
 				}
-				child.addTrace(trace, threads);
+				if (nextT != null && !s.equals(nextS)) {
+					child.addTraceHelper(nextT, rest, threads);
+				}
 			}
 		}
 
@@ -1293,7 +1405,7 @@ public class SummaryInfo {
 			if (o == null) {
 				return 1;
 			}
-			return site.compareTo(o.site);
+			return site.compareToByLocation(o.site);
 		}
 
 		@Override
@@ -1320,7 +1432,7 @@ public class SummaryInfo {
 				if (other.site != null) {
 					return false;
 				}
-			} else if (!site.equals(other.site)) {
+			} else if (!site.equalsByLocation(other.site)) {
 				return false;
 			}
 			return true;

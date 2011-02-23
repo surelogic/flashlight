@@ -42,6 +42,7 @@ import com.surelogic.flashlight.common.prep.HTMLBuilder.Table;
 import com.surelogic.flashlight.common.prep.HTMLBuilder.UL;
 import com.surelogic.flashlight.common.prep.SummaryInfo.BadPublishAccess;
 import com.surelogic.flashlight.common.prep.SummaryInfo.BadPublishEvidence;
+import com.surelogic.flashlight.common.prep.SummaryInfo.ContentionSite;
 import com.surelogic.flashlight.common.prep.SummaryInfo.CoverageSite;
 import com.surelogic.flashlight.common.prep.SummaryInfo.DeadlockEvidence;
 import com.surelogic.flashlight.common.prep.SummaryInfo.DeadlockTrace;
@@ -53,6 +54,10 @@ import com.surelogic.flashlight.common.prep.SummaryInfo.LockSetLock;
 import com.surelogic.flashlight.common.prep.SummaryInfo.LockSetSite;
 import com.surelogic.flashlight.common.prep.SummaryInfo.LockTrace;
 import com.surelogic.flashlight.common.prep.SummaryInfo.Site;
+import com.surelogic.flashlight.common.prep.SummaryInfo.Thread;
+import com.surelogic.flashlight.common.prep.json.JArray;
+import com.surelogic.flashlight.common.prep.json.JObject;
+import com.surelogic.flashlight.common.prep.json.JsonBuilder;
 
 public final class WriteHtmlOverview implements IPostPrep {
 
@@ -107,8 +112,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 
 			Category threads = new Category("threads", "Threads");
 			threads.getSections().add(new TimelineSection(info.getThreads()));
-			threads.getSections().add(
-					new CoverageSection(info.getThreadCoverage()));
+			threads.getSections().add(new CoverageSection(info));
 			threads.getSections().add(new LivenessSection(info.getThreads()));
 			categories.add(locks);
 			categories.add(fields);
@@ -254,13 +258,14 @@ public final class WriteHtmlOverview implements IPostPrep {
 					deadlockList.li().id("cycle" + deadlock.getNum())
 							.text(String.format("Cycle %d", deadlock.getNum()));
 				}
-
 				PrintWriter graphs = null;
 				try {
 					graphs = new PrintWriter(new File(htmlDirectory,
 							"graph-data.js"));
 					writeCycles(graphs, deadlocks);
 				} catch (FileNotFoundException e) {
+					throw new IllegalStateException(e);
+				} catch (IOException e) {
 					throw new IllegalStateException(e);
 				} finally {
 					if (graphs != null) {
@@ -310,14 +315,15 @@ public final class WriteHtmlOverview implements IPostPrep {
 		}
 
 		private void writeCycles(final PrintWriter writer,
-				final List<DeadlockEvidence> deadlocks) {
-			writer.println("var deadlocks = {");
-			for (Iterator<DeadlockEvidence> ci = deadlocks.iterator(); ci
+				final List<DeadlockEvidence> deadlocks) throws IOException {
+			JsonBuilder builder = new JsonBuilder();
+			JObject jDeadlocks = builder.object("deadlocks");
+			for (Iterator<DeadlockEvidence> des = deadlocks.iterator(); des
 					.hasNext();) {
-				DeadlockEvidence c = ci.next();
+				DeadlockEvidence de = des.next();
 				Map<EdgeEntry, EdgeEntry> edges = new TreeMap<EdgeEntry, EdgeEntry>();
 				// Calculate edge entries from the deadlock graph
-				for (Edge e : c.getEdges()) {
+				for (Edge e : de.getEdges()) {
 					EdgeEntry reverse = new EdgeEntry(e.getAcquiredId(),
 							e.getHeldId());
 					// Check to see if we have seen this edge's reverse. If so,
@@ -333,62 +339,44 @@ public final class WriteHtmlOverview implements IPostPrep {
 					}
 				}
 				// Write out edge entries into the list of cycles
-				writer.printf("\tcycle%d : [", c.getNum());
+				JArray jCycle = jDeadlocks.array("cycle" + de.getNum());
 				String heldId = null;
-				boolean first = true;
-				for (Iterator<EdgeEntry> ei = edges.keySet().iterator(); ei
-						.hasNext();) {
-					EdgeEntry e = ei.next();
+				JArray jAdj = null;
+				for (EdgeEntry e : edges.keySet()) {
 					if (!e.getFrom().equals(heldId)) {
-						if (heldId != null) {
-							writer.println("]\n}, ");
-						}
 						heldId = e.getFrom();
-						writer.println("{");
-						writer.printf("\t\t\"id\": \"%s\",\n", e.getFromName());
-						writer.printf("\t\t\"name\": \"%s\",\n",
-								e.getFromName());
-						writer.print("\t\t\"adjacencies\": [");
-						first = true;
+						JObject jEdge = jCycle.object();
+						jEdge.val("id", e.getFromName());
+						jEdge.val("name", e.getFromName());
+						jAdj = jEdge.array("adjacencies");
 					}
-					final String arrowType = e.isBidirectional() ? "doubleArrow"
-							: "arrow";
-					if (!first) {
-						writer.print(", ");
-					}
-					first = false;
-					writer.printf(
-							"{'nodeTo': '%3$s', 'data': { '$type': '%1$s', '$direction': ['%2$s','%3$s'], 'threads': %4$s, 'edgeId': '%5$s'}}\n",
-							arrowType, e.getFromName(), e.getToName(),
-							jsList(e.getThreads()), e.getId());
-				}
-				writer.println("]\n}]");
-				if (ci.hasNext()) {
-					writer.print(", ");
+					JObject jAdjObj = jAdj.object();
+					jAdjObj.val("nodeTo", e.getToName());
+					JObject jAdjData = jAdjObj.object("data");
+					jAdjData.val("$type", e.isBidirectional() ? "doubleArrow"
+							: "arrow");
+					jAdjData.array("$direction", e.getFromName(), e.getToName());
+					jAdjData.val("threads", e.getThreads());
+					jAdjData.val("edgeId", e.getId());
 				}
 			}
-			writer.println("};");
 			for (DeadlockEvidence de : deadlocks) {
-				writer.println("deadlocks.cycle" + de.getNum() + ".threads = "
-						+ jsList(de.getThreads()) + ";");
-
+				builder.val("deadlocks.cycle" + de.getNum() + ".threads",
+						de.getThreads());
 				List<DeadlockTrace> traceList = new ArrayList<SummaryInfo.DeadlockTrace>(
 						de.getTraces().values());
 				Collections.sort(traceList);
-				List<String> traceObjects = new ArrayList<String>();
-				writer.print("deadlocks.cycle" + de.getNum() + ".edges = [");
+				JArray jEdges = builder.array("deadlocks.cycle" + de.getNum()
+						+ ".edges");
 				for (DeadlockTrace t : traceList) {
 					Edge edge = t.getEdge();
 					String edgeName = edge.getHeld() + " -> "
 							+ edge.getAcquired();
-					writer.print(String.format("{'id': '%s', 'name': '%s'}, ",
-							edgeId(edge), edgeName));
+					jEdges.object("id", edgeId(edge), "name", edgeName);
 				}
-				writer.println("];");
 			}
-
+			builder.build(writer);
 		}
-
 	}
 
 	private static String edgeId(final Edge edge) {
@@ -615,14 +603,21 @@ public final class WriteHtmlOverview implements IPostPrep {
 		String lin = Integer.toString(line);
 		buildCodeLink(emph, "(" + file + ":" + lin + ")", "Package", pakkage,
 				"Class", clazz, "Method", loc, "Line", lin);
+	}
 
+	static void displayLocation(final Container c, final String pakkage,
+			final String clazz, final String loc, final String file) {
+		Container emph = c.span();
+		emph.text(pakkage + "." + clazz + "." + loc);
+		buildCodeLink(emph, "(" + file + ")", "Package", pakkage, "Class",
+				clazz, "Method", loc);
 	}
 
 	class TimelineSection extends Section {
 
-		private final List<SummaryInfo.Thread> threads;
+		private final List<Thread> threads;
 
-		public TimelineSection(final List<SummaryInfo.Thread> threads) {
+		public TimelineSection(final List<Thread> threads) {
 			super("Program Timeline");
 			this.threads = threads;
 		}
@@ -655,7 +650,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 		private void writeThreadTimeline(final PrintWriter writer) {
 			SimpleDateFormat df = new SimpleDateFormat(GRAPH_DATE_FORMAT);
 			Date first = null, last = null;
-			for (SummaryInfo.Thread t : threads) {
+			for (Thread t : threads) {
 				Date start = t.getStart();
 				Date stop = t.getStop();
 				if (first == null || start.getTime() < first.getTime()) {
@@ -703,7 +698,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 						mainIntervalPixels, overviewInterval, overviewPixels);
 				writer.println("'dateTimeFormat': 'javascriptnative', ");
 				writer.println("'events': [");
-				for (SummaryInfo.Thread t : threads) {
+				for (Thread t : threads) {
 					Date start = t.getStart();
 					Date stop = t.getStop();
 					writer.print(String
@@ -729,10 +724,14 @@ public final class WriteHtmlOverview implements IPostPrep {
 	class CoverageSection extends Section {
 
 		private final CoverageSite site;
+		private final List<ContentionSite> contentionSites;
+		private final List<Thread> threads;
 
-		public CoverageSection(final CoverageSite site) {
+		public CoverageSection(final SummaryInfo info) {
 			super("Coverage");
-			this.site = site;
+			this.site = info.getThreadCoverage();
+			contentionSites = info.getContentionSites();
+			threads = info.getThreads();
 		}
 
 		@Override
@@ -744,21 +743,20 @@ public final class WriteHtmlOverview implements IPostPrep {
 				c.p().clazz("info")
 						.text("There is no coverage data for this run.");
 			} else {
+				c.h(3).text("Threads Seen");
 				UL list = c.ul();
 				list.clazz("outline").clazz("collapsed");
 				for (CoverageSite child : children) {
 					displayThreadCoverageHelper(list, child);
 				}
 			}
-
 		}
 
 		private void displayThreadCoverageHelper(final UL list,
 				final CoverageSite coverage) {
 			LI li = list.li();
 			displayLocation(li, coverage.getPackage(), coverage.getClazz(),
-					coverage.getLocation(), coverage.getFile(),
-					coverage.getLine());
+					coverage.getLocation(), coverage.getFile());
 			Set<CoverageSite> children = coverage.getChildren();
 			if (children.isEmpty()) {
 				return;
@@ -771,15 +769,14 @@ public final class WriteHtmlOverview implements IPostPrep {
 	}
 
 	class LivenessSection extends Section {
-		private final List<SummaryInfo.Thread> threads;
+		private final List<Thread> threads;
 
-		public LivenessSection(final List<SummaryInfo.Thread> threads) {
+		public LivenessSection(final List<Thread> threads) {
 			super("Liveness");
-			this.threads = new ArrayList<SummaryInfo.Thread>(threads);
-			Collections.sort(threads, new Comparator<SummaryInfo.Thread>() {
+			this.threads = new ArrayList<Thread>(threads);
+			Collections.sort(threads, new Comparator<Thread>() {
 				@Override
-				public int compare(final SummaryInfo.Thread o1,
-						final SummaryInfo.Thread o2) {
+				public int compare(final Thread o1, final Thread o2) {
 					long t1 = o1.getBlockTime();
 					long t2 = o2.getBlockTime();
 					return t1 > t2 ? -1 : t1 == t2 ? 0 : 1;
@@ -792,7 +789,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 			Table threadTable = c.table();
 			threadTable.header().th("Thread").th("Time Blocked");
 			int count = 0;
-			for (SummaryInfo.Thread thread : threads) {
+			for (Thread thread : threads) {
 				final Row row = threadTable.row();
 				buildQueryLink(row.td(), thread.getName(), THREAD_LOCKS_QUERY,
 						"Thread", thread.getName(), "ThreadId", thread.getId());
@@ -1118,7 +1115,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 	 * @return the style sheet, or <code>null</code> if unable to load
 	 */
 	private void loadStyleSheet(final Head head) {
-		final URL styleSheetURL = Thread
+		final URL styleSheetURL = java.lang.Thread
 				.currentThread()
 				.getContextClassLoader()
 				.getResource(
@@ -1134,7 +1131,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 	 * @return the style sheet, or <code>null</code> if unable to load
 	 */
 	private void loadJavaScript(final Head head) {
-		final ClassLoader loader = Thread.currentThread()
+		final ClassLoader loader = java.lang.Thread.currentThread()
 				.getContextClassLoader();
 		final URL vis = loader.getResource("/com/surelogic/common/js/jit.js");
 		final URL jquery = loader
@@ -1158,7 +1155,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 	}
 
 	private void loadTimeline(final Head head) {
-		final URL tl = Thread
+		final URL tl = java.lang.Thread
 				.currentThread()
 				.getContextClassLoader()
 				.getResource(

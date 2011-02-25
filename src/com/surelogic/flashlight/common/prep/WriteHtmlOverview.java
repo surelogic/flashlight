@@ -150,7 +150,9 @@ public final class WriteHtmlOverview implements IPostPrep {
 		Head head = builder.head(f_runDescription.getName());
 		loadStyleSheet(head);
 		loadTimeline(head);
-		loadJavaScript(head);
+		if (s != null) {
+			loadJavaScript(head, s);
+		}
 		Body body = builder.body();
 		body.div().id("header").h(1).text(f_runDescription.getName());
 		Container main = body.div().id("main");
@@ -244,6 +246,11 @@ public final class WriteHtmlOverview implements IPostPrep {
 		public DeadlocksSection(final List<DeadlockEvidence> deadlocks) {
 			super("Deadlocks");
 			this.deadlocks = deadlocks;
+		}
+
+		@Override
+		public List<String> getJavaScriptImports() {
+			return Collections.singletonList("graph-data.js");
 		}
 
 		@Override
@@ -623,6 +630,11 @@ public final class WriteHtmlOverview implements IPostPrep {
 		}
 
 		@Override
+		public List<String> getJavaScriptImports() {
+			return Collections.singletonList("timeline-data.js");
+		}
+
+		@Override
 		void displaySection(final Container c) {
 			int threadCount = threads.size();
 			c.p(String.format(
@@ -636,8 +648,9 @@ public final class WriteHtmlOverview implements IPostPrep {
 				graphs = new PrintWriter(new File(htmlDirectory,
 						"timeline-data.js"));
 				writeThreadTimeline(graphs);
-
 			} catch (FileNotFoundException e) {
+				throw new IllegalStateException(e);
+			} catch (IOException e) {
 				throw new IllegalStateException(e);
 			} finally {
 				if (graphs != null) {
@@ -647,7 +660,8 @@ public final class WriteHtmlOverview implements IPostPrep {
 
 		}
 
-		private void writeThreadTimeline(final PrintWriter writer) {
+		private void writeThreadTimeline(final PrintWriter writer)
+				throws IOException {
 			SimpleDateFormat df = new SimpleDateFormat(GRAPH_DATE_FORMAT);
 			Date first = null, last = null;
 			for (Thread t : threads) {
@@ -660,17 +674,17 @@ public final class WriteHtmlOverview implements IPostPrep {
 					last = stop;
 				}
 			}
-
+			JsonBuilder builder = new JsonBuilder();
 			if (first == null) {
-				writer.println("var timeline_data = 'none'");
+				builder.string("timeline_data", "none");
 			} else {
-				writer.println("var timeline_data = {");
-				writer.println(String
-						.format("'first': Timeline.DateTime.parseGregorianDateTime('%s'),",
-								df.format(first)));
-				writer.println(String
-						.format("'last': Timeline.DateTime.parseGregorianDateTime('%s'),",
-								df.format(last)));
+				JObject jTimeline = builder.object("timeline_data");
+				jTimeline.literal("first", String.format(
+						"Timeline.DateTime.parseGregorianDateTime('%s')",
+						df.format(first)));
+				jTimeline.literal("last", String.format(
+						"Timeline.DateTime.parseGregorianDateTime('%s')",
+						df.format(last)));
 				long duration = last.getTime() - first.getTime();
 				boolean hasOverviewBand = true;
 				int mainIntervalPixels = 100;
@@ -692,32 +706,40 @@ public final class WriteHtmlOverview implements IPostPrep {
 					overviewInterval = "HOUR";
 					overviewPixels = 100;
 				}
-				writer.printf(
-						"'needsOverview': %s, 'mainBandInterval': Timeline.DateTime.%s, 'mainBandIntervalPixels': %d, 'overviewBandInterval': Timeline.DateTime.%s, 'overviewBandIntervalPixels': %d,\n",
-						Boolean.toString(hasOverviewBand), mainInterval,
-						mainIntervalPixels, overviewInterval, overviewPixels);
-				writer.println("'dateTimeFormat': 'javascriptnative', ");
-				writer.println("'events': [");
+				jTimeline.bool("needsOverview", hasOverviewBand);
+				jTimeline.literal("mainBandInterval", "Timeline.DateTime."
+						+ mainInterval);
+				jTimeline.val("mainBandIntervalPixels", mainIntervalPixels);
+				jTimeline.literal("overviewBandInterval", "Timeline.DateTime."
+						+ overviewInterval);
+				jTimeline.val("overviewBandIntervalPixels", overviewPixels);
+				jTimeline.string("dateTimeFormat", "javascriptnative");
+				JArray jEvents = jTimeline.array("events");
 				for (Thread t : threads) {
 					Date start = t.getStart();
 					Date stop = t.getStop();
-					writer.print(String
-							.format("{'start': %s, 'end': %s, 'title': \"%s\", 'description': 'Thread Duration: %(,.3f seconds\\nTime Blocked: %(,.3f seconds', 'durationEvent': true, 'color': 'blue' }",
-									jsDate(start),
-									jsDate(stop),
-									t.getName(),
+					JObject jDate = jEvents.object();
+					jDate.literal("start", jsDate(start)).literal("end",
+							jsDate(stop));
+					jDate.string("title", t.getName());
+					jDate.string(
+							"description",
+							String.format(
+									"Thread Duration: %(,.3f seconds\nTime Blocked: %(,.3f seconds",
 									(float) (stop.getTime() - start.getTime()) / 1000,
 									(float) t.getBlockTime() / 1000000000));
-					writer.println(",");
+					jDate.bool("durationEvent", true).string("color", "blue");
 				}
-				writer.print(String
-						.format("{'start': %s, 'end': %s, 'title': \"%s\", 'description': 'Program Duration: %(,.3f seconds', 'durationEvent': true, 'color': 'red' }",
-								jsDate(first),
-								jsDate(last),
-								"Program Run Time",
-								(float) (last.getTime() - first.getTime()) / 1000));
-				writer.println("]};");
+				JObject jTotal = jEvents.object();
+				jTotal.literal("start", jsDate(first)).literal("end",
+						jsDate(last));
+				jTotal.string("title", "Program Run Time");
+				jTotal.string("description", String.format(
+						"Duration: %(,.3f seconds",
+						(float) (last.getTime() - first.getTime()) / 1000));
+				jTotal.bool("durationEvent", true).string("color", "red");
 			}
+			builder.build(writer);
 		}
 	}
 
@@ -732,6 +754,11 @@ public final class WriteHtmlOverview implements IPostPrep {
 			this.site = info.getThreadCoverage();
 			contentionSites = info.getContentionSites();
 			threads = info.getThreads();
+		}
+
+		@Override
+		public List<String> getJavaScriptImports() {
+			return Collections.singletonList("coverage-data.js");
 		}
 
 		@Override
@@ -750,6 +777,20 @@ public final class WriteHtmlOverview implements IPostPrep {
 					displayThreadCoverageHelper(list, child);
 				}
 			}
+			PrintWriter graphs = null;
+			try {
+				graphs = new PrintWriter(new File(htmlDirectory,
+						"coverage-data.js"));
+				writeThreadCoverage(graphs);
+			} catch (FileNotFoundException e) {
+				throw new IllegalStateException(e);
+			} catch (IOException e) {
+				throw new IllegalStateException(e);
+			} finally {
+				if (graphs != null) {
+					graphs.close();
+				}
+			}
 		}
 
 		private void displayThreadCoverageHelper(final UL list,
@@ -766,6 +807,44 @@ public final class WriteHtmlOverview implements IPostPrep {
 				displayThreadCoverageHelper(ul, child);
 			}
 		}
+
+		void writeThreadCoverage(final PrintWriter writer) throws IOException {
+			JsonBuilder builder = new JsonBuilder();
+			JArray jcsList = builder.array("contentionSites");
+			for (ContentionSite cs : contentionSites) {
+				JObject jcs = jcsList.object();
+				jcs.val("durationNs", cs.getDurationNs());
+				Site site = cs.getSite();
+				jcs.object("site", "class", site.getClazz(), "package",
+						site.getPackage(), "file", site.getFile(), "line",
+						site.getLine(), "location", site.getLocation());
+			}
+			JObject jThreads = builder.object("threads");
+			for (Thread t : threads) {
+				JObject jThread = jThreads.object(t.getId());
+				jThread.val("blockTime", t.getBlockTime());
+				jThread.string("name", t.getName());
+				jThread.string("start", t.getStart().toString());
+				jThread.string("stop", t.getStop().toString());
+			}
+			JObject jRoot = builder.object("coverage");
+			writeNodes(jRoot, site);
+			builder.build(writer);
+		}
+
+		private void writeNodes(final JObject jRoot, final CoverageSite site) {
+			for (CoverageSite cs : site.getChildren()) {
+				String id = cs.getPackage() + "." + cs.getClazz() + "."
+						+ cs.getLocation();
+				JObject jSite = jRoot.object(id);
+				jSite.object("site", "class", cs.getClazz(), "package",
+						cs.getPackage(), "file", cs.getFile(), "line",
+						cs.getLine(), "location", cs.getLocation());
+				jSite.val("threadsSeen", cs.getThreadsSeen());
+				writeNodes(jSite.object("children"), cs);
+			}
+		}
+
 	}
 
 	class LivenessSection extends Section {
@@ -1128,9 +1207,11 @@ public final class WriteHtmlOverview implements IPostPrep {
 	/**
 	 * Loads and returns the outline JavaScript script.
 	 * 
+	 * @param s
+	 * 
 	 * @return the style sheet, or <code>null</code> if unable to load
 	 */
-	private void loadJavaScript(final Head head) {
+	private void loadJavaScript(final Head head, final Section s) {
 		final ClassLoader loader = java.lang.Thread.currentThread()
 				.getContextClassLoader();
 		final URL vis = loader.getResource("/com/surelogic/common/js/jit.js");
@@ -1139,8 +1220,8 @@ public final class WriteHtmlOverview implements IPostPrep {
 		final URL canvas = loader
 				.getResource("/com/surelogic/common/js/excanvas.js");
 		final URL cycles = loader
-				.getResource("/com/surelogic/flashlight/common/prep/cycles.js");
-		FileUtility.copy(cycles, new File(htmlDirectory, "cycles.js"));
+				.getResource("/com/surelogic/flashlight/common/prep/overview.js");
+		FileUtility.copy(cycles, new File(htmlDirectory, "overview.js"));
 		FileUtility.copy(canvas, new File(htmlDirectory, "excanvas.js"));
 		FileUtility.copy(vis, new File(htmlDirectory, "jit.js"));
 		FileUtility
@@ -1149,9 +1230,10 @@ public final class WriteHtmlOverview implements IPostPrep {
 		head.javaScript("excanvas.js", true);
 		head.javaScript("jit.js");
 		head.javaScript("jquery-1.4.2.min.js");
-		head.javaScript("graph-data.js");
-		head.javaScript("timeline-data.js");
-		head.javaScript("cycles.js");
+		head.javaScript("overview.js");
+		for (String js : s.getJavaScriptImports()) {
+			head.javaScript(js);
+		}
 	}
 
 	private void loadTimeline(final Head head) {
@@ -1213,6 +1295,10 @@ public final class WriteHtmlOverview implements IPostPrep {
 
 		public Section(final String name) {
 			this.name = name;
+		}
+
+		public List<String> getJavaScriptImports() {
+			return Collections.emptyList();
 		}
 
 		public String getName() {

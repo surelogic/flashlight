@@ -58,13 +58,23 @@ public class JArray implements JValue {
 		return this;
 	}
 
+	public JArray literal(final String literal) {
+		vals.add(new JLiteral(literal));
+		return this;
+	}
+
 	@Override
 	public void append(final Appendable builder, final int depth)
 			throws IOException {
 		builder.append('[');
+		boolean first = true;
 		for (JValue val : vals) {
+			if (first) {
+				first = false;
+			} else {
+				builder.append(", ");
+			}
 			val.append(builder, depth + 1);
-			builder.append(',');
 		}
 		builder.append(']');
 	}

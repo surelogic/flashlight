@@ -32,14 +32,22 @@ public class JObject extends JsonContainer<JObject> implements JValue {
 	public void append(final Appendable builder, final int depth)
 			throws IOException {
 		builder.append("{\n");
+		boolean first = true;
 		for (JPair pair : pairs) {
+			if (first) {
+				first = false;
+			} else {
+				builder.append(",\n");
+			}
 			tabs(builder, depth + 1);
 			pair.name.append(builder, depth + 1);
 			builder.append(" : ");
 			pair.val.append(builder, depth + 1);
-			builder.append(",\n");
 		}
-		tabs(builder, depth).append("}");
+		if (pairs.size() > 1) {
+			builder.append('\n');
+			tabs(builder, depth + 1);
+		}
+		builder.append("}");
 	}
-
 }

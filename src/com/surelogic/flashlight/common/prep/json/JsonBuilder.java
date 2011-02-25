@@ -19,8 +19,8 @@ public final class JsonBuilder extends JsonContainer<JsonBuilder> {
 		for (Def def : defs) {
 			b.append(def.name);
 			b.append(" = ");
-			def.val.append(b, 1);
-			b.append(';');
+			def.val.append(b, 0);
+			b.append(";\n");
 		}
 		return b;
 	}
@@ -31,7 +31,7 @@ public final class JsonBuilder extends JsonContainer<JsonBuilder> {
 			b.append(def.name);
 			b.append(" = ");
 			try {
-				def.val.append(b, 1);
+				def.val.append(b, 0);
 			} catch (IOException e) {
 				// Do nothing, never really gets thrown.
 			}

@@ -56,6 +56,12 @@ abstract class JsonContainer<T> {
 		return builder();
 	}
 
+	public T literal(final String name, final String string) {
+		JLiteral l = new JLiteral(string);
+		addVal(name, l);
+		return builder();
+	}
+
 	public T val(final String name, final Object val) {
 		addVal(name, coerce(val));
 		return builder();

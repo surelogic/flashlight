@@ -771,12 +771,15 @@ public final class WriteHtmlOverview implements IPostPrep {
 						.text("There is no coverage data for this run.");
 			} else {
 				c.h(3).text("Threads Seen");
-				UL list = c.ul();
-				list.clazz("outline").clazz("collapsed");
-				for (CoverageSite child : children) {
-					displayThreadCoverageHelper(list, child);
-				}
+				Div div = c.div();
+				div.id("coverage");
+				div.ul();
+				// list.clazz("outline").clazz("collapsed");
+				// for (CoverageSite child : children) {
+				// displayThreadCoverageHelper(list, child);
+				// }
 			}
+
 			PrintWriter graphs = null;
 			try {
 				graphs = new PrintWriter(new File(htmlDirectory,
@@ -1138,7 +1141,6 @@ public final class WriteHtmlOverview implements IPostPrep {
 	 * @param args
 	 * @return
 	 */
-
 	private static void buildCodeLink(final Container c, final String text,
 			final String... args) {
 		StringBuilder b = new StringBuilder();

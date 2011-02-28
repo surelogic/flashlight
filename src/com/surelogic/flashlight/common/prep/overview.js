@@ -28,6 +28,7 @@ function jq(myid) {
     animate = !(iStuff || !nativeCanvasSupport);
  })();
 
+
 function treeTable() {
    $(".treeTable td:first-child:not(.leaf)")
       .prepend("<img class='icon' src='" + O_DOWN + "'></img>")
@@ -84,9 +85,58 @@ function toggleTree() {
    }
 }
 
+function jsonOutline(outline,json) {
+//    var node = outline.append('<li><img class="icon" src="' +  O_RIGHT + '"></img></li>').find('> li');
+    outline.get(0).json = json;
+    outlineExpand(outline);
+}
+
+
+function outlineExpand(node) {
+    node.find('> .icon').attr('src', O_DOWN).click(jqOutlineCollapse);
+    var childList = node.find('> ul');
+    var json = node.get(0).json;
+    for(node in json) {
+        //this is a child of the selected node
+        var elem = json[node];
+        var hasChildren = false;
+        for(child in elem.children) {
+            hasChildren = true;
+            break;
+        }
+        var li = childList.append(siteTag(hasChildren, elem.site)).children().last();
+        li.get(0).json = elem.children;
+        li.find('> .icon').click(jqOutlineExpand);
+    }
+}
+
+function outlineCollapse(node) {
+    node.find('> .icon').attr('src', O_RIGHT).click(jqOutlineExpand);
+    node.find('> ul').empty();
+}
+
+function siteTag(hasChildren, site) {
+    var image = '<img class="icon" src="' + (hasChildren ? O_RIGHT : O_FILLER) + '"></img>';
+    var span = '<span>' + site.package + '.' + site.class + '.' + site.location + '</span>';
+    var link = '<a href="index.html?loc=&Package=' + site.package + '&Class=' + site.class + 
+        '&Method=' + site.location + '&Line=' + site.line + '">(' + site.file + ':' + 
+        site.line + ')</a>';
+    var childList = hasChildren ? '<ul></ul>' : '';
+    return '<li>' + image + span + link + childList + '</li>';
+}
+
+/* Used by click() events to expand a node */
+function jqOutlineCollapse() {
+    outlineCollapse($(this).parent());
+}
+function jqOutlineExpand() {
+    outlineExpand($(this).parent());
+}
+
+
 function outline() {
    $(".outline > li:has(ul)")
-      .prepend("<img class='icon' alt='Expand' src='" + O_DOWN + "'></img>")
+      .prepend("<img class='icon' alt='Expand/' src='" + O_DOWN + "'></img>")
       .find('> .icon')
       .each(toggle)
       .click(toggle);
@@ -489,6 +539,11 @@ $(document).ready(
       $('.sectionList > li.selected > a[href=index5.html]').each(
          function () {
                loadTimeline();
+         }
+      );
+      $('.sectionList > li.selected > a[href=index6.html]').each(
+         function () {
+             jsonOutline($('#coverage'), coverage);
          }
       );
    });

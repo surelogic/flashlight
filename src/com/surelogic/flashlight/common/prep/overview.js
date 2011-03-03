@@ -48,7 +48,7 @@ var depths = {
 var MAX_DEPTH = 5;
 
 function elemDepth(elem) {
-   for (d in depths) {
+   for (var d in depths) {
       if(elem.hasClass(d)) {
          return depths[d];
       }
@@ -85,54 +85,50 @@ function toggleTree() {
    }
 }
 
-function jsonOutline(outline,json) {
-//    var node = outline.append('<li><img class="icon" src="' +  O_RIGHT + '"></img></li>').find('> li');
+function jsonOutline(outline,json,filter) {
+    if(filter == undefined) {
+        filter = function() {return true;};
+    }
     outline.get(0).json = json;
-    outlineExpand(outline);
+    outline.find('> ul').empty();
+    outlineExpand(outline,filter);
 }
 
 
-function outlineExpand(node) {
-    node.find('> .icon').attr('src', O_DOWN).click(jqOutlineCollapse);
+function outlineExpand(node,filter) {
+    node.find('> .icon').attr('src', O_DOWN).click(outlineCollapse($(this).parent(), filter));
     var childList = node.find('> ul');
     var json = node.get(0).json;
-    for(node in json) {
+    for(var node in json) {
         //this is a child of the selected node
         var elem = json[node];
-        var hasChildren = false;
-        for(child in elem.children) {
-            hasChildren = true;
-            break;
+        if(filter(elem)) {
+            var hasChildren = false;
+            for(var child in elem.children) {
+                hasChildren = true;
+                break;
+            }
+            var li = childList.append(siteTag(hasChildren, elem.site)).children().last();
+            li.get(0).json = elem.children;
+            li.find('> .icon').click(outlineExpand($(this).parent(), filter));
         }
-        var li = childList.append(siteTag(hasChildren, elem.site)).children().last();
-        li.get(0).json = elem.children;
-        li.find('> .icon').click(jqOutlineExpand);
     }
 }
 
-function outlineCollapse(node) {
-    node.find('> .icon').attr('src', O_RIGHT).click(jqOutlineExpand);
+function outlineCollapse(node, filter) {
+    node.find('> .icon').attr('src', O_RIGHT).click(outlineExpand($(this).parent(), filter));
     node.find('> ul').empty();
 }
 
 function siteTag(hasChildren, site) {
     var image = '<img class="icon" src="' + (hasChildren ? O_RIGHT : O_FILLER) + '"></img>';
-    var span = '<span>' + site.package + '.' + site.class + '.' + site.location + '</span>';
-    var link = '<a href="index.html?loc=&Package=' + site.package + '&Class=' + site.class + 
+    var span = '<span>' + site.pakkage + '.' + site.clazz + '.' + site.location + '</span>';
+    var link = '<a href="index.html?loc=&Package=' + site.pakkage + '&Class=' + site.clazz + 
         '&Method=' + site.location + '&Line=' + site.line + '">(' + site.file + ':' + 
         site.line + ')</a>';
     var childList = hasChildren ? '<ul></ul>' : '';
     return '<li>' + image + span + link + childList + '</li>';
 }
-
-/* Used by click() events to expand a node */
-function jqOutlineCollapse() {
-    outlineCollapse($(this).parent());
-}
-function jqOutlineExpand() {
-    outlineExpand($(this).parent());
-}
-
 
 function outline() {
    $(".outline > li:has(ul)")
@@ -174,29 +170,31 @@ function toggle() {
    }
 }
 
-// Edge type used to represent a bidirectional edge
-$jit.ForceDirected.Plot.EdgeTypes.implement(
-   {
-      'doubleArrow': {
-    'render': function(adj, canvas) {
-      var from = adj.nodeFrom.pos.getc(true),
-      to = adj.nodeTo.pos.getc(true),
-      dim = adj.getData('dim'),
-      direction = adj.data.$direction,
-      inv = (direction && direction.length>1 && direction[0] != adj.nodeFrom.id);
-      this.edgeHelper.arrow.render(from, to, dim, inv, canvas);
-      this.edgeHelper.arrow.render(to, from, dim, inv, canvas);
-       },
-       'contains': function(adj, pos) {
-        var from = adj.nodeFrom.pos.getc(true),
-        to = adj.nodeTo.pos.getc(true);
-        return this.edgeHelper.arrow.contains(from, to, pos, this.edge.epsilon) ||
-         this.edgeHelper.arrow.contains(to, from, pos, this.edge.epsilon);
-       }
-    }
-   });
 
 function initForceDirected() {
+    // Edge type used to represent a bidirectional edge
+    $jit.ForceDirected.Plot.EdgeTypes.implement(
+        {
+            'doubleArrow': {
+                'render': function(adj, canvas) {
+                    var from = adj.nodeFrom.pos.getc(true),
+                    to = adj.nodeTo.pos.getc(true),
+                    dim = adj.getData('dim'),
+                    direction = adj.data.$direction,
+                    inv = (direction && direction.length>1 && direction[0] != adj.nodeFrom.id);
+                    this.edgeHelper.arrow.render(from, to, dim, inv, canvas);
+                    this.edgeHelper.arrow.render(to, from, dim, inv, canvas);
+                },
+                'contains': function(adj, pos) {
+                    var from = adj.nodeFrom.pos.getc(true),
+                    to = adj.nodeTo.pos.getc(true);
+                    return this.edgeHelper.arrow.contains(from, to, pos, this.edge.epsilon) ||
+                        this.edgeHelper.arrow.contains(to, from, pos, this.edge.epsilon);
+                }
+            }
+        });
+
+
  if($('#deadlock-widget').val() != undefined) {
     fd = new $jit.ForceDirected(
        {
@@ -509,6 +507,19 @@ function initDeadlockGraphTab() {
    displayDeadlock(cyc);
 }
 
+function initCoverageTab() {
+    jsonOutline($('#coverage'), coverage);
+    var threadDiv = $('#threads');
+    for (var e in threads) {
+        threadDiv.append('<li id="' + e + '">' + threads[e].name + '</li>');
+    }
+    threadDiv.find('li').click(
+        function () {
+            var threadId = $(this).attr('id');
+            jsonOutline($('#coverage'), coverage, function(node) {return $.inArray(threadId, node.threadsSeen); });
+        });
+}
+
 $(document).ready(
    function() {
 
@@ -543,7 +554,7 @@ $(document).ready(
       );
       $('.sectionList > li.selected > a[href=index6.html]').each(
          function () {
-             jsonOutline($('#coverage'), coverage);
+             initCoverageTab();
          }
       );
    });

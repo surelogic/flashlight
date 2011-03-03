@@ -247,3 +247,6 @@ ul.sectionList a:hover {
 }
 
 
+#coverage-div, #thread-div {
+   float: left;
+}

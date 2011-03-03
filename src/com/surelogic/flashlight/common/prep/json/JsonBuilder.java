@@ -17,6 +17,12 @@ public final class JsonBuilder extends JsonContainer<JsonBuilder> {
 
 	public <T extends Appendable> T build(final T b) throws IOException {
 		for (Def def : defs) {
+			if (!def.name.contains(".")) {
+				b.append("var ");
+			} else {
+				// Not a top level assignment, so we don't want to declare it as
+				// a var
+			}
 			b.append(def.name);
 			b.append(" = ");
 			def.val.append(b, 0);
@@ -27,15 +33,10 @@ public final class JsonBuilder extends JsonContainer<JsonBuilder> {
 
 	public String build() {
 		StringBuilder b = new StringBuilder();
-		for (Def def : defs) {
-			b.append(def.name);
-			b.append(" = ");
-			try {
-				def.val.append(b, 0);
-			} catch (IOException e) {
-				// Do nothing, never really gets thrown.
-			}
-			b.append(";\n");
+		try {
+			build(b);
+		} catch (IOException e1) {
+			// Do nothing, never really gets thrown
 		}
 		return b.toString();
 	}

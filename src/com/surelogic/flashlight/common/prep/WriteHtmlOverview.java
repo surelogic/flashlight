@@ -9,6 +9,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
@@ -120,6 +121,9 @@ public final class WriteHtmlOverview implements IPostPrep {
 			final HtmlHandles html = f_runDescription.getRunDirectory()
 					.getHtmlHandles();
 			displayPages(html, categories);
+			loadJavaScript();
+			loadTimeline();
+			loadStyleSheet();
 			writer.addImage(CLASS_IMG);
 			writer.addImage(PACKAGE_IMG);
 			writer.addImage("flashlight_overview_banner.png");
@@ -128,6 +132,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 			writer.addImage("outline_right.png");
 
 			writer.writeImages();
+
 		} finally {
 			mon.done();
 		}
@@ -148,11 +153,15 @@ public final class WriteHtmlOverview implements IPostPrep {
 			final Section s) {
 		HTMLBuilder builder = new HTMLBuilder();
 		Head head = builder.head(f_runDescription.getName());
-		loadStyleSheet(head);
-		loadTimeline(head);
+		head.styleSheet("RunOverviewStyleSheet.css");
+		head.javaScript("jquery-1.4.2.min.js");
+		head.javaScript("overview.js");
 		if (s != null) {
-			loadJavaScript(head, s);
+			for (String js : s.getJavaScriptImports()) {
+				head.javaScript(js);
+			}
 		}
+
 		Body body = builder.body();
 		body.div().id("header").h(1).text(f_runDescription.getName());
 		Container main = body.div().id("main");
@@ -631,7 +640,9 @@ public final class WriteHtmlOverview implements IPostPrep {
 
 		@Override
 		public List<String> getJavaScriptImports() {
-			return Collections.singletonList("timeline-data.js");
+			return Arrays.asList(new String[] { "excanvas.js", "jit.js",
+					"timeline_2.3.0/timeline_js/timeline-api.js?bundle=true",
+					"timeline-data.js" });
 		}
 
 		@Override
@@ -770,14 +781,14 @@ public final class WriteHtmlOverview implements IPostPrep {
 				c.p().clazz("info")
 						.text("There is no coverage data for this run.");
 			} else {
-				c.h(3).text("Threads Seen");
-				Div div = c.div();
-				div.id("coverage");
-				div.ul();
-				// list.clazz("outline").clazz("collapsed");
-				// for (CoverageSite child : children) {
-				// displayThreadCoverageHelper(list, child);
-				// }
+				Div threadDiv = c.div();
+				threadDiv.id("thread-div");
+				threadDiv.h(3).text("Threads");
+				threadDiv.ul().id("threads");
+				Div coverageDiv = c.div();
+				coverageDiv.id("coverage-div");
+				coverageDiv.h(3).text("Code Coverage");
+				coverageDiv.div().id("coverage").ul();
 			}
 
 			PrintWriter graphs = null;
@@ -796,21 +807,6 @@ public final class WriteHtmlOverview implements IPostPrep {
 			}
 		}
 
-		private void displayThreadCoverageHelper(final UL list,
-				final CoverageSite coverage) {
-			LI li = list.li();
-			displayLocation(li, coverage.getPackage(), coverage.getClazz(),
-					coverage.getLocation(), coverage.getFile());
-			Set<CoverageSite> children = coverage.getChildren();
-			if (children.isEmpty()) {
-				return;
-			}
-			UL ul = li.ul();
-			for (CoverageSite child : children) {
-				displayThreadCoverageHelper(ul, child);
-			}
-		}
-
 		void writeThreadCoverage(final PrintWriter writer) throws IOException {
 			JsonBuilder builder = new JsonBuilder();
 			JArray jcsList = builder.array("contentionSites");
@@ -818,7 +814,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 				JObject jcs = jcsList.object();
 				jcs.val("durationNs", cs.getDurationNs());
 				Site site = cs.getSite();
-				jcs.object("site", "class", site.getClazz(), "package",
+				jcs.object("site", "clazz", site.getClazz(), "pakkage",
 						site.getPackage(), "file", site.getFile(), "line",
 						site.getLine(), "location", site.getLocation());
 			}
@@ -840,7 +836,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 				String id = cs.getPackage() + "." + cs.getClazz() + "."
 						+ cs.getLocation();
 				JObject jSite = jRoot.object(id);
-				jSite.object("site", "class", cs.getClazz(), "package",
+				jSite.object("site", "clazz", cs.getClazz(), "pakkage",
 						cs.getPackage(), "file", cs.getFile(), "line",
 						cs.getLine(), "location", cs.getLocation());
 				jSite.val("threadsSeen", cs.getThreadsSeen());
@@ -856,7 +852,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 		public LivenessSection(final List<Thread> threads) {
 			super("Liveness");
 			this.threads = new ArrayList<Thread>(threads);
-			Collections.sort(threads, new Comparator<Thread>() {
+			Collections.sort(this.threads, new Comparator<Thread>() {
 				@Override
 				public int compare(final Thread o1, final Thread o2) {
 					long t1 = o1.getBlockTime();
@@ -888,21 +884,6 @@ public final class WriteHtmlOverview implements IPostPrep {
 			}
 
 		}
-	}
-
-	private static String jsList(final Collection<? extends Object> list) {
-		StringBuilder b = new StringBuilder();
-		b.append('[');
-		for (Iterator<? extends Object> iter = list.iterator(); iter.hasNext();) {
-			b.append('\"');
-			b.append(iter.next().toString());
-			b.append('\"');
-			if (iter.hasNext()) {
-				b.append(',');
-			}
-		}
-		b.append(']');
-		return b.toString();
 	}
 
 	private String jsDate(final Date date) {
@@ -1195,7 +1176,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 	 * 
 	 * @return the style sheet, or <code>null</code> if unable to load
 	 */
-	private void loadStyleSheet(final Head head) {
+	private void loadStyleSheet() {
 		final URL styleSheetURL = java.lang.Thread
 				.currentThread()
 				.getContextClassLoader()
@@ -1203,7 +1184,6 @@ public final class WriteHtmlOverview implements IPostPrep {
 						"/com/surelogic/flashlight/common/prep/RunOverviewStyleSheet.css");
 		FileUtility.copy(styleSheetURL, new File(htmlDirectory,
 				"RunOverviewStyleSheet.css"));
-		head.styleSheet("RunOverviewStyleSheet.css");
 	}
 
 	/**
@@ -1213,7 +1193,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 	 * 
 	 * @return the style sheet, or <code>null</code> if unable to load
 	 */
-	private void loadJavaScript(final Head head, final Section s) {
+	private void loadJavaScript() {
 		final ClassLoader loader = java.lang.Thread.currentThread()
 				.getContextClassLoader();
 		final URL vis = loader.getResource("/com/surelogic/common/js/jit.js");
@@ -1229,16 +1209,9 @@ public final class WriteHtmlOverview implements IPostPrep {
 		FileUtility
 				.copy(jquery, new File(htmlDirectory, "jquery-1.4.2.min.js"));
 
-		head.javaScript("excanvas.js", true);
-		head.javaScript("jit.js");
-		head.javaScript("jquery-1.4.2.min.js");
-		head.javaScript("overview.js");
-		for (String js : s.getJavaScriptImports()) {
-			head.javaScript(js);
-		}
 	}
 
-	private void loadTimeline(final Head head) {
+	private void loadTimeline() {
 		final URL tl = java.lang.Thread
 				.currentThread()
 				.getContextClassLoader()
@@ -1252,7 +1225,6 @@ public final class WriteHtmlOverview implements IPostPrep {
 			throw new IllegalStateException(e);
 		}
 		tlZip.delete();
-		head.javaScript("timeline_2.3.0/timeline_js/timeline-api.js?bundle=true");
 	}
 
 	private class Category {

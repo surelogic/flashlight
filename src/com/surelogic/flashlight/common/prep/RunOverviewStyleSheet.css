@@ -154,12 +154,18 @@ ul.deadlock-trace-menu li {
    color: white;
 }
 
+#threads {
+   padding-left: 0px;
+}
+
 #threads li.selected {
     background-color: #deb887;
 }
 
 #threads li {
     cursor: pointer;
+    color: blue;
+    padding: 1px 0px;
 }
 
 #thread-div > h3, #coverage-div > h3 {

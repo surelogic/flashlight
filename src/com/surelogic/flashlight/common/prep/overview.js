@@ -541,6 +541,16 @@ function initCoverageTab() {
                 selectedThreads[threadId] = true;
                 $('#' + threadId).addClass('selected');
             }
+            var someSelected = false;
+            for (var t in threads) {
+                someSelected |= selectedThreads[t];
+            }
+            if (!someSelected) {
+                //When no threads are selected, we show everything
+                for (var t in threads) {
+                    selectedThreads[t] = true;
+                }
+            }
             jsonOutline($('#coverage'), coverage, selectedThreads);
         }).
         mousedown(function(e) {e.preventDefault();})

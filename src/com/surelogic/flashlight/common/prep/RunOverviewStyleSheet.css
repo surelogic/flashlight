@@ -262,3 +262,15 @@ ul.sectionList a:hover {
 #coverage-div, #thread-div {
    float: left;
 }
+
+.cell-text {
+	text-align: left;
+}
+
+.cell-number {
+	text-align: right;
+}
+
+.cell-date {
+	text-align: center;
+}

@@ -31,6 +31,7 @@ import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.flashlight.common.files.HtmlHandles;
 import com.surelogic.flashlight.common.model.RunDescription;
 import com.surelogic.flashlight.common.prep.HTMLBuilder.Body;
+import com.surelogic.flashlight.common.prep.HTMLBuilder.Cell;
 import com.surelogic.flashlight.common.prep.HTMLBuilder.Container;
 import com.surelogic.flashlight.common.prep.HTMLBuilder.Div;
 import com.surelogic.flashlight.common.prep.HTMLBuilder.HTMLList;
@@ -220,16 +221,8 @@ public final class WriteHtmlOverview implements IPostPrep {
 			} else {
 				Table lockTable = c.table();
 				displayTreeTable(locks, lockTable, new LockTableRowProvider());
-				/*
-				 * int count = 0; for (SummaryInfo.Lock lock : locks) { Row r =
-				 * lockTable.row(); buildQueryLink(r.td(), lock.getName(),
-				 * LOCK_EDGE_QUERY, "Lock", lock.getId());
-				 * r.td(Integer.toString(lock.getAcquired()))
-				 * .td(Long.toString(lock.getBlockTime()) + " ns")
-				 * .td(Long.toString(lock.getAverageBlock()) + " ns"); if
-				 * (++count == TABLE_LIMIT) { break; } }
-				 */
-				if (locks.size() > SummaryInfo.LOCK_LIMIT) {
+
+				if (locks.size() >= SummaryInfo.LOCK_LIMIT) {
 					buildQueryLink(
 							lockTable.row().td().colspan(4),
 							String.format("More results...", locks.size()
@@ -268,30 +261,27 @@ public final class WriteHtmlOverview implements IPostPrep {
 				String clazz = site.getClazz();
 				if (!pakkage.equals(curPakkage)) {
 					if (pakkageRow != null) {
-						pakkageRow.td().span().text(pakkageDuration + " ns");
+						pakkageRow.td(pakkageDuration + " ns");
 					}
 					pakkageDuration = clazzDuration = 0;
 					curPakkage = pakkage;
 					curClazz = null;
-					clazzRow = null;
 					pakkageRow = table.row();
 					pakkageRow.td().clazz("depth2").span().clazz("package")
 							.text(pakkage);
-					for (int i = 0; i < 2; i++) {
-						pakkageRow.td();
-					}
+					pakkageRow.td();
+					pakkageRow.td();
 				}
 				if (!clazz.equals(curClazz)) {
 					if (clazzRow != null) {
-						clazzRow.td().span().text(clazzDuration + " ns");
+						clazzRow.td(clazzDuration + " ns");
 					}
 					curClazz = clazz;
 					clazzRow = table.row();
 					clazzRow.td().clazz("depth3").span().clazz("class")
 							.text(clazz);
-					for (int i = 0; i < 2; i++) {
-						clazzRow.td();
-					}
+					clazzRow.td();
+					clazzRow.td();
 				}
 				Row r = table.row();
 				Container locTd = r.td().clazz("depth4").clazz("leaf");
@@ -308,11 +298,19 @@ public final class WriteHtmlOverview implements IPostPrep {
 				pakkageDuration += s.getDurationNs();
 				clazzDuration += s.getDurationNs();
 			}
+			pakkageRow.td(pakkageDuration + " ns");
+			clazzRow.td(clazzDuration + " ns");
 		}
 
 		@Override
 		public int numCols(final Lock t) {
 			return 4;
+		}
+
+		@Override
+		public List<Cell> cellTypes() {
+			return Arrays.asList(new Cell[] { Cell.TEXT, Cell.NUMBER,
+					Cell.NUMBER, Cell.NUMBER });
 		}
 
 	}
@@ -587,6 +585,12 @@ public final class WriteHtmlOverview implements IPostPrep {
 		public void headerRow(final Row row) {
 			row.th("Lock").th("# Acquisitions").th("% Held");
 		}
+
+		@Override
+		public List<Cell> cellTypes() {
+			return Arrays.asList(new Cell[] { Cell.TEXT, Cell.NUMBER,
+					Cell.NUMBER });
+		}
 	}
 
 	class BadPublishSection extends Section {
@@ -669,6 +673,12 @@ public final class WriteHtmlOverview implements IPostPrep {
 			LI traceLI = ul.li();
 			ul = traceLI.ul();
 			displayTraceList(ul, trace);
+		}
+
+		@Override
+		public List<Cell> cellTypes() {
+			return Arrays
+					.asList(new Cell[] { Cell.TEXT, Cell.TEXT, Cell.TEXT });
 		}
 	}
 
@@ -947,7 +957,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 					break;
 				}
 			}
-			if (threads.size() > TABLE_LIMIT) {
+			if (threads.size() >= TABLE_LIMIT) {
 				buildQueryLink(
 						threadTable.row().td().colspan(2),
 						String.format("%d more results.", threads.size()
@@ -1117,6 +1127,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 	private static <T> void displayTreeTable(final List<T> ts,
 			final Table table, final RowProvider<T> rp) {
 		table.clazz("treeTable");
+		table.cellTypes(rp.cellTypes());
 		rp.headerRow(table.header());
 		for (T f : ts) {
 			rp.row(table, f);
@@ -1129,6 +1140,8 @@ public final class WriteHtmlOverview implements IPostPrep {
 		void row(final Table table, T t);
 
 		int numCols(T t);
+
+		List<Cell> cellTypes();
 	}
 
 	/**

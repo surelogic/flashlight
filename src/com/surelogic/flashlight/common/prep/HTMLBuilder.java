@@ -375,6 +375,7 @@ public class HTMLBuilder {
 
 	static class Table implements BodyNode {
 		private final List<String> classes = new ArrayList<String>();
+		private final List<Cell> cellTypes = new ArrayList<Cell>();
 		private String id;
 		private Row header;
 		private final List<Row> rows = new ArrayList<Row>();;
@@ -385,23 +386,29 @@ public class HTMLBuilder {
 			return this;
 		}
 
+		public Table cellTypes(final List<Cell> cellTypes) {
+			this.cellTypes.clear();
+			this.cellTypes.addAll(cellTypes);
+			return this;
+		}
+
 		public Table id(final String id) {
 			this.id = id;
 			return this;
 		}
 
 		public Row header() {
-			header = new Row();
+			header = new Row(cellTypes);
 			return header;
 		}
 
 		public Row footer() {
-			footer = new Row();
+			footer = new Row(cellTypes);
 			return footer;
 		}
 
 		public Row row() {
-			Row r = new Row();
+			Row r = new Row(cellTypes);
 			rows.add(r);
 			return r;
 		}
@@ -429,19 +436,49 @@ public class HTMLBuilder {
 
 	}
 
+	public enum Cell {
+		TEXT("cell-text"), NUMBER("cell-number"), DATE("cell-date");
+		private final String cssClass;
+
+		Cell(final String cssClass) {
+			this.cssClass = cssClass;
+		}
+
+		private String cssClass() {
+			return cssClass;
+		}
+
+	}
+
 	static class Row implements HTMLNode {
 		private final List<Col> cols = new ArrayList<Col>();
+		private final List<Cell> inherited;
+
+		Row(final List<Cell> inherited) {
+			this.inherited = inherited;
+		}
 
 		public TD td() {
 			TD td = new TD();
 			cols.add(td);
+			int colSize = cols.size();
+			if (inherited.size() >= colSize) {
+				td.clazz(inherited.get(colSize - 1).cssClass());
+			}
 			return td;
 		}
 
 		public Row td(final String col) {
+			TD td = td();
+			td.text(col);
+			return this;
+		}
+
+		public Row td(final String col, final Cell cell) {
 			TD td = new TD();
 			cols.add(td);
 			td.text(col);
+			td.clazz(cell.cssClass());
 			return this;
 		}
 

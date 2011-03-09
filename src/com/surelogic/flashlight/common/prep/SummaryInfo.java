@@ -20,6 +20,7 @@ import com.surelogic.common.jdbc.DBQuery;
 import com.surelogic.common.jdbc.LimitRowHandler;
 import com.surelogic.common.jdbc.NullRowHandler;
 import com.surelogic.common.jdbc.Query;
+import com.surelogic.common.jdbc.Queryable;
 import com.surelogic.common.jdbc.Result;
 import com.surelogic.common.jdbc.ResultHandler;
 import com.surelogic.common.jdbc.Row;
@@ -29,7 +30,8 @@ import com.surelogic.common.jdbc.StringRowHandler;
 
 public class SummaryInfo {
 
-	private static final int CONTENTION_SITE_LIMIT = 100;
+	static final int CONTENTION_SITE_LIMIT = 100;
+	static final int LOCK_LIMIT = 20;
 
 	private final List<Lock> locks;
 	private final List<Thread> threads;
@@ -106,8 +108,10 @@ public class SummaryInfo {
 
 		@Override
 		public SummaryInfo perform(final Query q) {
-			List<Lock> locks = q.prepared("Deadlock.lockContention",
-					new LockContentionHandler()).call();
+			List<Lock> locks = q.prepared(
+					"Deadlock.lockContention",
+					LimitRowHandler.from(new LockContentionHandler(q),
+							LOCK_LIMIT)).call();
 			List<Thread> threads = q.prepared("SummaryInfo.threads",
 					new ThreadContentionHandler()).call();
 			Collections.sort(threads);
@@ -885,17 +889,20 @@ public class SummaryInfo {
 	public static class Lock {
 		private final String name;
 		private final String id;
-		private final int acquired;
+		private final String acquired;
 		private final long blockTime;
 		private final long averageBlock;
+
+		private final List<ContentionSite> contentionSites;
 
 		public Lock(final String name, final int acquired,
 				final long blockTime, final long averageBlock, final long id) {
 			this.id = Long.toString(id);
 			this.name = name;
-			this.acquired = acquired;
+			this.acquired = Integer.toString(acquired);
 			this.blockTime = blockTime;
 			this.averageBlock = averageBlock;
+			this.contentionSites = new ArrayList<SummaryInfo.ContentionSite>();
 		}
 
 		public String getName() {
@@ -906,7 +913,7 @@ public class SummaryInfo {
 			return id;
 		}
 
-		public int getAcquired() {
+		public String getAcquired() {
 			return acquired;
 		}
 
@@ -918,14 +925,27 @@ public class SummaryInfo {
 			return averageBlock;
 		}
 
+		public List<ContentionSite> getContentionSites() {
+			return contentionSites;
+		}
+
 	}
 
 	private static class LockContentionHandler implements RowHandler<Lock> {
 
+		private final Queryable<List<ContentionSite>> prepared;
+
+		public LockContentionHandler(final Query q) {
+			prepared = q.prepared("SummaryInfo.lockContentionSites",
+					new ContentionSitesHandler());
+		}
+
 		@Override
 		public Lock handle(final Row r) {
-			return new Lock(r.nextString(), r.nextInt(), r.nextLong(),
+			Lock l = new Lock(r.nextString(), r.nextInt(), r.nextLong(),
 					r.nextLong(), r.nextLong());
+			l.getContentionSites().addAll(prepared.call(l.getId()));
+			return l;
 		}
 
 	}

@@ -62,8 +62,6 @@ import com.surelogic.flashlight.common.prep.json.JsonBuilder;
 
 public final class WriteHtmlOverview implements IPostPrep {
 
-	private static final int TABLE_LIMIT = 10;
-
 	private static final String DATE_FORMAT = "yyyy.MM.dd-'at'-HH.mm.ss.SSS";
 	private static final String GRAPH_DATE_FORMAT = "MMM dd yyyy HH:mm:ss zz";
 	private static final String LOCK_CONTENTION_QUERY = "cb38a427-c259-4690-abe2-acea9661f737";
@@ -154,7 +152,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 		HTMLBuilder builder = new HTMLBuilder();
 		Head head = builder.head(f_runDescription.getName());
 		head.styleSheet("RunOverviewStyleSheet.css");
-		head.javaScript("jquery-1.4.2.min.js");
+		head.javaScript("jquery-1.5.1.min.js");
 		head.javaScript("overview.js");
 		if (s != null) {
 			for (String js : s.getJavaScriptImports()) {
@@ -221,29 +219,100 @@ public final class WriteHtmlOverview implements IPostPrep {
 						.text("No locks were detected in this run of the program.");
 			} else {
 				Table lockTable = c.table();
-				lockTable.header().th("Lock").th("Times Acquired")
-						.th("Total Block Time").th("Average Block Time");
-
-				int count = 0;
-				for (SummaryInfo.Lock lock : locks) {
-					Row r = lockTable.row();
-					buildQueryLink(r.td(), lock.getName(), LOCK_EDGE_QUERY,
-							"Lock", lock.getId());
-					r.td(Integer.toString(lock.getAcquired()))
-							.td(Long.toString(lock.getBlockTime()) + " ns")
-							.td(Long.toString(lock.getAverageBlock()) + " ns");
-					if (++count == TABLE_LIMIT) {
-						break;
-					}
-				}
-				if (locks.size() > TABLE_LIMIT) {
+				displayTreeTable(locks, lockTable, new LockTableRowProvider());
+				/*
+				 * int count = 0; for (SummaryInfo.Lock lock : locks) { Row r =
+				 * lockTable.row(); buildQueryLink(r.td(), lock.getName(),
+				 * LOCK_EDGE_QUERY, "Lock", lock.getId());
+				 * r.td(Integer.toString(lock.getAcquired()))
+				 * .td(Long.toString(lock.getBlockTime()) + " ns")
+				 * .td(Long.toString(lock.getAverageBlock()) + " ns"); if
+				 * (++count == TABLE_LIMIT) { break; } }
+				 */
+				if (locks.size() > SummaryInfo.LOCK_LIMIT) {
 					buildQueryLink(
 							lockTable.row().td().colspan(4),
-							String.format("%d more results.", locks.size()
-									- TABLE_LIMIT), LOCK_CONTENTION_QUERY);
+							String.format("More results...", locks.size()
+									- SummaryInfo.LOCK_LIMIT),
+							LOCK_CONTENTION_QUERY);
 				}
 			}
 
+		}
+
+	}
+
+	private static class LockTableRowProvider implements RowProvider<Lock> {
+
+		@Override
+		public void headerRow(final Row row) {
+			row.th("Lock").th("Times Acquired").th("Average Block Time")
+					.th("Total Block Time");
+		}
+
+		@Override
+		public void row(final Table table, final Lock lock) {
+			Row lockRow = table.row();
+			lockRow.td().clazz("depth1").text(lock.getName());
+			lockRow.td(lock.getAcquired());
+			lockRow.td(lock.getAverageBlock() + " ns");
+			lockRow.td(lock.getBlockTime() + " ns");
+			String curPakkage = null;
+			long pakkageDuration = 0, clazzDuration = 0;
+			Row pakkageRow = null;
+			Row clazzRow = null;
+			String curClazz = null;
+			for (ContentionSite s : lock.getContentionSites()) {
+				Site site = s.getSite();
+				String pakkage = site.getPackage();
+				String clazz = site.getClazz();
+				if (!pakkage.equals(curPakkage)) {
+					if (pakkageRow != null) {
+						pakkageRow.td().span().text(pakkageDuration + " ns");
+					}
+					pakkageDuration = clazzDuration = 0;
+					curPakkage = pakkage;
+					curClazz = null;
+					clazzRow = null;
+					pakkageRow = table.row();
+					pakkageRow.td().clazz("depth2").span().clazz("package")
+							.text(pakkage);
+					for (int i = 0; i < 2; i++) {
+						pakkageRow.td();
+					}
+				}
+				if (!clazz.equals(curClazz)) {
+					if (clazzRow != null) {
+						clazzRow.td().span().text(clazzDuration + " ns");
+					}
+					curClazz = clazz;
+					clazzRow = table.row();
+					clazzRow.td().clazz("depth3").span().clazz("class")
+							.text(clazz);
+					for (int i = 0; i < 2; i++) {
+						clazzRow.td();
+					}
+				}
+				Row r = table.row();
+				Container locTd = r.td().clazz("depth4").clazz("leaf");
+				for (int i = 0; i < 2; i++) {
+					r.td();
+				}
+				Span span = locTd.span();
+				span.text(" at " + site.getLocation());
+				buildCodeLink(span, "(" + site.getFile() + ":" + site.getLine()
+						+ ")", "Package", site.getPackage(), "Class",
+						site.getClazz(), "Method", site.getLocation(), "Line",
+						Integer.toString(site.getLine()));
+				r.td().text(s.getDurationNs() + " ns");
+				pakkageDuration += s.getDurationNs();
+				clazzDuration += s.getDurationNs();
+			}
+		}
+
+		@Override
+		public int numCols(final Lock t) {
+			return 4;
 		}
 
 	}
@@ -259,7 +328,8 @@ public final class WriteHtmlOverview implements IPostPrep {
 
 		@Override
 		public List<String> getJavaScriptImports() {
-			return Collections.singletonList("graph-data.js");
+			return Arrays.asList(new String[] { "excanvas.js", "jit.js",
+					"graph-data.js" });
 		}
 
 		@Override
@@ -640,7 +710,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 
 		@Override
 		public List<String> getJavaScriptImports() {
-			return Arrays.asList(new String[] { "excanvas.js", "jit.js",
+			return Arrays.asList(new String[] {
 					"timeline_2.3.0/timeline_js/timeline-api.js?bundle=true",
 					"timeline-data.js" });
 		}
@@ -864,6 +934,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 
 		@Override
 		void displaySection(final Container c) {
+			int TABLE_LIMIT = 100;
 			Table threadTable = c.table();
 			threadTable.header().th("Thread").th("Time Blocked");
 			int count = 0;
@@ -1198,7 +1269,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 				.getContextClassLoader();
 		final URL vis = loader.getResource("/com/surelogic/common/js/jit.js");
 		final URL jquery = loader
-				.getResource("/com/surelogic/common/js/jquery-1.4.2.min.js");
+				.getResource("/com/surelogic/common/js/jquery-1.5.1.min.js");
 		final URL canvas = loader
 				.getResource("/com/surelogic/common/js/excanvas.js");
 		final URL cycles = loader
@@ -1207,7 +1278,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 		FileUtility.copy(canvas, new File(htmlDirectory, "excanvas.js"));
 		FileUtility.copy(vis, new File(htmlDirectory, "jit.js"));
 		FileUtility
-				.copy(jquery, new File(htmlDirectory, "jquery-1.4.2.min.js"));
+				.copy(jquery, new File(htmlDirectory, "jquery-1.5.1.min.js"));
 
 	}
 

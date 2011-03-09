@@ -150,6 +150,18 @@ ul.deadlock-trace-menu li {
    color: white;
 }
 
+#threads li.selected {
+    background-color: #deb887;
+}
+
+#threads li {
+    cursor: pointer;
+}
+
+#thread-div > h3, #coverage-div > h3 {
+    text-align: left;
+}
+
 .emph {
    font-weight: bold;
 }

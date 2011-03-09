@@ -85,9 +85,14 @@ function toggleTree() {
    }
 }
 
-function jsonOutline(outline,json,filter) {
-    if(filter == undefined) {
-        filter = function() {return true;};
+function jsonOutline(outline,json,threads) {
+    function filter(node) {
+        for (var i = 0; i < node.threadsSeen.length; i++) {
+            if(threads[node.threadsSeen[i]]) {
+                return true;
+            }
+        } 
+        return false;
     }
     outline.get(0).json = json;
     outline.find('> ul').empty();
@@ -96,12 +101,15 @@ function jsonOutline(outline,json,filter) {
 
 
 function outlineExpand(node,filter) {
-    node.find('> .icon').attr('src', O_DOWN).click(outlineCollapse($(this).parent(), filter));
+    node.find('> .icon').attr('src', O_DOWN).one('click', 
+                                                 function() {
+                                                     outlineCollapse($(this).parent(), filter);
+                                                 });
     var childList = node.find('> ul');
     var json = node.get(0).json;
-    for(var node in json) {
+    for(var n in json) {
         //this is a child of the selected node
-        var elem = json[node];
+        var elem = json[n];
         if(filter(elem)) {
             var hasChildren = false;
             for(var child in elem.children) {
@@ -110,13 +118,17 @@ function outlineExpand(node,filter) {
             }
             var li = childList.append(siteTag(hasChildren, elem.site)).children().last();
             li.get(0).json = elem.children;
-            li.find('> .icon').click(outlineExpand($(this).parent(), filter));
+            li.find('> .icon').one('click', 
+                                   function() {outlineExpand($(this).parent(), filter);});
         }
     }
 }
 
 function outlineCollapse(node, filter) {
-    node.find('> .icon').attr('src', O_RIGHT).click(outlineExpand($(this).parent(), filter));
+    node.find('> .icon').attr('src', O_RIGHT).one('click',
+                                                  function() {
+                                                      outlineExpand(node, filter);
+                                                  });
     node.find('> ul').empty();
 }
 
@@ -321,7 +333,7 @@ function loadDeadlockGraph(data) {
    }
    var edgeUl = $('#deadlock-edges .deadlock-trace-menu');
    edgeUl.empty();
-   for(var i = 0; i < data.edges.length; i++) {
+   for(i = 0; i < data.edges.length; i++) {
       edgeUl.append('<li><a href=\"#deadlock-trace-' + data.edges[i].id + '">' +
                     data.edges[i].name + '</a></li>');
    }
@@ -508,16 +520,31 @@ function initDeadlockGraphTab() {
 }
 
 function initCoverageTab() {
-    jsonOutline($('#coverage'), coverage);
     var threadDiv = $('#threads');
-    for (var e in threads) {
-        threadDiv.append('<li id="' + e + '">' + threads[e].name + '</li>');
+    var selectedThreads = {};
+    for (var t in threads) {
+        threadDiv.append('<li id="' + t + '">' + threads[t].name + '</li>');
+        selectedThreads[t] = true;
     }
+    jsonOutline($('#coverage'), coverage, selectedThreads);
     threadDiv.find('li').click(
-        function () {
-            var threadId = $(this).attr('id');
-            jsonOutline($('#coverage'), coverage, function(node) {return $.inArray(threadId, node.threadsSeen); });
-        });
+        function (e) {
+            var threadId = Number($(this).attr('id'));
+            if (e.shiftKey) {
+                selectedThreads[threadId] = !selectedThreads[threadId];
+                $('#' + threadId).toggleClass('selected');
+            } else {
+                for (var t in threads) {
+                    selectedThreads[t]= false;
+                    $('#' + t).removeClass('selected');
+                }
+                selectedThreads[threadId] = true;
+                $('#' + threadId).addClass('selected');
+            }
+            jsonOutline($('#coverage'), coverage, selectedThreads);
+        }).
+        mousedown(function(e) {e.preventDefault();})
+    ;
 }
 
 $(document).ready(
@@ -530,29 +557,29 @@ $(document).ready(
 
       // We load timeline separately b/c it takes too long to do on startup
 
-      $('.sectionList > li.selected > a[href=index2.html]').each(
+      $('.sectionList > li.selected > a[href="index2.html"]').each(
          function () {
                initDeadlockGraphTab();
          }
       );
       //Init race condition logic
-      $('.sectionList > li.selected > a[href=index3.html]').each(
+      $('.sectionList > li.selected > a[href="index3.html"]').each(
          function () {
                initRaceConditionTab();
          }
       );
       //Init bad publishes logic
-      $('.sectionList > li.selected > a[href=index4.html]').each(
+      $('.sectionList > li.selected > a[href="index4.html"]').each(
          function () {
                initBadPublishTab();
          }
       );
-      $('.sectionList > li.selected > a[href=index5.html]').each(
+      $('.sectionList > li.selected > a[href="index5.html"]').each(
          function () {
                loadTimeline();
          }
       );
-      $('.sectionList > li.selected > a[href=index6.html]').each(
+      $('.sectionList > li.selected > a[href="index6.html"]').each(
          function () {
              initCoverageTab();
          }

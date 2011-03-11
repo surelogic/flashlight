@@ -837,13 +837,11 @@ public final class WriteHtmlOverview implements IPostPrep {
 	class CoverageSection extends Section {
 
 		private final CoverageSite site;
-		private final List<ContentionSite> contentionSites;
 		private final List<Thread> threads;
 
 		public CoverageSection(final SummaryInfo info) {
 			super("Coverage");
 			this.site = info.getThreadCoverage();
-			contentionSites = info.getContentionSites();
 			threads = info.getThreads();
 		}
 
@@ -891,15 +889,6 @@ public final class WriteHtmlOverview implements IPostPrep {
 
 		void writeThreadCoverage(final PrintWriter writer) throws IOException {
 			JsonBuilder builder = new JsonBuilder();
-			JArray jcsList = builder.array("contentionSites");
-			for (ContentionSite cs : contentionSites) {
-				JObject jcs = jcsList.object();
-				jcs.val("durationNs", cs.getDurationNs());
-				Site site = cs.getSite();
-				jcs.object("site", "clazz", site.getClazz(), "pakkage",
-						site.getPackage(), "file", site.getFile(), "line",
-						site.getLine(), "location", site.getLocation());
-			}
 			JObject jThreads = builder.object("threads");
 			for (Thread t : threads) {
 				JObject jThread = jThreads.object(t.getId());

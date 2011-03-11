@@ -39,7 +39,6 @@ public class SummaryInfo {
 	private final List<LockSetEvidence> emptyLockSets;
 	private final List<BadPublishEvidence> badPublishes;
 	private final List<DeadlockEvidence> deadlocks;
-	private final List<ContentionSite> contentionSites;
 	private final String threadCount;
 	private final String objectCount;
 	private final String classCount;
@@ -48,17 +47,14 @@ public class SummaryInfo {
 	public SummaryInfo(final List<Lock> locks, final List<Thread> threads,
 			final List<LockSetEvidence> emptyLockSetFields,
 			final List<BadPublishEvidence> badPublishes,
-			final List<DeadlockEvidence> deadlocks,
-			final List<ContentionSite> contentionSites,
-			final String objectCount, final String classCount,
-			final CoverageSite coverageRoot) {
+			final List<DeadlockEvidence> deadlocks, final String objectCount,
+			final String classCount, final CoverageSite coverageRoot) {
 		this.locks = locks;
 		this.threads = threads;
 		this.threadCount = Integer.toString(threads.size());
 		this.emptyLockSets = emptyLockSetFields;
 		this.badPublishes = badPublishes;
 		this.deadlocks = deadlocks;
-		this.contentionSites = contentionSites;
 		this.objectCount = objectCount;
 		this.classCount = classCount;
 		this.root = coverageRoot;
@@ -82,10 +78,6 @@ public class SummaryInfo {
 
 	public List<DeadlockEvidence> getDeadlocks() {
 		return deadlocks;
-	}
-
-	public List<ContentionSite> getContentionSites() {
-		return contentionSites;
 	}
 
 	public String getThreadCount() {
@@ -138,11 +130,6 @@ public class SummaryInfo {
 					"Deadlock.lockCycles", new DeadlockEvidenceHandler(q))
 					.call();
 
-			List<ContentionSite> contentionSites = q.prepared(
-					"CoverageInfo.contentionHotSpots",
-					LimitRowHandler.from(new ContentionSitesHandler(),
-							CONTENTION_SITE_LIMIT)).call();
-
 			String classCount = q.prepared("SummaryInfo.classCount",
 					new StringResultHandler()).call();
 			String objectCount = q.prepared("SummaryInfo.objectCount",
@@ -157,7 +144,7 @@ public class SummaryInfo {
 					q.prepared("CoverageInfo.lockCoverage",
 							new CoverageHandler()).call());
 			return new SummaryInfo(locks, threads, emptyLockSets, badPublishes,
-					deadlocks, contentionSites, objectCount, classCount, root);
+					deadlocks, objectCount, classCount, root);
 		}
 
 		void process(final Query q, final CoverageSite site,
@@ -565,23 +552,17 @@ public class SummaryInfo {
 		}
 	}
 
-	/**
-	 * The site of some amount of lock contention.
-	 * 
-	 * @author nathan
-	 * 
-	 */
-	public static class ContentionSite {
-		private final Site s;
+	public static class ThreadDuration {
+		private final String threadId;
 		private final long durationNs;
 
-		public ContentionSite(final Site s, final long durationNs) {
-			this.s = s;
-			this.durationNs = durationNs;
+		public String getThreadId() {
+			return threadId;
 		}
 
-		public Site getSite() {
-			return s;
+		public ThreadDuration(final String threadId, final long durationNs) {
+			this.threadId = threadId;
+			this.durationNs = durationNs;
 		}
 
 		public long getDurationNs() {
@@ -590,17 +571,75 @@ public class SummaryInfo {
 
 	}
 
-	private static class ContentionSitesHandler implements
-			RowHandler<ContentionSite> {
-		private final SiteHandler sh = new SiteHandler();
+	/**
+	 * The site of some amount of lock contention.
+	 * 
+	 * @author nathan
+	 * 
+	 */
+	public static class ContentionSite {
+		private final Site s;
+		private final List<ThreadDuration> durations;
 
-		@Override
-		public ContentionSite handle(final Row r) {
-			long duration = r.nextLong();
-			Site site = sh.handle(r);
-			return new ContentionSite(site, duration);
+		public ContentionSite(final Site s) {
+			this.s = s;
+			this.durations = new ArrayList<ThreadDuration>();
 		}
 
+		public Site getSite() {
+			return s;
+		}
+
+		public long getDurationNs() {
+			long durationNs = 0;
+			for (ThreadDuration duration : durations) {
+				durationNs += duration.getDurationNs();
+			}
+			return durationNs;
+		}
+
+		public List<ThreadDuration> getDurations() {
+			return durations;
+		}
+
+	}
+
+	private static class ContentionSitesHandler implements
+			ResultHandler<List<ContentionSite>> {
+		private final SiteHandler sh = new SiteHandler();
+		private final int limit;
+
+		public ContentionSitesHandler(final int contentionSiteLimit) {
+			this.limit = contentionSiteLimit;
+		}
+
+		@Override
+		public List<ContentionSite> handle(final Result result) {
+			List<ContentionSite> sites = new ArrayList<ContentionSite>();
+			ContentionSite cs = null;
+			Site s = null;
+			int count = 0;
+			for (Row r : result) {
+				long duration = r.nextLong();
+				String thread = r.nextString();
+				Site site = sh.handle(r);
+				if (!site.equals(s)) {
+					if (count++ >= limit) {
+						break;
+					}
+					s = site;
+					if (cs != null) {
+						sites.add(cs);
+					}
+					cs = new ContentionSite(s);
+				}
+				cs.getDurations().add(new ThreadDuration(thread, duration));
+			}
+			if (cs != null) {
+				sites.add(cs);
+			}
+			return sites;
+		}
 	}
 
 	private static class BadPublishEvidenceHandler implements
@@ -937,7 +976,7 @@ public class SummaryInfo {
 
 		public LockContentionHandler(final Query q) {
 			prepared = q.prepared("SummaryInfo.lockContentionSites",
-					new ContentionSitesHandler());
+					new ContentionSitesHandler(CONTENTION_SITE_LIMIT));
 		}
 
 		@Override

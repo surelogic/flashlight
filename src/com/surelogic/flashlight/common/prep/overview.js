@@ -118,8 +118,10 @@ function outlineExpand(node,filter) {
             }
             var li = childList.append(siteTag(hasChildren, elem.site)).children().last();
             li.get(0).json = elem.children;
+            if(hasChildren) {
             li.find('> .icon').one('click', 
                                    function() {outlineExpand($(this).parent(), filter);});
+            }
         }
     }
 }

@@ -168,8 +168,12 @@ ul.deadlock-trace-menu li {
     padding: 1px 0px;
 }
 
-#thread-div > h3, #coverage-div > h3 {
+#thread-td > h3, #coverage-td > h3 {
     text-align: left;
+}
+
+#thread-td {
+    padding: 0px 0px;
 }
 
 .emph {
@@ -266,11 +270,6 @@ ul.sectionList a:hover {
 
 .treeTable {
    width: 100%;
-}
-
-
-#coverage-div, #thread-div {
-   float: left;
 }
 
 .cell-text {

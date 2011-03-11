@@ -861,12 +861,14 @@ public final class WriteHtmlOverview implements IPostPrep {
 				c.p().clazz("info")
 						.text("There is no coverage data for this run.");
 			} else {
-				Div threadDiv = c.div();
-				threadDiv.id("thread-div");
+				Table threadTable = c.table();
+				Row threadRow = threadTable.row();
+				TD threadDiv = threadRow.td();
+				threadDiv.id("thread-td");
 				threadDiv.h(3).text("Threads");
 				threadDiv.ul().id("threads");
-				Div coverageDiv = c.div();
-				coverageDiv.id("coverage-div");
+				TD coverageDiv = threadRow.td();
+				coverageDiv.id("coverage-td");
 				coverageDiv.h(3).text("Code Coverage");
 				coverageDiv.div().id("coverage").ul();
 			}

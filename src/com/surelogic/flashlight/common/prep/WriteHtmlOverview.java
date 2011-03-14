@@ -276,6 +276,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 					if (clazzRow != null) {
 						clazzRow.td(clazzDuration + " ns");
 					}
+					clazzDuration = 0;
 					curClazz = clazz;
 					clazzRow = table.row();
 					clazzRow.td().clazz("depth3").span().clazz("class")

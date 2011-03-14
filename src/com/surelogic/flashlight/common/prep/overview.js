@@ -524,9 +524,24 @@ function initDeadlockGraphTab() {
 function initCoverageTab() {
     var threadDiv = $('#threads');
     var selectedThreads = {};
+    var threadList = [];
     for (var t in threads) {
-        threadDiv.append('<li id="' + t + '">' + threads[t].name + '</li>');
+        threadList.push({id: t, name: threads[t].name});
         selectedThreads[t] = true;
+    }
+    threadList.sort(function(a,b) {
+        var an = a.name;
+        var bn = b.name;
+        if (an < bn) {
+            return -1;
+        } else if (an > bn) {
+            return 1;
+        } else {
+            return 0;
+        }
+    });
+    for (var i = 0; i < threadList.length; i++) {
+        threadDiv.append('<li id="' + threadList[i].id + '">' + threadList[i].name + '</li>');
     }
     jsonOutline($('#coverage'), coverage, selectedThreads);
     threadDiv.find('li').click(

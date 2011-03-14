@@ -607,26 +607,17 @@ public class SummaryInfo {
 	private static class ContentionSitesHandler implements
 			ResultHandler<List<ContentionSite>> {
 		private final SiteHandler sh = new SiteHandler();
-		private final int limit;
-
-		public ContentionSitesHandler(final int contentionSiteLimit) {
-			this.limit = contentionSiteLimit;
-		}
 
 		@Override
 		public List<ContentionSite> handle(final Result result) {
 			List<ContentionSite> sites = new ArrayList<ContentionSite>();
 			ContentionSite cs = null;
 			Site s = null;
-			int count = 0;
 			for (Row r : result) {
-				long duration = r.nextLong();
-				String thread = r.nextString();
-				Site site = sh.handle(r);
+				final long duration = r.nextLong();
+				final String thread = r.nextString();
+				final Site site = sh.handle(r);
 				if (!site.equals(s)) {
-					if (count++ >= limit) {
-						break;
-					}
 					s = site;
 					if (cs != null) {
 						sites.add(cs);
@@ -976,7 +967,7 @@ public class SummaryInfo {
 
 		public LockContentionHandler(final Query q) {
 			prepared = q.prepared("SummaryInfo.lockContentionSites",
-					new ContentionSitesHandler(CONTENTION_SITE_LIMIT));
+					new ContentionSitesHandler());
 		}
 
 		@Override

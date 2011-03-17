@@ -363,7 +363,7 @@ public class InstrumentArchive extends Task {
 							InstrumentationConstants.FL_SOURCE_RESOURCE)));
 			for (File f : sourceDir.listFiles()) {
 				zo.putNextEntry(new ZipEntry(f.getName()));
-				FileUtility.copyToStream(f.getName(), new FileInputStream(f),
+				FileUtility.copyToStream(false, f.getName(), new FileInputStream(f),
 						f.getName(), zo, false);
 				zo.closeEntry();
 			}

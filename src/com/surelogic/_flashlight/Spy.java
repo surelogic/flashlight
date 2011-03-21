@@ -18,66 +18,66 @@ import java.util.Map;
  */
 public final class Spy extends Thread {
 
-	Spy() {
-		super("flashlight-spy");
-	}
+    Spy() {
+        super("flashlight-spy");
+    }
 
-	private volatile boolean f_shutdownRequested = false;
+    private volatile boolean f_shutdownRequested = false;
 
-	/**
-	 * Spy every five seconds.
-	 */
-	private static final int PERIODIC = 5000;
+    /**
+     * Spy every five seconds.
+     */
+    private static final int PERIODIC = 5000;
 
-	@Override
-	public void run() {
-		Store.flashlightThread();
+    @Override
+    public void run() {
+        Store.flashlightThread();
 
-		while (true) {
-			try {
-				Thread.sleep(PERIODIC);
-			} catch (InterruptedException e) {
-				// ignore, likely during a shutdown that this thread doesn't
-				// initiate.
-			}
-			if (f_shutdownRequested) {
-				break;
-			}
-			final Map<Thread, StackTraceElement[]> threadToStackTrace = Thread
-					.getAllStackTraces();
-			boolean timeToShutdown = true; // assumption
-			for (Thread t : threadToStackTrace.keySet()) {
-				if (!t.isDaemon()) {
-					final boolean current = t == Thread.currentThread();
+        while (true) {
+            try {
+                Thread.sleep(PERIODIC);
+            } catch (InterruptedException e) {
+                // ignore, likely during a shutdown that this thread doesn't
+                // initiate.
+            }
+            if (f_shutdownRequested) {
+                break;
+            }
+            final Map<Thread, StackTraceElement[]> threadToStackTrace = Thread
+                    .getAllStackTraces();
+            boolean timeToShutdown = true; // assumption
+            for (Thread t : threadToStackTrace.keySet()) {
+                if (!t.isDaemon()) {
+                    final boolean current = t == Thread.currentThread();
 
-					final boolean flashlightThread = t.getName().startsWith(
-							"flashlight-");
+                    final boolean flashlightThread = t.getName().startsWith(
+                            "flashlight-");
 
-					/*
-					 * The "DestroyJavaVM" thread seems to hang out waiting
-					 * until the program is done. This check is flaky...and
-					 * probably not all that reliable, portable, etc.
-					 */
-					final boolean destroyJavaVM = t.getName().equalsIgnoreCase(
-							"DestroyJavaVM");
+                    /*
+                     * The "DestroyJavaVM" thread seems to hang out waiting
+                     * until the program is done. This check is flaky...and
+                     * probably not all that reliable, portable, etc.
+                     */
+                    final boolean destroyJavaVM = t.getName().equalsIgnoreCase(
+                            "DestroyJavaVM");
 
-					if (!current && !flashlightThread && !destroyJavaVM) {
-						timeToShutdown = false;
-					}
-				}
-			}
-			if (timeToShutdown) {
-				Store.shutdown();
-			}
-		}
-	}
+                    if (!current && !flashlightThread && !destroyJavaVM) {
+                        timeToShutdown = false;
+                    }
+                }
+            }
+            if (timeToShutdown) {
+                Store.shutdown();
+            }
+        }
+    }
 
-	/**
-	 * Signals that this spy thread should be shutdown. This method returns
-	 * immediately.
-	 */
-	void requestShutdown() {
-		f_shutdownRequested = true;
-		this.interrupt(); // wake up
-	}
+    /**
+     * Signals that this spy thread should be shutdown. This method returns
+     * immediately.
+     */
+    void requestShutdown() {
+        f_shutdownRequested = true;
+        this.interrupt(); // wake up
+    }
 }

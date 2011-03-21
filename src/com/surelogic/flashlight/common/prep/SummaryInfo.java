@@ -113,14 +113,15 @@ public class SummaryInfo {
 					new FieldHandler()).call();
 			for (Field f : nonstatics) {
 				emptyLockSets.add(q.prepared("SummaryInfo.likelyLocks",
-						new LockSetEvidenceHandler(q, f))
-						.call(f.id, f.id, f.id));
+						new LockSetEvidenceHandler(q, f)).call(f.id,
+						f.receiver, f.id, f.receiver, f.id, f.receiver));
 			}
 			List<Field> statics = q.prepared("SummaryInfo.emptyStaticLockSets",
 					new FieldHandler()).call();
 			for (Field f : statics) {
-				emptyLockSets.add(q.prepared("SummaryInfo.likelyLocks",
-						new LockSetEvidenceHandler(q, f)).call(f.id));
+				emptyLockSets.add(q.prepared("SummaryInfo.likelyStaticLocks",
+						new LockSetEvidenceHandler(q, f))
+						.call(f.id, f.id, f.id));
 			}
 			Collections.sort(emptyLockSets);
 			List<BadPublishEvidence> badPublishes = q.prepared(
@@ -360,12 +361,13 @@ public class SummaryInfo {
 					l.getHeldAt().addAll(
 							q.prepared("SummaryInfo.lockInstanceHeldAt",
 									new LockSetSiteHandler()).call(
-									field.getId(), l.getId(), field.getId(),
-									l.getId()));
+									field.getId(), field.getReceiver(),
+									l.getId(), field.getId(),
+									field.getReceiver(), l.getId()));
 					l.getNotHeldAt().addAll(
 							q.prepared("SummaryInfo.lockInstanceNotHeldAt",
 									new SiteHandler()).call(field.getId(),
-									l.getId(), l.getId()));
+									field.getReceiver(), l.getId(), l.getId()));
 				}
 				e.getLikelyLocks().add(l);
 			}
@@ -637,6 +639,7 @@ public class SummaryInfo {
 			RowHandler<BadPublishEvidence> {
 
 		private final Query q;
+		private final FieldHandler handler = new FieldHandler();
 
 		BadPublishEvidenceHandler(final Query q) {
 			this.q = q;
@@ -644,8 +647,7 @@ public class SummaryInfo {
 
 		@Override
 		public BadPublishEvidence handle(final Row r) {
-			Field f = new Field(r.nextString(), r.nextString(), r.nextString(),
-					r.nextLong(), r.nextBoolean());
+			Field f = handler.handle(r);
 			final BadPublishEvidence e = new BadPublishEvidence(f);
 			q.prepared("SummaryInfo.underConstructionAccesses",
 					new NullRowHandler() {
@@ -747,14 +749,17 @@ public class SummaryInfo {
 		private final String name;
 		private final long id;
 		private final boolean isStatic;
+		private final Long receiver;
 
 		public Field(final String pakkage, final String clazz,
-				final String name, final long id, final boolean isStatic) {
+				final String name, final long id, final boolean isStatic,
+				final Long receiver) {
 			this.pakkage = pakkage;
 			this.clazz = clazz;
 			this.name = name;
 			this.id = id;
 			this.isStatic = isStatic;
+			this.receiver = receiver;
 		}
 
 		@Override
@@ -777,6 +782,10 @@ public class SummaryInfo {
 
 		public boolean isStatic() {
 			return isStatic;
+		}
+
+		public Long getReceiver() {
+			return receiver;
 		}
 
 		@Override
@@ -854,8 +863,16 @@ public class SummaryInfo {
 
 		@Override
 		public Field handle(final Row r) {
-			return new Field(r.nextString(), r.nextString(), r.nextString(),
-					r.nextLong(), r.nextBoolean());
+			String pakkage = r.nextString();
+			String clazz = r.nextString();
+			String field = r.nextString();
+			long id = r.nextLong();
+			boolean isStatic = r.nextBoolean();
+			Long receiver = null;
+			if (!isStatic) {
+				receiver = r.nullableLong();
+			}
+			return new Field(pakkage, clazz, field, id, isStatic, receiver);
 		}
 
 	}

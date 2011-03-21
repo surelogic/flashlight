@@ -339,6 +339,7 @@ function loadDeadlockGraph(data) {
       edgeUl.append('<li><a href=\"#deadlock-trace-' + data.edges[i].id + '">' +
                     data.edges[i].name + '</a></li>');
    }
+
    $(".deadlock-trace-menu li a").click(
       function (event) {
          event.preventDefault();
@@ -347,18 +348,23 @@ function loadDeadlockGraph(data) {
          $(jq(edgeId)).show();
          fd.graph.eachNode(function (n) {
           n.eachAdjacency(function (adj) {
-           var edgeCheck = '#deadlock-trace-' + adj.data.edgeId;
-           if(edgeCheck == edgeId) {
-            adj.setDataset('end', {
-             'color': ACTIVE_COL,
-             'lineWidth': ACTIVE_WIDTH
-            });
-           } else {
-            adj.setDataset('end', {
-             'color': INACTIVE_COL,
-             'lineWidth': INACTIVE_WIDTH
-            });
-           }
+              var found = false;
+              for(var i = 0; i < adj.data.edgeIds.length; i++) {
+                  var edgeCheck = '#deadlock-trace-' + adj.data.edgeIds[i];
+                  if(edgeCheck == edgeId) {
+                      found = true;
+                      adj.setDataset('end', {
+                          'color': ACTIVE_COL,
+                          'lineWidth': ACTIVE_WIDTH
+                      });
+                  }
+              }
+              if (!found) {
+                  adj.setDataset('end', {
+                      'color': INACTIVE_COL,
+                      'lineWidth': INACTIVE_WIDTH
+                  });
+              }
           });
          });
          fd.fx.animate({

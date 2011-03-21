@@ -165,7 +165,7 @@ ul.deadlock-trace-menu li {
 #threads li {
     cursor: pointer;
     color: blue;
-    padding: 1px 0px;
+    padding: 1px 0px 1px 2px;
 }
 
 #thread-td > h3, #coverage-td > h3 {
@@ -282,4 +282,8 @@ ul.sectionList a:hover {
 
 .cell-date {
 	text-align: center;
+}
+
+#lockTable tr:last-child td{
+    border-top: 1px solid #D3D3D3;
 }

@@ -341,20 +341,30 @@ public final class FlashlightVMRunner implements IVMRunner {
 		 * parent of any other entry that is marked for instrumentation.
 		 * 
 		 * Could be expensive: O(n^2)
+		 * 
+		 * 2011-03-22: Jar files that are nested inside of directories are added
+		 * to a special list so that they can be forced to instructed last.  This
+		 * way we make sure the handling of the directories doesn't overwrite the
+		 * instrumented jar file.
 		 */
 		final List<String> allInstrument = new LinkedList<String>();
 		allInstrument.addAll(instrumentUser);
 		allInstrument.addAll(instrumentBoot);
+		final List<String> instrumentLast = new ArrayList<String>();
 		final StringBuilder sb = new StringBuilder();
 		for (final String potentialParent : allInstrument) {
 			final String test = potentialParent + File.separator;
 			for (final String potentialChild : allInstrument) {
 				if (potentialChild.startsWith(test)) {
-					sb.append("Classpath entry ");
-					sb.append(potentialParent);
-					sb.append(" is instrumented and nests the instrumented classpath entry ");
-					sb.append(potentialChild);
-					sb.append("  ");
+				  if ((new File(potentialChild)).isDirectory()) {
+				    sb.append("Classpath entry ");
+				    sb.append(potentialParent);
+				    sb.append(" is instrumented and nests the instrumented classpath directory entry ");
+				    sb.append(potentialChild);
+				    sb.append("  ");
+				  } else { // nested jar file
+				    instrumentLast.add(potentialChild);
+				  }
 				}
 			}
 		}
@@ -447,7 +457,7 @@ public final class FlashlightVMRunner implements IVMRunner {
 					configBuilder.getConfiguration(), messenger, fieldsFile,
 					sitesFile, progress);
 			// Init the RewriteManager
-			initializeRewriteManager(manager, entryMap);
+			initializeRewriteManager(manager, entryMap, instrumentLast);
 
 			try {
 				final Map<String, Map<String, Boolean>> badDups = manager
@@ -507,39 +517,59 @@ public final class FlashlightVMRunner implements IVMRunner {
 	}
 
 	private void initializeRewriteManager(final RewriteManager manager,
-			final Map<String, Entry> entryMap) {
+			final Map<String, Entry> entryMap, final List<String> instrumentLast) {
+	  /*
+     * 2011-03-22: Jar files that are nested inside of directories are added
+     * to instrumentLast so that they can be forced to instructed last.  This
+     * way we make sure the handling of the directories doesn't overwrite the
+     * instrumented jar file.
+	   */
 		for (final String cpEntry : classpath) {
 			final File asFile = new File(cpEntry);
-			if (instrumentUser.contains(cpEntry)
-					|| instrumentBoot.contains(cpEntry)) {
-				// Instrument the entry
-				final Entry mapped = entryMap.get(cpEntry);
-				final File destFile = new File(mapped.outputName);
-				if (asFile.isDirectory()) {
-					if (mapped.asJar) {
-						manager.addDirToJar(asFile, destFile, null);
-					} else {
-						manager.addDirToDir(asFile, destFile);
-					}
-				} else {
-					if (mapped.asJar) {
-						manager.addJarToJar(asFile, destFile, null);
-					} else {
-						manager.addJarToDir(asFile, destFile, null);
-					}
-				}
-			} else {
-				// Only scan it
-				if (asFile.isDirectory()) {
-					manager.addClasspathDir(asFile);
-				} else {
-					manager.addClasspathJar(asFile);
-				}
+			if (!instrumentLast.contains(cpEntry)) {
+  			if (instrumentUser.contains(cpEntry)
+  					|| instrumentBoot.contains(cpEntry)) {
+  				// Instrument the entry
+  				addToRewriteManager(manager, entryMap, cpEntry, asFile);
+  			} else {
+  				// Only scan it
+  				if (asFile.isDirectory()) {
+  					manager.addClasspathDir(asFile);
+  				} else {
+  					manager.addClasspathJar(asFile);
+  				}
+  			}
 			}
+		}
+		
+		// Add the instrumentLast entries to the manager
+		for (final String cpEntry : instrumentLast) {
+      final File asFile = new File(cpEntry);
+      addToRewriteManager(manager, entryMap, cpEntry, asFile);
 		}
 	}
 
-	private String[] updateClassPath(final VMRunnerConfiguration configuration,
+  public void addToRewriteManager(final RewriteManager manager,
+      final Map<String, Entry> entryMap, final String cpEntry, final File asFile) {
+    final Entry mapped = entryMap.get(cpEntry);
+    final File destFile = new File(mapped.outputName);
+    if (asFile.isDirectory()) {
+    	if (mapped.asJar) {
+    		manager.addDirToJar(asFile, destFile, null);
+    	} else {
+    		manager.addDirToDir(asFile, destFile);
+    	}
+    } else {
+    	if (mapped.asJar) {
+    		manager.addJarToJar(asFile, destFile, null);
+    	} else {
+    		manager.addJarToDir(asFile, destFile, null);
+    	}
+    }
+  }
+
+	@SuppressWarnings("unused")
+  private String[] updateClassPath(final VMRunnerConfiguration configuration,
 			final Map<String, Entry> entryMap) {
 		/*
 		 * (1) Replace each project "binary output directory" with its
@@ -767,7 +797,8 @@ public final class FlashlightVMRunner implements IVMRunner {
 		return newConfig;
 	}
 
-	private Map updateVMSpecificAttributesMap(final Map originalMap,
+	@SuppressWarnings("unused")
+  private Map updateVMSpecificAttributesMap(final Map originalMap,
 			final Map<String, Entry> entryMap) {
 		Map original = originalMap;
 		if (original == null) {

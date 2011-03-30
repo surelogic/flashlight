@@ -487,35 +487,29 @@ public final class WriteHtmlOverview implements IPostPrep {
         @Override
         void displaySection(final Container c) {
             c.div().id("lockset-outline").ul();
+            c.hr();
             c.div().id("lockset-locks");
             if (!fields.isEmpty()) {
-                displayClassTree(fields, c, new LockSetLink());
-                c.hr();
                 for (LockSetEvidence field : fields) {
-                    if (field.getLikelyLocks().isEmpty()) {
-                        c.div()
-                                .id("locksets-" + field.getPackage() + "."
-                                        + field.getClazz() + "."
-                                        + field.getName())
-                                .clazz("info")
-                                .clazz("locksetoutline")
-                                .text("No locks were held when this field was accessed.");
-                    } else {
-                        displayTreeTable(
-                                Collections.singletonList(field),
-                                c.table()
-                                        .clazz("locksetoutline")
-                                        .id("locksets-" + field.getPackage()
-                                                + "." + field.getClazz() + "."
-                                                + field.getName()),
-                                new LockSetRowProvider());
-                    }
+                    /*
+                     * if (field.getLikelyLocks().isEmpty()) { c.div()
+                     * .id("locksets-" + field.getPackage() + "." +
+                     * field.getClazz() + "." + field.getName()) .clazz("info")
+                     * .clazz("locksetoutline")
+                     * .text("No locks were held when this field was accessed."
+                     * ); } else { displayTreeTable(
+                     * Collections.singletonList(field), c.table()
+                     * .clazz("locksetoutline") .id("locksets-" +
+                     * field.getPackage() + "." + field.getClazz() + "." +
+                     * field.getName()), new LockSetRowProvider()); }
+                     */
                 }
             } else {
                 c.p()
                         .clazz("info")
                         .text("There are no fields accessed concurrently with an empty lock set in this run.");
             }
+
             PrintWriter locksets = null;
             try {
                 locksets = new PrintWriter(new File(htmlDirectory,
@@ -558,8 +552,10 @@ public final class WriteHtmlOverview implements IPostPrep {
                 jField.val("field", field.getName());
                 jField.val("qualified",
                         pakkage + "." + clazz + "." + field.getName());
+                JObject jLockset = jField.object("lockset");
                 for (LockSetLock lock : field.getLikelyLocks()) {
-                    JObject jLock = jField.object(Long.toString(lock.getId()));
+                    JObject jLock = jLockset
+                            .object(Long.toString(lock.getId()));
                     jLock.val("name", lock.getName());
                     JArray jHeldAt = jLock.array("heldAt");
                     for (LockSetSite s : lock.getHeldAt()) {
@@ -584,15 +580,6 @@ public final class WriteHtmlOverview implements IPostPrep {
                 }
             }
             builder.build(writer);
-        }
-    }
-
-    static class LockSetLink implements LinkProvider<LockSetEvidence> {
-        @Override
-        public void link(final Container c, final LockSetEvidence field) {
-            c.a("#locksets-" + field.getPackage() + "." + field.getClazz()
-                    + "." + field.getName()).clazz("locksetlink")
-                    .clazz("field").text(field.getName());
         }
     }
 

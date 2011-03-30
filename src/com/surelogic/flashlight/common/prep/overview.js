@@ -85,19 +85,6 @@ function toggleTree() {
    }
 }
 
-function locksetOutline(outline,json) {
-    function filter(node) { return true; }
-    function tag(hasChildren, node) {
-        if(node.pakkage != undefined) {
-            return '<span class="package">' + node.pakkage + '</span>';
-        } else if (node.clazz != undefined) {
-            return '<span class="class">' + node.clazz + '</span>';
-        } else {
-            return '<a class="locksetlink field" href="#locksets-' + node.qualified + '">' + node.field + '</a>';
-        }
-    }
-    jsonOutline(outline,json,filter,tag);
-}
 
 function coverageOutline(outline,json,threads) {
     function filter(node) {
@@ -114,7 +101,7 @@ function coverageOutline(outline,json,threads) {
         var link = '<a href="index.html?loc=&Package=' + site.pakkage + '&Class=' + site.clazz + 
             '&Method=' + site.location + '&Line=' + site.line + '">(' + site.file + ':' + 
             site.line + ')</a>';
-        return span + link;
+        return { text: span + link };
     }
     jsonOutline(outline,json,filter,siteTag);
 }
@@ -144,9 +131,13 @@ function outlineExpand(node,filter,show) {
                     break;
                 }
             }
+            var toShow = show(hasChildren, elem);
             var li = childList.append('<li><img class="icon" src="' + (hasChildren ? O_RIGHT : O_FILLER) + '"></img>' + 
-                                      show(hasChildren, elem) + (hasChildren ? '<ul></ul>' : '') + 
+                                      toShow.text + (hasChildren ? '<ul></ul>' : '') + 
                                       '</li>').children().last();
+            if(toShow.register != undefined) {
+                toShow.register(li);
+            }
             if(hasChildren) {
                 li.get(0).json = elem.children;
                 li.find('> .icon').one('click', 
@@ -495,22 +486,141 @@ function loadTimeline() {
    tl.layout(); // display the Timeline
 }
 
-var rcSelected = null;
+function displayLockSetTable(lockset) {
+    var locks = [];
+    for (i in lockset) {
+        locks.push(lockset[i]);
+    }
+    if(locks.length == 0) {
+        return '<div class="info locksetoutline">No locks where held when this field was accessed.</div>';
+    }
+    locks.sort(function(a,b) {
+        var an = Number(a.heldPercentage);
+        var bn = Number(b.heldPercentage);;
+        return bn - an;
+    });
+    var table = '<table class="locksetoutline treeTable">';
+    table +='<thead><tr><th>Lock</th><th># Acquisitions</th><th>% Held</th></tr></thead>';
+    table += '<tbody>';
+    for(var i = 0; i < locks.length; i++) {
+        table += displayLockSetRow(locks[i]);
+    }
+    table += '</tbody></table>';
+    return table;
+}
+
+function strcmp(a,b) {
+    return a == b ? 0 : (a < b ? -1 : 1);
+}
+
+function sortfn(fn,sort) {
+    return function (a,b) {
+        return sort(fn(a), fn(b));
+    };
+}
+
+function sortBySource(a,b) {
+    if(a.pakkage == b.pakkage) {
+        if(a.clazz == b.clazz) {
+            return strcmp(a.location, b.location);
+        } else {
+            return strcmp(a.clazz, b.clazz);
+        }
+    } else {
+        return strcmp(a.pakkage, b.pakkage);
+    }
+}
+
+function displayLockSetRow(lock) {
+    function heldAtFn(l) {
+        return '<span> at ' + displaySite(l.site) + ' via ' + displaySite(l.acquiredAt);
+    }
+    function notHeldAtFn(l) {
+        return '<span> at ' + displaySite(l.site);
+    }
+    var rows = '<tr><td class="cell-text depth1">' + lock.name + '</td>';
+    rows += '<td class="cell-number">' + lock.acquisitions + '</td>';
+    rows += '<td class="cell-number">' + lock.heldPercentage + '</td>';
+    rows += '</tr>';
+    rows += '<tr><td class="cell-text depth2">held at</td><td></td><td></td>';
+    rows += '<tr><td class="cell-text depth3 leaf">';
+    rows += displayClassTree(lock.heldAt, heldAtFn);
+    rows += '</td><td></td><td></td></tr>';
+    rows += '<tr><td class="cell-text depth2">not held at</td><td></td><td></td>';
+    rows += '<tr><td class="cell-text depth3 leaf">';
+    rows += displayClassTree(lock.heldAt, notHeldAtFn);
+    rows += '</td><td></td><td></td></tr>';
+    return rows;
+}
+
+function displayClassTree(leaves, leafFn) {
+    var pakkage = null, clazz = null;
+    var rows = '<ul class="outline">';
+    for(var i = 0; i < leaves.length; i++) {
+        var leaf = leaves[i];
+        var site = leaf.site;
+        if(site.pakkage != pakkage) {
+            if(pakkage != null) {
+                rows += '</ul></li></ul></li>';
+            }
+            pakkage = site.pakkage;
+            clazz = null;
+            rows += '<li><span class="package">' + pakkage + '</span><ul>';
+        }
+        if(site.clazz != clazz) {
+            if(clazz != null) {
+                rows += '</ul></li>';
+            }
+            clazz = site.clazz;
+            rows += '<li><span class="class">' + clazz + '</span><ul>';
+        }
+        rows += '<li>';
+        rows += leafFn(leaf);
+        rows += '</li>';
+    }
+    rows += '</ul>';
+    return rows;
+}
+
+function displaySite(site) {
+    return site.location + 
+        '<a href="?loc=&Package=' + site.pakkage + '&Class='  + site.clazz + '&Method=' + site.location + '&Line=' + site.line + 
+        '">(' + site.clazz + ':' + site.line + ')</a>';
+}
+
+function locksetOutline(elem,json) {
+    function filter(node) { return true; }
+    function selectLockSet(rc) {
+        var lsSelected = $('#lockset-locks');
+        lsSelected.empty();
+        lsSelected.append(displayLockSetTable(rc));
+        outline();              
+        treeTable();
+        // Hack to make the filler icons not crap out
+        $(".locksetoutline .depth3 > .icon").hide();
+    }
+    function tag(hasChildren, node) {
+        if(node.pakkage != undefined) {
+            return { text: '<span class="package">' + node.pakkage + '</span>' };
+        } else if (node.clazz != undefined) {
+            return { text: '<span class="class">' + node.clazz + '</span>' } ;
+        } else {
+            return { text: '<a class="locksetlink field" href="#locksets-' + node.qualified + '">' + node.field + '</a>',
+                     register: function (elem) { 
+                         elem.find('> a').click(function (e) { 
+                             e.preventDefault();
+                             selectLockSet(node.lockset); 
+                         });
+                     }
+                   };
+        }
+    }
+    jsonOutline(elem,json,filter,tag);
+}
+
+
 function initRaceConditionTab() {
    locksetOutline($("#lockset-outline"), lockSets);
-   $(".locksetoutline .depth3 > .icon").hide();
-   $(".locksetoutline").hide();
-   // Hack to make the filler icons not crap out
-   $(".locksetlink").click(
-      function(event) {
-         event.preventDefault();
-         if(rcSelected) {
-            rcSelected.hide();
-         }
-         rcSelected = $(jq($(this).attr("href")));
-         rcSelected.show();
-      }
-   );
 }
 
 var bpSelected = null;

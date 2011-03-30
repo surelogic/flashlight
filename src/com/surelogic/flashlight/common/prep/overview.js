@@ -85,7 +85,21 @@ function toggleTree() {
    }
 }
 
-function jsonOutline(outline,json,threads) {
+function locksetOutline(outline,json) {
+    function filter(node) { return true; }
+    function tag(hasChildren, node) {
+        if(node.pakkage != undefined) {
+            return '<span class="package">' + node.pakkage + '</span>';
+        } else if (node.clazz != undefined) {
+            return '<span class="class">' + node.clazz + '</span>';
+        } else {
+            return '<a class="locksetlink field" href="#locksets-' + node.qualified + '">' + node.field + '</a>';
+        }
+    }
+    jsonOutline(outline,json,filter,tag);
+}
+
+function coverageOutline(outline,json,threads) {
     function filter(node) {
         for (var i = 0; i < node.threadsSeen.length; i++) {
             if(threads[node.threadsSeen[i]]) {
@@ -94,16 +108,28 @@ function jsonOutline(outline,json,threads) {
         } 
         return false;
     }
+    function siteTag(hasChildren, node) {
+        var site = node.site;
+        var span = '<span>' + site.pakkage + '.' + site.clazz + '.' + site.location + '</span>';
+        var link = '<a href="index.html?loc=&Package=' + site.pakkage + '&Class=' + site.clazz + 
+            '&Method=' + site.location + '&Line=' + site.line + '">(' + site.file + ':' + 
+            site.line + ')</a>';
+        return span + link;
+    }
+    jsonOutline(outline,json,filter,siteTag);
+}
+
+function jsonOutline(outline,json,filter,show) {
     outline.get(0).json = json;
     outline.find('> ul').empty();
-    outlineExpand(outline,filter);
+    outlineExpand(outline,filter,show);
 }
 
 
-function outlineExpand(node,filter) {
+function outlineExpand(node,filter,show) {
     node.find('> .icon').attr('src', O_DOWN).one('click', 
                                                  function() {
-                                                     outlineCollapse($(this).parent(), filter);
+                                                     outlineCollapse($(this).parent(), filter, show);
                                                  });
     var childList = node.find('> ul');
     var json = node.get(0).json;
@@ -112,37 +138,32 @@ function outlineExpand(node,filter) {
         var elem = json[n];
         if(filter(elem)) {
             var hasChildren = false;
-            for(var child in elem.children) {
-                hasChildren = true;
-                break;
+            if(elem.children != undefined) {
+                for(var child in elem.children) {
+                    hasChildren = true;
+                    break;
+                }
             }
-            var li = childList.append(siteTag(hasChildren, elem.site)).children().last();
-            li.get(0).json = elem.children;
+            var li = childList.append('<li><img class="icon" src="' + (hasChildren ? O_RIGHT : O_FILLER) + '"></img>' + 
+                                      show(hasChildren, elem) + (hasChildren ? '<ul></ul>' : '') + 
+                                      '</li>').children().last();
             if(hasChildren) {
-            li.find('> .icon').one('click', 
-                                   function() {outlineExpand($(this).parent(), filter);});
+                li.get(0).json = elem.children;
+                li.find('> .icon').one('click', 
+                                       function() {outlineExpand($(this).parent(), filter, show);});
             }
         }
     }
 }
 
-function outlineCollapse(node, filter) {
+function outlineCollapse(node, filter,show) {
     node.find('> .icon').attr('src', O_RIGHT).one('click',
                                                   function() {
-                                                      outlineExpand(node, filter);
+                                                      outlineExpand(node, filter,show);
                                                   });
     node.find('> ul').empty();
 }
 
-function siteTag(hasChildren, site) {
-    var image = '<img class="icon" src="' + (hasChildren ? O_RIGHT : O_FILLER) + '"></img>';
-    var span = '<span>' + site.pakkage + '.' + site.clazz + '.' + site.location + '</span>';
-    var link = '<a href="index.html?loc=&Package=' + site.pakkage + '&Class=' + site.clazz + 
-        '&Method=' + site.location + '&Line=' + site.line + '">(' + site.file + ':' + 
-        site.line + ')</a>';
-    var childList = hasChildren ? '<ul></ul>' : '';
-    return '<li>' + image + span + link + childList + '</li>';
-}
 
 function outline() {
    $(".outline > li:has(ul)")
@@ -476,6 +497,7 @@ function loadTimeline() {
 
 var rcSelected = null;
 function initRaceConditionTab() {
+   locksetOutline($("#lockset-outline"), lockSets);
    $(".locksetoutline .depth3 > .icon").hide();
    $(".locksetoutline").hide();
    // Hack to make the filler icons not crap out
@@ -549,7 +571,7 @@ function initCoverageTab() {
     for (var i = 0; i < threadList.length; i++) {
         threadDiv.append('<li id="' + threadList[i].id + '">' + threadList[i].name + '</li>');
     }
-    jsonOutline($('#coverage'), coverage, selectedThreads);
+    coverageOutline($('#coverage'), coverage, selectedThreads);
     threadDiv.find('li').click(
         function (e) {
             var threadId = Number($(this).attr('id'));
@@ -574,7 +596,7 @@ function initCoverageTab() {
                     selectedThreads[t] = true;
                 }
             }
-            jsonOutline($('#coverage'), coverage, selectedThreads);
+            coverageOutline($('#coverage'), coverage, selectedThreads);
         }).
         mousedown(function(e) {e.preventDefault();})
     ;

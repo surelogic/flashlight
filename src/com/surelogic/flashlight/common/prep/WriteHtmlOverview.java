@@ -27,6 +27,7 @@ import com.surelogic.common.ImageWriter;
 import com.surelogic.common.derby.sqlfunctions.Trace;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jdbc.ConnectionQuery;
+import com.surelogic.common.jdbc.LimitedResult;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.flashlight.common.files.HtmlHandles;
 import com.surelogic.flashlight.common.model.RunDescription;
@@ -112,7 +113,8 @@ public final class WriteHtmlOverview implements IPostPrep {
             Category threads = new Category("threads", "Threads");
             threads.getSections().add(new TimelineSection(info.getThreads()));
             threads.getSections().add(new CoverageSection(info));
-            threads.getSections().add(new LivenessSection(info.getThreads()));
+            // threads.getSections().add(new
+            // LivenessSection(info.getThreads()));
             categories.add(locks);
             categories.add(fields);
             categories.add(threads);
@@ -204,9 +206,9 @@ public final class WriteHtmlOverview implements IPostPrep {
 
     private class LockSection extends Section {
 
-        private final List<Lock> locks;
+        private final LimitedResult<Lock> locks;
 
-        public LockSection(final List<SummaryInfo.Lock> locks) {
+        public LockSection(final LimitedResult<SummaryInfo.Lock> locks) {
             super("Lock Contention");
             this.locks = locks;
         }
@@ -221,12 +223,10 @@ public final class WriteHtmlOverview implements IPostPrep {
                 Table lockTable = c.table().id("lockTable");
                 displayTreeTable(locks, lockTable, new LockTableRowProvider());
 
-                if (locks.size() >= SummaryInfo.LOCK_LIMIT) {
-                    buildQueryLink(
-                            lockTable.row().td().colspan(4).clazz("leaf")
-                                    .clazz("depth1"),
-                            String.format("More results...", locks.size()
-                                    - SummaryInfo.LOCK_LIMIT),
+                if (locks.hasMore()) {
+                    buildQueryLink(lockTable.row().td().colspan(4)
+                            .clazz("leaf").clazz("depth1"),
+                            String.format("More results..."),
                             LOCK_CONTENTION_QUERY);
                 }
             }
@@ -480,7 +480,14 @@ public final class WriteHtmlOverview implements IPostPrep {
         }
 
         @Override
+        public List<String> getJavaScriptImports() {
+            return Collections.singletonList("lockset-data.js");
+        }
+
+        @Override
         void displaySection(final Container c) {
+            c.div().id("lockset-outline").ul();
+            c.div().id("lockset-locks");
             if (!fields.isEmpty()) {
                 displayClassTree(fields, c, new LockSetLink());
                 c.hr();
@@ -509,6 +516,74 @@ public final class WriteHtmlOverview implements IPostPrep {
                         .clazz("info")
                         .text("There are no fields accessed concurrently with an empty lock set in this run.");
             }
+            PrintWriter locksets = null;
+            try {
+                locksets = new PrintWriter(new File(htmlDirectory,
+                        "lockset-data.js"));
+                writeLockSets(locksets);
+            } catch (FileNotFoundException e) {
+                throw new IllegalStateException(e);
+            } catch (IOException e) {
+                throw new IllegalStateException(e);
+            } finally {
+                if (locksets != null) {
+                    locksets.close();
+                }
+            }
+        }
+
+        void writeLockSets(final PrintWriter writer) throws IOException {
+            JsonBuilder builder = new JsonBuilder();
+            JObject jLockSets = builder.object("lockSets");
+            String p = null;
+            String c = null;
+            JObject jPackage = null;
+            JObject jClass = null;
+            for (LockSetEvidence field : fields) {
+                String pakkage = field.getPackage();
+                if (!pakkage.equals(p)) {
+                    jPackage = jLockSets.object(pakkage)
+                            .val("pakkage", pakkage).object("children");
+                    p = pakkage;
+                    c = null;
+                }
+
+                String clazz = field.getClazz();
+                if (!clazz.equals(c)) {
+                    jClass = jPackage.object(clazz).val("clazz", clazz)
+                            .object("children");
+                    c = clazz;
+                }
+                JObject jField = jClass.object(field.getName());
+                jField.val("field", field.getName());
+                jField.val("qualified",
+                        pakkage + "." + clazz + "." + field.getName());
+                for (LockSetLock lock : field.getLikelyLocks()) {
+                    JObject jLock = jField.object(Long.toString(lock.getId()));
+                    jLock.val("name", lock.getName());
+                    JArray jHeldAt = jLock.array("heldAt");
+                    for (LockSetSite s : lock.getHeldAt()) {
+                        JObject jSite = jHeldAt.object();
+                        jSite.object("site", "clazz", s.getClazz(), "pakkage",
+                                s.getPackage(), "file", s.getFile(), "line",
+                                s.getLine(), "location", s.getLocation());
+                        Site a = s.getAcquiredAt();
+                        jSite.object("acquiredAt", "clazz", a.getClazz(),
+                                "pakkage", a.getPackage(), "file", a.getFile(),
+                                "line", a.getLine(), "location",
+                                a.getLocation());
+                    }
+                    JArray jNotHeldAt = jLock.array("notHeldAt");
+                    for (Site s : lock.getNotHeldAt()) {
+                        jNotHeldAt.object("clazz", s.getClazz(), "pakkage",
+                                s.getPackage(), "file", s.getFile(), "line",
+                                s.getLine(), "location", s.getLocation());
+                    }
+                    jLock.val("heldPercentage", lock.getHeldPercentage());
+                    jLock.val("acquisitions", lock.getTimesAcquired());
+                }
+            }
+            builder.build(writer);
         }
     }
 

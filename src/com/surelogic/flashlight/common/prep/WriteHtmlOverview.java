@@ -489,27 +489,6 @@ public final class WriteHtmlOverview implements IPostPrep {
             c.div().id("lockset-outline").ul();
             c.hr();
             c.div().id("lockset-locks");
-            if (!fields.isEmpty()) {
-                for (LockSetEvidence field : fields) {
-                    /*
-                     * if (field.getLikelyLocks().isEmpty()) { c.div()
-                     * .id("locksets-" + field.getPackage() + "." +
-                     * field.getClazz() + "." + field.getName()) .clazz("info")
-                     * .clazz("locksetoutline")
-                     * .text("No locks were held when this field was accessed."
-                     * ); } else { displayTreeTable(
-                     * Collections.singletonList(field), c.table()
-                     * .clazz("locksetoutline") .id("locksets-" +
-                     * field.getPackage() + "." + field.getClazz() + "." +
-                     * field.getName()), new LockSetRowProvider()); }
-                     */
-                }
-            } else {
-                c.p()
-                        .clazz("info")
-                        .text("There are no fields accessed concurrently with an empty lock set in this run.");
-            }
-
             PrintWriter locksets = null;
             try {
                 locksets = new PrintWriter(new File(htmlDirectory,
@@ -583,81 +562,6 @@ public final class WriteHtmlOverview implements IPostPrep {
         }
     }
 
-    private static class LockSetRowProvider implements
-            RowProvider<LockSetEvidence> {
-        private final LinkProvider<LockSetSite> heldProvider = new LinkProvider<LockSetSite>() {
-            @Override
-            public void link(final Container c, final LockSetSite t) {
-                Span span = c.span();
-                span.text(" at " + t.getLocation());
-                buildCodeLink(span,
-                        "(" + t.getFile() + ":" + t.getLine() + ")", "Package",
-                        t.getPackage(), "Class", t.getClazz(), "Method",
-                        t.getLocation(), "Line", Integer.toString(t.getLine()));
-                Site a = t.getAcquiredAt();
-                span.text(" via " + a.getLocation());
-                buildCodeLink(span,
-                        "(" + a.getFile() + ":" + a.getLine() + ")", "Package",
-                        a.getPackage(), "Class", a.getClazz(), "Method",
-                        a.getLocation(), "Line", Integer.toString(a.getLine()));
-            }
-        };
-        private final LinkProvider<Site> notHeldProvider = new LinkProvider<Site>() {
-            @Override
-            public void link(final Container c, final Site t) {
-                Span span = c.span();
-                span.text(" at " + t.getLocation());
-                buildCodeLink(span,
-                        "(" + t.getFile() + ":" + t.getLine() + ")", "Package",
-                        t.getPackage(), "Class", t.getClazz(), "Method",
-                        t.getLocation(), "Line", Integer.toString(t.getLine()));
-            }
-        };
-
-        @Override
-        public int numCols(final LockSetEvidence t) {
-            return 3;
-        }
-
-        @Override
-        public void row(final Table table, final LockSetEvidence e) {
-            for (LockSetLock lock : e.getLikelyLocks()) {
-                Row lockRow = table.row();
-                lockRow.td().clazz("depth1").text(lock.getName());
-                lockRow.td(lock.getTimesAcquired());
-                lockRow.td(lock.getHeldPercentage());
-                Row heldRow = table.row();
-                heldRow.td().clazz("depth2").text("held at");
-                heldRow.td();
-                heldRow.td();
-                Row heldTreeRow = table.row();
-                displayClassTree(lock.getHeldAt(),
-                        heldTreeRow.td().clazz("depth3").clazz("leaf"),
-                        heldProvider);
-                heldTreeRow.td();
-                heldTreeRow.td();
-                Row notHeldRow = table.row();
-                notHeldRow.td().clazz("depth2").text("not held at");
-                Row notHeldTreeRow = table.row();
-                displayClassTree(lock.getNotHeldAt(), notHeldTreeRow.td()
-                        .clazz("depth3").clazz("leaf"), notHeldProvider);
-                notHeldTreeRow.td();
-                notHeldTreeRow.td();
-            }
-        }
-
-        @Override
-        public void headerRow(final Row row) {
-            row.th("Lock").th("# Acquisitions").th("% Held");
-        }
-
-        @Override
-        public List<Cell> cellTypes() {
-            return Arrays.asList(new Cell[] { Cell.TEXT, Cell.NUMBER,
-                    Cell.NUMBER });
-        }
-    }
-
     class BadPublishSection extends Section {
 
         private final List<BadPublishEvidence> badPublishes;
@@ -675,7 +579,6 @@ public final class WriteHtmlOverview implements IPostPrep {
                 Div div = c.div();
                 displayClassTreeTable(badPublishes, table, new BadPublishTable(
                         div));
-                // displayClassTree(badPublishes, c, new BadPublishLink());
             } else {
                 c.p()
                         .clazz("info")
@@ -1210,55 +1113,6 @@ public final class WriteHtmlOverview implements IPostPrep {
         int numCols(T t);
 
         List<Cell> cellTypes();
-    }
-
-    /**
-     * Displays a tree of fields.
-     * 
-     * @param fields
-     *            a list of fields in alphabetical order by package/class/field
-     * @param c
-     *            the container to write to
-     */
-    private static <T extends Loc> void displayClassTree(final List<T> fields,
-            final Container c, final LinkProvider<T> lp) {
-        Iterator<T> iter = fields.iterator();
-        if (iter.hasNext()) {
-            UL packageList = c.ul();
-            packageList.clazz("outline");
-            T field = iter.next();
-            String pakkage = field.getPackage();
-            String clazz = field.getClazz();
-            LI packageLI = packageList.li();
-            packageLI.span().clazz("package").text(pakkage);
-            UL classList = packageLI.ul();
-            LI classLI = classList.li();
-            classLI.span().clazz("class").text(clazz);
-            UL fieldList = classLI.ul();
-            LI fieldLI = fieldList.li();
-            lp.link(fieldLI, field);
-
-            while (iter.hasNext()) {
-                field = iter.next();
-                if (!pakkage.equals(field.getPackage())) {
-                    pakkage = field.getPackage();
-                    clazz = field.getClazz();
-                    packageLI = packageList.li();
-                    packageLI.span().clazz("package").text(pakkage);
-                    classList = packageLI.ul();
-                    classLI = classList.li();
-                    classLI.span().clazz("class").text(clazz);
-                    fieldList = classLI.ul();
-                } else if (!clazz.equals(field.getClazz())) {
-                    clazz = field.getClazz();
-                    classLI = classList.li();
-                    classLI.span().clazz("class").text(clazz);
-                    fieldList = classLI.ul();
-                }
-                fieldLI = fieldList.li();
-                lp.link(fieldLI, field);
-            }
-        }
     }
 
     interface LinkProvider<T> {

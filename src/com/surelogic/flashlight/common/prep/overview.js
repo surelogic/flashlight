@@ -8,9 +8,9 @@ var O_DOWN = 'image_files/outline_down.png';
 var O_FILLER = 'image_files/outline_filler.png';
 var fd, icicle, sb, tm, tl;
 
-//Escaping function for selectors
+//Escaping function for selectors, escapes everything but #
 function jq(myid) {
-   return myid.replace(/(:|\.)/g,'\\$1');
+   return myid.replace(/([!"$%&'()*+,./:;<=>?@\[\\\]^`{|}~])/g,'\\$1');
 }
 
 (function() {

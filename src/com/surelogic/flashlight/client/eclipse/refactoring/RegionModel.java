@@ -90,6 +90,7 @@ public class RegionModel implements Iterable<RecommendedRegion> {
 		return set;
 	}
 
+	@Override
 	public Iterator<RecommendedRegion> iterator() {
 		final Set<RecommendedRegion> set = new HashSet<RecommendedRegion>();
 		for (final Set<RecommendedRegion> subset : regions.values()) {

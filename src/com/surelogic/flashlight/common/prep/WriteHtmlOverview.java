@@ -507,27 +507,27 @@ public final class WriteHtmlOverview implements IPostPrep {
 
         void writeLockSets(final PrintWriter writer) throws IOException {
             JsonBuilder builder = new JsonBuilder();
-            JObject jLockSets = builder.object("lockSets");
+            JArray jLockSets = builder.array("lockSets");
             String p = null;
             String c = null;
-            JObject jPackage = null;
-            JObject jClass = null;
+            JArray jPackage = null;
+            JArray jClass = null;
             for (LockSetEvidence field : fields) {
                 String pakkage = field.getPackage();
                 if (!pakkage.equals(p)) {
-                    jPackage = jLockSets.object(pakkage)
-                            .val("pakkage", pakkage).object("children");
+                    jPackage = jLockSets.object().val("pakkage", pakkage)
+                            .array("children");
                     p = pakkage;
                     c = null;
                 }
 
                 String clazz = field.getClazz();
                 if (!clazz.equals(c)) {
-                    jClass = jPackage.object(clazz).val("clazz", clazz)
-                            .object("children");
+                    jClass = jPackage.object().val("clazz", clazz)
+                            .array("children");
                     c = clazz;
                 }
-                JObject jField = jClass.object(field.getName());
+                JObject jField = jClass.object();
                 jField.val("field", field.getName());
                 jField.val("qualified",
                         pakkage + "." + clazz + "." + field.getName());
@@ -584,9 +584,66 @@ public final class WriteHtmlOverview implements IPostPrep {
                         .clazz("info")
                         .text("Flashlight detected no improperly published fields.");
             }
-
+            PrintWriter writer = null;
+            try {
+                writer = new PrintWriter(new File(htmlDirectory,
+                        "badpublish-data.js"));
+                writeBadPublishes(writer);
+            } catch (FileNotFoundException e) {
+                throw new IllegalStateException(e);
+            } catch (IOException e) {
+                throw new IllegalStateException(e);
+            } finally {
+                if (writer != null) {
+                    writer.close();
+                }
+            }
         }
 
+        void writeBadPublishes(final PrintWriter writer) throws IOException {
+            SimpleDateFormat df = new SimpleDateFormat(DATE_FORMAT);
+
+            JsonBuilder b = new JsonBuilder();
+            JArray jBadPublishes = b.array("badPublishes");
+
+            String p = null;
+            String c = null;
+            JArray jPackage = null;
+            JArray jClass = null;
+
+            for (BadPublishEvidence e : badPublishes) {
+                String pakkage = e.getPackage();
+                if (!pakkage.equals(p)) {
+                    jPackage = jBadPublishes.object().val("pakkage", pakkage)
+                            .array("children");
+                    p = pakkage;
+                    c = null;
+                }
+                String clazz = e.getClazz();
+                if (!clazz.equals(c)) {
+                    jClass = jPackage.object().val("clazz", clazz)
+                            .array("children");
+                    c = clazz;
+                }
+                JObject jField = jClass.object();
+                jField.val("field", e.getName());
+                JArray jAccesses = jField.array("accesses");
+                for (BadPublishAccess a : e.getAccesses()) {
+                    JObject jAccess = jAccesses.object();
+                    jAccess.val("thread", a.getThread());
+                    jAccess.val("time", df.format(a.getTime()));
+                    JArray jTrace = jAccess.array("trace");
+                    for (Trace t : a.getTrace()) {
+                        jTrace.object("clazz", t.getClazz(), "file",
+                                t.getFile(), "id", t.getId(), "line",
+                                t.getLine(), "location", t.getLoc(), "pakkage",
+                                t.getPackage(), "parentId", t.getParentId());
+                    }
+
+                }
+            }
+            b.build(writer);
+        }
     }
 
     private static class BadPublishTable implements

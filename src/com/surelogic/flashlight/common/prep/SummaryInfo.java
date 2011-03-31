@@ -147,7 +147,6 @@ public class SummaryInfo {
             LimitedResult<DeadlockEvidence> deadlocks = q.prepared(
                     "Deadlock.lockCycles", new DeadlockEvidenceHandler(q))
                     .call();
-
             String classCount = q.prepared("SummaryInfo.classCount",
                     new StringResultHandler()).call();
             String objectCount = q.prepared("SummaryInfo.objectCount",

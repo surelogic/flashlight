@@ -46,6 +46,25 @@ var depths = {
    "depth5" : 5
 };
 var MAX_DEPTH = 5;
+function hasDepth(node) {
+    for(var x in depths) {
+        if(node.hasClass(x)) {
+         return true;   
+        }
+    }
+    return false;
+}
+
+function depthClass(depth) {
+    switch (depth) {
+        case 1 : return "depth1";
+        case 2 : return "depth2";
+        case 3 : return "depth3";
+        case 4 : return "depth4";
+        case 5 : return "depth5";
+    }
+    throw 'depth of ' + depth + 'not supported';
+}
 
 function elemDepth(elem) {
    for (var d in depths) {
@@ -53,8 +72,111 @@ function elemDepth(elem) {
          return depths[d];
       }
    }
-  return MAX_DEPTH;
+  return -1;
 };
+
+
+function showTrace(trace) {
+    var show = '';
+    for(var i = 0; i < trace.length; i++) {
+        var t = trace[i];
+        show += '<li>at ' + t.pakkage + '.' + t.clazz + '.' + t.location;
+        show += '<a href="?loc=&Package=' + t.pakkage + '&Class=' + t.clazz + '&Method=' + t.location + '&Line=' + t.line;
+        show += '">(' + t.file + ':' + t.line + ')</a></li>';
+    }
+    return show;
+}
+
+function badPublishTable() {
+    function showAccess(access) {
+        var show = '<ul class="badPublishTrace">Access of ';
+        show += '<li>' + access.qualified + '</li>';
+        show += showTrace(access.trace);
+        show += '</ul>';
+        return show;
+    }
+    function filter() {
+        return true;
+    }
+    function header() {
+        return '<th>Package/Class/Field/Time</th><th>Thread</th><th>Read</th>';
+    }
+    function row(json) {
+        var t;
+        var r = '<td></td><td></td>';
+        var reg = undefined;
+        if(json.pakkage != undefined) {
+            t = '<span class="package">' + json.pakkage + '</span>';
+        } else if (json.clazz != undefined) {
+            t =  '<span class="class">' + json.clazz + '</span>';
+        } else if (json.field != undefined) {
+            t = '<span class="field">' + json.field + '</span>';
+        } else {
+            t = '<a class="badPublishTraceLink" href="#badPublishTrace-'+ json.id + '">' + json.time + '</a>';
+            r = '<td>' + json.thread + '</td><td>' + json.read + '</td>';
+            reg = function (node) {
+                node.find('.badPublishTraceLink').click(
+                    function(event) {
+                        event.preventDefault();
+                        var trace = $('#badpublish-trace');
+                        trace.empty();
+                        trace.append(showAccess(json));
+                    });
+            };
+        }
+        return { first : t, rest : r, register : reg};
+    }
+    jsonTreeTable($('#badpublish-table'),badPublishes,filter,header,row);
+}
+
+
+function jsonTreeTable(html, json, filter, header, row) {
+    var table = '<table><thead><tr>' + header() + '</tr></thead><tbody><tr></tr></tbody></table>';
+    html.append(table);
+    var firstRow = html.find('> table > tbody > tr');
+    tableExpand(firstRow, 1, json, filter, row);
+    firstRow.remove();
+}
+
+function tableExpand(tr, depth, json, filter, row) {
+    tr.find('> .icon').one('click', function () {
+        tableCollapse(tr, depth, json, filter);
+    });
+    for(var x in json) {
+        var elem = json[x];
+        if(filter(elem)) {
+            var hasChildren = false;
+            if(elem.children != undefined) {
+                for(var child in elem.children) {
+                    hasChildren = true;
+                    break;
+                }
+            }
+            var r = row(elem);
+            var trdata = '<tr><td class="' + depthClass(depth) + '"><img class="icon" src="' + 
+                     (hasChildren ? O_RIGHT : O_FILLER)+ '"/>'+ r.first +'</td>' +  r.rest + '</tr>';
+            tr.after(trdata);
+            tr = tr.next();
+            var next = tr;
+            tr.find('.icon').one('click',function () {
+                tableExpand(next,depth+1,elem.children,filter,row);
+            });
+            if(r.register != undefined) {
+                r.register(tr);
+            }
+        }
+    }
+
+}
+
+function tableCollapse(tr, depth, json, filter, row) {
+    tr.find('.icon').one('click', function () {
+        tableExpand(tr,depth,json,filter,row);
+    });
+    for(var n = tr.next(); elemDepth(n) > depth; n = tr.next()) {
+        tr.remove();
+    }
+}
 
 function toggleTree() {
    var icon = $(this);
@@ -625,17 +747,18 @@ function initRaceConditionTab() {
 
 var bpSelected = null;
 function initBadPublishTab() {
-   $(".badPublishTrace").hide();
-   $(".badPublishTraceLink").click(
-      function(event) {
-         event.preventDefault();
-         if(bpSelected) {
-            bpSelected.hide();
-         }
-         bpSelected = $(jq($(this).attr("href")));
-         bpSelected.show();
-      }
-   );
+    badPublishTable();
+    $(".badPublishTrace").hide();
+    $(".badPublishTraceLink").click(
+        function(event) {
+            event.preventDefault();
+            if(bpSelected) {
+                bpSelected.hide();
+            }
+            bpSelected = $(jq($(this).attr("href")));
+            bpSelected.show();
+        }
+    );
 }
 
 
@@ -702,8 +825,8 @@ function initCoverageTab() {
             }
             if (!someSelected) {
                 //When no threads are selected, we show everything
-                for (var t in threads) {
-                    selectedThreads[t] = true;
+                for (var th in threads) {
+                    selectedThreads[th] = true;
                 }
             }
             coverageOutline($('#coverage'), coverage, selectedThreads);

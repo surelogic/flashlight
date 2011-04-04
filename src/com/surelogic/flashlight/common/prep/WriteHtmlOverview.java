@@ -572,13 +572,16 @@ public final class WriteHtmlOverview implements IPostPrep {
         }
 
         @Override
+        public List<String> getJavaScriptImports() {
+            return Collections.singletonList("badpublish-data.js");
+        }
+
+        @Override
         void displaySection(final Container c) {
             if (!badPublishes.isEmpty()) {
-                Table table = c.table();
+                c.div().id("badpublish-table");
                 c.hr();
-                Div div = c.div();
-                displayClassTreeTable(badPublishes, table, new BadPublishTable(
-                        div));
+                c.div().id("badpublish-trace");
             } else {
                 c.p()
                         .clazz("info")
@@ -626,12 +629,15 @@ public final class WriteHtmlOverview implements IPostPrep {
                     c = clazz;
                 }
                 JObject jField = jClass.object();
-                jField.val("field", e.getName());
-                JArray jAccesses = jField.array("accesses");
+                String field = e.getName();
+                JArray jAccesses = jField.val("field", field).array("children");
                 for (BadPublishAccess a : e.getAccesses()) {
                     JObject jAccess = jAccesses.object();
                     jAccess.val("thread", a.getThread());
                     jAccess.val("time", df.format(a.getTime()));
+                    jAccess.val("read", a.isRead());
+                    jAccess.val("qualified", pakkage + "." + clazz + "."
+                            + field);
                     JArray jTrace = jAccess.array("trace");
                     for (Trace t : a.getTrace()) {
                         jTrace.object("clazz", t.getClazz(), "file",
@@ -639,7 +645,6 @@ public final class WriteHtmlOverview implements IPostPrep {
                                 t.getLine(), "location", t.getLoc(), "pakkage",
                                 t.getPackage(), "parentId", t.getParentId());
                     }
-
                 }
             }
             b.build(writer);

@@ -133,15 +133,19 @@ function badPublishTable() {
 function jsonTreeTable(html, json, filter, header, row) {
     var table = '<table><thead><tr>' + header() + '</tr></thead><tbody><tr></tr></tbody></table>';
     html.append(table);
-    var firstRow = html.find('> table > tbody > tr');
-    tableExpand(firstRow, 1, json, filter, row);
+    var firstRow = html.find('> table > tbody > tr:first-child');
+    firstRow.get(0).json = json;
+    tableExpand(firstRow, 1, filter, row);
     firstRow.remove();
 }
 
-function tableExpand(tr, depth, json, filter, row) {
-    tr.find('> .icon').one('click', function () {
-        tableCollapse(tr, depth, json, filter);
+function tableExpand(tr, depth, filter, row) {
+    var json = tr.get(0).json;
+    tr.find('> td > .icon').attr('src', O_DOWN).one('click', function (e) {
+        tableCollapse($(this).parent().parent(), depth, filter, row);
     });
+
+    var next = tr;
     for(var x in json) {
         var elem = json[x];
         if(filter(elem)) {
@@ -153,28 +157,29 @@ function tableExpand(tr, depth, json, filter, row) {
                 }
             }
             var r = row(elem);
-            var trdata = '<tr><td class="' + depthClass(depth) + '"><img class="icon" src="' + 
-                     (hasChildren ? O_RIGHT : O_FILLER)+ '"/>'+ r.first +'</td>' +  r.rest + '</tr>';
-            tr.after(trdata);
-            tr = tr.next();
-            var next = tr;
-            tr.find('.icon').one('click',function () {
-                tableExpand(next,depth+1,elem.children,filter,row);
-            });
+            next.after('<tr><td class="' + depthClass(depth) + '"><img class="icon" src="' + 
+                     (hasChildren ? O_RIGHT : O_FILLER)+ '"/>'+ r.first +'</td>' +  r.rest + '</tr>');
+            next = next.next();
             if(r.register != undefined) {
-                r.register(tr);
+                r.register(next);
+            }
+            if(hasChildren) {
+                next.get(0).json = elem.children;
+                next.find('> td > .icon').one('click',function (e) {
+                    tableExpand($(this).parent().parent(),depth+1,filter,row);
+                });
             }
         }
     }
-
 }
 
-function tableCollapse(tr, depth, json, filter, row) {
-    tr.find('.icon').one('click', function () {
-        tableExpand(tr,depth,json,filter,row);
+function tableCollapse(tr, depth, filter, row) {
+    var json = tr.get(0).json;
+    tr.find('> td > .icon').attr('src', O_RIGHT).one('click', function () {
+        tableExpand(tr,depth,filter,row);
     });
-    for(var n = tr.next(); elemDepth(n) > depth; n = tr.next()) {
-        tr.remove();
+    for(var n = tr.next(); elemDepth(n.find('td:first-child')) >= depth; n = tr.next()) { 
+        n.remove();
     }
 }
 

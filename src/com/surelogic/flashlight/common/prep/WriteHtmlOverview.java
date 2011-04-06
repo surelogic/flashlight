@@ -154,7 +154,7 @@ public final class WriteHtmlOverview implements IPostPrep {
         HTMLBuilder builder = new HTMLBuilder();
         Head head = builder.head(f_runDescription.getName());
         head.styleSheet("RunOverviewStyleSheet.css");
-        head.javaScript("jquery-1.5.1.min.js");
+        head.javaScript("jquery-1.5.2.min.js");
         head.javaScript("overview.js");
         if (s != null) {
             for (String js : s.getJavaScriptImports()) {
@@ -1266,7 +1266,7 @@ public final class WriteHtmlOverview implements IPostPrep {
                 .getContextClassLoader();
         final URL vis = loader.getResource("/com/surelogic/common/js/jit.js");
         final URL jquery = loader
-                .getResource("/com/surelogic/common/js/jquery-1.5.1.min.js");
+                .getResource("/com/surelogic/common/js/jquery-1.5.2.min.js");
         final URL canvas = loader
                 .getResource("/com/surelogic/common/js/excanvas.js");
         final URL cycles = loader
@@ -1275,7 +1275,7 @@ public final class WriteHtmlOverview implements IPostPrep {
         FileUtility.copy(canvas, new File(htmlDirectory, "excanvas.js"));
         FileUtility.copy(vis, new File(htmlDirectory, "jit.js"));
         FileUtility
-                .copy(jquery, new File(htmlDirectory, "jquery-1.5.1.min.js"));
+                .copy(jquery, new File(htmlDirectory, "jquery-1.5.2.min.js"));
 
     }
 

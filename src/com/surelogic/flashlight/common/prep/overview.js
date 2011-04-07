@@ -28,7 +28,8 @@ function jq(myid) {
     animate = !(iStuff || !nativeCanvasSupport);
  })();
 
-
+// Turn a table marked with class treeTable into a tree-table.  Rows in
+// the table are marked with classes depth1, depth2, etc.
 function treeTable() {
    $(".treeTable td:first-child:not(.leaf)")
       .prepend("<img class='icon' src='" + O_DOWN + "'></img>")
@@ -38,6 +39,36 @@ function treeTable() {
    $(".treeTable td.depth1:not(.leaf) > .icon").each(toggleTree);
 }
 
+function toggleTree() {
+   var icon = $(this);
+   var doOpen = icon.attr('src') == O_RIGHT;
+   icon.attr('src', doOpen ? O_DOWN : O_RIGHT);
+   var elem = icon.parent();
+   var depth = elemDepth(elem);
+   var row = elem.parent().next();
+   while(row.length) {
+      var rowDepth = elemDepth(row.children().first());
+      if(rowDepth <= depth) {
+         return;
+      }
+      if(doOpen) {
+         if(rowDepth == depth + 1) {
+            var rowIcon = row.find('.icon');
+            if(rowIcon.attr('src') != O_FILLER) {
+               rowIcon.attr('src',O_RIGHT);
+            }
+            row.show();
+         } else {
+            row.hide();
+         }
+      } else {
+         row.hide();
+      }
+      row = row.next();
+   }
+}
+
+
 var depths = {
    "depth1" : 1,
    "depth2" : 2,
@@ -45,6 +76,7 @@ var depths = {
    "depth4" : 4,
    "depth5" : 5
 };
+
 var MAX_DEPTH = 5;
 function hasDepth(node) {
     for(var x in depths) {
@@ -75,19 +107,17 @@ function elemDepth(elem) {
   return -1;
 };
 
-
-function showTrace(trace) {
-    var show = '';
-    for(var i = 0; i < trace.length; i++) {
-        var t = trace[i];
-        show += '<li>at ' + t.pakkage + '.' + t.clazz + '.' + t.location;
-        show += '<a href="?loc=&Package=' + t.pakkage + '&Class=' + t.clazz + '&Method=' + t.location + '&Line=' + t.line;
-        show += '">(' + t.file + ':' + t.line + ')</a></li>';
-    }
-    return show;
-}
-
 function badPublishTable() {
+    function showTrace(trace) {
+        var show = '';
+        for(var i = 0; i < trace.length; i++) {
+            var t = trace[i];
+            show += '<li>at ' + t.pakkage + '.' + t.clazz + '.' + t.location;
+            show += '<a href="?loc=&Package=' + t.pakkage + '&Class=' + t.clazz + '&Method=' + t.location + '&Line=' + t.line;
+            show += '">(' + t.file + ':' + t.line + ')</a></li>';
+        }
+        return show;
+    }
     function showAccess(access) {
         var show = '<ul class="badPublishTrace">Access of ';
         show += '<li>' + access.qualified + '</li>';
@@ -129,7 +159,8 @@ function badPublishTable() {
     jsonTreeTable($('#badpublish-table'),badPublishes,filter,header,row);
 }
 
-
+// Construct a tree-table in the given html node, backed by a json
+// object.
 function jsonTreeTable(html, json, filter, header, row) {
     var table = '<table><thead><tr>' + header() + '</tr></thead><tbody><tr></tr></tbody></table>';
     html.append(table);
@@ -183,35 +214,6 @@ function tableCollapse(tr, depth, filter, row) {
     }
 }
 
-function toggleTree() {
-   var icon = $(this);
-   var doOpen = icon.attr('src') == O_RIGHT;
-   icon.attr('src', doOpen ? O_DOWN : O_RIGHT);
-   var elem = icon.parent();
-   var depth = elemDepth(elem);
-   var row = elem.parent().next();
-   while(row.length) {
-      var rowDepth = elemDepth(row.children().first());
-      if(rowDepth <= depth) {
-         return;
-      }
-      if(doOpen) {
-         if(rowDepth == depth + 1) {
-            var rowIcon = row.find('.icon');
-            if(rowIcon.attr('src') != O_FILLER) {
-               rowIcon.attr('src',O_RIGHT);
-            }
-            row.show();
-         } else {
-            row.hide();
-         }
-      } else {
-         row.hide();
-      }
-      row = row.next();
-   }
-}
-
 
 function coverageOutline(outline,json,threads) {
     function filter(node) {
@@ -233,6 +235,7 @@ function coverageOutline(outline,json,threads) {
     jsonOutline(outline,json,filter,siteTag);
 }
 
+// Construct an outline in the given html node, backed by a json object.
 function jsonOutline(outline,json,filter,show) {
     outline.get(0).json = json;
     outline.find('> ul').empty();
@@ -282,7 +285,7 @@ function outlineCollapse(node, filter,show) {
     node.find('> ul').empty();
 }
 
-
+// Turn a list into an outline.
 function outline() {
    $(".outline > li:has(ul)")
       .prepend("<img class='icon' alt='Expand/' src='" + O_DOWN + "'></img>")

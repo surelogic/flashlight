@@ -113,7 +113,7 @@ function badPublishTable() {
             t = '<span class="field">' + json.field + '</span>';
         } else {
             t = '<a class="badPublishTraceLink" href="#badPublishTrace-'+ json.id + '">' + json.time + '</a>';
-            r = '<td>' + json.thread + '</td><td>' + json.read + '</td>';
+            r = '<td>' + json.thread + '</td><td>' + (json.read ? 'Read' : 'Write') + '</td>';
             reg = function (node) {
                 node.find('.badPublishTraceLink').click(
                     function(event) {

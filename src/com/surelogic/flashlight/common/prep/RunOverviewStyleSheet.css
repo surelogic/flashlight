@@ -82,8 +82,10 @@ a:visited {
   clear: both;
 }
 
-#header {
-  /* TODO */
+#header h1,h2{
+    display: inline;
+    padding-right: 20px;
+    white-space: nowrap;
 }
 
 #content {
@@ -151,7 +153,7 @@ ul.deadlock-trace-menu li {
 
 #badpublish-table, #lockset-outline {
     max-height: 160px;
-    overflow-y: scroll;
+    overflow-y: auto;
 }
 
 .deadlockThread {

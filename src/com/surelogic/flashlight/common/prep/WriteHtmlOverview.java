@@ -163,7 +163,10 @@ public final class WriteHtmlOverview implements IPostPrep {
         }
 
         Body body = builder.body();
-        body.div().id("header").h(1).text(f_runDescription.getName());
+        Container header = body.div().id("header");
+        header.h(1).text(f_runDescription.getName());
+        header.h(2).text(f_runDescription.getStartTimeOfRun().toString());
+        header.h(2).text(f_runDescription.getHostname());
         Container main = body.div().id("main");
         Container content = main.div().id("content");
         main.div().clazz("clear");

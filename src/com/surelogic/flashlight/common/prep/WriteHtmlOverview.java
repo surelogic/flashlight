@@ -167,10 +167,7 @@ public final class WriteHtmlOverview implements IPostPrep {
         header.h(1).text(f_runDescription.getName());
         header.h(2).text(f_runDescription.getStartTimeOfRun().toString());
         header.h(2).text(f_runDescription.getHostname());
-        Container main = body.div().id("main");
-        Container content = main.div().id("content");
-        main.div().clazz("clear");
-        HTMLList sectionList = content.ul().clazz("sectionList");
+        HTMLList sectionList = header.ul().clazz("sectionList");
         for (HeaderName hn : headers) {
             LI li = sectionList.li();
             if (s != null && s.getName().equals(hn.name)) {
@@ -178,6 +175,10 @@ public final class WriteHtmlOverview implements IPostPrep {
             }
             li.a(hn.link).text(hn.name);
         }
+        Container main = body.div().id("main");
+        Container content = main.div().id("content");
+        main.div().clazz("clear");
+
         content.div().clazz("clear");
         if (s != null) {
             s.display(content);

@@ -704,8 +704,7 @@ public final class WriteHtmlOverview implements IPostPrep {
                     }
                 }
                 if (e.getAccesses().isLimited()) {
-                    jField.object(
-                            "moreAccesses",
+                    jAccesses.object(
                             "text",
                             I18N.msg("flashlight.overview.nMoreResults", e
                                     .getAccesses().getExtraCount()),

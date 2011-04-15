@@ -729,6 +729,9 @@ function initBadPublishTab() {
             t =  '<span class="class">' + json.clazz + '</span>';
         } else if (json.field != undefined) {
             t = '<span class="field">' + json.field + '</span>';
+        } else if (json.text != undefined) {
+            // More results
+            t = '<a href="' + json.href + '">' + json.text + '</a>';
         } else {
             t = '<a class="badPublishTraceLink" href="#badPublishTrace-'+ json.id + '">' + json.time + '</a>';
             r = '<td>' + json.thread + '</td><td>' + (json.read ? 'Read' : 'Write') + '</td>';

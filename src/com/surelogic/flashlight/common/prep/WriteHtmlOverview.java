@@ -13,7 +13,6 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -65,7 +64,12 @@ public final class WriteHtmlOverview implements IPostPrep {
 
     private static final String DATE_FORMAT = "yyyy.MM.dd-'at'-HH.mm.ss.SSS";
     private static final String GRAPH_DATE_FORMAT = "MMM dd yyyy HH:mm:ss zz";
+
+    private static final String DEADLOCK_CYCLES_QUERY = "803ca72a-f303-4319-8a35-9494eccc3d26";
     private static final String LOCK_CONTENTION_QUERY = "cb38a427-c259-4690-abe2-acea9661f737";
+    private static final String INSTANCE_LOCKSET = "1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a";
+    private static final String STATIC_LOCKSET = "1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a";
+    private static final String FIELD_ACCESSES = "8034f80b-aefb-4255-98b6-0ccd73ab1696";
     private static final String LOCK_EDGE_QUERY = "c9453327-b892-4324-a6b8-2dceb32e1901";
     private static final String BAD_PUBLISH_QUERY = "708d1b8a-5274-4a25-b0b4-67f1a7a86690";
     private static final String THREAD_BLOCKING_QUERY = "4e026769-1b0b-42bd-8893-f3b92add093f";
@@ -113,8 +117,6 @@ public final class WriteHtmlOverview implements IPostPrep {
             Category threads = new Category("threads", "Threads");
             threads.getSections().add(new TimelineSection(info.getThreads()));
             threads.getSections().add(new CoverageSection(info));
-            // threads.getSections().add(new
-            // LivenessSection(info.getThreads()));
             categories.add(locks);
             categories.add(fields);
             categories.add(threads);
@@ -213,24 +215,25 @@ public final class WriteHtmlOverview implements IPostPrep {
         private final LimitedResult<Lock> locks;
 
         public LockSection(final LimitedResult<SummaryInfo.Lock> locks) {
-            super("Lock Contention");
+            super(I18N.msg("flashlight.overview.title.locks"));
             this.locks = locks;
         }
 
         @Override
         void displaySection(final Container c) {
             if (locks.isEmpty()) {
-                c.p()
-                        .clazz("info")
-                        .text("No locks were detected in this run of the program.");
+                c.p().clazz("info")
+                        .text(I18N.msg("flashlight.overview.locks.noLocks"));
             } else {
                 Table lockTable = c.table().id("lockTable");
                 displayTreeTable(locks, lockTable, new LockTableRowProvider());
 
-                if (locks.hasMore()) {
-                    buildQueryLink(lockTable.row().td().colspan(4)
-                            .clazz("leaf").clazz("depth1"),
-                            String.format("More results..."),
+                if (locks.isLimited()) {
+                    buildQueryLink(
+                            lockTable.row().td().colspan(4).clazz("leaf")
+                                    .clazz("more-results-td").clazz("depth1"),
+                            I18N.msg("flashlight.overview.nMoreResults",
+                                    locks.getExtraCount()),
                             LOCK_CONTENTION_QUERY);
                 }
             }
@@ -243,8 +246,10 @@ public final class WriteHtmlOverview implements IPostPrep {
 
         @Override
         public void headerRow(final Row row) {
-            row.th("Lock").th("Times Acquired").th("Average Block Time")
-                    .th("Total Block Time");
+            row.th(I18N.msg("flashlight.overview.th.lock"))
+                    .th(I18N.msg("flashlight.overview.th.acquired"))
+                    .th(I18N.msg("flashlight.overview.th.averageBlock"))
+                    .th(I18N.msg("flashlight.overview.th.totalBlock"));
         }
 
         @Override
@@ -252,8 +257,10 @@ public final class WriteHtmlOverview implements IPostPrep {
             Row lockRow = table.row();
             lockRow.td().clazz("depth1").text(lock.getName());
             lockRow.td(lock.getAcquired());
-            lockRow.td(lock.getAverageBlock() + " ns");
-            lockRow.td(lock.getBlockTime() + " ns");
+            lockRow.td(I18N.msg("flashlight.overview.td.nanoTime",
+                    lock.getAverageBlock()));
+            lockRow.td(I18N.msg("flashlight.overview.td.nanoTime",
+                    lock.getBlockTime()));
             String curPakkage = null;
             long pakkageDuration = 0, clazzDuration = 0;
             Row pakkageRow = null;
@@ -265,7 +272,9 @@ public final class WriteHtmlOverview implements IPostPrep {
                 String clazz = site.getClazz();
                 if (!pakkage.equals(curPakkage)) {
                     if (pakkageRow != null) {
-                        pakkageRow.td(pakkageDuration + " ns");
+                        pakkageRow.td(I18N.msg(
+                                "flashlight.overview.td.nanoTime",
+                                pakkageDuration));
                     }
                     pakkageDuration = clazzDuration = 0;
                     curPakkage = pakkage;
@@ -278,7 +287,8 @@ public final class WriteHtmlOverview implements IPostPrep {
                 }
                 if (!clazz.equals(curClazz)) {
                     if (clazzRow != null) {
-                        clazzRow.td(clazzDuration + " ns");
+                        clazzRow.td(I18N.msg("flashlight.overview.td.nanoTime",
+                                clazzDuration));
                     }
                     clazzDuration = 0;
                     curClazz = clazz;
@@ -299,12 +309,16 @@ public final class WriteHtmlOverview implements IPostPrep {
                         + ")", "Package", site.getPackage(), "Class",
                         site.getClazz(), "Method", site.getLocation(), "Line",
                         Integer.toString(site.getLine()));
-                r.td().text(s.getDurationNs() + " ns");
+                r.td().text(
+                        I18N.msg("flashlight.overview.td.nanoTime",
+                                s.getDurationNs()));
                 pakkageDuration += s.getDurationNs();
                 clazzDuration += s.getDurationNs();
             }
-            pakkageRow.td(pakkageDuration + " ns");
-            clazzRow.td(clazzDuration + " ns");
+            pakkageRow.td(I18N.msg("flashlight.overview.td.nanoTime",
+                    pakkageDuration));
+            clazzRow.td(I18N.msg("flashlight.overview.td.nanoTime",
+                    clazzDuration));
         }
 
         @Override
@@ -322,10 +336,10 @@ public final class WriteHtmlOverview implements IPostPrep {
 
     private class DeadlocksSection extends Section {
 
-        private final List<DeadlockEvidence> deadlocks;
+        private final LimitedResult<DeadlockEvidence> deadlocks;
 
-        public DeadlocksSection(final List<DeadlockEvidence> deadlocks) {
-            super("Deadlocks");
+        public DeadlocksSection(final LimitedResult<DeadlockEvidence> deadlocks) {
+            super(I18N.msg("flashlight.overview.title.deadlocks"));
             this.deadlocks = deadlocks;
         }
 
@@ -340,12 +354,23 @@ public final class WriteHtmlOverview implements IPostPrep {
             if (deadlocks.isEmpty()) {
                 c.p()
                         .clazz("info")
-                        .text("No lock cycles were detected in this run of the program.");
+                        .text(I18N
+                                .msg("flashlight.overview.deadlocks.noDeadlocks"));
             } else {
                 HTMLList deadlockList = c.ul().id("deadlock-list");
                 for (DeadlockEvidence deadlock : deadlocks) {
-                    deadlockList.li().id("cycle" + deadlock.getNum())
-                            .text(String.format("Cycle %d", deadlock.getNum()));
+                    deadlockList
+                            .li()
+                            .clazz("deadlock-cycle-link")
+                            .id("cycle" + deadlock.getNum())
+                            .text(I18N.msg(
+                                    "flashlight.overview.deadlocks.cycleName",
+                                    deadlock.getNum()));
+                }
+                if (deadlocks.isLimited()) {
+                    buildQueryLink(deadlockList.li(), I18N.msg(
+                            "flashlight.overview.nMoreResults",
+                            deadlocks.getExtraCount()), DEADLOCK_CYCLES_QUERY);
                 }
                 PrintWriter graphs = null;
                 try {
@@ -366,9 +391,9 @@ public final class WriteHtmlOverview implements IPostPrep {
                 Row dRow = dTable.row();
                 dRow.td().id("deadlock-widget");
                 TD col = dRow.td();
-                col.h(2).text("Edges");
+                col.h(2).text(I18N.msg("flashlight.overview.h.edges"));
                 Container edges = col.div().id("deadlock-edges");
-                col.h(2).text("Threads");
+                col.h(2).text(I18N.msg("flashlight.overview.h.threads"));
                 col.div().id("deadlock-threads");
                 Container traces = dTable.row().td().colspan(2)
                         .id("deadlock-traces");
@@ -389,11 +414,13 @@ public final class WriteHtmlOverview implements IPostPrep {
                         // TODO List<LockTrace> lockTrace = t.getLockTrace();
                         Div div = traceDiv.div();
                         div.clazz("deadlock-trace-edge").id(edgeId);
-                        div.h(4).text("Lock Acquired: ");
+                        div.h(4).text(
+                                I18N.msg("flashlight.overview.h.lockAcquired"));
                         div.span().text(edge.getAcquired());
                         UL ul = div.ul();
                         displayTraceList(ul, t.getTrace());
-                        div.h(4).text("Lock Held: ");
+                        div.h(4).text(
+                                I18N.msg("flashlight.overview.h.lockHeld"));
                         div.span().text(edge.getHeld());
                         ul = div.ul();
                         displayTraceList(ul, t.getHeldTrace());
@@ -479,7 +506,7 @@ public final class WriteHtmlOverview implements IPostPrep {
         private final List<LockSetEvidence> fields;
 
         public LockSetSection(final List<LockSetEvidence> fields) {
-            super("Race Conditions");
+            super(I18N.msg("flashlight.overview.title.lockSets"));
             this.fields = fields;
         }
 
@@ -561,6 +588,31 @@ public final class WriteHtmlOverview implements IPostPrep {
                     jLock.val("heldPercentage", lock.getHeldPercentage());
                     jLock.val("acquisitions", lock.getTimesAcquired());
                 }
+                if (field.getLikelyLocks().isLimited()) {
+                    if (field.isStatic()) {
+                        jField.object(
+                                "locksetLink",
+                                "text",
+                                I18N.msg("flashlight.overview.nMoreResults",
+                                        field.getLikelyLocks().getExtraCount()),
+                                "href",
+                                queryPredicate(STATIC_LOCKSET, "Field",
+                                        field.getName(), "FieldId",
+                                        Long.toString(field.getId())));
+                    } else {
+                        jField.object(
+                                "locksetLink",
+                                "text",
+                                I18N.msg("flashlight.overview.nMoreResults",
+                                        field.getLikelyLocks().getExtraCount()),
+                                "href",
+                                queryPredicate(INSTANCE_LOCKSET, new String[] {
+                                        "Field", field.getName(), "FieldId",
+                                        Long.toString(field.getId()),
+                                        "Receiver",
+                                        field.getReceiver().toString() }));
+                    }
+                }
             }
             builder.build(writer);
         }
@@ -571,7 +623,7 @@ public final class WriteHtmlOverview implements IPostPrep {
         private final List<BadPublishEvidence> badPublishes;
 
         public BadPublishSection(final List<BadPublishEvidence> badPublishes) {
-            super("Bad Publishes");
+            super(I18N.msg("flashlight.overview.title.badPublishes"));
             this.badPublishes = badPublishes;
         }
 
@@ -589,7 +641,8 @@ public final class WriteHtmlOverview implements IPostPrep {
             } else {
                 c.p()
                         .clazz("info")
-                        .text("Flashlight detected no improperly published fields.");
+                        .text(I18N
+                                .msg("flashlight.overview.badPublishes.noBadPublishes"));
             }
             PrintWriter writer = null;
             try {
@@ -650,73 +703,26 @@ public final class WriteHtmlOverview implements IPostPrep {
                                 t.getPackage(), "parentId", t.getParentId());
                     }
                 }
+                if (e.getAccesses().isLimited()) {
+                    jField.object(
+                            "moreAccesses",
+                            "text",
+                            I18N.msg("flashlight.overview.nMoreResults", e
+                                    .getAccesses().getExtraCount()),
+                            "href",
+                            queryPredicate(FIELD_ACCESSES, "Package", e
+                                    .getPackage(), "Class", e.getClazz(),
+                                    "Field", e.getName(), "FieldId", Long
+                                            .toString(e.getId()), "Receiver", e
+                                            .getReceiver().toString()));
+
+                }
             }
             b.build(writer);
         }
     }
 
-    private static class BadPublishTable implements
-            RowProvider<BadPublishEvidence> {
-
-        private final Container traces;
-
-        BadPublishTable(final Container traces) {
-            this.traces = traces;
-        }
-
-        @Override
-        public void headerRow(final Row row) {
-            row.th("Package/Class/Field/Time").th("Thread").th("Read");
-        }
-
-        @Override
-        public void row(final Table table, final BadPublishEvidence e) {
-            Row fieldRow = table.row();
-            fieldRow.td().clazz("depth3").clazz("field").text(e.getName());
-            fieldRow.td();
-            fieldRow.td();
-            SimpleDateFormat df = new SimpleDateFormat(DATE_FORMAT);
-            for (BadPublishAccess a : e.getAccesses()) {
-                Row accessRow = table.row();
-                String id = "badPublishTrace-"
-                        + a.getTime().toString().replace(' ', '-') + "-"
-                        + e.getPackage() + "." + e.getClazz() + "."
-                        + e.getName();
-                accessRow.td().clazz("leaf").clazz("depth4").clazz("thread")
-                        .a('#' + id).clazz("badPublishTraceLink")
-                        .text(df.format(a.getTime()));
-                accessRow.td().text(a.getThread());
-                accessRow.td().text(a.isRead() ? "R" : "W");
-                displayTrace(id, e, a);
-            }
-        }
-
-        @Override
-        public int numCols(final BadPublishEvidence e) {
-            return 3;
-        }
-
-        void displayTrace(final String id, final BadPublishEvidence e,
-                final BadPublishAccess a) {
-            List<Trace> trace = a.getTrace();
-            UL ul = traces.ul();
-            ul.clazz("badPublishTrace").id(id);
-            LI accessLi = ul.li();
-            accessLi.text(String.format("Access of %s.%s.%s", e.getPackage(),
-                    e.getClazz(), e.getName()));
-            LI traceLI = ul.li();
-            ul = traceLI.ul();
-            displayTraceList(ul, trace);
-        }
-
-        @Override
-        public List<Cell> cellTypes() {
-            return Arrays
-                    .asList(new Cell[] { Cell.TEXT, Cell.TEXT, Cell.TEXT });
-        }
-    }
-
-    static void displayTraceList(final UL ul, final List<Trace> trace) {
+    private static void displayTraceList(final UL ul, final List<Trace> trace) {
         for (Trace t : trace) {
             LI li = ul.li();
             li.text(" at ");
@@ -725,9 +731,9 @@ public final class WriteHtmlOverview implements IPostPrep {
         }
     }
 
-    static void displayLocation(final Container c, final String pakkage,
-            final String clazz, final String loc, final String file,
-            final int line) {
+    private static void displayLocation(final Container c,
+            final String pakkage, final String clazz, final String loc,
+            final String file, final int line) {
         Container emph = c.span();
         emph.text(pakkage + "." + clazz + "." + loc);
         String lin = Integer.toString(line);
@@ -735,20 +741,12 @@ public final class WriteHtmlOverview implements IPostPrep {
                 "Class", clazz, "Method", loc, "Line", lin);
     }
 
-    static void displayLocation(final Container c, final String pakkage,
-            final String clazz, final String loc, final String file) {
-        Container emph = c.span();
-        emph.text(pakkage + "." + clazz + "." + loc);
-        buildCodeLink(emph, "(" + file + ")", "Package", pakkage, "Class",
-                clazz, "Method", loc);
-    }
-
     class TimelineSection extends Section {
 
         private final List<Thread> threads;
 
         public TimelineSection(final List<Thread> threads) {
-            super("Program Timeline");
+            super(I18N.msg("flashlight.overview.title.timeline"));
             this.threads = threads;
         }
 
@@ -762,8 +760,7 @@ public final class WriteHtmlOverview implements IPostPrep {
         @Override
         void displaySection(final Container c) {
             int threadCount = threads.size();
-            c.p(String.format(
-                    "%d threads were observed in this run of the program.",
+            c.p(I18N.msg("flashlight.overview.timeline.nThreadsObserved",
                     threadCount)).clazz("info");
             if (threadCount > 0) {
                 c.div().id("tl");
@@ -847,20 +844,19 @@ public final class WriteHtmlOverview implements IPostPrep {
                     jDate.literal("start", jsDate(start)).literal("end",
                             jsDate(stop));
                     jDate.string("title", t.getName());
-                    jDate.string(
-                            "description",
-                            String.format(
-                                    "Thread Duration: %(,.3f seconds\nTime Blocked: %(,.3f seconds",
-                                    (float) (stop.getTime() - start.getTime()) / 1000,
-                                    (float) t.getBlockTime() / 1000000000));
+                    jDate.string("description", I18N.msg(
+                            "flashlight.overview.timeline.threadInfo",
+                            (float) (stop.getTime() - start.getTime()) / 1000,
+                            (float) t.getBlockTime() / 1000000000));
                     jDate.bool("durationEvent", true).string("color", "blue");
                 }
                 JObject jTotal = jEvents.object();
                 jTotal.literal("start", jsDate(first)).literal("end",
                         jsDate(last));
-                jTotal.string("title", "Program Run Time");
-                jTotal.string("description", String.format(
-                        "Duration: %(,.3f seconds",
+                jTotal.string("title",
+                        I18N.msg("flashlight.overview.timeline.program"));
+                jTotal.string("description", I18N.msg(
+                        "flashlight.overview.timeline.programDuration",
                         (float) (last.getTime() - first.getTime()) / 1000));
                 jTotal.bool("durationEvent", true).string("color", "red");
             }
@@ -874,7 +870,7 @@ public final class WriteHtmlOverview implements IPostPrep {
         private final List<Thread> threads;
 
         public CoverageSection(final SummaryInfo info) {
-            super("Coverage");
+            super(I18N.msg("flashlight.overview.title.coverage"));
             this.site = info.getThreadCoverage();
             threads = info.getThreads();
         }
@@ -890,18 +886,21 @@ public final class WriteHtmlOverview implements IPostPrep {
             // its children
             Set<CoverageSite> children = site.getChildren();
             if (children.isEmpty()) {
-                c.p().clazz("info")
-                        .text("There is no coverage data for this run.");
+                c.p()
+                        .clazz("info")
+                        .text(I18N
+                                .msg("flashlight.overview.coverage.noCoverage"));
             } else {
                 Table threadTable = c.table();
                 Row threadRow = threadTable.row();
                 TD threadDiv = threadRow.td();
                 threadDiv.id("thread-td");
-                threadDiv.h(3).text("Threads");
+                threadDiv.h(3).text(I18N.msg("flashlight.overview.h.threads"));
                 threadDiv.ul().id("threads");
                 TD coverageDiv = threadRow.td();
                 coverageDiv.id("coverage-td");
-                coverageDiv.h(3).text("Code Coverage");
+                coverageDiv.h(3).text(
+                        I18N.msg("flashlight.overview.h.coverage"));
                 coverageDiv.div().id("coverage").ul();
             }
 
@@ -949,47 +948,6 @@ public final class WriteHtmlOverview implements IPostPrep {
             }
         }
 
-    }
-
-    class LivenessSection extends Section {
-        private final List<Thread> threads;
-
-        public LivenessSection(final List<Thread> threads) {
-            super("Liveness");
-            this.threads = new ArrayList<Thread>(threads);
-            Collections.sort(this.threads, new Comparator<Thread>() {
-                @Override
-                public int compare(final Thread o1, final Thread o2) {
-                    long t1 = o1.getBlockTime();
-                    long t2 = o2.getBlockTime();
-                    return t1 > t2 ? -1 : t1 == t2 ? 0 : 1;
-                }
-            });
-        }
-
-        @Override
-        void displaySection(final Container c) {
-            int TABLE_LIMIT = 100;
-            Table threadTable = c.table();
-            threadTable.header().th("Thread").th("Time Blocked");
-            int count = 0;
-            for (Thread thread : threads) {
-                final Row row = threadTable.row();
-                buildQueryLink(row.td(), thread.getName(), THREAD_LOCKS_QUERY,
-                        "Thread", thread.getName(), "ThreadId", thread.getId());
-                row.td(thread.getBlockTime() + " ns");
-                if (++count == TABLE_LIMIT) {
-                    break;
-                }
-            }
-            if (threads.size() >= TABLE_LIMIT) {
-                buildQueryLink(
-                        threadTable.row().td().colspan(2),
-                        String.format("%d more results.", threads.size()
-                                - TABLE_LIMIT), THREAD_BLOCKING_QUERY);
-            }
-
-        }
     }
 
     private String jsDate(final Date date) {
@@ -1222,6 +1180,20 @@ public final class WriteHtmlOverview implements IPostPrep {
      */
     private static void buildQueryLink(final Container c, final String text,
             final String query, final String... args) {
+        c.a(queryPredicate(query, args)).text(text);
+    }
+
+    /**
+     * Construct a link target with the given params. Parameters are based in
+     * order. First name, then value. For example:
+     * <code>link(name, "bd72", "name", "foo")</code> would produce a link
+     * pointing to <code>index.html?query=bd72&name=foo</code>
+     * 
+     * @param args
+     * @return
+     */
+    private static String queryPredicate(final String query,
+            final String... args) {
         StringBuilder b = new StringBuilder();
         if (args.length % 2 != 0) {
             throw new IllegalArgumentException(
@@ -1235,7 +1207,7 @@ public final class WriteHtmlOverview implements IPostPrep {
             b.append('=');
             b.append(args[i + 1]);
         }
-        c.a(b.toString()).text(text);
+        return b.toString();
     }
 
     @Override

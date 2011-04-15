@@ -19,7 +19,6 @@ import com.surelogic.common.derby.sqlfunctions.Trace;
 import com.surelogic.common.jdbc.DBQuery;
 import com.surelogic.common.jdbc.LimitRowHandler;
 import com.surelogic.common.jdbc.LimitedResult;
-import com.surelogic.common.jdbc.NullRowHandler;
 import com.surelogic.common.jdbc.Query;
 import com.surelogic.common.jdbc.Queryable;
 import com.surelogic.common.jdbc.Result;
@@ -42,19 +41,29 @@ import com.surelogic.common.jdbc.StringRowHandler;
  */
 public class SummaryInfo {
 
-    private static final int CONTENTION_SITE_LIMIT = 100;
-    private static final int LOCK_LIMIT = 30;
+    /*
+     * # Locks shown on Lock Contention page
+     */
+    private static final int LOCK_LIMIT = 75;
+    /*
+     * # Threads shown on Coverage page
+     */
     private static final int THREAD_LIMIT = 100;
+    /*
+     * # Lock Cycles shown on Deadlocks page
+     */
     private static final int LOCK_CYCLE_LIMIT = 20;
+
     private final LimitedResult<Lock> locks;
     private final LimitedResult<Thread> threads;
+    private final LimitedResult<DeadlockEvidence> deadlocks;
 
     private final List<LockSetEvidence> emptyLockSets;
     private final List<BadPublishEvidence> badPublishes;
-    private final LimitedResult<DeadlockEvidence> deadlocks;
-    private final String threadCount;
+
     private final String objectCount;
     private final String classCount;
+
     private final CoverageSite root;
 
     public SummaryInfo(final LimitedResult<Lock> locks,
@@ -66,7 +75,6 @@ public class SummaryInfo {
             final CoverageSite coverageRoot) {
         this.locks = locks;
         this.threads = threads;
-        this.threadCount = Integer.toString(threads.size());
         this.emptyLockSets = emptyLockSetFields;
         this.badPublishes = badPublishes;
         this.deadlocks = deadlocks;
@@ -93,10 +101,6 @@ public class SummaryInfo {
 
     public LimitedResult<DeadlockEvidence> getDeadlocks() {
         return deadlocks;
-    }
-
-    public String getThreadCount() {
-        return threadCount;
     }
 
     public String getObjectCount() {
@@ -129,16 +133,21 @@ public class SummaryInfo {
             List<Field> nonstatics = q.prepared("SummaryInfo.emptyLockSets",
                     new FieldHandler()).call();
             for (Field f : nonstatics) {
-                emptyLockSets.add(q.prepared("SummaryInfo.likelyLocks",
-                        new LockSetEvidenceHandler(q, f)).call(f.id,
-                        f.receiver, f.id, f.receiver, f.id, f.receiver));
+                LockSetEvidence e = new LockSetEvidence(f, q.prepared(
+                        "SummaryInfo.likelyLocks",
+                        LimitRowHandler.from(new LockSetEvidenceHandler(q, f),
+                                LOCK_LIMIT)).call(f.id, f.receiver, f.id,
+                        f.receiver, f.id, f.receiver));
+                emptyLockSets.add(e);
             }
             List<Field> statics = q.prepared("SummaryInfo.emptyStaticLockSets",
                     new FieldHandler()).call();
             for (Field f : statics) {
-                emptyLockSets.add(q.prepared("SummaryInfo.likelyStaticLocks",
-                        new LockSetEvidenceHandler(q, f))
-                        .call(f.id, f.id, f.id));
+                LockSetEvidence e = new LockSetEvidence(f, q.prepared(
+                        "SummaryInfo.likelyStaticLocks",
+                        LimitRowHandler.from(new LockSetEvidenceHandler(q, f),
+                                LOCK_LIMIT)).call(f.id, f.id, f.id));
+                emptyLockSets.add(e);
             }
             Collections.sort(emptyLockSets);
             List<BadPublishEvidence> badPublishes = q.prepared(
@@ -179,11 +188,12 @@ public class SummaryInfo {
     public static class LockSetEvidence implements Comparable<LockSetEvidence>,
             Loc {
         private final Field field;
-        private final List<LockSetLock> likelyLocks;
+        private final LimitedResult<LockSetLock> likelyLocks;
 
-        public LockSetEvidence(final Field field) {
+        public LockSetEvidence(final Field field,
+                final LimitedResult<LockSetLock> likelyLocks) {
             this.field = field;
-            this.likelyLocks = new ArrayList<LockSetLock>();
+            this.likelyLocks = likelyLocks;
         }
 
         @Override
@@ -208,8 +218,12 @@ public class SummaryInfo {
             return field.getId();
         }
 
-        public List<LockSetLock> getLikelyLocks() {
+        public LimitedResult<LockSetLock> getLikelyLocks() {
             return likelyLocks;
+        }
+
+        public Long getReceiver() {
+            return field.getReceiver();
         }
 
         @Override
@@ -341,7 +355,7 @@ public class SummaryInfo {
     }
 
     private static class LockSetEvidenceHandler implements
-            ResultHandler<LockSetEvidence> {
+            RowHandler<LockSetLock> {
 
         private static final int LOCK_LIMIT = 5;
 
@@ -354,40 +368,30 @@ public class SummaryInfo {
         }
 
         @Override
-        public LockSetEvidence handle(final Result result) {
-            LockSetEvidence e = new LockSetEvidence(field);
-            int count = 0;
-            for (Row r : result) {
-                if (count++ == LOCK_LIMIT) {
-                    return e;
-                }
-                LockSetLock l = new LockSetLock(r.nextString(), r.nextLong(),
-                        r.nextString(), r.nextString());
-                if (field.isStatic()) {
-                    l.getHeldAt().addAll(
-                            q.prepared("SummaryInfo.lockHeldAt",
-                                    new LockSetSiteHandler()).call(
-                                    field.getId(), l.getId(), field.getId(),
-                                    l.getId()));
-                    l.getNotHeldAt().addAll(
-                            q.prepared("SummaryInfo.lockNotHeldAt",
-                                    new SiteHandler()).call(field.getId(),
-                                    l.getId(), l.getId()));
-                } else {
-                    l.getHeldAt().addAll(
-                            q.prepared("SummaryInfo.lockInstanceHeldAt",
-                                    new LockSetSiteHandler()).call(
-                                    field.getId(), field.getReceiver(),
-                                    l.getId(), field.getId(),
-                                    field.getReceiver(), l.getId()));
-                    l.getNotHeldAt().addAll(
-                            q.prepared("SummaryInfo.lockInstanceNotHeldAt",
-                                    new SiteHandler()).call(field.getId(),
-                                    field.getReceiver(), l.getId(), l.getId()));
-                }
-                e.getLikelyLocks().add(l);
+        public LockSetLock handle(final Row r) {
+            LockSetLock l = new LockSetLock(r.nextString(), r.nextLong(),
+                    r.nextString(), r.nextString());
+            if (field.isStatic()) {
+                l.getHeldAt().addAll(
+                        q.prepared("SummaryInfo.lockHeldAt",
+                                new LockSetSiteHandler()).call(field.getId(),
+                                l.getId(), field.getId(), l.getId()));
+                l.getNotHeldAt().addAll(
+                        q.prepared("SummaryInfo.lockNotHeldAt",
+                                new SiteHandler()).call(field.getId(),
+                                l.getId(), l.getId()));
+            } else {
+                l.getHeldAt().addAll(
+                        q.prepared("SummaryInfo.lockInstanceHeldAt",
+                                new LockSetSiteHandler()).call(field.getId(),
+                                field.getReceiver(), l.getId(), field.getId(),
+                                field.getReceiver(), l.getId()));
+                l.getNotHeldAt().addAll(
+                        q.prepared("SummaryInfo.lockInstanceNotHeldAt",
+                                new SiteHandler()).call(field.getId(),
+                                field.getReceiver(), l.getId(), l.getId()));
             }
-            return e;
+            return l;
         }
 
     }
@@ -403,16 +407,18 @@ public class SummaryInfo {
      */
     public static class DeadlockEvidence {
 
-        private final Map<Edge, DeadlockTrace> traces;
-        private final Set<Edge> edges = new TreeSet<Edge>();
+        private Map<Edge, DeadlockTrace> traces;
+        private Set<Edge> edges;
         private final int num;
 
         public DeadlockEvidence(final int num) {
             this.num = num;
-            this.traces = new HashMap<Edge, DeadlockTrace>();
         }
 
         public Set<Edge> getEdges() {
+            if (edges == null) {
+                edges = new TreeSet<SummaryInfo.Edge>();
+            }
             return edges;
         }
 
@@ -427,7 +433,7 @@ public class SummaryInfo {
          */
         Set<String> getLocks() {
             final Set<String> locks = new TreeSet<String>();
-            for (final Edge e : edges) {
+            for (final Edge e : getEdges()) {
                 locks.add(e.getHeld());
                 locks.add(e.getAcquired());
             }
@@ -441,21 +447,24 @@ public class SummaryInfo {
          */
         Set<String> getThreads() {
             Set<String> set = new HashSet<String>();
-            for (Edge e : edges) {
+            for (Edge e : getEdges()) {
                 set.addAll(e.getThreads());
             }
             return set;
         }
 
         public void addTrace(final DeadlockTrace trace) {
-            traces.put(trace.getEdge(), trace);
+            getTraces().put(trace.getEdge(), trace);
         }
 
         public DeadlockTrace getTrace(final Edge e) {
-            return traces.get(e);
+            return getTraces().get(e);
         }
 
         public Map<Edge, DeadlockTrace> getTraces() {
+            if (traces == null) {
+                traces = new HashMap<SummaryInfo.Edge, SummaryInfo.DeadlockTrace>();
+            }
             return traces;
         }
     }
@@ -664,45 +673,35 @@ public class SummaryInfo {
         @Override
         public BadPublishEvidence handle(final Row r) {
             Field f = handler.handle(r);
-            final BadPublishEvidence e = new BadPublishEvidence(f);
+            final BadPublishEvidence e = new BadPublishEvidence(f,
 
-            LimitedResult<Void> v = q.prepared(
-                    "SummaryInfo.underConstructionAccesses",
-                    LimitRowHandler.from(new NullRowHandler() {
+            q.prepared("SummaryInfo.underConstructionAccesses",
+                    LimitRowHandler.from(new RowHandler<BadPublishAccess>() {
                         @Override
-                        protected void doHandle(final Row r) {
+                        public BadPublishAccess handle(final Row r) {
                             String thread = r.nextString();
                             boolean isRead = r.nextBoolean();
                             Timestamp time = r.nextTimestamp();
                             List<Trace> trace = Trace.stackTrace(r.nextLong())
                                     .perform(q);
-                            e.getAccesses().add(
-                                    new BadPublishAccess(thread, isRead, time,
-                                            trace));
+
+                            return new BadPublishAccess(thread, isRead, time,
+                                    trace);
                         }
                     }, BAD_PUBLISH_ACCESS_LIMIT)).call(f.getId(),
-                    f.getReceiver());
-            e.setMoreAccesses(v.hasMore());
+                    f.getReceiver()));
             return e;
         }
     }
 
     public static class BadPublishEvidence implements Loc {
         private final Field f;
-        private final List<BadPublishAccess> accesses;
-        private boolean hasMoreAccesses;
+        private final LimitedResult<BadPublishAccess> accesses;
 
-        public BadPublishEvidence(final Field f) {
+        public BadPublishEvidence(final Field f,
+                final LimitedResult<BadPublishAccess> accesses) {
             this.f = f;
-            accesses = new ArrayList<BadPublishAccess>();
-        }
-
-        public boolean hasMoreAccesses() {
-            return hasMoreAccesses;
-        }
-
-        void setMoreAccesses(final boolean val) {
-            hasMoreAccesses = val;
+            this.accesses = accesses;
         }
 
         @Override
@@ -727,7 +726,11 @@ public class SummaryInfo {
             return f.isStatic();
         }
 
-        public List<BadPublishAccess> getAccesses() {
+        public Long getReceiver() {
+            return f.getReceiver();
+        }
+
+        public LimitedResult<BadPublishAccess> getAccesses() {
             return accesses;
         }
 
@@ -1162,13 +1165,11 @@ public class SummaryInfo {
             for (final Row r : result) {
                 final int cycle = r.nextInt();
                 if (deadlock.getNum() != cycle) {
-                    if (++cycleCount >= LOCK_CYCLE_LIMIT) {
-                        return new LimitedResult<SummaryInfo.DeadlockEvidence>(
-                                deadlocks, true);
-                    }
                     deadlock = new DeadlockEvidence(cycle);
+                    if (++cycleCount >= LOCK_CYCLE_LIMIT) {
+                        continue;
+                    }
                     deadlocks.add(deadlock);
-
                 }
                 final String held = r.nextString();
                 final String heldId = r.nextString();
@@ -1188,7 +1189,7 @@ public class SummaryInfo {
                 deadlock.addTrace(dt);
             }
             return new LimitedResult<SummaryInfo.DeadlockEvidence>(deadlocks,
-                    false);
+                    cycleCount);
         }
     }
 

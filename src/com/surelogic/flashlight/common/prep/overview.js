@@ -8,11 +8,6 @@ var O_DOWN = 'image_files/outline_down.png';
 var O_FILLER = 'image_files/outline_filler.png';
 var fd, icicle, sb, tm, tl;
 
-//Escaping function for selectors, escapes everything but #
-function jq(myid) {
-   return myid.replace(/([!"$%&'()*+,./:;<=>?@\[\\\]^`{|}~])/g,'\\$1');
-}
-
 (function() {
     var ua = navigator.userAgent,
     iStuff = ua.match(/iPhone/i) || ua.match(/iPad/i),
@@ -68,7 +63,6 @@ function toggleTree() {
    }
 }
 
-
 var depths = {
    "depth1" : 1,
    "depth2" : 2,
@@ -106,58 +100,6 @@ function elemDepth(elem) {
    }
   return -1;
 };
-
-function badPublishTable() {
-    function showTrace(trace) {
-        var show = '';
-        for(var i = 0; i < trace.length; i++) {
-            var t = trace[i];
-            show += '<li>at ' + t.pakkage + '.' + t.clazz + '.' + t.location;
-            show += '<a href="?loc=&Package=' + t.pakkage + '&Class=' + t.clazz + '&Method=' + t.location + '&Line=' + t.line;
-            show += '">(' + t.file + ':' + t.line + ')</a></li>';
-        }
-        return show;
-    }
-    function showAccess(access) {
-        var show = '<ul class="badPublishTrace">Access of ';
-        show += '<li>' + access.qualified + '</li>';
-        show += showTrace(access.trace);
-        show += '</ul>';
-        return show;
-    }
-    function filter() {
-        return true;
-    }
-    function header() {
-        return '<th>Package/Class/Field/Time</th><th>Thread</th><th>Read</th>';
-    }
-    function row(json) {
-        var t;
-        var r = '<td></td><td></td>';
-        var reg = undefined;
-        if(json.pakkage != undefined) {
-            t = '<span class="package">' + json.pakkage + '</span>';
-        } else if (json.clazz != undefined) {
-            t =  '<span class="class">' + json.clazz + '</span>';
-        } else if (json.field != undefined) {
-            t = '<span class="field">' + json.field + '</span>';
-        } else {
-            t = '<a class="badPublishTraceLink" href="#badPublishTrace-'+ json.id + '">' + json.time + '</a>';
-            r = '<td>' + json.thread + '</td><td>' + (json.read ? 'Read' : 'Write') + '</td>';
-            reg = function (node) {
-                node.find('.badPublishTraceLink').click(
-                    function(event) {
-                        event.preventDefault();
-                        var trace = $('#badpublish-trace');
-                        trace.empty();
-                        trace.append(showAccess(json));
-                    });
-            };
-        }
-        return { first : t, rest : r, register : reg};
-    }
-    jsonTreeTable($('#badpublish-table'),badPublishes,filter,header,row);
-}
 
 // Construct a tree-table in the given html node, backed by a json
 // object.
@@ -616,7 +558,8 @@ function loadTimeline() {
    tl.layout(); // display the Timeline
 }
 
-function displayLockSetTable(lockset) {
+function displayLockSetTable(node) {
+    var lockset = node.lockset;
     var locks = [];
     for (i in lockset) {
         locks.push(lockset[i]);
@@ -626,7 +569,7 @@ function displayLockSetTable(lockset) {
     }
     locks.sort(function(a,b) {
         var an = Number(a.heldPercentage);
-        var bn = Number(b.heldPercentage);;
+        var bn = Number(b.heldPercentage);
         return bn - an;
     });
     var table = '<table class="locksetoutline treeTable">';
@@ -634,6 +577,10 @@ function displayLockSetTable(lockset) {
     table += '<tbody>';
     for(var i = 0; i < locks.length; i++) {
         table += displayLockSetRow(locks[i]);
+    }
+    if(node.locksetlink) {
+        table += '<tr><td class="cell-text leaf more-results-td depth1" colspan="3">' + 
+            '<a href="' +  node.locksetlink.href + '">' + node.locksetlink.text + '</a></td></tr>';
     }
     table += '</tbody></table>';
     return table;
@@ -718,7 +665,7 @@ function displaySite(site) {
         '">(' + site.clazz + ':' + site.line + ')</a>';
 }
 
-function locksetOutline(elem,json) {
+function initRaceConditionTab() {
     function filter(node) { return true; }
     function selectLockSet(rc) {
         var lsSelected = $('#lockset-locks');
@@ -739,34 +686,65 @@ function locksetOutline(elem,json) {
                      register: function (elem) { 
                          elem.find('> a').click(function (e) { 
                              e.preventDefault();
-                             selectLockSet(node.lockset); 
+                             selectLockSet(node); 
                          });
                      }
                    };
         }
     }
-    jsonOutline(elem,json,filter,tag);
+    jsonOutline($('#lockset-outline'),lockSets,filter,tag);
 }
 
-
-function initRaceConditionTab() {
-   locksetOutline($("#lockset-outline"), lockSets);
-}
-
-var bpSelected = null;
 function initBadPublishTab() {
-    badPublishTable();
-    $(".badPublishTrace").hide();
-    $(".badPublishTraceLink").click(
-        function(event) {
-            event.preventDefault();
-            if(bpSelected) {
-                bpSelected.hide();
-            }
-            bpSelected = $(jq($(this).attr("href")));
-            bpSelected.show();
+    function showTrace(trace) {
+        var show = '';
+        for(var i = 0; i < trace.length; i++) {
+            var t = trace[i];
+            show += '<li>at ' + t.pakkage + '.' + t.clazz + '.' + t.location;
+            show += '<a href="?loc=&Package=' + t.pakkage + '&Class=' + t.clazz + '&Method=' + t.location + '&Line=' + t.line;
+            show += '">(' + t.file + ':' + t.line + ')</a></li>';
         }
-    );
+        return show;
+    }
+    function showAccess(access) {
+        var show = '<ul class="badPublishTrace">Access of ';
+        show += '<li>' + access.qualified + '</li>';
+        show += showTrace(access.trace);
+        show += '</ul>';
+        return show;
+    }
+    function filter() {
+        return true;
+    }
+    function header() {
+        return '<th>Package/Class/Field/Time</th><th>Thread</th><th>Read</th>';
+    }
+    function row(json) {
+        var t;
+        var r = '<td></td><td></td>';
+        var reg = undefined;
+        if(json.pakkage != undefined) {
+            t = '<span class="package">' + json.pakkage + '</span>';
+        } else if (json.clazz != undefined) {
+            t =  '<span class="class">' + json.clazz + '</span>';
+        } else if (json.field != undefined) {
+            t = '<span class="field">' + json.field + '</span>';
+        } else {
+            t = '<a class="badPublishTraceLink" href="#badPublishTrace-'+ json.id + '">' + json.time + '</a>';
+            r = '<td>' + json.thread + '</td><td>' + (json.read ? 'Read' : 'Write') + '</td>';
+            reg = function (node) {
+                node.find('.badPublishTraceLink').click(
+                    function(event) {
+                        event.preventDefault();
+                        var trace = $('#badpublish-trace');
+                        trace.empty();
+                        trace.append(showAccess(json));
+                    });
+            };
+        }
+        return { first : t, rest : r, register : reg};
+    }
+    jsonTreeTable($('#badpublish-table'),badPublishes,filter,header,row);
 }
 
 
@@ -779,7 +757,7 @@ function displayDeadlock(cyc) {
 }
 
 function initDeadlockGraphTab() {
-   $("#deadlock-list li").click(
+   $("#deadlock-list li.deadlock-cycle-link").click(
       function (event) {
          var val = $(this).attr("id");
          displayDeadlock(val);
@@ -895,3 +873,22 @@ $(document).resize(
       }
  }
 );
+
+//Escaping function for selectors, escapes everything but #
+function jq(myid) {
+   return myid.replace(/([!"$%&'()*+,./:;<=>?@\[\\\]^`{|}~])/g,'\\$1');
+}
+
+/*
+ * Create a link with the given params.  Parameters are based in order.
+ * First name, then value. For example: <code>link(name, "bd72", "name",
+ * "foo")</code> would produce a link pointing to
+ * <code>index.html?query=bd72&name=foo</code>
+ */
+function buildQueryLink(query) {
+    var link = 'index.html?query=' + query;
+    for(var i = 0; i < arguments.length; i += 2) {
+        link += '&' + arguments[i] + '=' + arguments[i+1];
+    }
+    return link;
+}

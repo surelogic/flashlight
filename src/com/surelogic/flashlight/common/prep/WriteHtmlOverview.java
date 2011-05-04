@@ -581,9 +581,10 @@ public final class WriteHtmlOverview implements IPostPrep {
                     }
                     JArray jNotHeldAt = jLock.array("notHeldAt");
                     for (Site s : lock.getNotHeldAt()) {
-                        jNotHeldAt.object("clazz", s.getClazz(), "pakkage",
-                                s.getPackage(), "file", s.getFile(), "line",
-                                s.getLine(), "location", s.getLocation());
+                        jNotHeldAt.object().object("site", "clazz",
+                                s.getClazz(), "pakkage", s.getPackage(),
+                                "file", s.getFile(), "line", s.getLine(),
+                                "location", s.getLocation());
                     }
                     jLock.val("heldPercentage", lock.getHeldPercentage());
                     jLock.val("acquisitions", lock.getTimesAcquired());

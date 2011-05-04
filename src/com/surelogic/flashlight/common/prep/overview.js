@@ -625,7 +625,7 @@ function displayLockSetRow(lock) {
     rows += '</td><td></td><td></td></tr>';
     rows += '<tr><td class="cell-text depth2">not held at</td><td></td><td></td>';
     rows += '<tr><td class="cell-text depth3 leaf">';
-    rows += displayClassTree(lock.heldAt, notHeldAtFn);
+    rows += displayClassTree(lock.notHeldAt, notHeldAtFn);
     rows += '</td><td></td><td></td></tr>';
     return rows;
 }

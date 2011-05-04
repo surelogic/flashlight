@@ -464,42 +464,49 @@ public final class FlashlightVMRunner implements IVMRunner {
             initializeRewriteManager(manager, entryMap, instrumentLast);
 
             try {
-                final Map<String, Map<String, Boolean>> badDups = manager
-                        .execute();
+                final Map<String, Map<String, Boolean>> badDups =
+                        manager.execute();
                 if (badDups != null) { // uh oh
-                    final StringBuilder sb2 = new StringBuilder();
-                    for (final Map.Entry<String, Map<String, Boolean>> entry : badDups
-                            .entrySet()) {
-                        /*
-                         * Scan the classpath: if the first classpath entry that
-                         * is in the set is NOT instrumented, then we have a
-                         * problem.
-                         */
-                        for (final String x : classpath) {
-                            final Boolean isInstrumented = entry.getValue()
-                                    .get(x);
-                            if (isInstrumented != null) {
-                                // Found the first entry
-                                if (!isInstrumented) {
-                                    // It's not instrumented, record a problem
-                                    sb2.append("Class ");
-                                    sb2.append(ClassNameUtil
-                                            .internal2FullyQualified(entry
-                                                    .getKey()));
-                                    sb2.append(" appears on the classpath more than once, only some entries are instrumented, and the first entry is NOT instrumented: ");
-                                    sb2.append(entry.getValue().toString());
-                                    sb2.append("  ");
-                                }
-                                break; // stop searching after finding the first
-                                // match
+                    for (final Map.Entry<String, Map<String, Boolean>> entry : badDups.entrySet()) {
+                        // XXX: Do something better here
+                        System.out.println("Did not instrument class " + ClassNameUtil.internal2FullyQualified(entry.getKey()) + " because it appears on the classpath more than once, and is inconsitently marked for instrumentation.");
+                        for (final Map.Entry<String, Boolean> entry2 : entry.getValue().entrySet()) {
+                            if (entry2.getValue().booleanValue()) {
+                              System.out.println("    Instrumented on classpath entry " + entry2.getKey());
+                            } else {
+                              System.out.println("    Not instrumented on classpath entry " + entry2.getKey());
                             }
                         }
+//                        /*
+//                         * Scan the classpath: if the first classpath entry that
+//                         * is in the set is NOT instrumented, then we have a
+//                         * problem.
+//                         */
+//                        for (final String x : classpath) {
+//                            final Boolean isInstrumented = entry.getValue()
+//                                    .get(x);
+//                            if (isInstrumented != null) {
+//                                // Found the first entry
+//                                if (!isInstrumented) {
+//                                    // It's not instrumented, record a problem
+//                                    sb2.append("Class ");
+//                                    sb2.append(ClassNameUtil
+//                                            .internal2FullyQualified(entry
+//                                                    .getKey()));
+//                                    sb2.append(" appears on the classpath more than once, only some entries are instrumented, and the first entry is NOT instrumented: ");
+//                                    sb2.append(entry.getValue().toString());
+//                                    sb2.append("  ");
+//                                }
+//                                break; // stop searching after finding the first
+//                                // match
+//                            }
+//                        }
                     }
-                    if (sb2.length() > 0) {
-                        throw new CoreException(
-                                SLEclipseStatusUtility.createErrorStatus(0,
-                                        sb2.toString()));
-                    }
+//                    if (sb2.length() > 0) {
+//                        throw new CoreException(
+//                                SLEclipseStatusUtility.createErrorStatus(0,
+//                                        sb2.toString()));
+//                    }
                 }
             } catch (final CanceledException e) {
                 /*

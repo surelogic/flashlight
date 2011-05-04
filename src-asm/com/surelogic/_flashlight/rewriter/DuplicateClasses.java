@@ -1,6 +1,7 @@
 package com.surelogic._flashlight.rewriter;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,6 +27,15 @@ public class DuplicateClasses {
       duplicatedClasses.put(internalClassName, dups);
     }
     dups.put(where.getAbsolutePath(), isInstrumented);
+  }
+  
+  public boolean isInconsistentlyDuplicated(final String internalClassName) {
+    final Map<String, Boolean> dups = duplicatedClasses.get(internalClassName);
+    return (dups == null) ? false : areDuplicatesInconsistent(dups);
+  }
+  
+  public Map<String, Boolean> getDuplicates(final String internalClassName) {
+    return Collections.unmodifiableMap(duplicatedClasses.get(internalClassName));
   }
   
   public Map<String, Map<String, Boolean>> getInconsistentDuplicates() {

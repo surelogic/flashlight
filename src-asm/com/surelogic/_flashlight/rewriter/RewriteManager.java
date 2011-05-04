@@ -410,15 +410,28 @@ public abstract class RewriteManager {
         protected final void rewriteFileStream(final StreamProvider provider,
                 final String fname, final String relativeName,
                 final OutputStream outFile) throws IOException {
+            boolean copy = true;
+            
             if (isClassfileName(relativeName) && !isBlackListed(relativeName)) {
-                messenger.verbose("Rewriting classfile " + fname);
-                try {
-                    messenger.increaseNesting();
-                    rewriteClassfileStream(provider, outFile);
-                } finally {
-                    messenger.decreaseNesting();
+                final String internalClassName = pathToInternalClassName(relativeName);
+                if (!duplicateClasses.isInconsistentlyDuplicated(internalClassName)) {
+                    copy = false;
+                    messenger.verbose("Rewriting classfile " + fname);
+                    try {
+                        messenger.increaseNesting();
+                        rewriteClassfileStream(provider, outFile);
+                    } finally {
+                        messenger.decreaseNesting();
+                    }
+                } else {
+                    final Map<String, Boolean> dups = duplicateClasses.getDuplicates(internalClassName);
+                    messenger.warning("Classfile " +
+                        fname +
+                        " was not instrumented because it appears on the classpath more than once and is inconsistently marked for instrumentation: " +
+                        dups);
                 }
-            } else {
+            }
+            if (copy) {
                 messenger.verbose("Copying file unchanged " + fname);
                 final InputStream inStream = provider.getInputStream();
                 try {
@@ -1320,14 +1333,28 @@ public abstract class RewriteManager {
          * we generate an internal class name.
          */
         if (classfileName.endsWith(".class")) {
-            final String internalClassName = classfileName.substring(0,
-                    classfileName.length() - 6);
-            return config.classBlacklist.contains(internalClassName);
+            return config.classBlacklist.contains(
+                pathToInternalClassName(classfileName));
         } else {
             return false;
         }
     }
 
+    /**
+     * Convert relative path name to an internal classfile name. 
+     * 
+     * @param relativeFileName
+     *          The path of the file relative to the root of the current classfile
+     *          directory.  This file must be known to be a classfile, that is
+     *          one that end with <code>.class</code>.
+     * @return The internal classfile name
+     */
+    private static String pathToInternalClassName(final String relativeFileName) {
+        return relativeFileName.substring(0, relativeFileName.length() - 6);
+    }
+    
+    
+    
     // ======================================================================
     // == Methods for logging status
     // ======================================================================

@@ -19,7 +19,7 @@ import org.objectweb.asm.MethodVisitor;
  * 
  * <p>The purpose of this class is to allow more control over the order of 
  * exception handlers in the generated method bytecode.  The order of handlers
- * is significant at runtime, but ASM doesn't allow control over there order: 
+ * is significant at runtime, but ASM doesn't allow control over their order: 
  * they are output in the order they are seen via calls to {@code visitTryCatchBlock}.
  * The problem is that we often generate an exception handler that must come before
  * another handler <em>after</em> the second one has already been output.  So 

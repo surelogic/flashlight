@@ -26,7 +26,6 @@
     <pathelement path="${lib}/activation.jar"/>
   </path>
 
-	
 	<target name="clean">
 		<delete file="${flashlight-ant.jar}"/>
 	</target>

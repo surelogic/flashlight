@@ -11,8 +11,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.swing.SwingUtilities;
-
 import com.surelogic._flashlight.ClassPhantomReference;
 import com.surelogic._flashlight.ConsoleCommand;
 import com.surelogic._flashlight.FieldDef;
@@ -163,9 +161,10 @@ public final class MonitorStore implements StoreListener {
             @Override
             protected ThreadLocks initialValue() {
                 final ThreadPhantomReference thread = tl_withinStore.get().thread;
+                final boolean isEDT = thread.getName().startsWith(
+                        "AWT-EventQueue");
                 final ThreadLocks ls = new ThreadLocks(thread.getName(),
-                        thread.getId(), SwingUtilities.isEventDispatchThread(),
-                        f_rwLocks);
+                        thread.getId(), isEDT, f_rwLocks);
                 f_lockSets.add(ls);
                 return ls;
             }

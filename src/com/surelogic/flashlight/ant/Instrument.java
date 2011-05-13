@@ -117,9 +117,9 @@ public final class Instrument extends Task {
     private Path methodFiles = null;
 
     public static final class Directories {
-        private static final String DEFAULT_DELIMETERS = " ,";
+        private static final String DEFAULT_DELIMITERS = " ,";
         private String list;
-        private String delimeters = DEFAULT_DELIMETERS;
+        private String delimiters = DEFAULT_DELIMITERS;
         private File srcDirPattern;
         private File destDirPattern;
         private File destFilePattern;
@@ -134,8 +134,8 @@ public final class Instrument extends Task {
             list = value;
         }
 
-        public void setDelimeters(final String value) {
-            delimeters = value;
+        public void setDelimiters(final String value) {
+            delimiters = value;
         }
 
         public void setSrcdirpattern(final File value) {
@@ -162,8 +162,8 @@ public final class Instrument extends Task {
             return list;
         }
 
-        String getDelimeters() {
-            return delimeters;
+        String getDelimiters() {
+            return delimiters;
         }
 
         File getSrcdirpattern() {
@@ -773,7 +773,7 @@ public final class Instrument extends Task {
 
     public void addConfiguredDirs(final Directories dirs) {
         final String list = dirs.getList();
-        final String delimeters = dirs.getDelimeters();
+        final String delimiters = dirs.getDelimiters();
         final File srcDirPattern = dirs.getSrcdirpattern();
         final File destDirPattern = dirs.getDestdirpattern();
         final File destFilePattern = dirs.getDestfilepattern();
@@ -783,8 +783,8 @@ public final class Instrument extends Task {
         if (list == null) {
             throw new BuildException("List is not set");
         }
-        if (delimeters == null) {
-            throw new BuildException("Delimeters is not set");
+        if (delimiters == null) {
+            throw new BuildException("Delimiters is not set");
         }
         if (srcDirPattern == null) {
             throw new BuildException("Source directory pattern is not set");
@@ -805,8 +805,8 @@ public final class Instrument extends Task {
 
         Instrument.this
                 .log(MessageFormat
-                        .format("Expanding list of directories using list=\"{0}\", delimeters=\"{1}\", source pattern=\"{2}\", destination directory pattern=\"{3}\", destination jar file pattern=\"{4}\", replacement pattern=\"{5}\", runtime jar file=\"{6}\"",
-                                list, delimeters, srcDirPattern,
+                        .format("Expanding list of directories using list=\"{0}\", delimiters=\"{1}\", source pattern=\"{2}\", destination directory pattern=\"{3}\", destination jar file pattern=\"{4}\", replacement pattern=\"{5}\", runtime jar file=\"{6}\"",
+                                list, delimiters, srcDirPattern,
                                 destDirPattern, destFilePattern, replace,
                                 runtime), Project.MSG_VERBOSE);
 
@@ -816,7 +816,7 @@ public final class Instrument extends Task {
         final String destFilePatternString = destFilePattern == null ? null
                 : destFilePattern.getAbsolutePath();
         final StringTokenizer st = new StringTokenizer(dirs.getList(),
-                dirs.getDelimeters());
+                dirs.getDelimiters());
         while (st.hasMoreTokens()) {
             final String element = st.nextToken();
             final String srcdir = srcDirPatternString.replace(replace, element);

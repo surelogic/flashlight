@@ -43,7 +43,7 @@ public class InstrumentArchive extends Task {
 
     private String runName;
     private File destFile, srcFile, runtime, dataDir, properties;
-    private Path extraLibs, sources;
+    private Path sources;
     private String collectionType;
 
     private final List<String> toIgnore;
@@ -105,10 +105,6 @@ public class InstrumentArchive extends Task {
 
     public Path createSources() {
         return sources = new Path(getProject());
-    }
-
-    public Path createLibs() {
-        return extraLibs = new Path(getProject());
     }
 
     /**
@@ -248,6 +244,18 @@ public class InstrumentArchive extends Task {
         i.setUseDefaultIndirectAccessMethods(flag);
     }
 
+    public Path createBootclasspath() {
+        return i.createBootclasspath();
+    }
+
+    public Path createExtDirs() {
+        return i.createExtDirs();
+    }
+
+    public Path createLibraries() {
+        return i.createLibraries();
+    }
+
     /**
      * This should turn an executable jar or ejb jar into a jar that will start
      * instrumenting when it is loaded up.
@@ -260,9 +268,7 @@ public class InstrumentArchive extends Task {
             throws IOException {
         dest.mkdir();
         i.setProject(getProject());
-        if (extraLibs != null) {
-            i.createLibraries().add(extraLibs);
-        }
+
         final Directory dir = new Directory(src, dest);
         i.addConfiguredDir(dir);
         setupFlashlightConf(dest);
@@ -302,9 +308,7 @@ public class InstrumentArchive extends Task {
         FileUtility.recursiveDelete(libDirDest);
 
         i.setProject(getProject());
-        if (extraLibs != null) {
-            i.createLibraries().add(extraLibs);
-        }
+
         classesDirDest.mkdir();
         setupFlashlightConf(classesDirDest);
 
@@ -372,13 +376,13 @@ public class InstrumentArchive extends Task {
         }
         if (dataDir != null) {
             final Properties properties = new Properties();
-            // TODO how to set other props like setting the collection type?
-            // include those that start with FL_?
-
-            // insert a properties file?
-            if (this.properties != null && this.properties.exists()
-                    && this.properties.isFile()) {
-                properties.load(new FileReader(this.properties));
+            if (this.properties != null) {
+                if (this.properties.exists() && this.properties.isFile()) {
+                    properties.load(new FileReader(this.properties));
+                } else {
+                    throw new BuildException(properties.toString()
+                            + " is not a valid properties file");
+                }
             }
             if (collectionType != null) {
                 properties.put(InstrumentationConstants.FL_COLLECTION_TYPE,

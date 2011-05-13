@@ -517,21 +517,26 @@ public final class WriteHtmlOverview implements IPostPrep {
 
         @Override
         void displaySection(final Container c) {
-            c.div().id("lockset-outline").ul();
-            c.hr();
-            c.div().id("lockset-locks");
-            PrintWriter locksets = null;
-            try {
-                locksets = new PrintWriter(new File(htmlDirectory,
-                        "lockset-data.js"));
-                writeLockSets(locksets);
-            } catch (FileNotFoundException e) {
-                throw new IllegalStateException(e);
-            } catch (IOException e) {
-                throw new IllegalStateException(e);
-            } finally {
-                if (locksets != null) {
-                    locksets.close();
+            if (fields.isEmpty()) {
+                c.p().clazz("info")
+                        .text(I18N.msg("flashlight.overview.locks.noLocksets"));
+            } else {
+                c.div().id("lockset-outline").ul();
+                c.hr();
+                c.div().id("lockset-locks");
+                PrintWriter locksets = null;
+                try {
+                    locksets = new PrintWriter(new File(htmlDirectory,
+                            "lockset-data.js"));
+                    writeLockSets(locksets);
+                } catch (FileNotFoundException e) {
+                    throw new IllegalStateException(e);
+                } catch (IOException e) {
+                    throw new IllegalStateException(e);
+                } finally {
+                    if (locksets != null) {
+                        locksets.close();
+                    }
                 }
             }
         }

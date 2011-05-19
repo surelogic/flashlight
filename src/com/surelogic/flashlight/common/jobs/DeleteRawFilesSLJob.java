@@ -8,7 +8,6 @@ import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.common.license.SLLicenseProduct;
 import com.surelogic.common.license.SLLicenseUtility;
-import com.surelogic.common.serviceability.UsageMeter;
 import com.surelogic.flashlight.common.files.RawFileUtility;
 import com.surelogic.flashlight.common.files.RunDirectory;
 import com.surelogic.flashlight.common.model.RunDescription;
@@ -35,11 +34,8 @@ public class DeleteRawFilesSLJob extends AbstractSLJob {
 				return failed;
 			}
 
-			UsageMeter.getInstance().tickUse(
-					"Flashlight ran DeleteRawFilesSLJob");
-
-			final RunDirectory runDir = RawFileUtility
-					.getRunDirectoryFor(dataDir, f_description);
+			final RunDirectory runDir = RawFileUtility.getRunDirectoryFor(
+					dataDir, f_description);
 			FileUtility.recursiveDelete(runDir.getRunDirectory());
 		} finally {
 			monitor.done();

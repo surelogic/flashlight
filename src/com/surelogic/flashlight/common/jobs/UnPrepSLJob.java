@@ -7,7 +7,6 @@ import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.common.license.SLLicenseProduct;
 import com.surelogic.common.license.SLLicenseUtility;
-import com.surelogic.common.serviceability.UsageMeter;
 import com.surelogic.flashlight.common.model.RunDescription;
 
 /**
@@ -31,8 +30,6 @@ public final class UnPrepSLJob extends AbstractSLJob {
 			if (failed != null) {
 				return failed;
 			}
-
-			UsageMeter.getInstance().tickUse("Flashlight ran UnPrepSLJob");
 			f_man.deleteAllResults(f_database);
 			f_database.destroy();
 		} finally {

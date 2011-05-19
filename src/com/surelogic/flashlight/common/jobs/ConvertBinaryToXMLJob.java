@@ -12,7 +12,6 @@ import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.common.license.SLLicenseProduct;
 import com.surelogic.common.license.SLLicenseUtility;
-import com.surelogic.common.serviceability.UsageMeter;
 import com.surelogic.flashlight.common.convert.ConvertBinaryFileScan;
 import com.surelogic.flashlight.common.files.RawDataFilePrefix;
 import com.surelogic.flashlight.common.files.RawFileUtility;
@@ -40,9 +39,6 @@ public final class ConvertBinaryToXMLJob extends AbstractSLJob {
 					SLLicenseProduct.FLASHLIGHT, monitor);
 			if (failed != null)
 				return failed;
-
-			UsageMeter.getInstance().tickUse(
-					"Flashlight ran ConvertBinaryToXMLJob");
 
 			final RawDataFilePrefix rawFilePrefix = RawFileUtility
 					.getPrefixFor(f_dataFile);

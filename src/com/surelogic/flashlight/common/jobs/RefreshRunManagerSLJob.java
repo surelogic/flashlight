@@ -5,7 +5,6 @@ import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.common.license.SLLicenseProduct;
 import com.surelogic.common.license.SLLicenseUtility;
-import com.surelogic.common.serviceability.UsageMeter;
 import com.surelogic.flashlight.common.model.RunManager;
 
 public final class RefreshRunManagerSLJob extends AbstractSLJob {
@@ -35,10 +34,6 @@ public final class RefreshRunManagerSLJob extends AbstractSLJob {
 			if (failed != null) {
 				return failed;
 			}
-
-			UsageMeter.getInstance().tickUse(
-					"Flashlight ran RefreshRunManagerSLJob");
-
 			RunManager.getInstance().refresh(f_forceNotify);
 		} catch (final Exception e) {
 			return SLStatus.createErrorStatus(SLStatus.OK,

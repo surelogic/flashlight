@@ -33,7 +33,6 @@ import com.surelogic.common.jobs.SubSLProgressMonitor;
 import com.surelogic.common.license.SLLicenseProduct;
 import com.surelogic.common.license.SLLicenseUtility;
 import com.surelogic.common.logging.SLLogger;
-import com.surelogic.common.serviceability.UsageMeter;
 import com.surelogic.flashlight.common.files.RawDataFilePrefix;
 import com.surelogic.flashlight.common.files.RawFileUtility;
 import com.surelogic.flashlight.common.model.RunDescription;
@@ -156,8 +155,6 @@ public final class PrepSLJob extends AbstractSLJob {
 				return failed;
 			}
 
-			UsageMeter.getInstance().tickUse("Flashlight ran PrepSLJob");
-
 			final int estEventsInRawFile = RawFileUtility
 					.estimateNumEvents(f_dataFile);
 
@@ -219,7 +216,8 @@ public final class PrepSLJob extends AbstractSLJob {
 						@Override
 						public void doPerform(final Connection c)
 								throws Exception {
-							c.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
+							c
+									.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
 							/*
 							 * Persist the run and obtain its database
 							 * identifier, start time stamp, and the start time

@@ -17,7 +17,6 @@ import org.eclipse.ui.part.ViewPart;
 import com.surelogic.common.CommonImages;
 import com.surelogic.common.core.jobs.EclipseJob;
 import com.surelogic.common.i18n.I18N;
-import com.surelogic.common.serviceability.UsageMeter;
 import com.surelogic.common.ui.ColumnViewerSorter;
 import com.surelogic.common.ui.EclipseUIUtility;
 import com.surelogic.common.ui.SLImages;
@@ -35,8 +34,6 @@ public final class RunView extends ViewPart {
 
 	@Override
 	public void createPartControl(final Composite parent) {
-		UsageMeter.getInstance().tickUse("Flashlight RunView opened");
-
 		final TableViewer tableViewer = new TableViewer(parent, SWT.BORDER
 				| SWT.FULL_SELECTION | SWT.MULTI);
 		tableViewer.setContentProvider(new RunViewContentProvider());
@@ -48,8 +45,8 @@ public final class RunView extends ViewPart {
 					EclipseUIUtility.adaptJustification(model
 							.getColumnJustification(columnIndex)));
 			column.getColumn().setText(model.getColumnTitle(index));
-			new ColumnViewerSorter<RunDescription>(tableViewer,
-					column.getColumn()) {
+			new ColumnViewerSorter<RunDescription>(tableViewer, column
+					.getColumn()) {
 				@Override
 				protected int doCompare(final Viewer viewer,
 						final RunDescription e1, final RunDescription e2) {

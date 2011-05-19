@@ -19,7 +19,6 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
-import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
 
 import com.surelogic.common.CommonImages;
@@ -32,7 +31,6 @@ import com.surelogic.common.jobs.NullSLProgressMonitor;
 import com.surelogic.common.jobs.SLJob;
 import com.surelogic.common.jobs.SLSeverity;
 import com.surelogic.common.jobs.SLStatus;
-import com.surelogic.common.serviceability.UsageMeter;
 import com.surelogic.common.ui.EclipseUIUtility;
 import com.surelogic.common.ui.SLImages;
 import com.surelogic.common.ui.adhoc.views.ExportQueryDialog;
@@ -58,14 +56,6 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 	public FlashlightPreferencePage() {
 		super("flashlight.", FlashlightPreferencesUtility
 				.getSwitchPreferences());
-	}
-
-	@Override
-	public void init(final IWorkbench workbench) {
-		super.init(workbench);
-
-		UsageMeter.getInstance().tickUse(
-				"Flashlight FlashlightPreferencePage opened");
 	}
 
 	@Override
@@ -97,9 +87,11 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 				final ChangeDataDirectoryDialog dialog = new ChangeDataDirectoryDialog(
 						change.getShell(),
 						existing,
-						I18N.msg("flashlight.change.data.directory.dialog.title"),
+						I18N
+								.msg("flashlight.change.data.directory.dialog.title"),
 						SLImages.getImage(CommonImages.IMG_FL_LOGO),
-						I18N.msg("flashlight.change.data.directory.dialog.information"));
+						I18N
+								.msg("flashlight.change.data.directory.dialog.information"));
 
 				if (dialog.open() != Window.OK) {
 					return;
@@ -113,17 +105,19 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 				final boolean moveOldToNew = dialog.moveOldToNew();
 				if (EclipseJob.getInstance().isActiveOfType(PrepSLJob.class)) {
 					// We can't do a move while we are prepping a job
-					PlatformUI.getWorkbench().getDisplay()
-							.asyncExec(new Runnable() {
+					PlatformUI.getWorkbench().getDisplay().asyncExec(
+							new Runnable() {
 								@Override
 								public void run() {
 									ErrorDialogUtility
-											.open(null,
+											.open(
+													null,
 													"Cannot move Flashlight data directory",
 													SLEclipseStatusUtility
 															.createWarningStatus(
 																	173,
-																	I18N.err(173)));
+																	I18N
+																			.err(173)));
 								}
 							});
 					// FIXME we can't continue
@@ -141,10 +135,12 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 				} else {
 					IStatus status = SLEclipseStatusUtility.convert(result,
 							Activator.getDefault());
-					ErrorDialogUtility.open(
-							change.getShell(),
-							I18N.msg("flashlight.change.data.directory.dialog.failed"),
-							status);
+					ErrorDialogUtility
+							.open(
+									change.getShell(),
+									I18N
+											.msg("flashlight.change.data.directory.dialog.failed"),
+									status);
 				}
 			}
 		});
@@ -154,8 +150,8 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 		onGroup.setText(I18N.msg("flashlight.preference.page.group.onLaunch"));
 
 		f_autoIncreaseHeap = new BooleanFieldEditor(
-				FlashlightPreferencesUtility.AUTO_INCREASE_HEAP_AT_LAUNCH,
-				I18N.msg("flashlight.preference.page.autoIncreaseHeap"),
+				FlashlightPreferencesUtility.AUTO_INCREASE_HEAP_AT_LAUNCH, I18N
+						.msg("flashlight.preference.page.autoIncreaseHeap"),
 				onGroup);
 		finishSetup(f_autoIncreaseHeap);
 
@@ -178,8 +174,9 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 		pGroup.setText(I18N.msg("flashlight.preference.page.group.prep"));
 
 		f_objectWindowSize = new IntegerFieldEditor(
-				FlashlightPreferencesUtility.PREP_OBJECT_WINDOW_SIZE,
-				I18N.msg("flashlight.preference.page.objectWindowSize"), pGroup);
+				FlashlightPreferencesUtility.PREP_OBJECT_WINDOW_SIZE, I18N
+						.msg("flashlight.preference.page.objectWindowSize"),
+				pGroup);
 		f_objectWindowSize.setValidRange(10000, 1000000);
 		f_objectWindowSize.fillIntoGrid(pGroup, 2);
 		finishSetup(f_objectWindowSize);
@@ -192,8 +189,8 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 		finishSetup(f_promptToPrepAllRawData);
 
 		f_autoPrepAllRawData = new BooleanFieldEditor(
-				FlashlightPreferencesUtility.AUTO_PREP_ALL_RAW_DATA,
-				I18N.msg("flashlight.preference.page.autoPrepAllRawData"),
+				FlashlightPreferencesUtility.AUTO_PREP_ALL_RAW_DATA, I18N
+						.msg("flashlight.preference.page.autoPrepAllRawData"),
 				pGroup);
 		f_autoPrepAllRawData.fillIntoGrid(pGroup, 2);
 		finishSetup(f_autoPrepAllRawData);
@@ -205,15 +202,17 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 		qGroup.setText(I18N.msg("flashlight.preference.page.group.query"));
 
 		f_maxRowsPerQuery = new IntegerFieldEditor(
-				FlashlightPreferencesUtility.MAX_ROWS_PER_QUERY,
-				I18N.msg("flashlight.preference.page.maxRowsPerQuery"), qGroup);
+				FlashlightPreferencesUtility.MAX_ROWS_PER_QUERY, I18N
+						.msg("flashlight.preference.page.maxRowsPerQuery"),
+				qGroup);
 		f_maxRowsPerQuery.setValidRange(1024, 65535);
 		f_maxRowsPerQuery.fillIntoGrid(qGroup, 2);
 		finishSetup(f_maxRowsPerQuery);
 
 		f_promptAboutLotsOfSavedQueries = new BooleanFieldEditor(
 				FlashlightPreferencesUtility.PROMPT_ABOUT_LOTS_OF_SAVED_QUERIES,
-				I18N.msg("flashlight.preference.page.promptAboutLotsOfSavedQueries"),
+				I18N
+						.msg("flashlight.preference.page.promptAboutLotsOfSavedQueries"),
 				qGroup);
 		f_promptAboutLotsOfSavedQueries.fillIntoGrid(qGroup, 2);
 		finishSetup(f_promptAboutLotsOfSavedQueries);

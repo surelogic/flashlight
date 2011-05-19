@@ -2,27 +2,19 @@ package com.surelogic.flashlight.client.eclipse.views.adhoc;
 
 import java.util.Map;
 
-import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Shell;
 
-import com.surelogic.common.ui.adhoc.views.menu.AbstractQueryMenuView;
 import com.surelogic.common.adhoc.AdHocManager;
 import com.surelogic.common.adhoc.AdHocQuery;
-import com.surelogic.common.ui.tooltip.ToolTip;
 import com.surelogic.common.i18n.I18N;
-import com.surelogic.common.serviceability.UsageMeter;
+import com.surelogic.common.ui.adhoc.views.menu.AbstractQueryMenuView;
+import com.surelogic.common.ui.tooltip.ToolTip;
 import com.surelogic.flashlight.client.eclipse.images.FlashlightImageLoader;
 import com.surelogic.flashlight.common.model.EmptyQueriesCache;
 import com.surelogic.flashlight.common.model.RunDescription;
 import com.surelogic.flashlight.common.model.RunManager;
 
 public final class QueryMenuView extends AbstractQueryMenuView {
-
-	@Override
-	public void createPartControl(final Composite parent) {
-		UsageMeter.getInstance().tickUse("Flashlight QueryMenuView opened");
-		super.createPartControl(parent);
-	}
 
 	@Override
 	public AdHocManager getManager() {

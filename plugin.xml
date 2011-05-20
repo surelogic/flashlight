@@ -35,6 +35,13 @@
 				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/service"
 				helpContextId="menu-run-flashlight-tutorials">
 			</action>
+            <action
+				class="com.surelogic.flashlight.client.eclipse.actions.SetupAntTasksAction"
+				id="com.surelogic.flashlight.client.eclipse.actions.SetupAntTasksAction"
+				label="Install Flashlight Ant"
+				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/service"
+				helpContextId="menu-install-flashlight-ant">
+			</action>
 			<action
 				class="com.surelogic.flashlight.client.eclipse.actions.SendProblemAction"
 				id="com.surelogic.flashlight.client.eclipse.actions.SendProblemAction"

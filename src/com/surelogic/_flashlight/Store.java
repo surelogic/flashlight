@@ -721,6 +721,19 @@ public class Store {
         return StoreDelegate.getObjectPhantom(o, id);
     }
 
+    /**
+     * Return the id associated with the given field in the fields.txt file.
+     * This method is used during object deserialization. DO NOT REMOVE
+     * 
+     * @param clazz
+     *            the fully-qualified class name.
+     * @param field
+     * @return a positive integer, or -1 if the field is not found
+     */
+    public static int getFieldId(final String clazz, final String field) {
+        return f_conf.getFieldId(clazz, field);
+    }
+
     private static void formatNanoTime(final StringBuilder sb,
             final long totalTime) {
         final long nsPerSecond = 1000000000L;

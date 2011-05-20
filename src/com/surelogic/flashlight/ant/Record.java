@@ -9,7 +9,6 @@ import java.util.Date;
 import java.util.List;
 
 import org.apache.tools.ant.BuildException;
-import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Task;
 import org.apache.tools.ant.types.Commandline.Argument;
 import org.apache.tools.ant.types.CommandlineJava;
@@ -60,7 +59,7 @@ public class Record extends Task {
      * must refer exclusively to files. The files are scanned but not
      * instrumented.
      */
-    private BootClassPath bootclasspath;
+    private Path bootclasspath;
 
     private final List<Inspect> inspects;
 
@@ -99,33 +98,6 @@ public class Record extends Task {
 
     }
 
-    public static class External {
-        private File loc;
-
-        public File getLoc() {
-            return loc;
-        }
-
-        public void setLoc(final File loc) {
-            this.loc = loc;
-        }
-
-    }
-
-    public static class BootClassPath extends Path {
-
-        boolean useCurrentPath = false;
-
-        public BootClassPath(final Project project) {
-            super(project);
-        }
-
-        void setUseCurrentPath(final boolean val) {
-            this.useCurrentPath = val;
-        }
-
-    }
-
     public void setDataDir(final File dataDir) {
         this.dataDir = dataDir;
     }
@@ -134,8 +106,8 @@ public class Record extends Task {
         this.name = name;
     }
 
-    public BootClassPath createBootclasspath() {
-        bootclasspath = new BootClassPath(getProject());
+    public Path createBootclasspath() {
+        bootclasspath = new Path(getProject());
         return bootclasspath;
     }
 
@@ -362,27 +334,6 @@ public class Record extends Task {
 
         i.execute();
         return instrumented;
-    }
-
-    public static void main(final String[] args) {
-        Project p = new Project();
-        p.setBaseDir(new File("/home/nathan/workspace/zzzfactory"));
-        Record r = new Record();
-        r.setDataDir(new File("/home/nathan/.flashlight-data"));
-        r.setClassname("edu.afit.planetbaron.server.Server");
-        Inspect i = new Inspect();
-        i.setLoc(new File("/home/nathan/testspace/PlanetBaron/bin"));
-        i.setSource(new File("/home/nathan/testspace/PlanetBaron/src"));
-        r.addConfiguredInspect(i);
-        r.createLibraries()
-                .add(new Path(p,
-                        "/home/nathan/workspace/zzzfactory/lib/fl/flashlight-runtime.jar"));
-        r.execute();
-        // new Record()
-        // .generateSource(
-        // new File("/home/nathan/testspace/PlanetBaron/src"),
-        // new File(
-        // "/home/nathan/.flashlight-data/edu.afit.planetbaron.server.Server-2010.08.06-at-13.54.33.692/source"));
     }
 
     void addVMArg(final String prop, final String value) {

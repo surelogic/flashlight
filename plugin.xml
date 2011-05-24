@@ -28,13 +28,6 @@
 				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/license"
 				helpContextId="menu-manage-licenses">
 			</action>
-			<action
-				class="com.surelogic.flashlight.client.eclipse.actions.ImportTutorialProjectAction"
-				id="com.surelogic.flashlight.client.eclipse.actions.ImportTutorialProjectsAction"
-				label="Run Flashlight Tutorials"
-				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/service"
-				helpContextId="menu-run-flashlight-tutorials">
-			</action>
             <action
 				class="com.surelogic.flashlight.client.eclipse.actions.SetupAntTasksAction"
 				id="com.surelogic.flashlight.client.eclipse.actions.SetupAntTasksAction"
@@ -42,6 +35,14 @@
 				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/service"
 				helpContextId="menu-install-flashlight-ant">
 			</action>
+			<action
+				class="com.surelogic.flashlight.client.eclipse.actions.ImportTutorialProjectAction"
+				id="com.surelogic.flashlight.client.eclipse.actions.ImportTutorialProjectsAction"
+				label="Run Flashlight Tutorials"
+				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/service"
+				helpContextId="menu-run-flashlight-tutorials">
+			</action>
+
 			<action
 				class="com.surelogic.flashlight.client.eclipse.actions.SendProblemAction"
 				id="com.surelogic.flashlight.client.eclipse.actions.SendProblemAction"

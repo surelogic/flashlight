@@ -22,8 +22,8 @@ public final class SendProblemAction implements IWorkbenchWindowActionDelegate {
 	}
 
 	public void run(IAction action) {
-		SendServiceMessageWizard.open(SLLicenseProduct.FLASHLIGHT + " "
-				+ EclipseUtility.getVersion(Activator.getDefault()),
+		SendServiceMessageWizard.openProblemReport(SLLicenseProduct.FLASHLIGHT
+				+ " " + EclipseUtility.getVersion(Activator.getDefault()),
 				CommonImages.IMG_FL_LOGO);
 	}
 

@@ -109,7 +109,8 @@ public class SetupAntDialog extends TitleAreaDialog {
                 }
                 final String selectedFilename = fd.open();
                 if (selectedFilename != null) {
-                    chooseFileText.setText(selectedFilename);
+                    chooseFileText.setText(selectedFilename + File.separator
+                            + FLASHLIGHT_DIR);
                 }
             }
         });
@@ -126,40 +127,29 @@ public class SetupAntDialog extends TitleAreaDialog {
     protected void okPressed() {
         String text = chooseFileText.getText();
         File file = new File(text);
-        if (file.exists()) {
-            File target = new File(file, FLASHLIGHT_DIR);
-            if (target.exists()) {
+        if (!file.exists()) {
+            file.mkdirs();
+        }
+        URL url = Thread.currentThread().getContextClassLoader()
+                .getResource(FL_ANT_ZIP);
+        try {
+            File tmp = File.createTempFile("fla", "zip");
+            try {
+                FileUtility.copy(url, tmp);
+                FileUtility.unzipFile(tmp, file);
                 MessageDialog
                         .openInformation(
                                 EclipseUIUtility.getShell(),
-                                "Directory already exists.",
+                                "Install Successful",
                                 String.format(
-                                        "A directory named %s already exists in %s.  The Flashlight Ant tasks have most likely already been unzipped here.",
-                                        FLASHLIGHT_DIR, file.toString()));
-            } else {
-                target.mkdir();
-                URL url = Thread.currentThread().getContextClassLoader()
-                        .getResource(FL_ANT_ZIP);
-                try {
-                    File tmp = File.createTempFile("fla", "zip");
-                    try {
-                        FileUtility.copy(url, tmp);
-                        FileUtility.unzipFile(tmp, target);
-                        MessageDialog
-                                .openInformation(
-                                        EclipseUIUtility.getShell(),
-                                        "Install Successful",
-                                        String.format(
-                                                "The Flashlight Ant tasks can be found in the %s folder.",
-                                                target.toString()));
-                    } finally {
-                        tmp.delete();
-                    }
-                } catch (IOException e) {
-                    target.delete();
-                    e.printStackTrace();
-                }
+                                        "The Flashlight Ant tasks can be found in the %s folder.",
+                                        file.toString()));
+            } finally {
+                tmp.delete();
             }
+        } catch (IOException e) {
+            file.delete();
+            e.printStackTrace();
         }
         super.okPressed();
     }

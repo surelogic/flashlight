@@ -235,7 +235,33 @@ final class ThreadLocks {
             }
         }
 
+        /**
+         * Removes duplicate acquisitions from this lock stack. This can be
+         * helpful for analysis, but should not be done to a stack that
+         * represents the live state of a thread, as the release method will not
+         * behave as expected.
+         * 
+         * @return
+         */
+        LockStack cull() {
+            if (lockId == HEAD) {
+                return this;
+            } else if (parentLock.contains(lockId)) {
+                return parentLock.cull();
+            } else {
+                return new LockStack(parentLock.cull(), lockId);
+            }
+        }
+
         private final int hash;
+
+        @Override
+        public String toString() {
+            if (lockId == HEAD) {
+                return "head";
+            }
+            return lockId + ":" + parentLock.toString();
+        }
 
         @Override
         public int hashCode() {

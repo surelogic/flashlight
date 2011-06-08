@@ -119,6 +119,7 @@ public class MasterLockSet {
         }
 
         void add(LockStack stack) {
+            stack = stack.cull();
             stacks.add(stack);
             final List<Long> ids = new ArrayList<Long>();
             for (; stack.lockId != LockStack.HEAD; stack = stack.parentLock) {

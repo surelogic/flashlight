@@ -52,7 +52,7 @@ public class DeadlockInfo {
             String s = "";
             for (; stack.getLockId() != LockStack.HEAD; stack = stack
                     .getParentLock()) {
-                s = " -> " + objId(stack.getLockId()) + s;
+                s = s + " -> " + objId(stack.getLockId());
             }
             strs.add(s);
         }

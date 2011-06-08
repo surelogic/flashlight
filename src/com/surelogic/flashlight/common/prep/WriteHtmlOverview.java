@@ -169,14 +169,19 @@ public final class WriteHtmlOverview implements IPostPrep {
         header.h(1).text(f_runDescription.getName());
         header.h(2).text(f_runDescription.getStartTimeOfRun().toString());
         header.h(2).text(f_runDescription.getHostname());
-        HTMLList sectionList = header.ul().clazz("sectionList");
+        Table sectionTable = header.table().clazz("sectionHeaders");
+        Row sectionRow = sectionTable.row();
         for (HeaderName hn : headers) {
-            LI li = sectionList.li();
+            sectionRow.td().clazz("sectionHeaderPadding").text(" ");
+            TD td = sectionRow.td();
+            td.clazz("sectionHeader");
             if (s != null && s.getName().equals(hn.name)) {
-                li.clazz("selected");
+                td.clazz("selected");
             }
-            li.a(hn.link).text(hn.name);
+            td.a(hn.link).text(hn.name);
         }
+        sectionRow.td().clazz("sectionHeaderRightPadding");
+
         Container main = body.div().id("main");
         Container content = main.div().id("content");
         main.div().clazz("clear");

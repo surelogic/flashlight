@@ -253,11 +253,66 @@ ul.deadlock-trace-menu li {
    vertical-align: middle;
 }
 
+table.sectionHeaders {
+   width: 100%;
+   border: none;
+   margin: 1em 0 1em 0;
+   padding: 3px 10px 3px 10px;
+}
+
+table.sectionHeaders td.sectionHeader {
+    border: 1px solid black;
+    text-align: center;
+    width: 10em;
+}
+
+table.sectionHeaders td.sectionHeaderPadding {
+    margin: 0;
+    padding: 0;
+    border-bottom: 1px solid black;
+    border-right: none;
+    border-left: none;
+    width: 10px;
+}
+
+
+table.sectionHeaders td.sectionHeader.selected {
+    border-bottom: 1px solid  #deb887;
+    background-color: #deb887;
+}
+
+table.sectionHeaders td.sectionHeaderRightPadding {
+    border-bottom: 1px solid black;
+    border-right: none;
+    border-left: none;
+}
+
+table.sectionHeaders td.sectionHeaderLeftPadding {
+    border-bottom: 1px solid black;
+    border-right: none;
+    border-left: none;
+}
+
+table.sectionHeaders td.sectionHeader a {
+   text-decoration: none;
+   font-size: 11pt;
+   font-weight: bold;
+}
+table.sectionHeaders td.sectionHeader:hover {
+   background: #deb887;
+}
+/*table.sectionHeaders a:hover {
+   background: #deb887;
+}*/
+
+
+
 ul.sectionList {
    text-align: left;
    margin: 1em 0 1em 0;
    border-bottom: 1px solid black;
    list-style-type: none;
+   margin: 1em 0 1em 0;
    padding: 3px 10px 3px 10px;
 }
 

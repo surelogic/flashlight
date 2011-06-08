@@ -834,29 +834,29 @@ $(document).ready(
 
       // We load timeline separately b/c it takes too long to do on startup
 
-      $('.sectionList > li.selected > a[href="index2.html"]').each(
+      $('.sectionHeaders td.selected > a[href="index2.html"]').each(
          function () {
                initDeadlockGraphTab();
          }
       );
       //Init race condition logic
-      $('.sectionList > li.selected > a[href="index3.html"]').each(
+      $('.sectionHeaders td.selected > a[href="index3.html"]').each(
          function () {
                initRaceConditionTab();
          }
       );
       //Init bad publishes logic
-      $('.sectionList > li.selected > a[href="index4.html"]').each(
+      $('.sectionHeaders td.selected > a[href="index4.html"]').each(
          function () {
                initBadPublishTab();
          }
       );
-      $('.sectionList > li.selected > a[href="index5.html"]').each(
+      $('.sectionHeaders td.selected > a[href="index5.html"]').each(
          function () {
                loadTimeline();
          }
       );
-      $('.sectionList > li.selected > a[href="index6.html"]').each(
+      $('.sectionHeaders td.selected > a[href="index6.html"]').each(
          function () {
              initCoverageTab();
          }

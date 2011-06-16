@@ -17,7 +17,7 @@
 
 	<property name="antlib.xml" value="com/surelogic/flashlight/ant/antlib.xml"/>
 	
-	<property name="flashlight-ant.zip" value="${basedir}/../flashlight-client-eclipse/lib/flashlight-ant.zip" />
+	<property name="flashlight-ant.zip" value="${basedir}/../flashlight-common/lib/flashlight-ant.zip" />
 	<property name="flashlight-ant.jar" value="${basedir}/flashlight-ant.jar" />
 	<property name="flashlight-ant.jar.manifest" value="${lib}/ANT-MANIFEST.MF" />
 

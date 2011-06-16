@@ -28,13 +28,6 @@
 				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/license"
 				helpContextId="menu-manage-licenses">
 			</action>
-            <action
-				class="com.surelogic.flashlight.client.eclipse.actions.SetupAntTasksAction"
-				id="com.surelogic.flashlight.client.eclipse.actions.SetupAntTasksAction"
-				label="Install Flashlight Ant"
-				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/service"
-				helpContextId="menu-install-flashlight-ant">
-			</action>
 			<action
 				class="com.surelogic.flashlight.client.eclipse.actions.ImportTutorialProjectAction"
 				id="com.surelogic.flashlight.client.eclipse.actions.ImportTutorialProjectsAction"
@@ -71,6 +64,15 @@
 				icon="platform:/plugin/com.surelogic.common/lib/images/fl_logo.gif"
 				label="Open Flashlight Perspective" menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/client"
 				helpContextId="menu-open-flashlight-perspective">
+			</action>
+			<action
+				class="com.surelogic.flashlight.client.eclipse.actions.SetupAntTasksAction"
+				id="com.surelogic.flashlight.client.eclipse.actions.SetupAntTasksAction"
+				icon="platform:/plugin/com.surelogic.common/lib/images/jar_saveas.gif"
+				label="Save Ant Task Library As..."
+				tooltip="Save a copy of the Flashlight Ant task library to the disk"
+				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/client"
+				helpContextId="menu-save-flashlight-ant">
 			</action>
 			<action
 				class="com.surelogic.flashlight.client.eclipse.actions.ImportFlashlightRunAction"

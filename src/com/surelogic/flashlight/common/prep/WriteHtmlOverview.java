@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.lang.reflect.Array;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -14,10 +15,12 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -874,6 +877,42 @@ public final class WriteHtmlOverview implements IPostPrep {
         }
     }
 
+    private static class CounterMap<T> {
+        final Map<T, Integer> map;
+        int count;
+
+        CounterMap() {
+            map = new HashMap<T, Integer>();
+        }
+
+        int assign(final T val) {
+            Integer integer = map.get(val);
+            if (integer == null) {
+                integer = count++;
+                map.put(val, integer);
+            }
+            return integer;
+        }
+
+        int getCount(final T val) {
+            Integer integer = map.get(val);
+            if (integer == null) {
+                throw new IllegalArgumentException("Object not in map");
+            }
+            return integer;
+        }
+
+        @SuppressWarnings("unchecked")
+        T[] toArray(final Class<T[]> arrayType) {
+            T[] array = (T[]) Array.newInstance(arrayType.getComponentType(),
+                    count);
+            for (Entry<T, Integer> e : map.entrySet()) {
+                array[e.getValue()] = e.getKey();
+            }
+            return array;
+        }
+    }
+
     class CoverageSection extends Section {
 
         private final CoverageSite site;
@@ -894,7 +933,7 @@ public final class WriteHtmlOverview implements IPostPrep {
         void displaySection(final Container c) {
             // The first node should be an anonymous root node, so we just do
             // its children
-            Set<CoverageSite> children = site.getChildren();
+            Collection<CoverageSite> children = site.getChildren();
             if (children.isEmpty()) {
                 c.p()
                         .clazz("info")
@@ -940,21 +979,37 @@ public final class WriteHtmlOverview implements IPostPrep {
                 jThread.string("start", t.getStart().toString());
                 jThread.string("stop", t.getStop().toString());
             }
-            JObject jRoot = builder.object("coverage");
-            writeNodes(jRoot, site);
+            CounterMap<CoverageSite> covMap = new CounterMap<SummaryInfo.CoverageSite>();
+            CounterMap<Site> siteMap = new CounterMap<SummaryInfo.Site>();
+            processNodes(site, covMap, siteMap);
+            CoverageSite[] covs = covMap.toArray(CoverageSite[].class);
+            Site[] sites = siteMap.toArray(Site[].class);
+            JArray jCovs = builder.array("coverage");
+            for (CoverageSite cov : covs) {
+                JObject jCov = jCovs.object();
+                jCov.val("site", siteMap.getCount(cov.getSite()));
+                jCov.val("threadsSeen", cov.getThreadsSeen());
+                JArray jChildren = jCov.array("children");
+                for (CoverageSite site : cov.getChildren()) {
+                    jChildren.val(covMap.getCount(site));
+                }
+            }
+            JArray jSites = builder.array("sites");
+            for (Site s : sites) {
+                jSites.object("clazz", s.getClazz(), "pakkage", s.getPackage(),
+                        "file", s.getFile(), "line", s.getLine(), "location",
+                        s.getLocation());
+            }
             builder.build(writer);
         }
 
-        private void writeNodes(final JObject jRoot, final CoverageSite site) {
+        private void processNodes(final CoverageSite site,
+                final CounterMap<CoverageSite> covs,
+                final CounterMap<Site> sites) {
+            covs.assign(site);
+            sites.assign(site.getSite());
             for (CoverageSite cs : site.getChildren()) {
-                String id = cs.getPackage() + "." + cs.getClazz() + "."
-                        + cs.getLocation();
-                JObject jSite = jRoot.object(id);
-                jSite.object("site", "clazz", cs.getClazz(), "pakkage",
-                        cs.getPackage(), "file", cs.getFile(), "line",
-                        cs.getLine(), "location", cs.getLocation());
-                jSite.val("threadsSeen", cs.getThreadsSeen());
-                writeNodes(jSite.object("children"), cs);
+                processNodes(cs, covs, sites);
             }
         }
 

@@ -28,7 +28,7 @@ var fd, icicle, sb, tm, tl;
 function treeTable() {
    $(".treeTable td:first-child:not(.leaf)")
       .prepend("<img class='icon' src='" + O_DOWN + "'></img>")
-      .find("> .icon")
+      
       .click(toggleTree);
    $(".treeTable td.leaf").prepend("<img class='icon' src='" + O_FILLER + "'></img>");
    $(".treeTable td.depth1:not(.leaf) > .icon").each(toggleTree);
@@ -157,7 +157,7 @@ function tableCollapse(tr, depth, filter, row) {
 }
 
 
-function coverageOutline(outline,json,threads) {
+function coverageOutline(outline,threads) {
     function filter(node) {
         for (var i = 0; i < node.threadsSeen.length; i++) {
             if(threads[node.threadsSeen[i]]) {
@@ -167,31 +167,34 @@ function coverageOutline(outline,json,threads) {
         return false;
     }
     function siteTag(hasChildren, node) {
-        var site = node.site;
+        var site = sites[node.site];
         var span = '<span>' + site.pakkage + '.' + site.clazz + '.' + site.location + '</span>';
         var link = '<a href="index.html?loc=&Package=' + site.pakkage + '&Class=' + site.clazz + 
             '&Method=' + site.location + '&Line=' + site.line + '">(' + site.file + ':' + 
             site.line + ')</a>';
         return { text: span + link };
     }
-    jsonOutline(outline,json,filter,siteTag);
+    function children(node) {
+        return $.map(node.children, function (i) { return coverage[i]; });
+    }
+    jsonOutline(outline,coverage[0],filter,children,siteTag);
 }
 
 // Construct an outline in the given html node, backed by a json object.
-function jsonOutline(outline,json,filter,show) {
+function jsonOutline(outline,json,filter,children,show) {
     outline.get(0).json = json;
     outline.find('> ul').empty();
-    outlineExpand(outline,filter,show);
+    outlineExpand(outline,filter,children,show);
 }
 
 
-function outlineExpand(node,filter,show) {
+function outlineExpand(node,filter,children, show) {
     node.find('> .icon').attr('src', O_DOWN).one('click', 
                                                  function() {
-                                                     outlineCollapse($(this).parent(), filter, show);
+                                                     outlineCollapse($(this).parent(), filter, children, show);
                                                  });
     var childList = node.find('> ul');
-    var json = node.get(0).json;
+    var json = children(node.get(0).json);
     for(var n in json) {
         //this is a child of the selected node
         var elem = json[n];
@@ -211,18 +214,18 @@ function outlineExpand(node,filter,show) {
                 toShow.register(li);
             }
             if(hasChildren) {
-                li.get(0).json = elem.children;
+                li.get(0).json = elem;
                 li.find('> .icon').one('click', 
-                                       function() {outlineExpand($(this).parent(), filter, show);});
+                                       function() {outlineExpand($(this).parent(), filter, children, show);});
             }
         }
     }
 }
 
-function outlineCollapse(node, filter,show) {
+function outlineCollapse(node, filter, children, show) {
     node.find('> .icon').attr('src', O_RIGHT).one('click',
                                                   function() {
-                                                      outlineExpand(node, filter,show);
+                                                      outlineExpand(node, filter, children, show);
                                                   });
     node.find('> ul').empty();
 }
@@ -793,11 +796,11 @@ function initCoverageTab() {
     for (var i = 0; i < threadList.length; i++) {
         threadDiv.append('<li id="' + threadList[i].id + '">' + threadList[i].name + '</li>');
     }
-    coverageOutline($('#coverage'), coverage, selectedThreads);
+    coverageOutline($('#coverage'), selectedThreads);
     threadDiv.find('li').click(
         function (e) {
             var threadId = Number($(this).attr('id'));
-            if (e.shiftKey) {
+            if (e.shiftKey || e.ctrlKey) {
                 selectedThreads[threadId] = !selectedThreads[threadId];
                 $('#' + threadId).toggleClass('selected');
             } else {
@@ -818,10 +821,12 @@ function initCoverageTab() {
                     selectedThreads[th] = true;
                 }
             }
-            coverageOutline($('#coverage'), coverage, selectedThreads);
-        }).
-        mousedown(function(e) {e.preventDefault();})
-    ;
+            coverageOutline($('#coverage'), selectedThreads);
+        }).mousedown(
+            function(e) {
+                e.preventDefault();
+            }
+        );
 }
 
 $(document).ready(

@@ -695,7 +695,10 @@ function initRaceConditionTab() {
                    };
         }
     }
-    jsonOutline($('#lockset-outline'),lockSets,filter,tag);
+    function children(node) {
+        return node.children;
+    }
+    jsonOutline($('#lockset-outline'),lockSets,filter,children,tag);
 }
 
 function initBadPublishTab() {

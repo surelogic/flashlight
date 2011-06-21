@@ -52,7 +52,6 @@ import com.surelogic.flashlight.common.prep.SummaryInfo.CoverageSite;
 import com.surelogic.flashlight.common.prep.SummaryInfo.DeadlockEvidence;
 import com.surelogic.flashlight.common.prep.SummaryInfo.DeadlockTrace;
 import com.surelogic.flashlight.common.prep.SummaryInfo.Edge;
-import com.surelogic.flashlight.common.prep.SummaryInfo.Loc;
 import com.surelogic.flashlight.common.prep.SummaryInfo.Lock;
 import com.surelogic.flashlight.common.prep.SummaryInfo.LockSetEvidence;
 import com.surelogic.flashlight.common.prep.SummaryInfo.LockSetLock;
@@ -73,11 +72,6 @@ public final class WriteHtmlOverview implements IPostPrep {
     private static final String INSTANCE_LOCKSET = "1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a";
     private static final String STATIC_LOCKSET = "1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a";
     private static final String FIELD_ACCESSES = "8034f80b-aefb-4255-98b6-0ccd73ab1696";
-    private static final String LOCK_EDGE_QUERY = "c9453327-b892-4324-a6b8-2dceb32e1901";
-    private static final String BAD_PUBLISH_QUERY = "708d1b8a-5274-4a25-b0b4-67f1a7a86690";
-    private static final String THREAD_BLOCKING_QUERY = "4e026769-1b0b-42bd-8893-f3b92add093f";
-    private static final String THREAD_LOCKS_QUERY = "dc4b409d-6c6c-4d5f-87f6-c8223a9d40aa";
-    private static final String LINE_OF_CODE_QUERY = "bd88cc1d-b606-463d-af27-b71c66ede24e";
     private static final String PACKAGE_IMG = "package.gif";
     private static final String CLASS_IMG = "class.gif";
 
@@ -551,7 +545,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 
         void writeLockSets(final PrintWriter writer) throws IOException {
             JsonBuilder builder = new JsonBuilder();
-            JArray jLockSets = builder.array("lockSets");
+            JArray jLockSets = builder.object("lockSets").array("children");
             String p = null;
             String c = null;
             JArray jPackage = null;
@@ -1153,35 +1147,6 @@ public final class WriteHtmlOverview implements IPostPrep {
             return "EdgeEntry [from=" + from + ", to=" + to + "]";
         }
 
-    }
-
-    private static <T extends Loc> void displayClassTreeTable(
-            final List<T> fields, final Table t, final RowProvider<T> lp) {
-        t.clazz("treeTable");
-        lp.headerRow(t.header());
-        String curPakkage = null, curClazz = null;
-        for (T f : fields) {
-            String pakkage = f.getPackage();
-            String clazz = f.getClazz();
-            if (!pakkage.equals(curPakkage)) {
-                curPakkage = pakkage;
-                curClazz = null;
-                Row r = t.row();
-                r.td().clazz("depth1").span().clazz("package").text(pakkage);
-                for (int i = 1; i < lp.numCols(f); i++) {
-                    r.td();
-                }
-            }
-            if (!clazz.equals(curClazz)) {
-                curClazz = clazz;
-                Row r = t.row();
-                r.td().clazz("depth2").span().clazz("class").text(clazz);
-                for (int i = 1; i < lp.numCols(f); i++) {
-                    r.td();
-                }
-            }
-            lp.row(t, f);
-        }
     }
 
     private static <T> void displayTreeTable(final List<T> ts,

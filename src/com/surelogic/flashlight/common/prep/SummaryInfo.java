@@ -641,8 +641,8 @@ public class SummaryInfo {
             Site s = null;
             for (Row r : result) {
                 final long duration = r.nextLong();
-                final String thread = r.nextString();
                 final Site site = sh.handle(r);
+                final String thread = r.nextString();
                 if (!site.equals(s)) {
                     s = site;
                     if (cs != null) {

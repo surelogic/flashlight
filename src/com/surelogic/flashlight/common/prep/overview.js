@@ -27,8 +27,8 @@ var fd, icicle, sb, tm, tl;
 // the table are marked with classes depth1, depth2, etc.
 function treeTable() {
    $(".treeTable td:first-child:not(.leaf)")
-      .prepend("<img class='icon' src='" + O_DOWN + "'></img>")
-      
+      .prepend("<img class='icon' src='" + O_DOWN + "'></img>")      
+      .find("> .icon")
       .click(toggleTree);
    $(".treeTable td.leaf").prepend("<img class='icon' src='" + O_FILLER + "'></img>");
    $(".treeTable td.depth1:not(.leaf) > .icon").each(toggleTree);

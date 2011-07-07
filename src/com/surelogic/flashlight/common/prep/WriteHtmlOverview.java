@@ -934,7 +934,7 @@ public final class WriteHtmlOverview implements IPostPrep {
                         .text(I18N
                                 .msg("flashlight.overview.coverage.noCoverage"));
             } else {
-                Table threadTable = c.table();
+                Table threadTable = c.table().id("coverage-table");
                 Row threadRow = threadTable.row();
                 TD threadDiv = threadRow.td();
                 threadDiv.id("thread-td");

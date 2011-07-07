@@ -189,7 +189,11 @@ ul.deadlock-trace-menu li {
 #threads li {
     cursor: pointer;
     color: blue;
-    padding: 1px 0px 1px 2px;
+    min-height: 18px;
+}
+
+#coverage li {
+    min-height: 18px;
 }
 
 #thread-td > h3, #coverage-td > h3 {
@@ -198,6 +202,14 @@ ul.deadlock-trace-menu li {
 
 #thread-td {
     padding: 0px 0px;
+}
+
+#coverage-table, #coverage-table td {
+    border: none;
+}
+
+#coverage li span, #coverage li a {
+    vertical-align: top;
 }
 
 .emph {

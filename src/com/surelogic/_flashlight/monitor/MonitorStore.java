@@ -437,7 +437,8 @@ public final class MonitorStore implements StoreListener {
             final long siteId) {
         final long lockId = Phantom.of(lockObject).getId();
         if (!f_lockNames.containsKey(lockId)) {
-            f_lockNames.put(lockId, lockObject.getClass().toString() + lockId);
+            f_lockNames.put(lockId, lockObject.getClass().toString() + '-'
+                    + lockId);
         }
         tl_lockSet.get().enterLock(lockId);
     }
@@ -734,9 +735,9 @@ public final class MonitorStore implements StoreListener {
 
         public String getDescription() {
             return SET
-                    + "- Set one of the following properties: ["
-                    + new String[] { FIELD_SPEC, EDT_FIELDS, SHARED_FIELDS,
-                            LOCKSET_FIELDS };
+                    + "- Set one of the following properties: "
+                    + Arrays.toString(new String[] { FIELD_SPEC, EDT_FIELDS,
+                            SHARED_FIELDS, LOCKSET_FIELDS });
         }
 
         public String handle(final String command) {

@@ -676,8 +676,7 @@ public class Store {
             l.shutdown();
         }
 
-        final long endTime = System.nanoTime();
-        final long totalTime = endTime - f_conf.getStartNanoTime();
+        final long totalTime = System.nanoTime() - f_conf.getStartNanoTime();
         final StringBuilder sb = new StringBuilder(
                 " (duration of collection was ");
         formatNanoTime(sb, totalTime);
@@ -695,10 +694,7 @@ public class Store {
                 InstrumentationConstants.FL_COMPLETE_RUN);
         try {
             final FileWriter w = new FileWriter(done);
-            sb.delete(0, sb.length()); // clear
-            sb.append("Completed: ");
-            formatNanoTime(sb, endTime);
-            w.write(sb.toString());
+            w.write(Long.toString(totalTime) + "\n");
             w.close();
         } catch (final IOException e) {
             f_conf.log(e.getMessage() + ", while writing final file");

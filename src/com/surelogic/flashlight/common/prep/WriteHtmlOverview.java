@@ -52,6 +52,7 @@ import com.surelogic.flashlight.common.prep.SummaryInfo.CoverageSite;
 import com.surelogic.flashlight.common.prep.SummaryInfo.DeadlockEvidence;
 import com.surelogic.flashlight.common.prep.SummaryInfo.DeadlockTrace;
 import com.surelogic.flashlight.common.prep.SummaryInfo.Edge;
+import com.surelogic.flashlight.common.prep.SummaryInfo.FieldCoverage;
 import com.surelogic.flashlight.common.prep.SummaryInfo.Lock;
 import com.surelogic.flashlight.common.prep.SummaryInfo.LockSetEvidence;
 import com.surelogic.flashlight.common.prep.SummaryInfo.LockSetLock;
@@ -1005,6 +1006,46 @@ public final class WriteHtmlOverview implements IPostPrep {
             for (CoverageSite cs : site.getChildren()) {
                 processNodes(cs, covs, sites);
             }
+        }
+
+    }
+
+    class FieldCoverageSection extends Section {
+
+        private final List<FieldCoverage> fields;
+
+        public FieldCoverageSection(final List<FieldCoverage> fields) {
+            super("Shared Fields");
+            this.fields = fields;
+        }
+
+        @Override
+        void displaySection(final Container c) {
+            if (fields.isEmpty()) {
+                c.p()
+                        .clazz("info")
+                        .text(I18N.msg("flashlight.overview.shared.noneShared"));
+            } else {
+                c.div().id("shared-outline").ul();
+                PrintWriter sharedFields = null;
+                try {
+                    sharedFields = new PrintWriter(new File(htmlDirectory,
+                            "lockset-data.js"));
+                    writeSharedFields(sharedFields);
+                } catch (FileNotFoundException e) {
+                    throw new IllegalStateException(e);
+                } catch (IOException e) {
+                    throw new IllegalStateException(e);
+                } finally {
+                    if (sharedFields != null) {
+                        sharedFields.close();
+                    }
+                }
+            }
+        }
+
+        void writeSharedFields(final PrintWriter writer) throws IOException {
+
         }
 
     }

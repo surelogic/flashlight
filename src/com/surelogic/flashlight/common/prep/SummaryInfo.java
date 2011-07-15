@@ -62,6 +62,8 @@ public class SummaryInfo {
     private final List<LockSetEvidence> emptyLockSets;
     private final List<BadPublishEvidence> badPublishes;
 
+    private final List<FieldCoverage> fields;
+
     private final String objectCount;
     private final String classCount;
 
@@ -73,7 +75,7 @@ public class SummaryInfo {
             final List<BadPublishEvidence> badPublishes,
             final LimitedResult<DeadlockEvidence> deadlocks,
             final String objectCount, final String classCount,
-            final CoverageSite coverageRoot) {
+            final CoverageSite coverageRoot, final List<FieldCoverage> fields) {
         this.locks = locks;
         this.threads = threads;
         this.emptyLockSets = emptyLockSetFields;
@@ -82,6 +84,7 @@ public class SummaryInfo {
         this.objectCount = objectCount;
         this.classCount = classCount;
         this.root = coverageRoot;
+        this.fields = fields;
     }
 
     public LimitedResult<Lock> getLocks() {
@@ -114,6 +117,10 @@ public class SummaryInfo {
 
     public CoverageSite getThreadCoverage() {
         return root;
+    }
+
+    public List<FieldCoverage> getFields() {
+        return fields;
     }
 
     public static class SummaryQuery implements DBQuery<SummaryInfo> {
@@ -170,8 +177,11 @@ public class SummaryInfo {
                     root,
                     q.prepared("CoverageInfo.lockCoverage",
                             new CoverageHandler()).call());
+            List<FieldCoverage> fields = new ArrayList<FieldCoverage>();
+            fields.addAll(q.prepared("SummaryInfo.staticFieldCoverage",
+                    new FieldCoverageHandler()).call());
             return new SummaryInfo(locks, threads, emptyLockSets, badPublishes,
-                    deadlocks, objectCount, classCount, root);
+                    deadlocks, objectCount, classCount, root, fields);
         }
 
         void process(final Query q, final CoverageSite site,
@@ -1583,6 +1593,52 @@ public class SummaryInfo {
                 set.add(thread);
             }
             return map;
+        }
+    }
+
+    public static class FieldCoverage {
+        private final Field field;
+        private final Set<Long> threadsSeen;
+
+        public FieldCoverage(final Field field) {
+            this.field = field;
+            threadsSeen = new HashSet<Long>();
+        }
+
+        public Field getField() {
+            return field;
+        }
+
+        public Set<Long> getThreadsSeen() {
+            return threadsSeen;
+        }
+
+    }
+
+    private static class FieldCoverageHandler implements
+            ResultHandler<List<FieldCoverage>> {
+
+        @Override
+        public List<FieldCoverage> handle(final Result result) {
+            Field current = null;
+            FieldCoverage currentCov = null;
+            List<FieldCoverage> fields = new ArrayList<FieldCoverage>();
+            for (Row r : result) {
+                long id = r.nextLong();
+                String pakkage = r.nextString();
+                String clazz = r.nextString();
+                String name = r.nextString();
+                boolean isStatic = r.nextBoolean();
+                long thread = r.nextLong();
+                Field f = new Field(pakkage, clazz, name, id, isStatic, null);
+                if (!f.equals(current)) {
+                    current = f;
+                    currentCov = new FieldCoverage(f);
+                    fields.add(currentCov);
+                }
+                currentCov.getThreadsSeen().add(thread);
+            }
+            return fields;
         }
     }
 

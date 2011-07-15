@@ -159,18 +159,13 @@ function tableCollapse(tr, depth, filter, row) {
 
 function coverageOutline(outline,threads) {
     function filter(node) {
-        for (var i = 0; i < node.threadsSeen.length; i++) {
-            if(threads[node.threadsSeen[i]]) {
-                return true;
-            }
-        } 
-        return false;
+        return intersects(threads, node.threadsSeen);
     }
     function siteTag(hasChildren, node) {
         var site = sites[node.site];
-        var span = '<span>' + site.pakkage + '.' + site.clazz + '.' + site.location + '</span>';
+        var span = '<span>' + site.pakkage + '.' + site.clazz + '.' + escapeHtml(site.location) + '</span>';
         var link = '<a href="index.html?loc=&Package=' + site.pakkage + '&Class=' + site.clazz + 
-            '&Method=' + site.location + '&Line=' + site.line + '">(' + site.file + ':' + 
+            '&Method=' + encodeURI(site.location) + '&Line=' + site.line + '">(' + site.file + ':' + 
             site.line + ')</a>';
         return { text: span + link };
     }
@@ -664,8 +659,9 @@ function displayClassTree(leaves, leafFn) {
 
 function displaySite(site) {
     return site.location + 
-        '<a href="?loc=&Package=' + site.pakkage + '&Class='  + site.clazz + '&Method=' + site.location + '&Line=' + site.line + 
-        '">(' + site.clazz + ':' + site.line + ')</a>';
+        '<a href="?loc=&Package=' + site.pakkage + '&Class='  + site.clazz + '&Method=' + 
+        encodeURI(site.location) + '&Line=' + site.line + '">(' + site.clazz + ':' + site.line + 
+        ')</a>';
 }
 
 function initRaceConditionTab() {
@@ -706,8 +702,8 @@ function initBadPublishTab() {
         var show = '';
         for(var i = 0; i < trace.length; i++) {
             var t = trace[i];
-            show += '<li>at ' + t.pakkage + '.' + t.clazz + '.' + t.location;
-            show += '<a href="?loc=&Package=' + t.pakkage + '&Class=' + t.clazz + '&Method=' + t.location + '&Line=' + t.line;
+            show += '<li>at ' + t.pakkage + '.' + t.clazz + '.' + escapeHtml(t.location);
+            show += '<a href="?loc=&Package=' + t.pakkage + '&Class=' + t.clazz + '&Method=' + encodeURI(t.location) + '&Line=' + t.line;
             show += '">(' + t.file + ':' + t.line + ')</a></li>';
         }
         return show;
@@ -777,13 +773,24 @@ function initDeadlockGraphTab() {
    displayDeadlock(cyc);
 }
 
+function getSelectedNumbers(map) {
+    var selected = [];
+    for(var t in map) {
+        if(map[t]) {
+            selected.push(Number(t));
+        }
+    }
+    return selected;
+}
+
+
 function initCoverageTab() {
     var threadDiv = $('#threads');
     var selectedThreads = {};
     var threadList = [];
     for (var t in threads) {
         threadList.push({id: t, name: threads[t].name});
-        selectedThreads[t] = true;
+        selectedThreads[t] = false;
     }
     threadList.sort(function(a,b) {
         var an = a.name;
@@ -799,7 +806,7 @@ function initCoverageTab() {
     for (var i = 0; i < threadList.length; i++) {
         threadDiv.append('<li id="' + threadList[i].id + '">' + threadList[i].name + '</li>');
     }
-    coverageOutline($('#coverage'), selectedThreads);
+    coverageOutline($('#coverage'), getSelectedNumbers(selectedThreads));
     threadDiv.find('li').click(
         function (e) {
             var threadId = Number($(this).attr('id'));
@@ -814,17 +821,7 @@ function initCoverageTab() {
                 selectedThreads[threadId] = true;
                 $('#' + threadId).addClass('selected');
             }
-            var someSelected = false;
-            for (var t in threads) {
-                someSelected |= selectedThreads[t];
-            }
-            if (!someSelected) {
-                //When no threads are selected, we show everything
-                for (var th in threads) {
-                    selectedThreads[th] = true;
-                }
-            }
-            coverageOutline($('#coverage'), selectedThreads);
+            coverageOutline($('#coverage'), getSelectedNumbers(selectedThreads));
         }).mousedown(
             function(e) {
                 e.preventDefault();
@@ -888,6 +885,19 @@ $(document).resize(
 //Escaping function for selectors, escapes everything but #
 function jq(myid) {
    return myid.replace(/([!"$%&'()*+,./:;<=>?@\[\\\]^`{|}~])/g,'\\$1');
+}
+function escapeHtml(html) {
+   return html.replace('<','&lt;').replace('>', '&gt');
+}
+
+//Array intersection function
+function intersects(arr1,arr2) {
+    for(var i = 0; i < arr1.length; i++) {
+        if(arr2.indexOf(arr1[i]) == -1) {
+            return false;
+        }
+    }
+    return true;
 }
 
 /*

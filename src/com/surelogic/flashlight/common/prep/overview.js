@@ -773,21 +773,39 @@ function initDeadlockGraphTab() {
    displayDeadlock(cyc);
 }
 
-function getSelectedNumbers(map) {
-    var selected = [];
-    for(var t in map) {
-        if(map[t]) {
-            selected.push(Number(t));
+function initSharedFieldsTab() {
+    function filter(node) {
+        return intersects(getSelectedNumbers(selectedThreads), node.threadsSeen);
+    }
+    function tag(hasChildren, node) {
+        if(node.pakkage != undefined) {
+            return { text: '<span class="package">' + node.pakkage + '</span>' };
+        } else if (node.clazz != undefined) {
+            return { text: '<span class="class">' + node.clazz + '</span>' } ;
+        } else {
+            return { text: '<a class="locksetlink field" href="#locksets-' + node.qualified + '">' + node.field + '</a>',
+                     register: function (elem) { 
+                         elem.find('> a').click(function (e) { 
+                             e.preventDefault();
+                             // Do something here
+                         });
+                     }
+                   };
         }
     }
-    return selected;
+    function children(node) {
+        return node.children;
+    }
+    jsonOutline($('#shared-outline'),fields,filter,children,tag);
+    initThreads(function (e) {
+        jsonOutline($('#shared-outline'),fields,filter,children,tag);
+    });
 }
 
-
-function initCoverageTab() {
+var selectedThreads = {};
+var threadList = [];
+function initThreads(callback) {
     var threadDiv = $('#threads');
-    var selectedThreads = {};
-    var threadList = [];
     for (var t in threads) {
         threadList.push({id: t, name: threads[t].name});
         selectedThreads[t] = false;
@@ -806,27 +824,42 @@ function initCoverageTab() {
     for (var i = 0; i < threadList.length; i++) {
         threadDiv.append('<li id="' + threadList[i].id + '">' + threadList[i].name + '</li>');
     }
+    threadDiv.find('li').click(function (e) {
+        var threadId = Number($(this).attr('id'));
+        if (e.shiftKey || e.ctrlKey) {
+            selectedThreads[threadId] = !selectedThreads[threadId];
+            $('#' + threadId).toggleClass('selected');
+        } else {
+            for (var t in threads) {
+                selectedThreads[t]= false;
+                $('#' + t).removeClass('selected');
+            }
+            selectedThreads[threadId] = true;
+            $('#' + threadId).addClass('selected');
+        }
+        callback(e);
+    }).mousedown(
+        function(e) {
+            e.preventDefault();
+        }
+    );
+}
+
+function getSelectedNumbers(map) {
+    var selected = [];
+    for(var t in map) {
+        if(map[t]) {
+            selected.push(Number(t));
+        }
+    }
+    return selected;
+}
+
+function initCoverageTab() {
     coverageOutline($('#coverage'), getSelectedNumbers(selectedThreads));
-    threadDiv.find('li').click(
-        function (e) {
-            var threadId = Number($(this).attr('id'));
-            if (e.shiftKey || e.ctrlKey) {
-                selectedThreads[threadId] = !selectedThreads[threadId];
-                $('#' + threadId).toggleClass('selected');
-            } else {
-                for (var t in threads) {
-                    selectedThreads[t]= false;
-                    $('#' + t).removeClass('selected');
-                }
-                selectedThreads[threadId] = true;
-                $('#' + threadId).addClass('selected');
-            }
-            coverageOutline($('#coverage'), getSelectedNumbers(selectedThreads));
-        }).mousedown(
-            function(e) {
-                e.preventDefault();
-            }
-        );
+    initThreads(function (e) {
+        coverageOutline($('#coverage'), getSelectedNumbers(selectedThreads));
+    });
 }
 
 $(document).ready(
@@ -847,21 +880,27 @@ $(document).ready(
       //Init race condition logic
       $('.sectionHeaders td.selected > a[href="index3.html"]').each(
          function () {
+               initSharedFieldsTab();
+         }
+      );
+      //Init race condition logic
+      $('.sectionHeaders td.selected > a[href="index4.html"]').each(
+         function () {
                initRaceConditionTab();
          }
       );
       //Init bad publishes logic
-      $('.sectionHeaders td.selected > a[href="index4.html"]').each(
+      $('.sectionHeaders td.selected > a[href="index5.html"]').each(
          function () {
                initBadPublishTab();
          }
       );
-      $('.sectionHeaders td.selected > a[href="index5.html"]').each(
+      $('.sectionHeaders td.selected > a[href="index6.html"]').each(
          function () {
                loadTimeline();
          }
       );
-      $('.sectionHeaders td.selected > a[href="index6.html"]').each(
+      $('.sectionHeaders td.selected > a[href="index7.html"]').each(
          function () {
              initCoverageTab();
          }

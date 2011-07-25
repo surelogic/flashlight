@@ -108,6 +108,9 @@ public final class WriteHtmlOverview implements IPostPrep {
 
             Category fields = new Category("fields", "Fields");
             fields.getSections().add(
+                    new FieldCoverageSection(info.getFields(), info
+                            .getThreads()));
+            fields.getSections().add(
                     new LockSetSection(info.getEmptyLockSetFields()));
             fields.getSections().add(
                     new BadPublishSection(info.getBadPublishes()));
@@ -935,7 +938,8 @@ public final class WriteHtmlOverview implements IPostPrep {
                         .text(I18N
                                 .msg("flashlight.overview.coverage.noCoverage"));
             } else {
-                Table threadTable = c.table().id("coverage-table");
+                Table threadTable = c.table().id("coverage-table")
+                        .clazz("threads-table");
                 Row threadRow = threadTable.row();
                 TD threadDiv = threadRow.td();
                 threadDiv.id("thread-td");
@@ -1013,10 +1017,18 @@ public final class WriteHtmlOverview implements IPostPrep {
     class FieldCoverageSection extends Section {
 
         private final List<FieldCoverage> fields;
+        private final List<Thread> threads;
 
-        public FieldCoverageSection(final List<FieldCoverage> fields) {
+        public FieldCoverageSection(final List<FieldCoverage> fields,
+                final List<Thread> threads) {
             super("Shared Fields");
             this.fields = fields;
+            this.threads = threads;
+        }
+
+        @Override
+        public List<String> getJavaScriptImports() {
+            return Collections.singletonList("field-data.js");
         }
 
         @Override
@@ -1026,11 +1038,22 @@ public final class WriteHtmlOverview implements IPostPrep {
                         .clazz("info")
                         .text(I18N.msg("flashlight.overview.shared.noneShared"));
             } else {
-                c.div().id("shared-outline").ul();
+                Table threadTable = c.table().id("shared-table")
+                        .clazz("threads-table");
+                Row threadRow = threadTable.row();
+                TD threadDiv = threadRow.td();
+                threadDiv.id("thread-td");
+                threadDiv.h(3).text(I18N.msg("flashlight.overview.h.threads"));
+                threadDiv.ul().id("threads");
+                TD coverageDiv = threadRow.td();
+                coverageDiv.id("shared-fields-td");
+                coverageDiv.h(3).text(
+                        I18N.msg("flashlight.overview.h.coverage"));
+                coverageDiv.div().id("shared-outline").ul();
                 PrintWriter sharedFields = null;
                 try {
                     sharedFields = new PrintWriter(new File(htmlDirectory,
-                            "lockset-data.js"));
+                            "field-data.js"));
                     writeSharedFields(sharedFields);
                 } catch (FileNotFoundException e) {
                     throw new IllegalStateException(e);
@@ -1045,7 +1068,43 @@ public final class WriteHtmlOverview implements IPostPrep {
         }
 
         void writeSharedFields(final PrintWriter writer) throws IOException {
+            JsonBuilder builder = new JsonBuilder();
+            JObject jThreads = builder.object("threads");
+            for (Thread t : threads) {
+                JObject jThread = jThreads.object(t.getId());
+                jThread.val("blockTime", t.getBlockTime());
+                jThread.string("name", t.getName());
+                jThread.string("start", t.getStart().toString());
+                jThread.string("stop", t.getStop().toString());
+            }
+            JArray jLockSets = builder.object("fields").array("children");
+            String p = null;
+            String c = null;
+            JArray jPackage = null;
+            JArray jClass = null;
+            for (FieldCoverage field : fields) {
+                String pakkage = field.getPackage();
+                if (!pakkage.equals(p)) {
+                    jPackage = jLockSets.object().val("pakkage", pakkage)
+                            .array("children");
+                    p = pakkage;
+                    c = null;
+                }
 
+                String clazz = field.getClazz();
+                if (!clazz.equals(c)) {
+                    jClass = jPackage.object().val("clazz", clazz)
+                            .array("children");
+                    c = clazz;
+                }
+                JObject jField = jClass.object();
+                jField.val("field", field.getName());
+                jField.val("qualified",
+                        pakkage + "." + clazz + "." + field.getName());
+                jField.val("threadsSeen", field.getThreadsSeen());
+
+            }
+            builder.build(writer);
         }
 
     }

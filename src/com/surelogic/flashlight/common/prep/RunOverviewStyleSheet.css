@@ -196,7 +196,7 @@ ul.deadlock-trace-menu li {
     min-height: 18px;
 }
 
-#thread-td > h3, #coverage-td > h3 {
+.shared-table td h3 {
     text-align: left;
 }
 
@@ -204,7 +204,7 @@ ul.deadlock-trace-menu li {
     padding: 0px 0px;
 }
 
-#coverage-table, #coverage-table td {
+.threads-table, .threads-table td {
     border: none;
 }
 

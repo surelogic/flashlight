@@ -1605,8 +1605,28 @@ public class SummaryInfo {
             threadsSeen = new HashSet<Long>();
         }
 
-        public Field getField() {
-            return field;
+        public String getClazz() {
+            return field.getClazz();
+        }
+
+        public String getPackage() {
+            return field.getPackage();
+        }
+
+        public String getName() {
+            return field.getName();
+        }
+
+        public long getId() {
+            return field.getId();
+        }
+
+        public boolean isStatic() {
+            return field.isStatic();
+        }
+
+        public Long getReceiver() {
+            return field.getReceiver();
         }
 
         public Set<Long> getThreadsSeen() {

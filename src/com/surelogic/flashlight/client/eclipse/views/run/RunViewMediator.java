@@ -21,7 +21,6 @@ import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Table;
-import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.progress.UIJob;
@@ -37,6 +36,7 @@ import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jobs.AggregateSLJob;
 import com.surelogic.common.jobs.SLJob;
 import com.surelogic.common.ui.EclipseUIUtility;
+import com.surelogic.common.ui.TableUtility;
 import com.surelogic.common.ui.jobs.SLUIJob;
 import com.surelogic.flashlight.client.eclipse.dialogs.DeleteRunDialog;
 import com.surelogic.flashlight.client.eclipse.dialogs.LogDialog;
@@ -117,7 +117,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 		RunManager.getInstance().addObserver(this);
 		AdHocManager.getInstance(AdHocDataSource.getInstance()).addObserver(
 				this);
-		packColumns();
+		TableUtility.packColumns(f_tableViewer);
 		setToolbarState();
 	}
 
@@ -185,7 +185,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 
 	void refresh() {
 		f_tableViewer.refresh();
-		packColumns();
+		TableUtility.packColumns(f_tableViewer);
 		setToolbarState();
 	}
 
@@ -398,15 +398,6 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
 
 	public Action getInferJSureAnnoAction() {
 		return f_inferJSureAnnoAction;
-	}
-
-	/**
-	 * Pack the columns of our table to the ideal width.
-	 */
-	private final void packColumns() {
-		for (final TableColumn col : f_tableViewer.getTable().getColumns()) {
-			col.pack();
-		}
 	}
 
 	private final void updateRunManager() {

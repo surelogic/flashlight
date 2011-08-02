@@ -14,6 +14,10 @@ import com.surelogic.flashlight.client.eclipse.perspectives.FlashlightPerspectiv
 import com.surelogic.flashlight.common.jobs.RefreshRunManagerSLJob;
 import com.surelogic.flashlight.common.model.RunManager;
 
+/**
+ * Job to prompt the user to switch to the Flashlight perspective. It handles
+ * all user preferences.
+ */
 public final class SwitchToFlashlightPerspectiveJob extends SLUIJob {
 
 	@Override
@@ -22,10 +26,10 @@ public final class SwitchToFlashlightPerspectiveJob extends SLUIJob {
 		 * First kick off a job to refresh the runs shown in the Flashlight Runs
 		 * view.
 		 */
-
 		final RefreshRunManagerSLJob job = new RefreshRunManagerSLJob(false);
 		EclipseJob.getInstance().scheduleDb(job, false, true,
 				RunManager.getInstance().getRunIdentities());
+
 		/*
 		 * Ensure that we are not already in the Flashlight perspective.
 		 */
@@ -51,9 +55,6 @@ public final class SwitchToFlashlightPerspectiveJob extends SLUIJob {
 		 */
 		final boolean onlySwitchToFlashlightPerspectiveJobRunning = EclipseUtility
 				.getActiveJobCountOfType(SwitchToFlashlightPerspectiveJob.class) == 1;
-		SLLogger.getLogger()
-				.fine("[SwitchToFlashlightPerspectiveJob] onlySwitchToFlashlightPerspectiveJobRunning = "
-						+ onlySwitchToFlashlightPerspectiveJobRunning);
 		if (!onlySwitchToFlashlightPerspectiveJobRunning) {
 			return Status.OK_STATUS; // bail
 		}

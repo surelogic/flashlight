@@ -11,6 +11,7 @@ import com.surelogic.flashlight.common.model.RunDescription;
 import com.surelogic.flashlight.common.model.RunManager;
 
 public final class HistoricalSourceView extends AbstractHistoricalSourceView {
+
 	@Override
 	protected ISourceZipFileHandles findSources(final String run) {
 		RunDescription currentRun = getRunDescription(run);
@@ -19,6 +20,7 @@ public final class HistoricalSourceView extends AbstractHistoricalSourceView {
 					.getFlashlightDataDirectory();
 			final RunDirectory dir = RawFileUtility.getRunDirectoryFor(dataDir,
 					currentRun);
+			setSourceSnapshotTime(dir.getRunDescription().getStartTimeOfRun());
 			return dir.getSourceHandles();
 		}
 		return null;

@@ -11,6 +11,7 @@ import org.eclipse.swt.browser.LocationListener;
 import org.eclipse.swt.browser.OpenWindowListener;
 import org.eclipse.swt.browser.WindowEvent;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.Shell;
 
@@ -29,136 +30,143 @@ import com.surelogic.flashlight.common.model.RunDescription;
 
 public final class QueryResultsView extends AbstractQueryResultsView {
 
-    @Override
-    public AdHocManager getManager() {
-        return AdHocDataSource.getManager();
-    }
+	@Override
+	public AdHocManager getManager() {
+		return AdHocDataSource.getManager();
+	}
 
-    @Override
-    public void displayResult(final AdHocQueryResult result) {
-        showQueryTitle();
-        super.displayResult(result);
-    }
+	@Override
+	public void displayResult(final AdHocQueryResult result) {
+		showQueryTitle();
+		super.displayResult(result);
+	}
 
-    private static final String BROWSER_FLAG = "com.surelogic.browserFlag";
+	private static final String BROWSER_FLAG = "com.surelogic.browserFlag";
 
-    private static Browser getBrowser(final Composite parent) {
-        String flag = System.getProperty(BROWSER_FLAG);
-        if (flag != null && flag.equalsIgnoreCase("DEFAULT")) {
-            return new Browser(parent, SWT.NONE);
-        }
-        try {
-            return new Browser(parent, SWT.MOZILLA);
-        } catch (Error e) {
-            // Do nothing
-        }
-        return new Browser(parent, SWT.NONE);
-    }
+	private static Browser getBrowser(final Composite parent) {
+		String flag = System.getProperty(BROWSER_FLAG);
+		if (flag != null && flag.equalsIgnoreCase("DEFAULT")) {
+			return new Browser(parent, SWT.NONE);
+		}
+		try {
+			return new Browser(parent, SWT.MOZILLA);
+		} catch (Error e) {
+			// Do nothing
+		}
+		/*
+		 * Sadly the browser doen't fail too well on Mac, so clean out junky
+		 * control.
+		 */
+		for (Control c : parent.getChildren()) {
+			c.dispose();
+		}
+		return new Browser(parent, SWT.NONE);
+	}
 
-    @Override
-    protected void setupNoResultsPane(final Composite parent) {
-        final RunDescription run = AdHocDataSource.getInstance()
-                .getSelectedRun();
-        if (run == null || !run.isPrepared()) {
-            showQueryTitle();
-            super.setupNoResultsPane(parent);
-        } else {
-            showOverviewTitle();
+	@Override
+	protected void setupNoResultsPane(final Composite parent) {
+		final RunDescription run = AdHocDataSource.getInstance()
+				.getSelectedRun();
+		if (run == null || !run.isPrepared()) {
+			showQueryTitle();
+			super.setupNoResultsPane(parent);
+		} else {
+			showOverviewTitle();
 
-            final Browser browser = getBrowser(parent);
-            browser.setForeground(parent.getDisplay().getSystemColor(
-                    SWT.COLOR_INFO_FOREGROUND));
-            browser.setBackground(parent.getDisplay().getSystemColor(
-                    SWT.COLOR_INFO_BACKGROUND));
+			final Browser browser = getBrowser(parent);
+			browser.setForeground(parent.getDisplay().getSystemColor(
+					SWT.COLOR_INFO_FOREGROUND));
+			browser.setBackground(parent.getDisplay().getSystemColor(
+					SWT.COLOR_INFO_BACKGROUND));
 
-            /*
-             * Schedule a job to populate the browser with information about the
-             * selected run.
-             */
-            final Job job = new PopulateBrowserWithRunInformationJob(run,
-                    browser);
-            job.schedule();
+			/*
+			 * Schedule a job to populate the browser with information about the
+			 * selected run.
+			 */
+			final Job job = new PopulateBrowserWithRunInformationJob(run,
+					browser);
+			job.schedule();
 
-            browser.addLocationListener(new LocationListener() {
+			browser.addLocationListener(new LocationListener() {
 
-                @Override
-                public void changing(final LocationEvent event) {
-                    int index = event.location.indexOf(QUERY_PAT);
-                    if (index != -1) {
-                        /*
-                         * We need to run a query
-                         */
-                        event.doit = false; // don't really open the link
-                        parseAndRunQuery(event.location);
-                        // It's worth a shot, and we can't actually make two
-                        // separate calls very easily
-                        parseAndJumpToLine(run, event.location);
-                    } else {
-                        index = event.location.indexOf(LOC_PAT);
-                        if (index != -1) {
-                            event.doit = false;
-                            parseAndJumpToLine(run, event.location);
-                        }
-                    }
-                }
+				@Override
+				public void changing(final LocationEvent event) {
+					int index = event.location.indexOf(QUERY_PAT);
+					if (index != -1) {
+						/*
+						 * We need to run a query
+						 */
+						event.doit = false; // don't really open the link
+						parseAndRunQuery(event.location);
+						// It's worth a shot, and we can't actually make two
+						// separate calls very easily
+						parseAndJumpToLine(run, event.location);
+					} else {
+						index = event.location.indexOf(LOC_PAT);
+						if (index != -1) {
+							event.doit = false;
+							parseAndJumpToLine(run, event.location);
+						}
+					}
+				}
 
-                @Override
-                public void changed(final LocationEvent event) {
-                    // nothing
-                }
-            });
+				@Override
+				public void changed(final LocationEvent event) {
+					// nothing
+				}
+			});
 
-            browser.addOpenWindowListener(new OpenWindowListener() {
-                @Override
-                public void open(final WindowEvent event) {
-                    event.required = true; // Cancel opening of new windows
-                }
-            });
+			browser.addOpenWindowListener(new OpenWindowListener() {
+				@Override
+				public void open(final WindowEvent event) {
+					event.required = true; // Cancel opening of new windows
+				}
+			});
 
-            // Replace browser's built-in context menu with none
-            browser.setMenu(new Menu(parent.getShell(), SWT.NONE));
-        }
-    }
+			// Replace browser's built-in context menu with none
+			browser.setMenu(new Menu(parent.getShell(), SWT.NONE));
+		}
+	}
 
-    public static final String LOC_PAT = "?loc=";
+	public static final String LOC_PAT = "?loc=";
 
-    public static final String QUERY_PAT = "?query=";
+	public static final String QUERY_PAT = "?query=";
 
-    private void parseAndRunQuery(final String queryUrl) {
-        try {
-            final AdHocQueryFullyBound query = getManager().parseQueryUrl(
-                    queryUrl);
-            EclipseQueryUtility.scheduleQuery(query, getManager()
-                    .getDataSource().getCurrentAccessKeys());
-        } catch (IllegalStateException problem) {
-            SLLogger.getLogger().log(Level.WARNING, I18N.err(213, queryUrl),
-                    problem);
-        }
-    }
+	private void parseAndRunQuery(final String queryUrl) {
+		try {
+			final AdHocQueryFullyBound query = getManager().parseQueryUrl(
+					queryUrl);
+			EclipseQueryUtility.scheduleQuery(query, getManager()
+					.getDataSource().getCurrentAccessKeys());
+		} catch (IllegalStateException problem) {
+			SLLogger.getLogger().log(Level.WARNING, I18N.err(213, queryUrl),
+					problem);
+		}
+	}
 
-    private void parseAndJumpToLine(final RunDescription run, final String url) {
-        try {
-            Map<String, String> params = SimpleHTMLPrinter
-                    .extractParametersFromURL(url);
-            params.put(AdHocManager.DATABASE, run.toIdentityString());
-            JumpToCode.getInstance().jumpToCode(params);
-        } catch (IllegalStateException problem) {
-            SLLogger.getLogger()
-                    .log(Level.WARNING, I18N.err(213, url), problem);
-        }
-    }
+	private void parseAndJumpToLine(final RunDescription run, final String url) {
+		try {
+			Map<String, String> params = SimpleHTMLPrinter
+					.extractParametersFromURL(url);
+			params.put(AdHocManager.DATABASE, run.toIdentityString());
+			JumpToCode.getInstance().jumpToCode(params);
+		} catch (IllegalStateException problem) {
+			SLLogger.getLogger()
+					.log(Level.WARNING, I18N.err(213, url), problem);
+		}
+	}
 
-    private void showQueryTitle() {
-        setPartName(I18N.msg("flashlight.query.view.queryResultsTitle"));
-    }
+	private void showQueryTitle() {
+		setPartName(I18N.msg("flashlight.query.view.queryResultsTitle"));
+	}
 
-    private void showOverviewTitle() {
-        setPartName(I18N.msg("flashlight.query.view.overviewTitle"));
-    }
+	private void showOverviewTitle() {
+		setPartName(I18N.msg("flashlight.query.view.overviewTitle"));
+	}
 
-    @Override
-    public ToolTip getToolTip(final Shell shell) {
-        return new ToolTip(shell, FlashlightImageLoader.getInstance());
-    }
+	@Override
+	public ToolTip getToolTip(final Shell shell) {
+		return new ToolTip(shell, FlashlightImageLoader.getInstance());
+	}
 
 }

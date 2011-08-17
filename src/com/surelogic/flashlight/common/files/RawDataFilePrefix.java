@@ -165,6 +165,9 @@ public final class RawDataFilePrefix {
         if (f_wallClockTime == null) {
             return false;
         }
+        if (f_duration == 0) {
+        	return false;
+        }
         return true;
     }
 
@@ -285,7 +288,6 @@ public final class RawDataFilePrefix {
                             runComplete));
                     f_duration = Long.parseLong(r.readLine());
                 } catch (NumberFormatException e) {
-                    f_duration = 0;
                     return;
                 } catch (IOException e) {
                     SLLogger.getLogger().log(Level.WARNING,

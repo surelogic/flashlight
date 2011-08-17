@@ -295,7 +295,7 @@ public final class RawDataFilePrefix {
             }
         } catch (Exception e) {
             SLLogger.getLogger().log(Level.WARNING,
-                    I18N.err(105, dataFile.getAbsolutePath()));
+                    I18N.err(105, dataFile.getAbsolutePath()), e);
         }
     }
 }

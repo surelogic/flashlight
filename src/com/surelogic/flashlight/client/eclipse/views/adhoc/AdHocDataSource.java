@@ -8,7 +8,6 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.ui.IViewPart;
-import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.progress.UIJob;
 
 import com.surelogic.common.ILifecycle;
@@ -134,9 +133,8 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements
 		final UIJob job = new SLUIJob() {
 			@Override
 			public IStatus runInUIThread(final IProgressMonitor monitor) {
-				final IViewPart view = EclipseUIUtility.showView(
-						QueryResultsView.class.getName(), null,
-						IWorkbenchPage.VIEW_VISIBLE);
+				final IViewPart view = EclipseUIUtility
+						.getView(QueryResultsView.class.getName());
 				if (view instanceof QueryResultsView) {
 					final QueryResultsView queryResultsView = (QueryResultsView) view;
 					queryResultsView.displayResult(result);

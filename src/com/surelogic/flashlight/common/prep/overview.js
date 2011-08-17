@@ -864,7 +864,6 @@ function initCoverageTab() {
 
 $(document).ready(
    function() {
-
       $("#main #content .section").hide();
       //Init outlines and tree tables
       outline();
@@ -899,6 +898,7 @@ $(document).ready(
              initCoverageTab();
          }
       );
+      $('.timeline-copyright').hide();
    });
 
 

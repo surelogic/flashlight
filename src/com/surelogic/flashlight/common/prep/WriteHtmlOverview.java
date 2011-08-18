@@ -107,9 +107,9 @@ public final class WriteHtmlOverview implements IPostPrep {
             locks.getSections().add(new DeadlocksSection(info.getDeadlocks()));
 
             Category fields = new Category("fields", "Fields");
-            // fields.getSections().add(
-            // new FieldCoverageSection(info.getFields(), info
-            // .getThreads()));
+            fields.getSections().add(
+                    new FieldCoverageSection(info.getFields(), info
+                            .getThreads()));
             fields.getSections().add(
                     new LockSetSection(info.getEmptyLockSetFields()));
             fields.getSections().add(

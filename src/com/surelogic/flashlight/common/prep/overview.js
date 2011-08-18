@@ -879,21 +879,27 @@ $(document).ready(
       //Init race condition logic
       $('.sectionHeaders td.selected > a[href="index3.html"]').each(
          function () {
+               initSharedFieldsTab();
+         }
+      );
+      //Init race condition logic
+      $('.sectionHeaders td.selected > a[href="index4.html"]').each(
+         function () {
                initRaceConditionTab();
          }
       );
       //Init bad publishes logic
-      $('.sectionHeaders td.selected > a[href="index4.html"]').each(
+      $('.sectionHeaders td.selected > a[href="index5.html"]').each(
          function () {
                initBadPublishTab();
          }
       );
-      $('.sectionHeaders td.selected > a[href="index5.html"]').each(
+      $('.sectionHeaders td.selected > a[href="index6.html"]').each(
          function () {
                loadTimeline();
          }
       );
-      $('.sectionHeaders td.selected > a[href="index6.html"]').each(
+      $('.sectionHeaders td.selected > a[href="index7.html"]').each(
          function () {
              initCoverageTab();
          }

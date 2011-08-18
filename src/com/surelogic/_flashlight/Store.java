@@ -693,10 +693,15 @@ public class Store {
         final File done = new File(StoreConfiguration.getDirectory(),
                 InstrumentationConstants.FL_COMPLETE_RUN);
         try {
-            final FileWriter w = new FileWriter(done);
-            w.write(Long.toString(totalTime) + "\n");
-            w.close();
-        } catch (final IOException e) {
+            FileWriter w = new FileWriter(done);
+            try {
+                w.write(Long.toString(totalTime) + "\n");
+            } catch (final IOException e) {
+                f_conf.log(e.getMessage() + ", while writing final file");
+            } finally {
+                w.close();
+            }
+        } catch (IOException e) {
             f_conf.log(e.getMessage() + ", while writing final file");
         }
         f_conf.logComplete();

@@ -1,9 +1,6 @@
 package com.surelogic.flashlight.common.files;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Timestamp;
 import java.text.ParseException;
@@ -17,7 +14,6 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.logging.SLLogger;
 
@@ -117,12 +113,6 @@ public final class RawDataFilePrefix {
         return f_wallClockTime;
     }
 
-    private long f_duration;
-
-    public long getDuration() {
-        return f_duration;
-    }
-
     /**
      * Checks whether or not this object is well-formed. All attributes are
      * considered except for duration, which was a later addition to this
@@ -164,9 +154,6 @@ public final class RawDataFilePrefix {
         }
         if (f_wallClockTime == null) {
             return false;
-        }
-        if (f_duration == 0) {
-        	return false;
         }
         return true;
     }
@@ -277,23 +264,6 @@ public final class RawDataFilePrefix {
                 }
             } finally {
                 stream.close();
-            }
-            final File runComplete = new File(dataFile.getParentFile(),
-                    InstrumentationConstants.FL_COMPLETE_RUN);
-            if (!runComplete.exists()) {
-                return;
-            } else {
-                try {
-                    BufferedReader r = new BufferedReader(new FileReader(
-                            runComplete));
-                    f_duration = Long.parseLong(r.readLine());
-                } catch (NumberFormatException e) {
-                    return;
-                } catch (IOException e) {
-                    SLLogger.getLogger().log(Level.WARNING,
-                            I18N.err(226, runComplete.getAbsolutePath()), e);
-                    return;
-                }
             }
         } catch (Exception e) {
             SLLogger.getLogger().log(Level.WARNING,

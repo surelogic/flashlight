@@ -127,8 +127,6 @@ public final class RunDirectory {
     static RunDirectory getFor(final File runDir) {
         // Caller checks if this null
         assert runDir != null && runDir.exists() && runDir.isDirectory();
-        final File tag = new File(runDir,
-                InstrumentationConstants.FL_COMPLETE_RUN);
 
         final InstrumentationFileHandles instrumentation = InstrumentationFileHandles
                 .getFor(runDir);
@@ -172,20 +170,19 @@ public final class RunDirectory {
                      */
                     final RunDescription run = RawFileUtility
                             .getRunDescriptionFor(headerInfo);
-
-                    final RawFileHandles profile = RawFileUtility
-                            .getRawFileHandlesFor(prefixInfos);
-                    final File db = new File(runDir.getAbsoluteFile(), DB_DIR);
-                    final HtmlHandles html = HtmlHandles.getFor(runDir);
-                    return new RunDirectory(run, runDir, headerFile, db, html,
-                            instrumentation, source, projects, profile);
+                    if (run != null) {
+                        final RawFileHandles profile = RawFileUtility
+                                .getRawFileHandlesFor(prefixInfos);
+                        final File db = new File(runDir.getAbsoluteFile(),
+                                DB_DIR);
+                        final HtmlHandles html = HtmlHandles.getFor(runDir);
+                        return new RunDirectory(run, runDir, headerFile, db,
+                                html, instrumentation, source, projects,
+                                profile);
+                    }
                 }
-            } else {
-                SLLogger.getLogger().log(Level.WARNING,
-                        I18N.err(107, headerFile.getAbsolutePath()));
             }
         }
-
         // If we get here there is something wrong with the profile data files
         return null;
     }

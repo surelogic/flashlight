@@ -162,7 +162,10 @@ public final class PrepSLJob extends AbstractSLJob {
                     .getPrefixFor(f_dataFile);
             final RunDescription runDescription = RawFileUtility
                     .getRunDescriptionFor(rawFilePrefix);
-
+            if (runDescription == null) {
+                throw new IllegalStateException(rawFilePrefix.getFile()
+                        .toString() + " does not describe a valid run.");
+            }
             final SLProgressMonitor preScanInfoMonitor = new SubSLProgressMonitor(
                     monitor, "Collecting raw file info", PRE_SCAN_WORK);
 

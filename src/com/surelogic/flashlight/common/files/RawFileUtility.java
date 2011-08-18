@@ -1,8 +1,10 @@
 package com.surelogic.flashlight.common.files;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,6 +27,7 @@ import javax.xml.parsers.SAXParserFactory;
 import org.xml.sax.SAXException;
 
 import com.surelogic._flashlight.common.BinaryEventReader;
+import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic.common.FileUtility;
 import com.surelogic.common.SLUtility;
 import com.surelogic.common.i18n.I18N;
@@ -190,18 +193,37 @@ public final class RawFileUtility {
         }
 
         if (prefixInfo.isWellFormed()) {
-
-            final Timestamp started = new Timestamp(prefixInfo
-                    .getWallClockTime().getTime());
-            final RunDescription run = new RunDescription(prefixInfo.getName(),
-                    prefixInfo.getRawDataVersion(), prefixInfo.getHostname(),
-                    prefixInfo.getUserName(), prefixInfo.getJavaVersion(),
-                    prefixInfo.getJavaVendor(), prefixInfo.getOSName(),
-                    prefixInfo.getOSArch(), prefixInfo.getOSVersion(),
-                    prefixInfo.getMaxMemoryMb(), prefixInfo.getProcessors(),
-                    started, prefixInfo.getDuration());
-
-            return run;
+            final File runComplete = new File(prefixInfo.getFile()
+                    .getParentFile(), InstrumentationConstants.FL_COMPLETE_RUN);
+            if (!runComplete.exists()) {
+                return null;
+            } else {
+                long duration = 0;
+                try {
+                    BufferedReader r = new BufferedReader(new FileReader(
+                            runComplete));
+                    try {
+                        duration = Long.parseLong(r.readLine());
+                    } finally {
+                        r.close();
+                    }
+                } catch (NumberFormatException e) {
+                    // We are okay with this for now, since it can happen on old
+                    // runs that are otherwise valid
+                } catch (IOException e) {
+                    SLLogger.getLogger().log(Level.WARNING,
+                            I18N.err(226, runComplete.getAbsolutePath()), e);
+                }
+                return new RunDescription(prefixInfo.getName(),
+                        prefixInfo.getRawDataVersion(),
+                        prefixInfo.getHostname(), prefixInfo.getUserName(),
+                        prefixInfo.getJavaVersion(),
+                        prefixInfo.getJavaVendor(), prefixInfo.getOSName(),
+                        prefixInfo.getOSArch(), prefixInfo.getOSVersion(),
+                        prefixInfo.getMaxMemoryMb(),
+                        prefixInfo.getProcessors(), new Timestamp(prefixInfo
+                                .getWallClockTime().getTime()), duration);
+            }
         } else {
             throw new IllegalStateException(I18N.err(107, prefixInfo.getFile()
                     .getAbsolutePath()));

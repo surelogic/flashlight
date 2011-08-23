@@ -239,33 +239,11 @@ public final class RunDirectory {
          * only be null when we get here after a directory refresh has been
          * kicked off after a delete of a run directory.
          */
-        if (files != null) {
-            // Must have exactly one data file
-            if (files.length == 0) {
-                SLLogger.getLogger().log(Level.FINE,
-                        I18N.err(noFileErr, runDir.getAbsolutePath()));
-            } else if (files.length == 1) {
-                return files;
-            } else if (files.length == FL_STREAM_SUFFIXES.length) {
-                final String suffix = isValidSuffix(files[0].getName());
-                if (suffix != null) {
-                    // Check if names match
-                    boolean match = true;
-                    for (File f : files) {
-                        if (!isValidStreamName(f.getName(), suffix)) {
-                            match = false;
-                            break;
-                        }
-                    }
-                    if (match) {
-                        return files;
-                    }
-                }
-            }
+        if (files != null && files.length == 0) {
             SLLogger.getLogger().log(Level.FINE,
-                    I18N.err(wrongNumFilesErr, runDir.getAbsolutePath()));
+                    I18N.err(noFileErr, runDir.getAbsolutePath()));
         }
-        return null;
+        return files;
     }
 
     private static boolean isValidStreamName(final String name,

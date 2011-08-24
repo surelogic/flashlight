@@ -4,6 +4,10 @@ import static com.surelogic._flashlight.common.InstrumentationConstants.FL_STREA
 
 import java.io.File;
 import java.io.FileFilter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
 import java.util.logging.Level;
 
 import com.surelogic._flashlight.common.InstrumentationConstants;
@@ -154,14 +158,19 @@ public final class RunDirectory {
                 if (rawDataFiles == null) {
                     return null;
                 }
-                final RawDataFilePrefix[] prefixInfos = RawFileUtility
-                        .getPrefixesFor(rawDataFiles);
-                for (RawDataFilePrefix prefixInfo : prefixInfos) {
-                    if (!prefixInfo.isWellFormed()) {
-                        return null;
+                final List<RawDataFilePrefix> prefixInfos = new ArrayList<RawDataFilePrefix>(
+                        Arrays.asList(RawFileUtility
+                                .getPrefixesFor(rawDataFiles)));
+                for (Iterator<RawDataFilePrefix> iter = prefixInfos.iterator(); iter
+                        .hasNext();) {
+                    if (!iter.next().isWellFormed()) {
+                        iter.remove();
                     }
                 }
-
+                if (prefixInfos.isEmpty()) {
+                    // We don't have any valid data here
+                    return null;
+                }
                 if (instrumentation != null && source != null
                         && projects != null) {
                     /*
@@ -172,7 +181,9 @@ public final class RunDirectory {
                             .getRunDescriptionFor(headerInfo);
                     if (run != null) {
                         final RawFileHandles profile = RawFileUtility
-                                .getRawFileHandlesFor(prefixInfos);
+                                .getRawFileHandlesFor(prefixInfos
+                                        .toArray(new RawDataFilePrefix[prefixInfos
+                                                .size()]));
                         final File db = new File(runDir.getAbsoluteFile(),
                                 DB_DIR);
                         final HtmlHandles html = HtmlHandles.getFor(runDir);

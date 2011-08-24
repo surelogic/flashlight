@@ -193,12 +193,12 @@ public final class RawFileUtility {
         }
 
         if (prefixInfo.isWellFormed()) {
+
             final File runComplete = new File(prefixInfo.getFile()
                     .getParentFile(), InstrumentationConstants.FL_COMPLETE_RUN);
-            if (!runComplete.exists()) {
-                return null;
-            } else {
-                long duration = 0;
+            long duration = 0;
+            boolean completed = runComplete.exists();
+            if (completed) {
                 try {
                     BufferedReader r = new BufferedReader(new FileReader(
                             runComplete));
@@ -214,16 +214,19 @@ public final class RawFileUtility {
                     SLLogger.getLogger().log(Level.WARNING,
                             I18N.err(226, runComplete.getAbsolutePath()), e);
                 }
-                return new RunDescription(prefixInfo.getName(),
-                        prefixInfo.getRawDataVersion(),
-                        prefixInfo.getHostname(), prefixInfo.getUserName(),
-                        prefixInfo.getJavaVersion(),
-                        prefixInfo.getJavaVendor(), prefixInfo.getOSName(),
-                        prefixInfo.getOSArch(), prefixInfo.getOSVersion(),
-                        prefixInfo.getMaxMemoryMb(),
-                        prefixInfo.getProcessors(), new Timestamp(prefixInfo
-                                .getWallClockTime().getTime()), duration);
+            } else {
+
             }
+
+            return new RunDescription(prefixInfo.getName(),
+                    prefixInfo.getRawDataVersion(), prefixInfo.getHostname(),
+                    prefixInfo.getUserName(), prefixInfo.getJavaVersion(),
+                    prefixInfo.getJavaVendor(), prefixInfo.getOSName(),
+                    prefixInfo.getOSArch(), prefixInfo.getOSVersion(),
+                    prefixInfo.getMaxMemoryMb(), prefixInfo.getProcessors(),
+                    new Timestamp(prefixInfo.getWallClockTime().getTime()),
+                    duration, runComplete.exists());
+
         } else {
             throw new IllegalStateException(I18N.err(107, prefixInfo.getFile()
                     .getAbsolutePath()));

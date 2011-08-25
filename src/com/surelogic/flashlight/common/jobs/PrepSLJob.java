@@ -13,11 +13,14 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 
 import javax.xml.parsers.SAXParser;
+
+import org.xml.sax.SAXParseException;
 
 import com.surelogic.common.SLUtility;
 import com.surelogic.common.adhoc.AdHocQuery;
@@ -182,6 +185,23 @@ public final class PrepSLJob extends AbstractSLJob {
 
         try {
             final SAXParser infoSaxParser = RawFileUtility.getParser(firstFile);
+            for (Iterator<File> iter = f_dataFiles.iterator(); iter.hasNext();) {
+                final InputStream infoStream = RawFileUtility
+                        .getInputStreamFor(iter.next());
+                try {
+                    infoSaxParser.parse(infoStream, preScanInfo);
+                    SLLogger.getLoggerFor(PrepSLJob.class).info(
+                            preScanInfo.toString());
+                } catch (SAXParseException e) {
+                    SLLogger.getLoggerFor(PrepSLJob.class)
+                            .log(Level.INFO,
+                                    "Part of this flashlight run is unreadable.  This may be because the process was killed before Flashlight could clean up.",
+                                    e);
+                    iter.remove();
+                } finally {
+                    infoStream.close();
+                }
+            }
             for (File dataFile : f_dataFiles) {
                 final InputStream infoStream = RawFileUtility
                         .getInputStreamFor(dataFile);

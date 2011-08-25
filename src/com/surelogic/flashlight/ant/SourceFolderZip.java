@@ -217,6 +217,11 @@ public final class SourceFolderZip extends AbstractJavaZip<File> {
 	}
 
 	@Override
+	protected File getFile(File res, String name) {
+		return new File(res, name);
+	}
+	
+	@Override
 	protected InputStream getFileContents(final File res) throws IOException {
 		return new FileInputStream(res);
 	}

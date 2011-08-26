@@ -100,7 +100,7 @@ public class OutputStrategyBinary extends EventVisitor {
             f_out.writeByte(Environment.getByte());
             f_out.writeLong(Runtime.getRuntime().maxMemory() / (1024L * 1024L)); // "max-memory-mb"
             f_out.writeInt(Runtime.getRuntime().availableProcessors());
-            f_out.writeByte(6); // num of properties following
+            f_out.writeByte(7); // num of properties following
             f_out.writeUTF("hostname");
             try {
                 f_out.writeUTF(InetAddress.getLocalHost().getHostName());

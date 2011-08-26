@@ -12,7 +12,7 @@ public enum AttributeType implements IAttributeType {
 			"os-arch"), OS_VERSION("os-version"), WALL_CLOCK("wall-clock-time"), PARENT_ID(
 			"parent-id"), TRACE("trace"), START_TIME("start-time"), PACKAGE(
 			"package"), VALUE("value"), VISIBILITY("visibility"), MODIFIER(
-			"mod");
+			"mod"), HOSTNAME("hostname");
 
 	private final String label;
 

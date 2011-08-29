@@ -2,6 +2,7 @@ package com.surelogic.flashlight.common.jobs;
 
 import gnu.trove.TLongHashSet;
 
+import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -192,6 +193,12 @@ public final class PrepSLJob extends AbstractSLJob {
 					infoSaxParser.parse(infoStream, preScanInfo);
 					SLLogger.getLoggerFor(PrepSLJob.class).info(
 							preScanInfo.toString());
+				} catch (EOFException e) {
+					SLLogger.getLoggerFor(PrepSLJob.class)
+							.log(Level.INFO,
+									"Part of this flashlight run is unreadable.  This may be because the process was killed before Flashlight could clean up.",
+									e);
+					iter.remove();
 				} catch (SAXParseException e) {
 					SLLogger.getLoggerFor(PrepSLJob.class)
 							.log(Level.INFO,

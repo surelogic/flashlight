@@ -181,9 +181,11 @@ public final class RunDirectory {
                             .getRunDescriptionFor(headerInfo);
                     if (run != null) {
                         final RawFileHandles profile = RawFileUtility
-                                .getRawFileHandlesFor(prefixInfos
-                                        .toArray(new RawDataFilePrefix[prefixInfos
-                                                .size()]));
+                                .getRawFileHandlesFor(
+                                        runDir,
+                                        prefixInfos
+                                                .toArray(new RawDataFilePrefix[prefixInfos
+                                                        .size()]));
                         final File db = new File(runDir.getAbsoluteFile(),
                                 DB_DIR);
                         final HtmlHandles html = HtmlHandles.getFor(runDir);

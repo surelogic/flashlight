@@ -246,7 +246,7 @@ public final class RawFileUtility {
      * @throws IllegalArgumentException
      *             if the prefix is {@code null}.
      */
-    public static RawFileHandles getRawFileHandlesFor(
+    public static RawFileHandles getRawFileHandlesFor(final File runDir,
             final RawDataFilePrefix[] prefixInfos) {
         if (prefixInfos == null) {
             throw new IllegalArgumentException(I18N.err(44, "prefixInfos"));
@@ -273,8 +273,7 @@ public final class RawFileUtility {
              */
 
             // Find log file
-            final File dir = prefixInfos[0].getFile().getParentFile();
-            final File[] logs = dir.listFiles(new LogFilter());
+            final File[] logs = runDir.listFiles(new LogFilter());
             final File logFile;
             if (logs == null || logs.length != 1) {
                 SLLogger.getLogger().log(

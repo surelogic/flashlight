@@ -8,6 +8,7 @@ import static com.surelogic._flashlight.common.EventType.After_UtilConcurrentLoc
 import static com.surelogic._flashlight.common.EventType.Before_IntrinsicLockAcquisition;
 import static com.surelogic._flashlight.common.EventType.Before_IntrinsicLockWait;
 import static com.surelogic._flashlight.common.EventType.Before_UtilConcurrentLockAcquisitionAttempt;
+import static com.surelogic._flashlight.common.EventType.Checkpoint;
 import static com.surelogic._flashlight.common.EventType.Class_Definition;
 import static com.surelogic._flashlight.common.EventType.Environment;
 import static com.surelogic._flashlight.common.EventType.FieldAssignment_Instance;
@@ -211,7 +212,11 @@ public class OutputStrategyBinary extends EventVisitor {
 
     @Override
     void visit(final CheckpointEvent e) {
-        // TODO
+        try {
+            writeLong_unsafe(Checkpoint.getByte(), e.getNanoTime(), false);
+        } catch (final IOException ioe) {
+            handleIOException(ioe);
+        }
     }
 
     @Override

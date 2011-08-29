@@ -1080,29 +1080,49 @@ public final class WriteHtmlOverview implements IPostPrep {
             JArray jLockSets = builder.object("fields").array("children");
             String p = null;
             String c = null;
-            JArray jPackage = null;
-            JArray jClass = null;
+            Set<Long> pThreads = null;
+            Set<Long> cThreads = null;
+            JObject jPackage = null;
+            JObject jClass = null;
+            JArray jPackageChildren = null;
+            JArray jClassChildren = null;
             for (FieldCoverage field : fields) {
                 String pakkage = field.getPackage();
                 if (!pakkage.equals(p)) {
-                    jPackage = jLockSets.object().val("pakkage", pakkage)
-                            .array("children");
+                    if (jPackage != null) {
+                        jPackage.val("threadsSeen", pThreads);
+                    }
+                    jPackage = jLockSets.object().val("pakkage", pakkage);
+                    jPackageChildren = jPackage.array("children");
                     p = pakkage;
+                    pThreads = new HashSet<Long>();
                     c = null;
                 }
 
                 String clazz = field.getClazz();
                 if (!clazz.equals(c)) {
-                    jClass = jPackage.object().val("clazz", clazz)
-                            .array("children");
+                    if (jClass != null) {
+                        jClass.val("threadsSeen", cThreads);
+                    }
+                    jClass = jPackageChildren.object().val("clazz", clazz);
+                    jClassChildren = jClass.array("children");
                     c = clazz;
+                    cThreads = new HashSet<Long>();
                 }
-                JObject jField = jClass.object();
+                JObject jField = jClassChildren.object();
                 jField.val("field", field.getName());
                 jField.val("qualified",
                         pakkage + "." + clazz + "." + field.getName());
-                jField.val("threadsSeen", field.getThreadsSeen());
-
+                Set<Long> fThreads = field.getThreadsSeen();
+                jField.val("threadsSeen", fThreads);
+                pThreads.addAll(fThreads);
+                cThreads.addAll(fThreads);
+            }
+            if (jPackage != null) {
+                jPackage.val("threadsSeen", pThreads);
+            }
+            if (jClass != null) {
+                jClass.val("threadsSeen", cThreads);
             }
             builder.build(writer);
         }

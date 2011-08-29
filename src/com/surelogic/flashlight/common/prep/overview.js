@@ -686,6 +686,13 @@ function initRaceConditionTab() {
                          elem.find('> a').click(function (e) { 
                              e.preventDefault();
                              selectLockSet(node); 
+                             var pieces = node.qualified.split('.');
+                             var field = pieces[pieces.length-1];
+                             var clazz = pieces[pieces.length-2];
+                             pieces.length = pieces.length - 2;
+                             var pakkage = pieces.join('.');
+                             var url = "index.html?loc=" + "&Field=" + field + "&Package=" + pakkage + "&Class=" + clazz;
+                             $(window.location).attr('href',url);            
                          });
                      }
                    };
@@ -787,7 +794,13 @@ function initSharedFieldsTab() {
                      register: function (elem) { 
                          elem.find('> a').click(function (e) { 
                              e.preventDefault();
-                             // Do something here
+                             var pieces = node.qualified.split('.');
+                             var field = pieces[pieces.length-1];
+                             var clazz = pieces[pieces.length-2];
+                             pieces.length = pieces.length - 2;
+                             var pakkage = pieces.join('.');
+                             var url = "index.html?loc=" + "&Field=" + field + "&Package=" + pakkage + "&Class=" + clazz;
+                             $(window.location).attr('href',url);            
                          });
                      }
                    };

@@ -145,7 +145,7 @@ public final class WriteHtmlOverview implements IPostPrep {
         String name;
         String link;
 
-        public HeaderName(final String name, final String link) {
+        HeaderName(final String name, final String link) {
             this.name = name;
             this.link = link;
         }

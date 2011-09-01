@@ -31,7 +31,7 @@ public class CheckpointingOutputStreamStrategy extends EventVisitor {
         return EventVisitor
                 .createStream(
                         f_conf.getFilePrefix() + '.'
-                                + String.format("%04d", f_count++),
+                                + String.format("%06d", f_count++),
                         f_outputType);
     }
 

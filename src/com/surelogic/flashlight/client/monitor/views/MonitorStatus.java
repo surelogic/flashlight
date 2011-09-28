@@ -20,6 +20,9 @@ public class MonitorStatus {
     private final Map<String, FieldDef> fieldMap;
     private final Set<String> shared;
     private final Set<String> unshared;
+    private final Set<String> races;
+    private final Set<String> activeProtected;
+
     private String listing;
     private final int port;
 
@@ -41,6 +44,8 @@ public class MonitorStatus {
         }
         shared = new HashSet<String>();
         unshared = new HashSet<String>();
+        races = new HashSet<String>();
+        activeProtected = new HashSet<String>();
     }
 
     public MonitorStatus(final MonitorStatus status) {
@@ -51,6 +56,8 @@ public class MonitorStatus {
             this.port = status.port;
             this.shared = new HashSet<String>(status.shared);
             this.unshared = new HashSet<String>(status.unshared);
+            this.races = new HashSet<String>(status.races);
+            this.activeProtected = new HashSet<String>(status.activeProtected);
             this.fieldMap = status.fieldMap;
             this.listing = status.listing;
         } else {
@@ -87,11 +94,20 @@ public class MonitorStatus {
         return unshared;
     }
 
+    public Set<String> getRaces() {
+        return races;
+    }
+
+    public Set<String> getActivelyProtected() {
+        return activeProtected;
+    }
+
     public List<FieldStatus> getFields() {
         List<FieldStatus> list = new ArrayList<FieldStatus>();
         for (FieldDef def : fieldMap.values()) {
             String name = def.getQualifiedFieldName();
             list.add(new FieldStatus(def, shared.contains(name), unshared
+                    .contains(name), races.contains(name), activeProtected
                     .contains(name)));
         }
         return list;
@@ -113,12 +129,17 @@ public class MonitorStatus {
         private final FieldDef field;
         private final boolean shared;
         private final boolean unshared;
+        private final boolean dataRace;
+        private final boolean activelyProtected;
 
         private FieldStatus(final FieldDef field, final boolean shared,
-                final boolean unshared) {
+                final boolean unshared, final boolean dataRace,
+                final boolean activelyProtected) {
             this.field = field;
             this.shared = shared;
             this.unshared = unshared;
+            this.dataRace = dataRace;
+            this.activelyProtected = activelyProtected;
         }
 
         public boolean isShared() {
@@ -127,6 +148,14 @@ public class MonitorStatus {
 
         public boolean isUnshared() {
             return unshared;
+        }
+
+        public boolean hasDataRace() {
+            return dataRace;
+        }
+
+        public boolean isActivelyProtected() {
+            return activelyProtected;
         }
 
         public long getId() {

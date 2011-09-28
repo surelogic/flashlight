@@ -89,16 +89,53 @@ public class MonitorThread extends Thread {
                         shared = true;
                     } else if (line.startsWith("Unshared Fields")) {
                         shared = false;
-                    } else if (line.charAt(0) == ' ' || line.charAt(0) == '\t') {
+                    } else if (isField(line)) {
                         Set<String> fieldSet = shared ? f_status.getShared()
                                 : f_status.getUnshared();
-                        fieldSet.add(className + "."
-                                + line.substring(line.lastIndexOf(' ') + 1));
+                        fieldSet.add(getField(className, line));
                     } else {
                         className = line;
                     }
                     line = reader.readLine();
                 } while (line != null && !line.startsWith(DELIMITER));
+                writer.println("locksets");
+                writer.flush();
+                line = reader.readLine();
+                if (line.isEmpty()) {
+                    // TODO Not sure where this is coming from
+                    line = reader.readLine();
+                }
+                if (line.startsWith("Potential Race Conditions")) {
+                    String clazz = "";
+                    while (!line.startsWith("Actively protected fields")) {
+                        line = reader.readLine();
+                        if (isField(line)) {
+                            f_status.getRaces().add(getField(clazz, line));
+                        } else {
+                            clazz = line;
+                        }
+
+                    }
+                } else {
+                    SLLogger.getLoggerFor(MonitorThread.class).warning(
+                            "Could not read output from locksets command.");
+                }
+                if (line.startsWith("Actively protected fields")) {
+                    String clazz = "";
+                    while (!line.startsWith("Garbage Collected Fields")) {
+                        line = reader.readLine();
+                        if (isField(line)) {
+                            f_status.getActivelyProtected().add(
+                                    getField(clazz, line));
+                        } else {
+                            clazz = line;
+                        }
+                    }
+                } else {
+                    SLLogger.getLoggerFor(MonitorThread.class).warning(
+                            "Could not read output from locksets command.");
+                }
+                readUpTo(reader, DELIMITER);
                 writer.println("list");
                 writer.flush();
                 f_status.setListing(readUpTo(reader, DELIMITER));
@@ -114,6 +151,15 @@ public class MonitorThread extends Thread {
             SLLogger.getLoggerFor(MonitorThread.class).log(Level.WARNING,
                     e.getMessage(), e);
         }
+    }
+
+    private static boolean isField(final String line) {
+        return line != null
+                && (line.charAt(0) == ' ' || line.charAt(0) == '\t');
+    }
+
+    private static String getField(final String clazz, final String line) {
+        return clazz + '.' + line.substring(line.lastIndexOf(' ') + 1);
     }
 
     public static void begin(final MonitorStatus status) {

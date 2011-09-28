@@ -1,5 +1,7 @@
 package com.surelogic.flashlight.client.monitor.views;
 
+import java.util.List;
+
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -35,6 +37,7 @@ public class MonitorViewMediator implements MonitorListener {
     private final Color f_yellow;
     private final Color f_red;
     private final Color f_gray;
+    private final Color f_blue;
 
     MonitorViewMediator(final Composite parent, final Label runText,
             final Label startTimeText, final Text fieldsSelector,
@@ -50,7 +53,7 @@ public class MonitorViewMediator implements MonitorListener {
         f_yellow = display.getSystemColor(SWT.COLOR_YELLOW);
         f_red = display.getSystemColor(SWT.COLOR_RED);
         f_gray = display.getSystemColor(SWT.COLOR_GRAY);
-
+        f_blue = display.getSystemColor(SWT.COLOR_BLUE);
     }
 
     public void init() {
@@ -92,8 +95,17 @@ public class MonitorViewMediator implements MonitorListener {
                     f_startTimeText.setText(status.getRunTime());
                     f_parent.layout();
                     f_fields.removeAll();
+                    String clazz = null;
+                    TreeItem clazzTree = null;
                     for (FieldStatus f : status.getFields()) {
-                        TreeItem item = new TreeItem(f_fields, SWT.NONE);
+                        String newClazz = f.getClazz();
+                        if (!newClazz.equals(clazz)) {
+                            clazz = newClazz;
+                            clazzTree = new TreeItem(f_fields, SWT.NONE);
+                            clazzTree.setText(clazz);
+                            clazzTree.setBackground(f_gray);
+                        }
+                        TreeItem item = new TreeItem(clazzTree, SWT.NONE);
                         item.setText(f.getQualifiedFieldName());
                         item.setData(f);
                         item.setBackground(f_gray);
@@ -101,26 +113,42 @@ public class MonitorViewMediator implements MonitorListener {
                     break;
                 case CONNECTED:
                     int i = 0;
-                    for (FieldStatus f : status.getFields()) {
-                        final TreeItem item = f_fields.getItem(i++);
-                        if (!((FieldStatus) item.getData())
-                                .getQualifiedFieldName().equals(
-                                        f.getQualifiedFieldName())) {
-                            // FIXME this is test code, it should never happen
-                            throw new IllegalStateException();
+                    List<FieldStatus> fields = status.getFields();
+                    for (TreeItem clazzItem : f_fields.getItems()) {
+                        boolean allGray = true;
+                        for (TreeItem item : clazzItem.getItems()) {
+                            FieldStatus f = fields.get(i++);
+                            if (!((FieldStatus) item.getData())
+                                    .getQualifiedFieldName().equals(
+                                            f.getQualifiedFieldName())) {
+                                // FIXME this is test code, it should never
+                                // happen
+                                throw new IllegalStateException();
+                            }
+                            item.setText(f.getQualifiedFieldName());
+                            item.setData(f);
+                            boolean gray = false;
+                            if (f.hasDataRace()) {
+                                item.setBackground(f_red);
+                            } else if (f.isActivelyProtected()) {
+                                item.setBackground(f_green);
+                            } else if (f.isShared()) {
+                                item.setBackground(f_yellow);
+                            } else if (f.isUnshared()) {
+                                item.setBackground(f_blue);
+                            } else {
+                                item.setBackground(f_gray);
+                                gray = true;
+                            }
+                            allGray &= gray;
                         }
-                        item.setText(f.getQualifiedFieldName());
-                        item.setData(f);
-                        if (f.isShared() && f.isUnshared()) {
-                            item.setBackground(f_yellow);
-                        } else if (f.isShared()) {
-                            item.setBackground(f_red);
-                        } else if (f.isUnshared()) {
-                            item.setBackground(f_green);
+                        if (allGray) {
+                            clazzItem.setBackground(f_gray);
                         } else {
-                            item.setBackground(f_gray);
+                            clazzItem.setBackground(null);
                         }
                     }
+
                     Document d = new Document();
                     d.set(status.getListing());
                     f_listing.setDocument(d);

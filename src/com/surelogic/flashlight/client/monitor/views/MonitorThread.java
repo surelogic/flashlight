@@ -105,6 +105,7 @@ public class MonitorThread extends Thread {
                     // TODO Not sure where this is coming from
                     line = reader.readLine();
                 }
+                f_status.getRaces().clear();
                 if (line.startsWith("Potential Race Conditions")) {
                     String clazz = "";
                     while (!line.startsWith("Actively protected fields")) {
@@ -120,6 +121,7 @@ public class MonitorThread extends Thread {
                     SLLogger.getLoggerFor(MonitorThread.class).warning(
                             "Could not read output from locksets command.");
                 }
+                f_status.getActivelyProtected().clear();
                 if (line.startsWith("Actively protected fields")) {
                     String clazz = "";
                     while (!line.startsWith("Garbage Collected Fields")) {

@@ -106,6 +106,14 @@
 				id="com.surelogic.flashlight.client.eclipse.views.source.HistoricalSourceView">
 			</viewShortcut>
 		</perspectiveExtension>
+		<perspectiveExtension
+            targetID="com.surelogic.flashlight.client.eclipse.perspectives.FlashlightPerspective">
+            <perspectiveShortcut id="org.eclipse.jdt.ui.JavaPerspective">
+            </perspectiveShortcut>
+            <viewShortcut
+                id="com.surelogic.flashlight.client.monitor.views.MonitorView">
+            </viewShortcut>
+        </perspectiveExtension>
 	</extension>
 
 	<extension point="org.eclipse.ui.perspectiveExtensions">
@@ -358,7 +366,12 @@
 			id="com.surelogic.flashlight.client.eclipse.views.source.HistoricalSourceView"
 			name="Historical Source Snapshot">
 		</view>
-	</extension>
+        <view allowMultiple="false" category="com.surelogic.flashlight.Flashlight"
+            class="com.surelogic.flashlight.client.monitor.views.MonitorView"
+            icon="platform:/plugin/com.surelogic.common/lib/images/fl_logo.gif"
+            id="com.surelogic.flashlight.client.monitor.views.MonitorView" name="Monitor View">
+        </view>
+    </extension>
 	<extension point="org.eclipse.ui.handlers">
 		<handler class="com.surelogic.common.ui.adhoc.views.results.QueryResultsCopyHandler"
 			commandId="org.eclipse.ui.edit.copy">

@@ -80,6 +80,8 @@ import com.surelogic.flashlight.client.eclipse.Activator;
 import com.surelogic.flashlight.client.eclipse.jobs.LaunchTerminationDetectionJob;
 import com.surelogic.flashlight.client.eclipse.jobs.SwitchToFlashlightPerspectiveJob;
 import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
+import com.surelogic.flashlight.client.monitor.views.MonitorStatus;
+import com.surelogic.flashlight.client.monitor.views.MonitorThread;
 import com.surelogic.flashlight.common.files.RunDirectory;
 import com.surelogic.flashlight.common.model.RunDescription;
 import com.surelogic.flashlight.common.model.RunManager;
@@ -234,6 +236,9 @@ public final class FlashlightVMRunner implements IVMRunner {
                 configuration, launch.getLaunchConfiguration(), newClassPath,
                 newBootClassPath, classpathEntryMap);
 
+        /* Let the monitor thread know it should expect a launch */
+        MonitorThread.begin(new MonitorStatus(mainTypeName, new Date()
+                .toString(), fieldsFile, 43524));
         /* Done with our set up, call the real runner */
         delegateRunner.run(newConfig, launch, monitor);
 
@@ -255,6 +260,7 @@ public final class FlashlightVMRunner implements IVMRunner {
                     final UIJob job = new SwitchToFlashlightPerspectiveJob();
                     job.schedule();
                 }
+                MonitorThread.end();
                 return Status.OK_STATUS;
             }
         };

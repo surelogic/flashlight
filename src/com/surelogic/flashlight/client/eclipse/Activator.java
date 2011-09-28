@@ -18,6 +18,7 @@ import com.surelogic.common.ui.DialogTouchNotificationUI;
 import com.surelogic.flashlight.client.eclipse.jobs.PromptToPrepAllRawData;
 import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
+import com.surelogic.flashlight.client.monitor.views.MonitorThread;
 import com.surelogic.flashlight.common.model.RunManager;
 
 /**
@@ -25,88 +26,90 @@ import com.surelogic.flashlight.common.model.RunManager;
  */
 public class Activator extends AbstractUIPlugin {
 
-	// The shared instance
-	private static Activator plugin;
+    // The shared instance
+    private static Activator plugin;
 
-	/**
-	 * Returns the shared instance
-	 * 
-	 * @return the shared instance
-	 */
-	public static Activator getDefault() {
-		return plugin;
-	}
+    /**
+     * Returns the shared instance
+     * 
+     * @return the shared instance
+     */
+    public static Activator getDefault() {
+        return plugin;
+    }
 
-	/**
-	 * The constructor
-	 */
-	public Activator() {
-		if (plugin != null)
-			throw new IllegalStateException(Activator.class.getName()
-					+ " instance already exits, it should be a singleton.");
-		plugin = this;
-	}
+    /**
+     * The constructor
+     */
+    public Activator() {
+        if (plugin != null) {
+            throw new IllegalStateException(Activator.class.getName()
+                    + " instance already exits, it should be a singleton.");
+        }
+        plugin = this;
+    }
 
-	/**
-	 * Gets the identifier for this plug in.
-	 * 
-	 * @return an identifier, such as <tt>com.surelogic.common</tt>. In rare
-	 *         cases, for example bad plug in XML, it may be {@code null}.
-	 * @see Bundle#getSymbolicName()
-	 */
-	public String getPlugInId() {
-		return plugin.getBundle().getSymbolicName();
-	}
+    /**
+     * Gets the identifier for this plug in.
+     * 
+     * @return an identifier, such as <tt>com.surelogic.common</tt>. In rare
+     *         cases, for example bad plug in XML, it may be {@code null}.
+     * @see Bundle#getSymbolicName()
+     */
+    public String getPlugInId() {
+        return plugin.getBundle().getSymbolicName();
+    }
 
-	@Override
-	public void start(final BundleContext context) throws Exception {
-		super.start(context);
+    @Override
+    public void start(final BundleContext context) throws Exception {
+        super.start(context);
 
-		/*
-		 * "Touch" common-core-eclipse so the logging gets Eclipse-ified.
-		 */
-		SLEclipseStatusUtility.touch(new DialogTouchNotificationUI());
+        /*
+         * "Touch" common-core-eclipse so the logging gets Eclipse-ified.
+         */
+        SLEclipseStatusUtility.touch(new DialogTouchNotificationUI());
 
-		/*
-		 * "Touch" the JSure preference initialization.
-		 */
-		FlashlightPreferencesUtility.initializeDefaultScope();
+        /*
+         * "Touch" the JSure preference initialization.
+         */
+        FlashlightPreferencesUtility.initializeDefaultScope();
 
-		/*
-		 * Get the data directory and ensure that it actually exists.
-		 */
-		final File dataDir = FlashlightPreferencesUtility
-				.getFlashlightDataDirectory();
+        /*
+         * Get the data directory and ensure that it actually exists.
+         */
+        final File dataDir = FlashlightPreferencesUtility
+                .getFlashlightDataDirectory();
 
-		EclipseUtility.getProductReleaseDateJob(SLLicenseProduct.FLASHLIGHT,
-				this).schedule();
-		RunManager.getInstance().setDataDirectory(dataDir);
-		PromptToPrepAllRawData.start();
-	}
+        EclipseUtility.getProductReleaseDateJob(SLLicenseProduct.FLASHLIGHT,
+                this).schedule();
+        RunManager.getInstance().setDataDirectory(dataDir);
+        PromptToPrepAllRawData.start();
+    }
 
-	@Override
-	public void stop(final BundleContext context) throws Exception {
-		try {
-			PromptToPrepAllRawData.stop();
-			AdHocDataSource.getInstance().dispose();
-			plugin = null;
-		} finally {
-			super.stop(context);
-		}
-	}
+    @Override
+    public void stop(final BundleContext context) throws Exception {
+        try {
+            PromptToPrepAllRawData.stop();
+            AdHocDataSource.getInstance().dispose();
+            MonitorThread.end();
+            plugin = null;
+        } finally {
+            super.stop(context);
+        }
+    }
 
-	public IPath getBundleLocation() {
-		final Bundle bundle = getBundle();
-		if (bundle == null) {
-			return null;
-		}
-		URL local = null;
-		try {
-			local = FileLocator.toFileURL(bundle.getEntry("/"));
-		} catch (final IOException e) {
-			return null;
-		}
-		final String fullPath = new File(local.getPath()).getAbsolutePath();
-		return Path.fromOSString(fullPath);
-	}
+    public IPath getBundleLocation() {
+        final Bundle bundle = getBundle();
+        if (bundle == null) {
+            return null;
+        }
+        URL local = null;
+        try {
+            local = FileLocator.toFileURL(bundle.getEntry("/"));
+        } catch (final IOException e) {
+            return null;
+        }
+        final String fullPath = new File(local.getPath()).getAbsolutePath();
+        return Path.fromOSString(fullPath);
+    }
 }

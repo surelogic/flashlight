@@ -2,7 +2,7 @@ package com.surelogic._flashlight.monitor;
 
 import java.util.Set;
 
-import com.surelogic._flashlight.FieldDefs;
+import com.surelogic._flashlight.common.FieldDefs;
 
 public class SharedFieldInfo {
 	private final Set<Long> shared;

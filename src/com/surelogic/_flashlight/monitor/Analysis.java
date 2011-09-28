@@ -8,9 +8,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.surelogic._flashlight.FieldDef;
 import com.surelogic._flashlight.IdPhantomReference;
 import com.surelogic._flashlight.RunConf;
+import com.surelogic._flashlight.common.FieldDef;
 
 /**
  * The Analysis thread periodically collects events from every program thread
@@ -134,12 +134,8 @@ final class Analysis extends Thread {
 
     @Override
     public synchronized String toString() {
-        final StringBuilder b = new StringBuilder();
-        b.append(getAlerts().toString());
-        b.append(master.getLockSetInfo().toString());
-        b.append(getDeadlocks().toString());
-        b.append(getShared().toString());
-        return b.toString();
+        return new FullInfo(getAlerts(), master.getLockSetInfo(), getShared(),
+                getDeadlocks()).toString();
     }
 
     synchronized void setAlerts(final AlertSpec spec) {

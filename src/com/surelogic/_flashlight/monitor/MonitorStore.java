@@ -13,8 +13,6 @@ import java.util.regex.Pattern;
 
 import com.surelogic._flashlight.ClassPhantomReference;
 import com.surelogic._flashlight.ConsoleCommand;
-import com.surelogic._flashlight.FieldDef;
-import com.surelogic._flashlight.FieldDefs;
 import com.surelogic._flashlight.IdPhantomReference;
 import com.surelogic._flashlight.ObjectPhantomReference;
 import com.surelogic._flashlight.Phantom;
@@ -23,6 +21,8 @@ import com.surelogic._flashlight.Spy;
 import com.surelogic._flashlight.StoreListener;
 import com.surelogic._flashlight.ThreadPhantomReference;
 import com.surelogic._flashlight.UtilConcurrent;
+import com.surelogic._flashlight.common.FieldDef;
+import com.surelogic._flashlight.common.FieldDefs;
 import com.surelogic._flashlight.jsr166y.ConcurrentReferenceHashMap;
 import com.surelogic._flashlight.jsr166y.ConcurrentReferenceHashMap.ReferenceType;
 
@@ -631,7 +631,7 @@ public final class MonitorStore implements StoreListener {
         }
 
         public String handle(final String command) {
-            if ("list".equalsIgnoreCase(command)) {
+            if (LIST.equalsIgnoreCase(command)) {
                 return getAnalysis().toString();
             }
             return null;

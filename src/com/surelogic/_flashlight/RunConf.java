@@ -14,6 +14,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.surelogic._flashlight.common.FieldDef;
+import com.surelogic._flashlight.common.FieldDefs;
 import com.surelogic._flashlight.common.InstrumentationConstants;
 
 /**
@@ -273,7 +275,7 @@ public class RunConf {
 
         f_start_nano = System.nanoTime();
         try {
-            f_fieldDefs = new FieldDefs();
+            f_fieldDefs = new FieldDefs(StoreConfiguration.getFieldsFile());
         } catch (IOException e) {
             logAProblem(e.getMessage(), e);
             throw new IllegalStateException(e);

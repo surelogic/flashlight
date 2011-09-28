@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 
-import com.surelogic._flashlight.FieldDef;
+import com.surelogic._flashlight.common.FieldDef;
 
 /**
  * Keeps track of what fields are currently shared by what threads.

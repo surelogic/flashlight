@@ -437,7 +437,12 @@ public final class MonitorStore implements StoreListener {
             final long siteId) {
         final long lockId = Phantom.of(lockObject).getId();
         if (!f_lockNames.containsKey(lockId)) {
-            f_lockNames.put(lockId, lockObject.getClass().toString() + '-'
+            if (lockObject instanceof Class) {
+                f_lockNames.put(lockId,
+                        "class " + ((Class) lockObject).getName() + '-'
+                                + lockId);
+            }
+            f_lockNames.put(lockId, lockObject.getClass().getName() + '-'
                     + lockId);
         }
         tl_lockSet.get().enterLock(lockId);
@@ -530,7 +535,7 @@ public final class MonitorStore implements StoreListener {
                         .ofObject(lockObject);
                 final long lockId = lockPhantom.getId();
                 if (!f_lockNames.containsKey(lockId)) {
-                    f_lockNames.put(lockId, lockObject.getClass().toString()
+                    f_lockNames.put(lockId, lockObject.getClass().getName()
                             + lockId);
                 }
                 tl_lockSet.get().enterLock(lockId);

@@ -139,10 +139,10 @@ final class Analysis extends Thread {
     }
 
     synchronized void setAlerts(final AlertSpec spec) {
-        if (alerts != null) {
-            alerts = alerts.merge(spec);
+        if (alerts == null) {
+            alerts = spec;
         } else {
-            this.alerts = spec;
+            alerts = alerts.merge(spec);
         }
         edtViolations = new HashSet<FieldDef>();
         sharedFieldViolations = new HashSet<FieldDef>();

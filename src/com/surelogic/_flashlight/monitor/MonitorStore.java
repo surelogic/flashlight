@@ -756,29 +756,29 @@ public final class MonitorStore implements StoreListener {
                 } else if (EDT_FIELDS.equalsIgnoreCase(prop)) {
                     reviseAlerts(new AlertSpec(val, null, null,
                             f_conf.getFieldDefs()));
-                    String.format(
-                            "Monitoring fields matching %s for Swing policy violations.",
-                            val);
+                    return String
+                            .format("Monitoring fields matching %s for Swing policy violations.",
+                                    val);
 
                 } else if (SHARED_FIELDS.equalsIgnoreCase(prop)) {
                     reviseAlerts(new AlertSpec(null, val, null,
                             f_conf.getFieldDefs()));
-                    String.format(
+                    return String.format(
                             "Ensuring fields matching %s are not shared.", val);
 
                 } else if (LOCKSET_FIELDS.equalsIgnoreCase(prop)) {
                     reviseAlerts(new AlertSpec(null, null, val,
                             f_conf.getFieldDefs()));
-                    String.format(
-                            "Ensuring fields matching %s always have a lock set.",
-                            val);
+                    return String
+                            .format("Ensuring fields matching %s always have a lock set.",
+                                    val);
                 } else {
                     return String.format("%s is not a valid property", prop);
                 }
+            } else {
+                return null;
             }
-            return null;
         }
-
     }
 
     class DescribeCommand implements ConsoleCommand {

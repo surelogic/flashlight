@@ -54,7 +54,9 @@ public class DeadlockInfo {
                     .getParentLock()) {
                 s = s + " -> " + objId(stack.getLockId());
             }
-            strs.add(s);
+            if (!s.isEmpty()) {
+                strs.add(s);
+            }
         }
         Collections.sort(strs);
         for (final String s : strs) {

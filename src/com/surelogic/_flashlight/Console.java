@@ -2,9 +2,12 @@ package com.surelogic._flashlight;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.lang.ref.WeakReference;
 import java.net.InetAddress;
 import java.net.ServerSocket;
@@ -14,6 +17,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import com.surelogic._flashlight.common.InstrumentationConstants;
 
 class Console extends Thread {
 
@@ -68,12 +73,24 @@ class Console extends Thread {
             }
         } while (!listening && tryCount <= 100);
         if (!listening) {
-            f_conf.logAProblem("unable to listen on any port between " + f_port
-                    + " and " + port
+            f_conf.logAProblem("unable to listen   on any port between "
+                    + f_port + " and " + port
                     + " (i.e., Flashlight cannot be shutdown via a console)");
             return;
         }
         f_conf.log("console server listening on port " + port);
+        File portFile = new File(StoreConfiguration.getDirectory(),
+                InstrumentationConstants.FL_PORT_FILE_NAME);
+        try {
+            PrintWriter writer = new PrintWriter(portFile);
+            try {
+                writer.println(port);
+            } finally {
+                writer.close();
+            }
+        } catch (FileNotFoundException e) {
+            f_conf.log("Could not write to instrumentation's port file.");
+        }
 
         // until told to shutdown, listen for and handle client connections
         while (!f_shutdownRequested) {

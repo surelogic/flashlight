@@ -65,26 +65,58 @@ public class MonitorView extends ViewPart {
         fieldsSelector.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true,
                 false));
 
-        final Tree tree = new Tree(fieldsBody, SWT.VIRTUAL);
-        tree.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+        final Tree fieldsTree = new Tree(fieldsBody, SWT.VIRTUAL);
+        fieldsTree.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
         fieldsTab.setControl(fieldsBody);
         fieldsBody.layout();
 
+        /*
+         * Locks Tab
+         */
         final TabItem locksTab = new TabItem(folder, SWT.NONE);
         locksTab.setText("Locks");
 
+        Composite locksBody = new Composite(folder, SWT.NONE);
+        locksBody.setLayout(new GridLayout());
+        locksBody.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+
+        final Tree locksTree = new Tree(locksBody, SWT.VIRTUAL);
+        locksTree.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+
+        locksTab.setControl(locksBody);
+
+        /*
+         * EDT Tab
+         */
         final TabItem edtTab = new TabItem(folder, SWT.NONE);
         edtTab.setText("EDT");
 
+        final Composite edtBody = new Composite(folder, SWT.NONE);
+        edtBody.setLayout(new GridLayout());
+        edtBody.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+
+        final Text edtSelector = new Text(edtBody, SWT.SINGLE);
+        edtSelector
+                .setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+
+        final Tree edtTree = new Tree(edtBody, SWT.NONE);
+        edtTree.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+
+        edtTab.setControl(edtBody);
+
+        /*
+         * Listing tab, we aren't keeping this.
+         */
         final TabItem removeThis = new TabItem(folder, SWT.NONE);
         removeThis.setText("List");
         final TextViewer tv = new TextViewer(folder, SWT.BORDER | SWT.V_SCROLL
                 | SWT.H_SCROLL);
 
         removeThis.setControl(tv.getControl());
-        f_mediator = new MonitorViewMediator(status, runText, startTimeText,
-                fieldsSelector, tree, tv);
+        f_mediator = new MonitorViewMediator(status, statusImage, runText,
+                startTimeText, fieldsSelector, fieldsTree, locksTree,
+                edtSelector, edtTree, tv);
 
         f_mediator.init();
     }

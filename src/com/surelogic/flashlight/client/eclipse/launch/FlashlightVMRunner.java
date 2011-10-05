@@ -8,6 +8,7 @@ import static com.surelogic._flashlight.common.InstrumentationConstants.FL_FIELD
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_NO_SPY;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_OUTPUT_TYPE;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_OUTQ_SIZE;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_PORT_FILE_NAME;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_POSTMORTEM;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_RAWQ_SIZE;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_REFINERY_OFF;
@@ -100,6 +101,7 @@ public final class FlashlightVMRunner implements IVMRunner {
     private final File fieldsFile;
     private final File sitesFile;
     private final File logFile;
+    private final File portFile;
 
     private final String datePostfix;
     private final String pathToFlashlightLib;
@@ -162,6 +164,7 @@ public final class FlashlightVMRunner implements IVMRunner {
         projectOutputDir = new File(runOutputDir, "projects");
         externalOutputDir = new File(runOutputDir, "external");
         sourceDir = new File(runOutputDir, "source");
+        portFile = new File(runOutputDir, FL_PORT_FILE_NAME);
         fieldsFile = new File(runOutputDir, FIELDS_FILE_NAME);
         sitesFile = new File(runOutputDir, SITES_FILE_NAME
                 + FileUtility.GZIP_SUFFIX);
@@ -236,9 +239,6 @@ public final class FlashlightVMRunner implements IVMRunner {
                 configuration, launch.getLaunchConfiguration(), newClassPath,
                 newBootClassPath, classpathEntryMap);
 
-        /* Let the monitor thread know it should expect a launch */
-        MonitorThread.begin(new MonitorStatus(mainTypeName, new Date()
-                .toString(), fieldsFile, 43524));
         /* Done with our set up, call the real runner */
         delegateRunner.run(newConfig, launch, monitor);
 
@@ -247,6 +247,11 @@ public final class FlashlightVMRunner implements IVMRunner {
                         FlashlightPreferencesUtility.POSTMORTEM_MODE,
                         EclipseUIUtility.getPreferences().getBoolean(
                                 FlashlightPreferencesUtility.POSTMORTEM_MODE));
+
+        /* Let the monitor thread know it should expect a launch */
+        final boolean monitoring = MonitorThread.begin(new MonitorStatus(
+                mainTypeName, new Date().toString(), fieldsFile, portFile));
+
         /*
          * Create and launch a job that detects when the instrumented run
          * terminates, and switches to the flashlight perspective on
@@ -260,7 +265,9 @@ public final class FlashlightVMRunner implements IVMRunner {
                     final UIJob job = new SwitchToFlashlightPerspectiveJob();
                     job.schedule();
                 }
-                MonitorThread.end();
+                if (monitoring) {
+                    MonitorThread.end();
+                }
                 return Status.OK_STATUS;
             }
         };

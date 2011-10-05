@@ -3,11 +3,13 @@ package com.surelogic.flashlight.client.monitor.views;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 import com.surelogic._flashlight.common.FieldDef;
 import com.surelogic._flashlight.common.FieldDefs;
@@ -23,16 +25,23 @@ public class MonitorStatus {
     private final Set<String> races;
     private final Set<String> activeProtected;
 
+    private final Set<String> deadlocks;
+
+    private final Set<List<String>> edges;
+
+    private final Set<String> alerts;
+
     private String listing;
-    private final int port;
+
+    private final File portFile;
 
     private ConnectionState state;
 
     public MonitorStatus(final String runName, final String runTime,
-            final File fieldsFile, final int port) {
+            final File fieldsFile, final File portFile) {
         this.runName = runName;
         this.runTime = runTime;
-        this.port = port;
+        this.portFile = portFile;
         try {
             this.fields = new FieldDefs(fieldsFile);
         } catch (IOException e) {
@@ -46,6 +55,9 @@ public class MonitorStatus {
         unshared = new HashSet<String>();
         races = new HashSet<String>();
         activeProtected = new HashSet<String>();
+        deadlocks = new HashSet<String>();
+        edges = new HashSet<List<String>>();
+        alerts = new HashSet<String>();
     }
 
     public MonitorStatus(final MonitorStatus status) {
@@ -53,13 +65,16 @@ public class MonitorStatus {
             this.runName = status.runName;
             this.runTime = status.runTime;
             this.fields = status.fields;
-            this.port = status.port;
+            this.portFile = status.portFile;
             this.shared = new HashSet<String>(status.shared);
             this.unshared = new HashSet<String>(status.unshared);
             this.races = new HashSet<String>(status.races);
             this.activeProtected = new HashSet<String>(status.activeProtected);
             this.fieldMap = status.fieldMap;
             this.listing = status.listing;
+            this.deadlocks = new HashSet<String>(status.deadlocks);
+            this.edges = new TreeSet<List<String>>(status.edges);
+            this.alerts = new HashSet<String>(status.alerts);
         } else {
             throw new IllegalArgumentException("status may not be null");
         }
@@ -82,8 +97,8 @@ public class MonitorStatus {
         return runTime;
     }
 
-    public int getPort() {
-        return port;
+    public File getPortFile() {
+        return portFile;
     }
 
     public Set<String> getShared() {
@@ -108,9 +123,39 @@ public class MonitorStatus {
             String name = def.getQualifiedFieldName();
             list.add(new FieldStatus(def, shared.contains(name), unshared
                     .contains(name), races.contains(name), activeProtected
-                    .contains(name)));
+                    .contains(name), alerts.contains(name)));
         }
         return list;
+    }
+
+    public Set<List<String>> getEdges() {
+        return edges;
+    }
+
+    public Set<String> getDeadlocks() {
+        return deadlocks;
+    }
+
+    public List<LockStatus> getLocks() {
+        final Map<String, LockStatus> locks = new HashMap<String, MonitorStatus.LockStatus>();
+        for (List<String> edge : getEdges()) {
+            List<LockStatus> newEdge = new ArrayList<MonitorStatus.LockStatus>(
+                    edge.size());
+            for (String lock : edge) {
+                LockStatus status = locks.get(lock);
+                if (status == null) {
+                    status = new LockStatus(deadlocks.contains(lock), lock);
+                    locks.put(lock, status);
+                }
+                newEdge.add(status);
+                status.getEdges().add(newEdge);
+            }
+        }
+        return new ArrayList<LockStatus>(locks.values());
+    }
+
+    public Set<String> getAlerts() {
+        return alerts;
     }
 
     public String getListing() {
@@ -131,15 +176,17 @@ public class MonitorStatus {
         private final boolean unshared;
         private final boolean dataRace;
         private final boolean activelyProtected;
+        private final boolean edtAlert;
 
         private FieldStatus(final FieldDef field, final boolean shared,
                 final boolean unshared, final boolean dataRace,
-                final boolean activelyProtected) {
+                final boolean activelyProtected, final boolean edtAlert) {
             this.field = field;
             this.shared = shared;
             this.unshared = unshared;
             this.dataRace = dataRace;
             this.activelyProtected = activelyProtected;
+            this.edtAlert = edtAlert;
         }
 
         public boolean isShared() {
@@ -186,5 +233,33 @@ public class MonitorStatus {
             return field.isVolatile();
         }
 
+        public boolean isEDTAlert() {
+            return edtAlert;
+        }
+
+    }
+
+    static class LockStatus {
+        private final boolean deadlock;
+        private final String name;
+        private final Set<List<LockStatus>> edges;
+
+        public LockStatus(final boolean deadlock, final String name) {
+            this.deadlock = deadlock;
+            this.name = name;
+            this.edges = new HashSet<List<LockStatus>>();
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public Set<List<LockStatus>> getEdges() {
+            return edges;
+        }
+
+        public boolean isDeadlocked() {
+            return deadlock;
+        }
     }
 }

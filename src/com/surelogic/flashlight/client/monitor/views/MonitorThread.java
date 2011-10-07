@@ -182,7 +182,7 @@ public class MonitorThread extends Thread {
                             clazz = line;
                         }
                     }
-
+                    readUpTo(reader, DELIMITER);
                     writeCommand(writer, "list");
                     StringBuilder b = new StringBuilder();
                     for (String str : readUpTo(reader, DELIMITER)) {

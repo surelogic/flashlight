@@ -41,11 +41,15 @@ public class MonitorViewMediator implements MonitorListener {
     private final Tree f_locks;
     private final Tree f_edtAlerts;
 
+    private final Image f_package;
+    private final Image f_class;
+    private final Image f_connecting;
     private final Image f_notConnected;
     private final Image f_connected;
     private final Image f_error;
     private final Image f_done;
 
+    private final Color f_edtAlertColor;
     private final Color f_protectedColor;
     private final Color f_sharedColor;
     private final Color f_dataRaceColor;
@@ -68,17 +72,25 @@ public class MonitorViewMediator implements MonitorListener {
         f_edtAlerts = edtTree;
         f_listing = listing;
 
-        f_connected = SLImages.getImage(CommonImages.IMG_ASTERISK_ORANGE_100);
-        f_notConnected = SLImages.getImage(CommonImages.IMG_ASTERISK_GRAY);
-        f_error = SLImages.getImage(CommonImages.IMG_RED_X);
-        f_done = SLImages.getImage(CommonImages.IMG_ASTERISK_DIAMOND_GRAY);
+        f_connected = SLImages.getImage(CommonImages.IMG_GREEN_CIRCLE);
+        f_connecting = SLImages.getImage(CommonImages.IMG_YELLOW_CIRCLE);
+        f_notConnected = SLImages.getImage(CommonImages.IMG_GRAY_CIRCLE);
+        f_error = SLImages.getImage(CommonImages.IMG_RED_CIRCLE);
+        f_done = SLImages.getImage(CommonImages.IMG_GRAY_CIRCLE);
+        f_package = SLImages.getImage(CommonImages.IMG_PACKAGE);
+        f_class = SLImages.getImage(CommonImages.IMG_CLASS);
 
         Display display = statusImage.getDisplay();
-        f_protectedColor = display.getSystemColor(SWT.COLOR_GREEN);
-        f_sharedColor = display.getSystemColor(SWT.COLOR_YELLOW);
-        f_dataRaceColor = display.getSystemColor(SWT.COLOR_RED);
-        f_unknownColor = display.getSystemColor(SWT.COLOR_GRAY);
-        f_unsharedColor = display.getSystemColor(SWT.COLOR_BLUE);
+        // Greenish
+        f_protectedColor = new Color(display, 44, 132, 44);
+        // Yellowish
+        f_sharedColor = new Color(display, 255, 255, 132);
+        // Reddish
+        f_edtAlertColor = f_dataRaceColor = new Color(display, 255, 44, 44);
+        // Gray
+        f_unknownColor = new Color(display, 176, 176, 176);
+        // Brownish?
+        f_unsharedColor = new Color(display, 132, 88, 44);
     }
 
     private static class SpecListener implements SelectionListener {
@@ -110,7 +122,18 @@ public class MonitorViewMediator implements MonitorListener {
     }
 
     public void dispose() {
-        // Nothing here
+        f_protectedColor.dispose();
+        f_sharedColor.dispose();
+        f_dataRaceColor.dispose();
+        f_unknownColor.dispose();
+        f_unsharedColor.dispose();
+        f_package.dispose();
+        f_class.dispose();
+        f_connected.dispose();
+        f_connecting.dispose();
+        f_notConnected.dispose();
+        f_error.dispose();
+        f_done.dispose();
     }
 
     public void setFocus() {
@@ -127,57 +150,145 @@ public class MonitorViewMediator implements MonitorListener {
                 }
                 switch (status.getState()) {
                 case SEARCHING:
-                    f_statusImage.setImage(f_notConnected);
+                    f_statusImage.setImage(f_connecting);
                     f_runText.setText(status.getRunName());
                     f_startTimeText.setText(status.getRunTime());
                     f_status.layout();
                     f_fields.removeAll();
                     String clazz = null;
+                    String pakkage = null;
+                    TreeItem pakkageTree = null;
                     TreeItem clazzTree = null;
                     List<FieldStatus> fieldList = status.getFields();
                     for (FieldStatus f : fieldList) {
-                        String newClazz = f.getClazz();
+                        String qualifiedClazz = f.getClazz();
+                        int split = qualifiedClazz.lastIndexOf('.');
+                        String newPakkage, newClazz;
+                        if (split != -1) {
+                            newPakkage = qualifiedClazz.substring(0, split);
+                            newClazz = qualifiedClazz.substring(split + 1);
+                        } else {
+                            newPakkage = "";
+                            newClazz = qualifiedClazz;
+                        }
+                        if (!newPakkage.equals(pakkage)) {
+                            pakkage = newPakkage;
+                            clazz = null;
+                            pakkageTree = new TreeItem(f_fields, SWT.None);
+                            pakkageTree.setText(pakkage);
+                            pakkageTree.setBackground(f_unknownColor);
+                            pakkageTree.setImage(f_package);
+                        }
                         if (!newClazz.equals(clazz)) {
                             clazz = newClazz;
-                            clazzTree = new TreeItem(f_fields, SWT.NONE);
+                            clazzTree = new TreeItem(pakkageTree, SWT.NONE);
                             clazzTree.setText(clazz);
                             clazzTree.setBackground(f_unknownColor);
+                            clazzTree.setImage(f_class);
                         }
                         TreeItem item = new TreeItem(clazzTree, SWT.NONE);
-                        item.setText(f.getQualifiedFieldName());
+                        item.setText(f.getField());
                         item.setData(f);
                         item.setBackground(f_unknownColor);
                     }
+                    f_edtAlerts.removeAll();
+                    for (FieldStatus f : fieldList) {
+                        String qualifiedClazz = f.getClazz();
+                        int split = qualifiedClazz.lastIndexOf('.');
+                        String newPakkage, newClazz;
+                        if (split != -1) {
+                            newPakkage = qualifiedClazz.substring(0, split);
+                            newClazz = qualifiedClazz.substring(split + 1);
+                        } else {
+                            newPakkage = "";
+                            newClazz = qualifiedClazz;
+                        }
+                        if (!newPakkage.equals(pakkage)) {
+                            pakkage = newPakkage;
+                            clazz = null;
+                            pakkageTree = new TreeItem(f_edtAlerts, SWT.None);
+                            pakkageTree.setText(pakkage);
+                            pakkageTree.setBackground(f_unknownColor);
+                            pakkageTree.setImage(f_package);
+                        }
+                        if (!newClazz.equals(clazz)) {
+                            clazz = newClazz;
+                            clazzTree = new TreeItem(pakkageTree, SWT.NONE);
+                            clazzTree.setText(clazz);
+                            clazzTree.setBackground(f_unknownColor);
+                            clazzTree.setImage(f_class);
+                        }
+                        TreeItem item = new TreeItem(clazzTree, SWT.NONE);
+                        item.setText(f.getField());
+                        item.setData(f);
+                        item.setBackground(f_unknownColor);
+                    }
+                    f_locks.removeAll();
                     break;
                 case CONNECTED:
                     f_statusImage.setImage(f_connected);
                     int i = 0;
                     List<FieldStatus> fields = status.getFields();
-                    for (TreeItem clazzItem : f_fields.getItems()) {
-                        boolean allGray = true;
-                        for (TreeItem item : clazzItem.getItems()) {
-                            FieldStatus f = fields.get(i++);
-                            item.setText(f.getQualifiedFieldName());
-                            item.setData(f);
-                            boolean gray = false;
-                            if (f.hasDataRace()) {
-                                item.setBackground(f_dataRaceColor);
-                            } else if (f.isActivelyProtected()) {
-                                item.setBackground(f_protectedColor);
-                            } else if (f.isShared()) {
-                                item.setBackground(f_sharedColor);
-                            } else if (f.isUnshared()) {
-                                item.setBackground(f_unsharedColor);
-                            } else {
-                                item.setBackground(f_unknownColor);
-                                gray = true;
+                    for (TreeItem packageItem : f_fields.getItems()) {
+                        boolean allGrayPackage = true;
+                        for (TreeItem clazzItem : packageItem.getItems()) {
+                            boolean allGrayClass = true;
+                            for (TreeItem item : clazzItem.getItems()) {
+                                FieldStatus f = fields.get(i++);
+                                boolean gray = false;
+                                if (f.hasDataRace()) {
+                                    item.setBackground(f_dataRaceColor);
+                                } else if (f.isActivelyProtected()) {
+                                    item.setBackground(f_protectedColor);
+                                } else if (f.isShared()) {
+                                    item.setBackground(f_sharedColor);
+                                } else if (f.isUnshared()) {
+                                    item.setBackground(f_unsharedColor);
+                                } else {
+                                    item.setBackground(f_unknownColor);
+                                    gray = true;
+                                }
+                                allGrayClass &= gray;
                             }
-                            allGray &= gray;
+                            if (allGrayClass) {
+                                clazzItem.setBackground(f_unknownColor);
+                            } else {
+                                clazzItem.setBackground(null);
+                            }
+                            allGrayPackage &= allGrayClass;
                         }
-                        if (allGray) {
-                            clazzItem.setBackground(f_unknownColor);
+                        if (allGrayPackage) {
+                            packageItem.setBackground(f_unknownColor);
                         } else {
-                            clazzItem.setBackground(null);
+                            packageItem.setBackground(null);
+                        }
+                    }
+                    i = 0;
+                    for (TreeItem packageItem : f_edtAlerts.getItems()) {
+                        boolean allGrayPackage = true;
+                        for (TreeItem clazzItem : packageItem.getItems()) {
+                            boolean allGrayClass = true;
+                            for (TreeItem item : clazzItem.getItems()) {
+                                FieldStatus f = fields.get(i++);
+                                boolean gray = false;
+                                if (f.isEDTAlert()) {
+                                    item.setBackground(f_edtAlertColor);
+                                } else {
+                                    gray = true;
+                                }
+                                allGrayClass &= gray;
+                            }
+                            if (allGrayClass) {
+                                clazzItem.setBackground(f_unknownColor);
+                            } else {
+                                clazzItem.setBackground(null);
+                            }
+                            allGrayPackage &= allGrayClass;
+                        }
+                        if (allGrayPackage) {
+                            packageItem.setBackground(f_unknownColor);
+                        } else {
+                            packageItem.setBackground(null);
                         }
                     }
                     f_locks.removeAll();
@@ -190,18 +301,10 @@ public class MonitorViewMediator implements MonitorListener {
                         }
                         item.setText(l.getName());
                     }
-                    for (List<String> edges : status.getEdges()) {
-                        TreeItem item = new TreeItem(f_locks, SWT.NONE);
-                        item.setText(edges.toString());
-                    }
-
-                    f_edtAlerts.removeAll();
-                    for (FieldStatus f : fields) {
-                        if (f.isEDTAlert()) {
-                            TreeItem item = new TreeItem(f_edtAlerts, SWT.NONE);
-                            item.setText(f.getQualifiedFieldName());
-                        }
-                    }
+                    // for (List<String> edges : status.getEdges()) {
+                    // TreeItem item = new TreeItem(f_locks, SWT.NONE);
+                    // item.setText(edges.toString());
+                    // }
 
                     Document d = new Document();
                     d.set(status.getListing());

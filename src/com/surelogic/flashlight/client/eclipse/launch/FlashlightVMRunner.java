@@ -560,7 +560,7 @@ public final class FlashlightVMRunner implements IVMRunner {
                     // Only scan it
                     if (asFile.isDirectory()) {
                         manager.addClasspathDir(asFile);
-                    } else {
+                    } else if (asFile.exists()) {
                         manager.addClasspathJar(asFile);
                     }
                 }

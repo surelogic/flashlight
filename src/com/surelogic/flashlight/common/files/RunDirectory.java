@@ -132,12 +132,17 @@ public final class RunDirectory {
         // Caller checks if this null
         assert runDir != null && runDir.exists() && runDir.isDirectory();
 
+        final File invalidFile = new File(runDir,
+                InstrumentationConstants.FL_INVALID_RUN);
+        if (invalidFile.exists()) {
+            return null;
+        }
+
         final InstrumentationFileHandles instrumentation = InstrumentationFileHandles
                 .getFor(runDir);
         final SourceZipFileHandles source = SourceZipFileHandles.getFor(runDir);
         final ProjectsDirectoryHandles projects = ProjectsDirectoryHandles
                 .getFor(runDir);
-
         /*
          * This process relies on RawFileUtility because RawFileHandles is the
          * original file handle class, and everything else is being built around
@@ -212,8 +217,11 @@ public final class RunDirectory {
 
         final File tag = new File(runDir,
                 InstrumentationConstants.FL_COMPLETE_RUN);
+        final File invalidTag = new File(runDir,
+                InstrumentationConstants.FL_INVALID_RUN);
         boolean valid = true;
         valid &= tag.exists();
+        valid &= !invalidTag.exists();
         valid &= InstrumentationFileHandles.hasValidHandles(runDir);
         valid &= runDir.listFiles(flashlightHeaderFileFilter).length > 0;
         valid &= runDir.listFiles(flashlightRawDataFileFilter).length > 0;

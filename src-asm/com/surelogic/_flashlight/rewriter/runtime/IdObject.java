@@ -64,7 +64,7 @@ public class IdObject implements IIdObject {
 		return (int) phantom.getId();
 	}
 	
-	public final ObjectPhantomReference getPhantom$Reference() {
+	public final ObjectPhantomReference flPhantom$Reference() {
 		return phantom;
 	}
 	

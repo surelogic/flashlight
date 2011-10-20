@@ -195,7 +195,7 @@ public abstract class IdPhantomReference extends PhantomReference {
 			// total++;
 			if (useIdObject && o instanceof IIdObject) {
 				final IIdObject ido = (IIdObject) o;
-				pr = (V) ido.getPhantom$Reference();
+				pr = (V) ido.flPhantom$Reference();
 				/*
 				 * idLookups++; if ((total & 0xffff) == 0) {
 				 * System.err.println(idLookups+" IdObject lookups of "+total);

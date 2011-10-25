@@ -12,6 +12,7 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
@@ -34,6 +35,9 @@ public class MonitorViewMediator implements MonitorListener {
 
     private final Text f_fieldsSelector;
     private final Text f_edtSelector;
+
+    private final Button f_fieldsButton;
+    private final Button f_edtButton;
 
     private final TextViewer f_listing;
 
@@ -58,17 +62,20 @@ public class MonitorViewMediator implements MonitorListener {
 
     MonitorViewMediator(final Composite status, final Label statusImage,
             final Label runText, final Label startTimeText,
-            final Text fieldsSelector, final Tree fieldsTree,
-            final Tree locksTree, final Text edtSelector, final Tree edtTree,
+            final Text fieldsSelector, final Button fieldsButton,
+            final Tree fieldsTree, final Tree locksTree,
+            final Text edtSelector, final Button edtButton, final Tree edtTree,
             final TextViewer listing) {
         f_status = status;
         f_statusImage = statusImage;
         f_runText = runText;
         f_startTimeText = startTimeText;
         f_fieldsSelector = fieldsSelector;
+        f_fieldsButton = fieldsButton;
         f_fields = fieldsTree;
         f_locks = locksTree;
         f_edtSelector = edtSelector;
+        f_edtButton = edtButton;
         f_edtAlerts = edtTree;
         f_listing = listing;
 
@@ -96,29 +103,35 @@ public class MonitorViewMediator implements MonitorListener {
     private static class SpecListener implements SelectionListener {
 
         private final String f_specType;
+        private final Text f_widget;
 
-        SpecListener(final String specType) {
+        SpecListener(final String specType, final Text widget) {
             f_specType = specType;
+            f_widget = widget;
         }
 
         @Override
         public void widgetSelected(final SelectionEvent e) {
-            // Do nothing, we only care about when enter is pressed.
+            MonitorThread.sendCommand(String.format("set %s=%s", f_specType,
+                    f_widget.getText()));
         }
 
         @Override
         public void widgetDefaultSelected(final SelectionEvent e) {
             MonitorThread.sendCommand(String.format("set %s=%s", f_specType,
-                    ((Text) e.widget).getText()));
+                    f_widget.getText()));
         }
 
     }
 
     public void init() {
         MonitorThread.addListener(this);
-        f_fieldsSelector.addSelectionListener(new SpecListener("fieldSpec"));
-        f_edtSelector
-                .addSelectionListener(new SpecListener("swingFieldAlerts"));
+        SpecListener l = new SpecListener("fieldSpec", f_fieldsSelector);
+        f_fieldsSelector.addSelectionListener(l);
+        f_fieldsButton.addSelectionListener(l);
+        l = new SpecListener("swingFieldAlerts", f_edtSelector);
+        f_edtSelector.addSelectionListener(l);
+        f_edtButton.addSelectionListener(l);
     }
 
     public void dispose() {
@@ -155,6 +168,8 @@ public class MonitorViewMediator implements MonitorListener {
                     f_startTimeText.setText(status.getRunTime());
                     f_status.layout();
                     f_fields.removeAll();
+                    f_fieldsSelector.setText("");
+                    f_edtSelector.setText("");
                     String clazz = null;
                     String pakkage = null;
                     TreeItem pakkageTree = null;

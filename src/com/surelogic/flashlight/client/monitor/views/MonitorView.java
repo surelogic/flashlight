@@ -4,6 +4,7 @@ import org.eclipse.jface.text.TextViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.TabFolder;
@@ -61,9 +62,22 @@ public class MonitorView extends ViewPart {
         fieldsBody.setLayout(new GridLayout());
         fieldsBody.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
-        final Text fieldsSelector = new Text(fieldsBody, SWT.SINGLE);
+        final Composite fieldsSelector = new Composite(fieldsBody, SWT.NONE);
+        GridLayout fsLayout = new GridLayout();
+        fsLayout.marginWidth = 0;
+        fsLayout.marginHeight = 0;
+        fsLayout.numColumns = 2;
+        fieldsSelector.setLayout(fsLayout);
         fieldsSelector.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true,
                 false));
+
+        final Text fieldsSelectorText = new Text(fieldsSelector, SWT.SINGLE);
+        fieldsSelectorText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true,
+                false));
+        final Button fieldsSelectorButton = new Button(fieldsSelector, SWT.PUSH);
+        fieldsSelectorButton.setLayoutData(new GridData(SWT.FILL, SWT.FILL,
+                false, false));
+        fieldsSelectorButton.setText("Set");
 
         final Tree fieldsTree = new Tree(fieldsBody, SWT.VIRTUAL);
         fieldsTree.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
@@ -96,9 +110,22 @@ public class MonitorView extends ViewPart {
         edtBody.setLayout(new GridLayout());
         edtBody.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
-        final Text edtSelector = new Text(edtBody, SWT.SINGLE);
+        final Composite edtSelector = new Composite(edtBody, SWT.NONE);
+        GridLayout edtLayout = new GridLayout();
+        edtLayout.numColumns = 2;
+        edtLayout.marginHeight = 0;
+        edtLayout.marginWidth = 0;
+        edtSelector.setLayout(edtLayout);
         edtSelector
                 .setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+
+        final Text edtSelectorText = new Text(edtSelector, SWT.SINGLE);
+        edtSelectorText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true,
+                false));
+        final Button edtSelectorButton = new Button(edtSelector, SWT.PUSH);
+        edtSelectorButton.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false,
+                false));
+        edtSelectorButton.setText("Set");
 
         final Tree edtTree = new Tree(edtBody, SWT.NONE);
         edtTree.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
@@ -115,8 +142,9 @@ public class MonitorView extends ViewPart {
 
         removeThis.setControl(tv.getControl());
         f_mediator = new MonitorViewMediator(status, statusImage, runText,
-                startTimeText, fieldsSelector, fieldsTree, locksTree,
-                edtSelector, edtTree, tv);
+                startTimeText, fieldsSelectorText, fieldsSelectorButton,
+                fieldsTree, locksTree, edtSelectorText, edtSelectorButton,
+                edtTree, tv);
 
         f_mediator.init();
     }

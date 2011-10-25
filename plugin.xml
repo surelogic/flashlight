@@ -219,17 +219,7 @@
 	</extension>
 
 	<!-- I have to add a tab group for my mode...I just use jdt's class -->
-	<!--
-		extension point="org.eclipse.debug.ui.launchConfigurationTabGroups">
-		<launchConfigurationTabGroup
-		type="org.eclipse.jdt.launching.localJavaApplication"
-		helpContextId="org.eclipse.jdt.debug.ui.launchConfigHelpContext.local_java_application"
-		class="org.eclipse.jdt.internal.debug.ui.launcher.LocalJavaApplicationTabGroup"
-		id="org.eclipse.jdt.debug.ui.launchConfigurationTabGroup.localJavaApplication">
-		<launchMode mode="flashlight"
-		description="%fl.localJavaApplicationTabGroupDescription">
-		</launchMode> </launchConfigurationTabGroup> </extension
-	-->
+
 	<extension point="org.eclipse.debug.ui.launchConfigurationTabGroups">
 		<launchConfigurationTabGroup
 			type="org.eclipse.jdt.launching.localJavaApplication"

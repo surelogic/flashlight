@@ -26,6 +26,8 @@ import com.surelogic.flashlight.common.model.RunManager;
  */
 public class Activator extends AbstractUIPlugin {
 
+    public static final String LAUNCH_GROUP = "com.surelogic.flashlight.launchGroup.flashlight";
+
     // The shared instance
     private static Activator plugin;
 

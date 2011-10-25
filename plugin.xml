@@ -16,7 +16,8 @@
 			id="com.surelogic.flashlight.client.eclipse.workbenchActionSet">
 			<menu id="com.surelogic.flashlight.client.eclipse.workbenchMenu"
 				label="Flashlight" path="additions">
-				<groupMarker name="client" />
+				<groupMarker name="launch" />
+				<separator name="client" />
 				<separator name="jsure" />
 				<separator name="service" />
 				<separator name="license" />
@@ -82,6 +83,30 @@
 				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/client"
 				helpContextId="menu-import-run">
 			</action>
+            <action
+				class="com.surelogic.flashlight.client.eclipse.actions.OpenFlashlightConfiguration"
+				id="com.surelogic.flashlight.client.eclipse.actions.OpenFlashlightConfiguration"
+				icon="platform:/plugin/com.surelogic.common/lib/images/fl_run_view.gif"
+				label="Flashlight Configurations..."
+				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/launch"
+				helpContextId="menu-flashlight-configuration">
+			</action>
+            <action
+                class="com.surelogic.flashlight.client.eclipse.actions.FlashlightAsAction"
+                helpContextId="menu-flashlight-as"
+                id="com.surelogic.flashlight.client.eclipse.actions.FlashlightAsAction"
+                label="Flashlight As"
+                menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/launch"
+                style="pulldown">
+            </action>
+            <action
+                label="Flashlight History"
+                style="pulldown"
+                helpContextId="menu-flashlight-history"
+                class="com.surelogic.flashlight.client.eclipse.actions.FlashlightLaunchHistoryAction"
+                menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/launch"
+                id="com.surelogic.flashlight.client.eclipse.actions.FlashlightLaunchHistoryAction">
+            </action>
 		</actionSet>
 	</extension>
 

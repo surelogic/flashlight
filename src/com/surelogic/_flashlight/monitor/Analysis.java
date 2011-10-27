@@ -109,6 +109,10 @@ final class Analysis extends Thread {
         }
     }
 
+    public synchronized AlertSpec getAlertSpec() {
+        return alerts;
+    }
+
     public synchronized AlertInfo getAlerts() {
         final Set<FieldDef> edts = new HashSet<FieldDef>(edtViolations);
         final Set<FieldDef> shared = new HashSet<FieldDef>(
@@ -138,7 +142,7 @@ final class Analysis extends Thread {
                 getDeadlocks()).toString();
     }
 
-    synchronized void setAlerts(final AlertSpec spec) {
+    synchronized void setAlertSpec(final AlertSpec spec) {
         if (alerts == null) {
             alerts = spec;
         } else {

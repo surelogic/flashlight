@@ -90,7 +90,7 @@ public final class MonitorStore implements StoreListener {
     void reviseAlerts(final AlertSpec spec) {
         f_analysisLock.lock();
         try {
-            f_activeAnalysis.setAlerts(spec);
+            f_activeAnalysis.setAlertSpec(spec);
         } finally {
             f_analysisLock.unlock();
         }
@@ -728,13 +728,41 @@ public final class MonitorStore implements StoreListener {
 
     }
 
+    private static final String FIELD_SPEC = "fieldSpec";
+    private static final String EDT_FIELDS = "swingFieldAlerts";
+    private static final String SHARED_FIELDS = "sharedFieldAlerts";
+    private static final String LOCKSET_FIELDS = "lockSetAlerts";
+
+    class PropsCommand implements ConsoleCommand {
+        private static final String PROPS = "props";
+
+        public String getDescription() {
+            return PROPS
+                    + " - List all configurable monitor properties, and their current values.";
+        }
+
+        public String handle(final String command) {
+            if (PROPS.equalsIgnoreCase(command)) {
+                AlertSpec aSpec;
+                f_analysisLock.lock();
+                try {
+                    aSpec = f_activeAnalysis.getAlertSpec();
+                } finally {
+                    f_analysisLock.unlock();
+                }
+                return String.format("%s=%s\n%s=%s\n%s=%s\n%s=%s\n",
+                        FIELD_SPEC, f_spec.getFieldSpec(), EDT_FIELDS,
+                        aSpec.getEDTSpec(), LOCKSET_FIELDS,
+                        aSpec.getLockSetSpec(), SHARED_FIELDS,
+                        aSpec.getSharedSpec());
+            }
+            return null;
+        }
+
+    }
+
     class SetCommand implements ConsoleCommand {
         private static final String SET = "set <prop>=<val>";
-
-        private static final String FIELD_SPEC = "fieldSpec";
-        private static final String EDT_FIELDS = "swingFieldAlerts";
-        private static final String SHARED_FIELDS = "sharedFieldAlerts";
-        private static final String LOCKSET_FIELDS = "lockSetAlerts";
 
         private final Pattern SETP = Pattern.compile("set ([^=]*)=(.*)");
 
@@ -813,7 +841,8 @@ public final class MonitorStore implements StoreListener {
         return Arrays.asList(new ConsoleCommand[] { new ListCommand(),
                 new AlertsCommand(), new DeadlocksCommand(),
                 new LockSetsCommand(), new RaceConditionsCommand(),
-                new SharedCommand(), new SetCommand(), new DescribeCommand() });
+                new SharedCommand(), new SetCommand(), new PropsCommand(),
+                new DescribeCommand() });
     }
 
 }

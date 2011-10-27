@@ -28,6 +28,9 @@ import com.surelogic.flashlight.client.monitor.views.MonitorStatus.LockStatus;
 
 public class MonitorViewMediator implements MonitorListener {
 
+    private static final String EDT_ALERTS = "swingFieldAlerts";
+    private static final String FIELD_SPEC = "fieldSpec";
+
     private final Composite f_status;
     private final Label f_statusImage;
     private final Label f_runText;
@@ -126,10 +129,10 @@ public class MonitorViewMediator implements MonitorListener {
 
     public void init() {
         MonitorThread.addListener(this);
-        SpecListener l = new SpecListener("fieldSpec", f_fieldsSelector);
+        SpecListener l = new SpecListener(FIELD_SPEC, f_fieldsSelector);
         f_fieldsSelector.addSelectionListener(l);
         f_fieldsButton.addSelectionListener(l);
-        l = new SpecListener("swingFieldAlerts", f_edtSelector);
+        l = new SpecListener(EDT_ALERTS, f_edtSelector);
         f_edtSelector.addSelectionListener(l);
         f_edtButton.addSelectionListener(l);
     }
@@ -153,6 +156,181 @@ public class MonitorViewMediator implements MonitorListener {
         f_statusImage.setFocus();
     }
 
+    private void searching(final MonitorStatus status) {
+        f_statusImage.setImage(f_connecting);
+        f_runText.setText(status.getRunName());
+        f_startTimeText.setText(status.getRunTime());
+        f_status.layout();
+        f_fields.removeAll();
+        f_fieldsSelector.setText("");
+        f_edtSelector.setText("");
+        String clazz = null;
+        String pakkage = null;
+        TreeItem pakkageTree = null;
+        TreeItem clazzTree = null;
+        List<FieldStatus> fieldList = status.getFields();
+        for (FieldStatus f : fieldList) {
+            String qualifiedClazz = f.getClazz();
+            int split = qualifiedClazz.lastIndexOf('.');
+            String newPakkage, newClazz;
+            if (split != -1) {
+                newPakkage = qualifiedClazz.substring(0, split);
+                newClazz = qualifiedClazz.substring(split + 1);
+            } else {
+                newPakkage = "";
+                newClazz = qualifiedClazz;
+            }
+            if (!newPakkage.equals(pakkage)) {
+                pakkage = newPakkage;
+                clazz = null;
+                pakkageTree = new TreeItem(f_fields, SWT.None);
+                pakkageTree.setText(pakkage);
+                pakkageTree.setBackground(f_unknownColor);
+                pakkageTree.setImage(f_package);
+            }
+            if (!newClazz.equals(clazz)) {
+                clazz = newClazz;
+                clazzTree = new TreeItem(pakkageTree, SWT.NONE);
+                clazzTree.setText(clazz);
+                clazzTree.setBackground(f_unknownColor);
+                clazzTree.setImage(f_class);
+            }
+            TreeItem item = new TreeItem(clazzTree, SWT.NONE);
+            item.setText(f.getField());
+            item.setData(f);
+            item.setBackground(f_unknownColor);
+        }
+        f_edtAlerts.removeAll();
+        for (FieldStatus f : fieldList) {
+            String qualifiedClazz = f.getClazz();
+            int split = qualifiedClazz.lastIndexOf('.');
+            String newPakkage, newClazz;
+            if (split != -1) {
+                newPakkage = qualifiedClazz.substring(0, split);
+                newClazz = qualifiedClazz.substring(split + 1);
+            } else {
+                newPakkage = "";
+                newClazz = qualifiedClazz;
+            }
+            if (!newPakkage.equals(pakkage)) {
+                pakkage = newPakkage;
+                clazz = null;
+                pakkageTree = new TreeItem(f_edtAlerts, SWT.None);
+                pakkageTree.setText(pakkage);
+                pakkageTree.setBackground(f_unknownColor);
+                pakkageTree.setImage(f_package);
+            }
+            if (!newClazz.equals(clazz)) {
+                clazz = newClazz;
+                clazzTree = new TreeItem(pakkageTree, SWT.NONE);
+                clazzTree.setText(clazz);
+                clazzTree.setBackground(f_unknownColor);
+                clazzTree.setImage(f_class);
+            }
+            TreeItem item = new TreeItem(clazzTree, SWT.NONE);
+            item.setText(f.getField());
+            item.setData(f);
+            item.setBackground(f_unknownColor);
+        }
+        f_locks.removeAll();
+    }
+
+    private void connected(final MonitorStatus status) {
+        f_statusImage.setImage(f_connected);
+        String spec = status.getProperty(FIELD_SPEC);
+        if (spec != null) {
+            f_fieldsSelector.setText(spec);
+        }
+        spec = status.getProperty(EDT_ALERTS);
+        if (spec != null) {
+            f_edtSelector.setText(spec);
+        }
+        int i = 0;
+        List<FieldStatus> fields = status.getFields();
+        for (TreeItem packageItem : f_fields.getItems()) {
+            boolean allGrayPackage = true;
+            for (TreeItem clazzItem : packageItem.getItems()) {
+                boolean allGrayClass = true;
+                for (TreeItem item : clazzItem.getItems()) {
+                    FieldStatus f = fields.get(i++);
+                    boolean gray = false;
+                    if (f.hasDataRace()) {
+                        item.setBackground(f_dataRaceColor);
+                    } else if (f.isActivelyProtected()) {
+                        item.setBackground(f_protectedColor);
+                    } else if (f.isShared()) {
+                        item.setBackground(f_sharedColor);
+                    } else if (f.isUnshared()) {
+                        item.setBackground(f_unsharedColor);
+                    } else {
+                        item.setBackground(f_unknownColor);
+                        gray = true;
+                    }
+                    allGrayClass &= gray;
+                }
+                if (allGrayClass) {
+                    clazzItem.setBackground(f_unknownColor);
+                } else {
+                    clazzItem.setBackground(null);
+                }
+                allGrayPackage &= allGrayClass;
+            }
+            if (allGrayPackage) {
+                packageItem.setBackground(f_unknownColor);
+            } else {
+                packageItem.setBackground(null);
+            }
+        }
+        i = 0;
+        for (TreeItem packageItem : f_edtAlerts.getItems()) {
+            boolean allGrayPackage = true;
+            for (TreeItem clazzItem : packageItem.getItems()) {
+                boolean allGrayClass = true;
+                for (TreeItem item : clazzItem.getItems()) {
+                    FieldStatus f = fields.get(i++);
+                    boolean gray = false;
+                    if (f.isEDTAlert()) {
+                        item.setBackground(f_edtAlertColor);
+                    } else {
+                        gray = true;
+                    }
+                    allGrayClass &= gray;
+                }
+                if (allGrayClass) {
+                    clazzItem.setBackground(f_unknownColor);
+                } else {
+                    clazzItem.setBackground(null);
+                }
+                allGrayPackage &= allGrayClass;
+            }
+            if (allGrayPackage) {
+                packageItem.setBackground(f_unknownColor);
+            } else {
+                packageItem.setBackground(null);
+            }
+        }
+        f_locks.removeAll();
+        for (LockStatus l : status.getLocks()) {
+            TreeItem item = new TreeItem(f_locks, SWT.NONE);
+            if (l.isDeadlocked()) {
+                item.setForeground(f_dataRaceColor);
+            } else {
+                item.setForeground(f_unsharedColor);
+            }
+            item.setText(l.getName());
+        }
+        // for (List<String> edges : status.getEdges()) {
+        // TreeItem item = new TreeItem(f_locks, SWT.NONE);
+        // item.setText(edges.toString());
+        // }
+
+        Document d = new Document();
+        d.set(status.getListing());
+        f_listing.setDocument(d);
+        f_listing.refresh();
+
+    }
+
     @Override
     public void update(final MonitorStatus status) {
         final UIJob job = new UIJob("Update Monitor View") {
@@ -163,168 +341,10 @@ public class MonitorViewMediator implements MonitorListener {
                 }
                 switch (status.getState()) {
                 case SEARCHING:
-                    f_statusImage.setImage(f_connecting);
-                    f_runText.setText(status.getRunName());
-                    f_startTimeText.setText(status.getRunTime());
-                    f_status.layout();
-                    f_fields.removeAll();
-                    f_fieldsSelector.setText("");
-                    f_edtSelector.setText("");
-                    String clazz = null;
-                    String pakkage = null;
-                    TreeItem pakkageTree = null;
-                    TreeItem clazzTree = null;
-                    List<FieldStatus> fieldList = status.getFields();
-                    for (FieldStatus f : fieldList) {
-                        String qualifiedClazz = f.getClazz();
-                        int split = qualifiedClazz.lastIndexOf('.');
-                        String newPakkage, newClazz;
-                        if (split != -1) {
-                            newPakkage = qualifiedClazz.substring(0, split);
-                            newClazz = qualifiedClazz.substring(split + 1);
-                        } else {
-                            newPakkage = "";
-                            newClazz = qualifiedClazz;
-                        }
-                        if (!newPakkage.equals(pakkage)) {
-                            pakkage = newPakkage;
-                            clazz = null;
-                            pakkageTree = new TreeItem(f_fields, SWT.None);
-                            pakkageTree.setText(pakkage);
-                            pakkageTree.setBackground(f_unknownColor);
-                            pakkageTree.setImage(f_package);
-                        }
-                        if (!newClazz.equals(clazz)) {
-                            clazz = newClazz;
-                            clazzTree = new TreeItem(pakkageTree, SWT.NONE);
-                            clazzTree.setText(clazz);
-                            clazzTree.setBackground(f_unknownColor);
-                            clazzTree.setImage(f_class);
-                        }
-                        TreeItem item = new TreeItem(clazzTree, SWT.NONE);
-                        item.setText(f.getField());
-                        item.setData(f);
-                        item.setBackground(f_unknownColor);
-                    }
-                    f_edtAlerts.removeAll();
-                    for (FieldStatus f : fieldList) {
-                        String qualifiedClazz = f.getClazz();
-                        int split = qualifiedClazz.lastIndexOf('.');
-                        String newPakkage, newClazz;
-                        if (split != -1) {
-                            newPakkage = qualifiedClazz.substring(0, split);
-                            newClazz = qualifiedClazz.substring(split + 1);
-                        } else {
-                            newPakkage = "";
-                            newClazz = qualifiedClazz;
-                        }
-                        if (!newPakkage.equals(pakkage)) {
-                            pakkage = newPakkage;
-                            clazz = null;
-                            pakkageTree = new TreeItem(f_edtAlerts, SWT.None);
-                            pakkageTree.setText(pakkage);
-                            pakkageTree.setBackground(f_unknownColor);
-                            pakkageTree.setImage(f_package);
-                        }
-                        if (!newClazz.equals(clazz)) {
-                            clazz = newClazz;
-                            clazzTree = new TreeItem(pakkageTree, SWT.NONE);
-                            clazzTree.setText(clazz);
-                            clazzTree.setBackground(f_unknownColor);
-                            clazzTree.setImage(f_class);
-                        }
-                        TreeItem item = new TreeItem(clazzTree, SWT.NONE);
-                        item.setText(f.getField());
-                        item.setData(f);
-                        item.setBackground(f_unknownColor);
-                    }
-                    f_locks.removeAll();
+                    searching(status);
                     break;
                 case CONNECTED:
-                    f_statusImage.setImage(f_connected);
-                    int i = 0;
-                    List<FieldStatus> fields = status.getFields();
-                    for (TreeItem packageItem : f_fields.getItems()) {
-                        boolean allGrayPackage = true;
-                        for (TreeItem clazzItem : packageItem.getItems()) {
-                            boolean allGrayClass = true;
-                            for (TreeItem item : clazzItem.getItems()) {
-                                FieldStatus f = fields.get(i++);
-                                boolean gray = false;
-                                if (f.hasDataRace()) {
-                                    item.setBackground(f_dataRaceColor);
-                                } else if (f.isActivelyProtected()) {
-                                    item.setBackground(f_protectedColor);
-                                } else if (f.isShared()) {
-                                    item.setBackground(f_sharedColor);
-                                } else if (f.isUnshared()) {
-                                    item.setBackground(f_unsharedColor);
-                                } else {
-                                    item.setBackground(f_unknownColor);
-                                    gray = true;
-                                }
-                                allGrayClass &= gray;
-                            }
-                            if (allGrayClass) {
-                                clazzItem.setBackground(f_unknownColor);
-                            } else {
-                                clazzItem.setBackground(null);
-                            }
-                            allGrayPackage &= allGrayClass;
-                        }
-                        if (allGrayPackage) {
-                            packageItem.setBackground(f_unknownColor);
-                        } else {
-                            packageItem.setBackground(null);
-                        }
-                    }
-                    i = 0;
-                    for (TreeItem packageItem : f_edtAlerts.getItems()) {
-                        boolean allGrayPackage = true;
-                        for (TreeItem clazzItem : packageItem.getItems()) {
-                            boolean allGrayClass = true;
-                            for (TreeItem item : clazzItem.getItems()) {
-                                FieldStatus f = fields.get(i++);
-                                boolean gray = false;
-                                if (f.isEDTAlert()) {
-                                    item.setBackground(f_edtAlertColor);
-                                } else {
-                                    gray = true;
-                                }
-                                allGrayClass &= gray;
-                            }
-                            if (allGrayClass) {
-                                clazzItem.setBackground(f_unknownColor);
-                            } else {
-                                clazzItem.setBackground(null);
-                            }
-                            allGrayPackage &= allGrayClass;
-                        }
-                        if (allGrayPackage) {
-                            packageItem.setBackground(f_unknownColor);
-                        } else {
-                            packageItem.setBackground(null);
-                        }
-                    }
-                    f_locks.removeAll();
-                    for (LockStatus l : status.getLocks()) {
-                        TreeItem item = new TreeItem(f_locks, SWT.NONE);
-                        if (l.isDeadlocked()) {
-                            item.setForeground(f_dataRaceColor);
-                        } else {
-                            item.setForeground(f_unsharedColor);
-                        }
-                        item.setText(l.getName());
-                    }
-                    // for (List<String> edges : status.getEdges()) {
-                    // TreeItem item = new TreeItem(f_locks, SWT.NONE);
-                    // item.setText(edges.toString());
-                    // }
-
-                    Document d = new Document();
-                    d.set(status.getListing());
-                    f_listing.setDocument(d);
-                    f_listing.refresh();
+                    connected(status);
                     break;
                 case NOTFOUND:
                     f_statusImage.setImage(f_error);
@@ -333,7 +353,6 @@ public class MonitorViewMediator implements MonitorListener {
                     f_statusImage.setImage(f_done);
                     break;
                 }
-
                 return Status.OK_STATUS;
             }
         };

@@ -24,7 +24,7 @@ public class MonitorStatus {
     private final Set<String> unshared;
     private final Set<String> races;
     private final Set<String> activeProtected;
-
+    private final Map<String, String> props;
     private final Set<String> deadlocks;
 
     private final Set<List<String>> edges;
@@ -58,6 +58,7 @@ public class MonitorStatus {
         deadlocks = new HashSet<String>();
         edges = new HashSet<List<String>>();
         alerts = new HashSet<String>();
+        props = new HashMap<String, String>();
     }
 
     public MonitorStatus(final MonitorStatus status) {
@@ -75,10 +76,10 @@ public class MonitorStatus {
             this.deadlocks = new HashSet<String>(status.deadlocks);
             this.edges = new TreeSet<List<String>>(status.edges);
             this.alerts = new HashSet<String>(status.alerts);
+            this.props = new HashMap<String, String>(status.props);
         } else {
             throw new IllegalArgumentException("status may not be null");
         }
-        // TODO Make sure that we have everything that we need here.
     }
 
     public ConnectionState getState() {
@@ -164,6 +165,18 @@ public class MonitorStatus {
 
     public void setListing(final String listing) {
         this.listing = listing;
+    }
+
+    public Map<String, String> getProps() {
+        return props;
+    }
+
+    public String getProperty(final String property) {
+        return props.get(property);
+    }
+
+    public String setProperty(final String property, final String value) {
+        return props.put(property, value);
     }
 
     enum ConnectionState {

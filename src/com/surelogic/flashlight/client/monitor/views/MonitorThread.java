@@ -183,6 +183,14 @@ public class MonitorThread extends Thread {
                         }
                     }
                     readUpTo(reader, DELIMITER);
+                    writeCommand(writer, "props");
+                    for (String propStr : readUpTo(reader, DELIMITER)) {
+                        int eq = propStr.indexOf('=');
+                        if (eq > 0) {
+                            f_status.setProperty(propStr.substring(0, eq),
+                                    propStr.substring(eq + 1));
+                        }
+                    }
                     writeCommand(writer, "list");
                     StringBuilder b = new StringBuilder();
                     for (String str : readUpTo(reader, DELIMITER)) {

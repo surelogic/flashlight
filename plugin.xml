@@ -16,8 +16,7 @@
 			id="com.surelogic.flashlight.client.eclipse.workbenchActionSet">
 			<menu id="com.surelogic.flashlight.client.eclipse.workbenchMenu"
 				label="Flashlight" path="additions">
-				<groupMarker name="launch" />
-				<separator name="client" />
+				<groupMarker name="client" />
 				<separator name="jsure" />
 				<separator name="service" />
 				<separator name="license" />
@@ -70,7 +69,7 @@
 				class="com.surelogic.flashlight.client.eclipse.actions.SetupAntTasksAction"
 				id="com.surelogic.flashlight.client.eclipse.actions.SetupAntTasksAction"
 				icon="platform:/plugin/com.surelogic.common/lib/images/jar_saveas.gif"
-				label="Save Ant Task Library As..."
+				label="Save Ant Task As..."
 				tooltip="Save a copy of the Flashlight Ant task library to the disk"
 				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/client"
 				helpContextId="menu-save-flashlight-ant">
@@ -79,7 +78,7 @@
 				class="com.surelogic.flashlight.client.eclipse.actions.ImportFlashlightRunAction"
 				id="com.surelogic.flashlight.client.eclipse.actions.ImportFlashlightRunAction"
 				icon="platform:/plugin/com.surelogic.common/lib/images/fl_run_view.gif"
-				label="Import Flashlight Run..."
+				label="Import Ant Run..."
 				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/client"
 				helpContextId="menu-import-run">
 			</action>
@@ -88,7 +87,7 @@
 			<action label="%fl.run" style="pulldown"
 				icon="platform:/plugin/com.surelogic.common/lib/images/fl_logo.gif"
 				class="com.surelogic.flashlight.client.eclipse.actions.RunToolbarAction"
-				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/launch" 
+				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/client" 
 				id="com.surelogic.flashlight.FlashlightMenuDelegateMenu">
 			</action>
 			<action id="com.surelogic.flashlight.actions.RunToolbarAction"

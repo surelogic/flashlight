@@ -8,6 +8,10 @@ var O_DOWN = 'image_files/outline_down.png';
 var O_FILLER = 'image_files/outline_filler.png';
 var fd, icicle, sb, tm, tl;
 
+var Timeline_ajax_url='timeline_2.3.0/timeline_ajax/simile-ajax-api.js';
+var Timeline_urlPrefix='timeline_2.3.0/timeline_js/';       
+var Timeline_parameters='bundle=true';
+
 (function() {
     var ua = navigator.userAgent,
     iStuff = ua.match(/iPhone/i) || ua.match(/iPad/i),

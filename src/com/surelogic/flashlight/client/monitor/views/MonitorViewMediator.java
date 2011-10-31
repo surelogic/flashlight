@@ -8,6 +8,8 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.TextViewer;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.ModifyEvent;
+import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Color;
@@ -23,6 +25,7 @@ import org.eclipse.ui.progress.UIJob;
 
 import com.surelogic.common.CommonImages;
 import com.surelogic.common.ui.SLImages;
+import com.surelogic.flashlight.client.monitor.views.MonitorStatus.ConnectionState;
 import com.surelogic.flashlight.client.monitor.views.MonitorStatus.FieldStatus;
 import com.surelogic.flashlight.client.monitor.views.MonitorStatus.LockStatus;
 
@@ -103,38 +106,54 @@ public class MonitorViewMediator implements MonitorListener {
         f_unsharedColor = new Color(display, 132, 88, 44);
     }
 
-    private static class SpecListener implements SelectionListener {
+    private static class SpecListener implements SelectionListener,
+            ModifyListener {
 
         private final String f_specType;
         private final Text f_widget;
+        private final Button f_button;
 
-        SpecListener(final String specType, final Text widget) {
+        SpecListener(final String specType, final Text widget,
+                final Button button) {
             f_specType = specType;
             f_widget = widget;
+            f_button = button;
         }
 
         @Override
         public void widgetSelected(final SelectionEvent e) {
             MonitorThread.sendCommand(String.format("set %s=%s", f_specType,
                     f_widget.getText()));
+            f_button.setEnabled(false);
         }
 
         @Override
         public void widgetDefaultSelected(final SelectionEvent e) {
             MonitorThread.sendCommand(String.format("set %s=%s", f_specType,
                     f_widget.getText()));
+            f_button.setEnabled(false);
+        }
+
+        @Override
+        public void modifyText(final ModifyEvent e) {
+            f_button.setEnabled(true);
         }
 
     }
 
     public void init() {
         MonitorThread.addListener(this);
-        SpecListener l = new SpecListener(FIELD_SPEC, f_fieldsSelector);
+        SpecListener l = new SpecListener(FIELD_SPEC, f_fieldsSelector,
+                f_fieldsButton);
         f_fieldsSelector.addSelectionListener(l);
+        f_fieldsSelector.addModifyListener(l);
         f_fieldsButton.addSelectionListener(l);
-        l = new SpecListener(EDT_ALERTS, f_edtSelector);
+        f_fieldsButton.setEnabled(false);
+        l = new SpecListener(EDT_ALERTS, f_edtSelector, f_edtButton);
         f_edtSelector.addSelectionListener(l);
+        f_edtSelector.addModifyListener(l);
         f_edtButton.addSelectionListener(l);
+        f_edtButton.setEnabled(false);
     }
 
     public void dispose() {
@@ -163,7 +182,9 @@ public class MonitorViewMediator implements MonitorListener {
         f_status.layout();
         f_fields.removeAll();
         f_fieldsSelector.setText("");
+        f_fieldsButton.setEnabled(false);
         f_edtSelector.setText("");
+        f_edtButton.setEnabled(false);
         String clazz = null;
         String pakkage = null;
         TreeItem pakkageTree = null;
@@ -220,6 +241,7 @@ public class MonitorViewMediator implements MonitorListener {
                 pakkageTree.setBackground(f_unknownColor);
                 pakkageTree.setImage(f_package);
             }
+
             if (!newClazz.equals(clazz)) {
                 clazz = newClazz;
                 clazzTree = new TreeItem(pakkageTree, SWT.NONE);
@@ -237,14 +259,22 @@ public class MonitorViewMediator implements MonitorListener {
 
     private void connected(final MonitorStatus status) {
         f_statusImage.setImage(f_connected);
-        String spec = status.getProperty(FIELD_SPEC);
-        if (spec != null) {
-            f_fieldsSelector.setText(spec);
+        if (!f_fieldsButton.isEnabled()) {
+            String spec = status.getProperty(FIELD_SPEC);
+            if (spec != null) {
+                f_fieldsSelector.setText(spec);
+                f_fieldsButton.setEnabled(false);
+            }
         }
-        spec = status.getProperty(EDT_ALERTS);
-        if (spec != null) {
-            f_edtSelector.setText(spec);
+        f_fieldsSelector.setEnabled(true);
+        if (!f_edtButton.isEnabled()) {
+            String spec = status.getProperty(EDT_ALERTS);
+            if (spec != null) {
+                f_edtSelector.setText(spec);
+                f_edtButton.setEnabled(false);
+            }
         }
+        f_edtSelector.setEnabled(true);
         int i = 0;
         List<FieldStatus> fields = status.getFields();
         for (TreeItem packageItem : f_fields.getItems()) {
@@ -319,16 +349,24 @@ public class MonitorViewMediator implements MonitorListener {
             }
             item.setText(l.getName());
         }
-        // for (List<String> edges : status.getEdges()) {
-        // TreeItem item = new TreeItem(f_locks, SWT.NONE);
-        // item.setText(edges.toString());
-        // }
 
         Document d = new Document();
         d.set(status.getListing());
         f_listing.setDocument(d);
         f_listing.refresh();
 
+    }
+
+    private void finished(final MonitorStatus status) {
+        f_edtSelector.setEnabled(false);
+        f_edtButton.setEnabled(false);
+        f_fieldsSelector.setEnabled(false);
+        f_fieldsButton.setEnabled(false);
+        if (status.getState() == ConnectionState.NOTFOUND) {
+            f_statusImage.setImage(f_error);
+        } else {
+            f_statusImage.setImage(f_done);
+        }
     }
 
     @Override
@@ -347,10 +385,8 @@ public class MonitorViewMediator implements MonitorListener {
                     connected(status);
                     break;
                 case NOTFOUND:
-                    f_statusImage.setImage(f_error);
-                    break;
                 case TERMINATED:
-                    f_statusImage.setImage(f_done);
+                    finished(status);
                     break;
                 }
                 return Status.OK_STATUS;

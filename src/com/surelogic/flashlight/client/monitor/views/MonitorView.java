@@ -78,6 +78,8 @@ public class MonitorView extends ViewPart {
         fieldsSelectorButton.setLayoutData(new GridData(SWT.FILL, SWT.FILL,
                 false, false));
         fieldsSelectorButton.setText("Set");
+        fieldsSelectorButton.setEnabled(false);
+        fieldsSelectorText.setEnabled(false);
 
         final Tree fieldsTree = new Tree(fieldsBody, SWT.VIRTUAL);
         fieldsTree.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
@@ -126,6 +128,8 @@ public class MonitorView extends ViewPart {
         edtSelectorButton.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false,
                 false));
         edtSelectorButton.setText("Set");
+        edtSelectorButton.setEnabled(false);
+        edtSelectorText.setEnabled(false);
 
         final Tree edtTree = new Tree(edtBody, SWT.NONE);
         edtTree.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));

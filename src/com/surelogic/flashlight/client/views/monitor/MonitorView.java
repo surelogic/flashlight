@@ -1,4 +1,4 @@
-package com.surelogic.flashlight.client.monitor.views;
+package com.surelogic.flashlight.client.views.monitor;
 
 import org.eclipse.jface.text.TextViewer;
 import org.eclipse.swt.SWT;

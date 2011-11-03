@@ -1,4 +1,4 @@
-package com.surelogic.flashlight.client.monitor.views;
+package com.surelogic.flashlight.client.views.monitor;
 
 import java.util.List;
 
@@ -25,9 +25,9 @@ import org.eclipse.ui.progress.UIJob;
 
 import com.surelogic.common.CommonImages;
 import com.surelogic.common.ui.SLImages;
-import com.surelogic.flashlight.client.monitor.views.MonitorStatus.ConnectionState;
-import com.surelogic.flashlight.client.monitor.views.MonitorStatus.FieldStatus;
-import com.surelogic.flashlight.client.monitor.views.MonitorStatus.LockStatus;
+import com.surelogic.flashlight.client.views.monitor.MonitorStatus.ConnectionState;
+import com.surelogic.flashlight.client.views.monitor.MonitorStatus.FieldStatus;
+import com.surelogic.flashlight.client.views.monitor.MonitorStatus.LockStatus;
 
 public class MonitorViewMediator implements MonitorListener {
 

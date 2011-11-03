@@ -1,4 +1,4 @@
-package com.surelogic.flashlight.client.monitor.views;
+package com.surelogic.flashlight.client.views.monitor;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -18,7 +18,7 @@ import java.util.logging.Level;
 import java.util.regex.Pattern;
 
 import com.surelogic.common.logging.SLLogger;
-import com.surelogic.flashlight.client.monitor.views.MonitorStatus.ConnectionState;
+import com.surelogic.flashlight.client.views.monitor.MonitorStatus.ConnectionState;
 
 public class MonitorThread extends Thread {
 

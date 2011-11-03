@@ -1,4 +1,4 @@
-package com.surelogic.flashlight.client.views.monitor;
+package com.surelogic.flashlight.client.eclipse.views.monitor;
 
 public interface MonitorListener {
 

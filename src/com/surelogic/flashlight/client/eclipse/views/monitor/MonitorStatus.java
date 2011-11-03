@@ -1,4 +1,4 @@
-package com.surelogic.flashlight.client.views.monitor;
+package com.surelogic.flashlight.client.eclipse.views.monitor;
 
 import java.io.File;
 import java.io.IOException;

@@ -36,6 +36,7 @@ public class MonitorThread extends Thread {
     private final MonitorStatus f_status;
 
     private MonitorThread(final MonitorStatus status) {
+        super("Flashlight Monitor");
         f_status = status;
     }
 

@@ -2,9 +2,6 @@ package com.surelogic.flashlight.client.eclipse.views.monitor;
 
 import java.util.List;
 
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.TextViewer;
 import org.eclipse.swt.SWT;
@@ -21,15 +18,17 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
-import org.eclipse.ui.progress.UIJob;
 
 import com.surelogic.common.CommonImages;
+import com.surelogic.common.core.jobs.EclipseJob;
 import com.surelogic.common.ui.SLImages;
+import com.surelogic.flashlight.client.eclipse.jobs.SendCommandToFlashlightMonitorJob;
+import com.surelogic.flashlight.client.eclipse.jobs.WatchFlashlightMonitorJob;
 import com.surelogic.flashlight.client.eclipse.views.monitor.MonitorStatus.ConnectionState;
 import com.surelogic.flashlight.client.eclipse.views.monitor.MonitorStatus.FieldStatus;
 import com.surelogic.flashlight.client.eclipse.views.monitor.MonitorStatus.LockStatus;
 
-public class MonitorViewMediator implements MonitorListener {
+public class MonitorViewMediator {
 
     private static final String EDT_ALERTS = "swingFieldAlerts";
     private static final String FIELD_SPEC = "fieldSpec";
@@ -65,6 +64,8 @@ public class MonitorViewMediator implements MonitorListener {
     private final Color f_dataRaceColor;
     private final Color f_unknownColor;
     private final Color f_unsharedColor;
+
+    private MonitorStatus f_monitorStatus;
 
     MonitorViewMediator(final Composite status, final Label statusImage,
             final Label runText, final Label startTimeText,
@@ -106,8 +107,7 @@ public class MonitorViewMediator implements MonitorListener {
         f_unsharedColor = new Color(display, 132, 88, 44);
     }
 
-    private static class SpecListener implements SelectionListener,
-            ModifyListener {
+    private class SpecListener implements SelectionListener, ModifyListener {
 
         private final String f_specType;
         private final Text f_widget;
@@ -122,15 +122,19 @@ public class MonitorViewMediator implements MonitorListener {
 
         @Override
         public void widgetSelected(final SelectionEvent e) {
-            MonitorThread.sendCommand(String.format("set %s=%s", f_specType,
-                    f_widget.getText()));
+            EclipseJob.getInstance().schedule(
+                    new SendCommandToFlashlightMonitorJob(f_monitorStatus,
+                            String.format("set %s=%s", f_specType,
+                                    f_widget.getText())));
             f_button.setEnabled(false);
         }
 
         @Override
         public void widgetDefaultSelected(final SelectionEvent e) {
-            MonitorThread.sendCommand(String.format("set %s=%s", f_specType,
-                    f_widget.getText()));
+            EclipseJob.getInstance().schedule(
+                    new SendCommandToFlashlightMonitorJob(f_monitorStatus,
+                            String.format("set %s=%s", f_specType,
+                                    f_widget.getText())));
             f_button.setEnabled(false);
         }
 
@@ -142,7 +146,7 @@ public class MonitorViewMediator implements MonitorListener {
     }
 
     public void init() {
-        MonitorThread.addListener(this);
+        WatchFlashlightMonitorJob.setMediator(this);
         SpecListener l = new SpecListener(FIELD_SPEC, f_fieldsSelector,
                 f_fieldsButton);
         f_fieldsSelector.addSelectionListener(l);
@@ -157,6 +161,7 @@ public class MonitorViewMediator implements MonitorListener {
     }
 
     public void dispose() {
+        WatchFlashlightMonitorJob.setMediator(null);
         f_protectedColor.dispose();
         f_sharedColor.dispose();
         f_dataRaceColor.dispose();
@@ -369,30 +374,26 @@ public class MonitorViewMediator implements MonitorListener {
         }
     }
 
-    @Override
+    /**
+     * Update the monitor view mediator. Only call this from the UI thread.
+     */
     public void update(final MonitorStatus status) {
-        final UIJob job = new UIJob("Update Monitor View") {
-            @Override
-            public IStatus runInUIThread(final IProgressMonitor monitor) {
-                if (f_statusImage.isDisposed()) {
-                    return Status.OK_STATUS;
-                }
-                switch (status.getState()) {
-                case SEARCHING:
-                    searching(status);
-                    break;
-                case CONNECTED:
-                    connected(status);
-                    break;
-                case NOTFOUND:
-                case TERMINATED:
-                    finished(status);
-                    break;
-                }
-                return Status.OK_STATUS;
-            }
-        };
-        job.schedule();
+        f_monitorStatus = status;
+        if (f_statusImage.isDisposed()) {
+            return;
+        }
+        switch (status.getState()) {
+        case SEARCHING:
+            searching(status);
+            break;
+        case CONNECTED:
+            connected(status);
+            break;
+        case NOTFOUND:
+        case TERMINATED:
+            finished(status);
+            break;
+        }
     }
 
 }

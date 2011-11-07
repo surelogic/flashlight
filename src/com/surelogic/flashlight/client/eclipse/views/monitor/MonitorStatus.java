@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.TreeSet;
 
 import com.surelogic._flashlight.common.FieldDef;
 import com.surelogic._flashlight.common.FieldDefs;
@@ -34,11 +33,13 @@ public class MonitorStatus {
     private String listing;
 
     private final File portFile;
+    private final File completeFile;
 
     private ConnectionState state;
+    private int timeout;
 
     public MonitorStatus(final String runName, final String runTime,
-            final File fieldsFile, final File portFile) {
+            final File fieldsFile, final File portFile, final File completeFile) {
         this.runName = runName;
         this.runTime = runTime;
         this.portFile = portFile;
@@ -59,6 +60,8 @@ public class MonitorStatus {
         edges = new HashSet<List<String>>();
         alerts = new HashSet<String>();
         props = new HashMap<String, String>();
+        state = ConnectionState.SEARCHING;
+        this.completeFile = completeFile;
     }
 
     public MonitorStatus(final MonitorStatus status) {
@@ -66,17 +69,20 @@ public class MonitorStatus {
             this.runName = status.runName;
             this.runTime = status.runTime;
             this.fields = status.fields;
-            this.portFile = status.portFile;
+            this.fieldMap = status.fieldMap;
             this.shared = new HashSet<String>(status.shared);
             this.unshared = new HashSet<String>(status.unshared);
             this.races = new HashSet<String>(status.races);
             this.activeProtected = new HashSet<String>(status.activeProtected);
-            this.fieldMap = status.fieldMap;
-            this.listing = status.listing;
-            this.deadlocks = new HashSet<String>(status.deadlocks);
-            this.edges = new TreeSet<List<String>>(status.edges);
-            this.alerts = new HashSet<String>(status.alerts);
             this.props = new HashMap<String, String>(status.props);
+            this.deadlocks = new HashSet<String>(status.deadlocks);
+            this.edges = new HashSet<List<String>>(status.edges);
+            this.alerts = new HashSet<String>(status.alerts);
+            this.listing = status.listing;
+            this.portFile = status.portFile;
+            this.completeFile = status.completeFile;
+            this.state = status.state;
+            this.timeout = status.timeout;
         } else {
             throw new IllegalArgumentException("status may not be null");
         }
@@ -84,6 +90,14 @@ public class MonitorStatus {
 
     public ConnectionState getState() {
         return state;
+    }
+
+    public int getTimeout() {
+        return timeout;
+    }
+
+    public void setTimeout(final int timeout) {
+        this.timeout = timeout;
     }
 
     public void setState(final ConnectionState state) {
@@ -100,6 +114,10 @@ public class MonitorStatus {
 
     public File getPortFile() {
         return portFile;
+    }
+
+    public File getCompleteFile() {
+        return completeFile;
     }
 
     public Set<String> getShared() {
@@ -179,7 +197,7 @@ public class MonitorStatus {
         return props.put(property, value);
     }
 
-    enum ConnectionState {
+    public enum ConnectionState {
         SEARCHING, CONNECTED, TERMINATED, NOTFOUND
     }
 

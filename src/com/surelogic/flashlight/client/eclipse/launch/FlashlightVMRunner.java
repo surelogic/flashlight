@@ -1,6 +1,7 @@
 package com.surelogic.flashlight.client.eclipse.launch;
 
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_COLLECTION_TYPE;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_COMPLETE_RUN;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_CONSOLE_PORT;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_DATE_OVERRIDE;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_DIR;
@@ -69,6 +70,7 @@ import com.surelogic.common.FileUtility;
 import com.surelogic.common.core.JDTUtility;
 import com.surelogic.common.core.MemoryUtility;
 import com.surelogic.common.core.SourceZip;
+import com.surelogic.common.core.jobs.EclipseJob;
 import com.surelogic.common.core.logging.SLEclipseStatusUtility;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.license.SLLicenseProduct;
@@ -80,9 +82,9 @@ import com.surelogic.common.ui.jobs.SLUIJob;
 import com.surelogic.flashlight.client.eclipse.Activator;
 import com.surelogic.flashlight.client.eclipse.jobs.LaunchTerminationDetectionJob;
 import com.surelogic.flashlight.client.eclipse.jobs.SwitchToFlashlightPerspectiveJob;
+import com.surelogic.flashlight.client.eclipse.jobs.WatchFlashlightMonitorJob;
 import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
 import com.surelogic.flashlight.client.eclipse.views.monitor.MonitorStatus;
-import com.surelogic.flashlight.client.eclipse.views.monitor.MonitorThread;
 import com.surelogic.flashlight.common.files.RunDirectory;
 import com.surelogic.flashlight.common.model.RunDescription;
 import com.surelogic.flashlight.common.model.RunManager;
@@ -102,6 +104,7 @@ public final class FlashlightVMRunner implements IVMRunner {
     private final File sitesFile;
     private final File logFile;
     private final File portFile;
+    private final File completeFile;
 
     private final String datePostfix;
     private final String pathToFlashlightLib;
@@ -165,6 +168,7 @@ public final class FlashlightVMRunner implements IVMRunner {
         externalOutputDir = new File(runOutputDir, "external");
         sourceDir = new File(runOutputDir, "source");
         portFile = new File(runOutputDir, FL_PORT_FILE_NAME);
+        completeFile = new File(runOutputDir, FL_COMPLETE_RUN);
         fieldsFile = new File(runOutputDir, FIELDS_FILE_NAME);
         sitesFile = new File(runOutputDir, SITES_FILE_NAME
                 + FileUtility.GZIP_SUFFIX);
@@ -249,8 +253,10 @@ public final class FlashlightVMRunner implements IVMRunner {
                                 FlashlightPreferencesUtility.POSTMORTEM_MODE));
 
         /* Let the monitor thread know it should expect a launch */
-        final boolean monitoring = MonitorThread.begin(new MonitorStatus(
-                mainTypeName, new Date().toString(), fieldsFile, portFile));
+        EclipseJob.getInstance().schedule(
+                new WatchFlashlightMonitorJob(new MonitorStatus(mainTypeName,
+                        new Date().toString(), fieldsFile, portFile,
+                        completeFile)));
 
         /*
          * Create and launch a job that detects when the instrumented run
@@ -264,9 +270,6 @@ public final class FlashlightVMRunner implements IVMRunner {
                 if (postmortem) {
                     final UIJob job = new SwitchToFlashlightPerspectiveJob();
                     job.schedule();
-                }
-                if (monitoring) {
-                    MonitorThread.end();
                 }
                 return Status.OK_STATUS;
             }

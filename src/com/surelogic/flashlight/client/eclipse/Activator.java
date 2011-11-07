@@ -18,7 +18,6 @@ import com.surelogic.common.ui.DialogTouchNotificationUI;
 import com.surelogic.flashlight.client.eclipse.jobs.PromptToPrepAllRawData;
 import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
-import com.surelogic.flashlight.client.eclipse.views.monitor.MonitorThread;
 import com.surelogic.flashlight.common.model.RunManager;
 
 /**
@@ -93,7 +92,6 @@ public class Activator extends AbstractUIPlugin {
         try {
             PromptToPrepAllRawData.stop();
             AdHocDataSource.getInstance().dispose();
-            MonitorThread.end();
             plugin = null;
         } finally {
             super.stop(context);

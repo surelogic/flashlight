@@ -11,8 +11,8 @@
 	<property name="flashlight-instrumentation-runtime" value="../flashlight-instrumentation-5.0/flashlight-runtime.jar"/>
 	<property name="flashlight-instrumentation-runtime1.4" value="../flashlight-instrumentation-5.0/flashlight-runtime.java1.4.jar"/>
     <property name="flashlight-common-project-classes" value="../flashlight-common/bin"/>
-    <property name="common-project-classes" value="../common/bin"/>
-    <property name="common-project-runtime" value="../common/lib/runtime"/>
+    <property name="common-project-classes" value="../../common/common/bin"/>
+    <property name="common-project-runtime" value="../../common/common/lib/runtime"/>
 	<property name="ant.jar" value="${lib}/ant.jar" />
 
 	<property name="antlib.xml" value="com/surelogic/flashlight/ant/antlib.xml"/>

@@ -3,7 +3,7 @@
 	<property environment="env" />
 
 	<property name="lib" value="${basedir}/lib" />
-	<property name="common.lib" value="${basedir}/../common/lib/runtime" />
+	<property name="common.lib" value="${basedir}/../../common/common/lib/runtime" />
 	<property name="resources" value="${basedir}/resources" />
 	<property name="classes" value="${basedir}/bin" />
 

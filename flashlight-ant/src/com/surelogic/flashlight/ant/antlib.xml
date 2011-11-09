@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<antlib>
+	<taskdef name="instrument" classname="com.surelogic.flashlight.ant.Instrument" />
+	<taskdef name="record" classname="com.surelogic.flashlight.ant.Record" />
+	<taskdef name="instrument-archive" classname="com.surelogic.flashlight.ant.InstrumentArchive" />
+</antlib>

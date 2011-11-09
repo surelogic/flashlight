@@ -1,0 +1,22 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: SureLogic Common Code for Flashlight
+Bundle-SymbolicName: com.surelogic.flashlight.common
+Bundle-Version: 4.0.2.qualifier
+Bundle-Vendor: SureLogic, Inc.
+Require-Bundle: com.surelogic.common
+Export-Package: com.surelogic._flashlight.common,
+ com.surelogic.flashlight.common,
+ com.surelogic.flashlight.common.convert,
+ com.surelogic.flashlight.common.files,
+ com.surelogic.flashlight.common.jobs,
+ com.surelogic.flashlight.common.model,
+ com.surelogic.flashlight.common.prep,
+ com.surelogic.flashlight.recommend,
+ com.surelogic.flashlight.schema,
+ gnu.trove,
+ gnu.trove.decorator
+Bundle-ClassPath: lib/jgrapht-jdk1.5.jar,
+ lib/trove-2.0.4.jar,
+ .
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6

@@ -1,0 +1,385 @@
+/* Reset Code */
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outline:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+/* End Reset Code */
+
+html {
+ /* This should help with bottoming out. */
+ height: 100%;
+ background-color: lightgray;
+}
+
+body {
+ font-family: Helvetica,Arial,sans-serif; 
+ font-size: 10pt;
+}
+
+
+h1 {
+ font-size: 14pt;
+ margin: 4px 0px;
+}
+
+h2 {
+ font-size: 12pt;
+ margin: 4px 0px;
+ text-align: center;
+}
+
+h3 {
+ font-size: 11pt;
+ text-align: center;
+ margin: 4px 0px;
+}
+
+table {
+ border-spacing: 0;
+ border-bottom: 1px solid gray;
+ border-top: 1px solid gray;
+}
+
+thead tr {
+ background-color: #7096B3;
+ color: white;
+ text-align: left;
+}
+
+thead th {
+ border-collapse: collapse;
+ font-size: 11pt;
+}
+
+thead th:first-child {
+ border-left: 1px solid gray;
+}
+
+thead th:last-child {
+ border-right: 1px solid gray;
+}
+
+tbody td {
+ border-collapse: collapse;
+ border-left: 1px solid gray;
+ border-right: 1px solid gray;
+ empty-cells: show;
+}
+
+th,td {
+  padding: 2px 5px;
+}
+
+ul {
+  padding-left: 10px;
+}
+
+a:visited {
+    color: blue;
+}
+
+.section {
+  padding-top: 5px;
+  padding-left: 2px;
+  padding-right: 2px;
+}
+
+.info {
+ font-style: italic;
+ color: graytext;  
+ text-indent: 3em;
+}
+
+.clear {
+  clear: both;
+}
+
+#header h1,#header h2{
+    display: inline;
+    padding-right: 20px;
+    white-space: nowrap;
+}
+
+#content {
+ float: left;
+ padding-left: 5px;
+ height: 100%;
+ width: 99%;
+}
+
+#main {
+  min-width: 900px;
+}
+
+#deadlock-widget {
+    position:relative;
+    width:500px;
+    height:300px;
+    margin:auto;
+    overflow:hidden;
+    background: black;
+}
+
+#tl {
+	border: 1px solid #aaa;
+	margin: 0.33em 0px;
+}
+
+#deadlock-list li {
+   display: inline;
+   color: #005596;
+   cursor: pointer;
+   text-decoration: underline;
+   margin-right: 10px;
+}
+
+
+#deadlock-container {
+  border: none;
+}
+
+#deadlock-container td {
+  vertical-align: middle;
+  border: none;
+}
+
+#deadlock-container h2 {
+  text-align: center;
+  text-decoration: underline;
+  padding-top: 4px;
+}
+
+ul.deadlock-trace-menu li a {
+  font-weight: bold;
+}
+
+ul.deadlock-trace-menu li {
+  text-align: center;
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+.badPublishTrace {
+    padding-left: 5px;
+}
+
+#badpublish-table table{
+    width: 98%;
+}
+
+#badpublish-table, #lockset-outline {
+    max-height: 160px;
+    overflow-y: auto;
+}
+
+.deadlockThread {
+   cursor: pointer;
+}
+
+.deadlockThread:hover {
+   background-color: blue;
+   color: white;
+}
+
+#threads {
+   padding-left: 0px;
+}
+
+#threads li.selected {
+    background-color: #deb887;
+}
+
+#threads li {
+    cursor: pointer;
+    color: blue;
+    min-height: 18px;
+}
+
+#coverage li {
+    min-height: 18px;
+}
+
+.shared-table td h3 {
+    text-align: left;
+}
+
+#thread-td {
+    padding: 0px 0px;
+}
+
+.threads-table, .threads-table td {
+    border: none;
+}
+
+#coverage li span, #coverage li a {
+    vertical-align: top;
+}
+
+.emph {
+   font-weight: bold;
+}
+
+.package {
+  font-weight: bold;
+}
+
+.package:before {
+ content: url(image_files/package.gif);
+}
+
+.class {
+  font-weight: bold;
+}
+
+.class:before {
+ content: url(image_files/class.gif);
+}
+
+.field {
+
+}
+
+.depth1 {
+
+} 
+.depth2 {
+  padding-left: 16px;
+} 
+.depth3 {
+  padding-left: 32px;
+} 
+.depth4 {
+  padding-left: 48px;
+} 
+.depth5 {
+  padding-left: 54px;
+} 
+.outline ul { 
+   list-style-type: none;
+}
+
+.icon {
+    display: inline;
+}
+
+.outline li {
+   list-style-image: none;
+   margin-left: 10px;
+   vertical-align: middle;
+}
+
+table.sectionHeaders {
+   width: 100%;
+   border: none;
+   margin: 1em 0 1em 0;
+   padding: 3px 10px 3px 10px;
+}
+
+table.sectionHeaders td.sectionHeader {
+    border: 1px solid black;
+    text-align: center;
+    width: 10em;
+}
+
+table.sectionHeaders td.sectionHeaderPadding {
+    margin: 0;
+    padding: 0;
+    border-bottom: 1px solid black;
+    border-right: none;
+    border-left: none;
+    width: 10px;
+}
+
+
+table.sectionHeaders td.sectionHeader.selected {
+    border-bottom: 1px solid  #deb887;
+    background-color: #deb887;
+}
+
+table.sectionHeaders td.sectionHeaderRightPadding {
+    border-bottom: 1px solid black;
+    border-right: none;
+    border-left: none;
+}
+
+table.sectionHeaders td.sectionHeaderLeftPadding {
+    border-bottom: 1px solid black;
+    border-right: none;
+    border-left: none;
+}
+
+table.sectionHeaders td.sectionHeader a {
+   text-decoration: none;
+   font-size: 11pt;
+   font-weight: bold;
+}
+table.sectionHeaders td.sectionHeader:hover {
+   background: #deb887;
+}
+/*table.sectionHeaders a:hover {
+   background: #deb887;
+}*/
+
+
+
+ul.sectionList {
+   text-align: left;
+   margin: 1em 0 1em 0;
+   border-bottom: 1px solid black;
+   list-style-type: none;
+   margin: 1em 0 1em 0;
+   padding: 3px 10px 3px 10px;
+}
+
+ul.sectionList li {
+   display: inline;
+   margin-right: 5px;
+}
+
+ul.sectionList li.selected {
+   border-bottom: 1px solid #deb887;
+   background-color: #deb887;
+}
+
+ul.sectionList li.selected a {
+   background-color: #deb887;
+   position: relative;
+   top: 1px;
+   padding-top: 3px;
+}
+
+ul.sectionList li a {
+   padding: 2px 4px 1px 4px;
+   border: 1px solid black;
+   background-color: lightgray;
+   text-decoration: none;
+   border-bottom: none;
+   font-size: 11pt;
+   font-weight: bold;
+}
+
+ul.sectionList a:hover {
+   background: #deb887;
+}
+
+.treeTable {
+   width: 100%;
+}
+
+.cell-text {
+	text-align: left;
+}
+
+.cell-number {
+	text-align: right;
+}
+
+.cell-date {
+	text-align: center;
+}
+
+.more-results-td {
+    border-top: 1px solid gray;
+}
+
+#lockTable {
+    width: 100%;
+}
+

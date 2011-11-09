@@ -1,0 +1,176 @@
+<project name="flashlight-instrumentation-5.0" default="build-jars">
+
+	<property environment="env" />
+
+	<property name="lib" value="${basedir}/lib" />
+	<property name="common.lib" value="${basedir}/../common/lib/runtime" />
+	<property name="resources" value="${basedir}/resources" />
+	<property name="classes" value="${basedir}/bin" />
+
+	<property name="src" value="${basedir}/src" />
+	<property name="src-asm" value="${basedir}/src-asm" />
+	<property name="src-rt" value="${basedir}/../flashlight-common/src" />
+	<property name="test" value="${basedir}/test" />
+
+	<property name="asm.jar" value="${common.lib}/asm-3.3.1.jar" />
+	<property name="asm-commons.jar" value="${common.lib}/asm-commons-3.3.1.jar" />
+
+	<property name="junit.jar" value="${lib}/junit-4.3.1.jar" />
+
+	<property name="flashlight-all.jar" value="${basedir}/flashlight-all.jar" />
+	<property name="flashlight-runtime.jar" value="${basedir}/flashlight-runtime.jar" />
+	<property name="flashlight-runtime-4.jar" value="${basedir}/flashlight-runtime.java1.4.jar" />
+
+	<property name="flashlight-rewriter.jar" value="${basedir}/flashlight-rewriter.jar" />
+	<property name="java1.4.lib" value="${basedir}/lib/1.4" />
+
+	<path id="jaxb.classpath">
+		<pathelement path="${lib}/jaxb1-impl.jar" />
+		<pathelement path="${lib}/jaxb-api.jar" />
+		<pathelement path="${lib}/jaxb-impl.jar" />
+		<pathelement path="${lib}/jaxb-xjc.jar" />
+		<pathelement path="${lib}/jsr173_1.0_api.jar" />
+		<pathelement path="${lib}/activation.jar" />
+	</path>
+
+	<target name="clean">
+		<delete file="${flashlight-all.jar}" />
+		<delete file="${flashlight-runtime.jar}" />
+		<delete file="${flashlight-rewriter.jar}" />
+	</target>
+
+	<target name="compile">
+		<delete dir="${classes}" />
+		<mkdir dir="${classes}" />
+		<javac destdir="${classes}" debug="true" source="1.5" target="1.5">
+			<src path="${src}" />
+			<src path="${src-asm}" />
+			<src path="${src-rt}" />
+			<exclude name="com/surelogic/flashlight/**" />
+			<classpath>
+				<path refid="jaxb.classpath" />
+				<pathelement location="${asm.jar}" />
+				<pathelement location="${asm-commons.jar}" />
+			</classpath>
+		</javac>
+		<copy todir="${classes}/resources">
+			<fileset dir="${resources}" />
+		</copy>
+	</target>
+
+	<target name="build-all-jar">
+		<unzip src="${asm.jar}" dest="${classes}" />
+		<unzip src="${asm-commons.jar}" dest="${classes}" />
+		<jar destfile="${flashlight-all.jar}" basedir="${classes}">
+			<exclude name="**/com/surelogic/flashlight/**" />
+			<manifest>
+				<attribute name="Manifest-Version" value="1.0" />
+			</manifest>
+		</jar>
+		<!--copy file="${flashlight-all.jar}" todir="${basedir}/../flashlight-client-eclipse/lib"/ -->
+	</target>
+
+	<target name="build-runtime-jar">
+		<jar destfile="${flashlight-runtime.jar}" basedir="${classes}">
+			<include name="**/com/surelogic/_flashlight/*" />
+			<include name="**/com/surelogic/_flashlight/monitor/*" />
+			<include name="**/com/surelogic/_flashlight/common/**" />
+			<include name="**/com/surelogic/_flashlight/emory/**" />
+			<include name="**/com/surelogic/_flashlight/jsr166y/**" />
+			<include name="**/com/surelogic/_flashlight/rewriter/runtime/**" />
+			<include name="**/com/surelogic/_flashlight/rewriter/test/**" />
+			<include name="**/com/surelogic/_flashlight/trace/**" />
+			<manifest>
+				<attribute name="Manifest-Version" value="1.0" />
+			</manifest>
+		</jar>
+		<copy file="${flashlight-runtime.jar}" todir="${basedir}/../flashlight-client-eclipse/lib" />
+	</target>
+
+	<target name="translate-runtime-jar">
+		<java jar="lib/build/retrotranslator-transformer-1.2.9.jar" fork="true" failonerror="true" maxmemory="128m">
+			<arg value="-srcjar" />
+			<arg value="${flashlight-runtime.jar}" />
+			<arg value="-destjar" />
+			<arg value="${flashlight-runtime-4.jar}" />
+			<arg value="-embed" />
+			<arg value="com.surelogic.internal" />
+			<arg value="-verify" />
+			<arg value="-classpath" />
+			<arg value="${java1.4.lib}/rt.jar${path.separator}lib/build/retrotranslator-runtime-1.2.9.jar${path.separator}lib/build/backport-util-concurrent-3.1.jar" />
+		</java>
+		<copy file="${flashlight-runtime-4.jar}" todir="${basedir}/../flashlight-client-eclipse/lib" />
+	</target>
+
+	<target name="build-rewriter-jar">
+		<jar destfile="${flashlight-rewriter.jar}" basedir="${classes}">
+			<include name="**/resources/**" />
+			<include name="**/com/surelogic/_flashlight/rewriter/*" />
+			<include name="**/com/surelogic/_flashlight/rewriter/config/*" />
+			<include name="**/com/surelogic/_flashlight/rewriter/xml/*" />
+			<manifest>
+				<attribute name="Manifest-Version" value="1.0" />
+				<attribute name="Class-Path" value="asm-3.2.jar asm-commons-3.2.jar" />
+			</manifest>
+		</jar>
+		<copy file="${flashlight-rewriter.jar}" todir="${basedir}/../flashlight-client-eclipse/lib" />
+	</target>
+
+	<target name="build-jars-eclipse" depends="build-all-jar, build-runtime-jar,  build-rewriter-jar, translate-runtime-jar" />
+
+	<target name="build-jars" depends="compile, build-all-jar, build-runtime-jar,  build-rewriter-jar, translate-runtime-jar" />
+
+	<target name="compile-test-code" depends="build-jars">
+		<delete dir="${classes}" />
+		<mkdir dir="${classes}" />
+		<javac srcdir="${test}" destdir="${classes}" source="1.5" target="1.5">
+			<classpath>
+				<pathelement path="${java.class.path}" />
+				<pathelement location="${junit.jar}" />
+				<pathelement location="${flashlight-all.jar}" />
+			</classpath>
+		</javac>
+	</target>
+
+
+	<path id="test.classpath">
+		<pathelement location="${classes}" />
+		<pathelement path="${java.class.path}" />
+		<pathelement location="${junit.jar}" />
+		<pathelement location="${flashlight-all.jar}" />
+	</path>
+
+	<target name="run-store-tests" depends="compile-test-code">
+		<echo message="(These tests do not use the instrumentation)" />
+		<echo message=" - The below test might fail if the GC gods do not smile upon it" />
+		<junit printsummary="on" fork="yes" haltonfailure="yes">
+			<classpath refid="test.classpath" />
+			<test name="com.surelogic._flashlight.TestBasicRefinery" />
+		</junit>
+		<echo message=" - The below test might fail if the GC gods do not smile upon it" />
+		<junit printsummary="on" fork="yes" haltonfailure="yes">
+			<classpath refid="test.classpath" />
+			<test name="com.surelogic._flashlight.TestBasicSharedState" />
+		</junit>
+		<junit printsummary="on" fork="yes" haltonfailure="yes">
+			<classpath refid="test.classpath" />
+			<test name="com.surelogic._flashlight.TestEntities" />
+		</junit>
+		<junit printsummary="on" fork="yes" haltonfailure="yes">
+			<classpath refid="test.classpath" />
+			<test name="com.surelogic._flashlight.TestKeyField" />
+		</junit>
+		<junit printsummary="on" fork="yes" haltonfailure="yes">
+			<classpath refid="test.classpath" />
+			<test name="com.surelogic._flashlight.TestObservedField" />
+		</junit>
+		<junit printsummary="on" fork="yes" haltonfailure="yes">
+			<classpath refid="test.classpath" />
+			<test name="com.surelogic._flashlight.TestOutput" />
+		</junit>
+		<junit printsummary="on" fork="yes" haltonfailure="yes">
+			<classpath refid="test.classpath" />
+			<test name="com.surelogic._flashlight.TestPhantom" />
+		</junit>
+	</target>
+</project>

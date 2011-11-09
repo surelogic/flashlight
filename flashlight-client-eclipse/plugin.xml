@@ -1,0 +1,372 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<plugin>
+
+	<!-- UI for initializing and setting Flashlight preferences -->
+	<extension point="org.eclipse.ui.preferencePages">
+		<page
+			class="com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencePage"
+			id="com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencePage"
+			name="Flashlight" />
+	</extension>
+
+	<!-- Flashlight menus -->
+	<extension point="org.eclipse.ui.actionSets">
+		<actionSet label="Flashlight ActionSet" visible="true"
+			id="com.surelogic.flashlight.client.eclipse.workbenchActionSet">
+			<menu id="com.surelogic.flashlight.client.eclipse.workbenchMenu"
+				label="Flashlight" path="additions">
+				<groupMarker name="client" />
+				<separator name="jsure" />
+				<separator name="service" />
+				<separator name="license" />
+			</menu>
+			<action
+				class="com.surelogic.flashlight.client.eclipse.actions.ManageLicensesAction"
+				id="com.surelogic.flashlight.client.eclipse.actions.ManageLicensesAction"
+				label="Manage SureLogic Licenses"
+				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/license"
+				helpContextId="menu-manage-licenses">
+			</action>
+			<action
+				class="com.surelogic.flashlight.client.eclipse.actions.ImportTutorialProjectAction"
+				id="com.surelogic.flashlight.client.eclipse.actions.ImportTutorialProjectsAction"
+				label="Run Flashlight Tutorials"
+				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/service"
+				helpContextId="menu-run-flashlight-tutorials">
+			</action>
+
+			<action
+				class="com.surelogic.flashlight.client.eclipse.actions.SendProblemAction"
+				id="com.surelogic.flashlight.client.eclipse.actions.SendProblemAction"
+				label="Send Problem Report"
+				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/service"
+				helpContextId="menu-send-problem-report">
+			</action>
+			<action
+				class="com.surelogic.flashlight.client.eclipse.actions.SendTipAction"
+				id="com.surelogic.flashlight.client.eclipse.actions.SendTipAction"
+				label="Send Tip for Improvement"
+				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/service"
+				helpContextId="menu-send-tip-for-improvement">
+			</action>
+			<action
+				class="com.surelogic.flashlight.client.eclipse.refactoring.RegionModelRefactoringAction"
+				id="com.surelogic.flashlight.client.eclipse.refactoring.RegionModelRefactoringAction"
+				icon="platform:/plugin/com.surelogic.common/lib/images/annotation.gif"
+				label="Infer JSure Annotations..."
+				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/jsure"
+				helpContextId="menu-recommend-regions">
+			</action>
+			<action
+				class="com.surelogic.flashlight.client.eclipse.actions.ShowFlashlightPerspectiveAction"
+				id="com.surelogic.flashlight.client.eclipse.actions.ShowFlashlightPerspectiveAction"
+				icon="platform:/plugin/com.surelogic.common/lib/images/fl_logo.gif"
+				label="Open Flashlight Perspective" menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/client"
+				helpContextId="menu-open-flashlight-perspective">
+			</action>
+			<action
+				class="com.surelogic.flashlight.client.eclipse.actions.SetupAntTasksAction"
+				id="com.surelogic.flashlight.client.eclipse.actions.SetupAntTasksAction"
+				icon="platform:/plugin/com.surelogic.common/lib/images/jar_saveas.gif"
+				label="Save Ant Task As..."
+				tooltip="Save a copy of the Flashlight Ant task library to the disk"
+				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/client"
+				helpContextId="menu-save-flashlight-ant">
+			</action>
+			<action
+				class="com.surelogic.flashlight.client.eclipse.actions.ImportFlashlightRunAction"
+				id="com.surelogic.flashlight.client.eclipse.actions.ImportFlashlightRunAction"
+				icon="platform:/plugin/com.surelogic.common/lib/images/fl_run_view.gif"
+				label="Import Ant Run..."
+				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/client"
+				helpContextId="menu-import-run">
+			</action>
+            
+        	<!-- UI for launching Java applications in Flashlight -->
+			<action label="%fl.run" style="pulldown"
+				icon="platform:/plugin/com.surelogic.common/lib/images/fl_logo.gif"
+				class="com.surelogic.flashlight.client.eclipse.actions.RunToolbarAction"
+				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/client" 
+				id="com.surelogic.flashlight.FlashlightMenuDelegateMenu">
+			</action>
+			<action id="com.surelogic.flashlight.actions.RunToolbarAction"
+				toolbarPath="org.eclipse.debug.ui.launchActionSet/debug"
+				hoverIcon="platform:/plugin/com.surelogic.common/lib/images/fl_logo.gif"
+				class="com.surelogic.flashlight.client.eclipse.actions.RunToolbarAction"
+				icon="platform:/plugin/com.surelogic.common/lib/images/fl_logo.gif"
+				helpContextId="run_action_context" label="%fl.runDropDownAction.label"
+				style="pulldown">
+			</action>
+		</actionSet>
+	</extension>
+
+	<!-- Flashlight perspective links and Java perspective links -->
+	<extension point="org.eclipse.ui.perspectives">
+		<perspective name="Flashlight"
+			icon="platform:/plugin/com.surelogic.common/lib/images/fl_logo.gif"
+			class="com.surelogic.flashlight.client.eclipse.perspectives.FlashlightPerspective"
+			id="com.surelogic.flashlight.client.eclipse.perspectives.FlashlightPerspective">
+		</perspective>
+	</extension>
+
+	<extension point="org.eclipse.ui.perspectiveExtensions">
+		<perspectiveExtension
+			targetID="com.surelogic.flashlight.client.eclipse.perspectives.FlashlightPerspective">
+			<perspectiveShortcut id="org.eclipse.jdt.ui.JavaPerspective">
+			</perspectiveShortcut>
+			<viewShortcut
+				id="com.surelogic.flashlight.client.eclipse.views.adhoc.QueryEditorView">
+			</viewShortcut>
+			<viewShortcut
+				id="com.surelogic.flashlight.client.eclipse.views.source.HistoricalSourceView">
+			</viewShortcut>
+		</perspectiveExtension>
+		<perspectiveExtension
+            targetID="com.surelogic.flashlight.client.eclipse.perspectives.FlashlightPerspective">
+            <perspectiveShortcut id="org.eclipse.jdt.ui.JavaPerspective">
+            </perspectiveShortcut>
+            <viewShortcut
+                id="com.surelogic.flashlight.client.monitor.views.MonitorView">
+            </viewShortcut>
+        </perspectiveExtension>
+	</extension>
+
+	<extension point="org.eclipse.ui.perspectiveExtensions">
+		<perspectiveExtension targetID="org.eclipse.jdt.ui.JavaPerspective">
+			<perspectiveShortcut
+				id="com.surelogic.flashlight.client.eclipse.perspectives.FlashlightPerspective">
+			</perspectiveShortcut>
+		</perspectiveExtension>
+	</extension>
+
+
+	<!-- Define a new mode for running applications -->
+	<extension point="org.eclipse.debug.core.launchModes">
+		<launchMode label="%fl.run" launchAsLabel="%fl.runAs.label"
+			mode="flashlight" />
+		<launchMode label="%fl.runMon" launchAsLabel="%fl.runMonAs.label"
+			mode="flashlight-monitor" />
+	</extension>
+	<!--
+		Define a special launch delegate for Flashlight that handles local
+		Java applications in our new mode
+	-->
+	<extension point="org.eclipse.debug.core.launchDelegates">
+		<launchDelegate
+			delegate="com.surelogic.flashlight.client.eclipse.launch.FlashlightLaunchConfigurationDelegate"
+			id="com.surelogic.flashlight.client.eclipse.launch.FlashlightLaunchConfigurationDelegate"
+			modes="flashlight" type="org.eclipse.jdt.launching.localJavaApplication" />
+		<launchDelegate
+			delegate="com.surelogic.flashlight.client.eclipse.launch.FlashlightJUnitLaunchConfigurationDelegate"
+			id="com.surelogic.flashlight.client.eclipse.launch.FlashlightJUnitLaunchConfigurationDelegate"
+			modes="flashlight" type="org.eclipse.jdt.junit.launchconfig" />
+	</extension>
+
+	<!-- We need a launch group (the id string is in the actions code) -->
+	<extension point="org.eclipse.debug.ui.launchGroups">
+		<launchGroup bannerImage="/lib/images/fl_wiz.png"
+			id="com.surelogic.flashlight.launchGroup.flashlight" image="icons/fl_logo.gif"
+			label="Flashlight" mode="flashlight" title="%fl.launchGroup.title" />
+	</extension>
+
+	<!--
+		Put a "Flashlight As" entry in the popup menu. This is based on what
+		YourKit does.
+	-->
+	<extension point="org.eclipse.ui.popupMenus">
+		<objectContribution objectClass="org.eclipse.jdt.core.IJavaElement"
+			id="org.eclipse.debug.ui.contextualLaunch.flashlight">
+			<action label="Flashlight As" style="pulldown"
+				icon="platform:/plugin/com.surelogic.common/lib/images/fl_logo.gif"
+				class="com.surelogic.flashlight.client.eclipse.launch.FlashlightContextualLaunchAction"
+				menubarPath="additions" enablesFor="+"
+				id="org.eclipse.debug.ui.contextualLaunch.flashlight.submenu">
+			</action>
+			<enablement>
+				<test property="org.eclipse.debug.ui.launchable" value="flashlight" />
+			</enablement>
+		</objectContribution>
+	</extension>
+
+	<!-- I have to add a tab group for my mode...I just use jdt's class -->
+
+	<extension point="org.eclipse.debug.ui.launchConfigurationTabGroups">
+		<launchConfigurationTabGroup
+			type="org.eclipse.jdt.launching.localJavaApplication"
+			helpContextId="org.eclipse.jdt.debug.ui.launchConfigHelpContext.local_java_application"
+			class="com.surelogic.flashlight.client.eclipse.launch.FlashlightAppTabGroup"
+			id="com.surelogic.flashlight.launchConfigurationTabGroup.localJavaApplication">
+			<launchMode mode="flashlight"
+				description="%fl.localJavaApplicationTabGroupDescription">
+			</launchMode>
+			<launchMode mode="flashlight-monitor"
+				description="%fl.localJavaApplicationTabGroupDescription">
+			</launchMode>
+		</launchConfigurationTabGroup>
+		<launchConfigurationTabGroup type="org.eclipse.jdt.junit.launchconfig"
+			helpContextId="org.eclipse.jdt.debug.ui.launchConfigHelpContext.local_java_application"
+			class="com.surelogic.flashlight.client.eclipse.launch.FlashlightJUnitAppTabGroup"
+			id="com.surelogic.flashlight.launchConfigurationTabGroup.localJUnitApplication">
+			<launchMode mode="flashlight"
+				description="%fl.localJUnitApplicationTabGroupDescription">
+			</launchMode>
+			<launchMode mode="flashlight-monitor"
+				description="%fl.localJUnitApplicationTabGroupDescription">
+			</launchMode>
+		</launchConfigurationTabGroup>
+	</extension>
+
+	<!--
+		Adding additional tabs using the launchConfigurationTabs extension
+		point results in unreliable tab ordering.
+	-->
+	<!--
+		extension point="org.eclipse.debug.ui.launchConfigurationTabs"> <tab
+		class="com.surelogic.flashlight.client.eclipse.launch.FlashlightInstrumentationTab"
+		group="org.eclipse.jdt.debug.ui.launchConfigurationTabGroup.localJavaApplication"
+		id="com.surelogic.flashlight.client.eclipse.launch.FlashlightInstrumentationTab"
+		name="Instrument"> <placement
+		after="org.eclipse.jdt.debug.ui.javaArgumentsTab"/>
+		<associatedDelegate
+		delegate="com.surelogic.flashlight.client.eclipse.launch.FlashlightLaunchConfigurationDelegate"/>
+		</tab> <tab
+		class="com.surelogic.flashlight.client.eclipse.launch.FlashlightTab"
+		group="org.eclipse.jdt.debug.ui.launchConfigurationTabGroup.localJavaApplication"
+		id="com.surelogic.flashlight.client.eclipse.launch.FlashlightTab"
+		name="Flashlight"> <placement
+		after="com.surelogic.flashlight.client.eclipse.launch.FlashlightInstrumentationTab"/>
+		<associatedDelegate
+		delegate="com.surelogic.flashlight.client.eclipse.launch.FlashlightLaunchConfigurationDelegate"/>
+		</tab> <tab
+		class="com.surelogic.flashlight.client.eclipse.launch.FlashlightMethodsTab"
+		group="org.eclipse.jdt.debug.ui.launchConfigurationTabGroup.localJavaApplication"
+		id="com.surelogic.flashlight.client.eclipse.launch.FlashlightMethodsTab"
+		name="Methods"> <placement
+		after="com.surelogic.flashlight.client.eclipse.launch.FlashlightTab"/>
+		<associatedDelegate
+		delegate="com.surelogic.flashlight.client.eclipse.launch.FlashlightLaunchConfigurationDelegate"/>
+		</tab> <tab
+		class="com.surelogic.flashlight.client.eclipse.launch.FlashlightFieldsTab"
+		group="org.eclipse.jdt.debug.ui.launchConfigurationTabGroup.localJavaApplication"
+		id="com.surelogic.flashlight.client.eclipse.launch.FlashlightFieldsTab"
+		name="Fields"> <placement
+		after="com.surelogic.flashlight.client.eclipse.launch.FlashlightMethodsTab"/>
+		<associatedDelegate
+		delegate="com.surelogic.flashlight.client.eclipse.launch.FlashlightLaunchConfigurationDelegate"/>
+		</tab> </extension
+	-->
+
+	<!--
+		Causes the "Flashlight as" menus to work properly (launch shortcut
+		actions)
+	-->
+	<extension point="org.eclipse.debug.ui.launchShortcuts">
+		<shortcut label="%fl.javaApplicationShortcut.label" icon="icons/fl_app.gif"
+			helpContextId="org.eclipse.jdt.debug.ui.shortcut_local_java_application"
+			modes="flashlight,flashlight-monitor"
+			class="com.surelogic.flashlight.client.eclipse.launch.JavaApplicationLaunchWrapper"
+			id="com.surelogic.flashlight.localJavaShortcut">
+			<contextualLaunch>
+				<enablement>
+					<with variable="selection">
+						<count value="1" />
+						<iterate>
+							<or>
+								<test property="org.eclipse.jdt.launching.hasMain" />
+								<and>
+									<test property="org.eclipse.jdt.launching.isContainer" />
+									<test property="org.eclipse.jdt.launching.hasProjectNature"
+										args="org.eclipse.jdt.core.javanature" />
+								</and>
+							</or>
+						</iterate>
+					</with>
+				</enablement>
+			</contextualLaunch>
+			<configurationType id="org.eclipse.jdt.launching.localJavaApplication">
+			</configurationType>
+		</shortcut>
+		<shortcut label="%fl.junitApplicationShortcut.label" icon="icons/fl_app.gif"
+			helpContextId="org.eclipse.jdt.junit.launch_shortcut" modes="flashlight, flashlight-monitor"
+			class="com.surelogic.flashlight.client.eclipse.launch.FlashlightJUnitLaunchWrapper"
+			id="com.surelogic.flashlight.localJUnitShortcut">
+			<contextualLaunch>
+				<enablement>
+					<with variable="selection">
+						<count value="1" />
+						<iterate>
+							<adapt type="org.eclipse.jdt.core.IJavaElement">
+								<test property="org.eclipse.jdt.core.isInJavaProject" />
+								<test property="org.eclipse.jdt.core.hasTypeOnClasspath"
+									value="junit.framework.Test" />
+								<test property="org.eclipse.jdt.junit.canLaunchAsJUnit"
+									forcePluginActivation="true" />
+							</adapt>
+						</iterate>
+					</with>
+				</enablement>
+			</contextualLaunch>
+			<configurationType id="org.eclipse.jdt.junit.launchconfig">
+			</configurationType>
+		</shortcut>
+	</extension>
+	<extension point="org.eclipse.ui.views">
+		<category name="Flashlight" id="com.surelogic.flashlight.Flashlight">
+		</category>
+
+		<!-- UI for raw data -->
+		<view allowMultiple="false" category="com.surelogic.flashlight.Flashlight"
+			class="com.surelogic.flashlight.client.eclipse.views.run.RunView"
+			icon="platform:/plugin/com.surelogic.common/lib/images/fl_run_view.gif"
+			id="com.surelogic.flashlight.client.eclipse.views.run.RunView" name="Flashlight Runs">
+		</view>
+		<!-- UI for entering ad hoc queries -->
+		<view allowMultiple="false" category="com.surelogic.flashlight.Flashlight"
+			class="com.surelogic.flashlight.client.eclipse.views.adhoc.QueryEditorView"
+			icon="platform:/plugin/com.surelogic.common/lib/images/query.gif"
+			id="com.surelogic.flashlight.client.eclipse.views.adhoc.QueryEditorView"
+			name="Query Editor">
+		</view>
+		<view allowMultiple="false" category="com.surelogic.flashlight.Flashlight"
+			class="com.surelogic.flashlight.client.eclipse.views.adhoc.QueryMenuView"
+			icon="platform:/plugin/com.surelogic.common/lib/images/fl_logo.gif"
+			id="com.surelogic.flashlight.client.eclipse.views.adhoc.QueryMenuView"
+			name="Query Menu">
+		</view>
+		<view allowMultiple="false" category="com.surelogic.flashlight.Flashlight"
+			class="com.surelogic.flashlight.client.eclipse.views.adhoc.QueryResultExplorerView"
+			icon="platform:/plugin/com.surelogic.common/lib/images/drum_explorer.gif"
+			id="com.surelogic.flashlight.client.eclipse.views.adhoc.QueryResultExplorerView"
+			name="Query Results Explorer">
+		</view>
+		<view allowMultiple="false" category="com.surelogic.flashlight.Flashlight"
+			class="com.surelogic.flashlight.client.eclipse.views.adhoc.QueryResultsView"
+			icon="platform:/plugin/com.surelogic.common/lib/images/drum.gif"
+			id="com.surelogic.flashlight.client.eclipse.views.adhoc.QueryResultsView"
+			name="Query Results">
+		</view>
+		<view allowMultiple="false" category="com.surelogic.flashlight.Flashlight"
+			class="com.surelogic.flashlight.client.eclipse.views.source.HistoricalSourceView"
+			icon="platform:/plugin/com.surelogic.common/lib/images/fl_comp_unit.gif"
+			id="com.surelogic.flashlight.client.eclipse.views.source.HistoricalSourceView"
+			name="Historical Source Snapshot">
+		</view>
+        <view allowMultiple="false" category="com.surelogic.flashlight.Flashlight"
+            class="com.surelogic.flashlight.client.eclipse.views.monitor.MonitorView"
+            icon="platform:/plugin/com.surelogic.common/lib/images/fl_logo.gif"
+            id="com.surelogic.flashlight.client.monitor.views.MonitorView" name="Monitor View">
+        </view>
+    </extension>
+	<extension point="org.eclipse.ui.handlers">
+		<handler class="com.surelogic.common.ui.adhoc.views.results.QueryResultsCopyHandler"
+			commandId="org.eclipse.ui.edit.copy">
+			<activeWhen>
+				<with variable="activePartId">
+					<equals
+						value="com.surelogic.flashlight.client.eclipse.views.adhoc.QueryResultsView" />
+				</with>
+			</activeWhen>
+		</handler>
+	</extension>
+</plugin>

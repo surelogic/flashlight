@@ -219,7 +219,9 @@ public class WatchFlashlightMonitorJob extends AbstractSLJob {
 
         @Override
         public IStatus runInUIThread(final IProgressMonitor monitor) {
-            f_mediator.update(f_status);
+            if (f_mediator != null) {
+                f_mediator.update(f_status);
+            }
             WatchFlashlightMonitorJob job = new WatchFlashlightMonitorJob(
                     f_status);
             ConnectionState state = f_status.getState();

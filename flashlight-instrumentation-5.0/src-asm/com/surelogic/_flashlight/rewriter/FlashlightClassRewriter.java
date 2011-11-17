@@ -201,7 +201,7 @@ final class FlashlightClassRewriter extends ClassAdapter {
     if (isInterface) { // Interface, leave alone
       newInterfaces = interfaces;
       mustImplementIIdObject = false;
-    } else if (superName.equals(FlashlightNames.JAVA_LANG_OBJECT) || !classModel.isInstrumentedClass(superName)) {
+    } else if (hasNoInstrumentedAncestor(superName)) {
       /* Class extends Object or a class that is not being instrumented.  Add the
        * IIdObject interface, and we need to add the methods to implement it.
        */
@@ -344,6 +344,26 @@ final class FlashlightClassRewriter extends ClassAdapter {
     
     // Now we are done
     cv.visitEnd();
+  }
+  
+  private boolean hasNoInstrumentedAncestor(final String superName) {
+    String currentName = superName;
+    while (true) {
+      // If we hit java.lang.Object, we are done: there are no instrumented ancestors
+      if (currentName.equals(FlashlightNames.JAVA_LANG_OBJECT)) {
+        return true;
+      }
+      // If the ancestor is instrumented, we are done
+      if (classModel.isInstrumentedClass(currentName)) {
+        return false;
+      }
+      try {
+        currentName = classModel.getClass(currentName).getSuperClass();
+      } catch (final ClassNotFoundException e) {
+        // If we don't know about the class, it is not being instrumented.
+        return false;
+      }
+    } 
   }
   
   private void addPhantomClassObjectGetter() {

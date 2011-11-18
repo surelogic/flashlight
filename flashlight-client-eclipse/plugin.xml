@@ -119,17 +119,9 @@
 				id="com.surelogic.flashlight.client.eclipse.views.adhoc.QueryEditorView">
 			</viewShortcut>
 			<viewShortcut
-				id="com.surelogic.flashlight.client.eclipse.views.source.HistoricalSourceView">
-			</viewShortcut>
-		</perspectiveExtension>
-		<perspectiveExtension
-            targetID="com.surelogic.flashlight.client.eclipse.perspectives.FlashlightPerspective">
-            <perspectiveShortcut id="org.eclipse.jdt.ui.JavaPerspective">
-            </perspectiveShortcut>
-            <viewShortcut
                 id="com.surelogic.flashlight.client.monitor.views.MonitorView">
             </viewShortcut>
-        </perspectiveExtension>
+		</perspectiveExtension>
 	</extension>
 
 	<extension point="org.eclipse.ui.perspectiveExtensions">

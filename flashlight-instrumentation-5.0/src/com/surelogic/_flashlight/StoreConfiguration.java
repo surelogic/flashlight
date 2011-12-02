@@ -90,11 +90,25 @@ public class StoreConfiguration {
 	static {
 		// System.out.println("StoreConfiguration");
 		ClassLoader context = Thread.currentThread().getContextClassLoader();
-		InputStream in = context.getResourceAsStream(FL_PROPERTIES_RESOURCE);
+
+		Properties props = System.getProperties();
+
+		// We try to load properties from InstrumentationConf, if it exists.
+		// This file is sometimes generated during the instrumentation
+		// phase.
+		try {
+			props.setProperty(FL_COLLECTION_TYPE,
+					InstrumentationConf.getFL_COLLECTION_TYPE());
+			props.setProperty(FL_RUN, InstrumentationConf.getFL_RUN());
+			props.setProperty(FL_RUN_FOLDER,
+					InstrumentationConf.getFL_RUN_FOLDER());
+		} catch (NoClassDefFoundError e) {
+			// Do nothing here
+		}
 
 		// We try to load properties from a special properties file, but we do
 		// not override properties already set on the command line
-		Properties props = System.getProperties();
+		InputStream in = context.getResourceAsStream(FL_PROPERTIES_RESOURCE);
 		if (in != null) {
 			try {
 				Properties newProps = new Properties();
@@ -108,6 +122,7 @@ public class StoreConfiguration {
 				throw new IllegalStateException(e);
 			}
 		}
+
 		// Initialize the settings base on Java System properties
 		setOff(props.getProperty(FL_OFF, null) != null);
 		setRun(props.getProperty(FL_RUN, FL_RUN_DEFAULT));

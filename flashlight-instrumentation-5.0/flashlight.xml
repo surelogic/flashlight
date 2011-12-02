@@ -56,6 +56,8 @@
 		<copy todir="${classes}/resources">
 			<fileset dir="${resources}" />
 		</copy>
+		<!-- Get rid of InstrumentationConf, which is a magic file sometimes produced by the instrumentation -->
+		<delete file="${classes}/com/surelogic/_flashlight/InstrumentationConf.class" />
 	</target>
 
 	<target name="build-all-jar">

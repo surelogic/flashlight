@@ -17,11 +17,17 @@
 
 	<property name="junit.jar" value="${lib}/junit-4.3.1.jar" />
 
-	<property name="flashlight-all.jar" value="${basedir}/flashlight-all.jar" />
-	<property name="flashlight-runtime.jar" value="${basedir}/flashlight-runtime.jar" />
-	<property name="flashlight-runtime-4.jar" value="${basedir}/flashlight-runtime.java1.4.jar" />
+	<property name="flashlight-all.jar" value="${basedir}/flashlight-all-unstripped.jar" />
+	<property name="flashlight-all-final.jar" value="${basedir}/flashlight-all.jar" />
 
-	<property name="flashlight-rewriter.jar" value="${basedir}/flashlight-rewriter.jar" />
+	<property name="flashlight-runtime.jar" value="${basedir}/flashlight-runtime-unstripped.jar" />
+	<property name="flashlight-runtime-final.jar" value="${basedir}/flashlight-runtime.jar" />
+
+	<property name="flashlight-runtime-4.jar" value="${basedir}/flashlight-runtime-unstripped.java1.4.jar" />
+	<property name="flashlight-runtime-final-4.jar" value="${basedir}/flashlight-runtime.java1.4.jar" />
+
+	<property name="flashlight-rewriter.jar" value="${basedir}/flashlight-rewriter-unstripped.jar" />
+	
 	<property name="java1.4.lib" value="${basedir}/lib/1.4" />
 
 	<path id="jaxb.classpath">
@@ -56,8 +62,6 @@
 		<copy todir="${classes}/resources">
 			<fileset dir="${resources}" />
 		</copy>
-		<!-- Get rid of InstrumentationConf, which is a magic file sometimes produced by the instrumentation -->
-		<delete file="${classes}/com/surelogic/_flashlight/InstrumentationConf.class" />
 	</target>
 
 	<target name="build-all-jar">
@@ -118,10 +122,31 @@
 		<copy file="${flashlight-rewriter.jar}" todir="${basedir}/../flashlight-client-eclipse/lib" />
 	</target>
 
-	<target name="build-jars-eclipse" depends="build-all-jar, build-runtime-jar,  build-rewriter-jar, translate-runtime-jar" />
+	<target name="build-jars-eclipse" depends="build-all-jar, build-runtime-jar,  build-rewriter-jar, translate-runtime-jar, strip-conf" />
 
-	<target name="build-jars" depends="compile, build-all-jar, build-runtime-jar,  build-rewriter-jar, translate-runtime-jar" />
+	<target name="build-jars" depends="compile, build-all-jar, build-runtime-jar,  build-rewriter-jar, translate-runtime-jar, strip-conf" />
 
+	<target name="strip-conf">
+		<jar destfile="${flashlight-all-final.jar}">
+    		<zipfileset src="${flashlight-all.jar}" >
+    	  		<exclude name="com/surelogic/_flashlight/InstrumentationConf.class"/>
+	    	</zipfileset>
+		</jar>
+		<delete file="${flashlight-runtime.jar}"/>
+		<jar destfile="${flashlight-runtime-final.jar}">
+    		<zipfileset src="${flashlight-runtime.jar}" >
+    	  		<exclude name="com/surelogic/_flashlight/InstrumentationConf.class"/>
+	    	</zipfileset>
+		</jar>
+		<delete file="${flashlight-runtime.jar}"/>
+		<jar destfile="${flashlight-runtime-4-final.jar}">
+    		<zipfileset src="${flashlight-runtime-4.jar}" >
+    	  		<exclude name="com/surelogic/_flashlight/InstrumentationConf.class"/>
+	    	</zipfileset>
+		</jar>
+		<delete file="${flashlight-runtime-4.jar}"/>
+	</target>		
+	
 	<target name="compile-test-code" depends="build-jars">
 		<delete dir="${classes}" />
 		<mkdir dir="${classes}" />

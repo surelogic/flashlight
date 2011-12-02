@@ -132,7 +132,7 @@
     	  		<exclude name="com/surelogic/_flashlight/InstrumentationConf.class"/>
 	    	</zipfileset>
 		</jar>
-		<delete file="${flashlight-runtime.jar}"/>
+		<delete file="${flashlight-all.jar}"/>
 		<jar destfile="${flashlight-runtime-final.jar}">
     		<zipfileset src="${flashlight-runtime.jar}" >
     	  		<exclude name="com/surelogic/_flashlight/InstrumentationConf.class"/>

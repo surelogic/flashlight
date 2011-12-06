@@ -3,7 +3,7 @@ package com.surelogic._flashlight;
 public class InstrumentationConf {
 
 	public static String getFL_RUN() {
-		return null;
+		return "FOO";
 	}
 
 	public static String getFL_COLLECTION_TYPE() {

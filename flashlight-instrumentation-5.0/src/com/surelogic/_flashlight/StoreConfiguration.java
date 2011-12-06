@@ -97,13 +97,16 @@ public class StoreConfiguration {
 		// This file is sometimes generated during the instrumentation
 		// phase.
 		try {
+			System.err.println("Reading from InstrumentationConf class.");
 			props.setProperty(FL_COLLECTION_TYPE,
 					InstrumentationConf.getFL_COLLECTION_TYPE());
 			props.setProperty(FL_RUN, InstrumentationConf.getFL_RUN());
 			props.setProperty(FL_RUN_FOLDER,
 					InstrumentationConf.getFL_RUN_FOLDER());
+			System.err.println("Done reading from InstrumentationConf class.");
 		} catch (NoClassDefFoundError e) {
 			// Do nothing here
+			e.printStackTrace();
 		}
 
 		// We try to load properties from a special properties file, but we do

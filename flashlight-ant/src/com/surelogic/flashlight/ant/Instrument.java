@@ -3,6 +3,7 @@ package com.surelogic.flashlight.ant;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -1287,24 +1288,41 @@ public final class Instrument extends Task implements Opcodes {
 
 	private static void writeProperties(final File propFile,
 			final File classFile) throws IOException {
-		ClassWriter writer = new ClassWriter(0);
+		ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
 		writer.visit(V1_6, ACC_PUBLIC,
 				"com/surelogic/_flashlight/InstrumentationConf", null,
 				"java/lang/Object", null);
 		Properties props = new Properties();
 		FileInputStream in = new FileInputStream(propFile);
-		props.load(in);
+		try {
+			props.load(in);
+		} finally {
+			in.close();
+		}
+		MethodVisitor c = writer.visitMethod(ACC_PUBLIC, "<init>", "()V", null,
+				null);
+		c.visitCode();
+		c.visitVarInsn(ALOAD, 0);
+		c.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V");
+		c.visitInsn(RETURN);
+		c.visitMaxs(1, 1);
+		c.visitEnd();
 		for (String prop : props.stringPropertyNames()) {
 			MethodVisitor m = writer.visitMethod(ACC_PUBLIC + ACC_STATIC, "get"
 					+ prop, "()Ljava/lang/String;", null, null);
 			m.visitCode();
 			m.visitLdcInsn(props.getProperty(prop));
-			m.visitInsn(IRETURN);
+			m.visitInsn(ARETURN);
 			m.visitMaxs(1, 0);
 			m.visitEnd();
 		}
 		writer.visitEnd();
-		writer.toByteArray();
+		FileOutputStream out = new FileOutputStream(classFile);
+		try {
+			out.write(writer.toByteArray());
+		} finally {
+			out.close();
+		}
 	}
 
 	/**

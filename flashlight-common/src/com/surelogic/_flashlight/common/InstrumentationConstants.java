@@ -7,7 +7,7 @@ public final class InstrumentationConstants {
 
 	public static final String FL_PACKAGE = "com/surelogic/_flashlight";
 	public static final String FL_PROPERTIES_CLASS = FL_PACKAGE
-			+ "InstrumentationConf.class";
+			+ "/InstrumentationConf.class";
 	public static final String FL_PROPERTIES_RESOURCE = FL_PACKAGE
 			+ "/fl.properties";
 	public static final String FL_SITES_RESOURCE = FL_PACKAGE + "/sites.txt.gz";

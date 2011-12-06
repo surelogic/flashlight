@@ -24,9 +24,9 @@
 	<property name="flashlight-runtime-final.jar" value="${basedir}/flashlight-runtime.jar" />
 
 	<property name="flashlight-runtime-4.jar" value="${basedir}/flashlight-runtime-unstripped.java1.4.jar" />
-	<property name="flashlight-runtime-final-4.jar" value="${basedir}/flashlight-runtime.java1.4.jar" />
+	<property name="flashlight-runtime-4-final.jar" value="${basedir}/flashlight-runtime.java1.4.jar" />
 
-	<property name="flashlight-rewriter.jar" value="${basedir}/flashlight-rewriter-unstripped.jar" />
+	<property name="flashlight-rewriter.jar" value="${basedir}/flashlight-rewriter.jar" />
 	
 	<property name="java1.4.lib" value="${basedir}/lib/1.4" />
 
@@ -42,6 +42,10 @@
 	<target name="clean">
 		<delete file="${flashlight-all.jar}" />
 		<delete file="${flashlight-runtime.jar}" />
+		<delete file="${flashlight-runtime-4.jar}" />
+		<delete file="${flashlight-all-final.jar}" quiet="true" />
+		<delete file="${flashlight-runtime-final.jar}" quiet="true" />
+		<delete file="${flashlight-runtime-4-final.jar}" quiet="true" />
 		<delete file="${flashlight-rewriter.jar}" />
 	</target>
 
@@ -73,7 +77,6 @@
 				<attribute name="Manifest-Version" value="1.0" />
 			</manifest>
 		</jar>
-		<!--copy file="${flashlight-all.jar}" todir="${basedir}/../flashlight-client-eclipse/lib"/ -->
 	</target>
 
 	<target name="build-runtime-jar">
@@ -90,7 +93,6 @@
 				<attribute name="Manifest-Version" value="1.0" />
 			</manifest>
 		</jar>
-		<copy file="${flashlight-runtime.jar}" todir="${basedir}/../flashlight-client-eclipse/lib" />
 	</target>
 
 	<target name="translate-runtime-jar">
@@ -105,7 +107,6 @@
 			<arg value="-classpath" />
 			<arg value="${java1.4.lib}/rt.jar${path.separator}lib/build/retrotranslator-runtime-1.2.9.jar${path.separator}lib/build/backport-util-concurrent-3.1.jar" />
 		</java>
-		<copy file="${flashlight-runtime-4.jar}" todir="${basedir}/../flashlight-client-eclipse/lib" />
 	</target>
 
 	<target name="build-rewriter-jar">
@@ -119,12 +120,11 @@
 				<attribute name="Class-Path" value="asm-3.2.jar asm-commons-3.2.jar" />
 			</manifest>
 		</jar>
-		<copy file="${flashlight-rewriter.jar}" todir="${basedir}/../flashlight-client-eclipse/lib" />
 	</target>
 
-	<target name="build-jars-eclipse" depends="build-all-jar, build-runtime-jar,  build-rewriter-jar, translate-runtime-jar, strip-conf" />
+	<target name="build-jars-eclipse" depends="build-all-jar, build-runtime-jar,  build-rewriter-jar, translate-runtime-jar, strip-conf, copy-to-client" />
 
-	<target name="build-jars" depends="compile, build-all-jar, build-runtime-jar,  build-rewriter-jar, translate-runtime-jar, strip-conf" />
+	<target name="build-jars" depends="compile, build-all-jar, build-runtime-jar,  build-rewriter-jar, translate-runtime-jar, strip-conf, copy-to-client" />
 
 	<target name="strip-conf">
 		<jar destfile="${flashlight-all-final.jar}">
@@ -146,7 +146,13 @@
 		</jar>
 		<delete file="${flashlight-runtime-4.jar}"/>
 	</target>		
-	
+
+	<target name="copy-to-client">
+		<copy file="${flashlight-runtime-final.jar}" todir="${basedir}/../flashlight-client-eclipse/lib" />
+		<copy file="${flashlight-runtime-4-final.jar}" todir="${basedir}/../flashlight-client-eclipse/lib" />
+		<copy file="${flashlight-rewriter.jar}" todir="${basedir}/../flashlight-client-eclipse/lib" />
+	</target>
+		
 	<target name="compile-test-code" depends="build-jars">
 		<delete dir="${classes}" />
 		<mkdir dir="${classes}" />

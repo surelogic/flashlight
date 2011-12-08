@@ -1350,7 +1350,7 @@ public final class Instrument extends Task implements Opcodes {
 					"java/lang/Object", null);
 			defaultConstructor(writer);
 			MethodVisitor method = writer.visitMethod(ACC_PUBLIC + ACC_STATIC,
-					"getLines", "()[Ljava/lang/String;", null, null);
+					"getSiteLines", "()[Ljava/lang/String;", null, null);
 			final List<String> lines = new ArrayList<String>();
 			for (String line = reader.readLine(); line != null; line = reader
 					.readLine()) {
@@ -1398,7 +1398,7 @@ public final class Instrument extends Task implements Opcodes {
 					"java/lang/Object", null);
 			defaultConstructor(writer);
 			MethodVisitor method = writer.visitMethod(ACC_PUBLIC + ACC_STATIC,
-					"getLines", "()[Ljava/lang/String;", null, null);
+					"getFieldLines", "()[Ljava/lang/String;", null, null);
 			final List<String> lines = new ArrayList<String>();
 			for (String line = reader.readLine(); line != null; line = reader
 					.readLine()) {

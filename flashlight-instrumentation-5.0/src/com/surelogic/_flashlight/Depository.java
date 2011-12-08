@@ -39,6 +39,8 @@ final class Depository extends Thread {
 		assert outputStrategy != null;
 		f_outputStrategy = outputStrategy;
 		this.conf = conf;
+		classVisitor = new ClassVisitor();
+		classDefs = loadClassInfo();
 	}
 
 	private boolean f_finished = false;
@@ -55,9 +57,9 @@ final class Depository extends Thread {
 		}
 	}
 
-	private final ClassVisitor classVisitor = new ClassVisitor();
+	private final ClassVisitor classVisitor;
 
-	private final Map<String, List<ClassInfo>> classDefs = loadClassInfo();
+	private final Map<String, List<ClassInfo>> classDefs;
 
 	static class ClassInfo extends AbstractList<ClassInfo> {
 		final String fileName;
@@ -107,11 +109,11 @@ final class Depository extends Thread {
 
 	static class StringTable extends HashMap<String, String> {
 		public String intern(final String s) {
-			final String cached = this.get(s);
+			final String cached = get(s);
 			if (cached != null) {
 				return cached;
 			}
-			this.put(s, s);
+			put(s, s);
 			return s;
 		}
 
@@ -180,20 +182,11 @@ final class Depository extends Thread {
 	}
 
 	private Map<String, List<FieldInfo>> loadFieldInfo(final StringTable strings) {
-		final String name = StoreConfiguration.getFieldsFile();
-		if (name == null) {
-			return Collections.emptyMap();
-		}
-		final File f = new File(name);
-		if (!f.exists() || !f.isFile()) {
-			return Collections.emptyMap();
-		}
-		final Map<String, List<FieldInfo>> map = new HashMap<String, List<FieldInfo>>();
 		try {
-			final Reader r = new FileReader(f);
-			final BufferedReader br = new BufferedReader(r);
-			String line;
-			while ((line = br.readLine()) != null) {
+			String[] lines = FieldsConf.getFieldLines();
+			conf.log("Using com.surelogic._flashlight.FieldsConf for fields data.");
+			final Map<String, List<FieldInfo>> map = new HashMap<String, List<FieldInfo>>();
+			for (String line : lines) {
 				final FieldInfo fi = new FieldInfo(strings, line);
 				List<FieldInfo> l = map.get(fi.declaringType);
 				if (l == null) {
@@ -202,11 +195,38 @@ final class Depository extends Thread {
 				}
 				l.add(fi);
 			}
-		} catch (final IOException e) {
-			conf.logAProblem("Couldn't read field definition file", e);
-			map.clear();
+			return map;
+		} catch (NoClassDefFoundError xxx) {
+			final String name = StoreConfiguration.getFieldsFile();
+			conf.log("Could not locate com.surelogic._flashlight.FieldsConf, attempting to use "
+					+ name + " instead.");
+			if (name == null) {
+				return Collections.emptyMap();
+			}
+			final File f = new File(name);
+			if (!f.exists() || !f.isFile()) {
+				return Collections.emptyMap();
+			}
+			final Map<String, List<FieldInfo>> map = new HashMap<String, List<FieldInfo>>();
+			try {
+				final Reader r = new FileReader(f);
+				final BufferedReader br = new BufferedReader(r);
+				String line;
+				while ((line = br.readLine()) != null) {
+					final FieldInfo fi = new FieldInfo(strings, line);
+					List<FieldInfo> l = map.get(fi.declaringType);
+					if (l == null) {
+						l = new ArrayList<FieldInfo>();
+						map.put(fi.declaringType, l);
+					}
+					l.add(fi);
+				}
+			} catch (final IOException e) {
+				conf.logAProblem("Couldn't read field definition file", e);
+				map.clear();
+			}
+			return map;
 		}
-		return map;
 	}
 
 	int outputFieldDefs(final long id, final EventVisitor strategy,
@@ -248,20 +268,25 @@ final class Depository extends Thread {
 	}
 
 	private Map<String, List<ClassInfo>> loadClassInfo() {
-		String name = StoreConfiguration.getSitesFile();
-		File f;
-		if (name != null) {
-			f = new File(name);
-		} else {
-			// Try to use fields file to find the sites file
-			name = StoreConfiguration.getFieldsFile();
-			if (name == null) {
-				return Collections.emptyMap();
+		final SitesReader sitesReader = new SitesReader();
+		try {
+			for (String line : SitesConf.getSiteLines()) {
+				sitesReader.readLine(line);
 			}
-			f = new File(name);
-			f = new File(f.getParentFile(), "sitesfile.txt");
+			conf.log("Site information read from com.surelogic._flashlight.SitesConf.class");
+		} catch (NoClassDefFoundError e) {
+			String name = StoreConfiguration.getSitesFile();
+			if (name == null) {
+				conf.log("No site class or file could be located. Depository proceeding with incomplete class information.");
+				return Collections.EMPTY_MAP;
+			} else {
+				conf.log("Could not read from com.surelogic._flashlight.SitesConf.class, trying "
+						+ name + '.');
+				File f = new File(name);
+				loadFileContents(f, sitesReader);
+			}
 		}
-		final SitesReader sitesReader = loadFileContents(f, new SitesReader());
+
 		final Map<String, List<ClassInfo>> classesMap = sitesReader.getMap();
 		final Map<String, List<FieldInfo>> fieldsMap = sitesReader
 				.getFieldsMap();
@@ -337,7 +362,7 @@ final class Depository extends Thread {
 
 		private void makeClassInfo() {
 			if (lastClassName != null) {
-				final List<FieldInfo> finfo = this.fields.remove(lastClassName);
+				final List<FieldInfo> finfo = fields.remove(lastClassName);
 				final FieldInfo[] fields = finfo == null ? noFields : finfo
 						.toArray(noFields);
 				final ClassInfo info = new ClassInfo(lastFileName,
@@ -371,13 +396,13 @@ final class Depository extends Thread {
 		}
 	}
 
-	private <T extends LineHandler> T loadFileContents(final File f,
+	private <T extends LineHandler> void loadFileContents(final File f,
 			final T handler) {
 		if (!f.exists() || !f.isFile()) {
 			if (StoreConfiguration.debugOn()) {
 				System.err.println("Can't read: " + f.getName());
 			}
-			return handler;
+			return;
 		}
 		try {
 			Reader r;
@@ -396,7 +421,6 @@ final class Depository extends Thread {
 		} catch (final IOException e) {
 			conf.logAProblem("Couldn't read definition file" + f.getName(), e);
 		}
-		return handler;
 	}
 
 	/**

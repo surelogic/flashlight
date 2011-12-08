@@ -1,11 +1,14 @@
 package com.surelogic.flashlight.ant;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
@@ -15,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.StringTokenizer;
+import java.util.zip.GZIPInputStream;
 
 import javax.xml.bind.JAXBException;
 
@@ -1277,6 +1281,17 @@ public final class Instrument extends Task implements Opcodes {
 			}
 		}
 		if (jarName != null) {
+			// Store site info as a class
+			try {
+				writeSites(sitesFileName, new File(tmpJar,
+						InstrumentationConstants.FL_SITES_CLASS));
+				writeFields(fieldsFileName, new File(tmpJar,
+						InstrumentationConstants.FL_FIELDS_CLASS));
+			} catch (IOException e) {
+				throw new BuildException(e);
+			}
+
+			// Zip up info jar
 			try {
 				FileUtility.zipDir(tmpJar, jarName);
 			} catch (IOException e) {
@@ -1299,14 +1314,7 @@ public final class Instrument extends Task implements Opcodes {
 		} finally {
 			in.close();
 		}
-		MethodVisitor c = writer.visitMethod(ACC_PUBLIC, "<init>", "()V", null,
-				null);
-		c.visitCode();
-		c.visitVarInsn(ALOAD, 0);
-		c.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V");
-		c.visitInsn(RETURN);
-		c.visitMaxs(1, 1);
-		c.visitEnd();
+		defaultConstructor(writer);
 		for (String prop : props.stringPropertyNames()) {
 			MethodVisitor m = writer.visitMethod(ACC_PUBLIC + ACC_STATIC, "get"
 					+ prop, "()Ljava/lang/String;", null, null);
@@ -1323,6 +1331,113 @@ public final class Instrument extends Task implements Opcodes {
 		} finally {
 			out.close();
 		}
+	}
+
+	private static void writeSites(final File siteFile, final File classFile)
+			throws IOException {
+		InputStreamReader in;
+		if (siteFile.getName().endsWith("gz")) {
+			in = new InputStreamReader(new GZIPInputStream(new FileInputStream(
+					siteFile)));
+		} else {
+			in = new FileReader(siteFile);
+		}
+		BufferedReader reader = new BufferedReader(in);
+		try {
+			ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
+			writer.visit(V1_6, ACC_PUBLIC,
+					"com/surelogic/_flashlight/SitesConf", null,
+					"java/lang/Object", null);
+			defaultConstructor(writer);
+			MethodVisitor method = writer.visitMethod(ACC_PUBLIC + ACC_STATIC,
+					"getLines", "()[Ljava/lang/String;", null, null);
+			final List<String> lines = new ArrayList<String>();
+			for (String line = reader.readLine(); line != null; line = reader
+					.readLine()) {
+				lines.add(line);
+			}
+			method.visitLdcInsn(lines.size());
+			method.visitTypeInsn(ANEWARRAY, "java/lang/String");
+			int idx = 0;
+			for (String line : lines) {
+				method.visitInsn(DUP);
+				method.visitLdcInsn(idx++);
+				method.visitLdcInsn(line);
+				method.visitInsn(AASTORE);
+			}
+			method.visitInsn(ARETURN);
+			method.visitMaxs(0, 0);
+			method.visitEnd();
+			writer.visitEnd();
+			FileOutputStream out = new FileOutputStream(classFile);
+			try {
+				out.write(writer.toByteArray());
+			} finally {
+				out.close();
+			}
+
+		} finally {
+			reader.close();
+		}
+	}
+
+	private static void writeFields(final File fieldFile, final File classFile)
+			throws IOException {
+		InputStreamReader in;
+		if (fieldFile.getName().endsWith("gz")) {
+			in = new InputStreamReader(new GZIPInputStream(new FileInputStream(
+					fieldFile)));
+		} else {
+			in = new FileReader(fieldFile);
+		}
+		BufferedReader reader = new BufferedReader(in);
+		try {
+			ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
+			writer.visit(V1_6, ACC_PUBLIC,
+					"com/surelogic/_flashlight/FieldsConf", null,
+					"java/lang/Object", null);
+			defaultConstructor(writer);
+			MethodVisitor method = writer.visitMethod(ACC_PUBLIC + ACC_STATIC,
+					"getLines", "()[Ljava/lang/String;", null, null);
+			final List<String> lines = new ArrayList<String>();
+			for (String line = reader.readLine(); line != null; line = reader
+					.readLine()) {
+				lines.add(line);
+			}
+			method.visitLdcInsn(lines.size());
+			method.visitTypeInsn(ANEWARRAY, "java/lang/String");
+			int idx = 0;
+			for (String line : lines) {
+				method.visitInsn(DUP);
+				method.visitLdcInsn(idx++);
+				method.visitLdcInsn(line);
+				method.visitInsn(AASTORE);
+			}
+			method.visitInsn(ARETURN);
+			method.visitMaxs(0, 0);
+			method.visitEnd();
+			writer.visitEnd();
+			FileOutputStream out = new FileOutputStream(classFile);
+			try {
+				out.write(writer.toByteArray());
+			} finally {
+				out.close();
+			}
+
+		} finally {
+			reader.close();
+		}
+	}
+
+	private static void defaultConstructor(final ClassWriter writer) {
+		MethodVisitor c = writer.visitMethod(ACC_PUBLIC, "<init>", "()V", null,
+				null);
+		c.visitCode();
+		c.visitVarInsn(ALOAD, 0);
+		c.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V");
+		c.visitInsn(RETURN);
+		c.visitMaxs(1, 1);
+		c.visitEnd();
 	}
 
 	/**

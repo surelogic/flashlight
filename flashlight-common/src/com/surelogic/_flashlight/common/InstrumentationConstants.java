@@ -11,7 +11,11 @@ public final class InstrumentationConstants {
 	public static final String FL_PROPERTIES_RESOURCE = FL_PACKAGE
 			+ "/fl.properties";
 	public static final String FL_SITES_RESOURCE = FL_PACKAGE + "/sites.txt.gz";
+	public static final String FL_SITES_CLASS = FL_PACKAGE + "/SitesConf.class";
 	public static final String FL_FIELDS_RESOURCE = FL_PACKAGE + "/fields.txt";
+	public static final String FL_FIELDS_CLASS = FL_PACKAGE
+			+ "/FieldsConf.class";
+
 	public static final String FL_LOG_RESOURCE = FL_PACKAGE
 			+ "/instrumentation.log";
 	public static final String FL_SOURCE_RESOURCE = FL_PACKAGE + "/sources.zip";

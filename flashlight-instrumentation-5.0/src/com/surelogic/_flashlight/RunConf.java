@@ -274,18 +274,23 @@ public class RunConf {
 		f_log = initLog(fileName.toString());
 
 		f_start_nano = System.nanoTime();
+		FieldDefs defs;
 		try {
-			String fieldsFile = StoreConfiguration.getFieldsFile();
-			if (fieldsFile == null) {
-				f_fieldDefs = new FieldDefs();
-			} else {
-				f_fieldDefs = new FieldDefs(StoreConfiguration.getFieldsFile());
+			defs = new FieldDefs(FieldsConf.getFieldLines());
+		} catch (NoClassDefFoundError xxx) {
+			try {
+				String fieldsFile = StoreConfiguration.getFieldsFile();
+				if (fieldsFile == null) {
+					defs = new FieldDefs();
+				} else {
+					defs = new FieldDefs(fieldsFile);
+				}
+			} catch (IOException e) {
+				logAProblem(e.getMessage(), e);
+				throw new IllegalStateException(e);
 			}
-		} catch (IOException e) {
-			logAProblem(e.getMessage(), e);
-			throw new IllegalStateException(e);
 		}
-
+		f_fieldDefs = defs;
 		f_defs = initDefs();
 	}
 

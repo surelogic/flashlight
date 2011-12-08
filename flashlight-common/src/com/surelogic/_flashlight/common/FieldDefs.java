@@ -49,6 +49,21 @@ public class FieldDefs extends HashMap<Long, FieldDef> {
 		}
 	}
 
+	public FieldDefs(final String[] lines) {
+		for (String line : lines) {
+			final StringTokenizer st = new StringTokenizer(line);
+			final int id = Integer.parseInt(st.nextToken());
+			final String clazz = st.nextToken();
+			final String field = st.nextToken();
+			final int mod = Integer.parseInt(st.nextToken(), 16);
+			final boolean isS = Modifier.isStatic(mod);
+			final boolean isF = Modifier.isFinal(mod);
+			final boolean isV = Modifier.isVolatile(mod);
+			final FieldDef f = new FieldDef(id, clazz, field, isS, isF, isV);
+			put(f.getId(), f);
+		}
+	}
+
 	public FieldDefs(final File file) throws IOException {
 		this(new BufferedReader(new FileReader(file)));
 	}

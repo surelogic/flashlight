@@ -40,15 +40,18 @@ import static com.surelogic._flashlight.common.InstrumentationConstants.JAVA_IO_
 
 import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.zip.GZIPOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -163,29 +166,89 @@ public class StoreConfiguration {
 		if (props.containsKey(FL_FIELDS_FILE)) {
 			setFieldsFile(props.getProperty(FL_FIELDS_FILE));
 		} else {
-			InputStream resource = context
-					.getResourceAsStream(FL_FIELDS_RESOURCE);
-			if (resource != null) {
-				File fieldsFile = new File(getDirectory(), FL_FIELDS_FILE_NAME);
-				copy(resource, fieldsFile, true);
+			File fieldsFile = new File(getDirectory(), FL_FIELDS_FILE_NAME);
+			boolean success = false;
+			try {
+				// Look for the fields data as a class
+				String[] lines = FieldsConf.getFieldLines();
+				PrintWriter writer = new PrintWriter(fieldsFile);
+				try {
+					for (String line : lines) {
+						writer.println(line);
+					}
+				} finally {
+					writer.close();
+				}
 				setFieldsFile(fieldsFile.getAbsolutePath());
+				success = true;
+			} catch (NoClassDefFoundError e) {
+				// Do nothing
+			} catch (FileNotFoundException e) {
+				// Do nothing
+			}
+			if (!success) {
+				// Look for it as a file resource on the classpath.
+				InputStream resource = context
+						.getResourceAsStream(FL_FIELDS_RESOURCE);
+				if (resource != null) {
+					copy(resource, fieldsFile, true);
+					setFieldsFile(fieldsFile.getAbsolutePath());
+				}
 			}
 		}
 		if (props.containsKey(FL_SITES_FILE)) {
 			setSitesFile(props.getProperty(FL_SITES_FILE, FL_SITES_FILE_NAME));
 		} else {
-			InputStream resource = context
-					.getResourceAsStream(FL_SITES_RESOURCE);
-			if (resource != null) {
-				File sitesFile = new File(getDirectory(), FL_SITES_FILE_NAME);
-				copy(resource, sitesFile, true);
+			File sitesFile = new File(getDirectory(), FL_SITES_FILE_NAME);
+			boolean success = false;
+			try {
+				// Look for the fields data as a class
+				String[] lines = SitesConf.getSiteLines();
+				OutputStream out = new FileOutputStream(sitesFile);
+				if (FL_SITES_FILE_NAME.endsWith("tar.gz")) {
+					out = new GZIPOutputStream(out);
+				}
+				PrintWriter writer = new PrintWriter(out);
+				try {
+					for (String line : lines) {
+						writer.println(line);
+					}
+				} finally {
+					writer.close();
+				}
 				setSitesFile(sitesFile.getAbsolutePath());
+				success = true;
+			} catch (NoClassDefFoundError e) {
+				// Do nothing
+			} catch (IOException e) {
+				// Do nothing
+			}
+			if (!success) {
+				InputStream resource = context
+						.getResourceAsStream(FL_SITES_RESOURCE);
+				if (resource != null) {
+					copy(resource, sitesFile, true);
+					setSitesFile(sitesFile.getAbsolutePath());
+				}
 			}
 		}
 		InputStream resource = context.getResourceAsStream(FL_LOG_RESOURCE);
+		File logFile = new File(getDirectory(), FL_LOG_FILE_NAME);
 		if (resource != null) {
-			File logFile = new File(getDirectory(), FL_LOG_FILE_NAME);
 			copy(resource, logFile, true);
+		} else {
+			// We are going to write out a file anyways, in the interests of
+			// producing a valid run directory.
+			try {
+				PrintWriter writer = new PrintWriter(logFile);
+				try {
+					writer.println("Instrumentation log data was not made available to the Flashlight runtime.");
+				} finally {
+					writer.close();
+				}
+			} catch (FileNotFoundException e) {
+				// Do nothing
+			}
 		}
 		InputStream sources = context.getResourceAsStream(FL_SOURCE_RESOURCE);
 		if (sources != null) {

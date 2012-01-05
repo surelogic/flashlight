@@ -236,7 +236,7 @@ public class StoreConfiguration {
 		File logFile = new File(getDirectory(), FL_LOG_FILE_NAME);
 		if (resource != null) {
 			copy(resource, logFile, true);
-		} else {
+		} else if (!logFile.exists()) {
 			// We are going to write out a file anyways, in the interests of
 			// producing a valid run directory.
 			try {

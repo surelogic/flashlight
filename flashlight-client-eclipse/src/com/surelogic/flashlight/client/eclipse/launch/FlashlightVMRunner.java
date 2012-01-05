@@ -356,6 +356,8 @@ public final class FlashlightVMRunner implements IVMRunner {
     private boolean instrumentClassfiles(final ILaunchConfiguration launch,
             final Map<String, Entry> entryMap, final SubMonitor progress)
             throws CoreException {
+        boolean aborted = false;
+        
         /*
          * Bug 1615: Sanity check the instrumented classpath entries first:
          * Check that no entry marked for instrumentation is a file system
@@ -483,8 +485,8 @@ public final class FlashlightVMRunner implements IVMRunner {
             initializeRewriteManager(manager, entryMap, instrumentLast);
 
             try {
-                final Map<String, Map<String, Boolean>> badDups = manager
-                        .execute();
+                final Map<String, Map<String, Boolean>> badDups =
+                    manager.execute();
                 if (badDups != null) { // uh oh
                     final StringWriter s = new StringWriter();
                     PrintWriter w = new PrintWriter(s);
@@ -508,7 +510,7 @@ public final class FlashlightVMRunner implements IVMRunner {
                     }
 
                     w.flush();
-                    SLUIJob job = new SLUIJob() {
+                    final SLUIJob job = new SLUIJob() {
                         final String message = s.toString();
 
                         @Override
@@ -523,14 +525,59 @@ public final class FlashlightVMRunner implements IVMRunner {
                     };
                     job.schedule();
                 }
+            } catch (final RewriteManager.AlreadyInstrumentedException e) {
+              /* Found classes on the classpath that are already instrumented.
+               * This creates a bad situation, and the whole execution must
+               * be prevented.
+               */
+              aborted = true;
+              final StringWriter s = new StringWriter();
+              PrintWriter w = new PrintWriter(s);
+              w.println("Instrumentation and execution were aborted because classes were found that have already been instrumented:");
+              for (final String cname : e.getClasses()) {
+                w.print("  ");
+                w.println(cname);                  
+              }
+              w.println();
+              w.println("Flashlight cannot collect meaningful data under these circumstances.");
+              w.flush();
+              
+              final SLUIJob job = new SLUIJob() {
+                final String message = s.toString();
+
+                @Override
+                public IStatus runInUIThread(
+                        final IProgressMonitor monitor) {
+                    ShowTextDialog.showText(getDisplay()
+                            .getActiveShell(),
+                            "Instrumentation aborted.", message);
+                    return Status.OK_STATUS;
+                }
+              };
+              job.schedule();
+
+              final StringBuilder x = new StringBuilder("Instrumentation aborted because some classes have already been instrumented: ");
+              boolean first = true;
+              for (final String cname : e.getClasses()) {
+                if (!first) {
+                  x.append(", ");
+                } else {
+                  first = false;
+                }
+                x.append(cname);
+              }
+              SLLogger.getLogger().log(Level.SEVERE, x.toString());
+                  
             } catch (final CanceledException e) {
                 /*
                  * Do nothing, the user canceled the launch early. Caught to
                  * prevent propagation of the local exception being used as a
                  * control flow hack.
                  */
+              aborted = true;
             }
         } catch (final FileNotFoundException e) {
+            aborted = true;
             SLLogger.getLogger().log(
                     Level.SEVERE,
                     "Unable to create instrumentation log file "
@@ -541,7 +588,7 @@ public final class FlashlightVMRunner implements IVMRunner {
             }
         }
 
-        return false;
+        return aborted;
     }
 
     private void initializeRewriteManager(final RewriteManager manager,

@@ -61,6 +61,23 @@ public abstract class RewriteManager {
     // ======================================================================
 
     /**
+     * Exception thrown by {@link #execute} if it is discovered that 1 or more
+     * classes on the classpath have already been instrumented by flashlight.
+     */
+    public static final class AlreadyInstrumentedException extends Exception {
+      private final Set<String> classes;
+      
+      public AlreadyInstrumentedException(final Set<String> s) {
+        super("Classes already instrumented");
+        classes = s;
+      }
+      
+      public Set<String> getClasses() {
+        return classes;
+      }
+    }
+    
+    /**
      * Exception thrown during instrumentation indicating that the instrumented
      * classfile contains oversized methods. Contains a list of those methods
      * that are too large.
@@ -415,10 +432,7 @@ public abstract class RewriteManager {
             
             if (isClassfileName(relativeName) && !isBlackListed(relativeName)) {
                 final String internalClassName = pathToInternalClassName(relativeName);
-                if (instrumentedAlready.contains(internalClassName)) {
-                  messenger.warning("Classfile " + fname +
-                      " was not instrumented because it is already instrumented");
-                } else if (!duplicateClasses.isInconsistentlyDuplicated(internalClassName)) {
+                if (!duplicateClasses.isInconsistentlyDuplicated(internalClassName)) {
                     copy = false;
                     messenger.verbose("Rewriting classfile " + fname);
                     try {
@@ -1238,7 +1252,7 @@ public abstract class RewriteManager {
      *         values are sets of records describing the locations of the
      *         duplicate entries.
      */
-    public final Map<String, Map<String, Boolean>> execute() {
+    public final Map<String, Map<String, Boolean>> execute() throws AlreadyInstrumentedException {
         /*
          * First pass: Scan all the classfiles to build the class and field
          * model. Record the field identifiers in the fields file.
@@ -1258,6 +1272,13 @@ public abstract class RewriteManager {
             }
         }
 
+        /* Fail hard if we detected classes on the classpath that have already
+         * been instrumented.
+         */
+        if (!instrumentedAlready.isEmpty()) {
+          throw new AlreadyInstrumentedException(instrumentedAlready);
+        }
+        
         /* Finish initializing interesting methods using the class model */
         accessMethods.initClazz(classModel);
 

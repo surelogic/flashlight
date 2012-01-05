@@ -1236,39 +1236,53 @@ public final class Instrument extends Task implements Opcodes {
 				subTask.add(manager);
 			}
 
-			final Map<String, Map<String, Boolean>> badDups = manager.execute();
-			if (badDups != null) { // uh oh
-				// TODO change to match
-				// FlashlightVMRunner.instrumentClassfiles() when we finally get
-				// the classpath info
-				log("Some classes were not instrumented because their status is ambiguous.  The following classes appear on the classpath more than once and are not always instrumented.",
-						Project.MSG_WARN);
-				final StringBuilder sb = new StringBuilder();
-				for (final Map.Entry<String, Map<String, Boolean>> entry : badDups
-						.entrySet()) {
-					sb.append('\t');
-					sb.append(ClassNameUtil.internal2FullyQualified(entry
-							.getKey()));
-					sb.append(" : first uninstrumented in ");
-					/*
-					 * for (final Map.Entry<String, Boolean> d :
-					 * entry.getValue() .entrySet()) { sb.append("Is ");
-					 * sb.append(d.getValue() ? "INSTRUMENTED" :
-					 * "NOT INSTRUMENTED"); sb.append(" on classpath entry ");
-					 * sb.append(d.getKey()); sb.append("; "); }
-					 */
-					for (final Map.Entry<String, Boolean> d : entry.getValue()
-							.entrySet()) {
-						Boolean val = d.getValue();
-						if (val == null || !val) { // Uninstrumented
-							sb.append(d.getKey());
-							break;
-						}
-					}
-					log(sb.toString(), Project.MSG_WARN);
-					sb.setLength(0);
-				}
-				// throw new RuntimeException(sb.toString());
+			try {
+  			final Map<String, Map<String, Boolean>> badDups = manager.execute();
+  			if (badDups != null) { // uh oh
+  				// TODO change to match
+  				// FlashlightVMRunner.instrumentClassfiles() when we finally get
+  				// the classpath info
+  				log("Some classes were not instrumented because their status is ambiguous.  The following classes appear on the classpath more than once and are not always instrumented.",
+  						Project.MSG_WARN);
+  				final StringBuilder sb = new StringBuilder();
+  				for (final Map.Entry<String, Map<String, Boolean>> entry : badDups
+  						.entrySet()) {
+  					sb.append('\t');
+  					sb.append(ClassNameUtil.internal2FullyQualified(entry
+  							.getKey()));
+  					sb.append(" : first uninstrumented in ");
+  					/*
+  					 * for (final Map.Entry<String, Boolean> d :
+  					 * entry.getValue() .entrySet()) { sb.append("Is ");
+  					 * sb.append(d.getValue() ? "INSTRUMENTED" :
+  					 * "NOT INSTRUMENTED"); sb.append(" on classpath entry ");
+  					 * sb.append(d.getKey()); sb.append("; "); }
+  					 */
+  					for (final Map.Entry<String, Boolean> d : entry.getValue()
+  							.entrySet()) {
+  						Boolean val = d.getValue();
+  						if (val == null || !val) { // Uninstrumented
+  							sb.append(d.getKey());
+  							break;
+  						}
+  					}
+  					log(sb.toString(), Project.MSG_WARN);
+  					sb.setLength(0);
+  				}
+  				// throw new RuntimeException(sb.toString());
+  			}
+			} catch(final RewriteManager.AlreadyInstrumentedException e) {
+			  final StringBuilder sb = new StringBuilder("Instrumentation aborted because some classes have already been instrumented: ");
+			  boolean first = true;
+			  for (final String s : e.getClasses()) {
+			    if (!first) {
+			      sb.append(", ");
+			    } else {
+			      first = false;
+			    }
+			    sb.append(s);
+			  }
+			  log(sb.toString(), Project.MSG_ERR);
 			}
 		} catch (final FileNotFoundException e) {
 			final String msg = "Unable to create instrumentation log file "

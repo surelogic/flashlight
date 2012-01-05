@@ -140,6 +140,11 @@ final class FlashlightClassRewriter extends ClassAdapter {
    */
   private final Map<String, Integer> method2numLocals;
   
+  /**
+   * Did we output the special Flashlight attribute yet?
+   */
+  private boolean wroteFlashlightAttribute = false;
+  
   
   
   /**
@@ -254,8 +259,26 @@ final class FlashlightClassRewriter extends ClassAdapter {
   }
   
   @Override
+  public void visitInnerClass(final String name, final String outerName,
+      final String innerName, final int access)
+  { 
+    addFlashlightAttribute();
+    super.visitInnerClass(name, outerName, innerName, access);
+  }
+
+  @Override 
+  public FieldVisitor visitField(final int access, final String name,
+      final String desc, final String signature, final Object value)
+  {
+    addFlashlightAttribute();
+    return super.visitField(access, name, desc, signature, value);
+  }
+  
+  @Override
   public MethodVisitor visitMethod(final int access, final String name,
       final String desc, final String signature, final String[] exceptions) {
+    addFlashlightAttribute();
+    
     final boolean isClassInit = name.equals(CLASS_INITIALIZER);
     if (isClassInit) {
       needsClassInitializer = false;
@@ -343,6 +366,7 @@ final class FlashlightClassRewriter extends ClassAdapter {
     }
     
     // Now we are done
+    addFlashlightAttribute();
     cv.visitEnd();
   }
   
@@ -497,5 +521,16 @@ final class FlashlightClassRewriter extends ClassAdapter {
         Math.max(6 + Math.max(1, wrapper.getMethodReturnSize()), numLocals),
         numLocals);
     mv.visitEnd();
+  }
+  
+  /**
+   * Called from visitInnerClass, visitField, visitMethod, and visitEnd.  See
+   * the method order constraints in ClassVisitor.
+   */
+  private void addFlashlightAttribute() {
+    if (!wroteFlashlightAttribute) {
+      cv.visitAttribute(new FlashlightAttribute());
+      wroteFlashlightAttribute = true;
+    }
   }
 }

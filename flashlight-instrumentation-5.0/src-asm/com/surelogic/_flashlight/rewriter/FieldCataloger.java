@@ -1,6 +1,7 @@
 package com.surelogic._flashlight.rewriter;
 
 import java.io.File;
+import java.util.Set;
 
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Attribute;
@@ -76,16 +77,29 @@ final class FieldCataloger implements ClassVisitor {
    */
   private ClassAndFieldModel.Clazz duplicateOf = null;
   
+  /**
+   * Output field: This is a set of the internal names of classes that were
+   * found to already be instrumented. That is they contain the special
+   * flashlight attribute in the classfile already.
+   */
+  private final Set<String> instrumentedAlready;
+  
+  /**
+   * The name of this class.
+   */
+  private String className = null;
+  
   
   
   public FieldCataloger(final File where, final String relativePath,
       final boolean isInstrumented, final ClassAndFieldModel model,
-      RewriteMessenger messenger) {
+      final Set<String> instrumented, RewriteMessenger messenger) {
     this.where = where;
     this.relativePath = relativePath;
     this.isInstrumented = isInstrumented;
     this.classModel = model;
     this.messenger = messenger;
+    this.instrumentedAlready = instrumented;
   }
 
   public boolean isClassBogus() {
@@ -99,6 +113,8 @@ final class FieldCataloger implements ClassVisitor {
   public void visit(final int version, final int access, final String name,
       final String signature, final String superName,
       final String[] interfaces) {
+    className = name;
+    
     /* We check to see if the name of the class matches the name of the classfile,
      * and whether the class is located in the correct location.  The RewriteManager
      * guarantees that the relativePath ends with ".class" and that the 
@@ -134,8 +150,10 @@ final class FieldCataloger implements ClassVisitor {
     return null;
   }
 
-  public void visitAttribute(Attribute attr) {
-    // Don't care about
+  public void visitAttribute(final Attribute attr) {
+    if (attr.type.equals(FlashlightAttribute.NAME)) {
+      instrumentedAlready.add(className);
+    }
   }
 
   public void visitEnd() {

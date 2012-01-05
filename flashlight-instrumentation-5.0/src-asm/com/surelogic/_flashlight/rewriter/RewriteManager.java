@@ -186,8 +186,9 @@ public abstract class RewriteManager {
             try {
                 final ClassReader input = new ClassReader(inClassfile);
                 final FieldCataloger cataloger = new FieldCataloger(
-                        elementPath, relativePath, willBeInstrumented
-                                && !isBlacklisted, classModel, messenger);
+                        elementPath, relativePath,
+                        willBeInstrumented && !isBlacklisted,
+                        classModel, instrumentedAlready, messenger);
                 input.accept(cataloger, ClassReader.SKIP_CODE
                         | ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
                 if (cataloger.isClassBogus()) {
@@ -414,7 +415,10 @@ public abstract class RewriteManager {
             
             if (isClassfileName(relativeName) && !isBlackListed(relativeName)) {
                 final String internalClassName = pathToInternalClassName(relativeName);
-                if (!duplicateClasses.isInconsistentlyDuplicated(internalClassName)) {
+                if (instrumentedAlready.contains(internalClassName)) {
+                  messenger.warning("Classfile " + fname +
+                      " was not instrumented because it is already instrumented");
+                } else if (!duplicateClasses.isInconsistentlyDuplicated(internalClassName)) {
                     copy = false;
                     messenger.verbose("Rewriting classfile " + fname);
                     try {
@@ -1121,6 +1125,7 @@ public abstract class RewriteManager {
 
     private final byte[] buffer = new byte[BUFSIZE];
     private final ClassAndFieldModel classModel = new ClassAndFieldModel();
+    private final Set<String> instrumentedAlready = new HashSet<String>();
     private final DuplicateClasses duplicateClasses = new DuplicateClasses();
     private final IndirectAccessMethods accessMethods = new IndirectAccessMethods();
     private final Configuration config;

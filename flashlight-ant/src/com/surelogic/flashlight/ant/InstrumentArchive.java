@@ -374,31 +374,31 @@ public class InstrumentArchive extends Task {
 			}
 			zo.close();
 		}
+		final Properties properties = new Properties();
+		if (this.properties != null) {
+			if (this.properties.exists() && this.properties.isFile()) {
+				properties.load(new FileReader(this.properties));
+			} else {
+				throw new BuildException(properties.toString()
+						+ " is not a valid properties file");
+			}
+		}
+		if (collectionType != null) {
+			properties.put(InstrumentationConstants.FL_COLLECTION_TYPE,
+					collectionType);
+		}
+		if (runName != null) {
+			properties.put(InstrumentationConstants.FL_RUN, runName);
+		}
 		if (dataDir != null) {
-			final Properties properties = new Properties();
-			if (this.properties != null) {
-				if (this.properties.exists() && this.properties.isFile()) {
-					properties.load(new FileReader(this.properties));
-				} else {
-					throw new BuildException(properties.toString()
-							+ " is not a valid properties file");
-				}
-			}
-			if (collectionType != null) {
-				properties.put(InstrumentationConstants.FL_COLLECTION_TYPE,
-						collectionType);
-			}
-			if (runName != null) {
-				properties.put(InstrumentationConstants.FL_RUN, runName);
-			}
 			properties.put(InstrumentationConstants.FL_RUN_FOLDER,
 					dataDir.getAbsolutePath());
-			File propsFile = new File(classDir,
-					InstrumentationConstants.FL_PROPERTIES_RESOURCE);
-			FileOutputStream out = new FileOutputStream(propsFile);
-			properties.store(out, null);
-			out.close();
 		}
+		File propsFile = new File(classDir,
+				InstrumentationConstants.FL_PROPERTIES_RESOURCE);
+		FileOutputStream out = new FileOutputStream(propsFile);
+		properties.store(out, null);
+		out.close();
 	}
 
 	@Override

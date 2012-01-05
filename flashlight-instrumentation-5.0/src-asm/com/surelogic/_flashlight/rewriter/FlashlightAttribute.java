@@ -7,7 +7,7 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Label;
 
 public final class FlashlightAttribute extends Attribute {
-  private static final String NAME = "com.surelogic.flashlight.Instrumented";
+  public static final String NAME = "com.surelogic.flashlight.Instrumented";
   
   protected FlashlightAttribute() {
     super(NAME);

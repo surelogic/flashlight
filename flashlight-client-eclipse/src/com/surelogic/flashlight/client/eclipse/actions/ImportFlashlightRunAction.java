@@ -19,6 +19,7 @@ import com.surelogic.flashlight.common.model.RunManager;
 public class ImportFlashlightRunAction implements
 		IWorkbenchWindowActionDelegate {
 
+	@Override
 	public void run(final IAction action) {
 		Shell shell = EclipseUIUtility.getShell();
 		DirectoryDialog dd = new DirectoryDialog(shell);
@@ -43,15 +44,18 @@ public class ImportFlashlightRunAction implements
 		}
 	}
 
+	@Override
 	public void selectionChanged(final IAction action,
 			final ISelection selection) {
 		// Do nothing
 	}
 
+	@Override
 	public void dispose() {
 		// Do nothing
 	}
 
+	@Override
 	public void init(final IWorkbenchWindow window) {
 		// Do nothing
 	}

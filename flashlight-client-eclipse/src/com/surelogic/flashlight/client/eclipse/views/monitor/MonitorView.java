@@ -1,5 +1,6 @@
 package com.surelogic.flashlight.client.eclipse.views.monitor;
 
+import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.text.TextViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
@@ -11,6 +12,7 @@ import org.eclipse.swt.widgets.TabFolder;
 import org.eclipse.swt.widgets.TabItem;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
+import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.part.ViewPart;
 
 import com.surelogic.common.CommonImages;
@@ -148,6 +150,9 @@ public class MonitorView extends ViewPart {
 					| SWT.H_SCROLL);
 			removeThis.setControl(tv.getControl());
 		}
+		final IActionBars actionBars = getViewSite().getActionBars();
+		final IMenuManager menu = actionBars.getMenuManager();
+		menu.add(new ConnectToRunningMonitorAction());
 
 		f_mediator = new MonitorViewMediator(status, statusImage, runText,
 				startTimeText, fieldsSelectorText, fieldsSelectorButton,

@@ -1,4 +1,4 @@
-package com.surelogic.flashlight.client.eclipse.views.monitor;
+package com.surelogic.flashlight.client.eclipse.actions;
 
 import java.io.File;
 import java.text.DateFormat;
@@ -16,6 +16,7 @@ import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.ui.EclipseUIUtility;
 import com.surelogic.common.ui.SLImages;
 import com.surelogic.flashlight.client.eclipse.jobs.WatchFlashlightMonitorJob;
+import com.surelogic.flashlight.client.eclipse.views.monitor.MonitorStatus;
 
 public class ConnectToRunningMonitorAction extends Action {
 

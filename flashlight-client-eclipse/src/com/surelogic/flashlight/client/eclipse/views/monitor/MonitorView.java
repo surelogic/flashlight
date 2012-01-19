@@ -1,5 +1,6 @@
 package com.surelogic.flashlight.client.eclipse.views.monitor;
 
+import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.text.TextViewer;
 import org.eclipse.swt.SWT;
@@ -17,7 +18,10 @@ import org.eclipse.ui.part.ViewPart;
 
 import com.surelogic.common.CommonImages;
 import com.surelogic.common.XUtil;
+import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.ui.SLImages;
+import com.surelogic.flashlight.client.eclipse.actions.ConnectToRunningMonitorAction;
+import com.surelogic.flashlight.client.eclipse.dialogs.ShowMonitorLegendDialog;
 
 public class MonitorView extends ViewPart {
 
@@ -60,7 +64,7 @@ public class MonitorView extends ViewPart {
 		 * Fields Tab
 		 */
 		final TabItem fieldsTab = new TabItem(folder, SWT.NONE);
-		fieldsTab.setText("Fields");
+		fieldsTab.setText(I18N.msg("flashlight.monitor.view.fields"));
 		final Composite fieldsBody = new Composite(folder, SWT.NONE);
 		fieldsBody.setLayout(new GridLayout());
 		fieldsBody.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
@@ -80,7 +84,7 @@ public class MonitorView extends ViewPart {
 		final Button fieldsSelectorButton = new Button(fieldsSelector, SWT.PUSH);
 		fieldsSelectorButton.setLayoutData(new GridData(SWT.FILL, SWT.FILL,
 				false, false));
-		fieldsSelectorButton.setText("Set");
+		fieldsSelectorButton.setText(I18N.msg("flashlight.monitor.view.set"));
 		fieldsSelectorButton.setEnabled(false);
 		fieldsSelectorText.setEnabled(false);
 
@@ -94,7 +98,7 @@ public class MonitorView extends ViewPart {
 		 * Locks Tab
 		 */
 		final TabItem locksTab = new TabItem(folder, SWT.NONE);
-		locksTab.setText("Locks");
+		locksTab.setText(I18N.msg("flashlight.monitor.view.locks"));
 
 		Composite locksBody = new Composite(folder, SWT.NONE);
 		locksBody.setLayout(new GridLayout());
@@ -109,7 +113,7 @@ public class MonitorView extends ViewPart {
 		 * EDT Tab
 		 */
 		final TabItem edtTab = new TabItem(folder, SWT.NONE);
-		edtTab.setText("EDT");
+		edtTab.setText(I18N.msg("flashlight.monitor.view.edt"));
 
 		final Composite edtBody = new Composite(folder, SWT.NONE);
 		edtBody.setLayout(new GridLayout());
@@ -130,7 +134,7 @@ public class MonitorView extends ViewPart {
 		final Button edtSelectorButton = new Button(edtSelector, SWT.PUSH);
 		edtSelectorButton.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false,
 				false));
-		edtSelectorButton.setText("Set");
+		edtSelectorButton.setText(I18N.msg("flashlight.monitor.view.set"));
 		edtSelectorButton.setEnabled(false);
 		edtSelectorText.setEnabled(false);
 
@@ -153,13 +157,29 @@ public class MonitorView extends ViewPart {
 		final IActionBars actionBars = getViewSite().getActionBars();
 		final IMenuManager menu = actionBars.getMenuManager();
 		menu.add(new ConnectToRunningMonitorAction());
-
+		menu.add(new OpenLegendAction());
 		f_mediator = new MonitorViewMediator(status, statusImage, runText,
 				startTimeText, fieldsSelectorText, fieldsSelectorButton,
 				fieldsTree, locksTree, edtSelectorText, edtSelectorButton,
 				edtTree, tv);
 
 		f_mediator.init();
+	}
+
+	private static class OpenLegendAction extends Action {
+		OpenLegendAction() {
+			setText(I18N.msg("flashlight.monitor.legend"));
+			setImageDescriptor(SLImages
+					.getImageDescriptor(CommonImages.IMG_QUERY_BACK));
+			setDisabledImageDescriptor(SLImages
+					.getImageDescriptor(CommonImages.IMG_QUERY_GRAY));
+		}
+
+		@Override
+		public void run() {
+			ShowMonitorLegendDialog.show();
+		}
+
 	}
 
 	@Override

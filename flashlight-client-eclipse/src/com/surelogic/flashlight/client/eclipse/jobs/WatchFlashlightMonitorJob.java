@@ -68,7 +68,7 @@ public class WatchFlashlightMonitorJob extends AbstractSLJob {
 				f_status.setState(ConnectionState.NOTFOUND);
 			}
 		}
-		new UpdateUIMonitorJob(new MonitorStatus(f_status), f_mediator)
+		new UpdateUIMonitorJob(new MonitorStatus(f_status), f_mediator, true)
 				.schedule();
 		return SLStatus.OK_STATUS;
 	}
@@ -79,8 +79,8 @@ public class WatchFlashlightMonitorJob extends AbstractSLJob {
 		try {
 			if (f_status.getState() == ConnectionState.SEARCHING) {
 				// Make sure we trigger at least one searching event.
-				new UpdateUIMonitorJob(new MonitorStatus(f_status), f_mediator)
-						.schedule();
+				new UpdateUIMonitorJob(new MonitorStatus(f_status), f_mediator,
+						false).schedule();
 			}
 			f_status.setState(ConnectionState.CONNECTED);
 			final BufferedReader reader = new BufferedReader(
@@ -215,11 +215,13 @@ public class WatchFlashlightMonitorJob extends AbstractSLJob {
 
 		private final MonitorStatus f_status;
 		private final MonitorViewMediator f_mediator;
+		private final boolean f_callback;
 
 		UpdateUIMonitorJob(final MonitorStatus status,
-				final MonitorViewMediator mediator) {
+				final MonitorViewMediator mediator, final boolean callback) {
 			f_status = status;
 			f_mediator = mediator;
+			f_callback = callback;
 		}
 
 		@Override
@@ -230,8 +232,8 @@ public class WatchFlashlightMonitorJob extends AbstractSLJob {
 			WatchFlashlightMonitorJob job = new WatchFlashlightMonitorJob(
 					f_status);
 			ConnectionState state = f_status.getState();
-			if (state == ConnectionState.CONNECTED
-					|| state == ConnectionState.SEARCHING) {
+			if (f_callback
+					&& (state == ConnectionState.CONNECTED || state == ConnectionState.SEARCHING)) {
 				EclipseJob.getInstance().schedule(job, 1000);
 			}
 			return Status.OK_STATUS;

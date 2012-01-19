@@ -74,21 +74,21 @@ public final class ConfirmPrepAllRawDataDialog extends MessageDialog {
 	}
 
 	@Override
-	protected Control createCustomArea(Composite parent) {
+	protected Control createCustomArea(final Composite parent) {
 		final Button rememberMyDecision = new Button(parent, SWT.CHECK);
 		rememberMyDecision.setText(I18N
 				.msg("flashlight.dialog.prep.all.remember"));
 		rememberMyDecision.addListener(SWT.Selection, new Listener() {
 			@Override
-			public void handleEvent(Event event) {
+			public void handleEvent(final Event event) {
 				f_rememberMyDecision = rememberMyDecision.getSelection();
 			}
 		});
 		return super.createCustomArea(parent);
 	}
 
-	public ConfirmPrepAllRawDataDialog(Shell parentShell,
-			Image dialogTitleImage, String dialogMessage) {
+	public ConfirmPrepAllRawDataDialog(final Shell parentShell,
+			final Image dialogTitleImage, final String dialogMessage) {
 		super(parentShell, I18N.msg("flashlight.dialog.prep.all.title"),
 				dialogTitleImage, dialogMessage, QUESTION, new String[] {
 						"Yes", "No" }, 0);

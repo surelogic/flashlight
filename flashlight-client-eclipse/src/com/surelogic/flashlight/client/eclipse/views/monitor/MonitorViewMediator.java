@@ -9,20 +9,15 @@ import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
-import org.eclipse.swt.graphics.Color;
-import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
 
-import com.surelogic.common.CommonImages;
 import com.surelogic.common.XUtil;
 import com.surelogic.common.core.jobs.EclipseJob;
-import com.surelogic.common.ui.SLImages;
 import com.surelogic.flashlight.client.eclipse.jobs.SendCommandToFlashlightMonitorJob;
 import com.surelogic.flashlight.client.eclipse.jobs.WatchFlashlightMonitorJob;
 import com.surelogic.flashlight.client.eclipse.views.monitor.MonitorStatus.ConnectionState;
@@ -51,20 +46,7 @@ public class MonitorViewMediator {
 	private final Tree f_locks;
 	private final Tree f_edtAlerts;
 
-	private final Image f_package;
-	private final Image f_class;
-	private final Image f_connecting;
-	private final Image f_notConnected;
-	private final Image f_connected;
-	private final Image f_error;
-	private final Image f_done;
-
-	private final Color f_edtAlertColor;
-	private final Color f_protectedColor;
-	private final Color f_sharedColor;
-	private final Color f_dataRaceColor;
-	private final Color f_unknownColor;
-	private final Color f_unsharedColor;
+	private final MonitorImages f_im;
 
 	private MonitorStatus f_monitorStatus;
 
@@ -86,26 +68,7 @@ public class MonitorViewMediator {
 		f_edtButton = edtButton;
 		f_edtAlerts = edtTree;
 		f_listing = listing;
-
-		f_connected = SLImages.getImage(CommonImages.IMG_GREEN_CIRCLE);
-		f_connecting = SLImages.getImage(CommonImages.IMG_YELLOW_CIRCLE);
-		f_notConnected = SLImages.getImage(CommonImages.IMG_GRAY_CIRCLE);
-		f_error = SLImages.getImage(CommonImages.IMG_RED_CIRCLE);
-		f_done = SLImages.getImage(CommonImages.IMG_GRAY_CIRCLE);
-		f_package = SLImages.getImage(CommonImages.IMG_PACKAGE);
-		f_class = SLImages.getImage(CommonImages.IMG_CLASS);
-
-		Display display = statusImage.getDisplay();
-		// Greenish
-		f_protectedColor = new Color(display, 44, 132, 44);
-		// Yellowish
-		f_sharedColor = new Color(display, 255, 255, 132);
-		// Reddish
-		f_edtAlertColor = f_dataRaceColor = new Color(display, 255, 44, 44);
-		// Gray
-		f_unknownColor = new Color(display, 176, 176, 176);
-		// Brownish?
-		f_unsharedColor = new Color(display, 132, 88, 44);
+		f_im = new MonitorImages(statusImage.getDisplay());
 	}
 
 	private class SpecListener implements SelectionListener, ModifyListener {
@@ -163,18 +126,7 @@ public class MonitorViewMediator {
 
 	public void dispose() {
 		WatchFlashlightMonitorJob.setMediator(null);
-		f_protectedColor.dispose();
-		f_sharedColor.dispose();
-		f_dataRaceColor.dispose();
-		f_unknownColor.dispose();
-		f_unsharedColor.dispose();
-		f_package.dispose();
-		f_class.dispose();
-		f_connected.dispose();
-		f_connecting.dispose();
-		f_notConnected.dispose();
-		f_error.dispose();
-		f_done.dispose();
+		f_im.dispose();
 	}
 
 	public void setFocus() {
@@ -182,7 +134,7 @@ public class MonitorViewMediator {
 	}
 
 	private void searching(final MonitorStatus status) {
-		f_statusImage.setImage(f_connecting);
+		f_statusImage.setImage(f_im.getConnecting());
 		f_runText.setText(status.getRunName());
 		f_startTimeText.setText(status.getRunTime());
 		f_status.layout();
@@ -212,20 +164,20 @@ public class MonitorViewMediator {
 				clazz = null;
 				pakkageTree = new TreeItem(f_fields, SWT.None);
 				pakkageTree.setText(pakkage);
-				pakkageTree.setBackground(f_unknownColor);
-				pakkageTree.setImage(f_package);
+				pakkageTree.setBackground(f_im.getUnknownColor());
+				pakkageTree.setImage(f_im.getPackage());
 			}
 			if (!newClazz.equals(clazz)) {
 				clazz = newClazz;
 				clazzTree = new TreeItem(pakkageTree, SWT.NONE);
 				clazzTree.setText(clazz);
-				clazzTree.setBackground(f_unknownColor);
-				clazzTree.setImage(f_class);
+				clazzTree.setBackground(f_im.getUnknownColor());
+				clazzTree.setImage(f_im.getClazz());
 			}
 			TreeItem item = new TreeItem(clazzTree, SWT.NONE);
 			item.setText(f.getField());
 			item.setData(f);
-			item.setBackground(f_unknownColor);
+			item.setBackground(f_im.getUnknownColor());
 		}
 		f_edtAlerts.removeAll();
 		for (FieldStatus f : fieldList) {
@@ -244,27 +196,27 @@ public class MonitorViewMediator {
 				clazz = null;
 				pakkageTree = new TreeItem(f_edtAlerts, SWT.None);
 				pakkageTree.setText(pakkage);
-				pakkageTree.setBackground(f_unknownColor);
-				pakkageTree.setImage(f_package);
+				pakkageTree.setBackground(f_im.getUnknownColor());
+				pakkageTree.setImage(f_im.getPackage());
 			}
 
 			if (!newClazz.equals(clazz)) {
 				clazz = newClazz;
 				clazzTree = new TreeItem(pakkageTree, SWT.NONE);
 				clazzTree.setText(clazz);
-				clazzTree.setBackground(f_unknownColor);
-				clazzTree.setImage(f_class);
+				clazzTree.setBackground(f_im.getUnknownColor());
+				clazzTree.setImage(f_im.getClazz());
 			}
 			TreeItem item = new TreeItem(clazzTree, SWT.NONE);
 			item.setText(f.getField());
 			item.setData(f);
-			item.setBackground(f_unknownColor);
+			item.setBackground(f_im.getUnknownColor());
 		}
 		f_locks.removeAll();
 	}
 
 	private void connected(final MonitorStatus status) {
-		f_statusImage.setImage(f_connected);
+		f_statusImage.setImage(f_im.getConnected());
 		if (!f_fieldsButton.isEnabled()) {
 			String spec = status.getProperty(FIELD_SPEC);
 			if (spec != null) {
@@ -291,28 +243,28 @@ public class MonitorViewMediator {
 					FieldStatus f = fields.get(i++);
 					boolean gray = false;
 					if (f.hasDataRace()) {
-						item.setBackground(f_dataRaceColor);
+						item.setBackground(f_im.getDataRaceColor());
 					} else if (f.isActivelyProtected()) {
-						item.setBackground(f_protectedColor);
+						item.setBackground(f_im.getProtectedColor());
 					} else if (f.isShared()) {
-						item.setBackground(f_sharedColor);
+						item.setBackground(f_im.getSharedColor());
 					} else if (f.isUnshared()) {
-						item.setBackground(f_unsharedColor);
+						item.setBackground(f_im.getUnsharedColor());
 					} else {
-						item.setBackground(f_unknownColor);
+						item.setBackground(f_im.getUnknownColor());
 						gray = true;
 					}
 					allGrayClass &= gray;
 				}
 				if (allGrayClass) {
-					clazzItem.setBackground(f_unknownColor);
+					clazzItem.setBackground(f_im.getUnknownColor());
 				} else {
 					clazzItem.setBackground(null);
 				}
 				allGrayPackage &= allGrayClass;
 			}
 			if (allGrayPackage) {
-				packageItem.setBackground(f_unknownColor);
+				packageItem.setBackground(f_im.getUnknownColor());
 			} else {
 				packageItem.setBackground(null);
 			}
@@ -326,21 +278,21 @@ public class MonitorViewMediator {
 					FieldStatus f = fields.get(i++);
 					boolean gray = false;
 					if (f.isEDTAlert()) {
-						item.setBackground(f_edtAlertColor);
+						item.setBackground(f_im.getEdtAlertColor());
 					} else {
 						gray = true;
 					}
 					allGrayClass &= gray;
 				}
 				if (allGrayClass) {
-					clazzItem.setBackground(f_unknownColor);
+					clazzItem.setBackground(f_im.getUnknownColor());
 				} else {
 					clazzItem.setBackground(null);
 				}
 				allGrayPackage &= allGrayClass;
 			}
 			if (allGrayPackage) {
-				packageItem.setBackground(f_unknownColor);
+				packageItem.setBackground(f_im.getUnknownColor());
 			} else {
 				packageItem.setBackground(null);
 			}
@@ -349,9 +301,9 @@ public class MonitorViewMediator {
 		for (LockStatus l : status.getLocks()) {
 			TreeItem item = new TreeItem(f_locks, SWT.NONE);
 			if (l.isDeadlocked()) {
-				item.setForeground(f_dataRaceColor);
+				item.setForeground(f_im.getDataRaceColor());
 			} else {
-				item.setForeground(f_unsharedColor);
+				item.setForeground(f_im.getUnsharedColor());
 			}
 			item.setText(l.getName());
 		}
@@ -371,9 +323,9 @@ public class MonitorViewMediator {
 		f_fieldsSelector.setEnabled(false);
 		f_fieldsButton.setEnabled(false);
 		if (status.getState() == ConnectionState.NOTFOUND) {
-			f_statusImage.setImage(f_error);
+			f_statusImage.setImage(f_im.getError());
 		} else {
-			f_statusImage.setImage(f_done);
+			f_statusImage.setImage(f_im.getDone());
 		}
 	}
 

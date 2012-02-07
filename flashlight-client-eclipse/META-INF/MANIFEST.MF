@@ -26,19 +26,12 @@ Require-Bundle: com.surelogic.common,
  org.eclipse.jdt.core,
  org.eclipse.jface.text,
  org.eclipse.ltk.core.refactoring,
- org.eclipse.ltk.ui.refactoring,
- com.android.ide.eclipse.adt;resolution:=optional,
- com.android.ide.eclipse.ddms;resolution:=optional,
- com.android.ide.eclipse.hierarchyviewer;resolution:=optional,
- com.android.ide.eclipse.traceview;resolution:=optional
+ org.eclipse.ltk.ui.refactoring
 Eclipse-LazyStart: true
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: .,
  lib/flashlight-rewriter.jar
-Export-Package: com.surelogic._flashlight.rewriter,
- com.surelogic._flashlight.rewriter.config,
- com.surelogic._flashlight.rewriter.xml;x-friends:="com.surelogic.flashlight.android",
- com.surelogic.flashlight.client.eclipse,
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Export-Package: com.surelogic.flashlight.client.eclipse,
  com.surelogic.flashlight.client.eclipse.launch,
  com.surelogic.flashlight.client.eclipse.preferences
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6

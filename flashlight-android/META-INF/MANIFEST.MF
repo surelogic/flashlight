@@ -26,7 +26,10 @@ Require-Bundle: org.eclipse.ui,
  org.eclipse.ui.editors,
  org.eclipse.jdt.core,
  org.eclipse.jface.text,
- com.android.ide.eclipse.ddms;bundle-version="16.0.0"
+ com.android.ide.eclipse.adt,
+ com.android.ide.eclipse.ddms,
+ com.android.ide.eclipse.hierarchyviewer,
+ com.android.ide.eclipse.traceview
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ClassPath: .,

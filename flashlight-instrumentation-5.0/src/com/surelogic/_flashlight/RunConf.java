@@ -229,7 +229,12 @@ public class RunConf {
 		f_problemCount = new AtomicLong();
 		final File flashlightDir = new File(StoreConfiguration.getDirectory());
 		if (!flashlightDir.exists()) {
-			flashlightDir.mkdirs();
+			if (!flashlightDir.mkdirs()) {
+				throw new IllegalStateException(
+						String.format(
+								"Could not start Flashlight instrumentation: %s could not be created",
+								flashlightDir.toString()));
+			}
 		}
 		// ??? What to do if mkdirs() fails???
 		final StringBuilder fileName = new StringBuilder();

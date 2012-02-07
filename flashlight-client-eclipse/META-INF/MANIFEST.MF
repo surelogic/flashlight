@@ -26,7 +26,11 @@ Require-Bundle: com.surelogic.common,
  org.eclipse.jdt.core,
  org.eclipse.jface.text,
  org.eclipse.ltk.core.refactoring,
- org.eclipse.ltk.ui.refactoring
+ org.eclipse.ltk.ui.refactoring,
+ com.android.ide.eclipse.adt;resolution:=optional,
+ com.android.ide.eclipse.ddms;resolution:=optional,
+ com.android.ide.eclipse.hierarchyviewer;resolution:=optional,
+ com.android.ide.eclipse.traceview;resolution:=optional
 Eclipse-LazyStart: true
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: .,

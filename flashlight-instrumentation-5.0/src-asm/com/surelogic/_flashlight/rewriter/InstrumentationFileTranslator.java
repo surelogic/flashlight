@@ -16,14 +16,14 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-public class InstrumentationFileTranslator implements Opcodes {
+public final class InstrumentationFileTranslator implements Opcodes {
 
-	private static void writeProperties(final File propFile,
-			final File classFile) throws IOException {
-		ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-		writer.visit(V1_6, ACC_PUBLIC,
-				"com/surelogic/_flashlight/InstrumentationConf", null,
-				"java/lang/Object", null);
+	private InstrumentationFileTranslator() {
+
+	}
+
+	public static void writeProperties(final File propFile, final File classFile)
+			throws IOException {
 		Properties props = new Properties();
 		FileInputStream in = new FileInputStream(propFile);
 		try {
@@ -31,6 +31,15 @@ public class InstrumentationFileTranslator implements Opcodes {
 		} finally {
 			in.close();
 		}
+		writeProperties(props, classFile);
+	}
+
+	public static void writeProperties(final Properties props,
+			final File classFile) throws IOException {
+		ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
+		writer.visit(V1_6, ACC_PUBLIC,
+				"com/surelogic/_flashlight/InstrumentationConf", null,
+				"java/lang/Object", null);
 		defaultConstructor(writer);
 		for (String prop : props.stringPropertyNames()) {
 			MethodVisitor m = writer.visitMethod(ACC_PUBLIC + ACC_STATIC, "get"
@@ -50,7 +59,7 @@ public class InstrumentationFileTranslator implements Opcodes {
 		}
 	}
 
-	private static void writeSites(final File siteFile, final File classFile)
+	public static void writeSites(final File siteFile, final File classFile)
 			throws IOException {
 		InputStreamReader in;
 		if (siteFile.getName().endsWith("gz")) {
@@ -98,7 +107,7 @@ public class InstrumentationFileTranslator implements Opcodes {
 		}
 	}
 
-	private static void writeFields(final File fieldFile, final File classFile)
+	public static void writeFields(final File fieldFile, final File classFile)
 			throws IOException {
 		InputStreamReader in;
 		if (fieldFile.getName().endsWith("gz")) {
@@ -146,7 +155,7 @@ public class InstrumentationFileTranslator implements Opcodes {
 		}
 	}
 
-	private static void defaultConstructor(final ClassWriter writer) {
+	public static void defaultConstructor(final ClassWriter writer) {
 		MethodVisitor c = writer.visitMethod(ACC_PUBLIC, "<init>", "()V", null,
 				null);
 		c.visitCode();

@@ -1,14 +1,9 @@
 package com.surelogic.flashlight.ant;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
@@ -16,9 +11,7 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.StringTokenizer;
-import java.util.zip.GZIPInputStream;
 
 import javax.xml.bind.JAXBException;
 
@@ -26,12 +19,10 @@ import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Task;
 import org.apache.tools.ant.types.Path;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
 
 import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic._flashlight.rewriter.ClassNameUtil;
+import com.surelogic._flashlight.rewriter.InstrumentationFileTranslator;
 import com.surelogic._flashlight.rewriter.PrintWriterMessenger;
 import com.surelogic._flashlight.rewriter.RewriteManager;
 import com.surelogic._flashlight.rewriter.RewriteMessenger;
@@ -46,7 +37,7 @@ import com.surelogic.common.FileUtility;
  * file or to a directory. This allows more another task to be more
  * sophisticated in the packaging of a jar than this task is.
  */
-public final class Instrument extends Task implements Opcodes {
+public final class Instrument extends Task {
 	private final static String INDENT = "    ";
 
 	private final static FilenameFilter JAR_FILTER = new FilenameFilter() {
@@ -1164,7 +1155,8 @@ public final class Instrument extends Task implements Opcodes {
 						File infoClassDest = new File(tmpJar,
 								InstrumentationConstants.FL_PROPERTIES_CLASS);
 						infoClassDest.getParentFile().mkdirs();
-						writeProperties(infoProperties, infoClassDest);
+						InstrumentationFileTranslator.writeProperties(
+								infoProperties, infoClassDest);
 					} else {
 						File infoDest = new File(tmpJar,
 								InstrumentationConstants.FL_PROPERTIES_RESOURCE);
@@ -1237,52 +1229,56 @@ public final class Instrument extends Task implements Opcodes {
 			}
 
 			try {
-  			final Map<String, Map<String, Boolean>> badDups = manager.execute();
-  			if (badDups != null) { // uh oh
-  				// TODO change to match
-  				// FlashlightVMRunner.instrumentClassfiles() when we finally get
-  				// the classpath info
-  				log("Some classes were not instrumented because their status is ambiguous.  The following classes appear on the classpath more than once and are not always instrumented.",
-  						Project.MSG_WARN);
-  				final StringBuilder sb = new StringBuilder();
-  				for (final Map.Entry<String, Map<String, Boolean>> entry : badDups
-  						.entrySet()) {
-  					sb.append('\t');
-  					sb.append(ClassNameUtil.internal2FullyQualified(entry
-  							.getKey()));
-  					sb.append(" : first uninstrumented in ");
-  					/*
-  					 * for (final Map.Entry<String, Boolean> d :
-  					 * entry.getValue() .entrySet()) { sb.append("Is ");
-  					 * sb.append(d.getValue() ? "INSTRUMENTED" :
-  					 * "NOT INSTRUMENTED"); sb.append(" on classpath entry ");
-  					 * sb.append(d.getKey()); sb.append("; "); }
-  					 */
-  					for (final Map.Entry<String, Boolean> d : entry.getValue()
-  							.entrySet()) {
-  						Boolean val = d.getValue();
-  						if (val == null || !val) { // Uninstrumented
-  							sb.append(d.getKey());
-  							break;
-  						}
-  					}
-  					log(sb.toString(), Project.MSG_WARN);
-  					sb.setLength(0);
-  				}
-  				// throw new RuntimeException(sb.toString());
-  			}
-			} catch(final RewriteManager.AlreadyInstrumentedException e) {
-			  final StringBuilder sb = new StringBuilder("Instrumentation aborted because some classes have already been instrumented: ");
-			  boolean first = true;
-			  for (final String s : e.getClasses()) {
-			    if (!first) {
-			      sb.append(", ");
-			    } else {
-			      first = false;
-			    }
-			    sb.append(s);
-			  }
-			  log(sb.toString(), Project.MSG_ERR);
+				final Map<String, Map<String, Boolean>> badDups = manager
+						.execute();
+				if (badDups != null) { // uh oh
+					// TODO change to match
+					// FlashlightVMRunner.instrumentClassfiles() when we finally
+					// get
+					// the classpath info
+					log("Some classes were not instrumented because their status is ambiguous.  The following classes appear on the classpath more than once and are not always instrumented.",
+							Project.MSG_WARN);
+					final StringBuilder sb = new StringBuilder();
+					for (final Map.Entry<String, Map<String, Boolean>> entry : badDups
+							.entrySet()) {
+						sb.append('\t');
+						sb.append(ClassNameUtil.internal2FullyQualified(entry
+								.getKey()));
+						sb.append(" : first uninstrumented in ");
+						/*
+						 * for (final Map.Entry<String, Boolean> d :
+						 * entry.getValue() .entrySet()) { sb.append("Is ");
+						 * sb.append(d.getValue() ? "INSTRUMENTED" :
+						 * "NOT INSTRUMENTED");
+						 * sb.append(" on classpath entry ");
+						 * sb.append(d.getKey()); sb.append("; "); }
+						 */
+						for (final Map.Entry<String, Boolean> d : entry
+								.getValue().entrySet()) {
+							Boolean val = d.getValue();
+							if (val == null || !val) { // Uninstrumented
+								sb.append(d.getKey());
+								break;
+							}
+						}
+						log(sb.toString(), Project.MSG_WARN);
+						sb.setLength(0);
+					}
+					// throw new RuntimeException(sb.toString());
+				}
+			} catch (final RewriteManager.AlreadyInstrumentedException e) {
+				final StringBuilder sb = new StringBuilder(
+						"Instrumentation aborted because some classes have already been instrumented: ");
+				boolean first = true;
+				for (final String s : e.getClasses()) {
+					if (!first) {
+						sb.append(", ");
+					} else {
+						first = false;
+					}
+					sb.append(s);
+				}
+				log(sb.toString(), Project.MSG_ERR);
 			}
 		} catch (final FileNotFoundException e) {
 			final String msg = "Unable to create instrumentation log file "
@@ -1297,10 +1293,12 @@ public final class Instrument extends Task implements Opcodes {
 		if (jarName != null) {
 			// Store site info as a class
 			try {
-				writeSites(sitesFileName, new File(tmpJar,
-						InstrumentationConstants.FL_SITES_CLASS));
-				writeFields(fieldsFileName, new File(tmpJar,
-						InstrumentationConstants.FL_FIELDS_CLASS));
+				InstrumentationFileTranslator.writeSites(sitesFileName,
+						new File(tmpJar,
+								InstrumentationConstants.FL_SITES_CLASS));
+				InstrumentationFileTranslator.writeFields(fieldsFileName,
+						new File(tmpJar,
+								InstrumentationConstants.FL_FIELDS_CLASS));
 			} catch (IOException e) {
 				throw new BuildException(e);
 			}
@@ -1313,145 +1311,6 @@ public final class Instrument extends Task implements Opcodes {
 						"Failure to zip instrumentation log jar.", e);
 			}
 		}
-	}
-
-	private static void writeProperties(final File propFile,
-			final File classFile) throws IOException {
-		ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-		writer.visit(V1_6, ACC_PUBLIC,
-				"com/surelogic/_flashlight/InstrumentationConf", null,
-				"java/lang/Object", null);
-		Properties props = new Properties();
-		FileInputStream in = new FileInputStream(propFile);
-		try {
-			props.load(in);
-		} finally {
-			in.close();
-		}
-		defaultConstructor(writer);
-		for (String prop : props.stringPropertyNames()) {
-			MethodVisitor m = writer.visitMethod(ACC_PUBLIC + ACC_STATIC, "get"
-					+ prop, "()Ljava/lang/String;", null, null);
-			m.visitCode();
-			m.visitLdcInsn(props.getProperty(prop));
-			m.visitInsn(ARETURN);
-			m.visitMaxs(1, 0);
-			m.visitEnd();
-		}
-		writer.visitEnd();
-		FileOutputStream out = new FileOutputStream(classFile);
-		try {
-			out.write(writer.toByteArray());
-		} finally {
-			out.close();
-		}
-	}
-
-	private static void writeSites(final File siteFile, final File classFile)
-			throws IOException {
-		InputStreamReader in;
-		if (siteFile.getName().endsWith("gz")) {
-			in = new InputStreamReader(new GZIPInputStream(new FileInputStream(
-					siteFile)));
-		} else {
-			in = new FileReader(siteFile);
-		}
-		BufferedReader reader = new BufferedReader(in);
-		try {
-			ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-			writer.visit(V1_6, ACC_PUBLIC,
-					"com/surelogic/_flashlight/SitesConf", null,
-					"java/lang/Object", null);
-			defaultConstructor(writer);
-			MethodVisitor method = writer.visitMethod(ACC_PUBLIC + ACC_STATIC,
-					"getSiteLines", "()[Ljava/lang/String;", null, null);
-			final List<String> lines = new ArrayList<String>();
-			for (String line = reader.readLine(); line != null; line = reader
-					.readLine()) {
-				lines.add(line);
-			}
-			method.visitLdcInsn(lines.size());
-			method.visitTypeInsn(ANEWARRAY, "java/lang/String");
-			int idx = 0;
-			for (String line : lines) {
-				method.visitInsn(DUP);
-				method.visitLdcInsn(idx++);
-				method.visitLdcInsn(line);
-				method.visitInsn(AASTORE);
-			}
-			method.visitInsn(ARETURN);
-			method.visitMaxs(0, 0);
-			method.visitEnd();
-			writer.visitEnd();
-			FileOutputStream out = new FileOutputStream(classFile);
-			try {
-				out.write(writer.toByteArray());
-			} finally {
-				out.close();
-			}
-
-		} finally {
-			reader.close();
-		}
-	}
-
-	private static void writeFields(final File fieldFile, final File classFile)
-			throws IOException {
-		InputStreamReader in;
-		if (fieldFile.getName().endsWith("gz")) {
-			in = new InputStreamReader(new GZIPInputStream(new FileInputStream(
-					fieldFile)));
-		} else {
-			in = new FileReader(fieldFile);
-		}
-		BufferedReader reader = new BufferedReader(in);
-		try {
-			ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-			writer.visit(V1_6, ACC_PUBLIC,
-					"com/surelogic/_flashlight/FieldsConf", null,
-					"java/lang/Object", null);
-			defaultConstructor(writer);
-			MethodVisitor method = writer.visitMethod(ACC_PUBLIC + ACC_STATIC,
-					"getFieldLines", "()[Ljava/lang/String;", null, null);
-			final List<String> lines = new ArrayList<String>();
-			for (String line = reader.readLine(); line != null; line = reader
-					.readLine()) {
-				lines.add(line);
-			}
-			method.visitLdcInsn(lines.size());
-			method.visitTypeInsn(ANEWARRAY, "java/lang/String");
-			int idx = 0;
-			for (String line : lines) {
-				method.visitInsn(DUP);
-				method.visitLdcInsn(idx++);
-				method.visitLdcInsn(line);
-				method.visitInsn(AASTORE);
-			}
-			method.visitInsn(ARETURN);
-			method.visitMaxs(0, 0);
-			method.visitEnd();
-			writer.visitEnd();
-			FileOutputStream out = new FileOutputStream(classFile);
-			try {
-				out.write(writer.toByteArray());
-			} finally {
-				out.close();
-			}
-
-		} finally {
-			reader.close();
-		}
-	}
-
-	private static void defaultConstructor(final ClassWriter writer) {
-		MethodVisitor c = writer.visitMethod(ACC_PUBLIC, "<init>", "()V", null,
-				null);
-		c.visitCode();
-		c.visitVarInsn(ALOAD, 0);
-		c.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V");
-		c.visitInsn(RETURN);
-		c.visitMaxs(1, 1);
-		c.visitEnd();
 	}
 
 	/**

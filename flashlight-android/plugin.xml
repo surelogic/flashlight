@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<plugin>
+
+	<!-- Android -->
+	<extension point="org.eclipse.debug.core.launchDelegates">
+		<launchDelegate
+        	id="com.android.ide.eclipse.adt.internal.launch.FlashlightAndroidLaunchConfigurationDelegate"
+        	type="com.android.ide.eclipse.adt.debug.LaunchConfigType"
+        	delegate="com.android.ide.eclipse.adt.internal.launch.FlashlightAndroidLaunchConfigurationDelegate"
+        	modes="flashlight">
+		</launchDelegate>
+	</extension>
+    <extension point="org.eclipse.debug.ui.launchShortcuts">
+        <shortcut
+            label="Flashlight Android Application"
+            icon="platform:/plugin/com.surelogic.common/lib/images/fl_logo.gif"
+            modes="flashlight"
+            class="com.android.ide.eclipse.adt.internal.launch.FlashlightLaunchShortcut"
+            id="com.android.ide.eclipse.adt.debug.launching.FlashlightLaunchShortcut">
+            <contextualLaunch>
+                <enablement>
+                    <with variable="selection">
+                        <count value="1" />
+                        <iterate>
+                            <and>
+                                <test property="org.eclipse.jdt.launching.isContainer" />
+                                <test
+                                    property="org.eclipse.jdt.launching.hasProjectNature"
+                                    args="com.android.ide.eclipse.adt.AndroidNature" />
+                            </and>
+                        </iterate>
+                    </with>
+                </enablement>
+            </contextualLaunch>
+            <perspective id="org.eclipse.jdt.ui.JavaPerspective" />
+            <perspective id="org.eclipse.debug.ui.DebugPerspective" />
+            <configurationType id="com.surelogic.flashlight.client.eclipse.launch.FlashlightAndroidLaunchConfigurationType">
+            </configurationType>
+            <description
+                description="Runs an Android Application with Flashlight"
+                mode="flashlight">
+            </description>
+        </shortcut>
+    </extension>
+</plugin>

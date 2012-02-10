@@ -33,5 +33,7 @@ Bundle-ClassPath: .,
  lib/flashlight-rewriter.jar
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: com.surelogic.flashlight.client.eclipse,
+ com.surelogic.flashlight.client.eclipse.jobs,
  com.surelogic.flashlight.client.eclipse.launch,
- com.surelogic.flashlight.client.eclipse.preferences
+ com.surelogic.flashlight.client.eclipse.preferences,
+ com.surelogic.flashlight.client.eclipse.views.monitor

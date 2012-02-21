@@ -79,6 +79,7 @@ import com.surelogic.flashlight.client.eclipse.Activator;
 import com.surelogic.flashlight.client.eclipse.jobs.WatchFlashlightMonitorJob;
 import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
 import com.surelogic.flashlight.client.eclipse.views.monitor.MonitorStatus;
+import com.surelogic.flashlight.eclipse.client.jobs.ReadFlashlightStreamJob;
 
 /**
  * This Launch Configuration is mostly cribbed from
@@ -106,6 +107,7 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
     /**
      * Activity to be launched if {@link #ATTR_LAUNCH_ACTION} is 1
      */
+    @SuppressWarnings("restriction")
     public static final String ATTR_ACTIVITY = AdtPlugin.PLUGIN_ID
             + ".activity"; //$NON-NLS-1$
 
@@ -529,13 +531,15 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
         final String projectName;
         final String runName;
         final List<String> classpaths;
-        final int port;
+        final int consolePort;
+        final int outputPort;
 
         FLData(final IProject project, final String[] dxInputPaths)
                 throws IOException {
             this.project = project;
-            port = EclipseUtility
+            consolePort = EclipseUtility
                     .getIntPreference(FlashlightPreferencesUtility.CONSOLE_PORT);
+            outputPort = InstrumentationConstants.FL_OUTPUT_PORT_DEFAULT;
             time = new Date();
             classpaths = new ArrayList<String>(dxInputPaths.length);
             for (int i = 0; i < dxInputPaths.length; i++) {
@@ -563,7 +567,7 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
                     InstrumentationConstants.FL_PORT_FILE_NAME);
             PrintWriter writer = new PrintWriter(portFile);
             try {
-                writer.println(port);
+                writer.println(consolePort);
             } finally {
                 writer.close();
             }
@@ -599,7 +603,9 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
                     InstrumentationConstants.FL_COLLECTION_TYPE_DEFAULT
                             .toString());
             props.setProperty(InstrumentationConstants.FL_CONSOLE_PORT,
-                    Integer.toString(port));
+                    Integer.toString(consolePort));
+            props.setProperty(InstrumentationConstants.FL_OUTPUT_PORT, Integer
+                    .toString(InstrumentationConstants.FL_OUTPUT_PORT_DEFAULT));
             InstrumentationFileTranslator.writeProperties(props, infoClassDest);
 
             File fieldsClass = new File(infoDir,
@@ -671,6 +677,7 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
      * 
      * @throws CoreException
      */
+    @SuppressWarnings("restriction")
     @Override
     public ILaunch getLaunch(final ILaunchConfiguration configuration,
             final String mode) throws CoreException {
@@ -689,6 +696,7 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
         return false;
     }
 
+    @SuppressWarnings("restriction")
     protected void doLaunch(final ILaunchConfiguration configuration,
             final String mode, final IProgressMonitor monitor,
             final IProject project, final AndroidLaunch androidLaunch,
@@ -806,7 +814,7 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
         private final String pakkage;
 
         ConnectToProjectJob(final FLData data, final String packageName) {
-            this(data, packageName, 5);
+            this(data, packageName, 20);
         }
 
         ConnectToProjectJob(final FLData data, final String packageName,
@@ -817,19 +825,24 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
             pakkage = packageName;
         }
 
+        @SuppressWarnings("restriction")
         @Override
         protected IStatus run(final IProgressMonitor monitor) {
             for (IDevice id : AndroidDebugBridge.getBridge().getDevices()) {
                 try {
                     if (ApkInstallManager.getInstance().isApplicationInstalled(
                             data.project, pakkage, id)) {
-                        id.createForward(data.port, data.port);
+                        id.createForward(data.consolePort, data.consolePort);
+                        id.createForward(data.outputPort, data.outputPort);
                         EclipseJob.getInstance().schedule(
                                 new WatchFlashlightMonitorJob(
                                         new MonitorStatus(data.runName,
                                                 data.time.toString(),
                                                 data.fieldsFile, data.portFile,
                                                 data.completeFile)));
+                        EclipseJob.getInstance().schedule(
+                                new ReadFlashlightStreamJob(data.runName,
+                                        data.runDir, data.outputPort));
                         return Status.OK_STATUS;
                     }
                 } catch (Exception e) {
@@ -856,6 +869,7 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
      * @return true if the project is an android SDK.
      * @throws CoreException
      */
+    @SuppressWarnings("restriction")
     private boolean checkAndroidProject(final IProject project)
             throws CoreException {
         // check if the project is a java and an android project.

@@ -15,6 +15,7 @@ import static com.surelogic._flashlight.common.InstrumentationConstants.FL_LOG_F
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_LOG_RESOURCE;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_NO_SPY;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_OFF;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_OUTPUT_PORT;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_OUTPUT_TYPE;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_OUTPUT_TYPE_DEFAULT;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_OUTQ_SIZE;
@@ -79,6 +80,7 @@ public class StoreConfiguration {
     private static volatile int refinerySize;
     private static volatile boolean noSpy;
     private static volatile int consolePort;
+    private static volatile Integer outputPort;
     private static volatile String fieldsFile;
     private static volatile String sitesFile;
     private static volatile String dateOverride;
@@ -107,6 +109,8 @@ public class StoreConfiguration {
                     InstrumentationConf.getFL_RUN_FOLDER());
             props.setProperty(FL_CONSOLE_PORT,
                     InstrumentationConf.getFL_CONSOLE_PORT());
+            props.setProperty(FL_OUTPUT_PORT,
+                    InstrumentationConf.getFL_OUTPUT_PORT());
         } catch (NoClassDefFoundError e) {
             // Do nothing
         }
@@ -274,6 +278,7 @@ public class StoreConfiguration {
         setNoSpy(props.getProperty(FL_NO_SPY) != null);
         setConsolePort(getIntProperty(props, FL_CONSOLE_PORT,
                 FL_CONSOLE_PORT_DEFAULT));
+        setOutputPort(getIntProperty(props, FL_OUTPUT_PORT, null));
         setRefineryOff(props.getProperty(FL_REFINERY_OFF, null) != null);
         setOutputType(OutputType.valueOf(props.getProperty(FL_OUTPUT_TYPE),
                 FL_OUTPUT_TYPE_DEFAULT));
@@ -285,8 +290,8 @@ public class StoreConfiguration {
                 FL_SEPARATE_STREAMS, "OFF")));
     }
 
-    private static int getIntProperty(final Properties props, final String key,
-            int def) {
+    private static Integer getIntProperty(final Properties props,
+            final String key, Integer def) {
         try {
             String intString = props.getProperty(key);
             if (intString != null) {
@@ -477,6 +482,10 @@ public class StoreConfiguration {
         consolePort = Math.max(port, 1024);
     }
 
+    public static void setOutputPort(final Integer port) {
+        outputPort = port;
+    }
+
     public static String getFieldsFile() {
         return fieldsFile;
     }
@@ -587,9 +596,16 @@ public class StoreConfiguration {
                 }
             }
         } catch (final IOException e) {
-
             success = false;
         }
         return success;
+    }
+
+    public static boolean hasOutputPort() {
+        return outputPort != null;
+    }
+
+    public static int getOutputPort() {
+        return outputPort == null ? -1 : outputPort;
     }
 }

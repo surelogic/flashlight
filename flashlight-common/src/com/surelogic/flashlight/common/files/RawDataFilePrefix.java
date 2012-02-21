@@ -14,6 +14,7 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
+import com.surelogic._flashlight.common.OutputType;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.logging.SLLogger;
 
@@ -236,8 +237,7 @@ public final class RawDataFilePrefix {
             }
             f_dataFile = dataFile;
 
-            final InputStream stream = RawFileUtility
-                    .getInputStreamFor(dataFile);
+            final InputStream stream = OutputType.getInputStreamFor(dataFile);
             try {
 
                 /*

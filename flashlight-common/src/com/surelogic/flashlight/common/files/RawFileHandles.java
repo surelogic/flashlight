@@ -119,7 +119,7 @@ public final class RawFileHandles {
      */
     public boolean isLogClean() {
         try {
-            if (!f_log.exists()) {
+            if (f_log == null || !f_log.exists()) {
                 return true;
             }
             final BufferedReader r = new BufferedReader(new FileReader(f_log));
@@ -137,8 +137,12 @@ public final class RawFileHandles {
                 r.close();
             }
         } catch (final Exception e) {
-            SLLogger.getLogger().log(Level.SEVERE,
-                    I18N.err(40, f_log.getAbsolutePath()), e);
+            SLLogger.getLogger()
+                    .log(Level.SEVERE,
+                            I18N.err(
+                                    40,
+                                    f_log == null ? null : f_log
+                                            .getAbsolutePath()), e);
         }
         return true;
     }

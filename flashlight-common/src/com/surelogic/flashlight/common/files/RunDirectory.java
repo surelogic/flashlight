@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.logging.Level;
 
 import com.surelogic._flashlight.common.InstrumentationConstants;
+import com.surelogic._flashlight.common.OutputType;
 import com.surelogic.common.FileUtility;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.logging.SLLogger;
@@ -35,8 +36,6 @@ public final class RunDirectory {
     /** Complete list of suffixes used to identify raw data files */
     private static final String[] suffixes = { COMPRESSED_SUFFIX, BIN_SUFFIX,
             SUFFIX, COMPRESSED_BIN_SUFFIX };
-
-    public static final String HEADER_SUFFIX = ".flh";
 
     private static String isValidSuffix(final String name) {
         for (final String suffix : suffixes) {
@@ -70,7 +69,7 @@ public final class RunDirectory {
                 return false;
             }
             final String name = pathname.getName();
-            if (name.endsWith(HEADER_SUFFIX)) {
+            if (name.endsWith(OutputType.FLH.getSuffix())) {
                 return true;
             }
             return false;

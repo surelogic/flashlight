@@ -1,14 +1,10 @@
 package com.surelogic.flashlight.common.files;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -18,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
-import java.util.zip.GZIPInputStream;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -28,7 +23,7 @@ import org.xml.sax.SAXException;
 
 import com.surelogic._flashlight.common.BinaryEventReader;
 import com.surelogic._flashlight.common.InstrumentationConstants;
-import com.surelogic.common.FileUtility;
+import com.surelogic._flashlight.common.OutputType;
 import com.surelogic.common.SLUtility;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.logging.SLLogger;
@@ -41,17 +36,6 @@ import com.surelogic.flashlight.common.model.RunDescription;
 public final class RawFileUtility {
     public static final String DB_DIRECTORY = "db";
 
-    public static final String SUFFIX = ".fl";
-    public static final String COMPRESSED_SUFFIX = ".fl"
-            + FileUtility.GZIP_SUFFIX;
-
-    public static final String BIN_SUFFIX = ".flb";
-    public static final String COMPRESSED_BIN_SUFFIX = ".flb"
-            + FileUtility.GZIP_SUFFIX;
-
-    static final String[] suffixes = { COMPRESSED_SUFFIX, BIN_SUFFIX, SUFFIX,
-            COMPRESSED_BIN_SUFFIX };
-
     /**
      * Checks if the passed raw file is compressed or not. It does this by
      * checking the file suffix (i.e., nothing fancy is done).
@@ -62,15 +46,12 @@ public final class RawFileUtility {
      *         otherwise.
      */
     public static boolean isRawFileGzip(final File dataFile) {
-        final String name = dataFile.getName();
-        return name.endsWith(COMPRESSED_SUFFIX)
-                || name.endsWith(COMPRESSED_BIN_SUFFIX);
+        return OutputType.detectFileType(dataFile).isCompressed();
+
     }
 
     static boolean isBinary(final File dataFile) {
-        final String name = dataFile.getName();
-        return name.endsWith(BIN_SUFFIX)
-                || name.endsWith(COMPRESSED_BIN_SUFFIX);
+        return OutputType.detectFileType(dataFile).isBinary();
     }
 
     /**
@@ -82,30 +63,6 @@ public final class RawFileUtility {
     public static boolean isRunDirectory(final File runDirectory) {
         return f_runDirectoryFilter.accept(runDirectory.getParentFile(),
                 runDirectory.getName());
-    }
-
-    /**
-     * Gets an input stream to read the passed raw file. This method opens the
-     * right kind of stream based upon if the raw file is compressed or not.
-     * 
-     * @param dataFile
-     *            a raw data file.
-     * @return an input stream to read the passed raw file.
-     * @throws IOException
-     *             if the file doesn't exist or some other IO problem occurs.
-     */
-    public static InputStream getInputStreamFor(final File dataFile)
-            throws IOException {
-        InputStream stream = new FileInputStream(dataFile);
-        if (isRawFileGzip(dataFile)) {
-            stream = new GZIPInputStream(stream, 32 * 1024);
-        } else {
-            stream = new BufferedInputStream(stream, 32 * 1024);
-        }
-        if (isBinary(dataFile)) {
-            stream = new ObjectInputStream(stream);
-        }
-        return stream;
     }
 
     /**
@@ -370,9 +327,8 @@ public final class RawFileUtility {
             final File dir = new File(root, name);
             return dir.exists()
                     && dir.isDirectory()
-                    && new File(dir, name + RunDirectory.HEADER_SUFFIX)
+                    && new File(dir, name + OutputType.FLH.getSuffix())
                             .exists();
-            // name.contains("-at-") && !name.equals(DB_DIRECTORY);
         }
     };
 

@@ -25,4 +25,8 @@ public class InstrumentationConf {
         return null;
     }
 
+    public static String getFL_OUTPUT_PORT() {
+        return null;
+    }
+
 }

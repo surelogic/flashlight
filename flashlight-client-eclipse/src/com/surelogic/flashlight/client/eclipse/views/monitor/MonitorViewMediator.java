@@ -142,12 +142,12 @@ public class MonitorViewMediator {
         f_fieldsButton.setEnabled(false);
         f_edtSelector.setText("");
         f_edtButton.setEnabled(false);
+        List<FieldStatus> fieldList = status.getFields();
+        f_fields.removeAll();
         String clazz = null;
         String pakkage = null;
         TreeItem pakkageTree = null;
         TreeItem clazzTree = null;
-        List<FieldStatus> fieldList = status.getFields();
-        f_fields.removeAll();
         for (FieldStatus f : fieldList) {
             String qualifiedClazz = f.getClazz();
             int split = qualifiedClazz.lastIndexOf('.');
@@ -179,10 +179,15 @@ public class MonitorViewMediator {
             item.setData(f);
             item.setBackground(f_im.getUnknownColor());
         }
+        clazz = null;
+        pakkage = null;
+        pakkageTree = null;
+        clazzTree = null;
         f_edtAlerts.removeAll();
         for (FieldStatus f : fieldList) {
             String qualifiedClazz = f.getClazz();
             int split = qualifiedClazz.lastIndexOf('.');
+
             String newPakkage, newClazz;
             if (split != -1) {
                 newPakkage = qualifiedClazz.substring(0, split);

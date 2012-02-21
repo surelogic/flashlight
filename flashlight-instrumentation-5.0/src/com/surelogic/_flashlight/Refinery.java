@@ -2,6 +2,7 @@ package com.surelogic._flashlight;
 
 import java.lang.ref.PhantomReference;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -27,6 +28,7 @@ final class Refinery extends AbstractRefinery {
 
     private final BlockingQueue<List<Event>> f_outQueue;
 
+    private final DefinitionEventGenerator f_defs;
     /**
      * The desired size of {@link #f_eventCache}.
      */
@@ -46,6 +48,7 @@ final class Refinery extends AbstractRefinery {
         f_size = size;
         f_conf = conf;
         f_store = store;
+        f_defs = new DefinitionEventGenerator(conf, outQueue);
     }
 
     private boolean f_finished = false;
@@ -154,6 +157,7 @@ final class Refinery extends AbstractRefinery {
             }
         }
         List<Event> last = new ArrayList<Event>();
+        last.add(new Time(new Date(), System.nanoTime()));
         last.add(FinalEvent.FINAL_EVENT);
         PostMortemStore.putInQueue(f_outQueue, last);
         f_conf.log("refinery completed (" + f_garbageCollectedObjectCount
@@ -324,6 +328,11 @@ final class Refinery extends AbstractRefinery {
                 .size() - f_size;
         while (transferCount > 0) {
             final List<Event> buf = f_eventCache.removeFirst();
+            for (Event e : buf) {
+                if (e instanceof ObjectDefinition) {
+                    f_defs.handleDefinition(e);
+                }
+            }
             transferCount--;
             PostMortemStore.putInQueue(f_outQueue, buf);
         }

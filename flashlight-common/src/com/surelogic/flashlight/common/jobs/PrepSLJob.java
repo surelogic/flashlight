@@ -25,6 +25,7 @@ import javax.xml.parsers.SAXParser;
 import org.xml.sax.SAXParseException;
 
 import com.surelogic._flashlight.common.InstrumentationConstants;
+import com.surelogic._flashlight.common.OutputType;
 import com.surelogic.common.SLUtility;
 import com.surelogic.common.adhoc.AdHocQuery;
 import com.surelogic.common.i18n.I18N;
@@ -190,11 +191,11 @@ public final class PrepSLJob extends AbstractSLJob {
         try {
             final SAXParser infoSaxParser = RawFileUtility.getParser(firstFile);
             for (Iterator<File> iter = f_dataFiles.iterator(); iter.hasNext();) {
-                final InputStream infoStream = RawFileUtility
+                final InputStream infoStream = OutputType
                         .getInputStreamFor(iter.next());
                 try {
                     infoSaxParser.parse(infoStream, preScanInfo);
-                    SLLogger.getLoggerFor(PrepSLJob.class).info(
+                    SLLogger.getLoggerFor(PrepSLJob.class).fine(
                             preScanInfo.toString());
                 } catch (EOFException e) {
                     SLLogger.getLoggerFor(PrepSLJob.class)
@@ -227,11 +228,11 @@ public final class PrepSLJob extends AbstractSLJob {
 
             }
             for (File dataFile : f_dataFiles) {
-                final InputStream infoStream = RawFileUtility
+                final InputStream infoStream = OutputType
                         .getInputStreamFor(dataFile);
                 try {
                     infoSaxParser.parse(infoStream, preScanInfo);
-                    SLLogger.getLoggerFor(PrepSLJob.class).info(
+                    SLLogger.getLoggerFor(PrepSLJob.class).fine(
                             preScanInfo.toString());
                 } finally {
                     infoStream.close();
@@ -253,7 +254,7 @@ public final class PrepSLJob extends AbstractSLJob {
                     preScanMonitor);
             final SAXParser saxParser = RawFileUtility.getParser(firstFile);
             for (File dataFile : f_dataFiles) {
-                final InputStream stream = RawFileUtility
+                final InputStream stream = OutputType
                         .getInputStreamFor(dataFile);
                 preScanMonitor.begin(estEventsInRawFile);
                 saxParser.parse(stream, scanResults);
@@ -317,7 +318,7 @@ public final class PrepSLJob extends AbstractSLJob {
                     final ScanRawFilePrepScan parseHandler = new ScanRawFilePrepScan(
                             conn, prepMonitor, f_parseElements);
                     for (File dataFile : f_dataFiles) {
-                        final InputStream dataFileStream = RawFileUtility
+                        final InputStream dataFileStream = OutputType
                                 .getInputStreamFor(dataFile);
                         try {
                             saxParser.parse(dataFileStream, parseHandler);
@@ -360,7 +361,7 @@ public final class PrepSLJob extends AbstractSLJob {
                                 rprepMonitor, synthetics, begin, end);
 
                         for (File dataFile : f_dataFiles) {
-                            final InputStream infoStream = RawFileUtility
+                            final InputStream infoStream = OutputType
                                     .getInputStreamFor(dataFile);
                             try {
                                 saxParser.parse(infoStream, preScan);
@@ -373,7 +374,7 @@ public final class PrepSLJob extends AbstractSLJob {
                                     end);
                         }
                         for (File dataFile : f_dataFiles) {
-                            final InputStream rangeStream = RawFileUtility
+                            final InputStream rangeStream = OutputType
                                     .getInputStreamFor(dataFile);
                             try {
                                 final ScanRawFilePrepScan rangeHandler = new ScanRawFilePrepScan(

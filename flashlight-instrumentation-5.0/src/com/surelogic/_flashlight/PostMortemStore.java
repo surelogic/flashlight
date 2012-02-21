@@ -147,7 +147,7 @@ public class PostMortemStore implements StoreListener {
         EventVisitor outputStrategy = null;
         try {
             final PrintWriter headerW = new PrintWriter(f_conf.getFilePrefix()
-                    + ".flh");
+                    + OutputType.FLH.getSuffix());
             OutputStrategyXML.outputHeader(f_conf, headerW, timeEvent, outType
                     .isBinary() ? OutputStrategyBinary.version
                     : OutputStrategyXML.version);
@@ -162,6 +162,12 @@ public class PostMortemStore implements StoreListener {
             if (StoreConfiguration.useSeparateStreams()) {
                 f_conf.log("Starting multi-stream output.");
                 outputStrategy = new OutputStreamsStrategy(f_conf, factory);
+            } else if (StoreConfiguration.hasOutputPort()) {
+                // This check needs to be before the MultiFileOutput check,
+                // as we do not switch output streams when we are using
+                // checkpointing and sockets at the same time.
+                outputStrategy = new SocketOutputStrategy(f_conf, factory,
+                        outType);
             } else if (f_conf.isMultiFileOutput()) {
                 f_conf.log("Using checkpointing output.");
                 outputStrategy = new CheckpointingOutputStreamStrategy(f_conf,
@@ -171,7 +177,6 @@ public class PostMortemStore implements StoreListener {
                         f_conf.getFilePrefix(), outType);
                 outputStrategy = factory.create(f_conf, stream);
             }
-
         } catch (final IOException e) {
             f_conf.logAProblem(
                     "unable to output to \"" + dataFile.getAbsolutePath()

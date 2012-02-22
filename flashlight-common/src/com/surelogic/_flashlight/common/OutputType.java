@@ -14,6 +14,12 @@ import java.io.OutputStream;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+
+import org.xml.sax.SAXException;
+
 public enum OutputType {
 
     FL(false, false, ".fl"), FL_GZ(false, true, ".fl.gz"), FLB(true, false,
@@ -147,5 +153,19 @@ public enum OutputType {
             stream = new ObjectOutputStream(stream);
         }
         return stream;
+    }
+
+    public static SAXParser getParser(final OutputType type)
+            throws ParserConfigurationException, SAXException {
+        if (type.binary) {
+            return new BinaryEventReader();
+        } else {
+            return SAXParserFactory.newInstance().newSAXParser();
+        }
+    }
+
+    public static SAXParser getParser(final File dataFile)
+            throws ParserConfigurationException, SAXException {
+        return getParser(detectFileType(dataFile));
     }
 }

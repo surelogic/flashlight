@@ -15,13 +15,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-
-import org.xml.sax.SAXException;
-
-import com.surelogic._flashlight.common.BinaryEventReader;
 import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic._flashlight.common.OutputType;
 import com.surelogic.common.SLUtility;
@@ -344,13 +337,6 @@ public final class RawFileUtility {
             estimatedEvents = 10L;
         }
         return SLUtility.safeLongToInt(estimatedEvents);
-    }
-
-    public static SAXParser getParser(final File dataFile)
-            throws ParserConfigurationException, SAXException {
-        final SAXParserFactory factory = SAXParserFactory.newInstance();
-        return isBinary(dataFile) ? new BinaryEventReader() : factory
-                .newSAXParser();
     }
 
     private RawFileUtility() {

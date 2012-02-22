@@ -604,8 +604,9 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
                             .toString());
             props.setProperty(InstrumentationConstants.FL_CONSOLE_PORT,
                     Integer.toString(consolePort));
-            props.setProperty(InstrumentationConstants.FL_OUTPUT_PORT, Integer
-                    .toString(InstrumentationConstants.FL_OUTPUT_PORT_DEFAULT));
+            // props.setProperty(InstrumentationConstants.FL_OUTPUT_PORT,
+            // Integer
+            // .toString(InstrumentationConstants.FL_OUTPUT_PORT_DEFAULT));
             InstrumentationFileTranslator.writeProperties(props, infoClassDest);
 
             File fieldsClass = new File(infoDir,

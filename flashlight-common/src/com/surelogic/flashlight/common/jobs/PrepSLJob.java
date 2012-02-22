@@ -189,7 +189,7 @@ public final class PrepSLJob extends AbstractSLJob {
                 preScanInfoMonitor);
 
         try {
-            final SAXParser infoSaxParser = RawFileUtility.getParser(firstFile);
+            final SAXParser infoSaxParser = OutputType.getParser(firstFile);
             for (Iterator<File> iter = f_dataFiles.iterator(); iter.hasNext();) {
                 final InputStream infoStream = OutputType
                         .getInputStreamFor(iter.next());
@@ -252,7 +252,7 @@ public final class PrepSLJob extends AbstractSLJob {
                     monitor, "Pre-scanning the raw file", PRE_SCAN_WORK);
             final ScanRawFilePreScan scanResults = new ScanRawFilePreScan(
                     preScanMonitor);
-            final SAXParser saxParser = RawFileUtility.getParser(firstFile);
+            final SAXParser saxParser = OutputType.getParser(firstFile);
             for (File dataFile : f_dataFiles) {
                 final InputStream stream = OutputType
                         .getInputStreamFor(dataFile);

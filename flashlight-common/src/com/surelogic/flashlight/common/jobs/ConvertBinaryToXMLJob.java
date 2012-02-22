@@ -52,8 +52,7 @@ public final class ConvertBinaryToXMLJob extends AbstractSLJob {
                         newName);
                 final ConvertBinaryFileScan convertFile = new ConvertBinaryFileScan(
                         convertedFile);
-                final SAXParser saxParser = RawFileUtility
-                        .getParser(f_dataFile);
+                final SAXParser saxParser = OutputType.getParser(f_dataFile);
                 if (saxParser instanceof BinaryEventReader) {
                     BinaryEventReader r = (BinaryEventReader) saxParser;
                     r.showRawData(true);

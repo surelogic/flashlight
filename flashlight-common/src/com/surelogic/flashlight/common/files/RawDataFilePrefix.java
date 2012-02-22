@@ -247,7 +247,7 @@ public final class RawDataFilePrefix {
                 final PrefixHandler handler = new PrefixHandler();
                 try {
                     // Parse the input
-                    final SAXParser saxParser = RawFileUtility
+                    final SAXParser saxParser = OutputType
                             .getParser(f_dataFile);
                     saxParser.parse(stream, handler);
                 } catch (final SAXException e) {

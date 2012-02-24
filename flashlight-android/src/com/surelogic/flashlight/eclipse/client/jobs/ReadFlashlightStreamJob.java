@@ -1,23 +1,33 @@
 package com.surelogic.flashlight.eclipse.client.jobs;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.logging.Level;
 
 import javax.xml.parsers.SAXParser;
 
+import org.eclipse.ui.progress.UIJob;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 
+import com.android.ddmlib.IDevice;
 import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic._flashlight.common.OutputType;
+import com.surelogic.common.core.jobs.EclipseJob;
 import com.surelogic.common.jobs.NullSLProgressMonitor;
 import com.surelogic.common.jobs.SLJob;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
+import com.surelogic.common.logging.SLLogger;
+import com.surelogic.common.xml.Entities;
+import com.surelogic.flashlight.client.eclipse.jobs.SwitchToFlashlightPerspectiveJob;
 import com.surelogic.flashlight.common.prep.AbstractDataScan;
 import com.surelogic.flashlight.common.prep.PrepEvent;
 
@@ -26,12 +36,21 @@ public class ReadFlashlightStreamJob implements SLJob {
     private final String f_runName;
     private final int f_port;
     private final File f_dir;
+    private final IDevice f_device;
+    private final int f_retries;
 
     public ReadFlashlightStreamJob(final String runName, final File infoDir,
-            final int outputPort) {
+            final int outputPort, final IDevice id) {
+        this(runName, infoDir, outputPort, id, 20);
+    }
+
+    private ReadFlashlightStreamJob(final String runName, final File infoDir,
+            final int outputPort, final IDevice id, final int retries) {
         f_runName = runName;
         f_port = outputPort;
         f_dir = infoDir;
+        f_device = id;
+        f_retries = retries;
     }
 
     @Override
@@ -41,44 +60,90 @@ public class ReadFlashlightStreamJob implements SLJob {
 
     @Override
     public SLStatus run(final SLProgressMonitor monitor) {
+        Exception e = null;
         try {
             Socket socket = new Socket();
             try {
-                socket.connect(new InetSocketAddress("localhost", f_port));
                 OutputType type = InstrumentationConstants.FL_OUTPUT_TYPE_DEFAULT;
-                InputStream in = OutputType.getInputStreamFor(
-                        socket.getInputStream(), type);
+                InputStream in;
+                try {
+                    socket.connect(new InetSocketAddress("localhost", f_port));
+                    in = OutputType.getInputStreamFor(socket.getInputStream(),
+                            type);
+                } catch (IOException exc) {
+                    // We will retry if the connection fails and we have retries
+                    // left.
+                    if (f_retries > 0) {
+                        EclipseJob.getInstance().schedule(
+                                new ReadFlashlightStreamJob(f_runName, f_dir,
+                                        f_port, f_device, f_retries - 1), 1000);
+                        return SLStatus.OK_STATUS;
+                    }
+                    throw exc;
+                }
                 SAXParser parser = OutputType.getParser(type);
                 CheckpointingEventHandler h = new CheckpointingEventHandler(
                         type);
                 try {
                     parser.parse(in, h);
                     h.streamFinished();
-                } catch (Exception e) {
+                } catch (SAXParseException exc) {
+                    // This is going to fail a lot, so we aren't going to report
+                    // anything here.
+                    SLLogger.getLoggerFor(ReadFlashlightStreamJob.class).log(
+                            Level.INFO, exc.getMessage(), e);
                     h.streamBroken();
-                    return SLStatus.createErrorStatus(e);
+                } catch (Exception exc) {
+                    h.streamBroken();
+                    e = exc;
                 }
-                // FileUtility.copyToStream(false, "Port: " + f_port, in,
-                // file.getAbsolutePath(), out, true);
             } finally {
                 socket.close();
             }
-            return SLStatus.OK_STATUS;
-        } catch (Exception e) {
-            return SLStatus.createErrorStatus(e);
+        } catch (Exception exc) {
+            e = exc;
+        } finally {
+            try {
+                f_device.removeForward(f_port, f_port);
+            } catch (Exception exc) {
+                if (e == null) {
+                    e = exc;
+                }
+            }
         }
+        if (e != null) {
+            return SLStatus.createErrorStatus(e);
+        } else {
+            final UIJob job = new SwitchToFlashlightPerspectiveJob();
+            job.schedule();
+        }
+        return SLStatus.OK_STATUS;
     }
 
     class CheckpointingEventHandler extends AbstractDataScan {
         private final OutputType f_type;
         private PrintWriter f_out;
+        private final PrintWriter f_header;
         private int f_count;
-        private StringBuilder buf;
+        private final StringBuilder f_buf;
+        boolean f_doHeader;
 
         public CheckpointingEventHandler(final OutputType type)
                 throws IOException {
             super(new NullSLProgressMonitor());
+            f_doHeader = true;
             f_type = type;
+            // FIXME we set up the additional folders needed by eclipse here,
+            // but we should probably remove the dependencies in eclipse or do
+            // something more here
+            new File(f_dir, "source").mkdir();
+            new File(f_dir, "external").mkdir();
+            new File(f_dir, "projects").mkdir();
+            f_header = new PrintWriter(new File(f_dir, f_runName
+                    + OutputType.FLH.getSuffix()));
+            f_header.println("<?xml version='1.0' encoding='UTF-8' standalone='yes'?>");
+            f_buf = new StringBuilder();
+            nextStream();
         }
 
         @Override
@@ -86,23 +151,30 @@ public class ReadFlashlightStreamJob implements SLJob {
                 final String qName, final Attributes attributes)
                 throws SAXException {
             PrepEvent event = PrepEvent.getEvent(qName);
-            buf.append('<');
-            buf.append(event.getXmlName());
+            Entities.start(event.getXmlName(), f_buf);
             int size = attributes.getLength();
             for (int i = 0; i < size; i++) {
-                buf.append(' ');
-                buf.append(attributes.getQName(i));
-                buf.append("='");
-                buf.append(attributes.getValue(i));
-                buf.append('\'');
+                Entities.addAttribute(attributes.getQName(i),
+                        attributes.getValue(i), f_buf);
             }
+
             if (event == PrepEvent.FLASHLIGHT) {
-                buf.append('>');
+                f_buf.append('>');
             } else {
-                buf.append("/>");
+                f_buf.append("/>");
             }
-            f_out.println(buf);
-            buf.setLength(0);
+            f_out.println(f_buf);
+            if (f_doHeader) {
+                if (event == PrepEvent.ENVIRONMENT
+                        || event == PrepEvent.FLASHLIGHT) {
+                    f_header.println(f_buf);
+                } else if (event == PrepEvent.TIME) { // Last element
+                    f_header.println(f_buf);
+                    f_header.println("</flashlight>");
+                    f_header.close();
+                    f_doHeader = false;
+                }
+            }
             if (event == PrepEvent.CHECKPOINT) {
                 try {
                     nextStream();
@@ -110,26 +182,40 @@ public class ReadFlashlightStreamJob implements SLJob {
                     throw new SAXException(e);
                 }
             }
-
+            f_buf.setLength(0);
         }
 
         void nextStream() throws IOException {
-            if (f_out != null) {
+            boolean firstFile = f_out == null;
+            if (!firstFile) {
                 f_out.println("</flashlight>");
                 f_out.close();
             }
             f_out = new PrintWriter(OutputType.getOutputStreamFor(new File(
                     f_dir, f_runName + String.format(".%06d", f_count++)
                             + f_type.getSuffix())));
-            f_out.println("<?xml version='1.0' encoding='UTF-8' standalone='yes'?>");
-
+            if (firstFile) {
+                f_out.println("<?xml version='1.0' encoding='UTF-8' standalone='yes'?>");
+            } else {
+                // Grab the header information and place it into this file.
+                BufferedReader reader = new BufferedReader(
+                        new FileReader(new File(f_dir, f_runName
+                                + OutputType.FLH.getSuffix())));
+                String line;
+                while (!(line = reader.readLine()).startsWith("</flashlight>")) {
+                    f_out.println(line);
+                }
+            }
         }
 
         /**
          * Call this if we get an error during data processing.
          */
         void streamBroken() {
-
+            if (f_out != null) {
+                f_out.close();
+            }
+            f_header.close();
         }
 
         /**
@@ -143,6 +229,7 @@ public class ReadFlashlightStreamJob implements SLJob {
                 f_out.println("</flashlight>");
                 f_out.close();
             }
+            f_header.close();
         }
 
     }

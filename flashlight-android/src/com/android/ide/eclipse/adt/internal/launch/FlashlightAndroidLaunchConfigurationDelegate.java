@@ -842,7 +842,7 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
                                                 data.completeFile)));
                         EclipseJob.getInstance().schedule(
                                 new ReadFlashlightStreamJob(data.runName,
-                                        data.runDir, data.outputPort));
+                                        data.runDir, data.outputPort, id));
                         return Status.OK_STATUS;
                     }
                 } catch (Exception e) {

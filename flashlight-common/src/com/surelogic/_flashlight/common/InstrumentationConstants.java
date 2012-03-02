@@ -1,6 +1,7 @@
 package com.surelogic._flashlight.common;
 
 public final class InstrumentationConstants {
+
     public static final boolean allowJava14 = true;
 
     public static final String DATE_FORMAT = "-yyyy.MM.dd-'at'-HH.mm.ss.SSS";
@@ -85,4 +86,12 @@ public final class InstrumentationConstants {
 
     public static final String FL_POSTMORTEM = "FL_POSTMORTEM";
     public static final String FL_POSTMORTEM_DEFAULT = "true";
+
+    public static final String[] FL_PROPERTY_LIST = new String[] {
+            FL_COLLECTION_TYPE, FL_CONSOLE_PORT, FL_DATE_OVERRIDE, FL_DEBUG,
+            FL_DIR, FL_FIELDS_FILE, FL_OFF, FL_NO_SPY, FL_OUTPUT_PORT,
+            FL_OUTPUT_TYPE, FL_OUTQ_SIZE, FL_POSTMORTEM, FL_RAWQ_SIZE,
+            FL_REFINERY_OFF, FL_REFINERY_SIZE, FL_RUN, FL_RUN_FOLDER,
+            FL_SEPARATE_STREAMS, FL_SITES_FILE };
+
 }

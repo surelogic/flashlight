@@ -1,6 +1,8 @@
 package com.surelogic.flashlight.client.eclipse.refactoring;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import org.eclipse.jface.dialogs.Dialog;
@@ -13,8 +15,10 @@ import org.eclipse.swt.layout.FormData;
 import org.eclipse.swt.layout.FormLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Table;
+import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 
+import com.surelogic.common.SLUtility;
 import com.surelogic.common.core.JDTUtility;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.flashlight.common.model.RunDescription;
@@ -25,7 +29,8 @@ import com.surelogic.flashlight.common.model.RunDescription;
 public class RunSelectionPage extends UserInputWizardPage {
 
     private Table f_runTable;
-    // private TableColumn f_nameColumn;
+    private TableColumn[] f_cols;
+
     private final RegionRefactoringInfo f_info;
     private String selected;
 
@@ -48,7 +53,7 @@ public class RunSelectionPage extends UserInputWizardPage {
         formData.top = new FormAttachment(0, 0);
         formData.left = new FormAttachment(0, 0);
         f_runTable.setLayoutData(formData);
-        f_runTable.setHeaderVisible(false);
+        f_runTable.setHeaderVisible(true);
         f_runTable.setLinesVisible(true);
         f_runTable.addSelectionListener(new SelectionListener() {
 
@@ -62,7 +67,14 @@ public class RunSelectionPage extends UserInputWizardPage {
                 validate();
             }
         });
-
+        f_cols = new TableColumn[2];
+        f_cols[0] = new TableColumn(f_runTable, SWT.NONE);
+        f_cols[0].setText(I18N.msg("flashlight.recommend.dialog.runCol"));
+        f_cols[1] = new TableColumn(f_runTable, SWT.NONE);
+        f_cols[1].setText(I18N.msg("flashlight.recommend.dialog.timeCol"));
+        for (TableColumn c : f_cols) {
+            c.pack();
+        }
         Dialog.applyDialogFont(container);
         validate();
     }
@@ -85,7 +97,21 @@ public class RunSelectionPage extends UserInputWizardPage {
             if (!project.equals(selected)) {
                 f_runTable.removeAll();
                 selected = project;
-                for (final RunDescription run : f_info.getRuns()) {
+                final List<RunDescription> runList = new ArrayList<RunDescription>(
+                        f_info.getRuns());
+                Collections.sort(runList, new Comparator<RunDescription>() {
+                    @Override
+                    public int compare(final RunDescription r1,
+                            final RunDescription r2) {
+                        int cmp = r1.getName().compareTo(r2.getName());
+                        if (cmp == 0) {
+                            cmp = r1.getStartTimeOfRun().compareTo(
+                                    r2.getStartTimeOfRun());
+                        }
+                        return cmp;
+                    }
+                });
+                for (final RunDescription run : runList) {
                     boolean noneSelected = true;
                     final String runName = run.getName();
                     final int idx = runName.lastIndexOf('.');
@@ -95,6 +121,9 @@ public class RunSelectionPage extends UserInputWizardPage {
                         if (JDTUtility.findIType(project, runPackage, runClass) != null) {
                             final TableItem item = new TableItem(f_runTable,
                                     SWT.NONE);
+                            item.setText(0, run.getName());
+                            item.setText(1, SLUtility.toStringHMS(run
+                                    .getStartTimeOfRun()));
                             item.setText(run.getName());
                             item.setData(run);
                             if (noneSelected) {
@@ -103,6 +132,9 @@ public class RunSelectionPage extends UserInputWizardPage {
                             }
                         }
                     }
+                }
+                for (TableColumn c : f_cols) {
+                    c.pack();
                 }
                 validate();
             }

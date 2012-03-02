@@ -92,6 +92,13 @@ public class StoreConfiguration {
     private static volatile boolean debug;
     private static volatile boolean isPostmortemMode;
 
+    private static void updateIfNotSet(final Properties props,
+            final String propName, final String propValue) {
+        if (!props.containsKey(propName) && propValue != null) {
+            props.setProperty(propName, propValue);
+        }
+    }
+
     static {
         // System.out.println("StoreConfiguration");
         ClassLoader context = Thread.currentThread().getContextClassLoader();
@@ -100,19 +107,43 @@ public class StoreConfiguration {
 
         // We try to load properties from InstrumentationConf, if it exists.
         // This file is sometimes generated during the instrumentation
-        // phase.
+        // phase. We do not override properties specified on the command line.
         try {
-            props.setProperty(FL_COLLECTION_TYPE,
+            updateIfNotSet(props, FL_COLLECTION_TYPE,
                     InstrumentationConf.getFL_COLLECTION_TYPE());
-            props.setProperty(FL_RUN, InstrumentationConf.getFL_RUN());
-            props.setProperty(FL_RUN_FOLDER,
-                    InstrumentationConf.getFL_RUN_FOLDER());
-            props.setProperty(FL_CONSOLE_PORT,
+            updateIfNotSet(props, FL_CONSOLE_PORT,
                     InstrumentationConf.getFL_CONSOLE_PORT());
-            props.setProperty(FL_OUTPUT_PORT,
+            updateIfNotSet(props, FL_DATE_OVERRIDE,
+                    InstrumentationConf.getFL_DATE_OVERRIDE());
+            updateIfNotSet(props, FL_DEBUG, InstrumentationConf.getFL_DEBUG());
+            updateIfNotSet(props, FL_DIR, InstrumentationConf.getFL_DIR());
+            updateIfNotSet(props, FL_FIELDS_FILE,
+                    InstrumentationConf.getFL_FIELDS_FILE());
+            updateIfNotSet(props, FL_OFF, InstrumentationConf.getFL_OFF());
+            updateIfNotSet(props, FL_NO_SPY, InstrumentationConf.getFL_NO_SPY());
+            updateIfNotSet(props, FL_OUTPUT_PORT,
                     InstrumentationConf.getFL_OUTPUT_PORT());
+            updateIfNotSet(props, FL_OUTPUT_TYPE,
+                    InstrumentationConf.getFL_OUTPUT_TYPE());
+            updateIfNotSet(props, FL_OUTQ_SIZE,
+                    InstrumentationConf.getFL_OUTQ_SIZE());
+            updateIfNotSet(props, FL_POSTMORTEM,
+                    InstrumentationConf.getFL_POSTMORTEM());
+            updateIfNotSet(props, FL_RAWQ_SIZE,
+                    InstrumentationConf.getFL_RAWQ_SIZE());
+            updateIfNotSet(props, FL_REFINERY_OFF,
+                    InstrumentationConf.getFL_REFINERY_OFF());
+            updateIfNotSet(props, FL_REFINERY_SIZE,
+                    InstrumentationConf.getFL_REFINERY_SIZE());
+            updateIfNotSet(props, FL_RUN, InstrumentationConf.getFL_RUN());
+            updateIfNotSet(props, FL_RUN_FOLDER,
+                    InstrumentationConf.getFL_RUN_FOLDER());
+            updateIfNotSet(props, FL_SEPARATE_STREAMS,
+                    InstrumentationConf.getFL_SEPARATE_STREAMS());
+            updateIfNotSet(props, FL_SITES_FILE,
+                    InstrumentationConf.getFL_SITES_FILE());
         } catch (NoClassDefFoundError e) {
-            // Do nothing
+            // Do nothing, it's okay if this class is not available at runtime.
         }
 
         // We try to load properties from a special properties file, but we do

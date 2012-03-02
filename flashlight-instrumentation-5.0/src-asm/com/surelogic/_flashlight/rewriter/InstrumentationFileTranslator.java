@@ -16,11 +16,9 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-public final class InstrumentationFileTranslator implements Opcodes {
+import com.surelogic._flashlight.common.InstrumentationConstants;
 
-    private static final String[] requiredProperties = new String[] { "FL_RUN",
-            "FL_COLLECTION_TYPE", "FL_RUN_FOLDER", "FL_CONSOLE_PORT",
-            "FL_OUTPUT_PORT" };
+public final class InstrumentationFileTranslator implements Opcodes {
 
     private InstrumentationFileTranslator() {
 
@@ -41,7 +39,7 @@ public final class InstrumentationFileTranslator implements Opcodes {
     public static void writeProperties(final Properties props,
             final File classFile) throws IOException {
         List<String> emptyMethods = new ArrayList<String>();
-        for (String s : requiredProperties) {
+        for (String s : InstrumentationConstants.FL_PROPERTY_LIST) {
             if (!props.containsKey(s)) {
                 emptyMethods.add(s);
             }

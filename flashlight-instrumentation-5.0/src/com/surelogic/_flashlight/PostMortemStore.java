@@ -7,6 +7,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -186,7 +187,6 @@ public class PostMortemStore implements StoreListener {
 
         // Initialize Queues
         putInQueue(f_rawQueue, singletonList(timeEvent));
-        putInQueue(f_rawQueue, singletonList(new SelectedPackage("*")));
         IdPhantomReference
                 .addObserver(new IdPhantomReferenceCreationObserver() {
                     public void notify(final ClassPhantomReference o,
@@ -424,12 +424,14 @@ public class PostMortemStore implements StoreListener {
         }
         Thread.yield();
         putInQueue(f_rawQueue, flushLocalQueues());
-        putInQueue(f_rawQueue, singletonList(FinalEvent.FINAL_EVENT));
+        final List<Event> last = new ArrayList<Event>();
+        last.add(new Time(new Date(), System.nanoTime()));
+        last.add(FinalEvent.FINAL_EVENT);
+        putInQueue(f_rawQueue, last);
         if (!StoreConfiguration.isRefineryOff()) {
             join(f_refinery);
         }
         join(f_depository);
-
     }
 
     static final int LOCAL_QUEUE_MAX = 256;
@@ -485,17 +487,48 @@ public class PostMortemStore implements StoreListener {
         }
     }
 
+    /**
+     * Clear all of the local queues. This must be called before a checkpoint
+     * event, in order to ensure that we see the entirety of the program in a
+     * consistent state. Without flushing local queues, events on
+     * low-computation threads may sit around for a very long time compared to
+     * high-computation threads.
+     * 
+     * @return
+     */
     List<Event> flushLocalQueues() {
         final List<Event> buf = new ArrayList<Event>(LOCAL_QUEUE_MAX);
         synchronized (localQueueList) {
-            for (final List<Event> q : localQueueList) {
-                synchronized (q) {
-                    buf.addAll(q);
-                    q.clear();
-                }
-            }
+            flushLocalQueuesHelper(0, localQueueList, localQueueList.size(),
+                    buf);
         }
         return buf;
+    }
+
+    /*
+     * Recursively acquire every lock in the list of local queues. A lock on
+     * queueList must be acquired before this method can be called.
+     */
+    private static void flushLocalQueuesHelper(final int index,
+            final List<List<Event>> queueList, final int queueLength,
+            final List<Event> output) {
+        if (index == queueLength) {
+            flushAllQueues(queueList, output);
+        }
+        synchronized (queueList.get(index)) {
+            flushLocalQueuesHelper(index + 1, queueList, queueLength, output);
+        }
+    }
+
+    /*
+     * A lock must already be held on all queues before this method is called.
+     */
+    private static void flushAllQueues(final List<List<Event>> queueList,
+            final List<Event> output) {
+        for (final List<Event> q : queueList) {
+            output.addAll(q);
+            q.clear();
+        }
     }
 
     static List<Event> singletonList(final Event e) {

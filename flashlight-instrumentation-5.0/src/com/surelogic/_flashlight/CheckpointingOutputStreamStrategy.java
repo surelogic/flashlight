@@ -45,7 +45,6 @@ public class CheckpointingOutputStreamStrategy extends EventVisitor {
             throw new IllegalStateException(exc);
         }
         f_out.visit(new Time(f_conf.getStartTime(), f_conf.getStartNanoTime()));
-        f_out.visit(new SelectedPackage("*"));
     }
 
     @Override
@@ -145,11 +144,6 @@ public class CheckpointingOutputStreamStrategy extends EventVisitor {
 
     @Override
     void visit(final ReadWriteLockDefinition e) {
-        f_out.visit(e);
-    }
-
-    @Override
-    void visit(final SelectedPackage e) {
         f_out.visit(e);
     }
 

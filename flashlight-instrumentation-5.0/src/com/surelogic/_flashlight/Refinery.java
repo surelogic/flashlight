@@ -132,8 +132,6 @@ final class Refinery extends AbstractRefinery {
                         f_eventCache.add(l);
                         List<Event> cp = new ArrayList<Event>(1);
                         cp.add(new CheckpointEvent(System.nanoTime()));
-                        cp.add(new Time(f_conf.getStartTime(), f_conf
-                                .getStartNanoTime()));
                         f_eventCache.add(cp);
                         count = 0;
                     }

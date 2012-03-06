@@ -30,7 +30,6 @@ import static com.surelogic._flashlight.common.EventType.Object_Definition;
 import static com.surelogic._flashlight.common.EventType.Observed_CallLocation;
 import static com.surelogic._flashlight.common.EventType.ReadWriteLock_Definition;
 import static com.surelogic._flashlight.common.EventType.Receiver;
-import static com.surelogic._flashlight.common.EventType.SelectedPackage;
 import static com.surelogic._flashlight.common.EventType.SingleThreadedField_Instance;
 import static com.surelogic._flashlight.common.EventType.SingleThreadedField_Static;
 import static com.surelogic._flashlight.common.EventType.Static_CallLocation;
@@ -355,16 +354,6 @@ public class OutputStrategyBinary extends EventVisitor {
             writeCompressedLong(e.getReadWriteLockId());
             writeCompressedLong(e.getReadLockId());
             writeCompressedLong(e.getWriteLockId());
-        } catch (final IOException ioe) {
-            handleIOException(ioe);
-        }
-    }
-
-    @Override
-    void visit(final SelectedPackage e) {
-        try {
-            writeLong_unsafe(SelectedPackage.getByte(), e.getNanoTime(), false);
-            writeUTF(e.name);
         } catch (final IOException ioe) {
             handleIOException(ioe);
         }

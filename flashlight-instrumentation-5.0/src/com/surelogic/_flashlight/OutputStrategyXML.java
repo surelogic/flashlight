@@ -186,11 +186,6 @@ final class OutputStrategyXML extends EventVisitor {
     }
 
     @Override
-    void visit(final SelectedPackage e) {
-        o(e.toString());
-    }
-
-    @Override
     void visit(final SingleThreadedFieldInstance e) {
         o(e.toString());
     }

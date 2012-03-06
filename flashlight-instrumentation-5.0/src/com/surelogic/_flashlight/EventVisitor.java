@@ -94,10 +94,6 @@ public abstract class EventVisitor {
         // do nothing
     }
 
-    void visit(final SelectedPackage e) {
-        // do nothing
-    }
-
     void visit(final SingleThreadedFieldInstance e) {
         // do nothing
     }

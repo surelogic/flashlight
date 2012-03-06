@@ -8,6 +8,13 @@ import java.net.Socket;
 import com.surelogic._flashlight.common.OutputType;
 import com.surelogic._flashlight.trace.TraceNode;
 
+/**
+ * This output strategy listens to the output port for a client to connect. Once
+ * a client has connected, it can begin transmitting data to it.
+ * 
+ * @author nathan
+ * 
+ */
 public class SocketOutputStrategy extends EventVisitor {
 
     private final ServerSocket f_serverSocket;
@@ -171,12 +178,6 @@ public class SocketOutputStrategy extends EventVisitor {
 
     @Override
     void visit(final ReadWriteLockDefinition e) {
-        checkConnection();
-        f_out.visit(e);
-    }
-
-    @Override
-    void visit(final SelectedPackage e) {
         checkConnection();
         f_out.visit(e);
     }

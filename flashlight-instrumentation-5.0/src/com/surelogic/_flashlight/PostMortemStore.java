@@ -509,22 +509,32 @@ public class PostMortemStore implements StoreListener {
      * Recursively acquire every lock in the list of local queues. A lock on
      * queueList must be acquired before this method can be called.
      */
-    private static void flushLocalQueuesHelper(final int index,
+    private void flushLocalQueuesHelper(final int index,
             final List<List<Event>> queueList, final int queueLength,
             final List<Event> output) {
         if (index == queueLength) {
             flushAllQueues(queueList, output);
-        }
-        synchronized (queueList.get(index)) {
-            flushLocalQueuesHelper(index + 1, queueList, queueLength, output);
+        } else {
+            synchronized (queueList.get(index)) {
+                flushLocalQueuesHelper(index + 1, queueList, queueLength,
+                        output);
+            }
         }
     }
 
     /*
      * A lock must already be held on all queues before this method is called.
      */
-    private static void flushAllQueues(final List<List<Event>> queueList,
+    private void flushAllQueues(final List<List<Event>> queueList,
             final List<Event> output) {
+        // We drain the raw queue here too, just in case events have crept back
+        // in since the last time the refinery drained it. We do this first, so
+        // as to preserve the order of events in the same thread.
+        final List<List<Event>> rawEvents = new ArrayList<List<Event>>();
+        f_rawQueue.drainTo(rawEvents);
+        for (final List<Event> e : rawEvents) {
+            output.addAll(e);
+        }
         for (final List<Event> q : queueList) {
             output.addAll(q);
             q.clear();

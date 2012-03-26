@@ -66,7 +66,7 @@ public class DefinitionEventGenerator {
                 f_conf.log("No site class or file could be located. Depository proceeding with incomplete class information.");
                 return Collections.EMPTY_MAP;
             } else {
-                f_conf.log("Could not read from com.surelogic._flashlight.SitesConf.class, trying "
+                f_conf.log("Could not locate com.surelogic._flashlight.SitesConf, trying "
                         + name + '.');
                 File f = new File(name);
                 loadFileContents(f, sitesReader);

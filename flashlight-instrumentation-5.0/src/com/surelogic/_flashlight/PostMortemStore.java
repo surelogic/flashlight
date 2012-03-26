@@ -212,7 +212,7 @@ public class PostMortemStore implements StoreListener {
                 + StoreConfiguration.getRawQueueSize() + " : refinery="
                 + refinerySize + " : outQ="
                 + StoreConfiguration.getOutQueueSize() + ")");
-
+        f_conf.logFlush();
     }
 
     public void instanceFieldAccess(final boolean read, final Object receiver,

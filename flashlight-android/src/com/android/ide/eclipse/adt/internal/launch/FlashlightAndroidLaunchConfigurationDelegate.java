@@ -597,8 +597,6 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
             infoClassDest.getParentFile().mkdirs();
             Properties props = new Properties();
             props.setProperty(InstrumentationConstants.FL_RUN, runName);
-            props.setProperty(InstrumentationConstants.FL_RUN_FOLDER,
-                    "/mnt/sdcard/fl");
             props.setProperty(InstrumentationConstants.FL_COLLECTION_TYPE,
                     InstrumentationConstants.FL_COLLECTION_TYPE_DEFAULT
                             .toString());

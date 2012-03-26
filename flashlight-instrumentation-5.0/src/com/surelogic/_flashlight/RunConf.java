@@ -299,7 +299,7 @@ public class RunConf {
             f_log = initLog(fileName.toString());
         } else {
             f_filePrefix = null;
-            f_log = null;
+            f_log = initLog(null);
         }
         f_start_nano = System.nanoTime();
         FieldDefs defs;
@@ -323,6 +323,9 @@ public class RunConf {
     }
 
     private static PrintStream initLog(final String fileName) {
+        if (fileName == null) {
+            return System.err;
+        }
         final File logFile = new File(fileName.toString() + ".flog");
         PrintStream w = null;
         try {

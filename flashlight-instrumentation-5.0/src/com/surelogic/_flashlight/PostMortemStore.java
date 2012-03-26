@@ -1,6 +1,5 @@
 package com.surelogic._flashlight;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
@@ -142,18 +141,16 @@ public class PostMortemStore implements StoreListener {
         if (StoreConfiguration.debugOn()) {
             System.err.println("Output XML = " + !outType.isBinary());
         }
-        final File dataFile = EventVisitor.createStreamFile(
-                f_conf.getFilePrefix(), outType);
-
         EventVisitor outputStrategy = null;
         try {
-            final PrintWriter headerW = new PrintWriter(f_conf.getFilePrefix()
-                    + OutputType.FLH.getSuffix());
-            OutputStrategyXML.outputHeader(f_conf, headerW, timeEvent, outType
-                    .isBinary() ? OutputStrategyBinary.version
-                    : OutputStrategyXML.version);
-            headerW.close();
-
+            if (StoreConfiguration.getDirectory() != null) {
+                final PrintWriter headerW = new PrintWriter(
+                        f_conf.getFilePrefix() + OutputType.FLH.getSuffix());
+                OutputStrategyXML.outputHeader(f_conf, headerW, timeEvent,
+                        outType.isBinary() ? OutputStrategyBinary.version
+                                : OutputStrategyXML.version);
+                headerW.close();
+            }
             if (StoreConfiguration.debugOn()) {
                 System.err.println("Compress stream = "
                         + outType.isCompressed());
@@ -179,9 +176,8 @@ public class PostMortemStore implements StoreListener {
                 outputStrategy = factory.create(f_conf, stream);
             }
         } catch (final IOException e) {
-            f_conf.logAProblem(
-                    "unable to output to \"" + dataFile.getAbsolutePath()
-                            + "\"", e);
+            f_conf.logAProblem("unable to initialize PostMortem Store output.",
+                    e);
             System.exit(1); // bail
         }
 
@@ -216,7 +212,6 @@ public class PostMortemStore implements StoreListener {
                 + StoreConfiguration.getRawQueueSize() + " : refinery="
                 + refinerySize + " : outQ="
                 + StoreConfiguration.getOutQueueSize() + ")");
-        f_conf.log("to \"" + dataFile.getAbsolutePath() + "\"");
 
     }
 

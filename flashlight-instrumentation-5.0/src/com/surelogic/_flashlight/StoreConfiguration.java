@@ -37,7 +37,6 @@ import static com.surelogic._flashlight.common.InstrumentationConstants.FL_SITES
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_SITES_RESOURCE;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_SOURCE_FOLDER_NAME;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_SOURCE_RESOURCE;
-import static com.surelogic._flashlight.common.InstrumentationConstants.JAVA_IO_TMPDIR;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -194,15 +193,13 @@ public class StoreConfiguration {
             new File(dir, "external").mkdir();
             new File(dir, "projects").mkdir();
             setDirectory(dir.getAbsolutePath());
-        } else {
-            setDirectory(System.getProperty(JAVA_IO_TMPDIR));
         }
         // We will use specific field and sites files, but otherwise we will
         // look to see if the files are embedded in the instrumented code. If
         // this is the case, we also copy the files into the run directory
         if (props.containsKey(FL_FIELDS_FILE)) {
             setFieldsFile(props.getProperty(FL_FIELDS_FILE));
-        } else {
+        } else if (getDirectory() != null) {
             File fieldsFile = new File(getDirectory(), FL_FIELDS_FILE_NAME);
             boolean success = false;
             try {
@@ -235,7 +232,7 @@ public class StoreConfiguration {
         }
         if (props.containsKey(FL_SITES_FILE)) {
             setSitesFile(props.getProperty(FL_SITES_FILE, FL_SITES_FILE_NAME));
-        } else {
+        } else if (getDirectory() != null) {
             File sitesFile = new File(getDirectory(), FL_SITES_FILE_NAME);
             boolean success = false;
             try {
@@ -269,37 +266,42 @@ public class StoreConfiguration {
                 }
             }
         }
-        InputStream resource = context.getResourceAsStream(FL_LOG_RESOURCE);
-        File logFile = new File(getDirectory(), FL_LOG_FILE_NAME);
-        if (resource != null) {
-            copy(resource, logFile, true);
-        } else if (!logFile.exists()) {
-            // We are going to write out a file anyways, in the interests of
-            // producing a valid run directory.
-            try {
-                PrintWriter writer = new PrintWriter(logFile);
+        if (getDirectory() != null) {
+            InputStream resource = context.getResourceAsStream(FL_LOG_RESOURCE);
+            File logFile = new File(getDirectory(), FL_LOG_FILE_NAME);
+            if (resource != null) {
+                copy(resource, logFile, true);
+            } else if (!logFile.exists()) {
+                // We are going to write out a file anyways, in the interests of
+                // producing a valid run directory.
                 try {
-                    writer.println("Instrumentation log data was not made available to the Flashlight runtime.");
-                } finally {
-                    writer.close();
+                    PrintWriter writer = new PrintWriter(logFile);
+                    try {
+                        writer.println("Instrumentation log data was not made available to the Flashlight runtime.");
+                    } finally {
+                        writer.close();
+                    }
+                } catch (FileNotFoundException e) {
+                    // Do nothing
                 }
-            } catch (FileNotFoundException e) {
-                // Do nothing
+            }
+            InputStream sources = context
+                    .getResourceAsStream(FL_SOURCE_RESOURCE);
+            if (sources != null) {
+                ZipInputStream zf = new ZipInputStream(sources);
+                File sourceFolder = new File(getDirectory(),
+                        FL_SOURCE_FOLDER_NAME);
+                try {
+                    for (ZipEntry entry = zf.getNextEntry(); entry != null; entry = zf
+                            .getNextEntry()) {
+                        copy(zf, new File(sourceFolder, entry.getName()), false);
+                    }
+                } catch (IOException e) {
+                    throw new IllegalStateException(e);
+                }
             }
         }
-        InputStream sources = context.getResourceAsStream(FL_SOURCE_RESOURCE);
-        if (sources != null) {
-            ZipInputStream zf = new ZipInputStream(sources);
-            File sourceFolder = new File(getDirectory(), FL_SOURCE_FOLDER_NAME);
-            try {
-                for (ZipEntry entry = zf.getNextEntry(); entry != null; entry = zf
-                        .getNextEntry()) {
-                    copy(zf, new File(sourceFolder, entry.getName()), false);
-                }
-            } catch (IOException e) {
-                throw new IllegalStateException(e);
-            }
-        }
+
         setRawQueueSize(getIntProperty(props, FL_RAWQ_SIZE,
                 FL_RAWQ_SIZE_DEFAULT));
         setOutQueueSize(getIntProperty(props, FL_OUTQ_SIZE,
@@ -632,6 +634,11 @@ public class StoreConfiguration {
         return success;
     }
 
+    /**
+     * Indicates that we are streaming data to a remote program.
+     * 
+     * @return
+     */
     public static boolean hasOutputPort() {
         return outputPort != null;
     }

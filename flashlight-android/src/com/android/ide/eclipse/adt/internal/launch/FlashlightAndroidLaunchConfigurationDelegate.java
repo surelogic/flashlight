@@ -814,7 +814,7 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
         private final String pakkage;
 
         ConnectToProjectJob(final FLData data, final String packageName) {
-            this(data, packageName, 20);
+            this(data, packageName, 100);
         }
 
         ConnectToProjectJob(final FLData data, final String packageName,

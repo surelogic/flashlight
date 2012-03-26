@@ -79,19 +79,22 @@ class Console extends Thread {
             return;
         }
         f_conf.log("console server listening on port " + port);
-        File portFile = new File(StoreConfiguration.getDirectory(),
-                InstrumentationConstants.FL_PORT_FILE_NAME);
-        try {
-            PrintWriter writer = new PrintWriter(portFile);
+        if (StoreConfiguration.getDirectory() != null) {
+            // We write out the port file we are using to our local run folder,
+            // if it exists.
+            File portFile = new File(StoreConfiguration.getDirectory(),
+                    InstrumentationConstants.FL_PORT_FILE_NAME);
             try {
-                writer.println(port);
-            } finally {
-                writer.close();
+                PrintWriter writer = new PrintWriter(portFile);
+                try {
+                    writer.println(port);
+                } finally {
+                    writer.close();
+                }
+            } catch (FileNotFoundException e) {
+                f_conf.log("Could not write to instrumentation's port file.");
             }
-        } catch (FileNotFoundException e) {
-            f_conf.log("Could not write to instrumentation's port file.");
         }
-
         // until told to shutdown, listen for and handle client connections
         while (!f_shutdownRequested) {
             try {
@@ -269,7 +272,7 @@ class Console extends Thread {
         void requestShutdown() {
             f_shutdownRequested = true;
             try {
-                this.interrupt(); // wake up
+                interrupt(); // wake up
                 f_client.close();
             } catch (IOException e) {
                 f_conf.logAProblem("unable to close the socket used by "

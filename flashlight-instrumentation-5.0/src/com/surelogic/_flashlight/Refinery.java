@@ -49,6 +49,7 @@ final class Refinery extends AbstractRefinery {
         f_conf = conf;
         f_store = store;
         f_defs = new DefinitionEventGenerator(conf, outQueue);
+        f_refineryStart = System.currentTimeMillis();
     }
 
     private boolean f_finished = false;
@@ -58,6 +59,9 @@ final class Refinery extends AbstractRefinery {
     private long f_garbageCollectedObjectCount = 0;
 
     private long f_threadLocalFieldCount = 0;
+
+    private long f_lastRollover = 0;
+    private final long f_refineryStart;
 
     @Override
     public void run() {
@@ -83,10 +87,8 @@ final class Refinery extends AbstractRefinery {
                 } else {
                     continue;
                 }
-                // int num =
+
                 f_rawQueue.drainTo(buf);
-                // Caused lots of sync overhead
-                // buf.add(Store.flushLocalQueues());
 
                 /*
                  * System.err.println("Refinery: got "+buf.size()+" lists ("+num+
@@ -122,7 +124,14 @@ final class Refinery extends AbstractRefinery {
                     }
                     f_eventCache.add(l);
                 } else if (f_conf.isMultiFileOutput()) {
-                    if (count > f_conf.getFileEventCount()) {
+                    long curTime = System.currentTimeMillis();
+                    if (count > f_conf.getFileEventCount()
+                            || f_lastRollover == 0
+                            && curTime - f_refineryStart > f_conf
+                                    .getFileEventInitialDuration()
+                            || f_lastRollover > 0
+                            && curTime - f_lastRollover > f_conf
+                                    .getFileEventDuration()) {
                         final List<Event> l = f_store.flushLocalQueues();
                         if (filter) {
                             for (Event e : l) {
@@ -134,6 +143,7 @@ final class Refinery extends AbstractRefinery {
                         cp.add(new CheckpointEvent(System.nanoTime()));
                         f_eventCache.add(cp);
                         count = 0;
+                        f_lastRollover = curTime;
                     }
                 }
 

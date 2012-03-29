@@ -43,4 +43,14 @@
             </description>
         </shortcut>
     </extension>
+    <extension point="org.eclipse.debug.ui.launchConfigurationTabGroups">
+		<launchConfigurationTabGroup
+			type="com.android.ide.eclipse.adt.debug.LaunchConfigType"
+			class="com.android.ide.eclipse.adt.internal.launch.FlashlightAppTabGroup"
+			id="com.android.ide.eclipse.adt.debug.FlashlightLaunchConfigTabGroup">
+			<launchMode mode="flashlight"
+				description="%fl.localJavaApplicationTabGroupDescription">
+			</launchMode>
+		</launchConfigurationTabGroup>
+	</extension>
 </plugin>

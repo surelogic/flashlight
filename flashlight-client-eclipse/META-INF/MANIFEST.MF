@@ -32,8 +32,23 @@ Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: .,
  lib/flashlight-rewriter.jar
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
-Export-Package: com.surelogic.flashlight.client.eclipse,
+Export-Package: com.surelogic._flashlight.rewriter;
+  x-friends:="com.surelogic.flashlight.android,
+   com.surelogic.flashlight.client.eclipse,
+   com.surelogic.jsure.client.eclipse,
+   com.surelogic.sierra.client.eclipse",
+ com.surelogic._flashlight.rewriter.config,
+ com.surelogic._flashlight.rewriter.xml,
+ com.surelogic.flashlight.client.eclipse,
+ com.surelogic.flashlight.client.eclipse.actions,
+ com.surelogic.flashlight.client.eclipse.dialogs,
+ com.surelogic.flashlight.client.eclipse.images,
  com.surelogic.flashlight.client.eclipse.jobs,
  com.surelogic.flashlight.client.eclipse.launch,
+ com.surelogic.flashlight.client.eclipse.perspectives,
  com.surelogic.flashlight.client.eclipse.preferences,
- com.surelogic.flashlight.client.eclipse.views.monitor
+ com.surelogic.flashlight.client.eclipse.refactoring,
+ com.surelogic.flashlight.client.eclipse.views.adhoc,
+ com.surelogic.flashlight.client.eclipse.views.monitor,
+ com.surelogic.flashlight.client.eclipse.views.run,
+ com.surelogic.flashlight.client.eclipse.views.source

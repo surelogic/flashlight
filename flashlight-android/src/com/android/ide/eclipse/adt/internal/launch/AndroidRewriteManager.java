@@ -12,38 +12,37 @@ import com.surelogic._flashlight.rewriter.config.Configuration;
 
 public class AndroidRewriteManager extends RewriteManager {
 
-	public AndroidRewriteManager(final Configuration c,
-			final RewriteMessenger m, final File ff, final File sf) {
-		super(c, m, ff, sf);
+    public AndroidRewriteManager(final Configuration c,
+            final RewriteMessenger m, final File ff, final File sf) {
+        super(c, m, ff, sf);
+    }
 
-	}
+    @Override
+    protected void exceptionScan(final String srcPath, final IOException e) {
+        throw new RuntimeException(e);
+    }
 
-	@Override
-	protected void exceptionScan(final String srcPath, final IOException e) {
-		throw new RuntimeException();
-	}
+    @Override
+    protected void exceptionInstrument(final String srcPath,
+            final String destPath, final IOException e) {
+        throw new RuntimeException(e);
+    }
 
-	@Override
-	protected void exceptionInstrument(final String srcPath,
-			final String destPath, final IOException e) {
-		throw new RuntimeException();
-	}
+    @Override
+    protected void exceptionLoadingMethodsFile(final JAXBException e) {
+        throw new RuntimeException(e);
+    }
 
-	@Override
-	protected void exceptionLoadingMethodsFile(final JAXBException e) {
-		throw new RuntimeException();
-	}
+    @Override
+    protected void exceptionCreatingFieldsFile(final File fieldsFile,
+            final FileNotFoundException e) {
+        throw new RuntimeException(e);
+    }
 
-	@Override
-	protected void exceptionCreatingFieldsFile(final File fieldsFile,
-			final FileNotFoundException e) {
-		throw new RuntimeException();
-	}
-
-	@Override
-	protected void exceptionCreatingSitesFile(final File sitesFile,
-			final IOException e) {
-		throw new RuntimeException();
-	}
+    @Override
+    protected void exceptionCreatingSitesFile(final File sitesFile,
+            final IOException e) {
+        throw new RuntimeException(e);
+    }
 
 }

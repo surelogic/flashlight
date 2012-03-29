@@ -10,8 +10,6 @@ Require-Bundle: org.eclipse.ui,
  com.surelogic.common,
  com.surelogic.common.core,
  com.surelogic.common.ui,
- com.surelogic.flashlight.client.eclipse,
- com.surelogic.flashlight.common,
  org.eclipse.ui,
  org.eclipse.core.runtime,
  org.eclipse.debug.core,
@@ -29,7 +27,9 @@ Require-Bundle: org.eclipse.ui,
  com.android.ide.eclipse.adt,
  com.android.ide.eclipse.ddms,
  com.android.ide.eclipse.hierarchyviewer,
- com.android.ide.eclipse.traceview
+ com.android.ide.eclipse.traceview,
+ com.surelogic.flashlight.client.eclipse;bundle-version="4.2.1",
+ com.surelogic.flashlight.common;bundle-version="4.2.1"
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ClassPath: .,

@@ -20,7 +20,6 @@ import static com.surelogic.flashlight.common.files.InstrumentationFileHandles.I
 import static com.surelogic.flashlight.common.files.InstrumentationFileHandles.SITES_FILE_NAME;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -34,7 +33,6 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.logging.Level;
 
@@ -65,7 +63,6 @@ import com.surelogic._flashlight.rewriter.PrintWriterMessenger;
 import com.surelogic._flashlight.rewriter.RewriteManager;
 import com.surelogic._flashlight.rewriter.RewriteMessenger;
 import com.surelogic._flashlight.rewriter.config.Configuration;
-import com.surelogic._flashlight.rewriter.config.Configuration.FieldFilter;
 import com.surelogic._flashlight.rewriter.config.ConfigurationBuilder;
 import com.surelogic.common.FileUtility;
 import com.surelogic.common.core.JDTUtility;
@@ -73,7 +70,6 @@ import com.surelogic.common.core.MemoryUtility;
 import com.surelogic.common.core.SourceZip;
 import com.surelogic.common.core.jobs.EclipseJob;
 import com.surelogic.common.core.logging.SLEclipseStatusUtility;
-import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.license.SLLicenseProduct;
 import com.surelogic.common.license.SLLicenseUtility;
 import com.surelogic.common.logging.SLLogger;
@@ -84,6 +80,7 @@ import com.surelogic.flashlight.client.eclipse.Activator;
 import com.surelogic.flashlight.client.eclipse.jobs.LaunchTerminationDetectionJob;
 import com.surelogic.flashlight.client.eclipse.jobs.SwitchToFlashlightPerspectiveJob;
 import com.surelogic.flashlight.client.eclipse.jobs.WatchFlashlightMonitorJob;
+import com.surelogic.flashlight.client.eclipse.launch.LaunchHelper.RuntimeConfig;
 import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
 import com.surelogic.flashlight.client.eclipse.views.monitor.MonitorStatus;
 import com.surelogic.flashlight.common.files.RunDirectory;
@@ -183,7 +180,6 @@ public final class FlashlightVMRunner implements IVMRunner {
         if (!sourceDir.exists()) {
             sourceDir.mkdir();
         }
-
     }
 
     @Override
@@ -353,50 +349,15 @@ public final class FlashlightVMRunner implements IVMRunner {
      * @return Whether instrumentation was canceled.
      * @throws CoreException
      */
-    @SuppressWarnings("cast")
     private boolean instrumentClassfiles(final ILaunchConfiguration launch,
             final Map<String, Entry> entryMap, final SubMonitor progress)
             throws CoreException {
         boolean aborted = false;
-
-        /*
-         * Bug 1615: Sanity check the instrumented classpath entries first:
-         * Check that no entry marked for instrumentation is a file system
-         * parent of any other entry that is marked for instrumentation.
-         * 
-         * Could be expensive: O(n^2)
-         * 
-         * 2011-03-22: Jar files that are nested inside of directories are added
-         * to a special list so that they can be forced to instructed last. This
-         * way we make sure the handling of the directories doesn't overwrite
-         * the instrumented jar file.
-         */
         final List<String> allInstrument = new LinkedList<String>();
         allInstrument.addAll(instrumentUser);
         allInstrument.addAll(instrumentBoot);
-        final List<String> instrumentLast = new ArrayList<String>();
-        final StringBuilder sb = new StringBuilder();
-        for (final String potentialParent : allInstrument) {
-            final String test = potentialParent + File.separator;
-            for (final String potentialChild : allInstrument) {
-                if (potentialChild.startsWith(test)) {
-                    if (new File(potentialChild).isDirectory()) {
-                        sb.append("Classpath entry ");
-                        sb.append(potentialParent);
-                        sb.append(" is instrumented and nests the instrumented classpath directory entry ");
-                        sb.append(potentialChild);
-                        sb.append("  ");
-                    } else { // nested jar file
-                        instrumentLast.add(potentialChild);
-                    }
-                }
-            }
-        }
-        if (sb.length() > 0) {
-            throw new CoreException(SLEclipseStatusUtility.createErrorStatus(0,
-                    sb.toString()));
-            // FIXME throw new FlashlightLaunchException(sb.toString());
-        }
+        List<String> instrumentLast = LaunchHelper
+                .sanitizeInstrumentationList(allInstrument);
 
         runOutputDir.mkdirs();
         PrintWriter logOut = null;
@@ -404,81 +365,8 @@ public final class FlashlightVMRunner implements IVMRunner {
             logOut = new PrintWriter(logFile);
             final RewriteMessenger messenger = new PrintWriterMessenger(logOut);
 
-            // Read the property file
-            final Properties flashlightProps = new Properties();
-            final File flashlightPropFile = new File(
-                    System.getProperty("user.home"),
-                    "flashlight-rewriter.properties");
-            boolean failed = false;
-            try {
-                flashlightProps.load(new FileInputStream(flashlightPropFile));
-            } catch (final IOException e) {
-                failed = true;
-            } catch (final IllegalArgumentException e) {
-                failed = true;
-            }
-
-            final ConfigurationBuilder configBuilder;
-            if (failed) {
-                SLLogger.getLogger().log(Level.INFO,
-                        I18N.err(162, flashlightPropFile));
-                configBuilder = new ConfigurationBuilder();
-            } else {
-                configBuilder = new ConfigurationBuilder(flashlightProps);
-            }
-
-            try {
-                configBuilder
-                        .setIndirectUseDefault(launch
-                                .getAttribute(
-                                        FlashlightPreferencesUtility.USE_DEFAULT_INDIRECT_ACCESS_METHODS,
-                                        true));
-            } catch (final CoreException e) {
-                // eat it
-            }
-            try {
-                final List<String> xtraMethods = (List<String>) launch
-                        .getAttribute(
-                                FlashlightPreferencesUtility.ADDITIONAL_INDIRECT_ACCESS_METHODS,
-                                Collections.emptyList());
-                for (final String s : xtraMethods) {
-                    configBuilder.addAdditionalMethods(new File(s));
-                }
-            } catch (final CoreException e) {
-                // eat it
-            }
-
-            try {
-                final List<String> blacklist = (List<String>) launch
-                        .getAttribute(
-                                FlashlightPreferencesUtility.CLASS_BLACKLIST,
-                                Collections.emptyList());
-                for (final String internalTypeName : blacklist) {
-                    configBuilder.addToBlacklist(internalTypeName);
-                }
-            } catch (final CoreException e) {
-                // eat it
-            }
-
-            try {
-                final String filterName = launch.getAttribute(
-                        FlashlightPreferencesUtility.FIELD_FILTER,
-                        FieldFilter.NONE.name());
-                configBuilder.setFieldFilter(Enum.valueOf(FieldFilter.class,
-                        filterName));
-
-                final List<String> filterPkgs = launch.getAttribute(
-                        FlashlightPreferencesUtility.FIELD_FILTER_PACKAGES,
-                        Collections.emptyList());
-                configBuilder.getFilterPackages().clear();
-                for (final String pkg : filterPkgs) {
-                    configBuilder.addToFilterPackages(pkg.replace('.', '/'));
-                }
-
-            } catch (final CoreException e) {
-                // eat it
-            }
-
+            final ConfigurationBuilder configBuilder = LaunchHelper
+                    .buildConfigurationFromPreferences(launch);
             final RewriteManager manager = new VMRewriteManager(
                     configBuilder.getConfiguration(), messenger, fieldsFile,
                     sitesFile, progress);
@@ -765,41 +653,8 @@ public final class FlashlightVMRunner implements IVMRunner {
         final List<String> newVmArgsList = new ArrayList<String>(
                 vmArgs.length + 11);
         try {
-            final int rawQSize = launch.getAttribute(
-                    FlashlightPreferencesUtility.RAWQ_SIZE,
-                    prefs.getInt(FlashlightPreferencesUtility.RAWQ_SIZE));
-            final int refSize = launch.getAttribute(
-                    FlashlightPreferencesUtility.REFINERY_SIZE,
-                    prefs.getInt(FlashlightPreferencesUtility.REFINERY_SIZE));
-            final int outQSize = launch.getAttribute(
-                    FlashlightPreferencesUtility.OUTQ_SIZE,
-                    prefs.getInt(FlashlightPreferencesUtility.OUTQ_SIZE));
-            final int cPort = launch.getAttribute(
-                    FlashlightPreferencesUtility.CONSOLE_PORT,
-                    prefs.getInt(FlashlightPreferencesUtility.CONSOLE_PORT));
-            final String useBinary = launch.getAttribute(
-                    FlashlightPreferencesUtility.OUTPUT_TYPE,
-                    prefs.getString(FlashlightPreferencesUtility.OUTPUT_TYPE));
-            final boolean postmortem = launch
-                    .getAttribute(
-                            FlashlightPreferencesUtility.POSTMORTEM_MODE,
-                            prefs.getBoolean(FlashlightPreferencesUtility.POSTMORTEM_MODE));
-            final boolean compress = launch
-                    .getAttribute(
-                            FlashlightPreferencesUtility.COMPRESS_OUTPUT,
-                            prefs.getBoolean(FlashlightPreferencesUtility.COMPRESS_OUTPUT));
-            final String collectionType = launch
-                    .getAttribute(
-                            FlashlightPreferencesUtility.COLLECTION_TYPE,
-                            prefs.getString(FlashlightPreferencesUtility.COLLECTION_TYPE));
-            final boolean useSpy = launch.getAttribute(
-                    FlashlightPreferencesUtility.USE_SPY,
-                    prefs.getBoolean(FlashlightPreferencesUtility.USE_SPY));
-            final boolean useRefinery = launch
-                    .getAttribute(
-                            FlashlightPreferencesUtility.USE_REFINERY,
-                            prefs.getBoolean(FlashlightPreferencesUtility.USE_REFINERY));
 
+            RuntimeConfig conf = LaunchHelper.getRuntimeConfig(launch);
             newVmArgsList.add("-DFL_RUN=" + mainTypeName);
             newVmArgsList.add("-D" + FL_DIR + "="
                     + runOutputDir.getAbsolutePath());
@@ -807,24 +662,28 @@ public final class FlashlightVMRunner implements IVMRunner {
                     + fieldsFile.getAbsolutePath());
             newVmArgsList.add("-D" + FL_SITES_FILE + "="
                     + sitesFile.getAbsolutePath());
-            newVmArgsList.add("-D" + FL_RAWQ_SIZE + "=" + rawQSize);
-            newVmArgsList.add("-D" + FL_REFINERY_SIZE + "=" + refSize);
-            newVmArgsList.add("-D" + FL_OUTQ_SIZE + "=" + outQSize);
-            newVmArgsList.add("-D" + FL_CONSOLE_PORT + "=" + cPort);
+            newVmArgsList.add("-D" + FL_RAWQ_SIZE + "="
+                    + conf.getRawQueueSize());
+            newVmArgsList.add("-D" + FL_REFINERY_SIZE + "="
+                    + conf.getRefinerySize());
+            newVmArgsList.add("-D" + FL_OUTQ_SIZE + "="
+                    + conf.getOutQueueSize());
+            newVmArgsList.add("-D" + FL_CONSOLE_PORT + "="
+                    + conf.getConsolePort());
             newVmArgsList.add("-D" + FL_DATE_OVERRIDE + "=" + datePostfix);
             newVmArgsList.add("-D" + FL_POSTMORTEM + "="
-                    + Boolean.toString(postmortem));
+                    + Boolean.toString(conf.isPostmortem()));
             newVmArgsList.add("-D" + FL_OUTPUT_TYPE + "="
-                    + OutputType.get(useBinary, compress));
+                    + OutputType.get(conf.getUseBinary(), conf.isCompressed()));
             newVmArgsList.add("-D"
                     + FL_COLLECTION_TYPE
                     + "="
-                    + CollectionType
-                            .valueOf(collectionType, CollectionType.ALL));
-            if (!useRefinery) {
+                    + CollectionType.valueOf(conf.getCollectionType(),
+                            CollectionType.ALL));
+            if (!conf.useRefinery()) {
                 newVmArgsList.add("-D" + FL_REFINERY_OFF + "=true");
             }
-            if (!useSpy) {
+            if (!conf.useSpy()) {
                 newVmArgsList.add("-D" + FL_NO_SPY + "=true");
             }
         } catch (final CoreException e) {

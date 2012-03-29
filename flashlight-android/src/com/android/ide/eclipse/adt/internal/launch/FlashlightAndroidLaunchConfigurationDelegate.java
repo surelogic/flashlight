@@ -6,6 +6,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +33,7 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
+import org.eclipse.jface.preference.IPreferenceStore;
 
 import com.android.ddmlib.AndroidDebugBridge;
 import com.android.ddmlib.IDevice;
@@ -73,10 +75,13 @@ import com.surelogic.common.core.EclipseUtility;
 import com.surelogic.common.core.jobs.EclipseJob;
 import com.surelogic.common.core.logging.SLEclipseStatusUtility;
 import com.surelogic.common.logging.SLLogger;
+import com.surelogic.common.ui.EclipseUIUtility;
 import com.surelogic.common.ui.dialogs.ShowTextDialog;
 import com.surelogic.common.ui.jobs.SLUIJob;
 import com.surelogic.flashlight.client.eclipse.Activator;
 import com.surelogic.flashlight.client.eclipse.jobs.WatchFlashlightMonitorJob;
+import com.surelogic.flashlight.client.eclipse.launch.LaunchHelper;
+import com.surelogic.flashlight.client.eclipse.launch.LaunchHelper.RuntimeConfig;
 import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
 import com.surelogic.flashlight.client.eclipse.views.monitor.MonitorStatus;
 import com.surelogic.flashlight.eclipse.client.jobs.ReadFlashlightStreamJob;
@@ -125,7 +130,8 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
                                 IJavaLaunchConfigurationConstants.ATTR_PROJECT_NAME,
                                 ""));
         AndroidLaunch androidLaunch = (AndroidLaunch) launch;
-        FLData data = doFullIncrementalDebugBuild(project, monitor);
+        FLData data = doFullIncrementalDebugBuild(configuration, project,
+                monitor);
 
         // if we have a valid debug port, this means we're debugging an app
         // that's already launched.
@@ -256,7 +262,8 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
     }
 
     @SuppressWarnings("restriction")
-    private FLData doFullIncrementalDebugBuild(final IProject project,
+    private FLData doFullIncrementalDebugBuild(
+            final ILaunchConfiguration launchConfig, final IProject project,
             final IProgressMonitor monitor) throws CoreException {
         // First have android do their full build
         ProjectHelper.doFullIncrementalDebugBuild(project, monitor);
@@ -386,7 +393,7 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
                 .getFile(SdkConstants.FN_ANDROID_MANIFEST_XML);
         FLData data = null;
         try {
-            data = instrumentClasses(project, dxInputPaths);
+            data = instrumentClasses(launchConfig, project, dxInputPaths);
 
             try {
                 dxInputPaths = data.getClasspathEntries();
@@ -519,6 +526,7 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
     }
 
     private static class FLData {
+
         final IProject project;
         final File log;
         final File fieldsFile;
@@ -530,19 +538,21 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
         final Date time;
         final String projectName;
         final String runName;
+        final List<String> originalClasspaths;
         final List<String> classpaths;
-        final int consolePort;
         final int outputPort;
+        final RuntimeConfig conf;
 
-        FLData(final IProject project, final String[] dxInputPaths)
-                throws IOException {
+        FLData(final ILaunchConfiguration launch, final IProject project,
+                final String[] dxInputPaths) throws IOException, CoreException {
+            conf = LaunchHelper.getRuntimeConfig(launch);
             this.project = project;
-            consolePort = EclipseUtility
-                    .getIntPreference(FlashlightPreferencesUtility.CONSOLE_PORT);
+            final IPreferenceStore prefs = EclipseUIUtility.getPreferences();
             outputPort = InstrumentationConstants.FL_OUTPUT_PORT_DEFAULT;
             time = new Date();
-            classpaths = new ArrayList<String>(dxInputPaths.length);
-            for (int i = 0; i < dxInputPaths.length; i++) {
+            originalClasspaths = Arrays.asList(dxInputPaths);
+            classpaths = new ArrayList<String>(originalClasspaths.size());
+            for (int i = 0; i < originalClasspaths.size(); i++) {
                 File tmpFile = File.createTempFile("fl_classes_", "dir");
                 tmpFile.delete();
                 tmpFile.mkdir();
@@ -567,7 +577,7 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
                     InstrumentationConstants.FL_PORT_FILE_NAME);
             PrintWriter writer = new PrintWriter(portFile);
             try {
-                writer.println(consolePort);
+                writer.println(conf.getConsolePort());
             } finally {
                 writer.close();
             }
@@ -580,14 +590,8 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
             String[] arr = classpaths.toArray(new String[length]);
             arr[length - 2] = infoDir.getAbsolutePath();
             // Get the path to the flashlight-runtime.jar
-            final IPath bundleBase = Activator.getDefault().getBundleLocation();
-            if (bundleBase != null) {
-                String name = "lib/flashlight-runtime.jar";
-                final IPath jarLocation = bundleBase.append(name);
-                arr[length - 1] = jarLocation.toOSString();
-            } else {
-                throw new IllegalStateException("No bundle location found.");
-            }
+            arr[length - 1] = getRuntimeJarPath();
+
             return arr;
         }
 
@@ -597,13 +601,25 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
             infoClassDest.getParentFile().mkdirs();
             Properties props = new Properties();
             props.setProperty(InstrumentationConstants.FL_RUN, runName);
+
             props.setProperty(InstrumentationConstants.FL_COLLECTION_TYPE,
-                    InstrumentationConstants.FL_COLLECTION_TYPE_DEFAULT
-                            .toString());
+                    conf.getCollectionType());
             props.setProperty(InstrumentationConstants.FL_CONSOLE_PORT,
-                    Integer.toString(consolePort));
+                    Integer.toString(conf.getConsolePort()));
             props.setProperty(InstrumentationConstants.FL_OUTPUT_PORT, Integer
                     .toString(InstrumentationConstants.FL_OUTPUT_PORT_DEFAULT));
+            props.setProperty(InstrumentationConstants.FL_OUTQ_SIZE,
+                    Integer.toString(conf.getOutQueueSize()));
+            props.setProperty(InstrumentationConstants.FL_RAWQ_SIZE,
+                    Integer.toString(conf.getRawQueueSize()));
+            props.setProperty(InstrumentationConstants.FL_REFINERY_SIZE,
+                    Integer.toString(conf.getRefinerySize()));
+            props.setProperty(InstrumentationConstants.FL_POSTMORTEM,
+                    Boolean.toString(conf.isPostmortem()));
+            if (!conf.useSpy()) {
+                props.setProperty(InstrumentationConstants.FL_NO_SPY, "true");
+            }
+
             InstrumentationFileTranslator.writeProperties(props, infoClassDest);
 
             File fieldsClass = new File(infoDir,
@@ -624,19 +640,37 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
 
     }
 
-    private FLData instrumentClasses(final IProject project,
-            final String[] dxInputPaths) throws IOException {
-        ConfigurationBuilder configBuilder = new ConfigurationBuilder();
-        FLData data = new FLData(project, dxInputPaths);
+    private static String getRuntimeJarPath() {
+        final IPath bundleBase = Activator.getDefault().getBundleLocation();
+        if (bundleBase != null) {
+            String name = "lib/flashlight-runtime.jar";
+            final IPath jarLocation = bundleBase.append(name);
+            return jarLocation.toOSString();
+        } else {
+            throw new IllegalStateException("No bundle location found.");
+        }
+    }
+
+    private FLData instrumentClasses(final ILaunchConfiguration launchConfig,
+            final IProject project, final String[] dxInputPaths)
+            throws IOException, CoreException {
+        ConfigurationBuilder configBuilder = LaunchHelper
+                .buildConfigurationFromPreferences(launchConfig);
+        FLData data = new FLData(launchConfig, project, dxInputPaths);
 
         RewriteManager rm = new AndroidRewriteManager(
                 configBuilder.getConfiguration(), new PrintWriterMessenger(
                         new PrintWriter(data.log)), data.fieldsFile,
                 data.sitesFile);
-
-        for (int i = 0; i < dxInputPaths.length; i++) {
-            rm.addDirToDir(new File(dxInputPaths[i]),
-                    new File(data.classpaths.get(i)));
+        String runtimePath = getRuntimeJarPath();
+        for (int i = 0; i < data.originalClasspaths.size(); i++) {
+            File from = new File(data.originalClasspaths.get(i));
+            File to = new File(data.classpaths.get(i));
+            if (from.isDirectory()) {
+                rm.addDirToDir(from, to);
+            } else if (from.exists()) {
+                rm.addJarToJar(from, to, runtimePath);
+            }
         }
 
         try {
@@ -830,7 +864,8 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
                 try {
                     if (ApkInstallManager.getInstance().isApplicationInstalled(
                             data.project, pakkage, id)) {
-                        id.createForward(data.consolePort, data.consolePort);
+                        id.createForward(data.conf.getConsolePort(),
+                                data.conf.getConsolePort());
                         id.createForward(data.outputPort, data.outputPort);
                         EclipseJob.getInstance().schedule(
                                 new WatchFlashlightMonitorJob(

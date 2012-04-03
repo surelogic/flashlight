@@ -7,6 +7,7 @@ import java.io.StringWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -656,6 +657,17 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
             throws IOException, CoreException {
         ConfigurationBuilder configBuilder = LaunchHelper
                 .buildConfigurationFromPreferences(launchConfig);
+
+        /* Get the entries that the user does not want instrumented */
+        final List<String> noInstrumentUser = launchConfig
+                .getAttribute(
+                        FlashlightPreferencesUtility.CLASSPATH_ENTRIES_TO_NOT_INSTRUMENT,
+                        Collections.emptyList());
+        final List<String> noInstrumentBoot = launchConfig
+                .getAttribute(
+                        FlashlightPreferencesUtility.BOOTPATH_ENTRIES_TO_NOT_INSTRUMENT,
+                        Collections.emptyList());
+
         FLData data = new FLData(launchConfig, project, dxInputPaths);
 
         RewriteManager rm = new AndroidRewriteManager(
@@ -663,13 +675,20 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
                         new PrintWriter(data.log)), data.fieldsFile,
                 data.sitesFile);
         String runtimePath = getRuntimeJarPath();
+        LaunchHelper.sanitizeInstrumentationList(data.originalClasspaths);
         for (int i = 0; i < data.originalClasspaths.size(); i++) {
-            File from = new File(data.originalClasspaths.get(i));
+            String fromPath = data.originalClasspaths.get(i);
+            File from = new File(fromPath);
             File to = new File(data.classpaths.get(i));
+            boolean ignore = noInstrumentBoot.contains(fromPath)
+                    || noInstrumentUser.contains(fromPath);
             if (from.isDirectory()) {
                 rm.addDirToDir(from, to);
             } else if (from.exists()) {
                 rm.addJarToJar(from, to, runtimePath);
+            } else {
+                log.warning(from.getAbsolutePath().toString()
+                        + " could not be found on the classpath could not be found when trying to instrument this project with Flashlight.");
             }
         }
 

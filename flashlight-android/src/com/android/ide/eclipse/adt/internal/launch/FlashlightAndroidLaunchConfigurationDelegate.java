@@ -6,7 +6,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -34,7 +34,6 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
-import org.eclipse.jface.preference.IPreferenceStore;
 
 import com.android.ddmlib.AndroidDebugBridge;
 import com.android.ddmlib.IDevice;
@@ -76,7 +75,6 @@ import com.surelogic.common.core.EclipseUtility;
 import com.surelogic.common.core.jobs.EclipseJob;
 import com.surelogic.common.core.logging.SLEclipseStatusUtility;
 import com.surelogic.common.logging.SLLogger;
-import com.surelogic.common.ui.EclipseUIUtility;
 import com.surelogic.common.ui.dialogs.ShowTextDialog;
 import com.surelogic.common.ui.jobs.SLUIJob;
 import com.surelogic.flashlight.client.eclipse.Activator;
@@ -309,9 +307,6 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
         // a build to use the apk right after the call.
         project.refreshLocal(IResource.DEPTH_INFINITE, monitor);
 
-        // FIXME build the package that we want manually, and replace the
-        // existing one.
-
         // list of referenced projects. This is a mix of java projects and
         // library projects
         // and is computed below.
@@ -357,12 +352,23 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
         AndroidPrintStream mErrStream = new AndroidPrintStream(project,
                 null /* prefix */, AdtPlugin.getOutStream());
 
+        ResourceMarker mResourceMarker = new ResourceMarker() {
+            @Override
+            public void setWarning(final IResource resource,
+                    final String message) {
+                BaseProjectHelper.markResource(resource,
+                        AdtConstants.MARKER_PACKAGING, message,
+                        IMarker.SEVERITY_WARNING);
+            }
+        };
+
         BuildHelper helper = new BuildHelper(
                 project,
                 mOutStream,
                 mErrStream,
                 true /* debugMode */,
-                AdtPrefs.getPrefs().getBuildVerbosity() == BuildVerbosity.VERBOSE);
+                AdtPrefs.getPrefs().getBuildVerbosity() == BuildVerbosity.VERBOSE,
+                mResourceMarker);
 
         IPath androidBinLocation = androidOutputFolder.getLocation();
         String osAndroidBinPath = androidBinLocation.toOSString();
@@ -377,17 +383,7 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
         // Delete old APK
         new File(osFinalPackagePath).delete();
 
-        ResourceMarker mResourceMarker = new ResourceMarker() {
-            @Override
-            public void setWarning(final IResource resource,
-                    final String message) {
-                BaseProjectHelper.markResource(resource,
-                        AdtConstants.MARKER_PACKAGING, message,
-                        IMarker.SEVERITY_WARNING);
-            }
-        };
-        String[] dxInputPaths = helper.getCompiledCodePaths(true,
-                mResourceMarker);
+        Collection<String> dxInputPaths = helper.getCompiledCodePaths();
         // Now we instrument all of the code in dxInputPaths and replace it with
         // ours.
         IFile manifestFile = project
@@ -405,8 +401,7 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
 
                 helper.finalDebugPackage(osAndroidBinPath + File.separator
                         + AdtConstants.FN_RESOURCES_AP_, classesDexPath,
-                        osFinalPackagePath, javaProject, libProjects,
-                        referencedJavaProjects, mResourceMarker);
+                        osFinalPackagePath, libProjects, mResourceMarker);
             } finally {
                 data.deleteTempFiles();
             }
@@ -545,18 +540,24 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
         final RuntimeConfig conf;
 
         FLData(final ILaunchConfiguration launch, final IProject project,
-                final String[] dxInputPaths) throws IOException, CoreException {
+                final Collection<String> dxInputPaths) throws IOException,
+                CoreException {
             conf = LaunchHelper.getRuntimeConfig(launch);
             this.project = project;
-            final IPreferenceStore prefs = EclipseUIUtility.getPreferences();
             outputPort = InstrumentationConstants.FL_OUTPUT_PORT_DEFAULT;
             time = new Date();
-            originalClasspaths = Arrays.asList(dxInputPaths);
+            originalClasspaths = new ArrayList<String>(dxInputPaths);
             classpaths = new ArrayList<String>(originalClasspaths.size());
             for (int i = 0; i < originalClasspaths.size(); i++) {
-                File tmpFile = File.createTempFile("fl_classes_", "dir");
-                tmpFile.delete();
-                tmpFile.mkdir();
+                File tmpFile;
+                if (new File(originalClasspaths.get(i)).isDirectory()) {
+                    tmpFile = File.createTempFile("fl_classes_", "dir");
+                    tmpFile.delete();
+                    tmpFile.mkdir();
+                } else {
+                    tmpFile = File.createTempFile("fl_classes_", "jar");
+                }
+
                 classpaths.add(tmpFile.getAbsolutePath());
             }
             SimpleDateFormat df = new SimpleDateFormat(
@@ -586,14 +587,13 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
             infoDir.delete();
         }
 
-        public String[] getClasspathEntries() {
-            int length = classpaths.size() + 2;
-            String[] arr = classpaths.toArray(new String[length]);
-            arr[length - 2] = infoDir.getAbsolutePath();
-            // Get the path to the flashlight-runtime.jar
-            arr[length - 1] = getRuntimeJarPath();
+        public Collection<String> getClasspathEntries() {
+            List<String> list = new ArrayList<String>(classpaths.size() + 2);
 
-            return arr;
+            list.addAll(classpaths);
+            list.add(infoDir.getAbsolutePath());
+            list.add(getRuntimeJarPath());
+            return list;
         }
 
         public void createInfoClasses() throws IOException {
@@ -652,8 +652,9 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
         }
     }
 
+    @SuppressWarnings("unchecked")
     private FLData instrumentClasses(final ILaunchConfiguration launchConfig,
-            final IProject project, final String[] dxInputPaths)
+            final IProject project, final Collection<String> dxInputPaths)
             throws IOException, CoreException {
         ConfigurationBuilder configBuilder = LaunchHelper
                 .buildConfigurationFromPreferences(launchConfig);
@@ -675,13 +676,39 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
                         new PrintWriter(data.log)), data.fieldsFile,
                 data.sitesFile);
         String runtimePath = getRuntimeJarPath();
-        LaunchHelper.sanitizeInstrumentationList(data.originalClasspaths);
+        List<String> instrumentLast = LaunchHelper
+                .sanitizeInstrumentationList(data.originalClasspaths);
+        List<Integer> toInstrument = new ArrayList<Integer>();
         for (int i = 0; i < data.originalClasspaths.size(); i++) {
             String fromPath = data.originalClasspaths.get(i);
             File from = new File(fromPath);
             File to = new File(data.classpaths.get(i));
             boolean ignore = noInstrumentBoot.contains(fromPath)
                     || noInstrumentUser.contains(fromPath);
+            if (!ignore && instrumentLast.contains(fromPath)) {
+                toInstrument.add(i);
+            }
+            if (from.isDirectory()) {
+                if (ignore) {
+                    rm.addClasspathDir(from);
+                } else {
+                    rm.addDirToDir(from, to);
+                }
+            } else if (from.exists()) {
+                if (ignore) {
+                    rm.addClasspathJar(from);
+                } else {
+                    rm.addJarToJar(from, to, runtimePath);
+                }
+            } else {
+                log.warning(from.getAbsolutePath().toString()
+                        + " could not be found on the classpath could not be found when trying to instrument this project with Flashlight.");
+            }
+        }
+        for (int i : toInstrument) {
+            String fromPath = data.originalClasspaths.get(i);
+            File from = new File(fromPath);
+            File to = new File(data.classpaths.get(i));
             if (from.isDirectory()) {
                 rm.addDirToDir(from, to);
             } else if (from.exists()) {
@@ -691,7 +718,6 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
                         + " could not be found on the classpath could not be found when trying to instrument this project with Flashlight.");
             }
         }
-
         try {
             rm.execute();
         } catch (AlreadyInstrumentedException e) {

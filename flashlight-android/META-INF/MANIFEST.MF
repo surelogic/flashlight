@@ -6,7 +6,7 @@ Bundle-Version: 1.0.0.qualifier
 Bundle-Activator: com.surelogic.flashlight.android.Activator
 Require-Bundle: org.eclipse.ui,
  org.eclipse.core.runtime,
- com.android.ide.eclipse.adt,
+ com.android.ide.eclipse.adt;bundle-version="17.0.0",
  com.surelogic.common,
  com.surelogic.common.core,
  com.surelogic.common.ui,

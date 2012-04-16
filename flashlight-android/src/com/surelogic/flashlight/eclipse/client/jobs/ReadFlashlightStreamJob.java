@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.util.logging.Level;
 
 import javax.xml.parsers.SAXParser;
@@ -17,6 +18,7 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
+import com.android.ddmlib.AdbCommandRejectedException;
 import com.android.ddmlib.IDevice;
 import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic._flashlight.common.OutputType;
@@ -33,6 +35,8 @@ import com.surelogic.flashlight.common.prep.PrepEvent;
 
 public class ReadFlashlightStreamJob implements SLJob {
 
+    private static final int RETRIES = 50;
+    private static final int TIMEOUT = 1000;
     private final String f_runName;
     private final int f_port;
     private final File f_dir;
@@ -41,7 +45,7 @@ public class ReadFlashlightStreamJob implements SLJob {
 
     public ReadFlashlightStreamJob(final String runName, final File infoDir,
             final int outputPort, final IDevice id) {
-        this(runName, infoDir, outputPort, id, 20);
+        this(runName, infoDir, outputPort, id, RETRIES);
     }
 
     private ReadFlashlightStreamJob(final String runName, final File infoDir,
@@ -67,19 +71,31 @@ public class ReadFlashlightStreamJob implements SLJob {
                 OutputType type = InstrumentationConstants.FL_OUTPUT_TYPE_DEFAULT;
                 InputStream in;
                 try {
-                    socket.connect(new InetSocketAddress("localhost", f_port));
+                    try {
+                        socket.connect(new InetSocketAddress("localhost",
+                                f_port), TIMEOUT);
+                    } catch (Exception exc) {
+                        if ((exc instanceof SocketTimeoutException || exc instanceof IOException)
+                                && f_retries > 0) {
+                            EclipseJob.getInstance().schedule(
+                                    new ReadFlashlightStreamJob(f_runName,
+                                            f_dir, f_port, f_device,
+                                            f_retries - 1), 500);
+                            return SLStatus.OK_STATUS;
+                        } else {
+                            return SLStatus
+                                    .createErrorStatus(
+                                            String.format(
+                                                    "Could not connect to the device hosting %s.",
+                                                    f_runName), exc);
+                        }
+                    }
                     in = OutputType.getInputStreamFor(socket.getInputStream(),
                             type);
                 } catch (IOException exc) {
-                    // We will retry if the connection fails and we have retries
-                    // left.
-                    if (f_retries > 0) {
-                        EclipseJob.getInstance().schedule(
-                                new ReadFlashlightStreamJob(f_runName, f_dir,
-                                        f_port, f_device, f_retries - 1), 1000);
-                        return SLStatus.OK_STATUS;
-                    }
-                    throw exc;
+                    return SLStatus.createErrorStatus(String.format(
+                            "Could not connect to the device hosting %s.",
+                            f_runName), exc);
                 }
                 SAXParser parser = OutputType.getParser(type);
                 CheckpointingEventHandler h = new CheckpointingEventHandler(
@@ -105,6 +121,9 @@ public class ReadFlashlightStreamJob implements SLJob {
         } finally {
             try {
                 f_device.removeForward(f_port, f_port);
+            } catch (AdbCommandRejectedException exc) {
+                // That's okay, we were just doing our best. Probably someone
+                // unplugged the device.
             } catch (Exception exc) {
                 if (e == null) {
                     e = exc;

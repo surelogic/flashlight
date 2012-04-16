@@ -49,7 +49,7 @@
 			class="com.android.ide.eclipse.adt.internal.launch.FlashlightAppTabGroup"
 			id="com.android.ide.eclipse.adt.debug.FlashlightLaunchConfigTabGroup">
 			<launchMode mode="flashlight"
-				description="%fl.localJavaApplicationTabGroupDescription">
+				description="Run an Android application in Flashlight">
 			</launchMode>
 		</launchConfigurationTabGroup>
 	</extension>

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 
 import com.surelogic._flashlight.common.OutputType;
 import com.surelogic._flashlight.trace.TraceNode;
@@ -17,211 +18,286 @@ import com.surelogic._flashlight.trace.TraceNode;
  */
 public class SocketOutputStrategy extends EventVisitor {
 
-    private final ServerSocket f_serverSocket;
+    private static final int TIMEOUT = 5000;
+
+    private Socket f_socket;
     private EventVisitor f_out;
     private final OutputType f_outType;
     private final RunConf f_conf;
     private final Factory f_fact;
+    private boolean done;
 
     public SocketOutputStrategy(final RunConf conf, final Factory factory,
             final OutputType outType) {
         f_conf = conf;
         f_fact = factory;
         f_outType = outType;
-        try {
-            f_conf.log("Depository will connect to output port "
-                    + StoreConfiguration.getOutputPort() + ".");
-            f_serverSocket = new ServerSocket(
-                    StoreConfiguration.getOutputPort());
-        } catch (IOException e) {
-            f_conf.logAProblem(
-                    "Could not connect to socket and create output stream.", e);
-            throw new IllegalStateException(e);
-        }
+        f_conf.log("Depository will connect to output port "
+                + StoreConfiguration.getOutputPort() + ".");
     }
 
-    private void checkConnection() {
-        if (f_out == null) {
+    class ConnectToHost extends Thread {
+
+        @Override
+        public void run() {
             try {
-                Socket socket = f_serverSocket.accept();
-                OutputStream stream = OutputType.getOutputStreamFor(
-                        socket.getOutputStream(), f_outType);
-                f_out = f_fact.create(f_conf, stream);
+                ServerSocket serverSocket = new ServerSocket(
+                        StoreConfiguration.getOutputPort());
+                serverSocket.setSoTimeout(TIMEOUT);
+                try {
+                    f_socket = serverSocket.accept();
+                } catch (SocketTimeoutException e) {
+                    serverSocket.close();
+                }
             } catch (IOException e) {
                 f_conf.logAProblem(
                         "Could not connect to socket and create output stream.",
                         e);
-                e.printStackTrace();
             }
+        }
+
+    }
+
+    private boolean checkConnection() {
+        if (done) {
+            return false;
+        }
+        if (f_out == null) {
+            boolean success = false;
+            try {
+                Thread t = new ConnectToHost();
+                t.start();
+                try {
+                    t.join();
+                } catch (InterruptedException e1) {
+                    // Do nothing
+                }
+                if (f_socket == null) {
+                    t = new ConnectToHost();
+                    t.start();
+                    try {
+                        t.join();
+                    } catch (InterruptedException e) {
+                        // Do nothing
+                    }
+                }
+                if (f_socket != null) {
+                    OutputStream stream = OutputType.getOutputStreamFor(
+                            f_socket.getOutputStream(), f_outType);
+                    f_out = f_fact.create(f_conf, stream);
+                    success = true;
+                } else {
+                    f_conf.logAProblem("Could not connect to host computer, shutting down instrumentation now.");
+                }
+            } catch (IOException e) {
+                f_conf.logAProblem(
+                        "Could not connect to socket and create output stream, shutting down instrumentation now..",
+                        e);
+            }
+            if (!success) {
+                done = true;
+                Store.shutdown();
+            }
+            return success;
+        } else {
+            return true;
         }
     }
 
     @Override
     void visit(final CheckpointEvent e) {
-        checkConnection();
-        f_out.visit(e);
+        if (checkConnection()) {
+            f_out.visit(e);
+        }
     }
 
     @Override
     void visit(final AfterIntrinsicLockAcquisition e) {
-        checkConnection();
-        f_out.visit(e);
+        if (checkConnection()) {
+            f_out.visit(e);
+        }
     }
 
     @Override
     void visit(final AfterIntrinsicLockRelease e) {
-        checkConnection();
-        f_out.visit(e);
+        if (checkConnection()) {
+            f_out.visit(e);
+        }
     }
 
     @Override
     void visit(final AfterIntrinsicLockWait e) {
-        checkConnection();
-        f_out.visit(e);
+        if (checkConnection()) {
+            f_out.visit(e);
+        }
     }
 
     @Override
     void visit(final AfterUtilConcurrentLockAcquisitionAttempt e) {
-        checkConnection();
-        f_out.visit(e);
+        if (checkConnection()) {
+            f_out.visit(e);
+        }
     }
 
     @Override
     void visit(final AfterUtilConcurrentLockReleaseAttempt e) {
-        checkConnection();
-        f_out.visit(e);
+        if (checkConnection()) {
+            f_out.visit(e);
+        }
     }
 
     @Override
     void visit(final BeforeIntrinsicLockAcquisition e) {
-        checkConnection();
-        f_out.visit(e);
+        if (checkConnection()) {
+            f_out.visit(e);
+        }
     }
 
     @Override
     void visit(final BeforeIntrinsicLockWait e) {
-        checkConnection();
-        f_out.visit(e);
+        if (checkConnection()) {
+            f_out.visit(e);
+        }
     }
 
     @Override
     void visit(final BeforeUtilConcurrentLockAcquisitionAttempt e) {
-        checkConnection();
-        f_out.visit(e);
+        if (checkConnection()) {
+            f_out.visit(e);
+        }
     }
 
     @Override
     void visit(final FieldAssignment e) {
-        checkConnection();
-        f_out.visit(e);
+        if (checkConnection()) {
+            f_out.visit(e);
+        }
     }
 
     @Override
     void visit(final FieldDefinition e) {
-        checkConnection();
-        f_out.visit(e);
+        if (checkConnection()) {
+            f_out.visit(e);
+        }
     }
 
     @Override
     void visit(final FieldReadInstance e) {
-        checkConnection();
-        f_out.visit(e);
+        if (checkConnection()) {
+            f_out.visit(e);
+        }
     }
 
     @Override
     void visit(final FieldReadStatic e) {
-        checkConnection();
-        f_out.visit(e);
+        if (checkConnection()) {
+            f_out.visit(e);
+        }
     }
 
     @Override
     void visit(final FieldWriteInstance e) {
-        checkConnection();
-        f_out.visit(e);
+        if (checkConnection()) {
+            f_out.visit(e);
+        }
     }
 
     @Override
     void visit(final FieldWriteStatic e) {
-        checkConnection();
-        f_out.visit(e);
+        if (checkConnection()) {
+            f_out.visit(e);
+        }
     }
 
     @Override
     void visit(final FinalEvent e) {
-        checkConnection();
-        f_out.visit(e);
+        if (checkConnection()) {
+            f_out.visit(e);
+        }
     }
 
     @Override
     void visit(final GarbageCollectedObject e) {
-        checkConnection();
-        f_out.visit(e);
+        if (checkConnection()) {
+            f_out.visit(e);
+        }
     }
 
     @Override
     void visit(final IndirectAccess indirectAccess) {
-        checkConnection();
-        f_out.visit(indirectAccess);
+        if (checkConnection()) {
+            f_out.visit(indirectAccess);
+        }
     }
 
     @Override
     void visit(final ObjectDefinition e) {
-        checkConnection();
-        f_out.visit(e);
+        if (checkConnection()) {
+            f_out.visit(e);
+        }
     }
 
     @Override
     void visit(final ObservedCallLocation e) {
-        checkConnection();
-        f_out.visit(e);
+        if (checkConnection()) {
+            f_out.visit(e);
+        }
     }
 
     @Override
     void visit(final ReadWriteLockDefinition e) {
-        checkConnection();
-        f_out.visit(e);
+        if (checkConnection()) {
+            f_out.visit(e);
+        }
     }
 
     @Override
     void visit(final SingleThreadedFieldInstance e) {
-        checkConnection();
-        f_out.visit(e);
+        if (checkConnection()) {
+            f_out.visit(e);
+        }
     }
 
     @Override
     void visit(final SingleThreadedFieldStatic e) {
-        checkConnection();
-        f_out.visit(e);
+        if (checkConnection()) {
+            f_out.visit(e);
+        }
     }
 
     @Override
     void visit(final StaticCallLocation e) {
-        checkConnection();
-        f_out.visit(e);
+        if (checkConnection()) {
+            f_out.visit(e);
+        }
     }
 
     @Override
     void visit(final Time e) {
-        checkConnection();
-        f_out.visit(e);
+        if (checkConnection()) {
+            f_out.visit(e);
+        }
     }
 
     @Override
     public void visit(final TraceNode e) {
-        checkConnection();
-        f_out.visit(e);
+        if (checkConnection()) {
+            f_out.visit(e);
+        }
     }
 
     @Override
     void flush() {
-        checkConnection();
-        f_out.flush();
+        if (checkConnection()) {
+            f_out.flush();
+        }
     }
 
     @Override
     void printStats() {
-        checkConnection();
-        f_out.printStats();
+        if (checkConnection()) {
+            f_out.printStats();
+        }
     }
 
 }

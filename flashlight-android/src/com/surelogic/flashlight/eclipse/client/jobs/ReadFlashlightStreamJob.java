@@ -1,6 +1,7 @@
 package com.surelogic.flashlight.eclipse.client.jobs;
 
 import java.io.BufferedReader;
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -18,11 +19,11 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
-import com.android.ddmlib.AdbCommandRejectedException;
 import com.android.ddmlib.IDevice;
 import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic._flashlight.common.OutputType;
 import com.surelogic.common.core.jobs.EclipseJob;
+import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jobs.NullSLProgressMonitor;
 import com.surelogic.common.jobs.SLJob;
 import com.surelogic.common.jobs.SLProgressMonitor;
@@ -70,65 +71,69 @@ public class ReadFlashlightStreamJob implements SLJob {
             try {
                 OutputType type = InstrumentationConstants.FL_OUTPUT_TYPE_DEFAULT;
                 InputStream in;
+
+                // Try to connect to the device
                 try {
-                    try {
-                        socket.connect(new InetSocketAddress("localhost",
-                                f_port), TIMEOUT);
-                    } catch (Exception exc) {
-                        if ((exc instanceof SocketTimeoutException || exc instanceof IOException)
-                                && f_retries > 0) {
-                            EclipseJob.getInstance().schedule(
-                                    new ReadFlashlightStreamJob(f_runName,
-                                            f_dir, f_port, f_device,
-                                            f_retries - 1), 500);
-                            return SLStatus.OK_STATUS;
-                        } else {
-                            return SLStatus
-                                    .createErrorStatus(
-                                            String.format(
-                                                    "Could not connect to the device hosting %s.",
-                                                    f_runName), exc);
-                        }
-                    }
+                    socket.connect(new InetSocketAddress("localhost", f_port),
+                            TIMEOUT);
                     in = OutputType.getInputStreamFor(socket.getInputStream(),
                             type);
-                } catch (IOException exc) {
-                    return SLStatus.createErrorStatus(String.format(
-                            "Could not connect to the device hosting %s.",
-                            f_runName), exc);
+                } catch (Exception exc) {
+                    if ((exc instanceof SocketTimeoutException || exc instanceof IOException)
+                            && f_retries > 0) {
+                        // Maybe something isn't set up yet, we'll try again in
+                        // just a little bit.
+                        EclipseJob.getInstance().schedule(
+                                new ReadFlashlightStreamJob(f_runName, f_dir,
+                                        f_port, f_device, f_retries - 1), 500);
+                        return SLStatus.OK_STATUS;
+                    } else {
+                        // We are done trying to connect, so it is time to bail
+                        // and to remove our forward port.
+                        try {
+                            f_device.removeForward(f_port, f_port);
+                        } catch (Exception exc1) {
+                            // That's okay, we were just doing our best. Maybe
+                            // someone unplugged the device?
+                        }
+                        return SLStatus.createErrorStatus(
+                                I18N.err(237, f_runName), exc);
+                    }
                 }
+
+                // We managed to connect to the device. Time to start reading
+                // data.
                 SAXParser parser = OutputType.getParser(type);
                 CheckpointingEventHandler h = new CheckpointingEventHandler(
                         type);
                 try {
                     parser.parse(in, h);
                     h.streamFinished();
-                } catch (SAXParseException exc) {
-                    // This is going to fail a lot, so we aren't going to report
-                    // anything here.
-                    SLLogger.getLoggerFor(ReadFlashlightStreamJob.class).log(
-                            Level.INFO, exc.getMessage(), e);
-                    h.streamBroken();
                 } catch (Exception exc) {
                     h.streamBroken();
-                    e = exc;
+                    if (exc instanceof SAXParseException
+                            || exc instanceof EOFException) {
+                        // This is going to fail a lot, so we aren't going to
+                        // report
+                        // anything here.
+                        SLLogger.getLoggerFor(ReadFlashlightStreamJob.class)
+                                .log(Level.INFO, exc.getMessage(), e);
+                    } else {
+                        e = exc;
+                    }
                 }
             } finally {
                 socket.close();
             }
         } catch (Exception exc) {
             e = exc;
-        } finally {
-            try {
-                f_device.removeForward(f_port, f_port);
-            } catch (AdbCommandRejectedException exc) {
-                // That's okay, we were just doing our best. Probably someone
-                // unplugged the device.
-            } catch (Exception exc) {
-                if (e == null) {
-                    e = exc;
-                }
-            }
+        }
+        // Time to remove the port forward.
+        try {
+            f_device.removeForward(f_port, f_port);
+        } catch (Exception exc) {
+            // That's okay, we were just doing our best. Maybe someone unplugged
+            // the device?
         }
         if (e != null) {
             return SLStatus.createErrorStatus(e);

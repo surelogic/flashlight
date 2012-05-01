@@ -30,6 +30,7 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.model.LaunchConfigurationDelegate;
+import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
@@ -716,6 +717,23 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
             } else {
                 log.warning(from.getAbsolutePath().toString()
                         + " could not be found on the classpath could not be found when trying to instrument this project with Flashlight.");
+            }
+        }
+        // We check the classpath to see if there are any entries that aren't
+        // being exported, but that we will need in order to fully instrument
+        // the project.
+        IJavaProject javaProject = JavaCore.create(project);
+        for (IClasspathEntry cpe : javaProject.getResolvedClasspath(true)) {
+            if (cpe.getEntryKind() == IClasspathEntry.CPE_LIBRARY) {
+                String path = cpe.getPath().toOSString();
+                if (!data.classpaths.contains(path)) {
+                    File pathFile = new File(path);
+                    if (pathFile.isDirectory()) {
+                        rm.addClasspathDir(pathFile);
+                    } else {
+                        rm.addClasspathJar(pathFile);
+                    }
+                }
             }
         }
         try {

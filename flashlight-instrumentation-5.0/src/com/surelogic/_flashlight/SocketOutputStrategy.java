@@ -20,12 +20,12 @@ public class SocketOutputStrategy extends EventVisitor {
 
     private static final int TIMEOUT = 5000;
 
-    private Socket f_socket;
     private EventVisitor f_out;
     private final OutputType f_outType;
     private final RunConf f_conf;
     private final Factory f_fact;
-    private boolean done;
+    private final Thread f_connectThread;
+    private volatile boolean connecting;
 
     public SocketOutputStrategy(final RunConf conf, final Factory factory,
             final OutputType outType) {
@@ -33,13 +33,50 @@ public class SocketOutputStrategy extends EventVisitor {
         f_fact = factory;
         f_outType = outType;
         f_conf.log("Depository will connect to output port "
-                + StoreConfiguration.getOutputPort() + ".");
+                + StoreConfiguration.getOutputPort() + " with output type "
+                + outType + ".");
+        connecting = true;
+        f_connectThread = new ConnectToHost();
+        f_connectThread.start();
     }
 
     class ConnectToHost extends Thread {
+        private Socket f_socket;
 
         @Override
         public void run() {
+            try {
+                boolean success = false;
+                try {
+                    connectToHost();
+                    // If it didn't work, we try again.
+                    if (f_socket == null) {
+                        connectToHost();
+                    }
+                    // If it worked, we are good to go. If it didn't, then it is
+                    // time to shut down.
+                    if (f_socket != null) {
+                        OutputStream stream = OutputType.getOutputStreamFor(
+                                f_socket.getOutputStream(), f_outType);
+                        f_out = f_fact.create(f_conf, stream);
+                        success = true;
+                    } else {
+                        f_conf.logAProblem("Could not connect to host computer, shutting down instrumentation now.");
+                    }
+                } catch (IOException e) {
+                    f_conf.logAProblem(
+                            "Could not connect to socket and create output stream, shutting down instrumentation now..",
+                            e);
+                }
+                if (!success) {
+                    Store.shutdown();
+                }
+            } finally {
+                connecting = false;
+            }
+        }
+
+        void connectToHost() {
             try {
                 ServerSocket serverSocket = new ServerSocket(
                         StoreConfiguration.getOutputPort());
@@ -59,49 +96,17 @@ public class SocketOutputStrategy extends EventVisitor {
     }
 
     private boolean checkConnection() {
-        if (done) {
-            return false;
+        while (connecting) {
+            try {
+                f_connectThread.join();
+            } catch (InterruptedException e) {
+                // Do nothing
+            }
         }
         if (f_out == null) {
-            boolean success = false;
-            try {
-                Thread t = new ConnectToHost();
-                t.start();
-                try {
-                    t.join();
-                } catch (InterruptedException e1) {
-                    // Do nothing
-                }
-                if (f_socket == null) {
-                    t = new ConnectToHost();
-                    t.start();
-                    try {
-                        t.join();
-                    } catch (InterruptedException e) {
-                        // Do nothing
-                    }
-                }
-                if (f_socket != null) {
-                    OutputStream stream = OutputType.getOutputStreamFor(
-                            f_socket.getOutputStream(), f_outType);
-                    f_out = f_fact.create(f_conf, stream);
-                    success = true;
-                } else {
-                    f_conf.logAProblem("Could not connect to host computer, shutting down instrumentation now.");
-                }
-            } catch (IOException e) {
-                f_conf.logAProblem(
-                        "Could not connect to socket and create output stream, shutting down instrumentation now..",
-                        e);
-            }
-            if (!success) {
-                done = true;
-                Store.shutdown();
-            }
-            return success;
-        } else {
-            return true;
+            return false;
         }
+        return true;
     }
 
     @Override

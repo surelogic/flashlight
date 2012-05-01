@@ -97,7 +97,7 @@ public class ReadFlashlightStreamJob implements SLJob {
                             // someone unplugged the device?
                         }
                         return SLStatus.createErrorStatus(
-                                I18N.err(237, f_runName), exc);
+                                I18N.err(245, f_runName), exc);
                     }
                 }
 

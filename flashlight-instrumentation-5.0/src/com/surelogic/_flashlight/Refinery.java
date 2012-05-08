@@ -166,7 +166,7 @@ final class Refinery extends AbstractRefinery {
                 f_conf.logAProblem("refinery was interrupted...a bug");
             }
         }
-        List<Event> last = new ArrayList<Event>();
+        final List<Event> last = new ArrayList<Event>();
         last.add(new Time(new Date(), System.nanoTime()));
         last.add(FinalEvent.FINAL_EVENT);
         PostMortemStore.putInQueue(f_outQueue, last);

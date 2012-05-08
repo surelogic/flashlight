@@ -125,7 +125,9 @@ final class Refinery extends AbstractRefinery {
                     f_eventCache.add(l);
                 } else if (f_conf.isMultiFileOutput()) {
                     long curTime = System.currentTimeMillis();
-                    long elapsed = curTime - f_refineryStart;
+                    long elapsed = curTime
+                            - (f_lastRollover == 0 ? f_refineryStart
+                                    : f_lastRollover);
                     long checkpointLimit = f_lastRollover == 0 ? f_conf
                             .getFileEventInitialDuration() : f_conf
                             .getFileEventDuration();

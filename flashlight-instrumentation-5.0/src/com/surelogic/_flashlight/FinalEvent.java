@@ -6,26 +6,27 @@ package com.surelogic._flashlight;
  */
 final class FinalEvent extends TimedEvent {
 
-	/**
-	 * The singleton instance.
-	 */
-	static final FinalEvent FINAL_EVENT = new FinalEvent();
+    /**
+     * The singleton instance.
+     */
+    static final FinalEvent FINAL_EVENT = new FinalEvent();
 
-	private FinalEvent() {
-		super(System.nanoTime());
-	}
+    private FinalEvent() {
+        super(System.nanoTime());
+    }
 
-	@Override
-	void accept(final EventVisitor v) {
-		v.visit(this);
-	}
+    @Override
+    void accept(final EventVisitor v) {
+        v.visit(this);
+        v.flush();
+    }
 
-	@Override
-	public String toString() {
-		final StringBuilder b = new StringBuilder();
-		b.append("<final");
-		addNanoTime(b);
-		b.append("/>");
-		return b.toString();
-	}
+    @Override
+    public String toString() {
+        final StringBuilder b = new StringBuilder();
+        b.append("<final");
+        addNanoTime(b);
+        b.append("/>");
+        return b.toString();
+    }
 }

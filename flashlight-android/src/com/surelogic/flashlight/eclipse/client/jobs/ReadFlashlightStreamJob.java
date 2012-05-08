@@ -213,6 +213,7 @@ public class ReadFlashlightStreamJob implements SLJob {
             boolean firstFile = f_out == null;
             if (!firstFile) {
                 f_out.println("</flashlight>");
+                f_out.flush();
                 f_out.close();
             }
             f_out = new PrintWriter(OutputType.getOutputStreamFor(new File(

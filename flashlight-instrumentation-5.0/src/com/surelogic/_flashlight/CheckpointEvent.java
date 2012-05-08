@@ -9,6 +9,9 @@ public class CheckpointEvent extends TimedEvent {
     @Override
     void accept(final EventVisitor v) {
         v.visit(this);
+        // We want to flush on checkpointing events, so that data doesn't get
+        // lost unnecessarily
+        v.flush();
     }
 
     @Override

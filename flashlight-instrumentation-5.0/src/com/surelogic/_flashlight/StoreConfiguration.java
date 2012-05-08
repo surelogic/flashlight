@@ -56,6 +56,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import com.surelogic._flashlight.common.CollectionType;
+import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic._flashlight.common.OutputType;
 
 /**
@@ -419,7 +420,8 @@ public class StoreConfiguration {
      * one thread drains this queue. The size is always at least 10.
      */
     public static void setRawQueueSize(final int size) {
-        rawQueueSize = Math.max(size, 10);
+        rawQueueSize = Math
+                .max(size, InstrumentationConstants.FL_RAWQ_SIZE_MIN);
     }
 
     /**
@@ -441,7 +443,8 @@ public class StoreConfiguration {
      * this queue. The size is always at least 10.
      */
     public static void setOutQueueSize(final int size) {
-        outQueueSize = Math.max(size, 10);
+        outQueueSize = Math
+                .max(size, InstrumentationConstants.FL_OUTQ_SIZE_MIN);
     }
 
     /**
@@ -469,7 +472,8 @@ public class StoreConfiguration {
      * discarded (and therefore not output). The size is always at least 100.
      */
     public static void setRefinerySize(final int size) {
-        refinerySize = Math.max(size, 100);
+        refinerySize = Math.max(size,
+                InstrumentationConstants.FL_REFINERY_SIZE_MIN);
     }
 
     /**

@@ -114,7 +114,7 @@ final class Refinery extends AbstractRefinery {
                     count += l.size();
                 }
                 buf.clear();
-
+                boolean isCheckpoint = false;
                 if (f_finished) {
                     final List<Event> l = f_store.flushLocalQueues();
                     if (filter) {
@@ -125,13 +125,12 @@ final class Refinery extends AbstractRefinery {
                     f_eventCache.add(l);
                 } else if (f_conf.isMultiFileOutput()) {
                     long curTime = System.currentTimeMillis();
+                    long elapsed = curTime - f_refineryStart;
+                    long checkpointLimit = f_lastRollover == 0 ? f_conf
+                            .getFileEventInitialDuration() : f_conf
+                            .getFileEventDuration();
                     if (count > f_conf.getFileEventCount()
-                            || f_lastRollover == 0
-                            && curTime - f_refineryStart > f_conf
-                                    .getFileEventInitialDuration()
-                            || f_lastRollover > 0
-                            && curTime - f_lastRollover > f_conf
-                                    .getFileEventDuration()) {
+                            || elapsed > checkpointLimit) {
                         final List<Event> l = f_store.flushLocalQueues();
                         if (filter) {
                             for (Event e : l) {
@@ -140,8 +139,11 @@ final class Refinery extends AbstractRefinery {
                         }
                         f_eventCache.add(l);
                         List<Event> cp = new ArrayList<Event>(1);
-                        cp.add(new CheckpointEvent(System.nanoTime()));
+                        CheckpointEvent ce = new CheckpointEvent(
+                                System.nanoTime());
+                        cp.add(ce);
                         f_eventCache.add(cp);
+                        isCheckpoint = true;
                         count = 0;
                         f_lastRollover = curTime;
                     }
@@ -152,7 +154,7 @@ final class Refinery extends AbstractRefinery {
                     removeRemainingThreadLocalFields();
                 }
 
-                final boolean xferd = transferEventsToOutQueue();
+                final boolean xferd = transferEventsToOutQueue(isCheckpoint);
                 if (!xferd) {
                     try {
                         Thread.sleep(1);
@@ -331,9 +333,9 @@ final class Refinery extends AbstractRefinery {
      * 
      * @param l
      */
-    private boolean transferEventsToOutQueue() {
-        int transferCount = f_finished ? f_eventCache.size() : f_eventCache
-                .size() - f_size;
+    private boolean transferEventsToOutQueue(final boolean flush) {
+        int transferCount = flush || f_finished ? f_eventCache.size()
+                : f_eventCache.size() - f_size;
         while (transferCount > 0) {
             final List<Event> buf = f_eventCache.removeFirst();
             for (Event e : buf) {

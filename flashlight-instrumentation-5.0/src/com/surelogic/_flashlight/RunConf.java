@@ -211,7 +211,7 @@ public class RunConf {
      * @return
      */
     public int getFileEventCount() {
-        return 100000;
+        return InstrumentationConstants.FILE_EVENT_COUNT;
     }
 
     /**
@@ -219,7 +219,7 @@ public class RunConf {
      * first file.
      */
     public long getFileEventInitialDuration() {
-        return 3000;
+        return InstrumentationConstants.FILE_EVENT_INITIAL_DURATION;
     }
 
     /**
@@ -228,7 +228,7 @@ public class RunConf {
      * @return
      */
     public long getFileEventDuration() {
-        return 30000;
+        return InstrumentationConstants.FILE_EVENT_DURATION;
     }
 
     /**

@@ -164,8 +164,6 @@ public final class RawFileUtility {
                     SLLogger.getLogger().log(Level.WARNING,
                             I18N.err(226, runComplete.getAbsolutePath()), e);
                 }
-            } else {
-
             }
 
             return new RunDescription(prefixInfo.getName(),

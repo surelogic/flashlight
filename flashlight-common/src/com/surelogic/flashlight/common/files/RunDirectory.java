@@ -162,6 +162,7 @@ public final class RunDirectory {
                 if (rawDataFiles == null) {
                     return null;
                 }
+
                 final List<RawDataFilePrefix> prefixInfos = new ArrayList<RawDataFilePrefix>(
                         Arrays.asList(RawFileUtility
                                 .getPrefixesFor(rawDataFiles)));
@@ -193,6 +194,16 @@ public final class RunDirectory {
                         final File db = new File(runDir.getAbsoluteFile(),
                                 DB_DIR);
                         final HtmlHandles html = HtmlHandles.getFor(runDir);
+                        if (!run.isCompleted()) {
+                            // A sanity check to make sure that we aren't still
+                            // running.
+                            long cur = System.currentTimeMillis();
+                            for (File f : rawDataFiles) {
+                                if (cur - f.lastModified() < InstrumentationConstants.FILE_EVENT_DURATION) {
+                                    return null;
+                                }
+                            }
+                        }
                         return new RunDirectory(run, runDir, headerFile, db,
                                 html, instrumentation, source, projects,
                                 profile);

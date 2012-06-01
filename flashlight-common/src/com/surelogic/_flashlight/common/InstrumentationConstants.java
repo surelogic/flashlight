@@ -98,4 +98,21 @@ public final class InstrumentationConstants {
             FL_REFINERY_OFF, FL_REFINERY_SIZE, FL_RUN, FL_RUN_FOLDER,
             FL_SEPARATE_STREAMS, FL_SITES_FILE };
 
+    /**
+     * The number of events a single log file should (roughly) contain.
+     * 
+     */
+    public static final int FILE_EVENT_COUNT = 100000;
+
+    /**
+     * The maximum initial amount of time in milliseconds that should be in the
+     * first file.
+     */
+    public static final long FILE_EVENT_INITIAL_DURATION = 1000;
+
+    /**
+     * The maximum amount of time before rotating to the next file.
+     */
+    public static final long FILE_EVENT_DURATION = 3000;
+
 }

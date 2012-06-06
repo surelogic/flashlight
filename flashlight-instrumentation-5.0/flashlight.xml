@@ -157,7 +157,6 @@
 		<copy file="${flashlight-runtime-final.jar}" todir="${basedir}/../flashlight-client-eclipse/lib" />
 		<copy file="${flashlight-runtime-4-final.jar}" todir="${basedir}/../flashlight-client-eclipse/lib" />
 		<copy file="${flashlight-rewriter.jar}" todir="${basedir}/../flashlight-client-eclipse/lib" />
-	    <copy file="${flashlight-rewriter.jar}" todir="${basedir}/../flashlight-android/lib" />
 	</target>
 		
 	<target name="compile-test-code" depends="build-jars">

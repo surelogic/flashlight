@@ -158,7 +158,7 @@
 	<!-- We need a launch group (the id string is in the actions code) -->
 	<extension point="org.eclipse.debug.ui.launchGroups">
 		<launchGroup bannerImage="/lib/images/fl_wiz.png"
-			id="com.surelogic.flashlight.launchGroup.flashlight" image="icons/fl_logo.gif"
+			id="com.surelogic.flashlight.launchGroup.flashlight" image="/lib/images/fl_logo.gif"
 			label="Flashlight" mode="flashlight" title="%fl.launchGroup.title" />
 	</extension>
 
@@ -254,7 +254,7 @@
 		actions)
 	-->
 	<extension point="org.eclipse.debug.ui.launchShortcuts">
-		<shortcut label="%fl.javaApplicationShortcut.label" icon="icons/fl_app.gif"
+		<shortcut label="%fl.javaApplicationShortcut.label" icon="/lib/images/fl_app.gif"
 			helpContextId="org.eclipse.jdt.debug.ui.shortcut_local_java_application"
 			modes="flashlight,flashlight-monitor"
 			class="com.surelogic.flashlight.client.eclipse.launch.JavaApplicationLaunchWrapper"
@@ -279,7 +279,7 @@
 			<configurationType id="org.eclipse.jdt.launching.localJavaApplication">
 			</configurationType>
 		</shortcut>
-		<shortcut label="%fl.junitApplicationShortcut.label" icon="icons/fl_app.gif"
+		<shortcut label="%fl.junitApplicationShortcut.label" icon="/lib/images/fl_app.gif"
 			helpContextId="org.eclipse.jdt.junit.launch_shortcut" modes="flashlight, flashlight-monitor"
 			class="com.surelogic.flashlight.client.eclipse.launch.FlashlightJUnitLaunchWrapper"
 			id="com.surelogic.flashlight.localJUnitShortcut">

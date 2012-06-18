@@ -23,6 +23,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
+
+import org.eclipse.jface.resource.ColorRegistry;
+import org.eclipse.jface.resource.JFaceResources;
+import org.eclipse.swt.graphics.Color;
 
 import com.surelogic.common.FileUtility;
 import com.surelogic.common.ImageWriter;
@@ -157,6 +162,7 @@ public final class WriteHtmlOverview implements IPostPrep {
         HTMLBuilder builder = new HTMLBuilder();
         Head head = builder.head(f_runDescription.getName());
         head.styleSheet("RunOverviewStyleSheet.css");
+        head.styleSheet("colors.css");
         head.javaScript("jquery-1.6.4.min.js");
         head.javaScript("overview.js");
         if (s != null) {
@@ -1366,6 +1372,7 @@ public final class WriteHtmlOverview implements IPostPrep {
      * Loads and includes the Javadoc hover style sheet.
      * 
      * @return the style sheet, or <code>null</code> if unable to load
+     * @throws IOException
      */
     private void loadStyleSheet() {
         final URL styleSheetURL = java.lang.Thread
@@ -1375,6 +1382,61 @@ public final class WriteHtmlOverview implements IPostPrep {
                         "/com/surelogic/flashlight/common/prep/RunOverviewStyleSheet.css");
         FileUtility.copy(styleSheetURL, new File(htmlDirectory,
                 "RunOverviewStyleSheet.css"));
+
+        try {
+            PrintWriter colorWriter = new PrintWriter(new File(htmlDirectory,
+                    "colors.css"));
+            try {
+                ColorRegistry colorRegistry = JFaceResources.getColorRegistry();
+                colorWriter
+                        .printf("html { background-color: %s; color: %s }\n",
+                                rgb(colorRegistry
+                                        .get("org.eclipse.ui.workbench.ACTIVE_NOFOCUS_TAB_BG_START")),
+                                rgb(colorRegistry
+                                        .get("org.eclipse.ui.workbench.ACTIVE_TAB_TEXT_COLOR")));
+                colorWriter
+                        .printf(".info { color: %s; }\n",
+                                rgb(colorRegistry
+                                        .get("org.eclipse.ui.workbench.ACTIVE_NOFOCUS_TAB_TEXT_COLOR")));
+
+            } finally {
+                colorWriter.close();
+            }
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    @SuppressWarnings("unused")
+    private static void eclipseColorPage(final File dir) {
+        try {
+            PrintWriter colHtmlWriter = new PrintWriter(new File(dir,
+                    "colors-test.html"));
+            try {
+                ColorRegistry colorRegistry = JFaceResources.getColorRegistry();
+                @SuppressWarnings("unchecked")
+                Set<String> keys = new TreeSet<String>(
+                        colorRegistry.getKeySet());
+                colHtmlWriter.println("<html><head></head><body>");
+                for (String key : keys) {
+                    final Color color = colorRegistry.get(key);
+                    colHtmlWriter
+                            .printf("<div style=\"background-color: rgb(%d,%d,%d);\">%s</div>\n",
+                                    color.getRed(), color.getGreen(),
+                                    color.getBlue(), key);
+                }
+                colHtmlWriter.println("</body></html>");
+            } finally {
+                colHtmlWriter.close();
+            }
+        } catch (IOException e) {
+            // Do nothing
+        }
+    }
+
+    private static String rgb(final Color color) {
+        return "rgb(" + color.getRed() + ',' + color.getGreen() + ','
+                + color.getBlue() + ")";
     }
 
     /**

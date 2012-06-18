@@ -167,9 +167,6 @@ public final class WriteHtmlOverview implements IPostPrep {
 
         Body body = builder.body();
         Container header = body.div().id("header");
-        header.h(1).text(f_runDescription.getName());
-        header.h(2).text(f_runDescription.getStartTimeOfRun().toString());
-        header.h(2).text(f_runDescription.getHostname());
         Table sectionTable = header.table().clazz("sectionHeaders");
         Row sectionRow = sectionTable.row();
         for (HeaderName hn : headers) {
@@ -918,7 +915,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 
         public CoverageSection(final SummaryInfo info) {
             super(I18N.msg("flashlight.overview.title.coverage"));
-            this.site = info.getThreadCoverage();
+            site = info.getThreadCoverage();
             threads = info.getThreads();
         }
 

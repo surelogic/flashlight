@@ -1391,14 +1391,17 @@ public final class WriteHtmlOverview implements IPostPrep {
                 colorWriter
                         .printf("html { background-color: %s; color: %s }\n",
                                 rgb(colorRegistry
-                                        .get("org.eclipse.ui.workbench.ACTIVE_NOFOCUS_TAB_BG_START")),
+                                        .get("org.eclipse.ui.editors.backgroundColor")),
                                 rgb(colorRegistry
-                                        .get("org.eclipse.ui.workbench.ACTIVE_TAB_TEXT_COLOR")));
+                                        .get("org.eclipse.ui.editors.foregroundColor")));
                 colorWriter
                         .printf(".info { color: %s; }\n",
                                 rgb(colorRegistry
                                         .get("org.eclipse.ui.workbench.ACTIVE_NOFOCUS_TAB_TEXT_COLOR")));
-
+                colorWriter
+                        .printf("table.sectionHeaders td.sectionHeader.selected { border-bottom: 1px solid %1$s; background-color : %1$s; }\n",
+                                rgb(colorRegistry
+                                        .get("org.eclipse.ui.workbench.ACTIVE_TAB_BG_END")));
             } finally {
                 colorWriter.close();
             }

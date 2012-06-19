@@ -283,8 +283,9 @@ table.sectionHeaders td.sectionHeaderPadding {
 
 
 table.sectionHeaders td.sectionHeader.selected {
-    border-bottom: 1px solid  #deb887;
+/*    border-bottom: 1px solid  #deb887;
     background-color: #deb887;
+*/
 }
 
 table.sectionHeaders td.sectionHeaderRightPadding {

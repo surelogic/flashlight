@@ -92,18 +92,28 @@ public final class SiteIdFactory {
             int cmp = lineOfCode < o.lineOfCode ? -1
                     : lineOfCode == o.lineOfCode ? 0 : 1;
             if (cmp == 0) {
-                cmp = String.CASE_INSENSITIVE_ORDER.compare(calledMethodName,
-                        o.calledMethodName);
+                cmp = cmp(calledMethodName, o.calledMethodName);
                 if (cmp == 0) {
-                    cmp = String.CASE_INSENSITIVE_ORDER.compare(
-                            calledMethodOwner, o.calledMethodOwner);
+                    cmp = cmp(calledMethodOwner, o.calledMethodOwner);
                     if (cmp == 0) {
-                        cmp = String.CASE_INSENSITIVE_ORDER.compare(
-                                calledMethodDesc, o.calledMethodDesc);
+                        cmp = cmp(calledMethodDesc, o.calledMethodDesc);
                     }
                 }
             }
             return cmp;
+        }
+
+        private static final int cmp(final String ths, final String tht) {
+            if (ths == null) {
+                if (tht == null) {
+                    return 0;
+                } else {
+                    return -1;
+                }
+            } else if (tht == null) {
+                return 1;
+            }
+            return ths.compareTo(tht);
         }
     }
 

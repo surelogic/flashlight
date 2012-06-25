@@ -78,12 +78,12 @@ public class SummaryInfo {
             final CoverageSite coverageRoot, final List<FieldCoverage> fields) {
         this.locks = locks;
         this.threads = threads;
-        this.emptyLockSets = emptyLockSetFields;
+        emptyLockSets = emptyLockSetFields;
         this.badPublishes = badPublishes;
         this.deadlocks = deadlocks;
         this.objectCount = objectCount;
         this.classCount = classCount;
-        this.root = coverageRoot;
+        root = coverageRoot;
         this.fields = fields;
     }
 
@@ -258,8 +258,8 @@ public class SummaryInfo {
             this.id = id;
             this.timesAcquired = timesAcquired;
             this.heldPercentage = heldPercentage;
-            this.heldAt = new ArrayList<LockSetSite>();
-            this.notHeldAt = new ArrayList<Site>();
+            heldAt = new ArrayList<LockSetSite>();
+            notHeldAt = new ArrayList<Site>();
         }
 
         public String getName() {
@@ -373,7 +373,7 @@ public class SummaryInfo {
 
         LockSetEvidenceHandler(final Query q, final Field f) {
             this.q = q;
-            this.field = f;
+            field = f;
         }
 
         @Override
@@ -619,7 +619,7 @@ public class SummaryInfo {
 
         public ContentionSite(final Site s) {
             this.s = s;
-            this.durations = new ArrayList<ThreadDuration>();
+            durations = new ArrayList<ThreadDuration>();
         }
 
         public Site getSite() {
@@ -990,7 +990,7 @@ public class SummaryInfo {
             this.acquired = Integer.toString(acquired);
             this.blockTime = blockTime;
             this.averageBlock = averageBlock;
-            this.contentionSites = new ArrayList<SummaryInfo.ContentionSite>();
+            contentionSites = new ArrayList<SummaryInfo.ContentionSite>();
         }
 
         public String getName() {
@@ -1209,7 +1209,7 @@ public class SummaryInfo {
 
         DeadlockTraceHandler(final Query q, final Edge e) {
             this.q = q;
-            this.edge = e;
+            edge = e;
         }
 
         @Override
@@ -1235,7 +1235,7 @@ public class SummaryInfo {
         @Override
         public Site handle(final Row r) {
             return new Site(r.nextString(), r.nextString(), r.nextString(),
-                    r.nextInt(), r.nextString());
+                    r.nextInt(), r.nextString(), r.nextString());
         }
     }
 
@@ -1255,14 +1255,17 @@ public class SummaryInfo {
         private final String location;
         private final int line;
         private final String file;
+        private final String methodCalled;
 
         public Site(final String pakkage, final String clazz,
-                final String location, final int line, final String file) {
+                final String location, final int line, final String file,
+                final String methodCalled) {
             this.pakkage = pakkage;
             this.clazz = clazz;
             this.location = location;
             this.line = line;
             this.file = file;
+            this.methodCalled = methodCalled;
         }
 
         @Override
@@ -1285,6 +1288,10 @@ public class SummaryInfo {
 
         public String getFile() {
             return file;
+        }
+
+        public String getMethodCalled() {
+            return methodCalled;
         }
 
         @Override

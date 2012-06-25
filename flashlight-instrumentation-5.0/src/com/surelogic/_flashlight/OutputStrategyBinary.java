@@ -378,6 +378,15 @@ public class OutputStrategyBinary extends EventVisitor {
             writeCompressedMaybeNegativeInt(e.getLine());
             writeUTF(e.getFileName());
             writeUTF(e.getLocationName());
+            String methodCallName = e.getMethodCallName();
+            if (methodCallName == null) {
+                writeCompressedInt(0);
+            } else {
+                writeCompressedInt(1);
+                writeUTF(e.getMethodCallOwner());
+                writeUTF(methodCallName);
+                writeUTF(e.getMethodCallDesc());
+            }
         } catch (final IOException ioe) {
             handleIOException(ioe);
         }

@@ -9,6 +9,9 @@ import static com.surelogic._flashlight.common.AttributeType.IN_CLASS;
 import static com.surelogic._flashlight.common.AttributeType.LINE;
 import static com.surelogic._flashlight.common.AttributeType.LOCATION;
 import static com.surelogic._flashlight.common.AttributeType.MEMORY_MB;
+import static com.surelogic._flashlight.common.AttributeType.METHODCALLDESC;
+import static com.surelogic._flashlight.common.AttributeType.METHODCALLNAME;
+import static com.surelogic._flashlight.common.AttributeType.METHODCALLOWNER;
 import static com.surelogic._flashlight.common.AttributeType.MODIFIER;
 import static com.surelogic._flashlight.common.AttributeType.PACKAGE;
 import static com.surelogic._flashlight.common.AttributeType.PARENT_ID;
@@ -336,6 +339,12 @@ public enum EventType {
             attrs.put(LINE, readCompressedInt(in));
             attrs.put(FILE, in.readUTF());
             attrs.put(LOCATION, in.readUTF());
+            int hasMore = readCompressedInt(in);
+            if (hasMore == 1) {
+                attrs.put(METHODCALLOWNER, in.readUTF());
+                attrs.put(METHODCALLNAME, in.readUTF());
+                attrs.put(METHODCALLDESC, in.readUTF());
+            }
         }
     },
     Thread("thread", false) {
@@ -482,7 +491,7 @@ public enum EventType {
     }
 
     public byte getByte() {
-        return (byte) this.ordinal();
+        return (byte) ordinal();
     }
 
     public static EventType getEvent(final int i) {

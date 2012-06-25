@@ -214,7 +214,8 @@ public class DefinitionEventGenerator {
                 lastFileName = file;
                 lastClassName = qname;
             }
-            final SiteInfo site = new SiteInfo(id, member, lineNo);
+            final SiteInfo site = new SiteInfo(id, member, lineNo,
+                    st.nextToken(), st.nextToken(), st.nextToken());
             sites.add(site);
         }
 
@@ -332,17 +333,26 @@ public class DefinitionEventGenerator {
         final long id;
         final String memberName;
         final int line;
+        final String methodName;
+        final String methodClass;
+        final String methodDesc;
 
-        SiteInfo(final long id, final String name, final int line) {
+        SiteInfo(final long id, final String name, final int line,
+                final String methodName, final String methodClass,
+                final String methodDesc) {
             this.id = id;
             memberName = name;
             this.line = line;
+            this.methodName = methodName;
+            this.methodClass = methodClass;
+            this.methodDesc = methodDesc;
         }
 
         void accept(final long declaringType, final List<Event> events,
                 final ClassInfo info) {
             events.add(new StaticCallLocation(id, memberName, line,
-                    info.fileName, declaringType));
+                    info.fileName, declaringType, methodClass, methodName,
+                    methodDesc));
         }
     }
 

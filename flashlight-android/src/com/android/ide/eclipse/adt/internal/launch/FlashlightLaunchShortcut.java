@@ -70,7 +70,7 @@ public class FlashlightLaunchShortcut implements ILaunchShortcut {
 	private void launch(final IProject project, final String mode) {
 		// get an existing or new launch configuration
 		ILaunchConfiguration config = AndroidLaunchController
-				.getLaunchConfig(project);
+				.getLaunchConfig(project, LaunchConfigDelegate.ANDROID_LAUNCH_TYPE_ID);
 
 		if (config != null) {
 			// and launch!

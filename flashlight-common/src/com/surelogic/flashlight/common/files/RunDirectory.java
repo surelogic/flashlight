@@ -162,14 +162,6 @@ public final class RunDirectory {
 				if (rawDataFiles == null) {
 					return null;
 				}
-				// A sanity check to make sure that we aren't still
-				// running.
-				final long cur = System.currentTimeMillis();
-				for (final File f : rawDataFiles) {
-					if (cur - f.lastModified() < InstrumentationConstants.FILE_EVENT_DURATION) {
-						return null;
-					}
-				}
 				final List<RawDataFilePrefix> prefixInfos = new ArrayList<RawDataFilePrefix>(
 						Arrays.asList(RawFileUtility
 								.getPrefixesFor(rawDataFiles)));
@@ -192,6 +184,16 @@ public final class RunDirectory {
 					final RunDescription run = RawFileUtility
 							.getRunDescriptionFor(headerInfo);
 					if (run != null) {
+						if (!run.isCompleted()) {
+							// A sanity check to make sure that we aren't still
+							// running.
+							final long cur = System.currentTimeMillis();
+							for (final File f : rawDataFiles) {
+								if (cur - f.lastModified() < InstrumentationConstants.FILE_EVENT_DURATION) {
+									return null;
+								}
+							}
+						}
 						final RawFileHandles profile = RawFileUtility
 								.getRawFileHandlesFor(
 										runDir,

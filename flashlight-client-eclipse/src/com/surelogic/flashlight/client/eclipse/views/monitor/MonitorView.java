@@ -31,8 +31,6 @@ public class MonitorView extends ViewPart {
 	public void createPartControl(final Composite parent) {
 		final GridLayout layout = new GridLayout();
 		parent.setLayout(layout);
-		final GridData layoutData = new GridData(SWT.FILL, SWT.FILL, true, true);
-		parent.setLayoutData(layoutData);
 
 		/*
 		 * Status Bar

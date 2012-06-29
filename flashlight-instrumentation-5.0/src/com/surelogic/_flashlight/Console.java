@@ -254,15 +254,9 @@ class Console extends Thread {
          *            the data to write to the stream.
          */
         private void sendResponse(final BufferedWriter outputStream,
-                final String response) {
-            try {
+                final String response) throws IOException {
                 outputStream.write(response + "\n\r");
                 outputStream.flush();
-            } catch (IOException e) {
-                f_conf.logAProblem(
-                        "general I/O failure writing to socket used by "
-                                + getName(), e);
-            }
         }
 
         /**

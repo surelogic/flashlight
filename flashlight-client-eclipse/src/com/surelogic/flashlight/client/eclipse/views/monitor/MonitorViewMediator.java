@@ -126,7 +126,6 @@ public class MonitorViewMediator {
 
     public void dispose() {
         WatchFlashlightMonitorJob.setMediator(null);
-        f_im.dispose();
     }
 
     public void setFocus() {

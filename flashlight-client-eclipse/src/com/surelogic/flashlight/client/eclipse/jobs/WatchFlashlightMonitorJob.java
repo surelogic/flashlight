@@ -29,7 +29,7 @@ public class WatchFlashlightMonitorJob extends AbstractSLJob {
 
 	private static volatile MonitorViewMediator f_mediator;
 
-	private static final String DELIMITER = "**********";
+	static final String DELIMITER = "**********";
 	private static final Pattern LIST_PATTERN = Pattern.compile("^\\[|, |\\]$");
 	private static final Pattern LOCK_EDGE_DELIM = Pattern.compile(" -> ");
 
@@ -48,19 +48,24 @@ public class WatchFlashlightMonitorJob extends AbstractSLJob {
 				if (f_status.getCompleteFile().exists()) {
 					f_status.setState(ConnectionState.TERMINATED);
 				} else if (!f_status.getPortFile().exists()) {
-					int timeout = f_status.getTimeout();
+					final int timeout = f_status.getTimeout();
 					if (timeout < 60) {
 						f_status.setTimeout(timeout + 1);
 					} else {
 						f_status.setState(ConnectionState.NOTFOUND);
 					}
 				} else {
-					BufferedReader portReader = new BufferedReader(
+					final BufferedReader portReader = new BufferedReader(
 							new FileReader(f_status.getPortFile()));
-					int port = Integer.parseInt(portReader.readLine());
+					int port;
+					try {
+						port = Integer.parseInt(portReader.readLine());
+					} finally {
+						portReader.close();
+					}
 					try {
 						updateStatus(port);
-					} catch (DoneException e) {
+					} catch (final DoneException e) {
 						f_status.setState(ConnectionState.TERMINATED);
 					}
 				}
@@ -74,7 +79,7 @@ public class WatchFlashlightMonitorJob extends AbstractSLJob {
 	}
 
 	private void updateStatus(final int port) throws IOException {
-		Socket s = new Socket();
+		final Socket s = new Socket();
 		s.connect(new InetSocketAddress("localhost", port));
 		try {
 			if (f_status.getState() == ConnectionState.SEARCHING) {
@@ -89,10 +94,10 @@ public class WatchFlashlightMonitorJob extends AbstractSLJob {
 			readUpTo(reader, DELIMITER);
 
 			writeCommand(writer, "shared");
-			List<String> sharedResult = readUpTo(reader, DELIMITER);
+			final List<String> sharedResult = readUpTo(reader, DELIMITER);
 			boolean shared = true;
 			String className = "";
-			for (String line : sharedResult) {
+			for (final String line : sharedResult) {
 				if (line.isEmpty()) {
 					// Do nothing
 				} else if (line.startsWith("Shared Fields")) {
@@ -100,7 +105,7 @@ public class WatchFlashlightMonitorJob extends AbstractSLJob {
 				} else if (line.startsWith("Unshared Fields")) {
 					shared = false;
 				} else if (isField(line)) {
-					Set<String> fieldSet = shared ? f_status.getShared()
+					final Set<String> fieldSet = shared ? f_status.getShared()
 							: f_status.getUnshared();
 					fieldSet.add(getField(className, line));
 				} else {
@@ -110,20 +115,20 @@ public class WatchFlashlightMonitorJob extends AbstractSLJob {
 
 			writeCommand(writer, "locksets");
 			readUpTo(reader, "Potential Race Conditions");
-			List<String> locksetResults = readUpTo(reader,
+			final List<String> locksetResults = readUpTo(reader,
 					"Actively protected fields");
 			String clazz = "";
-			for (String line : locksetResults) {
+			for (final String line : locksetResults) {
 				if (isField(line)) {
 					f_status.getRaces().add(getField(clazz, line));
 				} else {
 					clazz = line;
 				}
 			}
-			List<String> protectedResults = readUpTo(reader,
+			final List<String> protectedResults = readUpTo(reader,
 					"Garbage Collected Fields");
 			f_status.getActivelyProtected().clear();
-			for (String line : protectedResults) {
+			for (final String line : protectedResults) {
 				if (isField(line)) {
 					f_status.getActivelyProtected().add(getField(clazz, line));
 				} else {
@@ -134,10 +139,10 @@ public class WatchFlashlightMonitorJob extends AbstractSLJob {
 
 			writeCommand(writer, "deadlocks");
 			readUpTo(reader, "Lock Orderings");
-			List<String> orderingResults = readUpTo(reader,
+			final List<String> orderingResults = readUpTo(reader,
 					"Potential Deadlocks");
-			for (String line : orderingResults) {
-				String[] split = LOCK_EDGE_DELIM.split(line);
+			for (final String line : orderingResults) {
+				final String[] split = LOCK_EDGE_DELIM.split(line);
 				final List<String> edge = new ArrayList<String>(
 						split.length - 1);
 				for (int i = 1; i < split.length; i++) {
@@ -147,12 +152,12 @@ public class WatchFlashlightMonitorJob extends AbstractSLJob {
 			}
 
 			f_status.getDeadlocks().clear();
-			String deadlockLine = reader.readLine();
+			final String deadlockLine = reader.readLine();
 			if (deadlockLine == null) {
 				throw new DoneException();
 			}
-			String[] split = LIST_PATTERN.split(deadlockLine);
-			for (String deadlock : split) {
+			final String[] split = LIST_PATTERN.split(deadlockLine);
+			for (final String deadlock : split) {
 				if (!deadlock.isEmpty()) {
 					f_status.getDeadlocks().add(deadlock);
 				}
@@ -163,8 +168,8 @@ public class WatchFlashlightMonitorJob extends AbstractSLJob {
 			readUpTo(reader, "Swing Event Dispatch Thread");
 
 			f_status.getAlerts().clear();
-			List<String> swingAlerts = readUpTo(reader, "Shared Field");
-			for (String line : swingAlerts) {
+			final List<String> swingAlerts = readUpTo(reader, "Shared Field");
+			for (final String line : swingAlerts) {
 				if (isField(line)) {
 					f_status.getAlerts().add(getField(clazz, line));
 				} else {
@@ -173,16 +178,16 @@ public class WatchFlashlightMonitorJob extends AbstractSLJob {
 			}
 			readUpTo(reader, DELIMITER);
 			writeCommand(writer, "props");
-			for (String propStr : readUpTo(reader, DELIMITER)) {
-				int eq = propStr.indexOf('=');
+			for (final String propStr : readUpTo(reader, DELIMITER)) {
+				final int eq = propStr.indexOf('=');
 				if (eq > 0) {
 					f_status.setProperty(propStr.substring(0, eq),
 							propStr.substring(eq + 1));
 				}
 			}
 			writeCommand(writer, "list");
-			StringBuilder b = new StringBuilder();
-			for (String str : readUpTo(reader, DELIMITER)) {
+			final StringBuilder b = new StringBuilder();
+			for (final String str : readUpTo(reader, DELIMITER)) {
 				b.append(str);
 				b.append('\n');
 			}
@@ -192,12 +197,20 @@ public class WatchFlashlightMonitorJob extends AbstractSLJob {
 		}
 	}
 
-	private void writeCommand(final PrintWriter writer, final String command) {
+	static void writeCommand(final PrintWriter writer, final String command) {
 		writer.println(command);
 		writer.flush();
 	}
 
-	private List<String> readUpTo(final BufferedReader reader,
+	/**
+	 * Reads until it reaches a line that starts with the given marker.
+	 * 
+	 * @param reader
+	 * @param marker
+	 * @return
+	 * @throws IOException
+	 */
+	static List<String> readUpTo(final BufferedReader reader,
 			final String marker) throws IOException {
 		final List<String> lines = new ArrayList<String>();
 		String line;
@@ -229,9 +242,9 @@ public class WatchFlashlightMonitorJob extends AbstractSLJob {
 			if (f_mediator != null) {
 				f_mediator.update(f_status);
 			}
-			WatchFlashlightMonitorJob job = new WatchFlashlightMonitorJob(
+			final WatchFlashlightMonitorJob job = new WatchFlashlightMonitorJob(
 					f_status);
-			ConnectionState state = f_status.getState();
+			final ConnectionState state = f_status.getState();
 			if (f_callback
 					&& (state == ConnectionState.CONNECTED || state == ConnectionState.SEARCHING)) {
 				EclipseJob.getInstance().schedule(job, 1000);

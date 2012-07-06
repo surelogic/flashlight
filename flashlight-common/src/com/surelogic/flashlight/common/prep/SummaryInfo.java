@@ -343,6 +343,14 @@ public class SummaryInfo {
 			return access.getFile();
 		}
 
+		public String getMethodCallClass() {
+			return access.getMethodCallClass();
+		}
+
+		public String getMethodCallName() {
+			return access.getMethodCallName();
+		}
+
 		@Override
 		public String toString() {
 			return access.toString();

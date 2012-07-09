@@ -1267,11 +1267,6 @@ public class SummaryInfo {
 		private final String methodCallName;
 
 		public Site(final String pakkage, final String clazz,
-				final String location, final int line, final String file) {
-			this(pakkage, clazz, location, line, file, null, null);
-		}
-
-		public Site(final String pakkage, final String clazz,
 				final String location, final int line, final String file,
 				final String methodCallClass, String methodCallName) {
 			this.pakkage = pakkage;

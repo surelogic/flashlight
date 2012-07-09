@@ -14,7 +14,7 @@
     <extension point="org.eclipse.debug.ui.launchShortcuts">
         <shortcut
             label="Android Application"
-            icon="platform:/plugin/com.surelogic.common/lib/images/fl_logo.gif"
+            icon="/lib/images/android_app.gif"
             modes="flashlight"
             class="com.android.ide.eclipse.adt.internal.launch.FlashlightLaunchShortcut"
             id="com.android.ide.eclipse.adt.debug.launching.FlashlightLaunchShortcut">

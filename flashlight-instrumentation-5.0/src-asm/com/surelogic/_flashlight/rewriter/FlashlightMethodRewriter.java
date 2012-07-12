@@ -1051,7 +1051,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 			// ...
 			ByteCodeUtils.pushBooleanConstant(mv, true);
 			// ..., true
-			pushSiteIdentifier();
+			pushSiteIdentifier(siteId);
 			// ..., true, siteId
 			ByteCodeUtils.callStoreMethod(mv, config,
 					FlashlightNames.CONSTRUCTOR_CALL);
@@ -1071,7 +1071,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 			// ...
 			ByteCodeUtils.pushBooleanConstant(mv, false);
 			// ..., false
-			pushSiteIdentifier();
+			pushSiteIdentifier(siteId);
 			// ..., false, siteId
 			ByteCodeUtils.callStoreMethod(mv, config,
 					FlashlightNames.CONSTRUCTOR_CALL);
@@ -1083,7 +1083,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 			// ex
 			ByteCodeUtils.pushBooleanConstant(mv, false);
 			// ex, false
-			pushSiteIdentifier();
+			pushSiteIdentifier(siteId);
 			// ex, false, siteId
 			ByteCodeUtils.callStoreMethod(mv, config,
 					FlashlightNames.CONSTRUCTOR_CALL);
@@ -2058,7 +2058,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 				wrapperMethods.add(wrapper);
 
 				// ..., [objRef], arg1, ..., argN
-				pushSiteIdentifier();
+				pushSiteIdentifier(siteId);
 				// ..., [objRef], arg1, ..., argN, siteId
 				wrapper.invokeWrapperMethod(mv, classBeingAnalyzedInternal);
 				// ..., [returnVlaue]

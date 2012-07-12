@@ -123,6 +123,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 			Category threads = new Category("threads", "Threads");
 			threads.getSections().add(new TimelineSection(info.getThreads()));
 			threads.getSections().add(new CoverageSection(info));
+			threads.getSections().add(new MethodCoverageSection(info));
 			categories.add(locks);
 			categories.add(fields);
 			categories.add(threads);
@@ -918,6 +919,52 @@ public final class WriteHtmlOverview implements IPostPrep {
 			}
 			return array;
 		}
+	}
+
+	class MethodCoverageSection extends Section {
+
+		private final CoverageSite site;
+
+		public MethodCoverageSection(final SummaryInfo info) {
+			super(I18N.msg("flashlight.overview.title.methodCoverage"));
+			site = info.getThreadCoverage();
+		}
+
+		@Override
+		public List<String> getJavaScriptImports() {
+			return Collections.singletonList("coverage-data.js");
+		}
+
+		@Override
+		void displaySection(final Container c) {
+			// NOTE: The js data for this should already have been output by
+			// CoverageSection
+
+			// The first node should be an anonymous root node, so we just do
+			// its children
+			Collection<CoverageSite> children = site.getChildren();
+			if (children.isEmpty()) {
+				c.p()
+						.clazz("info")
+						.text(I18N
+								.msg("flashlight.overview.coverage.noCoverage"));
+			} else {
+				Table threadTable = c.table().id("coverage-table")
+						.clazz("threads-table");
+				Row threadRow = threadTable.row();
+				TD threadDiv = threadRow.td();
+				threadDiv.id("thread-td");
+				threadDiv.h(3).text(I18N.msg("flashlight.overview.h.threads"));
+				threadDiv.ul().id("threads");
+				TD coverageDiv = threadRow.td();
+				coverageDiv.id("coverage-td");
+				coverageDiv.h(3).text(
+						I18N.msg("flashlight.overview.h.coverage"));
+				coverageDiv.div().id("coverage").ul();
+			}
+
+		}
+
 	}
 
 	class CoverageSection extends Section {

@@ -179,6 +179,24 @@ function coverageOutline(outline,threads) {
     jsonOutline(outline,coverage[0],filter,children,siteTag);
 }
 
+function methodCoverageOutline(outline, threads) {
+    function filter(node) {
+        return intersects(threads, node.threadsSeen);
+    }
+    function siteTag(hasChildren, node) {
+        var site = sites[node.site];
+        var span = '<span>' + site.pakkage + '.' + site.clazz + '.' + escapeHtml(site.location) + ':' + site.methodClass + '.' + site.methodName + '</span>';
+        var link = '<a href="index.html?loc=&Package=' + site.pakkage + '&Class=' + site.clazz + 
+            '&Method=' + encodeURI(site.location) + '&Line=' + site.line + '">(' + site.file + ':' + 
+            site.line + ')</a>';
+        return { text: span + link };
+    }    
+    function children(node) {
+        return $.map(node.children, function (i) { return coverage[i]; });
+    }
+    jsonOutline(outline,coverage[0],filter,children,siteTag);
+}
+
 // Construct an outline in the given html node, backed by a json object.
 function jsonOutline(outline,json,filter,children,show) {
     outline.get(0).json = json;
@@ -879,6 +897,13 @@ function initCoverageTab() {
     });
 }
 
+function initMethodCoverageTab() {
+    methodCoverageOutline($('#coverage'), getSelectedNumbers(selectedThreads));
+    initThreads(function (e) {
+        methodCoverageOutline($('#coverage'), getSelectedNumbers(selectedThreads));
+    });
+}
+
 $(document).ready(
    function() {
       $("#main #content .section").hide();
@@ -919,6 +944,11 @@ $(document).ready(
       $('.sectionHeaders td.selected > a[href="index7.html"]').each(
          function () {
              initCoverageTab();
+         }
+      );
+      $('.sectionHeaders td.selected > a[href="index8.html"]').each(
+         function () {
+             initMethodCoverageTab();
          }
       );
       $('.timeline-copyright').hide();

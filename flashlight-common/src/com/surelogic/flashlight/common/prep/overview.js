@@ -185,7 +185,7 @@ function methodCoverageOutline(outline, threads) {
     }
     function siteTag(hasChildren, node) {
         var site = sites[node.site];
-        var span = '<span>' + site.pakkage + '.' + site.clazz + '.' + escapeHtml(site.location) + ':' + site.methodClass + '.' + site.methodName + '</span>';
+        var span = '<span>' + site.pakkage + '.' + site.clazz + '.' + escapeHtml(site.location) + ':' + site.methodClass + '.' + escapeHtml(site.methodName) + '</span>';
         var link = '<a href="index.html?loc=&Package=' + site.pakkage + '&Class=' + site.clazz + 
             '&Method=' + encodeURI(site.location) + '&Line=' + site.line + '">(' + site.file + ':' + 
             site.line + ')</a>';
@@ -205,7 +205,7 @@ function jsonOutline(outline,json,filter,children,show) {
 }
 
 
-function outlineExpand(node,filter,children, show) {
+function outlineExpand(node,filter,children,show) {
     node.find('> .icon').attr('src', O_DOWN).one('click', 
                                                  function() {
                                                      outlineCollapse($(this).parent(), filter, children, show);
@@ -973,6 +973,9 @@ function jq(myid) {
    return myid.replace(/([!"$%&'()*+,./:;<=>?@\[\\\]^`{|}~])/g,'\\$1');
 }
 function escapeHtml(html) {
+    if(html == null) {
+        return null;
+    }
    return html.replace('<','&lt;').replace('>', '&gt');
 }
 

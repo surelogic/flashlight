@@ -185,7 +185,7 @@ function methodCoverageOutline(outline, threads) {
     }
     function siteTag(hasChildren, node) {
         var site = sites[node.site];
-        var span = '<span>' + site.methodClass.replaceAll(/\//g,'.') + '.' + escapeHtml(site.methodName) + '</span>';
+        var span = '<span>' + site.methodClass.replace(/\//g,'.') + '.' + escapeHtml(site.methodName) + '</span>';
         var link = '<a href="index.html?loc=&Package=' + site.pakkage + '&Class=' + site.clazz + 
             '&Method=' + encodeURI(site.location) + '&Line=' + site.line + '">(' + site.file + ':' + 
             site.line + ')</a>';

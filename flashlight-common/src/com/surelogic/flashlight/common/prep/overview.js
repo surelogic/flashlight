@@ -185,14 +185,23 @@ function methodCoverageOutline(outline, threads) {
     }
     function siteTag(hasChildren, node) {
         var site = sites[node.site];
-        var span = '<span>' + site.pakkage + '.' + site.clazz + '.' + escapeHtml(site.location) + ':' + site.methodClass + '.' + escapeHtml(site.methodName) + '</span>';
+        var span = '<span>' + site.methodClass.replaceAll(/\//g,'.') + '.' + escapeHtml(site.methodName) + '</span>';
         var link = '<a href="index.html?loc=&Package=' + site.pakkage + '&Class=' + site.clazz + 
             '&Method=' + encodeURI(site.location) + '&Line=' + site.line + '">(' + site.file + ':' + 
             site.line + ')</a>';
         return { text: span + link };
     }    
     function children(node) {
-        return $.map(node.children, function (i) { return coverage[i]; });
+        return $.grep(
+            $.map(node.children, function (i) { 
+                var site = sites[coverage[i].site];
+                if(site.methodClass == null) {
+                    return null;
+                }
+                return coverage[i];
+            }),
+            function (x) {return x != null;}
+        );
     }
     jsonOutline(outline,coverage[0],filter,children,siteTag);
 }
@@ -217,11 +226,9 @@ function outlineExpand(node,filter,children,show) {
         var elem = json[n];
         if(filter(elem)) {
             var hasChildren = false;
-            if(elem.children != undefined) {
-                for(var child in elem.children) {
+            for(var child in children(elem)) {
                     hasChildren = true;
                     break;
-                }
             }
             var toShow = show(hasChildren, elem);
             var li = childList.append('<li><img class="icon" src="' + (hasChildren ? O_RIGHT : O_FILLER) + '"></img>' + 

@@ -7,6 +7,7 @@ import java.util.Set;
 
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Attribute;
+import org.objectweb.asm.Handle;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -58,9 +59,6 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 			}
 		}
 	}
-
-	/** The delegate method visitor */
-	private final ExceptionHandlerReorderingMethodAdapter mv;
 
 	/** Configuration information, derived from properties. */
 	private final Configuration config;
@@ -274,8 +272,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 			final String nameInternal,
 			final String classBeingAnalyzedFullyQualified,
 			final String superInternal, final Set<MethodCallWrapper> wrappers) {
-		super(Opcodes.ASM4);
-		this.mv = new ExceptionHandlerReorderingMethodAdapter(mv);
+		super(Opcodes.ASM4, new ExceptionHandlerReorderingMethodAdapter(mv));
 		config = conf;
 		siteIdFactory = csif;
 		messenger = msg;
@@ -404,7 +401,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 				/* Start a new try-block */
 				final Label startOfTryBlock = new Label();
 				endOfTryBlock = new Label();
-				mv.appendTryCatchBlock(startOfTryBlock, endOfTryBlock,
+				((ExceptionHandlerReorderingMethodAdapter) mv).appendTryCatchBlock(startOfTryBlock, endOfTryBlock,
 						startOfExceptionHandler, null);
 				mv.visitLabel(startOfTryBlock);
 			}
@@ -629,6 +626,13 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 	}
 
 	@Override
+	public void visitInvokeDynamicInsn(final String name, final String desc,
+	    final Handle bsm, final Object... bsmArgs) {
+	  // TODO: Something special here.  For now, just forward
+	  mv.visitInvokeDynamicInsn(name, desc, bsm, bsmArgs);
+	}
+
+	@Override
 	public void visitJumpInsn(final int opcode, final Label label) {
 		handlePreviousAload();
 		handlePreviousAstore();
@@ -703,7 +707,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 
 	@Override
 	public void visitTableSwitchInsn(final int min, final int max,
-			final Label dflt, final Label[] labels) {
+			final Label dflt, final Label... labels) {
 		handlePreviousAload();
 		handlePreviousAstore();
 		insertDelayedCode();
@@ -960,7 +964,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 		/* Set up finally handler */
 		final Label startOfInitializer = new Label();
 		startOfExceptionHandler = new Label();
-		mv.appendTryCatchBlock(startOfInitializer, startOfExceptionHandler,
+		((ExceptionHandlerReorderingMethodAdapter) mv).appendTryCatchBlock(startOfInitializer, startOfExceptionHandler,
 				startOfExceptionHandler, null);
 		// mv.visitTryCatchBlock(startOfInitializer,
 		// startOfExceptionHandler, startOfExceptionHandler, null);
@@ -997,7 +1001,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 		/* Set up finally handler */
 		final Label startOfOriginalConstructor = new Label();
 		startOfExceptionHandler = new Label();
-		mv.appendTryCatchBlock(startOfOriginalConstructor,
+		((ExceptionHandlerReorderingMethodAdapter) mv).appendTryCatchBlock(startOfOriginalConstructor,
 				startOfExceptionHandler, startOfExceptionHandler, null);
 
 		/* Start of constructor */
@@ -1060,7 +1064,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 			final Label end = new Label();
 			final Label handler = new Label();
 			final Label resume = new Label();
-			mv.prependTryCatchBlock(start, end, handler, null);
+			((ExceptionHandlerReorderingMethodAdapter) mv).prependTryCatchBlock(start, end, handler, null);
 
 			/* Original call */
 			mv.visitLabel(start);
@@ -1876,7 +1880,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 		final Label startOfTryBlock = new Label();
 		endOfTryBlock = new Label();
 		startOfExceptionHandler = new Label();
-		mv.appendTryCatchBlock(startOfTryBlock, endOfTryBlock,
+		((ExceptionHandlerReorderingMethodAdapter) mv).appendTryCatchBlock(startOfTryBlock, endOfTryBlock,
 				startOfExceptionHandler, null);
 		mv.visitLabel(startOfTryBlock);
 
@@ -1985,7 +1989,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 			}
 			methodCall.popReceiverAndArguments(mv);
 			methodCall.recordIndirectAccesses(mv, config);
-			methodCall.instrumentMethodCall(mv, config);
+			methodCall.instrumentMethodCall((ExceptionHandlerReorderingMethodAdapter) mv, config);
 		} else {
 			/*
 			 * The clone() method is a special case due to its retarded
@@ -2034,7 +2038,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 							desc, this);
 				}
 				methodCall.popReceiverAndArguments(mv);
-				methodCall.instrumentMethodCall(mv, config);
+				methodCall.instrumentMethodCall((ExceptionHandlerReorderingMethodAdapter) mv, config);
 			} else {
 				/*
 				 * Create the wrapper method information and add it to the list

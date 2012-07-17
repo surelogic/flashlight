@@ -47,6 +47,8 @@ final class FlashlightClassRewriter extends ClassVisitor {
 	 */
 	private static final int MAX_CODE_SIZE = 64 * 1024;
 
+	
+	
 	/** Properties to control rewriting and instrumentation. */
 	private final Configuration config;
 
@@ -257,14 +259,14 @@ final class FlashlightClassRewriter extends ClassVisitor {
 	public void visitInnerClass(final String name, final String outerName,
 			final String innerName, final int access) {
 		addFlashlightAttribute();
-		super.visitInnerClass(name, outerName, innerName, access);
+		cv.visitInnerClass(name, outerName, innerName, access);
 	}
 
 	@Override
 	public FieldVisitor visitField(final int access, final String name,
 			final String desc, final String signature, final Object value) {
 		addFlashlightAttribute();
-		return super.visitField(access, name, desc, signature, value);
+		return cv.visitField(access, name, desc, signature, value);
 	}
 
 	@Override

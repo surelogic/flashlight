@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.objectweb.asm.AnnotationVisitor;
-import org.objectweb.asm.Attribute;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -110,14 +109,9 @@ final class ExceptionHandlerReorderingMethodAdapter extends MethodVisitor {
 			"WIDE", "MULTIANEWARRAY", "IFNULL", "IFNONNULL", "GOTO_W", "JSR_W" };
 
 	/**
-	 * The visitor to adapt.
-	 */
-	private final MethodVisitor mv;
-
-	/**
 	 * The list of memoized method calls. Does not contain try catch blocks.
 	 */
-	private final List<MethodMemo> memoizedCalls = new ArrayList<MethodMemo>();
+	private final List<Memo> memoizedCalls = new ArrayList<Memo>();
 
 	/**
 	 * The list of exception handlers we get from calls to
@@ -136,8 +130,7 @@ final class ExceptionHandlerReorderingMethodAdapter extends MethodVisitor {
 	private final List<TryCatchBlockMemo> postfix = new ArrayList<TryCatchBlockMemo>();
 
 	public ExceptionHandlerReorderingMethodAdapter(final MethodVisitor mv) {
-		super(Opcodes.ASM4);
-		this.mv = mv;
+		super(Opcodes.ASM4, mv);
 	}
 
 	public void prependTryCatchBlock(final Label start, final Label end,
@@ -148,27 +141,6 @@ final class ExceptionHandlerReorderingMethodAdapter extends MethodVisitor {
 	public void appendTryCatchBlock(final Label start, final Label end,
 			final Label handler, final String type) {
 		postfix.add(new TryCatchBlockMemo(start, end, handler, type));
-	}
-
-	@Override
-	public AnnotationVisitor visitAnnotation(final String desc,
-			final boolean visible) {
-		return mv.visitAnnotation(desc, visible);
-	}
-
-	@Override
-	public AnnotationVisitor visitAnnotationDefault() {
-		return mv.visitAnnotationDefault();
-	}
-
-	@Override
-	public void visitAttribute(final Attribute attr) {
-		mv.visitAttribute(attr);
-	}
-
-	@Override
-	public void visitCode() {
-		mv.visitCode();
 	}
 
 	@Override
@@ -185,7 +157,7 @@ final class ExceptionHandlerReorderingMethodAdapter extends MethodVisitor {
 		}
 
 		// Output all the buffered instructions
-		for (final MethodMemo memo : memoizedCalls) {
+		for (final Memo memo : memoizedCalls) {
 			memo.forward(mv);
 		}
 
@@ -206,7 +178,7 @@ final class ExceptionHandlerReorderingMethodAdapter extends MethodVisitor {
 		}
 
 		// Output all the buffered instructions
-		for (final MethodMemo memo : memoizedCalls) {
+		for (final Memo memo : memoizedCalls) {
 			pw.println(memo);
 		}
 		pw.flush();
@@ -304,8 +276,6 @@ final class ExceptionHandlerReorderingMethodAdapter extends MethodVisitor {
 	@Override
 	public void visitTryCatchBlock(final Label start, final Label end,
 			final Label handler, final String type) {
-		// System.out.println("***** normal handler: " + start + " " + end + " "
-		// + handler + " " + type);
 		exceptionHandlers.add(new TryCatchBlockMemo(start, end, handler, type));
 	}
 
@@ -319,19 +289,35 @@ final class ExceptionHandlerReorderingMethodAdapter extends MethodVisitor {
 		memoizedCalls.add(new VarInsnMemo(opcode, var));
 	}
 
-	private static interface MethodMemo {
+	
+	
+	private static interface Memo {
 		public void forward(MethodVisitor mv);
 	}
+	
+	private static abstract class OpcodeMemo implements Memo {
+	  protected final int opcode;
+	  
+	  protected OpcodeMemo(final int opcode) {
+	    this.opcode = opcode;
+	  }
+	  
+	  @Override
+	  public final String toString() {
+	    return OPCODES[opcode] + restOfToString();
+	  }
+	  
+	  protected String restOfToString() { return ""; }
+	}
 
-	private final class FieldInsnMemo implements MethodMemo {
-		private final int opcode;
+	private static final class FieldInsnMemo extends OpcodeMemo {
 		private final String owner;
 		private final String name;
 		private final String desc;
 
 		public FieldInsnMemo(final int opcode, final String owner,
 				final String name, final String desc) {
-			this.opcode = opcode;
+		  super(opcode);
 			this.owner = owner;
 			this.name = name;
 			this.desc = desc;
@@ -342,12 +328,12 @@ final class ExceptionHandlerReorderingMethodAdapter extends MethodVisitor {
 		}
 
 		@Override
-		public String toString() {
-			return OPCODES[opcode] + " " + owner + " " + name + " " + desc;
+		protected String restOfToString() {
+			return " " + owner + " " + name + " " + desc;
 		}
 	}
 
-	private final class FrameMemo implements MethodMemo {
+	private static final class FrameMemo implements Memo {
 		private final int type;
 		private final int nLocal;
 		private final Object[] local;
@@ -373,7 +359,7 @@ final class ExceptionHandlerReorderingMethodAdapter extends MethodVisitor {
 		}
 	}
 
-	private final class IncInsnMemo implements MethodMemo {
+	private static final class IncInsnMemo implements Memo {
 		private final int var;
 		private final int increment;
 
@@ -392,29 +378,21 @@ final class ExceptionHandlerReorderingMethodAdapter extends MethodVisitor {
 		}
 	}
 
-	private final class InsnMemo implements MethodMemo {
-		private final int opcode;
-
+	private static final class InsnMemo extends OpcodeMemo {
 		public InsnMemo(final int opcode) {
-			this.opcode = opcode;
+		  super(opcode);
 		}
 
 		public void forward(final MethodVisitor mv) {
 			mv.visitInsn(opcode);
 		}
-
-		@Override
-		public String toString() {
-			return OPCODES[opcode];
-		}
 	}
 
-	private final class IntInsnMemo implements MethodMemo {
-		private final int opcode;
+	private static final class IntInsnMemo extends OpcodeMemo {
 		private final int operand;
 
 		public IntInsnMemo(final int opcode, final int operand) {
-			this.opcode = opcode;
+			super(opcode);
 			this.operand = operand;
 		}
 
@@ -423,17 +401,16 @@ final class ExceptionHandlerReorderingMethodAdapter extends MethodVisitor {
 		}
 
 		@Override
-		public String toString() {
-			return OPCODES[opcode] + " " + operand;
+		protected String restOfToString() {
+			return " " + operand;
 		}
 	}
 
-	private final class JumpInsnMemo implements MethodMemo {
-		private final int opcode;
+	private static final class JumpInsnMemo extends OpcodeMemo {
 		private final Label label;
 
 		public JumpInsnMemo(final int opcode, final Label label) {
-			this.opcode = opcode;
+			super(opcode);
 			this.label = label;
 		}
 
@@ -442,12 +419,12 @@ final class ExceptionHandlerReorderingMethodAdapter extends MethodVisitor {
 		}
 
 		@Override
-		public String toString() {
-			return OPCODES[opcode] + " " + label;
+		protected String restOfToString() {
+			return " " + label;
 		}
 	}
 
-	private final class LabelMemo implements MethodMemo {
+	private static final class LabelMemo implements Memo {
 		private final Label label;
 
 		public LabelMemo(final Label label) {
@@ -464,7 +441,7 @@ final class ExceptionHandlerReorderingMethodAdapter extends MethodVisitor {
 		}
 	}
 
-	private final class LdcInsnMemo implements MethodMemo {
+	private static final class LdcInsnMemo implements Memo {
 		private final Object cst;
 
 		public LdcInsnMemo(final Object cst) {
@@ -481,7 +458,7 @@ final class ExceptionHandlerReorderingMethodAdapter extends MethodVisitor {
 		}
 	}
 
-	private final class LineNumberMemo implements MethodMemo {
+	private static final class LineNumberMemo implements Memo {
 		private final int line;
 		private final Label start;
 
@@ -500,7 +477,7 @@ final class ExceptionHandlerReorderingMethodAdapter extends MethodVisitor {
 		}
 	}
 
-	private final class LocalVariableMemo implements MethodMemo {
+	private static final class LocalVariableMemo implements Memo {
 		private final String name;
 		private final String desc;
 		private final String signature;
@@ -529,7 +506,7 @@ final class ExceptionHandlerReorderingMethodAdapter extends MethodVisitor {
 		}
 	}
 
-	private final class LookupSwitchInsn implements MethodMemo {
+	private static final class LookupSwitchInsn implements Memo {
 		private final Label dflt;
 		private final int[] keys;
 		private final Label[] labels;
@@ -551,7 +528,7 @@ final class ExceptionHandlerReorderingMethodAdapter extends MethodVisitor {
 		}
 	}
 
-	private final class MaxsMemo implements MethodMemo {
+	private static final class MaxsMemo implements Memo {
 		private final int maxStack;
 		private final int maxLocals;
 
@@ -570,15 +547,14 @@ final class ExceptionHandlerReorderingMethodAdapter extends MethodVisitor {
 		}
 	}
 
-	private final class MethodInsnMemo implements MethodMemo {
-		private final int opcode;
+	private static final class MethodInsnMemo extends OpcodeMemo {
 		private final String owner;
 		private final String name;
 		private final String desc;
 
 		public MethodInsnMemo(final int opcode, final String owner,
 				final String name, final String desc) {
-			this.opcode = opcode;
+		  super(opcode);
 			this.owner = owner;
 			this.name = name;
 			this.desc = desc;
@@ -589,12 +565,12 @@ final class ExceptionHandlerReorderingMethodAdapter extends MethodVisitor {
 		}
 
 		@Override
-		public String toString() {
-			return OPCODES[opcode] + " " + owner + " " + name + " " + desc;
+		protected String restOfToString() {
+			return " " + owner + " " + name + " " + desc;
 		}
 	}
 
-	private final class MultiANewArrayInsnMemo implements MethodMemo {
+	private static final class MultiANewArrayInsnMemo implements Memo {
 		private final String desc;
 		private final int dims;
 
@@ -613,7 +589,7 @@ final class ExceptionHandlerReorderingMethodAdapter extends MethodVisitor {
 		}
 	}
 
-	private final class TableSwitchInsnMemo implements MethodMemo {
+	private static final class TableSwitchInsnMemo implements Memo {
 		private final int min;
 		private final int max;
 		private final Label dflt;
@@ -637,7 +613,7 @@ final class ExceptionHandlerReorderingMethodAdapter extends MethodVisitor {
 		}
 	}
 
-	private final class TryCatchBlockMemo implements MethodMemo {
+	private static final class TryCatchBlockMemo implements Memo {
 		private final Label start;
 		private final Label end;
 		private final Label handler;
@@ -661,12 +637,11 @@ final class ExceptionHandlerReorderingMethodAdapter extends MethodVisitor {
 		}
 	}
 
-	private final class TypeInsnMemo implements MethodMemo {
-		private final int opcode;
+	private static final class TypeInsnMemo extends OpcodeMemo {
 		private final String type;
 
 		public TypeInsnMemo(final int opcode, final String type) {
-			this.opcode = opcode;
+		  super(opcode);
 			this.type = type;
 		}
 
@@ -675,17 +650,16 @@ final class ExceptionHandlerReorderingMethodAdapter extends MethodVisitor {
 		}
 
 		@Override
-		public String toString() {
-			return OPCODES[opcode] + " " + type;
+		protected String restOfToString() {
+			return " " + type;
 		}
 	}
 
-	private final class VarInsnMemo implements MethodMemo {
-		private final int opcode;
+	private static final class VarInsnMemo extends OpcodeMemo {
 		private final int var;
 
 		public VarInsnMemo(final int opcode, final int var) {
-			this.opcode = opcode;
+			super(opcode);
 			this.var = var;
 		}
 
@@ -694,8 +668,8 @@ final class ExceptionHandlerReorderingMethodAdapter extends MethodVisitor {
 		}
 
 		@Override
-		public String toString() {
-			return OPCODES[opcode] + " " + var;
+		protected String restOfToString() {
+			return " " + var;
 		}
 	}
 }

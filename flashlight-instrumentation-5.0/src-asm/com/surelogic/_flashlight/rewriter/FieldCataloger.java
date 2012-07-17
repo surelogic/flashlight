@@ -31,7 +31,7 @@ import com.surelogic._flashlight.rewriter.ClassAndFieldModel.ClassNotFoundExcept
  */
 final class FieldCataloger extends ClassVisitor {
 	/**
-	 * The classpath entry that contains the class being catalogged.
+	 * The classpath entry that contains the class being cataloged.
 	 */
 	private final File where;
 

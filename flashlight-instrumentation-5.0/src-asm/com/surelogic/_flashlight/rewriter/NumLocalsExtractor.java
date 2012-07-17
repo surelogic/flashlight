@@ -187,7 +187,7 @@ final class NumLocalsExtractor extends ClassVisitor {
 
 			@Override
 			public void visitTableSwitchInsn(final int min, final int max,
-					final Label dflt, final Label[] labels) {
+					final Label dflt, final Label... labels) {
 				// don't care
 			}
 

@@ -385,6 +385,11 @@ public class Store {
         }
     }
 
+    public static void methodExecution(final boolean before,
+        final String className, final String methodName, final String desc) {
+      // Do stuff
+    }
+    
     public static void beforeIntrinsicLockAcquisition(final Object lockObject,
             final boolean lockIsThis, final boolean lockIsClass,
             final long siteId) {

@@ -85,6 +85,9 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 	/** The simple name of the method being rewritten. */
 	private final String methodName;
 
+	/** The description of the method being rewritten. */
+	private final String methodDesc;
+	
 	/** Are we visiting a constructor? */
 	private final boolean isConstructor;
 
@@ -133,6 +136,12 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 	 */
 	private Label startOfExceptionHandler = null;
 
+	/**
+	 * Label for marking the start of the exception handler used for wrapping
+	 * all constructors/methods with stack-trace building entry/exit calls.
+	 */
+	private Label startOfExecutionExceptionHandler = null;
+	
 	/**
 	 * Label for marking the end of the current try-finally block when rewriting
 	 * synchronized methods.
@@ -284,6 +293,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 		isStatic = (access & Opcodes.ACC_STATIC) != 0;
 		isSynthetic = (access & Opcodes.ACC_SYNTHETIC) != 0;
 		methodName = mname;
+		methodDesc = desc;
 		isConstructor = mname.equals(INITIALIZER);
 		isClassInitializer = mname.equals(CLASS_INITIALIZER);
 		isReadObject = mname.equals(FlashlightNames.READ_OBJECT.getName())
@@ -318,6 +328,8 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 		 */
 		mv.visitCode();
 
+		insertMethodExecutionPrefix();
+		
 		/*
 		 * Initialize the site identifier in case the class doesn't have line
 		 * number information
@@ -395,6 +407,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 			if (isClassInitializer) {
 				insertClassInit(false);
 			}
+			insertMethodExecution(false);
 			mv.visitInsn(opcode);
 
 			if (wasSynchronized && config.rewriteSynchronizedMethod) {
@@ -604,6 +617,8 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 		if (isConstructor && config.rewriteConstructorExecution) {
 			insertConstructorExecutionPostfix();
 		}
+		
+		insertMethodExecutionPostfix();
 
 		/*
 		 * We require the use of a ClassWRiter with the COMPUTE_MAXES or
@@ -993,6 +1008,48 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 		ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.CLASS_INIT);
 		// ...
 	}
+
+  private void insertMethodExecutionPrefix() {
+    /* Create event */
+    insertMethodExecution(true);
+
+    /* Set up finally handler */
+    final Label startOfOriginalMethod = new Label();
+    startOfExecutionExceptionHandler = new Label();
+    ((ExceptionHandlerReorderingMethodAdapter) mv).appendTryCatchBlock(
+        startOfOriginalMethod, startOfExecutionExceptionHandler,
+        startOfExecutionExceptionHandler, null);
+
+    /* Start of constructor */
+    mv.visitLabel(startOfOriginalMethod);
+  }
+
+  private void insertMethodExecutionPostfix() {
+    mv.visitLabel(startOfExecutionExceptionHandler);
+
+    // exception 
+    insertMethodExecution(false);
+    // exception
+
+    /* Rethrow the exception */
+    mv.visitInsn(Opcodes.ATHROW);
+
+    startOfExecutionExceptionHandler = null;
+  }
+
+  private void insertMethodExecution(final boolean before) {
+    // ...
+    ByteCodeUtils.pushBooleanConstant(mv, before);
+    // ..., before
+    mv.visitLdcInsn(classBeingAnalyzedInternal);
+    // ..., before, className
+    mv.visitLdcInsn(methodName);
+    // ..., before, className, methodName
+    mv.visitLdcInsn(methodDesc);
+    // ..., before, className, methodName, desc
+    ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.METHOD_EXECUTION);
+    // ...
+  }
 
 	private void insertConstructorExecutionPrefix() {
 		/* Create event */

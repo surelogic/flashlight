@@ -162,6 +162,16 @@ public class DebugStore {
     stdOut.println("  siteID = " + siteId);
     stdOut.flush();
   }
+
+  public static synchronized void methodExecution(final boolean before,
+      final String className, final String methodName, final String desc) {
+    stdOut.println("methodExecution");
+    stdOut.println("  before = " + before);
+    stdOut.println("  className = " + className);
+    stdOut.println("  methodName = " + methodName);
+    stdOut.println("  desc = " + desc);
+    stdOut.flush();
+  }
   
   public static synchronized void methodCall(
       final boolean before, final Object receiver, final long siteId) {

@@ -65,6 +65,11 @@ public class EmptyStore {
       final boolean before, final Object lockObject, final long siteId) {
     // do nothing
   }
+
+  public static void methodExecution(final boolean before,
+      final String className, final String methodName, final String desc) {
+    // Do stuff
+  }
   
   public static void methodCall(
       final boolean before, final Object receiver, final long siteid) {

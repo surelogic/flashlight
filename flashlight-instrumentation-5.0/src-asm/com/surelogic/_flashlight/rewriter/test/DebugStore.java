@@ -163,13 +163,10 @@ public class DebugStore {
     stdOut.flush();
   }
 
-  public static synchronized void methodExecution(final boolean before,
-      final String className, final String methodName, final String desc) {
+  public static synchronized void methodExecution(
+      final boolean before, final long siteId) {
     stdOut.println("methodExecution");
     stdOut.println("  before = " + before);
-    stdOut.println("  className = " + className);
-    stdOut.println("  methodName = " + methodName);
-    stdOut.println("  desc = " + desc);
     stdOut.flush();
   }
   

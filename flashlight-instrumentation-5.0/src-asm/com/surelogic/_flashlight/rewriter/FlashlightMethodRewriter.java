@@ -143,6 +143,12 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 	private Label startOfExecutionExceptionHandler = null;
 	
 	/**
+	 * The siteId used for marking the execution of this method.  Passed to
+	 * {@link Store#methodExecution}.
+	 */
+	private long executionSiteId;
+	
+	/**
 	 * Label for marking the end of the current try-finally block when rewriting
 	 * synchronized methods.
 	 */
@@ -327,14 +333,14 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 		 * any delayed instructions yet.
 		 */
 		mv.visitCode();
-
-		insertMethodExecutionPrefix();
 		
-		/*
-		 * Initialize the site identifier in case the class doesn't have line
-		 * number information
-		 */
-		updateSiteIdentifier();
+    /*
+     * Used to initialize the site identifier in case the class doesn't have
+     * line number information, but this now happens in
+     * insertMethodExecutionPrefix() when a site is generated for stack trace
+     * info.
+     */
+    insertMethodExecutionPrefix();
 
 		// Initialize the flashlight$phantomClass field
 		if (isClassInitializer) {
@@ -1011,6 +1017,8 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 
   private void insertMethodExecutionPrefix() {
     /* Create event */
+    executionSiteId = siteIdFactory.getSiteId(
+        currentSrcLine, methodName, classBeingAnalyzedInternal, methodDesc);
     insertMethodExecution(true);
 
     /* Set up finally handler */
@@ -1041,12 +1049,8 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
     // ...
     ByteCodeUtils.pushBooleanConstant(mv, before);
     // ..., before
-    mv.visitLdcInsn(classBeingAnalyzedInternal);
-    // ..., before, className
-    mv.visitLdcInsn(methodName);
-    // ..., before, className, methodName
-    mv.visitLdcInsn(methodDesc);
-    // ..., before, className, methodName, desc
+    pushSiteIdentifier(executionSiteId);
+    // ..., before, siteId
     ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.METHOD_EXECUTION);
     // ...
   }

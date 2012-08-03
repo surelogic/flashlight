@@ -29,10 +29,15 @@ public final class SiteIdFactory {
             this.calledMethodDesc = calledMethodDesc;
         }
 
+        private SiteInfo(final int lineOfCode, final SiteInfo siteInfo) {
+            this(lineOfCode, siteInfo.calledMethodName,
+                siteInfo.calledMethodOwner, siteInfo.calledMethodDesc);
+        }
+        
         @Override
         public int hashCode() {
             final int prime = 31;
-            int result = 1;
+            int result = 17;
             result = prime
                     * result
                     + (calledMethodDesc == null ? 0 : calledMethodDesc
@@ -177,20 +182,23 @@ public final class SiteIdFactory {
          * If possible, reassociate the site associated with line number -1 with
          * the first non-negative line number holding a site.
          */
-        Long emptySite = null;
+        SiteInfo emptySite = null;
+        Long emptySiteId = null;
         Integer firstRealLineNumber = null;
         for (final Map.Entry<SiteInfo, Long> entry : sitesToIds.entrySet()) {
             final SiteInfo site = entry.getKey();
             if (site.lineOfCode == -1) {
-                emptySite = entry.getValue();
+                emptySite = site;
+                emptySiteId = entry.getValue();
             } else if (site.lineOfCode >= 0) {
                 firstRealLineNumber = site.lineOfCode;
                 break;
             }
         }
-        if (emptySite != null && firstRealLineNumber != null) {
-            idsToSites.put(emptySite, new SiteInfo(firstRealLineNumber, null,
-                    null, null));
+        if (emptySiteId != null && firstRealLineNumber != null) {
+            idsToSites.put(
+                emptySiteId,
+                new SiteInfo(firstRealLineNumber, emptySite));
         }
 
         /* Output all the sites to the database */

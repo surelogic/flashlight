@@ -66,8 +66,8 @@ public class EmptyStore {
     // do nothing
   }
 
-  public static void methodExecution(final boolean before,
-      final String className, final String methodName, final String desc) {
+  public static void methodExecution(
+      final boolean before, final long siteId) {
     // Do stuff
   }
   

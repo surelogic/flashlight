@@ -885,6 +885,14 @@ public final class WriteHtmlOverview implements IPostPrep {
 		}
 	}
 
+	/**
+	 * Assigns and keeps track of a number corresponding to every member added
+	 * to the map.
+	 * 
+	 * @author nathan
+	 * 
+	 * @param <T>
+	 */
 	private static class CounterMap<T> {
 		final Map<T, Integer> map;
 		int count;
@@ -910,6 +918,10 @@ public final class WriteHtmlOverview implements IPostPrep {
 			return integer;
 		}
 
+		int getCounted() {
+			return count;
+		}
+
 		@SuppressWarnings("unchecked")
 		T[] toArray(final Class<T[]> arrayType) {
 			T[] array = (T[]) Array.newInstance(arrayType.getComponentType(),
@@ -919,52 +931,6 @@ public final class WriteHtmlOverview implements IPostPrep {
 			}
 			return array;
 		}
-	}
-
-	class MethodCoverageSection extends Section {
-
-		private final CoverageSite site;
-
-		public MethodCoverageSection(final SummaryInfo info) {
-			super(I18N.msg("flashlight.overview.title.methodCoverage"));
-			site = info.getThreadCoverage();
-		}
-
-		@Override
-		public List<String> getJavaScriptImports() {
-			return Collections.singletonList("coverage-data.js");
-		}
-
-		@Override
-		void displaySection(final Container c) {
-			// NOTE: The js data for this should already have been output by
-			// CoverageSection
-
-			// The first node should be an anonymous root node, so we just do
-			// its children
-			Collection<CoverageSite> children = site.getChildren();
-			if (children.isEmpty()) {
-				c.p()
-						.clazz("info")
-						.text(I18N
-								.msg("flashlight.overview.coverage.noCoverage"));
-			} else {
-				Table threadTable = c.table().id("coverage-table")
-						.clazz("threads-table");
-				Row threadRow = threadTable.row();
-				TD threadDiv = threadRow.td();
-				threadDiv.id("thread-td");
-				threadDiv.h(3).text(I18N.msg("flashlight.overview.h.threads"));
-				threadDiv.ul().id("threads");
-				TD coverageDiv = threadRow.td();
-				coverageDiv.id("coverage-td");
-				coverageDiv.h(3).text(
-						I18N.msg("flashlight.overview.h.coverage"));
-				coverageDiv.div().id("coverage").ul();
-			}
-
-		}
-
 	}
 
 	class CoverageSection extends Section {
@@ -1067,6 +1033,270 @@ public final class WriteHtmlOverview implements IPostPrep {
 			for (CoverageSite cs : site.getChildren()) {
 				processNodes(cs, covs, sites);
 			}
+		}
+
+	}
+
+	class MethodCoverageSection extends Section {
+
+		private final CoverageSite site;
+		private final List<Thread> threads;
+
+		public MethodCoverageSection(final SummaryInfo info) {
+			super(I18N.msg("flashlight.overview.title.methodCoverage"));
+			site = info.getThreadCoverage();
+			threads = info.getThreads();
+		}
+
+		@Override
+		public List<String> getJavaScriptImports() {
+			return Collections.singletonList("method-data.js");
+		}
+
+		@Override
+		void displaySection(final Container c) {
+			PrintWriter graphs = null;
+			try {
+				graphs = new PrintWriter(new File(htmlDirectory,
+						"method-data.js"));
+				writeMethodCoverage(graphs);
+			} catch (FileNotFoundException e) {
+				throw new IllegalStateException(e);
+			} catch (IOException e) {
+				throw new IllegalStateException(e);
+			} finally {
+				if (graphs != null) {
+					graphs.close();
+				}
+			}
+			// The first node should be an anonymous root node, so we just do
+			// its children
+			Collection<CoverageSite> children = site.getChildren();
+			if (children.isEmpty()) {
+				c.p()
+						.clazz("info")
+						.text(I18N
+								.msg("flashlight.overview.coverage.noCoverage"));
+			} else {
+				Table threadTable = c.table().id("coverage-table")
+						.clazz("threads-table");
+				Row threadRow = threadTable.row();
+				TD threadDiv = threadRow.td();
+				threadDiv.id("thread-td");
+				threadDiv.h(3).text(I18N.msg("flashlight.overview.h.threads"));
+				threadDiv.ul().id("threads");
+				TD coverageDiv = threadRow.td();
+				coverageDiv.id("coverage-td");
+				coverageDiv.h(3).text(
+						I18N.msg("flashlight.overview.h.coverage"));
+				coverageDiv.div().id("coverage").ul();
+			}
+
+		}
+
+		void writeMethodCoverage(final PrintWriter writer) throws IOException {
+			JsonBuilder builder = new JsonBuilder();
+			JObject jThreads = builder.object("threads");
+			for (Thread t : threads) {
+				JObject jThread = jThreads.object(t.getId());
+				jThread.val("blockTime", t.getBlockTime());
+				jThread.string("name", t.getName());
+				jThread.string("start", t.getStart().toString());
+				jThread.string("stop", t.getStop().toString());
+			}
+
+			CounterMap<MethodName> methNames = new CounterMap<MethodName>();
+			final Map<Integer, MethodNode> nodes = new HashMap<Integer, MethodNode>();
+			processNodes(site, nodes, methNames);
+			final JArray jNodes = builder.array("methods");
+			for (int i = 0; i < methNames.getCounted(); i++) {
+				final MethodNode methodNode = nodes.get(i);
+				JObject jNode = jNodes.object();
+				jNode.val("children", methodNode.getChildren());
+				jNode.val("threadsSeen", methodNode.getThreadsSeen());
+				jNode.string("pakkage", methodNode.getPackage());
+				jNode.string("clazz", methodNode.getClazz());
+				jNode.string("name", methodNode.getName());
+			}
+			builder.build(writer);
+		}
+
+		private void processNodes(final CoverageSite cov,
+				final Map<Integer, MethodNode> nodes,
+				final CounterMap<MethodName> methods) {
+			// cov should be the root node.
+			MethodName name = new MethodName(cov.getSite());
+			MethodNode root = new MethodNode(name);
+			nodes.put(methods.assign(name), root);
+			for (CoverageSite covChild : cov.getChildren()) {
+				MethodName childName = new MethodName(covChild.getSite());
+				final int num = methods.assign(childName);
+				MethodNode child = nodes.get(num);
+				if (child == null) {
+					child = new MethodNode(childName);
+					nodes.put(num, child);
+				}
+				root.addChild(num);
+				processNodes2(covChild, nodes, methods);
+			}
+		}
+
+		private int processNodes2(final CoverageSite cov,
+				final Map<Integer, MethodNode> nodes,
+				final CounterMap<MethodName> methods) {
+			Site site = cov.getSite();
+			String fullClass = site.getMethodCallClass();
+			MethodName name;
+			if (fullClass != null) {
+				String pakkage, clazz;
+				int idx = fullClass.lastIndexOf('.');
+				if (idx > 0) {
+					pakkage = fullClass.substring(0, idx);
+					clazz = fullClass.substring(idx + 1);
+				} else {
+					pakkage = "";
+					clazz = fullClass;
+				}
+				name = new MethodName(pakkage, clazz, site.getMethodCallName());
+			} else {
+				name = new MethodName(site);
+			}
+
+			final int num = methods.assign(name);
+			MethodNode methodNode = nodes.get(num);
+			if (methodNode == null) {
+				methodNode = new MethodNode(name);
+				nodes.put(num, methodNode);
+			}
+			methodNode.getThreadsSeen().addAll(cov.getThreadsSeen());
+			for (CoverageSite covChild : cov.getChildren()) {
+				methodNode.addChild(processNodes2(covChild, nodes, methods));
+			}
+			return num;
+		}
+	}
+
+	private static class MethodNode {
+		final Set<Integer> children;
+		final Set<Long> threads;
+		final MethodName name;
+
+		MethodNode(MethodName name) {
+			children = new HashSet<Integer>();
+			threads = new HashSet<Long>();
+			this.name = name;
+		}
+
+		public Set<Long> getThreadsSeen() {
+			return threads;
+		}
+
+		public void addChild(int child) {
+			children.add(child);
+		}
+
+		public Set<Integer> getChildren() {
+			return children;
+		}
+
+		public String getPackage() {
+			return name.getPackage();
+		}
+
+		public String getClazz() {
+			return name.getClazz();
+		}
+
+		public String getName() {
+			return name.getName();
+		}
+
+		@Override
+		public String toString() {
+			return "MethodNode [children=" + children + ", threads=" + threads
+					+ ", name=" + name + "]";
+		}
+
+	}
+
+	private static class MethodName implements Comparable<MethodName> {
+		final String clazz;
+		final String pakkage;
+		final String name;
+
+		MethodName(String pakkage, String clazz, String name) {
+			this.pakkage = pakkage;
+			this.clazz = clazz;
+			this.name = name;
+		}
+
+		MethodName(Site site) {
+			this(site.getPackage(), site.getClazz(), site.getLocation());
+		}
+
+		public String getClazz() {
+			return clazz;
+		}
+
+		public String getPackage() {
+			return pakkage;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		@Override
+		public int compareTo(MethodName o) {
+			int cmp = clazz.compareTo(o.clazz);
+			if (cmp == 0) {
+				cmp = name.compareTo(o.name);
+			}
+			return cmp;
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + (clazz == null ? 0 : clazz.hashCode());
+			result = prime * result + (name == null ? 0 : name.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null) {
+				return false;
+			}
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
+			MethodName other = (MethodName) obj;
+			if (clazz == null) {
+				if (other.clazz != null) {
+					return false;
+				}
+			} else if (!clazz.equals(other.clazz)) {
+				return false;
+			}
+			if (name == null) {
+				if (other.name != null) {
+					return false;
+				}
+			} else if (!name.equals(other.name)) {
+				return false;
+			}
+			return true;
+		}
+
+		@Override
+		public String toString() {
+			return "MethodName [clazz=" + clazz + ", pakkage=" + pakkage
+					+ ", name=" + name + "]";
 		}
 
 	}

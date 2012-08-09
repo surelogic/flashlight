@@ -184,26 +184,15 @@ function methodCoverageOutline(outline, threads) {
         return intersects(threads, node.threadsSeen);
     }
     function siteTag(hasChildren, node) {
-        var site = sites[node.site];
-        var span = '<span>' + site.methodClass.replace(/\//g,'.') + '.' + escapeHtml(site.methodName) + '</span>';
-        var link = '<a href="index.html?loc=&Package=' + site.pakkage + '&Class=' + site.clazz + 
-            '&Method=' + encodeURI(site.location) + '&Line=' + site.line + '">(' + site.file + ':' + 
-            site.line + ')</a>';
+        var span = '<span>' + node.pakkage + '.' + node.clazz + '.' + escapeHtml(node.name) + '</span>';
+        var link = '<a href="index.html?loc=&Package=' + node.pakkage + '&Class=' + node.clazz + 
+            '&Method=' + encodeURI(node.name) +  '">(&hellip;)</a>';
         return { text: span + link };
     }    
     function children(node) {
-        return $.grep(
-            $.map(node.children, function (i) { 
-                var site = sites[coverage[i].site];
-                if(site.methodClass == null) {
-                    return null;
-                }
-                return coverage[i];
-            }),
-            function (x) {return x != null;}
-        );
+        return $.map(node.children, function (i) { return methods[i]; });
     }
-    jsonOutline(outline,coverage[0],filter,children,siteTag);
+    jsonOutline(outline,methods[0],filter,children,siteTag);
 }
 
 // Construct an outline in the given html node, backed by a json object.

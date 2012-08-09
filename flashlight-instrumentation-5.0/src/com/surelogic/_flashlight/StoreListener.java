@@ -182,6 +182,8 @@ public interface StoreListener {
 	void methodCall(final boolean before, final Object receiver,
 			final long siteId);
 
+	void methodExecution(boolean before, long siteid);
+
 	/**
 	 * Records that the instrumented program is attempting to acquire an
 	 * intrinsic lock. An intrinsic lock is a {@code synchronized} block or
@@ -359,4 +361,5 @@ public interface StoreListener {
 	 * @return a list of commands for this store listener.
 	 */
 	Collection<? extends ConsoleCommand> getCommands();
+
 }

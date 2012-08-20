@@ -32,7 +32,8 @@ public class ImportTutorialProjectAction implements
 						l.getResource("/lib/FlashlightTutorial_PlanetBaron.zip"),
 						l.getResource("/lib/FlashlightTutorial_DiningPhilosophers.zip"),
 						l.getResource("/lib/FlashlightTutorial_jEdit-4.1.zip"),
-						l.getResource("/lib/FlashlightTutorial_Zookeeper.zip"));
+						l.getResource("/lib/FlashlightTutorial_Zookeeper.zip"),
+						l.getResource("/lib/FlashlightTutorial_CounterRace.zip"));
 	}
 
 	@Override

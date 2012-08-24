@@ -164,6 +164,7 @@ public class PostMortemStore implements StoreListener {
                 // This check needs to be before the MultiFileOutput check,
                 // as we do not switch output streams when we are using
                 // checkpointing and sockets at the same time.
+                f_conf.log("Using network output.");
                 outputStrategy = new SocketOutputStrategy(f_conf, factory,
                         outType);
             } else if (f_conf.isMultiFileOutput()) {
@@ -171,6 +172,7 @@ public class PostMortemStore implements StoreListener {
                 outputStrategy = new CheckpointingOutputStreamStrategy(f_conf,
                         factory, outType);
             } else {
+                f_conf.log("Using non-checkpointing local output.");
                 final OutputStream stream = EventVisitor.createStream(
                         f_conf.getFilePrefix(), outType);
                 outputStrategy = factory.create(f_conf, stream);

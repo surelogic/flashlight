@@ -255,8 +255,8 @@ class Console extends Thread {
          */
         private void sendResponse(final BufferedWriter outputStream,
                 final String response) throws IOException {
-                outputStream.write(response + "\n\r");
-                outputStream.flush();
+            outputStream.write(response + "\n\r");
+            outputStream.flush();
         }
 
         /**

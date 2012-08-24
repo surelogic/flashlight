@@ -118,6 +118,30 @@ public enum OutputType {
     }
 
     /**
+     * Gets an input stream to read the passed raw file. This method opens the
+     * right kind of stream based upon if the raw file is compressed or not. The
+     * input stream will be (mostly) unbuffered, which is necessary for reading
+     * data over the network without losing a significant amount of data when
+     * the stream closes.
+     * 
+     * @param dataFile
+     *            a raw data file.
+     * @return an input stream to read the passed raw file.
+     * @throws IOException
+     *             if the file doesn't exist or some other IO problem occurs.
+     */
+    public static InputStream getUnbufferedInputStreamFor(InputStream stream,
+            final OutputType type) throws IOException {
+        if (type.isCompressed()) {
+            stream = new GZIPInputStream(stream);
+        }
+        if (type.isBinary()) {
+            stream = new ObjectInputStream(stream);
+        }
+        return stream;
+    }
+
+    /**
      * Gets an output stream to write to based on the name of the given data
      * file. This method opens the right kind of stream based on whether the
      * file suffix indicates binary and/or compressed output.

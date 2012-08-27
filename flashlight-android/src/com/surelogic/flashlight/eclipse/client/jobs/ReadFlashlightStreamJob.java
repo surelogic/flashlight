@@ -13,12 +13,8 @@ import java.net.SocketTimeoutException;
 import java.util.logging.Level;
 
 import javax.xml.parsers.SAXParser;
-import javax.xml.stream.XMLEventReader;
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.events.XMLEvent;
 
+import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.ui.progress.UIJob;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -34,8 +30,10 @@ import com.surelogic.common.jobs.SLJob;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.common.logging.SLLogger;
+import com.surelogic.common.ui.EclipseUIUtility;
 import com.surelogic.common.xml.Entities;
 import com.surelogic.flashlight.client.eclipse.jobs.SwitchToFlashlightPerspectiveJob;
+import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
 import com.surelogic.flashlight.common.prep.AbstractDataScan;
 import com.surelogic.flashlight.common.prep.PrepEvent;
 
@@ -74,15 +72,15 @@ public class ReadFlashlightStreamJob implements SLJob {
         try {
             Socket socket = new Socket();
             try {
-                OutputType type = InstrumentationConstants.FL_OUTPUT_TYPE_DEFAULT;
+                OutputType socketType = InstrumentationConstants.FL_SOCKET_OUTPUT_TYPE;
                 InputStream in;
 
                 // Try to connect to the device
                 try {
                     socket.connect(new InetSocketAddress("localhost", f_port),
                             TIMEOUT);
-                    in = OutputType.getUnbufferedInputStreamFor(
-                            socket.getInputStream(), type);
+                    in = OutputType.getInputStreamFor(socket.getInputStream(),
+                            socketType);
                 } catch (Exception exc) {
                     if ((exc instanceof SocketTimeoutException || exc instanceof IOException)
                             && f_retries > 0) {
@@ -107,9 +105,14 @@ public class ReadFlashlightStreamJob implements SLJob {
                 }
                 // We managed to connect to the device. Time to start reading
                 // data.
-                SAXParser parser = OutputType.getParser(type);
+                IPreferenceStore prefs = EclipseUIUtility.getPreferences();
+                OutputType outType = OutputType
+                        .get(prefs
+                                .getString(FlashlightPreferencesUtility.OUTPUT_TYPE),
+                                prefs.getBoolean(FlashlightPreferencesUtility.COMPRESS_OUTPUT));
+                SAXParser parser = OutputType.getParser(outType);
                 CheckpointingEventHandler h = new CheckpointingEventHandler(
-                        type);
+                        outType);
                 try {
                     parser.parse(in, h);
                     h.streamFinished();
@@ -146,148 +149,6 @@ public class ReadFlashlightStreamJob implements SLJob {
             job.schedule();
         }
         return SLStatus.OK_STATUS;
-    }
-
-    class CheckpointingEventReader implements XMLStreamConstants {
-        final XMLEventReader reader;
-        private final OutputType f_type;
-        private PrintWriter f_out;
-        private final PrintWriter f_header;
-        private int f_count;
-
-        CheckpointingEventReader(final OutputType type, InputStream in)
-                throws IOException {
-            XMLInputFactory f = XMLInputFactory.newInstance();
-            try {
-                reader = f.createXMLEventReader(in);
-            } catch (XMLStreamException e) {
-                throw new IllegalStateException(e);
-            }
-            f_type = type;
-            // FIXME we set up the additional folders needed by eclipse here,
-            // but we should probably remove the dependencies in eclipse or do
-            // something more here
-            new File(f_dir, "source").mkdir();
-            new File(f_dir, "external").mkdir();
-            new File(f_dir, "projects").mkdir();
-            f_header = new PrintWriter(new File(f_dir, f_runName
-                    + OutputType.FLH.getSuffix()));
-            f_header.println("<?xml version='1.0' encoding='UTF-8' standalone='yes'?>");
-            nextStream();
-        }
-
-        void start() {
-            boolean atCheckpoint = false;
-            boolean doHeader = true;
-            try {
-                while (reader.hasNext()) {
-                    XMLEvent event = reader.nextEvent();
-                    f_out.print(event);
-                    if (event.getEventType() == START_ELEMENT) {
-                        PrepEvent pe = PrepEvent.getEvent(event
-                                .asStartElement().getName().toString());
-                        if (pe == PrepEvent.CHECKPOINT) {
-                            atCheckpoint = true;
-                        }
-                        if (doHeader) {
-                            if (pe == PrepEvent.ENVIRONMENT
-                                    || pe == PrepEvent.FLASHLIGHT) {
-                                f_header.println(event);
-                            } else if (pe == PrepEvent.TIME) { // Last element
-                                f_header.println(event);
-                                f_header.println("</flashlight>");
-                                f_header.close();
-                                doHeader = false;
-                            }
-                        }
-                    } else if (event.getEventType() == END_ELEMENT) {
-                        f_out.println();
-                        if (atCheckpoint) {
-                            atCheckpoint = false;
-                            nextStream();
-                        }
-                    }
-                }
-            } catch (IOException e) {
-                streamBroken();
-            } catch (XMLStreamException e) {
-                streamBroken();
-            }
-        }
-
-        void nextStream() throws IOException {
-            boolean firstFile = f_out == null;
-            if (!firstFile) {
-                f_out.println("</flashlight>");
-                f_out.flush();
-                f_out.close();
-            }
-            f_out = new PrintWriter(OutputType.getOutputStreamFor(new File(
-                    f_dir, f_runName + String.format(".%06d", f_count++)
-                            + f_type.getSuffix())));
-            if (firstFile) {
-                f_out.println("<?xml version='1.0' encoding='UTF-8' standalone='yes'?>");
-            } else {
-                // Grab the header information and place it into this file.
-                BufferedReader reader = new BufferedReader(
-                        new FileReader(new File(f_dir, f_runName
-                                + OutputType.FLH.getSuffix())));
-                try {
-                    String line;
-                    while (!(line = reader.readLine())
-                            .startsWith("</flashlight>")) {
-                        f_out.println(line);
-                    }
-                } finally {
-                    reader.close();
-                }
-            }
-        }
-
-        /**
-         * Call this if we get an error during data processing.
-         */
-        void streamBroken() {
-            if (f_out != null) {
-                f_out.close();
-            }
-
-            f_header.close();
-            // Still write out a Run.Complete as long as we have some data.
-            if (f_count > 1) {
-                File complete = new File(f_dir,
-                        InstrumentationConstants.FL_COMPLETE_RUN);
-                try {
-                    complete.createNewFile();
-                } catch (IOException e) {
-                    SLLogger.getLoggerFor(ReadFlashlightStreamJob.class).log(
-                            Level.WARNING, "Could not create Run.Complete", e);
-                }
-            }
-        }
-
-        /**
-         * This should be called at the end of stream processing ONLY if
-         * everything has gone well.
-         * 
-         * @throws IOException
-         */
-        void streamFinished() throws IOException {
-            if (f_out != null) {
-                f_out.println("</flashlight>");
-                f_out.close();
-            }
-            f_header.close();
-            File complete = new File(f_dir,
-                    InstrumentationConstants.FL_COMPLETE_RUN);
-            try {
-                complete.createNewFile();
-            } catch (IOException e) {
-                SLLogger.getLoggerFor(ReadFlashlightStreamJob.class).log(
-                        Level.WARNING, "Could not create Run.Complete", e);
-            }
-        }
-
     }
 
     class CheckpointingEventHandler extends AbstractDataScan {

@@ -35,6 +35,7 @@ import static com.surelogic._flashlight.common.InstrumentationConstants.FL_SEPAR
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_SITES_FILE;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_SITES_FILE_NAME;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_SITES_RESOURCE;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_SOCKET_OUTPUT_TYPE;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_SOURCE_FOLDER_NAME;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_SOURCE_RESOURCE;
 
@@ -314,8 +315,12 @@ public class StoreConfiguration {
                 FL_CONSOLE_PORT_DEFAULT));
         setOutputPort(getIntProperty(props, FL_OUTPUT_PORT, null));
         setRefineryOff(props.getProperty(FL_REFINERY_OFF, null) != null);
-        setOutputType(OutputType.valueOf(props.getProperty(FL_OUTPUT_TYPE),
-                FL_OUTPUT_TYPE_DEFAULT));
+        if (hasOutputPort()) {
+            setOutputType(FL_SOCKET_OUTPUT_TYPE);
+        } else {
+            setOutputType(OutputType.valueOf(props.getProperty(FL_OUTPUT_TYPE),
+                    FL_OUTPUT_TYPE_DEFAULT));
+        }
         setDebug("ON".equalsIgnoreCase(props.getProperty(FL_DEBUG, "OFF")));
         setCollectionType(CollectionType.valueOf(
                 props.getProperty(FL_COLLECTION_TYPE),

@@ -48,7 +48,6 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
-import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
 import org.eclipse.jdt.launching.IVMRunner;
 import org.eclipse.jdt.launching.VMRunnerConfiguration;
@@ -65,9 +64,7 @@ import com.surelogic._flashlight.rewriter.RewriteMessenger;
 import com.surelogic._flashlight.rewriter.config.Configuration;
 import com.surelogic._flashlight.rewriter.config.ConfigurationBuilder;
 import com.surelogic.common.FileUtility;
-import com.surelogic.common.core.JDTUtility;
 import com.surelogic.common.core.MemoryUtility;
-import com.surelogic.common.core.SourceZip;
 import com.surelogic.common.core.jobs.EclipseJob;
 import com.surelogic.common.core.logging.SLEclipseStatusUtility;
 import com.surelogic.common.license.SLLicenseProduct;
@@ -212,7 +209,8 @@ public final class FlashlightVMRunner implements IVMRunner {
         // Check if projects changed since last Flashlight run?
         final RunDirectory lastRun = findLastRunDirectory();
 
-        if (createSourceZips(lastRun, interestingProjects, progress)) {
+        if (LaunchUtils.createSourceZips(lastRun, interestingProjects,
+                sourceDir, progress)) {
             // Canceled, abort early
             return;
         }
@@ -287,59 +285,6 @@ public final class FlashlightVMRunner implements IVMRunner {
             }
         }
         return latest == null ? null : latest.getRunDirectory();
-    }
-
-    /**
-     * Create zips of the sources from the projects Also checks to see if it can
-     * reuse an old one from the last run
-     * 
-     * @return Whether instrumentation was canceled.
-     */
-    private boolean createSourceZips(final RunDirectory lastRun,
-            final Set<IProject> projects, final SubMonitor progress) {
-        final List<File> oldZips = lastRun == null ? Collections
-                .<File> emptyList() : lastRun.getSourceHandles()
-                .getSourceZips();
-        for (final IProject project : projects) {
-            final String projectName = project.getName();
-            progress.subTask("Creating source zip for " + projectName);
-            final SourceZip srcZip = new SourceZip(project);
-            final File zipFile = new File(sourceDir, projectName + ".src.zip");
-            try {
-                // Check if old zip is up-to-date
-                File orig = null;
-
-                for (final File old : oldZips) {
-                    if (old.getName().equals(zipFile.getName())) {
-                        final IJavaProject jp = JDTUtility
-                                .getJavaProject(project.getName());
-                        if (JDTUtility.projectUpdatedSince(jp,
-                                old.lastModified())) {
-                            orig = null;
-                        } else {
-                            orig = old;
-                        }
-                        break;
-                    }
-                }
-                if (orig != null) {
-                    FileUtility.copy(orig, zipFile);
-                } else {
-                    srcZip.generateSourceZip(zipFile.getAbsolutePath(), project);
-                }
-            } catch (final IOException e) {
-                SLLogger.getLogger().log(
-                        Level.SEVERE,
-                        "Unable to create source zip for project "
-                                + projectName, e);
-            }
-
-            if (progress.isCanceled()) {
-                return true;
-            }
-            progress.worked(1);
-        }
-        return false;
     }
 
     /**

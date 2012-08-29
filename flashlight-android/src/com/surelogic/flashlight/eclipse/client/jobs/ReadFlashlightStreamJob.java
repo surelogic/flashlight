@@ -105,12 +105,12 @@ public class ReadFlashlightStreamJob implements SLJob {
                 }
                 // We managed to connect to the device. Time to start reading
                 // data.
+                SAXParser parser = OutputType.getParser(socketType);
                 IPreferenceStore prefs = EclipseUIUtility.getPreferences();
                 OutputType outType = OutputType
                         .get(prefs
                                 .getString(FlashlightPreferencesUtility.OUTPUT_TYPE),
                                 prefs.getBoolean(FlashlightPreferencesUtility.COMPRESS_OUTPUT));
-                SAXParser parser = OutputType.getParser(outType);
                 CheckpointingEventHandler h = new CheckpointingEventHandler(
                         outType);
                 try {

@@ -316,6 +316,7 @@ public class StoreConfiguration {
         setOutputPort(getIntProperty(props, FL_OUTPUT_PORT, null));
         setRefineryOff(props.getProperty(FL_REFINERY_OFF, null) != null);
         if (hasOutputPort()) {
+            // We only stream XML over the pipe
             setOutputType(FL_SOCKET_OUTPUT_TYPE);
         } else {
             setOutputType(OutputType.valueOf(props.getProperty(FL_OUTPUT_TYPE),

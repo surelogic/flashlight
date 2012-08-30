@@ -14,7 +14,6 @@ import java.util.logging.Level;
 
 import javax.xml.parsers.SAXParser;
 
-import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.ui.progress.UIJob;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -30,10 +29,8 @@ import com.surelogic.common.jobs.SLJob;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.common.logging.SLLogger;
-import com.surelogic.common.ui.EclipseUIUtility;
 import com.surelogic.common.xml.Entities;
 import com.surelogic.flashlight.client.eclipse.jobs.SwitchToFlashlightPerspectiveJob;
-import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
 import com.surelogic.flashlight.common.prep.AbstractDataScan;
 import com.surelogic.flashlight.common.prep.PrepEvent;
 
@@ -106,13 +103,8 @@ public class ReadFlashlightStreamJob implements SLJob {
                 // We managed to connect to the device. Time to start reading
                 // data.
                 SAXParser parser = OutputType.getParser(socketType);
-                IPreferenceStore prefs = EclipseUIUtility.getPreferences();
-                OutputType outType = OutputType
-                        .get(prefs
-                                .getString(FlashlightPreferencesUtility.OUTPUT_TYPE),
-                                prefs.getBoolean(FlashlightPreferencesUtility.COMPRESS_OUTPUT));
                 CheckpointingEventHandler h = new CheckpointingEventHandler(
-                        outType);
+                        OutputType.FL_GZ);
                 try {
                     parser.parse(in, h);
                     h.streamFinished();

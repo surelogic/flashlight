@@ -73,9 +73,11 @@ public class WatchFlashlightMonitorJob extends AbstractSLJob {
             } catch (final IOException e) {
                 f_status.setState(ConnectionState.NOTFOUND);
             }
-            new UpdateUIMonitorJob(new MonitorStatus(f_status), true)
-                    .schedule();
         }
+        boolean callback = f_status.getState() != ConnectionState.NOTFOUND
+                && f_status.getState() != ConnectionState.TERMINATED;
+        new UpdateUIMonitorJob(new MonitorStatus(f_status), callback)
+                .schedule();
         return SLStatus.OK_STATUS;
     }
 
@@ -241,12 +243,9 @@ public class WatchFlashlightMonitorJob extends AbstractSLJob {
                     .getView("com.surelogic.flashlight.client.monitor.views.MonitorView");
             if (view != null) {
                 view.getMediator().update(f_status);
-                final WatchFlashlightMonitorJob job = new WatchFlashlightMonitorJob(
-                        f_status);
-                final ConnectionState state = f_status.getState();
-                if (f_callback
-                        && (state == ConnectionState.CONNECTED || state == ConnectionState.SEARCHING)) {
-                    EclipseJob.getInstance().schedule(job, 1000);
+                if (f_callback) {
+                    EclipseJob.getInstance().schedule(
+                            new WatchFlashlightMonitorJob(f_status), 1000);
                 }
             }
             return Status.OK_STATUS;

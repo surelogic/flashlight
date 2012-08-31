@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
-import java.util.logging.Level;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.ILaunchConfiguration;
@@ -16,8 +15,6 @@ import org.eclipse.jface.preference.IPreferenceStore;
 import com.surelogic._flashlight.rewriter.config.Configuration.FieldFilter;
 import com.surelogic._flashlight.rewriter.config.ConfigurationBuilder;
 import com.surelogic.common.core.logging.SLEclipseStatusUtility;
-import com.surelogic.common.i18n.I18N;
-import com.surelogic.common.logging.SLLogger;
 import com.surelogic.common.ui.EclipseUIUtility;
 import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
 
@@ -182,8 +179,6 @@ public final class LaunchHelper {
 
         final ConfigurationBuilder configBuilder;
         if (failed) {
-            SLLogger.getLogger().log(Level.INFO,
-                    I18N.err(162, flashlightPropFile));
             configBuilder = new ConfigurationBuilder();
         } else {
             configBuilder = new ConfigurationBuilder(flashlightProps);

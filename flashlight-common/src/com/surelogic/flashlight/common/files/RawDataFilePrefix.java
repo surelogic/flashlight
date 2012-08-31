@@ -257,7 +257,7 @@ public final class RawDataFilePrefix {
                      * got what we wanted.
                      */
                     if (!e.getMessage().equals("done")) {
-                        SLLogger.getLogger().log(Level.WARNING,
+                        SLLogger.getLogger().log(Level.FINE,
                                 I18N.err(109, dataFile.getAbsolutePath()));
                         throw new SAXException(e);
                     }

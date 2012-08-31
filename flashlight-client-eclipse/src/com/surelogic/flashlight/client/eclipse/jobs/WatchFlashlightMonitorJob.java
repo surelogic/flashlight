@@ -25,7 +25,6 @@ import com.surelogic.common.ui.jobs.SLUIJob;
 import com.surelogic.flashlight.client.eclipse.views.monitor.MonitorStatus;
 import com.surelogic.flashlight.client.eclipse.views.monitor.MonitorStatus.ConnectionState;
 import com.surelogic.flashlight.client.eclipse.views.monitor.MonitorView;
-import com.surelogic.flashlight.client.eclipse.views.monitor.MonitorViewMediator;
 
 public class WatchFlashlightMonitorJob extends AbstractSLJob {
 
@@ -46,7 +45,6 @@ public class WatchFlashlightMonitorJob extends AbstractSLJob {
         MonitorView view = (MonitorView) EclipseUIUtility
                 .getView("com.surelogic.flashlight.client.monitor.views.MonitorView");
         if (view != null) {
-            MonitorViewMediator mediator = view.getMediator();
             try {
                 if (f_status.getCompleteFile().exists()) {
                     f_status.setState(ConnectionState.TERMINATED);

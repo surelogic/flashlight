@@ -10,6 +10,7 @@ import java.io.PrintWriter;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.util.Date;
 import java.util.logging.Level;
 
 import javax.xml.parsers.SAXParser;
@@ -74,18 +75,25 @@ public class ReadFlashlightStreamJob implements SLJob {
 
                 // Try to connect to the device
                 try {
+                    System.err.println("**** Trying to connect to localhost:"
+                            + f_port + " at " + new Date());
                     socket.connect(new InetSocketAddress("localhost", f_port),
                             TIMEOUT);
                     in = OutputType.getInputStreamFor(socket.getInputStream(),
                             socketType);
+                    System.err.println("**** Connected to localhost:" + f_port
+                            + " at " + new Date());
                 } catch (Exception exc) {
                     if ((exc instanceof SocketTimeoutException || exc instanceof IOException)
                             && f_retries > 0) {
                         // Maybe something isn't set up yet, we'll try again in
                         // just a little bit.
+                        System.err
+                                .println("**** Rescheduling a connection attempt to localhost:"
+                                        + f_port + " at " + new Date());
                         EclipseJob.getInstance().schedule(
                                 new ReadFlashlightStreamJob(f_runName, f_dir,
-                                        f_port, f_device, f_retries - 1), 500);
+                                        f_port, f_device, f_retries - 1), 100);
                         return SLStatus.OK_STATUS;
                     } else {
                         // We are done trying to connect, so it is time to bail

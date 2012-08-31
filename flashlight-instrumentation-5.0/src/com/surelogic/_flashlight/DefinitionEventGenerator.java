@@ -133,18 +133,23 @@ public class DefinitionEventGenerator {
 				return Collections.emptyMap();
 			}
 			final Map<String, List<FieldInfo>> map = new HashMap<String, List<FieldInfo>>();
+			BufferedReader br = null;
 			try {
-				final Reader r = new FileReader(f);
-				final BufferedReader br = new BufferedReader(r);
-				String line;
-				while ((line = br.readLine()) != null) {
-					final FieldInfo fi = new FieldInfo(strings, line);
-					List<FieldInfo> l = map.get(fi.declaringType);
-					if (l == null) {
-						l = new ArrayList<FieldInfo>();
-						map.put(fi.declaringType, l);
+				br = new BufferedReader(new FileReader(f));
+				try {
+					String line;
+					while ((line = br.readLine()) != null) {
+						final FieldInfo fi = new FieldInfo(strings, line);
+						List<FieldInfo> l = map.get(fi.declaringType);
+						if (l == null) {
+							l = new ArrayList<FieldInfo>();
+							map.put(fi.declaringType, l);
+						}
+						l.add(fi);
 					}
-					l.add(fi);
+				} finally {
+					if (br != null)
+						br.close();
 				}
 			} catch (final IOException e) {
 				f_conf.logAProblem("Couldn't read field definition file", e);
@@ -163,7 +168,7 @@ public class DefinitionEventGenerator {
 			return;
 		}
 		try {
-			Reader r;
+			final Reader r;
 			if (f.getName().endsWith(".gz")) {
 				final FileInputStream fin = new FileInputStream(f);
 				final GZIPInputStream gzip = new GZIPInputStream(fin);
@@ -172,9 +177,13 @@ public class DefinitionEventGenerator {
 				r = new FileReader(f);
 			}
 			final BufferedReader br = new BufferedReader(r);
-			String line;
-			while ((line = br.readLine()) != null) {
-				handler.readLine(line);
+			try {
+				String line;
+				while ((line = br.readLine()) != null) {
+					handler.readLine(line);
+				}
+			} finally {
+				br.close();
 			}
 		} catch (final IOException e) {
 			f_conf.logAProblem("Couldn't read definition file" + f.getName(), e);

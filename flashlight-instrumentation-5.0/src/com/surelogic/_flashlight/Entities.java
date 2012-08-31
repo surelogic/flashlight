@@ -107,7 +107,6 @@ public final class Entities {
     }
 
     private static final class CharValueTuple extends AbstractTuple {
-        final String f_valueAsString;
         final char f_value;
 
         CharValueTuple(final String name, final String value) {
@@ -116,7 +115,6 @@ public final class Entities {
                 throw new IllegalArgumentException(
                         "Value must have length of 1");
             }
-            f_valueAsString = value;
             f_value = value.charAt(0);
         }
 

@@ -38,8 +38,6 @@ public class ImportTutorialProjectAction implements
 		tutorials.add(l.getResource("/lib/FlashlightTutorial_PlanetBaron.zip"));
 		tutorials.add(l
 				.getResource("/lib/FlashlightTutorial_DiningPhilosophers.zip"));
-		tutorials.add(l.getResource("/lib/FlashlightTutorial_jEdit-4.1.zip"));
-		tutorials.add(l.getResource("/lib/FlashlightTutorial_Zookeeper.zip"));
 
 		/*
 		 * Only show the Android tutorial if the Flashlight Android plug-in is

@@ -225,7 +225,7 @@ public final class RawFileUtility {
             final File logFile;
             if (logs == null || logs.length != 1) {
                 SLLogger.getLogger().log(
-                        Level.WARNING,
+                        Level.FINE,
                         I18N.err(108, prefixInfos[0].getFile()
                                 .getAbsolutePath()));
                 logFile = null;

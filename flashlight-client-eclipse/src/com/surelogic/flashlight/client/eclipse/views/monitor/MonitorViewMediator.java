@@ -19,7 +19,6 @@ import org.eclipse.swt.widgets.TreeItem;
 import com.surelogic.common.XUtil;
 import com.surelogic.common.core.jobs.EclipseJob;
 import com.surelogic.flashlight.client.eclipse.jobs.SendCommandToFlashlightMonitorJob;
-import com.surelogic.flashlight.client.eclipse.jobs.WatchFlashlightMonitorJob;
 import com.surelogic.flashlight.client.eclipse.views.monitor.MonitorStatus.ConnectionState;
 import com.surelogic.flashlight.client.eclipse.views.monitor.MonitorStatus.FieldStatus;
 import com.surelogic.flashlight.client.eclipse.views.monitor.MonitorStatus.LockStatus;
@@ -110,7 +109,6 @@ public class MonitorViewMediator {
     }
 
     public void init() {
-        WatchFlashlightMonitorJob.setMediator(this);
         SpecListener l = new SpecListener(FIELD_SPEC, f_fieldsSelector,
                 f_fieldsButton);
         f_fieldsSelector.addSelectionListener(l);
@@ -122,10 +120,6 @@ public class MonitorViewMediator {
         f_edtSelector.addModifyListener(l);
         f_edtButton.addSelectionListener(l);
         f_edtButton.setEnabled(false);
-    }
-
-    public void dispose() {
-        WatchFlashlightMonitorJob.setMediator(null);
     }
 
     public void setFocus() {

@@ -80,7 +80,7 @@ final class Refinery extends AbstractRefinery {
                     first = f_rawQueue.poll(500, TimeUnit.MILLISECONDS);
                 } catch (InterruptedException e) {
                     // Ignored
-                    f_conf.logAProblem("Interrupted while calling take()", e);
+                    f_conf.logAProblem("Interrupted while calling poll()", e);
                     continue;
                 }
                 if (first != null) {

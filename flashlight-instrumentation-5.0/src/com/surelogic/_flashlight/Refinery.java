@@ -125,14 +125,15 @@ final class Refinery extends AbstractRefinery {
                     f_eventCache.add(l);
                 } else if (f_conf.isMultiFileOutput()) {
                     long curTime = System.currentTimeMillis();
-                    long elapsed = curTime
-                            - (f_lastRollover == 0 ? f_refineryStart
-                                    : f_lastRollover);
-                    long checkpointLimit = f_lastRollover == 0 ? f_conf
-                            .getFileEventInitialDuration() : f_conf
-                            .getFileEventDuration();
-                    if (count > f_conf.getFileEventCount()
-                            || elapsed > checkpointLimit) {
+                    boolean timesUp;
+                    if (f_lastRollover == 0) {
+                        timesUp = curTime - f_refineryStart > f_conf
+                                .getFileEventInitialDuration();
+                    } else {
+                        timesUp = curTime - f_lastRollover > f_conf
+                                .getFileEventDuration();
+                    }
+                    if (count > f_conf.getFileEventCount() || timesUp) {
                         final List<Event> l = f_store.flushLocalQueues();
                         if (filter) {
                             for (Event e : l) {

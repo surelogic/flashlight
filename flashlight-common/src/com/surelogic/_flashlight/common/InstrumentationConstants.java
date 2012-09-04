@@ -105,14 +105,15 @@ public final class InstrumentationConstants {
     public static final int FILE_EVENT_COUNT = 100000;
 
     /**
-     * The maximum initial amount of time in milliseconds that should be in the
+     * The maximum initial amount of time in nanoseconds that should be in the
      * first file.
      */
-    public static final long FILE_EVENT_INITIAL_DURATION = 1000;
+    public static final long FILE_EVENT_INITIAL_DURATION = 1000000000L;
 
     /**
-     * The maximum amount of time before rotating to the next file.
+     * The maximum amount of time in nanoseconds before rotating to the next
+     * file.
      */
-    public static final long FILE_EVENT_DURATION = 3000;
+    public static final long FILE_EVENT_DURATION = 3000000000L;
 
 }

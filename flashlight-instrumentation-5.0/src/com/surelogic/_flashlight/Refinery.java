@@ -6,6 +6,7 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import com.surelogic._flashlight.common.IdConstants;
 
@@ -49,7 +50,7 @@ final class Refinery extends AbstractRefinery {
         f_conf = conf;
         f_store = store;
         f_defs = new DefinitionEventGenerator(conf, outQueue);
-        f_refineryStart = System.currentTimeMillis();
+        f_refineryStart = System.nanoTime();
     }
 
     private boolean f_finished = false;
@@ -76,7 +77,7 @@ final class Refinery extends AbstractRefinery {
             try {
                 List<Event> first = null;
                 try {
-                    first = f_rawQueue.take();
+                    first = f_rawQueue.poll(500, TimeUnit.MILLISECONDS);
                 } catch (InterruptedException e) {
                     // Ignored
                     f_conf.logAProblem("Interrupted while calling take()", e);
@@ -84,8 +85,6 @@ final class Refinery extends AbstractRefinery {
                 }
                 if (first != null) {
                     buf.add(first);
-                } else {
-                    continue;
                 }
 
                 f_rawQueue.drainTo(buf);
@@ -124,7 +123,7 @@ final class Refinery extends AbstractRefinery {
                     }
                     f_eventCache.add(l);
                 } else if (f_conf.isMultiFileOutput()) {
-                    long curTime = System.currentTimeMillis();
+                    long curTime = System.nanoTime();
                     boolean timesUp;
                     if (f_lastRollover == 0) {
                         timesUp = curTime - f_refineryStart > f_conf

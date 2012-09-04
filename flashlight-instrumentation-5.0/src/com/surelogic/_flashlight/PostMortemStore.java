@@ -1,7 +1,6 @@
 package com.surelogic._flashlight;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -167,15 +166,10 @@ public class PostMortemStore implements StoreListener {
                 f_conf.log("Using network output.");
                 outputStrategy = new SocketOutputStrategy(f_conf, factory,
                         outType);
-            } else if (f_conf.isMultiFileOutput()) {
+            } else {
                 f_conf.log("Using checkpointing output.");
                 outputStrategy = new CheckpointingOutputStreamStrategy(f_conf,
                         factory, outType);
-            } else {
-                f_conf.log("Using non-checkpointing local output.");
-                final OutputStream stream = EventVisitor.createStream(
-                        f_conf.getFilePrefix(), outType);
-                outputStrategy = factory.create(f_conf, stream);
             }
         } catch (final IOException e) {
             f_conf.logAProblem("unable to initialize PostMortem Store output.",

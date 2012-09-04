@@ -85,34 +85,34 @@ final class Refinery extends AbstractRefinery {
                 }
                 if (first != null) {
                     buf.add(first);
-                }
 
-                f_rawQueue.drainTo(buf);
+                    f_rawQueue.drainTo(buf);
 
-                /*
-                 * System.err.println("Refinery: got "+buf.size()+" lists ("+num+
-                 * ")"); if (buf.size() == 0) { continue; }
-                 */
-                for (List<Event> l : buf) {
-                    for (Event e : l) {
-                        if (e == FinalEvent.FINAL_EVENT) {
-                            /*
-                             * We need to delay putting the final event on the
-                             * out queue until all the thread-local events get
-                             * added.
-                             */
-                            f_finished = true;
-                            break;
-                        } else {
-                            if (filter) {
-                                e.accept(f_detectSharedFieldsVisitor);
+                    /*
+                     * System.err.println("Refinery: got "+buf.size()+" lists ("+
+                     * num+ ")"); if (buf.size() == 0) { continue; }
+                     */
+                    for (List<Event> l : buf) {
+                        for (Event e : l) {
+                            if (e == FinalEvent.FINAL_EVENT) {
+                                /*
+                                 * We need to delay putting the final event on
+                                 * the out queue until all the thread-local
+                                 * events get added.
+                                 */
+                                f_finished = true;
+                                break;
+                            } else {
+                                if (filter) {
+                                    e.accept(f_detectSharedFieldsVisitor);
+                                }
                             }
                         }
+                        f_eventCache.add(l);
+                        count += l.size();
                     }
-                    f_eventCache.add(l);
-                    count += l.size();
+                    buf.clear();
                 }
-                buf.clear();
                 boolean isCheckpoint = false;
                 if (f_finished) {
                     final List<Event> l = f_store.flushLocalQueues();
@@ -122,7 +122,7 @@ final class Refinery extends AbstractRefinery {
                         }
                     }
                     f_eventCache.add(l);
-                } else if (f_conf.isMultiFileOutput()) {
+                } else {
                     long curTime = System.nanoTime();
                     boolean timesUp;
                     if (f_lastRollover == 0) {

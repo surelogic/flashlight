@@ -1019,6 +1019,8 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
     /* Create event */
     executionSiteId = siteIdFactory.getSiteId(
         currentSrcLine, methodName, classBeingAnalyzedInternal, methodDesc);
+    // init the site identifier for the whole method
+    siteId = executionSiteId;
     insertMethodExecution(true);
 
     /* Set up finally handler */

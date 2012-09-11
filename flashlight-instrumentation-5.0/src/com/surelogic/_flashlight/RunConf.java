@@ -231,16 +231,6 @@ public class RunConf {
         return InstrumentationConstants.FILE_EVENT_DURATION;
     }
 
-    /**
-     * Whether or not to use the checkpointing, multi-file way of outputting
-     * instrumentation data
-     * 
-     * @return
-     */
-    public boolean isMultiFileOutput() {
-        return true;
-    }
-
     public RunConf() {
         // still incremented even if logging is off.
         f_problemCount = new AtomicLong();
@@ -323,20 +313,18 @@ public class RunConf {
     }
 
     private static PrintStream initLog(final String fileName) {
-        if (fileName == null) {
-            return System.err;
-        }
-        final File logFile = new File(fileName.toString() + ".flog");
-        PrintStream w = null;
-        try {
-            OutputStream stream = new FileOutputStream(logFile);
-            stream = new BufferedOutputStream(stream);
-            w = new PrintStream(stream);
-        } catch (final IOException e) {
-            System.err.println("[Flashlight] unable to log to \""
-                    + logFile.getAbsolutePath() + "\"");
-            e.printStackTrace(System.err);
-            System.exit(1); // bail
+        PrintStream w = System.err;
+        if (fileName != null) {
+            final File logFile = new File(fileName.toString() + ".flog");
+            try {
+                OutputStream stream = new FileOutputStream(logFile);
+                stream = new BufferedOutputStream(stream);
+                w = new PrintStream(stream);
+            } catch (final IOException e) {
+                System.err.println("[Flashlight] unable to log to \""
+                        + logFile.getAbsolutePath() + "\"");
+                e.printStackTrace(System.err);
+            }
         }
         return w;
     }

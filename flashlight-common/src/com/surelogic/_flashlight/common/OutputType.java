@@ -157,7 +157,7 @@ public enum OutputType {
 
     public static SAXParser getParser(final OutputType type)
             throws ParserConfigurationException, SAXException {
-        if (type.binary) {
+        if (type.isBinary()) {
             return new BinaryEventReader();
         } else {
             return SAXParserFactory.newInstance().newSAXParser();

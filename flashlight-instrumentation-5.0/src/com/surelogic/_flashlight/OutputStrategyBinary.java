@@ -405,15 +405,12 @@ public class OutputStrategyBinary extends EventVisitor {
     @Override
     public void visit(final TraceNode e) {
         try {
-            int bytes = 1;
             writeHeader(Trace_Node.getByte());
-            bytes += writeCompressedLong(e.getId());
-            bytes += writeCompressedLong(e.getParentId());
-            bytes += writeCompressedLong(e.getSiteId());
-            // traceBytes += bytes;
+            writeCompressedLong(e.getId());
+            writeCompressedLong(e.getParentId());
+            writeCompressedLong(e.getSiteId());
 
             lastTrace = e.getId();
-            // lastWasTraceNode = true;
         } catch (final IOException ioe) {
             handleIOException(ioe);
         }

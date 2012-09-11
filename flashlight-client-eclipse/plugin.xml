@@ -170,7 +170,6 @@
 		<objectContribution objectClass="org.eclipse.jdt.core.IJavaElement"
 			id="org.eclipse.debug.ui.contextualLaunch.flashlight">
 			<action label="Flashlight As" style="pulldown"
-				icon="platform:/plugin/com.surelogic.common/lib/images/fl_logo.gif"
 				class="com.surelogic.flashlight.client.eclipse.launch.FlashlightContextualLaunchAction"
 				menubarPath="additions" enablesFor="+"
 				id="org.eclipse.debug.ui.contextualLaunch.flashlight.submenu">

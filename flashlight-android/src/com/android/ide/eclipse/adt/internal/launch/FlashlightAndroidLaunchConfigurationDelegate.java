@@ -9,9 +9,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.logging.Logger;
 
@@ -21,6 +23,7 @@ import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IncrementalProjectBuilder;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -82,6 +85,7 @@ import com.surelogic.flashlight.client.eclipse.Activator;
 import com.surelogic.flashlight.client.eclipse.jobs.WatchFlashlightMonitorJob;
 import com.surelogic.flashlight.client.eclipse.launch.LaunchHelper;
 import com.surelogic.flashlight.client.eclipse.launch.LaunchHelper.RuntimeConfig;
+import com.surelogic.flashlight.client.eclipse.launch.LaunchUtils;
 import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
 import com.surelogic.flashlight.client.eclipse.views.monitor.MonitorStatus;
 import com.surelogic.flashlight.eclipse.client.jobs.ReadFlashlightStreamJob;
@@ -392,7 +396,8 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
         FLData data = null;
         try {
             data = instrumentClasses(launchConfig, project, dxInputPaths);
-
+            LaunchUtils.createSourceZips(null, data.allProjects,
+                    data.sourceDir, null);
             try {
                 dxInputPaths = data.getClasspathEntries();
                 helper.packageResources(manifestFile, libProjects, null, 0,
@@ -525,6 +530,7 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
     private static class FLData {
 
         final IProject project;
+        final Set<IProject> allProjects;
         final File log;
         final File fieldsFile;
         final File sitesFile;
@@ -532,6 +538,7 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
         final File infoDir;
         final File completeFile;
         final File portFile;
+        final File sourceDir;
         final Date time;
         final String projectName;
         final String runName;
@@ -561,6 +568,14 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
 
                 classpaths.add(tmpFile.getAbsolutePath());
             }
+            allProjects = new HashSet<IProject>();
+            allProjects.add(project);
+            for (final IProject p : ResourcesPlugin.getWorkspace().getRoot()
+                    .getProjects()) {
+                if (originalClasspaths.contains(p.getLocation().toOSString())) {
+                    allProjects.add(p);
+                }
+            }
             SimpleDateFormat df = new SimpleDateFormat(
                     InstrumentationConstants.DATE_FORMAT);
             projectName = project.getName();
@@ -569,6 +584,8 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
                     FlashlightPreferencesUtility.getFlashlightDataDirectory(),
                     runName);
             runDir.mkdir();
+            sourceDir = new File(runDir, "source");
+            sourceDir.mkdir();
             fieldsFile = new File(runDir,
                     InstrumentationConstants.FL_FIELDS_FILE_NAME);
             log = new File(runDir, InstrumentationConstants.FL_LOG_FILE_NAME);

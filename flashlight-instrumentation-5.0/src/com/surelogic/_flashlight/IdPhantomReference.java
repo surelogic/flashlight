@@ -14,39 +14,26 @@ import com.surelogic._flashlight.rewriter.runtime.IdObject;
 
 public abstract class IdPhantomReference extends PhantomReference {
 	private static final boolean useIdObject = true;
-	/*
-	 * private static int total = 0, idLookups = 0; private static int
-	 * notJavaSomething = 0;
-	 */
-	static final ConcurrentReferenceHashMap.Hasher hasher = false ? ConcurrentReferenceHashMap.IDENTITY_HASH
-			: new ConcurrentReferenceHashMap.Hasher() {
-				// private int total = 0, id = 0;
+	static final ConcurrentReferenceHashMap.Hasher hasher = new ConcurrentReferenceHashMap.Hasher() {
 
-				public int hashCode(final Object o) {
-					// total++;
-					if (useIdObject && o instanceof IIdObject) {
-						/*
-						 * id++; if ((total & 0xffff) == 0) {
-						 * System.out.println(id+" IdObjects of "+total); }
-						 */
-						return ((IIdObject) o).identity$HashCode();
-					} else {
-						return System.identityHashCode(o);
-					}
-				}
+		public int hashCode(final Object o) {
+			if (useIdObject && o instanceof IIdObject) {
+				return ((IIdObject) o).identity$HashCode();
+			} else {
+				return System.identityHashCode(o);
+			}
+		}
 
-				public boolean useReferenceEquality() {
-					return true;
-				}
-			};
+		public boolean useReferenceEquality() {
+			return true;
+		}
+	};
 
 	/**
 	 * Use a thread-safe counter.
 	 */
-	// private static final AtomicLong f_phantomCount = new AtomicLong();
 
-	private final long f_id;// = IdObject.getNewId();
-	// //f_phantomCount.incrementAndGet();
+	private final long f_id;
 	private boolean ignore = false;
 
 	public long getId() {
@@ -110,8 +97,6 @@ public abstract class IdPhantomReference extends PhantomReference {
 
 	protected void notifyObservers(final ClassPhantomReference type) {
 		if (f_observers.isEmpty()) {
-			// new
-			// Throwable("No observers for IdPhantomReference").printStackTrace();
 			synchronized (IdPhantomReference.class) {
 				if (unnotified != null) {
 					unnotified.add(new Unnotified(type, this));
@@ -179,12 +164,9 @@ public abstract class IdPhantomReference extends PhantomReference {
 		boolean phantomExisted;
 		V pr;
 		if (id != Phantom.NO_PREASSIGNED_ID) {
-			// total++;
 			pr = factory.removeSpecialId(o);
 			if (pr != null) {
 				// Already allocated
-				// specialIds++;
-				// System.err.println(specialIds+" special Ids out of "+total);
 				return pr;
 			}
 			// Must be new
@@ -192,21 +174,17 @@ public abstract class IdPhantomReference extends PhantomReference {
 			pr = factory.newReference(o, q, id);
 
 		} else {
-			// total++;
 			if (useIdObject && o instanceof IIdObject) {
 				final IIdObject ido = (IIdObject) o;
 				pr = (V) ido.flPhantom$Reference();
-				/*
-				 * idLookups++; if ((total & 0xffff) == 0) {
-				 * System.err.println(idLookups+" IdObject lookups of "+total);
-				 * }
-				 */
 				if (pr != null) {
 					return pr;
 				}
-				// If it gets here, it's because a superclass called an
-				// overridden method
-				// and the code below will allocate a phantom reference
+				/*
+				 * If it gets here, it's because a superclass called an
+				 * overridden method and the code below will allocate a phantom
+				 * reference
+				 */
 				pr = factory.newReference(o, q, id);
 				factory.recordSpecialId(o, pr);
 				notifyOnCreation(o, pr, q);
@@ -223,20 +201,8 @@ public abstract class IdPhantomReference extends PhantomReference {
 					phantomExisted = true;
 					pr2.setToIgnore();
 				} else {
-					/*
-					 * total++; if
-					 * (!o.getClass().getPackage().getName().startsWith("java"))
-					 * { notJavaSomething++; }
-					 * //System.err.println("Not IdObject: "
-					 * +o.getClass().getName()); if ((total & 0xff) == 0) {
-					 * System
-					 * .err.println(notJavaSomething+" non-java of "+total); }
-					 */
 					pr = pr2;
 				}
-				/*
-				 * } else { factory = null;
-				 */
 			}
 		}
 		/*

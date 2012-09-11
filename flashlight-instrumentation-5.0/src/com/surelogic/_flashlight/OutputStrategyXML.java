@@ -212,7 +212,6 @@ final class OutputStrategyXML extends EventVisitor {
 
     @Override
     void flush() {
-        // System.out.println("Flushed.");
         f_out.flush();
     }
 }

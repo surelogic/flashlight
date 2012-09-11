@@ -10,6 +10,7 @@ import java.io.PrintWriter;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.util.Date;
 import java.util.logging.Level;
 
 import javax.xml.parsers.SAXParser;
@@ -37,30 +38,40 @@ import com.surelogic.flashlight.common.prep.PrepEvent;
 public class ReadFlashlightStreamJob implements SLJob {
 
     private static final int RETRIES = 50;
-    private static final int TIMEOUT = 1000;
+    private static final int TIMEOUT_MS = 1000;
+    private static final int RETRY_DELAY_MS = 100;
     private final String f_runName;
     private final int f_port;
     private final File f_dir;
     private final IDevice f_device;
     private final int f_retries;
 
+    private final StringBuilder f_pastAttemptsLog;
+
     public ReadFlashlightStreamJob(final String runName, final File infoDir,
             final int outputPort, final IDevice id) {
-        this(runName, infoDir, outputPort, id, RETRIES);
+        this(runName, infoDir, outputPort, id, RETRIES, null);
     }
 
     private ReadFlashlightStreamJob(final String runName, final File infoDir,
-            final int outputPort, final IDevice id, final int retries) {
+            final int outputPort, final IDevice id, final int retries,
+            final StringBuilder pastAttemptsLog) {
         f_runName = runName;
         f_port = outputPort;
         f_dir = infoDir;
         f_device = id;
         f_retries = retries;
+        f_pastAttemptsLog = pastAttemptsLog == null ? new StringBuilder()
+                : pastAttemptsLog;
     }
 
     @Override
     public String getName() {
         return "Collecting data from " + f_runName + ".";
+    }
+
+    private final String getTStamp() {
+        return "[" + new Date() + "] ";
     }
 
     @Override
@@ -69,23 +80,38 @@ public class ReadFlashlightStreamJob implements SLJob {
         try {
             Socket socket = new Socket();
             try {
-                OutputType type = InstrumentationConstants.FL_OUTPUT_TYPE_DEFAULT;
+                OutputType socketType = InstrumentationConstants.FL_SOCKET_OUTPUT_TYPE;
                 InputStream in;
 
                 // Try to connect to the device
                 try {
+                    f_pastAttemptsLog
+                            .append(getTStamp()
+                                    + " Flashlight Android attempted socket.connect(localhost:"
+                                    + f_port + ") with timeout of "
+                                    + TIMEOUT_MS + " ms\n");
                     socket.connect(new InetSocketAddress("localhost", f_port),
-                            TIMEOUT);
+                            TIMEOUT_MS);
                     in = OutputType.getInputStreamFor(socket.getInputStream(),
-                            type);
+                            socketType);
+                    f_pastAttemptsLog
+                            .append(getTStamp()
+                                    + " Flashlight Android connected OK to socket.connect(localhost:"
+                                    + f_port + ")\n");
                 } catch (Exception exc) {
                     if ((exc instanceof SocketTimeoutException || exc instanceof IOException)
                             && f_retries > 0) {
                         // Maybe something isn't set up yet, we'll try again in
                         // just a little bit.
+                        f_pastAttemptsLog
+                                .append(getTStamp()
+                                        + " Flashlight Android FAILURE of socket.connect(localhost:"
+                                        + f_port + ")...retrying in "
+                                        + RETRY_DELAY_MS + " ms \n");
                         EclipseJob.getInstance().schedule(
                                 new ReadFlashlightStreamJob(f_runName, f_dir,
-                                        f_port, f_device, f_retries - 1), 500);
+                                        f_port, f_device, f_retries - 1,
+                                        f_pastAttemptsLog), RETRY_DELAY_MS);
                         return SLStatus.OK_STATUS;
                     } else {
                         // We are done trying to connect, so it is time to bail
@@ -97,27 +123,26 @@ public class ReadFlashlightStreamJob implements SLJob {
                             // someone unplugged the device?
                         }
                         return SLStatus.createErrorStatus(
-                                I18N.err(245, f_runName), exc);
+                                I18N.err(245, f_runName,
+                                        f_pastAttemptsLog.toString()), exc);
                     }
                 }
-
                 // We managed to connect to the device. Time to start reading
                 // data.
-                SAXParser parser = OutputType.getParser(type);
+                SAXParser parser = OutputType.getParser(socketType);
                 CheckpointingEventHandler h = new CheckpointingEventHandler(
-                        type);
+                        OutputType.FL_GZ);
                 try {
                     parser.parse(in, h);
                     h.streamFinished();
                 } catch (Exception exc) {
-                    h.streamBroken();
-                    if (exc instanceof SAXParseException
-                            || exc instanceof EOFException) {
+                    boolean success = h.streamBroken();
+                    if (success
+                            && (exc instanceof SAXParseException || exc instanceof EOFException)) {
                         // This is going to fail a lot, so we aren't going to
-                        // report
-                        // anything here.
+                        // report anything here.
                         SLLogger.getLoggerFor(ReadFlashlightStreamJob.class)
-                                .log(Level.INFO, exc.getMessage(), e);
+                                .log(Level.FINE, exc.getMessage(), e);
                     } else {
                         e = exc;
                     }
@@ -136,7 +161,7 @@ public class ReadFlashlightStreamJob implements SLJob {
             // the device?
         }
         if (e != null) {
-            return SLStatus.createErrorStatus(e);
+            return SLStatus.createErrorStatus(f_pastAttemptsLog.toString(), e);
         } else {
             final UIJob job = new SwitchToFlashlightPerspectiveJob();
             job.schedule();
@@ -147,6 +172,7 @@ public class ReadFlashlightStreamJob implements SLJob {
     class CheckpointingEventHandler extends AbstractDataScan {
         private final OutputType f_type;
         private PrintWriter f_out;
+        private File f_outFile;
         private final PrintWriter f_header;
         private int f_count;
         private final StringBuilder f_buf;
@@ -216,9 +242,9 @@ public class ReadFlashlightStreamJob implements SLJob {
                 f_out.flush();
                 f_out.close();
             }
-            f_out = new PrintWriter(OutputType.getOutputStreamFor(new File(
-                    f_dir, f_runName + String.format(".%06d", f_count++)
-                            + f_type.getSuffix())));
+            f_outFile = new File(f_dir, f_runName
+                    + String.format(".%06d", f_count++) + f_type.getSuffix());
+            f_out = new PrintWriter(OutputType.getOutputStreamFor(f_outFile));
             if (firstFile) {
                 f_out.println("<?xml version='1.0' encoding='UTF-8' standalone='yes'?>");
             } else {
@@ -226,21 +252,42 @@ public class ReadFlashlightStreamJob implements SLJob {
                 BufferedReader reader = new BufferedReader(
                         new FileReader(new File(f_dir, f_runName
                                 + OutputType.FLH.getSuffix())));
-                String line;
-                while (!(line = reader.readLine()).startsWith("</flashlight>")) {
-                    f_out.println(line);
+                try {
+                    String line;
+                    while (!(line = reader.readLine())
+                            .startsWith("</flashlight>")) {
+                        f_out.println(line);
+                    }
+                } finally {
+                    reader.close();
                 }
             }
         }
 
         /**
          * Call this if we get an error during data processing.
+         * 
+         * @return whether or not the run should be treated as valid
          */
-        void streamBroken() {
+        boolean streamBroken() {
             if (f_out != null) {
                 f_out.close();
             }
+            f_outFile.delete();
             f_header.close();
+            // Still write out a Run.Complete as long as we have some data.
+            if (f_count > 1) {
+                File complete = new File(f_dir,
+                        InstrumentationConstants.FL_COMPLETE_RUN);
+                try {
+                    complete.createNewFile();
+                } catch (IOException e) {
+                    SLLogger.getLoggerFor(ReadFlashlightStreamJob.class).log(
+                            Level.WARNING, "Could not create Run.Complete", e);
+                }
+                return true;
+            }
+            return false;
         }
 
         /**
@@ -255,6 +302,14 @@ public class ReadFlashlightStreamJob implements SLJob {
                 f_out.close();
             }
             f_header.close();
+            File complete = new File(f_dir,
+                    InstrumentationConstants.FL_COMPLETE_RUN);
+            try {
+                complete.createNewFile();
+            } catch (IOException e) {
+                SLLogger.getLoggerFor(ReadFlashlightStreamJob.class).log(
+                        Level.WARNING, "Could not create Run.Complete", e);
+            }
         }
 
     }

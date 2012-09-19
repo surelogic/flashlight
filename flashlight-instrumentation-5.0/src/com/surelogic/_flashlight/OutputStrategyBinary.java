@@ -23,6 +23,7 @@ import static com.surelogic._flashlight.common.EventType.Field_Definition;
 import static com.surelogic._flashlight.common.EventType.Final_Event;
 import static com.surelogic._flashlight.common.EventType.First_Event;
 import static com.surelogic._flashlight.common.EventType.GarbageCollected_Object;
+import static com.surelogic._flashlight.common.EventType.Happens_Before;
 import static com.surelogic._flashlight.common.EventType.IndirectAccess;
 import static com.surelogic._flashlight.common.EventType.Lock;
 import static com.surelogic._flashlight.common.EventType.Not_Under_Construction;
@@ -416,6 +417,17 @@ public class OutputStrategyBinary extends EventVisitor {
         }
     }
 
+    @Override
+    void visit(HappensBefore e) {
+        try {
+            writeTracedEvent(Happens_Before.getByte(), e);
+            writeCompressedLong(e.getTarget());
+            writeUTF(e.getDirection());
+        } catch (final IOException ioe) {
+            handleIOException(ioe);
+        }
+    }
+
     // Common code
     private void writeUTF(final String s) throws IOException {
         if (IdConstants.writeOutput) {
@@ -554,13 +566,7 @@ public class OutputStrategyBinary extends EventVisitor {
     private void writeTracedEvent(final byte header, final TracedEvent e)
             throws IOException {
         writeCommon(header, e);
-        /* tracedBytes += */writeCompressedLong(e.getTraceId());
-        /*
-         * totalTraces++; if (lastTrace == e.getTraceId()) { sameTraces++; }
-         * else { lastTrace = e.getTraceId(); } if ((totalTraces & 0xffff) == 0)
-         * { System.err.println(sameTraces+" same as last out of "+totalTraces);
-         * }
-         */
+        writeCompressedLong(e.getTraceId());
     }
 
     private void writeFieldAccess_unsafe(final byte header, final FieldAccess e)

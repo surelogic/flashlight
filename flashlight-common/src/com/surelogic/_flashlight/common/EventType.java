@@ -2,6 +2,7 @@ package com.surelogic._flashlight.common;
 
 import static com.surelogic._flashlight.common.AttributeType.CLASS_NAME;
 import static com.surelogic._flashlight.common.AttributeType.CPUS;
+import static com.surelogic._flashlight.common.AttributeType.DIRECTION;
 import static com.surelogic._flashlight.common.AttributeType.FIELD;
 import static com.surelogic._flashlight.common.AttributeType.FILE;
 import static com.surelogic._flashlight.common.AttributeType.ID;
@@ -19,6 +20,7 @@ import static com.surelogic._flashlight.common.AttributeType.READ_LOCK_ID;
 import static com.surelogic._flashlight.common.AttributeType.RECEIVER;
 import static com.surelogic._flashlight.common.AttributeType.RUN;
 import static com.surelogic._flashlight.common.AttributeType.SITE_ID;
+import static com.surelogic._flashlight.common.AttributeType.TARGET;
 import static com.surelogic._flashlight.common.AttributeType.THREAD_NAME;
 import static com.surelogic._flashlight.common.AttributeType.TIME;
 import static com.surelogic._flashlight.common.AttributeType.TYPE;
@@ -448,6 +450,17 @@ public enum EventType {
             attrs.setStartTime(time);
             attrs.put(TIME, time); // Needed for unmodified code
             // attrs.put(START_TIME, time);
+        }
+
+    },
+    Happens_Before("happens-before") {
+
+        @Override
+        void read(ObjectInputStream in, BinaryAttributes attrs)
+                throws IOException {
+            readTracedEvent(in, attrs);
+            attrs.put(TARGET, readCompressedLong(in));
+            attrs.put(DIRECTION, in.readUTF());
         }
 
     };

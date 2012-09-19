@@ -18,6 +18,8 @@ import java.util.StringTokenizer;
 import java.util.concurrent.BlockingQueue;
 import java.util.zip.GZIPInputStream;
 
+import com.surelogic._flashlight.SitesReader.HappensBeforeSites;
+
 /**
  * The DefinitionGenerator is responsible for adding static-call-location and
  * field-definition events to the output queue. It should be called by the
@@ -28,8 +30,8 @@ import java.util.zip.GZIPInputStream;
  */
 public class DefinitionEventGenerator {
 
-    private static final SiteInfo[] noSites = new SiteInfo[0];
-    private static final FieldInfo[] noFields = new FieldInfo[0];
+    public static final SiteInfo[] NO_SITES = new SiteInfo[0];
+    public static final FieldInfo[] NO_FIELDS = new FieldInfo[0];
 
     private final RunConf f_conf;
 
@@ -38,6 +40,7 @@ public class DefinitionEventGenerator {
     private final ClassVisitor classVisitor;
 
     private final Map<String, List<ClassInfo>> classDefs;
+    private HappensBeforeSites happensBefore;
 
     DefinitionEventGenerator(final RunConf conf,
             final BlockingQueue<List<Event>> outQueue) {
@@ -53,8 +56,12 @@ public class DefinitionEventGenerator {
         ref.accept(od, classVisitor);
     }
 
+    HappensBeforeSites getHappensBefore() {
+        return happensBefore;
+    }
+
     private Map<String, List<ClassInfo>> loadClassInfo() {
-        final SitesReader sitesReader = new SitesReader();
+        final SitesReader sitesReader = new SitesReader(f_conf);
         try {
             for (String line : SitesConf.getSiteLines()) {
                 sitesReader.readLine(line);
@@ -72,7 +79,7 @@ public class DefinitionEventGenerator {
                 loadFileContents(f, sitesReader);
             }
         }
-
+        happensBefore = sitesReader.getHappensBeforeSites();
         final Map<String, List<ClassInfo>> classesMap = sitesReader.getMap();
         final Map<String, List<FieldInfo>> fieldsMap = sitesReader
                 .getFieldsMap();
@@ -90,10 +97,10 @@ public class DefinitionEventGenerator {
             final List<FieldInfo> finfo = entry.getValue();
 
             /* Copied from makeClassInfo() below */
-            final FieldInfo[] fields = finfo == null ? noFields : finfo
-                    .toArray(noFields);
+            final FieldInfo[] fields = finfo == null ? NO_FIELDS : finfo
+                    .toArray(NO_FIELDS);
             final ClassInfo info = new ClassInfo("<unknown>", classname,
-                    noSites, fields);
+                    NO_SITES, fields);
             final List<ClassInfo> infos = classesMap.get(classname);
             if (infos == null) {
                 classesMap.put(classname, info);
@@ -106,62 +113,7 @@ public class DefinitionEventGenerator {
                 .<String, List<ClassInfo>> emptyMap() : classesMap;
     }
 
-    private Map<String, List<FieldInfo>> loadFieldInfo(final StringTable strings) {
-        try {
-            String[] lines = FieldsConf.getFieldLines();
-            f_conf.log("Using com.surelogic._flashlight.FieldsConf for fields data.");
-            final Map<String, List<FieldInfo>> map = new HashMap<String, List<FieldInfo>>();
-            for (String line : lines) {
-                final FieldInfo fi = new FieldInfo(strings, line);
-                List<FieldInfo> l = map.get(fi.declaringType);
-                if (l == null) {
-                    l = new ArrayList<FieldInfo>();
-                    map.put(fi.declaringType, l);
-                }
-                l.add(fi);
-            }
-            return map;
-        } catch (NoClassDefFoundError xxx) {
-            final String name = StoreConfiguration.getFieldsFile();
-            f_conf.log("Could not locate com.surelogic._flashlight.FieldsConf, attempting to use "
-                    + name + " instead.");
-            if (name == null) {
-                return Collections.emptyMap();
-            }
-            final File f = new File(name);
-            if (!f.exists() || !f.isFile()) {
-                return Collections.emptyMap();
-            }
-            final Map<String, List<FieldInfo>> map = new HashMap<String, List<FieldInfo>>();
-            BufferedReader br = null;
-            try {
-                br = new BufferedReader(new FileReader(f));
-                try {
-                    String line;
-                    while ((line = br.readLine()) != null) {
-                        final FieldInfo fi = new FieldInfo(strings, line);
-                        List<FieldInfo> l = map.get(fi.declaringType);
-                        if (l == null) {
-                            l = new ArrayList<FieldInfo>();
-                            map.put(fi.declaringType, l);
-                        }
-                        l.add(fi);
-                    }
-                } finally {
-                    if (br != null) {
-                        br.close();
-                    }
-                }
-            } catch (final IOException e) {
-                f_conf.logAProblem("Couldn't read field definition file", e);
-                map.clear();
-            }
-            return map;
-        }
-    }
-
-    private <T extends LineHandler> void loadFileContents(final File f,
-            final T handler) {
+    private void loadFileContents(final File f, final SitesReader handler) {
         if (!f.exists() || !f.isFile()) {
             if (StoreConfiguration.debugOn()) {
                 System.err.println("Can't read: " + f.getName());
@@ -187,80 +139,6 @@ public class DefinitionEventGenerator {
             }
         } catch (final IOException e) {
             f_conf.logAProblem("Couldn't read definition file" + f.getName(), e);
-        }
-    }
-
-    private interface LineHandler {
-        void readLine(String line);
-    }
-
-    class SitesReader implements LineHandler {
-        final StringTable strings = new StringTable();
-        final Map<String, List<FieldInfo>> fields = loadFieldInfo(strings);
-        final Map<String, List<ClassInfo>> classes = new HashMap<String, List<ClassInfo>>();
-        List<SiteInfo> sites = new ArrayList<SiteInfo>();
-        String lastFileName;
-        String lastClassName;
-        String lastMemberName;
-
-        public void readLine(final String line) {
-            final StringTokenizer st = new StringTokenizer(line);
-            final long id = Long.parseLong(st.nextToken());
-            String file = st.nextToken(); // FIX intern
-            String qname = st.nextToken(); // FIX intern
-            String member = st.nextToken();
-            final int lineNo = Integer.parseInt(st.nextToken());
-            if (member.equals(lastMemberName)) {
-                member = lastMemberName;
-            } else {
-                member = strings.intern(member);
-                lastMemberName = member;
-            }
-            if (!file.equals(lastFileName) || !qname.equals(lastClassName)) {
-                makeClassInfo();
-                file = strings.intern(file);
-                qname = strings.intern(qname);
-                lastFileName = file;
-                lastClassName = qname;
-            }
-            final SiteInfo site = new SiteInfo(id, member, lineNo,
-                    st.nextToken(), st.nextToken(), st.nextToken());
-            sites.add(site);
-        }
-
-        private void makeClassInfo() {
-            if (lastClassName != null) {
-                final List<FieldInfo> finfo = fields.remove(lastClassName);
-                final FieldInfo[] fields = finfo == null ? noFields : finfo
-                        .toArray(noFields);
-                final ClassInfo info = new ClassInfo(lastFileName,
-                        lastClassName, sites.toArray(noSites), fields);
-                List<ClassInfo> infos = classes.get(lastClassName);
-                if (infos == null) {
-                    classes.put(lastClassName, info);
-                } else {
-                    if (infos instanceof ClassInfo) {
-                        final ClassInfo firstInfo = (ClassInfo) infos;
-                        infos = new ArrayList<ClassInfo>();
-                        classes.put(lastClassName, infos);
-                        infos.add(firstInfo);
-                    }
-                    infos.add(info);
-                }
-                sites.clear();
-            }
-        }
-
-        public Map<String, List<ClassInfo>> getMap() {
-            makeClassInfo();
-            return classes;
-            // return classes.isEmpty() ?
-            // Collections.<String,List<ClassInfo>>emptyMap() : classes;
-        }
-
-        public Map<String, List<FieldInfo>> getFieldsMap() {
-            return fields.isEmpty() ? Collections
-                    .<String, List<FieldInfo>> emptyMap() : fields;
         }
     }
 

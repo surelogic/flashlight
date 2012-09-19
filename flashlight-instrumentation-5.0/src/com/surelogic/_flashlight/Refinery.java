@@ -38,6 +38,7 @@ final class Refinery extends AbstractRefinery {
     // private int filtered = 0, total = 0;
 
     Refinery(final PostMortemStore store, final RunConf conf,
+            DefinitionEventGenerator defs,
             final BlockingQueue<List<? extends IdPhantomReference>> gcQueue,
             final BlockingQueue<List<Event>> rawQueue,
             final BlockingQueue<List<Event>> outQueue, final int size) {
@@ -49,7 +50,7 @@ final class Refinery extends AbstractRefinery {
         f_size = size;
         f_conf = conf;
         f_store = store;
-        f_defs = new DefinitionEventGenerator(conf, outQueue);
+        f_defs = defs;
         f_refineryStart = System.nanoTime();
     }
 

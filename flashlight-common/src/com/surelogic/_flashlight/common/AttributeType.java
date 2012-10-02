@@ -13,8 +13,8 @@ public enum AttributeType implements IAttributeType {
             "parent-id"), TRACE("trace"), START_TIME("start-time"), PACKAGE(
             "package"), VALUE("value"), VISIBILITY("visibility"), MODIFIER(
             "mod"), HOSTNAME("hostname"), METHODCALLNAME("method-call-name"), METHODCALLOWNER(
-            "method-call-owner"), METHODCALLDESC("method-call-desc"), TARGET(
-            "target"), DIRECTION("direction");
+            "method-call-owner"), METHODCALLDESC("method-call-desc"), SOURCE(
+            "source"), TARGET("target");
 
     private final String label;
 

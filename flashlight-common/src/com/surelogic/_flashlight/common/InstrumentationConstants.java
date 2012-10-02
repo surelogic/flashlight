@@ -78,7 +78,6 @@ public final class InstrumentationConstants {
     public static final String FL_COLLECTION_TYPE = "FL_COLLECTION_TYPE";
     public static final CollectionType FL_COLLECTION_TYPE_DEFAULT = CollectionType.ALL;
 
-    public static final String FL_SEPARATE_STREAMS = "FL_SEPARATE_STREAMS";
     public static final String FL_LOCK_SUFFIX = ".locks";
     public static final String FL_ACCESS_SUFFIX = ".accesses";
     public static final String FL_OBJECT_SUFFIX = ".objects";
@@ -96,7 +95,7 @@ public final class InstrumentationConstants {
             FL_DIR, FL_FIELDS_FILE, FL_OFF, FL_NO_SPY, FL_OUTPUT_PORT,
             FL_OUTPUT_TYPE, FL_OUTQ_SIZE, FL_POSTMORTEM, FL_RAWQ_SIZE,
             FL_REFINERY_OFF, FL_REFINERY_SIZE, FL_RUN, FL_RUN_FOLDER,
-            FL_SEPARATE_STREAMS, FL_SITES_FILE };
+            FL_SITES_FILE };
 
     /**
      * The number of events a single log file should (roughly) contain.

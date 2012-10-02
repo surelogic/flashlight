@@ -421,8 +421,8 @@ public class OutputStrategyBinary extends EventVisitor {
     void visit(HappensBefore e) {
         try {
             writeTracedEvent(Happens_Before.getByte(), e);
+            writeCompressedLong(e.getSource());
             writeCompressedLong(e.getTarget());
-            writeUTF(e.getDirection());
         } catch (final IOException ioe) {
             handleIOException(ioe);
         }

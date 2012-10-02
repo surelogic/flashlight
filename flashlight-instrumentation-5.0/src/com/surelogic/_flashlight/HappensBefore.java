@@ -5,14 +5,14 @@ import com.surelogic._flashlight.common.AttributeType;
 
 public class HappensBefore extends TracedEvent {
 
-    private final boolean isFrom;
-    private final long target;
+    private final boolean isInFrom;
+    private final long to;
 
-    HappensBefore(final ObjectPhantomReference target, long siteId,
-            State state, boolean isFrom) {
+    HappensBefore(final ObjectPhantomReference to, long siteId, State state,
+            boolean isInFrom) {
         super(siteId, state);
-        this.isFrom = isFrom;
-        this.target = target.getId();
+        this.isInFrom = isInFrom;
+        this.to = to.getId();
     }
 
     @Override
@@ -20,12 +20,20 @@ public class HappensBefore extends TracedEvent {
         v.visit(this);
     }
 
-    public String getDirection() {
-        return isFrom ? "from" : "to";
+    public long getSource() {
+        if (isInFrom) {
+            return getWithinThread().getId();
+        } else {
+            return to;
+        }
     }
 
     public long getTarget() {
-        return target;
+        if (isInFrom) {
+            return to;
+        } else {
+            return getWithinThread().getId();
+        }
     }
 
     @Override
@@ -34,18 +42,13 @@ public class HappensBefore extends TracedEvent {
         b.append("<happens-before");
         addNanoTime(b);
         addThread(b);
-        addTarget(b);
-        addDirection(b);
+        addEdge(b);
         b.append("/>");
         return b.toString();
     }
 
-    private void addDirection(StringBuilder b) {
-        Entities.addAttribute(AttributeType.DIRECTION.label(), isFrom ? "from"
-                : "to", b);
-    }
-
-    private void addTarget(StringBuilder b) {
-        Entities.addAttribute(AttributeType.TARGET.label(), target, b);
+    private void addEdge(StringBuilder b) {
+        Entities.addAttribute(AttributeType.SOURCE.label(), getSource(), b);
+        Entities.addAttribute(AttributeType.TARGET.label(), getTarget(), b);
     }
 }

@@ -1,6 +1,6 @@
 package com.surelogic.flashlight.common.prep;
 
-import static com.surelogic._flashlight.common.AttributeType.DIRECTION;
+import static com.surelogic._flashlight.common.AttributeType.SOURCE;
 import static com.surelogic._flashlight.common.AttributeType.TARGET;
 import static com.surelogic._flashlight.common.IdConstants.ILLEGAL_ID;
 import static com.surelogic._flashlight.common.IdConstants.ILLEGAL_RECEIVER_ID;
@@ -29,8 +29,9 @@ public class HappensBefore extends Event {
         final long nanoTime = attributes.getEventTime();
         final long inThread = attributes.getThreadId();
         final long trace = attributes.getTraceId();
+        final long source = attributes.getLong(SOURCE);
         final long target = attributes.getLong(TARGET);
-        final boolean isFrom = "from".equals(attributes.getString(DIRECTION));
+
         if (nanoTime == ILLEGAL_ID || inThread == ILLEGAL_ID
                 || trace == ILLEGAL_ID || target == ILLEGAL_RECEIVER_ID) {
             SLLogger.getLogger().log(
@@ -39,18 +40,18 @@ public class HappensBefore extends Event {
                             + getXMLElementName());
             return;
         }
-        insert(nanoTime, inThread, trace, target, isFrom);
+        insert(nanoTime, inThread, trace, source, target);
     }
 
     private void insert(final long nanoTime, final long inThread,
-            final long trace, final long target, final boolean isFrom)
+            final long trace, final long source, final long target)
             throws SQLException {
         int idx = 1;
-        f_ps.setLong(idx++, inThread);
+        f_ps.setLong(idx++, source);
         f_ps.setLong(idx++, target);
-        f_ps.setLong(idx++, trace);
         f_ps.setTimestamp(idx++, getTimestamp(nanoTime), now);
-        f_ps.setString(idx++, isFrom ? "Y" : "N");
+        f_ps.setLong(idx++, inThread);
+        f_ps.setLong(idx++, trace);
         if (doInsert) {
             f_ps.addBatch();
             if (++count == 10000) {
@@ -65,7 +66,7 @@ public class HappensBefore extends Event {
             final long startNS, final ScanRawFilePreScan scanResults)
             throws SQLException {
         super.setup(c, start, startNS, scanResults);
-        f_ps = c.prepareStatement("INSERT INTO HAPPENSBEFORE (THREAD,TARGET,TRACE,TS,ID_FROM) VALUES (?,?,?,?,?)");
+        f_ps = c.prepareStatement("INSERT INTO HAPPENSBEFORE (SOURCE,TARGET,TS,INTHREAD,TRACE) VALUES (?,?,?,?,?)");
     }
 
     @Override

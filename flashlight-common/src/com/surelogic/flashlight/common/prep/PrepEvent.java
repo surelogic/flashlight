@@ -20,7 +20,7 @@ public enum PrepEvent {
             "read-write-lock-definition"), SELECTEDPACKAGE("selected-package"), STATICCALLLOCATION(
             "static-call-location"), SINGLETHREADEFIELD("single-threaded-field"), THREADDEFINITION(
             "thread-definition"), TIME("time"), TRACENODE("trace-node"), CHECKPOINT(
-            "checkpoint");
+            "checkpoint"), HAPPENSBEFORE("happens-before");
 
     static Map<String, PrepEvent> map = new HashMap<String, PrepEvent>();
 
@@ -40,7 +40,7 @@ public enum PrepEvent {
     }
 
     PrepEvent(final String xmlName) {
-        this.xml = xmlName;
+        xml = xmlName;
     }
 
     private String xml;

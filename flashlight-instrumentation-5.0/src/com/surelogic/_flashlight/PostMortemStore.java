@@ -161,10 +161,7 @@ public class PostMortemStore implements StoreListener {
             }
             final EventVisitor.Factory factory = outType.isBinary() ? OutputStrategyBinary.factory
                     : OutputStrategyXML.factory;
-            if (StoreConfiguration.useSeparateStreams()) {
-                f_conf.log("Starting multi-stream output.");
-                outputStrategy = new OutputStreamsStrategy(f_conf, factory);
-            } else if (StoreConfiguration.hasOutputPort()) {
+            if (StoreConfiguration.hasOutputPort()) {
                 // This check needs to be before the MultiFileOutput check,
                 // as we do not switch output streams when we are using
                 // checkpointing and sockets at the same time.

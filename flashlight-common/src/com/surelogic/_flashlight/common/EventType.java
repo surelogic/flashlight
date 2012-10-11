@@ -6,6 +6,7 @@ import static com.surelogic._flashlight.common.AttributeType.FIELD;
 import static com.surelogic._flashlight.common.AttributeType.FILE;
 import static com.surelogic._flashlight.common.AttributeType.ID;
 import static com.surelogic._flashlight.common.AttributeType.IN_CLASS;
+import static com.surelogic._flashlight.common.AttributeType.ISSOURCE;
 import static com.surelogic._flashlight.common.AttributeType.LINE;
 import static com.surelogic._flashlight.common.AttributeType.LOCATION;
 import static com.surelogic._flashlight.common.AttributeType.MEMORY_MB;
@@ -13,6 +14,7 @@ import static com.surelogic._flashlight.common.AttributeType.METHODCALLDESC;
 import static com.surelogic._flashlight.common.AttributeType.METHODCALLNAME;
 import static com.surelogic._flashlight.common.AttributeType.METHODCALLOWNER;
 import static com.surelogic._flashlight.common.AttributeType.MODIFIER;
+import static com.surelogic._flashlight.common.AttributeType.OBJECT;
 import static com.surelogic._flashlight.common.AttributeType.PACKAGE;
 import static com.surelogic._flashlight.common.AttributeType.PARENT_ID;
 import static com.surelogic._flashlight.common.AttributeType.READ_LOCK_ID;
@@ -463,6 +465,15 @@ public enum EventType {
             attrs.put(TARGET, readCompressedLong(in));
         }
 
+    },
+    Happens_Before_Object("happens-before-obj") {
+        @Override
+        void read(ObjectInputStream in, BinaryAttributes attrs)
+                throws IOException {
+            readTracedEvent(in, attrs);
+            attrs.put(OBJECT, readCompressedLong(in));
+            attrs.put(ISSOURCE, in.readByte() == 0);
+        }
     };
 
     public static final int NumEvents = values().length;

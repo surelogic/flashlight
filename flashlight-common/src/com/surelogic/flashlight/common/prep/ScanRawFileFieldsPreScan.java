@@ -146,6 +146,9 @@ public class ScanRawFileFieldsPreScan extends AbstractDataScan {
             useObject(attrs.getLong(AttributeType.TARGET));
             useObject(attrs.getLong(AttributeType.THREAD));
             break;
+        case HAPPENSBEFOREOBJECT:
+            useObject(attrs.getLong(AttributeType.OBJECT));
+            useObject(attrs.getLong(AttributeType.THREAD));
         default:
             break;
         }

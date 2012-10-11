@@ -20,7 +20,8 @@ public enum PrepEvent {
             "read-write-lock-definition"), SELECTEDPACKAGE("selected-package"), STATICCALLLOCATION(
             "static-call-location"), SINGLETHREADEFIELD("single-threaded-field"), THREADDEFINITION(
             "thread-definition"), TIME("time"), TRACENODE("trace-node"), CHECKPOINT(
-            "checkpoint"), HAPPENSBEFORE("happens-before");
+            "checkpoint"), HAPPENSBEFORE("happens-before"), HAPPENSBEFOREOBJECT(
+            "happens-before-obj");
 
     static Map<String, PrepEvent> map = new HashMap<String, PrepEvent>();
 

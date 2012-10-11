@@ -428,6 +428,17 @@ public class OutputStrategyBinary extends EventVisitor {
         }
     }
 
+    @Override
+    void visit(HappensBeforeObject e) {
+        try {
+            writeTracedEvent(Happens_Before.getByte(), e);
+            writeCompressedLong(e.getObj());
+            f_out.writeByte(e.isSource() ? 0 : 1);
+        } catch (final IOException ioe) {
+            handleIOException(ioe);
+        }
+    }
+
     // Common code
     private void writeUTF(final String s) throws IOException {
         if (IdConstants.writeOutput) {

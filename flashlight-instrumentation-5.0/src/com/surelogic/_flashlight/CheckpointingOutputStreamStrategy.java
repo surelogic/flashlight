@@ -178,6 +178,11 @@ public class CheckpointingOutputStreamStrategy extends EventVisitor {
     }
 
     @Override
+    void visit(HappensBeforeObject e) {
+        f_out.visit(e);
+    }
+
+    @Override
     void flush() {
         f_out.flush();
     }

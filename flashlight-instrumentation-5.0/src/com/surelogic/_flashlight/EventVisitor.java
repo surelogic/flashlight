@@ -122,6 +122,10 @@ public abstract class EventVisitor {
         // do nothing
     }
 
+    void visit(HappensBeforeObject e) {
+        // do nothing
+    }
+
     void flush() {
         // do nothing
     }

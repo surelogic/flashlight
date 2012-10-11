@@ -65,10 +65,43 @@ class SitesReader {
         sites.add(site);
 
         if (site.methodClass != null) {
-            if (site.methodClass.equals("java/lang/Thread")) {
+            if (site.methodClass.equals("java/lang/Object")) {
+                if (site.methodName.equals("wait")) {
+                    hb.addHappensTarget(site.id);
+                } else if (site.methodName.equals("notify")) {
+                    hb.addHappensSource(site.id);
+                }
+            } else if (site.methodClass.equals("java/lang/Thread")) {
                 if (site.methodName.equals("start")) {
                     hb.addHappensFrom(site.id);
                 } else if (site.methodName.equals("join")) {
+                    hb.addHappensTo(site.id);
+                }
+            } else if (site.methodClass
+                    .equals("java/util/concurrent/CountDownLatch")) {
+                if (site.methodName.equals("countDown")) {
+                    hb.addHappensSource(site.id);
+                } else if (site.methodName.equals("await")) {
+                    hb.addHappensTarget(site.id);
+                }
+            } else if (site.methodClass
+                    .equals("java/util/concurrent/CyclicBarrier")) {
+                if (site.methodName.equals("await")) {
+                    hb.addHappensSource(site.id);
+                    hb.addHappensTarget(site.id);
+                }
+            } else if (site.methodClass
+                    .equals("java/util/concurrent/Exchanger")) {
+                if (site.methodName.equals("exchange")) {
+                    hb.addHappensSource(site.id);
+                    hb.addHappensTarget(site.id);
+                }
+            } else if (site.methodClass
+                    .equals("java/util/concurrent/Semaphore")) {
+                if (site.methodName.equals("release")) {
+                    hb.addHappensFrom(site.id);
+                } else if (site.methodName.equals("acquire")
+                        || site.methodName.equals("acquireInterruptibly")) {
                     hb.addHappensTo(site.id);
                 }
             }
@@ -112,6 +145,8 @@ class SitesReader {
 
         final Set<Long> happensFrom = new HashSet<Long>();
         final Set<Long> happensTo = new HashSet<Long>();
+        final Set<Long> happensSource = new HashSet<Long>();
+        final Set<Long> happensTarget = new HashSet<Long>();
 
         void addHappensFrom(long siteId) {
             happensFrom.add(siteId);
@@ -121,18 +156,34 @@ class SitesReader {
             happensTo.add(siteId);
         }
 
+        void addHappensSource(long siteId) {
+            happensSource.add(siteId);
+        }
+
+        void addHappensTarget(long siteId) {
+            happensTarget.add(siteId);
+        }
+
         public void handle(long siteId, Object receiver, boolean before,
                 State state) {
             if (before) {
+                if (happensFrom.contains(siteId)) {
+                    PostMortemStore.putInQueue(state,
+                            new HappensBefore(Phantom.ofObject(receiver),
+                                    siteId, state, true));
+                } else if (happensSource.contains(siteId)) {
+                    PostMortemStore.putInQueue(state, new HappensBeforeObject(
+                            Phantom.ofObject(receiver), siteId, state, true));
+                }
+            } else {
                 if (happensTo.contains(siteId)) {
                     PostMortemStore.putInQueue(state,
                             new HappensBefore(Phantom.ofObject(receiver),
                                     siteId, state, false));
+                } else if (happensTarget.contains(siteId)) {
+                    PostMortemStore.putInQueue(state, new HappensBeforeObject(
+                            Phantom.ofObject(receiver), siteId, state, false));
                 }
-            } else if (happensFrom.contains(siteId)) {
-                PostMortemStore.putInQueue(state,
-                        new HappensBefore(Phantom.ofObject(receiver), siteId,
-                                state, true));
             }
         }
     }

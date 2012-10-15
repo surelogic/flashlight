@@ -28,6 +28,7 @@ import com.sun.source.util.SimpleTreeVisitor;
 import com.sun.tools.javac.api.JavacTaskImpl;
 import com.sun.tools.javac.api.JavacTool;
 import com.surelogic.common.AbstractJavaZip;
+import com.surelogic.common.SLUtility;
 
 public final class SourceFolderZip extends AbstractJavaZip<File> {
 
@@ -51,7 +52,7 @@ public final class SourceFolderZip extends AbstractJavaZip<File> {
     protected String[] getIncludedTypes(final File res) {
         List<String> list = typeMap.get(res);
         if (list != null) {
-            return list.toArray(new String[0]);
+            return list.toArray(SLUtility.EMPTY_STRING_ARRAY);
         }
         return null;
     }

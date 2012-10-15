@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.surelogic.common.SLUtility;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.common.files.RawFileUtility;
@@ -151,7 +152,7 @@ public final class RunManager {
 		for (final RunDescription r : descs) {
 			ids.add(r.toIdentityString());
 		}
-		return ids.toArray(new String[0]);
+		return ids.toArray(SLUtility.EMPTY_STRING_ARRAY);
 	}
 
 	/**

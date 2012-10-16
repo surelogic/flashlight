@@ -9,16 +9,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.surelogic.common.refactor.Method;
-import com.surelogic.common.refactor.TypeContext;
+import com.surelogic.common.ref.*;
 
 public class TypeNode implements Comparable<TypeNode> {
     final List<TypeNode> children = new ArrayList<TypeNode>();
     final String type;
-    final TypeContext ctx;
-    final Map<String, List<Method>> methods = new HashMap<String, List<Method>>();
+    final IDeclType ctx;
+    final Map<String, List<IDeclFunction>> methods = new HashMap<String, List<IDeclFunction>>();
 
-    TypeNode(final String name, final TypeContext context) {
+    TypeNode(final String name, final IDeclType context) {
         type = name;
         ctx = context;
     }
@@ -51,16 +50,16 @@ public class TypeNode implements Comparable<TypeNode> {
         }
     }
 
-    void addMethod(final String name, final Method m) {
-        List<Method> list = methods.get(name);
+    void addMethod(final String name, final IDeclFunction m) {
+        List<IDeclFunction> list = methods.get(name);
         if (list == null) {
-            list = new ArrayList<Method>();
+            list = new ArrayList<IDeclFunction>();
             methods.put(name, list);
         }
         list.add(m);
     }
 
-    TypeNode addChild(final String name, final TypeContext ctx) {
+    TypeNode addChild(final String name, final IDeclType ctx) {
         final TypeNode t = new TypeNode(name, ctx);
         children.add(t);
         return t;
@@ -70,20 +69,20 @@ public class TypeNode implements Comparable<TypeNode> {
         return type;
     }
 
-    public TypeContext getContext() {
+    public IDeclType getContext() {
         return ctx;
     }
 
-    public List<Method> getConstructors() {
-        final List<Method> list = methods.get(type);
+    public List<IDeclFunction> getConstructors() {
+        final List<IDeclFunction> list = methods.get(type);
         if (list == null) {
             return Collections.emptyList();
         }
         return list;
     }
 
-    public List<Method> getMethods(final String method) {
-        final List<Method> list = methods.get(method);
+    public List<IDeclFunction> getMethods(final String method) {
+        final List<IDeclFunction> list = methods.get(method);
         if (list == null) {
             return Collections.emptyList();
         }

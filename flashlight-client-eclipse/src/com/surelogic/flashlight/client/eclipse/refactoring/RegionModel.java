@@ -9,10 +9,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.surelogic.common.ref.*;
+import com.surelogic.common.ref.Decl.DeclBuilder;
 import com.surelogic.common.refactor.AnnotationDescription;
-import com.surelogic.common.refactor.Field;
-import com.surelogic.common.refactor.Method;
-import com.surelogic.common.refactor.TypeContext;
 import com.surelogic.flashlight.recommend.FieldLoc;
 import com.surelogic.flashlight.recommend.MethodLoc;
 import com.surelogic.flashlight.recommend.RecommendedRegion;
@@ -107,20 +106,22 @@ public class RegionModel implements Iterable<RecommendedRegion> {
 	public boolean isEmpty() {
 		return regions.isEmpty();
 	}
-
+	
 	public Set<AnnotationDescription> generateAnnotations(
 			final Map<String, TypeNode> typeMap, final NamingScheme ns) {
 		final Set<AnnotationDescription> set = new HashSet<AnnotationDescription>();
 		for (final RecommendedRegion r : this) {
 			final TypeNode node = typeMap.get(r.getClazz());
 			if (node != null) {
-				final TypeContext t = node.getContext();
+				final IDeclType t = node.getContext();
 				set.add(new AnnotationDescription("Region", ns
 						.regionModelAnnotation(r), t));
 				set.add(new AnnotationDescription("RegionLock", ns
 						.regionLockAnnotation(r), t));
 				for (final FieldLoc field : r.getFields()) {
-					final Field f = new Field(t, field.getField());
+					Decl.FieldBuilder builder = new Decl.FieldBuilder(field.getField());
+					builder.setParent(Decl.getBuilderFor(t));
+					final IDeclField f = (IDeclField) builder.build();
 					if (field.isAggregate()) {
 						set.add(new AnnotationDescription("AggregateInRegion",
 								ns.aggregateInstanceAnnotation(r), f));
@@ -131,11 +132,11 @@ public class RegionModel implements Iterable<RecommendedRegion> {
 								.regionName(r), f));
 					}
 				}
-				for (final Method m : node.getConstructors()) {
+				for (final IDeclFunction m : node.getConstructors()) {
 					set.add(new AnnotationDescription("Unique", "return", m));
 				}
 				for (final MethodLoc m : r.getRequiresLockMethods()) {
-					for (final Method method : node.getMethods(m.getMethod())) {
+					for (final IDeclFunction method : node.getMethods(m.getMethod())) {
 						set.add(new AnnotationDescription("RequiresLock", ns
 								.lockModelName(r), method));
 					}

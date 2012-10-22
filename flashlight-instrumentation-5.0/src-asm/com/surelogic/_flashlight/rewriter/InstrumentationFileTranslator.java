@@ -85,6 +85,7 @@ public final class InstrumentationFileTranslator implements Opcodes {
         } else {
             in = new FileReader(siteFile);
         }
+
         BufferedReader reader = new BufferedReader(in);
         try {
             ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
@@ -93,21 +94,14 @@ public final class InstrumentationFileTranslator implements Opcodes {
                     "java/lang/Object", null);
             defaultConstructor(writer);
             MethodVisitor method = writer.visitMethod(ACC_PUBLIC + ACC_STATIC,
-                    "getSiteLines", "()[Ljava/lang/String;", null, null);
-            final List<String> lines = new ArrayList<String>();
+                    "getSiteLines", "()Ljava/lang/String;", null, null);
+            final StringBuilder sites = new StringBuilder();
             for (String line = reader.readLine(); line != null; line = reader
                     .readLine()) {
-                lines.add(line);
+                sites.append(line);
+                sites.append('\n');
             }
-            method.visitLdcInsn(lines.size());
-            method.visitTypeInsn(ANEWARRAY, "java/lang/String");
-            int idx = 0;
-            for (String line : lines) {
-                method.visitInsn(DUP);
-                method.visitLdcInsn(idx++);
-                method.visitLdcInsn(line);
-                method.visitInsn(AASTORE);
-            }
+            loadString(method, sites.toString());
             method.visitInsn(ARETURN);
             method.visitMaxs(0, 0);
             method.visitEnd();
@@ -118,7 +112,6 @@ public final class InstrumentationFileTranslator implements Opcodes {
             } finally {
                 out.close();
             }
-
         } finally {
             reader.close();
         }
@@ -141,21 +134,14 @@ public final class InstrumentationFileTranslator implements Opcodes {
                     "java/lang/Object", null);
             defaultConstructor(writer);
             MethodVisitor method = writer.visitMethod(ACC_PUBLIC + ACC_STATIC,
-                    "getFieldLines", "()[Ljava/lang/String;", null, null);
-            final List<String> lines = new ArrayList<String>();
+                    "getFieldLines", "()Ljava/lang/String;", null, null);
+            final StringBuilder fields = new StringBuilder();
             for (String line = reader.readLine(); line != null; line = reader
                     .readLine()) {
-                lines.add(line);
+                fields.append(line);
+                fields.append('\n');
             }
-            method.visitLdcInsn(lines.size());
-            method.visitTypeInsn(ANEWARRAY, "java/lang/String");
-            int idx = 0;
-            for (String line : lines) {
-                method.visitInsn(DUP);
-                method.visitLdcInsn(idx++);
-                method.visitLdcInsn(line);
-                method.visitInsn(AASTORE);
-            }
+            loadString(method, fields.toString());
             method.visitInsn(ARETURN);
             method.visitMaxs(0, 0);
             method.visitEnd();
@@ -170,6 +156,36 @@ public final class InstrumentationFileTranslator implements Opcodes {
         } finally {
             reader.close();
         }
+    }
+
+    // Real max is 65533, I'm just leaving a bit of headroom for no particular
+    // reason
+    private static int MAX = 65000;
+
+    private static void loadString(MethodVisitor method, String string) {
+        int len = string.length();
+        if (len <= MAX) {
+            method.visitLdcInsn(string);
+        } else {
+            int chunksLessOne = (int) Math.ceil((double) len / MAX) - 1;
+            method.visitTypeInsn(NEW, "java/lang/StringBuilder");
+            method.visitInsn(DUP);
+            method.visitLdcInsn(string.substring(0, MAX));
+            method.visitMethodInsn(INVOKESPECIAL, "java/lang/StringBuilder",
+                    "<init>", "(Ljava/lang/String;)V");
+            for (int i = 1; i < chunksLessOne; i++) {
+                method.visitLdcInsn(string.substring(i * MAX, (i + 1) * MAX));
+                method.visitMethodInsn(INVOKEVIRTUAL,
+                        "java/lang/StringBuilder", "append",
+                        "(Ljava/lang/String;)Ljava/lang/StringBuilder;");
+            }
+            method.visitLdcInsn(string.substring(chunksLessOne * MAX));
+            method.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder",
+                    "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;");
+            method.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder",
+                    "toString", "()Ljava/lang/String;");
+        }
+
     }
 
     public static void defaultConstructor(final ClassWriter writer) {

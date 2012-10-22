@@ -301,7 +301,7 @@ public class RunConf {
                 if (fieldsFile == null) {
                     defs = new FieldDefs();
                 } else {
-                    defs = new FieldDefs(fieldsFile);
+                    defs = new FieldDefs(new File(fieldsFile));
                 }
             } catch (IOException e) {
                 logAProblem(e.getMessage(), e);

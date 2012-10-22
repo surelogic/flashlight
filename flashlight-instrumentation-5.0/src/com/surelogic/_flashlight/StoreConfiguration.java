@@ -51,6 +51,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.StringTokenizer;
 import java.util.zip.GZIPOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -202,10 +203,12 @@ public class StoreConfiguration {
             boolean success = false;
             try {
                 // Look for the fields data as a class
-                String[] lines = FieldsConf.getFieldLines();
+                String lines = FieldsConf.getFieldLines();
                 PrintWriter writer = new PrintWriter(fieldsFile);
                 try {
-                    for (String line : lines) {
+                    StringTokenizer tok = new StringTokenizer(lines);
+                    while (tok.hasMoreTokens()) {
+                        String line = tok.nextToken();
                         writer.println(line);
                     }
                 } finally {
@@ -235,14 +238,17 @@ public class StoreConfiguration {
             boolean success = false;
             try {
                 // Look for the fields data as a class
-                String[] lines = SitesConf.getSiteLines();
+                String lines = SitesConf.getSiteLines();
                 OutputStream out = new FileOutputStream(sitesFile);
                 if (FL_SITES_FILE_NAME.endsWith("tar.gz")) {
                     out = new GZIPOutputStream(out);
                 }
+
                 PrintWriter writer = new PrintWriter(out);
                 try {
-                    for (String line : lines) {
+                    StringTokenizer tok = new StringTokenizer(lines);
+                    while (tok.hasMoreTokens()) {
+                        String line = tok.nextToken();
                         writer.println(line);
                     }
                 } finally {

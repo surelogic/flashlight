@@ -194,10 +194,12 @@ class SitesReader {
 
     private Map<String, List<FieldInfo>> loadFieldInfo(final StringTable strings) {
         try {
-            String[] lines = FieldsConf.getFieldLines();
+            String fields = FieldsConf.getFieldLines();
             f_conf.log("Using com.surelogic._flashlight.FieldsConf for fields data.");
             final Map<String, List<FieldInfo>> map = new HashMap<String, List<FieldInfo>>();
-            for (String line : lines) {
+            StringTokenizer tok = new StringTokenizer(fields, "\n");
+            while (tok.hasMoreTokens()) {
+                String line = tok.nextToken();
                 final FieldInfo fi = new FieldInfo(strings, line);
                 List<FieldInfo> l = map.get(fi.declaringType);
                 if (l == null) {

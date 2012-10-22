@@ -607,7 +607,6 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
 
         public Collection<String> getClasspathEntries() {
             List<String> list = new ArrayList<String>(classpaths.size() + 2);
-
             list.addAll(classpaths);
             list.add(infoDir.getAbsolutePath());
             list.add(getRuntimeJarPath());
@@ -743,11 +742,11 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
         for (IClasspathEntry cpe : javaProject.getResolvedClasspath(true)) {
             if (cpe.getEntryKind() == IClasspathEntry.CPE_LIBRARY) {
                 String path = cpe.getPath().toOSString();
-                if (!data.classpaths.contains(path)) {
+                if (!data.originalClasspaths.contains(path)) {
                     File pathFile = new File(path);
                     if (pathFile.isDirectory()) {
                         rm.addClasspathDir(pathFile);
-                    } else {
+                    } else if (pathFile.exists()) {
                         rm.addClasspathJar(pathFile);
                     }
                 }

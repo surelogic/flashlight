@@ -40,14 +40,16 @@ public class DefinitionEventGenerator {
     private final ClassVisitor classVisitor;
 
     private final Map<String, List<ClassInfo>> classDefs;
-    private HappensBeforeSites happensBefore;
+    private final HappensBeforeSites happensBefore;
 
     DefinitionEventGenerator(final RunConf conf,
             final BlockingQueue<List<Event>> outQueue) {
         f_conf = conf;
         f_outQueue = outQueue;
         classVisitor = new ClassVisitor();
-        classDefs = loadClassInfo();
+        final SitesReader sitesReader = new SitesReader(f_conf);
+        classDefs = loadClassInfo(sitesReader);
+        happensBefore = sitesReader.getHappensBeforeSites();
     }
 
     void handleDefinition(final Event e) {
@@ -60,11 +62,13 @@ public class DefinitionEventGenerator {
         return happensBefore;
     }
 
-    private Map<String, List<ClassInfo>> loadClassInfo() {
-        final SitesReader sitesReader = new SitesReader(f_conf);
+    private Map<String, List<ClassInfo>> loadClassInfo(SitesReader sitesReader) {
+
         try {
-            for (String line : SitesConf.getSiteLines()) {
-                sitesReader.readLine(line);
+            StringTokenizer tok = new StringTokenizer(SitesConf.getSiteLines(),
+                    "\n");
+            while (tok.hasMoreTokens()) {
+                sitesReader.readLine(tok.nextToken());
             }
             f_conf.log("Site information read from com.surelogic._flashlight.SitesConf.class");
         } catch (NoClassDefFoundError e) {
@@ -79,7 +83,6 @@ public class DefinitionEventGenerator {
                 loadFileContents(f, sitesReader);
             }
         }
-        happensBefore = sitesReader.getHappensBeforeSites();
         final Map<String, List<ClassInfo>> classesMap = sitesReader.getMap();
         final Map<String, List<FieldInfo>> fieldsMap = sitesReader
                 .getFieldsMap();

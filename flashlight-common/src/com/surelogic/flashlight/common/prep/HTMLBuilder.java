@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import com.surelogic.common.xml.XMLUtil;
+import com.surelogic.common.xml.Entities;
 
 /**
  * A simple builder for HTML pages.
@@ -49,7 +49,7 @@ public class HTMLBuilder {
 
 		@Override
 		public void display(final StringBuilder b, final int depth) {
-			b.append(XMLUtil.escape(text));
+			b.append(Entities.Holder.DEFAULT.escape(text));
 		}
 	}
 

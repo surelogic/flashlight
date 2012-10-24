@@ -516,7 +516,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 			mv.visitMethodInsn(opcode, owner, name, desc);
 		} else {
 			/*
-			 * Check if we are calling an method makes indirect use of
+			 * Check if we are calling a method makes indirect use of
 			 * aggregated state.
 			 */
 			IndirectAccessMethod indirectAccess = null;
@@ -525,7 +525,13 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 				try {
 					indirectAccess = accessMethods.get(owner, name, desc);
 				} catch (final ClassNotFoundException e) {
-					throwMissingClass(e.getMissingClass());
+				  // Couldn't find the class.  Used to insert an exception here
+          //          throwMissingClass(e.getMissingClass());
+				  // But now we soldier on with a warning message, and figure that the
+				  // call is not an indirect access call
+				  indirectAccess = null;
+          messenger.warning("In Method " + methodName
+              + ": Couldn't find class " + e.getMissingClass() + ".");
 				}
 			}
 
@@ -2055,7 +2061,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 			methodCall.instrumentMethodCall((ExceptionHandlerReorderingMethodAdapter) mv, config);
 		} else {
 			/*
-			 * The clone() method is a special case due to its retarded
+			 * The clone() method is a special case due to its non-standard
 			 * semantics. If the class of the object being used as the receiver,
 			 * call it C, implements Cloneable, but DOES NOT override the
 			 * clone() method, the clone method is still seen as a protected
@@ -2161,7 +2167,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 	private void pushSiteIdentifier() {
 		pushSiteIdentifier(siteId);
 	}
-
+	
 	private void throwMissingClass(final String missingClassName) {
 		messenger.verbose("In Method " + methodName + ": Couldn't find class "
 				+ missingClassName

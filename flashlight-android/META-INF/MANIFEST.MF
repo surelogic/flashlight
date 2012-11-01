@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Flashlight Support for Android
 Bundle-SymbolicName: com.surelogic.flashlight.android;singleton:=true
-Bundle-Version: 4.3.3.qualifier
+Bundle-Version: 4.3.4.qualifier
 Bundle-Activator: com.surelogic.flashlight.android.Activator
 Require-Bundle: org.eclipse.ui,
  org.eclipse.core.runtime,
@@ -23,8 +23,8 @@ Require-Bundle: org.eclipse.ui,
  org.eclipse.ui.editors,
  org.eclipse.jdt.core,
  org.eclipse.jface.text,
- com.surelogic.flashlight.client.eclipse;bundle-version="4.3.2",
- com.surelogic.flashlight.common;bundle-version="4.3.2",
+ com.surelogic.flashlight.client.eclipse,
+ com.surelogic.flashlight.common,
  com.android.ide.eclipse.base;bundle-version="20.0.0",
  com.android.ide.eclipse.adt;bundle-version="20.0.0",
  com.android.ide.eclipse.ddms;bundle-version="20.0.0"

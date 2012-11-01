@@ -559,11 +559,11 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
             for (int i = 0; i < originalClasspaths.size(); i++) {
                 File tmpFile;
                 if (new File(originalClasspaths.get(i)).isDirectory()) {
-                    tmpFile = File.createTempFile("fl_classes_", "dir");
+                    tmpFile = File.createTempFile("fl_", "class");
                     tmpFile.delete();
                     tmpFile.mkdir();
                 } else {
-                    tmpFile = File.createTempFile("fl_classes_", "jar");
+                    tmpFile = File.createTempFile("fl_classes_", ".jar");
                 }
 
                 classpaths.add(tmpFile.getAbsolutePath());

@@ -25,11 +25,11 @@ public class MonitorImages {
     private final Color f_unsharedColor;
 
     public MonitorImages(final Display display) {
-        f_connected = SLImages.getImage(CommonImages.IMG_GREEN_CIRCLE);
-        f_connecting = SLImages.getImage(CommonImages.IMG_YELLOW_CIRCLE);
-        f_notConnected = SLImages.getImage(CommonImages.IMG_GRAY_CIRCLE);
-        f_error = SLImages.getImage(CommonImages.IMG_RED_CIRCLE);
-        f_done = SLImages.getImage(CommonImages.IMG_GRAY_CIRCLE);
+        f_connected = SLImages.getImage(CommonImages.IMG_CIRCLE_GREEN);
+        f_connecting = SLImages.getImage(CommonImages.IMG_CIRCLE_YELLOW);
+        f_notConnected = SLImages.getImage(CommonImages.IMG_CIRCLE_GRAY);
+        f_error = SLImages.getImage(CommonImages.IMG_CIRCLE_RED);
+        f_done = SLImages.getImage(CommonImages.IMG_CIRCLE_GRAY);
         f_package = SLImages.getImage(CommonImages.IMG_PACKAGE);
         f_class = SLImages.getImage(CommonImages.IMG_CLASS);
         // Greenish

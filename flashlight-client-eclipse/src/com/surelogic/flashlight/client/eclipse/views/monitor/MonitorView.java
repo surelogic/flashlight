@@ -47,7 +47,7 @@ public class MonitorView extends ViewPart {
         status.setLayoutData(statusLayoutData);
 
         final Label statusImage = new Label(status, SWT.NONE);
-        statusImage.setImage(SLImages.getImage(CommonImages.IMG_GRAY_CIRCLE));
+        statusImage.setImage(SLImages.getImage(CommonImages.IMG_CIRCLE_GRAY));
 
         final Label startTimeText = new Label(status, SWT.NONE);
         final Label runText = new Label(status, SWT.NONE);

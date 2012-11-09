@@ -104,6 +104,16 @@ class SitesReader {
                         || site.methodName.equals("acquireInterruptibly")) {
                     hb.addHappensTo(site.id);
                 }
+            } else if (site.methodClass
+                    .startsWith("java/util/concurrent/Atomic")) {
+                if (site.methodName.startsWith("get")) {
+                    hb.addHappensTarget(site.id);
+                    if (site.methodName.equals("getAndSet")) {
+                        hb.addHappensSource(site.id);
+                    }
+                } else if (site.methodName.equals("set")) {
+                    hb.addHappensSource(site.id);
+                }
             }
         }
     }

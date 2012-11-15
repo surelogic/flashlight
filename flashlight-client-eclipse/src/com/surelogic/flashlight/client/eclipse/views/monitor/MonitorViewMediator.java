@@ -308,7 +308,7 @@ public class MonitorViewMediator {
 
         Document d = new Document();
         d.set(status.getListing());
-        if (XUtil.useExperimental()) {
+        if (XUtil.useExperimental) {
             f_listing.setDocument(d);
             f_listing.refresh();
         }

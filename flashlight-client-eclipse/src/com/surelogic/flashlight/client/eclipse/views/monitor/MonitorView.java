@@ -145,7 +145,7 @@ public class MonitorView extends ViewPart {
          * Listing tab, we aren't keeping this.
          */
         TextViewer tv = null;
-        if (XUtil.useExperimental()) {
+        if (XUtil.useExperimental) {
             final TabItem removeThis = new TabItem(folder, SWT.NONE);
             removeThis.setText("List");
             tv = new TextViewer(folder, SWT.BORDER | SWT.V_SCROLL

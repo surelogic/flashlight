@@ -126,7 +126,7 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
 
 		qGroup.setLayout(new GridLayout(2, false));
 
-		if (XUtil.useExperimental()) {
+		if (XUtil.useExperimental) {
 			final Button exportButton = new Button(parent, SWT.PUSH);
 			exportButton.setText("Export New Queries File");
 			exportButton.setLayoutData(new GridData(SWT.DEFAULT, SWT.DEFAULT,

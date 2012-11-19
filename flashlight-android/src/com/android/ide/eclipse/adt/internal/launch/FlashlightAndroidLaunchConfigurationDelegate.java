@@ -39,8 +39,11 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
 
+import com.android.SdkConstants;
 import com.android.ddmlib.AndroidDebugBridge;
 import com.android.ddmlib.IDevice;
+import com.android.ide.common.xml.ManifestData;
+import com.android.ide.common.xml.ManifestData.Activity;
 import com.android.ide.eclipse.adt.AdtConstants;
 import com.android.ide.eclipse.adt.AdtPlugin;
 import com.android.ide.eclipse.adt.AndroidPrintStream;
@@ -62,12 +65,9 @@ import com.android.ide.eclipse.adt.internal.project.ProjectHelper;
 import com.android.ide.eclipse.adt.internal.sdk.ProjectState;
 import com.android.ide.eclipse.adt.internal.sdk.Sdk;
 import com.android.prefs.AndroidLocation.AndroidLocationException;
-import com.android.sdklib.SdkConstants;
 import com.android.sdklib.build.ApkCreationException;
 import com.android.sdklib.build.DuplicateFileException;
 import com.android.sdklib.internal.build.DebugKeyProvider.KeytoolException;
-import com.android.sdklib.xml.ManifestData;
-import com.android.sdklib.xml.ManifestData.Activity;
 import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic._flashlight.rewriter.InstrumentationFileTranslator;
 import com.surelogic._flashlight.rewriter.PrintWriterMessenger;
@@ -371,6 +371,7 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
                 project,
                 mOutStream,
                 mErrStream,
+                false /* jumbo mode doesn't matter here */,
                 true /* debugMode */,
                 AdtPrefs.getPrefs().getBuildVerbosity() == BuildVerbosity.VERBOSE,
                 mResourceMarker);

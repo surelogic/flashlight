@@ -105,7 +105,7 @@ class SitesReader {
                     hb.addHappensTo(site.id);
                 }
             } else if (site.methodClass
-                    .startsWith("java/util/concurrent/Atomic")) {
+                    .startsWith("java/util/concurrent/atomic/Atomic")) {
                 if (site.methodName.startsWith("get")) {
                     hb.addHappensTarget(site.id);
                     if (site.methodName.equals("getAndSet")) {

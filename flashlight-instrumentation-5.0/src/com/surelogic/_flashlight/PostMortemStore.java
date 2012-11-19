@@ -605,16 +605,15 @@ public class PostMortemStore implements StoreListener {
     }
 
     public void methodExecution(boolean before, long siteId) {
-        State state = tl_withinStore.get();
+
         /*
          * Record this call in the trace.
          */
-        if (before) {
-            TraceNode.pushTraceNode(siteId, state);
-        } else {
-            TraceNode.popTraceNode(siteId, state);
-        }
-
+        /*
+         * State state = tl_withinStore.get(); if (before) {
+         * TraceNode.pushTraceNode(siteId, state); } else {
+         * TraceNode.popTraceNode(siteId, state); }
+         */
     }
 
 }

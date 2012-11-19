@@ -5,20 +5,17 @@ import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.ui.IEditorPart;
 
 public class JavaApplicationLaunchWrapper implements ILaunchShortcut {
+	/*
 	private static final String ClassUnder3_3 = 
 		"org.eclipse.jdt.internal.debug.ui.launcher.JavaApplicationLaunchShortcut";
+	*/
 	private static final String ClassUnder3_4 = 
 		"org.eclipse.jdt.debug.ui.launchConfigurations.JavaApplicationLaunchShortcut";
 	
 	private final ILaunchShortcut realShortCut;	
 	
 	public JavaApplicationLaunchWrapper() throws InstantiationException, IllegalAccessException, ClassNotFoundException {
-		Class<?> cls = null;
-		try {
-			cls = Class.forName(ClassUnder3_4);
-		} catch (ClassNotFoundException e) {
-			cls = Class.forName(ClassUnder3_3);
-		}
+		Class<?> cls = Class.forName(ClassUnder3_4);
 		realShortCut = (ILaunchShortcut) cls.newInstance();		
 	}
 

@@ -253,7 +253,7 @@
 		actions)
 	-->
 	<extension point="org.eclipse.debug.ui.launchShortcuts">
-		<shortcut label="%fl.javaApplicationShortcut.label" icon="/lib/images/fl_app.gif"
+		<shortcut label="%fl.javaApplicationShortcut.label" icon="/lib/images/java_app.gif"
 			helpContextId="org.eclipse.jdt.debug.ui.shortcut_local_java_application"
 			modes="flashlight,flashlight-monitor"
 			class="com.surelogic.flashlight.client.eclipse.launch.JavaApplicationLaunchWrapper"
@@ -278,7 +278,7 @@
 			<configurationType id="org.eclipse.jdt.launching.localJavaApplication">
 			</configurationType>
 		</shortcut>
-		<shortcut label="%fl.junitApplicationShortcut.label" icon="/lib/images/fl_app.gif"
+		<shortcut label="%fl.junitApplicationShortcut.label" icon="/lib/images/java_app.gif"
 			helpContextId="org.eclipse.jdt.junit.launch_shortcut" modes="flashlight, flashlight-monitor"
 			class="com.surelogic.flashlight.client.eclipse.launch.FlashlightJUnitLaunchWrapper"
 			id="com.surelogic.flashlight.localJUnitShortcut">

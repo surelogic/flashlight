@@ -196,7 +196,7 @@ public final class RunViewModel {
                         return CommonImages.IMG_WARNING;
                     }
                 }
-                return CommonImages.IMG_FL_RUN_OBJ;
+                return CommonImages.IMG_CLASS;
             }
         });
 

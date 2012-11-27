@@ -1,0 +1,42 @@
+<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
+
+<sites>
+  <happens-before>
+    <class>java.lang.Thread</class>
+    <method name="start" sig="()" type="from" />
+    <method name="join" sig="()" type="to" />
+  </happens-before>
+
+  <happens-before-obj>
+    <class>java.lang.Object</class>
+    <method name="wait" sig="(long)" type="target" />
+    <method name="wait" sig="(long,int)" type="target" />
+    <method name="notify" sig="()" type="source" />
+  </happens-before-obj>
+
+  <happens-before-obj>
+    <class>java.util.concurrent.CountDownLatch</class>
+    <method name="countDown" sig="()" type="source" />
+    <method name="await" sig="()" type="target" />
+    <method name="await" sig="(long, TimeUnit)" type="target" checkReturn="true"/>
+  </happens-before-obj>
+
+  <happens-before-coll>
+    <class>java.util.concurrent.ArrayBlockingQueue</class>
+    <method name="add" sig="(Object)" type="source" obj="1"/>
+    <method name="put" sig="(Object)" type="source" obj="1"/>
+    <method name="offer" sig="(Object)" type="source" obj="1"/>
+    <method name="offer" sig="(Object,long,TimeUnit)" type="source" obj="1" checkReturn="!null"/>
+    <method name="take" sig="()" obj="0" type="target" />
+    <method name="poll" sig="(long,java.util.concurrent.TimeUnit)" obj="0" type="target" checkReturn="true"/>
+    <method name="remove" sig="Object" type="target" obj="1" checkReturn="true"/>
+    <method name="contains" sig="Object" type="target" obj="1" checkReturn="true"/>
+    <!-- TODO
+    <method name="drainTo" sig="" type="target" />
+    -->
+  </happens-before-coll>
+  
+
+
+
+</sites>

@@ -61,13 +61,6 @@ public class FlashlightInstrumentationWidgets {
                         { "Only lock info", "ONLY_LOCKS" } }, group1);
         finishSetup(group1, f_collectionType);
 
-        final RadioGroupFieldEditor f_outputType = new RadioGroupFieldEditor(
-                FlashlightPreferencesUtility.OUTPUT_TYPE,
-                I18N.msg("flashlight.preference.page.outputType"), 2,
-                new String[][] { { "XML", "false" }, { "Binary", "true" } },
-                group1);
-        finishSetup(group1, f_outputType);
-
         final BooleanFieldEditor f_compress = new BooleanFieldEditor(
                 FlashlightPreferencesUtility.COMPRESS_OUTPUT,
                 I18N.msg("flashlight.preference.page.compressOutput"), group1);

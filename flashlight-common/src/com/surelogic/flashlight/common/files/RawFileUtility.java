@@ -43,10 +43,6 @@ public final class RawFileUtility {
 
     }
 
-    static boolean isBinary(final File dataFile) {
-        return OutputType.detectFileType(dataFile).isBinary();
-    }
-
     /**
      * Checks to see if this folder is a valid run directory.
      * 

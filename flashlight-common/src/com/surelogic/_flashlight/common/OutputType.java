@@ -8,8 +8,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -22,20 +20,14 @@ import org.xml.sax.SAXException;
 
 public enum OutputType {
 
-    FL(false, false, ".fl"), FL_GZ(false, true, ".fl.gz"), FLB(true, false,
-            ".flb"), FLB_GZ(true, true, ".flb.gz"), FLH(false, false, ".flh");
+    FL(false, ".fl"), FL_GZ(true, ".fl.gz"), FLH(false, ".flh");
 
-    private final boolean binary, compressed;
+    private final boolean compressed;
     private final String suffix;
 
-    private OutputType(final boolean bin, final boolean gz, final String sf) {
-        binary = bin;
+    private OutputType(final boolean gz, final String sf) {
         compressed = gz;
         suffix = sf;
-    }
-
-    public boolean isBinary() {
-        return binary;
     }
 
     public boolean isCompressed() {
@@ -58,14 +50,12 @@ public enum OutputType {
         return defValue;
     }
 
-    public static OutputType get(final String useBinary, final boolean compress) {
-        boolean binary = "true".equals(useBinary);
-        for (OutputType val : values()) {
-            if (val.isBinary() == binary && val.isCompressed() == compress) {
-                return val;
-            }
+    public static OutputType get(final boolean compress) {
+        if (compress) {
+            return FL_GZ;
+        } else {
+            return FL;
         }
-        return FL_GZ;
     }
 
     public static OutputType detectFileType(final File dataFile) {
@@ -107,14 +97,10 @@ public enum OutputType {
     public static InputStream getInputStreamFor(InputStream stream,
             final OutputType type) throws IOException {
         if (type.isCompressed()) {
-            stream = new GZIPInputStream(stream, 32 * 1024);
+            return new GZIPInputStream(stream, 32 * 1024);
         } else {
-            stream = new BufferedInputStream(stream, 32 * 1024);
+            return new BufferedInputStream(stream, 32 * 1024);
         }
-        if (type.isBinary()) {
-            stream = new ObjectInputStream(stream);
-        }
-        return stream;
     }
 
     /**
@@ -145,23 +131,15 @@ public enum OutputType {
     public static OutputStream getOutputStreamFor(OutputStream stream,
             final OutputType type) throws IOException {
         if (type.isCompressed()) {
-            stream = new GZIPOutputStream(stream);
+            return new GZIPOutputStream(stream);
         } else {
-            stream = new BufferedOutputStream(stream);
+            return new BufferedOutputStream(stream);
         }
-        if (type.isBinary()) {
-            stream = new ObjectOutputStream(stream);
-        }
-        return stream;
     }
 
     public static SAXParser getParser(final OutputType type)
             throws ParserConfigurationException, SAXException {
-        if (type.isBinary()) {
-            return new BinaryEventReader();
-        } else {
-            return SAXParserFactory.newInstance().newSAXParser();
-        }
+        return SAXParserFactory.newInstance().newSAXParser();
     }
 
     public static SAXParser getParser(final File dataFile)

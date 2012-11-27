@@ -48,7 +48,6 @@ import com.surelogic.flashlight.client.eclipse.refactoring.RegionRefactoringWiza
 import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.QueryMenuView;
 import com.surelogic.flashlight.common.files.RawFileHandles;
-import com.surelogic.flashlight.common.jobs.ConvertBinaryToXMLJob;
 import com.surelogic.flashlight.common.jobs.DeleteRawFilesSLJob;
 import com.surelogic.flashlight.common.jobs.RefreshRunManagerSLJob;
 import com.surelogic.flashlight.common.jobs.UnPrepSLJob;
@@ -260,29 +259,6 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
         return f_showLogAction;
     }
 
-    private final Action f_convertToXmlAction = new Action() {
-        @Override
-        public void run() {
-            final RunDescription[] selected = getSelectedRunDescriptions();
-            for (final RunDescription description : selected) {
-                if (description != null) {
-                    final RawFileHandles handles = description
-                            .getRawFileHandles();
-                    if (handles != null) {
-                        for (final File dataFile : handles.getDataFiles()) {
-                            EclipseJob.getInstance().schedule(
-                                    new ConvertBinaryToXMLJob(dataFile));
-                        }
-                    }
-                }
-            }
-        }
-    };
-
-    public Action getConvertToXmlAction() {
-        return f_convertToXmlAction;
-    }
-
     private final Action f_deleteAction = new Action() {
         @Override
         public void run() {
@@ -424,7 +400,6 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
         f_deleteAction.setEnabled(somethingIsSelected);
         f_inferJSureAnnoAction.setEnabled(somethingIsSelected);
         boolean rawActionsEnabled = somethingIsSelected;
-        boolean binaryActionsEnabled = somethingIsSelected;
         /*
          * Only enable raw actions if all the selected runs have raw data. Only
          * enable binary actions if all the selected runs have raw binary data.
@@ -433,13 +408,6 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
             final RawFileHandles rfh = rd.getRawFileHandles();
             if (rfh == null) {
                 rawActionsEnabled = false;
-                binaryActionsEnabled = false;
-            } else {
-                if (binaryActionsEnabled) {
-                    if (!rfh.isDataFileBinary()) {
-                        binaryActionsEnabled = false;
-                    }
-                }
             }
         }
         /*
@@ -463,7 +431,6 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
         }
         f_prepAction.setEnabled(rawActionsEnabled);
         f_showLogAction.setEnabled(rawActionsEnabled);
-        f_convertToXmlAction.setEnabled(binaryActionsEnabled);
     }
 
     /**

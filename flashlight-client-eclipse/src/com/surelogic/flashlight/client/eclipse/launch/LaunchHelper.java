@@ -33,7 +33,6 @@ public final class LaunchHelper {
         private final int refSize;
         private final int outQSize;
         private final int cPort;
-        private final String useBinary;
         private final boolean postmortem;
         private final boolean compress;
         private final String collectionType;
@@ -55,9 +54,6 @@ public final class LaunchHelper {
             cPort = launch.getAttribute(
                     FlashlightPreferencesUtility.CONSOLE_PORT,
                     prefs.getInt(FlashlightPreferencesUtility.CONSOLE_PORT));
-            useBinary = launch.getAttribute(
-                    FlashlightPreferencesUtility.OUTPUT_TYPE,
-                    prefs.getString(FlashlightPreferencesUtility.OUTPUT_TYPE));
             postmortem = launch
                     .getAttribute(
                             FlashlightPreferencesUtility.POSTMORTEM_MODE,
@@ -92,10 +88,6 @@ public final class LaunchHelper {
 
         public int getConsolePort() {
             return cPort;
-        }
-
-        public String getUseBinary() {
-            return useBinary;
         }
 
         public boolean isPostmortem() {

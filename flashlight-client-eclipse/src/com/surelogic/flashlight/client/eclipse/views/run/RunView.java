@@ -98,14 +98,6 @@ public final class RunView extends ViewPart {
         actionBars.getToolBarManager().add(showLogAction);
         actionBars.getMenuManager().add(showLogAction);
 
-        final Action convertToXmlAction = f_mediator.getConvertToXmlAction();
-        convertToXmlAction.setText(I18N
-                .msg("flashlight.run.view.text.convertToXml"));
-        convertToXmlAction.setToolTipText(I18N
-                .msg("flashlight.run.view.tooltip.convertToXml"));
-        convertToXmlAction.setEnabled(false);
-        actionBars.getMenuManager().add(convertToXmlAction);
-
         final Action deleteRunAction = f_mediator.getDeleteAction();
         deleteRunAction.setImageDescriptor(SLImages
                 .getImageDescriptor(CommonImages.IMG_RED_X));

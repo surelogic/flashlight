@@ -136,7 +136,7 @@ public abstract class EventVisitor {
 
     public static File createStreamFile(final String fileName,
             final OutputType type) {
-        final String extension = type.isBinary() ? ".flb" : ".fl";
+        final String extension = ".fl";
         return new File(fileName + extension
                 + (type.isCompressed() ? ".gz" : ""));
     }

@@ -143,7 +143,7 @@ public class PostMortemStore implements StoreListener {
         // Initialize Refinery and Depository
         final OutputType outType = StoreConfiguration.getOutputType();
         if (StoreConfiguration.debugOn()) {
-            System.err.println("Output XML = " + !outType.isBinary());
+            System.err.println("Output XML = " + outType);
         }
         EventVisitor outputStrategy = null;
         try {
@@ -151,16 +151,14 @@ public class PostMortemStore implements StoreListener {
                 final PrintWriter headerW = new PrintWriter(
                         f_conf.getFilePrefix() + OutputType.FLH.getSuffix());
                 OutputStrategyXML.outputHeader(f_conf, headerW, timeEvent,
-                        outType.isBinary() ? OutputStrategyBinary.version
-                                : OutputStrategyXML.version);
+                        OutputStrategyXML.version);
                 headerW.close();
             }
             if (StoreConfiguration.debugOn()) {
                 System.err.println("Compress stream = "
                         + outType.isCompressed());
             }
-            final EventVisitor.Factory factory = outType.isBinary() ? OutputStrategyBinary.factory
-                    : OutputStrategyXML.factory;
+            final EventVisitor.Factory factory = OutputStrategyXML.factory;
             if (StoreConfiguration.hasOutputPort()) {
                 // This check needs to be before the MultiFileOutput check,
                 // as we do not switch output streams when we are using

@@ -68,7 +68,7 @@ public class HappensBeforeConfig {
         return objects;
     }
 
-    public List<List<HappensBefore>> getStatics() {
+    public List<List<HappensBefore>> getThreadHappensBefore() {
         return threads;
     }
 
@@ -107,6 +107,47 @@ public class HappensBeforeConfig {
                     + ", getSignature()=" + getSignature() + ", getType()="
                     + getType() + ", getReturnCheck()=" + getReturnCheck()
                     + ", getMethod()=" + getMethod() + "]";
+        }
+
+    }
+
+    enum Type {
+        SOURCE("source"), TARGET("target"), FROM("from"), TO("to");
+
+        final String name;
+
+        Type(String name) {
+            this.name = name;
+        }
+
+        static Type lookup(String key) {
+            for (Type e : values()) {
+                if (e.name.equals(key)) {
+                    return e;
+                }
+            }
+            return null;
+        }
+
+    }
+
+    enum ReturnCheck {
+        NONE("none"), NOT_NULL("!null"), NULL("null"), TRUE("true"), FALSE(
+                "false");
+
+        final String name;
+
+        ReturnCheck(String name) {
+            this.name = name;
+        }
+
+        static ReturnCheck lookup(String key) {
+            for (ReturnCheck e : values()) {
+                if (e.name.equals(key)) {
+                    return e;
+                }
+            }
+            return NONE;
         }
 
     }
@@ -300,47 +341,6 @@ public class HappensBeforeConfig {
             return "HappensBefore [qualifiedClass=" + qualifiedClass
                     + ", method=" + method + ", signature=" + signature
                     + ", type=" + type + ", returnCheck=" + returnCheck + "]";
-        }
-
-    }
-
-    enum Type {
-        SOURCE("source"), TARGET("target"), FROM("from"), TO("to");
-
-        final String name;
-
-        Type(String name) {
-            this.name = name;
-        }
-
-        static Type lookup(String key) {
-            for (Type e : values()) {
-                if (e.name.equals(key)) {
-                    return e;
-                }
-            }
-            return null;
-        }
-
-    }
-
-    enum ReturnCheck {
-        NONE("none"), NOT_NULL("!null"), NULL("null"), TRUE("true"), FALSE(
-                "false");
-
-        final String name;
-
-        ReturnCheck(String name) {
-            this.name = name;
-        }
-
-        static ReturnCheck lookup(String key) {
-            for (ReturnCheck e : values()) {
-                if (e.name.equals(key)) {
-                    return e;
-                }
-            }
-            return NONE;
         }
 
     }

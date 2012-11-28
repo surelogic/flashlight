@@ -60,11 +60,11 @@ public class HappensBeforeConfig {
         }
     }
 
-    public List<List<HappensBeforeCollection>> getCollections() {
+    public List<List<HappensBeforeCollection>> getCollectionHappensBefore() {
         return collections;
     }
 
-    public List<List<HappensBeforeObject>> getObjects() {
+    public List<List<HappensBeforeObject>> getObjectHappensBefore() {
         return objects;
     }
 

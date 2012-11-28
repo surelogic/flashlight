@@ -112,7 +112,8 @@ public class HappensBeforeConfig {
     }
 
     enum Type {
-        SOURCE("source"), TARGET("target"), FROM("from"), TO("to");
+        SOURCE("source"), TARGET("target"), SOURCEANDTARGET("source-and-target"), FROM(
+                "from"), TO("to"), FROMANDTO("from-and-to");
 
         final String name;
 

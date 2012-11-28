@@ -15,22 +15,34 @@
   </happens-before-obj>
 
   <happens-before-obj>
+    <class>java.util.concurrent.CyclicBarrier</class>
+    <method name="await" sig="()" type="source-and-target" />
+    <method name="await" sig="(long, TimeUnit)" type="source-and-target" />
+  </happens-before-obj>
+
+  <happens-before-obj>
     <class>java.util.concurrent.CountDownLatch</class>
     <method name="countDown" sig="()" type="source" />
     <method name="await" sig="()" type="target" />
     <method name="await" sig="(long, TimeUnit)" type="target" checkReturn="true"/>
   </happens-before-obj>
 
+  <happens-before-obj>
+    <class>java.util.concurrent.Exchanger</class>
+    <method name="exchage" sig="(java.lang.Object)" type="source-and-target" />
+    <method name="exchage" sig="(java.lang.Object, long, TimeUnit)" type="source-and-target" />
+  </happens-before-obj>
+
   <happens-before-coll>
     <class>java.util.concurrent.ArrayBlockingQueue</class>
-    <method name="add" sig="(Object)" type="source" obj="1"/>
-    <method name="put" sig="(Object)" type="source" obj="1"/>
-    <method name="offer" sig="(Object)" type="source" obj="1"/>
-    <method name="offer" sig="(Object,long,TimeUnit)" type="source" obj="1" checkReturn="!null"/>
+    <method name="add" sig="(java.lang.Object)" type="source" obj="1"/>
+    <method name="put" sig="(java.lang.Object)" type="source" obj="1"/>
+    <method name="offer" sig="(java.lang.Object)" type="source" obj="1"/>
+    <method name="offer" sig="(java.lang.Object,long,TimeUnit)" type="source" obj="1" checkReturn="!null"/>
     <method name="take" sig="()" obj="0" type="target" />
     <method name="poll" sig="(long,java.util.concurrent.TimeUnit)" obj="0" type="target" checkReturn="true"/>
-    <method name="remove" sig="Object" type="target" obj="1" checkReturn="true"/>
-    <method name="contains" sig="Object" type="target" obj="1" checkReturn="true"/>
+    <method name="remove" sig="java.lang.Object" type="target" obj="1" checkReturn="true"/>
+    <method name="contains" sig="java.lang.Object" type="target" obj="1" checkReturn="true"/>
     <!-- TODO
     <method name="drainTo" sig="" type="target" />
     -->

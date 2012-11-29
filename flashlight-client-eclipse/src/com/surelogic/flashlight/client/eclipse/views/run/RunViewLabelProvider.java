@@ -4,7 +4,6 @@ import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.ILabelProviderListener;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.graphics.ImageData;
 
 import com.surelogic.common.CommonImages;
 import com.surelogic.common.ui.SLImages;
@@ -31,10 +30,11 @@ public final class RunViewLabelProvider implements ITableLabelProvider {
       final boolean hasWarnings = CommonImages.IMG_WARNING.equals(symbolicName);
       String runName = f_model.getText(rowData, columnIndex);
       if (runName != null) {
-        //return SLImages.getImageForAndroidProject();
+        // return SLImages.getImageForAndroidProject();
       }
       final ImageDescriptor warn = hasWarnings ? SLImages.getImageDescriptor(CommonImages.DECR_WARNING) : null;
-      return SLImages.getDecoratedImage(baseImage, new ImageDescriptor[] { null, null, null, warn, null });
+      return SLImages.getDecoratedImage(baseImage,
+          new ImageDescriptor[] { SLImages.getImageDescriptor(CommonImages.DECR_FLASHLIGHT), null, null, warn, null });
 
     } else if (symbolicName != null)
       return SLImages.getImage(symbolicName);

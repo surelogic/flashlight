@@ -99,10 +99,10 @@ class SitesReader {
             } else if (site.methodClass
                     .equals("java/util/concurrent/Semaphore")) {
                 if (site.methodName.equals("release")) {
-                    hb.addHappensFrom(site.id);
+                    hb.addHappensSource(site.id);
                 } else if (site.methodName.equals("acquire")
                         || site.methodName.equals("acquireInterruptibly")) {
-                    hb.addHappensTo(site.id);
+                    hb.addHappensTarget(site.id);
                 }
             } else if (site.methodClass
                     .startsWith("java/util/concurrent/atomic/Atomic")) {

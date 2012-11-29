@@ -3,9 +3,10 @@ package com.surelogic._flashlight.rewriter.config;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -17,14 +18,14 @@ import org.xml.sax.helpers.DefaultHandler;
 
 public class HappensBeforeConfig {
 
-    private final LinkedList<List<HappensBeforeCollection>> collections;
-    private final LinkedList<List<HappensBeforeObject>> objects;
-    private final LinkedList<List<HappensBefore>> threads;
+    private final Map<String, List<HappensBeforeCollection>> collections;
+    private final Map<String, List<HappensBeforeObject>> objects;
+    private final Map<String, List<HappensBefore>> threads;
 
     HappensBeforeConfig() {
-        collections = new LinkedList<List<HappensBeforeCollection>>();
-        objects = new LinkedList<List<HappensBeforeObject>>();
-        threads = new LinkedList<List<HappensBefore>>();
+        collections = new HashMap<String, List<HappensBeforeCollection>>();
+        objects = new HashMap<String, List<HappensBeforeObject>>();
+        threads = new HashMap<String, List<HappensBefore>>();
     }
 
     public static HappensBeforeConfig parse(File f) {
@@ -60,16 +61,18 @@ public class HappensBeforeConfig {
         }
     }
 
-    public List<List<HappensBeforeCollection>> getCollectionHappensBefore() {
-        return collections;
+    public List<HappensBeforeCollection> getCollectionHappensBefore(
+            String qualifiedClass) {
+        return collections.get(qualifiedClass);
     }
 
-    public List<List<HappensBeforeObject>> getObjectHappensBefore() {
-        return objects;
+    public List<HappensBeforeObject> getObjectHappensBefore(
+            String qualifiedClass) {
+        return objects.get(qualifiedClass);
     }
 
-    public List<List<HappensBefore>> getThreadHappensBefore() {
-        return threads;
+    public List<HappensBefore> getThreadHappensBefore(String qualifiedClass) {
+        return threads.get(qualifiedClass);
     }
 
     public static class HappensBeforeObject extends HappensBefore {
@@ -191,6 +194,15 @@ public class HappensBeforeConfig {
         }
     }
 
+    static <T> void add(String key, T elem, Map<String, List<T>> map) {
+        List<T> list = map.get(key);
+        if (list == null) {
+            list = new LinkedList<T>();
+            map.put(key, list);
+        }
+        list.add(elem);
+    }
+
     static class HappensBeforeConfigHandler extends DefaultHandler {
         final HappensBeforeConfig config = new HappensBeforeConfig();
         private final StringBuilder qClass = new StringBuilder();
@@ -204,20 +216,14 @@ public class HappensBeforeConfig {
             if (e != null) {
                 switch (e) {
                 case COLL:
-                    List<HappensBeforeCollection> l = new ArrayList<HappensBeforeCollection>();
-                    config.collections.add(l);
                     hb = e;
                     qClass.setLength(0);
                     break;
                 case OBJECT:
-                    List<HappensBeforeObject> lo = new ArrayList<HappensBeforeObject>();
-                    config.objects.add(lo);
                     hb = e;
                     qClass.setLength(0);
                     break;
                 case THREAD:
-                    List<HappensBefore> lt = new ArrayList<HappensBefore>();
-                    config.threads.add(lt);
                     hb = e;
                     qClass.setLength(0);
                     break;
@@ -253,18 +259,23 @@ public class HappensBeforeConfig {
                             }
                         }
                     }
-                    if (hb == Elem.THREAD) {
-                        config.threads.getLast().add(
-                                new HappensBefore(qClass.toString(), name, sig,
-                                        type, check));
-                    } else if (hb == Elem.COLL) {
-                        config.collections.getLast().add(
-                                new HappensBeforeCollection(qClass.toString(),
-                                        name, sig, type, check, param));
-                    } else if (hb == Elem.OBJECT) {
-                        config.objects.getLast().add(
-                                new HappensBeforeObject(qClass.toString(),
-                                        name, sig, type, check));
+                    String clazz = qClass.toString();
+                    switch (hb) {
+                    case THREAD:
+                        add(clazz, new HappensBefore(clazz, name, sig, type,
+                                check), config.threads);
+                        break;
+                    case COLL:
+                        add(clazz, new HappensBeforeCollection(clazz, name,
+                                sig, type, check, param), config.collections);
+                        break;
+                    case OBJECT:
+                        add(clazz, new HappensBeforeObject(clazz, name, sig,
+                                type, check), config.objects);
+                        break;
+                    default:
+                        throw new IllegalStateException(
+                                "Parser should never reach here.");
                     }
                     break;
                 }

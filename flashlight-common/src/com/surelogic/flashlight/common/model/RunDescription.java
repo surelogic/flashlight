@@ -16,9 +16,10 @@ import com.surelogic.flashlight.common.files.RunDirectory;
 @Immutable
 @ValueObject
 public final class RunDescription {
+
   public RunDescription(final String name, final String rawDataVersion, final String hostname, final String userName,
       final String javaVersion, final String javaVendor, final String osName, final String osArch, final String osVersion,
-      final int maxMemoryMb, final int processors, final Timestamp started, final long duration, final boolean android,
+      final int maxMemoryMb, final int processors, final Timestamp started, final long duration, final boolean isAndroid,
       final boolean completed) {
     if (name == null) {
       throw new IllegalArgumentException(I18N.err(44, "name"));
@@ -28,8 +29,10 @@ public final class RunDescription {
       throw new IllegalArgumentException(I18N.err(44, "rawDataVersion"));
     }
     f_rawDataVersion = rawDataVersion;
-    // XXX hostname and user name are new fields. For reasons of passivity
-    // we will accept entries that do not have them.
+    /*
+     * The hostname and username fields were added, so we will accept entries
+     * that do not have them by using a reasonable default.
+     */
     if (hostname == null) {
       f_hostname = "unknown";
     } else {
@@ -67,7 +70,7 @@ public final class RunDescription {
     }
     f_started = started;
     f_duration = duration;
-    f_android = android;
+    f_android = isAndroid;
     f_completed = completed;
   }
 
@@ -166,6 +169,7 @@ public final class RunDescription {
     final StringBuilder b = new StringBuilder();
     b.append("[RunDescription: name=").append(f_name);
     b.append(" rawDataVersion=").append(f_rawDataVersion);
+    b.append(" hostname=").append(f_hostname);
     b.append(" userName=").append(f_userName);
     b.append(" javaVendor=").append(f_javaVendor);
     b.append(" javaVersion=").append(f_javaVersion);
@@ -176,7 +180,7 @@ public final class RunDescription {
     b.append(" processors=").append(f_processors);
     b.append(" started=").append(f_started);
     b.append(" duration=").append(f_duration);
-    b.append(" android=").append(f_android);
+    b.append(" isAndroid=").append(f_android);
     b.append(" completed=").append(f_completed);
     b.append("]");
     return b.toString();

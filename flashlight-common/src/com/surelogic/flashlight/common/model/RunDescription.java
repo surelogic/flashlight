@@ -200,117 +200,93 @@ public final class RunDescription {
   public int hashCode() {
     final int prime = 31;
     int result = 1;
+    result = prime * result + (f_android ? 1231 : 1237);
     result = prime * result + (f_completed ? 1231 : 1237);
-    result = prime * result + (int) (f_duration ^ f_duration >>> 32);
-    result = prime * result + (f_hostname == null ? 0 : f_hostname.hashCode());
-    result = prime * result + (f_javaVendor == null ? 0 : f_javaVendor.hashCode());
-    result = prime * result + (f_javaVersion == null ? 0 : f_javaVersion.hashCode());
+    result = prime * result + (int) (f_duration ^ (f_duration >>> 32));
+    result = prime * result + ((f_hostname == null) ? 0 : f_hostname.hashCode());
+    result = prime * result + ((f_javaVendor == null) ? 0 : f_javaVendor.hashCode());
+    result = prime * result + ((f_javaVersion == null) ? 0 : f_javaVersion.hashCode());
     result = prime * result + f_maxMemoryMb;
-    result = prime * result + (f_name == null ? 0 : f_name.hashCode());
-    result = prime * result + (f_osArch == null ? 0 : f_osArch.hashCode());
-    result = prime * result + (f_osName == null ? 0 : f_osName.hashCode());
-    result = prime * result + (f_osVersion == null ? 0 : f_osVersion.hashCode());
+    result = prime * result + ((f_name == null) ? 0 : f_name.hashCode());
+    result = prime * result + ((f_osArch == null) ? 0 : f_osArch.hashCode());
+    result = prime * result + ((f_osName == null) ? 0 : f_osName.hashCode());
+    result = prime * result + ((f_osVersion == null) ? 0 : f_osVersion.hashCode());
     result = prime * result + f_processors;
-    result = prime * result + (f_rawDataVersion == null ? 0 : f_rawDataVersion.hashCode());
-    result = prime * result + (f_started == null ? 0 : f_started.hashCode());
-    result = prime * result + (f_userName == null ? 0 : f_userName.hashCode());
+    result = prime * result + ((f_rawDataVersion == null) ? 0 : f_rawDataVersion.hashCode());
+    result = prime * result + ((f_started == null) ? 0 : f_started.hashCode());
+    result = prime * result + ((f_userName == null) ? 0 : f_userName.hashCode());
     return result;
   }
 
   @Override
-  public boolean equals(final Object obj) {
-    if (this == obj) {
+  public boolean equals(Object obj) {
+    if (this == obj)
       return true;
-    }
-    if (obj == null) {
+    if (obj == null)
       return false;
-    }
-    if (getClass() != obj.getClass()) {
+    if (!(obj instanceof RunDescription))
       return false;
-    }
     RunDescription other = (RunDescription) obj;
-    if (f_completed != other.f_completed) {
+    if (f_android != other.f_android)
       return false;
-    }
-    if (f_duration != other.f_duration) {
+    if (f_completed != other.f_completed)
       return false;
-    }
+    if (f_duration != other.f_duration)
+      return false;
     if (f_hostname == null) {
-      if (other.f_hostname != null) {
+      if (other.f_hostname != null)
         return false;
-      }
-    } else if (!f_hostname.equals(other.f_hostname)) {
+    } else if (!f_hostname.equals(other.f_hostname))
       return false;
-    }
     if (f_javaVendor == null) {
-      if (other.f_javaVendor != null) {
+      if (other.f_javaVendor != null)
         return false;
-      }
-    } else if (!f_javaVendor.equals(other.f_javaVendor)) {
+    } else if (!f_javaVendor.equals(other.f_javaVendor))
       return false;
-    }
     if (f_javaVersion == null) {
-      if (other.f_javaVersion != null) {
+      if (other.f_javaVersion != null)
         return false;
-      }
-    } else if (!f_javaVersion.equals(other.f_javaVersion)) {
+    } else if (!f_javaVersion.equals(other.f_javaVersion))
       return false;
-    }
-    if (f_maxMemoryMb != other.f_maxMemoryMb) {
+    if (f_maxMemoryMb != other.f_maxMemoryMb)
       return false;
-    }
     if (f_name == null) {
-      if (other.f_name != null) {
+      if (other.f_name != null)
         return false;
-      }
-    } else if (!f_name.equals(other.f_name)) {
+    } else if (!f_name.equals(other.f_name))
       return false;
-    }
     if (f_osArch == null) {
-      if (other.f_osArch != null) {
+      if (other.f_osArch != null)
         return false;
-      }
-    } else if (!f_osArch.equals(other.f_osArch)) {
+    } else if (!f_osArch.equals(other.f_osArch))
       return false;
-    }
     if (f_osName == null) {
-      if (other.f_osName != null) {
+      if (other.f_osName != null)
         return false;
-      }
-    } else if (!f_osName.equals(other.f_osName)) {
+    } else if (!f_osName.equals(other.f_osName))
       return false;
-    }
     if (f_osVersion == null) {
-      if (other.f_osVersion != null) {
+      if (other.f_osVersion != null)
         return false;
-      }
-    } else if (!f_osVersion.equals(other.f_osVersion)) {
+    } else if (!f_osVersion.equals(other.f_osVersion))
       return false;
-    }
-    if (f_processors != other.f_processors) {
+    if (f_processors != other.f_processors)
       return false;
-    }
     if (f_rawDataVersion == null) {
-      if (other.f_rawDataVersion != null) {
+      if (other.f_rawDataVersion != null)
         return false;
-      }
-    } else if (!f_rawDataVersion.equals(other.f_rawDataVersion)) {
+    } else if (!f_rawDataVersion.equals(other.f_rawDataVersion))
       return false;
-    }
     if (f_started == null) {
-      if (other.f_started != null) {
+      if (other.f_started != null)
         return false;
-      }
-    } else if (!f_started.equals(other.f_started)) {
+    } else if (!f_started.equals(other.f_started))
       return false;
-    }
     if (f_userName == null) {
-      if (other.f_userName != null) {
+      if (other.f_userName != null)
         return false;
-      }
-    } else if (!f_userName.equals(other.f_userName)) {
+    } else if (!f_userName.equals(other.f_userName))
       return false;
-    }
     return true;
   }
 
@@ -343,8 +319,6 @@ public final class RunDescription {
     }
   }
 
-  private volatile RunDirectory f_runDirectoryCache;
-
   /**
    * Examines the Flashlight data directory and returns per-run directory model
    * object corresponding to this run description, or {@code null} if there is
@@ -357,13 +331,7 @@ public final class RunDescription {
    *         directory or {@code null} if no file handles exist.
    */
   public RunDirectory getRunDirectory() {
-    if (f_runDirectoryCache == null) {
-      f_runDirectoryCache = createRunDirectory();
-    }
-    return f_runDirectoryCache;
-  }
-
-  private RunDirectory createRunDirectory() {
+    // TODO CACHE THIS
     return RawFileUtility.getRunDirectoryFor(RunManager.getInstance().getDataDirectory(), this);
   }
 

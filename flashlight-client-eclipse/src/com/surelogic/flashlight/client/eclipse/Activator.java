@@ -11,6 +11,7 @@ import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 
+import com.surelogic.common.FileUtility;
 import com.surelogic.common.core.EclipseUtility;
 import com.surelogic.common.core.logging.SLEclipseStatusUtility;
 import com.surelogic.common.license.SLLicenseProduct;
@@ -25,91 +26,89 @@ import com.surelogic.flashlight.common.model.RunManager;
  */
 public class Activator extends AbstractUIPlugin {
 
-    public static final String LAUNCH_GROUP = "com.surelogic.flashlight.launchGroup.flashlight";
+  public static final String LAUNCH_GROUP = "com.surelogic.flashlight.launchGroup.flashlight";
 
-    // The shared instance
-    private static Activator plugin;
+  // The shared instance
+  private static Activator plugin;
 
-    /**
-     * Returns the shared instance
-     * 
-     * @return the shared instance
+  /**
+   * Returns the shared instance
+   * 
+   * @return the shared instance
+   */
+  public static Activator getDefault() {
+    return plugin;
+  }
+
+  /**
+   * The constructor
+   */
+  public Activator() {
+    if (plugin != null) {
+      throw new IllegalStateException(Activator.class.getName() + " instance already exits, it should be a singleton.");
+    }
+    plugin = this;
+  }
+
+  /**
+   * Gets the identifier for this plug in.
+   * 
+   * @return an identifier, such as <tt>com.surelogic.common</tt>. In rare
+   *         cases, for example bad plug in XML, it may be {@code null}.
+   * @see Bundle#getSymbolicName()
+   */
+  public String getPlugInId() {
+    return plugin.getBundle().getSymbolicName();
+  }
+
+  @Override
+  public void start(final BundleContext context) throws Exception {
+    super.start(context);
+
+    /*
+     * "Touch" common-core-eclipse so the logging gets Eclipse-ified.
      */
-    public static Activator getDefault() {
-        return plugin;
-    }
+    SLEclipseStatusUtility.touch(new DialogTouchNotificationUI());
 
-    /**
-     * The constructor
+    /*
+     * "Touch" the JSure preference initialization.
      */
-    public Activator() {
-        if (plugin != null) {
-            throw new IllegalStateException(Activator.class.getName()
-                    + " instance already exits, it should be a singleton.");
-        }
-        plugin = this;
-    }
+    FlashlightPreferencesUtility.initializeDefaultScope();
 
-    /**
-     * Gets the identifier for this plug in.
-     * 
-     * @return an identifier, such as <tt>com.surelogic.common</tt>. In rare
-     *         cases, for example bad plug in XML, it may be {@code null}.
-     * @see Bundle#getSymbolicName()
+    /*
+     * Get the data directory and ensure that it actually exists.
      */
-    public String getPlugInId() {
-        return plugin.getBundle().getSymbolicName();
+    final File dataDir = EclipseUtility.getFlashlightDataDirectory();
+    FileUtility.ensureDirectoryExists(dataDir);
+
+    EclipseUtility.getProductReleaseDateJob(SLLicenseProduct.FLASHLIGHT, this).schedule();
+    RunManager.initialize(dataDir);
+    PromptToPrepAllRawData.start();
+  }
+
+  @Override
+  public void stop(final BundleContext context) throws Exception {
+    try {
+      PromptToPrepAllRawData.stop();
+      AdHocDataSource.getInstance().dispose();
+      plugin = null;
+    } finally {
+      super.stop(context);
     }
+  }
 
-    @Override
-    public void start(final BundleContext context) throws Exception {
-        super.start(context);
-
-        /*
-         * "Touch" common-core-eclipse so the logging gets Eclipse-ified.
-         */
-        SLEclipseStatusUtility.touch(new DialogTouchNotificationUI());
-
-        /*
-         * "Touch" the JSure preference initialization.
-         */
-        FlashlightPreferencesUtility.initializeDefaultScope();
-
-        /*
-         * Get the data directory and ensure that it actually exists.
-         */
-        final File dataDir = FlashlightPreferencesUtility
-                .getFlashlightDataDirectory();
-
-        EclipseUtility.getProductReleaseDateJob(SLLicenseProduct.FLASHLIGHT,
-                this).schedule();
-        RunManager.getInstance().setDataDirectory(dataDir);
-        PromptToPrepAllRawData.start();
+  public IPath getBundleLocation() {
+    final Bundle bundle = getBundle();
+    if (bundle == null) {
+      return null;
     }
-
-    @Override
-    public void stop(final BundleContext context) throws Exception {
-        try {
-            PromptToPrepAllRawData.stop();
-            AdHocDataSource.getInstance().dispose();
-            plugin = null;
-        } finally {
-            super.stop(context);
-        }
+    URL local = null;
+    try {
+      local = FileLocator.toFileURL(bundle.getEntry("/"));
+    } catch (final IOException e) {
+      return null;
     }
-
-    public IPath getBundleLocation() {
-        final Bundle bundle = getBundle();
-        if (bundle == null) {
-            return null;
-        }
-        URL local = null;
-        try {
-            local = FileLocator.toFileURL(bundle.getEntry("/"));
-        } catch (final IOException e) {
-            return null;
-        }
-        final String fullPath = new File(local.getPath()).getAbsolutePath();
-        return Path.fromOSString(fullPath);
-    }
+    final String fullPath = new File(local.getPath()).getAbsolutePath();
+    return Path.fromOSString(fullPath);
+  }
 }

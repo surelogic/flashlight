@@ -30,6 +30,7 @@ import com.surelogic.common.SLUtility;
 import com.surelogic.common.adhoc.AdHocManager;
 import com.surelogic.common.adhoc.AdHocManagerAdapter;
 import com.surelogic.common.adhoc.AdHocQueryResult;
+import com.surelogic.common.core.EclipseUtility;
 import com.surelogic.common.core.JDTUtility;
 import com.surelogic.common.core.jobs.EclipseJob;
 import com.surelogic.common.i18n.I18N;
@@ -41,7 +42,6 @@ import com.surelogic.common.ui.jobs.SLUIJob;
 import com.surelogic.flashlight.client.eclipse.dialogs.DeleteRunDialog;
 import com.surelogic.flashlight.client.eclipse.dialogs.LogDialog;
 import com.surelogic.flashlight.client.eclipse.jobs.PromptToPrepAllRawData;
-import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
 import com.surelogic.flashlight.client.eclipse.refactoring.RegionModelRefactoring;
 import com.surelogic.flashlight.client.eclipse.refactoring.RegionRefactoringInfo;
 import com.surelogic.flashlight.client.eclipse.refactoring.RegionRefactoringWizard;
@@ -280,8 +280,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements
                                 .getManager()));
                     }
                     if (handles != null) {
-                        final File dataDir = FlashlightPreferencesUtility
-                                .getFlashlightDataDirectory();
+                        final File dataDir = EclipseUtility.getFlashlightDataDirectory();
                         jobs.add(new DeleteRawFilesSLJob(dataDir, description));
                     }
                     keys.add(description.toIdentityString());

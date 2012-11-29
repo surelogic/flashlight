@@ -79,11 +79,9 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements
 		f_selectedRun = runDescription;
 	}
 
-	public File getQuerySaveFile() {
-		return new File(
-				FlashlightPreferencesUtility.getFlashlightDataDirectory(),
-				"flashlight-queries.xml");
-	}
+  public File getQuerySaveFile() {
+    return new File(EclipseUtility.getFlashlightDataDirectory(), "flashlight-queries.xml");
+  }
 
 	public URL getDefaultQueryUrl() {
 		return Thread

@@ -64,6 +64,7 @@ import com.surelogic._flashlight.rewriter.RewriteMessenger;
 import com.surelogic._flashlight.rewriter.config.Configuration;
 import com.surelogic._flashlight.rewriter.config.ConfigurationBuilder;
 import com.surelogic.common.FileUtility;
+import com.surelogic.common.core.EclipseUtility;
 import com.surelogic.common.core.MemoryUtility;
 import com.surelogic.common.core.jobs.EclipseJob;
 import com.surelogic.common.core.logging.SLEclipseStatusUtility;
@@ -151,8 +152,7 @@ public final class FlashlightVMRunner implements IVMRunner {
                 InstrumentationConstants.DATE_FORMAT);
         datePostfix = dateFormat.format(new Date());
         final String runName = mainTypeName + datePostfix;
-        final File dataDir = FlashlightPreferencesUtility
-                .getFlashlightDataDirectory();
+        final File dataDir = EclipseUtility.getFlashlightDataDirectory();
         runOutputDir = new File(dataDir, runName);
         if (!runOutputDir.exists()) {
             runOutputDir.mkdirs();

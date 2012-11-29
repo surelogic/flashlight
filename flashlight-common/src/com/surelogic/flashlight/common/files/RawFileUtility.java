@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 
+import com.surelogic.Utility;
 import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic._flashlight.common.OutputType;
 import com.surelogic.common.SLUtility;
@@ -24,6 +25,7 @@ import com.surelogic.flashlight.common.model.RunDescription;
  * A utility designed to work with Flashlight data files and the contents of the
  * Flashlight data directory.
  */
+@Utility
 public final class RawFileUtility {
   public static final String DB_DIRECTORY = "db";
 
@@ -154,7 +156,7 @@ public final class RawFileUtility {
       return new RunDescription(prefixInfo.getName(), prefixInfo.getRawDataVersion(), prefixInfo.getHostname(),
           prefixInfo.getUserName(), prefixInfo.getJavaVersion(), prefixInfo.getJavaVendor(), prefixInfo.getOSName(),
           prefixInfo.getOSArch(), prefixInfo.getOSVersion(), prefixInfo.getMaxMemoryMb(), prefixInfo.getProcessors(),
-          new Timestamp(prefixInfo.getWallClockTime().getTime()), duration, runComplete.exists());
+          new Timestamp(prefixInfo.getWallClockTime().getTime()), duration, false /* TODO */, runComplete.exists());
 
     } else {
       throw new IllegalStateException(I18N.err(107, prefixInfo.getFile().getAbsolutePath()));

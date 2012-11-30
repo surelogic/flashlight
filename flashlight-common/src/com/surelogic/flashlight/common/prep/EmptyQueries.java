@@ -12,48 +12,45 @@ import java.util.Set;
 
 import com.surelogic.common.adhoc.AdHocQuery;
 import com.surelogic.common.jobs.SLProgressMonitor;
+import com.surelogic.flashlight.common.files.RunDirectory;
 import com.surelogic.flashlight.common.model.EmptyQueriesCache;
-import com.surelogic.flashlight.common.model.RunDescription;
 
 public class EmptyQueries implements IPostPrep {
 
-	private final RunDescription f_runDescription;
-	private final Set<AdHocQuery> f_queries;
+  private final RunDirectory f_runDirectory;
+  private final Set<AdHocQuery> f_queries;
 
-	public EmptyQueries(final RunDescription desc, final Set<AdHocQuery> queries) {
-		f_runDescription = desc;
-		f_queries = queries;
-	}
+  public EmptyQueries(final RunDirectory runDirectory, final Set<AdHocQuery> queries) {
+    f_runDirectory = runDirectory;
+    f_queries = queries;
+  }
 
-	public String getDescription() {
-		return "Generating the set of empty queries";
-	}
+  public String getDescription() {
+    return "Generating the set of empty queries";
+  }
 
-	public void doPostPrep(final Connection c, final SLProgressMonitor mon)
-			throws SQLException {
-		EmptyQueriesCache.getInstance().purge(f_runDescription);
-		try {
-			final File queriesFile = f_runDescription.getRunDirectory()
-					.getEmptyQueriesFile();
-			final PrintWriter writer = new PrintWriter(new FileWriter(
-					queriesFile));
-			try {
-				Statement st = c.createStatement();
-				try {
-					for (AdHocQuery a : f_queries) {
-						ResultSet set = st.executeQuery(a.getSql());
-						if (!set.next()) {
-							writer.println(a.getId());
-						}
-					}
-				} finally {
-					st.close();
-				}
-			} finally {
-				writer.close();
-			}
-		} catch (IOException e) {
-			throw new IllegalStateException(e);
-		}
-	}
+  public void doPostPrep(final Connection c, final SLProgressMonitor mon) throws SQLException {
+    EmptyQueriesCache.getInstance().purge(f_runDirectory.getRunDescription());
+    try {
+      final File queriesFile = f_runDirectory.getEmptyQueriesFile();
+      final PrintWriter writer = new PrintWriter(new FileWriter(queriesFile));
+      try {
+        Statement st = c.createStatement();
+        try {
+          for (AdHocQuery a : f_queries) {
+            ResultSet set = st.executeQuery(a.getSql());
+            if (!set.next()) {
+              writer.println(a.getId());
+            }
+          }
+        } finally {
+          st.close();
+        }
+      } finally {
+        writer.close();
+      }
+    } catch (IOException e) {
+      throw new IllegalStateException(e);
+    }
+  }
 }

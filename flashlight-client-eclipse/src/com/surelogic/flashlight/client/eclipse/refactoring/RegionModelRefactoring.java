@@ -27,7 +27,7 @@ import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jdbc.DBConnection;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.common.ui.refactor.PromisesAnnotationRewriter;
-import com.surelogic.flashlight.common.model.RunDescription;
+import com.surelogic.flashlight.common.files.RunDirectory;
 import com.surelogic.flashlight.recommend.RecommendRegions;
 import com.surelogic.flashlight.recommend.RecommendedRegion;
 
@@ -49,7 +49,7 @@ public class RegionModelRefactoring extends Refactoring {
         targetRegions = new HashMap<String, Map<String, RecommendedRegion>>();
         targetClassRegions = new HashMap<String, Map<String, RecommendedRegion>>();
         targetFieldRegions = new HashMap<String, Map<String, List<RecommendedRegion>>>();
-        for (final RunDescription desc : info.getSelectedRuns()) {
+        for (final RunDirectory desc : info.getSelectedRuns()) {
             final DBConnection conn = desc.getDB();
             try {
                 conn.bootAndCheckSchema();

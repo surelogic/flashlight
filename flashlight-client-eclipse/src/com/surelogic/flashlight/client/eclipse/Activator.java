@@ -19,7 +19,6 @@ import com.surelogic.common.ui.DialogTouchNotificationUI;
 import com.surelogic.flashlight.client.eclipse.jobs.PromptToPrepAllRawData;
 import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
-import com.surelogic.flashlight.common.model.RunManager;
 
 /**
  * The activator class controls the plug-in life cycle
@@ -82,7 +81,6 @@ public class Activator extends AbstractUIPlugin {
     FileUtility.ensureDirectoryExists(dataDir);
 
     EclipseUtility.getProductReleaseDateJob(SLLicenseProduct.FLASHLIGHT, this).schedule();
-    RunManager.initialize(dataDir);
     PromptToPrepAllRawData.start();
   }
 

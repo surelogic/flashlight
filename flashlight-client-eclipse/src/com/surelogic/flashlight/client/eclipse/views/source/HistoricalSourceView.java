@@ -5,10 +5,10 @@ import java.io.File;
 import com.surelogic.common.ISourceZipFileHandles;
 import com.surelogic.common.core.EclipseUtility;
 import com.surelogic.common.ui.views.AbstractHistoricalSourceView;
+import com.surelogic.flashlight.client.eclipse.model.RunManager;
 import com.surelogic.flashlight.common.files.RawFileUtility;
 import com.surelogic.flashlight.common.files.RunDirectory;
 import com.surelogic.flashlight.common.model.RunDescription;
-import com.surelogic.flashlight.common.model.RunManager;
 
 public final class HistoricalSourceView extends AbstractHistoricalSourceView {
 
@@ -20,7 +20,7 @@ public final class HistoricalSourceView extends AbstractHistoricalSourceView {
 			final RunDirectory dir = RawFileUtility.getRunDirectoryFor(dataDir,
 					currentRun);
 			setSourceSnapshotTime(dir.getRunDescription().getStartTimeOfRun());
-			return dir.getSourceHandles();
+			return dir.getSourceZipFileHandles();
 		}
 		return null;
 	}

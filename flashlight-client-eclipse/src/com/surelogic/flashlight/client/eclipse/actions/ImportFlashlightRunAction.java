@@ -13,8 +13,8 @@ import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 import com.surelogic.common.FileUtility;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.ui.EclipseUIUtility;
+import com.surelogic.flashlight.client.eclipse.model.RunManager;
 import com.surelogic.flashlight.common.files.RawFileUtility;
-import com.surelogic.flashlight.common.model.RunManager;
 
 public class ImportFlashlightRunAction implements
 		IWorkbenchWindowActionDelegate {

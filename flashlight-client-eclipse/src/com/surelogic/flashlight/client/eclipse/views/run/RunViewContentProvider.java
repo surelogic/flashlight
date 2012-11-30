@@ -3,7 +3,7 @@ package com.surelogic.flashlight.client.eclipse.views.run;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.Viewer;
 
-import com.surelogic.flashlight.common.model.RunManager;
+import com.surelogic.flashlight.client.eclipse.model.RunManager;
 
 public final class RunViewContentProvider implements
 		IStructuredContentProvider {
@@ -11,7 +11,7 @@ public final class RunViewContentProvider implements
 	public Object[] getElements(Object inputElement) {
 		if (inputElement instanceof RunManager) {
 			final RunManager rm = (RunManager) inputElement;
-			return rm.getRunDescriptions().toArray();
+			return rm.getRunDirectories().toArray();
 		} else
 			return null;
 	}

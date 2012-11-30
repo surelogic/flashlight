@@ -315,7 +315,7 @@ public class RunConf {
     private static PrintStream initLog(final String fileName) {
         PrintStream w = System.err;
         if (fileName != null) {
-            final File logFile = new File(fileName.toString() + ".flog");
+            final File logFile = new File(fileName.toString() + InstrumentationConstants.FL_LOG_SUFFIX);
             try {
                 OutputStream stream = new FileOutputStream(logFile);
                 stream = new BufferedOutputStream(stream);

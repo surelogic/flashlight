@@ -1,71 +1,41 @@
-package com.surelogic.flashlight.common.model;
+package com.surelogic.flashlight.client.eclipse.model;
 
 import java.io.File;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.atomic.AtomicReference;
 
 import com.surelogic.NonNull;
+import com.surelogic.Nullable;
+import com.surelogic.Singleton;
 import com.surelogic.common.SLUtility;
-import com.surelogic.common.i18n.I18N;
+import com.surelogic.common.core.EclipseUtility;
+import com.surelogic.flashlight.client.eclipse.jobs.RefreshRunManagerSLJob;
 import com.surelogic.flashlight.common.files.RawFileUtility;
 import com.surelogic.flashlight.common.files.RunDirectory;
-import com.surelogic.flashlight.common.jobs.RefreshRunManagerSLJob;
+import com.surelogic.flashlight.common.model.RunDescription;
 
 /**
- * A singleton that manages the set of run description aggregates. This class
- * will not be populated with data until its {@link #refresh()} method is
- * invoked.
+ * A singleton that manages the set of run directory aggregates.
  */
+@Singleton
 public final class RunManager {
 
-  /**
-   * Initializes the run manager with the location of the Flashlight data
-   * directory. This is necessary because this directory is only known to
-   * EclipseUtility (it is workspace relative) and this class cannot directly
-   * invoke that utilitie's code. The Flashlight client activator should be the
-   * only code to invoke this method.
-   * 
-   * @param flashlightDataDir
-   *          the Flashlight data directory.
-   * @throws IllegalStateException
-   *           if called more than once.
-   * @throws IllegalArgumentException
-   *           if the passed directory is null.
-   */
-  public static void initialize(File flashlightDataDir) {
-    if (INSTANCE.get() != null)
-      throw new IllegalStateException(I18N.err(168));
-    final RunManager singleton = new RunManager(flashlightDataDir);
-    INSTANCE.set(singleton);
-  }
-
-  private static final AtomicReference<RunManager> INSTANCE = new AtomicReference<RunManager>();
+  private static final RunManager INSTANCE = new RunManager();
 
   /**
    * Gets the singleton instance.
    * 
    * @return the singleton instance.
-   * @throws IllegalStateException
-   *           if the run manager has not been initialized with the location of
-   *           the Flashlight data directory from Eclipse.
    */
   @NonNull
   public static RunManager getInstance() {
-    final RunManager singleton = INSTANCE.get();
-    if (singleton != null)
-      return singleton;
-    else
-      throw new IllegalStateException(I18N.err(167));
+    return INSTANCE;
   }
 
-  private RunManager(File flashlightDataDir) {
-    if (flashlightDataDir == null)
-      throw new IllegalArgumentException(I18N.err(44, "flashlightDataDir"));
-    f_dataDir = flashlightDataDir;
+  private RunManager() {
+    f_dataDir = EclipseUtility.getFlashlightDataDirectory();
   }
 
   private final Set<IRunManagerObserver> f_observers = new CopyOnWriteArraySet<IRunManagerObserver>();
@@ -106,37 +76,61 @@ public final class RunManager {
   }
 
   /**
-   * Holds the set of all known run descriptions.
+   * Holds the set of all known run directories.
    */
-  private final AtomicReference<Set<RunDescription>> f_runs = new AtomicReference<Set<RunDescription>>(
-      new HashSet<RunDescription>());
+  private final Set<RunDirectory> f_runs = new HashSet<RunDirectory>();
 
-  /**
-   * Holds the set of all known prepared run descriptions.
-   */
-  private final AtomicReference<Set<RunDescription>> f_preparedRuns = new AtomicReference<Set<RunDescription>>(
-      new HashSet<RunDescription>());
+  @NonNull
+  public Set<RunDirectory> getRunDirectories() {
+    synchronized (f_runs) {
+      return new HashSet<RunDirectory>(f_runs);
+    }
+  }
+
+  @NonNull
+  public Set<RunDirectory> getPreparedRunDirectories() {
+    final Set<RunDirectory> result = new HashSet<RunDirectory>();
+    synchronized (f_runs) {
+      for (RunDirectory runDir : f_runs) {
+        if (runDir.isPreparedOrIsBeingPrepared())
+          result.add(runDir);
+      }
+    }
+    return result;
+  }
 
   /**
    * Gets the set of run descriptions known to this manager.
    * 
-   * @return the non-null set of run descriptions known to this manager. This is
-   *         a copy of the set maintained by this manager so it can be freely
-   *         mutated by callers.
+   * @return a copy of the set of run descriptions known to this manager.
    */
+  @NonNull
   public Set<RunDescription> getRunDescriptions() {
-    return new HashSet<RunDescription>(f_runs.get());
+    final Set<RunDescription> result = new HashSet<RunDescription>();
+    synchronized (f_runs) {
+      for (RunDirectory runDir : f_runs) {
+        result.add(runDir.getRunDescription());
+      }
+    }
+    return result;
   }
 
   /**
    * Gets the set of prepared run descriptions known to this manager.
    * 
-   * @return the non-null set of prepared run descriptions known to this
-   *         manager. This is a copy of the set maintained by this manager so it
-   *         can be freely mutated by callers.
+   * @return a copy of the set of prepared run descriptions known to this
+   *         manager.
    */
+  @NonNull
   public Set<RunDescription> getPreparedRunDescriptions() {
-    return new HashSet<RunDescription>(f_preparedRuns.get());
+    final Set<RunDescription> result = new HashSet<RunDescription>();
+    synchronized (f_runs) {
+      for (RunDirectory runDir : f_runs) {
+        if (runDir.isPreparedOrIsBeingPrepared())
+          result.add(runDir.getRunDescription());
+      }
+    }
+    return result;
   }
 
   /**
@@ -147,7 +141,17 @@ public final class RunManager {
    * @return {@code true} if the run has been prepared, {@code false} otherwise.
    */
   public boolean isPrepared(final RunDescription runDescription) {
-    return f_preparedRuns.get().contains(runDescription);
+    synchronized (f_runs) {
+      for (RunDirectory runDir : f_runs) {
+        if (runDir.getRunDescription().equals(runDescription)) {
+          if (runDir.isPreparedOrIsBeingPrepared())
+            return true;
+          else
+            return false;
+        }
+      }
+      return false;
+    }
   }
 
   /**
@@ -156,6 +160,7 @@ public final class RunManager {
    * 
    * @return the identity strings of all run descriptions known to this manager.
    */
+  @NonNull
   public String[] getRunIdentities() {
     final Set<RunDescription> descs = getRunDescriptions();
     final Set<String> ids = new HashSet<String>(descs.size());
@@ -174,10 +179,31 @@ public final class RunManager {
    * @return a run with <tt>idString</tt>, or {@code null} if no such run can be
    *         found.
    */
-  public RunDescription getRunByIdentityString(final String idString) {
-    for (final RunDescription runDescription : f_runs.get()) {
+  @Nullable
+  public RunDescription getRunDescriptionByIdentityString(final String idString) {
+    for (final RunDescription runDescription : getRunDescriptions()) {
       if (runDescription.toIdentityString().equals(idString)) {
         return runDescription;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public RunDirectory getRunDirectoryByIdentityString(final String idString) {
+    for (final RunDirectory runDirectory : getRunDirectories()) {
+      if (runDirectory.getRunDescription().toIdentityString().equals(idString)) {
+        return runDirectory;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public RunDirectory getRunDirectoryFor(final RunDescription runDescription) {
+    for (final RunDirectory runDirectory : getRunDirectories()) {
+      if (runDirectory.getRunDescription().equals(runDescription)) {
+        return runDirectory;
       }
     }
     return null;
@@ -191,9 +217,17 @@ public final class RunManager {
    *         have not been prepared. This is a copy of the set maintained by
    *         this manager so it can be freely mutated by callers.
    */
+  @NonNull
   public Set<RunDescription> getUnPreppedRunDescriptions() {
     final Set<RunDescription> result = getRunDescriptions();
     result.removeAll(getPreparedRunDescriptions());
+    return result;
+  }
+
+  @NonNull
+  public Set<RunDirectory> getUnPreppedRunDirectories() {
+    final Set<RunDirectory> result = getRunDirectories();
+    result.removeAll(getPreparedRunDirectories());
     return result;
   }
 
@@ -221,20 +255,11 @@ public final class RunManager {
      */
     final Set<RunDescription> runs = new HashSet<RunDescription>();
     final Set<RunDescription> preparedRuns = new HashSet<RunDescription>();
-
     final Collection<RunDirectory> runDirs = RawFileUtility.getRunDirectories(f_dataDir);
-    /*
-     * Put in all the raw descriptions with a null. This indicates that there is
-     * no prepared description associated with them.
-     */
     for (final RunDirectory dir : runDirs) {
-      final RunDescription key = dir.getRunDescription();
-      // Assume the run is not prepped until we find out otherwise
-      runs.add(key);
-      final File dbDir = dir.getDatabaseDirectory();
-      if (dbDir.exists()) {
-        // Check to see if there is a prepped run
-        preparedRuns.add(key);
+      runs.add(dir.getRunDescription());
+      if (dir.isPreparedOrIsBeingPrepared()) {
+        preparedRuns.add(dir.getRunDescription());
       }
     }
 
@@ -242,13 +267,17 @@ public final class RunManager {
      * Check if anything changed...if so, update the fields and notify
      * observers.
      */
-    if (!f_runs.get().equals(runs)) {
+    if (!getRunDescriptions().equals(runs)) {
       isChanged = true;
-      f_runs.set(Collections.unmodifiableSet(runs));
     }
-    if (!f_preparedRuns.get().equals(preparedRuns)) {
+    if (!getPreparedRunDescriptions().equals(preparedRuns)) {
       isChanged = true;
-      f_preparedRuns.set(Collections.unmodifiableSet(preparedRuns));
+    }
+    if (isChanged) {
+      synchronized (f_runs) {
+        f_runs.clear();
+        f_runs.addAll(runDirs);
+      }
     }
 
     if (isChanged || forceNotify) {

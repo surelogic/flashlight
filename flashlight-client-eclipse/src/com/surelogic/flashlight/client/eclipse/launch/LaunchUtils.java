@@ -127,7 +127,7 @@ public final class LaunchUtils {
             final Set<IProject> projects, final File sourceDir,
             final SubMonitor progress) {
         final List<File> oldZips = lastRun == null ? Collections
-                .<File> emptyList() : lastRun.getSourceHandles()
+                .<File> emptyList() : lastRun.getSourceZipFileHandles()
                 .getSourceZips();
         for (final IProject project : projects) {
             final String projectName = project.getName();

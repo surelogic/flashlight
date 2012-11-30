@@ -9,6 +9,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.EnumSet;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -18,132 +19,186 @@ import javax.xml.parsers.SAXParserFactory;
 
 import org.xml.sax.SAXException;
 
+import com.surelogic.NonNull;
+import com.surelogic.Nullable;
+import com.surelogic.common.i18n.I18N;
+
 public enum OutputType {
 
-    FL(false, ".fl"), FL_GZ(true, ".fl.gz"), FLH(false, ".flh");
+  FL(false, ".fl"), FL_GZ(true, ".fl.gz"), FLH(false, ".flh");
 
-    private final boolean compressed;
-    private final String suffix;
+  /**
+   * A set that indicates raw data files.
+   */
+  public static final EnumSet<OutputType> RAW_DATA = EnumSet.of(FL, FL_GZ);
 
-    private OutputType(final boolean gz, final String sf) {
-        compressed = gz;
-        suffix = sf;
-    }
+  private final boolean f_compressed;
+  private final String f_suffix;
 
-    public boolean isCompressed() {
-        return compressed;
-    }
+  private OutputType(final boolean gz, final String sf) {
+    f_compressed = gz;
+    f_suffix = sf;
+  }
 
-    public String getSuffix() {
-        return suffix;
-    }
+  public boolean isCompressed() {
+    return f_compressed;
+  }
 
-    public static OutputType valueOf(final String name,
-            final OutputType defValue) {
-        if (name != null) {
-            for (OutputType val : values()) {
-                if (val.toString().equals(name)) {
-                    return val;
-                }
-            }
+  @NonNull
+  public String getSuffix() {
+    return f_suffix;
+  }
+
+  /**
+   * Returns an output type in {@link #values()} that exactly matches the passed
+   * string, or the passed default.
+   * 
+   * @param value
+   *          a string.
+   * @param defaultValue
+   *          a default output type.
+   * @return an output type in {@link #values()} that exactly matches the passed
+   *         string, or the passed default.
+   * @throws IllegalArgumentException
+   *           if {@code DefaultValue} is null and it needs to be returned.
+   */
+  @NonNull
+  public static OutputType valueOf(final String value, @NonNull final OutputType defaultValue) {
+    if (value != null) {
+      for (OutputType val : values()) {
+        if (val.toString().equals(value)) {
+          return val;
         }
-        return defValue;
+      }
     }
+    if (defaultValue == null)
+      throw new IllegalArgumentException(I18N.err(44, "defaultValue"));
+    return defaultValue;
+  }
 
-    public static OutputType get(final boolean compress) {
-        if (compress) {
-            return FL_GZ;
-        } else {
-            return FL;
-        }
+  /**
+   * Gets the output type for a raw file based upon if it should be compressed
+   * or not.
+   * 
+   * @param compress
+   *          {@code true} if compression should be used, {@code false}
+   *          otherwise.
+   * @return {@link #FL_GZ} if compression is requested, {@link #FL} if not.
+   */
+  @NonNull
+  public static OutputType get(final boolean compress) {
+    if (compress) {
+      return FL_GZ;
+    } else {
+      return FL;
     }
+  }
 
-    public static OutputType detectFileType(final File dataFile) {
-        final String name = dataFile.getName();
-        for (OutputType t : values()) {
-            if (name.endsWith(t.getSuffix())) {
-                return t;
-            }
-        }
-        return null;
+  /**
+   * Gets an output type for the passed file, or {@code null} if none can be
+   * determined.
+   * 
+   * @param file
+   *          any file.
+   * @return an output type for the passed file, or {@code null} if none can be
+   *         determined.
+   */
+  @Nullable
+  public static OutputType detectFileType(final File file) {
+    if (file == null)
+      return null;
+    final String name = file.getName();
+    for (OutputType t : values()) {
+      if (name.endsWith(t.getSuffix())) {
+        return t;
+      }
     }
+    return null;
+  }
 
-    /**
-     * Gets an input stream to read the passed raw file. This method opens the
-     * right kind of stream based upon if the raw file is compressed or not.
-     * 
-     * @param dataFile
-     *            a raw data file.
-     * @return an input stream to read the passed raw file.
-     * @throws IOException
-     *             if the file doesn't exist or some other IO problem occurs.
-     */
-    public static InputStream getInputStreamFor(final File dataFile)
-            throws IOException {
-        return getInputStreamFor(new FileInputStream(dataFile),
-                OutputType.detectFileType(dataFile));
-    }
+  /**
+   * Checks if the passed file may be a raw data file based upon its suffix.
+   * 
+   * @param file
+   *          any file
+   * @return {@code true} if the passed file may be a raw data file based upon
+   *         its suffix, {@code false} otherwise.
+   */
+  public static boolean mayBeRawDataFile(final File file) {
+    if (file == null)
+      return false;
+    final OutputType type = detectFileType(file);
+    return RAW_DATA.contains(type);
+  }
 
-    /**
-     * Gets an input stream to read the passed raw file. This method opens the
-     * right kind of stream based upon if the raw file is compressed or not.
-     * 
-     * @param dataFile
-     *            a raw data file.
-     * @return an input stream to read the passed raw file.
-     * @throws IOException
-     *             if the file doesn't exist or some other IO problem occurs.
-     */
-    public static InputStream getInputStreamFor(InputStream stream,
-            final OutputType type) throws IOException {
-        if (type.isCompressed()) {
-            return new GZIPInputStream(stream, 32 * 1024);
-        } else {
-            return new BufferedInputStream(stream, 32 * 1024);
-        }
-    }
+  /**
+   * Gets an input stream to read the passed raw file. This method opens the
+   * right kind of stream based upon if the raw file is compressed or not.
+   * 
+   * @param dataFile
+   *          a raw data file.
+   * @return an input stream to read the passed raw file.
+   * @throws IOException
+   *           if the file doesn't exist or some other IO problem occurs.
+   */
+  public static InputStream getInputStreamFor(final File dataFile) throws IOException {
+    return getInputStreamFor(new FileInputStream(dataFile), OutputType.detectFileType(dataFile));
+  }
 
-    /**
-     * Gets an output stream to write to based on the name of the given data
-     * file. This method opens the right kind of stream based on whether the
-     * file suffix indicates binary and/or compressed output.
-     * 
-     * @param dataFile
-     * @return
-     * @throws FileNotFoundException
-     * @throws IOException
-     */
-    public static OutputStream getOutputStreamFor(final File dataFile)
-            throws IOException {
-        return getOutputStreamFor(new FileOutputStream(dataFile),
-                detectFileType(dataFile));
+  /**
+   * Gets an input stream to read the passed raw file. This method opens the
+   * right kind of stream based upon if the raw file is compressed or not.
+   * 
+   * @param dataFile
+   *          a raw data file.
+   * @return an input stream to read the passed raw file.
+   * @throws IOException
+   *           if the file doesn't exist or some other IO problem occurs.
+   */
+  public static InputStream getInputStreamFor(InputStream stream, final OutputType type) throws IOException {
+    if (type.isCompressed()) {
+      return new GZIPInputStream(stream, 32 * 1024);
+    } else {
+      return new BufferedInputStream(stream, 32 * 1024);
     }
+  }
 
-    /**
-     * Wraps an output stream based on whether the file suffix indicates binary
-     * and/or compressed output.
-     * 
-     * @param stream
-     * @param type
-     * @return
-     * @throws IOException
-     */
-    public static OutputStream getOutputStreamFor(OutputStream stream,
-            final OutputType type) throws IOException {
-        if (type.isCompressed()) {
-            return new GZIPOutputStream(stream);
-        } else {
-            return new BufferedOutputStream(stream);
-        }
-    }
+  /**
+   * Gets an output stream to write to based on the name of the given data file.
+   * This method opens the right kind of stream based on whether the file suffix
+   * indicates binary and/or compressed output.
+   * 
+   * @param dataFile
+   * @return
+   * @throws FileNotFoundException
+   * @throws IOException
+   */
+  public static OutputStream getOutputStreamFor(final File dataFile) throws IOException {
+    return getOutputStreamFor(new FileOutputStream(dataFile), detectFileType(dataFile));
+  }
 
-    public static SAXParser getParser(final OutputType type)
-            throws ParserConfigurationException, SAXException {
-        return SAXParserFactory.newInstance().newSAXParser();
+  /**
+   * Wraps an output stream based on whether the file suffix indicates binary
+   * and/or compressed output.
+   * 
+   * @param stream
+   * @param type
+   * @return
+   * @throws IOException
+   */
+  public static OutputStream getOutputStreamFor(OutputStream stream, final OutputType type) throws IOException {
+    if (type.isCompressed()) {
+      return new GZIPOutputStream(stream);
+    } else {
+      return new BufferedOutputStream(stream);
     }
+  }
 
-    public static SAXParser getParser(final File dataFile)
-            throws ParserConfigurationException, SAXException {
-        return getParser(detectFileType(dataFile));
-    }
+  public static SAXParser getParser(final OutputType type) throws ParserConfigurationException, SAXException {
+    return SAXParserFactory.newInstance().newSAXParser();
+  }
+
+  public static SAXParser getParser(final File dataFile) throws ParserConfigurationException, SAXException {
+    return getParser(detectFileType(dataFile));
+  }
 }

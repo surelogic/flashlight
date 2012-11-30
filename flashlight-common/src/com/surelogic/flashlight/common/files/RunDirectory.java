@@ -8,189 +8,122 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 
+import com.surelogic.NonNull;
+import com.surelogic.Nullable;
+import com.surelogic.ReferenceObject;
 import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic._flashlight.common.OutputType;
 import com.surelogic.common.FileUtility;
 import com.surelogic.common.i18n.I18N;
+import com.surelogic.common.jdbc.DBConnection;
 import com.surelogic.common.logging.SLLogger;
+import com.surelogic.flashlight.common.model.FlashlightDBConnection;
 import com.surelogic.flashlight.common.model.RunDescription;
 
 /**
  * Model for manipulating a per-run flashlight data directory, including the
  * instrumentation artifacts, source zip files, jar files, and profile data.
  */
+@ReferenceObject
 public final class RunDirectory {
-  /** Suffix for a textual data file */
-  public static final String SUFFIX = ".fl";
-  /** Suffixed for a compressed textual data file */
-  public static final String COMPRESSED_SUFFIX = ".fl.gz";
-  /** Suffix for a binary data file */
-  public static final String BIN_SUFFIX = ".flb";
-  /** Suffix for a compressed binary data file */
-  public static final String COMPRESSED_BIN_SUFFIX = ".flb.gz";
-  /** Name of database directory under the run directory */
-  private static final String DB_DIR = "db";
-  private static final String QUERIES_FILE = "empty-queries.txt";
-  /** Complete list of suffixes used to identify raw data files */
-  private static final String[] suffixes = { COMPRESSED_SUFFIX, BIN_SUFFIX, SUFFIX, COMPRESSED_BIN_SUFFIX };
-
-  private static String isValidSuffix(final String name) {
-    for (final String suffix : suffixes) {
-      if (name.endsWith(suffix)) {
-        return suffix;
-      }
-    }
-    return null;
-  }
-
-  /**
-   * Filter used to identify files that may be raw flashlight data files.
-   */
-  private static final FileFilter flashlightRawDataFileFilter = new FileFilter() {
-    @Override
-    public boolean accept(final File pathname) {
-      if (pathname.isDirectory()) {
-        return false;
-      }
-      return isValidSuffix(pathname.getName()) != null;
-    }
-  };
-
-  /**
-   * Filter used to identify header files for raw flashlight data files.
-   */
-  private static final FileFilter flashlightHeaderFileFilter = new FileFilter() {
-    @Override
-    public boolean accept(final File pathname) {
-      if (pathname.isDirectory()) {
-        return false;
-      }
-      final String name = pathname.getName();
-      if (name.endsWith(OutputType.FLH.getSuffix())) {
-        return true;
-      }
-      return false;
-    }
-  };
-
-  /** The run description for the data file contained in this directory */
-  private final RunDescription runDescription;
-
-  /** The file handle for the run directory itself. */
-  private final File runDirHandle;
-  /** The file handle for the database */
-  private final File dbHandle;
-  /** The file handles for the html directory */
-  private final HtmlHandles htmlHandles;
-  /** The file handle for the header file */
-  private final File headerHandle;
-  /** The file handles for the instrumentation files. */
-  private final InstrumentationFileHandles instrumentationFileHandles;
-  /** The file handles for the source zips. */
-  private final SourceZipFileHandles sourceZipFileHandles;
-  /** The file handles for the project jar files */
-  private final ProjectsDirectoryHandles projectDirHandles;
-  /** The file handles for the profile data */
-  private final RawFileHandles rawFileHandles;
-
-  /* Private constructor: use the factory method */
-  private RunDirectory(final RunDescription run, final File runDir, final File header, final File db, final HtmlHandles html,
-      final InstrumentationFileHandles instrumentation, final SourceZipFileHandles source, final ProjectsDirectoryHandles projects,
-      final RawFileHandles profile) {
-    runDescription = run;
-    headerHandle = header;
-    runDirHandle = runDir;
-    instrumentationFileHandles = instrumentation;
-    sourceZipFileHandles = source;
-    projectDirHandles = projects;
-    rawFileHandles = profile;
-    dbHandle = db;
-    htmlHandles = html;
-  }
 
   /**
    * Scan the given directory and gather the file handles for the contained
-   * structures.
-   * <p>
-   * <i>Implementation Note:</i> This constructor scans the Flashlight data
-   * directory.
+   * structures, returns {@code null} if anything is missing or wrong.
    * 
-   * @param runDir
-   *          Pathname to a per-run flashlight data directory.
+   * @param directory
+   *          a flashlight run directory.
    * @return The model object or {@code null} if one of the necessary files
    *         doesn't exist.
    */
-  /* Package private: Only created by RawFileUtility */
-  static RunDirectory getFor(final File runDir) {
-    // Caller checks if this null
-    assert runDir != null && runDir.exists() && runDir.isDirectory();
+  @Nullable
+  static RunDirectory getFor(final File directory) {
+    if (directory == null)
+      throw new IllegalArgumentException(I18N.err(44, "directory"));
+    if (!directory.exists())
+      throw new IllegalArgumentException(I18N.err(95, directory.getAbsolutePath(), "it does not exist"));
+    if (!directory.isDirectory())
+      throw new IllegalArgumentException(I18N.err(95, directory.getAbsolutePath(), "it is not a directory"));
 
-    final File invalidFile = new File(runDir, InstrumentationConstants.FL_INVALID_RUN);
+    final File invalidFile = new File(directory, InstrumentationConstants.FL_INVALID_RUN);
     if (invalidFile.exists()) {
       return null;
     }
 
-    final InstrumentationFileHandles instrumentation = InstrumentationFileHandles.getFor(runDir);
-    final SourceZipFileHandles source = SourceZipFileHandles.getFor(runDir);
-    final ProjectsDirectoryHandles projects = ProjectsDirectoryHandles.getFor(runDir);
+    final InstrumentationFileHandles instrumentation = InstrumentationFileHandles.getFor(directory);
+    if (instrumentation == null)
+      return null;
+
+    final SourceZipFileHandles source = SourceZipFileHandles.getFor(directory);
+    if (source == null)
+      return null;
+
+    final ProjectsDirectoryHandles projects = ProjectsDirectoryHandles.getFor(directory);
+    if (projects == null)
+      return null;
+
     /*
      * This process relies on RawFileUtility because RawFileHandles is the
      * original file handle class, and everything else is being built around the
-     * machinery that preexisted to compute them.
+     * machinery that existed to compute them.
      */
-    final File headerFile = getFileFrom(runDir, flashlightHeaderFileFilter, 152, 153);
-    if (headerFile != null) {
-      final RawDataFilePrefix headerInfo = RawFileUtility.getPrefixFor(headerFile);
-      if (headerInfo.isWellFormed()) {
-        /*
-         * If we get here the profile data files are okay, now check that the
-         * other files are okay too.
-         */
-        final File[] rawDataFiles = getFilesFrom(runDir, flashlightRawDataFileFilter, 146, 147);
-        if (rawDataFiles == null) {
+    final File headerFile = getFileFrom(directory, flashlightHeaderFileFilter, 152, 153);
+    if (headerFile == null) {
+      // no header file exists
+      return null;
+    }
+
+    final RawDataFilePrefix headerInfo = RawFileUtility.getPrefixFor(headerFile);
+    if (!headerInfo.isWellFormed()) {
+      // can't make sense of the header file
+      return null;
+    }
+
+    /*
+     * If we get here the profile data files are okay, now check that the other
+     * files are okay too.
+     */
+    final File[] rawDataFiles = getFilesFrom(directory, flashlightRawDataFileFilter, 146, 147);
+    if (rawDataFiles == null) {
+      // no raw files are in the directory
+      return null;
+    }
+    final List<RawDataFilePrefix> prefixInfos = new ArrayList<RawDataFilePrefix>(Arrays.asList(RawFileUtility
+        .getPrefixesFor(rawDataFiles)));
+    // Take out files if their prefix is not well formed
+    for (final Iterator<RawDataFilePrefix> iter = prefixInfos.iterator(); iter.hasNext();) {
+      if (!iter.next().isWellFormed()) {
+        iter.remove();
+      }
+    }
+    if (prefixInfos.isEmpty()) {
+      // We don't have any valid data in this directory
+      return null;
+    }
+
+    final RunDescription run = RawFileUtility.getRunDescriptionFor(headerInfo);
+    if (run == null)
+      return null;
+
+    if (!run.isCompleted()) {
+      /**
+       * A sanity check to make sure that we aren't still running the
+       * instrumented program and collecting data.
+       */
+      final long cur = System.currentTimeMillis();
+      for (final File f : rawDataFiles) {
+        if (cur - f.lastModified() < InstrumentationConstants.FILE_EVENT_DURATION) {
           return null;
-        }
-        final List<RawDataFilePrefix> prefixInfos = new ArrayList<RawDataFilePrefix>(Arrays.asList(RawFileUtility
-            .getPrefixesFor(rawDataFiles)));
-        for (final Iterator<RawDataFilePrefix> iter = prefixInfos.iterator(); iter.hasNext();) {
-          if (!iter.next().isWellFormed()) {
-            iter.remove();
-          }
-        }
-        if (prefixInfos.isEmpty()) {
-          // We don't have any valid data here
-          return null;
-        }
-        if (instrumentation != null && source != null && projects != null) {
-          /*
-           * These calls won't fail because we know that prefixInfo is non-null
-           * and well formed.
-           */
-          final RunDescription run = RawFileUtility.getRunDescriptionFor(headerInfo);
-          if (run != null) {
-            if (!run.isCompleted()) {
-              // A sanity check to make sure that we aren't still
-              // running.
-              final long cur = System.currentTimeMillis();
-              for (final File f : rawDataFiles) {
-                if (cur - f.lastModified() < InstrumentationConstants.FILE_EVENT_DURATION) {
-                  return null;
-                }
-              }
-            }
-            final RawFileHandles profile = RawFileUtility.getRawFileHandlesFor(runDir,
-                prefixInfos.toArray(new RawDataFilePrefix[prefixInfos.size()]));
-            final File db = new File(runDir.getAbsoluteFile(), DB_DIR);
-            final HtmlHandles html = HtmlHandles.getFor(runDir);
-            return new RunDirectory(run, runDir, headerFile, db, html, instrumentation, source, projects, profile);
-          }
         }
       }
     }
-    // If we get here there is something wrong with the profile data files
-    return null;
+    final RawFileHandles rawFileHandles = RawFileUtility.getRawFileHandlesFor(directory,
+        prefixInfos.toArray(new RawDataFilePrefix[prefixInfos.size()]));
+
+    return new RunDirectory(run, directory, headerFile, instrumentation, source, projects, rawFileHandles);
   }
 
+  @Nullable
   private static File getFileFrom(final File runDir, final FileFilter filter, final int noFileErr, final int manyFilesErr) {
     final File[] files = runDir.listFiles(filter);
     /*
@@ -224,86 +157,252 @@ public final class RunDirectory {
     return files;
   }
 
-  /** Get the run description. Never returns {@code null}. */
-  public RunDescription getRunDescription() {
-    return runDescription;
-  }
-
-  /** Get the handle for the run directory. Never returns {@code null}. */
-  public File getRunDirectory() {
-    return runDirHandle;
-  }
-
-  /**
-   * Gets a human readable size of the run directory. Never returns {@code null}
-   * .
+  /*
+   * String constants about the contents of a Flashlight run directory.
    */
-  public String getHumanReadableSize() {
-    return FileUtility.bytesToHumanReadableString(FileUtility.recursiveSizeInBytes(runDirHandle));
-  }
+
+  /** Name of the subdirectory that contains the database */
+  private static final String DB_DIR = "db";
+  /** Name of the empty queries file */
+  private static final String QUERIES_FILE = "empty-queries.txt";
 
   /**
-   * Gets a human readable size of the database directory. Never returns
-   * {@code null}.
+   * Filter used to identify files that may be raw flashlight data files.
    */
-  public String getHumanReadableDatabaseSize() {
-    return FileUtility.bytesToHumanReadableString(FileUtility.recursiveSizeInBytes(dbHandle));
-  }
-
-  /** Get the handle for the header file. Never returns {@code null}. */
-  public File getHeader() {
-    return headerHandle;
-  }
+  private static final FileFilter flashlightRawDataFileFilter = new FileFilter() {
+    @Override
+    public boolean accept(final File pathname) {
+      if (pathname.isDirectory()) {
+        return false;
+      }
+      return OutputType.mayBeRawDataFile(pathname);
+    }
+  };
 
   /**
-   * Get the handles for the instrumentation artifacts. Never returns
-   * {@code null}.
+   * Filter used to identify header files for raw flashlight data files.
    */
-  public InstrumentationFileHandles getInstrumentationHandles() {
-    return instrumentationFileHandles;
-  }
-
-  /** Get the handles for the source zip files. Never returns {@code null}. */
-  public SourceZipFileHandles getSourceHandles() {
-    return sourceZipFileHandles;
-  }
-
-  /** Get the handles for the project jar files. Never returns {@code null}. */
-  public ProjectsDirectoryHandles getProjectDirectory() {
-    return projectDirHandles;
-  }
+  private static final FileFilter flashlightHeaderFileFilter = new FileFilter() {
+    @Override
+    public boolean accept(final File pathname) {
+      if (pathname.isDirectory()) {
+        return false;
+      }
+      final String name = pathname.getName();
+      if (name.endsWith(OutputType.FLH.getSuffix())) {
+        return true;
+      }
+      return false;
+    }
+  };
 
   /**
-   * Get the handles for the profile data files. Unlike the other getter
-   * methods, this method <em>may</em> return {@code null}.
+   * This directory.
    */
-  public RawFileHandles getProfileHandles() {
-    return rawFileHandles;
+  @NonNull
+  private final File f_runDirHandle;
+
+  /**
+   * The run header file
+   */
+  @NonNull
+  private final File f_headerFileHandle;
+
+  /**
+   * A description of the run in this directory.
+   */
+  @NonNull
+  private final RunDescription f_runDescription;
+
+  /**
+   * The file handles for the instrumentation files.
+   */
+  @NonNull
+  private final InstrumentationFileHandles f_instrumentationFileHandles;
+
+  /**
+   * The file handles for the source zips.
+   */
+  @NonNull
+  private final SourceZipFileHandles f_sourceZipFileHandles;
+
+  /**
+   * The file handles for the project jar files.
+   */
+  @NonNull
+  private final ProjectsDirectoryHandles f_projectDirHandles;
+
+  /**
+   * The file handles for the profile data
+   */
+  @NonNull
+  private final RawFileHandles f_rawFileHandles;
+
+  private RunDirectory(@NonNull final RunDescription runDescription, @NonNull final File runDirHandle,
+      @NonNull final File headerFileHandle, @NonNull final InstrumentationFileHandles instrumentationFileHandles,
+      @NonNull final SourceZipFileHandles sourceZipFileHandles, @NonNull final ProjectsDirectoryHandles projectDirHandles,
+      @NonNull final RawFileHandles rawFileHandles) {
+    f_runDescription = runDescription;
+    f_runDirHandle = runDirHandle;
+    f_headerFileHandle = headerFileHandle;
+    f_instrumentationFileHandles = instrumentationFileHandles;
+    f_sourceZipFileHandles = sourceZipFileHandles;
+    f_projectDirHandles = projectDirHandles;
+    f_rawFileHandles = rawFileHandles;
   }
 
   /**
-   * Gets the database directory.
+   * Gets a run description for the run in this.
    * 
-   * @return the non-null database directory.
+   * @return a run description for the run in this.
    */
+  @NonNull
+  public RunDescription getRunDescription() {
+    return f_runDescription;
+  }
+
+  /**
+   * Gets an abstract representation of this run directory.
+   * 
+   * @return an abstract representation of this run directory.
+   */
+  @NonNull
+  public File getRunDirectory() {
+    return f_runDirHandle;
+  }
+
+  /**
+   * Gets a human readable size of this run directory.
+   * 
+   * @return a human readable size of this run directory.
+   */
+  @NonNull
+  public String getHumanReadableSize() {
+    return FileUtility.bytesToHumanReadableString(FileUtility.recursiveSizeInBytes(f_runDirHandle));
+  }
+
+  /**
+   * Gets an abstract representation of the header file in this run directory.
+   * 
+   * @return an abstract representation of the header file in this run
+   *         directory.
+   */
+  @NonNull
+  public File getHeaderFile() {
+    return f_headerFileHandle;
+  }
+
+  /**
+   * Get the handles for the instrumentation artifacts.
+   * 
+   * @return handles for the instrumentation artifacts.
+   */
+  @NonNull
+  public InstrumentationFileHandles getInstrumentationFileHandles() {
+    return f_instrumentationFileHandles;
+  }
+
+  /**
+   * Get the handles for the source Zip files.
+   * 
+   * @return handles for the source Zip files.
+   */
+  @NonNull
+  public SourceZipFileHandles getSourceZipFileHandles() {
+    return f_sourceZipFileHandles;
+  }
+
+  /**
+   * Get the handles for the project JAR files.
+   * 
+   * @return handles for the project JAR files.
+   */
+  @NonNull
+  public ProjectsDirectoryHandles getProjectsDirectoryHandles() {
+    return f_projectDirHandles;
+  }
+
+  /**
+   * Get the handles for the raw data files.
+   * 
+   * @return handles for the raw data files.
+   */
+  @NonNull
+  public RawFileHandles getRawFileHandles() {
+    return f_rawFileHandles;
+  }
+
+  /**
+   * Gets an abstract handle to the database directory for this run. This
+   * directory may or may not exist depending upon if the run is prepared.
+   * 
+   * @return an abstract handle to the database directory for this run.
+   */
+  @NonNull
   public File getDatabaseDirectory() {
-    return dbHandle;
+    final File db = new File(f_runDirHandle, DB_DIR);
+    return db;
+  }
+
+  /**
+   * Checks if this run has been, or is being, prepared by seeing if the handle
+   * returned from {@link #getDatabaseDirectory()} exists.
+   * 
+   * @return {@code true} if this run has been, or is being, prepared,
+   *         {@code false} otherwise.
+   */
+  public boolean isPreparedOrIsBeingPrepared() {
+    return getDatabaseDirectory().exists();
+  }
+
+  /**
+   * Gets a database connection for the database directory for this run.
+   * 
+   * @return a database connection for the database directory for this run.
+   */
+  public DBConnection getDB() {
+    return FlashlightDBConnection.getInstance(getDatabaseDirectory());
+  }
+
+  /**
+   * Gets a human readable size of the database directory within this run
+   * directory.
+   * 
+   * @return a human readable size of the database directory within this run
+   *         directory.
+   */
+  @NonNull
+  public String getHumanReadableDatabaseSize() {
+    return FileUtility.bytesToHumanReadableString(FileUtility.recursiveSizeInBytes(getDatabaseDirectory()));
   }
 
   /**
    * Gets the handles for the HTML directory containing an overview of the
    * findings for this run.
    * 
-   * @return the non-null handles for the HTML directory.
+   * @return handles for the HTML directory containing an overview of the
+   *         findings for this run.
+   * 
+   * @throws IllegalStateException
+   *           if something goes wrong.
    */
+  @NonNull
   public HtmlHandles getHtmlHandles() {
-    return htmlHandles;
+    final HtmlHandles result = HtmlHandles.getFor(f_runDirHandle);
+    if (result == null)
+      throw new IllegalStateException("Unable to work on html within " + f_runDirHandle.getAbsolutePath());
+    else
+      return result;
   }
 
   /**
-   * The file handle for the list of queries containing no data.
+   * Gets an abstract representation of the list of queries containing no data.
+   * 
+   * @return an abstract representation of the list of queries containing no
+   *         data.
    */
+  @NonNull
   public File getEmptyQueriesFile() {
-    return new File(runDirHandle, QUERIES_FILE);
+    return new File(f_runDirHandle, QUERIES_FILE);
   }
 }

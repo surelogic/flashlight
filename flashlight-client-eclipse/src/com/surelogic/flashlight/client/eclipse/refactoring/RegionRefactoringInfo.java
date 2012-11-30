@@ -4,43 +4,41 @@ import java.util.List;
 
 import org.eclipse.jdt.core.IJavaProject;
 
-import com.surelogic.flashlight.common.model.RunDescription;
+import com.surelogic.flashlight.common.files.RunDirectory;
 
 public class RegionRefactoringInfo {
 
-	private IJavaProject selectedProject;
-	private final List<IJavaProject> projects;
-	private final List<RunDescription> runs;
-	private List<RunDescription> selectedRuns;
+  private IJavaProject selectedProject;
+  private final List<IJavaProject> projects;
+  private final List<RunDirectory> runs;
+  private List<RunDirectory> selectedRuns;
 
-	public RegionRefactoringInfo(final List<IJavaProject> projects,
-			final List<RunDescription> runs) {
-		this.projects = projects;
-		this.runs = runs;
-	}
+  public RegionRefactoringInfo(final List<IJavaProject> projects, final List<RunDirectory> runs) {
+    this.projects = projects;
+    this.runs = runs;
+  }
 
-	public IJavaProject getSelectedProject() {
-		return selectedProject;
-	}
+  public IJavaProject getSelectedProject() {
+    return selectedProject;
+  }
 
-	public void setSelectedProject(final IJavaProject project) {
-		this.selectedProject = project;
-	}
+  public void setSelectedProject(final IJavaProject project) {
+    this.selectedProject = project;
+  }
 
-	public List<IJavaProject> getProjects() {
-		return projects;
-	}
+  public List<IJavaProject> getProjects() {
+    return projects;
+  }
 
-	public List<RunDescription> getRuns() {
-		return runs;
-	}
+  public List<RunDirectory> getRuns() {
+    return runs;
+  }
 
-	public List<RunDescription> getSelectedRuns() {
-		return selectedRuns;
-	}
+  public List<RunDirectory> getSelectedRuns() {
+    return selectedRuns;
+  }
 
-	public void setSelectedRuns(final List<RunDescription> selectedRuns) {
-		this.selectedRuns = selectedRuns;
-	}
-
+  public void setSelectedRuns(final List<RunDirectory> selectedRuns) {
+    this.selectedRuns = selectedRuns;
+  }
 }

@@ -7,8 +7,8 @@ import org.eclipse.swt.graphics.Image;
 
 import com.surelogic.common.CommonImages;
 import com.surelogic.common.ui.SLImages;
-import com.surelogic.flashlight.common.model.RunDescription;
-import com.surelogic.flashlight.common.model.RunViewModel;
+import com.surelogic.flashlight.client.eclipse.model.RunViewModel;
+import com.surelogic.flashlight.common.files.RunDirectory;
 
 public final class RunViewLabelProvider implements ITableLabelProvider {
 
@@ -20,7 +20,7 @@ public final class RunViewLabelProvider implements ITableLabelProvider {
   }
 
   public Image getColumnImage(Object element, int columnIndex) {
-    final RunDescription rowData = (RunDescription) element;
+    final RunDirectory rowData = (RunDirectory) element;
     final String symbolicName = f_model.getImageSymbolicName(rowData, columnIndex);
     if (columnIndex == 1) {
       /*
@@ -43,7 +43,7 @@ public final class RunViewLabelProvider implements ITableLabelProvider {
   }
 
   public String getColumnText(Object element, int columnIndex) {
-    final RunDescription rowData = (RunDescription) element;
+    final RunDirectory rowData = (RunDirectory) element;
     return f_model.getText(rowData, columnIndex);
   }
 

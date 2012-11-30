@@ -1,4 +1,4 @@
-package com.surelogic.flashlight.common.model;
+package com.surelogic.flashlight.client.eclipse.model;
 
 public interface IRunManagerObserver {
 

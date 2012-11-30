@@ -6,13 +6,13 @@ import java.io.FileReader;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 
+import com.surelogic.NonNull;
+import com.surelogic.Nullable;
 import com.surelogic.Utility;
 import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic._flashlight.common.OutputType;
@@ -27,30 +27,32 @@ import com.surelogic.flashlight.common.model.RunDescription;
  */
 @Utility
 public final class RawFileUtility {
-  public static final String DB_DIRECTORY = "db";
 
   /**
    * Checks if the passed raw file is compressed or not. It does this by
    * checking the file suffix (i.e., nothing fancy is done).
    * 
-   * @param dataFile
+   * @param rawDataFile
    *          a raw data file.
    * @return {@code true} if the passed raw file is compressed, {@code false}
    *         otherwise.
    */
-  public static boolean isRawFileGzip(final File dataFile) {
-    return OutputType.detectFileType(dataFile).isCompressed();
+  public static boolean isRawFileGzip(final File rawDataFile) {
+    return OutputType.detectFileType(rawDataFile).isCompressed();
 
   }
 
   /**
-   * Checks to see if this folder is a valid run directory.
+   * Checks to see if the passed directory appears to be a valid run directory
+   * based upon its name (i.e., nothing fancy is done).
    * 
-   * @param runDirectory
-   * @return
+   * @param directory
+   *          any directory.
+   * @return {@code true} if the passed directory appears to be a valid run
+   *         directory based upon its name, {@code false} otherwise.
    */
-  public static boolean isRunDirectory(final File runDirectory) {
-    return f_runDirectoryFilter.accept(runDirectory.getParentFile(), runDirectory.getName());
+  public static boolean isRunDirectory(final File directory) {
+    return f_runDirectoryFilter.accept(directory.getParentFile(), directory.getName());
   }
 
   /**
@@ -69,11 +71,7 @@ public final class RawFileUtility {
     return runDescriptionBuilder.getRunDirectories();
   }
 
-  public static List<File> findInvalidRunDirectories(final File dataDir) {
-    final RawDataDirectoryReader runDescriptionBuilder = new RawDataDirectoryReader(dataDir);
-    return runDescriptionBuilder.findBadDirs();
-  }
-
+  // TODO MOVE TO SOMEPLACE ELSE!!!
   public static RunDirectory getRunDirectoryFor(final File dataDir, final RunDescription description) {
     if (description == null) {
       throw new IllegalArgumentException(I18N.err(44, "description"));
@@ -86,58 +84,59 @@ public final class RawFileUtility {
   /**
    * Reads the prefix information from a raw data file.
    * 
-   * @param dataFile
+   * @param rawDataFile
    *          a raw data file.
    * @return prefix information (may or may not be well-formed).
    */
-  public static RawDataFilePrefix getPrefixFor(final File dataFile) {
-    if (dataFile == null) {
+  public static RawDataFilePrefix getPrefixFor(final File rawDataFile) {
+    if (rawDataFile == null)
       throw new IllegalArgumentException(I18N.err(44, "dataFile"));
-    }
+
     final RawDataFilePrefix prefixInfo = new RawDataFilePrefix();
-    prefixInfo.read(dataFile);
+    prefixInfo.read(rawDataFile);
 
     return prefixInfo;
   }
 
   public static RawDataFilePrefix[] getPrefixesFor(final File[] dataFiles) {
-    if (dataFiles == null) {
+    if (dataFiles == null)
       throw new IllegalArgumentException(I18N.err(44, "dataFiles"));
-    }
-    for (File f : dataFiles) {
-      if (f == null) {
-        throw new IllegalArgumentException(I18N.err(44, "dataFiles"));
-      }
-    }
-    RawDataFilePrefix[] rv = new RawDataFilePrefix[dataFiles.length];
+    if (dataFiles.length < 1)
+      throw new IllegalArgumentException(I18N.err(92, "dataFiles"));
+
+    final RawDataFilePrefix[] rv = new RawDataFilePrefix[dataFiles.length];
     for (int i = 0; i < dataFiles.length; i++) {
-      rv[i] = getPrefixFor(dataFiles[i]);
+      final File dataFile = dataFiles[i];
+      if (dataFile == null)
+        throw new IllegalArgumentException(I18N.err(44, "dataFiles[" + i + "]"));
+      rv[i] = getPrefixFor(dataFile);
     }
     return rv;
   }
 
+  // TODO SHOULD THIS METHOD (TAKING ONE PREFIXINFO) SHOULD BE GONE WITH NEW
+  // MULTI FILE SCHEME
+
   /**
-   * Obtains the corresponding run description for the passed raw file prefix.
+   * Obtains the corresponding run description for the passed raw file prefix or
+   * throws an exception.
    * 
    * @param prefixInfo
-   *          a well-formed raw file prefix.
-   * @return a run description.
-   * @throws IllegalStateException
-   *           if the prefix is not well-formed.
-   * @throws IllegalArgumentException
-   *           if the prefix is {@code null}.
+   *          a well-formed raw data file prefix.
+   * @return a run description based upon the passed prefix info.
+   * @throws Exception
+   *           if something goes wrong.
    */
+  @NonNull
   public static RunDescription getRunDescriptionFor(final RawDataFilePrefix prefixInfo) {
-    if (prefixInfo == null) {
+    if (prefixInfo == null)
       throw new IllegalArgumentException(I18N.err(44, "prefixInfo"));
-    }
 
     if (prefixInfo.isWellFormed()) {
-
       final File runComplete = new File(prefixInfo.getFile().getParentFile(), InstrumentationConstants.FL_COMPLETE_RUN);
+      final boolean runCompleted = runComplete.exists();
       long duration = 0;
-      boolean completed = runComplete.exists();
-      if (completed) {
+      if (runCompleted) {
         try {
           BufferedReader r = new BufferedReader(new FileReader(runComplete));
           try {
@@ -145,78 +144,77 @@ public final class RawFileUtility {
           } finally {
             r.close();
           }
-        } catch (NumberFormatException e) {
-          // We are okay with this for now, since it can happen on old
-          // runs that are otherwise valid
+        } catch (NumberFormatException ignore) {
+          /*
+           * We are okay with this for now, since it can happen on old runs that
+           * are otherwise valid.
+           */
         } catch (IOException e) {
           SLLogger.getLogger().log(Level.WARNING, I18N.err(226, runComplete.getAbsolutePath()), e);
         }
       }
-
       return new RunDescription(prefixInfo.getName(), prefixInfo.getRawDataVersion(), prefixInfo.getHostname(),
           prefixInfo.getUserName(), prefixInfo.getJavaVersion(), prefixInfo.getJavaVendor(), prefixInfo.getOSName(),
           prefixInfo.getOSArch(), prefixInfo.getOSVersion(), prefixInfo.getMaxMemoryMb(), prefixInfo.getProcessors(),
           new Timestamp(prefixInfo.getWallClockTime().getTime()), duration, false /* TODO */, runComplete.exists());
-
     } else {
       throw new IllegalStateException(I18N.err(107, prefixInfo.getFile().getAbsolutePath()));
     }
   }
 
   /**
-   * Obtains the corresponding raw file handles for the passed raw file prefix.
+   * Obtains the corresponding raw file handles for the passed raw file prefixes
+   * or throws an exception.
    * 
-   * @param prefixInfo
-   *          a well-formed raw file prefix.
+   * @param runDir
+   *          a directory
+   * @param prefixInfos
+   *          an array of well-formed raw file prefix.
    * @return the corresponding raw file handles for the passed raw file prefix.
-   * @throws IllegalStateException
-   *           if the prefix is not well-formed.
-   * @throws IllegalArgumentException
-   *           if the prefix is {@code null}.
+   * @throws Exception
+   *           if something goes wrong.
    */
+  @NonNull
   public static RawFileHandles getRawFileHandlesFor(final File runDir, final RawDataFilePrefix[] prefixInfos) {
-    if (prefixInfos == null) {
+    if (prefixInfos == null)
       throw new IllegalArgumentException(I18N.err(44, "prefixInfos"));
+    if (prefixInfos.length < 1)
+      throw new IllegalArgumentException(I18N.err(92, "prefixInfos"));
+
+    for (int i = 0; i < prefixInfos.length; i++) {
+      final RawDataFilePrefix p = prefixInfos[i];
+      if (p == null)
+        throw new IllegalArgumentException(I18N.err(44, "prefixInfos[" + i + "]"));
+      if (!p.isWellFormed())
+        throw new IllegalStateException(I18N.err(107, p.getFile().getAbsolutePath()));
     }
-    boolean wellFormed = true;
-    for (RawDataFilePrefix p : prefixInfos) {
-      if (p == null) {
-        throw new IllegalArgumentException(I18N.err(44, "prefixInfos"));
-      } else if (!p.isWellFormed()) {
-        wellFormed = false;
+
+    // Find log file
+    final class LogFilter implements FilenameFilter {
+      @Override
+      public boolean accept(final File dir, final String name) {
+        return name.endsWith(InstrumentationConstants.FL_LOG_SUFFIX);
       }
     }
+    final File[] logs = runDir.listFiles(new LogFilter());
+    final File logFile;
+    if (logs == null || logs.length != 1) {
+      SLLogger.getLogger().log(Level.FINE, I18N.err(108, prefixInfos[0].getFile().getAbsolutePath()));
+      logFile = null;
+    } else {
+      logFile = logs[0];
 
-    if (wellFormed) {
-      // Find log file
-      final File[] logs = runDir.listFiles(new LogFilter());
-      final File logFile;
-      if (logs == null || logs.length != 1) {
-        SLLogger.getLogger().log(Level.FINE, I18N.err(108, prefixInfos[0].getFile().getAbsolutePath()));
-        logFile = null;
-      } else {
-        logFile = logs[0];
-
-        // Remove ".flog"
-        final String fileNamePrefix = logFile.getName().substring(0, logFile.getName().length() - 5);
-        for (RawDataFilePrefix p : prefixInfos) {
-          if (!p.getFile().getName().startsWith(fileNamePrefix)) {
-            SLLogger.getLogger().log(Level.WARNING, "Log name " + fileNamePrefix + " doesn't match data: " + p.getFile().getName());
-          }
+      // Remove ".flog" suffix from the file name
+      final String fileNamePrefix = logFile.getName().substring(0,
+          logFile.getName().length() - InstrumentationConstants.FL_LOG_SUFFIX.length());
+      for (RawDataFilePrefix p : prefixInfos) {
+        if (!p.getFile().getName().startsWith(fileNamePrefix)) {
+          SLLogger.getLogger().log(Level.WARNING, "Log name " + fileNamePrefix + " doesn't match data: " + p.getFile().getName());
         }
       }
-      final RawFileHandles handles = new RawFileHandles(prefixInfos, logFile);
-      return handles;
-    } else {
-      throw new IllegalStateException(I18N.err(107, prefixInfos[0].getFile().getAbsolutePath()));
     }
-  }
-
-  private static final class LogFilter implements FilenameFilter {
-    @Override
-    public boolean accept(final File dir, final String name) {
-      return name.endsWith(".flog");
-    }
+    final RawFileHandles handles = new RawFileHandles(prefixInfos, logFile);
+    return handles;
   }
 
   /**
@@ -224,25 +222,36 @@ public final class RawFileUtility {
    * data directory.
    */
   private static final class RawDataDirectoryReader {
+
+    @NonNull
     private final Map<RunDescription, RunDirectory> f_runToHandles = new HashMap<RunDescription, RunDirectory>();
 
-    private final File dataDir;
+    @NonNull
+    private final File f_dataDir;
 
     RawDataDirectoryReader(final File dataDir) {
-      this.dataDir = dataDir;
+      if (dataDir == null)
+        throw new IllegalArgumentException(I18N.err(44, "dataDir"));
+      f_dataDir = dataDir;
     }
 
+    @NonNull
     Collection<RunDirectory> getRunDirectories() {
       return f_runToHandles.values();
     }
 
+    @Nullable
     RunDirectory getRunDirectoryFor(final RunDescription description) {
       return f_runToHandles.get(description);
     }
 
-    private File[] getRunDirs() {
-      final File[] runDirs = dataDir.listFiles(f_runDirectoryFilter);
-      return runDirs;
+    @NonNull
+    File[] getRunDirs() {
+      final File[] runDirs = f_dataDir.listFiles(f_runDirectoryFilter);
+      if (runDirs == null)
+        return new File[0];
+      else
+        return runDirs;
     }
 
     void read() {
@@ -253,17 +262,6 @@ public final class RawFileUtility {
           f_runToHandles.put(run, runDirectory);
         }
       }
-    }
-
-    List<File> findBadDirs() {
-      List<File> bad = new ArrayList<File>();
-      for (final File runDir : getRunDirs()) {
-        final RunDirectory runDirectory = RunDirectory.getFor(runDir);
-        if (runDirectory == null) {
-          bad.add(runDir);
-        }
-      }
-      return bad;
     }
   }
 

@@ -26,7 +26,7 @@ import com.surelogic.common.ui.adhoc.views.results.AbstractQueryResultsView;
 import com.surelogic.common.ui.tooltip.ToolTip;
 import com.surelogic.flashlight.client.eclipse.images.FlashlightImageLoader;
 import com.surelogic.flashlight.client.eclipse.jobs.PopulateBrowserWithRunInformationJob;
-import com.surelogic.flashlight.common.model.RunDescription;
+import com.surelogic.flashlight.common.files.RunDirectory;
 
 public final class QueryResultsView extends AbstractQueryResultsView {
 
@@ -85,9 +85,9 @@ public final class QueryResultsView extends AbstractQueryResultsView {
 
     @Override
     protected void setupNoResultsPane(final Composite parent) {
-        final RunDescription run = AdHocDataSource.getInstance()
+        final RunDirectory run = AdHocDataSource.getInstance()
                 .getSelectedRun();
-        if (run == null || !run.isPrepared()) {
+        if (run == null || !run.isPreparedOrIsBeingPrepared()) {
             showQueryTitle();
             super.setupNoResultsPane(parent);
         } else {
@@ -164,11 +164,11 @@ public final class QueryResultsView extends AbstractQueryResultsView {
         }
     }
 
-    private void parseAndJumpToLine(final RunDescription run, final String url) {
+    private void parseAndJumpToLine(final RunDirectory run, final String url) {
         try {
             Map<String, String> params = SimpleHTMLPrinter
                     .extractParametersFromURL(url);
-            params.put(AdHocManager.DATABASE, run.toIdentityString());
+            params.put(AdHocManager.DATABASE, run.getRunDescription().toIdentityString());
             JumpToCode.getInstance().jumpToCode(params);
         } catch (IllegalStateException problem) {
             SLLogger.getLogger()

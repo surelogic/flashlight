@@ -1,11 +1,11 @@
-package com.surelogic.flashlight.common.jobs;
+package com.surelogic.flashlight.client.eclipse.jobs;
 
 import com.surelogic.common.jobs.AbstractSLJob;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.common.license.SLLicenseProduct;
 import com.surelogic.common.license.SLLicenseUtility;
-import com.surelogic.flashlight.common.model.RunManager;
+import com.surelogic.flashlight.client.eclipse.model.RunManager;
 
 public final class RefreshRunManagerSLJob extends AbstractSLJob {
 

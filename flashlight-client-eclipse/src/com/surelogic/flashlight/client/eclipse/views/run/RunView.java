@@ -20,10 +20,10 @@ import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.ui.ColumnViewerSorter;
 import com.surelogic.common.ui.EclipseUIUtility;
 import com.surelogic.common.ui.SLImages;
-import com.surelogic.flashlight.common.jobs.RefreshRunManagerSLJob;
-import com.surelogic.flashlight.common.model.RunDescription;
-import com.surelogic.flashlight.common.model.RunManager;
-import com.surelogic.flashlight.common.model.RunViewModel;
+import com.surelogic.flashlight.client.eclipse.jobs.RefreshRunManagerSLJob;
+import com.surelogic.flashlight.client.eclipse.model.RunManager;
+import com.surelogic.flashlight.client.eclipse.model.RunViewModel;
+import com.surelogic.flashlight.common.files.RunDirectory;
 
 /**
  * View to display all raw and prepared Flashlight runs to the user.
@@ -45,11 +45,11 @@ public final class RunView extends ViewPart {
                     EclipseUIUtility.adaptJustification(model
                             .getColumnJustification(columnIndex)));
             column.getColumn().setText(model.getColumnTitle(index));
-            new ColumnViewerSorter<RunDescription>(tableViewer,
+            new ColumnViewerSorter<RunDirectory>(tableViewer,
                     column.getColumn()) {
                 @Override
                 protected int doCompare(final Viewer viewer,
-                        final RunDescription e1, final RunDescription e2) {
+                        final RunDirectory e1, final RunDirectory e2) {
                     return model.getColumnComparator(columnIndex).compare(e1,
                             e2);
                 }

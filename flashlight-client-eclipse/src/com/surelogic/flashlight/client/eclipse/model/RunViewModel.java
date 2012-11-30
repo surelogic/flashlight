@@ -1,4 +1,4 @@
-package com.surelogic.flashlight.common.model;
+package com.surelogic.flashlight.client.eclipse.model;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -9,6 +9,8 @@ import com.surelogic.common.FileUtility;
 import com.surelogic.common.Justification;
 import com.surelogic.common.SLUtility;
 import com.surelogic.flashlight.common.files.RawFileHandles;
+import com.surelogic.flashlight.common.files.RunDirectory;
+import com.surelogic.flashlight.common.model.RunDescription;
 
 /**
  * IDE independent data model for the table of Flashlight runs displayed in the
@@ -59,7 +61,7 @@ public final class RunViewModel {
    *          the column index.
    * @return the non-null text for the passed row and column.
    */
-  public String getText(final RunDescription rowData, final int column) {
+  public String getText(final RunDirectory rowData, final int column) {
     return f_columnData.get(column).getText(rowData);
   }
 
@@ -74,7 +76,7 @@ public final class RunViewModel {
    * @return a symbolic name from {@link CommonImages} or {@code null} if no
    *         image should be displayed.
    */
-  public String getImageSymbolicName(final RunDescription rowData, final int column) {
+  public String getImageSymbolicName(final RunDirectory rowData, final int column) {
     return f_columnData.get(column).getImageSymbolicName(rowData);
   }
 
@@ -85,7 +87,7 @@ public final class RunViewModel {
    *          the column index.
    * @return the non-null {@link Comparator} used for sorting the passed column.
    */
-  public Comparator<RunDescription> getColumnComparator(final int column) {
+  public Comparator<RunDirectory> getColumnComparator(final int column) {
     return f_columnData.get(column).getColumnComparator();
   }
 
@@ -106,22 +108,22 @@ public final class RunViewModel {
       return Justification.LEFT;
     }
 
-    String getText(final RunDescription rowData) {
+    String getText(final RunDirectory rowData) {
       return "";
     }
 
-    String getImageSymbolicName(final RunDescription rowData) {
+    String getImageSymbolicName(final RunDirectory rowData) {
       return null;
     }
 
-    private final Comparator<RunDescription> f_defaultComparator = new Comparator<RunDescription>() {
+    private final Comparator<RunDirectory> f_defaultComparator = new Comparator<RunDirectory>() {
       @Override
-      public int compare(final RunDescription o1, final RunDescription o2) {
+      public int compare(final RunDirectory o1, final RunDirectory o2) {
         return getText(o1).compareToIgnoreCase(getText(o2));
       }
     };
 
-    Comparator<RunDescription> getColumnComparator() {
+    Comparator<RunDirectory> getColumnComparator() {
       return f_defaultComparator;
     }
   }
@@ -136,26 +138,26 @@ public final class RunViewModel {
       }
 
       @Override
-      String getText(final RunDescription rowData) {
+      String getText(final RunDirectory rowData) {
         if (rowData == null || rowData.getRunDirectory() == null) {
           return "Unknown";
         }
-        return rowData.getRunDirectory().getHumanReadableSize();
+        return rowData.getHumanReadableSize();
       }
 
       @Override
-      String getImageSymbolicName(final RunDescription rowData) {
-        if (rowData.isPrepared()) {
+      String getImageSymbolicName(final RunDirectory rowData) {
+        if (rowData.isPreparedOrIsBeingPrepared()) {
           return CommonImages.IMG_DRUM;
         }
         return CommonImages.IMG_FILE;
       }
 
-      private final Comparator<RunDescription> f_defaultComparator = new Comparator<RunDescription>() {
+      private final Comparator<RunDirectory> f_defaultComparator = new Comparator<RunDirectory>() {
         @Override
-        public int compare(final RunDescription o1, final RunDescription o2) {
-          long size1 = FileUtility.recursiveSizeInBytes(o1.getRunDirectory().getRunDirectory());
-          long size2 = FileUtility.recursiveSizeInBytes(o2.getRunDirectory().getRunDirectory());
+        public int compare(final RunDirectory o1, final RunDirectory o2) {
+          long size1 = FileUtility.recursiveSizeInBytes(o1.getRunDirectory());
+          long size2 = FileUtility.recursiveSizeInBytes(o2.getRunDirectory());
           if (size1 < size2) {
             return -1;
           } else if (size1 == size2) {
@@ -167,7 +169,7 @@ public final class RunViewModel {
       };
 
       @Override
-      Comparator<RunDescription> getColumnComparator() {
+      Comparator<RunDirectory> getColumnComparator() {
         return f_defaultComparator;
       }
     });
@@ -179,12 +181,12 @@ public final class RunViewModel {
       }
 
       @Override
-      String getText(final RunDescription rowData) {
-        return rowData.getName();
+      String getText(final RunDirectory rowData) {
+        return rowData.getRunDescription().getName();
       }
 
       @Override
-      String getImageSymbolicName(final RunDescription rowData) {
+      String getImageSymbolicName(final RunDirectory rowData) {
         RawFileHandles handles = rowData.getRawFileHandles();
         if (handles != null) {
           if (!handles.isLogClean()) {
@@ -202,8 +204,8 @@ public final class RunViewModel {
       }
 
       @Override
-      String getText(final RunDescription rowData) {
-        return SLUtility.toStringHMS(rowData.getStartTimeOfRun());
+      String getText(final RunDirectory rowData) {
+        return SLUtility.toStringHMS(rowData.getRunDescription().getStartTimeOfRun());
       }
     });
 
@@ -214,8 +216,8 @@ public final class RunViewModel {
       }
 
       @Override
-      String getText(final RunDescription rowData) {
-        long duration = rowData.getDuration();
+      String getText(final RunDirectory rowData) {
+        long duration = rowData.getRunDescription().getDuration();
         String text;
         if (duration == 0) {
           text = "-";
@@ -246,8 +248,8 @@ public final class RunViewModel {
       }
 
       @Override
-      String getText(final RunDescription rowData) {
-        return rowData.getUserName();
+      String getText(final RunDirectory rowData) {
+        return rowData.getRunDescription().getUserName();
       }
     });
 
@@ -258,8 +260,8 @@ public final class RunViewModel {
       }
 
       @Override
-      String getText(final RunDescription rowData) {
-        return rowData.getHostname();
+      String getText(final RunDirectory rowData) {
+        return rowData.getRunDescription().getHostname();
       }
     });
 
@@ -270,8 +272,8 @@ public final class RunViewModel {
       }
 
       @Override
-      String getText(final RunDescription rowData) {
-        return rowData.getJavaVersion();
+      String getText(final RunDirectory rowData) {
+        return rowData.getRunDescription().getJavaVersion();
       }
     });
 
@@ -282,8 +284,8 @@ public final class RunViewModel {
       }
 
       @Override
-      String getText(final RunDescription rowData) {
-        return rowData.getJavaVendor();
+      String getText(final RunDirectory rowData) {
+        return rowData.getRunDescription().getJavaVendor();
       }
     });
 
@@ -294,8 +296,9 @@ public final class RunViewModel {
       }
 
       @Override
-      String getText(final RunDescription rowData) {
-        return rowData.getOSName() + " (" + rowData.getOSVersion() + ") on " + rowData.getOSArch();
+      String getText(final RunDirectory rowData) {
+        final RunDescription desc = rowData.getRunDescription();
+        return desc.getOSName() + " (" + desc.getOSVersion() + ") on " + desc.getOSArch();
       }
     });
 
@@ -311,19 +314,19 @@ public final class RunViewModel {
       }
 
       @Override
-      String getText(final RunDescription rowData) {
-        return Integer.toString(rowData.getMaxMemoryMb());
+      String getText(final RunDirectory rowData) {
+        return Integer.toString(rowData.getRunDescription().getMaxMemoryMb());
       }
 
-      private final Comparator<RunDescription> f_defaultComparator = new Comparator<RunDescription>() {
+      private final Comparator<RunDirectory> f_defaultComparator = new Comparator<RunDirectory>() {
         @Override
-        public int compare(final RunDescription o1, final RunDescription o2) {
-          return o1.getMaxMemoryMb() - o2.getMaxMemoryMb();
+        public int compare(final RunDirectory o1, final RunDirectory o2) {
+          return o1.getRunDescription().getMaxMemoryMb() - o2.getRunDescription().getMaxMemoryMb();
         }
       };
 
       @Override
-      Comparator<RunDescription> getColumnComparator() {
+      Comparator<RunDirectory> getColumnComparator() {
         return f_defaultComparator;
       }
     });
@@ -340,19 +343,19 @@ public final class RunViewModel {
       }
 
       @Override
-      String getText(final RunDescription rowData) {
-        return Integer.toString(rowData.getProcessors());
+      String getText(final RunDirectory rowData) {
+        return Integer.toString(rowData.getRunDescription().getProcessors());
       }
 
-      private final Comparator<RunDescription> f_defaultComparator = new Comparator<RunDescription>() {
+      private final Comparator<RunDirectory> f_defaultComparator = new Comparator<RunDirectory>() {
         @Override
-        public int compare(final RunDescription o1, final RunDescription o2) {
-          return o1.getProcessors() - o2.getProcessors();
+        public int compare(final RunDirectory o1, final RunDirectory o2) {
+          return o1.getRunDescription().getProcessors() - o2.getRunDescription().getProcessors();
         }
       };
 
       @Override
-      Comparator<RunDescription> getColumnComparator() {
+      Comparator<RunDirectory> getColumnComparator() {
         return f_defaultComparator;
       }
     });

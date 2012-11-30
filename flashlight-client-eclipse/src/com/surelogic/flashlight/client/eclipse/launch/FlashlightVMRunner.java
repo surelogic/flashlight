@@ -54,6 +54,7 @@ import org.eclipse.jdt.launching.VMRunnerConfiguration;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.ui.progress.UIJob;
 
+import com.surelogic.Nullable;
 import com.surelogic._flashlight.common.CollectionType;
 import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic._flashlight.common.OutputType;
@@ -79,11 +80,10 @@ import com.surelogic.flashlight.client.eclipse.jobs.LaunchTerminationDetectionJo
 import com.surelogic.flashlight.client.eclipse.jobs.SwitchToFlashlightPerspectiveJob;
 import com.surelogic.flashlight.client.eclipse.jobs.WatchFlashlightMonitorJob;
 import com.surelogic.flashlight.client.eclipse.launch.LaunchHelper.RuntimeConfig;
+import com.surelogic.flashlight.client.eclipse.model.RunManager;
 import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
 import com.surelogic.flashlight.client.eclipse.views.monitor.MonitorStatus;
 import com.surelogic.flashlight.common.files.RunDirectory;
-import com.surelogic.flashlight.common.model.RunDescription;
-import com.surelogic.flashlight.common.model.RunManager;
 
 public final class FlashlightVMRunner implements IVMRunner {
     private static final String MAX_HEAP_PREFIX = "-Xmx";
@@ -272,19 +272,20 @@ public final class FlashlightVMRunner implements IVMRunner {
         terminationDetector.reschedule();
     }
 
+    @Nullable
     private RunDirectory findLastRunDirectory() throws CoreException {
-        RunDescription latest = null;
-        for (final RunDescription run : RunManager.getInstance()
-                .getRunDescriptions()) {
-            if (mainTypeName.equals(run.getName())) {
+      RunDirectory latest = null;
+        for (final RunDirectory run : RunManager.getInstance()
+                .getRunDirectories()) {
+            if (mainTypeName.equals(run.getRunDescription().getName())) {
                 if (latest == null
-                        || run.getStartTimeOfRun().after(
-                                latest.getStartTimeOfRun())) {
+                        || run.getRunDescription().getStartTimeOfRun().after(
+                                latest.getRunDescription().getStartTimeOfRun())) {
                     latest = run;
                 }
             }
         }
-        return latest == null ? null : latest.getRunDirectory();
+        return latest == null ? null : latest;
     }
 
     /**

@@ -21,7 +21,7 @@ import org.eclipse.swt.widgets.TableItem;
 import com.surelogic.common.SLUtility;
 import com.surelogic.common.core.JDTUtility;
 import com.surelogic.common.i18n.I18N;
-import com.surelogic.flashlight.common.model.RunDescription;
+import com.surelogic.flashlight.common.files.RunDirectory;
 
 /**
  * Choose one or more runs from those currently available in Flashlight.
@@ -80,10 +80,10 @@ public class RunSelectionPage extends UserInputWizardPage {
     }
 
     void validate() {
-        final List<RunDescription> selected = new ArrayList<RunDescription>();
+        final List<RunDirectory> selected = new ArrayList<RunDirectory>();
         for (final TableItem item : f_runTable.getItems()) {
             if (item.getChecked()) {
-                selected.add((RunDescription) item.getData());
+                selected.add((RunDirectory) item.getData());
             }
         }
         f_info.setSelectedRuns(selected);
@@ -97,23 +97,23 @@ public class RunSelectionPage extends UserInputWizardPage {
             if (!project.equals(selected)) {
                 f_runTable.removeAll();
                 selected = project;
-                final List<RunDescription> runList = new ArrayList<RunDescription>(
+                final List<RunDirectory> runList = new ArrayList<RunDirectory>(
                         f_info.getRuns());
-                Collections.sort(runList, new Comparator<RunDescription>() {
+                Collections.sort(runList, new Comparator<RunDirectory>() {
                     @Override
-                    public int compare(final RunDescription r1,
-                            final RunDescription r2) {
-                        int cmp = r1.getName().compareTo(r2.getName());
+                    public int compare(final RunDirectory r1,
+                            final RunDirectory r2) {
+                        int cmp = r1.getRunDescription().getName().compareTo(r2.getRunDescription().getName());
                         if (cmp == 0) {
-                            cmp = r1.getStartTimeOfRun().compareTo(
-                                    r2.getStartTimeOfRun());
+                            cmp = r1.getRunDescription().getStartTimeOfRun().compareTo(
+                                    r2.getRunDescription().getStartTimeOfRun());
                         }
                         return cmp;
                     }
                 });
-                for (final RunDescription run : runList) {
+                for (final RunDirectory run : runList) {
                     boolean noneSelected = true;
-                    final String runName = run.getName();
+                    final String runName = run.getRunDescription().getName();
                     final int idx = runName.lastIndexOf('.');
                     if (idx > 0) {
                         final String runPackage = runName.substring(0, idx);
@@ -121,10 +121,10 @@ public class RunSelectionPage extends UserInputWizardPage {
                         if (JDTUtility.findIType(project, runPackage, runClass) != null) {
                             final TableItem item = new TableItem(f_runTable,
                                     SWT.NONE);
-                            item.setText(0, run.getName());
-                            item.setText(1, SLUtility.toStringHMS(run
+                            item.setText(0, run.getRunDescription().getName());
+                            item.setText(1, SLUtility.toStringHMS(run.getRunDescription()
                                     .getStartTimeOfRun()));
-                            item.setText(run.getName());
+                            item.setText(run.getRunDescription().getName());
                             item.setData(run);
                             if (noneSelected) {
                                 noneSelected = false;

@@ -43,6 +43,7 @@ import com.surelogic.common.license.SLLicenseUtility;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.common.files.RawDataFilePrefix;
 import com.surelogic.flashlight.common.files.RawFileUtility;
+import com.surelogic.flashlight.common.files.RunDirectory;
 import com.surelogic.flashlight.common.model.RunDescription;
 import com.surelogic.flashlight.common.prep.AfterIntrinsicLockAcquisition;
 import com.surelogic.flashlight.common.prep.AfterIntrinsicLockRelease;
@@ -118,11 +119,11 @@ public final class PrepSLJob extends AbstractSLJob {
 
     private IPostPrep[] getPostPrep() {
         return new IPostPrep[] { new LockSetAnalysis(),
-                new WriteHtmlOverview(f_runDescription),
-                new EmptyQueries(f_runDescription, f_queries) };
+                new WriteHtmlOverview(f_runDirectory),
+                new EmptyQueries(f_runDirectory, f_queries) };
     }
 
-    private final RunDescription f_runDescription;
+    private final RunDirectory f_runDirectory;
     private final List<File> f_dataFiles;
     private final Set<AdHocQuery> f_queries;
     private final DBConnection f_database;
@@ -138,24 +139,24 @@ public final class PrepSLJob extends AbstractSLJob {
      *            an optional set of queries that will be run and checked
      *            against results
      */
-    public PrepSLJob(final RunDescription run, final int windowSize,
+    public PrepSLJob(final RunDirectory runDirectory, final int windowSize,
             final Set<AdHocQuery> queries) {
-        super("Preparing " + run.getName());
-        f_runDescription = run;
+        super("Preparing " + runDirectory.getRunDescription().getName());
+        f_runDirectory = runDirectory;
         f_dataFiles = new ArrayList<File>();
-        for (File f : run.getRawFileHandles().getDataFiles()) {
+        for (File f : runDirectory.getRawFileHandles().getDataFiles()) {
             f_dataFiles.add(f);
         }
         Collections.sort(f_dataFiles);
-        f_database = run.getDB();
+        f_database = runDirectory.getDB();
         f_windowSize = windowSize;
         f_queries = queries;
     }
 
     @Override
     public SLStatus run(final SLProgressMonitor monitor) {
-        File runDir = f_runDescription.getRunDirectory().getRunDirectory();
-        File invalidRun = new File(runDir,
+        final File runDir = f_runDirectory.getRunDirectory();
+        final File invalidRun = new File(runDir,
                 InstrumentationConstants.FL_INVALID_RUN);
         int estEventsInRawFile = 0;
         for (File f : f_dataFiles) {

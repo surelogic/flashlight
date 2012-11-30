@@ -10,9 +10,8 @@ import com.surelogic.common.logging.SLLogger;
 import com.surelogic.common.ui.EclipseUIUtility;
 import com.surelogic.common.ui.jobs.SLUIJob;
 import com.surelogic.flashlight.client.eclipse.dialogs.ConfirmPerspectiveSwitch;
+import com.surelogic.flashlight.client.eclipse.model.RunManager;
 import com.surelogic.flashlight.client.eclipse.perspectives.FlashlightPerspective;
-import com.surelogic.flashlight.common.jobs.RefreshRunManagerSLJob;
-import com.surelogic.flashlight.common.model.RunManager;
 
 /**
  * Job to prompt the user to switch to the Flashlight perspective. It handles

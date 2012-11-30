@@ -17,8 +17,8 @@ import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 import com.surelogic.common.core.JDTUtility;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.ui.EclipseUIUtility;
-import com.surelogic.flashlight.common.model.RunDescription;
-import com.surelogic.flashlight.common.model.RunManager;
+import com.surelogic.flashlight.client.eclipse.model.RunManager;
+import com.surelogic.flashlight.common.files.RunDirectory;
 
 public class RegionModelRefactoringAction implements IObjectActionDelegate,
         IWorkbenchWindowActionDelegate {
@@ -33,8 +33,8 @@ public class RegionModelRefactoringAction implements IObjectActionDelegate,
 
     @Override
     public void run(final IAction action) {
-        final List<RunDescription> preppedRuns = new ArrayList<RunDescription>(
-                RunManager.getInstance().getPreparedRunDescriptions());
+        final List<RunDirectory> preppedRuns = new ArrayList<RunDirectory>(
+                RunManager.getInstance().getPreparedRunDirectories());
 
         final RegionRefactoringInfo info = new RegionRefactoringInfo(
                 JDTUtility.getJavaProjects(), preppedRuns);

@@ -13,6 +13,7 @@ import com.surelogic.common.logging.SLLogger;
  * 
  * @see RunDirectory
  */
+// TODO MERGE WITH RAWFILE HANDLES NOT SURE WHY THIS NEEDS TO BE SEPARATE
 public final class InstrumentationFileHandles {
     /** The standard name for the instrumentation field database file. */
     public static final String FIELDS_FILE_NAME = "fields.txt";

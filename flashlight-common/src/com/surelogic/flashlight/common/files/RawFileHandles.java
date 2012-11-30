@@ -6,6 +6,7 @@ import java.io.FileReader;
 import java.util.Iterator;
 import java.util.logging.Level;
 
+import com.surelogic.Nullable;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.logging.SLLogger;
 
@@ -17,129 +18,129 @@ import com.surelogic.common.logging.SLLogger;
  */
 public final class RawFileHandles {
 
-    RawFileHandles(final RawDataFilePrefix[] data, final File log) {
-        if (data == null) {
-            throw new IllegalArgumentException(I18N.err(44, "data"));
-        }
-        f_data = new File[data.length];
-        int i = 0;
-        for (RawDataFilePrefix p : data) {
-            if (p == null) {
-                throw new IllegalArgumentException(I18N.err(44, "data"));
-            } else {
-                f_data[i] = p.getFile();
-                i++;
-            }
-        }
+  RawFileHandles(final RawDataFilePrefix[] data, @Nullable final File log) {
+    if (data == null)
+      throw new IllegalArgumentException(I18N.err(44, "data"));
+    if (data.length < 1)
+      throw new IllegalArgumentException(I18N.err(92, "data"));
 
-        /*
-         * The log file can be null.
-         */
-        f_log = log;
+    f_data = new File[data.length];
+    for (int j = 0; j < data.length; j++) {
+      RawDataFilePrefix p = data[j];
+      if (p == null)
+        throw new IllegalArgumentException(I18N.err(44, "data[" + j + "]"));
+      f_data[j] = p.getFile();
     }
-
-    private final File[] f_data;
-
-    public int numDataFiles() {
-        return f_data.length;
-    }
-
-    public File getFirstDataFile() {
-        return f_data[0];
-    }
-
-    /**
-     * A handle to the data files.
-     * 
-     * @return a non-null handle to the data files.
+    /*
+     * The log file can be null.
      */
-    public Iterable<File> getDataFiles() {
-        return new Iterable<File>() {
-            @Override
-            public Iterator<File> iterator() {
-                return new Iterator<File>() {
-                    int i = 0;
+    f_log = log;
+  }
 
-                    @Override
-                    public boolean hasNext() {
-                        return i < f_data.length;
-                    }
+  /**
+   * Should contain at least one element.
+   */
+  private final File[] f_data;
 
-                    @Override
-                    public File next() {
-                        try {
-                            return f_data[i];
-                        } finally {
-                            i++;
-                        }
-                    }
+  public int numDataFiles() {
+    return f_data.length;
+  }
 
-                    @Override
-                    public void remove() {
-                        throw new UnsupportedOperationException();
-                    }
-                };
-            }
-        };
-    }
+  public File getFirstDataFile() {
+    return f_data[0];
+  }
 
-    /**
-     * Checks if the data file is compressed.
-     * 
-     * @return {@code true} if the data file is compressed, {@code false}
-     *         otherwise.
-     */
-    public boolean isDataFileGzip() {
-        return RawFileUtility.isRawFileGzip(f_data[0]);
-    }
+  /**
+   * A handle to the data files.
+   * 
+   * @return a non-null handle to the data files.
+   */
+  public Iterable<File> getDataFiles() {
+    return new Iterable<File>() {
+      @Override
+      public Iterator<File> iterator() {
+        return new Iterator<File>() {
+          int i = 0;
 
-    private final File f_log;
+          @Override
+          public boolean hasNext() {
+            return i < f_data.length;
+          }
 
-    /**
-     * A handle to the log file if one exists.
-     * 
-     * @return a handle to the log file, or {@code null} if no log file exists.
-     */
-    public File getLogFile() {
-        return f_log;
-    }
-
-    /**
-     * Checks the log of this raw file and reports if it is clean. A log file is
-     * clean if it doesn't contain the string <tt>!PROBLEM!</tt> within it.
-     * <tt>!PROBLEM!</tt> is the special string that the instrumentation uses to
-     * highlight a problem with.
-     * 
-     * @return <code>true</code> if the log file is clean, <code>false</code>
-     *         otherwise.
-     */
-    public boolean isLogClean() {
-        try {
-            if (f_log == null || !f_log.exists()) {
-                return true;
-            }
-            final BufferedReader r = new BufferedReader(new FileReader(f_log));
+          @Override
+          public File next() {
             try {
-                while (true) {
-                    final String s = r.readLine();
-                    if (s == null) {
-                        break;
-                    }
-                    if (s.indexOf("!PROBLEM!") != -1) {
-                        return false;
-                    }
-                }
+              return f_data[i];
             } finally {
-                r.close();
+              i++;
             }
-        } catch (final Exception e) {
-            SLLogger.getLogger()
-                    .log(Level.SEVERE,
-                            I18N.err(
-                                    40,
-                                    f_log == null ? null : f_log
-                                            .getAbsolutePath()), e);
-        }
+          }
+
+          @Override
+          public void remove() {
+            throw new UnsupportedOperationException();
+          }
+        };
+      }
+    };
+  }
+
+  /**
+   * Checks if the first known data file is compressed.
+   * 
+   * @return {@code true} if the data file is compressed, {@code false}
+   *         otherwise.
+   * 
+   * @see RawFileUtility#isRawFileGzip(File)
+   */
+  public boolean isDataFileGzip() {
+    return RawFileUtility.isRawFileGzip(getFirstDataFile());
+  }
+
+  @Nullable
+  private final File f_log;
+
+  /**
+   * A handle to the log file if one exists.
+   * 
+   * @return a handle to the log file, or {@code null} if no log file exists.
+   */
+  @Nullable
+  public File getLogFile() {
+    return f_log;
+  }
+
+  /**
+   * Checks the log of this raw file and reports if it is clean. A log file is
+   * clean if it doesn't contain the string <tt>!PROBLEM!</tt> within it.
+   * <tt>!PROBLEM!</tt> is the special string that the instrumentation uses to
+   * highlight a problem with.
+   * 
+   * @return {@code true} if the log file is clean or doesn't exist,
+   *         {@code false} otherwise.
+   */
+  public boolean isLogClean() {
+    try {
+      if (f_log == null || !f_log.exists()) {
         return true;
+      }
+      final BufferedReader r = new BufferedReader(new FileReader(f_log));
+      try {
+        while (true) {
+          final String s = r.readLine();
+          if (s == null) {
+            break;
+          }
+          if (s.indexOf("!PROBLEM!") != -1) {
+            return false;
+          }
+        }
+      } finally {
+        r.close();
+      }
+    } catch (final Exception e) {
+      SLLogger.getLogger().log(Level.SEVERE, I18N.err(40, f_log == null ? null : f_log.getAbsolutePath()), e);
     }
+    return true;
+  }
 }

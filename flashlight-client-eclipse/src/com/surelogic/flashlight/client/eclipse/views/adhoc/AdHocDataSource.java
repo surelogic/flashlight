@@ -24,8 +24,8 @@ import com.surelogic.common.ui.adhoc.dialogs.LotsOfSavedQueriesDialog;
 import com.surelogic.common.ui.jobs.SLUIJob;
 import com.surelogic.flashlight.client.eclipse.Activator;
 import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
+import com.surelogic.flashlight.common.files.RunDirectory;
 import com.surelogic.flashlight.common.jobs.JobConstants;
-import com.surelogic.flashlight.common.model.RunDescription;
 
 public final class AdHocDataSource extends AdHocManagerAdapter implements
 		IAdHocDataSource, ILifecycle {
@@ -56,7 +56,7 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements
 	 * The currently selected run, may be {@code null} which indicates that no
 	 * run is selected.
 	 */
-	private volatile RunDescription f_selectedRun;
+	private volatile RunDirectory f_selectedRun;
 
 	/**
 	 * Gets the currently selected run.
@@ -64,7 +64,7 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements
 	 * @return the currently selected run, or {@code null} if no run is
 	 *         selected.
 	 */
-	public RunDescription getSelectedRun() {
+	public RunDirectory getSelectedRun() {
 		return f_selectedRun;
 	}
 
@@ -75,7 +75,7 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements
 	 *            the run that is now selected, or {@code null} if no run is now
 	 *            selected.
 	 */
-	public void setSelectedRun(final RunDescription runDescription) {
+	public void setSelectedRun(final RunDirectory runDescription) {
 		f_selectedRun = runDescription;
 	}
 
@@ -102,7 +102,7 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements
 	}
 
 	public final DBConnection getDB() {
-		final RunDescription desc = getSelectedRun();
+		final RunDirectory desc = getSelectedRun();
 		return desc == null ? null : desc.getDB();
 	}
 
@@ -179,10 +179,10 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements
 	 *         currently selected
 	 */
 	public String[] getCurrentAccessKeys() {
-		RunDescription desc = getSelectedRun();
+	  RunDirectory desc = getSelectedRun();
 		if (desc == null) {
 			return null;
 		}
-		return new String[] { desc.toIdentityString(), JobConstants.QUERY_KEY };
+		return new String[] { desc.getRunDescription().toIdentityString(), JobConstants.QUERY_KEY };
 	}
 }

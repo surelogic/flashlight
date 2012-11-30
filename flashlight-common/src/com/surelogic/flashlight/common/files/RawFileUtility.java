@@ -156,7 +156,7 @@ public final class RawFileUtility {
       return new RunDescription(prefixInfo.getName(), prefixInfo.getRawDataVersion(), prefixInfo.getHostname(),
           prefixInfo.getUserName(), prefixInfo.getJavaVersion(), prefixInfo.getJavaVendor(), prefixInfo.getOSName(),
           prefixInfo.getOSArch(), prefixInfo.getOSVersion(), prefixInfo.getMaxMemoryMb(), prefixInfo.getProcessors(),
-          new Timestamp(prefixInfo.getWallClockTime().getTime()), duration, false /* TODO */, runComplete.exists());
+          new Timestamp(prefixInfo.getWallClockTime().getTime()), duration, prefixInfo.isAndroid(), runComplete.exists());
     } else {
       throw new IllegalStateException(I18N.err(107, prefixInfo.getFile().getAbsolutePath()));
     }

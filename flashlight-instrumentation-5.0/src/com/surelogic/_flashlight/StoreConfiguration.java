@@ -1,6 +1,7 @@
 package com.surelogic._flashlight;
 
 import static com.surelogic._flashlight.common.InstrumentationConstants.DATE_FORMAT;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_ANDROID;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_COLLECTION_TYPE;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_COLLECTION_TYPE_DEFAULT;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_CONSOLE_PORT;
@@ -91,6 +92,7 @@ public class StoreConfiguration {
     private static volatile boolean handleFieldAccesses;
     private static volatile boolean debug;
     private static volatile boolean isPostmortemMode;
+    private static volatile boolean isAndroid;
 
     private static void updateIfNotSet(final Properties props,
             final String propName, final String propValue) {
@@ -136,6 +138,7 @@ public class StoreConfiguration {
             updateIfNotSet(props, FL_REFINERY_SIZE,
                     InstrumentationConf.getFL_REFINERY_SIZE());
             updateIfNotSet(props, FL_RUN, InstrumentationConf.getFL_RUN());
+            updateIfNotSet(props, FL_ANDROID, InstrumentationConf.getFL_ANDROID());
             updateIfNotSet(props, FL_RUN_FOLDER,
                     InstrumentationConf.getFL_RUN_FOLDER());
             updateIfNotSet(props, FL_SITES_FILE,
@@ -326,6 +329,7 @@ public class StoreConfiguration {
                     FL_OUTPUT_TYPE_DEFAULT));
         }
         setDebug("ON".equalsIgnoreCase(props.getProperty(FL_DEBUG, "OFF")));
+        isAndroid = props.getProperty(FL_ANDROID) != null;
         setCollectionType(CollectionType.valueOf(
                 props.getProperty(FL_COLLECTION_TYPE),
                 FL_COLLECTION_TYPE_DEFAULT));
@@ -597,6 +601,10 @@ public class StoreConfiguration {
 
     public static void setPostmortemMode(final boolean isPostmortemMode) {
         StoreConfiguration.isPostmortemMode = isPostmortemMode;
+    }
+    
+    public static boolean isAndroid() {
+      return isAndroid;
     }
 
     /**

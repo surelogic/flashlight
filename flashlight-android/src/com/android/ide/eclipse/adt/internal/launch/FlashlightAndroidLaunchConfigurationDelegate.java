@@ -620,6 +620,7 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
             infoClassDest.getParentFile().mkdirs();
             Properties props = new Properties();
             props.setProperty(InstrumentationConstants.FL_RUN, runName);
+            props.setProperty(InstrumentationConstants.FL_ANDROID, "true");
 
             props.setProperty(InstrumentationConstants.FL_COLLECTION_TYPE,
                     conf.getCollectionType());

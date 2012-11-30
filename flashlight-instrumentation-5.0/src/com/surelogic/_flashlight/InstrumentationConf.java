@@ -5,7 +5,6 @@ package com.surelogic._flashlight;
  * instrumentation jars.
  * 
  * @author nathan
- * 
  */
 public class InstrumentationConf {
 
@@ -85,4 +84,7 @@ public class InstrumentationConf {
         return null;
     }
 
+    public static String getFL_ANDROID() {
+      return null;
+    }
 }

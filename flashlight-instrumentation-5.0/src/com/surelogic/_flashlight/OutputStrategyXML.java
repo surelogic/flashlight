@@ -50,6 +50,8 @@ final class OutputStrategyXML extends EventVisitor {
     addProperty("os.name", AttributeType.OS_NAME, b);
     addProperty("os.arch", AttributeType.OS_ARCH, b);
     addProperty("os.version", AttributeType.OS_VERSION, b);
+    if (StoreConfiguration.isAndroid())
+      Entities.addAttribute(AttributeType.ANDROID.label(), "true", b);
     Entities.addAttribute(AttributeType.MEMORY_MB.label(), Runtime.getRuntime().maxMemory() / (1024L * 1024L), b);
     Entities.addAttribute(AttributeType.CPUS.label(), Runtime.getRuntime().availableProcessors(), b);
     b.append("/>");

@@ -72,6 +72,8 @@ public final class InstrumentationConstants {
   public static final String FL_INVALID_RUN = "Run.Invalid";
 
   public static final String FL_LOG_SUFFIX = ".flog";
+  
+  public static final String FL_ANDROID = "android";
 
   public static final String FL_COLLECTION_TYPE = "FL_COLLECTION_TYPE";
   public static final CollectionType FL_COLLECTION_TYPE_DEFAULT = CollectionType.ALL;
@@ -89,7 +91,7 @@ public final class InstrumentationConstants {
 
   public static final String[] FL_PROPERTY_LIST = new String[] { FL_COLLECTION_TYPE, FL_CONSOLE_PORT, FL_DATE_OVERRIDE, FL_DEBUG,
       FL_DIR, FL_FIELDS_FILE, FL_OFF, FL_NO_SPY, FL_OUTPUT_PORT, FL_OUTPUT_TYPE, FL_OUTQ_SIZE, FL_POSTMORTEM, FL_RAWQ_SIZE,
-      FL_REFINERY_OFF, FL_REFINERY_SIZE, FL_RUN, FL_RUN_FOLDER, FL_SITES_FILE };
+      FL_REFINERY_OFF, FL_REFINERY_SIZE, FL_RUN, FL_RUN_FOLDER, FL_SITES_FILE, FL_ANDROID};
 
   /**
    * The number of events a single log file should (roughly) contain.

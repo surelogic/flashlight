@@ -8,7 +8,6 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 
-import com.surelogic._flashlight.common.EventType;
 import com.surelogic._flashlight.common.LongSet;
 import com.surelogic._flashlight.common.PreppedAttributes;
 
@@ -19,7 +18,7 @@ public final class TraceNode extends AbstractPrep {
 	private int count;
 
 	public String getXMLElementName() {
-		return EventType.Trace_Node.getLabel();
+		return "trace-node";
 	}
 
 	public void parse(final PreppedAttributes attributes) throws SQLException {

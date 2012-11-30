@@ -8,7 +8,6 @@ Require-Bundle: com.surelogic.common,
  org.eclipse.jface
 Export-Package: com.surelogic._flashlight.common,
  com.surelogic.flashlight.common,
- com.surelogic.flashlight.common.convert,
  com.surelogic.flashlight.common.files,
  com.surelogic.flashlight.common.jobs,
  com.surelogic.flashlight.common.model,

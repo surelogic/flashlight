@@ -3,7 +3,6 @@ package com.surelogic._flashlight.trace;
 import static com.surelogic._flashlight.common.AttributeType.PARENT_ID;
 import static com.surelogic._flashlight.common.AttributeType.SITE_ID;
 import static com.surelogic._flashlight.common.AttributeType.TRACE;
-import static com.surelogic._flashlight.common.EventType.Trace_Node;
 
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -241,7 +240,7 @@ public abstract class TraceNode extends AbstractCallLocation implements
 	@Override
 	public String toString() {
 		final StringBuilder b = new StringBuilder();
-		b.append("<").append(Trace_Node.getLabel());
+		b.append("<").append("trace-node");
 		Entities.addAttribute(TRACE.label(), getId(), b);
 		Entities.addAttribute(SITE_ID.label(), getSiteId(), b);
 		Entities.addAttribute(PARENT_ID.label(), getParentId(), b);

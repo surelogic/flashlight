@@ -120,7 +120,7 @@ public final class RunDirectory {
     final RawFileHandles rawFileHandles = RawFileUtility.getRawFileHandlesFor(directory,
         prefixInfos.toArray(new RawDataFilePrefix[prefixInfos.size()]));
 
-    return new RunDirectory(run, directory, headerFile, instrumentation, source, projects, rawFileHandles);
+    return new RunDirectory(run, directory, instrumentation, source, projects, rawFileHandles);
   }
 
   @Nullable
@@ -203,12 +203,6 @@ public final class RunDirectory {
   private final File f_runDirHandle;
 
   /**
-   * The run header file
-   */
-  @NonNull
-  private final File f_headerFileHandle;
-
-  /**
    * A description of the run in this directory.
    */
   @NonNull
@@ -239,12 +233,11 @@ public final class RunDirectory {
   private final RawFileHandles f_rawFileHandles;
 
   private RunDirectory(@NonNull final RunDescription runDescription, @NonNull final File runDirHandle,
-      @NonNull final File headerFileHandle, @NonNull final InstrumentationFileHandles instrumentationFileHandles,
+      @NonNull final InstrumentationFileHandles instrumentationFileHandles,
       @NonNull final SourceZipFileHandles sourceZipFileHandles, @NonNull final ProjectsDirectoryHandles projectDirHandles,
       @NonNull final RawFileHandles rawFileHandles) {
     f_runDescription = runDescription;
     f_runDirHandle = runDirHandle;
-    f_headerFileHandle = headerFileHandle;
     f_instrumentationFileHandles = instrumentationFileHandles;
     f_sourceZipFileHandles = sourceZipFileHandles;
     f_projectDirHandles = projectDirHandles;
@@ -279,17 +272,6 @@ public final class RunDirectory {
   @NonNull
   public String getHumanReadableSize() {
     return FileUtility.bytesToHumanReadableString(FileUtility.recursiveSizeInBytes(f_runDirHandle));
-  }
-
-  /**
-   * Gets an abstract representation of the header file in this run directory.
-   * 
-   * @return an abstract representation of the header file in this run
-   *         directory.
-   */
-  @NonNull
-  public File getHeaderFile() {
-    return f_headerFileHandle;
   }
 
   /**

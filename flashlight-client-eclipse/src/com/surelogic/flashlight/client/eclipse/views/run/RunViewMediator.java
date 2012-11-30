@@ -256,14 +256,11 @@ public final class RunViewMediator extends AdHocManagerAdapter implements IRunMa
           return;
         }
         for (final RunDirectory description : selected) {
-          final RawFileHandles handles = description.getRawFileHandles();
           if (description.isPreparedOrIsBeingPrepared()) {
             jobs.add(new UnPrepSLJob(description, AdHocDataSource.getManager()));
           }
-          if (handles != null) {
-            final File dataDir = EclipseUtility.getFlashlightDataDirectory();
-            jobs.add(new DeleteRawFilesSLJob(dataDir, description.getRunDescription()));
-          }
+          final File dataDir = EclipseUtility.getFlashlightDataDirectory();
+          jobs.add(new DeleteRawFilesSLJob(dataDir, description.getRunDescription()));
           keys.add(description.getRunDescription().toIdentityString());
         }
       }

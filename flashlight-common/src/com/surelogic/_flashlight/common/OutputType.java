@@ -19,10 +19,6 @@ import javax.xml.parsers.SAXParserFactory;
 
 import org.xml.sax.SAXException;
 
-import com.surelogic.NonNull;
-import com.surelogic.Nullable;
-import com.surelogic.common.i18n.I18N;
-
 public enum OutputType {
 
   FL(false, ".fl"), FL_GZ(true, ".fl.gz"), FLH(false, ".flh");
@@ -44,7 +40,7 @@ public enum OutputType {
     return f_compressed;
   }
 
-  @NonNull
+  /*@NonNull*/
   public String getSuffix() {
     return f_suffix;
   }
@@ -59,11 +55,8 @@ public enum OutputType {
    *          a default output type.
    * @return an output type in {@link #values()} that exactly matches the passed
    *         string, or the passed default.
-   * @throws IllegalArgumentException
-   *           if {@code DefaultValue} is null and it needs to be returned.
    */
-  @NonNull
-  public static OutputType valueOf(final String value, @NonNull final OutputType defaultValue) {
+  public static OutputType valueOf(final String value, /*@NonNull*/ final OutputType defaultValue) {
     if (value != null) {
       for (OutputType val : values()) {
         if (val.toString().equals(value)) {
@@ -71,8 +64,6 @@ public enum OutputType {
         }
       }
     }
-    if (defaultValue == null)
-      throw new IllegalArgumentException(I18N.err(44, "defaultValue"));
     return defaultValue;
   }
 
@@ -85,7 +76,7 @@ public enum OutputType {
    *          otherwise.
    * @return {@link #FL_GZ} if compression is requested, {@link #FL} if not.
    */
-  @NonNull
+  /*@NonNull*/
   public static OutputType get(final boolean compress) {
     if (compress) {
       return FL_GZ;
@@ -103,7 +94,7 @@ public enum OutputType {
    * @return an output type for the passed file, or {@code null} if none can be
    *         determined.
    */
-  @Nullable
+  /*@Nullable*/
   public static OutputType detectFileType(final File file) {
     if (file == null)
       return null;

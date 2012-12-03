@@ -192,33 +192,15 @@ public final class RunManager {
     return null;
   }
 
-  @Nullable
-  public RunDirectory getRunDirectoryFor(final RunDescription runDescription) {
-    for (final RunDirectory runDirectory : getRunDirectories()) {
-      if (runDirectory.getDescription().equals(runDescription)) {
-        return runDirectory;
-      }
-    }
-    return null;
-  }
-
   /**
-   * Gets the set of run descriptions known to this manager that have not been
-   * prepared. This set can be empty, but will not be {@code null}.
+   * Gets the set of run directories managed by this that have not been
+   * prepared. The return set can be empty, but will not be {@code null}.
    * 
-   * @return the non-null set of run descriptions known to this manager that
-   *         have not been prepared. This is a copy of the set maintained by
-   *         this manager so it can be freely mutated by callers.
+   * @return the set of run directories managed by this that have not been
+   *         prepared. May be empty.
    */
   @NonNull
-  public Set<RunDescription> getUnPreppedRunDescriptions() {
-    final Set<RunDescription> result = getRunDescriptions();
-    result.removeAll(getPreparedRunDescriptions());
-    return result;
-  }
-
-  @NonNull
-  public Set<RunDirectory> getUnPreppedRunDirectories() {
+  public Set<RunDirectory> getNotPreparedRunDirectories() {
     final Set<RunDirectory> result = getRunDirectories();
     result.removeAll(getPreparedRunDirectories());
     return result;

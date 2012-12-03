@@ -6,7 +6,9 @@ import java.io.FileReader;
 import java.util.Iterator;
 import java.util.logging.Level;
 
+import com.surelogic.NonNull;
 import com.surelogic.Nullable;
+import com.surelogic.common.FileUtility;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.logging.SLLogger;
 
@@ -18,7 +20,7 @@ import com.surelogic.common.logging.SLLogger;
  */
 public final class RawFileHandles {
 
-  RawFileHandles(final RawDataFilePrefix[] data, @Nullable final File log) {
+  RawFileHandles(@NonNull final RawDataFilePrefix[] data, @Nullable final File[] logs) {
     if (data == null)
       throw new IllegalArgumentException(I18N.err(44, "data"));
     if (data.length < 1)
@@ -34,7 +36,7 @@ public final class RawFileHandles {
     /*
      * The log file can be null.
      */
-    f_log = log;
+    f_logs = logs == null ? new File[0] : logs;
   }
 
   /**
@@ -97,17 +99,19 @@ public final class RawFileHandles {
     return RawFileUtility.isRawFileGzip(getFirstDataFile());
   }
 
-  @Nullable
-  private final File f_log;
+  @NonNull
+  private final File[] f_logs;
 
   /**
-   * A handle to the log file if one exists.
+   * Gets all the log files found in the Flashlight directory. Do not mutate the
+   * returned array.
    * 
-   * @return a handle to the log file, or {@code null} if no log file exists.
+   * @return An array referencing all that log files found in the Flashlight
+   *         directory. May be empty.
    */
-  @Nullable
-  public File getLogFile() {
-    return f_log;
+  @NonNull
+  public File[] getLogFiles() {
+    return f_logs;
   }
 
   /**
@@ -120,11 +124,19 @@ public final class RawFileHandles {
    *         {@code false} otherwise.
    */
   public boolean isLogClean() {
+    boolean result = true;
+    for (final File log : f_logs) {
+      result &= isLogCleanHelper(log);
+    }
+    return result;
+  }
+
+  private boolean isLogCleanHelper(@NonNull File log) {
     try {
-      if (f_log == null || !f_log.exists()) {
+      if (log == null || !log.exists()) {
         return true;
       }
-      final BufferedReader r = new BufferedReader(new FileReader(f_log));
+      final BufferedReader r = new BufferedReader(new FileReader(log));
       try {
         while (true) {
           final String s = r.readLine();
@@ -139,8 +151,18 @@ public final class RawFileHandles {
         r.close();
       }
     } catch (final Exception e) {
-      SLLogger.getLogger().log(Level.SEVERE, I18N.err(40, f_log == null ? null : f_log.getAbsolutePath()), e);
+      SLLogger.getLogger().log(Level.SEVERE, I18N.err(40, log == null ? null : log.getAbsolutePath()), e);
     }
     return true;
+  }
+
+  public String getLogContentsAsAString() {
+    final StringBuilder b = new StringBuilder();
+    for (final File log : f_logs) {
+      b.append("LOG FILE: ").append(log.getName()).append('\n');
+      b.append(FileUtility.getFileContentsAsStringOrDefaultValue(log, "-empty-"));
+      b.append("\n\n_______________________________________________________________\n");
+    }
+    return b.toString();
   }
 }

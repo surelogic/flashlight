@@ -225,15 +225,11 @@ public final class RunViewMediator extends AdHocManagerAdapter implements IRunMa
       final RunDirectory[] selected = getSelectedRunDirectories();
       for (final RunDirectory runDirectory : selected) {
         if (runDirectory != null) {
-          final RawFileHandles handles = runDirectory.getRawFileHandles();
-          final File logFile = handles.getLogFile();
-          if (logFile != null) {
-            /*
-             * This dialog is modeless so that we can open more than one.
-             */
-            final LogDialog d = new LogDialog(f_table.getShell(), handles.getLogFile(), runDirectory);
-            d.open();
-          }
+          /*
+           * This dialog is modeless so that we can open more than one.
+           */
+          final LogDialog d = new LogDialog(f_table.getShell(), runDirectory);
+          d.open();
         }
       }
     }

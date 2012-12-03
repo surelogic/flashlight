@@ -171,9 +171,8 @@ public abstract class RewriteManager {
                 final String relativePath, final String fname,
                 final boolean isBlacklisted) throws IOException {
             if (isClassfileName(fname)) {
-                messenger.verbose("Scanning classfile " + fname);
+                messenger.increaseNestingWith("Scanning classfile " + fname);
                 try {
-                    messenger.increaseNesting();
                     scanClassfileStream(provider, relativePath, isBlacklisted);
                 } finally {
                     messenger.decreaseNesting();
@@ -434,9 +433,8 @@ public abstract class RewriteManager {
                 final String internalClassName = pathToInternalClassName(relativeName);
                 if (!duplicateClasses.isInconsistentlyDuplicated(internalClassName)) {
                     copy = false;
-                    messenger.verbose("Rewriting classfile " + fname);
+                    messenger.increaseNestingWith("Rewriting classfile " + fname);
                     try {
-                        messenger.increaseNesting();
                         rewriteClassfileStream(provider, outFile);
                     } finally {
                         messenger.decreaseNesting();
@@ -449,21 +447,27 @@ public abstract class RewriteManager {
                         dups);
                 }
             }
-            if (copy) {
-                messenger.verbose("Copying file unchanged " + fname);
-                final InputStream inStream = provider.getInputStream();
-                try {
-                    messenger.increaseNesting();
-                    copyStream(inStream, outFile);
-                } finally {
-                    messenger.decreaseNesting();
-                    try {
-                        inStream.close();
-                    } catch (final IOException e) {
-                        // Doesn't want to close, what can we do?
-                    }
-                }
-            }
+			if (copy) {
+				messenger.increaseNestingWith("Copying file unchanged " + fname);
+				try {
+					final InputStream inStream = provider.getInputStream();
+					try {
+						copyStream(inStream, outFile);
+					} catch (final IOException e) {
+						messenger.error("IOException copying " + fname + ": " + e.getMessage());
+						throw e;
+					} finally {
+						try {
+							inStream.close();
+						} catch (final IOException ignore) {
+							messenger.error("IOException when closing input stream: " + ignore.getMessage());
+							// Doesn't want to close, what can we do but complain?
+						}
+					}
+				} finally {
+					messenger.decreaseNesting();
+				}
+			}
         }
 
         /**

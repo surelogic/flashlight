@@ -1,6 +1,5 @@
 package com.surelogic.flashlight.client.eclipse.dialogs;
 
-import java.io.File;
 import java.util.ArrayList;
 
 import org.eclipse.jface.dialogs.Dialog;
@@ -18,7 +17,6 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 
 import com.surelogic.common.CommonImages;
-import com.surelogic.common.FileUtility;
 import com.surelogic.common.SLUtility;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.ui.SLImages;
@@ -30,7 +28,7 @@ import com.surelogic.flashlight.common.files.RunDirectory;
  */
 public final class LogDialog extends Dialog {
 
-  private final File f_log;
+  private final RunDirectory f_run;
 
   private final String f_title;
 
@@ -44,18 +42,16 @@ public final class LogDialog extends Dialog {
    * @param run
    *          the Flashlight run the log is about.
    */
-  public LogDialog(Shell parentShell, final File log, final RunDirectory run) {
+  public LogDialog(Shell parentShell, final RunDirectory run) {
     super(parentShell);
     /*
      * Ensure that this dialog is modeless.
      */
     setShellStyle(SWT.RESIZE | SWT.MAX | SWT.MODELESS);
     setBlockOnOpen(false);
-    if (log == null)
-      throw new IllegalArgumentException(I18N.err(44, "log"));
-    f_log = log;
     if (run == null)
       throw new IllegalArgumentException(I18N.err(44, "run"));
+    f_run = run;
     f_title = I18N.msg("flashlight.dialog.log.title", run.getDescription().getName(),
         SLUtility.toStringHMS(run.getDescription().getStartTimeOfRun()));
   }
@@ -93,7 +89,7 @@ public final class LogDialog extends Dialog {
         event.styles = result.toArray(new StyleRange[result.size()]);
       }
     });
-    text.setText(FileUtility.getFileContentsAsString(f_log));
+    text.setText(f_run.getRawFileHandles().getLogContentsAsAString());
     return c;
   }
 

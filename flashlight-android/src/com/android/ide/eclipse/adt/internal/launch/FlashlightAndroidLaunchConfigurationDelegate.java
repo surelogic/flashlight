@@ -593,7 +593,7 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
                     InstrumentationConstants.FL_SOURCE_FOLDER_LOC);
             sourceDir.mkdirs();
             apkFile = new File(runDir, InstrumentationConstants.FL_APK_FILE_LOC);
-            apkFile.mkdirs();
+            apkFile.getParentFile().mkdirs();
             fieldsFile = new File(runDir,
                     InstrumentationConstants.FL_FIELDS_FILE_LOC);
             log = new File(runDir, InstrumentationConstants.FL_LOG_FILE_LOC);

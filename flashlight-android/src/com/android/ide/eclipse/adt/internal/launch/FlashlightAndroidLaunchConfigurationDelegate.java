@@ -248,8 +248,9 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
             return;
         } else {
             // We are going to store away the apk for debugging purposes
-            FileUtility.copy(applicationPackage.getRawLocation().toFile(),
-                    data.apkFile);
+            File apkFile = applicationPackage.getRawLocation().toFile();
+            FileUtility.copy(apkFile,
+                    new File(data.apkFolder, apkFile.getName()));
         }
 
         // we need some information from the manifest
@@ -544,7 +545,7 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
         final File completeFile;
         final File portFile;
         final File sourceDir;
-        final File apkFile;
+        final File apkFolder;
         final Date time;
         final String projectName;
         final String runName;
@@ -592,8 +593,9 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
             sourceDir = new File(runDir,
                     InstrumentationConstants.FL_SOURCE_FOLDER_LOC);
             sourceDir.mkdirs();
-            apkFile = new File(runDir, InstrumentationConstants.FL_APK_FILE_LOC);
-            apkFile.getParentFile().mkdirs();
+            apkFolder = new File(runDir,
+                    InstrumentationConstants.FL_APK_FOLDER_LOC);
+            apkFolder.mkdirs();
             fieldsFile = new File(runDir,
                     InstrumentationConstants.FL_FIELDS_FILE_LOC);
             log = new File(runDir, InstrumentationConstants.FL_LOG_FILE_LOC);

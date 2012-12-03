@@ -7,7 +7,7 @@ public final class InstrumentationConstants {
     public static final boolean allowJava14 = true;
 
     public static final String DATE_FORMAT = "-yyyy.MM.dd-'at'-HH.mm.ss.SSS";
-    
+
     public static final String LOG_SUFFIX = "-log.txt";
 
     public static final String FL_PACKAGE = "com/surelogic/_flashlight";
@@ -24,13 +24,14 @@ public final class InstrumentationConstants {
 
     public static final String FL_SOURCE_RESOURCE = FL_PACKAGE + "/sources.zip";
     public static final String FL_SOURCE_FOLDER_LOC = "source";
-    private static final String FL_LOG_FILE_NAME = "instrumentation" + LOG_SUFFIX;
+    private static final String FL_LOG_FILE_NAME = "instrumentation"
+            + LOG_SUFFIX;
     public static final String FL_LOG_FILE_LOC = FL_LOG_FILE_NAME;
     public static final String FL_LOG_RESOURCE = FL_PACKAGE + "/"
             + FL_LOG_FILE_NAME;
 
-    public static final String FL_APK_FILE_LOC = FL_INSTRUMENTATION_FOLDER_NAME
-            + File.separator + "instrumented.apk";
+    public static final String FL_APK_FOLDER_LOC = FL_INSTRUMENTATION_FOLDER_NAME
+            + File.separator + "apk";
 
     public static final String FL_PORT_FILE_LOC = "port";
 

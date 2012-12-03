@@ -36,7 +36,7 @@ public class EmptyQueriesCache {
     if (runDirectory == null || query == null)
       return false;
 
-    final RunDescription runDescription = runDirectory.getRunDescription();
+    final RunDescription runDescription = runDirectory.getDescription();
 
     if (!f_runToEmptyQueries.containsKey(runDescription))
       readFile(runDirectory);
@@ -76,7 +76,7 @@ public class EmptyQueriesCache {
       SLLogger.getLogger().log(Level.WARNING, I18N.err(40, emptyQueriesFile.toString()));
     }
     if (!emptyQueries.isEmpty()) {
-      f_runToEmptyQueries.put(runDirectory.getRunDescription(), emptyQueries);
+      f_runToEmptyQueries.put(runDirectory.getDescription(), emptyQueries);
     }
   }
 }

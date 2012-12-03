@@ -145,7 +145,8 @@ public final class RawFileUtility {
 
         if (prefixInfo.isWellFormed()) {
             final File runComplete = new File(prefixInfo.getFile()
-                    .getParentFile(), InstrumentationConstants.FL_COMPLETE_RUN_LOC);
+                    .getParentFile(),
+                    InstrumentationConstants.FL_COMPLETE_RUN_LOC);
             final boolean runCompleted = runComplete.exists();
             long duration = 0;
             if (runCompleted) {
@@ -270,7 +271,7 @@ public final class RawFileUtility {
             for (final File runDir : getRunDirs()) {
                 final RunDirectory runDirectory = RunDirectory.getFor(runDir);
                 if (runDirectory != null) {
-                    final RunDescription run = runDirectory.getRunDescription();
+                    final RunDescription run = runDirectory.getDescription();
                     f_runToHandles.put(run, runDirectory);
                 }
             }

@@ -141,7 +141,7 @@ public final class PrepSLJob extends AbstractSLJob {
      */
     public PrepSLJob(final RunDirectory runDirectory, final int windowSize,
             final Set<AdHocQuery> queries) {
-        super("Preparing " + runDirectory.getRunDescription().getName());
+        super("Preparing " + runDirectory.getDescription().getName());
         f_runDirectory = runDirectory;
         f_dataFiles = new ArrayList<File>();
         for (File f : runDirectory.getRawFileHandles().getDataFiles()) {
@@ -155,7 +155,7 @@ public final class PrepSLJob extends AbstractSLJob {
 
     @Override
     public SLStatus run(final SLProgressMonitor monitor) {
-        final File runDir = f_runDirectory.getRunDirectory();
+        final File runDir = f_runDirectory.getDirectory();
         final File invalidRun = new File(runDir,
                 InstrumentationConstants.FL_INVALID_RUN);
         int estEventsInRawFile = 0;

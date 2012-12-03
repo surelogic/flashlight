@@ -168,7 +168,7 @@ public final class QueryResultsView extends AbstractQueryResultsView {
         try {
             Map<String, String> params = SimpleHTMLPrinter
                     .extractParametersFromURL(url);
-            params.put(AdHocManager.DATABASE, run.getRunDescription().toIdentityString());
+            params.put(AdHocManager.DATABASE, run.getDescription().toIdentityString());
             JumpToCode.getInstance().jumpToCode(params);
         } catch (IllegalStateException problem) {
             SLLogger.getLogger()

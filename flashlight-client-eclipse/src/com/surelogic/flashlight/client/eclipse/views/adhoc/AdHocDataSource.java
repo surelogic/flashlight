@@ -183,6 +183,6 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements
 		if (desc == null) {
 			return null;
 		}
-		return new String[] { desc.getRunDescription().toIdentityString(), JobConstants.QUERY_KEY };
+		return new String[] { desc.getDescription().toIdentityString(), JobConstants.QUERY_KEY };
 	}
 }

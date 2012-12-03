@@ -33,7 +33,7 @@ public class PrepMultipleRunsJob extends AbstractSLJob {
   private static String jobName(final List<RunDirectory> runs) {
     final String jobName;
     if (runs.size() == 1) {
-      final RunDescription one = runs.get(0).getRunDescription();
+      final RunDescription one = runs.get(0).getDescription();
       jobName = I18N.msg("flashlight.jobs.prep.one", one.getName(), SLUtility.toStringHMS(one.getStartTimeOfRun()));
     } else {
       jobName = I18N.msg("flashlight.jobs.prep.many");
@@ -48,7 +48,7 @@ public class PrepMultipleRunsJob extends AbstractSLJob {
     monitor.begin((perJobWork + refreshWork) * f_runDirectories.size());
     final IJobManager man = Job.getJobManager();
     for (final RunDirectory runDir : f_runDirectories) {
-      final ISchedulingRule rule = KeywordAccessRule.getInstance(JobConstants.PREP_KEY, runDir.getRunDescription()
+      final ISchedulingRule rule = KeywordAccessRule.getInstance(JobConstants.PREP_KEY, runDir.getDescription()
           .toIdentityString());
       SLStatus status;
       try {

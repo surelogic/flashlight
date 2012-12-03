@@ -109,7 +109,7 @@ public final class RunManager {
     final Set<RunDescription> result = new HashSet<RunDescription>();
     synchronized (f_runs) {
       for (RunDirectory runDir : f_runs) {
-        result.add(runDir.getRunDescription());
+        result.add(runDir.getDescription());
       }
     }
     return result;
@@ -127,7 +127,7 @@ public final class RunManager {
     synchronized (f_runs) {
       for (RunDirectory runDir : f_runs) {
         if (runDir.isPreparedOrIsBeingPrepared())
-          result.add(runDir.getRunDescription());
+          result.add(runDir.getDescription());
       }
     }
     return result;
@@ -143,7 +143,7 @@ public final class RunManager {
   public boolean isPrepared(final RunDescription runDescription) {
     synchronized (f_runs) {
       for (RunDirectory runDir : f_runs) {
-        if (runDir.getRunDescription().equals(runDescription)) {
+        if (runDir.getDescription().equals(runDescription)) {
           if (runDir.isPreparedOrIsBeingPrepared())
             return true;
           else
@@ -171,38 +171,21 @@ public final class RunManager {
   }
 
   /**
-   * Looks up a run with a given identity string. Results in {@code null} if no
-   * such run can be found.
+   * Looks up a run directory managed by this with the passed identity string.
+   * In particular for the returned {@link RunDirectory}, which we will call
+   * <tt>run</tt>,
+   * {@code run.getDescription().toIdentityString.equals(runIdentityString)} is
+   * {@code true}.
    * 
-   * @param idString
-   *          an identity string.
-   * @return a run with <tt>idString</tt>, or {@code null} if no such run can be
-   *         found.
+   * @param runIdentityString
+   *          a run identity string.
+   * @return run directory managed by this with the passed identity string, or
+   *         {@code null} if none.
    */
   @Nullable
-  public RunDescription getRunDescriptionByIdentityString(final String idString) {
-    for (final RunDescription runDescription : getRunDescriptions()) {
-      if (runDescription.toIdentityString().equals(idString)) {
-        return runDescription;
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  public RunDirectory getRunDirectoryByIdentityString(final String idString) {
+  public RunDirectory getRunDirectoryByIdentityString(final String runIdentityString) {
     for (final RunDirectory runDirectory : getRunDirectories()) {
-      if (runDirectory.getRunDescription().toIdentityString().equals(idString)) {
-        return runDirectory;
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  public RunDirectory getRunDirectoryFor(final RunDescription runDescription) {
-    for (final RunDirectory runDirectory : getRunDirectories()) {
-      if (runDirectory.getRunDescription().equals(runDescription)) {
+      if (runDirectory.getDescription().toIdentityString().equals(runIdentityString)) {
         return runDirectory;
       }
     }
@@ -210,22 +193,14 @@ public final class RunManager {
   }
 
   /**
-   * Gets the set of run descriptions known to this manager that have not been
-   * prepared. This set can be empty, but will not be {@code null}.
+   * Gets the set of run directories managed by this that have not been
+   * prepared. The return set can be empty, but will not be {@code null}.
    * 
-   * @return the non-null set of run descriptions known to this manager that
-   *         have not been prepared. This is a copy of the set maintained by
-   *         this manager so it can be freely mutated by callers.
+   * @return the set of run directories managed by this that have not been
+   *         prepared. May be empty.
    */
   @NonNull
-  public Set<RunDescription> getUnPreppedRunDescriptions() {
-    final Set<RunDescription> result = getRunDescriptions();
-    result.removeAll(getPreparedRunDescriptions());
-    return result;
-  }
-
-  @NonNull
-  public Set<RunDirectory> getUnPreppedRunDirectories() {
+  public Set<RunDirectory> getNotPreparedRunDirectories() {
     final Set<RunDirectory> result = getRunDirectories();
     result.removeAll(getPreparedRunDirectories());
     return result;
@@ -257,9 +232,9 @@ public final class RunManager {
     final Set<RunDescription> preparedRuns = new HashSet<RunDescription>();
     final Collection<RunDirectory> runDirs = RawFileUtility.getRunDirectories(f_dataDir);
     for (final RunDirectory dir : runDirs) {
-      runs.add(dir.getRunDescription());
+      runs.add(dir.getDescription());
       if (dir.isPreparedOrIsBeingPrepared()) {
-        preparedRuns.add(dir.getRunDescription());
+        preparedRuns.add(dir.getDescription());
       }
     }
 

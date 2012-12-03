@@ -171,28 +171,21 @@ public final class RunManager {
   }
 
   /**
-   * Looks up a run with a given identity string. Results in {@code null} if no
-   * such run can be found.
+   * Looks up a run directory managed by this with the passed identity string.
+   * In particular for the returned {@link RunDirectory}, which we will call
+   * <tt>run</tt>,
+   * {@code run.getDescription().toIdentityString.equals(runIdentityString)} is
+   * {@code true}.
    * 
-   * @param idString
-   *          an identity string.
-   * @return a run with <tt>idString</tt>, or {@code null} if no such run can be
-   *         found.
+   * @param runIdentityString
+   *          a run identity string.
+   * @return run directory managed by this with the passed identity string, or
+   *         {@code null} if none.
    */
   @Nullable
-  public RunDescription getRunDescriptionByIdentityString(final String idString) {
-    for (final RunDescription runDescription : getRunDescriptions()) {
-      if (runDescription.toIdentityString().equals(idString)) {
-        return runDescription;
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  public RunDirectory getRunDirectoryByIdentityString(final String idString) {
+  public RunDirectory getRunDirectoryByIdentityString(final String runIdentityString) {
     for (final RunDirectory runDirectory : getRunDirectories()) {
-      if (runDirectory.getDescription().toIdentityString().equals(idString)) {
+      if (runDirectory.getDescription().toIdentityString().equals(runIdentityString)) {
         return runDirectory;
       }
     }

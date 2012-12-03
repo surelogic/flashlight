@@ -60,8 +60,8 @@ public final class PopulateBrowserWithRunInformationJob extends Job {
       final int code = 210;
       return SLEclipseStatusUtility.createErrorStatus(
           code,
-          I18N.err(code, f_runDirectory.getRunDescription().getName(),
-              SLUtility.toStringHMS(f_runDirectory.getRunDescription().getStartTimeOfRun())), e);
+          I18N.err(code, f_runDirectory.getDescription().getName(),
+              SLUtility.toStringHMS(f_runDirectory.getDescription().getStartTimeOfRun())), e);
     } finally {
       monitor.done();
     }

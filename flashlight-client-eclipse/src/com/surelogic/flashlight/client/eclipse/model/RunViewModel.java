@@ -139,7 +139,7 @@ public final class RunViewModel {
 
       @Override
       String getText(final RunDirectory rowData) {
-        if (rowData == null || rowData.getRunDirectory() == null) {
+        if (rowData == null || rowData.getDirectory() == null) {
           return "Unknown";
         }
         return rowData.getHumanReadableSize();
@@ -156,8 +156,8 @@ public final class RunViewModel {
       private final Comparator<RunDirectory> f_defaultComparator = new Comparator<RunDirectory>() {
         @Override
         public int compare(final RunDirectory o1, final RunDirectory o2) {
-          long size1 = FileUtility.recursiveSizeInBytes(o1.getRunDirectory());
-          long size2 = FileUtility.recursiveSizeInBytes(o2.getRunDirectory());
+          long size1 = FileUtility.recursiveSizeInBytes(o1.getDirectory());
+          long size2 = FileUtility.recursiveSizeInBytes(o2.getDirectory());
           if (size1 < size2) {
             return -1;
           } else if (size1 == size2) {
@@ -182,7 +182,7 @@ public final class RunViewModel {
 
       @Override
       String getText(final RunDirectory rowData) {
-        return rowData.getRunDescription().getName();
+        return rowData.getDescription().getName();
       }
 
       @Override
@@ -205,7 +205,7 @@ public final class RunViewModel {
 
       @Override
       String getText(final RunDirectory rowData) {
-        return SLUtility.toStringHMS(rowData.getRunDescription().getStartTimeOfRun());
+        return SLUtility.toStringHMS(rowData.getDescription().getStartTimeOfRun());
       }
     });
 
@@ -217,7 +217,7 @@ public final class RunViewModel {
 
       @Override
       String getText(final RunDirectory rowData) {
-        long duration = rowData.getRunDescription().getDuration();
+        long duration = rowData.getDescription().getDuration();
         String text;
         if (duration == 0) {
           text = "-";
@@ -249,7 +249,7 @@ public final class RunViewModel {
 
       @Override
       String getText(final RunDirectory rowData) {
-        return rowData.getRunDescription().getUserName();
+        return rowData.getDescription().getUserName();
       }
     });
 
@@ -261,7 +261,7 @@ public final class RunViewModel {
 
       @Override
       String getText(final RunDirectory rowData) {
-        return rowData.getRunDescription().getHostname();
+        return rowData.getDescription().getHostname();
       }
     });
 
@@ -273,7 +273,7 @@ public final class RunViewModel {
 
       @Override
       String getText(final RunDirectory rowData) {
-        return rowData.getRunDescription().getJavaVersion();
+        return rowData.getDescription().getJavaVersion();
       }
     });
 
@@ -285,7 +285,7 @@ public final class RunViewModel {
 
       @Override
       String getText(final RunDirectory rowData) {
-        return rowData.getRunDescription().getJavaVendor();
+        return rowData.getDescription().getJavaVendor();
       }
     });
 
@@ -297,7 +297,7 @@ public final class RunViewModel {
 
       @Override
       String getText(final RunDirectory rowData) {
-        final RunDescription desc = rowData.getRunDescription();
+        final RunDescription desc = rowData.getDescription();
         return desc.getOSName() + " (" + desc.getOSVersion() + ") on " + desc.getOSArch();
       }
     });
@@ -315,13 +315,13 @@ public final class RunViewModel {
 
       @Override
       String getText(final RunDirectory rowData) {
-        return Integer.toString(rowData.getRunDescription().getMaxMemoryMb());
+        return Integer.toString(rowData.getDescription().getMaxMemoryMb());
       }
 
       private final Comparator<RunDirectory> f_defaultComparator = new Comparator<RunDirectory>() {
         @Override
         public int compare(final RunDirectory o1, final RunDirectory o2) {
-          return o1.getRunDescription().getMaxMemoryMb() - o2.getRunDescription().getMaxMemoryMb();
+          return o1.getDescription().getMaxMemoryMb() - o2.getDescription().getMaxMemoryMb();
         }
       };
 
@@ -344,13 +344,13 @@ public final class RunViewModel {
 
       @Override
       String getText(final RunDirectory rowData) {
-        return Integer.toString(rowData.getRunDescription().getProcessors());
+        return Integer.toString(rowData.getDescription().getProcessors());
       }
 
       private final Comparator<RunDirectory> f_defaultComparator = new Comparator<RunDirectory>() {
         @Override
         public int compare(final RunDirectory o1, final RunDirectory o2) {
-          return o1.getRunDescription().getProcessors() - o2.getRunDescription().getProcessors();
+          return o1.getDescription().getProcessors() - o2.getDescription().getProcessors();
         }
       };
 

@@ -103,17 +103,17 @@ public class RunSelectionPage extends UserInputWizardPage {
                     @Override
                     public int compare(final RunDirectory r1,
                             final RunDirectory r2) {
-                        int cmp = r1.getRunDescription().getName().compareTo(r2.getRunDescription().getName());
+                        int cmp = r1.getDescription().getName().compareTo(r2.getDescription().getName());
                         if (cmp == 0) {
-                            cmp = r1.getRunDescription().getStartTimeOfRun().compareTo(
-                                    r2.getRunDescription().getStartTimeOfRun());
+                            cmp = r1.getDescription().getStartTimeOfRun().compareTo(
+                                    r2.getDescription().getStartTimeOfRun());
                         }
                         return cmp;
                     }
                 });
                 for (final RunDirectory run : runList) {
                     boolean noneSelected = true;
-                    final String runName = run.getRunDescription().getName();
+                    final String runName = run.getDescription().getName();
                     final int idx = runName.lastIndexOf('.');
                     if (idx > 0) {
                         final String runPackage = runName.substring(0, idx);
@@ -121,10 +121,10 @@ public class RunSelectionPage extends UserInputWizardPage {
                         if (JDTUtility.findIType(project, runPackage, runClass) != null) {
                             final TableItem item = new TableItem(f_runTable,
                                     SWT.NONE);
-                            item.setText(0, run.getRunDescription().getName());
-                            item.setText(1, SLUtility.toStringHMS(run.getRunDescription()
+                            item.setText(0, run.getDescription().getName());
+                            item.setText(1, SLUtility.toStringHMS(run.getDescription()
                                     .getStartTimeOfRun()));
-                            item.setText(run.getRunDescription().getName());
+                            item.setText(run.getDescription().getName());
                             item.setData(run);
                             if (noneSelected) {
                                 noneSelected = false;

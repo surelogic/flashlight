@@ -56,8 +56,8 @@ public final class LogDialog extends Dialog {
     f_log = log;
     if (run == null)
       throw new IllegalArgumentException(I18N.err(44, "run"));
-    f_title = I18N.msg("flashlight.dialog.log.title", run.getRunDescription().getName(),
-        SLUtility.toStringHMS(run.getRunDescription().getStartTimeOfRun()));
+    f_title = I18N.msg("flashlight.dialog.log.title", run.getDescription().getName(),
+        SLUtility.toStringHMS(run.getDescription().getStartTimeOfRun()));
   }
 
   @Override

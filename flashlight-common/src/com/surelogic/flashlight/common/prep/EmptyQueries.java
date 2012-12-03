@@ -30,7 +30,7 @@ public class EmptyQueries implements IPostPrep {
   }
 
   public void doPostPrep(final Connection c, final SLProgressMonitor mon) throws SQLException {
-    EmptyQueriesCache.getInstance().purge(f_runDirectory.getRunDescription());
+    EmptyQueriesCache.getInstance().purge(f_runDirectory.getDescription());
     try {
       final File queriesFile = f_runDirectory.getEmptyQueriesFile();
       final PrintWriter writer = new PrintWriter(new FileWriter(queriesFile));

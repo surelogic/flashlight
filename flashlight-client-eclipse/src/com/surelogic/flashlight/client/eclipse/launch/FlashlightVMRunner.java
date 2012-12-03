@@ -275,11 +275,11 @@ public final class FlashlightVMRunner implements IVMRunner {
         RunDirectory latest = null;
         for (final RunDirectory run : RunManager.getInstance()
                 .getRunDirectories()) {
-            if (mainTypeName.equals(run.getRunDescription().getName())) {
+            if (mainTypeName.equals(run.getDescription().getName())) {
                 if (latest == null
-                        || run.getRunDescription()
+                        || run.getDescription()
                                 .getStartTimeOfRun()
-                                .after(latest.getRunDescription()
+                                .after(latest.getDescription()
                                         .getStartTimeOfRun())) {
                     latest = run;
                 }

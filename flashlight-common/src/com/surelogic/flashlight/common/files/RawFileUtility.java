@@ -258,7 +258,7 @@ public final class RawFileUtility {
       for (final File runDir : getRunDirs()) {
         final RunDirectory runDirectory = RunDirectory.getFor(runDir);
         if (runDirectory != null) {
-          final RunDescription run = runDirectory.getRunDescription();
+          final RunDescription run = runDirectory.getDescription();
           f_runToHandles.put(run, runDirectory);
         }
       }

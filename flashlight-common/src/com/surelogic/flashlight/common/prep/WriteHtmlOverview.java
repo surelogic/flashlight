@@ -152,7 +152,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 
   private HTMLBuilder displayPage(final List<HeaderName> headers, final Section s) {
     HTMLBuilder builder = new HTMLBuilder();
-    Head head = builder.head(f_runDirectory.getRunDescription().getName());
+    Head head = builder.head(f_runDirectory.getDescription().getName());
     head.styleSheet("RunOverviewStyleSheet.css");
     head.styleSheet("colors.css");
     head.javaScript("jquery-1.7.2.min.js");

@@ -109,7 +109,7 @@ public final class RunManager {
     final Set<RunDescription> result = new HashSet<RunDescription>();
     synchronized (f_runs) {
       for (RunDirectory runDir : f_runs) {
-        result.add(runDir.getRunDescription());
+        result.add(runDir.getDescription());
       }
     }
     return result;
@@ -127,7 +127,7 @@ public final class RunManager {
     synchronized (f_runs) {
       for (RunDirectory runDir : f_runs) {
         if (runDir.isPreparedOrIsBeingPrepared())
-          result.add(runDir.getRunDescription());
+          result.add(runDir.getDescription());
       }
     }
     return result;
@@ -143,7 +143,7 @@ public final class RunManager {
   public boolean isPrepared(final RunDescription runDescription) {
     synchronized (f_runs) {
       for (RunDirectory runDir : f_runs) {
-        if (runDir.getRunDescription().equals(runDescription)) {
+        if (runDir.getDescription().equals(runDescription)) {
           if (runDir.isPreparedOrIsBeingPrepared())
             return true;
           else
@@ -192,7 +192,7 @@ public final class RunManager {
   @Nullable
   public RunDirectory getRunDirectoryByIdentityString(final String idString) {
     for (final RunDirectory runDirectory : getRunDirectories()) {
-      if (runDirectory.getRunDescription().toIdentityString().equals(idString)) {
+      if (runDirectory.getDescription().toIdentityString().equals(idString)) {
         return runDirectory;
       }
     }
@@ -202,7 +202,7 @@ public final class RunManager {
   @Nullable
   public RunDirectory getRunDirectoryFor(final RunDescription runDescription) {
     for (final RunDirectory runDirectory : getRunDirectories()) {
-      if (runDirectory.getRunDescription().equals(runDescription)) {
+      if (runDirectory.getDescription().equals(runDescription)) {
         return runDirectory;
       }
     }
@@ -257,9 +257,9 @@ public final class RunManager {
     final Set<RunDescription> preparedRuns = new HashSet<RunDescription>();
     final Collection<RunDirectory> runDirs = RawFileUtility.getRunDirectories(f_dataDir);
     for (final RunDirectory dir : runDirs) {
-      runs.add(dir.getRunDescription());
+      runs.add(dir.getDescription());
       if (dir.isPreparedOrIsBeingPrepared()) {
-        preparedRuns.add(dir.getRunDescription());
+        preparedRuns.add(dir.getDescription());
       }
     }
 

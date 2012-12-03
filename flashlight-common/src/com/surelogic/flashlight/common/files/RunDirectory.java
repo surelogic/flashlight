@@ -249,7 +249,7 @@ public final class RunDirectory {
      * @return a run description for the run in this.
      */
     @NonNull
-    public RunDescription getRunDescription() {
+    public RunDescription getDescription() {
         return f_runDescription;
     }
 
@@ -259,7 +259,7 @@ public final class RunDirectory {
      * @return an abstract representation of this run directory.
      */
     @NonNull
-    public File getRunDirectory() {
+    public File getDirectory() {
         return f_runDirHandle;
     }
 

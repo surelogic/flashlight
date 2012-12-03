@@ -157,7 +157,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements IRunMa
     final TableItem[] items = f_table.getItems();
     for (int i = 0; i < items.length; i++) {
       final RunDirectory itemData = getData(items[i]);
-      if (run.getRunDescription().equals(itemData.getRunDescription())) {
+      if (run.getDescription().equals(itemData.getDescription())) {
         f_table.setSelection(i);
         break;
       }
@@ -201,8 +201,8 @@ public final class RunViewMediator extends AdHocManagerAdapter implements IRunMa
         final String msg;
         if (notPrepped.size() == 1) {
           title = I18N.msg("flashlight.dialog.reprep.title");
-          msg = I18N.msg("flashlight.dialog.reprep.msg", one.getRunDescription().getName(),
-              SLUtility.toStringHMS(one.getRunDescription().getStartTimeOfRun()));
+          msg = I18N.msg("flashlight.dialog.reprep.msg", one.getDescription().getName(),
+              SLUtility.toStringHMS(one.getDescription().getStartTimeOfRun()));
         } else {
           title = I18N.msg("flashlight.dialog.reprep.multi.title");
           msg = I18N.msg("flashlight.dialog.reprep.multi.msg");
@@ -250,7 +250,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements IRunMa
       final ArrayList<String> keys = new ArrayList<String>();
       final RunDirectory[] selected = getSelectedRunDirectories();
       if (selected.length > 0) {
-        final DeleteRunDialog d = new DeleteRunDialog(f_table.getShell(), selected[0].getRunDescription(), selected.length > 1);
+        final DeleteRunDialog d = new DeleteRunDialog(f_table.getShell(), selected[0].getDescription(), selected.length > 1);
         d.open();
         if (Window.CANCEL == d.getReturnCode()) {
           return;
@@ -260,16 +260,16 @@ public final class RunViewMediator extends AdHocManagerAdapter implements IRunMa
             jobs.add(new UnPrepSLJob(description, AdHocDataSource.getManager()));
           }
           final File dataDir = EclipseUtility.getFlashlightDataDirectory();
-          jobs.add(new DeleteRawFilesSLJob(dataDir, description.getRunDescription()));
-          keys.add(description.getRunDescription().toIdentityString());
+          jobs.add(new DeleteRawFilesSLJob(dataDir, description.getDescription()));
+          keys.add(description.getDescription().toIdentityString());
         }
       }
       if (!jobs.isEmpty()) {
         final RunDirectory one = selected.length == 1 ? selected[0] : null;
         final String jobName;
         if (one != null) {
-          jobName = I18N.msg("flashlight.jobs.delete.one", one.getRunDescription().getName(),
-              SLUtility.toStringHMS(one.getRunDescription().getStartTimeOfRun()));
+          jobName = I18N.msg("flashlight.jobs.delete.one", one.getDescription().getName(),
+              SLUtility.toStringHMS(one.getDescription().getStartTimeOfRun()));
         } else {
           jobName = I18N.msg("flashlight.jobs.delete.many");
         }
@@ -307,7 +307,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements IRunMa
   private void inferJSureAnnoHelper(final List<RunDirectory> runs) {
     for (final IJavaProject p : JDTUtility.getJavaProjects()) {
       for (final RunDirectory run : runs) {
-        final String runName = run.getRunDescription().getName();
+        final String runName = run.getDescription().getName();
         final int idx = runName.lastIndexOf('.');
         final String runPackage = runName.substring(0, idx);
         final String runClass = runName.substring(idx + 1);
@@ -388,7 +388,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements IRunMa
     } else {
       final RunDirectory o = selected[0];
       AdHocDataSource.getInstance().setSelectedRun(o);
-      AdHocDataSource.getManager().setGlobalVariableValue(AdHocManager.DATABASE, o.getRunDescription().toIdentityString());
+      AdHocDataSource.getManager().setGlobalVariableValue(AdHocManager.DATABASE, o.getDescription().toIdentityString());
       AdHocDataSource.getManager().setSelectedResult(null);
     }
     f_prepAction.setEnabled(rawActionsEnabled);

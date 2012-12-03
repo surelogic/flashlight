@@ -6,6 +6,8 @@ import static com.surelogic._flashlight.common.InstrumentationConstants.FL_CONSO
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_DATE_OVERRIDE;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_DIR;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_FIELDS_FILE;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_FIELDS_FILE_NAME;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_LOG_FILE_NAME;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_NO_SPY;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_OUTPUT_TYPE;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_OUTQ_SIZE;
@@ -15,9 +17,7 @@ import static com.surelogic._flashlight.common.InstrumentationConstants.FL_RAWQ_
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_REFINERY_OFF;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_REFINERY_SIZE;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_SITES_FILE;
-import static com.surelogic.flashlight.common.files.InstrumentationFileHandles.FIELDS_FILE_NAME;
-import static com.surelogic.flashlight.common.files.InstrumentationFileHandles.INSTRUMENTATION_LOG_FILE_NAME;
-import static com.surelogic.flashlight.common.files.InstrumentationFileHandles.SITES_FILE_NAME;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_SITES_FILE_NAME;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -64,7 +64,6 @@ import com.surelogic._flashlight.rewriter.RewriteManager;
 import com.surelogic._flashlight.rewriter.RewriteMessenger;
 import com.surelogic._flashlight.rewriter.config.Configuration;
 import com.surelogic._flashlight.rewriter.config.ConfigurationBuilder;
-import com.surelogic.common.FileUtility;
 import com.surelogic.common.core.EclipseUtility;
 import com.surelogic.common.core.MemoryUtility;
 import com.surelogic.common.core.jobs.EclipseJob;
@@ -164,10 +163,9 @@ public final class FlashlightVMRunner implements IVMRunner {
         sourceDir = new File(runOutputDir, "source");
         portFile = new File(runOutputDir, FL_PORT_FILE_NAME);
         completeFile = new File(runOutputDir, FL_COMPLETE_RUN);
-        fieldsFile = new File(runOutputDir, FIELDS_FILE_NAME);
-        sitesFile = new File(runOutputDir, SITES_FILE_NAME
-                + FileUtility.GZIP_SUFFIX);
-        logFile = new File(runOutputDir, INSTRUMENTATION_LOG_FILE_NAME);
+        fieldsFile = new File(runOutputDir, FL_FIELDS_FILE_NAME);
+        sitesFile = new File(runOutputDir, FL_SITES_FILE_NAME);
+        logFile = new File(runOutputDir, FL_LOG_FILE_NAME);
         if (!projectOutputDir.exists()) {
             projectOutputDir.mkdir();
         }
@@ -274,13 +272,15 @@ public final class FlashlightVMRunner implements IVMRunner {
 
     @Nullable
     private RunDirectory findLastRunDirectory() throws CoreException {
-      RunDirectory latest = null;
+        RunDirectory latest = null;
         for (final RunDirectory run : RunManager.getInstance()
                 .getRunDirectories()) {
             if (mainTypeName.equals(run.getRunDescription().getName())) {
                 if (latest == null
-                        || run.getRunDescription().getStartTimeOfRun().after(
-                                latest.getRunDescription().getStartTimeOfRun())) {
+                        || run.getRunDescription()
+                                .getStartTimeOfRun()
+                                .after(latest.getRunDescription()
+                                        .getStartTimeOfRun())) {
                     latest = run;
                 }
             }

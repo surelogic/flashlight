@@ -11,17 +11,12 @@ public final class InstrumentationConstants {
             + "/InstrumentationConf.class";
     public static final String FL_PROPERTIES_RESOURCE = FL_PACKAGE
             + "/fl.properties";
-    public static final String FL_SITES_RESOURCE = FL_PACKAGE + "/sites.txt.gz";
-    public static final String FL_SITES_CLASS = FL_PACKAGE + "/SitesConf.class";
-    public static final String FL_FIELDS_RESOURCE = FL_PACKAGE + "/fields.txt";
-    public static final String FL_FIELDS_CLASS = FL_PACKAGE
-            + "/FieldsConf.class";
 
-    public static final String FL_LOG_RESOURCE = FL_PACKAGE
-            + "/instrumentation.log";
     public static final String FL_SOURCE_RESOURCE = FL_PACKAGE + "/sources.zip";
     public static final String FL_SOURCE_FOLDER_NAME = "source";
     public static final String FL_LOG_FILE_NAME = "instrumentation.log";
+    public static final String FL_LOG_RESOURCE = FL_PACKAGE + FL_LOG_FILE_NAME;
+
     public static final String FL_PORT_FILE_NAME = "port";
 
     public static final String FL_OFF = "FL_OFF";
@@ -59,9 +54,16 @@ public final class InstrumentationConstants {
 
     public static final String FL_FIELDS_FILE = "FL_FIELDS_FILE";
     public static final String FL_FIELDS_FILE_NAME = "fields.txt";
+    public static final String FL_FIELDS_RESOURCE = FL_PACKAGE
+            + FL_FIELDS_FILE_NAME;
+    public static final String FL_FIELDS_CLASS = FL_PACKAGE
+            + "/FieldsConf.class";
 
     public static final String FL_SITES_FILE = "FL_SITES_FILE";
     public static final String FL_SITES_FILE_NAME = "sites.txt.gz";
+    public static final String FL_SITES_RESOURCE = FL_PACKAGE
+            + FL_SITES_FILE_NAME;
+    public static final String FL_SITES_CLASS = FL_PACKAGE + "/SitesConf.class";
 
     public static final String FL_DATE_OVERRIDE = "FL_DATE_OVERRIDE";
 

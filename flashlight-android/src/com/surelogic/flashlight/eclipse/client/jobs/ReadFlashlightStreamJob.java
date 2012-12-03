@@ -278,7 +278,7 @@ public class ReadFlashlightStreamJob implements SLJob {
             // Still write out a Run.Complete as long as we have some data.
             if (f_count > 1) {
                 File complete = new File(f_dir,
-                        InstrumentationConstants.FL_COMPLETE_RUN);
+                        InstrumentationConstants.FL_COMPLETE_RUN_LOC);
                 try {
                     complete.createNewFile();
                 } catch (IOException e) {
@@ -303,7 +303,7 @@ public class ReadFlashlightStreamJob implements SLJob {
             }
             f_header.close();
             File complete = new File(f_dir,
-                    InstrumentationConstants.FL_COMPLETE_RUN);
+                    InstrumentationConstants.FL_COMPLETE_RUN_LOC);
             try {
                 complete.createNewFile();
             } catch (IOException e) {

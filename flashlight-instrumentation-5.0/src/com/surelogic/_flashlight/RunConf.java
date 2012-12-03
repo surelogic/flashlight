@@ -286,7 +286,7 @@ public class RunConf {
             fileName.append(dateFormat.format(f_startTime));
 
             f_filePrefix = fileName.toString();
-            f_log = initLog(fileName.toString());
+            f_log = initLog(flashlightDir);
         } else {
             f_filePrefix = null;
             f_log = initLog(null);
@@ -312,10 +312,11 @@ public class RunConf {
         f_defs = initDefs();
     }
 
-    private static PrintStream initLog(final String fileName) {
+    private static PrintStream initLog(File flashlightDir) {
         PrintStream w = System.err;
-        if (fileName != null) {
-            final File logFile = new File(fileName.toString() + InstrumentationConstants.FL_LOG_SUFFIX);
+        if (flashlightDir != null) {
+            final File logFile = new File(flashlightDir,
+                    InstrumentationConstants.FL_RUNTIME_LOG_LOC);
             try {
                 OutputStream stream = new FileOutputStream(logFile);
                 stream = new BufferedOutputStream(stream);

@@ -1,5 +1,7 @@
 package com.surelogic._flashlight.common;
 
+import java.io.File;
+
 public final class InstrumentationConstants {
 
     public static final boolean allowJava14 = true;
@@ -12,12 +14,23 @@ public final class InstrumentationConstants {
     public static final String FL_PROPERTIES_RESOURCE = FL_PACKAGE
             + "/fl.properties";
 
-    public static final String FL_SOURCE_RESOURCE = FL_PACKAGE + "/sources.zip";
-    public static final String FL_SOURCE_FOLDER_NAME = "source";
-    public static final String FL_LOG_FILE_NAME = "instrumentation.log";
-    public static final String FL_LOG_RESOURCE = FL_PACKAGE + FL_LOG_FILE_NAME;
+    private static final String FL_INSTRUMENTATION_FOLDER_NAME = "instrumentation";
+    public static final String FL_PROJECTS_FOLDER_LOC = FL_INSTRUMENTATION_FOLDER_NAME
+            + File.separator + "projects";
+    public static final String FL_EXTERNAL_FOLDER_LOC = FL_INSTRUMENTATION_FOLDER_NAME
+            + File.separator + "external";
 
-    public static final String FL_PORT_FILE_NAME = "port";
+    public static final String FL_SOURCE_RESOURCE = FL_PACKAGE + "/sources.zip";
+    public static final String FL_SOURCE_FOLDER_LOC = "source";
+    private static final String FL_LOG_FILE_NAME = "instrumentation-log.txt";
+    public static final String FL_LOG_FILE_LOC = FL_LOG_FILE_NAME;
+    public static final String FL_LOG_RESOURCE = FL_PACKAGE + "/"
+            + FL_LOG_FILE_NAME;
+
+    public static final String FL_APK_FILE_LOC = FL_INSTRUMENTATION_FOLDER_NAME
+            + File.separator + "instrumented.apk";
+
+    public static final String FL_PORT_FILE_LOC = "port";
 
     public static final String FL_OFF = "FL_OFF";
 
@@ -53,17 +66,23 @@ public final class InstrumentationConstants {
     public static final int FL_OUTPUT_PORT_DEFAULT = 42524;
 
     public static final String FL_FIELDS_FILE = "FL_FIELDS_FILE";
-    public static final String FL_FIELDS_FILE_NAME = "fields.txt";
-    public static final String FL_FIELDS_RESOURCE = FL_PACKAGE
+    private static final String FL_FIELDS_FILE_NAME = "fields.txt";
+    public static final String FL_FIELDS_RESOURCE = FL_PACKAGE + "/"
             + FL_FIELDS_FILE_NAME;
+    public static final String FL_FIELDS_FILE_LOC = FL_INSTRUMENTATION_FOLDER_NAME
+            + FL_FIELDS_FILE;
     public static final String FL_FIELDS_CLASS = FL_PACKAGE
             + "/FieldsConf.class";
 
     public static final String FL_SITES_FILE = "FL_SITES_FILE";
-    public static final String FL_SITES_FILE_NAME = "sites.txt.gz";
-    public static final String FL_SITES_RESOURCE = FL_PACKAGE
+    private static final String FL_SITES_FILE_NAME = "sites.txt.gz";
+    public static final String FL_SITES_FILE_LOC = FL_INSTRUMENTATION_FOLDER_NAME
+            + File.separator + FL_SITES_FILE_NAME;
+    public static final String FL_SITES_RESOURCE = FL_PACKAGE + "/"
             + FL_SITES_FILE_NAME;
     public static final String FL_SITES_CLASS = FL_PACKAGE + "/SitesConf.class";
+
+    public static final String FL_RUNTIME_LOG_LOC = "runtime-log.txt";
 
     public static final String FL_DATE_OVERRIDE = "FL_DATE_OVERRIDE";
 
@@ -74,10 +93,8 @@ public final class InstrumentationConstants {
     public static final OutputType FL_SOCKET_OUTPUT_TYPE = OutputType.FL;
     public static final String FL_DEBUG = "FL_DEBUG";
 
-    public static final String FL_COMPLETE_RUN = "Run.Complete";
+    public static final String FL_COMPLETE_RUN_LOC = "Run.Complete";
     public static final String FL_INVALID_RUN = "Run.Invalid";
-
-    public static final String FL_LOG_SUFFIX = ".flog";
 
     public static final String FL_ANDROID = "FL_ANDROID";
 

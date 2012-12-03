@@ -246,6 +246,10 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
         if (applicationPackage == null) {
             androidLaunch.stopLaunch();
             return;
+        } else {
+            // We are going to store away the apk for debugging purposes
+            FileUtility.copy(applicationPackage.getRawLocation().toFile(),
+                    data.apkFile);
         }
 
         // we need some information from the manifest
@@ -540,6 +544,7 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
         final File completeFile;
         final File portFile;
         final File sourceDir;
+        final File apkFile;
         final Date time;
         final String projectName;
         final String runName;
@@ -581,21 +586,23 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
                     InstrumentationConstants.DATE_FORMAT);
             projectName = project.getName();
             runName = projectName + df.format(time);
-            runDir = new File(
-                    EclipseUtility.getFlashlightDataDirectory(),
+            runDir = new File(EclipseUtility.getFlashlightDataDirectory(),
                     runName);
             runDir.mkdir();
-            sourceDir = new File(runDir, "source");
-            sourceDir.mkdir();
+            sourceDir = new File(runDir,
+                    InstrumentationConstants.FL_SOURCE_FOLDER_LOC);
+            sourceDir.mkdirs();
+            apkFile = new File(runDir, InstrumentationConstants.FL_APK_FILE_LOC);
+            apkFile.mkdirs();
             fieldsFile = new File(runDir,
-                    InstrumentationConstants.FL_FIELDS_FILE_NAME);
-            log = new File(runDir, InstrumentationConstants.FL_LOG_FILE_NAME);
+                    InstrumentationConstants.FL_FIELDS_FILE_LOC);
+            log = new File(runDir, InstrumentationConstants.FL_LOG_FILE_LOC);
             sitesFile = new File(runDir,
-                    InstrumentationConstants.FL_SITES_FILE_NAME);
+                    InstrumentationConstants.FL_SITES_FILE_LOC);
             completeFile = new File(runDir,
-                    InstrumentationConstants.FL_COMPLETE_RUN);
+                    InstrumentationConstants.FL_COMPLETE_RUN_LOC);
             portFile = new File(runDir,
-                    InstrumentationConstants.FL_PORT_FILE_NAME);
+                    InstrumentationConstants.FL_PORT_FILE_LOC);
             PrintWriter writer = new PrintWriter(portFile);
             try {
                 writer.println(conf.getConsolePort());

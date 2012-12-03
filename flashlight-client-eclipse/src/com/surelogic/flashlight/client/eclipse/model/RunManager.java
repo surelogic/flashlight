@@ -100,22 +100,6 @@ public final class RunManager {
   }
 
   /**
-   * Gets the set of run descriptions known to this manager.
-   * 
-   * @return a copy of the set of run descriptions known to this manager.
-   */
-  @NonNull
-  public Set<RunDescription> getRunDescriptions() {
-    final Set<RunDescription> result = new HashSet<RunDescription>();
-    synchronized (f_runs) {
-      for (RunDirectory runDir : f_runs) {
-        result.add(runDir.getDescription());
-      }
-    }
-    return result;
-  }
-
-  /**
    * Gets the set of prepared run descriptions known to this manager.
    * 
    * @return a copy of the set of prepared run descriptions known to this
@@ -155,17 +139,19 @@ public final class RunManager {
   }
 
   /**
-   * Gets an array containing the identity strings of all run descriptions known
-   * to this manager.
+   * Gets an array containing the identity strings of all run directories
+   * managed by this. The identity string for a {@link RunDirectory}, which we
+   * will call <tt>run</tt>, is defined to be
+   * {@code run.getDescription().toIdentityString()}.
    * 
-   * @return the identity strings of all run descriptions known to this manager.
+   * @return the identity strings of all run directories managed by this.
    */
   @NonNull
   public String[] getRunIdentities() {
-    final Set<RunDescription> descs = getRunDescriptions();
-    final Set<String> ids = new HashSet<String>(descs.size());
-    for (final RunDescription r : descs) {
-      ids.add(r.toIdentityString());
+    final Set<RunDirectory> runs = getRunDirectories();
+    final Set<String> ids = new HashSet<String>(runs.size());
+    for (final RunDirectory run : runs) {
+      ids.add(run.getDescription().toIdentityString());
     }
     return ids.toArray(SLUtility.EMPTY_STRING_ARRAY);
   }
@@ -258,5 +244,16 @@ public final class RunManager {
     if (isChanged || forceNotify) {
       notifyObservers();
     }
+  }
+
+  @NonNull
+  private Set<RunDescription> getRunDescriptions() {
+    final Set<RunDescription> result = new HashSet<RunDescription>();
+    synchronized (f_runs) {
+      for (RunDirectory runDir : f_runs) {
+        result.add(runDir.getDescription());
+      }
+    }
+    return result;
   }
 }

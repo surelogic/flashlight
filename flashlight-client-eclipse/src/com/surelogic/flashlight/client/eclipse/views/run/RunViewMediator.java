@@ -231,7 +231,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements IRunMa
             /*
              * This dialog is modeless so that we can open more than one.
              */
-            final LogDialog d = new LogDialog(f_table.getShell(), handles.getLogFile(), runDirectory.getRunDescription());
+            final LogDialog d = new LogDialog(f_table.getShell(), handles.getLogFile(), runDirectory);
             d.open();
           }
         }

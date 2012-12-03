@@ -70,7 +70,7 @@ public final class InstrumentationConstants {
     public static final String FL_FIELDS_RESOURCE = FL_PACKAGE + "/"
             + FL_FIELDS_FILE_NAME;
     public static final String FL_FIELDS_FILE_LOC = FL_INSTRUMENTATION_FOLDER_NAME
-            + FL_FIELDS_FILE;
+            + File.separator + FL_FIELDS_FILE_NAME;
     public static final String FL_FIELDS_CLASS = FL_PACKAGE
             + "/FieldsConf.class";
 

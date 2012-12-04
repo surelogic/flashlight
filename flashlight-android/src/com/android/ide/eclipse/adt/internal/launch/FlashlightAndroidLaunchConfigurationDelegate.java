@@ -81,6 +81,8 @@ import com.surelogic.common.core.logging.SLEclipseStatusUtility;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.common.ui.dialogs.ShowTextDialog;
 import com.surelogic.common.ui.jobs.SLUIJob;
+import com.surelogic.flashlight.android.jobs.ReadFlashlightStreamJob;
+import com.surelogic.flashlight.android.jobs.ReadLogcatJob;
 import com.surelogic.flashlight.client.eclipse.Activator;
 import com.surelogic.flashlight.client.eclipse.jobs.WatchFlashlightMonitorJob;
 import com.surelogic.flashlight.client.eclipse.launch.LaunchHelper;
@@ -88,7 +90,6 @@ import com.surelogic.flashlight.client.eclipse.launch.LaunchHelper.RuntimeConfig
 import com.surelogic.flashlight.client.eclipse.launch.LaunchUtils;
 import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
 import com.surelogic.flashlight.client.eclipse.views.monitor.MonitorStatus;
-import com.surelogic.flashlight.eclipse.client.jobs.ReadFlashlightStreamJob;
 
 /**
  * This Launch Configuration is mostly cribbed from
@@ -966,6 +967,10 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
                         EclipseJob.getInstance().schedule(
                                 new ReadFlashlightStreamJob(data.runName,
                                         data.runDir, data.outputPort, id));
+                        EclipseJob.getInstance()
+                                .schedule(
+                                        new ReadLogcatJob(data.runName,
+                                                data.runDir, id));
                         return Status.OK_STATUS;
                     }
                 } catch (Exception e) {

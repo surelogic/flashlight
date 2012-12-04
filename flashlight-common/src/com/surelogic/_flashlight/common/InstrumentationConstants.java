@@ -33,6 +33,8 @@ public final class InstrumentationConstants {
     public static final String FL_APK_FOLDER_LOC = FL_INSTRUMENTATION_FOLDER_NAME
             + File.separator + "apk";
 
+    public static final String FL_LOGCAT_LOC = "logcat-log.txt";
+
     public static final String FL_PORT_FILE_LOC = "port";
 
     public static final String FL_OFF = "FL_OFF";

@@ -1,4 +1,4 @@
-package com.surelogic.flashlight.eclipse.client.jobs;
+package com.surelogic.flashlight.android.jobs;
 
 import java.io.BufferedReader;
 import java.io.EOFException;

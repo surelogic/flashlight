@@ -99,8 +99,6 @@ public final class RunManager {
    * empty, but will not be {@code null}.
    * 
    * @return the set of run directories managed by this.
-   * 
-   * @see #refresh(boolean)
    */
   @NonNull
   public Set<RunDirectory> getRunDirectories() {

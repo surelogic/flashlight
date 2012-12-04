@@ -200,6 +200,40 @@ public final class RunViewModel {
     f_columnData.add(new ColumnDataAdaptor() {
       @Override
       String getColumnTitle() {
+        return "Processors";
+      }
+
+      @Override
+      String getImageSymbolicName(RunDirectory rowData) {
+        return CommonImages.IMG_CPU;
+      }
+
+      @Override
+      Justification getColumnJustification() {
+        return Justification.RIGHT;
+      }
+
+      @Override
+      String getText(final RunDirectory rowData) {
+        return Integer.toString(rowData.getDescription().getProcessors());
+      }
+
+      private final Comparator<RunDirectory> f_defaultComparator = new Comparator<RunDirectory>() {
+        @Override
+        public int compare(final RunDirectory o1, final RunDirectory o2) {
+          return o1.getDescription().getProcessors() - o2.getDescription().getProcessors();
+        }
+      };
+
+      @Override
+      Comparator<RunDirectory> getColumnComparator() {
+        return f_defaultComparator;
+      }
+    });
+
+    f_columnData.add(new ColumnDataAdaptor() {
+      @Override
+      String getColumnTitle() {
         return "Time";
       }
 
@@ -280,7 +314,7 @@ public final class RunViewModel {
     f_columnData.add(new ColumnDataAdaptor() {
       @Override
       String getColumnTitle() {
-        return "Vendor";
+        return "Java Vendor";
       }
 
       @Override
@@ -322,35 +356,6 @@ public final class RunViewModel {
         @Override
         public int compare(final RunDirectory o1, final RunDirectory o2) {
           return o1.getDescription().getMaxMemoryMb() - o2.getDescription().getMaxMemoryMb();
-        }
-      };
-
-      @Override
-      Comparator<RunDirectory> getColumnComparator() {
-        return f_defaultComparator;
-      }
-    });
-
-    f_columnData.add(new ColumnDataAdaptor() {
-      @Override
-      String getColumnTitle() {
-        return "Processors";
-      }
-
-      @Override
-      Justification getColumnJustification() {
-        return Justification.RIGHT;
-      }
-
-      @Override
-      String getText(final RunDirectory rowData) {
-        return Integer.toString(rowData.getDescription().getProcessors());
-      }
-
-      private final Comparator<RunDirectory> f_defaultComparator = new Comparator<RunDirectory>() {
-        @Override
-        public int compare(final RunDirectory o1, final RunDirectory o2) {
-          return o1.getDescription().getProcessors() - o2.getDescription().getProcessors();
         }
       };
 

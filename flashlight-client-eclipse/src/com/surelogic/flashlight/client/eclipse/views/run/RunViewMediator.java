@@ -51,10 +51,10 @@ import com.surelogic.flashlight.client.eclipse.refactoring.RegionRefactoringInfo
 import com.surelogic.flashlight.client.eclipse.refactoring.RegionRefactoringWizard;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.QueryMenuView;
-import com.surelogic.flashlight.common.files.RawFileHandles;
-import com.surelogic.flashlight.common.files.RunDirectory;
 import com.surelogic.flashlight.common.jobs.DeleteRawFilesSLJob;
 import com.surelogic.flashlight.common.jobs.UnPrepSLJob;
+import com.surelogic.flashlight.common.model.RawFileHandles;
+import com.surelogic.flashlight.common.model.RunDirectory;
 
 /**
  * Mediator for the {@link RunView}.

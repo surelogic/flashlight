@@ -11,8 +11,8 @@ import com.surelogic.common.ui.adhoc.views.menu.AbstractQueryMenuView;
 import com.surelogic.common.ui.tooltip.ToolTip;
 import com.surelogic.flashlight.client.eclipse.images.FlashlightImageLoader;
 import com.surelogic.flashlight.client.eclipse.model.RunManager;
-import com.surelogic.flashlight.common.files.RunDirectory;
 import com.surelogic.flashlight.common.model.EmptyQueriesCache;
+import com.surelogic.flashlight.common.model.RunDirectory;
 
 public final class QueryMenuView extends AbstractQueryMenuView {
 

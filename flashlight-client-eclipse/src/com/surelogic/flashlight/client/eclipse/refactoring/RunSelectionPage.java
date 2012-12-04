@@ -21,7 +21,7 @@ import org.eclipse.swt.widgets.TableItem;
 import com.surelogic.common.SLUtility;
 import com.surelogic.common.core.JDTUtility;
 import com.surelogic.common.i18n.I18N;
-import com.surelogic.flashlight.common.files.RunDirectory;
+import com.surelogic.flashlight.common.model.RunDirectory;
 
 /**
  * Choose one or more runs from those currently available in Flashlight.

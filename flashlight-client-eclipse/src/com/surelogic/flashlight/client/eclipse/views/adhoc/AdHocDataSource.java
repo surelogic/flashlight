@@ -24,8 +24,8 @@ import com.surelogic.common.ui.adhoc.dialogs.LotsOfSavedQueriesDialog;
 import com.surelogic.common.ui.jobs.SLUIJob;
 import com.surelogic.flashlight.client.eclipse.Activator;
 import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
-import com.surelogic.flashlight.common.files.RunDirectory;
 import com.surelogic.flashlight.common.jobs.JobConstants;
+import com.surelogic.flashlight.common.model.RunDirectory;
 
 public final class AdHocDataSource extends AdHocManagerAdapter implements
 		IAdHocDataSource, ILifecycle {

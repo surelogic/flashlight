@@ -16,10 +16,10 @@ import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.flashlight.client.eclipse.model.RunManager;
 import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
-import com.surelogic.flashlight.common.files.RunDirectory;
 import com.surelogic.flashlight.common.jobs.JobConstants;
 import com.surelogic.flashlight.common.jobs.PrepSLJob;
 import com.surelogic.flashlight.common.model.RunDescription;
+import com.surelogic.flashlight.common.model.RunDirectory;
 
 public class PrepMultipleRunsJob extends AbstractSLJob {
 

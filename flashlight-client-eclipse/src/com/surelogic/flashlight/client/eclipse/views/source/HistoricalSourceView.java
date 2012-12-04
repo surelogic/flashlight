@@ -8,7 +8,7 @@ import com.surelogic.Nullable;
 import com.surelogic.common.ISourceZipFileHandles;
 import com.surelogic.common.ui.views.AbstractHistoricalSourceView;
 import com.surelogic.flashlight.client.eclipse.model.RunManager;
-import com.surelogic.flashlight.common.files.RunDirectory;
+import com.surelogic.flashlight.common.model.RunDirectory;
 
 public final class HistoricalSourceView extends AbstractHistoricalSourceView {
 

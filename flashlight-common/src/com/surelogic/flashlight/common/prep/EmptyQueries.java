@@ -12,8 +12,8 @@ import java.util.Set;
 
 import com.surelogic.common.adhoc.AdHocQuery;
 import com.surelogic.common.jobs.SLProgressMonitor;
-import com.surelogic.flashlight.common.files.RunDirectory;
 import com.surelogic.flashlight.common.model.EmptyQueriesCache;
+import com.surelogic.flashlight.common.model.RunDirectory;
 
 public class EmptyQueries implements IPostPrep {
 

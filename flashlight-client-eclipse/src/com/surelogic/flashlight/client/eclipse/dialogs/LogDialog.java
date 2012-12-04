@@ -20,7 +20,7 @@ import com.surelogic.common.CommonImages;
 import com.surelogic.common.SLUtility;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.ui.SLImages;
-import com.surelogic.flashlight.common.files.RunDirectory;
+import com.surelogic.flashlight.common.model.RunDirectory;
 
 /**
  * A modeless dialog to show the instrumentation log to the user. Problems in

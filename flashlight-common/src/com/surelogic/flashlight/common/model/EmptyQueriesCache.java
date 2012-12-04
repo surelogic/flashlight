@@ -15,7 +15,6 @@ import com.surelogic.Singleton;
 import com.surelogic.common.adhoc.AdHocQuery;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.logging.SLLogger;
-import com.surelogic.flashlight.common.files.RunDirectory;
 
 @Singleton
 public class EmptyQueriesCache {

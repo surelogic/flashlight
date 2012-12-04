@@ -1,4 +1,4 @@
-package com.surelogic.flashlight.common.files;
+package com.surelogic.flashlight.common.model;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -17,8 +17,6 @@ import com.surelogic.common.FileUtility;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jdbc.DBConnection;
 import com.surelogic.common.logging.SLLogger;
-import com.surelogic.flashlight.common.model.FlashlightDBConnection;
-import com.surelogic.flashlight.common.model.RunDescription;
 
 /**
  * Model for manipulating a per-run flashlight data directory, including the

@@ -18,7 +18,7 @@ import com.surelogic.common.core.JDTUtility;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.ui.EclipseUIUtility;
 import com.surelogic.flashlight.client.eclipse.model.RunManager;
-import com.surelogic.flashlight.common.files.RunDirectory;
+import com.surelogic.flashlight.common.model.RunDirectory;
 
 public class RegionModelRefactoringAction implements IObjectActionDelegate,
         IWorkbenchWindowActionDelegate {

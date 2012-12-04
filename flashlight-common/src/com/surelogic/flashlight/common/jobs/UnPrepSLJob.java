@@ -7,7 +7,7 @@ import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.common.license.SLLicenseProduct;
 import com.surelogic.common.license.SLLicenseUtility;
-import com.surelogic.flashlight.common.files.RunDirectory;
+import com.surelogic.flashlight.common.model.RunDirectory;
 
 /**
  * Note that the RunManager needs to be refreshed after this

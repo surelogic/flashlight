@@ -26,7 +26,7 @@ import com.surelogic.common.ui.adhoc.views.results.AbstractQueryResultsView;
 import com.surelogic.common.ui.tooltip.ToolTip;
 import com.surelogic.flashlight.client.eclipse.images.FlashlightImageLoader;
 import com.surelogic.flashlight.client.eclipse.jobs.PopulateBrowserWithRunInformationJob;
-import com.surelogic.flashlight.common.files.RunDirectory;
+import com.surelogic.flashlight.common.model.RunDirectory;
 
 public final class QueryResultsView extends AbstractQueryResultsView {
 

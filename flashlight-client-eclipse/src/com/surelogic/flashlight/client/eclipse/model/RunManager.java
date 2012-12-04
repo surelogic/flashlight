@@ -19,9 +19,9 @@ import com.surelogic.Vouch;
 import com.surelogic.common.SLUtility;
 import com.surelogic.common.core.EclipseUtility;
 import com.surelogic.flashlight.client.eclipse.jobs.RefreshRunManagerSLJob;
-import com.surelogic.flashlight.common.files.RawFileUtility;
-import com.surelogic.flashlight.common.files.RunDirectory;
+import com.surelogic.flashlight.common.model.RawFileUtility;
 import com.surelogic.flashlight.common.model.RunDescription;
+import com.surelogic.flashlight.common.model.RunDirectory;
 
 /**
  * A singleton that manages the set of run directory aggregates.

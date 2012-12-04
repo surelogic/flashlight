@@ -20,7 +20,7 @@ import com.surelogic.common.FileUtility;
 import com.surelogic.common.core.JDTUtility;
 import com.surelogic.common.core.SourceZip;
 import com.surelogic.common.logging.SLLogger;
-import com.surelogic.flashlight.common.files.RunDirectory;
+import com.surelogic.flashlight.common.model.RunDirectory;
 
 public final class LaunchUtils {
     private LaunchUtils() {

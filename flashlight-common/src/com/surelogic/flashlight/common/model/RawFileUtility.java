@@ -1,4 +1,4 @@
-package com.surelogic.flashlight.common.files;
+package com.surelogic.flashlight.common.model;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -19,7 +19,6 @@ import com.surelogic._flashlight.common.OutputType;
 import com.surelogic.common.SLUtility;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.logging.SLLogger;
-import com.surelogic.flashlight.common.model.RunDescription;
 
 /**
  * A utility designed to work with Flashlight data files and the contents of the

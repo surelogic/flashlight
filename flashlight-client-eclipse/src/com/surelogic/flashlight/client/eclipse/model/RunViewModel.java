@@ -8,9 +8,9 @@ import com.surelogic.common.CommonImages;
 import com.surelogic.common.FileUtility;
 import com.surelogic.common.Justification;
 import com.surelogic.common.SLUtility;
-import com.surelogic.flashlight.common.files.RawFileHandles;
-import com.surelogic.flashlight.common.files.RunDirectory;
+import com.surelogic.flashlight.common.model.RawFileHandles;
 import com.surelogic.flashlight.common.model.RunDescription;
+import com.surelogic.flashlight.common.model.RunDirectory;
 
 /**
  * IDE independent data model for the table of Flashlight runs displayed in the

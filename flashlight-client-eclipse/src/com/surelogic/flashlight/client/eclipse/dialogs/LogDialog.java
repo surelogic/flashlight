@@ -30,8 +30,6 @@ public final class LogDialog extends Dialog {
 
   private final RunDirectory f_run;
 
-  private final String f_title;
-
   /**
    * Constructs a modeless dialog to show a log file to the user.
    * 
@@ -52,8 +50,6 @@ public final class LogDialog extends Dialog {
     if (run == null)
       throw new IllegalArgumentException(I18N.err(44, "run"));
     f_run = run;
-    f_title = I18N.msg("flashlight.dialog.log.title", run.getDescription().getName(),
-        SLUtility.toStringHMS(run.getDescription().getStartTimeOfRun()));
   }
 
   @Override
@@ -96,7 +92,8 @@ public final class LogDialog extends Dialog {
   @Override
   protected void configureShell(Shell newShell) {
     super.configureShell(newShell);
-    newShell.setText(f_title);
+    newShell.setText(I18N.msg("flashlight.dialog.log.title", f_run.getDescription().getName(),
+        SLUtility.toStringHMS(f_run.getDescription().getStartTimeOfRun())));
     newShell.setImage(SLImages.getImage(CommonImages.IMG_FILE));
   }
 

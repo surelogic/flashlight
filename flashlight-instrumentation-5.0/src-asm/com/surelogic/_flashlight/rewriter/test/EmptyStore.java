@@ -118,4 +118,8 @@ public class EmptyStore {
   public static int getFieldId(final String clazz, final String field) {
     return -1;
   }
+
+  public static void tryCallSucceeded(final Object receiver, final long siteId) {
+    // do nothing
+  }
 }

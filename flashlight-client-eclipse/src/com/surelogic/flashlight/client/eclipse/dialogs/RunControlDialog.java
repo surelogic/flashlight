@@ -4,6 +4,8 @@ import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.FocusEvent;
+import org.eclipse.swt.events.FocusListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
@@ -120,12 +122,39 @@ public class RunControlDialog extends Dialog {
         }
       }
     });
+    showSearchPrompt(search); // at start
+    search.addFocusListener(new FocusListener() {
+      public void focusLost(FocusEvent e) {
+        System.out.println("focusLost");
+        final String text = search.getText();
+        if (text == null || "".equals(text)) {
+          showSearchPrompt(search);
+        }
+      }
+
+      public void focusGained(FocusEvent e) {
+        System.out.println("focusGained");
+        clearSearchPromptIfNecessary(search);
+      }
+    });
 
     return composite;
   }
 
-  private final void clearListPressed() {
-    System.out.println("clearListPressed()");
+  private static final String SEARCH_PROMPT = "Search...";
+
+  private final void showSearchPrompt(final Text search) {
+    search.setText(SEARCH_PROMPT);
+    search.setForeground(search.getDisplay().getSystemColor(SWT.COLOR_DARK_GRAY));
+    search.setData(SEARCH_PROMPT);
+  }
+
+  private final void clearSearchPromptIfNecessary(final Text search) {
+    if (search.getData() == SEARCH_PROMPT) {
+      search.setText("");
+      search.setForeground(null);
+      search.setData(null);
+    }
   }
 
   private final void searchCleared() {
@@ -137,6 +166,10 @@ public class RunControlDialog extends Dialog {
 
     if (value == null || "".equals(value))
       searchCleared();
+  }
+
+  private final void clearListPressed() {
+    System.out.println("clearListPressed()");
   }
 
   protected IDialogSettings getDialogBoundsSettings() {

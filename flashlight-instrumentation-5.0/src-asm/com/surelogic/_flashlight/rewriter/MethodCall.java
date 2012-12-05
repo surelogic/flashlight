@@ -114,6 +114,8 @@ abstract class MethodCall {
     instrumentAfterTryLockNormal(mv, config); // +4
     instrumentAfterUnlock(mv, config, true); // +4
     instrumentAfterWait(mv, config); // +4
+    // XXX: Not doing this yet
+//    instrumentAfterTryMethod(mv, config);
     
     /* after method call event */
     instrumentAfterMethodCall(mv, config); // +6
@@ -130,6 +132,7 @@ abstract class MethodCall {
     instrumentAfterTryLockException(mv, config); // +4 (+1 exception)
     instrumentAfterUnlock(mv, config, false); // +4 (+1 exception)
     instrumentAfterWait(mv, config); // +4 (+1 exception)
+    // If there was an exception then the "try" method fails, so nothing to report
     
     instrumentAfterMethodCall(mv, config); // +6 (+1 exception)
 
@@ -328,4 +331,30 @@ abstract class MethodCall {
       messenger.warning("Provided classpath is incomplete: couldn't find class " + e.getMissingClass());
     }
   }  
+  
+  private void instrumentAfterTryMethod(
+      final MethodVisitor mv, final Configuration config) {
+    try {
+      if (this.testCalledMethodName(
+          "java/util/concurrent/Semaphore", "tryAcquire")) {
+        // ..., [boolean success]
+        mv.visitInsn(Opcodes.DUP);
+        // ..., [boolean succes], [boolean success]
+        // jump if return value is false
+        final Label tryFailed = new Label();
+        mv.visitJumpInsn(Opcodes.IFEQ, tryFailed);
+        // ..., [boolean success]
+        this.pushReceiverForEvent(mv);
+        // ..., [boolean success], objRef
+        this.pushSiteId(mv);
+        // ..., [boolean success], objRef, callSiteId (long)
+        ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.TRY_CALL_SUCCEEDED);
+        // ..., [boolean success]
+        
+        mv.visitLabel(tryFailed);
+      }
+    } catch (final ClassNotFoundException e) {
+      messenger.warning("Provided classpath is incomplete: couldn't find class " + e.getMissingClass());
+    }
+  }
 }

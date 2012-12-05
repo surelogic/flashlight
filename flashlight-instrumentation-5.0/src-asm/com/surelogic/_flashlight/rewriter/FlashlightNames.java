@@ -76,6 +76,9 @@ public final class FlashlightNames {
     public static final Method GET_FIELD_ID = Method
             .getMethod("int getFieldId(String, String)");
 
+    public static final Method TRY_CALL_SUCCEEDED = Method
+            .getMethod("void tryCallSucceeded(java.lang.Object, long)");
+    
     public static final Method SHUTDOWN = Method.getMethod("void shutdown()");
 
     public static final Method GET_CLASS_PHANTOM = Method

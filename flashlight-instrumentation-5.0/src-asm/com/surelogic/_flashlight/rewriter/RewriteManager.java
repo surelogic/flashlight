@@ -35,10 +35,6 @@ import org.objectweb.asm.ClassWriter;
 import com.surelogic._flashlight.common.FileChannelOutputStream;
 import com.surelogic._flashlight.rewriter.config.Configuration;
 
-/**
- * Wrapper around a {@link RewriteEngine} that makes it easier to use for the
- * common cases.
- */
 public abstract class RewriteManager {
     // ======================================================================
     // == Constants
@@ -49,7 +45,8 @@ public abstract class RewriteManager {
     public static final String DEFAULT_FLASHLIGHT_RUNTIME_JAR = "flashlight-runtime.jar";
     private static final String ZIP_FILE_NAME_SEPERATOR = "/";
     private static final String INTERNAL_CLASSNAME_SEPARATOR = "/";
-    private static final String MANIFEST_DIR = JarFile.MANIFEST_NAME.substring(
+    private static final String MANIFEST_DIR =
+        JarFile.MANIFEST_NAME.substring(
             0, JarFile.MANIFEST_NAME.indexOf('/') + 1);
     private static final char SPACE = ' ';
     private static final int BUFSIZE = 10240;

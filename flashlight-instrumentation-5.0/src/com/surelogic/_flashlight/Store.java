@@ -641,6 +641,10 @@ public class Store {
 		}
 	}
 
+	public static void tryCallSucceeded(final Object receiver, final long siteId) {
+	  // fill this in
+	}
+	
 	/**
 	 * Stops collection of events about the instrumented program. This method
 	 * may be called from within the following thread contexts:
@@ -822,7 +826,6 @@ public class Store {
 				return;
 			}
 		}
-
 	}
 
 }

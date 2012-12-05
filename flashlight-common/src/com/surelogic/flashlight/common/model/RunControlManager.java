@@ -2,7 +2,10 @@ package com.surelogic.flashlight.common.model;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.surelogic.NonNull;
@@ -63,6 +66,8 @@ public final class RunControlManager {
   /**
    * Adds the passed run to this manager. Subsequent calls to change the state
    * of this run should pass the same object instance.
+   * <p>
+   * Run control manager observers are notified if this method is successful.
    * 
    * @param run
    *          a launched Flashlight-instrumented application.
@@ -86,6 +91,8 @@ public final class RunControlManager {
    * Notifies this manager that the passed run is now collecting data. The run
    * must be known to the manager via a subsequent call to
    * {@link #runStarting(IDataCollectingRun)}.
+   * <p>
+   * Run control manager observers are notified if this method is successful.
    * 
    * @param run
    *          a launched Flashlight-instrumented application.
@@ -114,6 +121,8 @@ public final class RunControlManager {
 
   /**
    * Requests that this terminate collection as soon as possible.
+   * <p>
+   * Run control manager observers are notified if this method is successful.
    * 
    * @param run
    *          a launched Flashlight-instrumented application.
@@ -148,6 +157,8 @@ public final class RunControlManager {
    * run, just that {@link #runStarting(IDataCollectingRun)} has been invoked. A
    * run is allowed to finish collecting data before it ever started collecting
    * data.
+   * <p>
+   * Run control manager observers are notified if this method is successful.
    * 
    * @param run
    *          a launched Flashlight-instrumented application.
@@ -168,6 +179,63 @@ public final class RunControlManager {
       f_runToState.put(run, DataCollectingRunState.FINISHED);
     }
     notify(run, DataCollectingRunState.FINISHED);
+  }
+
+  /**
+   * Clears out runs that have reached the
+   * {@link DataCollectingRunState#FINISHED} state.
+   * <p>
+   * Run control manager observers are notified if this method, in face, cleared
+   * out any runs. Notification is skipped if this manager had no finished runs.
+   */
+  public void clearAllFinishedRuns() {
+    final Set<IDataCollectingRun> cleared = new HashSet<IDataCollectingRun>();
+    synchronized (f_lock) {
+      for (Iterator<Map.Entry<IDataCollectingRun, DataCollectingRunState>> iterator = f_runToState.entrySet().iterator(); iterator
+          .hasNext();) {
+        Map.Entry<IDataCollectingRun, DataCollectingRunState> entry = iterator.next();
+        if (entry.getValue() == DataCollectingRunState.FINISHED) {
+          cleared.add(entry.getKey());
+          iterator.remove();
+        }
+      }
+    }
+    if (!cleared.isEmpty())
+      notifyCleared(cleared);
+  }
+
+  /**
+   * Clears the passed run that must have reached the
+   * {@link DataCollectingRunState#FINISHED} state. The run must be known to the
+   * manager via a subsequent call to {@link #runStarting(IDataCollectingRun)}.
+   * <p>
+   * Run control manager observers are notified if this method is successful.
+   * 
+   * @param run
+   *          a launched Flashlight-instrumented application.
+   * 
+   * @throws IllegalStateException
+   *           if the passed run is not known to this manager or it is not in
+   *           the {@link DataCollectingRunState#FINISHED} state.
+   * @throws IllegalArgumentException
+   *           if the passed run is {@code null}.
+   */
+  public void clearFinishedRun(@NonNull final IDataCollectingRun run) {
+    if (run == null)
+      throw new IllegalArgumentException(I18N.err(44, "run"));
+    synchronized (f_lock) {
+      DataCollectingRunState state = f_runToState.get(run);
+      if (state == null)
+        throw new IllegalStateException(run.getRunSimpleNameforUI() + " not known to the "
+            + RunControlManager.class.getSimpleName());
+      if (state != DataCollectingRunState.FINISHED)
+        throw new IllegalStateException(run.getRunSimpleNameforUI() + " state must be " + DataCollectingRunState.FINISHED
+            + " but instead is " + state);
+      f_runToState.remove(run);
+    }
+    final Set<IDataCollectingRun> cleared = new HashSet<IDataCollectingRun>();
+    cleared.add(run);
+    notifyCleared(cleared);
   }
 
   @Vouch("AnnotationBounds")
@@ -212,6 +280,16 @@ public final class RunControlManager {
   private void notify(@NonNull final IDataCollectingRun run, @NonNull final DataCollectingRunState newState) {
     for (final IRunControlObserver observer : f_observers) {
       observer.launchedRunStateChanged(run, newState);
+    }
+  }
+
+  /**
+   * Notifies observers that that the set of runs in the
+   * {@link DataCollectingRunState#FINISHED} state has been cleared.
+   */
+  private void notifyCleared(@NonNull final Set<IDataCollectingRun> cleared) {
+    for (final IRunControlObserver observer : f_observers) {
+      observer.launchedRunCleared(cleared);
     }
   }
 }

@@ -1,5 +1,7 @@
 package com.surelogic.flashlight.common.model;
 
+import java.util.Set;
+
 /**
  * Implemented to observe changes to launched Flashlight-instrumented
  * applications.
@@ -22,4 +24,10 @@ public interface IRunControlObserver {
    *          the new state of the passed run.
    */
   void launchedRunStateChanged(IDataCollectingRun run, DataCollectingRunState newState);
+
+  /**
+   * Notification that the passed set of runs in the
+   * {@link DataCollectingRunState#FINISHED} state has been cleared.
+   */
+  void launchedRunCleared(Set<IDataCollectingRun> cleared);
 }

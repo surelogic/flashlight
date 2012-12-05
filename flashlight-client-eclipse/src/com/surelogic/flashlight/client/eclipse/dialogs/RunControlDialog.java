@@ -3,6 +3,7 @@ package com.surelogic.flashlight.client.eclipse.dialogs;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -349,7 +350,7 @@ public final class RunControlDialog extends Dialog implements IRunControlObserve
     System.out.println("modelItemActionPressed(" + on + ")");
   }
 
-  private final ArrayList<RunModel> f_model = new ArrayList<RunModel>();
+  private final LinkedList<RunModel> f_model = new LinkedList<RunModel>();
 
   @Nullable
   private RunModel getModelFor(IDataCollectingRun run) {
@@ -379,7 +380,7 @@ public final class RunControlDialog extends Dialog implements IRunControlObserve
       if (runModel == null) {
         runModel = new RunModel(pair.first(), pair.second());
         runModel.addToUI(f_dialogArea);
-        f_model.add(runModel);
+        f_model.addFirst(runModel);
       }
       stillExists.add(runModel);
       runModel.updateUI();

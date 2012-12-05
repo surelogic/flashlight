@@ -44,7 +44,7 @@ public class RunControlDialog extends Dialog {
     /*
      * Ensure that this dialog is modeless.
      */
-    setShellStyle(SWT.RESIZE | SWT.MAX | SWT.MODELESS);
+    setShellStyle(SWT.RESIZE | SWT.CLOSE | SWT.MAX | SWT.MODELESS);
     setBlockOnOpen(false);
   }
 

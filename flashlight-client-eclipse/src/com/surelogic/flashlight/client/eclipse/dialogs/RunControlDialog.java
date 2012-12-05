@@ -35,8 +35,7 @@ public class RunControlDialog extends Dialog {
     if (INSTANCE == null) {
       INSTANCE = new RunControlDialog(EclipseUIUtility.getShell());
     }
-    int result = INSTANCE.open();
-    System.out.println("RunControlDialog = " + result);
+    INSTANCE.open();
   }
 
   public RunControlDialog(Shell parentShell) {
@@ -59,7 +58,7 @@ public class RunControlDialog extends Dialog {
   @Override
   protected void configureShell(Shell newShell) {
     super.configureShell(newShell);
-    newShell.setText("Flashlight Run Control");
+    newShell.setText(I18N.msg("flashligh.dialog.run.control.title"));
     newShell.setImage(SLImages.getImage(CommonImages.IMG_FL_RUN_CONTROL));
   }
 
@@ -98,6 +97,10 @@ public class RunControlDialog extends Dialog {
       }
     });
 
+    /*
+     * This whole mess below is to implement a search box that works on the
+     * various operating systems.
+     */
     final Text search = new Text(composite, SWT.SEARCH | SWT.ICON_CANCEL);
     search.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
     if ((search.getStyle() & SWT.ICON_CANCEL) == 0) {

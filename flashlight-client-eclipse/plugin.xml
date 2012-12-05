@@ -66,6 +66,13 @@
 				helpContextId="menu-open-flashlight-perspective">
 			</action>
 			<action
+				class="com.surelogic.flashlight.client.eclipse.actions.ShowRunControlAction"
+				id="com.surelogic.flashlight.client.eclipse.actions.ShowRunControlAction"
+				icon="platform:/plugin/com.surelogic.common/lib/images/fl_run_control.gif"
+				label="Run Control" menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/client"
+				helpContextId="menu-open-run-control">
+			</action>
+			<action
 				class="com.surelogic.flashlight.client.eclipse.actions.SetupAntTasksAction"
 				id="com.surelogic.flashlight.client.eclipse.actions.SetupAntTasksAction"
 				icon="platform:/plugin/com.surelogic.common/lib/images/jar_saveas.gif"

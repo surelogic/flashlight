@@ -1,4 +1,4 @@
-package com.surelogic.flashlight.common.files;
+package com.surelogic.flashlight.common.model;
 
 import java.io.File;
 import java.io.FilenameFilter;

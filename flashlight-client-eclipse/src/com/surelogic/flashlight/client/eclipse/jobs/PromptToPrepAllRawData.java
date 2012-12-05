@@ -27,8 +27,8 @@ import com.surelogic.flashlight.client.eclipse.dialogs.ConfirmPrepAllRawDataDial
 import com.surelogic.flashlight.client.eclipse.model.IRunManagerObserver;
 import com.surelogic.flashlight.client.eclipse.model.RunManager;
 import com.surelogic.flashlight.client.eclipse.perspectives.FlashlightPerspective;
-import com.surelogic.flashlight.common.files.RunDirectory;
 import com.surelogic.flashlight.common.jobs.PrepSLJob;
+import com.surelogic.flashlight.common.model.RunDirectory;
 
 /**
  * A job to prompt the user if he or she wants to prepare all run data that has
@@ -118,7 +118,7 @@ public final class PromptToPrepAllRawData extends SLUIJob {
       return Status.OK_STATUS; // bail
     }
 
-    final Set<RunDirectory> notPrepped = RunManager.getInstance().getUnPreppedRunDirectories();
+    final Set<RunDirectory> notPrepped = RunManager.getInstance().getNotPreparedRunDirectories();
     if (!notPrepped.isEmpty()) {
       /*
        * Prompt the user

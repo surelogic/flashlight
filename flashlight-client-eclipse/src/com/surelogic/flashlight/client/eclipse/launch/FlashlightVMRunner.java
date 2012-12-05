@@ -1,23 +1,26 @@
 package com.surelogic.flashlight.client.eclipse.launch;
 
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_COLLECTION_TYPE;
-import static com.surelogic._flashlight.common.InstrumentationConstants.FL_COMPLETE_RUN;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_COMPLETE_RUN_LOC;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_CONSOLE_PORT;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_DATE_OVERRIDE;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_DIR;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_EXTERNAL_FOLDER_LOC;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_FIELDS_FILE;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_FIELDS_FILE_LOC;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_LOG_FILE_LOC;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_NO_SPY;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_OUTPUT_TYPE;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_OUTQ_SIZE;
-import static com.surelogic._flashlight.common.InstrumentationConstants.FL_PORT_FILE_NAME;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_PORT_FILE_LOC;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_POSTMORTEM;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_PROJECTS_FOLDER_LOC;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_RAWQ_SIZE;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_REFINERY_OFF;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_REFINERY_SIZE;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_SITES_FILE;
-import static com.surelogic.flashlight.common.files.InstrumentationFileHandles.FIELDS_FILE_NAME;
-import static com.surelogic.flashlight.common.files.InstrumentationFileHandles.INSTRUMENTATION_LOG_FILE_NAME;
-import static com.surelogic.flashlight.common.files.InstrumentationFileHandles.SITES_FILE_NAME;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_SITES_FILE_LOC;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_SOURCE_FOLDER_LOC;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -64,7 +67,6 @@ import com.surelogic._flashlight.rewriter.RewriteManager;
 import com.surelogic._flashlight.rewriter.RewriteMessenger;
 import com.surelogic._flashlight.rewriter.config.Configuration;
 import com.surelogic._flashlight.rewriter.config.ConfigurationBuilder;
-import com.surelogic.common.FileUtility;
 import com.surelogic.common.core.EclipseUtility;
 import com.surelogic.common.core.MemoryUtility;
 import com.surelogic.common.core.jobs.EclipseJob;
@@ -83,7 +85,7 @@ import com.surelogic.flashlight.client.eclipse.launch.LaunchHelper.RuntimeConfig
 import com.surelogic.flashlight.client.eclipse.model.RunManager;
 import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
 import com.surelogic.flashlight.client.eclipse.views.monitor.MonitorStatus;
-import com.surelogic.flashlight.common.files.RunDirectory;
+import com.surelogic.flashlight.common.model.RunDirectory;
 
 public final class FlashlightVMRunner implements IVMRunner {
     private static final String MAX_HEAP_PREFIX = "-Xmx";
@@ -159,23 +161,22 @@ public final class FlashlightVMRunner implements IVMRunner {
         }
 
         /* Init references to the different components of the output directory */
-        projectOutputDir = new File(runOutputDir, "projects");
-        externalOutputDir = new File(runOutputDir, "external");
-        sourceDir = new File(runOutputDir, "source");
-        portFile = new File(runOutputDir, FL_PORT_FILE_NAME);
-        completeFile = new File(runOutputDir, FL_COMPLETE_RUN);
-        fieldsFile = new File(runOutputDir, FIELDS_FILE_NAME);
-        sitesFile = new File(runOutputDir, SITES_FILE_NAME
-                + FileUtility.GZIP_SUFFIX);
-        logFile = new File(runOutputDir, INSTRUMENTATION_LOG_FILE_NAME);
+        projectOutputDir = new File(runOutputDir, FL_PROJECTS_FOLDER_LOC);
+        externalOutputDir = new File(runOutputDir, FL_EXTERNAL_FOLDER_LOC);
+        sourceDir = new File(runOutputDir, FL_SOURCE_FOLDER_LOC);
+        portFile = new File(runOutputDir, FL_PORT_FILE_LOC);
+        completeFile = new File(runOutputDir, FL_COMPLETE_RUN_LOC);
+        fieldsFile = new File(runOutputDir, FL_FIELDS_FILE_LOC);
+        sitesFile = new File(runOutputDir, FL_SITES_FILE_LOC);
+        logFile = new File(runOutputDir, FL_LOG_FILE_LOC);
         if (!projectOutputDir.exists()) {
-            projectOutputDir.mkdir();
+            projectOutputDir.mkdirs();
         }
         if (!externalOutputDir.exists()) {
-            externalOutputDir.mkdir();
+            externalOutputDir.mkdirs();
         }
         if (!sourceDir.exists()) {
-            sourceDir.mkdir();
+            sourceDir.mkdirs();
         }
     }
 
@@ -274,13 +275,15 @@ public final class FlashlightVMRunner implements IVMRunner {
 
     @Nullable
     private RunDirectory findLastRunDirectory() throws CoreException {
-      RunDirectory latest = null;
+        RunDirectory latest = null;
         for (final RunDirectory run : RunManager.getInstance()
                 .getRunDirectories()) {
-            if (mainTypeName.equals(run.getRunDescription().getName())) {
+            if (mainTypeName.equals(run.getDescription().getName())) {
                 if (latest == null
-                        || run.getRunDescription().getStartTimeOfRun().after(
-                                latest.getRunDescription().getStartTimeOfRun())) {
+                        || run.getDescription()
+                                .getStartTimeOfRun()
+                                .after(latest.getDescription()
+                                        .getStartTimeOfRun())) {
                     latest = run;
                 }
             }

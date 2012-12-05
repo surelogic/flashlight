@@ -16,10 +16,10 @@ import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.flashlight.client.eclipse.model.RunManager;
 import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
-import com.surelogic.flashlight.common.files.RunDirectory;
 import com.surelogic.flashlight.common.jobs.JobConstants;
 import com.surelogic.flashlight.common.jobs.PrepSLJob;
 import com.surelogic.flashlight.common.model.RunDescription;
+import com.surelogic.flashlight.common.model.RunDirectory;
 
 public class PrepMultipleRunsJob extends AbstractSLJob {
 
@@ -33,7 +33,7 @@ public class PrepMultipleRunsJob extends AbstractSLJob {
   private static String jobName(final List<RunDirectory> runs) {
     final String jobName;
     if (runs.size() == 1) {
-      final RunDescription one = runs.get(0).getRunDescription();
+      final RunDescription one = runs.get(0).getDescription();
       jobName = I18N.msg("flashlight.jobs.prep.one", one.getName(), SLUtility.toStringHMS(one.getStartTimeOfRun()));
     } else {
       jobName = I18N.msg("flashlight.jobs.prep.many");
@@ -48,7 +48,7 @@ public class PrepMultipleRunsJob extends AbstractSLJob {
     monitor.begin((perJobWork + refreshWork) * f_runDirectories.size());
     final IJobManager man = Job.getJobManager();
     for (final RunDirectory runDir : f_runDirectories) {
-      final ISchedulingRule rule = KeywordAccessRule.getInstance(JobConstants.PREP_KEY, runDir.getRunDescription()
+      final ISchedulingRule rule = KeywordAccessRule.getInstance(JobConstants.PREP_KEY, runDir.getDescription()
           .toIdentityString());
       SLStatus status;
       try {

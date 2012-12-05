@@ -26,7 +26,7 @@ import com.surelogic.common.ui.adhoc.views.results.AbstractQueryResultsView;
 import com.surelogic.common.ui.tooltip.ToolTip;
 import com.surelogic.flashlight.client.eclipse.images.FlashlightImageLoader;
 import com.surelogic.flashlight.client.eclipse.jobs.PopulateBrowserWithRunInformationJob;
-import com.surelogic.flashlight.common.files.RunDirectory;
+import com.surelogic.flashlight.common.model.RunDirectory;
 
 public final class QueryResultsView extends AbstractQueryResultsView {
 
@@ -168,7 +168,7 @@ public final class QueryResultsView extends AbstractQueryResultsView {
         try {
             Map<String, String> params = SimpleHTMLPrinter
                     .extractParametersFromURL(url);
-            params.put(AdHocManager.DATABASE, run.getRunDescription().toIdentityString());
+            params.put(AdHocManager.DATABASE, run.getDescription().toIdentityString());
             JumpToCode.getInstance().jumpToCode(params);
         } catch (IllegalStateException problem) {
             SLLogger.getLogger()

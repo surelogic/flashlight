@@ -8,9 +8,9 @@ import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.common.license.SLLicenseProduct;
 import com.surelogic.common.license.SLLicenseUtility;
-import com.surelogic.flashlight.common.files.RawFileUtility;
-import com.surelogic.flashlight.common.files.RunDirectory;
+import com.surelogic.flashlight.common.model.RawFileUtility;
 import com.surelogic.flashlight.common.model.RunDescription;
+import com.surelogic.flashlight.common.model.RunDirectory;
 
 /**
  * Note that the RunManager needs to be refreshed after this
@@ -37,7 +37,7 @@ public class DeleteRawFilesSLJob extends AbstractSLJob {
 
             final RunDirectory runDir = RawFileUtility.getRunDirectoryFor(
                     dataDir, f_description);
-            FileUtility.recursiveDelete(runDir.getRunDirectory());
+            FileUtility.recursiveDelete(runDir.getDirectory());
         } finally {
             monitor.done();
         }

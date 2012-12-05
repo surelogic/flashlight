@@ -15,7 +15,6 @@ import com.surelogic.Singleton;
 import com.surelogic.common.adhoc.AdHocQuery;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.logging.SLLogger;
-import com.surelogic.flashlight.common.files.RunDirectory;
 
 @Singleton
 public class EmptyQueriesCache {
@@ -36,7 +35,7 @@ public class EmptyQueriesCache {
     if (runDirectory == null || query == null)
       return false;
 
-    final RunDescription runDescription = runDirectory.getRunDescription();
+    final RunDescription runDescription = runDirectory.getDescription();
 
     if (!f_runToEmptyQueries.containsKey(runDescription))
       readFile(runDirectory);
@@ -76,7 +75,7 @@ public class EmptyQueriesCache {
       SLLogger.getLogger().log(Level.WARNING, I18N.err(40, emptyQueriesFile.toString()));
     }
     if (!emptyQueries.isEmpty()) {
-      f_runToEmptyQueries.put(runDirectory.getRunDescription(), emptyQueries);
+      f_runToEmptyQueries.put(runDirectory.getDescription(), emptyQueries);
     }
   }
 }

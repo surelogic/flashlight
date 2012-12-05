@@ -36,8 +36,8 @@ import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jdbc.ConnectionQuery;
 import com.surelogic.common.jdbc.LimitedResult;
 import com.surelogic.common.jobs.SLProgressMonitor;
-import com.surelogic.flashlight.common.files.HtmlHandles;
-import com.surelogic.flashlight.common.files.RunDirectory;
+import com.surelogic.flashlight.common.model.HtmlHandles;
+import com.surelogic.flashlight.common.model.RunDirectory;
 import com.surelogic.flashlight.common.prep.HTMLBuilder.Body;
 import com.surelogic.flashlight.common.prep.HTMLBuilder.Cell;
 import com.surelogic.flashlight.common.prep.HTMLBuilder.Container;
@@ -152,7 +152,7 @@ public final class WriteHtmlOverview implements IPostPrep {
 
   private HTMLBuilder displayPage(final List<HeaderName> headers, final Section s) {
     HTMLBuilder builder = new HTMLBuilder();
-    Head head = builder.head(f_runDirectory.getRunDescription().getName());
+    Head head = builder.head(f_runDirectory.getDescription().getName());
     head.styleSheet("RunOverviewStyleSheet.css");
     head.styleSheet("colors.css");
     head.javaScript("jquery-1.7.2.min.js");

@@ -83,7 +83,7 @@ class Console extends Thread {
             // We write out the port file we are using to our local run folder,
             // if it exists.
             File portFile = new File(StoreConfiguration.getDirectory(),
-                    InstrumentationConstants.FL_PORT_FILE_NAME);
+                    InstrumentationConstants.FL_PORT_FILE_LOC);
             try {
                 PrintWriter writer = new PrintWriter(portFile);
                 try {

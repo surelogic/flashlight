@@ -81,6 +81,8 @@ import com.surelogic.common.core.logging.SLEclipseStatusUtility;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.common.ui.dialogs.ShowTextDialog;
 import com.surelogic.common.ui.jobs.SLUIJob;
+import com.surelogic.flashlight.android.jobs.ReadFlashlightStreamJob;
+import com.surelogic.flashlight.android.jobs.ReadLogcatJob;
 import com.surelogic.flashlight.client.eclipse.Activator;
 import com.surelogic.flashlight.client.eclipse.jobs.WatchFlashlightMonitorJob;
 import com.surelogic.flashlight.client.eclipse.launch.LaunchHelper;
@@ -88,7 +90,6 @@ import com.surelogic.flashlight.client.eclipse.launch.LaunchHelper.RuntimeConfig
 import com.surelogic.flashlight.client.eclipse.launch.LaunchUtils;
 import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
 import com.surelogic.flashlight.client.eclipse.views.monitor.MonitorStatus;
-import com.surelogic.flashlight.eclipse.client.jobs.ReadFlashlightStreamJob;
 
 /**
  * This Launch Configuration is mostly cribbed from
@@ -246,6 +247,11 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
         if (applicationPackage == null) {
             androidLaunch.stopLaunch();
             return;
+        } else {
+            // We are going to store away the apk for debugging purposes
+            File apkFile = applicationPackage.getRawLocation().toFile();
+            FileUtility.copy(apkFile,
+                    new File(data.apkFolder, apkFile.getName()));
         }
 
         // we need some information from the manifest
@@ -540,6 +546,7 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
         final File completeFile;
         final File portFile;
         final File sourceDir;
+        final File apkFolder;
         final Date time;
         final String projectName;
         final String runName;
@@ -581,21 +588,24 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
                     InstrumentationConstants.DATE_FORMAT);
             projectName = project.getName();
             runName = projectName + df.format(time);
-            runDir = new File(
-                    EclipseUtility.getFlashlightDataDirectory(),
+            runDir = new File(EclipseUtility.getFlashlightDataDirectory(),
                     runName);
             runDir.mkdir();
-            sourceDir = new File(runDir, "source");
-            sourceDir.mkdir();
+            sourceDir = new File(runDir,
+                    InstrumentationConstants.FL_SOURCE_FOLDER_LOC);
+            sourceDir.mkdirs();
+            apkFolder = new File(runDir,
+                    InstrumentationConstants.FL_APK_FOLDER_LOC);
+            apkFolder.mkdirs();
             fieldsFile = new File(runDir,
-                    InstrumentationConstants.FL_FIELDS_FILE_NAME);
-            log = new File(runDir, InstrumentationConstants.FL_LOG_FILE_NAME);
+                    InstrumentationConstants.FL_FIELDS_FILE_LOC);
+            log = new File(runDir, InstrumentationConstants.FL_LOG_FILE_LOC);
             sitesFile = new File(runDir,
-                    InstrumentationConstants.FL_SITES_FILE_NAME);
+                    InstrumentationConstants.FL_SITES_FILE_LOC);
             completeFile = new File(runDir,
-                    InstrumentationConstants.FL_COMPLETE_RUN);
+                    InstrumentationConstants.FL_COMPLETE_RUN_LOC);
             portFile = new File(runDir,
-                    InstrumentationConstants.FL_PORT_FILE_NAME);
+                    InstrumentationConstants.FL_PORT_FILE_LOC);
             PrintWriter writer = new PrintWriter(portFile);
             try {
                 writer.println(conf.getConsolePort());
@@ -957,6 +967,10 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
                         EclipseJob.getInstance().schedule(
                                 new ReadFlashlightStreamJob(data.runName,
                                         data.runDir, data.outputPort, id));
+                        EclipseJob.getInstance()
+                                .schedule(
+                                        new ReadLogcatJob(data.runName,
+                                                data.runDir, id));
                         return Status.OK_STATUS;
                     }
                 } catch (Exception e) {

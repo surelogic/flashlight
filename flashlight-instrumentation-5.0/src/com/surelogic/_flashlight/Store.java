@@ -713,7 +713,7 @@ public class Store {
 
 		if (StoreConfiguration.getDirectory() != null) {
 			final File done = new File(StoreConfiguration.getDirectory(),
-					InstrumentationConstants.FL_COMPLETE_RUN);
+					InstrumentationConstants.FL_COMPLETE_RUN_LOC);
 			try {
 				FileWriter w = new FileWriter(done);
 				try {

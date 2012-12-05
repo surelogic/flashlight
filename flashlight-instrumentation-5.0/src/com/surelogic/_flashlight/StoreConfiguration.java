@@ -10,9 +10,9 @@ import static com.surelogic._flashlight.common.InstrumentationConstants.FL_DATE_
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_DEBUG;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_DIR;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_FIELDS_FILE;
-import static com.surelogic._flashlight.common.InstrumentationConstants.FL_FIELDS_FILE_NAME;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_FIELDS_FILE_LOC;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_FIELDS_RESOURCE;
-import static com.surelogic._flashlight.common.InstrumentationConstants.FL_LOG_FILE_NAME;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_LOG_FILE_LOC;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_LOG_RESOURCE;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_NO_SPY;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_OFF;
@@ -33,10 +33,10 @@ import static com.surelogic._flashlight.common.InstrumentationConstants.FL_RUN;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_RUN_DEFAULT;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_RUN_FOLDER;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_SITES_FILE;
-import static com.surelogic._flashlight.common.InstrumentationConstants.FL_SITES_FILE_NAME;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_SITES_FILE_LOC;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_SITES_RESOURCE;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_SOCKET_OUTPUT_TYPE;
-import static com.surelogic._flashlight.common.InstrumentationConstants.FL_SOURCE_FOLDER_NAME;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_SOURCE_FOLDER_LOC;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_SOURCE_RESOURCE;
 
 import java.io.BufferedInputStream;
@@ -138,7 +138,8 @@ public class StoreConfiguration {
             updateIfNotSet(props, FL_REFINERY_SIZE,
                     InstrumentationConf.getFL_REFINERY_SIZE());
             updateIfNotSet(props, FL_RUN, InstrumentationConf.getFL_RUN());
-            updateIfNotSet(props, FL_ANDROID, InstrumentationConf.getFL_ANDROID());
+            updateIfNotSet(props, FL_ANDROID,
+                    InstrumentationConf.getFL_ANDROID());
             updateIfNotSet(props, FL_RUN_FOLDER,
                     InstrumentationConf.getFL_RUN_FOLDER());
             updateIfNotSet(props, FL_SITES_FILE,
@@ -202,7 +203,7 @@ public class StoreConfiguration {
         if (props.containsKey(FL_FIELDS_FILE)) {
             setFieldsFile(props.getProperty(FL_FIELDS_FILE));
         } else if (getDirectory() != null) {
-            File fieldsFile = new File(getDirectory(), FL_FIELDS_FILE_NAME);
+            File fieldsFile = new File(getDirectory(), FL_FIELDS_FILE_LOC);
             boolean success = false;
             try {
                 // Look for the fields data as a class
@@ -235,15 +236,15 @@ public class StoreConfiguration {
             }
         }
         if (props.containsKey(FL_SITES_FILE)) {
-            setSitesFile(props.getProperty(FL_SITES_FILE, FL_SITES_FILE_NAME));
+            setSitesFile(props.getProperty(FL_SITES_FILE, FL_SITES_FILE_LOC));
         } else if (getDirectory() != null) {
-            File sitesFile = new File(getDirectory(), FL_SITES_FILE_NAME);
+            File sitesFile = new File(getDirectory(), FL_SITES_FILE_LOC);
             boolean success = false;
             try {
                 // Look for the fields data as a class
                 String lines = SitesConf.getSiteLines();
                 OutputStream out = new FileOutputStream(sitesFile);
-                if (FL_SITES_FILE_NAME.endsWith("tar.gz")) {
+                if (FL_SITES_FILE_LOC.endsWith("tar.gz")) {
                     out = new GZIPOutputStream(out);
                 }
 
@@ -275,7 +276,7 @@ public class StoreConfiguration {
         }
         if (getDirectory() != null) {
             InputStream resource = context.getResourceAsStream(FL_LOG_RESOURCE);
-            File logFile = new File(getDirectory(), FL_LOG_FILE_NAME);
+            File logFile = new File(getDirectory(), FL_LOG_FILE_LOC);
             if (resource != null) {
                 copy(resource, logFile);
             } else if (!logFile.exists()) {
@@ -298,7 +299,7 @@ public class StoreConfiguration {
                 ZipInputStream zf = new ZipInputStream(new BufferedInputStream(
                         sources));
                 File sourceFolder = new File(getDirectory(),
-                        FL_SOURCE_FOLDER_NAME);
+                        FL_SOURCE_FOLDER_LOC);
                 try {
                     for (ZipEntry entry = zf.getNextEntry(); entry != null; entry = zf
                             .getNextEntry()) {
@@ -602,9 +603,9 @@ public class StoreConfiguration {
     public static void setPostmortemMode(final boolean isPostmortemMode) {
         StoreConfiguration.isPostmortemMode = isPostmortemMode;
     }
-    
+
     public static boolean isAndroid() {
-      return isAndroid;
+        return isAndroid;
     }
 
     /**

@@ -2090,10 +2090,6 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 			 * within D. It remains to be seen if this is a big deal or not.
 			 */
 			final boolean ownerIsSuper = owner.equals(superClassInternal);
-			if (ownerIsSuper) {
-				messenger.verbose("OWNER IS SUPER: method " + methodName
-						+ ", invoking " + owner + " " + name + " " + desc);
-			}
 
 			if (inInterface || isClone || ownerIsSuper) {
 				final InPlaceMethodInstrumentation methodCall;

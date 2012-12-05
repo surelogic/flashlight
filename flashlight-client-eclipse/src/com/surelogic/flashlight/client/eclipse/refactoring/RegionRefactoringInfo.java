@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.eclipse.jdt.core.IJavaProject;
 
-import com.surelogic.flashlight.common.files.RunDirectory;
+import com.surelogic.flashlight.common.model.RunDirectory;
 
 public class RegionRefactoringInfo {
 

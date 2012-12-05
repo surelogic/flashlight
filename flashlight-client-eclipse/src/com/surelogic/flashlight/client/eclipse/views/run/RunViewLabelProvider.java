@@ -8,7 +8,7 @@ import org.eclipse.swt.graphics.Image;
 import com.surelogic.common.CommonImages;
 import com.surelogic.common.ui.SLImages;
 import com.surelogic.flashlight.client.eclipse.model.RunViewModel;
-import com.surelogic.flashlight.common.files.RunDirectory;
+import com.surelogic.flashlight.common.model.RunDirectory;
 
 public final class RunViewLabelProvider implements ITableLabelProvider {
 
@@ -28,7 +28,7 @@ public final class RunViewLabelProvider implements ITableLabelProvider {
        */
       String baseImage = CommonImages.IMG_JAVA_APP;
       final boolean hasWarnings = CommonImages.IMG_WARNING.equals(symbolicName);
-      if (rowData.getRunDescription().isAndroid()) {
+      if (rowData.getDescription().isAndroid()) {
         baseImage = CommonImages.IMG_ANDROID_APP;
       }
       final ImageDescriptor warn = hasWarnings ? SLImages.getImageDescriptor(CommonImages.DECR_WARNING) : null;

@@ -1,4 +1,4 @@
-package com.surelogic.flashlight.common.files;
+package com.surelogic.flashlight.common.model;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -19,7 +19,6 @@ import com.surelogic._flashlight.common.OutputType;
 import com.surelogic.common.SLUtility;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.logging.SLLogger;
-import com.surelogic.flashlight.common.model.RunDescription;
 
 /**
  * A utility designed to work with Flashlight data files and the contents of the
@@ -89,8 +88,9 @@ public final class RawFileUtility {
    * @return prefix information (may or may not be well-formed).
    */
   public static RawDataFilePrefix getPrefixFor(final File rawDataFile) {
-    if (rawDataFile == null)
+    if (rawDataFile == null) {
       throw new IllegalArgumentException(I18N.err(44, "dataFile"));
+    }
 
     final RawDataFilePrefix prefixInfo = new RawDataFilePrefix();
     prefixInfo.read(rawDataFile);
@@ -99,16 +99,19 @@ public final class RawFileUtility {
   }
 
   public static RawDataFilePrefix[] getPrefixesFor(final File[] dataFiles) {
-    if (dataFiles == null)
+    if (dataFiles == null) {
       throw new IllegalArgumentException(I18N.err(44, "dataFiles"));
-    if (dataFiles.length < 1)
+    }
+    if (dataFiles.length < 1) {
       throw new IllegalArgumentException(I18N.err(92, "dataFiles"));
+    }
 
     final RawDataFilePrefix[] rv = new RawDataFilePrefix[dataFiles.length];
     for (int i = 0; i < dataFiles.length; i++) {
       final File dataFile = dataFiles[i];
-      if (dataFile == null)
+      if (dataFile == null) {
         throw new IllegalArgumentException(I18N.err(44, "dataFiles[" + i + "]"));
+      }
       rv[i] = getPrefixFor(dataFile);
     }
     return rv;
@@ -129,11 +132,12 @@ public final class RawFileUtility {
    */
   @NonNull
   public static RunDescription getRunDescriptionFor(final RawDataFilePrefix prefixInfo) {
-    if (prefixInfo == null)
+    if (prefixInfo == null) {
       throw new IllegalArgumentException(I18N.err(44, "prefixInfo"));
+    }
 
     if (prefixInfo.isWellFormed()) {
-      final File runComplete = new File(prefixInfo.getFile().getParentFile(), InstrumentationConstants.FL_COMPLETE_RUN);
+      final File runComplete = new File(prefixInfo.getFile().getParentFile(), InstrumentationConstants.FL_COMPLETE_RUN_LOC);
       final boolean runCompleted = runComplete.exists();
       long duration = 0;
       if (runCompleted) {
@@ -176,44 +180,29 @@ public final class RawFileUtility {
    */
   @NonNull
   public static RawFileHandles getRawFileHandlesFor(final File runDir, final RawDataFilePrefix[] prefixInfos) {
-    if (prefixInfos == null)
+    if (prefixInfos == null) {
       throw new IllegalArgumentException(I18N.err(44, "prefixInfos"));
-    if (prefixInfos.length < 1)
+    }
+    if (prefixInfos.length < 1) {
       throw new IllegalArgumentException(I18N.err(92, "prefixInfos"));
+    }
 
     for (int i = 0; i < prefixInfos.length; i++) {
       final RawDataFilePrefix p = prefixInfos[i];
-      if (p == null)
+      if (p == null) {
         throw new IllegalArgumentException(I18N.err(44, "prefixInfos[" + i + "]"));
-      if (!p.isWellFormed())
+      }
+      if (!p.isWellFormed()) {
         throw new IllegalStateException(I18N.err(107, p.getFile().getAbsolutePath()));
-    }
-
-    // Find log file
-    final class LogFilter implements FilenameFilter {
-      @Override
-      public boolean accept(final File dir, final String name) {
-        return name.endsWith(InstrumentationConstants.FL_LOG_SUFFIX);
       }
     }
-    final File[] logs = runDir.listFiles(new LogFilter());
-    final File logFile;
-    if (logs == null || logs.length != 1) {
+
+    final File logFile = new File(runDir, InstrumentationConstants.FL_RUNTIME_LOG_LOC);
+    if (!logFile.exists()) {
       SLLogger.getLogger().log(Level.FINE, I18N.err(108, prefixInfos[0].getFile().getAbsolutePath()));
-      logFile = null;
-    } else {
-      logFile = logs[0];
-
-      // Remove ".flog" suffix from the file name
-      final String fileNamePrefix = logFile.getName().substring(0,
-          logFile.getName().length() - InstrumentationConstants.FL_LOG_SUFFIX.length());
-      for (RawDataFilePrefix p : prefixInfos) {
-        if (!p.getFile().getName().startsWith(fileNamePrefix)) {
-          SLLogger.getLogger().log(Level.WARNING, "Log name " + fileNamePrefix + " doesn't match data: " + p.getFile().getName());
-        }
-      }
     }
-    final RawFileHandles handles = new RawFileHandles(prefixInfos, logFile);
+
+    final RawFileHandles handles = new RawFileHandles(prefixInfos, getLogFiles(runDir));
     return handles;
   }
 
@@ -230,8 +219,9 @@ public final class RawFileUtility {
     private final File f_dataDir;
 
     RawDataDirectoryReader(final File dataDir) {
-      if (dataDir == null)
+      if (dataDir == null) {
         throw new IllegalArgumentException(I18N.err(44, "dataDir"));
+      }
       f_dataDir = dataDir;
     }
 
@@ -248,17 +238,18 @@ public final class RawFileUtility {
     @NonNull
     File[] getRunDirs() {
       final File[] runDirs = f_dataDir.listFiles(f_runDirectoryFilter);
-      if (runDirs == null)
+      if (runDirs == null) {
         return new File[0];
-      else
+      } else {
         return runDirs;
+      }
     }
 
     void read() {
       for (final File runDir : getRunDirs()) {
         final RunDirectory runDirectory = RunDirectory.getFor(runDir);
         if (runDirectory != null) {
-          final RunDescription run = runDirectory.getRunDescription();
+          final RunDescription run = runDirectory.getDescription();
           f_runToHandles.put(run, runDirectory);
         }
       }
@@ -269,7 +260,30 @@ public final class RawFileUtility {
     @Override
     public boolean accept(final File root, final String name) {
       final File dir = new File(root, name);
-      return dir.exists() && dir.isDirectory() && new File(dir, name + OutputType.FLH.getSuffix()).exists();
+      return dir.isDirectory() && new File(dir, name + OutputType.FLH.getSuffix()).exists();
+    }
+  };
+
+  public static final File[] getLogFiles(File in) {
+    if (in == null)
+      return new File[0];
+
+    final File[] logFiles = in.listFiles(f_logFileFilter);
+    if (logFiles == null) {
+      return new File[0];
+    } else {
+      return logFiles;
+    }
+  }
+
+  private static final FilenameFilter f_logFileFilter = new FilenameFilter() {
+    @Override
+    public boolean accept(final File root, final String name) {
+      if (!name.endsWith(InstrumentationConstants.LOG_SUFFIX))
+        return false;
+
+      final File logFile = new File(root, name);
+      return logFile.isFile();
     }
   };
 

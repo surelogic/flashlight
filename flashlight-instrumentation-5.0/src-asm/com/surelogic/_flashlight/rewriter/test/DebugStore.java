@@ -249,4 +249,10 @@ public class DebugStore {
     stdOut.println("  value = " + field);
     return -1;
   }
+
+  public static void tryCallSucceeded(final Object receiver, final long siteId) {
+    stdOut.println("tryCallSucceeded");
+    stdOut.println("  receiver = " + objectToString(receiver));
+    stdOut.println("  siteID = " + siteId);
+  }
 }

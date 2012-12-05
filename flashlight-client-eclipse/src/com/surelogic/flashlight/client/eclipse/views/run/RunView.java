@@ -88,6 +88,13 @@ public final class RunView extends ViewPart {
     actionBars.getToolBarManager().add(showLogAction);
     actionBars.getMenuManager().add(showLogAction);
 
+    final Action showRunControlAction = f_mediator.getShowRunControlAction();
+    showRunControlAction.setImageDescriptor(SLImages.getImageDescriptor(CommonImages.IMG_FL_RUN_CONTROL));
+    showRunControlAction.setText(I18N.msg("flashlight.run.view.text.showRunControl"));
+    showRunControlAction.setToolTipText(I18N.msg("flashlight.run.view.tooltip.showRunControl"));
+    actionBars.getToolBarManager().add(showRunControlAction);
+    actionBars.getMenuManager().add(showRunControlAction);
+
     final Action deleteRunAction = f_mediator.getDeleteAction();
     deleteRunAction.setImageDescriptor(SLImages.getImageDescriptor(CommonImages.IMG_RED_X));
     deleteRunAction.setText(I18N.msg("flashlight.run.view.text.delete"));

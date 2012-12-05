@@ -42,6 +42,7 @@ import com.surelogic.common.ui.TableUtility;
 import com.surelogic.common.ui.jobs.SLUIJob;
 import com.surelogic.flashlight.client.eclipse.dialogs.DeleteRunDialog;
 import com.surelogic.flashlight.client.eclipse.dialogs.LogDialog;
+import com.surelogic.flashlight.client.eclipse.dialogs.RunControlDialog;
 import com.surelogic.flashlight.client.eclipse.jobs.PromptToPrepAllRawData;
 import com.surelogic.flashlight.client.eclipse.jobs.RefreshRunManagerSLJob;
 import com.surelogic.flashlight.client.eclipse.model.IRunManagerObserver;
@@ -237,6 +238,17 @@ public final class RunViewMediator extends AdHocManagerAdapter implements IRunMa
 
   public Action getShowLogAction() {
     return f_showLogAction;
+  }
+
+  private final Action f_showRunControlAction = new Action() {
+    @Override
+    public void run() {
+      RunControlDialog.show();
+    }
+  };
+
+  public Action getShowRunControlAction() {
+    return f_showRunControlAction;
   }
 
   private final Action f_deleteAction = new Action() {

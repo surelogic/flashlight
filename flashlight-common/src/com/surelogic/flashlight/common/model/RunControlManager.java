@@ -1,6 +1,7 @@
 package com.surelogic.flashlight.common.model;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -40,6 +41,52 @@ public final class RunControlManager {
 
   private RunControlManager() {
     // singleton
+    IDataCollectingRun android = new IDataCollectingRun() {
+
+      final Date start = new Date();
+
+      public void stopDataCollectionAsSoonAsPossible() {
+      }
+
+      public boolean isAndroid() {
+        return true;
+      }
+
+      @NonNull
+      public String getRunSimpleNameforUI() {
+        return "CounterRace";
+      }
+
+      @NonNull
+      public Date getLaunchTime() {
+        return start;
+      }
+    };
+
+    IDataCollectingRun java = new IDataCollectingRun() {
+
+      final Date start = new Date();
+
+      public void stopDataCollectionAsSoonAsPossible() {
+      }
+
+      public boolean isAndroid() {
+        return false;
+      }
+
+      @NonNull
+      public String getRunSimpleNameforUI() {
+        return "PlanetBaronServer";
+      }
+
+      @NonNull
+      public Date getLaunchTime() {
+        return start;
+      }
+    };
+    this.runStarting(android);
+    this.runCollecting(android);
+    this.runStarting(java);
   }
 
   private final Object f_lock = new Object();

@@ -10,11 +10,14 @@ import java.util.concurrent.TimeUnit;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.IDialogSettings;
+import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.FocusEvent;
 import org.eclipse.swt.events.FocusListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -22,6 +25,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
@@ -60,11 +64,21 @@ public final class RunControlDialog extends Dialog implements IRunControlObserve
     setBlockOnOpen(false);
   }
 
+  private Composite f_dialogArea = null;
+
   @Override
   protected Control createDialogArea(Composite parent) {
-    Composite c = (Composite) super.createDialogArea(parent);
+    final Composite c = new Composite(parent, SWT.NONE);
+    GridLayout layout = new GridLayout();
+    layout.numColumns = 1;
+    layout.marginHeight = layout.marginWidth = layout.verticalSpacing = layout.horizontalSpacing = 5;
+    c.setLayout(layout);
+    c.setLayoutData(new GridData(GridData.FILL_BOTH));
+    applyDialogFont(c);
     c.setBackground(parent.getDisplay().getSystemColor(SWT.COLOR_DARK_GREEN));
 
+    f_dialogArea = c;
+    updateModelSafe();
     return c;
   }
 
@@ -202,7 +216,7 @@ public final class RunControlDialog extends Dialog implements IRunControlObserve
     updateModelSafe();
   }
 
-  private static class RunModel {
+  private class RunModel {
 
     RunModel(@NonNull IDataCollectingRun run, @NonNull DataCollectingRunState state) {
       f_run = run;
@@ -232,6 +246,88 @@ public final class RunControlDialog extends Dialog implements IRunControlObserve
       return SLUtility.toStringDurationS(durationMS, TimeUnit.MILLISECONDS);
     }
 
+    Composite f_bk = null;
+    Label f_image = null;
+    Label f_runLabel = null;
+    Label f_stateLabel = null;
+    Label f_durationLabel = null;
+    ToolItem f_action = null;
+
+    final int f_dimension = 64;
+    final Point f_size = new Point(f_dimension, f_dimension);
+    final Image f_javaRunning = SLImages.scaleImage(SLImages.getImage(CommonImages.IMG_JAVA_APP, false), f_size);
+    final Image f_javaFinished = SLImages.getGrayscaleImage(f_javaRunning);
+    final Image f_androidRunning = SLImages.scaleImage(SLImages.getImage(CommonImages.IMG_ANDROID_APP, false), f_size);
+    final Image f_androidFinished = SLImages.getGrayscaleImage(f_androidRunning);
+
+    Image getImage() {
+      if (f_run.isAndroid()) {
+        return f_state == DataCollectingRunState.FINISHED ? f_androidFinished : f_androidRunning;
+      } else {
+        return f_state == DataCollectingRunState.FINISHED ? f_javaFinished : f_javaRunning;
+      }
+    }
+
+    void addToUI(@NonNull final Composite parent) {
+      f_bk = new Composite(parent, SWT.NONE);
+      GridLayout layout = new GridLayout();
+      layout.numColumns = 3;
+      layout.marginHeight = layout.marginWidth = layout.verticalSpacing = layout.horizontalSpacing = 5;
+      f_bk.setLayout(layout);
+      f_bk.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+
+      f_image = new Label(f_bk, SWT.NONE);
+      f_image.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, false));
+      f_image.setImage(getImage());
+
+      final Composite labels = new Composite(f_bk, SWT.NONE);
+      layout = new GridLayout();
+      layout.numColumns = 1;
+      layout.marginHeight = layout.marginWidth = layout.verticalSpacing = layout.horizontalSpacing = 5;
+      labels.setLayout(layout);
+      labels.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+      f_runLabel = new Label(labels, SWT.NONE);
+      f_runLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+      f_runLabel.setText(getRunLabel());
+      f_runLabel.setFont(JFaceResources.getFontRegistry().getBold(JFaceResources.HEADER_FONT));
+      f_stateLabel = new Label(labels, SWT.NONE);
+      f_stateLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+      f_durationLabel = new Label(labels, SWT.NONE);
+      f_durationLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+
+      final ToolBar toolBar = new ToolBar(f_bk, SWT.FLAT);
+      f_action = new ToolItem(toolBar, SWT.PUSH);
+      f_action.setImage(SLImages.getImage(CommonImages.IMG_GRAY_X));
+      f_action.addSelectionListener(new SelectionAdapter() {
+        public void widgetSelected(SelectionEvent e) {
+          modelItemActionPressed(RunModel.this);
+        }
+      });
+      toolBar.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, false));
+    }
+
+    void updateUI() {
+      if (f_bk == null || f_bk.isDisposed())
+        return;
+
+      final Image image = getImage();
+      if (f_image.getImage() != image)
+        f_image.setImage(image);
+
+      f_stateLabel.setText(getRunStateLabel());
+      f_durationLabel.setText(getTimeSinceLaunch());
+    }
+
+    void removeFromUI() {
+      if (f_bk == null || f_bk.isDisposed())
+        return;
+
+      f_bk.dispose();
+    }
+  }
+
+  private void modelItemActionPressed(@NonNull RunModel on) {
+    System.out.println("modelItemActionPressed(" + on + ")");
   }
 
   private final ArrayList<RunModel> f_model = new ArrayList<RunModel>();
@@ -254,26 +350,33 @@ public final class RunControlDialog extends Dialog implements IRunControlObserve
   }
 
   private void updateModelInUIThreadContext() {
+    if (f_dialogArea == null || f_dialogArea.isDisposed())
+      return;
+
     ArrayList<Pair<IDataCollectingRun, DataCollectingRunState>> runInfo = RunControlManager.getInstance().getManagedRuns();
     List<RunModel> stillExists = new ArrayList<RunModel>();
     for (Pair<IDataCollectingRun, DataCollectingRunState> pair : runInfo) {
       RunModel runModel = getModelFor(pair.first());
       if (runModel == null) {
-        // new run
         runModel = new RunModel(pair.first(), pair.second());
-        // TODO
+        runModel.addToUI(f_dialogArea);
       }
       stillExists.add(runModel);
-      // update run
-      // TODO
+      runModel.updateUI();
     }
     for (Iterator<RunModel> iterator = f_model.iterator(); iterator.hasNext();) {
       final RunModel runModel = iterator.next();
       if (!stillExists.contains(runModel)) {
         iterator.remove();
-        // TODO UI
+        runModel.removeFromUI();
       }
     }
+    Display.getCurrent().asyncExec(new Runnable() {
+      public void run() {
+        if (f_dialogArea == null || f_dialogArea.isDisposed())
+          return;
+        f_dialogArea.layout();
+      }
+    });
   }
-
 }

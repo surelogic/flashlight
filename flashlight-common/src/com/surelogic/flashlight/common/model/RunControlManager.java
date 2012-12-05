@@ -1,5 +1,6 @@
 package com.surelogic.flashlight.common.model;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -10,6 +11,7 @@ import com.surelogic.RegionLock;
 import com.surelogic.Singleton;
 import com.surelogic.ThreadSafe;
 import com.surelogic.UniqueInRegion;
+import com.surelogic.common.Pair;
 import com.surelogic.common.i18n.I18N;
 
 /**
@@ -40,6 +42,22 @@ public final class RunControlManager {
 
   @UniqueInRegion("RunState")
   private final Map<IDataCollectingRun, DataCollectingRunState> f_runToState = new HashMap<IDataCollectingRun, DataCollectingRunState>();
+
+  /**
+   * Gets all runs known to this manager and their current state. The returned
+   * list may be freely mutated&mdash;it is a copy.
+   * 
+   * @return a list of all known to this manager and their current state.
+   */
+  public ArrayList<Pair<IDataCollectingRun, DataCollectingRunState>> getManagedRuns() {
+    final ArrayList<Pair<IDataCollectingRun, DataCollectingRunState>> result = new ArrayList<Pair<IDataCollectingRun, DataCollectingRunState>>();
+    synchronized (f_lock) {
+      for (Map.Entry<IDataCollectingRun, DataCollectingRunState> entry : f_runToState.entrySet()) {
+        result.add(new Pair<IDataCollectingRun, DataCollectingRunState>(entry.getKey(), entry.getValue()));
+      }
+    }
+    return result;
+  }
 
   /**
    * Adds the passed run to this manager. Subsequent calls to change the state

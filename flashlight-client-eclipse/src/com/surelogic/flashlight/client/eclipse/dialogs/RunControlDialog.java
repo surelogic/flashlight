@@ -2,19 +2,30 @@ package com.surelogic.flashlight.client.eclipse.dialogs;
 
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
+import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.Text;
+import org.eclipse.swt.widgets.ToolBar;
+import org.eclipse.swt.widgets.ToolItem;
 
+import com.surelogic.Nullable;
 import com.surelogic.common.CommonImages;
+import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.ui.EclipseUIUtility;
 import com.surelogic.common.ui.SLImages;
+import com.surelogic.flashlight.client.eclipse.Activator;
 
 public class RunControlDialog extends Dialog {
-
-  private static final String CLEAR_LABEL = "Clear";
-  private static final int CLEAR_ID = 2034;
 
   private static RunControlDialog INSTANCE = null;
 
@@ -50,23 +61,85 @@ public class RunControlDialog extends Dialog {
     newShell.setImage(SLImages.getImage(CommonImages.IMG_FL_RUN_CONTROL));
   }
 
+  /**
+   * A full replacement of the default button-only behavior.
+   * <p>
+   * Note that out parent implementation is very particular about what gets
+   * returned. Be sure to look at the superclass implementation when making any
+   * changes.
+   * 
+   * @param parent
+   *          the parent composite to contain the button bar.
+   * @return the button bar control. The returned control's layout data must be
+   *         an instance of <code>GridData</code>.
+   */
   @Override
-  protected void createButtonsForButtonBar(Composite parent) {
-    createButton(parent, CLEAR_ID, CLEAR_LABEL, true);
-    createButton(parent, IDialogConstants.CLOSE_ID, IDialogConstants.CLOSE_LABEL, true);
+  protected Control createButtonBar(Composite parent) {
+    final Composite composite = new Composite(parent, SWT.NONE);
+    final GridLayout layout = new GridLayout();
+    layout.numColumns = 2;
+    layout.marginWidth = convertHorizontalDLUsToPixels(IDialogConstants.HORIZONTAL_MARGIN);
+    layout.marginHeight = convertVerticalDLUsToPixels(IDialogConstants.VERTICAL_MARGIN);
+    layout.horizontalSpacing = convertHorizontalDLUsToPixels(IDialogConstants.HORIZONTAL_SPACING);
+    layout.verticalSpacing = convertVerticalDLUsToPixels(IDialogConstants.VERTICAL_SPACING);
+    composite.setLayout(layout);
+    composite.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+    composite.setFont(parent.getFont());
+
+    final Button clearList = new Button(composite, SWT.PUSH);
+    clearList.setText(I18N.msg("flashligh.dialog.run.control.clear_list"));
+    clearList.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, true, false));
+    clearList.setFont(parent.getFont());
+    clearList.addListener(SWT.SELECTED, new Listener() {
+      public void handleEvent(Event event) {
+        clearListPressed();
+      }
+    });
+
+    final Text search = new Text(composite, SWT.SEARCH | SWT.ICON_CANCEL);
+    search.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+    if ((search.getStyle() & SWT.ICON_CANCEL) == 0) {
+      ToolBar toolBar = new ToolBar(composite, SWT.FLAT);
+      ToolItem item = new ToolItem(toolBar, SWT.PUSH);
+      item.setImage(SLImages.getImage(CommonImages.IMG_GRAY_X));
+      item.addSelectionListener(new SelectionAdapter() {
+        public void widgetSelected(SelectionEvent e) {
+          search.setText("");
+          searchCleared();
+        }
+      });
+      layout.numColumns++;
+      toolBar.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, false));
+    }
+    search.addSelectionListener(new SelectionAdapter() {
+      public void widgetDefaultSelected(SelectionEvent e) {
+        if (e.detail == SWT.CANCEL) {
+          searchCleared();
+        } else {
+          searchFor(search.getText());
+        }
+      }
+    });
+
+    return composite;
   }
 
-  @Override
-  protected void buttonPressed(int buttonId) {
-    if (buttonId == IDialogConstants.CLOSE_ID)
-      close();
-    else if (buttonId == CLEAR_ID)
-      clearPressed();
-    else
-      super.buttonPressed(buttonId);
+  private final void clearListPressed() {
+    System.out.println("clearListPressed()");
   }
 
-  private final void clearPressed() {
-    System.out.println("clearPressed()");
+  private final void searchCleared() {
+    System.out.println("searchCleared()");
+  }
+
+  private final void searchFor(@Nullable String value) {
+    System.out.println("searchFor(" + value + ")");
+
+    if (value == null || "".equals(value))
+      searchCleared();
+  }
+
+  protected IDialogSettings getDialogBoundsSettings() {
+    return Activator.getDefault().getDialogSettings();
   }
 }

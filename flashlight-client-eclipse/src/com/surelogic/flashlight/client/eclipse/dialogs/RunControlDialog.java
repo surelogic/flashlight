@@ -31,6 +31,9 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
+import org.jdesktop.core.animation.timing.TimingSource;
+import org.jdesktop.core.animation.timing.TimingSource.TickListener;
+import org.jdesktop.swt.animation.timing.sources.SWTTimingSource;
 
 import com.surelogic.NonNull;
 import com.surelogic.Nullable;
@@ -38,6 +41,7 @@ import com.surelogic.common.CommonImages;
 import com.surelogic.common.Pair;
 import com.surelogic.common.SLUtility;
 import com.surelogic.common.i18n.I18N;
+import com.surelogic.common.ui.EclipseColorUtility;
 import com.surelogic.common.ui.EclipseUIUtility;
 import com.surelogic.common.ui.SLImages;
 import com.surelogic.flashlight.client.eclipse.Activator;
@@ -46,22 +50,35 @@ import com.surelogic.flashlight.common.model.IDataCollectingRun;
 import com.surelogic.flashlight.common.model.IRunControlObserver;
 import com.surelogic.flashlight.common.model.RunControlManager;
 
-public final class RunControlDialog extends Dialog implements IRunControlObserver {
+public final class RunControlDialog extends Dialog implements IRunControlObserver, TickListener {
 
   public static void show() {
-    RunControlDialog dialog = new RunControlDialog(EclipseUIUtility.getShell());
+    final Shell shell = EclipseUIUtility.getShell();
+    final TimingSource ts = new SWTTimingSource(1, TimeUnit.SECONDS, shell.getDisplay());
+    final RunControlDialog dialog = new RunControlDialog(shell, ts);
     RunControlManager.getInstance().register(dialog);
+    ts.addTickListener(dialog);
+    ts.init();
     dialog.open();
-    RunControlManager.getInstance().remove(dialog);
   }
 
-  private RunControlDialog(Shell parentShell) {
+  private RunControlDialog(Shell parentShell, @NonNull final TimingSource disposeOnClose) {
     super(parentShell);
     /*
      * Ensure that this dialog is modeless.
      */
     setShellStyle(SWT.RESIZE | SWT.CLOSE | SWT.MAX | SWT.MODELESS);
     setBlockOnOpen(false);
+    f_disposeOnClose = disposeOnClose;
+  }
+
+  private final TimingSource f_disposeOnClose;
+
+  @Override
+  public boolean close() {
+    f_disposeOnClose.dispose();
+    RunControlManager.getInstance().remove(this);
+    return super.close();
   }
 
   private Composite f_dialogArea = null;
@@ -75,7 +92,7 @@ public final class RunControlDialog extends Dialog implements IRunControlObserve
     c.setLayout(layout);
     c.setLayoutData(new GridData(GridData.FILL_BOTH));
     applyDialogFont(c);
-    c.setBackground(parent.getDisplay().getSystemColor(SWT.COLOR_DARK_GREEN));
+    c.setBackground(EclipseColorUtility.getRunControlBackgroundColor());
 
     f_dialogArea = c;
     updateModelSafe();
@@ -243,7 +260,7 @@ public final class RunControlDialog extends Dialog implements IRunControlObserve
       final long launched = f_run.getLaunchTime().getTime();
       final long now = new Date().getTime();
       final long durationMS = now - launched;
-      return SLUtility.toStringDurationS(durationMS, TimeUnit.MILLISECONDS);
+      return "Running for " + SLUtility.toStringDurationS(durationMS, TimeUnit.MILLISECONDS);
     }
 
     Composite f_bk = null;
@@ -292,8 +309,10 @@ public final class RunControlDialog extends Dialog implements IRunControlObserve
       f_runLabel.setFont(JFaceResources.getFontRegistry().getBold(JFaceResources.HEADER_FONT));
       f_stateLabel = new Label(labels, SWT.NONE);
       f_stateLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+      f_stateLabel.setForeground(EclipseColorUtility.getSubtleTextColor());
       f_durationLabel = new Label(labels, SWT.NONE);
       f_durationLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+      f_durationLabel.setForeground(f_durationLabel.getDisplay().getSystemColor(SWT.COLOR_DARK_GRAY));
 
       final ToolBar toolBar = new ToolBar(f_bk, SWT.FLAT);
       f_action = new ToolItem(toolBar, SWT.PUSH);
@@ -342,7 +361,7 @@ public final class RunControlDialog extends Dialog implements IRunControlObserve
   }
 
   private void updateModelSafe() {
-    Display.getCurrent().asyncExec(new Runnable() {
+    Display.getDefault().asyncExec(new Runnable() {
       public void run() {
         updateModelInUIThreadContext();
       }
@@ -360,6 +379,7 @@ public final class RunControlDialog extends Dialog implements IRunControlObserve
       if (runModel == null) {
         runModel = new RunModel(pair.first(), pair.second());
         runModel.addToUI(f_dialogArea);
+        f_model.add(runModel);
       }
       stillExists.add(runModel);
       runModel.updateUI();
@@ -371,12 +391,17 @@ public final class RunControlDialog extends Dialog implements IRunControlObserve
         runModel.removeFromUI();
       }
     }
-    Display.getCurrent().asyncExec(new Runnable() {
+    f_dialogArea.getDisplay().asyncExec(new Runnable() {
       public void run() {
         if (f_dialogArea == null || f_dialogArea.isDisposed())
           return;
         f_dialogArea.layout();
       }
     });
+  }
+
+  public void timingSourceTick(TimingSource source, long nanoTime) {
+    // CALLED IN SWT THREAD
+    updateModelInUIThreadContext();
   }
 }

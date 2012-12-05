@@ -11,6 +11,7 @@ import com.surelogic.RegionLock;
 import com.surelogic.Singleton;
 import com.surelogic.ThreadSafe;
 import com.surelogic.UniqueInRegion;
+import com.surelogic.Vouch;
 import com.surelogic.common.Pair;
 import com.surelogic.common.i18n.I18N;
 
@@ -169,6 +170,7 @@ public final class RunControlManager {
     notify(run, DataCollectingRunState.FINISHED);
   }
 
+  @Vouch("AnnotationBounds")
   private final CopyOnWriteArrayList<IRunControlObserver> f_observers = new CopyOnWriteArrayList<IRunControlObserver>();
 
   /**

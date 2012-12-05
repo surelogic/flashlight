@@ -125,7 +125,6 @@ public class RunControlDialog extends Dialog {
     showSearchPrompt(search); // at start
     search.addFocusListener(new FocusListener() {
       public void focusLost(FocusEvent e) {
-        System.out.println("focusLost");
         final String text = search.getText();
         if (text == null || "".equals(text)) {
           showSearchPrompt(search);
@@ -133,7 +132,6 @@ public class RunControlDialog extends Dialog {
       }
 
       public void focusGained(FocusEvent e) {
-        System.out.println("focusGained");
         clearSearchPromptIfNecessary(search);
       }
     });

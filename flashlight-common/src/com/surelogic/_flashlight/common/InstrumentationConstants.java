@@ -98,7 +98,7 @@ public final class InstrumentationConstants {
     public static final OutputType FL_SOCKET_OUTPUT_TYPE = OutputType.FL;
     public static final String FL_DEBUG = "FL_DEBUG";
 
-    public static final String FL_COMPLETE_RUN_LOC = "Run.Complete";
+    public static final String FL_COMPLETE_CHECKPOINT_SUFFIX = ".complete";
     public static final String FL_INVALID_RUN = "Run.Invalid";
 
     public static final String FL_ANDROID = "FL_ANDROID";

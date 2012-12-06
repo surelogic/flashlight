@@ -3,6 +3,7 @@ package com.surelogic.flashlight.client.eclipse.model;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import com.surelogic.common.CommonImages;
 import com.surelogic.common.FileUtility;
@@ -251,27 +252,8 @@ public final class RunViewModel {
 
       @Override
       String getText(final RunDirectory rowData) {
-        long duration = rowData.getDescription().getDuration();
-        String text;
-        if (duration == 0) {
-          text = "-";
-        } else if (duration < 1e6) {
-          text = String.format("%dns", duration);
-        } else if (duration < 1e9) {
-          text = String.format("%4.3fs", duration / 1e9);
-        } else if (duration < 60 * 1e9) {
-          text = String.format("%.3fs", duration / 1e9);
-        } else if (duration < 60 * 60 * 1e9) {
-          int ms = (int) (duration / 1e9 / 60);
-          int s = (int) (duration / 1e9) - 60 * ms;
-          text = String.format("%dm %ds", ms, s);
-        } else {
-          int hs = (int) (duration / 1e9 / 60 / 60);
-          int ms = (int) (duration / 1e9 / 60) - 60 * hs;
-          int s = (int) (duration / 1e9) - 60 * ms - 60 * 60 * hs;
-          text = String.format("%dh %dm %ds", hs, ms, s);
-        }
-        return text;
+        long duration = rowData.getDescription().getDurationNanos();
+        return SLUtility.toStringDurationMS(duration, TimeUnit.NANOSECONDS);
       }
     });
 

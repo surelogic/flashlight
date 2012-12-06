@@ -472,7 +472,7 @@ public final class PrepSLJob extends AbstractSLJob {
             s.setInt(i++, run.getMaxMemoryMb());
             s.setInt(i++, run.getProcessors());
             s.setTimestamp(i++, run.getStartTimeOfRun());
-            s.setLong(i++, run.getDuration());
+            s.setLong(i++, run.getDurationNanos());
             s.executeUpdate();
         } finally {
             s.close();

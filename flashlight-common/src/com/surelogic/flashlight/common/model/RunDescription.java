@@ -144,7 +144,7 @@ public final class RunDescription {
 
   private final long f_duration;
 
-  public long getDuration() {
+  public long getDurationNanos() {
     return f_duration;
   }
 

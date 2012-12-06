@@ -70,16 +70,6 @@ public final class RawFileUtility {
     return runDescriptionBuilder.getRunDirectories();
   }
 
-  // TODO MOVE TO SOMEPLACE ELSE!!!
-  public static RunDirectory getRunDirectoryFor(final File dataDir, final RunDescription description) {
-    if (description == null) {
-      throw new IllegalArgumentException(I18N.err(44, "description"));
-    }
-    final RawDataDirectoryReader runDescriptionBuilder = new RawDataDirectoryReader(dataDir);
-    runDescriptionBuilder.read();
-    return runDescriptionBuilder.getRunDirectoryFor(description);
-  }
-
   /**
    * Reads the prefix information from a raw data file.
    * 

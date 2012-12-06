@@ -1,6 +1,5 @@
 package com.surelogic.flashlight.client.eclipse.views.run;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -30,7 +29,6 @@ import com.surelogic.common.SLUtility;
 import com.surelogic.common.adhoc.AdHocManager;
 import com.surelogic.common.adhoc.AdHocManagerAdapter;
 import com.surelogic.common.adhoc.AdHocQueryResult;
-import com.surelogic.common.core.EclipseUtility;
 import com.surelogic.common.core.JDTUtility;
 import com.surelogic.common.core.jobs.EclipseJob;
 import com.surelogic.common.i18n.I18N;
@@ -262,13 +260,12 @@ public final class RunViewMediator extends AdHocManagerAdapter implements IRunMa
         if (Window.CANCEL == d.getReturnCode()) {
           return;
         }
-        for (final RunDirectory description : selected) {
-          if (description.isPreparedOrIsBeingPrepared()) {
-            jobs.add(new UnPrepSLJob(description, AdHocDataSource.getManager()));
+        for (final RunDirectory runDir : selected) {
+          if (runDir.isPreparedOrIsBeingPrepared()) {
+            jobs.add(new UnPrepSLJob(runDir, AdHocDataSource.getManager()));
           }
-          final File dataDir = EclipseUtility.getFlashlightDataDirectory();
-          jobs.add(new DeleteRawFilesSLJob(dataDir, description.getDescription()));
-          keys.add(description.getDescription().toIdentityString());
+          jobs.add(new DeleteRawFilesSLJob(runDir));
+          keys.add(runDir.getDescription().toIdentityString());
         }
       }
       if (!jobs.isEmpty()) {

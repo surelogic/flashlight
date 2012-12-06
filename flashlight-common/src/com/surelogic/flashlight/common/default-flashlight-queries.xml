@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes'?>
 <ad-hoc version="3.0">
-  <query id="094fc6db-5a5b-4495-aacd-54f5a5aa1691" description="What fields (static, non-final) are shared?" revision="7" display="true" display-at-root="true">-- NO-ROWS-MSG=No static, non-final fields are shared between two or more threads.
+  <query id="094fc6db-5a5b-4495-aacd-54f5a5aa1691" description="What fields (static, non-final) are shared?" revision="8" display="true" display-at-root="true">-- NO-ROWS-MSG=No static, non-final fields are shared between two or more threads.
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What fields (static, non-final) are shared?
@@ -54,9 +54,11 @@
 
 --END-INFO
 select
-  O.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;,
-  O.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;,
+  O.PackageName &quot;Package__(&apos;@PK&apos;)&quot;,
+  O.ClassName &quot;Class&quot;,
+  O.ClassCode &quot;Class__(icon)&quot;,
   F.FieldName &quot;Field__]&quot;,
+  F.Code &quot;Field__(icon)&quot;,
   THO.ThreadName &quot;Thread__|&quot;,
   FS.ReadCount &quot;Read Count__(sum on 2,3)(r)&quot;,
   FS.WriteCount &quot;Write Count__(sum on 2,3)(r)&quot;,
@@ -72,7 +74,7 @@ where
   and FS.FIELD = F.ID 
   and THO.ID = FS.Thread
 order by O.PackageName,O.ClassName,F.FieldName,THO.ThreadName</query>
-  <query id="10477928-cf86-4416-9118-34eea8cd7e38" description="What is the stack trace for this lock acquisition?" revision="3" display="true">--BEGIN-INFO
+  <query id="10477928-cf86-4416-9118-34eea8cd7e38" description="What is the stack trace for this lock acquisition?" revision="4" display="true">--BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What is the stack trace for this lock acquisition?
 --&lt;/strong&gt;&lt;/p&gt;
@@ -128,10 +130,10 @@ order by O.PackageName,O.ClassName,F.FieldName,THO.ThreadName</query>
 --&lt;/p&gt;
 --
 --END-INFO
-SELECT s.PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;, s.CLASSNAME &quot;Class__(&apos;class.gif&apos;)&quot;, s.INFILE &quot;File&quot;, s.LOCATION &quot;Location&quot;, s.ATLINE &quot;Line__(r)&quot;
+SELECT s.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;, s.CLASSNAME &quot;Class&quot;, s.CLASSCODE &quot;Class__(icon)&quot;, s.INFILE &quot;File&quot;, s.LOCATION &quot;Location&quot;, s.ATLINE &quot;Line__(r)&quot;
 FROM TABLE (STACKTRACE(?LATRACE?)) s
 </query>
-  <query id="106c3818-78f2-4983-812a-0e83ca3cde89" description="Where is this field accessed by the program?" revision="3" display="true">--BEGIN-INFO
+  <query id="106c3818-78f2-4983-812a-0e83ca3cde89" description="Where is this field accessed by the program?" revision="4" display="true">--BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    Where is this field accessed by the program?
 --&lt;/strong&gt;&lt;/p&gt;
@@ -165,8 +167,9 @@ FROM TABLE (STACKTRACE(?LATRACE?)) s
 --
 --END-INFO
 SELECT DISTINCT
-    CO.PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;,
-    CO.CLASSNAME   &quot;Class__(&apos;class.gif&apos;)&quot;,
+    CO.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;,
+    CO.CLASSNAME   &quot;Class&quot;,
+    CO.CLASSCODE   &quot;Class__(icon)&quot;,
     S.ATLINE       &quot;Line__(r)|&quot;
 FROM ACCESS A, TRACE TR, SITE S, OBJECT CO
 WHERE A.FIELD = ?FieldId? AND
@@ -175,7 +178,7 @@ WHERE A.FIELD = ?FieldId? AND
       S.ID = TR.SITE AND
       CO.ID = S.INCLASS
 ORDER BY 1,2,3</query>
-  <query id="12592a6f-1b1e-4e22-b17a-56b2e4ff0495" description="Where is this lock acquired by the program?" revision="10" display="true">--BEGIN-INFO
+  <query id="12592a6f-1b1e-4e22-b17a-56b2e4ff0495" description="Where is this lock acquired by the program?" revision="11" display="true">--BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    Where is this lock acquired by the program?
 --&lt;/strong&gt;&lt;/p&gt;
@@ -228,8 +231,9 @@ ORDER BY 1,2,3</query>
 --
 --END-INFO
 SELECT DISTINCT
-    CO.PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;,
-    CO.CLASSNAME   &quot;Class__(&apos;class.gif&apos;)&quot;,
+    CO.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;,
+    CO.CLASSNAME   &quot;Class&quot;,
+    CO.CLASSCODE   &quot;Class__(icon)&quot;,
     S.ATLINE       &quot;Line__(r)|&quot;,
     CASE WHEN L.TYPE = &apos;U&apos; AND L.LOCK != L.OBJECT AND L.OBJECT = RW.READLOCK THEN &apos;java.util.concurrent ReadWriteLock.readLock()&apos;
          WHEN L.TYPE = &apos;U&apos; AND L.LOCK != L.OBJECT AND L.OBJECT = RW.WRITELOCK THEN &apos;java.util.concurrent ReadWriteLock.writeLock()&apos;
@@ -365,7 +369,7 @@ FROM
 (SELECT COUNT(*) &quot;ACCESSCOUNT&quot; 
  FROM ACCESS A 
  WHERE A.FIELD = ?FieldId? AND A.RECEIVER = ?Receiver? AND A.UNDERCONSTRUCTION = &apos;N&apos;) AS ACCESSES</query>
-  <query id="2048e73c-e95b-4e4c-84ee-2309372a7eae" description="When and by what threads was this field accessed?" revision="3" display="true">--BEGIN-INFO
+  <query id="2048e73c-e95b-4e4c-84ee-2309372a7eae" description="When and by what threads was this field accessed?" revision="4" display="true">--BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    When and by what threads was this field accessed?
 --&lt;/strong&gt;&lt;/p&gt;
@@ -417,9 +421,11 @@ FROM
 --
 --END-INFO
 SELECT 
-   &apos;?Package?&apos; &quot;Package__(&apos;package.gif&apos;)&quot;, 
-   &apos;?Class?&apos; &quot;Class__(&apos;class.gif&apos;)&quot;, 
-   &apos;?Field?&apos; &quot;Field&quot;, 
+   &apos;?Package?&apos; &quot;Package__(&apos;@PK&apos;)&quot;, 
+   &apos;?Class?&apos; &quot;Class&quot;, 
+   &apos;?Class (Image)?&apos; &quot;Class__(icon)&quot;,
+   &apos;?Field?&apos; &quot;Field&quot;,
+   &apos;?Field (Image)?&apos; &quot;Field__(icon)&quot;,
    S.THREADNAME &quot;Thread__|&quot;,
    S.HAPPENSBEFORE &quot;Happens-Before&quot;,
    CASE WHEN S.HAPPENSBEFORE = &apos;Yes&apos; THEN &apos;happens_before.gif&apos; 
@@ -431,7 +437,7 @@ SELECT
    S.ENDTIME &quot;End&quot;,
    S.THREADID &quot;ThreadId__(hide)&quot;
 FROM TABLE (STATICACCESSSUMMARY(?FieldId?)) S</query>
-  <query id="213c73ad-b3f6-4aef-9a05-f0c31d8fdcde" description="What fields (non-static) have a lock set after object construction?" revision="9" display="true" display-at-root="true">-- NO-ROWS-MSG=No non-final non-volatile non-static fields that are shared after object construction have a common lock held for each access.
+  <query id="213c73ad-b3f6-4aef-9a05-f0c31d8fdcde" description="What fields (non-static) have a lock set after object construction?" revision="10" display="true" display-at-root="true">-- NO-ROWS-MSG=No non-final non-volatile non-static fields that are shared after object construction have a common lock held for each access.
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What fields (non-static) have a lock set after object construction?
@@ -477,17 +483,19 @@ FROM TABLE (STATICACCESSSUMMARY(?FieldId?)) S</query>
 
 --END-INFO
 SELECT 
-  O.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;,
-  O.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;,
+  O.PackageName &quot;Package__(&apos;@PK&apos;)&quot;,
+  O.ClassName &quot;Class&quot;,
+  O.ClassCode &quot;Class__(icon)&quot;,
   FI.FieldName &quot;Field__|&quot;,
+  FI.Code &quot;Field__(icon)&quot;,
   COUNT(DISTINCT I.Receiver) &quot;Instances&quot;, I.Field &quot;FieldId__(hide)&quot;
  FROM OBJECT O
  INNER JOIN FIELD FI ON FI.DeclaringType = O.Id
  INNER JOIN INTERESTINGFIELD I ON FI.STATIC = &apos;N&apos; AND I.FIELD=FI.ID
  INNER JOIN FIELDINSTANCELOCKSET F ON F.FIELD = I.FIELD AND F.RECEIVER = I.RECEIVER 
- GROUP BY O.PackageName,O.ClassName,FI.FieldName,I.Field
+ GROUP BY O.PackageName,O.ClassName,O.ClassCode,FI.Code,FI.FieldName,I.Field
  ORDER BY O.PackageName,O.ClassName,FI.FieldName</query>
-  <query id="2f505921-50fb-405b-bc78-4a5fe9228957" description="What fields (static) have a lock set? " revision="11" display="true" display-at-root="true">-- NO-ROWS-MSG=No non-final non-volatile static fields that are shared have a common lock held for each access.
+  <query id="2f505921-50fb-405b-bc78-4a5fe9228957" description="What fields (static) have a lock set? " revision="12" display="true" display-at-root="true">-- NO-ROWS-MSG=No non-final non-volatile static fields that are shared have a common lock held for each access.
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What fields (static) have a lock set?
@@ -532,9 +540,11 @@ SELECT
 --&lt;/p&gt;
 --END-INFO
 SELECT 
-  O.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;,
-  O.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;,
+  O.PackageName &quot;Package__(&apos;@PK&apos;)&quot;,
+  O.ClassName &quot;Class&quot;,
+  O.ClassCode &quot;Class__(icon)&quot;,
   FI.FieldName &quot;Field&quot;,
+  FI.Code &quot;Field__(icon)&quot;,
   OBJID(F.LOCK) &quot;Lock__|&quot;,
   F.LOCK &quot;Lock__(hide)&quot;,
   I.FIELD &quot;FieldId__(hide)&quot; 
@@ -543,7 +553,7 @@ SELECT
  INNER JOIN INTERESTINGFIELD I ON I.RECEIVER IS NULL AND I.FIELD=FI.ID
  INNER JOIN FIELDLOCKSET F ON F.FIELD = I.FIELD
  ORDER BY O.PackageName,O.ClassName,FI.FieldName</query>
-  <query id="33868960-7df8-4bab-bb33-ffb230957940" description="What fields (non-static) are shared during object construction?" revision="5" display="true" display-at-root="true">-- NO-ROWS-MSG=No fields are accessed by multiple threads during object construction.
+  <query id="33868960-7df8-4bab-bb33-ffb230957940" description="What fields (non-static) are shared during object construction?" revision="6" display="true" display-at-root="true">-- NO-ROWS-MSG=No fields are accessed by multiple threads during object construction.
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What fields (non-static) are shared during object construction?
@@ -632,9 +642,11 @@ SELECT
 --
 --END-INFO
 select
-  O.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;,
-  O.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;,
+  O.PackageName &quot;Package__(&apos;@PK&apos;)&quot;,
+  O.ClassName &quot;Class&quot;,
+  O.ClassCode &quot;Class__(icon)&quot;,
   F.FieldName &quot;Field__|&quot;,
+  F.Code &quot;Field__(icon)&quot;,
   SUM(FI.ReadUCCount) + SUM(FI.ReadCount) &quot;Reads__(sum on 2,3)(r)&quot;,
   SUM(FI.WriteUCCount) + SUM(FI.WriteCount) &quot;Writes__(sum on 2,3)(r)&quot;,
   SUM(FI.ReadUCCount) &quot;Reads During Construction__(sum on 2,3)(r)&quot;,
@@ -652,9 +664,9 @@ where
   and F.DeclaringType = O.Id
   and FI.FIELD = F.ID 
   and THO.ID = FI.Thread
-group by O.PackageName,O.ClassName,F.FieldName,F.Id
+group by O.PackageName,O.ClassName,O.ClassCode,F.FieldName,F.Code,F.Id
 order by O.PackageName,O.ClassName,F.FieldName</query>
-  <query id="39872cb4-369c-4dd8-90fd-1847a3f05dc9" description="Where is this field accessed while this lock is held?" revision="3" display="true">--BEGIN-INFO
+  <query id="39872cb4-369c-4dd8-90fd-1847a3f05dc9" description="Where is this field accessed while this lock is held?" revision="4" display="true">--BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    Where is this field accessed while this lock is held?
 --&lt;/strong&gt;&lt;/p&gt;
@@ -688,8 +700,9 @@ order by O.PackageName,O.ClassName,F.FieldName</query>
 --
 --END-INFO
 SELECT
-    CO.PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;,
-    CO.CLASSNAME   &quot;Class__(&apos;class.gif&apos;)&quot;,
+    CO.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;,
+    CO.CLASSNAME   &quot;Class&quot;,
+    CO.CLASSCODE   &quot;Class__(icon)&quot;,
     S.ATLINE       &quot;Line__(r)|&quot;
 FROM ACCESS A, TRACE TR, SITE S, OBJECT CO, ACCESSLOCKSHELD ALH, LOCK L
 WHERE A.FIELD = ?FieldId? AND
@@ -702,8 +715,9 @@ WHERE A.FIELD = ?FieldId? AND
       L.LOCK = ?Lock?
 UNION DISTINCT
 SELECT 
-    CO.PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;,
-    CO.CLASSNAME   &quot;Class__(&apos;class.gif&apos;)&quot;,
+    CO.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;,
+    CO.CLASSNAME   &quot;Class&quot;,
+    CO.CLASSCODE   &quot;Class__(icon)&quot;,
     S.ATLINE       &quot;Line__(r)|&quot;
 FROM ACCESS A, TRACE TR, SITE S, OBJECT CO, ACCESSLOCKSHELD ALH, LOCKSHELD L
 WHERE A.FIELD = ?FieldId? AND
@@ -715,7 +729,7 @@ WHERE A.FIELD = ?FieldId? AND
       L.LOCKEVENT = ALH.LASTACQUISITION AND
       L.LOCKHELD = ?Lock?
 ORDER BY 1,2,3</query>
-  <query id="419c927e-a87c-4364-b4a9-2e8f50f728f6" description="What fields (static) are shared?" revision="12" display="true" display-at-root="true">-- NO-ROWS-MSG=No static fields are shared between two or more threads.
+  <query id="419c927e-a87c-4364-b4a9-2e8f50f728f6" description="What fields (static) are shared?" revision="13" display="true" display-at-root="true">-- NO-ROWS-MSG=No static fields are shared between two or more threads.
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What fields (static) are shared?
@@ -766,9 +780,11 @@ ORDER BY 1,2,3</query>
 --&lt;/p&gt;
 --END-INFO
 select
-  O.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;,
-  O.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;,
+  O.PackageName &quot;Package__(&apos;@PK&apos;)&quot;,
+  O.ClassName &quot;Class&quot;,
+  O.ClassCode &quot;Class__(icon)&quot;,
   F.FieldName &quot;Field__]&quot;,
+  F.Code &quot;Field__(icon)&quot;,
   THO.ThreadName &quot;Thread__|&quot;,
   FS.ReadCount &quot;Read Count__(sum on 2,3)(r)&quot;,
   FS.WriteCount &quot;Write Count__(sum on 2,3)(r)&quot;,
@@ -850,7 +866,7 @@ FROM
 (SELECT COUNT(*) &quot;ACCESSCOUNT&quot; 
  FROM INDIRECTACCESS A 
  WHERE A.RECEIVER = ?Receiver?) AS ACCESSES</query>
-  <query id="432b76db-c751-4bd8-8b2f-ef5986334514" description="What is the stack trace for this lock event?" revision="3" display="true">--BEGIN-INFO
+  <query id="432b76db-c751-4bd8-8b2f-ef5986334514" description="What is the stack trace for this lock event?" revision="4" display="true">--BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What is the stack trace for this lock event?
 --&lt;/strong&gt;&lt;/p&gt;
@@ -903,9 +919,9 @@ FROM
 --&lt;code&gt;endCurrentTurn&lt;/code&gt; method of &lt;code&gt;MapView&lt;/code&gt;, on line 422.
 --&lt;/p&gt;
 ----END-INFO
-SELECT s.PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;, s.CLASSNAME &quot;Class__(&apos;class.gif&apos;)&quot;, s.INFILE &quot;File&quot;, s.LOCATION &quot;Location&quot;, s.ATLINE &quot;Line__(r)&quot;
+SELECT s.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;, s.CLASSNAME &quot;Class&quot;, s.CLASSCODE &quot;Class__(icon)&quot;, s.INFILE &quot;File&quot;, s.LOCATION &quot;Location&quot;, s.ATLINE &quot;Line__(r)&quot;
 FROM TABLE (STACKTRACE(?LETRACE?)) s</query>
-  <query id="4c9fcdb0-e7dc-46a0-87b6-c00b3caa8a8a" description="Where is this field accessed by the program?" revision="3" display="true">--BEGIN-INFO
+  <query id="4c9fcdb0-e7dc-46a0-87b6-c00b3caa8a8a" description="Where is this field accessed by the program?" revision="4" display="true">--BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    Where is this field accessed by the program?
 --&lt;/strong&gt;&lt;/p&gt;
@@ -939,8 +955,9 @@ FROM TABLE (STACKTRACE(?LETRACE?)) s</query>
 --
 --END-INFO
 SELECT DISTINCT
-    CO.PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;,
-    CO.CLASSNAME   &quot;Class__(&apos;class.gif&apos;)&quot;,
+    CO.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;,
+    CO.CLASSNAME   &quot;Class&quot;,
+    CO.CLASSCODE   &quot;Class__(icon)&quot;,
     S.ATLINE       &quot;Line__(r)|&quot;
 FROM ACCESS A, TRACE TR, SITE S, OBJECT CO
 WHERE A.FIELD = ?FieldId? AND
@@ -1009,7 +1026,7 @@ FROM
 ON A.INTHREAD = L.INTHREAD
 ORDER BY L.BLOCK DESC NULLS LAST
 </query>
-  <query id="4fce8390-7307-45dc-b779-5701ee7f23a1" description="What are the lock events for this lock graph edge?" revision="5" display="true">--BEGIN-INFO
+  <query id="4fce8390-7307-45dc-b779-5701ee7f23a1" description="What are the lock events for this lock graph edge?" revision="6" display="true">--BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What are the lock events for this lock graph edge?
 --&lt;/strong&gt;&lt;/p&gt;
@@ -1049,7 +1066,7 @@ ORDER BY L.BLOCK DESC NULLS LAST
 --&lt;/p&gt;
 --
 --END-INFO
-select lo.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;, lo.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;, s.AtLine &quot;Line__]&quot;, tho.ThreadName &quot;Thread__|&quot;, lh.LockEvent &quot;LockEvent__(r)&quot;,tr.id &quot;LETRACE__(hide)&quot;
+select lo.PackageName &quot;Package__(&apos;@PK&apos;)&quot;, lo.ClassName &quot;Class&quot;, lo.ClassCode &quot;Class__(icon)&quot;, s.AtLine &quot;Line__]&quot;, tho.ThreadName &quot;Thread__|&quot;, lh.LockEvent &quot;LockEvent__(r)&quot;,tr.id &quot;LETRACE__(hide)&quot;
 from LOCKSHELD as lh, LOCK l, TRACE tr, SITE s, OBJECT lo, OBJECT tho
 where lh.LockHeld=?LockHeld?
   and lh.LockAcquired=?LockAcquired?
@@ -1130,7 +1147,7 @@ SELECT OBJID(FIT.RECEIVER) &quot;?Field? Object&quot;,
  WHERE FIT.FIELD = ?FieldId? AND FIL.LOCK IS NULL
  GROUP BY FIT.RECEIVER
  ORDER BY 1</query>
-  <query id="598a178b-7153-4e1c-978e-1b78b1d95799" description="What threads read and write this field?" revision="11" display="true">--BEGIN-INFO
+  <query id="598a178b-7153-4e1c-978e-1b78b1d95799" description="What threads read and write this field?" revision="12" display="true">--BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What threads read and write this field?
 --&lt;/strong&gt;&lt;/p&gt;
@@ -1185,9 +1202,11 @@ SELECT OBJID(FIT.RECEIVER) &quot;?Field? Object&quot;,
 --
 --END-INFO
 SELECT
-  CO.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;,
-  CO.ClassName   &quot;Class__(&apos;class.gif&apos;)&quot;,
+  CO.PackageName &quot;Package__(&apos;@PK&apos;)&quot;,
+  CO.ClassName   &quot;Class&quot;,
+  CO.ClassCode   &quot;Class__(icon)&quot;,
   F.FieldName    &quot;Field&quot;,
+  F.Code         &quot;Field__(icon)&quot;,
   THO.ThreadName &quot;Thread__|&quot;,
   FI.ReadCount + FI.ReadUCCount   &quot;Reads&quot;,
   FI.WriteCount + FI.WriteUCCount &quot;Writes&quot;,
@@ -1199,7 +1218,7 @@ SELECT
    THO.ID = FI.THREAD AND 
    F.ID = FI.FIELD AND
    CO.ID = F.DECLARINGTYPE</query>
-  <query id="5ebba191-8523-4253-b639-872d6da4dc92" description="What objects are protected by this lock, and how often?" revision="3" display="true">-- NO-ROWS-MSG=No accesses occur while this lock is held 
+  <query id="5ebba191-8523-4253-b639-872d6da4dc92" description="What objects are protected by this lock, and how often?" revision="4" display="true">-- NO-ROWS-MSG=No accesses occur while this lock is held 
 --
 --BEGIN-INFO
 --&lt;strong&gt;&lt;p&gt;
@@ -1246,7 +1265,7 @@ SELECT
 --of which are always protected by the given lock.
 --&lt;/p&gt;
 --END-INFO
-SELECT DT.PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;, DT.CLASSNAME &quot;Class__(&apos;class.gif&apos;)&quot;, OBJID(A.RECEIVER) &quot;Object__|&quot;, IA.HELD &quot;Times Held__(r)&quot;, COUNT(A.ID) &quot;Total Accesses__(r)&quot;, CAST ((CAST (IA.HELD AS FLOAT) / CAST (COUNT(A.ID) AS FLOAT) * 100) AS DECIMAL) &quot;%__(r)&quot;
+SELECT DT.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;, DT.CLASSNAME &quot;Class&quot;, DT.CLASSCODE &quot;Class__(icon)&quot;, OBJID(A.RECEIVER) &quot;Object__|&quot;, IA.HELD &quot;Times Held__(r)&quot;, COUNT(A.ID) &quot;Total Accesses__(r)&quot;, CAST ((CAST (IA.HELD AS FLOAT) / CAST (COUNT(A.ID) AS FLOAT) * 100) AS DECIMAL) &quot;%__(r)&quot;
 FROM 
  (SELECT A.RECEIVER, COUNT(DISTINCT A.ID) &quot;HELD&quot; FROM
   (SELECT ALH.ACCESS FROM LOCK L, INDIRECTACCESSLOCKSHELD ALH
@@ -1257,9 +1276,9 @@ FROM
   WHERE A.ID = AIDS.ACCESS
   GROUP BY A.RECEIVER) AS IA, INDIRECTACCESS A, OBJECT O, OBJECT DT
 WHERE A.RECEIVER = IA.RECEIVER AND O.ID = A.RECEIVER AND DT.ID = O.TYPE
-GROUP BY DT.PACKAGENAME,DT.CLASSNAME,A.RECEIVER,IA.HELD
+GROUP BY DT.PACKAGENAME,DT.CLASSNAME,DT.CLASSCODE,A.RECEIVER,IA.HELD
 ORDER BY 1,2,3</query>
-  <query id="67a08763-cefe-4193-908c-9dc8d1ca4245" description="When and where did this lock event occur?" revision="5" display="true">--BEGIN-INFO
+  <query id="67a08763-cefe-4193-908c-9dc8d1ca4245" description="When and where did this lock event occur?" revision="6" display="true">--BEGIN-INFO
 --&lt;strong&gt;&lt;p&gt;
 --When and where did this lock event occur?
 --&lt;/strong&gt;&lt;/p&gt;
@@ -1327,9 +1346,9 @@ ORDER BY 1,2,3</query>
 --happened on line 422 of &lt;code&gt;MapView&lt;/code&gt;.
 --&lt;/p&gt;
 --END-INFO
-select l.TS &quot;Time&quot;, t.ThreadName &quot;Thread&quot;, l.Lock &quot;Lock&quot;, lkType.ClassName &quot;Lock Class__(&apos;class.gif&apos;)&quot;, 
+select l.TS &quot;Time&quot;, t.ThreadName &quot;Thread&quot;, l.Lock &quot;Lock&quot;, lkType.ClassName &quot;Lock Class&quot;, lkType.ClassCode &quot;Lock Class__(icon)&quot;, 
 l.LockIsThis &quot;Lock on this&quot;, l.LockIsClass &quot;Lock on class&quot;,
-l.State &quot;State&quot;, cl.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;, cl.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;, s.AtLine &quot;Line&quot;
+l.State &quot;State&quot;, cl.PackageName &quot;Package__(&apos;@PK&apos;)&quot;, cl.ClassName &quot;Class&quot;, cl.ClassCode &quot;Class__(icon)&quot;, s.AtLine &quot;Line&quot;
 from LOCK as l, TRACE tr, SITE s, OBJECT as cl, OBJECT as lk, OBJECT as t, OBJECT as lkType
 where l.Id = ?LockEvent?
 and tr.Id = l.Trace
@@ -1591,7 +1610,7 @@ SELECT OBJID(COUNTS.RECEIVER) &quot;?Field? Object&quot;,
     WHERE FIELD = ?FieldId? 
     GROUP BY RECEIVER) AS LOCKS
   ON COUNTS.RECEIVER = LOCKS.RECEIVER</query>
-  <query id="71a6fb5b-e5e1-4d25-bdc8-67ab5df1f66e" description="What fields (non-static, non-final) are shared?" revision="9" display="true" display-at-root="true">-- NO-ROWS-MSG=No non-static fields are shared between two or more threads.
+  <query id="71a6fb5b-e5e1-4d25-bdc8-67ab5df1f66e" description="What fields (non-static, non-final) are shared?" revision="10" display="true" display-at-root="true">-- NO-ROWS-MSG=No non-static fields are shared between two or more threads.
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What fields (non-static, non-final) are shared?
@@ -1669,9 +1688,11 @@ SELECT OBJID(COUNTS.RECEIVER) &quot;?Field? Object&quot;,
 --&lt;/p&gt;
 --END-INFO
 select
-  O.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;,
-  O.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;,
+  O.PackageName &quot;Package__(&apos;@PK&apos;)&quot;,
+  O.ClassName &quot;Class&quot;,
+  O.ClassCode &quot;Class__(icon)&quot;,
   F.FieldName &quot;Field__|&quot;,
+  F.Code &quot;Field__(icon)&quot;,
   SUM(FI.ReadUCCount) + SUM(FI.ReadCount) &quot;Reads__(sum on 2)(r)&quot;,
   SUM(FI.WriteUCCount) + SUM(FI.WriteCount) &quot;Writes__(sum on 2)(r)&quot;,
   SUM(FI.ReadUCCount) &quot;Reads During Construction__(sum on 2)(r)&quot;,
@@ -1690,9 +1711,9 @@ where
   and FI.FIELD = F.ID 
   and THO.ID = FI.Thread
   and FIRC.FIELD = F.ID
-group by O.PackageName,O.ClassName,F.FieldName,F.Id
+group by O.PackageName,O.ClassName,O.ClassCode,F.FieldName,F.Code,F.Id
 order by O.PackageName,O.ClassName,F.FieldName</query>
-  <query id="732daa1f-dac0-4f40-b714-8190f903d323" description="Where are fields accessed while this lock is held?" revision="6" display="true">-- NO-ROWS-MSG=No accesses occur while this lock is held 
+  <query id="732daa1f-dac0-4f40-b714-8190f903d323" description="Where are fields accessed while this lock is held?" revision="7" display="true">-- NO-ROWS-MSG=No accesses occur while this lock is held 
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    Where are fields accessed while this lock is held?
@@ -1726,9 +1747,9 @@ order by O.PackageName,O.ClassName,F.FieldName</query>
 --&lt;/p&gt;
 --
 --END-INFO
-SELECT DISTINCT PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;, CLASSNAME &quot;Class__(&apos;class.gif&apos;)&quot;, ATLINE &quot;Line__(r)|&quot;
+SELECT DISTINCT PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;, CLASSNAME &quot;Class&quot;, CLASSCODE &quot;Class__(icon)&quot;, ATLINE &quot;Line__(r)|&quot;
 FROM
-(SELECT CO.PACKAGENAME, CO.CLASSNAME, S.ATLINE
+(SELECT CO.PACKAGENAME, CO.CLASSNAME, CO.CLASSCODE, S.ATLINE
   FROM LOCKSHELD LH, ACCESSLOCKSHELD ALH, ACCESS A, TRACE T, SITE S, OBJECT CO
   WHERE LH.LOCKHELD = ?Lock? AND
         ALH.LASTACQUISITION = LH.LOCKEVENT AND
@@ -1737,7 +1758,7 @@ FROM
         S.ID = T.SITE AND
         CO.ID = S.INCLASS
 UNION
- SELECT CO.PACKAGENAME, CO.CLASSNAME, S.ATLINE
+ SELECT CO.PACKAGENAME, CO.CLASSNAME, CO.CLASSCODE, S.ATLINE
   FROM LOCK L, ACCESSLOCKSHELD ALH, ACCESS A, TRACE T, SITE S, OBJECT CO
   WHERE L.LOCK = ?Lock? AND
         ALH.LASTACQUISITION = L.ID AND
@@ -1745,7 +1766,7 @@ UNION
         T.ID = A.TRACE AND
         S.ID = T.SITE AND
         CO.ID = S.INCLASS) AS ACCESSES
-ORDER BY 1,2,3</query>
+ORDER BY 1,2,4</query>
   <query id="803ca72a-f303-4319-8a35-9494eccc3d26" description="What locks could potentially cause deadlock?" revision="7" display="true" display-at-root="true">-- NO-ROWS-MSG=No potential lock cycles were observed during this run of the program.
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
@@ -1833,7 +1854,7 @@ select Component &quot;Cycle&quot;, OBJID(LockHeld) &quot;LockHeld__(r)|&quot;,
 from lockcycle
 where count &gt; 0
 order by count desc</query>
-  <query id="83d613b3-283e-4100-9a82-e42adf107fe6" description="What is the stack trace for this access?" revision="4" display="true">--BEGIN-INFO
+  <query id="83d613b3-283e-4100-9a82-e42adf107fe6" description="What is the stack trace for this access?" revision="5" display="true">--BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What is the stack trace for this access?
 --&lt;/strong&gt;&lt;/p&gt;
@@ -1886,13 +1907,14 @@ order by count desc</query>
 --&lt;/p&gt;
 --
 --END-INFO
-SELECT s.PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;, s.CLASSNAME &quot;Class__(&apos;class.gif&apos;)&quot;, s.INFILE &quot;File&quot;, s.LOCATION &quot;Location&quot;, s.ATLINE &quot;Line__(r)&quot;
+SELECT s.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;, s.CLASSNAME &quot;Class&quot;, s.CLASSCODE &quot;Class__(icon)&quot;, s.INFILE &quot;File&quot;, s.LOCATION &quot;Location&quot;, s.ATLINE &quot;Line__(r)&quot;
 FROM TABLE (STACKTRACE(?ATRACE?)) s
 </query>
-  <query id="8c0045d1-6b75-4a9b-9158-f9affe59dbb7" description="@Regions" revision="2">SELECT DISTINCT
+  <query id="8c0045d1-6b75-4a9b-9158-f9affe59dbb7" description="@Regions" revision="3">SELECT DISTINCT
   TRIM(CAST (FLCO.PACKAGENAME || &apos;.&apos; || FLCO.CLASSNAME || &apos;-&apos; || CAST (FIL.LOCK AS CHAR (50)) AS CHAR (200))) &quot;Dynamic Lock Id&quot;,  
-  CO.PACKAGENAME &quot;Package__|(&apos;package.gif&apos;)&quot;,
-  CO.CLASSNAME &quot;Class__(&apos;class.gif&apos;)&quot;,
+  CO.PACKAGENAME &quot;Package__|(&apos;@PK&apos;)&quot;,
+  CO.CLASSNAME &quot;Class&quot;,
+  CO.CLASSCODE &quot;Class__(icon)&quot;
   F.FIELDNAME &quot;Field&quot;
 FROM FIELDINSTANCELOCKSET FIL
 INNER JOIN OBJECT O ON
@@ -1907,7 +1929,7 @@ INNER JOIN OBJECT FLCO ON
   FLCO.ID = FLO.TYPE
 ORDER BY 1,2,3,4
 </query>
-  <query id="8de7d969-6633-4a16-acad-786ab9fd2f5f" description="Show every access of this field in this time range." revision="2" display="true">--BEGIN-INFO
+  <query id="8de7d969-6633-4a16-acad-786ab9fd2f5f" description="Show every access of this field in this time range." revision="3" display="true">--BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    Show every access of this field in this time range
 --&lt;/strong&gt;&lt;/p&gt;
@@ -1942,7 +1964,7 @@ ORDER BY 1,2,3,4
 --&lt;/p&gt;
 --
 --END-INFO
-SELECT &apos;?Package?&apos; &quot;Package__(&apos;package.gif&apos;)&quot;, &apos;?Class?&apos; &quot;Class__(&apos;class.gif&apos;)&quot;, &apos;?Field?&apos; &quot;Field&quot;, 
+SELECT &apos;?Package?&apos; &quot;Package__(&apos;@PK&apos;)&quot;, &apos;?Class?&apos; &quot;Class&quot;, &apos;?Class (Image)?&apos; &quot;Class__(icon)&quot;,&apos;?Field?&apos; &quot;Field&quot;, &apos;?Field (Image)?&apos; &quot;Field__(icon)&quot;,
        THO.THREADNAME &quot;Thread__|&quot;, A.TS &quot;Time&quot;, 
        CASE WHEN A.RW = &apos;R&apos; THEN &apos;Read&apos; ELSE &apos;Write&apos; END &quot;Access&quot;,
        CO.PACKAGENAME &quot;Package__(hide)&quot;, CO.CLASSNAME &quot;Class__(hide)&quot;, S.ATLINE &quot;Line__(hide)&quot;,
@@ -1958,7 +1980,7 @@ WHERE
    A.TS BETWEEN &apos;?Start?&apos; AND &apos;?End?&apos; AND
    A.INTHREAD = ?ThreadId?
 ORDER BY A.TS ASC</query>
-  <query id="8f6cfa4a-8821-4166-adb0-94a17a7b8f1b" description="When do we acquire a lock here?" revision="4" display="true">--TODO Instead of showing every event, we may just want to show all of the relevant traces
+  <query id="8f6cfa4a-8821-4166-adb0-94a17a7b8f1b" description="When do we acquire a lock here?" revision="5" display="true">--TODO Instead of showing every event, we may just want to show all of the relevant traces
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    When do we acquire a lock here?
@@ -2004,14 +2026,15 @@ ORDER BY A.TS ASC</query>
 --&lt;/p&gt;
 --
 --END-INFO
-SELECT &apos;?Package?&apos;      &quot;Package__(&apos;package.gif&apos;)&quot;,
-       &apos;?Class?&apos;        &quot;Class__(&apos;class.gif&apos;)&quot;,
-       ?Line?           &quot;Line__(r)&quot;,
-       L.TS             &quot;Time__|&quot;,
-       COUNT (LOCKHELD) &quot;Locks Already Held__(r)&quot;,
-       THO.THREADNAME   &quot;ThreadName&quot;,
-       LH.LOCKEVENT     &quot;LockEvent__(hide)&quot;,
-       TR.ID            &quot;LETRACE__(hide)&quot;
+SELECT &apos;?Package?&apos;       &quot;Package__(&apos;@PK&apos;)&quot;,
+       &apos;?Class?&apos;         &quot;Class&quot;,
+       &apos;?Class (Image)?&apos; &quot;Class__(icon)&quot;,
+       ?Line?            &quot;Line__(r)&quot;,
+       L.TS              &quot;Time__|&quot;,
+       COUNT (LOCKHELD)  &quot;Locks Already Held__(r)&quot;,
+       THO.THREADNAME    &quot;ThreadName&quot;,
+       LH.LOCKEVENT      &quot;LockEvent__(hide)&quot;,
+       TR.ID             &quot;LETRACE__(hide)&quot;
 FROM OBJECT O,
      SITE S,
      TRACE TR,
@@ -2028,7 +2051,7 @@ WHERE O.CLASSNAME = &apos;?Class?&apos; AND
       THO.ID = LH.INTHREAD
 GROUP BY LH.LOCKEVENT,L.TS,THO.THREADNAME,TR.ID
 ORDER BY 5 DESC,4</query>
-  <query id="976506a9-cf85-4907-8d7f-2fd9b5a28d6d" description="What fields are read by the AWT Event Dispatch Thread and written in others?" revision="3" display="true" display-at-root="true">-- NO-ROWS-MSG=No fields read by the AWT Event Dispatch Thread were modified outside of it.
+  <query id="976506a9-cf85-4907-8d7f-2fd9b5a28d6d" description="What fields are read by the AWT Event Dispatch Thread and written in others?" revision="4" display="true" display-at-root="true">-- NO-ROWS-MSG=No fields read by the AWT Event Dispatch Thread were modified outside of it.
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What fields are read by the AWT Event Dispatch Thread and written in others?
@@ -2110,9 +2133,11 @@ ORDER BY 5 DESC,4</query>
 --&lt;/p&gt;
 --END-INFO
 SELECT 
-  O.PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;,
-  O.CLASSNAME &quot;Class__(&apos;class.gif&apos;)&quot;,
+  O.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;,
+  O.CLASSNAME &quot;Class&quot;,
+  O.CLASSCODE &quot;Class__(icon)&quot;,
   F.FIELDNAME &quot;Field__|&quot;,
+  F.CODE &quot;Field__(icon)&quot;,
   SUM(FI.ReadUCCount) + SUM(FI.ReadCount) &quot;Reads__(sum on 2,3)(r)&quot;,
   SUM(FI.WriteUCCount) + SUM(FI.WriteCount) &quot;Writes__(sum on 2,3)(r)&quot;,
   SUM(FI.ReadUCCount) &quot;Reads During Construction__(sum on 2,3)(r)&quot;,
@@ -2140,10 +2165,10 @@ WHERE F.ID = MIXEDAWT.FIELD AND
       FI.FIELD = MIXEDAWT.FIELD AND
       FI.RECEIVER = MIXEDAWT.RECEIVER AND
       THO.ID = FI.Thread
-GROUP BY O.PACKAGENAME,O.CLASSNAME,F.FIELDNAME,F.ID
+GROUP BY O.PACKAGENAME,O.CLASSNAME,O.CLASSCODE,F.FIELDNAME,F.CODE,F.ID
 ORDER BY 1,2,3
 </query>
-  <query id="9d05ac24-20c2-436e-af6b-2bd0bc7dbcfb" description="Where does a thread hold a lock and acquire another?" revision="10" display="true" display-at-root="true">-- NO-ROWS-MSG=No locks were observed to be acquired while another was already held during this run of the program.
+  <query id="9d05ac24-20c2-436e-af6b-2bd0bc7dbcfb" description="Where does a thread hold a lock and acquire another?" revision="11" display="true" display-at-root="true">-- NO-ROWS-MSG=No locks were observed to be acquired while another was already held during this run of the program.
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    Where does a thread hold a lock and acquire another?
@@ -2189,13 +2214,15 @@ ORDER BY 1,2,3
 --particular line was one, two, and two respectively.
 --&lt;/p&gt;
 --END-INFO
-SELECT PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;,
-       CLASSNAME &quot;Class__(&apos;class.gif&apos;)&quot;,
+SELECT PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;,
+       CLASSNAME &quot;Class&quot;,
+       CLASSCODE &quot;Class__(icon)&quot;,
        ATLINE &quot;Line__|(r)&quot;,
        MAX (HELDCOUNT) &quot;Most Locks Already Held__(r)(max on 2)&quot;
 FROM
  ( SELECT COUNT (LH.LOCKHELD) &quot;HELDCOUNT&quot;,
          LO.CLASSNAME,
+         LO.CLASSCODE,
          LO.PACKAGENAME,
          S.ATLINE
    FROM LOCKSHELD LH,
@@ -2207,8 +2234,8 @@ FROM
          TR.ID = LE.TRACE AND
          S.ID = TR.SITE AND
          LO.ID = S.INCLASS
-   GROUP BY LH.LOCKEVENT,LO.CLASSNAME,LO.PACKAGENAME,S.ATLINE,LE.TRACE) AS T
-GROUP BY CLASSNAME,PACKAGENAME,ATLINE
+   GROUP BY LH.LOCKEVENT,LO.CLASSNAME,LO.CLASSCODE,LO.PACKAGENAME,S.ATLINE,LE.TRACE) AS T
+GROUP BY CLASSNAME,CLASSCODE,PACKAGENAME,ATLINE
 
 
 </query>
@@ -2341,7 +2368,7 @@ GROUP BY IA.RECEIVER, THO.THREADNAME
 ORDER BY 1, 3 DESC
 
 </query>
-  <query id="ae0f22d4-2f02-47f0-8745-8fa60024eda4" description="What fields (non-static) are protected by this lock, and how often?" revision="1" display="true">-- NO-ROWS-MSG=No accesses occur while this lock is held 
+  <query id="ae0f22d4-2f02-47f0-8745-8fa60024eda4" description="What fields (non-static) are protected by this lock, and how often?" revision="2" display="true">-- NO-ROWS-MSG=No accesses occur while this lock is held 
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What fields (non-static) are protected by this lock, and how often?
@@ -2392,7 +2419,7 @@ ORDER BY 1, 3 DESC
 --&lt;/p&gt;
 --
 --END-INFO
-SELECT DT.PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;, DT.CLASSNAME &quot;Class__(&apos;class.gif&apos;)&quot;, F.FIELDNAME &quot;Field__|&quot;, F.ID &quot;FieldId__(hide)&quot;, FA.HELD &quot;Times Held__(r)&quot;, COUNT(A.ID) &quot;Total Accesses__(r)&quot;, CAST ((CAST (FA.HELD AS FLOAT) / CAST (COUNT(A.ID) AS FLOAT) * 100) AS DECIMAL) &quot;%__(r)&quot;
+SELECT DT.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;, DT.CLASSNAME &quot;Class&quot;, DT.CLASSCODE &quot;Class__(icon)&quot;, F.FIELDNAME &quot;Field__|&quot;, F.CODE &quot;Field__(icon)&quot;,F.ID &quot;FieldId__(hide)&quot;, FA.HELD &quot;Times Held__(r)&quot;, COUNT(A.ID) &quot;Total Accesses__(r)&quot;, CAST ((CAST (FA.HELD AS FLOAT) / CAST (COUNT(A.ID) AS FLOAT) * 100) AS DECIMAL) &quot;%__(r)&quot;
 FROM 
  (SELECT A.FIELD, COUNT(DISTINCT A.ID) &quot;HELD&quot; FROM
   (SELECT ALH.ACCESS FROM LOCK L, ACCESSLOCKSHELD ALH
@@ -2403,9 +2430,9 @@ FROM
   WHERE A.ID = AIDS.ACCESS AND F.ID = A.FIELD
   GROUP BY A.FIELD) AS FA, FIELD F, ACCESS A, OBJECT DT
 WHERE F.ID = FA.FIELD AND A.FIELD = F.ID AND DT.ID = F.DECLARINGTYPE AND F.STATIC = &apos;N&apos;
-GROUP BY DT.PACKAGENAME,DT.CLASSNAME,F.FIELDNAME,F.ID,FA.HELD
+GROUP BY DT.PACKAGENAME,DT.CLASSNAME,DT.CLASSCODE,F.FIELDNAME,F.CODE,F.ID,FA.HELD
 ORDER BY 1,2,3</query>
-  <query id="ae2c5715-740e-4850-a404-38bdc8cde6b6" description="What locks are held during this field access?" revision="6" display="true">-- NO-ROWS-MSG=No locks are held during this access of the field.
+  <query id="ae2c5715-740e-4850-a404-38bdc8cde6b6" description="What locks are held during this field access?" revision="7" display="true">-- NO-ROWS-MSG=No locks are held during this access of the field.
 --TODO make this look like a lock trace
 --BEGIN-INFO
 --&lt;strong&gt;&lt;p&gt;
@@ -2452,7 +2479,7 @@ ORDER BY 1,2,3</query>
 --were all held when &lt;code&gt;Thread-4&lt;/code&gt; accessed this field.
 --&lt;/p&gt;
 --END-INFO
-SELECT O.THREADNAME &quot;Thread&quot;, A.TS &quot;Time&quot;, OBJID(D.Lock) &quot;Lock__|&quot;, LO.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;, LO.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;, S.AtLine &quot;Line__(r)&quot;, D.ID &quot;LDID__(hide)&quot;, A.TRACE &quot;ATRACE__(hide)&quot;,L.TRACE &quot;LATRACE__(hide)&quot;
+SELECT O.THREADNAME &quot;Thread&quot;, A.TS &quot;Time&quot;, OBJID(D.Lock) &quot;Lock__|&quot;, LO.PackageName &quot;Package__(&apos;@PK&apos;)&quot;, LO.ClassName &quot;Class&quot;, LO.ClassCode &quot;Class__(icon)&quot;, S.AtLine &quot;Line__(r)&quot;, D.ID &quot;LDID__(hide)&quot;, A.TRACE &quot;ATRACE__(hide)&quot;,L.TRACE &quot;LATRACE__(hide)&quot;
  FROM ACCESS A
  INNER JOIN OBJECT O ON
    O.Id = A.InThread 
@@ -2471,7 +2498,7 @@ WHERE
    A.ID = ?AID?
 ORDER BY O.THREADNAME ASC, A.TS ASC, D.Start DESC
 </query>
-  <query id="ae568ab0-7c65-48cf-91a9-1ac97bd8221a" description="Where is this field accessed while this lock is held?" revision="3" display="true">--BEGIN-INFO
+  <query id="ae568ab0-7c65-48cf-91a9-1ac97bd8221a" description="Where is this field accessed while this lock is held?" revision="4" display="true">--BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    Where is this field accessed while this lock is held?
 --&lt;/strong&gt;&lt;/p&gt;
@@ -2506,8 +2533,9 @@ ORDER BY O.THREADNAME ASC, A.TS ASC, D.Start DESC
 --
 --END-INFO
 SELECT
-    CO.PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;,
-    CO.CLASSNAME   &quot;Class__(&apos;class.gif&apos;)&quot;,
+    CO.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;,
+    CO.CLASSNAME   &quot;Class&quot;,
+    CO.CLASSCODE   &quot;Class__(icon)&quot;,
     S.ATLINE       &quot;Line__(r)|&quot;
 FROM ACCESS A, TRACE TR, SITE S, OBJECT CO, ACCESSLOCKSHELD ALH, LOCK L
 WHERE A.FIELD = ?FieldId? AND
@@ -2519,8 +2547,9 @@ WHERE A.FIELD = ?FieldId? AND
       L.LOCK = ?Lock?
 UNION DISTINCT
 SELECT 
-    CO.PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;,
-    CO.CLASSNAME   &quot;Class__(&apos;class.gif&apos;)&quot;,
+    CO.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;,
+    CO.CLASSNAME   &quot;Class&quot;,
+    CO.CLASSCODE   &quot;Class__(icon)&quot;,
     S.ATLINE       &quot;Line__(r)|&quot;
 FROM ACCESS A, TRACE TR, SITE S, OBJECT CO, ACCESSLOCKSHELD ALH, LOCKSHELD L
 WHERE A.FIELD = ?FieldId? AND
@@ -2531,7 +2560,7 @@ WHERE A.FIELD = ?FieldId? AND
       L.LOCKEVENT = ALH.LASTACQUISITION AND
       L.LOCKHELD = ?Lock?
 ORDER BY 1,2,3</query>
-  <query id="b4c691be-b394-45c0-8190-6a2e0d9e63d9" description="Show every access of this field in this time range." revision="2" display="true">--BEGIN-INFO
+  <query id="b4c691be-b394-45c0-8190-6a2e0d9e63d9" description="Show every access of this field in this time range." revision="3" display="true">--BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    Show every access of this field in this time range
 --&lt;/strong&gt;&lt;/p&gt;
@@ -2567,7 +2596,7 @@ ORDER BY 1,2,3</query>
 --&lt;/p&gt;
 --
 --END-INFO
-SELECT &apos;?Package?&apos; &quot;Package__(&apos;package.gif&apos;)&quot;, &apos;?Class?&apos; &quot;Class__(&apos;class.gif&apos;)&quot;, &apos;?Field?&apos; &quot;Field&quot;, 
+SELECT &apos;?Package?&apos; &quot;Package__(&apos;@PK&apos;)&quot;, &apos;?Class?&apos; &quot;Class&quot;, &apos;?Class (Image)?&apos; &quot;Class__(icon)&quot;,&apos;?Field?&apos; &quot;Field&quot;, &apos;?Field (Image)?&apos; &quot;Field__(icon)&quot;,
        THO.THREADNAME &quot;Thread__|&quot;, A.TS &quot;Time&quot;, 
        CASE WHEN A.RW = &apos;R&apos; THEN &apos;Read&apos; ELSE &apos;Write&apos; END &quot;Access&quot;,
        CASE WHEN A.UNDERCONSTRUCTION = &apos;N&apos; THEN &apos; &apos; ELSE &apos;Yes&apos; END &quot;Under Construction__(c)&quot;,
@@ -2584,7 +2613,7 @@ WHERE
    A.TS BETWEEN &apos;?Start?&apos; AND &apos;?End?&apos; AND
    A.INTHREAD = ?ThreadId?
 ORDER BY A.TS ASC</query>
-  <query id="b8689ed4-28e4-4e81-a89f-e5c511ba54b5" description="Where is this field accessed while this lock is not held?" revision="5" display="true">--BEGIN-INFO
+  <query id="b8689ed4-28e4-4e81-a89f-e5c511ba54b5" description="Where is this field accessed while this lock is not held?" revision="6" display="true">--BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    Where is this field accessed while this lock is not held?
 --&lt;/strong&gt;&lt;/p&gt;
@@ -2619,8 +2648,9 @@ ORDER BY A.TS ASC</query>
 --
 --END-INFO
 SELECT DISTINCT 
-    CO.PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;,
-    CO.CLASSNAME   &quot;Class__(&apos;class.gif&apos;)&quot;,
+    CO.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;,
+    CO.CLASSNAME   &quot;Class&quot;,
+    CO.CLASSCODE   &quot;Class__(icon)&quot;,
     S.ATLINE       &quot;Line__(r)|&quot;
 FROM ACCESS A
      INNER JOIN TRACE TR ON TR.ID = A.TRACE
@@ -2634,7 +2664,7 @@ WHERE A.FIELD = ?FieldId? AND
          (NOT EXISTS (SELECT LOCKHELD FROM LOCKSHELD WHERE LOCKEVENT = ALH.LASTACQUISITION) OR
           (NOT ?Lock? IN (SELECT LOCKHELD FROM LOCKSHELD WHERE LOCKEVENT = ALH.LASTACQUISITION)))))
 </query>
-  <query id="bd72a5e4-42aa-415d-aa72-28d351f629a4" description="What fields (non-static) are shared?" revision="15" display="true" display-at-root="true">-- NO-ROWS-MSG=No non-static fields are shared between two or more threads.
+  <query id="bd72a5e4-42aa-415d-aa72-28d351f629a4" description="What fields (non-static) are shared?" revision="16" display="true" display-at-root="true">-- NO-ROWS-MSG=No non-static fields are shared between two or more threads.
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What fields (non-static) are shared?
@@ -2710,9 +2740,11 @@ WHERE A.FIELD = ?FieldId? AND
 --&lt;/p&gt;
 --END-INFO
 select
-  O.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;,
-  O.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;,
+  O.PackageName &quot;Package__(&apos;@PK&apos;)&quot;,
+  O.ClassName &quot;Class&quot;,
+  O.ClassCode &quot;Class__(icon)&quot;,
   F.FieldName &quot;Field__|&quot;,
+  F.Code &quot;Field__(icon)&quot;,
   SUM(FI.ReadUCCount) + SUM(FI.ReadCount) &quot;Reads__(sum on 2)(r)&quot;,
   SUM(FI.WriteUCCount) + SUM(FI.WriteCount) &quot;Writes__(sum on 2)(r)&quot;,
   SUM(FI.ReadUCCount) &quot;Reads During Construction__(sum on 2)(r)&quot;,
@@ -2730,9 +2762,9 @@ where
   and FI.FIELD = F.ID 
   and THO.ID = FI.Thread
   and FIRC.FIELD = F.ID
-group by O.PackageName,O.ClassName,F.FieldName,F.Id
+group by O.PackageName,O.ClassName,O.ClassCode,F.FieldName,F.Id,F.Code
 order by O.PackageName,O.ClassName,F.FieldName</query>
-  <query id="c744b5b5-15f0-4f72-a344-7e52bcac5071" description="What fields (static) have an empty lock set?" revision="10" display="true" display-at-root="true">-- NO-ROWS-MSG=All non-final non-volatile static fields that are shared have a common lock held for each access.
+  <query id="c744b5b5-15f0-4f72-a344-7e52bcac5071" description="What fields (static) have an empty lock set?" revision="11" display="true" display-at-root="true">-- NO-ROWS-MSG=All non-final non-volatile static fields that are shared have a common lock held for each access.
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What fields (static) have an empty lock set?
@@ -2772,9 +2804,11 @@ order by O.PackageName,O.ClassName,F.FieldName</query>
 --&lt;/p&gt;
 --END-INFO
 SELECT 
-  O.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;,
-  O.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;,
+  O.PackageName &quot;Package__(&apos;@PK&apos;)&quot;,
+  O.ClassName &quot;Class&quot;,
+  O.ClassCode &quot;Class__(icon)&quot;,
   FI.FieldName &quot;Field__|&quot;,
+  FI.Code &quot;Field__(icon)&quot;,
   I.FIELD &quot;FieldId__(hide)&quot;
  FROM OBJECT O
  INNER JOIN FIELD FI ON FI.DeclaringType = O.Id
@@ -2782,7 +2816,7 @@ SELECT
  LEFT OUTER JOIN FIELDLOCKSET F ON F.FIELD = I.FIELD
  WHERE F.LOCK IS NULL
  ORDER BY O.PackageName,O.ClassName,FI.FieldName</query>
-  <query id="c9453327-b892-4324-a6b8-2dceb32e1901" description="Which threads and what code contend for this lock?" revision="8" display="true">-- NO-ROWS-MSG=No threads were forced to wait for this lock.
+  <query id="c9453327-b892-4324-a6b8-2dceb32e1901" description="Which threads and what code contend for this lock?" revision="9" display="true">-- NO-ROWS-MSG=No threads were forced to wait for this lock.
 -- This query shows the locations and threads of all places this lock 
 -- was contended for. Some entries appear to be duplicates, but actually
 -- represent different stack traces.
@@ -2843,7 +2877,7 @@ SELECT
 --average of 3,916 nanoseconds each time.
 --&lt;/p&gt;
 --END-INFO
-select lo.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;, lo.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;, s.AtLine &quot;Line__]&quot;, tho.ThreadName &quot;Thread__|&quot;, 
+select lo.PackageName &quot;Package__(&apos;@PK&apos;)&quot;, lo.ClassName &quot;Class&quot;, lo.ClassCode &quot;Class__(icon)&quot;, s.AtLine &quot;Line__]&quot;, tho.ThreadName &quot;Thread__|&quot;, 
   (trim(cast(sum(ld.Duration) as char(20))) || &apos; ns&apos;) &quot;BlockTime__(sum &apos; ns&apos;)(r)&quot;, 
   count(ld.lock)                                                        as &quot;Times Acquired__(sum)(r)&quot;,
   (trim (cast(sum(ld.Duration) as char(20)))) || &apos; ns&apos;                  as &quot;Total Block Time__(sum &apos; ns&apos;)(r)&quot;, 
@@ -2857,7 +2891,7 @@ where ld.Lock=?Lock?
   and s.Id = tr.Site
   and lo.Id = s.InClass
   and tho.Id = ld.InThread
-group by lo.PackageName,lo.ClassName, s.AtLine, tho.ThreadName, le.trace
+group by lo.PackageName,lo.ClassName, lo.ClassCode, s.AtLine, tho.ThreadName, le.trace
 order by lo.PackageName, lo.ClassName, s.AtLine, tho.ThreadName, sum(ld.Duration) desc
   </query>
   <query id="cb38a427-c259-4690-abe2-acea9661f737" description="What locks are contended for the longest time?" revision="12" display="true" display-at-root="true">-- NO-ROWS-MSG=No locks were observed to be acquired during this run of the program.
@@ -2928,7 +2962,9 @@ where State = &apos;BLOCKING&apos;
 group by Lock
 order by sum(duration) / count (lock) desc
   </query>
-  <query id="cdc2d460-b17f-43bc-8cc6-4c26f1637fda" description="What fields (non-static) are shared after object construction?" revision="1" display="true" display-at-root="true">-- NO-ROWS-MSG=No non-static fields are shared between two or more threads after object construction.
+  <query id="cd3213bd-079c-4206-93d5-41aa4c2e9ee1" description="Stack Trace" revision="1" display="true">SELECT s.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;, s.CLASSNAME &quot;Class&quot;, s.CLASSCODE &quot;Class__(icon)&quot;, s.INFILE &quot;File&quot;, s.LOCATION &quot;Location&quot;, s.ATLINE &quot;Line__(r)&quot;
+FROM TABLE (STACKTRACE(?TRACE?)) s</query>
+  <query id="cdc2d460-b17f-43bc-8cc6-4c26f1637fda" description="What fields (non-static) are shared after object construction?" revision="2" display="true" display-at-root="true">-- NO-ROWS-MSG=No non-static fields are shared between two or more threads after object construction.
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What fields (non-static) are shared after object construction?
@@ -2993,9 +3029,11 @@ order by sum(duration) / count (lock) desc
 --&lt;/p&gt;
 --END-INFO
 select
-  O.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;,
-  O.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;,
+  O.PackageName &quot;Package__(&apos;@PK&apos;)&quot;,
+  O.ClassName &quot;Class&quot;,
+  O.ClassCode &quot;Class__(icon)&quot;,
   F.FieldName &quot;Field__|&quot;,
+  F.Code &quot;Field__(icon)&quot;,
   SUM(FI.ReadUCCount) + SUM(FI.ReadCount) &quot;Reads__(sum on 2)(r)&quot;,
   SUM(FI.WriteUCCount) + SUM(FI.WriteCount) &quot;Writes__(sum on 2)(r)&quot;,
   SUM(FI.ReadUCCount) &quot;Reads During Construction__(sum on 2)(r)&quot;,
@@ -3016,10 +3054,10 @@ where
   and FI.RECEIVER = SHARED.RECEIVER
   and THO.ID = FI.Thread
   and FIRC.FIELD = F.ID
-group by O.PackageName,O.ClassName,F.FieldName,F.Id
+group by O.PackageName,O.ClassName,O.ClassCode,F.FieldName,F.Code,F.Id
 order by O.PackageName,O.ClassName,F.FieldName
 </query>
-  <query id="ce90be0d-9d7a-49a6-8334-c6f37112fa4b" description="What threads read and write this field?" revision="10" display="true">--BEGIN-INFO
+  <query id="ce90be0d-9d7a-49a6-8334-c6f37112fa4b" description="What threads read and write this field?" revision="11" display="true">--BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What threads read and write this field?
 --&lt;/strong&gt;&lt;/p&gt;
@@ -3072,9 +3110,11 @@ order by O.PackageName,O.ClassName,F.FieldName
 --
 --END-INFO
 SELECT
-  CO.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;,
-  CO.ClassName   &quot;Class__(&apos;class.gif&apos;)&quot;,
+  CO.PackageName &quot;Package__(&apos;@PK&apos;)&quot;,
+  CO.ClassName   &quot;Class&quot;,
+  CO.ClassCode   &quot;Class__(icon)&quot;,
   F.FieldName    &quot;Field&quot;,
+  F.Code		 &quot;Field__(icon)&quot;,
   THO.ThreadName &quot;Thread__|&quot;,
   FI.ReadCount &quot;Reads__(sum on 2,3)&quot;,
   FI.WriteCount &quot;Writes__(sum on 2,3)&quot;
@@ -3083,7 +3123,7 @@ SELECT
    THO.ID = FI.THREAD AND 
    F.ID = FI.FIELD AND
    CO.ID = F.DECLARINGTYPE</query>
-  <query id="d1176c97-e3b6-483b-a341-6914a6f64860" description="What kinds of objects are indirectly accessed by more than one thread?" revision="7" display="true" display-at-root="true">--BEGIN-INFO
+  <query id="d1176c97-e3b6-483b-a341-6914a6f64860" description="What kinds of objects are indirectly accessed by more than one thread?" revision="8" display="true" display-at-root="true">--BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What kinds of objects are indirectly accessed by more than one thread?
 --&lt;/strong&gt;&lt;/p&gt;
@@ -3136,15 +3176,15 @@ SELECT
 --one thread?&quot;&lt;/code&gt;
 --&lt;/p&gt;
 --END-INFO
-SELECT T.PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;, T.CLASSNAME &quot;Class__(&apos;class.gif&apos;)|&quot;, COUNT(DISTINCT THO.THREADNAME) &quot;Threads__(r)&quot;, COUNT (IA.ID) &quot;Accesses__(sum on 3)(r)&quot;
+SELECT T.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;, T.CLASSNAME &quot;Class|&quot;, T.CLASSCODE &quot;Class__(icon)&quot;, COUNT(DISTINCT THO.THREADNAME) &quot;Threads__(r)&quot;, COUNT (IA.ID) &quot;Accesses__(sum on 3)(r)&quot;
  FROM  (SELECT RECEIVER 
         FROM INDIRECTACCESS 
         GROUP BY RECEIVER 
         HAVING COUNT(DISTINCT INTHREAD) &gt; 1) AS R, INDIRECTACCESS IA, OBJECT O, OBJECT T, OBJECT THO
  WHERE IA.RECEIVER = R.RECEIVER AND O.ID = IA.RECEIVER AND T.ID = O.TYPE AND THO.ID = IA.INTHREAD
- GROUP BY T.PACKAGENAME, T.CLASSNAME
+ GROUP BY T.PACKAGENAME, T.CLASSNAME, T.CLASSCODE
  ORDER BY 1,2,3,4</query>
-  <query id="d4d2af9b-ce4d-4457-9e94-01972fcb58d3" description="What fields (non-static) have an empty lock set after object construction?" revision="11" display="true" display-at-root="true">-- NO-ROWS-MSG=All non-final non-volatile non-static fields that are shared after object construction have a common lock held for each access.
+  <query id="d4d2af9b-ce4d-4457-9e94-01972fcb58d3" description="What fields (non-static) have an empty lock set after object construction?" revision="12" display="true" display-at-root="true">-- NO-ROWS-MSG=All non-final non-volatile non-static fields that are shared after object construction have a common lock held for each access.
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What fields (non-static) have an empty lock set after object construction?
@@ -3190,18 +3230,20 @@ SELECT T.PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;, T.CLASSNAME
 --&lt;/p&gt;
 --END-INFO
 SELECT 
-  O.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;,
-  O.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;,
+  O.PackageName &quot;Package__(&apos;@PK&apos;)&quot;,
+  O.ClassName &quot;Class&quot;,
+  O.ClassCode &quot;Class__(icon)&quot;,
   FI.FieldName &quot;Field__|&quot;,
+  FI.Code &quot;Field__(icon)&quot;,
   COUNT(DISTINCT I.Receiver) &quot;Instances&quot;, I.Field &quot;FieldId__(hide)&quot;
  FROM OBJECT O
  INNER JOIN FIELD FI ON FI.DeclaringType = O.Id
  INNER JOIN INTERESTINGFIELD I ON FI.STATIC = &apos;N&apos; AND I.FIELD=FI.ID
  LEFT OUTER JOIN FIELDINSTANCELOCKSET F ON F.FIELD = I.FIELD AND F.RECEIVER = I.RECEIVER 
  WHERE F.LOCK IS NULL
- GROUP BY O.PackageName, O.ClassName, FI.FieldName, I.Field
+ GROUP BY O.PackageName, O.ClassName, O.ClassCode, FI.FieldName, FI.Code,I.Field
  ORDER BY O.PackageName, O.ClassName, FI.FieldName</query>
-  <query id="d84c1559-9336-4255-a15d-51413859a005" description="Where is this field accessed while this lock is not held?" revision="5" display="true">--BEGIN-INFO
+  <query id="d84c1559-9336-4255-a15d-51413859a005" description="Where is this field accessed while this lock is not held?" revision="6" display="true">--BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    Where is this field accessed while this lock is not held?
 --&lt;/strong&gt;&lt;/p&gt;
@@ -3235,8 +3277,9 @@ SELECT
 --
 --END-INFO
 SELECT DISTINCT 
-    CO.PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;,
-    CO.CLASSNAME   &quot;Class__(&apos;class.gif&apos;)&quot;,
+    CO.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;,
+    CO.CLASSNAME   &quot;Class&quot;,
+    CO.CLASSCODE   &quot;Class__(icon)&quot;,
     S.ATLINE       &quot;Line__(r)|&quot;
 FROM ACCESS A
      INNER JOIN TRACE TR ON TR.ID = A.TRACE
@@ -3267,7 +3310,7 @@ select st.TABLENAME &quot;Table&quot;,
 from sys.sysschemas sc,sys.systables st,sys.syscolumns sco 
 where sc.schemaname = &apos;FLASHLIGHT&apos; and st.schemaid = sc.schemaid and sco.referenceid = st.tableid 
 order by st.tablename,sco.columnnumber</query>
-  <query id="e6477143-977b-4c8d-b3d5-3d09c919cb94" description="Where are fields accessed during this particular lock acquisition?" revision="6" display="true">-- NO-ROWS-MSG=No accesses occur while this lock is held 
+  <query id="e6477143-977b-4c8d-b3d5-3d09c919cb94" description="Where are fields accessed during this particular lock acquisition?" revision="7" display="true">-- NO-ROWS-MSG=No accesses occur while this lock is held 
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    Where are fields accessed during this particular lock acquisition?
@@ -3302,7 +3345,7 @@ order by st.tablename,sco.columnnumber</query>
 --&lt;/p&gt;
 --
 --END-INFO
-SELECT DISTINCT CO.PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;, CO.CLASSNAME &quot;Class__](&apos;class.gif&apos;)&quot;, S.ATLINE &quot;Line__|(r)&quot;
+SELECT DISTINCT CO.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;, CO.CLASSNAME &quot;Class__]&quot;, CO.CLASSCODE &quot;Class__(icon)&quot;, S.ATLINE &quot;Line__|(r)&quot;
   FROM LOCKDURATION D, ACCESS A, TRACE T, SITE S, OBJECT CO
   WHERE D.STARTEVENT = ?LockEvent? AND
         A.INTHREAD = D.INTHREAD AND
@@ -3311,9 +3354,10 @@ SELECT DISTINCT CO.PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;, C
         S.ID = T.SITE AND 
         CO.ID = S.INCLASS
 ORDER BY 1,2,3</query>
-  <query id="f6db6b42-eb34-43e7-b133-278089a03ea1" description="@RegionLock(&quot;Lock is this protects Region&quot;)" revision="1">SELECT DISTINCT 
-  LCO.PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;,
-  LCO.CLASSNAME &quot;Class__(&apos;class.gif&apos;)&quot;,
+  <query id="f6db6b42-eb34-43e7-b133-278089a03ea1" description="@RegionLock(&quot;Lock is this protects Region&quot;)" revision="2">SELECT DISTINCT 
+  LCO.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;,
+  LCO.CLASSNAME &quot;Class&quot;,
+  LCO.CLASSCODE &quot;Class__(icon)&quot;,
   F.FIELDNAME &quot;Field__|&quot;
 FROM FIELDINSTANCELOCKSET FIL
 INNER JOIN OBJECT LO ON
@@ -3415,7 +3459,7 @@ SELECT OBJID(COUNTS.RECEIVER) &quot;?Field? Object&quot;,
     WHERE FIELD = ?FieldId? 
     GROUP BY RECEIVER) AS LOCKS
   ON COUNTS.RECEIVER = LOCKS.RECEIVER</query>
-  <query id="fb317a0c-d9c5-41e2-811b-d6236f63fae1" description="What is the lock trace for this lock event?" revision="7" display="true">--BEGIN-INFO
+  <query id="fb317a0c-d9c5-41e2-811b-d6236f63fae1" description="What is the lock trace for this lock event?" revision="8" display="true">--BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What is the lock trace for this lock event?
 --&lt;/strong&gt;&lt;/p&gt;
@@ -3469,7 +3513,7 @@ SELECT OBJID(COUNTS.RECEIVER) &quot;?Field? Object&quot;,
 --&lt;/p&gt;
 --
 --END-INFO
-SELECT OBJID(D.Lock) &quot;Lock__(r)&quot;, D.Lock &quot;Lock__(hide)&quot;, LO.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;, LO.ClassName &quot;Class__(&apos;class.gif&apos;)&quot;, S.AtLine &quot;Line__(r)&quot;, D.Start &quot;Time&quot;, D.ID &quot;LDID__(hide)&quot;, LL.TRACE &quot;LATRACE__(hide)&quot;
+SELECT OBJID(D.Lock) &quot;Lock__(r)&quot;, D.Lock &quot;Lock__(hide)&quot;, LO.PackageName &quot;Package__(&apos;@PK&apos;)&quot;, LO.ClassName &quot;Class&quot;, LO.Classcode &quot;Class__(icon)&quot;, S.AtLine &quot;Line__(r)&quot;, D.Start &quot;Time&quot;, D.ID &quot;LDID__(hide)&quot;, LL.TRACE &quot;LATRACE__(hide)&quot;
  FROM LOCK L, LOCKDURATION D, LOCK LL, TRACE T, SITE S, OBJECT LO
  WHERE D.InThread = L.InThread AND (L.TS BETWEEN D.START AND D.STOP) AND D.STATE = &apos;HOLDING&apos; AND
        LL.Id = D.StartEvent AND
@@ -3478,7 +3522,7 @@ SELECT OBJID(D.Lock) &quot;Lock__(r)&quot;, D.Lock &quot;Lock__(hide)&quot;, LO.
        LO.Id = S.InClass AND
        L.Id = ?LockEvent?
 ORDER BY D.START DESC</query>
-  <query id="fd49f015-3585-4602-a5d1-4e67ef7b6a55" description="What fields (static) are protected by this lock, and how often?" revision="10" display="true">-- NO-ROWS-MSG=No accesses occur while this lock is held 
+  <query id="fd49f015-3585-4602-a5d1-4e67ef7b6a55" description="What fields (static) are protected by this lock, and how often?" revision="11" display="true">-- NO-ROWS-MSG=No accesses occur while this lock is held 
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What fields (non-static) are protected by this lock, and how often?
@@ -3529,7 +3573,7 @@ ORDER BY D.START DESC</query>
 --&lt;/p&gt;
 --
 --END-INFO
-SELECT DT.PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;, DT.CLASSNAME &quot;Class__(&apos;class.gif&apos;)&quot;, F.FIELDNAME &quot;Field__|&quot;, F.ID &quot;FieldId__(hide)&quot;, FA.HELD &quot;Times Held__(r)&quot;, COUNT(A.ID) &quot;Total Accesses__(r)&quot;, CAST ((CAST (FA.HELD AS FLOAT) / CAST (COUNT(A.ID) AS FLOAT) * 100) AS DECIMAL) &quot;%__(r)&quot;
+SELECT DT.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;, DT.CLASSNAME &quot;Class&quot;, DT.CLASSCODE &quot;Class__(icon)&quot;, F.FIELDNAME &quot;Field__|&quot;, F.CODE &quot;Field__(icon)&quot;, F.ID &quot;FieldId__(hide)&quot;, FA.HELD &quot;Times Held__(r)&quot;, COUNT(A.ID) &quot;Total Accesses__(r)&quot;, CAST ((CAST (FA.HELD AS FLOAT) / CAST (COUNT(A.ID) AS FLOAT) * 100) AS DECIMAL) &quot;%__(r)&quot;
 FROM 
  (SELECT A.FIELD, COUNT(DISTINCT A.ID) &quot;HELD&quot; FROM
   (SELECT ALH.ACCESS FROM LOCK L, ACCESSLOCKSHELD ALH
@@ -3540,9 +3584,9 @@ FROM
   WHERE A.ID = AIDS.ACCESS AND F.ID = A.FIELD
   GROUP BY A.FIELD) AS FA, FIELD F, ACCESS A, OBJECT DT
 WHERE F.ID = FA.FIELD AND A.FIELD = F.ID AND DT.ID = F.DECLARINGTYPE AND F.STATIC = &apos;Y&apos;
-GROUP BY DT.PACKAGENAME,DT.CLASSNAME,F.FIELDNAME,F.ID,FA.HELD
+GROUP BY DT.PACKAGENAME,DT.CLASSNAME,DT.CLASSCODE,F.FIELDNAME,F.CODE,F.ID,FA.HELD
 ORDER BY 1,2,3</query>
-  <query id="fdd4eb5b-7e43-4285-a8a5-71a7b09c182f" description="When and by what threads was this field accessed?" revision="4" display="true">--BEGIN-INFO
+  <query id="fdd4eb5b-7e43-4285-a8a5-71a7b09c182f" description="When and by what threads was this field accessed?" revision="5" display="true">--BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    When and by what threads was this field accessed?
 --&lt;/strong&gt;&lt;/p&gt;
@@ -3606,9 +3650,11 @@ ORDER BY 1,2,3</query>
 --
 --END-INFO
 SELECT 
-   &apos;?Package?&apos; &quot;Package__(&apos;package.gif&apos;)&quot;, 
-   &apos;?Class?&apos; &quot;Class__(&apos;class.gif&apos;)&quot;, 
-   &apos;?Field?&apos; &quot;Field&quot;, 
+   &apos;?Package?&apos; &quot;Package__(&apos;@PK&apos;)&quot;, 
+   &apos;?Class?&apos; &quot;Class&quot;, 
+   &apos;?Class (Image)?&apos; &quot;Class__(icon)&quot;,
+   &apos;?Field?&apos; &quot;Field&quot;,
+   &apos;?Field (Image)?&apos; &quot;Field__(icon)&quot;,
    S.THREADNAME &quot;Thread__|&quot;,
    S.HAPPENSBEFORE &quot;Happens-Before&quot;,
    CASE WHEN S.HAPPENSBEFORE = &apos;Yes&apos; THEN &apos;happens_before.gif&apos; 
@@ -3622,126 +3668,126 @@ SELECT
    S.ENDTIME &quot;End&quot;,
    S.THREADID &quot;ThreadId__(hide)&quot;
 FROM TABLE (ACCESSSUMMARY(?FieldId?, ?Receiver?)) S</query>
-  <sub-query id="094fc6db-5a5b-4495-aacd-54f5a5aa1691" sub-query="6a39e6ca-29e9-4093-ba03-0e9bd9503a1a" is-default="true"/>
-  <sub-query id="094fc6db-5a5b-4495-aacd-54f5a5aa1691" sub-query="2048e73c-e95b-4e4c-84ee-2309372a7eae"/>
   <sub-query id="094fc6db-5a5b-4495-aacd-54f5a5aa1691" sub-query="ce90be0d-9d7a-49a6-8334-c6f37112fa4b"/>
   <sub-query id="094fc6db-5a5b-4495-aacd-54f5a5aa1691" sub-query="4c9fcdb0-e7dc-46a0-87b6-c00b3caa8a8a"/>
+  <sub-query id="094fc6db-5a5b-4495-aacd-54f5a5aa1691" sub-query="2048e73c-e95b-4e4c-84ee-2309372a7eae"/>
+  <sub-query id="094fc6db-5a5b-4495-aacd-54f5a5aa1691" sub-query="6a39e6ca-29e9-4093-ba03-0e9bd9503a1a" is-default="true"/>
   <sub-query id="1a6082af-29c0-41af-b5bc-995ec6183787" sub-query="83d613b3-283e-4100-9a82-e42adf107fe6" is-default="true"/>
-  <sub-query id="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a" sub-query="39872cb4-369c-4dd8-90fd-1847a3f05dc9"/>
   <sub-query id="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a" sub-query="d84c1559-9336-4255-a15d-51413859a005"/>
-  <sub-query id="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a" sub-query="732daa1f-dac0-4f40-b714-8190f903d323"/>
-  <sub-query id="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a" sub-query="fd49f015-3585-4602-a5d1-4e67ef7b6a55"/>
-  <sub-query id="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a" sub-query="12592a6f-1b1e-4e22-b17a-56b2e4ff0495"/>
-  <sub-query id="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a" sub-query="ae0f22d4-2f02-47f0-8745-8fa60024eda4" is-default="true"/>
   <sub-query id="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a" sub-query="5ebba191-8523-4253-b639-872d6da4dc92"/>
+  <sub-query id="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a" sub-query="12592a6f-1b1e-4e22-b17a-56b2e4ff0495"/>
+  <sub-query id="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a" sub-query="fd49f015-3585-4602-a5d1-4e67ef7b6a55"/>
+  <sub-query id="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a" sub-query="39872cb4-369c-4dd8-90fd-1847a3f05dc9"/>
+  <sub-query id="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a" sub-query="732daa1f-dac0-4f40-b714-8190f903d323"/>
+  <sub-query id="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a" sub-query="ae0f22d4-2f02-47f0-8745-8fa60024eda4" is-default="true"/>
   <sub-query id="2048e73c-e95b-4e4c-84ee-2309372a7eae" sub-query="8de7d969-6633-4a16-acad-786ab9fd2f5f" is-default="true"/>
   <sub-query id="213c73ad-b3f6-4aef-9a05-f0c31d8fdcde" sub-query="6d8d0985-0830-4f18-a655-fa7b43703d5f" is-default="true"/>
   <sub-query id="213c73ad-b3f6-4aef-9a05-f0c31d8fdcde" sub-query="708d1b8a-5274-4a25-b0b4-67f1a7a86690"/>
-  <sub-query id="2f505921-50fb-405b-bc78-4a5fe9228957" sub-query="6a39e6ca-29e9-4093-ba03-0e9bd9503a1a" is-default="true"/>
-  <sub-query id="2f505921-50fb-405b-bc78-4a5fe9228957" sub-query="2048e73c-e95b-4e4c-84ee-2309372a7eae"/>
   <sub-query id="2f505921-50fb-405b-bc78-4a5fe9228957" sub-query="ce90be0d-9d7a-49a6-8334-c6f37112fa4b"/>
   <sub-query id="2f505921-50fb-405b-bc78-4a5fe9228957" sub-query="4c9fcdb0-e7dc-46a0-87b6-c00b3caa8a8a"/>
+  <sub-query id="2f505921-50fb-405b-bc78-4a5fe9228957" sub-query="2048e73c-e95b-4e4c-84ee-2309372a7eae"/>
+  <sub-query id="2f505921-50fb-405b-bc78-4a5fe9228957" sub-query="6a39e6ca-29e9-4093-ba03-0e9bd9503a1a" is-default="true"/>
   <sub-query id="33868960-7df8-4bab-bb33-ffb230957940" sub-query="6d8d0985-0830-4f18-a655-fa7b43703d5f"/>
   <sub-query id="33868960-7df8-4bab-bb33-ffb230957940" sub-query="708d1b8a-5274-4a25-b0b4-67f1a7a86690" is-default="true"/>
-  <sub-query id="419c927e-a87c-4364-b4a9-2e8f50f728f6" sub-query="6a39e6ca-29e9-4093-ba03-0e9bd9503a1a" is-default="true"/>
-  <sub-query id="419c927e-a87c-4364-b4a9-2e8f50f728f6" sub-query="2048e73c-e95b-4e4c-84ee-2309372a7eae"/>
   <sub-query id="419c927e-a87c-4364-b4a9-2e8f50f728f6" sub-query="ce90be0d-9d7a-49a6-8334-c6f37112fa4b"/>
   <sub-query id="419c927e-a87c-4364-b4a9-2e8f50f728f6" sub-query="4c9fcdb0-e7dc-46a0-87b6-c00b3caa8a8a"/>
-  <sub-query id="42031a55-4f1c-42dc-80dc-0fa141a32382" sub-query="732daa1f-dac0-4f40-b714-8190f903d323"/>
-  <sub-query id="42031a55-4f1c-42dc-80dc-0fa141a32382" sub-query="fd49f015-3585-4602-a5d1-4e67ef7b6a55"/>
-  <sub-query id="42031a55-4f1c-42dc-80dc-0fa141a32382" sub-query="12592a6f-1b1e-4e22-b17a-56b2e4ff0495"/>
-  <sub-query id="42031a55-4f1c-42dc-80dc-0fa141a32382" sub-query="ae0f22d4-2f02-47f0-8745-8fa60024eda4" is-default="true"/>
+  <sub-query id="419c927e-a87c-4364-b4a9-2e8f50f728f6" sub-query="2048e73c-e95b-4e4c-84ee-2309372a7eae"/>
+  <sub-query id="419c927e-a87c-4364-b4a9-2e8f50f728f6" sub-query="6a39e6ca-29e9-4093-ba03-0e9bd9503a1a" is-default="true"/>
   <sub-query id="42031a55-4f1c-42dc-80dc-0fa141a32382" sub-query="5ebba191-8523-4253-b639-872d6da4dc92"/>
-  <sub-query id="4fce8390-7307-45dc-b779-5701ee7f23a1" sub-query="67a08763-cefe-4193-908c-9dc8d1ca4245"/>
+  <sub-query id="42031a55-4f1c-42dc-80dc-0fa141a32382" sub-query="12592a6f-1b1e-4e22-b17a-56b2e4ff0495"/>
+  <sub-query id="42031a55-4f1c-42dc-80dc-0fa141a32382" sub-query="fd49f015-3585-4602-a5d1-4e67ef7b6a55"/>
+  <sub-query id="42031a55-4f1c-42dc-80dc-0fa141a32382" sub-query="732daa1f-dac0-4f40-b714-8190f903d323"/>
+  <sub-query id="42031a55-4f1c-42dc-80dc-0fa141a32382" sub-query="ae0f22d4-2f02-47f0-8745-8fa60024eda4" is-default="true"/>
   <sub-query id="4fce8390-7307-45dc-b779-5701ee7f23a1" sub-query="432b76db-c751-4bd8-8b2f-ef5986334514" is-default="true"/>
-  <sub-query id="4fce8390-7307-45dc-b779-5701ee7f23a1" sub-query="fb317a0c-d9c5-41e2-811b-d6236f63fae1"/>
   <sub-query id="4fce8390-7307-45dc-b779-5701ee7f23a1" sub-query="e6477143-977b-4c8d-b3d5-3d09c919cb94"/>
+  <sub-query id="4fce8390-7307-45dc-b779-5701ee7f23a1" sub-query="fb317a0c-d9c5-41e2-811b-d6236f63fae1"/>
+  <sub-query id="4fce8390-7307-45dc-b779-5701ee7f23a1" sub-query="67a08763-cefe-4193-908c-9dc8d1ca4245"/>
+  <sub-query id="5224d411-6ed3-432f-8b91-a1c43df22911" sub-query="fdd4eb5b-7e43-4285-a8a5-71a7b09c182f"/>
+  <sub-query id="5224d411-6ed3-432f-8b91-a1c43df22911" sub-query="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a" is-default="true"/>
   <sub-query id="5224d411-6ed3-432f-8b91-a1c43df22911" sub-query="598a178b-7153-4e1c-978e-1b78b1d95799"/>
   <sub-query id="5224d411-6ed3-432f-8b91-a1c43df22911" sub-query="a1e89392-cd0c-4a41-85f1-44251d7a5e71"/>
   <sub-query id="5224d411-6ed3-432f-8b91-a1c43df22911" sub-query="106c3818-78f2-4983-812a-0e83ca3cde89"/>
-  <sub-query id="5224d411-6ed3-432f-8b91-a1c43df22911" sub-query="fdd4eb5b-7e43-4285-a8a5-71a7b09c182f"/>
-  <sub-query id="5224d411-6ed3-432f-8b91-a1c43df22911" sub-query="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a" is-default="true"/>
   <sub-query id="598a178b-7153-4e1c-978e-1b78b1d95799" sub-query="fdd4eb5b-7e43-4285-a8a5-71a7b09c182f" is-default="true"/>
-  <sub-query id="67a08763-cefe-4193-908c-9dc8d1ca4245" sub-query="732daa1f-dac0-4f40-b714-8190f903d323"/>
   <sub-query id="67a08763-cefe-4193-908c-9dc8d1ca4245" sub-query="fd49f015-3585-4602-a5d1-4e67ef7b6a55" is-default="true"/>
+  <sub-query id="67a08763-cefe-4193-908c-9dc8d1ca4245" sub-query="732daa1f-dac0-4f40-b714-8190f903d323"/>
   <sub-query id="67a08763-cefe-4193-908c-9dc8d1ca4245" sub-query="ae0f22d4-2f02-47f0-8745-8fa60024eda4"/>
-  <sub-query id="6a39e6ca-29e9-4093-ba03-0e9bd9503a1a" sub-query="732daa1f-dac0-4f40-b714-8190f903d323"/>
-  <sub-query id="6a39e6ca-29e9-4093-ba03-0e9bd9503a1a" sub-query="ae568ab0-7c65-48cf-91a9-1ac97bd8221a"/>
-  <sub-query id="6a39e6ca-29e9-4093-ba03-0e9bd9503a1a" sub-query="fd49f015-3585-4602-a5d1-4e67ef7b6a55"/>
-  <sub-query id="6a39e6ca-29e9-4093-ba03-0e9bd9503a1a" sub-query="12592a6f-1b1e-4e22-b17a-56b2e4ff0495"/>
-  <sub-query id="6a39e6ca-29e9-4093-ba03-0e9bd9503a1a" sub-query="ae0f22d4-2f02-47f0-8745-8fa60024eda4" is-default="true"/>
-  <sub-query id="6a39e6ca-29e9-4093-ba03-0e9bd9503a1a" sub-query="b8689ed4-28e4-4e81-a89f-e5c511ba54b5"/>
   <sub-query id="6a39e6ca-29e9-4093-ba03-0e9bd9503a1a" sub-query="5ebba191-8523-4253-b639-872d6da4dc92"/>
+  <sub-query id="6a39e6ca-29e9-4093-ba03-0e9bd9503a1a" sub-query="12592a6f-1b1e-4e22-b17a-56b2e4ff0495"/>
+  <sub-query id="6a39e6ca-29e9-4093-ba03-0e9bd9503a1a" sub-query="ae568ab0-7c65-48cf-91a9-1ac97bd8221a"/>
+  <sub-query id="6a39e6ca-29e9-4093-ba03-0e9bd9503a1a" sub-query="b8689ed4-28e4-4e81-a89f-e5c511ba54b5"/>
+  <sub-query id="6a39e6ca-29e9-4093-ba03-0e9bd9503a1a" sub-query="fd49f015-3585-4602-a5d1-4e67ef7b6a55"/>
+  <sub-query id="6a39e6ca-29e9-4093-ba03-0e9bd9503a1a" sub-query="732daa1f-dac0-4f40-b714-8190f903d323"/>
+  <sub-query id="6a39e6ca-29e9-4093-ba03-0e9bd9503a1a" sub-query="ae0f22d4-2f02-47f0-8745-8fa60024eda4" is-default="true"/>
+  <sub-query id="6d8d0985-0830-4f18-a655-fa7b43703d5f" sub-query="fdd4eb5b-7e43-4285-a8a5-71a7b09c182f"/>
+  <sub-query id="6d8d0985-0830-4f18-a655-fa7b43703d5f" sub-query="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a" is-default="true"/>
   <sub-query id="6d8d0985-0830-4f18-a655-fa7b43703d5f" sub-query="598a178b-7153-4e1c-978e-1b78b1d95799"/>
   <sub-query id="6d8d0985-0830-4f18-a655-fa7b43703d5f" sub-query="a1e89392-cd0c-4a41-85f1-44251d7a5e71"/>
   <sub-query id="6d8d0985-0830-4f18-a655-fa7b43703d5f" sub-query="106c3818-78f2-4983-812a-0e83ca3cde89"/>
-  <sub-query id="6d8d0985-0830-4f18-a655-fa7b43703d5f" sub-query="fdd4eb5b-7e43-4285-a8a5-71a7b09c182f"/>
-  <sub-query id="6d8d0985-0830-4f18-a655-fa7b43703d5f" sub-query="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a" is-default="true"/>
+  <sub-query id="708d1b8a-5274-4a25-b0b4-67f1a7a86690" sub-query="fdd4eb5b-7e43-4285-a8a5-71a7b09c182f"/>
+  <sub-query id="708d1b8a-5274-4a25-b0b4-67f1a7a86690" sub-query="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a"/>
   <sub-query id="708d1b8a-5274-4a25-b0b4-67f1a7a86690" sub-query="598a178b-7153-4e1c-978e-1b78b1d95799" is-default="true"/>
   <sub-query id="708d1b8a-5274-4a25-b0b4-67f1a7a86690" sub-query="a1e89392-cd0c-4a41-85f1-44251d7a5e71"/>
   <sub-query id="708d1b8a-5274-4a25-b0b4-67f1a7a86690" sub-query="106c3818-78f2-4983-812a-0e83ca3cde89"/>
-  <sub-query id="708d1b8a-5274-4a25-b0b4-67f1a7a86690" sub-query="fdd4eb5b-7e43-4285-a8a5-71a7b09c182f"/>
-  <sub-query id="708d1b8a-5274-4a25-b0b4-67f1a7a86690" sub-query="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a"/>
   <sub-query id="71a6fb5b-e5e1-4d25-bdc8-67ab5df1f66e" sub-query="6d8d0985-0830-4f18-a655-fa7b43703d5f" is-default="true"/>
   <sub-query id="71a6fb5b-e5e1-4d25-bdc8-67ab5df1f66e" sub-query="708d1b8a-5274-4a25-b0b4-67f1a7a86690"/>
   <sub-query id="803ca72a-f303-4319-8a35-9494eccc3d26" sub-query="4fce8390-7307-45dc-b779-5701ee7f23a1" is-default="true"/>
   <sub-query id="8de7d969-6633-4a16-acad-786ab9fd2f5f" sub-query="ae2c5715-740e-4850-a404-38bdc8cde6b6"/>
   <sub-query id="8de7d969-6633-4a16-acad-786ab9fd2f5f" sub-query="83d613b3-283e-4100-9a82-e42adf107fe6" is-default="true"/>
   <sub-query id="8f6cfa4a-8821-4166-adb0-94a17a7b8f1b" sub-query="432b76db-c751-4bd8-8b2f-ef5986334514" is-default="true"/>
-  <sub-query id="8f6cfa4a-8821-4166-adb0-94a17a7b8f1b" sub-query="fb317a0c-d9c5-41e2-811b-d6236f63fae1"/>
   <sub-query id="8f6cfa4a-8821-4166-adb0-94a17a7b8f1b" sub-query="e6477143-977b-4c8d-b3d5-3d09c919cb94"/>
+  <sub-query id="8f6cfa4a-8821-4166-adb0-94a17a7b8f1b" sub-query="fb317a0c-d9c5-41e2-811b-d6236f63fae1"/>
   <sub-query id="976506a9-cf85-4907-8d7f-2fd9b5a28d6d" sub-query="6d8d0985-0830-4f18-a655-fa7b43703d5f" is-default="true"/>
   <sub-query id="9d05ac24-20c2-436e-af6b-2bd0bc7dbcfb" sub-query="8f6cfa4a-8821-4166-adb0-94a17a7b8f1b" is-default="true"/>
-  <sub-query id="a1e89392-cd0c-4a41-85f1-44251d7a5e71" sub-query="39872cb4-369c-4dd8-90fd-1847a3f05dc9"/>
   <sub-query id="a1e89392-cd0c-4a41-85f1-44251d7a5e71" sub-query="d84c1559-9336-4255-a15d-51413859a005"/>
-  <sub-query id="a1e89392-cd0c-4a41-85f1-44251d7a5e71" sub-query="732daa1f-dac0-4f40-b714-8190f903d323"/>
-  <sub-query id="a1e89392-cd0c-4a41-85f1-44251d7a5e71" sub-query="fd49f015-3585-4602-a5d1-4e67ef7b6a55"/>
-  <sub-query id="a1e89392-cd0c-4a41-85f1-44251d7a5e71" sub-query="12592a6f-1b1e-4e22-b17a-56b2e4ff0495"/>
-  <sub-query id="a1e89392-cd0c-4a41-85f1-44251d7a5e71" sub-query="ae0f22d4-2f02-47f0-8745-8fa60024eda4" is-default="true"/>
   <sub-query id="a1e89392-cd0c-4a41-85f1-44251d7a5e71" sub-query="5ebba191-8523-4253-b639-872d6da4dc92"/>
+  <sub-query id="a1e89392-cd0c-4a41-85f1-44251d7a5e71" sub-query="12592a6f-1b1e-4e22-b17a-56b2e4ff0495"/>
+  <sub-query id="a1e89392-cd0c-4a41-85f1-44251d7a5e71" sub-query="fd49f015-3585-4602-a5d1-4e67ef7b6a55"/>
+  <sub-query id="a1e89392-cd0c-4a41-85f1-44251d7a5e71" sub-query="39872cb4-369c-4dd8-90fd-1847a3f05dc9"/>
+  <sub-query id="a1e89392-cd0c-4a41-85f1-44251d7a5e71" sub-query="732daa1f-dac0-4f40-b714-8190f903d323"/>
+  <sub-query id="a1e89392-cd0c-4a41-85f1-44251d7a5e71" sub-query="ae0f22d4-2f02-47f0-8745-8fa60024eda4" is-default="true"/>
   <sub-query id="a3dcb49f-7586-42af-808c-9906c4ae1d03" sub-query="1a6082af-29c0-41af-b5bc-995ec6183787"/>
   <sub-query id="a3dcb49f-7586-42af-808c-9906c4ae1d03" sub-query="42031a55-4f1c-42dc-80dc-0fa141a32382" is-default="true"/>
   <sub-query id="ae0f22d4-2f02-47f0-8745-8fa60024eda4" sub-query="6d8d0985-0830-4f18-a655-fa7b43703d5f" is-default="true"/>
   <sub-query id="ae0f22d4-2f02-47f0-8745-8fa60024eda4" sub-query="708d1b8a-5274-4a25-b0b4-67f1a7a86690"/>
-  <sub-query id="ae2c5715-740e-4850-a404-38bdc8cde6b6" sub-query="732daa1f-dac0-4f40-b714-8190f903d323"/>
-  <sub-query id="ae2c5715-740e-4850-a404-38bdc8cde6b6" sub-query="12592a6f-1b1e-4e22-b17a-56b2e4ff0495"/>
   <sub-query id="ae2c5715-740e-4850-a404-38bdc8cde6b6" sub-query="83d613b3-283e-4100-9a82-e42adf107fe6"/>
+  <sub-query id="ae2c5715-740e-4850-a404-38bdc8cde6b6" sub-query="12592a6f-1b1e-4e22-b17a-56b2e4ff0495"/>
   <sub-query id="ae2c5715-740e-4850-a404-38bdc8cde6b6" sub-query="10477928-cf86-4416-9118-34eea8cd7e38" is-default="true"/>
+  <sub-query id="ae2c5715-740e-4850-a404-38bdc8cde6b6" sub-query="732daa1f-dac0-4f40-b714-8190f903d323"/>
   <sub-query id="b4c691be-b394-45c0-8190-6a2e0d9e63d9" sub-query="ae2c5715-740e-4850-a404-38bdc8cde6b6"/>
   <sub-query id="b4c691be-b394-45c0-8190-6a2e0d9e63d9" sub-query="83d613b3-283e-4100-9a82-e42adf107fe6" is-default="true"/>
   <sub-query id="bd72a5e4-42aa-415d-aa72-28d351f629a4" sub-query="6d8d0985-0830-4f18-a655-fa7b43703d5f" is-default="true"/>
   <sub-query id="bd72a5e4-42aa-415d-aa72-28d351f629a4" sub-query="708d1b8a-5274-4a25-b0b4-67f1a7a86690"/>
-  <sub-query id="c744b5b5-15f0-4f72-a344-7e52bcac5071" sub-query="6a39e6ca-29e9-4093-ba03-0e9bd9503a1a" is-default="true"/>
-  <sub-query id="c744b5b5-15f0-4f72-a344-7e52bcac5071" sub-query="2048e73c-e95b-4e4c-84ee-2309372a7eae"/>
   <sub-query id="c744b5b5-15f0-4f72-a344-7e52bcac5071" sub-query="ce90be0d-9d7a-49a6-8334-c6f37112fa4b"/>
   <sub-query id="c744b5b5-15f0-4f72-a344-7e52bcac5071" sub-query="4c9fcdb0-e7dc-46a0-87b6-c00b3caa8a8a"/>
-  <sub-query id="c9453327-b892-4324-a6b8-2dceb32e1901" sub-query="fd49f015-3585-4602-a5d1-4e67ef7b6a55"/>
-  <sub-query id="c9453327-b892-4324-a6b8-2dceb32e1901" sub-query="12592a6f-1b1e-4e22-b17a-56b2e4ff0495"/>
-  <sub-query id="c9453327-b892-4324-a6b8-2dceb32e1901" sub-query="ae0f22d4-2f02-47f0-8745-8fa60024eda4"/>
+  <sub-query id="c744b5b5-15f0-4f72-a344-7e52bcac5071" sub-query="2048e73c-e95b-4e4c-84ee-2309372a7eae"/>
+  <sub-query id="c744b5b5-15f0-4f72-a344-7e52bcac5071" sub-query="6a39e6ca-29e9-4093-ba03-0e9bd9503a1a" is-default="true"/>
   <sub-query id="c9453327-b892-4324-a6b8-2dceb32e1901" sub-query="5ebba191-8523-4253-b639-872d6da4dc92"/>
+  <sub-query id="c9453327-b892-4324-a6b8-2dceb32e1901" sub-query="12592a6f-1b1e-4e22-b17a-56b2e4ff0495"/>
   <sub-query id="c9453327-b892-4324-a6b8-2dceb32e1901" sub-query="10477928-cf86-4416-9118-34eea8cd7e38" is-default="true"/>
-  <sub-query id="cb38a427-c259-4690-abe2-acea9661f737" sub-query="732daa1f-dac0-4f40-b714-8190f903d323"/>
+  <sub-query id="c9453327-b892-4324-a6b8-2dceb32e1901" sub-query="fd49f015-3585-4602-a5d1-4e67ef7b6a55"/>
+  <sub-query id="c9453327-b892-4324-a6b8-2dceb32e1901" sub-query="ae0f22d4-2f02-47f0-8745-8fa60024eda4"/>
+  <sub-query id="cb38a427-c259-4690-abe2-acea9661f737" sub-query="5ebba191-8523-4253-b639-872d6da4dc92"/>
+  <sub-query id="cb38a427-c259-4690-abe2-acea9661f737" sub-query="12592a6f-1b1e-4e22-b17a-56b2e4ff0495"/>
   <sub-query id="cb38a427-c259-4690-abe2-acea9661f737" sub-query="fd49f015-3585-4602-a5d1-4e67ef7b6a55"/>
   <sub-query id="cb38a427-c259-4690-abe2-acea9661f737" sub-query="c9453327-b892-4324-a6b8-2dceb32e1901" is-default="true"/>
-  <sub-query id="cb38a427-c259-4690-abe2-acea9661f737" sub-query="12592a6f-1b1e-4e22-b17a-56b2e4ff0495"/>
+  <sub-query id="cb38a427-c259-4690-abe2-acea9661f737" sub-query="732daa1f-dac0-4f40-b714-8190f903d323"/>
   <sub-query id="cb38a427-c259-4690-abe2-acea9661f737" sub-query="ae0f22d4-2f02-47f0-8745-8fa60024eda4"/>
-  <sub-query id="cb38a427-c259-4690-abe2-acea9661f737" sub-query="5ebba191-8523-4253-b639-872d6da4dc92"/>
   <sub-query id="cdc2d460-b17f-43bc-8cc6-4c26f1637fda" sub-query="f7ed1ced-73a5-4790-bc7c-8ba5fdf114a6" is-default="true"/>
   <sub-query id="cdc2d460-b17f-43bc-8cc6-4c26f1637fda" sub-query="708d1b8a-5274-4a25-b0b4-67f1a7a86690"/>
   <sub-query id="ce90be0d-9d7a-49a6-8334-c6f37112fa4b" sub-query="2048e73c-e95b-4e4c-84ee-2309372a7eae" is-default="true"/>
   <sub-query id="d1176c97-e3b6-483b-a341-6914a6f64860" sub-query="a3dcb49f-7586-42af-808c-9906c4ae1d03" is-default="true"/>
-  <sub-query id="d4d2af9b-ce4d-4457-9e94-01972fcb58d3" sub-query="5224d411-6ed3-432f-8b91-a1c43df22911" is-default="true"/>
   <sub-query id="d4d2af9b-ce4d-4457-9e94-01972fcb58d3" sub-query="708d1b8a-5274-4a25-b0b4-67f1a7a86690"/>
+  <sub-query id="d4d2af9b-ce4d-4457-9e94-01972fcb58d3" sub-query="5224d411-6ed3-432f-8b91-a1c43df22911" is-default="true"/>
+  <sub-query id="f7ed1ced-73a5-4790-bc7c-8ba5fdf114a6" sub-query="fdd4eb5b-7e43-4285-a8a5-71a7b09c182f"/>
+  <sub-query id="f7ed1ced-73a5-4790-bc7c-8ba5fdf114a6" sub-query="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a"/>
   <sub-query id="f7ed1ced-73a5-4790-bc7c-8ba5fdf114a6" sub-query="598a178b-7153-4e1c-978e-1b78b1d95799" is-default="true"/>
   <sub-query id="f7ed1ced-73a5-4790-bc7c-8ba5fdf114a6" sub-query="a1e89392-cd0c-4a41-85f1-44251d7a5e71"/>
   <sub-query id="f7ed1ced-73a5-4790-bc7c-8ba5fdf114a6" sub-query="106c3818-78f2-4983-812a-0e83ca3cde89"/>
-  <sub-query id="f7ed1ced-73a5-4790-bc7c-8ba5fdf114a6" sub-query="fdd4eb5b-7e43-4285-a8a5-71a7b09c182f"/>
-  <sub-query id="f7ed1ced-73a5-4790-bc7c-8ba5fdf114a6" sub-query="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a"/>
   <sub-query id="fb317a0c-d9c5-41e2-811b-d6236f63fae1" sub-query="12592a6f-1b1e-4e22-b17a-56b2e4ff0495"/>
   <sub-query id="fb317a0c-d9c5-41e2-811b-d6236f63fae1" sub-query="10477928-cf86-4416-9118-34eea8cd7e38" is-default="true"/>
-  <sub-query id="fd49f015-3585-4602-a5d1-4e67ef7b6a55" sub-query="6a39e6ca-29e9-4093-ba03-0e9bd9503a1a" is-default="true"/>
-  <sub-query id="fd49f015-3585-4602-a5d1-4e67ef7b6a55" sub-query="2048e73c-e95b-4e4c-84ee-2309372a7eae"/>
   <sub-query id="fd49f015-3585-4602-a5d1-4e67ef7b6a55" sub-query="ce90be0d-9d7a-49a6-8334-c6f37112fa4b"/>
   <sub-query id="fd49f015-3585-4602-a5d1-4e67ef7b6a55" sub-query="4c9fcdb0-e7dc-46a0-87b6-c00b3caa8a8a"/>
+  <sub-query id="fd49f015-3585-4602-a5d1-4e67ef7b6a55" sub-query="2048e73c-e95b-4e4c-84ee-2309372a7eae"/>
+  <sub-query id="fd49f015-3585-4602-a5d1-4e67ef7b6a55" sub-query="6a39e6ca-29e9-4093-ba03-0e9bd9503a1a" is-default="true"/>
   <sub-query id="fdd4eb5b-7e43-4285-a8a5-71a7b09c182f" sub-query="b4c691be-b394-45c0-8190-6a2e0d9e63d9" is-default="true"/>
 </ad-hoc>

@@ -14,7 +14,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -84,442 +83,387 @@ import com.surelogic.flashlight.common.prep.WriteHtmlOverview;
 
 public final class PrepSLJob extends AbstractSLJob {
 
-    private static final int PRE_SCAN_WORK = 100;
-    private static final int DROP_CONSTRAINT_WORK = 5;
-    private static final int PERSIST_RUN_DESCRIPTION_WORK = 5;
-    private static final int SETUP_WORK = 10;
-    private static final int PREP_WORK = 200;
-    private static final int FLUSH_WORK = 10;
-    private static final int EACH_POST_PREP = 50;
-    private static final int ADD_CONSTRAINT_WORK = 100;
+  private static final int PRE_SCAN_WORK = 100;
+  private static final int DROP_CONSTRAINT_WORK = 5;
+  private static final int PERSIST_RUN_DESCRIPTION_WORK = 5;
+  private static final int SETUP_WORK = 10;
+  private static final int PREP_WORK = 200;
+  private static final int FLUSH_WORK = 10;
+  private static final int EACH_POST_PREP = 50;
+  private static final int ADD_CONSTRAINT_WORK = 100;
 
-    private IOneTimePrep[] getOneTimeHandlers(
-            final IntrinsicLockDurationRowInserter i) {
-        return new IOneTimePrep[] { new Trace(),
-                new AfterIntrinsicLockAcquisition(i),
-                new AfterIntrinsicLockWait(i),
-                new AfterIntrinsicLockRelease(i),
-                new BeforeIntrinsicLockAcquisition(i),
-                new BeforeIntrinsicLockWait(i),
-                new BeforeUtilConcurrentLockAquisitionAttempt(i),
-                new AfterUtilConcurrentLockAcquisitionAttempt(i),
-                new AfterUtilConcurrentLockReleaseAttempt(i),
-                new ReadWriteLock(i), new StaticFieldRead(),
-                new StaticFieldWrite(), new FieldDefinition(), new TraceNode(),
-                new StaticCallLocation(), new IndirectAccess(i),
-                new ClassDefinition(), new HappensBefore(),
-                new HappensBeforeObject() };
+  private IOneTimePrep[] getOneTimeHandlers(final IntrinsicLockDurationRowInserter i) {
+    return new IOneTimePrep[] { new Trace(), new AfterIntrinsicLockAcquisition(i), new AfterIntrinsicLockWait(i),
+        new AfterIntrinsicLockRelease(i), new BeforeIntrinsicLockAcquisition(i), new BeforeIntrinsicLockWait(i),
+        new BeforeUtilConcurrentLockAquisitionAttempt(i), new AfterUtilConcurrentLockAcquisitionAttempt(i),
+        new AfterUtilConcurrentLockReleaseAttempt(i), new ReadWriteLock(i), new StaticFieldRead(), new StaticFieldWrite(),
+        new FieldDefinition(), new TraceNode(), new StaticCallLocation(), new IndirectAccess(i), new ClassDefinition(),
+        new HappensBefore(), new HappensBeforeObject() };
+  }
+
+  private IRangePrep[] getRangeHandlers() {
+    return new IRangePrep[] { new FieldRead(), new FieldWrite(), new ObjectDefinition(), new ThreadDefinition(),
+        new FieldAssignment() };
+  }
+
+  private IPostPrep[] getPostPrep() {
+    return new IPostPrep[] { new LockSetAnalysis(), new WriteHtmlOverview(f_runDirectory),
+        new EmptyQueries(f_runDirectory, f_queries) };
+  }
+
+  private final RunDirectory f_runDirectory;
+  private final List<File> f_dataFiles;
+  private final Set<AdHocQuery> f_queries;
+  private final DBConnection f_database;
+  private final int f_windowSize;
+
+  /**
+   * Constructs a job instance that will prep the target run description.
+   * 
+   * @param run
+   * @param windowSize
+   *          the number of receivers to scan at one time.
+   * @param queries
+   *          an optional set of queries that will be run and checked against
+   *          results
+   */
+  public PrepSLJob(final RunDirectory runDirectory, final int windowSize, final Set<AdHocQuery> queries) {
+    super("Preparing " + runDirectory.getDescription().getName());
+    f_runDirectory = runDirectory;
+    f_dataFiles = runDirectory.getRawFileHandles().getOrderedListOfDataFiles();
+    f_database = runDirectory.getDB();
+    f_windowSize = windowSize;
+    f_queries = queries;
+  }
+
+  @Override
+  public SLStatus run(final SLProgressMonitor monitor) {
+    final File runDir = f_runDirectory.getDirectory();
+    final File invalidRun = new File(runDir, InstrumentationConstants.FL_INVALID_RUN);
+    int estEventsInRawFile = 0;
+    for (File f : f_dataFiles) {
+      estEventsInRawFile += RawFileUtility.estimateNumEvents(f);
+    }
+    final IPostPrep[] postPrepWork = getPostPrep();
+
+    monitor.begin(PRE_SCAN_WORK + DROP_CONSTRAINT_WORK + PERSIST_RUN_DESCRIPTION_WORK + SETUP_WORK + PREP_WORK * 2 + FLUSH_WORK
+        + EACH_POST_PREP * postPrepWork.length + ADD_CONSTRAINT_WORK);
+
+    final SLStatus failed = SLLicenseUtility.validateSLJob(SLLicenseProduct.FLASHLIGHT, monitor);
+    if (failed != null) {
+      return failed;
     }
 
-    private IRangePrep[] getRangeHandlers() {
-        return new IRangePrep[] { new FieldRead(), new FieldWrite(),
-                new ObjectDefinition(), new ThreadDefinition(),
-                new FieldAssignment() };
+    File firstFile = f_dataFiles.get(0);
+
+    final RawDataFilePrefix rawFilePrefix = RawFileUtility.getPrefixFor(firstFile);
+    final RunDescription runDescription = RawFileUtility.getRunDescriptionFor(rawFilePrefix, f_runDirectory.getDescription()
+        .getDurationNanos());
+    if (runDescription == null) {
+      throw new IllegalStateException(rawFilePrefix.getFile().toString() + " does not describe a valid run.");
+
+    }
+    final SLProgressMonitor preScanInfoMonitor = new SubSLProgressMonitor(monitor, "Collecting raw file info", PRE_SCAN_WORK);
+
+    final ScanRawFileInfoPreScan preScanInfo = new ScanRawFileInfoPreScan(preScanInfoMonitor);
+
+    try {
+      final SAXParser infoSaxParser = OutputType.getParser(firstFile);
+      for (Iterator<File> iter = f_dataFiles.iterator(); iter.hasNext();) {
+        final InputStream infoStream = OutputType.getInputStreamFor(iter.next());
+        try {
+          infoSaxParser.parse(infoStream, preScanInfo);
+          SLLogger.getLoggerFor(PrepSLJob.class).fine(preScanInfo.toString());
+        } catch (EOFException e) {
+          SLLogger
+              .getLoggerFor(PrepSLJob.class)
+              .log(
+                  Level.INFO,
+                  "Part of this flashlight run is unreadable.  This may be because the process was killed before Flashlight could clean up.",
+                  e);
+          iter.remove();
+        } catch (SAXParseException e) {
+          SLLogger
+              .getLoggerFor(PrepSLJob.class)
+              .log(
+                  Level.INFO,
+                  "Part of this flashlight run is unreadable.  This may be because the process was killed before Flashlight could clean up.",
+                  e);
+          iter.remove();
+        } finally {
+          infoStream.close();
+        }
+      }
+      if (f_dataFiles.isEmpty()) {
+        // We are going to mark this file as invalid
+        String msg = I18N.err(235);
+        if (!invalidRun.exists()) {
+          FileWriter o = new FileWriter(invalidRun);
+          try {
+            o.write(msg);
+          } finally {
+            o.close();
+          }
+        }
+        return SLStatus.createErrorStatus(I18N.err(235));
+
+      }
+      for (File dataFile : f_dataFiles) {
+        final InputStream infoStream = OutputType.getInputStreamFor(dataFile);
+        try {
+          infoSaxParser.parse(infoStream, preScanInfo);
+          SLLogger.getLoggerFor(PrepSLJob.class).fine(preScanInfo.toString());
+        } finally {
+          infoStream.close();
+        }
+      }
+
+      if (monitor.isCanceled()) {
+        return SLStatus.CANCEL_STATUS;
+      }
+      /*
+       * Scan the file to collect the set of fields that were observed to be
+       * single-threaded. This information allows us to avoid inserting
+       * unnecessary data into the database.
+       */
+
+      final SLProgressMonitor preScanMonitor = new SubSLProgressMonitor(monitor, "Pre-scanning the raw file", PRE_SCAN_WORK);
+      final ScanRawFilePreScan scanResults = new ScanRawFilePreScan(preScanMonitor);
+      final SAXParser saxParser = OutputType.getParser(firstFile);
+      for (File dataFile : f_dataFiles) {
+        final InputStream stream = OutputType.getInputStreamFor(dataFile);
+        preScanMonitor.begin(estEventsInRawFile);
+        saxParser.parse(stream, scanResults);
+        preScanMonitor.done();
+        stream.close();
+      }
+
+      if (monitor.isCanceled()) {
+        return SLStatus.CANCEL_STATUS;
+      }
+
+      final int eventsInRawFile = SLUtility.safeLongToInt(scanResults.getElementCount());
+      f_database.destroy();
+      f_database.withTransaction(new NullDBTransaction() {
+
+        @Override
+        public void doPerform(final Connection conn) throws Exception {
+          conn.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
+          /*
+           * Persist the run and obtain its database identifier, start time
+           * stamp, and the start time in nanoseconds.
+           */
+          final SLProgressMonitor persistRunDescriptionMonitor = new SubSLProgressMonitor(monitor,
+              "Persist the new run description", PERSIST_RUN_DESCRIPTION_WORK);
+          persistRunDescriptionMonitor.begin();
+          final Timestamp start = new Timestamp(rawFilePrefix.getWallClockTime().getTime());
+          final long startNS = rawFilePrefix.getNanoTime();
+          saveRunDescription(conn, runDescription);
+          persistRunDescriptionMonitor.done();
+
+          if (monitor.isCanceled()) {
+            throw new CanceledException();
+          }
+
+          /*
+           * Do the second pass through the file. This time we populate the
+           * database.
+           */
+          final IntrinsicLockDurationRowInserter i = new IntrinsicLockDurationRowInserter(conn);
+          final IOneTimePrep[] f_parseElements = getOneTimeHandlers(i);
+          final SLProgressMonitor setupMonitor = new SubSLProgressMonitor(monitor, "Setting up event handlers", SETUP_WORK);
+          setupMonitor.begin(f_parseElements.length);
+          for (final IOneTimePrep element : f_parseElements) {
+            element.setup(conn, start, startNS, scanResults);
+            setupMonitor.worked(1);
+          }
+          setupMonitor.done();
+
+          if (monitor.isCanceled()) {
+            throw new CanceledException();
+          }
+
+          final SLProgressMonitor prepMonitor = new SubSLProgressMonitor(monitor, "Preparing the raw file", PREP_WORK);
+          prepMonitor.begin(eventsInRawFile);
+          final ScanRawFilePrepScan parseHandler = new ScanRawFilePrepScan(conn, prepMonitor, f_parseElements);
+          for (File dataFile : f_dataFiles) {
+            final InputStream dataFileStream = OutputType.getInputStreamFor(dataFile);
+            try {
+              saxParser.parse(dataFileStream, parseHandler);
+            } finally {
+              dataFileStream.close();
+            }
+          }
+          prepMonitor.done();
+          if (monitor.isCanceled()) {
+            throw new CanceledException();
+          }
+
+          final SLProgressMonitor flushMonitor = new SubSLProgressMonitor(monitor, "Flushing prepared data into the database",
+              FLUSH_WORK);
+          flushMonitor.begin(f_parseElements.length);
+          for (final IPrep element : f_parseElements) {
+            element.flush(scanResults.getEndNanoTime());
+            flushMonitor.worked(1);
+          }
+          flushMonitor.done();
+
+          if (monitor.isCanceled()) {
+            throw new CanceledException();
+          }
+          final SLProgressMonitor rprepMonitor = new SubSLProgressMonitor(monitor, "Preparing the raw file", PREP_WORK);
+          final int numWindows = (int) (preScanInfo.getMaxReceiverId() / f_windowSize)
+              + (preScanInfo.getMaxReceiverId() % f_windowSize > 0 ? 1 : 0);
+          rprepMonitor.begin(eventsInRawFile * 2 * numWindows);
+          final TLongHashSet synthetics = scanResults.getSynthetics();
+          final IRangePrep[] rpElements = getRangeHandlers();
+          for (int j = 0; j < numWindows; j++) {
+            final long begin = f_windowSize * j;
+            final long end = f_windowSize * (j + 1) - 1;
+            final ScanRawFileFieldsPreScan preScan = new ScanRawFileFieldsPreScan(rprepMonitor, synthetics, begin, end);
+
+            for (File dataFile : f_dataFiles) {
+              final InputStream infoStream = OutputType.getInputStreamFor(dataFile);
+              try {
+                saxParser.parse(infoStream, preScan);
+              } finally {
+                infoStream.close();
+              }
+            }
+            for (final IRangePrep prep : rpElements) {
+              prep.setup(conn, start, startNS, preScan, begin, end);
+            }
+            for (File dataFile : f_dataFiles) {
+              final InputStream rangeStream = OutputType.getInputStreamFor(dataFile);
+              try {
+                final ScanRawFilePrepScan rangeHandler = new ScanRawFilePrepScan(conn, rprepMonitor, rpElements);
+                saxParser.parse(rangeStream, rangeHandler);
+              } finally {
+                rangeStream.close();
+              }
+            }
+            for (final IPrep prep : rpElements) {
+              prep.flush(scanResults.getEndNanoTime());
+            }
+          }
+          if (SLLogger.getLogger().isLoggable(Level.FINE)) {
+            for (final IPrep element : f_parseElements) {
+              element.printStats();
+            }
+          }
+        }
+      });
+      final SLProgressMonitor constraintMonitor = new SubSLProgressMonitor(monitor, "Generating indexes", ADD_CONSTRAINT_WORK);
+      final List<NullDBTransaction> constraints = addConstraints(constraintMonitor);
+      constraintMonitor.begin(constraints.size());
+      for (final NullDBTransaction constraint : constraints) {
+        f_database.withTransaction(constraint);
+      }
+      constraintMonitor.done();
+      if (monitor.isCanceled()) {
+        f_database.destroy();
+        return SLStatus.CANCEL_STATUS;
+      }
+      f_database.withTransaction(new NullDBTransaction() {
+
+        @Override
+        public void doPerform(final Connection conn) throws Exception {
+          for (final IPostPrep postPrep : postPrepWork) {
+            final SLProgressMonitor postPrepMonitor = new SubSLProgressMonitor(monitor, postPrep.getDescription(), EACH_POST_PREP);
+            postPrepMonitor.begin();
+            postPrep.doPostPrep(conn, monitor);
+            postPrepMonitor.done();
+          }
+
+        }
+      });
+      if (monitor.isCanceled()) {
+        f_database.destroy();
+        return SLStatus.CANCEL_STATUS;
+      }
+      return SLStatus.OK_STATUS;
+    } catch (TransactionException e) {
+      f_database.destroy();
+      if (e.getCause() instanceof CanceledException) {
+        return SLStatus.CANCEL_STATUS;
+      } else {
+        return SLStatus.createErrorStatus(116, runDir.getName(), e);
+      }
+    } catch (final Exception e) {
+      /*
+       * We check for a cancel here because a SAXException is thrown out of the
+       * parser when the user presses cancel.
+       */
+      if (monitor.isCanceled()) {
+        return SLStatus.CANCEL_STATUS;
+      }
+      final int code = 116;
+      final String msg = I18N.err(code, runDir.getName());
+      return SLStatus.createErrorStatus(code, msg, e);
+    } finally {
+      monitor.done();
     }
 
-    private IPostPrep[] getPostPrep() {
-        return new IPostPrep[] { new LockSetAnalysis(),
-                new WriteHtmlOverview(f_runDirectory),
-                new EmptyQueries(f_runDirectory, f_queries) };
-    }
+  }
 
-    private final RunDirectory f_runDirectory;
-    private final List<File> f_dataFiles;
-    private final Set<AdHocQuery> f_queries;
-    private final DBConnection f_database;
-    private final int f_windowSize;
+  private void saveRunDescription(final Connection c, final RunDescription run) throws SQLException {
+    final PreparedStatement s = c.prepareStatement(QB.get("RunDAO.insert"));
+    try {
+      int i = 1;
+      s.setString(i++, run.getName());
+      s.setString(i++, run.getRawDataVersion());
+      s.setString(i++, run.getHostname());
+      s.setString(i++, run.getUserName());
+      s.setString(i++, run.getJavaVersion());
+      s.setString(i++, run.getJavaVendor());
+      s.setString(i++, run.getOSName());
+      s.setString(i++, run.getOSArch());
+      s.setString(i++, run.getOSVersion());
+      s.setInt(i++, run.getMaxMemoryMb());
+      s.setInt(i++, run.getProcessors());
+      s.setTimestamp(i++, run.getStartTimeOfRun());
+      s.setLong(i++, run.getDurationNanos());
+      s.executeUpdate();
+    } finally {
+      s.close();
+    }
+  }
+
+  private List<NullDBTransaction> addConstraints(final SLProgressMonitor monitor) {
+    final URL script = f_database.getSchemaLoader().getSchemaResource("add_constraints.sql");
+    final List<NullDBTransaction> transactions = new ArrayList<NullDBTransaction>();
+    try {
+      for (final StringBuilder statement : SchemaUtility.getSQLStatements(script)) {
+        transactions.add(new NullDBTransaction() {
+          @Override
+          public void doPerform(final Connection conn) throws Exception {
+            try {
+              SLLogger.getLoggerFor(PrepSLJob.class).fine(statement.toString());
+              final Statement addSt = conn.createStatement();
+              try {
+                addSt.execute(statement.toString());
+              } finally {
+                addSt.close();
+              }
+            } catch (final SQLException e) {
+              throw new IllegalStateException(I18N.err(12, statement.toString(), script), e);
+            }
+            monitor.worked(1);
+          }
+        });
+      }
+    } catch (final IOException e) {
+      throw new IllegalStateException(e);
+    }
+    return transactions;
+  }
+
+  private static class CanceledException extends RuntimeException {
 
     /**
-     * Constructs a job instance that will prep the target run description.
-     * 
-     * @param run
-     * @param windowSize
-     *            the number of receivers to scan at one time.
-     * @param queries
-     *            an optional set of queries that will be run and checked
-     *            against results
-     */
-    public PrepSLJob(final RunDirectory runDirectory, final int windowSize,
-            final Set<AdHocQuery> queries) {
-        super("Preparing " + runDirectory.getDescription().getName());
-        f_runDirectory = runDirectory;
-        f_dataFiles = new ArrayList<File>();
-        for (File f : runDirectory.getRawFileHandles().getDataFiles()) {
-            f_dataFiles.add(f);
-        }
-        Collections.sort(f_dataFiles);
-        f_database = runDirectory.getDB();
-        f_windowSize = windowSize;
-        f_queries = queries;
-    }
-
-    @Override
-    public SLStatus run(final SLProgressMonitor monitor) {
-        final File runDir = f_runDirectory.getDirectory();
-        final File invalidRun = new File(runDir,
-                InstrumentationConstants.FL_INVALID_RUN);
-        int estEventsInRawFile = 0;
-        for (File f : f_dataFiles) {
-            estEventsInRawFile += RawFileUtility.estimateNumEvents(f);
-        }
-        final IPostPrep[] postPrepWork = getPostPrep();
-
-        monitor.begin(PRE_SCAN_WORK + DROP_CONSTRAINT_WORK
-                + PERSIST_RUN_DESCRIPTION_WORK + SETUP_WORK + PREP_WORK * 2
-                + FLUSH_WORK + EACH_POST_PREP * postPrepWork.length
-                + ADD_CONSTRAINT_WORK);
-
-        final SLStatus failed = SLLicenseUtility.validateSLJob(
-                SLLicenseProduct.FLASHLIGHT, monitor);
-        if (failed != null) {
-            return failed;
-        }
-
-        File firstFile = f_dataFiles.get(0);
-
-        final RawDataFilePrefix rawFilePrefix = RawFileUtility
-                .getPrefixFor(firstFile);
-        final RunDescription runDescription = RawFileUtility
-                .getRunDescriptionFor(rawFilePrefix);
-        if (runDescription == null) {
-            throw new IllegalStateException(rawFilePrefix.getFile().toString()
-                    + " does not describe a valid run.");
-
-        }
-        final SLProgressMonitor preScanInfoMonitor = new SubSLProgressMonitor(
-                monitor, "Collecting raw file info", PRE_SCAN_WORK);
-
-        final ScanRawFileInfoPreScan preScanInfo = new ScanRawFileInfoPreScan(
-                preScanInfoMonitor);
-
-        try {
-            final SAXParser infoSaxParser = OutputType.getParser(firstFile);
-            for (Iterator<File> iter = f_dataFiles.iterator(); iter.hasNext();) {
-                final InputStream infoStream = OutputType
-                        .getInputStreamFor(iter.next());
-                try {
-                    infoSaxParser.parse(infoStream, preScanInfo);
-                    SLLogger.getLoggerFor(PrepSLJob.class).fine(
-                            preScanInfo.toString());
-                } catch (EOFException e) {
-                    SLLogger.getLoggerFor(PrepSLJob.class)
-                            .log(Level.INFO,
-                                    "Part of this flashlight run is unreadable.  This may be because the process was killed before Flashlight could clean up.",
-                                    e);
-                    iter.remove();
-                } catch (SAXParseException e) {
-                    SLLogger.getLoggerFor(PrepSLJob.class)
-                            .log(Level.INFO,
-                                    "Part of this flashlight run is unreadable.  This may be because the process was killed before Flashlight could clean up.",
-                                    e);
-                    iter.remove();
-                } finally {
-                    infoStream.close();
-                }
-            }
-            if (f_dataFiles.isEmpty()) {
-                // We are going to mark this file as invalid
-                String msg = I18N.err(235);
-                if (!invalidRun.exists()) {
-                    FileWriter o = new FileWriter(invalidRun);
-                    try {
-                        o.write(msg);
-                    } finally {
-                        o.close();
-                    }
-                }
-                return SLStatus.createErrorStatus(I18N.err(235));
-
-            }
-            for (File dataFile : f_dataFiles) {
-                final InputStream infoStream = OutputType
-                        .getInputStreamFor(dataFile);
-                try {
-                    infoSaxParser.parse(infoStream, preScanInfo);
-                    SLLogger.getLoggerFor(PrepSLJob.class).fine(
-                            preScanInfo.toString());
-                } finally {
-                    infoStream.close();
-                }
-            }
-
-            if (monitor.isCanceled()) {
-                return SLStatus.CANCEL_STATUS;
-            }
-            /*
-             * Scan the file to collect the set of fields that were observed to
-             * be single-threaded. This information allows us to avoid inserting
-             * unnecessary data into the database.
-             */
-
-            final SLProgressMonitor preScanMonitor = new SubSLProgressMonitor(
-                    monitor, "Pre-scanning the raw file", PRE_SCAN_WORK);
-            final ScanRawFilePreScan scanResults = new ScanRawFilePreScan(
-                    preScanMonitor);
-            final SAXParser saxParser = OutputType.getParser(firstFile);
-            for (File dataFile : f_dataFiles) {
-                final InputStream stream = OutputType
-                        .getInputStreamFor(dataFile);
-                preScanMonitor.begin(estEventsInRawFile);
-                saxParser.parse(stream, scanResults);
-                preScanMonitor.done();
-                stream.close();
-            }
-
-            if (monitor.isCanceled()) {
-                return SLStatus.CANCEL_STATUS;
-            }
-
-            final int eventsInRawFile = SLUtility.safeLongToInt(scanResults
-                    .getElementCount());
-            f_database.destroy();
-            f_database.withTransaction(new NullDBTransaction() {
-
-                @Override
-                public void doPerform(final Connection conn) throws Exception {
-                    conn.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
-                    /*
-                     * Persist the run and obtain its database identifier, start
-                     * time stamp, and the start time in nanoseconds.
-                     */
-                    final SLProgressMonitor persistRunDescriptionMonitor = new SubSLProgressMonitor(
-                            monitor, "Persist the new run description",
-                            PERSIST_RUN_DESCRIPTION_WORK);
-                    persistRunDescriptionMonitor.begin();
-                    final Timestamp start = new Timestamp(rawFilePrefix
-                            .getWallClockTime().getTime());
-                    final long startNS = rawFilePrefix.getNanoTime();
-                    saveRunDescription(conn, runDescription);
-                    persistRunDescriptionMonitor.done();
-
-                    if (monitor.isCanceled()) {
-                        throw new CanceledException();
-                    }
-
-                    /*
-                     * Do the second pass through the file. This time we
-                     * populate the database.
-                     */
-                    final IntrinsicLockDurationRowInserter i = new IntrinsicLockDurationRowInserter(
-                            conn);
-                    final IOneTimePrep[] f_parseElements = getOneTimeHandlers(i);
-                    final SLProgressMonitor setupMonitor = new SubSLProgressMonitor(
-                            monitor, "Setting up event handlers", SETUP_WORK);
-                    setupMonitor.begin(f_parseElements.length);
-                    for (final IOneTimePrep element : f_parseElements) {
-                        element.setup(conn, start, startNS, scanResults);
-                        setupMonitor.worked(1);
-                    }
-                    setupMonitor.done();
-
-                    if (monitor.isCanceled()) {
-                        throw new CanceledException();
-                    }
-
-                    final SLProgressMonitor prepMonitor = new SubSLProgressMonitor(
-                            monitor, "Preparing the raw file", PREP_WORK);
-                    prepMonitor.begin(eventsInRawFile);
-                    final ScanRawFilePrepScan parseHandler = new ScanRawFilePrepScan(
-                            conn, prepMonitor, f_parseElements);
-                    for (File dataFile : f_dataFiles) {
-                        final InputStream dataFileStream = OutputType
-                                .getInputStreamFor(dataFile);
-                        try {
-                            saxParser.parse(dataFileStream, parseHandler);
-                        } finally {
-                            dataFileStream.close();
-                        }
-                    }
-                    prepMonitor.done();
-                    if (monitor.isCanceled()) {
-                        throw new CanceledException();
-                    }
-
-                    final SLProgressMonitor flushMonitor = new SubSLProgressMonitor(
-                            monitor,
-                            "Flushing prepared data into the database",
-                            FLUSH_WORK);
-                    flushMonitor.begin(f_parseElements.length);
-                    for (final IPrep element : f_parseElements) {
-                        element.flush(scanResults.getEndNanoTime());
-                        flushMonitor.worked(1);
-                    }
-                    flushMonitor.done();
-
-                    if (monitor.isCanceled()) {
-                        throw new CanceledException();
-                    }
-                    final SLProgressMonitor rprepMonitor = new SubSLProgressMonitor(
-                            monitor, "Preparing the raw file", PREP_WORK);
-                    final int numWindows = (int) (preScanInfo
-                            .getMaxReceiverId() / f_windowSize)
-                            + (preScanInfo.getMaxReceiverId() % f_windowSize > 0 ? 1
-                                    : 0);
-                    rprepMonitor.begin(eventsInRawFile * 2 * numWindows);
-                    final TLongHashSet synthetics = scanResults.getSynthetics();
-                    final IRangePrep[] rpElements = getRangeHandlers();
-                    for (int j = 0; j < numWindows; j++) {
-                        final long begin = f_windowSize * j;
-                        final long end = f_windowSize * (j + 1) - 1;
-                        final ScanRawFileFieldsPreScan preScan = new ScanRawFileFieldsPreScan(
-                                rprepMonitor, synthetics, begin, end);
-
-                        for (File dataFile : f_dataFiles) {
-                            final InputStream infoStream = OutputType
-                                    .getInputStreamFor(dataFile);
-                            try {
-                                saxParser.parse(infoStream, preScan);
-                            } finally {
-                                infoStream.close();
-                            }
-                        }
-                        for (final IRangePrep prep : rpElements) {
-                            prep.setup(conn, start, startNS, preScan, begin,
-                                    end);
-                        }
-                        for (File dataFile : f_dataFiles) {
-                            final InputStream rangeStream = OutputType
-                                    .getInputStreamFor(dataFile);
-                            try {
-                                final ScanRawFilePrepScan rangeHandler = new ScanRawFilePrepScan(
-                                        conn, rprepMonitor, rpElements);
-                                saxParser.parse(rangeStream, rangeHandler);
-                            } finally {
-                                rangeStream.close();
-                            }
-                        }
-                        for (final IPrep prep : rpElements) {
-                            prep.flush(scanResults.getEndNanoTime());
-                        }
-                    }
-                    if (SLLogger.getLogger().isLoggable(Level.FINE)) {
-                        for (final IPrep element : f_parseElements) {
-                            element.printStats();
-                        }
-                    }
-                }
-            });
-            final SLProgressMonitor constraintMonitor = new SubSLProgressMonitor(
-                    monitor, "Generating indexes", ADD_CONSTRAINT_WORK);
-            final List<NullDBTransaction> constraints = addConstraints(constraintMonitor);
-            constraintMonitor.begin(constraints.size());
-            for (final NullDBTransaction constraint : constraints) {
-                f_database.withTransaction(constraint);
-            }
-            constraintMonitor.done();
-            if (monitor.isCanceled()) {
-                f_database.destroy();
-                return SLStatus.CANCEL_STATUS;
-            }
-            f_database.withTransaction(new NullDBTransaction() {
-
-                @Override
-                public void doPerform(final Connection conn) throws Exception {
-                    for (final IPostPrep postPrep : postPrepWork) {
-                        final SLProgressMonitor postPrepMonitor = new SubSLProgressMonitor(
-                                monitor, postPrep.getDescription(),
-                                EACH_POST_PREP);
-                        postPrepMonitor.begin();
-                        postPrep.doPostPrep(conn, monitor);
-                        postPrepMonitor.done();
-                    }
-
-                }
-            });
-            if (monitor.isCanceled()) {
-                f_database.destroy();
-                return SLStatus.CANCEL_STATUS;
-            }
-            return SLStatus.OK_STATUS;
-        } catch (TransactionException e) {
-            f_database.destroy();
-            if (e.getCause() instanceof CanceledException) {
-                return SLStatus.CANCEL_STATUS;
-            } else {
-                return SLStatus.createErrorStatus(116, runDir.getName(), e);
-            }
-        } catch (final Exception e) {
-            /*
-             * We check for a cancel here because a SAXException is thrown out
-             * of the parser when the user presses cancel.
-             */
-            if (monitor.isCanceled()) {
-                return SLStatus.CANCEL_STATUS;
-            }
-            final int code = 116;
-            final String msg = I18N.err(code, runDir.getName());
-            return SLStatus.createErrorStatus(code, msg, e);
-        } finally {
-            monitor.done();
-        }
-
-    }
-
-    private void saveRunDescription(final Connection c, final RunDescription run)
-            throws SQLException {
-        final PreparedStatement s = c.prepareStatement(QB.get("RunDAO.insert"));
-        try {
-            int i = 1;
-            s.setString(i++, run.getName());
-            s.setString(i++, run.getRawDataVersion());
-            s.setString(i++, run.getHostname());
-            s.setString(i++, run.getUserName());
-            s.setString(i++, run.getJavaVersion());
-            s.setString(i++, run.getJavaVendor());
-            s.setString(i++, run.getOSName());
-            s.setString(i++, run.getOSArch());
-            s.setString(i++, run.getOSVersion());
-            s.setInt(i++, run.getMaxMemoryMb());
-            s.setInt(i++, run.getProcessors());
-            s.setTimestamp(i++, run.getStartTimeOfRun());
-            s.setLong(i++, run.getDurationNanos());
-            s.executeUpdate();
-        } finally {
-            s.close();
-        }
-    }
-
-    private List<NullDBTransaction> addConstraints(
-            final SLProgressMonitor monitor) {
-        final URL script = f_database.getSchemaLoader().getSchemaResource(
-                "add_constraints.sql");
-        final List<NullDBTransaction> transactions = new ArrayList<NullDBTransaction>();
-        try {
-            for (final StringBuilder statement : SchemaUtility
-                    .getSQLStatements(script)) {
-                transactions.add(new NullDBTransaction() {
-                    @Override
-                    public void doPerform(final Connection conn)
-                            throws Exception {
-                        try {
-                            SLLogger.getLoggerFor(PrepSLJob.class).fine(
-                                    statement.toString());
-                            final Statement addSt = conn.createStatement();
-                            try {
-                                addSt.execute(statement.toString());
-                            } finally {
-                                addSt.close();
-                            }
-                        } catch (final SQLException e) {
-                            throw new IllegalStateException(I18N.err(12,
-                                    statement.toString(), script), e);
-                        }
-                        monitor.worked(1);
-                    }
-                });
-            }
-        } catch (final IOException e) {
-            throw new IllegalStateException(e);
-        }
-        return transactions;
-    }
-
-    private static class CanceledException extends RuntimeException {
-
-        /**
 		 * 
 		 */
-        private static final long serialVersionUID = -7858543475905909600L;
+    private static final long serialVersionUID = -7858543475905909600L;
 
-    }
+  }
 }

@@ -2,20 +2,24 @@ package com.surelogic.flashlight.common.model;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileReader;
 import java.io.FilenameFilter;
-import java.io.IOException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 import com.surelogic.NonNull;
 import com.surelogic.Nullable;
 import com.surelogic.Utility;
-import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic._flashlight.common.OutputType;
+import com.surelogic.common.FileUtility;
+import com.surelogic.common.Pair;
 import com.surelogic.common.SLUtility;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.logging.SLLogger;
@@ -26,6 +30,94 @@ import com.surelogic.common.logging.SLLogger;
  */
 @Utility
 public final class RawFileUtility {
+
+  /**
+   * A heuristic used to check that we aren't still running the instrumented
+   * program and collecting data into the passed directory. We do this by
+   * checking if anything has been recently modified in the run directory.
+   * 
+   * @param directory
+   *          a Flashlight run directory.
+   * @return {@code true} if it appears the instrumented program is no longer
+   *         collecting data into the passed directory, {@code true} if it still
+   *         seems to be outputting data.
+   */
+  public static boolean doneCollectingDataInto(final File directory) {
+    final boolean stillCollectingData = FileUtility.anythingModifiedInTheLast(directory, 3, TimeUnit.SECONDS);
+    return !stillCollectingData;
+  }
+
+  /**
+   * Finds the last ".complete" snapshot file in the passed directory and
+   * returns it and its number as a pair.
+   * 
+   * @param directory
+   *          a directory
+   * @return the last ".complete" snapshot file in the passed directory and
+   *         returns it and its number as a pair or {@code null} if no such file
+   *         could be found.
+   */
+  @Nullable
+  public static Pair<File, Integer> getLatestCheckpointCompleteFileAndItsNumberWithin(final File directory) {
+    File lastCheckpoint = null;
+    int lastCheckpointNum = -1;
+    for (File complete : OutputType.COMPLETE.getFilesWithin(directory)) {
+      final String name = complete.getName();
+      if (name.length() > 15) { // ex: ...000015.complete
+        String numStr = name.substring(name.length() - 15, name.length() - 9);
+        int thisCheckpointNum = -1;
+        try {
+          thisCheckpointNum = Integer.parseInt(numStr);
+        } catch (NumberFormatException ignore) {
+          SLLogger.getLogger().log(Level.WARNING, "Unable to parse '" + numStr + "' from checkpoint .complete file: " + name,
+              ignore);
+        }
+        if (thisCheckpointNum > lastCheckpointNum) {
+          lastCheckpoint = complete;
+          lastCheckpointNum = thisCheckpointNum;
+        }
+      }
+    }
+    if (lastCheckpoint != null)
+      return new Pair<File, Integer>(lastCheckpoint, lastCheckpointNum);
+    else
+      return null;
+  }
+
+  /**
+   * Reads the single line within a <tt>.complete</tt> file which should look
+   * something like
+   * 
+   * <pre>
+   * 47385738473 ns
+   * </pre>
+   * 
+   * and represents the run duration up to that snapshot in nanoseconds.
+   * <p>
+   * If something goes wrong a log message is generated and 0 is returned.
+   * 
+   * @param checkpointComplete
+   *          the file to read
+   * @return the duration in the passed file, or 0 if something goes wrong.
+   */
+  public static long readDurationInNanosFrom(final File checkpointComplete) {
+    long duration = 0;
+    try {
+      final BufferedReader r = new BufferedReader(new FileReader(checkpointComplete));
+      try {
+        String line = r.readLine();
+        final int unitsIndex = line.indexOf("ns");
+        if (unitsIndex != -1)
+          line = line.substring(unitsIndex);
+        duration = Long.parseLong(line);
+      } finally {
+        r.close();
+      }
+    } catch (Exception e) {
+      SLLogger.getLogger().log(Level.WARNING, I18N.err(226, checkpointComplete.getAbsolutePath()), e);
+    }
+    return duration;
+  }
 
   /**
    * Checks if the passed raw file is compressed or not. It does this by
@@ -88,69 +180,28 @@ public final class RawFileUtility {
     return prefixInfo;
   }
 
-  public static RawDataFilePrefix[] getPrefixesFor(final File[] dataFiles) {
-    if (dataFiles == null) {
-      throw new IllegalArgumentException(I18N.err(44, "dataFiles"));
-    }
-    if (dataFiles.length < 1) {
-      throw new IllegalArgumentException(I18N.err(92, "dataFiles"));
-    }
-
-    final RawDataFilePrefix[] rv = new RawDataFilePrefix[dataFiles.length];
-    for (int i = 0; i < dataFiles.length; i++) {
-      final File dataFile = dataFiles[i];
-      if (dataFile == null) {
-        throw new IllegalArgumentException(I18N.err(44, "dataFiles[" + i + "]"));
-      }
-      rv[i] = getPrefixFor(dataFile);
-    }
-    return rv;
-  }
-
-  // TODO SHOULD THIS METHOD (TAKING ONE PREFIXINFO) SHOULD BE GONE WITH NEW
-  // MULTI FILE SCHEME
-
   /**
    * Obtains the corresponding run description for the passed raw file prefix or
    * throws an exception.
    * 
    * @param prefixInfo
    *          a well-formed raw data file prefix.
+   * @param durationNS
+   *          run duration in Nanoseconds.
    * @return a run description based upon the passed prefix info.
    * @throws Exception
    *           if something goes wrong.
    */
   @NonNull
-  public static RunDescription getRunDescriptionFor(final RawDataFilePrefix prefixInfo) {
-    if (prefixInfo == null) {
+  public static RunDescription getRunDescriptionFor(final RawDataFilePrefix prefixInfo, final long durationNanos) {
+    if (prefixInfo == null)
       throw new IllegalArgumentException(I18N.err(44, "prefixInfo"));
-    }
 
     if (prefixInfo.isWellFormed()) {
-      final File runComplete = new File(prefixInfo.getFile().getParentFile(), InstrumentationConstants.FL_COMPLETE_RUN_LOC);
-      final boolean runCompleted = runComplete.exists();
-      long duration = 0;
-      if (runCompleted) {
-        try {
-          BufferedReader r = new BufferedReader(new FileReader(runComplete));
-          try {
-            duration = Long.parseLong(r.readLine());
-          } finally {
-            r.close();
-          }
-        } catch (NumberFormatException ignore) {
-          /*
-           * We are okay with this for now, since it can happen on old runs that
-           * are otherwise valid.
-           */
-        } catch (IOException e) {
-          SLLogger.getLogger().log(Level.WARNING, I18N.err(226, runComplete.getAbsolutePath()), e);
-        }
-      }
       return new RunDescription(prefixInfo.getName(), prefixInfo.getRawDataVersion(), prefixInfo.getHostname(),
           prefixInfo.getUserName(), prefixInfo.getJavaVersion(), prefixInfo.getJavaVendor(), prefixInfo.getOSName(),
           prefixInfo.getOSArch(), prefixInfo.getOSVersion(), prefixInfo.getMaxMemoryMb(), prefixInfo.getProcessors(),
-          new Timestamp(prefixInfo.getWallClockTime().getTime()), duration, prefixInfo.isAndroid(), runComplete.exists());
+          new Timestamp(prefixInfo.getWallClockTime().getTime()), durationNanos, prefixInfo.isAndroid());
     } else {
       throw new IllegalStateException(I18N.err(107, prefixInfo.getFile().getAbsolutePath()));
     }
@@ -160,40 +211,81 @@ public final class RawFileUtility {
    * Obtains the corresponding raw file handles for the passed raw file prefixes
    * or throws an exception.
    * 
-   * @param runDir
-   *          a directory
-   * @param prefixInfos
-   *          an array of well-formed raw file prefix.
-   * @return the corresponding raw file handles for the passed raw file prefix.
+   * @param directory
+   *          a run directory.
+   * @param lastCheckpointCompleteFileNumber
+   *          the number from the last ".complete" file in the directory,
+   *          obtained by calling
+   *          {@link #getLatestCheckpointCompleteFileAndItsNumberWithin(File)}.
+   * @return a raw file handles.
+   * 
    * @throws Exception
    *           if something goes wrong.
    */
   @NonNull
-  public static RawFileHandles getRawFileHandlesFor(final File runDir, final RawDataFilePrefix[] prefixInfos) {
-    if (prefixInfos == null) {
-      throw new IllegalArgumentException(I18N.err(44, "prefixInfos"));
-    }
-    if (prefixInfos.length < 1) {
-      throw new IllegalArgumentException(I18N.err(92, "prefixInfos"));
-    }
-
-    for (int i = 0; i < prefixInfos.length; i++) {
-      final RawDataFilePrefix p = prefixInfos[i];
-      if (p == null) {
-        throw new IllegalArgumentException(I18N.err(44, "prefixInfos[" + i + "]"));
+  public static RawFileHandles getRawFileHandlesFor(final File directory, final int lastCheckpointCompleteFileNumber) {
+    /**
+     * Filter used to identify files that may be raw flashlight data files.
+     */
+    final FileFilter flashlightRawDataFileFilter = new FileFilter() {
+      @Override
+      public boolean accept(final File pathname) {
+        if (pathname.isDirectory()) {
+          return false;
+        }
+        return OutputType.mayBeRawDataFile(pathname);
       }
-      if (!p.isWellFormed()) {
-        throw new IllegalStateException(I18N.err(107, p.getFile().getAbsolutePath()));
+    };
+    final ArrayList<File> rawFiles = new ArrayList<File>();
+    for (File raw : directory.listFiles(flashlightRawDataFileFilter))
+      rawFiles.add(raw);
+
+    final File[] orderedRawFiles = new File[lastCheckpointCompleteFileNumber + 1];
+    for (int i = 0; i <= lastCheckpointCompleteFileNumber; i++) {
+      File rawThisNum = null;
+      for (Iterator<File> iterator = rawFiles.iterator(); iterator.hasNext();) {
+        final File raw = iterator.next();
+        final int fileNum = getDataFileNumHelper(raw);
+        if (fileNum == i) {
+          rawThisNum = raw;
+          iterator.remove();
+        }
       }
+      if (rawThisNum != null)
+        orderedRawFiles[i] = rawThisNum;
+      else
+        throw new IllegalStateException(I18N.err(108, i, directory.getAbsolutePath()));
     }
 
-    final File logFile = new File(runDir, InstrumentationConstants.FL_RUNTIME_LOG_LOC);
-    if (!logFile.exists()) {
-      SLLogger.getLogger().log(Level.FINE, I18N.err(108, prefixInfos[0].getFile().getAbsolutePath()));
-    }
-
-    final RawFileHandles handles = new RawFileHandles(prefixInfos, getLogFiles(runDir));
+    final RawFileHandles handles = new RawFileHandles(orderedRawFiles, OutputType.LOG.getFilesWithin(directory));
     return handles;
+  }
+
+  private static int getDataFileNumHelper(@NonNull final File file) {
+    int result = -1;
+    if (file == null)
+      return result;
+
+    final String name = file.getName();
+    if (name == null)
+      return result;
+
+    final OutputType type = OutputType.detectFileType(file);
+    if (type == null || !OutputType.RAW_DATA.contains(type))
+      return result;
+
+    // remove extension
+    int endIndex = name.length() - type.getSuffix().length();
+    int beginIndex = endIndex - 6;
+    final String numStr = name.substring(beginIndex, endIndex);
+
+    try {
+      result = Integer.parseInt(numStr);
+    } catch (NumberFormatException ignore) {
+      SLLogger.getLogger().log(Level.WARNING, "Unable to parse '" + numStr + "' from raw data file: " + name, ignore);
+    }
+
+    return result;
   }
 
   /**
@@ -251,29 +343,6 @@ public final class RawFileUtility {
     public boolean accept(final File root, final String name) {
       final File dir = new File(root, name);
       return dir.isDirectory() && new File(dir, name + OutputType.FLH.getSuffix()).exists();
-    }
-  };
-
-  public static final File[] getLogFiles(File in) {
-    if (in == null)
-      return new File[0];
-
-    final File[] logFiles = in.listFiles(f_logFileFilter);
-    if (logFiles == null) {
-      return new File[0];
-    } else {
-      return logFiles;
-    }
-  }
-
-  private static final FilenameFilter f_logFileFilter = new FilenameFilter() {
-    @Override
-    public boolean accept(final File root, final String name) {
-      if (!name.endsWith(InstrumentationConstants.LOG_SUFFIX))
-        return false;
-
-      final File logFile = new File(root, name);
-      return logFile.isFile();
     }
   };
 

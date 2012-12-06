@@ -7,7 +7,8 @@ import com.surelogic.ValueObject;
 import com.surelogic.common.i18n.I18N;
 
 /**
- * Describes the run of a program with Flashlight instrumentation.
+ * Describes a run of a Flashlight-instrumented program that has completed data
+ * collection.
  */
 @Immutable
 @ValueObject
@@ -15,8 +16,7 @@ public final class RunDescription {
 
   public RunDescription(final String name, final String rawDataVersion, final String hostname, final String userName,
       final String javaVersion, final String javaVendor, final String osName, final String osArch, final String osVersion,
-      final int maxMemoryMb, final int processors, final Timestamp started, final long duration, final boolean isAndroid,
-      final boolean completed) {
+      final int maxMemoryMb, final int processors, final Timestamp started, final long duration, final boolean isAndroid) {
     if (name == null) {
       throw new IllegalArgumentException(I18N.err(44, "name"));
     }
@@ -67,7 +67,6 @@ public final class RunDescription {
     f_started = started;
     f_duration = duration;
     f_android = isAndroid;
-    f_completed = completed;
   }
 
   private final String f_name;
@@ -154,12 +153,6 @@ public final class RunDescription {
     return f_android;
   }
 
-  private final boolean f_completed;
-
-  public boolean isCompleted() {
-    return f_completed;
-  }
-
   @Override
   public String toString() {
     final StringBuilder b = new StringBuilder();
@@ -177,7 +170,6 @@ public final class RunDescription {
     b.append(" started=").append(f_started);
     b.append(" duration=").append(f_duration);
     b.append(" isAndroid=").append(f_android);
-    b.append(" completed=").append(f_completed);
     b.append("]");
     return b.toString();
   }
@@ -201,7 +193,6 @@ public final class RunDescription {
     final int prime = 31;
     int result = 1;
     result = prime * result + (f_android ? 1231 : 1237);
-    result = prime * result + (f_completed ? 1231 : 1237);
     result = prime * result + (int) (f_duration ^ (f_duration >>> 32));
     result = prime * result + ((f_hostname == null) ? 0 : f_hostname.hashCode());
     result = prime * result + ((f_javaVendor == null) ? 0 : f_javaVendor.hashCode());
@@ -228,8 +219,6 @@ public final class RunDescription {
       return false;
     RunDescription other = (RunDescription) obj;
     if (f_android != other.f_android)
-      return false;
-    if (f_completed != other.f_completed)
       return false;
     if (f_duration != other.f_duration)
       return false;

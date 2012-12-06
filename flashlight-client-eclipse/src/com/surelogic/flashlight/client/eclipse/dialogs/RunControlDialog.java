@@ -30,7 +30,6 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
@@ -59,14 +58,34 @@ import com.surelogic.flashlight.common.model.RunControlManager;
 
 public final class RunControlDialog extends Dialog implements IRunControlObserver, TickListener {
 
+  /**
+   * This field tracks the dialog. The field is thread-confined to the SWT
+   * thread.
+   */
+  private static RunControlDialog f_dialogInstance = null;
+
+  private static final Runnable f_openDialogJob = new Runnable() {
+    public void run() {
+      if (f_dialogInstance == null) {
+        final Shell shell = EclipseUIUtility.getShell();
+        final TimingSource ts = new SWTTimingSource(1, TimeUnit.SECONDS, shell.getDisplay());
+        f_dialogInstance = new RunControlDialog(shell, ts);
+        RunControlManager.getInstance().register(f_dialogInstance);
+        ts.addTickListener(f_dialogInstance);
+        ts.init();
+        f_dialogInstance.open();
+      }
+    }
+  };
+
+  /**
+   * Opens and displays the run control dialog. If the dialog is already open
+   * this call has no effect.
+   * <p>
+   * This call may be invoked from any thread context.
+   */
   public static void show() {
-    final Shell shell = EclipseUIUtility.getShell();
-    final TimingSource ts = new SWTTimingSource(1, TimeUnit.SECONDS, shell.getDisplay());
-    final RunControlDialog dialog = new RunControlDialog(shell, ts);
-    RunControlManager.getInstance().register(dialog);
-    ts.addTickListener(dialog);
-    ts.init();
-    dialog.open();
+    EclipseUIUtility.nowOrAsyncExec(f_openDialogJob);
   }
 
   private RunControlDialog(Shell parentShell, @NonNull final TimingSource disposeOnClose) {
@@ -85,6 +104,7 @@ public final class RunControlDialog extends Dialog implements IRunControlObserve
   public boolean close() {
     f_disposeOnClose.dispose();
     RunControlManager.getInstance().remove(this);
+    f_dialogInstance = null;
     return super.close();
   }
 
@@ -406,7 +426,7 @@ public final class RunControlDialog extends Dialog implements IRunControlObserve
   }
 
   private void updateModelSafe() {
-    Display.getDefault().asyncExec(new Runnable() {
+    EclipseUIUtility.asyncExec(new Runnable() {
       public void run() {
         updateModelInUIThreadContext();
       }
@@ -445,7 +465,7 @@ public final class RunControlDialog extends Dialog implements IRunControlObserve
         runModel.removeFromUI();
       }
     }
-    f_dialogArea.getDisplay().asyncExec(new Runnable() {
+    EclipseUIUtility.asyncExec(new Runnable() {
       public void run() {
         if (f_dialogArea == null || f_dialogArea.isDisposed())
           return;

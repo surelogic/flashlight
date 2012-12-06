@@ -408,7 +408,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements IRunMa
    */
   @Override
   public void notify(final RunManager manager) {
-    PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
+    EclipseUIUtility.asyncExec(new Runnable() {
       @Override
       public void run() {
         refresh();

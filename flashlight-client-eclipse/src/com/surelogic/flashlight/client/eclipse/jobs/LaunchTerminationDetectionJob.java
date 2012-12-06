@@ -10,25 +10,24 @@ import org.eclipse.debug.core.ILaunch;
  * Simple job that periodically checks if a particular ILaunch has terminated.
  * When termination is detected it performs further actions as defined by
  * {@link #terminatationAction}.
- * @author aarong
- *
  */
 public abstract class LaunchTerminationDetectionJob extends Job {
-  public static final long DEFAULT_PERIOD = 1000L;
-  
+
+  public static final long DEFAULT_PERIOD = 3000L; // 3 seconds
+
   private final long period;
   private final ILaunch launch;
-  
+
   public LaunchTerminationDetectionJob(final ILaunch launch, final long period) {
     super("Launch Termination Detector");
     this.launch = launch;
     this.period = period;
   }
-  
+
   public final void reschedule() {
     schedule(period);
   }
-  
+
   @Override
   protected final IStatus run(final IProgressMonitor monitor) {
     if (launch.isTerminated()) {
@@ -39,6 +38,6 @@ public abstract class LaunchTerminationDetectionJob extends Job {
       return Status.OK_STATUS;
     }
   }
-  
+
   protected abstract IStatus terminationAction();
 }

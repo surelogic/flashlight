@@ -66,8 +66,8 @@
 			<!-- (3) Include the contents of flashlight-common -->
  		    <fileset dir="${flashlight-common-project-classes}"/>
 		    <zipfileset src="${common-project-runtime}/commons-lang3-3.0.jar" />
-			<zipfileset src="${common-project-runtime}/asm-3.3.1.jar" />
-			<zipfileset src="${common-project-runtime}/asm-commons-3.3.1.jar" />
+			<zipfileset src="${common-project-runtime}/asm-4.1.jar" />
+			<zipfileset src="${common-project-runtime}/asm-commons-4.1.jar" />
 			<zipfileset src="${flashlight-rewriter-jar}" />
 		</jar>
 		<zip destfile="${flashlight-ant.zip}">

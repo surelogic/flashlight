@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -43,6 +44,29 @@ public enum OutputType {
   /* @NonNull */
   public String getSuffix() {
     return f_suffix;
+  }
+
+  /**
+   * Gets the set of files within the passed directory with this output type.
+   * 
+   * @param directory
+   *          a directory.
+   * @return the set of files within the passed directory with this output type.
+   *         May be empty.
+   */
+  /* @NonNull */
+  public File[] getFilesWithin(final File directory) {
+    if (directory == null || !directory.isDirectory())
+      return new File[0];
+    final File[] result = directory.listFiles(new FilenameFilter() {
+      public boolean accept(File dir, String name) {
+        return name.endsWith(getSuffix());
+      }
+    });
+    if (result != null)
+      return result;
+    else
+      return new File[0];
   }
 
   /**

@@ -33,18 +33,17 @@ public class MonitorStatus {
     private String listing;
 
     private final File portFile;
-    private final File completeFile;
 
     private ConnectionState state;
     private int timeout;
 
     public MonitorStatus(final String runName, final String runTime,
-            final File fieldsFile, final File portFile, final File completeFile) {
+            final File fieldsFile, final File portFile) {
         this.runName = runName;
         this.runTime = runTime;
         this.portFile = portFile;
         try {
-            this.fields = new FieldDefs(fieldsFile);
+            fields = new FieldDefs(fieldsFile);
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
@@ -61,28 +60,26 @@ public class MonitorStatus {
         alerts = new HashSet<String>();
         props = new HashMap<String, String>();
         state = ConnectionState.SEARCHING;
-        this.completeFile = completeFile;
     }
 
     public MonitorStatus(final MonitorStatus status) {
         if (status != null) {
-            this.runName = status.runName;
-            this.runTime = status.runTime;
-            this.fields = status.fields;
-            this.fieldMap = status.fieldMap;
-            this.shared = new HashSet<String>(status.shared);
-            this.unshared = new HashSet<String>(status.unshared);
-            this.races = new HashSet<String>(status.races);
-            this.activeProtected = new HashSet<String>(status.activeProtected);
-            this.props = new HashMap<String, String>(status.props);
-            this.deadlocks = new HashSet<String>(status.deadlocks);
-            this.edges = new HashSet<List<String>>(status.edges);
-            this.alerts = new HashSet<String>(status.alerts);
-            this.listing = status.listing;
-            this.portFile = status.portFile;
-            this.completeFile = status.completeFile;
-            this.state = status.state;
-            this.timeout = status.timeout;
+            runName = status.runName;
+            runTime = status.runTime;
+            fields = status.fields;
+            fieldMap = status.fieldMap;
+            shared = new HashSet<String>(status.shared);
+            unshared = new HashSet<String>(status.unshared);
+            races = new HashSet<String>(status.races);
+            activeProtected = new HashSet<String>(status.activeProtected);
+            props = new HashMap<String, String>(status.props);
+            deadlocks = new HashSet<String>(status.deadlocks);
+            edges = new HashSet<List<String>>(status.edges);
+            alerts = new HashSet<String>(status.alerts);
+            listing = status.listing;
+            portFile = status.portFile;
+            state = status.state;
+            timeout = status.timeout;
         } else {
             throw new IllegalArgumentException("status may not be null");
         }
@@ -114,10 +111,6 @@ public class MonitorStatus {
 
     public File getPortFile() {
         return portFile;
-    }
-
-    public File getCompleteFile() {
-        return completeFile;
     }
 
     public Set<String> getShared() {
@@ -278,7 +271,7 @@ public class MonitorStatus {
         public LockStatus(final boolean deadlock, final String name) {
             this.deadlock = deadlock;
             this.name = name;
-            this.edges = new HashSet<List<LockStatus>>();
+            edges = new HashSet<List<LockStatus>>();
         }
 
         public String getName() {

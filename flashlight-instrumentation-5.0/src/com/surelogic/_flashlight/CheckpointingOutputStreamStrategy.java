@@ -1,8 +1,10 @@
 package com.surelogic._flashlight;
 
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic._flashlight.common.OutputType;
 import com.surelogic._flashlight.trace.TraceNode;
 
@@ -28,11 +30,18 @@ public class CheckpointingOutputStreamStrategy extends EventVisitor {
     }
 
     private OutputStream nextStream() throws IOException {
-        return EventVisitor
-                .createStream(
-                        f_conf.getFilePrefix() + '.'
-                                + String.format("%06d", f_count++),
-                        f_outputType);
+        return EventVisitor.createStream(
+                f_conf.getFilePrefix() + '.' + String.format("%06d", f_count),
+                f_outputType);
+    }
+
+    private void checkpointStream() throws IOException {
+        FileWriter w = new FileWriter(f_conf.getFilePrefix() + '.'
+                + String.format("%06d", f_count++)
+                + InstrumentationConstants.FL_COMPLETE_CHECKPOINT_SUFFIX);
+        w.write(Long.toString(System.nanoTime() - f_conf.getStartNanoTime())
+                + " ns\n");
+        w.close();
     }
 
     @Override
@@ -40,6 +49,7 @@ public class CheckpointingOutputStreamStrategy extends EventVisitor {
         f_out.visit(e);
         f_out.visit(FinalEvent.FINAL_EVENT);
         try {
+            checkpointStream();
             f_out = f_factory.create(f_conf, nextStream());
         } catch (IOException exc) {
             throw new IllegalStateException(exc);

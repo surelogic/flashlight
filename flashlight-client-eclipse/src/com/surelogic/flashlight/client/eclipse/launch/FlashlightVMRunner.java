@@ -1,7 +1,6 @@
 package com.surelogic.flashlight.client.eclipse.launch;
 
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_COLLECTION_TYPE;
-import static com.surelogic._flashlight.common.InstrumentationConstants.FL_COMPLETE_RUN_LOC;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_CONSOLE_PORT;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_DATE_OVERRIDE;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_DIR;
@@ -102,7 +101,6 @@ public final class FlashlightVMRunner implements IVMRunner {
     private final File sitesFile;
     private final File logFile;
     private final File portFile;
-    private final File completeFile;
 
     private final String datePostfix;
     private final String pathToFlashlightLib;
@@ -165,7 +163,6 @@ public final class FlashlightVMRunner implements IVMRunner {
         externalOutputDir = new File(runOutputDir, FL_EXTERNAL_FOLDER_LOC);
         sourceDir = new File(runOutputDir, FL_SOURCE_FOLDER_LOC);
         portFile = new File(runOutputDir, FL_PORT_FILE_LOC);
-        completeFile = new File(runOutputDir, FL_COMPLETE_RUN_LOC);
         fieldsFile = new File(runOutputDir, FL_FIELDS_FILE_LOC);
         sitesFile = new File(runOutputDir, FL_SITES_FILE_LOC);
         logFile = new File(runOutputDir, FL_LOG_FILE_LOC);
@@ -251,8 +248,7 @@ public final class FlashlightVMRunner implements IVMRunner {
         /* Let the monitor thread know it should expect a launch */
         EclipseJob.getInstance().schedule(
                 new WatchFlashlightMonitorJob(new MonitorStatus(mainTypeName,
-                        new Date().toString(), fieldsFile, portFile,
-                        completeFile)));
+                        new Date().toString(), fieldsFile, portFile)));
 
         /*
          * Create and launch a job that detects when the instrumented run

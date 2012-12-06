@@ -8,8 +8,6 @@ import com.surelogic.ReferenceObject;
 /**
  * Interface to represent a launched Flashlight-instrumented application and
  * control its collection.
- * 
- * @see RunControlManager
  */
 @ReferenceObject
 public interface IDataCollectingRun {
@@ -56,10 +54,8 @@ public interface IDataCollectingRun {
 
   /**
    * Requests that this terminate collection as soon as possible. <b>Only to be
-   * invoked by {@link RunControlManager}&mdash;client code should not invoke
-   * this method.</b>
-   * 
-   * @see RunControlManager#stopDataCollectionAsSoonAsPossible(IDataCollectingRun)
+   * invoked by the <tt>RunControlManager</tt>&mdash;client code should not
+   * invoke this method.</b>
    */
   void stopDataCollectionAsSoonAsPossible();
 }

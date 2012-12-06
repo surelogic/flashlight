@@ -1,4 +1,4 @@
-package com.surelogic.flashlight.common.model;
+package com.surelogic.flashlight.client.eclipse.model;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -18,6 +18,8 @@ import com.surelogic.UniqueInRegion;
 import com.surelogic.Vouch;
 import com.surelogic.common.Pair;
 import com.surelogic.common.i18n.I18N;
+import com.surelogic.flashlight.common.model.DataCollectingRunState;
+import com.surelogic.flashlight.common.model.IDataCollectingRun;
 
 /**
  * Singleton manager of launched Flashlight-instrumented applications.

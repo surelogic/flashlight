@@ -49,10 +49,10 @@ import com.surelogic.common.ui.EclipseColorUtility;
 import com.surelogic.common.ui.EclipseUIUtility;
 import com.surelogic.common.ui.SLImages;
 import com.surelogic.flashlight.client.eclipse.Activator;
+import com.surelogic.flashlight.client.eclipse.model.IRunControlObserver;
+import com.surelogic.flashlight.client.eclipse.model.RunControlManager;
 import com.surelogic.flashlight.common.model.DataCollectingRunState;
 import com.surelogic.flashlight.common.model.IDataCollectingRun;
-import com.surelogic.flashlight.common.model.IRunControlObserver;
-import com.surelogic.flashlight.common.model.RunControlManager;
 
 public final class RunControlDialog extends Dialog implements IRunControlObserver, TickListener {
 

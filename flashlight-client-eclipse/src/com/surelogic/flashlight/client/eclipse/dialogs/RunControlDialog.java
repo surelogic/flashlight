@@ -4,9 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -141,7 +139,7 @@ public final class RunControlDialog extends Dialog implements IRunControlObserve
     });
 
     f_dialogArea = c;
-    updateModelSafe();
+    updateGUIModel();
     return composite;
   }
 
@@ -183,7 +181,7 @@ public final class RunControlDialog extends Dialog implements IRunControlObserve
     clearList.setFont(parent.getFont());
     clearList.addListener(SWT.SELECTED, new Listener() {
       public void handleEvent(Event event) {
-        clearListPressed();
+        RunControlManager.getInstance().clearAllFinishedRuns();
       }
     });
 
@@ -259,10 +257,6 @@ public final class RunControlDialog extends Dialog implements IRunControlObserve
       searchCleared();
   }
 
-  private void clearListPressed() {
-    System.out.println("clearListPressed()");
-  }
-
   protected IDialogSettings getDialogBoundsSettings() {
     return Activator.getDefault().getDialogSettings();
   }
@@ -270,70 +264,26 @@ public final class RunControlDialog extends Dialog implements IRunControlObserve
   @Override
   public void launchedRunStateChanged(final IDataCollectingRun run, final DataCollectingRunState newState) {
     // NOT CALLED IN THE UI THREAD
-    updateModelSafe();
+    updateGUIModel();
   }
 
   @Override
   public void launchedRunCleared(Set<IDataCollectingRun> cleared) {
     // NOT CALLED IN THE UI THREAD
-    updateModelSafe();
+    updateGUIModel();
   }
 
-  private class RunModel {
+  /**
+   * A wrapper for links to the run and its state plus all GUI objects for the
+   * displayed panel in the dialog.
+   */
+  private final class RunControlItem {
 
-    RunModel(@NonNull IDataCollectingRun run, @NonNull DataCollectingRunState state) {
-      f_run = run;
-      f_state = state;
-    }
+    RunControlItem(@NonNull final Composite parent, @NonNull IDataCollectingRun run, @NonNull DataCollectingRunState state) {
+      if (parent == null)
+        throw new IllegalArgumentException(I18N.err(44, "parent"));
+      updateLogicalModel(run, state);
 
-    @NonNull
-    final IDataCollectingRun f_run;
-    @NonNull
-    DataCollectingRunState f_state;
-
-    @NonNull
-    String getRunLabel() {
-      return f_run.getRunSimpleNameforUI();
-    }
-
-    @NonNull
-    String getRunStateLabel() {
-      return f_state.getLabel();
-    }
-
-    @NonNull
-    String getTimeSinceLaunch() {
-      final Date launchDate = f_run.getLaunchTime();
-      final long launched = launchDate.getTime();
-      final long now = new Date().getTime();
-      final long durationMS = now - launched;
-      return "Started at " + SLUtility.toStringHMS(launchDate) + " running for "
-          + SLUtility.toStringDurationS(durationMS, TimeUnit.MILLISECONDS);
-    }
-
-    Composite f_bk = null;
-    Label f_image = null;
-    Label f_runLabel = null;
-    Label f_stateLabel = null;
-    Label f_durationLabel = null;
-    ToolItem f_action = null;
-
-    final int f_dimension = 64;
-    final Point f_size = new Point(f_dimension, f_dimension);
-    final Image f_javaRunning = SLImages.scaleImage(SLImages.getImage(CommonImages.IMG_JAVA_APP, false), f_size);
-    final Image f_javaFinished = SLImages.getGrayscaleImage(f_javaRunning);
-    final Image f_androidRunning = SLImages.scaleImage(SLImages.getImage(CommonImages.IMG_ANDROID_APP, false), f_size);
-    final Image f_androidFinished = SLImages.getGrayscaleImage(f_androidRunning);
-
-    Image getImage() {
-      if (f_run.isAndroid()) {
-        return f_state == DataCollectingRunState.FINISHED ? f_androidFinished : f_androidRunning;
-      } else {
-        return f_state == DataCollectingRunState.FINISHED ? f_javaFinished : f_javaRunning;
-      }
-    }
-
-    void addToUI(@NonNull final Composite parent) {
       f_bk = new Composite(parent, SWT.NONE);
       GridLayout layout = new GridLayout();
       layout.numColumns = 3;
@@ -357,44 +307,119 @@ public final class RunControlDialog extends Dialog implements IRunControlObserve
       f_runLabel.setFont(JFaceResources.getFontRegistry().getBold(JFaceResources.HEADER_FONT));
       f_stateLabel = new Label(labels, SWT.NONE);
       f_stateLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+      f_stateLabel.setText(getRunStateLabel());
       f_stateLabel.setForeground(EclipseColorUtility.getSubtleTextColor());
       f_durationLabel = new Label(labels, SWT.NONE);
       f_durationLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+      f_durationLabel.setText(getTimeInformation());
       f_durationLabel.setForeground(f_durationLabel.getDisplay().getSystemColor(SWT.COLOR_DARK_GRAY));
 
       final ToolBar toolBar = new ToolBar(f_bk, SWT.FLAT);
-      f_action = new ToolItem(toolBar, SWT.PUSH);
-      f_action.setImage(SLImages.getImage(CommonImages.IMG_GRAY_X));
-      f_action.addSelectionListener(new SelectionAdapter() {
+      f_clearFinishedRun = new ToolItem(toolBar, SWT.PUSH);
+      f_clearFinishedRun.setImage(SLImages.getImage(CommonImages.IMG_GRAY_X));
+      f_clearFinishedRun.addSelectionListener(new SelectionAdapter() {
         public void widgetSelected(SelectionEvent e) {
-          modelItemActionPressed(RunModel.this);
+          if (f_run != null && f_state != null && f_state.equals(DataCollectingRunState.FINISHED))
+            RunControlManager.getInstance().clearFinishedRun(f_run);
         }
       });
+      f_clearFinishedRun.setEnabled(f_state.equals(DataCollectingRunState.FINISHED));
       toolBar.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, false));
     }
 
-    void updateUI() {
-      if (f_bk == null || f_bk.isDisposed())
+    private void updateLogicalModel(@NonNull IDataCollectingRun run, @NonNull DataCollectingRunState state) {
+      if (run == null)
+        throw new IllegalArgumentException(I18N.err(44, "run"));
+      f_run = run;
+      if (state == null)
+        throw new IllegalArgumentException(I18N.err(44, "state"));
+      f_state = state;
+    }
+
+    /*
+     * The logical model: a run and its state
+     */
+
+    @NonNull
+    IDataCollectingRun f_run;
+    @NonNull
+    DataCollectingRunState f_state;
+
+    @NonNull
+    String getRunLabel() {
+      return f_run.getRunSimpleNameforUI();
+    }
+
+    @NonNull
+    String getRunStateLabel() {
+      return f_state.getLabel();
+    }
+
+    @NonNull
+    String getTimeInformation() {
+      final Date launchDate = f_run.getLaunchTime();
+      final long launched = launchDate.getTime();
+      final long now = new Date().getTime();
+      final long durationMS = now - launched;
+      return "Started at " + SLUtility.toStringHMS(launchDate) + " running for "
+          + SLUtility.toStringDurationS(durationMS, TimeUnit.MILLISECONDS);
+    }
+
+    /*
+     * The GUI portion of this, never changes once created.
+     */
+    @NonNull
+    final Composite f_bk;
+    @NonNull
+    final Label f_image;
+    @NonNull
+    final Label f_runLabel;
+    @NonNull
+    final Label f_stateLabel;
+    @NonNull
+    final Label f_durationLabel;
+    @NonNull
+    final ToolItem f_clearFinishedRun;
+
+    final int f_dimension = 64;
+    final Point f_size = new Point(f_dimension, f_dimension);
+    final Image f_javaRunning = SLImages.scaleImage(SLImages.getImage(CommonImages.IMG_JAVA_APP, false), f_size);
+    final Image f_javaFinished = SLImages.getGrayscaleImage(f_javaRunning);
+    final Image f_androidRunning = SLImages.scaleImage(SLImages.getImage(CommonImages.IMG_ANDROID_APP, false), f_size);
+    final Image f_androidFinished = SLImages.getGrayscaleImage(f_androidRunning);
+
+    Image getImage() {
+      if (f_run.isAndroid()) {
+        return f_state == DataCollectingRunState.FINISHED ? f_androidFinished : f_androidRunning;
+      } else {
+        return f_state == DataCollectingRunState.FINISHED ? f_javaFinished : f_javaRunning;
+      }
+    }
+
+    void updateDisplayWith(@NonNull IDataCollectingRun run, @NonNull DataCollectingRunState state) {
+      if (f_bk.isDisposed())
         return;
+
+      updateLogicalModel(run, state);
 
       final Image image = getImage();
       if (f_image.getImage() != image)
         f_image.setImage(image);
 
+      f_runLabel.setText(getRunLabel());
       f_stateLabel.setText(getRunStateLabel());
-      f_durationLabel.setText(getTimeSinceLaunch());
+      f_durationLabel.setText(getTimeInformation());
+      f_clearFinishedRun.setEnabled(f_state.equals(DataCollectingRunState.FINISHED));
     }
 
-    void removeFromUI() {
-      if (f_bk == null || f_bk.isDisposed())
-        return;
-
-      f_bk.dispose();
+    void dispose() {
+      if (!f_bk.isDisposed())
+        f_bk.dispose();
     }
   }
 
-  private final Comparator<RunModel> f_newToOld = new Comparator<RunControlDialog.RunModel>() {
-    public int compare(RunModel o1, RunModel o2) {
+  private final Comparator<Pair<IDataCollectingRun, DataCollectingRunState>> f_newestToOldest = new Comparator<Pair<IDataCollectingRun, DataCollectingRunState>>() {
+    public int compare(Pair<IDataCollectingRun, DataCollectingRunState> o1, Pair<IDataCollectingRun, DataCollectingRunState> o2) {
       /*
        * Compares its two arguments for order. Returns a negative integer, zero,
        * or a positive integer as the first argument is less than, equal to, or
@@ -402,80 +427,60 @@ public final class RunControlDialog extends Dialog implements IRunControlObserve
        */
       if (o1 == null && o2 == null)
         return 0;
-      if (o1 == null)
+      if (o1 == null || o1.first() == null)
         return 1;
-      if (o2 == null)
+      if (o2 == null || o2.first() == null)
         return -1;
-      return o2.f_run.getLaunchTime().compareTo(o1.f_run.getLaunchTime());
+      return o2.first().getLaunchTime().compareTo(o1.first().getLaunchTime());
     }
   };
 
-  private void modelItemActionPressed(@NonNull RunModel on) {
-    System.out.println("modelItemActionPressed(" + on + ")");
-  }
+  private final LinkedList<RunControlItem> f_guiModel = new LinkedList<RunControlItem>();
 
-  private final LinkedList<RunModel> f_model = new LinkedList<RunModel>();
-
-  @Nullable
-  private RunModel getModelFor(IDataCollectingRun run) {
-    for (RunModel element : f_model) {
-      if (element.f_run.equals(run))
-        return element;
-    }
-    return null;
-  }
-
-  private void updateModelSafe() {
-    EclipseUIUtility.asyncExec(new Runnable() {
-      public void run() {
-        updateModelInUIThreadContext();
-      }
-    });
-  }
-
-  private void updateModelInUIThreadContext() {
-    if (f_dialogArea == null || f_dialogArea.isDisposed())
-      return;
-
-    final ArrayList<Pair<IDataCollectingRun, DataCollectingRunState>> runInfo = RunControlManager.getInstance().getManagedRuns();
-    final List<RunModel> stillExists = new ArrayList<RunModel>();
-    final List<RunModel> newModels = new ArrayList<RunModel>();
-    for (Pair<IDataCollectingRun, DataCollectingRunState> pair : runInfo) {
-      RunModel runModel = getModelFor(pair.first());
-      if (runModel == null) {
-        runModel = new RunModel(pair.first(), pair.second());
-        f_model.addFirst(runModel);
-        newModels.add(runModel); // added to UI below
-      } else {
-        runModel.updateUI();
-      }
-      stillExists.add(runModel);
-    }
-    // sort new models and add to UI
-    Collections.sort(newModels, f_newToOld);
-    for (RunModel runModel : newModels) {
-      runModel.addToUI(f_dialogArea);
-      runModel.updateUI();
-    }
-    // remove models that do not still exist
-    for (Iterator<RunModel> iterator = f_model.iterator(); iterator.hasNext();) {
-      final RunModel runModel = iterator.next();
-      if (!stillExists.contains(runModel)) {
-        iterator.remove();
-        runModel.removeFromUI();
-      }
-    }
-    EclipseUIUtility.asyncExec(new Runnable() {
+  private void updateGUIModel() {
+    EclipseUIUtility.nowOrAsyncExec(new Runnable() {
       public void run() {
         if (f_dialogArea == null || f_dialogArea.isDisposed())
           return;
-        f_dialogArea.layout();
+
+        final ArrayList<Pair<IDataCollectingRun, DataCollectingRunState>> runInfo = RunControlManager.getInstance()
+            .getManagedRuns();
+        Collections.sort(runInfo, f_newestToOldest);
+        /*
+         * Update the GUI with updated information
+         */
+        for (int i = 0; i < runInfo.size(); i++) {
+          final Pair<IDataCollectingRun, DataCollectingRunState> pair = runInfo.get(i);
+          if (i < f_guiModel.size()) {
+            final RunControlItem gui = f_guiModel.get(i);
+            gui.updateDisplayWith(pair.first(), pair.second());
+          } else {
+            final RunControlItem gui = new RunControlItem(f_dialogArea, pair.first(), pair.second());
+            f_guiModel.add(gui);
+          }
+        }
+        // dispose of items no longer needed.
+        final int modelSize = f_guiModel.size();
+        for (int d = runInfo.size(); d < modelSize; d++) {
+          final RunControlItem gui = f_guiModel.get(d);
+          gui.dispose();
+        }
+        for (int d = runInfo.size(); d < modelSize; d++)
+          f_guiModel.removeLast();
+
+        EclipseUIUtility.asyncExec(new Runnable() {
+          public void run() {
+            if (f_dialogArea == null || f_dialogArea.isDisposed())
+              return;
+            f_dialogArea.layout();
+          }
+        });
       }
     });
   }
 
   public void timingSourceTick(TimingSource source, long nanoTime) {
     // CALLED IN SWT THREAD
-    updateModelInUIThreadContext();
+    updateGUIModel();
   }
 }

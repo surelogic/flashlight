@@ -64,13 +64,42 @@ public final class RunControlManager {
     };
     
     try {
-      Thread.sleep(4000);
+      Thread.sleep(2000);
+    } catch (InterruptedException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+    
+    IDataCollectingRun java = new IDataCollectingRun() {
+
+      final Date start = new Date();
+
+      public void stopDataCollectionAsSoonAsPossible() {
+      }
+
+      public boolean isAndroid() {
+        return false;
+      }
+
+      @NonNull
+      public String getRunSimpleNameforUI() {
+        return "PlanetBaronServer";
+      }
+
+      @NonNull
+      public Date getLaunchTime() {
+        return start;
+      }
+    };
+    
+    try {
+      Thread.sleep(2000);
     } catch (InterruptedException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
 
-    IDataCollectingRun java = new IDataCollectingRun() {
+    IDataCollectingRun java2 = new IDataCollectingRun() {
 
       final Date start = new Date();
 
@@ -94,6 +123,8 @@ public final class RunControlManager {
     this.runStarting(android);
     this.runCollecting(android);
     this.runStarting(java);
+    this.runDoneCollecting(java);
+    this.runStarting(java2);
   }
 
   private final Object f_lock = new Object();

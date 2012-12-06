@@ -8,8 +8,6 @@ public final class InstrumentationConstants {
 
   public static final String DATE_FORMAT = "-yyyy.MM.dd-'at'-HH.mm.ss.SSS";
 
-  public static final String LOG_SUFFIX = "-log.txt";
-
   public static final String FL_PACKAGE = "com/surelogic/_flashlight";
   public static final String FL_PROPERTIES_CLASS = FL_PACKAGE + "/InstrumentationConf.class";
   public static final String FL_PROPERTIES_RESOURCE = FL_PACKAGE + "/fl.properties";
@@ -20,7 +18,7 @@ public final class InstrumentationConstants {
 
   public static final String FL_SOURCE_RESOURCE = FL_PACKAGE + "/sources.zip";
   public static final String FL_SOURCE_FOLDER_LOC = "source";
-  private static final String FL_LOG_FILE_NAME = "instrumentation" + LOG_SUFFIX;
+  private static final String FL_LOG_FILE_NAME = "instrumentation" + OutputType.LOG.getSuffix();
   public static final String FL_LOG_FILE_LOC = FL_LOG_FILE_NAME;
   public static final String FL_LOG_RESOURCE = FL_PACKAGE + "/" + FL_LOG_FILE_NAME;
 
@@ -75,7 +73,7 @@ public final class InstrumentationConstants {
   public static final String FL_SITES_RESOURCE = FL_PACKAGE + "/" + FL_SITES_FILE_NAME;
   public static final String FL_SITES_CLASS = FL_PACKAGE + "/SitesConf.class";
 
-  public static final String FL_RUNTIME_LOG_LOC = "runtime" + LOG_SUFFIX;
+  public static final String FL_RUNTIME_LOG_LOC = "runtime" + OutputType.LOG.getSuffix();
 
   public static final String FL_DATE_OVERRIDE = "FL_DATE_OVERRIDE";
 

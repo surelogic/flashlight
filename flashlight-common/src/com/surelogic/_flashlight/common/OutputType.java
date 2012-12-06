@@ -22,7 +22,7 @@ import org.xml.sax.SAXException;
 
 public enum OutputType {
 
-  FL(false, ".fl"), FL_GZ(true, ".fl.gz"), FLH(false, ".flh"), COMPLETE(false, ".complete");
+  FL(false, ".fl"), FL_GZ(true, ".fl.gz"), FLH(false, ".flh"), COMPLETE(false, ".complete"), LOG(false, "-log.txt");
 
   /**
    * A set that indicates raw data files.

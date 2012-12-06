@@ -62,14 +62,14 @@ public final class RunControlManager {
         return start;
       }
     };
-    
+
     try {
       Thread.sleep(2000);
     } catch (InterruptedException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
-    
+
     IDataCollectingRun java = new IDataCollectingRun() {
 
       final Date start = new Date();
@@ -91,7 +91,7 @@ public final class RunControlManager {
         return start;
       }
     };
-    
+
     try {
       Thread.sleep(2000);
     } catch (InterruptedException e) {

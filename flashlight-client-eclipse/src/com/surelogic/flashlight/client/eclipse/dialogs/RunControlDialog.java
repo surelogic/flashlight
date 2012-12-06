@@ -179,7 +179,7 @@ public final class RunControlDialog extends Dialog implements IRunControlObserve
     clearList.setText(I18N.msg("flashligh.dialog.run.control.clear_list"));
     clearList.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, true, false));
     clearList.setFont(parent.getFont());
-    clearList.addListener(SWT.SELECTED, new Listener() {
+    clearList.addListener(SWT.Selection, new Listener() {
       public void handleEvent(Event event) {
         RunControlManager.getInstance().clearAllFinishedRuns();
       }
@@ -293,7 +293,6 @@ public final class RunControlDialog extends Dialog implements IRunControlObserve
 
       f_image = new Label(f_bk, SWT.NONE);
       f_image.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, false));
-      f_image.setImage(getImage());
 
       final Composite labels = new Composite(f_bk, SWT.NONE);
       layout = new GridLayout();
@@ -303,15 +302,12 @@ public final class RunControlDialog extends Dialog implements IRunControlObserve
       labels.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
       f_runLabel = new Label(labels, SWT.NONE);
       f_runLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-      f_runLabel.setText(getRunLabel());
       f_runLabel.setFont(JFaceResources.getFontRegistry().getBold(JFaceResources.HEADER_FONT));
       f_stateLabel = new Label(labels, SWT.NONE);
       f_stateLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-      f_stateLabel.setText(getRunStateLabel());
       f_stateLabel.setForeground(EclipseColorUtility.getSubtleTextColor());
       f_durationLabel = new Label(labels, SWT.NONE);
       f_durationLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-      f_durationLabel.setText(getTimeInformation());
       f_durationLabel.setForeground(f_durationLabel.getDisplay().getSystemColor(SWT.COLOR_DARK_GRAY));
 
       final ToolBar toolBar = new ToolBar(f_bk, SWT.FLAT);
@@ -323,8 +319,9 @@ public final class RunControlDialog extends Dialog implements IRunControlObserve
             RunControlManager.getInstance().clearFinishedRun(f_run);
         }
       });
-      f_clearFinishedRun.setEnabled(f_state.equals(DataCollectingRunState.FINISHED));
       toolBar.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, false));
+
+      updateGUIInformation();
     }
 
     private void updateLogicalModel(@NonNull IDataCollectingRun run, @NonNull DataCollectingRunState state) {
@@ -356,13 +353,16 @@ public final class RunControlDialog extends Dialog implements IRunControlObserve
     }
 
     @NonNull
-    String getTimeInformation() {
-      final Date launchDate = f_run.getLaunchTime();
-      final long launched = launchDate.getTime();
-      final long now = new Date().getTime();
-      final long durationMS = now - launched;
-      return "Started at " + SLUtility.toStringHMS(launchDate) + " running for "
-          + SLUtility.toStringDurationS(durationMS, TimeUnit.MILLISECONDS);
+    String getTimeInformation(boolean finished) {
+      if (!finished) {
+        final Date launchDate = f_run.getLaunchTime();
+        final long launched = launchDate.getTime();
+        final long now = new Date().getTime();
+        final long durationMS = now - launched;
+        return "Started at " + SLUtility.toStringHMS(launchDate) + " running for "
+            + SLUtility.toStringDurationS(durationMS, TimeUnit.MILLISECONDS);
+      } else
+        return "";
     }
 
     /*
@@ -401,15 +401,24 @@ public final class RunControlDialog extends Dialog implements IRunControlObserve
         return;
 
       updateLogicalModel(run, state);
+      updateGUIInformation();
+    }
+
+    void updateGUIInformation() {
+      if (f_bk.isDisposed())
+        return;
+
+      final boolean finished = f_state.equals(DataCollectingRunState.FINISHED);
 
       final Image image = getImage();
       if (f_image.getImage() != image)
         f_image.setImage(image);
 
       f_runLabel.setText(getRunLabel());
+      f_runLabel.setForeground(finished ? f_runLabel.getDisplay().getSystemColor(SWT.COLOR_DARK_GRAY) : null);
       f_stateLabel.setText(getRunStateLabel());
-      f_durationLabel.setText(getTimeInformation());
-      f_clearFinishedRun.setEnabled(f_state.equals(DataCollectingRunState.FINISHED));
+      f_durationLabel.setText(getTimeInformation(finished));
+      f_clearFinishedRun.setEnabled(finished);
     }
 
     void dispose() {

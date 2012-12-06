@@ -1,6 +1,8 @@
 package com.surelogic.flashlight.client.eclipse.dialogs;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -13,12 +15,16 @@ import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.ScrolledComposite;
+import org.eclipse.swt.events.ControlAdapter;
+import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.FocusEvent;
 import org.eclipse.swt.events.FocusListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -86,18 +92,37 @@ public final class RunControlDialog extends Dialog implements IRunControlObserve
 
   @Override
   protected Control createDialogArea(Composite parent) {
-    final Composite c = new Composite(parent, SWT.NONE);
+    final Composite composite = new Composite(parent, SWT.NONE);
+    composite.setLayout(new GridLayout());
+    composite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+
+    final ScrolledComposite sc = new ScrolledComposite(composite, SWT.BORDER | SWT.V_SCROLL);
+    sc.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+    applyDialogFont(sc);
+    sc.setExpandHorizontal(true);
+    sc.setExpandVertical(true);
+
+    // Create a child composite to hold the controls
+    final Composite c = new Composite(sc, SWT.NONE);
     GridLayout layout = new GridLayout();
     layout.numColumns = 1;
     layout.marginHeight = layout.marginWidth = layout.verticalSpacing = layout.horizontalSpacing = 5;
     c.setLayout(layout);
-    c.setLayoutData(new GridData(GridData.FILL_BOTH));
+    c.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
     applyDialogFont(c);
     c.setBackground(EclipseColorUtility.getRunControlBackgroundColor());
 
+    sc.setContent(c);
+    sc.addControlListener(new ControlAdapter() {
+      public void controlResized(ControlEvent e) {
+        Rectangle r = sc.getClientArea();
+        sc.setMinSize(c.computeSize(r.width, SWT.DEFAULT));
+      }
+    });
+
     f_dialogArea = c;
     updateModelSafe();
-    return c;
+    return composite;
   }
 
   @Override
@@ -258,10 +283,12 @@ public final class RunControlDialog extends Dialog implements IRunControlObserve
 
     @NonNull
     String getTimeSinceLaunch() {
-      final long launched = f_run.getLaunchTime().getTime();
+      final Date launchDate = f_run.getLaunchTime();
+      final long launched = launchDate.getTime();
       final long now = new Date().getTime();
       final long durationMS = now - launched;
-      return "Running for " + SLUtility.toStringDurationS(durationMS, TimeUnit.MILLISECONDS);
+      return "Started at " + SLUtility.toStringHMS(launchDate) + " running for "
+          + SLUtility.toStringDurationS(durationMS, TimeUnit.MILLISECONDS);
     }
 
     Composite f_bk = null;
@@ -346,6 +373,23 @@ public final class RunControlDialog extends Dialog implements IRunControlObserve
     }
   }
 
+  private final Comparator<RunModel> f_newToOld = new Comparator<RunControlDialog.RunModel>() {
+    public int compare(RunModel o1, RunModel o2) {
+      /*
+       * Compares its two arguments for order. Returns a negative integer, zero,
+       * or a positive integer as the first argument is less than, equal to, or
+       * greater than the second.
+       */
+      if (o1 == null && o2 == null)
+        return 0;
+      if (o1 == null)
+        return 1;
+      if (o2 == null)
+        return -1;
+      return o2.f_run.getLaunchTime().compareTo(o1.f_run.getLaunchTime());
+    }
+  };
+
   private void modelItemActionPressed(@NonNull RunModel on) {
     System.out.println("modelItemActionPressed(" + on + ")");
   }
@@ -373,18 +417,27 @@ public final class RunControlDialog extends Dialog implements IRunControlObserve
     if (f_dialogArea == null || f_dialogArea.isDisposed())
       return;
 
-    ArrayList<Pair<IDataCollectingRun, DataCollectingRunState>> runInfo = RunControlManager.getInstance().getManagedRuns();
-    List<RunModel> stillExists = new ArrayList<RunModel>();
+    final ArrayList<Pair<IDataCollectingRun, DataCollectingRunState>> runInfo = RunControlManager.getInstance().getManagedRuns();
+    final List<RunModel> stillExists = new ArrayList<RunModel>();
+    final List<RunModel> newModels = new ArrayList<RunModel>();
     for (Pair<IDataCollectingRun, DataCollectingRunState> pair : runInfo) {
       RunModel runModel = getModelFor(pair.first());
       if (runModel == null) {
         runModel = new RunModel(pair.first(), pair.second());
-        runModel.addToUI(f_dialogArea);
         f_model.addFirst(runModel);
+        newModels.add(runModel); // added to UI below
+      } else {
+        runModel.updateUI();
       }
       stillExists.add(runModel);
+    }
+    // sort new models and add to UI
+    Collections.sort(newModels, f_newToOld);
+    for (RunModel runModel : newModels) {
+      runModel.addToUI(f_dialogArea);
       runModel.updateUI();
     }
+    // remove models that do not still exist
     for (Iterator<RunModel> iterator = f_model.iterator(); iterator.hasNext();) {
       final RunModel runModel = iterator.next();
       if (!stillExists.contains(runModel)) {

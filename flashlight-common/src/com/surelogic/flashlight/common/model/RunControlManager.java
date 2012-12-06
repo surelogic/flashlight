@@ -62,6 +62,13 @@ public final class RunControlManager {
         return start;
       }
     };
+    
+    try {
+      Thread.sleep(4000);
+    } catch (InterruptedException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
 
     IDataCollectingRun java = new IDataCollectingRun() {
 

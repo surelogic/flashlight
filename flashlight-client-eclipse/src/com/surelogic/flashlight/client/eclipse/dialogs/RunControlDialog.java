@@ -179,7 +179,7 @@ public final class RunControlDialog extends Dialog implements IRunControlObserve
     clearList.setText(I18N.msg("flashligh.dialog.run.control.clear_list"));
     clearList.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, true, false));
     clearList.setFont(parent.getFont());
-    clearList.addListener(SWT.SELECTED, new Listener() {
+    clearList.addListener(SWT.Selection, new Listener() {
       public void handleEvent(Event event) {
         RunControlManager.getInstance().clearAllFinishedRuns();
       }

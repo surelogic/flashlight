@@ -21,7 +21,7 @@ import org.xml.sax.SAXException;
 
 public enum OutputType {
 
-  FL(false, ".fl"), FL_GZ(true, ".fl.gz"), FLH(false, ".flh");
+  FL(false, ".fl"), FL_GZ(true, ".fl.gz"), FLH(false, ".flh"), COMPLETE(false, ".complete");
 
   /**
    * A set that indicates raw data files.
@@ -40,7 +40,7 @@ public enum OutputType {
     return f_compressed;
   }
 
-  /*@NonNull*/
+  /* @NonNull */
   public String getSuffix() {
     return f_suffix;
   }
@@ -56,7 +56,7 @@ public enum OutputType {
    * @return an output type in {@link #values()} that exactly matches the passed
    *         string, or the passed default.
    */
-  public static OutputType valueOf(final String value, /*@NonNull*/ final OutputType defaultValue) {
+  public static OutputType valueOf(final String value, /* @NonNull */final OutputType defaultValue) {
     if (value != null) {
       for (OutputType val : values()) {
         if (val.toString().equals(value)) {
@@ -76,7 +76,7 @@ public enum OutputType {
    *          otherwise.
    * @return {@link #FL_GZ} if compression is requested, {@link #FL} if not.
    */
-  /*@NonNull*/
+  /* @NonNull */
   public static OutputType get(final boolean compress) {
     if (compress) {
       return FL_GZ;
@@ -94,7 +94,7 @@ public enum OutputType {
    * @return an output type for the passed file, or {@code null} if none can be
    *         determined.
    */
-  /*@Nullable*/
+  /* @Nullable */
   public static OutputType detectFileType(final File file) {
     if (file == null)
       return null;

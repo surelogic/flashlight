@@ -105,10 +105,10 @@ public final class RawFileUtility {
     try {
       final BufferedReader r = new BufferedReader(new FileReader(checkpointComplete));
       try {
-        String line = r.readLine();
+        String line = r.readLine().trim();
         final int unitsIndex = line.indexOf("ns");
         if (unitsIndex != -1)
-          line = line.substring(unitsIndex);
+          line = line.substring(0, unitsIndex).trim();
         duration = Long.parseLong(line);
       } finally {
         r.close();

@@ -3,6 +3,7 @@ package com.surelogic.flashlight.client.eclipse.model;
 import java.io.File;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
@@ -18,7 +19,9 @@ import com.surelogic.UniqueInRegion;
 import com.surelogic.Vouch;
 import com.surelogic.common.SLUtility;
 import com.surelogic.common.core.EclipseUtility;
+import com.surelogic.common.core.jobs.EclipseJob;
 import com.surelogic.flashlight.client.eclipse.jobs.RefreshRunManagerSLJob;
+import com.surelogic.flashlight.common.jobs.PrepSLJob;
 import com.surelogic.flashlight.common.model.FlashlightFileUtility;
 import com.surelogic.flashlight.common.model.RunDescription;
 import com.surelogic.flashlight.common.model.RunDirectory;
@@ -179,11 +182,52 @@ public final class RunManager {
     final Set<RunDirectory> result = new HashSet<RunDirectory>();
     synchronized (f_runs) {
       for (RunDirectory runDir : f_runs) {
-        if (!runDir.isPrepared() && !runDir.isBeingPrepared())
+        if (!runDir.isPrepared() && !isBeingPrepared(runDir))
           result.add(runDir);
       }
     }
     return result;
+  }
+
+  /**
+   * Checks if the passed run is in the process of being prepared for querying.
+   * <p>
+   * This cannot be a call on the {@link RunDirectory} because we need to check
+   * if a prep job is currently running within Eclipse and that class cannot
+   * interact with Eclipse.
+   * 
+   * @param directory
+   *          a Flashlight run directory.
+   * @return {@code true} if the passed run is in the process of being prepared
+   *         for querying, {@code false} otherwise.
+   */
+  public boolean isBeingPrepared(final RunDirectory directory) {
+    return findPrepSLJobOrNullFor(directory) != null;
+  }
+
+  /**
+   * Finds the running data preparation job for the passed run directory and
+   * returns it, or {@code null} if no data preparation job is currently running
+   * on the passed directory.
+   * 
+   * @param directory
+   *          a Flashlight run directory.
+   * @return the running data preparation job for the passed run directory and
+   *         returns it, or {@code null} if no data preparation job is currently
+   *         running on the passed directory
+   */
+  @Nullable
+  public PrepSLJob findPrepSLJobOrNullFor(final RunDirectory directory) {
+    if (directory.getPrepDbDirectoryHandle().exists() && !directory.isPrepared()) {
+      final String prepJobName = directory.getPrepJobName();
+      final List<PrepSLJob> prepJobs = EclipseJob.getInstance().getActiveJobsOfType(PrepSLJob.class);
+      for (PrepSLJob job : prepJobs) {
+        if (prepJobName.equals(job.getName())) {
+          return job;
+        }
+      }
+    }
+    return null;
   }
 
   /**

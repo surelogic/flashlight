@@ -140,7 +140,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements IRunMa
   private RunDirectory[] getSelectedRunDirectoriesNotBeingPrepared() {
     final List<RunDirectory> result = new ArrayList<RunDirectory>();
     for (RunDirectory r : getSelectedRunDirectories()) {
-      if (!r.isBeingPrepared())
+      if (!RunManager.getInstance().isBeingPrepared(r))
         result.add(r);
     }
     return result.toArray(new RunDirectory[result.size()]);

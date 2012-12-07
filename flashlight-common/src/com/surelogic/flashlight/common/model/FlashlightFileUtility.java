@@ -60,6 +60,29 @@ public final class FlashlightFileUtility {
   }
 
   /**
+   * Name of the "data preparation is completed" file file within the prep
+   * directory.
+   */
+  private static final String PREP_COMPLETE_FILENAME = "complete";
+
+  /**
+   * Constructs and returns an abstract representation of
+   * "data preparation is completed" file within the prepared data directory
+   * within the passed directory.
+   * <p>
+   * This method does not create the directory or check if it actually exists.
+   * 
+   * @param directory
+   *          a Flashlight run directory.
+   * @return an abstract representation of "data preparation is completed" file
+   *         within the prepared data directory within the passed directory.
+   */
+  public static File getPrepCompleteFileHandle(final File directory) {
+    final File result = new File(getPrepDirectoryHandle(directory), PREP_COMPLETE_FILENAME);
+    return result;
+  }
+
+  /**
    * Name of the subdirectory within the prep directory that contains the
    * database.
    */

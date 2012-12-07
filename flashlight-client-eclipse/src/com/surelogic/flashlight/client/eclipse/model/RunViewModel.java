@@ -150,7 +150,7 @@ public final class RunViewModel {
       String getImageSymbolicName(final RunDirectory rowData) {
         if (rowData.isPrepared()) {
           return CommonImages.IMG_DRUM;
-        } else if (rowData.isBeingPrepared())
+        } else if (RunManager.getInstance().isBeingPrepared(rowData))
           return CommonImages.IMG_REFRESH;
         else
           return CommonImages.IMG_FILE;

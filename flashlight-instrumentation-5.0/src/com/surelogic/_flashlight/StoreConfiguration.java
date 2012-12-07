@@ -86,7 +86,6 @@ public class StoreConfiguration {
     private static volatile String fieldsFile;
     private static volatile String sitesFile;
     private static volatile String dateOverride;
-    private static volatile boolean isRefineryOff;
     private static volatile OutputType outputType;
     private static volatile CollectionType collectionType;
     private static volatile boolean handleFieldAccesses;
@@ -321,7 +320,6 @@ public class StoreConfiguration {
         setConsolePort(getIntProperty(props, FL_CONSOLE_PORT,
                 FL_CONSOLE_PORT_DEFAULT));
         setOutputPort(getIntProperty(props, FL_OUTPUT_PORT, null));
-        setRefineryOff(props.getProperty(FL_REFINERY_OFF, null) != null);
         if (hasOutputPort()) {
             // We only stream XML over the pipe
             setOutputType(FL_SOCKET_OUTPUT_TYPE);
@@ -557,14 +555,6 @@ public class StoreConfiguration {
 
     public static void setDateOverride(final String date) {
         dateOverride = date;
-    }
-
-    public static boolean isRefineryOff() {
-        return isRefineryOff;
-    }
-
-    public static void setRefineryOff(final boolean off) {
-        isRefineryOff = off;
     }
 
     public static OutputType getOutputType() {

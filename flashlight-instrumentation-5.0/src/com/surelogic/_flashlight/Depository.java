@@ -60,27 +60,4 @@ final class Depository extends Thread {
         }
     }
 
-    /**
-     * Sets the output strategy used by the Depository. This method is intended
-     * for <i>test code use only</i> because the {@link Store} configures the
-     * output strategy for this thread upon construction. Tests, however, may
-     * want to avoid output and/or simply count events.
-     * 
-     * @param outputStrategy
-     *            an output strategy.
-     */
-    void setOutputStrategy(final EventVisitor outputStrategy) {
-        if (outputStrategy == null) {
-            throw new IllegalArgumentException(
-                    "outputStrategy must be non-null");
-        }
-        if (f_outputStrategy != null) {
-            /*
-             * Allow the default XML strategy to end properly and close its
-             * file.
-             */
-            f_outputStrategy.visit(FinalEvent.FINAL_EVENT);
-        }
-        f_outputStrategy = outputStrategy;
-    }
 }

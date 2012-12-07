@@ -796,17 +796,4 @@ public class Store {
         }
     }
 
-    /*
-     * Used by one of the JUnit tests.
-     */
-    public static void setOutputStrategy(final EventVisitor outputStrategy) {
-        for (StoreListener l : f_listeners) {
-            if (l instanceof PostMortemStore) {
-                PostMortemStore s = (PostMortemStore) l;
-                s.setOutputStrategy(outputStrategy);
-                return;
-            }
-        }
-    }
-
 }

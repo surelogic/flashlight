@@ -42,6 +42,7 @@ public class CheckpointingOutputStreamStrategy extends EventVisitor {
     }
 
     private void checkpointStream(long nanos) throws IOException {
+        f_out = null;
         FileWriter w = new FileWriter(new File(
                 StoreConfiguration.getDirectory(), String.format("%s.%06d%s",
                         InstrumentationConstants.FL_CHECKPOINT_PREFIX,
@@ -60,7 +61,6 @@ public class CheckpointingOutputStreamStrategy extends EventVisitor {
         } catch (IOException exc) {
             throw new IllegalStateException(exc);
         }
-        f_out.visit(new Time(f_conf.getStartTime(), f_conf.getStartNanoTime()));
     }
 
     @Override
@@ -137,7 +137,7 @@ public class CheckpointingOutputStreamStrategy extends EventVisitor {
     void visit(final FinalEvent e) {
         f_out.visit(e);
         try {
-            checkpointStream(e.getNanoTime());
+            checkpointStream(System.nanoTime());
         } catch (IOException exc) {
             throw new IllegalStateException(exc);
         }

@@ -49,18 +49,6 @@ public class PostMortemStore implements StoreListener {
      */
     private Depository f_depository;
 
-    /**
-     * Only used for testing, this method sets the output strategy of the
-     * depository thread.
-     * 
-     * @param outputStrategy
-     *            an output strategy.
-     */
-    void setOutputStrategy(final EventVisitor outputStrategy) {
-        assert outputStrategy != null;
-        f_depository.setOutputStrategy(outputStrategy);
-    }
-
     private final UtilConcurrent f_rwLocks;
 
     private RunConf f_conf;
@@ -106,19 +94,8 @@ public class PostMortemStore implements StoreListener {
     public PostMortemStore() {
         final int rawQueueSize = StoreConfiguration.getRawQueueSize();
         final int outQueueSize = StoreConfiguration.getOutQueueSize();
-        f_rawQueue = new ArrayBlockingQueue<List<Event>>(
-                StoreConfiguration.isRefineryOff() ? outQueueSize
-                        : rawQueueSize);
-
-        if (StoreConfiguration.debugOn()) {
-            System.err.println("Using refinery = "
-                    + !StoreConfiguration.isRefineryOff());
-        }
-        if (!StoreConfiguration.isRefineryOff()) {
-            f_outQueue = new ArrayBlockingQueue<List<Event>>(outQueueSize);
-        } else {
-            f_outQueue = null;
-        }
+        f_rawQueue = new ArrayBlockingQueue<List<Event>>(rawQueueSize);
+        f_outQueue = new ArrayBlockingQueue<List<Event>>(outQueueSize);
         f_gcQueue = new ArrayBlockingQueue<List<? extends IdPhantomReference>>(
                 GC_DRIFT);
 
@@ -178,16 +155,10 @@ public class PostMortemStore implements StoreListener {
         f_happensBefore = defs.getHappensBefore();
         // Start Refinery and Depository
         final int refinerySize = StoreConfiguration.getRefinerySize();
-        if (!StoreConfiguration.isRefineryOff()) {
-            f_refinery = new Refinery(this, f_conf, defs, f_gcQueue,
-                    f_rawQueue, f_outQueue, refinerySize);
-            f_refinery.start();
-            f_depository = new Depository(f_conf, f_outQueue, outputStrategy);
-        } else {
-            f_refinery = new MinimalRefinery(this, f_gcQueue);
-            f_refinery.start();
-            f_depository = new Depository(f_conf, f_rawQueue, outputStrategy);
-        }
+        f_refinery = new Refinery(this, f_conf, defs, f_gcQueue, f_rawQueue,
+                f_outQueue, refinerySize);
+        f_refinery.start();
+        f_depository = new Depository(f_conf, f_outQueue, outputStrategy);
         f_depository.start();
         f_conf.log("collection started (rawQ="
                 + StoreConfiguration.getRawQueueSize() + " : refinery="
@@ -399,20 +370,13 @@ public class PostMortemStore implements StoreListener {
         /*
          * Finish up data output.
          */
-        if (StoreConfiguration.isRefineryOff()) {
-            // Need to shutdown the minimal refinery in a different way than
-            // the normal refinery
-            f_refinery.requestShutdown();
-        }
         Thread.yield();
         putInQueue(f_rawQueue, flushLocalQueues());
         final List<Event> last = new ArrayList<Event>();
         last.add(new Time(new Date(), System.nanoTime()));
         last.add(FinalEvent.FINAL_EVENT);
         putInQueue(f_rawQueue, last);
-        if (!StoreConfiguration.isRefineryOff()) {
-            join(f_refinery);
-        }
+        join(f_refinery);
         join(f_depository);
     }
 

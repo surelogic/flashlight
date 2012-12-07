@@ -57,13 +57,8 @@ public class ConnectToRunningMonitorAction extends Action {
                     name = result;
                     date = new Date();
                 }
-                MonitorStatus status = new MonitorStatus(name, date.toString(),
-                        new File(runDir,
-                                InstrumentationConstants.FL_FIELDS_FILE_LOC),
-                        new File(runDir,
-                                InstrumentationConstants.FL_PORT_FILE_LOC),
-                        new File(runDir,
-                                InstrumentationConstants.FL_COMPLETE_RUN_LOC));
+                MonitorStatus status = new MonitorStatus(runDir, name,
+                        date.toString());
                 /* Let the monitor thread know it should expect a launch */
                 EclipseJob.getInstance().schedule(
                         new WatchFlashlightMonitorJob(status));

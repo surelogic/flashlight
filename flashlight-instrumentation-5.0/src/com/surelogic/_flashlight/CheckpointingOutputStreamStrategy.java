@@ -4,7 +4,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic._flashlight.common.OutputType;
 import com.surelogic._flashlight.trace.TraceNode;
 
@@ -35,12 +34,11 @@ public class CheckpointingOutputStreamStrategy extends EventVisitor {
                 f_outputType);
     }
 
-    private void checkpointStream() throws IOException {
+    private void checkpointStream(long nanos) throws IOException {
         FileWriter w = new FileWriter(f_conf.getFilePrefix() + '.'
                 + String.format("%06d", f_count++)
-                + InstrumentationConstants.FL_COMPLETE_CHECKPOINT_SUFFIX);
-        w.write(Long.toString(System.nanoTime() - f_conf.getStartNanoTime())
-                + " ns\n");
+                + OutputType.COMPLETE.getSuffix());
+        w.write(nanos + " ns\n");
         w.close();
     }
 
@@ -49,7 +47,7 @@ public class CheckpointingOutputStreamStrategy extends EventVisitor {
         f_out.visit(e);
         f_out.visit(FinalEvent.FINAL_EVENT);
         try {
-            checkpointStream();
+            checkpointStream(e.getNanoTime());
             f_out = f_factory.create(f_conf, nextStream());
         } catch (IOException exc) {
             throw new IllegalStateException(exc);

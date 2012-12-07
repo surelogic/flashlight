@@ -12,9 +12,11 @@ import java.util.TreeMap;
 
 import com.surelogic._flashlight.common.FieldDef;
 import com.surelogic._flashlight.common.FieldDefs;
+import com.surelogic._flashlight.common.InstrumentationConstants;
 
 public class MonitorStatus {
 
+    private final File runDirectory;
     private final String runName;
     private final String runTime;
     private final FieldDefs fields;
@@ -37,11 +39,15 @@ public class MonitorStatus {
     private ConnectionState state;
     private int timeout;
 
-    public MonitorStatus(final String runName, final String runTime,
-            final File fieldsFile, final File portFile) {
+    public MonitorStatus(final File runDirectory, final String runName,
+            final String runTime) {
+        this.runDirectory = runDirectory;
         this.runName = runName;
         this.runTime = runTime;
-        this.portFile = portFile;
+        portFile = new File(runDirectory,
+                InstrumentationConstants.FL_PORT_FILE_LOC);
+        File fieldsFile = new File(runDirectory,
+                InstrumentationConstants.FL_FIELDS_FILE_LOC);
         try {
             fields = new FieldDefs(fieldsFile);
         } catch (IOException e) {
@@ -64,6 +70,7 @@ public class MonitorStatus {
 
     public MonitorStatus(final MonitorStatus status) {
         if (status != null) {
+            runDirectory = status.runDirectory;
             runName = status.runName;
             runTime = status.runTime;
             fields = status.fields;
@@ -99,6 +106,10 @@ public class MonitorStatus {
 
     public void setState(final ConnectionState state) {
         this.state = state;
+    }
+
+    public File getRunDirectory() {
+        return runDirectory;
     }
 
     public String getRunName() {

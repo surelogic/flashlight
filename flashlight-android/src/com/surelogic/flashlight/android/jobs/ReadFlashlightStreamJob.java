@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
@@ -193,7 +194,7 @@ public class ReadFlashlightStreamJob implements SLJob {
                     + OutputType.FLH.getSuffix()));
             f_header.println("<?xml version='1.0' encoding='UTF-8' standalone='yes'?>");
             f_buf = new StringBuilder();
-            nextStream();
+            nextStream(true);
         }
 
         @Override
@@ -227,7 +228,7 @@ public class ReadFlashlightStreamJob implements SLJob {
             }
             if (event == PrepEvent.CHECKPOINT) {
                 try {
-                    nextStream();
+                    nextStream(false);
                 } catch (IOException e) {
                     throw new SAXException(e);
                 }
@@ -235,15 +236,24 @@ public class ReadFlashlightStreamJob implements SLJob {
             f_buf.setLength(0);
         }
 
-        void nextStream() throws IOException {
-            boolean firstFile = f_out == null;
-            if (!firstFile) {
-                f_out.println("</flashlight>");
-                f_out.flush();
-                f_out.close();
+        void checkpointStream(long nanos) throws IOException {
+            f_out.println("</flashlight>");
+            f_out.flush();
+            f_out.close();
+            // Build completion file
+            FileWriter complete = new FileWriter(new File(f_dir, f_runName
+                    + String.format(".%06d", f_count++)
+                    + OutputType.COMPLETE.getSuffix()));
+            try {
+                complete.write(nanos + " ns\n");
+            } finally {
+                complete.close();
             }
+        }
+
+        void nextStream(boolean firstFile) throws IOException {
             f_outFile = new File(f_dir, f_runName
-                    + String.format(".%06d", f_count++) + f_type.getSuffix());
+                    + String.format(".%06d", f_count) + f_type.getSuffix());
             f_out = new PrintWriter(OutputType.getOutputStreamFor(f_outFile));
             if (firstFile) {
                 f_out.println("<?xml version='1.0' encoding='UTF-8' standalone='yes'?>");
@@ -275,18 +285,6 @@ public class ReadFlashlightStreamJob implements SLJob {
             }
             f_outFile.delete();
             f_header.close();
-            // Still write out a Run.Complete as long as we have some data.
-            if (f_count > 1) {
-                File complete = new File(f_dir,
-                        InstrumentationConstants.FL_COMPLETE_RUN_LOC);
-                try {
-                    complete.createNewFile();
-                } catch (IOException e) {
-                    SLLogger.getLoggerFor(ReadFlashlightStreamJob.class).log(
-                            Level.WARNING, "Could not create Run.Complete", e);
-                }
-                return true;
-            }
             return false;
         }
 
@@ -302,14 +300,6 @@ public class ReadFlashlightStreamJob implements SLJob {
                 f_out.close();
             }
             f_header.close();
-            File complete = new File(f_dir,
-                    InstrumentationConstants.FL_COMPLETE_RUN_LOC);
-            try {
-                complete.createNewFile();
-            } catch (IOException e) {
-                SLLogger.getLoggerFor(ReadFlashlightStreamJob.class).log(
-                        Level.WARNING, "Could not create Run.Complete", e);
-            }
         }
 
     }

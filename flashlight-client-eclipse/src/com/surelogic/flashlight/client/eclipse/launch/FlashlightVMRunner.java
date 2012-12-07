@@ -11,7 +11,6 @@ import static com.surelogic._flashlight.common.InstrumentationConstants.FL_LOG_F
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_NO_SPY;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_OUTPUT_TYPE;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_OUTQ_SIZE;
-import static com.surelogic._flashlight.common.InstrumentationConstants.FL_PORT_FILE_LOC;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_POSTMORTEM;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_PROJECTS_FOLDER_LOC;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_RAWQ_SIZE;
@@ -100,7 +99,6 @@ public final class FlashlightVMRunner implements IVMRunner {
     private final File fieldsFile;
     private final File sitesFile;
     private final File logFile;
-    private final File portFile;
 
     private final String datePostfix;
     private final String pathToFlashlightLib;
@@ -162,7 +160,6 @@ public final class FlashlightVMRunner implements IVMRunner {
         projectOutputDir = new File(runOutputDir, FL_PROJECTS_FOLDER_LOC);
         externalOutputDir = new File(runOutputDir, FL_EXTERNAL_FOLDER_LOC);
         sourceDir = new File(runOutputDir, FL_SOURCE_FOLDER_LOC);
-        portFile = new File(runOutputDir, FL_PORT_FILE_LOC);
         fieldsFile = new File(runOutputDir, FL_FIELDS_FILE_LOC);
         sitesFile = new File(runOutputDir, FL_SITES_FILE_LOC);
         logFile = new File(runOutputDir, FL_LOG_FILE_LOC);
@@ -247,8 +244,8 @@ public final class FlashlightVMRunner implements IVMRunner {
 
         /* Let the monitor thread know it should expect a launch */
         EclipseJob.getInstance().schedule(
-                new WatchFlashlightMonitorJob(new MonitorStatus(mainTypeName,
-                        new Date().toString(), fieldsFile, portFile)));
+                new WatchFlashlightMonitorJob(new MonitorStatus(runOutputDir,
+                        mainTypeName, new Date().toString())));
 
         /*
          * Create and launch a job that detects when the instrumented run

@@ -543,7 +543,6 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
         final File sitesFile;
         final File runDir;
         final File infoDir;
-        final File completeFile;
         final File portFile;
         final File sourceDir;
         final File apkFolder;
@@ -602,8 +601,6 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
             log = new File(runDir, InstrumentationConstants.FL_LOG_FILE_LOC);
             sitesFile = new File(runDir,
                     InstrumentationConstants.FL_SITES_FILE_LOC);
-            completeFile = new File(runDir,
-                    InstrumentationConstants.FL_COMPLETE_RUN_LOC);
             portFile = new File(runDir,
                     InstrumentationConstants.FL_PORT_FILE_LOC);
             PrintWriter writer = new PrintWriter(portFile);
@@ -960,10 +957,9 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
                         id.createForward(data.outputPort, data.outputPort);
                         EclipseJob.getInstance().schedule(
                                 new WatchFlashlightMonitorJob(
-                                        new MonitorStatus(data.runName,
-                                                data.time.toString(),
-                                                data.fieldsFile, data.portFile,
-                                                data.completeFile)));
+                                        new MonitorStatus(data.runDir,
+                                                data.runName, data.time
+                                                        .toString())));
                         EclipseJob.getInstance().schedule(
                                 new ReadFlashlightStreamJob(data.runName,
                                         data.runDir, data.outputPort, id));

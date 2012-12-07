@@ -14,6 +14,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 
 import com.surelogic._flashlight.SitesReader.HappensBeforeSites;
 import com.surelogic._flashlight.Store.GCThread;
+import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic._flashlight.common.OutputType;
 import com.surelogic._flashlight.trace.TraceNode;
 
@@ -149,7 +150,8 @@ public class PostMortemStore implements StoreListener {
         try {
             if (StoreConfiguration.getDirectory() != null) {
                 final PrintWriter headerW = new PrintWriter(
-                        f_conf.getFilePrefix() + OutputType.FLH.getSuffix());
+                        InstrumentationConstants.FL_CHECKPOINT_PREFIX
+                                + OutputType.FLH.getSuffix());
                 OutputStrategyXML.outputHeader(f_conf, headerW, timeEvent,
                         OutputStrategyXML.version);
                 headerW.close();

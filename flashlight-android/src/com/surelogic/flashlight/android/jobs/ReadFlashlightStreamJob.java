@@ -41,7 +41,6 @@ public class ReadFlashlightStreamJob implements SLJob {
     private static final int RETRIES = 50;
     private static final int TIMEOUT_MS = 1000;
     private static final int RETRY_DELAY_MS = 100;
-    private final String f_runName;
     private final int f_port;
     private final File f_dir;
     private final IDevice f_device;
@@ -49,15 +48,14 @@ public class ReadFlashlightStreamJob implements SLJob {
 
     private final StringBuilder f_pastAttemptsLog;
 
-    public ReadFlashlightStreamJob(final String runName, final File infoDir,
-            final int outputPort, final IDevice id) {
-        this(runName, infoDir, outputPort, id, RETRIES, null);
+    public ReadFlashlightStreamJob(final File infoDir, final int outputPort,
+            final IDevice id) {
+        this(infoDir, outputPort, id, RETRIES, null);
     }
 
-    private ReadFlashlightStreamJob(final String runName, final File infoDir,
-            final int outputPort, final IDevice id, final int retries,
+    private ReadFlashlightStreamJob(final File infoDir, final int outputPort,
+            final IDevice id, final int retries,
             final StringBuilder pastAttemptsLog) {
-        f_runName = runName;
         f_port = outputPort;
         f_dir = infoDir;
         f_device = id;
@@ -68,7 +66,7 @@ public class ReadFlashlightStreamJob implements SLJob {
 
     @Override
     public String getName() {
-        return "Collecting data from " + f_runName + ".";
+        return "Collecting data in " + f_dir + ".";
     }
 
     private final String getTStamp() {
@@ -110,8 +108,8 @@ public class ReadFlashlightStreamJob implements SLJob {
                                         + f_port + ")...retrying in "
                                         + RETRY_DELAY_MS + " ms \n");
                         EclipseJob.getInstance().schedule(
-                                new ReadFlashlightStreamJob(f_runName, f_dir,
-                                        f_port, f_device, f_retries - 1,
+                                new ReadFlashlightStreamJob(f_dir, f_port,
+                                        f_device, f_retries - 1,
                                         f_pastAttemptsLog), RETRY_DELAY_MS);
                         return SLStatus.OK_STATUS;
                     } else {
@@ -124,7 +122,7 @@ public class ReadFlashlightStreamJob implements SLJob {
                             // someone unplugged the device?
                         }
                         return SLStatus.createErrorStatus(
-                                I18N.err(245, f_runName,
+                                I18N.err(245, f_dir.toString(),
                                         f_pastAttemptsLog.toString()), exc);
                     }
                 }
@@ -190,8 +188,9 @@ public class ReadFlashlightStreamJob implements SLJob {
             new File(f_dir, "source").mkdir();
             new File(f_dir, "external").mkdir();
             new File(f_dir, "projects").mkdir();
-            f_header = new PrintWriter(new File(f_dir, f_runName
-                    + OutputType.FLH.getSuffix()));
+            f_header = new PrintWriter(new File(f_dir,
+                    InstrumentationConstants.FL_CHECKPOINT_PREFIX
+                            + OutputType.FLH.getSuffix()));
             f_header.println("<?xml version='1.0' encoding='UTF-8' standalone='yes'?>");
             f_buf = new StringBuilder();
             nextStream(true);
@@ -241,9 +240,10 @@ public class ReadFlashlightStreamJob implements SLJob {
             f_out.flush();
             f_out.close();
             // Build completion file
-            FileWriter complete = new FileWriter(new File(f_dir, f_runName
-                    + String.format(".%06d", f_count++)
-                    + OutputType.COMPLETE.getSuffix()));
+            FileWriter complete = new FileWriter(new File(f_dir,
+                    InstrumentationConstants.FL_CHECKPOINT_PREFIX
+                            + String.format(".%06d", f_count++)
+                            + OutputType.COMPLETE.getSuffix()));
             try {
                 complete.write(nanos + " ns\n");
             } finally {
@@ -252,16 +252,19 @@ public class ReadFlashlightStreamJob implements SLJob {
         }
 
         void nextStream(boolean firstFile) throws IOException {
-            f_outFile = new File(f_dir, f_runName
-                    + String.format(".%06d", f_count) + f_type.getSuffix());
+            f_outFile = new File(f_dir,
+                    InstrumentationConstants.FL_CHECKPOINT_PREFIX
+                            + String.format(".%06d", f_count)
+                            + f_type.getSuffix());
             f_out = new PrintWriter(OutputType.getOutputStreamFor(f_outFile));
             if (firstFile) {
                 f_out.println("<?xml version='1.0' encoding='UTF-8' standalone='yes'?>");
             } else {
                 // Grab the header information and place it into this file.
-                BufferedReader reader = new BufferedReader(
-                        new FileReader(new File(f_dir, f_runName
-                                + OutputType.FLH.getSuffix())));
+                BufferedReader reader = new BufferedReader(new FileReader(
+                        new File(f_dir,
+                                InstrumentationConstants.FL_CHECKPOINT_PREFIX
+                                        + OutputType.FLH.getSuffix())));
                 try {
                     String line;
                     while (!(line = reader.readLine())

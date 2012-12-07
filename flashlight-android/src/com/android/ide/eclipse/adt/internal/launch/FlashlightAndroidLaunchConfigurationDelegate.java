@@ -961,8 +961,8 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
                                                 data.runName, data.time
                                                         .toString())));
                         EclipseJob.getInstance().schedule(
-                                new ReadFlashlightStreamJob(data.runName,
-                                        data.runDir, data.outputPort, id));
+                                new ReadFlashlightStreamJob(data.runDir,
+                                        data.outputPort, id));
                         EclipseJob.getInstance()
                                 .schedule(
                                         new ReadLogcatJob(data.runName,

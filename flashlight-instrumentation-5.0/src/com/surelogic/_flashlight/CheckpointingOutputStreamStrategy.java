@@ -31,11 +31,14 @@ public class CheckpointingOutputStreamStrategy extends EventVisitor {
     }
 
     private OutputStream nextStream() throws IOException {
-        return EventVisitor.createStream(
-                new File(StoreConfiguration.getDirectory(), String.format(
-                        "%s.%06d%s",
-                        InstrumentationConstants.FL_CHECKPOINT_PREFIX, f_count,
-                        f_outputType.getSuffix())), f_outputType);
+        return EventVisitor
+                .createStream(
+                        new File(
+                                StoreConfiguration.getDirectory(),
+                                String.format(
+                                        "%s.%06d",
+                                        InstrumentationConstants.FL_CHECKPOINT_PREFIX,
+                                        f_count)), f_outputType);
     }
 
     private void checkpointStream(long nanos) throws IOException {
@@ -133,6 +136,11 @@ public class CheckpointingOutputStreamStrategy extends EventVisitor {
     @Override
     void visit(final FinalEvent e) {
         f_out.visit(e);
+        try {
+            checkpointStream(e.getNanoTime());
+        } catch (IOException exc) {
+            throw new IllegalStateException(exc);
+        }
     }
 
     @Override

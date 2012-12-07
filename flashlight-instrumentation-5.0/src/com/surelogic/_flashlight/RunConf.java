@@ -34,12 +34,6 @@ public class RunConf {
      */
     private final PrintStream f_log;
 
-    private static final String ENCODING = "UTF-8";
-
-    public String getEncoding() {
-        return ENCODING;
-    }
-
     /**
      * Flags if helpful debug information should be output to the console log.
      * This flag generates a lot of output and should only be set to

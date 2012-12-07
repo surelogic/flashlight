@@ -174,8 +174,9 @@ public class ReadFlashlightStreamJob implements SLJob {
         private int f_count;
         private final StringBuilder f_buf;
 
-        private boolean haveTime;
-        private long time;
+        private String f_run;
+        private boolean f_haveTime;
+        private long f_time;
 
         public CheckpointingEventHandler(final OutputType type)
                 throws IOException {
@@ -207,6 +208,7 @@ public class ReadFlashlightStreamJob implements SLJob {
             }
 
             if (event == PrepEvent.FLASHLIGHT) {
+                f_run = attributes.getValue(AttributeType.RUN.label());
                 f_buf.append('>');
             } else {
                 f_buf.append("/>");
@@ -220,10 +222,10 @@ public class ReadFlashlightStreamJob implements SLJob {
                 } catch (IOException e) {
                     throw new SAXException(e);
                 }
-            } else if (!haveTime && event == PrepEvent.TIME) {
-                time = Long.parseLong(attributes.getValue(AttributeType.TIME
+            } else if (!f_haveTime && event == PrepEvent.TIME) {
+                f_time = Long.parseLong(attributes.getValue(AttributeType.TIME
                         .label()));
-                haveTime = true;
+                f_haveTime = true;
             }
 
             f_buf.setLength(0);
@@ -239,7 +241,7 @@ public class ReadFlashlightStreamJob implements SLJob {
                             + String.format(".%06d", f_count++)
                             + OutputType.COMPLETE.getSuffix()));
             try {
-                complete.write(nanos - time + " ns\n");
+                complete.write(nanos - f_time + " ns\n");
             } finally {
                 complete.close();
             }
@@ -251,10 +253,10 @@ public class ReadFlashlightStreamJob implements SLJob {
                             + String.format(".%06d", f_count)
                             + f_type.getSuffix());
             f_out = new PrintWriter(OutputType.getOutputStreamFor(f_outFile));
-            if (firstFile) {
-                f_out.println("<?xml version='1.0' encoding='UTF-8' standalone='yes'?>");
-            } else {
-                // FIXME we may need to still output the header info here
+            f_out.println("<?xml version='1.0' encoding='UTF-8' standalone='yes'?>");
+            if (!firstFile) {
+                f_out.println(String.format(
+                        "<flashlight version='1.0' run='%s'>", f_run));
             }
         }
 

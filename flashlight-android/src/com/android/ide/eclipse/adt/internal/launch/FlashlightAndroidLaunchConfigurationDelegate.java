@@ -586,9 +586,9 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
             SimpleDateFormat df = new SimpleDateFormat(
                     InstrumentationConstants.DATE_FORMAT);
             projectName = project.getName();
-            runName = projectName + df.format(time);
+            runName = projectName;
             runDir = new File(EclipseUtility.getFlashlightDataDirectory(),
-                    runName);
+                    runName + df.format(time));
             runDir.mkdir();
             sourceDir = new File(runDir,
                     InstrumentationConstants.FL_SOURCE_FOLDER_LOC);

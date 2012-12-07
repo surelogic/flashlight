@@ -29,18 +29,17 @@ final class OutputStrategyXML extends EventVisitor {
         Entities.addAttribute(attr.label(), prop, b);
     }
 
-    public static void outputHeader(final RunConf conf, final PrintWriter out,
-            final Time time, final String version) {
+    public static void outputHeader(String run, final PrintWriter out,
+            final String version) {
         assert out != null;
-        out.println("<?xml version='1.0' encoding='" + conf.getEncoding()
-                + "' standalone='yes'?>");
+        out.println("<?xml version='1.0' encoding='UTF-8' standalone='yes'?>");
         StringBuilder b = new StringBuilder();
         b.append("<flashlight");
         Entities.addAttribute(AttributeType.VERSION.label(), version, b);
-        Entities.addAttribute(AttributeType.RUN.label(), conf.getRun(), b);
+        Entities.addAttribute(AttributeType.RUN.label(), run, b);
         b.append(">"); // don't end this element
         out.println(b.toString());
-        b = new StringBuilder();
+        b.setLength(0);
         b.append("  <environment");
         try {
             Entities.addAttribute(AttributeType.HOSTNAME.label(), InetAddress
@@ -63,11 +62,6 @@ final class OutputStrategyXML extends EventVisitor {
                 .availableProcessors(), b);
         b.append("/>");
         out.println(b.toString());
-        if (time != null) {
-            out.print("  ");
-            out.println(time);
-            out.println("</flashlight>");
-        }
     }
 
     static final Factory factory = new Factory() {
@@ -80,10 +74,9 @@ final class OutputStrategyXML extends EventVisitor {
     OutputStrategyXML(final RunConf conf, final OutputStream stream)
             throws IOException {
         assert stream != null;
-        final OutputStreamWriter osw = new OutputStreamWriter(stream,
-                conf.getEncoding());
+        final OutputStreamWriter osw = new OutputStreamWriter(stream, "UTF-8");
         f_out = new PrintWriter(osw);
-        outputHeader(conf, f_out, null, version);
+        outputHeader(conf.getRun(), f_out, version);
     }
 
     @Override

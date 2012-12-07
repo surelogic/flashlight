@@ -2,7 +2,6 @@ package com.surelogic.flashlight.common.jobs;
 
 import gnu.trove.TLongHashSet;
 
-import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,14 +13,11 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 
 import javax.xml.parsers.SAXParser;
-
-import org.xml.sax.SAXParseException;
 
 import com.surelogic.NonNull;
 import com.surelogic.Nullable;
@@ -70,7 +66,6 @@ import com.surelogic.flashlight.common.prep.LockSetAnalysis;
 import com.surelogic.flashlight.common.prep.ObjectDefinition;
 import com.surelogic.flashlight.common.prep.ReadWriteLock;
 import com.surelogic.flashlight.common.prep.ScanRawFileFieldsPreScan;
-import com.surelogic.flashlight.common.prep.ScanRawFileInfoPreScan;
 import com.surelogic.flashlight.common.prep.ScanRawFilePreScan;
 import com.surelogic.flashlight.common.prep.ScanRawFilePrepScan;
 import com.surelogic.flashlight.common.prep.StaticCallLocation;
@@ -172,48 +167,7 @@ public final class PrepSLJob extends AbstractSLJob {
 
         File firstFile = f_dataFiles.get(0);
 
-        final SLProgressMonitor preScanInfoMonitor = new SubSLProgressMonitor(
-                monitor, "Collecting raw file info", PRE_SCAN_WORK);
-
-        final ScanRawFileInfoPreScan preScanInfo = new ScanRawFileInfoPreScan(
-                preScanInfoMonitor);
-
         try {
-            final SAXParser infoSaxParser = OutputType.getParser(firstFile);
-            for (Iterator<File> iter = f_dataFiles.iterator(); iter.hasNext();) {
-                final InputStream infoStream = OutputType
-                        .getInputStreamFor(iter.next());
-                try {
-                    infoSaxParser.parse(infoStream, preScanInfo);
-                    SLLogger.getLoggerFor(PrepSLJob.class).fine(
-                            preScanInfo.toString());
-                } catch (EOFException e) {
-                    SLLogger.getLoggerFor(PrepSLJob.class)
-                            .log(Level.INFO,
-                                    "Part of this flashlight run is unreadable.  This may be because the process was killed before Flashlight could clean up.",
-                                    e);
-                    iter.remove();
-                } catch (SAXParseException e) {
-                    SLLogger.getLoggerFor(PrepSLJob.class)
-                            .log(Level.INFO,
-                                    "Part of this flashlight run is unreadable.  This may be because the process was killed before Flashlight could clean up.",
-                                    e);
-                    iter.remove();
-                } finally {
-                    infoStream.close();
-                }
-            }
-            for (File dataFile : f_dataFiles) {
-                final InputStream infoStream = OutputType
-                        .getInputStreamFor(dataFile);
-                try {
-                    infoSaxParser.parse(infoStream, preScanInfo);
-                    SLLogger.getLoggerFor(PrepSLJob.class).fine(
-                            preScanInfo.toString());
-                } finally {
-                    infoStream.close();
-                }
-            }
 
             if (monitor.isCanceled()) {
                 return SLStatus.CANCEL_STATUS;
@@ -324,9 +278,9 @@ public final class PrepSLJob extends AbstractSLJob {
                     }
                     final SLProgressMonitor rprepMonitor = new SubSLProgressMonitor(
                             monitor, "Preparing the raw file", PREP_WORK);
-                    final int numWindows = (int) (preScanInfo
+                    final int numWindows = (int) (scanResults
                             .getMaxReceiverId() / f_windowSize)
-                            + (preScanInfo.getMaxReceiverId() % f_windowSize > 0 ? 1
+                            + (scanResults.getMaxReceiverId() % f_windowSize > 0 ? 1
                                     : 0);
                     rprepMonitor.begin(eventsInRawFile * 2 * numWindows);
                     final TLongHashSet synthetics = scanResults.getSynthetics();

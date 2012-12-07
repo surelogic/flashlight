@@ -92,6 +92,12 @@ public final class ScanRawFilePreScan extends AbstractDataScan {
      */
     private final TLongLongHashMap f_currentStatics = new TLongLongHashMap();
 
+    private long f_maxReceiverId;
+
+    public long getMaxReceiverId() {
+        return f_maxReceiverId;
+    }
+
     /*
      * Static field accesses
      */
@@ -129,32 +135,88 @@ public final class ScanRawFilePreScan extends AbstractDataScan {
             logState();
         }
         final PreppedAttributes attrs = preprocessAttributes(name, attributes);
-        if ("field-read".equals(name) || "field-write".equals(name)) {
+        PrepEvent event = PrepEvent.getEvent(name);
+        switch (event) {
+        case FIELDREAD:
+        case FIELDWRITE:
             final long field = attrs.getLong(AttributeType.FIELD);
             final long thread = attrs.getThreadId();
             final long receiver = attrs.getLong(AttributeType.RECEIVER);
             if (receiver == IdConstants.ILLEGAL_RECEIVER_ID) {
                 useField(field, thread);
             }
-        } else if ("read-write-lock-definition".equals(name)) {
+            break;
+        case READWRITELOCK:
             final long id = attrs.getLong(AttributeType.ID);
             final long rLock = attrs.getLong(AttributeType.READ_LOCK_ID);
             final long wLock = attrs.getLong(AttributeType.WRITE_LOCK_ID);
             f_rwLocks.put(rLock, id);
             f_rwLocks.put(wLock, id);
-        } else if ("field-definition".equals(name)) {
+            break;
+        case FIELDDEFINITION:
             final int mod = attrs.getInt(AttributeType.MODIFIER);
             if ((mod & SYNTHETIC) != 0) {
                 f_synthetics.add(attrs.getLong(AttributeType.ID));
             }
-        } else if ("time".equals(name)) {
+            break;
+        case OBJECTDEFINITION:
+        case THREADDEFINITION:
+        case CLASSDEFINITION:
+            final long classId = attrs.getLong(AttributeType.ID);
+            f_maxReceiverId = Math.max(f_maxReceiverId, classId);
+            break;
+        case TIME:
             if (f_firstTimeEventFound) {
                 f_endTime = attrs.getEventTime();
             } else {
                 f_firstTimeEventFound = true;
             }
-        } else if ("checkpoint".equals(name)) {
+            break;
+        case CHECKPOINT:
             f_endTime = attrs.getEventTime();
+            break;
+        case AFTERINTRINSICLOCKACQUISITION:
+            break;
+        case AFTERINTRINSICLOCKRELEASE:
+            break;
+        case AFTERINTRINSICLOCKWAIT:
+            break;
+        case AFTERUTILCONCURRENTLOCKACQUISITIONATTEMPT:
+            break;
+        case AFTERUTILCONCURRENTLOCKRELEASEATTEMPT:
+            break;
+        case BEFOREINTRINSICLOCKACQUISITION:
+            break;
+        case BEFOREINTRINSICLOCKWAIT:
+            break;
+        case BEFOREUTILCONCURRENTLOCKACQUISITIONATTEMPT:
+            break;
+        case ENVIRONMENT:
+            break;
+        case FIELDASSIGNMENT:
+            break;
+        case FINAL:
+            break;
+        case FLASHLIGHT:
+            break;
+        case GARBAGECOLLECTEDOBJECT:
+            break;
+        case HAPPENSBEFORE:
+            break;
+        case HAPPENSBEFOREOBJECT:
+            break;
+        case INDIRECTACCESS:
+            break;
+        case SELECTEDPACKAGE:
+            break;
+        case SINGLETHREADEFIELD:
+            break;
+        case STATICCALLLOCATION:
+            break;
+        case TRACENODE:
+            break;
+        default:
+            break;
         }
     }
 

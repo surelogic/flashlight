@@ -50,20 +50,14 @@ public final class RunDescription {
       throw new IllegalArgumentException(I18N.err(44, "rawDataVersion"));
     }
     f_rawDataVersion = rawDataVersion;
-    /*
-     * The hostname and username fields were added, so we will accept entries
-     * that do not have them by using a reasonable default.
-     */
     if (hostname == null) {
-      f_hostname = "unknown";
-    } else {
-      f_hostname = hostname;
+      throw new IllegalArgumentException(I18N.err(44, "hostname"));
     }
+    f_hostname = hostname;
     if (userName == null) {
-      f_userName = "unknown";
-    } else {
-      f_userName = userName;
+      throw new IllegalArgumentException(I18N.err(44, "userName"));
     }
+    f_userName = userName;
     if (javaVersion == null) {
       throw new IllegalArgumentException(I18N.err(44, "javaVersion"));
     }
@@ -93,56 +87,83 @@ public final class RunDescription {
     f_android = isAndroid;
   }
 
+  @NonNull
   private final String f_name;
 
+  @NonNull
   public String getName() {
     return f_name;
   }
 
+  @NonNull
+  public String getSimpleName() {
+    final int dotIndex = f_name.lastIndexOf('.');
+    if (dotIndex == -1)
+      return f_name;
+    else
+      return f_name.substring(dotIndex);
+  }
+
+  @NonNull
   private final String f_rawDataVersion;
 
+  @NonNull
   public String getRawDataVersion() {
     return f_rawDataVersion;
   }
 
+  @NonNull
   private final String f_hostname;
 
+  @NonNull
   public String getHostname() {
     return f_hostname;
   }
 
+  @NonNull
   private final String f_userName;
 
+  @NonNull
   public String getUserName() {
     return f_userName;
   }
 
+  @NonNull
   private final String f_javaVersion;
 
+  @NonNull
   public String getJavaVersion() {
     return f_javaVersion;
   }
 
+  @NonNull
   private final String f_javaVendor;
 
+  @NonNull
   public String getJavaVendor() {
     return f_javaVendor;
   }
 
+  @NonNull
   private final String f_osName;
 
+  @NonNull
   public String getOSName() {
     return f_osName;
   }
 
+  @NonNull
   private final String f_osArch;
 
+  @NonNull
   public String getOSArch() {
     return f_osArch;
   }
 
+  @NonNull
   private final String f_osVersion;
 
+  @NonNull
   public String getOSVersion() {
     return f_osVersion;
   }
@@ -159,8 +180,10 @@ public final class RunDescription {
     return f_processors;
   }
 
+  @NonNull
   private final Timestamp f_started;
 
+  @NonNull
   public Timestamp getStartTimeOfRun() {
     return f_started;
   }

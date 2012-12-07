@@ -32,8 +32,7 @@ public final class RunViewLabelProvider implements ITableLabelProvider {
         baseImage = CommonImages.IMG_ANDROID_APP;
       }
       final ImageDescriptor warn = hasWarnings ? SLImages.getImageDescriptor(CommonImages.DECR_WARNING) : null;
-      return SLImages.getDecoratedImage(baseImage,
-          new ImageDescriptor[] { SLImages.getImageDescriptor(CommonImages.DECR_FLASHLIGHT), null, null, warn, null });
+      return SLImages.getDecoratedImage(baseImage, new ImageDescriptor[] { null, null, null, warn, null });
 
     } else if (symbolicName != null)
       return SLImages.getImage(symbolicName);

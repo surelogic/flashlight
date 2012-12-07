@@ -183,7 +183,7 @@ public final class RunViewModel {
 
       @Override
       String getText(final RunDirectory rowData) {
-        return rowData.getDescription().getName();
+        return rowData.getDescription().getSimpleName();
       }
 
       @Override
@@ -206,7 +206,7 @@ public final class RunViewModel {
 
       @Override
       String getImageSymbolicName(RunDirectory rowData) {
-        return CommonImages.IMG_CPU;
+        return CommonImages.IMG_CPU_SUBDUED;
       }
 
       @Override

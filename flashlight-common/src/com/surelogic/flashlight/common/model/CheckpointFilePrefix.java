@@ -132,6 +132,9 @@ public final class CheckpointFilePrefix {
     if (f_rawDataVersion == null) {
       return false;
     }
+    if (f_hostname == null) {
+      return false;
+    }
     if (f_userName == null) {
       return false;
     }

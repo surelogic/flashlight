@@ -59,7 +59,7 @@ public final class PromptToPrepAllRawData extends SLUIJob {
     } else {
       SLLogger.getLogger().log(Level.WARNING, I18N.err(164));
     }
-    RunManager.getInstance().addObserver(RMO);
+    //RunManager.getInstance().addObserver(RMO);
   }
 
   public static void stop() {

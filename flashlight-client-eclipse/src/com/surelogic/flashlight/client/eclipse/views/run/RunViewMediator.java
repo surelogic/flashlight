@@ -184,8 +184,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements IRunMa
   private final Action f_refreshAction = new Action() {
     @Override
     public void run() {
-      EclipseJob.getInstance().scheduleDb(new RefreshRunManagerSLJob(true), false, false,
-          RunManager.getInstance().getRunIdentities());
+      EclipseJob.getInstance().scheduleDb(new RefreshRunManagerSLJob(true), false, false);
     }
   };
 

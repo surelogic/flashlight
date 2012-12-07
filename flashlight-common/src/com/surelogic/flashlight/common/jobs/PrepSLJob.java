@@ -41,7 +41,7 @@ import com.surelogic.common.license.SLLicenseProduct;
 import com.surelogic.common.license.SLLicenseUtility;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.common.model.RawDataFilePrefix;
-import com.surelogic.flashlight.common.model.RawFileUtility;
+import com.surelogic.flashlight.common.model.FlashlightFileUtility;
 import com.surelogic.flashlight.common.model.RunDescription;
 import com.surelogic.flashlight.common.model.RunDirectory;
 import com.surelogic.flashlight.common.prep.AfterIntrinsicLockAcquisition;
@@ -142,7 +142,7 @@ public final class PrepSLJob extends AbstractSLJob {
     final File invalidRun = new File(runDir, InstrumentationConstants.FL_INVALID_RUN);
     int estEventsInRawFile = 0;
     for (File f : f_dataFiles) {
-      estEventsInRawFile += RawFileUtility.estimateNumEvents(f);
+      estEventsInRawFile += FlashlightFileUtility.estimateNumEvents(f);
     }
     final IPostPrep[] postPrepWork = getPostPrep();
 
@@ -156,8 +156,8 @@ public final class PrepSLJob extends AbstractSLJob {
 
     File firstFile = f_dataFiles.get(0);
 
-    final RawDataFilePrefix rawFilePrefix = RawFileUtility.getPrefixFor(firstFile);
-    final RunDescription runDescription = RawFileUtility.getRunDescriptionFor(rawFilePrefix, f_runDirectory.getDescription()
+    final RawDataFilePrefix rawFilePrefix = FlashlightFileUtility.getPrefixFor(firstFile);
+    final RunDescription runDescription = FlashlightFileUtility.getRunDescriptionFor(rawFilePrefix, f_runDirectory.getDescription()
         .getDurationNanos());
     if (runDescription == null) {
       throw new IllegalStateException(rawFilePrefix.getFile().toString() + " does not describe a valid run.");

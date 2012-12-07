@@ -66,20 +66,20 @@ public final class RunDirectory {
       return null;
     }
 
-    final RawDataFilePrefix headerInfo = RawFileUtility.getPrefixFor(headerFile);
+    final RawDataFilePrefix headerInfo = FlashlightFileUtility.getPrefixFor(headerFile);
     if (!headerInfo.isWellFormed()) {
       // can't make sense of the header file
       return null;
     }
 
     // Find the last .complete snapshot
-    final Pair<File, Integer> pair = RawFileUtility.getLatestCheckpointCompleteFileAndItsNumberWithin(directory);
+    final Pair<File, Integer> pair = FlashlightFileUtility.getLatestCheckpointCompleteFileAndItsNumberWithin(directory);
     if (pair == null)
       return null;
 
-    final long durationNanos = RawFileUtility.readDurationInNanosFrom(pair.first());
+    final long durationNanos = FlashlightFileUtility.readDurationInNanosFrom(pair.first());
 
-    final RunDescription run = RawFileUtility.getRunDescriptionFor(headerInfo, durationNanos);
+    final RunDescription run = FlashlightFileUtility.getRunDescriptionFor(headerInfo, durationNanos);
     if (run == null)
       return null;
 
@@ -92,7 +92,7 @@ public final class RunDirectory {
     if (isStillCollectingData)
       return null;
 
-    final RawFileHandles rawFileHandles = RawFileUtility.getRawFileHandlesFor(directory, pair.second());
+    final RawFileHandles rawFileHandles = FlashlightFileUtility.getRawFileHandlesFor(directory, pair.second());
 
     return new RunDirectory(run, directory, source, rawFileHandles);
   }
@@ -228,7 +228,7 @@ public final class RunDirectory {
    */
   @NonNull
   public File getPrepDbDirectoryHandle() {
-    return RawFileUtility.getPrepDbDirectoryHandle(f_runDirHandle);
+    return FlashlightFileUtility.getPrepDbDirectoryHandle(f_runDirHandle);
   }
 
   /**
@@ -294,7 +294,7 @@ public final class RunDirectory {
    */
   @NonNull
   public File getPrepEmptyQueriesFileHandle() {
-    return RawFileUtility.getPrepEmptyQueriesFileHandle(f_runDirHandle);
+    return FlashlightFileUtility.getPrepEmptyQueriesFileHandle(f_runDirHandle);
   }
 
   /**
@@ -307,6 +307,6 @@ public final class RunDirectory {
    */
   @NonNull
   public File getPrepDirectoryHandle() {
-    return RawFileUtility.getPrepDirectoryHandle(f_runDirHandle);
+    return FlashlightFileUtility.getPrepDirectoryHandle(f_runDirHandle);
   }
 }

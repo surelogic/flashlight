@@ -32,7 +32,7 @@ import com.surelogic.common.logging.SLLogger;
  * Flashlight data directory.
  */
 @Utility
-public final class RawFileUtility {
+public final class FlashlightFileUtility {
 
   /*
    * String constants about the prepared data directory within a Flashlight run
@@ -472,14 +472,14 @@ public final class RawFileUtility {
    */
   public static int estimateNumEvents(final File dataFile) {
     final long sizeInBytes = dataFile.length();
-    long estimatedEvents = sizeInBytes / (RawFileUtility.isRawFileGzip(dataFile) ? 7L : 130L);
+    long estimatedEvents = sizeInBytes / (FlashlightFileUtility.isRawFileGzip(dataFile) ? 7L : 130L);
     if (estimatedEvents <= 0) {
       estimatedEvents = 10L;
     }
     return SLUtility.safeLongToInt(estimatedEvents);
   }
 
-  private RawFileUtility() {
+  private FlashlightFileUtility() {
     // no instances
   }
 }

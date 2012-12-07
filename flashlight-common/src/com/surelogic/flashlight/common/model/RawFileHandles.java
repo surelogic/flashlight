@@ -16,7 +16,7 @@ import com.surelogic.common.logging.SLLogger;
  * Holds file handles to the data file(s) and the log file of a Flashlight run
  * as well as time information.
  * 
- * @see RawFileUtility
+ * @see FlashlightFileUtility
  */
 public final class RawFileHandles {
 
@@ -77,10 +77,10 @@ public final class RawFileHandles {
    * @return {@code true} if the data file is compressed, {@code false}
    *         otherwise.
    * 
-   * @see RawFileUtility#isRawFileGzip(File)
+   * @see FlashlightFileUtility#isRawFileGzip(File)
    */
   public boolean isDataFileGzip() {
-    return RawFileUtility.isRawFileGzip(f_data[0]);
+    return FlashlightFileUtility.isRawFileGzip(f_data[0]);
   }
 
   @NonNull

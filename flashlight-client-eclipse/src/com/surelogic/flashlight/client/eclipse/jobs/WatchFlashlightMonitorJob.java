@@ -25,7 +25,7 @@ import com.surelogic.common.ui.jobs.SLUIJob;
 import com.surelogic.flashlight.client.eclipse.views.monitor.MonitorStatus;
 import com.surelogic.flashlight.client.eclipse.views.monitor.MonitorStatus.ConnectionState;
 import com.surelogic.flashlight.client.eclipse.views.monitor.MonitorView;
-import com.surelogic.flashlight.common.model.RawFileUtility;
+import com.surelogic.flashlight.common.model.FlashlightFileUtility;
 
 public class WatchFlashlightMonitorJob extends AbstractSLJob {
 
@@ -47,7 +47,7 @@ public class WatchFlashlightMonitorJob extends AbstractSLJob {
                 .getView("com.surelogic.flashlight.client.monitor.views.MonitorView");
         if (view != null) {
             try {
-                if (RawFileUtility.doneCollectingDataInto(f_status
+                if (FlashlightFileUtility.doneCollectingDataInto(f_status
                         .getRunDirectory())) {
                     f_status.setState(ConnectionState.TERMINATED);
                 } else if (!f_status.getPortFile().exists()) {

@@ -19,7 +19,7 @@ import com.surelogic.Vouch;
 import com.surelogic.common.SLUtility;
 import com.surelogic.common.core.EclipseUtility;
 import com.surelogic.flashlight.client.eclipse.jobs.RefreshRunManagerSLJob;
-import com.surelogic.flashlight.common.model.RawFileUtility;
+import com.surelogic.flashlight.common.model.FlashlightFileUtility;
 import com.surelogic.flashlight.common.model.RunDescription;
 import com.surelogic.flashlight.common.model.RunDirectory;
 
@@ -209,7 +209,7 @@ public final class RunManager {
      */
     final Set<RunDescription> runs = new HashSet<RunDescription>();
     final Set<RunDescription> preparedRuns = new HashSet<RunDescription>();
-    final Collection<RunDirectory> runDirs = RawFileUtility.getRunDirectories(f_dataDir);
+    final Collection<RunDirectory> runDirs = FlashlightFileUtility.getRunDirectories(f_dataDir);
     for (final RunDirectory dir : runDirs) {
       runs.add(dir.getDescription());
       if (dir.isPreparedOrIsBeingPrepared()) {

@@ -53,7 +53,7 @@ public class EmptyQueriesCache {
   }
 
   private void readFile(RunDirectory runDirectory) {
-    final File emptyQueriesFile = runDirectory.getEmptyQueriesFile();
+    final File emptyQueriesFile = runDirectory.getPrepEmptyQueriesFileHandle();
     if (!emptyQueriesFile.exists())
       return;
 

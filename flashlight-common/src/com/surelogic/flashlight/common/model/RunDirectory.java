@@ -66,20 +66,20 @@ public final class RunDirectory {
       return null;
     }
 
-    final RawDataFilePrefix headerInfo = RawFileUtility.getPrefixFor(headerFile);
+    final RawDataFilePrefix headerInfo = FlashlightFileUtility.getPrefixFor(headerFile);
     if (!headerInfo.isWellFormed()) {
       // can't make sense of the header file
       return null;
     }
 
     // Find the last .complete snapshot
-    final Pair<File, Integer> pair = RawFileUtility.getLatestCheckpointCompleteFileAndItsNumberWithin(directory);
+    final Pair<File, Integer> pair = FlashlightFileUtility.getLatestCheckpointCompleteFileAndItsNumberWithin(directory);
     if (pair == null)
       return null;
 
-    final long durationNanos = RawFileUtility.readDurationInNanosFrom(pair.first());
+    final long durationNanos = FlashlightFileUtility.readDurationInNanosFrom(pair.first());
 
-    final RunDescription run = RawFileUtility.getRunDescriptionFor(headerInfo, durationNanos);
+    final RunDescription run = FlashlightFileUtility.getRunDescriptionFor(headerInfo, durationNanos);
     if (run == null)
       return null;
 
@@ -92,7 +92,7 @@ public final class RunDirectory {
     if (isStillCollectingData)
       return null;
 
-    final RawFileHandles rawFileHandles = RawFileUtility.getRawFileHandlesFor(directory, pair.second());
+    final RawFileHandles rawFileHandles = FlashlightFileUtility.getRawFileHandlesFor(directory, pair.second());
 
     return new RunDirectory(run, directory, source, rawFileHandles);
   }
@@ -117,15 +117,6 @@ public final class RunDirectory {
     }
     return null;
   }
-
-  /*
-   * String constants about the contents of a Flashlight run directory.
-   */
-
-  /** Name of the subdirectory that contains the database */
-  private static final String DB_DIR = "db";
-  /** Name of the empty queries file */
-  private static final String QUERIES_FILE = "empty-queries.txt";
 
   /**
    * Filter used to identify header files for raw flashlight data files.
@@ -227,26 +218,28 @@ public final class RunDirectory {
   }
 
   /**
-   * Gets an abstract handle to the database directory for this run. This
-   * directory may or may not exist depending upon if the run is prepared.
+   * Constructs and returns an abstract representation of the database directory
+   * within the prepared data directory.
+   * <p>
+   * This method does not create the directory or check if it actually exists.
    * 
-   * @return an abstract handle to the database directory for this run.
+   * @return an abstract representation of the database directory within the
+   *         prepared data directory.
    */
   @NonNull
-  public File getDatabaseDirectory() {
-    final File db = new File(f_runDirHandle, DB_DIR);
-    return db;
+  public File getPrepDbDirectoryHandle() {
+    return FlashlightFileUtility.getPrepDbDirectoryHandle(f_runDirHandle);
   }
 
   /**
    * Checks if this run has been, or is being, prepared by seeing if the handle
-   * returned from {@link #getDatabaseDirectory()} exists.
+   * returned from {@link #getPrepDbDirectoryHandle()} exists.
    * 
    * @return {@code true} if this run has been, or is being, prepared,
    *         {@code false} otherwise.
    */
   public boolean isPreparedOrIsBeingPrepared() {
-    return getDatabaseDirectory().exists();
+    return getPrepDbDirectoryHandle().exists();
   }
 
   /**
@@ -255,7 +248,7 @@ public final class RunDirectory {
    * @return a database connection for the database directory for this run.
    */
   public DBConnection getDB() {
-    return FlashlightDBConnection.getInstance(getDatabaseDirectory());
+    return FlashlightDBConnection.getInstance(getPrepDbDirectoryHandle());
   }
 
   /**
@@ -267,7 +260,7 @@ public final class RunDirectory {
    */
   @NonNull
   public String getHumanReadableDatabaseSize() {
-    return FileUtility.bytesToHumanReadableString(FileUtility.recursiveSizeInBytes(getDatabaseDirectory()));
+    return FileUtility.bytesToHumanReadableString(FileUtility.recursiveSizeInBytes(getPrepDbDirectoryHandle()));
   }
 
   /**
@@ -291,13 +284,29 @@ public final class RunDirectory {
   }
 
   /**
-   * Gets an abstract representation of the list of queries containing no data.
+   * Constructs and returns an abstract representation of the empty queries file
+   * within the prepared data directory.
+   * <p>
+   * This method does not create the directory or check if it actually exists.
    * 
-   * @return an abstract representation of the list of queries containing no
-   *         data.
+   * @return an abstract representation of the empty queries file within the
+   *         prepared data directory.
    */
   @NonNull
-  public File getEmptyQueriesFile() {
-    return new File(f_runDirHandle, QUERIES_FILE);
+  public File getPrepEmptyQueriesFileHandle() {
+    return FlashlightFileUtility.getPrepEmptyQueriesFileHandle(f_runDirHandle);
+  }
+
+  /**
+   * Constructs and returns an abstract representation of the prepared data
+   * directory.
+   * <p>
+   * This method does not create the directory or check if it actually exists.
+   * 
+   * @return an abstract representation of the prepared data directory.
+   */
+  @NonNull
+  public File getPrepDirectoryHandle() {
+    return FlashlightFileUtility.getPrepDirectoryHandle(f_runDirHandle);
   }
 }

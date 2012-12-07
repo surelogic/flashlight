@@ -245,7 +245,6 @@ public class RunConf {
         f_startTime = startTime;
         f_run = StoreConfiguration.getRun();
         if (StoreConfiguration.getDirectory() != null) {
-
             final File flashlightDir = new File(
                     StoreConfiguration.getDirectory());
             if (!flashlightDir.exists()) {
@@ -256,7 +255,15 @@ public class RunConf {
                                     flashlightDir.toString()));
                 }
             }
+            // Touch the port file to indicate that we are starting
             f_log = initLog(flashlightDir);
+            try {
+                new File(flashlightDir,
+                        InstrumentationConstants.FL_PORT_FILE_LOC)
+                        .createNewFile();
+            } catch (IOException e) {
+                logAProblem("Could not create port file", e);
+            }
         } else {
             f_log = initLog(null);
         }

@@ -154,6 +154,11 @@ public abstract class EventVisitor {
         return stream;
     }
 
+    public static OutputStream createStream(File file, OutputType outputType)
+            throws IOException {
+        return createStream(file.getAbsolutePath(), outputType);
+    }
+
     interface Factory {
         EventVisitor create(RunConf conf, OutputStream stream)
                 throws IOException;

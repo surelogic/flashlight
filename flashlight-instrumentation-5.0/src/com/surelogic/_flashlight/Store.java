@@ -60,6 +60,7 @@ public class Store {
         if (IdConstants.enableFlashlightToggle
                 || !StoreDelegate.FL_OFF.getAndSet(true)) {
             f_conf = new RunConf();
+
             // TODO add listeners based on properties
 
             f_listeners = new ArrayList<StoreListener>(2);

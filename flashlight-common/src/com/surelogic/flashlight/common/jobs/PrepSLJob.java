@@ -13,6 +13,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -22,6 +23,8 @@ import javax.xml.parsers.SAXParser;
 
 import org.xml.sax.SAXParseException;
 
+import com.surelogic.NonNull;
+import com.surelogic.Nullable;
 import com.surelogic._flashlight.common.OutputType;
 import com.surelogic.common.SLUtility;
 import com.surelogic.common.adhoc.AdHocQuery;
@@ -38,7 +41,6 @@ import com.surelogic.common.jobs.SubSLProgressMonitor;
 import com.surelogic.common.license.SLLicenseProduct;
 import com.surelogic.common.license.SLLicenseUtility;
 import com.surelogic.common.logging.SLLogger;
-import com.surelogic.flashlight.common.model.CheckpointFilePrefix;
 import com.surelogic.flashlight.common.model.FlashlightFileUtility;
 import com.surelogic.flashlight.common.model.RunDescription;
 import com.surelogic.flashlight.common.model.RunDirectory;
@@ -125,13 +127,13 @@ public final class PrepSLJob extends AbstractSLJob {
    *          an optional set of queries that will be run and checked against
    *          results
    */
-  public PrepSLJob(final RunDirectory runDirectory, final int windowSize, final Set<AdHocQuery> queries) {
+  public PrepSLJob(@NonNull final RunDirectory runDirectory, final int windowSize, @Nullable final Set<AdHocQuery> queries) {
     super("Preparing " + runDirectory.getDescription().getName());
     f_runDirectory = runDirectory;
     f_dataFiles = runDirectory.getRawFileHandles().getOrderedListOfCheckpointFiles();
     f_database = runDirectory.getDB();
     f_windowSize = windowSize;
-    f_queries = queries;
+    f_queries = queries != null ? queries : Collections.<AdHocQuery> emptySet();
   }
 
   @Override
@@ -153,13 +155,6 @@ public final class PrepSLJob extends AbstractSLJob {
 
     File firstFile = f_dataFiles.get(0);
 
-    final CheckpointFilePrefix checkpointPrefix = FlashlightFileUtility.getPrefixFor(firstFile);
-    final RunDescription runDescription = FlashlightFileUtility.getRunDescriptionFor(checkpointPrefix, f_runDirectory
-        .getDescription().getDurationNanos());
-    if (runDescription == null) {
-      throw new IllegalStateException(checkpointPrefix.getFile().toString() + " does not describe a valid run.");
-
-    }
     final SLProgressMonitor preScanInfoMonitor = new SubSLProgressMonitor(monitor, "Collecting raw file info", PRE_SCAN_WORK);
 
     final ScanRawFileInfoPreScan preScanInfo = new ScanRawFileInfoPreScan(preScanInfoMonitor);
@@ -239,9 +234,9 @@ public final class PrepSLJob extends AbstractSLJob {
           final SLProgressMonitor persistRunDescriptionMonitor = new SubSLProgressMonitor(monitor,
               "Persist the new run description", PERSIST_RUN_DESCRIPTION_WORK);
           persistRunDescriptionMonitor.begin();
-          final Timestamp start = new Timestamp(checkpointPrefix.getWallClockTime().getTime());
-          final long startNS = checkpointPrefix.getNanoTime();
-          saveRunDescription(conn, runDescription);
+          final Timestamp start = f_runDirectory.getDescription().getStartTimeOfRun();
+          final long startNS = f_runDirectory.getCollectionDurationInNanos();
+          saveRunDescription(conn);
           persistRunDescriptionMonitor.done();
 
           if (monitor.isCanceled()) {
@@ -389,7 +384,9 @@ public final class PrepSLJob extends AbstractSLJob {
 
   }
 
-  private void saveRunDescription(final Connection c, final RunDescription run) throws SQLException {
+  private void saveRunDescription(final Connection c) throws SQLException {
+    final RunDescription run = f_runDirectory.getDescription();
+    final long durationNanos = f_runDirectory.getCollectionDurationInNanos();
     final PreparedStatement s = c.prepareStatement(QB.get("RunDAO.insert"));
     try {
       int i = 1;
@@ -405,7 +402,7 @@ public final class PrepSLJob extends AbstractSLJob {
       s.setInt(i++, run.getMaxMemoryMb());
       s.setInt(i++, run.getProcessors());
       s.setTimestamp(i++, run.getStartTimeOfRun());
-      s.setLong(i++, run.getDurationNanos());
+      s.setLong(i++, durationNanos);
       s.executeUpdate();
     } finally {
       s.close();

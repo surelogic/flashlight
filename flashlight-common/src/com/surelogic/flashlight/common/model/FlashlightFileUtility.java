@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.FileReader;
 import java.io.FilenameFilter;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -322,33 +321,6 @@ public final class FlashlightFileUtility {
     prefix.read(rawDataFile);
 
     return prefix;
-  }
-
-  /**
-   * Obtains the corresponding run description for the passed raw file prefix or
-   * throws an exception.
-   * 
-   * @param prefix
-   *          a well-formed raw data file prefix.
-   * @param durationNS
-   *          run duration in Nanoseconds.
-   * @return a run description based upon the passed prefix info.
-   * @throws Exception
-   *           if something goes wrong.
-   */
-  @NonNull
-  public static RunDescription getRunDescriptionFor(final CheckpointFilePrefix prefix, final long durationNanos) {
-    if (prefix == null)
-      throw new IllegalArgumentException(I18N.err(44, "prefix"));
-
-    if (prefix.isWellFormed()) {
-      return new RunDescription(prefix.getName(), prefix.getRawDataVersion(), prefix.getHostname(), prefix.getUserName(),
-          prefix.getJavaVersion(), prefix.getJavaVendor(), prefix.getOSName(), prefix.getOSArch(), prefix.getOSVersion(),
-          prefix.getMaxMemoryMb(), prefix.getProcessors(), new Timestamp(prefix.getWallClockTime().getTime()), durationNanos,
-          prefix.isAndroid());
-    } else {
-      throw new IllegalStateException(I18N.err(107, prefix.getFile().getAbsolutePath()));
-    }
   }
 
   /**

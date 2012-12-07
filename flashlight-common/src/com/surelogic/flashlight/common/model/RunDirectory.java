@@ -65,7 +65,7 @@ public final class RunDirectory {
 
     final long durationNanos = FlashlightFileUtility.readDurationInNanosFrom(pair.first());
 
-    final RunDescription run = FlashlightFileUtility.getRunDescriptionFor(prefix, durationNanos);
+    final RunDescription run = RunDescription.getInstance(prefix);
     if (run == null)
       return null;
 
@@ -78,7 +78,7 @@ public final class RunDirectory {
     if (isStillCollectingData)
       return null;
 
-    return new RunDirectory(run, directory, source, rawFileHandles);
+    return new RunDirectory(run, durationNanos, directory, source, rawFileHandles);
   }
 
   @Nullable
@@ -121,17 +121,23 @@ public final class RunDirectory {
   private final SourceZipFileHandles f_sourceZipFileHandles;
 
   /**
+   * The run duration in nanoseconds.
+   */
+  private final long f_runDurationNanos;
+
+  /**
    * The file handles for the profile data
    */
   @NonNull
   private final RawFileHandles f_rawFileHandles;
 
-  private RunDirectory(@NonNull final RunDescription runDescription, @NonNull final File runDirHandle,
+  private RunDirectory(@NonNull final RunDescription runDescription, final long runDurationNanos, @NonNull final File runDirHandle,
       @NonNull final SourceZipFileHandles sourceZipFileHandles, @NonNull final RawFileHandles rawFileHandles) {
     f_runDescription = runDescription;
     f_runDirHandle = runDirHandle;
     f_sourceZipFileHandles = sourceZipFileHandles;
     f_rawFileHandles = rawFileHandles;
+    f_runDurationNanos = runDurationNanos;
   }
 
   /**
@@ -142,6 +148,15 @@ public final class RunDirectory {
   @NonNull
   public RunDescription getDescription() {
     return f_runDescription;
+  }
+
+  /**
+   * Gets the duration of collection in nanoseconds.
+   * 
+   * @return the duration of collection in nanoseconds.
+   */
+  public long getCollectionDurationInNanos() {
+    return f_runDurationNanos;
   }
 
   /**

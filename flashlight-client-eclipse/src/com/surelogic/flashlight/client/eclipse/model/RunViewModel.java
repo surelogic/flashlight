@@ -252,7 +252,7 @@ public final class RunViewModel {
 
       @Override
       String getText(final RunDirectory rowData) {
-        long duration = rowData.getDescription().getDurationNanos();
+        long duration = rowData.getCollectionDurationInNanos();
         return SLUtility.toStringDurationMS(duration, TimeUnit.NANOSECONDS);
       }
     });

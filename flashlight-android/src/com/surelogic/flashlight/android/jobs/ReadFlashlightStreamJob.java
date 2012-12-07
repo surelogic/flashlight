@@ -20,6 +20,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
 import com.android.ddmlib.IDevice;
+import com.surelogic._flashlight.common.AttributeType;
 import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic._flashlight.common.OutputType;
 import com.surelogic.common.core.jobs.EclipseJob;
@@ -173,6 +174,9 @@ public class ReadFlashlightStreamJob implements SLJob {
         private int f_count;
         private final StringBuilder f_buf;
 
+        private boolean haveTime;
+        private long time;
+
         public CheckpointingEventHandler(final OutputType type)
                 throws IOException {
             super(new NullSLProgressMonitor());
@@ -180,9 +184,12 @@ public class ReadFlashlightStreamJob implements SLJob {
             // FIXME we set up the additional folders needed by eclipse here,
             // but we should probably remove the dependencies in eclipse or do
             // something more here
-            new File(f_dir, "source").mkdir();
-            new File(f_dir, "external").mkdir();
-            new File(f_dir, "projects").mkdir();
+            new File(f_dir, InstrumentationConstants.FL_SOURCE_FOLDER_LOC)
+                    .mkdirs();
+            new File(f_dir, InstrumentationConstants.FL_EXTERNAL_FOLDER_LOC)
+                    .mkdirs();
+            new File(f_dir, InstrumentationConstants.FL_PROJECTS_FOLDER_LOC)
+                    .mkdirs();
             f_buf = new StringBuilder();
             nextStream(true);
         }
@@ -207,11 +214,18 @@ public class ReadFlashlightStreamJob implements SLJob {
             f_out.println(f_buf);
             if (event == PrepEvent.CHECKPOINT) {
                 try {
+                    checkpointStream(Long.parseLong(attributes
+                            .getValue(AttributeType.TIME.label())));
                     nextStream(false);
                 } catch (IOException e) {
                     throw new SAXException(e);
                 }
+            } else if (!haveTime && event == PrepEvent.TIME) {
+                time = Long.parseLong(attributes.getValue(AttributeType.TIME
+                        .label()));
+                haveTime = true;
             }
+
             f_buf.setLength(0);
         }
 
@@ -225,7 +239,7 @@ public class ReadFlashlightStreamJob implements SLJob {
                             + String.format(".%06d", f_count++)
                             + OutputType.COMPLETE.getSuffix()));
             try {
-                complete.write(nanos + " ns\n");
+                complete.write(nanos - time + " ns\n");
             } finally {
                 complete.close();
             }

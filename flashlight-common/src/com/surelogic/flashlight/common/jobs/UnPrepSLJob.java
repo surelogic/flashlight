@@ -13,28 +13,27 @@ import com.surelogic.flashlight.common.model.RunDirectory;
  * Note that the RunManager needs to be refreshed after this
  */
 public final class UnPrepSLJob extends AbstractSLJob {
-	private final DBConnection f_database;
-	private final AdHocManager f_man;
+  private final DBConnection f_database;
+  private final AdHocManager f_man;
 
-	public UnPrepSLJob(final RunDirectory runDirectory, final AdHocManager man) {
-		super("Removing prepared data " + runDirectory.getDescription().getName());
-		f_database = runDirectory.getDB();
-		f_man = man;
-	}
+  public UnPrepSLJob(final RunDirectory runDirectory, final AdHocManager man) {
+    super("Removing prepared data " + runDirectory.getDescription().getName());
+    f_database = runDirectory.getDB();
+    f_man = man;
+  }
 
-	public SLStatus run(final SLProgressMonitor monitor) {
-		monitor.begin();
-		try {
-			final SLStatus failed = SLLicenseUtility.validateSLJob(
-					SLLicenseProduct.FLASHLIGHT, monitor);
-			if (failed != null) {
-				return failed;
-			}
-			f_man.deleteAllResults(f_database);
-			f_database.destroy();
-		} finally {
-			monitor.done();
-		}
-		return SLStatus.OK_STATUS;
-	}
+  public SLStatus run(final SLProgressMonitor monitor) {
+    monitor.begin();
+    try {
+      final SLStatus failed = SLLicenseUtility.validateSLJob(SLLicenseProduct.FLASHLIGHT, monitor);
+      if (failed != null) {
+        return failed;
+      }
+      f_man.deleteAllResults(f_database);
+      f_database.destroy();
+    } finally {
+      monitor.done();
+    }
+    return SLStatus.OK_STATUS;
+  }
 }

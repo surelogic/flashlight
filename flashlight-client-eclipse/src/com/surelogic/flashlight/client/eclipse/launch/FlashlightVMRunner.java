@@ -270,7 +270,7 @@ public final class FlashlightVMRunner implements IVMRunner {
     private RunDirectory findLastRunDirectory() throws CoreException {
         RunDirectory latest = null;
         for (final RunDirectory run : RunManager.getInstance()
-                .getRunDirectories()) {
+                .getCollectionCompletedRunDirectories()) {
             if (mainTypeName.equals(run.getDescription().getName())) {
                 if (latest == null
                         || run.getDescription()

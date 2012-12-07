@@ -148,10 +148,12 @@ public final class RunViewModel {
 
       @Override
       String getImageSymbolicName(final RunDirectory rowData) {
-        if (rowData.isPreparedOrIsBeingPrepared()) {
+        if (rowData.isPrepared()) {
           return CommonImages.IMG_DRUM;
-        }
-        return CommonImages.IMG_FILE;
+        } else if (rowData.isBeingPrepared())
+          return CommonImages.IMG_REFRESH;
+        else
+          return CommonImages.IMG_FILE;
       }
 
       private final Comparator<RunDirectory> f_defaultComparator = new Comparator<RunDirectory>() {

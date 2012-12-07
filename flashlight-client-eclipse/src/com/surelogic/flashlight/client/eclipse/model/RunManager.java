@@ -101,7 +101,7 @@ public final class RunManager {
    * @return the set of run directories managed by this.
    */
   @NonNull
-  public Set<RunDirectory> getRunDirectories() {
+  public Set<RunDirectory> getCollectionCompletedRunDirectories() {
     synchronized (f_runs) {
       return new HashSet<RunDirectory>(f_runs);
     }
@@ -117,7 +117,7 @@ public final class RunManager {
    */
   @NonNull
   public String[] getRunIdentities() {
-    final Set<RunDirectory> runs = getRunDirectories();
+    final Set<RunDirectory> runs = getCollectionCompletedRunDirectories();
     final Set<String> ids = new HashSet<String>(runs.size());
     for (final RunDirectory run : runs) {
       ids.add(run.getRunIdString());
@@ -139,7 +139,7 @@ public final class RunManager {
    */
   @Nullable
   public RunDirectory getRunDirectoryByIdentityString(final String runIdentityString) {
-    for (final RunDirectory runDirectory : getRunDirectories()) {
+    for (final RunDirectory runDirectory : getCollectionCompletedRunDirectories()) {
       if (runDirectory.getRunIdString().equals(runIdentityString)) {
         return runDirectory;
       }
@@ -148,8 +148,9 @@ public final class RunManager {
   }
 
   /**
-   * Gets the set of prepared run directories managed by this. The return set
-   * can be empty, but will not be {@code null}.
+   * Gets the set of prepared run directories managed by this. These run
+   * directories are ready to be queries. The return set can be empty, but will
+   * not be {@code null}.
    * 
    * @return the set of run directories managed by this that have been prepared.
    *         May be empty.
@@ -159,7 +160,7 @@ public final class RunManager {
     final Set<RunDirectory> result = new HashSet<RunDirectory>();
     synchronized (f_runs) {
       for (RunDirectory runDir : f_runs) {
-        if (runDir.isPreparedOrIsBeingPrepared())
+        if (runDir.isPrepared())
           result.add(runDir);
       }
     }
@@ -174,11 +175,11 @@ public final class RunManager {
    *         prepared. May be empty.
    */
   @NonNull
-  public Set<RunDirectory> getNotPreparedRunDirectories() {
+  public Set<RunDirectory> getNotPreparedOrBeingPreparedRunDirectories() {
     final Set<RunDirectory> result = new HashSet<RunDirectory>();
     synchronized (f_runs) {
       for (RunDirectory runDir : f_runs) {
-        if (!runDir.isPreparedOrIsBeingPrepared())
+        if (!runDir.isPrepared() && !runDir.isBeingPrepared())
           result.add(runDir);
       }
     }
@@ -212,7 +213,7 @@ public final class RunManager {
     final Collection<RunDirectory> runDirs = FlashlightFileUtility.getRunDirectories(f_dataDir);
     for (final RunDirectory dir : runDirs) {
       runs.add(dir.getDescription());
-      if (dir.isPreparedOrIsBeingPrepared()) {
+      if (dir.isPrepared()) {
         preparedRuns.add(dir.getDescription());
       }
     }
@@ -254,7 +255,7 @@ public final class RunManager {
   private Set<RunDescription> getPreparedRunDescriptions() {
     final Set<RunDescription> result = new HashSet<RunDescription>();
     for (RunDirectory runDir : f_runs) {
-      if (runDir.isPreparedOrIsBeingPrepared())
+      if (runDir.isPrepared())
         result.add(runDir.getDescription());
     }
     return result;

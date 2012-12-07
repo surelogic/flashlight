@@ -260,14 +260,23 @@ public final class RunDirectory {
   }
 
   /**
-   * Checks if this run has been, or is being, prepared by seeing if the handle
-   * returned from {@link #getPrepDbDirectoryHandle()} exists.
+   * Checks if this run is in the process of being prepared for querying.
    * 
-   * @return {@code true} if this run has been, or is being, prepared,
-   *         {@code false} otherwise.
+   * @return {@code true} if this run run is in the process of being prepared
+   *         for querying, {@code false} otherwise.
    */
-  public boolean isPreparedOrIsBeingPrepared() {
-    return getPrepDbDirectoryHandle().exists();
+  public boolean isBeingPrepared() {
+    return getPrepDbDirectoryHandle().exists() && !isPrepared();
+  }
+
+  /**
+   * Checks if this run has been prepared and is ready to be queried.
+   * 
+   * @return {@code true} if this run has been prepared and is ready to be
+   *         queried, {@code false} otherwise.
+   */
+  public boolean isPrepared() {
+    return FlashlightFileUtility.getPrepCompleteFileHandle(f_runDirHandle).exists();
   }
 
   /**

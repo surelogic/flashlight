@@ -84,7 +84,7 @@ public final class QueryResultsView extends AbstractQueryResultsView {
   @Override
   protected void setupNoResultsPane(final Composite parent) {
     final RunDirectory run = AdHocDataSource.getInstance().getSelectedRun();
-    if (run == null || !run.isPreparedOrIsBeingPrepared()) {
+    if (run == null || !run.isPrepared()) {
       showQueryTitle();
       super.setupNoResultsPane(parent);
     } else {

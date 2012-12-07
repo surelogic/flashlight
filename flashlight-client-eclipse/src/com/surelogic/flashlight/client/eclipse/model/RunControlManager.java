@@ -18,8 +18,6 @@ import com.surelogic.UniqueInRegion;
 import com.surelogic.Vouch;
 import com.surelogic.common.Pair;
 import com.surelogic.common.i18n.I18N;
-import com.surelogic.flashlight.common.model.DataCollectingRunState;
-import com.surelogic.flashlight.common.model.IDataCollectingRun;
 
 /**
  * Singleton manager of launched Flashlight-instrumented applications.
@@ -168,7 +166,7 @@ public final class RunControlManager {
       throw new IllegalArgumentException(I18N.err(44, "run"));
     synchronized (f_lock) {
       if (f_runToState.containsKey(run))
-        throw new IllegalStateException(run.getRunSimpleNameforUI() + " passed to runStarting() more than once");
+        throw new IllegalStateException("TODO" + " passed to runStarting() more than once");
       f_runToState.put(run, DataCollectingRunState.STARTING);
     }
     notify(run, DataCollectingRunState.STARTING);
@@ -196,10 +194,10 @@ public final class RunControlManager {
     synchronized (f_lock) {
       DataCollectingRunState state = f_runToState.get(run);
       if (state == null)
-        throw new IllegalStateException(run.getRunSimpleNameforUI() + " not known to the "
+        throw new IllegalStateException("TODO" + " not known to the "
             + RunControlManager.class.getSimpleName());
       if (state != DataCollectingRunState.STARTING)
-        throw new IllegalStateException(run.getRunSimpleNameforUI() + " state must be " + DataCollectingRunState.STARTING
+        throw new IllegalStateException("TODO" + " state must be " + DataCollectingRunState.STARTING
             + " but instead is " + state);
       f_runToState.put(run, DataCollectingRunState.COLLECTING);
     }
@@ -224,7 +222,7 @@ public final class RunControlManager {
     synchronized (f_lock) {
       DataCollectingRunState state = f_runToState.get(run);
       if (state == null)
-        throw new IllegalStateException(run.getRunSimpleNameforUI() + " not known to the "
+        throw new IllegalStateException("TODO" + " not known to the "
             + RunControlManager.class.getSimpleName());
       f_runToState.put(run, DataCollectingRunState.STOP_COLLECTION_REQUESTED);
       run.stopDataCollectionAsSoonAsPossible();
@@ -261,7 +259,7 @@ public final class RunControlManager {
     synchronized (f_lock) {
       DataCollectingRunState state = f_runToState.get(run);
       if (state == null)
-        throw new IllegalStateException(run.getRunSimpleNameforUI() + " not known to the "
+        throw new IllegalStateException("TODO" + " not known to the "
             + RunControlManager.class.getSimpleName());
       f_runToState.put(run, DataCollectingRunState.FINISHED);
     }
@@ -313,10 +311,10 @@ public final class RunControlManager {
     synchronized (f_lock) {
       DataCollectingRunState state = f_runToState.get(run);
       if (state == null)
-        throw new IllegalStateException(run.getRunSimpleNameforUI() + " not known to the "
+        throw new IllegalStateException("TODO" + " not known to the "
             + RunControlManager.class.getSimpleName());
       if (state != DataCollectingRunState.FINISHED)
-        throw new IllegalStateException(run.getRunSimpleNameforUI() + " state must be " + DataCollectingRunState.FINISHED
+        throw new IllegalStateException("TODO" + " state must be " + DataCollectingRunState.FINISHED
             + " but instead is " + state);
       f_runToState.remove(run);
     }

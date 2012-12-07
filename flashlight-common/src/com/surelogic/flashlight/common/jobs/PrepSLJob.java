@@ -40,7 +40,7 @@ import com.surelogic.common.jobs.SubSLProgressMonitor;
 import com.surelogic.common.license.SLLicenseProduct;
 import com.surelogic.common.license.SLLicenseUtility;
 import com.surelogic.common.logging.SLLogger;
-import com.surelogic.flashlight.common.model.RawDataFilePrefix;
+import com.surelogic.flashlight.common.model.CheckpointFilePrefix;
 import com.surelogic.flashlight.common.model.FlashlightFileUtility;
 import com.surelogic.flashlight.common.model.RunDescription;
 import com.surelogic.flashlight.common.model.RunDirectory;
@@ -130,7 +130,7 @@ public final class PrepSLJob extends AbstractSLJob {
   public PrepSLJob(final RunDirectory runDirectory, final int windowSize, final Set<AdHocQuery> queries) {
     super("Preparing " + runDirectory.getDescription().getName());
     f_runDirectory = runDirectory;
-    f_dataFiles = runDirectory.getRawFileHandles().getOrderedListOfDataFiles();
+    f_dataFiles = runDirectory.getRawFileHandles().getOrderedListOfCheckpointFiles();
     f_database = runDirectory.getDB();
     f_windowSize = windowSize;
     f_queries = queries;
@@ -156,11 +156,11 @@ public final class PrepSLJob extends AbstractSLJob {
 
     File firstFile = f_dataFiles.get(0);
 
-    final RawDataFilePrefix rawFilePrefix = FlashlightFileUtility.getPrefixFor(firstFile);
-    final RunDescription runDescription = FlashlightFileUtility.getRunDescriptionFor(rawFilePrefix, f_runDirectory.getDescription()
-        .getDurationNanos());
+    final CheckpointFilePrefix checkpointPrefix = FlashlightFileUtility.getPrefixFor(firstFile);
+    final RunDescription runDescription = FlashlightFileUtility.getRunDescriptionFor(checkpointPrefix, f_runDirectory
+        .getDescription().getDurationNanos());
     if (runDescription == null) {
-      throw new IllegalStateException(rawFilePrefix.getFile().toString() + " does not describe a valid run.");
+      throw new IllegalStateException(checkpointPrefix.getFile().toString() + " does not describe a valid run.");
 
     }
     final SLProgressMonitor preScanInfoMonitor = new SubSLProgressMonitor(monitor, "Collecting raw file info", PRE_SCAN_WORK);
@@ -256,8 +256,8 @@ public final class PrepSLJob extends AbstractSLJob {
           final SLProgressMonitor persistRunDescriptionMonitor = new SubSLProgressMonitor(monitor,
               "Persist the new run description", PERSIST_RUN_DESCRIPTION_WORK);
           persistRunDescriptionMonitor.begin();
-          final Timestamp start = new Timestamp(rawFilePrefix.getWallClockTime().getTime());
-          final long startNS = rawFilePrefix.getNanoTime();
+          final Timestamp start = new Timestamp(checkpointPrefix.getWallClockTime().getTime());
+          final long startNS = checkpointPrefix.getNanoTime();
           saveRunDescription(conn, runDescription);
           persistRunDescriptionMonitor.done();
 

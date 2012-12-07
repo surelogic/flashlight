@@ -9,7 +9,6 @@ import com.surelogic.NonNull;
 import com.surelogic.Nullable;
 import com.surelogic.ReferenceObject;
 import com.surelogic._flashlight.common.InstrumentationConstants;
-import com.surelogic._flashlight.common.OutputType;
 import com.surelogic.common.FileUtility;
 import com.surelogic.common.Pair;
 import com.surelogic.common.i18n.I18N;
@@ -55,31 +54,24 @@ public final class RunDirectory {
       return null;
     }
 
-    /*
-     * This process relies on RawFileUtility because RawFileHandles is the
-     * original file handle class, and everything else is being built around the
-     * machinery that existed to compute them.
-     */
-    final File headerFile = getFileFrom(directory, flashlightHeaderFileFilter, 152, 153);
-    if (headerFile == null) {
-      // no header file exists
-      return null;
-    }
-
-    final RawDataFilePrefix headerInfo = FlashlightFileUtility.getPrefixFor(headerFile);
-    if (!headerInfo.isWellFormed()) {
-      // can't make sense of the header file
-      return null;
-    }
-
     // Find the last .complete snapshot
     final Pair<File, Integer> pair = FlashlightFileUtility.getLatestCheckpointCompleteFileAndItsNumberWithin(directory);
     if (pair == null)
       return null;
 
+    final RawFileHandles rawFileHandles = FlashlightFileUtility.getRawFileHandlesFor(directory, pair.second());
+
+    // read the prefix from the first checkpoint file
+    final File firstSnapshotFile = rawFileHandles.getFirstCheckpointFile();
+    final CheckpointFilePrefix prefix = FlashlightFileUtility.getPrefixFor(firstSnapshotFile);
+    if (!prefix.isWellFormed()) {
+      // can't make sense of the header file
+      return null;
+    }
+
     final long durationNanos = FlashlightFileUtility.readDurationInNanosFrom(pair.first());
 
-    final RunDescription run = FlashlightFileUtility.getRunDescriptionFor(headerInfo, durationNanos);
+    final RunDescription run = FlashlightFileUtility.getRunDescriptionFor(prefix, durationNanos);
     if (run == null)
       return null;
 
@@ -91,8 +83,6 @@ public final class RunDirectory {
     final boolean isStillCollectingData = FileUtility.anythingModifiedInTheLast(directory, 3, TimeUnit.SECONDS);
     if (isStillCollectingData)
       return null;
-
-    final RawFileHandles rawFileHandles = FlashlightFileUtility.getRawFileHandlesFor(directory, pair.second());
 
     return new RunDirectory(run, directory, source, rawFileHandles);
   }
@@ -117,23 +107,6 @@ public final class RunDirectory {
     }
     return null;
   }
-
-  /**
-   * Filter used to identify header files for raw flashlight data files.
-   */
-  private static final FileFilter flashlightHeaderFileFilter = new FileFilter() {
-    @Override
-    public boolean accept(final File pathname) {
-      if (pathname.isDirectory()) {
-        return false;
-      }
-      final String name = pathname.getName();
-      if (name.endsWith(OutputType.FLH.getSuffix())) {
-        return true;
-      }
-      return false;
-    }
-  };
 
   /**
    * This directory.

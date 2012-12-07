@@ -163,7 +163,7 @@ public final class FlashlightFileUtility {
    *         collecting data into the passed directory, {@code true} if it still
    *         seems to be outputting data.
    */
-  public static boolean doneCollectingDataInto(final File directory) {
+  public static boolean isDoneCollectingDataInto(final File directory) {
     /*
      * Is there any data we could prep and query yet...if not we are not done.
      */
@@ -311,22 +311,22 @@ public final class FlashlightFileUtility {
    *          a raw data file.
    * @return prefix information (may or may not be well-formed).
    */
-  public static RawDataFilePrefix getPrefixFor(final File rawDataFile) {
+  public static CheckpointFilePrefix getPrefixFor(final File rawDataFile) {
     if (rawDataFile == null) {
       throw new IllegalArgumentException(I18N.err(44, "dataFile"));
     }
 
-    final RawDataFilePrefix prefixInfo = new RawDataFilePrefix();
-    prefixInfo.read(rawDataFile);
+    final CheckpointFilePrefix prefix = new CheckpointFilePrefix();
+    prefix.read(rawDataFile);
 
-    return prefixInfo;
+    return prefix;
   }
 
   /**
    * Obtains the corresponding run description for the passed raw file prefix or
    * throws an exception.
    * 
-   * @param prefixInfo
+   * @param prefix
    *          a well-formed raw data file prefix.
    * @param durationNS
    *          run duration in Nanoseconds.
@@ -335,17 +335,17 @@ public final class FlashlightFileUtility {
    *           if something goes wrong.
    */
   @NonNull
-  public static RunDescription getRunDescriptionFor(final RawDataFilePrefix prefixInfo, final long durationNanos) {
-    if (prefixInfo == null)
-      throw new IllegalArgumentException(I18N.err(44, "prefixInfo"));
+  public static RunDescription getRunDescriptionFor(final CheckpointFilePrefix prefix, final long durationNanos) {
+    if (prefix == null)
+      throw new IllegalArgumentException(I18N.err(44, "prefix"));
 
-    if (prefixInfo.isWellFormed()) {
-      return new RunDescription(prefixInfo.getName(), prefixInfo.getRawDataVersion(), prefixInfo.getHostname(),
-          prefixInfo.getUserName(), prefixInfo.getJavaVersion(), prefixInfo.getJavaVendor(), prefixInfo.getOSName(),
-          prefixInfo.getOSArch(), prefixInfo.getOSVersion(), prefixInfo.getMaxMemoryMb(), prefixInfo.getProcessors(),
-          new Timestamp(prefixInfo.getWallClockTime().getTime()), durationNanos, prefixInfo.isAndroid());
+    if (prefix.isWellFormed()) {
+      return new RunDescription(prefix.getName(), prefix.getRawDataVersion(), prefix.getHostname(), prefix.getUserName(),
+          prefix.getJavaVersion(), prefix.getJavaVendor(), prefix.getOSName(), prefix.getOSArch(), prefix.getOSVersion(),
+          prefix.getMaxMemoryMb(), prefix.getProcessors(), new Timestamp(prefix.getWallClockTime().getTime()), durationNanos,
+          prefix.isAndroid());
     } else {
-      throw new IllegalStateException(I18N.err(107, prefixInfo.getFile().getAbsolutePath()));
+      throw new IllegalStateException(I18N.err(107, prefix.getFile().getAbsolutePath()));
     }
   }
 
@@ -483,8 +483,8 @@ public final class FlashlightFileUtility {
   private static final FilenameFilter f_runDirectoryFilter = new FilenameFilter() {
     @Override
     public boolean accept(final File root, final String name) {
-      final File dir = new File(root, name);
-      return dir.isDirectory() && new File(dir, name + OutputType.FLH.getSuffix()).exists();
+      final File potentialRunDir = new File(root, name);
+      return potentialRunDir.isDirectory() && isDoneCollectingDataInto(potentialRunDir);
     }
   };
 

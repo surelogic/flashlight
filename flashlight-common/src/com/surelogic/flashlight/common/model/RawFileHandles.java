@@ -26,12 +26,12 @@ public final class RawFileHandles {
     if (data.length < 1)
       throw new IllegalArgumentException(I18N.err(92, "data"));
 
-    f_data = new File[data.length];
+    f_checkpoints = new File[data.length];
     for (int j = 0; j < data.length; j++) {
       final File inData = data[j];
       if (inData == null)
         throw new IllegalArgumentException(I18N.err(44, "data[" + j + "]"));
-      f_data[j] = inData;
+      f_checkpoints[j] = inData;
     }
     /*
      * The log files can be null, but we store this as an empty array.
@@ -43,30 +43,41 @@ public final class RawFileHandles {
    * Will contain at least one element.
    */
   @NonNull
-  private final File[] f_data;
+  private final File[] f_checkpoints;
 
   /**
-   * Gets the reference to the snapshot data files ordered from 0 to <i>n</i>.
+   * Gets the reference to the checkpoint data files ordered from 0 to <i>n</i>.
    * Do not mutate the returned array.
    * 
-   * @return the reference to the snapshot data files ordered from 0 to
+   * @return the reference to the checkpoint data files ordered from 0 to
    *         <i>n</i>. May be empty.
    */
   @NonNull
-  public File[] getDataFiles() {
-    return f_data;
+  public File[] getCheckpointFiles() {
+    return f_checkpoints;
   }
 
   /**
-   * Gets a copy of the list of snapshot data files ordered from 0 to <i>n</i>.
+   * Gets a reference to the first checkpoint data file (number 0). This is useful
+   * to read its prefix.
    * 
-   * @return a copy of the list of snapshot data files ordered from 0 to
+   * @return a reference to the first checkpoint data file (number 0).
+   */
+  @NonNull
+  public File getFirstCheckpointFile() {
+    return f_checkpoints[0];
+  }
+
+  /**
+   * Gets a copy of the list of checkpoint data files ordered from 0 to <i>n</i>.
+   * 
+   * @return a copy of the list of checkpoint data files ordered from 0 to
    *         <i>n</i>. May be empty.
    */
   @NonNull
-  public ArrayList<File> getOrderedListOfDataFiles() {
+  public ArrayList<File> getOrderedListOfCheckpointFiles() {
     final ArrayList<File> result = new ArrayList<File>();
-    for (File f : f_data)
+    for (File f : f_checkpoints)
       result.add(f);
     return result;
   }
@@ -80,7 +91,7 @@ public final class RawFileHandles {
    * @see FlashlightFileUtility#isRawFileGzip(File)
    */
   public boolean isDataFileGzip() {
-    return FlashlightFileUtility.isRawFileGzip(f_data[0]);
+    return FlashlightFileUtility.isRawFileGzip(f_checkpoints[0]);
   }
 
   @NonNull

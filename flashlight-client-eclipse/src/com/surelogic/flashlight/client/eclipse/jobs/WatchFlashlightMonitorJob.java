@@ -47,7 +47,7 @@ public class WatchFlashlightMonitorJob extends AbstractSLJob {
                 .getView("com.surelogic.flashlight.client.monitor.views.MonitorView");
         if (view != null) {
             try {
-                if (FlashlightFileUtility.doneCollectingDataInto(f_status
+                if (FlashlightFileUtility.isDoneCollectingDataInto(f_status
                         .getRunDirectory())) {
                     f_status.setState(ConnectionState.TERMINATED);
                 } else if (!f_status.getPortFile().exists()) {

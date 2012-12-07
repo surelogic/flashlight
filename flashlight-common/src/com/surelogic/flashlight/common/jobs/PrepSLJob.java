@@ -135,7 +135,7 @@ public final class PrepSLJob extends AbstractSLJob {
      */
     public PrepSLJob(@NonNull final RunDirectory runDirectory,
             final int windowSize, @Nullable final Set<AdHocQuery> queries) {
-        super("Preparing " + runDirectory.getDescription().getName());
+        super(runDirectory.getPrepJobName());
         f_runDirectory = runDirectory;
         f_dataFiles = runDirectory.getRawFileHandles()
                 .getOrderedListOfCheckpointFiles();

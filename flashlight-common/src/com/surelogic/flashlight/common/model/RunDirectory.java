@@ -187,6 +187,17 @@ public final class RunDirectory {
   }
 
   /**
+   * Constructs a name for the data preparation job of this run directory. We
+   * need to know what this name is so we can find the prep job if we need to.
+   * 
+   * @return a name for the data preparation job of this run directory.
+   */
+  @NonNull
+  public String getPrepJobName() {
+    return "Preparing " + getRunIdString();
+  }
+
+  /**
    * Gets a run description for the run in this.
    * 
    * @return a run description for the run in this.

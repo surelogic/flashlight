@@ -265,7 +265,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements IRunMa
             jobs.add(new UnPrepSLJob(runDir, AdHocDataSource.getManager()));
           }
           jobs.add(new DeleteRawFilesSLJob(runDir));
-          keys.add(runDir.getDescription().toIdentityString());
+          keys.add(runDir.getRunIdString());
         }
       }
       if (!jobs.isEmpty()) {
@@ -392,7 +392,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements IRunMa
     } else {
       final RunDirectory o = selected[0];
       AdHocDataSource.getInstance().setSelectedRun(o);
-      AdHocDataSource.getManager().setGlobalVariableValue(AdHocManager.DATABASE, o.getDescription().toIdentityString());
+      AdHocDataSource.getManager().setGlobalVariableValue(AdHocManager.DATABASE, o.getRunIdString());
       AdHocDataSource.getManager().setSelectedResult(null);
     }
     f_prepAction.setEnabled(rawActionsEnabled);

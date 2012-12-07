@@ -48,8 +48,7 @@ public class PrepMultipleRunsJob extends AbstractSLJob {
     monitor.begin((perJobWork + refreshWork) * f_runDirectories.size());
     final IJobManager man = Job.getJobManager();
     for (final RunDirectory runDir : f_runDirectories) {
-      final ISchedulingRule rule = KeywordAccessRule.getInstance(JobConstants.PREP_KEY, runDir.getDescription()
-          .toIdentityString());
+      final ISchedulingRule rule = KeywordAccessRule.getInstance(JobConstants.PREP_KEY, runDir.getRunIdString());
       SLStatus status;
       try {
         man.beginRule(rule, null);

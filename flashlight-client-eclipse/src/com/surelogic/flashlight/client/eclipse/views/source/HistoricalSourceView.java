@@ -46,7 +46,7 @@ public final class HistoricalSourceView extends AbstractHistoricalSourceView {
     if (runIdentityString == null)
       return null;
     for (final RunDirectory run : RunManager.getInstance().getRunDirectories()) {
-      if (runIdentityString.equals(run.getDescription().toIdentityString())) {
+      if (runIdentityString.equals(run.getRunIdString())) {
         return run;
       }
     }

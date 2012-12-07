@@ -120,7 +120,7 @@ public final class RunManager {
     final Set<RunDirectory> runs = getRunDirectories();
     final Set<String> ids = new HashSet<String>(runs.size());
     for (final RunDirectory run : runs) {
-      ids.add(run.getDescription().toIdentityString());
+      ids.add(run.getRunIdString());
     }
     return ids.toArray(SLUtility.EMPTY_STRING_ARRAY);
   }
@@ -129,7 +129,7 @@ public final class RunManager {
    * Looks up a run directory managed by this with the passed identity string.
    * In particular for the returned {@link RunDirectory}, which we will call
    * <tt>run</tt>,
-   * {@code run.getDescription().toIdentityString.equals(runIdentityString)} is
+   * {@code runDirectory.getRunIdString().equals(runIdentityString)} is
    * {@code true}.
    * 
    * @param runIdentityString
@@ -140,7 +140,7 @@ public final class RunManager {
   @Nullable
   public RunDirectory getRunDirectoryByIdentityString(final String runIdentityString) {
     for (final RunDirectory runDirectory : getRunDirectories()) {
-      if (runDirectory.getDescription().toIdentityString().equals(runIdentityString)) {
+      if (runDirectory.getRunIdString().equals(runIdentityString)) {
         return runDirectory;
       }
     }

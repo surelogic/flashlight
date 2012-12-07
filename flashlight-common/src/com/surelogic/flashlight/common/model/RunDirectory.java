@@ -141,6 +141,52 @@ public final class RunDirectory {
   }
 
   /**
+   * Returns the name of the run directory denoted by this&mdash;sometime used
+   * as a run identifier. This is just the last name in the run directory
+   * pathname's name sequence (i.e., {@link #getDirectory()}<tt>.getName()</tt>
+   * ).
+   * <p>
+   * For example, for a run directory for the PlanetBaron server, this call
+   * returns
+   * 
+   * <pre>
+   * com.surelogic.jsure.planetbaron.server.Server-2012.12.07-at-12.14.38.738
+   * </pre>
+   * 
+   * This string is useful as an identifier for a Flashlight run. It should be
+   * unique across runs due to the time at the end of the run directory name.
+   * 
+   * @return the name of the run directory denoted by this.
+   * 
+   * @see #getRunIdString()
+   */
+  @NonNull
+  public String getSimpleRunDirectoryName() {
+    return f_runDirHandle.getName();
+  }
+
+  /**
+   * Gets a run identity string for this run. This method simply invokes
+   * {@link #getSimpleRunDirectoryName()} and returns the result.
+   * <p>
+   * For example, for a run directory for the PlanetBaron server, this call
+   * returns
+   * 
+   * <pre>
+   * com.surelogic.jsure.planetbaron.server.Server-2012.12.07-at-12.14.38.738
+   * </pre>
+   * 
+   * This string is useful as an identifier for a Flashlight run. It should be
+   * unique across runs due to the time at the end of the run directory name.
+   * 
+   * @return as an identifier for a Flashlight run.
+   */
+  @NonNull
+  public String getRunIdString() {
+    return getSimpleRunDirectoryName();
+  }
+
+  /**
    * Gets a run description for the run in this.
    * 
    * @return a run description for the run in this.
@@ -231,18 +277,6 @@ public final class RunDirectory {
    */
   public DBConnection getDB() {
     return FlashlightDBConnection.getInstance(getPrepDbDirectoryHandle());
-  }
-
-  /**
-   * Gets a human readable size of the database directory within this run
-   * directory.
-   * 
-   * @return a human readable size of the database directory within this run
-   *         directory.
-   */
-  @NonNull
-  public String getHumanReadableDatabaseSize() {
-    return FileUtility.bytesToHumanReadableString(FileUtility.recursiveSizeInBytes(getPrepDbDirectoryHandle()));
   }
 
   /**

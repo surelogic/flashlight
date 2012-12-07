@@ -9,14 +9,17 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 import com.surelogic.NonNull;
 import com.surelogic.Nullable;
 import com.surelogic.Utility;
+import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic._flashlight.common.OutputType;
 import com.surelogic.common.FileUtility;
 import com.surelogic.common.Pair;
@@ -31,6 +34,102 @@ import com.surelogic.common.logging.SLLogger;
 @Utility
 public final class RawFileUtility {
 
+  /*
+   * String constants about the prepared data directory within a Flashlight run
+   * directory.
+   */
+
+  /**
+   * Name of the prep directory.
+   */
+  private static final String PREP_DIRNAME = "prep";
+
+  /**
+   * Constructs and returns an abstract representation of the prepared data
+   * directory within the passed directory.
+   * <p>
+   * This method does not create the directory or check if it actually exists.
+   * 
+   * @param directory
+   *          a Flashlight run directory.
+   * @return an abstract representation of the prepared data directory within
+   *         the passed directory.
+   */
+  public static File getPrepDirectoryHandle(final File directory) {
+    final File result = new File(directory, PREP_DIRNAME);
+    return result;
+  }
+
+  /**
+   * Name of the subdirectory within the prep directory that contains the
+   * database.
+   */
+  private static final String PREP_DB_DIRNAME = "db";
+
+  /**
+   * Constructs and returns an abstract representation of the database directory
+   * within the prepared data directory within the passed directory.
+   * <p>
+   * This method does not create the directory or check if it actually exists.
+   * 
+   * @param directory
+   *          a Flashlight run directory.
+   * @return an abstract representation of the database directory within the
+   *         prepared data directory within the passed directory.
+   */
+  public static File getPrepDbDirectoryHandle(final File directory) {
+    final File result = new File(getPrepDirectoryHandle(directory), PREP_DB_DIRNAME);
+    return result;
+  }
+
+  /**
+   * Name of the empty queries file within the prep directory.
+   */
+  private static final String PREP_EMPTY_QUERIES_FILENAME = "empty-queries.txt";
+
+  /**
+   * Constructs and returns an abstract representation of the empty queries file
+   * within the prepared data directory within the passed directory.
+   * <p>
+   * This method does not create the directory or check if it actually exists.
+   * 
+   * @param directory
+   *          a Flashlight run directory.
+   * @return an abstract representation of the empty queries file within the
+   *         prepared data directory within the passed directory.
+   */
+  public static File getPrepEmptyQueriesFileHandle(final File directory) {
+    final File result = new File(getPrepDirectoryHandle(directory), PREP_EMPTY_QUERIES_FILENAME);
+    return result;
+  }
+
+  /**
+   * Constructs and returns an abstract representation of the port file within
+   * the passed directory.
+   * <p>
+   * This method does not create the directory or check if it actually exists.
+   * 
+   * @param directory
+   *          a Flashlight run directory.
+   * @return an abstract representation of the port file within the passed
+   *         directory.
+   */
+  public static File getPortFileHandle(final File directory) {
+    final File result = new File(directory, InstrumentationConstants.FL_PORT_FILE_LOC);
+    return result;
+  }
+
+  /**
+   * Checks if this run has been, or is being, prepared by seeing if the handle
+   * returned from {@link #getPrepDirectoryHandle(File)} exists.
+   * 
+   * @return {@code true} if this run has been, or is being, prepared,
+   *         {@code false} otherwise.
+   */
+  public boolean isPreparedOrIsBeingPrepared(final File directory) {
+    return getPrepDirectoryHandle(directory).exists();
+  }
+
   /**
    * A heuristic used to check that we aren't still running the instrumented
    * program and collecting data into the passed directory. We do this by
@@ -43,7 +142,28 @@ public final class RawFileUtility {
    *         seems to be outputting data.
    */
   public static boolean doneCollectingDataInto(final File directory) {
-    final boolean stillCollectingData = FileUtility.anythingModifiedInTheLast(directory, 3, TimeUnit.SECONDS);
+    /*
+     * Is there any data we could prep and query yet...if not we are not done.
+     */
+    boolean hasUsableData = OutputType.COMPLETE.getFilesWithin(directory).length > 0;
+    if (!hasUsableData)
+      return false;
+    /*
+     * The port file is deleted if the collection run terminated cleanly,
+     * however, if it hard crashed it stays in the directory. So if it is gone,
+     * we are pretty sure the collection is completed, but if it exists we can't
+     * be sure.
+     */
+    final boolean portFileExists = getPortFileHandle(directory).exists();
+    if (hasUsableData && !portFileExists)
+      return true;
+    /*
+     * This will detect raw files being modified, the prep subdirectory is
+     * ignored.
+     */
+    final Set<String> ignore = new HashSet<String>();
+    ignore.add(PREP_DIRNAME);
+    final boolean stillCollectingData = FileUtility.anythingModifiedInTheLast(directory, 3, TimeUnit.SECONDS, ignore);
     return !stillCollectingData;
   }
 

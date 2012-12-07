@@ -8,7 +8,6 @@ import java.util.logging.Level;
 import com.surelogic.NonNull;
 import com.surelogic.Nullable;
 import com.surelogic.ReferenceObject;
-import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic.common.FileUtility;
 import com.surelogic.common.Pair;
 import com.surelogic.common.i18n.I18N;
@@ -42,11 +41,6 @@ public final class RunDirectory {
     }
     if (!directory.isDirectory()) {
       throw new IllegalArgumentException(I18N.err(95, directory.getAbsolutePath(), "it is not a directory"));
-    }
-
-    final File invalidFile = new File(directory, InstrumentationConstants.FL_INVALID_RUN);
-    if (invalidFile.exists()) {
-      return null;
     }
 
     final SourceZipFileHandles source = SourceZipFileHandles.getFor(directory);

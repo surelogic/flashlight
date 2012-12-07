@@ -4,7 +4,6 @@ import gnu.trove.TLongHashSet;
 
 import java.io.EOFException;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -23,7 +22,6 @@ import javax.xml.parsers.SAXParser;
 
 import org.xml.sax.SAXParseException;
 
-import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic._flashlight.common.OutputType;
 import com.surelogic.common.SLUtility;
 import com.surelogic.common.adhoc.AdHocQuery;
@@ -139,7 +137,6 @@ public final class PrepSLJob extends AbstractSLJob {
   @Override
   public SLStatus run(final SLProgressMonitor monitor) {
     final File runDir = f_runDirectory.getDirectory();
-    final File invalidRun = new File(runDir, InstrumentationConstants.FL_INVALID_RUN);
     int estEventsInRawFile = 0;
     for (File f : f_dataFiles) {
       estEventsInRawFile += FlashlightFileUtility.estimateNumEvents(f);
@@ -193,20 +190,6 @@ public final class PrepSLJob extends AbstractSLJob {
         } finally {
           infoStream.close();
         }
-      }
-      if (f_dataFiles.isEmpty()) {
-        // We are going to mark this file as invalid
-        String msg = I18N.err(235);
-        if (!invalidRun.exists()) {
-          FileWriter o = new FileWriter(invalidRun);
-          try {
-            o.write(msg);
-          } finally {
-            o.close();
-          }
-        }
-        return SLStatus.createErrorStatus(I18N.err(235));
-
       }
       for (File dataFile : f_dataFiles) {
         final InputStream infoStream = OutputType.getInputStreamFor(dataFile);

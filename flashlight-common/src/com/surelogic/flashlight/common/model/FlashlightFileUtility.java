@@ -186,7 +186,8 @@ public final class FlashlightFileUtility {
     final Set<String> ignore = new HashSet<String>();
     ignore.add(PREP_DIRNAME);
     final boolean modifiedRecently = FileUtility.anythingModifiedInTheLast(directory, 3, TimeUnit.SECONDS, ignore);
-    //System.out.println("isDoneCollectingDataInto: modified files in last 3 s (except /prep) = " + modifiedRecently);
+    // System.out.println("isDoneCollectingDataInto: modified files in last 3 s (except /prep) = "
+    // + modifiedRecently);
     return !modifiedRecently;
   }
 

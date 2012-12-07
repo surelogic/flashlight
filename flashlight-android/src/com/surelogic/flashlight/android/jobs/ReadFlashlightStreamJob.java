@@ -1,9 +1,7 @@
 package com.surelogic.flashlight.android.jobs;
 
-import java.io.BufferedReader;
 import java.io.EOFException;
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -172,15 +170,12 @@ public class ReadFlashlightStreamJob implements SLJob {
         private final OutputType f_type;
         private PrintWriter f_out;
         private File f_outFile;
-        private final PrintWriter f_header;
         private int f_count;
         private final StringBuilder f_buf;
-        boolean f_doHeader;
 
         public CheckpointingEventHandler(final OutputType type)
                 throws IOException {
             super(new NullSLProgressMonitor());
-            f_doHeader = true;
             f_type = type;
             // FIXME we set up the additional folders needed by eclipse here,
             // but we should probably remove the dependencies in eclipse or do
@@ -188,10 +183,6 @@ public class ReadFlashlightStreamJob implements SLJob {
             new File(f_dir, "source").mkdir();
             new File(f_dir, "external").mkdir();
             new File(f_dir, "projects").mkdir();
-            f_header = new PrintWriter(new File(f_dir,
-                    InstrumentationConstants.FL_CHECKPOINT_PREFIX
-                            + OutputType.FLH.getSuffix()));
-            f_header.println("<?xml version='1.0' encoding='UTF-8' standalone='yes'?>");
             f_buf = new StringBuilder();
             nextStream(true);
         }
@@ -214,17 +205,6 @@ public class ReadFlashlightStreamJob implements SLJob {
                 f_buf.append("/>");
             }
             f_out.println(f_buf);
-            if (f_doHeader) {
-                if (event == PrepEvent.ENVIRONMENT
-                        || event == PrepEvent.FLASHLIGHT) {
-                    f_header.println(f_buf);
-                } else if (event == PrepEvent.TIME) { // Last element
-                    f_header.println(f_buf);
-                    f_header.println("</flashlight>");
-                    f_header.close();
-                    f_doHeader = false;
-                }
-            }
             if (event == PrepEvent.CHECKPOINT) {
                 try {
                     nextStream(false);
@@ -260,20 +240,7 @@ public class ReadFlashlightStreamJob implements SLJob {
             if (firstFile) {
                 f_out.println("<?xml version='1.0' encoding='UTF-8' standalone='yes'?>");
             } else {
-                // Grab the header information and place it into this file.
-                BufferedReader reader = new BufferedReader(new FileReader(
-                        new File(f_dir,
-                                InstrumentationConstants.FL_CHECKPOINT_PREFIX
-                                        + OutputType.FLH.getSuffix())));
-                try {
-                    String line;
-                    while (!(line = reader.readLine())
-                            .startsWith("</flashlight>")) {
-                        f_out.println(line);
-                    }
-                } finally {
-                    reader.close();
-                }
+                // FIXME we may need to still output the header info here
             }
         }
 
@@ -287,7 +254,6 @@ public class ReadFlashlightStreamJob implements SLJob {
                 f_out.close();
             }
             f_outFile.delete();
-            f_header.close();
             new File(f_dir, InstrumentationConstants.FL_PORT_FILE_LOC).delete();
             return false;
         }
@@ -303,7 +269,6 @@ public class ReadFlashlightStreamJob implements SLJob {
                 f_out.println("</flashlight>");
                 f_out.close();
             }
-            f_header.close();
             new File(f_dir, InstrumentationConstants.FL_PORT_FILE_LOC).delete();
         }
 

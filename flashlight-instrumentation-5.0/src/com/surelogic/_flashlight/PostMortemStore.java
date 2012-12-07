@@ -1,7 +1,5 @@
 package com.surelogic._flashlight;
 
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -14,7 +12,6 @@ import java.util.concurrent.locks.ReadWriteLock;
 
 import com.surelogic._flashlight.SitesReader.HappensBeforeSites;
 import com.surelogic._flashlight.Store.GCThread;
-import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic._flashlight.common.OutputType;
 import com.surelogic._flashlight.trace.TraceNode;
 
@@ -147,36 +144,20 @@ public class PostMortemStore implements StoreListener {
             System.err.println("Output XML = " + outType);
         }
         EventVisitor outputStrategy = null;
-        try {
-            if (StoreConfiguration.getDirectory() != null) {
-                final PrintWriter headerW = new PrintWriter(
-                        InstrumentationConstants.FL_CHECKPOINT_PREFIX
-                                + OutputType.FLH.getSuffix());
-                OutputStrategyXML.outputHeader(f_conf, headerW, timeEvent,
-                        OutputStrategyXML.version);
-                headerW.close();
-            }
-            if (StoreConfiguration.debugOn()) {
-                System.err.println("Compress stream = "
-                        + outType.isCompressed());
-            }
-            final EventVisitor.Factory factory = OutputStrategyXML.factory;
-            if (StoreConfiguration.hasOutputPort()) {
-                // This check needs to be before the MultiFileOutput check,
-                // as we do not switch output streams when we are using
-                // checkpointing and sockets at the same time.
-                f_conf.log("Using network output.");
-                outputStrategy = new SocketOutputStrategy(f_conf, factory,
-                        outType);
-            } else {
-                f_conf.log("Using checkpointing output.");
-                outputStrategy = new CheckpointingOutputStreamStrategy(f_conf,
-                        factory, outType);
-            }
-        } catch (final IOException e) {
-            f_conf.logAProblem("unable to initialize PostMortem Store output.",
-                    e);
-            System.exit(1); // bail
+        if (StoreConfiguration.debugOn()) {
+            System.err.println("Compress stream = " + outType.isCompressed());
+        }
+        final EventVisitor.Factory factory = OutputStrategyXML.factory;
+        if (StoreConfiguration.hasOutputPort()) {
+            // This check needs to be before the MultiFileOutput check,
+            // as we do not switch output streams when we are using
+            // checkpointing and sockets at the same time.
+            f_conf.log("Using network output.");
+            outputStrategy = new SocketOutputStrategy(f_conf, factory, outType);
+        } else {
+            f_conf.log("Using checkpointing output.");
+            outputStrategy = new CheckpointingOutputStreamStrategy(f_conf,
+                    factory, outType);
         }
 
         // Initialize Queues

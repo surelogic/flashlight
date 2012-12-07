@@ -204,6 +204,11 @@ public class CheckpointingOutputStreamStrategy extends EventVisitor {
     }
 
     @Override
+    public void visit(Environment e) {
+        f_out.visit(e);
+    }
+
+    @Override
     void flush() {
         if (f_out != null) {
             f_out.flush();

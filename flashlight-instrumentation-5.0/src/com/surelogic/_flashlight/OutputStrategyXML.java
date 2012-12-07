@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 
 import com.surelogic._flashlight.common.AttributeType;
 import com.surelogic._flashlight.trace.TraceNode;
@@ -20,17 +18,7 @@ final class OutputStrategyXML extends EventVisitor {
         f_out.println(s);
     }
 
-    private static void addProperty(final String key, final AttributeType attr,
-            final StringBuilder b) {
-        String prop = System.getProperty(key);
-        if (prop == null) {
-            prop = "UNKNOWN";
-        }
-        Entities.addAttribute(attr.label(), prop, b);
-    }
-
-    public static void outputHeader(String run, final PrintWriter out,
-            final String version) {
+    public static void outputHeader(String run, final PrintWriter out) {
         assert out != null;
         out.println("<?xml version='1.0' encoding='UTF-8' standalone='yes'?>");
         StringBuilder b = new StringBuilder();
@@ -38,29 +26,6 @@ final class OutputStrategyXML extends EventVisitor {
         Entities.addAttribute(AttributeType.VERSION.label(), version, b);
         Entities.addAttribute(AttributeType.RUN.label(), run, b);
         b.append(">"); // don't end this element
-        out.println(b.toString());
-        b.setLength(0);
-        b.append("  <environment");
-        try {
-            Entities.addAttribute(AttributeType.HOSTNAME.label(), InetAddress
-                    .getLocalHost().getHostName(), b);
-        } catch (UnknownHostException e) {
-            Entities.addAttribute(AttributeType.HOSTNAME.label(), "unknown", b);
-        }
-        addProperty("user.name", AttributeType.USER_NAME, b);
-        addProperty("java.version", AttributeType.JAVA_VERSION, b);
-        addProperty("java.vendor", AttributeType.JAVA_VENDOR, b);
-        addProperty("os.name", AttributeType.OS_NAME, b);
-        addProperty("os.arch", AttributeType.OS_ARCH, b);
-        addProperty("os.version", AttributeType.OS_VERSION, b);
-        if (StoreConfiguration.isAndroid()) {
-            Entities.addAttribute(AttributeType.ANDROID.label(), "true", b);
-        }
-        Entities.addAttribute(AttributeType.MEMORY_MB.label(), Runtime
-                .getRuntime().maxMemory() / (1024L * 1024L), b);
-        Entities.addAttribute(AttributeType.CPUS.label(), Runtime.getRuntime()
-                .availableProcessors(), b);
-        b.append("/>");
         out.println(b.toString());
     }
 
@@ -76,7 +41,7 @@ final class OutputStrategyXML extends EventVisitor {
         assert stream != null;
         final OutputStreamWriter osw = new OutputStreamWriter(stream, "UTF-8");
         f_out = new PrintWriter(osw);
-        outputHeader(conf.getRun(), f_out, version);
+        outputHeader(conf.getRun(), f_out);
     }
 
     @Override
@@ -213,6 +178,11 @@ final class OutputStrategyXML extends EventVisitor {
 
     @Override
     void visit(HappensBeforeObject e) {
+        o(e.toString());
+    }
+
+    @Override
+    void visit(final Environment e) {
         o(e.toString());
     }
 

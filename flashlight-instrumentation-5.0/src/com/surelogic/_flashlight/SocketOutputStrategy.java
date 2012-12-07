@@ -306,6 +306,13 @@ public class SocketOutputStrategy extends EventVisitor {
     }
 
     @Override
+    void visit(Environment e) {
+        if (checkConnection()) {
+            f_out.visit(e);
+        }
+    }
+
+    @Override
     void flush() {
         if (checkConnection()) {
             f_out.flush();

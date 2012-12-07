@@ -112,8 +112,12 @@ public class PostMortemStore implements StoreListener {
 
     public void init(final RunConf conf) {
         f_conf = conf;
-        // Create starting time event
+        // Create starting events
+        Environment environmentEvent = new Environment();
         Time timeEvent = new Time(conf.getStartTime(), conf.getStartNanoTime());
+        List<Event> startingEvents = new ArrayList<Event>(2);
+        startingEvents.add(environmentEvent);
+        startingEvents.add(timeEvent);
 
         // Initialize Refinery and Depository
         final OutputType outType = StoreConfiguration.getOutputType();
@@ -138,7 +142,8 @@ public class PostMortemStore implements StoreListener {
         }
 
         // Initialize Queues
-        putInQueue(f_rawQueue, singletonList(timeEvent));
+
+        putInQueue(f_rawQueue, startingEvents);
         IdPhantomReference
                 .addObserver(new IdPhantomReferenceCreationObserver() {
                     public void notify(final ClassPhantomReference o,
@@ -485,12 +490,6 @@ public class PostMortemStore implements StoreListener {
             output.addAll(q);
             q.clear();
         }
-    }
-
-    static List<Event> singletonList(final Event e) {
-        final List<Event> l = new ArrayList<Event>(1);
-        l.add(e);
-        return l;
     }
 
     /**

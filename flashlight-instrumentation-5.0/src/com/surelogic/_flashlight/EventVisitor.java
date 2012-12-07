@@ -126,6 +126,10 @@ public abstract class EventVisitor {
         // do nothing
     }
 
+    void visit(Environment environment) {
+        // do nothing
+    }
+
     void flush() {
         // do nothing
     }
@@ -163,4 +167,5 @@ public abstract class EventVisitor {
         EventVisitor create(RunConf conf, OutputStream stream)
                 throws IOException;
     }
+
 }

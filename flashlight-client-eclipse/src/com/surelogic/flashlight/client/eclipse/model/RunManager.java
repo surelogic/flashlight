@@ -196,21 +196,38 @@ public final class RunManager {
    * if a prep job is currently running within Eclipse and that class cannot
    * interact with Eclipse.
    * 
+   * @param directory
+   *          a Flashlight run directory.
    * @return {@code true} if the passed run is in the process of being prepared
    *         for querying, {@code false} otherwise.
    */
-  public boolean isBeingPrepared(final RunDirectory runDir) {
-    if (runDir.getPrepDbDirectoryHandle().exists() && !runDir.isPrepared()) {
-      final String prepJobName = runDir.getPrepJobName();
-      // check if there is a prep job running
-      List<PrepSLJob> prepJobs = EclipseJob.getInstance().getActiveJobsOfType(PrepSLJob.class);
+  public boolean isBeingPrepared(final RunDirectory directory) {
+    return findPrepSLJobOrNullFor(directory) != null;
+  }
+
+  /**
+   * Finds the running data preparation job for the passed run directory and
+   * returns it, or {@code null} if no data preparation job is currently running
+   * on the passed directory.
+   * 
+   * @param directory
+   *          a Flashlight run directory.
+   * @return the running data preparation job for the passed run directory and
+   *         returns it, or {@code null} if no data preparation job is currently
+   *         running on the passed directory
+   */
+  @Nullable
+  public PrepSLJob findPrepSLJobOrNullFor(final RunDirectory directory) {
+    if (directory.getPrepDbDirectoryHandle().exists() && !directory.isPrepared()) {
+      final String prepJobName = directory.getPrepJobName();
+      final List<PrepSLJob> prepJobs = EclipseJob.getInstance().getActiveJobsOfType(PrepSLJob.class);
       for (PrepSLJob job : prepJobs) {
         if (prepJobName.equals(job.getName())) {
-          return true;
+          return job;
         }
       }
     }
-    return false;
+    return null;
   }
 
   /**

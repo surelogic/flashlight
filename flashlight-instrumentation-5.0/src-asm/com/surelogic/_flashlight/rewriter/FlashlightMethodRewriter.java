@@ -334,14 +334,21 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 		 */
 		mv.visitCode();
 		
-    /*
-     * Used to initialize the site identifier in case the class doesn't have
-     * line number information, but this now happens in
-     * insertMethodExecutionPrefix() when a site is generated for stack trace
-     * info.
-     */
-    insertMethodExecutionPrefix();
-
+		if (isConstructor) {
+		  /* Constructors don't call methodExecution(); they already call
+		   * constructorExecution().
+		   */
+		  updateSiteIdentifier();
+		} else {
+      /*
+       * Used to initialize the site identifier in case the class doesn't have
+       * line number information, but this now happens in
+       * insertMethodExecutionPrefix() when a site is generated for stack trace
+       * info.
+       */
+      insertMethodExecutionPrefix();
+		}
+		
 		// Initialize the flashlight$phantomClass field
 		if (isClassInitializer) {
 			insertClassInitializerCode();
@@ -413,7 +420,9 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 			if (isClassInitializer) {
 				insertClassInit(false);
 			}
-			insertMethodExecution(false);
+			if (!isConstructor) {
+			  insertMethodExecution(false);
+			}
 			mv.visitInsn(opcode);
 
 			if (wasSynchronized && config.rewriteSynchronizedMethod) {
@@ -630,7 +639,9 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 			insertConstructorExecutionPostfix();
 		}
 		
-		insertMethodExecutionPostfix();
+		if (!isConstructor) {
+		  insertMethodExecutionPostfix();
+		}
 
 		/*
 		 * We require the use of a ClassWRiter with the COMPUTE_MAXES or

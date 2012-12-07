@@ -118,7 +118,7 @@ public final class PromptToPrepAllRawData extends SLUIJob {
       return Status.OK_STATUS; // bail
     }
 
-    final Set<RunDirectory> notPrepped = RunManager.getInstance().getNotPreparedRunDirectories();
+    final Set<RunDirectory> notPrepped = RunManager.getInstance().getNotPreparedOrBeingPreparedRunDirectories();
     if (!notPrepped.isEmpty()) {
       /*
        * Prompt the user

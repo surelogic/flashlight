@@ -2,8 +2,6 @@ package com.surelogic.flashlight.client.eclipse.model;
 
 import java.util.Set;
 
-import com.surelogic.flashlight.common.model.DataCollectingRunState;
-import com.surelogic.flashlight.common.model.IDataCollectingRun;
 
 /**
  * Implemented to observe changes to launched Flashlight-instrumented

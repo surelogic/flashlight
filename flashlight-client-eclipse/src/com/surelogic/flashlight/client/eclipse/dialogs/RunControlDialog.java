@@ -49,10 +49,10 @@ import com.surelogic.common.ui.EclipseColorUtility;
 import com.surelogic.common.ui.EclipseUIUtility;
 import com.surelogic.common.ui.SLImages;
 import com.surelogic.flashlight.client.eclipse.Activator;
+import com.surelogic.flashlight.client.eclipse.model.DataCollectingRunState;
+import com.surelogic.flashlight.client.eclipse.model.IDataCollectingRun;
 import com.surelogic.flashlight.client.eclipse.model.IRunControlObserver;
 import com.surelogic.flashlight.client.eclipse.model.RunControlManager;
-import com.surelogic.flashlight.common.model.DataCollectingRunState;
-import com.surelogic.flashlight.common.model.IDataCollectingRun;
 
 public final class RunControlDialog extends Dialog implements IRunControlObserver, TickListener {
 
@@ -344,7 +344,7 @@ public final class RunControlDialog extends Dialog implements IRunControlObserve
 
     @NonNull
     String getRunLabel() {
-      return f_run.getRunSimpleNameforUI();
+      return "TODO"; //f_run.getRunSimpleNameforUI();
     }
 
     @NonNull
@@ -355,7 +355,7 @@ public final class RunControlDialog extends Dialog implements IRunControlObserve
     @NonNull
     String getTimeInformation(boolean finished) {
       if (!finished) {
-        final Date launchDate = f_run.getLaunchTime();
+        final Date launchDate = null; // TODO f_run.getLaunchTime();
         final long launched = launchDate.getTime();
         final long now = new Date().getTime();
         final long durationMS = now - launched;
@@ -389,7 +389,7 @@ public final class RunControlDialog extends Dialog implements IRunControlObserve
     final Image f_androidFinished = SLImages.getGrayscaleImage(f_androidRunning);
 
     Image getImage() {
-      if (f_run.isAndroid()) {
+      if (true /* TODOf_run.isAndroid()*/) {
         return f_state == DataCollectingRunState.FINISHED ? f_androidFinished : f_androidRunning;
       } else {
         return f_state == DataCollectingRunState.FINISHED ? f_javaFinished : f_javaRunning;
@@ -440,7 +440,8 @@ public final class RunControlDialog extends Dialog implements IRunControlObserve
         return 1;
       if (o2 == null || o2.first() == null)
         return -1;
-      return o2.first().getLaunchTime().compareTo(o1.first().getLaunchTime());
+      return -1;
+    // TODO  return o2.first().getLaunchTime().compareTo(o1.first().getLaunchTime());
     }
   };
 

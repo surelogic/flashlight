@@ -51,7 +51,6 @@ import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.QueryMenuView;
 import com.surelogic.flashlight.common.jobs.DeleteRawFilesSLJob;
 import com.surelogic.flashlight.common.jobs.UnPrepSLJob;
-import com.surelogic.flashlight.common.model.RawFileHandles;
 import com.surelogic.flashlight.common.model.RunDirectory;
 
 /**
@@ -86,7 +85,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements IRunMa
             /*
              * Is it already prepared?
              */
-            if (description.isPreparedOrIsBeingPrepared()) {
+            if (description.isPrepared()) {
               /*
                * Change the focus to the query menu view.
                */
@@ -138,6 +137,26 @@ public final class RunViewMediator extends AdHocManagerAdapter implements IRunMa
   }
 
   @NonNull
+  private RunDirectory[] getSelectedRunDirectoriesNotBeingPrepared() {
+    final List<RunDirectory> result = new ArrayList<RunDirectory>();
+    for (RunDirectory r : getSelectedRunDirectories()) {
+      if (!r.isBeingPrepared())
+        result.add(r);
+    }
+    return result.toArray(new RunDirectory[result.size()]);
+  }
+
+  @NonNull
+  private List<RunDirectory> getSelectedRunDirectoriesThatArePrepared() {
+    final List<RunDirectory> result = new ArrayList<RunDirectory>();
+    for (RunDirectory r : getSelectedRunDirectories()) {
+      if (r.isPrepared())
+        result.add(r);
+    }
+    return result;
+  }
+
+  @NonNull
   private RunDirectory[] getSelectedRunDirectories() {
     final TableItem[] items = f_table.getSelection();
     final RunDirectory[] results = new RunDirectory[items.length];
@@ -186,10 +205,10 @@ public final class RunViewMediator extends AdHocManagerAdapter implements IRunMa
       final List<RunDirectory> notPrepped = new ArrayList<RunDirectory>();
       RunDirectory one = null;
       boolean hasPrep = false;
-      for (final RunDirectory d : getSelectedRunDirectories()) {
+      for (final RunDirectory d : getSelectedRunDirectoriesNotBeingPrepared()) {
         notPrepped.add(d);
         one = d;
-        if (d.isPreparedOrIsBeingPrepared()) {
+        if (d.isPrepared()) {
           hasPrep = true;
         }
       }
@@ -253,7 +272,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements IRunMa
     public void run() {
       final ArrayList<SLJob> jobs = new ArrayList<SLJob>();
       final ArrayList<String> keys = new ArrayList<String>();
-      final RunDirectory[] selected = getSelectedRunDirectories();
+      final RunDirectory[] selected = getSelectedRunDirectoriesNotBeingPrepared();
       if (selected.length > 0) {
         final DeleteRunDialog d = new DeleteRunDialog(f_table.getShell(), selected[0].getDescription(), selected.length > 1);
         d.open();
@@ -261,7 +280,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements IRunMa
           return;
         }
         for (final RunDirectory runDir : selected) {
-          if (runDir.isPreparedOrIsBeingPrepared()) {
+          if (runDir.isPrepared()) {
             jobs.add(new UnPrepSLJob(runDir, AdHocDataSource.getManager()));
           }
           jobs.add(new DeleteRawFilesSLJob(runDir));
@@ -293,16 +312,8 @@ public final class RunViewMediator extends AdHocManagerAdapter implements IRunMa
   private final Action f_inferJSureAnnoAction = new Action() {
     @Override
     public void run() {
-      final RunDirectory[] selectedRunDescriptions = getSelectedRunDirectories();
-      final List<RunDirectory> preparedRuns = new ArrayList<RunDirectory>();
-      boolean hasRun = false;
-      for (final RunDirectory description : selectedRunDescriptions) {
-        if (description.isPreparedOrIsBeingPrepared()) {
-          hasRun = true;
-          preparedRuns.add(description);
-        }
-      }
-      if (hasRun) {
+      final List<RunDirectory> preparedRuns = getSelectedRunDirectoriesThatArePrepared();
+      if (!preparedRuns.isEmpty()) {
         inferJSureAnnoHelper(preparedRuns);
       }
     }
@@ -363,40 +374,31 @@ public final class RunViewMediator extends AdHocManagerAdapter implements IRunMa
       f_table.setSelection(0);
     }
 
-    final RunDirectory[] selected = getSelectedRunDirectories();
-    final boolean somethingIsSelected = selected.length > 0;
-    f_deleteAction.setEnabled(somethingIsSelected);
-    f_inferJSureAnnoAction.setEnabled(somethingIsSelected);
-    boolean rawActionsEnabled = somethingIsSelected;
-    /*
-     * Only enable raw actions if all the selected runs have raw data. Only
-     * enable binary actions if all the selected runs have raw binary data.
-     */
-    for (final RunDirectory rd : selected) {
-      final RawFileHandles rfh = rd.getRawFileHandles();
-      if (rfh == null) {
-        rawActionsEnabled = false;
-      }
-    }
+    final RunDirectory[] notBeingPreparedSelected = getSelectedRunDirectoriesNotBeingPrepared();
+    final boolean somethingIsSelectedNotBeingPrepared = notBeingPreparedSelected.length > 0;
+    f_deleteAction.setEnabled(somethingIsSelectedNotBeingPrepared);
+    f_inferJSureAnnoAction.setEnabled(somethingIsSelectedNotBeingPrepared);
+    boolean rawActionsEnabled = somethingIsSelectedNotBeingPrepared;
+
     /*
      * If only one item is selected change the focus of the query menu and if
      * the selection changed inform the SourceView so it shows code from that
      * run.
      */
-    if (selected.length == 0 || !selected[0].isPreparedOrIsBeingPrepared()) {
+    if (notBeingPreparedSelected.length == 0 || !notBeingPreparedSelected[0].isPrepared()) {
       AdHocDataSource.getInstance().setSelectedRun(null);
       AdHocDataSource.getManager().setGlobalVariableValue(AdHocManager.DATABASE, null);
       if (AdHocDataSource.getManager().getSelectedResult() == null) {
         AdHocDataSource.getManager().notifySelectedResultChange();
       }
     } else {
-      final RunDirectory o = selected[0];
+      final RunDirectory o = notBeingPreparedSelected[0];
       AdHocDataSource.getInstance().setSelectedRun(o);
       AdHocDataSource.getManager().setGlobalVariableValue(AdHocManager.DATABASE, o.getRunIdString());
       AdHocDataSource.getManager().setSelectedResult(null);
     }
     f_prepAction.setEnabled(rawActionsEnabled);
-    f_showLogAction.setEnabled(rawActionsEnabled);
+    f_showLogAction.setEnabled(getSelectedRunDirectories().length > 0);
   }
 
   /**

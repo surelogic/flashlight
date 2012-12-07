@@ -241,9 +241,10 @@ public class ReadFlashlightStreamJob implements SLJob {
             f_out.flush();
             f_out.close();
             // Build completion file
-            FileWriter complete = new FileWriter(new File(f_dir, f_runName
-                    + String.format(".%06d", f_count++)
-                    + OutputType.COMPLETE.getSuffix()));
+            FileWriter complete = new FileWriter(new File(f_dir,
+                    InstrumentationConstants.FL_CHECKPOINT_PREFIX
+                            + String.format(".%06d", f_count++)
+                            + OutputType.COMPLETE.getSuffix()));
             try {
                 complete.write(nanos + " ns\n");
             } finally {
@@ -252,8 +253,10 @@ public class ReadFlashlightStreamJob implements SLJob {
         }
 
         void nextStream(boolean firstFile) throws IOException {
-            f_outFile = new File(f_dir, f_runName
-                    + String.format(".%06d", f_count) + f_type.getSuffix());
+            f_outFile = new File(f_dir,
+                    InstrumentationConstants.FL_CHECKPOINT_PREFIX
+                            + String.format(".%06d", f_count)
+                            + f_type.getSuffix());
             f_out = new PrintWriter(OutputType.getOutputStreamFor(f_outFile));
             if (firstFile) {
                 f_out.println("<?xml version='1.0' encoding='UTF-8' standalone='yes'?>");

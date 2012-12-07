@@ -193,18 +193,6 @@ public class RunConf {
         return id == null ? -1 : id;
     }
 
-    private final String f_filePrefix;
-
-    /**
-     * This is the unique file name prefix at the start of .flog, .fl, and .flh
-     * files.
-     * 
-     * @return
-     */
-    public String getFilePrefix() {
-        return f_filePrefix;
-    }
-
     /**
      * The number of events a single log file should (roughly) contain.
      * 
@@ -268,27 +256,8 @@ public class RunConf {
                                     flashlightDir.toString()));
                 }
             }
-            // ??? What to do if mkdirs() fails???
-            final StringBuilder fileName = new StringBuilder();
-            fileName.append(flashlightDir);
-            fileName.append(System.getProperty("file.separator"));
-            fileName.append(f_run);
-
-            /*
-             * Get the start time of the data collection. This time is embedded
-             * in the time event in the output as well as in the names of the
-             * data and log files. The time can be provided in the configuration
-             * parameter "date override" so that we use the same start time in
-             * the data file as we use in the name of the flashlight run
-             * directory as constructed by the executing IDE.
-             */
-
-            fileName.append(dateFormat.format(f_startTime));
-
-            f_filePrefix = fileName.toString();
             f_log = initLog(flashlightDir);
         } else {
-            f_filePrefix = null;
             f_log = initLog(null);
         }
         f_start_nano = System.nanoTime();

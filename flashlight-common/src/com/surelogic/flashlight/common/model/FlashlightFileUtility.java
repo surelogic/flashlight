@@ -104,6 +104,28 @@ public final class FlashlightFileUtility {
   }
 
   /**
+   * Name of the subdirectory within the prep directory that contains the HTML
+   * for the run overview.
+   */
+  private static final String PREP_HTML_DIRNAME = "html";
+
+  /**
+   * Constructs and returns an abstract representation of the HTML directory
+   * within the prepared data directory within the passed directory.
+   * <p>
+   * This method does not create the directory or check if it actually exists.
+   * 
+   * @param directory
+   *          a Flashlight run directory.
+   * @return an abstract representation of the HTML directory within the
+   *         prepared data directory within the passed directory.
+   */
+  public static File getPrepHtmlDirectoryHandle(final File directory) {
+    final File result = new File(getPrepDirectoryHandle(directory), PREP_HTML_DIRNAME);
+    return result;
+  }
+
+  /**
    * Constructs and returns an abstract representation of the port file within
    * the passed directory.
    * <p>

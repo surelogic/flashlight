@@ -8,7 +8,6 @@ import com.surelogic.common.i18n.I18N;
 
 public final class HtmlHandles {
 
-  private static final String HTML_DIR_NAME = "html";
   private static final String INDEX_HTML = "index.html";
 
   @NonNull
@@ -48,7 +47,7 @@ public final class HtmlHandles {
     if (runDir == null || !runDir.exists()) {
       return null;
     }
-    final File htmlDirectory = new File(runDir, HTML_DIR_NAME);
+    final File htmlDirectory = FlashlightFileUtility.getPrepHtmlDirectoryHandle(runDir);
     if (!htmlDirectory.exists()) {
       /*
        * Create the directory

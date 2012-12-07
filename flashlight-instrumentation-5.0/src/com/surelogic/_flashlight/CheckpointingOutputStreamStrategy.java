@@ -40,7 +40,7 @@ public class CheckpointingOutputStreamStrategy extends EventVisitor {
                 InstrumentationConstants.FL_CHECKPOINT_PREFIX
                         + String.format(".%06d", f_count++)
                         + OutputType.COMPLETE.getSuffix());
-        w.write(nanos + " ns\n");
+        w.write(nanos - f_conf.getStartNanoTime() + " ns\n");
         w.close();
     }
 

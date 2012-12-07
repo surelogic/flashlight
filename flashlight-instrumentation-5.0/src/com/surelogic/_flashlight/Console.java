@@ -147,6 +147,13 @@ class Console extends Thread {
             f_conf.logAProblem("unable to close the socket used by "
                     + getName(), e);
         }
+        if (StoreConfiguration.getDirectory() != null) {
+            File portFile = new File(StoreConfiguration.getDirectory(),
+                    InstrumentationConstants.FL_PORT_FILE_LOC);
+            if (portFile.exists()) {
+                portFile.delete();
+            }
+        }
     }
 
     static AtomicInteger f_instanceCount = new AtomicInteger();

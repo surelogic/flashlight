@@ -288,6 +288,7 @@ public class ReadFlashlightStreamJob implements SLJob {
             }
             f_outFile.delete();
             f_header.close();
+            new File(f_dir, InstrumentationConstants.FL_PORT_FILE_LOC).delete();
             return false;
         }
 
@@ -303,6 +304,7 @@ public class ReadFlashlightStreamJob implements SLJob {
                 f_out.close();
             }
             f_header.close();
+            new File(f_dir, InstrumentationConstants.FL_PORT_FILE_LOC).delete();
         }
 
     }

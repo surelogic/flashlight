@@ -23,7 +23,7 @@ public final class SwitchToFlashlightPerspectiveJob extends SLUIJob {
      * First kick off a job to refresh the runs shown in the Flashlight Runs
      * view.
      */
-    RefreshRunManagerSLJob.submit(false, true);
+    RefreshRunManagerSLJob.submit(true);
 
     /*
      * Ensure that we are not already in the Flashlight perspective.

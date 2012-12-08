@@ -55,7 +55,7 @@ public final class RunView extends ViewPart {
     // Set the line of the table visible
     tableViewer.getTable().setLinesVisible(true);
     // Ensure that the run manager data is fresh
-    RefreshRunManagerSLJob.submit(false, true);
+    RefreshRunManagerSLJob.submit(true);
     // Set the input so we see data
     tableViewer.setInput(RunManager.getInstance());
 

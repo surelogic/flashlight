@@ -468,7 +468,7 @@ public final class FlashlightFileUtility {
 
     void read() {
       for (final File runDir : getRunDirs()) {
-        final RunDirectory runDirectory = RunDirectory.getFor(runDir);
+        final RunDirectory runDirectory = RunDirectory.getFor(runDir, true);
         if (runDirectory != null) {
           final RunDescription run = runDirectory.getDescription();
           f_runToHandles.put(run, runDirectory);
@@ -481,7 +481,10 @@ public final class FlashlightFileUtility {
     @Override
     public boolean accept(final File root, final String name) {
       final File potentialRunDir = new File(root, name);
-      return potentialRunDir.isDirectory() && isDoneCollectingDataInto(potentialRunDir);
+      final boolean result = potentialRunDir.isDirectory() && isDoneCollectingDataInto(potentialRunDir);
+      // System.out.println("Considered " + potentialRunDir.getName() +
+      // " : accept=" + result);
+      return result;
     }
   };
 

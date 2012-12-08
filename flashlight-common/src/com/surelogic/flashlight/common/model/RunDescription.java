@@ -9,7 +9,8 @@ import com.surelogic.common.i18n.I18N;
 
 /**
  * Describes a run of a Flashlight-instrumented program that has completed data
- * collection.
+ * collection. This class is used to see if the information loaded about two run
+ * directories is really the same because it is a value object.
  */
 @Immutable
 @ValueObject
@@ -21,19 +22,23 @@ public final class RunDescription {
    * 
    * @param prefix
    *          a well-formed checkpoint data file prefix.
+   * @param collectionDurationNanos
+   *          the duration of collection in nanoseconds. This is critical to
+   *          check if more raw data somehow appeared in the directory.
    * @return a run description based upon the passed prefix info.
    * @throws Exception
    *           if something goes wrong.
    */
   @NonNull
-  public static RunDescription getInstance(final CheckpointFilePrefix prefix) {
+  public static RunDescription getInstance(final CheckpointFilePrefix prefix, final long collectionDurationNanos) {
     if (prefix == null)
       throw new IllegalArgumentException(I18N.err(44, "prefix"));
 
     if (prefix.isWellFormed()) {
       return new RunDescription(prefix.getName(), prefix.getRawDataVersion(), prefix.getHostname(), prefix.getUserName(),
           prefix.getJavaVersion(), prefix.getJavaVendor(), prefix.getOSName(), prefix.getOSArch(), prefix.getOSVersion(),
-          prefix.getMaxMemoryMb(), prefix.getProcessors(), new Timestamp(prefix.getWallClockTime().getTime()), prefix.isAndroid());
+          prefix.getMaxMemoryMb(), prefix.getProcessors(), new Timestamp(prefix.getWallClockTime().getTime()), prefix.isAndroid(),
+          collectionDurationNanos);
     } else {
       throw new IllegalStateException(I18N.err(107, prefix.getFile().getAbsolutePath()));
     }
@@ -41,7 +46,8 @@ public final class RunDescription {
 
   private RunDescription(final String name, final String rawDataVersion, final String hostname, final String userName,
       final String javaVersion, final String javaVendor, final String osName, final String osArch, final String osVersion,
-      final int maxMemoryMb, final int processors, final Timestamp started, final boolean isAndroid) {
+      final int maxMemoryMb, final int processors, final Timestamp started, final boolean isAndroid,
+      final long collectionDurationNanos) {
     if (name == null) {
       throw new IllegalArgumentException(I18N.err(44, "name"));
     }
@@ -85,6 +91,7 @@ public final class RunDescription {
     }
     f_started = started;
     f_android = isAndroid;
+    f_collectionDurationNanos = collectionDurationNanos;
   }
 
   @NonNull
@@ -194,6 +201,12 @@ public final class RunDescription {
     return f_android;
   }
 
+  private final long f_collectionDurationNanos;
+
+  public long getCollectionDurationInNanos() {
+    return f_collectionDurationNanos;
+  }
+
   @Override
   public String toString() {
     final StringBuilder b = new StringBuilder();
@@ -209,6 +222,7 @@ public final class RunDescription {
     b.append(" Max Memory: ").append(f_maxMemoryMb).append(" MB");
     b.append(" processors=").append(f_processors);
     b.append(" started=").append(f_started);
+    b.append(" duration=").append(f_collectionDurationNanos);
     b.append(" isAndroid=").append(f_android);
     b.append("]");
     return b.toString();
@@ -219,6 +233,7 @@ public final class RunDescription {
     final int prime = 31;
     int result = 1;
     result = prime * result + (f_android ? 1231 : 1237);
+    result = prime * result + (int) (f_collectionDurationNanos ^ (f_collectionDurationNanos >>> 32));
     result = prime * result + ((f_hostname == null) ? 0 : f_hostname.hashCode());
     result = prime * result + ((f_javaVendor == null) ? 0 : f_javaVendor.hashCode());
     result = prime * result + ((f_javaVersion == null) ? 0 : f_javaVersion.hashCode());
@@ -244,6 +259,8 @@ public final class RunDescription {
       return false;
     RunDescription other = (RunDescription) obj;
     if (f_android != other.f_android)
+      return false;
+    if (f_collectionDurationNanos != other.f_collectionDurationNanos)
       return false;
     if (f_hostname == null) {
       if (other.f_hostname != null)

@@ -235,15 +235,8 @@ public final class RunManager {
    * all observers if that set has changed. This method is invoked by
    * {@link RefreshRunManagerSLJob}, which is generally what you want to use if
    * you are in the Eclipse client.
-   * 
-   * @param forceNotify
-   *          {@code true} if a notification to observers is made even if no
-   *          changes are noted, {@code false} if a notification to observers is
-   *          only made if changes are noted.
-   * 
-   * @see RefreshRunManagerSLJob
    */
-  public void refresh(boolean forceNotify) {
+  public void refresh() {
     /*
      * Assume nothing changed
      */
@@ -279,7 +272,8 @@ public final class RunManager {
       }
     }
 
-    if (isChanged || forceNotify) {
+    if (isChanged) {
+      // System.out.println("RunManager.notifyObservers() invoked");
       notifyObservers();
     }
   }

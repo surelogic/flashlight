@@ -138,7 +138,7 @@ public final class PromptToPrepAllRawData extends SLUIJob {
         final SLJob job = new PrepSLJob(run, EclipseUtility.getIntPreference(FlashlightPreferencesUtility.PREP_OBJECT_WINDOW_SIZE),
             AdHocDataSource.getManager().getTopLevelQueries());
         EclipseJob.getInstance().schedule(job, true, false, run.getRunIdString());
-        RefreshRunManagerSLJob.submit(false, true);
+        RefreshRunManagerSLJob.submit(true);
       }
     }
   }

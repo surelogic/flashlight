@@ -2,7 +2,6 @@ package com.surelogic.flashlight.common.model;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 import com.surelogic.NonNull;
@@ -32,7 +31,7 @@ public final class RunDirectory {
    *         doesn't exist.
    */
   @Nullable
-  static RunDirectory getFor(final File directory) {
+  static RunDirectory getFor(final File directory, boolean debug) {
     if (directory == null) {
       throw new IllegalArgumentException(I18N.err(44, "directory"));
     }
@@ -45,13 +44,20 @@ public final class RunDirectory {
 
     final SourceZipFileHandles source = SourceZipFileHandles.getFor(directory);
     if (source == null) {
+      if (debug)
+        System.out.println("getFor(" + directory.getName() + ") failed: SourceZipFileHandles.getFor(directory)==null");
       return null;
     }
 
     // Find the last .complete snapshot
     final Pair<File, Integer> pair = FlashlightFileUtility.getLatestCheckpointCompleteFileAndItsNumberWithin(directory);
-    if (pair == null)
+    if (pair == null) {
+      if (debug)
+        System.out.println("getFor(" + directory.getName()
+            + ") failed: FlashlightFileUtility.getLatestCheckpointCompleteFileAndItsNumberWithin(directory)==null");
+
       return null;
+    }
 
     final RawFileHandles rawFileHandles = FlashlightFileUtility.getRawFileHandlesFor(directory, pair.second());
 
@@ -59,26 +65,21 @@ public final class RunDirectory {
     final File firstSnapshotFile = rawFileHandles.getFirstCheckpointFile();
     final CheckpointFilePrefix prefix = FlashlightFileUtility.getPrefixFor(firstSnapshotFile);
     if (!prefix.isWellFormed()) {
-      // can't make sense of the header file
+      if (debug)
+        System.out.println("getFor(" + directory.getName() + ") failed: !prefix.isWellFormed()");
       return null;
     }
 
-    final long durationNanos = FlashlightFileUtility.readDurationInNanosFrom(pair.first());
+    final long collectionDurationNanos = FlashlightFileUtility.readDurationInNanosFrom(pair.first());
 
-    final RunDescription run = RunDescription.getInstance(prefix);
-    if (run == null)
+    final RunDescription run = RunDescription.getInstance(prefix, collectionDurationNanos);
+    if (run == null) {
+      if (debug)
+        System.out.println("getFor(" + directory.getName() + ") failed: RunDescription.getInstance(prefix)==null");
       return null;
+    }
 
-    /**
-     * A sanity check to make sure that we aren't still running the instrumented
-     * program and collecting data. We do this by checking if anything has been
-     * recently modified in the run directory.
-     */
-    final boolean isStillCollectingData = FileUtility.anythingModifiedInTheLast(directory, 3, TimeUnit.SECONDS);
-    if (isStillCollectingData)
-      return null;
-
-    return new RunDirectory(run, durationNanos, directory, source, rawFileHandles);
+    return new RunDirectory(run, directory, source, rawFileHandles);
   }
 
   @Nullable
@@ -121,23 +122,17 @@ public final class RunDirectory {
   private final SourceZipFileHandles f_sourceZipFileHandles;
 
   /**
-   * The run duration in nanoseconds.
-   */
-  private final long f_runDurationNanos;
-
-  /**
    * The file handles for the profile data
    */
   @NonNull
   private final RawFileHandles f_rawFileHandles;
 
-  private RunDirectory(@NonNull final RunDescription runDescription, final long runDurationNanos, @NonNull final File runDirHandle,
+  private RunDirectory(@NonNull final RunDescription runDescription, @NonNull final File runDirHandle,
       @NonNull final SourceZipFileHandles sourceZipFileHandles, @NonNull final RawFileHandles rawFileHandles) {
     f_runDescription = runDescription;
     f_runDirHandle = runDirHandle;
     f_sourceZipFileHandles = sourceZipFileHandles;
     f_rawFileHandles = rawFileHandles;
-    f_runDurationNanos = runDurationNanos;
   }
 
   /**
@@ -205,15 +200,6 @@ public final class RunDirectory {
   @NonNull
   public RunDescription getDescription() {
     return f_runDescription;
-  }
-
-  /**
-   * Gets the duration of collection in nanoseconds.
-   * 
-   * @return the duration of collection in nanoseconds.
-   */
-  public long getCollectionDurationInNanos() {
-    return f_runDurationNanos;
   }
 
   /**

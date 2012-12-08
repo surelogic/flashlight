@@ -182,7 +182,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements IRunMa
   private final Action f_refreshAction = new Action() {
     @Override
     public void run() {
-      RefreshRunManagerSLJob.submit(false, false);
+      RefreshRunManagerSLJob.submit(false);
     }
   };
 
@@ -278,7 +278,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements IRunMa
           final SLJob job = new DeleteRunDirectoryJob(runDir);
           EclipseJob.getInstance().schedule(job, true, false, runDir.getRunIdString());
         }
-        RefreshRunManagerSLJob.submit(false, true);
+        RefreshRunManagerSLJob.submit(true);
       }
     }
   };

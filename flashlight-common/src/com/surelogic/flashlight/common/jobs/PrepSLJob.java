@@ -204,7 +204,7 @@ public final class PrepSLJob extends AbstractSLJob {
               "Persist the new run description", PERSIST_RUN_DESCRIPTION_WORK);
           persistRunDescriptionMonitor.begin();
           final Timestamp start = f_runDirectory.getDescription().getStartTimeOfRun();
-          final long startNS = f_runDirectory.getCollectionDurationInNanos();
+          final long startNS = f_runDirectory.getDescription().getCollectionDurationInNanos();
           saveRunDescription(conn);
           persistRunDescriptionMonitor.done();
 
@@ -359,7 +359,7 @@ public final class PrepSLJob extends AbstractSLJob {
 
   private void saveRunDescription(final Connection c) throws SQLException {
     final RunDescription run = f_runDirectory.getDescription();
-    final long durationNanos = f_runDirectory.getCollectionDurationInNanos();
+    final long durationNanos = run.getCollectionDurationInNanos();
     final PreparedStatement s = c.prepareStatement(QB.get("RunDAO.insert"));
     try {
       int i = 1;

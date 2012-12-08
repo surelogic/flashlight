@@ -114,7 +114,7 @@ public final class RunManager {
    * Gets an array containing the identity strings of all run directories
    * managed by this. The identity string for a {@link RunDirectory}, which we
    * will call <tt>run</tt>, is defined to be
-   * {@code run.getDescription().toIdentityString()}.
+   * {@code run.getDescription().getRunIdString()}.
    * 
    * @return the identity strings of all run directories managed by this.
    */

@@ -153,6 +153,9 @@ public final class PrepSLJob extends AbstractSLJob {
     monitor.begin(PRE_SCAN_WORK + DROP_CONSTRAINT_WORK + PERSIST_RUN_DESCRIPTION_WORK + SETUP_WORK + PREP_WORK * 2 + FLUSH_WORK
         + EACH_POST_PREP * postPrepWork.length + ADD_CONSTRAINT_WORK);
 
+    /*
+     * License check
+     */
     final SLStatus failed = SLLicenseUtility.validateSLJob(SLLicenseProduct.FLASHLIGHT, monitor);
     if (failed != null) {
       return failed;

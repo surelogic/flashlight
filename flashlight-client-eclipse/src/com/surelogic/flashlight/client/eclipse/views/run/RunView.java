@@ -56,7 +56,7 @@ public final class RunView extends ViewPart {
     // Set the line of the table visible
     tableViewer.getTable().setLinesVisible(true);
     // Ensure that the run manager data is fresh
-    EclipseJob.getInstance().scheduleDb(new RefreshRunManagerSLJob(false), false, true, 500,
+    EclipseJob.getInstance().schedule(new RefreshRunManagerSLJob(false), false, true, 500,
         RunManager.getInstance().getRunIdentities());
     // Set the input so we see data
     tableViewer.setInput(RunManager.getInstance());

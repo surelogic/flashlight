@@ -40,6 +40,7 @@ import com.surelogic.common.ui.jobs.SLUIJob;
 import com.surelogic.flashlight.client.eclipse.dialogs.DeleteRunDialog;
 import com.surelogic.flashlight.client.eclipse.dialogs.LogDialog;
 import com.surelogic.flashlight.client.eclipse.dialogs.RunControlDialog;
+import com.surelogic.flashlight.client.eclipse.jobs.DeleteRunDirectoryJob;
 import com.surelogic.flashlight.client.eclipse.jobs.PromptToPrepAllRawData;
 import com.surelogic.flashlight.client.eclipse.jobs.RefreshRunManagerSLJob;
 import com.surelogic.flashlight.client.eclipse.model.IRunManagerObserver;
@@ -49,8 +50,6 @@ import com.surelogic.flashlight.client.eclipse.refactoring.RegionRefactoringInfo
 import com.surelogic.flashlight.client.eclipse.refactoring.RegionRefactoringWizard;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.QueryMenuView;
-import com.surelogic.flashlight.common.jobs.DeleteRawFilesSLJob;
-import com.surelogic.flashlight.common.jobs.UnPrepSLJob;
 import com.surelogic.flashlight.common.model.RunDirectory;
 
 /**
@@ -184,7 +183,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements IRunMa
   private final Action f_refreshAction = new Action() {
     @Override
     public void run() {
-      EclipseJob.getInstance().scheduleDb(new RefreshRunManagerSLJob(true), false, false);
+      EclipseJob.getInstance().schedule(new RefreshRunManagerSLJob(true), false, false);
     }
   };
 
@@ -279,10 +278,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements IRunMa
           return;
         }
         for (final RunDirectory runDir : selected) {
-          if (runDir.isPrepared()) {
-            jobs.add(new UnPrepSLJob(runDir, AdHocDataSource.getManager()));
-          }
-          jobs.add(new DeleteRawFilesSLJob(runDir));
+          jobs.add(new DeleteRunDirectoryJob(runDir));
           keys.add(runDir.getRunIdString());
         }
       }
@@ -297,8 +293,8 @@ public final class RunViewMediator extends AdHocManagerAdapter implements IRunMa
         }
 
         final SLJob job = new AggregateSLJob(jobName, jobs);
-        EclipseJob.getInstance().scheduleDb(job, true, false, keys.toArray(new String[keys.size()]));
-        EclipseJob.getInstance().scheduleDb(new RefreshRunManagerSLJob(false), false, false,
+        EclipseJob.getInstance().schedule(job, true, false, keys.toArray(new String[keys.size()]));
+        EclipseJob.getInstance().schedule(new RefreshRunManagerSLJob(false), false, false,
             RunManager.getInstance().getRunIdentities());
       }
     }

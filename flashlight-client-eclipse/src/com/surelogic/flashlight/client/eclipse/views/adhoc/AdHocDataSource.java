@@ -10,6 +10,7 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.progress.UIJob;
 
+import com.surelogic.NonNull;
 import com.surelogic.common.ILifecycle;
 import com.surelogic.common.adhoc.AdHocManager;
 import com.surelogic.common.adhoc.AdHocManagerAdapter;
@@ -43,6 +44,7 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements IAdHoc
     // singleton
   }
 
+  @NonNull
   public static AdHocManager getManager() {
     return AdHocManager.getInstance(INSTANCE);
   }

@@ -98,45 +98,51 @@ public final class WriteHtmlOverview implements IPostPrep {
 
   @Override
   public void doPostPrep(final Connection c, final SLProgressMonitor mon) throws SQLException {
-    mon.begin();
-    try {
-      SummaryInfo info = new SummaryInfo.SummaryQuery().perform(new ConnectionQuery(c));
+    SummaryInfo info = new SummaryInfo.SummaryQuery().perform(new ConnectionQuery(c));
 
-      List<Category> categories = new ArrayList<Category>();
+    List<Category> categories = new ArrayList<Category>();
 
-      Category locks = new Category("locks", "Locks");
-      locks.getSections().add(new LockSection(info.getLocks()));
-      locks.getSections().add(new DeadlocksSection(info.getDeadlocks()));
+    Category locks = new Category("locks", "Locks");
+    locks.getSections().add(new LockSection(info.getLocks()));
+    locks.getSections().add(new DeadlocksSection(info.getDeadlocks()));
 
-      Category fields = new Category("fields", "Fields");
-      fields.getSections().add(new FieldCoverageSection(info.getFields(), info.getThreads()));
-      fields.getSections().add(new LockSetSection(info.getEmptyLockSetFields()));
-      fields.getSections().add(new BadPublishSection(info.getBadPublishes()));
-
-      Category threads = new Category("threads", "Threads");
-      threads.getSections().add(new TimelineSection(info.getThreads()));
-      threads.getSections().add(new CoverageSection(info));
-      threads.getSections().add(new MethodCoverageSection(info));
-      categories.add(locks);
-      categories.add(fields);
-      categories.add(threads);
-      final HtmlHandles html = f_runDirectory.getHtmlHandles();
-      displayPages(html, categories);
-      loadJavaScript();
-      loadTimeline();
-      loadStyleSheet();
-      writer.addImage(CLASS_IMG);
-      writer.addImage(PACKAGE_IMG);
-      writer.addImage("flashlight_overview_banner.png");
-      writer.addImage("outline_down.png");
-      writer.addImage("outline_filler.png");
-      writer.addImage("outline_right.png");
-
-      writer.writeImages();
-
-    } finally {
-      mon.done();
+    if (mon.isCanceled()) {
+      return;
     }
+
+    Category fields = new Category("fields", "Fields");
+    fields.getSections().add(new FieldCoverageSection(info.getFields(), info.getThreads()));
+    fields.getSections().add(new LockSetSection(info.getEmptyLockSetFields()));
+    fields.getSections().add(new BadPublishSection(info.getBadPublishes()));
+
+    if (mon.isCanceled()) {
+      return;
+    }
+
+    Category threads = new Category("threads", "Threads");
+    threads.getSections().add(new TimelineSection(info.getThreads()));
+    threads.getSections().add(new CoverageSection(info));
+    threads.getSections().add(new MethodCoverageSection(info));
+    categories.add(locks);
+    categories.add(fields);
+    categories.add(threads);
+    final HtmlHandles html = f_runDirectory.getHtmlHandles();
+    displayPages(html, categories);
+    loadJavaScript();
+    loadTimeline();
+    loadStyleSheet();
+    writer.addImage(CLASS_IMG);
+    writer.addImage(PACKAGE_IMG);
+    writer.addImage("flashlight_overview_banner.png");
+    writer.addImage("outline_down.png");
+    writer.addImage("outline_filler.png");
+    writer.addImage("outline_right.png");
+
+    if (mon.isCanceled()) {
+      return;
+    }
+
+    writer.writeImages();
   }
 
   private static class HeaderName {

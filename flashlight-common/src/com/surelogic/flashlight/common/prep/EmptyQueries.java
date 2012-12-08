@@ -31,6 +31,9 @@ public class EmptyQueries implements IPostPrep {
 
   public void doPostPrep(final Connection c, final SLProgressMonitor mon) throws SQLException {
     EmptyQueriesCache.getInstance().purge(f_runDirectory.getDescription());
+    if (mon.isCanceled()) {
+      return;
+    }
     try {
       final File queriesFile = f_runDirectory.getPrepEmptyQueriesFileHandle();
       final PrintWriter writer = new PrintWriter(new FileWriter(queriesFile));
@@ -38,6 +41,9 @@ public class EmptyQueries implements IPostPrep {
         Statement st = c.createStatement();
         try {
           for (AdHocQuery a : f_queries) {
+            if (mon.isCanceled()) {
+              return;
+            }
             ResultSet set = st.executeQuery(a.getSql());
             if (!set.next()) {
               writer.println(a.getId());

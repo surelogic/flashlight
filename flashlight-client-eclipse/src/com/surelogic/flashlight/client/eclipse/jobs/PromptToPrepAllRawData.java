@@ -1,8 +1,6 @@
 package com.surelogic.flashlight.client.eclipse.jobs;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 
@@ -27,6 +25,8 @@ import com.surelogic.flashlight.client.eclipse.dialogs.ConfirmPrepAllRawDataDial
 import com.surelogic.flashlight.client.eclipse.model.IRunManagerObserver;
 import com.surelogic.flashlight.client.eclipse.model.RunManager;
 import com.surelogic.flashlight.client.eclipse.perspectives.FlashlightPerspective;
+import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
+import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
 import com.surelogic.flashlight.common.jobs.PrepSLJob;
 import com.surelogic.flashlight.common.model.RunDirectory;
 
@@ -59,7 +59,7 @@ public final class PromptToPrepAllRawData extends SLUIJob {
     } else {
       SLLogger.getLogger().log(Level.WARNING, I18N.err(164));
     }
-    //RunManager.getInstance().addObserver(RMO);
+    // RunManager.getInstance().addObserver(RMO);
   }
 
   public static void stop() {
@@ -95,7 +95,7 @@ public final class PromptToPrepAllRawData extends SLUIJob {
      * to do something that is already being done.
      */
     final boolean prepJobRunning = EclipseJob.getInstance().isActiveOfType(PrepSLJob.class)
-        || EclipseJob.getInstance().isActiveOfType(PrepMultipleRunsJob.class);
+        || EclipseJob.getInstance().isActiveOfType(PrepSLJob.class);
     SLLogger.getLogger().fine("[PromptToPrepAllRawData] prepJobRunning = " + prepJobRunning);
     if (prepJobRunning) {
       return Status.OK_STATUS; // bail
@@ -133,13 +133,13 @@ public final class PromptToPrepAllRawData extends SLUIJob {
   }
 
   public static void runPrepJob(final Collection<RunDirectory> notPrepped) {
-    final List<RunDirectory> toPrep = new ArrayList<RunDirectory>();
-    for (final RunDirectory description : notPrepped) {
-      if (description != null) {
-        toPrep.add(description);
+    for (final RunDirectory run : notPrepped) {
+      if (run != null) {
+        final SLJob job = new PrepSLJob(run, EclipseUtility.getIntPreference(FlashlightPreferencesUtility.PREP_OBJECT_WINDOW_SIZE),
+            AdHocDataSource.getManager().getTopLevelQueries());
+        EclipseJob.getInstance().schedule(job, true, false, run.getRunIdString());
+        RefreshRunManagerSLJob.submit(false, true);
       }
     }
-    final SLJob job = new PrepMultipleRunsJob(toPrep);
-    EclipseJob.getInstance().schedule(job, true, false);
   }
 }

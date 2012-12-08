@@ -32,7 +32,6 @@ import com.surelogic.common.adhoc.AdHocQueryResult;
 import com.surelogic.common.core.JDTUtility;
 import com.surelogic.common.core.jobs.EclipseJob;
 import com.surelogic.common.i18n.I18N;
-import com.surelogic.common.jobs.AggregateSLJob;
 import com.surelogic.common.jobs.SLJob;
 import com.surelogic.common.ui.EclipseUIUtility;
 import com.surelogic.common.ui.TableUtility;
@@ -183,7 +182,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements IRunMa
   private final Action f_refreshAction = new Action() {
     @Override
     public void run() {
-      EclipseJob.getInstance().schedule(new RefreshRunManagerSLJob(true), false, false);
+      RefreshRunManagerSLJob.submit(false, false);
     }
   };
 
@@ -268,9 +267,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements IRunMa
   private final Action f_deleteAction = new Action() {
     @Override
     public void run() {
-      final ArrayList<SLJob> jobs = new ArrayList<SLJob>();
-      final ArrayList<String> keys = new ArrayList<String>();
-      final RunDirectory[] selected = getSelectedRunDirectoriesNotBeingPrepared();
+      final RunDirectory[] selected = getSelectedRunDirectories();
       if (selected.length > 0) {
         final DeleteRunDialog d = new DeleteRunDialog(f_table.getShell(), selected[0].getDescription(), selected.length > 1);
         d.open();
@@ -278,24 +275,10 @@ public final class RunViewMediator extends AdHocManagerAdapter implements IRunMa
           return;
         }
         for (final RunDirectory runDir : selected) {
-          jobs.add(new DeleteRunDirectoryJob(runDir));
-          keys.add(runDir.getRunIdString());
+          final SLJob job = new DeleteRunDirectoryJob(runDir);
+          EclipseJob.getInstance().schedule(job, true, false, runDir.getRunIdString());
         }
-      }
-      if (!jobs.isEmpty()) {
-        final RunDirectory one = selected.length == 1 ? selected[0] : null;
-        final String jobName;
-        if (one != null) {
-          jobName = I18N.msg("flashlight.jobs.delete.one", one.getDescription().getName(),
-              SLUtility.toStringHMS(one.getDescription().getStartTimeOfRun()));
-        } else {
-          jobName = I18N.msg("flashlight.jobs.delete.many");
-        }
-
-        final SLJob job = new AggregateSLJob(jobName, jobs);
-        EclipseJob.getInstance().schedule(job, true, false, keys.toArray(new String[keys.size()]));
-        EclipseJob.getInstance().schedule(new RefreshRunManagerSLJob(false), false, false,
-            RunManager.getInstance().getRunIdentities());
+        RefreshRunManagerSLJob.submit(false, true);
       }
     }
   };
@@ -369,9 +352,11 @@ public final class RunViewMediator extends AdHocManagerAdapter implements IRunMa
       f_table.setSelection(0);
     }
 
+    final boolean somethingSelected = getSelectedRunDirectories().length > 0;
+    f_deleteAction.setEnabled(somethingSelected); // will block if being prepped
+
     final RunDirectory[] notBeingPreparedSelected = getSelectedRunDirectoriesNotBeingPrepared();
     final boolean somethingIsSelectedNotBeingPrepared = notBeingPreparedSelected.length > 0;
-    f_deleteAction.setEnabled(somethingIsSelectedNotBeingPrepared);
     f_inferJSureAnnoAction.setEnabled(somethingIsSelectedNotBeingPrepared);
     boolean rawActionsEnabled = somethingIsSelectedNotBeingPrepared;
 
@@ -393,7 +378,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements IRunMa
       AdHocDataSource.getManager().setSelectedResult(null);
     }
     f_prepAction.setEnabled(rawActionsEnabled);
-    f_showLogAction.setEnabled(getSelectedRunDirectories().length > 0);
+    f_showLogAction.setEnabled(somethingSelected);
   }
 
   /**

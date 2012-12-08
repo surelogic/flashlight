@@ -15,7 +15,6 @@ import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.part.ViewPart;
 
 import com.surelogic.common.CommonImages;
-import com.surelogic.common.core.jobs.EclipseJob;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.ui.ColumnViewerSorter;
 import com.surelogic.common.ui.EclipseUIUtility;
@@ -56,8 +55,7 @@ public final class RunView extends ViewPart {
     // Set the line of the table visible
     tableViewer.getTable().setLinesVisible(true);
     // Ensure that the run manager data is fresh
-    EclipseJob.getInstance().schedule(new RefreshRunManagerSLJob(false), false, true, 500,
-        RunManager.getInstance().getRunIdentities());
+    RefreshRunManagerSLJob.submit(false, true);
     // Set the input so we see data
     tableViewer.setInput(RunManager.getInstance());
 

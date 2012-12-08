@@ -318,8 +318,11 @@ public final class PrepSLJob extends AbstractSLJob {
           for (final IPostPrep postPrep : postPrepWork) {
             final SLProgressMonitor postPrepMonitor = new SubSLProgressMonitor(monitor, postPrep.getDescription(), EACH_POST_PREP);
             postPrepMonitor.begin();
-            postPrep.doPostPrep(conn, monitor);
-            postPrepMonitor.done();
+            try {
+              postPrep.doPostPrep(conn, monitor);
+            } finally {
+              postPrepMonitor.done();
+            }
           }
 
         }

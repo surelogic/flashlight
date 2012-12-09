@@ -7,6 +7,7 @@ import java.util.List;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.dialogs.IDialogConstants;
@@ -29,8 +30,8 @@ import com.surelogic.common.SLUtility;
 import com.surelogic.common.adhoc.AdHocManager;
 import com.surelogic.common.adhoc.AdHocManagerAdapter;
 import com.surelogic.common.adhoc.AdHocQueryResult;
+import com.surelogic.common.core.EclipseUtility;
 import com.surelogic.common.core.JDTUtility;
-import com.surelogic.common.core.jobs.EclipseJob;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jobs.SLJob;
 import com.surelogic.common.ui.EclipseUIUtility;
@@ -276,7 +277,9 @@ public final class RunViewMediator extends AdHocManagerAdapter implements IRunMa
         }
         for (final RunDirectory runDir : selected) {
           final SLJob job = new DeleteRunDirectoryJob(runDir);
-          EclipseJob.getInstance().schedule(job, true, false, runDir.getRunIdString());
+          final Job eJob = EclipseUtility.toEclipseJob(job, runDir.getRunIdString());
+          eJob.setUser(true);
+          eJob.schedule();
         }
         RefreshRunManagerSLJob.submit(true);
       }

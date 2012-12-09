@@ -19,7 +19,6 @@ import com.surelogic.UniqueInRegion;
 import com.surelogic.Vouch;
 import com.surelogic.common.SLUtility;
 import com.surelogic.common.core.EclipseUtility;
-import com.surelogic.common.core.jobs.EclipseJob;
 import com.surelogic.flashlight.client.eclipse.jobs.RefreshRunManagerSLJob;
 import com.surelogic.flashlight.common.jobs.PrepSLJob;
 import com.surelogic.flashlight.common.model.FlashlightFileUtility;
@@ -220,7 +219,7 @@ public final class RunManager {
   public PrepSLJob findPrepSLJobOrNullFor(final RunDirectory directory) {
     if (directory.getPrepDbDirectoryHandle().exists() && !directory.isPrepared()) {
       final String prepJobName = directory.getPrepJobName();
-      final List<PrepSLJob> prepJobs = EclipseJob.getInstance().getActiveJobsOfType(PrepSLJob.class);
+      final List<PrepSLJob> prepJobs = EclipseUtility.getActiveJobsOfType(PrepSLJob.class);
       for (PrepSLJob job : prepJobs) {
         if (prepJobName.equals(job.getName())) {
           return job;

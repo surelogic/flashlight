@@ -7,6 +7,7 @@ import java.util.logging.Level;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.ui.IPerspectiveDescriptor;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
@@ -15,7 +16,6 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.progress.UIJob;
 
 import com.surelogic.common.core.EclipseUtility;
-import com.surelogic.common.core.jobs.EclipseJob;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jobs.SLJob;
 import com.surelogic.common.logging.SLLogger;
@@ -94,8 +94,7 @@ public final class PromptToPrepAllRawData extends SLUIJob {
      * Check that no prep jobs are running...it would be rude to prompt the user
      * to do something that is already being done.
      */
-    final boolean prepJobRunning = EclipseJob.getInstance().isActiveOfType(PrepSLJob.class)
-        || EclipseJob.getInstance().isActiveOfType(PrepSLJob.class);
+    final boolean prepJobRunning = EclipseUtility.isActiveOfType(PrepSLJob.class);
     SLLogger.getLogger().fine("[PromptToPrepAllRawData] prepJobRunning = " + prepJobRunning);
     if (prepJobRunning) {
       return Status.OK_STATUS; // bail
@@ -137,7 +136,9 @@ public final class PromptToPrepAllRawData extends SLUIJob {
       if (run != null) {
         final SLJob job = new PrepSLJob(run, EclipseUtility.getIntPreference(FlashlightPreferencesUtility.PREP_OBJECT_WINDOW_SIZE),
             AdHocDataSource.getManager().getTopLevelQueries());
-        EclipseJob.getInstance().schedule(job, true, false, run.getRunIdString());
+        final Job eJob = EclipseUtility.toEclipseJob(job, run.getRunIdString());
+        eJob.setUser(true);
+        eJob.schedule();
         RefreshRunManagerSLJob.submit(true);
       }
     }

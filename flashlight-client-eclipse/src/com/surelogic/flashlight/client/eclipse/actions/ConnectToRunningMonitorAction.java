@@ -6,12 +6,13 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.action.Action;
 import org.eclipse.swt.widgets.DirectoryDialog;
 
 import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic.common.CommonImages;
-import com.surelogic.common.core.jobs.EclipseJob;
+import com.surelogic.common.core.EclipseUtility;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.ui.EclipseUIUtility;
 import com.surelogic.common.ui.SLImages;
@@ -60,8 +61,9 @@ public class ConnectToRunningMonitorAction extends Action {
                 MonitorStatus status = new MonitorStatus(runDir, name,
                         date.toString());
                 /* Let the monitor thread know it should expect a launch */
-                EclipseJob.getInstance().schedule(
-                        new WatchFlashlightMonitorJob(status));
+                final Job job = EclipseUtility.toEclipseJob(new WatchFlashlightMonitorJob(status));
+                job.setSystem(true);
+                job.schedule();
             }
         }
     }

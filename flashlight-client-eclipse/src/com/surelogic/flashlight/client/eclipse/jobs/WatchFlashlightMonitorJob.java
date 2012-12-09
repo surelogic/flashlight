@@ -15,8 +15,9 @@ import java.util.regex.Pattern;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
 
-import com.surelogic.common.core.jobs.EclipseJob;
+import com.surelogic.common.core.EclipseUtility;
 import com.surelogic.common.jobs.AbstractSLJob;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
@@ -246,8 +247,9 @@ public class WatchFlashlightMonitorJob extends AbstractSLJob {
             if (view != null) {
                 view.getMediator().update(f_status);
                 if (f_callback) {
-                    EclipseJob.getInstance().schedule(
-                            new WatchFlashlightMonitorJob(f_status), 1000);
+                    final Job job = EclipseUtility.toEclipseJob(new WatchFlashlightMonitorJob(f_status));
+                    job.setSystem(true);
+                    job.schedule(1000);
                 }
             }
             return Status.OK_STATUS;

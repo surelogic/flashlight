@@ -47,6 +47,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
@@ -67,7 +68,6 @@ import com.surelogic._flashlight.rewriter.config.Configuration;
 import com.surelogic._flashlight.rewriter.config.ConfigurationBuilder;
 import com.surelogic.common.core.EclipseUtility;
 import com.surelogic.common.core.MemoryUtility;
-import com.surelogic.common.core.jobs.EclipseJob;
 import com.surelogic.common.core.logging.SLEclipseStatusUtility;
 import com.surelogic.common.license.SLLicenseProduct;
 import com.surelogic.common.license.SLLicenseUtility;
@@ -243,9 +243,10 @@ public final class FlashlightVMRunner implements IVMRunner {
                                 FlashlightPreferencesUtility.POSTMORTEM_MODE));
 
         /* Let the monitor thread know it should expect a launch */
-        EclipseJob.getInstance().schedule(
-                new WatchFlashlightMonitorJob(new MonitorStatus(runOutputDir,
-                        mainTypeName, new Date().toString())));
+        final Job job = EclipseUtility.toEclipseJob(new WatchFlashlightMonitorJob(new MonitorStatus(runOutputDir,
+            mainTypeName, new Date().toString())));
+        job.setSystem(true);
+        job.schedule();
 
         /*
          * Create and launch a job that detects when the instrumented run

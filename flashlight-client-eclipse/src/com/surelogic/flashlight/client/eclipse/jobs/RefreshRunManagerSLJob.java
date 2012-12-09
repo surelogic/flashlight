@@ -1,6 +1,8 @@
 package com.surelogic.flashlight.client.eclipse.jobs;
 
-import com.surelogic.common.core.jobs.EclipseJob;
+import org.eclipse.core.runtime.jobs.Job;
+
+import com.surelogic.common.core.EclipseUtility;
 import com.surelogic.common.jobs.AbstractSLJob;
 import com.surelogic.common.jobs.SLJob;
 import com.surelogic.common.jobs.SLProgressMonitor;
@@ -11,11 +13,13 @@ public final class RefreshRunManagerSLJob extends AbstractSLJob {
 
   public static void submit(boolean useAllRunsAsAccessKeys) {
     final SLJob job = new RefreshRunManagerSLJob();
+    final Job eJob;
     if (useAllRunsAsAccessKeys) {
-      EclipseJob.getInstance().schedule(job, false, false, 500, RunManager.getInstance().getRunIdentities());
+      eJob = EclipseUtility.toEclipseJob(job, RunManager.getInstance().getRunIdentities());
     } else {
-      EclipseJob.getInstance().schedule(job);
+      eJob = EclipseUtility.toEclipseJob(job);
     }
+    eJob.schedule(500);
   }
 
   private RefreshRunManagerSLJob() {

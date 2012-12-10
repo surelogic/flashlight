@@ -76,7 +76,6 @@ import com.surelogic._flashlight.rewriter.RewriteManager.AlreadyInstrumentedExce
 import com.surelogic._flashlight.rewriter.config.ConfigurationBuilder;
 import com.surelogic.common.FileUtility;
 import com.surelogic.common.core.EclipseUtility;
-import com.surelogic.common.core.jobs.EclipseJob;
 import com.surelogic.common.core.logging.SLEclipseStatusUtility;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.common.ui.dialogs.ShowTextDialog;
@@ -955,18 +954,19 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
                         id.createForward(data.conf.getConsolePort(),
                                 data.conf.getConsolePort());
                         id.createForward(data.outputPort, data.outputPort);
-                        EclipseJob.getInstance().schedule(
+                        EclipseUtility.toEclipseJob(
                                 new WatchFlashlightMonitorJob(
                                         new MonitorStatus(data.runDir,
                                                 data.runName, data.time
-                                                        .toString())));
-                        EclipseJob.getInstance().schedule(
+                                                        .toString())))
+                                .schedule();
+                        EclipseUtility.toEclipseJob(
                                 new ReadFlashlightStreamJob(data.runDir,
-                                        data.outputPort, id));
-                        EclipseJob.getInstance()
-                                .schedule(
+                                        data.outputPort, id)).schedule();
+                        EclipseUtility
+                                .toEclipseJob(
                                         new ReadLogcatJob(data.runName,
-                                                data.runDir, id));
+                                                data.runDir, id)).schedule();
                         return Status.OK_STATUS;
                     }
                 } catch (Exception e) {

@@ -23,7 +23,7 @@ import com.android.ddmlib.IDevice;
 import com.surelogic._flashlight.common.AttributeType;
 import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic._flashlight.common.OutputType;
-import com.surelogic.common.core.jobs.EclipseJob;
+import com.surelogic.common.core.EclipseUtility;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jobs.NullSLProgressMonitor;
 import com.surelogic.common.jobs.SLJob;
@@ -106,10 +106,11 @@ public class ReadFlashlightStreamJob implements SLJob {
                                         + " Flashlight Android FAILURE of socket.connect(localhost:"
                                         + f_port + ")...retrying in "
                                         + RETRY_DELAY_MS + " ms \n");
-                        EclipseJob.getInstance().schedule(
+                        EclipseUtility.toEclipseJob(
                                 new ReadFlashlightStreamJob(f_dir, f_port,
                                         f_device, f_retries - 1,
-                                        f_pastAttemptsLog), RETRY_DELAY_MS);
+                                        f_pastAttemptsLog), f_dir.toString())
+                                .schedule(RETRY_DELAY_MS);
                         return SLStatus.OK_STATUS;
                     } else {
                         // We are done trying to connect, so it is time to bail

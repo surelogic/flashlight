@@ -104,11 +104,7 @@ public final class RunDescription {
 
   @NonNull
   public String getSimpleName() {
-    final int dotIndex = f_name.lastIndexOf('.');
-    if (dotIndex == -1 || f_name.length() <= dotIndex)
-      return f_name;
-    else
-      return f_name.substring(dotIndex + 1);
+    return FlashlightFileUtility.getSimpleRunName(f_name);
   }
 
   @NonNull

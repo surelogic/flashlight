@@ -7,7 +7,6 @@ import java.util.logging.Level;
 import com.surelogic.NonNull;
 import com.surelogic.Nullable;
 import com.surelogic.ReferenceObject;
-import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic.common.FileUtility;
 import com.surelogic.common.Pair;
 import com.surelogic.common.i18n.I18N;
@@ -183,7 +182,7 @@ public final class RunDirectory {
   }
 
   /**
-   * Gets if this run is from an instrumented Android application. If not it is
+   * Gets if this run is from an instrumented Android application. If not, it is
    * is from an instrumented standard Java program.
    * 
    * @return {@code true} if this run is from an instrumented Android
@@ -191,7 +190,7 @@ public final class RunDirectory {
    *         standard Java program.
    */
   public boolean isAndroid() {
-    return getRunIdString().endsWith(InstrumentationConstants.ANDROID_LAUNCH_SUFFIX);
+    return FlashlightFileUtility.isAndroid(getRunIdString());
   }
 
   /**

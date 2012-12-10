@@ -488,9 +488,14 @@ public final class FlashlightFileUtility {
     }
   };
 
-  /*
+  /**
    * Estimate the amount of events in the raw file based upon the size of the
-   * raw file. This guess is only used for the pre-scan of the file.
+   * raw file. This guess is only used for the pre-scan of the file during the
+   * prep.
+   * 
+   * @param dataFile
+   *          a raw file.
+   * @return a guess of how many events are in the file.
    */
   public static int estimateNumEvents(final File dataFile) {
     final long sizeInBytes = dataFile.length();
@@ -499,6 +504,67 @@ public final class FlashlightFileUtility {
       estimatedEvents = 10L;
     }
     return SLUtility.safeLongToInt(estimatedEvents);
+  }
+
+  /*
+   * Helper code for run identity strings.
+   */
+
+  /**
+   * Gets if the passed run identity string is from an instrumented Android
+   * application. If not, it is is from an instrumented standard Java program.
+   * 
+   * @param runIdString
+   *          a run identity string.
+   * @return {@code true} if this run is from an instrumented Android
+   *         application, {@code false} if this run is from an instrumented
+   *         standard Java program.
+   */
+  public static boolean isAndroid(@NonNull final String runIdString) {
+    if (runIdString == null)
+      throw new IllegalArgumentException(I18N.err(44, "runIdString"));
+    return runIdString.endsWith(InstrumentationConstants.ANDROID_LAUNCH_SUFFIX);
+  }
+
+  /**
+   * Gets the name of the run from the passed run identity string by removing
+   * the date at the end. This is typically the fully-qualified class name for a
+   * Java application or the project name for an Android application.
+   * 
+   * @param runIdString
+   *          a run identity string.
+   * @return the name of the run from the passed run identity string.
+   */
+  @NonNull
+  public static String getRunName(@NonNull final String runIdString) {
+    if (runIdString == null)
+      throw new IllegalArgumentException(I18N.err(44, "runIdString"));
+    int backFromEnd = InstrumentationConstants.DATE_FORMAT.length();
+    backFromEnd += isAndroid(runIdString) ? InstrumentationConstants.ANDROID_LAUNCH_SUFFIX.length()
+        : InstrumentationConstants.JAVA_LAUNCH_SUFFIX.length();
+    final int index = runIdString.length() - backFromEnd;
+    if (index < 0)
+      throw new IllegalArgumentException(I18N.err(248, runIdString, backFromEnd));
+    return runIdString.substring(index);
+  }
+
+  /**
+   * Gets a simple run name for the passed run name. For example
+   * <tt>com.surelogic.Program</tt> would return <tt>Program</tt>. This shortens
+   * names of Java applications which use the fully-qualified class name as a
+   * name.
+   * 
+   * @param runName
+   *          a run name.
+   * @return a simple run name for the passed run name
+   */
+  @NonNull
+  public static String getSimpleRunName(@NonNull final String runName) {
+    final int dotIndex = runName.lastIndexOf('.');
+    if (dotIndex == -1 || runName.length() <= dotIndex)
+      return runName;
+    else
+      return runName.substring(dotIndex + 1);
   }
 
   private FlashlightFileUtility() {

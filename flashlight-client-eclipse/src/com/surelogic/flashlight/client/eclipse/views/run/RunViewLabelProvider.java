@@ -28,7 +28,7 @@ public final class RunViewLabelProvider implements ITableLabelProvider {
        */
       String baseImage = CommonImages.IMG_JAVA_APP;
       final boolean hasWarnings = CommonImages.IMG_WARNING.equals(symbolicName);
-      if (rowData.getDescription().isAndroid()) {
+      if (rowData.isAndroid()) {
         baseImage = CommonImages.IMG_ANDROID_APP;
       }
       final ImageDescriptor warn = hasWarnings ? SLImages.getImageDescriptor(CommonImages.DECR_WARNING) : null;

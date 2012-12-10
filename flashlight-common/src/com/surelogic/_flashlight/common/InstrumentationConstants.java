@@ -7,6 +7,8 @@ public final class InstrumentationConstants {
   public static final boolean allowJava14 = true;
 
   public static final String DATE_FORMAT = "-yyyy.MM.dd-'at'-HH.mm.ss.SSS";
+  public static final String JAVA_LAUNCH_SUFFIX = "-Java";
+  public static final String ANDROID_LAUNCH_SUFFIX = "-Android";
 
   public static final String FL_PACKAGE = "com/surelogic/_flashlight";
   public static final String FL_PROPERTIES_CLASS = FL_PACKAGE + "/InstrumentationConf.class";

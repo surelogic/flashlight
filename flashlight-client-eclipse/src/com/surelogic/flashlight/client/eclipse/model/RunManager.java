@@ -1,6 +1,7 @@
 package com.surelogic.flashlight.client.eclipse.model;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -11,7 +12,6 @@ import com.surelogic.NonNull;
 import com.surelogic.Nullable;
 import com.surelogic.Region;
 import com.surelogic.RegionLock;
-import com.surelogic.RequiresLock;
 import com.surelogic.Singleton;
 import com.surelogic.ThreadSafe;
 import com.surelogic.Unique;
@@ -32,8 +32,8 @@ import com.surelogic.flashlight.common.model.RunDirectory;
  */
 @ThreadSafe
 @Singleton
-@Region("private RunDirectories")
-@RegionLock("RunDirectoriesLock is f_runs protects RunDirectories")
+@Region("private RunState")
+@RegionLock("RunStateLock is f_lock protects RunState")
 public final class RunManager {
 
   private static final RunManager INSTANCE = new RunManager();
@@ -93,23 +93,43 @@ public final class RunManager {
     return f_dataDir;
   }
 
+  private final Object f_lock = new Object();
+
   /**
-   * Holds the set of all known run directories.
+   * Holds the set of all run directories that have completed data collection,
+   * but may or may not have been prepared.
+   * <p>
+   * This set reflects the state of the Flashlight data directory as of the last
+   * call to {@code #refresh()}.
    */
-  @UniqueInRegion("RunDirectories")
-  private final Set<RunDirectory> f_runs = new HashSet<RunDirectory>();
+  @UniqueInRegion("RunState")
+  private final Set<RunDirectory> f_collectionCompletedRunDirectories = new HashSet<RunDirectory>();
+
+  /**
+   * Holds the set of all run directories that have completed data collection
+   * and have been prepared. This set is a subset of
+   * {@link #f_collectionCompletedRunDirectories}.
+   * <p>
+   * This set reflects the state of the Flashlight data directory as of the last
+   * call to {@link #refresh()}.
+   */
+  @UniqueInRegion("RunState")
+  private final Set<RunDirectory> f_preparedRunDirectories = new HashSet<RunDirectory>();
 
   /**
    * Gets the set of all run directories that have completed data collection.
    * The return set can be empty, but will not be {@code null}.
+   * <p>
+   * The result of this call reflect the state of the Flashlight data directory
+   * as of the last call to {@link #refresh()}.
    * 
    * @return the set of run directories that have completed data collection. May
    *         be empty.
    */
   @NonNull
   public Set<RunDirectory> getCollectionCompletedRunDirectories() {
-    synchronized (f_runs) {
-      return new HashSet<RunDirectory>(f_runs);
+    synchronized (f_lock) {
+      return new HashSet<RunDirectory>(f_collectionCompletedRunDirectories);
     }
   }
 
@@ -121,6 +141,9 @@ public final class RunManager {
    * <p>
    * These strings are useful as the access keys for a job that wants to scan
    * all the Flashlight data directories.
+   * <p>
+   * The result of this call reflects the state of the Flashlight data directory
+   * as of the last call to {@link #refresh()}.
    * 
    * @return the identity strings of all run directories that have completed
    *         data collection. May be empty.
@@ -128,11 +151,15 @@ public final class RunManager {
   @NonNull
   public String[] getCollectionCompletedRunIdStrings() {
     final Set<RunDirectory> runs = getCollectionCompletedRunDirectories();
-    final Set<String> ids = new HashSet<String>(runs.size());
+    if (runs.isEmpty())
+      return SLUtility.EMPTY_STRING_ARRAY;
+    final String[] ids = new String[runs.size()];
+    int index = 0;
     for (final RunDirectory run : runs) {
-      ids.add(run.getRunIdString());
+      ids[index] = run.getRunIdString();
+      index++;
     }
-    return ids.toArray(SLUtility.EMPTY_STRING_ARRAY);
+    return ids;
   }
 
   /**
@@ -141,6 +168,9 @@ public final class RunManager {
    * we will call <tt>run</tt>,
    * {@code runDirectory.getRunIdString().equals(runIdentityString)} is
    * {@code true}.
+   * <p>
+   * The result of this call reflects the state of the Flashlight data directory
+   * as of the last call to {@link #refresh()}.
    * 
    * @param runIdString
    *          a run identity string.
@@ -161,25 +191,29 @@ public final class RunManager {
    * Gets the set of run directories that have completed data collection and
    * been prepared for querying. These run directories are ready to be queries.
    * The return set can be empty, but will not be {@code null}.
+   * <p>
+   * The result of this call reflects the state of the Flashlight data directory
+   * as of the last call to {@link #refresh()}.
    * 
    * @return the set of run directories managed by this that have been prepared.
    *         May be empty.
    */
   @NonNull
   public Set<RunDirectory> getPreparedRunDirectories() {
-    final Set<RunDirectory> result = new HashSet<RunDirectory>();
-    synchronized (f_runs) {
-      for (RunDirectory runDir : f_runs) {
-        if (runDir.isPrepared())
-          result.add(runDir);
-      }
+    synchronized (f_lock) {
+      return new HashSet<RunDirectory>(f_preparedRunDirectories);
     }
-    return result;
   }
 
   /**
-   * Gets the set of run directories managed by this that have not been
-   * prepared. The return set can be empty, but will not be {@code null}.
+   * Gets the set of run directories that have completed data collection but
+   * have not yet been prepared or are not yet currently being prepared. The
+   * return set can be empty, but will not be {@code null}.
+   * <p>
+   * The set of run directories considered by this call reflects the state of
+   * the Flashlight data directory as of the last call to {@link #refresh()}.
+   * However, the check if the run directory is prepared or has an active job
+   * preparing it is reflects the situation as the call is made.
    * 
    * @return the set of run directories managed by this that have not been
    *         prepared. May be empty.
@@ -187,8 +221,8 @@ public final class RunManager {
   @NonNull
   public Set<RunDirectory> getCollectionCompletedRunDirectoriesNotPreparedOrBeingPrepared() {
     final Set<RunDirectory> result = new HashSet<RunDirectory>();
-    synchronized (f_runs) {
-      for (RunDirectory runDir : f_runs) {
+    synchronized (f_lock) {
+      for (RunDirectory runDir : f_collectionCompletedRunDirectories) {
         if (!runDir.isPrepared() && !isBeingPrepared(runDir))
           result.add(runDir);
       }
@@ -199,9 +233,8 @@ public final class RunManager {
   /**
    * Checks if the passed run is in the process of being prepared for querying.
    * <p>
-   * This cannot be a call on the {@link RunDirectory} because we need to check
-   * if a prep job is currently running within Eclipse and that class cannot
-   * interact with Eclipse.
+   * The check that there is an active data preparation job reflects the
+   * situation as the call is made.
    * 
    * @param directory
    *          a Flashlight run directory.
@@ -213,15 +246,18 @@ public final class RunManager {
   }
 
   /**
-   * Finds the running data preparation job for the passed run directory and
-   * returns it, or {@code null} if no data preparation job is currently running
-   * on the passed directory.
+   * Finds a running data preparation job for the passed run directory and
+   * returns it, {@code null} is returned if no data preparation job is
+   * currently running on the passed directory.
+   * <p>
+   * The search for an active data preparation job reflects the situation as the
+   * call is made.
    * 
    * @param directory
    *          a Flashlight run directory.
-   * @return the running data preparation job for the passed run directory and
-   *         returns it, or {@code null} if no data preparation job is currently
-   *         running on the passed directory
+   * @return the running data preparation job for the passed run directory or
+   *         {@code null} if no data preparation job is currently running on the
+   *         passed directory
    */
   @Nullable
   public PrepSLJob findPrepSLJobOrNullFor(final RunDirectory directory) {
@@ -250,35 +286,45 @@ public final class RunManager {
     boolean isChanged = false;
 
     /*
-     * Examine the run directory
+     * Search the run directory for runs that have completed data collection.
      */
-    final Set<RunDescription> runs = new HashSet<RunDescription>();
-    final Set<RunDescription> preparedRuns = new HashSet<RunDescription>();
-    final Collection<RunDirectory> runDirs = FlashlightFileUtility.getRunDirectories(f_dataDir);
-    for (final RunDirectory dir : runDirs) {
-      runs.add(dir.getDescription());
+    final Collection<RunDirectory> collectionCompletedDirs = FlashlightFileUtility.getRunDirectories(f_dataDir);
+
+    final Set<RunDescription> collectionCompleted = new HashSet<RunDescription>();
+    final Collection<RunDirectory> preparedDirs = new ArrayList<RunDirectory>();
+    final Set<RunDescription> prepared = new HashSet<RunDescription>();
+    for (final RunDirectory dir : collectionCompletedDirs) {
+      final RunDescription desc = dir.getDescription();
+      collectionCompleted.add(desc);
       if (dir.isPrepared()) {
-        preparedRuns.add(dir.getDescription());
+        preparedDirs.add(dir);
+        prepared.add(desc);
       }
     }
 
     /*
-     * Check if anything changed...if so, update the fields and notify
-     * observers.
+     * Check if anything changed.
+     * 
+     * If so, update the fields and notify observers.
      */
-    synchronized (f_runs) {
-      if (!getRunDescriptions().equals(runs)) {
+    synchronized (f_lock) {
+      if (!getRunDescriptionsFor(f_collectionCompletedRunDirectories).equals(collectionCompleted)) {
         isChanged = true;
       }
-      if (!getPreparedRunDescriptions().equals(preparedRuns)) {
+      if (!getRunDescriptionsFor(f_preparedRunDirectories).equals(prepared)) {
         isChanged = true;
       }
       if (isChanged) {
-        f_runs.clear();
-        f_runs.addAll(runDirs);
+        f_collectionCompletedRunDirectories.clear();
+        f_collectionCompletedRunDirectories.addAll(collectionCompletedDirs);
+        f_preparedRunDirectories.clear();
+        f_preparedRunDirectories.addAll(preparedDirs);
       }
     }
 
+    /*
+     * We must be carful to not notify holding a lock.
+     */
     if (isChanged) {
       // System.out.println("RunManager.notifyObservers() invoked");
       notifyObservers();
@@ -286,22 +332,10 @@ public final class RunManager {
   }
 
   @NonNull
-  @RequiresLock("RunDirectoriesLock")
-  private Set<RunDescription> getRunDescriptions() {
-    final Set<RunDescription> result = new HashSet<RunDescription>(f_runs.size());
-    for (RunDirectory runDir : f_runs) {
+  private Set<RunDescription> getRunDescriptionsFor(Set<RunDirectory> runs) {
+    final Set<RunDescription> result = new HashSet<RunDescription>(runs.size());
+    for (RunDirectory runDir : runs) {
       result.add(runDir.getDescription());
-    }
-    return result;
-  }
-
-  @NonNull
-  @RequiresLock("RunDirectoriesLock")
-  private Set<RunDescription> getPreparedRunDescriptions() {
-    final Set<RunDescription> result = new HashSet<RunDescription>();
-    for (RunDirectory runDir : f_runs) {
-      if (runDir.isPrepared())
-        result.add(runDir.getDescription());
     }
     return result;
   }

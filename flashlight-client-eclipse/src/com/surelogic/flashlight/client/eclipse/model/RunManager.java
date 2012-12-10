@@ -26,7 +26,9 @@ import com.surelogic.flashlight.common.model.RunDescription;
 import com.surelogic.flashlight.common.model.RunDirectory;
 
 /**
- * A singleton that manages the set of run directory aggregates.
+ * A singleton that manages the state of the Flashlight data directory. This is
+ * the hub to understand the state of a running instrumented program, as well as
+ * to obtain handles to raw and prepared collected data.
  */
 @ThreadSafe
 @Singleton
@@ -37,9 +39,9 @@ public final class RunManager {
   private static final RunManager INSTANCE = new RunManager();
 
   /**
-   * Gets the singleton instance.
+   * Gets the singleton instance of the Flashlight run manager.
    * 
-   * @return the singleton instance.
+   * @return the singleton instance of the Flashlight run manager.
    */
   @NonNull
   public static RunManager getInstance() {
@@ -52,6 +54,7 @@ public final class RunManager {
     f_dataDir = EclipseUtility.getFlashlightDataDirectory();
   }
 
+  @Vouch("AnnotationBounds")
   private final CopyOnWriteArraySet<IRunManagerObserver> f_observers = new CopyOnWriteArraySet<IRunManagerObserver>();
 
   public void addObserver(final IRunManagerObserver o) {
@@ -81,12 +84,12 @@ public final class RunManager {
   private final File f_dataDir;
 
   /**
-   * Gets the location of the Flashlight data directory.
+   * Gets an abstract representation of the Flashlight data directory.
    * 
-   * @return the Flashlight data directory.
+   * @return an abstract representation of the Flashlight data directory.
    */
   @NonNull
-  public File getDataDirectory() {
+  public File getDirectory() {
     return f_dataDir;
   }
 
@@ -97,10 +100,11 @@ public final class RunManager {
   private final Set<RunDirectory> f_runs = new HashSet<RunDirectory>();
 
   /**
-   * Gets the set of all run directories managed by this. The return set can be
-   * empty, but will not be {@code null}.
+   * Gets the set of all run directories that have completed data collection.
+   * The return set can be empty, but will not be {@code null}.
    * 
-   * @return the set of run directories managed by this.
+   * @return the set of run directories that have completed data collection. May
+   *         be empty.
    */
   @NonNull
   public Set<RunDirectory> getCollectionCompletedRunDirectories() {
@@ -114,11 +118,15 @@ public final class RunManager {
    * managed by this. The identity string for a {@link RunDirectory}, which we
    * will call <tt>run</tt>, is defined to be
    * {@code run.getDescription().getRunIdString()}.
+   * <p>
+   * These strings are useful as the access keys for a job that wants to scan
+   * all the Flashlight data directories.
    * 
-   * @return the identity strings of all run directories managed by this.
+   * @return the identity strings of all run directories that have completed
+   *         data collection. May be empty.
    */
   @NonNull
-  public String[] getRunIdentities() {
+  public String[] getCollectionCompletedRunIdStrings() {
     final Set<RunDirectory> runs = getCollectionCompletedRunDirectories();
     final Set<String> ids = new HashSet<String>(runs.size());
     for (final RunDirectory run : runs) {
@@ -128,21 +136,21 @@ public final class RunManager {
   }
 
   /**
-   * Looks up a run directory managed by this with the passed identity string.
-   * In particular for the returned {@link RunDirectory}, which we will call
-   * <tt>run</tt>,
+   * Looks up a run directory that has completed data collection by the passed
+   * identity string. In particular for the returned {@link RunDirectory}, which
+   * we will call <tt>run</tt>,
    * {@code runDirectory.getRunIdString().equals(runIdentityString)} is
    * {@code true}.
    * 
-   * @param runIdentityString
+   * @param runIdString
    *          a run identity string.
    * @return run directory managed by this with the passed identity string, or
    *         {@code null} if none.
    */
   @Nullable
-  public RunDirectory getRunDirectoryByIdentityString(final String runIdentityString) {
+  public RunDirectory getCollectionCompletedRunDirectoryByIdString(final String runIdString) {
     for (final RunDirectory runDirectory : getCollectionCompletedRunDirectories()) {
-      if (runDirectory.getRunIdString().equals(runIdentityString)) {
+      if (runDirectory.getRunIdString().equals(runIdString)) {
         return runDirectory;
       }
     }
@@ -150,9 +158,9 @@ public final class RunManager {
   }
 
   /**
-   * Gets the set of prepared run directories managed by this. These run
-   * directories are ready to be queries. The return set can be empty, but will
-   * not be {@code null}.
+   * Gets the set of run directories that have completed data collection and
+   * been prepared for querying. These run directories are ready to be queries.
+   * The return set can be empty, but will not be {@code null}.
    * 
    * @return the set of run directories managed by this that have been prepared.
    *         May be empty.
@@ -177,7 +185,7 @@ public final class RunManager {
    *         prepared. May be empty.
    */
   @NonNull
-  public Set<RunDirectory> getNotPreparedOrBeingPreparedRunDirectories() {
+  public Set<RunDirectory> getCollectionCompletedRunDirectoriesNotPreparedOrBeingPrepared() {
     final Set<RunDirectory> result = new HashSet<RunDirectory>();
     synchronized (f_runs) {
       for (RunDirectory runDir : f_runs) {

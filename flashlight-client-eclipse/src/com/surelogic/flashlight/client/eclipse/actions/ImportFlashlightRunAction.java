@@ -25,7 +25,7 @@ public class ImportFlashlightRunAction implements IWorkbenchWindowActionDelegate
     String fileName = dd.open();
     if (fileName != null) {
       File f = new File(fileName);
-      File dataDirectory = RunManager.getInstance().getDataDirectory();
+      File dataDirectory = RunManager.getInstance().getDirectory();
       if (f.getParentFile().equals(dataDirectory)) {
         MessageDialog.openError(shell, I18N.msg("flashlight.dialog.importRun.errorTitle"),
             "flashlight.dialog.importRun.inDataDir.msg");

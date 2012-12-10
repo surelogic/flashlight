@@ -416,7 +416,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements IRunMa
        * currently selected.
        */
       final String db = result.getQueryFullyBound().getVariableValues().get(AdHocManager.DATABASE);
-      final RunDirectory desired = RunManager.getInstance().getRunDirectoryByIdentityString(db);
+      final RunDirectory desired = RunManager.getInstance().getCollectionCompletedRunDirectoryByIdString(db);
 
       final RunDirectory selected = AdHocDataSource.getInstance().getSelectedRun();
 

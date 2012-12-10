@@ -37,7 +37,7 @@ public final class QueryMenuView extends AbstractQueryMenuView {
 		final String db = variableValues.get(AdHocManager.DATABASE);
 		if (db != null) {
 			final RunDirectory runDirectory = RunManager.getInstance()
-					.getRunDirectoryByIdentityString(db);
+					.getCollectionCompletedRunDirectoryByIdString(db);
 
 			return EmptyQueriesCache.getInstance().queryResultWillBeEmpty(
 			    runDirectory, query);

@@ -15,7 +15,7 @@ public final class RefreshRunManagerSLJob extends AbstractSLJob {
     final SLJob job = new RefreshRunManagerSLJob();
     final Job eJob;
     if (useAllRunsAsAccessKeys) {
-      eJob = EclipseUtility.toEclipseJob(job, RunManager.getInstance().getRunIdentities());
+      eJob = EclipseUtility.toEclipseJob(job, RunManager.getInstance().getCollectionCompletedRunIdStrings());
     } else {
       eJob = EclipseUtility.toEclipseJob(job);
     }

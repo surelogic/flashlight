@@ -587,7 +587,8 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
             projectName = project.getName();
             runName = projectName;
             runDir = new File(EclipseUtility.getFlashlightDataDirectory(),
-                    runName + df.format(time));
+                    runName + df.format(time)
+                            + InstrumentationConstants.ANDROID_LAUNCH_SUFFIX);
             runDir.mkdir();
             sourceDir = new File(runDir,
                     InstrumentationConstants.FL_SOURCE_FOLDER_LOC);

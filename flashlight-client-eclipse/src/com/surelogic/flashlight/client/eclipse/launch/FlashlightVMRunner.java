@@ -149,7 +149,8 @@ public final class FlashlightVMRunner implements IVMRunner {
         final SimpleDateFormat dateFormat = new SimpleDateFormat(
                 InstrumentationConstants.DATE_FORMAT);
         datePostfix = dateFormat.format(new Date());
-        final String runName = mainTypeName + datePostfix;
+        final String runName = mainTypeName + datePostfix
+                + InstrumentationConstants.JAVA_LAUNCH_SUFFIX;
         final File dataDir = EclipseUtility.getFlashlightDataDirectory();
         runOutputDir = new File(dataDir, runName);
         if (!runOutputDir.exists()) {
@@ -243,8 +244,9 @@ public final class FlashlightVMRunner implements IVMRunner {
                                 FlashlightPreferencesUtility.POSTMORTEM_MODE));
 
         /* Let the monitor thread know it should expect a launch */
-        final Job job = EclipseUtility.toEclipseJob(new WatchFlashlightMonitorJob(new MonitorStatus(runOutputDir,
-            mainTypeName, new Date().toString())));
+        final Job job = EclipseUtility
+                .toEclipseJob(new WatchFlashlightMonitorJob(new MonitorStatus(
+                        runOutputDir, mainTypeName, new Date().toString())));
         job.setSystem(true);
         job.schedule();
 

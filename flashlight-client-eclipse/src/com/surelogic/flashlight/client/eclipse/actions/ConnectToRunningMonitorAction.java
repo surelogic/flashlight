@@ -17,6 +17,7 @@ import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.ui.EclipseUIUtility;
 import com.surelogic.common.ui.SLImages;
 import com.surelogic.flashlight.client.eclipse.jobs.WatchFlashlightMonitorJob;
+import com.surelogic.flashlight.client.eclipse.model.RunManager;
 import com.surelogic.flashlight.client.eclipse.views.monitor.MonitorStatus;
 
 public class ConnectToRunningMonitorAction extends Action {
@@ -58,10 +59,11 @@ public class ConnectToRunningMonitorAction extends Action {
                     name = result;
                     date = new Date();
                 }
-                MonitorStatus status = new MonitorStatus(runDir, name,
-                        date.toString());
+                MonitorStatus status = new MonitorStatus(
+                        RunManager.getRunIdStringFrom(runDir));
                 /* Let the monitor thread know it should expect a launch */
-                final Job job = EclipseUtility.toEclipseJob(new WatchFlashlightMonitorJob(status));
+                final Job job = EclipseUtility
+                        .toEclipseJob(new WatchFlashlightMonitorJob(status));
                 job.setSystem(true);
                 job.schedule();
             }

@@ -157,9 +157,8 @@ public class MonitorView extends ViewPart {
         menu.add(new ConnectToRunningMonitorAction());
         menu.add(new OpenLegendAction());
         f_mediator = new MonitorViewMediator(status, statusImage, runText,
-                startTimeText, fieldsSelectorText, fieldsSelectorButton,
-                fieldsTree, locksTree, edtSelectorText, edtSelectorButton,
-                edtTree, tv);
+                fieldsSelectorText, fieldsSelectorButton, fieldsTree,
+                locksTree, edtSelectorText, edtSelectorButton, edtTree, tv);
 
         f_mediator.init();
     }

@@ -13,6 +13,7 @@ import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic.common.jobs.SLJob;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
+import com.surelogic.flashlight.client.eclipse.model.RunManager;
 
 public class ReadLogcatJob implements SLJob, ILogListener {
     private final String f_run;
@@ -21,9 +22,9 @@ public class ReadLogcatJob implements SLJob, ILogListener {
 
     private OutputStream out;
 
-    public ReadLogcatJob(String runName, File runDir, IDevice id) {
-        f_run = runName;
-        f_dir = runDir;
+    public ReadLogcatJob(String runId, IDevice id) {
+        f_run = runId;
+        f_dir = RunManager.getInstance().getDirectoryFrom(runId);
         f_dev = id;
     }
 

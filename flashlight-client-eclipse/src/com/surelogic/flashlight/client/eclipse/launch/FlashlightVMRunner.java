@@ -90,6 +90,7 @@ public final class FlashlightVMRunner implements IVMRunner {
     private static final long DEFAULT_MAX_HEAP_SIZE = 64 * 1024 * 1024;
 
     private final IVMRunner delegateRunner;
+    private final String runId;
     private final File runOutputDir;
     private final String mainTypeName;
 
@@ -149,10 +150,10 @@ public final class FlashlightVMRunner implements IVMRunner {
         final SimpleDateFormat dateFormat = new SimpleDateFormat(
                 InstrumentationConstants.DATE_FORMAT);
         datePostfix = dateFormat.format(new Date());
-        final String runName = mainTypeName + datePostfix
+        runId = mainTypeName + datePostfix
                 + InstrumentationConstants.JAVA_LAUNCH_SUFFIX;
         final File dataDir = EclipseUtility.getFlashlightDataDirectory();
-        runOutputDir = new File(dataDir, runName);
+        runOutputDir = new File(dataDir, runId);
         if (!runOutputDir.exists()) {
             runOutputDir.mkdirs();
         }
@@ -182,7 +183,8 @@ public final class FlashlightVMRunner implements IVMRunner {
         if (!SLLicenseUtility.validate(SLLicenseProduct.FLASHLIGHT)) {
             return;
         }
-
+        RunManager.getInstance()
+                .notifyPerformingInstrumentationAndLaunch(runId);
         /*
          * Build the set of projects used by the application being run, and
          * build the map of original to instrumented names.
@@ -246,7 +248,7 @@ public final class FlashlightVMRunner implements IVMRunner {
         /* Let the monitor thread know it should expect a launch */
         final Job job = EclipseUtility
                 .toEclipseJob(new WatchFlashlightMonitorJob(new MonitorStatus(
-                        runOutputDir, mainTypeName, new Date().toString())));
+                        runId)));
         job.setSystem(true);
         job.schedule();
 
@@ -267,6 +269,7 @@ public final class FlashlightVMRunner implements IVMRunner {
             }
         };
         terminationDetector.reschedule();
+        RunManager.getInstance().notifyCollectingData(runId);
     }
 
     @Nullable

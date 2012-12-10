@@ -13,12 +13,11 @@ import java.util.TreeMap;
 import com.surelogic._flashlight.common.FieldDef;
 import com.surelogic._flashlight.common.FieldDefs;
 import com.surelogic._flashlight.common.InstrumentationConstants;
+import com.surelogic.flashlight.client.eclipse.model.RunManager;
 
 public class MonitorStatus {
-
+    private final String runId;
     private final File runDirectory;
-    private final String runName;
-    private final String runTime;
     private final FieldDefs fields;
     private final Map<String, FieldDef> fieldMap;
     private final Set<String> shared;
@@ -39,11 +38,9 @@ public class MonitorStatus {
     private ConnectionState state;
     private int timeout;
 
-    public MonitorStatus(final File runDirectory, final String runName,
-            final String runTime) {
-        this.runDirectory = runDirectory;
-        this.runName = runName;
-        this.runTime = runTime;
+    public MonitorStatus(final String runId) {
+        this.runId = runId;
+        runDirectory = RunManager.getInstance().getDirectoryFrom(runId);
         portFile = new File(runDirectory,
                 InstrumentationConstants.FL_PORT_FILE_LOC);
         File fieldsFile = new File(runDirectory,
@@ -70,9 +67,8 @@ public class MonitorStatus {
 
     public MonitorStatus(final MonitorStatus status) {
         if (status != null) {
+            runId = status.runId;
             runDirectory = status.runDirectory;
-            runName = status.runName;
-            runTime = status.runTime;
             fields = status.fields;
             fieldMap = status.fieldMap;
             shared = new HashSet<String>(status.shared);
@@ -112,12 +108,8 @@ public class MonitorStatus {
         return runDirectory;
     }
 
-    public String getRunName() {
-        return runName;
-    }
-
-    public String getRunTime() {
-        return runTime;
+    public String getRunId() {
+        return runId;
     }
 
     public File getPortFile() {

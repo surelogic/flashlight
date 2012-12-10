@@ -17,49 +17,49 @@ import com.surelogic.flashlight.client.eclipse.views.monitor.MonitorStatus;
 
 public class SendCommandToFlashlightMonitorJob extends AbstractSLJob {
 
-	private final String f_command;
-	private final MonitorStatus f_status;
+    private final String f_command;
+    private final MonitorStatus f_status;
 
-	public SendCommandToFlashlightMonitorJob(final MonitorStatus status,
-			final String command) {
-		super(String.format("Sending %s command to %s - %s", command,
-				status.getRunName(), status.getRunTime()));
-		f_command = command;
-		f_status = status;
-	}
+    public SendCommandToFlashlightMonitorJob(final MonitorStatus status,
+            final String command) {
+        super(String.format("Sending %s command to %s", command,
+                status.getRunId()));
+        f_command = command;
+        f_status = status;
+    }
 
-	@Override
-	public SLStatus run(final SLProgressMonitor monitor) {
-		try {
-			final Socket s = new Socket();
-			final BufferedReader portReader = new BufferedReader(
-					new FileReader(f_status.getPortFile()));
-			int port;
-			try {
-				port = Integer.parseInt(portReader.readLine());
-			} finally {
-				portReader.close();
-			}
-			s.connect(new InetSocketAddress("localhost", port));
-			try {
-				final BufferedReader reader = new BufferedReader(
-						new InputStreamReader(s.getInputStream()));
-				final PrintWriter writer = new PrintWriter(s.getOutputStream());
-				WatchFlashlightMonitorJob.readUpTo(reader,
-						WatchFlashlightMonitorJob.DELIMITER);
-				WatchFlashlightMonitorJob.writeCommand(writer, f_command);
-				WatchFlashlightMonitorJob.readUpTo(reader,
-						WatchFlashlightMonitorJob.DELIMITER);
-			} finally {
-				s.close();
-			}
-		} catch (final IOException e) {
-			SLLogger.getLoggerFor(SendCommandToFlashlightMonitorJob.class).log(
-					Level.WARNING,
-					String.format("Could not send command to %s - %s.",
-							f_status.getRunName(), f_status.getRunTime()), e);
-		}
-		return SLStatus.OK_STATUS;
-	}
+    @Override
+    public SLStatus run(final SLProgressMonitor monitor) {
+        try {
+            final Socket s = new Socket();
+            final BufferedReader portReader = new BufferedReader(
+                    new FileReader(f_status.getPortFile()));
+            int port;
+            try {
+                port = Integer.parseInt(portReader.readLine());
+            } finally {
+                portReader.close();
+            }
+            s.connect(new InetSocketAddress("localhost", port));
+            try {
+                final BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(s.getInputStream()));
+                final PrintWriter writer = new PrintWriter(s.getOutputStream());
+                WatchFlashlightMonitorJob.readUpTo(reader,
+                        WatchFlashlightMonitorJob.DELIMITER);
+                WatchFlashlightMonitorJob.writeCommand(writer, f_command);
+                WatchFlashlightMonitorJob.readUpTo(reader,
+                        WatchFlashlightMonitorJob.DELIMITER);
+            } finally {
+                s.close();
+            }
+        } catch (final IOException e) {
+            SLLogger.getLoggerFor(SendCommandToFlashlightMonitorJob.class).log(
+                    Level.WARNING,
+                    String.format("Could not send command to %s.",
+                            f_status.getRunId()), e);
+        }
+        return SLStatus.OK_STATUS;
+    }
 
 }

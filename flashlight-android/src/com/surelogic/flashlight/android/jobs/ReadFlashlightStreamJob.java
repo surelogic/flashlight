@@ -32,6 +32,7 @@ import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.common.xml.Entities;
 import com.surelogic.flashlight.client.eclipse.jobs.SwitchToFlashlightPerspectiveJob;
+import com.surelogic.flashlight.client.eclipse.model.RunManager;
 import com.surelogic.flashlight.common.prep.AbstractDataScan;
 import com.surelogic.flashlight.common.prep.PrepEvent;
 
@@ -210,6 +211,7 @@ public class ReadFlashlightStreamJob implements SLJob {
 
             if (event == PrepEvent.FLASHLIGHT) {
                 f_run = attributes.getValue(AttributeType.RUN.label());
+                RunManager.getInstance().notifyCollectingData(f_run);
                 f_buf.append('>');
             } else {
                 f_buf.append("/>");

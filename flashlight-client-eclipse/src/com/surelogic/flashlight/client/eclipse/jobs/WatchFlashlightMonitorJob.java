@@ -37,8 +37,7 @@ public class WatchFlashlightMonitorJob extends AbstractSLJob {
     private final MonitorStatus f_status;
 
     public WatchFlashlightMonitorJob(final MonitorStatus status) {
-        super(String.format("Checking status of %s - %s", status.getRunName(),
-                status.getRunTime()));
+        super(String.format("Checking status of %s", status.getRunId()));
         f_status = status;
     }
 
@@ -247,7 +246,9 @@ public class WatchFlashlightMonitorJob extends AbstractSLJob {
             if (view != null) {
                 view.getMediator().update(f_status);
                 if (f_callback) {
-                    final Job job = EclipseUtility.toEclipseJob(new WatchFlashlightMonitorJob(f_status));
+                    final Job job = EclipseUtility
+                            .toEclipseJob(new WatchFlashlightMonitorJob(
+                                    f_status));
                     job.setSystem(true);
                     job.schedule(1000);
                 }

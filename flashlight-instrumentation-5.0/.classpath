@@ -18,7 +18,7 @@
 			<accessrule kind="nonaccessible" pattern="**"/>
 		</accessrules>
 	</classpathentry>
-	<classpathentry kind="lib" path="/common/lib/runtime/asm-4.0.jar" sourcepath="lib/asm-src.zip"/>
-	<classpathentry kind="lib" path="/common/lib/runtime/asm-commons-4.0.jar" sourcepath="lib/asm-src.zip"/>
+	<classpathentry kind="lib" path="/common/lib/runtime/asm-4.1.jar" sourcepath="lib/asm-src.zip"/>
+	<classpathentry kind="lib" path="/common/lib/runtime/asm-commons-4.1.jar" sourcepath="lib/asm-src.zip"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -102,6 +102,95 @@ public final class RunManager {
   private final Object f_lock = new Object();
 
   /**
+   * Gets the run identity string for the passed a handle to a run directory on
+   * the disk. The result is the same as invoking <tt>directory.getName()</tt>.
+   * 
+   * @param directory
+   *          a directory.
+   * @return the run identity string for the passed a handle to a run directory
+   *         on the disk.
+   */
+  @NonNull
+  public static String getRunIdStringFrom(@NonNull final File directory) {
+    if (directory == null)
+      throw new IllegalArgumentException(I18N.err(44, "directory"));
+    return directory.getName();
+  }
+
+  /**
+   * Gets an abstract representation of the run directory on the disk in the
+   * Flashlight data directory. The result is the same as invoking
+   * 
+   * <pre>
+   * new File(RunManager.getInstance().getDirectory(), runIdString)
+   * </pre>
+   * 
+   * @param runIdString
+   *          a run identity string.
+   * @return an abstract representation of the run directory on the disk in the
+   *         Flashlight data directory.
+   * 
+   * @throws IllegalArgumentException
+   *           if runIdString is {@code null}.
+   */
+  @NonNull
+  public File getDirectoryFrom(@NonNull final String runIdString) {
+    if (runIdString == null)
+      throw new IllegalArgumentException(I18N.err(44, "runIdString"));
+    final File result = new File(getDirectory(), runIdString);
+    return result;
+  }
+
+  /**
+   * Notifies the run manager that an application is being instrumented and
+   * launched.
+   * 
+   * @param runIdString
+   *          a run identity string.
+   * @throws IllegalArgumentException
+   *           if runIdString is {@code null}.
+   */
+  public void notifyPerformingInstrumentationAndLaunch(@NonNull final String runIdString) {
+    if (runIdString == null)
+      throw new IllegalArgumentException(I18N.err(44, "runIdString"));
+    // TODO
+  }
+
+  /**
+   * Notifies the run manager that an application is collecting data.
+   * 
+   * @param runIdString
+   *          a run identity string.
+   * @throws IllegalArgumentException
+   *           if runIdString is {@code null}.
+   */
+  public void notifyCollectingData(@NonNull final String runIdString) {
+    if (runIdString == null)
+      throw new IllegalArgumentException(I18N.err(44, "runIdString"));
+    // TODO
+  }
+
+  /**
+   * Invoked to make a best effort to ask the instrumented application to stop
+   * collecting data. Note that a successful notification does not mean that
+   * data collection has stopped, it may take some time for that to occur.
+   * 
+   * @param runIdString
+   *          a run identity string.
+   * @return {@code true} if the instrumented application was notified
+   *         successfully, {@code false} if something went wrong and no
+   *         notification could be performed.
+   * @throws IllegalArgumentException
+   *           if runIdString is {@code null}.
+   */
+  public boolean requestDataCollectionToStop(@NonNull final String runIdString) {
+    if (runIdString == null)
+      throw new IllegalArgumentException(I18N.err(44, "runIdString"));
+    // TODO
+    return false;
+  }
+
+  /**
    * Holds the set of all run directories that have completed data collection,
    * but may or may not have been prepared.
    * <p>
@@ -280,6 +369,24 @@ public final class RunManager {
   }
 
   /**
+   * Starts a data preparation job on the passed run directory. This call does
+   * not block, it returns immediately after the job is submitted to Eclipse.
+   * 
+   * @param run
+   *          a run directory.
+   */
+  public void startDataPreparationJobOn(@NonNull final RunDirectory run) {
+    if (run == null)
+      throw new IllegalArgumentException(I18N.err(44, "run"));
+
+    final SLJob job = new PrepSLJob(run, EclipseUtility.getIntPreference(FlashlightPreferencesUtility.PREP_OBJECT_WINDOW_SIZE),
+        AdHocDataSource.getManager().getTopLevelQueries());
+    final Job eJob = EclipseUtility.toEclipseJob(job, run.getRunIdString());
+    eJob.setUser(true);
+    eJob.schedule();
+  }
+
+  /**
    * Refreshes the set of run descriptions managed by this class and notifies
    * all observers if that set has changed. This method is invoked by
    * {@link RefreshRunManagerSLJob}, which is generally what you want to use if
@@ -338,37 +445,11 @@ public final class RunManager {
   }
 
   @NonNull
-  public static String getRunIdStringFrom(@NonNull final File directory) {
-    if (directory == null)
-      throw new IllegalArgumentException(I18N.err(44, "directory"));
-    return directory.getName();
-  }
-
-  @NonNull
-  public File getHandleFrom(@NonNull final String runIdString) {
-    if (runIdString == null)
-      throw new IllegalArgumentException(I18N.err(44, "runIdString"));
-    final File result = new File(getDirectory(), runIdString);
-    return result;
-  }
-
-  @NonNull
-  public static Set<RunDescription> getRunDescriptionsFor(Set<RunDirectory> runs) {
+  private static Set<RunDescription> getRunDescriptionsFor(Set<RunDirectory> runs) {
     final Set<RunDescription> result = new HashSet<RunDescription>(runs.size());
     for (RunDirectory runDir : runs) {
       result.add(runDir.getDescription());
     }
     return result;
-  }
-
-  public void startDataPreparationJobOn(@NonNull final RunDirectory run) {
-    if (run == null)
-      throw new IllegalArgumentException(I18N.err(44, "run"));
-
-    final SLJob job = new PrepSLJob(run, EclipseUtility.getIntPreference(FlashlightPreferencesUtility.PREP_OBJECT_WINDOW_SIZE),
-        AdHocDataSource.getManager().getTopLevelQueries());
-    final Job eJob = EclipseUtility.toEclipseJob(job, run.getRunIdString());
-    eJob.setUser(true);
-    eJob.schedule();
   }
 }

@@ -132,15 +132,13 @@ public final class PromptToPrepAllRawData extends SLUIJob {
   }
 
   public static void runPrepJob(final Collection<RunDirectory> notPrepped) {
+    if (notPrepped == null || notPrepped.isEmpty())
+      return;
+
     for (final RunDirectory run : notPrepped) {
-      if (run != null) {
-        final SLJob job = new PrepSLJob(run, EclipseUtility.getIntPreference(FlashlightPreferencesUtility.PREP_OBJECT_WINDOW_SIZE),
-            AdHocDataSource.getManager().getTopLevelQueries());
-        final Job eJob = EclipseUtility.toEclipseJob(job, run.getRunIdString());
-        eJob.setUser(true);
-        eJob.schedule();
-        RefreshRunManagerSLJob.submit(true);
-      }
+      if (run != null)
+        RunManager.getInstance().startDataPreparationJobOn(run);
     }
+    RefreshRunManagerSLJob.submit(true);
   }
 }

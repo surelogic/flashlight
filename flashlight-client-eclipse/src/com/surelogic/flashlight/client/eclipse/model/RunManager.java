@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
+import org.eclipse.core.runtime.jobs.Job;
+
 import com.surelogic.NonNull;
 import com.surelogic.Nullable;
 import com.surelogic.Region;
@@ -19,7 +21,11 @@ import com.surelogic.UniqueInRegion;
 import com.surelogic.Vouch;
 import com.surelogic.common.SLUtility;
 import com.surelogic.common.core.EclipseUtility;
+import com.surelogic.common.i18n.I18N;
+import com.surelogic.common.jobs.SLJob;
 import com.surelogic.flashlight.client.eclipse.jobs.RefreshRunManagerSLJob;
+import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
+import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
 import com.surelogic.flashlight.common.jobs.PrepSLJob;
 import com.surelogic.flashlight.common.model.FlashlightFileUtility;
 import com.surelogic.flashlight.common.model.RunDescription;
@@ -332,11 +338,37 @@ public final class RunManager {
   }
 
   @NonNull
-  private Set<RunDescription> getRunDescriptionsFor(Set<RunDirectory> runs) {
+  public static String getRunIdStringFrom(@NonNull final File directory) {
+    if (directory == null)
+      throw new IllegalArgumentException(I18N.err(44, "directory"));
+    return directory.getName();
+  }
+
+  @NonNull
+  public File getHandleFrom(@NonNull final String runIdString) {
+    if (runIdString == null)
+      throw new IllegalArgumentException(I18N.err(44, "runIdString"));
+    final File result = new File(getDirectory(), runIdString);
+    return result;
+  }
+
+  @NonNull
+  public static Set<RunDescription> getRunDescriptionsFor(Set<RunDirectory> runs) {
     final Set<RunDescription> result = new HashSet<RunDescription>(runs.size());
     for (RunDirectory runDir : runs) {
       result.add(runDir.getDescription());
     }
     return result;
+  }
+
+  public void startDataPreparationJobOn(@NonNull final RunDirectory run) {
+    if (run == null)
+      throw new IllegalArgumentException(I18N.err(44, "run"));
+
+    final SLJob job = new PrepSLJob(run, EclipseUtility.getIntPreference(FlashlightPreferencesUtility.PREP_OBJECT_WINDOW_SIZE),
+        AdHocDataSource.getManager().getTopLevelQueries());
+    final Job eJob = EclipseUtility.toEclipseJob(job, run.getRunIdString());
+    eJob.setUser(true);
+    eJob.schedule();
   }
 }

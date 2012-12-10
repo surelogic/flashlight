@@ -272,7 +272,7 @@ public class ReadFlashlightStreamJob implements SLJob {
             }
             f_outFile.delete();
             new File(f_dir, InstrumentationConstants.FL_PORT_FILE_LOC).delete();
-            return false;
+            return f_count >= 1;
         }
 
         /**

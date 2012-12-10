@@ -12,8 +12,8 @@
 	<property name="src-rt" value="${basedir}/../flashlight-common/src" />
 	<property name="test" value="${basedir}/test" />
 
-	<property name="asm.jar" value="${common.lib}/asm-4.0.jar" />
-	<property name="asm-commons.jar" value="${common.lib}/asm-commons-4.0.jar" />
+	<property name="asm.jar" value="${common.lib}/asm-4.1.jar" />
+	<property name="asm-commons.jar" value="${common.lib}/asm-commons-4.1.jar" />
 
 	<property name="junit.jar" value="${lib}/junit-4.3.1.jar" />
 

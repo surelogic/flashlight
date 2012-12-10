@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.logging.Level;
 
 import org.eclipse.core.runtime.jobs.Job;
 
@@ -23,6 +24,7 @@ import com.surelogic.common.SLUtility;
 import com.surelogic.common.core.EclipseUtility;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jobs.SLJob;
+import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.client.eclipse.jobs.RefreshRunManagerSLJob;
 import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
@@ -83,6 +85,10 @@ public final class RunManager {
     }
   }
 
+  private void notifyLaunchCollectionObservers() {
+
+  }
+
   /**
    * A reference to the Flashlight data directory.
    */
@@ -100,6 +106,12 @@ public final class RunManager {
   }
 
   private final Object f_lock = new Object();
+
+  @UniqueInRegion("RunState")
+  private final Set<String> f_launchingRunIdStrings = new HashSet<String>();
+
+  @UniqueInRegion("RunState")
+  private final Set<String> f_collectingRunIdStrings = new HashSet<String>();
 
   /**
    * Gets the run identity string for the passed a handle to a run directory on
@@ -153,7 +165,14 @@ public final class RunManager {
   public void notifyPerformingInstrumentationAndLaunch(@NonNull final String runIdString) {
     if (runIdString == null)
       throw new IllegalArgumentException(I18N.err(44, "runIdString"));
-    // TODO
+    synchronized (f_lock) {
+      if (f_launchingRunIdStrings.contains(runIdString)) {
+        SLLogger.getLogger().log(Level.WARNING, I18N.err(168, runIdString));
+        return;
+      }
+      f_launchingRunIdStrings.add(runIdString);
+      notifyLaunchCollectionObservers();
+    }
   }
 
   /**
@@ -167,7 +186,19 @@ public final class RunManager {
   public void notifyCollectingData(@NonNull final String runIdString) {
     if (runIdString == null)
       throw new IllegalArgumentException(I18N.err(44, "runIdString"));
-    // TODO
+    synchronized (f_lock) {
+      if (f_collectingRunIdStrings.contains(runIdString)) {
+        SLLogger.getLogger().log(Level.WARNING, I18N.err(170, runIdString));
+        return;
+      }
+      if (f_launchingRunIdStrings.contains(runIdString)) {
+        f_launchingRunIdStrings.remove(runIdString);
+      } else {
+        SLLogger.getLogger().log(Level.WARNING, I18N.err(235, runIdString));
+      }
+      f_collectingRunIdStrings.add(runIdString);
+      notifyLaunchCollectionObservers();
+    }
   }
 
   /**

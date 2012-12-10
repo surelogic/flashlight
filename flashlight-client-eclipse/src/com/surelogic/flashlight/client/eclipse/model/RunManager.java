@@ -124,6 +124,13 @@ public final class RunManager {
   @UniqueInRegion("RunState")
   private final Set<String> f_launchingRunIdStrings = new HashSet<String>();
 
+  /**
+   * Gets the set of run identity strings that have are being instrumented and
+   * launching. The returned set is a copy and may be freely mutated.
+   * 
+   * @return the set of run identity strings that have are being instrumented
+   *         and launching. May be empty.
+   */
   @NonNull
   public Set<String> getLaunchingRunIdStrings() {
     synchronized (f_lock) {
@@ -134,6 +141,13 @@ public final class RunManager {
   @UniqueInRegion("RunState")
   private final Set<String> f_collectingRunIdStrings = new HashSet<String>();
 
+  /**
+   * Gets the set of run identity strings that have are collecting data. The
+   * returned set is a copy and may be freely mutated.
+   * 
+   * @return the set of run identity strings that have are collecting data. May
+   *         be empty.
+   */
   @NonNull
   public Set<String> getCollectingRunIdStrings() {
     synchronized (f_lock) {

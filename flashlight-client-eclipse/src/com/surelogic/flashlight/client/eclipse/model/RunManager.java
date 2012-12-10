@@ -124,8 +124,22 @@ public final class RunManager {
   @UniqueInRegion("RunState")
   private final Set<String> f_launchingRunIdStrings = new HashSet<String>();
 
+  @NonNull
+  public Set<String> getLaunchingRunIdStrings() {
+    synchronized (f_lock) {
+      return new HashSet<String>(f_launchingRunIdStrings);
+    }
+  }
+
   @UniqueInRegion("RunState")
   private final Set<String> f_collectingRunIdStrings = new HashSet<String>();
+
+  @NonNull
+  public Set<String> getCollectingRunIdStrings() {
+    synchronized (f_lock) {
+      return new HashSet<String>(f_collectingRunIdStrings);
+    }
+  }
 
   /**
    * Gets the run identity string for the passed a handle to a run directory on

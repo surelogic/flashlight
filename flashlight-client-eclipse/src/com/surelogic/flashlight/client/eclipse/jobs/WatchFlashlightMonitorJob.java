@@ -30,7 +30,7 @@ import com.surelogic.flashlight.common.model.FlashlightFileUtility;
 
 public class WatchFlashlightMonitorJob extends AbstractSLJob {
 
-    static final String DELIMITER = "**********";
+    public static final String DELIMITER = "**********";
     private static final Pattern LIST_PATTERN = Pattern.compile("^\\[|, |\\]$");
     private static final Pattern LOCK_EDGE_DELIM = Pattern.compile(" -> ");
 
@@ -202,7 +202,8 @@ public class WatchFlashlightMonitorJob extends AbstractSLJob {
         }
     }
 
-    static void writeCommand(final PrintWriter writer, final String command) {
+    public static void writeCommand(final PrintWriter writer,
+            final String command) {
         writer.println(command);
         writer.flush();
     }
@@ -215,7 +216,7 @@ public class WatchFlashlightMonitorJob extends AbstractSLJob {
      * @return
      * @throws IOException
      */
-    static List<String> readUpTo(final BufferedReader reader,
+    public static List<String> readUpTo(final BufferedReader reader,
             final String marker) throws IOException {
         final List<String> lines = new ArrayList<String>();
         String line;

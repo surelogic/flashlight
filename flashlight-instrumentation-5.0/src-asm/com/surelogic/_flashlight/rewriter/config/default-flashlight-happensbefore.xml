@@ -1,176 +1,160 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes'?>
 
-<sites>
-  <happens-before>
-    <class>java.lang.Thread</class>
-    <method name="start" sig="()" type="from" />
-    <method name="join" sig="()" type="to" />
-  </happens-before>
+<happens-before>
+  <thread type="java.lang.Thread">
+    <method decl="start()" hb="from" />
+    <method decl="join()" hb="to" />
+  </thread>
 
-  <happens-before-obj>
-    <class>java.lang.Object</class>
-    <method name="wait" sig="(long)" type="target" />
-    <method name="wait" sig="(long,int)" type="target" />
-    <method name="notify" sig="()" type="source" />
-  </happens-before-obj>
+  <object type="java.lang.Object">
+    <method decl="wait(long)" hb="target" />
+    <method decl="wait(long,int)" hb="target" />
+    <method decl="notify()" hb="source" />
+  </object>
 
-  <happens-before-obj>
-    <class>java.util.concurrent.CyclicBarrier</class>
-    <method name="await" sig="()" type="source-and-target" />
-    <method name="await" sig="(long, java.util.concurrent.TimeUnit)" type="source-and-target" />
-  </happens-before-obj>
+  <object type="java.util.concurrent.CyclicBarrier">
+    <method decl="await()" hb="source-and-target" />
+    <method decl="await(long, java.util.concurrent.TimeUnit)" hb="source-and-target" />
+  </object>
 
-  <happens-before-obj>
-    <class>java.util.concurrent.CountDownLatch</class>
-    <method name="countDown" sig="()" type="source" />
-    <method name="await" sig="()" type="target" />
-    <method name="await" sig="(long, java.util.concurrent.TimeUnit)" type="target" checkReturn="true"/>
-  </happens-before-obj>
+  <object type="java.util.concurrent.CountDownLatch">
+    <method decl="countDown()" hb="source" />
+    <method decl="await()" hb="target" />
+    <method decl="await(long, java.util.concurrent.TimeUnit)" hb="target" resultMustBe="true"/>
+  </object>
 
-  <happens-before-obj>
-    <class>java.util.concurrent.Exchanger</class>
-    <method name="exchange" sig="(java.lang.Object)" type="source-and-target" />
-    <method name="exchange" sig="(java.lang.Object, long, java.util.concurrent.TimeUnit)" type="source-and-target" />
-  </happens-before-obj>
+  <object type="java.util.concurrent.Exchanger">
+    <method decl="exchange(java.lang.Object)" hb="source-and-target" />
+    <method decl="exchange(java.lang.Object, long, java.util.concurrent.TimeUnit)" hb="source-and-target" />
+  </object>
 
-  <happens-before-obj>
-    <class>java.util.concurrent.Semaphore</class>
-    <method name="acquire" sig="()" type="target" />
-    <method name="acquireUninterruptibly" sig="()" type="target" />
-    <method name="acquire" sig="(int)" type="target" />
-    <method name="acquireUninterruptibly" sig="(int)" type="target" />
-    <method name="tryAcquire" sig="()" type="target" checkReturn="true" />
-    <method name="tryAcquire" sig="(long,java.util.concurrent.TimeUnit)" type="target" checkReturn="true" />
-    <method name="release" sig="()" type="source" />
-  </happens-before-obj>
+  <object type="java.util.concurrent.Semaphore">
+    <method decl="acquire()" hb="target" />
+    <method decl="acquireUninterruptibly()" hb="target" />
+    <method decl="acquire(int)" hb="target" />
+    <method decl="acquireUninterruptibly(int)" hb="target" />
+    <method decl="tryAcquire()" hb="target" resultMustBe="true" />
+    <method decl="tryAcquire(long,java.util.concurrent.TimeUnit)" hb="target" resultMustBe="true" />
+    <method decl="release()" hb="source" />
+  </object>
 
   <!-- Atomics -->
 
-  <happens-before-obj>
-    <class>java.util.concurrent.atomic.AtomicBoolean</class>
-    <method name="compareAndSet" sig="(boolean,boolean)" type="source-and-target"/>
-    <method name="get" sig="()" type="target" />
-    <method name="getAndSet" sig="(boolean)" type="source-and-target" />
-    <method name="set" sig="(boolean)" type="source" />
-  </happens-before-obj>
+  <object type="java.util.concurrent.atomic.AtomicBoolean">
+    <method decl="compareAndSet(boolean,boolean)" hb="source-and-target"/>
+    <method decl="get()" hb="target" />
+    <method decl="getAndSet(boolean)" hb="source-and-target" />
+    <method decl="set(boolean)" hb="source" />
+  </object>
 
-  <happens-before-obj>
-    <class>java.util.concurrent.atomic.AtomicInteger</class>
-    <method name="compareAndSet" sig="(int,int)" type="source-and-target"/>
-    <method name="get" sig="()" type="target" />
-    <method name="getAndSet" sig="(int)" type="source-and-target" />
-    <method name="set" sig="(int)" type="source" />
-    <method name="addAndGet" sig="(int)" type="source-and-target" />
-    <method name="decrementAndGet" sig="()" type="source-and-target" />
-    <method name="getAndAdd" sig="(int)" type="source-and-target" />
-    <method name="getAndIncrement" sig="()" type="source-and-target" />
-    <method name="getAndDecrement" sig="()" type="source-and-target" />
-    <method name="incrementAndGet" sig="()" type="source-and-target" />
-    <method name="intValue" sig="()" type="target" />
-    <method name="longValue" sig="()" type="target" />
-    <method name="floatValue" sig="()" type="target" />
-    <method name="doubleValue" sig="()" type="target" />
-  </happens-before-obj>
+  <object type="java.util.concurrent.atomic.AtomicInteger">
+    <method decl="compareAndSet(int,int)" hb="source-and-target"/>
+    <method decl="get()" hb="target" />
+    <method decl="getAndSet(int)" hb="source-and-target" />
+    <method decl="set(int)" hb="source" />
+    <method decl="addAndGet(int)" hb="source-and-target" />
+    <method decl="decrementAndGet()" hb="source-and-target" />
+    <method decl="getAndAdd(int)" hb="source-and-target" />
+    <method decl="getAndIncrement()" hb="source-and-target" />
+    <method decl="getAndDecrement()" hb="source-and-target" />
+    <method decl="incrementAndGet()" hb="source-and-target" />
+    <method decl="intValue()" hb="target" />
+    <method decl="longValue()" hb="target" />
+    <method decl="floatValue()" hb="target" />
+    <method decl="doubleValue()" hb="target" />
+  </object>
 
-  <happens-before-obj>
-    <class>java.util.concurrent.atomic.AtomicIntegerArray</class>
-    <method name="compareAndSet" sig="(int,int,int)" type="source-and-target"/>
-    <method name="get" sig="(int)" type="target" />
-    <method name="getAndSet" sig="(int,int)" type="source-and-target" />
-    <method name="set" sig="(int,int)" type="source" />
-    <method name="addAndGet" sig="(int,int)" type="source-and-target" />
-    <method name="decrementAndGet" sig="(int)" type="source-and-target" />
-    <method name="getAndIncrement" sig="(int)" type="source-and-target" />
-    <method name="getAndDecrement" sig="(int)" type="source-and-target" />
-    <method name="getAndAdd" sig="(int,int)" type="source-and-target" />
-    <method name="incrementAndGet" sig="(int)" type="source-and-target" />
-  </happens-before-obj>
+  <object type="java.util.concurrent.atomic.AtomicIntegerArray">
+    <method decl="compareAndSet(int,int,int)" hb="source-and-target"/>
+    <method decl="get(int)" hb="target" />
+    <method decl="getAndSet(int,int)" hb="source-and-target" />
+    <method decl="set(int,int)" hb="source" />
+    <method decl="addAndGet(int,int)" hb="source-and-target" />
+    <method decl="decrementAndGet(int)" hb="source-and-target" />
+    <method decl="getAndIncrement(int)" hb="source-and-target" />
+    <method decl="getAndDecrement(int)" hb="source-and-target" />
+    <method decl="getAndAdd(int,int)" hb="source-and-target" />
+    <method decl="incrementAndGet(int)" hb="source-and-target" />
+  </object>
 
-  <happens-before-obj>
-    <class>java.util.concurrent.atomic.AtomicLong</class>
-    <method name="compareAndSet" sig="(long,long)" type="source-and-target"/>
-    <method name="get" sig="()" type="target" />
-    <method name="getAndSet" sig="(long)" type="source-and-target" />
-    <method name="set" sig="(long)" type="source" />
-    <method name="addAndGet" sig="(long)" type="source-and-target" />
-    <method name="decrementAndGet" sig="()" type="source-and-target" />
-    <method name="getAndAdd" sig="(long)" type="source-and-target" />
-    <method name="getAndIncrement" sig="()" type="source-and-target" />
-    <method name="getAndDecrement" sig="()" type="source-and-target" />
-    <method name="incrementAndGet" sig="()" type="source-and-target" />
-    <method name="intValue" sig="()" type="target" />
-    <method name="longValue" sig="()" type="target" />
-    <method name="floatValue" sig="()" type="target" />
-    <method name="doubleValue" sig="()" type="target" />
-  </happens-before-obj>
+  <object type="java.util.concurrent.atomic.AtomicLong">
+    <method decl="compareAndSet(long,long)" hb="source-and-target"/>
+    <method decl="get()" hb="target" />
+    <method decl="getAndSet(long)" hb="source-and-target" />
+    <method decl="set(long)" hb="source" />
+    <method decl="addAndGet(long)" hb="source-and-target" />
+    <method decl="decrementAndGet()" hb="source-and-target" />
+    <method decl="getAndAdd(long)" hb="source-and-target" />
+    <method decl="getAndIncrement()" hb="source-and-target" />
+    <method decl="getAndDecrement()" hb="source-and-target" />
+    <method decl="incrementAndGet()" hb="source-and-target" />
+    <method decl="intValue()" hb="target" />
+    <method decl="longValue()" hb="target" />
+    <method decl="floatValue()" hb="target" />
+    <method decl="doubleValue()" hb="target" />
+  </object>
 
-  <happens-before-obj>
-    <class>java.util.concurrent.atomic.AtomicLongArray</class>
-    <method name="compareAndSet" sig="(int,int,int)" type="source-and-target"/>
-    <method name="get" sig="(int)" type="target" />
-    <method name="getAndSet" sig="(int,long)" type="source-and-target" />
-    <method name="set" sig="(int,long)" type="source" />
-    <method name="addAndGet" sig="(int,long)" type="source-and-target" />
-    <method name="decrementAndGet" sig="(int)" type="source-and-target" />
-    <method name="getAndIncrement" sig="(int)" type="source-and-target" />
-    <method name="getAndDecrement" sig="(int)" type="source-and-target" />
-    <method name="getAndAdd" sig="(int,long)" type="source-and-target" />
-    <method name="incrementAndGet" sig="(int)" type="source-and-target" />
-  </happens-before-obj>
+  <object type="java.util.concurrent.atomic.AtomicLongArray">
+    <method decl="compareAndSet(int,int,int)" hb="source-and-target"/>
+    <method decl="get(int)" hb="target" />
+    <method decl="getAndSet(int,long)" hb="source-and-target" />
+    <method decl="set(int,long)" hb="source" />
+    <method decl="addAndGet(int,long)" hb="source-and-target" />
+    <method decl="decrementAndGet(int)" hb="source-and-target" />
+    <method decl="getAndIncrement(int)" hb="source-and-target" />
+    <method decl="getAndDecrement(int)" hb="source-and-target" />
+    <method decl="getAndAdd(int,long)" hb="source-and-target" />
+    <method decl="incrementAndGet(int)" hb="source-and-target" />
+  </object>
 
-  <happens-before-obj>
-    <class>java.util.concurrent.atomic.AtomicMarkableReference</class>
-    <method name="compareAndSet" sig="(java.lang.Object, java.lang.Object, boolean, boolean)" type="source-and-target"/>
-    <method name="attemptMark" sig="(java.lang.Object, boolean)" type="source-and-target" />
-    <method name="get" sig="(boolean[])" type="target" />
-    <method name="isMarked" sig="()" type="target" />
-    <method name="set" sig="(java.lang.Object, boolean)" type="source" />
-  </happens-before-obj>
+  <object type="java.util.concurrent.atomic.AtomicMarkableReference">
+    <method decl="compareAndSet(java.lang.Object, java.lang.Object, boolean, boolean)" hb="source-and-target"/>
+    <method decl="attemptMark(java.lang.Object, boolean)" hb="source-and-target" />
+    <method decl="get(boolean[])" hb="target" />
+    <method decl="isMarked()" hb="target" />
+    <method decl="set(java.lang.Object, boolean)" hb="source" />
+  </object>
 
-  <happens-before-obj>
-    <class>java.util.concurrent.atomic.AtomicReference</class>
-    <method name="compareAndSet" sig="(java.lang.Object,java.lang.Object)" type="source-and-target"/>
-    <method name="get" sig="(java.lang.Object)" type="target" />
-    <method name="getAndSet" sig="(java.lang.Object)" type="source-and-target" />
-    <method name="set" sig="(java.lang.Object)" type="source" />
-  </happens-before-obj>
+  <object type="java.util.concurrent.atomic.AtomicReference">
+    <method decl="compareAndSet(java.lang.Object,java.lang.Object)" hb="source-and-target"/>
+    <method decl="get(java.lang.Object)" hb="target" />
+    <method decl="getAndSet(java.lang.Object)" hb="source-and-target" />
+    <method decl="set(java.lang.Object)" hb="source" />
+  </object>
 
-  <happens-before-obj>
-    <class>java.util.concurrent.atomic.AtomicReferenceArray</class>
-    <method name="compareAndSet" sig="(int,java.lang.Object,java.lang.Object)" type="source-and-target"/>
-    <method name="get" sig="(int)" type="target" />
-    <method name="getAndSet" sig="(int,java.lang.Object)" type="source-and-target" />
-    <method name="set" sig="(int,java.lang.Object)" type="source" />
-  </happens-before-obj>
+  <object type="java.util.concurrent.atomic.AtomicReferenceArray">
+    <method decl="compareAndSet(int,java.lang.Object,java.lang.Object)" hb="source-and-target"/>
+    <method decl="get(int)" hb="target" />
+    <method decl="getAndSet(int,java.lang.Object)" hb="source-and-target" />
+    <method decl="set(int,java.lang.Object)" hb="source" />
+  </object>
 
-  <happens-before-obj>
-    <class>java.util.concurrent.atomic.AtomicStampedReference</class>
-    <method name="attemptStamp" sig="(java.lang.Object,int)" type="source-and-target" />
-    <method name="compareAndSet" sig="(java.lang.Object,java.lang.Object,int,int)" type="source-and-target"/>
-    <method name="get" sig="(int[])" type="target" />
-    <method name="getStamp" sig="(int[])" type="target" />
-    <method name="set" sig="(java.lang.Object,int)" type="source" />
-  </happens-before-obj>
+  <object type="java.util.concurrent.atomic.AtomicStampedReference">
+    <method decl="attemptStamp(java.lang.Object,int)" hb="source-and-target" />
+    <method decl="compareAndSet(java.lang.Object,java.lang.Object,int,int)" hb="source-and-target"/>
+    <method decl="get(int[])" hb="target" />
+    <method decl="getStamp(int[])" hb="target" />
+    <method decl="set(java.lang.Object,int)" hb="source" />
+  </object>
 
 
   <!-- Concurrent Collections --> 
 
-  <happens-before-coll>
-    <class>java.util.concurrent.ArrayBlockingQueue</class>
-    <method name="add" sig="(java.lang.Object)" type="source" obj="1"/>
-    <method name="put" sig="(java.lang.Object)" type="source" obj="1"/>
-    <method name="offer" sig="(java.lang.Object)" type="source" obj="1"/>
-    <method name="offer" sig="(java.lang.Object,long,java.util.concurrent.TimeUnit)" type="source" obj="1" checkReturn="!null"/>
-    <method name="take" sig="()" obj="0" type="target" />
-    <method name="poll" sig="(long,java.util.concurrent.TimeUnit)" obj="0" type="target" checkReturn="true"/>
-    <method name="remove" sig="java.lang.Object" type="target" obj="1" checkReturn="true"/>
-    <method name="contains" sig="java.lang.Object" type="target" obj="1" checkReturn="true"/>
+  <collection type="java.util.concurrent.ArrayBlockingQueue">
+    <method decl="add(java.lang.Object)" hb="source" obj="1"/>
+    <method decl="put(java.lang.Object)" hb="source" obj="1"/>
+    <method decl="offer(java.lang.Object)" hb="source" obj="1"/>
+    <method decl="offer(java.lang.Object,long,java.util.concurrent.TimeUnit)" hb="source" obj="1" resultMustBe="!null"/>
+    <method decl="take()" obj="0" hb="target" />
+    <method decl="poll(long,java.util.concurrent.TimeUnit)" obj="0" hb="target" resultMustBe="true"/>
+    <method decl="remove(java.lang.Object)" hb="target" obj="1" resultMustBe="true"/>
+    <method decl="contains(java.lang.Object)" hb="target" obj="1" resultMustBe="true"/>
     <!-- TODO
-    <method name="drainTo" sig="" type="target" />
+    <method decl="drainTo()" hb="target" />
     -->
-  </happens-before-coll>
+  </collection>
   
 
 
 
-</sites>
+</happens-before>

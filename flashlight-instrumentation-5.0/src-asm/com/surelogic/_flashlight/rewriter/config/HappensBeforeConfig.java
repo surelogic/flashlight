@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -77,9 +79,9 @@ public class HappensBeforeConfig {
 
     public static class HappensBeforeObject extends HappensBefore {
 
-        public HappensBeforeObject(String qualifiedClass, String method,
-                String signature, Type type, ReturnCheck returnCheck) {
-            super(qualifiedClass, method, signature, type, returnCheck);
+        public HappensBeforeObject(String qualifiedClass, String decl,
+                Type type, ReturnCheck returnCheck) {
+            super(qualifiedClass, decl, type, returnCheck);
         }
 
         @Override
@@ -96,10 +98,9 @@ public class HappensBeforeConfig {
     public static class HappensBeforeCollection extends HappensBeforeObject {
         final int objectParam;
 
-        public HappensBeforeCollection(String qualifiedClass, String method,
-                String signature, Type type, ReturnCheck returnCheck,
-                int objectParam) {
-            super(qualifiedClass, method, signature, type, returnCheck);
+        public HappensBeforeCollection(String qualifiedClass, String decl,
+                Type type, ReturnCheck returnCheck, int objectParam) {
+            super(qualifiedClass, decl, type, returnCheck);
             this.objectParam = objectParam;
         }
 
@@ -157,8 +158,7 @@ public class HappensBeforeConfig {
     }
 
     private static enum Elem {
-        METHOD("method"), THREAD("happens-before"), OBJECT("happens-before-obj"), COLL(
-                "happens-before-coll"), CLASS("class");
+        METHOD("method"), THREAD("thread"), OBJECT("object"), COLL("collection");
         final String name;
 
         Elem(String name) {
@@ -176,8 +176,8 @@ public class HappensBeforeConfig {
     }
 
     private static enum Attr {
-        NAME("name"), SIG("sig"), TYPE("type"), RETURN("checkReturn"), PARAM(
-                "obj");
+        DECL("decl"), HB("hb"), RETURN("checkReturn"), PARAM("obj"), TYPE(
+                "type");
         final String name;
 
         Attr(String name) {
@@ -205,9 +205,8 @@ public class HappensBeforeConfig {
 
     static class HappensBeforeConfigHandler extends DefaultHandler {
         final HappensBeforeConfig config = new HappensBeforeConfig();
-        private final StringBuilder qClass = new StringBuilder();
+        private String curClass;
         private Elem hb;
-        private boolean readClass;
 
         @Override
         public void startElement(String uri, String localName, String qName,
@@ -216,23 +215,13 @@ public class HappensBeforeConfig {
             if (e != null) {
                 switch (e) {
                 case COLL:
-                    hb = e;
-                    qClass.setLength(0);
-                    break;
                 case OBJECT:
-                    hb = e;
-                    qClass.setLength(0);
-                    break;
                 case THREAD:
                     hb = e;
-                    qClass.setLength(0);
-                    break;
-                case CLASS:
-                    readClass = true;
+                    curClass = attributes.getValue(Attr.TYPE.name);
                     break;
                 case METHOD:
-                    String name = null;
-                    String sig = null;
+                    String decl = null;
                     Type type = null;
                     ReturnCheck check = ReturnCheck.NONE;
                     int param = Integer.MIN_VALUE;
@@ -241,8 +230,8 @@ public class HappensBeforeConfig {
                         String val = attributes.getValue(i);
                         if (a != null) {
                             switch (a) {
-                            case NAME:
-                                name = val;
+                            case DECL:
+                                decl = val;
                                 break;
                             case PARAM:
                                 param = Integer.parseInt(val);
@@ -250,27 +239,26 @@ public class HappensBeforeConfig {
                             case RETURN:
                                 check = ReturnCheck.lookup(val);
                                 break;
-                            case SIG:
-                                sig = val;
-                                break;
-                            case TYPE:
+                            case HB:
                                 type = Type.lookup(val);
                                 break;
+                            default:
+                                throw new IllegalStateException(
+                                        "Invalid attribute found.");
                             }
                         }
                     }
-                    String clazz = qClass.toString();
                     switch (hb) {
                     case THREAD:
-                        add(clazz, new HappensBefore(clazz, name, sig, type,
+                        add(curClass, new HappensBefore(curClass, decl, type,
                                 check), config.threads);
                         break;
                     case COLL:
-                        add(clazz, new HappensBeforeCollection(clazz, name,
-                                sig, type, check, param), config.collections);
+                        add(curClass, new HappensBeforeCollection(curClass,
+                                decl, type, check, param), config.collections);
                         break;
                     case OBJECT:
-                        add(clazz, new HappensBeforeObject(clazz, name, sig,
+                        add(curClass, new HappensBeforeObject(curClass, decl,
                                 type, check), config.objects);
                         break;
                     default:
@@ -281,23 +269,6 @@ public class HappensBeforeConfig {
                 }
             }
 
-        }
-
-        @Override
-        public void endElement(String uri, String localName, String qName)
-                throws SAXException {
-            Elem e = Elem.lookup(qName);
-            if (e == Elem.CLASS) {
-                readClass = false;
-            }
-        }
-
-        @Override
-        public void characters(char[] ch, int start, int length)
-                throws SAXException {
-            if (readClass) {
-                qClass.append(ch, start, length);
-            }
         }
 
     }
@@ -313,19 +284,27 @@ public class HappensBeforeConfig {
     }
 
     public static class HappensBefore {
+        Pattern DECL_PATTERN = Pattern.compile("(.*)(\\(.*\\))");
+
         private final String qualifiedClass;
         private final String method;
         private final String signature;
         private final Type type;
         private final ReturnCheck returnCheck;
 
-        public HappensBefore(String qualifiedClass, String method,
-                String signature, Type type, ReturnCheck returnCheck) {
+        public HappensBefore(String qualifiedClass, String decl, Type type,
+                ReturnCheck returnCheck) {
             this.qualifiedClass = qualifiedClass;
-            this.signature = signature;
             this.type = type;
             this.returnCheck = returnCheck;
-            this.method = method;
+            Matcher match = DECL_PATTERN.matcher(decl);
+            if (match.matches()) {
+                method = match.group(1);
+                signature = match.group(2);
+            } else {
+                throw new IllegalArgumentException(decl
+                        + " is not a valid declaration.");
+            }
         }
 
         public String getQualifiedClass() {

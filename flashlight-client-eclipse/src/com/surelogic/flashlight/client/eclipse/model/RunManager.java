@@ -79,14 +79,28 @@ public final class RunManager {
   /**
    * Do not call this method while holding a lock!
    */
-  private void notifyObservers() {
+  private void notifyCollectionCompletedRunDirectoryChange() {
     for (final IRunManagerObserver o : f_observers) {
-      o.notify(this);
+      o.notifyCollectionCompletedRunDirectoryChange();
     }
   }
 
-  private void notifyLaunchCollectionObservers() {
+  /**
+   * Do not call this method while holding a lock!
+   */
+  private void notifyInstrumentedApplicationChange() {
+    for (final IRunManagerObserver o : f_observers) {
+      o.notifyInstrumentedApplicationChange();
+    }
+  }
 
+  /**
+   * Do not call this method while holding a lock!
+   */
+  private void notifyPrepareDataJobScheduled() {
+    for (final IRunManagerObserver o : f_observers) {
+      o.notifyPrepareDataJobScheduled();
+    }
   }
 
   /**
@@ -110,8 +124,36 @@ public final class RunManager {
   @UniqueInRegion("RunState")
   private final Set<String> f_launchingRunIdStrings = new HashSet<String>();
 
+  /**
+   * Gets the set of run identity strings that have are being instrumented and
+   * launching. The returned set is a copy and may be freely mutated.
+   * 
+   * @return the set of run identity strings that have are being instrumented
+   *         and launching. May be empty.
+   */
+  @NonNull
+  public Set<String> getLaunchingRunIdStrings() {
+    synchronized (f_lock) {
+      return new HashSet<String>(f_launchingRunIdStrings);
+    }
+  }
+
   @UniqueInRegion("RunState")
   private final Set<String> f_collectingRunIdStrings = new HashSet<String>();
+
+  /**
+   * Gets the set of run identity strings that have are collecting data. The
+   * returned set is a copy and may be freely mutated.
+   * 
+   * @return the set of run identity strings that have are collecting data. May
+   *         be empty.
+   */
+  @NonNull
+  public Set<String> getCollectingRunIdStrings() {
+    synchronized (f_lock) {
+      return new HashSet<String>(f_collectingRunIdStrings);
+    }
+  }
 
   /**
    * Gets the run identity string for the passed a handle to a run directory on
@@ -171,7 +213,7 @@ public final class RunManager {
         return;
       }
       f_launchingRunIdStrings.add(runIdString);
-      notifyLaunchCollectionObservers();
+      notifyInstrumentedApplicationChange();
     }
   }
 
@@ -197,7 +239,7 @@ public final class RunManager {
         SLLogger.getLogger().log(Level.WARNING, I18N.err(235, runIdString));
       }
       f_collectingRunIdStrings.add(runIdString);
-      notifyLaunchCollectionObservers();
+      notifyInstrumentedApplicationChange();
     }
   }
 
@@ -415,6 +457,7 @@ public final class RunManager {
     final Job eJob = EclipseUtility.toEclipseJob(job, run.getRunIdString());
     eJob.setUser(true);
     eJob.schedule();
+    notifyPrepareDataJobScheduled();
   }
 
   /**
@@ -467,11 +510,10 @@ public final class RunManager {
     }
 
     /*
-     * We must be carful to not notify holding a lock.
+     * We must be careful to not notify holding a lock.
      */
     if (isChanged) {
-      // System.out.println("RunManager.notifyObservers() invoked");
-      notifyObservers();
+      notifyCollectionCompletedRunDirectoryChange();
     }
   }
 

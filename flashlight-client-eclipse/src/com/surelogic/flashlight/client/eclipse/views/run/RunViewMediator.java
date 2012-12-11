@@ -45,6 +45,7 @@ import com.surelogic.flashlight.client.eclipse.jobs.PromptToPrepAllRawData;
 import com.surelogic.flashlight.client.eclipse.jobs.RefreshRunManagerSLJob;
 import com.surelogic.flashlight.client.eclipse.model.IRunManagerObserver;
 import com.surelogic.flashlight.client.eclipse.model.RunManager;
+import com.surelogic.flashlight.client.eclipse.model.RunManagerObserverAdapter;
 import com.surelogic.flashlight.client.eclipse.refactoring.RegionModelRefactoring;
 import com.surelogic.flashlight.client.eclipse.refactoring.RegionRefactoringInfo;
 import com.surelogic.flashlight.client.eclipse.refactoring.RegionRefactoringWizard;
@@ -55,10 +56,22 @@ import com.surelogic.flashlight.common.model.RunDirectory;
 /**
  * Mediator for the {@link RunView}.
  */
-public final class RunViewMediator extends AdHocManagerAdapter implements IRunManagerObserver, ILifecycle {
+public final class RunViewMediator extends AdHocManagerAdapter implements ILifecycle {
 
   private final TableViewer f_tableViewer;
   private final Table f_table;
+
+  private final IRunManagerObserver f_rmo = new RunManagerObserverAdapter() {
+    @Override
+    public void notifyCollectionCompletedRunDirectoryChange() {
+      EclipseUIUtility.asyncExec(new Runnable() {
+        @Override
+        public void run() {
+          refresh();
+        }
+      });
+    }
+  };
 
   RunViewMediator(final TableViewer tableViewer) {
     f_tableViewer = tableViewer;
@@ -110,7 +123,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements IRunMa
       }
     });
 
-    RunManager.getInstance().addObserver(this);
+    RunManager.getInstance().addObserver(f_rmo);
     AdHocManager.getInstance(AdHocDataSource.getInstance()).addObserver(this);
     TableUtility.packColumns(f_tableViewer);
     setToolbarState();
@@ -384,22 +397,9 @@ public final class RunViewMediator extends AdHocManagerAdapter implements IRunMa
     f_showLogAction.setEnabled(somethingSelected);
   }
 
-  /**
-   * Probably we have not been called from the SWT event dispatch thread.
-   */
-  @Override
-  public void notify(final RunManager manager) {
-    EclipseUIUtility.asyncExec(new Runnable() {
-      @Override
-      public void run() {
-        refresh();
-      }
-    });
-  }
-
   @Override
   public void dispose() {
-    RunManager.getInstance().removeObserver(this);
+    RunManager.getInstance().removeObserver(f_rmo);
     AdHocManager.getInstance(AdHocDataSource.getInstance()).removeObserver(this);
   }
 

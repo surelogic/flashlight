@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.LinkedList;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.eclipse.jface.dialogs.Dialog;
@@ -49,12 +48,13 @@ import com.surelogic.common.ui.EclipseColorUtility;
 import com.surelogic.common.ui.EclipseUIUtility;
 import com.surelogic.common.ui.SLImages;
 import com.surelogic.flashlight.client.eclipse.Activator;
-import com.surelogic.flashlight.client.eclipse.model.DataCollectingRunState;
-import com.surelogic.flashlight.client.eclipse.model.IDataCollectingRun;
-import com.surelogic.flashlight.client.eclipse.model.IRunControlObserver;
-import com.surelogic.flashlight.client.eclipse.model.RunControlManager;
+import com.surelogic.flashlight.client.eclipse.model.IRunManagerObserver;
+import com.surelogic.flashlight.client.eclipse.model.InstrumentedApplicationState;
+import com.surelogic.flashlight.client.eclipse.model.RunManager;
+import com.surelogic.flashlight.common.model.DataCollectingRunState;
+import com.surelogic.flashlight.common.model.IDataCollectingRun;
 
-public final class RunControlDialog extends Dialog implements IRunControlObserver, TickListener {
+public final class RunControlDialog extends Dialog implements IRunManagerObserver, TickListener {
 
   /**
    * This field tracks the dialog. The field is thread-confined to the SWT
@@ -68,7 +68,7 @@ public final class RunControlDialog extends Dialog implements IRunControlObserve
         final Shell shell = EclipseUIUtility.getShell();
         final TimingSource ts = new SWTTimingSource(1, TimeUnit.SECONDS, shell.getDisplay());
         f_dialogInstance = new RunControlDialog(shell, ts);
-        RunControlManager.getInstance().register(f_dialogInstance);
+        RunManager.getInstance().addObserver(f_dialogInstance);
         ts.addTickListener(f_dialogInstance);
         ts.init();
         f_dialogInstance.open();
@@ -101,7 +101,7 @@ public final class RunControlDialog extends Dialog implements IRunControlObserve
   @Override
   public boolean close() {
     f_disposeOnClose.dispose();
-    RunControlManager.getInstance().remove(this);
+    RunManager.getInstance().removeObserver(this);
     f_dialogInstance = null;
     return super.close();
   }
@@ -181,7 +181,7 @@ public final class RunControlDialog extends Dialog implements IRunControlObserve
     clearList.setFont(parent.getFont());
     clearList.addListener(SWT.Selection, new Listener() {
       public void handleEvent(Event event) {
-        RunControlManager.getInstance().clearAllFinishedRuns();
+        // TODO RunControlManager.getInstance().clearAllFinishedRuns();
       }
     });
 
@@ -262,13 +262,18 @@ public final class RunControlDialog extends Dialog implements IRunControlObserve
   }
 
   @Override
-  public void launchedRunStateChanged(final IDataCollectingRun run, final DataCollectingRunState newState) {
+  public void notifyInstrumentedApplicationChange() {
+    // Nothing to do
+  }
+
+  @Override
+  public void notifyPrepareDataJobScheduled() {
     // NOT CALLED IN THE UI THREAD
     updateGUIModel();
   }
 
   @Override
-  public void launchedRunCleared(Set<IDataCollectingRun> cleared) {
+  public void notifyCollectionCompletedRunDirectoryChange() {
     // NOT CALLED IN THE UI THREAD
     updateGUIModel();
   }
@@ -279,10 +284,10 @@ public final class RunControlDialog extends Dialog implements IRunControlObserve
    */
   private final class RunControlItem {
 
-    RunControlItem(@NonNull final Composite parent, @NonNull IDataCollectingRun run, @NonNull DataCollectingRunState state) {
+    RunControlItem(@NonNull final Composite parent, @NonNull String runIdString, @NonNull InstrumentedApplicationState state) {
       if (parent == null)
         throw new IllegalArgumentException(I18N.err(44, "parent"));
-      updateLogicalModel(run, state);
+      updateLogicalModel(runIdString, state);
 
       f_bk = new Composite(parent, SWT.NONE);
       GridLayout layout = new GridLayout();
@@ -315,8 +320,8 @@ public final class RunControlDialog extends Dialog implements IRunControlObserve
       f_clearFinishedRun.setImage(SLImages.getImage(CommonImages.IMG_GRAY_X));
       f_clearFinishedRun.addSelectionListener(new SelectionAdapter() {
         public void widgetSelected(SelectionEvent e) {
-          if (f_run != null && f_state != null && f_state.equals(DataCollectingRunState.FINISHED))
-            RunControlManager.getInstance().clearFinishedRun(f_run);
+//          if (f_runIdString != null && f_state != null && f_state.equals(InstrumentedApplicationState.DONE_COLLECTING_DATA))
+            //RunControlManager.getInstance().clearFinishedRun(f_run);
         }
       });
       toolBar.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, false));
@@ -324,10 +329,10 @@ public final class RunControlDialog extends Dialog implements IRunControlObserve
       updateGUIInformation();
     }
 
-    private void updateLogicalModel(@NonNull IDataCollectingRun run, @NonNull DataCollectingRunState state) {
-      if (run == null)
-        throw new IllegalArgumentException(I18N.err(44, "run"));
-      f_run = run;
+    private void updateLogicalModel(@NonNull String runIdString, @NonNull InstrumentedApplicationState state) {
+      if (runIdString == null)
+        throw new IllegalArgumentException(I18N.err(44, "runIdString"));
+      f_runIdString = runIdString;
       if (state == null)
         throw new IllegalArgumentException(I18N.err(44, "state"));
       f_state = state;
@@ -338,13 +343,13 @@ public final class RunControlDialog extends Dialog implements IRunControlObserve
      */
 
     @NonNull
-    IDataCollectingRun f_run;
+    String f_runIdString;
     @NonNull
-    DataCollectingRunState f_state;
+    InstrumentedApplicationState f_state;
 
     @NonNull
     String getRunLabel() {
-      return "TODO"; //f_run.getRunSimpleNameforUI();
+      return "TODO"; // f_run.getRunSimpleNameforUI();
     }
 
     @NonNull
@@ -389,18 +394,18 @@ public final class RunControlDialog extends Dialog implements IRunControlObserve
     final Image f_androidFinished = SLImages.getGrayscaleImage(f_androidRunning);
 
     Image getImage() {
-      if (true /* TODOf_run.isAndroid()*/) {
-        return f_state == DataCollectingRunState.FINISHED ? f_androidFinished : f_androidRunning;
+      if (true /* TODOf_run.isAndroid() */) {
+        return f_state == InstrumentedApplicationState.DONE_COLLECTING_DATA ? f_androidFinished : f_androidRunning;
       } else {
-        return f_state == DataCollectingRunState.FINISHED ? f_javaFinished : f_javaRunning;
+        return f_state == InstrumentedApplicationState.DONE_COLLECTING_DATA ? f_javaFinished : f_javaRunning;
       }
     }
 
-    void updateDisplayWith(@NonNull IDataCollectingRun run, @NonNull DataCollectingRunState state) {
+    void updateDisplayWith(@NonNull String runIdString, @NonNull InstrumentedApplicationState state) {
       if (f_bk.isDisposed())
         return;
 
-      updateLogicalModel(run, state);
+      updateLogicalModel(runIdString, state);
       updateGUIInformation();
     }
 
@@ -441,7 +446,8 @@ public final class RunControlDialog extends Dialog implements IRunControlObserve
       if (o2 == null || o2.first() == null)
         return -1;
       return -1;
-    // TODO  return o2.first().getLaunchTime().compareTo(o1.first().getLaunchTime());
+      // TODO return
+      // o2.first().getLaunchTime().compareTo(o1.first().getLaunchTime());
     }
   };
 
@@ -453,19 +459,18 @@ public final class RunControlDialog extends Dialog implements IRunControlObserve
         if (f_dialogArea == null || f_dialogArea.isDisposed())
           return;
 
-        final ArrayList<Pair<IDataCollectingRun, DataCollectingRunState>> runInfo = RunControlManager.getInstance()
-            .getManagedRuns();
-        Collections.sort(runInfo, f_newestToOldest);
+        final ArrayList<Pair<String, DataCollectingRunState>> runInfo = null; // TODORunControlManager.getInstance().getManagedRuns();
+       // Collections.sort(runInfo, f_newestToOldest);
         /*
          * Update the GUI with updated information
          */
         for (int i = 0; i < runInfo.size(); i++) {
-          final Pair<IDataCollectingRun, DataCollectingRunState> pair = runInfo.get(i);
+          final Pair<IDataCollectingRun, DataCollectingRunState> pair = null; // TODO runInfo.get(i);
           if (i < f_guiModel.size()) {
             final RunControlItem gui = f_guiModel.get(i);
-            gui.updateDisplayWith(pair.first(), pair.second());
+           // gui.updateDisplayWith(pair.first(), pair.second());
           } else {
-            final RunControlItem gui = new RunControlItem(f_dialogArea, pair.first(), pair.second());
+            final RunControlItem gui = null; //TODOnew RunControlItem(f_dialogArea, pair.first(), pair.second());
             f_guiModel.add(gui);
           }
         }

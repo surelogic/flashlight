@@ -7,7 +7,6 @@ import java.util.logging.Level;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.ui.IPerspectiveDescriptor;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
@@ -17,16 +16,14 @@ import org.eclipse.ui.progress.UIJob;
 
 import com.surelogic.common.core.EclipseUtility;
 import com.surelogic.common.i18n.I18N;
-import com.surelogic.common.jobs.SLJob;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.common.ui.EclipseUIUtility;
 import com.surelogic.common.ui.jobs.SLUIJob;
 import com.surelogic.flashlight.client.eclipse.dialogs.ConfirmPrepAllRawDataDialog;
 import com.surelogic.flashlight.client.eclipse.model.IRunManagerObserver;
 import com.surelogic.flashlight.client.eclipse.model.RunManager;
+import com.surelogic.flashlight.client.eclipse.model.RunManagerObserverAdapter;
 import com.surelogic.flashlight.client.eclipse.perspectives.FlashlightPerspective;
-import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
-import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
 import com.surelogic.flashlight.common.jobs.PrepSLJob;
 import com.surelogic.flashlight.common.model.RunDirectory;
 
@@ -36,9 +33,9 @@ import com.surelogic.flashlight.common.model.RunDirectory;
  */
 public final class PromptToPrepAllRawData extends SLUIJob {
 
-  private static final IRunManagerObserver RMO = new IRunManagerObserver() {
+  private static final IRunManagerObserver RMO = new RunManagerObserverAdapter() {
     @Override
-    public void notify(final RunManager manager) {
+    public void notifyCollectionCompletedRunDirectoryChange() {
       createAndSchedule();
     }
   };

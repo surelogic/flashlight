@@ -176,7 +176,7 @@ public class HappensBeforeConfig {
     }
 
     private static enum Attr {
-        DECL("decl"), HB("hb"), RETURN("checkReturn"), PARAM("argNum"), TYPE(
+        DECL("decl"), HB("hb"), RESULT_MUST_BE("resultMustBe"), ARG_NUM("argNum"), TYPE(
                 "type");
         final String name;
 
@@ -233,10 +233,10 @@ public class HappensBeforeConfig {
                             case DECL:
                                 decl = val;
                                 break;
-                            case PARAM:
+                            case ARG_NUM:
                                 param = Integer.parseInt(val);
                                 break;
-                            case RETURN:
+                            case RESULT_MUST_BE:
                                 check = ReturnCheck.lookup(val);
                                 break;
                             case HB:

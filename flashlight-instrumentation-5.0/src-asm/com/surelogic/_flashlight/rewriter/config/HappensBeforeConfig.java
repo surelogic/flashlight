@@ -3,6 +3,7 @@ package com.surelogic._flashlight.rewriter.config;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -61,6 +62,18 @@ public class HappensBeforeConfig {
         } catch (IOException e) {
             throw new IllegalArgumentException(e);
         }
+    }
+
+    public Map<String, List<HappensBeforeCollection>> getCollections() {
+        return collections;
+    }
+
+    public Map<String, List<HappensBeforeObject>> getObjects() {
+        return objects;
+    }
+
+    public Map<String, List<HappensBefore>> getThreads() {
+        return threads;
     }
 
     public List<HappensBeforeCollection> getCollectionHappensBefore(
@@ -176,8 +189,8 @@ public class HappensBeforeConfig {
     }
 
     private static enum Attr {
-        DECL("decl"), HB("hb"), RESULT_MUST_BE("resultMustBe"), ARG_NUM("argNum"), TYPE(
-                "type");
+        DECL("decl"), HB("hb"), RESULT_MUST_BE("resultMustBe"), ARG_NUM(
+                "argNum"), TYPE("type");
         final String name;
 
         Attr(String name) {
@@ -273,22 +286,12 @@ public class HappensBeforeConfig {
 
     }
 
-    public static void main(String[] args) {
-        HappensBeforeConfig parse = HappensBeforeConfig
-                .parse(Thread
-                        .currentThread()
-                        .getContextClassLoader()
-                        .getResourceAsStream(
-                                "com/surelogic/_flashlight/rewriter/config/happens-before-config.xml"));
-        System.out.println(parse);
-    }
-
     public static class HappensBefore {
-        Pattern DECL_PATTERN = Pattern.compile("(.*)(\\(.*\\))");
+        Pattern DECL_PATTERN = Pattern.compile("(.*)\\((.*)\\)");
 
         private final String qualifiedClass;
         private final String method;
-        private final String signature;
+        private final List<String> signature;
         private final Type type;
         private final ReturnCheck returnCheck;
 
@@ -299,8 +302,13 @@ public class HappensBeforeConfig {
             this.returnCheck = returnCheck;
             Matcher match = DECL_PATTERN.matcher(decl);
             if (match.matches()) {
+                signature = new ArrayList<String>();
                 method = match.group(1);
-                signature = match.group(2);
+                for (String param : match.group(2).split("[\\s,]+]")) {
+                    if (param.length() > 0) {
+                        signature.add(param);
+                    }
+                }
             } else {
                 throw new IllegalArgumentException(decl
                         + " is not a valid declaration.");
@@ -311,7 +319,7 @@ public class HappensBeforeConfig {
             return qualifiedClass;
         }
 
-        public String getSignature() {
+        public List<String> getSignature() {
             return signature;
         }
 

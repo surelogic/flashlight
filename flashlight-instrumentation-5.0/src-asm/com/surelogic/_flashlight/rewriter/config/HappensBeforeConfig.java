@@ -176,7 +176,7 @@ public class HappensBeforeConfig {
     }
 
     private static enum Attr {
-        DECL("decl"), HB("hb"), RETURN("checkReturn"), PARAM("obj"), TYPE(
+        DECL("decl"), HB("hb"), RETURN("checkReturn"), PARAM("argNum"), TYPE(
                 "type");
         final String name;
 
@@ -279,7 +279,7 @@ public class HappensBeforeConfig {
                         .currentThread()
                         .getContextClassLoader()
                         .getResourceAsStream(
-                                "com/surelogic/_flashlight/rewriter/config/default-flashlight-happensbefore.xml"));
+                                "com/surelogic/_flashlight/rewriter/config/happens-before-config.xml"));
         System.out.println(parse);
     }
 

@@ -103,6 +103,7 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
     return super.close();
   }
 
+  private ScrolledComposite f_sc = null;
   private Composite f_dialogArea = null;
 
   @Override
@@ -116,6 +117,7 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
     applyDialogFont(sc);
     sc.setExpandHorizontal(true);
     sc.setExpandVertical(true);
+    f_sc = sc;
 
     // Create a child composite to hold the controls
     final Composite c = new Composite(sc, SWT.NONE);
@@ -397,13 +399,11 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
       /*
        * Change and setup or update the bottom informational control
        */
-      boolean packNeeded = false;
       if (f_lrun.isFinishedCollectingData()) {
         // for now no control
         if (f_bottom != null) {
           f_bottom.dispose();
           f_bottom = null;
-          packNeeded = true;
         }
       } else {
         // show duration
@@ -415,12 +415,9 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
           durationLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
           durationLabel.setForeground(EclipseColorUtility.getSubtleTextColor());
           f_bottom = durationLabel;
-          packNeeded = true;
         }
         durationLabel.setText(getTimeInformation(finished));
       }
-      if (packNeeded)
-        f_bk.pack(true);
 
       final Image buttonImage = f_button.getImage();
       final Image newImage;
@@ -494,13 +491,10 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
         for (int d = launchedRuns.size(); d < modelSize; d++)
           f_guiModel.removeLast();
 
-        EclipseUIUtility.asyncExec(new Runnable() {
-          public void run() {
-            if (f_dialogArea == null || f_dialogArea.isDisposed())
-              return;
-            f_dialogArea.layout();
-          }
-        });
+        f_dialogArea.layout(true, true);
+        Rectangle r = f_sc.getClientArea();
+        f_sc.setMinSize(f_dialogArea.computeSize(r.width, SWT.DEFAULT));
+        f_sc.layout(true, true);
       }
     });
   }

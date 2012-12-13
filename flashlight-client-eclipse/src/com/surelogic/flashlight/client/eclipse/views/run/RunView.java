@@ -126,6 +126,16 @@ public final class RunView extends ViewPart {
     getSite().registerContextMenu(menuMgr, tableViewer);
 
     f_mediator.init();
+
+    /*
+     * Populate view contents at startup
+     */
+    EclipseUIUtility.asyncExec(new Runnable() {
+      @Override
+      public void run() {
+        refresh();
+      }
+    });
   }
 
   @Override

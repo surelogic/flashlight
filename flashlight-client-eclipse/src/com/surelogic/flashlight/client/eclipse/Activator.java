@@ -16,7 +16,6 @@ import com.surelogic.common.core.EclipseUtility;
 import com.surelogic.common.core.logging.SLEclipseStatusUtility;
 import com.surelogic.common.license.SLLicenseProduct;
 import com.surelogic.common.ui.DialogTouchNotificationUI;
-import com.surelogic.flashlight.client.eclipse.jobs.PromptToPrepAllRawData;
 import com.surelogic.flashlight.client.eclipse.model.RunManager;
 import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
@@ -82,13 +81,11 @@ public class Activator extends AbstractUIPlugin {
     FileUtility.ensureDirectoryExists(dataDir);
 
     EclipseUtility.getProductReleaseDateJob(SLLicenseProduct.FLASHLIGHT, this).schedule();
-    PromptToPrepAllRawData.start();
   }
 
   @Override
   public void stop(final BundleContext context) throws Exception {
     try {
-      PromptToPrepAllRawData.stop();
       RunManager.getInstance().dispose();
       AdHocDataSource.getInstance().dispose();
       plugin = null;

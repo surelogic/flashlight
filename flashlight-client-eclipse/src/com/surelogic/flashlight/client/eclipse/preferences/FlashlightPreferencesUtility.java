@@ -56,7 +56,6 @@ public final class FlashlightPreferencesUtility {
       EclipseUtility.setDefaultBooleanPreference(COMPRESS_OUTPUT, FL_OUTPUT_TYPE_DEFAULT.isCompressed());
 
       EclipseUtility.setDefaultBooleanPreference(PROMPT_ABOUT_LOTS_OF_SAVED_QUERIES, true);
-      EclipseUtility.setDefaultBooleanPreference(PROMPT_TO_PREP_ALL_RAW_DATA, true);
 
       EclipseUtility.setDefaultIntPreference(PREP_OBJECT_WINDOW_SIZE, 300000);
 
@@ -87,8 +86,6 @@ public final class FlashlightPreferencesUtility {
   public static final String PREP_OBJECT_WINDOW_SIZE = PREFIX + "object.window.size";
   public static final String AUTO_INCREASE_HEAP_AT_LAUNCH = PREFIX + "auto.increase.heap.at.launch";
   public static final String PROMPT_ABOUT_LOTS_OF_SAVED_QUERIES = PREFIX + "prompt.about.lots.of.saved.queries";
-  public static final String PROMPT_TO_PREP_ALL_RAW_DATA = PREFIX + "prompt.to.prep.all.raw.data";
-  public static final String AUTO_PREP_ALL_RAW_DATA = PREFIX + "auto.prep.all.raw.data";
   public static final String POSTMORTEM_MODE = PREFIX + "store.postmortem";
 
   /**

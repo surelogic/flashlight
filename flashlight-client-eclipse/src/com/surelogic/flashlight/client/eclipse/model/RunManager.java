@@ -44,6 +44,7 @@ import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.client.eclipse.dialogs.RunControlDialog;
+import com.surelogic.flashlight.client.eclipse.jobs.SwitchToFlashlightPerspectiveJob;
 import com.surelogic.flashlight.client.eclipse.jobs.WatchFlashlightMonitorJob;
 import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
@@ -655,12 +656,15 @@ public final class RunManager implements ILifecycle {
 
   /**
    * Starts a data preparation job on the passed run directory. This call does
-   * not block, it returns immediately after the job is submitted to Eclipse.
+   * not block, it returns immediately after a job is submitted to Eclipse.
    * 
    * @param run
    *          a run directory.
+   * 
+   * @throws IllegalArgumentException
+   *           if run is {@code null}.
    */
-  public void startDataPreparationJobOn(@NonNull final RunDirectory run) {
+  private void prepare(@NonNull final RunDirectory run) {
     if (run == null) {
       throw new IllegalArgumentException(I18N.err(44, "run"));
     }
@@ -668,9 +672,30 @@ public final class RunManager implements ILifecycle {
     final SLJob job = new PrepSLJob(run, EclipseUtility.getIntPreference(FlashlightPreferencesUtility.PREP_OBJECT_WINDOW_SIZE),
         AdHocDataSource.getManager().getTopLevelQueries());
     final Job eJob = EclipseUtility.toEclipseJob(job, run.getRunIdString());
-    eJob.setUser(true);
     eJob.schedule();
     notifyPrepareDataJobScheduled();
+  }
+
+  /**
+   * Starts a data preparation job on all passed run directories. This call does
+   * not block, it returns immediately after any necessary jobs are submitted to
+   * Eclipse.
+   * 
+   * @param runs
+   *          a collection of run directories.
+   * 
+   * @throws IllegalArgumentException
+   *           if runs is {@code null}.
+   */
+  public void prepareAll(@NonNull List<RunDirectory> runs) {
+    if (runs == null) {
+      throw new IllegalArgumentException(I18N.err(44, "runs"));
+    }
+
+    for (RunDirectory run : runs)
+      prepare(run);
+
+    refresh(true);
   }
 
   @NonNull
@@ -722,6 +747,7 @@ public final class RunManager implements ILifecycle {
          * Assume nothing changed
          */
         boolean collectionCompletedRunDirectoryChange = false;
+        boolean preparedDataChanged = false;
         boolean launchedRunChange = false;
 
         /*
@@ -761,6 +787,7 @@ public final class RunManager implements ILifecycle {
           }
           if (!getRunDescriptionsFor(f_preparedRunDirectories).equals(prepared)) {
             collectionCompletedRunDirectoryChange = true;
+            preparedDataChanged = true;
           }
 
           monitor.worked(1);
@@ -785,6 +812,7 @@ public final class RunManager implements ILifecycle {
                   }
                 } else {
                   if (lrun.setState(RunState.DONE_COLLECTING_DATA)) {
+                    prepare(run);
                     launchedRunChange = true;
                   }
                 }
@@ -796,6 +824,13 @@ public final class RunManager implements ILifecycle {
         /*
          * We must be careful to not notify holding a lock.
          */
+        if (preparedDataChanged) {
+          /*
+           * Prepared data changed -- check if we are in the Flashlight
+           * perspective
+           */
+          (new SwitchToFlashlightPerspectiveJob()).schedule(500);
+        }
         if (collectionCompletedRunDirectoryChange) {
           notifyCollectionCompletedRunDirectoryChange();
         }

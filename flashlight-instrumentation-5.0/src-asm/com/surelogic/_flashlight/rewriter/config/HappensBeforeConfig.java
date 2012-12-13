@@ -304,7 +304,7 @@ public class HappensBeforeConfig {
             if (match.matches()) {
                 signature = new ArrayList<String>();
                 method = match.group(1);
-                for (String param : match.group(2).split("[\\s,]+]")) {
+                for (String param : match.group(2).split("[,\\s]+")) {
                     if (param.length() > 0) {
                         signature.add(param);
                     }

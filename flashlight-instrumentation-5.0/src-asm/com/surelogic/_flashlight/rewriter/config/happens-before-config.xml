@@ -117,7 +117,7 @@
 
   <object type="java.util.concurrent.atomic.AtomicReference">
     <method decl="compareAndSet(java.lang.Object,java.lang.Object)" hb="source-and-target"/>
-    <method decl="get(java.lang.Object)" hb="target" />
+    <method decl="get()" hb="target" />
     <method decl="getAndSet(java.lang.Object)" hb="source-and-target" />
     <method decl="set(java.lang.Object)" hb="source" />
   </object>
@@ -133,7 +133,7 @@
     <method decl="attemptStamp(java.lang.Object,int)" hb="source-and-target" />
     <method decl="compareAndSet(java.lang.Object,java.lang.Object,int,int)" hb="source-and-target"/>
     <method decl="get(int[])" hb="target" />
-    <method decl="getStamp(int[])" hb="target" />
+    <method decl="getStamp()" hb="target" />
     <method decl="set(java.lang.Object,int)" hb="source" />
   </object>
 

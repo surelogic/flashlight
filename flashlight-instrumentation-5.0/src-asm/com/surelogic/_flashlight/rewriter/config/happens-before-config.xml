@@ -95,7 +95,7 @@
   </object>
 
   <object type="java.util.concurrent.atomic.AtomicLongArray">
-    <method decl="compareAndSet(int,int,int)" hb="source-and-target"/>
+    <method decl="compareAndSet(int,long,long)" hb="source-and-target"/>
     <method decl="get(int)" hb="target" />
     <method decl="getAndSet(int,long)" hb="source-and-target" />
     <method decl="set(int,long)" hb="source" />

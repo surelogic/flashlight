@@ -27,6 +27,8 @@ public final class LaunchedRun {
     if (runIdString == null)
       throw new IllegalArgumentException(I18N.err(44, "runIdString"));
     f_runIdString = runIdString;
+    f_runLabel = FlashlightFileUtility.getSimpleRunName(FlashlightFileUtility.getRunName(runIdString));
+    f_isAndroid = FlashlightFileUtility.isAndroid(runIdString);
     f_startTime = new Date();
   }
 
@@ -36,6 +38,20 @@ public final class LaunchedRun {
   @NonNull
   public String getRunIdString() {
     return f_runIdString;
+  }
+
+  @NonNull
+  private final String f_runLabel;
+
+  @NonNull
+  public String getRunLabel() {
+    return f_runLabel;
+  }
+
+  private final boolean f_isAndroid;
+
+  public boolean isAndroid() {
+    return f_isAndroid;
   }
 
   @NonNull
@@ -56,8 +72,7 @@ public final class LaunchedRun {
   }
 
   public boolean isFinishedCollectingData() {
-    final RunState state = f_state.get();
-    return state != RunState.INSTRUMENTATION_AND_LAUNCH && state != RunState.COLLECTING_DATA;
+    return RunState.IS_FINISHED.contains(f_state.get());
   }
 
   /**
@@ -94,17 +109,5 @@ public final class LaunchedRun {
   boolean setDisplayToUser(boolean value) {
     final boolean oldValue = f_displayToUser.getAndSet(value);
     return value != oldValue;
-  }
-
-  @NonNull
-  public String getRunLabel() {
-    System.out.println(f_runIdString);
-    System.out.println(FlashlightFileUtility.getRunName(f_runIdString));
-    System.out.println(FlashlightFileUtility.getSimpleRunName(FlashlightFileUtility.getRunName(f_runIdString)));
-    return FlashlightFileUtility.getSimpleRunName(FlashlightFileUtility.getRunName(f_runIdString));
-  }
-
-  public boolean isAndroid() {
-    return FlashlightFileUtility.isAndroid(f_runIdString);
   }
 }

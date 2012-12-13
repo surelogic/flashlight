@@ -1,5 +1,7 @@
 package com.surelogic.flashlight.client.eclipse.model;
 
+import java.util.EnumSet;
+
 import com.surelogic.Immutable;
 
 @Immutable
@@ -7,13 +9,13 @@ public enum RunState {
 
   INSTRUMENTATION_AND_LAUNCH("Performing instrumentation and launching the application..."),
 
-  COLLECTING_DATA("Collecting data from running application..."),
+  COLLECTING_DATA("Collecting data from the instrumented application..."),
 
-  STOP_COLLECTION_REQUESTED("Data collection is in the process of shutting down..."),
+  STOP_COLLECTION_REQUESTED("Waiting for data collection to stop..."),
 
-  DONE_COLLECTING_DATA("Data collection completed"),
+  DONE_COLLECTING_DATA("Data collection complete"),
 
-  READY("Data ready to be queried...");
+  READY("Data ready to be queried");
 
   private final String f_label;
 
@@ -24,4 +26,6 @@ public enum RunState {
   public String getLabel() {
     return f_label;
   }
+
+  public static final EnumSet<RunState> IS_FINISHED = EnumSet.of(RunState.DONE_COLLECTING_DATA, RunState.READY);
 }

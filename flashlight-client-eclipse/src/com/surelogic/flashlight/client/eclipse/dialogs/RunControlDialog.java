@@ -2,6 +2,7 @@ package com.surelogic.flashlight.client.eclipse.dialogs;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.concurrent.TimeUnit;
 
@@ -177,7 +178,7 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
     clearList.setFont(parent.getFont());
     clearList.addListener(SWT.Selection, new Listener() {
       public void handleEvent(Event event) {
-        // TODO RunControlManager.getInstance().clearAllFinishedRuns();
+        RunManager.getInstance().setDisplayToUserOnAllFinished(false);
       }
     });
 
@@ -278,31 +279,24 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
       f_image = new Label(f_bk, SWT.NONE);
       f_image.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, false));
 
-      final Composite labels = new Composite(f_bk, SWT.NONE);
+      f_labels = new Composite(f_bk, SWT.NONE);
       layout = new GridLayout();
       layout.numColumns = 1;
       layout.marginHeight = layout.marginWidth = layout.verticalSpacing = layout.horizontalSpacing = 5;
-      labels.setLayout(layout);
-      labels.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
-      f_runLabel = new Label(labels, SWT.NONE);
+      f_labels.setLayout(layout);
+      f_labels.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+      f_runLabel = new Label(f_labels, SWT.NONE);
       f_runLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
       f_runLabel.setFont(JFaceResources.getFontRegistry().getBold(JFaceResources.HEADER_FONT));
-      f_stateLabel = new Label(labels, SWT.NONE);
+      f_stateLabel = new Label(f_labels, SWT.NONE);
       f_stateLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-      f_stateLabel.setForeground(EclipseColorUtility.getSubtleTextColor());
-      f_durationLabel = new Label(labels, SWT.NONE);
-      f_durationLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-      f_durationLabel.setForeground(f_durationLabel.getDisplay().getSystemColor(SWT.COLOR_DARK_GRAY));
 
       final ToolBar toolBar = new ToolBar(f_bk, SWT.FLAT);
       f_clearFinishedRun = new ToolItem(toolBar, SWT.PUSH);
       f_clearFinishedRun.setImage(SLImages.getImage(CommonImages.IMG_GRAY_X));
       f_clearFinishedRun.addSelectionListener(new SelectionAdapter() {
         public void widgetSelected(SelectionEvent e) {
-          // TODO
-          // if (f_runIdString != null && f_state != null &&
-          // f_state.equals(InstrumentedApplicationState.DONE_COLLECTING_DATA))
-          // RunControlManager.getInstance().clearFinishedRun(f_run);
+          RunManager.getInstance().setDisplayToUser(f_lrun.getRunIdString(), false);
         }
       });
       toolBar.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, false));
@@ -354,11 +348,13 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
     @NonNull
     final Label f_image;
     @NonNull
+    final Composite f_labels;
+    @NonNull
     final Label f_runLabel;
     @NonNull
     final Label f_stateLabel;
-    @NonNull
-    final Label f_durationLabel;
+    @Nullable
+    Control f_bottom;
     @NonNull
     final ToolItem f_clearFinishedRun;
 
@@ -398,13 +394,40 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
       f_runLabel.setText(getRunLabel());
       f_runLabel.setForeground(finished ? f_runLabel.getDisplay().getSystemColor(SWT.COLOR_DARK_GRAY) : null);
       f_stateLabel.setText(getRunStateLabel());
-      f_durationLabel.setText(getTimeInformation(finished));
+
+      /*
+       * Change and setup or update the bottom informational control
+       */
+      boolean packNeeded = false;
+      if (f_lrun.isFinishedCollectingData()) {
+        // for now no control
+        if (f_bottom != null) {
+          f_bottom.dispose();
+          f_bottom = null;
+          packNeeded = true;
+        }
+      } else {
+        // show duration
+        final Label durationLabel;
+        if (f_bottom instanceof Label) {
+          durationLabel = (Label) f_bottom;
+        } else {
+          durationLabel = new Label(f_labels, SWT.NONE);
+          durationLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+          durationLabel.setForeground(EclipseColorUtility.getSubtleTextColor());
+          f_bottom = durationLabel;
+          packNeeded = true;
+        }
+        durationLabel.setText(getTimeInformation(finished));
+      }
+      if (packNeeded)
+        f_bk.pack(true);
+
       f_clearFinishedRun.setEnabled(finished);
     }
 
     void dispose() {
-      if (!f_bk.isDisposed())
-        f_bk.dispose();
+      f_bk.dispose();
     }
   }
 
@@ -420,6 +443,13 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
           return;
 
         final ArrayList<LaunchedRun> launchedRuns = RunManager.getInstance().getLaunchedRuns();
+
+        // clear out dismissed launched runs the user doesn't want to see
+        for (Iterator<LaunchedRun> iterator = launchedRuns.iterator(); iterator.hasNext();) {
+          LaunchedRun launchedRun = iterator.next();
+          if (!launchedRun.getDisplayToUser())
+            iterator.remove();
+        }
 
         /*
          * Update the GUI with updated information

@@ -249,8 +249,8 @@ public final class RunManager {
       }
       lrun = new LaunchedRun(runIdString);
       f_launchedRuns.addFirst(lrun);
-      notifyLaunchedRunChange();
     }
+    notifyLaunchedRunChange();
     // TODO perhaps a better way with a preference
     RunControlDialog.show();
   }
@@ -278,8 +278,8 @@ public final class RunManager {
         SLLogger.getLogger().log(Level.WARNING, I18N.err(170, runIdString));
         return;
       }
-      notifyLaunchedRunChange();
     }
+    notifyLaunchedRunChange();
   }
 
   /**
@@ -394,15 +394,29 @@ public final class RunManager {
     if (runIdString == null) {
       throw new IllegalArgumentException(I18N.err(44, "runIdString"));
     }
+    boolean notify = false;
     synchronized (f_lock) {
       LaunchedRun lrun = getLaunchedRunFor(runIdString);
       if (lrun == null) {
         SLLogger.getLogger().log(Level.WARNING, I18N.err(268, runIdString));
       } else {
-        if (lrun.setDisplayToUser(value))
-          notifyLaunchedRunChange();
+        notify = lrun.setDisplayToUser(value);
       }
     }
+    if (notify)
+      notifyLaunchedRunChange();
+  }
+
+  public void setDisplayToUserOnAllFinished(final boolean value) {
+    boolean notify = false;
+    synchronized (f_lock) {
+      for (LaunchedRun lrun : f_launchedRuns) {
+        if (RunState.IS_FINISHED.contains(lrun.getState()))
+          notify |= lrun.setDisplayToUser(value);
+      }
+    }
+    if (notify)
+      notifyLaunchedRunChange();
   }
 
   /*

@@ -10,6 +10,7 @@ import com.surelogic.ReferenceObject;
 import com.surelogic.ThreadSafe;
 import com.surelogic.Vouch;
 import com.surelogic.common.i18n.I18N;
+import com.surelogic.flashlight.common.model.FlashlightFileUtility;
 
 @ThreadSafe
 @ReferenceObject
@@ -54,6 +55,11 @@ public final class LaunchedRun {
     return f_state.get();
   }
 
+  public boolean isFinishedCollectingData() {
+    final RunState state = f_state.get();
+    return state != RunState.INSTRUMENTATION_AND_LAUNCH && state != RunState.COLLECTING_DATA;
+  }
+
   /**
    * Sets the state of this launched run.
    * 
@@ -88,5 +94,17 @@ public final class LaunchedRun {
   boolean setDisplayToUser(boolean value) {
     final boolean oldValue = f_displayToUser.getAndSet(value);
     return value != oldValue;
+  }
+
+  @NonNull
+  public String getRunLabel() {
+    System.out.println(f_runIdString);
+    System.out.println(FlashlightFileUtility.getRunName(f_runIdString));
+    System.out.println(FlashlightFileUtility.getSimpleRunName(FlashlightFileUtility.getRunName(f_runIdString)));
+    return FlashlightFileUtility.getSimpleRunName(FlashlightFileUtility.getRunName(f_runIdString));
+  }
+
+  public boolean isAndroid() {
+    return FlashlightFileUtility.isAndroid(f_runIdString);
   }
 }

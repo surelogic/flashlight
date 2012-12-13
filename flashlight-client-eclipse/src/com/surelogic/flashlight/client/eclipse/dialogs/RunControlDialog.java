@@ -1,8 +1,6 @@
 package com.surelogic.flashlight.client.eclipse.dialogs;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.concurrent.TimeUnit;
@@ -41,7 +39,6 @@ import org.jdesktop.swt.animation.timing.sources.SWTTimingSource;
 import com.surelogic.NonNull;
 import com.surelogic.Nullable;
 import com.surelogic.common.CommonImages;
-import com.surelogic.common.Pair;
 import com.surelogic.common.SLUtility;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.ui.EclipseColorUtility;
@@ -49,10 +46,9 @@ import com.surelogic.common.ui.EclipseUIUtility;
 import com.surelogic.common.ui.SLImages;
 import com.surelogic.flashlight.client.eclipse.Activator;
 import com.surelogic.flashlight.client.eclipse.model.IRunManagerObserver;
-import com.surelogic.flashlight.client.eclipse.model.RunState;
+import com.surelogic.flashlight.client.eclipse.model.LaunchedRun;
 import com.surelogic.flashlight.client.eclipse.model.RunManager;
-import com.surelogic.flashlight.common.model.DataCollectingRunState;
-import com.surelogic.flashlight.common.model.IDataCollectingRun;
+import com.surelogic.flashlight.client.eclipse.model.RunState;
 
 public final class RunControlDialog extends Dialog implements IRunManagerObserver, TickListener {
 
@@ -114,7 +110,7 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
     composite.setLayout(new GridLayout());
     composite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
-    final ScrolledComposite sc = new ScrolledComposite(composite, SWT.BORDER | SWT.V_SCROLL);
+    final ScrolledComposite sc = new ScrolledComposite(composite, SWT.V_SCROLL);
     sc.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
     applyDialogFont(sc);
     sc.setExpandHorizontal(true);
@@ -261,33 +257,16 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
     return Activator.getDefault().getDialogSettings();
   }
 
-  @Override
-  public void notifyLaunchedRunChange() {
-    // Nothing to do
-  }
-
-  @Override
-  public void notifyPrepareDataJobScheduled() {
-    // NOT CALLED IN THE UI THREAD
-    updateGUIModel();
-  }
-
-  @Override
-  public void notifyCollectionCompletedRunDirectoryChange() {
-    // NOT CALLED IN THE UI THREAD
-    updateGUIModel();
-  }
-
   /**
    * A wrapper for links to the run and its state plus all GUI objects for the
    * displayed panel in the dialog.
    */
   private final class RunControlItem {
 
-    RunControlItem(@NonNull final Composite parent, @NonNull String runIdString, @NonNull RunState state) {
+    RunControlItem(@NonNull final Composite parent, @NonNull final LaunchedRun lrun) {
       if (parent == null)
         throw new IllegalArgumentException(I18N.err(44, "parent"));
-      updateLogicalModel(runIdString, state);
+      updateLogicalModel(lrun);
 
       f_bk = new Composite(parent, SWT.NONE);
       GridLayout layout = new GridLayout();
@@ -320,8 +299,10 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
       f_clearFinishedRun.setImage(SLImages.getImage(CommonImages.IMG_GRAY_X));
       f_clearFinishedRun.addSelectionListener(new SelectionAdapter() {
         public void widgetSelected(SelectionEvent e) {
-//          if (f_runIdString != null && f_state != null && f_state.equals(InstrumentedApplicationState.DONE_COLLECTING_DATA))
-            //RunControlManager.getInstance().clearFinishedRun(f_run);
+          // TODO
+          // if (f_runIdString != null && f_state != null &&
+          // f_state.equals(InstrumentedApplicationState.DONE_COLLECTING_DATA))
+          // RunControlManager.getInstance().clearFinishedRun(f_run);
         }
       });
       toolBar.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, false));
@@ -329,13 +310,10 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
       updateGUIInformation();
     }
 
-    private void updateLogicalModel(@NonNull String runIdString, @NonNull RunState state) {
-      if (runIdString == null)
-        throw new IllegalArgumentException(I18N.err(44, "runIdString"));
-      f_runIdString = runIdString;
-      if (state == null)
-        throw new IllegalArgumentException(I18N.err(44, "state"));
-      f_state = state;
+    private void updateLogicalModel(@NonNull final LaunchedRun lrun) {
+      if (lrun == null)
+        throw new IllegalArgumentException(I18N.err(44, "lrun"));
+      f_lrun = lrun;
     }
 
     /*
@@ -343,24 +321,22 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
      */
 
     @NonNull
-    String f_runIdString;
-    @NonNull
-    RunState f_state;
+    LaunchedRun f_lrun;
 
     @NonNull
     String getRunLabel() {
-      return "TODO"; // f_run.getRunSimpleNameforUI();
+      return f_lrun.getRunLabel();
     }
 
     @NonNull
     String getRunStateLabel() {
-      return f_state.getLabel();
+      return f_lrun.getState().getLabel();
     }
 
     @NonNull
     String getTimeInformation(boolean finished) {
       if (!finished) {
-        final Date launchDate = null; // TODO f_run.getLaunchTime();
+        final Date launchDate = f_lrun.getStartTime();
         final long launched = launchDate.getTime();
         final long now = new Date().getTime();
         final long durationMS = now - launched;
@@ -394,18 +370,18 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
     final Image f_androidFinished = SLImages.getGrayscaleImage(f_androidRunning);
 
     Image getImage() {
-      if (true /* TODOf_run.isAndroid() */) {
-        return f_state == RunState.DONE_COLLECTING_DATA ? f_androidFinished : f_androidRunning;
+      if (f_lrun.isAndroid()) {
+        return f_lrun.getState() == RunState.DONE_COLLECTING_DATA ? f_androidFinished : f_androidRunning;
       } else {
-        return f_state == RunState.DONE_COLLECTING_DATA ? f_javaFinished : f_javaRunning;
+        return f_lrun.getState() == RunState.DONE_COLLECTING_DATA ? f_javaFinished : f_javaRunning;
       }
     }
 
-    void updateDisplayWith(@NonNull String runIdString, @NonNull RunState state) {
+    void updateDisplayWith(@NonNull final LaunchedRun lrun) {
       if (f_bk.isDisposed())
         return;
 
-      updateLogicalModel(runIdString, state);
+      updateLogicalModel(lrun);
       updateGUIInformation();
     }
 
@@ -413,7 +389,7 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
       if (f_bk.isDisposed())
         return;
 
-      final boolean finished = f_state.equals(DataCollectingRunState.FINISHED);
+      final boolean finished = f_lrun.isFinishedCollectingData();
 
       final Image image = getImage();
       if (f_image.getImage() != image)
@@ -432,55 +408,40 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
     }
   }
 
-  private final Comparator<Pair<IDataCollectingRun, DataCollectingRunState>> f_newestToOldest = new Comparator<Pair<IDataCollectingRun, DataCollectingRunState>>() {
-    public int compare(Pair<IDataCollectingRun, DataCollectingRunState> o1, Pair<IDataCollectingRun, DataCollectingRunState> o2) {
-      /*
-       * Compares its two arguments for order. Returns a negative integer, zero,
-       * or a positive integer as the first argument is less than, equal to, or
-       * greater than the second.
-       */
-      if (o1 == null && o2 == null)
-        return 0;
-      if (o1 == null || o1.first() == null)
-        return 1;
-      if (o2 == null || o2.first() == null)
-        return -1;
-      return -1;
-      // TODO return
-      // o2.first().getLaunchTime().compareTo(o1.first().getLaunchTime());
-    }
-  };
-
   private final LinkedList<RunControlItem> f_guiModel = new LinkedList<RunControlItem>();
 
+  /**
+   * May be invoked within any thread context.
+   */
   private void updateGUIModel() {
     EclipseUIUtility.nowOrAsyncExec(new Runnable() {
       public void run() {
         if (f_dialogArea == null || f_dialogArea.isDisposed())
           return;
 
-        final ArrayList<Pair<String, DataCollectingRunState>> runInfo = null; // TODORunControlManager.getInstance().getManagedRuns();
-       // Collections.sort(runInfo, f_newestToOldest);
+        final ArrayList<LaunchedRun> launchedRuns = RunManager.getInstance().getLaunchedRuns();
+
         /*
          * Update the GUI with updated information
          */
-        for (int i = 0; i < runInfo.size(); i++) {
-          final Pair<IDataCollectingRun, DataCollectingRunState> pair = null; // TODO runInfo.get(i);
+        for (int i = 0; i < launchedRuns.size(); i++) {
+          final LaunchedRun lrun = launchedRuns.get(i);
+
           if (i < f_guiModel.size()) {
             final RunControlItem gui = f_guiModel.get(i);
-           // gui.updateDisplayWith(pair.first(), pair.second());
+            gui.updateDisplayWith(lrun);
           } else {
-            final RunControlItem gui = null; //TODOnew RunControlItem(f_dialogArea, pair.first(), pair.second());
+            final RunControlItem gui = new RunControlItem(f_dialogArea, lrun);
             f_guiModel.add(gui);
           }
         }
         // dispose of items no longer needed.
         final int modelSize = f_guiModel.size();
-        for (int d = runInfo.size(); d < modelSize; d++) {
+        for (int d = launchedRuns.size(); d < modelSize; d++) {
           final RunControlItem gui = f_guiModel.get(d);
           gui.dispose();
         }
-        for (int d = runInfo.size(); d < modelSize; d++)
+        for (int d = launchedRuns.size(); d < modelSize; d++)
           f_guiModel.removeLast();
 
         EclipseUIUtility.asyncExec(new Runnable() {
@@ -496,6 +457,24 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
 
   public void timingSourceTick(TimingSource source, long nanoTime) {
     // CALLED IN SWT THREAD
+    updateGUIModel();
+  }
+
+  @Override
+  public void notifyLaunchedRunChange() {
+    // NOT CALLED IN THE UI THREAD
+    updateGUIModel();
+  }
+
+  @Override
+  public void notifyPrepareDataJobScheduled() {
+    // NOT CALLED IN THE UI THREAD
+    updateGUIModel();
+  }
+
+  @Override
+  public void notifyCollectionCompletedRunDirectoryChange() {
+    // NOT CALLED IN THE UI THREAD
     updateGUIModel();
   }
 }

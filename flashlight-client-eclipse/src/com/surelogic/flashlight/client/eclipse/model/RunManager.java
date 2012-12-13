@@ -36,6 +36,7 @@ import com.surelogic.common.jobs.SLJob;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.common.logging.SLLogger;
+import com.surelogic.flashlight.client.eclipse.dialogs.RunControlDialog;
 import com.surelogic.flashlight.client.eclipse.jobs.RefreshRunManagerSLJob;
 import com.surelogic.flashlight.client.eclipse.jobs.WatchFlashlightMonitorJob;
 import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
@@ -250,6 +251,8 @@ public final class RunManager {
       f_launchedRuns.addFirst(lrun);
       notifyLaunchedRunChange();
     }
+    // TODO perhaps a better way with a preference
+    RunControlDialog.show();
   }
 
   /**

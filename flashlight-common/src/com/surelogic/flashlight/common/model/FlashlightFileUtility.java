@@ -539,13 +539,13 @@ public final class FlashlightFileUtility {
   public static String getRunName(@NonNull final String runIdString) {
     if (runIdString == null)
       throw new IllegalArgumentException(I18N.err(44, "runIdString"));
-    int backFromEnd = InstrumentationConstants.DATE_FORMAT.length();
+    int backFromEnd = InstrumentationConstants.DATE_FORMAT.length() - 2;
     backFromEnd += isAndroid(runIdString) ? InstrumentationConstants.ANDROID_LAUNCH_SUFFIX.length()
         : InstrumentationConstants.JAVA_LAUNCH_SUFFIX.length();
     final int index = runIdString.length() - backFromEnd;
     if (index < 0)
       throw new IllegalArgumentException(I18N.err(248, runIdString, backFromEnd));
-    return runIdString.substring(index);
+    return runIdString.substring(0, index);
   }
 
   /**
@@ -557,6 +557,8 @@ public final class FlashlightFileUtility {
    * @param runName
    *          a run name.
    * @return a simple run name for the passed run name
+   * 
+   * @see #getRunName(String)
    */
   @NonNull
   public static String getSimpleRunName(@NonNull final String runName) {

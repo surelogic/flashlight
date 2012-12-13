@@ -9,6 +9,7 @@ import com.surelogic.common.logging.SLLogger;
 import com.surelogic.common.ui.EclipseUIUtility;
 import com.surelogic.common.ui.jobs.SLUIJob;
 import com.surelogic.flashlight.client.eclipse.dialogs.ConfirmPerspectiveSwitch;
+import com.surelogic.flashlight.client.eclipse.model.RunManager;
 import com.surelogic.flashlight.client.eclipse.perspectives.FlashlightPerspective;
 
 /**
@@ -23,7 +24,7 @@ public final class SwitchToFlashlightPerspectiveJob extends SLUIJob {
      * First kick off a job to refresh the runs shown in the Flashlight Runs
      * view.
      */
-    RefreshRunManagerSLJob.submit(true);
+    RunManager.getInstance().refresh(true);
 
     /*
      * Ensure that we are not already in the Flashlight perspective.

@@ -136,6 +136,6 @@ public final class PromptToPrepAllRawData extends SLUIJob {
       if (run != null)
         RunManager.getInstance().startDataPreparationJobOn(run);
     }
-    RefreshRunManagerSLJob.submit(true);
+    RunManager.getInstance().refresh(true);
   }
 }

@@ -42,7 +42,6 @@ import com.surelogic.flashlight.client.eclipse.dialogs.LogDialog;
 import com.surelogic.flashlight.client.eclipse.dialogs.RunControlDialog;
 import com.surelogic.flashlight.client.eclipse.jobs.DeleteRunDirectoryJob;
 import com.surelogic.flashlight.client.eclipse.jobs.PromptToPrepAllRawData;
-import com.surelogic.flashlight.client.eclipse.jobs.RefreshRunManagerSLJob;
 import com.surelogic.flashlight.client.eclipse.model.IRunManagerObserver;
 import com.surelogic.flashlight.client.eclipse.model.RunManager;
 import com.surelogic.flashlight.client.eclipse.model.RunManagerObserverAdapter;
@@ -196,7 +195,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements ILifec
   private final Action f_refreshAction = new Action() {
     @Override
     public void run() {
-      RefreshRunManagerSLJob.submit(false);
+      RunManager.getInstance().refresh(false);
     }
   };
 
@@ -294,7 +293,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements ILifec
           eJob.setUser(true);
           eJob.schedule();
         }
-        RefreshRunManagerSLJob.submit(true);
+        RunManager.getInstance().refresh(true);
       }
     }
   };

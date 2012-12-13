@@ -432,7 +432,8 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
       if (buttonImage != newImage)
         f_button.setImage(newImage);
       f_button.setToolTipText(I18N.msg(tipText));
-      f_button.setEnabled(f_lrun.getState() != RunState.STOP_COLLECTION_REQUESTED);
+      f_button.setEnabled(f_lrun.getState() != RunState.STOP_COLLECTION_REQUESTED
+          && f_lrun.getState() != RunState.INSTRUMENTATION_AND_LAUNCH);
     }
 
     final void buttonPressed() {

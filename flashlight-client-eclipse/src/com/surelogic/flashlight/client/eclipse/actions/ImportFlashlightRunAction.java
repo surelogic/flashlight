@@ -32,7 +32,7 @@ public class ImportFlashlightRunAction implements IWorkbenchWindowActionDelegate
         // Do nothing
       } else if (FlashlightFileUtility.isRunDirectory(f)) {
         FileUtility.recursiveCopy(f, new File(dataDirectory, f.getName()));
-        RunManager.getInstance().refresh();
+        RunManager.getInstance().refresh(false);
       } else {
         MessageDialog.openError(shell, I18N.msg("flashlight.dialog.importRun.errorTitle"),
             "flashlight.dialog.importRun.invalidDir.msg");

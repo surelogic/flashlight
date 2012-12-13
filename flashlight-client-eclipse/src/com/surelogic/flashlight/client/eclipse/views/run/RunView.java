@@ -19,7 +19,6 @@ import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.ui.ColumnViewerSorter;
 import com.surelogic.common.ui.EclipseUIUtility;
 import com.surelogic.common.ui.SLImages;
-import com.surelogic.flashlight.client.eclipse.jobs.RefreshRunManagerSLJob;
 import com.surelogic.flashlight.client.eclipse.model.RunManager;
 import com.surelogic.flashlight.client.eclipse.model.RunViewModel;
 import com.surelogic.flashlight.common.model.RunDirectory;
@@ -54,8 +53,6 @@ public final class RunView extends ViewPart {
     tableViewer.getTable().setHeaderVisible(true);
     // Set the line of the table visible
     tableViewer.getTable().setLinesVisible(true);
-    // Ensure that the run manager data is fresh
-    RefreshRunManagerSLJob.submit(true);
     // Set the input so we see data
     tableViewer.setInput(RunManager.getInstance());
 

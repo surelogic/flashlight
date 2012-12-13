@@ -46,7 +46,7 @@ public class HappensBeforeConfigChecker {
         primMap.put("long", "J");
         primMap.put("double", "D");
         primMap.put("float", "F");
-        primMap.put("bool", "Z");
+        primMap.put("boolean", "Z");
         primMap.put("char", "C");
         primMap.put("byte", "B");
         primMap.put("short", "S");
@@ -54,7 +54,7 @@ public class HappensBeforeConfigChecker {
         primClassMap.put("long", Long.TYPE);
         primClassMap.put("double", Double.TYPE);
         primClassMap.put("float", Float.TYPE);
-        primClassMap.put("bool", Boolean.TYPE);
+        primClassMap.put("boolean", Boolean.TYPE);
         primClassMap.put("char", Character.TYPE);
         primClassMap.put("byte", Byte.TYPE);
         primClassMap.put("short", Short.TYPE);
@@ -85,8 +85,8 @@ public class HappensBeforeConfigChecker {
             Entry<String, List<T>> e, Class clazz, T hb) {
         String method = hb.getMethod();
         List<String> signature = hb.getSignature();
+        Class[] sigClasses = new Class[signature.size()];
         try {
-            Class[] sigClasses = new Class[signature.size()];
             for (int i = 0; i < sigClasses.length; i++) {
                 try {
                     sigClasses[i] = declToClass(signature.get(i));

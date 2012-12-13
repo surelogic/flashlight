@@ -117,6 +117,10 @@ public class HappensBeforeConfig {
             this.objectParam = objectParam;
         }
 
+        public int getObjectParam() {
+            return objectParam;
+        }
+
         @Override
         public String toString() {
             return "HappensBeforeCollection [objectParam=" + objectParam

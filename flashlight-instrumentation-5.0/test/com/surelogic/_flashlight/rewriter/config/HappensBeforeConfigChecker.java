@@ -1,5 +1,6 @@
 package com.surelogic._flashlight.rewriter.config;
 
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -98,7 +99,49 @@ public class HappensBeforeConfigChecker {
                     return;
                 }
             }
-            clazz.getMethod(method, sigClasses);
+            Method m = clazz.getMethod(method, sigClasses);
+            Class<?> returnType = m.getReturnType();
+            switch (hb.getReturnCheck()) {
+            case NONE:
+                break;
+            case FALSE:
+            case TRUE:
+                if (!(returnType == Boolean.TYPE)
+                        || returnType.equals(Boolean.class)) {
+                    err(e,
+                            String.format(
+                                    "Return check wants a boolean but the return type of %s%s in class %s is %s",
+                                    method, signature, clazz, returnType));
+                }
+                break;
+            case NOT_NULL:
+            case NULL:
+                if (returnType.isPrimitive()) {
+                    err(e,
+                            String.format(
+                                    "Return check expects an object for the return type of %s%s in class %s is %s",
+                                    method, signature, clazz, returnType));
+                }
+                break;
+            }
+            if (hb instanceof HappensBeforeCollection) {
+                HappensBeforeCollection hbColl = (HappensBeforeCollection) hb;
+                int param = hbColl.getObjectParam();
+                boolean valid = false;
+                if (param <= sigClasses.length) {
+                    Class<?> paramClass = param == 0 ? returnType
+                            : sigClasses[param - 1];
+                    if (!paramClass.isPrimitive()) {
+                        valid = true;
+                    }
+                }
+                if (!valid) {
+                    err(e,
+                            String.format(
+                                    "Object parameter of %s does not correspond to a valid parameter on method %s%s of class %s.",
+                                    param, method, signature, clazz));
+                }
+            }
         } catch (NoSuchMethodException e1) {
             err(e, String.format("%s%s is not a valid method in %s", method,
                     signature, clazz));

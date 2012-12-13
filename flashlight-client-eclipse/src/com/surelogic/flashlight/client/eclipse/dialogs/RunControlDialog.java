@@ -49,7 +49,7 @@ import com.surelogic.common.ui.EclipseUIUtility;
 import com.surelogic.common.ui.SLImages;
 import com.surelogic.flashlight.client.eclipse.Activator;
 import com.surelogic.flashlight.client.eclipse.model.IRunManagerObserver;
-import com.surelogic.flashlight.client.eclipse.model.InstrumentedApplicationState;
+import com.surelogic.flashlight.client.eclipse.model.RunState;
 import com.surelogic.flashlight.client.eclipse.model.RunManager;
 import com.surelogic.flashlight.common.model.DataCollectingRunState;
 import com.surelogic.flashlight.common.model.IDataCollectingRun;
@@ -262,7 +262,7 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
   }
 
   @Override
-  public void notifyInstrumentedApplicationChange() {
+  public void notifyLaunchedRunChange() {
     // Nothing to do
   }
 
@@ -284,7 +284,7 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
    */
   private final class RunControlItem {
 
-    RunControlItem(@NonNull final Composite parent, @NonNull String runIdString, @NonNull InstrumentedApplicationState state) {
+    RunControlItem(@NonNull final Composite parent, @NonNull String runIdString, @NonNull RunState state) {
       if (parent == null)
         throw new IllegalArgumentException(I18N.err(44, "parent"));
       updateLogicalModel(runIdString, state);
@@ -329,7 +329,7 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
       updateGUIInformation();
     }
 
-    private void updateLogicalModel(@NonNull String runIdString, @NonNull InstrumentedApplicationState state) {
+    private void updateLogicalModel(@NonNull String runIdString, @NonNull RunState state) {
       if (runIdString == null)
         throw new IllegalArgumentException(I18N.err(44, "runIdString"));
       f_runIdString = runIdString;
@@ -345,7 +345,7 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
     @NonNull
     String f_runIdString;
     @NonNull
-    InstrumentedApplicationState f_state;
+    RunState f_state;
 
     @NonNull
     String getRunLabel() {
@@ -395,13 +395,13 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
 
     Image getImage() {
       if (true /* TODOf_run.isAndroid() */) {
-        return f_state == InstrumentedApplicationState.DONE_COLLECTING_DATA ? f_androidFinished : f_androidRunning;
+        return f_state == RunState.DONE_COLLECTING_DATA ? f_androidFinished : f_androidRunning;
       } else {
-        return f_state == InstrumentedApplicationState.DONE_COLLECTING_DATA ? f_javaFinished : f_javaRunning;
+        return f_state == RunState.DONE_COLLECTING_DATA ? f_javaFinished : f_javaRunning;
       }
     }
 
-    void updateDisplayWith(@NonNull String runIdString, @NonNull InstrumentedApplicationState state) {
+    void updateDisplayWith(@NonNull String runIdString, @NonNull RunState state) {
       if (f_bk.isDisposed())
         return;
 

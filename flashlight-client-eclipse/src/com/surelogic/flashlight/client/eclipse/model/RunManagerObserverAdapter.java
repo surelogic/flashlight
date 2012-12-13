@@ -2,7 +2,7 @@ package com.surelogic.flashlight.client.eclipse.model;
 
 public class RunManagerObserverAdapter implements IRunManagerObserver {
 
-  public void notifyInstrumentedApplicationChange() {
+  public void notifyLaunchedRunChange() {
     // do nothing
   }
 

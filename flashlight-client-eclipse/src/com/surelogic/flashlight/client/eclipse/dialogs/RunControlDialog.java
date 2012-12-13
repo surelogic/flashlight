@@ -143,7 +143,7 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
   @Override
   protected void configureShell(Shell newShell) {
     super.configureShell(newShell);
-    newShell.setText(I18N.msg("flashligh.dialog.run.control.title"));
+    newShell.setText(I18N.msg("flashlight.dialog.run.control.title"));
     newShell.setImage(SLImages.getImage(CommonImages.IMG_FL_RUN_CONTROL));
   }
 
@@ -173,7 +173,7 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
     composite.setFont(parent.getFont());
 
     final Button clearList = new Button(composite, SWT.PUSH);
-    clearList.setText(I18N.msg("flashligh.dialog.run.control.clear_list"));
+    clearList.setText(I18N.msg("flashlight.dialog.run.control.clear_list"));
     clearList.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, true, false));
     clearList.setFont(parent.getFont());
     clearList.addListener(SWT.Selection, new Listener() {
@@ -292,11 +292,10 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
       f_stateLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 
       final ToolBar toolBar = new ToolBar(f_bk, SWT.FLAT);
-      f_clearFinishedRun = new ToolItem(toolBar, SWT.PUSH);
-      f_clearFinishedRun.setImage(SLImages.getImage(CommonImages.IMG_GRAY_X));
-      f_clearFinishedRun.addSelectionListener(new SelectionAdapter() {
+      f_button = new ToolItem(toolBar, SWT.PUSH);
+      f_button.addSelectionListener(new SelectionAdapter() {
         public void widgetSelected(SelectionEvent e) {
-          RunManager.getInstance().setDisplayToUser(f_lrun.getRunIdString(), false);
+          buttonPressed();
         }
       });
       toolBar.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, false));
@@ -356,7 +355,7 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
     @Nullable
     Control f_bottom;
     @NonNull
-    final ToolItem f_clearFinishedRun;
+    final ToolItem f_button;
 
     final int f_dimension = 64;
     final Point f_size = new Point(f_dimension, f_dimension);
@@ -423,7 +422,28 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
       if (packNeeded)
         f_bk.pack(true);
 
-      f_clearFinishedRun.setEnabled(finished);
+      final Image buttonImage = f_button.getImage();
+      final Image newImage;
+      final String tipText;
+      if (f_lrun.isFinishedCollectingData()) {
+        newImage = SLImages.getImage(CommonImages.IMG_GRAY_X);
+        tipText = "flashlight.dialog.run.control.button.tip-dismiss";
+      } else {
+        newImage = SLImages.getImage(CommonImages.IMG_RED_X);
+        tipText = "flashlight.dialog.run.control.button.tip-stop-collection";
+      }
+      if (buttonImage != newImage)
+        f_button.setImage(newImage);
+      f_button.setToolTipText(I18N.msg(tipText));
+      f_button.setEnabled(f_lrun.getState() != RunState.STOP_COLLECTION_REQUESTED);
+    }
+
+    final void buttonPressed() {
+      if (f_lrun.isFinishedCollectingData()) {
+        RunManager.getInstance().setDisplayToUser(f_lrun.getRunIdString(), false);
+      } else {
+        RunManager.getInstance().requestDataCollectionToStop(f_lrun.getRunIdString());
+      }
     }
 
     void dispose() {

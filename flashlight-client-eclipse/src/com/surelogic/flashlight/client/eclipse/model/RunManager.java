@@ -812,8 +812,9 @@ public final class RunManager implements ILifecycle {
                   }
                 } else {
                   if (lrun.setState(RunState.DONE_COLLECTING_DATA)) {
-                    prepare(run);
                     launchedRunChange = true;
+                    if (EclipseUtility.getBooleanPreference(FlashlightPreferencesUtility.AUTO_PREP_LAUNCHED_RUNS))
+                      prepare(run);
                   }
                 }
               }

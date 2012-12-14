@@ -91,7 +91,7 @@ public final class RunManager implements ILifecycle {
     f_dataDir = EclipseUtility.getFlashlightDataDirectory();
   }
 
-  private final TimingSource f_timer = new ScheduledExecutorTimingSource(5, TimeUnit.SECONDS);
+  private final TimingSource f_timer = new ScheduledExecutorTimingSource(6, TimeUnit.SECONDS);
 
   /**
    * Autmatically called by {@link #getInstance()} &mdash; client code should
@@ -660,6 +660,9 @@ public final class RunManager implements ILifecycle {
   /**
    * Starts a data preparation job on the passed run directory. This call does
    * not block, it returns immediately after a job is submitted to Eclipse.
+   * <p>
+   * This call does not notify observers. It just schedules the prepare data
+   * job.
    * 
    * @param run
    *          a run directory.
@@ -667,7 +670,7 @@ public final class RunManager implements ILifecycle {
    * @throws IllegalArgumentException
    *           if run is {@code null}.
    */
-  private void prepare(@NonNull final RunDirectory run) {
+  private void prepareHelper(@NonNull final RunDirectory run) {
     if (run == null) {
       throw new IllegalArgumentException(I18N.err(44, "run"));
     }
@@ -677,13 +680,15 @@ public final class RunManager implements ILifecycle {
     final Job eJob = EclipseUtility.toEclipseJob(job, run.getRunIdString());
     eJob.setProperty(IProgressConstants.ICON_PROPERTY, SLImages.getImageDescriptor(CommonImages.IMG_FL_PREP_DATA));
     eJob.schedule();
-    notifyPrepareDataJobScheduled();
   }
 
   /**
    * Starts a data preparation job on all passed run directories. This call does
    * not block, it returns immediately after any necessary jobs are submitted to
    * Eclipse.
+   * <p>
+   * Observers are notified after all jobs are scheduled. Refresh jobs for the
+   * Flashlight data directory are also scheduled.
    * 
    * @param runs
    *          a collection of run directories.
@@ -691,15 +696,41 @@ public final class RunManager implements ILifecycle {
    * @throws IllegalArgumentException
    *           if runs is {@code null}.
    */
-  public void prepareAll(@NonNull List<RunDirectory> runs) {
+  public void prepareAll(@NonNull Collection<RunDirectory> runs) {
     if (runs == null) {
       throw new IllegalArgumentException(I18N.err(44, "runs"));
     }
 
     for (RunDirectory run : runs)
-      prepare(run);
+      prepareHelper(run);
 
+    notifyPrepareDataJobScheduled();
+    refresh(false); // show preparing
     refresh(true);
+  }
+
+  /**
+   * Starts a data preparation job on the passed run directory. This call does
+   * not block, it returns immediately after any necessary jobs are submitted to
+   * Eclipse.
+   * <p>
+   * Observers are notified after the job is scheduled. Refresh jobs for the
+   * Flashlight data directory are also scheduled.
+   * 
+   * @param run
+   *          a run directory.
+   * 
+   * @throws IllegalArgumentException
+   *           if run is {@code null}.
+   */
+  public void prepare(@NonNull final RunDirectory run) {
+    if (run == null) {
+      throw new IllegalArgumentException(I18N.err(44, "run"));
+    }
+
+    List<RunDirectory> runs = new ArrayList<RunDirectory>();
+    runs.add(run);
+    prepareAll(runs);
   }
 
   @NonNull
@@ -729,8 +760,7 @@ public final class RunManager implements ILifecycle {
         keys.add(rd.getRunIdString());
     }
     final String[] accessKeys = keys.toArray(new String[keys.size()]);
-    EclipseUtility.toEclipseJob(f_refreshJob, accessKeys).schedule(10);
-
+    EclipseUtility.toEclipseJob(f_refreshJob, accessKeys).schedule(100);
   }
 
   @Vouch("ThreadSafe")
@@ -753,6 +783,7 @@ public final class RunManager implements ILifecycle {
         boolean collectionCompletedRunDirectoryChange = false;
         boolean preparedDataChanged = false;
         boolean launchedRunChange = false;
+        RunDirectory prepare = null;
 
         /*
          * Search the run directory for runs that have completed data
@@ -817,8 +848,9 @@ public final class RunManager implements ILifecycle {
                 } else {
                   if (lrun.setState(RunState.DONE_COLLECTING_DATA)) {
                     launchedRunChange = true;
-                    if (EclipseUtility.getBooleanPreference(FlashlightPreferencesUtility.AUTO_PREP_LAUNCHED_RUNS))
-                      prepare(run);
+                    if (EclipseUtility.getBooleanPreference(FlashlightPreferencesUtility.AUTO_PREP_LAUNCHED_RUNS)) {
+                      prepare = run;
+                    }
                   }
                 }
               }
@@ -841,6 +873,9 @@ public final class RunManager implements ILifecycle {
         }
         if (launchedRunChange) {
           notifyLaunchedRunChange();
+        }
+        if (prepare != null) {
+          prepare(prepare);
         }
         return SLStatus.OK_STATUS;
       } catch (final Exception e) {

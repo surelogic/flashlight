@@ -94,8 +94,8 @@ public final class RunManager implements ILifecycle {
   private final TimingSource f_timer = new ScheduledExecutorTimingSource(6, TimeUnit.SECONDS);
 
   /**
-   * Autmatically called by {@link #getInstance()} &mdash; client code should
-   * not invoke.
+   * Automatically called by {@link #getInstance()} &mdash; client code should
+   * <b>never</b> invoke.
    */
   @Override
   public void init() {
@@ -705,7 +705,15 @@ public final class RunManager implements ILifecycle {
       prepareHelper(run);
 
     notifyPrepareDataJobScheduled();
-    refresh(false); // show preparing
+    /*
+     * This schedules two refresh jobs. The first refreshes to show that the
+     * prepare data jobs are running. The second refreshes the run view after
+     * they are all completed.
+     * 
+     * Because the jobs are on different run directories they will proceed in
+     * parallel.
+     */
+    refresh(false);
     refresh(true);
   }
 

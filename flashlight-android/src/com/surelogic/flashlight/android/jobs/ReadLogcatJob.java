@@ -9,23 +9,32 @@ import com.android.ddmlib.IDevice;
 import com.android.ddmlib.log.LogReceiver;
 import com.android.ddmlib.log.LogReceiver.ILogListener;
 import com.android.ddmlib.log.LogReceiver.LogEntry;
+import com.android.ddmuilib.logcat.LogCatReceiver;
+import com.android.ddmuilib.logcat.LogCatReceiverFactory;
+import com.android.ide.eclipse.ddms.DdmsPlugin;
 import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic.common.jobs.SLJob;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.flashlight.client.eclipse.model.RunManager;
+import com.surelogic.flashlight.client.eclipse.model.RunManagerObserverAdapter;
 
-public class ReadLogcatJob implements SLJob, ILogListener {
+public class ReadLogcatJob extends RunManagerObserverAdapter implements SLJob,
+        ILogListener {
     private final String f_run;
     private final File f_dir;
     private final IDevice f_dev;
 
     private OutputStream out;
+    private final LogCatReceiver f_receiver;
 
     public ReadLogcatJob(String runId, IDevice id) {
+        RunManager.getInstance().addObserver(this);
         f_run = runId;
         f_dir = RunManager.getInstance().getDirectoryFrom(runId);
         f_dev = id;
+        f_receiver = LogCatReceiverFactory.INSTANCE.newReceiver(id, DdmsPlugin
+                .getDefault().getPreferenceStore());
     }
 
     @Override
@@ -70,6 +79,11 @@ public class ReadLogcatJob implements SLJob, ILogListener {
 
     @Override
     public void newEntry(LogEntry entry) {
+
+    }
+
+    @Override
+    public void notifyLaunchedRunChange() {
 
     }
 

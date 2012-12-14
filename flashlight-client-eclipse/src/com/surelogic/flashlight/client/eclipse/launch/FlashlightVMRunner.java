@@ -54,7 +54,6 @@ import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
 import org.eclipse.jdt.launching.IVMRunner;
 import org.eclipse.jdt.launching.VMRunnerConfiguration;
 import org.eclipse.jface.preference.IPreferenceStore;
-import org.eclipse.ui.progress.UIJob;
 
 import com.surelogic.Nullable;
 import com.surelogic._flashlight.common.CollectionType;
@@ -76,8 +75,6 @@ import com.surelogic.common.ui.EclipseUIUtility;
 import com.surelogic.common.ui.dialogs.ShowTextDialog;
 import com.surelogic.common.ui.jobs.SLUIJob;
 import com.surelogic.flashlight.client.eclipse.Activator;
-import com.surelogic.flashlight.client.eclipse.jobs.LaunchTerminationDetectionJob;
-import com.surelogic.flashlight.client.eclipse.jobs.SwitchToFlashlightPerspectiveJob;
 import com.surelogic.flashlight.client.eclipse.jobs.WatchFlashlightMonitorJob;
 import com.surelogic.flashlight.client.eclipse.launch.LaunchHelper.RuntimeConfig;
 import com.surelogic.flashlight.client.eclipse.model.RunManager;
@@ -252,23 +249,6 @@ public final class FlashlightVMRunner implements IVMRunner {
         job.setSystem(true);
         job.schedule();
 
-        /*
-         * Create and launch a job that detects when the instrumented run
-         * terminates, and switches to the flashlight perspective on
-         * termination.
-         */
-        final LaunchTerminationDetectionJob terminationDetector = new LaunchTerminationDetectionJob(
-                launch, LaunchTerminationDetectionJob.DEFAULT_PERIOD) {
-            @Override
-            protected IStatus terminationAction() {
-                if (postmortem) {
-                    final UIJob job = new SwitchToFlashlightPerspectiveJob();
-                    job.schedule();
-                }
-                return Status.OK_STATUS;
-            }
-        };
-        terminationDetector.reschedule();
         RunManager.getInstance().notifyCollectingData(runId);
     }
 

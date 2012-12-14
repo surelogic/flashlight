@@ -18,6 +18,10 @@ import com.surelogic.flashlight.client.eclipse.perspectives.FlashlightPerspectiv
  */
 public final class SwitchToFlashlightPerspectiveJob extends SLUIJob {
 
+  public SwitchToFlashlightPerspectiveJob() {
+    super(SwitchToFlashlightPerspectiveJob.class.getName());
+  }
+
   @Override
   public IStatus runInUIThread(final IProgressMonitor monitor) {
     /*
@@ -46,7 +50,7 @@ public final class SwitchToFlashlightPerspectiveJob extends SLUIJob {
      * to the Flashlight perspective.
      */
     final boolean onlySwitchToFlashlightPerspectiveJobRunning = EclipseUtility
-        .getActiveJobCountOfType(SwitchToFlashlightPerspectiveJob.class) == 1;
+        .getActiveJobCountWithName(SwitchToFlashlightPerspectiveJob.class.getName()) == 1;
     if (!onlySwitchToFlashlightPerspectiveJobRunning) {
       return Status.OK_STATUS; // bail
     }

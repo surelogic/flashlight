@@ -368,9 +368,9 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
 
     Image getImage() {
       if (f_lrun.isAndroid()) {
-        return f_lrun.getState() == RunState.DONE_COLLECTING_DATA ? f_androidFinished : f_androidRunning;
+        return f_lrun.isFinishedCollectingData() ? f_androidFinished : f_androidRunning;
       } else {
-        return f_lrun.getState() == RunState.DONE_COLLECTING_DATA ? f_javaFinished : f_javaRunning;
+        return f_lrun.isFinishedCollectingData() ? f_javaFinished : f_javaRunning;
       }
     }
 

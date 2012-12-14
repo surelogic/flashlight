@@ -179,6 +179,7 @@ public class ReadFlashlightStreamJob implements SLJob {
         private String f_run;
         private boolean f_haveTime;
         private long f_time;
+        private long f_lastTime;
 
         public CheckpointingEventHandler(final OutputType type)
                 throws IOException {
@@ -225,10 +226,15 @@ public class ReadFlashlightStreamJob implements SLJob {
                 } catch (IOException e) {
                     throw new SAXException(e);
                 }
-            } else if (!f_haveTime && event == PrepEvent.TIME) {
-                f_time = Long.parseLong(attributes.getValue(AttributeType.TIME
-                        .label()));
-                f_haveTime = true;
+            } else if (event == PrepEvent.TIME) {
+                if (!f_haveTime) {
+                    f_time = Long.parseLong(attributes
+                            .getValue(AttributeType.TIME.label()));
+                    f_haveTime = true;
+                } else {
+                    f_lastTime = Long.parseLong(attributes
+                            .getValue(AttributeType.TIME.label()));
+                }
             }
 
             f_buf.setLength(0);
@@ -284,10 +290,7 @@ public class ReadFlashlightStreamJob implements SLJob {
          * @throws IOException
          */
         void streamFinished() throws IOException {
-            if (f_out != null) {
-                f_out.println("</flashlight>");
-                f_out.close();
-            }
+            checkpointStream(f_lastTime);
             new File(f_dir, InstrumentationConstants.FL_PORT_FILE_LOC).delete();
         }
 

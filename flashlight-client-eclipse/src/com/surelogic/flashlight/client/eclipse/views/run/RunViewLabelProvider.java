@@ -7,7 +7,6 @@ import org.eclipse.swt.graphics.Image;
 
 import com.surelogic.common.CommonImages;
 import com.surelogic.common.ui.SLImages;
-import com.surelogic.flashlight.client.eclipse.model.RunViewModel;
 import com.surelogic.flashlight.common.model.RunDirectory;
 
 public final class RunViewLabelProvider implements ITableLabelProvider {

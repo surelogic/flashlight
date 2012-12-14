@@ -20,6 +20,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.ui.progress.IProgressConstants;
 import org.jdesktop.core.animation.timing.TimingSource;
 import org.jdesktop.core.animation.timing.TimingSource.TickListener;
 import org.jdesktop.core.animation.timing.sources.ScheduledExecutorTimingSource;
@@ -34,6 +35,7 @@ import com.surelogic.Unique;
 import com.surelogic.UniqueInRegion;
 import com.surelogic.Vouch;
 import com.surelogic._flashlight.common.InstrumentationConstants;
+import com.surelogic.common.CommonImages;
 import com.surelogic.common.ILifecycle;
 import com.surelogic.common.SLUtility;
 import com.surelogic.common.core.EclipseUtility;
@@ -43,6 +45,7 @@ import com.surelogic.common.jobs.SLJob;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.common.logging.SLLogger;
+import com.surelogic.common.ui.SLImages;
 import com.surelogic.flashlight.client.eclipse.dialogs.RunControlDialog;
 import com.surelogic.flashlight.client.eclipse.jobs.SwitchToFlashlightPerspectiveJob;
 import com.surelogic.flashlight.client.eclipse.jobs.WatchFlashlightMonitorJob;
@@ -672,6 +675,7 @@ public final class RunManager implements ILifecycle {
     final SLJob job = new PrepSLJob(run, EclipseUtility.getIntPreference(FlashlightPreferencesUtility.PREP_OBJECT_WINDOW_SIZE),
         AdHocDataSource.getManager().getTopLevelQueries());
     final Job eJob = EclipseUtility.toEclipseJob(job, run.getRunIdString());
+    eJob.setProperty(IProgressConstants.ICON_PROPERTY, SLImages.getImageDescriptor(CommonImages.IMG_FL_PREP_DATA));
     eJob.schedule();
     notifyPrepareDataJobScheduled();
   }

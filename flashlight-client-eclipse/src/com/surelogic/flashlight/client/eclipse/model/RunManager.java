@@ -339,7 +339,7 @@ public final class RunManager implements ILifecycle {
       SLLogger.getLogger().log(Level.WARNING, I18N.err(295, runIdString));
       return;
     }
-    final SLJob job = new SLJob() {
+    final SLJob job = new AbstractSLJob("Notifying " + runIdString + " to stop Flashlight data collection") {
       @Override
       public SLStatus run(SLProgressMonitor monitor) {
         monitor.begin(5);
@@ -405,11 +405,6 @@ public final class RunManager implements ILifecycle {
         } finally {
           monitor.done();
         }
-      }
-
-      @Override
-      public String getName() {
-        return "Notifying " + runIdString + " to stop Flashlight data collection";
       }
     };
     EclipseUtility.toEclipseJob(job, runIdString).schedule();

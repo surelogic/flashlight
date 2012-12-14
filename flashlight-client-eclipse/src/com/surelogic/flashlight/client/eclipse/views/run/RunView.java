@@ -20,7 +20,6 @@ import com.surelogic.common.ui.ColumnViewerSorter;
 import com.surelogic.common.ui.EclipseUIUtility;
 import com.surelogic.common.ui.SLImages;
 import com.surelogic.flashlight.client.eclipse.model.RunManager;
-import com.surelogic.flashlight.client.eclipse.model.RunViewModel;
 import com.surelogic.flashlight.common.model.RunDirectory;
 
 /**

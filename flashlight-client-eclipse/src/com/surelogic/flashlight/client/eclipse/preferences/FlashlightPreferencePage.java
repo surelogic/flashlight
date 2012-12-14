@@ -30,6 +30,7 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
   private BooleanFieldEditor f_autoIncreaseHeap;
   private IntegerFieldEditor f_maxRowsPerQuery;
   private BooleanFieldEditor f_promptAboutLotsOfSavedQueries;
+  private BooleanFieldEditor f_autoPrepLaunchedRuns;
   private IntegerFieldEditor f_objectWindowSize;
 
   public FlashlightPreferencePage() {
@@ -82,6 +83,11 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
     f_objectWindowSize.setValidRange(10000, 1000000);
     f_objectWindowSize.fillIntoGrid(pGroup, 2);
     finishSetup(f_objectWindowSize);
+
+    f_autoPrepLaunchedRuns = new BooleanFieldEditor(FlashlightPreferencesUtility.AUTO_PREP_LAUNCHED_RUNS,
+        I18N.msg("flashlight.preference.page.autoPrepLaunchedRuns"), pGroup);
+    f_autoPrepLaunchedRuns.fillIntoGrid(pGroup, 2);
+    finishSetup(f_autoPrepLaunchedRuns);
 
     pGroup.setLayout(new GridLayout(2, false));
 

@@ -1,4 +1,4 @@
-package com.surelogic.flashlight.client.eclipse.model;
+package com.surelogic.flashlight.client.eclipse.views.run;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -9,6 +9,7 @@ import com.surelogic.common.CommonImages;
 import com.surelogic.common.FileUtility;
 import com.surelogic.common.Justification;
 import com.surelogic.common.SLUtility;
+import com.surelogic.flashlight.client.eclipse.model.RunManager;
 import com.surelogic.flashlight.common.model.RawFileHandles;
 import com.surelogic.flashlight.common.model.RunDescription;
 import com.surelogic.flashlight.common.model.RunDirectory;
@@ -21,12 +22,12 @@ import com.surelogic.flashlight.common.model.RunDirectory;
  * <li>Size</li>
  * <li>Run</li>
  * <li>Time</li>
+ * <li>Processors</li>
  * <li>By</li>
  * <li>Java</li>
  * <li>Vendor</li>
  * <li>OS</li>
  * <li>Max Memory (MB)</li>
- * <li>Processors</li>
  * </ul>
  */
 public final class RunViewModel {
@@ -203,40 +204,6 @@ public final class RunViewModel {
     f_columnData.add(new ColumnDataAdaptor() {
       @Override
       String getColumnTitle() {
-        return "Processors";
-      }
-
-      @Override
-      String getImageSymbolicName(RunDirectory rowData) {
-        return CommonImages.IMG_CPU_SUBDUED;
-      }
-
-      @Override
-      Justification getColumnJustification() {
-        return Justification.RIGHT;
-      }
-
-      @Override
-      String getText(final RunDirectory rowData) {
-        return Integer.toString(rowData.getDescription().getProcessors());
-      }
-
-      private final Comparator<RunDirectory> f_defaultComparator = new Comparator<RunDirectory>() {
-        @Override
-        public int compare(final RunDirectory o1, final RunDirectory o2) {
-          return o1.getDescription().getProcessors() - o2.getDescription().getProcessors();
-        }
-      };
-
-      @Override
-      Comparator<RunDirectory> getColumnComparator() {
-        return f_defaultComparator;
-      }
-    });
-
-    f_columnData.add(new ColumnDataAdaptor() {
-      @Override
-      String getColumnTitle() {
         return "Time";
       }
 
@@ -262,24 +229,63 @@ public final class RunViewModel {
     f_columnData.add(new ColumnDataAdaptor() {
       @Override
       String getColumnTitle() {
-        return "By";
+        return "Processors";
+      }
+
+      @Override
+      String getImageSymbolicName(RunDirectory rowData) {
+        return CommonImages.IMG_CPU_SUBDUED;
+      }
+
+      @Override
+      Justification getColumnJustification() {
+        return Justification.RIGHT;
       }
 
       @Override
       String getText(final RunDirectory rowData) {
-        return rowData.getDescription().getUserName();
+        return SLUtility.toStringHumanWithCommas(rowData.getDescription().getProcessors());
+      }
+
+      private final Comparator<RunDirectory> f_defaultComparator = new Comparator<RunDirectory>() {
+        @Override
+        public int compare(final RunDirectory o1, final RunDirectory o2) {
+          return o1.getDescription().getProcessors() - o2.getDescription().getProcessors();
+        }
+      };
+
+      @Override
+      Comparator<RunDirectory> getColumnComparator() {
+        return f_defaultComparator;
       }
     });
 
     f_columnData.add(new ColumnDataAdaptor() {
       @Override
       String getColumnTitle() {
-        return "Host";
+        return "Max Memory";
+      }
+
+      @Override
+      Justification getColumnJustification() {
+        return Justification.RIGHT;
       }
 
       @Override
       String getText(final RunDirectory rowData) {
-        return rowData.getDescription().getHostname();
+        return SLUtility.toStringHumanWithCommas(rowData.getDescription().getMaxMemoryMb()) + " MB";
+      }
+
+      private final Comparator<RunDirectory> f_defaultComparator = new Comparator<RunDirectory>() {
+        @Override
+        public int compare(final RunDirectory o1, final RunDirectory o2) {
+          return o1.getDescription().getMaxMemoryMb() - o2.getDescription().getMaxMemoryMb();
+        }
+      };
+
+      @Override
+      Comparator<RunDirectory> getColumnComparator() {
+        return f_defaultComparator;
       }
     });
 
@@ -323,29 +329,24 @@ public final class RunViewModel {
     f_columnData.add(new ColumnDataAdaptor() {
       @Override
       String getColumnTitle() {
-        return "Max Memory (MB)";
-      }
-
-      @Override
-      Justification getColumnJustification() {
-        return Justification.RIGHT;
+        return "Host";
       }
 
       @Override
       String getText(final RunDirectory rowData) {
-        return Integer.toString(rowData.getDescription().getMaxMemoryMb());
+        return rowData.getDescription().getHostname();
+      }
+    });
+
+    f_columnData.add(new ColumnDataAdaptor() {
+      @Override
+      String getColumnTitle() {
+        return "By";
       }
 
-      private final Comparator<RunDirectory> f_defaultComparator = new Comparator<RunDirectory>() {
-        @Override
-        public int compare(final RunDirectory o1, final RunDirectory o2) {
-          return o1.getDescription().getMaxMemoryMb() - o2.getDescription().getMaxMemoryMb();
-        }
-      };
-
       @Override
-      Comparator<RunDirectory> getColumnComparator() {
-        return f_defaultComparator;
+      String getText(final RunDirectory rowData) {
+        return rowData.getDescription().getUserName();
       }
     });
   }

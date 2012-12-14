@@ -51,6 +51,7 @@ public final class FlashlightPreferencesUtility {
       EclipseUtility.setDefaultIntPreference(MAX_ROWS_PER_QUERY, 5000);
       EclipseUtility.setDefaultBooleanPreference(AUTO_INCREASE_HEAP_AT_LAUNCH, true);
       EclipseUtility.setDefaultBooleanPreference(USE_REFINERY, true);
+      EclipseUtility.setDefaultBooleanPreference(AUTO_PREP_LAUNCHED_RUNS, true);
       EclipseUtility.setDefaultBooleanPreference(POSTMORTEM_MODE, true);
       EclipseUtility.setDefaultStringPreference(COLLECTION_TYPE, FL_COLLECTION_TYPE_DEFAULT.name());
       EclipseUtility.setDefaultBooleanPreference(COMPRESS_OUTPUT, FL_OUTPUT_TYPE_DEFAULT.isCompressed());
@@ -86,6 +87,7 @@ public final class FlashlightPreferencesUtility {
   public static final String PREP_OBJECT_WINDOW_SIZE = PREFIX + "object.window.size";
   public static final String AUTO_INCREASE_HEAP_AT_LAUNCH = PREFIX + "auto.increase.heap.at.launch";
   public static final String PROMPT_ABOUT_LOTS_OF_SAVED_QUERIES = PREFIX + "prompt.about.lots.of.saved.queries";
+  public static final String AUTO_PREP_LAUNCHED_RUNS = PREFIX + "auto.prep.launched.runs";
   public static final String POSTMORTEM_MODE = PREFIX + "store.postmortem";
 
   /**

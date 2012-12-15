@@ -240,6 +240,28 @@ public final class RunManager implements ILifecycle {
   }
 
   /**
+   * Gets if the passed run identity string for a launched run is finished
+   * collecting data. This method checks both the state of the
+   * {@link LaunchedRun}, or, if none, the state of the Flashlight data
+   * directory on the disk.
+   * 
+   * @param runIdString
+   *          a run identity string.
+   * @return {@code true} if the passed run identity string for a launched run
+   *         is finished collecting data, {@code false} otherwise.
+   */
+  public boolean isLaunchedRunFinishedCollectingData(@NonNull final String runIdString) {
+    if (runIdString == null)
+      throw new IllegalArgumentException(I18N.err(44, "runIdString"));
+    final LaunchedRun lrun = getLaunchedRunFor(runIdString);
+    if (lrun != null)
+      return RunState.IS_FINISHED.contains(lrun.getState());
+    else {
+      return getCollectionCompletedRunDirectories().contains(getDirectoryFrom(runIdString));
+    }
+  }
+
+  /**
    * Gets the launched run for the passed run identity string, or {@code null}
    * if none.
    * 

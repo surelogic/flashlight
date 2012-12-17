@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
@@ -45,6 +46,7 @@ import com.surelogic.common.SLUtility;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jobs.SLJobTracker;
 import com.surelogic.common.jobs.SLProgressMonitorObserver;
+import com.surelogic.common.logging.SLLogger;
 import com.surelogic.common.ui.EclipseColorUtility;
 import com.surelogic.common.ui.EclipseUIUtility;
 import com.surelogic.common.ui.SLImages;
@@ -183,7 +185,7 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
     clearList.setFont(parent.getFont());
     clearList.addListener(SWT.Selection, new Listener() {
       public void handleEvent(Event event) {
-        RunManager.getInstance().setDisplayToUserOnAllFinished(false);
+        RunManager.getInstance().setDisplayToUserIfReady(false);
       }
     });
 
@@ -371,9 +373,9 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
 
     Image getImage() {
       if (f_lrun.isAndroid()) {
-        return f_lrun.isFinishedCollectingData() ? f_androidFinished : f_androidRunning;
+        return f_lrun.isReady() ? f_androidFinished : f_androidRunning;
       } else {
-        return f_lrun.isFinishedCollectingData() ? f_javaFinished : f_javaRunning;
+        return f_lrun.isReady() ? f_javaFinished : f_javaRunning;
       }
     }
 
@@ -430,15 +432,14 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
           if (tracker != data) {
             tracker.clearObservers();
             prepProgressBar.setData(tracker);
-            int percentage = tracker.getPercentage();
-            if (percentage < 0)
-              percentage = 0;
+            final int percentage = fixUpPercentage(tracker.getPercentageOrState());
             prepProgressBar.setSelection(percentage);
             tracker.addObserver(new SLProgressMonitorObserver() {
-              public void notifyPercentComplete(final int percentage) {
+              public void notifyPercentComplete(int percentage) {
+                final int uiPercentage = fixUpPercentage(percentage);
                 EclipseUIUtility.nowOrAsyncExec(new Runnable() {
                   public void run() {
-                    prepProgressBar.setSelection(percentage);
+                    prepProgressBar.setSelection(uiPercentage);
                   }
                 });
               }
@@ -547,6 +548,16 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
         f_sc.layout(true, true);
       }
     });
+  }
+
+  static int fixUpPercentage(final int percentage) {
+    if (percentage == -1)
+      SLLogger.getLogger().log(Level.WARNING, I18N.err(298));
+    if (percentage < 0)
+      return 0;
+    if (percentage > 100)
+      return 100;
+    return percentage;
   }
 
   public void timingSourceTick(TimingSource source, long nanoTime) {

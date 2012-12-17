@@ -73,7 +73,11 @@ public final class LaunchedRun {
   }
 
   public boolean isFinishedCollectingData() {
-    return RunState.IS_FINISHED.contains(f_state.get());
+    return RunState.IS_FINISHED_COLLECTING_DATA.contains(f_state.get());
+  }
+
+  public boolean isReady() {
+    return RunState.READY.equals(f_state.get());
   }
 
   /**

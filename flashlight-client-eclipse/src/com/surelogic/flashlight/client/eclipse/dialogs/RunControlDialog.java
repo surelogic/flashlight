@@ -430,6 +430,10 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
           if (tracker != data) {
             tracker.clearObservers();
             prepProgressBar.setData(tracker);
+            int percentage = tracker.getPercentage();
+            if (percentage < 0)
+              percentage = 0;
+            prepProgressBar.setSelection(percentage);
             tracker.addObserver(new SLProgressMonitorObserver() {
               public void notifyPercentComplete(final int percentage) {
                 EclipseUIUtility.nowOrAsyncExec(new Runnable() {

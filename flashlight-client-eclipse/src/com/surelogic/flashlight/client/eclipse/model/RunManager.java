@@ -772,6 +772,8 @@ public final class RunManager implements ILifecycle {
   @Vouch("ThreadSafe")
   private final SLJob f_refreshJob = new AbstractSLJob("Examining the Flashlight run directory contents") {
 
+    private final AtomicBoolean f_firstRefresh = new AtomicBoolean(true);
+
     @Override
     public SLStatus run(SLProgressMonitor monitor) {
       monitor.begin(5);
@@ -884,7 +886,8 @@ public final class RunManager implements ILifecycle {
            * Prepared data changed -- check if we are in the Flashlight
            * perspective
            */
-          (new SwitchToFlashlightPerspectiveJob()).schedule(500);
+          if (!f_firstRefresh.get())
+            (new SwitchToFlashlightPerspectiveJob()).schedule(500);
         }
         if (collectionCompletedRunDirectoryChange) {
           notifyCollectionCompletedRunDirectoryChange();
@@ -900,6 +903,7 @@ public final class RunManager implements ILifecycle {
         return SLStatus.createErrorStatus(SLStatus.OK, "RunManager.refresh() failed", e);
       } finally {
         monitor.done();
+        f_firstRefresh.set(false);
       }
     }
   };

@@ -29,7 +29,7 @@ public final class DeleteRunDialog extends Dialog {
     if (hasMultipleDeletions) {
       f_msg = I18N.msg("flashlight.dialog.deleteRun.multi.msg");
     } else {
-      f_msg = I18N.msg("flashlight.dialog.deleteRun.msg", run.getName(), SLUtility.toStringHMS(run.getStartTimeOfRun()));
+      f_msg = I18N.msg("flashlight.dialog.deleteRun.msg", run.getName(), SLUtility.toStringDayHMS(run.getStartTimeOfRun()));
     }
 
   }

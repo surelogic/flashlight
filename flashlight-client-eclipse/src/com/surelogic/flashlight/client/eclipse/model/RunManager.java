@@ -714,17 +714,7 @@ public final class RunManager implements ILifecycle {
       }
     }
     notifyPrepareDataJobScheduled();
-
-    /*
-     * This schedules two refresh jobs. The first refreshes to show that the
-     * prepare data jobs are running. The second refreshes the run view after
-     * they are all completed.
-     * 
-     * Because the jobs are on different run directories they will proceed in
-     * parallel.
-     */
-    refresh(false);
-    refresh(true);
+    refresh();
   }
 
   /**
@@ -765,26 +755,17 @@ public final class RunManager implements ILifecycle {
    * Flashlight data directory.
    * <p>
    * This call does not block, it just schedules the job and returns.
-   * 
-   * @param afterRunDirJobs
-   *          {@code true} if the job should be blocked until all other run
-   *          directory jobs are completed, {@code false} otherwise.
    */
-  public void refresh(final boolean afterRunDirJobs) {
-    final Set<String> keys = new HashSet<String>();
-    keys.add(RunManager.class.getName()); // used to serialize refreshes
-    if (afterRunDirJobs) {
-      for (RunDirectory rd : getCollectionCompletedRunDirectories())
-        keys.add(rd.getRunIdString());
-    }
-    final String[] accessKeys = keys.toArray(new String[keys.size()]);
+  public void refresh() {
+    // used to serialize refreshes
+    final String[] accessKeys = new String[] { RunManager.class.getName() };
     EclipseUtility.toEclipseJob(f_refreshJob, accessKeys).schedule(100);
   }
 
   @Vouch("ThreadSafe")
   private final TickListener f_tick = new TickListener() {
     public void timingSourceTick(TimingSource source, long nanoTime) {
-      refresh(false);
+      refresh();
     }
   };
 
@@ -855,7 +836,12 @@ public final class RunManager implements ILifecycle {
 
             monitor.worked(1);
 
-            for (RunDirectory run : collectionCompletedDirs) {
+            /*
+             * Based upon what we read from the disk see if we need to update
+             * the status of a launched run. It could be done collecting or done
+             * being prepared.
+             */
+            for (final RunDirectory run : collectionCompletedDirs) {
               final LaunchedRun lrun = getLaunchedRunFor(run.getRunIdString());
               if (lrun != null) {
                 final boolean isPrepared = f_preparedRunDirectories.contains(run);
@@ -870,6 +856,20 @@ public final class RunManager implements ILifecycle {
                       prepare = run;
                     }
                   }
+                }
+              }
+            }
+
+            /*
+             * Check if a prep job currently being monitored by a launched run
+             * has finished.
+             */
+            for (final LaunchedRun lrun : f_launchedRuns) {
+              final SLJobTracker tracker = lrun.getPrepareJobTracker();
+              if (tracker != null) {
+                if (tracker.isFinished()) {
+                  lrun.setPrepareJobTracker(null);
+                  launchedRunChange = true;
                 }
               }
             }

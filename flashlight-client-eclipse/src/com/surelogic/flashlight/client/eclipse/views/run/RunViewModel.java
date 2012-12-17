@@ -209,7 +209,7 @@ public final class RunViewModel {
 
       @Override
       String getText(final RunDirectory rowData) {
-        return SLUtility.toStringHMS(rowData.getDescription().getStartTimeOfRun());
+        return SLUtility.toStringDayHMS(rowData.getDescription().getStartTimeOfRun());
       }
     });
 

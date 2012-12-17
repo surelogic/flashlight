@@ -93,7 +93,7 @@ public final class LogDialog extends Dialog {
   protected void configureShell(Shell newShell) {
     super.configureShell(newShell);
     newShell.setText(I18N.msg("flashlight.dialog.log.title", f_run.getDescription().getName(),
-        SLUtility.toStringHMS(f_run.getDescription().getStartTimeOfRun())));
+        SLUtility.toStringDayHMS(f_run.getDescription().getStartTimeOfRun())));
     newShell.setImage(SLImages.getImage(CommonImages.IMG_FILE));
   }
 

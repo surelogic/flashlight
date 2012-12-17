@@ -122,7 +122,7 @@ public class RunSelectionPage extends UserInputWizardPage {
                             final TableItem item = new TableItem(f_runTable,
                                     SWT.NONE);
                             item.setText(0, run.getDescription().getName());
-                            item.setText(1, SLUtility.toStringHMS(run.getDescription()
+                            item.setText(1, SLUtility.toStringDayHMS(run.getDescription()
                                     .getStartTimeOfRun()));
                             item.setText(run.getDescription().getName());
                             item.setData(run);

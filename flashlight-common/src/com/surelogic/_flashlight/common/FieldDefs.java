@@ -30,18 +30,22 @@ public class FieldDefs extends HashMap<Long, FieldDef> {
 
     public FieldDefs(final BufferedReader reader) throws NumberFormatException,
             IOException {
-        for (String line = reader.readLine(); line != null; line = reader
-                .readLine()) {
-            final StringTokenizer st = new StringTokenizer(line);
-            final int id = Integer.parseInt(st.nextToken());
-            final String clazz = st.nextToken();
-            final String field = st.nextToken();
-            final int mod = Integer.parseInt(st.nextToken(), 16);
-            final boolean isS = Modifier.isStatic(mod);
-            final boolean isF = Modifier.isFinal(mod);
-            final boolean isV = Modifier.isVolatile(mod);
-            final FieldDef f = new FieldDef(id, clazz, field, isS, isF, isV);
-            put(f.getId(), f);
+        try {
+            for (String line = reader.readLine(); line != null; line = reader
+                    .readLine()) {
+                final StringTokenizer st = new StringTokenizer(line);
+                final int id = Integer.parseInt(st.nextToken());
+                final String clazz = st.nextToken();
+                final String field = st.nextToken();
+                final int mod = Integer.parseInt(st.nextToken(), 16);
+                final boolean isS = Modifier.isStatic(mod);
+                final boolean isF = Modifier.isFinal(mod);
+                final boolean isV = Modifier.isVolatile(mod);
+                final FieldDef f = new FieldDef(id, clazz, field, isS, isF, isV);
+                put(f.getId(), f);
+            }
+        } finally {
+            reader.close();
         }
     }
 

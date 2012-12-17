@@ -194,7 +194,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements ILifec
   private final Action f_refreshAction = new Action() {
     @Override
     public void run() {
-      RunManager.getInstance().refresh(false);
+      RunManager.getInstance().refresh();
     }
   };
 
@@ -228,7 +228,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements ILifec
         if (notPrepped.size() == 1) {
           title = I18N.msg("flashlight.dialog.reprep.title");
           msg = I18N.msg("flashlight.dialog.reprep.msg", one.getDescription().getName(),
-              SLUtility.toStringHMS(one.getDescription().getStartTimeOfRun()));
+              SLUtility.toStringDayHMS(one.getDescription().getStartTimeOfRun()));
         } else {
           title = I18N.msg("flashlight.dialog.reprep.multi.title");
           msg = I18N.msg("flashlight.dialog.reprep.multi.msg");
@@ -288,11 +288,11 @@ public final class RunViewMediator extends AdHocManagerAdapter implements ILifec
         }
         for (final RunDirectory runDir : selected) {
           final SLJob job = new DeleteRunDirectoryJob(runDir);
-          final Job eJob = EclipseUtility.toEclipseJob(job, runDir.getRunIdString());
+          final Job eJob = EclipseUtility
+              .toEclipseJob(job, runDir.getRunIdString(), RunManager.getInstance().getRefreshAccessKey());
           eJob.setUser(true);
           eJob.schedule();
         }
-        RunManager.getInstance().refresh(true);
       }
     }
   };

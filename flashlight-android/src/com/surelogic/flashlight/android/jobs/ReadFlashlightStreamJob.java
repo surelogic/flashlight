@@ -25,8 +25,8 @@ import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic._flashlight.common.OutputType;
 import com.surelogic.common.core.EclipseUtility;
 import com.surelogic.common.i18n.I18N;
+import com.surelogic.common.jobs.AbstractSLJob;
 import com.surelogic.common.jobs.NullSLProgressMonitor;
-import com.surelogic.common.jobs.SLJob;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.common.logging.SLLogger;
@@ -36,7 +36,7 @@ import com.surelogic.flashlight.client.eclipse.model.RunManager;
 import com.surelogic.flashlight.common.prep.AbstractDataScan;
 import com.surelogic.flashlight.common.prep.PrepEvent;
 
-public class ReadFlashlightStreamJob implements SLJob {
+public class ReadFlashlightStreamJob extends AbstractSLJob {
 
     private static final int RETRIES = 50;
     private static final int TIMEOUT_MS = 1000;
@@ -56,17 +56,13 @@ public class ReadFlashlightStreamJob implements SLJob {
     private ReadFlashlightStreamJob(final File infoDir, final int outputPort,
             final IDevice id, final int retries,
             final StringBuilder pastAttemptsLog) {
+        super("Collecting data in " + infoDir + ".");
         f_port = outputPort;
         f_dir = infoDir;
         f_device = id;
         f_retries = retries;
         f_pastAttemptsLog = pastAttemptsLog == null ? new StringBuilder()
                 : pastAttemptsLog;
-    }
-
-    @Override
-    public String getName() {
-        return "Collecting data in " + f_dir + ".";
     }
 
     private final String getTStamp() {

@@ -10,6 +10,7 @@ import com.surelogic.ReferenceObject;
 import com.surelogic.ThreadSafe;
 import com.surelogic.Vouch;
 import com.surelogic.common.i18n.I18N;
+import com.surelogic.common.jobs.SLJobTracker;
 import com.surelogic.flashlight.common.model.FlashlightFileUtility;
 
 @ThreadSafe
@@ -72,7 +73,11 @@ public final class LaunchedRun {
   }
 
   public boolean isFinishedCollectingData() {
-    return RunState.IS_FINISHED.contains(f_state.get());
+    return RunState.IS_FINISHED_COLLECTING_DATA.contains(f_state.get());
+  }
+
+  public boolean isReady() {
+    return RunState.READY.equals(f_state.get());
   }
 
   /**
@@ -91,8 +96,25 @@ public final class LaunchedRun {
     return value != oldValue;
   }
 
+  private final AtomicReference<SLJobTracker> f_prepTracker = new AtomicReference<SLJobTracker>();
+
+  @Nullable
+  public SLJobTracker getPrepareJobTracker() {
+    return f_prepTracker.get();
+  }
+
+  public void setPrepareJobTracker(@Nullable final SLJobTracker tracker) {
+    f_prepTracker.set(tracker);
+  }
+
   private final AtomicBoolean f_displayToUser = new AtomicBoolean(true);
 
+  /**
+   * Gets the state of if the user wants to see this launched run.
+   * 
+   * @return {@code true} if the user wants to see this launched run,
+   *         {@code false} if the user does not want to see this launched run.
+   */
   public boolean getDisplayToUser() {
     return f_displayToUser.get();
   }

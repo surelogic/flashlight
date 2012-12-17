@@ -27,5 +27,5 @@ public enum RunState {
     return f_label;
   }
 
-  public static final EnumSet<RunState> IS_FINISHED = EnumSet.of(RunState.DONE_COLLECTING_DATA, RunState.READY);
+  public static final EnumSet<RunState> IS_FINISHED_COLLECTING_DATA = EnumSet.of(RunState.DONE_COLLECTING_DATA, RunState.READY);
 }

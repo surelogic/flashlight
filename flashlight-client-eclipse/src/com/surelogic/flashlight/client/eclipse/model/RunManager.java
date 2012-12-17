@@ -11,6 +11,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -42,6 +43,7 @@ import com.surelogic.common.core.EclipseUtility;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jobs.AbstractSLJob;
 import com.surelogic.common.jobs.SLJob;
+import com.surelogic.common.jobs.SLJobTracker;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.common.logging.SLLogger;
@@ -240,6 +242,30 @@ public final class RunManager implements ILifecycle {
   }
 
   /**
+   * Gets if the passed run identity string for a launched run is finished
+   * collecting data. This method checks both the state of the
+   * {@link LaunchedRun}, or, if none, the state of the Flashlight data
+   * directory on the disk.
+   * 
+   * @param runIdString
+   *          a run identity string.
+   * @return {@code true} if the passed run identity string for a launched run
+   *         is finished collecting data, {@code false} otherwise.
+   */
+  public boolean isLaunchedRunFinishedCollectingData(@NonNull final String runIdString) {
+    if (runIdString == null)
+      throw new IllegalArgumentException(I18N.err(44, "runIdString"));
+    synchronized (f_lock) {
+      final LaunchedRun lrun = getLaunchedRunFor(runIdString);
+      if (lrun != null)
+        return RunState.IS_FINISHED_COLLECTING_DATA.contains(lrun.getState());
+      else {
+        return getCollectionCompletedRunDirectories().contains(getDirectoryFrom(runIdString));
+      }
+    }
+  }
+
+  /**
    * Gets the launched run for the passed run identity string, or {@code null}
    * if none.
    * 
@@ -339,7 +365,7 @@ public final class RunManager implements ILifecycle {
       SLLogger.getLogger().log(Level.WARNING, I18N.err(295, runIdString));
       return;
     }
-    final SLJob job = new SLJob() {
+    final SLJob job = new AbstractSLJob("Notifying " + runIdString + " to stop Flashlight data collection") {
       @Override
       public SLStatus run(SLProgressMonitor monitor) {
         monitor.begin(5);
@@ -406,11 +432,6 @@ public final class RunManager implements ILifecycle {
           monitor.done();
         }
       }
-
-      @Override
-      public String getName() {
-        return "Notifying " + runIdString + " to stop Flashlight data collection";
-      }
     };
     EclipseUtility.toEclipseJob(job, runIdString).schedule();
   }
@@ -449,11 +470,19 @@ public final class RunManager implements ILifecycle {
     }
   }
 
-  public void setDisplayToUserOnAllFinished(final boolean value) {
+  /**
+   * Sets the state of if the user wants to see information about all launched
+   * runs in the {@link RunState#READY} state.
+   * 
+   * @param value
+   *          {@code true} if the user wants to see this launched run,
+   *          {@code false} if the user does not want to see this launched run.
+   */
+  public void setDisplayToUserIfReady(final boolean value) {
     boolean notify = false;
     synchronized (f_lock) {
       for (LaunchedRun lrun : f_launchedRuns) {
-        if (RunState.IS_FINISHED.contains(lrun.getState())) {
+        if (RunState.READY.equals(lrun.getState())) {
           notify |= lrun.setDisplayToUser(value);
         }
       }
@@ -658,31 +687,6 @@ public final class RunManager implements ILifecycle {
   }
 
   /**
-   * Starts a data preparation job on the passed run directory. This call does
-   * not block, it returns immediately after a job is submitted to Eclipse.
-   * <p>
-   * This call does not notify observers. It just schedules the prepare data
-   * job.
-   * 
-   * @param run
-   *          a run directory.
-   * 
-   * @throws IllegalArgumentException
-   *           if run is {@code null}.
-   */
-  private void prepareHelper(@NonNull final RunDirectory run) {
-    if (run == null) {
-      throw new IllegalArgumentException(I18N.err(44, "run"));
-    }
-
-    final SLJob job = new PrepSLJob(run, EclipseUtility.getIntPreference(FlashlightPreferencesUtility.PREP_OBJECT_WINDOW_SIZE),
-        AdHocDataSource.getManager().getTopLevelQueries());
-    final Job eJob = EclipseUtility.toEclipseJob(job, run.getRunIdString());
-    eJob.setProperty(IProgressConstants.ICON_PROPERTY, SLImages.getImageDescriptor(CommonImages.IMG_FL_PREP_DATA));
-    eJob.schedule();
-  }
-
-  /**
    * Starts a data preparation job on all passed run directories. This call does
    * not block, it returns immediately after any necessary jobs are submitted to
    * Eclipse.
@@ -701,20 +705,25 @@ public final class RunManager implements ILifecycle {
       throw new IllegalArgumentException(I18N.err(44, "runs"));
     }
 
-    for (RunDirectory run : runs)
-      prepareHelper(run);
+    synchronized (f_lock) {
+      for (final RunDirectory run : runs) {
+        if (run == null)
+          throw new IllegalArgumentException(I18N.err(44, "run"));
 
+        final SLJob job = new PrepSLJob(run, EclipseUtility.getIntPreference(FlashlightPreferencesUtility.PREP_OBJECT_WINDOW_SIZE),
+            AdHocDataSource.getManager().getTopLevelQueries());
+        final Job eJob = EclipseUtility.toEclipseJob(job, run.getRunIdString());
+        eJob.setProperty(IProgressConstants.ICON_PROPERTY, SLImages.getImageDescriptor(CommonImages.IMG_FL_PREP_DATA));
+        final LaunchedRun lrun = getLaunchedRunFor(run.getRunIdString());
+        if (lrun != null) {
+          final SLJobTracker tracker = new SLJobTracker(job);
+          lrun.setPrepareJobTracker(tracker);
+        }
+        eJob.schedule();
+      }
+    }
     notifyPrepareDataJobScheduled();
-    /*
-     * This schedules two refresh jobs. The first refreshes to show that the
-     * prepare data jobs are running. The second refreshes the run view after
-     * they are all completed.
-     * 
-     * Because the jobs are on different run directories they will proceed in
-     * parallel.
-     */
-    refresh(false);
-    refresh(true);
+    refresh();
   }
 
   /**
@@ -755,31 +764,34 @@ public final class RunManager implements ILifecycle {
    * Flashlight data directory.
    * <p>
    * This call does not block, it just schedules the job and returns.
-   * 
-   * @param afterRunDirJobs
-   *          {@code true} if the job should be blocked until all other run
-   *          directory jobs are completed, {@code false} otherwise.
    */
-  public void refresh(final boolean afterRunDirJobs) {
-    final Set<String> keys = new HashSet<String>();
-    keys.add(RunManager.class.getName()); // used to serialize refreshes
-    if (afterRunDirJobs) {
-      for (RunDirectory rd : getCollectionCompletedRunDirectories())
-        keys.add(rd.getRunIdString());
-    }
-    final String[] accessKeys = keys.toArray(new String[keys.size()]);
-    EclipseUtility.toEclipseJob(f_refreshJob, accessKeys).schedule(100);
+  public void refresh() {
+    EclipseUtility.toEclipseJob(f_refreshJob, getRefreshAccessKey()).schedule(100);
+  }
+
+  /**
+   * Gets the job access key used to serialize jobs started by
+   * {@link #refresh()}. This key is needed if jobs, such as a delete, don't
+   * want a refresh running at the same time.
+   * 
+   * @return the job access key used to serialize jobs started by
+   *         {@link #refresh()}.
+   */
+  public String getRefreshAccessKey() {
+    return RunManager.class.getName();
   }
 
   @Vouch("ThreadSafe")
   private final TickListener f_tick = new TickListener() {
     public void timingSourceTick(TimingSource source, long nanoTime) {
-      refresh(false);
+      refresh();
     }
   };
 
   @Vouch("ThreadSafe")
   private final SLJob f_refreshJob = new AbstractSLJob("Examining the Flashlight run directory contents") {
+
+    private final AtomicBoolean f_firstRefresh = new AtomicBoolean(true);
 
     @Override
     public SLStatus run(SLProgressMonitor monitor) {
@@ -845,7 +857,12 @@ public final class RunManager implements ILifecycle {
 
             monitor.worked(1);
 
-            for (RunDirectory run : collectionCompletedDirs) {
+            /*
+             * Based upon what we read from the disk see if we need to update
+             * the status of a launched run. It could be done collecting or done
+             * being prepared.
+             */
+            for (final RunDirectory run : collectionCompletedDirs) {
               final LaunchedRun lrun = getLaunchedRunFor(run.getRunIdString());
               if (lrun != null) {
                 final boolean isPrepared = f_preparedRunDirectories.contains(run);
@@ -864,6 +881,33 @@ public final class RunManager implements ILifecycle {
               }
             }
           }
+
+          /*
+           * Check if a prep job currently being monitored by a launched run has
+           * finished. We also clear out ready runs that are no longer being
+           * displayed or they got deleted.
+           */
+          for (Iterator<LaunchedRun> iterator = f_launchedRuns.iterator(); iterator.hasNext();) {
+            final LaunchedRun lrun = iterator.next();
+
+            final SLJobTracker tracker = lrun.getPrepareJobTracker();
+            if (tracker != null) {
+              if (tracker.isFinished()) {
+                lrun.setPrepareJobTracker(null);
+                launchedRunChange = true;
+              }
+            }
+
+            // clear out launches that are not displayed and ready
+            if (!lrun.getDisplayToUser() && lrun.isReady()) {
+              iterator.remove();
+            }
+            // clear out launches that have been deleted
+            if (!RunState.INSTRUMENTATION_AND_LAUNCH.equals(lrun.getState())
+                && !getDirectoryFrom(lrun.getRunIdString()).isDirectory()) {
+              iterator.remove();
+            }
+          }
         }
         monitor.worked(1);
         /*
@@ -874,7 +918,8 @@ public final class RunManager implements ILifecycle {
            * Prepared data changed -- check if we are in the Flashlight
            * perspective
            */
-          (new SwitchToFlashlightPerspectiveJob()).schedule(500);
+          if (!f_firstRefresh.get())
+            (new SwitchToFlashlightPerspectiveJob()).schedule(500);
         }
         if (collectionCompletedRunDirectoryChange) {
           notifyCollectionCompletedRunDirectoryChange();
@@ -890,6 +935,7 @@ public final class RunManager implements ILifecycle {
         return SLStatus.createErrorStatus(SLStatus.OK, "RunManager.refresh() failed", e);
       } finally {
         monitor.done();
+        f_firstRefresh.set(false);
       }
     }
   };

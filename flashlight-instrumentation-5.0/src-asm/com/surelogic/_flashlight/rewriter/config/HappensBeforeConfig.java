@@ -25,6 +25,12 @@ import com.surelogic._flashlight.rewriter.ByteCodeUtils;
 import com.surelogic._flashlight.rewriter.FlashlightNames;
 import com.surelogic._flashlight.rewriter.MethodCall;
 
+/**
+ * This class parses happens before configuration files for Flashlight.
+ * 
+ * @author nathan
+ * 
+ */
 public class HappensBeforeConfig {
 
     private final Map<String, List<HappensBeforeCollection>> collections;
@@ -99,7 +105,7 @@ public class HappensBeforeConfig {
     public static class HappensBeforeObject extends HappensBefore {
 
         public HappensBeforeObject(String qualifiedClass, String decl,
-                Type type, ReturnCheck returnCheck) {
+                HBType type, ReturnCheck returnCheck) {
             super(qualifiedClass, decl, type, returnCheck);
         }
 
@@ -130,11 +136,18 @@ public class HappensBeforeConfig {
         final int objectParam;
 
         public HappensBeforeCollection(String qualifiedClass, String decl,
-                Type type, ReturnCheck returnCheck, int objectParam) {
+                HBType type, ReturnCheck returnCheck, int objectParam) {
             super(qualifiedClass, decl, type, returnCheck);
             this.objectParam = objectParam;
         }
 
+        /**
+         * The parameter of this method that corresponds to the object affecting
+         * happens-before events, indexed starting at 1. A 0 indicates that it
+         * is the return value.
+         * 
+         * @return
+         */
         public int getObjectParam() {
             return objectParam;
         }
@@ -199,18 +212,18 @@ public class HappensBeforeConfig {
         }
     }
 
-    public enum Type {
+    enum HBType {
         SOURCE("source"), TARGET("target"), SOURCEANDTARGET("source-and-target"), FROM(
                 "from"), TO("to"), FROMANDTO("from-and-to");
 
         final String name;
 
-        Type(String name) {
+        HBType(String name) {
             this.name = name;
         }
 
-        static Type lookup(String key) {
-            for (Type e : values()) {
+        static HBType lookup(String key) {
+            for (HBType e : values()) {
                 if (e.name.equals(key)) {
                     return e;
                 }
@@ -315,7 +328,7 @@ public class HappensBeforeConfig {
                     break;
                 case METHOD:
                     String decl = null;
-                    Type type = null;
+                    HBType type = null;
                     ReturnCheck check = ReturnCheck.NONE;
                     int param = Integer.MIN_VALUE;
                     for (int i = 0; i < attributes.getLength(); i++) {
@@ -333,7 +346,7 @@ public class HappensBeforeConfig {
                                 check = ReturnCheck.lookup(val);
                                 break;
                             case HB:
-                                type = Type.lookup(val);
+                                type = HBType.lookup(val);
                                 break;
                             default:
                                 throw new IllegalStateException(
@@ -366,16 +379,24 @@ public class HappensBeforeConfig {
 
     }
 
+    /**
+     * Represents a single method in a class to be instrumented, and also
+     * indicates whether or not the return value of the method is to be checked
+     * and how the method contributes to a happens-before edge.
+     * 
+     * @author nathan
+     * 
+     */
     public static class HappensBefore {
         Pattern DECL_PATTERN = Pattern.compile("(.*)\\((.*)\\)");
 
         private final String qualifiedClass;
         private final String method;
         private final List<String> signature;
-        private final Type type;
+        private final HBType type;
         private final ReturnCheck returnCheck;
 
-        public HappensBefore(String qualifiedClass, String decl, Type type,
+        public HappensBefore(String qualifiedClass, String decl, HBType type,
                 ReturnCheck returnCheck) {
             this.qualifiedClass = qualifiedClass;
             this.type = type;
@@ -395,22 +416,66 @@ public class HappensBeforeConfig {
             }
         }
 
+        /**
+         * Get the JVM class name this method belongs to.
+         * 
+         * @return
+         */
+        public String getInternalClass() {
+            return HappensBeforeConfig.getInternalName(qualifiedClass);
+        }
+
+        /**
+         * Get the JLS class name that this method belongs to.
+         * 
+         * @return
+         */
         public String getQualifiedClass() {
             return qualifiedClass;
         }
 
+        /**
+         * The JLS class names of each parameter in this method.
+         * 
+         * @return
+         */
         public List<String> getSignature() {
             return signature;
         }
 
-        public Type getType() {
+        /**
+         * Returns the method descriptor, minus the type of the return value.
+         * 
+         * @return
+         */
+        public String getPartialMethodDescriptor() {
+            return HappensBeforeConfig.getPartialDescriptor(signature);
+        }
+
+        /**
+         * The type of happens-before event this corresponds to.
+         * 
+         * @return
+         */
+        public HBType getType() {
             return type;
         }
 
+        /**
+         * Indicates whether or not this return value of this method should be
+         * checked, and the appropriate way to check it.
+         * 
+         * @return
+         */
         public ReturnCheck getReturnCheck() {
             return returnCheck;
         }
 
+        /**
+         * The name of the method
+         * 
+         * @return
+         */
         public String getMethod() {
             return method;
         }
@@ -439,6 +504,79 @@ public class HappensBeforeConfig {
     public String toString() {
         return "HappensBeforeConfig [collections=" + collections + ", objects="
                 + objects + ", threads=" + threads + "]";
+    }
+
+    private static final Pattern primitive = Pattern
+            .compile("(byte|short|int|long|float|double|boolean|char|void)((\\s*\\[\\s*\\]\\s*)*)");
+    private static final Pattern array = Pattern.compile("\\s*\\[\\s*\\]\\s*");
+    private static final Pattern type = Pattern.compile("([^\\[\\s]+)(.*)");
+    private static final Map<String, String> primMap = new HashMap<String, String>();
+    static {
+        primMap.put("int", "I");
+        primMap.put("long", "J");
+        primMap.put("double", "D");
+        primMap.put("float", "F");
+        primMap.put("boolean", "Z");
+        primMap.put("char", "C");
+        primMap.put("byte", "B");
+        primMap.put("short", "S");
+        primMap.put("void", "V");
+    }
+
+    /**
+     * Converts a Java language class name to a Java bytecode class name.
+     * 
+     * @param jlsName
+     * @return
+     */
+    public static String getInternalName(String jlsName) {
+        return jlsName.replace('.', '/');
+    }
+
+    /**
+     * Produces a JVM type descriptor from a JLS type declaration.
+     * 
+     * @param jlsName
+     * @return
+     */
+    public static String getInternalTypeDescriptor(String jlsName) {
+        Matcher m = primitive.matcher(jlsName);
+        String typeName;
+        if (m.matches()) {
+            typeName = primMap.get(m.group(1));
+        } else {
+            m = type.matcher(jlsName);
+            m.matches();
+            typeName = getInternalName(m.group(1) + ";");
+        }
+        if (m.group(3) == null) {
+            return typeName;
+        } else {
+            StringBuilder b = new StringBuilder();
+            Matcher arrMatch = array.matcher(m.group(2));
+            while (arrMatch.find()) {
+                b.append("[");
+            }
+            b.append(typeName);
+            return b.toString();
+        }
+    }
+
+    /**
+     * Converts the list of parameter names in JLS format to a partial bytecode
+     * descriptor.
+     * 
+     * @param hb
+     * @return
+     */
+    public static String getPartialDescriptor(List<String> params) {
+        StringBuilder b = new StringBuilder();
+        b.append("(");
+        for (String p : params) {
+            b.append(getInternalTypeDescriptor(p));
+        }
+        b.append(")");
+        return b.toString();
     }
 
 }

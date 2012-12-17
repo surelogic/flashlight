@@ -164,17 +164,6 @@ public final class FlashlightFileUtility {
   }
 
   /**
-   * Checks if this run has been, or is being, prepared by seeing if the handle
-   * returned from {@link #getPrepDirectoryHandle(File)} exists.
-   * 
-   * @return {@code true} if this run has been, or is being, prepared,
-   *         {@code false} otherwise.
-   */
-  public boolean isPreparedOrIsBeingPrepared(final File directory) {
-    return getPrepDirectoryHandle(directory).exists();
-  }
-
-  /**
    * A heuristic used to check that we aren't still running the instrumented
    * program and collecting data into the passed directory. We do this by
    * checking if anything has been recently modified in the run directory.

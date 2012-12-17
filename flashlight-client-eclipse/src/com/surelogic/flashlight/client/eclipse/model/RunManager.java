@@ -885,7 +885,7 @@ public final class RunManager implements ILifecycle {
           /*
            * Check if a prep job currently being monitored by a launched run has
            * finished. We also clear out ready runs that are no longer being
-           * displayed.
+           * displayed or they got deleted.
            */
           for (Iterator<LaunchedRun> iterator = f_launchedRuns.iterator(); iterator.hasNext();) {
             final LaunchedRun lrun = iterator.next();
@@ -900,6 +900,12 @@ public final class RunManager implements ILifecycle {
 
             // clear out launches that are not displayed and ready
             if (!lrun.getDisplayToUser() && lrun.isReady()) {
+              iterator.remove();
+            }
+            // clear out launches that have been deleted
+            if (!RunState.INSTRUMENTATION_AND_LAUNCH.equals(lrun.getState())
+                && !getDirectoryFrom(lrun.getRunIdString()).isDirectory()) {
+              System.out.println("cleared deleted launch " + lrun.getRunIdString());
               iterator.remove();
             }
           }

@@ -3,9 +3,12 @@ package com.surelogic._flashlight.rewriter;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 
 import com.surelogic._flashlight.rewriter.ClassAndFieldModel.ClassNotFoundException;
 import com.surelogic._flashlight.rewriter.config.Configuration;
+import com.surelogic._flashlight.rewriter.config.HappensBeforeConfig.HappensBefore;
+import com.surelogic._flashlight.rewriter.config.HappensBeforeConfig.ReturnCheck;
 
 /**
  * Abstract representation of a method call that needs to be instrumented.
@@ -13,11 +16,12 @@ import com.surelogic._flashlight.rewriter.config.Configuration;
  * placed in wrapper methods and to and method calls that are instrumented 
  * in place (in the case of calls from interface initializers).
  */
-abstract class MethodCall {
+public abstract class MethodCall {
   protected final int opcode;
   protected final String owner;
   protected final String name;
   protected final String descriptor;
+  protected final Type returnType;
   
   protected final RewriteMessenger messenger;
   protected final ClassAndFieldModel classModel;
@@ -36,6 +40,7 @@ abstract class MethodCall {
     this.owner = owner;
     this.name = originalName;
     this.descriptor = originalDesc;
+    this.returnType = Type.getReturnType(originalDesc);
     
     messenger = msg;
     classModel = model;
@@ -65,6 +70,16 @@ abstract class MethodCall {
   public abstract void pushReceiverForEvent(MethodVisitor mv);
   
   /**
+   * Pushes the given argument on to the stack for use by an instrumentation
+   * event method.
+   * 
+   * @param arg
+   *          A number greater than 0, where 1 indicates the first non-receiver
+   *          argument, 2 the second non-receiver argument, etc.
+   */
+  public abstract void pushArgumentForEvent(MethodVisitor mv, int arg);
+  
+  /**
    * Push the original receiver and original arguments onto the stack so that
    * method can be invoked.  This is separate from invoking the method via
    * {@link #invokeMethod(MethodVisitor)} so that the labels for the try-finally
@@ -72,6 +87,13 @@ abstract class MethodCall {
    * from being larger than necessary.
    */
   public abstract void pushReceiverAndArguments(MethodVisitor mv);
+  
+  /**
+   * Get the return type of the method;
+   */
+  public Type getReturnType() {
+    return returnType;
+  }
   
   public final void invokeMethod(final MethodVisitor mv) {
     mv.visitMethodInsn(opcode, owner, name, descriptor);
@@ -114,6 +136,9 @@ abstract class MethodCall {
     instrumentAfterTryLockNormal(mv, config); // +4
     instrumentAfterUnlock(mv, config, true); // +4
     instrumentAfterWait(mv, config); // +4
+    
+    instrumentHappensBefore(mv, config);
+    
     // XXX: Not doing this yet
 //    instrumentAfterTryMethod(mv, config);
     
@@ -332,29 +357,57 @@ abstract class MethodCall {
     }
   }  
   
-  private void instrumentAfterTryMethod(
+//  private void instrumentAfterTryMethod(
+//      final MethodVisitor mv, final Configuration config) {
+//    try {
+//      if (this.testCalledMethodName(
+//          "java/util/concurrent/Semaphore", "tryAcquire")) {
+//        // ..., [boolean success]
+//        mv.visitInsn(Opcodes.DUP);
+//        // ..., [boolean success], [boolean success]
+//        // jump if return value is false
+//        final Label tryFailed = new Label();
+//        mv.visitJumpInsn(Opcodes.IFEQ, tryFailed);
+//        // ..., [boolean success]
+//        this.pushReceiverForEvent(mv);
+//        // ..., [boolean success], objRef
+//        this.pushSiteId(mv);
+//        // ..., [boolean success], objRef, callSiteId (long)
+//        ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.TRY_CALL_SUCCEEDED);
+//        // ..., [boolean success]
+//        
+//        mv.visitLabel(tryFailed);
+//      }
+//    } catch (final ClassNotFoundException e) {
+//      messenger.warning("Provided classpath is incomplete: couldn't find class " + e.getMissingClass());
+//    }
+//  }
+  
+  private HappensBefore getHappensBefore() {
+    return null;
+  }
+  
+  private void instrumentHappensBefore(
       final MethodVisitor mv, final Configuration config) {
-    try {
-      if (this.testCalledMethodName(
-          "java/util/concurrent/Semaphore", "tryAcquire")) {
-        // ..., [boolean success]
+    // XXX: make this real
+    final HappensBefore hb = getHappensBefore();
+    if (hb != null) {
+      /* Check the return value of the method call to see if we should
+       * generate an event.
+       */
+      final Label skip = new Label();
+      final ReturnCheck check = hb.getReturnCheck();
+      if (check != ReturnCheck.NONE) {
+        // ..., [return value]
         mv.visitInsn(Opcodes.DUP);
-        // ..., [boolean succes], [boolean success]
-        // jump if return value is false
-        final Label tryFailed = new Label();
-        mv.visitJumpInsn(Opcodes.IFEQ, tryFailed);
-        // ..., [boolean success]
-        this.pushReceiverForEvent(mv);
-        // ..., [boolean success], objRef
-        this.pushSiteId(mv);
-        // ..., [boolean success], objRef, callSiteId (long)
-        ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.TRY_CALL_SUCCEEDED);
-        // ..., [boolean success]
-        
-        mv.visitLabel(tryFailed);
+        // ..., [return value], [return value]
+        mv.visitJumpInsn(check.getOpcode(), skip);
+        // ..., [return value]
       }
-    } catch (final ClassNotFoundException e) {
-      messenger.warning("Provided classpath is incomplete: couldn't find class " + e.getMissingClass());
+      
+      // ...
+      hb.insertInstrumentation(mv, config, this);
+      mv.visitLabel(skip);
     }
   }
 }

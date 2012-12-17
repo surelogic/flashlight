@@ -221,6 +221,13 @@ abstract class MethodCallWrapper extends MethodCall {
     }
   }
   
+  @Override
+  public final void pushArgumentForEvent(final MethodVisitor mv, final int arg) {
+    final int offset = arg - 1;  // arg == 0 is the return value 
+    mv.visitVarInsn(originalArgTypes[offset].getOpcode(Opcodes.ILOAD),
+        wrapperArgsToLocals[firstOriginalArgPos + offset]);
+  }
+  
   public final void invokeWrapperMethod(
       final MethodVisitor mv, final String classBeingAnalyzed) {
     mv.visitMethodInsn(getWrapperMethodOpcode(), classBeingAnalyzed,

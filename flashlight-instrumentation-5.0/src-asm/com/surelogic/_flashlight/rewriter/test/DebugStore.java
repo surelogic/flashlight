@@ -255,4 +255,26 @@ public class DebugStore {
     stdOut.println("  receiver = " + objectToString(receiver));
     stdOut.println("  siteID = " + siteId);
   }
+
+  public static void happensBeforeThread(
+      final Thread callee, long siteId) {
+    stdOut.println("happensBeforeThread");
+    stdOut.println("  callee = " + objectToString(callee));
+    stdOut.println("  siteID = " + siteId);
+  }
+  
+  public static void happensBeforeObject(
+      final Object object, final long siteId) {
+    stdOut.println("happensBeforeObject");
+    stdOut.println("  object = " + objectToString(object));
+    stdOut.println("  siteID = " + siteId);
+  }
+  
+  public static void happensBeforeCollection(
+      final Object collection, final Object item, final long siteId) {
+    stdOut.println("happensBeforeCollection");
+    stdOut.println("  collection = " + objectToString(collection));
+    stdOut.println("  item = " + objectToString(item));
+    stdOut.println("  siteID = " + siteId);
+  }
 }

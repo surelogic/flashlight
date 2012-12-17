@@ -66,6 +66,11 @@ abstract class InPlaceMethodInstrumentation extends MethodCall {
       mv.visitVarInsn(Opcodes.ALOAD, argLocals[0]);
     }
     
+    public void pushArgument(final MethodVisitor mv, final int offset) {
+      // offset is already corrected for the presense of the receiver or not
+      mv.visitVarInsn(argTypes[offset].getOpcode(Opcodes.ILOAD), argLocals[offset]);
+    }
+    
     public int[] getLocals() {
       return argLocals;
     }

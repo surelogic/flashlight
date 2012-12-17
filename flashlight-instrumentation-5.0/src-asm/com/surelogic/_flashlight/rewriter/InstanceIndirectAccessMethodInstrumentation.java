@@ -19,6 +19,14 @@ final class InstanceIndirectAccessMethodInstrumentation extends
   }
 
   @Override
+  public void pushArgumentForEvent(final MethodVisitor mv, final int arg) {
+    /* arg == 1 is the first argument, so we do not have to correct because
+     * we have the receiver in the argument list of poppedArgs. 
+     */
+    poppedArgs.pushArgument(mv, arg);
+  }
+  
+  @Override
   protected PoppedArguments getPoppedArgs(
       final String owner, final String descriptor,
       final LocalVariableGenerator vg) {

@@ -26,4 +26,12 @@ final class StaticIndirectAccessMethodInstrumentation extends
   public void pushReceiverForEvent(final MethodVisitor mv) {
     mv.visitInsn(Opcodes.ACONST_NULL);
   }
+
+  @Override
+  public void pushArgumentForEvent(final MethodVisitor mv, final int arg) {
+    /* arg == 1 is the first argument, so we need to subtract 1 because the
+     * receiver is not in the argument list of poppedArgs
+     */
+    poppedArgs.pushArgument(mv, arg - 1);
+  }
 }

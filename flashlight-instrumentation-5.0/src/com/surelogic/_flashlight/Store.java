@@ -638,10 +638,27 @@ public class Store {
         }
     }
 
-    public static void tryCallSucceeded(final Object receiver, final long siteId) {
+    @Deprecated
+    public static void tryCallSucceeded(
+        final Object receiver, final long siteId) {
         // fill this in
     }
 
+    public static void happensBeforeThread(
+        final Thread callee, long siteId) {
+      // fill this in
+    }
+    
+    public static void happensBeforeObject(
+        final Object object, final long siteId) {
+      // fill this in
+    }
+    
+    public static void happensBeforeCollection(
+        final Object collection, final Object item, final long siteId) {
+      // fill this in
+    }
+    
     /**
      * Stops collection of events about the instrumented program. This method
      * may be called from within the following thread contexts:

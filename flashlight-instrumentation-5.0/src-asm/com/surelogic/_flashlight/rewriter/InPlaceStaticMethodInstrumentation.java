@@ -26,6 +26,12 @@ final class InPlaceStaticMethodInstrumentation extends
   }
 
   @Override
+  public void pushArgumentForEvent(final MethodVisitor mv, final int arg) {
+    // XXX: Problematic if we ever have interesting static methods becase we don't have a record of the arguments
+    throw new UnsupportedOperationException("Not implemented for InPlaceStaticMethodInstrumentation");
+  }
+
+  @Override
   public void popReceiverAndArguments(final MethodVisitor mv) {
     /* We don't pop anything because we don't need to derive any information
      * from the stack contents.

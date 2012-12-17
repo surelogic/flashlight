@@ -69,7 +69,7 @@
 				class="com.surelogic.flashlight.client.eclipse.actions.ShowRunControlAction"
 				id="com.surelogic.flashlight.client.eclipse.actions.ShowRunControlAction"
 				icon="platform:/plugin/com.surelogic.common/lib/images/fl_run_control.gif"
-				label="Run Control" menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/client"
+				label="Launched Run Control..." menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/client"
 				helpContextId="menu-open-run-control">
 			</action>
 			<action

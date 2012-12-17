@@ -228,7 +228,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements ILifec
         if (notPrepped.size() == 1) {
           title = I18N.msg("flashlight.dialog.reprep.title");
           msg = I18N.msg("flashlight.dialog.reprep.msg", one.getDescription().getName(),
-              SLUtility.toStringHMS(one.getDescription().getStartTimeOfRun()));
+              SLUtility.toStringDayHMS(one.getDescription().getStartTimeOfRun()));
         } else {
           title = I18N.msg("flashlight.dialog.reprep.multi.title");
           msg = I18N.msg("flashlight.dialog.reprep.multi.msg");

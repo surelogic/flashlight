@@ -338,7 +338,7 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
         final long launched = launchDate.getTime();
         final long now = new Date().getTime();
         final long durationMS = now - launched;
-        return "Started at " + SLUtility.toStringHMS(launchDate) + " running for "
+        return "Started at " + SLUtility.toStringNoDayHMS(launchDate) + " running for "
             + SLUtility.toStringDurationS(durationMS, TimeUnit.MILLISECONDS);
       } else
         return "";

@@ -905,7 +905,6 @@ public final class RunManager implements ILifecycle {
             // clear out launches that have been deleted
             if (!RunState.INSTRUMENTATION_AND_LAUNCH.equals(lrun.getState())
                 && !getDirectoryFrom(lrun.getRunIdString()).isDirectory()) {
-              System.out.println("cleared deleted launch " + lrun.getRunIdString());
               iterator.remove();
             }
           }

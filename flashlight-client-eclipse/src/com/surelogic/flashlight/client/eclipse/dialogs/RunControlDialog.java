@@ -29,6 +29,7 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
+import org.eclipse.swt.widgets.ProgressBar;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.ToolBar;
@@ -42,6 +43,8 @@ import com.surelogic.Nullable;
 import com.surelogic.common.CommonImages;
 import com.surelogic.common.SLUtility;
 import com.surelogic.common.i18n.I18N;
+import com.surelogic.common.jobs.SLJobTracker;
+import com.surelogic.common.jobs.SLProgressMonitorObserver;
 import com.surelogic.common.ui.EclipseColorUtility;
 import com.surelogic.common.ui.EclipseUIUtility;
 import com.surelogic.common.ui.SLImages;
@@ -400,10 +403,49 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
        * Change and setup or update the bottom informational control
        */
       if (f_lrun.isFinishedCollectingData()) {
-        // for now no control
-        if (f_bottom != null) {
-          f_bottom.dispose();
-          f_bottom = null;
+        SLJobTracker tracker = f_lrun.getPrepareJobTracker();
+        if (tracker != null) {
+          // show prep progress
+          final ProgressBar prepProgressBar;
+          if (f_bottom instanceof ProgressBar) {
+            prepProgressBar = (ProgressBar) f_bottom;
+          } else {
+            if (f_bottom != null) {
+              f_bottom.dispose();
+            }
+            prepProgressBar = new ProgressBar(f_labels, SWT.NONE);
+            prepProgressBar.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+            prepProgressBar.setMaximum(100);
+            prepProgressBar.setMinimum(0);
+            f_bottom = prepProgressBar;
+          }
+          // fix text display to indicate prepare job is running
+          f_stateLabel.setText(getRunStateLabel() + "...preparing data for querying...");
+          /*
+           * If the progress bar is already tracking this prepare job we do not
+           * want to resetup the callbacks. We set the tracker as the progress
+           * bar's data and check if they are the same.
+           */
+          Object data = prepProgressBar.getData();
+          if (tracker != data) {
+            tracker.clearObservers();
+            prepProgressBar.setData(tracker);
+            tracker.addObserver(new SLProgressMonitorObserver() {
+              public void notifyPercentComplete(final int percentage) {
+                EclipseUIUtility.nowOrAsyncExec(new Runnable() {
+                  public void run() {
+                    prepProgressBar.setSelection(percentage);
+                  }
+                });
+              }
+            });
+          }
+        } else {
+          // display no control
+          if (f_bottom != null) {
+            f_bottom.dispose();
+            f_bottom = null;
+          }
         }
       } else {
         // show duration
@@ -411,6 +453,9 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
         if (f_bottom instanceof Label) {
           durationLabel = (Label) f_bottom;
         } else {
+          if (f_bottom != null) {
+            f_bottom.dispose();
+          }
           durationLabel = new Label(f_labels, SWT.NONE);
           durationLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
           durationLabel.setForeground(EclipseColorUtility.getSubtleTextColor());
@@ -519,7 +564,6 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
 
   @Override
   public void notifyCollectionCompletedRunDirectoryChange() {
-    // NOT CALLED IN THE UI THREAD
-    updateGUIModel();
+    // Ignore
   }
 }

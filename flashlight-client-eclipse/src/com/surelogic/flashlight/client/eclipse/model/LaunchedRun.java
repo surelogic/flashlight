@@ -99,9 +99,7 @@ public final class LaunchedRun {
     return f_prepTracker.get();
   }
 
-  public void setPrepareJobTracker(final SLJobTracker tracker) {
-    if (tracker == null)
-      throw new IllegalArgumentException(I18N.err(44, "tracker"));
+  public void setPrepareJobTracker(@Nullable final SLJobTracker tracker) {
     f_prepTracker.set(tracker);
   }
 

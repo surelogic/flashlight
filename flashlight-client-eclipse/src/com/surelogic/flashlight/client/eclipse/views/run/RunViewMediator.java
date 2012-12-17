@@ -194,7 +194,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements ILifec
   private final Action f_refreshAction = new Action() {
     @Override
     public void run() {
-      RunManager.getInstance().refresh(false);
+      RunManager.getInstance().refresh();
     }
   };
 
@@ -292,7 +292,6 @@ public final class RunViewMediator extends AdHocManagerAdapter implements ILifec
           eJob.setUser(true);
           eJob.schedule();
         }
-        RunManager.getInstance().refresh(true);
       }
     }
   };

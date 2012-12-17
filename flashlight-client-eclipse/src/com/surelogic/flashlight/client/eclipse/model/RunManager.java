@@ -42,6 +42,7 @@ import com.surelogic.common.core.EclipseUtility;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jobs.AbstractSLJob;
 import com.surelogic.common.jobs.SLJob;
+import com.surelogic.common.jobs.SLJobTracker;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.common.logging.SLLogger;
@@ -677,31 +678,6 @@ public final class RunManager implements ILifecycle {
   }
 
   /**
-   * Starts a data preparation job on the passed run directory. This call does
-   * not block, it returns immediately after a job is submitted to Eclipse.
-   * <p>
-   * This call does not notify observers. It just schedules the prepare data
-   * job.
-   * 
-   * @param run
-   *          a run directory.
-   * 
-   * @throws IllegalArgumentException
-   *           if run is {@code null}.
-   */
-  private void prepareHelper(@NonNull final RunDirectory run) {
-    if (run == null) {
-      throw new IllegalArgumentException(I18N.err(44, "run"));
-    }
-
-    final SLJob job = new PrepSLJob(run, EclipseUtility.getIntPreference(FlashlightPreferencesUtility.PREP_OBJECT_WINDOW_SIZE),
-        AdHocDataSource.getManager().getTopLevelQueries());
-    final Job eJob = EclipseUtility.toEclipseJob(job, run.getRunIdString());
-    eJob.setProperty(IProgressConstants.ICON_PROPERTY, SLImages.getImageDescriptor(CommonImages.IMG_FL_PREP_DATA));
-    eJob.schedule();
-  }
-
-  /**
    * Starts a data preparation job on all passed run directories. This call does
    * not block, it returns immediately after any necessary jobs are submitted to
    * Eclipse.
@@ -720,10 +696,25 @@ public final class RunManager implements ILifecycle {
       throw new IllegalArgumentException(I18N.err(44, "runs"));
     }
 
-    for (RunDirectory run : runs)
-      prepareHelper(run);
+    synchronized (f_lock) {
+      for (final RunDirectory run : runs) {
+        if (run == null)
+          throw new IllegalArgumentException(I18N.err(44, "run"));
 
+        final SLJob job = new PrepSLJob(run, EclipseUtility.getIntPreference(FlashlightPreferencesUtility.PREP_OBJECT_WINDOW_SIZE),
+            AdHocDataSource.getManager().getTopLevelQueries());
+        final Job eJob = EclipseUtility.toEclipseJob(job, run.getRunIdString());
+        eJob.setProperty(IProgressConstants.ICON_PROPERTY, SLImages.getImageDescriptor(CommonImages.IMG_FL_PREP_DATA));
+        final LaunchedRun lrun = getLaunchedRunFor(run.getRunIdString());
+        if (lrun != null) {
+          final SLJobTracker tracker = new SLJobTracker(job);
+          lrun.setPrepareJobTracker(tracker);
+        }
+        eJob.schedule();
+      }
+    }
     notifyPrepareDataJobScheduled();
+
     /*
      * This schedules two refresh jobs. The first refreshes to show that the
      * prepare data jobs are running. The second refreshes the run view after

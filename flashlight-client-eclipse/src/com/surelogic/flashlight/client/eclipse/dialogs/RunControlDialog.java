@@ -17,6 +17,8 @@ import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.FocusEvent;
 import org.eclipse.swt.events.FocusListener;
+import org.eclipse.swt.events.ModifyEvent;
+import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
@@ -230,6 +232,15 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
         clearSearchPromptIfNecessary(search);
       }
     });
+    search.addModifyListener(new ModifyListener() {
+
+      @Override
+      public void modifyText(ModifyEvent e) {
+        if (search.getData() != SEARCH_PROMPT) {
+          searchFor(search.getText());
+        }
+      }
+    });
 
     return composite;
   }
@@ -237,9 +248,9 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
   private static final String SEARCH_PROMPT = "Search...";
 
   private void showSearchPrompt(final Text search) {
+    search.setData(SEARCH_PROMPT);
     search.setText(SEARCH_PROMPT);
     search.setForeground(search.getDisplay().getSystemColor(SWT.COLOR_DARK_GRAY));
-    search.setData(SEARCH_PROMPT);
   }
 
   private void clearSearchPromptIfNecessary(final Text search) {
@@ -250,15 +261,33 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
     }
   }
 
+  @Nullable
+  String f_searchFilterText = null;
+
   private void searchCleared() {
-    System.out.println("searchCleared()");
+    if (f_searchFilterText != null) {
+      f_searchFilterText = null;
+      updateGUIModel();
+    }
   }
 
   private void searchFor(@Nullable String value) {
-    System.out.println("searchFor(" + value + ")");
-
     if (value == null || "".equals(value))
       searchCleared();
+    else {
+      if (!value.equalsIgnoreCase(f_searchFilterText)) {
+        f_searchFilterText = value.toLowerCase();
+        updateGUIModel();
+      }
+    }
+  }
+
+  boolean filterOutDueToSearch(final LaunchedRun lrun) {
+    if (f_searchFilterText == null)
+      return false;
+
+    final String runLabel = lrun.getRunLabel().toLowerCase();
+    return !runLabel.startsWith(f_searchFilterText);
   }
 
   protected IDialogSettings getDialogBoundsSettings() {
@@ -512,11 +541,16 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
 
         final ArrayList<LaunchedRun> launchedRuns = RunManager.getInstance().getLaunchedRuns();
 
-        // clear out dismissed launched runs the user doesn't want to see
         for (Iterator<LaunchedRun> iterator = launchedRuns.iterator(); iterator.hasNext();) {
           LaunchedRun launchedRun = iterator.next();
           if (!launchedRun.getDisplayToUser())
+            // clear out dismissed launched runs the user doesn't want to see
             iterator.remove();
+          else {
+            // check if filtered out by the user's search
+            if (filterOutDueToSearch(launchedRun))
+              iterator.remove();
+          }
         }
 
         /*

@@ -253,11 +253,13 @@ public final class RunManager implements ILifecycle {
   public boolean isLaunchedRunFinishedCollectingData(@NonNull final String runIdString) {
     if (runIdString == null)
       throw new IllegalArgumentException(I18N.err(44, "runIdString"));
-    final LaunchedRun lrun = getLaunchedRunFor(runIdString);
-    if (lrun != null)
-      return RunState.IS_FINISHED.contains(lrun.getState());
-    else {
-      return getCollectionCompletedRunDirectories().contains(getDirectoryFrom(runIdString));
+    synchronized (f_lock) {
+      final LaunchedRun lrun = getLaunchedRunFor(runIdString);
+      if (lrun != null)
+        return RunState.IS_FINISHED.contains(lrun.getState());
+      else {
+        return getCollectionCompletedRunDirectories().contains(getDirectoryFrom(runIdString));
+      }
     }
   }
 

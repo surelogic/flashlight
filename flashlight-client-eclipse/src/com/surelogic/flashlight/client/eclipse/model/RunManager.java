@@ -11,6 +11,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -257,7 +258,7 @@ public final class RunManager implements ILifecycle {
     synchronized (f_lock) {
       final LaunchedRun lrun = getLaunchedRunFor(runIdString);
       if (lrun != null)
-        return RunState.IS_FINISHED.contains(lrun.getState());
+        return RunState.IS_FINISHED_COLLECTING_DATA.contains(lrun.getState());
       else {
         return getCollectionCompletedRunDirectories().contains(getDirectoryFrom(runIdString));
       }
@@ -469,11 +470,19 @@ public final class RunManager implements ILifecycle {
     }
   }
 
-  public void setDisplayToUserOnAllFinished(final boolean value) {
+  /**
+   * Sets the state of if the user wants to see information about all launched
+   * runs in the {@link RunState#READY} state.
+   * 
+   * @param value
+   *          {@code true} if the user wants to see this launched run,
+   *          {@code false} if the user does not want to see this launched run.
+   */
+  public void setDisplayToUserIfReady(final boolean value) {
     boolean notify = false;
     synchronized (f_lock) {
       for (LaunchedRun lrun : f_launchedRuns) {
-        if (RunState.IS_FINISHED.contains(lrun.getState())) {
+        if (RunState.READY.equals(lrun.getState())) {
           notify |= lrun.setDisplayToUser(value);
         }
       }
@@ -757,9 +766,19 @@ public final class RunManager implements ILifecycle {
    * This call does not block, it just schedules the job and returns.
    */
   public void refresh() {
-    // used to serialize refreshes
-    final String[] accessKeys = new String[] { RunManager.class.getName() };
-    EclipseUtility.toEclipseJob(f_refreshJob, accessKeys).schedule(100);
+    EclipseUtility.toEclipseJob(f_refreshJob, getRefreshAccessKey()).schedule(100);
+  }
+
+  /**
+   * Gets the job access key used to serialize jobs started by
+   * {@link #refresh()}. This key is needed if jobs, such as a delete, don't
+   * want a refresh running at the same time.
+   * 
+   * @return the job access key used to serialize jobs started by
+   *         {@link #refresh()}.
+   */
+  public String getRefreshAccessKey() {
+    return RunManager.class.getName();
   }
 
   @Vouch("ThreadSafe")
@@ -771,6 +790,8 @@ public final class RunManager implements ILifecycle {
 
   @Vouch("ThreadSafe")
   private final SLJob f_refreshJob = new AbstractSLJob("Examining the Flashlight run directory contents") {
+
+    private final AtomicBoolean f_firstRefresh = new AtomicBoolean(true);
 
     @Override
     public SLStatus run(SLProgressMonitor monitor) {
@@ -859,19 +880,33 @@ public final class RunManager implements ILifecycle {
                 }
               }
             }
+          }
 
-            /*
-             * Check if a prep job currently being monitored by a launched run
-             * has finished.
-             */
-            for (final LaunchedRun lrun : f_launchedRuns) {
-              final SLJobTracker tracker = lrun.getPrepareJobTracker();
-              if (tracker != null) {
-                if (tracker.isFinished()) {
-                  lrun.setPrepareJobTracker(null);
-                  launchedRunChange = true;
-                }
+          /*
+           * Check if a prep job currently being monitored by a launched run has
+           * finished. We also clear out ready runs that are no longer being
+           * displayed or they got deleted.
+           */
+          for (Iterator<LaunchedRun> iterator = f_launchedRuns.iterator(); iterator.hasNext();) {
+            final LaunchedRun lrun = iterator.next();
+
+            final SLJobTracker tracker = lrun.getPrepareJobTracker();
+            if (tracker != null) {
+              if (tracker.isFinished()) {
+                lrun.setPrepareJobTracker(null);
+                launchedRunChange = true;
               }
+            }
+
+            // clear out launches that are not displayed and ready
+            if (!lrun.getDisplayToUser() && lrun.isReady()) {
+              iterator.remove();
+            }
+            // clear out launches that have been deleted
+            if (!RunState.INSTRUMENTATION_AND_LAUNCH.equals(lrun.getState())
+                && !getDirectoryFrom(lrun.getRunIdString()).isDirectory()) {
+              System.out.println("cleared deleted launch " + lrun.getRunIdString());
+              iterator.remove();
             }
           }
         }
@@ -884,7 +919,8 @@ public final class RunManager implements ILifecycle {
            * Prepared data changed -- check if we are in the Flashlight
            * perspective
            */
-          (new SwitchToFlashlightPerspectiveJob()).schedule(500);
+          if (!f_firstRefresh.get())
+            (new SwitchToFlashlightPerspectiveJob()).schedule(500);
         }
         if (collectionCompletedRunDirectoryChange) {
           notifyCollectionCompletedRunDirectoryChange();
@@ -900,6 +936,7 @@ public final class RunManager implements ILifecycle {
         return SLStatus.createErrorStatus(SLStatus.OK, "RunManager.refresh() failed", e);
       } finally {
         monitor.done();
+        f_firstRefresh.set(false);
       }
     }
   };

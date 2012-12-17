@@ -288,7 +288,8 @@ public final class RunViewMediator extends AdHocManagerAdapter implements ILifec
         }
         for (final RunDirectory runDir : selected) {
           final SLJob job = new DeleteRunDirectoryJob(runDir);
-          final Job eJob = EclipseUtility.toEclipseJob(job, runDir.getRunIdString());
+          final Job eJob = EclipseUtility
+              .toEclipseJob(job, runDir.getRunIdString(), RunManager.getInstance().getRefreshAccessKey());
           eJob.setUser(true);
           eJob.schedule();
         }

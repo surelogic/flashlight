@@ -1,6 +1,5 @@
 package com.surelogic._flashlight.rewriter.config;
 
-import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
@@ -16,12 +15,6 @@ import com.surelogic._flashlight.rewriter.config.HappensBeforeConfig.HappensBefo
 public class HappensBeforeConfigChecker {
 
     public static void main(String[] args) {
-        InputStream res = Thread
-                .currentThread()
-                .getContextClassLoader()
-                .getResourceAsStream(
-                        "/com/surelogic/_flashlight/rewriter/config/happens-before-config.xml");
-        System.out.println(res);
         HappensBeforeConfig config = HappensBeforeConfig.loadDefault();
         for (Entry<String, List<HappensBeforeObject>> e : config.getObjects()
                 .entrySet()) {

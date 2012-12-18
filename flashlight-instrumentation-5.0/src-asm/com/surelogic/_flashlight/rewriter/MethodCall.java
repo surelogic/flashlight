@@ -25,7 +25,7 @@ public abstract class MethodCall {
   
   protected final RewriteMessenger messenger;
   protected final ClassAndFieldModel classModel;
-  
+  protected final HappensBeforeTable happensBefore;
   
   /**
    * @param opcode The opcode used to invoke the method.
@@ -34,7 +34,8 @@ public abstract class MethodCall {
    * @param originalDesc The descriptor of the method.
    */
   public MethodCall(final RewriteMessenger msg,
-      final ClassAndFieldModel model, final int opcode, final String owner,
+      final ClassAndFieldModel model, final HappensBeforeTable hbt,
+      final int opcode, final String owner,
       final String originalName, final String originalDesc) {
     this.opcode = opcode;
     this.owner = owner;
@@ -44,6 +45,7 @@ public abstract class MethodCall {
     
     messenger = msg;
     classModel = model;
+    happensBefore = hbt;
   }
 
   
@@ -357,40 +359,10 @@ public abstract class MethodCall {
     }
   }  
   
-//  private void instrumentAfterTryMethod(
-//      final MethodVisitor mv, final Configuration config) {
-//    try {
-//      if (this.testCalledMethodName(
-//          "java/util/concurrent/Semaphore", "tryAcquire")) {
-//        // ..., [boolean success]
-//        mv.visitInsn(Opcodes.DUP);
-//        // ..., [boolean success], [boolean success]
-//        // jump if return value is false
-//        final Label tryFailed = new Label();
-//        mv.visitJumpInsn(Opcodes.IFEQ, tryFailed);
-//        // ..., [boolean success]
-//        this.pushReceiverForEvent(mv);
-//        // ..., [boolean success], objRef
-//        this.pushSiteId(mv);
-//        // ..., [boolean success], objRef, callSiteId (long)
-//        ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.TRY_CALL_SUCCEEDED);
-//        // ..., [boolean success]
-//        
-//        mv.visitLabel(tryFailed);
-//      }
-//    } catch (final ClassNotFoundException e) {
-//      messenger.warning("Provided classpath is incomplete: couldn't find class " + e.getMissingClass());
-//    }
-//  }
-  
-  private HappensBefore getHappensBefore() {
-    return null;
-  }
-  
   private void instrumentHappensBefore(
       final MethodVisitor mv, final Configuration config) {
-    // XXX: make this real
-    final HappensBefore hb = getHappensBefore();
+    final HappensBefore hb = 
+        happensBefore.getHappensBefore(owner, name, descriptor);
     if (hb != null) {
       /* Check the return value of the method call to see if we should
        * generate an event.

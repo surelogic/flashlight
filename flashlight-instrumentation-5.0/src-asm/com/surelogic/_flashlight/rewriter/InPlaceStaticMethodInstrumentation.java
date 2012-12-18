@@ -8,9 +8,10 @@ final class InPlaceStaticMethodInstrumentation extends
 
   public InPlaceStaticMethodInstrumentation(
       final RewriteMessenger messenger, final ClassAndFieldModel classModel,
+      final HappensBeforeTable hbt,
       final long callSiteId, final int opcode,
       final String owner, final String name, final String descriptor) {
-    super(messenger, classModel, callSiteId, opcode, owner, name, descriptor);
+    super(messenger, classModel, hbt, callSiteId, opcode, owner, name, descriptor);
   }
 
   @Override

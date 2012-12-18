@@ -7,10 +7,11 @@ final class InstanceIndirectAccessMethodInstrumentation extends
   IndirectAccessMethodInstrumentation {
   public InstanceIndirectAccessMethodInstrumentation(
       final RewriteMessenger messenger, final ClassAndFieldModel classModel,
+      final HappensBeforeTable hbt,
       final long callSiteId, final int opcode, final IndirectAccessMethod am,
       final String owner, final String name, final String descriptor,
       final LocalVariableGenerator vg) {
-    super(messenger, classModel, callSiteId, opcode, am, owner, name, descriptor, vg);
+    super(messenger, classModel, hbt, callSiteId, opcode, am, owner, name, descriptor, vg);
   }
 
   @Override

@@ -64,10 +64,11 @@ abstract class MethodCallWrapper extends MethodCall {
    */
   public MethodCallWrapper(
       final RewriteMessenger messenger, final ClassAndFieldModel classModel,
+      final HappensBeforeTable hbt,
       final int opcode, final String rcvrTypeInternal, final String owner,
       final String originalName, final String originalDesc,
       final boolean isInstance) {
-    super(messenger, classModel, opcode, owner, originalName, originalDesc);
+    super(messenger, classModel, hbt, opcode, owner, originalName, originalDesc);
     final String ownerUnderscored = fixOwnerNameForMethodName(owner);
     final int endOfArgs = originalDesc.lastIndexOf(END_OF_ARGS);
     final String originalArgs = originalDesc.substring(1, endOfArgs);

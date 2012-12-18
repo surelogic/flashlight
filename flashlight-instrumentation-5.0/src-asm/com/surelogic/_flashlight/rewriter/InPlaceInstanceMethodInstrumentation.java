@@ -9,10 +9,11 @@ class InPlaceInstanceMethodInstrumentation extends
   
   public InPlaceInstanceMethodInstrumentation(
       final RewriteMessenger messenger, final ClassAndFieldModel classModel,
+      final HappensBeforeTable hbt,
       final long callSiteId, final int opcode,
       final String owner, final String name, final String descriptor,
       final LocalVariableGenerator vg) {
-    super(messenger, classModel, callSiteId, opcode, owner, name, descriptor);
+    super(messenger, classModel, hbt,callSiteId, opcode, owner, name, descriptor);
     poppedArgs = PoppedArguments.instanceArguments(
         Type.getObjectType(owner), Type.getArgumentTypes(descriptor), vg);
   }

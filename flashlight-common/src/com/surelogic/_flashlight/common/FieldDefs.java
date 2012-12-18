@@ -28,8 +28,8 @@ public class FieldDefs extends HashMap<Long, FieldDef> {
      */
     private static final long serialVersionUID = -7841259146538158436L;
 
-    public FieldDefs(final BufferedReader reader) throws NumberFormatException,
-            IOException {
+    private FieldDefs(final BufferedReader reader)
+            throws NumberFormatException, IOException {
         try {
             for (String line = reader.readLine(); line != null; line = reader
                     .readLine()) {

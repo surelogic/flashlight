@@ -293,6 +293,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements ILifec
           eJob.setUser(true);
           eJob.schedule();
         }
+        RunManager.getInstance().refresh(); // after all deletes
       }
     }
   };

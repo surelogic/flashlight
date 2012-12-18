@@ -468,7 +468,8 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
                 final int uiPercentage = fixUpPercentage(percentage);
                 EclipseUIUtility.nowOrAsyncExec(new Runnable() {
                   public void run() {
-                    prepProgressBar.setSelection(uiPercentage);
+                    if (!prepProgressBar.isDisposed())
+                      prepProgressBar.setSelection(uiPercentage);
                   }
                 });
               }

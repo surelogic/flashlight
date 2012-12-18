@@ -36,7 +36,10 @@ public final class StoreDelegate {
      * objects.
      */
     public static ClassPhantomReference getClassPhantom(final Class<?> c) {
-        return Phantom.ofClass(c);
+        if (IdConstants.enableFlashlightToggle || !FL_OFF.get()) {
+            return Phantom.ofClass(c);
+        }
+        return null;
     }
 
     public static ObjectPhantomReference getObjectPhantom(final Object o,

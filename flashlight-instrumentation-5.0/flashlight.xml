@@ -63,6 +63,11 @@
 				<pathelement location="${asm-commons.jar}" />
 			</classpath>
 		</javac>
+		<copy todir="${classes}">
+    		<fileset dir="${src}" includes="**/*.xml" />
+    		<fileset dir="${src-asm}" includes="**/*.xml" />
+    		<fileset dir="${src-rt}" includes="**/*.xml" />
+		</copy>
 		<copy todir="${classes}/resources">
 			<fileset dir="${resources}" />
 		</copy>

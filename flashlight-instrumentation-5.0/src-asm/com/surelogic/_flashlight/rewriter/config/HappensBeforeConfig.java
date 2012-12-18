@@ -509,7 +509,8 @@ public class HappensBeforeConfig {
     private static final Pattern primitive = Pattern
             .compile("(byte|short|int|long|float|double|boolean|char|void)((\\s*\\[\\s*\\]\\s*)*)");
     private static final Pattern array = Pattern.compile("\\s*\\[\\s*\\]\\s*");
-    private static final Pattern type = Pattern.compile("([^\\[\\s]+)(.*)");
+    private static final Pattern type = Pattern
+            .compile("([^\\[\\s]+)((\\s*\\[\\s*\\]\\s*)*)");
     private static final Map<String, String> primMap = new HashMap<String, String>();
     static {
         primMap.put("int", "I");
@@ -547,7 +548,7 @@ public class HappensBeforeConfig {
         } else {
             m = type.matcher(jlsName);
             m.matches();
-            typeName = getInternalName(m.group(1) + ";");
+            typeName = "L" + getInternalName(m.group(1) + ";");
         }
         if (m.group(3) == null) {
             return typeName;

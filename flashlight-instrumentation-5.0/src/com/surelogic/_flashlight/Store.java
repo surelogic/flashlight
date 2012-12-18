@@ -718,12 +718,20 @@ public class Store {
      * objects.
      */
     public static ClassPhantomReference getClassPhantom(final Class<?> c) {
-        return StoreDelegate.getClassPhantom(c);
+        if (checkInside()) {
+            return StoreDelegate.getClassPhantom(c);
+        } else {
+            return null;
+        }
     }
 
     public static ObjectPhantomReference getObjectPhantom(final Object o,
             final long id) {
-        return StoreDelegate.getObjectPhantom(o, id);
+        if (checkInside()) {
+            return StoreDelegate.getObjectPhantom(o, id);
+        } else {
+            return null;
+        }
     }
 
     /**

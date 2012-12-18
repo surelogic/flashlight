@@ -492,4 +492,16 @@ public class HappensBeforeConfig {
         return b.toString();
     }
 
+    public static HappensBeforeConfig loadDefault() {
+        return HappensBeforeConfig
+                .parse(Thread
+                        .currentThread()
+                        .getContextClassLoader()
+                        .getResourceAsStream(
+                                "com/surelogic/_flashlight/rewriter/config/happens-before-config.xml"));// TODO
+                                                                                                        // Auto-generated
+                                                                                                        // method
+                                                                                                        // stub
+    }
+
 }

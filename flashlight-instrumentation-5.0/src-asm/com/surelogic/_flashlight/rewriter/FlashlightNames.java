@@ -80,7 +80,7 @@ public final class FlashlightNames {
             .getMethod("void tryCallSucceeded(java.lang.Object, long)");
     
     public static final Method HAPPENS_BEFORE_THREAD = Method
-            .getMethod("void happensBeforeThread(java.lang.Thread, java.lang.Thread, long)");
+            .getMethod("void happensBeforeThread(java.lang.Thread, long)");
     
     public static final Method HAPPENS_BEFORE_OBJECT = Method
             .getMethod("void happensBeforeObject(java.lang.Object, long)");

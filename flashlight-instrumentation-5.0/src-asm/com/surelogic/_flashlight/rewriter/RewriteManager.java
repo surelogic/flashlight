@@ -34,6 +34,7 @@ import org.objectweb.asm.ClassWriter;
 
 import com.surelogic._flashlight.common.FileChannelOutputStream;
 import com.surelogic._flashlight.rewriter.config.Configuration;
+import com.surelogic._flashlight.rewriter.config.HappensBeforeConfig;
 
 public abstract class RewriteManager {
     // ======================================================================
@@ -567,7 +568,7 @@ public abstract class RewriteManager {
                         classWriterFlags, classModel);
                 final FlashlightClassRewriter xformer = new FlashlightClassRewriter(
                         config, callSiteIdFactory, msgr, output, classModel,
-                        accessMethods, method2numLocals, ignoreMethods);
+                        happensBefore, accessMethods, method2numLocals, ignoreMethods);
                 // Skip stack map frames: Either the classfiles don't have them,
                 // or we will recompute them
                 input.accept(xformer, ClassReader.SKIP_FRAMES);
@@ -1160,6 +1161,14 @@ public abstract class RewriteManager {
      */
     private final List<Instrumenter> instrumenters = new LinkedList<Instrumenter>();
 
+    /**
+     * The information about happens-before related methods.
+     * This is initialized by {@link #execute()}.
+     */
+    private HappensBeforeTable happensBefore = null;
+    
+    
+    
     // ======================================================================
     // == Constructor
     // ======================================================================
@@ -1254,6 +1263,10 @@ public abstract class RewriteManager {
      *         duplicate entries.
      */
     public final Map<String, Map<String, Boolean>> execute() throws AlreadyInstrumentedException {
+        /* Load and set up the happens before information. */
+        final HappensBeforeConfig hbc = HappensBeforeConfig.loadDefault();
+        happensBefore = new HappensBeforeTable(hbc);
+        
         /*
          * First pass: Scan all the classfiles to build the class and field
          * model. Record the field identifiers in the fields file.
@@ -1288,6 +1301,7 @@ public abstract class RewriteManager {
         try {
             sitesFile.getParentFile().mkdirs();
             if (sitesFile.getName().endsWith(".gz")) {
+                @SuppressWarnings("resource") // Closed recursively when sitesOut is closed
                 FileOutputStream fout = new FileOutputStream(sitesFile);
                 GZIPOutputStream gzip = new GZIPOutputStream(fout);
                 sitesOut = new PrintWriter(gzip);

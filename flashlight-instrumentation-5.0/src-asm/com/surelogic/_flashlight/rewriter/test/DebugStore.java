@@ -229,7 +229,7 @@ public class DebugStore {
     stdOut.flush();
   }
 
-  public static void instanceFieldInit(
+  public static synchronized void instanceFieldInit(
       final Object receiver, final int fieldId, final Object value) {
     stdOut.println("instanceFieldInit");
     stdOut.println("  receiver = " + objectToString(receiver));
@@ -237,40 +237,40 @@ public class DebugStore {
     stdOut.println("  value = " + objectToString(value));
   }
   
-  public static void staticFieldInit(final int fieldId, final Object value) {
+  public static synchronized void staticFieldInit(final int fieldId, final Object value) {
     stdOut.println("staticFieldInit");
     stdOut.println("  fieldId = " + fieldId);
     stdOut.println("  value = " + objectToString(value));
   }
 
-  public static int getFieldId(final String clazz, final String field) {
+  public static synchronized int getFieldId(final String clazz, final String field) {
     stdOut.println("getFieldId");
     stdOut.println("  class = " + clazz);
     stdOut.println("  value = " + field);
     return -1;
   }
 
-  public static void tryCallSucceeded(final Object receiver, final long siteId) {
+  public static synchronized void tryCallSucceeded(final Object receiver, final long siteId) {
     stdOut.println("tryCallSucceeded");
     stdOut.println("  receiver = " + objectToString(receiver));
     stdOut.println("  siteID = " + siteId);
   }
 
-  public static void happensBeforeThread(
+  public static synchronized void happensBeforeThread(
       final Thread callee, long siteId) {
     stdOut.println("happensBeforeThread");
     stdOut.println("  callee = " + objectToString(callee));
     stdOut.println("  siteID = " + siteId);
   }
   
-  public static void happensBeforeObject(
+  public static synchronized void happensBeforeObject(
       final Object object, final long siteId) {
     stdOut.println("happensBeforeObject");
     stdOut.println("  object = " + objectToString(object));
     stdOut.println("  siteID = " + siteId);
   }
   
-  public static void happensBeforeCollection(
+  public static synchronized void happensBeforeCollection(
       final Object collection, final Object item, final long siteId) {
     stdOut.println("happensBeforeCollection");
     stdOut.println("  collection = " + objectToString(collection));

@@ -803,7 +803,7 @@ public final class RunManager implements ILifecycle {
         boolean collectionCompletedRunDirectoryChange = false;
         boolean preparedDataChanged = false;
         boolean launchedRunChange = false;
-        RunDirectory prepare = null;
+        List<RunDirectory> prepare = new ArrayList<RunDirectory>();
 
         /*
          * Search the run directory for runs that have completed data
@@ -874,7 +874,7 @@ public final class RunManager implements ILifecycle {
                   if (lrun.setState(RunState.DONE_COLLECTING_DATA)) {
                     launchedRunChange = true;
                     if (EclipseUtility.getBooleanPreference(FlashlightPreferencesUtility.AUTO_PREP_LAUNCHED_RUNS)) {
-                      prepare = run;
+                      prepare.add(run);
                     }
                   }
                 }
@@ -893,6 +893,7 @@ public final class RunManager implements ILifecycle {
             final SLJobTracker tracker = lrun.getPrepareJobTracker();
             if (tracker != null) {
               if (tracker.isFinished()) {
+                tracker.clearObservers();
                 lrun.setPrepareJobTracker(null);
                 launchedRunChange = true;
               }
@@ -905,7 +906,6 @@ public final class RunManager implements ILifecycle {
             // clear out launches that have been deleted
             if (!RunState.INSTRUMENTATION_AND_LAUNCH.equals(lrun.getState())
                 && !getDirectoryFrom(lrun.getRunIdString()).isDirectory()) {
-              System.out.println("cleared deleted launch " + lrun.getRunIdString());
               iterator.remove();
             }
           }
@@ -928,8 +928,8 @@ public final class RunManager implements ILifecycle {
         if (launchedRunChange) {
           notifyLaunchedRunChange();
         }
-        if (prepare != null) {
-          prepare(prepare);
+        if (!prepare.isEmpty()) {
+          prepareAll(prepare);
         }
         return SLStatus.OK_STATUS;
       } catch (final Exception e) {

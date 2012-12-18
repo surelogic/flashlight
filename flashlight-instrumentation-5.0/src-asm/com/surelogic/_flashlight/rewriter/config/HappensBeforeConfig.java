@@ -498,10 +498,7 @@ public class HappensBeforeConfig {
                         .currentThread()
                         .getContextClassLoader()
                         .getResourceAsStream(
-                                "com/surelogic/_flashlight/rewriter/config/happens-before-config.xml"));// TODO
-                                                                                                        // Auto-generated
-                                                                                                        // method
-                                                                                                        // stub
+                                "com/surelogic/_flashlight/rewriter/config/happens-before-config.xml"));
     }
 
 }

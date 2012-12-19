@@ -697,97 +697,102 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
                         Collections.emptyList());
 
         FLData data = new FLData(runId, launchConfig, project, dxInputPaths);
-
-        RewriteManager rm = new AndroidRewriteManager(
-                configBuilder.getConfiguration(), new PrintWriterMessenger(
-                        new PrintWriter(data.log)), data.fieldsFile,
-                data.sitesFile);
-        String runtimePath = getRuntimeJarPath();
-        List<String> instrumentLast = LaunchHelper
-                .sanitizeInstrumentationList(data.originalClasspaths);
-        List<Integer> toInstrument = new ArrayList<Integer>();
-        for (int i = 0; i < data.originalClasspaths.size(); i++) {
-            String fromPath = data.originalClasspaths.get(i);
-            File from = new File(fromPath);
-            File to = new File(data.classpaths.get(i));
-            boolean ignore = noInstrumentBoot.contains(fromPath)
-                    || noInstrumentUser.contains(fromPath);
-            if (!ignore && instrumentLast.contains(fromPath)) {
-                toInstrument.add(i);
-            }
-            if (from.isDirectory()) {
-                if (ignore) {
-                    rm.addClasspathDir(from);
+        PrintWriter logWriter = new PrintWriter(data.log);
+        try {
+            RewriteManager rm = new AndroidRewriteManager(
+                    configBuilder.getConfiguration(), new PrintWriterMessenger(
+                            logWriter), data.fieldsFile, data.sitesFile);
+            String runtimePath = getRuntimeJarPath();
+            List<String> instrumentLast = LaunchHelper
+                    .sanitizeInstrumentationList(data.originalClasspaths);
+            List<Integer> toInstrument = new ArrayList<Integer>();
+            for (int i = 0; i < data.originalClasspaths.size(); i++) {
+                String fromPath = data.originalClasspaths.get(i);
+                File from = new File(fromPath);
+                File to = new File(data.classpaths.get(i));
+                boolean ignore = noInstrumentBoot.contains(fromPath)
+                        || noInstrumentUser.contains(fromPath);
+                if (!ignore && instrumentLast.contains(fromPath)) {
+                    toInstrument.add(i);
+                }
+                if (from.isDirectory()) {
+                    if (ignore) {
+                        rm.addClasspathDir(from);
+                    } else {
+                        rm.addDirToDir(from, to);
+                    }
+                } else if (from.exists()) {
+                    if (ignore) {
+                        rm.addClasspathJar(from);
+                    } else {
+                        rm.addJarToJar(from, to, runtimePath);
+                    }
                 } else {
+                    log.warning(from.getAbsolutePath().toString()
+                            + " could not be found on the classpath could not be found when trying to instrument this project with Flashlight.");
+                }
+            }
+            for (int i : toInstrument) {
+                String fromPath = data.originalClasspaths.get(i);
+                File from = new File(fromPath);
+                File to = new File(data.classpaths.get(i));
+                if (from.isDirectory()) {
                     rm.addDirToDir(from, to);
-                }
-            } else if (from.exists()) {
-                if (ignore) {
-                    rm.addClasspathJar(from);
-                } else {
+                } else if (from.exists()) {
                     rm.addJarToJar(from, to, runtimePath);
+                } else {
+                    log.warning(from.getAbsolutePath().toString()
+                            + " could not be found on the classpath could not be found when trying to instrument this project with Flashlight.");
                 }
-            } else {
-                log.warning(from.getAbsolutePath().toString()
-                        + " could not be found on the classpath could not be found when trying to instrument this project with Flashlight.");
             }
-        }
-        for (int i : toInstrument) {
-            String fromPath = data.originalClasspaths.get(i);
-            File from = new File(fromPath);
-            File to = new File(data.classpaths.get(i));
-            if (from.isDirectory()) {
-                rm.addDirToDir(from, to);
-            } else if (from.exists()) {
-                rm.addJarToJar(from, to, runtimePath);
-            } else {
-                log.warning(from.getAbsolutePath().toString()
-                        + " could not be found on the classpath could not be found when trying to instrument this project with Flashlight.");
-            }
-        }
-        // We check the classpath to see if there are any entries that aren't
-        // being exported, but that we will need in order to fully instrument
-        // the project.
-        IJavaProject javaProject = JavaCore.create(project);
-        for (IClasspathEntry cpe : javaProject.getResolvedClasspath(true)) {
-            if (cpe.getEntryKind() == IClasspathEntry.CPE_LIBRARY) {
-                String path = cpe.getPath().toOSString();
-                if (!data.originalClasspaths.contains(path)) {
-                    File pathFile = new File(path);
-                    if (pathFile.isDirectory()) {
-                        rm.addClasspathDir(pathFile);
-                    } else if (pathFile.exists()) {
-                        rm.addClasspathJar(pathFile);
+            // We check the classpath to see if there are any entries that
+            // aren't
+            // being exported, but that we will need in order to fully
+            // instrument
+            // the project.
+            IJavaProject javaProject = JavaCore.create(project);
+            for (IClasspathEntry cpe : javaProject.getResolvedClasspath(true)) {
+                if (cpe.getEntryKind() == IClasspathEntry.CPE_LIBRARY) {
+                    String path = cpe.getPath().toOSString();
+                    if (!data.originalClasspaths.contains(path)) {
+                        File pathFile = new File(path);
+                        if (pathFile.isDirectory()) {
+                            rm.addClasspathDir(pathFile);
+                        } else if (pathFile.exists()) {
+                            rm.addClasspathJar(pathFile);
+                        }
                     }
                 }
             }
-        }
-        try {
-            rm.execute();
-        } catch (AlreadyInstrumentedException e) {
-            final StringWriter s = new StringWriter();
-            PrintWriter w = new PrintWriter(s);
-            w.println("Instrumentation and execution were aborted because classes were found that have already been instrumented:");
-            for (final String cname : e.getClasses()) {
-                w.print("  ");
-                w.println(cname);
-            }
-            w.println();
-            w.println("Flashlight cannot collect meaningful data under these circumstances.");
-            w.flush();
-
-            final SLUIJob job = new SLUIJob() {
-                final String message = s.toString();
-
-                @Override
-                public IStatus runInUIThread(final IProgressMonitor monitor) {
-                    ShowTextDialog.showText(getDisplay().getActiveShell(),
-                            "Instrumentation aborted.", message);
-                    return Status.OK_STATUS;
+            try {
+                rm.execute();
+            } catch (AlreadyInstrumentedException e) {
+                final StringWriter s = new StringWriter();
+                PrintWriter w = new PrintWriter(s);
+                w.println("Instrumentation and execution were aborted because classes were found that have already been instrumented:");
+                for (final String cname : e.getClasses()) {
+                    w.print("  ");
+                    w.println(cname);
                 }
-            };
-            job.schedule();
-            return null;
+                w.println();
+                w.println("Flashlight cannot collect meaningful data under these circumstances.");
+                w.flush();
+
+                final SLUIJob job = new SLUIJob() {
+                    final String message = s.toString();
+
+                    @Override
+                    public IStatus runInUIThread(final IProgressMonitor monitor) {
+                        ShowTextDialog.showText(getDisplay().getActiveShell(),
+                                "Instrumentation aborted.", message);
+                        return Status.OK_STATUS;
+                    }
+                };
+                job.schedule();
+                return null;
+            }
+        } finally {
+            logWriter.close();
         }
         data.createInfoClasses();
         return data;

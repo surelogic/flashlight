@@ -833,14 +833,16 @@ public final class Instrument extends Task {
 			final String element = st.nextToken();
 			final String srcdir = srcDirPatternString.replace(replace, element);
 			if (destDirPattern != null) {
-				final String destdir = destDirPatternString.replace(replace,
+				@SuppressWarnings("null") // not null because destDirPattern is not null
+        final String destdir = destDirPatternString.replace(replace,
 						element);
 				Instrument.this.log(MessageFormat.format(
 						"{2}Adding srcdir=\"{0}\", destdir=\"{1}\"", srcdir,
 						destdir, INDENT), Project.MSG_VERBOSE);
 				subTasks.add(new Directory(new File(srcdir), new File(destdir)));
 			} else {
-				final String destfile = destFilePatternString.replace(replace,
+				@SuppressWarnings("null") // not null because destFilePattern is non-null if destDirPattern is null due to checks above
+        final String destfile = destFilePatternString.replace(replace,
 						element);
 				Instrument.this.log(MessageFormat.format(
 						"{2}Adding srcdir=\"{0}\", destfile=\"{1}\"", srcdir,
@@ -1229,8 +1231,7 @@ public final class Instrument extends Task {
 			}
 
 			try {
-				final Map<String, Map<String, Boolean>> badDups = manager
-						.execute();
+				final Map<String, Map<String, Boolean>> badDups = manager.execute();
 				if (badDups != null) { // uh oh
 					// TODO change to match
 					// FlashlightVMRunner.instrumentClassfiles() when we finally

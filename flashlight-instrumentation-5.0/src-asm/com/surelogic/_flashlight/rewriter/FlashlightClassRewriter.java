@@ -52,6 +52,9 @@ final class FlashlightClassRewriter extends ClassVisitor {
 	/** Properties to control rewriting and instrumentation. */
 	private final Configuration config;
 
+	/** The happens before method information */
+	private final HappensBeforeTable happensBefore;
+	
 	/** Messenger for status reports. */
 	private final RewriteMessenger messenger;
 
@@ -160,14 +163,14 @@ final class FlashlightClassRewriter extends ClassVisitor {
 	public FlashlightClassRewriter(final Configuration conf,
 			final SiteIdFactory csif, final RewriteMessenger msg,
 			final ClassVisitor cv, final ClassAndFieldModel model,
-			final IndirectAccessMethods am,
-			final Map<String, Integer> m2locals,
-			final Set<MethodIdentifier> ignore) {
+			final HappensBeforeTable hbt,	final IndirectAccessMethods am,
+			final Map<String, Integer> m2locals, final Set<MethodIdentifier> ignore) {
 		super(Opcodes.ASM4, cv);
 		config = conf;
 		callSiteIdFactory = csif;
 		messenger = msg;
 		classModel = model;
+		happensBefore = hbt;
 		accessMethods = am;
 		method2numLocals = m2locals;
 		methodsToIgnore = ignore;
@@ -308,7 +311,7 @@ final class FlashlightClassRewriter extends ClassVisitor {
 					: numLocalsInteger.intValue();
 			return FlashlightMethodRewriter
 					.create(access, name, desc, numLocals, cse, config,
-							callSiteIdFactory, messenger, classModel,
+							callSiteIdFactory, messenger, classModel, happensBefore,
 							accessMethods, isInterface, mustImplementIIdObject,
 							sourceFileName, classNameInternal,
 							classNameFullyQualified, superClassInternal,
@@ -429,7 +432,7 @@ final class FlashlightClassRewriter extends ClassVisitor {
 		 */
 		final MethodVisitor rewriter_mv = FlashlightMethodRewriter.create(
 				Opcodes.ACC_STATIC, CLASS_INITIALIZER, CLASS_INITIALIZER_DESC,
-				0, mv, config, callSiteIdFactory, messenger, classModel,
+				0, mv, config, callSiteIdFactory, messenger, classModel, happensBefore,
 				accessMethods, isInterface, mustImplementIIdObject,
 				sourceFileName, classNameInternal, classNameFullyQualified,
 				superClassInternal, wrapperMethods);

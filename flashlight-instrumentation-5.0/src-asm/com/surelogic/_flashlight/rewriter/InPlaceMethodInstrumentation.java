@@ -66,6 +66,11 @@ abstract class InPlaceMethodInstrumentation extends MethodCall {
       mv.visitVarInsn(Opcodes.ALOAD, argLocals[0]);
     }
     
+    public void pushArgument(final MethodVisitor mv, final int offset) {
+      // offset is already corrected for the presense of the receiver or not
+      mv.visitVarInsn(argTypes[offset].getOpcode(Opcodes.ILOAD), argLocals[offset]);
+    }
+    
     public int[] getLocals() {
       return argLocals;
     }
@@ -86,9 +91,10 @@ abstract class InPlaceMethodInstrumentation extends MethodCall {
    */
   public InPlaceMethodInstrumentation(
       final RewriteMessenger messenger, final ClassAndFieldModel classModel,
+      final HappensBeforeTable hbt,
       final long callSiteId, final int opcode,
       final String owner, final String name, final String descriptor) {
-    super(messenger, classModel, opcode, owner, name, descriptor);
+    super(messenger, classModel, hbt, opcode, owner, name, descriptor);
     this.callSiteId = callSiteId;
   }
   

@@ -638,10 +638,43 @@ public class Store {
         }
     }
 
-    public static void tryCallSucceeded(final Object receiver, final long siteId) {
-        // fill this in
+    /**
+     * @param typeName
+     *          <code>null</code> if the method definitely matches a 
+     *          happens before method;
+     *          otherwise it is the fully qualified type name of the type that we
+     *          need to see if callee is assignable to.
+     */
+    public static void happensBeforeThread(
+        final Thread callee, final long siteId, final String typeName) {
+      // fill this in
     }
-
+    
+    /**
+     * @param typeName
+     *          <code>null</code> if the method definitely matches a 
+     *          happens before method;
+     *          otherwise it is the fully qualified type name of the type that we
+     *          need to see if callee is assignable to.
+     */
+    public static void happensBeforeObject(
+        final Object object, final long siteId, final String typeName) {
+      // fill this in
+    }
+    
+    /**
+     * @param typeName
+     *          <code>null</code> if the method definitely matches a 
+     *          happens before method;
+     *          otherwise it is the fully qualified type name of the type that we
+     *          need to see if callee is assignable to.
+     */
+    public static void happensBeforeCollection(
+        final Object collection, final Object item, final long siteId,
+        final String typeName) {
+      // fill this in
+    }
+    
     /**
      * Stops collection of events about the instrumented program. This method
      * may be called from within the following thread contexts:

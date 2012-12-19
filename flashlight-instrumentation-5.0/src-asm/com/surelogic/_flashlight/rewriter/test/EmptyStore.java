@@ -119,7 +119,19 @@ public class EmptyStore {
     return -1;
   }
 
-  public static void tryCallSucceeded(final Object receiver, final long siteId) {
+  public static void happensBeforeThread(
+      final Thread callee, final long siteId, final String typeName) {
+    // do nothing
+  }
+  
+  public static void happensBeforeObject(
+      final Object object, final long siteId, final String typeName) {
+    // do nothing
+  }
+  
+  public static void happensBeforeCollection(
+      final Object collection, final Object item, final long siteId,
+      final String typeName) {
     // do nothing
   }
 }

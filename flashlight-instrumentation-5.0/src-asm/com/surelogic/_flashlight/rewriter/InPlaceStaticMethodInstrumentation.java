@@ -8,9 +8,10 @@ final class InPlaceStaticMethodInstrumentation extends
 
   public InPlaceStaticMethodInstrumentation(
       final RewriteMessenger messenger, final ClassAndFieldModel classModel,
+      final HappensBeforeTable hbt,
       final long callSiteId, final int opcode,
       final String owner, final String name, final String descriptor) {
-    super(messenger, classModel, callSiteId, opcode, owner, name, descriptor);
+    super(messenger, classModel, hbt, callSiteId, opcode, owner, name, descriptor);
   }
 
   @Override
@@ -23,6 +24,12 @@ final class InPlaceStaticMethodInstrumentation extends
   @Override
   public void pushReceiverForEvent(final MethodVisitor mv) {
     mv.visitInsn(Opcodes.ACONST_NULL);
+  }
+
+  @Override
+  public void pushArgumentForEvent(final MethodVisitor mv, final int arg) {
+    // XXX: Problematic if we ever have interesting static methods becase we don't have a record of the arguments
+    throw new UnsupportedOperationException("Not implemented for InPlaceStaticMethodInstrumentation");
   }
 
   @Override

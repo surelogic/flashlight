@@ -11,7 +11,7 @@ import com.surelogic._flashlight.rewriter.config.Configuration;
 /**
  * Home to static utility functions for generation of bytecode operations.
  */
-final class ByteCodeUtils {
+public final class ByteCodeUtils {
   private ByteCodeUtils() {
     // do nothing
   }

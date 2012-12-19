@@ -75,10 +75,16 @@ public final class FlashlightNames {
 
     public static final Method GET_FIELD_ID = Method
             .getMethod("int getFieldId(String, String)");
-
-    public static final Method TRY_CALL_SUCCEEDED = Method
-            .getMethod("void tryCallSucceeded(java.lang.Object, long)");
     
+    public static final Method HAPPENS_BEFORE_THREAD = Method
+            .getMethod("void happensBeforeThread(java.lang.Thread, long, java.lang.String)");
+    
+    public static final Method HAPPENS_BEFORE_OBJECT = Method
+            .getMethod("void happensBeforeObject(java.lang.Object, long, java.lang.String)");
+
+    public static final Method HAPPENS_BEFORE_COLLECTION = Method
+            .getMethod("void happensBeforeCollection(java.lang.Object, java.lang.Object, long, java.lang.String)");
+
     public static final Method SHUTDOWN = Method.getMethod("void shutdown()");
 
     public static final Method GET_CLASS_PHANTOM = Method

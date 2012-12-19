@@ -7,10 +7,11 @@ final class InstanceIndirectAccessMethodInstrumentation extends
   IndirectAccessMethodInstrumentation {
   public InstanceIndirectAccessMethodInstrumentation(
       final RewriteMessenger messenger, final ClassAndFieldModel classModel,
+      final HappensBeforeTable hbt,
       final long callSiteId, final int opcode, final IndirectAccessMethod am,
       final String owner, final String name, final String descriptor,
       final LocalVariableGenerator vg) {
-    super(messenger, classModel, callSiteId, opcode, am, owner, name, descriptor, vg);
+    super(messenger, classModel, hbt, callSiteId, opcode, am, owner, name, descriptor, vg);
   }
 
   @Override
@@ -18,6 +19,14 @@ final class InstanceIndirectAccessMethodInstrumentation extends
     poppedArgs.pushReceiver(mv);
   }
 
+  @Override
+  public void pushArgumentForEvent(final MethodVisitor mv, final int arg) {
+    /* arg == 1 is the first argument, so we do not have to correct because
+     * we have the receiver in the argument list of poppedArgs. 
+     */
+    poppedArgs.pushArgument(mv, arg);
+  }
+  
   @Override
   protected PoppedArguments getPoppedArgs(
       final String owner, final String descriptor,

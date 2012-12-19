@@ -250,31 +250,29 @@ public class DebugStore {
     return -1;
   }
 
-  public static synchronized void tryCallSucceeded(final Object receiver, final long siteId) {
-    stdOut.println("tryCallSucceeded");
-    stdOut.println("  receiver = " + objectToString(receiver));
-    stdOut.println("  siteID = " + siteId);
-  }
-
   public static synchronized void happensBeforeThread(
-      final Thread callee, long siteId) {
+      final Thread callee, final long siteId, final String typeName) {
     stdOut.println("happensBeforeThread");
     stdOut.println("  callee = " + objectToString(callee));
     stdOut.println("  siteID = " + siteId);
+    stdOut.println("  typeName = " + typeName);
   }
   
   public static synchronized void happensBeforeObject(
-      final Object object, final long siteId) {
+      final Object object, final long siteId, final String typeName) {
     stdOut.println("happensBeforeObject");
     stdOut.println("  object = " + objectToString(object));
     stdOut.println("  siteID = " + siteId);
+    stdOut.println("  typeName = " + typeName);
   }
   
   public static synchronized void happensBeforeCollection(
-      final Object collection, final Object item, final long siteId) {
+      final Object collection, final Object item, final long siteId,
+      final String typeName) {
     stdOut.println("happensBeforeCollection");
     stdOut.println("  collection = " + objectToString(collection));
     stdOut.println("  item = " + objectToString(item));
     stdOut.println("  siteID = " + siteId);
+    stdOut.println("  typeName = " + typeName);
   }
 }

@@ -6,6 +6,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
 import com.surelogic._flashlight.rewriter.ClassAndFieldModel.ClassNotFoundException;
+import com.surelogic._flashlight.rewriter.HappensBeforeTable.Result;
 import com.surelogic._flashlight.rewriter.config.Configuration;
 import com.surelogic._flashlight.rewriter.config.HappensBeforeConfig.HappensBefore;
 import com.surelogic._flashlight.rewriter.config.HappensBeforeConfig.ReturnCheck;
@@ -361,25 +362,30 @@ public abstract class MethodCall {
   
   private void instrumentHappensBefore(
       final MethodVisitor mv, final Configuration config) {
-    final HappensBefore hb = 
-        happensBefore.getHappensBefore(owner, name, descriptor);
-    if (hb != null) {
-      /* Check the return value of the method call to see if we should
-       * generate an event.
-       */
-      final Label skip = new Label();
-      final ReturnCheck check = hb.getReturnCheck();
-      if (check != ReturnCheck.NONE) {
-        // ..., [return value]
-        mv.visitInsn(Opcodes.DUP);
-        // ..., [return value], [return value]
-        mv.visitJumpInsn(check.getOpcode(), skip);
-        // ..., [return value]
+    try {
+      final Result result = 
+          happensBefore.getHappensBefore(owner, name, descriptor);
+      if (result != null) {
+        final HappensBefore hb = result.hb;
+        /* Check the return value of the method call to see if we should
+         * generate an event.
+         */
+        final Label skip = new Label();
+        final ReturnCheck check = hb.getReturnCheck();
+        if (check != ReturnCheck.NONE) {
+          // ..., [return value]
+          mv.visitInsn(Opcodes.DUP);
+          // ..., [return value], [return value]
+          mv.visitJumpInsn(check.getOpcode(), skip);
+          // ..., [return value]
+        }
+        
+        // ...
+        hb.insertInstrumentation(mv, config, this, result.isExact, hb.getQualifiedClass());
+        mv.visitLabel(skip);
       }
-      
-      // ...
-      hb.insertInstrumentation(mv, config, this);
-      mv.visitLabel(skip);
+    } catch (final ClassNotFoundException e) {
+      messenger.warning("Provided classpath is incomplete: couldn't find class " + e.getMissingClass());
     }
   }
 }

@@ -121,12 +121,21 @@ public class HappensBeforeConfig {
         @Override
         public void insertInstrumentation(
             final MethodVisitor mv, final Configuration config,
-            final MethodCall mcall) {
+            final MethodCall mcall, final boolean isExact, final String typeName) {
           // ...
           mcall.pushReceiverForEvent(mv);
           // ..., object
           mcall.pushSiteId(mv);
           // ..., object, callSiteId (long)
+          /* Push null if the call is exact, or the qualified type name if
+           * the result is not exact.
+           */
+          if (isExact) {
+            mv.visitInsn(Opcodes.ACONST_NULL);
+          } else {
+            mv.visitLdcInsn(typeName);
+          }
+          // ..., object, callSideId (long), [type name or null]
           ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.HAPPENS_BEFORE_OBJECT);
           // ...,
         }
@@ -164,7 +173,7 @@ public class HappensBeforeConfig {
         @Override
         public void insertInstrumentation(
             final MethodVisitor mv, final Configuration config,
-            final MethodCall mcall) {
+            final MethodCall mcall, final boolean isExact, final String typeName) {
           /* check if the arg pos is 0, if so, then we use the return value,
            * so we have to push the collection reference down past a copy
            * of the return value.
@@ -207,6 +216,15 @@ public class HappensBeforeConfig {
           }
           mcall.pushSiteId(mv);
           // ..., [return value], collectionRef, item, callSiteId (long)
+          /* Push null if the call is exact, or the qualified type name if
+           * the result is not exact.
+           */
+          if (isExact) {
+            mv.visitInsn(Opcodes.ACONST_NULL);
+          } else {
+            mv.visitLdcInsn(typeName);
+          }
+          // ..., [return value], collectionRef, item, callSideId (long), [type name or null]
           ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.HAPPENS_BEFORE_COLLECTION);
           // ..., [return value]
         }
@@ -489,12 +507,21 @@ public class HappensBeforeConfig {
 
         public void insertInstrumentation(
             final MethodVisitor mv, final Configuration config,
-            final MethodCall mcall) {
+            final MethodCall mcall, final boolean isExact, final String typeName) {
           // ...
           mcall.pushReceiverForEvent(mv);
           // ..., threadRef
           mcall.pushSiteId(mv);
           // ..., threadRef, callSiteId (long)
+          /* Push null if the call is exact, or the qualified type name if
+           * the result is not exact.
+           */
+          if (isExact) {
+            mv.visitInsn(Opcodes.ACONST_NULL);
+          } else {
+            mv.visitLdcInsn(typeName);
+          }
+          // ..., threadRef, callSideId (long), [type name or null]
           ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.HAPPENS_BEFORE_THREAD);
           // ...,
         }

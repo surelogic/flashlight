@@ -1263,10 +1263,6 @@ public abstract class RewriteManager {
      *         duplicate entries.
      */
     public final Map<String, Map<String, Boolean>> execute() throws AlreadyInstrumentedException {
-        /* Load and set up the happens before information. */
-        final HappensBeforeConfig hbc = HappensBeforeConfig.loadDefault();
-        happensBefore = new HappensBeforeTable(hbc);
-        
         /*
          * First pass: Scan all the classfiles to build the class and field
          * model. Record the field identifiers in the fields file.
@@ -1296,6 +1292,10 @@ public abstract class RewriteManager {
         /* Finish initializing interesting methods using the class model */
         accessMethods.initClazz(classModel);
 
+        /* Load and set up the happens before information. */
+        final HappensBeforeConfig hbc = HappensBeforeConfig.loadDefault();
+        happensBefore = new HappensBeforeTable(hbc, classModel, messenger);
+        
         /* Second pass: Instrument the classfiles */
         PrintWriter sitesOut = null;
         try {

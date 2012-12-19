@@ -138,7 +138,7 @@ final class ClassAndFieldModel {
     private final boolean isInstrumented;
     
     /**
-     * Is it an inteface?
+     * Is it an interface?
      */
     private final boolean isInterface;
     

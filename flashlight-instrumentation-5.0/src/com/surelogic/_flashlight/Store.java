@@ -640,41 +640,61 @@ public class Store {
 
     /**
      * @param typeName
-     *          <code>null</code> if the method definitely matches a 
-     *          happens before method;
-     *          otherwise it is the fully qualified type name of the type that we
-     *          need to see if callee is assignable to.
+     *            <code>null</code> if the method definitely matches a happens
+     *            before method; otherwise it is the fully qualified type name
+     *            of the type that we need to see if callee is assignable to.
      */
-    public static void happensBeforeThread(
-        final Thread callee, final long siteId, final String typeName) {
-      // fill this in
+    public static void happensBeforeThread(final Thread callee,
+            final long siteId, final String typeName) {
+        try {
+            if (typeName == null
+                    || Class.forName(typeName).isAssignableFrom(
+                            Thread.currentThread().getClass())) {
+                // TODO
+            }
+        } catch (ClassNotFoundException e) {
+            f_conf.logAProblem(e.getMessage(), e);
+        }
     }
-    
+
     /**
      * @param typeName
-     *          <code>null</code> if the method definitely matches a 
-     *          happens before method;
-     *          otherwise it is the fully qualified type name of the type that we
-     *          need to see if callee is assignable to.
+     *            <code>null</code> if the method definitely matches a happens
+     *            before method; otherwise it is the fully qualified type name
+     *            of the type that we need to see if callee is assignable to.
      */
-    public static void happensBeforeObject(
-        final Object object, final long siteId, final String typeName) {
-      // fill this in
+    public static void happensBeforeObject(final Object object,
+            final long siteId, final String typeName) {
+        try {
+            if (typeName == null
+                    || Class.forName(typeName).isAssignableFrom(
+                            object.getClass())) {
+                // TODO
+            }
+        } catch (ClassNotFoundException e) {
+            f_conf.logAProblem(e.getMessage(), e);
+        }
     }
-    
+
     /**
      * @param typeName
-     *          <code>null</code> if the method definitely matches a 
-     *          happens before method;
-     *          otherwise it is the fully qualified type name of the type that we
-     *          need to see if callee is assignable to.
+     *            <code>null</code> if the method definitely matches a happens
+     *            before method; otherwise it is the fully qualified type name
+     *            of the type that we need to see if callee is assignable to.
      */
-    public static void happensBeforeCollection(
-        final Object collection, final Object item, final long siteId,
-        final String typeName) {
-      // fill this in
+    public static void happensBeforeCollection(final Object collection,
+            final Object item, final long siteId, final String typeName) {
+        try {
+            if (typeName == null
+                    || Class.forName(typeName).isAssignableFrom(
+                            collection.getClass())) {
+                // TODO
+            }
+        } catch (ClassNotFoundException e) {
+            f_conf.logAProblem(e.getMessage(), e);
+        }
     }
-    
+
     /**
      * Stops collection of events about the instrumented program. This method
      * may be called from within the following thread contexts:

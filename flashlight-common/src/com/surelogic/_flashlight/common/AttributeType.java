@@ -13,9 +13,9 @@ public enum AttributeType implements IAttributeType {
             "parent-id"), TRACE("trace"), START_TIME("start-time"), PACKAGE(
             "package"), VALUE("value"), VISIBILITY("visibility"), MODIFIER(
             "mod"), HOSTNAME("hostname"), METHODCALLNAME("method-call-name"), METHODCALLOWNER(
-            "method-call-owner"), METHODCALLDESC("method-call-desc"), SOURCE(
-            "source"), TARGET("target"), OBJECT("object"), ISSOURCE("is-source"), ANDROID(
-            "android"), CLASS_TYPE("class-type");
+            "method-call-owner"), METHODCALLDESC("method-call-desc"), OBJECT(
+            "object"), ANDROID("android"), CLASS_TYPE("class-type"), TOTHREAD(
+            "to-thread"), COLLECTION("coll");
 
     private final String label;
 

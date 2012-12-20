@@ -118,11 +118,15 @@ public abstract class EventVisitor {
         // do nothing
     }
 
-    void visit(HappensBefore e) {
+    void visit(HappensBeforeThread e) {
         // do nothing
     }
 
     void visit(HappensBeforeObject e) {
+        // do nothing
+    }
+
+    void visit(HappensBeforeCollection e) {
         // do nothing
     }
 

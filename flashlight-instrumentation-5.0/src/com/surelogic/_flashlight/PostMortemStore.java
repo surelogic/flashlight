@@ -10,7 +10,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 
-import com.surelogic._flashlight.SitesReader.HappensBeforeSites;
 import com.surelogic._flashlight.Store.GCThread;
 import com.surelogic._flashlight.common.OutputType;
 import com.surelogic._flashlight.trace.TraceNode;
@@ -52,8 +51,6 @@ public class PostMortemStore implements StoreListener {
     private final UtilConcurrent f_rwLocks;
 
     private RunConf f_conf;
-
-    private HappensBeforeSites f_happensBefore;
 
     public static final class State {
         final ThreadPhantomReference thread;
@@ -157,7 +154,6 @@ public class PostMortemStore implements StoreListener {
                 });
         DefinitionEventGenerator defs = new DefinitionEventGenerator(conf,
                 f_outQueue);
-        f_happensBefore = defs.getHappensBefore();
         // Start Refinery and Depository
         final int refinerySize = StoreConfiguration.getRefinerySize();
         f_refinery = new Refinery(this, f_conf, defs, f_gcQueue, f_rawQueue,
@@ -237,11 +233,6 @@ public class PostMortemStore implements StoreListener {
             final long siteId) {
 
         State state = tl_withinStore.get();
-
-        // TODO Precompute site paths. Long term - have a different
-        // happens-before method
-
-        f_happensBefore.handle(siteId, receiver, before, state);
 
         /*
          * Special handling for ReadWriteLocks
@@ -558,6 +549,26 @@ public class PostMortemStore implements StoreListener {
          * TraceNode.pushTraceNode(siteId, state); } else {
          * TraceNode.popTraceNode(siteId, state); }
          */
+    }
+
+    public void happensBeforeThread(Thread callee, long siteId, String typeName) {
+        State state = tl_withinStore.get();
+        putInQueue(state, new HappensBeforeThread(Phantom.ofThread(callee),
+                siteId, state));
+    }
+
+    public void happensBeforeObject(Object object, long siteId, String typeName) {
+        State state = tl_withinStore.get();
+        putInQueue(state, new HappensBeforeObject(Phantom.ofObject(object),
+                siteId, state));
+    }
+
+    public void happensBeforeCollection(Object collection, Object item,
+            long siteId, String typeName) {
+        State state = tl_withinStore.get();
+        putInQueue(state,
+                new HappensBeforeCollection(Phantom.ofObject(collection),
+                        Phantom.ofObject(item), siteId, state));
     }
 
 }

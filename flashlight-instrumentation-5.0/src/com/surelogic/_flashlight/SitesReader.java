@@ -7,17 +7,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.StringTokenizer;
 
 import com.surelogic._flashlight.DefinitionEventGenerator.ClassInfo;
 import com.surelogic._flashlight.DefinitionEventGenerator.FieldInfo;
 import com.surelogic._flashlight.DefinitionEventGenerator.SiteInfo;
 import com.surelogic._flashlight.DefinitionEventGenerator.StringTable;
-import com.surelogic._flashlight.PostMortemStore.State;
 
 class SitesReader {
     final StringTable strings;
@@ -27,7 +24,6 @@ class SitesReader {
     String lastFileName;
     String lastClassName;
     String lastMemberName;
-    HappensBeforeSites hb;
 
     private final RunConf f_conf;
 
@@ -37,7 +33,6 @@ class SitesReader {
         fields = loadFieldInfo(strings);
         classes = new HashMap<String, List<ClassInfo>>();
         sites = new ArrayList<SiteInfo>();
-        hb = new HappensBeforeSites();
     }
 
     public void readLine(final String line) {
@@ -64,58 +59,6 @@ class SitesReader {
                 st.nextToken(), st.nextToken());
         sites.add(site);
 
-        if (site.methodClass != null) {
-            if (site.methodClass.equals("java/lang/Object")) {
-                if (site.methodName.equals("wait")) {
-                    hb.addHappensTarget(site.id);
-                } else if (site.methodName.equals("notify")) {
-                    hb.addHappensSource(site.id);
-                }
-            } else if (site.methodClass.equals("java/lang/Thread")) {
-                if (site.methodName.equals("start")) {
-                    hb.addHappensFrom(site.id);
-                } else if (site.methodName.equals("join")) {
-                    hb.addHappensTo(site.id);
-                }
-            } else if (site.methodClass
-                    .equals("java/util/concurrent/CountDownLatch")) {
-                if (site.methodName.equals("countDown")) {
-                    hb.addHappensSource(site.id);
-                } else if (site.methodName.equals("await")) {
-                    hb.addHappensTarget(site.id);
-                }
-            } else if (site.methodClass
-                    .equals("java/util/concurrent/CyclicBarrier")) {
-                if (site.methodName.equals("await")) {
-                    hb.addHappensSource(site.id);
-                    hb.addHappensTarget(site.id);
-                }
-            } else if (site.methodClass
-                    .equals("java/util/concurrent/Exchanger")) {
-                if (site.methodName.equals("exchange")) {
-                    hb.addHappensSource(site.id);
-                    hb.addHappensTarget(site.id);
-                }
-            } else if (site.methodClass
-                    .equals("java/util/concurrent/Semaphore")) {
-                if (site.methodName.equals("release")) {
-                    hb.addHappensSource(site.id);
-                } else if (site.methodName.equals("acquire")
-                        || site.methodName.equals("acquireInterruptibly")) {
-                    hb.addHappensTarget(site.id);
-                }
-            } else if (site.methodClass
-                    .startsWith("java/util/concurrent/atomic/Atomic")) {
-                if (site.methodName.startsWith("get")) {
-                    hb.addHappensTarget(site.id);
-                    if (site.methodName.equals("getAndSet")) {
-                        hb.addHappensSource(site.id);
-                    }
-                } else if (site.methodName.equals("set")) {
-                    hb.addHappensSource(site.id);
-                }
-            }
-        }
     }
 
     private void makeClassInfo() {
@@ -149,57 +92,6 @@ class SitesReader {
     public Map<String, List<FieldInfo>> getFieldsMap() {
         return fields.isEmpty() ? Collections
                 .<String, List<FieldInfo>> emptyMap() : fields;
-    }
-
-    static class HappensBeforeSites {
-
-        final Set<Long> happensFrom = new HashSet<Long>();
-        final Set<Long> happensTo = new HashSet<Long>();
-        final Set<Long> happensSource = new HashSet<Long>();
-        final Set<Long> happensTarget = new HashSet<Long>();
-
-        void addHappensFrom(long siteId) {
-            happensFrom.add(siteId);
-        }
-
-        void addHappensTo(long siteId) {
-            happensTo.add(siteId);
-        }
-
-        void addHappensSource(long siteId) {
-            happensSource.add(siteId);
-        }
-
-        void addHappensTarget(long siteId) {
-            happensTarget.add(siteId);
-        }
-
-        public void handle(long siteId, Object receiver, boolean before,
-                State state) {
-            if (before) {
-                if (happensFrom.contains(siteId)) {
-                    PostMortemStore.putInQueue(state,
-                            new HappensBefore(Phantom.ofObject(receiver),
-                                    siteId, state, true));
-                } else if (happensSource.contains(siteId)) {
-                    PostMortemStore.putInQueue(state, new HappensBeforeObject(
-                            Phantom.ofObject(receiver), siteId, state, true));
-                }
-            } else {
-                if (happensTo.contains(siteId)) {
-                    PostMortemStore.putInQueue(state,
-                            new HappensBefore(Phantom.ofObject(receiver),
-                                    siteId, state, false));
-                } else if (happensTarget.contains(siteId)) {
-                    PostMortemStore.putInQueue(state, new HappensBeforeObject(
-                            Phantom.ofObject(receiver), siteId, state, false));
-                }
-            }
-        }
-    }
-
-    public HappensBeforeSites getHappensBeforeSites() {
-        return hb;
     }
 
     private Map<String, List<FieldInfo>> loadFieldInfo(final StringTable strings) {

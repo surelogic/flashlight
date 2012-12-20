@@ -18,8 +18,6 @@ import java.util.StringTokenizer;
 import java.util.concurrent.BlockingQueue;
 import java.util.zip.GZIPInputStream;
 
-import com.surelogic._flashlight.SitesReader.HappensBeforeSites;
-
 /**
  * The DefinitionGenerator is responsible for adding static-call-location and
  * field-definition events to the output queue. It should be called by the
@@ -40,7 +38,6 @@ public class DefinitionEventGenerator {
     private final ClassVisitor classVisitor;
 
     private final Map<String, List<ClassInfo>> classDefs;
-    private final HappensBeforeSites happensBefore;
 
     DefinitionEventGenerator(final RunConf conf,
             final BlockingQueue<List<Event>> outQueue) {
@@ -49,17 +46,12 @@ public class DefinitionEventGenerator {
         classVisitor = new ClassVisitor();
         final SitesReader sitesReader = new SitesReader(f_conf);
         classDefs = loadClassInfo(sitesReader);
-        happensBefore = sitesReader.getHappensBeforeSites();
     }
 
     void handleDefinition(final Event e) {
         final ObjectDefinition od = (ObjectDefinition) e;
         final IdPhantomReference ref = od.getObject();
         ref.accept(od, classVisitor);
-    }
-
-    HappensBeforeSites getHappensBefore() {
-        return happensBefore;
     }
 
     private Map<String, List<ClassInfo>> loadClassInfo(SitesReader sitesReader) {

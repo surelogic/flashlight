@@ -292,7 +292,7 @@ public class SocketOutputStrategy extends EventVisitor {
     }
 
     @Override
-    void visit(HappensBefore e) {
+    void visit(HappensBeforeThread e) {
         if (checkConnection()) {
             f_out.visit(e);
         }
@@ -300,6 +300,13 @@ public class SocketOutputStrategy extends EventVisitor {
 
     @Override
     void visit(HappensBeforeObject e) {
+        if (checkConnection()) {
+            f_out.visit(e);
+        }
+    }
+
+    @Override
+    void visit(HappensBeforeCollection e) {
         if (checkConnection()) {
             f_out.visit(e);
         }

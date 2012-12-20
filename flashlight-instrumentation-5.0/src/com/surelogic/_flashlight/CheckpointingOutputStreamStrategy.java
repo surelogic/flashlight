@@ -194,12 +194,17 @@ public class CheckpointingOutputStreamStrategy extends EventVisitor {
     }
 
     @Override
-    void visit(HappensBefore e) {
+    void visit(HappensBeforeThread e) {
         f_out.visit(e);
     }
 
     @Override
     void visit(HappensBeforeObject e) {
+        f_out.visit(e);
+    }
+
+    @Override
+    void visit(HappensBeforeCollection e) {
         f_out.visit(e);
     }
 

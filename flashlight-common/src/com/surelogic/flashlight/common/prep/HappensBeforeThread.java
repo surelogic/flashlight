@@ -1,7 +1,6 @@
 package com.surelogic.flashlight.common.prep;
 
-import static com.surelogic._flashlight.common.AttributeType.SOURCE;
-import static com.surelogic._flashlight.common.AttributeType.TARGET;
+import static com.surelogic._flashlight.common.AttributeType.TOTHREAD;
 import static com.surelogic._flashlight.common.IdConstants.ILLEGAL_ID;
 import static com.surelogic._flashlight.common.IdConstants.ILLEGAL_RECEIVER_ID;
 
@@ -14,7 +13,7 @@ import java.util.logging.Level;
 import com.surelogic._flashlight.common.PreppedAttributes;
 import com.surelogic.common.logging.SLLogger;
 
-public class HappensBefore extends Event {
+public class HappensBeforeThread extends Event {
 
     private int count;
     private PreparedStatement f_ps;
@@ -29,8 +28,7 @@ public class HappensBefore extends Event {
         final long nanoTime = attributes.getEventTime();
         final long inThread = attributes.getThreadId();
         final long trace = attributes.getTraceId();
-        final long source = attributes.getLong(SOURCE);
-        final long target = attributes.getLong(TARGET);
+        final long target = attributes.getLong(TOTHREAD);
 
         if (nanoTime == ILLEGAL_ID || inThread == ILLEGAL_ID
                 || trace == ILLEGAL_ID || target == ILLEGAL_RECEIVER_ID) {
@@ -40,7 +38,7 @@ public class HappensBefore extends Event {
                             + getXMLElementName());
             return;
         }
-        insert(nanoTime, inThread, trace, source, target);
+        // TODO insert(nanoTime, inThread, trace, source, target);
     }
 
     private void insert(final long nanoTime, final long inThread,

@@ -30,7 +30,6 @@ public class HappensBeforeObject extends Event {
         final long inThread = attributes.getThreadId();
         final long trace = attributes.getTraceId();
         final long obj = attributes.getLong(AttributeType.OBJECT);
-        final boolean isSource = attributes.getBoolean(AttributeType.ISSOURCE);
         if (nanoTime == ILLEGAL_ID || inThread == ILLEGAL_ID
                 || trace == ILLEGAL_ID || obj == ILLEGAL_ID) {
             SLLogger.getLogger().log(
@@ -39,7 +38,7 @@ public class HappensBeforeObject extends Event {
                             + getXMLElementName());
             return;
         }
-        insert(nanoTime, inThread, trace, obj, isSource);
+        // TODO insert(nanoTime, inThread, trace, obj, isSource);
     }
 
     private void insert(final long nanoTime, final long inThread,

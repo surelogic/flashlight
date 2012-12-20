@@ -172,12 +172,17 @@ final class OutputStrategyXML extends EventVisitor {
     }
 
     @Override
-    void visit(HappensBefore e) {
+    void visit(HappensBeforeThread e) {
         o(e.toString());
     }
 
     @Override
     void visit(HappensBeforeObject e) {
+        o(e.toString());
+    }
+
+    @Override
+    void visit(HappensBeforeCollection e) {
         o(e.toString());
     }
 

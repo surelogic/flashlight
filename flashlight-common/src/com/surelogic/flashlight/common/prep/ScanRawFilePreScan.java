@@ -201,7 +201,7 @@ public final class ScanRawFilePreScan extends AbstractDataScan {
             break;
         case GARBAGECOLLECTEDOBJECT:
             break;
-        case HAPPENSBEFORE:
+        case HAPPENSBEFORETHREAD:
             break;
         case HAPPENSBEFOREOBJECT:
             break;

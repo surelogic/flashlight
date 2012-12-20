@@ -20,7 +20,7 @@ public class HappensBeforeThread extends Event {
 
     @Override
     public String getXMLElementName() {
-        return "happens-before";
+        return "happens-before-thread";
     }
 
     @Override

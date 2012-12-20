@@ -1,5 +1,7 @@
 package com.android.ide.eclipse.adt.internal.launch;
 
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_CLASS_HIERARCHY_FILE_LOC;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -547,6 +549,7 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
         final File log;
         final File fieldsFile;
         final File sitesFile;
+        final File classesFile;
         final File runDir;
         final File infoDir;
         final File portFile;
@@ -601,6 +604,7 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
             log = new File(runDir, InstrumentationConstants.FL_LOG_FILE_LOC);
             sitesFile = new File(runDir,
                     InstrumentationConstants.FL_SITES_FILE_LOC);
+            classesFile = new File(runDir, FL_CLASS_HIERARCHY_FILE_LOC);
             portFile = new File(runDir,
                     InstrumentationConstants.FL_PORT_FILE_LOC);
             PrintWriter writer = new PrintWriter(portFile);
@@ -701,7 +705,8 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
         try {
             RewriteManager rm = new AndroidRewriteManager(
                     configBuilder.getConfiguration(), new PrintWriterMessenger(
-                            logWriter), data.fieldsFile, data.sitesFile);
+                            logWriter), data.fieldsFile, data.sitesFile,
+                    data.classesFile);
             String runtimePath = getRuntimeJarPath();
             List<String> instrumentLast = LaunchHelper
                     .sanitizeInstrumentationList(data.originalClasspaths);

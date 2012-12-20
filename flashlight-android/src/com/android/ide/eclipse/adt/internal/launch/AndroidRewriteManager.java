@@ -13,8 +13,9 @@ import com.surelogic._flashlight.rewriter.config.Configuration;
 public class AndroidRewriteManager extends RewriteManager {
 
     public AndroidRewriteManager(final Configuration c,
-            final RewriteMessenger m, final File ff, final File sf) {
-        super(c, m, ff, sf);
+            final RewriteMessenger m, final File ff, final File sf,
+            final File chf) {
+        super(c, m, ff, sf, chf);
     }
 
     @Override
@@ -42,6 +43,12 @@ public class AndroidRewriteManager extends RewriteManager {
     @Override
     protected void exceptionCreatingSitesFile(final File sitesFile,
             final IOException e) {
+        throw new RuntimeException(e);
+    }
+
+    @Override
+    protected void exceptionCreatingClassHierarchyFile(File fieldsFile,
+            IOException e) {
         throw new RuntimeException(e);
     }
 

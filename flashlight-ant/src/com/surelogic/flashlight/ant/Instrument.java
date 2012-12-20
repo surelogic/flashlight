@@ -86,6 +86,11 @@ public final class Instrument extends Task {
 	private File fieldsFileName = null;
 
 	/**
+	 * The pathname of the class hierarchy database file to create.
+	 */
+	private File classHierarchyFileName = null;
+	
+	/**
 	 * The pathname of the call site database file to create.
 	 */
 	private File sitesFileName = null;
@@ -687,6 +692,13 @@ public final class Instrument extends Task {
 	public void setFieldsFile(final File fileName) {
 		fieldsFileName = fileName;
 	}
+	
+  /**
+   * Set the path of the class hierarchy database file to create.
+   */
+  public void setClassHierarchyFile(final File fileName) {
+    classHierarchyFileName = fileName;
+  }
 
 	/**
 	 * Set the path of the call site identifiers database file to create.
@@ -1033,6 +1045,10 @@ public final class Instrument extends Task {
 				throw new BuildException(
 						"No file name specified for the fields database");
 			}
+      if (classHierarchyFileName == null) {
+        throw new BuildException(
+            "No file name specified for the class hierarchy database");
+      }
 			if (sitesFileName == null) {
 				throw new BuildException(
 						"No file name specified for the sites database");
@@ -1051,6 +1067,10 @@ public final class Instrument extends Task {
 				throw new BuildException(
 						"File name specified for the fields database when jar name is also specified.");
 			}
+      if (classHierarchyFileName != null) {
+        throw new BuildException(
+            "File name specified for the class hierarchy database when jar name is also specified.");
+      }
 			if (sitesFileName != null) {
 				throw new BuildException(
 						"File name specified for the sites database when jar name is also specified.");
@@ -1146,6 +1166,10 @@ public final class Instrument extends Task {
 						InstrumentationConstants.FL_FIELDS_RESOURCE);
 				fieldsFileName.getParentFile().mkdirs();
 
+				classHierarchyFileName = new File(tmpJar,
+				    InstrumentationConstants.FL_CLASS_HIERARCHY_RESOURCE);
+				classHierarchyFileName.getParentFile().mkdirs();
+				
 				sitesFileName = new File(tmpJar,
 						InstrumentationConstants.FL_SITES_RESOURCE);
 				sitesFileName.getParentFile().mkdirs();
@@ -1203,7 +1227,7 @@ public final class Instrument extends Task {
 			logOut = new PrintWriter(logFileName);
 			final RewriteMessenger messenger = new PrintWriterMessenger(logOut);
 			final RewriteManager manager = new AntRewriteManager(config,
-					messenger, fieldsFileName, sitesFileName);
+					messenger, fieldsFileName, sitesFileName, classHierarchyFileName);
 
 			for (final String p : bootclasspath.list()) {
 				manager.addClasspathJar(new File(p));
@@ -1375,8 +1399,8 @@ public final class Instrument extends Task {
 
 	private final class AntRewriteManager extends RewriteManager {
 		public AntRewriteManager(final Configuration c,
-				final RewriteMessenger m, final File ff, final File sf) {
-			super(c, m, ff, sf);
+				final RewriteMessenger m, final File ff, final File sf, final File chf) {
+			super(c, m, ff, sf, chf);
 		}
 
 		@Override
@@ -1407,11 +1431,18 @@ public final class Instrument extends Task {
 					+ fieldsFile.getAbsolutePath(), e);
 		}
 
-		@Override
-		protected void exceptionCreatingSitesFile(final File sitesFile,
-				final IOException e) {
-			throw new BuildException("Couldn't open "
-					+ sitesFile.getAbsolutePath(), e);
-		}
+    @Override
+    protected void exceptionCreatingSitesFile(final File sitesFile,
+        final IOException e) {
+      throw new BuildException("Couldn't open "
+          + sitesFile.getAbsolutePath(), e);
+    }
+
+    @Override
+    protected void exceptionCreatingClassHierarchyFile(final File chFile,
+        final IOException e) {
+      throw new BuildException("Couldn't open "
+          + chFile.getAbsolutePath(), e);
+    }
 	}
 }

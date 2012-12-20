@@ -293,6 +293,8 @@ public class Record extends Task {
         }
         i.setFieldsFile(new File(runFolder,
                 InstrumentationConstants.FL_FIELDS_FILE_LOC));
+        i.setClassHierarchyFile(new File(runFolder,
+            InstrumentationConstants.FL_CLASS_HIERARCHY_FILE_LOC));
         i.setLogFile(new File(runFolder,
                 InstrumentationConstants.FL_LOG_FILE_LOC));
         i.setSitesFile(new File(runFolder,
@@ -369,6 +371,8 @@ public class Record extends Task {
         }
         addVMArg(InstrumentationConstants.FL_FIELDS_FILE, new File(runFolder,
                 InstrumentationConstants.FL_FIELDS_FILE_LOC).getAbsolutePath());
+        addVMArg(InstrumentationConstants.FL_CLASS_HIERARCHY_FILE, new File(runFolder,
+            InstrumentationConstants.FL_CLASS_HIERARCHY_FILE_LOC).getAbsolutePath());
         addVMArg(InstrumentationConstants.FL_SITES_FILE, new File(runFolder,
                 InstrumentationConstants.FL_SITES_FILE_LOC).getAbsolutePath());
         addVMArg(InstrumentationConstants.FL_RUN, name);

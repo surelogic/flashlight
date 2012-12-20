@@ -302,6 +302,22 @@ final class ClassAndFieldModel {
         }
       }
     }
+    
+    private void writeToFile(final PrintWriter pw) {
+      pw.print(ClassNameUtil.internal2FullyQualified(name));
+      final int numParents = (superClass == null ? 0 : 1) + interfaces.length;
+      pw.print(' ');
+      pw.print(numParents);
+      if (superClass != null) {
+        pw.print(' ');
+        pw.print(ClassNameUtil.internal2FullyQualified(superClass));
+      }
+      for (final String iName : interfaces) {
+        pw.print(' ');
+        pw.print(ClassNameUtil.internal2FullyQualified(iName));
+      }
+      pw.println();
+    }
   }
 
   
@@ -485,6 +501,18 @@ final class ClassAndFieldModel {
     
     for (final Field f : referencedFields) {
       f.writeFieldInfo(out);
+    }
+  }
+  
+  /**
+   * Write the class hierarchy to print writer
+   */
+  public void writeClassHierarchy(final PrintWriter out) {
+    // Output the number of types
+    out.println(classes.size());
+    // Output the types
+    for (final Clazz c : classes.values()) {
+      c.writeToFile(out);
     }
   }
 }

@@ -69,6 +69,11 @@ public final class InstrumentationConstants {
   public static final String FL_FIELDS_FILE_LOC = FL_INSTRUMENTATION_FOLDER_NAME + File.separator + FL_FIELDS_FILE_NAME;
   public static final String FL_FIELDS_CLASS = FL_PACKAGE + "/FieldsConf.class";
 
+  public static final String FL_CLASS_HIERARCHY_FILE = "FL_CLASS_HIERARCHY_FILE";
+  private static final String FL_CLASS_HIERARCHY_FILE_NAME = "class_hierarchy.txt.gz";
+  public static final String FL_CLASS_HIERARCHY_RESOURCE = FL_PACKAGE + "/" + FL_CLASS_HIERARCHY_FILE_NAME;
+  public static final String FL_CLASS_HIERARCHY_FILE_LOC = FL_INSTRUMENTATION_FOLDER_NAME + File.separator + FL_CLASS_HIERARCHY_FILE_NAME;
+
   public static final String FL_SITES_FILE = "FL_SITES_FILE";
   private static final String FL_SITES_FILE_NAME = "sites.txt.gz";
   public static final String FL_SITES_FILE_LOC = FL_INSTRUMENTATION_FOLDER_NAME + File.separator + FL_SITES_FILE_NAME;
@@ -105,7 +110,7 @@ public final class InstrumentationConstants {
   public static final String FL_POSTMORTEM_DEFAULT = "true";
 
   public static final String[] FL_PROPERTY_LIST = new String[] { FL_COLLECTION_TYPE, FL_CONSOLE_PORT, FL_DATE_OVERRIDE, FL_DEBUG,
-      FL_DIR, FL_FIELDS_FILE, FL_OFF, FL_NO_SPY, FL_OUTPUT_PORT, FL_OUTPUT_TYPE, FL_OUTQ_SIZE, FL_POSTMORTEM, FL_RAWQ_SIZE,
+      FL_DIR, FL_FIELDS_FILE, FL_CLASS_HIERARCHY_FILE, FL_OFF, FL_NO_SPY, FL_OUTPUT_PORT, FL_OUTPUT_TYPE, FL_OUTQ_SIZE, FL_POSTMORTEM, FL_RAWQ_SIZE,
       FL_REFINERY_OFF, FL_REFINERY_SIZE, FL_RUN, FL_RUN_FOLDER, FL_SITES_FILE, FL_ANDROID };
 
   /**

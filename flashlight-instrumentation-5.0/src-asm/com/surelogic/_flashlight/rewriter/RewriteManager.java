@@ -1148,6 +1148,7 @@ public abstract class RewriteManager {
     private final RewriteMessenger messenger;
     private final File fieldsFile;
     private final File sitesFile;
+    private final File classHierarchyFile;
 
     /**
      * The complete list of classpath entries to scan, in the order entries are
@@ -1174,11 +1175,12 @@ public abstract class RewriteManager {
     // ======================================================================
 
     public RewriteManager(final Configuration c, final RewriteMessenger m,
-            final File ff, final File sf) {
+            final File ff, final File sf, final File chf) {
         config = c;
         messenger = m;
         fieldsFile = ff;
         sitesFile = sf;
+        classHierarchyFile = chf;
 
         final InputStream defaultMethods = config.indirectUseDefault ? RewriteManager.class
                 .getResourceAsStream(DEFAULT_METHODS_FILE) : null;
@@ -1333,6 +1335,29 @@ public abstract class RewriteManager {
                 sitesOut.close();
             }
         }
+        
+        /*
+         * Output the class hierarchy;
+         */
+        PrintWriter chOut = null;
+        try {
+          classHierarchyFile.getParentFile().mkdirs();
+          if (classHierarchyFile.getName().endsWith(".gz")) {
+              @SuppressWarnings("resource") // Closed recursively when chOut is closed
+              final FileOutputStream fout = new FileOutputStream(classHierarchyFile);
+              final GZIPOutputStream gzip = new GZIPOutputStream(fout);
+              chOut = new PrintWriter(gzip);
+          } else {
+            chOut = new PrintWriter(sitesFile);
+          }
+          classModel.writeClassHierarchy(chOut);
+        } catch (final IOException e) {
+          exceptionCreatingClassHierarchyFile(classHierarchyFile, e);
+        } finally {
+          if (chOut != null) {
+            chOut.close();
+          }
+        }
 
         /*
          * Output the fields database: Done last, because instrumentation marks
@@ -1451,6 +1476,13 @@ public abstract class RewriteManager {
      */
     protected abstract void exceptionCreatingFieldsFile(File fieldsFile,
             FileNotFoundException e);
+
+    /**
+     * Called if there is an exception trying to create the class hierarchy
+     * database file.
+     */
+    protected abstract void exceptionCreatingClassHierarchyFile(File fieldsFile,
+            IOException e);
 
     /**
      * Called if there is an exception trying to create the sites database file.

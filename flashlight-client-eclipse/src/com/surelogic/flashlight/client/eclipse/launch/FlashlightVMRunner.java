@@ -7,6 +7,7 @@ import static com.surelogic._flashlight.common.InstrumentationConstants.FL_DIR;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_EXTERNAL_FOLDER_LOC;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_FIELDS_FILE;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_FIELDS_FILE_LOC;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_CLASS_HIERARCHY_FILE_LOC;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_LOG_FILE_LOC;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_NO_SPY;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_OUTPUT_TYPE;
@@ -95,6 +96,7 @@ public final class FlashlightVMRunner implements IVMRunner {
     private final File externalOutputDir;
     private final File sourceDir;
     private final File fieldsFile;
+    private final File classHierarchyFile;
     private final File sitesFile;
     private final File logFile;
 
@@ -160,6 +162,7 @@ public final class FlashlightVMRunner implements IVMRunner {
         externalOutputDir = new File(runOutputDir, FL_EXTERNAL_FOLDER_LOC);
         sourceDir = new File(runOutputDir, FL_SOURCE_FOLDER_LOC);
         fieldsFile = new File(runOutputDir, FL_FIELDS_FILE_LOC);
+        classHierarchyFile = new File(runOutputDir, FL_CLASS_HIERARCHY_FILE_LOC);
         sitesFile = new File(runOutputDir, FL_SITES_FILE_LOC);
         logFile = new File(runOutputDir, FL_LOG_FILE_LOC);
         if (!projectOutputDir.exists()) {
@@ -297,7 +300,7 @@ public final class FlashlightVMRunner implements IVMRunner {
                     .buildConfigurationFromPreferences(launch);
             final RewriteManager manager = new VMRewriteManager(
                     configBuilder.getConfiguration(), messenger, fieldsFile,
-                    sitesFile, progress);
+                    sitesFile, classHierarchyFile, progress);
             // Init the RewriteManager
             initializeRewriteManager(manager, entryMap, instrumentLast);
 
@@ -749,8 +752,8 @@ public final class FlashlightVMRunner implements IVMRunner {
 
         public VMRewriteManager(final Configuration c,
                 final RewriteMessenger m, final File ff, final File sf,
-                final SubMonitor sub) {
-            super(c, m, ff, sf);
+                final File chf, final SubMonitor sub) {
+            super(c, m, ff, sf, chf);
             progress = sub;
         }
 
@@ -809,6 +812,15 @@ public final class FlashlightVMRunner implements IVMRunner {
                     Level.SEVERE,
                     "Unable to create fields file "
                             + fieldsFile.getAbsolutePath(), e);
+        }
+
+        @Override
+        protected void exceptionCreatingClassHierarchyFile(final File chFile,
+                final IOException e) {
+            SLLogger.getLogger().log(
+                    Level.SEVERE,
+                    "Unable to create class hierarchy file "
+                            + chFile.getAbsolutePath(), e);
         }
 
         @Override

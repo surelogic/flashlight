@@ -346,6 +346,11 @@ public class InstrumentArchive extends Task {
 		fieldsFile.getParentFile().mkdirs();
 		i.setFieldsFile(fieldsFile);
 
+		File chFile = new File(classDir,
+		    InstrumentationConstants.FL_CLASS_HIERARCHY_RESOURCE);
+		chFile.getParentFile().mkdirs();
+		i.setClassHierarchyFile(chFile);
+		
 		File logFile = new File(classDir,
 				InstrumentationConstants.FL_LOG_RESOURCE);
 		logFile.getParentFile().mkdirs();

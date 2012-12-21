@@ -15,15 +15,9 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
-
-import com.surelogic._flashlight.rewriter.ByteCodeUtils;
-import com.surelogic._flashlight.rewriter.FlashlightNames;
-import com.surelogic._flashlight.rewriter.MethodCall;
 
 /**
  * This class parses happens before configuration files for Flashlight.
@@ -119,25 +113,8 @@ public class HappensBeforeConfig {
         }
 
         @Override
-        public void insertInstrumentation(
-            final MethodVisitor mv, final Configuration config,
-            final MethodCall mcall, final boolean isExact, final String typeName) {
-          // ...
-          mcall.pushReceiverForEvent(mv);
-          // ..., object
-          mcall.pushSiteId(mv);
-          // ..., object, callSiteId (long)
-          /* Push null if the call is exact, or the qualified type name if
-           * the result is not exact.
-           */
-          if (isExact) {
-            mv.visitInsn(Opcodes.ACONST_NULL);
-          } else {
-            mv.visitLdcInsn(typeName);
-          }
-          // ..., object, callSideId (long), [type name or null]
-          ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.HAPPENS_BEFORE_OBJECT);
-          // ...,
+        public void invokeSwitch(final HappensBeforeSwitch s) {
+          s.caseHappensBeforeObject(this);
         }
     }
 
@@ -171,62 +148,8 @@ public class HappensBeforeConfig {
         }
 
         @Override
-        public void insertInstrumentation(
-            final MethodVisitor mv, final Configuration config,
-            final MethodCall mcall, final boolean isExact, final String typeName) {
-          /* check if the arg pos is 0, if so, then we use the return value,
-           * so we have to push the collection reference down past a copy
-           * of the return value.
-           */
-          if (objectParam == 0) {
-            final org.objectweb.asm.Type returnType = mcall.getReturnType();
-            if (returnType.equals(org.objectweb.asm.Type.LONG_TYPE)) {
-              /* this really shouldn't ever be the case because we expect the
-               * return value to be a object reference for our purposes. But
-               * let's generate legal JVM code for this case anyhow. 
-               */
-              // ..., [return value]
-              mv.visitInsn(Opcodes.DUP2);
-              // ..., [return value], [return value]
-              mcall.pushReceiverForEvent(mv);
-              // ..., [return value], [return value], collectionRef
-              mv.visitInsn(Opcodes.DUP_X2);
-              // ..., [return value], collectionRef, [return value], collectionRef
-              mv.visitInsn(Opcodes.POP);
-              // ..., [return value], collectionRef, [return value]
-            } else {
-              // ..., [return value]
-              mv.visitInsn(Opcodes.DUP);
-              // ..., [return value], [return value]
-              mcall.pushReceiverForEvent(mv);
-              // ..., [return value], [return value], collectionRef
-              mv.visitInsn(Opcodes.SWAP);
-              // ..., [return value], collectionRef, [return value]
-            }
-          } else {
-            /* Otherwise, push the collection, reference, the site id, and
-             * the given actual argument
-             */
-
-            // ...
-            mcall.pushReceiverForEvent(mv);
-            // ..., [return value], collectionRef
-            mcall.pushArgumentForEvent(mv, objectParam);
-            // ..., [return value], collectionRef, item
-          }
-          mcall.pushSiteId(mv);
-          // ..., [return value], collectionRef, item, callSiteId (long)
-          /* Push null if the call is exact, or the qualified type name if
-           * the result is not exact.
-           */
-          if (isExact) {
-            mv.visitInsn(Opcodes.ACONST_NULL);
-          } else {
-            mv.visitLdcInsn(typeName);
-          }
-          // ..., [return value], collectionRef, item, callSideId (long), [type name or null]
-          ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.HAPPENS_BEFORE_COLLECTION);
-          // ..., [return value]
+        public void invokeSwitch(final HappensBeforeSwitch s) {
+          s.caseHappensBeforeCollection(this);
         }
     }
 
@@ -252,22 +175,16 @@ public class HappensBeforeConfig {
     }
 
     public enum ReturnCheck {
-        NONE("none", Opcodes.NOP),
-        NOT_NULL("!null", Opcodes.IFNULL),
-        NULL("null", Opcodes.IFNONNULL),
-        TRUE("true", Opcodes.IFEQ),
-        FALSE("false", Opcodes.IFNE);
+        NONE("none"),
+        NOT_NULL("!null"),
+        NULL("null"),
+        TRUE("true"),
+        FALSE("false");
 
         private final String name;
-        private final int opcode;
         
-        private ReturnCheck(final String name, final int opcode) {
+        private ReturnCheck(final String name) {
             this.name = name;
-            this.opcode = opcode;
-        }
-        
-        public int getOpcode() {
-          return opcode;
         }
 
         static ReturnCheck lookup(String key) {
@@ -498,35 +415,26 @@ public class HappensBeforeConfig {
             return method;
         }
 
+        public void invokeSwitch(final HappensBeforeSwitch s) {
+          s.caseHappensBefore(this);
+        }
+        
         @Override
         public String toString() {
             return "HappensBefore [qualifiedClass=" + qualifiedClass
                     + ", method=" + method + ", signature=" + signature
                     + ", type=" + type + ", returnCheck=" + returnCheck + "]";
         }
-
-        public void insertInstrumentation(
-            final MethodVisitor mv, final Configuration config,
-            final MethodCall mcall, final boolean isExact, final String typeName) {
-          // ...
-          mcall.pushReceiverForEvent(mv);
-          // ..., threadRef
-          mcall.pushSiteId(mv);
-          // ..., threadRef, callSiteId (long)
-          /* Push null if the call is exact, or the qualified type name if
-           * the result is not exact.
-           */
-          if (isExact) {
-            mv.visitInsn(Opcodes.ACONST_NULL);
-          } else {
-            mv.visitLdcInsn(typeName);
-          }
-          // ..., threadRef, callSideId (long), [type name or null]
-          ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.HAPPENS_BEFORE_THREAD);
-          // ...,
-        }
     }
 
+    public static interface HappensBeforeSwitch {
+      public void caseHappensBefore(HappensBefore hb);
+      public void caseHappensBeforeObject(HappensBeforeObject hb);
+      public void caseHappensBeforeCollection(HappensBeforeCollection hb);
+    }
+    
+    
+    
     @Override
     public String toString() {
         return "HappensBeforeConfig [collections=" + collections + ", objects="

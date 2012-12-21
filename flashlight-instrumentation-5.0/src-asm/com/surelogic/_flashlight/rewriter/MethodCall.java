@@ -9,6 +9,9 @@ import com.surelogic._flashlight.rewriter.ClassAndFieldModel.ClassNotFoundExcept
 import com.surelogic._flashlight.rewriter.HappensBeforeTable.Result;
 import com.surelogic._flashlight.rewriter.config.Configuration;
 import com.surelogic._flashlight.rewriter.config.HappensBeforeConfig.HappensBefore;
+import com.surelogic._flashlight.rewriter.config.HappensBeforeConfig.HappensBeforeCollection;
+import com.surelogic._flashlight.rewriter.config.HappensBeforeConfig.HappensBeforeObject;
+import com.surelogic._flashlight.rewriter.config.HappensBeforeConfig.HappensBeforeSwitch;
 import com.surelogic._flashlight.rewriter.config.HappensBeforeConfig.ReturnCheck;
 
 /**
@@ -373,19 +376,153 @@ public abstract class MethodCall {
         final Label skip = new Label();
         final ReturnCheck check = hb.getReturnCheck();
         if (check != ReturnCheck.NONE) {
+          final int opCode;
+          switch (check) {
+          case NOT_NULL:
+            opCode = Opcodes.IFNULL;
+            break;
+          case NULL:
+            opCode = Opcodes.IFNONNULL;
+            break;
+          case TRUE:
+            opCode = Opcodes.IFEQ;
+            break;
+          case FALSE:
+            opCode = Opcodes.IFNE;
+            break;
+          default:
+              opCode = Opcodes.NOP;
+          }
+          
           // ..., [return value]
           mv.visitInsn(Opcodes.DUP);
           // ..., [return value], [return value]
-          mv.visitJumpInsn(check.getOpcode(), skip);
+          mv.visitJumpInsn(opCode, skip);
           // ..., [return value]
         }
         
         // ...
-        hb.insertInstrumentation(mv, config, this, result.isExact, hb.getQualifiedClass());
+        hb.invokeSwitch(new InstrumentationSwitch(this, mv, config, result.isExact));
+//        hb.insertInstrumentation(mv, config, this, result.isExact, hb.getQualifiedClass());
         mv.visitLabel(skip);
       }
     } catch (final ClassNotFoundException e) {
       messenger.warning("Provided classpath is incomplete: couldn't find class " + e.getMissingClass());
     }
+  }
+  
+  private static final class InstrumentationSwitch implements HappensBeforeSwitch {
+    private final MethodCall mcall;
+    private final MethodVisitor mv;
+    private Configuration config;
+    private final boolean isExact;
+    
+    
+    
+    public InstrumentationSwitch(final MethodCall mcall,
+        final MethodVisitor mv, final Configuration config,
+        final boolean isExact) {
+      this.mcall = mcall;
+      this.mv = mv;
+      this.config = config;
+      this.isExact = isExact;
+    }
+    
+    
+    
+    public void caseHappensBefore(final HappensBefore hb) {
+      // ...
+      mcall.pushReceiverForEvent(mv);
+      // ..., threadRef
+      mcall.pushSiteId(mv);
+      // ..., threadRef, callSiteId (long)
+      /* Push null if the call is exact, or the qualified type name if
+       * the result is not exact.
+       */
+      if (isExact) {
+        mv.visitInsn(Opcodes.ACONST_NULL);
+      } else {
+        mv.visitLdcInsn(hb.getQualifiedClass());
+      }
+      // ..., threadRef, callSideId (long), [type name or null]
+      ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.HAPPENS_BEFORE_THREAD);
+      // ...,
+    }
+
+    public void caseHappensBeforeObject(final HappensBeforeObject hb) {
+      // ...
+      mcall.pushReceiverForEvent(mv);
+      // ..., object
+      mcall.pushSiteId(mv);
+      // ..., object, callSiteId (long)
+      /* Push null if the call is exact, or the qualified type name if
+       * the result is not exact.
+       */
+      if (isExact) {
+        mv.visitInsn(Opcodes.ACONST_NULL);
+      } else {
+        mv.visitLdcInsn(hb.getQualifiedClass());
+      }
+      // ..., object, callSideId (long), [type name or null]
+      ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.HAPPENS_BEFORE_OBJECT);
+      // ...,
+    }
+
+    public void caseHappensBeforeCollection(final HappensBeforeCollection hb) {
+      /* check if the arg pos is 0, if so, then we use the return value,
+       * so we have to push the collection reference down past a copy
+       * of the return value.
+       */
+      if (hb.getObjectParam() == 0) {
+        final org.objectweb.asm.Type returnType = mcall.getReturnType();
+        if (returnType.equals(org.objectweb.asm.Type.LONG_TYPE)) {
+          /* this really shouldn't ever be the case because we expect the
+           * return value to be a object reference for our purposes. But
+           * let's generate legal JVM code for this case anyhow. 
+           */
+          // ..., [return value]
+          mv.visitInsn(Opcodes.DUP2);
+          // ..., [return value], [return value]
+          mcall.pushReceiverForEvent(mv);
+          // ..., [return value], [return value], collectionRef
+          mv.visitInsn(Opcodes.DUP_X2);
+          // ..., [return value], collectionRef, [return value], collectionRef
+          mv.visitInsn(Opcodes.POP);
+          // ..., [return value], collectionRef, [return value]
+        } else {
+          // ..., [return value]
+          mv.visitInsn(Opcodes.DUP);
+          // ..., [return value], [return value]
+          mcall.pushReceiverForEvent(mv);
+          // ..., [return value], [return value], collectionRef
+          mv.visitInsn(Opcodes.SWAP);
+          // ..., [return value], collectionRef, [return value]
+        }
+      } else {
+        /* Otherwise, push the collection, reference, the site id, and
+         * the given actual argument
+         */
+
+        // ...
+        mcall.pushReceiverForEvent(mv);
+        // ..., [return value], collectionRef
+        mcall.pushArgumentForEvent(mv, hb.getObjectParam());
+        // ..., [return value], collectionRef, item
+      }
+      mcall.pushSiteId(mv);
+      // ..., [return value], collectionRef, item, callSiteId (long)
+      /* Push null if the call is exact, or the qualified type name if
+       * the result is not exact.
+       */
+      if (isExact) {
+        mv.visitInsn(Opcodes.ACONST_NULL);
+      } else {
+        mv.visitLdcInsn(hb.getQualifiedClass());
+      }
+      // ..., [return value], collectionRef, item, callSideId (long), [type name or null]
+      ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.HAPPENS_BEFORE_COLLECTION);
+      // ..., [return value]
+    }
+    
   }
 }

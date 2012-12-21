@@ -5,14 +5,14 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
+import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBefore;
+import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBeforeCollection;
+import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBeforeObject;
+import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBeforeSwitch;
+import com.surelogic._flashlight.common.HappensBeforeConfig.ReturnCheck;
 import com.surelogic._flashlight.rewriter.ClassAndFieldModel.ClassNotFoundException;
 import com.surelogic._flashlight.rewriter.HappensBeforeTable.Result;
 import com.surelogic._flashlight.rewriter.config.Configuration;
-import com.surelogic._flashlight.rewriter.config.HappensBeforeConfig.HappensBefore;
-import com.surelogic._flashlight.rewriter.config.HappensBeforeConfig.HappensBeforeCollection;
-import com.surelogic._flashlight.rewriter.config.HappensBeforeConfig.HappensBeforeObject;
-import com.surelogic._flashlight.rewriter.config.HappensBeforeConfig.HappensBeforeSwitch;
-import com.surelogic._flashlight.rewriter.config.HappensBeforeConfig.ReturnCheck;
 
 /**
  * Abstract representation of a method call that needs to be instrumented.
@@ -415,7 +415,7 @@ public abstract class MethodCall {
     private final MethodCall mcall;
     private final MethodVisitor mv;
     private Configuration config;
-    private final boolean isExact;
+    private final boolean isExact; 
     
     
     

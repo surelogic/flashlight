@@ -34,7 +34,7 @@ public class HappensBeforeCollection extends HappensBefore {
                     "Missing obj or coll in " + getXMLElementName());
             return;
         }
-        HBType type = f_hbConfig.getCollectionHbType(site);
+        HBType type = f_hbConfig.getHBType(site);
         if (type.isSource()) {
             insert(nanoTime, inThread, trace, obj, true);
         }

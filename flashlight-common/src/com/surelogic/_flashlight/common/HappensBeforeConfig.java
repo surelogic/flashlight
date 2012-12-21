@@ -1,4 +1,4 @@
-package com.surelogic._flashlight.rewriter.config;
+package com.surelogic._flashlight.common;
 
 import java.io.File;
 import java.io.IOException;

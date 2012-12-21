@@ -15,9 +15,6 @@ import java.util.regex.Pattern;
 
 import com.surelogic._flashlight.common.HappensBeforeConfig;
 import com.surelogic._flashlight.common.HappensBeforeConfig.HBType;
-import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBefore;
-import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBeforeCollection;
-import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBeforeObject;
 
 public class ClassHierarchy {
 
@@ -47,13 +44,13 @@ public class ClassHierarchy {
         final String className;
         final Set<ClassNode> parents;
         final Set<ClassNode> children;
-        final List<HappensBefore> hbs;
+        final List<HappensBeforeConfig.HappensBefore> hbs;
 
         ClassNode(String name) {
             className = name;
             parents = new HashSet<ClassNode>();
             children = new HashSet<ClassNode>();
-            hbs = new ArrayList<HappensBefore>();
+            hbs = new ArrayList<HappensBeforeConfig.HappensBefore>();
         }
 
     }
@@ -95,19 +92,23 @@ public class ClassHierarchy {
 
     void loadHappensBefore() {
         HappensBeforeConfig config = HappensBeforeConfig.loadDefault();
-        Map<String, List<HappensBefore>> threads = config.getThreads();
-        for (Entry<String, List<HappensBefore>> e : threads.entrySet()) {
+        Map<String, List<HappensBeforeConfig.HappensBefore>> threads = config
+                .getThreads();
+        for (Entry<String, List<HappensBeforeConfig.HappensBefore>> e : threads
+                .entrySet()) {
             ClassNode node = nodes.get(e.getKey());
             node.hbs.addAll(e.getValue());
         }
-        Map<String, List<HappensBeforeObject>> objects = config.getObjects();
-        for (Entry<String, List<HappensBeforeObject>> e : objects.entrySet()) {
+        Map<String, List<HappensBeforeConfig.HappensBeforeObject>> objects = config
+                .getObjects();
+        for (Entry<String, List<HappensBeforeConfig.HappensBeforeObject>> e : objects
+                .entrySet()) {
             ClassNode node = nodes.get(e.getKey());
             node.hbs.addAll(e.getValue());
         }
-        Map<String, List<HappensBeforeCollection>> collections = config
+        Map<String, List<HappensBeforeConfig.HappensBeforeCollection>> collections = config
                 .getCollections();
-        for (Entry<String, List<HappensBeforeCollection>> e : collections
+        for (Entry<String, List<HappensBeforeConfig.HappensBeforeCollection>> e : collections
                 .entrySet()) {
             ClassNode node = nodes.get(e.getKey());
             node.hbs.addAll(e.getValue());
@@ -147,40 +148,56 @@ public class ClassHierarchy {
     public HBType getHBType(long site) {
         MethodCall call = methodCalls.get(site);
         ClassNode node = nodes.get(call.methodCallClass);
+        HBType type = checkNode(call, node);
+        if (type == null) {
+            type = checkParents(call, node);
+            if (type == null) {
+                type = checkChildren(call, node);
+            }
+        }
+        return type;
+    }
 
+    HBType checkParents(MethodCall call, ClassNode node) {
+        for (ClassNode parent : node.parents) {
+            HBType type = checkNode(call, parent);
+            if (type != null) {
+                return type;
+            }
+        }
+        for (ClassNode parent : node.parents) {
+            HBType type = checkParents(call, parent);
+            if (type != null) {
+                return type;
+            }
+        }
+        return null;
+    }
+
+    HBType checkChildren(MethodCall call, ClassNode node) {
+        for (ClassNode parent : node.parents) {
+            HBType type = checkNode(call, parent);
+            if (type != null) {
+                return type;
+            }
+        }
+        for (ClassNode parent : node.parents) {
+            HBType type = checkParents(call, parent);
+            if (type != null) {
+                return type;
+            }
+        }
         return null;
     }
 
     HBType checkNode(MethodCall call, ClassNode node) {
-        for (HappensBefore hb : node.hbs) {
+        for (HappensBeforeConfig.HappensBefore hb : node.hbs) {
             if (hb.getMethod().equals(call.methodCallName)
                     && call.methodCallDesc.startsWith(hb
                             .getPartialMethodDescriptor())) {
                 return hb.getType();
             }
         }
-        return null;
-    }
-
-    /**
-     * For a happens-before-thread relationship, whether the originating thread
-     * is the source thread.
-     * 
-     * @param site
-     * @return
-     */
-    public HBType getThreadHbType(long site) {
-        MethodCall call = methodCalls.get(site);
-        ClassNode node = nodes.get(call.methodCallClass);
-
-        return null;
-    }
-
-    public HBType getObjectHbType(long site) {
-        return null;
-    }
-
-    public HBType getCollectionHbType(long site) {
         return null;
     }
 

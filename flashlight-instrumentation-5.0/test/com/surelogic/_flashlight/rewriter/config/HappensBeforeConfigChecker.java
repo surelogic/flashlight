@@ -8,9 +8,10 @@ import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.surelogic._flashlight.rewriter.config.HappensBeforeConfig.HappensBefore;
-import com.surelogic._flashlight.rewriter.config.HappensBeforeConfig.HappensBeforeCollection;
-import com.surelogic._flashlight.rewriter.config.HappensBeforeConfig.HappensBeforeObject;
+import com.surelogic._flashlight.common.HappensBeforeConfig;
+import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBefore;
+import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBeforeCollection;
+import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBeforeObject;
 
 public class HappensBeforeConfigChecker {
 

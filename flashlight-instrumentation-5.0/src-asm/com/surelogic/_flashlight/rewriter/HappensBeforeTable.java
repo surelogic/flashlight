@@ -5,10 +5,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.surelogic._flashlight.common.HappensBeforeConfig;
+import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBefore;
 import com.surelogic._flashlight.rewriter.ClassAndFieldModel.ClassNotFoundException;
 import com.surelogic._flashlight.rewriter.ClassAndFieldModel.Clazz;
-import com.surelogic._flashlight.rewriter.config.HappensBeforeConfig;
-import com.surelogic._flashlight.rewriter.config.HappensBeforeConfig.HappensBefore;
 
 final class HappensBeforeTable {
   private final ClassAndFieldModel classModel;

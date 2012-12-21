@@ -36,7 +36,7 @@ public class HappensBeforeThread extends HappensBefore {
                     "Missing to-Thread in " + getXMLElementName());
             return;
         }
-        HBType type = f_hbConfig.getThreadHbType(site);
+        HBType type = f_hbConfig.getHBType(site);
         if (type.isFrom()) {
             insert(nanoTime, inThread, trace, inThread, toThread);
 

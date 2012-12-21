@@ -33,8 +33,8 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 
 import com.surelogic._flashlight.common.FileChannelOutputStream;
+import com.surelogic._flashlight.common.HappensBeforeConfig;
 import com.surelogic._flashlight.rewriter.config.Configuration;
-import com.surelogic._flashlight.rewriter.config.HappensBeforeConfig;
 
 public abstract class RewriteManager {
     // ======================================================================

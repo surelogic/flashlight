@@ -38,7 +38,7 @@ public class HappensBeforeObject extends HappensBefore {
                     "Missing obj in " + getXMLElementName());
             return;
         }
-        HBType type = f_hbConfig.getObjectHbType(site);
+        HBType type = f_hbConfig.getHBType(site);
         if (type.isSource()) {
             insert(nanoTime, inThread, trace, obj, true);
         }

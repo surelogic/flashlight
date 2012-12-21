@@ -650,7 +650,9 @@ public class Store {
             if (typeName == null
                     || Class.forName(typeName).isAssignableFrom(
                             Thread.currentThread().getClass())) {
-                // TODO
+                for (StoreListener l : f_listeners) {
+                    l.happensBeforeThread(callee, siteId, typeName);
+                }
             }
         } catch (ClassNotFoundException e) {
             f_conf.logAProblem(e.getMessage(), e);
@@ -669,7 +671,9 @@ public class Store {
             if (typeName == null
                     || Class.forName(typeName).isAssignableFrom(
                             object.getClass())) {
-                // TODO
+                for (StoreListener l : f_listeners) {
+                    l.happensBeforeObject(object, siteId, typeName);
+                }
             }
         } catch (ClassNotFoundException e) {
             f_conf.logAProblem(e.getMessage(), e);
@@ -688,7 +692,10 @@ public class Store {
             if (typeName == null
                     || Class.forName(typeName).isAssignableFrom(
                             collection.getClass())) {
-                // TODO
+                for (StoreListener l : f_listeners) {
+                    l.happensBeforeCollection(collection, item, siteId,
+                            typeName);
+                }
             }
         } catch (ClassNotFoundException e) {
             f_conf.logAProblem(e.getMessage(), e);

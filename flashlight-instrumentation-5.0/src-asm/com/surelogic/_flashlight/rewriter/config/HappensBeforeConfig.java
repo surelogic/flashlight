@@ -114,7 +114,7 @@ public class HappensBeforeConfig {
 
         @Override
         public void invokeSwitch(final HappensBeforeSwitch s) {
-          s.caseHappensBeforeObject(this);
+            s.caseHappensBeforeObject(this);
         }
     }
 
@@ -149,11 +149,11 @@ public class HappensBeforeConfig {
 
         @Override
         public void invokeSwitch(final HappensBeforeSwitch s) {
-          s.caseHappensBeforeCollection(this);
+            s.caseHappensBeforeCollection(this);
         }
     }
 
-    enum HBType {
+    public static enum HBType {
         SOURCE("source"), TARGET("target"), SOURCEANDTARGET("source-and-target"), FROM(
                 "from"), TO("to"), FROMANDTO("from-and-to");
 
@@ -172,17 +172,30 @@ public class HappensBeforeConfig {
             return null;
         }
 
+        public boolean isFrom() {
+            return this == FROM || this == FROMANDTO;
+        }
+
+        public boolean isTo() {
+            return this == TO || this == FROMANDTO;
+        }
+
+        public boolean isSource() {
+            return this == SOURCE || this == SOURCEANDTARGET;
+        }
+
+        public boolean isTarget() {
+            return this == TARGET || this == SOURCEANDTARGET;
+        }
+
     }
 
     public enum ReturnCheck {
-        NONE("none"),
-        NOT_NULL("!null"),
-        NULL("null"),
-        TRUE("true"),
-        FALSE("false");
+        NONE("none"), NOT_NULL("!null"), NULL("null"), TRUE("true"), FALSE(
+                "false");
 
         private final String name;
-        
+
         private ReturnCheck(final String name) {
             this.name = name;
         }
@@ -416,9 +429,9 @@ public class HappensBeforeConfig {
         }
 
         public void invokeSwitch(final HappensBeforeSwitch s) {
-          s.caseHappensBefore(this);
+            s.caseHappensBefore(this);
         }
-        
+
         @Override
         public String toString() {
             return "HappensBefore [qualifiedClass=" + qualifiedClass
@@ -428,13 +441,13 @@ public class HappensBeforeConfig {
     }
 
     public static interface HappensBeforeSwitch {
-      public void caseHappensBefore(HappensBefore hb);
-      public void caseHappensBeforeObject(HappensBeforeObject hb);
-      public void caseHappensBeforeCollection(HappensBeforeCollection hb);
+        public void caseHappensBefore(HappensBefore hb);
+
+        public void caseHappensBeforeObject(HappensBeforeObject hb);
+
+        public void caseHappensBeforeCollection(HappensBeforeCollection hb);
     }
-    
-    
-    
+
     @Override
     public String toString() {
         return "HappensBeforeConfig [collections=" + collections + ", objects="

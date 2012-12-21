@@ -2,7 +2,6 @@ package com.surelogic.flashlight.common.prep;
 
 import static com.surelogic._flashlight.common.AttributeType.TOTHREAD;
 import static com.surelogic._flashlight.common.IdConstants.ILLEGAL_ID;
-import static com.surelogic._flashlight.common.IdConstants.ILLEGAL_RECEIVER_ID;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -10,10 +9,15 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.logging.Level;
 
+import com.surelogic._flashlight.common.HappensBeforeConfig.HBType;
 import com.surelogic._flashlight.common.PreppedAttributes;
 import com.surelogic.common.logging.SLLogger;
 
-public class HappensBeforeThread extends Event {
+public class HappensBeforeThread extends HappensBefore {
+
+    public HappensBeforeThread(ClassHierarchy hbConfig) {
+        super(hbConfig);
+    }
 
     private int count;
     private PreparedStatement f_ps;
@@ -24,21 +28,23 @@ public class HappensBeforeThread extends Event {
     }
 
     @Override
-    public void parse(PreppedAttributes attributes) throws SQLException {
-        final long nanoTime = attributes.getEventTime();
-        final long inThread = attributes.getThreadId();
-        final long trace = attributes.getTraceId();
-        final long target = attributes.getLong(TOTHREAD);
-
-        if (nanoTime == ILLEGAL_ID || inThread == ILLEGAL_ID
-                || trace == ILLEGAL_ID || target == ILLEGAL_RECEIVER_ID) {
-            SLLogger.getLogger().log(
-                    Level.SEVERE,
-                    "Missing nano-time, thread, site, or field in "
-                            + getXMLElementName());
+    void parseRest(PreppedAttributes attributes, long nanoTime, long inThread,
+            long trace, long site) throws SQLException {
+        final long toThread = attributes.getLong(TOTHREAD);
+        if (toThread == ILLEGAL_ID) {
+            SLLogger.getLogger().log(Level.SEVERE,
+                    "Missing to-Thread in " + getXMLElementName());
             return;
         }
-        // TODO insert(nanoTime, inThread, trace, source, target);
+        HBType type = f_hbConfig.getThreadHbType(site);
+        if (type.isFrom()) {
+            insert(nanoTime, inThread, trace, inThread, toThread);
+
+        }
+        if (type.isTo()) {
+            insert(nanoTime, inThread, trace, toThread, inThread);
+        }
+
     }
 
     private void insert(final long nanoTime, final long inThread,
@@ -76,4 +82,5 @@ public class HappensBeforeThread extends Event {
         f_ps.close();
         super.flush(endTime);
     }
+
 }

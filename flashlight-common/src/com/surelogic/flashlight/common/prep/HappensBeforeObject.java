@@ -9,10 +9,15 @@ import java.sql.Timestamp;
 import java.util.logging.Level;
 
 import com.surelogic._flashlight.common.AttributeType;
+import com.surelogic._flashlight.common.HappensBeforeConfig.HBType;
 import com.surelogic._flashlight.common.PreppedAttributes;
 import com.surelogic.common.logging.SLLogger;
 
-public class HappensBeforeObject extends Event {
+public class HappensBeforeObject extends HappensBefore {
+
+    public HappensBeforeObject(ClassHierarchy hbConfig) {
+        super(hbConfig);
+    }
 
     private int sourceCount;
     private int targetCount;
@@ -25,20 +30,21 @@ public class HappensBeforeObject extends Event {
     }
 
     @Override
-    public void parse(PreppedAttributes attributes) throws SQLException {
-        final long nanoTime = attributes.getEventTime();
-        final long inThread = attributes.getThreadId();
-        final long trace = attributes.getTraceId();
+    void parseRest(PreppedAttributes attributes, long nanoTime, long inThread,
+            long trace, long site) throws SQLException {
         final long obj = attributes.getLong(AttributeType.OBJECT);
-        if (nanoTime == ILLEGAL_ID || inThread == ILLEGAL_ID
-                || trace == ILLEGAL_ID || obj == ILLEGAL_ID) {
-            SLLogger.getLogger().log(
-                    Level.SEVERE,
-                    "Missing nano-time, thread, site, or field in "
-                            + getXMLElementName());
+        if (obj == ILLEGAL_ID) {
+            SLLogger.getLogger().log(Level.SEVERE,
+                    "Missing obj in " + getXMLElementName());
             return;
         }
-        // TODO insert(nanoTime, inThread, trace, obj, isSource);
+        HBType type = f_hbConfig.getObjectHbType(site);
+        if (type.isSource()) {
+            insert(nanoTime, inThread, trace, obj, true);
+        }
+        if (type.isTarget()) {
+            insert(nanoTime, inThread, trace, obj, false);
+        }
     }
 
     private void insert(final long nanoTime, final long inThread,
@@ -92,4 +98,5 @@ public class HappensBeforeObject extends Event {
         f_targetPs.close();
         super.flush(endTime);
     }
+
 }

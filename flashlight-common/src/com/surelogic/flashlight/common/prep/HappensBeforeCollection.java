@@ -9,32 +9,43 @@ import java.sql.Timestamp;
 import java.util.logging.Level;
 
 import com.surelogic._flashlight.common.AttributeType;
+import com.surelogic._flashlight.common.HappensBeforeConfig.HBType;
 import com.surelogic._flashlight.common.PreppedAttributes;
 import com.surelogic.common.logging.SLLogger;
 
-public class HappensBeforeCollection extends Event {
+public class HappensBeforeCollection extends HappensBefore {
 
     private int sourceCount;
     private int targetCount;
     private PreparedStatement f_sourcePs;
     private PreparedStatement f_targetPs;
 
+    public HappensBeforeCollection(ClassHierarchy ch) {
+        super(ch);
+    }
+
     @Override
-    public void parse(PreppedAttributes attributes) throws SQLException {
-        final long nanoTime = attributes.getEventTime();
-        final long inThread = attributes.getThreadId();
-        final long trace = attributes.getTraceId();
+    void parseRest(PreppedAttributes attributes, long nanoTime, long inThread,
+            long trace, long site) throws SQLException {
         final long coll = attributes.getLong(AttributeType.COLLECTION);
         final long obj = attributes.getLong(AttributeType.OBJECT);
-        if (nanoTime == ILLEGAL_ID || inThread == ILLEGAL_ID
-                || trace == ILLEGAL_ID || obj == ILLEGAL_ID) {
-            SLLogger.getLogger().log(
-                    Level.SEVERE,
-                    "Missing nano-time, thread, site, or field in "
-                            + getXMLElementName());
+        if (obj == ILLEGAL_ID || coll == ILLEGAL_ID) {
+            SLLogger.getLogger().log(Level.SEVERE,
+                    "Missing obj or coll in " + getXMLElementName());
             return;
         }
-        // TODO insert(nanoTime, inThread, trace, obj, isSource);
+        HBType type = f_hbConfig.getCollectionHbType(site);
+        if (type.isSource()) {
+            insert(nanoTime, inThread, trace, obj, true);
+        }
+        if (type.isTarget()) {
+            insert(nanoTime, inThread, trace, obj, false);
+        }
+    }
+
+    @Override
+    public void parse(PreppedAttributes attributes) throws SQLException {
+
     }
 
     private void insert(final long nanoTime, final long inThread,

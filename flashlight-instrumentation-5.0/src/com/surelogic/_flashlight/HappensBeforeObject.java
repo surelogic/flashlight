@@ -6,11 +6,13 @@ import com.surelogic._flashlight.common.AttributeType;
 public class HappensBeforeObject extends TracedEvent {
 
     private final long obj;
+    private final long siteId;
 
     HappensBeforeObject(final ObjectPhantomReference obj, long siteId,
             State state) {
         super(siteId, state);
         this.obj = obj.getId();
+        this.siteId = siteId;
     }
 
     @Override
@@ -28,12 +30,9 @@ public class HappensBeforeObject extends TracedEvent {
         b.append("<happens-before-obj");
         addNanoTime(b);
         addThread(b);
-        addObj(b);
+        Entities.addAttribute(AttributeType.SITE_ID.label(), siteId, b);
+        Entities.addAttribute(AttributeType.OBJECT.label(), obj, b);
         b.append("/>");
         return b.toString();
-    }
-
-    private void addObj(StringBuilder b) {
-        Entities.addAttribute(AttributeType.OBJECT.label(), obj, b);
     }
 }

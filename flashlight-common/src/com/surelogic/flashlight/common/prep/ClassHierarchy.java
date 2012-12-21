@@ -2,8 +2,9 @@ package com.surelogic.flashlight.common.prep;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -12,6 +13,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.zip.GZIPInputStream;
 
 import com.surelogic._flashlight.common.HappensBeforeConfig;
 import com.surelogic._flashlight.common.HappensBeforeConfig.HBType;
@@ -29,11 +31,11 @@ public class ClassHierarchy {
         String methodCallName;
         String methodCallDesc;
 
-        MethodCall(long site, String methodCallClass, String methodCallName,
+        MethodCall(long site, String methodCallName, String methodCallClass,
                 String methodCallDesc) {
             super();
             this.site = site;
-            this.methodCallClass = methodCallClass;
+            this.methodCallClass = methodCallClass.replaceAll("/", ".");
             this.methodCallName = methodCallName;
             this.methodCallDesc = methodCallDesc;
         }
@@ -74,18 +76,21 @@ public class ClassHierarchy {
     }
 
     void loadNodes(BufferedReader reader) throws IOException {
-        for (String line = reader.readLine(); line != null; line = reader
-                .readLine()) {
-            String[] elems = DELIM.split(line);
-            ClassNode node = ensureNode(elems[0]);
-            int children = Integer.parseInt(elems[1]);
-            if (children != elems.length + 2) {
-                throw new IllegalArgumentException("Invalid file format.");
-            }
-            for (int i = 2; i < elems.length; i++) {
-                ClassNode parent = ensureNode(elems[i]);
-                node.parents.add(parent);
-                parent.children.add(node);
+        String line = reader.readLine();
+        if (line != null) {
+            int count = Integer.parseInt(line);
+            for (int i = 0; i < count; i++) {
+                String[] elems = DELIM.split(reader.readLine());
+                ClassNode node = ensureNode(elems[0]);
+                int children = Integer.parseInt(elems[1]);
+                if (children != elems.length - 2) {
+                    throw new IllegalArgumentException("Invalid file format.");
+                }
+                for (int j = 2; j < elems.length; j++) {
+                    ClassNode parent = ensureNode(elems[j]);
+                    node.parents.add(parent);
+                    parent.children.add(node);
+                }
             }
         }
     }
@@ -121,17 +126,19 @@ public class ClassHierarchy {
             String[] elems = DELIM.split(line);
             long id = Integer.parseInt(elems[0]);
             methodCalls.put(id,
-                    new MethodCall(id, elems[5].replaceAll("/", "."), elems[6],
-                            elems[7]));
+                    new MethodCall(id, elems[5], elems[6], elems[7]));
         }
     }
 
     public static ClassHierarchy load(File classFile, File sitesFile) {
         BufferedReader classReader, sitesReader;
         try {
-            classReader = new BufferedReader(new FileReader(classFile));
+
+            classReader = new BufferedReader(new InputStreamReader(
+                    new GZIPInputStream(new FileInputStream(classFile))));
             try {
-                sitesReader = new BufferedReader(new FileReader(sitesFile));
+                sitesReader = new BufferedReader(new InputStreamReader(
+                        new GZIPInputStream(new FileInputStream(sitesFile))));
                 try {
                     return new ClassHierarchy(classReader, sitesReader);
                 } finally {
@@ -148,6 +155,10 @@ public class ClassHierarchy {
     public HBType getHBType(long site) {
         MethodCall call = methodCalls.get(site);
         ClassNode node = nodes.get(call.methodCallClass);
+        if (node == null) {
+            throw new IllegalStateException(String.format(
+                    "Site %d does not match a valid class node.", site));
+        }
         HBType type = checkNode(call, node);
         if (type == null) {
             type = checkParents(call, node);

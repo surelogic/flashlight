@@ -534,7 +534,7 @@ public class HappensBeforeConfig {
                         .currentThread()
                         .getContextClassLoader()
                         .getResourceAsStream(
-                                "com/surelogic/_flashlight/rewriter/config/happens-before-config.xml"));
+                                "com/surelogic/_flashlight/common/happens-before-config.xml"));
     }
 
 }

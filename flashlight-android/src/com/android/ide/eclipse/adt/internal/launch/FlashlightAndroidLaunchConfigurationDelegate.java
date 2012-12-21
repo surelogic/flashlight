@@ -92,6 +92,7 @@ import com.surelogic.flashlight.client.eclipse.launch.LaunchUtils;
 import com.surelogic.flashlight.client.eclipse.model.RunManager;
 import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
 import com.surelogic.flashlight.client.eclipse.views.monitor.MonitorStatus;
+import com.surelogic.flashlight.common.model.FlashlightFileUtility;
 
 /**
  * This Launch Configuration is mostly cribbed from
@@ -630,7 +631,8 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
                     InstrumentationConstants.FL_PROPERTIES_CLASS);
             infoClassDest.getParentFile().mkdirs();
             Properties props = new Properties();
-            props.setProperty(InstrumentationConstants.FL_RUN, runId);
+            props.setProperty(InstrumentationConstants.FL_RUN,
+                    FlashlightFileUtility.getRunName(runId));
             props.setProperty(InstrumentationConstants.FL_ANDROID, "true");
 
             props.setProperty(InstrumentationConstants.FL_COLLECTION_TYPE,
@@ -971,8 +973,9 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
                                         new MonitorStatus(data.runId)))
                                 .schedule();
                         EclipseUtility.toEclipseJob(
-                                new ReadFlashlightStreamJob(data.runDir,
-                                        data.outputPort, id)).schedule();
+                                new ReadFlashlightStreamJob(data.runId,
+                                        data.runDir, data.outputPort, id))
+                                .schedule();
                         EclipseUtility.toEclipseJob(
                                 new ReadLogcatJob(data.runId, id)).schedule();
                         return Status.OK_STATUS;

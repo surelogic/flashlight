@@ -45,18 +45,20 @@ public class ReadFlashlightStreamJob extends AbstractSLJob {
     private final File f_dir;
     private final IDevice f_device;
     private final int f_retries;
+    private final String f_runId;
 
     private final StringBuilder f_pastAttemptsLog;
 
-    public ReadFlashlightStreamJob(final File infoDir, final int outputPort,
-            final IDevice id) {
-        this(infoDir, outputPort, id, RETRIES, null);
+    public ReadFlashlightStreamJob(String runId, final File infoDir,
+            final int outputPort, final IDevice id) {
+        this(runId, infoDir, outputPort, id, RETRIES, null);
     }
 
-    private ReadFlashlightStreamJob(final File infoDir, final int outputPort,
-            final IDevice id, final int retries,
+    private ReadFlashlightStreamJob(final String runId, final File infoDir,
+            final int outputPort, final IDevice id, final int retries,
             final StringBuilder pastAttemptsLog) {
         super("Collecting data in " + infoDir + ".");
+        f_runId = runId;
         f_port = outputPort;
         f_dir = infoDir;
         f_device = id;
@@ -104,8 +106,8 @@ public class ReadFlashlightStreamJob extends AbstractSLJob {
                                         + f_port + ")...retrying in "
                                         + RETRY_DELAY_MS + " ms \n");
                         EclipseUtility.toEclipseJob(
-                                new ReadFlashlightStreamJob(f_dir, f_port,
-                                        f_device, f_retries - 1,
+                                new ReadFlashlightStreamJob(f_runId, f_dir,
+                                        f_port, f_device, f_retries - 1,
                                         f_pastAttemptsLog), f_dir.toString())
                                 .schedule(RETRY_DELAY_MS);
                         return SLStatus.OK_STATUS;
@@ -208,7 +210,7 @@ public class ReadFlashlightStreamJob extends AbstractSLJob {
 
             if (event == PrepEvent.FLASHLIGHT) {
                 f_run = attributes.getValue(AttributeType.RUN.label());
-                RunManager.getInstance().notifyCollectingData(f_run);
+                RunManager.getInstance().notifyCollectingData(f_runId);
                 f_buf.append('>');
             } else {
                 f_buf.append("/>");

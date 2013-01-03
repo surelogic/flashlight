@@ -17,7 +17,12 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
@@ -40,6 +45,12 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.ui.progress.UIJob;
+import org.xml.sax.Attributes;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
 
 import com.android.SdkConstants;
 import com.android.ddmlib.AndroidDebugBridge;
@@ -79,7 +90,9 @@ import com.surelogic._flashlight.rewriter.config.ConfigurationBuilder;
 import com.surelogic.common.FileUtility;
 import com.surelogic.common.core.EclipseUtility;
 import com.surelogic.common.core.logging.SLEclipseStatusUtility;
+import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.logging.SLLogger;
+import com.surelogic.common.ui.EclipseUIUtility;
 import com.surelogic.common.ui.dialogs.ShowTextDialog;
 import com.surelogic.common.ui.jobs.SLUIJob;
 import com.surelogic.flashlight.android.jobs.ReadFlashlightStreamJob;
@@ -141,6 +154,22 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
         if (project == null) {
             AdtPlugin.printErrorToConsole("Couldn't get project object!");
             androidLaunch.stopLaunch();
+            return;
+        }
+
+        if (!checkManifest(project)) {
+            androidLaunch.stopLaunch();
+            new UIJob("Display Flashlight Android Configuration Problem") {
+                @Override
+                public IStatus runInUIThread(IProgressMonitor monitor) {
+                    MessageDialog
+                            .openInformation(
+                                    EclipseUIUtility.getShell(),
+                                    I18N.msg("flashlight.eclipse.android.launchError.title"),
+                                    I18N.msg("flashlight.eclipse.android.launchError.message"));
+                    return Status.OK_STATUS;
+                }
+            }.schedule();
             return;
         }
 
@@ -278,6 +307,48 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
 
         final Job job = new ConnectToProjectJob(data, manifestData.getPackage());
         job.schedule();
+    }
+
+    private static final class PermissionChecker extends DefaultHandler {
+        boolean found;
+
+        @Override
+        public void startElement(String uri, String localName, String qName,
+                Attributes attributes) throws SAXException {
+            if (qName.equals("uses-permission")) {
+                if ("android.permission.INTERNET".equals(attributes
+                        .getValue("android:name"))) {
+                    found = true;
+                }
+            }
+
+        }
+
+    }
+
+    private boolean checkManifest(IProject project) {
+        PermissionChecker checker = new PermissionChecker();
+        IFile manifestFile = ProjectHelper.getManifest(project);
+        if (manifestFile != null) {
+            try {
+                SAXParser parser = SAXParserFactory.newInstance()
+                        .newSAXParser();
+                parser.parse(new InputSource(manifestFile.getContents()),
+                        checker);
+            } catch (ParserConfigurationException e) {
+                SLLogger.getLoggerFor(
+                        FlashlightAndroidLaunchConfigurationDelegate.class)
+                        .log(Level.WARNING, "Problem configuring sax parser", e);
+            } catch (IOException e) {
+                // Do nothing, this could be caused by a malformed file.
+            } catch (SAXException e) {
+                // Do nothing, this could be caused by a malformed file.
+            } catch (CoreException e) {
+                // Do nothing, this could be caused by a malformed file.
+            }
+
+        }
+        return checker.found;
     }
 
     @SuppressWarnings("restriction")

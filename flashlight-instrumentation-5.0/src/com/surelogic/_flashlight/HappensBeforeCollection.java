@@ -5,12 +5,14 @@ import com.surelogic._flashlight.common.AttributeType;
 
 public class HappensBeforeCollection extends TracedEvent {
 
+    private final long coll;
     private final long obj;
     private final long siteId;
 
     HappensBeforeCollection(final ObjectPhantomReference coll,
             final ObjectPhantomReference obj, long siteId, State state) {
         super(siteId, state);
+        this.coll = coll.getId();
         this.obj = obj.getId();
         this.siteId = siteId;
     }
@@ -31,7 +33,7 @@ public class HappensBeforeCollection extends TracedEvent {
         addNanoTime(b);
         addThread(b);
         Entities.addAttribute(AttributeType.SITE_ID.label(), siteId, b);
-        Entities.addAttribute(AttributeType.COLLECTION.label(), obj, b);
+        Entities.addAttribute(AttributeType.COLLECTION.label(), coll, b);
         Entities.addAttribute(AttributeType.OBJECT.label(), obj, b);
         b.append("/>");
         return b.toString();

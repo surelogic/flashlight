@@ -47,6 +47,7 @@ public class HappensBeforeObject extends HappensBefore {
         }
     }
 
+    @SuppressWarnings("resource")
     private void insert(final long nanoTime, final long inThread,
             final long trace, final long obj, final boolean isSource)
             throws SQLException {

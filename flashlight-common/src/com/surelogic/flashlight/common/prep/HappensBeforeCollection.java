@@ -36,23 +36,20 @@ public class HappensBeforeCollection extends HappensBefore {
         }
         HBType type = f_hbConfig.getHBType(site);
         if (type.isSource()) {
-            insert(nanoTime, inThread, trace, obj, true);
+            insert(nanoTime, inThread, trace, coll, obj, true);
         }
         if (type.isTarget()) {
-            insert(nanoTime, inThread, trace, obj, false);
+            insert(nanoTime, inThread, trace, coll, obj, false);
         }
     }
 
-    @Override
-    public void parse(PreppedAttributes attributes) throws SQLException {
-
-    }
-
+    @SuppressWarnings("resource")
     private void insert(final long nanoTime, final long inThread,
-            final long trace, final long obj, final boolean isSource)
-            throws SQLException {
+            final long trace, final long coll, final long obj,
+            final boolean isSource) throws SQLException {
         PreparedStatement ps = isSource ? f_sourcePs : f_targetPs;
         int idx = 1;
+        ps.setLong(idx++, coll);
         ps.setLong(idx++, obj);
         ps.setTimestamp(idx++, getTimestamp(nanoTime), now);
         ps.setLong(idx++, inThread);
@@ -80,9 +77,9 @@ public class HappensBeforeCollection extends HappensBefore {
             throws SQLException {
         super.setup(c, start, startNS, scanResults);
         f_sourcePs = c
-                .prepareStatement("INSERT INTO HAPPENSBEFORESOURCE (OBJ,TS,INTHREAD,TRACE) VALUES (?,?,?,?)");
+                .prepareStatement("INSERT INTO HAPPENSBEFORECOLLSOURCE (COLL,OBJ,TS,INTHREAD,TRACE) VALUES (?,?,?,?,?)");
         f_targetPs = c
-                .prepareStatement("INSERT INTO HAPPENSBEFORETARGET (OBJ,TS,INTHREAD,TRACE) VALUES (?,?,?,?)");
+                .prepareStatement("INSERT INTO HAPPENSBEFORECOLLTARGET (COLL,OBJ,TS,INTHREAD,TRACE) VALUES (?,?,?,?,?)");
     }
 
     @Override

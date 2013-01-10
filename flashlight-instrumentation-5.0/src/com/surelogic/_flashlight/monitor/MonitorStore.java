@@ -849,16 +849,18 @@ public final class MonitorStore implements StoreListener {
                 new DescribeCommand() });
     }
 
-    public void happensBeforeThread(Thread callee, long siteId, String typeName) {
+    public void happensBeforeThread(Thread callee, long siteId, String typeNa,
+            long nanoTime) {
         // Do nothing
     }
 
-    public void happensBeforeObject(Object object, long siteId, String typeName) {
+    public void happensBeforeObject(Object object, long siteId,
+            String typeName, long nanoTime) {
         // Do nothing
     }
 
     public void happensBeforeCollection(Object collection, Object item,
-            long siteId, String typeName) {
+            long siteId, String typeName, long nanoTime) {
         // Do nothing
     }
 

@@ -644,15 +644,14 @@ public class Store {
      *            before method; otherwise it is the fully qualified type name
      *            of the type that we need to see if callee is assignable to.
      */
-    public static void happensBeforeThread(
-            final Thread callee, final long siteId, final String typeName,
-            final long nanoTime) {
+    public static void happensBeforeThread(final Thread callee,
+            final long siteId, final String typeName, final long nanoTime) {
         try {
             if (typeName == null
                     || Class.forName(typeName).isAssignableFrom(
                             Thread.currentThread().getClass())) {
                 for (StoreListener l : f_listeners) {
-                    l.happensBeforeThread(callee, siteId, typeName);
+                    l.happensBeforeThread(callee, siteId, typeName, nanoTime);
                 }
             }
         } catch (ClassNotFoundException e) {
@@ -666,15 +665,14 @@ public class Store {
      *            before method; otherwise it is the fully qualified type name
      *            of the type that we need to see if callee is assignable to.
      */
-    public static void happensBeforeObject(
-            final Object object, final long siteId, final String typeName,
-            final long nanoTime) {
+    public static void happensBeforeObject(final Object object,
+            final long siteId, final String typeName, final long nanoTime) {
         try {
             if (typeName == null
                     || Class.forName(typeName).isAssignableFrom(
                             object.getClass())) {
                 for (StoreListener l : f_listeners) {
-                    l.happensBeforeObject(object, siteId, typeName);
+                    l.happensBeforeObject(object, siteId, typeName, nanoTime);
                 }
             }
         } catch (ClassNotFoundException e) {
@@ -688,16 +686,16 @@ public class Store {
      *            before method; otherwise it is the fully qualified type name
      *            of the type that we need to see if callee is assignable to.
      */
-    public static void happensBeforeCollection(
-            final Object collection, final Object item, final long siteId,
-            final String typeName, final long nanoTime) {
+    public static void happensBeforeCollection(final Object collection,
+            final Object item, final long siteId, final String typeName,
+            final long nanoTime) {
         try {
             if (typeName == null
                     || Class.forName(typeName).isAssignableFrom(
                             collection.getClass())) {
                 for (StoreListener l : f_listeners) {
                     l.happensBeforeCollection(collection, item, siteId,
-                            typeName);
+                            typeName, nanoTime);
                 }
             }
         } catch (ClassNotFoundException e) {

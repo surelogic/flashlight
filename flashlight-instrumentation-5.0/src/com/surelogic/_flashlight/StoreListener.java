@@ -367,25 +367,28 @@ public interface StoreListener {
      *            <code>null</code> if the method definitely matches a happens
      *            before method; otherwise it is the fully qualified type name
      *            of the type that we need to see if callee is assignable to.
+     * @param nanoTime
      */
     void happensBeforeThread(final Thread callee, final long siteId,
-            final String typeName);
+            final String typeName, long nanoTime);
 
     /**
      * @param typeName
      *            <code>null</code> if the method definitely matches a happens
      *            before method; otherwise it is the fully qualified type name
      *            of the type that we need to see if callee is assignable to.
+     * @param nanoTime
      */
     void happensBeforeObject(final Object object, final long siteId,
-            final String typeName);
+            final String typeName, long nanoTime);
 
     /**
      * @param typeName
      *            <code>null</code> if the method definitely matches a happens
      *            before method; otherwise it is the fully qualified type name
      *            of the type that we need to see if callee is assignable to.
+     * @param nanoTime
      */
     void happensBeforeCollection(final Object collection, final Object item,
-            final long siteId, final String typeName);
+            final long siteId, final String typeName, long nanoTime);
 }

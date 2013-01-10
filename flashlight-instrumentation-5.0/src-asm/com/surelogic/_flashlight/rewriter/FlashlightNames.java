@@ -77,13 +77,13 @@ public final class FlashlightNames {
             .getMethod("int getFieldId(String, String)");
     
     public static final Method HAPPENS_BEFORE_THREAD = Method
-            .getMethod("void happensBeforeThread(java.lang.Thread, long, java.lang.String)");
+            .getMethod("void happensBeforeThread(java.lang.Thread, long, java.lang.String, long)");
     
     public static final Method HAPPENS_BEFORE_OBJECT = Method
-            .getMethod("void happensBeforeObject(java.lang.Object, long, java.lang.String)");
+            .getMethod("void happensBeforeObject(java.lang.Object, long, java.lang.String, long)");
 
     public static final Method HAPPENS_BEFORE_COLLECTION = Method
-            .getMethod("void happensBeforeCollection(java.lang.Object, java.lang.Object, long, java.lang.String)");
+            .getMethod("void happensBeforeCollection(java.lang.Object, java.lang.Object, long, java.lang.String, long)");
 
     public static final Method SHUTDOWN = Method.getMethod("void shutdown()");
 
@@ -124,6 +124,9 @@ public final class FlashlightNames {
     public static final String JAVA_LANG_OBJECT = "java/lang/Object";
     public static final Type JAVA_LANG_OBJECT_TYPE = Type
             .getObjectType(JAVA_LANG_OBJECT);
+    
+    public static final String JAVA_LANG_SYSTEM = "java/lang/System";
+    public static final Method NANO_TIME = Method.getMethod("long nanoTime()");
 
     public static final String WAIT = "wait";
     public static final String WAIT_SIGNATURE_0_ARGS = "()V";

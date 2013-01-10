@@ -403,7 +403,6 @@ public abstract class MethodCall {
         
         // ...
         hb.invokeSwitch(new InstrumentationSwitch(this, mv, config, result.isExact));
-//        hb.insertInstrumentation(mv, config, this, result.isExact, hb.getQualifiedClass());
         mv.visitLabel(skip);
       }
     } catch (final ClassNotFoundException e) {
@@ -445,6 +444,10 @@ public abstract class MethodCall {
         mv.visitLdcInsn(hb.getQualifiedClass());
       }
       // ..., threadRef, callSideId (long), [type name or null]
+      mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.JAVA_LANG_SYSTEM,
+          FlashlightNames.NANO_TIME.getName(),
+          FlashlightNames.NANO_TIME.getDescriptor());
+      // ..., threadRef, callSideId (long), [type name or null], nanoTime (long)
       ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.HAPPENS_BEFORE_THREAD);
       // ...,
     }
@@ -464,6 +467,10 @@ public abstract class MethodCall {
         mv.visitLdcInsn(hb.getQualifiedClass());
       }
       // ..., object, callSideId (long), [type name or null]
+      mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.JAVA_LANG_SYSTEM,
+          FlashlightNames.NANO_TIME.getName(),
+          FlashlightNames.NANO_TIME.getDescriptor());
+      // ..., object, callSideId (long), [type name or null], nanoTime (long)
       ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.HAPPENS_BEFORE_OBJECT);
       // ...,
     }
@@ -503,7 +510,7 @@ public abstract class MethodCall {
          * the given actual argument
          */
 
-        // ...
+        // ..., [return value]
         mcall.pushReceiverForEvent(mv);
         // ..., [return value], collectionRef
         mcall.pushArgumentForEvent(mv, hb.getObjectParam());
@@ -520,6 +527,10 @@ public abstract class MethodCall {
         mv.visitLdcInsn(hb.getQualifiedClass());
       }
       // ..., [return value], collectionRef, item, callSideId (long), [type name or null]
+      mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.JAVA_LANG_SYSTEM,
+          FlashlightNames.NANO_TIME.getName(),
+          FlashlightNames.NANO_TIME.getDescriptor());
+      // ..., [return value], collectionRef, item, callSideId (long), [type name or null], nanoTime (long)
       ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.HAPPENS_BEFORE_COLLECTION);
       // ..., [return value]
     }

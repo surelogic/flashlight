@@ -3,14 +3,14 @@ package com.surelogic._flashlight;
 import com.surelogic._flashlight.PostMortemStore.State;
 import com.surelogic._flashlight.common.AttributeType;
 
-public class HappensBeforeThread extends TracedEvent {
+public class HappensBeforeThread extends HappensBeforeEvent {
 
     private final long to;
     private final long siteId;
 
     HappensBeforeThread(final ThreadPhantomReference to, long siteId,
-            State state) {
-        super(siteId, state);
+            State state, long nanoTime) {
+        super(siteId, state, nanoTime);
         this.to = to.getId();
         this.siteId = siteId;
     }

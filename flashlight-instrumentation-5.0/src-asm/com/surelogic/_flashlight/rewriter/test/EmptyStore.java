@@ -120,20 +120,20 @@ public class EmptyStore {
   }
 
   public static void happensBeforeThread(
-      final Thread callee, final long siteId, final String typeName,
-      final long nanoTime) {
+      final long nanoTime, final Thread callee,
+      final long siteId, final String typeName) {
     // do nothing
   }
   
   public static void happensBeforeObject(
-      final Object object, final long siteId, final String typeName,
-      final long nanoTime) {
+      final long nanoTime, final Object object,
+      final long siteId, final String typeName) {
     // do nothing
   }
   
   public static void happensBeforeCollection(
-      final Object collection, final Object item, final long siteId,
-      final String typeName, final long nanoTime) {
+      final long nanoTime, final Object item,
+      final Object collection, final long siteId, final String typeName) {
     // do nothing
   }
 }

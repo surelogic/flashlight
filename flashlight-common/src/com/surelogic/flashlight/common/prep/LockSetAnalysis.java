@@ -25,6 +25,7 @@ import com.surelogic.common.jdbc.Query;
 import com.surelogic.common.jdbc.Queryable;
 import com.surelogic.common.jdbc.Result;
 import com.surelogic.common.jdbc.Row;
+import com.surelogic.common.jdbc.SchemaData;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.logging.SLLogger;
 
@@ -52,7 +53,8 @@ public class LockSetAnalysis implements IPostPrep {
     }
 
     @Override
-    public void doPostPrep(final Connection c, final SLProgressMonitor mon) {
+    public void doPostPrep(final Connection c, final SchemaData schema,
+            final SLProgressMonitor mon) {
         this.c = c;
         doPerform(new ConnectionQuery(c), mon);
     }
@@ -555,14 +557,14 @@ public class LockSetAnalysis implements IPostPrep {
         private Lock lock;
 
         ThreadLocks(final Result lockDurations) {
-            this.locks = lockDurations.iterator();
-            this.activeLocks = new TreeSet<Lock>(new Comparator<Lock>() {
+            locks = lockDurations.iterator();
+            activeLocks = new TreeSet<Lock>(new Comparator<Lock>() {
                 @Override
                 public int compare(final Lock o1, final Lock o2) {
                     return o1.end.compareTo(o2.end);
                 }
             });
-            this.threads = new TLongObjectHashMap<TreeSet<Lock>>();
+            threads = new TLongObjectHashMap<TreeSet<Lock>>();
         }
 
         /**
@@ -663,11 +665,11 @@ public class LockSetAnalysis implements IPostPrep {
         final Timestamp end;
 
         Lock(final Row row) {
-            this.thread = row.nextLong();
-            this.lock = row.nextLong();
-            this.start = row.nextTimestamp();
-            this.end = row.nextTimestamp();
-            this.startEvent = row.nextLong();
+            thread = row.nextLong();
+            lock = row.nextLong();
+            start = row.nextTimestamp();
+            end = row.nextTimestamp();
+            startEvent = row.nextLong();
         }
 
     }

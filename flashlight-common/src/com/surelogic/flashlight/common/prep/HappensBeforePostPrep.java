@@ -1,8 +1,12 @@
 package com.surelogic.flashlight.common.prep;
 
+import java.io.IOException;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Timestamp;
+import java.util.List;
 
 import com.surelogic.common.jdbc.ConnectionQuery;
 import com.surelogic.common.jdbc.NullRowHandler;
@@ -11,13 +15,15 @@ import com.surelogic.common.jdbc.Queryable;
 import com.surelogic.common.jdbc.Result;
 import com.surelogic.common.jdbc.ResultHandler;
 import com.surelogic.common.jdbc.Row;
+import com.surelogic.common.jdbc.SchemaData;
+import com.surelogic.common.jdbc.SchemaUtility;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.flashlight.common.HappensBeforeAnalysis;
 
 public class HappensBeforePostPrep implements IPostPrep {
 
-    ConnectionQuery q;
-    HappensBeforeAnalysis hb;
+    private ConnectionQuery q;
+    private HappensBeforeAnalysis hb;
     private Queryable<Void> badHappensBefore;
 
     @Override
@@ -26,15 +32,46 @@ public class HappensBeforePostPrep implements IPostPrep {
     }
 
     @Override
-    public void doPostPrep(Connection c, SLProgressMonitor mon)
-            throws SQLException {
+    public void doPostPrep(Connection c, final SchemaData schema,
+            SLProgressMonitor mon) throws SQLException {
         q = new ConnectionQuery(c);
         hb = new HappensBeforeAnalysis(c);
         // First we build out our HappensBeforeVolatile table
-
+        q.statement("Accesses.prep.volatileWrites").call();
+        c.commit();
+        q.statement("Accesses.prep.volatileReads").call();
+        c.commit();
+        try {
+            addConstraints(c, schema, "add_volatile_constraints.sql");
+        } catch (IOException e) {
+            throw new IllegalStateException(
+                    "Error reading volatile happens before constraints.", e);
+        }
         badHappensBefore = q.prepared("Accesses.prep.insertBadHappensBefore");
         q.statement("Accesses.prep.selectStatics", new StaticHandler()).call();
         q.statement("Accesses.prep.selectFields", new InstanceHandler()).call();
+        c.commit();
+        try {
+            addConstraints(c, schema, "add_badhappensbefore_constraints.sql");
+        } catch (IOException e) {
+            throw new IllegalStateException(
+                    "Error reading bad happens before constraints.", e);
+        }
+    }
+
+    void addConstraints(Connection c, SchemaData data, String res)
+            throws IOException, SQLException {
+        final URL script = data.getSchemaResource(res);
+        List<StringBuilder> sql = SchemaUtility.getSQLStatements(script);
+        Statement st = c.createStatement();
+        try {
+            for (StringBuilder s : sql) {
+                st.execute(s.toString());
+                c.commit();
+            }
+        } finally {
+            st.close();
+        }
     }
 
     private class InstanceHandler extends NullRowHandler {
@@ -65,7 +102,6 @@ public class HappensBeforePostPrep implements IPostPrep {
 
     }
 
-    // SELECT INTHREAD,TS,RW
     private class AccessHandler implements ResultHandler<Boolean> {
 
         @Override

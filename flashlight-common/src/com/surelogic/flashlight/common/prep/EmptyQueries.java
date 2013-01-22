@@ -11,52 +11,59 @@ import java.sql.Statement;
 import java.util.Set;
 
 import com.surelogic.common.adhoc.AdHocQuery;
+import com.surelogic.common.jdbc.SchemaData;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.flashlight.common.model.EmptyQueriesCache;
 import com.surelogic.flashlight.common.model.RunDirectory;
 
 public class EmptyQueries implements IPostPrep {
 
-  private final RunDirectory f_runDirectory;
-  private final Set<AdHocQuery> f_queries;
+    private final RunDirectory f_runDirectory;
+    private final Set<AdHocQuery> f_queries;
 
-  public EmptyQueries(final RunDirectory runDirectory, final Set<AdHocQuery> queries) {
-    f_runDirectory = runDirectory;
-    f_queries = queries;
-  }
-
-  public String getDescription() {
-    return "Generating the set of empty queries";
-  }
-
-  public void doPostPrep(final Connection c, final SLProgressMonitor mon) throws SQLException {
-    EmptyQueriesCache.getInstance().purge(f_runDirectory.getDescription());
-    if (mon.isCanceled()) {
-      return;
+    public EmptyQueries(final RunDirectory runDirectory,
+            final Set<AdHocQuery> queries) {
+        f_runDirectory = runDirectory;
+        f_queries = queries;
     }
-    try {
-      final File queriesFile = f_runDirectory.getPrepEmptyQueriesFileHandle();
-      final PrintWriter writer = new PrintWriter(new FileWriter(queriesFile));
-      try {
-        Statement st = c.createStatement();
-        try {
-          for (AdHocQuery a : f_queries) {
-            if (mon.isCanceled()) {
-              return;
-            }
-            ResultSet set = st.executeQuery(a.getSql());
-            if (!set.next()) {
-              writer.println(a.getId());
-            }
-          }
-        } finally {
-          st.close();
+
+    @Override
+    public String getDescription() {
+        return "Generating the set of empty queries";
+    }
+
+    @Override
+    public void doPostPrep(final Connection c, final SchemaData schema,
+            final SLProgressMonitor mon) throws SQLException {
+        EmptyQueriesCache.getInstance().purge(f_runDirectory.getDescription());
+        if (mon.isCanceled()) {
+            return;
         }
-      } finally {
-        writer.close();
-      }
-    } catch (IOException e) {
-      throw new IllegalStateException(e);
+        try {
+            final File queriesFile = f_runDirectory
+                    .getPrepEmptyQueriesFileHandle();
+            final PrintWriter writer = new PrintWriter(new FileWriter(
+                    queriesFile));
+            try {
+                Statement st = c.createStatement();
+                try {
+                    for (AdHocQuery a : f_queries) {
+                        if (mon.isCanceled()) {
+                            return;
+                        }
+                        ResultSet set = st.executeQuery(a.getSql());
+                        if (!set.next()) {
+                            writer.println(a.getId());
+                        }
+                    }
+                } finally {
+                    st.close();
+                }
+            } finally {
+                writer.close();
+            }
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
     }
-  }
 }

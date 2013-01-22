@@ -56,9 +56,9 @@ import com.surelogic.flashlight.common.prep.FieldAssignment;
 import com.surelogic.flashlight.common.prep.FieldDefinition;
 import com.surelogic.flashlight.common.prep.FieldRead;
 import com.surelogic.flashlight.common.prep.FieldWrite;
-import com.surelogic.flashlight.common.prep.HappensBeforePostPrep;
 import com.surelogic.flashlight.common.prep.HappensBeforeCollection;
 import com.surelogic.flashlight.common.prep.HappensBeforeObject;
+import com.surelogic.flashlight.common.prep.HappensBeforePostPrep;
 import com.surelogic.flashlight.common.prep.HappensBeforeThread;
 import com.surelogic.flashlight.common.prep.IOneTimePrep;
 import com.surelogic.flashlight.common.prep.IPostPrep;
@@ -366,24 +366,25 @@ public final class PrepSLJob extends AbstractSLJob {
                 f_database.destroy();
                 return SLStatus.CANCEL_STATUS;
             }
-            f_database.withTransaction(new NullDBTransaction() {
 
-                @Override
-                public void doPerform(final Connection conn) throws Exception {
-                    for (final IPostPrep postPrep : postPrepWork) {
-                        final SLProgressMonitor postPrepMonitor = new SubSLProgressMonitor(
-                                monitor, postPrep.getDescription(),
-                                EACH_POST_PREP);
-                        postPrepMonitor.begin();
-                        try {
-                            postPrep.doPostPrep(conn, monitor);
-                        } finally {
-                            postPrepMonitor.done();
+            for (final IPostPrep postPrep : postPrepWork) {
+                final SLProgressMonitor postPrepMonitor = new SubSLProgressMonitor(
+                        monitor, postPrep.getDescription(), EACH_POST_PREP);
+                postPrepMonitor.begin();
+                try {
+                    f_database.withTransaction(new NullDBTransaction() {
+                        @Override
+                        public void doPerform(final Connection conn)
+                                throws Exception {
+                            postPrep.doPostPrep(conn,
+                                    f_database.getSchemaLoader(), monitor);
                         }
-                    }
-
+                    });
+                } finally {
+                    postPrepMonitor.done();
                 }
-            });
+            }
+
             if (monitor.isCanceled()) {
                 f_database.destroy();
                 return SLStatus.CANCEL_STATUS;

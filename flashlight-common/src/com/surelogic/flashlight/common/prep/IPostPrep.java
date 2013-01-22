@@ -3,6 +3,7 @@ package com.surelogic.flashlight.common.prep;
 import java.sql.Connection;
 import java.sql.SQLException;
 
+import com.surelogic.common.jdbc.SchemaData;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.flashlight.common.jobs.PrepSLJob;
 
@@ -15,23 +16,24 @@ import com.surelogic.flashlight.common.jobs.PrepSLJob;
  */
 public interface IPostPrep {
 
-  /**
-   * Gets a short description of this action to display as it is run.
-   * 
-   * @return a short description of this action to display as it is run.
-   */
-  String getDescription();
+    /**
+     * Gets a short description of this action to display as it is run.
+     * 
+     * @return a short description of this action to display as it is run.
+     */
+    String getDescription();
 
-  /**
-   * Runs the database action. This method will only be called after parsing is
-   * completed and all thread-local fields and objects have been cleared from
-   * the database.
-   * 
-   * @param c
-   *          a connection to the Flashlight database.
-   * @param mon
-   *          a progress monitor, only to be used to check for cancellation.
-   *          Begin and done are invoked around invocation of this method.
-   */
-  void doPostPrep(final Connection c, final SLProgressMonitor mon) throws SQLException;
+    /**
+     * Runs the database action. This method will only be called after parsing
+     * is completed and all thread-local fields and objects have been cleared
+     * from the database.
+     * 
+     * @param c
+     *            a connection to the Flashlight database.
+     * @param mon
+     *            a progress monitor, only to be used to check for cancellation.
+     *            Begin and done are invoked around invocation of this method.
+     */
+    void doPostPrep(final Connection c, final SchemaData schema,
+            final SLProgressMonitor mon) throws SQLException;
 }

@@ -56,6 +56,7 @@ import com.surelogic.flashlight.common.prep.FieldAssignment;
 import com.surelogic.flashlight.common.prep.FieldDefinition;
 import com.surelogic.flashlight.common.prep.FieldRead;
 import com.surelogic.flashlight.common.prep.FieldWrite;
+import com.surelogic.flashlight.common.prep.HappensBeforePostPrep;
 import com.surelogic.flashlight.common.prep.HappensBeforeCollection;
 import com.surelogic.flashlight.common.prep.HappensBeforeObject;
 import com.surelogic.flashlight.common.prep.HappensBeforeThread;
@@ -116,6 +117,7 @@ public final class PrepSLJob extends AbstractSLJob {
 
     private IPostPrep[] getPostPrep() {
         return new IPostPrep[] { new LockSetAnalysis(),
+                new HappensBeforePostPrep(),
                 new WriteHtmlOverview(f_runDirectory),
                 new EmptyQueries(f_runDirectory, f_queries) };
     }

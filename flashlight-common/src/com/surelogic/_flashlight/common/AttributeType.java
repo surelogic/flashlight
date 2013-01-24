@@ -15,7 +15,8 @@ public enum AttributeType implements IAttributeType {
             "mod"), HOSTNAME("hostname"), METHODCALLNAME("method-call-name"), METHODCALLOWNER(
             "method-call-owner"), METHODCALLDESC("method-call-desc"), OBJECT(
             "object"), ANDROID("android"), CLASS_TYPE("class-type"), TOTHREAD(
-            "to-thread"), COLLECTION("coll");
+            "to-thread"), COLLECTION("coll"), NANO_START("nano-start"), NANO_END(
+            "nano-end");
 
     private final String label;
 

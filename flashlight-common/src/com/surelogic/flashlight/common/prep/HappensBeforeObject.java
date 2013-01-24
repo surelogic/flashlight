@@ -30,8 +30,8 @@ public class HappensBeforeObject extends HappensBefore {
     }
 
     @Override
-    void parseRest(PreppedAttributes attributes, long nanoTime, long inThread,
-            long trace, long site) throws SQLException {
+    void parseRest(PreppedAttributes attributes, long nanoStart, long nanoEnd,
+            long inThread, long trace, long site) throws SQLException {
         final long obj = attributes.getLong(AttributeType.OBJECT);
         if (obj == ILLEGAL_ID) {
             SLLogger.getLogger().log(Level.SEVERE,
@@ -40,10 +40,10 @@ public class HappensBeforeObject extends HappensBefore {
         }
         HBType type = f_hbConfig.getHBType(site);
         if (type.isSource()) {
-            insert(nanoTime, inThread, trace, obj, true);
+            insert(nanoStart, inThread, trace, obj, true);
         }
         if (type.isTarget()) {
-            insert(nanoTime, inThread, trace, obj, false);
+            insert(nanoEnd, inThread, trace, obj, false);
         }
     }
 

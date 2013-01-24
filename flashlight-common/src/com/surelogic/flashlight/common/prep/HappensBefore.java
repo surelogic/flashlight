@@ -19,22 +19,25 @@ abstract class HappensBefore extends Event {
 
     @Override
     public void parse(PreppedAttributes attributes) throws SQLException {
-        final long nanoTime = attributes.getEventTime();
+        final long nanoStart = attributes.getLong(AttributeType.NANO_START);
+        final long nanoEnd = attributes.getLong(AttributeType.NANO_END);
         final long inThread = attributes.getThreadId();
         final long trace = attributes.getTraceId();
         final long site = attributes.getLong(AttributeType.SITE_ID);
-        if (nanoTime == ILLEGAL_ID || inThread == ILLEGAL_ID
-                || trace == ILLEGAL_ID || site == ILLEGAL_ID) {
+        if (nanoStart == ILLEGAL_ID || nanoEnd == ILLEGAL_ID
+                || inThread == ILLEGAL_ID || trace == ILLEGAL_ID
+                || site == ILLEGAL_ID) {
             SLLogger.getLogger().log(
                     Level.SEVERE,
                     "Missing nano-time, thread, site, or field in "
                             + getXMLElementName());
             return;
         }
-        parseRest(attributes, nanoTime, inThread, trace, site);
+        parseRest(attributes, nanoStart, nanoEnd, inThread, trace, site);
     }
 
-    abstract void parseRest(PreppedAttributes attributes, long nanoTime,
-            long inThread, long trace, long site) throws SQLException;
+    abstract void parseRest(PreppedAttributes attributes, long nanoStart,
+            long nanoEnd, long inThread, long trace, long site)
+            throws SQLException;
 
 }

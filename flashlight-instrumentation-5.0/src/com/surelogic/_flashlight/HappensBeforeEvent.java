@@ -6,13 +6,15 @@ import com.surelogic._flashlight.common.IdConstants;
 
 public abstract class HappensBeforeEvent extends ProgramEvent {
 
-    private final long f_nanoTime;
+    private final long f_nanoStart;
+    private final long f_nanoEnd;
     private final long f_threadId;
     private final long f_traceId;
 
-    HappensBeforeEvent(long siteId, State state, long nanoTime) {
+    HappensBeforeEvent(long siteId, State state, long nanoStart) {
         f_threadId = state.thread.getId();
-        f_nanoTime = nanoTime;
+        f_nanoStart = nanoStart;
+        f_nanoEnd = System.nanoTime();
         if (siteId == IdConstants.SYNTHETIC_METHOD_SITE_ID) {
             f_traceId = state.getCurrentTrace().getId();
         } else {
@@ -21,7 +23,8 @@ public abstract class HappensBeforeEvent extends ProgramEvent {
     }
 
     protected final void addNanoTime(final StringBuilder b) {
-        Entities.addAttribute(AttributeType.TIME.label(), f_nanoTime, b);
+        Entities.addAttribute(AttributeType.NANO_START.label(), f_nanoStart, b);
+        Entities.addAttribute(AttributeType.NANO_END.label(), f_nanoEnd, b);
     }
 
     protected void addThread(final StringBuilder b) {

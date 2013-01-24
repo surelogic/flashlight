@@ -25,8 +25,8 @@ public class HappensBeforeCollection extends HappensBefore {
     }
 
     @Override
-    void parseRest(PreppedAttributes attributes, long nanoTime, long inThread,
-            long trace, long site) throws SQLException {
+    void parseRest(PreppedAttributes attributes, long nanoStart, long nanoEnd,
+            long inThread, long trace, long site) throws SQLException {
         final long coll = attributes.getLong(AttributeType.COLLECTION);
         final long obj = attributes.getLong(AttributeType.OBJECT);
         if (obj == ILLEGAL_ID || coll == ILLEGAL_ID) {
@@ -36,10 +36,10 @@ public class HappensBeforeCollection extends HappensBefore {
         }
         HBType type = f_hbConfig.getHBType(site);
         if (type.isSource()) {
-            insert(nanoTime, inThread, trace, coll, obj, true);
+            insert(nanoStart, inThread, trace, coll, obj, true);
         }
         if (type.isTarget()) {
-            insert(nanoTime, inThread, trace, coll, obj, false);
+            insert(nanoEnd, inThread, trace, coll, obj, false);
         }
     }
 

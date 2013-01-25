@@ -223,7 +223,6 @@ public final class PrepSLJob extends AbstractSLJob {
 
                 @Override
                 public void doPerform(final Connection conn) throws Exception {
-                    conn.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
                     /*
                      * Persist the run and obtain its database identifier, start
                      * time stamp, and the start time in nanoseconds.

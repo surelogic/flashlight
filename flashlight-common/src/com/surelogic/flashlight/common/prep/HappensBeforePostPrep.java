@@ -35,7 +35,6 @@ public class HappensBeforePostPrep implements IPostPrep {
     public void doPostPrep(Connection c, final SchemaData schema,
             SLProgressMonitor mon) throws SQLException {
         q = new ConnectionQuery(c);
-        hb = new HappensBeforeAnalysis(c);
         // First we build out our HappensBeforeVolatile table
         q.statement("Accesses.prep.volatileWrites").call();
         c.commit();
@@ -47,6 +46,7 @@ public class HappensBeforePostPrep implements IPostPrep {
             throw new IllegalStateException(
                     "Error reading volatile happens before constraints.", e);
         }
+        hb = new HappensBeforeAnalysis(c);
         badHappensBefore = q.prepared("Accesses.prep.insertBadHappensBefore");
         q.statement("Accesses.prep.selectStatics", new StaticHandler()).call();
         q.statement("Accesses.prep.selectFields", new InstanceHandler()).call();

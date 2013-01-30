@@ -1,9 +1,9 @@
 package com.surelogic.flashlight.common.prep;
 
-import gnu.trove.TLongHashSet;
-import gnu.trove.TLongIterator;
-import gnu.trove.TLongObjectHashMap;
-import gnu.trove.TLongObjectProcedure;
+import gnu.trove.iterator.TLongIterator;
+import gnu.trove.map.hash.TLongObjectHashMap;
+import gnu.trove.procedure.TLongObjectProcedure;
+import gnu.trove.set.hash.TLongHashSet;
 
 import java.sql.Connection;
 import java.sql.SQLException;

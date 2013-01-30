@@ -1,6 +1,6 @@
 package com.surelogic.flashlight.common.jobs;
 
-import gnu.trove.TLongHashSet;
+import gnu.trove.set.hash.TLongHashSet;
 
 import java.io.File;
 import java.io.IOException;

@@ -5,6 +5,5 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="test"/>
 	<classpathentry exported="true" kind="lib" path="lib/jgrapht-jdk1.5.jar"/>
-	<classpathentry kind="lib" path="lib/trove-2.0.4.jar" sourcepath="lib/trove-src-2.0.4.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

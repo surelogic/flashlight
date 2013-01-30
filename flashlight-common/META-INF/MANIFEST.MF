@@ -12,10 +12,7 @@ Export-Package: com.surelogic._flashlight.common,
  com.surelogic.flashlight.common.model,
  com.surelogic.flashlight.common.prep,
  com.surelogic.flashlight.recommend,
- com.surelogic.flashlight.schema,
- gnu.trove,
- gnu.trove.decorator
+ com.surelogic.flashlight.schema
 Bundle-ClassPath: lib/jgrapht-jdk1.5.jar,
- lib/trove-2.0.4.jar,
  .
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6

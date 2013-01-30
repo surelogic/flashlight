@@ -1,9 +1,9 @@
 package com.surelogic.flashlight.common.prep;
 
-import gnu.trove.TLongHashSet;
-import gnu.trove.TLongLongHashMap;
-import gnu.trove.TLongObjectHashMap;
-import gnu.trove.TObjectProcedure;
+import gnu.trove.map.hash.TLongLongHashMap;
+import gnu.trove.map.hash.TLongObjectHashMap;
+import gnu.trove.procedure.TObjectProcedure;
+import gnu.trove.set.hash.TLongHashSet;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;

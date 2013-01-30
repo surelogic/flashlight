@@ -1,7 +1,7 @@
 package com.surelogic.flashlight.common.prep;
 
-import gnu.trove.TLongHashSet;
-import gnu.trove.TLongLongHashMap;
+import gnu.trove.map.hash.TLongLongHashMap;
+import gnu.trove.set.hash.TLongHashSet;
 
 import java.util.logging.Level;
 

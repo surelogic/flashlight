@@ -1,8 +1,8 @@
 package com.surelogic.flashlight.recommend;
 
-import gnu.trove.TLongArrayList;
-import gnu.trove.TLongHashSet;
-import gnu.trove.TLongProcedure;
+import gnu.trove.list.array.TLongArrayList;
+import gnu.trove.procedure.TLongProcedure;
+import gnu.trove.set.hash.TLongHashSet;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -258,7 +258,7 @@ public final class RecommendRegions {
             for (final Row r : result) {
                 lst.add(r.nextLong());
             }
-            return lst.toNativeArray();
+            return lst.toArray();
         }
     }
 }

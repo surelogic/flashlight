@@ -11,19 +11,23 @@ import com.surelogic.common.ui.dialogs.ManageLicensesDialog;
 public final class ManageLicensesAction implements
 		IWorkbenchWindowActionDelegate {
 
-	public void dispose() {
+	@Override
+  public void dispose() {
 		// nothing to do
 	}
 
-	public void init(IWorkbenchWindow window) {
+	@Override
+  public void init(IWorkbenchWindow window) {
 		// nothing to do
 	}
 
-	public void run(IAction action) {
+	@Override
+  public void run(IAction action) {
 		ManageLicensesDialog.open(EclipseUIUtility.getShell());
 	}
 
-	public void selectionChanged(IAction action, ISelection selection) {
+	@Override
+  public void selectionChanged(IAction action, ISelection selection) {
 		// nothing to do
 	}
 }

@@ -60,7 +60,8 @@ public final class FlashlightFieldsTab extends AbstractLaunchConfigurationTab {
 	private List<String> allPackages;
 	private CheckboxTableViewer packageViewer;
 
-	public void createControl(final Composite parent) {
+	@Override
+  public void createControl(final Composite parent) {
 		final Composite comp = new Composite(parent, SWT.NONE);
 		setControl(comp);
 
@@ -127,7 +128,8 @@ public final class FlashlightFieldsTab extends AbstractLaunchConfigurationTab {
 		packageViewer.setContentProvider(new PackagesContentProvider());
 		packageViewer.setLabelProvider(new PackagesLabelProvider());
 		packageViewer.addCheckStateListener(new ICheckStateListener() {
-			public void checkStateChanged(final CheckStateChangedEvent event) {
+			@Override
+      public void checkStateChanged(final CheckStateChangedEvent event) {
 				setDirty(true);
 				updateLaunchConfigurationDialog();
 			}
@@ -193,15 +195,18 @@ public final class FlashlightFieldsTab extends AbstractLaunchConfigurationTab {
 
 	private static final class PackagesContentProvider implements
 			IStructuredContentProvider {
-		public Object[] getElements(final Object inputElement) {
+		@Override
+    public Object[] getElements(final Object inputElement) {
 			return ((java.util.List) inputElement).toArray();
 		}
 
-		public void dispose() {
+		@Override
+    public void dispose() {
 			// Do nothing
 		}
 
-		public void inputChanged(final Viewer viewer, final Object oldInput,
+		@Override
+    public void inputChanged(final Viewer viewer, final Object oldInput,
 				final Object newInput) {
 			// Do nothing
 		}
@@ -210,28 +215,34 @@ public final class FlashlightFieldsTab extends AbstractLaunchConfigurationTab {
 	private static final class PackagesLabelProvider implements
 			ITableLabelProvider {
 
-		public Image getColumnImage(final Object element, final int columnIndex) {
+		@Override
+    public Image getColumnImage(final Object element, final int columnIndex) {
 			return IMG_PACKAGE;
 		}
 
-		public String getColumnText(final Object element, final int columnIndex) {
+		@Override
+    public String getColumnText(final Object element, final int columnIndex) {
 			return (String) element;
 		}
 
-		public void dispose() {
+		@Override
+    public void dispose() {
 			// Do nothing
 		}
 
-		public boolean isLabelProperty(final Object element,
+		@Override
+    public boolean isLabelProperty(final Object element,
 				final String property) {
 			return false;
 		}
 
-		public void addListener(final ILabelProviderListener listener) {
+		@Override
+    public void addListener(final ILabelProviderListener listener) {
 			// Do nothing
 		}
 
-		public void removeListener(final ILabelProviderListener listener) {
+		@Override
+    public void removeListener(final ILabelProviderListener listener) {
 			// Do Nothing
 		}
 	}
@@ -241,7 +252,8 @@ public final class FlashlightFieldsTab extends AbstractLaunchConfigurationTab {
 		return "com.surelogic.flashlight.client.eclipse.launch.FlashlightFieldsTab";
 	}
 
-	public String getName() {
+	@Override
+  public String getName() {
 		return "Fields";
 	}
 
@@ -259,7 +271,8 @@ public final class FlashlightFieldsTab extends AbstractLaunchConfigurationTab {
 	 * @param configuration
 	 *            launch configuration
 	 */
-	public void initializeFrom(final ILaunchConfiguration config) {
+	@Override
+  public void initializeFrom(final ILaunchConfiguration config) {
 		String filter = FieldFilter.NONE.name();
 		try {
 			filter = config.getAttribute(
@@ -388,7 +401,8 @@ public final class FlashlightFieldsTab extends AbstractLaunchConfigurationTab {
 
 	}
 
-	public void performApply(final ILaunchConfigurationWorkingCopy config) {
+	@Override
+  public void performApply(final ILaunchConfigurationWorkingCopy config) {
 		config.setAttribute(FlashlightPreferencesUtility.FIELD_FILTER,
 				fieldFilter.name());
 
@@ -400,7 +414,8 @@ public final class FlashlightFieldsTab extends AbstractLaunchConfigurationTab {
 				pkgs);
 	}
 
-	public void setDefaults(final ILaunchConfigurationWorkingCopy config) {
+	@Override
+  public void setDefaults(final ILaunchConfigurationWorkingCopy config) {
 		config.setAttribute(FlashlightPreferencesUtility.FIELD_FILTER,
 				FieldFilter.NONE.name());
 		config.setAttribute(FlashlightPreferencesUtility.FIELD_FILTER_PACKAGES,

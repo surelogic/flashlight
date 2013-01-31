@@ -11,7 +11,8 @@ public final class AfterUtilConcurrentLockAcquisitionAttempt extends Lock {
 		super(i);
 	}
 
-	public String getXMLElementName() {
+	@Override
+  public String getXMLElementName() {
 		return "after-util-concurrent-lock-acquisition-attempt";
 	}
 

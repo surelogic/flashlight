@@ -9,18 +9,22 @@ import com.surelogic.flashlight.client.eclipse.dialogs.RunControlDialog;
 
 public final class ShowRunControlAction implements IWorkbenchWindowActionDelegate {
 
+  @Override
   public void dispose() {
     // Nothing to do
   }
 
+  @Override
   public void init(IWorkbenchWindow window) {
     // Nothing to do
   }
 
+  @Override
   public void run(IAction action) {
     RunControlDialog.show();
   }
 
+  @Override
   public void selectionChanged(IAction action, ISelection selection) {
     // Nothing to do
   }

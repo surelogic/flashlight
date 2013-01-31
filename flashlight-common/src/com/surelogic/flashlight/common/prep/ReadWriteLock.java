@@ -33,11 +33,13 @@ public class ReadWriteLock extends Event {
 		f_ps = c.prepareStatement(QB.get(25));
 	}
 
-	public String getXMLElementName() {
+	@Override
+  public String getXMLElementName() {
 		return "read-write-lock-definition";
 	}
 
-	public void parse(final PreppedAttributes attributes) throws SQLException {
+	@Override
+  public void parse(final PreppedAttributes attributes) throws SQLException {
 		final long id = attributes.getLong(ID);
 		final long readLock = attributes.getLong(READ_LOCK_ID);
 		final long writeLock = attributes.getLong(WRITE_LOCK_ID);

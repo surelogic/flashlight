@@ -20,7 +20,8 @@ public abstract class Lock extends Event {
 		super(i);
 	}
 
-	public void parse(final PreppedAttributes attributes) throws SQLException {
+	@Override
+  public void parse(final PreppedAttributes attributes) throws SQLException {
 		final long nanoTime = attributes.getEventTime();
 		final long inThread = attributes.getThreadId();
 		final long trace = attributes.getTraceId();

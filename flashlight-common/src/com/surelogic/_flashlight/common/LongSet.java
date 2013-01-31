@@ -23,21 +23,25 @@ public class LongSet extends LongMap<Boolean> implements ILongSet {
 		}
 	}
 
-	public void add(final long e) {
+	@Override
+  public void add(final long e) {
 		this.put(e, Boolean.TRUE);
 	}
 
-	public boolean contains(final long e) {
+	@Override
+  public boolean contains(final long e) {
 		return this.get(e) != null;
 	}
 
-	public void addAll(final LongSet ls) {
+	@Override
+  public void addAll(final LongSet ls) {
 		for (final long l : ls) {
 			add(l);
 		}
 	}
 
-	public void retainAll(final LongSet ls) {
+	@Override
+  public void retainAll(final LongSet ls) {
 		final Iterator<Long> it = this.iterator();
 		while (it.hasNext()) {
 			final long l = it.next();
@@ -47,13 +51,15 @@ public class LongSet extends LongMap<Boolean> implements ILongSet {
 		}
 	}
 
-	public void addAll(final Collection<Long> ls) {
+	@Override
+  public void addAll(final Collection<Long> ls) {
 		for (final long l : ls) {
 			add(l);
 		}
 	}
 
-	public void retainAll(final Collection<Long> ls) {
+	@Override
+  public void retainAll(final Collection<Long> ls) {
 		final Iterator<Long> it = this.iterator();
 		while (it.hasNext()) {
 			final long l = it.next();
@@ -76,19 +82,23 @@ public class LongSet extends LongMap<Boolean> implements ILongSet {
 		return sb.toString();
 	}
 
-	public Iterator<Long> iterator() {
+	@Override
+  public Iterator<Long> iterator() {
 		final Iterator<Map.Entry<Long, Boolean>> it = _iterator();
 		return new Iterator<Long>() {
 
-			public boolean hasNext() {
+			@Override
+      public boolean hasNext() {
 				return it.hasNext();
 			}
 
-			public Long next() {
+			@Override
+      public Long next() {
 				return it.next().getKey();
 			}
 
-			public void remove() {
+			@Override
+      public void remove() {
 				it.remove();
 			}
 		};

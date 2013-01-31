@@ -22,7 +22,8 @@ public final class IndirectAccess extends Event {
 		super(i);
 	}
 
-	public String getXMLElementName() {
+	@Override
+  public String getXMLElementName() {
 		return "indirect-access";
 	}
 
@@ -34,7 +35,8 @@ public final class IndirectAccess extends Event {
 		f_ps = c.prepareStatement(f_psQ);
 	}
 
-	public void parse(final PreppedAttributes attributes) throws SQLException {
+	@Override
+  public void parse(final PreppedAttributes attributes) throws SQLException {
 		final long nanoTime = attributes.getEventTime();
 		final long inThread = attributes.getThreadId();
 		final long trace = attributes.getTraceId();

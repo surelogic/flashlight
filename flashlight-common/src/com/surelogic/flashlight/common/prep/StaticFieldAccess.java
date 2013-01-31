@@ -31,7 +31,8 @@ public abstract class StaticFieldAccess extends Event {
 		super();
 	}
 
-	public void parse(final PreppedAttributes attributes) throws SQLException {
+	@Override
+  public void parse(final PreppedAttributes attributes) throws SQLException {
 		final long receiver = attributes.getLong(RECEIVER);
 		if (receiver == ILLEGAL_RECEIVER_ID) {
 			final long nanoTime = attributes.getEventTime();

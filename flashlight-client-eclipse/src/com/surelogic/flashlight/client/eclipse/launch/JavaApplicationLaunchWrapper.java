@@ -37,11 +37,13 @@ public class JavaApplicationLaunchWrapper implements ILaunchShortcut {
 	}
     */
 
-	public void launch(ISelection selection, String mode) {
+	@Override
+  public void launch(ISelection selection, String mode) {
 		realShortCut.launch(selection, mode);
 	}
 
-	public void launch(IEditorPart editor, String mode) {
+	@Override
+  public void launch(IEditorPart editor, String mode) {
 		realShortCut.launch(editor, mode);
 	}
 }

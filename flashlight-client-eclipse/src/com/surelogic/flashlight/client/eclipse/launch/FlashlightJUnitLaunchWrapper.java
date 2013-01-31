@@ -28,11 +28,13 @@ public class FlashlightJUnitLaunchWrapper implements ILaunchShortcut {
 	 * realShortCut.getLaunchableResource(editorpart); }
 	 */
 
-	public void launch(final ISelection selection, final String mode) {
+	@Override
+  public void launch(final ISelection selection, final String mode) {
 		realShortCut.launch(selection, mode);
 	}
 
-	public void launch(final IEditorPart editor, final String mode) {
+	@Override
+  public void launch(final IEditorPart editor, final String mode) {
 		realShortCut.launch(editor, mode);
 	}
 }

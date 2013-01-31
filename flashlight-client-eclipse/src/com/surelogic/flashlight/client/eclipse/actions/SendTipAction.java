@@ -13,21 +13,25 @@ import com.surelogic.flashlight.client.eclipse.Activator;
 
 public final class SendTipAction implements IWorkbenchWindowActionDelegate {
 
-	public void dispose() {
+	@Override
+  public void dispose() {
 		// nothing to do
 	}
 
-	public void init(IWorkbenchWindow window) {
+	@Override
+  public void init(IWorkbenchWindow window) {
 		// nothing to do
 	}
 
-	public void run(IAction action) {
+	@Override
+  public void run(IAction action) {
 		SendServiceMessageWizard.openTip(SLLicenseProduct.FLASHLIGHT + " "
 				+ EclipseUtility.getVersion(Activator.getDefault()),
 				CommonImages.IMG_FL_LOGO);
 	}
 
-	public void selectionChanged(IAction action, ISelection selection) {
+	@Override
+  public void selectionChanged(IAction action, ISelection selection) {
 		// nothing to do
 	}
 }

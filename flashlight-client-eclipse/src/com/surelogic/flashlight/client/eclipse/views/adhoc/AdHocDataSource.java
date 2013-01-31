@@ -79,15 +79,18 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements IAdHoc
     f_selectedRun = runDescription;
   }
 
+  @Override
   public File getQuerySaveFile() {
     return new File(EclipseUtility.getFlashlightDataDirectory(), "flashlight-queries.xml");
   }
 
+  @Override
   public URL getDefaultQueryUrl() {
     return Thread.currentThread().getContextClassLoader()
         .getResource("/com/surelogic/flashlight/common/default-flashlight-queries.xml");
   }
 
+  @Override
   public void badQuerySaveFileNotification(final Exception e) {
     try {
       SLLogger.getLogger().log(Level.SEVERE, I18N.err(4, getQuerySaveFile().getAbsolutePath()), e);
@@ -96,15 +99,18 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements IAdHoc
     }
   }
 
+  @Override
   public final DBConnection getDB() {
     final RunDirectory desc = getSelectedRun();
     return desc == null ? null : desc.getDB();
   }
 
+  @Override
   public int getMaxRowsPerQuery() {
     return EclipseUtility.getIntPreference(FlashlightPreferencesUtility.MAX_ROWS_PER_QUERY);
   }
 
+  @Override
   public void init() {
     if (isValid()) {
       getManager().addObserver(this);
@@ -112,6 +118,7 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements IAdHoc
     }
   }
 
+  @Override
   public void dispose() {
     if (isValid()) {
       getManager().removeObserver(JumpToCode.getInstance());
@@ -155,6 +162,7 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements IAdHoc
     }
   }
 
+  @Override
   public String getEditorViewId() {
     return QueryEditorView.class.getName();
   }
@@ -166,6 +174,7 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements IAdHoc
    * @return an array of access key names, or if {@code null} if no run is
    *         currently selected
    */
+  @Override
   public String[] getCurrentAccessKeys() {
     RunDirectory runDir = getSelectedRun();
     if (runDir == null) {

@@ -24,7 +24,8 @@ public abstract class RangedEvent implements IRangePrep {
 		return SLUtility.getWall(f_start, f_startNS, timeNS);
 	}
 
-	public void setup(final Connection c, final Timestamp start,
+	@Override
+  public void setup(final Connection c, final Timestamp start,
 			final long startNS, final ScanRawFileFieldsPreScan scanResults,
 			final long begin, final long end) throws SQLException {
 		f_begin = begin;

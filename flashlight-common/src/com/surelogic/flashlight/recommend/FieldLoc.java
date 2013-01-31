@@ -51,7 +51,8 @@ public final class FieldLoc implements Comparable<FieldLoc> {
 		return isAggregate;
 	}
 
-	public int compareTo(final FieldLoc o) {
+	@Override
+  public int compareTo(final FieldLoc o) {
 		return field.compareTo(o.field);
 	}
 

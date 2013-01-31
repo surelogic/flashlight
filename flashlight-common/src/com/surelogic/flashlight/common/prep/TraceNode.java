@@ -17,11 +17,13 @@ public final class TraceNode extends AbstractPrep {
 	private PreparedStatement f_ps;
 	private int count;
 
-	public String getXMLElementName() {
+	@Override
+  public String getXMLElementName() {
 		return "trace-node";
 	}
 
-	public void parse(final PreppedAttributes attributes) throws SQLException {
+	@Override
+  public void parse(final PreppedAttributes attributes) throws SQLException {
 		int idx = 1;
 		final long id = attributes.getTraceId();
 		long parent = attributes.getLong(PARENT_ID);

@@ -15,7 +15,8 @@ public final class DisconnectAllDatabases extends AbstractSLJob {
 		super("Disconnect all Flashlight databases");
 	}
 
-	public SLStatus run(final SLProgressMonitor monitor) {
+	@Override
+  public SLStatus run(final SLProgressMonitor monitor) {
 		monitor.begin();
 		try {
 			/*

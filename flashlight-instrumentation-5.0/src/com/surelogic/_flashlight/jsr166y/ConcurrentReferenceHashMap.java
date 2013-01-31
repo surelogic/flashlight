@@ -1149,7 +1149,8 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
 	 * 
 	 * @return <tt>true</tt> if this map contains no key-value mappings
 	 */
-	public boolean isEmpty() {
+	@Override
+  public boolean isEmpty() {
 		final Segment<K, V>[] segments = this.segments;
 		/*
 		 * We keep track of per-segment modCounts to avoid ABA problems in which
@@ -1186,7 +1187,8 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
 	 * 
 	 * @return the number of key-value mappings in this map
 	 */
-	public int size() {
+	@Override
+  public int size() {
 		final Segment<K, V>[] segments = this.segments;
 		long sum = 0;
 		long check = 0;
@@ -1241,7 +1243,8 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
 	 * @throws NullPointerException
 	 *             if the specified key is null
 	 */
-	public V get(Object key) {
+	@Override
+  public V get(Object key) {
 		int hash = hashOf(key);
 		return segmentFor(hash).get(key, hash);
 	}
@@ -1257,7 +1260,8 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
 	 * @throws NullPointerException
 	 *             if the specified key is null
 	 */
-	public boolean containsKey(Object key) {
+	@Override
+  public boolean containsKey(Object key) {
 		int hash = hashOf(key);
 		return segmentFor(hash).containsKey(key, hash);
 	}
@@ -1274,7 +1278,8 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
 	 * @throws NullPointerException
 	 *             if the specified value is null
 	 */
-	public boolean containsValue(Object value) {
+	@Override
+  public boolean containsValue(Object value) {
 		if (value == null)
 			throw new NullPointerException();
 
@@ -1360,7 +1365,8 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
 	 * @throws NullPointerException
 	 *             if the specified key or value is null
 	 */
-	public V put(K key, V value) {
+	@Override
+  public V put(K key, V value) {
 		if (value == null)
 			throw new NullPointerException();
 		int hash = hashOf(key);
@@ -1390,7 +1396,8 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
 	 * @param m
 	 *            mappings to be stored in this map
 	 */
-	public void putAll(Map<? extends K, ? extends V> m) {
+	@Override
+  public void putAll(Map<? extends K, ? extends V> m) {
 		for (Map.Entry<? extends K, ? extends V> e : m.entrySet())
 			put(e.getKey(), e.getValue());
 	}
@@ -1406,7 +1413,8 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
 	 * @throws NullPointerException
 	 *             if the specified key is null
 	 */
-	public V remove(Object key) {
+	@Override
+  public V remove(Object key) {
 		int hash = hashOf(key);
 		return segmentFor(hash).remove(key, hash, null, false);
 	}
@@ -1455,7 +1463,8 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
 	/**
 	 * Removes all of the mappings from this map.
 	 */
-	public void clear() {
+	@Override
+  public void clear() {
 		for (int i = 0; i < segments.length; ++i)
 			segments[i].clear();
 	}
@@ -1492,7 +1501,8 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
 	 * and may (but is not guaranteed to) reflect any modifications subsequent
 	 * to construction.
 	 */
-	public Set<K> keySet() {
+	@Override
+  public Set<K> keySet() {
 		Set<K> ks = keySet;
 		return (ks != null) ? ks : (keySet = new KeySet());
 	}
@@ -1514,7 +1524,8 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
 	 * and may (but is not guaranteed to) reflect any modifications subsequent
 	 * to construction.
 	 */
-	public Collection<V> values() {
+	@Override
+  public Collection<V> values() {
 		Collection<V> vs = values;
 		return (vs != null) ? vs : (values = new Values());
 	}
@@ -1535,7 +1546,8 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
 	 * and may (but is not guaranteed to) reflect any modifications subsequent
 	 * to construction.
 	 */
-	public Set<Map.Entry<K, V>> entrySet() {
+	@Override
+  public Set<Map.Entry<K, V>> entrySet() {
 		Set<Map.Entry<K, V>> es = entrySet;
 		return (es != null) ? es : (entrySet = new EntrySet());
 	}
@@ -1689,7 +1701,8 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
 			return oldValue;
 		}
 
-		public boolean equals(Object o) {
+		@Override
+    public boolean equals(Object o) {
 			if (!(o instanceof Map.Entry))
 				return false;
 			@SuppressWarnings("unchecked")
@@ -1697,12 +1710,14 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
 			return eq(key, e.getKey()) && eq(value, e.getValue());
 		}
 
-		public int hashCode() {
+		@Override
+    public int hashCode() {
 			return (key == null ? 0 : key.hashCode())
 					^ (value == null ? 0 : value.hashCode());
 		}
 
-		public String toString() {
+		@Override
+    public String toString() {
 			return key + "=" + value;
 		}
 
@@ -1730,7 +1745,8 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
 		 * removed in which case the put will re-establish). We do not and
 		 * cannot guarantee more.
 		 */
-		public V setValue(V value) {
+		@Override
+    public V setValue(V value) {
 			if (value == null)
 				throw new NullPointerException();
 			V v = super.setValue(value);
@@ -1748,59 +1764,72 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
 	}
 
 	final class KeySet extends AbstractSet<K> {
-		public Iterator<K> iterator() {
+		@Override
+    public Iterator<K> iterator() {
 			return new KeyIterator();
 		}
 
-		public int size() {
+		@Override
+    public int size() {
 			return ConcurrentReferenceHashMap.this.size();
 		}
 
-		public boolean isEmpty() {
+		@Override
+    public boolean isEmpty() {
 			return ConcurrentReferenceHashMap.this.isEmpty();
 		}
 
-		public boolean contains(Object o) {
+		@Override
+    public boolean contains(Object o) {
 			return ConcurrentReferenceHashMap.this.containsKey(o);
 		}
 
-		public boolean remove(Object o) {
+		@Override
+    public boolean remove(Object o) {
 			return ConcurrentReferenceHashMap.this.remove(o) != null;
 		}
 
-		public void clear() {
+		@Override
+    public void clear() {
 			ConcurrentReferenceHashMap.this.clear();
 		}
 	}
 
 	final class Values extends AbstractCollection<V> {
-		public Iterator<V> iterator() {
+		@Override
+    public Iterator<V> iterator() {
 			return new ValueIterator();
 		}
 
-		public int size() {
+		@Override
+    public int size() {
 			return ConcurrentReferenceHashMap.this.size();
 		}
 
-		public boolean isEmpty() {
+		@Override
+    public boolean isEmpty() {
 			return ConcurrentReferenceHashMap.this.isEmpty();
 		}
 
-		public boolean contains(Object o) {
+		@Override
+    public boolean contains(Object o) {
 			return ConcurrentReferenceHashMap.this.containsValue(o);
 		}
 
-		public void clear() {
+		@Override
+    public void clear() {
 			ConcurrentReferenceHashMap.this.clear();
 		}
 	}
 
 	final class EntrySet extends AbstractSet<Map.Entry<K, V>> {
-		public Iterator<Map.Entry<K, V>> iterator() {
+		@Override
+    public Iterator<Map.Entry<K, V>> iterator() {
 			return new EntryIterator();
 		}
 
-		public boolean contains(Object o) {
+		@Override
+    public boolean contains(Object o) {
 			if (!(o instanceof Map.Entry))
 				return false;
 			Map.Entry<?, ?> e = (Map.Entry<?, ?>) o;
@@ -1808,7 +1837,8 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
 			return v != null && v.equals(e.getValue());
 		}
 
-		public boolean remove(Object o) {
+		@Override
+    public boolean remove(Object o) {
 			if (!(o instanceof Map.Entry))
 				return false;
 			Map.Entry<?, ?> e = (Map.Entry<?, ?>) o;
@@ -1816,15 +1846,18 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
 					.getValue());
 		}
 
-		public int size() {
+		@Override
+    public int size() {
 			return ConcurrentReferenceHashMap.this.size();
 		}
 
-		public boolean isEmpty() {
+		@Override
+    public boolean isEmpty() {
 			return ConcurrentReferenceHashMap.this.isEmpty();
 		}
 
-		public void clear() {
+		@Override
+    public void clear() {
 			ConcurrentReferenceHashMap.this.clear();
 		}
 	}

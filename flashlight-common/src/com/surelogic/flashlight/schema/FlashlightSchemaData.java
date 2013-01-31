@@ -13,16 +13,19 @@ public class FlashlightSchemaData extends AbstractSchemaData {
 			  SLLicenseProduct.FLASHLIGHT);
 	}
 
-	protected Object newInstance(String qname) 
+	@Override
+  protected Object newInstance(String qname) 
 	throws InstantiationException, IllegalAccessException, ClassNotFoundException {
 		return loader.loadClass(qname).newInstance();
 	}
 	
-	public URL getSchemaResource(final String name) {
+	@Override
+  public URL getSchemaResource(final String name) {
 		return loader.getResource(getSchemaResourcePath(name));
 	}
 
-	protected InputStream getResourceAsStream(String path) {
+	@Override
+  protected InputStream getResourceAsStream(String path) {
 		return loader.getResourceAsStream(path);
 	}
 }

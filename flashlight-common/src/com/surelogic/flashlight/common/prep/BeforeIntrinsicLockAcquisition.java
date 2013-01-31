@@ -7,7 +7,8 @@ public final class BeforeIntrinsicLockAcquisition extends Lock {
 		super(i);
 	}
 
-	public String getXMLElementName() {
+	@Override
+  public String getXMLElementName() {
 		return "before-intrinsic-lock-acquisition";
 	}
 

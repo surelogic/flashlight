@@ -42,6 +42,7 @@ public class FileChannelOutputStream extends OutputStream {
     buffer.clear();
   }
 
+  @Override
   public void write(byte b[], int off, int len) throws IOException {
     // Check args
     if (b == null) {

@@ -42,7 +42,8 @@ public final class FlashlightMethodsTab extends AbstractLaunchConfigurationTab {
 	private Button removeButton;
 	private java.util.List<String> extraFiles = new ArrayList<String>();
 
-	public void createControl(final Composite parent) {
+	@Override
+  public void createControl(final Composite parent) {
 		final Composite comp = new Composite(parent, SWT.NONE);
 		setControl(comp);
 
@@ -102,40 +103,49 @@ public final class FlashlightMethodsTab extends AbstractLaunchConfigurationTab {
 		extraFilesViewer.getList().setLayoutData(gridData);
 
 		extraFilesViewer.setContentProvider(new IStructuredContentProvider() {
-			public Object[] getElements(Object inputElement) {
+			@Override
+      public Object[] getElements(Object inputElement) {
 				return ((java.util.List<String>) inputElement).toArray();
 			}
 
-			public void dispose() { /* do nothing */
+			@Override
+      public void dispose() { /* do nothing */
 			}
 
-			public void inputChanged(Viewer viewer, Object oldInput,
+			@Override
+      public void inputChanged(Viewer viewer, Object oldInput,
 					Object newInput) { /* do nothing */
 			}
 		});
 		extraFilesViewer.setLabelProvider(new ILabelProvider() {
-			public Image getImage(Object element) {
+			@Override
+      public Image getImage(Object element) {
 				return null;
 			}
 
-			public String getText(Object element) {
+			@Override
+      public String getText(Object element) {
 				return (String) element;
 			}
 
-			public void addListener(ILabelProviderListener listener) { /*
+			@Override
+      public void addListener(ILabelProviderListener listener) { /*
 																		 * do
 																		 * nothing
 																		 */
 			}
 
-			public void dispose() { /* do nothing */
+			@Override
+      public void dispose() { /* do nothing */
 			}
 
-			public boolean isLabelProperty(Object element, String property) {
+			@Override
+      public boolean isLabelProperty(Object element, String property) {
 				return false;
 			}
 
-			public void removeListener(ILabelProviderListener listener) { /*
+			@Override
+      public void removeListener(ILabelProviderListener listener) { /*
 																		 * do
 																		 * nothing
 																		 */
@@ -143,7 +153,8 @@ public final class FlashlightMethodsTab extends AbstractLaunchConfigurationTab {
 		});
 		extraFilesViewer
 				.addSelectionChangedListener(new ISelectionChangedListener() {
-					public void selectionChanged(
+					@Override
+          public void selectionChanged(
 							final SelectionChangedEvent event) {
 						removeButton
 								.setEnabled(!event.getSelection().isEmpty());
@@ -220,7 +231,8 @@ public final class FlashlightMethodsTab extends AbstractLaunchConfigurationTab {
 		return "com.surelogic.flashlight.client.eclipse.launch.FlashlightMethodsTab";
 	}
 
-	public String getName() {
+	@Override
+  public String getName() {
 		return "Methods";
 	}
 
@@ -238,7 +250,8 @@ public final class FlashlightMethodsTab extends AbstractLaunchConfigurationTab {
 	 * @param configuration
 	 *            launch configuration
 	 */
-	public void initializeFrom(final ILaunchConfiguration config) {
+	@Override
+  public void initializeFrom(final ILaunchConfiguration config) {
 		boolean useDefault = true;
 		List<String> xtraFiles = Collections.emptyList();
 
@@ -271,7 +284,8 @@ public final class FlashlightMethodsTab extends AbstractLaunchConfigurationTab {
 	 * @param configuration
 	 *            launch configuration
 	 */
-	public void performApply(final ILaunchConfigurationWorkingCopy config) {
+	@Override
+  public void performApply(final ILaunchConfigurationWorkingCopy config) {
 		config.setAttribute(
 				FlashlightPreferencesUtility.USE_DEFAULT_INDIRECT_ACCESS_METHODS,
 				useDefaultMethods.getSelection());
@@ -289,7 +303,8 @@ public final class FlashlightMethodsTab extends AbstractLaunchConfigurationTab {
 	 * @param configuration
 	 *            launch configuration
 	 */
-	public void setDefaults(final ILaunchConfigurationWorkingCopy config) {
+	@Override
+  public void setDefaults(final ILaunchConfigurationWorkingCopy config) {
 		config.setAttribute(
 				FlashlightPreferencesUtility.USE_DEFAULT_INDIRECT_ACCESS_METHODS,
 				true);

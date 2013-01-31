@@ -783,6 +783,7 @@ public final class RunManager implements ILifecycle {
 
   @Vouch("ThreadSafe")
   private final TickListener f_tick = new TickListener() {
+    @Override
     public void timingSourceTick(TimingSource source, long nanoTime) {
       refresh();
     }

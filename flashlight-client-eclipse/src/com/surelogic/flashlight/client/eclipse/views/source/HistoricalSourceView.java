@@ -21,6 +21,7 @@ public final class HistoricalSourceView extends AbstractHistoricalSourceView {
       zips = run.getSourceZipFileHandles();
     } else {
       zips = new ISourceZipFileHandles() {
+        @Override
         public Iterable<File> getSourceZips() {
           return Collections.emptyList();
         }

@@ -14,7 +14,8 @@ public interface IRangePrep extends IPrep {
 	 * 
 	 * @return the XML element name that this handler deals with.
 	 */
-	String getXMLElementName();
+	@Override
+  String getXMLElementName();
 
 	/**
 	 * Allows the event handler to perform any required setup. Always called
@@ -47,7 +48,8 @@ public interface IRangePrep extends IPrep {
 	 * @throws SQLException
 	 *             if something goes wrong, this will cause the prep to fail.
 	 */
-	void parse(final PreppedAttributes attributes) throws SQLException;
+	@Override
+  void parse(final PreppedAttributes attributes) throws SQLException;
 
 	/**
 	 * Called after the last call to {@link #parse(int, Attributes)} to allow a
@@ -61,11 +63,13 @@ public interface IRangePrep extends IPrep {
 	 * @throws SQLException
 	 *             if something goes wrong, this will cause the prep to fail.
 	 */
-	void flush(final long endTime) throws SQLException;
+	@Override
+  void flush(final long endTime) throws SQLException;
 
 	/**
 	 * Logs some status if the logging level {@link Level#FINE} is loggable.
 	 * This method will be called after {@link #flush(int, long)}.
 	 */
-	void printStats();
+	@Override
+  void printStats();
 }

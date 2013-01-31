@@ -81,7 +81,8 @@ public final class FieldDef implements Comparable<FieldDef> {
 		return getQualifiedFieldName();
 	}
 
-	public int compareTo(final FieldDef o) {
+	@Override
+  public int compareTo(final FieldDef o) {
 		if (isStatic && !o.isStatic) {
 			return 1;
 		} else if (!isStatic && o.isStatic) {

@@ -18,7 +18,8 @@ import com.surelogic.flashlight.common.LibResources;
 
 public class SetupAntTasksAction implements IWorkbenchWindowActionDelegate {
 
-	public void run(IAction action) {
+	@Override
+  public void run(IAction action) {
 		DirectoryDialog dialog = new DirectoryDialog(EclipseUIUtility
 				.getShell());
 		dialog.setText(I18N
@@ -50,15 +51,18 @@ public class SetupAntTasksAction implements IWorkbenchWindowActionDelegate {
 		}
 	}
 
-	public void init(IWorkbenchWindow window) {
+	@Override
+  public void init(IWorkbenchWindow window) {
 		// Nothing to do
 	}
 
-	public void dispose() {
+	@Override
+  public void dispose() {
 		// Nothing to do
 	}
 
-	public void selectionChanged(IAction action, ISelection selection) {
+	@Override
+  public void selectionChanged(IAction action, ISelection selection) {
 		// Nothing to do
 	}
 }

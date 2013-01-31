@@ -67,6 +67,7 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
   private static RunControlDialog f_dialogInstance = null;
 
   private static final Runnable f_openDialogJob = new Runnable() {
+    @Override
     public void run() {
       if (f_dialogInstance == null) {
         final Shell shell = EclipseUIUtility.getShell();
@@ -138,6 +139,7 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
 
     sc.setContent(c);
     sc.addControlListener(new ControlAdapter() {
+      @Override
       public void controlResized(ControlEvent e) {
         Rectangle r = sc.getClientArea();
         sc.setMinSize(c.computeSize(r.width, SWT.DEFAULT));
@@ -186,6 +188,7 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
     clearList.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, true, false));
     clearList.setFont(parent.getFont());
     clearList.addListener(SWT.Selection, new Listener() {
+      @Override
       public void handleEvent(Event event) {
         RunManager.getInstance().setDisplayToUserIfReady(false);
       }
@@ -202,6 +205,7 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
       ToolItem item = new ToolItem(toolBar, SWT.PUSH);
       item.setImage(SLImages.getImage(CommonImages.IMG_GRAY_X));
       item.addSelectionListener(new SelectionAdapter() {
+        @Override
         public void widgetSelected(SelectionEvent e) {
           search.setText("");
           searchCleared();
@@ -211,6 +215,7 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
       toolBar.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, false));
     }
     search.addSelectionListener(new SelectionAdapter() {
+      @Override
       public void widgetDefaultSelected(SelectionEvent e) {
         if (e.detail == SWT.CANCEL) {
           searchCleared();
@@ -221,6 +226,7 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
     });
     showSearchPrompt(search); // at start
     search.addFocusListener(new FocusListener() {
+      @Override
       public void focusLost(FocusEvent e) {
         final String text = search.getText();
         if (text == null || "".equals(text)) {
@@ -228,6 +234,7 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
         }
       }
 
+      @Override
       public void focusGained(FocusEvent e) {
         clearSearchPromptIfNecessary(search);
       }
@@ -290,6 +297,7 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
     return !runLabel.startsWith(f_searchFilterText);
   }
 
+  @Override
   protected IDialogSettings getDialogBoundsSettings() {
     return Activator.getDefault().getDialogSettings();
   }
@@ -330,6 +338,7 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
       final ToolBar toolBar = new ToolBar(f_bk, SWT.FLAT);
       f_button = new ToolItem(toolBar, SWT.PUSH);
       f_button.addSelectionListener(new SelectionAdapter() {
+        @Override
         public void widgetSelected(SelectionEvent e) {
           buttonPressed();
         }
@@ -464,9 +473,11 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
             final int percentage = fixUpPercentage(tracker.getPercentageOrState());
             prepProgressBar.setSelection(percentage);
             tracker.addObserver(new SLProgressMonitorObserver() {
+              @Override
               public void notifyPercentComplete(int percentage) {
                 final int uiPercentage = fixUpPercentage(percentage);
                 EclipseUIUtility.nowOrAsyncExec(new Runnable() {
+                  @Override
                   public void run() {
                     if (!prepProgressBar.isDisposed())
                       prepProgressBar.setSelection(uiPercentage);
@@ -536,6 +547,7 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
    */
   private void updateGUIModel() {
     EclipseUIUtility.nowOrAsyncExec(new Runnable() {
+      @Override
       public void run() {
         if (f_dialogArea == null || f_dialogArea.isDisposed())
           return;
@@ -595,6 +607,7 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
     return percentage;
   }
 
+  @Override
   public void timingSourceTick(TimingSource source, long nanoTime) {
     // CALLED IN SWT THREAD
     updateGUIModel();

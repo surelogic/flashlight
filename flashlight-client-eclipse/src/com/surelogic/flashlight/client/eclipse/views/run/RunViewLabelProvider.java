@@ -18,6 +18,7 @@ public final class RunViewLabelProvider implements ITableLabelProvider {
     f_model = model;
   }
 
+  @Override
   public Image getColumnImage(Object element, int columnIndex) {
     final RunDirectory rowData = (RunDirectory) element;
     final String symbolicName = f_model.getImageSymbolicName(rowData, columnIndex);
@@ -39,23 +40,28 @@ public final class RunViewLabelProvider implements ITableLabelProvider {
       return null;
   }
 
+  @Override
   public String getColumnText(Object element, int columnIndex) {
     final RunDirectory rowData = (RunDirectory) element;
     return f_model.getText(rowData, columnIndex);
   }
 
+  @Override
   public void addListener(ILabelProviderListener listener) {
     // ignore
   }
 
+  @Override
   public void dispose() {
     // nothing to do
   }
 
+  @Override
   public boolean isLabelProperty(Object element, String property) {
     return false;
   }
 
+  @Override
   public void removeListener(ILabelProviderListener listener) {
     // ignore
   }

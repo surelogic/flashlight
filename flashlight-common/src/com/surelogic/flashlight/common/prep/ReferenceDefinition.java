@@ -24,7 +24,8 @@ public abstract class ReferenceDefinition extends RangedEvent {
 
 	private int count;
 
-	public final void parse(final PreppedAttributes attributes)
+	@Override
+  public final void parse(final PreppedAttributes attributes)
 			throws SQLException {
 		final long id = attributes.getLong(ID);
 		long type = attributes.getLong(TYPE);
@@ -89,7 +90,8 @@ public abstract class ReferenceDefinition extends RangedEvent {
 		f_ps = c.prepareStatement(f_psQ);
 	}
 
-	public void flush(final long endTime) throws SQLException {
+	@Override
+  public void flush(final long endTime) throws SQLException {
 		if (count > 0) {
 			f_ps.executeBatch();
 		}
@@ -97,7 +99,8 @@ public abstract class ReferenceDefinition extends RangedEvent {
 		f_ps.close();
 	}
 
-	public void printStats() {
+	@Override
+  public void printStats() {
 
 	}
 

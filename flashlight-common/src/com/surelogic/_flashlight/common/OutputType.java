@@ -59,6 +59,7 @@ public enum OutputType {
     if (directory == null || !directory.isDirectory())
       return new File[0];
     final File[] result = directory.listFiles(new FilenameFilter() {
+      @Override
       public boolean accept(File dir, String name) {
         return name.endsWith(getSuffix());
       }

@@ -13,7 +13,8 @@ import com.surelogic.flashlight.client.eclipse.views.source.HistoricalSourceView
 
 public final class FlashlightPerspective implements IPerspectiveFactory {
 
-	public void createInitialLayout(final IPageLayout layout) {
+	@Override
+  public void createInitialLayout(final IPageLayout layout) {
 		final String editorArea = layout.getEditorArea();
 
 		final IFolderLayout runArea = layout.createFolder("runArea",

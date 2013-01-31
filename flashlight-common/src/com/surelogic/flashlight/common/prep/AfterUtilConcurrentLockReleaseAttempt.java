@@ -16,7 +16,8 @@ public final class AfterUtilConcurrentLockReleaseAttempt extends Lock {
 		return LockType.UTIL;
 	}
 
-	public String getXMLElementName() {
+	@Override
+  public String getXMLElementName() {
 		return "after-util-concurrent-lock-release-attempt";
 	}
 

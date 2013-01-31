@@ -21,11 +21,13 @@ public class LongMap<T> { // extends AbstractMap<Long,T> {
 			value = newValue;
 		}
 
-		public T getValue() {
+		@Override
+    public T getValue() {
 			return value;
 		}
 
-		public T setValue(final T value) {
+		@Override
+    public T setValue(final T value) {
 			final T old = this.value;
 			this.value = value;
 			return old;
@@ -33,7 +35,8 @@ public class LongMap<T> { // extends AbstractMap<Long,T> {
 
 		public abstract long key();
 
-		public Long getKey() {
+		@Override
+    public Long getKey() {
 			return key();
 		}
 
@@ -216,12 +219,14 @@ public class LongMap<T> { // extends AbstractMap<Long,T> {
 				valid = true;
 			}
 
-			public boolean hasNext() {
+			@Override
+      public boolean hasNext() {
 				findNext();
 				return valid && index != BAD_INDEX;
 			}
 
-			public Map.Entry<Long, T> next() {
+			@Override
+      public Map.Entry<Long, T> next() {
 				if (!hasNext()) {
 					throw new NoSuchElementException();
 				}
@@ -229,7 +234,8 @@ public class LongMap<T> { // extends AbstractMap<Long,T> {
 				return current;
 			}
 
-			public void remove() {
+			@Override
+      public void remove() {
 				throw new UnsupportedOperationException();
 			}
 		};
@@ -257,18 +263,22 @@ public class LongMap<T> { // extends AbstractMap<Long,T> {
 	public Iterable<T> values() {
 		final Iterator<Map.Entry<Long, T>> entries = entrySet().iterator();
 		return new Iterable<T>() {
-			public Iterator<T> iterator() {
+			@Override
+      public Iterator<T> iterator() {
 				return new Iterator<T>() {
-					public boolean hasNext() {
+					@Override
+          public boolean hasNext() {
 						return entries.hasNext();
 					}
 
-					public T next() {
+					@Override
+          public T next() {
 						final Map.Entry<Long, T> e = entries.next();
 						return e.getValue();
 					}
 
-					public void remove() {
+					@Override
+          public void remove() {
 						throw new UnsupportedOperationException();
 					}
 				};

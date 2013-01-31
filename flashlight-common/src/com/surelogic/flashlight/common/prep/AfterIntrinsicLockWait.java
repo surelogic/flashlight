@@ -6,7 +6,8 @@ public final class AfterIntrinsicLockWait extends Lock {
 		super(i);
 	}
 
-	public String getXMLElementName() {
+	@Override
+  public String getXMLElementName() {
 		return "after-intrinsic-lock-wait";
 	}
 

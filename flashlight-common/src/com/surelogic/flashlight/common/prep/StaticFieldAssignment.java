@@ -47,11 +47,13 @@ public class StaticFieldAssignment extends AbstractPrep {
 		f_ps = c.prepareStatement(f_psQ);
 	}
 
-	public String getXMLElementName() {
+	@Override
+  public String getXMLElementName() {
 		return "field-assignment";
 	}
 
-	public void parse(final PreppedAttributes attributes) throws SQLException {
+	@Override
+  public void parse(final PreppedAttributes attributes) throws SQLException {
 		final long field = attributes.getLong(AttributeType.FIELD);
 		final long value = attributes.getLong(AttributeType.VALUE);
 		final Long receiver = attributes.containsKey(AttributeType.RECEIVER) ? attributes

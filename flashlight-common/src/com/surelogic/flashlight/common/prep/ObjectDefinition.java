@@ -2,7 +2,8 @@ package com.surelogic.flashlight.common.prep;
 
 public final class ObjectDefinition extends ReferenceDefinition {
 
-	public String getXMLElementName() {
+	@Override
+  public String getXMLElementName() {
 		return "object-definition";
 	}
 

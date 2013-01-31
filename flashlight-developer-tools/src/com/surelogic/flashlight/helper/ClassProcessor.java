@@ -121,6 +121,7 @@ public final class ClassProcessor implements ClassVisitor {
     
     private MethodComparator() { /* do nothing */ }
     
+    @Override
     public int compare(final Method o1, final Method o2) {
       return o1.key.compareTo(o2.key);
     }
@@ -187,6 +188,7 @@ public final class ClassProcessor implements ClassVisitor {
   
   
   
+  @Override
   public void visit(final int version, final int access, final String name,
       final String signature, final String superName,
       final String[] interfaces) {
@@ -204,31 +206,37 @@ public final class ClassProcessor implements ClassVisitor {
     }
   }
 
+  @Override
   public FieldVisitor visitField(final int access, final String name,
       final String desc, final String signature, final Object value) {
     // don't care
     return null;
   }
 
+  @Override
   public AnnotationVisitor visitAnnotation(final String desc, final boolean visible) {
     // Don't care about
     return null;
   }
 
+  @Override
   public void visitAttribute(final Attribute attr) {
     // Don't care about
   }
 
+  @Override
   public void visitEnd() {
     classCache.put(className, new Clazz(ancestorMethods, myMethods));
   }
 
+  @Override
   public void visitInnerClass(
       final String name, final String outerName, final String innerName,
       final int access) {
     // Don't care about
   }
 
+  @Override
   public MethodVisitor visitMethod(
       final int access, final String name, final String desc,
       final String signature, final String[] exceptions) {
@@ -259,11 +267,13 @@ public final class ClassProcessor implements ClassVisitor {
     return null;
   }
 
+  @Override
   public void visitOuterClass(
       final String owner, final String name, final String desc) {
     // Don't care about
   }
 
+  @Override
   public void visitSource(final String source, final String debug) {
     // Don't care about
   }

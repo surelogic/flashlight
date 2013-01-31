@@ -17,7 +17,8 @@ public final class Trace extends AbstractPrep {
 	private PreparedStatement f_ps;
 	private int count = 0;
 
-	public void parse(final PreppedAttributes attributes) throws SQLException {
+	@Override
+  public void parse(final PreppedAttributes attributes) throws SQLException {
 		final long parent = attributes.getLong(PARENT_ID);
 		final long site = attributes.getLong(SITE_ID);
 		final long id = attributes.getLong(ID);
@@ -34,7 +35,8 @@ public final class Trace extends AbstractPrep {
 		}
 	}
 
-	public String getXMLElementName() {
+	@Override
+  public String getXMLElementName() {
 		return "trace-node";
 	}
 

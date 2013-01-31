@@ -76,7 +76,8 @@ public final class FlashlightInstrumentationTab extends
 
 	private IJavaProject currentProject = null;
 
-	public void createControl(final Composite parent) {
+	@Override
+  public void createControl(final Composite parent) {
 		Composite comp = new Composite(parent, SWT.NONE);
 		setControl(comp);
 
@@ -104,12 +105,14 @@ public final class FlashlightInstrumentationTab extends
 		viewer.setContentProvider(CLASSPATH_ITEMS_CONTENT_PROVIDER);
 		viewer.setLabelProvider(CLASSPATH_ITEMS_LABEL_PROVIDER);
 		viewer.addCheckStateListener(new ICheckStateListener() {
-			public void checkStateChanged(final CheckStateChangedEvent event) {
+			@Override
+      public void checkStateChanged(final CheckStateChangedEvent event) {
 				setAsChanged();
 			}
 		});
 		viewer.getTable().addMenuDetectListener(new MenuDetectListener() {
-			public void menuDetected(MenuDetectEvent e) {
+			@Override
+      public void menuDetected(MenuDetectEvent e) {
 				final Menu contextMenu = new Menu(viewer.getControl()
 						.getShell(), SWT.POP_UP);
 				setupContextMenu(viewer, contextMenu);
@@ -174,45 +177,55 @@ public final class FlashlightInstrumentationTab extends
 				new GridData(GridData.FILL_BOTH));
 
 		blacklistViewer.setContentProvider(new IStructuredContentProvider() {
-			public Object[] getElements(Object inputElement) {
+			@Override
+      public Object[] getElements(Object inputElement) {
 				return ((java.util.List<String>) inputElement).toArray();
 			}
 
-			public void dispose() { /* do nothing */
+			@Override
+      public void dispose() { /* do nothing */
 			}
 
-			public void inputChanged(Viewer viewer, Object oldInput,
+			@Override
+      public void inputChanged(Viewer viewer, Object oldInput,
 					Object newInput) {
 				/* do nothing */
 			}
 		});
 		blacklistViewer.setLabelProvider(new ILabelProvider() {
-			public Image getImage(Object element) {
+			@Override
+      public Image getImage(Object element) {
 				return null;
 			}
 
-			public String getText(Object element) {
+			@Override
+      public String getText(Object element) {
 				return (String) element;
 			}
 
-			public void addListener(ILabelProviderListener listener) {
+			@Override
+      public void addListener(ILabelProviderListener listener) {
 				/* do nothing */
 			}
 
-			public void dispose() { /* do nothing */
+			@Override
+      public void dispose() { /* do nothing */
 			}
 
-			public boolean isLabelProperty(Object element, String property) {
+			@Override
+      public boolean isLabelProperty(Object element, String property) {
 				return false;
 			}
 
-			public void removeListener(ILabelProviderListener listener) {
+			@Override
+      public void removeListener(ILabelProviderListener listener) {
 				/* do nothing */
 			}
 		});
 		blacklistViewer
 				.addSelectionChangedListener(new ISelectionChangedListener() {
-					public void selectionChanged(
+					@Override
+          public void selectionChanged(
 							final SelectionChangedEvent event) {
 						removeButton
 								.setEnabled(!event.getSelection().isEmpty());
@@ -300,7 +313,8 @@ public final class FlashlightInstrumentationTab extends
 		return "com.surelogic.flashlight.client.eclipse.launch.FlashlightInstrumentationTab";
 	}
 
-	public String getName() {
+	@Override
+  public String getName() {
 		return "Instrumentation";
 	}
 
@@ -311,15 +325,18 @@ public final class FlashlightInstrumentationTab extends
 
 	private static final class ClasspathItemsContentProvider implements
 			IStructuredContentProvider {
-		public Object[] getElements(final Object inputElement) {
+		@Override
+    public Object[] getElements(final Object inputElement) {
 			return ((java.util.List) inputElement).toArray();
 		}
 
-		public void dispose() {
+		@Override
+    public void dispose() {
 			// Do nothing
 		}
 
-		public void inputChanged(final Viewer viewer, final Object oldInput,
+		@Override
+    public void inputChanged(final Viewer viewer, final Object oldInput,
 				final Object newInput) {
 			// Do nothing
 		}
@@ -332,7 +349,8 @@ public final class FlashlightInstrumentationTab extends
 		private static final Image IMG_JAR = SLImages
 				.getImage(CommonImages.IMG_JAR);
 
-		public Image getColumnImage(final Object element, final int columnIndex) {
+		@Override
+    public Image getColumnImage(final Object element, final int columnIndex) {
 			final IRuntimeClasspathEntry elt = (IRuntimeClasspathEntry) element;
 			final int type = elt.getType();
 
@@ -357,25 +375,30 @@ public final class FlashlightInstrumentationTab extends
 			return null;
 		}
 
-		public String getColumnText(final Object element, final int columnIndex) {
+		@Override
+    public String getColumnText(final Object element, final int columnIndex) {
 			final IRuntimeClasspathEntry elt = (IRuntimeClasspathEntry) element;
 			return elt.getLocation();
 		}
 
-		public void dispose() {
+		@Override
+    public void dispose() {
 			// Do nothing
 		}
 
-		public boolean isLabelProperty(final Object element,
+		@Override
+    public boolean isLabelProperty(final Object element,
 				final String property) {
 			return false;
 		}
 
-		public void addListener(final ILabelProviderListener listener) {
+		@Override
+    public void addListener(final ILabelProviderListener listener) {
 			// Do nothing
 		}
 
-		public void removeListener(final ILabelProviderListener listener) {
+		@Override
+    public void removeListener(final ILabelProviderListener listener) {
 			// Do Nothing
 		}
 	}
@@ -389,7 +412,8 @@ public final class FlashlightInstrumentationTab extends
 	 * @param configuration
 	 *            launch configuration
 	 */
-	public void initializeFrom(final ILaunchConfiguration config) {
+	@Override
+  public void initializeFrom(final ILaunchConfiguration config) {
 		final java.util.List<IRuntimeClasspathEntry> user = new ArrayList<IRuntimeClasspathEntry>();
 		final java.util.List<IRuntimeClasspathEntry> boot = new ArrayList<IRuntimeClasspathEntry>();
 		final java.util.List<IRuntimeClasspathEntry> system = new ArrayList<IRuntimeClasspathEntry>();
@@ -479,7 +503,8 @@ public final class FlashlightInstrumentationTab extends
 	 * @param configuration
 	 *            launch configuration
 	 */
-	public void performApply(final ILaunchConfigurationWorkingCopy config) {
+	@Override
+  public void performApply(final ILaunchConfigurationWorkingCopy config) {
 		final java.util.List<IRuntimeClasspathEntry> user = new ArrayList<IRuntimeClasspathEntry>(
 				userEntries);
 		user.removeAll(Arrays.asList(userTable.getCheckedElements()));
@@ -513,7 +538,8 @@ public final class FlashlightInstrumentationTab extends
 	 * @param configuration
 	 *            launch configuration
 	 */
-	public void setDefaults(final ILaunchConfigurationWorkingCopy config) {
+	@Override
+  public void setDefaults(final ILaunchConfigurationWorkingCopy config) {
 		// Enable instrumentation for all the user classpath items
 		// Disable instrumentation for all the bootpath items
 		final java.util.List<IRuntimeClasspathEntry> user = new ArrayList<IRuntimeClasspathEntry>();

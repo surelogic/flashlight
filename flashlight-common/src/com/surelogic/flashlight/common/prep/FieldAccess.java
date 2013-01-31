@@ -25,7 +25,8 @@ public abstract class FieldAccess extends RangedEvent {
 
 	private long skipped, inserted;
 
-	public void parse(final PreppedAttributes attributes) throws SQLException {
+	@Override
+  public void parse(final PreppedAttributes attributes) throws SQLException {
 		final long nanoTime = attributes.getEventTime();
 		final long inThread = attributes.getThreadId();
 		final long trace = attributes.getTraceId();
@@ -79,7 +80,8 @@ public abstract class FieldAccess extends RangedEvent {
 		}
 	}
 
-	public void printStats() {
+	@Override
+  public void printStats() {
 		System.out.println(getClass().getName() + " Skipped   = " + skipped);
 		System.out.println(getClass().getName() + " Inserted  = " + inserted);
 		System.out.println(getClass().getName() + " %Inserted = " + inserted
@@ -94,7 +96,8 @@ public abstract class FieldAccess extends RangedEvent {
 		f_ps = c.prepareStatement(f_psQ);
 	}
 
-	public void flush(final long endTime) throws SQLException {
+	@Override
+  public void flush(final long endTime) throws SQLException {
 		if (count > 0) {
 			f_ps.executeBatch();
 			count = 0;

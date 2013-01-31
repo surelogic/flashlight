@@ -13,11 +13,13 @@ public class GarbageCollectedObject extends Event {
 		super(i);
 	}
 
-	public String getXMLElementName() {
+	@Override
+  public String getXMLElementName() {
 		return "garbage-collected-object";
 	}
 
-	public void parse(final PreppedAttributes attributes) {
+	@Override
+  public void parse(final PreppedAttributes attributes) {
 		final long id = attributes.getLong(ID);
 		if (id != IdConstants.ILLEGAL_ID) {
 			f_rowInserter.gcObject(id);

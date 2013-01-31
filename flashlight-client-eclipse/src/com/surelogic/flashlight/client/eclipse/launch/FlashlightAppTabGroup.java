@@ -17,7 +17,8 @@ import org.eclipse.jdt.debug.ui.launchConfigurations.JavaMainTab;
  * extension point.
  */
 public class FlashlightAppTabGroup extends AbstractLaunchConfigurationTabGroup {
-	public void createTabs(final ILaunchConfigurationDialog dialog,
+	@Override
+  public void createTabs(final ILaunchConfigurationDialog dialog,
 			final String mode) {
 		final ILaunchConfigurationTab[] tabs = new ILaunchConfigurationTab[] {
 				new JavaMainTab(), new JavaArgumentsTab(),

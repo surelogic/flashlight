@@ -1281,54 +1281,99 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 				// Mark the field as referenced
 				field.setReferenced();
 
-				/*
-				 * We need to manipulate the stack to make a copy of the object
-				 * being accessed so that we can have it for the call to the
-				 * Store. How we do this depends on whether the top value on the
-				 * stack is a category 1 or a category 2 value. We have to test
-				 * the type descriptor of the field to determine this.
+				/* We call the store before the field access so that that in the case 
+				 * of a volatile field the store can get the time stamp of the access.
+				 * (We call the store after field reads, but before field writes, so 
+				 * that happens-before information can be computed.)
 				 */
-				if (ByteCodeUtils.isCategory2(desc)) {
-					// At the start the stack is "..., objectref, value"
-					mv.visitInsn(Opcodes.DUP2_X1);
-					// Stack is "..., value, objectref, value" (+2)
-					mv.visitInsn(Opcodes.POP2);
-					// Stack is "..., value, objectref" (+0)
-					mv.visitInsn(Opcodes.DUP_X2);
-					// Stack is "..., objectref, value, objectref" (+1)
-					mv.visitInsn(Opcodes.DUP_X2);
-					// Stack is "..., objectref, objectref, value, objectref"
-					// (+2)
-					mv.visitInsn(Opcodes.POP);
-					// Stack is "..., objectref, objectref, value" (+1)
-				} else { // Category 1
-					// At the start the stack is "..., objectref, value"
-					mv.visitInsn(Opcodes.SWAP);
-					// Stack is "..., value, objectref" (+0)
-					mv.visitInsn(Opcodes.DUP_X1);
-					// Stack is "..., objectref, value, objectref" (+1)
-					mv.visitInsn(Opcodes.SWAP);
-					// Stack is "..., objectref, objectref, value" (+1)
-				}
+				
+        /*
+         * We need to manipulate the stack to make a copy of the object
+         * being accessed so that we can have it for the call to the
+         * Store. How we do this depends on whether the top value on the
+         * stack is a category 1 or a category 2 value. We have to test
+         * the type descriptor of the field to determine this.
+         */
+        if (ByteCodeUtils.isCategory2(desc)) {
+          // At the start the stack is "..., objectref, value"
+          mv.visitInsn(Opcodes.DUP2_X1);
+          // Stack is "..., value, objectref, value" (+2)
+          mv.visitInsn(Opcodes.POP2);
+          // Stack is "..., value, objectref" (+0)
+          mv.visitInsn(Opcodes.DUP_X2);
+          // Stack is "..., objectref, value, objectref" (+1)
+        } else { // Category 1
+          // At the start the stack is "..., objectref, value"
+          mv.visitInsn(Opcodes.SWAP);
+          // Stack is "..., value, objectref" (+0)
+          mv.visitInsn(Opcodes.DUP_X1);
+          // Stack is "..., objectref, value, objectref" (+1)
+        }
+
+        /*
+         * Again manipulate the stack so that we can set up the first
+         * two arguments to the Store.fieldAccess() call. The first
+         * argument is a boolean "isRead" flag. The second argument is
+         * the object being accessed.
+         */
+        ByteCodeUtils.pushBooleanConstant(mv, false);
+        // Stack is "..., objectref, value, objectref, false"
+        mv.visitInsn(Opcodes.SWAP);
+        // Stack is "..., objectref, value, false, objectref"
+
+        finishFieldAccess(owner, field.id,
+            field.clazz.isInstrumented(), field.clazz.getName(),
+            FlashlightNames.INSTANCE_FIELD_ACCESS);
+        // Stack is "..., objectref, value"
+        
+//				/*
+//				 * We need to manipulate the stack to make a copy of the object
+//				 * being accessed so that we can have it for the call to the
+//				 * Store. How we do this depends on whether the top value on the
+//				 * stack is a category 1 or a category 2 value. We have to test
+//				 * the type descriptor of the field to determine this.
+//				 */
+//				if (ByteCodeUtils.isCategory2(desc)) {
+//					// At the start the stack is "..., objectref, value"
+//					mv.visitInsn(Opcodes.DUP2_X1);
+//					// Stack is "..., value, objectref, value" (+2)
+//					mv.visitInsn(Opcodes.POP2);
+//					// Stack is "..., value, objectref" (+0)
+//					mv.visitInsn(Opcodes.DUP_X2);
+//					// Stack is "..., objectref, value, objectref" (+1)
+//					mv.visitInsn(Opcodes.DUP_X2);
+//					// Stack is "..., objectref, objectref, value, objectref"
+//					// (+2)
+//					mv.visitInsn(Opcodes.POP);
+//					// Stack is "..., objectref, objectref, value" (+1)
+//				} else { // Category 1
+//					// At the start the stack is "..., objectref, value"
+//					mv.visitInsn(Opcodes.SWAP);
+//					// Stack is "..., value, objectref" (+0)
+//					mv.visitInsn(Opcodes.DUP_X1);
+//					// Stack is "..., objectref, value, objectref" (+1)
+//					mv.visitInsn(Opcodes.SWAP);
+//					// Stack is "..., objectref, objectref, value" (+1)
+//				}
 
 				// Execute the original PUTFIELD instruction
 				mv.visitFieldInsn(Opcodes.PUTFIELD, owner, name, desc);
 				// Stack is "..., objectref"
 
-				/*
-				 * Again manipulate the stack so that we can set up the first
-				 * two arguments to the Store.fieldAccess() call. The first
-				 * argument is a boolean "isRead" flag. The second argument is
-				 * the object being accessed.
-				 */
-				ByteCodeUtils.pushBooleanConstant(mv, false);
-				// Stack is "..., objectref, false"
-				mv.visitInsn(Opcodes.SWAP);
-				// Stack is "..., false, objectref"
-
-				finishFieldAccess(owner, field.id,
-						field.clazz.isInstrumented(), field.clazz.getName(),
-						FlashlightNames.INSTANCE_FIELD_ACCESS);
+//				/*
+//				 * Again manipulate the stack so that we can set up the first
+//				 * two arguments to the Store.fieldAccess() call. The first
+//				 * argument is a boolean "isRead" flag. The second argument is
+//				 * the object being accessed.
+//				 */
+//				ByteCodeUtils.pushBooleanConstant(mv, false);
+//				// Stack is "..., objectref, false"
+//				mv.visitInsn(Opcodes.SWAP);
+//				// Stack is "..., false, objectref"
+//
+//				finishFieldAccess(owner, field.id,
+//						field.clazz.isInstrumented(), field.clazz.getName(),
+//						FlashlightNames.INSTANCE_FIELD_ACCESS);
 			} else {
 				// Execute the original PUTFIELD instruction
 				mv.visitFieldInsn(Opcodes.PUTFIELD, owner, name, desc);
@@ -1448,20 +1493,37 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 
 				// Stack is "..., value"
 
+        /* We call the store before the field access so that that in the case 
+         * of a volatile field the store can get the time stamp of the access.
+         * (We call the store after field reads, but before field writes, so 
+         * that happens-before information can be computed.)
+         */
+        /*
+         * Push the first arguments on the stack for the call to the
+         * Store.
+         */
+        ByteCodeUtils.pushBooleanConstant(mv, false);
+        // Stack is "..., value, false"
+
+        finishFieldAccess(owner, field.id,
+            field.clazz.isInstrumented(), field.clazz.getName(),
+            FlashlightNames.STATIC_FIELD_ACCESS);
+        // Stack is "..., value"
+				
 				// Execute the original PUTSTATIC instruction
 				mv.visitFieldInsn(Opcodes.PUTSTATIC, owner, name, desc);
 				// Stack is "..."
 
-				/*
-				 * Push the first arguments on the stack for the call to the
-				 * Store.
-				 */
-				ByteCodeUtils.pushBooleanConstant(mv, false);
-				// Stack is "..., false"
-
-				finishFieldAccess(owner, field.id,
-						field.clazz.isInstrumented(), field.clazz.getName(),
-						FlashlightNames.STATIC_FIELD_ACCESS);
+//				/*
+//				 * Push the first arguments on the stack for the call to the
+//				 * Store.
+//				 */
+//				ByteCodeUtils.pushBooleanConstant(mv, false);
+//				// Stack is "..., false"
+//
+//				finishFieldAccess(owner, field.id,
+//						field.clazz.isInstrumented(), field.clazz.getName(),
+//						FlashlightNames.STATIC_FIELD_ACCESS);
 			} else {
 				// Execute the original PUTSTATIC instruction
 				mv.visitFieldInsn(Opcodes.PUTSTATIC, owner, name, desc);

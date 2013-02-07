@@ -254,7 +254,10 @@ public final class PrepSLJob extends AbstractSLJob {
                                     InstrumentationConstants.FL_CLASS_HIERARCHY_FILE_LOC),
                                     new File(
                                             runDir,
-                                            InstrumentationConstants.FL_SITES_FILE_LOC));
+                                            InstrumentationConstants.FL_SITES_FILE_LOC),
+                                    new File(
+                                            runDir,
+                                            InstrumentationConstants.FL_HAPPENS_BEFORE_FILE_LOC));
                     final IOneTimePrep[] f_parseElements = getOneTimeHandlers(
                             i, ch);
                     final SLProgressMonitor setupMonitor = new SubSLProgressMonitor(

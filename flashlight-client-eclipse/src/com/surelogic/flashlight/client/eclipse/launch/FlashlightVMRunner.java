@@ -1,5 +1,6 @@
 package com.surelogic.flashlight.client.eclipse.launch;
 
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_CLASS_HIERARCHY_FILE_LOC;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_COLLECTION_TYPE;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_CONSOLE_PORT;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_DATE_OVERRIDE;
@@ -7,7 +8,7 @@ import static com.surelogic._flashlight.common.InstrumentationConstants.FL_DIR;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_EXTERNAL_FOLDER_LOC;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_FIELDS_FILE;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_FIELDS_FILE_LOC;
-import static com.surelogic._flashlight.common.InstrumentationConstants.FL_CLASS_HIERARCHY_FILE_LOC;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_HAPPENS_BEFORE_FILE_LOC;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_LOG_FILE_LOC;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_NO_SPY;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_OUTPUT_TYPE;
@@ -98,6 +99,7 @@ public final class FlashlightVMRunner implements IVMRunner {
     private final File fieldsFile;
     private final File classHierarchyFile;
     private final File sitesFile;
+    private final File hbFile;
     private final File logFile;
 
     private final String datePostfix;
@@ -165,6 +167,7 @@ public final class FlashlightVMRunner implements IVMRunner {
         classHierarchyFile = new File(runOutputDir, FL_CLASS_HIERARCHY_FILE_LOC);
         sitesFile = new File(runOutputDir, FL_SITES_FILE_LOC);
         logFile = new File(runOutputDir, FL_LOG_FILE_LOC);
+        hbFile = new File(runOutputDir, FL_HAPPENS_BEFORE_FILE_LOC);
         if (!projectOutputDir.exists()) {
             projectOutputDir.mkdirs();
         }
@@ -300,7 +303,7 @@ public final class FlashlightVMRunner implements IVMRunner {
                     .buildConfigurationFromPreferences(launch);
             final RewriteManager manager = new VMRewriteManager(
                     configBuilder.getConfiguration(), messenger, fieldsFile,
-                    sitesFile, classHierarchyFile, progress);
+                    sitesFile, classHierarchyFile, hbFile, progress);
             // Init the RewriteManager
             initializeRewriteManager(manager, entryMap, instrumentLast);
 
@@ -742,6 +745,11 @@ public final class FlashlightVMRunner implements IVMRunner {
     }
 
     private static final class CanceledException extends RuntimeException {
+        /**
+         * 
+         */
+        private static final long serialVersionUID = -3234551631280412888L;
+
         public CanceledException() {
             super();
         }
@@ -752,8 +760,8 @@ public final class FlashlightVMRunner implements IVMRunner {
 
         public VMRewriteManager(final Configuration c,
                 final RewriteMessenger m, final File ff, final File sf,
-                final File chf, final SubMonitor sub) {
-            super(c, m, ff, sf, chf);
+                final File chf, File hbf, final SubMonitor sub) {
+            super(c, m, ff, sf, chf, hbf);
             progress = sub;
         }
 

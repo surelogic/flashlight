@@ -25,27 +25,26 @@ import org.xml.sax.helpers.DefaultHandler;
  * @author nathan
  * 
  */
-public class HappensBeforeConfig {
+public final class HappensBeforeConfig {
 
     private final Map<String, List<HappensBeforeCollection>> collections;
     private final Map<String, List<HappensBeforeObject>> objects;
     private final Map<String, List<HappensBefore>> threads;
 
-    HappensBeforeConfig() {
+    private HappensBeforeConfig() {
         collections = new HashMap<String, List<HappensBeforeCollection>>();
         objects = new HashMap<String, List<HappensBeforeObject>>();
         threads = new HashMap<String, List<HappensBefore>>();
     }
 
-    public static HappensBeforeConfig parse(File f) {
-        if (f == null || !f.exists() || f.isDirectory()) {
+    public HappensBeforeConfig parse(File f) {
+        if (!f.exists() || f.isDirectory()) {
             throw new IllegalArgumentException(f + " is not a valid file name.");
         }
         try {
             SAXParser p = SAXParserFactory.newInstance().newSAXParser();
             HappensBeforeConfigHandler handler = new HappensBeforeConfigHandler();
             p.parse(f, handler);
-            return handler.config;
         } catch (ParserConfigurationException e) {
             throw new IllegalStateException(e);
         } catch (SAXException e) {
@@ -53,14 +52,14 @@ public class HappensBeforeConfig {
         } catch (IOException e) {
             throw new IllegalArgumentException("Could not parse file: " + f, e);
         }
+        return this;
     }
 
-    public static HappensBeforeConfig parse(InputStream in) {
+    public HappensBeforeConfig parse(InputStream in) {
         try {
             SAXParser p = SAXParserFactory.newInstance().newSAXParser();
             HappensBeforeConfigHandler handler = new HappensBeforeConfigHandler();
             p.parse(in, handler);
-            return handler.config;
         } catch (ParserConfigurationException e) {
             throw new IllegalStateException(e);
         } catch (SAXException e) {
@@ -68,6 +67,7 @@ public class HappensBeforeConfig {
         } catch (IOException e) {
             throw new IllegalArgumentException(e);
         }
+        return this;
     }
 
     public Map<String, List<HappensBeforeCollection>> getCollections() {
@@ -257,8 +257,8 @@ public class HappensBeforeConfig {
         list.add(elem);
     }
 
-    static class HappensBeforeConfigHandler extends DefaultHandler {
-        final HappensBeforeConfig config = new HappensBeforeConfig();
+    class HappensBeforeConfigHandler extends DefaultHandler {
+
         private String curClass;
         private Elem hb;
 
@@ -305,15 +305,15 @@ public class HappensBeforeConfig {
                     switch (hb) {
                     case THREAD:
                         add(curClass, new HappensBefore(curClass, decl, type,
-                                check), config.threads);
+                                check), threads);
                         break;
                     case COLL:
                         add(curClass, new HappensBeforeCollection(curClass,
-                                decl, type, check, param), config.collections);
+                                decl, type, check, param), collections);
                         break;
                     case OBJECT:
                         add(curClass, new HappensBeforeObject(curClass, decl,
-                                type, check), config.objects);
+                                type, check), objects);
                         break;
                     default:
                         throw new IllegalStateException(
@@ -529,7 +529,7 @@ public class HappensBeforeConfig {
     }
 
     public static HappensBeforeConfig loadDefault() {
-        return HappensBeforeConfig
+        return new HappensBeforeConfig()
                 .parse(Thread
                         .currentThread()
                         .getContextClassLoader()

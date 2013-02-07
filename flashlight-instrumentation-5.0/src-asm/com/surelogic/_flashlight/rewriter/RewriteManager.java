@@ -46,8 +46,7 @@ public abstract class RewriteManager {
     public static final String DEFAULT_FLASHLIGHT_RUNTIME_JAR = "flashlight-runtime.jar";
     private static final String ZIP_FILE_NAME_SEPERATOR = "/";
     private static final String INTERNAL_CLASSNAME_SEPARATOR = "/";
-    private static final String MANIFEST_DIR =
-        JarFile.MANIFEST_NAME.substring(
+    private static final String MANIFEST_DIR = JarFile.MANIFEST_NAME.substring(
             0, JarFile.MANIFEST_NAME.indexOf('/') + 1);
     private static final char SPACE = ' ';
     private static final int BUFSIZE = 10240;
@@ -63,18 +62,18 @@ public abstract class RewriteManager {
      * classes on the classpath have already been instrumented by flashlight.
      */
     public static final class AlreadyInstrumentedException extends Exception {
-      private final Set<String> classes;
-      
-      public AlreadyInstrumentedException(final Set<String> s) {
-        super("Classes already instrumented");
-        classes = s;
-      }
-      
-      public Set<String> getClasses() {
-        return classes;
-      }
+        private final Set<String> classes;
+
+        public AlreadyInstrumentedException(final Set<String> s) {
+            super("Classes already instrumented");
+            classes = s;
+        }
+
+        public Set<String> getClasses() {
+            return classes;
+        }
     }
-    
+
     /**
      * Exception thrown during instrumentation indicating that the instrumented
      * classfile contains oversized methods. Contains a list of those methods
@@ -123,7 +122,7 @@ public abstract class RewriteManager {
         public Scanner(final File elementPath, final boolean willBeInstrumented) {
             this.elementPath = elementPath;
             this.willBeInstrumented = willBeInstrumented;
-            this.bogusClassfiles = new HashSet<String>();
+            bogusClassfiles = new HashSet<String>();
         }
 
         public final File getPath() {
@@ -200,9 +199,9 @@ public abstract class RewriteManager {
             try {
                 final ClassReader input = new ClassReader(inClassfile);
                 final FieldCataloger cataloger = new FieldCataloger(
-                        elementPath, relativePath,
-                        willBeInstrumented && !isBlacklisted,
-                        classModel, instrumentedAlready, messenger);
+                        elementPath, relativePath, willBeInstrumented
+                                && !isBlacklisted, classModel,
+                        instrumentedAlready, messenger);
                 input.accept(cataloger, ClassReader.SKIP_CODE
                         | ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
                 if (cataloger.isClassBogus()) {
@@ -379,7 +378,7 @@ public abstract class RewriteManager {
         }
 
         public final void setSiteIdFactory(final SiteIdFactory idFactory) {
-            this.callSiteIdFactory = idFactory;
+            callSiteIdFactory = idFactory;
         }
 
         public final Scanner getScanner() {
@@ -426,46 +425,55 @@ public abstract class RewriteManager {
                 final String fname, final String relativeName,
                 final OutputStream outFile) throws IOException {
             boolean copy = true;
-            
+
             if (isClassfileName(relativeName) && !isBlackListed(relativeName)) {
                 final String internalClassName = pathToInternalClassName(relativeName);
-                if (!duplicateClasses.isInconsistentlyDuplicated(internalClassName)) {
+                if (!duplicateClasses
+                        .isInconsistentlyDuplicated(internalClassName)) {
                     copy = false;
-                    messenger.increaseNestingWith("Rewriting classfile " + fname);
+                    messenger.increaseNestingWith("Rewriting classfile "
+                            + fname);
                     try {
                         rewriteClassfileStream(provider, outFile);
                     } finally {
                         messenger.decreaseNesting();
                     }
                 } else {
-                    final Map<String, Boolean> dups = duplicateClasses.getDuplicates(internalClassName);
-                    messenger.warning("Classfile " +
-                        fname +
-                        " was not instrumented because it appears on the classpath more than once and is inconsistently marked for instrumentation: " +
-                        dups);
+                    final Map<String, Boolean> dups = duplicateClasses
+                            .getDuplicates(internalClassName);
+                    messenger
+                            .warning("Classfile "
+                                    + fname
+                                    + " was not instrumented because it appears on the classpath more than once and is inconsistently marked for instrumentation: "
+                                    + dups);
                 }
             }
-			if (copy) {
-				messenger.increaseNestingWith("Copying file unchanged " + fname);
-				try {
-					final InputStream inStream = provider.getInputStream();
-					try {
-						copyStream(inStream, outFile);
-					} catch (final IOException e) {
-						messenger.error("IOException copying " + fname + ": " + e.getMessage());
-						throw e;
-					} finally {
-						try {
-							inStream.close();
-						} catch (final IOException ignore) {
-							messenger.error("IOException when closing input stream: " + ignore.getMessage());
-							// Doesn't want to close, what can we do but complain?
-						}
-					}
-				} finally {
-					messenger.decreaseNesting();
-				}
-			}
+            if (copy) {
+                messenger
+                        .increaseNestingWith("Copying file unchanged " + fname);
+                try {
+                    final InputStream inStream = provider.getInputStream();
+                    try {
+                        copyStream(inStream, outFile);
+                    } catch (final IOException e) {
+                        messenger.error("IOException copying " + fname + ": "
+                                + e.getMessage());
+                        throw e;
+                    } finally {
+                        try {
+                            inStream.close();
+                        } catch (final IOException ignore) {
+                            messenger
+                                    .error("IOException when closing input stream: "
+                                            + ignore.getMessage());
+                            // Doesn't want to close, what can we do but
+                            // complain?
+                        }
+                    }
+                } finally {
+                    messenger.decreaseNesting();
+                }
+            }
         }
 
         /**
@@ -568,7 +576,8 @@ public abstract class RewriteManager {
                         classWriterFlags, classModel);
                 final FlashlightClassRewriter xformer = new FlashlightClassRewriter(
                         config, callSiteIdFactory, msgr, output, classModel,
-                        happensBefore, accessMethods, method2numLocals, ignoreMethods);
+                        happensBefore, accessMethods, method2numLocals,
+                        ignoreMethods);
                 // Skip stack map frames: Either the classfiles don't have them,
                 // or we will recompute them
                 input.accept(xformer, ClassReader.SKIP_FRAMES);
@@ -1149,7 +1158,7 @@ public abstract class RewriteManager {
     private final File fieldsFile;
     private final File sitesFile;
     private final File classHierarchyFile;
-
+    private final File happensBeforeFile;
     /**
      * The complete list of classpath entries to scan, in the order entries are
      * added using the {@code add*} methods.
@@ -1163,25 +1172,23 @@ public abstract class RewriteManager {
     private final List<Instrumenter> instrumenters = new LinkedList<Instrumenter>();
 
     /**
-     * The information about happens-before related methods.
-     * This is initialized by {@link #execute()}.
+     * The information about happens-before related methods. This is initialized
+     * by {@link #execute()}.
      */
     private HappensBeforeTable happensBefore = null;
-    
-    
-    
+
     // ======================================================================
     // == Constructor
     // ======================================================================
 
     public RewriteManager(final Configuration c, final RewriteMessenger m,
-            final File ff, final File sf, final File chf) {
+            final File ff, final File sf, final File chf, final File hbf) {
         config = c;
         messenger = m;
         fieldsFile = ff;
         sitesFile = sf;
         classHierarchyFile = chf;
-
+        happensBeforeFile = hbf;
         final InputStream defaultMethods = config.indirectUseDefault ? RewriteManager.class
                 .getResourceAsStream(DEFAULT_METHODS_FILE) : null;
         try {
@@ -1264,7 +1271,8 @@ public abstract class RewriteManager {
      *         values are sets of records describing the locations of the
      *         duplicate entries.
      */
-    public final Map<String, Map<String, Boolean>> execute() throws AlreadyInstrumentedException {
+    public final Map<String, Map<String, Boolean>> execute()
+            throws AlreadyInstrumentedException {
         /*
          * First pass: Scan all the classfiles to build the class and field
          * model. Record the field identifiers in the fields file.
@@ -1284,26 +1292,31 @@ public abstract class RewriteManager {
             }
         }
 
-        /* Fail hard if we detected classes on the classpath that have already
+        /*
+         * Fail hard if we detected classes on the classpath that have already
          * been instrumented.
          */
         if (!instrumentedAlready.isEmpty()) {
-          throw new AlreadyInstrumentedException(instrumentedAlready);
+            throw new AlreadyInstrumentedException(instrumentedAlready);
         }
-        
+
         /* Finish initializing interesting methods using the class model */
         accessMethods.initClazz(classModel);
 
         /* Load and set up the happens before information. */
         final HappensBeforeConfig hbc = HappensBeforeConfig.loadDefault();
+        if (happensBeforeFile != null && happensBeforeFile.exists()) {
+            hbc.parse(happensBeforeFile);
+        }
         happensBefore = new HappensBeforeTable(hbc, classModel, messenger);
-        
+
         /* Second pass: Instrument the classfiles */
         PrintWriter sitesOut = null;
         try {
             sitesFile.getParentFile().mkdirs();
             if (sitesFile.getName().endsWith(".gz")) {
-                @SuppressWarnings("resource") // Closed recursively when sitesOut is closed
+                @SuppressWarnings("resource")
+                // Closed recursively when sitesOut is closed
                 FileOutputStream fout = new FileOutputStream(sitesFile);
                 GZIPOutputStream gzip = new GZIPOutputStream(fout);
                 sitesOut = new PrintWriter(gzip);
@@ -1335,28 +1348,30 @@ public abstract class RewriteManager {
                 sitesOut.close();
             }
         }
-        
+
         /*
          * Output the class hierarchy;
          */
         PrintWriter chOut = null;
         try {
-          classHierarchyFile.getParentFile().mkdirs();
-          if (classHierarchyFile.getName().endsWith(".gz")) {
-              @SuppressWarnings("resource") // Closed recursively when chOut is closed
-              final FileOutputStream fout = new FileOutputStream(classHierarchyFile);
-              final GZIPOutputStream gzip = new GZIPOutputStream(fout);
-              chOut = new PrintWriter(gzip);
-          } else {
-            chOut = new PrintWriter(sitesFile);
-          }
-          classModel.writeClassHierarchy(chOut);
+            classHierarchyFile.getParentFile().mkdirs();
+            if (classHierarchyFile.getName().endsWith(".gz")) {
+                @SuppressWarnings("resource")
+                // Closed recursively when chOut is closed
+                final FileOutputStream fout = new FileOutputStream(
+                        classHierarchyFile);
+                final GZIPOutputStream gzip = new GZIPOutputStream(fout);
+                chOut = new PrintWriter(gzip);
+            } else {
+                chOut = new PrintWriter(sitesFile);
+            }
+            classModel.writeClassHierarchy(chOut);
         } catch (final IOException e) {
-          exceptionCreatingClassHierarchyFile(classHierarchyFile, e);
+            exceptionCreatingClassHierarchyFile(classHierarchyFile, e);
         } finally {
-          if (chOut != null) {
-            chOut.close();
-          }
+            if (chOut != null) {
+                chOut.close();
+            }
         }
 
         /*
@@ -1399,28 +1414,26 @@ public abstract class RewriteManager {
          * we generate an internal class name.
          */
         if (classfileName.endsWith(".class")) {
-            return config.classBlacklist.contains(
-                pathToInternalClassName(classfileName));
+            return config.classBlacklist
+                    .contains(pathToInternalClassName(classfileName));
         } else {
             return false;
         }
     }
 
     /**
-     * Convert relative path name to an internal classfile name. 
+     * Convert relative path name to an internal classfile name.
      * 
      * @param relativeFileName
-     *          The path of the file relative to the root of the current classfile
-     *          directory.  This file must be known to be a classfile, that is
-     *          one that end with <code>.class</code>.
+     *            The path of the file relative to the root of the current
+     *            classfile directory. This file must be known to be a
+     *            classfile, that is one that end with <code>.class</code>.
      * @return The internal classfile name
      */
     private static String pathToInternalClassName(final String relativeFileName) {
         return relativeFileName.substring(0, relativeFileName.length() - 6);
     }
-    
-    
-    
+
     // ======================================================================
     // == Methods for logging status
     // ======================================================================
@@ -1481,8 +1494,8 @@ public abstract class RewriteManager {
      * Called if there is an exception trying to create the class hierarchy
      * database file.
      */
-    protected abstract void exceptionCreatingClassHierarchyFile(File fieldsFile,
-            IOException e);
+    protected abstract void exceptionCreatingClassHierarchyFile(
+            File fieldsFile, IOException e);
 
     /**
      * Called if there is an exception trying to create the sites database file.

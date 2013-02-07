@@ -34,7 +34,7 @@ public class PostMortemStore implements StoreListener {
      */
     private final BlockingQueue<List<Event>> f_outQueue;
     /**
-     * The garbagecollection queue.
+     * The garbage collection queue.
      */
     private final BlockingQueue<List<? extends IdPhantomReference>> f_gcQueue;
 

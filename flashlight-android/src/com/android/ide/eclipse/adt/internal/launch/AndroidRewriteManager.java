@@ -14,8 +14,8 @@ public class AndroidRewriteManager extends RewriteManager {
 
     public AndroidRewriteManager(final Configuration c,
             final RewriteMessenger m, final File ff, final File sf,
-            final File chf) {
-        super(c, m, ff, sf, chf);
+            final File chf, final File hbf) {
+        super(c, m, ff, sf, chf, hbf);
     }
 
     @Override

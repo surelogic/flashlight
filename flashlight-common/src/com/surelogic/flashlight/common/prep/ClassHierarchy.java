@@ -66,13 +66,13 @@ public class ClassHierarchy {
         return classNode;
     }
 
-    private ClassHierarchy(BufferedReader reader, BufferedReader sitesReader)
-            throws IOException {
+    private ClassHierarchy(BufferedReader reader, BufferedReader sitesReader,
+            File hbFile) throws IOException {
         nodes = new HashMap<String, ClassNode>();
         methodCalls = new HashMap<Long, MethodCall>();
         loadNodes(reader);
         loadSites(sitesReader);
-        loadHappensBefore();
+        loadHappensBefore(hbFile);
     }
 
     void loadNodes(BufferedReader reader) throws IOException {
@@ -95,8 +95,11 @@ public class ClassHierarchy {
         }
     }
 
-    void loadHappensBefore() {
+    void loadHappensBefore(File hbFile) {
         HappensBeforeConfig config = HappensBeforeConfig.loadDefault();
+        if (hbFile != null && hbFile.exists()) {
+            config.parse(hbFile);
+        }
         Map<String, List<HappensBeforeConfig.HappensBefore>> threads = config
                 .getThreads();
         for (Entry<String, List<HappensBeforeConfig.HappensBefore>> e : threads
@@ -130,7 +133,8 @@ public class ClassHierarchy {
         }
     }
 
-    public static ClassHierarchy load(File classFile, File sitesFile) {
+    public static ClassHierarchy load(File classFile, File sitesFile,
+            File hbFile) {
         BufferedReader classReader, sitesReader;
         try {
 
@@ -140,7 +144,7 @@ public class ClassHierarchy {
                 sitesReader = new BufferedReader(new InputStreamReader(
                         new GZIPInputStream(new FileInputStream(sitesFile))));
                 try {
-                    return new ClassHierarchy(classReader, sitesReader);
+                    return new ClassHierarchy(classReader, sitesReader, hbFile);
                 } finally {
                     sitesReader.close();
                 }

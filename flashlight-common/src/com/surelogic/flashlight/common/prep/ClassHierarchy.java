@@ -26,7 +26,6 @@ public class ClassHierarchy {
     private final Map<Long, MethodCall> methodCalls;
 
     private static class MethodCall {
-        long site;
         String methodCallClass;
         String methodCallName;
         String methodCallDesc;
@@ -34,7 +33,6 @@ public class ClassHierarchy {
         MethodCall(long site, String methodCallName, String methodCallClass,
                 String methodCallDesc) {
             super();
-            this.site = site;
             this.methodCallClass = methodCallClass.replaceAll("/", ".");
             this.methodCallName = methodCallName;
             this.methodCallDesc = methodCallDesc;
@@ -43,16 +41,21 @@ public class ClassHierarchy {
     }
 
     private static class ClassNode {
-        final String className;
+        final String name;
         final Set<ClassNode> parents;
         final Set<ClassNode> children;
         final List<HappensBeforeConfig.HappensBefore> hbs;
 
         ClassNode(String name) {
-            className = name;
+            this.name = name;
             parents = new HashSet<ClassNode>();
             children = new HashSet<ClassNode>();
             hbs = new ArrayList<HappensBeforeConfig.HappensBefore>();
+        }
+
+        @Override
+        public String toString() {
+            return "ClassNode [name=" + name + ", hbs=" + hbs + "]";
         }
 
     }
@@ -190,14 +193,14 @@ public class ClassHierarchy {
     }
 
     HBType checkChildren(MethodCall call, ClassNode node) {
-        for (ClassNode parent : node.parents) {
-            HBType type = checkNode(call, parent);
+        for (ClassNode children : node.children) {
+            HBType type = checkNode(call, children);
             if (type != null) {
                 return type;
             }
         }
-        for (ClassNode parent : node.parents) {
-            HBType type = checkParents(call, parent);
+        for (ClassNode children : node.children) {
+            HBType type = checkChildren(call, children);
             if (type != null) {
                 return type;
             }

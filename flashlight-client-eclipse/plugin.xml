@@ -126,6 +126,9 @@
 				id="com.surelogic.flashlight.client.eclipse.views.adhoc.QueryEditorView">
 			</viewShortcut>
 			<viewShortcut
+				id="com.surelogic.flashlight.client.eclipse.views.adhoc.CategoryEditorView">
+			</viewShortcut>
+			<viewShortcut
                 id="com.surelogic.flashlight.client.monitor.views.MonitorView">
             </viewShortcut>
 		</perspectiveExtension>
@@ -325,6 +328,12 @@
 			icon="platform:/plugin/com.surelogic.common/lib/images/query.gif"
 			id="com.surelogic.flashlight.client.eclipse.views.adhoc.QueryEditorView"
 			name="Query Editor">
+		</view>
+		<view allowMultiple="false" category="com.surelogic.flashlight.Flashlight"
+			class="com.surelogic.flashlight.client.eclipse.views.adhoc.CategoryEditorView"
+			icon="platform:/plugin/com.surelogic.common/lib/images/query.gif"
+			id="com.surelogic.flashlight.client.eclipse.views.adhoc.CategoryEditorView"
+			name="Query Category Editor">
 		</view>
 		<view allowMultiple="false" category="com.surelogic.flashlight.Flashlight"
 			class="com.surelogic.flashlight.client.eclipse.views.adhoc.QueryMenuView"

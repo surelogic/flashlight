@@ -4,6 +4,7 @@ import org.eclipse.ui.IFolderLayout;
 import org.eclipse.ui.IPageLayout;
 import org.eclipse.ui.IPerspectiveFactory;
 
+import com.surelogic.flashlight.client.eclipse.views.adhoc.CategoryEditorView;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.QueryEditorView;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.QueryMenuView;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.QueryResultExplorerView;
@@ -29,6 +30,7 @@ public final class FlashlightPerspective implements IPerspectiveFactory {
 				IPageLayout.TOP, 0.6f, editorArea);
 		resultsArea.addView(QueryResultsView.class.getName());
 		resultsArea.addPlaceholder(QueryEditorView.class.getName());
+		resultsArea.addPlaceholder(CategoryEditorView.class.getName());
 
 		final IFolderLayout menuArea = layout.createFolder("menuArea",
 				IPageLayout.LEFT, 0.25f, "resultsArea");

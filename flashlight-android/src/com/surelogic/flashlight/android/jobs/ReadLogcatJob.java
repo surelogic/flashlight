@@ -45,7 +45,6 @@ public class ReadLogcatJob extends AbstractSLJob implements
         f_run = runId;
         f_dir = RunManager.getInstance().getDirectoryFrom(runId);
         f_dev = id;
-
     }
 
     @Override
@@ -62,7 +61,7 @@ public class ReadLogcatJob extends AbstractSLJob implements
                 f_out = new PrintWriter(new File(f_dir,
                         InstrumentationConstants.FL_LOGCAT_LOC));
                 try {
-                    while (!f_isDone) {
+                    while (!f_isDone && !monitor.isCanceled()) {
                         try {
                             Thread.sleep(1000);
                         } catch (InterruptedException e) {

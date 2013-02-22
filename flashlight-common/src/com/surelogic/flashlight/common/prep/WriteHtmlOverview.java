@@ -833,7 +833,7 @@ public final class WriteHtmlOverview implements IPostPrep {
                         df.format(last)));
                 long duration = last.getTime() - first.getTime();
                 boolean hasOverviewBand = true;
-                int mainIntervalPixels = 100;
+                int mainIntervalPixels = 200;
                 int overviewPixels = (int) Math
                         .round(600 / (duration * .001 / 60));
                 String mainInterval = "SECOND";
@@ -846,7 +846,8 @@ public final class WriteHtmlOverview implements IPostPrep {
                 } else if (duration < 10000) {
                     // Second resolution
                     hasOverviewBand = false;
-                    mainIntervalPixels = (int) (600 * 1000 / duration);
+                    mainIntervalPixels = Math.max(
+                            (int) (600 * 1000 / duration), mainIntervalPixels);
                 } else if (duration > 1000 * 60 * 30) {
                     mainInterval = "MINUTE";
                     overviewInterval = "HOUR";

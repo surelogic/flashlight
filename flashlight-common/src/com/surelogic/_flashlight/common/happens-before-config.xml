@@ -140,7 +140,7 @@
 
   <!-- Concurrent Collections --> 
 
-  <collection type="java.util.concurrent.ArrayBlockingQueue">
+  <collection type="java.util.concurrent.BlockingQueue">
     <method decl="add(java.lang.Object)" hb="source" argNum="1"/>
     <method decl="put(java.lang.Object)" hb="source" argNum="1"/>
     <method decl="offer(java.lang.Object)" hb="source" argNum="1" resultMustBe="true" />
@@ -149,12 +149,8 @@
     <method decl="poll(long,java.util.concurrent.TimeUnit)" argNum="0" hb="target"/>
     <method decl="remove(java.lang.Object)" hb="target" argNum="1" resultMustBe="true"/>
     <method decl="contains(java.lang.Object)" hb="target" argNum="1" resultMustBe="true"/>
-    <!-- TODO
-    <method decl="drainTo()" hb="target" />
-    -->
+    <method decl="drainTo(java.util.Collection)" hb="target-all" argNum="1"/>
+    <method decl="drainTo(java.util.Collection,int)" hb="target-all" argNum="1"/>
   </collection>
   
-
-
-
 </happens-before>

@@ -38,7 +38,7 @@ import com.surelogic.flashlight.common.prep.PrepEvent;
 
 public class ReadFlashlightStreamJob extends AbstractSLJob {
 
-    private static final int RETRIES = 50;
+    private static final int RETRIES = 500;
     private static final int TIMEOUT_MS = 1000;
     private static final int RETRY_DELAY_MS = 100;
     private final int f_port;

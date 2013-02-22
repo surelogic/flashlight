@@ -5,6 +5,7 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.util.Date;
 
 import com.surelogic._flashlight.common.OutputType;
 import com.surelogic._flashlight.trace.TraceNode;
@@ -53,6 +54,10 @@ public class SocketOutputStrategy extends EventVisitor {
                     if (f_socket == null) {
                         connectToHost();
                     }
+                    // If it didn't work, we try one final time
+                    if (f_socket == null) {
+                        connectToHost();
+                    }
                     // If it worked, we are good to go. If it didn't, then it is
                     // time to shut down.
                     if (f_socket != null) {
@@ -78,8 +83,11 @@ public class SocketOutputStrategy extends EventVisitor {
 
         void connectToHost() {
             try {
-                ServerSocket serverSocket = new ServerSocket(
-                        StoreConfiguration.getOutputPort());
+                int port = StoreConfiguration.getOutputPort();
+                f_conf.log(String.format(
+                        "Listening for connections on %d at %s.", port,
+                        new Date().toString()));
+                ServerSocket serverSocket = new ServerSocket(port);
                 serverSocket.setSoTimeout(TIMEOUT);
                 try {
                     f_socket = serverSocket.accept();

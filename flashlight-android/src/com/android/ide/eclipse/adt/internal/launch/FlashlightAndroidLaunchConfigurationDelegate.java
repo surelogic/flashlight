@@ -1010,7 +1010,6 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
                 manifestData.getDebuggable(),
                 manifestData.getMinSdkVersionString(), launchAction, config,
                 androidLaunch, monitor);
-
     }
 
     private static final class ConnectToProjectJob extends Job {

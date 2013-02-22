@@ -16,37 +16,34 @@ import com.surelogic.flashlight.common.model.RunDirectory;
 
 public final class QueryMenuView extends AbstractQueryMenuView {
 
-	@Override
-	public AdHocManager getManager() {
-		return AdHocDataSource.getManager();
-	}
+  @Override
+  public AdHocManager getManager() {
+    return AdHocDataSource.getManager();
+  }
 
-	@Override
-	public String getNoDatabaseMessage() {
-		return I18N.msg("flashlight.query.menu.label.noDatabaseSelected");
-	}
+  @Override
+  public String getNoDatabaseMessage() {
+    return I18N.msg("flashlight.query.menu.label.noDatabaseSelected");
+  }
 
-	@Override
-	public boolean queryResultWillBeEmpty(AdHocQuery query) {
-		/*
-		 * Determine what run we are dealing with from the query.
-		 */
-		final AdHocManager manager = query.getManager();
-		final Map<String, String> variableValues = manager
-				.getGlobalVariableValues();
-		final String db = variableValues.get(AdHocManager.DATABASE);
-		if (db != null) {
-			final RunDirectory runDirectory = RunManager.getInstance()
-					.getCollectionCompletedRunDirectoryByIdString(db);
+  @Override
+  protected boolean queryResultWillBeEmpty(AdHocQuery query) {
+    /*
+     * Determine what run we are dealing with from the query.
+     */
+    final AdHocManager manager = query.getManager();
+    final Map<String, String> variableValues = manager.getGlobalVariableValues();
+    final String db = variableValues.get(AdHocManager.DATABASE);
+    if (db != null) {
+      final RunDirectory runDirectory = RunManager.getInstance().getCollectionCompletedRunDirectoryByIdString(db);
 
-			return EmptyQueriesCache.getInstance().queryResultWillBeEmpty(
-			    runDirectory, query);
-		}
-		return super.queryResultWillBeEmpty(query);
-	}
+      return EmptyQueriesCache.getInstance().queryResultWillBeEmpty(runDirectory, query);
+    }
+    return super.queryResultWillBeEmpty(query);
+  }
 
-	@Override
-	public ToolTip getToolTip(Shell shell) {
-		return new ToolTip(shell, FlashlightImageLoader.getInstance());
-	}
+  @Override
+  public ToolTip getToolTip(Shell shell) {
+    return new ToolTip(shell, FlashlightImageLoader.getInstance());
+  }
 }

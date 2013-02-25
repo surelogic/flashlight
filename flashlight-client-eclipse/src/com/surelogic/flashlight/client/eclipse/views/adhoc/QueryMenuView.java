@@ -21,7 +21,7 @@ public final class QueryMenuView extends AbstractQueryMenuView {
   }
 
   @Override
-  public ToolTip getToolTip(Shell shell) {
+  public ToolTip constructToolTip(Shell shell) {
     return new ToolTip(shell, FlashlightImageLoader.getInstance());
   }
 }

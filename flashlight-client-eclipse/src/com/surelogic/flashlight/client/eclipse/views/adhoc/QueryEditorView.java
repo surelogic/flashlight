@@ -9,13 +9,13 @@ import com.surelogic.flashlight.client.eclipse.images.FlashlightImageLoader;
 
 public final class QueryEditorView extends AbstractQueryEditorView {
 
-	@Override
-	public AdHocManager getManager() {
-		return AdHocDataSource.getManager();
-	}
+  @Override
+  public AdHocManager getManager() {
+    return AdHocDataSource.getManager();
+  }
 
-	@Override
-	public ToolTip getToolTip(Shell shell) {
-		return new ToolTip(shell, FlashlightImageLoader.getInstance());
-	}
+  @Override
+  public ToolTip constructToolTip(Shell shell) {
+    return new ToolTip(shell, FlashlightImageLoader.getInstance());
+  }
 }

@@ -8,9 +8,9 @@ import java.util.Map;
 
 import com.surelogic.common.CommonImages;
 import com.surelogic.common.FileUtility;
-import com.surelogic.common.ui.tooltip.ToolTip;
+import com.surelogic.common.ui.tooltip.ToolTipImageLoader;
 
-public class FlashlightImageLoader implements ToolTip.ImageLoader {
+public class FlashlightImageLoader implements ToolTipImageLoader {
 
 	public static final String PATH = "/com/surelogic/flashlight/client/eclipse/images/";
 

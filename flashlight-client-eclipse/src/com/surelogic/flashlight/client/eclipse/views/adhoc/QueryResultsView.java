@@ -174,8 +174,7 @@ public final class QueryResultsView extends AbstractQueryResultsView {
   }
 
   @Override
-  public ToolTip getToolTip(final Shell shell) {
+  public ToolTip constructToolTip(Shell shell) {
     return new ToolTip(shell, FlashlightImageLoader.getInstance());
   }
-
 }

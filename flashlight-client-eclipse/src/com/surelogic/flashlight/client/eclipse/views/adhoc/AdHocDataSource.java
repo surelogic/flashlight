@@ -2,6 +2,7 @@ package com.surelogic.flashlight.client.eclipse.views.adhoc;
 
 import java.io.File;
 import java.net.URL;
+import java.util.Map;
 import java.util.logging.Level;
 
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -14,6 +15,7 @@ import com.surelogic.NonNull;
 import com.surelogic.common.ILifecycle;
 import com.surelogic.common.adhoc.AdHocManager;
 import com.surelogic.common.adhoc.AdHocManagerAdapter;
+import com.surelogic.common.adhoc.AdHocQuery;
 import com.surelogic.common.adhoc.AdHocQueryResult;
 import com.surelogic.common.adhoc.IAdHocDataSource;
 import com.surelogic.common.core.EclipseUtility;
@@ -24,8 +26,10 @@ import com.surelogic.common.ui.EclipseUIUtility;
 import com.surelogic.common.ui.adhoc.dialogs.LotsOfSavedQueriesDialog;
 import com.surelogic.common.ui.jobs.SLUIJob;
 import com.surelogic.flashlight.client.eclipse.Activator;
+import com.surelogic.flashlight.client.eclipse.model.RunManager;
 import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
 import com.surelogic.flashlight.common.jobs.JobConstants;
+import com.surelogic.flashlight.common.model.EmptyQueriesCache;
 import com.surelogic.flashlight.common.model.RunDirectory;
 
 public final class AdHocDataSource extends AdHocManagerAdapter implements IAdHocDataSource, ILifecycle {
@@ -181,5 +185,20 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements IAdHoc
       return null;
     }
     return new String[] { runDir.getRunIdString(), JobConstants.QUERY_KEY };
+  }
+
+  @Override
+  public boolean queryResultWillBeEmpty(AdHocQuery query) {
+    /*
+     * Determine what run we are dealing with from the query.
+     */
+    final AdHocManager manager = query.getManager();
+    final Map<String, String> variableValues = manager.getGlobalVariableValues();
+    final String db = variableValues.get(AdHocManager.DATABASE);
+    if (db != null) {
+      final RunDirectory runDirectory = RunManager.getInstance().getCollectionCompletedRunDirectoryByIdString(db);
+      return EmptyQueriesCache.getInstance().queryResultWillBeEmpty(runDirectory, query);
+    }
+    return false;
   }
 }

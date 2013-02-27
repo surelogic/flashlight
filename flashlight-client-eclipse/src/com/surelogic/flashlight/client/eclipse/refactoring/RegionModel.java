@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.Set;
 
 import com.surelogic.common.ref.*;
-import com.surelogic.common.ref.Decl.DeclBuilder;
 import com.surelogic.common.refactor.AnnotationDescription;
 import com.surelogic.flashlight.recommend.FieldLoc;
 import com.surelogic.flashlight.recommend.MethodLoc;

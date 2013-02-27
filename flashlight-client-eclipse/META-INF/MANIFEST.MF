@@ -50,6 +50,7 @@ Export-Package: com.surelogic._flashlight.rewriter;
  com.surelogic.flashlight.client.eclipse.preferences,
  com.surelogic.flashlight.client.eclipse.refactoring,
  com.surelogic.flashlight.client.eclipse.views.adhoc,
+ com.surelogic.flashlight.client.eclipse.views.adhoc.custom,
  com.surelogic.flashlight.client.eclipse.views.monitor,
  com.surelogic.flashlight.client.eclipse.views.run,
  com.surelogic.flashlight.client.eclipse.views.source

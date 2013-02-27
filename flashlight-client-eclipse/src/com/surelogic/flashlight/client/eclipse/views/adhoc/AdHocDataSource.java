@@ -23,6 +23,7 @@ import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jdbc.DBConnection;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.common.ui.EclipseUIUtility;
+import com.surelogic.common.ui.adhoc.IQueryResultCustomDisplay;
 import com.surelogic.common.ui.adhoc.dialogs.LotsOfSavedQueriesDialog;
 import com.surelogic.common.ui.jobs.SLUIJob;
 import com.surelogic.flashlight.client.eclipse.Activator;
@@ -200,5 +201,14 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements IAdHoc
       return EmptyQueriesCache.getInstance().queryResultWillBeEmpty(runDirectory, query);
     }
     return false;
+  }
+
+  @Override
+  public IQueryResultCustomDisplay getCustomDisplay(String className) throws Exception {
+    final ClassLoader cl = Thread.currentThread().getContextClassLoader();
+    @SuppressWarnings("unchecked")
+    final Class<IQueryResultCustomDisplay> found = (Class<IQueryResultCustomDisplay>) cl.loadClass(className);
+    final IQueryResultCustomDisplay result = found.newInstance();
+    return result;
   }
 }

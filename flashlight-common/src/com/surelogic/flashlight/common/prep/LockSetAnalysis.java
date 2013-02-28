@@ -60,6 +60,8 @@ public class LockSetAnalysis implements IPostPrep {
     }
 
     public void doPerform(final Query q, final SLProgressMonitor mon) {
+        log.fine("Inserting lock cycle thread info");
+        q.statement("Deadlock.lockCycleThreads").call();
         log.fine("Inserting bad publishes.");
         q.prepared("LockSet.v2.badPublishes", new NullRowHandler() {
             Queryable<Void> insert = q.prepared("LockSet.v2.insertBadPublish");

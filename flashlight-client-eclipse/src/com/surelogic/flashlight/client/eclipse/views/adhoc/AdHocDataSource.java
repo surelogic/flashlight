@@ -13,7 +13,6 @@ import org.eclipse.ui.progress.UIJob;
 
 import com.surelogic.NonNull;
 import com.surelogic.Nullable;
-import com.surelogic.common.CommonImages;
 import com.surelogic.common.ILifecycle;
 import com.surelogic.common.adhoc.AdHocManager;
 import com.surelogic.common.adhoc.AdHocManagerAdapter;
@@ -31,6 +30,7 @@ import com.surelogic.common.ui.jobs.SLUIJob;
 import com.surelogic.flashlight.client.eclipse.Activator;
 import com.surelogic.flashlight.client.eclipse.model.RunManager;
 import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
+import com.surelogic.flashlight.common.LibResources;
 import com.surelogic.flashlight.common.jobs.JobConstants;
 import com.surelogic.flashlight.common.model.EmptyQueriesCache;
 import com.surelogic.flashlight.common.model.RunDirectory;
@@ -91,8 +91,7 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements IAdHoc
   }
 
   public URL getDefaultQueryUrl() {
-    return Thread.currentThread().getContextClassLoader()
-        .getResource("/com/surelogic/flashlight/common/default-flashlight-queries.xml");
+    return LibResources.getDefaultQueryUrl();
   }
 
   public void badQuerySaveFileNotification(final Exception e) {
@@ -199,12 +198,7 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements IAdHoc
 
   @Nullable
   public URL getQuerydocImageURL(String imageName) {
-    final String path = "/com/surelogic/flashlight/client/eclipse/images/" + imageName;
-    final URL url = Thread.currentThread().getContextClassLoader().getResource(path);
-    if (url != null)
-      return url;
-    else
-      return CommonImages.getImageURL(imageName);
+    return LibResources.getQuerydocImageURL(imageName);
   }
 
   @NonNull

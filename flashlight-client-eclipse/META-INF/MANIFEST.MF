@@ -42,7 +42,6 @@ Export-Package: com.surelogic._flashlight.rewriter;
  com.surelogic.flashlight.client.eclipse,
  com.surelogic.flashlight.client.eclipse.actions,
  com.surelogic.flashlight.client.eclipse.dialogs,
- com.surelogic.flashlight.client.eclipse.images,
  com.surelogic.flashlight.client.eclipse.jobs,
  com.surelogic.flashlight.client.eclipse.launch,
  com.surelogic.flashlight.client.eclipse.model,

@@ -358,7 +358,7 @@
 		</view>
 		<view allowMultiple="false" category="com.surelogic.flashlight.Flashlight"
 			class="com.surelogic.flashlight.client.eclipse.views.adhoc.QuerydocView"
-			icon="platform:/plugin/com.surelogic.common/lib/images/file.gif"
+			icon="platform:/plugin/com.surelogic.common/lib/images/doc.gif"
 			id="com.surelogic.flashlight.client.eclipse.views.adhoc.QuerydocView"
 			name="Querydoc">
 		</view>

@@ -23,7 +23,7 @@ import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.ui.EclipseUIUtility;
 import com.surelogic.common.ui.adhoc.views.ExportQueryDialog;
 import com.surelogic.common.ui.preferences.AbstractCommonPreferencePage;
-import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
+import com.surelogic.flashlight.client.eclipse.views.adhoc.FlashlightDataSource;
 
 public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
   private final List<FieldEditor> f_editors = new ArrayList<FieldEditor>();
@@ -115,7 +115,7 @@ public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
       exportButton.addListener(SWT.Selection, new Listener() {
         @Override
         public void handleEvent(final Event event) {
-          new ExportQueryDialog(EclipseUIUtility.getShell(), AdHocDataSource.getManager()).open();
+          new ExportQueryDialog(EclipseUIUtility.getShell(), FlashlightDataSource.getManager()).open();
         }
       });
     }

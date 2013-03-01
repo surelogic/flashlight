@@ -7,6 +7,6 @@ public final class CategoryEditorView extends AbstractCategoryEditorView {
 
   @Override
   public AdHocManager getManager() {
-    return AdHocDataSource.getManager();
+    return FlashlightDataSource.getManager();
   }
 }

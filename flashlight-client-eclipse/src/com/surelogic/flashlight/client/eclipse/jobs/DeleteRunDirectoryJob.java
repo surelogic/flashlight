@@ -7,7 +7,7 @@ import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.common.license.SLLicenseProduct;
 import com.surelogic.common.license.SLLicenseUtility;
-import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
+import com.surelogic.flashlight.client.eclipse.views.adhoc.FlashlightDataSource;
 import com.surelogic.flashlight.common.model.RunDirectory;
 
 public final class DeleteRunDirectoryJob extends AbstractSLJob {
@@ -31,7 +31,7 @@ public final class DeleteRunDirectoryJob extends AbstractSLJob {
 
       if (f_run.isPrepared()) {
         final DBConnection database = f_run.getDB();
-        AdHocDataSource.getManager().deleteAllResults(database);
+        FlashlightDataSource.getManager().deleteAllResults(database);
         monitor.worked(1);
         database.destroy();
         monitor.worked(1);

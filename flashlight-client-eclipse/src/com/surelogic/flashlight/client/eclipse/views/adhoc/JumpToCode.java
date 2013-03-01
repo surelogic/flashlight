@@ -15,8 +15,8 @@ import com.surelogic.flashlight.client.eclipse.views.source.HistoricalSourceView
  * <p>
  * This class is a singleton.
  * 
- * @see AdHocDataSource#init()
- * @see AdHocDataSource#dispose()
+ * @see FlashlightDataSource#init()
+ * @see FlashlightDataSource#dispose()
  */
 public final class JumpToCode extends AdHocManagerAdapter {
 

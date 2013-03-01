@@ -7,6 +7,6 @@ public class QueryResultExplorerView extends AbstractQueryResultExplorerView {
 
   @Override
   public AdHocManager getManager() {
-    return AdHocDataSource.getManager();
+    return FlashlightDataSource.getManager();
   }
 }

@@ -29,7 +29,7 @@ public final class QueryResultsView extends AbstractQueryResultsView {
 
   @Override
   public AdHocManager getManager() {
-    return AdHocDataSource.getManager();
+    return FlashlightDataSource.getManager();
   }
 
   @Override
@@ -50,7 +50,7 @@ public final class QueryResultsView extends AbstractQueryResultsView {
   @Override
   public void createPartControl(final Composite parent) {
     super.createPartControl(parent);
-    AdHocQueryResult result = AdHocDataSource.getManager().getSelectedResult();
+    AdHocQueryResult result = FlashlightDataSource.getManager().getSelectedResult();
     if (result != null) {
       displayResult(result);
     }
@@ -80,7 +80,7 @@ public final class QueryResultsView extends AbstractQueryResultsView {
 
   @Override
   protected void setupNoResultsPane(final Composite parent) {
-    final RunDirectory run = AdHocDataSource.getInstance().getSelectedRun();
+    final RunDirectory run = FlashlightDataSource.getInstance().getSelectedRun();
     if (run == null || !run.isPrepared()) {
       showQueryTitle();
       super.setupNoResultsPane(parent);

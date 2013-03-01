@@ -9,6 +9,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.ui.IViewPart;
+import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.progress.UIJob;
 
 import com.surelogic.NonNull;
@@ -35,19 +36,19 @@ import com.surelogic.flashlight.common.jobs.JobConstants;
 import com.surelogic.flashlight.common.model.EmptyQueriesCache;
 import com.surelogic.flashlight.common.model.RunDirectory;
 
-public final class AdHocDataSource extends AdHocManagerAdapter implements IAdHocDataSource, ILifecycle {
+public final class FlashlightDataSource extends AdHocManagerAdapter implements IAdHocDataSource, ILifecycle {
 
-  private static final AdHocDataSource INSTANCE = new AdHocDataSource();
+  private static final FlashlightDataSource INSTANCE = new FlashlightDataSource();
 
   static {
     INSTANCE.init();
   }
 
-  public static AdHocDataSource getInstance() {
+  public static FlashlightDataSource getInstance() {
     return INSTANCE;
   }
 
-  private AdHocDataSource() {
+  private FlashlightDataSource() {
     // singleton
   }
 
@@ -130,7 +131,7 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements IAdHoc
     final UIJob job = new SLUIJob() {
       @Override
       public IStatus runInUIThread(final IProgressMonitor monitor) {
-        final IViewPart view = EclipseUIUtility.getView(QueryResultsView.class.getName());
+        final IViewPart view = EclipseUIUtility.showView(QueryResultsView.class.getName(), null, IWorkbenchPage.VIEW_VISIBLE);
         if (view instanceof QueryResultsView) {
           final QueryResultsView queryResultsView = (QueryResultsView) view;
           queryResultsView.displayResult(result);

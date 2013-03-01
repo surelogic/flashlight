@@ -18,7 +18,7 @@ import com.surelogic.common.license.SLLicenseProduct;
 import com.surelogic.common.ui.DialogTouchNotificationUI;
 import com.surelogic.flashlight.client.eclipse.model.RunManager;
 import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
-import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
+import com.surelogic.flashlight.client.eclipse.views.adhoc.FlashlightDataSource;
 
 /**
  * The activator class controls the plug-in life cycle
@@ -87,7 +87,7 @@ public class Activator extends AbstractUIPlugin {
   public void stop(final BundleContext context) throws Exception {
     try {
       RunManager.getInstance().dispose();
-      AdHocDataSource.getInstance().dispose();
+      FlashlightDataSource.getInstance().dispose();
       plugin = null;
     } finally {
       super.stop(context);

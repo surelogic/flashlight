@@ -47,7 +47,7 @@ import com.surelogic.flashlight.client.eclipse.model.RunManagerObserverAdapter;
 import com.surelogic.flashlight.client.eclipse.refactoring.RegionModelRefactoring;
 import com.surelogic.flashlight.client.eclipse.refactoring.RegionRefactoringInfo;
 import com.surelogic.flashlight.client.eclipse.refactoring.RegionRefactoringWizard;
-import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
+import com.surelogic.flashlight.client.eclipse.views.adhoc.FlashlightDataSource;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.QueryMenuView;
 import com.surelogic.flashlight.common.model.RunDirectory;
 
@@ -122,7 +122,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements ILifec
     });
 
     RunManager.getInstance().addObserver(f_rmo);
-    AdHocManager.getInstance(AdHocDataSource.getInstance()).addObserver(this);
+    AdHocManager.getInstance(FlashlightDataSource.getInstance()).addObserver(this);
     TableUtility.packColumns(f_tableViewer);
     setToolbarState();
   }
@@ -355,7 +355,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements ILifec
 
   private final void updateRunManager() {
     final RunDirectory[] selected = getSelectedRunDirectories();
-    AdHocDataSource.getInstance().setSelectedRun(selected.length == 0 ? null : selected[0]);
+    FlashlightDataSource.getInstance().setSelectedRun(selected.length == 0 ? null : selected[0]);
   }
 
   private final void setToolbarState() {
@@ -381,16 +381,16 @@ public final class RunViewMediator extends AdHocManagerAdapter implements ILifec
      * run.
      */
     if (notBeingPreparedSelected.length == 0 || !notBeingPreparedSelected[0].isPrepared()) {
-      AdHocDataSource.getInstance().setSelectedRun(null);
-      AdHocDataSource.getManager().setGlobalVariableValue(AdHocManager.DATABASE, null);
-      if (AdHocDataSource.getManager().getSelectedResult() == null) {
-        AdHocDataSource.getManager().notifySelectedResultChange();
+      FlashlightDataSource.getInstance().setSelectedRun(null);
+      FlashlightDataSource.getManager().setGlobalVariableValue(AdHocManager.DATABASE, null);
+      if (FlashlightDataSource.getManager().getSelectedResult() == null) {
+        FlashlightDataSource.getManager().notifySelectedResultChange();
       }
     } else {
       final RunDirectory o = notBeingPreparedSelected[0];
-      AdHocDataSource.getInstance().setSelectedRun(o);
-      AdHocDataSource.getManager().setGlobalVariableValue(AdHocManager.DATABASE, o.getRunIdString());
-      AdHocDataSource.getManager().setSelectedResult(null);
+      FlashlightDataSource.getInstance().setSelectedRun(o);
+      FlashlightDataSource.getManager().setGlobalVariableValue(AdHocManager.DATABASE, o.getRunIdString());
+      FlashlightDataSource.getManager().setSelectedResult(null);
     }
     f_prepAction.setEnabled(rawActionsEnabled);
     f_showLogAction.setEnabled(somethingSelected);
@@ -399,7 +399,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements ILifec
   @Override
   public void dispose() {
     RunManager.getInstance().removeObserver(f_rmo);
-    AdHocManager.getInstance(AdHocDataSource.getInstance()).removeObserver(this);
+    AdHocManager.getInstance(FlashlightDataSource.getInstance()).removeObserver(this);
   }
 
   public void setFocus() {
@@ -417,11 +417,11 @@ public final class RunViewMediator extends AdHocManagerAdapter implements ILifec
       final String db = result.getQueryFullyBound().getVariableValues().get(AdHocManager.DATABASE);
       final RunDirectory desired = RunManager.getInstance().getCollectionCompletedRunDirectoryByIdString(db);
 
-      final RunDirectory selected = AdHocDataSource.getInstance().getSelectedRun();
+      final RunDirectory selected = FlashlightDataSource.getInstance().getSelectedRun();
 
       if (desired != null) {
         if (!desired.equals(selected)) {
-          AdHocDataSource.getInstance().setSelectedRun(desired);
+          FlashlightDataSource.getInstance().setSelectedRun(desired);
           final UIJob job = new SLUIJob() {
             @Override
             public IStatus runInUIThread(final IProgressMonitor monitor) {

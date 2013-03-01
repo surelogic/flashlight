@@ -7,6 +7,6 @@ public final class QuerydocView extends AbstractQuerydocView {
 
   @Override
   public AdHocManager getManager() {
-    return AdHocDataSource.getManager();
+    return FlashlightDataSource.getManager();
   }
 }

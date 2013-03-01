@@ -52,7 +52,7 @@ import com.surelogic.flashlight.client.eclipse.dialogs.RunControlDialog;
 import com.surelogic.flashlight.client.eclipse.jobs.SwitchToFlashlightPerspectiveJob;
 import com.surelogic.flashlight.client.eclipse.jobs.WatchFlashlightMonitorJob;
 import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
-import com.surelogic.flashlight.client.eclipse.views.adhoc.AdHocDataSource;
+import com.surelogic.flashlight.client.eclipse.views.adhoc.FlashlightDataSource;
 import com.surelogic.flashlight.common.jobs.PrepSLJob;
 import com.surelogic.flashlight.common.model.FlashlightFileUtility;
 import com.surelogic.flashlight.common.model.RunDescription;
@@ -711,7 +711,7 @@ public final class RunManager implements ILifecycle {
           throw new IllegalArgumentException(I18N.err(44, "run"));
 
         final SLJob job = new PrepSLJob(run, EclipseUtility.getIntPreference(FlashlightPreferencesUtility.PREP_OBJECT_WINDOW_SIZE),
-            AdHocDataSource.getManager().getTopLevelQueries());
+            FlashlightDataSource.getManager().getTopLevelQueries());
         final Job eJob = EclipseUtility.toEclipseJob(job, run.getRunIdString());
         eJob.setProperty(IProgressConstants.ICON_PROPERTY, SLImages.getImageDescriptor(CommonImages.IMG_FL_PREP_DATA));
         final LaunchedRun lrun = getLaunchedRunFor(run.getRunIdString());

@@ -9,35 +9,32 @@ import com.surelogic.flashlight.client.eclipse.views.adhoc.QueryEditorView;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.QueryMenuView;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.QueryResultExplorerView;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.QueryResultsView;
+import com.surelogic.flashlight.client.eclipse.views.adhoc.QuerydocView;
 import com.surelogic.flashlight.client.eclipse.views.run.RunView;
 import com.surelogic.flashlight.client.eclipse.views.source.HistoricalSourceView;
 
 public final class FlashlightPerspective implements IPerspectiveFactory {
 
-	@Override
+  @Override
   public void createInitialLayout(final IPageLayout layout) {
-		final String editorArea = layout.getEditorArea();
+    final String editorArea = layout.getEditorArea();
 
-		final IFolderLayout runArea = layout.createFolder("runArea",
-				IPageLayout.TOP, 0.2f, editorArea);
-		runArea.addView(RunView.class.getName());
+    final IFolderLayout runArea = layout.createFolder("runArea", IPageLayout.TOP, 0.2f, editorArea);
+    runArea.addView(RunView.class.getName());
 
-		final IFolderLayout explorerArea = layout.createFolder("explorerArea",
-				IPageLayout.RIGHT, 0.6f, "runArea");
-		explorerArea.addView(QueryResultExplorerView.class.getName());
+    final IFolderLayout explorerArea = layout.createFolder("explorerArea", IPageLayout.RIGHT, 0.6f, "runArea");
+    explorerArea.addView(QueryResultExplorerView.class.getName());
 
-		final IFolderLayout resultsArea = layout.createFolder("resultsArea",
-				IPageLayout.TOP, 0.6f, editorArea);
-		resultsArea.addView(QueryResultsView.class.getName());
-		resultsArea.addPlaceholder(QueryEditorView.class.getName());
-		resultsArea.addPlaceholder(CategoryEditorView.class.getName());
+    final IFolderLayout resultsArea = layout.createFolder("resultsArea", IPageLayout.TOP, 0.6f, editorArea);
+    resultsArea.addView(QueryResultsView.class.getName());
+    resultsArea.addPlaceholder(QueryEditorView.class.getName());
+    resultsArea.addPlaceholder(CategoryEditorView.class.getName());
 
-		final IFolderLayout menuArea = layout.createFolder("menuArea",
-				IPageLayout.LEFT, 0.25f, "resultsArea");
-		menuArea.addView(QueryMenuView.class.getName());
+    final IFolderLayout menuArea = layout.createFolder("menuArea", IPageLayout.LEFT, 0.25f, "resultsArea");
+    menuArea.addView(QueryMenuView.class.getName());
 
-		final IFolderLayout sourceArea = layout.createFolder("sourceArea",
-				IPageLayout.RIGHT, 0.5f, editorArea);
-		sourceArea.addView(HistoricalSourceView.class.getName());
-	}
+    final IFolderLayout sourceArea = layout.createFolder("sourceArea", IPageLayout.RIGHT, 0.5f, editorArea);
+    sourceArea.addView(HistoricalSourceView.class.getName());
+    sourceArea.addView(QuerydocView.class.getName());
+  }
 }

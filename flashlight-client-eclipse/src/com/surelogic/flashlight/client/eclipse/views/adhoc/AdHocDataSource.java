@@ -86,18 +86,15 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements IAdHoc
     f_selectedRun = runDescription;
   }
 
-  @Override
   public File getQuerySaveFile() {
     return new File(EclipseUtility.getFlashlightDataDirectory(), "flashlight-queries.xml");
   }
 
-  @Override
   public URL getDefaultQueryUrl() {
     return Thread.currentThread().getContextClassLoader()
         .getResource("/com/surelogic/flashlight/common/default-flashlight-queries.xml");
   }
 
-  @Override
   public void badQuerySaveFileNotification(final Exception e) {
     try {
       SLLogger.getLogger().log(Level.SEVERE, I18N.err(4, getQuerySaveFile().getAbsolutePath()), e);
@@ -106,18 +103,15 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements IAdHoc
     }
   }
 
-  @Override
   public final DBConnection getDB() {
     final RunDirectory desc = getSelectedRun();
     return desc == null ? null : desc.getDB();
   }
 
-  @Override
   public int getMaxRowsPerQuery() {
     return EclipseUtility.getIntPreference(FlashlightPreferencesUtility.MAX_ROWS_PER_QUERY);
   }
 
-  @Override
   public void init() {
     if (isValid()) {
       getManager().addObserver(this);
@@ -125,7 +119,6 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements IAdHoc
     }
   }
 
-  @Override
   public void dispose() {
     if (isValid()) {
       getManager().removeObserver(JumpToCode.getInstance());
@@ -134,7 +127,6 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements IAdHoc
     }
   }
 
-  @Override
   public void notifySelectedResultChange(final AdHocQueryResult result) {
     final UIJob job = new SLUIJob() {
       @Override
@@ -150,7 +142,6 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements IAdHoc
     job.schedule();
   }
 
-  @Override
   public void notifyResultModelChange(final AdHocManager manager) {
     if (manager.getHasALotOfSqlDataResults()) {
       if (EclipseUtility.getBooleanPreference(FlashlightPreferencesUtility.PROMPT_ABOUT_LOTS_OF_SAVED_QUERIES)) {
@@ -169,11 +160,6 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements IAdHoc
     }
   }
 
-  @Override
-  public String getEditorViewId() {
-    return QueryEditorView.class.getName();
-  }
-
   /**
    * Returns the access keys that should be held when querying the currently
    * selected run.
@@ -181,7 +167,6 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements IAdHoc
    * @return an array of access key names, or if {@code null} if no run is
    *         currently selected
    */
-  @Override
   public String[] getCurrentAccessKeys() {
     RunDirectory runDir = getSelectedRun();
     if (runDir == null) {
@@ -190,7 +175,6 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements IAdHoc
     return new String[] { runDir.getRunIdString(), JobConstants.QUERY_KEY };
   }
 
-  @Override
   public boolean queryResultWillBeEmpty(AdHocQuery query) {
     /*
      * Determine what run we are dealing with from the query.
@@ -205,7 +189,6 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements IAdHoc
     return false;
   }
 
-  @Override
   public IQueryResultCustomDisplay getCustomDisplay(String className) throws Exception {
     final ClassLoader cl = Thread.currentThread().getContextClassLoader();
     @SuppressWarnings("unchecked")
@@ -214,7 +197,6 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements IAdHoc
     return result;
   }
 
-  @Override
   @Nullable
   public URL getQuerydocImageURL(String imageName) {
     final String path = "/com/surelogic/flashlight/client/eclipse/images/" + imageName;
@@ -223,5 +205,20 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements IAdHoc
       return url;
     else
       return CommonImages.getImageURL(imageName);
+  }
+
+  @NonNull
+  public String getQueryEditorViewId() {
+    return QueryEditorView.class.getName();
+  }
+
+  @NonNull
+  public String getQueryResultsViewId() {
+    return QueryResultsView.class.getName();
+  }
+
+  @NonNull
+  public String getQueryDocViewId() {
+    return QuerydocView.class.getName();
   }
 }

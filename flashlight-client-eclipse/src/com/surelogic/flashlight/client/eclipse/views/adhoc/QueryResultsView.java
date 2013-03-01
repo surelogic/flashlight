@@ -13,7 +13,6 @@ import org.eclipse.swt.browser.WindowEvent;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Menu;
-import org.eclipse.swt.widgets.Shell;
 
 import com.surelogic.common.adhoc.AdHocManager;
 import com.surelogic.common.adhoc.AdHocQueryFullyBound;
@@ -23,8 +22,6 @@ import com.surelogic.common.html.SimpleHTMLPrinter;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.common.ui.adhoc.views.results.AbstractQueryResultsView;
-import com.surelogic.common.ui.tooltip.ToolTip;
-import com.surelogic.flashlight.client.eclipse.images.FlashlightImageLoader;
 import com.surelogic.flashlight.client.eclipse.jobs.PopulateBrowserWithRunInformationJob;
 import com.surelogic.flashlight.common.model.RunDirectory;
 
@@ -171,10 +168,5 @@ public final class QueryResultsView extends AbstractQueryResultsView {
 
   private void showOverviewTitle() {
     setPartName(I18N.msg("flashlight.query.view.overviewTitle"));
-  }
-
-  @Override
-  public ToolTip constructToolTip(Shell shell) {
-    return new ToolTip(shell, FlashlightImageLoader.getInstance());
   }
 }

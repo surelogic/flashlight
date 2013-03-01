@@ -1,9 +1,9 @@
 package com.surelogic.flashlight.client.eclipse.views.adhoc;
 
 import com.surelogic.common.adhoc.AdHocManager;
-import com.surelogic.common.ui.adhoc.views.editor.AbstractQueryEditorView;
+import com.surelogic.common.ui.adhoc.views.doc.AbstractQuerydocView;
 
-public final class QueryEditorView extends AbstractQueryEditorView {
+public final class QuerydocView extends AbstractQuerydocView {
 
   @Override
   public AdHocManager getManager() {

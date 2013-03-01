@@ -9,7 +9,6 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.ui.IViewPart;
-import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.progress.UIJob;
 
 import com.surelogic.NonNull;
@@ -131,7 +130,15 @@ public final class FlashlightDataSource extends AdHocManagerAdapter implements I
     final UIJob job = new SLUIJob() {
       @Override
       public IStatus runInUIThread(final IProgressMonitor monitor) {
-        final IViewPart view = EclipseUIUtility.showView(QueryResultsView.class.getName(), null, IWorkbenchPage.VIEW_VISIBLE);
+        final IViewPart view;
+        /*
+         * Only make the view pop-up if an actual result is being shown now just
+         * for an overview.
+         */
+        if (result != null)
+          view = EclipseUIUtility.showView(QueryResultsView.class.getName());
+        else
+          view = EclipseUIUtility.getView(QueryResultsView.class.getName());
         if (view instanceof QueryResultsView) {
           final QueryResultsView queryResultsView = (QueryResultsView) view;
           queryResultsView.displayResult(result);

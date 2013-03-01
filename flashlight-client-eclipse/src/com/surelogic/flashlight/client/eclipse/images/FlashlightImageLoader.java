@@ -60,6 +60,8 @@ public class FlashlightImageLoader implements ToolTipImageLoader {
 				.getResource(path);
 		return url;
 	}
+	
+	// only for tooltip
 
 	private static final FlashlightImageLoader INSTANCE = new FlashlightImageLoader();
 

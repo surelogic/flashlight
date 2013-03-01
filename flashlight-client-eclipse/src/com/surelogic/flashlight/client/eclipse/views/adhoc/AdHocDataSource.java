@@ -12,6 +12,8 @@ import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.progress.UIJob;
 
 import com.surelogic.NonNull;
+import com.surelogic.Nullable;
+import com.surelogic.common.CommonImages;
 import com.surelogic.common.ILifecycle;
 import com.surelogic.common.adhoc.AdHocManager;
 import com.surelogic.common.adhoc.AdHocManagerAdapter;
@@ -210,5 +212,16 @@ public final class AdHocDataSource extends AdHocManagerAdapter implements IAdHoc
     final Class<IQueryResultCustomDisplay> found = (Class<IQueryResultCustomDisplay>) cl.loadClass(className);
     final IQueryResultCustomDisplay result = found.newInstance();
     return result;
+  }
+
+  @Override
+  @Nullable
+  public URL getQuerydocImageURL(String imageName) {
+    final String path = "/com/surelogic/flashlight/client/eclipse/images/" + imageName;
+    final URL url = Thread.currentThread().getContextClassLoader().getResource(path);
+    if (url != null)
+      return url;
+    else
+      return CommonImages.getImageURL(imageName);
   }
 }

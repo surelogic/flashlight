@@ -13,6 +13,6 @@ Export-Package: com.surelogic._flashlight.common,
  com.surelogic.flashlight.common.prep,
  com.surelogic.flashlight.recommend,
  com.surelogic.flashlight.schema
-Bundle-ClassPath: lib/jgrapht-jdk1.5.jar,
+Bundle-ClassPath: lib/jgrapht-jdk1.6.jar,
  .
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6

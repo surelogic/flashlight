@@ -1,13 +1,18 @@
 package com.surelogic.flashlight.common.prep;
 
+import gnu.trove.set.TLongSet;
+import gnu.trove.set.hash.TLongHashSet;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -98,7 +103,7 @@ public final class IntrinsicLockDurationRowInserter {
     static class ThreadState {
         LongMap<State> lockToState = new LongMap<State>();
         final Set<State> nonIdleLocks = new HashSet<State>();
-        final Set<State> heldLocks = new HashSet<State>();
+        final List<State> heldLocks = new ArrayList<State>();
 
         /**
          * Iterate over the set of non-idle locks
@@ -143,7 +148,7 @@ public final class IntrinsicLockDurationRowInserter {
          * 
          * @return
          */
-        public Collection<State> heldLocks() {
+        public List<State> heldLocks() {
             return heldLocks;
         }
 
@@ -181,6 +186,7 @@ public final class IntrinsicLockDurationRowInserter {
         private static final long serialVersionUID = 1L;
         final Long lockHeld;
         final Long lockAcquired;
+        final TLongSet threads;
         private Timestamp first;
         private Timestamp last;
         private long count;
@@ -188,6 +194,11 @@ public final class IntrinsicLockDurationRowInserter {
         Edge(final Long held, final Long acq) {
             lockHeld = held;
             lockAcquired = acq;
+            threads = new TLongHashSet(3);
+        }
+
+        void addThread(long thread) {
+            threads.add(thread);
         }
 
         public void setFirst(final Timestamp t) {
@@ -683,12 +694,17 @@ public final class IntrinsicLockDurationRowInserter {
     private void noteHeldLocks(final long id, final Timestamp time,
             final long thread, final long lock, final ThreadState lockToState) {
         // Note what other locks are held at the time of this event
-        for (final State state : lockToState.heldLocks()) {
-            if (lock == state.getLock()) {
-                continue; // Skip myself
+        List<State> heldLocks = lockToState.heldLocks();
+        if (!heldLocks.isEmpty()) {
+            insertLockEdge(time, heldLocks.get(heldLocks.size() - 1).getLock(),
+                    lock, thread);
+            for (final State state : heldLocks) {
+                if (lock == state.getLock()) {
+                    continue; // Skip myself
+                }
+                insertHeldLock(id, time, state.getId(), state.getLock(), lock,
+                        thread);
             }
-            insertHeldLock(id, time, state.getId(), state.getLock(), lock,
-                    thread);
         }
     }
 
@@ -725,6 +741,26 @@ public final class IntrinsicLockDurationRowInserter {
         }
     }
 
+    private void insertLockEdge(final Timestamp time, final long lockHeld,
+            final long acquired, final long thread) {
+        final Long acq = acquired;
+        LongMap<Edge> edges = edgeStorage.get(lockHeld);
+        if (edges == null) {
+            edges = new LongMap<Edge>();
+            edgeStorage.put(lockHeld, edges);
+        }
+        Edge e = edges.get(acquired);
+        if (e == null) {
+            e = new Edge(lockHeld, acq);
+            e.setFirst(time);
+            edges.put(acq, e);
+        } else {
+            e.updateLast(time);
+        }
+        e.addThread(thread);
+
+    }
+
     private void insertHeldLock(final long eventId, final Timestamp time,
             final long lockHeldEventId, final long lockHeld,
             final long acquired, final long thread) {
@@ -746,20 +782,6 @@ public final class IntrinsicLockDurationRowInserter {
         } catch (final SQLException e) {
             SLLogger.getLogger().log(Level.SEVERE, "Insert failed: ILOCKSHELD",
                     e);
-        }
-        final Long acq = acquired;
-        LongMap<Edge> edges = edgeStorage.get(lockHeld);
-        if (edges == null) {
-            edges = new LongMap<Edge>();
-            edgeStorage.put(lockHeld, edges);
-        }
-        Edge e = edges.get(acquired);
-        if (e == null) {
-            e = new Edge(lockHeld, acq);
-            e.setFirst(time);
-            edges.put(acq, e);
-        } else {
-            e.updateLast(time);
         }
     }
 

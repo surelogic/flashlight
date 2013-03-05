@@ -197,6 +197,7 @@ public final class FlashlightDataSource extends AdHocManagerAdapter implements I
   }
 
   public IQueryResultCustomDisplay getCustomDisplay(String className) throws Exception {
+    className = "com.surelogic.flashlight.client.eclipse.views.adhoc.custom." + className;
     final ClassLoader cl = Thread.currentThread().getContextClassLoader();
     @SuppressWarnings("unchecked")
     final Class<IQueryResultCustomDisplay> found = (Class<IQueryResultCustomDisplay>) cl.loadClass(className);

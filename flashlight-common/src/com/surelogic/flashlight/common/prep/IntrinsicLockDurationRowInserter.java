@@ -1,5 +1,10 @@
 package com.surelogic.flashlight.common.prep;
 
+import gnu.trove.map.TLongObjectMap;
+import gnu.trove.map.hash.TLongObjectHashMap;
+import gnu.trove.procedure.TLongObjectProcedure;
+import gnu.trove.procedure.TLongProcedure;
+import gnu.trove.procedure.TObjectProcedure;
 import gnu.trove.set.TLongSet;
 import gnu.trove.set.hash.TLongHashSet;
 
@@ -13,23 +18,26 @@ import java.util.Collection;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
+import org.jgrapht.DirectedGraph;
 import org.jgrapht.alg.CycleDetector;
 import org.jgrapht.alg.StrongConnectivityInspector;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 
-import com.surelogic._flashlight.common.LongMap;
-import com.surelogic._flashlight.common.LongSet;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.jdbc.JDBCUtils;
 import com.surelogic.common.logging.SLLogger;
 
 public final class IntrinsicLockDurationRowInserter {
+
+    private static final int EDGE_HINT = 3;
+    private static final EdgeFactory EDGE_FACTORY = new EdgeFactory();
+
     private static final long FINAL_EVENT = Lock.FINAL_EVENT;
     private static final int LOCK_DURATION = 0;
     private static final int LOCKS_HELD = 1;
@@ -45,6 +53,8 @@ public final class IntrinsicLockDurationRowInserter {
     private final PreparedStatement[] statements = new PreparedStatement[queries.length];
     private final int[] counts = new int[queries.length];
     private final Calendar here = new GregorianCalendar();
+    private final Logger log = SLLogger
+            .getLoggerFor(IntrinsicLockDurationRowInserter.class);
 
     static class State {
         IntrinsicLockDurationState _lockState = IntrinsicLockDurationState.IDLE;
@@ -101,7 +111,7 @@ public final class IntrinsicLockDurationRowInserter {
     }
 
     static class ThreadState {
-        LongMap<State> lockToState = new LongMap<State>();
+        TLongObjectMap<State> lockToState = new TLongObjectHashMap<State>();
         final Set<State> nonIdleLocks = new HashSet<State>();
         final List<State> heldLocks = new ArrayList<State>();
 
@@ -179,8 +189,8 @@ public final class IntrinsicLockDurationRowInserter {
 
     }
 
-    private final LongMap<ThreadState> f_threadToLockToState = new LongMap<ThreadState>();
-    private final LongMap<IntrinsicLockDurationState> f_threadToStatus = new LongMap<IntrinsicLockDurationState>();
+    private final TLongObjectMap<ThreadState> f_threadToLockToState = new TLongObjectHashMap<ThreadState>();
+    private final TLongObjectMap<IntrinsicLockDurationState> f_threadToStatus = new TLongObjectHashMap<IntrinsicLockDurationState>();
 
     static class Edge extends DefaultEdge {
         private static final long serialVersionUID = 1L;
@@ -194,7 +204,7 @@ public final class IntrinsicLockDurationRowInserter {
         Edge(final Long held, final Long acq) {
             lockHeld = held;
             lockAcquired = acq;
-            threads = new TLongHashSet(3);
+            threads = new TLongHashSet(EDGE_HINT);
         }
 
         void addThread(long thread) {
@@ -242,16 +252,16 @@ public final class IntrinsicLockDurationRowInserter {
         }
     }
 
-    private final LongMap<LongMap<Edge>> edgeStorage = new LongMap<LongMap<Edge>>();
+    private final TLongObjectMap<TLongObjectMap<Edge>> edgeStorage = new TLongObjectHashMap<TLongObjectMap<Edge>>();
 
     private static class GraphInfo {
-        final LongSet destinations = new LongSet();
+        final TLongSet destinations = new TLongHashSet();
 
         /**
          * Vertices = locks Edge weight = # of times the edge appears
          */
         final DefaultDirectedGraph<Long, Edge> lockGraph = new DefaultDirectedGraph<Long, Edge>(
-                new EdgeFactory());
+                EDGE_FACTORY);
     }
 
     private boolean flushed = false;
@@ -278,7 +288,7 @@ public final class IntrinsicLockDurationRowInserter {
             for (final Entry<Long, Boolean> e : refd) {
                 final long id = e.getKey();
                 if (!StaticCallLocation.validSites.contains(id)) {
-                    System.err.println("Couldn't find site " + id);
+                    log.severe("Couldn't find site " + id);
                 }
             }
         }
@@ -288,41 +298,73 @@ public final class IntrinsicLockDurationRowInserter {
         final CycleDetector<Long, Edge> detector = new CycleDetector<Long, Edge>(
                 info.lockGraph);
         if (detector.detectCycles()) {
-            final PreparedStatement f_cyclePS = statements[LOCK_CYCLE];
-
             final StrongConnectivityInspector<Long, Edge> inspector = new StrongConnectivityInspector<Long, Edge>(
                     info.lockGraph);
-            int compId = 0;
             for (final Set<Long> comp : inspector.stronglyConnectedSets()) {
+                final List<Edge> graphEdges = new ArrayList<Edge>();
                 // Compute the set of edges myself
                 // (since the library's inefficient at iterating over edges)
-                for (final Long src : comp) {
-                    final LongMap<Edge> edges = edgeStorage.get(src);
+                for (final long src : comp) {
+                    final TLongObjectMap<Edge> edges = edgeStorage.get(src);
                     if (edges == null) {
-                        /*
-                         * System.out.println("Destination: "+info.destinations.
-                         * contains (src));
-                         * System.out.println("RW lock:     "+info.rwSources
-                         * .contains(src));
-                         */
                         // Ignorable because it's (probably) part of a RW lock
                         continue;
                     }
                     // Only look at edges in the component
-                    for (final Long dest : comp) {
+                    for (final long dest : comp) {
                         final Edge e = edges.get(dest);
                         if (e != null) {
-                            outputCycleEdge(f_cyclePS, compId, e);
+                            graphEdges.add(e);
+                            // outputCycleEdge(f_cyclePS, compId, e);
                         }
                     }
                 }
-                compId++;
+                new CycleEnumerator(graphEdges).enumerate();
             }
         }
         for (int i = 0; i < queries.length; i++) {
             if (counts[i] > 0) {
                 statements[i].executeBatch();
                 counts[i] = 0;
+            }
+        }
+    }
+
+    class CycleEnumerator extends CombinationEnumerator<Edge> {
+        final List<Set<Edge>> foundCycles;
+        int cycleId;
+
+        CycleEnumerator(List<Edge> edges) {
+            super(edges);
+            foundCycles = new ArrayList<Set<Edge>>();
+        }
+
+        @Override
+        void handleEnumeration(Set<Edge> cycle) {
+            DirectedGraph<Long, Edge> graph = new DefaultDirectedGraph<Long, Edge>(
+                    EDGE_FACTORY);
+            for (Set<Edge> found : foundCycles) {
+                if (cycle.containsAll(found)) {
+                    return;
+                }
+            }
+            for (Edge e : cycle) {
+                graph.addVertex(e.lockAcquired);
+                graph.addVertex(e.lockHeld);
+                graph.addEdge(e.lockHeld, e.lockAcquired);
+            }
+            StrongConnectivityInspector<Long, Edge> i = new StrongConnectivityInspector<Long, Edge>(
+                    graph);
+            if (i.isStronglyConnected()) {
+                for (Edge e : cycle) {
+                    try {
+                        outputCycleEdge(statements[LOCK_CYCLE], cycleId, e);
+                    } catch (SQLException e1) {
+                        throw new IllegalStateException(e1);
+                    }
+                }
+                cycleId++;
+                foundCycles.add(cycle);
             }
         }
     }
@@ -349,112 +391,123 @@ public final class IntrinsicLockDurationRowInserter {
     private static final boolean omitEdges = true;
 
     private GraphInfo createGraphFromStorage() {
-        int edges = 0;
-        int omitted = 0;
+
         final GraphInfo info = new GraphInfo();
-
         // Compute the set of destinations (used for pruning)
-        for (final Map.Entry<Long, LongMap<Edge>> entry1 : edgeStorage
-                .entrySet()) {
-            for (final Map.Entry<Long, Edge> entry2 : entry1.getValue()
-                    .entrySet()) {
-                final LongMap.Entry<Edge> e = (LongMap.Entry<Edge>) entry2;
-                info.destinations.add(e.key());
+        edgeStorage.forEachValue(new TObjectProcedure<TLongObjectMap<Edge>>() {
+            @Override
+            public boolean execute(TLongObjectMap<Edge> object) {
+                object.forEachKey(new TLongProcedure() {
+                    @Override
+                    public boolean execute(long value) {
+                        info.destinations.add(value);
+                        return true;
+                    }
+                });
+                return true;
             }
-        }
+        });
+        edgeStorage
+                .forEachEntry(new TLongObjectProcedure<TLongObjectMap<Edge>>() {
+                    int edges = 0;
+                    int omitted = 0;
 
-        // Create edges from storage
-        for (final Map.Entry<Long, LongMap<Edge>> entry1 : edgeStorage
-                .entrySet()) {
-            final LongMap.Entry<LongMap<Edge>> e1 = (LongMap.Entry<LongMap<Edge>>) entry1;
-            final long src = e1.key();
-            Long source = null;
+                    @Override
+                    public boolean execute(long src, TLongObjectMap<Edge> map) {
 
-            // Note: destinations already compensates for some of these being RW
-            // locks
-            if (omitEdges && !info.destinations.contains(src)) {
-                // The source is a root lock, so we can omit its edges
-                // (e.g. always the first lock acquired)
-                final int num = e1.getValue().size();
-                // System.out.println("Omitting "+num+" edges for #"+src);
-                omitted += num;
-                continue;
-            }
+                        // Note: destinations already compensates for some of
+                        // these being RW
+                        // locks
+                        if (omitEdges && !info.destinations.contains(src)) {
+                            // The source is a root lock, so we can omit its
+                            // edges
+                            // (e.g. always the first lock acquired)
+                            final int num = map.size();
+                            // System.out.println("Omitting "+num+" edges for #"+src);
+                            omitted += num;
+                            return true;
+                        }
+                        map.forEachEntry(new TLongObjectProcedure<Edge>() {
+                            Long source = null;
 
-            for (final Map.Entry<Long, Edge> entry2 : entry1.getValue()
-                    .entrySet()) {
-                final LongMap.Entry<Edge> e2 = (LongMap.Entry<Edge>) entry2;
-                final long dest = e2.key();
-                if (omitEdges && edgeStorage.get(dest) == null) {
-                    // The destination is a leaf lock, so we can omit it
-                    // (e.g. no more locks are acquired after holding it)
+                            @Override
+                            public boolean execute(long dest, Edge e) {
+                                if (omitEdges && edgeStorage.get(dest) == null) {
+                                    // The destination is a leaf lock, so we can
+                                    // omit it
+                                    // (e.g. no more locks are acquired after
+                                    // holding it)
 
-                    // System.out.println("Omitting edge to #"+dest);
-                    omitted++;
-                    continue;
-                }
-                final Edge e = entry2.getValue();
-                if (source == null) {
-                    source = e.lockHeld;
-                    info.lockGraph.addVertex(source);
-                }
-                info.lockGraph.addVertex(e.lockAcquired);
+                                    // System.out.println("Omitting edge to #"+dest);
+                                    omitted++;
+                                    return true;
+                                }
+                                if (source == null) {
+                                    source = e.lockHeld;
+                                    info.lockGraph.addVertex(source);
+                                }
+                                info.lockGraph.addVertex(e.lockAcquired);
+                                info.lockGraph.addEdge(source, e.lockAcquired,
+                                        e);
+                                edges++;
+                                return true;
+                            }
+                        });
+                        log.info("Total edges = " + edges + ", omitted = "
+                                + omitted);
+                        return true;
+                    }
+                });
 
-                info.lockGraph.addEdge(source, e.lockAcquired, e);
-                edges++;
-            }
-        }
-        System.out.println("Total edges = " + edges + ", omitted = " + omitted);
         return info;
     }
 
     private void handleNonIdleFinalState(final Timestamp endTime)
             throws SQLException {
-        boolean createdEvent = false;
-        int blocking = 0, holding = 0, waiting = 0;
-        for (final Entry<Long, IntrinsicLockDurationState> e : f_threadToStatus
-                .entrySet()) {
-            final Long thread = e.getKey();
-            System.out.println("Thread " + thread + " : " + e.getValue());
-            switch (e.getValue()) {
-            case BLOCKING:
-                blocking++;
-                break;
-            case HOLDING:
-                holding++;
-                break;
-            case WAITING:
-                waiting++;
-                break;
-            default:
-            }
+        f_threadToStatus
+                .forEachEntry(new TLongObjectProcedure<IntrinsicLockDurationState>() {
+                    boolean createdEvent = false;
 
-            final ThreadState lockToState = f_threadToLockToState.get(thread);
-            if (lockToState != null) {
-                for (final State state : lockToState.nonIdleLocks()) {
-                    System.out.println("\tLock " + state.getLock() + " : "
-                            + state.getLockState());
-                    if (!createdEvent) {
-                        createdEvent = true;
-                        insertLock(true, endTime, thread, state.getTrace(), /*
-                                                                             * src
-                                                                             * is
-                                                                             * nonsense
-                                                                             */
-                                state.getLock(), state.getLockObject(),
-                                LockType.INTRINSIC, LockState.AFTER_RELEASE,
-                                true, false, false);
+                    @Override
+                    public boolean execute(long thread,
+                            IntrinsicLockDurationState status) {
+                        log.info("Thread " + thread + " : " + status);
+                        final ThreadState lockToState = f_threadToLockToState
+                                .get(thread);
+                        if (lockToState != null) {
+                            for (final State state : lockToState.nonIdleLocks()) {
+                                log.info("\tLock " + state.getLock() + " : "
+                                        + state.getLockState());
+                                if (!createdEvent) {
+                                    createdEvent = true;
+                                    try {
+                                        insertLock(true, endTime, thread,
+                                                state.getTrace(), /*
+                                                                   * src is
+                                                                   * nonsense
+                                                                   */
+                                                state.getLock(),
+                                                state.getLockObject(),
+                                                LockType.INTRINSIC,
+                                                LockState.AFTER_RELEASE, true,
+                                                false, false);
+                                    } catch (SQLException e) {
+                                        throw new IllegalStateException(e);
+                                    }
+                                }
+                                if (state.getLockState() == IntrinsicLockDurationState.BLOCKING) {
+                                    noteHeldLocks(FINAL_EVENT, endTime, thread,
+                                            state.getLock(), lockToState);
+                                }
+                                recordStateDuration(thread, state.getLock(),
+                                        state.getTime(), state.getId(),
+                                        endTime, FINAL_EVENT,
+                                        state.getLockState());
+                            }
+                        }
+                        return true;
                     }
-                    if (state.getLockState() == IntrinsicLockDurationState.BLOCKING) {
-                        noteHeldLocks(FINAL_EVENT, endTime, thread,
-                                state.getLock(), lockToState);
-                    }
-                    recordStateDuration(thread, state.getLock(),
-                            state.getTime(), state.getId(), endTime,
-                            FINAL_EVENT, state.getLockState());
-                }
-            }
-        }
+                });
     }
 
     public void close() throws SQLException {
@@ -492,50 +545,30 @@ public final class IntrinsicLockDurationRowInserter {
     private void updateThreadStatus(final long id, final Timestamp time,
             final long inThread, final IntrinsicLockDurationState oldLockState,
             final IntrinsicLockDurationState newLockState) {
-        int blocking = 0, holding = 0, waiting = 0;
-        boolean found = false;
-        for (final Entry<Long, IntrinsicLockDurationState> e : f_threadToStatus
-                .entrySet()) {
-            final IntrinsicLockDurationState thisStatus = e.getValue();
-            // Check if it's the current thread
-            final long thisThread = e.getKey();
-            if (inThread == thisThread) {
-                found = true;
-                e.setValue(computeThisThreadStatus(thisStatus, oldLockState,
-                        newLockState, inThread));
-            }
-            switch (thisStatus) {
-            case BLOCKING:
-                blocking++;
-                break;
-            case HOLDING:
-                holding++;
-                break;
-            case WAITING:
-                waiting++;
-                break;
-            default:
-                continue;
-            }
-        }
-        if (!found) {
+
+        boolean noneFound = f_threadToStatus
+                .forEachEntry(new TLongObjectProcedure<IntrinsicLockDurationState>() {
+                    @Override
+                    public boolean execute(long thisThread,
+                            IntrinsicLockDurationState thisStatus) {
+                        // Check if it's the current thread
+                        if (inThread == thisThread) {
+                            f_threadToStatus.put(
+                                    thisThread,
+                                    computeThisThreadStatus(thisStatus,
+                                            oldLockState, newLockState,
+                                            inThread));
+                            return false;
+                        }
+                        return true;
+                    }
+                });
+        if (noneFound) {
             // insert the entry
             final IntrinsicLockDurationState newState = computeThisThreadStatus(
                     IntrinsicLockDurationState.IDLE, oldLockState,
                     newLockState, inThread);
             f_threadToStatus.put(inThread, newState);
-            switch (newState) {
-            case BLOCKING:
-                blocking++;
-                break;
-            case HOLDING:
-                holding++;
-                break;
-            case WAITING:
-                waiting++;
-                break;
-            default:
-            }
         }
     }
 
@@ -744,9 +777,9 @@ public final class IntrinsicLockDurationRowInserter {
     private void insertLockEdge(final Timestamp time, final long lockHeld,
             final long acquired, final long thread) {
         final Long acq = acquired;
-        LongMap<Edge> edges = edgeStorage.get(lockHeld);
+        TLongObjectMap<Edge> edges = edgeStorage.get(lockHeld);
         if (edges == null) {
-            edges = new LongMap<Edge>();
+            edges = new TLongObjectHashMap<Edge>(EDGE_HINT);
             edgeStorage.put(lockHeld, edges);
         }
         Edge e = edges.get(acquired);
@@ -793,9 +826,16 @@ public final class IntrinsicLockDurationRowInserter {
         // Clean up if it's a thread
         f_threadToStatus.remove(key);
         f_threadToLockToState.remove(key);
-        for (final ThreadState e : f_threadToLockToState.values()) {
-            e.gcLock(key);
-        }
+        f_threadToLockToState.forEachValue(new TObjectProcedure<ThreadState>() {
+
+            @Override
+            public boolean execute(ThreadState object) {
+                object.gcLock(key);
+                return true;
+            }
+
+        });
+
         // TODO Clean up lock graph?
         // Q: how do I know if an object is a lock?
 

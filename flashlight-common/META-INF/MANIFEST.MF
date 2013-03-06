@@ -5,7 +5,8 @@ Bundle-SymbolicName: com.surelogic.flashlight.common
 Bundle-Version: 4.4.0.qualifier
 Bundle-Vendor: SureLogic, Inc.
 Require-Bundle: com.surelogic.common,
- org.eclipse.jface
+ org.eclipse.jface,
+ org.junit
 Export-Package: com.surelogic._flashlight.common,
  com.surelogic.flashlight.common,
  com.surelogic.flashlight.common.jobs,

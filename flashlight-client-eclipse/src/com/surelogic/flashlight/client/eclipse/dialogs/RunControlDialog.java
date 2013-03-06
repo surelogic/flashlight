@@ -135,7 +135,7 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
     c.setLayout(layout);
     c.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
     applyDialogFont(c);
-    c.setBackground(EclipseColorUtility.getRunControlBackgroundColor());
+    c.setBackground(EclipseColorUtility.getSlightlyDarkerBackgroundColor());
 
     sc.setContent(c);
     sc.addControlListener(new ControlAdapter() {

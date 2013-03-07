@@ -447,43 +447,6 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
     return toRight ? v1 - v2 : v1 + v2;
   }
 
-  static Point getPointPerpendicularToMidPointOfLineOLD(Point p1, Point p2, double distance) {
-    final int dx = p2.x - p1.x;
-    final int dy = p2.y - p1.y;
-    final Point mid = getMidPointBetween(p1, p2);
-    if (-5 < dx && dx < 5) { // slope is infinite
-      final double val;
-      if (dy < 0)
-        val = mid.x - distance;
-      else
-        val = mid.x + distance;
-      return new Point(SLUtility.safeDoubleToInt(val), mid.y);
-    } else if (-5 < dy && dy < 5) { // slope is zero
-      final double val;
-      if (dx < 0)
-        val = mid.y - distance;
-      else
-        val = mid.y + distance;
-      return new Point(mid.x, SLUtility.safeDoubleToInt(val));
-    } else {
-      final double slope = getSlope(p1, p2);
-      final double tslope = -1.0 / slope;
-      final double yInt = getYIntercept(tslope, mid);
-
-      double v = distance / Math.sqrt(1.0 + tslope * tslope);
-      int mx = SLUtility.safeDoubleToInt(v);
-      double x = mid.x;
-      if (dx < 0)
-        x -= mx;
-      else
-        x += mx;
-      final double y = getYOnLine(tslope, yInt, x);
-
-      Point result = new Point(SLUtility.safeDoubleToInt(x), SLUtility.safeDoubleToInt(y));
-      return result;
-    }
-  }
-
   static double getDistance(Point p1, Point p2) {
     final double vx = p2.x - p1.x;
     final double vy = p2.y - p1.y;

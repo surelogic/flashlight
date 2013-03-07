@@ -60,6 +60,9 @@ public final class FlashlightPreferencesUtility {
 
       EclipseUtility.setDefaultIntPreference(PREP_OBJECT_WINDOW_SIZE, 300000);
 
+      EclipseUtility.setDefaultIntPreference(DEADLOCK_GRAPH_SASH_LHS_WEIGHT, 40);
+      EclipseUtility.setDefaultIntPreference(DEADLOCK_GRAPH_SASH_RHS_WEIGHT, 60);
+
       EclipseUtility.setDefaultBooleanPreference(getSwitchPreferences().getPromptPerspectiveSwitchConstant(), true);
       EclipseUtility.setDefaultBooleanPreference(getSwitchPreferences().getAutoPerspectiveSwitchConstant(), true);
       /*
@@ -89,6 +92,9 @@ public final class FlashlightPreferencesUtility {
   public static final String PROMPT_ABOUT_LOTS_OF_SAVED_QUERIES = PREFIX + "prompt.about.lots.of.saved.queries";
   public static final String AUTO_PREP_LAUNCHED_RUNS = PREFIX + "auto.prep.launched.runs";
   public static final String POSTMORTEM_MODE = PREFIX + "store.postmortem";
+
+  public static final String DEADLOCK_GRAPH_SASH_LHS_WEIGHT = PREFIX + "deadlock.graph.sash.lhs.weight";
+  public static final String DEADLOCK_GRAPH_SASH_RHS_WEIGHT = PREFIX + "deadlock.graph.sash.rhs.weight";
 
   /**
    * Gets the switch-to-the-Flashlight-perspective preferences.

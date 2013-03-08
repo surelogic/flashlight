@@ -60,11 +60,11 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
 
     Graph.Builder b = new Graph.Builder();
     b.addEdge("Object-1", "AWT-edge-3456");
-    // b.addEdge("AWT-edge-3456", "Object-1");
+    b.addEdge("AWT-edge-3456", "Object-1");
     b.addEdge("AWT-edge-3456", "Object-2");
-    // b.addEdge("Object-2", "AWT-edge-3456");
+    b.addEdge("Object-2", "AWT-edge-3456");
     b.addEdge("Object-2", "Object-1");
-    // b.addEdge("Object-1", "Object-2");
+    b.addEdge("Object-1", "Object-2");
     f_graph = b.build();
     f_graph.transform(150, 150);
 
@@ -186,10 +186,8 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
       final Point cTo = getCenterOf(to);
 
       final Point mid = getMidPointBetween(cFrom, cTo);
-      int dx = cTo.x - cFrom.x;
-      int dy = cTo.y - cFrom.y;
 
-      final Point ctrl = getPointPerpendicularToMidPointOfLine(cFrom, cTo, CTRL_DIST);
+      final Point ctrl = getPointPerpendicularToMidPointOfLine(cFrom, cTo, CTRL_DIST, true);
 
       final Path path = new Path(gc.getDevice());
       path.moveTo(cFrom.x, cFrom.y);
@@ -211,8 +209,8 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
       }
 
       final Point midPath = getMidPointBetween(ctrl, mid);
-      final Point arrow1 = getPointPerpendicularToMidPointOfLine(ctrl, midPath, ARROW_DIST);
-      final Point arrow2 = getPointPerpendicularToMidPointOfLine(midPath, mid, ARROW_DIST);
+      final Point arrow1 = getPointPerpendicularToMidPointOfLine(ctrl, midPath, ARROW_DIST, true);
+      final Point arrow2 = getPointPerpendicularToMidPointOfLine(midPath, mid, ARROW_DIST, true);
       gc.setBackground(highlight ? EclipseColorUtility.getDiffHighlightColorNewChanged() : gc.getDevice().getSystemColor(
           SWT.COLOR_LIST_BACKGROUND));
       final int[] arrow = new int[] { midPath.x, midPath.y, arrow1.x, arrow1.y, arrow2.x, arrow2.y };
@@ -377,41 +375,76 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
     return new Point(x, y);
   }
 
-  static Point getPointPerpendicularToMidPointOfLine(Point p1, Point p2, double distance) {
-    final int dx = p2.x - p1.x;
-    final int dy = p2.y - p1.y;
-    final Point mid = getMidPointBetween(p1, p2);
+  /**
+   * Determines a point perpendicular to the passed line, at the midpoint, a set
+   * distance from the line. The point is either on the right or left, facing
+   * the direction of the vector defined by the passed points.
+   * 
+   * @param from
+   *          beginning of the line.
+   * @param to
+   *          end of the line.
+   * @param distance
+   *          in pixels away from the line.
+   * @param toRight
+   *          {@code true} to the right of the passed line, facing the direction
+   *          of the vector, {@code false} to the left.
+   * @return a point perpendicular to the passed line, at the midpoint, a set
+   *         distance from the line.
+   */
+  static Point getPointPerpendicularToMidPointOfLine(Point from, Point to, double distance, boolean toRight) {
+    final int dx = to.x - from.x;
+    final int dy = to.y - from.y;
+    final Point mid = getMidPointBetween(from, to);
     if (-5 < dx && dx < 5) { // slope is infinite
       final double val;
-      if (dy < 0)
-        val = mid.x - distance;
-      else
-        val = mid.x + distance;
+      if (dy > 0) { // pointing straight down
+        val = subIfToRightOrAdd(mid.x, distance, toRight);
+      } else { // pointing straight up
+        val = addIfToRightOrSub(mid.x, distance, toRight);
+      }
       return new Point(SLUtility.safeDoubleToInt(val), mid.y);
     } else if (-5 < dy && dy < 5) { // slope is zero
       final double val;
-      if (dx < 0)
-        val = mid.y - distance;
-      else
-        val = mid.y + distance;
+      if (dx > 0) { // pointing right
+        val = subIfToRightOrAdd(mid.y, distance, toRight);
+      } else { // pointing left
+        val = addIfToRightOrSub(mid.y, distance, toRight);
+      }
       return new Point(mid.x, SLUtility.safeDoubleToInt(val));
     } else {
-      final double slope = getSlope(p1, p2);
+      final double slope = getSlope(from, to);
       final double tslope = -1.0 / slope;
       final double yInt = getYIntercept(tslope, mid);
 
-      double v = distance / Math.sqrt(1.0 + tslope * tslope);
-      int mx = SLUtility.safeDoubleToInt(v);
-      double x = mid.x;
-      if (dx < 0)
-        x -= mx;
-      else
-        x += mx;
+      final double v = distance / Math.sqrt(1.0 + tslope * tslope);
+      final double x;
+      if (dx > 0) {
+        if (dy > 0) { // down-toward-right
+          x = subIfToRightOrAdd(mid.x, v, toRight);
+        } else { // up-toward-right
+          x = addIfToRightOrSub(mid.x, v, toRight);
+        }
+      } else {
+        if (dy > 0) { // down-toward-left
+          x = subIfToRightOrAdd(mid.x, v, toRight);
+        } else { // up-toward-left
+          x = addIfToRightOrSub(mid.x, v, toRight);
+        }
+      }
       final double y = getYOnLine(tslope, yInt, x);
 
       Point result = new Point(SLUtility.safeDoubleToInt(x), SLUtility.safeDoubleToInt(y));
       return result;
     }
+  }
+
+  static double addIfToRightOrSub(double v1, double v2, boolean toRight) {
+    return toRight ? v1 + v2 : v1 - v2;
+  }
+
+  static double subIfToRightOrAdd(double v1, double v2, boolean toRight) {
+    return toRight ? v1 - v2 : v1 + v2;
   }
 
   static double getDistance(Point p1, Point p2) {

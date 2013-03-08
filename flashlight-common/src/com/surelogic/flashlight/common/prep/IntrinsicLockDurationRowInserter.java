@@ -15,6 +15,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.List;
@@ -229,6 +230,14 @@ public final class IntrinsicLockDurationRowInserter {
         public long getCount() {
             return count;
         }
+
+        @Override
+        public String toString() {
+            return "Edge [lockHeld=" + lockHeld + ", lockAcquired="
+                    + lockAcquired + ", threads=" + threads + ", first="
+                    + first + ", last=" + last + ", count=" + count + "]";
+        }
+
     }
 
     static class EdgeFactory implements org.jgrapht.EdgeFactory<Long, Edge> {
@@ -351,21 +360,54 @@ public final class IntrinsicLockDurationRowInserter {
             for (Edge e : cycle) {
                 graph.addVertex(e.lockAcquired);
                 graph.addVertex(e.lockHeld);
-                graph.addEdge(e.lockHeld, e.lockAcquired);
+                graph.addEdge(e.lockHeld, e.lockAcquired, e);
             }
             StrongConnectivityInspector<Long, Edge> i = new StrongConnectivityInspector<Long, Edge>(
                     graph);
             if (i.isStronglyConnected()) {
-                for (Edge e : cycle) {
-                    try {
-                        outputCycleEdge(statements[LOCK_CYCLE], cycleId, e);
-                    } catch (SQLException e1) {
-                        throw new IllegalStateException(e1);
+                cycle = sanitizeGraph(cycle, graph);
+                if (!cycle.isEmpty()) {
+                    for (Edge e : cycle) {
+                        try {
+                            outputCycleEdge(statements[LOCK_CYCLE], cycleId, e);
+                        } catch (SQLException e1) {
+                            throw new IllegalStateException(e1);
+                        }
                     }
                 }
                 cycleId++;
                 foundCycles.add(cycle);
             }
+        }
+
+        Set<Edge> sanitizeGraph(Set<Edge> cycle, DirectedGraph<Long, Edge> graph) {
+            final Set<Edge> deleted = new HashSet<Edge>(cycle.size());
+            final TLongSet threads = new TLongHashSet();
+            for (Edge e : cycle) {
+                if (!deleted.contains(e)) {
+                    threads.addAll(e.threads);
+                    Edge e_p = graph.outgoingEdgesOf(e.lockAcquired).iterator()
+                            .next();
+                    if (e_p.threads.equals(e.threads)
+                            && e_p.lockAcquired != e.lockHeld) {
+                        deleted.add(e);
+                        deleted.add(e_p);
+                        graph.removeEdge(e);
+                        graph.removeEdge(e_p);
+                        Edge newEdge = graph.addEdge(e.lockHeld,
+                                e_p.lockAcquired);
+                        newEdge.threads.addAll(e.threads);
+                        newEdge.first = e.first;
+                        newEdge.last = e_p.last;
+                        newEdge.count = e_p.count;
+                        graph.removeVertex(e.lockAcquired);
+                    }
+                }
+            }
+            if (threads.size() == 1) {
+                Collections.emptySet();
+            }
+            return graph.edgeSet();
         }
     }
 

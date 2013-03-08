@@ -405,7 +405,7 @@ public final class IntrinsicLockDurationRowInserter {
                 }
             }
             if (threads.size() == 1) {
-                Collections.emptySet();
+                return Collections.emptySet();
             }
             return graph.edgeSet();
         }

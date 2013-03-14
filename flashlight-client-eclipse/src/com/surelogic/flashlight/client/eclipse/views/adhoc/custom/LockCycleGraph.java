@@ -60,11 +60,8 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
 
     Graph.Builder b = new Graph.Builder();
     b.addEdge("Object-1", "AWT-edge-3456");
-    b.addEdge("AWT-edge-3456", "Object-1");
     b.addEdge("AWT-edge-3456", "Object-2");
-    b.addEdge("Object-2", "AWT-edge-3456");
     b.addEdge("Object-2", "Object-1");
-    b.addEdge("Object-1", "Object-2");
     f_graph = b.build();
     f_graph.transform(150, 150);
 
@@ -209,10 +206,19 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
       }
 
       final Point midPath = getMidPointBetween(ctrl, mid);
-      final Point arrow1 = getPointPerpendicularToMidPointOfLine(ctrl, midPath, ARROW_DIST, true);
-      final Point arrow2 = getPointPerpendicularToMidPointOfLine(midPath, mid, ARROW_DIST, true);
+      // guess direction of arrow
+      Point arrow1 = getPointPerpendicularToMidPointOfLine(midPath, ctrl, ARROW_DIST, true);
+      // check guess with dot product
+      if (dotProduct(arrow1, midPath, cFrom, cTo) < 0) {
+        // we were wrong
+        arrow1 = getPointPerpendicularToMidPointOfLine(midPath, ctrl, ARROW_DIST, false);
+      }
+      // rotate 90 degrees around 0,0: x' = -y and y' = x
+      final Point arrow2 = new Point(midPath.x - (arrow1.y - midPath.y), midPath.y + (arrow1.x - midPath.x));
+
       gc.setBackground(highlight ? EclipseColorUtility.getDiffHighlightColorNewChanged() : gc.getDevice().getSystemColor(
           SWT.COLOR_LIST_BACKGROUND));
+      // gc.drawLine(midPath.x, midPath.y, arrow1.x, arrow1.y);
       final int[] arrow = new int[] { midPath.x, midPath.y, arrow1.x, arrow1.y, arrow2.x, arrow2.y };
       gc.fillPolygon(arrow);
       gc.setForeground(EclipseColorUtility.getSubtleTextColor());
@@ -265,7 +271,7 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
   /*
    * Static methods (many should be moved to common)
    */
-  private static final boolean DEBUG_DRAWING = true;
+  private static final boolean DEBUG_DRAWING = false;
   private static final int PAD = 5;
   private static final int SIZE_ADJUST = 2;
   private static final int LOCK_ICON_WIDTH = 16;
@@ -407,9 +413,9 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
     } else if (-5 < dy && dy < 5) { // slope is zero
       final double val;
       if (dx > 0) { // pointing right
-        val = subIfToRightOrAdd(mid.y, distance, toRight);
-      } else { // pointing left
         val = addIfToRightOrSub(mid.y, distance, toRight);
+      } else { // pointing left
+        val = subIfToRightOrAdd(mid.y, distance, toRight);
       }
       return new Point(mid.x, SLUtility.safeDoubleToInt(val));
     } else {
@@ -457,5 +463,13 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
 
   static int getDistanceAsInt(Point p1, Point p2) {
     return SLUtility.safeDoubleToInt(getDistance(p1, p2));
+  }
+
+  static double dotProduct(Point v1tail, Point v1head, Point v2tail, Point v2head) {
+    double v1x = v1head.x - v1tail.x;
+    double v1y = v1head.y - v1tail.y;
+    double v2x = v2head.x - v2tail.x;
+    double v2y = v2head.y - v2tail.y;
+    return v1x * v2x + v1y * v2y;
   }
 }

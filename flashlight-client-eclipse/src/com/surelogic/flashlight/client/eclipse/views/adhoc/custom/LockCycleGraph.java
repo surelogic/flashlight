@@ -1,5 +1,10 @@
 package com.surelogic.flashlight.client.eclipse.views.adhoc.custom;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.eclipse.swt.SWT;
@@ -9,6 +14,8 @@ import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseMoveListener;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
@@ -19,9 +26,10 @@ import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Event;
-import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
-import org.eclipse.ui.part.PageBook;
+import org.eclipse.swt.widgets.Table;
+import org.eclipse.swt.widgets.TableColumn;
+import org.eclipse.swt.widgets.TableItem;
 import org.jdesktop.core.animation.timing.TimingSource;
 import org.jdesktop.core.animation.timing.sources.ScheduledExecutorTimingSource;
 
@@ -29,13 +37,18 @@ import com.surelogic.NonNull;
 import com.surelogic.Nullable;
 import com.surelogic.ThreadConfined;
 import com.surelogic.common.CommonImages;
+import com.surelogic.common.Pair;
 import com.surelogic.common.SLUtility;
+import com.surelogic.common.adhoc.AdHocQueryResultSqlData;
+import com.surelogic.common.adhoc.model.AdornedTreeTableModel;
+import com.surelogic.common.adhoc.model.Cell;
 import com.surelogic.common.core.EclipseUtility;
 import com.surelogic.common.graph.Edge;
 import com.surelogic.common.graph.Graph;
 import com.surelogic.common.graph.Node;
 import com.surelogic.common.ui.EclipseColorUtility;
 import com.surelogic.common.ui.SLImages;
+import com.surelogic.common.ui.TableUtility;
 import com.surelogic.common.ui.adhoc.AbstractQueryResultCustomDisplay;
 import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
 
@@ -43,6 +56,22 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
 
   private TimingSource f_ts;
   private Graph f_graph;
+  private Pair<String, String> f_selectedEdge;
+
+  List<String> getThreads(Pair<String, String> edge) {
+    final AdornedTreeTableModel model = getResult().getModel();
+    final List<String> result = new ArrayList<String>();
+    for (Cell[] row : model.getRows()) {
+      if (row[0].getText().equals(edge.first()) && row[1].getText().equals(edge.second())) {
+        final String occurenceCount = row[3].getText();
+        final boolean once = "1".equals(occurenceCount);
+        final String threadInfo = row[2].getText() + " (" + (once ? "once)" : row[3].getText() + " times)");
+        result.add(threadInfo);
+      }
+    }
+    Collections.sort(result);
+    return result;
+  }
 
   @Override
   public void dispose() {
@@ -58,10 +87,19 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
     final SashForm sash = new SashForm(panel, SWT.HORIZONTAL | SWT.SMOOTH);
     sash.setLayout(new FillLayout());
 
+    final AdHocQueryResultSqlData result = getResult();
+    final AdornedTreeTableModel model = result.getModel();
+    final Cell[][] cells = model.getRows();
+    final Set<Pair<String, String>> edges = new HashSet<Pair<String, String>>();
+    for (Cell[] row : cells) {
+      final Pair<String, String> pair = new Pair<String, String>(row[0].getText(), row[1].getText());
+      edges.add(pair);
+    }
+
     Graph.Builder b = new Graph.Builder();
-    b.addEdge("Object-1", "AWT-edge-3456");
-    b.addEdge("AWT-edge-3456", "Object-2");
-    b.addEdge("Object-2", "Object-1");
+    for (Pair<String, String> edge : edges) {
+      b.addEdge(edge.first(), edge.second());
+    }
     f_graph = b.build();
     f_graph.transform(150, 150);
 
@@ -76,10 +114,49 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
     /*
      * Right-hand-side
      */
-    final PageBook rhs = new PageBook(sash, SWT.NONE);
+    final Composite rhs = new Composite(sash, SWT.NONE);
 
-    final Label noSelectionPane = new Label(rhs, SWT.NONE);
-    rhs.showPage(noSelectionPane);
+    rhs.setLayout(new FillLayout());
+
+    final Table edgeTable = new Table(rhs, SWT.FULL_SELECTION);
+    edgeTable.setHeaderVisible(true);
+    edgeTable.setLinesVisible(true);
+
+    TableColumn col1 = new TableColumn(edgeTable, SWT.NONE);
+    col1.setText(model.getColumnLabels()[0]);
+
+    new TableColumn(edgeTable, SWT.NONE);
+
+    TableColumn col3 = new TableColumn(edgeTable, SWT.NONE);
+    col3.setText(model.getColumnLabels()[1]);
+
+    TableColumn col4 = new TableColumn(edgeTable, SWT.NONE);
+    col4.setText("Threads");
+
+    final Image lockImg = SLImages.getImage(CommonImages.IMG_LOCK);
+    for (Pair<String, String> edge : edges) {
+      final TableItem item = new TableItem(edgeTable, SWT.NONE);
+      item.setText(0, edge.first());
+      item.setImage(0, lockImg);
+      item.setText(1, "\u2192");
+      item.setText(2, edge.second());
+      item.setImage(2, lockImg);
+      item.setText(3, SLUtility.toStringCommaSeparatedList(getThreads(edge)));
+
+      item.setData(edge);
+    }
+    edgeTable.addSelectionListener(new SelectionAdapter() {
+      @SuppressWarnings("unchecked")
+      @Override
+      public void widgetSelected(SelectionEvent e) {
+        final Object data = TableUtility.getDataOfFirstSelectedOrNull(edgeTable);
+        if (data instanceof Pair<?, ?>) {
+          f_selectedEdge = (Pair<String, String>) data;
+        }
+      }
+    });
+
+    TableUtility.packColumns(edgeTable);
 
     f_ts = new ScheduledExecutorTimingSource(50, TimeUnit.MILLISECONDS);
     f_ts.addTickListener(handler);
@@ -108,7 +185,7 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
   /*
    * This class handles events for the graph.
    */
-  private static final class CanvasEventHandler extends MouseAdapter implements MouseMoveListener, PaintListener,
+  private final class CanvasEventHandler extends MouseAdapter implements MouseMoveListener, PaintListener,
       TimingSource.TickListener {
 
     private final Canvas f_canvas;
@@ -169,11 +246,17 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
       e.gc.fillRectangle(0, 0, clientArea.width, clientArea.height);
 
       synchronized (f_graph) {
+        Pair<String, String> selectedEdgeOrNull = f_selectedEdge;
+        String fromLabelOrNull = selectedEdgeOrNull == null ? null : selectedEdgeOrNull.first();
+        String toLabelOrNull = selectedEdgeOrNull == null ? null : selectedEdgeOrNull.second();
         for (Edge edge : f_graph.edges()) {
-          drawEdge(e.gc, edge.getFrom(), edge.getTo(), false);
+          final boolean highlight = edge.getFrom().getLabel().equals(fromLabelOrNull)
+              && edge.getTo().getLabel().equals(toLabelOrNull);
+          drawEdge(e.gc, edge.getFrom(), edge.getTo(), highlight);
         }
         for (Node node : f_graph.nodes()) {
-          drawNode(e.gc, node, false, node == f_trackingNode);
+          final boolean hightlight = node.getLabel().equals(fromLabelOrNull) || node.getLabel().equals(toLabelOrNull);
+          drawNode(e.gc, node, hightlight, node == f_trackingNode);
         }
       }
     }

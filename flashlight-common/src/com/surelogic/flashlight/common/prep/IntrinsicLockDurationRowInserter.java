@@ -234,8 +234,7 @@ public final class IntrinsicLockDurationRowInserter {
         @Override
         public String toString() {
             return "Edge [lockHeld=" + lockHeld + ", lockAcquired="
-                    + lockAcquired + ", threads=" + threads + ", first="
-                    + first + ", last=" + last + ", count=" + count + "]";
+                    + lockAcquired + ", threads=" + threads + "]";
         }
 
     }
@@ -301,7 +300,26 @@ public final class IntrinsicLockDurationRowInserter {
                 }
             }
         }
+        detectLockCycles();
+        for (int i = 0; i < queries.length; i++) {
+            if (counts[i] > 0) {
+                statements[i].executeBatch();
+                counts[i] = 0;
+            }
+        }
+    }
 
+    /**
+     * Overview:
+     * <ol>
+     * <li>Generate a graph of lock edges. An edge exists each time a lock is
+     * acquired while another is held in the program.
+     * <li>Break up the graph into strongly connected components.
+     * <li>Construct an enumeration of all the simple cycles in the strongly
+     * connected components, from smallest to largest, and check each one for
+     * deadlock.
+     */
+    private void detectLockCycles() {
         // FIX replace the graph w/ own implementation from CLR 23.5
         final GraphInfo info = createGraphFromStorage();
         final CycleDetector<Long, Edge> detector = new CycleDetector<Long, Edge>(
@@ -331,12 +349,6 @@ public final class IntrinsicLockDurationRowInserter {
                 new CycleEnumerator(graphEdges).enumerate();
             }
         }
-        for (int i = 0; i < queries.length; i++) {
-            if (counts[i] > 0) {
-                statements[i].executeBatch();
-                counts[i] = 0;
-            }
-        }
     }
 
     class CycleEnumerator extends CombinationEnumerator<Edge> {
@@ -348,6 +360,11 @@ public final class IntrinsicLockDurationRowInserter {
             foundCycles = new ArrayList<Set<Edge>>();
         }
 
+        /**
+         * Cycles will appear in order of increasing number of edges. We check
+         * each new edge set against the set of discovered cycles, which
+         * prevents us from having any non-simple cycles.
+         */
         @Override
         void handleEnumeration(Set<Edge> cycle) {
             DirectedGraph<Long, Edge> graph = new DefaultDirectedGraph<Long, Edge>(
@@ -365,14 +382,11 @@ public final class IntrinsicLockDurationRowInserter {
             StrongConnectivityInspector<Long, Edge> i = new StrongConnectivityInspector<Long, Edge>(
                     graph);
             if (i.isStronglyConnected()) {
-                cycle = sanitizeGraph(cycle, graph);
-                if (!cycle.isEmpty()) {
-                    for (Edge e : cycle) {
-                        try {
-                            outputCycleEdge(statements[LOCK_CYCLE], cycleId, e);
-                        } catch (SQLException e1) {
-                            throw new IllegalStateException(e1);
-                        }
+                for (Edge e : cycle) {
+                    try {
+                        outputCycleEdge(statements[LOCK_CYCLE], cycleId, e);
+                    } catch (SQLException e1) {
+                        throw new IllegalStateException(e1);
                     }
                 }
                 cycleId++;
@@ -770,16 +784,12 @@ public final class IntrinsicLockDurationRowInserter {
             final long thread, final long lock, final ThreadState lockToState) {
         // Note what other locks are held at the time of this event
         List<State> heldLocks = lockToState.heldLocks();
-        if (!heldLocks.isEmpty()) {
-            insertLockEdge(time, heldLocks.get(heldLocks.size() - 1).getLock(),
-                    lock, thread);
-            for (final State state : heldLocks) {
-                if (lock == state.getLock()) {
-                    continue; // Skip myself
-                }
-                insertHeldLock(id, time, state.getId(), state.getLock(), lock,
-                        thread);
+        for (final State state : heldLocks) {
+            if (lock == state.getLock()) {
+                continue; // Skip myself
             }
+            insertHeldLock(id, time, state.getId(), state.getLock(), lock,
+                    thread);
         }
     }
 
@@ -816,6 +826,14 @@ public final class IntrinsicLockDurationRowInserter {
         }
     }
 
+    /**
+     * Inserts a lock into our lock graph.
+     * 
+     * @param time
+     * @param lockHeld
+     * @param acquired
+     * @param thread
+     */
     private void insertLockEdge(final Timestamp time, final long lockHeld,
             final long acquired, final long thread) {
         final Long acq = acquired;
@@ -858,6 +876,11 @@ public final class IntrinsicLockDurationRowInserter {
             SLLogger.getLogger().log(Level.SEVERE, "Insert failed: ILOCKSHELD",
                     e);
         }
+        /*
+         * Create an edge in our lock graph every time a lock is acquired where
+         * a lock is held.
+         */
+        insertLockEdge(time, lockHeld, acquired, thread);
     }
 
     /**

@@ -1,3 +1,4 @@
+package com.surelogic._flashlight.common;
 
 
 import java.lang.reflect.Method;

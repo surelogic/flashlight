@@ -53,6 +53,7 @@ public final class IntrinsicLockDurationRowInserter {
             "INSERT INTO LOCK (Id,TS,InThread,Trace,Lock,Object,Type,State,Success,LockIsThis,LockIsClass) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" };
     private final PreparedStatement[] statements = new PreparedStatement[queries.length];
     private final int[] counts = new int[queries.length];
+    int cycleId;
     private final Calendar here = new GregorianCalendar();
     private final Logger log = SLLogger
             .getLoggerFor(IntrinsicLockDurationRowInserter.class);
@@ -353,7 +354,6 @@ public final class IntrinsicLockDurationRowInserter {
 
     class CycleEnumerator extends CombinationEnumerator<Edge> {
         final List<Set<Edge>> foundCycles;
-        int cycleId;
 
         CycleEnumerator(List<Edge> edges) {
             super(edges);

@@ -456,6 +456,9 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
                 mOutStream,
                 mErrStream,
                 false /* jumbo mode doesn't matter here */,
+                false /*
+                       * dex merger doesn't matter here
+                       */,
                 true /* debugMode */,
                 AdtPrefs.getPrefs().getBuildVerbosity() == BuildVerbosity.VERBOSE,
                 mResourceMarker);

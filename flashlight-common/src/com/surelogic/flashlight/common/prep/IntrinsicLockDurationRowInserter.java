@@ -382,6 +382,14 @@ public final class IntrinsicLockDurationRowInserter {
             StrongConnectivityInspector<Long, Edge> i = new StrongConnectivityInspector<Long, Edge>(
                     graph);
             if (i.isStronglyConnected()) {
+                foundCycles.add(cycle);
+                Set<Edge> sanitizedCycle = sanitizeGraph(cycle, graph);
+                if (!sanitizedCycle.equals(cycle)
+                        && foundCycles.contains(sanitizedCycle)) {
+                    // We have already done the more effecient variant of this
+                    // cycle.
+                    return;
+                }
                 for (Edge e : cycle) {
                     try {
                         outputCycleEdge(statements[LOCK_CYCLE], cycleId, e);
@@ -390,7 +398,6 @@ public final class IntrinsicLockDurationRowInserter {
                     }
                 }
                 cycleId++;
-                foundCycles.add(cycle);
             }
         }
 
@@ -404,17 +411,20 @@ public final class IntrinsicLockDurationRowInserter {
                             .next();
                     if (e_p.threads.equals(e.threads)
                             && e_p.lockAcquired != e.lockHeld) {
-                        deleted.add(e);
-                        deleted.add(e_p);
-                        graph.removeEdge(e);
-                        graph.removeEdge(e_p);
-                        Edge newEdge = graph.addEdge(e.lockHeld,
-                                e_p.lockAcquired);
-                        newEdge.threads.addAll(e.threads);
-                        newEdge.first = e.first;
-                        newEdge.last = e_p.last;
-                        newEdge.count = e_p.count;
-                        graph.removeVertex(e.lockAcquired);
+                        TLongObjectMap<Edge> heldMap = edgeStorage
+                                .get(e.lockHeld);
+                        if (heldMap != null) {
+                            Edge edge = heldMap.get(e_p.lockAcquired);
+                            if (edge != null) {
+                                deleted.add(e);
+                                deleted.add(e_p);
+                                graph.removeEdge(e);
+                                graph.removeEdge(e_p);
+                                graph.addEdge(e.lockHeld, e_p.lockAcquired,
+                                        edge);
+                                graph.removeVertex(e.lockAcquired);
+                            }
+                        }
                     }
                 }
             }

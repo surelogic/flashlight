@@ -285,6 +285,7 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
         gc.setForeground(gc.getDevice().getSystemColor(SWT.COLOR_LIST_FOREGROUND));
         gc.drawOval(ctrl.x - 5, ctrl.y - 5, 10, 10);
         gc.drawRectangle(mid.x - 5, mid.y - 5, 10, 10);
+        gc.drawLine(cFrom.x, cFrom.y, cTo.x, cTo.y);
       }
 
       final Point midPath = getMidPointBetween(ctrl, mid);
@@ -380,15 +381,13 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
     final Point extent = gc.textExtent(node.getLabel());
     final Point c = getCenterOf(node);
 
-    final int xt = c.x - (extent.x / 2);
-    final int yt = c.y - (extent.y / 2);
+    final int width = extent.x + PAD + PAD + LOCK_ICON_WIDTH - SIZE_ADJUST;
+    final int height = extent.y + PAD + PAD - SIZE_ADJUST;
 
-    int xb = xt - PAD;
-    int yb = yt - PAD;
-    int wb = extent.x + PAD + PAD;
-    int hb = extent.y + PAD + PAD;
+    final int x = c.x - (width / 2);
+    final int y = c.y - (height / 2);
 
-    return new Rectangle(xb, yb, wb + LOCK_ICON_WIDTH - SIZE_ADJUST, hb - SIZE_ADJUST);
+    return new Rectangle(x, y, width, height);
   }
 
   static Point getExitPointFor(@NonNull GC gc, @NonNull Node node, Point outside) {

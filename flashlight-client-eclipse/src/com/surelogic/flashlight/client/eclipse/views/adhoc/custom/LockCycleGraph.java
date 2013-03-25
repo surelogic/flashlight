@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
@@ -342,21 +343,42 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
       gc.drawImage(f_lock, nr.x + PAD, nr.y + (nr.height / 2 - LOCK_ICON_WIDTH / 2));
     }
 
-    private final Runnable f_tickTask = new Runnable() {
+    /**
+     * Counts redraws that occur, compared to {@link #f_tickCounter}.
+     */
+    private final AtomicInteger f_redrawCounter = new AtomicInteger(0);
+
+    private final Runnable f_redrawCanvasTask = new Runnable() {
       @Override
       public void run() {
         if (!f_canvas.isDisposed())
           f_canvas.redraw();
+        f_redrawCounter.incrementAndGet();
       }
     };
 
+    /**
+     * Counts ticks to this from the single-threaded timing source, compared to
+     * {@link #f_redrawCounter}.
+     */
+    @ThreadConfined
+    private int f_tickCounter = 0;
+
     @Override
     public void timingSourceTick(TimingSource source, long nanoTime) {
+      if (f_redrawCounter.get() != f_tickCounter) {
+        /*
+         * Skip tick we are behind in drawing the canvas in the SWT thread. Note
+         * that this call is never in the context of the SWT thread.
+         */
+        return;
+      }
+      f_tickCounter++;
       // not in the SWT thread
       if (!f_tracking)
         f_graph.relax();
 
-      f_canvas.getDisplay().asyncExec(f_tickTask);
+      f_canvas.getDisplay().asyncExec(f_redrawCanvasTask);
     }
   }
 

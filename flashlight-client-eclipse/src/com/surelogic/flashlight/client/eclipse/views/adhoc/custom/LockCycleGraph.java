@@ -342,19 +342,21 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
       gc.drawImage(f_lock, nr.x + PAD, nr.y + (nr.height / 2 - LOCK_ICON_WIDTH / 2));
     }
 
+    private final Runnable f_tickTask = new Runnable() {
+      @Override
+      public void run() {
+        if (!f_canvas.isDisposed())
+          f_canvas.redraw();
+      }
+    };
+
     @Override
     public void timingSourceTick(TimingSource source, long nanoTime) {
       // not in the SWT thread
       if (!f_tracking)
         f_graph.relax();
 
-      f_canvas.getDisplay().asyncExec(new Runnable() {
-        @Override
-        public void run() {
-          if (!f_canvas.isDisposed())
-            f_canvas.redraw();
-        }
-      });
+      f_canvas.getDisplay().asyncExec(f_tickTask);
     }
   }
 

@@ -272,17 +272,21 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
       final Point ctrl = getPointPerpendicularToMidPointOfLine(cFrom, cTo, CTRL_DIST, true);
 
       final Path path = new Path(gc.getDevice());
-      path.moveTo(cFrom.x, cFrom.y);
-      path.quadTo(ctrl.x, ctrl.y, cTo.x, cTo.y);
-      gc.setForeground(highlight ? EclipseColorUtility.getDiffHighlightColorNewChanged() : gc.getDevice().getSystemColor(
-          SWT.COLOR_LIST_BACKGROUND));
-      if (highlight) {
-        final int saved = gc.getLineWidth();
-        gc.setLineWidth(3);
-        gc.drawPath(path);
-        gc.setLineWidth(saved);
-      } else
-        gc.drawPath(path);
+      try {
+        path.moveTo(cFrom.x, cFrom.y);
+        path.quadTo(ctrl.x, ctrl.y, cTo.x, cTo.y);
+        gc.setForeground(highlight ? EclipseColorUtility.getDiffHighlightColorNewChanged() : gc.getDevice().getSystemColor(
+            SWT.COLOR_LIST_BACKGROUND));
+        if (highlight) {
+          final int saved = gc.getLineWidth();
+          gc.setLineWidth(3);
+          gc.drawPath(path);
+          gc.setLineWidth(saved);
+        } else
+          gc.drawPath(path);
+      } finally {
+        path.dispose();
+      }
 
       if (DEBUG_DRAWING) {
         gc.setForeground(gc.getDevice().getSystemColor(SWT.COLOR_LIST_FOREGROUND));

@@ -1,11 +1,6 @@
 package com.surelogic.flashlight.ant;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -27,10 +22,10 @@ import com.sun.source.tree.Tree;
 import com.sun.source.util.SimpleTreeVisitor;
 import com.sun.tools.javac.api.JavacTaskImpl;
 import com.sun.tools.javac.api.JavacTool;
-import com.surelogic.common.AbstractJavaZip;
+import com.surelogic.common.AbstractJavaFileZip;
 import com.surelogic.common.SLUtility;
 
-public final class SourceFolderZip extends AbstractJavaZip<File> {
+public final class SourceFolderZip extends AbstractJavaFileZip {
 
     private final File root;
     private final String rootPath;
@@ -194,51 +189,12 @@ public final class SourceFolderZip extends AbstractJavaZip<File> {
     }
 
     @Override
-    protected boolean isAccessible(final File res) {
-        return true;
-    }
-
-    @Override
-    protected String getName(final File res) {
-        return res.getName();
-    }
-
-    @Override
-    protected long getTimestamp(final File res) {
-        return res.lastModified();
-    }
-
-    @Override
     protected String getFullPath(final File res) throws IOException {
         String path = res.getCanonicalPath();
         if (path.startsWith(rootPath)) {
             return path.substring(rootPath.length());
         }
         return path;
-    }
-
-    @Override
-    protected boolean isFile(final File res) {
-        return res.isFile();
-    }
-
-    @Override
-    protected File getFile(final File res, final String name) {
-        return new File(res, name);
-    }
-
-    @Override
-    protected InputStream getFileContents(final File res) throws IOException {
-        return new FileInputStream(res);
-    }
-
-    @Override
-    protected File[] getMembers(final File res) throws IOException {
-        if (res.isDirectory()) {
-            return res.listFiles();
-        } else {
-            return new File[] {};
-        }
     }
 
     /**

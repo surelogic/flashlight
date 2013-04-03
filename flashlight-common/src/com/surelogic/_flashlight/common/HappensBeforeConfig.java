@@ -27,9 +27,9 @@ import org.xml.sax.helpers.DefaultHandler;
  */
 public final class HappensBeforeConfig {
 
-    private final Map<String, List<HappensBeforeCollection>> collections;
-    private final Map<String, List<HappensBeforeObject>> objects;
-    private final Map<String, List<HappensBefore>> threads;
+    final Map<String, List<HappensBeforeCollection>> collections;
+    final Map<String, List<HappensBeforeObject>> objects;
+    final Map<String, List<HappensBefore>> threads;
 
     private HappensBeforeConfig() {
         collections = new HashMap<String, List<HappensBeforeCollection>>();

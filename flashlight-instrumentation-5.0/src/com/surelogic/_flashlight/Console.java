@@ -27,9 +27,9 @@ class Console extends Thread {
 
     private static final String DELIMIT = "************************************************************";
 
-    private final RunConf f_conf;
+    final RunConf f_conf;
 
-    private final List<ConsoleCommand> f_command;
+    final List<ConsoleCommand> f_command;
 
     Console(final RunConf conf, final List<ConsoleCommand> commands) {
         super("flashlight-console");

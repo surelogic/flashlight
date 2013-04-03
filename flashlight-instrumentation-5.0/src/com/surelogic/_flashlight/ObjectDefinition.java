@@ -30,7 +30,7 @@ final class ObjectDefinition extends DefinitionalEvent {
         v.visit(this);
     }
 
-    private static class DefinitionVisitor extends IdPhantomReferenceVisitor {
+    static class DefinitionVisitor extends IdPhantomReferenceVisitor {
 
         final StringBuilder b = new StringBuilder();
 

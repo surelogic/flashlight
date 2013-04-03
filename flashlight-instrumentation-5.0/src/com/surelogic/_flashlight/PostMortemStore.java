@@ -78,9 +78,9 @@ public class PostMortemStore implements StoreListener {
      * A State object is kept for each instrumented thread. It is used to store
      * per-thread information needed to support the runtime.
      */
-    private final ThreadLocal<State> tl_withinStore;
+    final ThreadLocal<State> tl_withinStore;
 
-    private State createState() {
+    State createState() {
         final List<Event> l = new ArrayList<Event>(LOCAL_QUEUE_MAX);
         synchronized (localQueueList) {
             localQueueList.add(l);

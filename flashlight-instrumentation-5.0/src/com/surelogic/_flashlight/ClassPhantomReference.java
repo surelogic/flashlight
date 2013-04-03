@@ -61,7 +61,7 @@ public final class ClassPhantomReference extends IdPhantomReference {
         return f_modifiers;
     }
 
-    private ClassPhantomReference(final Class referent, final ReferenceQueue q) {
+    protected ClassPhantomReference(final Class referent, final ReferenceQueue q) {
         super(referent, q);
         f_className = referent.getName();
         f_type = ClassType.detectType(referent);

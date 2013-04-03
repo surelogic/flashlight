@@ -33,7 +33,7 @@ public class DefinitionEventGenerator {
 
     private final RunConf f_conf;
 
-    private final BlockingQueue<List<Event>> f_outQueue;
+    final BlockingQueue<List<Event>> f_outQueue;
 
     private final ClassVisitor classVisitor;
 
@@ -137,7 +137,7 @@ public class DefinitionEventGenerator {
         }
     }
 
-    private class ClassVisitor extends IdPhantomReferenceVisitor {
+    class ClassVisitor extends IdPhantomReferenceVisitor {
 
         @Override
         void visit(final ClassPhantomReference r) {

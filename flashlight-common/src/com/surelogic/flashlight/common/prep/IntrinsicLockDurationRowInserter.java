@@ -25,6 +25,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.jgrapht.DirectedGraph;
+import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.alg.CycleDetector;
 import org.jgrapht.alg.StrongConnectivityInspector;
 import org.jgrapht.graph.DefaultDirectedGraph;
@@ -44,13 +45,15 @@ public final class IntrinsicLockDurationRowInserter {
     private static final int LOCKS_HELD = 1;
     private static final int LOCK_CYCLE = 2;
     private static final int INSERT_LOCK = 3;
+    private static final int LOCK_COMPONENT = 4;
     private static final boolean doInsert = AbstractPrep.doInsert;
 
     private static final String[] queries = {
             "INSERT INTO LOCKDURATION (InThread,Lock,Start,StartEvent,Stop,StopEvent,Duration,State) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             "INSERT INTO LOCKSHELD (LockEvent,LockHeldEvent,LockHeld,LockAcquired,InThread) VALUES (?, ?, ?, ?, ?)",
             "INSERT INTO LOCKCYCLE (Component,LockHeld,LockAcquired,Count,FirstTime,LastTime) VALUES (?, ?, ?, ?, ?, ?)",
-            "INSERT INTO LOCK (Id,TS,InThread,Trace,Lock,Object,Type,State,Success,LockIsThis,LockIsClass) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" };
+            "INSERT INTO LOCK (Id,TS,InThread,Trace,Lock,Object,Type,State,Success,LockIsThis,LockIsClass) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO LOCKCOMPONENT (Component,Lock) VALUES (?, ?)" };
     private final PreparedStatement[] statements = new PreparedStatement[queries.length];
     private final int[] counts = new int[queries.length];
     int cycleId;
@@ -301,12 +304,36 @@ public final class IntrinsicLockDurationRowInserter {
                 }
             }
         }
-        detectLockCycles();
+        final GraphInfo info = createGraphFromStorage();
+        computeGraphComponents(info);
+        detectLockCycles(info);
         for (int i = 0; i < queries.length; i++) {
             if (counts[i] > 0) {
                 statements[i].executeBatch();
                 counts[i] = 0;
             }
+        }
+    }
+
+    private void computeGraphComponents(GraphInfo info) throws SQLException {
+        final ConnectivityInspector<Long, Edge> inspector = new ConnectivityInspector<Long, IntrinsicLockDurationRowInserter.Edge>(
+                info.lockGraph);
+        final PreparedStatement ps = statements[LOCK_COMPONENT];
+        int i = 0;
+        for (Set<Long> set : inspector.connectedSets()) {
+            System.out.println("Connected Set (" + set.size() + "):" + set);
+            for (long lock : set) {
+                ps.setInt(1, i);
+                ps.setLong(2, lock);
+                if (doInsert) {
+                    ps.addBatch();
+                    if (++counts[LOCK_COMPONENT] == 10000) {
+                        ps.executeBatch();
+                        counts[LOCK_COMPONENT] = 0;
+                    }
+                }
+            }
+            i++;
         }
     }
 
@@ -319,10 +346,10 @@ public final class IntrinsicLockDurationRowInserter {
      * <li>Construct an enumeration of all the simple cycles in the strongly
      * connected components, from smallest to largest, and check each one for
      * deadlock.
+     * 
+     * @throws SQLException
      */
-    private void detectLockCycles() {
-        // FIX replace the graph w/ own implementation from CLR 23.5
-        final GraphInfo info = createGraphFromStorage();
+    private void detectLockCycles(GraphInfo info) throws SQLException {
         final CycleDetector<Long, Edge> detector = new CycleDetector<Long, Edge>(
                 info.lockGraph);
         if (detector.detectCycles()) {
@@ -353,11 +380,11 @@ public final class IntrinsicLockDurationRowInserter {
     }
 
     class CycleEnumerator extends CombinationEnumerator<Edge> {
-        final List<Set<Edge>> foundCycles;
+        final Set<Set<Edge>> foundCycles;
 
         CycleEnumerator(List<Edge> edges) {
             super(edges);
-            foundCycles = new ArrayList<Set<Edge>>();
+            foundCycles = new HashSet<Set<Edge>>();
         }
 
         /**
@@ -384,24 +411,40 @@ public final class IntrinsicLockDurationRowInserter {
             if (i.isStronglyConnected()) {
                 foundCycles.add(cycle);
                 Set<Edge> sanitizedCycle = sanitizeGraph(cycle, graph);
-                if (!sanitizedCycle.equals(cycle)
-                        && foundCycles.contains(sanitizedCycle)) {
-                    // We have already done the more effecient variant of this
-                    // cycle.
-                    return;
-                }
-                for (Edge e : cycle) {
-                    try {
-                        outputCycleEdge(statements[LOCK_CYCLE], cycleId, e);
-                    } catch (SQLException e1) {
-                        throw new IllegalStateException(e1);
+                if (sanitizedCycle.equals(cycle)
+                        || foundCycles.add(sanitizedCycle)) {
+                    // This is a cycle whose ideal form we haven't written out
+                    // yet, so let's do it. I'm also pretty sure that I don't
+                    // need the foundCycles check because any sanitized cycle
+                    // will be smaller than the current one and therefore
+                    // already considered, but I'm including it anyways
+                    // for good measure.
+                    for (Edge e : cycle) {
+                        try {
+                            outputCycleEdge(statements[LOCK_CYCLE], cycleId, e);
+                        } catch (SQLException e1) {
+                            throw new IllegalStateException(e1);
+                        }
                     }
+                    cycleId++;
                 }
-                cycleId++;
             }
         }
 
-        Set<Edge> sanitizeGraph(Set<Edge> cycle, DirectedGraph<Long, Edge> graph) {
+        /**
+         * Many cycles can be improved getting rid of intermediate nodes that
+         * aren't strictly necessary, or ruled out completely when they don't
+         * actually deadlock in practice based on the threads observed. This
+         * routine replaces adjacent edges that are accessed by the same set of
+         * threads with their closure. It also returns an empty set of the cycle
+         * consists of only one thread.
+         * 
+         * @param cycle
+         * @param graph
+         * @return
+         */
+        private Set<Edge> sanitizeGraph(Set<Edge> cycle,
+                DirectedGraph<Long, Edge> graph) {
             final Set<Edge> deleted = new HashSet<Edge>(cycle.size());
             final TLongSet threads = new TLongHashSet();
             for (Edge e : cycle) {
@@ -454,7 +497,7 @@ public final class IntrinsicLockDurationRowInserter {
         }
     }
 
-    private static final boolean omitEdges = true;
+    private static final boolean omitEdges = false;
 
     private GraphInfo createGraphFromStorage() {
 

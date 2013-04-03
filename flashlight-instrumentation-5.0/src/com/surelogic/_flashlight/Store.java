@@ -39,9 +39,9 @@ public class Store {
 
     private static final GCThread f_gc;
 
-    private static final RunConf f_conf;
+    static final RunConf f_conf;
 
-    private static final List<StoreListener> f_listeners;
+    static final List<StoreListener> f_listeners;
 
     /**
      * This thread-local (tl) flag is used to ensure that we to not, within a
@@ -51,8 +51,8 @@ public class Store {
      */
     private final static ThreadLocal<State> tl_withinStore;
 
-    private static class State {
-        private boolean inside;
+    static class State {
+        boolean inside;
     }
 
     static {
@@ -644,9 +644,8 @@ public class Store {
      *            before method; otherwise it is the fully qualified type name
      *            of the type that we need to see if callee is assignable to.
      */
-    public static void happensBeforeThread(
-            final long nanoTime, final Thread callee,
-            final long siteId, final String typeName) {
+    public static void happensBeforeThread(final long nanoTime,
+            final Thread callee, final long siteId, final String typeName) {
         try {
             if (typeName == null
                     || Class.forName(typeName).isAssignableFrom(
@@ -666,9 +665,8 @@ public class Store {
      *            before method; otherwise it is the fully qualified type name
      *            of the type that we need to see if callee is assignable to.
      */
-    public static void happensBeforeObject(
-            final long nanoTime, final Object object,
-            final long siteId, final String typeName) {
+    public static void happensBeforeObject(final long nanoTime,
+            final Object object, final long siteId, final String typeName) {
         try {
             if (typeName == null
                     || Class.forName(typeName).isAssignableFrom(
@@ -688,9 +686,9 @@ public class Store {
      *            before method; otherwise it is the fully qualified type name
      *            of the type that we need to see if callee is assignable to.
      */
-    public static void happensBeforeCollection(
-            final long nanoTime, final Object item,
-            final Object collection, final long siteId, final String typeName) {
+    public static void happensBeforeCollection(final long nanoTime,
+            final Object item, final Object collection, final long siteId,
+            final String typeName) {
         try {
             if (typeName == null
                     || Class.forName(typeName).isAssignableFrom(

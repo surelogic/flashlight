@@ -39,7 +39,7 @@ public final class MonitorStore implements StoreListener {
         return f_lockNames;
     }
 
-    private final ConcurrentMap<Long, ReadWriteLockIds> f_rwLocks;
+    final ConcurrentMap<Long, ReadWriteLockIds> f_rwLocks;
     private final UtilConcurrent f_knownRWLocks;
 
     ConcurrentMap<Long, ReadWriteLockIds> getRWLocks() {
@@ -54,7 +54,7 @@ public final class MonitorStore implements StoreListener {
      * 
      * It also holds the thread-local lock set values.
      */
-    private final ThreadLocal<State> tl_withinStore;
+    final ThreadLocal<State> tl_withinStore;
 
     public static final class State {
         final ThreadPhantomReference thread;
@@ -65,7 +65,7 @@ public final class MonitorStore implements StoreListener {
 
     }
 
-    private volatile MonitorSpec f_spec;
+    volatile MonitorSpec f_spec;
 
     private final ThreadLocal<ThreadLocks> tl_lockSet;
     final CopyOnWriteArrayList<ThreadLocks> f_lockSets;
@@ -74,13 +74,14 @@ public final class MonitorStore implements StoreListener {
         return f_lockSets;
     }
 
-    private RunConf f_conf;
+    RunConf f_conf;
+
     /**
      * The active analysis. You always need an analysis running, as it handles
      * garbage collection events for the MonitorStore
      */
-    private Analysis f_activeAnalysis;
-    private final Lock f_analysisLock = new ReentrantLock();
+    Analysis f_activeAnalysis;
+    final Lock f_analysisLock = new ReentrantLock();
 
     /**
      * Revise the set of alerts used by the active analysis.

@@ -21,12 +21,12 @@ public class SocketOutputStrategy extends EventVisitor {
 
     private static final int TIMEOUT = 5000;
 
-    private EventVisitor f_out;
-    private final RunConf f_conf;
-    private final Factory f_fact;
+    EventVisitor f_out;
+    final RunConf f_conf;
+    final Factory f_fact;
     private final Thread f_connectThread;
-    private final OutputType f_outType;
-    private volatile boolean connecting;
+    final OutputType f_outType;
+    volatile boolean connecting;
 
     public SocketOutputStrategy(final RunConf conf, final Factory factory,
             final OutputType outType) {

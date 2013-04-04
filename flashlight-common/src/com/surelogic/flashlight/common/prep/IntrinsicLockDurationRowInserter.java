@@ -411,24 +411,86 @@ public final class IntrinsicLockDurationRowInserter {
             if (i.isStronglyConnected()) {
                 foundCycles.add(cycle);
                 Set<Edge> sanitizedCycle = sanitizeGraph(cycle, graph);
-                if (sanitizedCycle.equals(cycle)
-                        || foundCycles.add(sanitizedCycle)) {
+                if (sanitizedCycle.size() > 1
+                        && (sanitizedCycle.equals(cycle) || foundCycles
+                                .add(sanitizedCycle))) {
                     // This is a cycle whose ideal form we haven't written out
                     // yet, so let's do it. I'm also pretty sure that I don't
                     // need the foundCycles check because any sanitized cycle
                     // will be smaller than the current one and therefore
                     // already considered, but I'm including it anyways
                     // for good measure.
-                    for (Edge e : cycle) {
-                        try {
-                            outputCycleEdge(statements[LOCK_CYCLE], cycleId, e);
-                        } catch (SQLException e1) {
-                            throw new IllegalStateException(e1);
+                    if (isDeadlock(sanitizedCycle, graph)) {
+                        for (Edge e : cycle) {
+                            try {
+                                outputCycleEdge(statements[LOCK_CYCLE],
+                                        cycleId, e);
+                            } catch (SQLException e1) {
+                                throw new IllegalStateException(e1);
+                            }
                         }
+                        cycleId++;
                     }
-                    cycleId++;
                 }
             }
+        }
+
+        private boolean isDeadlock(Set<Edge> cycle,
+                final DirectedGraph<Long, Edge> graph) {
+            final Edge start = cycle.iterator().next();
+            final Visited nodes = new Visited(start.lockAcquired);
+            return !start.threads.forEach(new TLongProcedure() {
+
+                @Override
+                public boolean execute(long thread) {
+                    Visited threads = new Visited(thread);
+                    // Try walking back to the start using each thread
+                    return !deadlockHelper(start, threads, nodes, graph,
+                            start.lockHeld);
+                }
+            });
+        }
+
+        boolean deadlockHelper(Edge current, final Visited threads,
+                final Visited nodes, final DirectedGraph<Long, Edge> graph,
+                final long firstNode) {
+            if (current.lockAcquired == firstNode) {
+                // We are done, this is a full cycle
+                return true;
+            }
+            final Set<Edge> edges = graph.outgoingEdgesOf(current.lockAcquired);
+            for (final Edge nextEdge : edges) {
+                // Check to see if the node is on the visited list, otherwise
+                // check to see if we can find our deadlock using any of the
+                // threads along this edge
+                if (nodes.contains(nextEdge.lockAcquired)) {
+                    continue;
+                }
+                if (!nextEdge.threads.forEach(new TLongProcedure() {
+
+                    @Override
+                    public boolean execute(long thread) {
+                        // If this is any thread other than the thread of the
+                        // previous edge, then we can only consider it if it
+                        // hasn't been used before
+                        if (threads.restContains(thread)) {
+                            return true;
+                        }
+                        // If we are back at the start then we are done
+                        if (nextEdge.lockAcquired == firstNode) {
+                            return false;
+                        }
+                        // Otherwise as long as we haven't been there we should
+                        // consider it
+                        return !deadlockHelper(nextEdge, new Visited(thread,
+                                threads), new Visited(nextEdge.lockAcquired,
+                                nodes), graph, firstNode);
+                    }
+                })) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         /**
@@ -475,6 +537,40 @@ public final class IntrinsicLockDurationRowInserter {
                 return Collections.emptySet();
             }
             return graph.edgeSet();
+        }
+    }
+
+    static class Visited {
+        final long first;
+        final Visited rest;
+
+        Visited() {
+            first = -1;
+            rest = null;
+        }
+
+        Visited(long elem) {
+            first = elem;
+            rest = new Visited();
+        }
+
+        Visited(long first, Visited rest) {
+            this.first = first;
+            // We don't want duplicate entries to stack b/c it breaks what we
+            // are using restContains to find out
+            if (this.first == rest.first) {
+                this.rest = rest.rest;
+            } else {
+                this.rest = rest;
+            }
+        }
+
+        boolean restContains(long elem) {
+            return rest != null && rest.contains(elem);
+        }
+
+        boolean contains(long elem) {
+            return first == elem || rest != null && rest.contains(elem);
         }
     }
 

@@ -470,10 +470,8 @@ public final class IntrinsicLockDurationRowInserter {
 
                     @Override
                     public boolean execute(long thread) {
-                        // If this is any thread other than the thread of the
-                        // previous edge, then we can only consider it if it
-                        // hasn't been used before
-                        if (threads.restContains(thread)) {
+                        // We only consider threads that we haven't seen before.
+                        if (threads.contains(thread)) {
                             return true;
                         }
                         // If we are back at the start then we are done

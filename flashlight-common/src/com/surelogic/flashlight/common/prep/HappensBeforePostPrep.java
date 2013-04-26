@@ -57,6 +57,7 @@ public class HappensBeforePostPrep implements IPostPrep {
             throw new IllegalStateException(
                     "Error reading bad happens before constraints.", e);
         }
+        hb.finished();
     }
 
     void addConstraints(Connection c, SchemaData data, String res)

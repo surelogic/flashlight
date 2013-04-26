@@ -242,12 +242,6 @@ public final class FlashlightVMRunner implements IVMRunner {
         /* Done with our set up, call the real runner */
         delegateRunner.run(newConfig, launch, monitor);
 
-        final boolean postmortem = launch.getLaunchConfiguration()
-                .getAttribute(
-                        FlashlightPreferencesUtility.POSTMORTEM_MODE,
-                        EclipseUIUtility.getPreferences().getBoolean(
-                                FlashlightPreferencesUtility.POSTMORTEM_MODE));
-
         /* Let the monitor thread know it should expect a launch */
         final Job job = EclipseUtility
                 .toEclipseJob(new WatchFlashlightMonitorJob(new MonitorStatus(
@@ -467,7 +461,6 @@ public final class FlashlightVMRunner implements IVMRunner {
         }
     }
 
-    @SuppressWarnings("unused")
     private String[] updateClassPath(final VMRunnerConfiguration configuration,
             final Map<String, Entry> entryMap) {
         /*
@@ -481,14 +474,13 @@ public final class FlashlightVMRunner implements IVMRunner {
                 instrumentUser);
 
         /*
-         * (2) Also add the flashlight jar file to the classpath, unless the
-         * bootclasspath is non-empty. If it's not empty we add the flashlight
-         * lib to the bootclasspath so it is accessible to the instrumented
-         * bootclasspath items.
+         * We always add the runtime to the classpath, but we may add it to the
+         * boot classpath as well if we need to. We used to conditionally add
+         * this here, but jamaica vm doesn't seem to be respecting the boot
+         * path, and it shouldn't hurt to add it to the classpath twice
+         * sometimes.
          */
-        if (!ALWAYS_APPEND_TO_BOOT && instrumentBoot.isEmpty()) {
-            newClassPathList.add(pathToFlashlightLib);
-        }
+        newClassPathList.add(pathToFlashlightLib);
 
         final String[] newClassPath = new String[newClassPathList.size()];
         return newClassPathList.toArray(newClassPath);
@@ -537,6 +529,7 @@ public final class FlashlightVMRunner implements IVMRunner {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private VMRunnerConfiguration updateRunnerConfiguration(
             final VMRunnerConfiguration original,
             final ILaunchConfiguration launch, final String[] newClassPath,
@@ -667,7 +660,7 @@ public final class FlashlightVMRunner implements IVMRunner {
         return newConfig;
     }
 
-    @SuppressWarnings("unused")
+    @SuppressWarnings({ "unused", "rawtypes", "unchecked" })
     private Map updateVMSpecificAttributesMap(final Map originalMap,
             final Map<String, Entry> entryMap) {
         Map original = originalMap;

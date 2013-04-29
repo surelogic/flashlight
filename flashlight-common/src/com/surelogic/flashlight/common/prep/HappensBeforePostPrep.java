@@ -118,6 +118,7 @@ public class HappensBeforePostPrep implements IPostPrep {
                     lastWrite = ts;
                     lastWriteThread = thread;
                 } else if (thread != curThread) {
+                    curThread = thread;
                     try {
                         if (!hb.hasHappensBefore(lastWrite, lastWriteThread,
                                 ts, thread)) {

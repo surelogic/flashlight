@@ -78,15 +78,87 @@ public class HappensBeforePostPrep implements IPostPrep {
     private class InstanceHandler extends NullRowHandler {
         final Queryable<Boolean> check = q.prepared(
                 "Accesses.prep.selectInstanceField", new AccessHandler());
+        final Queryable<?> recordBlocks = q.prepared(
+                "Accesses.prep.selectInstanceField", new BlockStatsHandler());
+
+        long field;
+        long receiver;
 
         @Override
         protected void doHandle(Row r) {
-            long field = r.nextLong();
-            long receiver = r.nextLong();
+            field = r.nextLong();
+            receiver = r.nextLong();
+            recordBlocks.call(field, receiver);
             if (!check.call(field, receiver)) {
                 badHappensBefore.call(field, receiver);
             }
         }
+
+        private class BlockStatsHandler extends NullRowHandler {
+
+            Timestamp beginThread, endThread;
+            int reads, writes;
+            long lastThread = -1;
+
+            private final Queryable<Void> insertBlockStats = q
+                    .prepared("Accesses.prep.insertBlockStats");
+            private final Queryable<Integer> countInterleavingFields = q
+                    .prepared("Accesses.prep.interleavingFields",
+                            new InterleavingFieldHandler());
+
+            @Override
+            protected void doHandle(Row r) {
+                long thread = r.nextLong();
+                if (thread != lastThread) {
+                    handleBlock();
+                    lastThread = thread;
+                    beginThread = endThread = r.nextTimestamp();
+                    reads = 0;
+                    writes = 0;
+                } else {
+                    endThread = r.nextTimestamp();
+                }
+                if (r.nextString().equals("R")) {
+                    reads++;
+                } else {
+                    writes++;
+                }
+            }
+
+            void handleBlock() {
+                int total = reads + writes;
+                if (total > 20) {
+                    double leaves = countInterleavingFields.call(receiver,
+                            beginThread, endThread);
+                    // (FIELD, RECEIVER, INTHREAD, START, STOP, READS, WRITES,
+                    // QUOTIENT)
+                    insertBlockStats.call(field, receiver, lastThread,
+                            beginThread, endThread, reads, writes, leaves * 100
+                                    / total);
+                }
+            }
+
+            private class InterleavingFieldHandler implements
+                    ResultHandler<Integer> {
+
+                @Override
+                public Integer handle(Result result) {
+                    boolean inThread = true;
+                    int interleavings = 0;
+                    for (Row r : result) {
+                        long thread = r.nextLong();
+                        if (thread != lastThread && inThread) {
+                            interleavings++;
+                        }
+                        inThread = thread == lastThread;
+                    }
+                    return interleavings;
+                }
+
+            }
+
+        }
+
     }
 
     private class StaticHandler extends NullRowHandler {

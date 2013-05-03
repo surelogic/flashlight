@@ -1,5 +1,10 @@
 package com.surelogic.flashlight.common.prep;
 
+import gnu.trove.map.TLongObjectMap;
+import gnu.trove.map.hash.TLongObjectHashMap;
+import gnu.trove.procedure.TLongObjectProcedure;
+import gnu.trove.procedure.TObjectProcedure;
+
 import java.io.IOException;
 import java.net.URL;
 import java.sql.Connection;
@@ -9,6 +14,7 @@ import java.sql.Timestamp;
 import java.util.List;
 
 import com.surelogic.common.jdbc.ConnectionQuery;
+import com.surelogic.common.jdbc.NullResultHandler;
 import com.surelogic.common.jdbc.NullRowHandler;
 import com.surelogic.common.jdbc.Nulls;
 import com.surelogic.common.jdbc.Queryable;
@@ -100,11 +106,14 @@ public class HappensBeforePostPrep implements IPostPrep {
             int reads, writes;
             long lastThread = -1;
 
-            private final Queryable<Void> insertBlockStats = q
+            private final Queryable<?> insertBlockStats = q
                     .prepared("Accesses.prep.insertBlockStats");
-            private final Queryable<Integer> countInterleavingFields = q
-                    .prepared("Accesses.prep.interleavingFields",
-                            new InterleavingFieldHandler());
+            private final Queryable<?> insertFieldBlockStats = q
+                    .prepared("Accesses.prep.insertFieldBlockStats");
+
+            private final Queryable<?> countInterleavingFields = q.prepared(
+                    "Accesses.prep.interleavingFields",
+                    new InterleavingFieldHandler());
 
             @Override
             protected void doHandle(Row r) {
@@ -126,39 +135,77 @@ public class HappensBeforePostPrep implements IPostPrep {
             }
 
             void handleBlock() {
-                int total = reads + writes;
-                if (total > 20) {
-                    double leaves = countInterleavingFields.call(receiver,
-                            beginThread, endThread);
-                    // (FIELD, RECEIVER, INTHREAD, START, STOP, READS, WRITES,
-                    // QUOTIENT)
-                    insertBlockStats.call(field, receiver, lastThread,
-                            beginThread, endThread, reads, writes, leaves * 100
-                                    / total);
+                if (reads + writes > 20) {
+                    countInterleavingFields.call(receiver, beginThread,
+                            endThread);
+
                 }
             }
 
-            private class InterleavingFieldHandler implements
-                    ResultHandler<Integer> {
+            private class InterleavingFieldHandler extends NullResultHandler {
+
+                TLongObjectMap<Interleaving> fields = new TLongObjectHashMap<Interleaving>();
 
                 @Override
-                public Integer handle(Result result) {
+                public void doHandle(Result result) {
+                    fields.clear();
                     boolean inThread = true;
                     int interleavings = 0;
                     for (Row r : result) {
-                        long thread = r.nextLong();
-                        if (thread != lastThread && inThread) {
+                        long rField = r.nextLong();
+                        long rThread = r.nextLong();
+                        // Handle the big block
+                        if (rThread != lastThread && inThread) {
                             interleavings++;
                         }
-                        inThread = thread == lastThread;
+                        inThread = rThread == lastThread;
+                        // Handle the individual blocks
+                        if (rField != field) {
+                            Interleaving i = fields.get(rField);
+                            if (i == null) {
+                                i = new Interleaving();
+                                fields.put(rField, i);
+                            }
+                            if (rThread != lastThread && i.inThread) {
+                                i.interleavings++;
+                            }
+                            i.inThread = inThread;
+                        } else {
+                            fields.forEachValue(new TObjectProcedure<Interleaving>() {
+
+                                @Override
+                                public boolean execute(Interleaving i) {
+                                    i.inThread = true;
+                                    return true;
+                                }
+                            });
+                        }
                     }
-                    return interleavings;
+                    insertBlockStats.call(field, receiver, lastThread,
+                            beginThread, endThread, reads, writes,
+                            interleavings * 100 / (reads + writes));
+                    fields.forEachEntry(new TLongObjectProcedure<Interleaving>() {
+
+                        @Override
+                        public boolean execute(long rField, Interleaving i) {
+                            insertFieldBlockStats.call(field, rField, receiver,
+                                    lastThread, beginThread, endThread, reads,
+                                    writes, i.interleavings * 100
+                                            / (reads + writes));
+                            return true;
+                        }
+                    });
                 }
 
             }
 
         }
 
+    }
+
+    class Interleaving {
+        long interleavings = 0;
+        boolean inThread = true;
     }
 
     private class StaticHandler extends NullRowHandler {

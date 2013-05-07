@@ -171,11 +171,12 @@ public class HappensBeforePostPrep implements IPostPrep {
                             }
                             i.inThread = inThread;
                         } else {
+                            final boolean val = inThread;
                             fields.forEachValue(new TObjectProcedure<Interleaving>() {
 
                                 @Override
                                 public boolean execute(Interleaving i) {
-                                    i.inThread = true;
+                                    i.inThread = val;
                                     return true;
                                 }
                             });
@@ -183,14 +184,14 @@ public class HappensBeforePostPrep implements IPostPrep {
                     }
                     insertBlockStats.call(field, receiver, lastThread,
                             beginThread, endThread, reads, writes,
-                            interleavings * 100 / (reads + writes));
+                            (double) interleavings * 100 / (reads + writes));
                     fields.forEachEntry(new TLongObjectProcedure<Interleaving>() {
 
                         @Override
                         public boolean execute(long rField, Interleaving i) {
                             insertFieldBlockStats.call(field, rField, receiver,
                                     lastThread, beginThread, endThread, reads,
-                                    writes, i.interleavings * 100
+                                    writes, (double) i.interleavings * 100
                                             / (reads + writes));
                             return true;
                         }

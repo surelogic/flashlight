@@ -3,11 +3,8 @@ package com.surelogic.flashlight.android.jobs;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
-import java.util.List;
 
 import com.android.ddmlib.IDevice;
-import com.android.ddmuilib.logcat.ILogCatBufferChangeListener;
-import com.android.ddmuilib.logcat.LogCatMessage;
 import com.android.ddmuilib.logcat.LogCatReceiver;
 import com.android.ddmuilib.logcat.LogCatReceiverFactory;
 import com.android.ide.eclipse.ddms.DdmsPlugin;
@@ -19,8 +16,9 @@ import com.surelogic.flashlight.client.eclipse.model.IRunManagerObserver;
 import com.surelogic.flashlight.client.eclipse.model.RunManager;
 import com.surelogic.flashlight.client.eclipse.model.RunManagerObserverAdapter;
 
-public class ReadLogcatJob extends AbstractSLJob implements
-        ILogCatBufferChangeListener {
+//FIXME This currently does not work because LogCatMessage is inaccessible.
+public class ReadLogcatJob extends AbstractSLJob { // implements
+                                                   // ILogCatBufferChangeListener
 
     private final String f_run;
     private final File f_dir;
@@ -57,7 +55,7 @@ public class ReadLogcatJob extends AbstractSLJob implements
                     .newReceiver(f_dev, DdmsPlugin.getDefault()
                             .getPreferenceStore());
             try {
-                f_receiver.addMessageReceivedEventListener(this);
+                // FIXME f_receiver.addMessageReceivedEventListener(this);
                 f_out = new PrintWriter(new File(f_dir,
                         InstrumentationConstants.FL_LOGCAT_LOC));
                 try {
@@ -74,7 +72,7 @@ public class ReadLogcatJob extends AbstractSLJob implements
             } catch (FileNotFoundException e1) {
                 exc = e1;
             } finally {
-                f_receiver.removeMessageReceivedEventListener(this);
+                // FIXME f_receiver.removeMessageReceivedEventListener(this);
             }
         } finally {
             RunManager.getInstance().removeObserver(f_runManagerObserver);
@@ -86,15 +84,10 @@ public class ReadLogcatJob extends AbstractSLJob implements
             return SLStatus.createErrorStatus(exc);
         }
     }
-
-    @Override
-    public void bufferChanged(List<LogCatMessage> addedMessages,
-            List<LogCatMessage> deletedMessages) {
-        if (!f_isDone) {
-            for (LogCatMessage l : addedMessages) {
-                f_out.println(l.toString());
-            }
-        }
-    }
-
+    // FIXME
+    /*
+     * @Override public void bufferChanged(List<LogCatMessage> addedMessages,
+     * List<LogCatMessage> deletedMessages) { if (!f_isDone) { for
+     * (LogCatMessage l : addedMessages) { f_out.println(l.toString()); } } }
+     */
 }

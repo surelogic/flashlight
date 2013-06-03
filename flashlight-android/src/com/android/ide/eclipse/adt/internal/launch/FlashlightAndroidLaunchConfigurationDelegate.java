@@ -76,6 +76,7 @@ import com.android.ide.eclipse.adt.internal.project.ProjectHelper;
 import com.android.ide.eclipse.adt.internal.sdk.ProjectState;
 import com.android.ide.eclipse.adt.internal.sdk.Sdk;
 import com.android.prefs.AndroidLocation.AndroidLocationException;
+import com.android.sdklib.BuildToolInfo;
 import com.android.sdklib.build.ApkCreationException;
 import com.android.sdklib.build.DuplicateFileException;
 import com.android.sdklib.internal.build.DebugKeyProvider.KeytoolException;
@@ -94,7 +95,6 @@ import com.surelogic.common.ui.EclipseUIUtility;
 import com.surelogic.common.ui.dialogs.ShowTextDialog;
 import com.surelogic.common.ui.jobs.SLUIJob;
 import com.surelogic.flashlight.android.jobs.ReadFlashlightStreamJob;
-import com.surelogic.flashlight.android.jobs.ReadLogcatJob;
 import com.surelogic.flashlight.client.eclipse.Activator;
 import com.surelogic.flashlight.client.eclipse.jobs.WatchFlashlightMonitorJob;
 import com.surelogic.flashlight.client.eclipse.launch.LaunchHelper;
@@ -344,7 +344,6 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
             } catch (CoreException e) {
                 // Do nothing, this could be caused by a malformed file.
             }
-
         }
         return checker.found;
     }
@@ -402,9 +401,23 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
         IProject[] allRefProjects = null;
 
         ProjectState projectState = Sdk.getProjectState(project);
-
         if (projectState == null) {
             return null;
+        }
+        BuildToolInfo buildToolInfo = projectState.getBuildToolInfo();
+        if (buildToolInfo == null) {
+            buildToolInfo = Sdk.getCurrent().getLatestBuildTool();
+            if (buildToolInfo == null) {
+                AdtPlugin
+                        .printBuildToConsole(BuildVerbosity.VERBOSE, project,
+                                "No \"Build Tools\" package available; use SDK Manager to install one.");
+                throw new IllegalStateException(
+                        "No \"Build Tools\" package available; use SDK Manager to install one.");
+            } else {
+                AdtPlugin.printBuildToConsole(BuildVerbosity.VERBOSE, project,
+                        String.format("Using default Build Tools revision %s",
+                                buildToolInfo.getRevision()));
+            }
         }
         boolean isLibrary = projectState.isLibrary();
 
@@ -453,6 +466,7 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
 
         BuildHelper helper = new BuildHelper(
                 project,
+                buildToolInfo,
                 mOutStream,
                 mErrStream,
                 false /* jumbo mode doesn't matter here */,
@@ -1051,8 +1065,9 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
                                 new ReadFlashlightStreamJob(data.runId,
                                         data.runDir, data.outputPort, id))
                                 .schedule();
-                        EclipseUtility.toEclipseJob(
-                                new ReadLogcatJob(data.runId, id)).schedule();
+                        // FIXME ReadLogcatJob doesn't work right now
+                        // EclipseUtility.toEclipseJob(
+                        // new ReadLogcatJob(data.runId, id)).schedule();
                         return Status.OK_STATUS;
                     }
                 } catch (Exception e) {

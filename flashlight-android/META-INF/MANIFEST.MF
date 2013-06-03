@@ -25,9 +25,9 @@ Require-Bundle: org.eclipse.ui,
  org.eclipse.jface.text,
  com.surelogic.flashlight.client.eclipse,
  com.surelogic.flashlight.common,
- com.android.ide.eclipse.adt;bundle-version="21.0.0",
- com.android.ide.eclipse.base;bundle-version="21.0.0",
- com.android.ide.eclipse.ddms;bundle-version="21.0.0"
+ com.android.ide.eclipse.adt;bundle-version="22.0.1",
+ com.android.ide.eclipse.base;bundle-version="22.0.1",
+ com.android.ide.eclipse.ddms;bundle-version="22.0.1"
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ClassPath: .

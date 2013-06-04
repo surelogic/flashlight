@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SureLogic Common Code for Flashlight
 Bundle-SymbolicName: com.surelogic.flashlight.common
-Bundle-Version: 4.4.0.qualifier
+Bundle-Version: 4.5.0.qualifier
 Bundle-Vendor: SureLogic, Inc.
 Require-Bundle: com.surelogic.common,
  org.eclipse.jface,

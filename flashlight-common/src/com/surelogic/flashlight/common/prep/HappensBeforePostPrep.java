@@ -11,9 +11,13 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import com.surelogic.common.jdbc.ConnectionQuery;
+import com.surelogic.common.jdbc.LongResultHandler;
 import com.surelogic.common.jdbc.NullResultHandler;
 import com.surelogic.common.jdbc.NullRowHandler;
 import com.surelogic.common.jdbc.Nulls;
@@ -25,12 +29,18 @@ import com.surelogic.common.jdbc.SchemaData;
 import com.surelogic.common.jdbc.SchemaUtility;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.flashlight.common.HappensBeforeAnalysis;
+import com.surelogic.flashlight.common.prep.ClassHierarchy.ClassNode;
 
 public class HappensBeforePostPrep implements IPostPrep {
 
+    private final ClassHierarchy ch;
     private ConnectionQuery q;
     private HappensBeforeAnalysis hb;
     private Queryable<Void> badHappensBefore;
+
+    public HappensBeforePostPrep(ClassHierarchy ch) {
+        this.ch = ch;
+    }
 
     @Override
     public String getDescription() {
@@ -52,6 +62,10 @@ public class HappensBeforePostPrep implements IPostPrep {
             throw new IllegalStateException(
                     "Error reading volatile happens before constraints.", e);
         }
+        // We also need to build the class initialization table
+        q.statement("Accesses.prep.selectClassAccesses", new ClassInitHandler())
+                .call();
+
         hb = new HappensBeforeAnalysis(c);
         badHappensBefore = q.prepared("Accesses.prep.insertBadHappensBefore");
         q.statement("Accesses.prep.selectStatics", new StaticHandler()).call();
@@ -81,9 +95,119 @@ public class HappensBeforePostPrep implements IPostPrep {
         }
     }
 
+    static class ClassInit {
+        StaticAccess end;
+        Map<Long, StaticAccess> threads = new HashMap<Long, StaticAccess>();
+
+    }
+
+    private class StaticAccess {
+        final long thread;
+        final long trace;
+        final Timestamp ts;
+
+        public StaticAccess(long thread, long trace, Timestamp ts) {
+            this.thread = thread;
+            this.trace = trace;
+            this.ts = ts;
+        }
+
+    }
+
+    private class ClassInitHandler extends NullResultHandler {
+        final Map<String, ClassInit> classes = new HashMap<String, ClassInit>();
+        private final Queryable<Void> insertClassInit = q
+                .prepared("Accesses.prep.insertClassInit");
+        private final Queryable<Void> insertClassAccess = q
+                .prepared("Accesses.prep.insertClassAccess");
+        private final Queryable<Long> selectClass = q.prepared(
+                "Accesses.prep.selectClass", new LongResultHandler());
+
+        ClassInit getClassInit(String name) {
+            ClassInit init = classes.get(name);
+            if (init == null) {
+                init = new ClassInit();
+                classes.put(name, init);
+            }
+            return init;
+        }
+
+        private void updateInitEnd(String name, StaticAccess access) {
+            ClassInit init = getClassInit(name);
+            if (init.end == null || init.end.ts.before(access.ts)) {
+                init.end = access;
+                for (ClassNode node : ch.getNode(name).getParents()) {
+                    updateInitEnd(node.getName(), access);
+                }
+            }
+        }
+
+        private void updateThreadAccess(String name, StaticAccess access) {
+            ClassInit init = getClassInit(name);
+            StaticAccess earliest = init.threads.get(access.thread);
+            if (earliest == null || earliest.ts.after(access.ts)) {
+                init.threads.put(access.thread, access);
+                for (ClassNode node : ch.getNode(name).getParents()) {
+                    updateThreadAccess(node.getName(), access);
+                }
+            }
+        }
+
+        @Override
+        protected void doHandle(Result result) {
+            for (Row r : result) {
+                long thread = r.nextLong();
+                Timestamp ts = r.nextTimestamp();
+                long trace = r.nextLong();
+                boolean underConstruction = r.nextBoolean();
+                String pakkage = r.nextString();
+                String clazz = r.nextString();
+                String name;
+                if (pakkage.equals("(default)")) {
+                    name = clazz;
+                } else {
+                    name = pakkage + '.' + clazz;
+                }
+                if (underConstruction) {
+                    updateInitEnd(name, new StaticAccess(thread, trace, ts));
+                } else {
+                    updateThreadAccess(name,
+                            new StaticAccess(thread, trace, ts));
+                }
+            }
+
+            for (Entry<String, ClassInit> entry : classes.entrySet()) {
+                ClassInit init = entry.getValue();
+                String fullName = entry.getKey();
+                int split = fullName.lastIndexOf('.');
+                String pakkage, clazz;
+                if (split == -1) {
+                    pakkage = "(default)";
+                    clazz = fullName;
+                } else {
+                    pakkage = fullName.substring(0, split);
+                    clazz = fullName.substring(split + 1);
+                }
+                Long objId = selectClass.call(pakkage, clazz);
+                if (objId != null) {
+                    StaticAccess end = init.end;
+                    if (end != null) {
+                        insertClassInit.call(objId, init.end.thread,
+                                init.end.trace, init.end.ts);
+                        for (StaticAccess a : init.threads.values()) {
+                            insertClassAccess.call(objId, a.thread, a.trace,
+                                    a.ts);
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+
     private class InstanceHandler extends NullRowHandler {
         final Queryable<Boolean> check = q.prepared(
-                "Accesses.prep.selectInstanceField", new AccessHandler());
+                "Accesses.prep.selectInstanceField", new AccessHandler(false));
         final Queryable<?> recordBlocks = q.prepared(
                 "Accesses.prep.selectInstanceField", new BlockStatsHandler());
 
@@ -211,7 +335,7 @@ public class HappensBeforePostPrep implements IPostPrep {
 
     private class StaticHandler extends NullRowHandler {
         final Queryable<Boolean> check = q.prepared(
-                "Accesses.prep.selectStaticField", new AccessHandler());
+                "Accesses.prep.selectStaticField", new AccessHandler(true));
 
         @Override
         protected void doHandle(Row r) {
@@ -224,6 +348,12 @@ public class HappensBeforePostPrep implements IPostPrep {
     }
 
     private class AccessHandler implements ResultHandler<Boolean> {
+
+        private final boolean isStatic;
+
+        AccessHandler(boolean isStatic) {
+            this.isStatic = isStatic;
+        }
 
         @Override
         public Boolean handle(Result result) {

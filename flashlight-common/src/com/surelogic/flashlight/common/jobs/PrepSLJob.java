@@ -115,9 +115,9 @@ public final class PrepSLJob extends AbstractSLJob {
                 new FieldAssignment() };
     }
 
-    private IPostPrep[] getPostPrep() {
+    private IPostPrep[] getPostPrep(ClassHierarchy ch) {
         return new IPostPrep[] { new LockSetAnalysis(),
-                new HappensBeforePostPrep(),
+                new HappensBeforePostPrep(ch),
                 new WriteHtmlOverview(f_runDirectory),
                 new EmptyQueries(f_runDirectory, f_queries) };
     }
@@ -169,7 +169,14 @@ public final class PrepSLJob extends AbstractSLJob {
         for (File f : f_dataFiles) {
             estEventsInRawFile += FlashlightFileUtility.estimateNumEvents(f);
         }
-        final IPostPrep[] postPrepWork = getPostPrep();
+
+        final ClassHierarchy ch = ClassHierarchy.load(new File(runDir,
+                InstrumentationConstants.FL_CLASS_HIERARCHY_FILE_LOC),
+                new File(runDir, InstrumentationConstants.FL_SITES_FILE_LOC),
+                new File(runDir,
+                        InstrumentationConstants.FL_HAPPENS_BEFORE_FILE_LOC));
+
+        final IPostPrep[] postPrepWork = getPostPrep(ch);
 
         monitor.begin(PRE_SCAN_WORK + DROP_CONSTRAINT_WORK
                 + PERSIST_RUN_DESCRIPTION_WORK + SETUP_WORK + PREP_WORK * 2
@@ -248,16 +255,7 @@ public final class PrepSLJob extends AbstractSLJob {
                      */
                     final IntrinsicLockDurationRowInserter i = new IntrinsicLockDurationRowInserter(
                             conn);
-                    final ClassHierarchy ch = ClassHierarchy
-                            .load(new File(
-                                    runDir,
-                                    InstrumentationConstants.FL_CLASS_HIERARCHY_FILE_LOC),
-                                    new File(
-                                            runDir,
-                                            InstrumentationConstants.FL_SITES_FILE_LOC),
-                                    new File(
-                                            runDir,
-                                            InstrumentationConstants.FL_HAPPENS_BEFORE_FILE_LOC));
+
                     final IOneTimePrep[] f_parseElements = getOneTimeHandlers(
                             i, ch);
                     final SLProgressMonitor setupMonitor = new SubSLProgressMonitor(

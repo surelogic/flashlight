@@ -40,7 +40,7 @@ public class ClassHierarchy {
 
     }
 
-    private static class ClassNode {
+    public static class ClassNode {
         final String name;
         final Set<ClassNode> parents;
         final Set<ClassNode> children;
@@ -51,6 +51,18 @@ public class ClassHierarchy {
             parents = new HashSet<ClassNode>();
             children = new HashSet<ClassNode>();
             hbs = new ArrayList<HappensBeforeConfig.HappensBefore>();
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public Set<ClassNode> getParents() {
+            return parents;
+        }
+
+        public Set<ClassNode> getChildren() {
+            return children;
         }
 
         @Override
@@ -217,6 +229,10 @@ public class ClassHierarchy {
             }
         }
         return null;
+    }
+
+    public ClassNode getNode(String key) {
+        return nodes.get(key);
     }
 
 }

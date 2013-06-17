@@ -321,7 +321,6 @@ public final class IntrinsicLockDurationRowInserter {
         final PreparedStatement ps = statements[LOCK_COMPONENT];
         int i = 0;
         for (Set<Long> set : inspector.connectedSets()) {
-            System.out.println("Connected Set (" + set.size() + "):" + set);
             for (long lock : set) {
                 ps.setInt(1, i);
                 ps.setLong(2, lock);

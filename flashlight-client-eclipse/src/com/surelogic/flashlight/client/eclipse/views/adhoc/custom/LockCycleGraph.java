@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -28,6 +29,8 @@ import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
@@ -59,6 +62,7 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
   private Graph f_graph;
   private Pair<String, String> f_selectedEdge;
 
+  @NonNull
   List<String> getThreads(Pair<String, String> edge) {
     final AdornedTreeTableModel model = getResult().getModel();
     final List<String> result = new ArrayList<String>();
@@ -72,6 +76,19 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
     }
     Collections.sort(result);
     return result;
+  }
+
+  @NonNull
+  Map<String, String> getVariablesFor(Pair<String, String> edge) {
+    final AdornedTreeTableModel model = getResult().getModel();
+    final Cell[][] rows = model.getRows();
+    for (int rowIdx = 0; rowIdx < rows.length; rowIdx++) {
+      Cell[] row = rows[rowIdx];
+      if (row[0].getText().equals(edge.first()) && row[1].getText().equals(edge.second())) {
+        return model.getVariablesFor(rowIdx);
+      }
+    }
+    return Collections.emptyMap();
   }
 
   @Override
@@ -121,9 +138,13 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
 
     rhs.setLayout(new FillLayout());
 
+    final Menu menu = new Menu(rhs.getShell(), SWT.POP_UP);
+    setupMenu(menu);
+
     final Table edgeTable = new Table(rhs, SWT.FULL_SELECTION);
     edgeTable.setHeaderVisible(true);
     edgeTable.setLinesVisible(true);
+    edgeTable.setMenu(menu);
 
     TableColumn col1 = new TableColumn(edgeTable, SWT.NONE);
     col1.setText(model.getColumnLabels()[0]);
@@ -181,6 +202,26 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
           EclipseUtility.setIntPreference(FlashlightPreferencesUtility.DEADLOCK_GRAPH_SASH_LHS_WEIGHT, weights[0]);
           EclipseUtility.setIntPreference(FlashlightPreferencesUtility.DEADLOCK_GRAPH_SASH_RHS_WEIGHT, weights[1]);
         }
+      }
+    });
+  }
+
+  private void setupMenu(final Menu menu) {
+    menu.addListener(SWT.Show, new Listener() {
+      @Override
+      public void handleEvent(final Event event) {
+        for (final MenuItem item : menu.getItems()) {
+          if (!item.isDisposed()) {
+            item.dispose();
+          }
+        }
+
+        if (f_selectedEdge == null) {
+          return; // bail out
+        }
+
+        final Map<String, String> extraVariables = getVariablesFor(f_selectedEdge);
+        addSubQueriesToMenu(menu, extraVariables);
       }
     });
   }

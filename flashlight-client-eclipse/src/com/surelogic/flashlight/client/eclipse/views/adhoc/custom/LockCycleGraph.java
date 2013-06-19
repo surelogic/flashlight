@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -78,17 +77,17 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
     return result;
   }
 
-  @NonNull
-  Map<String, String> getVariablesFor(Pair<String, String> edge) {
+  void setSelectedRow(Pair<String, String> edge) {
     final AdornedTreeTableModel model = getResult().getModel();
     final Cell[][] rows = model.getRows();
     for (int rowIdx = 0; rowIdx < rows.length; rowIdx++) {
       Cell[] row = rows[rowIdx];
       if (row[0].getText().equals(edge.first()) && row[1].getText().equals(edge.second())) {
-        return model.getVariablesFor(rowIdx);
+        getResult().setSelectedRowIndex(rowIdx);
+        return;
       }
     }
-    return Collections.emptyMap();
+    getResult().clearSelection();
   }
 
   @Override
@@ -176,11 +175,16 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
         final Object data = TableUtility.getDataOfFirstSelectedOrNull(edgeTable);
         if (data instanceof Pair<?, ?>) {
           f_selectedEdge = (Pair<String, String>) data;
+          setSelectedRow(f_selectedEdge);
+        } else {
+          getResult().clearSelection();
         }
       }
     });
 
     TableUtility.packColumns(edgeTable);
+
+    getResult().clearSelection();
 
     f_ts = new ScheduledExecutorTimingSource(50, TimeUnit.MILLISECONDS);
     f_ts.addTickListener(handler);
@@ -215,13 +219,9 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
             item.dispose();
           }
         }
-
-        if (f_selectedEdge == null) {
-          return; // bail out
+        if (f_selectedEdge != null) {
+          addSubQueriesToMenu(menu, null);
         }
-
-        final Map<String, String> extraVariables = getVariablesFor(f_selectedEdge);
-        addSubQueriesToMenu(menu, extraVariables);
       }
     });
   }

@@ -29,7 +29,6 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Menu;
-import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
@@ -53,6 +52,7 @@ import com.surelogic.common.ui.EclipseColorUtility;
 import com.surelogic.common.ui.SLImages;
 import com.surelogic.common.ui.TableUtility;
 import com.surelogic.common.ui.adhoc.AbstractQueryResultCustomDisplay;
+import com.surelogic.common.ui.adhoc.views.results.AbstractQueryResultsView;
 import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
 
 public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
@@ -182,12 +182,19 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
     rhs.setLayout(new FillLayout());
 
     final Menu menu = new Menu(rhs.getShell(), SWT.POP_UP);
-    setupMenu(menu);
+    AbstractQueryResultsView.setupSubQueryMenu(menu, getResult(), null);
 
     final Table edgeTable = new Table(rhs, SWT.FULL_SELECTION);
     edgeTable.setHeaderVisible(true);
     edgeTable.setLinesVisible(true);
     edgeTable.setMenu(menu);
+
+    edgeTable.addListener(SWT.MouseDoubleClick, new Listener() {
+      @Override
+      public void handleEvent(final Event event) {
+        AbstractQueryResultsView.runDefaultQueryOf(getResult(), null);
+      }
+    });
 
     TableColumn col1 = new TableColumn(edgeTable, SWT.NONE);
     col1.setText(model.getColumnLabels()[0]);
@@ -258,22 +265,6 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
         if (weights != null && weights.length == 2) {
           EclipseUtility.setIntPreference(FlashlightPreferencesUtility.DEADLOCK_GRAPH_SASH_LHS_WEIGHT, weights[0]);
           EclipseUtility.setIntPreference(FlashlightPreferencesUtility.DEADLOCK_GRAPH_SASH_RHS_WEIGHT, weights[1]);
-        }
-      }
-    });
-  }
-
-  private void setupMenu(final Menu menu) {
-    menu.addListener(SWT.Show, new Listener() {
-      @Override
-      public void handleEvent(final Event event) {
-        for (final MenuItem item : menu.getItems()) {
-          if (!item.isDisposed()) {
-            item.dispose();
-          }
-        }
-        if (f_selectedEdge != null) {
-          addSubQueriesToMenu(menu, null);
         }
       }
     });

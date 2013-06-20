@@ -59,8 +59,24 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
 
   private TimingSource f_ts;
   private Graph f_graph;
+
+  /**
+   * This field controls what edge is selected in the displayed graph. The graph
+   * is redrawn frequently so just setting this will work okay, no notification
+   * has to happen.
+   */
+  @Nullable
   private Pair<String, String> f_selectedEdge;
 
+  /**
+   * Gets a string list of the threads that contain the passed edge from the
+   * result data. A row exists in the data for each thread that contains the
+   * edge.
+   * 
+   * @param edge
+   *          a held-acquired pair of lock names.
+   * @return A list of strings, one per thread that contains the edge.
+   */
   @NonNull
   List<String> getThreads(Pair<String, String> edge) {
     final AdornedTreeTableModel model = getResult().getModel();
@@ -77,7 +93,18 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
     return result;
   }
 
-  void setSelectedRow(Pair<String, String> edge) {
+  /**
+   * This method sets the selected row in the result to the first row it finds
+   * that matches the passed edge. Because there may be several rows that match
+   * the edge it is not perfect, it just takes the first one. Duplicates are
+   * caused if the edge occurs in more than one thread.
+   * <p>
+   * The selection is cleared if the edge is not found in the data.
+   * 
+   * @param edge
+   *          a held-acquired pair of lock names.
+   */
+  void setSelectedRowInQueryResults(@NonNull Pair<String, String> edge) {
     final AdornedTreeTableModel model = getResult().getModel();
     final Cell[][] rows = model.getRows();
     for (int rowIdx = 0; rowIdx < rows.length; rowIdx++) {
@@ -88,6 +115,23 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
       }
     }
     getResult().clearSelection();
+  }
+
+  /**
+   * Gets the edge that is selected in the query result data or {@code null} if
+   * no edge is selected.
+   * 
+   * @return a held-acquired pair of lock names or {@code null}.
+   */
+  @Nullable
+  Pair<String, String> getSelectedEdgeFromQueryResults() {
+    final int rowIdx = getResult().getSelectedRowIndex();
+    if (rowIdx == -1)
+      return null;
+    final AdornedTreeTableModel model = getResult().getModel();
+    final Cell[][] rows = model.getRows();
+    final Pair<String, String> edge = new Pair<String, String>(rows[rowIdx][0].getText(), rows[rowIdx][1].getText());
+    return edge;
   }
 
   @Override
@@ -156,6 +200,9 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
     TableColumn col4 = new TableColumn(edgeTable, SWT.NONE);
     col4.setText("Threads");
 
+    @Nullable
+    final Pair<String, String> oldSelectedEdge = getSelectedEdgeFromQueryResults();
+
     final Image lockImg = SLImages.getImage(CommonImages.IMG_LOCK);
     for (Pair<String, String> edge : edges) {
       final TableItem item = new TableItem(edgeTable, SWT.NONE);
@@ -167,6 +214,14 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
       item.setText(3, SLUtility.toStringCommaSeparatedList(getThreads(edge)));
 
       item.setData(edge);
+
+      /*
+       * Restore old selection (where possible)
+       */
+      if (edge.equals(oldSelectedEdge)) {
+        edgeTable.setSelection(item);
+        f_selectedEdge = oldSelectedEdge;
+      }
     }
     edgeTable.addSelectionListener(new SelectionAdapter() {
       @SuppressWarnings("unchecked")
@@ -175,7 +230,7 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
         final Object data = TableUtility.getDataOfFirstSelectedOrNull(edgeTable);
         if (data instanceof Pair<?, ?>) {
           f_selectedEdge = (Pair<String, String>) data;
-          setSelectedRow(f_selectedEdge);
+          setSelectedRowInQueryResults(f_selectedEdge);
         } else {
           getResult().clearSelection();
         }
@@ -183,8 +238,6 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
     });
 
     TableUtility.packColumns(edgeTable);
-
-    getResult().clearSelection();
 
     f_ts = new ScheduledExecutorTimingSource(50, TimeUnit.MILLISECONDS);
     f_ts.addTickListener(handler);

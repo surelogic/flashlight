@@ -136,7 +136,6 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
 
   @Override
   public void dispose() {
-    System.out.println(LockCycleGraph.class.getName() + "#dispose()");
     if (f_ts != null) {
       f_ts.dispose();
       f_ts = null;

@@ -301,15 +301,15 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
     @Override
     public void mouseDown(MouseEvent e) {
       if (e.button == 1) {
+        f_tracking = true;
+        f_x = e.x;
+        f_y = e.y;
         final Node node = getNodeOrNull(e.x, e.y, f_graph);
         if (node != null) {
           node.setPostitionFixed(true);
-          f_tracking = true;
           f_trackingNode = node;
-          f_x = e.x;
-          f_y = e.y;
-          f_canvas.addMouseMoveListener(this);
-        }
+        } /* else translate graph */
+        f_canvas.addMouseMoveListener(this);
       }
     }
 
@@ -329,7 +329,11 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
       final int dy = e.y - f_y;
       f_x = e.x;
       f_y = e.y;
-      f_trackingNode.movePosition(dx, dy);
+      if (f_trackingNode != null) {
+        f_trackingNode.movePosition(dx, dy);
+      } else {
+        f_graph.transform(dx, dy);
+      }
     }
 
     @Override

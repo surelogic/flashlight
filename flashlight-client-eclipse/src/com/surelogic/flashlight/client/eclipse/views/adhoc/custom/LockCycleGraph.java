@@ -159,12 +159,19 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
       edges.add(pair);
     }
 
-    Graph.Builder b = new Graph.Builder();
-    for (Pair<String, String> edge : edges) {
-      b.addEdge(edge.first(), edge.second());
+    final Object data = result.getData();
+    if (data instanceof Graph) {
+      f_graph = (Graph) data;
+    } else {
+
+      Graph.Builder b = new Graph.Builder();
+      for (Pair<String, String> edge : edges) {
+        b.addEdge(edge.first(), edge.second());
+      }
+      f_graph = b.build();
+      f_graph.transform(150, 150);
+      result.setData(f_graph);
     }
-    f_graph = b.build();
-    f_graph.transform(150, 150);
 
     /*
      * Left-hand-side shows graph.

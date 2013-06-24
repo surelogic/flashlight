@@ -136,7 +136,6 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
 
   @Override
   public void dispose() {
-    System.out.println(LockCycleGraph.class.getName() + "#dispose()");
     if (f_ts != null) {
       f_ts.dispose();
       f_ts = null;
@@ -159,12 +158,19 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
       edges.add(pair);
     }
 
-    Graph.Builder b = new Graph.Builder();
-    for (Pair<String, String> edge : edges) {
-      b.addEdge(edge.first(), edge.second());
+    final Object data = result.getData();
+    if (data instanceof Graph) {
+      f_graph = (Graph) data;
+    } else {
+
+      Graph.Builder b = new Graph.Builder();
+      for (Pair<String, String> edge : edges) {
+        b.addEdge(edge.first(), edge.second());
+      }
+      f_graph = b.build();
+      f_graph.transform(150, 150);
+      result.setData(f_graph);
     }
-    f_graph = b.build();
-    f_graph.transform(150, 150);
 
     /*
      * Left-hand-side shows graph.
@@ -295,15 +301,15 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
     @Override
     public void mouseDown(MouseEvent e) {
       if (e.button == 1) {
+        f_tracking = true;
+        f_x = e.x;
+        f_y = e.y;
         final Node node = getNodeOrNull(e.x, e.y, f_graph);
         if (node != null) {
           node.setPostitionFixed(true);
-          f_tracking = true;
           f_trackingNode = node;
-          f_x = e.x;
-          f_y = e.y;
-          f_canvas.addMouseMoveListener(this);
-        }
+        } /* else translate graph */
+        f_canvas.addMouseMoveListener(this);
       }
     }
 
@@ -323,7 +329,11 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
       final int dy = e.y - f_y;
       f_x = e.x;
       f_y = e.y;
-      f_trackingNode.movePosition(dx, dy);
+      if (f_trackingNode != null) {
+        f_trackingNode.movePosition(dx, dy);
+      } else {
+        f_graph.transform(dx, dy);
+      }
     }
 
     @Override

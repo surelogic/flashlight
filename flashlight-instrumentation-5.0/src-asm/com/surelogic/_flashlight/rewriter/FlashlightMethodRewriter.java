@@ -493,33 +493,41 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 		handlePreviousAload();
 		handlePreviousAstore();
 		insertDelayedCode();
-
-		/*
-		 * SPECIAL CASE: If the method being called in Runtime.halt(int), we
-		 * need to insert a call to Store.shutdown(). No point in instrumenting
-		 * the halt call because it will occur after the Store and everything
-		 * else has been stopped.
+		
+		/* 
+		 * The owner might be an array class, such as "[[La/b/C;" or 
+		 * "[Ljava/lang.Object;".  The only current situation where this can
+		 * occur is when the the method being called is "clone()".  In this case
+		 * we have to be careful because we don't have array classes modeled
+		 * in the class model.  We have to avoid doing things that would cause
+		 * us to look up the non-existent class object.
 		 */
-		try {
-			// if (name.equals("halt") && desc.equals("(I)V") &&
-			// classModel.getClass("java/lang/Runtime").isAssignableFrom(owner))
-			// {
-			if (callsMethod(FlashlightNames.JAVA_LANG_RUNTIME,
-					FlashlightNames.HALT, owner, name, desc)) {
-				// Insert call to Store.shutdown()
-				ByteCodeUtils.callStoreMethod(mv, config,
-						FlashlightNames.SHUTDOWN);
-
-				// Insert original call to halt(int)
-				mv.visitMethodInsn(opcode, owner, name, desc);
-				return;
-			}
-		} catch (final ClassNotFoundException e) {
-			messenger
-					.warning("Provided classpath is incomplete: couldn't find class "
-							+ e.getMissingClass());
+		final boolean isArray = owner.charAt(0) == '[';
+		if (!isArray) {
+  		/*
+  		 * SPECIAL CASE: If the method being called in Runtime.halt(int), we
+  		 * need to insert a call to Store.shutdown(). No point in instrumenting
+  		 * the halt call because it will occur after the Store and everything
+  		 * else has been stopped.
+  		 */
+  		try {
+  			if (callsMethod(FlashlightNames.JAVA_LANG_RUNTIME,
+  					FlashlightNames.HALT, owner, name, desc)) {
+  				// Insert call to Store.shutdown()
+  				ByteCodeUtils.callStoreMethod(mv, config,
+  						FlashlightNames.SHUTDOWN);
+  
+  				// Insert original call to halt(int)
+  				mv.visitMethodInsn(opcode, owner, name, desc);
+  				return;
+  			}
+  		} catch (final ClassNotFoundException e) {
+  			messenger
+  					.warning("Provided classpath is incomplete: couldn't find class "
+  							+ e.getMissingClass());
+  		}
 		}
-
+		
 		/* We don't instrument calls from within synthetic methods */
 		if (isSynthetic) {
 			/*
@@ -532,11 +540,11 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 		} else {
 			/*
 			 * Check if we are calling a method makes indirect use of
-			 * aggregated state.
+			 * aggregated state.  Methods on an array class NEVER do.  So we avoid
+			 * potential lookup problems by skipping them.
 			 */
 			IndirectAccessMethod indirectAccess = null;
-			if (config.instrumentIndirectAccess) { // we might have indirect
-													// access
+			if (!isArray && config.instrumentIndirectAccess) { // we might have indirect access
 				try {
 					indirectAccess = accessMethods.get(owner, name, desc);
 				} catch (final ClassNotFoundException e) {
@@ -608,19 +616,22 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 		/*
 		 * If the called method is ObjectInputStream.defaultReadObject() or
 		 * ObjectInputStream.readFields(), we need to generate field write
-		 * events for each serializable field in this class.
+		 * events for each serializable field in this class.  This can never
+		 * be the case if the method owner is an array class.
 		 */
-		try {
-			if (callsMethod(FlashlightNames.JAVA_IO_OBJECTINPUTSTREAM,
-					FlashlightNames.DEFAULT_READ_OBJECT, owner, name, desc)
-					|| callsMethod(FlashlightNames.JAVA_IO_OBJECTINPUTSTREAM,
-							FlashlightNames.READ_FIELDS, owner, name, desc)) {
-				insertFieldWrites();
-			}
-		} catch (final ClassNotFoundException e) {
-			messenger
-					.warning("Provided classpath is incomplete: couldn't find class "
-							+ e.getMissingClass());
+		if (!isArray) {
+  		try {
+  			if (callsMethod(FlashlightNames.JAVA_IO_OBJECTINPUTSTREAM,
+  					FlashlightNames.DEFAULT_READ_OBJECT, owner, name, desc)
+  					|| callsMethod(FlashlightNames.JAVA_IO_OBJECTINPUTSTREAM,
+  							FlashlightNames.READ_FIELDS, owner, name, desc)) {
+  				insertFieldWrites();
+  			}
+  		} catch (final ClassNotFoundException e) {
+  			messenger
+  					.warning("Provided classpath is incomplete: couldn't find class "
+  							+ e.getMissingClass());
+  		}
 		}
 	}
 

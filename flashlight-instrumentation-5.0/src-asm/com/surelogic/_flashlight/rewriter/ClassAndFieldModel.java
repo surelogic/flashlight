@@ -221,7 +221,9 @@ final class ClassAndFieldModel {
      * 5.1.1 and 5.1.4 , for details.
      * 
      * @param otherName
-     *          The internal class name of the other class.
+     *          The internal class name of the other class.  THis must be a
+     *          real class name, not the name of an array class, e.g.,
+     *          "[[Ljava/lang/Object;" (Object[][]).
      * @return the <code>boolean</code> value indicating whether objects of
      *         the type <code>other</code> can be assigned to objects of this
      *         class

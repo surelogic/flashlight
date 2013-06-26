@@ -3,6 +3,7 @@ package com.surelogic.flashlight.client.eclipse.views.run;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
+import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.viewers.TableViewer;
@@ -15,6 +16,7 @@ import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.part.ViewPart;
 
 import com.surelogic.common.CommonImages;
+import com.surelogic.common.core.EclipseUtility;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.ui.ColumnViewerSorter;
 import com.surelogic.common.ui.EclipseUIUtility;
@@ -63,47 +65,66 @@ public final class RunView extends ViewPart {
     refreshAction.setImageDescriptor(SLImages.getImageDescriptor(CommonImages.IMG_REFRESH));
     refreshAction.setText(I18N.msg("flashlight.run.view.text.refresh"));
     refreshAction.setToolTipText(I18N.msg("flashlight.run.view.tooltip.refresh"));
-    actionBars.getToolBarManager().add(refreshAction);
-    actionBars.getMenuManager().add(refreshAction);
 
     final Action prepAction = f_mediator.getPrepAction();
     prepAction.setImageDescriptor(SLImages.getImageDescriptor(CommonImages.IMG_FL_PREP_DATA));
     prepAction.setText(I18N.msg("flashlight.run.view.text.prep"));
     prepAction.setToolTipText(I18N.msg("flashlight.run.view.tooltip.prep"));
     prepAction.setEnabled(false);
-    actionBars.getToolBarManager().add(prepAction);
-    actionBars.getMenuManager().add(prepAction);
 
     final Action showLogAction = f_mediator.getShowLogAction();
     showLogAction.setImageDescriptor(SLImages.getImageDescriptor(CommonImages.IMG_FILE));
     showLogAction.setText(I18N.msg("flashlight.run.view.text.log"));
     showLogAction.setToolTipText(I18N.msg("flashlight.run.view.tooltip.log"));
     showLogAction.setEnabled(false);
-    actionBars.getToolBarManager().add(showLogAction);
-    actionBars.getMenuManager().add(showLogAction);
 
     final Action showRunControlAction = f_mediator.getShowRunControlAction();
     showRunControlAction.setImageDescriptor(SLImages.getImageDescriptor(CommonImages.IMG_FL_RUN_CONTROL));
     showRunControlAction.setText(I18N.msg("flashlight.run.view.text.showRunControl"));
     showRunControlAction.setToolTipText(I18N.msg("flashlight.run.view.tooltip.showRunControl"));
-    actionBars.getToolBarManager().add(showRunControlAction);
-    actionBars.getMenuManager().add(showRunControlAction);
 
     final Action deleteRunAction = f_mediator.getDeleteAction();
     deleteRunAction.setImageDescriptor(SLImages.getImageDescriptor(CommonImages.IMG_RED_X));
     deleteRunAction.setText(I18N.msg("flashlight.run.view.text.delete"));
     deleteRunAction.setToolTipText(I18N.msg("flashlight.run.view.tooltip.delete"));
     deleteRunAction.setEnabled(false);
-    actionBars.getToolBarManager().add(deleteRunAction);
-    actionBars.getMenuManager().add(deleteRunAction);
 
-    final Action inferJSureAnnoAction = f_mediator.getInferJSureAnnoAction();
-    inferJSureAnnoAction.setText(I18N.msg("flashlight.run.view.text.inferJSureAnno"));
-    inferJSureAnnoAction.setToolTipText(I18N.msg("flashlight.run.view.tooltip.inferJSureAnno"));
-    inferJSureAnnoAction.setEnabled(false);
-    actionBars.getMenuManager().add(inferJSureAnnoAction);
+    final boolean jSureInstalled = EclipseUtility.isJSureInstalled();
 
-    /**
+    final Action inferJSureAnnoAction;
+    if (jSureInstalled) {
+      inferJSureAnnoAction = f_mediator.getInferJSureAnnoAction();
+      inferJSureAnnoAction.setImageDescriptor(SLImages.getImageDescriptor(CommonImages.IMG_ANNOTATION));
+      inferJSureAnnoAction.setText(I18N.msg("flashlight.run.view.text.inferJSureAnno"));
+      inferJSureAnnoAction.setToolTipText(I18N.msg("flashlight.run.view.tooltip.inferJSureAnno"));
+      inferJSureAnnoAction.setEnabled(false);
+    } else {
+      inferJSureAnnoAction = null;
+    }
+
+    /*
+     * Setup view menu
+     */
+    final IMenuManager menu = actionBars.getMenuManager();
+    menu.add(prepAction);
+    menu.add(showLogAction);
+    if (jSureInstalled)
+      menu.add(inferJSureAnnoAction);
+    menu.add(deleteRunAction);
+    menu.add(new Separator());
+    menu.add(showRunControlAction);
+    menu.add(new Separator());
+    menu.add(refreshAction);
+
+    /*
+     * Setup view tool bar
+     */
+    final IToolBarManager tool = actionBars.getToolBarManager();
+    tool.add(showRunControlAction);
+    tool.add(new Separator());
+    tool.add(refreshAction);
+
+    /*
      * Add a context menu to the table viewer.
      */
     final MenuManager menuMgr = new MenuManager("#PopupMenu");
@@ -113,15 +134,15 @@ public final class RunView extends ViewPart {
       public void menuAboutToShow(final IMenuManager manager) {
         manager.add(prepAction);
         manager.add(showLogAction);
-        // manager.add(convertToXmlAction);
-        manager.add(new Separator());
-        manager.add(inferJSureAnnoAction);
-        manager.add(new Separator());
+        if (jSureInstalled)
+          manager.add(inferJSureAnnoAction);
         manager.add(deleteRunAction);
+        manager.add(new Separator());
+        manager.add(refreshAction);
       }
     });
-    final Menu menu = menuMgr.createContextMenu(tableViewer.getControl());
-    tableViewer.getControl().setMenu(menu);
+    final Menu cmenu = menuMgr.createContextMenu(tableViewer.getControl());
+    tableViewer.getControl().setMenu(cmenu);
     getSite().registerContextMenu(menuMgr, tableViewer);
 
     f_mediator.init();

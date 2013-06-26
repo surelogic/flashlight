@@ -10,6 +10,8 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -542,6 +544,29 @@ public final class RunManager implements ILifecycle {
     synchronized (f_lock) {
       return new HashSet<RunDirectory>(f_collectionCompletedRunDirectories);
     }
+  }
+
+  /**
+   * This method returns the run directories that have completed data collection
+   * in most recent to least recent order as an array. The result is intended as
+   * a good starting point for the user interface.
+   * 
+   * @return a list of run directories that have completed data collection
+   *         sorted for the user interface. May be empty.
+   */
+  @NonNull
+  public RunDirectory[] getCollectionCompletedRunDirectoriesForUI() {
+    final ArrayList<RunDirectory> result = new ArrayList<RunDirectory>(getCollectionCompletedRunDirectories());
+    Collections.sort(result, new Comparator<RunDirectory>() {
+      public int compare(RunDirectory o1, RunDirectory o2) {
+        if (o1 == null || o2 == null)
+          return 0;
+        String s1 = SLUtility.toStringDayHMS(o1.getDescription().getStartTimeOfRun());
+        String s2 = SLUtility.toStringDayHMS(o2.getDescription().getStartTimeOfRun());
+        return s2.compareTo(s1);
+      }
+    });
+    return result.toArray(new RunDirectory[result.size()]);
   }
 
   /**

@@ -12,7 +12,7 @@ public final class RunViewContentProvider implements
   public Object[] getElements(Object inputElement) {
 		if (inputElement instanceof RunManager) {
 			final RunManager rm = (RunManager) inputElement;
-			return rm.getCollectionCompletedRunDirectories().toArray();
+			return rm.getCollectionCompletedRunDirectoriesForUI();
 		} else
 			return null;
 	}

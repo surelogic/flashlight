@@ -353,17 +353,31 @@ final class ClassAndFieldModel {
    * @return The class model object for the class, or {@value null} if the
    * class is already in the model.
    */
-  public Clazz addClass(final File where,
+  public AddWrapper addClass(final File where,
       final String name, final boolean isInterface, 
       final boolean isInstrumented,
       final String superClass, final String[] interfaces) {
-    if (classes.containsKey(name)) {
-      return null;
+    Clazz c = classes.get(name);
+    if (c != null) {
+      return new AddWrapper(false, c);
     } else {
-      final Clazz c = new Clazz(where, name, isInterface, isInstrumented, superClass, interfaces);
+      c = new Clazz(where, name, isInterface, isInstrumented, superClass, interfaces);
       classes.put(name, c);
-      return c;
+      return new AddWrapper(true, c);
     }
+  }
+  
+  public static final class AddWrapper {
+    private final boolean successful;
+    private final Clazz clazz;
+    
+    private AddWrapper(final boolean s, final Clazz c) {
+      successful = s;
+      clazz = c;
+    }
+    
+    public boolean isSuccessful() { return successful; }
+    public Clazz getClazz() { return clazz; }
   }
   
   /**

@@ -10,6 +10,7 @@ import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import com.surelogic._flashlight.rewriter.ClassAndFieldModel.AddWrapper;
 import com.surelogic._flashlight.rewriter.ClassAndFieldModel.ClassNotFoundException;
 
 /**
@@ -121,20 +122,17 @@ final class FieldCataloger extends ClassVisitor {
 		 */
 		if (name.equals(relativePath.substring(0, relativePath.length() - 6))) {
 			final boolean isInterface = (access & Opcodes.ACC_INTERFACE) != 0;
-			clazz = classModel.addClass(where, name, isInterface,
-					isInstrumented, superName, interfaces);
-			if (clazz == null) {
-				messenger.warning("Skipping class "
-						+ ClassNameUtil.internal2FullyQualified(name)
-						+ " because we already saw another copy of it");
-				try {
-					duplicateOf = classModel.getClass(name);
-				} catch (final ClassNotFoundException e) {
-					/*
-					 * Cannot happen because we already know from addClass that
-					 * the class exists.
-					 */
-				}
+			final AddWrapper wrapper = classModel.addClass(where, name, isInterface,
+          isInstrumented, superName, interfaces);
+			if (wrapper.isSuccessful()) {
+			  clazz = wrapper.getClazz();
+			} else {
+			  clazz = null;
+			  duplicateOf = wrapper.getClazz();
+        messenger.warning("Skipping class "
+            + ClassNameUtil.internal2FullyQualified(name)
+            + " because we already saw another copy of it at "
+            + duplicateOf.getClasspathEntry());
 			}
 		} else {
 			messenger

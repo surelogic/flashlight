@@ -655,7 +655,7 @@ public final class IntrinsicLockDurationRowInserter {
                                 return true;
                             }
                         });
-                        log.info("Total edges = " + edges + ", omitted = "
+                        log.finest("Total edges = " + edges + ", omitted = "
                                 + omitted);
                         return true;
                     }
@@ -673,12 +673,12 @@ public final class IntrinsicLockDurationRowInserter {
                     @Override
                     public boolean execute(long thread,
                             IntrinsicLockDurationState status) {
-                        log.info("Thread " + thread + " : " + status);
+                        log.finest("Thread " + thread + " : " + status);
                         final ThreadState lockToState = f_threadToLockToState
                                 .get(thread);
                         if (lockToState != null) {
                             for (final State state : lockToState.nonIdleLocks()) {
-                                log.info("\tLock " + state.getLock() + " : "
+                                log.finest("\tLock " + state.getLock() + " : "
                                         + state.getLockState());
                                 if (!createdEvent) {
                                     createdEvent = true;

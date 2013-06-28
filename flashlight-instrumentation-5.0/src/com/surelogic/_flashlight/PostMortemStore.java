@@ -570,7 +570,8 @@ public class PostMortemStore implements StoreListener {
         State state = tl_withinStore.get();
         putInQueue(state,
                 new HappensBeforeCollection(Phantom.ofObject(collection),
-                        Phantom.ofObject(item), siteId, state, nanoTime));
+                        item == null ? null : Phantom.ofObject(item), siteId,
+                        state, nanoTime));
     }
 
 }

@@ -14,7 +14,7 @@ public class HappensBeforeCollection extends HappensBeforeEvent {
             long nanoTime) {
         super(siteId, state, nanoTime);
         this.coll = coll.getId();
-        this.obj = obj.getId();
+        this.obj = obj == null ? -1 : obj.getId();
         this.siteId = siteId;
     }
 

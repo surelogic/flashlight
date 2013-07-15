@@ -98,7 +98,6 @@ public class HappensBeforePostPrep implements IPostPrep {
     static class ClassInit {
         StaticAccess end;
         Map<Long, StaticAccess> threads = new HashMap<Long, StaticAccess>();
-
     }
 
     private class StaticAccess {
@@ -207,7 +206,7 @@ public class HappensBeforePostPrep implements IPostPrep {
 
     private class InstanceHandler extends NullRowHandler {
         final Queryable<Boolean> check = q.prepared(
-                "Accesses.prep.selectInstanceField", new AccessHandler(false));
+                "Accesses.prep.selectInstanceField", new AccessHandler());
         final Queryable<?> recordBlocks = q.prepared(
                 "Accesses.prep.selectInstanceField", new BlockStatsHandler());
 
@@ -335,7 +334,7 @@ public class HappensBeforePostPrep implements IPostPrep {
 
     private class StaticHandler extends NullRowHandler {
         final Queryable<Boolean> check = q.prepared(
-                "Accesses.prep.selectStaticField", new AccessHandler(true));
+                "Accesses.prep.selectStaticField", new AccessHandler());
 
         @Override
         protected void doHandle(Row r) {
@@ -348,12 +347,6 @@ public class HappensBeforePostPrep implements IPostPrep {
     }
 
     private class AccessHandler implements ResultHandler<Boolean> {
-
-        private final boolean isStatic;
-
-        AccessHandler(boolean isStatic) {
-            this.isStatic = isStatic;
-        }
 
         @Override
         public Boolean handle(Result result) {

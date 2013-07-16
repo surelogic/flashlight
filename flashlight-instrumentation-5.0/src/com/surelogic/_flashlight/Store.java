@@ -646,8 +646,8 @@ public class Store {
      *            before method; otherwise it is the fully qualified type name
      *            of the type that we need to see if callee is assignable to.
      */
-    public static void happensBeforeThread(String id, final long nanoTime,
-            final Thread callee, final long siteId, final String typeName) {
+    public static void happensBeforeThread(final long nanoTime,
+            final Thread callee, String id, final long siteId, final String typeName) {
         try {
             if (typeName == null
                     || Class.forName(typeName).isAssignableFrom(
@@ -670,8 +670,8 @@ public class Store {
      *            before method; otherwise it is the fully qualified type name
      *            of the type that we need to see if callee is assignable to.
      */
-    public static void happensBeforeObject(String id, final long nanoTime,
-            final Object object, final long siteId, final String typeName) {
+    public static void happensBeforeObject(final long nanoTime,
+            final Object object, String id, final long siteId, final String typeName) {
         try {
             if (typeName == null
                     || Class.forName(typeName).isAssignableFrom(
@@ -694,9 +694,9 @@ public class Store {
      *            before method; otherwise it is the fully qualified type name
      *            of the type that we need to see if callee is assignable to.
      */
-    public static void happensBeforeCollection(String id, final long nanoTime,
-            final Object item, final Object collection, final long siteId,
-            final String typeName) {
+    public static void happensBeforeCollection(final long nanoTime,
+            final Object item, final Object collection,
+            String id, final long siteId, final String typeName) {
         try {
             if (typeName == null
                     || Class.forName(typeName).isAssignableFrom(

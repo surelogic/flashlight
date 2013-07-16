@@ -526,13 +526,15 @@ public abstract class MethodCall {
       
       mcall.pushReceiverForEvent(mv);
       // ..., [return value], nanoTime (long), threadRef
+      mv.visitLdcInsn(hb.getId());
+      // ... [return value], nanoTime (long), threadRef, id
       mcall.pushSiteId(mv);
-      // ..., [return value], nanoTime (long), threadRef, callSiteId (long)
+      // ..., [return value], nanoTime (long), threadRef, id, callSiteId (long)
       /* Push null if the call is exact, or the qualified type name if
        * the result is not exact.
        */
       pushTypeNameForDynamicTesting(hb);
-      // ..., [return value], nanoTime (long), threadRef, callSideId (long), [type name or null]
+      // ..., [return value], nanoTime (long), threadRef, id, callSideId (long), [type name or null]
       ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.HAPPENS_BEFORE_THREAD);
       // ..., [return value]
     }
@@ -544,13 +546,15 @@ public abstract class MethodCall {
       
       mcall.pushReceiverForEvent(mv);
       // ..., [return value], nanoTime (long), object
+      mv.visitLdcInsn(hb.getId());
+      // ..., [return value], nanoTime (long), object, id
       mcall.pushSiteId(mv);
-      // ..., [return value], nanoTime (long), object, callSiteId (long)
+      // ..., [return value], nanoTime (long), object, id, callSiteId (long)
       /* Push null if the call is exact, or the qualified type name if
        * the result is not exact.
        */
       pushTypeNameForDynamicTesting(hb);
-      // ..., [return value], nanoTime (long), object, callSideId (long), [type name or null]
+      // ..., [return value], nanoTime (long), object, id, callSiteId (long), [type name or null]
       ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.HAPPENS_BEFORE_OBJECT);
       // ..., [return value]
     }
@@ -589,13 +593,15 @@ public abstract class MethodCall {
       // ..., [return value], nanoTime (long), item
       mcall.pushReceiverForEvent(mv);
       // ..., [return value], nanoTime (long), item, collection
+      mv.visitLdcInsn(hb.getId());
+      // ..., [return value], nanoTime (long), item, collection, id
       mcall.pushSiteId(mv);
-      // ..., [return value], nanoTime (long), item, collectionRef, callSiteId (long)
+      // ..., [return value], nanoTime (long), item, collection, id, callSiteId (long)
       /* Push null if the call is exact, or the qualified type name if
        * the result is not exact.
        */
       pushTypeNameForDynamicTesting(hb);
-      // ..., [return value], nanoTime (long), item, collection, callSiteId (long), [type name or null]
+      // ..., [return value], nanoTime (long), item, collection, id, callSiteId (long), [type name or null]
       ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.HAPPENS_BEFORE_COLLECTION);
       // ..., [return value]
     }

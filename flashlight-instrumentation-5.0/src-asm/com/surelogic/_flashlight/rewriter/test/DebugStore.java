@@ -251,32 +251,35 @@ public class DebugStore {
   }
 
   public static synchronized void happensBeforeThread(
-      final long nanoTime, final Thread callee,
+      final long nanoTime, final Thread callee, final String id, 
       final long siteId, final String typeName) {
     stdOut.println("happensBeforeThread");
     stdOut.println("  nanoTime = " + nanoTime);
     stdOut.println("  callee = " + objectToString(callee));
+    stdOut.println("  id = " + id);
     stdOut.println("  siteID = " + siteId);
     stdOut.println("  typeName = " + typeName);
   }
   
   public static synchronized void happensBeforeObject(
-      final long nanoTime, final Object object,
+      final long nanoTime, final Object object, final String id, 
       final long siteId, final String typeName) {
     stdOut.println("happensBeforeObject");
     stdOut.println("  nanoTime = " + nanoTime);
     stdOut.println("  object = " + objectToString(object));
+    stdOut.println("  id = " + id);
     stdOut.println("  siteID = " + siteId);
     stdOut.println("  typeName = " + typeName);
   }
   
   public static synchronized void happensBeforeCollection(
-      final long nanoTime, final Object item, 
-      final Object collection, final long siteId, final String typeName) {
+      final long nanoTime, final Object item, final Object collection,
+      final String id, final long siteId, final String typeName) {
     stdOut.println("happensBeforeCollection");
     stdOut.println("  nanoTime = " + nanoTime);
     stdOut.println("  item = " + objectToString(item));
     stdOut.println("  collection = " + objectToString(collection));
+    stdOut.println("  id = " + id);
     stdOut.println("  siteID = " + siteId);
     stdOut.println("  typeName = " + typeName);
   }

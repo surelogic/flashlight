@@ -9,10 +9,10 @@ public class HappensBeforeCollection extends HappensBeforeEvent {
     private final long obj;
     private final long siteId;
 
-    HappensBeforeCollection(final ObjectPhantomReference coll,
+    HappensBeforeCollection(final String id, final ObjectPhantomReference coll,
             final ObjectPhantomReference obj, long siteId, State state,
             long nanoTime) {
-        super(siteId, state, nanoTime);
+        super(id, siteId, state, nanoTime);
         this.coll = coll.getId();
         this.obj = obj == null ? -1 : obj.getId();
         this.siteId = siteId;
@@ -31,6 +31,7 @@ public class HappensBeforeCollection extends HappensBeforeEvent {
     public String toString() {
         final StringBuilder b = new StringBuilder(128);
         b.append("<happens-before-coll");
+        addId(b);
         addNanoTime(b);
         addThread(b);
         Entities.addAttribute(AttributeType.SITE_ID.label(), siteId, b);

@@ -25,8 +25,9 @@ public class HappensBeforeCollection extends HappensBefore {
     }
 
     @Override
-    void parseRest(PreppedAttributes attributes, long nanoStart, long nanoEnd,
-            long inThread, long trace, long site) throws SQLException {
+    void parseRest(PreppedAttributes attributes, String id, long nanoStart,
+            long nanoEnd, long inThread, long trace, long site)
+            throws SQLException {
         final long coll = attributes.getLong(AttributeType.COLLECTION);
         final long obj = attributes.getLong(AttributeType.OBJECT);
         if (obj == ILLEGAL_ID || coll == ILLEGAL_ID) {
@@ -36,19 +37,20 @@ public class HappensBeforeCollection extends HappensBefore {
         }
         HBType type = f_hbConfig.getHBType(site);
         if (type.isSource()) {
-            insert(nanoStart, inThread, trace, coll, obj, true);
+            insert(id, nanoStart, inThread, trace, coll, obj, true);
         }
         if (type.isTarget()) {
-            insert(nanoEnd, inThread, trace, coll, obj, false);
+            insert(id, nanoEnd, inThread, trace, coll, obj, false);
         }
     }
 
     @SuppressWarnings("resource")
-    private void insert(final long nanoTime, final long inThread,
-            final long trace, final long coll, final long obj,
-            final boolean isSource) throws SQLException {
+    private void insert(final String id, final long nanoTime,
+            final long inThread, final long trace, final long coll,
+            final long obj, final boolean isSource) throws SQLException {
         PreparedStatement ps = isSource ? f_sourcePs : f_targetPs;
         int idx = 1;
+        ps.setString(idx++, id);
         ps.setLong(idx++, coll);
         ps.setLong(idx++, obj);
         ps.setTimestamp(idx++, getTimestamp(nanoTime), now);
@@ -77,9 +79,9 @@ public class HappensBeforeCollection extends HappensBefore {
             throws SQLException {
         super.setup(c, start, startNS, scanResults);
         f_sourcePs = c
-                .prepareStatement("INSERT INTO HAPPENSBEFORECOLLSOURCE (COLL,OBJ,TS,INTHREAD,TRACE) VALUES (?,?,?,?,?)");
+                .prepareStatement("INSERT INTO HAPPENSBEFORECOLLSOURCE (ID,COLL,OBJ,TS,INTHREAD,TRACE) VALUES (?,?,?,?,?)");
         f_targetPs = c
-                .prepareStatement("INSERT INTO HAPPENSBEFORECOLLTARGET (COLL,OBJ,TS,INTHREAD,TRACE) VALUES (?,?,?,?,?)");
+                .prepareStatement("INSERT INTO HAPPENSBEFORECOLLTARGET (ID,COLL,OBJ,TS,INTHREAD,TRACE) VALUES (?,?,?,?,?)");
     }
 
     @Override

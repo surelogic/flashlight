@@ -98,9 +98,9 @@ public final class HappensBeforeConfig {
 
     public static class HappensBeforeObject extends HappensBefore {
 
-        public HappensBeforeObject(String qualifiedClass, String decl,
-                HBType type, ReturnCheck returnCheck) {
-            super(qualifiedClass, decl, type, returnCheck);
+        public HappensBeforeObject(String id, String qualifiedClass,
+                String decl, HBType type, ReturnCheck returnCheck) {
+            super(id, qualifiedClass, decl, type, returnCheck);
         }
 
         @Override
@@ -121,9 +121,10 @@ public final class HappensBeforeConfig {
     public static class HappensBeforeCollection extends HappensBeforeObject {
         final int objectParam;
 
-        public HappensBeforeCollection(String qualifiedClass, String decl,
-                HBType type, ReturnCheck returnCheck, int objectParam) {
-            super(qualifiedClass, decl, type, returnCheck);
+        public HappensBeforeCollection(String id, String qualifiedClass,
+                String decl, HBType type, ReturnCheck returnCheck,
+                int objectParam) {
+            super(id, qualifiedClass, decl, type, returnCheck);
             this.objectParam = objectParam;
         }
 
@@ -231,7 +232,7 @@ public final class HappensBeforeConfig {
 
     private static enum Attr {
         DECL("decl"), HB("hb"), RESULT_MUST_BE("resultMustBe"), ARG_NUM(
-                "argNum"), TYPE("type");
+                "argNum"), TYPE("type"), ID("id");
         final String name;
 
         Attr(String name) {
@@ -260,6 +261,7 @@ public final class HappensBeforeConfig {
     class HappensBeforeConfigHandler extends DefaultHandler {
 
         private String curClass;
+        private String curId;
         private Elem hb;
 
         @Override
@@ -273,6 +275,7 @@ public final class HappensBeforeConfig {
                 case THREAD:
                     hb = e;
                     curClass = attributes.getValue(Attr.TYPE.name);
+                    curId = attributes.getValue(Attr.ID.name);
                     break;
                 case METHOD:
                     String decl = null;
@@ -304,16 +307,17 @@ public final class HappensBeforeConfig {
                     }
                     switch (hb) {
                     case THREAD:
-                        add(curClass, new HappensBefore(curClass, decl, type,
-                                check), threads);
+                        add(curClass, new HappensBefore(curId, curClass, decl,
+                                type, check), threads);
                         break;
                     case COLL:
-                        add(curClass, new HappensBeforeCollection(curClass,
-                                decl, type, check, param), collections);
+                        add(curClass, new HappensBeforeCollection(curId,
+                                curClass, decl, type, check, param),
+                                collections);
                         break;
                     case OBJECT:
-                        add(curClass, new HappensBeforeObject(curClass, decl,
-                                type, check), objects);
+                        add(curClass, new HappensBeforeObject(curId, curClass,
+                                decl, type, check), objects);
                         break;
                     default:
                         throw new IllegalStateException(
@@ -346,9 +350,9 @@ public final class HappensBeforeConfig {
         private final HBType type;
         private final ReturnCheck returnCheck;
 
-        public HappensBefore(String qualifiedClass, String decl, HBType type,
-                ReturnCheck returnCheck) {
-            id = qualifiedClass;
+        public HappensBefore(String id, String qualifiedClass, String decl,
+                HBType type, ReturnCheck returnCheck) {
+            this.id = id;
             this.qualifiedClass = qualifiedClass;
             this.type = type;
             this.returnCheck = returnCheck;

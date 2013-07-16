@@ -1,6 +1,5 @@
 package com.surelogic._flashlight.common;
 
-
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
@@ -9,7 +8,6 @@ import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.surelogic._flashlight.common.HappensBeforeConfig;
 import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBefore;
 import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBeforeCollection;
 import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBeforeObject;
@@ -80,10 +78,10 @@ public class HappensBeforeConfigChecker {
     }
 
     public static <T extends HappensBefore> void checkMethod(
-            Entry<String, List<T>> e, Class clazz, T hb) {
+            Entry<String, List<T>> e, Class<?> clazz, T hb) {
         String method = hb.getMethod();
         List<String> signature = hb.getSignature();
-        Class[] sigClasses = new Class[signature.size()];
+        Class<?>[] sigClasses = new Class[signature.size()];
         try {
             for (int i = 0; i < sigClasses.length; i++) {
                 try {
@@ -147,8 +145,11 @@ public class HappensBeforeConfigChecker {
 
     public static <T extends HappensBefore> void check(Entry<String, List<T>> e) {
         try {
-            Class clazz = declToClass(e.getKey());
+            Class<?> clazz = declToClass(e.getKey());
             for (T o : e.getValue()) {
+                if (o.getId() == null) {
+                    err(e, "Missing a valid id.");
+                }
                 checkMethod(e, clazz, o);
             }
         } catch (ClassNotFoundException e1) {
@@ -156,7 +157,6 @@ public class HappensBeforeConfigChecker {
         } catch (SecurityException e1) {
             throw new IllegalStateException(e1);
         }
-
     }
 
     public static <T extends HappensBefore> void err(Entry<String, List<T>> e,

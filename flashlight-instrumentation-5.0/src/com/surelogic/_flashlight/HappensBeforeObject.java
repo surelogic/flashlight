@@ -8,9 +8,9 @@ public class HappensBeforeObject extends HappensBeforeEvent {
     private final long obj;
     private final long siteId;
 
-    HappensBeforeObject(final ObjectPhantomReference obj, long siteId,
-            State state, long nanoTime) {
-        super(siteId, state, nanoTime);
+    HappensBeforeObject(final String id, final ObjectPhantomReference obj,
+            long siteId, State state, long nanoTime) {
+        super(id, siteId, state, nanoTime);
         this.obj = obj.getId();
         this.siteId = siteId;
     }
@@ -28,6 +28,7 @@ public class HappensBeforeObject extends HappensBeforeEvent {
     public String toString() {
         final StringBuilder b = new StringBuilder(128);
         b.append("<happens-before-obj");
+        addId(b);
         addNanoTime(b);
         addThread(b);
         Entities.addAttribute(AttributeType.SITE_ID.label(), siteId, b);

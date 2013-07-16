@@ -1,34 +1,34 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes'?>
 
 <happens-before>
-  <thread type="java.lang.Thread">
+  <thread type="java.lang.Thread" id="Thread start/join">
     <method decl="start()" hb="from" />
     <method decl="join()" hb="to" />
   </thread>
 
-  <object type="java.lang.Object">
+  <object type="java.lang.Object" id="Object wait/notify">
     <method decl="wait(long)" hb="target" />
     <method decl="wait(long,int)" hb="target" />
     <method decl="notify()" hb="source" />
   </object>
 
-  <object type="java.util.concurrent.CyclicBarrier">
+  <object type="java.util.concurrent.CyclicBarrier" id="java.util.concurrent Cyclic Barrier">
     <method decl="await()" hb="source-and-target" />
     <method decl="await(long, java.util.concurrent.TimeUnit)" hb="source-and-target" />
   </object>
 
-  <object type="java.util.concurrent.CountDownLatch">
+  <object type="java.util.concurrent.CountDownLatch" id="java.util.concurrent Count Down Latch">
     <method decl="countDown()" hb="source" />
     <method decl="await()" hb="target" />
     <method decl="await(long, java.util.concurrent.TimeUnit)" hb="target" resultMustBe="true"/>
   </object>
 
-  <object type="java.util.concurrent.Exchanger">
+  <object type="java.util.concurrent.Exchanger" id="java.util.concurrent Exchanger">
     <method decl="exchange(java.lang.Object)" hb="source-and-target" />
     <method decl="exchange(java.lang.Object, long, java.util.concurrent.TimeUnit)" hb="source-and-target" />
   </object>
 
-  <object type="java.util.concurrent.Semaphore">
+  <object type="java.util.concurrent.Semaphore" id="java.util.concurrent Semaphore">
     <method decl="acquire()" hb="target" />
     <method decl="acquireUninterruptibly()" hb="target" />
     <method decl="acquire(int)" hb="target" />
@@ -40,14 +40,14 @@
 
   <!-- Atomics -->
 
-  <object type="java.util.concurrent.atomic.AtomicBoolean">
+  <object type="java.util.concurrent.atomic.AtomicBoolean" id="java.util.concurrent Atomic Boolean">
     <method decl="compareAndSet(boolean,boolean)" hb="source-and-target"/>
     <method decl="get()" hb="target" />
     <method decl="getAndSet(boolean)" hb="source-and-target" />
     <method decl="set(boolean)" hb="source" />
   </object>
 
-  <object type="java.util.concurrent.atomic.AtomicInteger">
+  <object type="java.util.concurrent.atomic.AtomicInteger" id="java.util.concurrent Atomic Integer">
     <method decl="compareAndSet(int,int)" hb="source-and-target"/>
     <method decl="get()" hb="target" />
     <method decl="getAndSet(int)" hb="source-and-target" />
@@ -64,7 +64,7 @@
     <method decl="doubleValue()" hb="target" />
   </object>
 
-  <object type="java.util.concurrent.atomic.AtomicIntegerArray">
+  <object type="java.util.concurrent.atomic.AtomicIntegerArray" id="java.util.concurrent Atomic Integer Array'>
     <method decl="compareAndSet(int,int,int)" hb="source-and-target"/>
     <method decl="get(int)" hb="target" />
     <method decl="getAndSet(int,int)" hb="source-and-target" />
@@ -77,7 +77,7 @@
     <method decl="incrementAndGet(int)" hb="source-and-target" />
   </object>
 
-  <object type="java.util.concurrent.atomic.AtomicLong">
+  <object type="java.util.concurrent.atomic.AtomicLong" id="java.util.concurrent Atomic Long">
     <method decl="compareAndSet(long,long)" hb="source-and-target"/>
     <method decl="get()" hb="target" />
     <method decl="getAndSet(long)" hb="source-and-target" />
@@ -94,7 +94,7 @@
     <method decl="doubleValue()" hb="target" />
   </object>
 
-  <object type="java.util.concurrent.atomic.AtomicLongArray">
+  <object type="java.util.concurrent.atomic.AtomicLongArray" id="java.util.concurrent Atomic Long Array">
     <method decl="compareAndSet(int,long,long)" hb="source-and-target"/>
     <method decl="get(int)" hb="target" />
     <method decl="getAndSet(int,long)" hb="source-and-target" />
@@ -107,7 +107,7 @@
     <method decl="incrementAndGet(int)" hb="source-and-target" />
   </object>
 
-  <object type="java.util.concurrent.atomic.AtomicMarkableReference">
+  <object type="java.util.concurrent.atomic.AtomicMarkableReference" id="java.util.concurrent Atomic Markable Reference">
     <method decl="compareAndSet(java.lang.Object, java.lang.Object, boolean, boolean)" hb="source-and-target"/>
     <method decl="attemptMark(java.lang.Object, boolean)" hb="source-and-target" />
     <method decl="get(boolean[])" hb="target" />
@@ -115,21 +115,21 @@
     <method decl="set(java.lang.Object, boolean)" hb="source" />
   </object>
 
-  <object type="java.util.concurrent.atomic.AtomicReference">
+  <object type="java.util.concurrent.atomic.AtomicReference" id="java.util.concurrent Atomic Reference">
     <method decl="compareAndSet(java.lang.Object,java.lang.Object)" hb="source-and-target"/>
     <method decl="get()" hb="target" />
     <method decl="getAndSet(java.lang.Object)" hb="source-and-target" />
     <method decl="set(java.lang.Object)" hb="source" />
   </object>
 
-  <object type="java.util.concurrent.atomic.AtomicReferenceArray">
+  <object type="java.util.concurrent.atomic.AtomicReferenceArray" id= "java.util.concurrent Atomic Reference Array">
     <method decl="compareAndSet(int,java.lang.Object,java.lang.Object)" hb="source-and-target"/>
     <method decl="get(int)" hb="target" />
     <method decl="getAndSet(int,java.lang.Object)" hb="source-and-target" />
     <method decl="set(int,java.lang.Object)" hb="source" />
   </object>
 
-  <object type="java.util.concurrent.atomic.AtomicStampedReference">
+  <object type="java.util.concurrent.atomic.AtomicStampedReference" id="java.util.concurrent Atomic Stamped Reference">
     <method decl="attemptStamp(java.lang.Object,int)" hb="source-and-target" />
     <method decl="compareAndSet(java.lang.Object,java.lang.Object,int,int)" hb="source-and-target"/>
     <method decl="get(int[])" hb="target" />
@@ -140,7 +140,7 @@
 
   <!-- Concurrent Collections --> 
 
-  <collection type="java.util.concurrent.BlockingQueue">
+  <collection type="java.util.concurrent.BlockingQueue" id="java.util.concurrent BlockingQueue">
     <method decl="add(java.lang.Object)" hb="source" argNum="1"/>
     <method decl="put(java.lang.Object)" hb="source" argNum="1"/>
     <method decl="offer(java.lang.Object)" hb="source" argNum="1" resultMustBe="true" />

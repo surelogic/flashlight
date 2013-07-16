@@ -8,9 +8,9 @@ public class HappensBeforeThread extends HappensBeforeEvent {
     private final long to;
     private final long siteId;
 
-    HappensBeforeThread(final ThreadPhantomReference to, long siteId,
-            State state, long nanoTime) {
-        super(siteId, state, nanoTime);
+    HappensBeforeThread(final String id, final ThreadPhantomReference to,
+            long siteId, State state, long nanoTime) {
+        super(id, siteId, state, nanoTime);
         this.to = to.getId();
         this.siteId = siteId;
     }
@@ -24,6 +24,7 @@ public class HappensBeforeThread extends HappensBeforeEvent {
     public String toString() {
         final StringBuilder b = new StringBuilder(128);
         b.append("<happens-before-thread");
+        addId(b);
         addNanoTime(b);
         addThread(b);
         Entities.addAttribute(AttributeType.SITE_ID.label(), siteId, b);

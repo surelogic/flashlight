@@ -28,8 +28,9 @@ public class HappensBeforeThread extends HappensBefore {
     }
 
     @Override
-    void parseRest(PreppedAttributes attributes, long nanoStart, long nanoEnd,
-            long inThread, long trace, long site) throws SQLException {
+    void parseRest(PreppedAttributes attributes, String id, long nanoStart,
+            long nanoEnd, long inThread, long trace, long site)
+            throws SQLException {
         final long toThread = attributes.getLong(TOTHREAD);
         if (toThread == ILLEGAL_ID) {
             SLLogger.getLogger().log(Level.SEVERE,
@@ -38,19 +39,20 @@ public class HappensBeforeThread extends HappensBefore {
         }
         HBType type = f_hbConfig.getHBType(site);
         if (type.isFrom()) {
-            insert(nanoStart, inThread, trace, inThread, toThread);
+            insert(id, nanoStart, inThread, trace, inThread, toThread);
 
         }
         if (type.isTo()) {
-            insert(nanoEnd, inThread, trace, toThread, inThread);
+            insert(id, nanoEnd, inThread, trace, toThread, inThread);
         }
 
     }
 
-    private void insert(final long nanoTime, final long inThread,
-            final long trace, final long source, final long target)
-            throws SQLException {
+    private void insert(final String id, final long nanoTime,
+            final long inThread, final long trace, final long source,
+            final long target) throws SQLException {
         int idx = 1;
+        f_ps.setString(idx++, id);
         f_ps.setLong(idx++, source);
         f_ps.setLong(idx++, target);
         f_ps.setTimestamp(idx++, getTimestamp(nanoTime), now);
@@ -70,7 +72,7 @@ public class HappensBeforeThread extends HappensBefore {
             final long startNS, final ScanRawFilePreScan scanResults)
             throws SQLException {
         super.setup(c, start, startNS, scanResults);
-        f_ps = c.prepareStatement("INSERT INTO HAPPENSBEFORE (SOURCE,TARGET,TS,INTHREAD,TRACE) VALUES (?,?,?,?,?)");
+        f_ps = c.prepareStatement("INSERT INTO HAPPENSBEFORE (ID, SOURCE,TARGET,TS,INTHREAD,TRACE) VALUES (?,?,?,?,?)");
     }
 
     @Override

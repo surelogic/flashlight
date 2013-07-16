@@ -19,6 +19,7 @@ abstract class HappensBefore extends Event {
 
     @Override
     public void parse(PreppedAttributes attributes) throws SQLException {
+        final String id = attributes.getString(AttributeType.ID);
         final long nanoStart = attributes.getLong(AttributeType.NANO_START);
         final long nanoEnd = attributes.getLong(AttributeType.NANO_END);
         final long inThread = attributes.getThreadId();
@@ -33,11 +34,11 @@ abstract class HappensBefore extends Event {
                             + getXMLElementName());
             return;
         }
-        parseRest(attributes, nanoStart, nanoEnd, inThread, trace, site);
+        parseRest(attributes, id, nanoStart, nanoEnd, inThread, trace, site);
     }
 
-    abstract void parseRest(PreppedAttributes attributes, long nanoStart,
-            long nanoEnd, long inThread, long trace, long site)
+    abstract void parseRest(PreppedAttributes attributes, String id,
+            long nanoStart, long nanoEnd, long inThread, long trace, long site)
             throws SQLException;
 
 }

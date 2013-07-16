@@ -79,9 +79,9 @@ public class HappensBeforeCollection extends HappensBefore {
             throws SQLException {
         super.setup(c, start, startNS, scanResults);
         f_sourcePs = c
-                .prepareStatement("INSERT INTO HAPPENSBEFORECOLLSOURCE (ID,COLL,OBJ,TS,INTHREAD,TRACE) VALUES (?,?,?,?,?)");
+                .prepareStatement("INSERT INTO HAPPENSBEFORECOLLSOURCE (ID,COLL,OBJ,TS,INTHREAD,TRACE) VALUES (?,?,?,?,?,?)");
         f_targetPs = c
-                .prepareStatement("INSERT INTO HAPPENSBEFORECOLLTARGET (ID,COLL,OBJ,TS,INTHREAD,TRACE) VALUES (?,?,?,?,?)");
+                .prepareStatement("INSERT INTO HAPPENSBEFORECOLLTARGET (ID,COLL,OBJ,TS,INTHREAD,TRACE) VALUES (?,?,?,?,?,?)");
     }
 
     @Override

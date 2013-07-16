@@ -217,6 +217,7 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
     final Pair<String, String> oldSelectedEdge = getSelectedEdgeFromQueryResults();
 
     final Image lockImg = SLImages.getImage(CommonImages.IMG_LOCK);
+    final Image threadImg = SLImages.getImage(CommonImages.IMG_THREAD);
     for (Pair<String, String> edge : edges) {
       final TableItem item = new TableItem(edgeTable, SWT.NONE);
       item.setText(0, edge.first());
@@ -225,6 +226,7 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
       item.setText(2, edge.second());
       item.setImage(2, lockImg);
       item.setText(3, SLUtility.toStringCommaSeparatedList(getThreads(edge)));
+      item.setImage(3, threadImg);
 
       item.setData(edge);
 

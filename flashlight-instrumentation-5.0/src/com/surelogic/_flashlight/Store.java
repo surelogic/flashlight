@@ -639,19 +639,22 @@ public class Store {
     }
 
     /**
+     * @param id
+     *            the identifier for the triggered happens-before rule
      * @param typeName
      *            <code>null</code> if the method definitely matches a happens
      *            before method; otherwise it is the fully qualified type name
      *            of the type that we need to see if callee is assignable to.
      */
-    public static void happensBeforeThread(final long nanoTime,
+    public static void happensBeforeThread(String id, final long nanoTime,
             final Thread callee, final long siteId, final String typeName) {
         try {
             if (typeName == null
                     || Class.forName(typeName).isAssignableFrom(
                             Thread.currentThread().getClass())) {
                 for (StoreListener l : f_listeners) {
-                    l.happensBeforeThread(callee, siteId, typeName, nanoTime);
+                    l.happensBeforeThread(id, callee, siteId, typeName,
+                            nanoTime);
                 }
             }
         } catch (ClassNotFoundException e) {
@@ -660,19 +663,22 @@ public class Store {
     }
 
     /**
+     * @param id
+     *            the identifier for the triggered happens-before rule
      * @param typeName
      *            <code>null</code> if the method definitely matches a happens
      *            before method; otherwise it is the fully qualified type name
      *            of the type that we need to see if callee is assignable to.
      */
-    public static void happensBeforeObject(final long nanoTime,
+    public static void happensBeforeObject(String id, final long nanoTime,
             final Object object, final long siteId, final String typeName) {
         try {
             if (typeName == null
                     || Class.forName(typeName).isAssignableFrom(
                             object.getClass())) {
                 for (StoreListener l : f_listeners) {
-                    l.happensBeforeObject(object, siteId, typeName, nanoTime);
+                    l.happensBeforeObject(id, object, siteId, typeName,
+                            nanoTime);
                 }
             }
         } catch (ClassNotFoundException e) {
@@ -681,12 +687,14 @@ public class Store {
     }
 
     /**
+     * @param id
+     *            the identifier for the triggered happens-before rule
      * @param typeName
      *            <code>null</code> if the method definitely matches a happens
      *            before method; otherwise it is the fully qualified type name
      *            of the type that we need to see if callee is assignable to.
      */
-    public static void happensBeforeCollection(final long nanoTime,
+    public static void happensBeforeCollection(String id, final long nanoTime,
             final Object item, final Object collection, final long siteId,
             final String typeName) {
         try {
@@ -694,7 +702,7 @@ public class Store {
                     || Class.forName(typeName).isAssignableFrom(
                             collection.getClass())) {
                 for (StoreListener l : f_listeners) {
-                    l.happensBeforeCollection(collection, item, siteId,
+                    l.happensBeforeCollection(id, collection, item, siteId,
                             typeName, nanoTime);
                 }
             }

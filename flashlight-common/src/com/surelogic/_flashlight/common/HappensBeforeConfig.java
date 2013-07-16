@@ -327,6 +327,9 @@ public final class HappensBeforeConfig {
 
     }
 
+    private static final Pattern DECL_PATTERN = Pattern
+            .compile("(.*)\\((.*)\\)");
+
     /**
      * Represents a single method in a class to be instrumented, and also
      * indicates whether or not the return value of the method is to be checked
@@ -336,8 +339,7 @@ public final class HappensBeforeConfig {
      * 
      */
     public static class HappensBefore {
-        Pattern DECL_PATTERN = Pattern.compile("(.*)\\((.*)\\)");
-
+        private final String id;
         private final String qualifiedClass;
         private final String method;
         private final List<String> signature;
@@ -346,6 +348,7 @@ public final class HappensBeforeConfig {
 
         public HappensBefore(String qualifiedClass, String decl, HBType type,
                 ReturnCheck returnCheck) {
+            id = qualifiedClass;
             this.qualifiedClass = qualifiedClass;
             this.type = type;
             this.returnCheck = returnCheck;
@@ -371,6 +374,16 @@ public final class HappensBeforeConfig {
          */
         public String getInternalClass() {
             return HappensBeforeConfig.getInternalName(qualifiedClass);
+        }
+
+        /**
+         * An identifying string for this happens-before rule. Should be passed
+         * into the store from the instrumentation.
+         * 
+         * @return
+         */
+        public String getId() {
+            return id;
         }
 
         /**

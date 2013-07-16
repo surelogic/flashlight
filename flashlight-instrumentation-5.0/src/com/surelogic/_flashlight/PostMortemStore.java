@@ -551,22 +551,22 @@ public class PostMortemStore implements StoreListener {
          */
     }
 
-    public void happensBeforeThread(Thread callee, long siteId,
+    public void happensBeforeThread(String id, Thread callee, long siteId,
             String typeName, long nanoTime) {
         State state = tl_withinStore.get();
         putInQueue(state, new HappensBeforeThread(Phantom.ofThread(callee),
                 siteId, state, nanoTime));
     }
 
-    public void happensBeforeObject(Object object, long siteId,
+    public void happensBeforeObject(String id, Object object, long siteId,
             String typeName, long nanoTime) {
         State state = tl_withinStore.get();
         putInQueue(state, new HappensBeforeObject(Phantom.ofObject(object),
                 siteId, state, nanoTime));
     }
 
-    public void happensBeforeCollection(Object collection, Object item,
-            long siteId, String typeName, long nanoTime) {
+    public void happensBeforeCollection(String id, Object collection,
+            Object item, long siteId, String typeName, long nanoTime) {
         State state = tl_withinStore.get();
         putInQueue(state,
                 new HappensBeforeCollection(Phantom.ofObject(collection),

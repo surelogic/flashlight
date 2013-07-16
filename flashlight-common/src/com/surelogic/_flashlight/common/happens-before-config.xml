@@ -64,7 +64,7 @@
     <method decl="doubleValue()" hb="target" />
   </object>
 
-  <object type="java.util.concurrent.atomic.AtomicIntegerArray" id="java.util.concurrent Atomic Integer Array'>
+  <object type="java.util.concurrent.atomic.AtomicIntegerArray" id="java.util.concurrent Atomic Integer Array">
     <method decl="compareAndSet(int,int,int)" hb="source-and-target"/>
     <method decl="get(int)" hb="target" />
     <method decl="getAndSet(int,int)" hb="source-and-target" />

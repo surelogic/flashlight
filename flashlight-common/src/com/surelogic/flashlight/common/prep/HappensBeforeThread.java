@@ -72,7 +72,7 @@ public class HappensBeforeThread extends HappensBefore {
             final long startNS, final ScanRawFilePreScan scanResults)
             throws SQLException {
         super.setup(c, start, startNS, scanResults);
-        f_ps = c.prepareStatement("INSERT INTO HAPPENSBEFORE (ID, SOURCE,TARGET,TS,INTHREAD,TRACE) VALUES (?,?,?,?,?)");
+        f_ps = c.prepareStatement("INSERT INTO HAPPENSBEFORE (ID, SOURCE,TARGET,TS,INTHREAD,TRACE) VALUES (?,?,?,?,?,?)");
     }
 
     @Override

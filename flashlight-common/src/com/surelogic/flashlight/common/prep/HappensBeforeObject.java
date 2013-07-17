@@ -82,9 +82,9 @@ public class HappensBeforeObject extends HappensBefore {
             throws SQLException {
         super.setup(c, start, startNS, scanResults);
         f_sourcePs = c
-                .prepareStatement("INSERT INTO HAPPENSBEFORESOURCE (ID,OBJ,TS,INTHREAD,TRACE) VALUES (?,?,?,?)");
+                .prepareStatement("INSERT INTO HAPPENSBEFORESOURCE (ID,OBJ,TS,INTHREAD,TRACE) VALUES (?,?,?,?,?)");
         f_targetPs = c
-                .prepareStatement("INSERT INTO HAPPENSBEFORETARGET (ID,OBJ,TS,INTHREAD,TRACE) VALUES (?,?,?,?)");
+                .prepareStatement("INSERT INTO HAPPENSBEFORETARGET (ID,OBJ,TS,INTHREAD,TRACE) VALUES (?,?,?,?,?)");
     }
 
     @Override

@@ -887,7 +887,13 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 	@Override
 	public void visitEnd() {
 		/* Output the site identifiers */
-		siteIdFactory.closeMethod();
+	  try {
+	    siteIdFactory.closeMethod(classModel);
+    } catch (final ClassNotFoundException e) {
+      messenger
+          .warning("Provided classpath is incomplete: couldn't find class "
+              + e.getMissingClass());
+    }
 
 		/* visitMaxs already cleared out the remaining delayed instructions. */
 		mv.visitEnd();
@@ -1052,7 +1058,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
   private void insertMethodExecutionPrefix() {
     /* Create event */
     executionSiteId = siteIdFactory.getSiteId(
-        currentSrcLine, methodName, classBeingAnalyzedInternal, methodDesc);
+        currentSrcLine); //, methodName, classBeingAnalyzedInternal, methodDesc);
     // init the site identifier for the whole method
     siteId = executionSiteId;
     insertMethodExecution(true);

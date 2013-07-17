@@ -5,6 +5,9 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import com.surelogic._flashlight.rewriter.ClassAndFieldModel.ClassNotFoundException;
+import com.surelogic._flashlight.rewriter.ClassAndFieldModel.Clazz;
+
 public final class SiteIdFactory {
     private final PrintWriter pw;
     private long nextId = 0L;
@@ -159,7 +162,8 @@ public final class SiteIdFactory {
         }
     }
 
-    private void recordSiteToDatabase(final long siteId, final SiteInfo site) {
+    private void recordSiteToDatabase(final ClassAndFieldModel model,
+        final long siteId, final SiteInfo site) throws ClassNotFoundException {
         pw.print(siteId);
         pw.print(' ');
         pw.print(sourceFileName);
@@ -174,10 +178,21 @@ public final class SiteIdFactory {
         pw.print(' ');
         pw.print(site.calledMethodOwner);
         pw.print(' ');
-        pw.println(site.calledMethodDesc);
+        pw.print(site.calledMethodDesc);
+        pw.print(' ');
+        
+        // get the method's access bits
+        if (site.calledMethodName == null) {
+          pw.println("0");
+        } else {
+          final Clazz c = model.getClass(site.calledMethodOwner);
+          final int access = c.getMethodAccess(
+              site.calledMethodName, site.calledMethodDesc);
+          pw.println(access);
+        }
     }
 
-    public void closeMethod() {
+    public void closeMethod(final ClassAndFieldModel model) throws ClassNotFoundException {
         /*
          * If possible, reassociate the site associated with line number -1 with
          * the first non-negative line number holding a site.
@@ -203,7 +218,7 @@ public final class SiteIdFactory {
 
         /* Output all the sites to the database */
         for (final Map.Entry<Long, SiteInfo> entry : idsToSites.entrySet()) {
-            recordSiteToDatabase(entry.getKey(), entry.getValue());
+            recordSiteToDatabase(model, entry.getKey(), entry.getValue());
         }
     }
 }

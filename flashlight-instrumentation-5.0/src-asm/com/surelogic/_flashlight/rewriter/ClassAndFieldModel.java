@@ -159,6 +159,12 @@ final class ClassAndFieldModel {
      */
     private final Map<String, Field> fields = new HashMap<String, Field>();
     
+    /**
+     * Map from method names to method access bits.  The key is the 
+     * concatenation of the method name with the method description.
+     */
+    private final Map<String, Integer> methods = new HashMap<String, Integer>();
+    
     
     
     public Clazz(final File where, final String name, final boolean isInterface,
@@ -170,6 +176,23 @@ final class ClassAndFieldModel {
       this.superClass = superClass;
       this.interfaces = new String[interfaces.length];
       System.arraycopy(interfaces, 0, this.interfaces, 0, interfaces.length);
+    }
+    
+    @Override
+    public String toString() {
+      final StringBuffer sb = new StringBuffer();
+      sb.append(name);
+      sb.append( " extends ");
+      sb.append(superClass);
+      if (interfaces.length > 0) {
+        sb.append(" implements ");
+        for (int i = 0; i < interfaces.length - 1; i++) {
+          sb.append(interfaces[i]);
+          sb.append(", ");
+        }
+        sb.append(interfaces[interfaces.length - 1]);
+      }
+      return sb.toString();
     }
     
     public File getClasspathEntry() {
@@ -206,6 +229,26 @@ final class ClassAndFieldModel {
       fields.put(fieldName, f);
       return f;
     }
+    
+    public void addMethod(final String name, final String desc, final int access) {
+      methods.put(name + desc, access);
+    }
+    
+    public int getMethodAccess(final String name, final String desc) {
+      final Integer access = methods.get(name + desc);
+      if (access == null) {
+        final Clazz zuper = ClassAndFieldModel.this.classes.get(this.superClass);
+        if (zuper == null) {
+          return 0; // XXX: should do something better than this
+        } else {
+          return zuper.getMethodAccess(name, desc);
+        }
+      } else {
+        return access;
+      }
+    }
+    
+    
     
     /**
      * Determines if the class or interface represented by this

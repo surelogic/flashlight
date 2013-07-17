@@ -11,7 +11,6 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import com.surelogic._flashlight.rewriter.ClassAndFieldModel.AddWrapper;
-import com.surelogic._flashlight.rewriter.ClassAndFieldModel.ClassNotFoundException;
 
 /**
  * Class visitor that implements the first pass of the classfile
@@ -180,7 +179,9 @@ final class FieldCataloger extends ClassVisitor {
 	@Override
 	public MethodVisitor visitMethod(final int access, final String name,
 			final String desc, final String signature, final String[] exceptions) {
-		// Don't care about
+	  if (clazz != null) {
+	    clazz.addMethod(name, desc, access);
+	  }
 		return null;
 	}
 

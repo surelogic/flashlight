@@ -144,7 +144,7 @@ public class ClassHierarchy {
             String[] elems = DELIM.split(line);
             long id = Integer.parseInt(elems[0]);
             methodCalls.put(id,
-                    new MethodCall(id, elems[5], elems[6], elems[7]));
+                    new MethodCall(id, elems[6], elems[7], elems[8]));
         }
     }
 

@@ -78,8 +78,7 @@ public class StaticCallLocation extends AbstractCallLocation {
             Entities.addAttribute("method-call-owner", f_methodCallOwner, b);
             Entities.addAttribute("method-call-name", f_methodCallName, b);
             Entities.addAttribute("method-call-desc", f_methodCallDesc, b);
-            Entities.addAttribute("method-call-modifier", f_methodCallModifier,
-                    b);
+            Entities.addAttribute("method-call-mod", f_methodCallModifier, b);
         }
         b.append("/>");
         return b.toString();

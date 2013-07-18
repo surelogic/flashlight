@@ -1,8 +1,11 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes'?>
 
 <happens-before>
-  <thread type="java.lang.Thread" id="Thread start/join">
+  <thread type="java.lang.Thread" id="Thread start">
     <method decl="start()" hb="from" />
+  </thread>
+
+  <thread type="java.lang.Thread" id="Thread join">
     <method decl="join()" hb="to" />
   </thread>
 
@@ -12,12 +15,12 @@
     <method decl="notify()" hb="source" />
   </object>
 
-  <object type="java.util.concurrent.CyclicBarrier" id="java.util.concurrent Cyclic Barrier">
+  <object type="java.util.concurrent.CyclicBarrier" id="java.util.concurrent CyclicBarrier">
     <method decl="await()" hb="source-and-target" />
     <method decl="await(long, java.util.concurrent.TimeUnit)" hb="source-and-target" />
   </object>
 
-  <object type="java.util.concurrent.CountDownLatch" id="java.util.concurrent Count Down Latch">
+  <object type="java.util.concurrent.CountDownLatch" id="java.util.concurrent CountDownLatch">
     <method decl="countDown()" hb="source" />
     <method decl="await()" hb="target" />
     <method decl="await(long, java.util.concurrent.TimeUnit)" hb="target" resultMustBe="true"/>
@@ -40,14 +43,14 @@
 
   <!-- Atomics -->
 
-  <object type="java.util.concurrent.atomic.AtomicBoolean" id="java.util.concurrent Atomic Boolean">
+  <object type="java.util.concurrent.atomic.AtomicBoolean" id="java.util.concurrent AtomicBoolean">
     <method decl="compareAndSet(boolean,boolean)" hb="source-and-target"/>
     <method decl="get()" hb="target" />
     <method decl="getAndSet(boolean)" hb="source-and-target" />
     <method decl="set(boolean)" hb="source" />
   </object>
 
-  <object type="java.util.concurrent.atomic.AtomicInteger" id="java.util.concurrent Atomic Integer">
+  <object type="java.util.concurrent.atomic.AtomicInteger" id="java.util.concurrent AtomicInteger">
     <method decl="compareAndSet(int,int)" hb="source-and-target"/>
     <method decl="get()" hb="target" />
     <method decl="getAndSet(int)" hb="source-and-target" />
@@ -64,7 +67,7 @@
     <method decl="doubleValue()" hb="target" />
   </object>
 
-  <object type="java.util.concurrent.atomic.AtomicIntegerArray" id="java.util.concurrent Atomic Integer Array">
+  <object type="java.util.concurrent.atomic.AtomicIntegerArray" id="java.util.concurrent AtomicIntegerArray">
     <method decl="compareAndSet(int,int,int)" hb="source-and-target"/>
     <method decl="get(int)" hb="target" />
     <method decl="getAndSet(int,int)" hb="source-and-target" />
@@ -77,7 +80,7 @@
     <method decl="incrementAndGet(int)" hb="source-and-target" />
   </object>
 
-  <object type="java.util.concurrent.atomic.AtomicLong" id="java.util.concurrent Atomic Long">
+  <object type="java.util.concurrent.atomic.AtomicLong" id="java.util.concurrent AtomicLong">
     <method decl="compareAndSet(long,long)" hb="source-and-target"/>
     <method decl="get()" hb="target" />
     <method decl="getAndSet(long)" hb="source-and-target" />
@@ -94,7 +97,7 @@
     <method decl="doubleValue()" hb="target" />
   </object>
 
-  <object type="java.util.concurrent.atomic.AtomicLongArray" id="java.util.concurrent Atomic Long Array">
+  <object type="java.util.concurrent.atomic.AtomicLongArray" id="java.util.concurrent AtomicLongArray">
     <method decl="compareAndSet(int,long,long)" hb="source-and-target"/>
     <method decl="get(int)" hb="target" />
     <method decl="getAndSet(int,long)" hb="source-and-target" />
@@ -107,7 +110,7 @@
     <method decl="incrementAndGet(int)" hb="source-and-target" />
   </object>
 
-  <object type="java.util.concurrent.atomic.AtomicMarkableReference" id="java.util.concurrent Atomic Markable Reference">
+  <object type="java.util.concurrent.atomic.AtomicMarkableReference" id="java.util.concurrent AtomicMarkableReference">
     <method decl="compareAndSet(java.lang.Object, java.lang.Object, boolean, boolean)" hb="source-and-target"/>
     <method decl="attemptMark(java.lang.Object, boolean)" hb="source-and-target" />
     <method decl="get(boolean[])" hb="target" />
@@ -115,21 +118,21 @@
     <method decl="set(java.lang.Object, boolean)" hb="source" />
   </object>
 
-  <object type="java.util.concurrent.atomic.AtomicReference" id="java.util.concurrent Atomic Reference">
+  <object type="java.util.concurrent.atomic.AtomicReference" id="java.util.concurrent AtomicReference">
     <method decl="compareAndSet(java.lang.Object,java.lang.Object)" hb="source-and-target"/>
     <method decl="get()" hb="target" />
     <method decl="getAndSet(java.lang.Object)" hb="source-and-target" />
     <method decl="set(java.lang.Object)" hb="source" />
   </object>
 
-  <object type="java.util.concurrent.atomic.AtomicReferenceArray" id= "java.util.concurrent Atomic Reference Array">
+  <object type="java.util.concurrent.atomic.AtomicReferenceArray" id= "java.util.concurrent AtomicReferenceArray">
     <method decl="compareAndSet(int,java.lang.Object,java.lang.Object)" hb="source-and-target"/>
     <method decl="get(int)" hb="target" />
     <method decl="getAndSet(int,java.lang.Object)" hb="source-and-target" />
     <method decl="set(int,java.lang.Object)" hb="source" />
   </object>
 
-  <object type="java.util.concurrent.atomic.AtomicStampedReference" id="java.util.concurrent Atomic Stamped Reference">
+  <object type="java.util.concurrent.atomic.AtomicStampedReference" id="java.util.concurrent AtomicStampedReference">
     <method decl="attemptStamp(java.lang.Object,int)" hb="source-and-target" />
     <method decl="compareAndSet(java.lang.Object,java.lang.Object,int,int)" hb="source-and-target"/>
     <method decl="get(int[])" hb="target" />

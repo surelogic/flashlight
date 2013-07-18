@@ -5,10 +5,13 @@ import static com.surelogic._flashlight.common.AttributeType.ID;
 import static com.surelogic._flashlight.common.AttributeType.IN_CLASS;
 import static com.surelogic._flashlight.common.AttributeType.LINE;
 import static com.surelogic._flashlight.common.AttributeType.LOCATION;
+import static com.surelogic._flashlight.common.AttributeType.LOCATIONMOD;
 import static com.surelogic._flashlight.common.AttributeType.METHODCALLDESC;
+import static com.surelogic._flashlight.common.AttributeType.METHODCALLMOD;
 import static com.surelogic._flashlight.common.AttributeType.METHODCALLNAME;
 import static com.surelogic._flashlight.common.AttributeType.METHODCALLOWNER;
 
+import java.lang.reflect.Modifier;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -18,6 +21,9 @@ import com.surelogic._flashlight.common.LongSet;
 import com.surelogic._flashlight.common.PreppedAttributes;
 
 public final class StaticCallLocation extends AbstractPrep {
+
+    private static final int SYNTHETIC = 0x00001000;
+
     public static final boolean checkSites = false;
     public static LongSet validSites = new LongSet();
 
@@ -41,9 +47,11 @@ public final class StaticCallLocation extends AbstractPrep {
         f_ps.setLong(idx++, attributes.getLong(IN_CLASS));
         f_ps.setString(idx++, attributes.getString(FILE));
         f_ps.setString(idx++, attributes.getString(LOCATION));
+        f_ps.setString(idx++, getMethodCode(attributes.getInt(LOCATIONMOD)));
         f_ps.setString(idx++, attributes.getString(METHODCALLOWNER));
         f_ps.setString(idx++, attributes.getString(METHODCALLNAME));
         f_ps.setString(idx++, attributes.getString(METHODCALLDESC));
+        f_ps.setString(idx++, getMethodCode(attributes.getInt(METHODCALLMOD)));
         if (doInsert) {
             f_ps.addBatch();
             if (++count == 10000) {
@@ -53,12 +61,40 @@ public final class StaticCallLocation extends AbstractPrep {
         }
     }
 
+    private static String getMethodCode(int mod) {
+        StringBuilder code = new StringBuilder(11);
+        code.append("@ME:");
+        if (Modifier.isPublic(mod)) {
+            code.append("PU");
+        } else if (Modifier.isProtected(mod)) {
+            code.append("PO");
+        } else if (Modifier.isPrivate(mod)) {
+            code.append("PR");
+        } else {
+            code.append("DE");
+        }
+        code.append(":");
+        if (Modifier.isStatic(mod)) {
+            code.append("S");
+        }
+        if (Modifier.isFinal(mod)) {
+            code.append("F");
+        }
+        if ((mod & SYNTHETIC) != 0) {
+            code.append("I");
+        }
+        if (Modifier.isAbstract(mod)) {
+            code.append("A");
+        }
+        return code.toString();
+    }
+
     @Override
     public void setup(final Connection c, final Timestamp start,
             final long startNS, final ScanRawFilePreScan scanResults)
             throws SQLException {
         super.setup(c, start, startNS, scanResults);
-        f_ps = c.prepareStatement("INSERT INTO SITE (Id,AtLine,InClass,InFile,Location, MethodClass, MethodCall, MethodSpec) VALUES (?,?,?,?,?,?,?,?)");
+        f_ps = c.prepareStatement("INSERT INTO SITE (Id,AtLine,InClass,InFile,Location,LocationCode,MethodClass,MethodCall,MethodSpec,MethodCode) VALUES (?,?,?,?,?,?,?,?,?,?)");
     }
 
     @Override

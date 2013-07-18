@@ -214,15 +214,19 @@ public class DefinitionEventGenerator {
     static class SiteInfo {
         final long id;
         final String memberName;
+        final int memberModifier;
         final int line;
         final String methodName;
         final String methodClass;
         final String methodDesc;
+        final int methodModifier;
 
-        SiteInfo(final long id, final String name, final int line,
-                String methodName, String methodClass, String methodDesc) {
+        SiteInfo(final long id, final String name, final int mod,
+                final int line, String methodName, String methodClass,
+                String methodDesc, int methodModifier) {
             this.id = id;
             memberName = name;
+            memberModifier = mod;
             this.line = line;
             if ("null".equals(methodName)) {
                 methodName = null;
@@ -236,13 +240,14 @@ public class DefinitionEventGenerator {
             this.methodName = methodName;
             this.methodClass = methodClass;
             this.methodDesc = methodDesc;
+            this.methodModifier = methodModifier;
         }
 
         void accept(final long declaringType, final List<Event> events,
                 final ClassInfo info) {
-            events.add(new StaticCallLocation(id, memberName, line,
-                    info.fileName, declaringType, methodClass, methodName,
-                    methodDesc));
+            events.add(new StaticCallLocation(id, memberName, memberModifier,
+                    line, info.fileName, declaringType, methodClass,
+                    methodName, methodDesc, methodModifier));
         }
     }
 

@@ -38,10 +38,15 @@ class SitesReader {
     public void readLine(final String line) {
         final StringTokenizer st = new StringTokenizer(line);
         final long id = Long.parseLong(st.nextToken());
-        String file = st.nextToken(); // FIX intern
-        String qname = st.nextToken(); // FIX intern
+        String file = st.nextToken();
+        String qname = st.nextToken();
         String member = st.nextToken();
+        final int memberMod = Integer.parseInt(st.nextToken());
         final int lineNo = Integer.parseInt(st.nextToken());
+        String methodName = st.nextToken();
+        String methodClass = st.nextToken();
+        String methodDesc = st.nextToken();
+        int methodModifier = Integer.parseInt(st.nextToken());
         if (member.equals(lastMemberName)) {
             member = lastMemberName;
         } else {
@@ -55,8 +60,8 @@ class SitesReader {
             lastFileName = file;
             lastClassName = qname;
         }
-        final SiteInfo site = new SiteInfo(id, member, lineNo, st.nextToken(),
-                st.nextToken(), st.nextToken());
+        final SiteInfo site = new SiteInfo(id, member, memberMod, lineNo,
+                methodName, methodClass, methodDesc, methodModifier);
         sites.add(site);
 
     }

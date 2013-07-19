@@ -42,16 +42,22 @@ public final class StaticCallLocation extends AbstractPrep {
         if (checkSites) {
             validSites.add(id);
         }
+        String loc = attributes.getString(LOCATION);
+        String callName = attributes.getString(METHODCALLNAME);
         f_ps.setLong(idx++, id);
         f_ps.setInt(idx++, attributes.getInt(LINE));
         f_ps.setLong(idx++, attributes.getLong(IN_CLASS));
         f_ps.setString(idx++, attributes.getString(FILE));
-        f_ps.setString(idx++, attributes.getString(LOCATION));
-        f_ps.setString(idx++, getMethodCode(attributes.getInt(LOCATIONMOD)));
+        f_ps.setString(idx++, loc);
+        f_ps.setString(idx++,
+                getMethodCode(loc, attributes.getInt(LOCATIONMOD)));
         f_ps.setString(idx++, attributes.getString(METHODCALLOWNER));
-        f_ps.setString(idx++, attributes.getString(METHODCALLNAME));
+        f_ps.setString(idx++, callName);
         f_ps.setString(idx++, attributes.getString(METHODCALLDESC));
-        f_ps.setString(idx++, getMethodCode(attributes.getInt(METHODCALLMOD)));
+        f_ps.setString(
+                idx++,
+                callName == null ? null : getMethodCode(callName,
+                        attributes.getInt(METHODCALLMOD)));
         if (doInsert) {
             f_ps.addBatch();
             if (++count == 10000) {
@@ -61,9 +67,17 @@ public final class StaticCallLocation extends AbstractPrep {
         }
     }
 
-    private static String getMethodCode(int mod) {
+    private static String getMethodCode(String name, int mod) {
         StringBuilder code = new StringBuilder(11);
-        code.append("@ME:");
+        code.append('@');
+        if (name.equals("<init>")) {
+            code.append("CO");
+        } else if (name.equals("<clinit")) {
+            code.append("IT");
+        } else {
+            code.append("@ME");
+        }
+        code.append(':');
         if (Modifier.isPublic(mod)) {
             code.append("PU");
         } else if (Modifier.isProtected(mod)) {

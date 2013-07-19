@@ -75,7 +75,7 @@ public final class StaticCallLocation extends AbstractPrep {
         } else if (name.equals("<clinit")) {
             code.append("IT");
         } else {
-            code.append("@ME");
+            code.append("ME");
         }
         code.append(':');
         if (Modifier.isPublic(mod)) {

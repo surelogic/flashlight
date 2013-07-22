@@ -111,15 +111,21 @@ public abstract class MethodCall {
    */
   public final void instrumentMethodCall(
       final ExceptionHandlerReorderingMethodAdapter mv, final Configuration config) {
-    // ...
+    /* 22 Jul 2013: Nathan wans the methodCall(true) and methodCall(false)
+     * calls to come immediately before and after the actual method call.
+     * The other instrumentation calls must come before/after the methodCall() 
+     * call as appropriate.
+     */
     
-    /* before method all event */
-    instrumentBeforeMethodCall(mv, config); // +6
     // ...
 
     /* Additional pre-call instrumentation */
     instrumentBeforeAnyJUCLockAcquisition(mv, config); // +3
     instrumentBeforeWait(mv, config); // +4
+    // ...
+    
+    /* before method all event */
+    instrumentBeforeMethodCall(mv, config); // +6
     // ...
 
     final Label beforeOriginalCall = new Label();
@@ -166,6 +172,9 @@ public abstract class MethodCall {
      * or
      *   ..., nanoTime (long), [returnValue]
      */
+    
+    /* after method call event */
+    instrumentAfterMethodCall(mv, config); // +6
 
     /* Additional post-call instrumentation */
     instrumentAfterLockAndLockInterruptibly(mv, config, true); // +4
@@ -178,24 +187,23 @@ public abstract class MethodCall {
      *   ..., [returnValue]
      */
     
-    /* after method call event */
-    instrumentAfterMethodCall(mv, config); // +6
-    
     /* Jump around exception handler */
     mv.visitJumpInsn(Opcodes.GOTO, resume);
 
     /* Exception handler: still want to report method exit when there is an exception */
     mv.visitLabel(exceptionHandler);
     // exception
+    
+    instrumentAfterMethodCall(mv, config); // +6 (+1 exception)
 
     /* Additional post-call instrumentation */
     instrumentAfterLockAndLockInterruptibly(mv, config, false); // +4 (+1 exception)
     instrumentAfterTryLockException(mv, config); // +4 (+1 exception)
     instrumentAfterUnlock(mv, config, false); // +4 (+1 exception)
     instrumentAfterWait(mv, config); // +4 (+1 exception)
-    // If there was an exception then the "try" method fails, so nothing to report
-    
-    instrumentAfterMethodCall(mv, config); // +6 (+1 exception)
+    /* NB. We do not report happens before information from the exception
+     * handler.  If the method fails, there is no happens before relationship.
+     */
 
     // exception
     mv.visitInsn(Opcodes.ATHROW);

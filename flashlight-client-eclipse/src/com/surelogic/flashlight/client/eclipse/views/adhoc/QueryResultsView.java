@@ -16,7 +16,6 @@ import org.eclipse.swt.widgets.Menu;
 
 import com.surelogic.common.adhoc.AdHocManager;
 import com.surelogic.common.adhoc.AdHocQueryFullyBound;
-import com.surelogic.common.adhoc.AdHocQueryResult;
 import com.surelogic.common.core.adhoc.EclipseQueryUtility;
 import com.surelogic.common.html.SimpleHTMLPrinter;
 import com.surelogic.common.i18n.I18N;
@@ -30,30 +29,6 @@ public final class QueryResultsView extends AbstractQueryResultsView {
   @Override
   public AdHocManager getManager() {
     return FlashlightDataSource.getManager();
-  }
-
-  @Override
-  public void displayResult(final AdHocQueryResult result) {
-    showQueryTitle();
-    super.displayResult(result);
-  }
-
-  /*
-   * XXX We override this to handle the case where we have a result selected
-   * before we create the actual control. We can't just fix this in the
-   * superclass because the superclass doesn't have access to our manager.
-   * (non-Javadoc)
-   * 
-   * @see com.surelogic.common.ui.adhoc.views.results.AbstractQueryResultsView#
-   * createPartControl(org.eclipse.swt.widgets.Composite)
-   */
-  @Override
-  public void createPartControl(final Composite parent) {
-    super.createPartControl(parent);
-    AdHocQueryResult result = FlashlightDataSource.getManager().getSelectedResult();
-    if (result != null) {
-      displayResult(result);
-    }
   }
 
   private static final String BROWSER_FLAG = "com.surelogic.browserFlag";
@@ -82,10 +57,10 @@ public final class QueryResultsView extends AbstractQueryResultsView {
   protected void setupNoResultsPane(final Composite parent) {
     final RunDirectory run = FlashlightDataSource.getInstance().getSelectedRun();
     if (run == null || !run.isPrepared()) {
-      showQueryTitle();
+      // no run selected to show an overview of
       super.setupNoResultsPane(parent);
     } else {
-      showOverviewTitle();
+      // show overview
 
       final Browser browser = getBrowser(parent);
       browser.setForeground(parent.getDisplay().getSystemColor(SWT.COLOR_INFO_FOREGROUND));
@@ -160,13 +135,5 @@ public final class QueryResultsView extends AbstractQueryResultsView {
     } catch (IllegalStateException problem) {
       SLLogger.getLogger().log(Level.WARNING, I18N.err(213, url), problem);
     }
-  }
-
-  private void showQueryTitle() {
-    setPartName(I18N.msg("flashlight.query.view.queryResultsTitle"));
-  }
-
-  private void showOverviewTitle() {
-    setPartName(I18N.msg("flashlight.query.view.overviewTitle"));
   }
 }

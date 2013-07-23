@@ -535,6 +535,7 @@ FROM
    &apos;?Line?&apos; &quot;Line&quot;,
    A.TS &quot;Time__|&quot;,
    CASE WHEN A.RW = &apos;R&apos; THEN &apos;Read&apos; ELSE &apos;Write&apos; END &quot;Access&quot;,
+   CASE WHEN A.UNDERCONSTRUCTION = &apos;N&apos; THEN &apos; &apos; ELSE &apos;Yes&apos; END &quot;Under Construction__(c)&quot;,
    &apos;?Multiple?&apos; &quot;Multiple__(hide)&quot;,
    A.ID &quot;AID__(hide)&quot;, 
    A.TRACE &quot;ATRACE__(hide)&quot;
@@ -1087,7 +1088,7 @@ FROM
 WHERE
    B.FIELD IS NULL OR (IF.FIELD IS NULL AND F.VOLATILE = &apos;Y&apos;)
 GROUP BY CO.PACKAGENAME,CO.CLASSNAME,CO.CLASSCODE,F.FIELDNAME,F.CODE,F.ID</query>
-  <query id="ae0f22d4-2f02-47f0-8745-8fa60024eda4" description="What fields (non-static) are protected by this lock, and how often?" revision="5" display="true">-- NO-ROWS-MSG=No accesses occur while this lock is held 
+  <query id="ae0f22d4-2f02-47f0-8745-8fa60024eda4" description="What fields (non-static) are protected by this lock, and how often?" revision="6" display="true">-- NO-ROWS-MSG=No accesses occur while this lock is held 
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What fields (non-static) are protected by this lock, and how often?
@@ -1151,7 +1152,7 @@ FROM
 WHERE F.ID = FA.FIELD AND A.FIELD = F.ID AND DT.ID = F.DECLARINGTYPE AND F.STATIC = &apos;N&apos;
 GROUP BY DT.PACKAGENAME,DT.CLASSNAME,DT.CLASSCODE,F.FIELDNAME,F.CODE,F.ID,FA.HELD
 ORDER BY 1,2,4</query>
-  <query id="cdc2d460-b17f-43bc-8cc6-4c26f1637fda" description="What fields (non-static) are shared after object construction?" revision="4" display="true" display-at-root="true">-- NO-ROWS-MSG=No non-static fields are shared between two or more threads after object construction.
+  <query id="cdc2d460-b17f-43bc-8cc6-4c26f1637fda" description="What fields (non-static) are shared after object construction?" revision="5" display="true" display-at-root="true">-- NO-ROWS-MSG=No non-static fields are shared between two or more threads after object construction.
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What fields (non-static) are shared after object construction?
@@ -1357,7 +1358,7 @@ where
   and THO.ID = FI.Thread
 group by O.PackageName,O.ClassName,O.ClassCode,F.FieldName,F.Code,F.Id
 order by O.PackageName,O.ClassName,F.FieldName</query>
-  <query id="bd72a5e4-42aa-415d-aa72-28d351f629a4" description="What fields (non-static) are shared?" revision="18" display="true" display-at-root="true">-- NO-ROWS-MSG=No non-static fields are shared between two or more threads.
+  <query id="bd72a5e4-42aa-415d-aa72-28d351f629a4" description="What fields (non-static) are shared?" revision="19" display="true" display-at-root="true">-- NO-ROWS-MSG=No non-static fields are shared between two or more threads.
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What fields (non-static) are shared?
@@ -1574,7 +1575,7 @@ SELECT
  WHERE F.LOCK IS NULL
  GROUP BY O.PackageName, O.ClassName, O.ClassCode, FI.FieldName, FI.Code,I.Field
  ORDER BY O.PackageName, O.ClassName, FI.FieldName</query>
-  <query id="71a6fb5b-e5e1-4d25-bdc8-67ab5df1f66e" description="What fields (non-static, non-final) are shared?" revision="12" display="true" display-at-root="true">-- NO-ROWS-MSG=No non-static fields are shared between two or more threads.
+  <query id="71a6fb5b-e5e1-4d25-bdc8-67ab5df1f66e" description="What fields (non-static, non-final) are shared?" revision="13" display="true" display-at-root="true">-- NO-ROWS-MSG=No non-static fields are shared between two or more threads.
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What fields (non-static, non-final) are shared?
@@ -5354,17 +5355,13 @@ order by lo.PackageName, lo.ClassName, s.AtLine, tho.ThreadName, sum(ld.Duration
   <sub-query id="1b191e96-598f-4d1f-9391-5d9feed0da69" sub-query="daa91c44-420a-4860-bcdc-970842110ccb" is-default="true"/>
   <sub-query id="1b191e96-598f-4d1f-9391-5d9feed0da69" sub-query="5af0591d-f8d5-490f-bfc2-ebf5237559bd"/>
   <sub-query id="ae0f22d4-2f02-47f0-8745-8fa60024eda4" sub-query="6d8d0985-0830-4f18-a655-fa7b43703d5f" is-default="true"/>
-  <sub-query id="ae0f22d4-2f02-47f0-8745-8fa60024eda4" sub-query="708d1b8a-5274-4a25-b0b4-67f1a7a86690"/>
   <sub-query id="cdc2d460-b17f-43bc-8cc6-4c26f1637fda" sub-query="f7ed1ced-73a5-4790-bc7c-8ba5fdf114a6" is-default="true"/>
-  <sub-query id="cdc2d460-b17f-43bc-8cc6-4c26f1637fda" sub-query="708d1b8a-5274-4a25-b0b4-67f1a7a86690"/>
   <sub-query id="33868960-7df8-4bab-bb33-ffb230957940" sub-query="6d8d0985-0830-4f18-a655-fa7b43703d5f"/>
   <sub-query id="33868960-7df8-4bab-bb33-ffb230957940" sub-query="708d1b8a-5274-4a25-b0b4-67f1a7a86690" is-default="true"/>
   <sub-query id="bd72a5e4-42aa-415d-aa72-28d351f629a4" sub-query="6d8d0985-0830-4f18-a655-fa7b43703d5f" is-default="true"/>
-  <sub-query id="bd72a5e4-42aa-415d-aa72-28d351f629a4" sub-query="708d1b8a-5274-4a25-b0b4-67f1a7a86690"/>
   <sub-query id="213c73ad-b3f6-4aef-9a05-f0c31d8fdcde" sub-query="6d8d0985-0830-4f18-a655-fa7b43703d5f" is-default="true"/>
   <sub-query id="d4d2af9b-ce4d-4457-9e94-01972fcb58d3" sub-query="5224d411-6ed3-432f-8b91-a1c43df22911" is-default="true"/>
   <sub-query id="71a6fb5b-e5e1-4d25-bdc8-67ab5df1f66e" sub-query="6d8d0985-0830-4f18-a655-fa7b43703d5f" is-default="true"/>
-  <sub-query id="71a6fb5b-e5e1-4d25-bdc8-67ab5df1f66e" sub-query="708d1b8a-5274-4a25-b0b4-67f1a7a86690"/>
   <sub-query id="94c1bc73-eb39-45d3-882e-d53c3bdf8a06" sub-query="4c9fcdb0-e7dc-46a0-87b6-c00b3caa8a8a"/>
   <sub-query id="94c1bc73-eb39-45d3-882e-d53c3bdf8a06" sub-query="2048e73c-e95b-4e4c-84ee-2309372a7eae"/>
   <sub-query id="94c1bc73-eb39-45d3-882e-d53c3bdf8a06" sub-query="5fd98753-3fe5-47a2-ab6a-ed5070dd41b0"/>

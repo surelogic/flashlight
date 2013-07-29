@@ -165,10 +165,8 @@ public final class PrepSLJob extends AbstractSLJob {
     @Override
     public SLStatus run(final SLProgressMonitor monitor) {
         final File runDir = f_runDirectory.getDirectory();
-        int estEventsInRawFile = 0;
-        for (File f : f_dataFiles) {
-            estEventsInRawFile += FlashlightFileUtility.estimateNumEvents(f);
-        }
+        int estEventsInRawFile = FlashlightFileUtility
+                .estimateNumEvents(f_dataFiles);
 
         final ClassHierarchy ch = ClassHierarchy.load(new File(runDir,
                 InstrumentationConstants.FL_CLASS_HIERARCHY_FILE_LOC),
@@ -223,8 +221,7 @@ public final class PrepSLJob extends AbstractSLJob {
                 return SLStatus.CANCEL_STATUS;
             }
 
-            final int eventsInRawFile = SLUtility.safeLongToInt(scanResults
-                    .getElementCount());
+            final long eventsInRawFile = scanResults.getElementCount();
             f_database.destroy();
             f_database.withTransaction(new NullDBTransaction() {
 
@@ -273,7 +270,7 @@ public final class PrepSLJob extends AbstractSLJob {
 
                     final SLProgressMonitor prepMonitor = new SubSLProgressMonitor(
                             monitor, "Preparing the raw file", PREP_WORK);
-                    prepMonitor.begin(eventsInRawFile);
+                    prepMonitor.begin(SLUtility.safeLongToInt(eventsInRawFile));
                     final ScanRawFilePrepScan parseHandler = new ScanRawFilePrepScan(
                             conn, prepMonitor, f_parseElements);
                     for (File dataFile : f_dataFiles) {
@@ -310,7 +307,8 @@ public final class PrepSLJob extends AbstractSLJob {
                             .getMaxReceiverId() / f_windowSize)
                             + (scanResults.getMaxReceiverId() % f_windowSize > 0 ? 1
                                     : 0);
-                    rprepMonitor.begin(eventsInRawFile * 2 * numWindows);
+                    rprepMonitor.begin(SLUtility.safeLongToInt(eventsInRawFile
+                            / 16 * numWindows));
                     final TLongHashSet synthetics = scanResults.getSynthetics();
                     final IRangePrep[] rpElements = getRangeHandlers();
                     for (int j = 0; j < numWindows; j++) {

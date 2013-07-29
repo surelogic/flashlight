@@ -86,7 +86,7 @@ public class ScanRawFileFieldsPreScan extends AbstractDataScan {
             /*
              * Show progress to the user
              */
-            f_monitor.worked(32);
+            f_monitor.worked(1);
 
             /*
              * Check for a user cancel.

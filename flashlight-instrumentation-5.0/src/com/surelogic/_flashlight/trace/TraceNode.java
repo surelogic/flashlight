@@ -384,7 +384,6 @@ public abstract class TraceNode extends AbstractCallLocation implements
     }
 
     void pruneTree() {
-        System.err.println("Pruning ...");
         // FIX What to do instead?
         synchronized (this) {
             f_calleeNodes = null;

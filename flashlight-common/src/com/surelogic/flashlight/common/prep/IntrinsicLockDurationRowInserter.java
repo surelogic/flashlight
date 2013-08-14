@@ -1,5 +1,11 @@
 package com.surelogic.flashlight.common.prep;
 
+import static com.surelogic.flashlight.common.prep.IntrinsicLockDurationRowInserter.Queries.INSERT_LOCK;
+import static com.surelogic.flashlight.common.prep.IntrinsicLockDurationRowInserter.Queries.LOCKS_HELD;
+import static com.surelogic.flashlight.common.prep.IntrinsicLockDurationRowInserter.Queries.LOCK_COMPONENT;
+import static com.surelogic.flashlight.common.prep.IntrinsicLockDurationRowInserter.Queries.LOCK_CYCLE;
+import static com.surelogic.flashlight.common.prep.IntrinsicLockDurationRowInserter.Queries.LOCK_DURATION;
+import static com.surelogic.flashlight.common.prep.IntrinsicLockDurationRowInserter.Queries.LOCK_TRACE;
 import gnu.trove.map.TLongObjectMap;
 import gnu.trove.map.hash.TLongObjectHashMap;
 import gnu.trove.procedure.TLongObjectProcedure;
@@ -12,10 +18,12 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumMap;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.List;
@@ -41,21 +49,35 @@ public final class IntrinsicLockDurationRowInserter {
     private static final EdgeFactory EDGE_FACTORY = new EdgeFactory();
 
     private static final long FINAL_EVENT = Lock.FINAL_EVENT;
-    private static final int LOCK_DURATION = 0;
-    private static final int LOCKS_HELD = 1;
-    private static final int LOCK_CYCLE = 2;
-    private static final int INSERT_LOCK = 3;
-    private static final int LOCK_COMPONENT = 4;
+
     private static final boolean doInsert = AbstractPrep.doInsert;
 
-    private static final String[] queries = {
-            "INSERT INTO LOCKDURATION (InThread,Lock,Start,StartEvent,Stop,StopEvent,Duration,State) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-            "INSERT INTO LOCKSHELD (LockEvent,LockHeldEvent,LockHeld,LockAcquired,InThread) VALUES (?, ?, ?, ?, ?)",
-            "INSERT INTO LOCKCYCLE (Component,LockHeld,LockAcquired,Count,FirstTime,LastTime) VALUES (?, ?, ?, ?, ?, ?)",
-            "INSERT INTO LOCK (Id,TS,InThread,Trace,Lock,Object,Type,State,Success,LockIsThis,LockIsClass) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            "INSERT INTO LOCKCOMPONENT (Component,Lock) VALUES (?, ?)" };
-    private final PreparedStatement[] statements = new PreparedStatement[queries.length];
-    private final int[] counts = new int[queries.length];
+    enum Queries {
+        LOCK_DURATION(
+                "INSERT INTO LOCKDURATION (InThread,Lock,Start,StartEvent,Stop,StopEvent,Duration,State) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"), LOCKS_HELD(
+                "INSERT INTO LOCKSHELD (LockEvent,LockHeldEvent,LockHeld,LockAcquired,InThread) VALUES (?, ?, ?, ?, ?)"), LOCK_CYCLE(
+                "INSERT INTO LOCKCYCLE (Component,LockHeld,LockAcquired,Count,FirstTime,LastTime) VALUES (?, ?, ?, ?, ?, ?)"), INSERT_LOCK(
+                "INSERT INTO LOCK (Id,TS,InThread,Trace,LockTrace,Lock,Object,Type,State,Success,LockIsThis,LockIsClass) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"), LOCK_COMPONENT(
+                "INSERT INTO LOCKCOMPONENT (Component,Lock) VALUES (?, ?)"), LOCK_TRACE(
+                "INSERT INTO LOCKTRACE (Id,Lock,Trace,Parent) VALUES(?,?,?,?)");
+        private final String sql;
+
+        Queries(String sql) {
+            this.sql = sql;
+        }
+
+        public String getSql() {
+            return sql;
+        }
+
+    }
+
+    private final EnumMap<Queries, PreparedStatement> statements = new EnumMap<IntrinsicLockDurationRowInserter.Queries, PreparedStatement>(
+            Queries.class);
+    private final EnumMap<Queries, Integer> counts = new EnumMap<IntrinsicLockDurationRowInserter.Queries, Integer>(
+            Queries.class);
+    private final TLongObjectHashMap<SLList<LockTrace>> lockTraces = new TLongObjectHashMap<SLList<LockTrace>>();
+    long lockTraceId;
     int cycleId;
     private final Calendar here = new GregorianCalendar();
     private final Logger log = SLLogger
@@ -117,6 +139,7 @@ public final class IntrinsicLockDurationRowInserter {
 
     static class ThreadState {
         TLongObjectMap<State> lockToState = new TLongObjectHashMap<State>();
+        LockTrace lockTrace = ROOT_TRACE;
         final Set<State> nonIdleLocks = new HashSet<State>();
         final List<State> heldLocks = new ArrayList<State>();
 
@@ -280,9 +303,9 @@ public final class IntrinsicLockDurationRowInserter {
 
     public IntrinsicLockDurationRowInserter(final Connection c)
             throws SQLException {
-        int i = 0;
-        for (final String q : queries) {
-            statements[i++] = c.prepareStatement(q);
+        for (Queries q : Queries.values()) {
+            statements.put(q, c.prepareStatement(q.getSql()));
+            counts.put(q, 0);
         }
     }
 
@@ -307,18 +330,35 @@ public final class IntrinsicLockDurationRowInserter {
         final GraphInfo info = createGraphFromStorage();
         computeGraphComponents(info);
         detectLockCycles(info);
-        for (int i = 0; i < queries.length; i++) {
-            if (counts[i] > 0) {
-                statements[i].executeBatch();
-                counts[i] = 0;
+        for (Queries q : Queries.values()) {
+            if (counts.get(q) > 0) {
+                statements.get(q).executeBatch();
+                counts.put(q, 0);
             }
+        }
+    }
+
+    /**
+     * Increment count, return true if batch should be executed.
+     * 
+     * @param q
+     * @return
+     */
+    private boolean incrementCount(Queries q) {
+        int count = counts.get(q);
+        if (count == 9999) {
+            counts.put(q, 0);
+            return true;
+        } else {
+            counts.put(q, count + 1);
+            return false;
         }
     }
 
     private void computeGraphComponents(GraphInfo info) throws SQLException {
         final ConnectivityInspector<Long, Edge> inspector = new ConnectivityInspector<Long, IntrinsicLockDurationRowInserter.Edge>(
                 info.lockGraph);
-        final PreparedStatement ps = statements[LOCK_COMPONENT];
+        final PreparedStatement ps = statements.get(LOCK_COMPONENT);
         int i = 0;
         for (Set<Long> set : inspector.connectedSets()) {
             for (long lock : set) {
@@ -326,9 +366,8 @@ public final class IntrinsicLockDurationRowInserter {
                 ps.setLong(2, lock);
                 if (doInsert) {
                     ps.addBatch();
-                    if (++counts[LOCK_COMPONENT] == 10000) {
+                    if (incrementCount(LOCK_COMPONENT)) {
                         ps.executeBatch();
-                        counts[LOCK_COMPONENT] = 0;
                     }
                 }
             }
@@ -422,7 +461,7 @@ public final class IntrinsicLockDurationRowInserter {
                     if (isDeadlock(sanitizedCycle, graph)) {
                         for (Edge e : cycle) {
                             try {
-                                outputCycleEdge(statements[LOCK_CYCLE],
+                                outputCycleEdge(statements.get(LOCK_CYCLE),
                                         cycleId, e);
                             } catch (SQLException e1) {
                                 throw new IllegalStateException(e1);
@@ -583,9 +622,8 @@ public final class IntrinsicLockDurationRowInserter {
         f_cyclePS.setTimestamp(idx++, e.last, here);
         if (doInsert) {
             f_cyclePS.addBatch();
-            if (++counts[LOCK_CYCLE] == 10000) {
+            if (incrementCount(LOCK_CYCLE)) {
                 f_cyclePS.executeBatch();
-                counts[LOCK_CYCLE] = 0;
             }
         }
     }
@@ -713,15 +751,15 @@ public final class IntrinsicLockDurationRowInserter {
     }
 
     public void close() throws SQLException {
-        for (int i = 0; i < statements.length; i++) {
-            if (statements[i] != null) {
-                statements[i].close();
-                statements[i] = null;
-            }
+        for (PreparedStatement ps : statements.values()) {
+            ps.close();
         }
+        statements.clear();
+        counts.clear();
         f_threadToLockToState.clear();
         f_threadToStatus.clear();
-        // FIX clear lockGraph
+        lockTraces.clear();
+        edgeStorage.clear();
     }
 
     private ThreadState getLockToStateMap(final long inThread) {
@@ -839,6 +877,7 @@ public final class IntrinsicLockDurationRowInserter {
                     lockEvent, LockState.AFTER_ACQUISITION, lockToState, state,
                     success);
             break;
+
         case HOLDING:
             handleEventWhileHolding(id, time, inThread, trace, lock, object,
                     lockEvent, state, lockToState);
@@ -943,7 +982,7 @@ public final class IntrinsicLockDurationRowInserter {
             final Timestamp startTime, final long startEvent,
             final Timestamp stopTime, final long stopEvent,
             final IntrinsicLockDurationState state) {
-        final PreparedStatement f_ps = statements[LOCK_DURATION];
+        final PreparedStatement f_ps = statements.get(LOCK_DURATION);
         try {
             int idx = 1;
             f_ps.setLong(idx++, inThread);
@@ -961,9 +1000,8 @@ public final class IntrinsicLockDurationRowInserter {
             f_ps.setString(idx++, state.toString());
             if (doInsert) {
                 f_ps.addBatch();
-                if (++counts[LOCK_DURATION] == 10000) {
+                if (incrementCount(LOCK_DURATION)) {
                     f_ps.executeBatch();
-                    counts[LOCK_DURATION] = 0;
                 }
             }
         } catch (final SQLException e) {
@@ -1003,7 +1041,7 @@ public final class IntrinsicLockDurationRowInserter {
     private void insertHeldLock(final long eventId, final Timestamp time,
             final long lockHeldEventId, final long lockHeld,
             final long acquired, final long thread) {
-        final PreparedStatement f_heldLockPS = statements[LOCKS_HELD];
+        final PreparedStatement f_heldLockPS = statements.get(LOCKS_HELD);
         try {
             int idx = 1;
             f_heldLockPS.setLong(idx++, eventId);
@@ -1013,9 +1051,8 @@ public final class IntrinsicLockDurationRowInserter {
             f_heldLockPS.setLong(idx++, thread);
             if (doInsert) {
                 f_heldLockPS.addBatch();
-                if (++counts[LOCKS_HELD] == 10000) {
+                if (incrementCount(LOCKS_HELD)) {
                     f_heldLockPS.executeBatch();
-                    counts[LOCKS_HELD] = 0;
                 }
             }
         } catch (final SQLException e) {
@@ -1047,6 +1084,8 @@ public final class IntrinsicLockDurationRowInserter {
 
         });
 
+        gcLock(id);
+
         // TODO Clean up lock graph?
         // Q: how do I know if an object is a lock?
 
@@ -1066,12 +1105,34 @@ public final class IntrinsicLockDurationRowInserter {
             final LockState lockState, final Boolean success,
             final Boolean lockIsThis, final Boolean lockIsClass)
             throws SQLException {
-        final PreparedStatement ps = statements[INSERT_LOCK];
+        final ThreadState threadState = getLockToStateMap(inThread);
+        switch (lockState) {
+        case AFTER_ACQUISITION:
+            if (success != Boolean.FALSE) {
+                threadState.lockTrace = pushLockTrace(threadState.lockTrace,
+                        lock, trace);
+            }
+            break;
+        case AFTER_RELEASE:
+            if (success != Boolean.FALSE) {
+                threadState.lockTrace = popLockTrace(threadState.lockTrace,
+                        lock);
+            }
+            break;
+        default:
+            // Do nothing
+        }
+        final PreparedStatement ps = statements.get(INSERT_LOCK);
         int idx = 1;
         ps.setLong(idx++, finalEvent ? Lock.FINAL_EVENT : ++f_lockId);
         ps.setTimestamp(idx++, time, here);
         ps.setLong(idx++, inThread);
         ps.setLong(idx++, trace);
+        if (threadState.lockTrace == ROOT_TRACE) {
+            ps.setNull(idx++, Types.BIGINT);
+        } else {
+            ps.setLong(idx++, threadState.lockTrace.id);
+        }
         ps.setLong(idx++, lock); // The aggregate
         ps.setLong(idx++, object); // The actual object locked on
         ps.setString(idx++, lockType.getFlag());
@@ -1081,11 +1142,163 @@ public final class IntrinsicLockDurationRowInserter {
         JDBCUtils.setNullableBoolean(idx++, ps, lockIsClass);
         if (doInsert) {
             ps.addBatch();
-            if (++counts[INSERT_LOCK] == 10000) {
+            if (incrementCount(INSERT_LOCK)) {
                 ps.executeBatch();
-                counts[INSERT_LOCK] = 0;
             }
         }
         return f_lockId;
     }
+
+    private static final LockTrace ROOT_TRACE = new LockTrace();
+
+    static class LockTrace {
+        final long id;
+        final long lock;
+        final long trace;
+        final LockTrace parent;
+        SLList<LockTrace> children;
+
+        // Only call for ROOT
+        LockTrace() {
+            id = lock = trace = -1;
+            parent = null;
+        }
+
+        LockTrace(long id, long lock, long trace, LockTrace parent) {
+            if (parent == null) {
+                throw new IllegalArgumentException(
+                        "Parent of LockTrace may not be null.");
+            }
+            this.id = id;
+            this.lock = lock;
+            this.trace = trace;
+            this.parent = parent;
+        }
+    }
+
+    /**
+     * Pop a lock off the current lock trace. The lock does not need to be the
+     * topmost lock.
+     * 
+     * @param current
+     * @param lock
+     * @return
+     * @throws SQLException
+     */
+    private LockTrace popLockTrace(LockTrace current, long lock)
+            throws SQLException {
+        return popLockTraceHelper(current, lock, null);
+    }
+
+    /*
+     * Pops the lock off the current trace by backtracking to the parent of the
+     * target lock, then pushing all encountered locks on to the trace except
+     * for the target lock.
+     */
+    private LockTrace popLockTraceHelper(LockTrace current, long lock,
+            SLList<LockTrace> toPush) throws SQLException {
+        if (current.lock == lock) {
+            LockTrace poppedTrace = current.parent;
+            for (SLList<LockTrace> nextPush = toPush; nextPush != null; nextPush = toPush.parent) {
+                poppedTrace = pushLockTrace(poppedTrace, nextPush.elem.lock,
+                        nextPush.elem.trace);
+            }
+            return poppedTrace;
+        } else {
+            return popLockTraceHelper(current.parent, lock,
+                    new SLList<LockTrace>(current, toPush));
+        }
+    }
+
+    /**
+     * Push a new lock onto the current lock trace, and return that lock trace.
+     * 
+     * @param current
+     * @param lock
+     * @return
+     * @throws SQLException
+     */
+    private LockTrace pushLockTrace(LockTrace current, long lock, long trace)
+            throws SQLException {
+        // Use the cached version if we've got it
+        for (SLList<LockTrace> child = current.children; child != null; child = child.parent) {
+            if (child.elem.lock == lock) {
+                return child.elem;
+            }
+        }
+        // Insert a new lock. We should have already returned from the method
+        // if one had been found already.
+        LockTrace lockTrace = new LockTrace(lockTraceId++, lock, trace, current);
+        PreparedStatement st = statements.get(LOCK_TRACE);
+        // INSERT INTO LOCKTRACE (Id,Lock,Trace,Parent) VALUES(?,?,?,?)
+        int idx = 1;
+        st.setLong(idx++, lockTrace.id);
+        st.setLong(idx++, lock);
+        st.setLong(idx++, trace);
+        if (lockTrace.parent == ROOT_TRACE) {
+            // We make the first locks acquired self-referential
+            st.setLong(idx++, lockTrace.id);
+        } else {
+            st.setLong(idx++, lockTrace.parent.id);
+        }
+        st.addBatch();
+        if (incrementCount(LOCK_TRACE)) {
+            st.executeBatch();
+        }
+        current.children = new SLList<IntrinsicLockDurationRowInserter.LockTrace>(
+                lockTrace, current.children);
+        lockTraces.put(lock,
+                new SLList<IntrinsicLockDurationRowInserter.LockTrace>(
+                        lockTrace, lockTraces.get(lock)));
+        return lockTrace;
+    }
+
+    /**
+     * Remove all references to a garbage collected lock
+     * 
+     * @param lock
+     */
+    private void gcLock(long lock) {
+        for (SLList<LockTrace> list = lockTraces.put(lock, null); list != null; list = list.parent) {
+            LockTrace trace = list.elem;
+            trace.parent.children = removeElem(trace.parent.children, trace);
+        }
+    }
+
+    /**
+     * Remove an element from the singly linked list. Return the new list.
+     * Modifies the old list to do this, so don't use it anymore.
+     * 
+     * @param list
+     * @param elem
+     * @return
+     */
+    private <T> SLList<T> removeElem(SLList<T> list, T elem) {
+        if (list == null) {
+            return list;
+        } else if (list.elem.equals(elem)) {
+            return list.parent;
+        } else {
+            list.parent = removeElem(list.parent, elem);
+            return list;
+        }
+    }
+
+    /**
+     * Mutable singly linked list. A null parent indicates that this is the last
+     * element in the list.
+     * 
+     * 
+     * @param <T>
+     */
+    static class SLList<T> {
+        SLList<T> parent;
+        final T elem;
+
+        SLList(T elem, SLList<T> parent) {
+            this.elem = elem;
+            this.parent = parent;
+        }
+    }
+
 }

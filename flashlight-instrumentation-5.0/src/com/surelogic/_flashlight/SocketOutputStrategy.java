@@ -8,7 +8,7 @@ import java.net.SocketTimeoutException;
 import java.util.Date;
 
 import com.surelogic._flashlight.common.OutputType;
-import com.surelogic._flashlight.trace.old.TraceNode;
+import com.surelogic._flashlight.trace.TraceNode;
 
 /**
  * This output strategy listens to the output port for a client to connect. Once

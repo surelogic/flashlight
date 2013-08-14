@@ -8,7 +8,7 @@ import java.util.zip.GZIPOutputStream;
 
 import com.surelogic._flashlight.common.FileChannelOutputStream;
 import com.surelogic._flashlight.common.OutputType;
-import com.surelogic._flashlight.trace.old.TraceNode;
+import com.surelogic._flashlight.trace.TraceNode;
 
 /**
  * Visitor for an {@link Event}.

@@ -235,7 +235,7 @@ public abstract class TraceNode extends AbstractCallLocation implements
 
     @Override
     protected void accept(final EventVisitor v) {
-        v.visit(this);
+        // v.visit(this);
     }
 
     @Override

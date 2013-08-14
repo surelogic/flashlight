@@ -7,7 +7,7 @@ import java.io.OutputStream;
 
 import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic._flashlight.common.OutputType;
-import com.surelogic._flashlight.trace.old.TraceNode;
+import com.surelogic._flashlight.trace.TraceNode;
 
 public class CheckpointingOutputStreamStrategy extends EventVisitor {
 

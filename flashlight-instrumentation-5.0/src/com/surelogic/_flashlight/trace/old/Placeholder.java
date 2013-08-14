@@ -1,7 +1,8 @@
-package com.surelogic._flashlight.trace;
+package com.surelogic._flashlight.trace.old;
 
 import com.surelogic._flashlight.PostMortemStore;
 
+@Deprecated
 public class Placeholder extends AbstractPlaceholder {
     final long f_siteId;
 

@@ -12,7 +12,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 
 import com.surelogic._flashlight.Store.GCThread;
 import com.surelogic._flashlight.common.OutputType;
-import com.surelogic._flashlight.trace.TraceNode;
+import com.surelogic._flashlight.trace.old.TraceNode;
 
 public class PostMortemStore implements StoreListener {
 

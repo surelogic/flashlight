@@ -1,4 +1,4 @@
-package com.surelogic._flashlight.trace;
+package com.surelogic._flashlight.trace.old;
 
 import static com.surelogic._flashlight.common.AttributeType.PARENT_ID;
 import static com.surelogic._flashlight.common.AttributeType.SITE_ID;
@@ -12,6 +12,7 @@ import com.surelogic._flashlight.EventVisitor;
 import com.surelogic._flashlight.PostMortemStore;
 import com.surelogic._flashlight.common.LongMap;
 
+@Deprecated
 public abstract class TraceNode extends AbstractCallLocation implements
         ITraceNode {
     static final boolean recordOnPush = false;

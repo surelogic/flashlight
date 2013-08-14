@@ -6,7 +6,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 
 import com.surelogic._flashlight.common.AttributeType;
-import com.surelogic._flashlight.trace.TraceNode;
+import com.surelogic._flashlight.trace.old.TraceNode;
 
 final class OutputStrategyXML extends EventVisitor {
     static final String version = "1.0";

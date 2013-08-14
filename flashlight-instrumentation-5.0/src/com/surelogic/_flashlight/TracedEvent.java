@@ -2,7 +2,7 @@ package com.surelogic._flashlight;
 
 import com.surelogic._flashlight.common.AttributeType;
 import com.surelogic._flashlight.common.IdConstants;
-import com.surelogic._flashlight.trace.TraceNode;
+import com.surelogic._flashlight.trace.old.TraceNode;
 
 public abstract class TracedEvent extends WithinThreadEvent {
     private final TraceNode trace; // = TraceNode.getCurrentNode();

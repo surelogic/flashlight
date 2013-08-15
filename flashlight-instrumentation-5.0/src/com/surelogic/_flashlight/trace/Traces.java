@@ -20,12 +20,27 @@ public class Traces {
 
         private TraceNode current;
 
+        /**
+         * Return a TraceNode that is a child of the current TraceNode, with the
+         * given site. Do not change the current trace node.
+         * 
+         * @param s
+         * @param siteId
+         * @return
+         */
         public TraceNode getCurrentNode(State s, long siteId) {
-            pushTraceNode(s, siteId);
-            try {
-                return current;
-            } finally {
-                popTraceNode();
+            if (current == null) {
+                TraceNode root;
+                synchronized (roots) {
+                    root = roots.get(siteId);
+                    if (root == null) {
+                        root = TraceNode.newTraceNode(s, siteId);
+                        roots.put(siteId, root);
+                    }
+                    return root;
+                }
+            } else {
+                return current.pushTraceNode(s, siteId);
             }
         }
 

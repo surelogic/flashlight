@@ -12,7 +12,8 @@ import java.util.concurrent.locks.ReadWriteLock;
 
 import com.surelogic._flashlight.Store.GCThread;
 import com.surelogic._flashlight.common.OutputType;
-import com.surelogic._flashlight.trace.old.TraceNode;
+import com.surelogic._flashlight.trace.TraceNode;
+import com.surelogic._flashlight.trace.Traces;
 
 public class PostMortemStore implements StoreListener {
 
@@ -54,7 +55,7 @@ public class PostMortemStore implements StoreListener {
 
     public static final class State {
         final ThreadPhantomReference thread;
-        public final TraceNode.Header traceHeader;
+        public final Traces.Header traceHeader;
         final List<Event> eventQueue;
         final BlockingQueue<List<Event>> rawQueue;
 
@@ -62,15 +63,15 @@ public class PostMortemStore implements StoreListener {
             rawQueue = q;
             eventQueue = l;
             thread = Phantom.ofThread(Thread.currentThread());
-            traceHeader = TraceNode.makeHeader();
+            traceHeader = Traces.makeHeader();
         }
 
         TraceNode getCurrentTrace(final long siteId) {
-            return traceHeader.getCurrentNode(siteId, this);
+            return traceHeader.getCurrentNode(this, siteId);
         }
 
         TraceNode getCurrentTrace() {
-            return traceHeader.getCurrentNode(this);
+            return traceHeader.getCurrentNode();
         }
     }
 
@@ -218,9 +219,9 @@ public class PostMortemStore implements StoreListener {
     public void constructorCall(final boolean before, final long siteId) {
         State state = tl_withinStore.get();
         if (before) {
-            TraceNode.pushTraceNode(siteId, state);
+            state.traceHeader.pushTraceNode(state, siteId);
         } else {
-            TraceNode.popTraceNode(siteId, state);
+            state.traceHeader.popTraceNode();
         }
     }
 
@@ -259,9 +260,9 @@ public class PostMortemStore implements StoreListener {
          * Record this call in the trace.
          */
         if (before) {
-            TraceNode.pushTraceNode(siteId, state);
+            state.traceHeader.pushTraceNode(state, siteId);
         } else {
-            TraceNode.popTraceNode(siteId, state);
+            state.traceHeader.popTraceNode();
         }
 
     }
@@ -374,6 +375,7 @@ public class PostMortemStore implements StoreListener {
         putInQueue(f_rawQueue, last);
         join(f_refinery);
         join(f_depository);
+        Traces.logNodes();
     }
 
     static final int LOCAL_QUEUE_MAX = 256;

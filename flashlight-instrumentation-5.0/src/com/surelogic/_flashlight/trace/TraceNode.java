@@ -5,7 +5,6 @@ import static com.surelogic._flashlight.common.AttributeType.SITE_ID;
 import static com.surelogic._flashlight.common.AttributeType.TRACE;
 
 import java.io.PrintWriter;
-import java.util.LinkedList;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.surelogic._flashlight.AbstractCallLocation;
@@ -26,12 +25,22 @@ public class TraceNode extends AbstractCallLocation {
 
     private final TraceNode parent;
     private final long id;
-    private final LinkedList<TraceNode> children;
+    private final TraceNode sibling;
+    private TraceNode child;
 
     private TraceNode(TraceNode parent, long siteId) {
         super(siteId);
         this.parent = parent;
-        children = new LinkedList<TraceNode>();
+        child = null;
+        sibling = null;
+        id = nextId();
+    }
+
+    private TraceNode(TraceNode parent, TraceNode sibling, long siteId) {
+        super(siteId);
+        this.parent = parent;
+        child = null;
+        this.sibling = sibling;
         id = nextId();
     }
 
@@ -68,18 +77,18 @@ public class TraceNode extends AbstractCallLocation {
      * @return
      */
     TraceNode pushTraceNode(State s, long siteId) {
-        TraceNode node;
         synchronized (this) {
-            for (TraceNode t : children) {
-                if (t.getSiteId() == siteId) {
-                    return t;
+            TraceNode c = child;
+            while (c != null) {
+                if (c.getSiteId() == siteId) {
+                    return c;
                 }
+                c = c.sibling;
             }
-            node = new TraceNode(this, siteId);
-            children.add(node);
+            child = new TraceNode(this, child, siteId);
         }
-        PostMortemStore.putInQueue(s, node);
-        return node;
+        PostMortemStore.putInQueue(s, child);
+        return child;
     }
 
     /**
@@ -89,14 +98,15 @@ public class TraceNode extends AbstractCallLocation {
      * @return
      */
     synchronized TraceNode pushTraceNode(long siteId) {
-        for (TraceNode t : children) {
-            if (t.getSiteId() == siteId) {
-                return t;
+        TraceNode c = child;
+        while (c != null) {
+            if (c.getSiteId() == siteId) {
+                return c;
             }
+            c = c.sibling;
         }
-        TraceNode node = new TraceNode(this, siteId);
-        children.add(node);
-        return node;
+        child = new TraceNode(this, child, siteId);
+        return child;
     }
 
     public TraceNode getParent() {
@@ -135,8 +145,10 @@ public class TraceNode extends AbstractCallLocation {
         }
         writer.println(toString());
         synchronized (this) {
-            for (TraceNode node : children) {
-                num += node.printNodeTree(depth + 1, writer);
+            TraceNode c = child;
+            while (c != null) {
+                num += c.printNodeTree(depth + 1, writer);
+                c = c.sibling;
             }
         }
         return num;

@@ -22,6 +22,7 @@ import com.surelogic.common.CommonImages;
 import com.surelogic.common.adhoc.AdHocManager;
 import com.surelogic.common.adhoc.AdHocQuery;
 import com.surelogic.common.adhoc.AdHocQueryMeta;
+import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.ui.EclipseColorUtility;
 import com.surelogic.common.ui.SLImages;
 import com.surelogic.common.ui.adhoc.views.menu.QueryMenuMediator;
@@ -30,6 +31,13 @@ import com.surelogic.flashlight.common.model.EmptyQueriesCache;
 import com.surelogic.flashlight.common.model.RunDirectory;
 
 public final class QueryResultsView extends AbstractQueryResultsView {
+
+  /**
+   * This points to the 'What threads access shared state in this program?'
+   * query which is a flag that the whole run is useless (nothing was shared so
+   * examining the concurrency in detail is worthless)
+   */
+  private static final String USELESS_RUN_IF_EMPTY_ID = "8107df4c-42eb-407c-88c1-e16d805f3aaa";
 
   @Override
   public AdHocManager getManager() {
@@ -60,6 +68,18 @@ public final class QueryResultsView extends AbstractQueryResultsView {
   private void setupOverview(@NonNull final Composite parent, @NonNull final RunDirectory run) {
     final Composite panel = new Composite(parent, SWT.NONE);
     panel.setLayout(new GridLayout());
+
+    /*
+     * Warn if no useful data
+     */
+    if (isRunUseless(run)) {
+      Label badRunLabel = new Label(panel, SWT.CENTER);
+      badRunLabel.setText(I18N.msg("flashlight.warn.emptyrun"));
+      badRunLabel.setFont(JFaceResources.getFontRegistry().getBold(JFaceResources.HEADER_FONT));
+      badRunLabel.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+      badRunLabel.setBackground(panel.getDisplay().getSystemColor(SWT.COLOR_DARK_RED));
+      badRunLabel.setForeground(panel.getDisplay().getSystemColor(SWT.COLOR_YELLOW));
+    }
 
     /*
      * Run identification
@@ -142,11 +162,19 @@ public final class QueryResultsView extends AbstractQueryResultsView {
     none.setFont(JFaceResources.getFontRegistry().getItalic(""));
   }
 
+  private boolean isRunUseless(@NonNull final RunDirectory run) {
+    @Nullable
+    final AdHocQuery query = getManager().getQueryOrNull(USELESS_RUN_IF_EMPTY_ID);
+    if (query == null) {
+      throw new IllegalStateException(I18N.err(308, USELESS_RUN_IF_EMPTY_ID));
+    }
+    return EmptyQueriesCache.getInstance().queryResultWillBeEmpty(run, query);
+  }
+
   private void setupNewsItems(@NonNull final RunDirectory run, @NonNull final Composite goodNews, @NonNull final Composite badNews) {
     List<AdHocQuery> topLevelQueries = getManager().getRootQueryList();
-    final EmptyQueriesCache cache = EmptyQueriesCache.getInstance();
     for (final AdHocQuery query : topLevelQueries) {
-      final boolean queryIsEmpty = cache.queryResultWillBeEmpty(run, query);
+      final boolean queryIsEmpty = EmptyQueriesCache.getInstance().queryResultWillBeEmpty(run, query);
 
       if (queryIsEmpty) {
         /*

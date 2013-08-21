@@ -76,7 +76,8 @@ public final class IntrinsicLockDurationRowInserter {
             Queries.class);
     private final EnumMap<Queries, Integer> counts = new EnumMap<IntrinsicLockDurationRowInserter.Queries, Integer>(
             Queries.class);
-    private final TLongObjectHashMap<SLList<LockTrace>> lockTraces = new TLongObjectHashMap<SLList<LockTrace>>();
+    private final TLongObjectHashMap<List<LockTrace>> lockTraces = new TLongObjectHashMap<List<LockTrace>>();
+    private final TLongObjectMap<TLongObjectMap<LockTrace>> lockTraceRoots = new TLongObjectHashMap<TLongObjectMap<LockTrace>>();
     long lockTraceId;
     int cycleId;
     private final Calendar here = new GregorianCalendar();
@@ -139,7 +140,7 @@ public final class IntrinsicLockDurationRowInserter {
 
     static class ThreadState {
         TLongObjectMap<State> lockToState = new TLongObjectHashMap<State>();
-        LockTrace lockTrace = ROOT_TRACE;
+        LockTrace lockTrace = null;
         final Set<State> nonIdleLocks = new HashSet<State>();
         final List<State> heldLocks = new ArrayList<State>();
 
@@ -1128,10 +1129,10 @@ public final class IntrinsicLockDurationRowInserter {
         ps.setTimestamp(idx++, time, here);
         ps.setLong(idx++, inThread);
         ps.setLong(idx++, trace);
-        if (threadState.lockTrace == ROOT_TRACE) {
+        if (threadState.lockTrace == null) {
             ps.setNull(idx++, Types.BIGINT);
         } else {
-            ps.setLong(idx++, threadState.lockTrace.id);
+            ps.setLong(idx++, threadState.lockTrace.getId());
         }
         ps.setLong(idx++, lock); // The aggregate
         ps.setLong(idx++, object); // The actual object locked on
@@ -1149,33 +1150,6 @@ public final class IntrinsicLockDurationRowInserter {
         return f_lockId;
     }
 
-    private static final LockTrace ROOT_TRACE = new LockTrace();
-
-    static class LockTrace {
-        final long id;
-        final long lock;
-        final long trace;
-        final LockTrace parent;
-        SLList<LockTrace> children;
-
-        // Only call for ROOT
-        LockTrace() {
-            id = lock = trace = -1;
-            parent = null;
-        }
-
-        LockTrace(long id, long lock, long trace, LockTrace parent) {
-            if (parent == null) {
-                throw new IllegalArgumentException(
-                        "Parent of LockTrace may not be null.");
-            }
-            this.id = id;
-            this.lock = lock;
-            this.trace = trace;
-            this.parent = parent;
-        }
-    }
-
     /**
      * Pop a lock off the current lock trace. The lock does not need to be the
      * topmost lock.
@@ -1187,26 +1161,11 @@ public final class IntrinsicLockDurationRowInserter {
      */
     private LockTrace popLockTrace(LockTrace current, long lock)
             throws SQLException {
-        return popLockTraceHelper(current, lock, null);
-    }
-
-    /*
-     * Pops the lock off the current trace by backtracking to the parent of the
-     * target lock, then pushing all encountered locks on to the trace except
-     * for the target lock.
-     */
-    private LockTrace popLockTraceHelper(LockTrace current, long lock,
-            SLList<LockTrace> toPush) throws SQLException {
-        if (current.lock == lock) {
-            LockTrace poppedTrace = current.parent;
-            for (SLList<LockTrace> nextPush = toPush; nextPush != null; nextPush = toPush.parent) {
-                poppedTrace = pushLockTrace(poppedTrace, nextPush.elem.lock,
-                        nextPush.elem.trace);
-            }
-            return poppedTrace;
+        if (current.getLock() == lock) {
+            return current.getParent();
         } else {
-            return popLockTraceHelper(current.parent, lock,
-                    new SLList<LockTrace>(current, toPush));
+            return pushLockTrace(popLockTrace(current.getParent(), lock),
+                    current.getLock(), current.getTrace());
         }
     }
 
@@ -1220,36 +1179,53 @@ public final class IntrinsicLockDurationRowInserter {
      */
     private LockTrace pushLockTrace(LockTrace current, long lock, long trace)
             throws SQLException {
-        // Use the cached version if we've got it
-        for (SLList<LockTrace> child = current.children; child != null; child = child.parent) {
-            if (child.elem.lock == lock) {
-                return child.elem;
+        LockTrace lockTrace;
+        if (current == null) {
+            // Try to get the root lock trace if it exists, otherwise make it.
+            TLongObjectMap<LockTrace> traceRoots = lockTraceRoots.get(lock);
+            if (traceRoots == null) {
+                traceRoots = new TLongObjectHashMap<LockTrace>();
+                lockTraceRoots.put(lock, traceRoots);
             }
+            lockTrace = traceRoots.get(trace);
+            if (lockTrace != null) {
+                return lockTrace;
+            }
+            lockTrace = LockTrace.newRootLockTrace(lockTraceId++, lock, trace);
+            traceRoots.put(trace, lockTrace);
+        } else {
+            // Use the cached version if we've got it
+            for (LockTrace child : current.children()) {
+                if (child.matches(lock, trace)) {
+                    return child;
+                }
+            }
+            lockTrace = current.pushLockTrace(lockTraceId++, lock, trace);
         }
         // Insert a new lock. We should have already returned from the method
         // if one had been found already.
-        LockTrace lockTrace = new LockTrace(lockTraceId++, lock, trace, current);
         PreparedStatement st = statements.get(LOCK_TRACE);
         // INSERT INTO LOCKTRACE (Id,Lock,Trace,Parent) VALUES(?,?,?,?)
         int idx = 1;
-        st.setLong(idx++, lockTrace.id);
+        st.setLong(idx++, lockTrace.getId());
         st.setLong(idx++, lock);
         st.setLong(idx++, trace);
-        if (lockTrace.parent == ROOT_TRACE) {
+        if (lockTrace.getParent() == null) {
             // We make the first locks acquired self-referential
-            st.setLong(idx++, lockTrace.id);
+            st.setLong(idx++, lockTrace.getId());
         } else {
-            st.setLong(idx++, lockTrace.parent.id);
+            st.setLong(idx++, lockTrace.getParent().getId());
         }
         st.addBatch();
         if (incrementCount(LOCK_TRACE)) {
             st.executeBatch();
         }
-        current.children = new SLList<IntrinsicLockDurationRowInserter.LockTrace>(
-                lockTrace, current.children);
-        lockTraces.put(lock,
-                new SLList<IntrinsicLockDurationRowInserter.LockTrace>(
-                        lockTrace, lockTraces.get(lock)));
+        List<LockTrace> list = lockTraces.get(lock);
+        if (list == null) {
+            list = new ArrayList<LockTrace>();
+            lockTraces.put(lock, list);
+        }
+        list.add(lockTrace);
         return lockTrace;
     }
 
@@ -1259,46 +1235,9 @@ public final class IntrinsicLockDurationRowInserter {
      * @param lock
      */
     private void gcLock(long lock) {
-        for (SLList<LockTrace> list = lockTraces.put(lock, null); list != null; list = list.parent) {
-            LockTrace trace = list.elem;
-            trace.parent.children = removeElem(trace.parent.children, trace);
+        for (LockTrace lockTrace : lockTraces.put(lock, null)) {
+            lockTrace.expunge();
         }
+        lockTraceRoots.put(lock, null);
     }
-
-    /**
-     * Remove an element from the singly linked list. Return the new list.
-     * Modifies the old list to do this, so don't use it anymore.
-     * 
-     * @param list
-     * @param elem
-     * @return
-     */
-    private <T> SLList<T> removeElem(SLList<T> list, T elem) {
-        if (list == null) {
-            return list;
-        } else if (list.elem.equals(elem)) {
-            return list.parent;
-        } else {
-            list.parent = removeElem(list.parent, elem);
-            return list;
-        }
-    }
-
-    /**
-     * Mutable singly linked list. A null parent indicates that this is the last
-     * element in the list.
-     * 
-     * 
-     * @param <T>
-     */
-    static class SLList<T> {
-        SLList<T> parent;
-        final T elem;
-
-        SLList(T elem, SLList<T> parent) {
-            this.elem = elem;
-            this.parent = parent;
-        }
-    }
-
 }

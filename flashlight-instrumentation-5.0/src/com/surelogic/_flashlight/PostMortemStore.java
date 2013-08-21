@@ -375,7 +375,6 @@ public class PostMortemStore implements StoreListener {
         putInQueue(f_rawQueue, last);
         join(f_refinery);
         join(f_depository);
-        Traces.logNodes();
     }
 
     static final int LOCAL_QUEUE_MAX = 256;

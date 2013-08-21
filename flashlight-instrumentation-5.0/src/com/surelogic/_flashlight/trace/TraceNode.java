@@ -78,12 +78,10 @@ public class TraceNode extends AbstractCallLocation {
      */
     TraceNode pushTraceNode(State s, long siteId) {
         synchronized (this) {
-            TraceNode c = child;
-            while (c != null) {
-                if (c.getSiteId() == siteId) {
-                    return c;
+            for (TraceNode node = child; node != null; node = node.sibling) {
+                if (node.getSiteId() == siteId) {
+                    return node;
                 }
-                c = c.sibling;
             }
             child = new TraceNode(this, child, siteId);
         }
@@ -145,13 +143,21 @@ public class TraceNode extends AbstractCallLocation {
         }
         writer.println(toString());
         synchronized (this) {
-            TraceNode c = child;
-            while (c != null) {
-                num += c.printNodeTree(depth + 1, writer);
-                c = c.sibling;
+            for (TraceNode node = child; node != null; node = node.sibling) {
+                num += node.printNodeTree(depth + 1, writer);
             }
         }
         return num;
+    }
+
+    public int getNodeCount() {
+        int count = 1;
+        synchronized (this) {
+            for (TraceNode node = child; node != null; node = node.sibling) {
+                count += node.getNodeCount();
+            }
+        }
+        return count;
     }
 
 }

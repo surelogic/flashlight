@@ -4,10 +4,12 @@ import java.util.List;
 
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
@@ -58,24 +60,28 @@ public final class QueryResultsView extends AbstractQueryResultsView {
   private void setupOverview(@NonNull final Composite parent, @NonNull final RunDirectory run) {
     final Composite panel = new Composite(parent, SWT.NONE);
     panel.setLayout(new GridLayout());
-    {
-      final Composite runId = new Composite(panel, SWT.NONE);
-      runId.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
-      runId.setLayout(new GridLayout(2, false));
-      // runId.setBackground(panel.getDisplay().getSystemColor(SWT.COLOR_DARK_CYAN));
-      Label image = new Label(runId, SWT.NONE);
-      image.setImage(getImage(run));
-      image.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, false, 1, 2));
-      Label nameLabel = new Label(runId, SWT.NONE);
-      nameLabel.setText(run.getDescription().getName());
-      nameLabel.setFont(JFaceResources.getFontRegistry().getBold(JFaceResources.HEADER_FONT));
-      nameLabel.setLayoutData(new GridData(SWT.FILL, SWT.BOTTOM, true, true));
-      Label dirLabel = new Label(runId, SWT.NONE);
-      dirLabel.setText(run.getDirectory().getAbsolutePath());
-      dirLabel.setForeground(EclipseColorUtility.getSubtleTextColor());
-      dirLabel.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true));
-    }
 
+    /*
+     * Run identification
+     */
+    final Composite runId = new Composite(panel, SWT.NONE);
+    runId.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+    runId.setLayout(new GridLayout(2, false));
+    Label image = new Label(runId, SWT.NONE);
+    image.setImage(getImage(run));
+    image.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, false, 1, 2));
+    Label nameLabel = new Label(runId, SWT.NONE);
+    nameLabel.setText(run.getDescription().getName());
+    nameLabel.setFont(JFaceResources.getFontRegistry().getBold(JFaceResources.HEADER_FONT));
+    nameLabel.setLayoutData(new GridData(SWT.FILL, SWT.BOTTOM, true, true));
+    Label dirLabel = new Label(runId, SWT.NONE);
+    dirLabel.setText(run.getDirectory().getAbsolutePath());
+    dirLabel.setForeground(EclipseColorUtility.getSubtleTextColor());
+    dirLabel.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true));
+
+    /*
+     * Good news / bad news panel
+     */
     final Composite newsPanel = new Composite(panel, SWT.NONE);
     newsPanel.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
     final GridLayout newsPanelLayout = new GridLayout(2, true);
@@ -84,10 +90,14 @@ public final class QueryResultsView extends AbstractQueryResultsView {
     newsPanel.setLayout(newsPanelLayout);
     newsPanel.setBackground(EclipseColorUtility.getSubtleTextColor());
 
-    final Composite goodNews = new Composite(newsPanel, SWT.NONE);
-    goodNews.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+    final ScrolledComposite goodSc = new ScrolledComposite(newsPanel, SWT.V_SCROLL | SWT.H_SCROLL);
+    goodSc.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+    goodSc.setLayout(new FillLayout());
+    final Composite goodNews = new Composite(goodSc, SWT.NONE);
+    goodSc.setExpandHorizontal(true);
+    goodSc.setExpandVertical(true);
+    goodSc.setContent(goodNews);
     goodNews.setLayout(new GridLayout());
-    goodNews.setBackground(panel.getDisplay().getSystemColor(SWT.COLOR_LIST_BACKGROUND));
 
     final Label goodNewsLabel = new Label(goodNews, SWT.CENTER);
     goodNewsLabel.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
@@ -96,10 +106,14 @@ public final class QueryResultsView extends AbstractQueryResultsView {
     goodNewsLabel.setBackground(panel.getDisplay().getSystemColor(SWT.COLOR_LIST_FOREGROUND));
     goodNewsLabel.setForeground(panel.getDisplay().getSystemColor(SWT.COLOR_LIST_BACKGROUND));
 
-    final Composite badNews = new Composite(newsPanel, SWT.NONE);
-    badNews.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+    final ScrolledComposite badSc = new ScrolledComposite(newsPanel, SWT.V_SCROLL | SWT.H_SCROLL);
+    badSc.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+    badSc.setLayout(new FillLayout());
+    final Composite badNews = new Composite(badSc, SWT.NONE);
+    badSc.setExpandHorizontal(true);
+    badSc.setExpandVertical(true);
+    badSc.setContent(badNews);
     badNews.setLayout(new GridLayout());
-    badNews.setBackground(panel.getDisplay().getSystemColor(SWT.COLOR_LIST_BACKGROUND));
 
     final Label badNewsLabel = new Label(badNews, SWT.CENTER);
     badNewsLabel.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
@@ -109,6 +123,9 @@ public final class QueryResultsView extends AbstractQueryResultsView {
     badNewsLabel.setForeground(panel.getDisplay().getSystemColor(SWT.COLOR_LIST_BACKGROUND));
 
     setupNewsItems(run, goodNews, badNews);
+
+    goodSc.setMinSize(goodNews.computeSize(SWT.DEFAULT, SWT.DEFAULT));
+    badSc.setMinSize(badNews.computeSize(SWT.DEFAULT, SWT.DEFAULT));
   }
 
   private void setupNewsItems(@NonNull final RunDirectory run, @NonNull final Composite goodNews, @NonNull final Composite badNews) {

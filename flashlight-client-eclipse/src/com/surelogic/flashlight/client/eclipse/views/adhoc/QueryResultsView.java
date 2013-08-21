@@ -124,8 +124,22 @@ public final class QueryResultsView extends AbstractQueryResultsView {
 
     setupNewsItems(run, goodNews, badNews);
 
+    if (goodNews.getChildren().length == 1) {
+      addNoneLabel(goodNews);
+    }
+    if (badNews.getChildren().length == 1) {
+      addNoneLabel(badNews);
+    }
+
     goodSc.setMinSize(goodNews.computeSize(SWT.DEFAULT, SWT.DEFAULT));
     badSc.setMinSize(badNews.computeSize(SWT.DEFAULT, SWT.DEFAULT));
+  }
+
+  private void addNoneLabel(@NonNull final Composite to) {
+    final Label none = new Label(to, SWT.WRAP);
+    none.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+    none.setText("None");
+    none.setFont(JFaceResources.getFontRegistry().getItalic(""));
   }
 
   private void setupNewsItems(@NonNull final RunDirectory run, @NonNull final Composite goodNews, @NonNull final Composite badNews) {

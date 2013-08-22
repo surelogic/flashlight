@@ -73,7 +73,7 @@ public final class QueryResultsView extends AbstractQueryResultsView {
      * Warn if no useful data
      */
     if (isRunUseless(run)) {
-      Label badRunLabel = new Label(panel, SWT.CENTER);
+      Label badRunLabel = new Label(panel, SWT.CENTER | SWT.WRAP);
       badRunLabel.setText(I18N.msg("flashlight.warn.emptyrun"));
       badRunLabel.setFont(JFaceResources.getFontRegistry().getBold(JFaceResources.HEADER_FONT));
       badRunLabel.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
@@ -87,14 +87,14 @@ public final class QueryResultsView extends AbstractQueryResultsView {
     final Composite runId = new Composite(panel, SWT.NONE);
     runId.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
     runId.setLayout(new GridLayout(2, false));
-    Label image = new Label(runId, SWT.NONE);
+    Label image = new Label(runId, SWT.WRAP);
     image.setImage(getImage(run));
     image.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, false, 1, 2));
     Label nameLabel = new Label(runId, SWT.NONE);
     nameLabel.setText(run.getDescription().getName());
     nameLabel.setFont(JFaceResources.getFontRegistry().getBold(JFaceResources.HEADER_FONT));
     nameLabel.setLayoutData(new GridData(SWT.FILL, SWT.BOTTOM, true, true));
-    Label dirLabel = new Label(runId, SWT.NONE);
+    Label dirLabel = new Label(runId, SWT.WRAP);
     dirLabel.setText(run.getDirectory().getAbsolutePath());
     dirLabel.setForeground(EclipseColorUtility.getSubtleTextColor());
     dirLabel.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true));

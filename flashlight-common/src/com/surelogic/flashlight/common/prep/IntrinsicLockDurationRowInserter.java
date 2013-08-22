@@ -54,7 +54,7 @@ public final class IntrinsicLockDurationRowInserter {
 
     enum Queries {
         LOCK_DURATION(
-                "INSERT INTO LOCKDURATION (InThread,Lock,Start,StartEvent,Stop,StopEvent,Duration,State) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"), LOCKS_HELD(
+                "INSERT INTO LOCKDURATION (InThread,Lock,Start,StartEvent,StartTrace,Stop,StopEvent,StopTrace,Duration,State) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"), LOCKS_HELD(
                 "INSERT INTO LOCKSHELD (LockEvent,LockHeldEvent,LockHeld,LockAcquired,InThread) VALUES (?, ?, ?, ?, ?)"), LOCK_CYCLE(
                 "INSERT INTO LOCKCYCLE (Component,LockHeld,LockAcquired,Count,FirstTime,LastTime) VALUES (?, ?, ?, ?, ?, ?)"), INSERT_LOCK(
                 "INSERT INTO LOCK (Id,TS,InThread,Trace,LockTrace,Lock,Object,Type,State,Success,LockIsThis,LockIsClass) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"), LOCK_COMPONENT(
@@ -93,6 +93,7 @@ public final class IntrinsicLockDurationRowInserter {
         long _lock;
         long _object;
         long _trace;
+        LockTrace _lockTrace;
         Timestamp _time;
         LockState _startEvent;
 
@@ -114,6 +115,10 @@ public final class IntrinsicLockDurationRowInserter {
 
         public long getTrace() {
             return _trace;
+        }
+
+        public LockTrace getLockTrace() {
+            return _lockTrace;
         }
 
         public Timestamp getTime() {
@@ -192,8 +197,8 @@ public final class IntrinsicLockDurationRowInserter {
         }
 
         public void update(final State mutableState, final long id,
-                final long trace, final long object, final Timestamp time,
-                final LockState startEvent,
+                final long trace, final LockTrace lockTrace, final long object,
+                final Timestamp time, final LockState startEvent,
                 final IntrinsicLockDurationState lockState) {
             if (mutableState.getLockState() == IntrinsicLockDurationState.HOLDING) {
                 assert lockState != IntrinsicLockDurationState.HOLDING;
@@ -214,6 +219,7 @@ public final class IntrinsicLockDurationRowInserter {
             mutableState._time = time;
             mutableState._startEvent = startEvent;
             mutableState._lockState = lockState;
+            mutableState._lockTrace = lockTrace;
         }
 
     }
@@ -742,7 +748,8 @@ public final class IntrinsicLockDurationRowInserter {
                                 }
                                 recordStateDuration(thread, state.getLock(),
                                         state.getTime(), state.getId(),
-                                        endTime, FINAL_EVENT,
+                                        state.getLockTrace(), endTime,
+                                        FINAL_EVENT, lockToState.lockTrace,
                                         state.getLockState());
                             }
                         }
@@ -778,8 +785,8 @@ public final class IntrinsicLockDurationRowInserter {
             final IntrinsicLockDurationState lockState,
             final ThreadState lockToState) {
         final IntrinsicLockDurationState oldLockState = state.getLockState();
-        lockToState.update(state, id, trace, object, time, startEvent,
-                lockState);
+        lockToState.update(state, id, trace, lockToState.lockTrace, object,
+                time, startEvent, lockState);
         updateThreadStatus(id, time, inThread, oldLockState, lockState);
     }
 
@@ -874,18 +881,20 @@ public final class IntrinsicLockDurationRowInserter {
             }
             break;
         case BLOCKING:
-            handlePossibleLockAcquire(id, time, inThread, trace, lock, object,
-                    lockEvent, LockState.AFTER_ACQUISITION, lockToState, state,
-                    success);
+            handlePossibleLockAcquire(id, time, inThread, trace,
+                    lockToState.lockTrace, lock, object, lockEvent,
+                    LockState.AFTER_ACQUISITION, lockToState, state, success);
             break;
 
         case HOLDING:
-            handleEventWhileHolding(id, time, inThread, trace, lock, object,
-                    lockEvent, state, lockToState);
+            handleEventWhileHolding(id, time, inThread, trace,
+                    lockToState.lockTrace, lock, object, lockEvent, state,
+                    lockToState);
             break;
         case WAITING:
-            handlePossibleLockAcquire(id, time, inThread, trace, lock, object,
-                    lockEvent, LockState.AFTER_WAIT, lockToState, state, true);
+            handlePossibleLockAcquire(id, time, inThread, trace,
+                    lockToState.lockTrace, lock, object, lockEvent,
+                    LockState.AFTER_WAIT, lockToState, state, true);
             break;
         default:
             SLLogger.getLogger().log(Level.SEVERE,
@@ -898,9 +907,9 @@ public final class IntrinsicLockDurationRowInserter {
      * timesEntered = 1, otherwise Hold-1
      */
     private void handleEventWhileHolding(final long id, final Timestamp time,
-            final long inThread, final long trace, final long lock,
-            final long object, final LockState lockEvent, final State state,
-            final ThreadState lockToState) {
+            final long inThread, final long trace, final LockTrace lockTrace,
+            final long lock, final long object, final LockState lockEvent,
+            final State state, final ThreadState lockToState) {
         assert state.getTimesEntered() > 0;
         switch (lockEvent) {
         case BEFORE_ACQUISITION:
@@ -912,7 +921,8 @@ public final class IntrinsicLockDurationRowInserter {
         case BEFORE_WAIT:
             state.lockReleased();
             recordStateDuration(inThread, lock, state.getTime(), state.getId(),
-                    time, id, state.getLockState());
+                    state.getLockTrace(), time, id, lockTrace,
+                    state.getLockState());
             updateState(state, id, time, inThread, trace, object, lockEvent,
                     IntrinsicLockDurationState.WAITING, lockToState);
             break;
@@ -926,7 +936,8 @@ public final class IntrinsicLockDurationRowInserter {
                     : IntrinsicLockDurationState.HOLDING;
             if (state.getTimesEntered() == 0) {
                 recordStateDuration(inThread, lock, state.getTime(),
-                        state.getId(), time, id, state.getLockState());
+                        state.getId(), state.getLockTrace(), time, id,
+                        lockTrace, state.getLockState());
                 updateState(state, id, time, inThread, trace, object,
                         lockEvent, newState, lockToState);
             }
@@ -938,8 +949,8 @@ public final class IntrinsicLockDurationRowInserter {
     }
 
     private void handlePossibleLockAcquire(final long id, final Timestamp time,
-            final long inThread, final long trace, final long lock,
-            final long object, final LockState lockEvent,
+            final long inThread, final long trace, final LockTrace lockTrace,
+            final long lock, final long object, final LockState lockEvent,
             final LockState eventToMatch, final ThreadState lockToState,
             final State state, final boolean success) {
         if (lockEvent == eventToMatch) {
@@ -948,7 +959,8 @@ public final class IntrinsicLockDurationRowInserter {
                 noteHeldLocks(id, time, inThread, lock, lockToState);
             }
             recordStateDuration(inThread, lock, state.getTime(), state.getId(),
-                    time, id, state.getLockState());
+                    state.getLockTrace(), time, id, lockTrace,
+                    state.getLockState());
             updateState(state, id, time, inThread, trace, object, lockEvent,
                     success ? IntrinsicLockDurationState.HOLDING
                             : IntrinsicLockDurationState.IDLE, lockToState);
@@ -981,7 +993,8 @@ public final class IntrinsicLockDurationRowInserter {
 
     private void recordStateDuration(final long inThread, final long lock,
             final Timestamp startTime, final long startEvent,
-            final Timestamp stopTime, final long stopEvent,
+            final LockTrace startTrace, final Timestamp stopTime,
+            final long stopEvent, final LockTrace stopTrace,
             final IntrinsicLockDurationState state) {
         final PreparedStatement f_ps = statements.get(LOCK_DURATION);
         try {
@@ -990,9 +1003,18 @@ public final class IntrinsicLockDurationRowInserter {
             f_ps.setLong(idx++, lock);
             f_ps.setTimestamp(idx++, startTime, here);
             f_ps.setLong(idx++, startEvent);
+            if (startTrace == null) {
+                f_ps.setNull(idx++, Types.BIGINT);
+            } else {
+                f_ps.setLong(idx++, startTrace.getId());
+            }
             f_ps.setTimestamp(idx++, stopTime, here);
             f_ps.setLong(idx++, stopEvent);
-
+            if (stopTrace == null) {
+                f_ps.setNull(idx++, Types.BIGINT);
+            } else {
+                f_ps.setLong(idx++, stopTrace.getId());
+            }
             final long secs = stopTime.getTime() / 1000 - startTime.getTime()
                     / 1000;
             final long nanos = stopTime.getNanos() - startTime.getNanos();

@@ -33,7 +33,82 @@ INNER JOIN OBJECT FLCO ON
   FLCO.ID = FLO.TYPE
 ORDER BY 1,2,3,4
 </query>
-  <query id="1562545d-004b-4865-9f55-65ed4e37bcbb" description="How often is a lock held when this field is accessed after object construction in this thread?" revision="6" display="true">-- META-BEGIN(no-rows)
+  <query id="5fd98753-3fe5-47a2-ab6a-ed5070dd41b0" description="How often is a lock held when this field is accessed in this thread?" revision="6" display="true">-- META-BEGIN(no-rows)
+-- No locks are ever held when this field is accessed
+-- META-END
+-- META-BEGIN(doc)
+--&lt;p&gt;&lt;strong&gt;
+--    How often is a lock held when this field is accessed in this thread?
+--&lt;/strong&gt;&lt;/p&gt;
+--&lt;p&gt;
+--    Lists how often each lock was held when this particular field was
+--    accessed, as well as what proportion of the total number of field
+--    accesses that represents.  If the same lock is held on every access,
+--    we have an assurance that no race condition was observed for this
+--    field.
+--  
+--  &lt;table&gt;
+--    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
+--      
+--      
+--      &lt;tbody&gt;
+--	&lt;tr&gt;
+--	  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
+--	  &lt;td&gt;Table&lt;/td&gt;
+--	&lt;/tr&gt;
+--	&lt;tr&gt;
+--	  &lt;td rowspan=&quot;4&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
+--	  &lt;td&gt;Lock&lt;/td&gt;
+--	  &lt;td&gt;A lock identifier&lt;/td&gt;
+--	&lt;/tr&gt;
+--	&lt;tr&gt;
+--	  &lt;td&gt;Times Acquired&lt;/td&gt;
+--	  &lt;td&gt;The number of times this lock was acquired and held
+--	  while this field was accessed&lt;/td&gt;
+--	&lt;/tr&gt;
+--	&lt;tr&gt;
+--	  &lt;td&gt;Field Access Count&lt;/td&gt;
+--	  &lt;td&gt;The number of times this field was accessed&lt;/td&gt;
+--	&lt;/tr&gt;
+--	&lt;tr&gt;
+--	  &lt;td&gt;Percentage Held&lt;/td&gt;
+--	  &lt;td&gt;The proportion of times a lock was held when this field
+--	  was accessed to the total number of accesses, expressed as a
+--	  percentage&lt;/td&gt;
+--	&lt;/tr&gt;
+--      &lt;/tbody&gt;
+--  &lt;/table&gt;
+--&lt;/p&gt;
+--
+--&lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+--&lt;img src=&quot;how-often-is-a-lock-held-when-this-field-is-accessed-static.png&quot; /&gt;
+--&lt;p&gt;
+--The above example lists all of the locks that access the static field
+--&lt;code&gt;copyComponents&lt;/code&gt;, ordered by the percentage of all field
+--accesses the lock was held for.  &lt;code&gt;ArrayList-12&lt;/code&gt; was held
+--every time &lt;code&gt;copyComponents&lt;/code&gt; was accessed.
+--&lt;/p&gt;
+-- META-END
+SELECT 
+   CAST (((CAST (LOCKS.COUNT AS FLOAT)) / (CAST (ACCESSES.ACCESSCOUNT AS FLOAT))) * 100 AS DECIMAL) &quot;% Held__(suffix &apos;%&apos;)(r)&quot;,
+   LOCKS.LOCKID &quot;Lock__(&apos;lock.gif&apos;)&quot;,
+   LOCKS.COUNT &quot;Lock Acquired__(add-commas)(r)&quot;,
+   ACCESSES.ACCESSCOUNT &quot;?Field? Accesses__(add-commas)(r)&quot;,
+   LOCKS.LOCK &quot;Lock__(hide)&quot;
+FROM
+(SELECT OBJID(LOCK) &quot;LOCKID&quot;, LOCK, COUNT(LOCK) &quot;COUNT&quot;
+ FROM 
+  (SELECT L.LOCK FROM ACCESS A, ACCESSLOCKSHELD ALH, LOCK L
+   WHERE ALH.ACCESS = A.ID AND A.INTHREAD = ?Thread? AND L.ID = ALH.LASTACQUISITION AND A.FIELD = ?FieldId? 
+  UNION ALL 
+  SELECT LH.LOCKHELD &quot;LOCK&quot; FROM ACCESS A, ACCESSLOCKSHELD ALH, LOCKSHELD LH 
+   WHERE ALH.ACCESS = A.ID AND A.INTHREAD = ?Thread? AND LH.LOCKEVENT = ALH.LASTACQUISITION AND A.FIELD = ?FieldId? ) AS FOO
+ GROUP BY LOCK) AS LOCKS,
+(SELECT COUNT(*) &quot;ACCESSCOUNT&quot; 
+ FROM ACCESS A 
+ WHERE A.FIELD = ?FieldId? AND A.INTHREAD = ?Thread?) AS ACCESSES
+ORDER BY 1 DESC</query>
+  <query id="1562545d-004b-4865-9f55-65ed4e37bcbb" description="How often is a lock held when this field is accessed in this thread?" revision="7" display="true">-- META-BEGIN(no-rows)
 -- No locks are ever held when this field is accessed
 -- META-END
 -- META-BEGIN(doc)
@@ -93,11 +168,14 @@ ORDER BY 1,2,3,4
 --containing object was fully initialized.
 --&lt;/p&gt;
 -- META-END
-SELECT LOCKS.*, 
-       ACCESSES.ACCESSCOUNT &quot;?Field? Access Count__(add-commas)(r)&quot;,
-       CAST (((CAST (LOCKS.&quot;Times Acquired__(add-commas)(r)&quot; AS FLOAT)) / (CAST (ACCESSES.ACCESSCOUNT AS FLOAT))) * 100 AS DECIMAL) &quot;% Held__(suffix &apos;%&apos;)(r)&quot;
+SELECT 
+   CAST (((CAST (LOCKS.COUNT AS FLOAT)) / (CAST (ACCESSES.ACCESSCOUNT AS FLOAT))) * 100 AS DECIMAL) &quot;% Held__(suffix &apos;%&apos;)(r)&quot;,
+   LOCKS.LOCKID &quot;Lock__(&apos;lock.gif&apos;)&quot;,
+   LOCKS.COUNT &quot;Lock Acquired__(add-commas)(r)&quot;,
+   ACCESSES.ACCESSCOUNT &quot;?Field? Accesses__(add-commas)(r)&quot;,
+   LOCKS.LOCK &quot;Lock__(hide)&quot;
 FROM
-(SELECT OBJID(LOCK) &quot;Lock__(&apos;lock.gif&apos;)(r)&quot;, LOCK &quot;Lock__(hide)&quot;, COUNT(LOCK) &quot;Times Acquired__(add-commas)(r)&quot;
+(SELECT OBJID(LOCK) &quot;LOCKID&quot;, LOCK, COUNT(LOCK) &quot;COUNT&quot;
  FROM 
   (SELECT L.LOCK FROM ACCESS A, ACCESSLOCKSHELD ALH, LOCK L
    WHERE ALH.ACCESS = A.ID AND A.INTHREAD = ?Thread? AND L.ID = ALH.LASTACQUISITION AND A.FIELD = ?FieldId? AND A.RECEIVER = ?Receiver? AND A.UNDERCONSTRUCTION = &apos;N&apos;
@@ -107,8 +185,84 @@ FROM
  GROUP BY LOCK) AS LOCKS,
 (SELECT COUNT(*) &quot;ACCESSCOUNT&quot; 
  FROM ACCESS A 
- WHERE A.FIELD = ?FieldId? AND A.RECEIVER = ?Receiver? AND A.INTHREAD = ?Thread? AND A.UNDERCONSTRUCTION = &apos;N&apos;) AS ACCESSES</query>
-  <query id="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a" description="How often is a lock held when this field is accessed after object construction?" revision="14" display="true">-- META-BEGIN(no-rows)
+ WHERE A.FIELD = ?FieldId? AND A.RECEIVER = ?Receiver? AND A.INTHREAD = ?Thread? AND A.UNDERCONSTRUCTION = &apos;N&apos;) AS ACCESSES
+ORDER BY 1 DESC</query>
+  <query id="6a39e6ca-29e9-4093-ba03-0e9bd9503a1a" description="How often is a lock held when this field is accessed?" revision="20" display="true">-- META-BEGIN(no-rows)
+-- No locks are ever held when this field is accessed
+-- META-END
+-- META-BEGIN(doc)
+--&lt;p&gt;&lt;strong&gt;
+--    How often is a lock held when this field is accessed?
+--&lt;/strong&gt;&lt;/p&gt;
+--&lt;p&gt;
+--    Lists how often each lock was held when this particular field was
+--    accessed, as well as what proportion of the total number of field
+--    accesses that represents.  If the same lock is held on every access,
+--    we have an assurance that no race condition was observed for this
+--    field.
+--  
+--  &lt;table&gt;
+--    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
+--      
+--      
+--      &lt;tbody&gt;
+--	&lt;tr&gt;
+--	  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
+--	  &lt;td&gt;Table&lt;/td&gt;
+--	&lt;/tr&gt;
+--	&lt;tr&gt;
+--	  &lt;td rowspan=&quot;4&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
+--	  &lt;td&gt;Lock&lt;/td&gt;
+--	  &lt;td&gt;A lock identifier&lt;/td&gt;
+--	&lt;/tr&gt;
+--	&lt;tr&gt;
+--	  &lt;td&gt;Times Acquired&lt;/td&gt;
+--	  &lt;td&gt;The number of times this lock was acquired and held
+--	  while this field was accessed&lt;/td&gt;
+--	&lt;/tr&gt;
+--	&lt;tr&gt;
+--	  &lt;td&gt;Field Access Count&lt;/td&gt;
+--	  &lt;td&gt;The number of times this field was accessed&lt;/td&gt;
+--	&lt;/tr&gt;
+--	&lt;tr&gt;
+--	  &lt;td&gt;Percentage Held&lt;/td&gt;
+--	  &lt;td&gt;The proportion of times a lock was held when this field
+--	  was accessed to the total number of accesses, expressed as a
+--	  percentage&lt;/td&gt;
+--	&lt;/tr&gt;
+--      &lt;/tbody&gt;
+--  &lt;/table&gt;
+--&lt;/p&gt;
+--
+--&lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+--&lt;img src=&quot;how-often-is-a-lock-held-when-this-field-is-accessed-static.png&quot; /&gt;
+--&lt;p&gt;
+--The above example lists all of the locks that access the static field
+--&lt;code&gt;copyComponents&lt;/code&gt;, ordered by the percentage of all field
+--accesses the lock was held for.  &lt;code&gt;ArrayList-12&lt;/code&gt; was held
+--every time &lt;code&gt;copyComponents&lt;/code&gt; was accessed.
+--&lt;/p&gt;
+-- META-END
+SELECT 
+   CAST (((CAST (LOCKS.COUNT AS FLOAT)) / (CAST (ACCESSES.ACCESSCOUNT AS FLOAT))) * 100 AS DECIMAL) &quot;% Held__(suffix &apos;%&apos;)(r)&quot;,
+   LOCKS.LOCKID &quot;Lock__(&apos;lock.gif&apos;)&quot;,
+   LOCKS.COUNT &quot;Lock Acquired__(add-commas)(r)&quot;,
+   ACCESSES.ACCESSCOUNT &quot;?Field? Accesses__(add-commas)(r)&quot;,
+   LOCKS.LOCK &quot;Lock__(hide)&quot;
+FROM
+(SELECT OBJID(LOCK) &quot;LOCKID&quot;, LOCK, COUNT(LOCK) &quot;COUNT&quot;
+ FROM 
+  (SELECT L.LOCK FROM ACCESS A, ACCESSLOCKSHELD ALH, LOCK L
+   WHERE ALH.ACCESS = A.ID AND L.ID = ALH.LASTACQUISITION AND A.FIELD = ?FieldId? 
+  UNION ALL 
+  SELECT LH.LOCKHELD &quot;LOCK&quot; FROM ACCESS A, ACCESSLOCKSHELD ALH, LOCKSHELD LH 
+   WHERE ALH.ACCESS = A.ID AND LH.LOCKEVENT = ALH.LASTACQUISITION AND A.FIELD = ?FieldId? ) AS FOO
+ GROUP BY LOCK) AS LOCKS,
+(SELECT COUNT(*) &quot;ACCESSCOUNT&quot; 
+ FROM ACCESS A 
+ WHERE A.FIELD = ?FieldId?) AS ACCESSES
+ORDER BY 1 DESC</query>
+  <query id="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a" description="How often is a lock held when this field is accessed?" revision="15" display="true">-- META-BEGIN(no-rows)
 -- No locks are ever held when this field is accessed
 -- META-END
 -- META-BEGIN(doc)
@@ -168,11 +322,14 @@ FROM
 --containing object was fully initialized.
 --&lt;/p&gt;
 -- META-END
-SELECT LOCKS.*, 
-       ACCESSES.ACCESSCOUNT &quot;?Field? Access Count__(add-commas)(r)&quot;,
-       CAST (((CAST (LOCKS.&quot;Times Acquired__(add-commas)(r)&quot; AS FLOAT)) / (CAST (ACCESSES.ACCESSCOUNT AS FLOAT))) * 100 AS DECIMAL) &quot;% Held__(suffix &apos;%&apos;)(r)&quot;
+SELECT 
+   CAST (((CAST (LOCKS.COUNT AS FLOAT)) / (CAST (ACCESSES.ACCESSCOUNT AS FLOAT))) * 100 AS DECIMAL) &quot;% Held__(suffix &apos;%&apos;)(r)&quot;,
+   LOCKS.LOCKID &quot;Lock__(&apos;lock.gif&apos;)&quot;,
+   LOCKS.COUNT &quot;Lock Acquired__(add-commas)(r)&quot;,
+   ACCESSES.ACCESSCOUNT &quot;?Field? Accesses__(add-commas)(r)&quot;,
+   LOCKS.LOCK &quot;Lock__(hide)&quot;
 FROM
-(SELECT OBJID(LOCK) &quot;Lock__(&apos;lock.gif&apos;)(r)&quot;, LOCK &quot;Lock__(hide)&quot;, COUNT(LOCK) &quot;Times Acquired__(add-commas)(r)&quot;
+(SELECT OBJID(LOCK) &quot;LOCKID&quot;, LOCK , COUNT(LOCK) &quot;COUNT&quot;
  FROM 
   (SELECT L.LOCK FROM ACCESS A, ACCESSLOCKSHELD ALH, LOCK L
    WHERE ALH.ACCESS = A.ID AND L.ID = ALH.LASTACQUISITION AND A.FIELD = ?FieldId? AND A.RECEIVER = ?Receiver? AND A.UNDERCONSTRUCTION = &apos;N&apos;
@@ -182,293 +339,8 @@ FROM
  GROUP BY LOCK) AS LOCKS,
 (SELECT COUNT(*) &quot;ACCESSCOUNT&quot; 
  FROM ACCESS A 
- WHERE A.FIELD = ?FieldId? AND A.RECEIVER = ?Receiver? AND A.UNDERCONSTRUCTION = &apos;N&apos;) AS ACCESSES</query>
-  <query id="5fd98753-3fe5-47a2-ab6a-ed5070dd41b0" description="How often is a lock held when this field is accessed in this thread?" revision="5" display="true">-- META-BEGIN(no-rows)
--- No locks are ever held when this field is accessed
--- META-END
--- META-BEGIN(doc)
---&lt;p&gt;&lt;strong&gt;
---    How often is a lock held when this field is accessed in this thread?
---&lt;/strong&gt;&lt;/p&gt;
---&lt;p&gt;
---    Lists how often each lock was held when this particular field was
---    accessed, as well as what proportion of the total number of field
---    accesses that represents.  If the same lock is held on every access,
---    we have an assurance that no race condition was observed for this
---    field.
---  
---  &lt;table&gt;
---    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
---      
---      
---      &lt;tbody&gt;
---	&lt;tr&gt;
---	  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
---	  &lt;td&gt;Table&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td rowspan=&quot;4&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
---	  &lt;td&gt;Lock&lt;/td&gt;
---	  &lt;td&gt;A lock identifier&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Times Acquired&lt;/td&gt;
---	  &lt;td&gt;The number of times this lock was acquired and held
---	  while this field was accessed&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Field Access Count&lt;/td&gt;
---	  &lt;td&gt;The number of times this field was accessed&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Percentage Held&lt;/td&gt;
---	  &lt;td&gt;The proportion of times a lock was held when this field
---	  was accessed to the total number of accesses, expressed as a
---	  percentage&lt;/td&gt;
---	&lt;/tr&gt;
---      &lt;/tbody&gt;
---  &lt;/table&gt;
---&lt;/p&gt;
---
---&lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
---&lt;img src=&quot;how-often-is-a-lock-held-when-this-field-is-accessed-static.png&quot; /&gt;
---&lt;p&gt;
---The above example lists all of the locks that access the static field
---&lt;code&gt;copyComponents&lt;/code&gt;, ordered by the percentage of all field
---accesses the lock was held for.  &lt;code&gt;ArrayList-12&lt;/code&gt; was held
---every time &lt;code&gt;copyComponents&lt;/code&gt; was accessed.
---&lt;/p&gt;
--- META-END
-SELECT LOCKS.*, 
-       ACCESSES.ACCESSCOUNT &quot;?Field? Access Count__(add-commas)(r)&quot;,
-       CAST (((CAST (LOCKS.&quot;Times Acquired__(add-commas)(r)&quot; AS FLOAT)) / (CAST (ACCESSES.ACCESSCOUNT AS FLOAT))) * 100 AS DECIMAL) &quot;% Held__(suffix &apos;%&apos;)(r)&quot;
-FROM
-(SELECT OBJID(LOCK) &quot;Lock__(&apos;lock.gif&apos;)(r)&quot;, LOCK &quot;Lock__(hide)&quot;, COUNT(LOCK) &quot;Times Acquired__(add-commas)(r)&quot;
- FROM 
-  (SELECT L.LOCK FROM ACCESS A, ACCESSLOCKSHELD ALH, LOCK L
-   WHERE ALH.ACCESS = A.ID AND A.INTHREAD = ?Thread? AND L.ID = ALH.LASTACQUISITION AND A.FIELD = ?FieldId? 
-  UNION ALL 
-  SELECT LH.LOCKHELD &quot;LOCK&quot; FROM ACCESS A, ACCESSLOCKSHELD ALH, LOCKSHELD LH 
-   WHERE ALH.ACCESS = A.ID AND A.INTHREAD = ?Thread? AND LH.LOCKEVENT = ALH.LASTACQUISITION AND A.FIELD = ?FieldId? ) AS FOO
- GROUP BY LOCK) AS LOCKS,
-(SELECT COUNT(*) &quot;ACCESSCOUNT&quot; 
- FROM ACCESS A 
- WHERE A.FIELD = ?FieldId? AND A.INTHREAD = ?Thread?) AS ACCESSES</query>
-  <query id="04175074-ed4a-4b7c-8102-8ec24e0f096d" description="How often is a lock held when this field is accessed in this thread?" revision="6" display="true">-- META-BEGIN(no-rows)
--- No locks are ever held when this field is accessed
--- META-END
--- META-BEGIN(doc)
---&lt;p&gt;&lt;strong&gt;
---    How often is a lock held when this field is accessed in this thread?
---&lt;/strong&gt;&lt;/p&gt;
---&lt;p&gt;
---    Lists how often each lock was held when this particular field was
---    accessed, as well as what proportion of the total number of field
---    accesses that represents.  If the same lock is held on every access,
---    we have an assurance that no race condition was observed for this
---    field.
---  
---  &lt;table&gt;
---    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
---      
---      
---      &lt;tbody&gt;
---	&lt;tr&gt;
---	  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
---	  &lt;td&gt;Table&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td rowspan=&quot;4&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
---	  &lt;td&gt;Lock&lt;/td&gt;
---	  &lt;td&gt;A lock identifier&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Times Acquired&lt;/td&gt;
---	  &lt;td&gt;The number of times this lock was acquired and held
---	  while this field was accessed&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Field Access Count&lt;/td&gt;
---	  &lt;td&gt;The number of times this field was accessed&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Percentage Held&lt;/td&gt;
---	  &lt;td&gt;The proportion of times a lock was held when this field
---	  was accessed to the total number of accesses, expressed as a
---	  percentage&lt;/td&gt;
---	&lt;/tr&gt;
---      &lt;/tbody&gt;
---  &lt;/table&gt;
---&lt;/p&gt;
---&lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
---&lt;img src=&quot;how-often-is-a-lock-held-when-this-field-is-accessed-non-static.png&quot; /&gt;
---&lt;p&gt;
---The above example lists all of the locks that access this instance of
---&lt;code&gt;f_location&lt;/code&gt;, ordered by the percent of all field accesses
---the lock was held for.  The most commonly held lock was
---&lt;code&gt;ClientHandler-753&lt;/code&gt;, which was held 11 out of the 14 times
---this instance of &lt;code&gt;f_location&lt;/code&gt; was accessed.  This includes
---accesses made while the object was being constructed.
---&lt;/p&gt;
--- META-END
-SELECT LOCKS.*, 
-       ACCESSES.ACCESSCOUNT &quot;?Field? Access Count__(add-commas)(r)&quot;,
-       CAST (((CAST (LOCKS.&quot;Times Acquired__(add-commas)(r)&quot; AS FLOAT)) / (CAST (ACCESSES.ACCESSCOUNT AS FLOAT))) * 100 AS DECIMAL) &quot;% Held__(suffix &apos;%&apos;)(r)&quot;
-FROM
-(SELECT OBJID(LOCK) &quot;Lock__(&apos;lock.gif&apos;)(r)&quot;, LOCK &quot;Lock__(hide)&quot;, COUNT(LOCK) &quot;Times Acquired__(add-commas)(r)&quot;
- FROM 
-  (SELECT L.LOCK FROM ACCESS A, ACCESSLOCKSHELD ALH, LOCK L
-   WHERE ALH.ACCESS = A.ID AND L.ID = ALH.LASTACQUISITION AND A.FIELD = ?FieldId? AND A.RECEIVER = ?Receiver? AND A.INTHREAD = ?Thread?
-  UNION ALL 
-  SELECT LH.LOCKHELD &quot;LOCK&quot; FROM ACCESS A, ACCESSLOCKSHELD ALH, LOCKSHELD LH 
-   WHERE ALH.ACCESS = A.ID AND LH.LOCKEVENT = ALH.LASTACQUISITION AND A.FIELD = ?FieldId? AND A.RECEIVER = ?Receiver? AND A.INTHREAD = ?Thread?) AS FOO
- GROUP BY LOCK) AS LOCKS,
-(SELECT COUNT(*) &quot;ACCESSCOUNT&quot; 
- FROM ACCESS A 
- WHERE A.FIELD = ?FieldId? AND A.RECEIVER = ?Receiver? AND A.INTHREAD = ?Thread?) AS ACCESSES</query>
-  <query id="6a39e6ca-29e9-4093-ba03-0e9bd9503a1a" description="How often is a lock held when this field is accessed?" revision="19" display="true">-- META-BEGIN(no-rows)
--- No locks are ever held when this field is accessed
--- META-END
--- META-BEGIN(doc)
---&lt;p&gt;&lt;strong&gt;
---    How often is a lock held when this field is accessed?
---&lt;/strong&gt;&lt;/p&gt;
---&lt;p&gt;
---    Lists how often each lock was held when this particular field was
---    accessed, as well as what proportion of the total number of field
---    accesses that represents.  If the same lock is held on every access,
---    we have an assurance that no race condition was observed for this
---    field.
---  
---  &lt;table&gt;
---    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
---      
---      
---      &lt;tbody&gt;
---	&lt;tr&gt;
---	  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
---	  &lt;td&gt;Table&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td rowspan=&quot;4&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
---	  &lt;td&gt;Lock&lt;/td&gt;
---	  &lt;td&gt;A lock identifier&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Times Acquired&lt;/td&gt;
---	  &lt;td&gt;The number of times this lock was acquired and held
---	  while this field was accessed&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Field Access Count&lt;/td&gt;
---	  &lt;td&gt;The number of times this field was accessed&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Percentage Held&lt;/td&gt;
---	  &lt;td&gt;The proportion of times a lock was held when this field
---	  was accessed to the total number of accesses, expressed as a
---	  percentage&lt;/td&gt;
---	&lt;/tr&gt;
---      &lt;/tbody&gt;
---  &lt;/table&gt;
---&lt;/p&gt;
---
---&lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
---&lt;img src=&quot;how-often-is-a-lock-held-when-this-field-is-accessed-static.png&quot; /&gt;
---&lt;p&gt;
---The above example lists all of the locks that access the static field
---&lt;code&gt;copyComponents&lt;/code&gt;, ordered by the percentage of all field
---accesses the lock was held for.  &lt;code&gt;ArrayList-12&lt;/code&gt; was held
---every time &lt;code&gt;copyComponents&lt;/code&gt; was accessed.
---&lt;/p&gt;
--- META-END
-SELECT LOCKS.*, 
-       ACCESSES.ACCESSCOUNT &quot;?Field? Access Count__(add-commas)(r)&quot;,
-       CAST (((CAST (LOCKS.&quot;Times Acquired__(add-commas)(r)&quot; AS FLOAT)) / (CAST (ACCESSES.ACCESSCOUNT AS FLOAT))) * 100 AS DECIMAL) &quot;% Held__(suffix &apos;%&apos;)(r)&quot;
-FROM
-(SELECT OBJID(LOCK) &quot;Lock__(&apos;lock.gif&apos;)(r)&quot;, LOCK &quot;Lock__(hide)&quot;, COUNT(LOCK) &quot;Times Acquired__(add-commas)(r)&quot;
- FROM 
-  (SELECT L.LOCK FROM ACCESS A, ACCESSLOCKSHELD ALH, LOCK L
-   WHERE ALH.ACCESS = A.ID AND L.ID = ALH.LASTACQUISITION AND A.FIELD = ?FieldId? 
-  UNION ALL 
-  SELECT LH.LOCKHELD &quot;LOCK&quot; FROM ACCESS A, ACCESSLOCKSHELD ALH, LOCKSHELD LH 
-   WHERE ALH.ACCESS = A.ID AND LH.LOCKEVENT = ALH.LASTACQUISITION AND A.FIELD = ?FieldId? ) AS FOO
- GROUP BY LOCK) AS LOCKS,
-(SELECT COUNT(*) &quot;ACCESSCOUNT&quot; 
- FROM ACCESS A 
- WHERE A.FIELD = ?FieldId?) AS ACCESSES</query>
-  <query id="a1e89392-cd0c-4a41-85f1-44251d7a5e71" description="How often is a lock held when this field is accessed? " revision="19" display="true">-- META-BEGIN(no-rows)
--- No locks are ever held when this field is accessed
--- META-END
--- META-BEGIN(doc)
---&lt;p&gt;&lt;strong&gt;
---    How often is a lock held when this field is accessed?
---&lt;/strong&gt;&lt;/p&gt;
---&lt;p&gt;
---    Lists how often each lock was held when this particular field was
---    accessed, as well as what proportion of the total number of field
---    accesses that represents.  If the same lock is held on every access,
---    we have an assurance that no race condition was observed for this
---    field.
---  
---  &lt;table&gt;
---    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
---      
---      
---      &lt;tbody&gt;
---	&lt;tr&gt;
---	  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
---	  &lt;td&gt;Table&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td rowspan=&quot;4&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
---	  &lt;td&gt;Lock&lt;/td&gt;
---	  &lt;td&gt;A lock identifier&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Times Acquired&lt;/td&gt;
---	  &lt;td&gt;The number of times this lock was acquired and held
---	  while this field was accessed&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Field Access Count&lt;/td&gt;
---	  &lt;td&gt;The number of times this field was accessed&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Percentage Held&lt;/td&gt;
---	  &lt;td&gt;The proportion of times a lock was held when this field
---	  was accessed to the total number of accesses, expressed as a
---	  percentage&lt;/td&gt;
---	&lt;/tr&gt;
---      &lt;/tbody&gt;
---  &lt;/table&gt;
---&lt;/p&gt;
---&lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
---&lt;img src=&quot;how-often-is-a-lock-held-when-this-field-is-accessed-non-static.png&quot; /&gt;
---&lt;p&gt;
---The above example lists all of the locks that access this instance of
---&lt;code&gt;f_location&lt;/code&gt;, ordered by the percent of all field accesses
---the lock was held for.  The most commonly held lock was
---&lt;code&gt;ClientHandler-753&lt;/code&gt;, which was held 11 out of the 14 times
---this instance of &lt;code&gt;f_location&lt;/code&gt; was accessed.  This includes
---accesses made while the object was being constructed.
---&lt;/p&gt;
--- META-END
-SELECT LOCKS.*, 
-       ACCESSES.ACCESSCOUNT &quot;?Field? Access Count__(add-commas)(r)&quot;,
-       CAST (((CAST (LOCKS.&quot;Times Acquired__(add-commas)(r)&quot; AS FLOAT)) / (CAST (ACCESSES.ACCESSCOUNT AS FLOAT))) * 100 AS DECIMAL) &quot;% Held__(suffix &apos;%&apos;)(r)&quot;
-FROM
-(SELECT OBJID(LOCK) &quot;Lock__(&apos;lock.gif&apos;)(r)&quot;, LOCK &quot;Lock__(hide)&quot;, COUNT(LOCK) &quot;Times Acquired__(add-commas)(r)&quot;
- FROM 
-  (SELECT L.LOCK FROM ACCESS A, ACCESSLOCKSHELD ALH, LOCK L
-   WHERE ALH.ACCESS = A.ID AND L.ID = ALH.LASTACQUISITION AND A.FIELD = ?FieldId? AND A.RECEIVER = ?Receiver?
-  UNION ALL 
-  SELECT LH.LOCKHELD &quot;LOCK&quot; FROM ACCESS A, ACCESSLOCKSHELD ALH, LOCKSHELD LH 
-   WHERE ALH.ACCESS = A.ID AND LH.LOCKEVENT = ALH.LASTACQUISITION AND A.FIELD = ?FieldId? AND A.RECEIVER = ?Receiver?) AS FOO
- GROUP BY LOCK) AS LOCKS,
-(SELECT COUNT(*) &quot;ACCESSCOUNT&quot; 
- FROM ACCESS A 
- WHERE A.FIELD = ?FieldId? AND A.RECEIVER = ?Receiver?) AS ACCESSES</query>
+ WHERE A.FIELD = ?FieldId? AND A.RECEIVER = ?Receiver? AND A.UNDERCONSTRUCTION = &apos;N&apos;) AS ACCESSES
+ORDER BY 1 DESC</query>
   <query id="42031a55-4f1c-42dc-80dc-0fa141a32382" description="How often is a lock held when this object is indirectly accessed?" revision="11" display="true">-- META-BEGIN(no-rows)
 -- No locks are ever held when this field is indirectly accessed
 -- META-END
@@ -1813,7 +1685,7 @@ where
   and FS.FIELD = F.ID 
   and THO.ID = FS.Thread
 order by O.PackageName,O.ClassName,F.FieldName,THO.ThreadName</query>
-  <query id="2f505921-50fb-405b-bc78-4a5fe9228957" description="What fields (static) have a lock set? " revision="12" display="true" display-at-root="true">-- NO-ROWS-MSG=No non-final non-volatile static fields that are shared have a common lock held for each access.
+  <query id="2f505921-50fb-405b-bc78-4a5fe9228957" description="What fields (static) have a non-empty lock set? " revision="13" display="true" display-at-root="true">-- NO-ROWS-MSG=No non-final non-volatile static fields that are shared have a common lock held for each access.
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What fields (static) have a lock set?
@@ -5769,42 +5641,30 @@ group by lo.PackageName,lo.ClassName, lo.ClassCode, s.AtLine, tho.ThreadName, le
 order by lo.PackageName, lo.ClassName, s.AtLine, tho.ThreadName, sum(ld.Duration) desc
   </query>
 
-  <sub-query id="1562545d-004b-4865-9f55-65ed4e37bcbb" sub-query="ae0f22d4-2f02-47f0-8745-8fa60024eda4" is-default="10"/>
-  <sub-query id="1562545d-004b-4865-9f55-65ed4e37bcbb" sub-query="732daa1f-dac0-4f40-b714-8190f903d323"/>
-  <sub-query id="1562545d-004b-4865-9f55-65ed4e37bcbb" sub-query="d84c1559-9336-4255-a15d-51413859a005"/>
-  <sub-query id="1562545d-004b-4865-9f55-65ed4e37bcbb" sub-query="fd49f015-3585-4602-a5d1-4e67ef7b6a55"/>
-  <sub-query id="1562545d-004b-4865-9f55-65ed4e37bcbb" sub-query="39872cb4-369c-4dd8-90fd-1847a3f05dc9"/>
-  <sub-query id="1562545d-004b-4865-9f55-65ed4e37bcbb" sub-query="5ebba191-8523-4253-b639-872d6da4dc92"/>
-  <sub-query id="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a" sub-query="ae0f22d4-2f02-47f0-8745-8fa60024eda4" is-default="10"/>
-  <sub-query id="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a" sub-query="732daa1f-dac0-4f40-b714-8190f903d323"/>
-  <sub-query id="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a" sub-query="d84c1559-9336-4255-a15d-51413859a005"/>
-  <sub-query id="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a" sub-query="fd49f015-3585-4602-a5d1-4e67ef7b6a55"/>
-  <sub-query id="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a" sub-query="39872cb4-369c-4dd8-90fd-1847a3f05dc9"/>
-  <sub-query id="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a" sub-query="5ebba191-8523-4253-b639-872d6da4dc92"/>
   <sub-query id="5fd98753-3fe5-47a2-ab6a-ed5070dd41b0" sub-query="b8689ed4-28e4-4e81-a89f-e5c511ba54b5"/>
   <sub-query id="5fd98753-3fe5-47a2-ab6a-ed5070dd41b0" sub-query="ae0f22d4-2f02-47f0-8745-8fa60024eda4" is-default="10"/>
   <sub-query id="5fd98753-3fe5-47a2-ab6a-ed5070dd41b0" sub-query="732daa1f-dac0-4f40-b714-8190f903d323"/>
   <sub-query id="5fd98753-3fe5-47a2-ab6a-ed5070dd41b0" sub-query="fd49f015-3585-4602-a5d1-4e67ef7b6a55"/>
   <sub-query id="5fd98753-3fe5-47a2-ab6a-ed5070dd41b0" sub-query="5ebba191-8523-4253-b639-872d6da4dc92"/>
   <sub-query id="5fd98753-3fe5-47a2-ab6a-ed5070dd41b0" sub-query="ae568ab0-7c65-48cf-91a9-1ac97bd8221a"/>
-  <sub-query id="04175074-ed4a-4b7c-8102-8ec24e0f096d" sub-query="ae0f22d4-2f02-47f0-8745-8fa60024eda4" is-default="10"/>
-  <sub-query id="04175074-ed4a-4b7c-8102-8ec24e0f096d" sub-query="732daa1f-dac0-4f40-b714-8190f903d323"/>
-  <sub-query id="04175074-ed4a-4b7c-8102-8ec24e0f096d" sub-query="d84c1559-9336-4255-a15d-51413859a005"/>
-  <sub-query id="04175074-ed4a-4b7c-8102-8ec24e0f096d" sub-query="fd49f015-3585-4602-a5d1-4e67ef7b6a55"/>
-  <sub-query id="04175074-ed4a-4b7c-8102-8ec24e0f096d" sub-query="39872cb4-369c-4dd8-90fd-1847a3f05dc9"/>
-  <sub-query id="04175074-ed4a-4b7c-8102-8ec24e0f096d" sub-query="5ebba191-8523-4253-b639-872d6da4dc92"/>
+  <sub-query id="1562545d-004b-4865-9f55-65ed4e37bcbb" sub-query="ae0f22d4-2f02-47f0-8745-8fa60024eda4" is-default="10"/>
+  <sub-query id="1562545d-004b-4865-9f55-65ed4e37bcbb" sub-query="732daa1f-dac0-4f40-b714-8190f903d323"/>
+  <sub-query id="1562545d-004b-4865-9f55-65ed4e37bcbb" sub-query="d84c1559-9336-4255-a15d-51413859a005"/>
+  <sub-query id="1562545d-004b-4865-9f55-65ed4e37bcbb" sub-query="fd49f015-3585-4602-a5d1-4e67ef7b6a55"/>
+  <sub-query id="1562545d-004b-4865-9f55-65ed4e37bcbb" sub-query="39872cb4-369c-4dd8-90fd-1847a3f05dc9"/>
+  <sub-query id="1562545d-004b-4865-9f55-65ed4e37bcbb" sub-query="5ebba191-8523-4253-b639-872d6da4dc92"/>
   <sub-query id="6a39e6ca-29e9-4093-ba03-0e9bd9503a1a" sub-query="b8689ed4-28e4-4e81-a89f-e5c511ba54b5"/>
   <sub-query id="6a39e6ca-29e9-4093-ba03-0e9bd9503a1a" sub-query="ae0f22d4-2f02-47f0-8745-8fa60024eda4" is-default="10"/>
   <sub-query id="6a39e6ca-29e9-4093-ba03-0e9bd9503a1a" sub-query="732daa1f-dac0-4f40-b714-8190f903d323"/>
   <sub-query id="6a39e6ca-29e9-4093-ba03-0e9bd9503a1a" sub-query="fd49f015-3585-4602-a5d1-4e67ef7b6a55"/>
   <sub-query id="6a39e6ca-29e9-4093-ba03-0e9bd9503a1a" sub-query="5ebba191-8523-4253-b639-872d6da4dc92"/>
   <sub-query id="6a39e6ca-29e9-4093-ba03-0e9bd9503a1a" sub-query="ae568ab0-7c65-48cf-91a9-1ac97bd8221a"/>
-  <sub-query id="a1e89392-cd0c-4a41-85f1-44251d7a5e71" sub-query="ae0f22d4-2f02-47f0-8745-8fa60024eda4" is-default="10"/>
-  <sub-query id="a1e89392-cd0c-4a41-85f1-44251d7a5e71" sub-query="732daa1f-dac0-4f40-b714-8190f903d323"/>
-  <sub-query id="a1e89392-cd0c-4a41-85f1-44251d7a5e71" sub-query="d84c1559-9336-4255-a15d-51413859a005"/>
-  <sub-query id="a1e89392-cd0c-4a41-85f1-44251d7a5e71" sub-query="fd49f015-3585-4602-a5d1-4e67ef7b6a55"/>
-  <sub-query id="a1e89392-cd0c-4a41-85f1-44251d7a5e71" sub-query="39872cb4-369c-4dd8-90fd-1847a3f05dc9"/>
-  <sub-query id="a1e89392-cd0c-4a41-85f1-44251d7a5e71" sub-query="5ebba191-8523-4253-b639-872d6da4dc92"/>
+  <sub-query id="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a" sub-query="ae0f22d4-2f02-47f0-8745-8fa60024eda4" is-default="10"/>
+  <sub-query id="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a" sub-query="732daa1f-dac0-4f40-b714-8190f903d323"/>
+  <sub-query id="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a" sub-query="d84c1559-9336-4255-a15d-51413859a005"/>
+  <sub-query id="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a" sub-query="fd49f015-3585-4602-a5d1-4e67ef7b6a55"/>
+  <sub-query id="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a" sub-query="39872cb4-369c-4dd8-90fd-1847a3f05dc9"/>
+  <sub-query id="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a" sub-query="5ebba191-8523-4253-b639-872d6da4dc92"/>
   <sub-query id="42031a55-4f1c-42dc-80dc-0fa141a32382" sub-query="ae0f22d4-2f02-47f0-8745-8fa60024eda4" is-default="10"/>
   <sub-query id="42031a55-4f1c-42dc-80dc-0fa141a32382" sub-query="732daa1f-dac0-4f40-b714-8190f903d323"/>
   <sub-query id="42031a55-4f1c-42dc-80dc-0fa141a32382" sub-query="fd49f015-3585-4602-a5d1-4e67ef7b6a55"/>
@@ -5873,7 +5733,6 @@ order by lo.PackageName, lo.ClassName, s.AtLine, tho.ThreadName, sum(ld.Duration
   <sub-query id="dd2ea83c-1940-4985-ace7-a578471e3b54" sub-query="078a8b6c-1fad-4843-94f9-fe005eb66b73"/>
   <sub-query id="66e6163a-a8db-425a-8471-6df5bd9d48b4" sub-query="83d613b3-283e-4100-9a82-e42adf107fe6" is-default="10"/>
   <sub-query id="649dff6b-1e60-4c03-8118-d98d93a9f586" sub-query="16872df3-2b60-4827-8f71-95b71e65c349" is-default="10"/>
-  <sub-query id="649dff6b-1e60-4c03-8118-d98d93a9f586" sub-query="04175074-ed4a-4b7c-8102-8ec24e0f096d"/>
   <sub-query id="649dff6b-1e60-4c03-8118-d98d93a9f586" sub-query="1562545d-004b-4865-9f55-65ed4e37bcbb"/>
   <sub-query id="649dff6b-1e60-4c03-8118-d98d93a9f586" sub-query="598a178b-7153-4e1c-978e-1b78b1d95799"/>
   <sub-query id="649dff6b-1e60-4c03-8118-d98d93a9f586" sub-query="fdd4eb5b-7e43-4285-a8a5-71a7b09c182f"/>
@@ -5881,37 +5740,30 @@ order by lo.PackageName, lo.ClassName, s.AtLine, tho.ThreadName, sum(ld.Duration
   <sub-query id="f7ed1ced-73a5-4790-bc7c-8ba5fdf114a6" sub-query="598a178b-7153-4e1c-978e-1b78b1d95799" is-default="10"/>
   <sub-query id="f7ed1ced-73a5-4790-bc7c-8ba5fdf114a6" sub-query="fdd4eb5b-7e43-4285-a8a5-71a7b09c182f"/>
   <sub-query id="f7ed1ced-73a5-4790-bc7c-8ba5fdf114a6" sub-query="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a"/>
-  <sub-query id="f7ed1ced-73a5-4790-bc7c-8ba5fdf114a6" sub-query="a1e89392-cd0c-4a41-85f1-44251d7a5e71"/>
   <sub-query id="f7ed1ced-73a5-4790-bc7c-8ba5fdf114a6" sub-query="106c3818-78f2-4983-812a-0e83ca3cde89"/>
   <sub-query id="708d1b8a-5274-4a25-b0b4-67f1a7a86690" sub-query="598a178b-7153-4e1c-978e-1b78b1d95799" is-default="10"/>
   <sub-query id="708d1b8a-5274-4a25-b0b4-67f1a7a86690" sub-query="fdd4eb5b-7e43-4285-a8a5-71a7b09c182f"/>
   <sub-query id="708d1b8a-5274-4a25-b0b4-67f1a7a86690" sub-query="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a"/>
-  <sub-query id="708d1b8a-5274-4a25-b0b4-67f1a7a86690" sub-query="a1e89392-cd0c-4a41-85f1-44251d7a5e71"/>
   <sub-query id="708d1b8a-5274-4a25-b0b4-67f1a7a86690" sub-query="106c3818-78f2-4983-812a-0e83ca3cde89"/>
   <sub-query id="5af0591d-f8d5-490f-bfc2-ebf5237559bd" sub-query="598a178b-7153-4e1c-978e-1b78b1d95799"/>
   <sub-query id="5af0591d-f8d5-490f-bfc2-ebf5237559bd" sub-query="fdd4eb5b-7e43-4285-a8a5-71a7b09c182f" is-default="10"/>
   <sub-query id="5af0591d-f8d5-490f-bfc2-ebf5237559bd" sub-query="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a"/>
-  <sub-query id="5af0591d-f8d5-490f-bfc2-ebf5237559bd" sub-query="a1e89392-cd0c-4a41-85f1-44251d7a5e71"/>
   <sub-query id="5af0591d-f8d5-490f-bfc2-ebf5237559bd" sub-query="106c3818-78f2-4983-812a-0e83ca3cde89"/>
   <sub-query id="daa91c44-420a-4860-bcdc-970842110ccb" sub-query="598a178b-7153-4e1c-978e-1b78b1d95799"/>
   <sub-query id="daa91c44-420a-4860-bcdc-970842110ccb" sub-query="fdd4eb5b-7e43-4285-a8a5-71a7b09c182f" is-default="10"/>
   <sub-query id="daa91c44-420a-4860-bcdc-970842110ccb" sub-query="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a"/>
-  <sub-query id="daa91c44-420a-4860-bcdc-970842110ccb" sub-query="a1e89392-cd0c-4a41-85f1-44251d7a5e71"/>
   <sub-query id="daa91c44-420a-4860-bcdc-970842110ccb" sub-query="106c3818-78f2-4983-812a-0e83ca3cde89"/>
   <sub-query id="33e0b1f6-f745-4fe3-8e77-f28ae3ccf965" sub-query="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a"/>
   <sub-query id="33e0b1f6-f745-4fe3-8e77-f28ae3ccf965" sub-query="106c3818-78f2-4983-812a-0e83ca3cde89"/>
   <sub-query id="33e0b1f6-f745-4fe3-8e77-f28ae3ccf965" sub-query="fdd4eb5b-7e43-4285-a8a5-71a7b09c182f"/>
-  <sub-query id="33e0b1f6-f745-4fe3-8e77-f28ae3ccf965" sub-query="a1e89392-cd0c-4a41-85f1-44251d7a5e71"/>
   <sub-query id="33e0b1f6-f745-4fe3-8e77-f28ae3ccf965" sub-query="598a178b-7153-4e1c-978e-1b78b1d95799"/>
   <sub-query id="5224d411-6ed3-432f-8b91-a1c43df22911" sub-query="598a178b-7153-4e1c-978e-1b78b1d95799"/>
   <sub-query id="5224d411-6ed3-432f-8b91-a1c43df22911" sub-query="fdd4eb5b-7e43-4285-a8a5-71a7b09c182f"/>
   <sub-query id="5224d411-6ed3-432f-8b91-a1c43df22911" sub-query="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a" is-default="10"/>
-  <sub-query id="5224d411-6ed3-432f-8b91-a1c43df22911" sub-query="a1e89392-cd0c-4a41-85f1-44251d7a5e71"/>
   <sub-query id="5224d411-6ed3-432f-8b91-a1c43df22911" sub-query="106c3818-78f2-4983-812a-0e83ca3cde89"/>
   <sub-query id="6d8d0985-0830-4f18-a655-fa7b43703d5f" sub-query="598a178b-7153-4e1c-978e-1b78b1d95799"/>
   <sub-query id="6d8d0985-0830-4f18-a655-fa7b43703d5f" sub-query="fdd4eb5b-7e43-4285-a8a5-71a7b09c182f"/>
   <sub-query id="6d8d0985-0830-4f18-a655-fa7b43703d5f" sub-query="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a" is-default="10"/>
-  <sub-query id="6d8d0985-0830-4f18-a655-fa7b43703d5f" sub-query="a1e89392-cd0c-4a41-85f1-44251d7a5e71"/>
   <sub-query id="6d8d0985-0830-4f18-a655-fa7b43703d5f" sub-query="106c3818-78f2-4983-812a-0e83ca3cde89"/>
   <sub-query id="a3dcb49f-7586-42af-808c-9906c4ae1d03" sub-query="1a6082af-29c0-41af-b5bc-995ec6183787"/>
   <sub-query id="a3dcb49f-7586-42af-808c-9906c4ae1d03" sub-query="42031a55-4f1c-42dc-80dc-0fa141a32382" is-default="10"/>

@@ -432,7 +432,7 @@ public class Store {
     }
 
     public static void afterIntrinsicLockAcquisition(final Object lockObject,
-            final long siteId) {
+            final boolean lockIsThis, final long siteId) {
         if (checkInside()) {
             try {
                 if (f_conf.isDebug()) {
@@ -489,7 +489,7 @@ public class Store {
     }
 
     public static void afterIntrinsicLockRelease(final Object lockObject,
-            final long siteId) {
+            final boolean lockIsThis, final long siteId) {
         if (checkInside()) {
             try {
                 if (RunConf.DEBUG) {

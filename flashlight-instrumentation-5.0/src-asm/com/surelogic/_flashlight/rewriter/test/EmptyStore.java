@@ -52,12 +52,12 @@ public class EmptyStore {
   }
 
   public static void afterIntrinsicLockAcquisition(
-      final Object lockObject, final long siteId) {
+      final Object lockObject, final boolean lockIsThis, final long siteId) {
     // do nothing
   }
   
   public static void afterIntrinsicLockRelease(
-      final Object lockObject, final long siteId) {
+      final Object lockObject, final boolean lockIsThis, final long siteId) {
     // do nothing
   }
 

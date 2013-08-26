@@ -20,10 +20,10 @@ public final class FlashlightNames {
     public static final String FLASHLIGHT_MONITOR_LISTENER = "com/surelogic/_flashlight/monitor/MonitorStore";
     public static final String FLASHLIGHT_POSTMORTEM_LISTENER = "com/surelogic/_flashlight/PostMortemStore";
     public static final Method AFTER_INTRINSIC_LOCK_ACQUISITION = Method
-            .getMethod("void afterIntrinsicLockAcquisition(Object, long)");
+            .getMethod("void afterIntrinsicLockAcquisition(Object, boolean, long)");
 
     public static final Method AFTER_INTRINSIC_LOCK_RELEASE = Method
-            .getMethod("void afterIntrinsicLockRelease(Object, long)");
+            .getMethod("void afterIntrinsicLockRelease(Object, boolean, long)");
 
     public static final Method AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT = Method
             .getMethod("void afterUtilConcurrentLockAcquisitionAttempt(boolean, Object, long)");

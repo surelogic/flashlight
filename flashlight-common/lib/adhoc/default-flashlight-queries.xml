@@ -33,7 +33,6 @@ INNER JOIN OBJECT FLCO ON
   FLCO.ID = FLO.TYPE
 ORDER BY 1,2,3,4
 </query>
-  <query id="1908d0a9-e187-49ae-903b-66166d731b27" description="A new query" revision="3">SELECT * FROM LOCKDURATION</query>
   <query id="1562545d-004b-4865-9f55-65ed4e37bcbb" description="How often is a lock held when this field is accessed after object construction in this thread?" revision="6" display="true">-- META-BEGIN(no-rows)
 -- No locks are ever held when this field is accessed
 -- META-END
@@ -876,7 +875,6 @@ SELECT OBJID(COUNTS.RECEIVER) &quot;?Field? Object&quot;,
        COUNTS.WRITES + COUNTS.WRITESUC &quot;Writes__(blank-if &apos;0&apos;)(add-commas)(r)&quot;, 
        COUNTS.READSUC &quot;Reads Under Construction__(blank-if &apos;0&apos;)(add-commas)(r)&quot;, 
        COUNTS.WRITESUC &quot;Writes Under Construction__(blank-if &apos;0&apos;)(add-commas)(r)&quot;, 
-       CASE WHEN LOCKS.COUNT IS NULL THEN NULL ELSE &apos;Yes&apos; END &quot;Consistently Protected By A Lock After Object Construction&quot;,
        ?FieldId? &quot;FieldId__(hide)&quot;,
        COUNTS.RECEIVER &quot;Receiver__(hide)&quot;
  FROM 
@@ -884,16 +882,10 @@ SELECT OBJID(COUNTS.RECEIVER) &quot;?Field? Object&quot;,
     FROM FIELDINSTANCETHREAD 
     WHERE FIELD = ?FieldId? 
     GROUP BY RECEIVER) AS COUNTS
-  LEFT OUTER JOIN
-  (SELECT RECEIVER, COUNT(LOCK) &quot;COUNT&quot; 
-    FROM FIELDINSTANCELOCKSET 
-    WHERE FIELD = ?FieldId? 
-    GROUP BY RECEIVER) AS LOCKS
-  ON COUNTS.RECEIVER = LOCKS.RECEIVER
   INNER JOIN
   OBJECT O ON O.ID = COUNTS.RECEIVER
   INNER JOIN
-  OBJECT CO ON O.ID = O.TYPE</query>
+  OBJECT CO ON CO.ID = O.TYPE</query>
   <query id="7cbeb2e0-994d-481e-ab2e-8413b13a417b" description="What fields (non-static) are accessed in this thread?" revision="8" display="true">-- META-BEGIN(no-rows)
 -- No non-static fields were accessed in this thread
 -- META-END
@@ -2641,7 +2633,7 @@ GROUP BY IA.RECEIVER, THO.THREADNAME
 ORDER BY 1, 3 DESC
 
 </query>
-  <query id="5af0591d-f8d5-490f-bfc2-ebf5237559bd" description="What instances of this field have a bad happens-before relationship?" type="ERROR" revision="7" display="true">--BEGIN-INFO
+  <query id="5af0591d-f8d5-490f-bfc2-ebf5237559bd" description="What instances of this field have a bad happens-before relationship?" type="ERROR" revision="8" display="true">--BEGIN-INFO
 --&lt;strong&gt;&lt;p&gt;
 --What instances of this field have a bad happens-before relationship?
 --&lt;/p&gt;&lt;/strong&gt;
@@ -2687,6 +2679,7 @@ ORDER BY 1, 3 DESC
 --&lt;/p&gt;
 --END-INFO
 SELECT OBJID(FIT.RECEIVER) &quot;?Field? Object&quot;,
+       MAX(CO.CLASSCODE)   &quot;?Field? Object__(icon)&quot;,
        SUM(FIT.READCOUNT) + SUM(FIT.READUCCOUNT) &quot;Reads__(blank-if &apos;0&apos;)(add-commas)(r)&quot;,
        SUM(FIT.WRITECOUNT) + SUM(FIT.WRITEUCCOUNT) &quot;Writes__(blank-if &apos;0&apos;)(add-commas)(r)&quot;, 
        SUM(FIT.READUCCOUNT) &quot;Reads Under Construction__(blank-if &apos;0&apos;)(add-commas)(r)&quot;, 
@@ -2700,10 +2693,14 @@ SELECT OBJID(FIT.RECEIVER) &quot;?Field? Object&quot;,
  INNER JOIN BADHAPPENSBEFORE B 
    ON B.FIELD = FIT.FIELD AND
       B.RECEIVER = FIT.RECEIVER
+ INNER JOIN
+  OBJECT O ON O.ID = FIT.RECEIVER
+  INNER JOIN
+  OBJECT CO ON CO.ID = O.TYPE
  WHERE FIT.FIELD = ?FieldId?
  GROUP BY FIT.RECEIVER
  ORDER BY 1</query>
-  <query id="daa91c44-420a-4860-bcdc-970842110ccb" description="What instances of this field have a good happens-before relationship?" revision="8" display="true">--BEGIN-INFO
+  <query id="daa91c44-420a-4860-bcdc-970842110ccb" description="What instances of this field have a good happens-before relationship?" revision="9" display="true">--BEGIN-INFO
 --&lt;strong&gt;&lt;p&gt;
 --What instances of this field have a good happens-before relationship?
 --&lt;/p&gt;&lt;/strong&gt;
@@ -2749,6 +2746,7 @@ SELECT OBJID(FIT.RECEIVER) &quot;?Field? Object&quot;,
 --&lt;/p&gt;
 --END-INFO
 SELECT OBJID(FIT.RECEIVER) &quot;?Field? Object&quot;,
+       MAX(CO.CLASSCODE)   &quot;?Field? Object__(icon)&quot;,
        SUM(FIT.READCOUNT) + SUM(FIT.READUCCOUNT) &quot;Reads__(blank-if &apos;0&apos;)(add-commas)(r)&quot;,
        SUM(FIT.WRITECOUNT) + SUM(FIT.WRITEUCCOUNT) &quot;Writes__(blank-if &apos;0&apos;)(add-commas)(r)&quot;, 
        SUM(FIT.READUCCOUNT) &quot;Reads Under Construction__(blank-if &apos;0&apos;)(add-commas)(r)&quot;, 
@@ -2767,12 +2765,16 @@ SELECT OBJID(FIT.RECEIVER) &quot;?Field? Object&quot;,
  LEFT OUTER JOIN BADHAPPENSBEFORE B 
    ON B.FIELD = FIT.FIELD AND
       B.RECEIVER = FIT.RECEIVER
+  INNER JOIN
+  OBJECT O ON O.ID = FIT.RECEIVER
+  INNER JOIN
+  OBJECT CO ON CO.ID = O.TYPE
  WHERE 
    F.ID = ?FieldId? AND 
    (B.RECEIVER IS NULL OR (IF.FIELD IS NULL AND F.VOLATILE = &apos;Y&apos;))
  GROUP BY FIT.RECEIVER
  ORDER BY 1</query>
-  <query id="5224d411-6ed3-432f-8b91-a1c43df22911" description="What instances of this field have an empty lock set?" type="ERROR" revision="8" display="true">--BEGIN-INFO
+  <query id="5224d411-6ed3-432f-8b91-a1c43df22911" description="What instances of this field have an empty lock set?" type="ERROR" revision="9" display="true">--BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What instances of this field have an empty lock set?
 --&lt;/strong&gt;&lt;/p&gt;
@@ -2826,6 +2828,7 @@ SELECT OBJID(FIT.RECEIVER) &quot;?Field? Object&quot;,
 --
 --END-INFO
 SELECT OBJID(FIT.RECEIVER) &quot;?Field? Object&quot;,
+       MAX(CO.CLASSCODE)   &quot;?Field? Object__(icon)&quot;,
        SUM(FIT.READCOUNT) + SUM(FIT.READUCCOUNT) &quot;Reads__(blank-if &apos;0&apos;)(add-commas)(r)&quot;,
        SUM(FIT.WRITECOUNT) + SUM(FIT.WRITEUCCOUNT) &quot;Writes__(blank-if &apos;0&apos;)(add-commas)(r)&quot;, 
        SUM(FIT.READUCCOUNT) &quot;Reads Under Construction__(blank-if &apos;0&apos;)(add-commas)(r)&quot;, 
@@ -2839,10 +2842,14 @@ SELECT OBJID(FIT.RECEIVER) &quot;?Field? Object&quot;,
  LEFT OUTER JOIN FIELDINSTANCELOCKSET FIL 
    ON FIL.FIELD = FIT.FIELD AND
       FIL.RECEIVER = FIT.RECEIVER
+ INNER JOIN
+  OBJECT O ON O.ID = FIT.RECEIVER
+ INNER JOIN
+  OBJECT CO ON CO.ID = O.TYPE
  WHERE FIT.FIELD = ?FieldId? AND FIL.LOCK IS NULL
  GROUP BY FIT.RECEIVER
  ORDER BY 1</query>
-  <query id="649dff6b-1e60-4c03-8118-d98d93a9f586" description="What instances of this non-static field are accessed in this thread?" revision="7" display="true">--BEGIN-INFO
+  <query id="649dff6b-1e60-4c03-8118-d98d93a9f586" description="What instances of this non-static field are accessed in this thread?" revision="8" display="true">--BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --  What instances of this non-static field are accessed in this thread?
 --&lt;/strong&gt;&lt;/p&gt;
@@ -2890,6 +2897,7 @@ SELECT OBJID(FIT.RECEIVER) &quot;?Field? Object&quot;,
 --&lt;/p&gt;
 --END-INFO
 SELECT OBJID(COUNTS.RECEIVER) &quot;?Field? Object&quot;,
+       CO.CLASSCODE           &quot;?Field? Object__(icon)&quot;,
        COUNTS.READS + COUNTS.READSUC &quot;Reads__(blank-if &apos;0&apos;)(add-commas)(r)&quot;,
        COUNTS.WRITES + COUNTS.WRITESUC &quot;Writes__(blank-if &apos;0&apos;)(add-commas)(r)&quot;, 
        COUNTS.READSUC &quot;Reads Under Construction__(blank-if &apos;0&apos;)(add-commas)(r)&quot;, 
@@ -2907,8 +2915,12 @@ SELECT OBJID(COUNTS.RECEIVER) &quot;?Field? Object&quot;,
     FROM FIELDINSTANCELOCKSET 
     WHERE FIELD = ?FieldId? 
     GROUP BY RECEIVER) AS LOCKS
-  ON COUNTS.RECEIVER = LOCKS.RECEIVER</query>
-  <query id="f7ed1ced-73a5-4790-bc7c-8ba5fdf114a6" description="What instances of this non-static field are shared after object construction?" revision="7" display="true">--BEGIN-INFO
+  ON COUNTS.RECEIVER = LOCKS.RECEIVER
+  INNER JOIN
+  OBJECT O ON O.ID = COUNTS.RECEIVER
+  INNER JOIN
+  OBJECT CO ON CO.ID = O.TYPE</query>
+  <query id="f7ed1ced-73a5-4790-bc7c-8ba5fdf114a6" description="What instances of this non-static field are shared after object construction?" revision="8" display="true">--BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What instances of this non-static field are shared after object construction?
 --&lt;/strong&gt;&lt;/p&gt;
@@ -2981,6 +2993,7 @@ SELECT OBJID(COUNTS.RECEIVER) &quot;?Field? Object&quot;,
 --END-INFO
 
 SELECT OBJID(COUNTS.RECEIVER) &quot;?Field? Object&quot;,
+       CO.CLASSCODE           &quot;?Field? Object__(icon)&quot;,
        COUNTS.READS + COUNTS.READSUC &quot;Reads__(blank-if &apos;0&apos;)(add-commas)(r)&quot;,
        COUNTS.WRITES + COUNTS.WRITESUC &quot;Writes__(blank-if &apos;0&apos;)(add-commas)(r)&quot;, 
        COUNTS.READSUC &quot;Reads Under Construction__(blank-if &apos;0&apos;)(add-commas)(r)&quot;, 
@@ -2998,8 +3011,12 @@ SELECT OBJID(COUNTS.RECEIVER) &quot;?Field? Object&quot;,
     FROM FIELDINSTANCELOCKSET 
     WHERE FIELD = ?FieldId? 
     GROUP BY RECEIVER) AS LOCKS
-  ON COUNTS.RECEIVER = LOCKS.RECEIVER</query>
-  <query id="708d1b8a-5274-4a25-b0b4-67f1a7a86690" description="What instances of this non-static field are shared during object construction?" type="ERROR" revision="14" display="true">-- NO-ROWS-MSG=No instances of this field are accessed by multiple threads during object construction.
+  ON COUNTS.RECEIVER = LOCKS.RECEIVER
+  INNER JOIN
+  OBJECT O ON O.ID = COUNTS.RECEIVER
+  INNER JOIN
+  OBJECT CO ON CO.ID = O.TYPE</query>
+  <query id="708d1b8a-5274-4a25-b0b4-67f1a7a86690" description="What instances of this non-static field are shared during object construction?" type="ERROR" revision="15" display="true">-- NO-ROWS-MSG=No instances of this field are accessed by multiple threads during object construction.
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What instances of this non-static field are shard during object construction?
@@ -3072,6 +3089,7 @@ SELECT OBJID(COUNTS.RECEIVER) &quot;?Field? Object&quot;,
 --
 --END-INFO
 SELECT OBJID(COUNTS.RECEIVER) &quot;?Field? Object&quot;,
+       CO.CLASSCODE           &quot;?Field? Object__(icon)&quot;,
        COUNTS.READS + COUNTS.READSUC &quot;Reads__(blank-if &apos;0&apos;)(add-commas)(r)&quot;,
        COUNTS.WRITES + COUNTS.WRITESUC &quot;Writes__(blank-if &apos;0&apos;)(add-commas)(r)&quot;, 
        COUNTS.READSUC &quot;Reads Under Construction__(blank-if &apos;0&apos;)(add-commas)(r)&quot;, 
@@ -3091,7 +3109,11 @@ SELECT OBJID(COUNTS.RECEIVER) &quot;?Field? Object&quot;,
     FROM FIELDINSTANCELOCKSET 
     WHERE FIELD = ?FieldId? 
     GROUP BY RECEIVER) AS LOCKS
-  ON COUNTS.RECEIVER = LOCKS.RECEIVER</query>
+  ON COUNTS.RECEIVER = LOCKS.RECEIVER
+  INNER JOIN
+  OBJECT O ON O.ID = COUNTS.RECEIVER
+  INNER JOIN
+  OBJECT CO ON CO.ID = O.TYPE</query>
   <query id="fb317a0c-d9c5-41e2-811b-d6236f63fae1" description="What is the lock trace for this lock event?" revision="12" display="true">--BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What is the lock trace for this lock event?

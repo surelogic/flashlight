@@ -268,39 +268,41 @@ public class PostMortemStore implements StoreListener {
     }
 
     public void beforeIntrinsicLockAcquisition(final Object lockObject,
-            final boolean lockIsThis, final boolean lockIsClass,
-            final long siteId) {
+            final boolean lockIsThis, final long siteId) {
         State state = tl_withinStore.get();
         final Event e = new BeforeIntrinsicLockAcquisition(lockObject,
-                lockIsThis, lockIsClass, siteId, state);
+                lockIsThis, siteId, state);
         putInQueue(state, e, true);
     }
 
     public void afterIntrinsicLockAcquisition(final Object lockObject,
-            final long siteId) {
+            boolean lockIsThis, final long siteId) {
         State state = tl_withinStore.get();
         final Event e = new AfterIntrinsicLockAcquisition(lockObject, siteId,
-                state);
+                state, lockIsThis);
         putInQueue(state, e);
     }
 
     public void intrinsicLockWait(final boolean before,
-            final Object lockObject, final long siteId) {
+            final Object lockObject, boolean lockIsThis, final long siteId) {
         final Event e;
         State state = tl_withinStore.get();
         if (before) {
-            e = new BeforeIntrinsicLockWait(lockObject, siteId, state);
+            e = new BeforeIntrinsicLockWait(lockObject, siteId, state,
+                    lockIsThis);
         } else {
-            e = new AfterIntrinsicLockWait(lockObject, siteId, state);
+            e = new AfterIntrinsicLockWait(lockObject, siteId, state,
+                    lockIsThis);
         }
         putInQueue(state, e, true);
 
     }
 
     public void afterIntrinsicLockRelease(final Object lockObject,
-            final long siteId) {
+            boolean lockIsThis, final long siteId) {
         State state = tl_withinStore.get();
-        final Event e = new AfterIntrinsicLockRelease(lockObject, siteId, state);
+        final Event e = new AfterIntrinsicLockRelease(lockObject, siteId,
+                state, lockIsThis);
         putInQueue(state, e);
     }
 

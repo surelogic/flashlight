@@ -203,8 +203,7 @@ public interface StoreListener {
      *            the line number where the event occurred.
      */
     void beforeIntrinsicLockAcquisition(final Object lockObject,
-            final boolean lockIsThis, final boolean lockIsClass,
-            final long siteId);
+            final boolean lockIsThis, final long siteId);
 
     /**
      * Records that the instrumented program has acquired an intrinsic lock. An
@@ -218,7 +217,7 @@ public interface StoreListener {
      *            the line number where the event occurred.
      */
     void afterIntrinsicLockAcquisition(final Object lockObject,
-            final long siteId);
+            boolean lockIsThis, final long siteId);
 
     /**
      * Records that the instrumented program is entering a call to one of the
@@ -245,7 +244,7 @@ public interface StoreListener {
      *            the line number where the event occurred.
      */
     void intrinsicLockWait(final boolean before, final Object lockObject,
-            final long siteId);
+            boolean lockIsThis, final long siteId);
 
     /**
      * Records that the program has released an intrinsic lock. An intrinsic
@@ -258,7 +257,8 @@ public interface StoreListener {
      * @param line
      *            the line number where the event occurred.
      */
-    void afterIntrinsicLockRelease(final Object lockObject, final long siteId);
+    void afterIntrinsicLockRelease(final Object lockObject, boolean lockIsThis,
+            final long siteId);
 
     /**
      * Records that the instrumented program is attempting to acquire a

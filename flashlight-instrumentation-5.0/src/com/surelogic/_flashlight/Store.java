@@ -423,7 +423,7 @@ public class Store {
                 }
                 for (StoreListener l : f_listeners) {
                     l.beforeIntrinsicLockAcquisition(lockObject, lockIsThis,
-                            lockIsClass, siteId);
+                            siteId);
                 }
             } finally {
                 tl_withinStore.get().inside = false;
@@ -451,7 +451,7 @@ public class Store {
                     return;
                 }
                 for (StoreListener l : f_listeners) {
-                    l.afterIntrinsicLockAcquisition(lockObject, siteId);
+                    l.afterIntrinsicLockAcquisition(lockObject, false, siteId);
                 }
             } finally {
                 tl_withinStore.get().inside = false;
@@ -480,7 +480,7 @@ public class Store {
                     return;
                 }
                 for (StoreListener l : f_listeners) {
-                    l.intrinsicLockWait(before, lockObject, siteId);
+                    l.intrinsicLockWait(before, lockObject, false, siteId);
                 }
             } finally {
                 tl_withinStore.get().inside = false;
@@ -508,7 +508,7 @@ public class Store {
                     return;
                 }
                 for (StoreListener l : f_listeners) {
-                    l.afterIntrinsicLockRelease(lockObject, siteId);
+                    l.afterIntrinsicLockRelease(lockObject, false, siteId);
                 }
             } finally {
                 tl_withinStore.get().inside = false;
@@ -647,7 +647,8 @@ public class Store {
      *            of the type that we need to see if callee is assignable to.
      */
     public static void happensBeforeThread(final long nanoTime,
-            final Thread callee, String id, final long siteId, final String typeName) {
+            final Thread callee, String id, final long siteId,
+            final String typeName) {
         try {
             if (typeName == null
                     || Class.forName(typeName).isAssignableFrom(
@@ -671,7 +672,8 @@ public class Store {
      *            of the type that we need to see if callee is assignable to.
      */
     public static void happensBeforeObject(final long nanoTime,
-            final Object object, String id, final long siteId, final String typeName) {
+            final Object object, String id, final long siteId,
+            final String typeName) {
         try {
             if (typeName == null
                     || Class.forName(typeName).isAssignableFrom(
@@ -695,8 +697,8 @@ public class Store {
      *            of the type that we need to see if callee is assignable to.
      */
     public static void happensBeforeCollection(final long nanoTime,
-            final Object item, final Object collection,
-            String id, final long siteId, final String typeName) {
+            final Object item, final Object collection, String id,
+            final long siteId, final String typeName) {
         try {
             if (typeName == null
                     || Class.forName(typeName).isAssignableFrom(

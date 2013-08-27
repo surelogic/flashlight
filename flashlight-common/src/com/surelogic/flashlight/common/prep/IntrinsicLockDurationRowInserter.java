@@ -57,7 +57,7 @@ public final class IntrinsicLockDurationRowInserter {
                 "INSERT INTO LOCKDURATION (InThread,Lock,Start,StartEvent,StartTrace,Stop,StopEvent,StopTrace,Duration,State) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"), LOCKS_HELD(
                 "INSERT INTO LOCKSHELD (LockEvent,LockHeldEvent,LockHeld,LockAcquired,InThread) VALUES (?, ?, ?, ?, ?)"), LOCK_CYCLE(
                 "INSERT INTO LOCKCYCLE (Component,LockHeld,LockAcquired,Count,FirstTime,LastTime) VALUES (?, ?, ?, ?, ?, ?)"), INSERT_LOCK(
-                "INSERT INTO LOCK (Id,TS,InThread,Trace,LockTrace,Lock,Object,Type,State,Success,LockIsThis,LockIsClass) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"), LOCK_COMPONENT(
+                "INSERT INTO LOCK (Id,TS,InThread,Trace,LockTrace,Lock,Object,Type,State,Success,LockIsThis) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"), LOCK_COMPONENT(
                 "INSERT INTO LOCKCOMPONENT (Component,Lock) VALUES (?, ?)"), LOCK_TRACE(
                 "INSERT INTO LOCKTRACE (Id,Lock,Trace,Parent) VALUES(?,?,?,?)");
         private final String sql;
@@ -737,7 +737,7 @@ public final class IntrinsicLockDurationRowInserter {
                                                 state.getLockObject(),
                                                 LockType.INTRINSIC,
                                                 LockState.AFTER_RELEASE, true,
-                                                false, false);
+                                                false);
                                     } catch (SQLException e) {
                                         throw new IllegalStateException(e);
                                     }
@@ -1126,8 +1126,7 @@ public final class IntrinsicLockDurationRowInserter {
             final long inThread, final long trace, final long lock,
             final long object, final LockType lockType,
             final LockState lockState, final Boolean success,
-            final Boolean lockIsThis, final Boolean lockIsClass)
-            throws SQLException {
+            final Boolean lockIsThis) throws SQLException {
         final ThreadState threadState = getLockToStateMap(inThread);
         switch (lockState) {
         case AFTER_ACQUISITION:
@@ -1162,7 +1161,6 @@ public final class IntrinsicLockDurationRowInserter {
         ps.setString(idx++, lockState.toString().replace('_', ' '));
         JDBCUtils.setNullableBoolean(idx++, ps, success);
         JDBCUtils.setNullableBoolean(idx++, ps, lockIsThis);
-        JDBCUtils.setNullableBoolean(idx++, ps, lockIsClass);
         if (doInsert) {
             ps.addBatch();
             if (incrementCount(INSERT_LOCK)) {

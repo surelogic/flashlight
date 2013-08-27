@@ -110,7 +110,8 @@ public abstract class MethodCall {
    * instrumentation.
    */
   public final void instrumentMethodCall(
-      final ExceptionHandlerReorderingMethodAdapter mv, final Configuration config) {
+      final ExceptionHandlerReorderingMethodAdapter mv,
+      final boolean callerIsStatic, final Configuration config) {
     /* 22 Jul 2013: Nathan wans the methodCall(true) and methodCall(false)
      * calls to come immediately before and after the actual method call.
      * The other instrumentation calls must come before/after the methodCall() 
@@ -121,7 +122,7 @@ public abstract class MethodCall {
 
     /* Additional pre-call instrumentation */
     instrumentBeforeAnyJUCLockAcquisition(mv, config); // +3
-    instrumentBeforeWait(mv, config); // +4
+    instrumentBeforeWait(mv, callerIsStatic, config); // +4
     // ...
     
     /* before method all event */
@@ -180,7 +181,7 @@ public abstract class MethodCall {
     instrumentAfterLockAndLockInterruptibly(mv, config, true); // +4
     instrumentAfterTryLockNormal(mv, config); // +4
     instrumentAfterUnlock(mv, config, true); // +4
-    instrumentAfterWait(mv, config); // +4
+    instrumentAfterWait(mv, callerIsStatic, config); // +4
     
     if (hbResult != null) instrumentHappensBefore(mv, config, hbResult);
     /* Stack is now definitely
@@ -200,7 +201,7 @@ public abstract class MethodCall {
     instrumentAfterLockAndLockInterruptibly(mv, config, false); // +4 (+1 exception)
     instrumentAfterTryLockException(mv, config); // +4 (+1 exception)
     instrumentAfterUnlock(mv, config, false); // +4 (+1 exception)
-    instrumentAfterWait(mv, config); // +4 (+1 exception)
+    instrumentAfterWait(mv, callerIsStatic, config); // +4 (+1 exception)
     /* NB. We do not report happens before information from the exception
      * handler.  If the method fails, there is no happens before relationship.
      */
@@ -245,7 +246,7 @@ public abstract class MethodCall {
 
   // +4 Stack
   private void instrumentBeforeWait(
-      final MethodVisitor mv, final Configuration config) {
+      final MethodVisitor mv, final boolean callerIsStatic, final Configuration config) {
     try {
       if (this.testCalledMethodName(
           FlashlightNames.JAVA_LANG_OBJECT, FlashlightNames.WAIT)
@@ -255,8 +256,10 @@ public abstract class MethodCall {
         // ..., true
         this.pushReceiverForEvent(mv);
         // ..., true, objRef
+        ByteCodeUtils.pushLockIsThis(mv, callerIsStatic);
+        // ..., true, objRef, lockIsThis
         this.pushSiteId(mv);
-        // ..., true, objRef, callSiteId (long)
+        // ..., true, objRef, lockIsThis, callSiteId (long)
         ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.INTRINSIC_LOCK_WAIT);      
       }
     } catch (final ClassNotFoundException e) {
@@ -266,7 +269,7 @@ public abstract class MethodCall {
   
   // +4 Stack
   private void instrumentAfterWait(
-      final MethodVisitor mv, final Configuration config) {
+      final MethodVisitor mv, final boolean callerIsStatic, final Configuration config) {
     try {
       if (this.testCalledMethodName(
           FlashlightNames.JAVA_LANG_OBJECT, FlashlightNames.WAIT)
@@ -276,8 +279,10 @@ public abstract class MethodCall {
         // ..., false
         this.pushReceiverForEvent(mv);
         // ..., false, objRef
+        ByteCodeUtils.pushLockIsThis(mv, callerIsStatic);
+        // ..., false, objRef, lockIsThis
         this.pushSiteId(mv);
-        // ..., false, objRef, callSiteId (long)
+        // ..., false, objRef, lockIsThis, callSiteId (long)
         ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.INTRINSIC_LOCK_WAIT);
       }
     } catch (final ClassNotFoundException e) {

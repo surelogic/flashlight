@@ -1822,38 +1822,38 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 	// == Rewrite monitor methods
 	// =========================================================================
 
-	// Top of the stack must be the lock object
-	private void pushLockIsThis() {
-	  // ..., obj
-	  
-    /* Compare the lock object against the receiver */
-    if (isStatic) {
-      // Static methods do not have a receiver
-      ByteCodeUtils.pushBooleanConstant(mv, false);
-      // ..., obj, false
-    } else {
-      mv.visitInsn(Opcodes.DUP);
-      // ..., obj,  obj
-
-      /* Compare the object against "this" */
-      mv.visitVarInsn(Opcodes.ALOAD, 0);
-      // ..., obj, obj, this
-      final Label pushFalse1 = new Label();
-      final Label afterPushIsThis = new Label();
-      mv.visitJumpInsn(Opcodes.IF_ACMPNE, pushFalse1);
-      // ..., obj 
-      ByteCodeUtils.pushBooleanConstant(mv, true);
-      // ..., obj, true
-      mv.visitJumpInsn(Opcodes.GOTO, afterPushIsThis);
-      // END
-      mv.visitLabel(pushFalse1);
-      // ..., obj, 
-      ByteCodeUtils.pushBooleanConstant(mv, false);
-      // ..., obj, false
-      mv.visitLabel(afterPushIsThis);
-    }
-    // ..., obj, isThis
-	}
+//	// Top of the stack must be the lock object
+//	private void pushLockIsThis() {
+//	  // ..., obj
+//	  
+//    /* Compare the lock object against the receiver */
+//    if (isStatic) {
+//      // Static methods do not have a receiver
+//      ByteCodeUtils.pushBooleanConstant(mv, false);
+//      // ..., obj, false
+//    } else {
+//      mv.visitInsn(Opcodes.DUP);
+//      // ..., obj,  obj
+//
+//      /* Compare the object against "this" */
+//      mv.visitVarInsn(Opcodes.ALOAD, 0);
+//      // ..., obj, obj, this
+//      final Label pushFalse1 = new Label();
+//      final Label afterPushIsThis = new Label();
+//      mv.visitJumpInsn(Opcodes.IF_ACMPNE, pushFalse1);
+//      // ..., obj 
+//      ByteCodeUtils.pushBooleanConstant(mv, true);
+//      // ..., obj, true
+//      mv.visitJumpInsn(Opcodes.GOTO, afterPushIsThis);
+//      // END
+//      mv.visitLabel(pushFalse1);
+//      // ..., obj, 
+//      ByteCodeUtils.pushBooleanConstant(mv, false);
+//      // ..., obj, false
+//      mv.visitLabel(afterPushIsThis);
+//    }
+//    // ..., obj, isThis
+//	}
 	
 	
 	@SuppressWarnings("synthetic-access")
@@ -1873,7 +1873,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 			// ..., obj, obj (,+1)
 		}
 
-		pushLockIsThis();
+		ByteCodeUtils.pushLockIsThis(mv, isStatic);
 		// ..., obj, obj, isThis (+1, +2)
 
 		/* Compare the object being locked against the Class object */
@@ -1940,7 +1940,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 			@Override
 			public void insertCode() {
 				/* Push the site identifier and call the post-method */
-			  pushLockIsThis();
+		    ByteCodeUtils.pushLockIsThis(mv, isStatic);
 			  // ..., obj, lockIsThis
 				pushSiteIdentifier(originalSiteId);
 				// ..., obj, lockIsThis, siteId
@@ -2000,7 +2000,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 		delayForLabel(new DelayedOutput() {
       @Override
 			public void insertCode() {
-        pushLockIsThis();
+        ByteCodeUtils.pushLockIsThis(mv, isStatic);
         // ..., obj, lockIsThis
 				pushSiteIdentifier(originalSiteId);
 				// ..., obj, lockIsThis, siteId
@@ -2176,7 +2176,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 			}
 			methodCall.popReceiverAndArguments(mv);
 			methodCall.recordIndirectAccesses(mv, config);
-			methodCall.instrumentMethodCall((ExceptionHandlerReorderingMethodAdapter) mv, config);
+			methodCall.instrumentMethodCall((ExceptionHandlerReorderingMethodAdapter) mv, isStatic, config);
 		} else {
 			/*
 			 * The clone() method is a special case due to its non-standard
@@ -2221,7 +2221,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 							desc, this);
 				}
 				methodCall.popReceiverAndArguments(mv);
-				methodCall.instrumentMethodCall((ExceptionHandlerReorderingMethodAdapter) mv, config);
+				methodCall.instrumentMethodCall((ExceptionHandlerReorderingMethodAdapter) mv, isStatic, config);
 			} else {
 				/*
 				 * Create the wrapper method information and add it to the list

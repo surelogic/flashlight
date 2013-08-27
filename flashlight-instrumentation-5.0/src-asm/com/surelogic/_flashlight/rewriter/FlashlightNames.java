@@ -65,7 +65,7 @@ public final class FlashlightNames {
             .getMethod("void arrayAccess(boolean, Object, int, long)");
 
     public static final Method INTRINSIC_LOCK_WAIT = Method
-            .getMethod("void intrinsicLockWait(boolean, Object, long)");
+            .getMethod("void intrinsicLockWait(boolean, Object, boolean, long)");
 
     public static final Method METHOD_EXECUTION = Method
             .getMethod("void methodExecution(boolean, long)");

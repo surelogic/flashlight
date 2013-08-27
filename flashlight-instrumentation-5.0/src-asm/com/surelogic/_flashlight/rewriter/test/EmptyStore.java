@@ -62,7 +62,7 @@ public class EmptyStore {
   }
 
   public static void intrinsicLockWait(
-      final boolean before, final Object lockObject, final long siteId) {
+      final boolean before, final Object lockObject, final boolean lockIsThis, final long siteId) {
     // do nothing
   }
 

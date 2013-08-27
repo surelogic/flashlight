@@ -252,4 +252,40 @@ public final class ByteCodeUtils {
     mv.visitJumpInsn(Opcodes.IF_ICMPLT, topOfLoop);
     // []
   }
+  
+  
+
+  // Top of the stack must be the lock object
+  public static void pushLockIsThis(final MethodVisitor mv, final boolean isStatic) {
+    // ..., obj
+    
+    /* Compare the lock object against the receiver */
+    if (isStatic) {
+      // Static methods do not have a receiver
+      ByteCodeUtils.pushBooleanConstant(mv, false);
+      // ..., obj, false
+    } else {
+      mv.visitInsn(Opcodes.DUP);
+      // ..., obj,  obj
+
+      /* Compare the object against "this" */
+      mv.visitVarInsn(Opcodes.ALOAD, 0);
+      // ..., obj, obj, this
+      final Label pushFalse1 = new Label();
+      final Label afterPushIsThis = new Label();
+      mv.visitJumpInsn(Opcodes.IF_ACMPNE, pushFalse1);
+      // ..., obj 
+      ByteCodeUtils.pushBooleanConstant(mv, true);
+      // ..., obj, true
+      mv.visitJumpInsn(Opcodes.GOTO, afterPushIsThis);
+      // END
+      mv.visitLabel(pushFalse1);
+      // ..., obj, 
+      ByteCodeUtils.pushBooleanConstant(mv, false);
+      // ..., obj, false
+      mv.visitLabel(afterPushIsThis);
+    }
+    // ..., obj, isThis
+  }
+
 }

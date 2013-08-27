@@ -523,7 +523,7 @@ final class FlashlightClassRewriter extends ClassVisitor {
 		// empty stack
 
 		/* Instrument the method call */
-		wrapper.instrumentMethodCall(mv, config);
+		wrapper.instrumentMethodCall(mv, (wrapper.getAccess() & Opcodes.ACC_STATIC) != 0, config);
 
 		/* Return from method */
 		wrapper.methodReturn(mv);

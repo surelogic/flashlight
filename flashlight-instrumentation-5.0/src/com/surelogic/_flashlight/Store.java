@@ -460,7 +460,7 @@ public class Store {
     }
 
     public static void intrinsicLockWait(final boolean before,
-            final Object lockObject, final long siteId) {
+            final Object lockObject, final boolean lockIsThis, final long siteId) {
         if (checkInside()) {
             try {
                 if (f_conf.isDebug()) {

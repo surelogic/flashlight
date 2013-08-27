@@ -57,7 +57,7 @@ public final class IntrinsicLockDurationRowInserter {
                 "INSERT INTO LOCKDURATION (InThread,Lock,Start,StartEvent,StartTrace,Stop,StopEvent,StopTrace,Duration,State) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"), LOCKS_HELD(
                 "INSERT INTO LOCKSHELD (LockEvent,LockHeldEvent,LockHeld,LockAcquired,InThread) VALUES (?, ?, ?, ?, ?)"), LOCK_CYCLE(
                 "INSERT INTO LOCKCYCLE (Component,LockHeld,LockAcquired,Count,FirstTime,LastTime) VALUES (?, ?, ?, ?, ?, ?)"), INSERT_LOCK(
-                "INSERT INTO LOCK (Id,TS,InThread,Trace,LockTrace,Lock,Object,Type,State,Success,LockIsThis) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"), LOCK_COMPONENT(
+                "INSERT INTO LOCK (Id,TS,InThread,Trace,LockTrace,Lock,Object,Type,State,Success,LockIsThis) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"), LOCK_COMPONENT(
                 "INSERT INTO LOCKCOMPONENT (Component,Lock) VALUES (?, ?)"), LOCK_TRACE(
                 "INSERT INTO LOCKTRACE (Id,Lock,Trace,Parent) VALUES(?,?,?,?)");
         private final String sql;

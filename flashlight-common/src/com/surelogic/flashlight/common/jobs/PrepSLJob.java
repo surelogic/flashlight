@@ -76,6 +76,7 @@ import com.surelogic.flashlight.common.prep.StaticCallLocation;
 import com.surelogic.flashlight.common.prep.StaticFieldRead;
 import com.surelogic.flashlight.common.prep.StaticFieldWrite;
 import com.surelogic.flashlight.common.prep.ThreadDefinition;
+import com.surelogic.flashlight.common.prep.ThreadNamePostPrep;
 import com.surelogic.flashlight.common.prep.Trace;
 import com.surelogic.flashlight.common.prep.TraceNode;
 
@@ -116,7 +117,7 @@ public final class PrepSLJob extends AbstractSLJob {
 
     private IPostPrep[] getPostPrep(ClassHierarchy ch) {
         return new IPostPrep[] { new LockSetAnalysis(),
-                new HappensBeforePostPrep(ch),
+                new HappensBeforePostPrep(ch), new ThreadNamePostPrep(),
                 new EmptyQueries(f_runDirectory, f_queries) };
     }
 

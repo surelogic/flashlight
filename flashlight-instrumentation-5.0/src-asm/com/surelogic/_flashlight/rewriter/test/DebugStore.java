@@ -139,26 +139,29 @@ public class DebugStore {
   }
 
   public static synchronized void afterIntrinsicLockAcquisition(
-      final Object lockObject, final long siteId) {
+      final Object lockObject, final boolean lockIsThis, final long siteId) {
     stdOut.println("afterIntrinsicLockAcquisition");
     stdOut.println("  lockObject = " + objectToString(lockObject));
+    stdOut.println("  lockIsThis = " + lockIsThis);
     stdOut.println("  siteID = " + siteId);
     stdOut.flush();
   }
   
   public static synchronized void afterIntrinsicLockRelease(
-      final Object lockObject, final long siteId) {
+      final Object lockObject, final boolean lockIsThis, final long siteId) {
     stdOut.println("afterIntrinsicLockRelease");
     stdOut.println("  lockObject = " + objectToString(lockObject));
+    stdOut.println("  lockIsThis = " + lockIsThis);
     stdOut.println("  siteID = " + siteId);
     stdOut.flush();
   }
 
   public static synchronized void intrinsicLockWait(
-      final boolean before, final Object lockObject, final long siteId) {
+      final boolean before, final Object lockObject, final boolean lockIsThis, final long siteId) {
     stdOut.println("intrinsicLockWait");
     stdOut.println("  before = " + before);
     stdOut.println("  lockObject = " + objectToString(lockObject));
+    stdOut.println("  lockIsThis = " + lockIsThis);
     stdOut.println("  siteID = " + siteId);
     stdOut.flush();
   }

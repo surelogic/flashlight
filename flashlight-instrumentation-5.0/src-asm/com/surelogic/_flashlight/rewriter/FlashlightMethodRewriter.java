@@ -39,7 +39,8 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 	 * constructor code.
 	 */
 	private final class ObjectInitCallback implements Callback {
-		public void superConstructorCalled() {
+		@SuppressWarnings("synthetic-access")
+    public void superConstructorCalled() {
 			stateMachine = null;
 			/*
 			 * Must initialize the flashlight$phantomObject field before calling
@@ -282,7 +283,8 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 	 * @param wrappers
 	 *            The set of wrapper methods that this visitor should add to.
 	 */
-	private FlashlightMethodRewriter(final int access, final String mname,
+	@SuppressWarnings("synthetic-access")
+  private FlashlightMethodRewriter(final int access, final String mname,
 			final String desc, final int numLocals, final MethodVisitor mv,
 			final Configuration conf, final SiteIdFactory csif,
 			final RewriteMessenger msg, final ClassAndFieldModel model,
@@ -1820,7 +1822,42 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 	// == Rewrite monitor methods
 	// =========================================================================
 
-	private void rewriteMonitorenter() {
+//	// Top of the stack must be the lock object
+//	private void pushLockIsThis() {
+//	  // ..., obj
+//	  
+//    /* Compare the lock object against the receiver */
+//    if (isStatic) {
+//      // Static methods do not have a receiver
+//      ByteCodeUtils.pushBooleanConstant(mv, false);
+//      // ..., obj, false
+//    } else {
+//      mv.visitInsn(Opcodes.DUP);
+//      // ..., obj,  obj
+//
+//      /* Compare the object against "this" */
+//      mv.visitVarInsn(Opcodes.ALOAD, 0);
+//      // ..., obj, obj, this
+//      final Label pushFalse1 = new Label();
+//      final Label afterPushIsThis = new Label();
+//      mv.visitJumpInsn(Opcodes.IF_ACMPNE, pushFalse1);
+//      // ..., obj 
+//      ByteCodeUtils.pushBooleanConstant(mv, true);
+//      // ..., obj, true
+//      mv.visitJumpInsn(Opcodes.GOTO, afterPushIsThis);
+//      // END
+//      mv.visitLabel(pushFalse1);
+//      // ..., obj, 
+//      ByteCodeUtils.pushBooleanConstant(mv, false);
+//      // ..., obj, false
+//      mv.visitLabel(afterPushIsThis);
+//    }
+//    // ..., obj, isThis
+//	}
+	
+	
+	@SuppressWarnings("synthetic-access")
+  private void rewriteMonitorenter() {
 		if (previousStore != -1) {
 			/*
 			 * There was an ASTORE immediately preceding this monitorenter. We
@@ -1836,32 +1873,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 			// ..., obj, obj (,+1)
 		}
 
-		/* Compare the lock object against the receiver */
-		if (isStatic) {
-			// Static methods do not have a receiver
-			ByteCodeUtils.pushBooleanConstant(mv, false);
-			// ..., obj, obj, false (+1, +2)
-		} else {
-			mv.visitInsn(Opcodes.DUP);
-			// ..., obj, obj, obj (+1, +2)
-
-			/* Compare the object against "this" */
-			mv.visitVarInsn(Opcodes.ALOAD, 0);
-			// ..., obj, obj, obj, this (+2, +3)
-			final Label pushFalse1 = new Label();
-			final Label afterPushIsThis = new Label();
-			mv.visitJumpInsn(Opcodes.IF_ACMPNE, pushFalse1);
-			// ..., obj, obj (+0, +1)
-			ByteCodeUtils.pushBooleanConstant(mv, true);
-			// ..., obj, obj, true (+1, +2)
-			mv.visitJumpInsn(Opcodes.GOTO, afterPushIsThis);
-			// END
-			mv.visitLabel(pushFalse1);
-			// ..., obj, obj (+0, +1)
-			ByteCodeUtils.pushBooleanConstant(mv, false);
-			// ..., obj, obj, false (+1, +2)
-			mv.visitLabel(afterPushIsThis);
-		}
+		ByteCodeUtils.pushLockIsThis(mv, isStatic);
 		// ..., obj, obj, isThis (+1, +2)
 
 		/* Compare the object being locked against the Class object */
@@ -1928,8 +1940,10 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 			@Override
 			public void insertCode() {
 				/* Push the site identifier and call the post-method */
+		    ByteCodeUtils.pushLockIsThis(mv, isStatic);
+			  // ..., obj, lockIsThis
 				pushSiteIdentifier(originalSiteId);
-				// ..., obj, siteId
+				// ..., obj, lockIsThis, siteId
 				ByteCodeUtils.callStoreMethod(mv, config,
 						FlashlightNames.AFTER_INTRINSIC_LOCK_ACQUISITION);
 				// ...
@@ -1939,7 +1953,8 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 		/* Resume original instruction stream */
 	}
 
-	private void rewriteMonitorexit() {
+	@SuppressWarnings("synthetic-access")
+  private void rewriteMonitorexit() {
 		if (previousLoad != -1) {
 			// ...
 
@@ -1983,10 +1998,12 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 		 */
 		final long originalSiteId = siteId;
 		delayForLabel(new DelayedOutput() {
-			@Override
+      @Override
 			public void insertCode() {
+        ByteCodeUtils.pushLockIsThis(mv, isStatic);
+        // ..., obj, lockIsThis
 				pushSiteIdentifier(originalSiteId);
-				// ..., obj, siteId
+				// ..., obj, lockIsThis, siteId
 				ByteCodeUtils.callStoreMethod(mv, config,
 						FlashlightNames.AFTER_INTRINSIC_LOCK_RELEASE);
 				// ...
@@ -2053,8 +2070,10 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 		/* Now call Store.afterIntrinsicLockAcquisition */
 		pushSynchronizedMethodLockObject();
 		// lockObj
+    ByteCodeUtils.pushBooleanConstant(mv, !isStatic);
+    // lockObj, isReceiver		
 		pushSiteIdentifier();
-		// lockObj, siteId
+		// lockObj, isReceiver, siteId
 		ByteCodeUtils.callStoreMethod(mv, config,
 				FlashlightNames.AFTER_INTRINSIC_LOCK_ACQUISITION);
 		// empty stack
@@ -2107,8 +2126,10 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 		/* Call Store.afterIntrinsicLockRelease(). */
 		pushSynchronizedMethodLockObject();
 		// ..., lockObj
+    ByteCodeUtils.pushBooleanConstant(mv, !isStatic);
+    // ..., lockObj, lockIsThis
 		pushSiteIdentifier();
-		// ..., lockObj, siteId
+		// ..., lockObj, lockIsThis, siteId
 		ByteCodeUtils.callStoreMethod(mv, config,
 				FlashlightNames.AFTER_INTRINSIC_LOCK_RELEASE);
 		// ...
@@ -2155,7 +2176,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 			}
 			methodCall.popReceiverAndArguments(mv);
 			methodCall.recordIndirectAccesses(mv, config);
-			methodCall.instrumentMethodCall((ExceptionHandlerReorderingMethodAdapter) mv, config);
+			methodCall.instrumentMethodCall((ExceptionHandlerReorderingMethodAdapter) mv, isStatic, config);
 		} else {
 			/*
 			 * The clone() method is a special case due to its non-standard
@@ -2200,7 +2221,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 							desc, this);
 				}
 				methodCall.popReceiverAndArguments(mv);
-				methodCall.instrumentMethodCall((ExceptionHandlerReorderingMethodAdapter) mv, config);
+				methodCall.instrumentMethodCall((ExceptionHandlerReorderingMethodAdapter) mv, isStatic, config);
 			} else {
 				/*
 				 * Create the wrapper method information and add it to the list

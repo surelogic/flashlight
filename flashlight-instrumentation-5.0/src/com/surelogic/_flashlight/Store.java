@@ -451,7 +451,8 @@ public class Store {
                     return;
                 }
                 for (StoreListener l : f_listeners) {
-                    l.afterIntrinsicLockAcquisition(lockObject, false, siteId);
+                    l.afterIntrinsicLockAcquisition(lockObject, lockIsThis,
+                            siteId);
                 }
             } finally {
                 tl_withinStore.get().inside = false;
@@ -480,7 +481,7 @@ public class Store {
                     return;
                 }
                 for (StoreListener l : f_listeners) {
-                    l.intrinsicLockWait(before, lockObject, false, siteId);
+                    l.intrinsicLockWait(before, lockObject, lockIsThis, siteId);
                 }
             } finally {
                 tl_withinStore.get().inside = false;
@@ -508,7 +509,7 @@ public class Store {
                     return;
                 }
                 for (StoreListener l : f_listeners) {
-                    l.afterIntrinsicLockRelease(lockObject, false, siteId);
+                    l.afterIntrinsicLockRelease(lockObject, lockIsThis, siteId);
                 }
             } finally {
                 tl_withinStore.get().inside = false;

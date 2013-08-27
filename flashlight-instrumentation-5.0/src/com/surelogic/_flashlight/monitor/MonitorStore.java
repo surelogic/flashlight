@@ -422,8 +422,7 @@ public final class MonitorStore implements StoreListener {
      *            the line number where the event occurred.
      */
     public void beforeIntrinsicLockAcquisition(final Object lockObject,
-            final boolean lockIsThis, final boolean lockIsClass,
-            final long siteId) {
+            final boolean lockIsThis, final long siteId) {
         // Do nothing
     }
 
@@ -439,7 +438,7 @@ public final class MonitorStore implements StoreListener {
      *            the line number where the event occurred.
      */
     public void afterIntrinsicLockAcquisition(final Object lockObject,
-            final long siteId) {
+            final boolean lockIsThis, final long siteId) {
         final long lockId = Phantom.of(lockObject).getId();
         if (!f_lockNames.containsKey(lockId)) {
             if (lockObject instanceof Class) {
@@ -478,7 +477,7 @@ public final class MonitorStore implements StoreListener {
      *            the line number where the event occurred.
      */
     public void intrinsicLockWait(final boolean before,
-            final Object lockObject, final long siteId) {
+            final Object lockObject, final boolean lockIsThis, final long siteId) {
         // Do nothing
     }
 
@@ -494,7 +493,7 @@ public final class MonitorStore implements StoreListener {
      *            the line number where the event occurred.
      */
     public void afterIntrinsicLockRelease(final Object lockObject,
-            final long siteId) {
+            final boolean lockIsThis, final long siteId) {
         final IdPhantomReference lockPhantom = Phantom.of(lockObject);
         tl_lockSet.get().leaveLock(lockPhantom.getId());
     }

@@ -26,10 +26,7 @@ public abstract class Lock extends Event {
         final long trace = attributes.getTraceId();
         final long object = attributes.getLockObjectId();
         final long lock = preScan.getLockFromObject(object);
-        Boolean lockIsThis = attributes.getBoolean(THIS_LOCK);
-        if (getType() == LockType.UTIL) {
-            lockIsThis = null;
-        }
+        boolean lockIsThis = attributes.getBoolean(THIS_LOCK);
         final Boolean success = isSuccess(attributes);
         if (nanoTime == ILLEGAL_ID || inThread == ILLEGAL_ID
                 || trace == ILLEGAL_ID || lock == ILLEGAL_ID) {

@@ -635,8 +635,6 @@ public final class IntrinsicLockDurationRowInserter {
         }
     }
 
-    private static final boolean omitEdges = false;
-
     private GraphInfo createGraphFromStorage() {
 
         final GraphInfo info = new GraphInfo();
@@ -661,34 +659,11 @@ public final class IntrinsicLockDurationRowInserter {
 
                     @Override
                     public boolean execute(long src, TLongObjectMap<Edge> map) {
-
-                        // Note: destinations already compensates for some of
-                        // these being RW
-                        // locks
-                        if (omitEdges && !info.destinations.contains(src)) {
-                            // The source is a root lock, so we can omit its
-                            // edges
-                            // (e.g. always the first lock acquired)
-                            final int num = map.size();
-                            // System.out.println("Omitting "+num+" edges for #"+src);
-                            omitted += num;
-                            return true;
-                        }
                         map.forEachEntry(new TLongObjectProcedure<Edge>() {
                             Long source = null;
 
                             @Override
                             public boolean execute(long dest, Edge e) {
-                                if (omitEdges && edgeStorage.get(dest) == null) {
-                                    // The destination is a leaf lock, so we can
-                                    // omit it
-                                    // (e.g. no more locks are acquired after
-                                    // holding it)
-
-                                    // System.out.println("Omitting edge to #"+dest);
-                                    omitted++;
-                                    return true;
-                                }
                                 if (source == null) {
                                     source = e.lockHeld;
                                     info.lockGraph.addVertex(source);
@@ -1126,7 +1101,7 @@ public final class IntrinsicLockDurationRowInserter {
             final long inThread, final long trace, final long lock,
             final long object, final LockType lockType,
             final LockState lockState, final Boolean success,
-            final Boolean lockIsThis) throws SQLException {
+            final boolean lockIsThis) throws SQLException {
         final ThreadState threadState = getLockToStateMap(inThread);
         switch (lockState) {
         case AFTER_ACQUISITION:
@@ -1160,7 +1135,11 @@ public final class IntrinsicLockDurationRowInserter {
         ps.setString(idx++, lockType.getFlag());
         ps.setString(idx++, lockState.toString().replace('_', ' '));
         JDBCUtils.setNullableBoolean(idx++, ps, success);
-        JDBCUtils.setNullableBoolean(idx++, ps, lockIsThis);
+        if (lockIsThis) {
+            ps.setString(idx++, "Y");
+        } else {
+            ps.setNull(idx++, Types.VARCHAR);
+        }
         if (doInsert) {
             ps.addBatch();
             if (incrementCount(INSERT_LOCK)) {

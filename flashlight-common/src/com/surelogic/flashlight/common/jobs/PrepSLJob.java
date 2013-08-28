@@ -66,6 +66,7 @@ import com.surelogic.flashlight.common.prep.IPrep;
 import com.surelogic.flashlight.common.prep.IRangePrep;
 import com.surelogic.flashlight.common.prep.IndirectAccess;
 import com.surelogic.flashlight.common.prep.IntrinsicLockDurationRowInserter;
+import com.surelogic.flashlight.common.prep.LockIsClassPostPrep;
 import com.surelogic.flashlight.common.prep.LockSetAnalysis;
 import com.surelogic.flashlight.common.prep.ObjectDefinition;
 import com.surelogic.flashlight.common.prep.ReadWriteLock;
@@ -118,6 +119,7 @@ public final class PrepSLJob extends AbstractSLJob {
     private IPostPrep[] getPostPrep(ClassHierarchy ch) {
         return new IPostPrep[] { new LockSetAnalysis(),
                 new HappensBeforePostPrep(ch), new ThreadNamePostPrep(),
+                new LockIsClassPostPrep(),
                 new EmptyQueries(f_runDirectory, f_queries) };
     }
 

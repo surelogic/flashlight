@@ -41,7 +41,7 @@ public class ThreadNamePostPrep implements IPostPrep, ResultHandler<Void> {
                 curName = nextName;
                 counter = 1;
             } else {
-                updateThreadName.call(nextName + "(" + counter++ + ")",
+                updateThreadName.call(nextName + " (" + counter++ + ")",
                         threadId);
             }
         }

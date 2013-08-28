@@ -3333,62 +3333,6 @@ FROM TABLE (STACKTRACE(?SOURCEID?)) s</query>
 --END-INFO
 SELECT s.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;, s.CLASSNAME &quot;Class&quot;, s.CLASSCODE &quot;Class__(icon)&quot;, s.LOCATION &quot;Location&quot;, s.LOCATIONCODE &quot;Location__(icon)&quot;, s.ATLINE &quot;Line__(r)&quot;
 FROM TABLE (STACKTRACE(?TRACEID?)) s</query>
-  <query id="83d613b3-283e-4100-9a82-e42adf107fe6" description="What is the stack trace?" revision="9" display="true">--BEGIN-INFO
---&lt;p&gt;&lt;strong&gt;
---    What is the stack trace for this access?
---&lt;/strong&gt;&lt;/p&gt;
---&lt;p&gt;
---    Generates a stack trace of the method calls leading up to this field
---    access or method call, from most to least recent.  Clicking on each
---    line will open the method call in the code view.
---  &lt;table&gt;
---    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
---      
---              
---              &lt;tbody&gt;
---                &lt;tr&gt;
---                  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
---                  &lt;td&gt;Table&lt;/td&gt;
---                &lt;/tr&gt;
---                &lt;tr&gt;
---                  &lt;td rowspan=&quot;5&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
---                  &lt;td&gt;Package&lt;/td&gt;
---                  &lt;td&gt;The package this method invocation or access occurred
---                  in&lt;/td&gt;
---                &lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Class&lt;/td&gt;
---	  &lt;td&gt;The class this method invocation or access occurred
---	  in&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Location&lt;/td&gt;
---	  &lt;td&gt;The location of this method invocation or access.  This
---	  is generally the enclosing method&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;File&lt;/td&gt;
---	  &lt;td&gt;The name of the source file this method invocation or
---	  access occurred in&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Line&lt;/td&gt;
---	  &lt;td&gt;The line number this method invocation or access occurred at&lt;/td&gt;
---	&lt;/tr&gt;
---      &lt;/tbody&gt;
---  &lt;/table&gt;
---&lt;/p&gt;
---&lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
---&lt;img src=&quot;what-is-the-stack-trace-for-this-access.png&quot; /&gt;
---&lt;p&gt;
---The above example shows the stack trace for an access in the constructor
---of &lt;code&gt;MapView&lt;/code&gt;, on line 84.
---&lt;/p&gt;
---
---END-INFO
-SELECT s.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;, s.CLASSNAME &quot;Class&quot;, s.CLASSCODE &quot;Class__(icon)&quot;, s.LOCATION &quot;Location&quot;, s.LOCATIONCODE &quot;Location__(icon)&quot;, s.ATLINE &quot;Line__(r)&quot;
-FROM TABLE (STACKTRACE(?ATRACE?)) s
-</query>
   <query id="432b76db-c751-4bd8-8b2f-ef5986334514" description="What is the stack trace?" revision="6" display="true">--BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What is the stack trace for this lock event?
@@ -3502,6 +3446,62 @@ FROM TABLE (STACKTRACE(?LETRACE?)) s</query>
 --END-INFO
 SELECT s.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;, s.CLASSNAME &quot;Class&quot;, s.CLASSCODE &quot;Class__(icon)&quot;, s.LOCATION &quot;Location&quot;, s.LOCATIONCODE &quot;Location__(icon)&quot;, s.ATLINE &quot;Line__(r)&quot;
 FROM TABLE (STACKTRACE(?LATRACE?)) s
+</query>
+  <query id="83d613b3-283e-4100-9a82-e42adf107fe6" description="What is the stack trace?" revision="9" display="true">--BEGIN-INFO
+--&lt;p&gt;&lt;strong&gt;
+--    What is the stack trace for this access?
+--&lt;/strong&gt;&lt;/p&gt;
+--&lt;p&gt;
+--    Generates a stack trace of the method calls leading up to this field
+--    access or method call, from most to least recent.  Clicking on each
+--    line will open the method call in the code view.
+--  &lt;table&gt;
+--    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
+--      
+--              
+--              &lt;tbody&gt;
+--                &lt;tr&gt;
+--                  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
+--                  &lt;td&gt;Table&lt;/td&gt;
+--                &lt;/tr&gt;
+--                &lt;tr&gt;
+--                  &lt;td rowspan=&quot;5&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
+--                  &lt;td&gt;Package&lt;/td&gt;
+--                  &lt;td&gt;The package this method invocation or access occurred
+--                  in&lt;/td&gt;
+--                &lt;/tr&gt;
+--	&lt;tr&gt;
+--	  &lt;td&gt;Class&lt;/td&gt;
+--	  &lt;td&gt;The class this method invocation or access occurred
+--	  in&lt;/td&gt;
+--	&lt;/tr&gt;
+--	&lt;tr&gt;
+--	  &lt;td&gt;Location&lt;/td&gt;
+--	  &lt;td&gt;The location of this method invocation or access.  This
+--	  is generally the enclosing method&lt;/td&gt;
+--	&lt;/tr&gt;
+--	&lt;tr&gt;
+--	  &lt;td&gt;File&lt;/td&gt;
+--	  &lt;td&gt;The name of the source file this method invocation or
+--	  access occurred in&lt;/td&gt;
+--	&lt;/tr&gt;
+--	&lt;tr&gt;
+--	  &lt;td&gt;Line&lt;/td&gt;
+--	  &lt;td&gt;The line number this method invocation or access occurred at&lt;/td&gt;
+--	&lt;/tr&gt;
+--      &lt;/tbody&gt;
+--  &lt;/table&gt;
+--&lt;/p&gt;
+--&lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+--&lt;img src=&quot;what-is-the-stack-trace-for-this-access.png&quot; /&gt;
+--&lt;p&gt;
+--The above example shows the stack trace for an access in the constructor
+--of &lt;code&gt;MapView&lt;/code&gt;, on line 84.
+--&lt;/p&gt;
+--
+--END-INFO
+SELECT s.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;, s.CLASSNAME &quot;Class&quot;, s.CLASSCODE &quot;Class__(icon)&quot;, s.LOCATION &quot;Location&quot;, s.LOCATIONCODE &quot;Location__(icon)&quot;, s.ATLINE &quot;Line__(r)&quot;
+FROM TABLE (STACKTRACE(?ATRACE?)) s
 </query>
   <query id="d1176c97-e3b6-483b-a341-6914a6f64860" description="What kinds of objects are indirectly accessed by more than one thread?" revision="11" display="true" display-at-root="true">--BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
@@ -4988,7 +4988,7 @@ WHERE L.ID = AGG.EVENT
 GROUP BY L.LOCK
 HAVING MAX(AGG.PACKAGES) &gt; 1
 ORDER BY MAX(AGG.PACKAGES) DESC</query>
-  <query id="106c3818-78f2-4983-812a-0e83ca3cde89" description="Where is this field accessed by the program?" revision="9" display="true">--BEGIN-INFO
+  <query id="106c3818-78f2-4983-812a-0e83ca3cde89" description="Where is this field accessed by the program?" revision="10" display="true">--BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    Where is this field accessed by the program?
 --&lt;/strong&gt;&lt;/p&gt;
@@ -5022,12 +5022,15 @@ ORDER BY MAX(AGG.PACKAGES) DESC</query>
 --
 --END-INFO
 SELECT
-    CO.PACKAGENAME &quot;Package__ (&apos;@PK&apos;)&quot;,
-    CO.CLASSNAME   &quot;Class&quot;,
-    CO.CLASSCODE   &quot;Class__(icon)&quot;,
-    S.ATLINE       &quot;Line&quot;,
-    &apos;*&apos;            &quot;via Trace__|&quot;,
-    COUNT (A.TS)   &quot;Access Count__(add-commas)(r)&quot;,
+    CO.PACKAGENAME       &quot;Package__ (&apos;@PK&apos;)&quot;,
+    CO.CLASSNAME         &quot;Class&quot;,
+    CO.CLASSCODE         &quot;Class__(icon)&quot;,
+    S.ATLINE             &quot;Line__|&quot;,
+    &apos;?Instance?&apos;         &quot;Instance&quot;,
+    &apos;?Instance (Image)?&apos; &quot;Instance__(icon)&quot;,
+    &apos;?Field?&apos;            &quot;Field&quot;,
+    &apos;?Field (Image)?&apos;    &quot;Field__(icon)&quot;,
+    COUNT (A.TS)   &quot;Accesses Via This Stack Trace__(add-commas)(r)&quot;,
     MIN (A.TS)     &quot;First Access&quot;,
     MAX (A.TS)     &quot;Last Access&quot;,
     TR.ID          &quot;ATRACE__(hide)&quot;
@@ -5052,7 +5055,7 @@ ORDER BY
     CO.CLASSNAME,
     S.ATLINE,
     MIN(A.TS)</query>
-  <query id="16872df3-2b60-4827-8f71-95b71e65c349" description="Where is this field accessed by this thread?" revision="6" display="true">--BEGIN-INFO
+  <query id="16872df3-2b60-4827-8f71-95b71e65c349" description="Where is this field accessed by this thread?" revision="7" display="true">--BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    Where is this field accessed by this thread?
 --&lt;/strong&gt;&lt;/p&gt;
@@ -5086,15 +5089,18 @@ ORDER BY
 --
 --END-INFO
 SELECT
-    CO.PACKAGENAME &quot;Package__ (&apos;@PK&apos;)&quot;,
-    CO.CLASSNAME   &quot;Class&quot;,
-    CO.CLASSCODE   &quot;Class__(icon)&quot;,
-    S.ATLINE       &quot;Line&quot;,
-    &apos;*&apos;            &quot;via Trace__|&quot;,
-    COUNT (A.TS)   &quot;Access Count__(add-commas)(r)&quot;,
-    MIN (A.TS)     &quot;First Access&quot;,
-    MAX (A.TS)     &quot;Last Access&quot;,
-    TR.ID          &quot;ATRACE__(hide)&quot;
+    CO.PACKAGENAME       &quot;Package__ (&apos;@PK&apos;)&quot;,
+    CO.CLASSNAME         &quot;Class&quot;,
+    CO.CLASSCODE         &quot;Class__(icon)&quot;,
+    S.ATLINE             &quot;Line__|&quot;,
+    &apos;?Instance?&apos;         &quot;Instance&quot;,
+    &apos;?Instance (Image)?&apos; &quot;Instance__(icon)&quot;,
+    &apos;?Field?&apos;            &quot;Field&quot;,
+    &apos;?Field (Image)?&apos;    &quot;Field__(icon)&quot;,
+    COUNT (A.TS)         &quot;Accesses Via This Stack Trace__(add-commas)(r)&quot;,
+    MIN (A.TS)           &quot;First Access&quot;,
+    MAX (A.TS)           &quot;Last Access&quot;,
+    TR.ID                &quot;ATRACE__(hide)&quot;
 FROM
     ACCESS A,
     TRACE TR,
@@ -5311,7 +5317,7 @@ WHERE
 GROUP BY LE.LOCKTRACE,CO.PACKAGENAME,CO.CLASSNAME,S.LOCATION,S.ATLINE,LE.LOCK
 ORDER BY CO.PACKAGENAME,CO.CLASSNAME,S.LOCATION,S.ATLINE,COALESCELOCKTRACETHREADS(LE.LOCKTRACE)
 </query>
-  <query id="4c9fcdb0-e7dc-46a0-87b6-c00b3caa8a8a" description="Where is this static field accessed by the program?" revision="11" display="true">--BEGIN-INFO
+  <query id="4c9fcdb0-e7dc-46a0-87b6-c00b3caa8a8a" description="Where is this static field accessed by the program?" revision="12" display="true">--BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    Where is this field accessed by the program?
 --&lt;/strong&gt;&lt;/p&gt;
@@ -5345,12 +5351,13 @@ ORDER BY CO.PACKAGENAME,CO.CLASSNAME,S.LOCATION,S.ATLINE,COALESCELOCKTRACETHREAD
 --
 --END-INFO
 SELECT
-    CO.PACKAGENAME &quot;Package__ (&apos;@PK&apos;)&quot;,
-    CO.CLASSNAME   &quot;Class&quot;,
-    CO.CLASSCODE   &quot;Class__(icon)&quot;,
-    S.ATLINE       &quot;Line&quot;,
-    &apos;*&apos;            &quot;via Trace__|&quot;,
-    COUNT (A.TS)   &quot;Access Count__(add-commas)(r)&quot;,
+    CO.PACKAGENAME       &quot;Package__ (&apos;@PK&apos;)&quot;,
+    CO.CLASSNAME         &quot;Class&quot;,
+    CO.CLASSCODE         &quot;Class__(icon)&quot;,
+    S.ATLINE             &quot;Line__|&quot;,
+    &apos;?Field?&apos;            &quot;Field&quot;,
+    &apos;?Field (Image)?&apos;    &quot;Field__(icon)&quot;,
+    COUNT (A.TS)   &quot;Accesses Via This Stack Trace__(add-commas)(r)&quot;,
     MIN (A.TS)     &quot;First Access&quot;,
     MAX (A.TS)     &quot;Last Access&quot;,
     TR.ID          &quot;ATRACE__(hide)&quot;
@@ -5374,7 +5381,7 @@ ORDER BY
     CO.CLASSNAME,
     S.ATLINE,
     MIN(A.TS)</query>
-  <query id="d2bf6bbd-e2f2-47e1-8a7e-e651cff3e807" description="Where is this static field accessed by this thread?" revision="7" display="true">--BEGIN-INFO
+  <query id="d2bf6bbd-e2f2-47e1-8a7e-e651cff3e807" description="Where is this static field accessed by this thread?" revision="8" display="true">--BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    Where is this field accessed by this thread?
 --&lt;/strong&gt;&lt;/p&gt;
@@ -5441,12 +5448,13 @@ ORDER BY
 --
 --END-INFO
 SELECT
-    CO.PACKAGENAME &quot;Package__ (&apos;@PK&apos;)&quot;,
-    CO.CLASSNAME   &quot;Class&quot;,
-    CO.CLASSCODE   &quot;Class__(icon)&quot;,
-    S.ATLINE       &quot;Line&quot;,
-    &apos;*&apos;            &quot;via Trace__|&quot;,
-    COUNT (A.TS)   &quot;Access Count__(add-commas)(r)&quot;,
+    CO.PACKAGENAME       &quot;Package__ (&apos;@PK&apos;)&quot;,
+    CO.CLASSNAME         &quot;Class&quot;,
+    CO.CLASSCODE         &quot;Class__(icon)&quot;,
+    S.ATLINE             &quot;Line__|&quot;,
+    &apos;?Field?&apos;            &quot;Field&quot;,
+    &apos;?Field (Image)?&apos;    &quot;Field__(icon)&quot;,
+    COUNT (A.TS)   &quot;Accesses Via This Stack Trace__(add-commas)(r)&quot;,
     MIN (A.TS)     &quot;First Access&quot;,
     MAX (A.TS)     &quot;Last Access&quot;,
     TR.ID          &quot;ATRACE__(hide)&quot;
@@ -5866,34 +5874,34 @@ order by lo.PackageName, lo.ClassName, s.AtLine, tho.ThreadName, sum(ld.Duration
   </category>
   <category id="84475b98-4c68-4165-b883-5bdf9479d3d6" description="Lock Use" has-data="Queries about lock use in the program." no-data="No lock use was observed in the program." revision="5">
     <cat-query id="2f505921-50fb-405b-bc78-4a5fe9228957"/>
-    <cat-query id="6cdf1659-f7f6-41b9-aa17-6d14a4a2f4b6"/>
-    <cat-query id="d4d2af9b-ce4d-4457-9e94-01972fcb58d3"/>
-    <cat-query id="c744b5b5-15f0-4f72-a344-7e52bcac5071"/>
     <cat-query id="b06809c5-5a7b-41f2-bd8c-a9e3ed5f6b1b"/>
     <cat-query id="3b8251fa-a315-4c36-a856-a53b278fdc91"/>
-    <cat-query id="26696a5f-3fd7-4f18-badf-e3d7d01a6d4e"/>
+    <cat-query id="6cdf1659-f7f6-41b9-aa17-6d14a4a2f4b6"/>
+    <cat-query id="c744b5b5-15f0-4f72-a344-7e52bcac5071"/>
     <cat-query id="ddb5a17c-f5ac-4c26-a251-34d8e3c7bc7f"/>
+    <cat-query id="d4d2af9b-ce4d-4457-9e94-01972fcb58d3"/>
+    <cat-query id="26696a5f-3fd7-4f18-badf-e3d7d01a6d4e"/>
     <cat-query id="213c73ad-b3f6-4aef-9a05-f0c31d8fdcde"/>
   </category>
   <category id="3d204f5e-d61d-4637-be14-118223f2fb9e" description="Memory Model" has-data="Queries that show happens-before relationships between threads defined by the Java memory model." no-data="No happens-before relationships between threads were observed in the program." revision="2">
+    <cat-query id="7cd8d92c-7aec-4238-b808-e628f83dcb4e"/>
     <cat-query id="eabad207-22a7-4bb0-a7e1-30946d02ea13"/>
     <cat-query id="1b191e96-598f-4d1f-9391-5d9feed0da69"/>
     <cat-query id="5f166e1b-f0a6-4c07-846b-98f2aba80be2"/>
-    <cat-query id="7cd8d92c-7aec-4238-b808-e628f83dcb4e"/>
   </category>
   <category id="64511c63-0ce8-44df-8324-95711bff56ce" description="Performance" has-data="Queries that highlight potential performance bottlenecks in the program." no-data="No potential performance bottlenecks were observed in the program." revision="2">
+    <cat-query id="2d506676-eb1d-455b-9256-9ea8f05352d4"/>
     <cat-query id="cb38a427-c259-4690-abe2-acea9661f737"/>
     <cat-query id="4e026769-1b0b-42bd-8893-f3b92add093f"/>
-    <cat-query id="2d506676-eb1d-455b-9256-9ea8f05352d4"/>
   </category>
   <category id="8401fcf7-7d5c-4191-a997-0b82f1db8e66" description="Shared State" has-data="Queries that show state (fields, not local variables or parameters) shared between multiple threads." no-data="No state (fields, not local variables or parameters) was shared between multiple threads." revision="2">
-    <cat-query id="d1176c97-e3b6-483b-a341-6914a6f64860"/>
-    <cat-query id="094fc6db-5a5b-4495-aacd-54f5a5aa1691"/>
-    <cat-query id="cdc2d460-b17f-43bc-8cc6-4c26f1637fda"/>
-    <cat-query id="bd72a5e4-42aa-415d-aa72-28d351f629a4"/>
-    <cat-query id="419c927e-a87c-4364-b4a9-2e8f50f728f6"/>
     <cat-query id="71a6fb5b-e5e1-4d25-bdc8-67ab5df1f66e"/>
+    <cat-query id="419c927e-a87c-4364-b4a9-2e8f50f728f6"/>
+    <cat-query id="bd72a5e4-42aa-415d-aa72-28d351f629a4"/>
+    <cat-query id="d1176c97-e3b6-483b-a341-6914a6f64860"/>
+    <cat-query id="cdc2d460-b17f-43bc-8cc6-4c26f1637fda"/>
     <cat-query id="33868960-7df8-4bab-bb33-ffb230957940"/>
+    <cat-query id="094fc6db-5a5b-4495-aacd-54f5a5aa1691"/>
   </category>
   <category id="b6d89f8b-7dfd-44a5-843c-d8a70f6aaaa9" description="Threads" has-data="Queries about threads in the program." no-data="No threads were observed in the program." revision="2">
     <cat-query id="8107df4c-42eb-407c-88c1-e16d805f3aaa"/>

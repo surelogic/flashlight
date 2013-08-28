@@ -132,8 +132,12 @@ public final class JumpToCode extends AdHocManagerAdapter {
    *          <tt>variableValues</tt>.
    */
   public void jumpToCode(final Map<String, String> variableValues, final Map<String, String> topVariableValues) {
-    String packageName = variableValues.get("Package");
-    final String typeName = variableValues.get("Class");
+    String packageName = variableValues.get("JumpToCodePackage");
+    if (packageName == null)
+      packageName = variableValues.get("Package");
+    String typeName = variableValues.get("JumpToCodeClass");
+    if (typeName == null)
+      typeName = variableValues.get("Class");
     if (packageName != null && typeName != null) {
       if (packageName.equals("(default)")) {
         packageName = null;

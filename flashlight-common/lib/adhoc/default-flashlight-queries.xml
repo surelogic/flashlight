@@ -2128,7 +2128,7 @@ FROM
    INNER JOIN OBJECT CO ON CO.ID = S.INCLASS
 GROUP BY CO.PACKAGENAME, CO.CLASSNAME, CO.CLASSCODE, S.LOCATION, S.LOCATIONCODE, S.ATLINE
 ORDER BY CO.PACKAGENAME,CO.CLASSNAME,S.LOCATION,S.ATLINE</query>
-  <query id="976506a9-cf85-4907-8d7f-2fd9b5a28d6d" description="What fields are read by the AWT Event Dispatch Thread and written in others?" type="ERROR" revision="9" display="true" display-at-root="true">-- META-BEGIN(no-rows)
+  <query id="976506a9-cf85-4907-8d7f-2fd9b5a28d6d" description="What fields are read by the AWT Event Dispatch Thread and written in others?" type="ERROR" revision="10" display="true" display-at-root="true">-- META-BEGIN(no-rows)
 -- No fields read by the AWT Event Dispatch Thread were modified outside of it
 -- META-END
 -- NOTE: We do not want a &quot;good news&quot; msg because the program may not use AWT/Swing
@@ -2954,6 +2954,46 @@ SELECT OBJID(FIT.RECEIVER) &quot;Instance&quot;,
  WHERE FIT.FIELD = ?FieldId? AND FIL.LOCK IS NULL
  GROUP BY FIT.RECEIVER
  ORDER BY 1</query>
+  <query id="ce9de85b-d3af-4de5-b9aa-38fba9503876" description="What instances contain this field when it is read by the AWT Event Dispatch Thread and written in others?" revision="1" display="true">SELECT OBJID(COUNTS.RECEIVER) &quot;Instance&quot;,
+       CO.CLASSCODE           &quot;Instance__(icon)&quot;,
+       &apos;?Field?&apos;              &quot;Field&quot;,
+       &apos;?Field (Image)?&apos;      &quot;Field__(icon)&quot;,
+       COUNTS.READS + COUNTS.READSUC &quot;Reads__(blank-if &apos;0&apos;)(add-commas)(r)&quot;,
+       COUNTS.WRITES + COUNTS.WRITESUC &quot;Writes__(blank-if &apos;0&apos;)(add-commas)(r)&quot;, 
+       COUNTS.READSUC &quot;Reads Under Construction__(blank-if &apos;0&apos;)(add-commas)(r)&quot;, 
+       COUNTS.WRITESUC &quot;Writes Under Construction__(blank-if &apos;0&apos;)(add-commas)(r)&quot;, 
+       CASE WHEN LS.RECEIVER IS NULL THEN &apos;Empty&apos; ELSE &apos;Non-Empty&apos; END &quot;Lock Set&quot;,
+       ?FieldId? &quot;FieldId__(hide)&quot;,
+       COUNTS.RECEIVER &quot;Receiver__(hide)&quot;
+ FROM 
+  (SELECT RECEIVER, SUM(READCOUNT) &quot;READS&quot;, SUM(WRITECOUNT) &quot;WRITES&quot;, SUM(READUCCOUNT) &quot;READSUC&quot;, SUM(WRITEUCCOUNT) &quot;WRITESUC&quot; 
+    FROM FIELDINSTANCETHREAD 
+    WHERE FIELD = ?FieldId? 
+    GROUP BY RECEIVER) AS COUNTS
+  LEFT OUTER JOIN
+  (SELECT DISTINCT RECEIVER 
+    FROM FIELDINSTANCELOCKSET 
+    WHERE FIELD = ?FieldId?) AS LS ON LS.RECEIVER = COUNTS.RECEIVER
+  INNER JOIN
+  OBJECT O ON O.ID = COUNTS.RECEIVER
+  INNER JOIN
+  OBJECT CO ON CO.ID = O.TYPE
+  INNER JOIN 
+  (SELECT A.RECEIVER
+     FROM OBJECT O, ACCESS A
+     WHERE O.FLAG = &apos;T&apos; AND
+           O.THREADNAME LIKE &apos;AWT-EventQueue%&apos; AND
+           A.INTHREAD = O.ID AND
+           A.RECEIVER IS NOT NULL
+   INTERSECT  
+   SELECT A.RECEIVER
+   FROM OBJECT O, ACCESS A
+   WHERE O.FLAG=&apos;T&apos; AND 
+         O.THREADNAME NOT LIKE &apos;AWT-EventQueue%&apos; AND
+         A.INTHREAD = O.ID AND
+         A.RECEIVER IS NOT NULL AND
+         A.RW = &apos;W&apos;) MIXEDAWT ON MIXEDAWT.RECEIVER = COUNTS.RECEIVER
+</query>
   <query id="6d8d0985-0830-4f18-a655-fa7b43703d5f" description="What instances contain this field?" revision="21" display="true">-- META-BEGIN(doc)
 --&lt;p&gt;&lt;strong&gt;
 --    What are the instances of this non-static field?
@@ -4330,7 +4370,7 @@ SELECT
    THO.ID = FI.THREAD AND 
    F.ID = FI.FIELD AND
    CO.ID = F.DECLARINGTYPE</query>
-  <query id="598a178b-7153-4e1c-978e-1b78b1d95799" description="What threads read and write this field?" revision="15" display="true">--BEGIN-INFO
+  <query id="598a178b-7153-4e1c-978e-1b78b1d95799" description="What threads read and write this field?" revision="16" display="true">--BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What threads read and write this field?
 --&lt;/strong&gt;&lt;/p&gt;
@@ -4384,10 +4424,9 @@ SELECT
 --&lt;/p&gt;
 --
 --END-INFO
-SELECT
-  CO.PackageName &quot;Package__(&apos;@PK&apos;)&quot;,
-  CO.ClassName   &quot;Class&quot;,
-  CO.ClassCode   &quot;Class__(icon)&quot;,
+SELECT 
+  &apos;?Instance?&apos; &quot;Instance&quot;,
+  &apos;?Instance (Image)?&apos; &quot;Instance__(icon)&quot;,
   F.FieldName    &quot;Field&quot;,
   F.Code         &quot;Field__(icon)&quot;,
   THO.ThreadName &quot;Thread__(&apos;thread.gif&apos;)|&quot;,
@@ -4401,7 +4440,7 @@ SELECT
    THO.ID = FI.THREAD AND 
    F.ID = FI.FIELD AND
    CO.ID = F.DECLARINGTYPE</query>
-  <query id="fdd4eb5b-7e43-4285-a8a5-71a7b09c182f" description="When and by what threads was this field accessed?" revision="11" display="true">--BEGIN-INFO
+  <query id="fdd4eb5b-7e43-4285-a8a5-71a7b09c182f" description="When and by what threads was this field accessed?" revision="12" display="true">--BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    When and by what threads was this field accessed?
 --&lt;/strong&gt;&lt;/p&gt;
@@ -4465,9 +4504,8 @@ SELECT
 --
 --END-INFO
 SELECT 
-   &apos;?Package?&apos; &quot;Package__(&apos;@PK&apos;)&quot;, 
-   &apos;?Class?&apos; &quot;Class&quot;, 
-   &apos;?Class (Image)?&apos; &quot;Class__(icon)&quot;,
+   &apos;?Instance?&apos; &quot;Instance&quot;,
+   &apos;?Instance (Image)?&apos; &quot;Instance__(icon)&quot;,
    &apos;?Field?&apos; &quot;Field&quot;,
    &apos;?Field (Image)?&apos; &quot;Field__(icon)&quot;,
    S.THREADNAME &quot;Thread__(&apos;thread.gif&apos;)|&quot;,
@@ -5454,7 +5492,7 @@ WHERE A.FIELD = ?FieldId? AND
         (L.LOCK != ?Lock? AND
          (NOT EXISTS (SELECT LOCKHELD FROM LOCKSHELD WHERE LOCKEVENT = ALH.LASTACQUISITION) OR
           (NOT ?Lock? IN (SELECT LOCKHELD FROM LOCKSHELD WHERE LOCKEVENT = ALH.LASTACQUISITION)))))</query>
-  <query id="608b8114-de9d-496e-89dc-118298ac06ee" description="Where is this lock acquired in this thread?" revision="14" display="true">SELECT 
+  <query id="608b8114-de9d-496e-89dc-118298ac06ee" description="Where is this lock acquired in this thread?" revision="15" display="true">SELECT 
     CO.PACKAGENAME         &quot;Package__(&apos;@PK&apos;)&quot;,
     CO.CLASSNAME           &quot;Class&quot;,
     MAX(CO.CLASSCODE)      &quot;Class__(icon)&quot;,
@@ -5465,9 +5503,11 @@ WHERE A.FIELD = ?FieldId? AND
     OBJID(LE.LOCK)         &quot;Lock__(&apos;lock.gif&apos;)&quot;,
     MAX(LKCO.CLASSNAME)    &quot;Lock Class&quot;,
     MAX(LKCO.CLASSCODE)    &quot;Lock Class__(icon)&quot;,
-    CASE WHEN MAX(LE.TYPE) = &apos;I&apos; THEN &apos;Intrinsic&apos;
-         ELSE &apos;java.util.concurrent&apos;
-    END                    &quot;Type&quot;,
+    CASE WHEN MAX(LE.LOCKISTHIS) = &apos;Y&apos; THEN &apos;Lock on This&apos;
+         WHEN MAX(LE.LOCKISCLASS) = &apos;Y&apos; THEN &apos;Lock on Class&apos;
+         WHEN MAX(LE.TYPE) = &apos;I&apos; THEN &apos;Intrinsic Lock&apos;
+         ELSE &apos;java.util.concurrent Lock&apos;
+    END &quot;Type&quot;,
     CASE WHEN MAX(LE.LOCKISTHIS) = &apos;Y&apos; THEN &apos;Yes&apos; ELSE &apos;N&apos; END &quot;Lock on this__(blank-if &apos;N&apos;)&quot;,
     CASE WHEN MAX(LE.LOCKISCLASS) = &apos;Y&apos; THEN &apos;Yes&apos; ELSE &apos;N&apos; END  &quot;Lock on class__(blank-if &apos;N&apos;)&quot;,
     MIN(LE.TS)              &quot;First Occurrence&quot;,
@@ -5494,7 +5534,7 @@ WHERE
 GROUP BY LE.LOCKTRACE,CO.PACKAGENAME,CO.CLASSNAME,S.LOCATION,S.ATLINE,LE.LOCK
 ORDER BY CO.PACKAGENAME,CO.CLASSNAME,S.LOCATION,S.ATLINE,COALESCELOCKTRACETHREADS(LE.LOCKTRACE)
 </query>
-  <query id="720921b7-6a0d-46b1-b9e9-4c7dc8671028" description="Where is this lock acquired?" revision="9" display="true">SELECT 
+  <query id="720921b7-6a0d-46b1-b9e9-4c7dc8671028" description="Where is this lock acquired?" revision="10" display="true">SELECT 
     CO.PACKAGENAME         &quot;Package__(&apos;@PK&apos;)&quot;,
     CO.CLASSNAME           &quot;Class&quot;,
     MAX(CO.CLASSCODE)      &quot;Class__(icon)&quot;,
@@ -5505,11 +5545,11 @@ ORDER BY CO.PACKAGENAME,CO.CLASSNAME,S.LOCATION,S.ATLINE,COALESCELOCKTRACETHREAD
     OBJID(LE.LOCK)         &quot;Lock__(&apos;lock.gif&apos;)&quot;,
     MAX(LKCO.CLASSNAME)    &quot;Lock Class&quot;,
     MAX(LKCO.CLASSCODE)    &quot;Lock Class__(icon)&quot;,
-    CASE WHEN MAX(LE.TYPE) = &apos;I&apos; THEN &apos;Intrinsic&apos;
-         ELSE &apos;java.util.concurrent&apos;
-    END                    &quot;Type&quot;,
-    CASE WHEN MAX(LE.LOCKISTHIS) = &apos;Y&apos; THEN &apos;Yes&apos; ELSE &apos;N&apos; END &quot;Lock on this__(blank-if &apos;N&apos;)&quot;,
-    CASE WHEN MAX(LE.LOCKISCLASS) = &apos;Y&apos; THEN &apos;Yes&apos; ELSE &apos;N&apos; END  &quot;Lock on class__(blank-if &apos;N&apos;)&quot;,
+    CASE WHEN MAX(LE.LOCKISTHIS) = &apos;Y&apos; THEN &apos;Lock on This&apos;
+         WHEN MAX(LE.LOCKISCLASS) = &apos;Y&apos; THEN &apos;Lock on Class&apos;
+         WHEN MAX(LE.TYPE) = &apos;I&apos; THEN &apos;Intrinsic Lock&apos;
+         ELSE &apos;java.util.concurrent Lock&apos;
+    END &quot;Type&quot;,
     MIN(LE.TS)              &quot;First Occurrence&quot;,
     MAX(LE.TS)              &quot;Last Occurrence&quot;,
     COALESCE(MAX(LH.LOCKSHELD),0) &quot;Locks Already Held__(r)&quot;,
@@ -5698,7 +5738,7 @@ order by lo.PackageName, lo.ClassName, s.AtLine, tho.ThreadName, sum(ld.Duration
   <sub-query id="094fc6db-5a5b-4495-aacd-54f5a5aa1691" sub-query="4c9fcdb0-e7dc-46a0-87b6-c00b3caa8a8a"/>
   <sub-query id="e6477143-977b-4c8d-b3d5-3d09c919cb94" sub-query="83d613b3-283e-4100-9a82-e42adf107fe6" is-default="10"/>
   <sub-query id="e6477143-977b-4c8d-b3d5-3d09c919cb94" sub-query="66e6163a-a8db-425a-8471-6df5bd9d48b4"/>
-  <sub-query id="976506a9-cf85-4907-8d7f-2fd9b5a28d6d" sub-query="6d8d0985-0830-4f18-a655-fa7b43703d5f" is-default="10"/>
+  <sub-query id="976506a9-cf85-4907-8d7f-2fd9b5a28d6d" sub-query="ce9de85b-d3af-4de5-b9aa-38fba9503876"/>
   <sub-query id="2d58b103-1e04-4161-b6da-c96a553e39d0" sub-query="eee60af8-2385-4e71-9dde-554361b9ef07" is-default="10"/>
   <sub-query id="dd2ea83c-1940-4985-ace7-a578471e3b54" sub-query="26461177-e0ff-4187-bdc4-31f1d256a951"/>
   <sub-query id="dd2ea83c-1940-4985-ace7-a578471e3b54" sub-query="078a8b6c-1fad-4843-94f9-fe005eb66b73"/>
@@ -5732,6 +5772,10 @@ order by lo.PackageName, lo.ClassName, s.AtLine, tho.ThreadName, sum(ld.Duration
   <sub-query id="5224d411-6ed3-432f-8b91-a1c43df22911" sub-query="fdd4eb5b-7e43-4285-a8a5-71a7b09c182f"/>
   <sub-query id="5224d411-6ed3-432f-8b91-a1c43df22911" sub-query="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a" is-default="10"/>
   <sub-query id="5224d411-6ed3-432f-8b91-a1c43df22911" sub-query="106c3818-78f2-4983-812a-0e83ca3cde89"/>
+  <sub-query id="ce9de85b-d3af-4de5-b9aa-38fba9503876" sub-query="598a178b-7153-4e1c-978e-1b78b1d95799"/>
+  <sub-query id="ce9de85b-d3af-4de5-b9aa-38fba9503876" sub-query="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a"/>
+  <sub-query id="ce9de85b-d3af-4de5-b9aa-38fba9503876" sub-query="fdd4eb5b-7e43-4285-a8a5-71a7b09c182f"/>
+  <sub-query id="ce9de85b-d3af-4de5-b9aa-38fba9503876" sub-query="106c3818-78f2-4983-812a-0e83ca3cde89"/>
   <sub-query id="6d8d0985-0830-4f18-a655-fa7b43703d5f" sub-query="598a178b-7153-4e1c-978e-1b78b1d95799"/>
   <sub-query id="6d8d0985-0830-4f18-a655-fa7b43703d5f" sub-query="fdd4eb5b-7e43-4285-a8a5-71a7b09c182f"/>
   <sub-query id="6d8d0985-0830-4f18-a655-fa7b43703d5f" sub-query="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a" is-default="10"/>
@@ -5808,35 +5852,35 @@ order by lo.PackageName, lo.ClassName, s.AtLine, tho.ThreadName, sum(ld.Duration
     <cat-query id="f556dcef-0e6b-480b-bc1b-eb84b3012831"/>
   </category>
   <category id="84475b98-4c68-4165-b883-5bdf9479d3d6" description="Lock Use" has-data="Queries about lock use in the program." no-data="No lock use was observed in the program." revision="5">
-    <cat-query id="3b8251fa-a315-4c36-a856-a53b278fdc91"/>
-    <cat-query id="213c73ad-b3f6-4aef-9a05-f0c31d8fdcde"/>
-    <cat-query id="6cdf1659-f7f6-41b9-aa17-6d14a4a2f4b6"/>
     <cat-query id="b06809c5-5a7b-41f2-bd8c-a9e3ed5f6b1b"/>
     <cat-query id="2f505921-50fb-405b-bc78-4a5fe9228957"/>
-    <cat-query id="d4d2af9b-ce4d-4457-9e94-01972fcb58d3"/>
     <cat-query id="ddb5a17c-f5ac-4c26-a251-34d8e3c7bc7f"/>
-    <cat-query id="26696a5f-3fd7-4f18-badf-e3d7d01a6d4e"/>
+    <cat-query id="d4d2af9b-ce4d-4457-9e94-01972fcb58d3"/>
+    <cat-query id="213c73ad-b3f6-4aef-9a05-f0c31d8fdcde"/>
+    <cat-query id="3b8251fa-a315-4c36-a856-a53b278fdc91"/>
     <cat-query id="c744b5b5-15f0-4f72-a344-7e52bcac5071"/>
+    <cat-query id="6cdf1659-f7f6-41b9-aa17-6d14a4a2f4b6"/>
+    <cat-query id="26696a5f-3fd7-4f18-badf-e3d7d01a6d4e"/>
   </category>
   <category id="3d204f5e-d61d-4637-be14-118223f2fb9e" description="Memory Model" has-data="Queries that show happens-before relationships between threads defined by the Java memory model." no-data="No happens-before relationships between threads were observed in the program." revision="2">
-    <cat-query id="7cd8d92c-7aec-4238-b808-e628f83dcb4e"/>
     <cat-query id="eabad207-22a7-4bb0-a7e1-30946d02ea13"/>
     <cat-query id="1b191e96-598f-4d1f-9391-5d9feed0da69"/>
     <cat-query id="5f166e1b-f0a6-4c07-846b-98f2aba80be2"/>
+    <cat-query id="7cd8d92c-7aec-4238-b808-e628f83dcb4e"/>
   </category>
   <category id="64511c63-0ce8-44df-8324-95711bff56ce" description="Performance" has-data="Queries that highlight potential performance bottlenecks in the program." no-data="No potential performance bottlenecks were observed in the program." revision="2">
-    <cat-query id="2d506676-eb1d-455b-9256-9ea8f05352d4"/>
     <cat-query id="cb38a427-c259-4690-abe2-acea9661f737"/>
+    <cat-query id="2d506676-eb1d-455b-9256-9ea8f05352d4"/>
     <cat-query id="4e026769-1b0b-42bd-8893-f3b92add093f"/>
   </category>
   <category id="8401fcf7-7d5c-4191-a997-0b82f1db8e66" description="Shared State" has-data="Queries that show state (fields, not local variables or parameters) shared between multiple threads." no-data="No state (fields, not local variables or parameters) was shared between multiple threads." revision="2">
-    <cat-query id="33868960-7df8-4bab-bb33-ffb230957940"/>
-    <cat-query id="bd72a5e4-42aa-415d-aa72-28d351f629a4"/>
-    <cat-query id="419c927e-a87c-4364-b4a9-2e8f50f728f6"/>
-    <cat-query id="094fc6db-5a5b-4495-aacd-54f5a5aa1691"/>
     <cat-query id="cdc2d460-b17f-43bc-8cc6-4c26f1637fda"/>
     <cat-query id="d1176c97-e3b6-483b-a341-6914a6f64860"/>
+    <cat-query id="419c927e-a87c-4364-b4a9-2e8f50f728f6"/>
+    <cat-query id="bd72a5e4-42aa-415d-aa72-28d351f629a4"/>
+    <cat-query id="094fc6db-5a5b-4495-aacd-54f5a5aa1691"/>
     <cat-query id="71a6fb5b-e5e1-4d25-bdc8-67ab5df1f66e"/>
+    <cat-query id="33868960-7df8-4bab-bb33-ffb230957940"/>
   </category>
   <category id="b6d89f8b-7dfd-44a5-843c-d8a70f6aaaa9" description="Threads" has-data="Queries about threads in the program." no-data="No threads were observed in the program." revision="2">
     <cat-query id="8107df4c-42eb-407c-88c1-e16d805f3aaa"/>

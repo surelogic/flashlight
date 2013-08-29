@@ -425,7 +425,7 @@ FROM
  FROM ACCESS A 
  WHERE A.FIELD = ?FieldId?) AS ACCESSES
 ORDER BY 5 DESC</query>
-  <query id="b4c691be-b394-45c0-8190-6a2e0d9e63d9" description="Show every access of this field in this time range." revision="5" display="true">-- META-BEGIN(doc)
+  <query id="b4c691be-b394-45c0-8190-6a2e0d9e63d9" description="Show every access of this field in this time range." revision="6" display="true">-- META-BEGIN(doc)
 --&lt;p&gt;&lt;strong&gt;
 --    Show every access of this field in this time range
 --&lt;/strong&gt;&lt;/p&gt;
@@ -474,7 +474,7 @@ WHERE
    THO.Id = A.InThread AND
    A.FIELD = ?FieldId? AND 
    A.RECEIVER = ?Receiver? AND
-   A.TS BETWEEN &apos;?Start?&apos; AND &apos;?End?&apos; AND
+   A.TS BETWEEN &apos;?First Access?&apos; AND &apos;?Last Access?&apos; AND
    A.INTHREAD = ?ThreadId?
 ORDER BY A.TS ASC</query>
   <query id="8de7d969-6633-4a16-acad-786ab9fd2f5f" description="Show every access of this static field in this time range." revision="6" display="true">-- META-BEGIN(doc)
@@ -2223,7 +2223,7 @@ ORDER BY
    B.RECEIVER,
    F.FIELDNAME,
    RF.FIELDNAME</query>
-  <query id="dd2ea83c-1940-4985-ace7-a578471e3b54" description="What happens before edges allow these field reads to see the previous write?" revision="9" display="true">-- NO-ROWS-MSG=No happens before edges were detected.
+  <query id="dd2ea83c-1940-4985-ace7-a578471e3b54" description="What happens before edges allow these field reads to see the previous write?" revision="10" display="true">-- NO-ROWS-MSG=No happens before edges were detected.
 --BEGIN-INFO
 --&lt;strong&gt;&lt;p&gt;
 --  What happens before edges allow these field reads to see the previous write?
@@ -2284,7 +2284,7 @@ HB.SOURCEID &quot;SOURCEID__(hide)&quot;,
 HB.TRACEID &quot;TRACEID__(hide)&quot;,
 HB.SOURCETS &quot;SOURCETS__(hide)&quot;,
 HB.TRACETS &quot;TRACETS__(hide)&quot; 
-FROM TABLE (HAPPENSBEFOREEDGES(?LastWriteThread?, &apos;?LastWriteTime?&apos;,?ThreadId?,&apos;?Start?&apos;)) HB
+FROM TABLE (HAPPENSBEFOREEDGES(?LastWriteThread?, &apos;?LastWriteTime?&apos;,?ThreadId?,&apos;?First Access?&apos;)) HB
    INNER JOIN TRACE ST ON ST.ID = HB.SOURCEID
    INNER JOIN SITE SS ON SS.ID = ST.SITE 
    INNER JOIN OBJECT SCO ON SCO.ID = SS.INCLASS
@@ -5969,12 +5969,16 @@ order by lo.PackageName, lo.ClassName, s.AtLine, tho.ThreadName, sum(ld.Duration
   <sub-query id="ddb5a17c-f5ac-4c26-a251-34d8e3c7bc7f" sub-query="fd49f015-3585-4602-a5d1-4e67ef7b6a55"/>
   <sub-query id="ddb5a17c-f5ac-4c26-a251-34d8e3c7bc7f" sub-query="5ebba191-8523-4253-b639-872d6da4dc92"/>
   <sub-query id="16872df3-2b60-4827-8f71-95b71e65c349" sub-query="83d613b3-283e-4100-9a82-e42adf107fe6" is-default="10"/>
+  <sub-query id="39872cb4-369c-4dd8-90fd-1847a3f05dc9" sub-query="83d613b3-283e-4100-9a82-e42adf107fe6"/>
+  <sub-query id="d84c1559-9336-4255-a15d-51413859a005" sub-query="83d613b3-283e-4100-9a82-e42adf107fe6"/>
   <sub-query id="106c3818-78f2-4983-812a-0e83ca3cde89" sub-query="83d613b3-283e-4100-9a82-e42adf107fe6" is-default="10"/>
   <sub-query id="608b8114-de9d-496e-89dc-118298ac06ee" sub-query="10477928-cf86-4416-9118-34eea8cd7e38"/>
   <sub-query id="608b8114-de9d-496e-89dc-118298ac06ee" sub-query="30f37c1b-4a34-4eff-8bca-b76566b216c3"/>
   <sub-query id="720921b7-6a0d-46b1-b9e9-4c7dc8671028" sub-query="30f37c1b-4a34-4eff-8bca-b76566b216c3"/>
   <sub-query id="720921b7-6a0d-46b1-b9e9-4c7dc8671028" sub-query="10477928-cf86-4416-9118-34eea8cd7e38"/>
   <sub-query id="d2bf6bbd-e2f2-47e1-8a7e-e651cff3e807" sub-query="83d613b3-283e-4100-9a82-e42adf107fe6" is-default="10"/>
+  <sub-query id="ae568ab0-7c65-48cf-91a9-1ac97bd8221a" sub-query="83d613b3-283e-4100-9a82-e42adf107fe6"/>
+  <sub-query id="b8689ed4-28e4-4e81-a89f-e5c511ba54b5" sub-query="83d613b3-283e-4100-9a82-e42adf107fe6"/>
   <sub-query id="4c9fcdb0-e7dc-46a0-87b6-c00b3caa8a8a" sub-query="83d613b3-283e-4100-9a82-e42adf107fe6" is-default="10"/>
   <sub-query id="c9453327-b892-4324-a6b8-2dceb32e1901" sub-query="ae0f22d4-2f02-47f0-8745-8fa60024eda4"/>
   <sub-query id="c9453327-b892-4324-a6b8-2dceb32e1901" sub-query="fd49f015-3585-4602-a5d1-4e67ef7b6a55"/>

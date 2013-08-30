@@ -1,5 +1,8 @@
 package com.surelogic.flashlight.client.eclipse.views.adhoc;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import org.eclipse.jface.resource.JFaceResources;
@@ -171,8 +174,55 @@ public final class QueryResultsView extends AbstractQueryResultsView {
     return EmptyQueriesCache.getInstance().queryResultWillBeEmpty(run, query);
   }
 
+  /**
+   * This class represents a news item. Its identity is by its text <b>only</b>
+   * it also sorts this way.
+   */
+  private static class NewsItem {
+    /**
+     * Text to display in the news item.
+     */
+    @NonNull
+    final String f_text;
+    /**
+     * An optional query to invoke from the news item. A null indicates no query
+     * should be run.
+     */
+    @Nullable
+    final AdHocQuery f_queryToRun;
+
+    public NewsItem(@NonNull String text, @Nullable AdHocQuery queryToRun) {
+      if (text == null)
+        throw new IllegalArgumentException(I18N.err(44, "text"));
+      f_text = text;
+      f_queryToRun = queryToRun;
+    }
+
+    @Override
+    public String toString() {
+      return "NewsItem(\"" + f_text + "\")";
+    }
+  }
+
+  final static Comparator<NewsItem> BY_TEXT = new Comparator<QueryResultsView.NewsItem>() {
+
+    @Override
+    public int compare(NewsItem o1, NewsItem o2) {
+      if (o1 == null && o2 == null)
+        return 0;
+      else if (o1 == null && o2 != null)
+        return -1;
+      else if (o1 != null && o2 == null)
+        return 1;
+      else
+        return String.CASE_INSENSITIVE_ORDER.compare(o1.f_text, o2.f_text);
+    }
+  };
+
   private void setupNewsItems(@NonNull final RunDirectory run, @NonNull final Composite goodNews, @NonNull final Composite badNews) {
     List<AdHocQuery> topLevelQueries = getManager().getRootQueryList();
+    final ArrayList<NewsItem> goodNewsList = new ArrayList<NewsItem>();
+    final ArrayList<NewsItem> badNewsList = new ArrayList<NewsItem>();
     for (final AdHocQuery query : topLevelQueries) {
       final boolean queryIsEmpty = EmptyQueriesCache.getInstance().queryResultWillBeEmpty(run, query);
 
@@ -180,38 +230,51 @@ public final class QueryResultsView extends AbstractQueryResultsView {
         /*
          * No results
          */
-        addNewsItem(AdHocQuery.META_FL_EMPTY_IS_GOOD_NEWS_NAME, goodNews, query, false);
-        addNewsItem(AdHocQuery.META_FL_EMPTY_IS_BAD_NEWS_NAME, badNews, query, false);
+        addNewsItem(goodNewsList, AdHocQuery.META_FL_EMPTY_IS_GOOD_NEWS_NAME, query, false);
+        addNewsItem(badNewsList, AdHocQuery.META_FL_EMPTY_IS_BAD_NEWS_NAME, query, false);
       } else {
         /*
          * Has results
          */
-        addNewsItem(AdHocQuery.META_FL_RESULT_IS_GOOD_NEWS_NAME, goodNews, query, true);
-        addNewsItem(AdHocQuery.META_FL_RESULT_IS_BAD_NEWS_NAME, badNews, query, true);
+        addNewsItem(goodNewsList, AdHocQuery.META_FL_RESULT_IS_GOOD_NEWS_NAME, query, true);
+        addNewsItem(badNewsList, AdHocQuery.META_FL_RESULT_IS_BAD_NEWS_NAME, query, true);
       }
     }
+
+    Collections.sort(goodNewsList, BY_TEXT);
+    Collections.sort(badNewsList, BY_TEXT);
+
+    createNewsList(goodNewsList, goodNews);
+    createNewsList(badNewsList, badNews);
   }
 
-  private void addNewsItem(@NonNull String metaName, @NonNull final Composite to, @NonNull final AdHocQuery query,
-      boolean useLinkToRunQuery) {
+  private void addNewsItem(@NonNull final ArrayList<NewsItem> mutableNewsList, @NonNull String metaName,
+      @NonNull final AdHocQuery query, boolean useLinkToRunQuery) {
     @Nullable
     AdHocQueryMeta meta = query.getMetaWithName(metaName);
     if (meta != null) {
       final String text = meta.getText().trim();
-      if (useLinkToRunQuery) {
+      final NewsItem newItem = new NewsItem(text, useLinkToRunQuery ? query : null);
+      mutableNewsList.add(newItem);
+    }
+  }
+
+  private void createNewsList(@NonNull final ArrayList<NewsItem> list, final Composite to) {
+    for (final NewsItem newsItem : list) {
+      if (newsItem.f_queryToRun != null) {
         final Link item = new Link(to, SWT.WRAP);
-        item.setText("<a href=\"run\">" + text + "</a>");
+        item.setText("<a href=\"run\">" + newsItem.f_text + "</a>");
         item.addSelectionListener(new SelectionAdapter() {
           @Override
           public void widgetSelected(SelectionEvent e) {
             if ("run".equals(e.text)) {
-              QueryMenuMediator.runQueryInContext(getManager(), query);
+              QueryMenuMediator.runQueryInContext(getManager(), newsItem.f_queryToRun);
             }
           }
         });
       } else {
         final Label item = new Label(to, SWT.WRAP);
-        item.setText(text);
+        item.setText(newsItem.f_text);
       }
     }
   }

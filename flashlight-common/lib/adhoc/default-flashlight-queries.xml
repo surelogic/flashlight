@@ -431,7 +431,25 @@ FROM
  FROM ACCESS A 
  WHERE A.FIELD = ?FieldId?) AS ACCESSES
 ORDER BY 5 DESC</query>
-  <query id="b4c691be-b394-45c0-8190-6a2e0d9e63d9" description="Show every access of this field in this time range." revision="6" display="true">-- META-BEGIN(doc)
+  <query id="c7b845ab-3efc-4f26-a240-e31228c2f1b4" description="Show ever indirect access of this object in this time range." revision="1" display="true">SELECT 
+   &apos;?Package?&apos; &quot;Package__(&apos;@PK&apos;)&quot;,
+   &apos;?Object?&apos; &quot;Object&quot;,
+   &apos;?Object (Image)?&apos; &quot;Object__(icon)&quot;,
+   THO.THREADNAME &quot;Thread__(&apos;thread.gif&apos;)|&quot;, A.TS &quot;Time&quot;, 
+   CASE WHEN A.RW = &apos;R&apos; THEN &apos;Read&apos; ELSE &apos;Write&apos; END &quot;Access&quot;,
+   CO.PACKAGENAME &quot;Package__(hide)&quot;, CO.CLASSNAME &quot;Class__(hide)&quot;, S.ATLINE &quot;Line__(hide)&quot;,
+   A.ID &quot;AID__(hide)&quot;, A.TRACE &quot;ATRACE__(hide)&quot;
+ FROM INDIRECTACCESS A, OBJECT THO, TRACE T, SITE S, OBJECT CO
+WHERE 
+   T.ID = A.TRACE AND
+   S.ID = T.SITE AND
+   CO.ID = S.INCLASS AND
+   THO.Id = A.InThread AND
+   A.RECEIVER = ?Receiver?
+   A.TS BETWEEN &apos;?Start?&apos; AND &apos;?Stop?&apos; AND
+   A.INTHREAD = ?ThreadId?
+ORDER BY A.TS ASC</query>
+  <query id="b4c691be-b394-45c0-8190-6a2e0d9e63d9" description="Show every access of this field in this time range." revision="7" display="true">-- META-BEGIN(doc)
 --&lt;p&gt;&lt;strong&gt;
 --    Show every access of this field in this time range
 --&lt;/strong&gt;&lt;/p&gt;
@@ -480,10 +498,10 @@ WHERE
    THO.Id = A.InThread AND
    A.FIELD = ?FieldId? AND 
    A.RECEIVER = ?Receiver? AND
-   A.TS BETWEEN &apos;?First Access?&apos; AND &apos;?Last Access?&apos; AND
+   A.TS BETWEEN &apos;?Start?&apos; AND &apos;?Stop?&apos; AND
    A.INTHREAD = ?ThreadId?
 ORDER BY A.TS ASC</query>
-  <query id="8de7d969-6633-4a16-acad-786ab9fd2f5f" description="Show every access of this static field in this time range." revision="6" display="true">-- META-BEGIN(doc)
+  <query id="8de7d969-6633-4a16-acad-786ab9fd2f5f" description="Show every access of this static field in this time range." revision="7" display="true">-- META-BEGIN(doc)
 --&lt;p&gt;&lt;strong&gt;
 --    Show every access of this field in this time range
 --&lt;/strong&gt;&lt;/p&gt;
@@ -530,7 +548,7 @@ WHERE
    THO.Id = A.InThread AND
    A.FIELD = ?FieldId? AND 
    A.RECEIVER IS NULL AND
-   A.TS BETWEEN &apos;?Start?&apos; AND &apos;?End?&apos; AND
+   A.TS BETWEEN &apos;?Start?&apos; AND &apos;?Stop?&apos; AND
    A.INTHREAD = ?ThreadId?
 ORDER BY A.TS ASC</query>
   <query id="e353c660-c044-43c3-8f29-df5edb359d2d" description="Show Tables" revision="4">-- META-BEGIN(doc)
@@ -2229,7 +2247,7 @@ ORDER BY
    B.RECEIVER,
    F.FIELDNAME,
    RF.FIELDNAME</query>
-  <query id="dd2ea83c-1940-4985-ace7-a578471e3b54" description="What happens before edges allow these field reads to see the previous write?" revision="10" display="true">-- NO-ROWS-MSG=No happens before edges were detected.
+  <query id="dd2ea83c-1940-4985-ace7-a578471e3b54" description="What happens before edges allow these field reads to see the previous write?" revision="11" display="true">-- NO-ROWS-MSG=No happens before edges were detected.
 --BEGIN-INFO
 --&lt;strong&gt;&lt;p&gt;
 --  What happens before edges allow these field reads to see the previous write?
@@ -2290,7 +2308,7 @@ HB.SOURCEID &quot;SOURCEID__(hide)&quot;,
 HB.TRACEID &quot;TRACEID__(hide)&quot;,
 HB.SOURCETS &quot;SOURCETS__(hide)&quot;,
 HB.TRACETS &quot;TRACETS__(hide)&quot; 
-FROM TABLE (HAPPENSBEFOREEDGES(?LastWriteThread?, &apos;?LastWriteTime?&apos;,?ThreadId?,&apos;?First Access?&apos;)) HB
+FROM TABLE (HAPPENSBEFOREEDGES(?LastWriteThread?, &apos;?LastWriteTime?&apos;,?ThreadId?,&apos;?Start?&apos;)) HB
    INNER JOIN TRACE ST ON ST.ID = HB.SOURCEID
    INNER JOIN SITE SS ON SS.ID = ST.SITE 
    INNER JOIN OBJECT SCO ON SCO.ID = SS.INCLASS
@@ -3046,6 +3064,19 @@ GROUP BY IA.RECEIVER, THO.THREADNAME
 ORDER BY 1, 3 DESC
 
 </query>
+  <query id="30f37c1b-4a34-4eff-8bca-b76566b216c3" description="What is the lock trace?" revision="3" display="true">SELECT
+   OBJID(LOCK)  &quot;Lock__(&apos;lock.gif&apos;)&quot;,
+   S.PACKAGENAME  &quot;Package__(&apos;package.gif&apos;)&quot;,
+   S.CLASSNAME    &quot;Class&quot;,
+   S.CLASSCODE    &quot;Class__(icon)&quot;,
+   S.LOCATION     &quot;Location&quot;,
+   S.LOCATIONCODE &quot;Location__(icon)&quot;,
+   S.ATLINE       &quot;Line__(r)&quot;,
+   S.LOCKTRACE    &quot;LOCKTRACE__(hide)&quot;,
+   S.LOCK         &quot;Lock__(hide)&quot;,
+   S.TRACE        &quot;LATRACE__(hide)&quot;
+FROM 
+   TABLE (LOCKTRACE(?LOCKTRACE?)) S</query>
   <query id="fb317a0c-d9c5-41e2-811b-d6236f63fae1" description="What is the lock trace?" revision="13" display="true">--BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What is the lock trace for this lock event?
@@ -3122,19 +3153,6 @@ SELECT
        LO.Id = S.InClass AND
        L.Id = ?LockEvent?
 ORDER BY D.START DESC</query>
-  <query id="30f37c1b-4a34-4eff-8bca-b76566b216c3" description="What is the lock trace?" revision="3" display="true">SELECT
-   OBJID(LOCK)  &quot;Lock__(&apos;lock.gif&apos;)&quot;,
-   S.PACKAGENAME  &quot;Package__(&apos;package.gif&apos;)&quot;,
-   S.CLASSNAME    &quot;Class&quot;,
-   S.CLASSCODE    &quot;Class__(icon)&quot;,
-   S.LOCATION     &quot;Location&quot;,
-   S.LOCATIONCODE &quot;Location__(icon)&quot;,
-   S.ATLINE       &quot;Line__(r)&quot;,
-   S.LOCKTRACE    &quot;LOCKTRACE__(hide)&quot;,
-   S.LOCK         &quot;Lock__(hide)&quot;,
-   S.TRACE        &quot;LATRACE__(hide)&quot;
-FROM 
-   TABLE (LOCKTRACE(?LOCKTRACE?)) S</query>
   <query id="078a8b6c-1fad-4843-94f9-fe005eb66b73" description="What is the stack trace for this edge&apos;s source?" revision="3" display="true">--BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What is the stack trace for this edge&apos;s source?
@@ -3232,6 +3250,62 @@ FROM TABLE (STACKTRACE(?SOURCEID?)) s</query>
 --END-INFO
 SELECT s.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;, s.CLASSNAME &quot;Class&quot;, s.CLASSCODE &quot;Class__(icon)&quot;, s.LOCATION &quot;Location&quot;, s.LOCATIONCODE &quot;Location__(icon)&quot;, s.ATLINE &quot;Line__(r)&quot;
 FROM TABLE (STACKTRACE(?TRACEID?)) s</query>
+  <query id="83d613b3-283e-4100-9a82-e42adf107fe6" description="What is the stack trace?" revision="9" display="true">--BEGIN-INFO
+--&lt;p&gt;&lt;strong&gt;
+--    What is the stack trace for this access?
+--&lt;/strong&gt;&lt;/p&gt;
+--&lt;p&gt;
+--    Generates a stack trace of the method calls leading up to this field
+--    access or method call, from most to least recent.  Clicking on each
+--    line will open the method call in the code view.
+--  &lt;table&gt;
+--    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
+--      
+--              
+--              &lt;tbody&gt;
+--                &lt;tr&gt;
+--                  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
+--                  &lt;td&gt;Table&lt;/td&gt;
+--                &lt;/tr&gt;
+--                &lt;tr&gt;
+--                  &lt;td rowspan=&quot;5&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
+--                  &lt;td&gt;Package&lt;/td&gt;
+--                  &lt;td&gt;The package this method invocation or access occurred
+--                  in&lt;/td&gt;
+--                &lt;/tr&gt;
+--	&lt;tr&gt;
+--	  &lt;td&gt;Class&lt;/td&gt;
+--	  &lt;td&gt;The class this method invocation or access occurred
+--	  in&lt;/td&gt;
+--	&lt;/tr&gt;
+--	&lt;tr&gt;
+--	  &lt;td&gt;Location&lt;/td&gt;
+--	  &lt;td&gt;The location of this method invocation or access.  This
+--	  is generally the enclosing method&lt;/td&gt;
+--	&lt;/tr&gt;
+--	&lt;tr&gt;
+--	  &lt;td&gt;File&lt;/td&gt;
+--	  &lt;td&gt;The name of the source file this method invocation or
+--	  access occurred in&lt;/td&gt;
+--	&lt;/tr&gt;
+--	&lt;tr&gt;
+--	  &lt;td&gt;Line&lt;/td&gt;
+--	  &lt;td&gt;The line number this method invocation or access occurred at&lt;/td&gt;
+--	&lt;/tr&gt;
+--      &lt;/tbody&gt;
+--  &lt;/table&gt;
+--&lt;/p&gt;
+--&lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+--&lt;img src=&quot;what-is-the-stack-trace-for-this-access.png&quot; /&gt;
+--&lt;p&gt;
+--The above example shows the stack trace for an access in the constructor
+--of &lt;code&gt;MapView&lt;/code&gt;, on line 84.
+--&lt;/p&gt;
+--
+--END-INFO
+SELECT s.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;, s.CLASSNAME &quot;Class&quot;, s.CLASSCODE &quot;Class__(icon)&quot;, s.LOCATION &quot;Location&quot;, s.LOCATIONCODE &quot;Location__(icon)&quot;, s.ATLINE &quot;Line__(r)&quot;
+FROM TABLE (STACKTRACE(?ATRACE?)) s
+</query>
   <query id="10477928-cf86-4416-9118-34eea8cd7e38" description="What is the stack trace?" revision="7" display="true">--BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What is the stack trace for this lock acquisition?
@@ -3346,62 +3420,6 @@ FROM TABLE (STACKTRACE(?LATRACE?)) s
 ----END-INFO
 SELECT s.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;, s.CLASSNAME &quot;Class&quot;, s.CLASSCODE &quot;Class__(icon)&quot;, s.LOCATION &quot;Location&quot;, s.LOCATIONCODE &quot;Location__(icon)&quot;, s.ATLINE &quot;Line__(r)&quot;
 FROM TABLE (STACKTRACE(?LETRACE?)) s</query>
-  <query id="83d613b3-283e-4100-9a82-e42adf107fe6" description="What is the stack trace?" revision="9" display="true">--BEGIN-INFO
---&lt;p&gt;&lt;strong&gt;
---    What is the stack trace for this access?
---&lt;/strong&gt;&lt;/p&gt;
---&lt;p&gt;
---    Generates a stack trace of the method calls leading up to this field
---    access or method call, from most to least recent.  Clicking on each
---    line will open the method call in the code view.
---  &lt;table&gt;
---    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
---      
---              
---              &lt;tbody&gt;
---                &lt;tr&gt;
---                  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
---                  &lt;td&gt;Table&lt;/td&gt;
---                &lt;/tr&gt;
---                &lt;tr&gt;
---                  &lt;td rowspan=&quot;5&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
---                  &lt;td&gt;Package&lt;/td&gt;
---                  &lt;td&gt;The package this method invocation or access occurred
---                  in&lt;/td&gt;
---                &lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Class&lt;/td&gt;
---	  &lt;td&gt;The class this method invocation or access occurred
---	  in&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Location&lt;/td&gt;
---	  &lt;td&gt;The location of this method invocation or access.  This
---	  is generally the enclosing method&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;File&lt;/td&gt;
---	  &lt;td&gt;The name of the source file this method invocation or
---	  access occurred in&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Line&lt;/td&gt;
---	  &lt;td&gt;The line number this method invocation or access occurred at&lt;/td&gt;
---	&lt;/tr&gt;
---      &lt;/tbody&gt;
---  &lt;/table&gt;
---&lt;/p&gt;
---&lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
---&lt;img src=&quot;what-is-the-stack-trace-for-this-access.png&quot; /&gt;
---&lt;p&gt;
---The above example shows the stack trace for an access in the constructor
---of &lt;code&gt;MapView&lt;/code&gt;, on line 84.
---&lt;/p&gt;
---
---END-INFO
-SELECT s.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;, s.CLASSNAME &quot;Class&quot;, s.CLASSCODE &quot;Class__(icon)&quot;, s.LOCATION &quot;Location&quot;, s.LOCATIONCODE &quot;Location__(icon)&quot;, s.ATLINE &quot;Line__(r)&quot;
-FROM TABLE (STACKTRACE(?ATRACE?)) s
-</query>
   <query id="d1176c97-e3b6-483b-a341-6914a6f64860" description="What kinds of objects are indirectly accessed by more than one thread?" revision="11" display="true" display-at-root="true">--BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What kinds of objects are indirectly accessed by more than one thread?
@@ -3899,6 +3917,23 @@ WHERE
    A.ID = ?AID?
 ORDER BY O.THREADNAME ASC, A.TS ASC, D.Start DESC
 </query>
+  <query id="c6edd27d-7d2b-47a0-bfda-87d222b06d6d" description="What locks are held during this indirect access?" revision="1" display="true">SELECT O.THREADNAME &quot;Thread__(&apos;thread.gif&apos;)&quot;, A.TS &quot;Time&quot;, OBJID(D.Lock) &quot;Lock__(&apos;lock.gif&apos;)|&quot;, LO.PackageName &quot;Package__(&apos;@PK&apos;)&quot;, LO.ClassName &quot;Class&quot;, LO.ClassCode &quot;Class__(icon)&quot;, S.Location &quot;Method&quot;, S.LocationCode &quot;Method__(icon)&quot;, S.AtLine &quot;Line__(r)&quot;, D.ID &quot;LDID__(hide)&quot;, A.TRACE &quot;ATRACE__(hide)&quot;,L.TRACE &quot;LATRACE__(hide)&quot;,D.LOCK &quot;Lock__(hide)&quot;
+ FROM INDIRECTACCESS A
+ INNER JOIN OBJECT O ON
+   O.Id = A.InThread 
+ INNER JOIN LOCKDURATION D ON
+   D.InThread = A.InThread AND 
+   (A.TS BETWEEN D.Start AND D.Stop)
+ LEFT OUTER JOIN LOCK L ON
+   L.Id = D.StartEvent
+ LEFT OUTER JOIN TRACE TR ON
+   TR.Id = L.TRACE
+ LEFT OUTER JOIN SITE S ON
+   S.Id = TR.SITE
+ LEFT OUTER JOIN OBJECT LO ON
+   LO.Id = S.InClass
+WHERE 
+   A.ID = ?AID?</query>
   <query id="5ebba191-8523-4253-b639-872d6da4dc92" description="What objects are protected by this lock, and how often?" revision="8" display="true">-- NO-ROWS-MSG=No accesses occur while this lock is held 
 --
 --BEGIN-INFO
@@ -4504,7 +4539,7 @@ SELECT
    F.ID = FI.FIELD AND
    CO.ID = F.DECLARINGTYPE AND
    A.FIELD = FI.FIELD</query>
-  <query id="fdd4eb5b-7e43-4285-a8a5-71a7b09c182f" description="When and by what threads was this field accessed?" revision="13" display="true">--BEGIN-INFO
+  <query id="fdd4eb5b-7e43-4285-a8a5-71a7b09c182f" description="When and by what threads was this field accessed?" revision="14" display="true">--BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    When and by what threads was this field accessed?
 --&lt;/strong&gt;&lt;/p&gt;
@@ -4581,20 +4616,19 @@ SELECT
    S.WRITES &quot;Writes__(blank-if &apos;0&apos;)(add-commas)(r)&quot;,
    S.READSUC &quot;Reads Under Construction__(blank-if &apos;0&apos;)(add-commas)(r)&quot;,
    S.WRITESUC &quot;Writes Under Construction__(blank-if &apos;0&apos;)(add-commas)(r)&quot;,
-   S.STARTTIME &quot;First Access&quot;,
-   S.ENDTIME &quot;Last Access&quot;,
+   S.STARTTIME &quot;Start&quot;,
+   S.ENDTIME &quot;Stop&quot;,
    S.THREADID &quot;ThreadId__(hide)&quot;,
    S.LASTWRITETIME &quot;LastWriteTime__(hide)&quot;,
    S.LASTWRITETHREAD &quot;LastWriteThread__(hide)&quot;
 FROM TABLE (ACCESSSUMMARY(?FieldId?, ?Receiver?)) S</query>
-  <query id="1a6082af-29c0-41af-b5bc-995ec6183787" description="When and by what threads was this object indirectly accessed?" revision="7" display="true">--BEGIN-INFO
+  <query id="1a6082af-29c0-41af-b5bc-995ec6183787" description="When and by what threads was this object indirectly accessed?" revision="8" display="true">--BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
---    When and by what threads was this object indirectly accessed?
+--    When and by what threads was this field accessed?
 --&lt;/strong&gt;&lt;/p&gt;
 --&lt;p&gt;
---    Shows each call to this object and what thread it happened in,
---    ordered by the time it occurred.  Clicking on an access will open
---    the relevant line in the code view.
+--  Shows a summary of field accesses in the program.  Chronologically consecutive
+--    accesses made in the same thread are condensed into one entry.
 --  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
@@ -4602,39 +4636,60 @@ FROM TABLE (ACCESSSUMMARY(?FieldId?, ?Receiver?)) S</query>
 --      &lt;tbody&gt;
 --	&lt;tr&gt;
 --	  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
---	  &lt;td&gt;Table&lt;/td&gt;
+--	  &lt;td&gt;Tree-Table&lt;/td&gt;
 --	&lt;/tr&gt;
 --	&lt;tr&gt;
---	  &lt;td rowspan=&quot;2&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
---	  &lt;td&gt;Thread&lt;/td&gt;
---	  &lt;td&gt;The thread this object was indirectly accessed in&lt;/td&gt;
+--	  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Tree Structure&lt;/strong&gt;&lt;/td&gt;
+--	  &lt;td&gt;&lt;em&gt;Package&lt;/em&gt; &amp;#8594; &lt;em&gt;Class&lt;/em&gt; &amp;#8594; &lt;em&gt;Field&lt;/em&gt; &amp;#8594; &lt;em&gt;Thread&lt;/em&gt;&lt;/td&gt;
 --	&lt;/tr&gt;
 --	&lt;tr&gt;
---	  &lt;td&gt;Time&lt;/td&gt;
---	  &lt;td&gt;The time this object was indirectly accessed&lt;/td&gt;
+--	  &lt;td rowspan=&quot;6&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
+--	  &lt;td&gt;Reads&lt;/td&gt;
+--	  &lt;td&gt;The number of consecutive reads made by this thread&lt;/td&gt;
 --	&lt;/tr&gt;
+--	&lt;tr&gt;
+--	  &lt;td&gt;Writes&lt;/td&gt;
+--	  &lt;td&gt;The number of consecutive writes made by this thread&lt;/td&gt;
+--	&lt;/tr&gt;
+--	&lt;tr&gt;
+--	  &lt;td&gt;Start&lt;/td&gt;
+--	  &lt;td&gt;The time of the earliest access in this entry&lt;/td&gt;
+--	&lt;/tr&gt;
+--	&lt;tr&gt;
+--	  &lt;td&gt;Writes&lt;/td&gt;
+--	  &lt;td&gt;The time of the latest access in this entry&lt;/td&gt;
+--	&lt;/tr&gt;
+--
 --      &lt;/tbody&gt;
 --  &lt;/table&gt;
 --&lt;/p&gt;
 --
 --&lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
---&lt;img src=&quot;when-and-by-what-threads-was-this-object-indirectly-accessed.png&quot; /&gt;
+--&lt;img src=&quot;when-and-by-what-threads-was-this-field-accessed-static.png&quot; /&gt;
 --&lt;p&gt;
---The above example lists all of the indirect accesses recorded for a
---particular object in this Flashlight run, from earliest to latest.
+--The above example lists all of the accesses to the static field
+--&lt;code&gt;INSTANCE&lt;/code&gt; in the &lt;code&gt;GameMap&lt;/code&gt; class observed during
+--this Flashlight run, from earliest to latest.
 --&lt;/p&gt;
 --
 --END-INFO
-SELECT THO.THREADNAME &quot;Thread__(&apos;thread.gif&apos;)|&quot;, IA.TS &quot;Time&quot;, 
-       CO.PACKAGENAME &quot;Package__(hide)&quot;, CO.CLASSNAME &quot;Class__(hide)&quot;, S.ATLINE &quot;Line__(hide)&quot;,
-       IA.TRACE &quot;ATRACE__(hide)&quot;
-FROM INDIRECTACCESS IA, TRACE T, SITE S, OBJECT CO, OBJECT THO
-WHERE IA.RECEIVER = ?Receiver? AND
-      T.ID = IA.TRACE AND
-      S.ID = T.SITE AND
-      CO.ID = S.INCLASS AND
-      THO.ID = IA.INTHREAD</query>
-  <query id="2048e73c-e95b-4e4c-84ee-2309372a7eae" description="When and by what threads was this static field accessed?" revision="12" display="true">--BEGIN-INFO
+SELECT 
+   &apos;?Package?&apos; &quot;Package__(&apos;@PK&apos;)&quot;, 
+   &apos;?Object?&apos;  &quot;Object&quot;,
+   &apos;?Object (Image)?&apos; &quot;Object__(icon)&quot;,
+   S.THREADNAME &quot;Thread__(&apos;thread.gif&apos;)|&quot;,
+   S.HAPPENSBEFORE &quot;Happens-Before&quot;,
+   CASE WHEN S.HAPPENSBEFORE = &apos;Yes&apos; THEN &apos;happens_before.gif&apos; 
+         WHEN S.HAPPENSBEFORE = &apos;No&apos; THEN &apos;happens_before_no.gif&apos;
+         ELSE &apos;empty.gif&apos; END &quot;Happens-Before__(icon)&quot;,
+   S.ACCESSES &quot;Accesses__(blank-if &apos;0&apos;)(add-commas)(r)&quot;,
+   S.STARTTIME &quot;Start&quot;,
+   S.ENDTIME &quot;Stop&quot;,
+   S.THREADID &quot;ThreadId__(hide)&quot;,
+   S.LASTWRITETIME &quot;LastWriteTime__(hide)&quot;,
+   S.LASTWRITETHREAD &quot;LastWriteThread__(hide)&quot;
+FROM TABLE (OBJECTSUMMARY(?Receiver?)) S</query>
+  <query id="2048e73c-e95b-4e4c-84ee-2309372a7eae" description="When and by what threads was this static field accessed?" revision="13" display="true">--BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    When and by what threads was this field accessed?
 --&lt;/strong&gt;&lt;/p&gt;
@@ -4698,8 +4753,8 @@ SELECT
          ELSE &apos;empty.gif&apos; END &quot;Happens-Before__(icon)&quot;,
    S.READS &quot;Reads__(blank-if &apos;0&apos;)(add-commas)(r)&quot;,
    S.WRITES &quot;Writes__(blank-if &apos;0&apos;)(add-commas)(r)&quot;,
-   S.STARTTIME &quot;First Access&quot;,
-   S.ENDTIME &quot;Last Access&quot;,
+   S.STARTTIME &quot;Start&quot;,
+   S.ENDTIME &quot;Stop&quot;,
    S.THREADID &quot;ThreadId__(hide)&quot;,
    S.LASTWRITETIME &quot;LastWriteTime__(hide)&quot;,
    S.LASTWRITETHREAD &quot;LastWriteThread__(hide)&quot;
@@ -5910,6 +5965,7 @@ order by lo.PackageName, lo.ClassName, s.AtLine, tho.ThreadName, sum(ld.Duration
   <sub-query id="6a39e6ca-29e9-4093-ba03-0e9bd9503a1a" sub-query="fd49f015-3585-4602-a5d1-4e67ef7b6a55"/>
   <sub-query id="6a39e6ca-29e9-4093-ba03-0e9bd9503a1a" sub-query="5ebba191-8523-4253-b639-872d6da4dc92"/>
   <sub-query id="6a39e6ca-29e9-4093-ba03-0e9bd9503a1a" sub-query="ae568ab0-7c65-48cf-91a9-1ac97bd8221a"/>
+  <sub-query id="c7b845ab-3efc-4f26-a240-e31228c2f1b4" sub-query="83d613b3-283e-4100-9a82-e42adf107fe6"/>
   <sub-query id="b4c691be-b394-45c0-8190-6a2e0d9e63d9" sub-query="ae2c5715-740e-4850-a404-38bdc8cde6b6"/>
   <sub-query id="b4c691be-b394-45c0-8190-6a2e0d9e63d9" sub-query="83d613b3-283e-4100-9a82-e42adf107fe6" is-default="10"/>
   <sub-query id="8de7d969-6633-4a16-acad-786ab9fd2f5f" sub-query="ae2c5715-740e-4850-a404-38bdc8cde6b6"/>
@@ -6002,9 +6058,9 @@ order by lo.PackageName, lo.ClassName, s.AtLine, tho.ThreadName, sum(ld.Duration
   <sub-query id="6d8d0985-0830-4f18-a655-fa7b43703d5f" sub-query="106c3818-78f2-4983-812a-0e83ca3cde89"/>
   <sub-query id="a3dcb49f-7586-42af-808c-9906c4ae1d03" sub-query="1a6082af-29c0-41af-b5bc-995ec6183787"/>
   <sub-query id="a3dcb49f-7586-42af-808c-9906c4ae1d03" sub-query="42031a55-4f1c-42dc-80dc-0fa141a32382" is-default="10"/>
-  <sub-query id="fb317a0c-d9c5-41e2-811b-d6236f63fae1" sub-query="10477928-cf86-4416-9118-34eea8cd7e38" is-default="10"/>
   <sub-query id="30f37c1b-4a34-4eff-8bca-b76566b216c3" sub-query="fb317a0c-d9c5-41e2-811b-d6236f63fae1"/>
   <sub-query id="30f37c1b-4a34-4eff-8bca-b76566b216c3" sub-query="10477928-cf86-4416-9118-34eea8cd7e38"/>
+  <sub-query id="fb317a0c-d9c5-41e2-811b-d6236f63fae1" sub-query="10477928-cf86-4416-9118-34eea8cd7e38" is-default="10"/>
   <sub-query id="d1176c97-e3b6-483b-a341-6914a6f64860" sub-query="a3dcb49f-7586-42af-808c-9906c4ae1d03" is-default="10"/>
   <sub-query id="f556dcef-0e6b-480b-bc1b-eb84b3012831" sub-query="eebe8cc6-9268-4b26-8d6a-bf94c88084fb"/>
   <sub-query id="b06809c5-5a7b-41f2-bd8c-a9e3ed5f6b1b" sub-query="4fce8390-7307-45dc-b779-5701ee7f23a1" is-default="10"/>
@@ -6054,6 +6110,8 @@ order by lo.PackageName, lo.ClassName, s.AtLine, tho.ThreadName, sum(ld.Duration
   <sub-query id="ce90be0d-9d7a-49a6-8334-c6f37112fa4b" sub-query="d2bf6bbd-e2f2-47e1-8a7e-e651cff3e807"/>
   <sub-query id="fdd4eb5b-7e43-4285-a8a5-71a7b09c182f" sub-query="b4c691be-b394-45c0-8190-6a2e0d9e63d9" is-default="10"/>
   <sub-query id="fdd4eb5b-7e43-4285-a8a5-71a7b09c182f" sub-query="dd2ea83c-1940-4985-ace7-a578471e3b54"/>
+  <sub-query id="1a6082af-29c0-41af-b5bc-995ec6183787" sub-query="c7b845ab-3efc-4f26-a240-e31228c2f1b4"/>
+  <sub-query id="1a6082af-29c0-41af-b5bc-995ec6183787" sub-query="dd2ea83c-1940-4985-ace7-a578471e3b54"/>
   <sub-query id="2048e73c-e95b-4e4c-84ee-2309372a7eae" sub-query="8de7d969-6633-4a16-acad-786ab9fd2f5f" is-default="10"/>
   <sub-query id="2048e73c-e95b-4e4c-84ee-2309372a7eae" sub-query="dd2ea83c-1940-4985-ace7-a578471e3b54"/>
   <sub-query id="4fce8390-7307-45dc-b779-5701ee7f23a1" sub-query="10477928-cf86-4416-9118-34eea8cd7e38"/>
@@ -6096,34 +6154,34 @@ order by lo.PackageName, lo.ClassName, s.AtLine, tho.ThreadName, sum(ld.Duration
     <cat-query id="9d05ac24-20c2-436e-af6b-2bd0bc7dbcfb"/>
   </category>
   <category id="84475b98-4c68-4165-b883-5bdf9479d3d6" description="Lock Use" has-data="Queries about lock use in the program." no-data="No lock use was observed in the program." revision="5">
-    <cat-query id="b06809c5-5a7b-41f2-bd8c-a9e3ed5f6b1b"/>
+    <cat-query id="2f505921-50fb-405b-bc78-4a5fe9228957"/>
+    <cat-query id="6cdf1659-f7f6-41b9-aa17-6d14a4a2f4b6"/>
     <cat-query id="c744b5b5-15f0-4f72-a344-7e52bcac5071"/>
     <cat-query id="213c73ad-b3f6-4aef-9a05-f0c31d8fdcde"/>
-    <cat-query id="ddb5a17c-f5ac-4c26-a251-34d8e3c7bc7f"/>
-    <cat-query id="d4d2af9b-ce4d-4457-9e94-01972fcb58d3"/>
-    <cat-query id="3b8251fa-a315-4c36-a856-a53b278fdc91"/>
-    <cat-query id="2f505921-50fb-405b-bc78-4a5fe9228957"/>
     <cat-query id="26696a5f-3fd7-4f18-badf-e3d7d01a6d4e"/>
-    <cat-query id="6cdf1659-f7f6-41b9-aa17-6d14a4a2f4b6"/>
+    <cat-query id="3b8251fa-a315-4c36-a856-a53b278fdc91"/>
+    <cat-query id="d4d2af9b-ce4d-4457-9e94-01972fcb58d3"/>
+    <cat-query id="b06809c5-5a7b-41f2-bd8c-a9e3ed5f6b1b"/>
+    <cat-query id="ddb5a17c-f5ac-4c26-a251-34d8e3c7bc7f"/>
   </category>
   <category id="3d204f5e-d61d-4637-be14-118223f2fb9e" description="Memory Model" has-data="Queries that show happens-before relationships between threads defined by the Java memory model." no-data="No happens-before relationships between threads were observed in the program." revision="2">
-    <cat-query id="5f166e1b-f0a6-4c07-846b-98f2aba80be2"/>
     <cat-query id="1b191e96-598f-4d1f-9391-5d9feed0da69"/>
     <cat-query id="7cd8d92c-7aec-4238-b808-e628f83dcb4e"/>
+    <cat-query id="5f166e1b-f0a6-4c07-846b-98f2aba80be2"/>
     <cat-query id="eabad207-22a7-4bb0-a7e1-30946d02ea13"/>
   </category>
   <category id="64511c63-0ce8-44df-8324-95711bff56ce" description="Performance" has-data="Queries that highlight potential performance bottlenecks in the program." no-data="No potential performance bottlenecks were observed in the program." revision="2">
-    <cat-query id="4e026769-1b0b-42bd-8893-f3b92add093f"/>
     <cat-query id="cb38a427-c259-4690-abe2-acea9661f737"/>
+    <cat-query id="4e026769-1b0b-42bd-8893-f3b92add093f"/>
     <cat-query id="2d506676-eb1d-455b-9256-9ea8f05352d4"/>
   </category>
   <category id="8401fcf7-7d5c-4191-a997-0b82f1db8e66" description="Shared State" has-data="Queries that show state (fields, not local variables or parameters) shared between multiple threads." no-data="No state (fields, not local variables or parameters) was shared between multiple threads." revision="2">
-    <cat-query id="419c927e-a87c-4364-b4a9-2e8f50f728f6"/>
     <cat-query id="71a6fb5b-e5e1-4d25-bdc8-67ab5df1f66e"/>
+    <cat-query id="419c927e-a87c-4364-b4a9-2e8f50f728f6"/>
     <cat-query id="094fc6db-5a5b-4495-aacd-54f5a5aa1691"/>
-    <cat-query id="bd72a5e4-42aa-415d-aa72-28d351f629a4"/>
-    <cat-query id="33868960-7df8-4bab-bb33-ffb230957940"/>
     <cat-query id="cdc2d460-b17f-43bc-8cc6-4c26f1637fda"/>
+    <cat-query id="33868960-7df8-4bab-bb33-ffb230957940"/>
+    <cat-query id="bd72a5e4-42aa-415d-aa72-28d351f629a4"/>
     <cat-query id="d1176c97-e3b6-483b-a341-6914a6f64860"/>
   </category>
   <category id="b6d89f8b-7dfd-44a5-843c-d8a70f6aaaa9" description="Threads" has-data="Queries about threads in the program." no-data="No threads were observed in the program." revision="2">

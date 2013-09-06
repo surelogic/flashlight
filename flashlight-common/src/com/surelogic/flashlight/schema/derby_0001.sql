@@ -170,3 +170,10 @@ PARAMETER STYLE JAVA
 READS SQL DATA LANGUAGE JAVA
 EXTERNAL NAME 'com.surelogic.common.derby.sqlfunctions.Functions.coalesceLockTraceThreads'
 <<>>
+CREATE FUNCTION COALESCETRACETHREADS
+       (FIELD BIGINT, TRACE BIGINT)
+RETURNS VARCHAR(32672)
+PARAMETER STYLE JAVA
+READS SQL DATA LANGUAGE JAVA
+EXTERNAL NAME 'com.surelogic.common.derby.sqlfunctions.Functions.coalesceTraceThreads'
+<<>>

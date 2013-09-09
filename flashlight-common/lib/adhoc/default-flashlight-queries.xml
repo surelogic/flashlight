@@ -2537,7 +2537,45 @@ SELECT OBJID(COUNTS.RECEIVER) &quot;Instance&quot;,
   OBJECT O ON O.ID = COUNTS.RECEIVER
   INNER JOIN
   OBJECT CO ON CO.ID = O.TYPE</query>
-  <query id="2468b391-8f70-4f4f-97fb-c34b0c0b3101" description="What instances contain this field and are protected by this lock?" revision="1" display="true"></query>
+  <query id="2468b391-8f70-4f4f-97fb-c34b0c0b3101" description="What instances contain this field and are protected by this lock?" revision="1" display="true">SELECT OBJID(COUNTS.RECEIVER) &quot;Instance&quot;,
+       CO.CLASSCODE           &quot;Instance__(icon)&quot;,
+       &apos;?Field?&apos;              &quot;Field&quot;,
+       &apos;?Field (Image)?&apos;      &quot;Field__(icon)&quot;,
+       OBJID(?Lock?)          &quot;Lock__(&apos;lock.gif&apos;)&quot;,
+       CAST ((CAST (FA.HELD AS FLOAT) / CAST (COUNTS.READS + COUNTS.WRITES AS FLOAT) * 100) AS DECIMAL) &quot;% w/ Lock Held__(suffix &apos;%&apos;)(r)&quot;,
+       COUNTS.READS + COUNTS.READSUC &quot;Reads__(blank-if &apos;0&apos;)(add-commas)(r)&quot;,
+       COUNTS.WRITES + COUNTS.WRITESUC &quot;Writes__(blank-if &apos;0&apos;)(add-commas)(r)&quot;, 
+       COUNTS.READSUC &quot;Reads Under Construction__(blank-if &apos;0&apos;)(add-commas)(r)&quot;, 
+       COUNTS.WRITESUC &quot;Writes Under Construction__(blank-if &apos;0&apos;)(add-commas)(r)&quot;, 
+       FA.HELD &quot;Times Lock Held While Accessed&quot;,
+       CASE WHEN LS.RECEIVER IS NULL THEN &apos;Empty&apos; ELSE &apos;Non-Empty&apos; END &quot;Lock Set&quot;,
+       ?FieldId? &quot;FieldId__(hide)&quot;,
+       COUNTS.RECEIVER &quot;Receiver__(hide)&quot;,
+       ?Lock? &quot;Lock__(hide)&quot;
+ FROM 
+  (SELECT RECEIVER, SUM(READCOUNT) &quot;READS&quot;, SUM(WRITECOUNT) &quot;WRITES&quot;, SUM(READUCCOUNT) &quot;READSUC&quot;, SUM(WRITEUCCOUNT) &quot;WRITESUC&quot; 
+    FROM FIELDINSTANCETHREAD 
+    WHERE FIELD = ?FieldId? 
+    GROUP BY RECEIVER) AS COUNTS
+  LEFT OUTER JOIN
+  (SELECT DISTINCT RECEIVER 
+    FROM FIELDINSTANCELOCKSET 
+    WHERE FIELD = ?FieldId?) AS LS ON LS.RECEIVER = COUNTS.RECEIVER
+  INNER JOIN
+  OBJECT O ON O.ID = COUNTS.RECEIVER
+  INNER JOIN
+  OBJECT CO ON CO.ID = O.TYPE
+  INNER JOIN
+  (SELECT A.FIELD, A.RECEIVER, COUNT(DISTINCT A.ID) &quot;HELD&quot; FROM
+    (SELECT ALH.ACCESS FROM LOCK L, ACCESSLOCKSHELD ALH
+     WHERE L.LOCK = ?Lock? AND ALH.LASTACQUISITION = L.ID 
+     UNION
+     SELECT ALH.ACCESS FROM LOCKSHELD LH, ACCESSLOCKSHELD ALH
+     WHERE LH.LOCKHELD = ?Lock? AND ALH.LASTACQUISITION = LH.LOCKEVENT
+     ) AS AIDS, ACCESS A
+   WHERE A.ID = AIDS.ACCESS AND A.FIELD = ?FieldId?
+   GROUP BY A.FIELD,A.RECEIVER
+  ) AS FA ON FA.RECEIVER = COUNTS.RECEIVER</query>
   <query id="f7ed1ced-73a5-4790-bc7c-8ba5fdf114a6" description="What instances contain this field and are shared after object construction?" revision="13" display="true">--BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What instances of this non-static field are shared after object construction?
@@ -6402,6 +6440,12 @@ order by lo.PackageName, lo.ClassName, s.AtLine, tho.ThreadName, sum(ld.Duration
   <sub-query id="649dff6b-1e60-4c03-8118-d98d93a9f586" sub-query="598a178b-7153-4e1c-978e-1b78b1d95799"/>
   <sub-query id="649dff6b-1e60-4c03-8118-d98d93a9f586" sub-query="fdd4eb5b-7e43-4285-a8a5-71a7b09c182f"/>
   <sub-query id="649dff6b-1e60-4c03-8118-d98d93a9f586" sub-query="106c3818-78f2-4983-812a-0e83ca3cde89"/>
+  <sub-query id="2468b391-8f70-4f4f-97fb-c34b0c0b3101" sub-query="106c3818-78f2-4983-812a-0e83ca3cde89"/>
+  <sub-query id="2468b391-8f70-4f4f-97fb-c34b0c0b3101" sub-query="fdd4eb5b-7e43-4285-a8a5-71a7b09c182f"/>
+  <sub-query id="2468b391-8f70-4f4f-97fb-c34b0c0b3101" sub-query="598a178b-7153-4e1c-978e-1b78b1d95799"/>
+  <sub-query id="2468b391-8f70-4f4f-97fb-c34b0c0b3101" sub-query="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a"/>
+  <sub-query id="2468b391-8f70-4f4f-97fb-c34b0c0b3101" sub-query="39872cb4-369c-4dd8-90fd-1847a3f05dc9"/>
+  <sub-query id="2468b391-8f70-4f4f-97fb-c34b0c0b3101" sub-query="d84c1559-9336-4255-a15d-51413859a005"/>
   <sub-query id="f7ed1ced-73a5-4790-bc7c-8ba5fdf114a6" sub-query="598a178b-7153-4e1c-978e-1b78b1d95799" is-default="10"/>
   <sub-query id="f7ed1ced-73a5-4790-bc7c-8ba5fdf114a6" sub-query="fdd4eb5b-7e43-4285-a8a5-71a7b09c182f"/>
   <sub-query id="f7ed1ced-73a5-4790-bc7c-8ba5fdf114a6" sub-query="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a"/>

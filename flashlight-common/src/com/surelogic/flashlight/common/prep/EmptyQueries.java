@@ -9,10 +9,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Set;
+import java.util.logging.Level;
 
 import com.surelogic.common.adhoc.AdHocQuery;
 import com.surelogic.common.jdbc.SchemaData;
 import com.surelogic.common.jobs.SLProgressMonitor;
+import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.common.model.EmptyQueriesCache;
 import com.surelogic.flashlight.common.model.RunDirectory;
 
@@ -51,9 +53,17 @@ public class EmptyQueries implements IPostPrep {
                         if (mon.isCanceled()) {
                             return;
                         }
-                        ResultSet set = st.executeQuery(a.getSql());
-                        if (!set.next()) {
-                            writer.println(a.getId());
+                        try {
+                            ResultSet set = st.executeQuery(a.getSql());
+                            if (!set.next()) {
+                                writer.println(a.getId());
+                            }
+                        } catch (SQLException e) {
+                            SLLogger.getLoggerFor(EmptyQueries.class)
+                                    .log(Level.WARNING,
+                                            String.format(
+                                                    "Exception encountered when executing %s to check for empty queries.",
+                                                    a.getDescription()), e);
                         }
                     }
                 } finally {

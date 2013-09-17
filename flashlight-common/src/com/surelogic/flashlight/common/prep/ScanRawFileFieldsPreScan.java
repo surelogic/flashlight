@@ -1,5 +1,6 @@
 package com.surelogic.flashlight.common.prep;
 
+import gnu.trove.map.TLongLongMap;
 import gnu.trove.map.hash.TLongLongHashMap;
 import gnu.trove.map.hash.TLongObjectHashMap;
 import gnu.trove.procedure.TObjectProcedure;
@@ -21,6 +22,7 @@ public class ScanRawFileFieldsPreScan extends AbstractDataScan {
     private final long f_end;
 
     private final TLongHashSet f_referencedObjects = new TLongHashSet();
+    private final TLongHashSet f_indirectObjects = new TLongHashSet();
 
     /*
      * Collection of non-static fields accessed by multiple threads and the
@@ -28,11 +30,22 @@ public class ScanRawFileFieldsPreScan extends AbstractDataScan {
      */
     private final TLongObjectHashMap<TLongHashSet> f_usedFields = new TLongObjectHashMap<TLongHashSet>();
     private final TLongObjectHashMap<TLongLongHashMap> f_currentFields = new TLongObjectHashMap<TLongLongHashMap>();
+    private final TLongLongMap f_currentObjects = new TLongLongHashMap();
     private final TLongHashSet f_synthetics;
 
     private void useObject(final long id) {
         if (f_start <= id && id <= f_end) {
             f_referencedObjects.add(id);
+        }
+    }
+
+    private void indirectAccess(final long receiver, final long thread) {
+        if (f_start <= receiver && receiver <= f_end) {
+            long lastPut = f_currentObjects.put(receiver, thread);
+            if (lastPut != f_currentObjects.getNoEntryValue()
+                    && lastPut != thread) {
+                f_indirectObjects.add(receiver);
+            }
         }
     }
 
@@ -73,6 +86,7 @@ public class ScanRawFileFieldsPreScan extends AbstractDataScan {
 
     private void garbageCollect(final long objectId) {
         f_currentFields.remove(objectId);
+        f_currentObjects.remove(objectId);
     }
 
     @SuppressWarnings("fallthrough")
@@ -116,7 +130,8 @@ public class ScanRawFileFieldsPreScan extends AbstractDataScan {
             garbageCollect(attrs.getLong(AttributeType.ID));
             break;
         case INDIRECTACCESS:
-            useObject(attrs.getLong(AttributeType.RECEIVER));
+            indirectAccess(attrs.getLong(AttributeType.RECEIVER),
+                    attrs.getThreadId());
             break;
         case AFTERINTRINSICLOCKACQUISITION:
         case AFTERINTRINSICLOCKRELEASE:
@@ -186,7 +201,12 @@ public class ScanRawFileFieldsPreScan extends AbstractDataScan {
      * @return
      */
     public boolean couldBeReferencedObject(final long id) {
-        return f_referencedObjects.contains(id);
+        return f_referencedObjects.contains(id)
+                || f_indirectObjects.contains(id);
+    }
+
+    public boolean isIndirectlyAccessedObject(final long id) {
+        return f_indirectObjects.contains(id);
     }
 
     public boolean isSynthetic(final long field) {

@@ -82,7 +82,7 @@ import com.surelogic.flashlight.common.prep.Trace;
 import com.surelogic.flashlight.common.prep.TraceNode;
 
 public final class PrepSLJob extends AbstractSLJob {
-    // Test commit
+
     private static final int PRE_SCAN_WORK = 100;
     private static final int DROP_CONSTRAINT_WORK = 5;
     private static final int PERSIST_RUN_DESCRIPTION_WORK = 5;

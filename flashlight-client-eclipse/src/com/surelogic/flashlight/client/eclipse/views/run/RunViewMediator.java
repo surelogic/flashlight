@@ -391,6 +391,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements ILifec
       FlashlightDataSource.getInstance().setSelectedRun(o);
       FlashlightDataSource.getManager().setGlobalVariableValue(AdHocManager.DATABASE, o.getRunIdString());
       FlashlightDataSource.getManager().setSelectedResult(null);
+      FlashlightDataSource.getManager().notifySelectedResultChange(); // may already be null (change overview)
     }
     f_prepAction.setEnabled(rawActionsEnabled);
     f_showLogAction.setEnabled(somethingSelected);

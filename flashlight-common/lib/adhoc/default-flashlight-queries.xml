@@ -33,6 +33,7 @@ INNER JOIN OBJECT FLCO ON
   FLCO.ID = FLO.TYPE
 ORDER BY 1,2,3,4
 </query>
+  <query id="151ce2c1-07ee-4f59-9e5f-a4e77cec4a1a" description="A new query" revision="1">SELECT * FROM INDIRECTACCESS</query>
   <query id="1562545d-004b-4865-9f55-65ed4e37bcbb" description="How often is a lock held when this field is accessed in this thread?" revision="13" display="true">-- META-BEGIN(no-rows)
 -- No locks are ever held when this field is accessed
 -- META-END
@@ -709,60 +710,6 @@ FROM
 FROM
    LOCKCYCLETHREAD
 WHERE COMPONENT = ?Cycle?</query>
-  <query id="02475ce2-0b3a-47e9-9200-e4f6e864aa3b" description="What are the lock traces?" revision="1" display="true">SELECT
-   LS.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;,
-   LS.CLASSNAME   &quot;Class&quot;,
-   LS.CLASSCODE   &quot;Class__(icon)&quot;,
-   LS.ATLINE      &quot;Line__|&quot;,
-   LS.LOCKTRACE   &quot;LOCKTRACE__(hide)&quot;,
-   ?Multiple?     &quot;Multiple__(hide)&quot;
-FROM
-   (SELECT
-       CO.PACKAGENAME,
-       CO.CLASSNAME,
-       CO.CLASSCODE,
-       S.ATLINE,
-       L.LOCKTRACE
-   FROM
-       ACCESS A, 
-       ACCESSLOCKSHELD ALH,
-       LOCK L,
-       TRACE TR,
-       SITE S,
-       OBJECT CO
-   WHERE
-       A.TRACE = ?ATRACE? AND
-       ALH.ACCESS = A.ID AND
-       L.ID = ALH.LASTACQUISITION AND
-       L.LOCK = ?Lock? AND
-       TR.ID = L.TRACE AND
-       S.ID = TR.SITE AND
-       CO.ID = S.INCLASS
-   UNION
-   SELECT
-       CO.PACKAGENAME,
-       CO.CLASSNAME,
-       CO.CLASSCODE,
-       S.ATLINE,
-       LE.LOCKTRACE
-   FROM
-       ACCESS A, 
-       ACCESSLOCKSHELD ALH,
-       LOCKSHELD L,
-       LOCK LE,
-       TRACE TR,
-       SITE S,
-       OBJECT CO
-   WHERE
-          A.TRACE = ?ATRACE? AND
-          ALH.ACCESS = A.ID AND
-          L.LOCKEVENT = ALH.LASTACQUISITION AND
-          L.LOCKHELD = ?Lock? AND
-          LE.ID = ALH.LASTACQUISITION AND
-          TR.ID = LE.TRACE AND
-          S.ID = TR.SITE AND
-          CO.ID = S.INCLASS) LS
-ORDER BY LS.PACKAGENAME,LS.CLASSNAME,LS.ATLINE</query>
   <query id="00c978ca-dd0c-4b32-a651-293510b3bffa" description="What are the lock traces?" revision="1" display="true">SELECT
    LS.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;,
    LS.CLASSNAME   &quot;Class&quot;,
@@ -802,6 +749,60 @@ FROM
    FROM
        INDIRECTACCESS A, 
        INDIRECTACCESSLOCKSHELD ALH,
+       LOCKSHELD L,
+       LOCK LE,
+       TRACE TR,
+       SITE S,
+       OBJECT CO
+   WHERE
+          A.TRACE = ?ATRACE? AND
+          ALH.ACCESS = A.ID AND
+          L.LOCKEVENT = ALH.LASTACQUISITION AND
+          L.LOCKHELD = ?Lock? AND
+          LE.ID = ALH.LASTACQUISITION AND
+          TR.ID = LE.TRACE AND
+          S.ID = TR.SITE AND
+          CO.ID = S.INCLASS) LS
+ORDER BY LS.PACKAGENAME,LS.CLASSNAME,LS.ATLINE</query>
+  <query id="02475ce2-0b3a-47e9-9200-e4f6e864aa3b" description="What are the lock traces?" revision="1" display="true">SELECT
+   LS.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;,
+   LS.CLASSNAME   &quot;Class&quot;,
+   LS.CLASSCODE   &quot;Class__(icon)&quot;,
+   LS.ATLINE      &quot;Line__|&quot;,
+   LS.LOCKTRACE   &quot;LOCKTRACE__(hide)&quot;,
+   ?Multiple?     &quot;Multiple__(hide)&quot;
+FROM
+   (SELECT
+       CO.PACKAGENAME,
+       CO.CLASSNAME,
+       CO.CLASSCODE,
+       S.ATLINE,
+       L.LOCKTRACE
+   FROM
+       ACCESS A, 
+       ACCESSLOCKSHELD ALH,
+       LOCK L,
+       TRACE TR,
+       SITE S,
+       OBJECT CO
+   WHERE
+       A.TRACE = ?ATRACE? AND
+       ALH.ACCESS = A.ID AND
+       L.ID = ALH.LASTACQUISITION AND
+       L.LOCK = ?Lock? AND
+       TR.ID = L.TRACE AND
+       S.ID = TR.SITE AND
+       CO.ID = S.INCLASS
+   UNION
+   SELECT
+       CO.PACKAGENAME,
+       CO.CLASSNAME,
+       CO.CLASSCODE,
+       S.ATLINE,
+       LE.LOCKTRACE
+   FROM
+       ACCESS A, 
+       ACCESSLOCKSHELD ALH,
        LOCKSHELD L,
        LOCK LE,
        TRACE TR,
@@ -3404,62 +3405,6 @@ FROM TABLE (STACKTRACE(?SOURCEID?)) s</query>
 --END-INFO
 SELECT s.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;, s.CLASSNAME &quot;Class&quot;, s.CLASSCODE &quot;Class__(icon)&quot;, s.LOCATION &quot;Location&quot;, s.LOCATIONCODE &quot;Location__(icon)&quot;, s.ATLINE &quot;Line__(r)&quot;
 FROM TABLE (STACKTRACE(?TRACEID?)) s</query>
-  <query id="83d613b3-283e-4100-9a82-e42adf107fe6" description="What is the stack trace?" revision="9" display="true">--BEGIN-INFO
---&lt;p&gt;&lt;strong&gt;
---    What is the stack trace for this access?
---&lt;/strong&gt;&lt;/p&gt;
---&lt;p&gt;
---    Generates a stack trace of the method calls leading up to this field
---    access or method call, from most to least recent.  Clicking on each
---    line will open the method call in the code view.
---  &lt;table&gt;
---    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
---      
---              
---              &lt;tbody&gt;
---                &lt;tr&gt;
---                  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
---                  &lt;td&gt;Table&lt;/td&gt;
---                &lt;/tr&gt;
---                &lt;tr&gt;
---                  &lt;td rowspan=&quot;5&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
---                  &lt;td&gt;Package&lt;/td&gt;
---                  &lt;td&gt;The package this method invocation or access occurred
---                  in&lt;/td&gt;
---                &lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Class&lt;/td&gt;
---	  &lt;td&gt;The class this method invocation or access occurred
---	  in&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Location&lt;/td&gt;
---	  &lt;td&gt;The location of this method invocation or access.  This
---	  is generally the enclosing method&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;File&lt;/td&gt;
---	  &lt;td&gt;The name of the source file this method invocation or
---	  access occurred in&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Line&lt;/td&gt;
---	  &lt;td&gt;The line number this method invocation or access occurred at&lt;/td&gt;
---	&lt;/tr&gt;
---      &lt;/tbody&gt;
---  &lt;/table&gt;
---&lt;/p&gt;
---&lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
---&lt;img src=&quot;what-is-the-stack-trace-for-this-access.png&quot; /&gt;
---&lt;p&gt;
---The above example shows the stack trace for an access in the constructor
---of &lt;code&gt;MapView&lt;/code&gt;, on line 84.
---&lt;/p&gt;
---
---END-INFO
-SELECT s.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;, s.CLASSNAME &quot;Class&quot;, s.CLASSCODE &quot;Class__(icon)&quot;, s.LOCATION &quot;Location&quot;, s.LOCATIONCODE &quot;Location__(icon)&quot;, s.ATLINE &quot;Line__(r)&quot;
-FROM TABLE (STACKTRACE(?ATRACE?)) s
-</query>
   <query id="10477928-cf86-4416-9118-34eea8cd7e38" description="What is the stack trace?" revision="7" display="true">--BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What is the stack trace for this lock acquisition?
@@ -3574,6 +3519,62 @@ FROM TABLE (STACKTRACE(?LATRACE?)) s
 ----END-INFO
 SELECT s.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;, s.CLASSNAME &quot;Class&quot;, s.CLASSCODE &quot;Class__(icon)&quot;, s.LOCATION &quot;Location&quot;, s.LOCATIONCODE &quot;Location__(icon)&quot;, s.ATLINE &quot;Line__(r)&quot;
 FROM TABLE (STACKTRACE(?LETRACE?)) s</query>
+  <query id="83d613b3-283e-4100-9a82-e42adf107fe6" description="What is the stack trace?" revision="9" display="true">--BEGIN-INFO
+--&lt;p&gt;&lt;strong&gt;
+--    What is the stack trace for this access?
+--&lt;/strong&gt;&lt;/p&gt;
+--&lt;p&gt;
+--    Generates a stack trace of the method calls leading up to this field
+--    access or method call, from most to least recent.  Clicking on each
+--    line will open the method call in the code view.
+--  &lt;table&gt;
+--    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
+--      
+--              
+--              &lt;tbody&gt;
+--                &lt;tr&gt;
+--                  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
+--                  &lt;td&gt;Table&lt;/td&gt;
+--                &lt;/tr&gt;
+--                &lt;tr&gt;
+--                  &lt;td rowspan=&quot;5&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
+--                  &lt;td&gt;Package&lt;/td&gt;
+--                  &lt;td&gt;The package this method invocation or access occurred
+--                  in&lt;/td&gt;
+--                &lt;/tr&gt;
+--	&lt;tr&gt;
+--	  &lt;td&gt;Class&lt;/td&gt;
+--	  &lt;td&gt;The class this method invocation or access occurred
+--	  in&lt;/td&gt;
+--	&lt;/tr&gt;
+--	&lt;tr&gt;
+--	  &lt;td&gt;Location&lt;/td&gt;
+--	  &lt;td&gt;The location of this method invocation or access.  This
+--	  is generally the enclosing method&lt;/td&gt;
+--	&lt;/tr&gt;
+--	&lt;tr&gt;
+--	  &lt;td&gt;File&lt;/td&gt;
+--	  &lt;td&gt;The name of the source file this method invocation or
+--	  access occurred in&lt;/td&gt;
+--	&lt;/tr&gt;
+--	&lt;tr&gt;
+--	  &lt;td&gt;Line&lt;/td&gt;
+--	  &lt;td&gt;The line number this method invocation or access occurred at&lt;/td&gt;
+--	&lt;/tr&gt;
+--      &lt;/tbody&gt;
+--  &lt;/table&gt;
+--&lt;/p&gt;
+--&lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+--&lt;img src=&quot;what-is-the-stack-trace-for-this-access.png&quot; /&gt;
+--&lt;p&gt;
+--The above example shows the stack trace for an access in the constructor
+--of &lt;code&gt;MapView&lt;/code&gt;, on line 84.
+--&lt;/p&gt;
+--
+--END-INFO
+SELECT s.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;, s.CLASSNAME &quot;Class&quot;, s.CLASSCODE &quot;Class__(icon)&quot;, s.LOCATION &quot;Location&quot;, s.LOCATIONCODE &quot;Location__(icon)&quot;, s.ATLINE &quot;Line__(r)&quot;
+FROM TABLE (STACKTRACE(?ATRACE?)) s
+</query>
   <query id="d1176c97-e3b6-483b-a341-6914a6f64860" description="What kinds of objects are indirectly accessed by more than one thread?" revision="11" display="true" display-at-root="true">--BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What kinds of objects are indirectly accessed by more than one thread?
@@ -5045,129 +5046,120 @@ WHERE O.CLASSNAME = &apos;?Class?&apos; AND
       LKCO.ID = LK.TYPE
 GROUP BY L.LOCKTRACE,TR.ID,L.LOCK,LKCO.CLASSNAME
 ORDER BY OBJID(L.LOCK),MIN(L.TS)</query>
-  <query id="732daa1f-dac0-4f40-b714-8190f903d323" description="Where are fields accessed while this lock is held?" revision="12" display="true">-- NO-ROWS-MSG=No accesses occur while this lock is held 
---BEGIN-INFO
---&lt;p&gt;&lt;strong&gt;
---    Where are fields accessed while this lock is held?
---&lt;/strong&gt;&lt;/p&gt;
---&lt;p&gt;
---    Lists all of the places in the program where a field is accessed
---    while this lock is held.  Clicking on a line will open it in the
---    code view.
---  &lt;table&gt;
---    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
---      
---      
---      &lt;tbody&gt;
---	&lt;tr&gt;
---	  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
---	  &lt;td&gt;Tree&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Tree Structure&lt;/strong&gt;&lt;/td&gt;
---	  &lt;td&gt;&lt;em&gt;Package&lt;/em&gt; &amp;#8594; &lt;em&gt;Class&lt;/em&gt; &amp;#8594; &lt;em&gt;Line&lt;/em&gt;&lt;/td&gt;
---	&lt;/tr&gt;
---      &lt;/tbody&gt;
---  &lt;/table&gt;
---&lt;/p&gt;
+  <query id="732daa1f-dac0-4f40-b714-8190f903d323" description="Where are fields accessed while this lock is held?" revision="13" display="true">-- META-BEGIN(no-rows)
+-- No accesses occur while this lock is held
+-- META-END
+-- META-BEGIN(doc)
+--    &lt;p&gt;&lt;strong&gt;
+--      Where are fields accessed while this lock is held?
+--    &lt;/strong&gt;&lt;/p&gt;
+--    &lt;p&gt;
+--      Lists all of the places in the program where a field is accessed while
+--      this lock is held, segregated by stack trace.  Double clicking on a line
+--      will show the full stack trace for the given entry.  You can also choose
+--      to see the lock trace for this particular trace.
+--      &lt;table&gt;
+--        &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
+--        
+--        
+--        &lt;tbody&gt;
+--	  &lt;tr&gt;
+--	    &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
+--	    &lt;td&gt;Tree-Table&lt;/td&gt;
+--	  &lt;/tr&gt;
+--	  &lt;tr&gt;
+--	    &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Tree Structure&lt;/strong&gt;&lt;/td&gt;
+--	    &lt;td&gt;&lt;em&gt;Package&lt;/em&gt; &amp;#8594; &lt;em&gt;Class&lt;/em&gt; &amp;#8594; &lt;em&gt;Line&lt;/em&gt;&lt;/td&gt;
+--	  &lt;/tr&gt;
+--	  &lt;tr&gt;
+--	    &lt;td rowspan=&quot;4&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
+--	    &lt;td&gt;Field&lt;/td&gt;
+--	    &lt;td&gt;The field accessed on this line.&lt;/td&gt;
+--	  &lt;/tr&gt;
+--          &lt;tr&gt;
+--            &lt;td&gt;Accesses Via This Stack Trace&lt;/td&gt;
+--            &lt;td&gt;The number of times this field access was observed in the program.&lt;/td&gt;
+--          &lt;/tr&gt;
 --
---&lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
---&lt;img src=&quot;where-are-fields-accessed-while-this-lock-is-held.png&quot; /&gt;
---&lt;p&gt;
---In the above example, fields were accessed on four different lines of
---code in the &lt;code&gt;GameMap&lt;/code&gt; class while this lock was held.
---&lt;/p&gt;
+--          &lt;tr&gt;
+--            &lt;td&gt;First Access&lt;/td&gt;
+--            &lt;td&gt;The first time this trace was observed in the program.&lt;/td&gt;
+--          &lt;/tr&gt;
+--          &lt;tr&gt;
+--            &lt;td&gt;Last Access&lt;/td&gt;
+--            &lt;td&gt;The last time this trace was observed in the program.&lt;/td&gt;
+--          &lt;/tr&gt;
+--        &lt;/tbody&gt;
+--      &lt;/table&gt;
+--    &lt;/p&gt;
 --
---END-INFO
+--&lt;img src=&quot;where-are-fields-accessed-while-this-lock-is-held.png&quot; /&gt; 
+--
+-- META-END
 SELECT
-   INFO.PACKAGENAME     &quot;Package__(&apos;@PK&apos;)&quot;,
-   INFO.CLASSNAME       &quot;Class&quot;,
-   INFO.CLASSCODE       &quot;Class__(icon)&quot;,
-   INFO.ATLINE          &quot;Line__|&quot;,
-   INFO.FIELDNAME       &quot;Field&quot;,
-   INFO.CODE            &quot;Field__(icon)&quot;,
-   COUNTS.COUNT         &quot;Accesses Via This Stack Trace__(add-commas)(r)&quot;,
-   COUNTS.AMIN          &quot;First Access&quot;,
-   COUNTS.AMAX          &quot;Last Access&quot;,
-   CASE WHEN COUNT(INFO.LOCKTRACE) &gt; 1 THEN NULL ELSE MAX(INFO.LOCKTRACE) END &quot;LOCKTRACE__(hide)&quot;,
-   CASE WHEN COUNT(INFO.LOCKTRACE) &gt; 1 THEN 1 ELSE NULL END &quot;Multiple__(hide)&quot;,
-   INFO.TRACE           &quot;ATRACE__(hide)&quot;
+   MAX(CO.PACKAGENAME)    &quot;Package__(&apos;@PK&apos;)&quot;,
+   MAX(CO.CLASSNAME)      &quot;Class&quot;,
+   MAX(CO.CLASSCODE)      &quot;Class__(icon)&quot;,
+   MAX(S.ATLINE)          &quot;Line__|&quot;,
+   MAX(F.FIELDNAME)       &quot;Field&quot;,
+   MAX(F.CODE)            &quot;Field__(icon)&quot;,
+   MAX(COUNTS.COUNT)      &quot;Accesses Via This Stack Trace__(add-commas)(r)&quot;,
+   MAX(COUNTS.AMIN)       &quot;First Access&quot;,
+   MAX(COUNTS.AMAX)       &quot;Last Access&quot;,
+   CASE WHEN COUNT(E.LOCKTRACE) &gt; 1 THEN NULL ELSE MAX(E.LOCKTRACE) END &quot;LOCKTRACE__(hide)&quot;,
+   CASE WHEN COUNT(E.LOCKTRACE) &gt; 1 THEN 1 ELSE NULL END &quot;Multiple__(hide)&quot;,
+   E.TRACE           &quot;ATRACE__(hide)&quot;
 FROM
    (SELECT
-       CO.PACKAGENAME,
-       CO.CLASSNAME,
-       CO.CLASSCODE,
-       S.ATLINE,
-       F.FIELDNAME,
-       F.CODE,
-       L.LOCKTRACE,
-       A.TRACE
+      L.LOCKTRACE,
+      A.TRACE,
+      A.FIELD
    FROM
-       ACCESS A, 
-       ACCESSLOCKSHELD ALH,
-       LOCK L,
-       TRACE TR,
-       SITE S,
-       OBJECT CO,
-       FIELD F
+      LOCK L,
+      ACCESSLOCKSHELD ALH,
+      ACCESS A
    WHERE
-       ALH.ACCESS = A.ID AND
-       L.ID = ALH.LASTACQUISITION AND
-       L.LOCK = ?Lock? AND
-       TR.ID = A.TRACE AND
-       S.ID = TR.SITE AND
-       CO.ID = S.INCLASS AND
-       F.ID = A.FIELD
-   UNION
+      A.ID = ALH.ACCESS AND
+      L.ID = ALH.LASTACQUISITION AND
+      L.LOCK = ?Lock?
+   UNION ALL
    SELECT
-       CO.PACKAGENAME,
-       CO.CLASSNAME,
-       CO.CLASSCODE,
-       S.ATLINE,
-       F.FIELDNAME,
-       F.CODE,
-       LE.LOCKTRACE,
-       A.TRACE
+      L.LOCKTRACE,
+      A.TRACE,
+      A.FIELD
    FROM
-       ACCESS A, 
-       ACCESSLOCKSHELD ALH,
-       LOCKSHELD L,
-       LOCK LE,
-       TRACE TR,
-       SITE S,
-       OBJECT CO,
-       FIELD F
+      LOCK L,
+      ACCESSLOCKSHELD ALH,
+      LOCKSHELD LH,
+      ACCESS A
    WHERE
-       ALH.ACCESS = A.ID AND
-       L.LOCKEVENT = ALH.LASTACQUISITION AND
-       L.LOCKHELD = ?Lock? AND
-       TR.ID = A.TRACE AND
-       LE.ID = ALH.LASTACQUISITION AND
-       S.ID = TR.SITE AND
-       CO.ID = S.INCLASS AND
-       F.ID = A.FIELD) INFO,
+      A.ID = ALH.ACCESS AND
+      LH.LOCKEVENT=ALH.LASTACQUISITION AND
+      LH.LOCKHELD = ?Lock? AND 
+      L.ID = ALH.LASTACQUISITION
+   ) E,
+   TRACE T,
+   SITE S,
+   OBJECT CO,
    (SELECT
       A.TRACE,
       MAX(A.UNDERCONSTRUCTION) &quot;AUC&quot;,
       MIN(A.TS)   &quot;AMIN&quot;,
       MAX(A.TS)   &quot;AMAX&quot;,
       COUNT(A.TS) &quot;COUNT&quot;
-   FROM
-      ACCESS A
-   GROUP BY A.TRACE) COUNTS
-WHERE
-   COUNTS.TRACE = INFO.TRACE
-GROUP BY INFO.PACKAGENAME,
-         INFO.CLASSNAME,
-         INFO.CLASSCODE,
-         INFO.FIELDNAME,
-         INFO.CODE,
-         INFO.ATLINE, 
-         COUNTS.COUNT,
-         COUNTS.AMIN,
-         COUNTS.AMAX,
-         INFO.TRACE
-ORDER BY INFO.PACKAGENAME,INFO.CLASSNAME,INFO.ATLINE,COUNTS.AMIN</query>
+   FROM ACCESS A
+   GROUP BY A.TRACE) COUNTS,
+   FIELD F
+WHERE 
+   COUNTS.TRACE = E.TRACE AND
+   T.ID = E.TRACE AND
+   S.ID = T.SITE AND
+   CO.ID = S.INCLASS AND
+   F.ID = E.FIELD
+GROUP BY E.TRACE,E.FIELD
+ORDER BY MAX(CO.PACKAGENAME), MAX(CO.CLASSNAME), MAX(S.ATLINE), MAX(COUNTS.AMIN)
+
+</query>
   <query id="9d05ac24-20c2-436e-af6b-2bd0bc7dbcfb" description="Where does a thread hold a lock and acquire another?" revision="13" display="true" display-at-root="true">-- NO-ROWS-MSG=No locks were observed to be acquired while another was already held during this run of the program.
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
@@ -5243,39 +5235,48 @@ GROUP BY CLASSNAME,CLASSCODE,LOCATION,LOCATIONCODE,PACKAGENAME,ATLINE
 ORDER BY PACKAGENAME,CLASSNAME,LOCATION,ATLINE
 
 </query>
-  <query id="6cdf1659-f7f6-41b9-aa17-6d14a4a2f4b6" description="Where is a lock held and state in more than two classes accessed?" revision="5" display="true" display-at-root="true">SELECT
+  <query id="6cdf1659-f7f6-41b9-aa17-6d14a4a2f4b6" description="Where is a lock held and state in more than two classes accessed?" revision="6" display="true" display-at-root="true">-- META-BEGIN(no-rows)
+-- No lock is held when state in more than two classes is accessed
+-- META-END
+-- META-BEGIN(empty-is-good-news)
+-- No lock was held when state in more than two classes is accessed
+-- META-END
+-- META-BEGIN(result-is-bad-news)
+-- State in more than two classes was accessed while holding a lock
+-- META-END
+SELECT
     OBJID(LOCK)    &quot;Lock__(&apos;lock.gif&apos;)&quot;,
     MAX(AGG.TYPES) &quot;Classes Accessed&quot;,
     LOCK           &quot;Lock__(hide)&quot;
 FROM (
    SELECT 
       E.EVENT,
-      COUNT(DISTINCT E.DECLARINGTYPE) &quot;TYPES&quot;
+      COUNT(DISTINCT S.INCLASS) &quot;TYPES&quot;
    FROM (
       SELECT
          ALH.LASTACQUISITION &quot;EVENT&quot;,
-         F.DECLARINGTYPE
+         A.TRACE             
       FROM
          ACCESSLOCKSHELD ALH,
-         ACCESS A,
-         FIELD F
+         ACCESS A
       WHERE
-         A.ID = ALH.ACCESS AND
-         F.ID = A.FIELD
+         A.ID = ALH.ACCESS
       UNION
       SELECT
          LH.LOCKHELDEVENT &quot;EVENT&quot;,
-         F.DECLARINGTYPE
+         A.TRACE
       FROM
          ACCESSLOCKSHELD ALH,
          LOCKSHELD LH,
-         ACCESS A,
-         FIELD F
+         ACCESS A
       WHERE
          A.ID = ALH.ACCESS AND
-         LH.LOCKEVENT=ALH.LASTACQUISITION AND
-         F.ID = A.FIELD
-      ) E
+         LH.LOCKEVENT=ALH.LASTACQUISITION
+      ) E,
+      TRACE T,
+      SITE S
+   WHERE T.ID = E.TRACE AND
+         S.ID = T.SITE
    GROUP BY E.EVENT
    ) AGG,
    LOCK L
@@ -5283,7 +5284,7 @@ WHERE L.ID = AGG.EVENT
 GROUP BY L.LOCK
 HAVING MAX(AGG.TYPES) &gt; 2
 ORDER BY MAX(AGG.TYPES) DESC</query>
-  <query id="ddb5a17c-f5ac-4c26-a251-34d8e3c7bc7f" description="Where is a lock held and state in more than two packages accessed?" revision="6" display="true" display-at-root="true">-- META-BEGIN(no-rows)
+  <query id="ddb5a17c-f5ac-4c26-a251-34d8e3c7bc7f" description="Where is a lock held and state in more than two packages accessed?" revision="7" display="true" display-at-root="true">-- META-BEGIN(no-rows)
 -- No lock is held when state in more than two packages is accessed
 -- META-END
 -- META-BEGIN(empty-is-good-news)
@@ -5303,31 +5304,31 @@ FROM (
    FROM (
       SELECT
          ALH.LASTACQUISITION &quot;EVENT&quot;,
-         F.DECLARINGTYPE
+         A.TRACE
       FROM
          ACCESSLOCKSHELD ALH,
-         ACCESS A,
-         FIELD F
+         ACCESS A
       WHERE
-         A.ID = ALH.ACCESS AND
-         F.ID = A.FIELD
+         A.ID = ALH.ACCESS
       UNION
       SELECT
          LH.LOCKHELDEVENT &quot;EVENT&quot;,
-         F.DECLARINGTYPE
+         A.TRACE
       FROM
          ACCESSLOCKSHELD ALH,
          LOCKSHELD LH,
-         ACCESS A,
-         FIELD F
+         ACCESS A
       WHERE
          A.ID = ALH.ACCESS AND
-         LH.LOCKEVENT=ALH.LASTACQUISITION AND
-         F.ID = A.FIELD
-      ) E, 
+         LH.LOCKEVENT=ALH.LASTACQUISITION
+      ) E,
+      TRACE T,
+      SITE S,
       OBJECT CO
    WHERE
-      CO.ID = E.DECLARINGTYPE 
+      T.ID = E.TRACE AND
+      S.ID = T.SITE AND
+      CO.ID = S.INCLASS
    GROUP BY E.EVENT
    ) AGG,
    LOCK L
@@ -6385,8 +6386,8 @@ order by lo.PackageName, lo.ClassName, s.AtLine, tho.ThreadName, sum(ld.Duration
   <sub-query id="8de7d969-6633-4a16-acad-786ab9fd2f5f" sub-query="ae2c5715-740e-4850-a404-38bdc8cde6b6"/>
   <sub-query id="8de7d969-6633-4a16-acad-786ab9fd2f5f" sub-query="83d613b3-283e-4100-9a82-e42adf107fe6" is-default="10"/>
   <sub-query id="eebe8cc6-9268-4b26-8d6a-bf94c88084fb" sub-query="4fce8390-7307-45dc-b779-5701ee7f23a1"/>
-  <sub-query id="02475ce2-0b3a-47e9-9200-e4f6e864aa3b" sub-query="30f37c1b-4a34-4eff-8bca-b76566b216c3"/>
   <sub-query id="00c978ca-dd0c-4b32-a651-293510b3bffa" sub-query="30f37c1b-4a34-4eff-8bca-b76566b216c3"/>
+  <sub-query id="02475ce2-0b3a-47e9-9200-e4f6e864aa3b" sub-query="30f37c1b-4a34-4eff-8bca-b76566b216c3"/>
   <sub-query id="cdc2d460-b17f-43bc-8cc6-4c26f1637fda" sub-query="f7ed1ced-73a5-4790-bc7c-8ba5fdf114a6" is-default="10"/>
   <sub-query id="33868960-7df8-4bab-bb33-ffb230957940" sub-query="6d8d0985-0830-4f18-a655-fa7b43703d5f"/>
   <sub-query id="33868960-7df8-4bab-bb33-ffb230957940" sub-query="708d1b8a-5274-4a25-b0b4-67f1a7a86690" is-default="10"/>
@@ -6546,7 +6547,7 @@ order by lo.PackageName, lo.ClassName, s.AtLine, tho.ThreadName, sum(ld.Duration
   <sub-query id="4fce8390-7307-45dc-b779-5701ee7f23a1" sub-query="30f37c1b-4a34-4eff-8bca-b76566b216c3"/>
   <sub-query id="8f6cfa4a-8821-4166-adb0-94a17a7b8f1b" sub-query="10477928-cf86-4416-9118-34eea8cd7e38"/>
   <sub-query id="8f6cfa4a-8821-4166-adb0-94a17a7b8f1b" sub-query="30f37c1b-4a34-4eff-8bca-b76566b216c3"/>
-  <sub-query id="732daa1f-dac0-4f40-b714-8190f903d323" sub-query="83d613b3-283e-4100-9a82-e42adf107fe6"/>
+  <sub-query id="732daa1f-dac0-4f40-b714-8190f903d323" sub-query="83d613b3-283e-4100-9a82-e42adf107fe6" is-default="1"/>
   <sub-query id="732daa1f-dac0-4f40-b714-8190f903d323" sub-query="30f37c1b-4a34-4eff-8bca-b76566b216c3"/>
   <sub-query id="732daa1f-dac0-4f40-b714-8190f903d323" sub-query="02475ce2-0b3a-47e9-9200-e4f6e864aa3b"/>
   <sub-query id="9d05ac24-20c2-436e-af6b-2bd0bc7dbcfb" sub-query="8f6cfa4a-8821-4166-adb0-94a17a7b8f1b" is-default="10"/>
@@ -6591,39 +6592,39 @@ order by lo.PackageName, lo.ClassName, s.AtLine, tho.ThreadName, sum(ld.Duration
     <cat-query id="976506a9-cf85-4907-8d7f-2fd9b5a28d6d"/>
   </category>
   <category id="28103990-73b5-4287-add0-39785aa7e3bb" description="Deadlock" has-data="Queries that show lock use that may cause the program to deadlock." no-data="No locking that could potentially cause deadlock was observed in the program." revision="3">
-    <cat-query id="f556dcef-0e6b-480b-bc1b-eb84b3012831"/>
     <cat-query id="9d05ac24-20c2-436e-af6b-2bd0bc7dbcfb"/>
+    <cat-query id="f556dcef-0e6b-480b-bc1b-eb84b3012831"/>
   </category>
   <category id="84475b98-4c68-4165-b883-5bdf9479d3d6" description="Lock Use" has-data="Queries about lock use in the program." no-data="No lock use was observed in the program." revision="5">
-    <cat-query id="2f505921-50fb-405b-bc78-4a5fe9228957"/>
-    <cat-query id="c744b5b5-15f0-4f72-a344-7e52bcac5071"/>
-    <cat-query id="26696a5f-3fd7-4f18-badf-e3d7d01a6d4e"/>
     <cat-query id="213c73ad-b3f6-4aef-9a05-f0c31d8fdcde"/>
-    <cat-query id="b06809c5-5a7b-41f2-bd8c-a9e3ed5f6b1b"/>
-    <cat-query id="d4d2af9b-ce4d-4457-9e94-01972fcb58d3"/>
-    <cat-query id="3b8251fa-a315-4c36-a856-a53b278fdc91"/>
     <cat-query id="ddb5a17c-f5ac-4c26-a251-34d8e3c7bc7f"/>
+    <cat-query id="d4d2af9b-ce4d-4457-9e94-01972fcb58d3"/>
     <cat-query id="6cdf1659-f7f6-41b9-aa17-6d14a4a2f4b6"/>
+    <cat-query id="c744b5b5-15f0-4f72-a344-7e52bcac5071"/>
+    <cat-query id="2f505921-50fb-405b-bc78-4a5fe9228957"/>
+    <cat-query id="26696a5f-3fd7-4f18-badf-e3d7d01a6d4e"/>
+    <cat-query id="b06809c5-5a7b-41f2-bd8c-a9e3ed5f6b1b"/>
+    <cat-query id="3b8251fa-a315-4c36-a856-a53b278fdc91"/>
   </category>
   <category id="3d204f5e-d61d-4637-be14-118223f2fb9e" description="Memory Model" has-data="Queries that show happens-before relationships between threads defined by the Java memory model." no-data="No happens-before relationships between threads were observed in the program." revision="2">
-    <cat-query id="7cd8d92c-7aec-4238-b808-e628f83dcb4e"/>
     <cat-query id="5f166e1b-f0a6-4c07-846b-98f2aba80be2"/>
     <cat-query id="eabad207-22a7-4bb0-a7e1-30946d02ea13"/>
+    <cat-query id="7cd8d92c-7aec-4238-b808-e628f83dcb4e"/>
     <cat-query id="1b191e96-598f-4d1f-9391-5d9feed0da69"/>
   </category>
   <category id="64511c63-0ce8-44df-8324-95711bff56ce" description="Performance" has-data="Queries that highlight potential performance bottlenecks in the program." no-data="No potential performance bottlenecks were observed in the program." revision="2">
-    <cat-query id="2d506676-eb1d-455b-9256-9ea8f05352d4"/>
     <cat-query id="4e026769-1b0b-42bd-8893-f3b92add093f"/>
+    <cat-query id="2d506676-eb1d-455b-9256-9ea8f05352d4"/>
     <cat-query id="cb38a427-c259-4690-abe2-acea9661f737"/>
   </category>
   <category id="8401fcf7-7d5c-4191-a997-0b82f1db8e66" description="Shared State" has-data="Queries that show state (fields, not local variables or parameters) shared between multiple threads." no-data="No state (fields, not local variables or parameters) was shared between multiple threads." revision="2">
     <cat-query id="33868960-7df8-4bab-bb33-ffb230957940"/>
     <cat-query id="bd72a5e4-42aa-415d-aa72-28d351f629a4"/>
     <cat-query id="d1176c97-e3b6-483b-a341-6914a6f64860"/>
+    <cat-query id="cdc2d460-b17f-43bc-8cc6-4c26f1637fda"/>
     <cat-query id="71a6fb5b-e5e1-4d25-bdc8-67ab5df1f66e"/>
     <cat-query id="094fc6db-5a5b-4495-aacd-54f5a5aa1691"/>
     <cat-query id="419c927e-a87c-4364-b4a9-2e8f50f728f6"/>
-    <cat-query id="cdc2d460-b17f-43bc-8cc6-4c26f1637fda"/>
   </category>
   <category id="b6d89f8b-7dfd-44a5-843c-d8a70f6aaaa9" description="Threads" has-data="Queries about threads in the program." no-data="No threads were observed in the program." revision="2">
     <cat-query id="8107df4c-42eb-407c-88c1-e16d805f3aaa"/>

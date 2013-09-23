@@ -383,7 +383,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements ILifec
     if (notBeingPreparedSelected.length == 0 || !notBeingPreparedSelected[0].isPrepared()) {
       FlashlightDataSource.getInstance().setSelectedRun(null);
       FlashlightDataSource.getManager().setGlobalVariableValue(AdHocManager.DATABASE, null);
-      FlashlightDataSource.getManager().setGlobalVariableValue(RunView.RUN_VARIABLE_NAME, null);
+      FlashlightDataSource.getManager().setGlobalVariableValue(RunView.RUN_DESC_VARIABLE_NAME, null);
       if (FlashlightDataSource.getManager().getSelectedResult() == null) {
         FlashlightDataSource.getManager().notifySelectedResultChange();
       }
@@ -391,7 +391,8 @@ public final class RunViewMediator extends AdHocManagerAdapter implements ILifec
       final RunDirectory o = notBeingPreparedSelected[0];
       FlashlightDataSource.getInstance().setSelectedRun(o);
       FlashlightDataSource.getManager().setGlobalVariableValue(AdHocManager.DATABASE, o.getRunIdString());
-      FlashlightDataSource.getManager().setGlobalVariableValue(RunView.RUN_VARIABLE_NAME, o.getDescription().getSimpleName());
+      FlashlightDataSource.getManager().setGlobalVariableValue(RunView.RUN_DESC_VARIABLE_NAME,
+          o.getDescription().getSimpleName() + " @ " + SLUtility.toStringDayHMS(o.getDescription().getStartTimeOfRun()));
       if (!FlashlightDataSource.getManager().setSelectedResult(null)) {
         /*
          * The selected result was already {@code null} but we need to update

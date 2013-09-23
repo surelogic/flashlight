@@ -463,9 +463,19 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
                         IMarker.SEVERITY_WARNING);
             }
         };
-
+        // public BuildHelper(@com.android.annotations.NonNull
+        // com.android.ide.eclipse.adt.internal.sdk.ProjectState projectState,
+        // @com.android.annotations.NonNull com.android.sdklib.BuildToolInfo
+        // buildToolInfo, @com.android.annotations.NonNull
+        // com.android.ide.eclipse.adt.AndroidPrintStream outStream,
+        // @com.android.annotations.NonNull
+        // com.android.ide.eclipse.adt.AndroidPrintStream errStream, boolean
+        // forceJumbo, boolean disableDexMerger, boolean debugMode, boolean
+        // verbose,
+        // com.android.ide.eclipse.adt.internal.build.BuildHelper.ResourceMarker
+        // resMarker)
         BuildHelper helper = new BuildHelper(
-                project,
+                projectState,
                 buildToolInfo,
                 mOutStream,
                 mErrStream,

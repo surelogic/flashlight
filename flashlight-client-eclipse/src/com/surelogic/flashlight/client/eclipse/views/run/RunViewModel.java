@@ -102,7 +102,7 @@ public final class RunViewModel {
     return f_columnData.size();
   }
 
-  private static abstract class ColumnDataAdaptor {
+  static abstract class ColumnDataAdaptor {
 
     abstract String getColumnTitle();
 

@@ -56,8 +56,8 @@ import com.surelogic.flashlight.common.model.RunDirectory;
  */
 public final class RunViewMediator extends AdHocManagerAdapter implements ILifecycle {
 
-  private final TableViewer f_tableViewer;
-  private final Table f_table;
+  final TableViewer f_tableViewer;
+  final Table f_table;
 
   private final IRunManagerObserver f_rmo = new RunManagerObserverAdapter() {
     @Override
@@ -147,7 +147,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements ILifec
   }
 
   @NonNull
-  private RunDirectory[] getSelectedRunDirectoriesNotBeingPrepared() {
+  RunDirectory[] getSelectedRunDirectoriesNotBeingPrepared() {
     final List<RunDirectory> result = new ArrayList<RunDirectory>();
     for (RunDirectory r : getSelectedRunDirectories()) {
       if (!RunManager.getInstance().isBeingPrepared(r))
@@ -157,7 +157,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements ILifec
   }
 
   @NonNull
-  private List<RunDirectory> getSelectedRunDirectoriesThatArePrepared() {
+  List<RunDirectory> getSelectedRunDirectoriesThatArePrepared() {
     final List<RunDirectory> result = new ArrayList<RunDirectory>();
     for (RunDirectory r : getSelectedRunDirectories()) {
       if (r.isPrepared())
@@ -167,7 +167,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements ILifec
   }
 
   @NonNull
-  private RunDirectory[] getSelectedRunDirectories() {
+  RunDirectory[] getSelectedRunDirectories() {
     final TableItem[] items = f_table.getSelection();
     final RunDirectory[] results = new RunDirectory[items.length];
     for (int i = 0; i < items.length; i++) {
@@ -177,7 +177,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements ILifec
     return results;
   }
 
-  private void setSelectedRunDirectory(final RunDirectory run) {
+  void setSelectedRunDirectory(final RunDirectory run) {
     if (run == null) {
       return;
     }
@@ -208,7 +208,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements ILifec
     setToolbarState();
   }
 
-  private final Action f_prepAction = new Action() {
+  final Action f_prepAction = new Action() {
     @Override
     public void run() {
       final List<RunDirectory> notPrepped = new ArrayList<RunDirectory>();
@@ -276,7 +276,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements ILifec
     return f_showRunControlAction;
   }
 
-  private final Action f_deleteAction = new Action() {
+  final Action f_deleteAction = new Action() {
     @Override
     public void run() {
       final RunDirectory[] selected = getSelectedRunDirectories();
@@ -302,7 +302,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements ILifec
     return f_deleteAction;
   }
 
-  private final Action f_inferJSureAnnoAction = new Action() {
+  final Action f_inferJSureAnnoAction = new Action() {
     @Override
     public void run() {
       final List<RunDirectory> preparedRuns = getSelectedRunDirectoriesThatArePrepared();
@@ -312,7 +312,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements ILifec
     }
   };
 
-  private void inferJSureAnnoHelper(final List<RunDirectory> runs) {
+  void inferJSureAnnoHelper(final List<RunDirectory> runs) {
     for (final IJavaProject p : JDTUtility.getJavaProjects()) {
       for (final RunDirectory run : runs) {
         final String runName = run.getDescription().getName();
@@ -353,12 +353,12 @@ public final class RunViewMediator extends AdHocManagerAdapter implements ILifec
     return f_inferJSureAnnoAction;
   }
 
-  private final void updateRunManager() {
+  final void updateRunManager() {
     final RunDirectory[] selected = getSelectedRunDirectories();
     FlashlightDataSource.getInstance().setSelectedRun(selected.length == 0 ? null : selected[0]);
   }
 
-  private final void setToolbarState() {
+  final void setToolbarState() {
     /*
      * Consider auto-selecting the run if one and only one run exists.
      */
@@ -383,6 +383,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements ILifec
     if (notBeingPreparedSelected.length == 0 || !notBeingPreparedSelected[0].isPrepared()) {
       FlashlightDataSource.getInstance().setSelectedRun(null);
       FlashlightDataSource.getManager().setGlobalVariableValue(AdHocManager.DATABASE, null);
+      FlashlightDataSource.getManager().setGlobalVariableValue(RunView.RUN_VARIABLE_NAME, null);
       if (FlashlightDataSource.getManager().getSelectedResult() == null) {
         FlashlightDataSource.getManager().notifySelectedResultChange();
       }
@@ -390,8 +391,14 @@ public final class RunViewMediator extends AdHocManagerAdapter implements ILifec
       final RunDirectory o = notBeingPreparedSelected[0];
       FlashlightDataSource.getInstance().setSelectedRun(o);
       FlashlightDataSource.getManager().setGlobalVariableValue(AdHocManager.DATABASE, o.getRunIdString());
-      FlashlightDataSource.getManager().setSelectedResult(null);
-      FlashlightDataSource.getManager().notifySelectedResultChange(); // may already be null (change overview)
+      FlashlightDataSource.getManager().setGlobalVariableValue(RunView.RUN_VARIABLE_NAME, o.getDescription().getSimpleName());
+      if (!FlashlightDataSource.getManager().setSelectedResult(null)) {
+        /*
+         * The selected result was already {@code null} but we need to update
+         * the run overview so we manually notify observers.
+         */
+        FlashlightDataSource.getManager().notifySelectedResultChange();
+      }
     }
     f_prepAction.setEnabled(rawActionsEnabled);
     f_showLogAction.setEnabled(somethingSelected);

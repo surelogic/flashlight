@@ -28,6 +28,8 @@ import com.surelogic.flashlight.common.model.RunDirectory;
  * View to display all raw and prepared Flashlight runs to the user.
  */
 public final class RunView extends ViewPart {
+  
+  public static final String RUN_VARIABLE_NAME = "FL_RUN_NAME";
 
   private RunViewMediator f_mediator;
 

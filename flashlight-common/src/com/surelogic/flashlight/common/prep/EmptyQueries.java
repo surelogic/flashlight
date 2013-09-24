@@ -53,6 +53,7 @@ public class EmptyQueries implements IPostPrep {
                         if (mon.isCanceled()) {
                             return;
                         }
+                        mon.subTask(a.getDescription());
                         try {
                             ResultSet set = st.executeQuery(a.getSql());
                             if (!set.next()) {
@@ -65,6 +66,7 @@ public class EmptyQueries implements IPostPrep {
                                                     "Exception encountered when executing %s to check for empty queries.",
                                                     a.getDescription()), e);
                         }
+                        mon.subTaskDone();
                     }
                 } finally {
                     st.close();

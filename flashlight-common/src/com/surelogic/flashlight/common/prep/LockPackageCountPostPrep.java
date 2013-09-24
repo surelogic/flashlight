@@ -11,7 +11,7 @@ public class LockPackageCountPostPrep implements IPostPrep {
 
     @Override
     public String getDescription() {
-        return "Getting ackage access counts for locks.";
+        return "Getting package access counts for locks.";
     }
 
     @Override

@@ -7,7 +7,7 @@ import com.surelogic.common.jdbc.ConnectionQuery;
 import com.surelogic.common.jdbc.SchemaData;
 import com.surelogic.common.jobs.SLProgressMonitor;
 
-public class LockPackageCountPostPrep implements IPostPrep {
+public class LockInfoPostPrep implements IPostPrep {
 
     @Override
     public String getDescription() {
@@ -19,6 +19,7 @@ public class LockPackageCountPostPrep implements IPostPrep {
             SLProgressMonitor mon) throws SQLException {
         new ConnectionQuery(c).prepared("Accesses.prep.packageAccessCounts")
                 .call();
+        new ConnectionQuery(c).prepared("Accesses.prep.lockThreadInfo").call();
     }
 
 }

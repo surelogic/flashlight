@@ -4773,7 +4773,7 @@ SELECT
    S.LASTWRITETIME &quot;LastWriteTime__(hide)&quot;,
    S.LASTWRITETHREAD &quot;LastWriteThread__(hide)&quot;
 FROM TABLE (STATICACCESSSUMMARY(?FieldId?)) S</query>
-  <query id="4fce8390-7307-45dc-b779-5701ee7f23a1" description="Where and in what threads does this lock edge occur?" revision="19" display="true">--BEGIN-INFO
+  <query id="4fce8390-7307-45dc-b779-5701ee7f23a1" description="Where and in what threads does this lock edge occur?" revision="20" display="true">--BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What are the lock events for this lock graph edge?
 --&lt;/strong&gt;&lt;/p&gt;
@@ -4828,7 +4828,7 @@ SELECT
         WHEN L.LOCKISCLASS = &apos;Y&apos; THEN &apos;Lock on class&apos;
         WHEN L.TYPE = &apos;I&apos; THEN &apos;Intrinsic lock&apos;
         ELSE &apos;java.util.concurrent lock&apos;
-   END &quot;Type&quot;,
+   END &quot;As&quot;,
    MIN(L.TS)              &quot;First Occurrence&quot;,
    MAX(L.TS)              &quot;Last Occurence&quot;,
    MAX(LAH.LOCKSHELD)      &quot;Locks Already Held__(r)&quot;,
@@ -4862,7 +4862,7 @@ WHERE
    LAH.LOCKEVENT = L.ID
 GROUP BY L.LOCKTRACE, LO.PACKAGENAME, LO.CLASSNAME, S.LOCATION, S.ATLINE, L.LOCK, LKCO.CLASSNAME, L.TYPE, L.LOCKISTHIS, L.LOCKISCLASS
 ORDER BY LO.PACKAGENAME, LO.CLASSNAME, S.LOCATION, S.ATLINE, COALESCELOCKTRACETHREADS(L.LOCKTRACE)</query>
-  <query id="8f6cfa4a-8821-4166-adb0-94a17a7b8f1b" description="Where and in what threads is a lock acquired here?" revision="13" display="true">SELECT &apos;?Package?&apos;         &quot;Package__(&apos;@PK&apos;)&quot;,
+  <query id="8f6cfa4a-8821-4166-adb0-94a17a7b8f1b" description="Where and in what threads is a lock acquired here?" revision="14" display="true">SELECT &apos;?Package?&apos;         &quot;Package__(&apos;@PK&apos;)&quot;,
        &apos;?Class?&apos;           &quot;Class&quot;,
        &apos;?Class (Image)?&apos;   &quot;Class__(icon)&quot;,
        &apos;?Method?&apos;          &quot;Method&quot;,
@@ -4876,7 +4876,7 @@ ORDER BY LO.PACKAGENAME, LO.CLASSNAME, S.LOCATION, S.ATLINE, COALESCELOCKTRACETH
             WHEN MAX(L.LOCKISCLASS) = &apos;Y&apos; THEN &apos;Lock on class&apos;
             WHEN MAX(L.TYPE) = &apos;I&apos; THEN &apos;Intrinsic lock&apos;
             ELSE &apos;java.util.concurrent lock&apos;
-       END &quot;Type&quot;,
+       END &quot;As&quot;,
        MIN(L.TS)           &quot;First Occurrence&quot;,
        MAX(L.TS)           &quot;Last Occurrence&quot;,
        MAX(LH.LOCKSHELD)   &quot;Locks Already Held__(r)&quot;,
@@ -5460,7 +5460,7 @@ ORDER BY
     CO.CLASSNAME,
     S.ATLINE,
     MIN(A.TS)</query>
-  <query id="608b8114-de9d-496e-89dc-118298ac06ee" description="Where is this lock acquired in this thread?" revision="17" display="true">SELECT 
+  <query id="608b8114-de9d-496e-89dc-118298ac06ee" description="Where is this lock acquired in this thread?" revision="18" display="true">SELECT 
     CO.PACKAGENAME         &quot;Package__(&apos;@PK&apos;)&quot;,
     CO.CLASSNAME           &quot;Class&quot;,
     MAX(CO.CLASSCODE)      &quot;Class__(icon)&quot;,
@@ -5475,9 +5475,7 @@ ORDER BY
          WHEN MAX(LE.LOCKISCLASS) = &apos;Y&apos; THEN &apos;Lock on class&apos;
          WHEN MAX(LE.TYPE) = &apos;I&apos; THEN &apos;Intrinsic lock&apos;
          ELSE &apos;java.util.concurrent lock&apos;
-    END &quot;Type&quot;,
-    CASE WHEN MAX(LE.LOCKISTHIS) = &apos;Y&apos; THEN &apos;Yes&apos; ELSE &apos;N&apos; END &quot;Lock on this__(blank-if &apos;N&apos;)&quot;,
-    CASE WHEN MAX(LE.LOCKISCLASS) = &apos;Y&apos; THEN &apos;Yes&apos; ELSE &apos;N&apos; END  &quot;Lock on class__(blank-if &apos;N&apos;)&quot;,
+    END &quot;As&quot;,
     MIN(LE.TS)              &quot;First Occurrence&quot;,
     MAX(LE.TS)              &quot;Last Occurrence&quot;,
     COALESCE(MAX(LH.LOCKSHELD),0) &quot;Locks Already Held__(r)&quot;,
@@ -5502,7 +5500,7 @@ WHERE
 GROUP BY LE.LOCKTRACE,CO.PACKAGENAME,CO.CLASSNAME,S.LOCATION,S.ATLINE,LE.LOCK
 ORDER BY CO.PACKAGENAME,CO.CLASSNAME,S.LOCATION,S.ATLINE,COALESCELOCKTRACETHREADS(LE.LOCKTRACE)
 </query>
-  <query id="720921b7-6a0d-46b1-b9e9-4c7dc8671028" description="Where is this lock acquired?" revision="13" display="true">SELECT 
+  <query id="720921b7-6a0d-46b1-b9e9-4c7dc8671028" description="Where is this lock acquired?" revision="14" display="true">SELECT 
     CO.PACKAGENAME         &quot;Package__(&apos;@PK&apos;)&quot;,
     CO.CLASSNAME           &quot;Class&quot;,
     MAX(CO.CLASSCODE)      &quot;Class__(icon)&quot;,
@@ -5517,7 +5515,7 @@ ORDER BY CO.PACKAGENAME,CO.CLASSNAME,S.LOCATION,S.ATLINE,COALESCELOCKTRACETHREAD
          WHEN MAX(LE.LOCKISCLASS) = &apos;Y&apos; THEN &apos;Lock on class&apos;
          WHEN MAX(LE.TYPE) = &apos;I&apos; THEN &apos;Intrinsic lock&apos;
          ELSE &apos;java.util.concurrent lock&apos;
-    END &quot;Type&quot;,
+    END &quot;As&quot;,
     MIN(LE.TS)              &quot;First Occurrence&quot;,
     MAX(LE.TS)              &quot;Last Occurrence&quot;,
     COALESCE(MAX(LH.LOCKSHELD),0) &quot;Locks Already Held__(r)&quot;,

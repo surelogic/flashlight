@@ -3999,7 +3999,7 @@ GROUP BY DT.PACKAGENAME,DT.CLASSNAME,DT.CLASSCODE,A.RECEIVER,IA.HELD
 ORDER BY 1,2,4
 
 </query>
-  <query id="2d506676-eb1d-455b-9256-9ea8f05352d4" description="What objects have the potential for false sharing?" revision="9" display="true" display-at-root="true">-- META-BEGIN(no-rows)
+  <query id="2d506676-eb1d-455b-9256-9ea8f05352d4" description="What objects have the potential for false sharing?" revision="10" display="true" display-at-root="true">-- META-BEGIN(no-rows)
 -- No objects in the program were observed that could exhibit false sharing
 -- META-END
 -- META-BEGIN(empty-is-good-news)
@@ -4076,7 +4076,7 @@ FROM
 WHERE
    F.ID = B.FIELD AND
    CO.ID = F.DECLARINGTYPE AND
-   B.QUOTIENT &gt; 0.10
+   B.QUOTIENT &gt; 10
 ORDER BY
    CO.PACKAGENAME,
    CO.CLASSNAME,

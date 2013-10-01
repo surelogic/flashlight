@@ -33,7 +33,7 @@ INNER JOIN OBJECT FLCO ON
   FLCO.ID = FLO.TYPE
 ORDER BY 1,2,3,4
 </query>
-  <query id="1562545d-004b-4865-9f55-65ed4e37bcbb" description="How often is a lock held when this field is accessed in this thread?" revision="14" display="true">-- META-BEGIN(no-rows)
+  <query id="1562545d-004b-4865-9f55-65ed4e37bcbb" description="How often is a lock held when this field is accessed in this thread?" revision="15" display="true">-- META-BEGIN(no-rows)
 -- No locks are ever held when this field is accessed
 -- META-END
 -- META-BEGIN(doc)
@@ -817,7 +817,9 @@ FROM
           S.ID = TR.SITE AND
           CO.ID = S.INCLASS) LS
 ORDER BY LS.PACKAGENAME,LS.CLASSNAME,LS.ATLINE</query>
-  <query id="cdc2d460-b17f-43bc-8cc6-4c26f1637fda" description="What fields (non-static) are shared after object construction?" revision="5" display="true" display-at-root="true">-- NO-ROWS-MSG=No non-static fields are shared between two or more threads after object construction.
+  <query id="cdc2d460-b17f-43bc-8cc6-4c26f1637fda" description="What fields (non-static) are shared after object construction?" revision="6" display="true" display-at-root="true">-- META-BEGIN(no-rows)
+-- No non-static fields are shared between two or more threads after object construction.
+-- META-END
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What fields (non-static) are shared after object construction?
@@ -1030,7 +1032,9 @@ where
   and THO.ID = FI.Thread
 group by O.PackageName,O.ClassName,O.ClassCode,F.FieldName,F.Code,F.Id
 order by O.PackageName,O.ClassName,F.FieldName</query>
-  <query id="bd72a5e4-42aa-415d-aa72-28d351f629a4" description="What fields (non-static) are shared?" revision="19" display="true" display-at-root="true">-- NO-ROWS-MSG=No non-static fields are shared between two or more threads.
+  <query id="bd72a5e4-42aa-415d-aa72-28d351f629a4" description="What fields (non-static) are shared?" revision="20" display="true" display-at-root="true">-- META-BEGIN(no-rows)
+-- No non-static fields are shared between two or more threads.
+-- META-END
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What fields (non-static) are shared?
@@ -1401,7 +1405,9 @@ FROM
 WHERE
    B.FIELD IS NULL OR (IF.FIELD IS NULL AND F.VOLATILE = &apos;Y&apos;)
 GROUP BY CO.PACKAGENAME,CO.CLASSNAME,CO.CLASSCODE,F.FIELDNAME,F.CODE,F.ID</query>
-  <query id="71a6fb5b-e5e1-4d25-bdc8-67ab5df1f66e" description="What fields (non-static, non-final) are shared?" revision="13" display="true" display-at-root="true">-- NO-ROWS-MSG=No non-static fields are shared between two or more threads.
+  <query id="71a6fb5b-e5e1-4d25-bdc8-67ab5df1f66e" description="What fields (non-static, non-final) are shared?" revision="14" display="true" display-at-root="true">-- META-BEGIN(no-rows)
+-- No non-static fields are shared between two or more threads.
+-- META-END
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What fields (non-static, non-final) are shared?
@@ -1504,7 +1510,9 @@ where
   and FIRC.FIELD = F.ID
 group by O.PackageName,O.ClassName,O.ClassCode,F.FieldName,F.Code,F.Id
 order by O.PackageName,O.ClassName,F.FieldName</query>
-  <query id="419c927e-a87c-4364-b4a9-2e8f50f728f6" description="What fields (static) are shared?" revision="20" display="true" display-at-root="true">-- NO-ROWS-MSG=No static fields are shared between two or more threads.
+  <query id="419c927e-a87c-4364-b4a9-2e8f50f728f6" description="What fields (static) are shared?" revision="21" display="true" display-at-root="true">-- META-BEGIN(no-rows)
+-- No static fields are shared between two or more threads.
+-- META-END
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What fields (static) are shared?
@@ -1575,7 +1583,9 @@ where
   and FS.FIELD = F.ID 
   and THO.ID = FS.Thread
 order by O.PackageName,O.ClassName,F.FieldName,THO.ThreadName</query>
-  <query id="2f505921-50fb-405b-bc78-4a5fe9228957" description="What fields (static) have a non-empty lock set? " revision="13" display="true" display-at-root="true">-- NO-ROWS-MSG=No non-final non-volatile static fields that are shared have a common lock held for each access.
+  <query id="2f505921-50fb-405b-bc78-4a5fe9228957" description="What fields (static) have a non-empty lock set? " revision="14" display="true" display-at-root="true">-- META-BEGIN(no-rows)
+-- No non-final non-volatile static fields that are shared have a common lock held for each access.
+-- META-END
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What fields (static) have a lock set?
@@ -1633,7 +1643,9 @@ SELECT
  INNER JOIN INTERESTINGFIELD I ON I.RECEIVER IS NULL AND I.FIELD=FI.ID
  INNER JOIN FIELDLOCKSET F ON F.FIELD = I.FIELD
  ORDER BY O.PackageName,O.ClassName,FI.FieldName</query>
-  <query id="c744b5b5-15f0-4f72-a344-7e52bcac5071" description="What fields (static) have an empty lock set?" type="ERROR" revision="12" display="true" display-at-root="true">-- NO-ROWS-MSG=All non-final non-volatile static fields that are shared have a common lock held for each access.
+  <query id="c744b5b5-15f0-4f72-a344-7e52bcac5071" description="What fields (static) have an empty lock set?" type="ERROR" revision="13" display="true" display-at-root="true">-- META-BEGIN(no-rows)
+-- All non-final non-volatile static fields that are shared have a common lock held for each access.
+-- META-END
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What fields (static) have an empty lock set?
@@ -1768,7 +1780,9 @@ FROM
 WHERE
    F.STATIC = &apos;Y&apos; AND ((IF.FIELD IS NOT NULL AND B.FIELD IS NULL) OR (IF.FIELD IS NULL AND F.VOLATILE = &apos;Y&apos;))
 ORDER BY 1,2,4</query>
-  <query id="094fc6db-5a5b-4495-aacd-54f5a5aa1691" description="What fields (static, non-final) are shared?" revision="14" display="true" display-at-root="true">-- NO-ROWS-MSG=No static, non-final fields are shared between two or more threads.
+  <query id="094fc6db-5a5b-4495-aacd-54f5a5aa1691" description="What fields (static, non-final) are shared?" revision="15" display="true" display-at-root="true">-- META-BEGIN(no-rows)
+-- No static, non-final fields are shared between two or more threads.
+-- META-END
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What fields (static, non-final) are shared?
@@ -1921,7 +1935,9 @@ where
   AND FI.THREAD = ?Thread?
 group by O.PackageName,O.ClassName,O.ClassCode,F.FieldName,F.Id,F.Code
 order by O.PackageName,O.ClassName,F.FieldName</query>
-  <query id="e6477143-977b-4c8d-b3d5-3d09c919cb94" description="What fields are accessed while this lock is held?" revision="14" display="true">-- NO-ROWS-MSG=No accesses occur while this lock is held 
+  <query id="e6477143-977b-4c8d-b3d5-3d09c919cb94" description="What fields are accessed while this lock is held?" revision="15" display="true">-- META-BEGIN(no-rows)
+-- No accesses occur while this lock is held 
+-- META-END
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    Where are fields accessed during this particular lock acquisition?
@@ -2079,7 +2095,9 @@ FROM
    INNER JOIN OBJECT CO ON CO.ID = S.INCLASS
 GROUP BY CO.PACKAGENAME, CO.CLASSNAME, CO.CLASSCODE, S.LOCATION, S.LOCATIONCODE, S.ATLINE
 ORDER BY CO.PACKAGENAME,CO.CLASSNAME,S.LOCATION,S.ATLINE</query>
-  <query id="ae0f22d4-2f02-47f0-8745-8fa60024eda4" description="What fields are protected by this lock, and how often?" revision="9" display="true">-- NO-ROWS-MSG=No accesses occur while this lock is held 
+  <query id="ae0f22d4-2f02-47f0-8745-8fa60024eda4" description="What fields are protected by this lock, and how often?" revision="10" display="true">-- META-BEGIN(no-rows)
+-- No accesses occur while this lock is held 
+-- META-END
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What fields (non-static) are protected by this lock, and how often?
@@ -2364,7 +2382,9 @@ ORDER BY
    B.RECEIVER,
    F.FIELDNAME,
    RF.FIELDNAME</query>
-  <query id="dd2ea83c-1940-4985-ace7-a578471e3b54" description="What happens before edges allow these field reads to see the previous write?" revision="11" display="true">-- NO-ROWS-MSG=No happens before edges were detected.
+  <query id="dd2ea83c-1940-4985-ace7-a578471e3b54" description="What happens before edges allow these field reads to see the previous write?" revision="12" display="true">-- META-BEGIN(no-rows)
+-- No happens before edges were detected.
+-- META-END
 --BEGIN-INFO
 --&lt;strong&gt;&lt;p&gt;
 --  What happens before edges allow these field reads to see the previous write?
@@ -2676,7 +2696,9 @@ SELECT OBJID(COUNTS.RECEIVER) &quot;Instance&quot;,
   OBJECT O ON O.ID = COUNTS.RECEIVER
   INNER JOIN
   OBJECT CO ON CO.ID = O.TYPE</query>
-  <query id="708d1b8a-5274-4a25-b0b4-67f1a7a86690" description="What instances contain this field and are shared during object construction?" type="ERROR" revision="20" display="true">-- NO-ROWS-MSG=No instances of this field are accessed by multiple threads during object construction.
+  <query id="708d1b8a-5274-4a25-b0b4-67f1a7a86690" description="What instances contain this field and are shared during object construction?" type="ERROR" revision="21" display="true">-- META-BEGIN(no-rows)
+-- No instances of this field are accessed by multiple threads during object construction.
+-- META-END
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What instances of this non-static field are shard during object construction?
@@ -3576,7 +3598,10 @@ FROM TABLE (STACKTRACE(?ATRACE?)) s
 SELECT s.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;, s.CLASSNAME &quot;Class&quot;, s.CLASSCODE &quot;Class__(icon)&quot;, s.LOCATION &quot;Location&quot;, s.LOCATIONCODE &quot;Location__(icon)&quot;, s.ATLINE &quot;Line__(r)&quot;
 FROM TABLE (STACKTRACE(?LATRACE?)) s
 </query>
-  <query id="d1176c97-e3b6-483b-a341-6914a6f64860" description="What kinds of objects are indirectly accessed by more than one thread?" revision="11" display="true" display-at-root="true">--BEGIN-INFO
+  <query id="d1176c97-e3b6-483b-a341-6914a6f64860" description="What kinds of objects are indirectly accessed by more than one thread?" revision="12" display="true" display-at-root="true">-- META-BEGIN(no-rows)
+-- No objects are indirectly accessed by more than one thread.
+-- META-END
+--BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What kinds of objects are indirectly accessed by more than one thread?
 --&lt;/strong&gt;&lt;/p&gt;
@@ -3759,7 +3784,9 @@ ORDER BY 1, LDS.DURATION DESC</query>
 FROM 
    LOCKINFO LDS
 ORDER BY 1, LDS.DURATION DESC</query>
-  <query id="cb38a427-c259-4690-abe2-acea9661f737" description="What locks are contended for the longest time?" revision="17" display="true" display-at-root="true">-- NO-ROWS-MSG=No locks were observed to be acquired during this run of the program.
+  <query id="cb38a427-c259-4690-abe2-acea9661f737" description="What locks are contended for the longest time?" revision="18" display="true" display-at-root="true">-- META-BEGIN(no-rows)
+-- No locks were observed to be acquired during this run of the program.
+-- META-END
 --BEGIN-INFO
 --&lt;strong&gt;&lt;p&gt;
 --    What locks are contended for the longest time?
@@ -3827,7 +3854,9 @@ where State = &apos;BLOCKING&apos;
 group by Lock
 order by sum(duration) / count (lock) desc
   </query>
-  <query id="ae2c5715-740e-4850-a404-38bdc8cde6b6" description="What locks are held during this field access?" revision="11" display="true">-- NO-ROWS-MSG=No locks are held during this access of the field.
+  <query id="ae2c5715-740e-4850-a404-38bdc8cde6b6" description="What locks are held during this field access?" revision="12" display="true">-- META-BEGIN(no-rows)
+-- No locks are held during this access of the field.
+-- META-END
 --TODO make this look like a lock trace
 --BEGIN-INFO
 --&lt;strong&gt;&lt;p&gt;
@@ -3928,7 +3957,9 @@ FROM
 WHERE 
    LDS.LOCK = LP.LOCK
 ORDER BY LP.PACKAGES DESC, 1, LDS.DURATION DESC </query>
-  <query id="5ebba191-8523-4253-b639-872d6da4dc92" description="What objects are protected by this lock, and how often?" revision="8" display="true">-- NO-ROWS-MSG=No accesses occur while this lock is held 
+  <query id="5ebba191-8523-4253-b639-872d6da4dc92" description="What objects are protected by this lock, and how often?" revision="9" display="true">-- META-BEGIN(no-rows)
+-- No accesses occur while this lock is held 
+-- META-END
 --
 --BEGIN-INFO
 --&lt;strong&gt;&lt;p&gt;
@@ -4082,7 +4113,9 @@ ORDER BY
    CO.CLASSNAME,
    B.RECEIVER,
    F.FIELDNAME</query>
-  <query id="3b8251fa-a315-4c36-a856-a53b278fdc91" description="What objects were used as both a dynamic and an intrinsic lock?" type="ERROR" revision="8" display="true" display-at-root="true">-- NO-ROWS-MSG=No locks are held as both an intrinsic and a util.concurrent lock.
+  <query id="3b8251fa-a315-4c36-a856-a53b278fdc91" description="What objects were used as both a dynamic and an intrinsic lock?" type="ERROR" revision="8" display="true" display-at-root="true">-- META-BEGIN(no-rows)
+-- No locks are held as both an intrinsic and a util.concurrent lock.
+-- META-END
 --BEGIN-INFO
 --&lt;strong&gt;&lt;p&gt;
 --   Are any locks used as both an intrinsic and a util.concurrent lock?
@@ -4132,7 +4165,9 @@ WHERE
 ORDER BY 1, LDS.DURATION DESC
 
 </query>
-  <query id="94c1bc73-eb39-45d3-882e-d53c3bdf8a06" description="What static fields are accessed in this thread?" revision="7" display="true">-- NO-ROWS-MSG=No static fields are accessed in this thread.
+  <query id="94c1bc73-eb39-45d3-882e-d53c3bdf8a06" description="What static fields are accessed in this thread?" revision="8" display="true">-- META-BEGIN(no-rows)
+-- No static fields are accessed in this thread.
+-- META-END
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What fields (static) are accessed in this thread??
@@ -4185,7 +4220,9 @@ where
   and THO.ID = FS.Thread
   AND FS.Thread = ?Thread?
 order by O.PackageName,O.ClassName,F.FieldName,THO.ThreadName</query>
-  <query id="fd49f015-3585-4602-a5d1-4e67ef7b6a55" description="What static fields are protected by this lock, and how often?" revision="17" display="true">-- NO-ROWS-MSG=No accesses occur while this lock is held 
+  <query id="fd49f015-3585-4602-a5d1-4e67ef7b6a55" description="What static fields are protected by this lock, and how often?" revision="18" display="true">-- META-BEGIN(no-rows)
+-- No accesses occur while this lock is held 
+-- META-END
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    What fields (non-static) are protected by this lock, and how often?
@@ -4259,7 +4296,9 @@ FROM
 WHERE F.ID = FA.FIELD AND A.FIELD = F.ID AND DT.ID = F.DECLARINGTYPE AND F.STATIC = &apos;Y&apos;
 GROUP BY DT.PACKAGENAME,DT.CLASSNAME,DT.CLASSCODE,F.FIELDNAME,F.CODE,F.ID,FA.HELD
 ORDER BY 1,2,4</query>
-  <query id="8107df4c-42eb-407c-88c1-e16d805f3aaa" description="What threads access shared state in this program?" revision="8" display="true" display-at-root="true">--NO-ROWS-MSG=No threads were observed in this run of the program.
+  <query id="8107df4c-42eb-407c-88c1-e16d805f3aaa" description="What threads access shared state in this program?" revision="9" display="true" display-at-root="true">-- META-BEGIN(no-rows)
+-- No threads were observed in this run of the program.
+-- META-END
 --BEGIN-INFO
 --&lt;strong&gt;&lt;p&gt;
 --    What threads are in this program?
@@ -4318,7 +4357,9 @@ FROM
    GROUP BY INTHREAD) AS L
 ON A.INTHREAD = L.INTHREAD
 ORDER BY 1</query>
-  <query id="4e026769-1b0b-42bd-8893-f3b92add093f" description="What threads are blocked for the longest time?" revision="12" display="true" display-at-root="true">-- NO-ROWS-MSG=No locks were observed to be acquired during this run of the program.
+  <query id="4e026769-1b0b-42bd-8893-f3b92add093f" description="What threads are blocked for the longest time?" revision="13" display="true" display-at-root="true">-- META-BEGIN(no-rows)
+-- No locks were observed to be acquired during this run of the program.
+-- META-END
 --BEGIN-INFO
 --&lt;strong&gt;&lt;p&gt;
 --    What threads are blocked for the longest time?
@@ -5066,7 +5107,9 @@ WHERE
    F.ID = E.FIELD
 GROUP BY E.TRACE,E.FIELD
 ORDER BY MAX(CO.PACKAGENAME), MAX(CO.CLASSNAME), MAX(S.ATLINE), MIN(E.TS)</query>
-  <query id="9d05ac24-20c2-436e-af6b-2bd0bc7dbcfb" description="Where does a thread hold a lock and acquire another?" revision="13" display="true" display-at-root="true">-- NO-ROWS-MSG=No locks were observed to be acquired while another was already held during this run of the program.
+  <query id="9d05ac24-20c2-436e-af6b-2bd0bc7dbcfb" description="Where does a thread hold a lock and acquire another?" revision="14" display="true" display-at-root="true">-- META-BEGIN(no-rows)
+-- NO-ROWS-MSG=No locks were observed to be acquired while another was already held during this run of the program.
+-- META-END
 --BEGIN-INFO
 --&lt;p&gt;&lt;strong&gt;
 --    Where does a thread hold a lock and acquire another?
@@ -6071,7 +6114,9 @@ ORDER BY
     CO.CLASSNAME,
     S.ATLINE,
     MIN(A.TS)</query>
-  <query id="c9453327-b892-4324-a6b8-2dceb32e1901" description="Which threads and what code contend for this lock?" revision="12" display="true">-- NO-ROWS-MSG=No threads were forced to wait for this lock.
+  <query id="c9453327-b892-4324-a6b8-2dceb32e1901" description="Which threads and what code contend for this lock?" revision="13" display="true">-- META-BEGIN(no-rows)
+-- No threads were forced to wait for this lock.
+-- META-END
 -- This query shows the locations and threads of all places this lock 
 -- was contended for. Some entries appear to be duplicates, but actually
 -- represent different stack traces.

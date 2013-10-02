@@ -116,65 +116,75 @@ FROM
  FROM ACCESS A 
  WHERE A.FIELD = ?FieldId? AND A.RECEIVER = ?Receiver? AND A.INTHREAD = ?Thread? AND A.UNDERCONSTRUCTION = &apos;N&apos;) AS ACCESSES
 ORDER BY 5 DESC</query>
-  <query id="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a" description="How often is a lock held when this field is accessed?" revision="22" display="true">-- META-BEGIN(no-rows)
+  <query id="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a" description="How often is a lock held when this field is accessed?" revision="23" display="true">-- META-BEGIN(no-rows)
 -- No locks are ever held when this field is accessed.
 -- META-END
 -- META-BEGIN(doc)
---&lt;p&gt;&lt;strong&gt;
---    How often is a lock held when this field is accessed after object construction?
---&lt;/strong&gt;&lt;/p&gt;
---&lt;p&gt;
---    Lists how often each lock was held when this particular field was
---    accessed after the object was fully constructed.  If the same lock
---    is held on every access, we have an assurance that no race condition
---    was observed for this field.  This is generally the more useful form
---    of this query, as a safely published field usually doesn&apos;t need to
---    have the same lock held during object construction as is held when
---    it is accessed.
+-- &lt;p&gt;&lt;strong&gt;
+--    How often is a lock held when this field is accessed?
+-- &lt;/strong&gt;&lt;/p&gt;
+-- &lt;p&gt;
+--    Lists how often each lock was held when this particular field was accessed.
+--    If the same lock is held on every access, we have an assurance that no race
+--    condition was observed for this field.  Only accesses of the field after
+--    object construction are considered, as a safely published field doesn&apos;t need
+--    to have the same lock held during object construction as is held when it is
+--    accessed.
+-- &lt;/p&gt;
 --  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
 --      
 --      &lt;tbody&gt;
---	&lt;tr&gt;
---	  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
---	  &lt;td&gt;Table&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td rowspan=&quot;4&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
---	  &lt;td&gt;Lock&lt;/td&gt;
---	  &lt;td&gt;A lock identifier&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Times Acquired&lt;/td&gt;
---	  &lt;td&gt;The number of times this lock was acquired and held
---	  while this field was accessed&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Field Access Count&lt;/td&gt;
---	  &lt;td&gt;The number of times this field was accessed&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Percentage Held&lt;/td&gt;
---	  &lt;td&gt;The proportion of times a lock was held when this field
---	  was accessed to the total number of accesses, expressed as a
---	  percentage&lt;/td&gt;
---	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
+-- 	  &lt;td&gt;Table&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td rowspan=&quot;6&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
+--           &lt;td&gt;Instance&lt;/td&gt;
+--           &lt;td&gt;The owning object of the field.&lt;/td&gt;
+--         &lt;/tr&gt;
+--         &lt;tr&gt;
+--           &lt;td&gt;Field&lt;/td&gt;
+--           &lt;td&gt;The field name&lt;/td&gt;
+--         &lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;% Held&lt;/td&gt;
+-- 	  &lt;td&gt;The proportion of times a lock was held when this field
+-- 	  was accessed to the total number of accesses, expressed as a
+-- 	  percentage&lt;/td&gt;
+-- 	&lt;/tr&gt;
+--         &lt;tr&gt;
+-- 	  &lt;td&gt;Lock&lt;/td&gt;
+-- 	  &lt;td&gt;A lock identifier&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Accesses With Lock Held&lt;/td&gt;
+-- 	  &lt;td&gt;The number of times this field was accessed while the lock in
+-- 	  question was held.&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Total Accesses&lt;/td&gt;
+-- 	  &lt;td&gt;The number of times this field was accessed after object construction&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 
 --      &lt;/tbody&gt;
 --  &lt;/table&gt;
---&lt;/p&gt;
---&lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
---
---&lt;img src=&quot;how-often-is-a-lock-held-when-this-field-is-accessed-after-object-construction.png&quot; /&gt;
---
---&lt;p&gt;
---The above example lists all of the locks that access this instance of
---&lt;code&gt;f_location&lt;/code&gt;, ordered by the percent of all field accesses
---the lock was held for.  The most commonly held lock was
---&lt;code&gt;ReentrantReadWriteLock-1272&lt;/code&gt;, which was held 10 out of the
---12 times this instance of &lt;code&gt;f_location&lt;/code&gt; was accessed after the
---containing object was fully initialized.
---&lt;/p&gt;
+-- 
+-- &lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+-- 
+-- &lt;img src=&quot;how-often-is-a-lock-held-when-this-field-is-accessed-non-static.png&quot; /&gt;
+-- 
+-- &lt;p&gt;
+-- The above example lists all of the locks that access this instance of
+-- &lt;code&gt;f_owner&lt;/code&gt; in Planet-94, ordered by the percent of all field accesses
+-- the lock was held for.  The most commonly held lock was
+-- &lt;code&gt;ReentrantReadWriteLock-95&lt;/code&gt;, which was held 5 out of the 5 times this
+-- instance of &lt;code&gt;f_owner&lt;/code&gt; was accessed.  Because the lock was held 100%
+-- of the time, we can feel confident that no race condition was present in this
+-- instance of &lt;code&gt;f_owner&lt;/code&gt; for this run of the program.
+-- &lt;/p&gt;
 -- META-END
 SELECT 
    &apos;?Instance?&apos;         &quot;Instance&quot;,
@@ -5026,7 +5036,7 @@ WHERE
    CO.ID = S.INCLASS AND
    F.ID = E.FIELD
 GROUP BY E.TRACE,E.FIELD</query>
-  <query id="732daa1f-dac0-4f40-b714-8190f903d323" description="Where are fields accessed while this lock is held?" revision="16" display="true">-- META-BEGIN(no-rows)
+  <query id="732daa1f-dac0-4f40-b714-8190f903d323" description="Where are fields accessed while this lock is held?" revision="17" display="true">-- META-BEGIN(no-rows)
 -- No accesses occur while this lock is held
 -- META-END
 -- META-BEGIN(doc)
@@ -5036,6 +5046,7 @@ GROUP BY E.TRACE,E.FIELD</query>
 --    &lt;p&gt;
 --      Lists all of the places in the program where a field is accessed while
 --      this lock is held, segregated by stack trace.
+--    &lt;/p&gt;
 --      &lt;table&gt;
 --        &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --        
@@ -5069,7 +5080,6 @@ GROUP BY E.TRACE,E.FIELD</query>
 --          &lt;/tr&gt;
 --        &lt;/tbody&gt;
 --      &lt;/table&gt;
---    &lt;/p&gt;
 --
 -- &lt;p&gt;Because the reported locations and occurance counts are segregated by stack trace,
 -- it is possible that the same line of code can be reported several times as shown in

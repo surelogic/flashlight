@@ -67,13 +67,19 @@ public class GenerateHtmlDocs extends DefaultHandler {
     public void endElement(String uri, String localName, String qName)
             throws SAXException {
         if (name != null) {
+            writer.printf("<!-- %s -->\n", name);
             int start = chars.indexOf("META-BEGIN(doc)");
-            int end = chars.indexOf("META-END");
-            if (start >= 0 && end >= 0) {
-                writer.println(chars.substring(
-                        start + "META-BEGIN(doc)".length(), end).replaceAll(
-                        "--( )?", ""));
-            } else {
+            boolean found = false;
+            if (start >= 0) {
+                int end = chars.indexOf("META-END", start);
+                if (end >= 0) {
+                    found = true;
+                    writer.println(chars.substring(
+                            start + "META-BEGIN(doc)".length(), end)
+                            .replaceAll("--( )?", ""));
+                }
+            }
+            if (!found) {
                 writer.printf("<p><strong>\n\t%s\n</strong></p>\n", name);
             }
         }

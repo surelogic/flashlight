@@ -222,58 +222,61 @@ FROM
  FROM ACCESS A 
  WHERE A.FIELD = ?FieldId? AND A.RECEIVER = ?Receiver? AND A.UNDERCONSTRUCTION = &apos;N&apos;) AS ACCESSES
 ORDER BY 5 DESC</query>
-  <query id="42031a55-4f1c-42dc-80dc-0fa141a32382" description="How often is a lock held when this object is indirectly accessed?" revision="15" display="true">-- META-BEGIN(no-rows)
+  <query id="42031a55-4f1c-42dc-80dc-0fa141a32382" description="How often is a lock held when this object is indirectly accessed?" revision="16" display="true">-- META-BEGIN(no-rows)
 -- No locks are ever held when this object is indirectly accessed.
 -- META-END
 -- META-BEGIN(doc)
---&lt;p&gt;&lt;strong&gt;
+-- &lt;p&gt;&lt;strong&gt;
 --    How often is a lock held when this object is indirectly accessed?
---&lt;/strong&gt;&lt;/p&gt;
---&lt;p&gt;
---    Lists how often each lock was held when a particular object was
---    indirectly accessed, as well as what proportion of the total number
---    of accesses that represents.
+-- &lt;/strong&gt;&lt;/p&gt;
+-- &lt;p&gt;
+--    Lists how often each lock was held when this particular object was indirectly
+--    accessed.  An indirect access is any method called on the object that matches
+--    a pre-set list of methods.  This list can be modified in Flashlight
+--    Configuration, but by default contains most array and collection accessors.
+-- &lt;/p&gt;
 --  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
---      
+-- 
 --      
 --      &lt;tbody&gt;
---	&lt;tr&gt;
---	  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
---	  &lt;td&gt;Table&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td rowspan=&quot;4&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
---	  &lt;td&gt;Lock&lt;/td&gt;
---	  &lt;td&gt;A lock identifier&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Times Acquired&lt;/td&gt;
---	  &lt;td&gt;The number of times this lock was acquired and held
---	  while this object was indirectly accessed&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Access Count&lt;/td&gt;
---	  &lt;td&gt;The number of times this object was indirectly
---	  accessed&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Percentage Held&lt;/td&gt;
---	  &lt;td&gt;The proportion of times a lock was held when this
---	  object was indirectly accessed to the total number of
---	  accesses, expressed as a percentage&lt;/td&gt;
---	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
+-- 	  &lt;td&gt;Table&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td rowspan=&quot;5&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
+--           &lt;td&gt;Object&lt;/td&gt;
+-- 	&lt;/tr&gt;
+--         &lt;tr&gt;
+-- 	  &lt;td&gt;% Held&lt;/td&gt;
+-- 	  &lt;td&gt;The proportion of times a lock was held when this
+-- 	  object was indirectly accessed to the total number of
+-- 	  accesses, expressed as a percentage&lt;/td&gt;
+--         &lt;/tr&gt;
+--         &lt;tr&gt;
+-- 	  &lt;td&gt;Lock&lt;/td&gt;
+-- 	  &lt;td&gt;A lock identifier&lt;/td&gt;
+--         &lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Accesses With Lock Held&lt;/td&gt;
+-- 	  &lt;td&gt;The number of times this object was indirectly accessed while the
+-- 	  given lock was held.&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Total Accesses&lt;/td&gt;
+-- 	  &lt;td&gt;The number of times this object was indirectly accessed&lt;/td&gt;
+-- 	&lt;/tr&gt;
 --      &lt;/tbody&gt;
 --  &lt;/table&gt;
---&lt;/p&gt;
---
---&lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
---&lt;img src=&quot;how-often-is-a-lock-held-when-this-object-is-indirectly-accessed.png&quot; /&gt;
---&lt;p&gt;
---The above example shows the two locks that were held when this was
---object was indirectly accessed.  &lt;code&gt;Object-523&lt;/code&gt; was held 99 out
---of 100 times this object was called, and likely protects the object&apos;s state.
---&lt;/p&gt;
+-- 
+-- &lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+-- &lt;img src=&quot;how-often-is-a-lock-held-when-this-object-is-indirectly-accessed.png&quot; /&gt;
+-- &lt;p&gt;
+-- The above example shows the four locks that were held when HashMap-84 was
+-- indirectly accessed.  The &lt;code&gt;Object-42&lt;/code&gt; lock was held 9 out of 9
+-- times this object was called, and likely protects the object&apos;s state.
+-- &lt;/p&gt;
 -- META-END
 SELECT 
    &apos;?Object?&apos;           &quot;Object&quot;,
@@ -296,65 +299,72 @@ FROM
  FROM INDIRECTACCESS A 
  WHERE A.RECEIVER = ?Receiver?) AS ACCESSES
 ORDER BY 3 DESC</query>
-  <query id="5fd98753-3fe5-47a2-ab6a-ed5070dd41b0" description="How often is a lock held when this static field is accessed in this thread?" revision="16" display="true">-- META-BEGIN(no-rows)
+  <query id="5fd98753-3fe5-47a2-ab6a-ed5070dd41b0" description="How often is a lock held when this static field is accessed in this thread?" revision="17" display="true">-- META-BEGIN(no-rows)
 -- No locks are ever held when this field is accessed.
 -- META-END
 -- META-BEGIN(doc)
---&lt;p&gt;&lt;strong&gt;
---    How often is a lock held when this field is accessed in this thread?
---&lt;/strong&gt;&lt;/p&gt;
---&lt;p&gt;
---    Lists how often each lock was held when this particular field was
---    accessed, as well as what proportion of the total number of field
---    accesses that represents.  If the same lock is held on every access,
---    we have an assurance that no race condition was observed for this
---    field.
---  
+-- &lt;p&gt;&lt;strong&gt;
+--    How often is a lock held when this static field is accessed in this thread?
+-- &lt;/strong&gt;&lt;/p&gt;
+-- &lt;p&gt;
+--    Lists how often each lock was held when this particular field was accessed in
+--    the given thread.
+-- &lt;/p&gt;
 --  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
 --      
 --      &lt;tbody&gt;
---	&lt;tr&gt;
---	  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
---	  &lt;td&gt;Table&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td rowspan=&quot;4&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
---	  &lt;td&gt;Lock&lt;/td&gt;
---	  &lt;td&gt;A lock identifier&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Times Acquired&lt;/td&gt;
---	  &lt;td&gt;The number of times this lock was acquired and held
---	  while this field was accessed&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Field Access Count&lt;/td&gt;
---	  &lt;td&gt;The number of times this field was accessed&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Percentage Held&lt;/td&gt;
---	  &lt;td&gt;The proportion of times a lock was held when this field
---	  was accessed to the total number of accesses, expressed as a
---	  percentage&lt;/td&gt;
---	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
+-- 	  &lt;td&gt;Table&lt;/td&gt;
+-- 	&lt;/tr&gt;
+--      &lt;tr&gt;
+-- 	  &lt;td rowspan=&quot;6&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
+--       &lt;td&gt;Field&lt;/td&gt;
+--       &lt;td&gt;The field name&lt;/td&gt;
+--      &lt;/tr&gt;
+--      &lt;tr&gt;
+--       &lt;td&gt;In Thread&lt;/td&gt;
+--       &lt;td&gt;The thread in context&lt;/td&gt;
+--      &lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;% Held&lt;/td&gt;
+-- 	  &lt;td&gt;The proportion of times a lock was held when this field
+-- 	  was accessed to the total number of accesses, expressed as a
+-- 	  percentage&lt;/td&gt;
+-- 	&lt;/tr&gt;
+--         &lt;tr&gt;
+-- 	  &lt;td&gt;Lock&lt;/td&gt;
+-- 	  &lt;td&gt;A lock identifier&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Accesses With Lock Held&lt;/td&gt;
+-- 	  &lt;td&gt;The number of times this field was accessed while the lock in
+-- 	  question was held.&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Total Accesses&lt;/td&gt;
+-- 	  &lt;td&gt;The number of times this field was accessed after object construction&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 
 --      &lt;/tbody&gt;
 --  &lt;/table&gt;
---&lt;/p&gt;
---
---&lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
---&lt;img src=&quot;how-often-is-a-lock-held-when-this-field-is-accessed-static.png&quot; /&gt;
---&lt;p&gt;
---The above example lists all of the locks that access the static field
---&lt;code&gt;copyComponents&lt;/code&gt;, ordered by the percentage of all field
---accesses the lock was held for.  &lt;code&gt;ArrayList-12&lt;/code&gt; was held
---every time &lt;code&gt;copyComponents&lt;/code&gt; was accessed.
---&lt;/p&gt;
+-- 
+-- &lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+-- 
+-- &lt;img src=&quot;how-often-is-a-lock-held-when-this-static-field-is-accessed-in-this-thread.png&quot; /&gt;
+-- 
+-- &lt;p&gt;
+-- The above example lists all of the locks that are held when the main thread
+-- accesses &lt;code&gt;lastTime&lt;/code&gt; , ordered by the percent of all field accesses
+-- the lock was held for.  The most commonly held lock was
+-- &lt;code&gt;ConsoleAppender-122&lt;/code&gt; , which was held 526 out of the 601 times this
+-- instance of &lt;code&gt;lastTime&lt;/code&gt; was accessed in main.
+-- &lt;/p&gt;
+
 -- META-END
 SELECT 
-   &apos;?Instance?&apos;         &quot;Instance&quot;,
-   &apos;?Instance (Image)?&apos; &quot;Instance__(icon)&quot;,
    &apos;?Field?&apos;            &quot;Field&quot;,
    &apos;?Field (Image)?&apos;    &quot;Field__(icon)&quot;,
    OBJID(?Thread?)      &quot;In Thread__(&apos;thread.gif&apos;)&quot;,
@@ -376,61 +386,69 @@ FROM
  FROM ACCESS A 
  WHERE A.FIELD = ?FieldId? AND A.INTHREAD = ?Thread?) AS ACCESSES
 ORDER BY 6 DESC</query>
-  <query id="6a39e6ca-29e9-4093-ba03-0e9bd9503a1a" description="How often is a lock held when this static field is accessed?" revision="29" display="true">-- META-BEGIN(no-rows)
+  <query id="6a39e6ca-29e9-4093-ba03-0e9bd9503a1a" description="How often is a lock held when this static field is accessed?" revision="30" display="true">-- META-BEGIN(no-rows)
 -- No locks are ever held when this field is accessed.
 -- META-END
 -- META-BEGIN(doc)
---&lt;p&gt;&lt;strong&gt;
---    How often is a lock held when this field is accessed?
---&lt;/strong&gt;&lt;/p&gt;
---&lt;p&gt;
---    Lists how often each lock was held when this particular field was
---    accessed, as well as what proportion of the total number of field
---    accesses that represents.  If the same lock is held on every access,
---    we have an assurance that no race condition was observed for this
---    field.
---  
+-- &lt;p&gt;&lt;strong&gt;
+--    How often is a lock held when this static field is accessed?
+-- &lt;/strong&gt;&lt;/p&gt;
+-- &lt;p&gt;
+--    Lists how often each lock was held when this particular field was accessed.
+--    If the same lock is held on every access, we have an assurance that no race
+--    condition was observed for this field.  Only accesses of the field after
+--    object construction are considered, as a safely published field doesn&apos;t need
+--    to have the same lock held during object construction as is held when it is
+--    accessed.
+-- &lt;/p&gt;
 --  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      
 --      
 --      &lt;tbody&gt;
---	&lt;tr&gt;
---	  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
---	  &lt;td&gt;Table&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td rowspan=&quot;4&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
---	  &lt;td&gt;Lock&lt;/td&gt;
---	  &lt;td&gt;A lock identifier&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Times Acquired&lt;/td&gt;
---	  &lt;td&gt;The number of times this lock was acquired and held
---	  while this field was accessed&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Field Access Count&lt;/td&gt;
---	  &lt;td&gt;The number of times this field was accessed&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Percentage Held&lt;/td&gt;
---	  &lt;td&gt;The proportion of times a lock was held when this field
---	  was accessed to the total number of accesses, expressed as a
---	  percentage&lt;/td&gt;
---	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
+-- 	  &lt;td&gt;Table&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td rowspan=&quot;5&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
+--           &lt;td&gt;Field&lt;/td&gt;
+--           &lt;td&gt;The field name&lt;/td&gt;
+--         &lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;% Held&lt;/td&gt;
+-- 	  &lt;td&gt;The proportion of times a lock was held when this field
+-- 	  was accessed to the total number of accesses, expressed as a
+-- 	  percentage&lt;/td&gt;
+-- 	&lt;/tr&gt;
+--         &lt;tr&gt;
+-- 	  &lt;td&gt;Lock&lt;/td&gt;
+-- 	  &lt;td&gt;A lock identifier&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Accesses With Lock Held&lt;/td&gt;
+-- 	  &lt;td&gt;The number of times this field was accessed while the lock in
+-- 	  question was held.&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Total Accesses&lt;/td&gt;
+-- 	  &lt;td&gt;The number of times this field was accessed after object construction&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 
 --      &lt;/tbody&gt;
 --  &lt;/table&gt;
---&lt;/p&gt;
---
---&lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
---&lt;img src=&quot;how-often-is-a-lock-held-when-this-field-is-accessed-static.png&quot; /&gt;
---&lt;p&gt;
---The above example lists all of the locks that access the static field
---&lt;code&gt;copyComponents&lt;/code&gt;, ordered by the percentage of all field
---accesses the lock was held for.  &lt;code&gt;ArrayList-12&lt;/code&gt; was held
---every time &lt;code&gt;copyComponents&lt;/code&gt; was accessed.
---&lt;/p&gt;
+-- 
+-- &lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+-- 
+-- &lt;img src=&quot;how-often-is-a-lock-held-when-this-static-field-is-accessed.png&quot; /&gt;
+-- 
+-- &lt;p&gt;
+-- The above example lists all of the locks that are held when the main thread
+-- accesses &lt;code&gt;lastTime&lt;/code&gt; , ordered by the percent of all field accesses
+-- the lock was held for.  The most commonly held lock was
+-- &lt;code&gt;ConsoleAppender-122&lt;/code&gt; , which was held 2,780 out of the 3,196 times
+-- this instance of &lt;code&gt;lastTime&lt;/code&gt; was accessed in the program.
+-- &lt;/p&gt;
 -- META-END
 SELECT 
    &apos;?Field?&apos;            &quot;Field&quot;,
@@ -3266,6 +3284,22 @@ GROUP BY IA.RECEIVER, THO.THREADNAME
 ORDER BY 1, 3 DESC
 
 </query>
+  <query id="30f37c1b-4a34-4eff-8bca-b76566b216c3" description="What is the lock trace?" revision="5" display="true">-- META-BEGIN(disable-column-sort)
+-- Rows from a trace should not be reordered.
+-- META-END
+SELECT
+   OBJID(LOCK)  &quot;Lock__(&apos;lock.gif&apos;)&quot;,
+   S.PACKAGENAME  &quot;Package__(&apos;package.gif&apos;)&quot;,
+   S.CLASSNAME    &quot;Class&quot;,
+   S.CLASSCODE    &quot;Class__(icon)&quot;,
+   S.LOCATION     &quot;Location&quot;,
+   S.LOCATIONCODE &quot;Location__(icon)&quot;,
+   S.ATLINE       &quot;Line__(r)&quot;,
+   S.LOCKTRACE    &quot;LOCKTRACE__(hide)&quot;,
+   S.LOCK         &quot;Lock__(hide)&quot;,
+   S.TRACE        &quot;LATRACE__(hide)&quot;
+FROM 
+   TABLE (LOCKTRACE(?LOCKTRACE?)) S</query>
   <query id="fb317a0c-d9c5-41e2-811b-d6236f63fae1" description="What is the lock trace?" revision="14" display="true">-- META-BEGIN(disable-column-sort)
 -- Rows from a trace should not be reordered.
 -- META-END
@@ -3345,22 +3379,6 @@ SELECT
        LO.Id = S.InClass AND
        L.Id = ?LockEvent?
 ORDER BY D.START DESC</query>
-  <query id="30f37c1b-4a34-4eff-8bca-b76566b216c3" description="What is the lock trace?" revision="5" display="true">-- META-BEGIN(disable-column-sort)
--- Rows from a trace should not be reordered.
--- META-END
-SELECT
-   OBJID(LOCK)  &quot;Lock__(&apos;lock.gif&apos;)&quot;,
-   S.PACKAGENAME  &quot;Package__(&apos;package.gif&apos;)&quot;,
-   S.CLASSNAME    &quot;Class&quot;,
-   S.CLASSCODE    &quot;Class__(icon)&quot;,
-   S.LOCATION     &quot;Location&quot;,
-   S.LOCATIONCODE &quot;Location__(icon)&quot;,
-   S.ATLINE       &quot;Line__(r)&quot;,
-   S.LOCKTRACE    &quot;LOCKTRACE__(hide)&quot;,
-   S.LOCK         &quot;Lock__(hide)&quot;,
-   S.TRACE        &quot;LATRACE__(hide)&quot;
-FROM 
-   TABLE (LOCKTRACE(?LOCKTRACE?)) S</query>
   <query id="078a8b6c-1fad-4843-94f9-fe005eb66b73" description="What is the stack trace for this edge&apos;s source?" revision="4" display="true">-- META-BEGIN(disable-column-sort)
 -- Rows from a trace should not be reordered.
 -- META-END
@@ -3466,65 +3484,6 @@ FROM TABLE (STACKTRACE(?SOURCEID?)) s</query>
 --END-INFO
 SELECT s.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;, s.CLASSNAME &quot;Class&quot;, s.CLASSCODE &quot;Class__(icon)&quot;, s.LOCATION &quot;Location&quot;, s.LOCATIONCODE &quot;Location__(icon)&quot;, s.ATLINE &quot;Line__(r)&quot;
 FROM TABLE (STACKTRACE(?TRACEID?)) s</query>
-  <query id="83d613b3-283e-4100-9a82-e42adf107fe6" description="What is the stack trace?" revision="10" display="true">-- META-BEGIN(disable-column-sort)
--- Rows from a trace should not be reordered.
--- META-END
---BEGIN-INFO
---&lt;p&gt;&lt;strong&gt;
---    What is the stack trace for this access?
---&lt;/strong&gt;&lt;/p&gt;
---&lt;p&gt;
---    Generates a stack trace of the method calls leading up to this field
---    access or method call, from most to least recent.  Clicking on each
---    line will open the method call in the code view.
---  &lt;table&gt;
---    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
---      
---              
---              &lt;tbody&gt;
---                &lt;tr&gt;
---                  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
---                  &lt;td&gt;Table&lt;/td&gt;
---                &lt;/tr&gt;
---                &lt;tr&gt;
---                  &lt;td rowspan=&quot;5&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
---                  &lt;td&gt;Package&lt;/td&gt;
---                  &lt;td&gt;The package this method invocation or access occurred
---                  in&lt;/td&gt;
---                &lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Class&lt;/td&gt;
---	  &lt;td&gt;The class this method invocation or access occurred
---	  in&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Location&lt;/td&gt;
---	  &lt;td&gt;The location of this method invocation or access.  This
---	  is generally the enclosing method&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;File&lt;/td&gt;
---	  &lt;td&gt;The name of the source file this method invocation or
---	  access occurred in&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Line&lt;/td&gt;
---	  &lt;td&gt;The line number this method invocation or access occurred at&lt;/td&gt;
---	&lt;/tr&gt;
---      &lt;/tbody&gt;
---  &lt;/table&gt;
---&lt;/p&gt;
---&lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
---&lt;img src=&quot;what-is-the-stack-trace-for-this-access.png&quot; /&gt;
---&lt;p&gt;
---The above example shows the stack trace for an access in the constructor
---of &lt;code&gt;MapView&lt;/code&gt;, on line 84.
---&lt;/p&gt;
---
---END-INFO
-SELECT s.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;, s.CLASSNAME &quot;Class&quot;, s.CLASSCODE &quot;Class__(icon)&quot;, s.LOCATION &quot;Location&quot;, s.LOCATIONCODE &quot;Location__(icon)&quot;, s.ATLINE &quot;Line__(r)&quot;
-FROM TABLE (STACKTRACE(?ATRACE?)) s
-</query>
   <query id="10477928-cf86-4416-9118-34eea8cd7e38" description="What is the stack trace?" revision="8" display="true">-- META-BEGIN(disable-column-sort)
 -- Rows from a trace should not be reordered.
 -- META-END
@@ -3586,6 +3545,65 @@ FROM TABLE (STACKTRACE(?ATRACE?)) s
 --END-INFO
 SELECT s.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;, s.CLASSNAME &quot;Class&quot;, s.CLASSCODE &quot;Class__(icon)&quot;, s.LOCATION &quot;Location&quot;, s.LOCATIONCODE &quot;Location__(icon)&quot;, s.ATLINE &quot;Line__(r)&quot;
 FROM TABLE (STACKTRACE(?LATRACE?)) s
+</query>
+  <query id="83d613b3-283e-4100-9a82-e42adf107fe6" description="What is the stack trace?" revision="10" display="true">-- META-BEGIN(disable-column-sort)
+-- Rows from a trace should not be reordered.
+-- META-END
+--BEGIN-INFO
+--&lt;p&gt;&lt;strong&gt;
+--    What is the stack trace for this access?
+--&lt;/strong&gt;&lt;/p&gt;
+--&lt;p&gt;
+--    Generates a stack trace of the method calls leading up to this field
+--    access or method call, from most to least recent.  Clicking on each
+--    line will open the method call in the code view.
+--  &lt;table&gt;
+--    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
+--      
+--              
+--              &lt;tbody&gt;
+--                &lt;tr&gt;
+--                  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
+--                  &lt;td&gt;Table&lt;/td&gt;
+--                &lt;/tr&gt;
+--                &lt;tr&gt;
+--                  &lt;td rowspan=&quot;5&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
+--                  &lt;td&gt;Package&lt;/td&gt;
+--                  &lt;td&gt;The package this method invocation or access occurred
+--                  in&lt;/td&gt;
+--                &lt;/tr&gt;
+--	&lt;tr&gt;
+--	  &lt;td&gt;Class&lt;/td&gt;
+--	  &lt;td&gt;The class this method invocation or access occurred
+--	  in&lt;/td&gt;
+--	&lt;/tr&gt;
+--	&lt;tr&gt;
+--	  &lt;td&gt;Location&lt;/td&gt;
+--	  &lt;td&gt;The location of this method invocation or access.  This
+--	  is generally the enclosing method&lt;/td&gt;
+--	&lt;/tr&gt;
+--	&lt;tr&gt;
+--	  &lt;td&gt;File&lt;/td&gt;
+--	  &lt;td&gt;The name of the source file this method invocation or
+--	  access occurred in&lt;/td&gt;
+--	&lt;/tr&gt;
+--	&lt;tr&gt;
+--	  &lt;td&gt;Line&lt;/td&gt;
+--	  &lt;td&gt;The line number this method invocation or access occurred at&lt;/td&gt;
+--	&lt;/tr&gt;
+--      &lt;/tbody&gt;
+--  &lt;/table&gt;
+--&lt;/p&gt;
+--&lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+--&lt;img src=&quot;what-is-the-stack-trace-for-this-access.png&quot; /&gt;
+--&lt;p&gt;
+--The above example shows the stack trace for an access in the constructor
+--of &lt;code&gt;MapView&lt;/code&gt;, on line 84.
+--&lt;/p&gt;
+--
+--END-INFO
+SELECT s.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;, s.CLASSNAME &quot;Class&quot;, s.CLASSCODE &quot;Class__(icon)&quot;, s.LOCATION &quot;Location&quot;, s.LOCATIONCODE &quot;Location__(icon)&quot;, s.ATLINE &quot;Line__(r)&quot;
+FROM TABLE (STACKTRACE(?ATRACE?)) s
 </query>
   <query id="432b76db-c751-4bd8-8b2f-ef5986334514" description="What is the stack trace?" revision="7" display="true">-- META-BEGIN(disable-column-sort)
 -- Rows from a trace should not be reordered.
@@ -6389,8 +6407,8 @@ order by lo.PackageName, lo.ClassName, s.AtLine, tho.ThreadName, sum(ld.Duration
   <sub-query id="6d8d0985-0830-4f18-a655-fa7b43703d5f" sub-query="106c3818-78f2-4983-812a-0e83ca3cde89"/>
   <sub-query id="a3dcb49f-7586-42af-808c-9906c4ae1d03" sub-query="1a6082af-29c0-41af-b5bc-995ec6183787"/>
   <sub-query id="a3dcb49f-7586-42af-808c-9906c4ae1d03" sub-query="42031a55-4f1c-42dc-80dc-0fa141a32382" is-default="10"/>
-  <sub-query id="fb317a0c-d9c5-41e2-811b-d6236f63fae1" sub-query="10477928-cf86-4416-9118-34eea8cd7e38" is-default="10"/>
   <sub-query id="30f37c1b-4a34-4eff-8bca-b76566b216c3" sub-query="10477928-cf86-4416-9118-34eea8cd7e38"/>
+  <sub-query id="fb317a0c-d9c5-41e2-811b-d6236f63fae1" sub-query="10477928-cf86-4416-9118-34eea8cd7e38" is-default="10"/>
   <sub-query id="d1176c97-e3b6-483b-a341-6914a6f64860" sub-query="a3dcb49f-7586-42af-808c-9906c4ae1d03" is-default="10"/>
   <sub-query id="f556dcef-0e6b-480b-bc1b-eb84b3012831" sub-query="eebe8cc6-9268-4b26-8d6a-bf94c88084fb"/>
   <sub-query id="b06809c5-5a7b-41f2-bd8c-a9e3ed5f6b1b" sub-query="4fce8390-7307-45dc-b779-5701ee7f23a1" is-default="10"/>
@@ -6518,20 +6536,20 @@ order by lo.PackageName, lo.ClassName, s.AtLine, tho.ThreadName, sum(ld.Duration
     <cat-query id="9d05ac24-20c2-436e-af6b-2bd0bc7dbcfb"/>
   </category>
   <category id="84475b98-4c68-4165-b883-5bdf9479d3d6" description="Lock Use" has-data="Queries about lock use in the program." no-data="No lock use was observed in the program." revision="5">
-    <cat-query id="b06809c5-5a7b-41f2-bd8c-a9e3ed5f6b1b"/>
-    <cat-query id="d4d2af9b-ce4d-4457-9e94-01972fcb58d3"/>
-    <cat-query id="2f505921-50fb-405b-bc78-4a5fe9228957"/>
-    <cat-query id="3b8251fa-a315-4c36-a856-a53b278fdc91"/>
     <cat-query id="26696a5f-3fd7-4f18-badf-e3d7d01a6d4e"/>
     <cat-query id="ddb5a17c-f5ac-4c26-a251-34d8e3c7bc7f"/>
-    <cat-query id="213c73ad-b3f6-4aef-9a05-f0c31d8fdcde"/>
+    <cat-query id="b06809c5-5a7b-41f2-bd8c-a9e3ed5f6b1b"/>
     <cat-query id="c744b5b5-15f0-4f72-a344-7e52bcac5071"/>
+    <cat-query id="d4d2af9b-ce4d-4457-9e94-01972fcb58d3"/>
+    <cat-query id="2f505921-50fb-405b-bc78-4a5fe9228957"/>
+    <cat-query id="213c73ad-b3f6-4aef-9a05-f0c31d8fdcde"/>
+    <cat-query id="3b8251fa-a315-4c36-a856-a53b278fdc91"/>
   </category>
   <category id="3d204f5e-d61d-4637-be14-118223f2fb9e" description="Memory Model" has-data="Queries that show happens-before relationships between threads defined by the Java memory model." no-data="No happens-before relationships between threads were observed in the program." revision="2">
-    <cat-query id="7cd8d92c-7aec-4238-b808-e628f83dcb4e"/>
+    <cat-query id="1b191e96-598f-4d1f-9391-5d9feed0da69"/>
     <cat-query id="5f166e1b-f0a6-4c07-846b-98f2aba80be2"/>
     <cat-query id="eabad207-22a7-4bb0-a7e1-30946d02ea13"/>
-    <cat-query id="1b191e96-598f-4d1f-9391-5d9feed0da69"/>
+    <cat-query id="7cd8d92c-7aec-4238-b808-e628f83dcb4e"/>
   </category>
   <category id="64511c63-0ce8-44df-8324-95711bff56ce" description="Performance" has-data="Queries that highlight potential performance bottlenecks in the program." no-data="No potential performance bottlenecks were observed in the program." revision="2">
     <cat-query id="2d506676-eb1d-455b-9256-9ea8f05352d4"/>
@@ -6540,12 +6558,12 @@ order by lo.PackageName, lo.ClassName, s.AtLine, tho.ThreadName, sum(ld.Duration
   </category>
   <category id="8401fcf7-7d5c-4191-a997-0b82f1db8e66" description="Shared State" has-data="Queries that show state (fields, not local variables or parameters) shared between multiple threads." no-data="No state (fields, not local variables or parameters) was shared between multiple threads." revision="2">
     <cat-query id="094fc6db-5a5b-4495-aacd-54f5a5aa1691"/>
+    <cat-query id="419c927e-a87c-4364-b4a9-2e8f50f728f6"/>
     <cat-query id="71a6fb5b-e5e1-4d25-bdc8-67ab5df1f66e"/>
+    <cat-query id="cdc2d460-b17f-43bc-8cc6-4c26f1637fda"/>
     <cat-query id="d1176c97-e3b6-483b-a341-6914a6f64860"/>
     <cat-query id="33868960-7df8-4bab-bb33-ffb230957940"/>
-    <cat-query id="419c927e-a87c-4364-b4a9-2e8f50f728f6"/>
     <cat-query id="bd72a5e4-42aa-415d-aa72-28d351f629a4"/>
-    <cat-query id="cdc2d460-b17f-43bc-8cc6-4c26f1637fda"/>
   </category>
   <category id="b6d89f8b-7dfd-44a5-843c-d8a70f6aaaa9" description="Threads" has-data="Queries about threads in the program." no-data="No threads were observed in the program." revision="2">
     <cat-query id="8107df4c-42eb-407c-88c1-e16d805f3aaa"/>

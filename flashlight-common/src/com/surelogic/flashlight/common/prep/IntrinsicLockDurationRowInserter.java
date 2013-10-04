@@ -1111,7 +1111,7 @@ public final class IntrinsicLockDurationRowInserter {
             }
             break;
         case AFTER_RELEASE:
-            if (success != Boolean.FALSE) {
+            if (success != Boolean.FALSE && !finalEvent) {
                 threadState.lockTrace = popLockTrace(threadState.lockTrace,
                         lock);
             }

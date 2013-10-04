@@ -205,10 +205,11 @@ public class HappensBeforePostPrep implements IPostPrep {
     }
 
     private class InstanceHandler extends NullRowHandler {
+        final BlockStatsHandler bh = new BlockStatsHandler();
         final Queryable<Boolean> check = q.prepared(
                 "Accesses.prep.selectInstanceField", new AccessHandler());
         final Queryable<?> recordBlocks = q.prepared(
-                "Accesses.prep.selectInstanceField", new BlockStatsHandler());
+                "Accesses.prep.selectInstanceField", bh);
 
         long field;
         long receiver;
@@ -217,6 +218,7 @@ public class HappensBeforePostPrep implements IPostPrep {
         protected void doHandle(Row r) {
             field = r.nextLong();
             receiver = r.nextLong();
+            bh.clear();
             recordBlocks.call(field, receiver);
             if (!check.call(field, receiver)) {
                 badHappensBefore.call(field, receiver);
@@ -224,6 +226,8 @@ public class HappensBeforePostPrep implements IPostPrep {
         }
 
         private class BlockStatsHandler extends NullRowHandler {
+
+            final InterleavingFieldHandler h = new InterleavingFieldHandler();
 
             Timestamp beginThread, endThread;
             int reads, writes;
@@ -235,8 +239,14 @@ public class HappensBeforePostPrep implements IPostPrep {
                     .prepared("Accesses.prep.insertFieldBlockStats");
 
             private final Queryable<?> countInterleavingFields = q.prepared(
-                    "Accesses.prep.interleavingFields",
-                    new InterleavingFieldHandler());
+                    "Accesses.prep.interleavingFields", h);
+
+            void clear() {
+                beginThread = endThread = null;
+                reads = writes = 0;
+                lastThread = -1;
+                h.fields.clear();
+            }
 
             @Override
             protected void doHandle(Row r) {

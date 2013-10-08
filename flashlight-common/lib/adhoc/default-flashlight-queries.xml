@@ -867,68 +867,6 @@ SELECT
 FROM
    LOCKCYCLETHREAD
 WHERE COMPONENT = ?Cycle?</query>
-  <query id="00c978ca-dd0c-4b32-a651-293510b3bffa" description="What are the lock traces?" revision="2" display="true">-- META-BEGIN(doc)
--- &lt;p&gt;&lt;strong&gt;
--- 	What are the lock traces?
--- &lt;/strong&gt;&lt;/p&gt;
--- &lt;p&gt;Lists all lock traces that were present at a given row in the parent query.  Each line corresponds to a different lock trace.&lt;/p&gt;
--- &lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
--- &lt;img src=&quot;what-are-the-lock-traces.png&quot; alt=&quot;What are the lock traces?&quot;/&gt;
--- META-END
-SELECT
-   LS.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;,
-   LS.CLASSNAME   &quot;Class&quot;,
-   LS.CLASSCODE   &quot;Class__(icon)&quot;,
-   LS.ATLINE      &quot;Line__|&quot;,
-   LS.LOCKTRACE   &quot;LOCKTRACE__(hide)&quot;,
-   ?Multiple?     &quot;Multiple__(hide)&quot;
-FROM
-   (SELECT
-       CO.PACKAGENAME,
-       CO.CLASSNAME,
-       CO.CLASSCODE,
-       S.ATLINE,
-       L.LOCKTRACE
-   FROM
-       INDIRECTACCESS A, 
-       INDIRECTACCESSLOCKSHELD ALH,
-       LOCK L,
-       TRACE TR,
-       SITE S,
-       OBJECT CO
-   WHERE
-       A.TRACE = ?ATRACE? AND
-       ALH.ACCESS = A.ID AND
-       L.ID = ALH.LASTACQUISITION AND
-       L.LOCK = ?Lock? AND
-       TR.ID = L.TRACE AND
-       S.ID = TR.SITE AND
-       CO.ID = S.INCLASS
-   UNION
-   SELECT
-       CO.PACKAGENAME,
-       CO.CLASSNAME,
-       CO.CLASSCODE,
-       S.ATLINE,
-       LE.LOCKTRACE
-   FROM
-       INDIRECTACCESS A, 
-       INDIRECTACCESSLOCKSHELD ALH,
-       LOCKSHELD L,
-       LOCK LE,
-       TRACE TR,
-       SITE S,
-       OBJECT CO
-   WHERE
-          A.TRACE = ?ATRACE? AND
-          ALH.ACCESS = A.ID AND
-          L.LOCKEVENT = ALH.LASTACQUISITION AND
-          L.LOCKHELD = ?Lock? AND
-          LE.ID = ALH.LASTACQUISITION AND
-          TR.ID = LE.TRACE AND
-          S.ID = TR.SITE AND
-          CO.ID = S.INCLASS) LS
-ORDER BY LS.PACKAGENAME,LS.CLASSNAME,LS.ATLINE</query>
   <query id="02475ce2-0b3a-47e9-9200-e4f6e864aa3b" description="What are the lock traces?" revision="2" display="true">-- META-BEGIN(doc)
 -- &lt;p&gt;&lt;strong&gt;
 -- 	What are the lock traces?
@@ -976,6 +914,68 @@ FROM
    FROM
        ACCESS A, 
        ACCESSLOCKSHELD ALH,
+       LOCKSHELD L,
+       LOCK LE,
+       TRACE TR,
+       SITE S,
+       OBJECT CO
+   WHERE
+          A.TRACE = ?ATRACE? AND
+          ALH.ACCESS = A.ID AND
+          L.LOCKEVENT = ALH.LASTACQUISITION AND
+          L.LOCKHELD = ?Lock? AND
+          LE.ID = ALH.LASTACQUISITION AND
+          TR.ID = LE.TRACE AND
+          S.ID = TR.SITE AND
+          CO.ID = S.INCLASS) LS
+ORDER BY LS.PACKAGENAME,LS.CLASSNAME,LS.ATLINE</query>
+  <query id="00c978ca-dd0c-4b32-a651-293510b3bffa" description="What are the lock traces?" revision="2" display="true">-- META-BEGIN(doc)
+-- &lt;p&gt;&lt;strong&gt;
+-- 	What are the lock traces?
+-- &lt;/strong&gt;&lt;/p&gt;
+-- &lt;p&gt;Lists all lock traces that were present at a given row in the parent query.  Each line corresponds to a different lock trace.&lt;/p&gt;
+-- &lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+-- &lt;img src=&quot;what-are-the-lock-traces.png&quot; alt=&quot;What are the lock traces?&quot;/&gt;
+-- META-END
+SELECT
+   LS.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;,
+   LS.CLASSNAME   &quot;Class&quot;,
+   LS.CLASSCODE   &quot;Class__(icon)&quot;,
+   LS.ATLINE      &quot;Line__|&quot;,
+   LS.LOCKTRACE   &quot;LOCKTRACE__(hide)&quot;,
+   ?Multiple?     &quot;Multiple__(hide)&quot;
+FROM
+   (SELECT
+       CO.PACKAGENAME,
+       CO.CLASSNAME,
+       CO.CLASSCODE,
+       S.ATLINE,
+       L.LOCKTRACE
+   FROM
+       INDIRECTACCESS A, 
+       INDIRECTACCESSLOCKSHELD ALH,
+       LOCK L,
+       TRACE TR,
+       SITE S,
+       OBJECT CO
+   WHERE
+       A.TRACE = ?ATRACE? AND
+       ALH.ACCESS = A.ID AND
+       L.ID = ALH.LASTACQUISITION AND
+       L.LOCK = ?Lock? AND
+       TR.ID = L.TRACE AND
+       S.ID = TR.SITE AND
+       CO.ID = S.INCLASS
+   UNION
+   SELECT
+       CO.PACKAGENAME,
+       CO.CLASSNAME,
+       CO.CLASSCODE,
+       S.ATLINE,
+       LE.LOCKTRACE
+   FROM
+       INDIRECTACCESS A, 
+       INDIRECTACCESSLOCKSHELD ALH,
        LOCKSHELD L,
        LOCK LE,
        TRACE TR,
@@ -2845,7 +2845,58 @@ SELECT OBJID(COUNTS.RECEIVER) &quot;Instance&quot;,
   OBJECT O ON O.ID = COUNTS.RECEIVER
   INNER JOIN
   OBJECT CO ON CO.ID = O.TYPE</query>
-  <query id="33e0b1f6-f745-4fe3-8e77-f28ae3ccf965" description="What instances contain this field and have a non-empty lock set?" revision="5" display="true">SELECT OBJID(FIT.RECEIVER) &quot;Instance&quot;,
+  <query id="33e0b1f6-f745-4fe3-8e77-f28ae3ccf965" description="What instances contain this field and have a non-empty lock set?" revision="6" display="true">-- META-BEGIN(doc)
+-- &lt;p&gt;&lt;strong&gt;
+-- 	What instances contain this field and have a non-empty lock set?
+-- &lt;/strong&gt;&lt;/p&gt;
+-- &lt;p&gt;
+-- Lists all objects containing an instance of this field with a non-empty lock set.
+-- &lt;/p&gt;
+--   &lt;table&gt;
+--     &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
+--       &lt;tbody&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
+-- 	  &lt;td&gt;Table&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td rowspan=&quot;8&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
+-- 	  &lt;td&gt;Instance&lt;/td&gt;
+-- 	  &lt;td&gt;An object identifier&lt;/td&gt;
+-- 	&lt;/tr&gt;
+--         &lt;tr&gt;
+--           &lt;td&gt;Field&lt;/td&gt;
+--           &lt;td&gt;The field name&lt;/td&gt;
+--         &lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Reads&lt;/td&gt;
+-- 	  &lt;td&gt;The read count of the field on this object&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Writes&lt;/td&gt;
+-- 	  &lt;td&gt;The write count of the field on this object&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Reads Under Construction&lt;/td&gt;
+-- 	  &lt;td&gt;The read count of the field on this object while it was
+-- 	  being initialized&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Writes Under Construction&lt;/td&gt;
+-- 	  &lt;td&gt;The write count of the field on this object while it was being
+-- 	  initialized&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Lock Set&lt;/td&gt;
+-- 	  &lt;td&gt;Either &lt;code&gt;Empty&lt;/code&gt; or &lt;code&gt;Non-empty&lt;/code&gt;, depending on whether or not the field has a lock set in this instance&lt;/td&gt;
+-- 	&lt;/tr&gt;
+--       &lt;/tbody&gt;
+--   &lt;/table&gt;
+-- 
+-- &lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+-- &lt;img src=&quot;what-instances-contain-this-field-and-have-a-non-empty-lock-set.png&quot; alt=&quot;What instances contain this field and have a non-empty lock set?&quot; /&gt;
+-- META-END
+SELECT OBJID(FIT.RECEIVER) &quot;Instance&quot;,
        MAX(CO.CLASSCODE)   &quot;Instance__(icon)&quot;,
        &apos;?Field?&apos;           &quot;Field&quot;,
        &apos;?Field (Image)?&apos;   &quot;Field__(icon)&quot;,
@@ -2872,59 +2923,58 @@ SELECT OBJID(COUNTS.RECEIVER) &quot;Instance&quot;,
  WHERE FIT.FIELD = ?FieldId?
  GROUP BY FIT.RECEIVER
  ORDER BY 1</query>
-  <query id="5224d411-6ed3-432f-8b91-a1c43df22911" description="What instances contain this field and have an empty lock set?" type="ERROR" revision="14" display="true">--BEGIN-INFO
---&lt;p&gt;&lt;strong&gt;
---    What instances of this field have an empty lock set?
---&lt;/strong&gt;&lt;/p&gt;
---&lt;p&gt;
---    Lists the objects containing the given field that are
---    accessed by more than one thread in the program and have no
---    lock set.  The number of reads/writes is also shown.
---  &lt;table&gt;
---    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
---      
---      
---      &lt;tbody&gt;
---	&lt;tr&gt;
---	  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
---	  &lt;td&gt;Table&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td rowspan=&quot;5&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
---	  &lt;td&gt;Field Object&lt;/td&gt;
---	  &lt;td&gt;An object identifier&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Reads&lt;/td&gt;
---	  &lt;td&gt;The read count of the field on this object&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Writes&lt;/td&gt;
---	  &lt;td&gt;The write count of the field on this object&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Reads Under Construction&lt;/td&gt;
---	  &lt;td&gt;The read count of the field on this object while it was
---	  being initialized&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Writes Under Construction&lt;/td&gt;
---	  &lt;td&gt;The write count of the field on this object while it was
---	  being initialized&lt;/td&gt;
---	&lt;/tr&gt;
---      &lt;/tbody&gt;
---  &lt;/table&gt;
---&lt;/p&gt;
---&lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
---
---&lt;img src=&quot;what-instances-of-this-field-have-an-empty-lock-set.png&quot; /&gt;
---
---&lt;p&gt;
---The above example shows a single &lt;code&gt;Ship&lt;/code&gt; object containing the
---&lt;code&gt;f_location&lt;/code&gt; field.
---&lt;/p&gt;
---
---END-INFO
+  <query id="5224d411-6ed3-432f-8b91-a1c43df22911" description="What instances contain this field and have an empty lock set?" type="ERROR" revision="15" display="true">
+-- META-BEGIN(doc)
+-- &lt;p&gt;&lt;strong&gt;
+--   What instances contain this field and have an empty lock set?
+-- &lt;/strong&gt;&lt;/p&gt;
+-- &lt;p&gt;
+-- Lists all objects containing an instance of this field with an empty lock set.
+-- &lt;/p&gt;
+--   &lt;table&gt;
+--     &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
+--       &lt;tbody&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
+-- 	  &lt;td&gt;Table&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td rowspan=&quot;8&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
+-- 	  &lt;td&gt;Instance&lt;/td&gt;
+-- 	  &lt;td&gt;An object identifier&lt;/td&gt;
+-- 	&lt;/tr&gt;
+--         &lt;tr&gt;
+--           &lt;td&gt;Field&lt;/td&gt;
+--           &lt;td&gt;The field name&lt;/td&gt;
+--         &lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Reads&lt;/td&gt;
+-- 	  &lt;td&gt;The read count of the field on this object&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Writes&lt;/td&gt;
+-- 	  &lt;td&gt;The write count of the field on this object&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Reads Under Construction&lt;/td&gt;
+-- 	  &lt;td&gt;The read count of the field on this object while it was
+-- 	  being initialized&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Writes Under Construction&lt;/td&gt;
+-- 	  &lt;td&gt;The write count of the field on this object while it was being
+-- 	  initialized&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Lock Set&lt;/td&gt;
+-- 	  &lt;td&gt;Either &lt;code&gt;Empty&lt;/code&gt; or &lt;code&gt;Non-empty&lt;/code&gt;, depending on whether or not the field has a lock set in this instance&lt;/td&gt;
+-- 	&lt;/tr&gt;
+--       &lt;/tbody&gt;
+--   &lt;/table&gt;
+-- 
+-- &lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+-- &lt;img src=&quot;what-instances-contain-this-field-and-have-an-empty-lock-set.png&quot; alt=&quot;What instances contain this field and have and empty lock set?&quot; /&gt;
+-- META-END
 SELECT OBJID(FIT.RECEIVER) &quot;Instance&quot;,
        MAX(CO.CLASSCODE)   &quot;Instance__(icon)&quot;,
        &apos;?Field?&apos;           &quot;Field&quot;,
@@ -2951,51 +3001,54 @@ SELECT OBJID(FIT.RECEIVER) &quot;Instance&quot;,
  WHERE FIT.FIELD = ?FieldId? AND FIL.LOCK IS NULL
  GROUP BY FIT.RECEIVER
  ORDER BY 1</query>
-  <query id="5af0591d-f8d5-490f-bfc2-ebf5237559bd" description="What instances contain this field and have writes that do not happen-before subsequent reads?" type="ERROR" revision="14" display="true">--BEGIN-INFO
---&lt;strong&gt;&lt;p&gt;
---What instances of this field have a bad happens-before relationship?
---&lt;/p&gt;&lt;/strong&gt;
---&lt;p&gt;
---Lists all objects containing this field that may not be protected properly by happens-before relationships.
---  &lt;table&gt;
---    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
---      
---              
---              &lt;tbody&gt;
---                &lt;tr&gt;
---                  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
---                  &lt;td&gt;Table&lt;/td&gt;
---                &lt;/tr&gt;
---                &lt;tr&gt;
---                  &lt;td rowspan=&quot;5&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
---                  &lt;td&gt;Object&lt;/td&gt;
---                  &lt;td&gt;An object containing this field&lt;/td&gt;
---                &lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Reads&lt;/td&gt;
---	  &lt;td&gt;The read count of all shared instances of this
---	  field made in this thread&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Writes&lt;/td&gt;
---	  &lt;td&gt;The write count of all shared instances of this
---	  field made in this thread&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Reads Under Construction&lt;/td&gt;
---	  &lt;td&gt;The read count of all shared instances of this field made in this
---	  thread while the owning object was under construction&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Writes Under Construction&lt;/td&gt;
---	  &lt;td&gt;The write count of all shared instances of this field made in this
---	  thread while the owning object was under construction&lt;/td&gt;
---	&lt;/tr&gt;
---
---      &lt;/tbody&gt;
---  &lt;/table&gt;
---&lt;/p&gt;
---END-INFO
+  <query id="5af0591d-f8d5-490f-bfc2-ebf5237559bd" description="What instances contain this field and have writes that do not happen-before subsequent reads?" type="ERROR" revision="15" display="true">-- META-BEGIN(doc)
+-- &lt;p&gt;&lt;strong&gt;
+--	What instances contain this field and have writes that do not happen-before subsequent reads?
+-- &lt;/strong&gt;&lt;/p&gt;
+-- &lt;p&gt;
+-- Lists all objects containing an instance of this field that could not be shown to have 
+-- a happens-before relationship from every write of the field to subsequent reads.
+-- &lt;/p&gt;
+--   &lt;table&gt;
+--     &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
+--       &lt;tbody&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
+-- 	  &lt;td&gt;Table&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td rowspan=&quot;8&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
+-- 	  &lt;td&gt;Instance&lt;/td&gt;
+-- 	  &lt;td&gt;An object identifier&lt;/td&gt;
+-- 	&lt;/tr&gt;
+--         &lt;tr&gt;
+--           &lt;td&gt;Field&lt;/td&gt;
+--           &lt;td&gt;The field name&lt;/td&gt;
+--         &lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Reads&lt;/td&gt;
+-- 	  &lt;td&gt;The read count of the field on this object&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Writes&lt;/td&gt;
+-- 	  &lt;td&gt;The write count of the field on this object&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Reads Under Construction&lt;/td&gt;
+-- 	  &lt;td&gt;The read count of the field on this object while it was
+-- 	  being initialized&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Writes Under Construction&lt;/td&gt;
+-- 	  &lt;td&gt;The write count of the field on this object while it was being
+-- 	  initialized&lt;/td&gt;
+-- 	&lt;/tr&gt;
+--       &lt;/tbody&gt;
+--   &lt;/table&gt;
+-- 
+-- &lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+-- &lt;img src=&quot;what-instances-contain-this-field-and-have-writes-that-do-not-happen-before-subsequent-reads.png&quot; alt=&quot;What instances contain this field and have writes that do not happen-before subsequent reads??&quot; /&gt;
+-- META-END
 SELECT OBJID(FIT.RECEIVER) &quot;Instance&quot;,
        MAX(CO.CLASSCODE)   &quot;Instance__(icon)&quot;,
        &apos;?Field?&apos;           &quot;Field&quot;,
@@ -3020,51 +3073,54 @@ SELECT OBJID(FIT.RECEIVER) &quot;Instance&quot;,
  WHERE FIT.FIELD = ?FieldId?
  GROUP BY FIT.RECEIVER
  ORDER BY 1</query>
-  <query id="daa91c44-420a-4860-bcdc-970842110ccb" description="What instances contain this field and have writes that happen-before subsequent reads?" revision="15" display="true">--BEGIN-INFO
---&lt;strong&gt;&lt;p&gt;
---What instances of this field have a good happens-before relationship?
---&lt;/p&gt;&lt;/strong&gt;
---&lt;p&gt;
---Lists all objects containing this field that can be shown to be protected by happens-before relationships.
---  &lt;table&gt;
---    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
---      
---              
---              &lt;tbody&gt;
---                &lt;tr&gt;
---                  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
---                  &lt;td&gt;Table&lt;/td&gt;
---                &lt;/tr&gt;
---                &lt;tr&gt;
---                  &lt;td rowspan=&quot;5&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
---                  &lt;td&gt;Object&lt;/td&gt;
---                  &lt;td&gt;An object containing this field&lt;/td&gt;
---                &lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Reads&lt;/td&gt;
---	  &lt;td&gt;The read count of all shared instances of this
---	  field made in this thread&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Writes&lt;/td&gt;
---	  &lt;td&gt;The write count of all shared instances of this
---	  field made in this thread&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Reads Under Construction&lt;/td&gt;
---	  &lt;td&gt;The read count of all shared instances of this field made in this
---	  thread while the owning object was under construction&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Writes Under Construction&lt;/td&gt;
---	  &lt;td&gt;The write count of all shared instances of this field made in this
---	  thread while the owning object was under construction&lt;/td&gt;
---	&lt;/tr&gt;
---
---      &lt;/tbody&gt;
---  &lt;/table&gt;
---&lt;/p&gt;
---END-INFO
+  <query id="daa91c44-420a-4860-bcdc-970842110ccb" description="What instances contain this field and have writes that happen-before subsequent reads?" revision="16" display="true">-- META-BEGIN(doc)
+-- &lt;p&gt;&lt;strong&gt;
+--	What instances contain this field and have writes that happen-before subsequent reads?
+-- &lt;/strong&gt;&lt;/p&gt;
+-- &lt;p&gt;
+-- Lists all objects containing an instance of this field that could be shown to have 
+-- a happens-before relationship from every write of the field to subsequent reads.
+-- &lt;/p&gt;
+--   &lt;table&gt;
+--     &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
+--       &lt;tbody&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
+-- 	  &lt;td&gt;Table&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td rowspan=&quot;8&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
+-- 	  &lt;td&gt;Instance&lt;/td&gt;
+-- 	  &lt;td&gt;An object identifier&lt;/td&gt;
+-- 	&lt;/tr&gt;
+--      &lt;tr&gt;
+--        &lt;td&gt;Field&lt;/td&gt;
+--        &lt;td&gt;The field name&lt;/td&gt;
+--      &lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Reads&lt;/td&gt;
+-- 	  &lt;td&gt;The read count of the field on this object&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Writes&lt;/td&gt;
+-- 	  &lt;td&gt;The write count of the field on this object&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Reads Under Construction&lt;/td&gt;
+-- 	  &lt;td&gt;The read count of the field on this object while it was
+-- 	  being initialized&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Writes Under Construction&lt;/td&gt;
+-- 	  &lt;td&gt;The write count of the field on this object while it was being
+-- 	  initialized&lt;/td&gt;
+-- 	&lt;/tr&gt;
+--       &lt;/tbody&gt;
+--   &lt;/table&gt;
+-- 
+-- &lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+-- &lt;img src=&quot;what-instances-contain-this-field-and-have-writes-that-happen-before-subsequent-reads.png&quot; alt=&quot;What instances contain this field and have writes that happen-before subsequent reads?&quot; /&gt;
+-- META-END
 SELECT OBJID(FIT.RECEIVER) &quot;Instance&quot;,
        MAX(CO.CLASSCODE)   &quot;Instance__(icon)&quot;,
        &apos;?Field?&apos;           &quot;Field&quot;,
@@ -3096,7 +3152,62 @@ SELECT OBJID(FIT.RECEIVER) &quot;Instance&quot;,
    (B.RECEIVER IS NULL OR (IF.FIELD IS NULL AND F.VOLATILE = &apos;Y&apos;))
  GROUP BY FIT.RECEIVER
  ORDER BY 1</query>
-  <query id="ce9de85b-d3af-4de5-b9aa-38fba9503876" description="What instances contain this field when it is read by the AWT Event Dispatch Thread and written in others?" revision="1" display="true">SELECT OBJID(COUNTS.RECEIVER) &quot;Instance&quot;,
+  <query id="ce9de85b-d3af-4de5-b9aa-38fba9503876" description="What instances contain this field when it is read by the AWT Event Dispatch Thread and written in others?" revision="2" display="true">-- META-BEGIN(doc)
+-- &lt;p&gt;&lt;strong&gt;
+-- 	What instances contain this field when it is read by the AWT Event Dispatch Thread and written in others?
+-- &lt;/strong&gt;&lt;/p&gt;
+-- &lt;p&gt;
+-- Lists all objects containing an instance of this field that is read in the AWT
+-- Event Dispatch Thread, but written in others.  The Swing and AWT libraries
+-- mandate that all modifications to their components happen in the AWT Event
+-- Dispatch Thread. Instances that show up in this query and are part of the
+-- Swing/AWT user interface potentially violate this policy.
+-- &lt;/p&gt;
+--   &lt;table&gt;
+--     &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
+--       &lt;tbody&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
+-- 	  &lt;td&gt;Table&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td rowspan=&quot;8&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
+-- 	  &lt;td&gt;Instance&lt;/td&gt;
+-- 	  &lt;td&gt;An object identifier&lt;/td&gt;
+-- 	&lt;/tr&gt;
+--         &lt;tr&gt;
+--           &lt;td&gt;Field&lt;/td&gt;
+--           &lt;td&gt;The field name&lt;/td&gt;
+--         &lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Reads&lt;/td&gt;
+-- 	  &lt;td&gt;The read count of the field on this object&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Writes&lt;/td&gt;
+-- 	  &lt;td&gt;The write count of the field on this object&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Reads Under Construction&lt;/td&gt;
+-- 	  &lt;td&gt;The read count of the field on this object while it was
+-- 	  being initialized&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Writes Under Construction&lt;/td&gt;
+-- 	  &lt;td&gt;The write count of the field on this object while it was being
+-- 	  initialized&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Lock Set&lt;/td&gt;
+-- 	  &lt;td&gt;Either &lt;code&gt;Empty&lt;/code&gt; or &lt;code&gt;Non-empty&lt;/code&gt;, depending on whether or not the field has a lock set in this instance&lt;/td&gt;
+-- 	&lt;/tr&gt;
+--       &lt;/tbody&gt;
+--   &lt;/table&gt;
+-- 
+-- &lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+-- &lt;img src=&quot;what-instances-contain-this-field-when-it-is-read-by-the-awt-event-dispatch-thread-and-written-in-others.png&quot; alt=&quot;What instances contain this field when it is read by the AWT Event Dispatch Thread and written in others?&quot; /&gt;
+-- META-END
+SELECT OBJID(COUNTS.RECEIVER) &quot;Instance&quot;,
        CO.CLASSCODE           &quot;Instance__(icon)&quot;,
        &apos;?Field?&apos;              &quot;Field&quot;,
        &apos;?Field (Image)?&apos;      &quot;Field__(icon)&quot;,
@@ -3136,76 +3247,57 @@ SELECT OBJID(FIT.RECEIVER) &quot;Instance&quot;,
          A.RECEIVER IS NOT NULL AND
          A.RW = &apos;W&apos;) MIXEDAWT ON MIXEDAWT.RECEIVER = COUNTS.RECEIVER
 </query>
-  <query id="6d8d0985-0830-4f18-a655-fa7b43703d5f" description="What instances contain this field?" revision="21" display="true">-- META-BEGIN(doc)
---&lt;p&gt;&lt;strong&gt;
---    What are the instances of this non-static field?
---&lt;/strong&gt;&lt;/p&gt;
---&lt;p&gt;
---    Lists the shared objects containing a given field.  The number of
---    reads/writes and the size of the lock set is also shown.
---  &lt;table&gt;
---    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
---      
---      
---      &lt;tbody&gt;
---	&lt;tr&gt;
---	  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
---	  &lt;td&gt;Table&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td rowspan=&quot;6&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
---	  &lt;td&gt;Field Object&lt;/td&gt;
---	  &lt;td&gt;An object identifier&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Reads&lt;/td&gt;
---	  &lt;td&gt;The read count of the field on this object&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Writes&lt;/td&gt;
---	  &lt;td&gt;The write count of the field on this object&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Reads Under Construction&lt;/td&gt;
---	  &lt;td&gt;The read count of the field on this object while it was
---	  being initialized&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Writes Under Construction&lt;/td&gt;
---	  &lt;td&gt;The write count of the field on this object while it was
---	  being initialized&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Lock Set Size&lt;/td&gt;
---	  &lt;td&gt;The number of locks commonly held when each access is
---	  made to the field on this object&lt;/td&gt;
---	&lt;/tr&gt;
---      &lt;/tbody&gt;
---  &lt;/table&gt;
---&lt;/p&gt;
---&lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
---
---&lt;img src=&quot;what-are-the-individual-instances-of-this-non-static-field.png&quot; /&gt;
---
---&lt;p&gt;
---The above example shows a number of objects containing the
---&lt;code&gt;f_lock&lt;/code&gt; field recorded during this Flashlight run.  We can
---see from the names of the objects that both Planet and ship contain the
---&lt;code&gt;f_lock&lt;/code&gt; field.  This is because &lt;code&gt;f_lock&lt;/code&gt; is
---declared in an abstract class called &lt;code&gt;Thing&lt;/code&gt;.  In addition to
---the number of reads and writes recorded for each object, the size of
---&lt;code&gt;f_lock&lt;/code&gt;&apos;s lock set is shown.  It is important to note that a
---lock set size of zero does &lt;em&gt;not&lt;/em&gt; mean that there is a potential
---race condition for this field.  The queries that specifically detect
---empty lock sets check for additional things, like whether the field is
---volatile or static, and whether the field is written to outside of
---the constructor.  Any of these indicators could make it perfectly
---acceptable for the field to have a lock set size of zero.  If you want 
---to get the fields that Flashlight reports as having an empty lock set, 
---instead run &lt;strong&gt;What instances of this field have an empty lock set?
---&lt;/strong&gt; 
---&lt;/p&gt;
---META-END
+  <query id="6d8d0985-0830-4f18-a655-fa7b43703d5f" description="What instances contain this field?" revision="22" display="true">-- META-BEGIN(doc)
+-- &lt;p&gt;&lt;strong&gt;
+--   What instances contain this field?
+-- &lt;/strong&gt;&lt;/p&gt;
+-- &lt;p&gt;
+-- Lists all objects containing an instance of this field.
+-- &lt;/p&gt;
+--   &lt;table&gt;
+--     &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
+--       &lt;tbody&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
+-- 	  &lt;td&gt;Table&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td rowspan=&quot;8&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
+-- 	  &lt;td&gt;Instance&lt;/td&gt;
+-- 	  &lt;td&gt;An object identifier&lt;/td&gt;
+-- 	&lt;/tr&gt;
+--         &lt;tr&gt;
+--           &lt;td&gt;Field&lt;/td&gt;
+--           &lt;td&gt;The field name&lt;/td&gt;
+--         &lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Reads&lt;/td&gt;
+-- 	  &lt;td&gt;The read count of the field on this object&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Writes&lt;/td&gt;
+-- 	  &lt;td&gt;The write count of the field on this object&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Reads Under Construction&lt;/td&gt;
+-- 	  &lt;td&gt;The read count of the field on this object while it was
+-- 	  being initialized&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Writes Under Construction&lt;/td&gt;
+-- 	  &lt;td&gt;The write count of the field on this object while it was being
+-- 	  initialized&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Lock Set&lt;/td&gt;
+-- 	  &lt;td&gt;Either &lt;code&gt;Empty&lt;/code&gt; or &lt;code&gt;Non-empty&lt;/code&gt;, depending on whether or not the field has a lock set in this instance&lt;/td&gt;
+-- 	&lt;/tr&gt;
+--       &lt;/tbody&gt;
+--   &lt;/table&gt;
+-- 
+-- &lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+-- &lt;img src=&quot;what-instances-contain-this-field.png&quot; alt=&quot;What instances contain this field?&quot; /&gt;
+-- META-END
 SELECT OBJID(COUNTS.RECEIVER) &quot;Instance&quot;,
        CO.CLASSCODE           &quot;Instance__(icon)&quot;,
        &apos;?Field?&apos;              &quot;Field&quot;,
@@ -3289,8 +3381,53 @@ GROUP BY IA.RECEIVER, THO.THREADNAME
 ORDER BY 1, 3 DESC
 
 </query>
-  <query id="30f37c1b-4a34-4eff-8bca-b76566b216c3" description="What is the lock trace?" revision="5" display="true">-- META-BEGIN(disable-column-sort)
+  <query id="30f37c1b-4a34-4eff-8bca-b76566b216c3" description="What is the lock trace?" revision="6" display="true">-- META-BEGIN(disable-column-sort)
 -- Rows from a trace should not be reordered.
+-- META-END
+-- META-BEGIN(doc)
+-- &lt;p&gt;&lt;strong&gt;
+--   What is the lock trace?
+-- &lt;/strong&gt;&lt;/p&gt;
+-- &lt;p&gt;
+-- Lists the locks held at a particular point in the program.  A lock trace is
+-- similar to a stack trace, but instead of nested method calls it shows nested
+-- lock acquisitions in order from most recent to least recent.
+-- &lt;/p&gt;
+--  &lt;table&gt;
+--    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
+--      &lt;tbody&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
+-- 	  &lt;td&gt;Table&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td rowspan=&quot;5&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
+--           &lt;td&gt;Lock&lt;/td&gt;
+--           &lt;td&gt;A lock name&lt;/td&gt;
+--         &lt;/tr&gt;
+--         &lt;tr&gt;
+--           &lt;td&gt;Package&lt;/td&gt;
+--           &lt;td&gt;The package the lock was acquired in&lt;/td&gt;
+--         &lt;/tr&gt;
+--         &lt;tr&gt;
+--           &lt;td&gt;Class&lt;/td&gt;
+--           &lt;td&gt;The class the lock was acquired in&lt;/td&gt;
+--         &lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Location&lt;/td&gt;
+-- 	  &lt;td&gt;The source location the lock was acquired in, usually a method name&lt;/td&gt;
+-- 	&lt;/tr&gt;
+--         &lt;tr&gt;
+-- 	  &lt;td&gt;Line&lt;/td&gt;
+-- 	  &lt;td&gt;The line of code in the class the lock was acquired in&lt;/td&gt;
+-- 	&lt;/tr&gt;
+--      &lt;/tbody&gt;
+--  &lt;/table&gt;
+-- &lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+-- &lt;img src=&quot;what-is-the-lock-trace.png&quot; alt=&quot;What is the lock trace?&quot; /&gt;
+-- &lt;p&gt;
+-- In the above example, three locks have been acquired.  &lt;code&gt;Thread-3&lt;/code&gt; was the first lock acquired at line 110 of ClientHandler, while &lt;code&gt;Object-42&lt;/code&gt; was most recently acquired at line 50 of &lt;code&gt;Location&lt;/code&gt;.
+-- &lt;/p&gt;
 -- META-END
 SELECT
    OBJID(LOCK)  &quot;Lock__(&apos;lock.gif&apos;)&quot;,
@@ -3305,369 +3442,183 @@ SELECT
    S.TRACE        &quot;LATRACE__(hide)&quot;
 FROM 
    TABLE (LOCKTRACE(?LOCKTRACE?)) S</query>
-  <query id="fb317a0c-d9c5-41e2-811b-d6236f63fae1" description="What is the lock trace?" revision="14" display="true">-- META-BEGIN(disable-column-sort)
+  <query id="078a8b6c-1fad-4843-94f9-fe005eb66b73" description="What is the stack trace for this edge&apos;s source?" revision="5" display="true">-- META-BEGIN(disable-column-sort)
 -- Rows from a trace should not be reordered.
 -- META-END
---BEGIN-INFO
---&lt;p&gt;&lt;strong&gt;
---    What is the lock trace for this lock event?
---&lt;/strong&gt;&lt;/p&gt;
---&lt;p&gt;
---    Generates a trace of the lock acquisitions that were made leading up
---    to this lock event, from most to least recent.  Clicking on each
---    entry will open up the line that acquired that lock in the code
---    view.
---  &lt;table&gt;
---    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
---      
---              
---              &lt;tbody&gt;
---                &lt;tr&gt;
---                  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
---                  &lt;td&gt;Table&lt;/td&gt;
---                &lt;/tr&gt;
---                &lt;tr&gt;
---                  &lt;td rowspan=&quot;5&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
---          &lt;td&gt;Lock&lt;/td&gt;
---                  &lt;td&gt;The lock acquired in this line of the trace&lt;/td&gt;
---                &lt;/tr&gt;
---                &lt;tr&gt;
---                  &lt;td&gt;Package&lt;/td&gt;
---                  &lt;td&gt;The package this lock was acquired in&lt;/td&gt;
---                &lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Class&lt;/td&gt;
---	  &lt;td&gt;The class this lock was acquired in&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Line&lt;/td&gt;
---	  &lt;td&gt;The line number this lock was acquired at&lt;/td&gt;
---	&lt;/tr&gt;
---                &lt;tr&gt;
---                  &lt;td&gt;Time&lt;/td&gt;
---                  &lt;td&gt;The time this lock was acquired&lt;/td&gt;
---                &lt;/tr&gt;
---      &lt;/tbody&gt;
---  &lt;/table&gt;
---&lt;/p&gt;
---
---&lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
---&lt;img src=&quot;what-is-the-lock-trace-for-this-lock-event.png&quot; /&gt;
---&lt;p&gt;
---The above example shows the locks acquired by the end of the given lock
---event.  The &lt;code&gt;ReentrantReadWriteLock-16&lt;/code&gt; lock is acquired at
---line 104 of &lt;code&gt;GameMap&lt;/code&gt;, followed by the
---&lt;code&gt;Object-523&lt;/code&gt; lock at line 422 of &lt;code&gt;MapView&lt;/code&gt;.  The
---times of both lock acquisitions are also noted.
---&lt;/p&gt;
---
---END-INFO
-SELECT 
-   OBJID(D.Lock) &quot;Lock__(&apos;lock.gif&apos;)(r)&quot;, 
-   D.Lock &quot;Lock__(hide)&quot;, 
-   LO.PackageName &quot;Package__(&apos;@PK&apos;)&quot;, 
-   LO.ClassName &quot;Class&quot;, 
-   LO.Classcode &quot;Class__(icon)&quot;,
-   S.Location &quot;Location&quot;,
-   S.LocationCode &quot;Location__(icon)&quot;,
-   S.AtLine &quot;Line__(r)&quot;, 
-   D.Start &quot;Acquired__(r)&quot;, 
-   D.Stop &quot;Released__(r)&quot;,
-   D.Duration &quot;Held__(human-readable-duration)(r)&quot;, 
-   D.ID &quot;LDID__(hide)&quot;, 
-   LL.TRACE &quot;LATRACE__(hide)&quot;
- FROM LOCK L, LOCKDURATION D, LOCK LL, TRACE T, SITE S, OBJECT LO
- WHERE D.InThread = L.InThread AND (L.TS BETWEEN D.START AND D.STOP) AND D.STATE = &apos;HOLDING&apos; AND
-       LL.Id = D.StartEvent AND
-       T.Id = LL.Trace AND 
-       S.Id = T.Site AND
-       LO.Id = S.InClass AND
-       L.Id = ?LockEvent?
-ORDER BY D.START DESC</query>
-  <query id="078a8b6c-1fad-4843-94f9-fe005eb66b73" description="What is the stack trace for this edge&apos;s source?" revision="4" display="true">-- META-BEGIN(disable-column-sort)
--- Rows from a trace should not be reordered.
+-- META-BEGIN(doc)
+-- &lt;p&gt;&lt;strong&gt;
+--   What is the stack trace for this edge&apos;s source?
+-- &lt;/strong&gt;&lt;/p&gt;
+-- &lt;p&gt;
+--     Generates a stack trace of the method calls leading up to the source of this
+--     happens-before edge, from newest to oldest.
+-- &lt;/p&gt;
+-- &lt;table&gt;
+--   &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
+--   &lt;tbody&gt;
+--     &lt;tr&gt;
+--       &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
+--       &lt;td&gt;Table&lt;/td&gt;
+--     &lt;/tr&gt;
+--     &lt;tr&gt;
+--       &lt;td rowspan=&quot;5&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
+--       &lt;td&gt;Package&lt;/td&gt;
+--       &lt;td&gt;The package this method call or access occurred in&lt;/td&gt;
+--     &lt;/tr&gt;
+--     &lt;tr&gt;
+--       &lt;td&gt;Class&lt;/td&gt;
+--       &lt;td&gt;The class this method call or access occurred in&lt;/td&gt;
+--     &lt;/tr&gt;
+--     &lt;tr&gt;
+--       &lt;td&gt;Location&lt;/td&gt;
+--       &lt;td&gt;The location of this method call or access.  This is generally the
+--       enclosing method&lt;/td&gt;
+--     &lt;/tr&gt;
+--     &lt;tr&gt;
+--       &lt;td&gt;Line&lt;/td&gt;
+--       &lt;td&gt;The line number this method call or access occurred at&lt;/td&gt;
+--     &lt;/tr&gt;
+--   &lt;/tbody&gt;
+-- &lt;/table&gt;
+-- &lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+-- &lt;img src=&quot;what-is-the-stack-trace-for-this-edges-source.png&quot; alt=&quot;What is the stack trace for this edge&apos;s source?&quot; /&gt;
 -- META-END
---BEGIN-INFO
---&lt;p&gt;&lt;strong&gt;
---    What is the stack trace for this edge&apos;s source?
---&lt;/strong&gt;&lt;/p&gt;
---&lt;p&gt;
---    Generates a stack trace of the method calls leading up to this field
---    access or method call, from most to least recent.  Clicking on each
---    line will open the method call in the code view.
---  &lt;table&gt;
---    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
---      
---              
---              &lt;tbody&gt;
---                &lt;tr&gt;
---                  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
---                  &lt;td&gt;Table&lt;/td&gt;
---                &lt;/tr&gt;
---                &lt;tr&gt;
---                  &lt;td rowspan=&quot;5&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
---                  &lt;td&gt;Package&lt;/td&gt;
---                  &lt;td&gt;The package this method invocation or access occurred
---                  in&lt;/td&gt;
---                &lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Class&lt;/td&gt;
---	  &lt;td&gt;The class this method invocation or access occurred
---	  in&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Location&lt;/td&gt;
---	  &lt;td&gt;The location of this method invocation or access.  This
---	  is generally the enclosing method&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;File&lt;/td&gt;
---	  &lt;td&gt;The name of the source file this method invocation or
---	  access occurred in&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Line&lt;/td&gt;
---	  &lt;td&gt;The line number this method invocation or access occurred at&lt;/td&gt;
---	&lt;/tr&gt;
---      &lt;/tbody&gt;
---  &lt;/table&gt;
---&lt;/p&gt;
---END-INFO
 SELECT s.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;, s.CLASSNAME &quot;Class&quot;, s.CLASSCODE &quot;Class__(icon)&quot;, s.LOCATION &quot;Location&quot;, s.LOCATIONCODE &quot;Location__(icon)&quot;, s.ATLINE &quot;Line__(r)&quot;
 FROM TABLE (STACKTRACE(?SOURCEID?)) s</query>
-  <query id="26461177-e0ff-4187-bdc4-31f1d256a951" description="What is the stack trace for this edge&apos;s target?" revision="5" display="true">-- META-BEGIN(disable-column-sort)
+  <query id="26461177-e0ff-4187-bdc4-31f1d256a951" description="What is the stack trace for this edge&apos;s target?" revision="6" display="true">-- META-BEGIN(disable-column-sort)
 -- Rows from a trace should not be reordered.
 -- META-END
 -- META-BEGIN(no-rows)
 -- This happens-before edge does not have a target stack trace.
 -- META-END
---BEGIN-INFO
---&lt;p&gt;&lt;strong&gt;
---    What is the stack trace for this edge&apos;s target?
---&lt;/strong&gt;&lt;/p&gt;
---&lt;p&gt;
---    Generates a stack trace of the method calls leading up to this field
---    access or method call, from most to least recent.  Clicking on each
---    line will open the method call in the code view.
---  &lt;table&gt;
---    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
---      
---              
---              &lt;tbody&gt;
---                &lt;tr&gt;
---                  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
---                  &lt;td&gt;Table&lt;/td&gt;
---                &lt;/tr&gt;
---                &lt;tr&gt;
---                  &lt;td rowspan=&quot;5&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
---                  &lt;td&gt;Package&lt;/td&gt;
---                  &lt;td&gt;The package this method invocation or access occurred
---                  in&lt;/td&gt;
---                &lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Class&lt;/td&gt;
---	  &lt;td&gt;The class this method invocation or access occurred
---	  in&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Location&lt;/td&gt;
---	  &lt;td&gt;The location of this method invocation or access.  This
---	  is generally the enclosing method&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;File&lt;/td&gt;
---	  &lt;td&gt;The name of the source file this method invocation or
---	  access occurred in&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Line&lt;/td&gt;
---	  &lt;td&gt;The line number this method invocation or access occurred at&lt;/td&gt;
---	&lt;/tr&gt;
---      &lt;/tbody&gt;
---  &lt;/table&gt;
---&lt;/p&gt;
---END-INFO
+-- META-BEGIN(doc)
+-- &lt;p&gt;&lt;strong&gt;
+--   What is the stack trace for this edge&apos;s target?
+-- &lt;/strong&gt;&lt;/p&gt;
+-- &lt;p&gt;
+--     Generates a stack trace of the method calls leading up to the targetof this
+--     happens-before edge, from newest to oldest.
+-- &lt;/p&gt;
+-- &lt;table&gt;
+--   &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
+--   &lt;tbody&gt;
+--     &lt;tr&gt;
+--       &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
+--       &lt;td&gt;Table&lt;/td&gt;
+--     &lt;/tr&gt;
+--     &lt;tr&gt;
+--       &lt;td rowspan=&quot;5&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
+--       &lt;td&gt;Package&lt;/td&gt;
+--       &lt;td&gt;The package this method call or access occurred in&lt;/td&gt;
+--     &lt;/tr&gt;
+--     &lt;tr&gt;
+--       &lt;td&gt;Class&lt;/td&gt;
+--       &lt;td&gt;The class this method call or access occurred in&lt;/td&gt;
+--     &lt;/tr&gt;
+--     &lt;tr&gt;
+--       &lt;td&gt;Location&lt;/td&gt;
+--       &lt;td&gt;The location of this method call or access.  This is generally the
+--       enclosing method&lt;/td&gt;
+--     &lt;/tr&gt;
+--     &lt;tr&gt;
+--       &lt;td&gt;Line&lt;/td&gt;
+--       &lt;td&gt;The line number this method call or access occurred at&lt;/td&gt;
+--     &lt;/tr&gt;
+--   &lt;/tbody&gt;
+-- &lt;/table&gt;
+-- &lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+-- &lt;img src=&quot;what-is-the-stack-trace-for-this-edges-target.png&quot; alt=&quot;What is the stack trace for this edge&apos;s target?&quot; /&gt;
+-- META-END
 SELECT s.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;, s.CLASSNAME &quot;Class&quot;, s.CLASSCODE &quot;Class__(icon)&quot;, s.LOCATION &quot;Location&quot;, s.LOCATIONCODE &quot;Location__(icon)&quot;, s.ATLINE &quot;Line__(r)&quot;
 FROM TABLE (STACKTRACE(?TRACEID?)) s</query>
-  <query id="83d613b3-283e-4100-9a82-e42adf107fe6" description="What is the stack trace?" revision="10" display="true">-- META-BEGIN(disable-column-sort)
+  <query id="83d613b3-283e-4100-9a82-e42adf107fe6" description="What is the stack trace?" revision="11" display="true">-- META-BEGIN(disable-column-sort)
 -- Rows from a trace should not be reordered.
 -- META-END
---BEGIN-INFO
---&lt;p&gt;&lt;strong&gt;
---    What is the stack trace for this access?
---&lt;/strong&gt;&lt;/p&gt;
---&lt;p&gt;
---    Generates a stack trace of the method calls leading up to this field
---    access or method call, from most to least recent.  Clicking on each
---    line will open the method call in the code view.
---  &lt;table&gt;
---    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
---      
---              
---              &lt;tbody&gt;
---                &lt;tr&gt;
---                  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
---                  &lt;td&gt;Table&lt;/td&gt;
---                &lt;/tr&gt;
---                &lt;tr&gt;
---                  &lt;td rowspan=&quot;5&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
---                  &lt;td&gt;Package&lt;/td&gt;
---                  &lt;td&gt;The package this method invocation or access occurred
---                  in&lt;/td&gt;
---                &lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Class&lt;/td&gt;
---	  &lt;td&gt;The class this method invocation or access occurred
---	  in&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Location&lt;/td&gt;
---	  &lt;td&gt;The location of this method invocation or access.  This
---	  is generally the enclosing method&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;File&lt;/td&gt;
---	  &lt;td&gt;The name of the source file this method invocation or
---	  access occurred in&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Line&lt;/td&gt;
---	  &lt;td&gt;The line number this method invocation or access occurred at&lt;/td&gt;
---	&lt;/tr&gt;
---      &lt;/tbody&gt;
---  &lt;/table&gt;
---&lt;/p&gt;
---&lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
---&lt;img src=&quot;what-is-the-stack-trace-for-this-access.png&quot; /&gt;
---&lt;p&gt;
---The above example shows the stack trace for an access in the constructor
---of &lt;code&gt;MapView&lt;/code&gt;, on line 84.
---&lt;/p&gt;
---
---END-INFO
+-- META-BEGIN(doc)
+-- &lt;p&gt;&lt;strong&gt;
+--   What is the stack trace for this edge&apos;s target?
+-- &lt;/strong&gt;&lt;/p&gt;
+-- &lt;p&gt;
+--      Generates a stack trace of the method calls leading up to this point in the
+--      program, from newest to oldest.
+-- &lt;/p&gt;
+-- &lt;table&gt;
+--   &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
+--   &lt;tbody&gt;
+--     &lt;tr&gt;
+--       &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
+--       &lt;td&gt;Table&lt;/td&gt;
+--     &lt;/tr&gt;
+--     &lt;tr&gt;
+--       &lt;td rowspan=&quot;5&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
+--       &lt;td&gt;Package&lt;/td&gt;
+--       &lt;td&gt;The package this method call or access occurred in&lt;/td&gt;
+--     &lt;/tr&gt;
+--     &lt;tr&gt;
+--       &lt;td&gt;Class&lt;/td&gt;
+--       &lt;td&gt;The class this method call or access occurred in&lt;/td&gt;
+--     &lt;/tr&gt;
+--     &lt;tr&gt;
+--       &lt;td&gt;Location&lt;/td&gt;
+--       &lt;td&gt;The location of this method call or access.  This is generally the
+--       enclosing method&lt;/td&gt;
+--     &lt;/tr&gt;
+--     &lt;tr&gt;
+--       &lt;td&gt;Line&lt;/td&gt;
+--       &lt;td&gt;The line number this method call or access occurred at&lt;/td&gt;
+--     &lt;/tr&gt;
+--   &lt;/tbody&gt;
+-- &lt;/table&gt;
+-- &lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+-- &lt;img src=&quot;what-is-the-stack-trace.png&quot; alt=&quot;What is the stack trace?&quot; /&gt;
+-- META-END
 SELECT s.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;, s.CLASSNAME &quot;Class&quot;, s.CLASSCODE &quot;Class__(icon)&quot;, s.LOCATION &quot;Location&quot;, s.LOCATIONCODE &quot;Location__(icon)&quot;, s.ATLINE &quot;Line__(r)&quot;
 FROM TABLE (STACKTRACE(?ATRACE?)) s
 </query>
-  <query id="10477928-cf86-4416-9118-34eea8cd7e38" description="What is the stack trace?" revision="8" display="true">-- META-BEGIN(disable-column-sort)
+  <query id="10477928-cf86-4416-9118-34eea8cd7e38" description="What is the stack trace?" revision="9" display="true">-- META-BEGIN(disable-column-sort)
 -- Rows from a trace should not be reordered.
 -- META-END
---BEGIN-INFO
---&lt;p&gt;&lt;strong&gt;
---    What is the stack trace for this lock acquisition?
---&lt;/strong&gt;&lt;/p&gt;
---&lt;p&gt;
---    Generates a stack trace of the method calls leading up to this lock
---    acquisition, from most to least recent.  Clicking on each line will
---    open the method call in the code view.
---  &lt;table&gt;
---    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
---      
---              
---              &lt;tbody&gt;
---                &lt;tr&gt;
---                  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
---                  &lt;td&gt;Table&lt;/td&gt;
---                &lt;/tr&gt;
---                &lt;tr&gt;
---                  &lt;td rowspan=&quot;5&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
---                  &lt;td&gt;Package&lt;/td&gt;
---                  &lt;td&gt;The package this method invocation or lock acquisition occurred
---                  in&lt;/td&gt;
---                &lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Class&lt;/td&gt;
---	  &lt;td&gt;The class this method invocation or lock acquisition
---	  occurred in&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;File&lt;/td&gt;
---	  &lt;td&gt;The name of the source file this method invocation or
---	  lock acquisition occurred in&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Location&lt;/td&gt;
---	  &lt;td&gt;The location of this method invocation, or lock
---	  acquisition.  This is generally the enclosing method&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Line&lt;/td&gt;
---	  &lt;td&gt;The line number this method invocation or lock
---	  acquisition occurred at&lt;/td&gt;
---	&lt;/tr&gt;
---      &lt;/tbody&gt;
---  &lt;/table&gt;
---&lt;/p&gt;
---
---&lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
---&lt;img src=&quot;what-is-the-stack-trace-for-this-lock-acquisition.png&quot; /&gt;
---&lt;p&gt;
---The above example shows the stack trace of a lock acquisition occurring
---in the &lt;code&gt;endCurrentTurn&lt;/code&gt; method of &lt;code&gt;GameMap&lt;/code&gt;, on
---line 104.
---&lt;/p&gt;
---
---END-INFO
+-- META-BEGIN(doc)
+-- &lt;p&gt;&lt;strong&gt;
+--   What is the stack trace for this edge&apos;s target?
+-- &lt;/strong&gt;&lt;/p&gt;
+-- &lt;p&gt;
+--      Generates a stack trace of the method calls leading up to this point in the
+--      program, from newest to oldest.
+-- &lt;/p&gt;
+-- &lt;table&gt;
+--   &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
+--   &lt;tbody&gt;
+--     &lt;tr&gt;
+--       &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
+--       &lt;td&gt;Table&lt;/td&gt;
+--     &lt;/tr&gt;
+--     &lt;tr&gt;
+--       &lt;td rowspan=&quot;5&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
+--       &lt;td&gt;Package&lt;/td&gt;
+--       &lt;td&gt;The package this method call or access occurred in&lt;/td&gt;
+--     &lt;/tr&gt;
+--     &lt;tr&gt;
+--       &lt;td&gt;Class&lt;/td&gt;
+--       &lt;td&gt;The class this method call or access occurred in&lt;/td&gt;
+--     &lt;/tr&gt;
+--     &lt;tr&gt;
+--       &lt;td&gt;Location&lt;/td&gt;
+--       &lt;td&gt;The location of this method call or access.  This is generally the
+--       enclosing method&lt;/td&gt;
+--     &lt;/tr&gt;
+--     &lt;tr&gt;
+--       &lt;td&gt;Line&lt;/td&gt;
+--       &lt;td&gt;The line number this method call or access occurred at&lt;/td&gt;
+--     &lt;/tr&gt;
+--   &lt;/tbody&gt;
+-- &lt;/table&gt;
+-- &lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+-- &lt;img src=&quot;what-is-the-stack-trace.png&quot; alt=&quot;What is the stack trace?&quot; /&gt;
+-- META-END
 SELECT s.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;, s.CLASSNAME &quot;Class&quot;, s.CLASSCODE &quot;Class__(icon)&quot;, s.LOCATION &quot;Location&quot;, s.LOCATIONCODE &quot;Location__(icon)&quot;, s.ATLINE &quot;Line__(r)&quot;
 FROM TABLE (STACKTRACE(?LATRACE?)) s
 </query>
-  <query id="432b76db-c751-4bd8-8b2f-ef5986334514" description="What is the stack trace?" revision="7" display="true">-- META-BEGIN(disable-column-sort)
--- Rows from a trace should not be reordered.
--- META-END
---BEGIN-INFO
---&lt;p&gt;&lt;strong&gt;
---    What is the stack trace for this lock event?
---&lt;/strong&gt;&lt;/p&gt;
---&lt;p&gt;
---    Generates a stack trace of the method calls leading up to this lock
---    event, from most to least recent.  Clicking on each line will open 
---    the method call in the code view.
---  &lt;table&gt;
---    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
---      
---              
---              &lt;tbody&gt;
---                &lt;tr&gt;
---                  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
---                  &lt;td&gt;Table&lt;/td&gt;
---                &lt;/tr&gt;
---                &lt;tr&gt;
---                  &lt;td rowspan=&quot;5&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
---                  &lt;td&gt;Package&lt;/td&gt;
---                  &lt;td&gt;The package this method invocation or access occurred
---                  in&lt;/td&gt;
---                &lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Class&lt;/td&gt;
---	  &lt;td&gt;The class this method invocation or access occurred
---	  in&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Location&lt;/td&gt;
---	  &lt;td&gt;The location of this method invocation or access.  This
---	  is generally the enclosing method&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;File&lt;/td&gt;
---	  &lt;td&gt;The name of the source file this method invocation or
---	  access occurred in&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Line&lt;/td&gt;
---	  &lt;td&gt;The line number this method invocation or access occurred at&lt;/td&gt;
---	&lt;/tr&gt;
---      &lt;/tbody&gt;
---  &lt;/table&gt;
---&lt;/p&gt;
---
---&lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
---&lt;img src=&quot;what-is-the-stack-trace-for-this-lock-event.png&quot; /&gt;
---&lt;p&gt;
---The above example shows the stack trace of a lock event occurring in the
---&lt;code&gt;endCurrentTurn&lt;/code&gt; method of &lt;code&gt;MapView&lt;/code&gt;, on line 422.
---&lt;/p&gt;
-----END-INFO
-SELECT s.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;, s.CLASSNAME &quot;Class&quot;, s.CLASSCODE &quot;Class__(icon)&quot;, s.LOCATION &quot;Location&quot;, s.LOCATIONCODE &quot;Location__(icon)&quot;, s.ATLINE &quot;Line__(r)&quot;
-FROM TABLE (STACKTRACE(?LETRACE?)) s</query>
   <query id="d1176c97-e3b6-483b-a341-6914a6f64860" description="What kinds of objects are indirectly accessed by more than one thread?" revision="12" display="true" display-at-root="true">-- META-BEGIN(no-rows)
 -- No objects are indirectly accessed by more than one thread.
 -- META-END
@@ -6315,8 +6266,8 @@ order by lo.PackageName, lo.ClassName, s.AtLine, tho.ThreadName, sum(ld.Duration
   <sub-query id="8de7d969-6633-4a16-acad-786ab9fd2f5f" sub-query="83d613b3-283e-4100-9a82-e42adf107fe6" is-default="10"/>
   <sub-query id="c7b845ab-3efc-4f26-a240-e31228c2f1b4" sub-query="83d613b3-283e-4100-9a82-e42adf107fe6"/>
   <sub-query id="eebe8cc6-9268-4b26-8d6a-bf94c88084fb" sub-query="4fce8390-7307-45dc-b779-5701ee7f23a1"/>
-  <sub-query id="00c978ca-dd0c-4b32-a651-293510b3bffa" sub-query="30f37c1b-4a34-4eff-8bca-b76566b216c3"/>
   <sub-query id="02475ce2-0b3a-47e9-9200-e4f6e864aa3b" sub-query="30f37c1b-4a34-4eff-8bca-b76566b216c3"/>
+  <sub-query id="00c978ca-dd0c-4b32-a651-293510b3bffa" sub-query="30f37c1b-4a34-4eff-8bca-b76566b216c3"/>
   <sub-query id="cdc2d460-b17f-43bc-8cc6-4c26f1637fda" sub-query="f7ed1ced-73a5-4790-bc7c-8ba5fdf114a6" is-default="10"/>
   <sub-query id="33868960-7df8-4bab-bb33-ffb230957940" sub-query="6d8d0985-0830-4f18-a655-fa7b43703d5f"/>
   <sub-query id="33868960-7df8-4bab-bb33-ffb230957940" sub-query="708d1b8a-5274-4a25-b0b4-67f1a7a86690" is-default="10"/>
@@ -6410,7 +6361,6 @@ order by lo.PackageName, lo.ClassName, s.AtLine, tho.ThreadName, sum(ld.Duration
   <sub-query id="a3dcb49f-7586-42af-808c-9906c4ae1d03" sub-query="1a6082af-29c0-41af-b5bc-995ec6183787"/>
   <sub-query id="a3dcb49f-7586-42af-808c-9906c4ae1d03" sub-query="42031a55-4f1c-42dc-80dc-0fa141a32382" is-default="10"/>
   <sub-query id="30f37c1b-4a34-4eff-8bca-b76566b216c3" sub-query="10477928-cf86-4416-9118-34eea8cd7e38"/>
-  <sub-query id="fb317a0c-d9c5-41e2-811b-d6236f63fae1" sub-query="10477928-cf86-4416-9118-34eea8cd7e38" is-default="10"/>
   <sub-query id="d1176c97-e3b6-483b-a341-6914a6f64860" sub-query="a3dcb49f-7586-42af-808c-9906c4ae1d03" is-default="10"/>
   <sub-query id="f556dcef-0e6b-480b-bc1b-eb84b3012831" sub-query="eebe8cc6-9268-4b26-8d6a-bf94c88084fb"/>
   <sub-query id="b06809c5-5a7b-41f2-bd8c-a9e3ed5f6b1b" sub-query="4fce8390-7307-45dc-b779-5701ee7f23a1" is-default="10"/>
@@ -6534,38 +6484,38 @@ order by lo.PackageName, lo.ClassName, s.AtLine, tho.ThreadName, sum(ld.Duration
     <cat-query id="976506a9-cf85-4907-8d7f-2fd9b5a28d6d"/>
   </category>
   <category id="28103990-73b5-4287-add0-39785aa7e3bb" description="Deadlock" has-data="Queries that show lock use that may cause the program to deadlock." no-data="No locking that could potentially cause deadlock was observed in the program." revision="3">
-    <cat-query id="f556dcef-0e6b-480b-bc1b-eb84b3012831"/>
     <cat-query id="9d05ac24-20c2-436e-af6b-2bd0bc7dbcfb"/>
+    <cat-query id="f556dcef-0e6b-480b-bc1b-eb84b3012831"/>
   </category>
   <category id="84475b98-4c68-4165-b883-5bdf9479d3d6" description="Lock Use" has-data="Queries about lock use in the program." no-data="No lock use was observed in the program." revision="5">
+    <cat-query id="ddb5a17c-f5ac-4c26-a251-34d8e3c7bc7f"/>
+    <cat-query id="26696a5f-3fd7-4f18-badf-e3d7d01a6d4e"/>
     <cat-query id="c744b5b5-15f0-4f72-a344-7e52bcac5071"/>
     <cat-query id="b06809c5-5a7b-41f2-bd8c-a9e3ed5f6b1b"/>
     <cat-query id="213c73ad-b3f6-4aef-9a05-f0c31d8fdcde"/>
-    <cat-query id="d4d2af9b-ce4d-4457-9e94-01972fcb58d3"/>
-    <cat-query id="ddb5a17c-f5ac-4c26-a251-34d8e3c7bc7f"/>
-    <cat-query id="3b8251fa-a315-4c36-a856-a53b278fdc91"/>
     <cat-query id="2f505921-50fb-405b-bc78-4a5fe9228957"/>
-    <cat-query id="26696a5f-3fd7-4f18-badf-e3d7d01a6d4e"/>
+    <cat-query id="3b8251fa-a315-4c36-a856-a53b278fdc91"/>
+    <cat-query id="d4d2af9b-ce4d-4457-9e94-01972fcb58d3"/>
   </category>
   <category id="3d204f5e-d61d-4637-be14-118223f2fb9e" description="Memory Model" has-data="Queries that show happens-before relationships between threads defined by the Java memory model." no-data="No happens-before relationships between threads were observed in the program." revision="2">
-    <cat-query id="eabad207-22a7-4bb0-a7e1-30946d02ea13"/>
-    <cat-query id="7cd8d92c-7aec-4238-b808-e628f83dcb4e"/>
     <cat-query id="5f166e1b-f0a6-4c07-846b-98f2aba80be2"/>
     <cat-query id="1b191e96-598f-4d1f-9391-5d9feed0da69"/>
+    <cat-query id="7cd8d92c-7aec-4238-b808-e628f83dcb4e"/>
+    <cat-query id="eabad207-22a7-4bb0-a7e1-30946d02ea13"/>
   </category>
   <category id="64511c63-0ce8-44df-8324-95711bff56ce" description="Performance" has-data="Queries that highlight potential performance bottlenecks in the program." no-data="No potential performance bottlenecks were observed in the program." revision="2">
-    <cat-query id="2d506676-eb1d-455b-9256-9ea8f05352d4"/>
     <cat-query id="cb38a427-c259-4690-abe2-acea9661f737"/>
     <cat-query id="4e026769-1b0b-42bd-8893-f3b92add093f"/>
+    <cat-query id="2d506676-eb1d-455b-9256-9ea8f05352d4"/>
   </category>
   <category id="8401fcf7-7d5c-4191-a997-0b82f1db8e66" description="Shared State" has-data="Queries that show state (fields, not local variables or parameters) shared between multiple threads." no-data="No state (fields, not local variables or parameters) was shared between multiple threads." revision="2">
-    <cat-query id="094fc6db-5a5b-4495-aacd-54f5a5aa1691"/>
-    <cat-query id="cdc2d460-b17f-43bc-8cc6-4c26f1637fda"/>
-    <cat-query id="d1176c97-e3b6-483b-a341-6914a6f64860"/>
-    <cat-query id="33868960-7df8-4bab-bb33-ffb230957940"/>
     <cat-query id="bd72a5e4-42aa-415d-aa72-28d351f629a4"/>
-    <cat-query id="71a6fb5b-e5e1-4d25-bdc8-67ab5df1f66e"/>
+    <cat-query id="33868960-7df8-4bab-bb33-ffb230957940"/>
+    <cat-query id="cdc2d460-b17f-43bc-8cc6-4c26f1637fda"/>
     <cat-query id="419c927e-a87c-4364-b4a9-2e8f50f728f6"/>
+    <cat-query id="d1176c97-e3b6-483b-a341-6914a6f64860"/>
+    <cat-query id="71a6fb5b-e5e1-4d25-bdc8-67ab5df1f66e"/>
+    <cat-query id="094fc6db-5a5b-4495-aacd-54f5a5aa1691"/>
   </category>
   <category id="b6d89f8b-7dfd-44a5-843c-d8a70f6aaaa9" description="Threads" has-data="Queries about threads in the program." no-data="No threads were observed in the program." revision="2">
     <cat-query id="8107df4c-42eb-407c-88c1-e16d805f3aaa"/>

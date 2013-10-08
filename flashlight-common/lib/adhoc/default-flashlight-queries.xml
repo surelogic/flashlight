@@ -867,68 +867,6 @@ SELECT
 FROM
    LOCKCYCLETHREAD
 WHERE COMPONENT = ?Cycle?</query>
-  <query id="02475ce2-0b3a-47e9-9200-e4f6e864aa3b" description="What are the lock traces?" revision="2" display="true">-- META-BEGIN(doc)
--- &lt;p&gt;&lt;strong&gt;
--- 	What are the lock traces?
--- &lt;/strong&gt;&lt;/p&gt;
--- &lt;p&gt;Lists all lock traces that were present at a given row in the parent query.  Each line corresponds to a different lock trace.&lt;/p&gt;
--- &lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
--- &lt;img src=&quot;what-are-the-lock-traces.png&quot; alt=&quot;What are the lock traces?&quot;/&gt;
--- META-END
-SELECT
-   LS.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;,
-   LS.CLASSNAME   &quot;Class&quot;,
-   LS.CLASSCODE   &quot;Class__(icon)&quot;,
-   LS.ATLINE      &quot;Line__|&quot;,
-   LS.LOCKTRACE   &quot;LOCKTRACE__(hide)&quot;,
-   ?Multiple?     &quot;Multiple__(hide)&quot;
-FROM
-   (SELECT
-       CO.PACKAGENAME,
-       CO.CLASSNAME,
-       CO.CLASSCODE,
-       S.ATLINE,
-       L.LOCKTRACE
-   FROM
-       ACCESS A, 
-       ACCESSLOCKSHELD ALH,
-       LOCK L,
-       TRACE TR,
-       SITE S,
-       OBJECT CO
-   WHERE
-       A.TRACE = ?ATRACE? AND
-       ALH.ACCESS = A.ID AND
-       L.ID = ALH.LASTACQUISITION AND
-       L.LOCK = ?Lock? AND
-       TR.ID = L.TRACE AND
-       S.ID = TR.SITE AND
-       CO.ID = S.INCLASS
-   UNION
-   SELECT
-       CO.PACKAGENAME,
-       CO.CLASSNAME,
-       CO.CLASSCODE,
-       S.ATLINE,
-       LE.LOCKTRACE
-   FROM
-       ACCESS A, 
-       ACCESSLOCKSHELD ALH,
-       LOCKSHELD L,
-       LOCK LE,
-       TRACE TR,
-       SITE S,
-       OBJECT CO
-   WHERE
-          A.TRACE = ?ATRACE? AND
-          ALH.ACCESS = A.ID AND
-          L.LOCKEVENT = ALH.LASTACQUISITION AND
-          L.LOCKHELD = ?Lock? AND
-          LE.ID = ALH.LASTACQUISITION AND
-          TR.ID = LE.TRACE AND
-          S.ID = TR.SITE AND
-          CO.ID = S.INCLASS) LS
-ORDER BY LS.PACKAGENAME,LS.CLASSNAME,LS.ATLINE</query>
   <query id="00c978ca-dd0c-4b32-a651-293510b3bffa" description="What are the lock traces?" revision="2" display="true">-- META-BEGIN(doc)
 -- &lt;p&gt;&lt;strong&gt;
 -- 	What are the lock traces?
@@ -991,7 +929,69 @@ FROM
           S.ID = TR.SITE AND
           CO.ID = S.INCLASS) LS
 ORDER BY LS.PACKAGENAME,LS.CLASSNAME,LS.ATLINE</query>
-  <query id="cdc2d460-b17f-43bc-8cc6-4c26f1637fda" description="What fields (non-static) are shared after object construction?" revision="8" display="true" display-at-root="true">-- META-BEGIN(no-rows)
+  <query id="02475ce2-0b3a-47e9-9200-e4f6e864aa3b" description="What are the lock traces?" revision="2" display="true">-- META-BEGIN(doc)
+-- &lt;p&gt;&lt;strong&gt;
+-- 	What are the lock traces?
+-- &lt;/strong&gt;&lt;/p&gt;
+-- &lt;p&gt;Lists all lock traces that were present at a given row in the parent query.  Each line corresponds to a different lock trace.&lt;/p&gt;
+-- &lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+-- &lt;img src=&quot;what-are-the-lock-traces.png&quot; alt=&quot;What are the lock traces?&quot;/&gt;
+-- META-END
+SELECT
+   LS.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;,
+   LS.CLASSNAME   &quot;Class&quot;,
+   LS.CLASSCODE   &quot;Class__(icon)&quot;,
+   LS.ATLINE      &quot;Line__|&quot;,
+   LS.LOCKTRACE   &quot;LOCKTRACE__(hide)&quot;,
+   ?Multiple?     &quot;Multiple__(hide)&quot;
+FROM
+   (SELECT
+       CO.PACKAGENAME,
+       CO.CLASSNAME,
+       CO.CLASSCODE,
+       S.ATLINE,
+       L.LOCKTRACE
+   FROM
+       ACCESS A, 
+       ACCESSLOCKSHELD ALH,
+       LOCK L,
+       TRACE TR,
+       SITE S,
+       OBJECT CO
+   WHERE
+       A.TRACE = ?ATRACE? AND
+       ALH.ACCESS = A.ID AND
+       L.ID = ALH.LASTACQUISITION AND
+       L.LOCK = ?Lock? AND
+       TR.ID = L.TRACE AND
+       S.ID = TR.SITE AND
+       CO.ID = S.INCLASS
+   UNION
+   SELECT
+       CO.PACKAGENAME,
+       CO.CLASSNAME,
+       CO.CLASSCODE,
+       S.ATLINE,
+       LE.LOCKTRACE
+   FROM
+       ACCESS A, 
+       ACCESSLOCKSHELD ALH,
+       LOCKSHELD L,
+       LOCK LE,
+       TRACE TR,
+       SITE S,
+       OBJECT CO
+   WHERE
+          A.TRACE = ?ATRACE? AND
+          ALH.ACCESS = A.ID AND
+          L.LOCKEVENT = ALH.LASTACQUISITION AND
+          L.LOCKHELD = ?Lock? AND
+          LE.ID = ALH.LASTACQUISITION AND
+          TR.ID = LE.TRACE AND
+          S.ID = TR.SITE AND
+          CO.ID = S.INCLASS) LS
+ORDER BY LS.PACKAGENAME,LS.CLASSNAME,LS.ATLINE</query>
+  <query id="cdc2d460-b17f-43bc-8cc6-4c26f1637fda" description="What fields (non-static) are shared after object construction?" revision="9" display="true" display-at-root="true">-- META-BEGIN(no-rows)
 -- No non-static fields are shared between two or more threads after object construction.
 -- META-END
 -- META-BEGIN(doc)
@@ -1054,16 +1054,6 @@ ORDER BY LS.PACKAGENAME,LS.CLASSNAME,LS.ATLINE</query>
 -- &lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
 -- 
 -- &lt;img src=&quot;what-fields-non-static-are-shared-after-object-construction.png&quot; alt=&quot;What fields (non-static) are shared after object construction?&quot;/&gt;
--- 
--- &lt;p&gt;
--- The above example shows several non-static fields in the
--- &lt;code&gt;edu.afit.planetbaron.game&lt;/code&gt; class.  The &lt;code&gt;f_owner&lt;/code&gt; field in
--- &lt;code&gt;Planet&lt;/code&gt; was the only shared field, and was read four times and
--- written to once.  We can see from the &lt;em&gt;Instances&lt;/em&gt; column that only one
--- &lt;code&gt;Planet&lt;/code&gt; object and only one &lt;code&gt;Ship&lt;/code&gt; object had these
--- fields accessed by multiple threads.  Instances of the &lt;code&gt;Reporter&lt;/code&gt;
--- class with shared fields, on the other hand, were constructed 31 times.
--- &lt;/p&gt;
 -- META-END
 select
   O.PackageName &quot;Package__(&apos;@PK&apos;)&quot;,
@@ -2302,52 +2292,69 @@ WHERE F.ID = MIXEDAWT.FIELD AND
 GROUP BY O.PACKAGENAME,O.CLASSNAME,O.CLASSCODE,F.FIELDNAME,F.CODE,F.ID
 ORDER BY O.PACKAGENAME,O.CLASSNAME,F.FIELDNAME
 </query>
-  <query id="2d58b103-1e04-4161-b6da-c96a553e39d0" description="What fields could produce false sharing with this field in the object?" revision="6" display="true">--BEGIN-INFO
---&lt;strong&gt;&lt;p&gt;
---  What fields could produce false sharing with this field in the object?
---&lt;/p&gt;&lt;/strong&gt;
---&lt;p&gt;
---Lists the other fields in the object that were accessed during the period of
---time in which the analysis suspected false sharing might be going on.  A high
---interleaving % indicates how often accesses of the field occurred in between
---accesses of the given thread.  A higher percentage indicates a higher risk of
---false sharing negatively impacting performances in this program.
+  <query id="2d58b103-1e04-4161-b6da-c96a553e39d0" description="What fields could produce false sharing with this field in the object?" revision="7" display="true">--META-BEGIN(doc)
+-- &lt;p&gt;&lt;strong&gt;
+-- 	What fields could produce false sharing with this field in the object?
+-- &lt;/strong&gt;&lt;/p&gt;
+-- &lt;p&gt;
+-- Displays all fields that interact with the selected field during the period of
+-- time the analysis suspected false sharing might be occurring.  Each row
+-- represents the interaction between the selected thread, labeled
+-- &lt;code&gt;Field&lt;/code&gt;, and an interleaving thread, labeled
+-- &lt;code&gt;Interleaver&lt;/code&gt;.  During this period of time the selected field is
+-- accessed exclusively in one thread, but the interleaving field may be accessed
+-- in one or more other threads.  An &quot;interleaving percentage&quot; is displayed for
+-- each row.  The two fields are considered to interleave with each other every
+-- time the next field access occurs in a different thread.  An interleaving
+-- percentage of 100 would indicate that every single field access occurred in a
+-- different thread than the previous one.  In general, a higher interleaving
+-- percentage indicates a higher risk that false sharing will impact the
+-- performance of the program.
+-- &lt;/p&gt;
 --  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
+--      
+--      
 --      &lt;tbody&gt;
---	&lt;tr&gt;
---	  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
---	  &lt;td&gt;Tree-Table&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Tree Structure&lt;/strong&gt;&lt;/td&gt;
---	  &lt;td&gt;&lt;em&gt;Package&lt;/em&gt; &amp;#8594; &lt;em&gt;Class&lt;/em&gt; &amp;#8594; &lt;em&gt;Object&lt;/em&gt; &amp;#8594; &lt;em&gt;Field&lt;/em&gt; &amp;#8594; &lt;em&gt;Interleaver&lt;/em&gt; &amp;#8594;&lt;em&gt;Thread&lt;/em&gt;&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td rowspan=&quot;6&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
---	  &lt;td&gt;Reads&lt;/td&gt;
---	  &lt;td&gt;The number of times this field was read in this thread&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Writes&lt;/td&gt;
---	  &lt;td&gt;The number of times this field was written in this thread&lt;/td&gt;
---	&lt;/tr&gt;
---        &lt;tr&gt;
---          &lt;td&gt;Interleaving %&lt;/td&gt;
---          &lt;td&gt;The frequency with which accesses to this field occurred in between accesses of the given field during this period of time&lt;/td&gt;
---        &lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Start&lt;/td&gt;
---	  &lt;td&gt;The time of the first field access in this block.&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Stop&lt;/td&gt;
---	  &lt;td&gt;The time of the last field access in this block.&lt;/td&gt;
---	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
+-- 	  &lt;td&gt;Tree-Table&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Tree Structure&lt;/strong&gt;&lt;/td&gt;
+-- 	  &lt;td&gt;&lt;em&gt;Package&lt;/em&gt; &amp;#8594; &lt;em&gt;Class&lt;/em&gt; &amp;#8594; &lt;em&gt;Object&lt;/em&gt; &amp;#8594; &lt;em&gt;Field&lt;/em&gt; &amp;#8594; &lt;em&gt;Interleaver&lt;/em&gt; &amp;#8594; &lt;em&gt;Thread&lt;/em&gt;&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td rowspan=&quot;6&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
+-- 	  &lt;td&gt;Reads&lt;/td&gt;
+-- 	  &lt;td&gt;The read count of the interleaving field&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Writes&lt;/td&gt;
+-- 	  &lt;td&gt;The write count of the interleaving field&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Interleaving %&lt;/td&gt;
+-- 	  &lt;td&gt;The read count of all shared instances of this
+-- 	  field made while the owning object was under
+-- 	  construction&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Start&lt;/td&gt;
+-- 	  &lt;td&gt;The start time for this block of accesses&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Stop&lt;/td&gt;
+-- 	  &lt;td&gt;The stop time for this block of accesses&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 
 --      &lt;/tbody&gt;
 --  &lt;/table&gt;
---&lt;/p&gt;
---END-INFO
+-- 
+-- &lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+-- 
+-- &lt;img src=&quot;what-fields-could-produce-false-sharing-with-this-field-in-the-object&quot; alt=&quot;What fields could produce false sharing with this field in the object?&quot; /&gt;
+--META-END
 SELECT
    CO.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;,
    CO.CLASSNAME &quot;Class&quot;,
@@ -2383,51 +2390,80 @@ ORDER BY
    B.RECEIVER,
    F.FIELDNAME,
    RF.FIELDNAME</query>
-  <query id="dd2ea83c-1940-4985-ace7-a578471e3b54" description="What happens before edges allow these field reads to see the previous write?" revision="12" display="true">-- META-BEGIN(no-rows)
+  <query id="dd2ea83c-1940-4985-ace7-a578471e3b54" description="What happens before edges allow these field reads to see the previous write?" revision="13" display="true">-- META-BEGIN(no-rows)
 -- No happens before edges were detected.
 -- META-END
---BEGIN-INFO
---&lt;strong&gt;&lt;p&gt;
---  What happens before edges allow these field reads to see the previous write?
---&lt;/p&gt;&lt;/strong&gt;
---&lt;p&gt;
---Lists all happens-before edges that ensure that any changes in the previous
---access block are visible to this access block.  The edge guarantees that actions
---taken before the source time in the source thread are visible by the target time
---in the target thread.  Note that no entries does not mean that there is a
---problem.  For instances, it may be the case that this access block begins for
---with a field write, and so does not have to worry about the previous accesses
---being visible.
---  &lt;table&gt;
---    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
---      
---              
---              &lt;tbody&gt;
---                &lt;tr&gt;
---                  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
---                  &lt;td&gt;Table&lt;/td&gt;
---                &lt;/tr&gt;
---                &lt;tr&gt;
---                  &lt;td rowspan=&quot;5&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
---                  &lt;td&gt;Source Thread&lt;/td&gt;
---                  &lt;td&gt;The originating thread for this happens-before edge&lt;/td&gt;
---                &lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Source Time&lt;/td&gt;
---	  &lt;td&gt;All accesses in the source thread made before this time are affected by this edge&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Target Thread&lt;/td&gt;
---	  &lt;td&gt;The target thread for this happens-before edge&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Target Time&lt;/td&gt;
---	  &lt;td&gt;The time at which changes made in the source thread become visible to the target thread&lt;/td&gt;
---	&lt;/tr&gt;
---      &lt;/tbody&gt;
---  &lt;/table&gt;
---&lt;/p&gt;
---END-INFO
+-- META-BEGIN(doc)
+-- &lt;p&gt;&lt;strong&gt;
+-- 	What happens before edges allow these field reads to see the previous write?
+-- &lt;/strong&gt;&lt;/p&gt;
+-- &lt;p&gt;
+-- Lists all happens-before edges that ensure that any changes in the previous
+-- access block are visible to this access block.  The edge guarantees that actions
+-- taken before the source time in the source thread are visible by the target time
+-- in the target thread.  If no happens-before edges are present, that means that
+-- Flashlight could not detect any sort of happens-before relationship between
+-- these two access blocks.  If writes in the first access block were expected to
+-- be visible in the second this could indicate a problem with the application.
+-- &lt;/p&gt;
+-- &lt;table&gt;
+--   &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
+--   &lt;tbody&gt;
+--     &lt;tr&gt;
+--       &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
+--       &lt;td&gt;Table&lt;/td&gt;
+--     &lt;/tr&gt;
+--     &lt;tr&gt;
+--       &lt;td rowspan=&quot;9&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
+--       &lt;td&gt;Type&lt;/td&gt;
+--       &lt;td&gt;The type of happens-before edge observed.  This will be one of:
+--             &lt;ul&gt;
+--               &lt;li&gt;The previous write was in this thread.&lt;/li&gt;
+--               &lt;li&gt;Volatile write/read of field&lt;/li&gt;
+--               &lt;li&gt;The name of a concurrency utility such as those found in java.util.concurrent&lt;/li&gt;
+--               &lt;li&gt;Class initialization&lt;/li&gt;
+--               &lt;li&gt;A lock release to a lock acquisition&lt;/li&gt;
+--             &lt;/ul&gt;
+--       &lt;/td&gt;
+--     &lt;/tr&gt;
+--     &lt;tr&gt;
+--       &lt;td&gt;Source Thread&lt;/td&gt;
+--       &lt;td&gt;The originating thread for this happens-before edge&lt;/td&gt;
+--     &lt;/tr&gt;
+--     &lt;tr&gt;
+--       &lt;td&gt;Source Time&lt;/td&gt;
+--       &lt;td&gt;All accesses in the source thread made before this time are affected by this edge&lt;/td&gt;
+--     &lt;/tr&gt;
+--     &lt;tr&gt;
+--       &lt;td&gt;Source Class&lt;/td&gt;
+--       &lt;td&gt;The originating object&apos;s class for this happens-before edge&lt;/td&gt;
+--     &lt;/tr&gt;
+--     &lt;tr&gt;
+--       &lt;td&gt;Source Method&lt;/td&gt;
+--       &lt;td&gt;The method invoked on the originating object for this happens-before edge&lt;/td&gt;
+--     &lt;/tr&gt;
+--     &lt;tr&gt;
+--       &lt;td&gt;Target Thread&lt;/td&gt;
+--       &lt;td&gt;The target thread for this happens-before edge&lt;/td&gt;
+--     &lt;/tr&gt;
+--     &lt;tr&gt;
+--       &lt;td&gt;Target Time&lt;/td&gt;
+--       &lt;td&gt;The time at which changes made in the source thread become visible to the target thread&lt;/td&gt;
+--     &lt;/tr&gt;
+--     &lt;tr&gt;
+--       &lt;td&gt;Source Class&lt;/td&gt;
+--       &lt;td&gt;The target object&apos;s class&lt;/td&gt;
+--     &lt;/tr&gt;
+--     &lt;tr&gt;
+--       &lt;td&gt;Source Method&lt;/td&gt;
+--       &lt;td&gt;The method invoked on the target object&lt;/td&gt;
+--     &lt;/tr&gt;
+--   &lt;/tbody&gt;
+-- &lt;/table&gt;
+-- 
+-- &lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+-- &lt;img src=&quot;what-happens-before-edges-allow-these-field-reads-to-see-the-previous-write.png&quot; alt=&quot;What happens before edges allow these fields to see the previous write?&quot; /&gt;
+-- META-END
 SELECT 
 HB.ID &quot;Type&quot;,
 &apos;?Thread?&apos; &quot;Source Thread__(&apos;thread.gif&apos;)&quot;,
@@ -2453,86 +2489,61 @@ FROM TABLE (HAPPENSBEFOREEDGES(?LastWriteThread?, &apos;?LastWriteTime?&apos;,?T
    LEFT OUTER JOIN TRACE TT ON TT.ID = HB.TRACEID
    LEFT OUTER JOIN SITE TS ON TS.ID = TT.SITE
    LEFT OUTER JOIN OBJECT TCO ON TCO.ID = TS.INCLASS</query>
-  <query id="66e6163a-a8db-425a-8471-6df5bd9d48b4" description="What individual accesses of this field occur while this lock is held?" revision="2" display="true">SELECT
-   &apos;?Package?&apos; &quot;Package__(&apos;@PK&apos;)&quot;, 
-   &apos;?Class?&apos; &quot;Class&quot;, 
-   &apos;?Class (Image)?&apos; &quot;Class__(icon)&quot;,
-   &apos;?Method?&apos; &quot;Method&quot;,
-   &apos;?Method (Image)?&apos; &quot;Method__(icon)&quot;,
-   &apos;?Line?&apos; &quot;Line&quot;,
-   A.TS &quot;Time__|&quot;,
-   CASE WHEN A.RW = &apos;R&apos; THEN &apos;Read&apos; ELSE &apos;Write&apos; END &quot;Access&quot;,
-   CASE WHEN A.UNDERCONSTRUCTION = &apos;N&apos; THEN &apos; &apos; ELSE &apos;Yes&apos; END &quot;Under Construction__(c)&quot;,
-   &apos;?Multiple?&apos; &quot;Multiple__(hide)&quot;,
-   A.ID &quot;AID__(hide)&quot;, 
-   A.TRACE &quot;ATRACE__(hide)&quot;
-FROM
-   LOCKDURATION D,
-   ACCESS A,
-   OBJECT THO,
-   TRACE T,
-   SITE S,
-   OBJECT CO      
-WHERE
-   D.STARTEVENT = ?LockEvent? AND
-   A.TS BETWEEN D.START AND D.STOP AND
-   A.INTHREAD = D.INTHREAD AND
-   T.ID = A.TRACE AND
-   S.ID = T.SITE AND
-   CO.ID = S.INCLASS AND
-   THO.ID = A.INTHREAD AND
-   S.ATLINE = ?Line? AND
-   S.LOCATION = &apos;?Method?&apos; AND
-   CO.CLASSNAME = &apos;?Class?&apos; AND
-   CO.PACKAGENAME = &apos;?Package?&apos;
-ORDER BY A.TS ASC</query>
-  <query id="649dff6b-1e60-4c03-8118-d98d93a9f586" description="What instances contain this field and are accessed in this thread?" revision="14" display="true">--BEGIN-INFO
---&lt;p&gt;&lt;strong&gt;
---  What instances of this non-static field are accessed in this thread?
---&lt;/strong&gt;&lt;/p&gt;
---&lt;p&gt;
---Lists all objects containing an instance of this field that is accessed in the given thread.
---  &lt;table&gt;
---    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
---      
---      
---      &lt;tbody&gt;
---	&lt;tr&gt;
---	  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
---	  &lt;td&gt;Table&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td rowspan=&quot;6&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
---	  &lt;td&gt;Object&lt;/td&gt;
---	  &lt;td&gt;An object identifier&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Reads&lt;/td&gt;
---	  &lt;td&gt;The read count of the field on this object&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Writes&lt;/td&gt;
---	  &lt;td&gt;The write count of the field on this object&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Reads Under Construction&lt;/td&gt;
---	  &lt;td&gt;The read count of the field on this object while it was
---	  being initialized&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Writes Under Construction&lt;/td&gt;
---	  &lt;td&gt;The write count of the field on this object while it was
---	  being initialized&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Lock Set Size&lt;/td&gt;
---	  &lt;td&gt;The number of locks commonly held when each access is
---	  made to the field on this object&lt;/td&gt;
---	&lt;/tr&gt;
---      &lt;/tbody&gt;
---  &lt;/table&gt;
---&lt;/p&gt;
---END-INFO
+  <query id="649dff6b-1e60-4c03-8118-d98d93a9f586" description="What instances contain this field and are accessed in this thread?" revision="16" display="true">-- META-BEGIN(doc)
+-- &lt;p&gt;&lt;strong&gt;
+--   What instances contain this field and are accessed in this thread?
+-- &lt;/strong&gt;&lt;/p&gt;
+-- &lt;p&gt;
+-- Lists all objects containing an instance of this field that is accessed in the given thread.
+-- &lt;/p&gt;
+--   &lt;table&gt;
+--     &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
+--       &lt;tbody&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
+-- 	  &lt;td&gt;Table&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td rowspan=&quot;8&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
+-- 	  &lt;td&gt;Instance&lt;/td&gt;
+-- 	  &lt;td&gt;An object identifier&lt;/td&gt;
+-- 	&lt;/tr&gt;
+--         &lt;tr&gt;
+--           &lt;td&gt;Field&lt;/td&gt;
+--           &lt;td&gt;The field name&lt;/td&gt;
+--         &lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Reads&lt;/td&gt;
+-- 	  &lt;td&gt;The read count of the field on this object&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Writes&lt;/td&gt;
+-- 	  &lt;td&gt;The write count of the field on this object&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Reads Under Construction&lt;/td&gt;
+-- 	  &lt;td&gt;The read count of the field on this object while it was
+-- 	  being initialized&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Writes Under Construction&lt;/td&gt;
+-- 	  &lt;td&gt;The write count of the field on this object while it was being
+-- 	  initialized&lt;/td&gt;
+-- 	&lt;/tr&gt;
+--         &lt;tr&gt;
+--           &lt;td&gt;In Thread&lt;/td&gt;
+--           &lt;td&gt;The name of the given thread&lt;/td&gt;
+--         &lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Lock Set&lt;/td&gt;
+-- 	  &lt;td&gt;Either &lt;code&gt;Empty&lt;/code&gt; or &lt;code&gt;Non-empty&lt;/code&gt;, depending on whether or not the field has a lock set in this instance&lt;/td&gt;
+-- 	&lt;/tr&gt;
+--       &lt;/tbody&gt;
+--   &lt;/table&gt;
+-- 
+-- &lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+-- &lt;img src=&quot;what-instances-contain-this-field-and-are-accessed-in-this-thread.png&quot; alt=&quot;What instances contain this field and are accessed in this thread?&quot; /&gt;
+-- META-END
 SELECT OBJID(COUNTS.RECEIVER) &quot;Instance&quot;,
        CO.CLASSCODE           &quot;Instance__(icon)&quot;,
        &apos;?Field?&apos;              &quot;Field&quot;,
@@ -2560,7 +2571,70 @@ SELECT OBJID(COUNTS.RECEIVER) &quot;Instance&quot;,
   OBJECT O ON O.ID = COUNTS.RECEIVER
   INNER JOIN
   OBJECT CO ON CO.ID = O.TYPE</query>
-  <query id="2468b391-8f70-4f4f-97fb-c34b0c0b3101" description="What instances contain this field and are protected by this lock?" revision="1" display="true">SELECT OBJID(COUNTS.RECEIVER) &quot;Instance&quot;,
+  <query id="2468b391-8f70-4f4f-97fb-c34b0c0b3101" description="What instances contain this field and are protected by this lock?" revision="2" display="true">-- META-BEGIN(doc)
+-- &lt;p&gt;&lt;strong&gt;
+-- 	What instances contain this field and are protected by this lock?
+-- &lt;/strong&gt;&lt;/p&gt;
+-- &lt;p&gt;
+-- Lists all objects containing an instance of this field that is accessed while the given lock is held.
+-- &lt;/p&gt;
+--   &lt;table&gt;
+--     &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
+--       &lt;tbody&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
+-- 	  &lt;td&gt;Table&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td rowspan=&quot;10&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
+-- 	  &lt;td&gt;Instance&lt;/td&gt;
+-- 	  &lt;td&gt;An object identifier&lt;/td&gt;
+-- 	&lt;/tr&gt;
+--      &lt;tr&gt;
+--        &lt;td&gt;Field&lt;/td&gt;
+--        &lt;td&gt;The field name&lt;/td&gt;
+--      &lt;/tr&gt;
+--      &lt;tr&gt;
+--        &lt;td&gt;Lock&lt;/td&gt;
+--        &lt;td&gt;The name of the given lock&lt;/td&gt;
+--      &lt;/tr&gt;
+--      &lt;tr&gt;
+--        &lt;td&gt;% w/ Lock Held&lt;/td&gt;
+--        &lt;td&gt;The percentage of field accesses in this object that took place while the given lock was held&lt;/td&gt;
+--      &lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Reads&lt;/td&gt;
+-- 	  &lt;td&gt;The read count of the field on this object&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Writes&lt;/td&gt;
+-- 	  &lt;td&gt;The write count of the field on this object&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Reads Under Construction&lt;/td&gt;
+-- 	  &lt;td&gt;The read count of the field on this object while it was
+-- 	  being initialized&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Writes Under Construction&lt;/td&gt;
+-- 	  &lt;td&gt;The write count of the field on this object while it was being
+-- 	  initialized&lt;/td&gt;
+-- 	&lt;/tr&gt;
+--      &lt;tr&gt;
+--        &lt;td&gt;Times Lock Held While Accessed&lt;/td&gt;
+--        &lt;td&gt;The number of field accesses in this object that took place while the given lock was held&lt;/td&gt;
+--      &lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Lock Set&lt;/td&gt;
+-- 	  &lt;td&gt;Either &lt;code&gt;Empty&lt;/code&gt; or &lt;code&gt;Non-empty&lt;/code&gt;, depending on whether or not the field has a lock set in this instance&lt;/td&gt;
+-- 	&lt;/tr&gt;
+--       &lt;/tbody&gt;
+--   &lt;/table&gt;
+-- 
+-- &lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+-- &lt;img src=&quot;what-instances-contain-this-field-and-are-protected-by-this-lock.png&quot; alt=&quot;What instances contain this field and are protected by this lock?&quot; /&gt;
+-- META-END
+SELECT OBJID(COUNTS.RECEIVER) &quot;Instance&quot;,
        CO.CLASSCODE           &quot;Instance__(icon)&quot;,
        &apos;?Field?&apos;              &quot;Field&quot;,
        &apos;?Field (Image)?&apos;      &quot;Field__(icon)&quot;,
@@ -2599,78 +2673,57 @@ SELECT OBJID(COUNTS.RECEIVER) &quot;Instance&quot;,
    WHERE A.ID = AIDS.ACCESS AND A.FIELD = ?FieldId?
    GROUP BY A.FIELD,A.RECEIVER
   ) AS FA ON FA.RECEIVER = COUNTS.RECEIVER</query>
-  <query id="f7ed1ced-73a5-4790-bc7c-8ba5fdf114a6" description="What instances contain this field and are shared after object construction?" revision="13" display="true">--BEGIN-INFO
---&lt;p&gt;&lt;strong&gt;
---    What instances of this non-static field are shared after object construction?
---&lt;/strong&gt;&lt;/p&gt;
---&lt;p&gt;
---    Lists the shared objects containing a given field.  The number of
---    reads/writes and the size of the lock set is also shown.
---  &lt;table&gt;
---    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
---      
---      
---      &lt;tbody&gt;
---	&lt;tr&gt;
---	  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
---	  &lt;td&gt;Table&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td rowspan=&quot;6&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
---	  &lt;td&gt;Field Object&lt;/td&gt;
---	  &lt;td&gt;An object identifier&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Reads&lt;/td&gt;
---	  &lt;td&gt;The read count of the field on this object&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Writes&lt;/td&gt;
---	  &lt;td&gt;The write count of the field on this object&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Reads Under Construction&lt;/td&gt;
---	  &lt;td&gt;The read count of the field on this object while it was
---	  being initialized&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Writes Under Construction&lt;/td&gt;
---	  &lt;td&gt;The write count of the field on this object while it was
---	  being initialized&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Lock Set Size&lt;/td&gt;
---	  &lt;td&gt;The number of locks commonly held when each access is
---	  made to the field on this object&lt;/td&gt;
---	&lt;/tr&gt;
---      &lt;/tbody&gt;
---  &lt;/table&gt;
---&lt;/p&gt;
---&lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
---
---&lt;img src=&quot;what-are-the-individual-instances-of-this-non-static-field.png&quot; /&gt;
---
---&lt;p&gt;
---The above example shows a number of objects containing the
---&lt;code&gt;f_lock&lt;/code&gt; field recorded during this Flashlight run.  We can
---see from the names of the objects that both Planet and ship contain the
---&lt;code&gt;f_lock&lt;/code&gt; field.  This is because &lt;code&gt;f_lock&lt;/code&gt; is
---declared in an abstract class called &lt;code&gt;Thing&lt;/code&gt;.  In addition to
---the number of reads and writes recorded for each object, the size of
---&lt;code&gt;f_lock&lt;/code&gt;&apos;s lock set is shown.  It is important to note that a
---lock set size of zero does &lt;em&gt;not&lt;/em&gt; mean that there is a potential
---race condition for this field.  The queries that specifically detect
---empty lock sets check for additional things, like whether the field is
---volatile or static, and whether the field is written to outside of
---the constructor.  Any of these indicators could make it perfectly
---acceptable for the field to have a lock set size of zero.  If you want 
---to get the fields that Flashlight reports as having an empty lock set, 
---instead run &lt;strong&gt;What instances of this field have an empty lock set?
---&lt;/strong&gt; 
---&lt;/p&gt;
---
---END-INFO
-
+  <query id="f7ed1ced-73a5-4790-bc7c-8ba5fdf114a6" description="What instances contain this field and are shared after object construction?" revision="14" display="true">--- META-BEGIN(doc)
+-- &lt;p&gt;&lt;strong&gt;
+--   What instances contain this field and are shared after object construction?
+-- &lt;/strong&gt;&lt;/p&gt;
+-- &lt;p&gt;
+-- Lists all objects containing an instance of this field that are accessed by more than one thread after the object has been constructed.
+-- &lt;/p&gt;
+--   &lt;table&gt;
+--     &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
+--       &lt;tbody&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
+-- 	  &lt;td&gt;Table&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td rowspan=&quot;7&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
+-- 	  &lt;td&gt;Instance&lt;/td&gt;
+-- 	  &lt;td&gt;An object identifier&lt;/td&gt;
+-- 	&lt;/tr&gt;
+--         &lt;tr&gt;
+--           &lt;td&gt;Field&lt;/td&gt;
+--           &lt;td&gt;The field name&lt;/td&gt;
+--         &lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Reads&lt;/td&gt;
+-- 	  &lt;td&gt;The read count of the field on this object&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Writes&lt;/td&gt;
+-- 	  &lt;td&gt;The write count of the field on this object&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Reads Under Construction&lt;/td&gt;
+-- 	  &lt;td&gt;The read count of the field on this object while it was
+-- 	  being initialized&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Writes Under Construction&lt;/td&gt;
+-- 	  &lt;td&gt;The write count of the field on this object while it was being
+-- 	  initialized&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Lock Set&lt;/td&gt;
+-- 	  &lt;td&gt;Either &lt;code&gt;Empty&lt;/code&gt; or &lt;code&gt;Non-empty&lt;/code&gt;, depending on whether or not the field has a lock set in this instance&lt;/td&gt;
+-- 	&lt;/tr&gt;
+--       &lt;/tbody&gt;
+--   &lt;/table&gt;
+-- 
+-- &lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+-- &lt;img src=&quot;what-instances-contain-this-field-and-are-shared-after-object-construction.png&quot; alt=&quot;What instances contain this field and are shared after object construction?&quot; /&gt;
+-- META-END
 SELECT OBJID(COUNTS.RECEIVER) &quot;Instance&quot;,
        CO.CLASSCODE           &quot;Instance__(icon)&quot;,
        &apos;?Field?&apos;              &quot;Field&quot;,
@@ -2679,7 +2732,7 @@ SELECT OBJID(COUNTS.RECEIVER) &quot;Instance&quot;,
        COUNTS.WRITES + COUNTS.WRITESUC &quot;Writes__(blank-if &apos;0&apos;)(add-commas)(r)&quot;, 
        COUNTS.READSUC &quot;Reads Under Construction__(blank-if &apos;0&apos;)(add-commas)(r)&quot;, 
        COUNTS.WRITESUC &quot;Writes Under Construction__(blank-if &apos;0&apos;)(add-commas)(r)&quot;, 
-       CASE WHEN LOCKS.COUNT IS NULL THEN NULL ELSE &apos;Yes&apos; END &quot;Consistently Protected By A Lock After Object Construction&quot;,
+       CASE WHEN LOCKS.COUNT IS NULL THEN &apos;Empty&apos; ELSE &apos;Non-Empty&apos; END &quot;Lock Set&quot;,
        ?FieldId? &quot;FieldId__(hide)&quot;,
        COUNTS.RECEIVER &quot;Receiver__(hide)&quot;
  FROM 
@@ -2697,80 +2750,73 @@ SELECT OBJID(COUNTS.RECEIVER) &quot;Instance&quot;,
   OBJECT O ON O.ID = COUNTS.RECEIVER
   INNER JOIN
   OBJECT CO ON CO.ID = O.TYPE</query>
-  <query id="708d1b8a-5274-4a25-b0b4-67f1a7a86690" description="What instances contain this field and are shared during object construction?" type="ERROR" revision="21" display="true">-- META-BEGIN(no-rows)
+  <query id="708d1b8a-5274-4a25-b0b4-67f1a7a86690" description="What instances contain this field and are shared during object construction?" type="ERROR" revision="22" display="true">-- META-BEGIN(no-rows)
 -- No instances of this field are accessed by multiple threads during object construction.
 -- META-END
---BEGIN-INFO
---&lt;p&gt;&lt;strong&gt;
---    What instances of this non-static field are shard during object construction?
---&lt;/strong&gt;&lt;/p&gt;
---&lt;p&gt;
---    Lists the shared objects containing a given field that are
---    improperly published.  Improperly published objects are accessed by
---    more than one thread while the object is under construction.  This
---    generally happens when a constructor passes its
---    &lt;varname&gt;this&lt;/varname&gt; reference to another object during
---    construction.  The number of reads/writes and the size of the lock
---    set is also shown.
---  &lt;table&gt;
---    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
---      
---      
---      &lt;tbody&gt;
---	&lt;tr&gt;
---	  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
---	  &lt;td&gt;Table&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td rowspan=&quot;6&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
---	  &lt;td&gt;Field Object&lt;/td&gt;
---	  &lt;td&gt;An object identifier&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Reads&lt;/td&gt;
---	  &lt;td&gt;The read count of the field on this object&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Writes&lt;/td&gt;
---	  &lt;td&gt;The write count of the field on this object&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Reads Under Construction&lt;/td&gt;
---	  &lt;td&gt;The read count of the field on this object while it was
---	  being initialized&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Writes Under Construction&lt;/td&gt;
---	  &lt;td&gt;The write count of the field on this object while it was
---	  being initialized&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Lock Set Size&lt;/td&gt;
---	  &lt;td&gt;The number of locks commonly held when each access is
---	  made to the field on this object&lt;/td&gt;
---	&lt;/tr&gt;
---      &lt;/tbody&gt;
---  &lt;/table&gt;
---&lt;/p&gt;
---
---&lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
---&lt;img src=&quot;what-are-the-improperly-published-instances-of-this-non-static-field.png&quot; /&gt;
---&lt;p&gt;
---In the above example, Flashlight has observed that the
---&lt;code&gt;state&lt;/code&gt; field in &lt;code&gt;ZooKeeper-663&lt;/code&gt; &lt;em&gt;may&lt;/em&gt; be
---improperly published.
---&lt;/p&gt;
---&lt;p&gt;
---It is important to note that the query does not prove that the
---&lt;code&gt;state&lt;/code&gt; field was improperly published.  It may be that there
---is a happens-before event of some sort between the reads and writes of
---each field.  This would be the case if a thread was initialized in a
---constructor and &lt;code&gt;this&lt;/code&gt; was passed into the new thread.  If
---the state of &lt;code&gt;this&lt;/code&gt; is not modified afterwards, then there is
---no danger that the program will behave unexpectedly.
---&lt;/p&gt;
---
---END-INFO
+-- META-BEGIN(doc)
+-- &lt;p&gt;&lt;strong&gt;
+-- 	What instances contain this field and are shared during object construction?
+-- &lt;/strong&gt;&lt;/p&gt;
+-- &lt;p&gt;
+--    Fields that are accessed by more than one thread before their enclosing
+--    object has finished construction run the risk of being seen in an
+--    uninitialized state.  This query lists all objects containing an instance 
+--    of this field that is accessed by more than one thread before the object is 
+--    fully initialized.
+-- &lt;/p&gt;
+-- &lt;p&gt;
+--    It is important to note that this query does not prove that a
+--    field was improperly published.  It may be that there
+--    is a happens-before event of some sort between the writes and any subsequent reads for
+--    each field.  This would be the case if a thread was initialized in a
+--    constructor and &lt;code&gt;this&lt;/code&gt; was passed into the new thread.  If
+--    the state of &lt;code&gt;this&lt;/code&gt; is not modified afterwards, then there is
+--    no danger that the program will behave unexpectedly.
+-- &lt;/p&gt;
+--   &lt;table&gt;
+--     &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
+--       &lt;tbody&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
+-- 	  &lt;td&gt;Table&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td rowspan=&quot;8&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
+-- 	  &lt;td&gt;Instance&lt;/td&gt;
+-- 	  &lt;td&gt;An object identifier&lt;/td&gt;
+-- 	&lt;/tr&gt;
+--         &lt;tr&gt;
+--           &lt;td&gt;Field&lt;/td&gt;
+--           &lt;td&gt;The field name&lt;/td&gt;
+--         &lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Reads&lt;/td&gt;
+-- 	  &lt;td&gt;The read count of the field on this object&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Writes&lt;/td&gt;
+-- 	  &lt;td&gt;The write count of the field on this object&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Reads Under Construction&lt;/td&gt;
+-- 	  &lt;td&gt;The read count of the field on this object while it was
+-- 	  being initialized&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Writes Under Construction&lt;/td&gt;
+-- 	  &lt;td&gt;The write count of the field on this object while it was being
+-- 	  initialized&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Lock Set&lt;/td&gt;
+-- 	  &lt;td&gt;Either &lt;code&gt;Empty&lt;/code&gt; or &lt;code&gt;Non-empty&lt;/code&gt;, depending on whether or not the field has a lock set in this instance&lt;/td&gt;
+-- 	&lt;/tr&gt;
+--       &lt;/tbody&gt;
+--   &lt;/table&gt;
+-- 
+-- &lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+-- &lt;img src=&quot;what-instances-contain-this-field-and-are-shared-during-object-construction.png&quot; alt=&quot;What instances contain this field and are shared during object construction?&quot; /&gt;
+-- META-END
 SELECT OBJID(COUNTS.RECEIVER) &quot;Instance&quot;,
        CO.CLASSCODE           &quot;Instance__(icon)&quot;,
        &apos;?Field?&apos;              &quot;Field&quot;,
@@ -2779,7 +2825,7 @@ SELECT OBJID(COUNTS.RECEIVER) &quot;Instance&quot;,
        COUNTS.WRITES + COUNTS.WRITESUC &quot;Writes__(blank-if &apos;0&apos;)(add-commas)(r)&quot;, 
        COUNTS.READSUC &quot;Reads Under Construction__(blank-if &apos;0&apos;)(add-commas)(r)&quot;, 
        COUNTS.WRITESUC &quot;Writes Under Construction__(blank-if &apos;0&apos;)(add-commas)(r)&quot;, 
-       CASE WHEN LOCKS.COUNT IS NULL THEN 0 ELSE LOCKS.COUNT END &quot;Lock Set Size__(r)&quot;,
+       CASE WHEN LOCKS.COUNT IS NULL THEN &apos;Empty&apos; ELSE &apos;Non-Empty&apos; END &quot;Lock Set&quot;,
        ?FieldId? &quot;FieldId__(hide)&quot;,
        COUNTS.RECEIVER &quot;Receiver__(hide)&quot;
  FROM BADPUBLISH BP
@@ -6269,8 +6315,8 @@ order by lo.PackageName, lo.ClassName, s.AtLine, tho.ThreadName, sum(ld.Duration
   <sub-query id="8de7d969-6633-4a16-acad-786ab9fd2f5f" sub-query="83d613b3-283e-4100-9a82-e42adf107fe6" is-default="10"/>
   <sub-query id="c7b845ab-3efc-4f26-a240-e31228c2f1b4" sub-query="83d613b3-283e-4100-9a82-e42adf107fe6"/>
   <sub-query id="eebe8cc6-9268-4b26-8d6a-bf94c88084fb" sub-query="4fce8390-7307-45dc-b779-5701ee7f23a1"/>
-  <sub-query id="02475ce2-0b3a-47e9-9200-e4f6e864aa3b" sub-query="30f37c1b-4a34-4eff-8bca-b76566b216c3"/>
   <sub-query id="00c978ca-dd0c-4b32-a651-293510b3bffa" sub-query="30f37c1b-4a34-4eff-8bca-b76566b216c3"/>
+  <sub-query id="02475ce2-0b3a-47e9-9200-e4f6e864aa3b" sub-query="30f37c1b-4a34-4eff-8bca-b76566b216c3"/>
   <sub-query id="cdc2d460-b17f-43bc-8cc6-4c26f1637fda" sub-query="f7ed1ced-73a5-4790-bc7c-8ba5fdf114a6" is-default="10"/>
   <sub-query id="33868960-7df8-4bab-bb33-ffb230957940" sub-query="6d8d0985-0830-4f18-a655-fa7b43703d5f"/>
   <sub-query id="33868960-7df8-4bab-bb33-ffb230957940" sub-query="708d1b8a-5274-4a25-b0b4-67f1a7a86690" is-default="10"/>
@@ -6318,7 +6364,6 @@ order by lo.PackageName, lo.ClassName, s.AtLine, tho.ThreadName, sum(ld.Duration
   <sub-query id="2d58b103-1e04-4161-b6da-c96a553e39d0" sub-query="eee60af8-2385-4e71-9dde-554361b9ef07" is-default="10"/>
   <sub-query id="dd2ea83c-1940-4985-ace7-a578471e3b54" sub-query="26461177-e0ff-4187-bdc4-31f1d256a951"/>
   <sub-query id="dd2ea83c-1940-4985-ace7-a578471e3b54" sub-query="078a8b6c-1fad-4843-94f9-fe005eb66b73"/>
-  <sub-query id="66e6163a-a8db-425a-8471-6df5bd9d48b4" sub-query="83d613b3-283e-4100-9a82-e42adf107fe6" is-default="10"/>
   <sub-query id="649dff6b-1e60-4c03-8118-d98d93a9f586" sub-query="16872df3-2b60-4827-8f71-95b71e65c349" is-default="10"/>
   <sub-query id="649dff6b-1e60-4c03-8118-d98d93a9f586" sub-query="1562545d-004b-4865-9f55-65ed4e37bcbb"/>
   <sub-query id="649dff6b-1e60-4c03-8118-d98d93a9f586" sub-query="598a178b-7153-4e1c-978e-1b78b1d95799"/>
@@ -6489,18 +6534,18 @@ order by lo.PackageName, lo.ClassName, s.AtLine, tho.ThreadName, sum(ld.Duration
     <cat-query id="976506a9-cf85-4907-8d7f-2fd9b5a28d6d"/>
   </category>
   <category id="28103990-73b5-4287-add0-39785aa7e3bb" description="Deadlock" has-data="Queries that show lock use that may cause the program to deadlock." no-data="No locking that could potentially cause deadlock was observed in the program." revision="3">
-    <cat-query id="9d05ac24-20c2-436e-af6b-2bd0bc7dbcfb"/>
     <cat-query id="f556dcef-0e6b-480b-bc1b-eb84b3012831"/>
+    <cat-query id="9d05ac24-20c2-436e-af6b-2bd0bc7dbcfb"/>
   </category>
   <category id="84475b98-4c68-4165-b883-5bdf9479d3d6" description="Lock Use" has-data="Queries about lock use in the program." no-data="No lock use was observed in the program." revision="5">
-    <cat-query id="26696a5f-3fd7-4f18-badf-e3d7d01a6d4e"/>
-    <cat-query id="b06809c5-5a7b-41f2-bd8c-a9e3ed5f6b1b"/>
     <cat-query id="c744b5b5-15f0-4f72-a344-7e52bcac5071"/>
-    <cat-query id="3b8251fa-a315-4c36-a856-a53b278fdc91"/>
-    <cat-query id="ddb5a17c-f5ac-4c26-a251-34d8e3c7bc7f"/>
-    <cat-query id="d4d2af9b-ce4d-4457-9e94-01972fcb58d3"/>
+    <cat-query id="b06809c5-5a7b-41f2-bd8c-a9e3ed5f6b1b"/>
     <cat-query id="213c73ad-b3f6-4aef-9a05-f0c31d8fdcde"/>
+    <cat-query id="d4d2af9b-ce4d-4457-9e94-01972fcb58d3"/>
+    <cat-query id="ddb5a17c-f5ac-4c26-a251-34d8e3c7bc7f"/>
+    <cat-query id="3b8251fa-a315-4c36-a856-a53b278fdc91"/>
     <cat-query id="2f505921-50fb-405b-bc78-4a5fe9228957"/>
+    <cat-query id="26696a5f-3fd7-4f18-badf-e3d7d01a6d4e"/>
   </category>
   <category id="3d204f5e-d61d-4637-be14-118223f2fb9e" description="Memory Model" has-data="Queries that show happens-before relationships between threads defined by the Java memory model." no-data="No happens-before relationships between threads were observed in the program." revision="2">
     <cat-query id="eabad207-22a7-4bb0-a7e1-30946d02ea13"/>
@@ -6514,12 +6559,12 @@ order by lo.PackageName, lo.ClassName, s.AtLine, tho.ThreadName, sum(ld.Duration
     <cat-query id="4e026769-1b0b-42bd-8893-f3b92add093f"/>
   </category>
   <category id="8401fcf7-7d5c-4191-a997-0b82f1db8e66" description="Shared State" has-data="Queries that show state (fields, not local variables or parameters) shared between multiple threads." no-data="No state (fields, not local variables or parameters) was shared between multiple threads." revision="2">
-    <cat-query id="bd72a5e4-42aa-415d-aa72-28d351f629a4"/>
-    <cat-query id="33868960-7df8-4bab-bb33-ffb230957940"/>
-    <cat-query id="71a6fb5b-e5e1-4d25-bdc8-67ab5df1f66e"/>
-    <cat-query id="cdc2d460-b17f-43bc-8cc6-4c26f1637fda"/>
     <cat-query id="094fc6db-5a5b-4495-aacd-54f5a5aa1691"/>
+    <cat-query id="cdc2d460-b17f-43bc-8cc6-4c26f1637fda"/>
     <cat-query id="d1176c97-e3b6-483b-a341-6914a6f64860"/>
+    <cat-query id="33868960-7df8-4bab-bb33-ffb230957940"/>
+    <cat-query id="bd72a5e4-42aa-415d-aa72-28d351f629a4"/>
+    <cat-query id="71a6fb5b-e5e1-4d25-bdc8-67ab5df1f66e"/>
     <cat-query id="419c927e-a87c-4364-b4a9-2e8f50f728f6"/>
   </category>
   <category id="b6d89f8b-7dfd-44a5-843c-d8a70f6aaaa9" description="Threads" has-data="Queries about threads in the program." no-data="No threads were observed in the program." revision="2">

@@ -2292,7 +2292,7 @@ WHERE F.ID = MIXEDAWT.FIELD AND
 GROUP BY O.PACKAGENAME,O.CLASSNAME,O.CLASSCODE,F.FIELDNAME,F.CODE,F.ID
 ORDER BY O.PACKAGENAME,O.CLASSNAME,F.FIELDNAME
 </query>
-  <query id="2d58b103-1e04-4161-b6da-c96a553e39d0" description="What fields could produce false sharing with this field in the object?" revision="7" display="true">--META-BEGIN(doc)
+  <query id="2d58b103-1e04-4161-b6da-c96a553e39d0" description="What fields could produce false sharing with this field in the object?" revision="8" display="true">--META-BEGIN(doc)
 -- &lt;p&gt;&lt;strong&gt;
 -- 	What fields could produce false sharing with this field in the object?
 -- &lt;/strong&gt;&lt;/p&gt;
@@ -2335,9 +2335,7 @@ ORDER BY O.PACKAGENAME,O.CLASSNAME,F.FIELDNAME
 -- 	&lt;/tr&gt;
 -- 	&lt;tr&gt;
 -- 	  &lt;td&gt;Interleaving %&lt;/td&gt;
--- 	  &lt;td&gt;The read count of all shared instances of this
--- 	  field made while the owning object was under
--- 	  construction&lt;/td&gt;
+-- 	  &lt;td&gt;The percent of accesses that happened in a different thread than the previous access&lt;/td&gt;
 -- 	&lt;/tr&gt;
 -- 	&lt;tr&gt;
 -- 	  &lt;td&gt;Start&lt;/td&gt;
@@ -2353,7 +2351,7 @@ ORDER BY O.PACKAGENAME,O.CLASSNAME,F.FIELDNAME
 -- 
 -- &lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
 -- 
--- &lt;img src=&quot;what-fields-could-produce-false-sharing-with-this-field-in-the-object&quot; alt=&quot;What fields could produce false sharing with this field in the object?&quot; /&gt;
+-- &lt;img src=&quot;what-fields-could-produce-false-sharing-with-this-field-in-the-object.png&quot; alt=&quot;What fields could produce false sharing with this field in the object?&quot; /&gt;
 --META-END
 SELECT
    CO.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;,
@@ -3531,50 +3529,6 @@ FROM TABLE (STACKTRACE(?SOURCEID?)) s</query>
 -- META-END
 SELECT s.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;, s.CLASSNAME &quot;Class&quot;, s.CLASSCODE &quot;Class__(icon)&quot;, s.LOCATION &quot;Location&quot;, s.LOCATIONCODE &quot;Location__(icon)&quot;, s.ATLINE &quot;Line__(r)&quot;
 FROM TABLE (STACKTRACE(?TRACEID?)) s</query>
-  <query id="10477928-cf86-4416-9118-34eea8cd7e38" description="What is the stack trace?" revision="9" display="true">-- META-BEGIN(disable-column-sort)
--- Rows from a trace should not be reordered.
--- META-END
--- META-BEGIN(doc)
--- &lt;p&gt;&lt;strong&gt;
---   What is the stack trace for this edge&apos;s target?
--- &lt;/strong&gt;&lt;/p&gt;
--- &lt;p&gt;
---      Generates a stack trace of the method calls leading up to this point in the
---      program, from newest to oldest.
--- &lt;/p&gt;
--- &lt;table&gt;
---   &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
---   &lt;tbody&gt;
---     &lt;tr&gt;
---       &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
---       &lt;td&gt;Table&lt;/td&gt;
---     &lt;/tr&gt;
---     &lt;tr&gt;
---       &lt;td rowspan=&quot;5&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
---       &lt;td&gt;Package&lt;/td&gt;
---       &lt;td&gt;The package this method call or access occurred in&lt;/td&gt;
---     &lt;/tr&gt;
---     &lt;tr&gt;
---       &lt;td&gt;Class&lt;/td&gt;
---       &lt;td&gt;The class this method call or access occurred in&lt;/td&gt;
---     &lt;/tr&gt;
---     &lt;tr&gt;
---       &lt;td&gt;Location&lt;/td&gt;
---       &lt;td&gt;The location of this method call or access.  This is generally the
---       enclosing method&lt;/td&gt;
---     &lt;/tr&gt;
---     &lt;tr&gt;
---       &lt;td&gt;Line&lt;/td&gt;
---       &lt;td&gt;The line number this method call or access occurred at&lt;/td&gt;
---     &lt;/tr&gt;
---   &lt;/tbody&gt;
--- &lt;/table&gt;
--- &lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
--- &lt;img src=&quot;what-is-the-stack-trace.png&quot; alt=&quot;What is the stack trace?&quot; /&gt;
--- META-END
-SELECT s.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;, s.CLASSNAME &quot;Class&quot;, s.CLASSCODE &quot;Class__(icon)&quot;, s.LOCATION &quot;Location&quot;, s.LOCATIONCODE &quot;Location__(icon)&quot;, s.ATLINE &quot;Line__(r)&quot;
-FROM TABLE (STACKTRACE(?LATRACE?)) s
-</query>
   <query id="83d613b3-283e-4100-9a82-e42adf107fe6" description="What is the stack trace?" revision="11" display="true">-- META-BEGIN(disable-column-sort)
 -- Rows from a trace should not be reordered.
 -- META-END
@@ -3618,6 +3572,50 @@ FROM TABLE (STACKTRACE(?LATRACE?)) s
 -- META-END
 SELECT s.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;, s.CLASSNAME &quot;Class&quot;, s.CLASSCODE &quot;Class__(icon)&quot;, s.LOCATION &quot;Location&quot;, s.LOCATIONCODE &quot;Location__(icon)&quot;, s.ATLINE &quot;Line__(r)&quot;
 FROM TABLE (STACKTRACE(?ATRACE?)) s
+</query>
+  <query id="10477928-cf86-4416-9118-34eea8cd7e38" description="What is the stack trace?" revision="9" display="true">-- META-BEGIN(disable-column-sort)
+-- Rows from a trace should not be reordered.
+-- META-END
+-- META-BEGIN(doc)
+-- &lt;p&gt;&lt;strong&gt;
+--   What is the stack trace for this edge&apos;s target?
+-- &lt;/strong&gt;&lt;/p&gt;
+-- &lt;p&gt;
+--      Generates a stack trace of the method calls leading up to this point in the
+--      program, from newest to oldest.
+-- &lt;/p&gt;
+-- &lt;table&gt;
+--   &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
+--   &lt;tbody&gt;
+--     &lt;tr&gt;
+--       &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
+--       &lt;td&gt;Table&lt;/td&gt;
+--     &lt;/tr&gt;
+--     &lt;tr&gt;
+--       &lt;td rowspan=&quot;5&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
+--       &lt;td&gt;Package&lt;/td&gt;
+--       &lt;td&gt;The package this method call or access occurred in&lt;/td&gt;
+--     &lt;/tr&gt;
+--     &lt;tr&gt;
+--       &lt;td&gt;Class&lt;/td&gt;
+--       &lt;td&gt;The class this method call or access occurred in&lt;/td&gt;
+--     &lt;/tr&gt;
+--     &lt;tr&gt;
+--       &lt;td&gt;Location&lt;/td&gt;
+--       &lt;td&gt;The location of this method call or access.  This is generally the
+--       enclosing method&lt;/td&gt;
+--     &lt;/tr&gt;
+--     &lt;tr&gt;
+--       &lt;td&gt;Line&lt;/td&gt;
+--       &lt;td&gt;The line number this method call or access occurred at&lt;/td&gt;
+--     &lt;/tr&gt;
+--   &lt;/tbody&gt;
+-- &lt;/table&gt;
+-- &lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+-- &lt;img src=&quot;what-is-the-stack-trace.png&quot; alt=&quot;What is the stack trace?&quot; /&gt;
+-- META-END
+SELECT s.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;, s.CLASSNAME &quot;Class&quot;, s.CLASSCODE &quot;Class__(icon)&quot;, s.LOCATION &quot;Location&quot;, s.LOCATIONCODE &quot;Location__(icon)&quot;, s.ATLINE &quot;Line__(r)&quot;
+FROM TABLE (STACKTRACE(?LATRACE?)) s
 </query>
   <query id="d1176c97-e3b6-483b-a341-6914a6f64860" description="What kinds of objects are indirectly accessed by more than one thread?" revision="12" display="true" display-at-root="true">-- META-BEGIN(no-rows)
 -- No objects are indirectly accessed by more than one thread.
@@ -3881,66 +3879,61 @@ SELECT
 FROM 
    LOCKINFO LDS
 ORDER BY 1, LDS.DURATION DESC</query>
-  <query id="cb38a427-c259-4690-abe2-acea9661f737" description="What locks are contended for the longest time?" revision="19" display="true" display-at-root="true">-- META-BEGIN(no-rows)
+  <query id="cb38a427-c259-4690-abe2-acea9661f737" description="What locks are contended for the longest time?" revision="20" display="true" display-at-root="true">-- META-BEGIN(no-rows)
 -- No locks were observed to be acquired during this run of the program.
 -- META-END
---BEGIN-INFO
---&lt;strong&gt;&lt;p&gt;
---    What locks are contended for the longest time?
---&lt;/strong&gt;&lt;/p&gt;
---&lt;p&gt;
---    Lists all of the locks in the program, in descending order of the
---    average amount of time a lock blocks a thread each time it is
---    acquired.  Locks with a high average block time usually indicate
---    high contention in part of your program, and may be a source of
---    slowdown.
+-- META-BEGIN(doc)
+-- &lt;p&gt;&lt;strong&gt;
+-- 	What locks are contended for the longest time?
+-- &lt;/strong&gt;&lt;/p&gt;
+-- &lt;p&gt;
+--   Lists all of the locks in the program, in descending order of the average amount of time the lock blocked its acquiring thread.  Locks with a high average block time usually indicate high contention in part of your program, and may be a source of slowdown.
+-- &lt;/p&gt;
 --  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
---      
---      
 --      &lt;tbody&gt;
---	&lt;tr&gt;
---	  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
---	  &lt;td&gt;Table&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td rowspan=&quot;4&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
---	  &lt;td&gt;Lock&lt;/td&gt;
---	  &lt;td&gt;A lock identifier&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Times Acquired&lt;/td&gt;
---	  &lt;td&gt;The number of times this lock was acquired&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Total Block Time&lt;/td&gt;
---	  &lt;td&gt;The total amount of time that threads spent waiting for
---	  this lock&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Average Block Time&lt;/td&gt;
---	  &lt;td&gt;The average amount of time a thread waits before the
---	  lock was acquired&lt;/td&gt;
---	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
+-- 	  &lt;td&gt;Tree-Table&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Tree Structure&lt;/strong&gt;&lt;/td&gt;
+-- 	  &lt;td&gt;&lt;em&gt;Lock&lt;/em&gt; &amp;#8594; &lt;em&gt;Thread&lt;/em&gt;&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td rowspan=&quot;7&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
+-- 	  &lt;td&gt;Times Acquired&lt;/td&gt;
+-- 	  &lt;td&gt;The number of times this lock was acquired&lt;/td&gt;
+-- 	&lt;/tr&gt;
+--         &lt;tr&gt;
+--           &lt;td&gt;Total Block Time&lt;/td&gt;
+--           &lt;td&gt;The total amount of time this thread spent blocked while trying to acquire this lock&lt;/td&gt;
+--         &lt;/tr&gt;
+--         &lt;tr&gt;
+--           &lt;td&gt;Average Block Time&lt;/td&gt;
+--           &lt;td&gt;The average amount of time this thread spent blocked while trying to acquire this lock&lt;/td&gt;
+--         &lt;/tr&gt;
+--         &lt;tr&gt;
+--           &lt;td&gt;Max Classes Accessed&lt;/td&gt;
+--           &lt;td&gt;The greatest number of classes accessed during a single acquisition of this lock&lt;/td&gt;
+--         &lt;/tr&gt;
+--         &lt;tr&gt;
+--           &lt;td&gt;Max Packages Accessed&lt;/td&gt;
+--           &lt;td&gt;The greatest number of packages accessed during a single acquisition of this lock&lt;/td&gt;
+--         &lt;/tr&gt;
+--         &lt;tr&gt;
+--           &lt;td&gt;As Intrinsic Lock&lt;/td&gt;
+--           &lt;td&gt;Whether or not the lock was acquired intrinsically, using the synchronized keywork&lt;/td&gt;
+--         &lt;/tr&gt;
+--         &lt;tr&gt;
+--           &lt;td&gt;As java.util.concurrent Lock&lt;/td&gt;
+--           &lt;td&gt;Whether or not the lock was acquired as a java.util.concurrent Lock&lt;/td&gt;
+--         &lt;/tr&gt;
 --      &lt;/tbody&gt;
 --  &lt;/table&gt;
---&lt;/p&gt;
---
---&lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
---
---&lt;img src=&quot;what-locks-are-contended-for-the-longest-time.png&quot; /&gt;
---
---&lt;p&gt;
---The above example lists some of the locks that were acquired during this
---Flashlight run, sorted in descending order by average block time.
---Threads acquiring &lt;code&gt;ReentrantReadWriteLock-1256&lt;/code&gt; waited an
---average of 72 microseconds before the lock was acquired and the thread
---could continue working.  We can see that most waited-on lock (on
---average) has a significantly smaller block time, so it may be worth
---investigating &lt;code&gt;ReentrantReadWriteLock-1256&lt;/code&gt; further to see
---what is causing it to wait longer on average.
---&lt;/p&gt;
---END-INFO
+-- &lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+-- &lt;img src=&quot;what-locks-are-contended-for-the-longest-time.png&quot; alt=&quot;What locks are contended for the longest time?&quot; /&gt;
+-- META-END
 SELECT 
    OBJID(LDS.Lock)     &quot;Lock__(&apos;lock.gif&apos;)(c)]&quot;,
    OBJID(LDS.InThread) &quot;Thread__(&apos;thread.gif&apos;)|&quot;,
@@ -3957,19 +3950,7 @@ FROM
    LOCKINFO LDS,
    (SELECT LDS.LOCK, SUM(LDS.DURATION) / SUM(LDS.COUNT) &quot;AVE&quot; FROM LOCKINFO LDS GROUP BY LDS.LOCK) LDSAGG
 WHERE LDSAGG.LOCK = LDS.LOCK
-ORDER BY LDSAGG.AVE DESC, LDSAGG.LOCK, LDS.DURATION DESC
-
-
---select OBJID(Lock)             &quot;Lock__(&apos;lock.gif&apos;)(c)&quot;,
---  count(lock)                  &quot;Times Acquired__(add-commas)(r)&quot;,
---  sum(Duration)                &quot;Total Block Time__(human-readable-duration)(r)&quot;, 
---  sum(duration) / count (lock) &quot;Average Block Time__(human-readable-duration)(r)&quot;,
---  Lock                         &quot;Lock__(hide)&quot;
---from LOCKDURATION    
---where State = &apos;BLOCKING&apos;
---group by Lock
---order by sum(duration) / count (lock) desc
-  </query>
+ORDER BY LDSAGG.AVE DESC, LDSAGG.LOCK, LDS.DURATION DESC</query>
   <query id="ae2c5715-740e-4850-a404-38bdc8cde6b6" description="What locks are held during this field access?" revision="12" display="true">-- META-BEGIN(no-rows)
 -- No locks are held during this access of the field.
 -- META-END
@@ -4055,7 +4036,18 @@ ORDER BY O.THREADNAME ASC, A.TS ASC, D.Start DESC
    LO.Id = S.InClass
 WHERE 
    A.ID = ?AID?</query>
-  <query id="ddb5a17c-f5ac-4c26-a251-34d8e3c7bc7f" description="What locks are held when state in two or more packages is accessed?" revision="15" display="true" display-at-root="true">SELECT 
+  <query id="ddb5a17c-f5ac-4c26-a251-34d8e3c7bc7f" description="What locks are held when state in two or more packages is accessed?" revision="16" display="true" display-at-root="true">-- META-BEGIN(doc)
+-- &lt;p&gt;&lt;strong&gt;
+-- 	What locks are held when state in two or more packages is accessed?
+-- &lt;/strong&gt;&lt;/p&gt;
+-- &lt;p&gt;
+-- Lists all locks where state in two or more packages were accessed during a single
+-- acquisition of the lock.
+-- &lt;/p&gt;
+-- &lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+-- &lt;img src=&quot;what-locks-are-held-when-state-in-two-or-more-packages-is-accesssed.png&quot; alt=&quot;What locks are held when state in two or more packages is accessed?&quot; /&gt;
+-- META-END
+SELECT 
    OBJID(LDS.Lock)     &quot;Lock__(&apos;lock.gif&apos;)(c)]&quot;,
    OBJID(LDS.InThread) &quot;Thread__(&apos;thread.gif&apos;)|&quot;,
    LDS.COUNT       &quot;Times Acquired__(add-commas)(r)(sum on 1)&quot;,
@@ -4146,7 +4138,7 @@ GROUP BY DT.PACKAGENAME,DT.CLASSNAME,DT.CLASSCODE,A.RECEIVER,IA.HELD
 ORDER BY 1,2,4
 
 </query>
-  <query id="2d506676-eb1d-455b-9256-9ea8f05352d4" description="What objects have the potential for false sharing?" revision="11" display="true" display-at-root="true">-- META-BEGIN(no-rows)
+  <query id="2d506676-eb1d-455b-9256-9ea8f05352d4" description="What objects have the potential for false sharing?" revision="12" display="true" display-at-root="true">-- META-BEGIN(no-rows)
 -- No objects in the program were observed that could exhibit false sharing
 -- META-END
 -- META-BEGIN(empty-is-good-news)
@@ -4156,51 +4148,62 @@ ORDER BY 1,2,4
 -- Objects in the program may exhibit false sharing
 -- META-END
 -- META-BEGIN(doc)
---&lt;strong&gt;&lt;p&gt;
+-- &lt;p&gt;&lt;strong&gt;
 --  What objects have the potential for false sharing?
---&lt;/p&gt;&lt;/strong&gt;
---&lt;p&gt;
---  Lists all objects in the program that may exhibit false sharing, which occurs
---  when different fields in the same object are accessed mostly in distinct
---  threads.  A high interleaving % indicates how often accesses of other fields
---  in the same object occurred in between accesses of this field in the given
---  thread.  A higher percentage indicates a higher risk of false sharing
---  negatively impacting performances in this program.
+-- &lt;/strong&gt;&lt;/p&gt;
+-- &lt;p&gt;
+--   Lists all objects in the program that Flashlight believes may exhibit false
+--   sharing. False sharing occurs when different fields in the same object are
+--   accessed mostly in separate threads during the same period of time.
+--  &lt;/p&gt;
+-- &lt;p&gt;
+--   Flashlight identifies potential false sharing by finding periods of time where
+--   a field is accessed entirely in one thread but other fields in the same object
+--   are being accessed frequently in other fields.  This query displays those
+--   periods of time alongside an &quot;interleaving percentage.&quot;  Other fields are
+--   considered to interleave with this field every time the next field access
+--   occurs in a different thread.  An interleaving percentage of 100 would
+--   indicate that every single field access occurred in a different thread than
+--   the previous one.  In general, a higher interleaving percentage indicates a
+--   higher risk that false sharing will impact the performance of the program.
+-- &lt;/p&gt;
 --  &lt;table&gt;
 --    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      &lt;tbody&gt;
---	&lt;tr&gt;
---	  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
---	  &lt;td&gt;Tree-Table&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Tree Structure&lt;/strong&gt;&lt;/td&gt;
---	  &lt;td&gt;&lt;em&gt;Package&lt;/em&gt; &amp;#8594; &lt;em&gt;Class&lt;/em&gt; &amp;#8594; &lt;em&gt;Object&lt;/em&gt; &amp;#8594; &lt;em&gt;Field&lt;/em&gt; &amp;#8594;&lt;em&gt;Thread&lt;/em&gt;&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td rowspan=&quot;6&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
---	  &lt;td&gt;Reads&lt;/td&gt;
---	  &lt;td&gt;The number of times this field was read in this thread&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Writes&lt;/td&gt;
---	  &lt;td&gt;The number of times this field was written in this thread&lt;/td&gt;
---	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
+-- 	  &lt;td&gt;Tree-Table&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Tree Structure&lt;/strong&gt;&lt;/td&gt;
+-- 	  &lt;td&gt;&lt;em&gt;Package&lt;/em&gt; &amp;#8594; &lt;em&gt;Class&lt;/em&gt; &amp;#8594; &lt;em&gt;Object&lt;/em&gt; &amp;#8594; &lt;em&gt;Field&lt;/em&gt; &amp;#8594;&lt;em&gt;Thread&lt;/em&gt;&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td rowspan=&quot;6&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
+-- 	  &lt;td&gt;Reads&lt;/td&gt;
+-- 	  &lt;td&gt;The number of times this field was read in this thread&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Writes&lt;/td&gt;
+-- 	  &lt;td&gt;The number of times this field was written in this thread&lt;/td&gt;
+-- 	&lt;/tr&gt;
 --        &lt;tr&gt;
 --          &lt;td&gt;Interleaving %&lt;/td&gt;
 --          &lt;td&gt;The frequency with which accesses of other fields occurred in between accesses of this field during this period of time&lt;/td&gt;
 --        &lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Start&lt;/td&gt;
---	  &lt;td&gt;The time of the first field access in this block.&lt;/td&gt;
---	&lt;/tr&gt;
---	&lt;tr&gt;
---	  &lt;td&gt;Stop&lt;/td&gt;
---	  &lt;td&gt;The time of the last field access in this block.&lt;/td&gt;
---	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Start&lt;/td&gt;
+-- 	  &lt;td&gt;The time of the first field access in this block.&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td&gt;Stop&lt;/td&gt;
+-- 	  &lt;td&gt;The time of the last field access in this block.&lt;/td&gt;
+-- 	&lt;/tr&gt;
 --      &lt;/tbody&gt;
 --  &lt;/table&gt;
---&lt;/p&gt;
+-- 
+-- &lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+-- &lt;img src=&quot;what-objects-have-the-potential-for-false-sharing.png&quot; alt=&quot;What objects have the potential for false sharing?&quot; /&gt;
 -- META-END
 SELECT
    CO.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;,
@@ -4229,32 +4232,65 @@ ORDER BY
    CO.CLASSNAME,
    B.RECEIVER,
    F.FIELDNAME</query>
-  <query id="3b8251fa-a315-4c36-a856-a53b278fdc91" description="What objects were used as both a dynamic and an intrinsic lock?" type="ERROR" revision="8" display="true" display-at-root="true">-- META-BEGIN(no-rows)
+  <query id="3b8251fa-a315-4c36-a856-a53b278fdc91" description="What objects were used as both a dynamic and an intrinsic lock?" type="ERROR" revision="9" display="true" display-at-root="true">-- META-BEGIN(no-rows)
 -- No locks are held as both an intrinsic and a util.concurrent lock.
 -- META-END
---BEGIN-INFO
---&lt;strong&gt;&lt;p&gt;
---   Are any locks used as both an intrinsic and a util.concurrent lock?
---&lt;/strong&gt;&lt;/p&gt;
---&lt;p&gt;
---      Lists all of the locks in the program that are acquired both as an intrinsic and
---      a util.concurrent lock.  While it is possible that this is the intent of the
---      programmer, it is very likely that this is the result of a mixed locking policy.
---    &lt;table&gt;
+-- META-BEGIN(doc)
+-- &lt;p&gt;&lt;strong&gt;
+-- 	What objects were used as both a dynamic and an intrinsic lock?
+-- &lt;/strong&gt;&lt;/p&gt;
+-- &lt;p&gt;
+--   This query lists java.util.concurrent locks that are acquired as both an
+--   intrinsic lock, using the synchronized keyword, and as a java.util.concurrent
+--   lock, by calling the &lt;code&gt;lock&lt;/code&gt; method or one of its analogues.  This
+--   is a fairly common mistake, usually caused by a poorly documented locking
+--   policy or a simple programming error.
+-- &lt;/p&gt;
+--  &lt;table&gt;
+--    &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
 --      &lt;tbody&gt;
---      &lt;tr&gt;
---        &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
---          &lt;td&gt;Table&lt;/td&gt;
---          &lt;/tr&gt;
---          &lt;tr&gt;
---            &lt;td rowspan=&quot;4&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
---              &lt;td&gt;Lock&lt;/td&gt;
---                &lt;td&gt;A lock identifier&lt;/td&gt;
---                &lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
+-- 	  &lt;td&gt;Tree-Table&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Tree Structure&lt;/strong&gt;&lt;/td&gt;
+-- 	  &lt;td&gt;&lt;em&gt;Lock&lt;/em&gt; &amp;#8594; &lt;em&gt;Thread&lt;/em&gt;&lt;/td&gt;
+-- 	&lt;/tr&gt;
+-- 	&lt;tr&gt;
+-- 	  &lt;td rowspan=&quot;7&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
+-- 	  &lt;td&gt;Times Acquired&lt;/td&gt;
+-- 	  &lt;td&gt;The number of times this lock was acquired&lt;/td&gt;
+-- 	&lt;/tr&gt;
+--         &lt;tr&gt;
+--           &lt;td&gt;Total Block Time&lt;/td&gt;
+--           &lt;td&gt;The total amount of time this thread spent blocked while trying to acquire this lock&lt;/td&gt;
+--         &lt;/tr&gt;
+--         &lt;tr&gt;
+--           &lt;td&gt;Average Block Time&lt;/td&gt;
+--           &lt;td&gt;The average amount of time this thread spent blocked while trying to acquire this lock&lt;/td&gt;
+--         &lt;/tr&gt;
+--         &lt;tr&gt;
+--           &lt;td&gt;Max Classes Accessed&lt;/td&gt;
+--           &lt;td&gt;The greatest number of classes accessed during a single acquisition of this lock&lt;/td&gt;
+--         &lt;/tr&gt;
+--         &lt;tr&gt;
+--           &lt;td&gt;Max Packages Accessed&lt;/td&gt;
+--           &lt;td&gt;The greatest number of packages accessed during a single acquisition of this lock&lt;/td&gt;
+--         &lt;/tr&gt;
+--         &lt;tr&gt;
+--           &lt;td&gt;As Intrinsic Lock&lt;/td&gt;
+--           &lt;td&gt;Whether or not the lock was acquired intrinsically, using the synchronized keywork&lt;/td&gt;
+--         &lt;/tr&gt;
+--         &lt;tr&gt;
+--           &lt;td&gt;As java.util.concurrent Lock&lt;/td&gt;
+--           &lt;td&gt;Whether or not the lock was acquired as a java.util.concurrent Lock&lt;/td&gt;
+--         &lt;/tr&gt;
 --      &lt;/tbody&gt;
 --  &lt;/table&gt;
---&lt;/p&gt;
---END-INFO
+-- &lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+-- &lt;img src=&quot;what-objects-were-used-as-both-a-dynamic-and-an-intrinsic-lock.png&quot; alt=&quot;What objects were used as both a dynamic and an intrinsic lock?&quot;/&gt;
+-- META-END
 SELECT 
    OBJID(LDS.Lock)     &quot;Lock__(&apos;lock.gif&apos;)(c)]&quot;,
    OBJID(LDS.InThread) &quot;Thread__(&apos;thread.gif&apos;)|&quot;,
@@ -6578,38 +6614,37 @@ order by lo.PackageName, lo.ClassName, s.AtLine, tho.ThreadName, sum(ld.Duration
     <cat-query id="976506a9-cf85-4907-8d7f-2fd9b5a28d6d"/>
   </category>
   <category id="28103990-73b5-4287-add0-39785aa7e3bb" description="Deadlock" has-data="Queries that show lock use that may cause the program to deadlock." no-data="No locking that could potentially cause deadlock was observed in the program." revision="3">
-    <cat-query id="9d05ac24-20c2-436e-af6b-2bd0bc7dbcfb"/>
     <cat-query id="f556dcef-0e6b-480b-bc1b-eb84b3012831"/>
+    <cat-query id="9d05ac24-20c2-436e-af6b-2bd0bc7dbcfb"/>
   </category>
   <category id="84475b98-4c68-4165-b883-5bdf9479d3d6" description="Lock Use" has-data="Queries about lock use in the program." no-data="No lock use was observed in the program." revision="5">
-    <cat-query id="ddb5a17c-f5ac-4c26-a251-34d8e3c7bc7f"/>
-    <cat-query id="b06809c5-5a7b-41f2-bd8c-a9e3ed5f6b1b"/>
-    <cat-query id="26696a5f-3fd7-4f18-badf-e3d7d01a6d4e"/>
+    <cat-query id="3b8251fa-a315-4c36-a856-a53b278fdc91"/>
     <cat-query id="213c73ad-b3f6-4aef-9a05-f0c31d8fdcde"/>
     <cat-query id="c744b5b5-15f0-4f72-a344-7e52bcac5071"/>
-    <cat-query id="2f505921-50fb-405b-bc78-4a5fe9228957"/>
     <cat-query id="d4d2af9b-ce4d-4457-9e94-01972fcb58d3"/>
-    <cat-query id="3b8251fa-a315-4c36-a856-a53b278fdc91"/>
+    <cat-query id="2f505921-50fb-405b-bc78-4a5fe9228957"/>
+    <cat-query id="ddb5a17c-f5ac-4c26-a251-34d8e3c7bc7f"/>
+    <cat-query id="26696a5f-3fd7-4f18-badf-e3d7d01a6d4e"/>
   </category>
   <category id="3d204f5e-d61d-4637-be14-118223f2fb9e" description="Memory Model" has-data="Queries that show happens-before relationships between threads defined by the Java memory model." no-data="No happens-before relationships between threads were observed in the program." revision="2">
-    <cat-query id="7cd8d92c-7aec-4238-b808-e628f83dcb4e"/>
     <cat-query id="eabad207-22a7-4bb0-a7e1-30946d02ea13"/>
+    <cat-query id="7cd8d92c-7aec-4238-b808-e628f83dcb4e"/>
     <cat-query id="5f166e1b-f0a6-4c07-846b-98f2aba80be2"/>
     <cat-query id="1b191e96-598f-4d1f-9391-5d9feed0da69"/>
   </category>
   <category id="64511c63-0ce8-44df-8324-95711bff56ce" description="Performance" has-data="Queries that highlight potential performance bottlenecks in the program." no-data="No potential performance bottlenecks were observed in the program." revision="2">
+    <cat-query id="cb38a427-c259-4690-abe2-acea9661f737"/>
     <cat-query id="4e026769-1b0b-42bd-8893-f3b92add093f"/>
     <cat-query id="2d506676-eb1d-455b-9256-9ea8f05352d4"/>
-    <cat-query id="cb38a427-c259-4690-abe2-acea9661f737"/>
   </category>
   <category id="8401fcf7-7d5c-4191-a997-0b82f1db8e66" description="Shared State" has-data="Queries that show state (fields, not local variables or parameters) shared between multiple threads." no-data="No state (fields, not local variables or parameters) was shared between multiple threads." revision="2">
-    <cat-query id="bd72a5e4-42aa-415d-aa72-28d351f629a4"/>
-    <cat-query id="419c927e-a87c-4364-b4a9-2e8f50f728f6"/>
-    <cat-query id="33868960-7df8-4bab-bb33-ffb230957940"/>
-    <cat-query id="d1176c97-e3b6-483b-a341-6914a6f64860"/>
     <cat-query id="cdc2d460-b17f-43bc-8cc6-4c26f1637fda"/>
+    <cat-query id="bd72a5e4-42aa-415d-aa72-28d351f629a4"/>
+    <cat-query id="33868960-7df8-4bab-bb33-ffb230957940"/>
     <cat-query id="71a6fb5b-e5e1-4d25-bdc8-67ab5df1f66e"/>
     <cat-query id="094fc6db-5a5b-4495-aacd-54f5a5aa1691"/>
+    <cat-query id="d1176c97-e3b6-483b-a341-6914a6f64860"/>
+    <cat-query id="419c927e-a87c-4364-b4a9-2e8f50f728f6"/>
   </category>
   <category id="b6d89f8b-7dfd-44a5-843c-d8a70f6aaaa9" description="Threads" has-data="Queries about threads in the program." no-data="No threads were observed in the program." revision="2">
     <cat-query id="8107df4c-42eb-407c-88c1-e16d805f3aaa"/>

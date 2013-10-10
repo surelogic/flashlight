@@ -546,12 +546,22 @@ public final class HappensBeforeConfig {
     }
 
     public static HappensBeforeConfig loadDefault() {
-        return new HappensBeforeConfig()
-                .parse(Thread
-                        .currentThread()
-                        .getContextClassLoader()
-                        .getResourceAsStream(
-                                "com/surelogic/_flashlight/common/happens-before-config.xml"));
+        InputStream is = Thread
+                .currentThread()
+                .getContextClassLoader()
+                .getResourceAsStream(
+                        "com/surelogic/_flashlight/common/happens-before-config.xml");
+        // For ant, b/c context class loader is broken by design in ant
+        if (is == null) {
+            is = HappensBeforeConfig.class
+                    .getResourceAsStream("/com/surelogic/_flashlight/common/happens-before-config.xml");
+        }
+
+        if (is == null) {
+            throw new IllegalStateException(
+                    "Default happens-before-config.xml could not be found");
+        }
+        return new HappensBeforeConfig().parse(is);
     }
 
 }

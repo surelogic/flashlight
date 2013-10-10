@@ -8,38 +8,41 @@ import com.surelogic.Nullable;
 import com.surelogic.common.CommonImages;
 
 public final class LibResources {
-  /**
-   * The name of the current version Flashlight Ant tasks. This is used for the
-   * directory created by the tool.
-   */
-  public static final String ANT_TASK_VERSION = "flashlight-ant-4.0.2";
+    /**
+     * The name of the current version Flashlight Ant tasks. This is used for
+     * the directory created by the tool.
+     */
+    public static final String ANT_TASK_VERSION = "flashlight-ant-5.0.0";
 
-  /**
-   * The name of the archive that contains the Flashlight Ant tasks.
-   */
-  public static final String ANT_TASK_ZIP = "flashlight-ant.zip";
+    /**
+     * The name of the archive that contains the Flashlight Ant tasks.
+     */
+    public static final String ANT_TASK_ZIP = "flashlight-ant.zip";
 
-  public static final String PATH = "/lib/";
-  public static final String ANT_TASK_ZIP_PATHNAME = PATH + ANT_TASK_ZIP;
+    public static final String PATH = "/lib/";
+    public static final String ANT_TASK_ZIP_PATHNAME = PATH + ANT_TASK_ZIP;
 
-  public static InputStream getAntTaskZip() throws IOException {
-    final URL url = LibResources.class.getResource(ANT_TASK_ZIP_PATHNAME);
-    final InputStream is = url.openStream();
-    return is;
-  }
+    public static InputStream getAntTaskZip() throws IOException {
+        final URL url = LibResources.class.getResource(ANT_TASK_ZIP_PATHNAME);
+        final InputStream is = url.openStream();
+        return is;
+    }
 
-  @Nullable
-  public static URL getDefaultQueryUrl() {
-    return Thread.currentThread().getContextClassLoader().getResource("/lib/adhoc/default-flashlight-queries.xml");
-  }
+    @Nullable
+    public static URL getDefaultQueryUrl() {
+        return Thread.currentThread().getContextClassLoader()
+                .getResource("/lib/adhoc/default-flashlight-queries.xml");
+    }
 
-  @Nullable
-  public static URL getQuerydocImageURL(String imageName) {
-    final String path = "/lib/adhoc/docimages/" + imageName;
-    final URL url = Thread.currentThread().getContextClassLoader().getResource(path);
-    if (url != null)
-      return url;
-    else
-      return CommonImages.getImageURL(imageName);
-  }
+    @Nullable
+    public static URL getQuerydocImageURL(String imageName) {
+        final String path = "/lib/adhoc/docimages/" + imageName;
+        final URL url = Thread.currentThread().getContextClassLoader()
+                .getResource(path);
+        if (url != null) {
+            return url;
+        } else {
+            return CommonImages.getImageURL(imageName);
+        }
+    }
 }

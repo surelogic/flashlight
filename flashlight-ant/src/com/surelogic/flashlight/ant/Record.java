@@ -294,7 +294,7 @@ public class Record extends Task {
         i.setFieldsFile(new File(runFolder,
                 InstrumentationConstants.FL_FIELDS_FILE_LOC));
         i.setClassHierarchyFile(new File(runFolder,
-            InstrumentationConstants.FL_CLASS_HIERARCHY_FILE_LOC));
+                InstrumentationConstants.FL_CLASS_HIERARCHY_FILE_LOC));
         i.setLogFile(new File(runFolder,
                 InstrumentationConstants.FL_LOG_FILE_LOC));
         i.setSitesFile(new File(runFolder,
@@ -324,7 +324,11 @@ public class Record extends Task {
             } else {
                 // TODO we might want to check here to make sure this is really
                 // a jar
-                i.addConfiguredJar(new Jar(l, projectFolder));
+                Jar toUpdate = new Jar(l, projectFolder);
+                if (l.equals(jarfile)) {
+                    toUpdate.setUpdatemanifest(true);
+                }
+                i.addConfiguredJar(toUpdate);
                 final PathElement el = instrumented.createPathElement();
                 el.setLocation(new File(projectFolder, l.getName()));
             }
@@ -351,28 +355,36 @@ public class Record extends Task {
             j.createBootclasspath(getProject()).add(bootclasspath);
         }
         final Path cp = j.createClasspath(getProject());
-        cp.add(libraries);
+        if (libraries != null) {
+            cp.add(libraries);
+        }
         cp.add(instrumentedFiles);
         if (jarfile != null) {
             for (final Inspect p : inspects) {
                 if (p.getLoc().equals(jarfile)) {
                     j.setJar(new File(new File(runFolder,
-                            InstrumentationConstants.FL_PROJECTS_FOLDER_LOC),
-                            p.getLoc().getName()).getAbsolutePath());
+                            InstrumentationConstants.FL_PROJECTS_FOLDER_LOC), p
+                            .getLoc().getName()).getAbsolutePath());
                 }
             }
-            for (final String e : libraries.list()) {
-                if (e.equals(jarfile)) {
-                    j.setJar(new File(new File(runFolder,
-                            InstrumentationConstants.FL_EXTERNAL_FOLDER_LOC),
-                            new File(e).getName()).getAbsolutePath());
+            if (libraries != null) {
+                for (final String e : libraries.list()) {
+                    if (e.equals(jarfile)) {
+                        j.setJar(new File(
+                                new File(
+                                        runFolder,
+                                        InstrumentationConstants.FL_EXTERNAL_FOLDER_LOC),
+                                new File(e).getName()).getAbsolutePath());
+                    }
                 }
             }
         }
         addVMArg(InstrumentationConstants.FL_FIELDS_FILE, new File(runFolder,
                 InstrumentationConstants.FL_FIELDS_FILE_LOC).getAbsolutePath());
-        addVMArg(InstrumentationConstants.FL_CLASS_HIERARCHY_FILE, new File(runFolder,
-            InstrumentationConstants.FL_CLASS_HIERARCHY_FILE_LOC).getAbsolutePath());
+        addVMArg(InstrumentationConstants.FL_CLASS_HIERARCHY_FILE,
+                new File(runFolder,
+                        InstrumentationConstants.FL_CLASS_HIERARCHY_FILE_LOC)
+                        .getAbsolutePath());
         addVMArg(InstrumentationConstants.FL_SITES_FILE, new File(runFolder,
                 InstrumentationConstants.FL_SITES_FILE_LOC).getAbsolutePath());
         addVMArg(InstrumentationConstants.FL_RUN, name);

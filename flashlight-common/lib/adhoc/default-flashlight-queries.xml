@@ -2513,7 +2513,7 @@ ORDER BY
    B.RECEIVER,
    F.FIELDNAME,
    RF.FIELDNAME</query>
-  <query id="dd2ea83c-1940-4985-ace7-a578471e3b54" description="What happens before edges allow these field reads to see the previous write?" revision="13" display="true">-- META-BEGIN(no-rows)
+  <query id="dd2ea83c-1940-4985-ace7-a578471e3b54" description="What happens before edges allow these field reads to see the previous write?" revision="14" display="true">-- META-BEGIN(no-rows)
 -- No happens before edges were detected.
 -- META-END
 -- META-BEGIN(doc)
@@ -2589,13 +2589,13 @@ ORDER BY
 -- META-END
 SELECT 
 HB.ID &quot;Type&quot;,
-&apos;?Thread?&apos; &quot;Source Thread__(&apos;thread.gif&apos;)&quot;,
+OBJID(?LastWriteThread?) &quot;Source Thread__(&apos;thread.gif&apos;)&quot;,
 HB.SOURCETS &quot;Source Time&quot;,
 SCO.CLASSNAME &quot;Source Class&quot;,
 SCO.CLASSCODE &quot;Source Class__(icon)&quot;,
 SS.LOCATION &quot;Source Method&quot;,
 SS.LOCATIONCODE &quot;Source Method__(icon)&quot;,
-OBJID(?LastWriteThread?) &quot;Target Thread__(&apos;thread.gif&apos;)&quot;,
+OBJID(?ThreadId?) &quot;Target Thread__(&apos;thread.gif&apos;)&quot;,
 HB.TRACETS &quot;Target Time&quot;,
 TCO.CLASSNAME &quot;Target Class&quot;,
 TCO.CLASSCODE &quot;Target Class__(icon)&quot;,

@@ -471,7 +471,7 @@ FROM
  FROM ACCESS A 
  WHERE A.FIELD = ?FieldId?) AS ACCESSES
 ORDER BY 5 DESC</query>
-  <query id="b4c691be-b394-45c0-8190-6a2e0d9e63d9" description="Show every access of this field in this time range." revision="9" display="true">-- META-BEGIN(doc)
+  <query id="b4c691be-b394-45c0-8190-6a2e0d9e63d9" description="Show every access of this field in this time range." revision="10" display="true">-- META-BEGIN(doc)
 -- &lt;p&gt;&lt;strong&gt;
 --    Show every access of this field in this time range.
 -- &lt;/strong&gt;&lt;/p&gt;
@@ -523,10 +523,10 @@ WHERE
    THO.Id = A.InThread AND
    A.FIELD = ?FieldId? AND 
    A.RECEIVER = ?Receiver? AND
-   A.TS BETWEEN &apos;?Start?&apos; AND &apos;?Stop?&apos; AND
+   A.TS BETWEEN &apos;?First Access?&apos; AND &apos;?Last Access?&apos; AND
    A.INTHREAD = ?ThreadId?
 ORDER BY A.TS ASC</query>
-  <query id="8de7d969-6633-4a16-acad-786ab9fd2f5f" description="Show every access of this static field in this time range." revision="9" display="true">-- META-BEGIN(doc)
+  <query id="8de7d969-6633-4a16-acad-786ab9fd2f5f" description="Show every access of this static field in this time range." revision="10" display="true">-- META-BEGIN(doc)
 -- &lt;p&gt;&lt;strong&gt;
 --    Show every access of this static field in this time range.
 -- &lt;/strong&gt;&lt;/p&gt;
@@ -577,10 +577,10 @@ WHERE
    THO.Id = A.InThread AND
    A.FIELD = ?FieldId? AND 
    A.RECEIVER IS NULL AND
-   A.TS BETWEEN &apos;?Start?&apos; AND &apos;?Stop?&apos; AND
+   A.TS BETWEEN &apos;?First Access?&apos; AND &apos;?Last Access?&apos; AND
    A.INTHREAD = ?ThreadId?
 ORDER BY A.TS ASC</query>
-  <query id="c7b845ab-3efc-4f26-a240-e31228c2f1b4" description="Show every indirect access of this object in this time range." revision="3" display="true">-- META-BEGIN(doc)
+  <query id="c7b845ab-3efc-4f26-a240-e31228c2f1b4" description="Show every indirect access of this object in this time range." revision="4" display="true">-- META-BEGIN(doc)
 -- &lt;p&gt;&lt;strong&gt;
 -- 	Show every indirect access of this object in this time range.
 -- &lt;/strong&gt;&lt;/p&gt;
@@ -611,7 +611,7 @@ ORDER BY A.TS ASC</query>
 -- 
 -- &lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
 -- 
--- &lt;img src=&quot;show-every-access-of-this-object-in-this-time-range.png&quot; alt=&quot;Show every access of this indirect object in this time range.&quot;/&gt;
+-- &lt;img src=&quot;show-every-indirect-access-of-this-object-in-this-time-range.png&quot; alt=&quot;Show every indirect access of this object in this time range.&quot;/&gt;
 -- META-END
 SELECT 
    &apos;?Package?&apos; &quot;Package__(&apos;@PK&apos;)&quot;,
@@ -628,7 +628,7 @@ WHERE
    CO.ID = S.INCLASS AND
    THO.Id = A.InThread AND
    A.RECEIVER = ?Receiver? AND
-   A.TS BETWEEN &apos;?Start?&apos; AND &apos;?Stop?&apos; AND
+   A.TS BETWEEN &apos;?First Access?&apos; AND &apos;?Last Access?&apos; AND
    A.INTHREAD = ?ThreadId?
 ORDER BY A.TS ASC</query>
   <query id="e353c660-c044-43c3-8f29-df5edb359d2d" description="Show Tables" revision="4">-- META-BEGIN(doc)
@@ -650,7 +650,7 @@ where sc.schemaname = &apos;FLASHLIGHT&apos; and st.schemaid = sc.schemaid and s
 order by st.tablename,sco.columnnumber</query>
   <query id="cd3213bd-079c-4206-93d5-41aa4c2e9ee1" description="Stack Trace" revision="1" display="true">SELECT s.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;, s.CLASSNAME &quot;Class&quot;, s.CLASSCODE &quot;Class__(icon)&quot;, s.INFILE &quot;File&quot;, s.LOCATION &quot;Location&quot;, s.ATLINE &quot;Line__(r)&quot;
 FROM TABLE (STACKTRACE(?TRACE?)) s</query>
-  <query id="1865f98c-ce4a-4e00-a11c-97d81409e54a" description="What accesses are made in this object during this block of time?" revision="7" display="true">-- META-BEGIN(doc)
+  <query id="1865f98c-ce4a-4e00-a11c-97d81409e54a" description="What accesses are made in this object during this block of time?" revision="8" display="true">-- META-BEGIN(doc)
 -- &lt;p&gt;&lt;strong&gt;
 --  What accesses are made in this object during this block of time?
 -- &lt;/strong&gt;&lt;/p&gt;
@@ -694,11 +694,11 @@ FROM TABLE (STACKTRACE(?TRACE?)) s</query>
 --          &lt;td&gt;The number of times this field was written in this thread while the owning object was under construction&lt;/td&gt;
 --        &lt;/tr&gt;
 -- 	&lt;tr&gt;
--- 	  &lt;td&gt;Start&lt;/td&gt;
+-- 	  &lt;td&gt;First Access&lt;/td&gt;
 -- 	  &lt;td&gt;The time of the first field access in this block.&lt;/td&gt;
 -- 	&lt;/tr&gt;
 -- 	&lt;tr&gt;
--- 	  &lt;td&gt;Stop&lt;/td&gt;
+-- 	  &lt;td&gt;Last Access&lt;/td&gt;
 -- 	  &lt;td&gt;The time of the last field access in this block.&lt;/td&gt;
 -- 	&lt;/tr&gt;
 --      &lt;/tbody&gt;
@@ -719,13 +719,13 @@ SELECT
    S.WRITES &quot;Write Count__(blank-if &apos;0&apos;)(add-commas)(r)&quot;,
    S.READSUC &quot;Reads Under Construction__(blank-if &apos;0&apos;)(add-commas)(r)&quot;,
    S.WRITESUC &quot;Writes Under Construction__(blank-if &apos;0&apos;)(add-commas)(r)&quot;,
-   S.START &quot;Start&quot;,
-   S.STOP &quot;Stop&quot;,
+   S.START &quot;First Access&quot;,
+   S.STOP &quot;Last Access&quot;,
    S.THREADID &quot;ThreadId__(hide)&quot;,
    S.FIELDID &quot;FieldId__(hide)&quot;
 FROM
-  TABLE (BLOCKSUMMARY(?Receiver?, &apos;?Start?&apos;, &apos;?Stop?&apos;)) S</query>
-  <query id="eee60af8-2385-4e71-9dde-554361b9ef07" description="What accesses do these two fields make during this block of time?" revision="6" display="true">-- META-BEGIN(doc)
+  TABLE (BLOCKSUMMARY(?Receiver?, &apos;?First Access?&apos;, &apos;?Last Access?&apos;)) S</query>
+  <query id="eee60af8-2385-4e71-9dde-554361b9ef07" description="What accesses do these two fields make during this block of time?" revision="7" display="true">-- META-BEGIN(doc)
 -- &lt;p&gt;&lt;strong&gt;
 --  What accesses do these two fields make during this block of time?
 -- &lt;/strong&gt;&lt;/p&gt;
@@ -770,11 +770,11 @@ FROM
 --          &lt;td&gt;The number of times this field was written in this thread while the owning object was under construction&lt;/td&gt;
 --        &lt;/tr&gt;
 -- 	&lt;tr&gt;
--- 	  &lt;td&gt;Start&lt;/td&gt;
+-- 	  &lt;td&gt;First Access&lt;/td&gt;
 -- 	  &lt;td&gt;The time of the first field access in this block.&lt;/td&gt;
 -- 	&lt;/tr&gt;
 -- 	&lt;tr&gt;
--- 	  &lt;td&gt;Stop&lt;/td&gt;
+-- 	  &lt;td&gt;Last Access&lt;/td&gt;
 -- 	  &lt;td&gt;The time of the last field access in this block.&lt;/td&gt;
 -- 	&lt;/tr&gt;
 --      &lt;/tbody&gt;
@@ -782,7 +782,7 @@ FROM
 -- 
 -- &lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
 -- 
--- &lt;img src=&quot;what-accesses-are-made-in-this-object-during-this-block-of-time.png&quot; alt=&quot;What accesses are made in this object during this block of time?&quot;/&gt;
+-- &lt;img src=&quot;what-accesses-do-these-two-fields-make-during-this-block-of-time.png&quot; alt=&quot;What accesses do these two fields make during this block of time?&quot;/&gt;
 --META-END
 SELECT
    &apos;?Package?&apos; &quot;Package__(&apos;@PK&apos;)&quot;,
@@ -795,12 +795,12 @@ SELECT
    S.WRITES &quot;Writes__(blank-if &apos;0&apos;)(add-commas)(r)&quot;,
    S.READSUC &quot;Reads Under Construction__(blank-if &apos;0&apos;)(add-commas)(r)&quot;,
    S.WRITESUC &quot;Writes Under Construction__(blank-if &apos;0&apos;)(add-commas)(r)&quot;,
-   S.START &quot;Start&quot;,
-   S.STOP &quot;Stop&quot;,
+   S.START &quot;First Access&quot;,
+   S.STOP &quot;Last Access&quot;,
    S.THREADID &quot;ThreadId__(hide)&quot;,
    S.FIELDID &quot;FieldId__(hide)&quot;
 FROM
-  TABLE (FIELDSBLOCKSUMMARY(?Receiver?, &apos;?Start?&apos;, &apos;?Stop?&apos;, ?FieldId?, ?RFieldId?)) S
+  TABLE (FIELDSBLOCKSUMMARY(?Receiver?, &apos;?First Access?&apos;, &apos;?Last Access?&apos;, ?FieldId?, ?RFieldId?)) S
 </query>
   <query id="eebe8cc6-9268-4b26-8d6a-bf94c88084fb" description="What are the edges for this lock cycle?" revision="7" display="true" custom-display="LockCycleGraph">-- META-BEGIN(doc)
 -- &lt;p&gt;&lt;strong&gt;
@@ -2417,7 +2417,7 @@ WHERE F.ID = MIXEDAWT.FIELD AND
 GROUP BY O.PACKAGENAME,O.CLASSNAME,O.CLASSCODE,F.FIELDNAME,F.CODE,F.ID
 ORDER BY O.PACKAGENAME,O.CLASSNAME,F.FIELDNAME
 </query>
-  <query id="2d58b103-1e04-4161-b6da-c96a553e39d0" description="What fields could produce false sharing with this field in the object?" revision="8" display="true">--META-BEGIN(doc)
+  <query id="2d58b103-1e04-4161-b6da-c96a553e39d0" description="What fields could produce false sharing with this field in the object?" revision="9" display="true">--META-BEGIN(doc)
 -- &lt;p&gt;&lt;strong&gt;
 -- 	What fields could produce false sharing with this field in the object?
 -- &lt;/strong&gt;&lt;/p&gt;
@@ -2463,11 +2463,11 @@ ORDER BY O.PACKAGENAME,O.CLASSNAME,F.FIELDNAME
 -- 	  &lt;td&gt;The percent of accesses that happened in a different thread than the previous access&lt;/td&gt;
 -- 	&lt;/tr&gt;
 -- 	&lt;tr&gt;
--- 	  &lt;td&gt;Start&lt;/td&gt;
+-- 	  &lt;td&gt;First Access&lt;/td&gt;
 -- 	  &lt;td&gt;The start time for this block of accesses&lt;/td&gt;
 -- 	&lt;/tr&gt;
 -- 	&lt;tr&gt;
--- 	  &lt;td&gt;Stop&lt;/td&gt;
+-- 	  &lt;td&gt;Last Access&lt;/td&gt;
 -- 	  &lt;td&gt;The stop time for this block of accesses&lt;/td&gt;
 -- 	&lt;/tr&gt;
 -- 
@@ -2491,8 +2491,8 @@ SELECT
    B.READS &quot;Reads__(blank-if &apos;0&apos;)(add-commas)(r)&quot;,
    B.WRITES &quot;Writes__(blank-if &apos;0&apos;)(add-commas)(r)&quot;,
    B.QUOTIENT &quot;Interleaving %__(suffix &apos;%&apos;)(r)&quot;,
-   B.START &quot;Start&quot;,
-   B.STOP &quot;Stop&quot;,
+   B.START &quot;First Access&quot;,
+   B.STOP &quot;Last Access&quot;,
    B.RECEIVER &quot;Receiver__(hide)&quot;,
    F.ID &quot;FieldId__(hide)&quot;,
    RF.ID &quot;RFieldId__(hide)&quot;
@@ -2505,15 +2505,15 @@ WHERE
    F.ID = B.FIELD AND
    CO.ID = F.DECLARINGTYPE AND 
    RF.ID = B.RFIELD AND
-   B.START = &apos;?Start?&apos; AND
-   B.STOP = &apos;?Stop?&apos;
+   B.START = &apos;?First Access?&apos; AND
+   B.STOP = &apos;?Last Access?&apos;
 ORDER BY
    CO.PACKAGENAME,
    CO.CLASSNAME,
    B.RECEIVER,
    F.FIELDNAME,
    RF.FIELDNAME</query>
-  <query id="dd2ea83c-1940-4985-ace7-a578471e3b54" description="What happens before edges allow these field reads to see the previous write?" revision="14" display="true">-- META-BEGIN(no-rows)
+  <query id="dd2ea83c-1940-4985-ace7-a578471e3b54" description="What happens before edges allow these field reads to see the previous write?" revision="15" display="true">-- META-BEGIN(no-rows)
 -- No happens before edges were detected.
 -- META-END
 -- META-BEGIN(doc)
@@ -2605,7 +2605,7 @@ HB.SOURCEID &quot;SOURCEID__(hide)&quot;,
 HB.TRACEID &quot;TRACEID__(hide)&quot;,
 HB.SOURCETS &quot;SOURCETS__(hide)&quot;,
 HB.TRACETS &quot;TRACETS__(hide)&quot; 
-FROM TABLE (HAPPENSBEFOREEDGES(?LastWriteThread?, &apos;?LastWriteTime?&apos;,?ThreadId?,&apos;?Start?&apos;)) HB
+FROM TABLE (HAPPENSBEFOREEDGES(?LastWriteThread?, &apos;?LastWriteTime?&apos;,?ThreadId?,&apos;?First Access?&apos;)) HB
    INNER JOIN TRACE ST ON ST.ID = HB.SOURCEID
    INNER JOIN SITE SS ON SS.ID = ST.SITE 
    INNER JOIN OBJECT SCO ON SCO.ID = SS.INCLASS
@@ -4253,7 +4253,7 @@ GROUP BY DT.PACKAGENAME,DT.CLASSNAME,DT.CLASSCODE,A.RECEIVER,IA.HELD
 ORDER BY 1,2,4
 
 </query>
-  <query id="2d506676-eb1d-455b-9256-9ea8f05352d4" description="What objects have the potential for false sharing?" revision="12" display="true" display-at-root="true">-- META-BEGIN(no-rows)
+  <query id="2d506676-eb1d-455b-9256-9ea8f05352d4" description="What objects have the potential for false sharing?" revision="13" display="true" display-at-root="true">-- META-BEGIN(no-rows)
 -- No objects in the program were observed that could exhibit false sharing
 -- META-END
 -- META-BEGIN(empty-is-good-news)
@@ -4307,11 +4307,11 @@ ORDER BY 1,2,4
 --          &lt;td&gt;The frequency with which accesses of other fields occurred in between accesses of this field during this period of time&lt;/td&gt;
 --        &lt;/tr&gt;
 -- 	&lt;tr&gt;
--- 	  &lt;td&gt;Start&lt;/td&gt;
+-- 	  &lt;td&gt;First Access&lt;/td&gt;
 -- 	  &lt;td&gt;The time of the first field access in this block.&lt;/td&gt;
 -- 	&lt;/tr&gt;
 -- 	&lt;tr&gt;
--- 	  &lt;td&gt;Stop&lt;/td&gt;
+-- 	  &lt;td&gt;Last Access&lt;/td&gt;
 -- 	  &lt;td&gt;The time of the last field access in this block.&lt;/td&gt;
 -- 	&lt;/tr&gt;
 --      &lt;/tbody&gt;
@@ -4331,8 +4331,8 @@ SELECT
    B.READS &quot;Reads__(blank-if &apos;0&apos;)(add-commas)(r)&quot;,
    B.WRITES &quot;Writes__(blank-if &apos;0&apos;)(add-commas)(r)&quot;,
    B.QUOTIENT &quot;Interleaving %__(suffix &apos;%&apos;)(r)&quot;,
-   B.START &quot;Start&quot;,
-   B.STOP &quot;Stop&quot;,
+   B.START &quot;First Access&quot;,
+   B.STOP &quot;Last Access&quot;,
    B.RECEIVER &quot;Receiver__(hide)&quot;
 FROM 
    BLOCKSTATS B, 
@@ -4898,7 +4898,7 @@ SELECT
    F.ID = FI.FIELD AND
    CO.ID = F.DECLARINGTYPE AND
    A.FIELD = FI.FIELD</query>
-  <query id="fdd4eb5b-7e43-4285-a8a5-71a7b09c182f" description="When and by what threads was this field accessed?" revision="17" display="true">-- META-BEGIN(doc)
+  <query id="fdd4eb5b-7e43-4285-a8a5-71a7b09c182f" description="When and by what threads was this field accessed?" revision="18" display="true">-- META-BEGIN(doc)
 -- &lt;p&gt;&lt;strong&gt;
 -- 	When and by what threads was this field accessed?
 -- &lt;/strong&gt;&lt;/p&gt;
@@ -4954,11 +4954,11 @@ SELECT
 --       &lt;td&gt;The number of writes in this entry while the instance is being constructed&lt;/td&gt;
 --     &lt;/tr&gt;
 --     &lt;tr&gt;
---       &lt;td&gt;Start&lt;/td&gt;
+--       &lt;td&gt;First Access&lt;/td&gt;
 --       &lt;td&gt;The time of the first access in this entry&lt;/td&gt;
 --     &lt;/tr&gt;
 --     &lt;tr&gt;
---       &lt;td&gt;Stop&lt;/td&gt;
+--       &lt;td&gt;Last Access&lt;/td&gt;
 --       &lt;td&gt;The time of the last access in this entry&lt;/td&gt;&gt;
 --     &lt;/tr&gt;
 --   &lt;/tbody&gt;
@@ -4981,13 +4981,13 @@ SELECT
    S.WRITES &quot;Writes__(blank-if &apos;0&apos;)(add-commas)(r)&quot;,
    S.READSUC &quot;Reads Under Construction__(blank-if &apos;0&apos;)(add-commas)(r)&quot;,
    S.WRITESUC &quot;Writes Under Construction__(blank-if &apos;0&apos;)(add-commas)(r)&quot;,
-   S.STARTTIME &quot;Start&quot;,
-   S.ENDTIME &quot;Stop&quot;,
+   S.STARTTIME &quot;First Access&quot;,
+   S.ENDTIME &quot;Last Access&quot;,
    S.THREADID &quot;ThreadId__(hide)&quot;,
    S.LASTWRITETIME &quot;LastWriteTime__(hide)&quot;,
    S.LASTWRITETHREAD &quot;LastWriteThread__(hide)&quot;
 FROM TABLE (ACCESSSUMMARY(?FieldId?, ?Receiver?)) S</query>
-  <query id="1a6082af-29c0-41af-b5bc-995ec6183787" description="When and by what threads was this object indirectly accessed?" revision="9" display="true">-- META-BEGIN(doc)
+  <query id="1a6082af-29c0-41af-b5bc-995ec6183787" description="When and by what threads was this object indirectly accessed?" revision="10" display="true">-- META-BEGIN(doc)
 -- &lt;p&gt;&lt;strong&gt;
 -- 	When and by what threads was this object indirectly accessed?
 -- &lt;/strong&gt;&lt;/p&gt;
@@ -5032,11 +5032,11 @@ FROM TABLE (ACCESSSUMMARY(?FieldId?, ?Receiver?)) S</query>
 --       &lt;td&gt;The number of object accesses&lt;/td&gt;
 --     &lt;/tr&gt;
 --     &lt;tr&gt;
---       &lt;td&gt;Start&lt;/td&gt;
+--       &lt;td&gt;First Access&lt;/td&gt;
 --       &lt;td&gt;The time of the first access in this entry&lt;/td&gt;
 --     &lt;/tr&gt;
 --     &lt;tr&gt;
---       &lt;td&gt;Stop&lt;/td&gt;
+--       &lt;td&gt;Last Access&lt;/td&gt;
 --       &lt;td&gt;The time of the last access in this entry&lt;/td&gt;&gt;
 --     &lt;/tr&gt;
 --   &lt;/tbody&gt;
@@ -5055,13 +5055,13 @@ SELECT
          WHEN S.HAPPENSBEFORE = &apos;No&apos; THEN &apos;happens_before_no.gif&apos;
          ELSE &apos;empty.gif&apos; END &quot;Happens-Before__(icon)&quot;,
    S.ACCESSES &quot;Accesses__(blank-if &apos;0&apos;)(add-commas)(r)&quot;,
-   S.STARTTIME &quot;Start&quot;,
-   S.ENDTIME &quot;Stop&quot;,
+   S.STARTTIME &quot;First Access&quot;,
+   S.ENDTIME &quot;Last Access&quot;,
    S.THREADID &quot;ThreadId__(hide)&quot;,
    S.LASTWRITETIME &quot;LastWriteTime__(hide)&quot;,
    S.LASTWRITETHREAD &quot;LastWriteThread__(hide)&quot;
 FROM TABLE (OBJECTSUMMARY(?Receiver?)) S</query>
-  <query id="2048e73c-e95b-4e4c-84ee-2309372a7eae" description="When and by what threads was this static field accessed?" revision="14" display="true">-- META-BEGIN(doc)
+  <query id="2048e73c-e95b-4e4c-84ee-2309372a7eae" description="When and by what threads was this static field accessed?" revision="15" display="true">-- META-BEGIN(doc)
 -- &lt;p&gt;&lt;strong&gt;
 -- 	When and by what threads was this static field accessed?
 -- &lt;/strong&gt;&lt;/p&gt;
@@ -5108,11 +5108,11 @@ FROM TABLE (OBJECTSUMMARY(?Receiver?)) S</query>
 --       &lt;td&gt;The number of writes in this entry&lt;/td&gt;
 --     &lt;/tr&gt;
 --     &lt;tr&gt;
---       &lt;td&gt;Start&lt;/td&gt;
+--       &lt;td&gt;First Access&lt;/td&gt;
 --       &lt;td&gt;The time of the first access in this entry&lt;/td&gt;
 --     &lt;/tr&gt;
 --     &lt;tr&gt;
---       &lt;td&gt;Stop&lt;/td&gt;
+--       &lt;td&gt;Last Access&lt;/td&gt;
 --       &lt;td&gt;The time of the last access in this entry&lt;/td&gt;&gt;
 --     &lt;/tr&gt;
 --   &lt;/tbody&gt;
@@ -5134,8 +5134,8 @@ SELECT
          ELSE &apos;empty.gif&apos; END &quot;Happens-Before__(icon)&quot;,
    S.READS &quot;Reads__(blank-if &apos;0&apos;)(add-commas)(r)&quot;,
    S.WRITES &quot;Writes__(blank-if &apos;0&apos;)(add-commas)(r)&quot;,
-   S.STARTTIME &quot;Start&quot;,
-   S.ENDTIME &quot;Stop&quot;,
+   S.STARTTIME &quot;First Access&quot;,
+   S.ENDTIME &quot;Last Access&quot;,
    S.THREADID &quot;ThreadId__(hide)&quot;,
    S.LASTWRITETIME &quot;LastWriteTime__(hide)&quot;,
    S.LASTWRITETHREAD &quot;LastWriteThread__(hide)&quot;
@@ -7250,37 +7250,37 @@ order by lo.PackageName, lo.ClassName, s.AtLine, tho.ThreadName, sum(ld.Duration
     <cat-query id="976506a9-cf85-4907-8d7f-2fd9b5a28d6d"/>
   </category>
   <category id="28103990-73b5-4287-add0-39785aa7e3bb" description="Deadlock" has-data="Queries that show lock use that may cause the program to deadlock." no-data="No locking that could potentially cause deadlock was observed in the program." revision="3">
-    <cat-query id="f556dcef-0e6b-480b-bc1b-eb84b3012831"/>
     <cat-query id="9d05ac24-20c2-436e-af6b-2bd0bc7dbcfb"/>
+    <cat-query id="f556dcef-0e6b-480b-bc1b-eb84b3012831"/>
   </category>
   <category id="84475b98-4c68-4165-b883-5bdf9479d3d6" description="Lock Use" has-data="Queries about lock use in the program." no-data="No lock use was observed in the program." revision="5">
-    <cat-query id="2f505921-50fb-405b-bc78-4a5fe9228957"/>
     <cat-query id="26696a5f-3fd7-4f18-badf-e3d7d01a6d4e"/>
-    <cat-query id="d4d2af9b-ce4d-4457-9e94-01972fcb58d3"/>
+    <cat-query id="c744b5b5-15f0-4f72-a344-7e52bcac5071"/>
+    <cat-query id="2f505921-50fb-405b-bc78-4a5fe9228957"/>
+    <cat-query id="3b8251fa-a315-4c36-a856-a53b278fdc91"/>
     <cat-query id="ddb5a17c-f5ac-4c26-a251-34d8e3c7bc7f"/>
     <cat-query id="213c73ad-b3f6-4aef-9a05-f0c31d8fdcde"/>
-    <cat-query id="c744b5b5-15f0-4f72-a344-7e52bcac5071"/>
-    <cat-query id="3b8251fa-a315-4c36-a856-a53b278fdc91"/>
+    <cat-query id="d4d2af9b-ce4d-4457-9e94-01972fcb58d3"/>
   </category>
   <category id="3d204f5e-d61d-4637-be14-118223f2fb9e" description="Memory Model" has-data="Queries that show happens-before relationships between threads defined by the Java memory model." no-data="No happens-before relationships between threads were observed in the program." revision="2">
     <cat-query id="eabad207-22a7-4bb0-a7e1-30946d02ea13"/>
+    <cat-query id="7cd8d92c-7aec-4238-b808-e628f83dcb4e"/>
     <cat-query id="5f166e1b-f0a6-4c07-846b-98f2aba80be2"/>
     <cat-query id="1b191e96-598f-4d1f-9391-5d9feed0da69"/>
-    <cat-query id="7cd8d92c-7aec-4238-b808-e628f83dcb4e"/>
   </category>
   <category id="64511c63-0ce8-44df-8324-95711bff56ce" description="Performance" has-data="Queries that highlight potential performance bottlenecks in the program." no-data="No potential performance bottlenecks were observed in the program." revision="2">
     <cat-query id="4e026769-1b0b-42bd-8893-f3b92add093f"/>
-    <cat-query id="cb38a427-c259-4690-abe2-acea9661f737"/>
     <cat-query id="2d506676-eb1d-455b-9256-9ea8f05352d4"/>
+    <cat-query id="cb38a427-c259-4690-abe2-acea9661f737"/>
   </category>
   <category id="8401fcf7-7d5c-4191-a997-0b82f1db8e66" description="Shared State" has-data="Queries that show state (fields, not local variables or parameters) shared between multiple threads." no-data="No state (fields, not local variables or parameters) was shared between multiple threads." revision="2">
-    <cat-query id="71a6fb5b-e5e1-4d25-bdc8-67ab5df1f66e"/>
-    <cat-query id="33868960-7df8-4bab-bb33-ffb230957940"/>
     <cat-query id="d1176c97-e3b6-483b-a341-6914a6f64860"/>
     <cat-query id="bd72a5e4-42aa-415d-aa72-28d351f629a4"/>
-    <cat-query id="419c927e-a87c-4364-b4a9-2e8f50f728f6"/>
+    <cat-query id="33868960-7df8-4bab-bb33-ffb230957940"/>
     <cat-query id="094fc6db-5a5b-4495-aacd-54f5a5aa1691"/>
     <cat-query id="cdc2d460-b17f-43bc-8cc6-4c26f1637fda"/>
+    <cat-query id="71a6fb5b-e5e1-4d25-bdc8-67ab5df1f66e"/>
+    <cat-query id="419c927e-a87c-4364-b4a9-2e8f50f728f6"/>
   </category>
   <category id="b6d89f8b-7dfd-44a5-843c-d8a70f6aaaa9" description="Threads" has-data="Queries about threads in the program." no-data="No threads were observed in the program." revision="2">
     <cat-query id="8107df4c-42eb-407c-88c1-e16d805f3aaa"/>

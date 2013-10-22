@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.surelogic.common.jdbc.BooleanResultHandler;
 import com.surelogic.common.jdbc.ConnectionQuery;
 import com.surelogic.common.jdbc.LongResultHandler;
 import com.surelogic.common.jdbc.NullResultHandler;
@@ -237,7 +238,8 @@ public class HappensBeforePostPrep implements IPostPrep {
                     .prepared("Accesses.prep.insertBlockStats");
             private final Queryable<?> insertFieldBlockStats = q
                     .prepared("Accesses.prep.insertFieldBlockStats");
-
+            private final Queryable<Boolean> isFieldLock = q.prepared(
+                    "Accesses.prep.isFieldLock", new BooleanResultHandler());
             private final Queryable<?> countInterleavingFields = q.prepared(
                     "Accesses.prep.interleavingFields", h);
 
@@ -315,20 +317,27 @@ public class HappensBeforePostPrep implements IPostPrep {
                             });
                         }
                     }
-                    insertBlockStats.call(field, receiver, lastThread,
-                            beginThread, endThread, reads, writes,
-                            (double) interleavings * 100 / (reads + writes));
-                    fields.forEachEntry(new TLongObjectProcedure<Interleaving>() {
+                    if (isFieldLock.call(field, receiver) != Boolean.TRUE) {
+                        insertBlockStats
+                                .call(field, receiver, lastThread, beginThread,
+                                        endThread, reads, writes,
+                                        (double) interleavings * 100
+                                                / (reads + writes));
+                        fields.forEachEntry(new TLongObjectProcedure<Interleaving>() {
 
-                        @Override
-                        public boolean execute(long rField, Interleaving i) {
-                            insertFieldBlockStats.call(field, rField, receiver,
-                                    lastThread, beginThread, endThread, reads,
-                                    writes, (double) i.interleavings * 100
-                                            / (reads + writes));
-                            return true;
-                        }
-                    });
+                            @Override
+                            public boolean execute(long rField, Interleaving i) {
+                                if (isFieldLock.call(rField, receiver) != Boolean.TRUE) {
+                                    insertFieldBlockStats.call(field, rField,
+                                            receiver, lastThread, beginThread,
+                                            endThread, reads, writes,
+                                            (double) i.interleavings * 100
+                                                    / (reads + writes));
+                                }
+                                return true;
+                            }
+                        });
+                    }
                 }
 
             }

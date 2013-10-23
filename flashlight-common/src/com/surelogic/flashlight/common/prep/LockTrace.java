@@ -12,21 +12,24 @@ class LockTrace {
     private final long id;
     private final long lock;
     private final long trace;
+    private final LockType type;
+
     private final LockTrace parent;
     private LockTrace sibling;
     private LockTrace child;
 
-    private LockTrace(long id, long lock, long trace, LockTrace parent,
-            LockTrace sibling) {
+    private LockTrace(long id, long lock, long trace, LockType type,
+            LockTrace parent, LockTrace sibling) {
         this.id = id;
         this.lock = lock;
         this.trace = trace;
+        this.type = type;
         this.parent = parent;
         this.sibling = sibling;
     }
 
-    private LockTrace(long id, long lock, long trace) {
-        this(id, lock, trace, null, null);
+    private LockTrace(long id, long lock, long trace, LockType type) {
+        this(id, lock, trace, type, null, null);
     }
 
     /**
@@ -37,8 +40,9 @@ class LockTrace {
      * @param trace
      * @return
      */
-    static LockTrace newRootLockTrace(long id, long lock, long trace) {
-        return new LockTrace(id, lock, trace);
+    static LockTrace newRootLockTrace(long id, long lock, long trace,
+            LockType type) {
+        return new LockTrace(id, lock, trace, type);
     }
 
     /**
@@ -49,8 +53,8 @@ class LockTrace {
      * @param trace
      * @return
      */
-    public LockTrace pushLockTrace(long id, long lock, long trace) {
-        child = new LockTrace(id, lock, trace, this, child);
+    public LockTrace pushLockTrace(long id, long lock, long trace, LockType type) {
+        child = new LockTrace(id, lock, trace, type, this, child);
         return child;
     }
 
@@ -85,6 +89,10 @@ class LockTrace {
 
     public long getTrace() {
         return trace;
+    }
+
+    public LockType getType() {
+        return type;
     }
 
     public LockTrace getParent() {

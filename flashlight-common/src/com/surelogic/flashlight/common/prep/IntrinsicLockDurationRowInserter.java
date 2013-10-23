@@ -59,7 +59,7 @@ public final class IntrinsicLockDurationRowInserter {
                 "INSERT INTO LOCKCYCLE (Component,LockHeld,LockAcquired,Count,FirstTime,LastTime) VALUES (?, ?, ?, ?, ?, ?)"), INSERT_LOCK(
                 "INSERT INTO LOCK (Id,TS,InThread,Trace,LockTrace,Lock,Object,Type,State,Success,LockIsThis) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"), LOCK_COMPONENT(
                 "INSERT INTO LOCKCOMPONENT (Component,Lock) VALUES (?, ?)"), LOCK_TRACE(
-                "INSERT INTO LOCKTRACE (Id,Lock,Trace,Parent) VALUES(?,?,?,?)");
+                "INSERT INTO LOCKTRACE (Id,Lock,Trace,Type,Parent) VALUES(?,?,?,?,?)");
         private final String sql;
 
         Queries(String sql) {
@@ -78,7 +78,7 @@ public final class IntrinsicLockDurationRowInserter {
             Queries.class);
     private final TLongObjectHashMap<List<LockTrace>> lockTraces = new TLongObjectHashMap<List<LockTrace>>();
     private final TLongObjectMap<TLongObjectMap<LockTrace>> lockTraceRoots = new TLongObjectHashMap<TLongObjectMap<LockTrace>>();
-    long lockTraceId;
+    long lockTraceIdSeq;
     int cycleId;
     private final Calendar here = new GregorianCalendar();
     private final Logger log = SLLogger
@@ -1107,13 +1107,13 @@ public final class IntrinsicLockDurationRowInserter {
         case AFTER_ACQUISITION:
             if (success != Boolean.FALSE) {
                 threadState.lockTrace = pushLockTrace(threadState.lockTrace,
-                        lock, trace);
+                        lock, trace, lockType);
             }
             break;
         case AFTER_RELEASE:
             if (success != Boolean.FALSE && !finalEvent) {
                 threadState.lockTrace = popLockTrace(threadState.lockTrace,
-                        lock);
+                        lock, lockType);
             }
             break;
         default:
@@ -1155,16 +1155,18 @@ public final class IntrinsicLockDurationRowInserter {
      * 
      * @param current
      * @param lock
+     * @param lockType
      * @return
      * @throws SQLException
      */
-    private LockTrace popLockTrace(LockTrace current, long lock)
-            throws SQLException {
+    private LockTrace popLockTrace(LockTrace current, long lock,
+            LockType lockType) throws SQLException {
         if (current.getLock() == lock) {
             return current.getParent();
         } else {
-            return pushLockTrace(popLockTrace(current.getParent(), lock),
-                    current.getLock(), current.getTrace());
+            return pushLockTrace(
+                    popLockTrace(current.getParent(), lock, lockType),
+                    current.getLock(), current.getTrace(), current.getType());
         }
     }
 
@@ -1173,11 +1175,12 @@ public final class IntrinsicLockDurationRowInserter {
      * 
      * @param current
      * @param lock
+     * @param lockType
      * @return
      * @throws SQLException
      */
-    private LockTrace pushLockTrace(LockTrace current, long lock, long trace)
-            throws SQLException {
+    private LockTrace pushLockTrace(LockTrace current, long lock, long trace,
+            LockType lockType) throws SQLException {
         LockTrace lockTrace;
         if (current == null) {
             // Try to get the root lock trace if it exists, otherwise make it.
@@ -1190,7 +1193,8 @@ public final class IntrinsicLockDurationRowInserter {
             if (lockTrace != null) {
                 return lockTrace;
             }
-            lockTrace = LockTrace.newRootLockTrace(lockTraceId++, lock, trace);
+            lockTrace = LockTrace.newRootLockTrace(lockTraceIdSeq++, lock,
+                    trace, lockType);
             traceRoots.put(trace, lockTrace);
         } else {
             // Use the cached version if we've got it
@@ -1199,7 +1203,8 @@ public final class IntrinsicLockDurationRowInserter {
                     return child;
                 }
             }
-            lockTrace = current.pushLockTrace(lockTraceId++, lock, trace);
+            lockTrace = current.pushLockTrace(lockTraceIdSeq++, lock, trace,
+                    lockType);
         }
         // Insert a new lock. We should have already returned from the method
         // if one had been found already.
@@ -1209,6 +1214,7 @@ public final class IntrinsicLockDurationRowInserter {
         st.setLong(idx++, lockTrace.getId());
         st.setLong(idx++, lock);
         st.setLong(idx++, trace);
+        st.setString(idx++, lockType.getFlag());
         if (lockTrace.getParent() == null) {
             // We make the first locks acquired self-referential
             st.setLong(idx++, lockTrace.getId());

@@ -1,19 +1,21 @@
 package com.surelogic.flashlight.common.prep;
 
-import gnu.trove.iterator.TLongIterator;
 import gnu.trove.map.hash.TLongObjectHashMap;
 import gnu.trove.procedure.TLongObjectProcedure;
-import gnu.trove.set.hash.TLongHashSet;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Logger;
 
@@ -215,8 +217,8 @@ public class LockSetAnalysis implements IPostPrep {
 
     private class LockSets {
 
-        private final TLongObjectHashMap<TLongHashSet> fields;
-        private final TLongObjectHashMap<TLongObjectHashMap<TLongHashSet>> instances;
+        private final TLongObjectHashMap<Set<LockNode>> fields;
+        private final TLongObjectHashMap<TLongObjectHashMap<Set<LockNode>>> instances;
         private final Map<StaticInstance, StaticCount> staticCounts;
         private final Map<FieldInstance, Count> counts;
         final ThreadLocks locks;
@@ -226,9 +228,9 @@ public class LockSetAnalysis implements IPostPrep {
         public LockSets(final Result lockDurations,
                 final Queryable<?> updateAccess,
                 final Queryable<?> updateIndirectAccess) {
-            fields = new TLongObjectHashMap<TLongHashSet>();
+            fields = new TLongObjectHashMap<Set<LockNode>>();
             locks = new ThreadLocks(lockDurations);
-            instances = new TLongObjectHashMap<TLongObjectHashMap<TLongHashSet>>();
+            instances = new TLongObjectHashMap<TLongObjectHashMap<Set<LockNode>>>();
             staticCounts = new HashMap<StaticInstance, StaticCount>();
             counts = new HashMap<FieldInstance, Count>();
             this.updateAccess = updateAccess;
@@ -241,15 +243,17 @@ public class LockSetAnalysis implements IPostPrep {
             final Queryable<Void> insertInstanceLockSets = q
                     .prepared("LockSet.v2.insertInstanceLockSets");
             log.fine("Static field lock sets.");
-            fields.forEachEntry(new TLongObjectProcedure<TLongHashSet>() {
+            fields.forEachEntry(new TLongObjectProcedure<Set<LockNode>>() {
                 int count = 0;
 
                 @Override
                 public boolean execute(final long field,
-                        final TLongHashSet locks) {
-                    for (final TLongIterator it = locks.iterator(); it
+                        final Set<LockNode> locks) {
+                    for (final Iterator<LockNode> it = locks.iterator(); it
                             .hasNext();) {
-                        insertFieldLockSets.call(field, it.next());
+                        LockNode lock = it.next();
+                        insertFieldLockSets.call(field, lock.getId(), lock
+                                .getType().getFlag());
                         if (++count % 10000 == 0) {
                             commit();
                         }
@@ -259,30 +263,31 @@ public class LockSetAnalysis implements IPostPrep {
             });
             log.fine("Instance lock sets.");
             instances
-                    .forEachEntry(new TLongObjectProcedure<TLongObjectHashMap<TLongHashSet>>() {
+                    .forEachEntry(new TLongObjectProcedure<TLongObjectHashMap<Set<LockNode>>>() {
                         int count;
 
                         @Override
                         public boolean execute(final long field,
-                                final TLongObjectHashMap<TLongHashSet> instance) {
-                            final TLongHashSet fieldSet = new TLongHashSet();
-                            instance.forEachEntry(new TLongObjectProcedure<TLongHashSet>() {
+                                final TLongObjectHashMap<Set<LockNode>> instance) {
+                            final Set<LockNode> fieldSet = new HashSet<LockNode>();
+                            instance.forEachEntry(new TLongObjectProcedure<Set<LockNode>>() {
                                 boolean first = true;
 
                                 @Override
                                 public boolean execute(final long receiver,
-                                        final TLongHashSet instanceSet) {
+                                        final Set<LockNode> instanceSet) {
                                     if (first) {
-                                        fieldSet.addAll(instanceSet.toArray());
+                                        fieldSet.addAll(instanceSet);
                                         first = false;
                                     } else {
-                                        fieldSet.retainAll(instanceSet
-                                                .toArray());
+                                        fieldSet.retainAll(instanceSet);
                                     }
-                                    for (final TLongIterator it = instanceSet
+                                    for (final Iterator<LockNode> it = instanceSet
                                             .iterator(); it.hasNext();) {
+                                        LockNode lock = it.next();
                                         insertInstanceLockSets.call(field,
-                                                receiver, it.next());
+                                                receiver, lock.getId(), lock
+                                                        .getType().getFlag());
                                     }
                                     if (++count % 10000 == 0) {
                                         commit();
@@ -290,9 +295,11 @@ public class LockSetAnalysis implements IPostPrep {
                                     return true;
                                 }
                             });
-                            for (final TLongIterator it = fieldSet.iterator(); it
-                                    .hasNext();) {
-                                insertFieldLockSets.call(field, it.next());
+                            for (final Iterator<LockNode> it = fieldSet
+                                    .iterator(); it.hasNext();) {
+                                LockNode lock = it.next();
+                                insertFieldLockSets.call(field, lock.getId(),
+                                        lock.getType().getFlag());
                                 if (++count % 10000 == 0) {
                                     commit();
                                 }
@@ -348,20 +355,20 @@ public class LockSetAnalysis implements IPostPrep {
 
         public void indirectAccess(final IndirectAccess ia) {
             locks.ensureTime(ia.ts);
-            final long[] lockSet = locks.getLocks(ia.thread);
-            updateIndirectAccess.call(ia.id, lockSet.length,
+            final List<LockNode> lockSet = locks.getLocks(ia.thread);
+            updateIndirectAccess.call(ia.id, lockSet.size(),
                     Nulls.coerce(locks.getLastAcquisition(ia.thread)));
         }
 
         void staticAccess(final long id, final Timestamp ts, final long thread,
                 final long field, final boolean read) {
             locks.ensureTime(ts);
-            TLongHashSet fieldSet = fields.get(field);
-            final long[] lockSet = locks.getLocks(thread);
-            updateAccess.call(id, lockSet.length,
+            Set<LockNode> fieldSet = fields.get(field);
+            final List<LockNode> lockSet = locks.getLocks(thread);
+            updateAccess.call(id, lockSet.size(),
                     Nulls.coerce(locks.getLastAcquisition(thread)));
             if (fieldSet == null) {
-                fieldSet = new TLongHashSet(lockSet.length);
+                fieldSet = new HashSet<LockNode>(lockSet.size());
                 fieldSet.addAll(lockSet);
                 fields.put(field, fieldSet);
             } else {
@@ -383,8 +390,8 @@ public class LockSetAnalysis implements IPostPrep {
         void classUnderConstruction(final long id, final Timestamp ts,
                 final long thread, final long field, final boolean read) {
             locks.ensureTime(ts);
-            final long[] lockSet = locks.getLocks(thread);
-            updateAccess.call(id, lockSet.length,
+            final List<LockNode> lockSet = locks.getLocks(thread);
+            updateAccess.call(id, lockSet.size(),
                     Nulls.coerce(locks.getLastAcquisition(thread)));
             final StaticInstance si = new StaticInstance(thread, field);
             StaticCount c = staticCounts.get(si);
@@ -403,7 +410,7 @@ public class LockSetAnalysis implements IPostPrep {
                 final long thread, final long field, final Long receiver,
                 final boolean read) {
             locks.ensureTime(ts);
-            updateAccess.call(id, locks.getLocks(thread).length,
+            updateAccess.call(id, locks.getLocks(thread).size(),
                     Nulls.coerce(locks.getLastAcquisition(thread)));
             final FieldInstance fi = new FieldInstance(thread, field, receiver);
             Count count = counts.get(fi);
@@ -422,17 +429,17 @@ public class LockSetAnalysis implements IPostPrep {
                 final long thread, final long field, final long receiver,
                 final boolean read) {
             locks.ensureTime(ts);
-            TLongObjectHashMap<TLongHashSet> fieldMap = instances.get(field);
+            TLongObjectHashMap<Set<LockNode>> fieldMap = instances.get(field);
             if (fieldMap == null) {
-                fieldMap = new TLongObjectHashMap<TLongHashSet>();
+                fieldMap = new TLongObjectHashMap<Set<LockNode>>();
                 instances.put(field, fieldMap);
             }
-            TLongHashSet instance = fieldMap.get(receiver);
-            final long[] lockSet = locks.getLocks(thread);
-            updateAccess.call(id, lockSet.length,
+            Set<LockNode> instance = fieldMap.get(receiver);
+            final List<LockNode> lockSet = locks.getLocks(thread);
+            updateAccess.call(id, lockSet.size(),
                     Nulls.coerce(locks.getLastAcquisition(thread)));
             if (instance == null) {
-                instance = new TLongHashSet();
+                instance = new HashSet<LockNode>();
                 instance.addAll(lockSet);
                 fieldMap.put(receiver, instance);
             } else {
@@ -575,12 +582,12 @@ public class LockSetAnalysis implements IPostPrep {
          * @param thread
          * @return
          */
-        public long[] getLocks(final long thread) {
+        public List<LockNode> getLocks(final long thread) {
             final Collection<Lock> set = getThreadSet(thread);
-            final long[] locks = new long[set.size()];
+            final List<LockNode> locks = new ArrayList<LockNode>(set.size());
             int i = 0;
             for (final Lock l : set) {
-                locks[i++] = l.lock;
+                locks.add(l.lock);
             }
             return locks;
         }
@@ -661,14 +668,15 @@ public class LockSetAnalysis implements IPostPrep {
 
     private static class Lock {
         final long thread;
-        final long lock;
+        final LockNode lock;
         final long startEvent;
         final Timestamp start;
         final Timestamp end;
 
         Lock(final Row row) {
             thread = row.nextLong();
-            lock = row.nextLong();
+            lock = new LockNode(row.nextLong(), LockType.fromFlag(row
+                    .nextString()));
             start = row.nextTimestamp();
             end = row.nextTimestamp();
             startEvent = row.nextLong();

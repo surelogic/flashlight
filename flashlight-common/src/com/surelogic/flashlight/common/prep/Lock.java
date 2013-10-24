@@ -37,9 +37,10 @@ public abstract class Lock extends Event {
             return;
         }
         final Timestamp time = getTimestamp(nanoTime);
+        LockNode lockNode = new LockNode(lock, getType());
         final long id = f_rowInserter.insertLock(false, time, inThread, trace,
-                lock, object, getType(), getState(), success, lockIsThis);
-        f_rowInserter.event(id, time, inThread, trace, lock, object,
+                lockNode, object, getState(), success, lockIsThis);
+        f_rowInserter.event(id, time, inThread, trace, lockNode, object,
                 getState(), success != Boolean.FALSE);
     }
 

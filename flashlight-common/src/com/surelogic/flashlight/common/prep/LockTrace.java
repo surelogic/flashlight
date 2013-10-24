@@ -10,26 +10,24 @@ import java.util.Iterator;
  */
 class LockTrace {
     private final long id;
-    private final long lock;
+    private final LockNode lock;
     private final long trace;
-    private final LockType type;
 
     private final LockTrace parent;
     private LockTrace sibling;
     private LockTrace child;
 
-    private LockTrace(long id, long lock, long trace, LockType type,
-            LockTrace parent, LockTrace sibling) {
+    private LockTrace(long id, LockNode lock, long trace, LockTrace parent,
+            LockTrace sibling) {
         this.id = id;
         this.lock = lock;
         this.trace = trace;
-        this.type = type;
         this.parent = parent;
         this.sibling = sibling;
     }
 
-    private LockTrace(long id, long lock, long trace, LockType type) {
-        this(id, lock, trace, type, null, null);
+    private LockTrace(long id, LockNode lock, long trace) {
+        this(id, lock, trace, null, null);
     }
 
     /**
@@ -40,9 +38,8 @@ class LockTrace {
      * @param trace
      * @return
      */
-    static LockTrace newRootLockTrace(long id, long lock, long trace,
-            LockType type) {
-        return new LockTrace(id, lock, trace, type);
+    static LockTrace newRootLockTrace(long id, LockNode lock, long trace) {
+        return new LockTrace(id, lock, trace);
     }
 
     /**
@@ -53,8 +50,8 @@ class LockTrace {
      * @param trace
      * @return
      */
-    public LockTrace pushLockTrace(long id, long lock, long trace, LockType type) {
-        child = new LockTrace(id, lock, trace, type, this, child);
+    public LockTrace pushLockTrace(long id, LockNode lock, long trace) {
+        child = new LockTrace(id, lock, trace, this, child);
         return child;
     }
 
@@ -83,8 +80,12 @@ class LockTrace {
         return id;
     }
 
-    public long getLock() {
+    public LockNode getLockNode() {
         return lock;
+    }
+
+    public long getLockId() {
+        return lock.getId();
     }
 
     public long getTrace() {
@@ -92,15 +93,15 @@ class LockTrace {
     }
 
     public LockType getType() {
-        return type;
+        return lock.getType();
     }
 
     public LockTrace getParent() {
         return parent;
     }
 
-    boolean matches(long lock, long trace) {
-        return this.lock == lock && this.trace == trace;
+    boolean matches(LockNode lock, long trace) {
+        return this.lock.equals(lock) && this.trace == trace;
     }
 
     public Iterable<LockTrace> children() {

@@ -38,7 +38,7 @@ public class LockInfoPostPrep implements IPostPrep {
                     @Override
                     protected void doHandle(Row r) {
                         updateTypes.call(r.nextLong(), r.nextLong(),
-                                r.nextLong());
+                                r.nextString(), r.nextLong());
 
                     }
                 }).call();
@@ -52,7 +52,7 @@ public class LockInfoPostPrep implements IPostPrep {
                     @Override
                     protected void doHandle(Row r) {
                         updatePackages.call(r.nextLong(), r.nextLong(),
-                                r.nextLong());
+                                r.nextString(), r.nextLong());
                     }
                 }).call();
         mon.subTaskDone();

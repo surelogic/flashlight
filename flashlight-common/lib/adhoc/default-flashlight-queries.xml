@@ -33,7 +33,7 @@ INNER JOIN OBJECT FLCO ON
   FLCO.ID = FLO.TYPE
 ORDER BY 1,2,3,4
 </query>
-  <query id="1562545d-004b-4865-9f55-65ed4e37bcbb" description="How often is a lock held when this field is accessed in this thread?" revision="18" display="true">-- META-BEGIN(no-rows)
+  <query id="1562545d-004b-4865-9f55-65ed4e37bcbb" description="How often is a lock held when this field is accessed in this thread?" revision="19" display="true">-- META-BEGIN(no-rows)
 -- No locks are ever held when this field is accessed.
 -- META-END
 -- META-BEGIN(doc)
@@ -112,24 +112,26 @@ SELECT
    &apos;?Field (Image)?&apos;    &quot;Field__(icon)&quot;,
    OBJID(?Thread?)      &quot;In Thread__(&apos;thread.gif&apos;)&quot;,
    CAST (((CAST (LOCKS.COUNT AS FLOAT)) / (CAST (ACCESSES.ACCESSCOUNT AS FLOAT))) * 100 AS DECIMAL) &quot;% Held__(suffix &apos;%&apos;)(r)&quot;,
-   LOCKS.LOCKID         &quot;Lock__(&apos;lock.gif&apos;)&quot;,
+   LOCKS.LOCKID         &quot;Lock&quot;,
+   CASE WHEN LOCKS.TYPE = &apos;U&apos; THEN &apos;lock_dynamic.gif&apos; ELSE &apos;lock.gif&apos; END &quot;Lock__(icon)&quot;,
    LOCKS.COUNT          &quot;Accesses With Lock Held__(add-commas)(r)&quot;,
    ACCESSES.ACCESSCOUNT &quot;Total Accesses__(add-commas)(r)&quot;,
-   LOCKS.LOCK           &quot;Lock__(hide)&quot;
+   LOCKS.LOCK           &quot;Lock__(hide)&quot;,
+   LOCKS.TYPE           &quot;LockType__(hide)&quot;
 FROM
-(SELECT OBJID(LOCK) &quot;LOCKID&quot;, LOCK, COUNT(LOCK) &quot;COUNT&quot;
+(SELECT OBJID(LOCK) &quot;LOCKID&quot;, LOCK, TYPE, COUNT(LOCK) &quot;COUNT&quot;
  FROM 
-  (SELECT L.LOCK FROM ACCESS A, ACCESSLOCKSHELD ALH, LOCK L
+  (SELECT L.LOCK,L.TYPE FROM ACCESS A, ACCESSLOCKSHELD ALH, LOCK L
    WHERE ALH.ACCESS = A.ID AND A.INTHREAD = ?Thread? AND L.ID = ALH.LASTACQUISITION AND A.FIELD = ?FieldId? AND A.RECEIVER = ?Receiver? AND A.UNDERCONSTRUCTION = &apos;N&apos;
   UNION ALL 
-  SELECT LH.LOCKHELD &quot;LOCK&quot; FROM ACCESS A, ACCESSLOCKSHELD ALH, LOCKSHELD LH 
+  SELECT LH.LOCKHELD &quot;LOCK&quot;, LH.LOCKHELDTYPE &quot;TYPE&quot; FROM ACCESS A, ACCESSLOCKSHELD ALH, LOCKSHELD LH 
    WHERE ALH.ACCESS = A.ID AND A.INTHREAD = ?Thread? AND LH.LOCKEVENT = ALH.LASTACQUISITION AND A.FIELD = ?FieldId? AND A.RECEIVER = ?Receiver? AND A.UNDERCONSTRUCTION = &apos;N&apos;) AS FOO
- GROUP BY LOCK) AS LOCKS,
+ GROUP BY LOCK,TYPE) AS LOCKS,
 (SELECT COUNT(*) &quot;ACCESSCOUNT&quot; 
  FROM ACCESS A 
  WHERE A.FIELD = ?FieldId? AND A.RECEIVER = ?Receiver? AND A.INTHREAD = ?Thread? AND A.UNDERCONSTRUCTION = &apos;N&apos;) AS ACCESSES
 ORDER BY 6 DESC</query>
-  <query id="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a" description="How often is a lock held when this field is accessed?" revision="24" display="true">-- META-BEGIN(no-rows)
+  <query id="1ab01445-f44f-4c5a-9a3e-46ab0ea96d7a" description="How often is a lock held when this field is accessed?" revision="25" display="true">-- META-BEGIN(no-rows)
 -- No locks are ever held when this field is accessed.
 -- META-END
 -- META-BEGIN(doc)
@@ -216,14 +218,14 @@ FROM
   (SELECT L.LOCK, L.TYPE FROM ACCESS A, ACCESSLOCKSHELD ALH, LOCK L
    WHERE ALH.ACCESS = A.ID AND L.ID = ALH.LASTACQUISITION AND A.FIELD = ?FieldId? AND A.RECEIVER = ?Receiver? AND A.UNDERCONSTRUCTION = &apos;N&apos;
   UNION ALL 
-  SELECT LH.LOCKHELD &quot;LOCK&quot;, L.TYPE &quot;TYPE&quot; FROM ACCESS A, ACCESSLOCKSHELD ALH, LOCKSHELD LH, LOCK L 
-   WHERE ALH.ACCESS = A.ID AND LH.LOCKEVENT = ALH.LASTACQUISITION AND A.FIELD = ?FieldId? AND A.RECEIVER = ?Receiver? AND A.UNDERCONSTRUCTION = &apos;N&apos; AND L.ID = LH.LOCKHELDEVENT) AS FOO
+  SELECT LH.LOCKHELD &quot;LOCK&quot;, LH.LOCKHELDTYPE &quot;TYPE&quot; FROM ACCESS A, ACCESSLOCKSHELD ALH, LOCKSHELD LH
+   WHERE ALH.ACCESS = A.ID AND LH.LOCKEVENT = ALH.LASTACQUISITION AND A.FIELD = ?FieldId? AND A.RECEIVER = ?Receiver? AND A.UNDERCONSTRUCTION = &apos;N&apos;) AS FOO
  GROUP BY LOCK, TYPE) AS LOCKS,
 (SELECT COUNT(*) &quot;ACCESSCOUNT&quot; 
  FROM ACCESS A 
  WHERE A.FIELD = ?FieldId? AND A.RECEIVER = ?Receiver? AND A.UNDERCONSTRUCTION = &apos;N&apos;) AS ACCESSES
 ORDER BY 5 DESC</query>
-  <query id="42031a55-4f1c-42dc-80dc-0fa141a32382" description="How often is a lock held when this object is indirectly accessed?" revision="16" display="true">-- META-BEGIN(no-rows)
+  <query id="42031a55-4f1c-42dc-80dc-0fa141a32382" description="How often is a lock held when this object is indirectly accessed?" revision="17" display="true">-- META-BEGIN(no-rows)
 -- No locks are ever held when this object is indirectly accessed.
 -- META-END
 -- META-BEGIN(doc)
@@ -283,24 +285,25 @@ SELECT
    &apos;?Object?&apos;           &quot;Object&quot;,
    &apos;?Object (Image)?&apos;   &quot;Object__(icon)&quot;,
    CAST (((CAST (LOCKS.COUNT AS FLOAT)) / (CAST (ACCESSES.ACCESSCOUNT AS FLOAT))) * 100 AS DECIMAL) &quot;% Held__(suffix &apos;%&apos;)(r)&quot;,  
-   LOCKS.LOCKID         &quot;Lock__(&apos;lock.gif&apos;)&quot;,
+   LOCKS.LOCKID         &quot;Lock&quot;,
+   CASE WHEN LOCKS.TYPE = &apos;U&apos; THEN &apos;lock_dynamic.gif&apos; ELSE &apos;lock.gif&apos; END &quot;Lock__(icon)&quot;,
    LOCKS.COUNT          &quot;Accesses With Lock Held__(add-commas)(r)&quot;,
    ACCESSES.ACCESSCOUNT &quot;Total Accesses__(add-commas)(r)&quot;,
    LOCKS.LOCK           &quot;Lock__(hide)&quot;
 FROM
-(SELECT OBJID(LOCK) &quot;LOCKID&quot;, LOCK, COUNT(LOCK) &quot;COUNT&quot;
+(SELECT OBJID(LOCK) &quot;LOCKID&quot;, LOCK, TYPE, COUNT(LOCK) &quot;COUNT&quot;
  FROM 
-  (SELECT L.LOCK FROM INDIRECTACCESS A, INDIRECTACCESSLOCKSHELD ALH, LOCK L
+  (SELECT L.LOCK, L.TYPE FROM INDIRECTACCESS A, INDIRECTACCESSLOCKSHELD ALH, LOCK L
    WHERE ALH.ACCESS = A.ID AND L.ID = ALH.LASTACQUISITION AND A.RECEIVER = ?Receiver?
   UNION ALL 
-  SELECT LH.LOCKHELD &quot;LOCK&quot; FROM INDIRECTACCESS A, INDIRECTACCESSLOCKSHELD ALH, LOCKSHELD LH 
+  SELECT LH.LOCKHELD &quot;LOCK&quot;, LH.LOCKHELDTYPE &quot;TYPE&quot; FROM INDIRECTACCESS A, INDIRECTACCESSLOCKSHELD ALH, LOCKSHELD LH 
    WHERE ALH.ACCESS = A.ID AND LH.LOCKEVENT = ALH.LASTACQUISITION AND A.RECEIVER = ?Receiver?) AS FOO
- GROUP BY LOCK) AS LOCKS,
+ GROUP BY LOCK, TYPE) AS LOCKS,
 (SELECT COUNT(*) &quot;ACCESSCOUNT&quot; 
  FROM INDIRECTACCESS A 
  WHERE A.RECEIVER = ?Receiver?) AS ACCESSES
 ORDER BY 3 DESC</query>
-  <query id="5fd98753-3fe5-47a2-ab6a-ed5070dd41b0" description="How often is a lock held when this static field is accessed in this thread?" revision="17" display="true">-- META-BEGIN(no-rows)
+  <query id="5fd98753-3fe5-47a2-ab6a-ed5070dd41b0" description="How often is a lock held when this static field is accessed in this thread?" revision="18" display="true">-- META-BEGIN(no-rows)
 -- No locks are ever held when this field is accessed.
 -- META-END
 -- META-BEGIN(doc)
@@ -370,24 +373,25 @@ SELECT
    &apos;?Field (Image)?&apos;    &quot;Field__(icon)&quot;,
    OBJID(?Thread?)      &quot;In Thread__(&apos;thread.gif&apos;)&quot;,
    CAST (((CAST (LOCKS.COUNT AS FLOAT)) / (CAST (ACCESSES.ACCESSCOUNT AS FLOAT))) * 100 AS DECIMAL) &quot;% Held__(suffix &apos;%&apos;)(r)&quot;,
-   LOCKS.LOCKID         &quot;Lock__(&apos;lock.gif&apos;)&quot;,
+   LOCKS.LOCKID         &quot;Lock&quot;,
+   CASE WHEN LOCKS.TYPE = &apos;U&apos; THEN &apos;lock_dynamic.gif&apos; ELSE &apos;lock.gif&apos; END &quot;Lock__(icon)&quot;,
    LOCKS.COUNT          &quot;Accesses With Lock Held__(add-commas)(r)&quot;,
    ACCESSES.ACCESSCOUNT &quot;Total Accesses__(add-commas)(r)&quot;,
    LOCKS.LOCK           &quot;Lock__(hide)&quot;
 FROM
-(SELECT OBJID(LOCK) &quot;LOCKID&quot;, LOCK, COUNT(LOCK) &quot;COUNT&quot;
+(SELECT OBJID(LOCK) &quot;LOCKID&quot;, LOCK, TYPE, COUNT(LOCK) &quot;COUNT&quot;
  FROM 
-  (SELECT L.LOCK FROM ACCESS A, ACCESSLOCKSHELD ALH, LOCK L
+  (SELECT L.LOCK, L.TYPE FROM ACCESS A, ACCESSLOCKSHELD ALH, LOCK L
    WHERE ALH.ACCESS = A.ID AND A.INTHREAD = ?Thread? AND L.ID = ALH.LASTACQUISITION AND A.FIELD = ?FieldId? 
   UNION ALL 
-  SELECT LH.LOCKHELD &quot;LOCK&quot; FROM ACCESS A, ACCESSLOCKSHELD ALH, LOCKSHELD LH 
+  SELECT LH.LOCKHELD &quot;LOCK&quot;, LH.LOCKHELDTYPE &quot;TYPE&quot; FROM ACCESS A, ACCESSLOCKSHELD ALH, LOCKSHELD LH 
    WHERE ALH.ACCESS = A.ID AND A.INTHREAD = ?Thread? AND LH.LOCKEVENT = ALH.LASTACQUISITION AND A.FIELD = ?FieldId? ) AS FOO
- GROUP BY LOCK) AS LOCKS,
+ GROUP BY LOCK, TYPE) AS LOCKS,
 (SELECT COUNT(*) &quot;ACCESSCOUNT&quot; 
  FROM ACCESS A 
  WHERE A.FIELD = ?FieldId? AND A.INTHREAD = ?Thread?) AS ACCESSES
 ORDER BY 6 DESC</query>
-  <query id="6a39e6ca-29e9-4093-ba03-0e9bd9503a1a" description="How often is a lock held when this static field is accessed?" revision="30" display="true">-- META-BEGIN(no-rows)
+  <query id="6a39e6ca-29e9-4093-ba03-0e9bd9503a1a" description="How often is a lock held when this static field is accessed?" revision="31" display="true">-- META-BEGIN(no-rows)
 -- No locks are ever held when this field is accessed.
 -- META-END
 -- META-BEGIN(doc)
@@ -455,19 +459,20 @@ SELECT
    &apos;?Field?&apos;            &quot;Field&quot;,
    &apos;?Field (Image)?&apos;    &quot;Field__(icon)&quot;,
    CAST (((CAST (LOCKS.COUNT AS FLOAT)) / (CAST (ACCESSES.ACCESSCOUNT AS FLOAT))) * 100 AS DECIMAL) &quot;% Held__(suffix &apos;%&apos;)(r)&quot;,
-   LOCKS.LOCKID         &quot;Lock__(&apos;lock.gif&apos;)&quot;,
+   LOCKS.LOCKID         &quot;Lock&quot;,
+   CASE WHEN LOCKS.TYPE = &apos;U&apos; THEN &apos;lock_dynamic.gif&apos; ELSE &apos;lock.gif&apos; END &quot;Lock__(icon)&quot;,
    LOCKS.COUNT          &quot;Accesses With Lock Held__(add-commas)(r)&quot;,
    ACCESSES.ACCESSCOUNT &quot;Total Accesses__(add-commas)(r)&quot;,
    LOCKS.LOCK           &quot;Lock__(hide)&quot;
 FROM
-(SELECT OBJID(LOCK) &quot;LOCKID&quot;, LOCK, COUNT(LOCK) &quot;COUNT&quot;
+(SELECT OBJID(LOCK) &quot;LOCKID&quot;, LOCK, TYPE, COUNT(LOCK) &quot;COUNT&quot;
  FROM 
-  (SELECT L.LOCK FROM ACCESS A, ACCESSLOCKSHELD ALH, LOCK L
+  (SELECT L.LOCK, L.TYPE FROM ACCESS A, ACCESSLOCKSHELD ALH, LOCK L
    WHERE ALH.ACCESS = A.ID AND L.ID = ALH.LASTACQUISITION AND A.FIELD = ?FieldId? 
   UNION ALL 
-  SELECT LH.LOCKHELD &quot;LOCK&quot; FROM ACCESS A, ACCESSLOCKSHELD ALH, LOCKSHELD LH 
+  SELECT LH.LOCKHELD &quot;LOCK&quot;, LH.LOCKHELDTYPE &quot;TYPE&quot; FROM ACCESS A, ACCESSLOCKSHELD ALH, LOCKSHELD LH 
    WHERE ALH.ACCESS = A.ID AND LH.LOCKEVENT = ALH.LASTACQUISITION AND A.FIELD = ?FieldId? ) AS FOO
- GROUP BY LOCK) AS LOCKS,
+ GROUP BY LOCK, TYPE) AS LOCKS,
 (SELECT COUNT(*) &quot;ACCESSCOUNT&quot; 
  FROM ACCESS A 
  WHERE A.FIELD = ?FieldId?) AS ACCESSES
@@ -3868,7 +3873,7 @@ select COMPONENT &quot;Cycle__(&apos;refresh.gif&apos;)(r)&quot;, COUNT(*) &quot
 as CYCLES
 group by COMPONENT
 order by COMPONENT</query>
-  <query id="db55bed8-8c7a-4601-8735-577912d938ca" description="What locks are acquired by this thread?" revision="20" display="true">-- META-BEGIN(doc)
+  <query id="db55bed8-8c7a-4601-8735-577912d938ca" description="What locks are acquired by this thread?" revision="21" display="true">-- META-BEGIN(doc)
 -- &lt;p&gt;&lt;strong&gt;
 -- 	What locks are acquired by this thread?
 -- &lt;/strong&gt;&lt;/p&gt;
@@ -3945,7 +3950,7 @@ FROM
    LOCKINFO LDS
 WHERE
    LDS.INTHREAD = ?Thread?
-ORDER BY 1, LDS.DURATION DESC</query>
+ORDER BY 1,2,LDS.DURATION DESC</query>
   <query id="26696a5f-3fd7-4f18-badf-e3d7d01a6d4e" description="What locks are acquired?" revision="16" display="true" display-at-root="true">-- META-BEGIN(doc)
 -- &lt;p&gt;&lt;strong&gt;
 -- 	What locks are acquired?
@@ -4015,7 +4020,7 @@ SELECT
 FROM 
    LOCKINFO LDS
 ORDER BY 1,2,LDS.DURATION DESC</query>
-  <query id="cb38a427-c259-4690-abe2-acea9661f737" description="What locks are contended for the longest time?" revision="21" display="true" display-at-root="true">-- META-BEGIN(no-rows)
+  <query id="cb38a427-c259-4690-abe2-acea9661f737" description="What locks are contended for the longest time?" revision="22" display="true" display-at-root="true">-- META-BEGIN(no-rows)
 -- No locks were observed to be acquired during this run of the program.
 -- META-END
 -- META-BEGIN(doc)
@@ -4086,9 +4091,9 @@ SELECT
    LDS.InThread        &quot;Thread__(hide)&quot;
 FROM 
    LOCKINFO LDS,
-   (SELECT LDS.LOCK, SUM(LDS.DURATION) / SUM(LDS.COUNT) &quot;AVE&quot; FROM LOCKINFO LDS GROUP BY LDS.LOCK) LDSAGG
-WHERE LDSAGG.LOCK = LDS.LOCK
-ORDER BY LDSAGG.AVE DESC, LDSAGG.LOCK, LDS.DURATION DESC</query>
+   (SELECT LDS.LOCK, LDS.TYPE, SUM(LDS.DURATION) / SUM(LDS.COUNT) &quot;AVE&quot; FROM LOCKINFO LDS GROUP BY LDS.LOCK, LDS.TYPE) LDSAGG
+WHERE LDSAGG.LOCK = LDS.LOCK AND LDSAGG.TYPE = LDS.TYPE
+ORDER BY LDSAGG.AVE DESC, LDS.LOCK, LDS.TYPE, LDS.DURATION DESC</query>
   <query id="ae2c5715-740e-4850-a404-38bdc8cde6b6" description="What locks are held during this field access?" revision="13" display="true">-- META-BEGIN(no-rows)
 -- No locks are held during this access of the field.
 -- META-END
@@ -4152,7 +4157,7 @@ WHERE
    A.ID = ?AID?
 ORDER BY O.THREADNAME ASC, A.TS ASC, D.Start DESC
 </query>
-  <query id="ddb5a17c-f5ac-4c26-a251-34d8e3c7bc7f" description="What locks are held when state in two or more packages is accessed?" revision="17" display="true" display-at-root="true">-- META-BEGIN(doc)
+  <query id="ddb5a17c-f5ac-4c26-a251-34d8e3c7bc7f" description="What locks are held when state in two or more packages is accessed?" revision="18" display="true" display-at-root="true">-- META-BEGIN(doc)
 -- &lt;p&gt;&lt;strong&gt;
 -- 	What locks are held when state in two or more packages is accessed?
 -- &lt;/strong&gt;&lt;/p&gt;
@@ -4182,7 +4187,7 @@ FROM
    LOCKINFO LDS
 WHERE 
    LDS.LOCK = LP.LOCK
-ORDER BY LP.PACKAGES DESC, 1, LDS.DURATION DESC </query>
+ORDER BY LP.PACKAGES DESC, 1, 2, LDS.DURATION DESC </query>
   <query id="71e04209-2ea7-4f4c-b1a0-557544a3f8fc" description="What methods directly access this field?" revision="1" display="true">SELECT DISTINCT 
    CO.PACKAGENAME &quot;Package__(&apos;package.gif&apos;)&quot;, 
    CO.CLASSNAME   &quot;Class&quot;, 
@@ -6950,7 +6955,7 @@ ORDER BY
     CO.CLASSNAME,
     S.ATLINE,
     MIN(A.TS)</query>
-  <query id="c9453327-b892-4324-a6b8-2dceb32e1901" description="Which threads and what code contend for this lock?" revision="14" display="true">-- META-BEGIN(no-rows)
+  <query id="c9453327-b892-4324-a6b8-2dceb32e1901" description="Which threads and what code contend for this lock?" revision="15" display="true">-- META-BEGIN(no-rows)
 -- No threads were forced to wait for this lock.
 -- META-END
 -- META-BEGIN(doc)
@@ -6998,13 +7003,19 @@ ORDER BY
 -- &lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
 -- &lt;img src=&quot;which-threads-and-what-code-contend-for-this-lock.png&quot; alt=&quot;Which threads and what code contend for this lock?&quot; /&gt;
 -- META-END
-select lo.PackageName &quot;Package__(&apos;@PK&apos;)&quot;, lo.ClassName &quot;Class&quot;, lo.ClassCode &quot;Class__(icon)&quot;, s.AtLine &quot;Line__]&quot;, tho.ThreadName &quot;Thread__|&quot;, 
+select 
+  lo.PackageName &quot;Package__(&apos;package.gif&apos;)&quot;, 
+  lo.ClassName &quot;Class&quot;, 
+  lo.ClassCode &quot;Class__(icon)&quot;, 
+  s.AtLine &quot;Line__]&quot;, 
+  tho.ThreadName &quot;Thread__|&quot;, 
   sum(ld.Duration)                   &quot;Block Time__(human-readable-duration)(r)&quot;,
   count(ld.lock)                     &quot;Times Acquired__(sum)(add-commas)(r)&quot;,
   sum(ld.Duration) / count (ld.lock) &quot;Average Block Time__(human-readable-duration)(r)&quot;,
   le.trace &quot;LATRACE__(hide)&quot;
 from LOCKDURATION ld, LOCK le, TRACE tr, SITE s, OBJECT lo, OBJECT tho
 where ld.Lock=?Lock?
+  and ld.Type=&apos;?LockType?&apos;
   and ld.State = &apos;BLOCKING&apos;
   and le.Id=ld.StartEvent
   and tr.Id = le.Trace
@@ -7287,32 +7298,32 @@ order by lo.PackageName, lo.ClassName, s.AtLine, tho.ThreadName, sum(ld.Duration
   </category>
   <category id="84475b98-4c68-4165-b883-5bdf9479d3d6" description="Lock Use" has-data="Queries about lock use in the program." no-data="No lock use was observed in the program." revision="5">
     <cat-query id="26696a5f-3fd7-4f18-badf-e3d7d01a6d4e"/>
-    <cat-query id="2f505921-50fb-405b-bc78-4a5fe9228957"/>
     <cat-query id="3b8251fa-a315-4c36-a856-a53b278fdc91"/>
+    <cat-query id="ddb5a17c-f5ac-4c26-a251-34d8e3c7bc7f"/>
     <cat-query id="213c73ad-b3f6-4aef-9a05-f0c31d8fdcde"/>
     <cat-query id="d4d2af9b-ce4d-4457-9e94-01972fcb58d3"/>
-    <cat-query id="ddb5a17c-f5ac-4c26-a251-34d8e3c7bc7f"/>
+    <cat-query id="2f505921-50fb-405b-bc78-4a5fe9228957"/>
     <cat-query id="c744b5b5-15f0-4f72-a344-7e52bcac5071"/>
   </category>
   <category id="3d204f5e-d61d-4637-be14-118223f2fb9e" description="Memory Model" has-data="Queries that show happens-before relationships between threads defined by the Java memory model." no-data="No happens-before relationships between threads were observed in the program." revision="2">
-    <cat-query id="1b191e96-598f-4d1f-9391-5d9feed0da69"/>
-    <cat-query id="7cd8d92c-7aec-4238-b808-e628f83dcb4e"/>
     <cat-query id="eabad207-22a7-4bb0-a7e1-30946d02ea13"/>
+    <cat-query id="7cd8d92c-7aec-4238-b808-e628f83dcb4e"/>
+    <cat-query id="1b191e96-598f-4d1f-9391-5d9feed0da69"/>
     <cat-query id="5f166e1b-f0a6-4c07-846b-98f2aba80be2"/>
   </category>
   <category id="64511c63-0ce8-44df-8324-95711bff56ce" description="Performance" has-data="Queries that highlight potential performance bottlenecks in the program." no-data="No potential performance bottlenecks were observed in the program." revision="2">
     <cat-query id="4e026769-1b0b-42bd-8893-f3b92add093f"/>
-    <cat-query id="cb38a427-c259-4690-abe2-acea9661f737"/>
     <cat-query id="2d506676-eb1d-455b-9256-9ea8f05352d4"/>
+    <cat-query id="cb38a427-c259-4690-abe2-acea9661f737"/>
   </category>
   <category id="8401fcf7-7d5c-4191-a997-0b82f1db8e66" description="Shared State" has-data="Queries that show state (fields, not local variables or parameters) shared between multiple threads." no-data="No state (fields, not local variables or parameters) was shared between multiple threads." revision="2">
-    <cat-query id="33868960-7df8-4bab-bb33-ffb230957940"/>
-    <cat-query id="71a6fb5b-e5e1-4d25-bdc8-67ab5df1f66e"/>
-    <cat-query id="d1176c97-e3b6-483b-a341-6914a6f64860"/>
-    <cat-query id="bd72a5e4-42aa-415d-aa72-28d351f629a4"/>
     <cat-query id="cdc2d460-b17f-43bc-8cc6-4c26f1637fda"/>
-    <cat-query id="094fc6db-5a5b-4495-aacd-54f5a5aa1691"/>
     <cat-query id="419c927e-a87c-4364-b4a9-2e8f50f728f6"/>
+    <cat-query id="d1176c97-e3b6-483b-a341-6914a6f64860"/>
+    <cat-query id="094fc6db-5a5b-4495-aacd-54f5a5aa1691"/>
+    <cat-query id="71a6fb5b-e5e1-4d25-bdc8-67ab5df1f66e"/>
+    <cat-query id="bd72a5e4-42aa-415d-aa72-28d351f629a4"/>
+    <cat-query id="33868960-7df8-4bab-bb33-ffb230957940"/>
   </category>
   <category id="b6d89f8b-7dfd-44a5-843c-d8a70f6aaaa9" description="Threads" has-data="Queries about threads in the program." no-data="No threads were observed in the program." revision="2">
     <cat-query id="8107df4c-42eb-407c-88c1-e16d805f3aaa"/>

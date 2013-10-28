@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
@@ -48,6 +49,8 @@ import com.surelogic.common.core.EclipseUtility;
 import com.surelogic.common.graph.Edge;
 import com.surelogic.common.graph.Graph;
 import com.surelogic.common.graph.Node;
+import com.surelogic.common.i18n.I18N;
+import com.surelogic.common.logging.SLLogger;
 import com.surelogic.common.ui.EclipseColorUtility;
 import com.surelogic.common.ui.SLImages;
 import com.surelogic.common.ui.TableUtility;
@@ -144,6 +147,63 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
     }
   }
 
+  /**
+   * This method encodes I or U as the type in front of the object name so we
+   * separate different types of lock acquisition for the same object. For
+   * example, <tt>IObject-43</tt> or <tt>UReentrantReadWriteLock-1843</tt>.
+   * 
+   * @param acqType
+   *          <tt>I</tt> for intrinsic acquisition or </tt>U</tt> for
+   *          util.concurrent acquisition any other value is ignored and changed
+   *          to an <tt>I</tt> and a warning is output.
+   * @param name
+   *          the lock name, for example, <tt>Object-43</tt> or
+   *          <tt>ReentrantReadWriteLock-1843</tt>
+   * @return the encoded lock name.
+   */
+  final String getEncLockName(String acqType, final String name) {
+    if (!"I".equals(acqType) && !"U".equals(acqType)) {
+      SLLogger.getLogger().log(Level.SEVERE, I18N.err(309, acqType));
+      acqType = "I";
+    }
+    return acqType + name;
+  }
+
+  /**
+   * Checks if the encoded name is for an intrinsic lock acquisition.
+   * 
+   * @param encodedName
+   *          encoded lock name, for example, <tt>IObject-43</tt> or
+   *          <tt>UReentrantReadWriteLock-1843</tt>.
+   * @return {@code true} if the encode name starts with <tt>I</tt>,
+   *         {@code false} otherwise (indicating a util.concurrent acquisition).
+   */
+  final boolean isIntrinsicAcq(@NonNull String encodedName) {
+    return encodedName.startsWith("I");
+  }
+
+  /**
+   * Strips off the encode for the acquisition type an returns the orginal
+   * object name.
+   * <p>
+   * The string <tt>none</tt> is returned if the passed name is too short to be
+   * an encoded name or it is null.
+   * 
+   * 
+   * @param encodedName
+   *          encoded lock name, for example, <tt>IObject-43</tt> or
+   *          <tt>UReentrantReadWriteLock-1843</tt>.
+   * @return the original object name, for example, <tt>Object-43</tt> or
+   *         <tt>ReentrantReadWriteLock-1843</tt>.
+   */
+  final String getLockDisplayName(String encodedName) {
+    if (encodedName == null || encodedName.length() <= 1)
+      return "none";
+    else
+      return (encodedName.substring(1));
+
+  }
+
   @Override
   protected void displayResult(Composite panel) {
     final SashForm sash = new SashForm(panel, SWT.HORIZONTAL | SWT.SMOOTH);
@@ -154,7 +214,13 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
     final Cell[][] cells = model.getRows();
     final Set<Pair<String, String>> edges = new HashSet<Pair<String, String>>();
     for (Cell[] row : cells) {
-      final Pair<String, String> pair = new Pair<String, String>(row[0].getText(), row[1].getText());
+      /*
+       * We encode I or U as the type in front of the object name. For example,
+       * IObject-43 or UReentrantReadWriteLock-1843
+       */
+      final String heldLock = getEncLockName(row[8].getText(), row[0].getText());
+      final String acquiredLock = getEncLockName(row[9].getText(), row[1].getText());
+      final Pair<String, String> pair = new Pair<String, String>(heldLock, acquiredLock);
       edges.add(pair);
     }
 
@@ -217,14 +283,17 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
     final Pair<String, String> oldSelectedEdge = getSelectedEdgeFromQueryResults();
 
     final Image lockImg = SLImages.getImage(CommonImages.IMG_LOCK);
+    final Image dyLockImage = SLImages.getImage(CommonImages.IMG_LOCK_DYNAMIC);
     final Image threadImg = SLImages.getImage(CommonImages.IMG_THREAD);
     for (Pair<String, String> edge : edges) {
       final TableItem item = new TableItem(edgeTable, SWT.NONE);
-      item.setText(0, edge.first());
-      item.setImage(0, lockImg);
+      String encName = edge.first();
+      item.setText(0, getLockDisplayName(encName));
+      item.setImage(0, isIntrinsicAcq(encName) ? lockImg : dyLockImage);
       item.setText(1, "\u2192");
-      item.setText(2, edge.second());
-      item.setImage(2, lockImg);
+      encName = edge.second();
+      item.setText(2, getLockDisplayName(encName));
+      item.setImage(2, isIntrinsicAcq(encName) ? lockImg : dyLockImage);
       item.setText(3, SLUtility.toStringCommaSeparatedList(getThreads(edge)));
       item.setImage(3, threadImg);
 
@@ -286,6 +355,7 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
 
     private final Canvas f_canvas;
     private final Image f_lock = SLImages.getImage(CommonImages.IMG_LOCK);
+    private final Image f_dyLock = SLImages.getImage(CommonImages.IMG_LOCK_DYNAMIC);
     private final Graph f_graph;
 
     private volatile boolean f_tracking = false;
@@ -434,10 +504,11 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
       gc.setBackground(bg);
       gc.fillRoundRectangle(nr.x + 1, nr.y + 1, nr.width - 1, nr.height - 1, PAD, PAD);
 
+      final String encName = node.getLabel();
       gc.setForeground(fg);
-      gc.drawText(node.getLabel(), nr.x + LOCK_ICON_WIDTH + PAD, nr.y + PAD, SWT.DRAW_TRANSPARENT);
+      gc.drawText(getLockDisplayName(encName), nr.x + LOCK_ICON_WIDTH + PAD, nr.y + PAD, SWT.DRAW_TRANSPARENT);
 
-      gc.drawImage(f_lock, nr.x + PAD, nr.y + (nr.height / 2 - LOCK_ICON_WIDTH / 2));
+      gc.drawImage(isIntrinsicAcq(encName) ? f_lock : f_dyLock, nr.x + PAD, nr.y + (nr.height / 2 - LOCK_ICON_WIDTH / 2));
     }
 
     /**

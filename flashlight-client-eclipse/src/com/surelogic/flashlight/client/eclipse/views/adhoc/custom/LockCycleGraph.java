@@ -85,7 +85,7 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
     final AdornedTreeTableModel model = getResult().getModel();
     final List<String> result = new ArrayList<String>();
     for (Cell[] row : model.getRows()) {
-      if (row[0].getText().equals(edge.first()) && row[1].getText().equals(edge.second())) {
+      if (getEncHeld(row).equals(edge.first()) && getEncAcquired(row).equals(edge.second())) {
         final String occurenceCount = row[3].getText();
         final boolean once = "1".equals(occurenceCount);
         final String threadInfo = row[2].getText() + " (" + (once ? "once)" : row[3].getText() + " times)");
@@ -112,7 +112,7 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
     final Cell[][] rows = model.getRows();
     for (int rowIdx = 0; rowIdx < rows.length; rowIdx++) {
       Cell[] row = rows[rowIdx];
-      if (row[0].getText().equals(edge.first()) && row[1].getText().equals(edge.second())) {
+      if (getEncHeld(row).equals(edge.first()) && getEncAcquired(row).equals(edge.second())) {
         getResult().setSelectedRowIndex(rowIdx);
         return;
       }
@@ -133,7 +133,7 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
       return null;
     final AdornedTreeTableModel model = getResult().getModel();
     final Cell[][] rows = model.getRows();
-    final Pair<String, String> edge = new Pair<String, String>(rows[rowIdx][0].getText(), rows[rowIdx][1].getText());
+    final Pair<String, String> edge = new Pair<String, String>(getEncHeld(rows[rowIdx]), getEncAcquired(rows[rowIdx]));
     return edge;
   }
 
@@ -167,6 +167,14 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
       acqType = "I";
     }
     return acqType + name;
+  }
+
+  final String getEncHeld(Cell[] row) {
+    return getEncLockName(row[8].getText(), row[0].getText());
+  }
+
+  final String getEncAcquired(Cell[] row) {
+    return getEncLockName(row[9].getText(), row[1].getText());
   }
 
   /**
@@ -218,9 +226,7 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
        * We encode I or U as the type in front of the object name. For example,
        * IObject-43 or UReentrantReadWriteLock-1843
        */
-      final String heldLock = getEncLockName(row[8].getText(), row[0].getText());
-      final String acquiredLock = getEncLockName(row[9].getText(), row[1].getText());
-      final Pair<String, String> pair = new Pair<String, String>(heldLock, acquiredLock);
+      final Pair<String, String> pair = new Pair<String, String>(getEncHeld(row), getEncAcquired(row));
       edges.add(pair);
     }
 
@@ -228,8 +234,7 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
     if (data instanceof Graph) {
       f_graph = (Graph) data;
     } else {
-
-      Graph.Builder b = new Graph.Builder();
+      final Graph.Builder b = new Graph.Builder();
       for (Pair<String, String> edge : edges) {
         b.addEdge(edge.first(), edge.second());
       }

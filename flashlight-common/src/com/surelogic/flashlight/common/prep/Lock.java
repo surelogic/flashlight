@@ -10,6 +10,8 @@ import java.util.logging.Level;
 
 import com.surelogic._flashlight.common.PreppedAttributes;
 import com.surelogic.common.logging.SLLogger;
+import com.surelogic.flashlight.common.LockId;
+import com.surelogic.flashlight.common.LockType;
 
 public abstract class Lock extends Event {
     static final long FINAL_EVENT = Long.MAX_VALUE;
@@ -37,7 +39,7 @@ public abstract class Lock extends Event {
             return;
         }
         final Timestamp time = getTimestamp(nanoTime);
-        LockNode lockNode = new LockNode(lock, getType());
+        LockId lockNode = new LockId(lock, getType());
         final long id = f_rowInserter.insertLock(false, time, inThread, trace,
                 lockNode, object, getState(), success, lockIsThis);
         f_rowInserter.event(id, time, inThread, trace, lockNode, object,

@@ -2,6 +2,9 @@ package com.surelogic.flashlight.common.prep;
 
 import java.util.Iterator;
 
+import com.surelogic.flashlight.common.LockId;
+import com.surelogic.flashlight.common.LockType;
+
 /**
  * Represents a lock trace in a tree of lock traces.
  * 
@@ -10,14 +13,14 @@ import java.util.Iterator;
  */
 class LockTrace {
     private final long id;
-    private final LockNode lock;
+    private final LockId lock;
     private final long trace;
 
     private final LockTrace parent;
     private LockTrace sibling;
     private LockTrace child;
 
-    private LockTrace(long id, LockNode lock, long trace, LockTrace parent,
+    private LockTrace(long id, LockId lock, long trace, LockTrace parent,
             LockTrace sibling) {
         this.id = id;
         this.lock = lock;
@@ -26,7 +29,7 @@ class LockTrace {
         this.sibling = sibling;
     }
 
-    private LockTrace(long id, LockNode lock, long trace) {
+    private LockTrace(long id, LockId lock, long trace) {
         this(id, lock, trace, null, null);
     }
 
@@ -38,7 +41,7 @@ class LockTrace {
      * @param trace
      * @return
      */
-    static LockTrace newRootLockTrace(long id, LockNode lock, long trace) {
+    static LockTrace newRootLockTrace(long id, LockId lock, long trace) {
         return new LockTrace(id, lock, trace);
     }
 
@@ -50,7 +53,7 @@ class LockTrace {
      * @param trace
      * @return
      */
-    public LockTrace pushLockTrace(long id, LockNode lock, long trace) {
+    public LockTrace pushLockTrace(long id, LockId lock, long trace) {
         child = new LockTrace(id, lock, trace, this, child);
         return child;
     }
@@ -80,7 +83,7 @@ class LockTrace {
         return id;
     }
 
-    public LockNode getLockNode() {
+    public LockId getLockNode() {
         return lock;
     }
 
@@ -100,7 +103,7 @@ class LockTrace {
         return parent;
     }
 
-    boolean matches(LockNode lock, long trace) {
+    boolean matches(LockId lock, long trace) {
         return this.lock.equals(lock) && this.trace == trace;
     }
 

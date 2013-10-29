@@ -30,6 +30,8 @@ import com.surelogic.common.jdbc.Row;
 import com.surelogic.common.jdbc.SchemaData;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.logging.SLLogger;
+import com.surelogic.flashlight.common.LockId;
+import com.surelogic.flashlight.common.LockType;
 
 /**
  * The lock set analysis looks for bad field publishes during construction of an
@@ -217,8 +219,8 @@ public class LockSetAnalysis implements IPostPrep {
 
     private class LockSets {
 
-        private final TLongObjectHashMap<Set<LockNode>> fields;
-        private final TLongObjectHashMap<TLongObjectHashMap<Set<LockNode>>> instances;
+        private final TLongObjectHashMap<Set<LockId>> fields;
+        private final TLongObjectHashMap<TLongObjectHashMap<Set<LockId>>> instances;
         private final Map<StaticInstance, StaticCount> staticCounts;
         private final Map<FieldInstance, Count> counts;
         final ThreadLocks locks;
@@ -228,9 +230,9 @@ public class LockSetAnalysis implements IPostPrep {
         public LockSets(final Result lockDurations,
                 final Queryable<?> updateAccess,
                 final Queryable<?> updateIndirectAccess) {
-            fields = new TLongObjectHashMap<Set<LockNode>>();
+            fields = new TLongObjectHashMap<Set<LockId>>();
             locks = new ThreadLocks(lockDurations);
-            instances = new TLongObjectHashMap<TLongObjectHashMap<Set<LockNode>>>();
+            instances = new TLongObjectHashMap<TLongObjectHashMap<Set<LockId>>>();
             staticCounts = new HashMap<StaticInstance, StaticCount>();
             counts = new HashMap<FieldInstance, Count>();
             this.updateAccess = updateAccess;
@@ -243,15 +245,14 @@ public class LockSetAnalysis implements IPostPrep {
             final Queryable<Void> insertInstanceLockSets = q
                     .prepared("LockSet.v2.insertInstanceLockSets");
             log.fine("Static field lock sets.");
-            fields.forEachEntry(new TLongObjectProcedure<Set<LockNode>>() {
+            fields.forEachEntry(new TLongObjectProcedure<Set<LockId>>() {
                 int count = 0;
 
                 @Override
-                public boolean execute(final long field,
-                        final Set<LockNode> locks) {
-                    for (final Iterator<LockNode> it = locks.iterator(); it
+                public boolean execute(final long field, final Set<LockId> locks) {
+                    for (final Iterator<LockId> it = locks.iterator(); it
                             .hasNext();) {
-                        LockNode lock = it.next();
+                        LockId lock = it.next();
                         insertFieldLockSets.call(field, lock.getId(), lock
                                 .getType().getFlag());
                         if (++count % 10000 == 0) {
@@ -263,28 +264,28 @@ public class LockSetAnalysis implements IPostPrep {
             });
             log.fine("Instance lock sets.");
             instances
-                    .forEachEntry(new TLongObjectProcedure<TLongObjectHashMap<Set<LockNode>>>() {
+                    .forEachEntry(new TLongObjectProcedure<TLongObjectHashMap<Set<LockId>>>() {
                         int count;
 
                         @Override
                         public boolean execute(final long field,
-                                final TLongObjectHashMap<Set<LockNode>> instance) {
-                            final Set<LockNode> fieldSet = new HashSet<LockNode>();
-                            instance.forEachEntry(new TLongObjectProcedure<Set<LockNode>>() {
+                                final TLongObjectHashMap<Set<LockId>> instance) {
+                            final Set<LockId> fieldSet = new HashSet<LockId>();
+                            instance.forEachEntry(new TLongObjectProcedure<Set<LockId>>() {
                                 boolean first = true;
 
                                 @Override
                                 public boolean execute(final long receiver,
-                                        final Set<LockNode> instanceSet) {
+                                        final Set<LockId> instanceSet) {
                                     if (first) {
                                         fieldSet.addAll(instanceSet);
                                         first = false;
                                     } else {
                                         fieldSet.retainAll(instanceSet);
                                     }
-                                    for (final Iterator<LockNode> it = instanceSet
+                                    for (final Iterator<LockId> it = instanceSet
                                             .iterator(); it.hasNext();) {
-                                        LockNode lock = it.next();
+                                        LockId lock = it.next();
                                         insertInstanceLockSets.call(field,
                                                 receiver, lock.getId(), lock
                                                         .getType().getFlag());
@@ -295,9 +296,9 @@ public class LockSetAnalysis implements IPostPrep {
                                     return true;
                                 }
                             });
-                            for (final Iterator<LockNode> it = fieldSet
+                            for (final Iterator<LockId> it = fieldSet
                                     .iterator(); it.hasNext();) {
-                                LockNode lock = it.next();
+                                LockId lock = it.next();
                                 insertFieldLockSets.call(field, lock.getId(),
                                         lock.getType().getFlag());
                                 if (++count % 10000 == 0) {
@@ -355,7 +356,7 @@ public class LockSetAnalysis implements IPostPrep {
 
         public void indirectAccess(final IndirectAccess ia) {
             locks.ensureTime(ia.ts);
-            final List<LockNode> lockSet = locks.getLocks(ia.thread);
+            final List<LockId> lockSet = locks.getLocks(ia.thread);
             updateIndirectAccess.call(ia.id, lockSet.size(),
                     Nulls.coerce(locks.getLastAcquisition(ia.thread)));
         }
@@ -363,12 +364,12 @@ public class LockSetAnalysis implements IPostPrep {
         void staticAccess(final long id, final Timestamp ts, final long thread,
                 final long field, final boolean read) {
             locks.ensureTime(ts);
-            Set<LockNode> fieldSet = fields.get(field);
-            final List<LockNode> lockSet = locks.getLocks(thread);
+            Set<LockId> fieldSet = fields.get(field);
+            final List<LockId> lockSet = locks.getLocks(thread);
             updateAccess.call(id, lockSet.size(),
                     Nulls.coerce(locks.getLastAcquisition(thread)));
             if (fieldSet == null) {
-                fieldSet = new HashSet<LockNode>(lockSet.size());
+                fieldSet = new HashSet<LockId>(lockSet.size());
                 fieldSet.addAll(lockSet);
                 fields.put(field, fieldSet);
             } else {
@@ -390,7 +391,7 @@ public class LockSetAnalysis implements IPostPrep {
         void classUnderConstruction(final long id, final Timestamp ts,
                 final long thread, final long field, final boolean read) {
             locks.ensureTime(ts);
-            final List<LockNode> lockSet = locks.getLocks(thread);
+            final List<LockId> lockSet = locks.getLocks(thread);
             updateAccess.call(id, lockSet.size(),
                     Nulls.coerce(locks.getLastAcquisition(thread)));
             final StaticInstance si = new StaticInstance(thread, field);
@@ -429,17 +430,17 @@ public class LockSetAnalysis implements IPostPrep {
                 final long thread, final long field, final long receiver,
                 final boolean read) {
             locks.ensureTime(ts);
-            TLongObjectHashMap<Set<LockNode>> fieldMap = instances.get(field);
+            TLongObjectHashMap<Set<LockId>> fieldMap = instances.get(field);
             if (fieldMap == null) {
-                fieldMap = new TLongObjectHashMap<Set<LockNode>>();
+                fieldMap = new TLongObjectHashMap<Set<LockId>>();
                 instances.put(field, fieldMap);
             }
-            Set<LockNode> instance = fieldMap.get(receiver);
-            final List<LockNode> lockSet = locks.getLocks(thread);
+            Set<LockId> instance = fieldMap.get(receiver);
+            final List<LockId> lockSet = locks.getLocks(thread);
             updateAccess.call(id, lockSet.size(),
                     Nulls.coerce(locks.getLastAcquisition(thread)));
             if (instance == null) {
-                instance = new HashSet<LockNode>();
+                instance = new HashSet<LockId>();
                 instance.addAll(lockSet);
                 fieldMap.put(receiver, instance);
             } else {
@@ -582,10 +583,9 @@ public class LockSetAnalysis implements IPostPrep {
          * @param thread
          * @return
          */
-        public List<LockNode> getLocks(final long thread) {
+        public List<LockId> getLocks(final long thread) {
             final Collection<Lock> set = getThreadSet(thread);
-            final List<LockNode> locks = new ArrayList<LockNode>(set.size());
-            int i = 0;
+            final List<LockId> locks = new ArrayList<LockId>(set.size());
             for (final Lock l : set) {
                 locks.add(l.lock);
             }
@@ -668,14 +668,14 @@ public class LockSetAnalysis implements IPostPrep {
 
     private static class Lock {
         final long thread;
-        final LockNode lock;
+        final LockId lock;
         final long startEvent;
         final Timestamp start;
         final Timestamp end;
 
         Lock(final Row row) {
             thread = row.nextLong();
-            lock = new LockNode(row.nextLong(), LockType.fromFlag(row
+            lock = new LockId(row.nextLong(), LockType.fromFlag(row
                     .nextString()));
             start = row.nextTimestamp();
             end = row.nextTimestamp();

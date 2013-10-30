@@ -61,11 +61,6 @@ public class FlashlightInstrumentationWidgets {
                         { "Only lock info", "ONLY_LOCKS" } }, group1);
         finishSetup(group1, f_collectionType);
 
-        final BooleanFieldEditor f_compress = new BooleanFieldEditor(
-                FlashlightPreferencesUtility.COMPRESS_OUTPUT,
-                I18N.msg("flashlight.preference.page.compressOutput"), group1);
-        finishSetup(group1, f_compress);
-
         final BooleanFieldEditor f_useRefinery = new BooleanFieldEditor(
                 FlashlightPreferencesUtility.USE_REFINERY,
                 I18N.msg("flashlight.preference.page.useRefinery"), group2);

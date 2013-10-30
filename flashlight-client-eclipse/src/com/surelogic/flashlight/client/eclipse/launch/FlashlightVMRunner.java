@@ -601,7 +601,7 @@ public final class FlashlightVMRunner implements IVMRunner {
             newVmArgsList.add("-D" + FL_POSTMORTEM + "="
                     + Boolean.toString(conf.isPostmortem()));
             newVmArgsList.add("-D" + FL_OUTPUT_TYPE + "="
-                    + OutputType.get(conf.isCompressed()));
+                    + OutputType.get(true));
             newVmArgsList.add("-D"
                     + FL_COLLECTION_TYPE
                     + "="

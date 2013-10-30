@@ -35,7 +35,6 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
     private static final String[] BooleanAttrs = {
             FlashlightPreferencesUtility.USE_REFINERY,
             FlashlightPreferencesUtility.USE_SPY,
-            FlashlightPreferencesUtility.COMPRESS_OUTPUT,
             FlashlightPreferencesUtility.POSTMORTEM_MODE, };
     private static final String[] IntAttrs = {
             FlashlightPreferencesUtility.CONSOLE_PORT,

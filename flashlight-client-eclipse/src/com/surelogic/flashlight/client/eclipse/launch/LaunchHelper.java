@@ -34,7 +34,6 @@ public final class LaunchHelper {
         private final int outQSize;
         private final int cPort;
         private final boolean postmortem;
-        private final boolean compress;
         private final String collectionType;
         private final boolean useSpy;
         private final boolean useRefinery;
@@ -58,10 +57,6 @@ public final class LaunchHelper {
                     .getAttribute(
                             FlashlightPreferencesUtility.POSTMORTEM_MODE,
                             prefs.getBoolean(FlashlightPreferencesUtility.POSTMORTEM_MODE));
-            compress = launch
-                    .getAttribute(
-                            FlashlightPreferencesUtility.COMPRESS_OUTPUT,
-                            prefs.getBoolean(FlashlightPreferencesUtility.COMPRESS_OUTPUT));
             collectionType = launch
                     .getAttribute(
                             FlashlightPreferencesUtility.COLLECTION_TYPE,
@@ -92,10 +87,6 @@ public final class LaunchHelper {
 
         public boolean isPostmortem() {
             return postmortem;
-        }
-
-        public boolean isCompressed() {
-            return compress;
         }
 
         public String getCollectionType() {

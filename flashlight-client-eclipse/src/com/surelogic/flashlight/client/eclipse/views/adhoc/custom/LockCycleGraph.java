@@ -1,9 +1,6 @@
 package com.surelogic.flashlight.client.eclipse.views.adhoc.custom;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -72,31 +69,6 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
   private Pair<String, String> f_selectedEdge;
 
   /**
-   * Gets a string list of the threads that contain the passed edge from the
-   * result data. A row exists in the data for each thread that contains the
-   * edge.
-   * 
-   * @param edge
-   *          a held-acquired pair of lock names.
-   * @return A list of strings, one per thread that contains the edge.
-   */
-  @NonNull
-  List<String> getThreads(Pair<String, String> edge) {
-    final AdornedTreeTableModel model = getResult().getModel();
-    final List<String> result = new ArrayList<String>();
-    for (Cell[] row : model.getRows()) {
-      if (getEncHeld(row).equals(edge.first()) && getEncAcquired(row).equals(edge.second())) {
-        final String occurenceCount = row[3].getText();
-        final boolean once = "1".equals(occurenceCount);
-        final String threadInfo = row[2].getText() + " (" + (once ? "once)" : row[3].getText() + " times)");
-        result.add(threadInfo);
-      }
-    }
-    Collections.sort(result);
-    return result;
-  }
-
-  /**
    * This method sets the selected row in the result to the first row it finds
    * that matches the passed edge. Because there may be several rows that match
    * the edge it is not perfect, it just takes the first one. Duplicates are
@@ -118,6 +90,26 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
       }
     }
     getResult().clearSelection();
+  }
+
+  /**
+   * Finds the row in the query results that corresponds to the passed edge.
+   * 
+   * @param edge
+   *          a graph edge.
+   * @return a row from the query results, or {@code null} if none can be found.
+   */
+  @Nullable
+  Cell[] findRowInQueryResultsFor(@NonNull Pair<String, String> edge) {
+    final AdornedTreeTableModel model = getResult().getModel();
+    final Cell[][] rows = model.getRows();
+    for (int rowIdx = 0; rowIdx < rows.length; rowIdx++) {
+      final Cell[] row = rows[rowIdx];
+      if (getEncHeld(row).equals(edge.first()) && getEncAcquired(row).equals(edge.second())) {
+        return row;
+      }
+    }
+    return null;
   }
 
   /**
@@ -170,11 +162,11 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
   }
 
   final String getEncHeld(Cell[] row) {
-    return getEncLockName(row[8].getText(), row[0].getText());
+    return getEncLockName(row[7].getText(), row[0].getText());
   }
 
   final String getEncAcquired(Cell[] row) {
-    return getEncLockName(row[9].getText(), row[1].getText());
+    return getEncLockName(row[8].getText(), row[1].getText());
   }
 
   /**
@@ -273,16 +265,17 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
       }
     });
 
-    TableColumn col1 = new TableColumn(edgeTable, SWT.NONE);
-    col1.setText(model.getColumnLabels()[0]);
+    new TableColumn(edgeTable, SWT.NONE).setText(model.getColumnLabels()[0]);
 
     new TableColumn(edgeTable, SWT.NONE);
 
-    TableColumn col3 = new TableColumn(edgeTable, SWT.NONE);
-    col3.setText(model.getColumnLabels()[1]);
+    new TableColumn(edgeTable, SWT.NONE).setText(model.getColumnLabels()[1]);
 
-    TableColumn col4 = new TableColumn(edgeTable, SWT.NONE);
-    col4.setText("Threads");
+    new TableColumn(edgeTable, SWT.NONE).setText("Threads");
+
+    new TableColumn(edgeTable, SWT.NONE).setText(model.getColumnLabels()[3]);
+
+    new TableColumn(edgeTable, SWT.NONE).setText(model.getColumnLabels()[4]);
 
     @Nullable
     final Pair<String, String> oldSelectedEdge = getSelectedEdgeFromQueryResults();
@@ -299,8 +292,13 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
       encName = edge.second();
       item.setText(2, getLockDisplayName(encName));
       item.setImage(2, isIntrinsicAcq(encName) ? lockImg : dyLockImage);
-      item.setText(3, SLUtility.toStringCommaSeparatedList(getThreads(edge)));
-      item.setImage(3, threadImg);
+      final Cell[] row = findRowInQueryResultsFor(edge);
+      if (row != null) {
+        item.setText(3, row[2].getText());
+        item.setImage(3, threadImg);
+        item.setText(4, row[3].getText());
+        item.setText(5, row[4].getText());
+      }
 
       item.setData(edge);
 

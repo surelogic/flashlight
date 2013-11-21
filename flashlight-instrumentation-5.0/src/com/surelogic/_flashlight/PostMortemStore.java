@@ -417,6 +417,7 @@ public class PostMortemStore implements StoreListener {
      */
     static <T> void putInQueue(final BlockingQueue<T> queue, final T e) {
         boolean done = false;
+        boolean interrupted = false;
         while (!done) {
             try {
                 queue.put(e);
@@ -424,11 +425,14 @@ public class PostMortemStore implements StoreListener {
             } catch (final InterruptedException e1) {
                 /*
                  * We are within a program thread, so another program thread
-                 * interrupted us. I think it is OK to ignore this, however, we
-                 * do need to ensure the event gets put into the raw queue.
+                 * interrupted us. We ensure the event still gets put into the
+                 * raw queue, then appropriately set the interrupted status.
                  */
-                // f_conf.logAProblem("queue.put(e) was interrupted", e1);
+                interrupted = true;
             }
+        }
+        if (interrupted) {
+            Thread.currentThread().interrupt();
         }
     }
 

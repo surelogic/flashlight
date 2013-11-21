@@ -1,0 +1,21 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Flashlight Support for Using Dex2Jar
+Bundle-SymbolicName: com.surelogic.flashlight.dex2jar;singleton:=true
+Bundle-Version: 5.0.0.qualifier
+Bundle-Activator: com.surelogic.flashlight.android.dex2jar.Activator
+Require-Bundle: org.eclipse.ui,
+ org.eclipse.core.runtime
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-ActivationPolicy: lazy
+Bundle-ClassPath: lib/asm-all-3.3.1.jar,
+ lib/commons-lite-1.15.jar,
+ lib/dex-ir-1.12.jar,
+ lib/dex-reader-1.15.jar,
+ lib/dex-tools-0.0.9.15.jar,
+ lib/dex-translator-0.0.9.15.jar,
+ lib/dx.jar,
+ lib/jar-rename-1.6.jar,
+ lib/jasmin-p2.5.jar,
+ .
+Export-Package: com.surelogic.flashlight.android.dex2jar

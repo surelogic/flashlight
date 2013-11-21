@@ -884,7 +884,6 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
                 w.println();
                 w.println("Flashlight cannot collect meaningful data under these circumstances.");
                 w.flush();
-
                 final SLUIJob job = new SLUIJob() {
                     final String message = s.toString();
 

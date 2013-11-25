@@ -48,6 +48,7 @@ public final class InstrumentationConstants {
 
     public static final String FL_THREADQ_SIZE = "FL_THREADQ_SIZE";
     public static final int FL_THREADQ_SIZE_DEFAULT = 128;
+    public static final int FL_THREADQ_SIZE_MIN = 1;
 
     public static final String FL_RAWQ_SIZE = "FL_RAWQ_SIZE";
     public static final int FL_RAWQ_SIZE_DEFAULT = 512;

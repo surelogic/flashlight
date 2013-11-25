@@ -46,21 +46,23 @@ public final class InstrumentationConstants {
     public static final String FL_RUN = "FL_RUN";
     public static final String FL_RUN_DEFAULT = "flashlight";
 
-    public static final int FL_QUEUE_SIZE_MAX = 500;
-    public static final int FL_QUEUE_SIZE_MIN = 10;
+    public static final String FL_THREADQ_SIZE = "FL_THREADQ_SIZE";
+    public static final int FL_THREADQ_SIZE_DEFAULT = 128;
 
     public static final String FL_RAWQ_SIZE = "FL_RAWQ_SIZE";
-    public static final int FL_RAWQ_SIZE_DEFAULT = 16;
-    public static final int FL_RAWQ_SIZE_MIN = FL_QUEUE_SIZE_MIN;
+    public static final int FL_RAWQ_SIZE_DEFAULT = 512;
+    public static final int FL_RAWQ_SIZE_MIN = 16;
+    public static final int FL_RAWQ_SIZE_MAX = 32768;
 
     public static final String FL_OUTQ_SIZE = "FL_OUTQ_SIZE";
     public static final int FL_OUTQ_SIZE_DEFAULT = 16;
-    public static final int FL_OUTQ_SIZE_MIN = FL_QUEUE_SIZE_MIN;
+    public static final int FL_OUTQ_SIZE_MIN = 1;
+    public static final int FL_OUTQ_SIZE_MAX = 128;
 
     public static final String FL_REFINERY_SIZE = "FL_REFINERY_SIZE";
     public static final int FL_REFINERY_SIZE_MIN = 20;
-    public static final int FL_REFINERY_SIZE_MAX = 999;
-    public static final int FL_REFINERY_SIZE_DEFAULT = 100;
+    public static final int FL_REFINERY_SIZE_MAX = 9999;
+    public static final int FL_REFINERY_SIZE_DEFAULT = 4096;
 
     public static final String FL_NO_SPY = "FL_NO_SPY";
 

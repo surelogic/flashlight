@@ -38,6 +38,8 @@ import static com.surelogic._flashlight.common.InstrumentationConstants.FL_SITES
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_SOCKET_OUTPUT_TYPE;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_SOURCE_FOLDER_LOC;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_SOURCE_RESOURCE;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_THREADQ_SIZE;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_THREADQ_SIZE_DEFAULT;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -77,6 +79,7 @@ public class StoreConfiguration {
     private static volatile boolean isOff;
     private static volatile String directory;
     private static volatile String runName;
+    private static volatile int threadRegistrationQueueSize;
     private static volatile int rawQueueSize;
     private static volatile int outQueueSize;
     private static volatile int refinerySize;
@@ -310,6 +313,8 @@ public class StoreConfiguration {
             }
         }
 
+        setThreadRegistrationQueueSize(getIntProperty(props, FL_THREADQ_SIZE,
+                FL_THREADQ_SIZE_DEFAULT));
         setRawQueueSize(getIntProperty(props, FL_RAWQ_SIZE,
                 FL_RAWQ_SIZE_DEFAULT));
         setOutQueueSize(getIntProperty(props, FL_OUTQ_SIZE,
@@ -411,10 +416,19 @@ public class StoreConfiguration {
         runName = name;
     }
 
+    public static int getThreadRegistrationQueueSize() {
+        return threadRegistrationQueueSize;
+    }
+
+    public static void setThreadRegistrationQueueSize(final int size) {
+        threadRegistrationQueueSize = Math.max(size,
+                InstrumentationConstants.FL_THREADQ_SIZE_MIN);
+    }
+
     /**
      * Get the size of the BlockingQueue between the instrumentation and the
-     * refinery (which deals with garbage collection). Many threads input and
-     * one thread drains this queue.
+     * refinery (which deals with garbage collection). One of these threads
+     * exists for each non-flashlight thread in the program.
      * 
      * <p>
      * This value is initialized from the Java system property

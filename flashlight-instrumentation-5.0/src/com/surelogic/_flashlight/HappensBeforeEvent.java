@@ -37,4 +37,15 @@ public abstract class HappensBeforeEvent extends ProgramEvent {
         Entities.addAttribute(AttributeType.THREAD.label(), f_threadId, b);
         Entities.addAttribute(AttributeType.TRACE.label(), f_traceId, b);
     }
+
+    @Override
+    boolean isTimedEvent() {
+        return true;
+    }
+
+    @Override
+    long getTime() {
+        return f_nanoStart;
+    }
+
 }

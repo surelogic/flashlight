@@ -2,7 +2,6 @@ package com.surelogic._flashlight;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -23,8 +22,7 @@ public class TestObservedField extends TestCase {
     private static final BlockingQueue<List<Event>> Q = new ArrayBlockingQueue<List<Event>>(
             4);
 
-    static final PostMortemStore.State state = new PostMortemStore.State(Q,
-            new ArrayList<Event>());
+    static final PostMortemStore.State state = new PostMortemStore.State();
 
     private final static int THREADS = 30;
 

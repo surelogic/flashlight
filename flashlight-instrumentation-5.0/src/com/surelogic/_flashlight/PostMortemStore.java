@@ -24,12 +24,6 @@ public class PostMortemStore implements StoreListener {
     private static final int GC_DRIFT = 16;
 
     /**
-     * A queue to buffer raw event records from the instrumented program to the
-     * {@link Refinery}.
-     */
-    private final BlockingQueue<List<Event>> f_rawQueue;
-
-    /**
      * A queue to buffer refined event records from the {@link Refinery} to the
      * {@link Depository}.
      */
@@ -42,7 +36,7 @@ public class PostMortemStore implements StoreListener {
     /**
      * The refinery thread.
      */
-    private AbstractRefinery f_refinery;
+    private PostMortemRefinery f_refinery;
 
     /**
      * The depository thread.
@@ -56,12 +50,11 @@ public class PostMortemStore implements StoreListener {
     public static final class State {
         final ThreadPhantomReference thread;
         public final Traces.Header traceHeader;
-        final List<Event> eventQueue;
-        final BlockingQueue<List<Event>> rawQueue;
+        final BlockingQueue<Event> localQueue;
 
-        State(final BlockingQueue<List<Event>> q, final List<Event> l) {
-            rawQueue = q;
-            eventQueue = l;
+        State() {
+            localQueue = new ArrayBlockingQueue<Event>(
+                    StoreConfiguration.getRawQueueSize());
             thread = Phantom.ofThread(Thread.currentThread());
             traceHeader = Traces.makeHeader();
         }
@@ -82,17 +75,13 @@ public class PostMortemStore implements StoreListener {
     final ThreadLocal<State> tl_withinStore;
 
     State createState() {
-        final List<Event> l = new ArrayList<Event>(LOCAL_QUEUE_MAX);
-        synchronized (localQueueList) {
-            localQueueList.add(l);
-        }
-        return new State(f_rawQueue, l);
+        State state = new State();
+        f_refinery.registerThread(state);
+        return state;
     }
 
     public PostMortemStore() {
-        final int rawQueueSize = StoreConfiguration.getRawQueueSize();
         final int outQueueSize = StoreConfiguration.getOutQueueSize();
-        f_rawQueue = new ArrayBlockingQueue<List<Event>>(rawQueueSize);
         f_outQueue = new ArrayBlockingQueue<List<Event>>(outQueueSize);
         f_gcQueue = new ArrayBlockingQueue<List<? extends IdPhantomReference>>(
                 GC_DRIFT);
@@ -141,7 +130,7 @@ public class PostMortemStore implements StoreListener {
 
         // Initialize Queues
 
-        putInQueue(f_rawQueue, startingEvents);
+        putInQueue(f_outQueue, startingEvents);
         IdPhantomReference
                 .addObserver(new IdPhantomReferenceCreationObserver() {
                     public void notify(final ClassPhantomReference o,
@@ -157,7 +146,7 @@ public class PostMortemStore implements StoreListener {
                 f_outQueue);
         // Start Refinery and Depository
         final int refinerySize = StoreConfiguration.getRefinerySize();
-        f_refinery = new Refinery(this, f_conf, defs, f_gcQueue, f_rawQueue,
+        f_refinery = new PostMortemRefinery(this, f_conf, defs, f_gcQueue,
                 f_outQueue, refinerySize);
         f_refinery.start();
         f_depository = new Depository(f_conf, f_outQueue, outputStrategy);
@@ -272,7 +261,7 @@ public class PostMortemStore implements StoreListener {
         State state = tl_withinStore.get();
         final Event e = new BeforeIntrinsicLockAcquisition(lockObject,
                 lockIsThis, siteId, state);
-        putInQueue(state, e, true);
+        putInQueue(state, e);
     }
 
     public void afterIntrinsicLockAcquisition(final Object lockObject,
@@ -294,7 +283,7 @@ public class PostMortemStore implements StoreListener {
             e = new AfterIntrinsicLockWait(lockObject, siteId, state,
                     lockIsThis);
         }
-        putInQueue(state, e, true);
+        putInQueue(state, e);
 
     }
 
@@ -313,7 +302,7 @@ public class PostMortemStore implements StoreListener {
             final Lock ucLock = (Lock) lockObject;
             final Event e = new BeforeUtilConcurrentLockAcquisitionAttempt(
                     ucLock, siteId, state);
-            putInQueue(state, e, true);
+            putInQueue(state, e);
         } else {
             final String fmt = "lock object must be a java.util.concurrent.locks.Lock...instrumentation bug detected by Store.beforeUtilConcurrentLockAcquisitionAttempt(lockObject=%s, location=%s)";
             f_conf.logAProblem(String.format(fmt, lockObject, siteId));
@@ -370,40 +359,19 @@ public class PostMortemStore implements StoreListener {
          * Finish up data output.
          */
         Thread.yield();
-        putInQueue(f_rawQueue, flushLocalQueues());
+        f_refinery.requestShutdown();
+        join(f_refinery);
         final List<Event> last = new ArrayList<Event>();
         last.add(new Time(new Date(), System.nanoTime()));
         last.add(FinalEvent.FINAL_EVENT);
-        putInQueue(f_rawQueue, last);
-        join(f_refinery);
+        putInQueue(f_outQueue, last);
         join(f_depository);
     }
 
     static final int LOCAL_QUEUE_MAX = 256;
 
-    /**
-     * Used by the refinery to flush all the local queues upon shutdown
-     */
-    final List<List<Event>> localQueueList = new ArrayList<List<Event>>();
-
     public static void putInQueue(final State state, final Event e) {
-        putInQueue(state, e, false);
-    }
-
-    static void putInQueue(final State state, final Event e, final boolean flush) {
-
-        final List<Event> localQ = state.eventQueue;
-        List<Event> copy = null;
-        synchronized (localQ) {
-            localQ.add(e);
-            if (/* flush || */localQ.size() >= LOCAL_QUEUE_MAX) {
-                copy = new ArrayList<Event>(localQ);
-                localQ.clear();
-            }
-        }
-        if (copy != null) {
-            putInQueue(state.rawQueue, copy);
-        }
+        putInQueue(state.localQueue, e);
     }
 
     /**
@@ -433,60 +401,6 @@ public class PostMortemStore implements StoreListener {
         }
         if (interrupted) {
             Thread.currentThread().interrupt();
-        }
-    }
-
-    /**
-     * Clear all of the local queues. This must be called before a checkpoint
-     * event, in order to ensure that we see the entirety of the program in a
-     * consistent state. Without flushing local queues, events on
-     * low-computation threads may sit around for a very long time compared to
-     * high-computation threads.
-     * 
-     * @return
-     */
-    List<Event> flushLocalQueues() {
-        final List<Event> buf = new ArrayList<Event>(LOCAL_QUEUE_MAX);
-        synchronized (localQueueList) {
-            flushLocalQueuesHelper(0, localQueueList, localQueueList.size(),
-                    buf);
-        }
-        return buf;
-    }
-
-    /*
-     * Recursively acquire every lock in the list of local queues. A lock on
-     * queueList must be acquired before this method can be called.
-     */
-    private void flushLocalQueuesHelper(final int index,
-            final List<List<Event>> queueList, final int queueLength,
-            final List<Event> output) {
-        if (index == queueLength) {
-            flushAllQueues(queueList, output);
-        } else {
-            synchronized (queueList.get(index)) {
-                flushLocalQueuesHelper(index + 1, queueList, queueLength,
-                        output);
-            }
-        }
-    }
-
-    /*
-     * A lock must already be held on all queues before this method is called.
-     */
-    private void flushAllQueues(final List<List<Event>> queueList,
-            final List<Event> output) {
-        // We drain the raw queue here too, just in case events have crept back
-        // in since the last time the refinery drained it. We do this first, so
-        // as to preserve the order of events in the same thread.
-        final List<List<Event>> rawEvents = new ArrayList<List<Event>>();
-        f_rawQueue.drainTo(rawEvents);
-        for (final List<Event> e : rawEvents) {
-            output.addAll(e);
-        }
-        for (final List<Event> q : queueList) {
-            output.addAll(q);
-            q.clear();
         }
     }
 

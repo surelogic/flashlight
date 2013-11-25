@@ -1,7 +1,8 @@
 package com.surelogic.flashlight.client.eclipse.preferences;
 
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_OUTQ_SIZE_MAX;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_OUTQ_SIZE_MIN;
-import static com.surelogic._flashlight.common.InstrumentationConstants.FL_QUEUE_SIZE_MAX;
+import static com.surelogic._flashlight.common.InstrumentationConstants.FL_RAWQ_SIZE_MAX;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_RAWQ_SIZE_MIN;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_REFINERY_SIZE_MAX;
 import static com.surelogic._flashlight.common.InstrumentationConstants.FL_REFINERY_SIZE_MIN;
@@ -69,8 +70,7 @@ public class FlashlightInstrumentationWidgets {
         f_rawQSize = new LabeledScaleFieldEditor(
                 FlashlightPreferencesUtility.RAWQ_SIZE,
                 I18N.msg("flashlight.preference.page.rawQSize"), group2);
-        finishScaleSetup(group2, f_rawQSize, FL_RAWQ_SIZE_MIN,
-                FL_QUEUE_SIZE_MAX);
+        finishScaleSetup(group2, f_rawQSize, FL_RAWQ_SIZE_MIN, FL_RAWQ_SIZE_MAX);
 
         f_refinerySize = new LabeledScaleFieldEditor(
                 FlashlightPreferencesUtility.REFINERY_SIZE,
@@ -81,8 +81,7 @@ public class FlashlightInstrumentationWidgets {
         f_outQSize = new LabeledScaleFieldEditor(
                 FlashlightPreferencesUtility.OUTQ_SIZE,
                 I18N.msg("flashlight.preference.page.outQSize"), group2);
-        finishScaleSetup(group2, f_outQSize, FL_OUTQ_SIZE_MIN,
-                FL_QUEUE_SIZE_MAX);
+        finishScaleSetup(group2, f_outQSize, FL_OUTQ_SIZE_MIN, FL_OUTQ_SIZE_MAX);
 
         f_useSpyThread = new BooleanFieldEditor(
                 FlashlightPreferencesUtility.USE_SPY,

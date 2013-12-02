@@ -18,20 +18,22 @@ public class LockInfoPostPrep implements IPostPrep {
         return "Getting package access counts for locks.";
     }
 
-    @Override
-    public void doPostPrep(Connection c, SchemaData schema,
-            SLProgressMonitor mon) throws SQLException {
-        Query q = new ConnectionQuery(c);
+    private void packageAccessCounts(SLProgressMonitor mon, Query q) {
         mon.subTask("Calculating lock package access counts.");
         q.prepared("Accesses.prep.packageAccessCounts").call();
         mon.subTaskDone();
+    }
+
+    private void lockThreadInfo(SLProgressMonitor mon, Query q) {
         mon.subTask("Collecting lock thread information.");
         q.prepared("Accesses.prep.lockThreadInfo").call();
         mon.subTaskDone();
+    }
+
+    private void updateLockTypeCounts(SLProgressMonitor mon, Query q) {
         mon.subTask("Calculating lock type access counts.");
         final Queryable<?> updateTypes = q
                 .prepared("Accesses.prep.updateLockInfoMaxTypes");
-
         q.prepared("Accesses.prep.selectLockInfoMaxTypes",
                 new NullRowHandler() {
 
@@ -39,10 +41,12 @@ public class LockInfoPostPrep implements IPostPrep {
                     protected void doHandle(Row r) {
                         updateTypes.call(r.nextLong(), r.nextLong(),
                                 r.nextString(), r.nextLong());
-
                     }
                 }).call();
         mon.subTaskDone();
+    }
+
+    private void lockPackageAccessCounts(SLProgressMonitor mon, Query q) {
         mon.subTask("Calculating lock package access counts.");
         final Queryable<?> updatePackages = q
                 .prepared("Accesses.prep.updateLockInfoMaxPackages");
@@ -56,5 +60,15 @@ public class LockInfoPostPrep implements IPostPrep {
                     }
                 }).call();
         mon.subTaskDone();
+    }
+
+    @Override
+    public void doPostPrep(Connection c, SchemaData schema,
+            SLProgressMonitor mon) throws SQLException {
+        Query q = new ConnectionQuery(c);
+        packageAccessCounts(mon, q);
+        lockThreadInfo(mon, q);
+        updateLockTypeCounts(mon, q);
+        lockPackageAccessCounts(mon, q);
     }
 }

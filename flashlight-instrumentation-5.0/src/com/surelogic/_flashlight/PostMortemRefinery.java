@@ -56,7 +56,7 @@ public class PostMortemRefinery extends Thread {
     }
 
     void registerThread(PostMortemStore.State state) {
-        f_toRegister.add(new StateReference(state));
+        PostMortemStore.putInQueue(f_toRegister, new StateReference(state));
     }
 
     @Override

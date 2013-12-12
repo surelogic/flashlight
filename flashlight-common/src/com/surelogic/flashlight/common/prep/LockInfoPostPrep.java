@@ -26,7 +26,47 @@ public class LockInfoPostPrep implements IPostPrep {
 
     private void lockThreadInfo(SLProgressMonitor mon, Query q) {
         mon.subTask("Collecting lock thread information.");
-        q.prepared("Accesses.prep.lockThreadInfo").call();
+        final Queryable<Void> insert = q
+                .prepared("Accesses.prep.lockThreadInfo.insert");
+        q.prepared("Accesses.prep.lockThreadInfo.selectForInsert",
+                new NullRowHandler() {
+                    @Override
+                    protected void doHandle(Row r) {
+                        insert.call(r.nextLong(), r.nextString(), r.nextLong(),
+                                r.nextLong(), r.nextLong());
+                    }
+                }).call();
+        final Queryable<Void> updateJUC = q
+                .prepared("Accesses.prep.lockThreadInfo.updateJUC");
+        q.prepared("Accesses.prep.lockThreadInfo.selectForUpdateJUC",
+                new NullRowHandler() {
+                    @Override
+                    protected void doHandle(Row r) {
+                        updateJUC.call(r.nextLong(), r.nextString(),
+                                r.nextLong());
+                    }
+                }).call();
+        final Queryable<Void> updateIntrinsic = q
+                .prepared("Accesses.prep.lockThreadInfo.updateIntrinsic");
+        q.prepared("Accesses.prep.lockThreadInfo.selectForUpdateIntrinsic",
+                new NullRowHandler() {
+                    @Override
+                    protected void doHandle(Row r) {
+                        updateIntrinsic.call(r.nextLong(), r.nextString(),
+                                r.nextLong());
+                    }
+                }).call();
+        final Queryable<Void> updateCount = q
+                .prepared("Accesses.prep.lockThreadInfo.updateCount");
+        q.prepared("Accesses.prep.lockThreadInfo.selectForUpdateCount",
+                new NullRowHandler() {
+
+                    @Override
+                    protected void doHandle(Row r) {
+                        updateCount.call(r.nextLong(), r.nextLong(),
+                                r.nextString(), r.nextLong());
+                    }
+                }).call();
         mon.subTaskDone();
     }
 

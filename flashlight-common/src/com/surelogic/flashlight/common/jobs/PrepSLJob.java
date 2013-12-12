@@ -360,12 +360,12 @@ public final class PrepSLJob extends AbstractSLJob {
             constraintMonitor.begin(constraints.size());
             for (final NullDBTransaction constraint : constraints) {
                 f_database.withTransaction(constraint);
+                if (monitor.isCanceled()) {
+                    f_database.destroy();
+                    return SLStatus.CANCEL_STATUS;
+                }
             }
             constraintMonitor.done();
-            if (monitor.isCanceled()) {
-                f_database.destroy();
-                return SLStatus.CANCEL_STATUS;
-            }
 
             for (final IPostPrep postPrep : postPrepWork) {
                 final SLProgressMonitor postPrepMonitor = new SubSLProgressMonitor(
@@ -383,12 +383,12 @@ public final class PrepSLJob extends AbstractSLJob {
                 } finally {
                     postPrepMonitor.done();
                 }
+                if (monitor.isCanceled()) {
+                    f_database.destroy();
+                    return SLStatus.CANCEL_STATUS;
+                }
             }
 
-            if (monitor.isCanceled()) {
-                f_database.destroy();
-                return SLStatus.CANCEL_STATUS;
-            }
             FlashlightFileUtility.getPrepCompleteFileHandle(
                     f_runDirectory.getDirectory()).createNewFile();
             return SLStatus.OK_STATUS;

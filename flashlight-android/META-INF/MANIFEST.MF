@@ -27,8 +27,7 @@ Require-Bundle: org.eclipse.ui,
  com.surelogic.flashlight.common,
  com.android.ide.eclipse.adt;bundle-version="22.3.0",
  com.android.ide.eclipse.base;bundle-version="22.3.0",
- com.android.ide.eclipse.ddms;bundle-version="22.3.0",
- com.surelogic.flashlight.dex2jar;bundle-version="5.2.0"
+ com.android.ide.eclipse.ddms;bundle-version="22.3.0"
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ClassPath: .

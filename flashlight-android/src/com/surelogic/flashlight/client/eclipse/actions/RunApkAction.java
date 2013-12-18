@@ -39,7 +39,6 @@ import com.surelogic.common.core.JDTUtility;
 import com.surelogic.common.ui.EclipseUIUtility;
 import com.surelogic.flashlight.android.dex.ApkSelectionInfo;
 import com.surelogic.flashlight.android.dex.ApkSelectionWizard;
-import com.surelogic.flashlight.android.dex2jar.DexHelper;
 
 public class RunApkAction implements IWorkbenchWindowActionDelegate {
 
@@ -66,7 +65,7 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
                     File origJar = new File(tmpDir, "orig.jar");
                     File origDir = new File(tmpDir, "orig");
                     // Extract bytecode from package
-                    DexHelper.extractJarFromApk(f, origJar);
+                    // FIXME DexHelper.extractJarFromApk(f, origJar);
                     // Unzip the jar so we can add our instrumentation
                     FileUtility.unzipFile(origJar, origDir);
                     // Instrument the jar

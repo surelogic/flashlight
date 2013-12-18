@@ -11,6 +11,8 @@ import java.util.Properties;
 
 import javax.xml.bind.JAXBException;
 
+import org.eclipse.core.resources.IProject;
+import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.wizard.WizardDialog;
@@ -19,7 +21,10 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 
+import com.android.ide.common.xml.ManifestData;
 import com.android.ide.eclipse.adt.internal.launch.AndroidLaunchController;
+import com.android.ide.eclipse.adt.internal.launch.EmptyLaunchAction;
+import com.android.ide.eclipse.adt.internal.project.AndroidManifestHelper;
 import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic._flashlight.rewriter.InstrumentationFileTranslator;
 import com.surelogic._flashlight.rewriter.PrintWriterMessenger;
@@ -29,6 +34,7 @@ import com.surelogic._flashlight.rewriter.RewriteMessenger;
 import com.surelogic._flashlight.rewriter.config.Configuration;
 import com.surelogic._flashlight.rewriter.config.ConfigurationBuilder;
 import com.surelogic.common.FileUtility;
+import com.surelogic.common.core.EclipseUtility;
 import com.surelogic.common.core.JDTUtility;
 import com.surelogic.common.ui.EclipseUIUtility;
 import com.surelogic.flashlight.android.dex.ApkSelectionInfo;
@@ -83,7 +89,17 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
                     FileUtility.zipDir(outDir, outJar);
                     AndroidLaunchController controller = AndroidLaunchController
                             .getInstance();
+                    IProject project = info.getSelectedProject();
 
+                    ManifestData manifestData = AndroidManifestHelper
+                            .parseForData(project);
+                    controller.launch(project, ILaunchManager.RUN_MODE
+                            .toString(), EclipseUtility.resolveIFile(info
+                            .getApk().toString()), manifestData.getPackage(),
+                            manifestData.getPackage(), manifestData
+                                    .getDebuggable(), manifestData
+                                    .getMinSdkVersionString(),
+                            new EmptyLaunchAction(), null, null, null);
                 } catch (IOException e) {
                     throw new IllegalStateException(e);
                 } catch (AlreadyInstrumentedException e) {

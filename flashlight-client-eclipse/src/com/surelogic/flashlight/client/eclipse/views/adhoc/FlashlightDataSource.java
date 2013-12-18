@@ -149,13 +149,21 @@ public final class FlashlightDataSource extends AdHocManagerAdapter implements I
     job.schedule();
   }
 
+  /**
+   * This flag avoids showing the "you have lots of results" dialog more than
+   * once per session. It can get annoying otherwise. (There is also a
+   * preference that spans sessions.)
+   */
+  boolean f_promptedAboutLotsOfResults = false;
+
   public void notifyResultModelChange(final AdHocManager manager) {
-    if (manager.getHasALotOfSqlDataResults()) {
+    if (manager.getHasALotOfSqlDataResults() && !f_promptedAboutLotsOfResults) {
       if (EclipseUtility.getBooleanPreference(FlashlightPreferencesUtility.PROMPT_ABOUT_LOTS_OF_SAVED_QUERIES)) {
         final UIJob job = new SLUIJob() {
           @Override
           public IStatus runInUIThread(final IProgressMonitor monitor) {
             final boolean doNotPromptAgain = LotsOfSavedQueriesDialog.show();
+            f_promptedAboutLotsOfResults = true;
             if (doNotPromptAgain) {
               EclipseUtility.setBooleanPreference(FlashlightPreferencesUtility.PROMPT_ABOUT_LOTS_OF_SAVED_QUERIES, false);
             }

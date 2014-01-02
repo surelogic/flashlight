@@ -2,8 +2,11 @@ package com.surelogic.flashlight.android.dex2jar;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 
 import com.googlecode.dex2jar.reader.DexFileReader;
+import com.googlecode.dex2jar.tools.ApkSign;
 import com.googlecode.dex2jar.tools.AsmVerify;
 import com.googlecode.dex2jar.v3.Dex2jar;
 import com.googlecode.dex2jar.v3.DexExceptionHandlerImpl;
@@ -41,6 +44,42 @@ public class DexHelper {
             throw new IllegalStateException(e);
         }
         return jar;
+    }
+
+    public static File rewriteApkWithJar(File apk, String runtimePath,
+            File jar, File destDir) throws IOException {
+        File source = new File(destDir, "out.jar");
+        File classes = new File(destDir, "classes.dex");
+        if (classes.exists()) {
+            throw new IllegalStateException(String.format(
+                    "%s already exists.\n", classes));
+        }
+        AsmVerify.main(new String[] { source.getPath() });
+        ProcessBuilder dx = new ProcessBuilder(
+                "/home/nathan/java/android-sdk-linux/build-tools/18.0.1/dx",
+                "--dex", "--no-strict", "--output=" + classes.getPath(),
+                source.getPath(), runtimePath);
+        waitFor(dx.start());
+        File target = new File(destDir, apk.getName());
+        Files.copy(apk.toPath(), target.toPath(),
+                StandardCopyOption.REPLACE_EXISTING);
+        ProcessBuilder zip = new ProcessBuilder("/usr/bin/zip", "-j", "-r",
+                target.getPath(), classes.getPath());
+        waitFor(zip.start());
+        File targetSigned = new File(target.getParentFile(), target.getName()
+                .substring(0, target.getName().indexOf(".apk")) + "-signed.apk");
+        ApkSign.main(new String[] { "-f", "-o", targetSigned.getPath(),
+                target.getPath() });
+        return targetSigned;
+    }
+
+    private static void waitFor(Process p) throws IOException {
+        try {
+            p.waitFor();
+        } catch (InterruptedException e) {
+            waitFor(p);
+            Thread.currentThread().interrupt();
+        }
     }
 
 }

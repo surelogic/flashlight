@@ -70,7 +70,7 @@ public class ProjectSelectionPage extends WizardPage {
 
     void validate() {
         final TableItem[] items = projectTable.getSelection();
-        setPageComplete(items.length > 0);
+        setPageComplete(items.length == 1);
         for (final TableItem item : items) {
             info.setSelectedProject((IProject) item.getData());
         }

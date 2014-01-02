@@ -32,9 +32,17 @@ public class ApkSelectionPage extends WizardPage {
         fe.setPropertyChangeListener(new IPropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent event) {
-                info.setApk(new File((String) event.getNewValue()));
+                File f = new File((String) event.getNewValue());
+                info.setApk(f);
+                validate();
             }
+
         });
         setControl(content);
+        validate();
+    }
+
+    private void validate() {
+        setPageComplete(info.getApk() != null && info.getApk().exists());
     }
 }

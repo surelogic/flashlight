@@ -34,4 +34,8 @@ public class ApkSelectionInfo {
         this.apk = apk;
     }
 
+    public boolean isSelectionValid() {
+        return selectedProject != null && apk != null && apk.exists();
+    }
+
 }

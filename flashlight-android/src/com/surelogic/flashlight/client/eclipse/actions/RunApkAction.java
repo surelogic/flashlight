@@ -11,8 +11,10 @@ import java.util.Properties;
 
 import javax.xml.bind.JAXBException;
 
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
-import org.eclipse.debug.core.ILaunchManager;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.wizard.WizardDialog;
@@ -22,8 +24,12 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 
 import com.android.ide.common.xml.ManifestData;
+import com.android.ide.eclipse.adt.internal.launch.AndroidLaunch;
+import com.android.ide.eclipse.adt.internal.launch.AndroidLaunchConfiguration;
 import com.android.ide.eclipse.adt.internal.launch.AndroidLaunchController;
+import com.android.ide.eclipse.adt.internal.launch.DelayedLaunchInfo;
 import com.android.ide.eclipse.adt.internal.launch.EmptyLaunchAction;
+import com.android.ide.eclipse.adt.internal.launch.IAndroidLaunchAction;
 import com.android.ide.eclipse.adt.internal.project.AndroidManifestHelper;
 import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic._flashlight.rewriter.InstrumentationFileTranslator;
@@ -39,8 +45,22 @@ import com.surelogic.common.core.JDTUtility;
 import com.surelogic.common.ui.EclipseUIUtility;
 import com.surelogic.flashlight.android.dex.ApkSelectionInfo;
 import com.surelogic.flashlight.android.dex.ApkSelectionWizard;
+import com.surelogic.flashlight.android.dex2jar.DexHelper;
+import com.surelogic.flashlight.client.eclipse.Activator;
 
 public class RunApkAction implements IWorkbenchWindowActionDelegate {
+
+    /**
+     * Default launch action. This launches the activity that is setup to be
+     * found in the HOME screen.
+     */
+    public final static int ACTION_DEFAULT = 0;
+    /** Launch action starting a specific activity. */
+    public final static int ACTION_ACTIVITY = 1;
+    /** Launch action that does nothing. */
+    public final static int ACTION_DO_NOTHING = 2;
+    /** Default launch action value. */
+    public final static int DEFAULT_LAUNCH_ACTION = ACTION_DEFAULT;
 
     @Override
     public void run(IAction action) {
@@ -48,9 +68,13 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
         ApkSelectionInfo info = new ApkSelectionInfo(JDTUtility.getProjects());
         ApkSelectionWizard wizard = new ApkSelectionWizard(info);
         WizardDialog wd = new WizardDialog(shell, wizard);
-        if (wd.open() == SWT.OK) {
-            File f = info.getApk();
-            if (f != null && f.exists()) {
+        int flag = wd.open();
+        if (info.isSelectionValid() && flag != SWT.CANCEL) {
+            File apkFile = info.getApk();
+            if (apkFile != null && apkFile.exists()) {
+                IFile apk = EclipseUtility.resolveIFile(apkFile
+                        .getAbsolutePath());
+
                 File tmpDir = null;
                 try {
                     tmpDir = File.createTempFile("flashligh", "dir");
@@ -65,7 +89,7 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
                     File origJar = new File(tmpDir, "orig.jar");
                     File origDir = new File(tmpDir, "orig");
                     // Extract bytecode from package
-                    // FIXME DexHelper.extractJarFromApk(f, origJar);
+                    DexHelper.extractJarFromApk(apkFile, origJar);
                     // Unzip the jar so we can add our instrumentation
                     FileUtility.unzipFile(origJar, origDir);
                     // Instrument the jar
@@ -79,26 +103,46 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
                     dex.addClasspathJar(new File(
                             "/home/nathan/java/android-sdk-linux/platforms/android-15/android.jar"));
                     Map<String, Map<String, Boolean>> execute = dex.execute();
-                    String runId = f.getName()
+                    String runId = apk.getName()
                             + new SimpleDateFormat(
                                     InstrumentationConstants.DATE_FORMAT)
                                     .format(new Date())
                             + InstrumentationConstants.ANDROID_LAUNCH_SUFFIX;
                     createInfoClasses(runId, outDir, fieldsFile, sitesFile);
                     FileUtility.zipDir(outDir, outJar);
+                    File newApk = DexHelper.rewriteApkWithJar(apkFile,
+                            getRuntimeJarPath(), outJar, tmpDir);
+
+                    //
+                    //
+                    //
+                    //
+                    //
                     AndroidLaunchController controller = AndroidLaunchController
                             .getInstance();
                     IProject project = info.getSelectedProject();
+                    AndroidLaunchConfiguration config = new AndroidLaunchConfiguration();
 
+                    AndroidLaunch launch = new AndroidLaunch(null, "run", null);
                     ManifestData manifestData = AndroidManifestHelper
                             .parseForData(project);
-                    controller.launch(project, ILaunchManager.RUN_MODE
-                            .toString(), EclipseUtility.resolveIFile(info
-                            .getApk().toString()), manifestData.getPackage(),
-                            manifestData.getPackage(), manifestData
-                                    .getDebuggable(), manifestData
-                                    .getMinSdkVersionString(),
-                            new EmptyLaunchAction(), null, null, null);
+                    manifestData.getLauncherActivity();
+                    IAndroidLaunchAction launchAction = new EmptyLaunchAction();
+
+                    new DelayedLaunchInfo(project, manifestData.getPackage(),
+                            manifestData.getPackage(), launchAction, apk,
+                            manifestData.getDebuggable(),
+                            manifestData.getMinSdkVersionString(), launch,
+                            new NullProgressMonitor());
+
+                    /*
+                     * controller.launch(project, ILaunchManager.RUN_MODE
+                     * .toString(), EclipseUtility.resolveIFile(info
+                     * .getApk().toString()), manifestData.getPackage(),
+                     * manifestData.getPackage(), manifestData .getDebuggable(),
+                     * manifestData .getMinSdkVersionString(), new
+                     * EmptyLaunchAction(), config, launch, null);
+                     */
                 } catch (IOException e) {
                     throw new IllegalStateException(e);
                 } catch (AlreadyInstrumentedException e) {
@@ -206,5 +250,16 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
         File sitesClass = new File(infoDir,
                 InstrumentationConstants.FL_SITES_CLASS);
         InstrumentationFileTranslator.writeSites(sitesFile, sitesClass);
+    }
+
+    private static String getRuntimeJarPath() {
+        final IPath bundleBase = Activator.getDefault().getBundleLocation();
+        if (bundleBase != null) {
+            String name = "lib/flashlight-runtime.jar";
+            final IPath jarLocation = bundleBase.append(name);
+            return jarLocation.toOSString();
+        } else {
+            throw new IllegalStateException("No bundle location found.");
+        }
     }
 }

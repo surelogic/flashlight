@@ -46,31 +46,49 @@ public class DexHelper {
         return jar;
     }
 
+    /**
+     * 
+     * @param apk
+     *            the apk to rewrite
+     * @param runtimePath
+     *            location of the flashlight runtime
+     * @param jar
+     *            the jar to replace in the apk
+     * @param destDir
+     *            the folder to place the new apk in
+     * @return the location of the new apk
+     * @throws IOException
+     */
     public static File rewriteApkWithJar(File apk, String runtimePath,
             File jar, File destDir) throws IOException {
-        File source = new File(destDir, "out.jar");
         File classes = new File(destDir, "classes.dex");
         if (classes.exists()) {
             throw new IllegalStateException(String.format(
                     "%s already exists.\n", classes));
         }
-        AsmVerify.main(new String[] { source.getPath() });
-        ProcessBuilder dx = new ProcessBuilder(
-                "/home/nathan/java/android-sdk-linux/build-tools/18.0.1/dx",
-                "--dex", "--no-strict", "--output=" + classes.getPath(),
-                source.getPath(), runtimePath);
-        waitFor(dx.start());
-        File target = new File(destDir, apk.getName());
-        Files.copy(apk.toPath(), target.toPath(),
-                StandardCopyOption.REPLACE_EXISTING);
-        ProcessBuilder zip = new ProcessBuilder("/usr/bin/zip", "-j", "-r",
-                target.getPath(), classes.getPath());
-        waitFor(zip.start());
-        File targetSigned = new File(target.getParentFile(), target.getName()
-                .substring(0, target.getName().indexOf(".apk")) + "-signed.apk");
-        ApkSign.main(new String[] { "-f", "-o", targetSigned.getPath(),
-                target.getPath() });
-        return targetSigned;
+        try {
+            AsmVerify.main(new String[] { jar.getPath() });
+            // FIXME locate the build tools used by android
+            ProcessBuilder dx = new ProcessBuilder(
+                    "/home/nathan/java/android-sdk-linux/build-tools/18.0.1/dx",
+                    "--dex", "--no-strict", "--output=" + classes.getPath(),
+                    jar.getPath(), runtimePath);
+            waitFor(dx.start());
+            File target = new File(destDir, apk.getName());
+            Files.copy(apk.toPath(), target.toPath(),
+                    StandardCopyOption.REPLACE_EXISTING);
+            ProcessBuilder zip = new ProcessBuilder("/usr/bin/zip", "-j", "-r",
+                    target.getPath(), classes.getPath());
+            waitFor(zip.start());
+            File targetSigned = new File(target.getParentFile(), target
+                    .getName().substring(0, target.getName().indexOf(".apk"))
+                    + "-signed.apk");
+            ApkSign.main(new String[] { "-f", "-o", targetSigned.getPath(),
+                    target.getPath() });
+            return targetSigned;
+        } finally {
+            classes.delete();
+        }
     }
 
     private static void waitFor(Process p) throws IOException {

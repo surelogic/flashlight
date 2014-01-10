@@ -31,4 +31,5 @@ Require-Bundle: org.eclipse.ui,
  com.android.ide.eclipse.ddms;bundle-version="22.3.0"
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
-Bundle-ClassPath: .
+Bundle-ClassPath: .,
+ lib/apktool.jar

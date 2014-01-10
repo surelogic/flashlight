@@ -134,15 +134,31 @@ public class ReadFlashlightStreamJob extends AbstractSLJob {
                     parser.parse(in, h);
                     h.streamFinished();
                 } catch (Exception exc) {
-                    boolean success = h.streamBroken();
-                    if (success
-                            && (exc instanceof SAXParseException || exc instanceof EOFException)) {
-                        // This is going to fail a lot, so we aren't going to
-                        // report anything here.
-                        SLLogger.getLoggerFor(ReadFlashlightStreamJob.class)
-                                .log(Level.FINE, exc.getMessage(), e);
+                    if (!h.isStarted) {
+                        // Let's just try this from the top, shall we?
+                        f_pastAttemptsLog
+                                .append(getTStamp()
+                                        + " Flashlight Android FAILURE of socket read (localhost:"
+                                        + f_port + ")...retrying in "
+                                        + RETRY_DELAY_MS + " ms \n");
+                        EclipseUtility.toEclipseJob(
+                                new ReadFlashlightStreamJob(f_runId, f_dir,
+                                        f_port, f_device, f_retries - 1,
+                                        f_pastAttemptsLog), f_dir.toString())
+                                .schedule(RETRY_DELAY_MS);
+                        return SLStatus.OK_STATUS;
                     } else {
-                        e = exc;
+                        boolean success = h.streamBroken();
+                        if (success
+                                && (exc instanceof SAXParseException || exc instanceof EOFException)) {
+                            // This is going to fail a lot, so we aren't going
+                            // to
+                            // report anything here.
+                            SLLogger.getLoggerFor(ReadFlashlightStreamJob.class)
+                                    .log(Level.FINE, exc.getMessage(), e);
+                        } else {
+                            e = exc;
+                        }
                     }
                 }
             } finally {
@@ -178,6 +194,7 @@ public class ReadFlashlightStreamJob extends AbstractSLJob {
         private boolean f_haveTime;
         private long f_time;
         private long f_lastTime;
+        private boolean isStarted;
 
         public CheckpointingEventHandler(final OutputType type)
                 throws IOException {
@@ -193,13 +210,20 @@ public class ReadFlashlightStreamJob extends AbstractSLJob {
             new File(f_dir, InstrumentationConstants.FL_PROJECTS_FOLDER_LOC)
                     .mkdirs();
             f_buf = new StringBuilder();
-            nextStream(true);
         }
 
         @Override
         public void startElement(final String uri, final String localName,
                 final String qName, final Attributes attributes)
                 throws SAXException {
+            if (!isStarted) {
+                try {
+                    nextStream(true);
+                } catch (IOException e) {
+                    throw new SAXException(e);
+                }
+            }
+            isStarted = true;
             PrepEvent event = PrepEvent.getEvent(qName);
             Entities.start(event.getXmlName(), f_buf);
             int size = attributes.getLength();

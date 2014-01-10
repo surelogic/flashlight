@@ -9,14 +9,15 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Map;
 import java.util.Properties;
+import java.util.zip.ZipFile;
 
 import javax.xml.bind.JAXBException;
 
 import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.action.IAction;
@@ -33,9 +34,13 @@ import com.android.ddmlib.IDevice;
 import com.android.ddmlib.InstallException;
 import com.android.ddmlib.TimeoutException;
 import com.android.ide.common.xml.ManifestData;
+import com.android.ide.common.xml.ManifestData.Activity;
 import com.android.ide.eclipse.adt.AdtPlugin;
+import com.android.ide.eclipse.adt.internal.launch.ActivityLaunchAction;
 import com.android.ide.eclipse.adt.internal.launch.AndroidLaunchConfiguration;
 import com.android.ide.eclipse.adt.internal.launch.AndroidLaunchConfiguration.TargetMode;
+import com.android.ide.eclipse.adt.internal.launch.AndroidLaunchController;
+import com.android.ide.eclipse.adt.internal.launch.DelayedLaunchInfo;
 import com.android.ide.eclipse.adt.internal.launch.DeviceChooserDialog;
 import com.android.ide.eclipse.adt.internal.launch.DeviceChooserDialog.DeviceChooserResponse;
 import com.android.ide.eclipse.adt.internal.project.AndroidManifestHelper;
@@ -60,6 +65,7 @@ import com.surelogic.common.ui.EclipseUIUtility;
 import com.surelogic.flashlight.android.dex.ApkSelectionInfo;
 import com.surelogic.flashlight.android.dex.ApkSelectionWizard;
 import com.surelogic.flashlight.android.dex2jar.DexHelper;
+import com.surelogic.flashlight.android.jobs.ReadFlashlightStreamJob;
 import com.surelogic.flashlight.client.eclipse.Activator;
 import com.surelogic.flashlight.client.eclipse.jobs.WatchFlashlightMonitorJob;
 import com.surelogic.flashlight.client.eclipse.views.monitor.MonitorStatus;
@@ -86,12 +92,17 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
         WizardDialog wd = new WizardDialog(shell, wizard);
         int flag = wd.open();
         if (info.isSelectionValid() && flag != SWT.CANCEL) {
-            IProject project = info.getSelectedProject();
             File apkFile = info.getApk();
-            if (project != null && apkFile != null && apkFile.exists()) {
+            if (apkFile != null && apkFile.exists()) {
                 IFile apk = EclipseUtility.resolveIFile(apkFile
                         .getAbsolutePath());
-                String runId = apk.getName()
+
+                String apkName = apk.getName();
+                int idx = apkName.indexOf('.');
+                if (idx > 0) {
+                    apkName = apkName.substring(0, idx);
+                }
+                String runId = apkName
                         + new SimpleDateFormat(
                                 InstrumentationConstants.DATE_FORMAT)
                                 .format(new Date())
@@ -100,11 +111,10 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
                 try {
                     data = new RunData(runId);
                     try {
-                        File outDir = new File(data.infoDir, "out");
-                        File outJar = new File(data.infoDir, "out.jar");
+                        File outJar = new File(data.tmpDir, "out.jar");
 
-                        File origJar = new File(data.infoDir, "orig.jar");
-                        File origDir = new File(data.infoDir, "orig");
+                        File origJar = new File(data.tmpDir, "orig.jar");
+                        File origDir = new File(data.tmpDir, "orig");
                         // Extract bytecode from package
                         DexHelper.extractJarFromApk(apkFile, origJar);
                         // Unzip the jar so we can add our instrumentation
@@ -114,22 +124,32 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
                                 new PrintWriterMessenger(new PrintWriter(
                                         System.out)), data.fieldsFile,
                                 data.sitesFile, data.classesFile, data.hbFile);
-                        dex.addDirToDir(origDir, outDir);
+                        dex.addDirToDir(origDir, data.classesDir);
                         dex.addClasspathJar(new File(
                                 "/home/nathan/java/android-sdk-linux/platforms/android-15/android.jar"));
                         Map<String, Map<String, Boolean>> execute = dex
                                 .execute();
-
                         createInfoClasses(data);
-                        FileUtility.zipDir(outDir, outJar);
+                        FileUtility.zipDir(data.classesDir, outJar);
                         File newApk = DexHelper.rewriteApkWithJar(apkFile,
                                 getRuntimeJarPath(), outJar, data.runDir);
 
                         Sdk sdk = Sdk.getCurrent();
                         IAndroidTarget projectTarget = sdk.getTarget(info
                                 .getSelectedProject());
+                        ZipFile zf = new ZipFile(apkFile);
+                        File manifestFile = new File(data.tmpDir,
+                                "AndroidManifest.xml");
+                        try {
+                            FileUtility.copy("AndroidManifest.xml", zf
+                                    .getInputStream(zf
+                                            .getEntry("AndroidManifest.xml")),
+                                    manifestFile);
+                        } finally {
+                            zf.close();
+                        }
                         ManifestData manifestData = AndroidManifestHelper
-                                .parseForData(project);
+                                .parseForData(manifestFile.getAbsolutePath());
 
                         AndroidVersion minApiVersion;
                         minApiVersion = new AndroidVersion(
@@ -139,7 +159,10 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
                                 shell, response, "", projectTarget,
                                 minApiVersion);
                         if (dialog.open() == Window.OK) {
-                            IDevice device = launch(response, newApk);
+                            IDevice device = launch(response,
+                                    EclipseUtility.resolveIFile(newApk
+                                            .getAbsolutePath()), manifestData);
+
                             data.device = device;
                             new ConnectToProjectJob(data).schedule();
                         }
@@ -192,7 +215,8 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
         }
     }
 
-    private IDevice launch(DeviceChooserResponse response, File apk) {
+    private IDevice launch(DeviceChooserResponse response, IFile apk,
+            ManifestData manifestData) {
         // FIXME make this configurable
         AndroidLaunchConfiguration config = new AndroidLaunchConfiguration();
         config.mAvdName = null;
@@ -214,14 +238,26 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
             // TODO finish setting up emulator
         } else if (device != null) {
             try {
-                device.installPackage(apk.getAbsolutePath(), true);
+                device.installPackage(apk.getLocation().toOSString(), true);
                 return device;
                 // FIXME more clear exception handling
             } catch (InstallException e) {
                 throw new RuntimeException(e);
             }
         }
-        return null;
+        Activity launcherActivity = manifestData.getLauncherActivity();
+        if (launcherActivity != null) {
+            String activityName = launcherActivity.getName();
+            ActivityLaunchAction action = new ActivityLaunchAction(
+                    activityName, AndroidLaunchController.getInstance());
+            DelayedLaunchInfo info = new DelayedLaunchInfo(null,
+                    manifestData.getPackage(), manifestData.getPackage(),
+                    action, apk, manifestData.getDebuggable(),
+                    manifestData.getMinSdkVersionString(), null,
+                    new NullProgressMonitor());
+            action.doLaunchAction(info, device);
+        }
+        return device;
 
     }
 
@@ -288,7 +324,7 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
     }
 
     public static RunData createInfoClasses(RunData data) throws IOException {
-        File infoClassDest = new File(data.infoDir,
+        File infoClassDest = new File(data.classesDir,
                 InstrumentationConstants.FL_PROPERTIES_CLASS);
         infoClassDest.getParentFile().mkdirs();
         Properties props = new Properties();
@@ -313,11 +349,11 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
                 Boolean.toString(true));
         InstrumentationFileTranslator.writeProperties(props, infoClassDest);
 
-        File fieldsClass = new File(data.infoDir,
+        File fieldsClass = new File(data.classesDir,
                 InstrumentationConstants.FL_FIELDS_CLASS);
         InstrumentationFileTranslator.writeFields(data.fieldsFile, fieldsClass);
 
-        File sitesClass = new File(data.infoDir,
+        File sitesClass = new File(data.classesDir,
                 InstrumentationConstants.FL_SITES_CLASS);
         InstrumentationFileTranslator.writeSites(data.sitesFile, sitesClass);
         return data;
@@ -339,6 +375,7 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
         private final int consolePort;
         private final int outputPort;
         public final String runId;
+        private final File classesDir;
         private final File runDir;
         private final File sourceDir;
         private final File apkFolder;
@@ -348,7 +385,7 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
         private final File classesFile;
         private final File hbFile;
         private final File portFile;
-        private final File infoDir;
+        private final File tmpDir;
 
         RunData(String runId) throws IOException {
             consolePort = InstrumentationConstants.FL_CONSOLE_PORT_DEFAULT;
@@ -374,12 +411,21 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
                     InstrumentationConstants.FL_HAPPENS_BEFORE_FILE_LOC);
             portFile = new File(runDir,
                     InstrumentationConstants.FL_PORT_FILE_LOC);
-            infoDir = File.createTempFile("fl_info_", "dir");
-            infoDir.delete();
+            PrintWriter writer = new PrintWriter(portFile);
+            try {
+                writer.println(consolePort);
+            } finally {
+                writer.close();
+            }
+            tmpDir = File.createTempFile("fl_tmp", "dir");
+            tmpDir.delete();
+            tmpDir.mkdir();
+            classesDir = new File(tmpDir, "classes");
+            classesDir.mkdir();
         }
 
         public void deleteTempFiles() {
-            FileUtility.recursiveDelete(infoDir);
+            FileUtility.recursiveDelete(tmpDir);
         }
 
     }
@@ -393,7 +439,6 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
             this.data = data;
         }
 
-        @SuppressWarnings("restriction")
         @Override
         protected IStatus run(final IProgressMonitor monitor) {
             try {
@@ -410,9 +455,9 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
                     .toEclipseJob(
                             new WatchFlashlightMonitorJob(new MonitorStatus(
                                     data.runId))).schedule();
-            // FIXME ReadLogcatJob doesn't work right now
-            // EclipseUtility.toEclipseJob(
-            // new ReadLogcatJob(data.runId, id)).schedule();
+            EclipseUtility.toEclipseJob(
+                    new ReadFlashlightStreamJob(data.runId, data.runDir,
+                            data.outputPort, data.device)).schedule();
             return Status.OK_STATUS;
         }
     }

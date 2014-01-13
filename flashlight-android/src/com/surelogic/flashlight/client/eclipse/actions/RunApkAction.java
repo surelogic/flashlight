@@ -29,6 +29,9 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 
+import brut.apktool.Main;
+import brut.common.BrutException;
+
 import com.android.ddmlib.AdbCommandRejectedException;
 import com.android.ddmlib.IDevice;
 import com.android.ddmlib.InstallException;
@@ -148,9 +151,12 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
                         } finally {
                             zf.close();
                         }
+                        /*
+                         * ManifestData manifestData = AndroidManifestHelper
+                         * .parseForData(manifestFile.getAbsolutePath());
+                         */
                         ManifestData manifestData = AndroidManifestHelper
-                                .parseForData(manifestFile.getAbsolutePath());
-
+                                .parseForData(info.getSelectedProject());
                         AndroidVersion minApiVersion;
                         minApiVersion = new AndroidVersion(
                                 manifestData.getMinSdkVersionString());
@@ -159,9 +165,8 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
                                 shell, response, "", projectTarget,
                                 minApiVersion);
                         if (dialog.open() == Window.OK) {
-                            IDevice device = launch(response,
-                                    EclipseUtility.resolveIFile(newApk
-                                            .getAbsolutePath()), manifestData);
+                            IDevice device = launch(response, newApk,
+                                    manifestData);
 
                             data.device = device;
                             new ConnectToProjectJob(data).schedule();
@@ -215,7 +220,7 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
         }
     }
 
-    private IDevice launch(DeviceChooserResponse response, IFile apk,
+    private IDevice launch(DeviceChooserResponse response, File apk,
             ManifestData manifestData) {
         // FIXME make this configurable
         AndroidLaunchConfiguration config = new AndroidLaunchConfiguration();
@@ -238,7 +243,7 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
             // TODO finish setting up emulator
         } else if (device != null) {
             try {
-                device.installPackage(apk.getLocation().toOSString(), true);
+                device.installPackage(apk.getAbsolutePath(), true);
                 return device;
                 // FIXME more clear exception handling
             } catch (InstallException e) {
@@ -252,7 +257,8 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
                     activityName, AndroidLaunchController.getInstance());
             DelayedLaunchInfo info = new DelayedLaunchInfo(null,
                     manifestData.getPackage(), manifestData.getPackage(),
-                    action, apk, manifestData.getDebuggable(),
+                    action, EclipseUtility.resolveIFile(apk.getAbsolutePath()),
+                    manifestData.getDebuggable(),
                     manifestData.getMinSdkVersionString(), null,
                     new NullProgressMonitor());
             action.doLaunchAction(info, device);
@@ -428,6 +434,12 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
             FileUtility.recursiveDelete(tmpDir);
         }
 
+    }
+
+    public static void main(String[] args) throws IOException,
+            InterruptedException, BrutException {
+        Main.main(new String[] { "apktool", "d",
+                "/home/nathan/tmp/FlashlightTutorial_CounterRace.apk" });
     }
 
     private static final class ConnectToProjectJob extends Job {

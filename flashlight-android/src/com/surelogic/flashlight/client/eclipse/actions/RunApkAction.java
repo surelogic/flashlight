@@ -3,9 +3,11 @@ package com.surelogic.flashlight.client.eclipse.actions;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
 import java.util.Properties;
@@ -14,6 +16,8 @@ import java.util.zip.ZipFile;
 import javax.xml.bind.JAXBException;
 
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -39,6 +43,7 @@ import com.android.ddmlib.TimeoutException;
 import com.android.ide.common.xml.ManifestData;
 import com.android.ide.common.xml.ManifestData.Activity;
 import com.android.ide.eclipse.adt.AdtPlugin;
+import com.android.ide.eclipse.adt.internal.build.DexWrapper;
 import com.android.ide.eclipse.adt.internal.launch.ActivityLaunchAction;
 import com.android.ide.eclipse.adt.internal.launch.AndroidLaunchConfiguration;
 import com.android.ide.eclipse.adt.internal.launch.AndroidLaunchConfiguration.TargetMode;
@@ -68,6 +73,7 @@ import com.surelogic.common.ui.EclipseUIUtility;
 import com.surelogic.flashlight.android.dex.ApkSelectionInfo;
 import com.surelogic.flashlight.android.dex.ApkSelectionWizard;
 import com.surelogic.flashlight.android.dex2jar.DexHelper;
+import com.surelogic.flashlight.android.dex2jar.DexHelper.DexTool;
 import com.surelogic.flashlight.android.jobs.ReadFlashlightStreamJob;
 import com.surelogic.flashlight.client.eclipse.Activator;
 import com.surelogic.flashlight.client.eclipse.jobs.WatchFlashlightMonitorJob;
@@ -86,6 +92,14 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
     public final static int ACTION_DO_NOTHING = 2;
     /** Default launch action value. */
     public final static int DEFAULT_LAUNCH_ACTION = ACTION_DEFAULT;
+
+    File getManifest(File apk, File tmpDir) throws IOException,
+            InterruptedException, BrutException {
+        File output = new File(tmpDir, "decompressed-apk");
+        Main.main(new String[] { "apktool", "d", "--no-src",
+                apk.getAbsolutePath(), output.getAbsolutePath() });
+        return new File(output, "AndroidManifest.xml");
+    }
 
     @Override
     public void run(IAction action) {
@@ -134,10 +148,13 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
                                 .execute();
                         createInfoClasses(data);
                         FileUtility.zipDir(data.classesDir, outJar);
-                        File newApk = DexHelper.rewriteApkWithJar(apkFile,
+                        Sdk sdk = Sdk.getCurrent();
+                        DexWrapper dexWrapper = sdk.getDexWrapper(sdk
+                                .getLatestBuildTool());
+                        File newApk = DexHelper.rewriteApkWithJar(
+                                new DexToolWrapper(), apkFile,
                                 getRuntimeJarPath(), outJar, data.runDir);
 
-                        Sdk sdk = Sdk.getCurrent();
                         IAndroidTarget projectTarget = sdk.getTarget(info
                                 .getSelectedProject());
                         ZipFile zf = new ZipFile(apkFile);
@@ -151,12 +168,11 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
                         } finally {
                             zf.close();
                         }
-                        /*
-                         * ManifestData manifestData = AndroidManifestHelper
-                         * .parseForData(manifestFile.getAbsolutePath());
-                         */
+
                         ManifestData manifestData = AndroidManifestHelper
-                                .parseForData(info.getSelectedProject());
+                                .parseForData(EclipseUtility
+                                        .resolveIFile(getManifest(apkFile,
+                                                data.tmpDir).getAbsolutePath()));
                         AndroidVersion minApiVersion;
                         minApiVersion = new AndroidVersion(
                                 manifestData.getMinSdkVersionString());
@@ -165,50 +181,23 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
                                 shell, response, "", projectTarget,
                                 minApiVersion);
                         if (dialog.open() == Window.OK) {
-                            IDevice device = launch(response, newApk,
-                                    manifestData);
-
+                            IDevice device = launch(info.getSelectedProject(),
+                                    response, newApk, manifestData);
                             data.device = device;
                             new ConnectToProjectJob(data).schedule();
                         }
-                        //
-                        //
-                        //
-                        //
-                        //
-                        /*
-                         * AndroidLaunchController controller =
-                         * AndroidLaunchController .getInstance();
-                         * AndroidLaunchConfiguration config = new
-                         * AndroidLaunchConfiguration();
-                         * 
-                         * AndroidLaunch launch = new AndroidLaunch(null, "run",
-                         * null);
-                         * 
-                         * manifestData.getLauncherActivity();
-                         * IAndroidLaunchAction launchAction = new
-                         * EmptyLaunchAction();
-                         * 
-                         * new DelayedLaunchInfo(project,
-                         * manifestData.getPackage(), manifestData.getPackage(),
-                         * launchAction, apk, manifestData.getDebuggable(),
-                         * manifestData.getMinSdkVersionString(), launch, new
-                         * NullProgressMonitor());
-                         * 
-                         * 
-                         * controller.launch(project, ILaunchManager.RUN_MODE
-                         * .toString(), EclipseUtility.resolveIFile(info
-                         * .getApk().toString()), manifestData.getPackage(),
-                         * manifestData.getPackage(), manifestData
-                         * .getDebuggable(), manifestData
-                         * .getMinSdkVersionString(), new EmptyLaunchAction(),
-                         * config, launch, null);
-                         */
+
                     } catch (AndroidVersionException e) {
                         throw new IllegalStateException(e);
                     } catch (IOException e) {
                         throw new IllegalStateException(e);
                     } catch (AlreadyInstrumentedException e) {
+                        throw new IllegalStateException(e);
+                    } catch (InterruptedException e) {
+                        throw new IllegalStateException(e);
+                    } catch (BrutException e) {
+                        throw new IllegalStateException(e);
+                    } catch (CoreException e) {
                         throw new IllegalStateException(e);
                     } finally {
                         data.deleteTempFiles();
@@ -220,8 +209,8 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
         }
     }
 
-    private IDevice launch(DeviceChooserResponse response, File apk,
-            ManifestData manifestData) {
+    private IDevice launch(IProject project, DeviceChooserResponse response,
+            File apk, ManifestData manifestData) {
         // FIXME make this configurable
         AndroidLaunchConfiguration config = new AndroidLaunchConfiguration();
         config.mAvdName = null;
@@ -255,7 +244,7 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
             String activityName = launcherActivity.getName();
             ActivityLaunchAction action = new ActivityLaunchAction(
                     activityName, AndroidLaunchController.getInstance());
-            DelayedLaunchInfo info = new DelayedLaunchInfo(null,
+            DelayedLaunchInfo info = new DelayedLaunchInfo(project,
                     manifestData.getPackage(), manifestData.getPackage(),
                     action, EclipseUtility.resolveIFile(apk.getAbsolutePath()),
                     manifestData.getDebuggable(),
@@ -280,6 +269,24 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
     @Override
     public void init(IWorkbenchWindow window) {
         // Do Nothing
+    }
+
+    class DexToolWrapper implements DexTool {
+        private final DexWrapper dexWrapper;
+
+        DexToolWrapper() {
+            Sdk sdk = Sdk.getCurrent();
+            dexWrapper = sdk.getDexWrapper(sdk.getLatestBuildTool());
+        }
+
+        @Override
+        public int run(String osOutFilePath, Collection<String> osFilenames,
+                boolean forceJumbo, boolean verbose, PrintStream outStream,
+                PrintStream errStream) throws CoreException {
+            return dexWrapper.run(osOutFilePath, osFilenames, forceJumbo,
+                    verbose, outStream, errStream);
+        }
+
     }
 
     static class DexRewriter extends RewriteManager {

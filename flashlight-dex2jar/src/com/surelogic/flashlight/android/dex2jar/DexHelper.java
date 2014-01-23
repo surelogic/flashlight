@@ -13,7 +13,6 @@ import com.googlecode.dex2jar.tools.ApkSign;
 import com.googlecode.dex2jar.tools.AsmVerify;
 import com.googlecode.dex2jar.v3.Dex2jar;
 import com.googlecode.dex2jar.v3.DexExceptionHandlerImpl;
-import com.surelogic.common.FileUtility;
 
 public class DexHelper {
 

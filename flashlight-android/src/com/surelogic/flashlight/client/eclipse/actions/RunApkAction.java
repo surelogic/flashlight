@@ -11,7 +11,6 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
 import java.util.Properties;
-import java.util.zip.ZipFile;
 
 import javax.xml.bind.JAXBException;
 
@@ -33,6 +32,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 
+import brut.androlib.ApkDecoder;
 import brut.apktool.Main;
 import brut.common.BrutException;
 
@@ -92,12 +92,17 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
     public final static int ACTION_DO_NOTHING = 2;
     /** Default launch action value. */
     public final static int DEFAULT_LAUNCH_ACTION = ACTION_DEFAULT;
+    private static final short ADECODE_SOURCES_NONE = 0x0000;
 
     File getManifest(File apk, File tmpDir) throws IOException,
             InterruptedException, BrutException {
         File output = new File(tmpDir, "decompressed-apk");
-        Main.main(new String[] { "apktool", "d", "--no-src",
-                apk.getAbsolutePath(), output.getAbsolutePath() });
+        /* apktool d --no-src apk output */
+        ApkDecoder decoder = new ApkDecoder();
+        decoder.setDecodeSources(ADECODE_SOURCES_NONE);
+        decoder.setApkFile(apk);
+        decoder.setOutDir(output);
+        decoder.decode();
         return new File(output, "AndroidManifest.xml");
     }
 
@@ -157,17 +162,6 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
 
                         IAndroidTarget projectTarget = sdk.getTarget(info
                                 .getSelectedProject());
-                        ZipFile zf = new ZipFile(apkFile);
-                        File manifestFile = new File(data.tmpDir,
-                                "AndroidManifest.xml");
-                        try {
-                            FileUtility.copy("AndroidManifest.xml", zf
-                                    .getInputStream(zf
-                                            .getEntry("AndroidManifest.xml")),
-                                    manifestFile);
-                        } finally {
-                            zf.close();
-                        }
 
                         ManifestData manifestData = AndroidManifestHelper
                                 .parseForData(EclipseUtility

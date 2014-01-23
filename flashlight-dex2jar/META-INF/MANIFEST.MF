@@ -5,8 +5,7 @@ Bundle-SymbolicName: com.surelogic.flashlight.dex2jar;singleton:=true
 Bundle-Version: 5.2.0.qualifier
 Bundle-Activator: com.surelogic.flashlight.android.dex2jar.Activator
 Require-Bundle: org.eclipse.ui,
- org.eclipse.core.runtime,
- com.surelogic.common
+ org.eclipse.core.runtime
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: lib/asm-all-3.3.1.jar,

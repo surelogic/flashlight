@@ -54,7 +54,6 @@ import com.android.ide.eclipse.adt.internal.launch.DeviceChooserDialog.DeviceCho
 import com.android.ide.eclipse.adt.internal.project.AndroidManifestHelper;
 import com.android.ide.eclipse.adt.internal.sdk.Sdk;
 import com.android.sdklib.AndroidVersion;
-import com.android.sdklib.AndroidVersion.AndroidVersionException;
 import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.internal.avd.AvdInfo;
 import com.surelogic._flashlight.common.InstrumentationConstants;
@@ -77,6 +76,7 @@ import com.surelogic.flashlight.android.dex2jar.DexHelper.DexTool;
 import com.surelogic.flashlight.android.jobs.ReadFlashlightStreamJob;
 import com.surelogic.flashlight.client.eclipse.Activator;
 import com.surelogic.flashlight.client.eclipse.jobs.WatchFlashlightMonitorJob;
+import com.surelogic.flashlight.client.eclipse.model.RunManager;
 import com.surelogic.flashlight.client.eclipse.views.monitor.MonitorStatus;
 
 public class RunApkAction implements IWorkbenchWindowActionDelegate {
@@ -129,6 +129,8 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
                                 InstrumentationConstants.DATE_FORMAT)
                                 .format(new Date())
                         + InstrumentationConstants.ANDROID_LAUNCH_SUFFIX;
+                RunManager.getInstance()
+                        .notifyPerformingInstrumentationAndLaunch(runId);
                 RunData data;
                 try {
                     data = new RunData(runId);
@@ -144,7 +146,7 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
                         // Instrument the jar
                         DexRewriter dex = new DexRewriter(buildConfiguration(),
                                 new PrintWriterMessenger(new PrintWriter(
-                                        System.out)), data.fieldsFile,
+                                        data.log)), data.fieldsFile,
                                 data.sitesFile, data.classesFile, data.hbFile);
                         dex.addDirToDir(origDir, data.classesDir);
                         dex.addClasspathJar(new File(
@@ -164,11 +166,11 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
                                 .getSelectedProject());
 
                         ManifestData manifestData = AndroidManifestHelper
-                                .parseForData(EclipseUtility
-                                        .resolveIFile(getManifest(apkFile,
-                                                data.tmpDir).getAbsolutePath()));
-                        AndroidVersion minApiVersion;
-                        minApiVersion = new AndroidVersion(
+                                .parseForData(getManifest(apkFile, data.tmpDir)
+                                        .getAbsolutePath());
+
+                        AndroidVersion minApiVersion = new AndroidVersion(
+                                manifestData.getMinSdkVersion(),
                                 manifestData.getMinSdkVersionString());
                         DeviceChooserResponse response = new DeviceChooserResponse();
                         DeviceChooserDialog dialog = new DeviceChooserDialog(
@@ -181,8 +183,6 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
                             new ConnectToProjectJob(data).schedule();
                         }
 
-                    } catch (AndroidVersionException e) {
-                        throw new IllegalStateException(e);
                     } catch (IOException e) {
                         throw new IllegalStateException(e);
                     } catch (AlreadyInstrumentedException e) {
@@ -427,8 +427,9 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
             tmpDir = File.createTempFile("fl_tmp", "dir");
             tmpDir.delete();
             tmpDir.mkdir();
-            classesDir = new File(tmpDir, "classes");
-            classesDir.mkdir();
+            classesDir = new File(runDir,
+                    InstrumentationConstants.FL_PROJECTS_FOLDER_LOC);
+            classesDir.mkdirs();
         }
 
         public void deleteTempFiles() {

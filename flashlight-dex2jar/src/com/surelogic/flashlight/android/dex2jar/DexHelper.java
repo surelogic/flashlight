@@ -1,10 +1,20 @@
 package com.surelogic.flashlight.android.dex2jar;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Enumeration;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipException;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipOutputStream;
 
 import org.eclipse.core.runtime.CoreException;
 
@@ -15,6 +25,8 @@ import com.googlecode.dex2jar.v3.Dex2jar;
 import com.googlecode.dex2jar.v3.DexExceptionHandlerImpl;
 
 public class DexHelper {
+
+    private static final String CLASSES_DEX = "classes.dex";
 
     private DexHelper() {
         // Do nothing
@@ -76,11 +88,10 @@ public class DexHelper {
      * @throws IOException
      * @throws CoreException
      */
-    @SuppressWarnings("restriction")
     public static File rewriteApkWithJar(DexTool dx, File apk,
             String runtimePath, File jar, File destDir) throws IOException,
             CoreException {
-        File classes = new File(destDir, "classes.dex");
+        File classes = new File(destDir, CLASSES_DEX);
         if (classes.exists()) {
             throw new IllegalStateException(String.format(
                     "%s already exists.\n", classes));
@@ -103,33 +114,94 @@ public class DexHelper {
 
                 // Files.copy(apk.toPath(), target.toPath(),
                 // StandardCopyOption.REPLACE_EXISTING);
-
-                FileUtility.unzipFile(apk, tmpZip);
-                FileUtility.copy(classes, new File(tmpZip, "classes.dex"));
-                FileUtility.zipDir(tmpZip, target);
+                replaceClasses(apk, classes, target);
 
                 File targetSigned = new File(target.getParentFile(), target
                         .getName().substring(0,
                                 target.getName().indexOf(".apk"))
                         + "-signed.apk");
+
                 ApkSign.main(new String[] { "-f", "-o", targetSigned.getPath(),
                         target.getPath() });
                 return targetSigned;
             } finally {
-                FileUtility.recursiveDelete(tmpZip);
+                recursiveDelete(tmpZip);
             }
         } finally {
             classes.delete();
         }
     }
 
-    private static void waitFor(Process p) throws IOException {
+    private static void replaceClasses(File apk, File classes, File target)
+            throws ZipException, IOException {
+        ZipFile zf = new ZipFile(apk);
         try {
-            p.waitFor();
-        } catch (InterruptedException e) {
-            waitFor(p);
-            Thread.currentThread().interrupt();
+            ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(
+                    target));
+            try {
+                Enumeration<? extends ZipEntry> entries = zf.entries();
+                while (entries.hasMoreElements()) {
+                    ZipEntry ze = entries.nextElement();
+                    if (ze.getName().equals(CLASSES_DEX)) {
+                        zos.putNextEntry(new ZipEntry(CLASSES_DEX));
+                        copyToStream(new FileInputStream(classes), zos);
+                    } else {
+                        zos.putNextEntry(ze);
+                        copyToStream(zf.getInputStream(ze), zos);
+                    }
+                    zos.closeEntry();
+                }
+            } finally {
+                zos.close();
+            }
+        } finally {
+            zf.close();
         }
     }
 
+    public static void copyToStream(InputStream is, final OutputStream os)
+            throws IOException {
+        is = new BufferedInputStream(is, 8192);
+        try {
+            final byte[] buf = new byte[8192];
+            int num;
+            while ((num = is.read(buf)) >= 0) {
+                os.write(buf, 0, num);
+            }
+        } finally {
+            is.close();
+        }
+    }
+
+    /**
+     * Tries to perform a recursive deletion on the passed path. If the path is
+     * a file it is deleted, if the path is a directory then the directory and
+     * all its contents are deleted.
+     * 
+     * @param path
+     *            the file or directory to delete.
+     * @return {@code true} if and only if the directory is successfully
+     *         deleted, {@code false} otherwise.
+     * 
+     */
+
+    public static boolean recursiveDelete(final File path) {
+        boolean success;
+        if (path.isDirectory()) {
+            final File[] files = path.listFiles();
+            if (files != null) {
+                for (final File file : files) {
+                    success = recursiveDelete(file);
+                }
+            }
+        }
+        if (!path.exists()) {
+            return true; // Same result
+        }
+        success = path.delete();
+        if (!success) {
+            path.deleteOnExit();
+        }
+        return success;
+    }
 }

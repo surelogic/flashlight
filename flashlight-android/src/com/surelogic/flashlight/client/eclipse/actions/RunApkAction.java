@@ -265,7 +265,7 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
         // Do Nothing
     }
 
-    class DexToolWrapper implements DexTool {
+    static class DexToolWrapper implements DexTool {
         private final DexWrapper dexWrapper;
 
         DexToolWrapper() {
@@ -459,11 +459,11 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
                 data.device.createForward(data.consolePort, data.consolePort);
                 data.device.createForward(data.outputPort, data.outputPort);
             } catch (TimeoutException e) {
-                return SLEclipseStatusUtility.createErrorStatus(310, e);
+                return SLEclipseStatusUtility.createErrorStatus(318, e);
             } catch (AdbCommandRejectedException e) {
-                return SLEclipseStatusUtility.createErrorStatus(310, e);
+                return SLEclipseStatusUtility.createErrorStatus(318, e);
             } catch (IOException e) {
-                return SLEclipseStatusUtility.createErrorStatus(310, e);
+                return SLEclipseStatusUtility.createErrorStatus(318, e);
             }
             EclipseUtility
                     .toEclipseJob(

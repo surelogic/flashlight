@@ -10,7 +10,9 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
@@ -101,9 +103,11 @@ public class DexHelper {
             try {
                 tmpZip.delete();
                 AsmVerify.main(new String[] { jar.getPath() });
-                dx.run(classes.getPath(),
-                        Arrays.asList(jar.getPath(), runtimePath), false,
-                        false, System.out, System.err);
+                List<String> cp = runtimePath == null ? Collections
+                        .singletonList(jar.getPath()) : Arrays.asList(
+                        jar.getPath(), runtimePath);
+                dx.run(classes.getPath(), cp, false, false, System.out,
+                        System.err);
                 /*
                  * ProcessBuilder dx = new ProcessBuilder(
                  * "/home/nathan/java/android-sdk-linux/build-tools/18.0.1/dx",
@@ -145,8 +149,11 @@ public class DexHelper {
                     if (ze.getName().equals(CLASSES_DEX)) {
                         zos.putNextEntry(new ZipEntry(CLASSES_DEX));
                         copyToStream(new FileInputStream(classes), zos);
-                    } else {
+                    } else if (ze.getMethod() == ZipEntry.STORED) {
                         zos.putNextEntry(ze);
+                        copyToStream(zf.getInputStream(ze), zos);
+                    } else {
+                        zos.putNextEntry(new ZipEntry(ze.getName()));
                         copyToStream(zf.getInputStream(ze), zos);
                     }
                     zos.closeEntry();

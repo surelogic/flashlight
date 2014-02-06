@@ -663,22 +663,24 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
                 final IProject project, final Collection<String> dxInputPaths)
                 throws IOException, CoreException {
             this.runId = runId;
+            runDir = new File(EclipseUtility.getFlashlightDataDirectory(),
+                    runId);
+            runDir.mkdir();
             conf = LaunchHelper.getRuntimeConfig(launch);
             this.project = project;
             outputPort = InstrumentationConstants.FL_OUTPUT_PORT_DEFAULT;
             originalClasspaths = new ArrayList<String>(dxInputPaths);
             classpaths = new ArrayList<String>(originalClasspaths.size());
+            File projectsDir = new File(runDir,
+                    InstrumentationConstants.FL_PROJECTS_FOLDER_LOC);
             for (int i = 0; i < originalClasspaths.size(); i++) {
-                File tmpFile;
-                if (new File(originalClasspaths.get(i)).isDirectory()) {
-                    tmpFile = File.createTempFile("fl_", "class");
-                    tmpFile.delete();
-                    tmpFile.mkdir();
-                } else {
-                    tmpFile = File.createTempFile("fl_classes_", ".jar");
+                File cp = new File(originalClasspaths.get(i));
+                File newCpFile = new File(projectsDir, String.format("%d - %s",
+                        i, cp.getName()));
+                if (cp.isDirectory()) {
+                    newCpFile.mkdir();
                 }
-
-                classpaths.add(tmpFile.getAbsolutePath());
+                classpaths.add(newCpFile.getAbsolutePath());
             }
             allProjects = new HashSet<IProject>();
             allProjects.add(project);
@@ -688,9 +690,7 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
                     allProjects.add(p);
                 }
             }
-            runDir = new File(EclipseUtility.getFlashlightDataDirectory(),
-                    runId);
-            runDir.mkdir();
+
             sourceDir = new File(runDir,
                     InstrumentationConstants.FL_SOURCE_FOLDER_LOC);
             sourceDir.mkdirs();
@@ -766,9 +766,6 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
 
         public void deleteTempFiles() {
             FileUtility.recursiveDelete(infoDir);
-            for (String p : classpaths) {
-                FileUtility.recursiveDelete(new File(p));
-            }
         }
 
     }

@@ -15,6 +15,7 @@ import com.surelogic.common.ref.IDeclFunction;
 import com.surelogic.common.ref.IDeclType;
 import com.surelogic.common.ref.TypeRef;
 import com.surelogic.common.refactor.AnnotationDescription;
+import com.surelogic.common.refactor.AnnotationDescription.Builder;
 import com.surelogic.flashlight.recommend.FieldLoc;
 import com.surelogic.flashlight.recommend.MethodLoc;
 import com.surelogic.flashlight.recommend.RecommendedRegion;
@@ -117,10 +118,10 @@ public class RegionModel implements Iterable<RecommendedRegion> {
             final TypeNode node = typeMap.get(r.getClazz());
             if (node != null) {
                 final IDeclType t = node.getContext();
-                set.add(new AnnotationDescription("Region", ns
-                        .regionModelAnnotation(r), t));
-                set.add(new AnnotationDescription("RegionLock", ns
-                        .regionLockAnnotation(r), t));
+                set.add(new Builder("Region", ns
+                        .regionModelAnnotation(r), t).build());
+                set.add(new Builder("RegionLock", ns
+                        .regionLockAnnotation(r), t).build());
                 for (final FieldLoc field : r.getFields()) {
                     Decl.FieldBuilder builder = new Decl.FieldBuilder(
                             field.getField());
@@ -128,23 +129,23 @@ public class RegionModel implements Iterable<RecommendedRegion> {
                     builder.setTypeOf(new TypeRef("java.lang.Object", "Object"));
                     final IDeclField f = (IDeclField) builder.build();
                     if (field.isAggregate()) {
-                        set.add(new AnnotationDescription("AggregateInRegion",
-                                ns.aggregateInstanceAnnotation(r), f));
-                        set.add(new AnnotationDescription("Unique", null, f));
+                        set.add(new Builder("AggregateInRegion",
+                                ns.aggregateInstanceAnnotation(r), f).build());
+                        set.add(new Builder("Unique", null, f).build());
                     }
                     if (!field.isFinal()) {
-                        set.add(new AnnotationDescription("InRegion", ns
-                                .regionName(r), f));
+                        set.add(new Builder("InRegion", ns
+                                .regionName(r), f).build());
                     }
                 }
                 for (final IDeclFunction m : node.getConstructors()) {
-                    set.add(new AnnotationDescription("Unique", "return", m));
+                    set.add(new Builder("Unique", "return", m).build());
                 }
                 for (final MethodLoc m : r.getRequiresLockMethods()) {
                     for (final IDeclFunction method : node.getMethods(m
                             .getMethod())) {
-                        set.add(new AnnotationDescription("RequiresLock", ns
-                                .lockModelName(r), method));
+                        set.add(new Builder("RequiresLock", ns
+                                .lockModelName(r), method).build());
                     }
                 }
             }

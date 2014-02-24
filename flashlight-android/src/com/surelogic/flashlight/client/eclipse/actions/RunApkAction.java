@@ -137,12 +137,12 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
                     try {
                         File outJar = new File(data.tmpDir, "out.jar");
 
-                        File origJar = new File(data.tmpDir, "orig.jar");
                         File origDir = new File(data.tmpDir, "orig");
                         // Extract bytecode from package
-                        DexHelper.extractJarFromApk(apkFile, origJar);
+                        DexHelper.extractJarFromApk(apkFile,
+                                data.decompiledJarFile);
                         // Unzip the jar so we can add our instrumentation
-                        FileUtility.unzipFile(origJar, origDir);
+                        FileUtility.unzipFile(data.decompiledJarFile, origDir);
                         // Instrument the jar
                         DexRewriter dex = new DexRewriter(buildConfiguration(),
                                 new PrintWriterMessenger(new PrintWriter(
@@ -393,6 +393,7 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
         private final File hbFile;
         private final File portFile;
         private final File tmpDir;
+        private final File decompiledJarFile;
 
         RunData(String runId) throws IOException {
             consolePort = InstrumentationConstants.FL_CONSOLE_PORT_DEFAULT;
@@ -407,6 +408,8 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
             apkFolder = new File(runDir,
                     InstrumentationConstants.FL_APK_FOLDER_LOC);
             apkFolder.mkdirs();
+            decompiledJarFile = new File(runDir,
+                    InstrumentationConstants.FL_DECOMPILED_JAR_LOC);
             fieldsFile = new File(runDir,
                     InstrumentationConstants.FL_FIELDS_FILE_LOC);
             log = new File(runDir, InstrumentationConstants.FL_LOG_FILE_LOC);

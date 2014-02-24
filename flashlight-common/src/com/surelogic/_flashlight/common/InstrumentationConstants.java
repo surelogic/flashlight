@@ -32,6 +32,8 @@ public final class InstrumentationConstants {
 
     public static final String FL_APK_FOLDER_LOC = FL_INSTRUMENTATION_FOLDER_NAME
             + File.separator + "apk";
+    public static final String FL_DECOMPILED_JAR_LOC = FL_INSTRUMENTATION_FOLDER_NAME
+            + File.separator + "decompiled.jar";
 
     public static final String FL_LOGCAT_LOC = "logcat-log.txt";
 

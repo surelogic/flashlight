@@ -31,9 +31,9 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
+import org.eclipse.ui.progress.UIJob;
 
 import brut.androlib.ApkDecoder;
-import brut.apktool.Main;
 import brut.common.BrutException;
 
 import com.android.ddmlib.AdbCommandRejectedException;
@@ -94,7 +94,7 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
     public final static int DEFAULT_LAUNCH_ACTION = ACTION_DEFAULT;
     private static final short ADECODE_SOURCES_NONE = 0x0000;
 
-    File getManifest(File apk, File tmpDir) throws IOException,
+    static File getManifest(File apk, File tmpDir) throws IOException,
             InterruptedException, BrutException {
         File output = new File(tmpDir, "decompressed-apk");
         /* apktool d --no-src apk output */
@@ -116,95 +116,13 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
         if (info.isSelectionValid() && flag != SWT.CANCEL) {
             File apkFile = info.getApk();
             if (apkFile != null && apkFile.exists()) {
-                IFile apk = EclipseUtility.resolveIFile(apkFile
-                        .getAbsolutePath());
-
-                String apkName = apk.getName();
-                int idx = apkName.indexOf('.');
-                if (idx > 0) {
-                    apkName = apkName.substring(0, idx);
-                }
-                String runId = apkName
-                        + new SimpleDateFormat(
-                                InstrumentationConstants.DATE_FORMAT)
-                                .format(new Date())
-                        + InstrumentationConstants.ANDROID_LAUNCH_SUFFIX;
-                RunManager.getInstance()
-                        .notifyPerformingInstrumentationAndLaunch(runId);
-                RunData data;
-                try {
-                    data = new RunData(runId);
-                    try {
-                        File outJar = new File(data.tmpDir, "out.jar");
-
-                        File origDir = new File(data.tmpDir, "orig");
-                        // Extract bytecode from package
-                        DexHelper.extractJarFromApk(apkFile,
-                                data.decompiledJarFile);
-                        // Unzip the jar so we can add our instrumentation
-                        FileUtility.unzipFile(data.decompiledJarFile, origDir);
-                        // Instrument the jar
-                        DexRewriter dex = new DexRewriter(buildConfiguration(),
-                                new PrintWriterMessenger(new PrintWriter(
-                                        data.log)), data.fieldsFile,
-                                data.sitesFile, data.classesFile, data.hbFile);
-                        dex.addDirToDir(origDir, data.classesDir);
-                        dex.addClasspathJar(new File(
-                                "/home/nathan/java/android-sdk-linux/platforms/android-15/android.jar"));
-                        Map<String, Map<String, Boolean>> execute = dex
-                                .execute();
-                        createInfoClasses(data);
-                        FileUtility.zipDir(data.classesDir, outJar);
-                        Sdk sdk = Sdk.getCurrent();
-                        DexWrapper dexWrapper = sdk.getDexWrapper(sdk
-                                .getLatestBuildTool());
-                        File newApk = DexHelper.rewriteApkWithJar(
-                                new DexToolWrapper(), apkFile,
-                                getRuntimeJarPath(), outJar, data.runDir);
-
-                        IAndroidTarget projectTarget = sdk.getTarget(info
-                                .getSelectedProject());
-
-                        ManifestData manifestData = AndroidManifestHelper
-                                .parseForData(getManifest(apkFile, data.tmpDir)
-                                        .getAbsolutePath());
-
-                        AndroidVersion minApiVersion = new AndroidVersion(
-                                manifestData.getMinSdkVersion(),
-                                manifestData.getMinSdkVersionString());
-                        DeviceChooserResponse response = new DeviceChooserResponse();
-                        DeviceChooserDialog dialog = new DeviceChooserDialog(
-                                shell, response, "", projectTarget,
-                                minApiVersion);
-                        if (dialog.open() == Window.OK) {
-                            IDevice device = launch(info.getSelectedProject(),
-                                    response, newApk, manifestData);
-                            data.device = device;
-                            new ConnectToProjectJob(data).schedule();
-                        }
-
-                    } catch (IOException e) {
-                        throw new IllegalStateException(e);
-                    } catch (AlreadyInstrumentedException e) {
-                        throw new IllegalStateException(e);
-                    } catch (InterruptedException e) {
-                        throw new IllegalStateException(e);
-                    } catch (BrutException e) {
-                        throw new IllegalStateException(e);
-                    } catch (CoreException e) {
-                        throw new IllegalStateException(e);
-                    } finally {
-                        data.deleteTempFiles();
-                    }
-                } catch (IOException e) {
-                    throw new IllegalStateException(e);
-                }
+                new LaunchApkJob(info).schedule();
             }
         }
     }
 
-    private IDevice launch(IProject project, DeviceChooserResponse response,
-            File apk, ManifestData manifestData) {
+    private static IDevice launch(IProject project,
+            DeviceChooserResponse response, File apk, ManifestData manifestData) {
         // FIXME make this configurable
         AndroidLaunchConfiguration config = new AndroidLaunchConfiguration();
         config.mAvdName = null;
@@ -227,25 +145,27 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
         } else if (device != null) {
             try {
                 device.installPackage(apk.getAbsolutePath(), true);
+                Activity launcherActivity = manifestData.getLauncherActivity();
+                if (launcherActivity != null) {
+                    String activityName = launcherActivity.getName();
+                    ActivityLaunchAction action = new ActivityLaunchAction(
+                            activityName, AndroidLaunchController.getInstance());
+                    DelayedLaunchInfo info = new DelayedLaunchInfo(project,
+                            manifestData.getPackage(),
+                            manifestData.getPackage(), action,
+                            EclipseUtility.resolveIFile(apk.getAbsolutePath()),
+                            manifestData.getDebuggable(),
+                            manifestData.getMinSdkVersionString(), null,
+                            new NullProgressMonitor());
+                    action.doLaunchAction(info, device);
+                }
                 return device;
                 // FIXME more clear exception handling
             } catch (InstallException e) {
                 throw new RuntimeException(e);
             }
         }
-        Activity launcherActivity = manifestData.getLauncherActivity();
-        if (launcherActivity != null) {
-            String activityName = launcherActivity.getName();
-            ActivityLaunchAction action = new ActivityLaunchAction(
-                    activityName, AndroidLaunchController.getInstance());
-            DelayedLaunchInfo info = new DelayedLaunchInfo(project,
-                    manifestData.getPackage(), manifestData.getPackage(),
-                    action, EclipseUtility.resolveIFile(apk.getAbsolutePath()),
-                    manifestData.getDebuggable(),
-                    manifestData.getMinSdkVersionString(), null,
-                    new NullProgressMonitor());
-            action.doLaunchAction(info, device);
-        }
+
         return device;
 
     }
@@ -441,10 +361,115 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
 
     }
 
-    public static void main(String[] args) throws IOException,
-            InterruptedException, BrutException {
-        Main.main(new String[] { "apktool", "d",
-                "/home/nathan/tmp/FlashlightTutorial_CounterRace.apk" });
+    private static class LaunchApkJob extends Job {
+        ApkSelectionInfo info;
+
+        public LaunchApkJob(ApkSelectionInfo info) {
+            super("Launching apk");
+            this.info = info;
+        }
+
+        @Override
+        protected IStatus run(IProgressMonitor monitor) {
+            File apkFile = info.getApk();
+            if (apkFile != null && apkFile.exists()) {
+                IFile apk = EclipseUtility.resolveIFile(apkFile
+                        .getAbsolutePath());
+
+                String apkName = apk.getName();
+                int idx = apkName.indexOf('.');
+                if (idx > 0) {
+                    apkName = apkName.substring(0, idx);
+                }
+                String runId = apkName
+                        + new SimpleDateFormat(
+                                InstrumentationConstants.DATE_FORMAT)
+                                .format(new Date())
+                        + InstrumentationConstants.ANDROID_LAUNCH_SUFFIX;
+                RunManager.getInstance()
+                        .notifyPerformingInstrumentationAndLaunch(runId);
+                final RunData data;
+                try {
+                    data = new RunData(runId);
+                    try {
+                        File outJar = new File(data.tmpDir, "out.jar");
+
+                        File origDir = new File(data.tmpDir, "orig");
+                        // Extract bytecode from package
+                        DexHelper.extractJarFromApk(apkFile,
+                                data.decompiledJarFile);
+                        // Unzip the jar so we can add our instrumentation
+                        FileUtility.unzipFile(data.decompiledJarFile, origDir);
+                        // Instrument the jar
+                        DexRewriter dex = new DexRewriter(buildConfiguration(),
+                                new PrintWriterMessenger(new PrintWriter(
+                                        data.log)), data.fieldsFile,
+                                data.sitesFile, data.classesFile, data.hbFile);
+                        dex.addDirToDir(origDir, data.classesDir);
+                        dex.addClasspathJar(new File(
+                                "/home/nathan/java/android-sdk-linux/platforms/android-15/android.jar"));
+                        Map<String, Map<String, Boolean>> execute = dex
+                                .execute();
+                        createInfoClasses(data);
+                        FileUtility.zipDir(data.classesDir, outJar);
+                        Sdk sdk = Sdk.getCurrent();
+                        DexWrapper dexWrapper = sdk.getDexWrapper(sdk
+                                .getLatestBuildTool());
+                        final File newApk = DexHelper.rewriteApkWithJar(
+                                new DexToolWrapper(), apkFile,
+                                getRuntimeJarPath(), outJar, data.runDir);
+
+                        final IAndroidTarget projectTarget = sdk.getTarget(info
+                                .getSelectedProject());
+
+                        final ManifestData manifestData = AndroidManifestHelper
+                                .parseForData(getManifest(apkFile, data.tmpDir)
+                                        .getAbsolutePath());
+
+                        final AndroidVersion minApiVersion = new AndroidVersion(
+                                manifestData.getMinSdkVersion(),
+                                manifestData.getMinSdkVersionString());
+                        final DeviceChooserResponse response = new DeviceChooserResponse();
+                        UIJob job = new UIJob("Choose a device") {
+
+                            @Override
+                            public IStatus runInUIThread(
+                                    IProgressMonitor monitor) {
+                                Shell shell = EclipseUIUtility.getShell();
+                                DeviceChooserDialog dialog = new DeviceChooserDialog(
+                                        shell, response, "", projectTarget,
+                                        minApiVersion);
+                                if (dialog.open() == Window.OK) {
+                                    IDevice device = launch(
+                                            info.getSelectedProject(),
+                                            response, newApk, manifestData);
+                                    data.device = device;
+                                    new ConnectToProjectJob(data).schedule();
+                                }
+                                return Status.OK_STATUS;
+                            }
+                        };
+
+                    } catch (IOException e) {
+                        throw new IllegalStateException(e);
+                    } catch (AlreadyInstrumentedException e) {
+                        throw new IllegalStateException(e);
+                    } catch (InterruptedException e) {
+                        throw new IllegalStateException(e);
+                    } catch (BrutException e) {
+                        throw new IllegalStateException(e);
+                    } catch (CoreException e) {
+                        throw new IllegalStateException(e);
+                    } finally {
+                        data.deleteTempFiles();
+                    }
+                } catch (IOException e) {
+                    throw new IllegalStateException(e);
+                }
+            }
+            return null;
+        }
+
     }
 
     private static final class ConnectToProjectJob extends Job {

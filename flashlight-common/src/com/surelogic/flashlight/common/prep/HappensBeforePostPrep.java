@@ -293,7 +293,11 @@ public class HappensBeforePostPrep implements IPostPrep {
                         if (rThread != lastThread && inThread) {
                             interleavings++;
                         }
-                        inThread = rThread == lastThread;
+                        if (inThread) {
+                            inThread = rThread == lastThread;
+                        } else {
+                            inThread = rThread == lastThread && rField == field;
+                        }
                         // Handle the individual blocks
                         if (rField != field) {
                             Interleaving i = fields.get(rField);

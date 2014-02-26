@@ -255,7 +255,7 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
                 InstrumentationConstants.FL_PROPERTIES_CLASS);
         infoClassDest.getParentFile().mkdirs();
         Properties props = new Properties();
-        props.setProperty(InstrumentationConstants.FL_RUN, data.runId);
+        props.setProperty(InstrumentationConstants.FL_RUN, data.runName);
         props.setProperty(InstrumentationConstants.FL_ANDROID, "true");
 
         props.setProperty(InstrumentationConstants.FL_COLLECTION_TYPE,
@@ -314,10 +314,13 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
         private final File portFile;
         private final File tmpDir;
         private final File decompiledJarFile;
+        private final String runName;
 
-        RunData(String runId) throws IOException {
+        RunData(String runName, String runId) throws IOException {
+
             consolePort = InstrumentationConstants.FL_CONSOLE_PORT_DEFAULT;
             outputPort = InstrumentationConstants.FL_OUTPUT_PORT_DEFAULT;
+            this.runName = runName;
             this.runId = runId;
             runDir = new File(EclipseUtility.getFlashlightDataDirectory(),
                     runId);
@@ -377,7 +380,7 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
                         .getAbsolutePath());
 
                 String apkName = apk.getName();
-                int idx = apkName.indexOf('.');
+                int idx = apkName.lastIndexOf('.');
                 if (idx > 0) {
                     apkName = apkName.substring(0, idx);
                 }
@@ -390,7 +393,7 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
                         .notifyPerformingInstrumentationAndLaunch(runId);
                 final RunData data;
                 try {
-                    data = new RunData(runId);
+                    data = new RunData(apkName, runId);
                     try {
                         File outJar = new File(data.tmpDir, "out.jar");
 
@@ -449,7 +452,7 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
                                 return Status.OK_STATUS;
                             }
                         };
-
+                        job.schedule();
                     } catch (IOException e) {
                         throw new IllegalStateException(e);
                     } catch (AlreadyInstrumentedException e) {
@@ -467,7 +470,7 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
                     throw new IllegalStateException(e);
                 }
             }
-            return null;
+            return Status.OK_STATUS;
         }
 
     }

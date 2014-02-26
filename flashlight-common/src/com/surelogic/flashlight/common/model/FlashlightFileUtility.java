@@ -14,6 +14,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.surelogic.NonNull;
 import com.surelogic.Nullable;
@@ -595,6 +597,9 @@ public final class FlashlightFileUtility {
         return runIdString.substring(0, index);
     }
 
+    private static final Pattern VERSION_PATTERN = Pattern
+            .compile("[^a-zA-Z0-9]+([0-9]+\\.)+");
+
     /**
      * Gets a simple run name for the passed run name. For example
      * <tt>com.surelogic.Program</tt> would return <tt>Program</tt>. This
@@ -608,7 +613,14 @@ public final class FlashlightFileUtility {
      * @see #getRunName(String)
      */
     @NonNull
-    public static String getSimpleRunName(@NonNull final String runName) {
+    public static String getSimpleRunName(@NonNull String runName) {
+        Matcher matcher = VERSION_PATTERN.matcher(runName);
+        if (matcher.find()) {
+            int idx = matcher.start();
+            if (idx > 0) {
+                runName = runName.substring(0, idx);
+            }
+        }
         final int dotIndex = runName.lastIndexOf('.');
         if (dotIndex == -1 || runName.length() <= dotIndex) {
             return runName;

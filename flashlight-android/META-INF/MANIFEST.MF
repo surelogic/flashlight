@@ -25,7 +25,6 @@ Require-Bundle: org.eclipse.ui,
  org.eclipse.jface.text,
  com.surelogic.flashlight.client.eclipse,
  com.surelogic.flashlight.common,
- com.surelogic.flashlight.dex2jar,
  com.android.ide.eclipse.adt;bundle-version="22.3.0",
  com.android.ide.eclipse.base;bundle-version="22.3.0",
  com.android.ide.eclipse.ddms;bundle-version="22.3.0"

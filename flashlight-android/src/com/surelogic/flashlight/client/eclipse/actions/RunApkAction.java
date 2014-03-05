@@ -429,10 +429,15 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
                                 new DexToolWrapper(), apkFile,
                                 getRuntimeJarPath(), outJar, data.runDir);
 
-                        final IAndroidTarget projectTarget = info
-                                .getSelectedProject() == null ? null : sdk
-                                .getTarget(info.getSelectedProject());
-
+                        IAndroidTarget projectTarget = sdk.getTarget(info
+                                .getSelectedProject());
+                        if (projectTarget == null) {
+                            IAndroidTarget[] targets = sdk.getTargets();
+                            if (targets.length > 0) {
+                                projectTarget = targets[0];
+                            }
+                        }
+                        final IAndroidTarget targetPlatform = projectTarget;
                         final ManifestData manifestData = AndroidManifestHelper
                                 .parseForData(getManifest(apkFile, data.tmpDir)
                                         .getAbsolutePath());
@@ -449,7 +454,7 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
                                 Shell shell = EclipseUIUtility.getShell();
 
                                 DeviceChooserDialog dialog = new DeviceChooserDialog(
-                                        shell, response, "", projectTarget,
+                                        shell, response, "", targetPlatform,
                                         minApiVersion, false);
                                 if (dialog.open() == Window.OK) {
                                     IDevice device = launch(

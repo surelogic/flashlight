@@ -53,12 +53,25 @@
 			</launchMode>
 		</launchConfigurationTabGroup>
 	</extension>
-	<!--
 	<extension point="org.eclipse.ui.actionSets">
-		<actionSet label="Flashlight ActionSet" visible="true"
-			id="com.surelogic.flashlight.client.eclipse.android.workbenchActionSet">
-			<menu id="com.surelogic.flashlight.client.eclipse.android.workbenchMenu"
+		<actionSet label="Flashlight Android ActionSet" visible="true"
+			id="com.surelogic.flashlight.android.client.eclipse.workbenchActionSet">
+			<menu id="com.surelogic.flashlight.android.client.eclipse.workbenchMenu"
 				label="Flashlight Android" path="additions">
+				<groupMarker name="client" />
+			</menu>
+			<action
+				class="com.surelogic.flashlight.client.eclipse.actions.RunApkAction"
+				id="com.surelogic.flashlight.client.eclipse.actions.RunApkAction"
+				label="Launch Apk"
+				menubarPath="com.surelogic.flashlight.android.client.eclipse.workbenchMenu/client"
+				helpContextId="menu-launch-apk">
+			</action>
+		</actionSet>
+		<actionSet label="Flashlight ActionSet" visible="true"
+			id="com.surelogic.flashlight.client.eclipse.workbenchActionSet">
+			<menu id="com.surelogic.flashlight.client.eclipse.workbenchMenu"
+				label="Flashlight" path="additions">
 				<groupMarker name="client" />
 				<separator name="jsure" />
 				<separator name="service" />
@@ -67,21 +80,13 @@
 			<action
 				class="com.surelogic.flashlight.client.eclipse.actions.RunApkAction"
 				id="com.surelogic.flashlight.client.eclipse.actions.RunApkAction"
+				icon="platform:/plugin/com.surelogic.common/lib/images/fl_run_view.gif"
 				label="Launch Apk"
-				menubarPath="com.surelogic.flashlight.client.eclipse.android.workbenchMenu/license"
-				helpContextId="menu-manage-licenses">
-				
-			</action>
-			<action
-				class="com.surelogic.flashlight.client.eclipse.actions.UnpackThenRepackAction"
-				id="com.surelogic.flashlight.client.eclipse.actions.UnpackThenRepackAction"
-				label="Unpack Then Repack Apk"
-				menubarPath="com.surelogic.flashlight.client.eclipse.android.workbenchMenu/license"
-				helpContextId="menu-manage-licenses">
-				
+				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/client"
+				helpContextId="menu-launch-apk">
 			</action>
 		</actionSet>
 	</extension>
-	-->
+
 </plugin>
 

@@ -55,6 +55,12 @@ public class ProjectSelectionPage extends WizardPage {
                 validate();
             }
         });
+        final TableItem noItem = new TableItem(projectTable, SWT.NONE);
+        noItem.setText("*None*");
+        noItem.setData(null);
+        if (info.getSelectedProject() == null) {
+            projectTable.setSelection(noItem);
+        }
         for (final IProject project : info.getProjects()) {
             final TableItem item = new TableItem(projectTable, SWT.NONE);
             item.setText(project.getProject().getName());

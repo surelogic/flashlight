@@ -35,7 +35,7 @@ public class ApkSelectionInfo {
     }
 
     public boolean isSelectionValid() {
-        return selectedProject != null && apk != null && apk.exists();
+        return apk != null && apk.exists();
     }
 
 }

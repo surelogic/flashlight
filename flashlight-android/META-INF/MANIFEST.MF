@@ -25,6 +25,7 @@ Require-Bundle: org.eclipse.ui,
  org.eclipse.jface.text,
  com.surelogic.flashlight.client.eclipse,
  com.surelogic.flashlight.common,
+ com.surelogic.flashlight.dex2jar,
  com.android.ide.eclipse.adt;bundle-version="22.3.0",
  com.android.ide.eclipse.base;bundle-version="22.3.0",
  com.android.ide.eclipse.ddms;bundle-version="22.3.0"
@@ -32,3 +33,4 @@ Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ClassPath: .,
  lib/apktool.jar
+Bundle-Vendor: SureLogic, Inc.

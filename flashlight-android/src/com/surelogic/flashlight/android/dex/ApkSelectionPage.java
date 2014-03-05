@@ -10,7 +10,6 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 
-import com.android.ide.eclipse.adt.internal.sdk.Sdk;
 import com.surelogic.common.i18n.I18N;
 
 public class ApkSelectionPage extends WizardPage {
@@ -28,7 +27,7 @@ public class ApkSelectionPage extends WizardPage {
     public void createControl(Composite parent) {
         Composite content = new Composite(parent, SWT.NONE);
         Label l = new Label(content, SWT.NONE);
-        l.setText(Sdk.getCurrent().getSdkLocation());
+        l.setText(I18N.msg("flashlight.dex.apk.select"));
         FileFieldEditor fe = new FileFieldEditor("bar",
                 I18N.msg("flashlight.dex.apk.select"), content);
         String[] filterExtensions = new String[] { "*.apk", "*" };

@@ -415,16 +415,19 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
                                 "/home/nathan/java/android-sdk-linux/platforms/android-15/android.jar"));
                         Map<String, Map<String, Boolean>> execute = dex
                                 .execute();
+                        // Set up source information if we have any
                         if (info.getSelectedProject() != null) {
                             LaunchUtils.createSourceZips(null, Collections
                                     .singleton(info.getSelectedProject()),
                                     data.sourceDir, null);
                         }
+                        // Create instrumentation data
                         createInfoClasses(data);
                         FileUtility.zipDir(data.classesDir, outJar);
                         Sdk sdk = Sdk.getCurrent();
                         DexWrapper dexWrapper = sdk.getDexWrapper(sdk
                                 .getLatestBuildTool());
+                        // Build final Apk
                         final File newApk = DexHelper.rewriteApkWithJar(
                                 new DexToolWrapper(), apkFile,
                                 getRuntimeJarPath(), outJar, data.runDir);
@@ -442,6 +445,7 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
                                 .parseForData(getManifest(apkFile, data.tmpDir)
                                         .getAbsolutePath());
 
+                        // Launch Apk
                         final AndroidVersion minApiVersion = new AndroidVersion(
                                 manifestData.getMinSdkVersion(),
                                 manifestData.getMinSdkVersionString());

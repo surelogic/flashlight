@@ -404,26 +404,28 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
                         final ManifestData manifestData = AndroidManifestHelper
                                 .parseForData(getManifest(apkFile, data.tmpDir)
                                         .getAbsolutePath());
+                        final AndroidVersion minApiVersion = new AndroidVersion(
+                                manifestData.getMinSdkVersion(),
+                                manifestData.getMinSdkVersionString());
                         if (projectTarget == null) {
                             int targetVersion = manifestData
                                     .getTargetSdkVersion();
                             for (IAndroidTarget t : sdk.getTargets()) {
-                                if (t.getVersion().getApiLevel() == targetVersion) {
+                                if (t.getVersion().equals(targetVersion)) {
                                     projectTarget = t;
                                 }
                             }
                         }
                         if (projectTarget == null) {
-                            int minVersion = manifestData.getMinSdkVersion();
                             for (IAndroidTarget t : sdk.getTargets()) {
-                                if (t.getVersion().getApiLevel() == minVersion) {
+                                if (t.getVersion().equals(minApiVersion)) {
                                     projectTarget = t;
                                 }
                             }
                         }
                         if (projectTarget == null
                                 && sdk.getTargets().length > 0) {
-                            projectTarget = sdk.getTargets()[0];
+                            projectTarget = sdk.getTargets()[sdk.getTargets().length - 1];
                         }
                         final IAndroidTarget targetPlatform = projectTarget;
 
@@ -464,9 +466,7 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
                                 getRuntimeJarPath(), outJar, data.runDir);
 
                         // Launch Apk
-                        final AndroidVersion minApiVersion = new AndroidVersion(
-                                manifestData.getMinSdkVersion(),
-                                manifestData.getMinSdkVersionString());
+
                         final DeviceChooserResponse response = new DeviceChooserResponse();
                         UIJob job = new UIJob("Choose a device") {
 
@@ -508,7 +508,6 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
             }
             return Status.OK_STATUS;
         }
-
     }
 
     private static final class ConnectToProjectJob extends Job {

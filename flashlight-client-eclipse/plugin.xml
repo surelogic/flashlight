@@ -17,6 +17,7 @@
 			<menu id="com.surelogic.flashlight.client.eclipse.workbenchMenu"
 				label="Flashlight" path="additions">
 				<groupMarker name="client" />
+				<separator name="android" />
 				<separator name="jsure" />
 				<separator name="service" />
 				<separator name="license" />

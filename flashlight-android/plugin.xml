@@ -60,7 +60,7 @@
 				class="com.surelogic.flashlight.client.eclipse.actions.RunApkAction"
 				id="com.surelogic.flashlight.client.eclipse.actions.RunApkAction"
 				icon="platform:/plugin/com.surelogic.common/lib/images/fl_logo.gif"
-				label="Launch Apk"
+				label="Flashlight Android APK..."
 				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/android"
 				helpContextId="menu-launch-apk">
 			</action>

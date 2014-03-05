@@ -397,6 +397,36 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
                 try {
                     data = new RunData(apkName, runId);
                     try {
+                        Sdk sdk = Sdk.getCurrent();
+                        // Determine goal project target platform
+                        IAndroidTarget projectTarget = sdk.getTarget(info
+                                .getSelectedProject());
+                        final ManifestData manifestData = AndroidManifestHelper
+                                .parseForData(getManifest(apkFile, data.tmpDir)
+                                        .getAbsolutePath());
+                        if (projectTarget == null) {
+                            int targetVersion = manifestData
+                                    .getTargetSdkVersion();
+                            for (IAndroidTarget t : sdk.getTargets()) {
+                                if (t.getVersion().getApiLevel() == targetVersion) {
+                                    projectTarget = t;
+                                }
+                            }
+                        }
+                        if (projectTarget == null) {
+                            int minVersion = manifestData.getMinSdkVersion();
+                            for (IAndroidTarget t : sdk.getTargets()) {
+                                if (t.getVersion().getApiLevel() == minVersion) {
+                                    projectTarget = t;
+                                }
+                            }
+                        }
+                        if (projectTarget == null
+                                && sdk.getTargets().length > 0) {
+                            projectTarget = sdk.getTargets()[0];
+                        }
+                        final IAndroidTarget targetPlatform = projectTarget;
+
                         File outJar = new File(data.tmpDir, "out.jar");
 
                         File origDir = new File(data.tmpDir, "orig");
@@ -411,8 +441,10 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
                                         data.log)), data.fieldsFile,
                                 data.sitesFile, data.classesFile, data.hbFile);
                         dex.addDirToDir(origDir, data.classesDir);
-                        dex.addClasspathJar(new File(
-                                "/home/nathan/java/android-sdk-linux/platforms/android-15/android.jar"));
+                        for (String path : targetPlatform.getBootClasspath()) {
+                            dex.addClasspathJar(new File(path));
+                        }
+
                         Map<String, Map<String, Boolean>> execute = dex
                                 .execute();
                         // Set up source information if we have any
@@ -424,26 +456,12 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
                         // Create instrumentation data
                         createInfoClasses(data);
                         FileUtility.zipDir(data.classesDir, outJar);
-                        Sdk sdk = Sdk.getCurrent();
                         DexWrapper dexWrapper = sdk.getDexWrapper(sdk
                                 .getLatestBuildTool());
                         // Build final Apk
                         final File newApk = DexHelper.rewriteApkWithJar(
                                 new DexToolWrapper(), apkFile,
                                 getRuntimeJarPath(), outJar, data.runDir);
-
-                        IAndroidTarget projectTarget = sdk.getTarget(info
-                                .getSelectedProject());
-                        if (projectTarget == null) {
-                            IAndroidTarget[] targets = sdk.getTargets();
-                            if (targets.length > 0) {
-                                projectTarget = targets[0];
-                            }
-                        }
-                        final IAndroidTarget targetPlatform = projectTarget;
-                        final ManifestData manifestData = AndroidManifestHelper
-                                .parseForData(getManifest(apkFile, data.tmpDir)
-                                        .getAbsolutePath());
 
                         // Launch Apk
                         final AndroidVersion minApiVersion = new AndroidVersion(

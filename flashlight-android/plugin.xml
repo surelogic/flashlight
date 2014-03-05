@@ -56,6 +56,14 @@
 	<extension point="org.eclipse.ui.actionSets">
 		<actionSet label="Flashlight Android ActionSet" visible="true"
 			id="com.surelogic.flashlight.android.client.eclipse.workbenchActionSet">
+			<menu id="com.surelogic.flashlight.client.eclipse.workbenchMenu"
+				label="Flashlight" path="additions">
+				<groupMarker name="client" />
+				<separator name="android" />
+				<separator name="jsure" />
+				<separator name="service" />
+				<separator name="license" />
+			</menu>
 			<action
 				class="com.surelogic.flashlight.client.eclipse.actions.RunApkAction"
 				id="com.surelogic.flashlight.client.eclipse.actions.RunApkAction"

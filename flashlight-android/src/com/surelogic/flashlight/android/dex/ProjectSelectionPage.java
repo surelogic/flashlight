@@ -78,7 +78,8 @@ public class ProjectSelectionPage extends WizardPage {
         final TableItem[] items = projectTable.getSelection();
         setPageComplete(items.length == 1);
         for (final TableItem item : items) {
-            info.setSelectedProject((IProject) item.getData());
+            IProject project = (IProject) item.getData();
+            info.setSelectedProject(project);
         }
     }
 

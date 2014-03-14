@@ -5,13 +5,19 @@ import java.util.List;
 
 import org.eclipse.core.resources.IProject;
 
+import com.android.sdklib.IAndroidTarget;
+
 public class ApkSelectionInfo {
     private IProject selectedProject;
     private final List<IProject> projects;
+    private IAndroidTarget selectedTarget;
+    private final List<IAndroidTarget> targets;
     File apk;
 
-    public ApkSelectionInfo(List<IProject> projects) {
+    public ApkSelectionInfo(List<IProject> projects,
+            List<IAndroidTarget> targets) {
         this.projects = projects;
+        this.targets = targets;
     }
 
     public IProject getSelectedProject() {
@@ -34,8 +40,20 @@ public class ApkSelectionInfo {
         this.apk = apk;
     }
 
+    public IAndroidTarget getSelectedTarget() {
+        return selectedTarget;
+    }
+
+    public void setSelectedTarget(IAndroidTarget selectedTarget) {
+        this.selectedTarget = selectedTarget;
+    }
+
+    public List<IAndroidTarget> getTargets() {
+        return targets;
+    }
+
     public boolean isSelectionValid() {
-        return apk != null && apk.exists();
+        return apk != null && apk.exists() && selectedTarget != null;
     }
 
 }

@@ -72,6 +72,13 @@
 				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/android"
 				helpContextId="menu-launch-apk">
 			</action>
+			<action
+				class="com.surelogic.flashlight.client.eclipse.actions.UnpackThenRepackAction"
+				id="com.surelogic.flashlight.client.eclipse.actions.UnpackThenRepackAction"
+				label="Unpack Then Repack Apk"
+				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/android"
+				helpContextId="menu-manage-licenses">
+			</action>
 		</actionSet>
 	</extension>
 

@@ -1,12 +1,15 @@
 package com.surelogic.flashlight.client.eclipse.actions;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -28,7 +31,6 @@ import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.WizardDialog;
-import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
@@ -94,6 +96,12 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
     public final static int ACTION_DO_NOTHING = 2;
     /** Default launch action value. */
     public final static int DEFAULT_LAUNCH_ACTION = ACTION_DEFAULT;
+
+    private static final String FLAG_AVD = "-avd"; //$NON-NLS-1$
+    private static final String FLAG_NETDELAY = "-netdelay"; //$NON-NLS-1$
+    private static final String FLAG_NETSPEED = "-netspeed"; //$NON-NLS-1$
+    private static final String FLAG_WIPE_DATA = "-wipe-data"; //$NON-NLS-1$
+    private static final String FLAG_NO_BOOT_ANIM = "-no-boot-anim"; //$NON-NLS-1$
     private static final short ADECODE_SOURCES_NONE = 0x0000;
 
     static File getManifest(File apk, File tmpDir) throws IOException,
@@ -111,11 +119,12 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
     @Override
     public void run(IAction action) {
         Shell shell = EclipseUIUtility.getShell();
-        ApkSelectionInfo info = new ApkSelectionInfo(JDTUtility.getProjects());
+        ApkSelectionInfo info = new ApkSelectionInfo(JDTUtility.getProjects(),
+                Arrays.asList(Sdk.getCurrent().getTargets()));
         ApkSelectionWizard wizard = new ApkSelectionWizard(info);
         WizardDialog wd = new WizardDialog(shell, wizard);
         int flag = wd.open();
-        if (info.isSelectionValid() && flag != SWT.CANCEL) {
+        if (info.isSelectionValid() && flag == Window.OK) {
             File apkFile = info.getApk();
             if (apkFile != null && apkFile.exists()) {
                 new LaunchApkJob(info).schedule();
@@ -141,8 +150,39 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
         IDevice device = response.getDeviceToUse();
         if (avd != null) {
             ArrayList<String> list = new ArrayList<String>();
+
             String path = AdtPlugin.getOsAbsoluteEmulator();
+
             list.add(path);
+
+            list.add(FLAG_AVD);
+            list.add(avd.getName());
+
+            if (config.mNetworkSpeed != null) {
+                list.add(FLAG_NETSPEED);
+                list.add(config.mNetworkSpeed);
+            }
+
+            if (config.mNetworkDelay != null) {
+                list.add(FLAG_NETDELAY);
+                list.add(config.mNetworkDelay);
+            }
+            /*
+             * if (needsWipeData) { list.add(FLAG_WIPE_DATA); }
+             */
+            if (config.mNoBootAnim) {
+                list.add(FLAG_NO_BOOT_ANIM);
+            }
+
+            // convert the list into an array for the call to exec.
+            String[] command = list.toArray(new String[list.size()]);
+
+            // launch the emulator
+            try {
+                Process process = Runtime.getRuntime().exec(command);
+                grabEmulatorOutput(process);
+            } catch (IOException e) {
+            }
             // TODO finish setting up emulator
         } else if (device != null) {
             try {
@@ -399,35 +439,17 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
                     try {
                         Sdk sdk = Sdk.getCurrent();
                         // Determine goal project target platform
-                        IAndroidTarget projectTarget = sdk.getTarget(info
-                                .getSelectedProject());
+
+                        String translatedManifestPath = getManifest(apkFile,
+                                data.tmpDir).getAbsolutePath();
                         final ManifestData manifestData = AndroidManifestHelper
-                                .parseForData(getManifest(apkFile, data.tmpDir)
-                                        .getAbsolutePath());
+                                .parseForData(translatedManifestPath);
                         final AndroidVersion minApiVersion = new AndroidVersion(
                                 manifestData.getMinSdkVersion(),
                                 manifestData.getMinSdkVersionString());
-                        if (projectTarget == null) {
-                            int targetVersion = manifestData
-                                    .getTargetSdkVersion();
-                            for (IAndroidTarget t : sdk.getTargets()) {
-                                if (t.getVersion().equals(targetVersion)) {
-                                    projectTarget = t;
-                                }
-                            }
-                        }
-                        if (projectTarget == null) {
-                            for (IAndroidTarget t : sdk.getTargets()) {
-                                if (t.getVersion().equals(minApiVersion)) {
-                                    projectTarget = t;
-                                }
-                            }
-                        }
-                        if (projectTarget == null
-                                && sdk.getTargets().length > 0) {
-                            projectTarget = sdk.getTargets()[sdk.getTargets().length - 1];
-                        }
-                        final IAndroidTarget targetPlatform = projectTarget;
+
+                        final IAndroidTarget targetPlatform = info
+                                .getSelectedTarget();
 
                         File outJar = new File(data.tmpDir, "out.jar");
 
@@ -542,4 +564,59 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
         }
     }
 
+    /**
+     * Get the stderr/stdout outputs of a process and return when the process is
+     * done. Both <b>must</b> be read or the process will block on windows.
+     * 
+     * @param process
+     *            The process to get the output from
+     */
+    private static void grabEmulatorOutput(final Process process) {
+        // read the lines as they come. if null is returned, it's
+        // because the process finished
+        new Thread("") { //$NON-NLS-1$
+            @Override
+            public void run() {
+                // create a buffer to read the stderr output
+                InputStreamReader is = new InputStreamReader(
+                        process.getErrorStream());
+                BufferedReader errReader = new BufferedReader(is);
+
+                try {
+                    while (true) {
+                        String line = errReader.readLine();
+                        if (line != null) {
+                            AdtPlugin.printErrorToConsole("Emulator", line);
+                        } else {
+                            break;
+                        }
+                    }
+                } catch (IOException e) {
+                    // do nothing.
+                }
+            }
+        }.start();
+
+        new Thread("") { //$NON-NLS-1$
+            @Override
+            public void run() {
+                InputStreamReader is = new InputStreamReader(
+                        process.getInputStream());
+                BufferedReader outReader = new BufferedReader(is);
+
+                try {
+                    while (true) {
+                        String line = outReader.readLine();
+                        if (line != null) {
+                            AdtPlugin.printToConsole("Emulator", line);
+                        } else {
+                            break;
+                        }
+                    }
+                } catch (IOException e) {
+                    // do nothing.
+                }
+            }
+        }.start();
+    }
 }

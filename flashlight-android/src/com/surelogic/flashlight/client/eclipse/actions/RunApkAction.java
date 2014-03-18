@@ -8,7 +8,6 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -28,6 +27,7 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.action.IAction;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.WizardDialog;
@@ -148,43 +148,7 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
         // Do launch
         AvdInfo avd = response.getAvdToLaunch();
         IDevice device = response.getDeviceToUse();
-        if (avd != null) {
-            ArrayList<String> list = new ArrayList<String>();
-
-            String path = AdtPlugin.getOsAbsoluteEmulator();
-
-            list.add(path);
-
-            list.add(FLAG_AVD);
-            list.add(avd.getName());
-
-            if (config.mNetworkSpeed != null) {
-                list.add(FLAG_NETSPEED);
-                list.add(config.mNetworkSpeed);
-            }
-
-            if (config.mNetworkDelay != null) {
-                list.add(FLAG_NETDELAY);
-                list.add(config.mNetworkDelay);
-            }
-            /*
-             * if (needsWipeData) { list.add(FLAG_WIPE_DATA); }
-             */
-            if (config.mNoBootAnim) {
-                list.add(FLAG_NO_BOOT_ANIM);
-            }
-
-            // convert the list into an array for the call to exec.
-            String[] command = list.toArray(new String[list.size()]);
-
-            // launch the emulator
-            try {
-                Process process = Runtime.getRuntime().exec(command);
-                grabEmulatorOutput(process);
-            } catch (IOException e) {
-            }
-            // TODO finish setting up emulator
-        } else if (device != null) {
+        if (device != null) {
             try {
                 device.installPackage(apk.getAbsolutePath(), true);
                 Activity launcherActivity = manifestData.getLauncherActivity();
@@ -501,6 +465,14 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
                                         shell, response, "", targetPlatform,
                                         minApiVersion, false);
                                 if (dialog.open() == Window.OK) {
+                                    if (response.getDeviceToUse() == null) {
+                                        MessageDialog
+                                                .openWarning(
+                                                        shell,
+                                                        "Cannot launch emulator",
+                                                        "If you want to deploy to an emulator, please make sure the device is already running first using the Android Virtual Device Manager.");
+                                        return Status.OK_STATUS;
+                                    }
                                     IDevice device = launch(
                                             info.getSelectedProject(),
                                             response, newApk, manifestData);

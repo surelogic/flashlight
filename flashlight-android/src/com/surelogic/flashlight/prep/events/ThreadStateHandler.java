@@ -18,12 +18,24 @@ public class ThreadStateHandler implements EventHandler {
             GCObject gc = (GCObject) e;
             activeThreads.remove(gc.getId());
             break;
+        case FIELDREAD:
+        case FIELDWRITE:
+
+            break;
         }
 
     }
 
     static class LockState {
 
+    }
+
+    static class Trace {
+        String classname;
+        String methodName;
+        String fileName;
+        int lineNumber;
+        boolean nativeMethod;
     }
 
     static class ThreadState {
@@ -42,6 +54,10 @@ public class ThreadStateHandler implements EventHandler {
         long waitedCount;
         long waitedTime;
         LockState lockInfo;
+        Trace stackTrace;
+
+        // TODO lockedMonitors[]
+        // TODO lockedSynchronizers[]
 
         public long getId() {
             return id;

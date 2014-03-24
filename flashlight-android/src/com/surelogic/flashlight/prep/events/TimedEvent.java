@@ -13,4 +13,8 @@ abstract class TimedEvent {
         return nanoTime;
     }
 
+    public long getInThread() {
+        return inThread;
+    }
+
 }

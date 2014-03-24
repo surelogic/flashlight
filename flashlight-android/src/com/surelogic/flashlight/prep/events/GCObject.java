@@ -14,7 +14,7 @@ public class GCObject implements Event {
     }
 
     @Override
-    public PrepEvent type() {
+    public PrepEvent getEventType() {
         return PrepEvent.GARBAGECOLLECTEDOBJECT;
     }
 

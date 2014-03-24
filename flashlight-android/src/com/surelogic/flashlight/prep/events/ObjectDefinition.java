@@ -9,7 +9,7 @@ public class ObjectDefinition extends ReferenceDefinition implements Event {
     }
 
     @Override
-    public PrepEvent type() {
+    public PrepEvent getEventType() {
         return PrepEvent.OBJECTDEFINITION;
     }
 

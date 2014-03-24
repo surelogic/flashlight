@@ -12,17 +12,18 @@ public class SaxElemHandler extends AbstractDataScan {
 
     private final EventHandler handler;
     private final EventBuilder builder;
+    private boolean isStarted;
 
-    SaxElemHandler(EventHandler handler, EventBuilder builder) {
+    private SaxElemHandler(EventHandler handler, EventBuilder builder) {
         super(null);
         this.handler = handler;
         this.builder = builder;
-
     }
 
     @Override
     public void startElement(String uri, String localName, String qName,
             Attributes attributes) throws SAXException {
+        isStarted = true;
         PrepEvent event = PrepEvent.getEvent(qName);
         Event elem = builder.getEvent(event, preprocessAttributes(attributes));
         if (elem != null) {
@@ -46,5 +47,14 @@ public class SaxElemHandler extends AbstractDataScan {
             return attrs;
         }
         return null;
+    }
+
+    public boolean isStarted() {
+        return isStarted;
+    }
+
+    public static SaxElemHandler create() {
+        return new SaxElemHandler(new ThreadStateHandler(),
+                new SaxElemBuilder());
     }
 }

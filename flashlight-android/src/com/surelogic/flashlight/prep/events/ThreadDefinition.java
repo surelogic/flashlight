@@ -5,7 +5,7 @@ import com.surelogic.flashlight.common.prep.PrepEvent;
 public class ThreadDefinition extends ReferenceDefinition implements Event {
 
     @Override
-    public PrepEvent type() {
+    public PrepEvent getEventType() {
         return PrepEvent.THREADDEFINITION;
     }
 

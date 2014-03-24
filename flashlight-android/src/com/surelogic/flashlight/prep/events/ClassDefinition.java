@@ -17,7 +17,7 @@ public class ClassDefinition implements Event {
     }
 
     @Override
-    public PrepEvent type() {
+    public PrepEvent getEventType() {
         return PrepEvent.CLASSDEFINITION;
     }
 

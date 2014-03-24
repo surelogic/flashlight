@@ -1,14 +1,26 @@
 package com.surelogic.flashlight.prep.events;
 
+import java.lang.management.LockInfo;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 public class ThreadStateHandler implements EventHandler {
+    private static final int GC_BUFFER_SIZE = 500;
 
-    Map<Long, ThreadState> activeThreads;
+    private final Map<Long, ThreadState> activeThreads;
+    private final ArrayList<Long> toGc;
+
+    ThreadStateHandler() {
+        activeThreads = new HashMap<Long, ThreadStateHandler.ThreadState>();
+        toGc = new ArrayList<Long>(500);
+    }
 
     @Override
     public void handle(Event e) {
-        switch (e.type()) {
+        switch (e.getEventType()) {
         case THREADDEFINITION:
             ThreadDefinition td = (ThreadDefinition) e;
             ThreadState state = new ThreadState(td.getId(), td.getName());
@@ -16,17 +28,84 @@ public class ThreadStateHandler implements EventHandler {
             break;
         case GARBAGECOLLECTEDOBJECT:
             GCObject gc = (GCObject) e;
-            activeThreads.remove(gc.getId());
+            toGc.add(gc.getId());
+            if (toGc.size() >= GC_BUFFER_SIZE) {
+                for (Long id : toGc) {
+                    activeThreads.remove(id);
+                    for (ThreadState ts : activeThreads.values()) {
+                        List<Long> locks = ts.locks;
+                        boolean more = true;
+                        while (more) {
+                            more = locks.remove(id);
+                        }
+                    }
+                }
+                toGc.clear();
+            }
             break;
         case FIELDREAD:
         case FIELDWRITE:
-
             break;
+        case AFTERINTRINSICLOCKACQUISITION:
+        case AFTERUTILCONCURRENTLOCKACQUISITIONATTEMPT:
+            final LockEvent lea = (LockEvent) e;
+            if (lea.isSuccess()) {
+                activeThreads.get(lea.getInThread()).acquireLock(lea.getLock());
+            }
+            break;
+        case AFTERINTRINSICLOCKRELEASE:
+        case AFTERUTILCONCURRENTLOCKRELEASEATTEMPT:
+            final LockEvent ler = (LockEvent) e;
+            if (ler.isSuccess()) {
+                activeThreads.get(ler.getInThread()).releaseLock(ler.getLock());
+            }
+            break;
+        case AFTERINTRINSICLOCKWAIT:
+        case BEFOREINTRINSICLOCKWAIT:
+        case BEFOREINTRINSICLOCKACQUISITION:
+        case BEFOREUTILCONCURRENTLOCKACQUISITIONATTEMPT:
+            // Do nothing
+            break;
+        case CHECKPOINT:
+            break;
+        case CLASSDEFINITION:
+            break;
+        case ENVIRONMENT:
+            break;
+        case FIELDASSIGNMENT:
+            break;
+        case FIELDDEFINITION:
+            break;
+        case FINAL:
+            break;
+        case FLASHLIGHT:
+            break;
+        case HAPPENSBEFORECOLLECTION:
+            break;
+        case HAPPENSBEFOREOBJECT:
+            break;
+        case HAPPENSBEFORETHREAD:
+            break;
+        case INDIRECTACCESS:
+            break;
+        case OBJECTDEFINITION:
+            break;
+        case READWRITELOCK:
+            break;
+        case SELECTEDPACKAGE:
+            break;
+        case SINGLETHREADEFIELD:
+            break;
+        case STATICCALLLOCATION:
+            break;
+        case TIME:
+            break;
+        case TRACENODE:
+            break;
+        default:
+            break;
+
         }
-
-    }
-
-    static class LockState {
 
     }
 
@@ -38,10 +117,20 @@ public class ThreadStateHandler implements EventHandler {
         boolean nativeMethod;
     }
 
-    static class ThreadState {
+    class ThreadState {
         public ThreadState(long id, String name) {
             this.id = id;
             threadName = name;
+        }
+
+        LinkedList<Long> locks;
+
+        void acquireLock(Long lockId) {
+            locks.push(lockId);
+        }
+
+        void releaseLock(Long lockId) {
+            locks.remove(lockId);
         }
 
         long id;
@@ -53,7 +142,7 @@ public class ThreadStateHandler implements EventHandler {
         long blockedTime;
         long waitedCount;
         long waitedTime;
-        LockState lockInfo;
+        LockInfo lockInfo;
         Trace stackTrace;
 
         // TODO lockedMonitors[]
@@ -129,6 +218,32 @@ public class ThreadStateHandler implements EventHandler {
 
         public void setWaitedTime(long waitedTime) {
             this.waitedTime = waitedTime;
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + (int) (id ^ id >>> 32);
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            ThreadState other = (ThreadState) obj;
+            if (id != other.id) {
+                return false;
+            }
+            return true;
         }
 
     }

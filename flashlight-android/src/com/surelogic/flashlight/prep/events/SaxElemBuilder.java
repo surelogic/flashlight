@@ -1,5 +1,7 @@
 package com.surelogic.flashlight.prep.events;
 
+import com.surelogic._flashlight.common.AttributeType;
+import com.surelogic._flashlight.common.FlagType;
 import com.surelogic._flashlight.common.PreppedAttributes;
 import com.surelogic.flashlight.common.prep.PrepEvent;
 
@@ -9,21 +11,33 @@ public class SaxElemBuilder implements EventBuilder {
     public Event getEvent(PrepEvent type, PreppedAttributes pa) {
         switch (type) {
         case AFTERINTRINSICLOCKACQUISITION:
-            break;
         case AFTERINTRINSICLOCKRELEASE:
-            break;
         case AFTERINTRINSICLOCKWAIT:
-            break;
-        case AFTERUTILCONCURRENTLOCKACQUISITIONATTEMPT:
-            break;
-        case AFTERUTILCONCURRENTLOCKRELEASEATTEMPT:
-            break;
         case BEFOREINTRINSICLOCKACQUISITION:
-            break;
         case BEFOREINTRINSICLOCKWAIT:
-            break;
+            return new IntrinsicLockEvent(type, pa.getLong(AttributeType.TIME),
+                    pa.getLong(AttributeType.THREAD),
+                    pa.getLong(AttributeType.TRACE),
+                    pa.getLong(AttributeType.LOCK),
+                    pa.getBoolean(FlagType.THIS_LOCK),
+                    pa.getBoolean(FlagType.CLASS_LOCK));
+        case AFTERUTILCONCURRENTLOCKACQUISITIONATTEMPT:
+            return new JUCLockEvent(type, pa.getLong(AttributeType.TIME),
+                    pa.getLong(AttributeType.THREAD),
+                    pa.getLong(AttributeType.TRACE),
+                    pa.getLong(AttributeType.LOCK),
+                    pa.getBoolean(FlagType.GOT_LOCK));
+        case AFTERUTILCONCURRENTLOCKRELEASEATTEMPT:
+            return new JUCLockEvent(type, pa.getLong(AttributeType.TIME),
+                    pa.getLong(AttributeType.THREAD),
+                    pa.getLong(AttributeType.TRACE),
+                    pa.getLong(AttributeType.LOCK),
+                    pa.getBoolean(FlagType.RELEASED_LOCK));
         case BEFOREUTILCONCURRENTLOCKACQUISITIONATTEMPT:
-            break;
+            return new JUCLockEvent(type, pa.getLong(AttributeType.TIME),
+                    pa.getLong(AttributeType.THREAD),
+                    pa.getLong(AttributeType.TRACE),
+                    pa.getLong(AttributeType.LOCK));
         case CHECKPOINT:
             break;
         case CLASSDEFINITION:
@@ -35,7 +49,11 @@ public class SaxElemBuilder implements EventBuilder {
         case FIELDDEFINITION:
             break;
         case FIELDREAD:
-            break;
+            return new FieldAccess(type, pa.getLong(AttributeType.FIELD),
+                    pa.getLong(AttributeType.TIME),
+                    pa.getLong(AttributeType.THREAD),
+                    pa.getLong(AttributeType.TRACE),
+                    pa.getLong(AttributeType.RECEIVER));
         case FIELDWRITE:
             break;
         case FINAL:
@@ -43,7 +61,7 @@ public class SaxElemBuilder implements EventBuilder {
         case FLASHLIGHT:
             break;
         case GARBAGECOLLECTEDOBJECT:
-            break;
+            return new GCObject(pa.getLong(AttributeType.ID));
         case HAPPENSBEFORECOLLECTION:
             break;
         case HAPPENSBEFOREOBJECT:
@@ -74,5 +92,4 @@ public class SaxElemBuilder implements EventBuilder {
         }
         return null;
     }
-
 }

@@ -2,12 +2,12 @@ package com.surelogic.flashlight.prep.events;
 
 import com.surelogic.flashlight.common.prep.PrepEvent;
 
-public class Trace implements Event {
+public class TraceNode implements Event {
     private final long id;
     private final long parent;
     private final long site;
 
-    public Trace(long id, long parent, long site) {
+    public TraceNode(long id, long parent, long site) {
         super();
         this.id = id;
         this.parent = parent;

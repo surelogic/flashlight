@@ -89,10 +89,11 @@ public class SaxElemBuilder implements EventBuilder {
         case TIME:
             break;
         case TRACENODE:
-            break;
+            return new TraceNode(pa.getLong(AttributeType.TRACE),
+                    pa.getLong(AttributeType.PARENT_ID),
+                    pa.getLong(AttributeType.SITE_ID));
         default:
             break;
-
         }
         return null;
     }

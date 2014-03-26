@@ -1,21 +1,58 @@
 package com.surelogic.flashlight.prep.events;
 
+import gnu.trove.map.TLongObjectMap;
+import gnu.trove.map.hash.TLongObjectHashMap;
+
 import java.lang.management.LockInfo;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.lang.management.ThreadInfo;
 import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+
+import com.surelogic.flashlight.common.LockId;
 
 public class ThreadStateHandler implements EventHandler {
-    private static final int GC_BUFFER_SIZE = 500;
 
-    private final Map<Long, ThreadState> activeThreads;
-    private final ArrayList<Long> toGc;
+    // thread id -> thread info
+    private final TLongObjectMap<ThreadState> activeThreads;
+    private final ClassHandler classes;
+    private int peakThreads;
+    private long startedThreads;
 
-    ThreadStateHandler() {
-        activeThreads = new HashMap<Long, ThreadStateHandler.ThreadState>();
-        toGc = new ArrayList<Long>(500);
+    ThreadStateHandler(ClassHandler classes) {
+        activeThreads = new TLongObjectHashMap<ThreadState>();
+        this.classes = classes;
+    }
+
+    public int getThreadCount() {
+        return activeThreads.size();
+    }
+
+    public int getPeakThreadCount() {
+        return peakThreads;
+    }
+
+    public long getTotalStartedThreadCount() {
+        return startedThreads;
+    }
+
+    // We can't implement this one right now
+    public int getDaemonThreadCount() {
+        return -1;
+    }
+
+    public long[] getAllThreadIds() {
+        return activeThreads.keys();
+    }
+
+    public ThreadInfo getThreadInfo(long id) {
+        return getState(id).toThreadInfo();
+    }
+
+    public ThreadInfo[] getThreadInfo(long[] ids) {
+        ThreadInfo[] arr = new ThreadInfo[ids.length];
+        for (int i = 0; i < ids.length; i++) {
+            arr[i] = getThreadInfo(ids[i]);
+        }
+        return arr;
     }
 
     @Override
@@ -25,88 +62,54 @@ public class ThreadStateHandler implements EventHandler {
             ThreadDefinition td = (ThreadDefinition) e;
             ThreadState state = new ThreadState(td.getId(), td.getName());
             activeThreads.put(state.getId(), state);
+            peakThreads = Math.max(peakThreads, activeThreads.size());
+            startedThreads++;
             break;
         case GARBAGECOLLECTEDOBJECT:
             GCObject gc = (GCObject) e;
-            toGc.add(gc.getId());
-            if (toGc.size() >= GC_BUFFER_SIZE) {
-                for (Long id : toGc) {
-                    activeThreads.remove(id);
-                    for (ThreadState ts : activeThreads.values()) {
-                        List<Long> locks = ts.locks;
-                        boolean more = true;
-                        while (more) {
-                            more = locks.remove(id);
-                        }
-                    }
-                }
-                toGc.clear();
-            }
-            break;
-        case FIELDREAD:
-        case FIELDWRITE:
+            long id = gc.getId();
+            activeThreads.remove(id);
             break;
         case AFTERINTRINSICLOCKACQUISITION:
         case AFTERUTILCONCURRENTLOCKACQUISITIONATTEMPT:
             final LockEvent lea = (LockEvent) e;
             if (lea.isSuccess()) {
-                activeThreads.get(lea.getInThread()).acquireLock(lea.getLock());
+                getState(lea).acquireLock(lea);
             }
             break;
         case AFTERINTRINSICLOCKRELEASE:
         case AFTERUTILCONCURRENTLOCKRELEASEATTEMPT:
             final LockEvent ler = (LockEvent) e;
             if (ler.isSuccess()) {
-                activeThreads.get(ler.getInThread()).releaseLock(ler.getLock());
+                getState(ler).releaseLock(ler);
             }
             break;
-        case AFTERINTRINSICLOCKWAIT:
         case BEFOREINTRINSICLOCKWAIT:
-        case BEFOREINTRINSICLOCKACQUISITION:
+            final LockEvent lebw = (LockEvent) e;
+            getState(lebw).waitLock(lebw);
+            break;
+        case AFTERINTRINSICLOCKWAIT:
+            final LockEvent leaw = (LockEvent) e;
+            getState(leaw).unwaitLock(leaw);
+            break;
         case BEFOREUTILCONCURRENTLOCKACQUISITIONATTEMPT:
-            // Do nothing
-            break;
-        case CHECKPOINT:
-            break;
-        case CLASSDEFINITION:
-            break;
-        case ENVIRONMENT:
-            break;
-        case FIELDASSIGNMENT:
-            break;
-        case FIELDDEFINITION:
-            break;
-        case FINAL:
-            break;
-        case FLASHLIGHT:
-            break;
-        case HAPPENSBEFORECOLLECTION:
-            break;
-        case HAPPENSBEFOREOBJECT:
-            break;
-        case HAPPENSBEFORETHREAD:
-            break;
-        case INDIRECTACCESS:
-            break;
-        case OBJECTDEFINITION:
-            break;
-        case READWRITELOCK:
-            break;
-        case SELECTEDPACKAGE:
-            break;
-        case SINGLETHREADEFIELD:
-            break;
-        case STATICCALLLOCATION:
-            break;
-        case TIME:
-            break;
-        case TRACENODE:
+        case BEFOREINTRINSICLOCKACQUISITION:
+            final LockEvent leba = (LockEvent) e;
+            getState(leba).beforeLock(leba);
             break;
         default:
             break;
 
         }
 
+    }
+
+    ThreadState getState(TracedEvent e) {
+        return getState(e.getInThread());
+    }
+
+    ThreadState getState(long thread) {
+        return activeThreads.get(thread);
     }
 
     static class Trace {
@@ -117,25 +120,85 @@ public class ThreadStateHandler implements EventHandler {
         boolean nativeMethod;
     }
 
-    class ThreadState {
+    enum Status {
+        IDLE, BLOCKING, WAITING;
+
+        Status beforeAcquisition() {
+            if (this == IDLE) {
+                return BLOCKING;
+            } else {
+                throw new IllegalStateException();
+            }
+        }
+
+        Status afterAcquisition() {
+            if (this == BLOCKING) {
+                return IDLE;
+            } else {
+                throw new IllegalStateException();
+            }
+        }
+
+        Status waitObject() {
+            if (this == IDLE) {
+                return WAITING;
+            } else {
+                throw new IllegalStateException();
+            }
+        }
+
+        Status unwaitObject() {
+            if (this == WAITING) {
+                return IDLE;
+            } else {
+                throw new IllegalStateException();
+            }
+        }
+    }
+
+    private class ThreadState {
+
+        private long lastEvent;
+
         public ThreadState(long id, String name) {
             this.id = id;
             threadName = name;
         }
 
-        LinkedList<Long> locks;
-
-        void acquireLock(Long lockId) {
-            locks.push(lockId);
+        public ThreadInfo toThreadInfo() {
+            // TODO Auto-generated method stub
+            return null;
         }
 
-        void releaseLock(Long lockId) {
-            locks.remove(lockId);
+        LinkedList<LockId> locks;
+
+        void beforeLock(LockEvent le) {
+            lastEvent = le.getNanoTime();
+            status = status.beforeAcquisition();
+        }
+
+        void acquireLock(LockEvent le) {
+            blockedTime = le.getNanoTime() - lastEvent;
+            locks.push(le.getLockId());
+            status = status.afterAcquisition();
+        }
+
+        void releaseLock(LockEvent le) {
+            locks.remove(le.getLockId());
+        }
+
+        void waitLock(LockEvent le) {
+            blockedTime = le.getNanoTime() - lastEvent;
+            lastEvent = le.getNanoTime();
+            status = status.waitObject();
+        }
+
+        void unwaitLock(LockEvent le) {
+            status = status.unwaitObject();
         }
 
         long id;
         String threadName;
-        String threadState;
         boolean suspended;
         boolean inNative;
         long blockedCount;
@@ -144,80 +207,13 @@ public class ThreadStateHandler implements EventHandler {
         long waitedTime;
         LockInfo lockInfo;
         Trace stackTrace;
+        Status status;
 
         // TODO lockedMonitors[]
         // TODO lockedSynchronizers[]
 
         public long getId() {
             return id;
-        }
-
-        public void setId(long id) {
-            this.id = id;
-        }
-
-        public String getThreadName() {
-            return threadName;
-        }
-
-        public void setThreadName(String threadName) {
-            this.threadName = threadName;
-        }
-
-        public String getThreadState() {
-            return threadState;
-        }
-
-        public void setThreadState(String threadState) {
-            this.threadState = threadState;
-        }
-
-        public boolean isSuspended() {
-            return suspended;
-        }
-
-        public void setSuspended(boolean suspended) {
-            this.suspended = suspended;
-        }
-
-        public boolean isInNative() {
-            return inNative;
-        }
-
-        public void setInNative(boolean inNative) {
-            this.inNative = inNative;
-        }
-
-        public long getBlockedCount() {
-            return blockedCount;
-        }
-
-        public void setBlockedCount(long blockedCount) {
-            this.blockedCount = blockedCount;
-        }
-
-        public long getBlockedTime() {
-            return blockedTime;
-        }
-
-        public void setBlockedTime(long blockedTime) {
-            this.blockedTime = blockedTime;
-        }
-
-        public long getWaitedCount() {
-            return waitedCount;
-        }
-
-        public void setWaitedCount(long waitedCount) {
-            this.waitedCount = waitedCount;
-        }
-
-        public long getWaitedTime() {
-            return waitedTime;
-        }
-
-        public void setWaitedTime(long waitedTime) {
-            this.waitedTime = waitedTime;
         }
 
         @Override

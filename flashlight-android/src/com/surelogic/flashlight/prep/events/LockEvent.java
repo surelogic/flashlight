@@ -1,5 +1,7 @@
 package com.surelogic.flashlight.prep.events;
 
+import com.surelogic.flashlight.common.LockId;
+import com.surelogic.flashlight.common.LockType;
 import com.surelogic.flashlight.common.prep.PrepEvent;
 
 public abstract class LockEvent extends TracedEvent implements Event {
@@ -30,8 +32,20 @@ public abstract class LockEvent extends TracedEvent implements Event {
         return type;
     }
 
-    public long getLock() {
-        return lock;
+    public LockId getLockId() {
+        LockType lt;
+        switch (type) {
+        case BEFOREINTRINSICLOCKACQUISITION:
+        case BEFOREINTRINSICLOCKWAIT:
+        case AFTERINTRINSICLOCKACQUISITION:
+        case AFTERINTRINSICLOCKRELEASE:
+        case AFTERINTRINSICLOCKWAIT:
+            lt = LockType.INTRINSIC;
+            break;
+        default:
+            lt = LockType.UTIL;
+        }
+        return new LockId(lock, lt);
     }
 
     public boolean isSuccess() {

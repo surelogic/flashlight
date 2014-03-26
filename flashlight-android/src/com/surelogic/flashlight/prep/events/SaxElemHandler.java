@@ -10,13 +10,13 @@ import com.surelogic.flashlight.common.prep.PrepEvent;
 
 public class SaxElemHandler extends AbstractDataScan {
 
-    private final EventHandler handler;
+    private final EventHandler[] handlers;
     private final EventBuilder builder;
     private boolean isStarted;
 
-    private SaxElemHandler(EventHandler handler, EventBuilder builder) {
+    private SaxElemHandler(EventBuilder builder, EventHandler... handler) {
         super(null);
-        this.handler = handler;
+        handlers = handler;
         this.builder = builder;
     }
 
@@ -27,7 +27,9 @@ public class SaxElemHandler extends AbstractDataScan {
         PrepEvent event = PrepEvent.getEvent(qName);
         Event elem = builder.getEvent(event, preprocessAttributes(attributes));
         if (elem != null) {
-            handler.handle(elem);
+            for (EventHandler handler : handlers) {
+                handler.handle(elem);
+            }
         }
     }
 
@@ -54,7 +56,8 @@ public class SaxElemHandler extends AbstractDataScan {
     }
 
     public static SaxElemHandler create() {
-        return new SaxElemHandler(new ThreadStateHandler(),
-                new SaxElemBuilder());
+        ClassHandler ch = new ClassHandler();
+        ThreadStateHandler th = new ThreadStateHandler(ch);
+        return new SaxElemHandler(new SaxElemBuilder(), ch, th);
     }
 }

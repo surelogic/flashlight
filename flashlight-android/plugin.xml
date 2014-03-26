@@ -72,6 +72,14 @@
 				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/android"
 				helpContextId="menu-launch-apk">
 			</action>
+			<action
+				class="com.surelogic.flashlight.client.eclipse.actions.RunMonitorAction"
+				id="com.surelogic.flashlight.client.eclipse.actions.RunMonitorAction"
+				icon="platform:/plugin/com.surelogic.common/lib/images/fl_logo.gif"
+				label="Flashlight MX APK..."
+				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/android"
+				helpContextId="menu-launch-apk">
+			</action>
 		</actionSet>
 	</extension>
 

@@ -79,7 +79,11 @@ public class SaxElemBuilder implements EventBuilder {
         case SINGLETHREADEFIELD:
             break;
         case STATICCALLLOCATION:
-            break;
+            return new StaticCallLocation(pa.getLong(AttributeType.ID),
+                    pa.getLong(AttributeType.IN_CLASS),
+                    pa.getString(AttributeType.LOCATION),
+                    pa.getInt(AttributeType.LINE),
+                    pa.getString(AttributeType.FILE));
         case THREADDEFINITION:
             break;
         case TIME:

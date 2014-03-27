@@ -14,12 +14,15 @@ public class ThreadStateHandler implements EventHandler {
     // thread id -> thread info
     private final TLongObjectMap<ThreadState> activeThreads;
     private final ClassHandler classes;
+    private final TraceHandler traces;
+
     private int peakThreads;
     private long startedThreads;
 
-    ThreadStateHandler(ClassHandler classes) {
+    ThreadStateHandler(ClassHandler classes, TraceHandler traces) {
         activeThreads = new TLongObjectHashMap<ThreadState>();
         this.classes = classes;
+        this.traces = traces;
     }
 
     public int getThreadCount() {
@@ -57,6 +60,12 @@ public class ThreadStateHandler implements EventHandler {
 
     @Override
     public void handle(Event e) {
+        ThreadState inThread = null;
+        if (e instanceof TracedEvent) {
+            TracedEvent te = (TracedEvent) e;
+            inThread = getState(te);
+            inThread.lastTrace = te.getTrace();
+        }
         switch (e.getEventType()) {
         case THREADDEFINITION:
             ThreadDefinition td = (ThreadDefinition) e;
@@ -74,32 +83,31 @@ public class ThreadStateHandler implements EventHandler {
         case AFTERUTILCONCURRENTLOCKACQUISITIONATTEMPT:
             final LockEvent lea = (LockEvent) e;
             if (lea.isSuccess()) {
-                getState(lea).acquireLock(lea);
+                inThread.acquireLock(lea);
             }
             break;
         case AFTERINTRINSICLOCKRELEASE:
         case AFTERUTILCONCURRENTLOCKRELEASEATTEMPT:
             final LockEvent ler = (LockEvent) e;
             if (ler.isSuccess()) {
-                getState(ler).releaseLock(ler);
+                inThread.releaseLock(ler);
             }
             break;
         case BEFOREINTRINSICLOCKWAIT:
             final LockEvent lebw = (LockEvent) e;
-            getState(lebw).waitLock(lebw);
+            inThread.waitLock(lebw);
             break;
         case AFTERINTRINSICLOCKWAIT:
             final LockEvent leaw = (LockEvent) e;
-            getState(leaw).unwaitLock(leaw);
+            inThread.unwaitLock(leaw);
             break;
         case BEFOREUTILCONCURRENTLOCKACQUISITIONATTEMPT:
         case BEFOREINTRINSICLOCKACQUISITION:
             final LockEvent leba = (LockEvent) e;
-            getState(leba).beforeLock(leba);
+            inThread.beforeLock(leba);
             break;
         default:
             break;
-
         }
 
     }
@@ -158,7 +166,8 @@ public class ThreadStateHandler implements EventHandler {
 
     private class ThreadState {
 
-        private long lastEvent;
+        private long lastTrace;
+        private long lastEventNanos;
 
         public ThreadState(long id, String name) {
             this.id = id;
@@ -173,12 +182,12 @@ public class ThreadStateHandler implements EventHandler {
         LinkedList<LockId> locks;
 
         void beforeLock(LockEvent le) {
-            lastEvent = le.getNanoTime();
+            lastEventNanos = le.getNanoTime();
             status = status.beforeAcquisition();
         }
 
         void acquireLock(LockEvent le) {
-            blockedTime = le.getNanoTime() - lastEvent;
+            blockedTime = le.getNanoTime() - lastEventNanos;
             locks.push(le.getLockId());
             status = status.afterAcquisition();
         }
@@ -188,13 +197,17 @@ public class ThreadStateHandler implements EventHandler {
         }
 
         void waitLock(LockEvent le) {
-            blockedTime = le.getNanoTime() - lastEvent;
-            lastEvent = le.getNanoTime();
+            blockedTime = le.getNanoTime() - lastEventNanos;
+            lastEventNanos = le.getNanoTime();
             status = status.waitObject();
         }
 
         void unwaitLock(LockEvent le) {
             status = status.unwaitObject();
+        }
+
+        StackTraceElement[] getTrace() {
+            return traces.trace(lastTrace);
         }
 
         long id;

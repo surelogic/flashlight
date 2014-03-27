@@ -22,6 +22,10 @@ public class ClassHandler implements EventHandler {
         return unloadedClasses;
     }
 
+    String getClassName(long classId) {
+        return classes.get(classId);
+    }
+
     ClassHandler() {
         classes = new TLongObjectHashMap<String>();
         objects = new TLongLongHashMap();

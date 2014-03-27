@@ -57,7 +57,8 @@ public class SaxElemHandler extends AbstractDataScan {
 
     public static SaxElemHandler create() {
         ClassHandler ch = new ClassHandler();
-        ThreadStateHandler th = new ThreadStateHandler(ch);
-        return new SaxElemHandler(new SaxElemBuilder(), ch, th);
+        TraceHandler trh = new TraceHandler(ch);
+        ThreadStateHandler th = new ThreadStateHandler(ch, trh);
+        return new SaxElemHandler(new SaxElemBuilder(), ch, trh, th);
     }
 }

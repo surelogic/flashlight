@@ -7,6 +7,8 @@ import com.surelogic.flashlight.common.prep.PrepEvent;
 
 public class SaxElemBuilder implements EventBuilder {
 
+    FlashlightEvent fe = new FlashlightEvent();
+
     @Override
     public Event getEvent(PrepEvent type, PreppedAttributes pa) {
         switch (type) {
@@ -39,11 +41,22 @@ public class SaxElemBuilder implements EventBuilder {
                     pa.getLong(AttributeType.TRACE),
                     pa.getLong(AttributeType.LOCK));
         case CHECKPOINT:
-            break;
+            return new CheckpointEvent(pa.getLong(AttributeType.TIME));
         case CLASSDEFINITION:
             break;
         case ENVIRONMENT:
-            break;
+            fe.setHostname(pa.getString(AttributeType.HOSTNAME));
+            fe.setUserName(pa.getString(AttributeType.USER_NAME));
+            fe.setJavaVersion(pa.getString(AttributeType.JAVA_VERSION));
+            fe.setJavaVendor(pa.getString(AttributeType.JAVA_VENDOR));
+            fe.setOsName(pa.getString(AttributeType.OS_NAME));
+            fe.setOsArch(pa.getString(AttributeType.OS_ARCH));
+            fe.setOsVersion(pa.getString(AttributeType.OS_VERSION));
+            fe.setMaxMemoryMb(pa.getInt(AttributeType.MEMORY_MB));
+            fe.setProcessors(pa.getInt(AttributeType.CPUS));
+            FlashlightEvent tmp = fe;
+            fe = null;
+            return tmp;
         case FIELDASSIGNMENT:
             break;
         case FIELDDEFINITION:
@@ -59,6 +72,8 @@ public class SaxElemBuilder implements EventBuilder {
         case FINAL:
             break;
         case FLASHLIGHT:
+            pa.getString(AttributeType.RUN);
+            pa.getString(AttributeType.VERSION);
             break;
         case GARBAGECOLLECTEDOBJECT:
             return new GCObject(pa.getLong(AttributeType.ID));
@@ -87,7 +102,8 @@ public class SaxElemBuilder implements EventBuilder {
         case THREADDEFINITION:
             break;
         case TIME:
-            break;
+            return new TimeEvent(pa.getLong(AttributeType.NANO_START),
+                    pa.getString(AttributeType.WALL_CLOCK));
         case TRACENODE:
             return new TraceNode(pa.getLong(AttributeType.TRACE),
                     pa.getLong(AttributeType.PARENT_ID),

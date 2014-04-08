@@ -37,6 +37,8 @@ public class Environment extends Event {
         addProperty("os.name", AttributeType.OS_NAME, b);
         addProperty("os.arch", AttributeType.OS_ARCH, b);
         addProperty("os.version", AttributeType.OS_VERSION, b);
+        addProperty("java.library.path", AttributeType.LIBRARY_PATH, b);
+
         if (StoreConfiguration.isAndroid()) {
             Entities.addAttribute(AttributeType.ANDROID.label(), "true", b);
         }

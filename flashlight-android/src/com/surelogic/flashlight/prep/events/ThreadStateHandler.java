@@ -3,8 +3,8 @@ package com.surelogic.flashlight.prep.events;
 import gnu.trove.map.TLongObjectMap;
 import gnu.trove.map.hash.TLongObjectHashMap;
 
+import java.lang.Thread.State;
 import java.lang.management.LockInfo;
-import java.lang.management.ThreadInfo;
 import java.util.LinkedList;
 
 import com.surelogic.flashlight.common.LockId;
@@ -33,27 +33,27 @@ public class ThreadStateHandler implements EventHandler {
         return peakThreads;
     }
 
-    public long getTotalStartedThreadCount() {
-        return startedThreads;
+    public void resetPeakThreadCount() {
+        peakThreads = getThreadCount();
+
     }
 
-    // We can't implement this one right now
-    public int getDaemonThreadCount() {
-        return -1;
+    public long getTotalStartedThreadCount() {
+        return startedThreads;
     }
 
     public long[] getAllThreadIds() {
         return activeThreads.keys();
     }
 
-    public ThreadInfo getThreadInfo(long id) {
-        return getState(id).toThreadInfo();
+    public ThreadState getThreadState(long id) {
+        return getState(id);
     }
 
-    public ThreadInfo[] getThreadInfo(long[] ids) {
-        ThreadInfo[] arr = new ThreadInfo[ids.length];
+    public ThreadState[] getThreadState(long[] ids) {
+        ThreadState[] arr = new ThreadState[ids.length];
         for (int i = 0; i < ids.length; i++) {
-            arr[i] = getThreadInfo(ids[i]);
+            arr[i] = getThreadState(ids[i]);
         }
         return arr;
     }
@@ -162,21 +162,38 @@ public class ThreadStateHandler implements EventHandler {
                 throw new IllegalStateException();
             }
         }
+
+        Thread.State toState() {
+            switch (this) {
+            case BLOCKING:
+                return State.BLOCKED;
+            case IDLE:
+                return State.RUNNABLE;
+            case WAITING:
+                return State.WAITING;
+            default:
+                throw new IllegalStateException("Unreachable code");
+            }
+        }
     }
 
-    private class ThreadState {
+    public class ThreadState {
+
+        private final long id;
+        private final String threadName;
 
         private long lastTrace;
         private long lastEventNanos;
+        private long blockedTime;
+        private long blockedCount;
+        private long waitedTime;
+        private long waitedCount;
+
+        private Status status;
 
         public ThreadState(long id, String name) {
             this.id = id;
             threadName = name;
-        }
-
-        public ThreadInfo toThreadInfo() {
-            // TODO Auto-generated method stub
-            return null;
         }
 
         LinkedList<LockId> locks;
@@ -188,6 +205,7 @@ public class ThreadStateHandler implements EventHandler {
 
         void acquireLock(LockEvent le) {
             blockedTime = le.getNanoTime() - lastEventNanos;
+            blockedCount++;
             locks.push(le.getLockId());
             status = status.afterAcquisition();
         }
@@ -197,7 +215,8 @@ public class ThreadStateHandler implements EventHandler {
         }
 
         void waitLock(LockEvent le) {
-            blockedTime = le.getNanoTime() - lastEventNanos;
+            waitedTime = le.getNanoTime() - lastEventNanos;
+            waitedCount++;
             lastEventNanos = le.getNanoTime();
             status = status.waitObject();
         }
@@ -209,21 +228,6 @@ public class ThreadStateHandler implements EventHandler {
         StackTraceElement[] getTrace() {
             return traces.trace(lastTrace);
         }
-
-        long id;
-        String threadName;
-        boolean suspended;
-        boolean inNative;
-        long blockedCount;
-        long blockedTime;
-        long waitedCount;
-        long waitedTime;
-        LockInfo lockInfo;
-        Trace stackTrace;
-        Status status;
-
-        // TODO lockedMonitors[]
-        // TODO lockedSynchronizers[]
 
         public long getId() {
             return id;
@@ -255,6 +259,39 @@ public class ThreadStateHandler implements EventHandler {
             return true;
         }
 
+        public long getBlockedCount() {
+            return blockedCount;
+        }
+
+        public long getBlockedTime() {
+            return blockedTime;
+        }
+
+        public LockInfo getLockInfo() {
+            if (locks.size() > 0) {
+                LockId first = locks.getFirst();
+                return new LockInfo(classes.getClassNameFromObject(first
+                        .getId()),
+                        (first.getId() + first.getType().toString()).hashCode());
+            }
+            return null;
+        }
+
+        public Object getName() {
+            return threadName;
+        }
+
+        public Object getState() {
+            return status.toState();
+        }
+
+        public Object getWaitedCount() {
+            return waitedCount;
+        }
+
+        public Object getWaitedTime() {
+            return waitedTime;
+        }
     }
 
 }

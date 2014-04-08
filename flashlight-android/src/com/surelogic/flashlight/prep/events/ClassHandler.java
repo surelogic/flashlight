@@ -12,10 +12,15 @@ public class ClassHandler implements EventHandler {
     // object id -> class id
     private final TLongLongMap objects;
 
+    private long totalLoaded;
     private long unloadedClasses;
 
+    public long getTotalLoadedClassCount() {
+        return totalLoaded;
+    }
+
     public int getLoadedClassCount() {
-        return classes.size();
+        return (int) (totalLoaded - unloadedClasses);
     }
 
     public long getUnloadedClassCount() {
@@ -37,6 +42,7 @@ public class ClassHandler implements EventHandler {
         case CLASSDEFINITION:
             ClassDefinition cd = (ClassDefinition) e;
             classes.put(cd.getId(), cd.getName());
+            totalLoaded++;
             break;
         case GARBAGECOLLECTEDOBJECT:
             long id = ((GCObject) e).getId();
@@ -52,5 +58,9 @@ public class ClassHandler implements EventHandler {
         default:
             break;
         }
+    }
+
+    public String getClassNameFromObject(long objectId) {
+        return classes.get(objects.get(objectId));
     }
 }

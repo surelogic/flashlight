@@ -3,20 +3,20 @@ package com.surelogic._flashlight.common;
 public enum AttributeType implements IAttributeType {
     TIME("nano-time"), THREAD("thread"), SITE_ID("site"), IN_CLASS("in-class"), LINE(
             "line"), FILE("file"), LOCK("lock"), FIELD("field"), RECEIVER(
-            "receiver"), LOCATION("location"), LOCATIONMOD("location-mod"), ID(
-            "id"), READ_LOCK_ID("read-lock-id"), WRITE_LOCK_ID("write-lock-id"), TYPE(
-            "type"), CLASS_NAME("class-name"), THREAD_NAME("thread-name"), FLAGS(
-            "flags"), VERSION("version"), RUN("run"), CPUS("processors"), MEMORY_MB(
-            "max-memory-mb"), USER_NAME("user-name"), JAVA_VERSION(
-            "java-version"), JAVA_VENDOR("java-vendor"), OS_NAME("os-name"), OS_ARCH(
-            "os-arch"), OS_VERSION("os-version"), WALL_CLOCK("wall-clock-time"), PARENT_ID(
-            "parent-id"), TRACE("trace"), START_TIME("start-time"), PACKAGE(
-            "package"), VALUE("value"), VISIBILITY("visibility"), MODIFIER(
-            "mod"), HOSTNAME("hostname"), METHODCALLNAME("method-call-name"), METHODCALLOWNER(
-            "method-call-owner"), METHODCALLDESC("method-call-desc"), METHODCALLMOD(
-            "method-call-mod"), OBJECT("object"), ANDROID("android"), CLASS_TYPE(
-            "class-type"), TOTHREAD("to-thread"), COLLECTION("coll"), NANO_START(
-            "nano-start"), NANO_END("nano-end");
+                    "receiver"), LOCATION("location"), LOCATIONMOD("location-mod"), ID(
+                            "id"), READ_LOCK_ID("read-lock-id"), WRITE_LOCK_ID("write-lock-id"), TYPE(
+                                    "type"), CLASS_NAME("class-name"), THREAD_NAME("thread-name"), FLAGS(
+                                            "flags"), VERSION("version"), RUN("run"), CPUS("processors"), MEMORY_MB(
+                                                    "max-memory-mb"), USER_NAME("user-name"), JAVA_VERSION(
+                                                            "java-version"), JAVA_VENDOR("java-vendor"), OS_NAME("os-name"), OS_ARCH(
+                                                                    "os-arch"), OS_VERSION("os-version"), WALL_CLOCK("wall-clock-time"), PARENT_ID(
+                                                                            "parent-id"), TRACE("trace"), START_TIME("start-time"), PACKAGE(
+                                                                                    "package"), VALUE("value"), VISIBILITY("visibility"), MODIFIER(
+                                                                                            "mod"), HOSTNAME("hostname"), METHODCALLNAME("method-call-name"), METHODCALLOWNER(
+                                                                                                    "method-call-owner"), METHODCALLDESC("method-call-desc"), METHODCALLMOD(
+                                                                                                            "method-call-mod"), OBJECT("object"), ANDROID("android"), CLASS_TYPE(
+                                                                                                                    "class-type"), TOTHREAD("to-thread"), COLLECTION("coll"), NANO_START(
+                                                                                                                            "nano-start"), NANO_END("nano-end"), LIBRARY_PATH("library-path");
 
     private final String label;
 

@@ -12,6 +12,11 @@ public class FLRuntimeMxBean implements RuntimeMXBean {
 
     FlashlightStateHandler handler;
 
+    public FLRuntimeMxBean(FlashlightStateHandler handler) {
+        super();
+        this.handler = handler;
+    }
+
     @Override
     public ObjectName getObjectName() {
         try {

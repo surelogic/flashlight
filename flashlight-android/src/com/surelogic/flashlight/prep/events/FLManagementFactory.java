@@ -161,10 +161,10 @@ public class FLManagementFactory {
         FlashlightStateHandler fh = new FlashlightStateHandler();
         SaxElemHandler seh = new SaxElemHandler(new SaxElemBuilder(), fh, ch,
                 trh, th);
-        FLClassLoadingMXBean clBean = new FLClassLoadingMXBean();
-        FLOSMXBean osBean = new FLOSMXBean();
-        FLRuntimeMxBean rtBean = new FLRuntimeMxBean();
-        FLThreadMxBean thBean = new FLThreadMxBean();
+        FLClassLoadingMXBean clBean = new FLClassLoadingMXBean(ch);
+        FLOSMXBean osBean = new FLOSMXBean(fh);
+        FLRuntimeMxBean rtBean = new FLRuntimeMxBean(fh);
+        FLThreadMxBean thBean = new FLThreadMxBean(th);
         FLMemoryMXBean memBean = new FLMemoryMXBean();
         FLMemoryPoolMXBean mpBean = new FLMemoryPoolMXBean();
         FLMemoryManagerMXBean mmBean = new FLMemoryManagerMXBean();

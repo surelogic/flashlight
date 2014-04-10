@@ -6,7 +6,12 @@ import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
 public class FLOSMXBean implements OperatingSystemMXBean {
-    FlashlightEvent fe;
+    FlashlightStateHandler fe;
+
+    public FLOSMXBean(FlashlightStateHandler fe) {
+        super();
+        this.fe = fe;
+    }
 
     @Override
     public ObjectName getObjectName() {

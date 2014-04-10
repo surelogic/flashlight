@@ -126,4 +126,11 @@ public class FlashlightStateHandler implements EventHandler {
         return wallClock.getTime() + (latestTime - startTime) / 1000;
     }
 
+    public String getOsVersion() {
+        if (fe == null) {
+            return null;
+        }
+        return fe.getOsVersion();
+    }
+
 }

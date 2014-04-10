@@ -8,6 +8,11 @@ import javax.management.ObjectName;
 public class FLClassLoadingMXBean implements ClassLoadingMXBean {
     ClassHandler ch;
 
+    public FLClassLoadingMXBean(ClassHandler ch) {
+        super();
+        this.ch = ch;
+    }
+
     @Override
     public ObjectName getObjectName() {
         try {

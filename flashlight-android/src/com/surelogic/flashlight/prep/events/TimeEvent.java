@@ -22,7 +22,7 @@ public class TimeEvent implements Event {
 
     @Override
     public PrepEvent getEventType() {
-        return null;
+        return PrepEvent.TIME;
     }
 
 }

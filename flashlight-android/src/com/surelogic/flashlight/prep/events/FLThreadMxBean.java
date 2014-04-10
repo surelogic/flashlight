@@ -17,7 +17,12 @@ import com.surelogic.flashlight.prep.events.ThreadStateHandler.ThreadState;
 
 public class FLThreadMxBean implements ThreadMXBean {
 
-    private ThreadStateHandler handler;
+    private final ThreadStateHandler handler;
+
+    public FLThreadMxBean(ThreadStateHandler handler) {
+        super();
+        this.handler = handler;
+    }
 
     @Override
     public ObjectName getObjectName() {
@@ -592,8 +597,8 @@ public class FLThreadMxBean implements ThreadMXBean {
     enum StackTraceElementDataTypes implements DataType {
         CLASSNAME("className", SimpleType.STRING), METHODNAME("methodName",
                 SimpleType.STRING), FILENAME("fileName", SimpleType.STRING), LINENUMBER(
-                "lineNumber", SimpleType.INTEGER), NATIVEMETHOD("nativeMethod",
-                SimpleType.BOOLEAN);
+                        "lineNumber", SimpleType.INTEGER), NATIVEMETHOD("nativeMethod",
+                                SimpleType.BOOLEAN);
         private final String name;
         private final OpenType<?> type;
 
@@ -629,8 +634,8 @@ public class FLThreadMxBean implements ThreadMXBean {
     enum MonitorInfoDataTypes implements DataType {
         STACKDEPTH("stackDepth", SimpleType.INTEGER), STACKFRAME("stackFrame",
                 StackTraceElementDataTypes.type()), CLASSNAME("className",
-                SimpleType.STRING), IDENTITYHASHCODE("identityHashCode",
-                SimpleType.LONG);
+                        SimpleType.STRING), IDENTITYHASHCODE("identityHashCode",
+                                SimpleType.LONG);
         private final String name;
         private final OpenType<?> type;
 
@@ -702,16 +707,16 @@ public class FLThreadMxBean implements ThreadMXBean {
     enum ThreadInfoDataTypes implements DataType {
         ID("threadId", SimpleType.LONG), NAME("threadName", SimpleType.STRING), STATE(
                 "threadState", SimpleType.STRING), SUSPENDED("suspended",
-                SimpleType.BOOLEAN), NATIVE("inNative", SimpleType.BOOLEAN), BLOCKEDCOUNT(
-                "blockedCount", SimpleType.LONG), BLOCKEDTIME("blockedTime",
-                SimpleType.LONG), WAITEDCOUNT("waitedCount", SimpleType.LONG), WAITEDTIME(
-                "waitedTime", SimpleType.LONG), LOCKINFO("lockInfo",
-                LockInfoDataTypes.type()), LOCKNAME("lockName",
-                SimpleType.STRING), LOCKOWNERID("lockOwnerId", SimpleType.LONG), LOCKOWNERNAME(
-                "lockWonderName", SimpleType.STRING), STACKTRACE("stackTrace",
-                StackTraceElementDataTypes.arrayType()), LOCKEDMONITORS(
-                                                                                        "lockedMonitors", MonitorInfoDataTypes.arrayType()), LOCKEDSYNCHRONIZERS(
-                "lockedSynchronizers", LockInfoDataTypes.arrayType());
+                        SimpleType.BOOLEAN), NATIVE("inNative", SimpleType.BOOLEAN), BLOCKEDCOUNT(
+                                "blockedCount", SimpleType.LONG), BLOCKEDTIME("blockedTime",
+                                        SimpleType.LONG), WAITEDCOUNT("waitedCount", SimpleType.LONG), WAITEDTIME(
+                                                "waitedTime", SimpleType.LONG), LOCKINFO("lockInfo",
+                                                        LockInfoDataTypes.type()), LOCKNAME("lockName",
+                                                                SimpleType.STRING), LOCKOWNERID("lockOwnerId", SimpleType.LONG), LOCKOWNERNAME(
+                                                                        "lockWonderName", SimpleType.STRING), STACKTRACE("stackTrace",
+                                                                                StackTraceElementDataTypes.arrayType()), LOCKEDMONITORS(
+                "lockedMonitors", MonitorInfoDataTypes.arrayType()), LOCKEDSYNCHRONIZERS(
+                                                                                                "lockedSynchronizers", LockInfoDataTypes.arrayType());
         private final String name;
         private final OpenType<?> type;
 

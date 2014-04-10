@@ -69,8 +69,7 @@ public class ThreadStateHandler implements EventHandler {
         switch (e.getEventType()) {
         case THREADDEFINITION:
             ThreadDefinition td = (ThreadDefinition) e;
-            ThreadState state = new ThreadState(td.getId(), td.getName());
-            activeThreads.put(state.getId(), state);
+            getState(td.getId()).setName(td.getName());
             peakThreads = Math.max(peakThreads, activeThreads.size());
             startedThreads++;
             break;
@@ -117,7 +116,12 @@ public class ThreadStateHandler implements EventHandler {
     }
 
     ThreadState getState(long thread) {
-        return activeThreads.get(thread);
+        ThreadState state = activeThreads.get(thread);
+        if (state == null) {
+            state = new ThreadState(thread);
+            activeThreads.put(thread, state);
+        }
+        return state;
     }
 
     static class Trace {
@@ -180,7 +184,7 @@ public class ThreadStateHandler implements EventHandler {
     public class ThreadState {
 
         private final long id;
-        private final String threadName;
+        private String threadName;
 
         private long lastTrace;
         private long lastEventNanos;
@@ -191,9 +195,8 @@ public class ThreadStateHandler implements EventHandler {
 
         private Status status;
 
-        public ThreadState(long id, String name) {
+        public ThreadState(long id) {
             this.id = id;
-            threadName = name;
         }
 
         LinkedList<LockId> locks;
@@ -277,19 +280,23 @@ public class ThreadStateHandler implements EventHandler {
             return null;
         }
 
-        public Object getName() {
+        public String getName() {
             return threadName;
         }
 
-        public Object getState() {
+        public void setName(String name) {
+            threadName = name;
+        }
+
+        public State getState() {
             return status.toState();
         }
 
-        public Object getWaitedCount() {
+        public long getWaitedCount() {
             return waitedCount;
         }
 
-        public Object getWaitedTime() {
+        public long getWaitedTime() {
             return waitedTime;
         }
     }

@@ -14,7 +14,7 @@ public class SaxElemHandler extends AbstractDataScan {
     private final EventBuilder builder;
     private boolean isStarted;
 
-    private SaxElemHandler(EventBuilder builder, EventHandler... handler) {
+    SaxElemHandler(EventBuilder builder, EventHandler... handler) {
         super(null);
         handlers = handler;
         this.builder = builder;
@@ -55,10 +55,4 @@ public class SaxElemHandler extends AbstractDataScan {
         return isStarted;
     }
 
-    public static SaxElemHandler create() {
-        ClassHandler ch = new ClassHandler();
-        TraceHandler trh = new TraceHandler(ch);
-        ThreadStateHandler th = new ThreadStateHandler(ch, trh);
-        return new SaxElemHandler(new SaxElemBuilder(), ch, trh, th);
-    }
 }

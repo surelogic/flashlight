@@ -25,7 +25,7 @@ import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.client.eclipse.jobs.SwitchToFlashlightPerspectiveJob;
-import com.surelogic.flashlight.prep.events.SaxElemHandler;
+import com.surelogic.flashlight.prep.events.FLManagementFactory;
 
 public class MxFlashlightStreamJob extends AbstractSLJob {
 
@@ -119,12 +119,12 @@ public class MxFlashlightStreamJob extends AbstractSLJob {
                 // We managed to connect to the device. Time to start reading
                 // data.
                 SAXParser parser = OutputType.getParser(socketType);
-                SaxElemHandler seh = SaxElemHandler.create();
+                FLManagementFactory fact = FLManagementFactory.create();
 
                 try {
-                    parser.parse(in, seh);
+                    fact.start(parser, in);
                 } catch (Exception exc) {
-                    if (!seh.isStarted()) {
+                    if (!fact.isStarted()) {
                         // Let's just try this from the top, shall we?
                         f_pastAttemptsLog
                                 .append(getTStamp()

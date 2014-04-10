@@ -1,5 +1,7 @@
 package com.surelogic.flashlight.prep.events;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.management.ClassLoadingMXBean;
 import java.lang.management.CompilationMXBean;
 import java.lang.management.GarbageCollectorMXBean;
@@ -11,6 +13,10 @@ import java.lang.management.RuntimeMXBean;
 import java.lang.management.ThreadMXBean;
 import java.util.Collections;
 import java.util.List;
+
+import javax.xml.parsers.SAXParser;
+
+import org.xml.sax.SAXException;
 
 public class FLManagementFactory {
 
@@ -24,7 +30,10 @@ public class FLManagementFactory {
     private final FLMemoryManagerMXBean mmBean;
     private final FLGarbageCollectorMXBean gcBean;
 
-    private FLManagementFactory(FLClassLoadingMXBean clBean, FLOSMXBean osBean,
+    private final SaxElemHandler handler;
+
+    private FLManagementFactory(SaxElemHandler seh,
+            FLClassLoadingMXBean clBean, FLOSMXBean osBean,
             FLRuntimeMxBean rtBean, FLThreadMxBean thBean,
             FLMemoryMXBean memBean, FLMemoryPoolMXBean mpBean,
             FLMemoryManagerMXBean mmBean, FLGarbageCollectorMXBean gcBean) {
@@ -36,6 +45,7 @@ public class FLManagementFactory {
         this.mpBean = mpBean;
         this.mmBean = mmBean;
         this.gcBean = gcBean;
+        handler = seh;
     }
 
     /**
@@ -137,6 +147,34 @@ public class FLManagementFactory {
      */
     public List<GarbageCollectorMXBean> getGarbageCollectorMXBeans() {
         return Collections.singletonList((GarbageCollectorMXBean) gcBean);
+    }
+
+    public void start(SAXParser parser, InputStream in) throws SAXException,
+    IOException {
+        parser.parse(in, handler);
+    }
+
+    public static FLManagementFactory create() {
+        ClassHandler ch = new ClassHandler();
+        TraceHandler trh = new TraceHandler(ch);
+        ThreadStateHandler th = new ThreadStateHandler(ch, trh);
+        FlashlightStateHandler fh = new FlashlightStateHandler();
+        SaxElemHandler seh = new SaxElemHandler(new SaxElemBuilder(), fh, ch,
+                trh, th);
+        FLClassLoadingMXBean clBean = new FLClassLoadingMXBean();
+        FLOSMXBean osBean = new FLOSMXBean();
+        FLRuntimeMxBean rtBean = new FLRuntimeMxBean();
+        FLThreadMxBean thBean = new FLThreadMxBean();
+        FLMemoryMXBean memBean = new FLMemoryMXBean();
+        FLMemoryPoolMXBean mpBean = new FLMemoryPoolMXBean();
+        FLMemoryManagerMXBean mmBean = new FLMemoryManagerMXBean();
+        FLGarbageCollectorMXBean gcBean = new FLGarbageCollectorMXBean();
+        return new FLManagementFactory(seh, clBean, osBean, rtBean, thBean,
+                memBean, mpBean, mmBean, gcBean);
+    }
+
+    public boolean isStarted() {
+        return handler.isStarted();
     }
 
 }

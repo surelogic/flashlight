@@ -10,18 +10,18 @@ import java.util.Set;
  * Enumerates all possible combinations of the elements in the given list, from
  * smallest sets to largest sets. Elements must be unique and obey equals
  * semantics.
- * 
+ *
  * @author nathan
- * 
+ *
  * @param <E>
  */
-abstract class CombinationEnumerator<E> {
+public abstract class CombinationEnumerator<E> {
 
     protected final List<E> elems;
     private int[] indexes;
     private final int len;
 
-    CombinationEnumerator(Collection<E> elems) {
+    protected CombinationEnumerator(Collection<E> elems) {
         this.elems = new ArrayList<E>(elems);
         len = elems.size();
     }
@@ -42,7 +42,7 @@ abstract class CombinationEnumerator<E> {
     }
 
     /**
-     * 
+     *
      * @param index
      *            points into indexes
      * @param elemsRemaining
@@ -68,6 +68,6 @@ abstract class CombinationEnumerator<E> {
         }
     }
 
-    abstract void handleEnumeration(Set<E> set);
+    protected abstract void handleEnumeration(Set<E> set);
 
 }

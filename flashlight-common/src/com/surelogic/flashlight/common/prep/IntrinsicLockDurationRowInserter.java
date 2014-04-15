@@ -2,7 +2,6 @@ package com.surelogic.flashlight.common.prep;
 
 import static com.surelogic.flashlight.common.prep.IntrinsicLockDurationRowInserter.Queries.INSERT_LOCK;
 import static com.surelogic.flashlight.common.prep.IntrinsicLockDurationRowInserter.Queries.LOCKS_HELD;
-import static com.surelogic.flashlight.common.prep.IntrinsicLockDurationRowInserter.Queries.LOCK_COMPONENT;
 import static com.surelogic.flashlight.common.prep.IntrinsicLockDurationRowInserter.Queries.LOCK_CYCLE;
 import static com.surelogic.flashlight.common.prep.IntrinsicLockDurationRowInserter.Queries.LOCK_DURATION;
 import static com.surelogic.flashlight.common.prep.IntrinsicLockDurationRowInserter.Queries.LOCK_TRACE;
@@ -35,7 +34,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.jgrapht.DirectedGraph;
-import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.alg.CycleDetector;
 import org.jgrapht.alg.StrongConnectivityInspector;
 import org.jgrapht.graph.DefaultDirectedGraph;
@@ -61,8 +59,7 @@ public final class IntrinsicLockDurationRowInserter {
                 "INSERT INTO LOCKDURATION (InThread,Lock,Type,Start,StartEvent,StartTrace,Stop,StopEvent,StopTrace,Duration,State) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)"), LOCKS_HELD(
                 "INSERT INTO LOCKSHELD (LockEvent,LockHeldEvent,LockHeld,LockHeldType,LockAcquired,LockAcquiredType,InThread) VALUES (?, ?, ?, ?, ?, ?, ?)"), LOCK_CYCLE(
                 "INSERT INTO LOCKCYCLE (Component,LockHeld,LockHeldType,LockAcquired,LockAcquiredType,Count,FirstTime,LastTime) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"), INSERT_LOCK(
-                "INSERT INTO LOCK (Id,TS,InThread,Trace,LockTrace,Lock,Object,Type,State,Success,LockIsThis) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"), LOCK_COMPONENT(
-                "INSERT INTO LOCKCOMPONENT (Component,Lock,Type) VALUES (?, ?, ?)"), LOCK_TRACE(
+                "INSERT INTO LOCK (Id,TS,InThread,Trace,LockTrace,Lock,Object,Type,State,Success,LockIsThis) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"), LOCK_TRACE(
                 "INSERT INTO LOCKTRACE (Id,Lock,Type,Trace,Parent) VALUES(?,?,?,?,?)");
         private final String sql;
 
@@ -156,7 +153,7 @@ public final class IntrinsicLockDurationRowInserter {
 
         /**
          * Iterate over the set of non-idle locks
-         * 
+         *
          * @return
          */
         public Collection<State> nonIdleLocks() {
@@ -165,7 +162,7 @@ public final class IntrinsicLockDurationRowInserter {
 
         /**
          * Called when a lock is garbage collected.
-         * 
+         *
          * @param key
          */
         public void gcLock(final long key) {
@@ -185,7 +182,7 @@ public final class IntrinsicLockDurationRowInserter {
 
         /**
          * Return the state associated with the given lock in this thread.
-         * 
+         *
          * @param lock
          * @return
          */
@@ -201,7 +198,7 @@ public final class IntrinsicLockDurationRowInserter {
 
         /**
          * Get the set of locks that are currently held.
-         * 
+         *
          * @return
          */
         public List<State> heldLocks() {
@@ -347,7 +344,6 @@ public final class IntrinsicLockDurationRowInserter {
             }
         }
         final GraphInfo info = createGraphFromStorage();
-        computeGraphComponents(info);
         detectLockCycles(info);
         for (Queries q : Queries.values()) {
             if (counts.get(q) > 0) {
@@ -359,7 +355,7 @@ public final class IntrinsicLockDurationRowInserter {
 
     /**
      * Increment count, return true if batch should be executed.
-     * 
+     *
      * @param q
      * @return
      */
@@ -374,27 +370,6 @@ public final class IntrinsicLockDurationRowInserter {
         }
     }
 
-    private void computeGraphComponents(GraphInfo info) throws SQLException {
-        final ConnectivityInspector<LockId, Edge> inspector = new ConnectivityInspector<LockId, IntrinsicLockDurationRowInserter.Edge>(
-                info.lockGraph);
-        final PreparedStatement ps = statements.get(LOCK_COMPONENT);
-        int i = 0;
-        for (Set<LockId> set : inspector.connectedSets()) {
-            for (LockId lock : set) {
-                ps.setInt(1, i);
-                ps.setLong(2, lock.getId());
-                ps.setString(3, lock.getType().getFlag());
-                if (doInsert) {
-                    ps.addBatch();
-                    if (incrementCount(LOCK_COMPONENT)) {
-                        ps.executeBatch();
-                    }
-                }
-            }
-            i++;
-        }
-    }
-
     /**
      * Overview:
      * <ol>
@@ -404,7 +379,7 @@ public final class IntrinsicLockDurationRowInserter {
      * <li>Construct an enumeration of all the simple cycles in the strongly
      * connected components, from smallest to largest, and check each one for
      * deadlock.
-     * 
+     *
      * @throws SQLException
      */
     private void detectLockCycles(GraphInfo info) throws SQLException {
@@ -451,7 +426,7 @@ public final class IntrinsicLockDurationRowInserter {
          * prevents us from having any non-simple cycles.
          */
         @Override
-        void handleEnumeration(Set<Edge> cycle) {
+        protected void handleEnumeration(Set<Edge> cycle) {
             DirectedGraph<LockId, Edge> graph = new DefaultDirectedGraph<LockId, Edge>(
                     EDGE_FACTORY);
             for (Set<Edge> found : foundCycles) {
@@ -557,7 +532,7 @@ public final class IntrinsicLockDurationRowInserter {
          * routine replaces adjacent edges that are accessed by the same set of
          * threads with their closure. It also returns an empty set of the cycle
          * consists of only one thread.
-         * 
+         *
          * @param cycle
          * @param graph
          * @return
@@ -1001,7 +976,7 @@ public final class IntrinsicLockDurationRowInserter {
 
     /**
      * Inserts a lock into our lock graph.
-     * 
+     *
      * @param time
      * @param lockHeld
      * @param acquired
@@ -1144,7 +1119,7 @@ public final class IntrinsicLockDurationRowInserter {
     /**
      * Pop a lock off the current lock trace. The lock does not need to be the
      * topmost lock.
-     * 
+     *
      * @param current
      * @param lock
      * @param lockType
@@ -1163,7 +1138,7 @@ public final class IntrinsicLockDurationRowInserter {
 
     /**
      * Push a new lock onto the current lock trace, and return that lock trace.
-     * 
+     *
      * @param current
      * @param lock
      * @param lockType
@@ -1226,7 +1201,7 @@ public final class IntrinsicLockDurationRowInserter {
 
     /**
      * Remove all references to a garbage collected lock
-     * 
+     *
      * @param lock
      */
     private void gcLock(long lock) {

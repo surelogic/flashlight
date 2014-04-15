@@ -15,7 +15,7 @@ public class CombinationEnumeratorTest {
         new CombinationEnumerator<Integer>(Arrays.asList(new Integer[] { 1 })) {
 
             @Override
-            void handleEnumeration(Set<Integer> set) {
+            protected void handleEnumeration(Set<Integer> set) {
                 Assert.assertEquals(Collections.singleton(1), set);
             }
         }.enumerate();
@@ -28,7 +28,7 @@ public class CombinationEnumeratorTest {
             int count;
 
             @Override
-            void handleEnumeration(Set<Integer> set) {
+            protected void handleEnumeration(Set<Integer> set) {
                 switch (count++) {
                 case 0:
                     Assert.assertEquals(Collections.singleton(1), set);
@@ -54,7 +54,7 @@ public class CombinationEnumeratorTest {
             int count;
 
             @Override
-            void handleEnumeration(Set<Integer> set) {
+            protected void handleEnumeration(Set<Integer> set) {
                 HashSet<Integer> exp;
                 switch (count++) {
                 case 0:

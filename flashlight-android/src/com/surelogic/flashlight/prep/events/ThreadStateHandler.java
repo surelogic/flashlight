@@ -7,6 +7,7 @@ import gnu.trove.set.hash.TLongHashSet;
 
 import java.lang.Thread.State;
 import java.lang.management.LockInfo;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -33,7 +34,7 @@ public class ThreadStateHandler implements EventHandler {
     private int peakThreads;
     private long startedThreads;
 
-    private final List<Set<Edge>> cycles;
+    private volatile List<Set<Edge>> cycles;
 
     ThreadStateHandler(ClassHandler classes, TraceHandler traces,
             FlashlightStateHandler fl) {
@@ -138,18 +139,20 @@ public class ThreadStateHandler implements EventHandler {
             break;
         case CHECKPOINT:
             final DeadlockAnalysis a = analyzer.beginAnalysis();
-            final CycleHandler ch = new CycleHandler() {
-
-                @Override
-                public void cycle(Set<Edge> cycle) {
-
-                }
-            };
             ex.submit(new Runnable() {
 
                 @Override
                 public void run() {
+                    final List<Set<Edge>> cycles = new ArrayList<Set<Edge>>();
+                    final CycleHandler ch = new CycleHandler() {
+
+                        @Override
+                        public void cycle(Set<Edge> cycle) {
+                            cycles.add(cycle);
+                        }
+                    };
                     a.detectLockCycles(ch);
+                    ThreadStateHandler.this.cycles = cycles;
                 }
             });
         default:

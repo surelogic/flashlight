@@ -2,27 +2,48 @@ package com.surelogic.flashlight.prep.events;
 
 import gnu.trove.map.TLongObjectMap;
 import gnu.trove.map.hash.TLongObjectHashMap;
+import gnu.trove.set.TLongSet;
+import gnu.trove.set.hash.TLongHashSet;
 
 import java.lang.Thread.State;
 import java.lang.management.LockInfo;
+import java.util.Collections;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
+import com.surelogic.flashlight.common.DeadlockAnalyzer;
+import com.surelogic.flashlight.common.DeadlockAnalyzer.CycleHandler;
+import com.surelogic.flashlight.common.DeadlockAnalyzer.DeadlockAnalysis;
+import com.surelogic.flashlight.common.DeadlockAnalyzer.Edge;
 import com.surelogic.flashlight.common.LockId;
 
 public class ThreadStateHandler implements EventHandler {
+
+    DeadlockAnalyzer analyzer;
 
     // thread id -> thread info
     private final TLongObjectMap<ThreadState> activeThreads;
     private final ClassHandler classes;
     private final TraceHandler traces;
-
+    private final FlashlightStateHandler fl;
+    private final ExecutorService ex;
     private int peakThreads;
     private long startedThreads;
 
-    ThreadStateHandler(ClassHandler classes, TraceHandler traces) {
+    private final List<Set<Edge>> cycles;
+
+    ThreadStateHandler(ClassHandler classes, TraceHandler traces,
+            FlashlightStateHandler fl) {
         activeThreads = new TLongObjectHashMap<ThreadState>();
         this.classes = classes;
         this.traces = traces;
+        this.fl = fl;
+        analyzer = new DeadlockAnalyzer();
+        ex = Executors.newSingleThreadExecutor();
+        cycles = Collections.emptyList();
     }
 
     public int getThreadCount() {
@@ -56,6 +77,16 @@ public class ThreadStateHandler implements EventHandler {
             arr[i] = getThreadState(ids[i]);
         }
         return arr;
+    }
+
+    public long[] getDeadlockedThreads() {
+        TLongSet threads = new TLongHashSet();
+        for (Set<Edge> cycle : cycles) {
+            for (Edge e : cycle) {
+                threads.addAll(e.getThreads());
+            }
+        }
+        return threads.toArray();
     }
 
     @Override
@@ -105,6 +136,22 @@ public class ThreadStateHandler implements EventHandler {
             final LockEvent leba = (LockEvent) e;
             inThread.beforeLock(leba);
             break;
+        case CHECKPOINT:
+            final DeadlockAnalysis a = analyzer.beginAnalysis();
+            final CycleHandler ch = new CycleHandler() {
+
+                @Override
+                public void cycle(Set<Edge> cycle) {
+
+                }
+            };
+            ex.submit(new Runnable() {
+
+                @Override
+                public void run() {
+                    a.detectLockCycles(ch);
+                }
+            });
         default:
             break;
         }
@@ -207,9 +254,17 @@ public class ThreadStateHandler implements EventHandler {
         }
 
         void acquireLock(LockEvent le) {
-            blockedTime = le.getNanoTime() - lastEventNanos;
+            long nanoTime = le.getNanoTime();
+            blockedTime = nanoTime - lastEventNanos;
             blockedCount++;
-            locks.push(le.getLockId());
+            LockId lockId = le.getLockId();
+            for (LockId held : locks) {
+                if (!held.equals(lockId)) {
+                    analyzer.addEdge(held, lockId, fl.getTimestamp(nanoTime),
+                            le.getInThread());
+                }
+            }
+            locks.push(lockId);
             status = status.afterAcquisition();
         }
 

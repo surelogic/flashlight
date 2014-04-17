@@ -1,15 +1,16 @@
 package com.surelogic.flashlight.prep.events;
 
+import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 
+import com.surelogic.common.SLUtility;
 import com.surelogic.flashlight.common.prep.PrepEvent;
 
 public class FlashlightStateHandler implements EventHandler {
 
     private FlashlightEvent fe;
-    Date wallClock;
+    Timestamp wallClock;
     long startTime;
     long finishTime;
     long latestTime;
@@ -29,7 +30,8 @@ public class FlashlightStateHandler implements EventHandler {
                 final SimpleDateFormat dateFormat = new SimpleDateFormat(
                         "yyyy-MM-dd HH:mm:ss.SSS");
                 try {
-                    wallClock = dateFormat.parse(te.getStartTime());
+                    wallClock = new Timestamp(dateFormat.parse(
+                            te.getStartTime()).getTime());
                 } catch (ParseException e1) {
                     throw new IllegalStateException(e1);
                 }
@@ -133,4 +135,7 @@ public class FlashlightStateHandler implements EventHandler {
         return fe.getOsVersion();
     }
 
+    public Timestamp getTimestamp(final long timeNS) {
+        return SLUtility.getWall(wallClock, startTime, timeNS);
+    }
 }

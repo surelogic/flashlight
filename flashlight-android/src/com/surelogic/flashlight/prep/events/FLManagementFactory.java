@@ -150,15 +150,15 @@ public class FLManagementFactory {
     }
 
     public void start(SAXParser parser, InputStream in) throws SAXException,
-    IOException {
+            IOException {
         parser.parse(in, handler);
     }
 
     public static FLManagementFactory create() {
         ClassHandler ch = new ClassHandler();
         TraceHandler trh = new TraceHandler(ch);
-        ThreadStateHandler th = new ThreadStateHandler(ch, trh);
         FlashlightStateHandler fh = new FlashlightStateHandler();
+        ThreadStateHandler th = new ThreadStateHandler(ch, trh, fh);
         SaxElemHandler seh = new SaxElemHandler(new SaxElemBuilder(), fh, ch,
                 trh, th);
         FLClassLoadingMXBean clBean = new FLClassLoadingMXBean(ch);

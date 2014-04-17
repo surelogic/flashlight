@@ -4,7 +4,6 @@ import gnu.trove.procedure.TLongProcedure;
 import gnu.trove.set.TLongSet;
 import gnu.trove.set.hash.TLongHashSet;
 
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,7 +28,7 @@ import com.surelogic.flashlight.common.prep.CombinationEnumerator;
  * Represents a deadlock analysis. This class is not thread safe, but instances
  * of deadlock analysis can be safely transferred to another thread in order to
  * do work after creation.
- * 
+ *
  * @author nathan
  *
  */
@@ -64,6 +63,10 @@ public class DeadlockAnalyzer {
     public DeadlockAnalysis beginAnalysis() {
         DeadlockAnalysis a = new DeadlockAnalysis(edgeStorage);
         return a;
+    }
+
+    public void clear() {
+        edgeStorage.clear();
     }
 
     static class Visited<T> {
@@ -107,7 +110,7 @@ public class DeadlockAnalyzer {
         }
     }
 
-    static class Edge extends DefaultEdge {
+    public static class Edge extends DefaultEdge {
         private static final long serialVersionUID = 1L;
         final LockId lockHeld;
         final LockId lockAcquired;
@@ -141,8 +144,28 @@ public class DeadlockAnalyzer {
             }
         }
 
+        public Timestamp getLast() {
+            return last;
+        }
+
+        public Timestamp getFirst() {
+            return first;
+        }
+
         public long getCount() {
             return count;
+        }
+
+        public LockId getLockHeld() {
+            return lockHeld;
+        }
+
+        public LockId getLockAcquired() {
+            return lockAcquired;
+        }
+
+        public TLongSet getThreads() {
+            return threads;
         }
 
         @Override
@@ -153,11 +176,11 @@ public class DeadlockAnalyzer {
 
     }
 
-    interface CycleHandler {
-        void cycleEdge(int cycleId, Edge e);
+    public interface CycleHandler {
+        void cycle(Set<Edge> cycle);
     }
 
-    static class DeadlockAnalysis {
+    public static class DeadlockAnalysis {
         Map<LockId, Map<LockId, Edge>> edgeStorage = new HashMap<LockId, Map<LockId, Edge>>();
         /**
          * Vertices = locks Edge weight = # of times the edge appears
@@ -168,9 +191,12 @@ public class DeadlockAnalyzer {
 
         private DeadlockAnalysis(Map<LockId, Map<LockId, Edge>> edgeStorage) {
             for (Entry<LockId, Map<LockId, Edge>> e : edgeStorage.entrySet()) {
-                edgeStorage.put(e.getKey(),
+                this.edgeStorage.put(e.getKey(),
                         new HashMap<LockId, Edge>(e.getValue()));
             }
+        }
+
+        private void initGraph() {
             // Compute the set of destinations (used for pruning)
             for (Map<LockId, Edge> object : edgeStorage.values()) {
                 for (LockId node : object.keySet()) {
@@ -202,9 +228,10 @@ public class DeadlockAnalyzer {
          * connected components, from smallest to largest, and check each one
          * for deadlock.
          *
-         * @throws SQLException
          */
-        public void detectLockCycles(CycleHandler handler) throws SQLException {
+        public void detectLockCycles(CycleHandler handler) {
+            initGraph();
+
             final CycleDetector<LockId, Edge> detector = new CycleDetector<LockId, Edge>(
                     lockGraph);
             if (detector.detectCycles()) {
@@ -238,7 +265,6 @@ public class DeadlockAnalyzer {
         private class CycleEnumerator extends CombinationEnumerator<Edge> {
             final Set<Set<Edge>> foundCycles;
             final CycleHandler handler;
-            int cycleId;
 
             CycleEnumerator(List<Edge> edges, CycleHandler cycleHandler) {
                 super(edges);
@@ -283,10 +309,7 @@ public class DeadlockAnalyzer {
                         // already considered, but I'm including it anyways
                         // for good measure.
                         if (isDeadlock(sanitizedCycle, graph)) {
-                            for (Edge e : cycle) {
-                                handler.cycleEdge(cycleId, e);
-                            }
-                            cycleId++;
+                            handler.cycle(cycle);
                         }
                     }
                 }
@@ -345,8 +368,8 @@ public class DeadlockAnalyzer {
                             // consider it
                             return !deadlockHelper(nextEdge, new Visited<Long>(
                                     thread, threads), new Visited<LockId>(
-                                            nextEdge.lockAcquired, nodes), graph,
-                                            firstNode);
+                                    nextEdge.lockAcquired, nodes), graph,
+                                    firstNode);
                         }
                     })) {
                         return true;
@@ -402,4 +425,5 @@ public class DeadlockAnalyzer {
             }
         }
     }
+
 }

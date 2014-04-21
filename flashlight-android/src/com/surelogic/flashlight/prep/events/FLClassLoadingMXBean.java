@@ -1,6 +1,7 @@
 package com.surelogic.flashlight.prep.events;
 
 import java.lang.management.ClassLoadingMXBean;
+import java.lang.management.ManagementFactory;
 
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
@@ -16,7 +17,8 @@ public class FLClassLoadingMXBean implements ClassLoadingMXBean {
     @Override
     public ObjectName getObjectName() {
         try {
-            return ObjectName.getInstance("java.lang:type=ClassLoading");
+            return ObjectName
+                    .getInstance(ManagementFactory.CLASS_LOADING_MXBEAN_NAME);
         } catch (MalformedObjectNameException e) {
             throw new IllegalStateException(e);
         } catch (NullPointerException e) {

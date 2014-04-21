@@ -1,5 +1,6 @@
 package com.surelogic.flashlight.prep.events;
 
+import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
 import java.lang.management.MemoryUsage;
 
@@ -11,7 +12,7 @@ public class FLMemoryMXBean implements MemoryMXBean {
     @Override
     public ObjectName getObjectName() {
         try {
-            return ObjectName.getInstance("java.lang:type=ClassLoading");
+            return ObjectName.getInstance(ManagementFactory.MEMORY_MXBEAN_NAME);
         } catch (MalformedObjectNameException e) {
             throw new IllegalStateException(e);
         } catch (NullPointerException e) {

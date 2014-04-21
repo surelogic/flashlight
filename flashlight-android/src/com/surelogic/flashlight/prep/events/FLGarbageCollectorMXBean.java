@@ -1,6 +1,7 @@
 package com.surelogic.flashlight.prep.events;
 
 import java.lang.management.GarbageCollectorMXBean;
+import java.lang.management.ManagementFactory;
 
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
@@ -26,7 +27,8 @@ public class FLGarbageCollectorMXBean implements GarbageCollectorMXBean {
     public ObjectName getObjectName() {
         try {
             return ObjectName
-                    .getInstance("java.lang:type=GarbageCollector,name=main");
+                    .getInstance(ManagementFactory.GARBAGE_COLLECTOR_MXBEAN_DOMAIN_TYPE
+                            + ",name=main");
         } catch (MalformedObjectNameException e) {
             throw new IllegalStateException(e);
         } catch (NullPointerException e) {

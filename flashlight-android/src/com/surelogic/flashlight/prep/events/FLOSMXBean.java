@@ -1,5 +1,6 @@
 package com.surelogic.flashlight.prep.events;
 
+import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
 
 import javax.management.MalformedObjectNameException;
@@ -16,7 +17,8 @@ public class FLOSMXBean implements OperatingSystemMXBean {
     @Override
     public ObjectName getObjectName() {
         try {
-            return ObjectName.getInstance("java.lang:type=OperatingSystem");
+            return ObjectName
+                    .getInstance(ManagementFactory.OPERATING_SYSTEM_MXBEAN_NAME);
         } catch (MalformedObjectNameException e) {
             throw new IllegalStateException(e);
         } catch (NullPointerException e) {

@@ -1,5 +1,6 @@
 package com.surelogic.flashlight.prep.events;
 
+import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.util.Collections;
 import java.util.List;
@@ -20,7 +21,8 @@ public class FLRuntimeMxBean implements RuntimeMXBean {
     @Override
     public ObjectName getObjectName() {
         try {
-            return ObjectName.getInstance("java.lang:type=Runtime");
+            return ObjectName
+                    .getInstance(ManagementFactory.RUNTIME_MXBEAN_NAME);
         } catch (MalformedObjectNameException e) {
             throw new IllegalStateException(e);
         } catch (NullPointerException e) {

@@ -1,5 +1,6 @@
 package com.surelogic.flashlight.prep.events;
 
+import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.MemoryType;
 import java.lang.management.MemoryUsage;
@@ -9,7 +10,7 @@ import javax.management.ObjectName;
 
 /**
  * Dummy memory pool bean;
- * 
+ *
  * @author nathan
  *
  */
@@ -19,7 +20,8 @@ public class FLMemoryPoolMXBean implements MemoryPoolMXBean {
     public ObjectName getObjectName() {
         try {
             return ObjectName
-                    .getInstance("java.lang:type=MemoryPool,name=heap");
+                    .getInstance(ManagementFactory.MEMORY_POOL_MXBEAN_DOMAIN_TYPE
+                            + ",name=heap");
         } catch (MalformedObjectNameException e) {
             throw new IllegalStateException(e);
         } catch (NullPointerException e) {

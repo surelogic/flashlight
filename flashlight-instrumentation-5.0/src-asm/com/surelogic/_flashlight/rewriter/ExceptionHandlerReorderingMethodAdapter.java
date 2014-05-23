@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.Handle;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -249,6 +250,12 @@ final class ExceptionHandlerReorderingMethodAdapter extends MethodVisitor {
 	public void visitMaxs(final int maxStack, final int maxLocals) {
 		memoizedCalls.add(new MaxsMemo(maxStack, maxLocals));
 	}
+
+  @Override
+  public void visitInvokeDynamicInsn(final String name, final String desc,
+      final Handle bsm, final Object... bsmArgs) {
+    memoizedCalls.add(new InvokeDynamicMemo(name, desc, bsm, bsmArgs));
+  }
 
 	@Override
 	public void visitMethodInsn(final int opcode, final String owner,
@@ -546,6 +553,38 @@ final class ExceptionHandlerReorderingMethodAdapter extends MethodVisitor {
 			return "maxs";
 		}
 	}
+
+	private static final class InvokeDynamicMemo implements Memo {
+	  private final String name;
+	  private final String desc;
+	  private final Handle bsm;
+	  private final Object[] bsmArgs;
+	  
+	  public InvokeDynamicMemo(final String name, final String desc,
+	      final Handle bsm, final Object... bsmArgs) {
+	    this.name = name;
+	    this.desc = desc;
+	    this.bsm = bsm;
+	    this.bsmArgs = bsmArgs;
+	  }
+	  
+	  public void forward(final MethodVisitor mv) {
+	    mv.visitInvokeDynamicInsn(name, desc, bsm, bsmArgs);
+	  }
+	  
+	  @Override
+	  public String toString() {
+	    return "INVOKEDYNAMIC " + name + " " + desc + " " + bsm + " " + bsmArgs;
+	  }
+	}
+	
+
+//  @Override
+//  public void visitInvokeDynamicInsn(final String name, final String desc,
+//      final Handle bsm, final Object... bsmArgs) {
+//    // TODO: Something special here.  For now, just forward
+//    mv.visitInvokeDynamicInsn(name, desc, bsm, bsmArgs);
+//  }
 
 	private static final class MethodInsnMemo extends OpcodeMemo {
 		private final String owner;

@@ -685,8 +685,11 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 	@Override
 	public void visitInvokeDynamicInsn(final String name, final String desc,
 	    final Handle bsm, final Object... bsmArgs) {
-	  // TODO: Something special here.  For now, just forward
-	  mv.visitInvokeDynamicInsn(name, desc, bsm, bsmArgs);
+    handlePreviousAload();
+    handlePreviousAstore();
+    insertDelayedCode();
+
+    mv.visitInvokeDynamicInsn(name, desc, bsm, bsmArgs);
 	}
 
 	@Override

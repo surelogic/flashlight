@@ -102,7 +102,7 @@ public final class ByteCodeUtils {
     mv.visitMethodInsn(Opcodes.INVOKESTATIC,
         FlashlightNames.JAVA_LANG_CLASS,
         FlashlightNames.FOR_NAME.getName(),
-        FlashlightNames.FOR_NAME.getDescriptor());
+        FlashlightNames.FOR_NAME.getDescriptor(), false);
     // Class
 
   }
@@ -113,7 +113,7 @@ public final class ByteCodeUtils {
   public static void callStoreMethod(
       final MethodVisitor mv, final Configuration config, final Method method) {
     mv.visitMethodInsn(Opcodes.INVOKESTATIC, config.storeClassName,
-        method.getName(), method.getDescriptor());
+        method.getName(), method.getDescriptor(), false);
   }
 
   /**
@@ -145,7 +145,7 @@ public final class ByteCodeUtils {
     // [C.class]
     mv.visitLdcInsn(FlashlightNames.FLASHLIGHT_PHANTOM_OBJECT);
     // [C.class, "flashlight$phantomObject"]
-    mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Class", "getDeclaredField", "(Ljava/lang/String;)Ljava/lang/reflect/Field;");
+    mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Class", "getDeclaredField", "(Ljava/lang/String;)Ljava/lang/reflect/Field;", false);
     // [Field]
     mv.visitInsn(Opcodes.DUP);
     // [Field, Field]
@@ -153,7 +153,7 @@ public final class ByteCodeUtils {
     // [Field, Field, Field]
     mv.visitInsn(Opcodes.ICONST_1);
     // [Field, Field, Field, true]
-    mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/reflect/Field", "setAccessible", "(Z)V");
+    mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/reflect/Field", "setAccessible", "(Z)V", false);
     // [Field, Field]
     mv.visitVarInsn(Opcodes.ALOAD, 0);
     // [Field, Field, this]
@@ -161,16 +161,16 @@ public final class ByteCodeUtils {
     mv.visitVarInsn(Opcodes.ALOAD, 0);
     // [Field, Field, this, this]
     mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.ID_OBJECT,
-        FlashlightNames.GET_NEW_ID.getName(), FlashlightNames.GET_NEW_ID.getDescriptor());
+        FlashlightNames.GET_NEW_ID.getName(), FlashlightNames.GET_NEW_ID.getDescriptor(), false);
     // [Field, Field, this, this, id (x2)]
     ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.GET_OBJECT_PHANTOM);
     // [Field, Field, this, phantomRef]
     
-    mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/reflect/Field", "set", "(Ljava/lang/Object;Ljava/lang/Object;)V");
+    mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/reflect/Field", "set", "(Ljava/lang/Object;Ljava/lang/Object;)V", false);
     // [Field]    
     mv.visitInsn(Opcodes.ICONST_0);
     // [Field, false]
-    mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/reflect/Field", "setAccessible", "(Z)V");
+    mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/reflect/Field", "setAccessible", "(Z)V", false);
     // []
   }
   
@@ -182,10 +182,10 @@ public final class ByteCodeUtils {
     ByteCodeUtils.pushClass(mv, classNameInternal);
     // [C.class]
     mv.visitMethodInsn(Opcodes.INVOKESTATIC, "java/io/ObjectStreamClass",
-        "lookup", "(Ljava/lang/Class;)Ljava/io/ObjectStreamClass;");
+        "lookup", "(Ljava/lang/Class;)Ljava/io/ObjectStreamClass;", false);
     // [ObjectStreamClass]
     mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/io/ObjectStreamClass",
-        "getFields", "()[Ljava/io/ObjectStreamField;");
+        "getFields", "()[Ljava/io/ObjectStreamField;", false);
     // [fields array]
     mv.visitVarInsn(Opcodes.ASTORE, fieldsVar);
     // []
@@ -223,7 +223,7 @@ public final class ByteCodeUtils {
     mv.visitVarInsn(Opcodes.ALOAD, fieldVar);
     // [false, this, "C", fields[i]]
     mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/io/ObjectStreamField",
-        "getName", "()Ljava/lang/String;");
+        "getName", "()Ljava/lang/String;", false);
     // [false, this, "C", field-name]
     ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.GET_FIELD_ID);
     // [false, this, fieldId]

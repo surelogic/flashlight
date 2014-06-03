@@ -8,7 +8,7 @@ final class VirtualCallWrapper extends InterfaceAndVirtualCallWrapper {
       final HappensBeforeTable hbt,
       final String rcvrTypeInternal,
       final String owner, final String originalName,
-      final String originalSignature) {
-    super(messenger, classModel, hbt, rcvrTypeInternal, owner, originalName, originalSignature, Opcodes.INVOKEVIRTUAL);
+      final String originalSignature, final boolean itf) {
+    super(messenger, classModel, hbt, rcvrTypeInternal, owner, originalName, originalSignature, itf, Opcodes.INVOKEVIRTUAL);
   }
 }

@@ -13,9 +13,9 @@ abstract class IndirectAccessMethodInstrumentation extends
       final RewriteMessenger messenger, final ClassAndFieldModel classModel,
       final HappensBeforeTable hbt,
       final long callSiteId, final int opcode, final IndirectAccessMethod am,
-      final String owner, final String name, final String descriptor,
+      final String owner, final String name, final String descriptor, final boolean itf,
       final LocalVariableGenerator vg) {
-    super(messenger, classModel, hbt, callSiteId, opcode, owner, name, descriptor);
+    super(messenger, classModel, hbt, callSiteId, opcode, owner, name, descriptor, itf);
     indirectAccess = am;
     poppedArgs = getPoppedArgs(owner, descriptor, vg);
   }

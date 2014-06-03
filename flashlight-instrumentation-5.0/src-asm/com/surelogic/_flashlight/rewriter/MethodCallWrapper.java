@@ -66,9 +66,9 @@ abstract class MethodCallWrapper extends MethodCall {
       final RewriteMessenger messenger, final ClassAndFieldModel classModel,
       final HappensBeforeTable hbt,
       final int opcode, final String rcvrTypeInternal, final String owner,
-      final String originalName, final String originalDesc,
+      final String originalName, final String originalDesc, final boolean itf,
       final boolean isInstance) {
-    super(messenger, classModel, hbt, opcode, owner, originalName, originalDesc);
+    super(messenger, classModel, hbt, opcode, owner, originalName, originalDesc, itf);
     final String ownerUnderscored = fixOwnerNameForMethodName(owner);
     final int endOfArgs = originalDesc.lastIndexOf(END_OF_ARGS);
     final String originalArgs = originalDesc.substring(1, endOfArgs);
@@ -232,7 +232,7 @@ abstract class MethodCallWrapper extends MethodCall {
   public final void invokeWrapperMethod(
       final MethodVisitor mv, final String classBeingAnalyzed) {
     mv.visitMethodInsn(getWrapperMethodOpcode(), classBeingAnalyzed,
-        wrapperName, wrapperDescriptor);
+        wrapperName, wrapperDescriptor, false); // method wrappers are never used inside of interfaces
   }
   
   protected abstract int getWrapperMethodOpcode();

@@ -17,8 +17,8 @@ final class StaticCallWrapper extends MethodCallWrapper {
       final RewriteMessenger messenger, final ClassAndFieldModel classModel,
       final HappensBeforeTable hbt,
       final String owner, final String originalName,
-      final String originalSignature) {
-    super(messenger, classModel, hbt, Opcodes.INVOKESTATIC, null, owner, originalName, originalSignature, false);
+      final String originalSignature, final boolean itf) {
+    super(messenger, classModel, hbt, Opcodes.INVOKESTATIC, null, owner, originalName, originalSignature, itf, false);
   }
 
   

@@ -17,7 +17,7 @@ import com.surelogic._flashlight.rewriter.config.Configuration;
 /**
  * Abstract representation of a method call that needs to be instrumented.
  * Generic enough to accommodate both method calls that are instrumented by being
- * placed in wrapper methods and to and method calls that are instrumented 
+ * placed in wrapper methods and method calls that are instrumented 
  * in place (in the case of calls from interface initializers).
  */
 public abstract class MethodCall {
@@ -25,6 +25,7 @@ public abstract class MethodCall {
   protected final String owner;
   protected final String name;
   protected final String descriptor;
+  protected final boolean itf;
   protected final Type returnType;
   
   protected final RewriteMessenger messenger;
@@ -40,11 +41,12 @@ public abstract class MethodCall {
   public MethodCall(final RewriteMessenger msg,
       final ClassAndFieldModel model, final HappensBeforeTable hbt,
       final int opcode, final String owner,
-      final String originalName, final String originalDesc) {
+      final String originalName, final String originalDesc, final boolean itf) {
     this.opcode = opcode;
     this.owner = owner;
     this.name = originalName;
     this.descriptor = originalDesc;
+    this.itf = itf;
     this.returnType = Type.getReturnType(originalDesc);
     
     messenger = msg;
@@ -102,7 +104,7 @@ public abstract class MethodCall {
   }
   
   public final void invokeMethod(final MethodVisitor mv) {
-    mv.visitMethodInsn(opcode, owner, name, descriptor);
+    mv.visitMethodInsn(opcode, owner, name, descriptor, itf);
   }
 
   /**

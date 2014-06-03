@@ -7,7 +7,7 @@ final class InterfaceCallWrapper extends InterfaceAndVirtualCallWrapper {
       final RewriteMessenger messenger, final ClassAndFieldModel classModel,
       final HappensBeforeTable hbt,
       final String owner, final String originalName,
-      final String originalSignature) {
-    super(messenger, classModel, hbt, null, owner, originalName, originalSignature, Opcodes.INVOKEINTERFACE);
+      final String originalSignature, final boolean itf) {
+    super(messenger, classModel, hbt, null, owner, originalName, originalSignature, itf, Opcodes.INVOKEINTERFACE);
   }
 }

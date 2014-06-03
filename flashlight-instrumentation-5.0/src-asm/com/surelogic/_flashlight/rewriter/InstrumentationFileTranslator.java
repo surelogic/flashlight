@@ -172,18 +172,18 @@ public final class InstrumentationFileTranslator implements Opcodes {
             method.visitInsn(DUP);
             method.visitLdcInsn(string.substring(0, MAX));
             method.visitMethodInsn(INVOKESPECIAL, "java/lang/StringBuilder",
-                    "<init>", "(Ljava/lang/String;)V");
+                    "<init>", "(Ljava/lang/String;)V", false);
             for (int i = 1; i < chunksLessOne; i++) {
                 method.visitLdcInsn(string.substring(i * MAX, (i + 1) * MAX));
                 method.visitMethodInsn(INVOKEVIRTUAL,
                         "java/lang/StringBuilder", "append",
-                        "(Ljava/lang/String;)Ljava/lang/StringBuilder;");
+                        "(Ljava/lang/String;)Ljava/lang/StringBuilder;", false);
             }
             method.visitLdcInsn(string.substring(chunksLessOne * MAX));
             method.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder",
-                    "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;");
+                    "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;", false);
             method.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder",
-                    "toString", "()Ljava/lang/String;");
+                    "toString", "()Ljava/lang/String;", false);
         }
 
     }
@@ -193,7 +193,7 @@ public final class InstrumentationFileTranslator implements Opcodes {
                 null);
         c.visitCode();
         c.visitVarInsn(ALOAD, 0);
-        c.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V");
+        c.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
         c.visitInsn(RETURN);
         c.visitMaxs(1, 1);
         c.visitEnd();

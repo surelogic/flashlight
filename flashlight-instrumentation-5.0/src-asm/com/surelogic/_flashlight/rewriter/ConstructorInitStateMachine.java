@@ -11,6 +11,7 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.TypePath;
 
 /**
  * State machine that eats JVM operations and triggers when the super
@@ -62,7 +63,7 @@ final class ConstructorInitStateMachine extends MethodVisitor {
 	private final Callback callback;
 
 	public ConstructorInitStateMachine(final Callback callback) {
-		super(Opcodes.ASM4);
+		super(Opcodes.ASM5);
 		this.callback = callback;
 	}
 
@@ -112,6 +113,35 @@ final class ConstructorInitStateMachine extends MethodVisitor {
 	}
 
 	@Override
+  public AnnotationVisitor visitInsnAnnotation(final int typeRef,
+      final TypePath typePath, final String desc, final boolean visible) {
+	  // Not interesting
+	  return null;
+	}
+	
+	@Override
+  public AnnotationVisitor visitLocalVariableAnnotation(final int typeRef,
+      final TypePath typePath, final Label[] start, final Label[] end, 
+      final int[] index, final String desc, final boolean visible) {
+	  // Not interesting
+	  return null;
+	}
+	
+	@Override
+  public AnnotationVisitor visitTryCatchAnnotation(int typeRef,
+      final TypePath typePath, final String desc, final boolean visible) {
+	  // Not interesting
+	  return null;
+	}
+	
+	@Override
+  public AnnotationVisitor visitTypeAnnotation(final int typeRef,
+      final TypePath typePath, final String desc, final boolean visible) {
+	  // Not interesting
+	  return null;
+	}
+	
+	@Override
 	public AnnotationVisitor visitAnnotationDefault() {
 		// Not interesting
 		return null;
@@ -122,6 +152,11 @@ final class ConstructorInitStateMachine extends MethodVisitor {
 		// Not interesting
 	}
 
+	@Override
+  public void visitParameter(final String name, final int access) {
+	  // not interesting
+	}
+	
 	@Override
 	public void visitCode() {
 		// Not interesting
@@ -454,7 +489,7 @@ final class ConstructorInitStateMachine extends MethodVisitor {
 
 	@Override
 	public void visitMethodInsn(final int opcode, final String owner,
-			final String name, final String desc) {
+			final String name, final String desc, boolean itf) {
 		if (!triggered) {
 			final Type[] types = Type.getArgumentTypes(desc);
 			for (int i = 0; i < types.length; i++) {

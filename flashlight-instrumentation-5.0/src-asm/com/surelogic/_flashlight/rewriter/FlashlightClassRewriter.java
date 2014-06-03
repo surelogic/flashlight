@@ -165,7 +165,7 @@ final class FlashlightClassRewriter extends ClassVisitor {
 			final ClassVisitor cv, final ClassAndFieldModel model,
 			final HappensBeforeTable hbt,	final IndirectAccessMethods am,
 			final Map<String, Integer> m2locals, final Set<MethodIdentifier> ignore) {
-		super(Opcodes.ASM4, cv);
+		super(Opcodes.ASM5, cv);
 		config = conf;
 		callSiteIdFactory = csif;
 		messenger = msg;
@@ -460,7 +460,7 @@ final class FlashlightClassRewriter extends ClassVisitor {
 		// Call ObjectInputStream.defaultReadObject()
 		mv.visitVarInsn(Opcodes.ALOAD, 1);
 		mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/io/ObjectInputStream",
-				"defaultReadObject", "()V");
+				"defaultReadObject", "()V", false);
 
 		// Insert code to generate write events for the deserialized fields
 		ByteCodeUtils.insertPostDeserializationFieldWrites(mv, config,
@@ -493,7 +493,7 @@ final class FlashlightClassRewriter extends ClassVisitor {
 		identityHashCode.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
 				FlashlightNames.OBJECT_PHANTOM_REFERENCE,
 				FlashlightNames.GET_ID.getName(),
-				FlashlightNames.GET_ID.getDescriptor());
+				FlashlightNames.GET_ID.getDescriptor(), false);
 		identityHashCode.visitInsn(Opcodes.L2I);
 		identityHashCode.visitInsn(Opcodes.IRETURN);
 		identityHashCode.visitMaxs(2, 1);

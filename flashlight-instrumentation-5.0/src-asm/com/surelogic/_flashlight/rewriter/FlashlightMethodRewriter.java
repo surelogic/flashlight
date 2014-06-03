@@ -12,6 +12,7 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.TypePath;
 import org.objectweb.asm.commons.Method;
 
 import com.surelogic._flashlight.rewriter.ClassAndFieldModel.ClassNotFoundException;
@@ -88,9 +89,6 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 
 	/** The simple name of the method being rewritten. */
 	private final String methodName;
-
-	/** The description of the method being rewritten. */
-	private final String methodDesc;
 	
 	/** Are we visiting a constructor? */
 	private final boolean isConstructor;
@@ -294,7 +292,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 			final String nameInternal,
 			final String classBeingAnalyzedFullyQualified,
 			final String superInternal, final Set<MethodCallWrapper> wrappers) {
-		super(Opcodes.ASM4, new ExceptionHandlerReorderingMethodAdapter(mv));
+		super(Opcodes.ASM5, new ExceptionHandlerReorderingMethodAdapter(mv));
 		config = conf;
 		siteIdFactory = csif;
 		messenger = msg;
@@ -307,7 +305,6 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 		isStatic = (access & Opcodes.ACC_STATIC) != 0;
 		isSynthetic = (access & Opcodes.ACC_SYNTHETIC) != 0;
 		methodName = mname;
-		methodDesc = desc;
 		isConstructor = mname.equals(INITIALIZER);
 		isClassInitializer = mname.equals(CLASS_INITIALIZER);
 		isReadObject = mname.equals(FlashlightNames.READ_OBJECT.getName())
@@ -491,7 +488,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 
 	@Override
 	public void visitMethodInsn(final int opcode, final String owner,
-			final String name, final String desc) {
+			final String name, final String desc, final boolean itf) {
 		handlePreviousAload();
 		handlePreviousAstore();
 		insertDelayedCode();
@@ -520,7 +517,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
   						FlashlightNames.SHUTDOWN);
   
   				// Insert original call to halt(int)
-  				mv.visitMethodInsn(opcode, owner, name, desc);
+  				mv.visitMethodInsn(opcode, owner, name, desc, itf);
   				return;
   			}
   		} catch (final ClassNotFoundException e) {
@@ -538,7 +535,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 			if (name.equals(FlashlightNames.CONSTRUCTOR)) {
 				lastInitOwner = owner;
 			}
-			mv.visitMethodInsn(opcode, owner, name, desc);
+			mv.visitMethodInsn(opcode, owner, name, desc, itf);
 		} else {
 			/*
 			 * Check if we are calling a method makes indirect use of
@@ -563,9 +560,9 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 			if (opcode == Opcodes.INVOKEVIRTUAL) {
 				if (config.rewriteInvokevirtual) {
 					rewriteMethodCall(Opcodes.INVOKEVIRTUAL, indirectAccess,
-							owner, name, desc);
+							owner, name, desc, itf);
 				} else {
-					mv.visitMethodInsn(opcode, owner, name, desc);
+					mv.visitMethodInsn(opcode, owner, name, desc, itf);
 				}
 			} else if (opcode == Opcodes.INVOKESPECIAL) {
 				boolean outputOriginalCall = true;
@@ -573,7 +570,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 					if (!name.equals(FlashlightNames.CONSTRUCTOR)) {
 						outputOriginalCall = false;
 						rewriteMethodCall(Opcodes.INVOKESPECIAL,
-								indirectAccess, owner, name, desc);
+								indirectAccess, owner, name, desc, itf);
 					} else {
 						lastInitOwner = owner;
 						if (config.rewriteInit) {
@@ -590,29 +587,29 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 					}
 				}
 				if (outputOriginalCall) {
-					mv.visitMethodInsn(Opcodes.INVOKESPECIAL, owner, name, desc);
+					mv.visitMethodInsn(Opcodes.INVOKESPECIAL, owner, name, desc, itf);
 				}
 			} else if (opcode == Opcodes.INVOKEINTERFACE) {
 				if (config.rewriteInvokeinterface) {
 					rewriteMethodCall(Opcodes.INVOKEINTERFACE, indirectAccess,
-							owner, name, desc);
+							owner, name, desc, itf);
 				} else {
-					mv.visitMethodInsn(opcode, owner, name, desc);
+					mv.visitMethodInsn(opcode, owner, name, desc, itf);
 				}
 			} else if (opcode == Opcodes.INVOKESTATIC) {
 				if (config.rewriteInvokestatic) {
 					rewriteMethodCall(Opcodes.INVOKESTATIC, indirectAccess,
-							owner, name, desc);
+							owner, name, desc, itf);
 				} else {
-					mv.visitMethodInsn(opcode, owner, name, desc);
+					mv.visitMethodInsn(opcode, owner, name, desc, itf);
 				}
 			} else { // Unknown, but safe
-				mv.visitMethodInsn(opcode, owner, name, desc);
+				mv.visitMethodInsn(opcode, owner, name, desc, itf);
 			}
 		}
 
 		if (stateMachine != null) {
-			stateMachine.visitMethodInsn(opcode, owner, name, desc);
+			stateMachine.visitMethodInsn(opcode, owner, name, desc, itf);
 		}
 
 		/*
@@ -825,6 +822,16 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 	}
 
 	@Override
+  public AnnotationVisitor visitTypeAnnotation(final int typeRef,
+      final TypePath typePath, final String desc, final boolean visible) {
+    /*
+     * Called before visitCode(), so we don't have worry about inserting any
+     * delayed instructions.
+     */
+	  return mv.visitTypeAnnotation(typeRef, typePath, desc, visible);
+	}
+	
+	@Override
 	public void visitAttribute(final Attribute attr) {
 		/*
 		 * Called before visitCode(), so we don't have worry about inserting any
@@ -833,6 +840,15 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 		mv.visitAttribute(attr);
 	}
 
+	@Override
+	public void visitParameter(final String name, final int access) {
+    /*
+     * Called before visitCode(), so we don't have worry about inserting any
+     * delayed instructions.
+     */
+	  mv.visitParameter(name, access);
+	}
+	
 	@Override
 	public void visitFrame(final int type, final int nLocal,
 			final Object[] local, final int nStack, final Object[] stack) {
@@ -1149,13 +1165,13 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 		final long siteId = siteIdFactory.getSiteId(currentSrcLine, name,
 				owner, desc);
 		if (isConstructor && stateMachine != null) {
-			mv.visitMethodInsn(Opcodes.INVOKESPECIAL, owner, name, desc);
+			mv.visitMethodInsn(Opcodes.INVOKESPECIAL, owner, name, desc, false);
 		} else {
 			if (indirectAccess != null) {
 				final IndirectAccessMethodInstrumentation method =
 				    new InstanceIndirectAccessMethodInstrumentation(
 				        messenger, classModel, happensBefore, siteId, Opcodes.INVOKESPECIAL,
-				        indirectAccess, owner, name, desc, this);
+				        indirectAccess, owner, name, desc, false, this);
 				method.popReceiverAndArguments(mv);
 				method.recordIndirectAccesses(mv, config);
 				method.pushReceiverAndArguments(mv);
@@ -1177,7 +1193,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 
 			/* Original call */
 			mv.visitLabel(start);
-			mv.visitMethodInsn(Opcodes.INVOKESPECIAL, owner, name, desc);
+			mv.visitMethodInsn(Opcodes.INVOKESPECIAL, owner, name, desc, false);
 			mv.visitLabel(end);
 
 			/* Normal return */
@@ -1706,7 +1722,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 							classBeingAnalyzedInternal,
 							FlashlightNames
 									.getPhantomClassObjectGetterName(declaringClassInternalName),
-							FlashlightNames.FLASHLIGHT_PHANTOM_CLASS_OBJECT_GETTER_DESC);
+							FlashlightNames.FLASHLIGHT_PHANTOM_CLASS_OBJECT_GETTER_DESC, false);
 				} else {
 					mv.visitFieldInsn(
 							Opcodes.GETSTATIC,
@@ -2157,7 +2173,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 
 	private void rewriteMethodCall(final int opcode,
 			final IndirectAccessMethod indirectMethod, final String owner,
-			final String name, final String desc) {
+			final String name, final String desc, final boolean itf) {
 		final long siteId = siteIdFactory.getSiteId(currentSrcLine, name,
 				owner, desc);
 		/*
@@ -2171,11 +2187,11 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 			if (opcode == Opcodes.INVOKESTATIC) {
 				methodCall = new StaticIndirectAccessMethodInstrumentation(
 						messenger, classModel, happensBefore, siteId, opcode, indirectMethod,
-						owner, name, desc, this);
+						owner, name, desc, itf, this);
 			} else {
 				methodCall = new InstanceIndirectAccessMethodInstrumentation(
 						messenger, classModel, happensBefore, siteId, opcode, indirectMethod,
-						owner, name, desc, this);
+						owner, name, desc, itf, this);
 			}
 			methodCall.popReceiverAndArguments(mv);
 			methodCall.recordIndirectAccesses(mv, config);
@@ -2217,11 +2233,11 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 				if (opcode == Opcodes.INVOKESTATIC) {
 					methodCall = new InPlaceStaticMethodInstrumentation(
 							messenger, classModel, happensBefore, siteId, opcode, owner, name,
-							desc);
+							desc, itf);
 				} else {
 					methodCall = new InPlaceInstanceMethodInstrumentation(
 							messenger, classModel, happensBefore, siteId, opcode, owner, name,
-							desc, this);
+							desc, itf, this);
 				}
 				methodCall.popReceiverAndArguments(mv);
 				methodCall.instrumentMethodCall((ExceptionHandlerReorderingMethodAdapter) mv, isStatic, config);
@@ -2233,16 +2249,16 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 				final MethodCallWrapper wrapper;
 				if (opcode == Opcodes.INVOKESPECIAL) {
 					wrapper = new SpecialCallWrapper(
-					    messenger, classModel, happensBefore,	owner, name, desc);
+					    messenger, classModel, happensBefore,	owner, name, desc, itf);
 				} else if (opcode == Opcodes.INVOKESTATIC) {
 					wrapper = new StaticCallWrapper(
-					    messenger, classModel, happensBefore, owner, name, desc);
+					    messenger, classModel, happensBefore, owner, name, desc, itf);
 				} else if (opcode == Opcodes.INVOKEINTERFACE) {
 					wrapper = new InterfaceCallWrapper(
-					    messenger, classModel, happensBefore, owner, name, desc);
+					    messenger, classModel, happensBefore, owner, name, desc, itf);
 				} else { // virtual call
 					wrapper = new VirtualCallWrapper(
-					    messenger, classModel, happensBefore, null, owner, name, desc);
+					    messenger, classModel, happensBefore, null, owner, name, desc, itf);
 				}
 
 				wrapperMethods.add(wrapper);
@@ -2265,7 +2281,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 		mv.visitVarInsn(Opcodes.ALOAD, 0);
 		mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.ID_OBJECT,
 				FlashlightNames.GET_NEW_ID.getName(),
-				FlashlightNames.GET_NEW_ID.getDescriptor());
+				FlashlightNames.GET_NEW_ID.getDescriptor(), false);
 		ByteCodeUtils.callStoreMethod(mv, config,
 				FlashlightNames.GET_OBJECT_PHANTOM);
 		mv.visitFieldInsn(Opcodes.PUTFIELD, classBeingAnalyzedInternal,
@@ -2308,7 +2324,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 		mv.visitLdcInsn(msg);
 		mv.visitMethodInsn(Opcodes.INVOKESPECIAL,
 				FlashlightNames.FLASHLIGHT_RUNTIME_ERROR,
-				FlashlightNames.CONSTRUCTOR, "(Ljava/lang/String;)V");
+				FlashlightNames.CONSTRUCTOR, "(Ljava/lang/String;)V", false);
 		mv.visitInsn(Opcodes.ATHROW);
 	}
 

@@ -8,9 +8,11 @@ import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Attribute;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.Handle;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.TypePath;
 
 /**
  * Class visitor makes a scan over the methods in the class to extract the debug
@@ -21,7 +23,7 @@ final class NumLocalsExtractor extends ClassVisitor {
 	private final Map<String, Integer> method2numLocals = new HashMap<String, Integer>();
 
 	public NumLocalsExtractor() {
-		super(Opcodes.ASM4);
+		super(Opcodes.ASM5);
 	}
 
 	public Map<String, Integer> getNumLocalsMap() {
@@ -48,6 +50,13 @@ final class NumLocalsExtractor extends ClassVisitor {
 		// Don't care about
 		return null;
 	}
+  
+  @Override
+  public AnnotationVisitor visitTypeAnnotation(final int typeRef,
+      final TypePath typePath, final String desc, final boolean visible) {
+    // Don't care about
+    return null;
+  } 
 
 	@Override
 	public void visitAttribute(final Attribute attr) {
@@ -70,13 +79,42 @@ final class NumLocalsExtractor extends ClassVisitor {
 			final String desc, final String signature, final String[] exceptions) {
 		final String key = name + desc;
 
-		return new MethodVisitor(Opcodes.ASM4) {
+		return new MethodVisitor(Opcodes.ASM5) {
 			@Override
 			public AnnotationVisitor visitAnnotation(final String desc,
 					final boolean visible) {
 				// don't care
 				return null;
 			}
+
+		  @Override
+		  public AnnotationVisitor visitInsnAnnotation(final int typeRef,
+		      final TypePath typePath, final String desc, final boolean visible) {
+		    // Not interesting
+		    return null;
+		  }
+		  
+		  @Override
+		  public AnnotationVisitor visitLocalVariableAnnotation(final int typeRef,
+		      final TypePath typePath, final Label[] start, final Label[] end, 
+		      final int[] index, final String desc, final boolean visible) {
+		    // Not interesting
+		    return null;
+		  }
+		  
+		  @Override
+		  public AnnotationVisitor visitTryCatchAnnotation(int typeRef,
+		      final TypePath typePath, final String desc, final boolean visible) {
+		    // Not interesting
+		    return null;
+		  }
+		  
+		  @Override
+		  public AnnotationVisitor visitTypeAnnotation(final int typeRef,
+		      final TypePath typePath, final String desc, final boolean visible) {
+		    // Not interesting
+		    return null;
+		  }
 
 			@Override
 			public AnnotationVisitor visitAnnotationDefault() {
@@ -88,6 +126,11 @@ final class NumLocalsExtractor extends ClassVisitor {
 			public void visitAttribute(final Attribute attr) {
 				// don't care
 			}
+
+		  @Override
+		  public void visitParameter(final String name, final int access) {
+		    // not interesting
+		  }
 
 			@Override
 			public void visitCode() {
@@ -159,7 +202,13 @@ final class NumLocalsExtractor extends ClassVisitor {
 					final int[] keys, final Label[] labels) {
 				// don't care
 			}
-
+			
+			@Override
+	    public void visitInvokeDynamicInsn(String name, String desc, Handle bsm,
+          Object... bsmArgs) {
+			  // don't care
+			}
+			
 			@Override
 			public void visitMaxs(final int maxStack, final int maxLocals) {
 				method2numLocals.put(key, Integer.valueOf(maxLocals));
@@ -167,7 +216,7 @@ final class NumLocalsExtractor extends ClassVisitor {
 
 			@Override
 			public void visitMethodInsn(final int opcode, final String owner,
-					final String name, final String desc) {
+					final String name, final String desc, final boolean itf) {
 				// don't care
 			}
 

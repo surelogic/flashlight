@@ -131,7 +131,7 @@ final class ExceptionHandlerReorderingMethodAdapter extends MethodVisitor {
 	private final List<TryCatchBlockMemo> postfix = new ArrayList<TryCatchBlockMemo>();
 
 	public ExceptionHandlerReorderingMethodAdapter(final MethodVisitor mv) {
-		super(Opcodes.ASM4, mv);
+		super(Opcodes.ASM5, mv);
 	}
 
 	public void prependTryCatchBlock(final Label start, final Label end,
@@ -578,14 +578,6 @@ final class ExceptionHandlerReorderingMethodAdapter extends MethodVisitor {
 	  }
 	}
 	
-
-//  @Override
-//  public void visitInvokeDynamicInsn(final String name, final String desc,
-//      final Handle bsm, final Object... bsmArgs) {
-//    // TODO: Something special here.  For now, just forward
-//    mv.visitInvokeDynamicInsn(name, desc, bsm, bsmArgs);
-//  }
-
 	private static final class MethodInsnMemo extends OpcodeMemo {
 		private final String owner;
 		private final String name;

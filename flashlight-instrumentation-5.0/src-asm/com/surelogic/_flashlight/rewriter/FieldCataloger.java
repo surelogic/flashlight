@@ -9,6 +9,7 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.TypePath;
 
 import com.surelogic._flashlight.rewriter.ClassAndFieldModel.AddWrapper;
 
@@ -90,7 +91,7 @@ final class FieldCataloger extends ClassVisitor {
 	public FieldCataloger(final File where, final String relativePath,
 			final boolean isInstrumented, final ClassAndFieldModel model,
 			final Set<String> instrumented, final RewriteMessenger messenger) {
-		super(Opcodes.ASM4);
+		super(Opcodes.ASM5);
 		this.where = where;
 		this.relativePath = relativePath;
 		this.isInstrumented = isInstrumented;
@@ -157,6 +158,13 @@ final class FieldCataloger extends ClassVisitor {
 		// Don't care about
 		return null;
 	}
+	
+	@Override
+  public AnnotationVisitor visitTypeAnnotation(final int typeRef,
+      final TypePath typePath, final String desc, final boolean visible) {
+	  // Don't care about
+	  return null;
+	}	
 
 	@Override
 	public void visitAttribute(final Attribute attr) {

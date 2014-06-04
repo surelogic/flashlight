@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Attribute;
+import org.objectweb.asm.Handle;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -526,6 +527,29 @@ final class ConstructorInitStateMachine extends MethodVisitor {
 		}
 	}
 
+	@Override
+	public void visitInvokeDynamicInsn(
+	    final String name, final String desc, final Handle bsm,
+	    final Object... bsmArgs) {
+    if (!triggered) {
+      final Type[] types = Type.getArgumentTypes(desc);
+      for (int i = 0; i < types.length; i++) {
+        popValue();
+        if (types[i].getSize() == 2) {
+          popValue();
+        }
+      }
+
+      final Type returnType = Type.getReturnType(desc);
+      if (returnType != Type.VOID_TYPE) {
+        pushValue(AbstractObjects.OTHER);
+        if (returnType.getSize() == 2) {
+          pushValue(AbstractObjects.OTHER);
+        }
+      }
+    }
+	}
+	
 	@Override
 	public void visitMultiANewArrayInsn(final String desc, final int dims) {
 		if (!triggered) {

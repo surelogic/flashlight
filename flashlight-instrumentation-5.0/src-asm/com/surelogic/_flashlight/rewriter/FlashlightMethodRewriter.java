@@ -686,6 +686,9 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
     handlePreviousAstore();
     insertDelayedCode();
 
+    if (stateMachine != null) {
+      stateMachine.visitInvokeDynamicInsn(name, desc, bsm, bsmArgs);
+    }
     mv.visitInvokeDynamicInsn(name, desc, bsm, bsmArgs);
 	}
 
@@ -820,6 +823,28 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 		 */
 		return mv.visitParameterAnnotation(parameter, desc, visible);
 	}
+
+  @Override
+  public AnnotationVisitor visitInsnAnnotation(final int typeRef,
+      final TypePath typePath, final String desc, final boolean visible) {
+    // XXX: IGNORE FOR NOW --- Fix this later
+    return null;
+  }
+
+  @Override
+  public AnnotationVisitor visitLocalVariableAnnotation(final int typeRef,
+      final TypePath typePath, final Label[] start, final Label[] end,
+      final int[] index, final String desc, final boolean visible) {
+    // XXX: IGNORE FOR NOW --- Fix this later
+    return null;
+  }
+
+  @Override
+  public AnnotationVisitor visitTryCatchAnnotation(int typeRef,
+      final TypePath typePath, final String desc, final boolean visible) {
+    // XXX: IGNORE FOR NOW --- Fix this later
+    return null;
+  }
 
 	@Override
   public AnnotationVisitor visitTypeAnnotation(final int typeRef,

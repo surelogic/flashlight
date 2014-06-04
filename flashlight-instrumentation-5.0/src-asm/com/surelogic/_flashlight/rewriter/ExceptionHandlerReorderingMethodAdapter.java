@@ -259,8 +259,8 @@ final class ExceptionHandlerReorderingMethodAdapter extends MethodVisitor {
 
 	@Override
 	public void visitMethodInsn(final int opcode, final String owner,
-			final String name, final String desc) {
-		memoizedCalls.add(new MethodInsnMemo(opcode, owner, name, desc));
+			final String name, final String desc, final boolean itf) {
+		memoizedCalls.add(new MethodInsnMemo(opcode, owner, name, desc, itf));
 	}
 
 	@Override
@@ -582,17 +582,19 @@ final class ExceptionHandlerReorderingMethodAdapter extends MethodVisitor {
 		private final String owner;
 		private final String name;
 		private final String desc;
-
+		private final boolean itf;
+		
 		public MethodInsnMemo(final int opcode, final String owner,
-				final String name, final String desc) {
+				final String name, final String desc, final boolean itf) {
 		  super(opcode);
 			this.owner = owner;
 			this.name = name;
 			this.desc = desc;
+			this.itf = itf;
 		}
 
 		public void forward(final MethodVisitor mv) {
-			mv.visitMethodInsn(opcode, owner, name, desc);
+			mv.visitMethodInsn(opcode, owner, name, desc, itf);
 		}
 
 		@Override

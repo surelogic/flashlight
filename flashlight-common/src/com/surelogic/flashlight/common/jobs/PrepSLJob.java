@@ -132,7 +132,7 @@ public final class PrepSLJob extends AbstractSLJob {
 
     /**
      * Constructs a job instance that will prep the target run description.
-     * 
+     *
      * @param run
      * @param windowSize
      *            the number of receivers to scan at one time.
@@ -354,6 +354,7 @@ public final class PrepSLJob extends AbstractSLJob {
                     }
                 }
             });
+
             final SLProgressMonitor constraintMonitor = new SubSLProgressMonitor(
                     monitor, "Generating indexes", ADD_CONSTRAINT_WORK);
             final List<NullDBTransaction> constraints = addConstraints(constraintMonitor);
@@ -479,8 +480,8 @@ public final class PrepSLJob extends AbstractSLJob {
     private static class CanceledException extends RuntimeException {
 
         /**
-		 * 
-		 */
+         *
+         */
         private static final long serialVersionUID = -7858543475905909600L;
 
     }

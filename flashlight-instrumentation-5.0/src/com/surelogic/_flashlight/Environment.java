@@ -32,7 +32,11 @@ public class Environment extends Event {
             Entities.addAttribute(AttributeType.HOSTNAME.label(), "unknown", b);
         }
         addProperty("user.name", AttributeType.USER_NAME, b);
-        addProperty("java.version", AttributeType.JAVA_VERSION, b);
+        if (StoreConfiguration.isAndroid()) {
+            addProperty("java.vm.version", AttributeType.JAVA_VERSION, b);
+        } else {
+            addProperty("java.version", AttributeType.JAVA_VERSION, b);
+        }
         addProperty("java.vendor", AttributeType.JAVA_VENDOR, b);
         addProperty("os.name", AttributeType.OS_NAME, b);
         addProperty("os.arch", AttributeType.OS_ARCH, b);

@@ -1716,16 +1716,9 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 		// Stack is "..., isRead, [receiver], field_id
 
 		/*
-		 * Push the site identifier. If the method is not synthetic we push the
-		 * real site identifier. If the method is synthetic we push a special
-		 * site id that indicates that accessing method is synthetic.
+		 * Push the site identifier.
 		 */
-		if (isSynthetic) {
-			pushSiteIdentifier(FlashlightNames.SYNTHETIC_METHOD_SITE_ID);
-		} else {
-			pushSiteIdentifier();
-		}
-		// Stack is "..., isRead, [receiver], field_id, siteId"
+		pushSiteIdentifier();
 
 		/*
 		 * If the class that declares the field is instrumented, then we push

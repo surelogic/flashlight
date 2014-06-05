@@ -16,7 +16,4 @@ public final class IdConstants {
 	public static final long ILLEGAL_RECEIVER_ID = ILLEGAL_ID;
 	public static final long ILLEGAL_SITE_ID = ILLEGAL_ID;
 	public static final int ILLEGAL_LINE = Integer.MIN_VALUE;
-
-	/* Must be kept in sync with FlashlightNames.SYNTHETIC_METHOD_SITE_ID */
-	public static final long SYNTHETIC_METHOD_SITE_ID = -42L;
 }

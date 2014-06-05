@@ -191,9 +191,6 @@ public final class FlashlightNames {
             | Opcodes.ACC_FINAL | Opcodes.ACC_TRANSIENT | Opcodes.ACC_SYNTHETIC;
     public static final String FLASHLIGHT_PHANTOM_OBJECT_DESC = "Lcom/surelogic/_flashlight/ObjectPhantomReference;";
 
-    /* Must be kept in sync with IdConstants.SYNTHETIC_METHOD_SITE_ID */
-    public static final long SYNTHETIC_METHOD_SITE_ID = -42L;
-
     public static String getPhantomClassObjectGetterName(
             final String classNameInternal) {
         return MessageFormat.format("flashlight${0}$getPhantomClassObject",

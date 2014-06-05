@@ -452,8 +452,13 @@ final class FlashlightClassRewriter extends ClassVisitor {
 				new String[] { FlashlightNames.JAVA_IO_IOEXCEPTION,
 						FlashlightNames.JAVA_LANG_CLASSNOTFOUNDEXCEPTION });
 
+		callSiteIdFactory.setMethodLocation(sourceFileName, classNameFullyQualified,
+		    FlashlightNames.READ_OBJECT.getName(),
+		    FlashlightNames.READ_OBJECT_ACCESS | Opcodes.ACC_SYNTHETIC);
+		
 		mv.visitCode();
-
+		final long siteId = callSiteIdFactory.getSiteId(-1); // generated method, no line number
+		
 		// Init the phantomObject field
 		ByteCodeUtils.initializePhantomObject(mv, config, classNameInternal);
 
@@ -464,13 +469,20 @@ final class FlashlightClassRewriter extends ClassVisitor {
 
 		// Insert code to generate write events for the deserialized fields
 		ByteCodeUtils.insertPostDeserializationFieldWrites(mv, config,
-				classNameInternal, FlashlightNames.SYNTHETIC_METHOD_SITE_ID, 2,
-				3, 4);
+				classNameInternal, siteId, 2, 3, 4);
 
 		// Return
 		mv.visitInsn(Opcodes.RETURN);
 		mv.visitMaxs(6, 5);
 		mv.visitEnd();
+		
+    try {
+      callSiteIdFactory.closeMethod(classModel);
+    } catch (final ClassNotFoundException e) {
+      messenger.warning(
+          "Provided classpath is incomplete: couldn't find class "
+              + e.getMissingClass());
+    }
 	}
 
 	private void addIIdObjectFieldsAndMethods() {

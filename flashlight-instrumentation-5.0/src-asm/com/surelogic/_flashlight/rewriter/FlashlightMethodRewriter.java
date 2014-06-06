@@ -62,6 +62,13 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 		}
 	}
 
+	/**
+	 * Purposely shadow <code>mv</code> field from {@link MethodVisitor} so that
+	 * we can refer to the actual type of the delegated visitor:
+	 * {@link ExceptionHandlerReorderingMethodAdapter}.
+	 */
+	private final ExceptionHandlerReorderingMethodAdapter mv;
+	
 	/** Configuration information, derived from properties. */
 	private final Configuration config;
 
@@ -108,8 +115,8 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 	/** Is the method static? */
 	private final boolean isStatic;
 
-	/** Is the method synthetic? */
-	private final boolean isSynthetic;
+//	/** Is the method synthetic? */
+//	private final boolean isSynthetic;
 
 	/**
 	 * Must the class that contains the method implement the IIdObject
@@ -258,7 +265,9 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 			final String nameInternal, final String nameFullyQualified,
 			final String superInternal, final Set<MethodCallWrapper> wrappers) {
 		final FlashlightMethodRewriter methodRewriter = new FlashlightMethodRewriter(
-				access, mname, desc, numLocals, mv, conf, csif, msg, model, hbt, am,
+				access, mname, desc, numLocals,
+				new ExceptionHandlerReorderingMethodAdapter(mv), 
+				conf, csif, msg, model, hbt, am,
 				inInt, mustImpl, fname, nameInternal, nameFullyQualified,
 				superInternal, wrappers);
 		return methodRewriter;
@@ -283,7 +292,8 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 	 */
 	@SuppressWarnings("synthetic-access")
   private FlashlightMethodRewriter(final int access, final String mname,
-			final String desc, final int numLocals, final MethodVisitor mv,
+			final String desc, final int numLocals,
+			final ExceptionHandlerReorderingMethodAdapter mv,
 			final Configuration conf, final SiteIdFactory csif,
 			final RewriteMessenger msg, final ClassAndFieldModel model,
       final HappensBeforeTable hbt,
@@ -292,7 +302,8 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 			final String nameInternal,
 			final String classBeingAnalyzedFullyQualified,
 			final String superInternal, final Set<MethodCallWrapper> wrappers) {
-		super(Opcodes.ASM5, new ExceptionHandlerReorderingMethodAdapter(mv));
+		super(Opcodes.ASM5, mv);
+		this.mv = mv; // Initialize the shadow casting reference to the method visitor: must alias super.mv
 		config = conf;
 		siteIdFactory = csif;
 		messenger = msg;
@@ -303,7 +314,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 		mustImplementIIdObject = mustImpl;
 		wasSynchronized = (access & Opcodes.ACC_SYNCHRONIZED) != 0;
 		isStatic = (access & Opcodes.ACC_STATIC) != 0;
-		isSynthetic = (access & Opcodes.ACC_SYNTHETIC) != 0;
+//		isSynthetic = (access & Opcodes.ACC_SYNTHETIC) != 0;
 		methodName = mname;
 		isConstructor = mname.equals(INITIALIZER);
 		isClassInitializer = mname.equals(CLASS_INITIALIZER);
@@ -434,7 +445,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 				/* Start a new try-block */
 				final Label startOfTryBlock = new Label();
 				endOfTryBlock = new Label();
-				((ExceptionHandlerReorderingMethodAdapter) mv).appendTryCatchBlock(startOfTryBlock, endOfTryBlock,
+				mv.appendTryCatchBlock(startOfTryBlock, endOfTryBlock,
 						startOfExceptionHandler, null);
 				mv.visitLabel(startOfTryBlock);
 			}
@@ -527,16 +538,17 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
   		}
 		}
 		
-		/* We don't instrument calls from within synthetic methods */
-		if (isSynthetic) {
-			/*
-			 * Still track the last init call.
-			 */
-			if (name.equals(FlashlightNames.CONSTRUCTOR)) {
-				lastInitOwner = owner;
-			}
-			mv.visitMethodInsn(opcode, owner, name, desc, itf);
-		} else {
+		// 2014-06-06: Now we do because we need for lambda expressions
+//		/* We don't instrument calls from within synthetic methods */
+//		if (isSynthetic) {
+//			/*
+//			 * Still track the last init call.
+//			 */
+//			if (name.equals(FlashlightNames.CONSTRUCTOR)) {
+//				lastInitOwner = owner;
+//			}
+//			mv.visitMethodInsn(opcode, owner, name, desc, itf);
+//		} else {
 			/*
 			 * Check if we are calling a method makes indirect use of
 			 * aggregated state.  Methods on an array class NEVER do.  So we avoid
@@ -606,7 +618,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 			} else { // Unknown, but safe
 				mv.visitMethodInsn(opcode, owner, name, desc, itf);
 			}
-		}
+//		}
 
 		if (stateMachine != null) {
 			stateMachine.visitMethodInsn(opcode, owner, name, desc, itf);
@@ -1071,7 +1083,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 		/* Set up finally handler */
 		final Label startOfInitializer = new Label();
 		startOfExceptionHandler = new Label();
-		((ExceptionHandlerReorderingMethodAdapter) mv).appendTryCatchBlock(startOfInitializer, startOfExceptionHandler,
+		mv.appendTryCatchBlock(startOfInitializer, startOfExceptionHandler,
 				startOfExceptionHandler, null);
 		// mv.visitTryCatchBlock(startOfInitializer,
 		// startOfExceptionHandler, startOfExceptionHandler, null);
@@ -1112,7 +1124,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
     /* Set up finally handler */
     final Label startOfOriginalMethod = new Label();
     startOfExecutionExceptionHandler = new Label();
-    ((ExceptionHandlerReorderingMethodAdapter) mv).appendTryCatchBlock(
+    mv.appendTryCatchBlock(
         startOfOriginalMethod, startOfExecutionExceptionHandler,
         startOfExecutionExceptionHandler, null);
 
@@ -1150,7 +1162,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 		/* Set up finally handler */
 		final Label startOfOriginalConstructor = new Label();
 		startOfExceptionHandler = new Label();
-		((ExceptionHandlerReorderingMethodAdapter) mv).appendTryCatchBlock(startOfOriginalConstructor,
+		mv.appendTryCatchBlock(startOfOriginalConstructor,
 				startOfExceptionHandler, startOfExceptionHandler, null);
 
 		/* Start of constructor */
@@ -1214,7 +1226,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 			final Label end = new Label();
 			final Label handler = new Label();
 			final Label resume = new Label();
-			((ExceptionHandlerReorderingMethodAdapter) mv).prependTryCatchBlock(start, end, handler, null);
+			mv.prependTryCatchBlock(start, end, handler, null);
 
 			/* Original call */
 			mv.visitLabel(start);
@@ -2100,7 +2112,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 		final Label startOfTryBlock = new Label();
 		endOfTryBlock = new Label();
 		startOfExceptionHandler = new Label();
-		((ExceptionHandlerReorderingMethodAdapter) mv).appendTryCatchBlock(startOfTryBlock, endOfTryBlock,
+		mv.appendTryCatchBlock(startOfTryBlock, endOfTryBlock,
 				startOfExceptionHandler, null);
 		mv.visitLabel(startOfTryBlock);
 
@@ -2213,7 +2225,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 			}
 			methodCall.popReceiverAndArguments(mv);
 			methodCall.recordIndirectAccesses(mv, config);
-			methodCall.instrumentMethodCall((ExceptionHandlerReorderingMethodAdapter) mv, isStatic, config);
+			methodCall.instrumentMethodCall(mv, isStatic, config);
 		} else {
 			/*
 			 * The clone() method is a special case due to its non-standard
@@ -2258,7 +2270,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 							desc, itf, this);
 				}
 				methodCall.popReceiverAndArguments(mv);
-				methodCall.instrumentMethodCall((ExceptionHandlerReorderingMethodAdapter) mv, isStatic, config);
+				methodCall.instrumentMethodCall(mv, isStatic, config);
 			} else {
 				/*
 				 * Create the wrapper method information and add it to the list

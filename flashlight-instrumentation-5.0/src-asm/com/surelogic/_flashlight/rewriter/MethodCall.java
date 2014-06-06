@@ -150,7 +150,7 @@ public abstract class MethodCall {
     if (hbResult != null) {
       mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.JAVA_LANG_SYSTEM,
           FlashlightNames.NANO_TIME.getName(),
-          FlashlightNames.NANO_TIME.getDescriptor());
+          FlashlightNames.NANO_TIME.getDescriptor(), false);
     }
     /* stack is either
      *   ...

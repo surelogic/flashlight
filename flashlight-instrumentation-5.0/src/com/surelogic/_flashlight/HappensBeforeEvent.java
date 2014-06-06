@@ -16,11 +16,7 @@ public abstract class HappensBeforeEvent extends ProgramEvent {
         f_threadId = state.thread.getId();
         f_nanoStart = nanoStart;
         f_nanoEnd = System.nanoTime();
-//        if (siteId == IdConstants.SYNTHETIC_METHOD_SITE_ID) {
-//            f_traceId = state.getCurrentTrace().getId();
-//        } else {
-            f_traceId = state.getCurrentTrace(siteId).getId();
-//        }
+        f_traceId = state.getCurrentTrace(siteId).getId();
     }
 
     protected final void addId(final StringBuilder b) {

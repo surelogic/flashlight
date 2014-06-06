@@ -8,11 +8,7 @@ public abstract class TracedEvent extends WithinThreadEvent {
 
     TracedEvent(final long siteId, final PostMortemStore.State state) {
         super(state.thread);
-//        if (siteId == IdConstants.SYNTHETIC_METHOD_SITE_ID) {
-//            trace = state.getCurrentTrace();
-//        } else {
-            trace = state.getCurrentTrace(siteId);
-//        }
+        trace = state.getCurrentTrace(siteId);
     }
 
     long getTraceId() {

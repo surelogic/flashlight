@@ -85,6 +85,9 @@ public final class FlashlightNames {
     public static final Method HAPPENS_BEFORE_COLLECTION = Method
             .getMethod("void happensBeforeCollection(long, java.lang.Object, java.lang.Object, java.lang.String, long, java.lang.String)");
 
+    public static final Method CLOSURE_CREATION = Method
+            .getMethod("void closureCreation(java.lang.Object, java.lang.String, java.lang.String, java.lang.String, int, java.lang.String, java.lang.String, java.lang.String)");
+    
     public static final Method SHUTDOWN = Method.getMethod("void shutdown()");
 
     public static final Method GET_CLASS_PHANTOM = Method
@@ -92,6 +95,11 @@ public final class FlashlightNames {
 
     public static final Method GET_OBJECT_PHANTOM = Method
             .getMethod("com.surelogic._flashlight.ObjectPhantomReference getObjectPhantom(Object, long)");
+
+    // Bootstrap method for lambda expressions
+    public static final String LAMBDA_METAFACTORY = "java/lang/invoke/LambdaMetafactory";
+    public static final Method LAMBDA_METAFACTORY_METAFACTORY = Method
+            .getMethod("java.lang.invoke.CallSite metafactory(java.lang.invoke.MethodHandles$Lookup, java.lang.String, java.lang.invoke.MethodType, java.lang.invoke.MethodType, java.lang.invoke.MethodHandle, java.lang.invoke.MethodType)");
 
     // Flashlight runtime error
     public static final String FLASHLIGHT_RUNTIME_ERROR = "com/surelogic/_flashlight/rewriter/runtime/FlashlightRuntimeError";

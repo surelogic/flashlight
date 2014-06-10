@@ -173,6 +173,22 @@ public class DebugStore {
     stdOut.flush();
   }
   
+  public static void closureCreation(
+      final Object closure, final String functionalInterface, 
+      final String methodName, final String methodDesc, final int behavior,
+      final String owner, final String name, final String desc) {
+    stdOut.println("closureCreation");
+    stdOut.println("  closure = " + closure);
+    stdOut.println("  functionalInterface = " + functionalInterface);
+    stdOut.println("  methodName = " + methodName);
+    stdOut.println("  methodDesc = " + methodDesc);
+    stdOut.println("  behavior = " + behavior);
+    stdOut.println("  owner = " + owner);
+    stdOut.println("  name = " + name);
+    stdOut.println("  desc = " + desc);
+    stdOut.flush();
+  }
+
   public static synchronized void methodCall(
       final boolean before, final Object receiver, final long siteId) {
     stdOut.println("methodCall");

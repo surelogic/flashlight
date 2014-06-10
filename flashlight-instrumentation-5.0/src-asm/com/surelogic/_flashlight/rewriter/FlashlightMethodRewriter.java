@@ -702,6 +702,41 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
       stateMachine.visitInvokeDynamicInsn(name, desc, bsm, bsmArgs);
     }
     mv.visitInvokeDynamicInsn(name, desc, bsm, bsmArgs);
+    
+    /* See if the bootstrap method indicates that this call is being used
+     * to generate a closure object reference.
+     */
+    if (bsm.getTag() == Opcodes.H_INVOKESTATIC &&
+        bsm.getOwner().equals(FlashlightNames.LAMBDA_METAFACTORY) &&
+        bsm.getName().equals(FlashlightNames.LAMBDA_METAFACTORY_METAFACTORY.getName()) &&
+        bsm.getDesc().equals(FlashlightNames.LAMBDA_METAFACTORY_METAFACTORY.getDescriptor())) {
+      final Type fiType = Type.getMethodType(desc).getReturnType();
+      final String methodDesc = ((Type) bsmArgs[0]).getDescriptor();
+      final Handle wrappedHandle = (Handle) bsmArgs[1];
+      
+      /* Top of stack is the closure object:
+       * ..., closure
+       */
+      mv.visitInsn(Opcodes.DUP);
+      // ..., closure, closure
+      mv.visitLdcInsn(fiType.getInternalName());
+      // ..., closure, closure, functional interface internal name
+      mv.visitLdcInsn(name);
+      // ..., closure, closure, functional interface internal name, method name
+      mv.visitLdcInsn(methodDesc);
+      // ..., closure, closure, functional interface internal name, method name, method descriptor
+      ByteCodeUtils.pushIntegerConstant(mv, wrappedHandle.getTag());
+      // ..., closure, closure, functional interface internal name, method name, method descriptor, behavior
+      mv.visitLdcInsn(wrappedHandle.getOwner());
+      // ..., closure, closure, functional interface internal name, method name, method descriptor, behavior, wrapped owner
+      mv.visitLdcInsn(wrappedHandle.getName());
+      // ..., closure, closure, functional interface internal name, method name, method descriptor, behavior, wrapped owner, wrapped name
+      mv.visitLdcInsn(wrappedHandle.getDesc());
+      // ..., closure, closure, functional interface internal name, method name, method descriptor, behavior, wrapped owner, wrapped name, wrapped descriptor
+      
+      ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.CLOSURE_CREATION);
+      // ..., closure
+    }
 	}
 
 	@Override

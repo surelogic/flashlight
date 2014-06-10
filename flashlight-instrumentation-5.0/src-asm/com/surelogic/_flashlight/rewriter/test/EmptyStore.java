@@ -68,9 +68,16 @@ public class EmptyStore {
 
   public static void methodExecution(
       final boolean before, final long siteId) {
-    // Do stuff
+    // do nothing
   }
   
+  public static void closureCreation(
+      final Object closure, final String functionalInterface, 
+      final String methodName, final String methodDesc, final int behavior,
+      final String owner, final String name, final String desc) {
+    // do nothing
+  }
+
   public static void methodCall(
       final boolean before, final Object receiver, final long siteid) {
     // do nothing

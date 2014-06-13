@@ -8,7 +8,7 @@ import com.surelogic._flashlight.monitor.MonitorStore;
 
 /**
  * This class defines the interface into the Flashlight data store.
- * 
+ *
  * @policyLock Console is java.lang.System:out
  */
 public class Store {
@@ -149,9 +149,9 @@ public class Store {
     /**
      * Garbage collection thread. It polls the phantom reference queues and
      * reports garbage collection events to the {@link StoreListener} listeners.
-     * 
+     *
      * @author nathan
-     * 
+     *
      */
     static class GCThread extends Thread {
 
@@ -186,7 +186,7 @@ public class Store {
      * already. If not, we flag the thread as being inside the Flashlight
      * instrumentation. Also checks to make sure that Flashlight is not turned
      * off.
-     * 
+     *
      * @return <code>true</code> if we are on and not yet flagged as inside
      *         flashlight
      */
@@ -216,7 +216,7 @@ public class Store {
                  * if the field is not from an instrumented class. We need to
                  * force the creation of the phantom object so that a listener
                  * somewhere else dumps the field definitions into the .fl file.
-                 * 
+                 *
                  * XXX This check is not redundant. Edwin already removed this
                  * once before and broke things.
                  */
@@ -247,7 +247,7 @@ public class Store {
                  * if the field is not from an instrumente class. We need to
                  * force the creation of the phantom object so that a listener
                  * somewhere else dumps the field definitions into the .fl file.
-                 * 
+                 *
                  * XXX This check is not redundant. Edwin already removed this
                  * once before and broke things.
                  */
@@ -650,17 +650,19 @@ public class Store {
     public static void happensBeforeThread(final long nanoTime,
             final Thread callee, String id, final long siteId,
             final String typeName) {
-        try {
-            if (typeName == null
-                    || Class.forName(typeName).isAssignableFrom(
-                            Thread.currentThread().getClass())) {
-                for (StoreListener l : f_listeners) {
-                    l.happensBeforeThread(id, callee, siteId, typeName,
-                            nanoTime);
+        if (checkInside()) {
+            try {
+                if (typeName == null
+                        || Class.forName(typeName).isAssignableFrom(
+                                Thread.currentThread().getClass())) {
+                    for (StoreListener l : f_listeners) {
+                        l.happensBeforeThread(id, callee, siteId, typeName,
+                                nanoTime);
+                    }
                 }
+            } catch (ClassNotFoundException e) {
+                f_conf.logAProblem(e.getMessage(), e);
             }
-        } catch (ClassNotFoundException e) {
-            f_conf.logAProblem(e.getMessage(), e);
         }
     }
 
@@ -675,17 +677,19 @@ public class Store {
     public static void happensBeforeObject(final long nanoTime,
             final Object object, String id, final long siteId,
             final String typeName) {
-        try {
-            if (typeName == null
-                    || Class.forName(typeName).isAssignableFrom(
-                            object.getClass())) {
-                for (StoreListener l : f_listeners) {
-                    l.happensBeforeObject(id, object, siteId, typeName,
-                            nanoTime);
+        if (checkInside()) {
+            try {
+                if (typeName == null
+                        || Class.forName(typeName).isAssignableFrom(
+                                object.getClass())) {
+                    for (StoreListener l : f_listeners) {
+                        l.happensBeforeObject(id, object, siteId, typeName,
+                                nanoTime);
+                    }
                 }
+            } catch (ClassNotFoundException e) {
+                f_conf.logAProblem(e.getMessage(), e);
             }
-        } catch (ClassNotFoundException e) {
-            f_conf.logAProblem(e.getMessage(), e);
         }
     }
 
@@ -700,17 +704,19 @@ public class Store {
     public static void happensBeforeCollection(final long nanoTime,
             final Object item, final Object collection, String id,
             final long siteId, final String typeName) {
-        try {
-            if (typeName == null
-                    || Class.forName(typeName).isAssignableFrom(
-                            collection.getClass())) {
-                for (StoreListener l : f_listeners) {
-                    l.happensBeforeCollection(id, collection, item, siteId,
-                            typeName, nanoTime);
+        if (checkInside()) {
+            try {
+                if (typeName == null
+                        || Class.forName(typeName).isAssignableFrom(
+                                collection.getClass())) {
+                    for (StoreListener l : f_listeners) {
+                        l.happensBeforeCollection(id, collection, item, siteId,
+                                typeName, nanoTime);
+                    }
                 }
+            } catch (ClassNotFoundException e) {
+                f_conf.logAProblem(e.getMessage(), e);
             }
-        } catch (ClassNotFoundException e) {
-            f_conf.logAProblem(e.getMessage(), e);
         }
     }
 
@@ -801,7 +807,7 @@ public class Store {
     /**
      * Return the id associated with the given field in the fields.txt file.
      * This method is used during object deserialization. DO NOT REMOVE
-     * 
+     *
      * @param clazz
      *            the fully-qualified class name.
      * @param field

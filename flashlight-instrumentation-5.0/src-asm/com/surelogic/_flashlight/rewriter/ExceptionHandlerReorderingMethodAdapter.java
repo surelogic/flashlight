@@ -9,6 +9,7 @@ import org.objectweb.asm.Handle;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.TypePath;
 
 /**
  * This class buffers all the "visit" calls until {@link #visitEnd()} is called,
@@ -239,6 +240,16 @@ final class ExceptionHandlerReorderingMethodAdapter extends MethodVisitor {
 		memoizedCalls.add(new LocalVariableMemo(name, desc, signature, start,
 				end, index));
 	}
+
+  @Override
+  public AnnotationVisitor visitLocalVariableAnnotation(final int typeRef,
+      final TypePath typePath, final Label[] start, final Label[] end,
+      final int[] index, final String desc, final boolean visible) {
+    final LocalVariableAnnotationMemo av = new LocalVariableAnnotationMemo(
+        typeRef, typePath, start, end, index, desc, visible);
+    memoizedCalls.add(av);
+    return av;
+  }
 
 	@Override
 	public void visitLookupSwitchInsn(final Label dflt, final int[] keys,
@@ -513,6 +524,85 @@ final class ExceptionHandlerReorderingMethodAdapter extends MethodVisitor {
 		}
 	}
 
+	private static abstract class AnnotationMemoizer extends AnnotationVisitor {
+	  protected final List<AnnoMemo> memos;
+	  
+	  protected AnnotationMemoizer() {
+	    super(Opcodes.ASM5);
+	    memos = new ArrayList<AnnoMemo>();
+	  }
+	
+	  protected final void doForward(final AnnotationVisitor av) {
+	    if (av != null) {
+	      for (final AnnoMemo memo : memos) {
+	        memo.forward(av);
+	      }
+	    }
+	  }
+	  
+	  @Override
+    public final void visit(final String name, final Object value) {
+      memos.add(new AnnoAttrValueMemo(name, value));
+    }
+    
+    @Override
+    public final void visitEnum(final String name, final String desc, final String value) {
+      memos.add(new AnnoEnumMemo(name, desc, value));
+    }
+    
+    @Override
+    public final void visitEnd() {
+      memos.add(new AnnoEndMemo());
+    }
+    
+    @Override
+    public final AnnotationVisitor visitAnnotation(final String name, final String desc) {
+      final AnnoAnnotationMemo av = new AnnoAnnotationMemo(name, desc);
+      memos.add(av);
+      return av;
+    }
+    
+    @Override
+    public final AnnotationVisitor visitArray(final String name) {
+      final AnnoArrayMemo av = new AnnoArrayMemo(name);
+      memos.add(av);
+      return av;
+    }
+	}
+	
+  private static final class LocalVariableAnnotationMemo extends AnnotationMemoizer implements Memo {
+    private final int typeRef;
+    private final TypePath typePath;
+    private final Label[] start;
+    private final Label[] end;
+    private final int[] index;
+    private final String desc;
+    private final boolean visible;
+    
+    public LocalVariableAnnotationMemo(final int typeRef,
+        final TypePath typePath, final Label[] start, final Label[] end,
+        final int[] index, final String desc, final boolean visible) {
+      this.typeRef = typeRef;
+      this.typePath = typePath;
+      this.start = start;
+      this.end = end;
+      this.index = index;
+      this.desc = desc;
+      this.visible = visible;
+    }
+
+    public void forward(final MethodVisitor mv) {
+      final AnnotationVisitor av = mv.visitLocalVariableAnnotation(
+          typeRef, typePath, start, end, index, desc, visible);
+      doForward(av);
+    }
+
+    @Override
+    public String toString() {
+      return "var annotation";
+    }
+  }
+
 	private static final class LookupSwitchInsn implements Memo {
 		private final Label dflt;
 		private final int[] keys;
@@ -704,5 +794,80 @@ final class ExceptionHandlerReorderingMethodAdapter extends MethodVisitor {
 		protected String restOfToString() {
 			return " " + var;
 		}
+	}
+	
+	// Memos for annotation visitor
+	
+  private static interface AnnoMemo {
+    public void forward(AnnotationVisitor mv);
+  }
+	
+	
+	private static final class AnnoAttrValueMemo implements AnnoMemo {
+	  private final String name;
+	  private final Object value;
+	  
+	  public AnnoAttrValueMemo(final String n, final Object v) {
+	    name = n;
+	    value = v;
+	  }
+	  
+	  public void forward(final AnnotationVisitor av) {
+	    av.visit(name,  value);
+	  }
+	}
+	
+	private static final class AnnoEnumMemo implements AnnoMemo {
+	  private final String name;
+	  private final String desc;
+	  private final String value;
+	  
+	  public AnnoEnumMemo(final String n, final String d, final String v) {
+	    name = n;
+	    desc = d;
+	    value = v;
+	  }
+	  
+	  public void forward(final AnnotationVisitor av) {
+	    av.visitEnum(name, desc, value);
+	  }
+	}
+	
+	private static final class AnnoEndMemo implements AnnoMemo {
+	  public AnnoEndMemo() {
+	    // empty;
+	  }
+	  
+	  public void forward(final AnnotationVisitor av) {
+	    av.visitEnd();
+	  }
+	}
+	
+	private static final class AnnoAnnotationMemo extends AnnotationMemoizer implements AnnoMemo {
+	  private String name;
+	  private String desc;
+	  
+	  public AnnoAnnotationMemo(final String n, final String d) {
+	    name = n;
+	    desc = d;
+	  }
+	  
+	  public void forward(final AnnotationVisitor av) {
+	    final AnnotationVisitor nested = av.visitAnnotation(name, desc);
+	    doForward(nested);
+	  }
+	}
+	
+	private static final class AnnoArrayMemo extends AnnotationMemoizer implements AnnoMemo {
+	  private String name;
+	  
+	  public AnnoArrayMemo(final String n) {
+	    name = n;
+	  }
+	  
+	  public void forward(final AnnotationVisitor av) {
+	    final AnnotationVisitor nested = av.visitArray(name);
+	    doForward(nested);
+	  }
 	}
 }

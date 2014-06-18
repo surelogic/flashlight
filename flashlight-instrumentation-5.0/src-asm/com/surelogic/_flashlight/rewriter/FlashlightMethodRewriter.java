@@ -882,8 +882,8 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
   public AnnotationVisitor visitLocalVariableAnnotation(final int typeRef,
       final TypePath typePath, final Label[] start, final Label[] end,
       final int[] index, final String desc, final boolean visible) {
-    // XXX: IGNORE FOR NOW --- Fix this later
-    return null;
+    return mv.visitLocalVariableAnnotation(typeRef, typePath, start, end, index, desc, visible);
+//    return null;
   }
 
   @Override

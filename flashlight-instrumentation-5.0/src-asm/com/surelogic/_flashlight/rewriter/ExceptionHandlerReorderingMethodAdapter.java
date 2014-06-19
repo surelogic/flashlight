@@ -10,6 +10,7 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.TypePath;
+import org.objectweb.asm.TypeReference;
 
 /**
  * This class buffers all the "visit" calls until {@link #visitEnd()} is called,
@@ -297,6 +298,15 @@ final class ExceptionHandlerReorderingMethodAdapter extends MethodVisitor {
 		exceptionHandlers.add(new TryCatchBlockMemo(start, end, handler, type));
 	}
 
+	@Override
+  public AnnotationVisitor visitTryCatchAnnotation(final int typeRef,
+      final TypePath typePath, final String desc, final boolean visible) {
+    final TryCatchAnnotationMemo av = new TryCatchAnnotationMemo(
+        typeRef, typePath, desc, visible, prefix);
+    memoizedCalls.add(av);
+    return av;
+	}
+		
 	@Override
 	public void visitTypeInsn(final int opcode, final String type) {
 		memoizedCalls.add(new TypeInsnMemo(opcode, type));
@@ -759,6 +769,39 @@ final class ExceptionHandlerReorderingMethodAdapter extends MethodVisitor {
 			return "TRY" + start + " " + end + " " + handler + " " + type;
 		}
 	}
+	
+  private static final class TryCatchAnnotationMemo extends AnnotationMemoizer implements Memo {
+    private final int typeRef;
+    private final TypePath typePath;
+    private final String desc;
+    private final boolean visible;
+    
+    private final List<TryCatchBlockMemo> prefix;
+    
+    public TryCatchAnnotationMemo(final int typeRef, final TypePath typePath,
+        final String desc, final boolean visible, List<TryCatchBlockMemo> prefix) {
+      this.typeRef = typeRef;
+      this.typePath = typePath;
+      this.desc = desc;
+      this.visible = visible;
+      this.prefix = prefix;
+    }
+
+    public void forward(final MethodVisitor mv) {
+      final int newTypeRef =
+          TypeReference.newTryCatchReference(
+              new TypeReference(typeRef).getTryCatchBlockIndex() +
+              prefix.size()).getValue();
+      final AnnotationVisitor av = mv.visitTryCatchAnnotation(
+          newTypeRef, typePath, desc, visible);
+      doForward(av);
+    }
+
+    @Override
+    public String toString() {
+      return "try catch annotation";
+    }
+  }
 
 	private static final class TypeInsnMemo extends OpcodeMemo {
 		private final String type;

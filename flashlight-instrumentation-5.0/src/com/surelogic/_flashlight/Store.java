@@ -399,50 +399,62 @@ public class Store {
         }
     }
 
-  /**
-   * Called just after closure object is created. Assumes the that the closure
-   * is implemented by wrapping a method call to another method that implements
-   * the true body of the closure. How the wrapped method is called is indicated
-   * by the <code>behavior</code> argument, using constants described in Section
-   * 5.4.3.5 of <cite>The Java Virtual Machine Specification, Java 8
-   * Edition</cite>.
-   * 
-   * <table>
-   * <tr><th>Behavior <th>Interpretation
-   * <tr><td>5 <td>invokevirtual <i>owner</i>.<i>method</i>
-   * <tr><td>6 <td>invokestatic <i>owner</i>.<i>method</i>
-   * <tr><td>7 <td>invokespecial <i>owner</i>.<i>method</i>
-   * <tr><td>8 <td>new <i>owner</i>; dup; invokespecial <i>owner</i>.&lt;init&gt;
-   * <tr><td>9 <td>invokeinterface <i>owner</i>.<i>method</i>
-   * </table>
-   * 
-   * @param closure
-   *          The closure object. This is the object that implements a
-   *          <em>functional interface</em>.
-   * @param functionalInterface
-   *          The internal class name of the functional interface implemented by
-   *          the closure
-   * @param methodName
-   *          The name of the abstract method of the functional interface that
-   *          is implemented by the closure.
-   * @param methodDesc
-   *          The signature of the abstract method.
-   * @param behavior
-   *          How the method wrapped by the closure is invoked.  See above.
-   * @param owner
-   *          The internal class name of the owner of the wrapped method.
-   * @param name
-   *          The name of the wrapped method.
-   * @param desc
-   *          The type signature of the wrapped method.
-   */
-    public static void closureCreation(
-        final Object closure, final String functionalInterface, 
-        final String methodName, final String methodDesc, final int behavior,
-        final String owner, final String name, final String desc) {
-      // fill this in
+    /**
+     * Called just after closure object is created. Assumes the that the closure
+     * is implemented by wrapping a method call to another method that
+     * implements the true body of the closure. How the wrapped method is called
+     * is indicated by the <code>behavior</code> argument, using constants
+     * described in Section 5.4.3.5 of <cite>The Java Virtual Machine
+     * Specification, Java 8 Edition</cite>.
+     *
+     * <table>
+     * <tr>
+     * <th>Behavior
+     * <th>Interpretation
+     * <tr>
+     * <td>5
+     * <td>invokevirtual <i>owner</i>.<i>method</i>
+     * <tr>
+     * <td>6
+     * <td>invokestatic <i>owner</i>.<i>method</i>
+     * <tr>
+     * <td>7
+     * <td>invokespecial <i>owner</i>.<i>method</i>
+     * <tr>
+     * <td>8
+     * <td>new <i>owner</i>; dup; invokespecial <i>owner</i>.&lt;init&gt;
+     * <tr>
+     * <td>9
+     * <td>invokeinterface <i>owner</i>.<i>method</i>
+     * </table>
+     *
+     * @param closure
+     *            The closure object. This is the object that implements a
+     *            <em>functional interface</em>.
+     * @param functionalInterface
+     *            The internal class name of the functional interface
+     *            implemented by the closure
+     * @param methodName
+     *            The name of the abstract method of the functional interface
+     *            that is implemented by the closure.
+     * @param methodDesc
+     *            The signature of the abstract method.
+     * @param behavior
+     *            How the method wrapped by the closure is invoked. See above.
+     * @param owner
+     *            The internal class name of the owner of the wrapped method.
+     * @param name
+     *            The name of the wrapped method.
+     * @param desc
+     *            The type signature of the wrapped method.
+     */
+    public static void closureCreation(final Object closure,
+            final String functionalInterface, final String methodName,
+            final String methodDesc, final int behavior, final String owner,
+            final String name, final String desc) {
+        // fill this in
     }
-    
+
     public static void beforeIntrinsicLockAcquisition(final Object lockObject,
             final boolean lockIsThis, final boolean lockIsClass,
             final long siteId) {
@@ -706,6 +718,8 @@ public class Store {
                 }
             } catch (ClassNotFoundException e) {
                 f_conf.logAProblem(e.getMessage(), e);
+            } finally {
+                tl_withinStore.get().inside = false;
             }
         }
     }
@@ -733,6 +747,8 @@ public class Store {
                 }
             } catch (ClassNotFoundException e) {
                 f_conf.logAProblem(e.getMessage(), e);
+            } finally {
+                tl_withinStore.get().inside = false;
             }
         }
     }
@@ -760,6 +776,8 @@ public class Store {
                 }
             } catch (ClassNotFoundException e) {
                 f_conf.logAProblem(e.getMessage(), e);
+            } finally {
+                tl_withinStore.get().inside = false;
             }
         }
     }

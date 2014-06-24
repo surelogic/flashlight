@@ -889,8 +889,9 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
   @Override
   public AnnotationVisitor visitTryCatchAnnotation(int typeRef,
       final TypePath typePath, final String desc, final boolean visible) {
-    // XXX: IGNORE FOR NOW --- Fix this later
-    return null;
+    return mv.visitTryCatchAnnotation(typeRef, typePath, desc, visible);
+//    // XXX: IGNORE FOR NOW --- Fix this later
+//    return null;
   }
 
 	@Override

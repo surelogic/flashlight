@@ -4,7 +4,7 @@ import java.text.MessageFormat;
 
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.MethodInsnNode;
 
 final class StaticCallWrapper extends MethodCallWrapper {
   private static final String WRAPPER_SIGNATURE_TEMPLATE = "({0}J){1}";
@@ -16,10 +16,8 @@ final class StaticCallWrapper extends MethodCallWrapper {
   
   public StaticCallWrapper(
       final RewriteMessenger messenger, final ClassAndFieldModel classModel,
-      final HappensBeforeTable hbt,
-      final String owner, final String originalName,
-      final String originalSignature, final boolean itf, final AbstractInsnNode insn) {
-    super(messenger, classModel, hbt, insn, Opcodes.INVOKESTATIC, null, owner, originalName, originalSignature, itf, false);
+      final HappensBeforeTable hbt, final MethodInsnNode insn) {
+    super(messenger, classModel, hbt, insn, null, false);
   }
 
   

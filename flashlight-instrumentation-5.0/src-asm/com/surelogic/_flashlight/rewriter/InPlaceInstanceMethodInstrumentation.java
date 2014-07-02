@@ -2,7 +2,7 @@ package com.surelogic._flashlight.rewriter;
 
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.MethodInsnNode;
 
 class InPlaceInstanceMethodInstrumentation extends
     InPlaceMethodInstrumentation {
@@ -11,12 +11,11 @@ class InPlaceInstanceMethodInstrumentation extends
   public InPlaceInstanceMethodInstrumentation(
       final RewriteMessenger messenger, final ClassAndFieldModel classModel,
       final HappensBeforeTable hbt,
-      final long callSiteId, final AbstractInsnNode insn, final int opcode,
-      final String owner, final String name, final String descriptor, final boolean itf,
+      final long callSiteId, final MethodInsnNode insn,
       final LocalVariableGenerator vg) {
-    super(messenger, classModel, hbt,callSiteId, insn, opcode, owner, name, descriptor, itf);
+    super(messenger, classModel, hbt,callSiteId, insn);
     poppedArgs = PoppedArguments.instanceArguments(
-        Type.getObjectType(owner), Type.getArgumentTypes(descriptor), vg);
+        Type.getObjectType(insn.owner), Type.getArgumentTypes(insn.desc), vg);
   }
 
   @Override

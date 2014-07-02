@@ -16,6 +16,7 @@ import org.objectweb.asm.TypePath;
 import org.objectweb.asm.commons.Method;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
 import com.surelogic._flashlight.rewriter.ClassAndFieldModel.ClassNotFoundException;
@@ -425,14 +426,6 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 	@Override
 	public void visitTypeInsn(final int opcode, final String type) {
 	  doNotInstrument();
-//		handlePreviousInstructions();
-//
-//		if (stateMachine != null) {
-//			stateMachine.visitTypeInsn(opcode, type);
-//		}
-//		mv.visitTypeInsn(opcode, type);
-//
-//    currentInstructionIndex += 1;
 	}
 
 	@Override
@@ -468,7 +461,6 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 			  insertMethodExecution(false);
 			}
 			currentInsn.accept(mv);
-//			mv.visitInsn(opcode);
 
 			if (wasSynchronized && config.rewriteSynchronizedMethod) {
 				/* Start a new try-block */
@@ -480,16 +472,13 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 			}
 		} else if (opcode >= Opcodes.IALOAD && opcode <= Opcodes.SALOAD) {
 			handlePreviousInstructions();
-			rewriteArrayLoad(opcode, opcode == Opcodes.LALOAD
-					|| opcode == Opcodes.DALOAD);
+			rewriteArrayLoad(opcode == Opcodes.LALOAD	|| opcode == Opcodes.DALOAD);
 		} else if (opcode >= Opcodes.IASTORE && opcode <= Opcodes.SASTORE) {
 			handlePreviousInstructions();
-			rewriteArrayStore(opcode, opcode == Opcodes.LASTORE
-					|| opcode == Opcodes.DASTORE);
+			rewriteArrayStore(opcode == Opcodes.LASTORE || opcode == Opcodes.DASTORE);
 		} else {
 			handlePreviousInstructions();
 			currentInsn.accept(mv);
-//			mv.visitInsn(opcode);
 		}
 
 		currentInsn = currentInsn.getNext();
@@ -593,9 +582,9 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 			if (opcode == Opcodes.INVOKEVIRTUAL) {
 				if (config.rewriteInvokevirtual) {
 					rewriteMethodCall(Opcodes.INVOKEVIRTUAL, indirectAccess,
-							owner, name, desc, itf);
+							owner, name, desc);
 				} else {
-					mv.visitMethodInsn(opcode, owner, name, desc, itf);
+				  currentInsn.accept(mv);
 				}
 			} else if (opcode == Opcodes.INVOKESPECIAL) {
 				boolean outputOriginalCall = true;
@@ -603,7 +592,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 					if (!name.equals(FlashlightNames.CONSTRUCTOR)) {
 						outputOriginalCall = false;
 						rewriteMethodCall(Opcodes.INVOKESPECIAL,
-								indirectAccess, owner, name, desc, itf);
+								indirectAccess, owner, name, desc);
 					} else {
 						lastInitOwner = owner;
 						if (config.rewriteInit) {
@@ -620,24 +609,24 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 					}
 				}
 				if (outputOriginalCall) {
-					mv.visitMethodInsn(Opcodes.INVOKESPECIAL, owner, name, desc, itf);
+				  currentInsn.accept(mv);
 				}
 			} else if (opcode == Opcodes.INVOKEINTERFACE) {
 				if (config.rewriteInvokeinterface) {
 					rewriteMethodCall(Opcodes.INVOKEINTERFACE, indirectAccess,
-							owner, name, desc, itf);
+							owner, name, desc);
 				} else {
-					mv.visitMethodInsn(opcode, owner, name, desc, itf);
+				  currentInsn.accept(mv);
 				}
 			} else if (opcode == Opcodes.INVOKESTATIC) {
 				if (config.rewriteInvokestatic) {
 					rewriteMethodCall(Opcodes.INVOKESTATIC, indirectAccess,
-							owner, name, desc, itf);
+							owner, name, desc);
 				} else {
-					mv.visitMethodInsn(opcode, owner, name, desc, itf);
+				  currentInsn.accept(mv);
 				}
 			} else { // Unknown, but safe
-				mv.visitMethodInsn(opcode, owner, name, desc, itf);
+			  currentInsn.accept(mv);
 			}
 //		}
 
@@ -699,14 +688,6 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 	@Override
 	public void visitIntInsn(final int opcode, final int operand) {
 	  doNotInstrument();
-//		handlePreviousInstructions();
-//
-//		if (stateMachine != null) {
-//			stateMachine.visitIntInsn(opcode, operand);
-//		}
-//		mv.visitIntInsn(opcode, operand);
-//
-//    currentInstructionIndex += 1;
 	}
 
 	@Override
@@ -760,14 +741,6 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 	@Override
 	public void visitJumpInsn(final int opcode, final Label label) {
 	  doNotInstrument();
-//		handlePreviousInstructions();
-//		if (stateMachine != null) {
-//			stateMachine.visitJumpInsn(opcode, label);
-//		}
-//
-//		mv.visitJumpInsn(opcode, label);
-//
-//    currentInstructionIndex += 1;
 	}
 
 	@Override
@@ -799,54 +772,23 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 	@Override
 	public void visitLdcInsn(final Object cst) {
 	  doNotInstrument();
-//		handlePreviousInstructions();
-//
-//		if (stateMachine != null) {
-//			stateMachine.visitLdcInsn(cst);
-//		}
-//		mv.visitLdcInsn(cst);
-//
-//    currentInstructionIndex += 1;
 	}
 
 	@Override
 	public void visitLookupSwitchInsn(final Label dflt, final int[] keys,
 			final Label[] labels) {
 	  doNotInstrument();
-//		handlePreviousInstructions();
-//		if (stateMachine != null) {
-//			stateMachine.visitLookupSwitchInsn(dflt, keys, labels);
-//		}
-//
-//		mv.visitLookupSwitchInsn(dflt, keys, labels);
-//
-//    currentInstructionIndex += 1;
 	}
 
 	@Override
 	public void visitMultiANewArrayInsn(final String desc, final int dims) {
 	  doNotInstrument();
-//		handlePreviousInstructions();
-//
-//		if (stateMachine != null) {
-//			stateMachine.visitMultiANewArrayInsn(desc, dims);
-//		}
-//		mv.visitMultiANewArrayInsn(desc, dims);
-//
-//    currentInstructionIndex += 1;
 	}
 
 	@Override
 	public void visitTableSwitchInsn(final int min, final int max,
 			final Label dflt, final Label... labels) {
 	  doNotInstrument();
-//		handlePreviousInstructions();
-//		if (stateMachine != null) {
-//			stateMachine.visitTableSwitchInsn(min, max, dflt, labels);
-//		}
-//		mv.visitTableSwitchInsn(min, max, dflt, labels);
-//
-//    currentInstructionIndex += 1;
 	}
 
 	@Override
@@ -857,13 +799,10 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 		}
 		if (opcode == Opcodes.ASTORE) {
 		  previousStoreInsn = (VarInsnNode) currentInsn;
-//			previousStore = var;
 		} else if (opcode == Opcodes.ALOAD) {
 		  previousLoadInsn = (VarInsnNode) currentInsn;
-//			previousLoad = var;
 		} else {
 		  currentInsn.accept(mv);
-//			mv.visitVarInsn(opcode, var);
 		}
 
     currentInsn = currentInsn.getNext();
@@ -966,11 +905,6 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 	@Override
 	public void visitIincInsn(final int var, final int increment) {
 	  doNotInstrument();
-//		handlePreviousInstructions();
-//
-//		mv.visitIincInsn(var, increment);
-//		
-//    currentInstructionIndex += 1;
 	}
 
 	@Override
@@ -1099,11 +1033,6 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 	    previousLoadInsn.accept(mv);
       previousLoadInsn = null;
     }
-
-//    if (previousLoad != -1) {
-//      mv.visitVarInsn(Opcodes.ALOAD, previousLoad);
-//      previousLoad = -1;
-//    }
 	}
 
 	/**
@@ -1123,11 +1052,6 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
       previousStoreInsn.accept(mv);
       previousStoreInsn = null;
     }
-    
-//		if (previousStore != -1) {
-//			mv.visitVarInsn(Opcodes.ASTORE, previousStore);
-//			previousStore = -1;
-//		}
 	}
 
   private void handlePreviousInstructions() {
@@ -1309,6 +1233,8 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 	private void rewriteConstructorCall(
 			final IndirectAccessMethod indirectAccess, final String owner,
 			final String name, final String desc) {
+	  final MethodInsnNode methodInsn = (MethodInsnNode) currentInsn;
+	  
 		final long siteId = siteIdFactory.getSiteId(currentSrcLine, name,
 				owner, desc);
 		if (isConstructor && stateMachine != null) {
@@ -1317,8 +1243,8 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 			if (indirectAccess != null) {
 				final IndirectAccessMethodInstrumentation method =
 				    new InstanceIndirectAccessMethodInstrumentation(
-				        messenger, classModel, happensBefore, siteId, currentInsn, Opcodes.INVOKESPECIAL,
-				        indirectAccess, owner, name, desc, false, this);
+				        messenger, classModel, happensBefore, siteId, methodInsn,
+				        indirectAccess, this);
 				method.popReceiverAndArguments(mv);
 				method.recordIndirectAccesses(mv, config);
 				method.pushReceiverAndArguments(mv);
@@ -1340,7 +1266,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 
 			/* Original call */
 			mv.visitLabel(start);
-			mv.visitMethodInsn(Opcodes.INVOKESPECIAL, owner, name, desc, false);
+			methodInsn.accept(mv);
 			mv.visitLabel(end);
 
 			/* Normal return */
@@ -1399,7 +1325,6 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 		 */
 		if (isConstructor && stateMachine != null) {
 		  currentInsn.accept(mv);
-//			mv.visitFieldInsn(Opcodes.PUTFIELD, owner, name, desc);
 			return;
 		}
 
@@ -1507,24 +1432,21 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
         mv.visitInsn(Opcodes.SWAP);
         // Stack is "..., objectref, value, false, objectref"
 
-        finishFieldAccess(owner, field.id,
+        finishFieldAccess(field.id,
             field.clazz.isInstrumented(), field.clazz.getName(),
             FlashlightNames.INSTANCE_FIELD_ACCESS);
         // Stack is "..., objectref, value"
         
 				// Execute the original PUTFIELD instruction
         currentInsn.accept(mv);
-//				mv.visitFieldInsn(Opcodes.PUTFIELD, owner, name, desc);
 				// Stack is "..., objectref"
 			} else {
 				// Execute the original PUTFIELD instruction
 	      currentInsn.accept(mv);
-//				mv.visitFieldInsn(Opcodes.PUTFIELD, owner, name, desc);
 			}
 		} else {
 			// Execute the original PUTFIELD instruction
       currentInsn.accept(mv);
-//			mv.visitFieldInsn(Opcodes.PUTFIELD, owner, name, desc);
 		}
 	}
 
@@ -1557,7 +1479,6 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 
 			// Execute the original GETFIELD instruction
 			currentInsn.accept(mv);
-//			mv.visitFieldInsn(Opcodes.GETFIELD, owner, name, desc);
 			// Stack is "..., objectref, value" [Value could be cat1 or cat2!]
 
 			/*
@@ -1583,13 +1504,12 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 			mv.visitInsn(Opcodes.SWAP);
 			// Stack is "..., value, true, objectref"
 
-			finishFieldAccess(owner, field.id, field.clazz.isInstrumented(),
+			finishFieldAccess(field.id, field.clazz.isInstrumented(),
 					field.clazz.getName(),
 					FlashlightNames.INSTANCE_FIELD_ACCESS);
 		} else {
 			// Execute the original GETFIELD instruction
 		  currentInsn.accept(mv);
-//			mv.visitFieldInsn(Opcodes.GETFIELD, owner, name, desc);
 		}
 	}
 
@@ -1651,24 +1571,21 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
         ByteCodeUtils.pushBooleanConstant(mv, false);
         // Stack is "..., value, false"
 
-        finishFieldAccess(owner, field.id,
+        finishFieldAccess(field.id,
             field.clazz.isInstrumented(), field.clazz.getName(),
             FlashlightNames.STATIC_FIELD_ACCESS);
         // Stack is "..., value"
 				
 				// Execute the original PUTSTATIC instruction
         currentInsn.accept(mv);
-//				mv.visitFieldInsn(Opcodes.PUTSTATIC, owner, name, desc);
 				// Stack is "..."
 			} else {
 				// Execute the original PUTSTATIC instruction
 			  currentInsn.accept(mv);
-//				mv.visitFieldInsn(Opcodes.PUTSTATIC, owner, name, desc);
 			}
 		} else {
 			// Execute the original PUTSTATIC instruction
 		  currentInsn.accept(mv);
-//			mv.visitFieldInsn(Opcodes.PUTSTATIC, owner, name, desc);
 		}
 	}
 
@@ -1693,7 +1610,6 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 
 			// Execute the original GETFIELD instruction
 			currentInsn.accept(mv);
-//			mv.visitFieldInsn(Opcodes.GETSTATIC, owner, name, desc);
 			// Stack is "..., value" [Value could be cat1 or cat2!]
 
 			/*
@@ -1703,12 +1619,11 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 			ByteCodeUtils.pushBooleanConstant(mv, true);
 			// Stack is "..., value, true"
 
-			finishFieldAccess(owner, field.id, field.clazz.isInstrumented(),
+			finishFieldAccess(field.id, field.clazz.isInstrumented(),
 					field.clazz.getName(), FlashlightNames.STATIC_FIELD_ACCESS);
 		} else {
 			// Execute the original GETFIELD instruction
 		  currentInsn.accept(mv);
-//			mv.visitFieldInsn(Opcodes.GETSTATIC, owner, name, desc);
 		}
 	}
 
@@ -1783,7 +1698,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 	 * receiver". When called for a static field, the stack should be "...,
 	 * isRead".
 	 */
-	private void finishFieldAccess(final String owner, final Integer fieldID,
+	private void finishFieldAccess(final Integer fieldID,
 			final boolean isInstrumented,
 			final String declaringClassInternalName, final Method storeMethod) {
 		// Stack is "..., isRead, [receiver]"
@@ -1852,14 +1767,13 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 	// == Rewrite array access
 	// =========================================================================
 
-	private void rewriteArrayLoad(final int opcode, final boolean isCat2) {
+	private void rewriteArrayLoad(final boolean isCat2) {
     // ..., ref, idx
 		mv.visitInsn(Opcodes.DUP2);
 		// ..., ref, idx, ref, idx
 
 		/* Execute the original instruction */
 		currentInsn.accept(mv);
-//		mv.visitInsn(opcode);
 		// ..., ref, idx, value
 
 		if (isCat2) {
@@ -1888,7 +1802,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 		/* Resume */
 	}
 
-	private void rewriteArrayStore(final int opcode, final boolean isCat2) {
+	private void rewriteArrayStore(final boolean isCat2) {
     // ..., ref, idx, value
 
 		if (isCat2) {
@@ -1916,7 +1830,6 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 
 		/* Execute the original instruction */
 		currentInsn.accept(mv);
-//		mv.visitInsn(opcode);
 		// ..., ref, idx
 
 		ByteCodeUtils.pushBooleanConstant(mv, false);
@@ -1998,8 +1911,6 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 
 			previousStoreInsn.accept(mv);
 			previousStoreInsn = null;
-//			mv.visitVarInsn(Opcodes.ASTORE, previousStore);
-//			previousStore = -1;
 			// ..., obj, obj (0,)
 		}
 
@@ -2007,7 +1918,6 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 
 		/* The original monitor enter call */
 		currentInsn.accept(mv);
-//		mv.visitInsn(Opcodes.MONITORENTER);
 		// ..., obj (-1, 0)
 
 		/*
@@ -2052,14 +1962,11 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 			 * is why we cannot use the DUP operation.
 			 */
 		  previousLoadInsn.accept(mv);
-//			mv.visitVarInsn(Opcodes.ALOAD, previousLoad);
 			// ..., obj
       previousLoadInsn.accept(mv);
-//			mv.visitVarInsn(Opcodes.ALOAD, previousLoad);
 			// ..., obj, obj
 
       previousLoadInsn = null;
-//			previousLoad = -1;
 		} else {
 			// ..., obj
 
@@ -2072,7 +1979,6 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 		}
 		/* The original monitor exit call */
 		currentInsn.accept(mv);
-//		mv.visitInsn(Opcodes.MONITOREXIT);
 		// ..., obj
 
 		/*
@@ -2243,8 +2149,10 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 
 	private void rewriteMethodCall(final int opcode,
 			final IndirectAccessMethod indirectMethod, final String owner,
-			final String name, final String desc, final boolean itf) {
-		final long siteId = siteIdFactory.getSiteId(currentSrcLine, name,
+			final String name, final String desc) {
+    final MethodInsnNode methodInsn = (MethodInsnNode) currentInsn;
+
+    final long siteId = siteIdFactory.getSiteId(currentSrcLine, name,
 				owner, desc);
 		/*
 		 * Are we dealing with a method that indirectly accesses aggregated
@@ -2256,12 +2164,12 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 			final IndirectAccessMethodInstrumentation methodCall;
 			if (opcode == Opcodes.INVOKESTATIC) {
 				methodCall = new StaticIndirectAccessMethodInstrumentation(
-						messenger, classModel, happensBefore, siteId, currentInsn, opcode, indirectMethod,
-						owner, name, desc, itf, this);
+						messenger, classModel, happensBefore, siteId, methodInsn, indirectMethod,
+						this);
 			} else {
 				methodCall = new InstanceIndirectAccessMethodInstrumentation(
-						messenger, classModel, happensBefore, siteId, currentInsn, opcode, indirectMethod,
-						owner, name, desc, itf, this);
+						messenger, classModel, happensBefore, siteId, methodInsn, indirectMethod,
+						this);
 			}
 			methodCall.popReceiverAndArguments(mv);
 			methodCall.recordIndirectAccesses(mv, config);
@@ -2304,19 +2212,17 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 			 * method for each distinct annotation of the method.
 			 */
 			final boolean isAnnotated =
-			    (currentInsn.invisibleTypeAnnotations != null && !currentInsn.invisibleTypeAnnotations.isEmpty()) ||
-			    (currentInsn.visibleTypeAnnotations != null && !currentInsn.visibleTypeAnnotations.isEmpty());
+			    (methodInsn.invisibleTypeAnnotations != null && !methodInsn.invisibleTypeAnnotations.isEmpty()) ||
+			    (methodInsn.visibleTypeAnnotations != null && !methodInsn.visibleTypeAnnotations.isEmpty());
 			
 			if (inInterface || isClone || ownerIsSuper || isAnnotated) {
 				final InPlaceMethodInstrumentation methodCall;
 				if (opcode == Opcodes.INVOKESTATIC) {
 					methodCall = new InPlaceStaticMethodInstrumentation(
-							messenger, classModel, happensBefore, siteId, currentInsn, opcode, owner, name,
-							desc, itf);
+							messenger, classModel, happensBefore, siteId, methodInsn);
 				} else {
 					methodCall = new InPlaceInstanceMethodInstrumentation(
-							messenger, classModel, happensBefore, siteId, currentInsn, opcode, owner, name,
-							desc, itf, this);
+							messenger, classModel, happensBefore, siteId, methodInsn, this);
 				}
 				methodCall.popReceiverAndArguments(mv);
 				methodCall.instrumentMethodCall(mv, isStatic, config);
@@ -2328,16 +2234,16 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 				final MethodCallWrapper wrapper;
 				if (opcode == Opcodes.INVOKESPECIAL) {
 					wrapper = new SpecialCallWrapper(
-					    messenger, classModel, happensBefore,	owner, name, desc, itf, currentInsn);
+					    messenger, classModel, happensBefore, methodInsn);
 				} else if (opcode == Opcodes.INVOKESTATIC) {
 					wrapper = new StaticCallWrapper(
-					    messenger, classModel, happensBefore, owner, name, desc, itf, currentInsn);
+					    messenger, classModel, happensBefore, methodInsn);
 				} else if (opcode == Opcodes.INVOKEINTERFACE) {
 					wrapper = new InterfaceCallWrapper(
-					    messenger, classModel, happensBefore, owner, name, desc, itf, currentInsn);
+					    messenger, classModel, happensBefore, methodInsn);
 				} else { // virtual call
 					wrapper = new VirtualCallWrapper(
-					    messenger, classModel, happensBefore, null, owner, name, desc, itf, currentInsn);
+					    messenger, classModel, happensBefore, null, methodInsn);
 				}
 
 				wrapperMethods.add(wrapper);

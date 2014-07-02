@@ -3,7 +3,7 @@ package com.surelogic._flashlight.rewriter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.MethodInsnNode;
 
 /**
  * Abstract representation of a method call that will instrumented in place,
@@ -93,10 +93,8 @@ abstract class InPlaceMethodInstrumentation extends MethodCall {
   public InPlaceMethodInstrumentation(
       final RewriteMessenger messenger, final ClassAndFieldModel classModel,
       final HappensBeforeTable hbt,
-      final long callSiteId, final AbstractInsnNode insn, final int opcode,
-      final String owner, final String name, final String descriptor,
-      final boolean itf) {
-    super(messenger, classModel, hbt, insn, opcode, owner, name, descriptor, itf);
+      final long callSiteId, final MethodInsnNode insn) {
+    super(messenger, classModel, hbt, insn);
     this.callSiteId = callSiteId;
   }
   

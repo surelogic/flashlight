@@ -2,6 +2,7 @@ package com.surelogic._flashlight.rewriter;
 
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.AbstractInsnNode;
 
 final class InPlaceStaticMethodInstrumentation extends
     InPlaceMethodInstrumentation {
@@ -9,9 +10,9 @@ final class InPlaceStaticMethodInstrumentation extends
   public InPlaceStaticMethodInstrumentation(
       final RewriteMessenger messenger, final ClassAndFieldModel classModel,
       final HappensBeforeTable hbt,
-      final long callSiteId, final int opcode,
+      final long callSiteId, final AbstractInsnNode insn, final int opcode,
       final String owner, final String name, final String descriptor, final boolean itf) {
-    super(messenger, classModel, hbt, callSiteId, opcode, owner, name, descriptor, itf);
+    super(messenger, classModel, hbt, callSiteId, insn, opcode, owner, name, descriptor, itf);
   }
 
   @Override

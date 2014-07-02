@@ -4,6 +4,7 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.AbstractInsnNode;
 
 import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBefore;
 import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBeforeCollection;
@@ -21,6 +22,7 @@ import com.surelogic._flashlight.rewriter.config.Configuration;
  * in place (in the case of calls from interface initializers).
  */
 public abstract class MethodCall {
+  protected final AbstractInsnNode originalInsn;
   protected final int opcode;
   protected final String owner;
   protected final String name;
@@ -40,8 +42,10 @@ public abstract class MethodCall {
    */
   public MethodCall(final RewriteMessenger msg,
       final ClassAndFieldModel model, final HappensBeforeTable hbt,
+      final AbstractInsnNode insn,
       final int opcode, final String owner,
       final String originalName, final String originalDesc, final boolean itf) {
+    this.originalInsn = insn;
     this.opcode = opcode;
     this.owner = owner;
     this.name = originalName;
@@ -104,7 +108,9 @@ public abstract class MethodCall {
   }
   
   public final void invokeMethod(final MethodVisitor mv) {
-    mv.visitMethodInsn(opcode, owner, name, descriptor, itf);
+    // Use the instruction node from the tree model to get the annotations
+    originalInsn.accept(mv);
+//    mv.visitMethodInsn(opcode, owner, name, descriptor, itf);
   }
 
   /**

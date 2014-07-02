@@ -7,6 +7,7 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.AbstractInsnNode;
 
 /**
  * Abstract representation of the wrapper method that is generated to replace
@@ -65,10 +66,11 @@ abstract class MethodCallWrapper extends MethodCall {
   public MethodCallWrapper(
       final RewriteMessenger messenger, final ClassAndFieldModel classModel,
       final HappensBeforeTable hbt,
+      final AbstractInsnNode insn,
       final int opcode, final String rcvrTypeInternal, final String owner,
       final String originalName, final String originalDesc, final boolean itf,
       final boolean isInstance) {
-    super(messenger, classModel, hbt, opcode, owner, originalName, originalDesc, itf);
+    super(messenger, classModel, hbt, insn, opcode, owner, originalName, originalDesc, itf);
     final String ownerUnderscored = fixOwnerNameForMethodName(owner);
     final int endOfArgs = originalDesc.lastIndexOf(END_OF_ARGS);
     final String originalArgs = originalDesc.substring(1, endOfArgs);

@@ -12,6 +12,9 @@ import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.CodeSizeEvaluator;
+import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.MethodNode;
 
 import com.surelogic._flashlight.rewriter.ClassAndFieldModel.ClassNotFoundException;
 import com.surelogic._flashlight.rewriter.config.Configuration;
@@ -276,7 +279,7 @@ final class FlashlightClassRewriter extends ClassVisitor {
 	public MethodVisitor visitMethod(final int access, final String name,
 			final String desc, final String signature, final String[] exceptions) {
 		addFlashlightAttribute();
-
+		
 		final boolean isClassInit = name.equals(CLASS_INITIALIZER);
 		if (isClassInit) {
 			needsClassInitializer = false;
@@ -297,25 +300,38 @@ final class FlashlightClassRewriter extends ClassVisitor {
 			} else {
 				newAccess = access;
 			}
-			final MethodVisitor original = cv.visitMethod(newAccess, name,
+			final MethodVisitor originalMV = cv.visitMethod(newAccess, name,
 					desc, signature, exceptions);
-			final CodeSizeEvaluator cse = new CodeSizeEvaluator(original);
-			methodSizes.put(methodId, cse);
-			/*
-			 * Get the number of locals in the original method. If the method is
-			 * not found in the map, then the method is abstract and thus as 0
-			 * local variables.
-			 */
-			final Integer numLocalsInteger = method2numLocals.get(name + desc);
-			final int numLocals = numLocalsInteger == null ? 0
-					: numLocalsInteger.intValue();
-			return FlashlightMethodRewriter
-					.create(access, name, desc, numLocals, cse, config,
-							callSiteIdFactory, messenger, classModel, happensBefore,
-							accessMethods, isInterface, mustImplementIIdObject,
-							sourceFileName, classNameInternal,
-							classNameFullyQualified, superClassInternal,
-							wrapperMethods);
+			
+			// (1) First build a tree model
+			final MethodNode model = new MethodNode(Opcodes.ASM5,
+			    newAccess, name, desc, signature, exceptions) {
+			  @Override
+			  public void visitEnd() {
+			    /* (2) Now traverse model and forward to the method visitors
+			     * Give the list of instructions to the visitor!
+			     */
+		      final CodeSizeEvaluator cse = new CodeSizeEvaluator(originalMV);
+		      methodSizes.put(methodId, cse);
+		      /*
+		       * Get the number of locals in the original method. If the method is
+		       * not found in the map, then the method is abstract and thus as 0
+		       * local variables.
+		       */
+		      final Integer numLocalsInteger = method2numLocals.get(name + desc);
+		      final int numLocals = numLocalsInteger == null ? 0
+		          : numLocalsInteger.intValue();
+		      accept(FlashlightMethodRewriter.create(
+		          this.instructions,
+		          access, name, desc, numLocals, cse, config,
+		          callSiteIdFactory, messenger, classModel, happensBefore,
+		          accessMethods, isInterface, mustImplementIIdObject,
+		          sourceFileName, classNameInternal,
+		          classNameFullyQualified, superClassInternal,
+		          wrapperMethods));
+			  }
+			};
+			return model;
 		}
 	}
 
@@ -423,6 +439,13 @@ final class FlashlightClassRewriter extends ClassVisitor {
 	}
 
 	private void addClassInitializer() {
+    /* Need to build the instruction list explicitly for the method. This is
+     * redundant and awful, but necessary so that we can guarantee the visitor
+     * that the instruction list is never null.
+     */	  
+	  final InsnList instructions = new InsnList();
+	  instructions.add(new InsnNode(Opcodes.RETURN));
+	  
 		/* Create a new <clinit> method to visit */
 		final MethodVisitor mv = cv.visitMethod(Opcodes.ACC_STATIC,
 				CLASS_INITIALIZER, CLASS_INITIALIZER_DESC, null, null);
@@ -430,7 +453,7 @@ final class FlashlightClassRewriter extends ClassVisitor {
 		 * Proceed as if visitMethod() were called on us, and simulate the
 		 * method traversal through the rewriter visitor.
 		 */
-		final MethodVisitor rewriter_mv = FlashlightMethodRewriter.create(
+		final MethodVisitor rewriter_mv = FlashlightMethodRewriter.create(instructions,
 				Opcodes.ACC_STATIC, CLASS_INITIALIZER, CLASS_INITIALIZER_DESC,
 				0, mv, config, callSiteIdFactory, messenger, classModel, happensBefore,
 				accessMethods, isInterface, mustImplementIIdObject,

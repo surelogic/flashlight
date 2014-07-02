@@ -15,6 +15,7 @@
   <property name="asm-version" value="5.0.2" />
 	<property name="asm.jar" value="${common.lib}/asm-${asm-version}.jar" />
 	<property name="asm-commons.jar" value="${common.lib}/asm-commons-${asm-version}.jar" />
+  <property name="asm-tree.jar" value="${common.lib}/asm-tree-${asm-version}.jar" />
 
 	<property name="junit.jar" value="${lib}/junit-4.3.1.jar" />
 
@@ -61,7 +62,8 @@
 			<classpath>
 				<path refid="jaxb.classpath" />
 				<pathelement location="${asm.jar}" />
-				<pathelement location="${asm-commons.jar}" />
+        <pathelement location="${asm-commons.jar}" />
+        <pathelement location="${asm-tree.jar}" />
 			</classpath>
 		</javac>
 		<copy todir="${classes}">
@@ -76,7 +78,8 @@
 
 	<target name="build-all-jar">
 		<unzip src="${asm.jar}" dest="${classes}" />
-		<unzip src="${asm-commons.jar}" dest="${classes}" />
+    <unzip src="${asm-commons.jar}" dest="${classes}" />
+    <unzip src="${asm-tree.jar}" dest="${classes}" />
 		<jar destfile="${flashlight-all.jar}" basedir="${classes}">
 			<exclude name="**/com/surelogic/flashlight/**" />
 			<manifest>
@@ -123,7 +126,7 @@
 			<include name="**/com/surelogic/_flashlight/rewriter/xml/*" />
 			<manifest>
 				<attribute name="Manifest-Version" value="1.0" />
-				<attribute name="Class-Path" value="asm-${asm-version}.jar asm-commons-${asm-version}.jar" />
+				<attribute name="Class-Path" value="asm-${asm-version}.jar asm-commons-${asm-version}.jar asm-tree-${asm-version}.jar" />
 			</manifest>
 		</jar>
 	</target>

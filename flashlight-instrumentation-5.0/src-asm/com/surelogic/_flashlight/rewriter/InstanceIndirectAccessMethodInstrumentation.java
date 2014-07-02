@@ -2,16 +2,18 @@ package com.surelogic._flashlight.rewriter;
 
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.AbstractInsnNode;
 
 final class InstanceIndirectAccessMethodInstrumentation extends
   IndirectAccessMethodInstrumentation {
   public InstanceIndirectAccessMethodInstrumentation(
       final RewriteMessenger messenger, final ClassAndFieldModel classModel,
       final HappensBeforeTable hbt,
-      final long callSiteId, final int opcode, final IndirectAccessMethod am,
+      final long callSiteId, 
+      final AbstractInsnNode insn, final int opcode, final IndirectAccessMethod am,
       final String owner, final String name, final String descriptor, final boolean itf,
       final LocalVariableGenerator vg) {
-    super(messenger, classModel, hbt, callSiteId, opcode, am, owner, name, descriptor, itf, vg);
+    super(messenger, classModel, hbt, callSiteId, insn, opcode, am, owner, name, descriptor, itf, vg);
   }
 
   @Override

@@ -4,6 +4,7 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.MethodInsnNode;
 
 import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBefore;
 import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBeforeCollection;
@@ -21,11 +22,7 @@ import com.surelogic._flashlight.rewriter.config.Configuration;
  * in place (in the case of calls from interface initializers).
  */
 public abstract class MethodCall {
-  protected final int opcode;
-  protected final String owner;
-  protected final String name;
-  protected final String descriptor;
-  protected final boolean itf;
+  protected final MethodInsnNode originalInsn;
   protected final Type returnType;
   
   protected final RewriteMessenger messenger;
@@ -40,14 +37,9 @@ public abstract class MethodCall {
    */
   public MethodCall(final RewriteMessenger msg,
       final ClassAndFieldModel model, final HappensBeforeTable hbt,
-      final int opcode, final String owner,
-      final String originalName, final String originalDesc, final boolean itf) {
-    this.opcode = opcode;
-    this.owner = owner;
-    this.name = originalName;
-    this.descriptor = originalDesc;
-    this.itf = itf;
-    this.returnType = Type.getReturnType(originalDesc);
+      final MethodInsnNode insn) {
+    this.originalInsn = insn;
+    this.returnType = Type.getReturnType(insn.desc);
     
     messenger = msg;
     classModel = model;
@@ -62,7 +54,7 @@ public abstract class MethodCall {
     /* Test the method name first: no sense fooling with the class model if
      * the method doesn't match.
      */
-    return name.equals(testName) && classModel.getClass(testOwner).isAssignableFrom(owner);
+    return originalInsn.name.equals(testName) && classModel.getClass(testOwner).isAssignableFrom(originalInsn.owner);
   }
 
   /**
@@ -104,7 +96,8 @@ public abstract class MethodCall {
   }
   
   public final void invokeMethod(final MethodVisitor mv) {
-    mv.visitMethodInsn(opcode, owner, name, descriptor, itf);
+    // Use the instruction node from the tree model to get the annotations
+    originalInsn.accept(mv);
   }
 
   /**
@@ -140,7 +133,7 @@ public abstract class MethodCall {
     // Non-null if the call is interesting for happens-before events
     Result hbResult;
     try {
-      hbResult = happensBefore.getHappensBefore(owner, name, descriptor);
+      hbResult = happensBefore.getHappensBefore(originalInsn.owner, originalInsn.name, originalInsn.desc);
     } catch (final ClassNotFoundException e) {
       hbResult = null;
       messenger.warning("Provided classpath is incomplete: couldn't find class " + e.getMissingClass());

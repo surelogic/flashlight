@@ -7,6 +7,7 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.MethodInsnNode;
 
 /**
  * Abstract representation of the wrapper method that is generated to replace
@@ -65,33 +66,32 @@ abstract class MethodCallWrapper extends MethodCall {
   public MethodCallWrapper(
       final RewriteMessenger messenger, final ClassAndFieldModel classModel,
       final HappensBeforeTable hbt,
-      final int opcode, final String rcvrTypeInternal, final String owner,
-      final String originalName, final String originalDesc, final boolean itf,
+      final MethodInsnNode insn, final String rcvrTypeInternal,
       final boolean isInstance) {
-    super(messenger, classModel, hbt, opcode, owner, originalName, originalDesc, itf);
-    final String ownerUnderscored = fixOwnerNameForMethodName(owner);
-    final int endOfArgs = originalDesc.lastIndexOf(END_OF_ARGS);
-    final String originalArgs = originalDesc.substring(1, endOfArgs);
-    final String originalReturn = originalDesc.substring(endOfArgs + 1);
+    super(messenger, classModel, hbt, insn);
+    final String ownerUnderscored = fixOwnerNameForMethodName(insn.owner);
+    final int endOfArgs = insn.desc.lastIndexOf(END_OF_ARGS);
+    final String originalArgs = insn.desc.substring(1, endOfArgs);
+    final String originalReturn = insn.desc.substring(endOfArgs + 1);
 
     if (rcvrTypeInternal == null) {
       this.wrapperName = MessageFormat.format(WRAPPER_NAME_TEMPLATE_DEFAULT,
-          ownerUnderscored, originalName, (opcode - Opcodes.INVOKEVIRTUAL));
+          ownerUnderscored, insn.name, (insn.getOpcode() - Opcodes.INVOKEVIRTUAL));
       this.wrapperDescriptor = createWrapperMethodSignature(
-          fixOwnerNameForDescriptor(owner), originalArgs, originalReturn);
+          fixOwnerNameForDescriptor(insn.owner), originalArgs, originalReturn);
       
-      this.identityString = owner + originalName + originalDesc + opcode;
+      this.identityString = insn.owner + insn.name + insn.desc + insn.getOpcode();
     } else {
       this.wrapperName = MessageFormat.format(WRAPPER_NAME_TEMPLATE_RECEIVER,
           fixOwnerNameForMethodName(rcvrTypeInternal), ownerUnderscored,
-          originalName, (opcode - Opcodes.INVOKEVIRTUAL));
+          insn.name, (insn.getOpcode() - Opcodes.INVOKEVIRTUAL));
       this.wrapperDescriptor = createWrapperMethodSignature(
           fixOwnerNameForDescriptor(rcvrTypeInternal), originalArgs, originalReturn);
-      this.identityString = rcvrTypeInternal + owner + originalName + originalDesc + opcode;
+      this.identityString = rcvrTypeInternal + insn.owner + insn.name + insn.desc + insn.getOpcode();
     }
     this.hashCode = identityString.hashCode();
     
-    this.originalArgTypes = Type.getArgumentTypes(originalDesc);
+    this.originalArgTypes = Type.getArgumentTypes(insn.desc);
 
     final Type[] wrapperArgTypes = Type.getArgumentTypes(wrapperDescriptor);
     wrapperArgsToLocals = new int[wrapperArgTypes.length];
@@ -105,7 +105,7 @@ abstract class MethodCallWrapper extends MethodCall {
     firstOriginalArgPos = getFirstOriginalArgPosition(originalArgTypes.length);
     siteIdArgPos = getSiteIdArgPosition(originalArgTypes.length);
     
-    originalReturnType = Type.getReturnType(originalDesc);
+    originalReturnType = Type.getReturnType(insn.desc);
   }
   
   /**

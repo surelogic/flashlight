@@ -210,6 +210,15 @@ final class ExceptionHandlerReorderingMethodAdapter extends MethodVisitor {
 	}
 
 	@Override
+  public AnnotationVisitor visitInsnAnnotation(final int typeRef,
+      final TypePath typePath, final String desc, final boolean visible) {
+    final InsnAnnotationMemo av = new InsnAnnotationMemo(
+        typeRef, typePath, desc, visible);
+    memoizedCalls.add(av);
+    return av;
+	}
+	
+	@Override
 	public void visitIntInsn(final int opcode, final int operand) {
 		memoizedCalls.add(new IntInsnMemo(opcode, operand));
 	}
@@ -579,6 +588,32 @@ final class ExceptionHandlerReorderingMethodAdapter extends MethodVisitor {
       return av;
     }
 	}
+	
+  private static final class InsnAnnotationMemo extends AnnotationMemoizer implements Memo {
+    private final int typeRef;
+    private final TypePath typePath;
+    private final String desc;
+    private final boolean visible;
+    
+    public InsnAnnotationMemo(final int typeRef,
+        final TypePath typePath, final String desc, final boolean visible) {
+      this.typeRef = typeRef;
+      this.typePath = typePath;
+      this.desc = desc;
+      this.visible = visible;
+    }
+
+    public void forward(final MethodVisitor mv) {
+      final AnnotationVisitor av = mv.visitInsnAnnotation(
+          typeRef, typePath, desc, visible);
+      doForward(av);
+    }
+
+    @Override
+    public String toString() {
+      return "insn annotation";
+    }
+  }
 	
   private static final class LocalVariableAnnotationMemo extends AnnotationMemoizer implements Memo {
     private final int typeRef;

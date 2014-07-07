@@ -1,6 +1,7 @@
 package com.surelogic._flashlight.rewriter;
 
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.tree.MethodInsnNode;
 
 import com.surelogic._flashlight.rewriter.config.Configuration;
 
@@ -12,12 +13,12 @@ abstract class IndirectAccessMethodInstrumentation extends
   public IndirectAccessMethodInstrumentation(
       final RewriteMessenger messenger, final ClassAndFieldModel classModel,
       final HappensBeforeTable hbt,
-      final long callSiteId, final int opcode, final IndirectAccessMethod am,
-      final String owner, final String name, final String descriptor, final boolean itf,
+      final long callSiteId,
+      final MethodInsnNode insn, final IndirectAccessMethod am,
       final LocalVariableGenerator vg) {
-    super(messenger, classModel, hbt, callSiteId, opcode, owner, name, descriptor, itf);
+    super(messenger, classModel, hbt, callSiteId, insn);
     indirectAccess = am;
-    poppedArgs = getPoppedArgs(owner, descriptor, vg);
+    poppedArgs = getPoppedArgs(insn.owner, insn.desc, vg);
   }
 
   protected abstract PoppedArguments getPoppedArgs(

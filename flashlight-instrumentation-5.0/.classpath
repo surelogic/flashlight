@@ -20,5 +20,6 @@
 	</classpathentry>
 	<classpathentry kind="lib" path="/common/lib/runtime/asm-5.0.2.jar"/>
 	<classpathentry kind="lib" path="/common/lib/runtime/asm-commons-5.0.2.jar"/>
+	<classpathentry kind="lib" path="/common/lib/runtime/asm-tree-5.0.2.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

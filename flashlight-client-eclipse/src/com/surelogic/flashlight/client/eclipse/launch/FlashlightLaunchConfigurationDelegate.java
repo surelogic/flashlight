@@ -17,14 +17,14 @@ import com.surelogic.common.core.logging.SLEclipseStatusUtility;
 import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
 
 public final class FlashlightLaunchConfigurationDelegate extends
-        JavaLaunchDelegate {
+JavaLaunchDelegate {
     private static final boolean allowJava14 = InstrumentationConstants.allowJava14;
     private static final int MIN_JAVA_VERSION = allowJava14 ? 4 : 5;
 
     /**
      * Returns the VM runner for the given launch mode to use when launching the
      * given configuration.
-     * 
+     *
      * @param configuration
      *            launch configuration
      * @param mode
@@ -66,7 +66,7 @@ public final class FlashlightLaunchConfigurationDelegate extends
         final List noInstrumentUser = config
                 .getAttribute(
                         FlashlightPreferencesUtility.CLASSPATH_ENTRIES_TO_NOT_INSTRUMENT,
-                        Collections.emptyList());
+                        Collections.<String> emptyList());
         final List noInstrumentBoot = config
                 .getAttribute(
                         FlashlightPreferencesUtility.BOOTPATH_ENTRIES_TO_NOT_INSTRUMENT,

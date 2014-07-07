@@ -35,281 +35,281 @@ import com.surelogic.common.ui.SLImages;
 import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
 
 public final class FlashlightMethodsTab extends AbstractLaunchConfigurationTab {
-	private Button useDefaultMethods;
+    private Button useDefaultMethods;
 
-	private ListViewer extraFilesViewer;
-	private Button addButton;
-	private Button removeButton;
-	private java.util.List<String> extraFiles = new ArrayList<String>();
+    private ListViewer extraFilesViewer;
+    private Button addButton;
+    private Button removeButton;
+    private java.util.List<String> extraFiles = new ArrayList<String>();
 
-	@Override
-  public void createControl(final Composite parent) {
-		final Composite comp = new Composite(parent, SWT.NONE);
-		setControl(comp);
+    @Override
+    public void createControl(final Composite parent) {
+        final Composite comp = new Composite(parent, SWT.NONE);
+        setControl(comp);
 
-		final GridLayout layout = new GridLayout();
-		layout.numColumns = 1;
-		comp.setLayout(layout);
+        final GridLayout layout = new GridLayout();
+        layout.numColumns = 1;
+        comp.setLayout(layout);
 
-		useDefaultMethods = new Button(comp, SWT.CHECK);
-		final GridData gridData = new GridData(GridData.FILL_HORIZONTAL);
-		useDefaultMethods.setLayoutData(gridData);
-		useDefaultMethods.setText(I18N
-				.msg("flashlight.launch.methods.useDefaultMethods"));
-		useDefaultMethods.setFont(parent.getFont());
-		useDefaultMethods.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(final SelectionEvent evt) {
-				setDirty(true);
-				updateLaunchConfigurationDialog();
-			}
-		});
+        useDefaultMethods = new Button(comp, SWT.CHECK);
+        final GridData gridData = new GridData(GridData.FILL_HORIZONTAL);
+        useDefaultMethods.setLayoutData(gridData);
+        useDefaultMethods.setText(I18N
+                .msg("flashlight.launch.methods.useDefaultMethods"));
+        useDefaultMethods.setFont(parent.getFont());
+        useDefaultMethods.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(final SelectionEvent evt) {
+                setDirty(true);
+                updateLaunchConfigurationDialog();
+            }
+        });
 
-		createListAndButtons(comp);
-	}
+        createListAndButtons(comp);
+    }
 
-	private void createListAndButtons(final Composite parent) {
-		final Composite mainComposite = new Composite(parent, SWT.NONE);
-		final GridLayout layout = new GridLayout();
-		layout.numColumns = 2;
-		mainComposite.setLayout(layout);
-		final GridData gridData = new GridData(GridData.FILL_BOTH);
-		mainComposite.setLayoutData(gridData);
-		mainComposite.setFont(parent.getFont());
+    private void createListAndButtons(final Composite parent) {
+        final Composite mainComposite = new Composite(parent, SWT.NONE);
+        final GridLayout layout = new GridLayout();
+        layout.numColumns = 2;
+        mainComposite.setLayout(layout);
+        final GridData gridData = new GridData(GridData.FILL_BOTH);
+        mainComposite.setLayoutData(gridData);
+        mainComposite.setFont(parent.getFont());
 
-		createList(mainComposite);
-		createButtons(mainComposite);
-	}
+        createList(mainComposite);
+        createButtons(mainComposite);
+    }
 
-	private void createList(final Composite parent) {
-		final Composite listComposite = new Composite(parent, SWT.NONE);
-		final GridLayout layout = new GridLayout();
-		layout.marginHeight = 0;
-		layout.marginWidth = 0;
-		layout.numColumns = 1;
-		GridData gridData = new GridData(GridData.FILL_BOTH);
-		gridData.heightHint = 150;
-		listComposite.setLayout(layout);
-		listComposite.setLayoutData(gridData);
-		listComposite.setFont(parent.getFont());
+    private void createList(final Composite parent) {
+        final Composite listComposite = new Composite(parent, SWT.NONE);
+        final GridLayout layout = new GridLayout();
+        layout.marginHeight = 0;
+        layout.marginWidth = 0;
+        layout.numColumns = 1;
+        GridData gridData = new GridData(GridData.FILL_BOTH);
+        gridData.heightHint = 150;
+        listComposite.setLayout(layout);
+        listComposite.setLayoutData(gridData);
+        listComposite.setFont(parent.getFont());
 
-		// Create label
-		final Label label = new Label(listComposite, SWT.NONE);
-		label.setFont(parent.getFont());
-		label.setText(I18N.msg("flashlight.launch.methods.files.title"));
+        // Create label
+        final Label label = new Label(listComposite, SWT.NONE);
+        label.setFont(parent.getFont());
+        label.setText(I18N.msg("flashlight.launch.methods.files.title"));
 
-		extraFilesViewer = new ListViewer(listComposite);
-		gridData = new GridData(GridData.FILL_BOTH);
-		extraFilesViewer.getList().setLayoutData(gridData);
+        extraFilesViewer = new ListViewer(listComposite);
+        gridData = new GridData(GridData.FILL_BOTH);
+        extraFilesViewer.getList().setLayoutData(gridData);
 
-		extraFilesViewer.setContentProvider(new IStructuredContentProvider() {
-			@Override
-      public Object[] getElements(Object inputElement) {
-				return ((java.util.List<String>) inputElement).toArray();
-			}
+        extraFilesViewer.setContentProvider(new IStructuredContentProvider() {
+            @Override
+            public Object[] getElements(Object inputElement) {
+                return ((java.util.List<String>) inputElement).toArray();
+            }
 
-			@Override
-      public void dispose() { /* do nothing */
-			}
+            @Override
+            public void dispose() { /* do nothing */
+            }
 
-			@Override
-      public void inputChanged(Viewer viewer, Object oldInput,
-					Object newInput) { /* do nothing */
-			}
-		});
-		extraFilesViewer.setLabelProvider(new ILabelProvider() {
-			@Override
-      public Image getImage(Object element) {
-				return null;
-			}
+            @Override
+            public void inputChanged(Viewer viewer, Object oldInput,
+                    Object newInput) { /* do nothing */
+            }
+        });
+        extraFilesViewer.setLabelProvider(new ILabelProvider() {
+            @Override
+            public Image getImage(Object element) {
+                return null;
+            }
 
-			@Override
-      public String getText(Object element) {
-				return (String) element;
-			}
+            @Override
+            public String getText(Object element) {
+                return (String) element;
+            }
 
-			@Override
-      public void addListener(ILabelProviderListener listener) { /*
-																		 * do
-																		 * nothing
-																		 */
-			}
+            @Override
+            public void addListener(ILabelProviderListener listener) { /*
+                                                                        * do
+                                                                        * nothing
+                                                                        */
+            }
 
-			@Override
-      public void dispose() { /* do nothing */
-			}
+            @Override
+            public void dispose() { /* do nothing */
+            }
 
-			@Override
-      public boolean isLabelProperty(Object element, String property) {
-				return false;
-			}
+            @Override
+            public boolean isLabelProperty(Object element, String property) {
+                return false;
+            }
 
-			@Override
-      public void removeListener(ILabelProviderListener listener) { /*
-																		 * do
-																		 * nothing
-																		 */
-			}
-		});
-		extraFilesViewer
-				.addSelectionChangedListener(new ISelectionChangedListener() {
-					@Override
-          public void selectionChanged(
-							final SelectionChangedEvent event) {
-						removeButton
-								.setEnabled(!event.getSelection().isEmpty());
-					}
-				});
-		extraFilesViewer.setInput(extraFiles);
-	}
+            @Override
+            public void removeListener(ILabelProviderListener listener) { /*
+                                                                           * do
+                                                                           * nothing
+                                                                           */
+            }
+        });
+        extraFilesViewer
+                .addSelectionChangedListener(new ISelectionChangedListener() {
+                    @Override
+                    public void selectionChanged(
+                            final SelectionChangedEvent event) {
+                        removeButton
+                                .setEnabled(!event.getSelection().isEmpty());
+                    }
+                });
+        extraFilesViewer.setInput(extraFiles);
+    }
 
-	private void createButtons(final Composite parent) {
-		final Composite buttonComposite = new Composite(parent, SWT.NONE);
-		final GridLayout buttonLayout = new GridLayout();
-		buttonLayout.marginHeight = 0;
-		buttonLayout.marginWidth = 0;
-		buttonLayout.numColumns = 1;
-		final GridData gdata = new GridData(GridData.VERTICAL_ALIGN_BEGINNING
-				| GridData.HORIZONTAL_ALIGN_END);
-		buttonComposite.setLayout(buttonLayout);
-		buttonComposite.setLayoutData(gdata);
-		buttonComposite.setFont(parent.getFont());
+    private void createButtons(final Composite parent) {
+        final Composite buttonComposite = new Composite(parent, SWT.NONE);
+        final GridLayout buttonLayout = new GridLayout();
+        buttonLayout.marginHeight = 0;
+        buttonLayout.marginWidth = 0;
+        buttonLayout.numColumns = 1;
+        final GridData gdata = new GridData(GridData.VERTICAL_ALIGN_BEGINNING
+                | GridData.HORIZONTAL_ALIGN_END);
+        buttonComposite.setLayout(buttonLayout);
+        buttonComposite.setLayoutData(gdata);
+        buttonComposite.setFont(parent.getFont());
 
-		createVerticalSpacer(buttonComposite, 1);
+        createVerticalSpacer(buttonComposite, 1);
 
-		addButton = createPushButton(buttonComposite,
-				I18N.msg("flashlight.launch.methods.files.add"), null);
-		addButton.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(final SelectionEvent event) {
-				handleAddButtonSelected();
-			}
-		});
+        addButton = createPushButton(buttonComposite,
+                I18N.msg("flashlight.launch.methods.files.add"), null);
+        addButton.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(final SelectionEvent event) {
+                handleAddButtonSelected();
+            }
+        });
 
-		removeButton = createPushButton(buttonComposite,
-				I18N.msg("flashlight.launch.methods.files.remove"), null);
-		removeButton.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent event) {
-				handleRemoveButtonSelected();
-			}
-		});
-		removeButton.setEnabled(false);
-	}
+        removeButton = createPushButton(buttonComposite,
+                I18N.msg("flashlight.launch.methods.files.remove"), null);
+        removeButton.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent event) {
+                handleRemoveButtonSelected();
+            }
+        });
+        removeButton.setEnabled(false);
+    }
 
-	private void handleAddButtonSelected() {
-		final FileDialog fileDialog = new FileDialog(getShell(), SWT.OPEN
-				| SWT.MULTI);
-		fileDialog.setFilterExtensions(new String[] { "*.xml" });
-		fileDialog.setFilterNames(new String[] { "XML Files" });
-		if (fileDialog.open() != null) {
-			final String path = fileDialog.getFilterPath() + File.separator;
-			final String[] files = fileDialog.getFileNames();
-			for (final String file : files) {
-				final String fullFile = path + file;
-				extraFiles.add(fullFile);
-				extraFilesViewer.add(fullFile);
-			}
-			setDirty(true);
-			updateLaunchConfigurationDialog();
-		}
-	}
+    private void handleAddButtonSelected() {
+        final FileDialog fileDialog = new FileDialog(getShell(), SWT.OPEN
+                | SWT.MULTI);
+        fileDialog.setFilterExtensions(new String[] { "*.xml" });
+        fileDialog.setFilterNames(new String[] { "XML Files" });
+        if (fileDialog.open() != null) {
+            final String path = fileDialog.getFilterPath() + File.separator;
+            final String[] files = fileDialog.getFileNames();
+            for (final String file : files) {
+                final String fullFile = path + file;
+                extraFiles.add(fullFile);
+                extraFilesViewer.add(fullFile);
+            }
+            setDirty(true);
+            updateLaunchConfigurationDialog();
+        }
+    }
 
-	private void handleRemoveButtonSelected() {
-		final ISelection selection = extraFilesViewer.getSelection();
-		if (selection instanceof IStructuredSelection) {
-			final IStructuredSelection ss = (IStructuredSelection) selection;
-			extraFiles.removeAll(ss.toList());
-			extraFilesViewer.remove(ss.toArray());
-			setDirty(true);
-			updateLaunchConfigurationDialog();
-		}
-	}
+    private void handleRemoveButtonSelected() {
+        final ISelection selection = extraFilesViewer.getSelection();
+        if (selection instanceof IStructuredSelection) {
+            final IStructuredSelection ss = (IStructuredSelection) selection;
+            extraFiles.removeAll(ss.toList());
+            extraFilesViewer.remove(ss.toArray());
+            setDirty(true);
+            updateLaunchConfigurationDialog();
+        }
+    }
 
-	@Override
-	public String getId() {
-		return "com.surelogic.flashlight.client.eclipse.launch.FlashlightMethodsTab";
-	}
+    @Override
+    public String getId() {
+        return "com.surelogic.flashlight.client.eclipse.launch.FlashlightMethodsTab";
+    }
 
-	@Override
-  public String getName() {
-		return "Methods";
-	}
+    @Override
+    public String getName() {
+        return "Methods";
+    }
 
-	@Override
-	public Image getImage() {
-		return SLImages.getImage(CommonImages.IMG_FL_LOGO);
-	}
+    @Override
+    public Image getImage() {
+        return SLImages.getImage(CommonImages.IMG_FL_LOGO);
+    }
 
-	// Copy from configuration to widgets
-	/**
-	 * Initializes this tab's controls with values from the given launch
-	 * configuration. This method is called when a configuration is selected to
-	 * view or edit, after this tab's control has been created.
-	 * 
-	 * @param configuration
-	 *            launch configuration
-	 */
-	@Override
-  public void initializeFrom(final ILaunchConfiguration config) {
-		boolean useDefault = true;
-		List<String> xtraFiles = Collections.emptyList();
+    // Copy from configuration to widgets
+    /**
+     * Initializes this tab's controls with values from the given launch
+     * configuration. This method is called when a configuration is selected to
+     * view or edit, after this tab's control has been created.
+     * 
+     * @param configuration
+     *            launch configuration
+     */
+    @Override
+    public void initializeFrom(final ILaunchConfiguration config) {
+        boolean useDefault = true;
+        List<String> xtraFiles = Collections.emptyList();
 
-		try {
-			useDefault = config
-					.getAttribute(
-							FlashlightPreferencesUtility.USE_DEFAULT_INDIRECT_ACCESS_METHODS,
-							useDefault);
-		} catch (final CoreException e) {
-			// Eclipse CommonTab is silent here, so are we
-		}
+        try {
+            useDefault = config
+                    .getAttribute(
+                            FlashlightPreferencesUtility.USE_DEFAULT_INDIRECT_ACCESS_METHODS,
+                            useDefault);
+        } catch (final CoreException e) {
+            // Eclipse CommonTab is silent here, so are we
+        }
 
-		try {
-			xtraFiles = config
-					.getAttribute(
-							FlashlightPreferencesUtility.ADDITIONAL_INDIRECT_ACCESS_METHODS,
-							xtraFiles);
-		} catch (final CoreException e) {
-			// Eclipse CommonTab is silent here, so are we
-		}
+        try {
+            xtraFiles = config
+                    .getAttribute(
+                            FlashlightPreferencesUtility.ADDITIONAL_INDIRECT_ACCESS_METHODS,
+                            xtraFiles);
+        } catch (final CoreException e) {
+            // Eclipse CommonTab is silent here, so are we
+        }
 
-		useDefaultMethods.setSelection(useDefault);
-		extraFiles = new ArrayList(xtraFiles);
-		extraFilesViewer.setInput(extraFiles);
-	}
+        useDefaultMethods.setSelection(useDefault);
+        extraFiles = new ArrayList(xtraFiles);
+        extraFilesViewer.setInput(extraFiles);
+    }
 
-	/**
-	 * Copies values from this tab into the given launch configuration.
-	 * 
-	 * @param configuration
-	 *            launch configuration
-	 */
-	@Override
-  public void performApply(final ILaunchConfigurationWorkingCopy config) {
-		config.setAttribute(
-				FlashlightPreferencesUtility.USE_DEFAULT_INDIRECT_ACCESS_METHODS,
-				useDefaultMethods.getSelection());
-		config.setAttribute(
-				FlashlightPreferencesUtility.ADDITIONAL_INDIRECT_ACCESS_METHODS,
-				extraFiles);
-	}
+    /**
+     * Copies values from this tab into the given launch configuration.
+     * 
+     * @param configuration
+     *            launch configuration
+     */
+    @Override
+    public void performApply(final ILaunchConfigurationWorkingCopy config) {
+        config.setAttribute(
+                FlashlightPreferencesUtility.USE_DEFAULT_INDIRECT_ACCESS_METHODS,
+                useDefaultMethods.getSelection());
+        config.setAttribute(
+                FlashlightPreferencesUtility.ADDITIONAL_INDIRECT_ACCESS_METHODS,
+                extraFiles);
+    }
 
-	/**
-	 * Initializes the given launch configuration with default values for this
-	 * tab. This method is called when a new launch configuration is created
-	 * such that the configuration can be initialized with meaningful values.
-	 * This method may be called before this tab's control is created.
-	 * 
-	 * @param configuration
-	 *            launch configuration
-	 */
-	@Override
-  public void setDefaults(final ILaunchConfigurationWorkingCopy config) {
-		config.setAttribute(
-				FlashlightPreferencesUtility.USE_DEFAULT_INDIRECT_ACCESS_METHODS,
-				true);
-		config.setAttribute(
-				FlashlightPreferencesUtility.ADDITIONAL_INDIRECT_ACCESS_METHODS,
-				Collections.emptyList());
-	}
+    /**
+     * Initializes the given launch configuration with default values for this
+     * tab. This method is called when a new launch configuration is created
+     * such that the configuration can be initialized with meaningful values.
+     * This method may be called before this tab's control is created.
+     * 
+     * @param configuration
+     *            launch configuration
+     */
+    @Override
+    public void setDefaults(final ILaunchConfigurationWorkingCopy config) {
+        config.setAttribute(
+                FlashlightPreferencesUtility.USE_DEFAULT_INDIRECT_ACCESS_METHODS,
+                true);
+        config.setAttribute(
+                FlashlightPreferencesUtility.ADDITIONAL_INDIRECT_ACCESS_METHODS,
+                Collections.<String> emptyList());
+    }
 }

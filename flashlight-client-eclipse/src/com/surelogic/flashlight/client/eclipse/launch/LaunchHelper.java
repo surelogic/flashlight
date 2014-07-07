@@ -109,9 +109,9 @@ public final class LaunchHelper {
          * Bug 1615: Sanity check the instrumented classpath entries first:
          * Check that no entry marked for instrumentation is a file system
          * parent of any other entry that is marked for instrumentation.
-         * 
+         *
          * Could be expensive: O(n^2)
-         * 
+         *
          * 2011-03-22: Jar files that are nested inside of directories are added
          * to a special list so that they can be forced to instructed last. This
          * way we make sure the handling of the directories doesn't overwrite
@@ -168,10 +168,10 @@ public final class LaunchHelper {
         }
         try {
             configBuilder
-                    .setIndirectUseDefault(launch
-                            .getAttribute(
-                                    FlashlightPreferencesUtility.USE_DEFAULT_INDIRECT_ACCESS_METHODS,
-                                    true));
+            .setIndirectUseDefault(launch
+                    .getAttribute(
+                            FlashlightPreferencesUtility.USE_DEFAULT_INDIRECT_ACCESS_METHODS,
+                            true));
         } catch (final CoreException e) {
             // eat itI
         }
@@ -179,7 +179,7 @@ public final class LaunchHelper {
             final List<String> xtraMethods = launch
                     .getAttribute(
                             FlashlightPreferencesUtility.ADDITIONAL_INDIRECT_ACCESS_METHODS,
-                            Collections.emptyList());
+                            Collections.<String> emptyList());
             for (final String s : xtraMethods) {
                 configBuilder.addAdditionalMethods(new File(s));
             }
@@ -190,7 +190,7 @@ public final class LaunchHelper {
         try {
             final List<String> blacklist = launch.getAttribute(
                     FlashlightPreferencesUtility.CLASS_BLACKLIST,
-                    Collections.emptyList());
+                    Collections.<String> emptyList());
             for (final String internalTypeName : blacklist) {
                 configBuilder.addToBlacklist(internalTypeName);
             }
@@ -207,7 +207,7 @@ public final class LaunchHelper {
 
             final List<String> filterPkgs = launch.getAttribute(
                     FlashlightPreferencesUtility.FIELD_FILTER_PACKAGES,
-                    Collections.emptyList());
+                    Collections.<String> emptyList());
             configBuilder.getFilterPackages().clear();
             for (final String pkg : filterPkgs) {
                 configBuilder.addToFilterPackages(pkg.replace('.', '/'));

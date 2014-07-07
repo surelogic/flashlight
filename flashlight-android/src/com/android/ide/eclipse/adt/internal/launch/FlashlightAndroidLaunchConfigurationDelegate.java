@@ -110,12 +110,12 @@ import com.surelogic.flashlight.common.model.FlashlightFileUtility;
  * {@link AndroidLaunchConfiguration}. The primary difference is that, after
  * ensuring that the project is fully compiled and packaged, we generate our own
  * package.
- * 
+ *
  * @author nathan
- * 
+ *
  */
 public class FlashlightAndroidLaunchConfigurationDelegate extends
-        LaunchConfigurationDelegate {
+LaunchConfigurationDelegate {
 
     /**
      * Default launch action. This launches the activity that is setup to be
@@ -133,7 +133,7 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
      */
     @SuppressWarnings("restriction")
     public static final String ATTR_ACTIVITY = AdtPlugin.PLUGIN_ID
-            + ".activity"; //$NON-NLS-1$
+    + ".activity"; //$NON-NLS-1$
 
     private final Logger log = SLLogger
             .getLoggerFor(FlashlightAndroidLaunchConfigurationDelegate.class);
@@ -161,10 +161,10 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
                 @Override
                 public IStatus runInUIThread(IProgressMonitor monitor) {
                     MessageDialog
-                            .openInformation(
-                                    EclipseUIUtility.getShell(),
-                                    I18N.msg("flashlight.eclipse.android.launchError.title"),
-                                    I18N.msg("flashlight.eclipse.android.launchError.message"));
+                    .openInformation(
+                            EclipseUIUtility.getShell(),
+                            I18N.msg("flashlight.eclipse.android.launchError.title"),
+                            I18N.msg("flashlight.eclipse.android.launchError.message"));
                     return Status.OK_STATUS;
                 }
             }.schedule();
@@ -173,10 +173,10 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
 
         String runId = project.getName()
                 + new SimpleDateFormat(InstrumentationConstants.DATE_FORMAT)
-                        .format(new Date())
-                + InstrumentationConstants.ANDROID_LAUNCH_SUFFIX;
+        .format(new Date())
+        + InstrumentationConstants.ANDROID_LAUNCH_SUFFIX;
         RunManager.getInstance()
-                .notifyPerformingInstrumentationAndLaunch(runId);
+        .notifyPerformingInstrumentationAndLaunch(runId);
         FLData data = doFullIncrementalDebugBuild(runId, configuration,
                 project, monitor);
 
@@ -228,34 +228,34 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
                 // in case it does.
                 if (connections == -1 || restarts == -1) {
                     AdtPlugin
-                            .printErrorToConsole(
-                                    project,
-                                    "The connection to adb is down, and a severe error has occured.",
-                                    "You must restart adb and Eclipse.",
-                                    String.format(
-                                            "Please ensure that adb is correctly located at '%1$s' and can be executed.",
-                                            AdtPlugin.getOsAbsoluteAdb()));
+                    .printErrorToConsole(
+                            project,
+                            "The connection to adb is down, and a severe error has occured.",
+                            "You must restart adb and Eclipse.",
+                            String.format(
+                                    "Please ensure that adb is correctly located at '%1$s' and can be executed.",
+                                    AdtPlugin.getOsAbsoluteAdb()));
                     return;
                 }
 
                 if (restarts == 0) {
                     AdtPlugin
-                            .printErrorToConsole(
-                                    project,
-                                    "Connection with adb was interrupted.",
-                                    String.format(
-                                            "%1$s attempts have been made to reconnect.",
-                                            connections),
-                                    "You may want to manually restart adb from the Devices view.");
+                    .printErrorToConsole(
+                            project,
+                            "Connection with adb was interrupted.",
+                            String.format(
+                                    "%1$s attempts have been made to reconnect.",
+                                    connections),
+                            "You may want to manually restart adb from the Devices view.");
                 } else {
                     AdtPlugin
-                            .printErrorToConsole(
-                                    project,
-                                    "Connection with adb was interrupted, and attempts to reconnect have failed.",
-                                    String.format(
-                                            "%1$s attempts have been made to restart adb.",
-                                            restarts),
-                                    "You may want to manually restart adb from the Devices view.");
+                    .printErrorToConsole(
+                            project,
+                            "Connection with adb was interrupted, and attempts to reconnect have failed.",
+                            String.format(
+                                    "%1$s attempts have been made to restart adb.",
+                                    restarts),
+                            "You may want to manually restart adb from the Devices view.");
 
                 }
                 return;
@@ -409,8 +409,8 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
             buildToolInfo = Sdk.getCurrent().getLatestBuildTool();
             if (buildToolInfo == null) {
                 AdtPlugin
-                        .printBuildToConsole(BuildVerbosity.VERBOSE, project,
-                                "No \"Build Tools\" package available; use SDK Manager to install one.");
+                .printBuildToConsole(BuildVerbosity.VERBOSE, project,
+                        "No \"Build Tools\" package available; use SDK Manager to install one.");
                 throw new IllegalStateException(
                         "No \"Build Tools\" package available; use SDK Manager to install one.");
             } else {
@@ -481,11 +481,11 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
                 mErrStream,
                 false /* jumbo mode doesn't matter here */,
                 false /*
-                       * dex merger doesn't matter here
-                       */,
-                true /* debugMode */,
-                AdtPrefs.getPrefs().getBuildVerbosity() == BuildVerbosity.VERBOSE,
-                mResourceMarker);
+                 * dex merger doesn't matter here
+                 */,
+                 true /* debugMode */,
+                 AdtPrefs.getPrefs().getBuildVerbosity() == BuildVerbosity.VERBOSE,
+                 mResourceMarker);
 
         IPath androidBinLocation = androidOutputFolder.getLocation();
         String osAndroidBinPath = androidBinLocation.toOSString();
@@ -580,8 +580,8 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
                     msg,
                     String.format(Messages.ApkBuilder_JAVA_HOME_is_s,
                             e.getJavaHome()),
-                    Messages.ApkBuilder_Update_or_Execute_manually_s,
-                    e.getCommandLine());
+                            Messages.ApkBuilder_Update_or_Execute_manually_s,
+                            e.getCommandLine());
 
             return null;
         } catch (ApkCreationException e) {
@@ -622,8 +622,8 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
             String msg2 = String.format(Messages.Final_Archive_Error_s, msg1);
             AdtPlugin.printErrorToConsole(project, msg2);
             BaseProjectHelper
-                    .markResource(project, AdtConstants.MARKER_PACKAGING, msg2,
-                            IMarker.SEVERITY_ERROR);
+            .markResource(project, AdtConstants.MARKER_PACKAGING, msg2,
+                    IMarker.SEVERITY_ERROR);
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
@@ -661,7 +661,7 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
 
         FLData(String runId, final ILaunchConfiguration launch,
                 final IProject project, final Collection<String> dxInputPaths)
-                throws IOException, CoreException {
+                        throws IOException, CoreException {
             this.runId = runId;
             runDir = new File(EclipseUtility.getFlashlightDataDirectory(),
                     runId);
@@ -793,11 +793,11 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
         final List<String> noInstrumentUser = launchConfig
                 .getAttribute(
                         FlashlightPreferencesUtility.CLASSPATH_ENTRIES_TO_NOT_INSTRUMENT,
-                        Collections.emptyList());
+                        Collections.<String> emptyList());
         final List<String> noInstrumentBoot = launchConfig
                 .getAttribute(
                         FlashlightPreferencesUtility.BOOTPATH_ENTRIES_TO_NOT_INSTRUMENT,
-                        Collections.emptyList());
+                        Collections.<String> emptyList());
 
         FLData data = new FLData(runId, launchConfig, project, dxInputPaths);
         PrintWriter logWriter = new PrintWriter(data.log);
@@ -805,7 +805,7 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
             RewriteManager rm = new AndroidRewriteManager(
                     configBuilder.getConfiguration(), new PrintWriterMessenger(
                             logWriter), data.fieldsFile, data.sitesFile,
-                    data.classesFile, data.hbFile);
+                            data.classesFile, data.hbFile);
             String runtimePath = getRuntimeJarPath();
             List<String> instrumentLast = LaunchHelper
                     .sanitizeInstrumentationList(data.originalClasspaths);
@@ -903,7 +903,7 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
 
     /**
      * {@inheritDoc}
-     * 
+     *
      * @throws CoreException
      */
     @SuppressWarnings("restriction")
@@ -916,7 +916,7 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
     @Override
     public boolean buildForLaunch(final ILaunchConfiguration configuration,
             final String mode, final IProgressMonitor monitor)
-            throws CoreException {
+                    throws CoreException {
         // if this returns true, this forces a full workspace rebuild which is
         // not
         // what we want.
@@ -948,15 +948,15 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
                 // and we can't launch the app. We'll revert to a sync-only
                 // launch
                 AdtPlugin
-                        .printErrorToConsole(project,
-                                "The Manifest defines no activity!",
-                                "The launch will only sync the application package on the device!");
+                .printErrorToConsole(project,
+                        "The Manifest defines no activity!",
+                        "The launch will only sync the application package on the device!");
                 config.mLaunchAction = ACTION_DO_NOTHING;
             } else if (activityName == null) {
                 // if the activity we got is null, we look for the default one.
                 AdtPlugin
-                        .printErrorToConsole(project,
-                                "No activity specified! Getting the launcher activity.");
+                .printErrorToConsole(project,
+                        "No activity specified! Getting the launcher activity.");
                 Activity launcherActivity = manifestData.getLauncherActivity();
                 if (launcherActivity != null) {
                     activityName = launcherActivity.getName();
@@ -966,9 +966,9 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
                 // launch.
                 if (activityName == null) {
                     AdtPlugin
-                            .printErrorToConsole(project,
-                                    "No Launcher activity found!",
-                                    "The launch will only sync the application package on the device!");
+                    .printErrorToConsole(project,
+                            "No Launcher activity found!",
+                            "The launch will only sync the application package on the device!");
                     config.mLaunchAction = ACTION_DO_NOTHING;
                 }
             } else {
@@ -986,8 +986,8 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
                 // if any.
                 if (match == false) {
                     AdtPlugin
-                            .printErrorToConsole(project,
-                                    "The specified activity does not exist! Getting the launcher activity.");
+                    .printErrorToConsole(project,
+                            "The specified activity does not exist! Getting the launcher activity.");
                     Activity launcherActivity = manifestData
                             .getLauncherActivity();
                     if (launcherActivity != null) {
@@ -996,9 +996,9 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
                         // if there's no default activity. We revert to a
                         // sync-only launch.
                         AdtPlugin
-                                .printErrorToConsole(project,
-                                        "No Launcher activity found!",
-                                        "The launch will only sync the application package on the device!");
+                        .printErrorToConsole(project,
+                                "No Launcher activity found!",
+                                "The launch will only sync the application package on the device!");
                         config.mLaunchAction = ACTION_DO_NOTHING;
                     }
                 }
@@ -1012,9 +1012,9 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
             // if there's no default activity. We revert to a sync-only launch.
             if (activityName == null) {
                 AdtPlugin
-                        .printErrorToConsole(project,
-                                "No Launcher activity found!",
-                                "The launch will only sync the application package on the device!");
+                .printErrorToConsole(project,
+                        "No Launcher activity found!",
+                        "The launch will only sync the application package on the device!");
                 config.mLaunchAction = ACTION_DO_NOTHING;
             }
         }
@@ -1066,11 +1066,11 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
                         EclipseUtility.toEclipseJob(
                                 new WatchFlashlightMonitorJob(
                                         new MonitorStatus(data.runId)))
-                                .schedule();
+                                        .schedule();
                         EclipseUtility.toEclipseJob(
                                 new ReadFlashlightStreamJob(data.runId,
                                         data.runDir, data.outputPort, id))
-                                .schedule();
+                                        .schedule();
                         // FIXME ReadLogcatJob doesn't work right now
                         // EclipseUtility.toEclipseJob(
                         // new ReadLogcatJob(data.runId, id)).schedule();
@@ -1082,7 +1082,7 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
             }
             if (timeout > 1) {
                 new ConnectToProjectJob(data, pakkage, timeout - 1)
-                        .schedule(1000);
+                .schedule(1000);
                 return Status.OK_STATUS;
             } else {
                 return SLEclipseStatusUtility.createInfoStatus(String.format(
@@ -1094,7 +1094,7 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
 
     /**
      * Checks the project is an android project.
-     * 
+     *
      * @param project
      *            The project to check
      * @return true if the project is an android SDK.

@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Flashlight Support for Using Dex2Jar
 Bundle-SymbolicName: com.surelogic.flashlight.dex2jar;singleton:=true
-Bundle-Version: 5.4.0.qualifier
+Bundle-Version: 5.5.0.qualifier
 Bundle-Activator: com.surelogic.flashlight.android.dex2jar.Activator
 Require-Bundle: org.eclipse.ui,
  org.eclipse.core.runtime

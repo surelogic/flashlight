@@ -276,7 +276,7 @@ final class FlashlightClassRewriter extends ClassVisitor {
 	}
 
 	@Override
-	public MethodVisitor visitMethod(final int access, final String name,
+	public MethodVisitor visitMethod(final int originalAccess, final String name,
 			final String desc, final String signature, final String[] exceptions) {
 		addFlashlightAttribute();
 		
@@ -292,13 +292,13 @@ final class FlashlightClassRewriter extends ClassVisitor {
 
 		final MethodIdentifier methodId = new MethodIdentifier(name, desc);
 		if (methodsToIgnore.contains(methodId)) {
-			return cv.visitMethod(access, name, desc, signature, exceptions);
+			return cv.visitMethod(originalAccess, name, desc, signature, exceptions);
 		} else {
 			final int newAccess;
 			if (config.rewriteSynchronizedMethod) {
-				newAccess = access & ~Opcodes.ACC_SYNCHRONIZED;
+				newAccess = originalAccess & ~Opcodes.ACC_SYNCHRONIZED;
 			} else {
-				newAccess = access;
+				newAccess = originalAccess;
 			}
 			final MethodVisitor originalMV = cv.visitMethod(newAccess, name,
 					desc, signature, exceptions);
@@ -323,7 +323,7 @@ final class FlashlightClassRewriter extends ClassVisitor {
 		          : numLocalsInteger.intValue();
 		      accept(FlashlightMethodRewriter.create(
 		          this.instructions,
-		          access, name, desc, numLocals, cse, config,
+		          originalAccess, name, desc, numLocals, cse, config,
 		          callSiteIdFactory, messenger, classModel, happensBefore,
 		          accessMethods, isInterface, mustImplementIIdObject,
 		          sourceFileName, classNameInternal,

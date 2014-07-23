@@ -14,43 +14,51 @@ import com.surelogic.common.core.EclipseUtility;
 import com.surelogic.common.ui.EclipseUIUtility;
 import com.surelogic.common.ui.dialogs.InstallTutorialProjectsDialog;
 
-public class ImportTutorialProjectAction implements IWorkbenchWindowActionDelegate {
+public class ImportTutorialProjectAction implements
+IWorkbenchWindowActionDelegate {
 
-  @Override
-  public void dispose() {
-    // Do nothing
-  }
-
-  @Override
-  public void init(final IWorkbenchWindow window) {
-    // Do nothing
-  }
-
-  @Override
-  public void run(final IAction action) {
-    ClassLoader l = Thread.currentThread().getContextClassLoader();
-    List<URL> tutorials = new ArrayList<URL>();
-
-    /*
-     * Basic Flashlight tutorial projects.
-     */
-    tutorials.add(l.getResource("/lib/FlashlightTutorial_PlanetBaron.zip"));
-    tutorials.add(l.getResource("/lib/FlashlightTutorial_DiningPhilosophers.zip"));
-
-    /*
-     * Only show the Android tutorial if the Flashlight Android plug-in is
-     * installed.
-     */
-    if (EclipseUtility.isFlashlightAndroidInstalled()) {
-      tutorials.add(l.getResource("/lib/FlashlightTutorial_CounterRace.zip"));
+    @Override
+    public void dispose() {
+        // Do nothing
     }
 
-    InstallTutorialProjectsDialog.open(EclipseUIUtility.getShell(), CommonImages.IMG_FL_LOGO,
-        "/com.surelogic.flashlight.client.help/ch01s03.html", tutorials);
-  }
+    @Override
+    public void init(final IWorkbenchWindow window) {
+        // Do nothing
+    }
 
-  @Override
-  public void selectionChanged(final IAction action, final ISelection selection) {
-    // Do nothing
-  }
+    @Override
+    public void run(final IAction action) {
+        ClassLoader l = Thread.currentThread().getContextClassLoader();
+        List<URL> tutorials = new ArrayList<URL>();
+
+        /*
+         * Basic Flashlight tutorial projects.
+         */
+        tutorials.add(l.getResource("/lib/FlashlightTutorial_PlanetBaron.zip"));
+        tutorials.add(l
+                .getResource("/lib/FlashlightTutorial_DiningPhilosophers.zip"));
+        tutorials
+        .add(l.getResource("/lib/FlashlightTutorial_DiningPhilosophersJava8.zip"));
+
+        /*
+         * Only show the Android tutorial if the Flashlight Android plug-in is
+         * installed.
+         */
+        if (EclipseUtility.isFlashlightAndroidInstalled()) {
+            tutorials.add(l
+                    .getResource("/lib/FlashlightTutorial_CounterRace.zip"));
+        }
+
+        InstallTutorialProjectsDialog
+        .open(EclipseUIUtility.getShell(), CommonImages.IMG_FL_LOGO,
+                "/com.surelogic.flashlight.client.help/ch01s03.html",
+                tutorials);
+    }
+
+    @Override
+    public void selectionChanged(final IAction action,
+            final ISelection selection) {
+        // Do nothing
+    }
 }

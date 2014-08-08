@@ -104,20 +104,6 @@
 		</jar>
 	</target>
 
-	<target name="translate-runtime-jar">
-		<java jar="lib/build/retrotranslator-transformer-1.2.9.jar" fork="true" failonerror="true" maxmemory="128m">
-			<arg value="-srcjar" />
-			<arg value="${flashlight-runtime.jar}" />
-			<arg value="-destjar" />
-			<arg value="${flashlight-runtime-4.jar}" />
-			<arg value="-embed" />
-			<arg value="com.surelogic.internal" />
-			<arg value="-verify" />
-			<arg value="-classpath" />
-			<arg value="${java1.4.lib}/rt.jar${path.separator}lib/build/retrotranslator-runtime-1.2.9.jar${path.separator}lib/build/backport-util-concurrent-3.1.jar" />
-		</java>
-	</target>
-
 	<target name="build-rewriter-jar">
 		<jar destfile="${flashlight-rewriter.jar}" basedir="${classes}">
 			<include name="**/resources/**" />
@@ -131,9 +117,9 @@
 		</jar>
 	</target>
 
-	<target name="build-jars-eclipse" depends="build-all-jar, build-runtime-jar,  build-rewriter-jar, translate-runtime-jar, strip-conf, copy-to-client" />
+	<target name="build-jars-eclipse" depends="build-all-jar, build-runtime-jar,  build-rewriter-jar, strip-conf, copy-to-client" />
 
-	<target name="build-jars" depends="compile, build-all-jar, build-runtime-jar,  build-rewriter-jar, translate-runtime-jar, strip-conf, copy-to-client" />
+	<target name="build-jars" depends="compile, build-all-jar, build-runtime-jar,  build-rewriter-jar, strip-conf, copy-to-client" />
 
 	<target name="strip-conf">
 		<jar destfile="${flashlight-all-final.jar}">
@@ -152,19 +138,10 @@
 			</zipfileset>
 		</jar>
 		<delete file="${flashlight-runtime.jar}"/>
-		<jar destfile="${flashlight-runtime-4-final.jar}">
-    		<zipfileset src="${flashlight-runtime-4.jar}" >
-    	  		<exclude name="com/surelogic/_flashlight/InstrumentationConf.class"/>
-    			<exclude name="com/surelogic/_flashlight/SitesConf.class"/>
-    			<exclude name="com/surelogic/_flashlight/FieldsConf.class"/>
-    		</zipfileset>
-		</jar>
-		<delete file="${flashlight-runtime-4.jar}"/>
 	</target>		
 
 	<target name="copy-to-client">
 		<copy file="${flashlight-runtime-final.jar}" todir="${basedir}/../flashlight-client-eclipse/lib" />
-		<copy file="${flashlight-runtime-4-final.jar}" todir="${basedir}/../flashlight-client-eclipse/lib" />
 		<copy file="${flashlight-rewriter.jar}" todir="${basedir}/../flashlight-client-eclipse/lib" />
 	</target>
 		

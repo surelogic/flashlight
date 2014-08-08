@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.resources.IProject;
@@ -59,7 +58,7 @@ import com.surelogic.common.ui.dialogs.TypeSelectionDialog;
 import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
 
 public final class FlashlightInstrumentationTab extends
-        AbstractLaunchConfigurationTab {
+AbstractLaunchConfigurationTab {
     private static final IStructuredContentProvider CLASSPATH_ITEMS_CONTENT_PROVIDER = new ClasspathItemsContentProvider();
     private static final ITableLabelProvider CLASSPATH_ITEMS_LABEL_PROVIDER = new ClasspathItemsLabelProvider();
 
@@ -180,7 +179,7 @@ public final class FlashlightInstrumentationTab extends
         blacklistViewer.setContentProvider(new IStructuredContentProvider() {
             @Override
             public Object[] getElements(Object inputElement) {
-                return ((java.util.List<String>) inputElement).toArray();
+                return ((java.util.List<?>) inputElement).toArray();
             }
 
             @Override
@@ -224,14 +223,14 @@ public final class FlashlightInstrumentationTab extends
             }
         });
         blacklistViewer
-                .addSelectionChangedListener(new ISelectionChangedListener() {
-                    @Override
-                    public void selectionChanged(
-                            final SelectionChangedEvent event) {
-                        removeButton
-                                .setEnabled(!event.getSelection().isEmpty());
-                    }
-                });
+        .addSelectionChangedListener(new ISelectionChangedListener() {
+            @Override
+            public void selectionChanged(
+                    final SelectionChangedEvent event) {
+                removeButton
+                .setEnabled(!event.getSelection().isEmpty());
+            }
+        });
         blacklistViewer.setInput(blacklist);
     }
 
@@ -325,10 +324,10 @@ public final class FlashlightInstrumentationTab extends
     }
 
     private static final class ClasspathItemsContentProvider implements
-            IStructuredContentProvider {
+    IStructuredContentProvider {
         @Override
         public Object[] getElements(final Object inputElement) {
-            return ((java.util.List) inputElement).toArray();
+            return ((java.util.List<?>) inputElement).toArray();
         }
 
         @Override
@@ -344,7 +343,7 @@ public final class FlashlightInstrumentationTab extends
     }
 
     private static final class ClasspathItemsLabelProvider implements
-            ITableLabelProvider {
+    ITableLabelProvider {
         private static final Image IMG_FOLDER = PlatformUI.getWorkbench()
                 .getSharedImages().getImage(ISharedImages.IMG_OBJ_FOLDER);
         private static final Image IMG_JAR = SLImages
@@ -440,10 +439,10 @@ public final class FlashlightInstrumentationTab extends
             bootpathMap.put(entry.getLocation(), entry);
         }
 
-        java.util.List configUserEntries = Collections.emptyList();
-        java.util.List configBootpathEntries = LaunchUtils
+        java.util.List<String> configUserEntries = Collections.emptyList();
+        java.util.List<String> configBootpathEntries = LaunchUtils
                 .convertToLocations(boot);
-        java.util.List classes = Collections.emptyList();
+        java.util.List<String> classes = Collections.emptyList();
 
         try {
             configUserEntries = config
@@ -520,7 +519,7 @@ public final class FlashlightInstrumentationTab extends
                 FlashlightPreferencesUtility.BOOTPATH_ENTRIES_TO_NOT_INSTRUMENT,
                 LaunchUtils.convertToLocations(boot));
 
-        final java.util.List blacklistInternalNames = new ArrayList(
+        final java.util.List<String> blacklistInternalNames = new ArrayList<String>(
                 blacklist.size());
         for (final String fqClassName : blacklist) {
             blacklistInternalNames.add(ClassNameUtil
@@ -552,10 +551,11 @@ public final class FlashlightInstrumentationTab extends
         LaunchUtils.divideClasspath(entries, user, boot, system);
         config.setAttribute(
                 FlashlightPreferencesUtility.CLASSPATH_ENTRIES_TO_NOT_INSTRUMENT,
-                Collections.<String>emptyList());
+                Collections.<String> emptyList());
         config.setAttribute(
                 FlashlightPreferencesUtility.BOOTPATH_ENTRIES_TO_NOT_INSTRUMENT,
                 LaunchUtils.convertToLocations(boot));
-        config.setAttribute(FlashlightPreferencesUtility.CLASS_BLACKLIST, Collections.<String>emptyList());
+        config.setAttribute(FlashlightPreferencesUtility.CLASS_BLACKLIST,
+                Collections.<String> emptyList());
     }
 }

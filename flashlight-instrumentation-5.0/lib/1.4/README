@@ -1,5 +1,0 @@
-This rt.jar is taken from the linux 1.4.2 JDK, and is used by the ant
-build script to build the instrumentations jars for use in a Java 1.4
-runtime environment.  It's purpose is simply to check that we only use
-Java 1.4 compatible code during the build step, and is not used at
-runtime.

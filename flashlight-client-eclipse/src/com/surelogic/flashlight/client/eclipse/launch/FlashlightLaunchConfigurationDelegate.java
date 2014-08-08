@@ -63,11 +63,11 @@ JavaLaunchDelegate {
         LaunchUtils.divideClasspathAsLocations(classpath, user, boot, system);
 
         /* Get the entries that the user does not want instrumented */
-        final List noInstrumentUser = config
+        final List<String> noInstrumentUser = config
                 .getAttribute(
                         FlashlightPreferencesUtility.CLASSPATH_ENTRIES_TO_NOT_INSTRUMENT,
                         Collections.<String> emptyList());
-        final List noInstrumentBoot = config
+        final List<String> noInstrumentBoot = config
                 .getAttribute(
                         FlashlightPreferencesUtility.BOOTPATH_ENTRIES_TO_NOT_INSTRUMENT,
                         boot);
@@ -78,21 +78,9 @@ JavaLaunchDelegate {
         instrumentUser.removeAll(noInstrumentUser);
         instrumentBoot.removeAll(noInstrumentBoot);
 
-        final int version = getMajorJavaVersion(vm);
-
         return new FlashlightVMRunner(runner, mainType,
                 LaunchUtils.convertToLocations(classpath), instrumentUser,
-                instrumentBoot, version == 4);
-    }
-
-    static int getMajorJavaVersion(final IVMInstall vm) {
-        if (vm instanceof IVMInstall2) {
-            final IVMInstall2 vm2 = (IVMInstall2) vm;
-            final String javaVersion = vm2.getJavaVersion();
-            final int majorRel = Integer.parseInt(javaVersion.substring(2, 3));
-            return majorRel;
-        }
-        return 0;
+                instrumentBoot);
     }
 
     static IVMRunner checkRequirements(final IVMInstall vm)

@@ -124,8 +124,7 @@ public final class FlashlightVMRunner implements IVMRunner {
 
     public FlashlightVMRunner(final IVMRunner other, final String mainType,
             final List<String> classpath, final List<String> iUser,
-            final List<String> iBoot, final boolean java14)
-            throws CoreException {
+            final List<String> iBoot) throws CoreException {
         delegateRunner = other;
         this.classpath = classpath;
         instrumentUser = iUser;
@@ -134,12 +133,7 @@ public final class FlashlightVMRunner implements IVMRunner {
         // Get the path to the flashlight-runtime.jar
         final IPath bundleBase = Activator.getDefault().getBundleLocation();
         if (bundleBase != null) {
-            final String name;
-            if (java14) {
-                name = "lib/flashlight-runtime.java1.4.jar";
-            } else {
-                name = "lib/flashlight-runtime.jar";
-            }
+            final String name = "lib/flashlight-runtime.jar";
             final IPath jarLocation = bundleBase.append(name);
             pathToFlashlightLib = jarLocation.toOSString();
         } else {
@@ -182,12 +176,12 @@ public final class FlashlightVMRunner implements IVMRunner {
     @Override
     public void run(final VMRunnerConfiguration configuration,
             final ILaunch launch, final IProgressMonitor monitor)
-            throws CoreException {
+                    throws CoreException {
         if (!SLLicenseUtility.validate(SLLicenseProduct.FLASHLIGHT)) {
             return;
         }
         RunManager.getInstance()
-                .notifyPerformingInstrumentationAndLaunch(runId);
+        .notifyPerformingInstrumentationAndLaunch(runId);
         /*
          * Build the set of projects used by the application being run, and
          * build the map of original to instrumented names.
@@ -260,9 +254,9 @@ public final class FlashlightVMRunner implements IVMRunner {
             if (mainTypeName.equals(run.getDescription().getName())) {
                 if (latest == null
                         || run.getDescription()
-                                .getStartTimeOfRun()
-                                .after(latest.getDescription()
-                                        .getStartTimeOfRun())) {
+                        .getStartTimeOfRun()
+                        .after(latest.getDescription()
+                                .getStartTimeOfRun())) {
                     latest = run;
                 }
             }
@@ -272,14 +266,14 @@ public final class FlashlightVMRunner implements IVMRunner {
 
     /**
      * Instrument the classfiles.
-     * 
+     *
      * @param progress
      * @return Whether instrumentation was canceled.
      * @throws CoreException
      */
     private boolean instrumentClassfiles(final ILaunchConfiguration launch,
             final Map<String, Entry> entryMap, final SubMonitor progress)
-            throws CoreException {
+                    throws CoreException {
         boolean aborted = false;
         final List<String> allInstrument = new LinkedList<String>();
         allInstrument.addAll(instrumentUser);
@@ -312,7 +306,7 @@ public final class FlashlightVMRunner implements IVMRunner {
                         w.println("Did not instrument class "
                                 + ClassNameUtil.internal2FullyQualified(entry
                                         .getKey())
-                                + " because it appears on the classpath more than once, and is inconsistently marked for instrumentation.");
+                                        + " because it appears on the classpath more than once, and is inconsistently marked for instrumentation.");
                         for (final Map.Entry<String, Boolean> entry2 : entry
                                 .getValue().entrySet()) {
                             if (entry2.getValue().booleanValue()) {
@@ -739,7 +733,7 @@ public final class FlashlightVMRunner implements IVMRunner {
 
     private static final class CanceledException extends RuntimeException {
         /**
-         * 
+         *
          */
         private static final long serialVersionUID = -3234551631280412888L;
 
@@ -887,9 +881,9 @@ public final class FlashlightVMRunner implements IVMRunner {
             if (!foundProject) {
                 final String correctedEntry = fixLeadingDriveLetter(entry);
                 final File newLocation =
-                // new File(externalOutputDir, isJar ? correctedEntry :
-                // (correctedEntry + ".jar"));
-                new File(externalOutputDir, correctedEntry);
+                        // new File(externalOutputDir, isJar ? correctedEntry :
+                        // (correctedEntry + ".jar"));
+                        new File(externalOutputDir, correctedEntry);
                 classpathEntryMap.put(entry,
                         new Entry(newLocation.getAbsolutePath(), isJar));
             }

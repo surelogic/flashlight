@@ -105,7 +105,7 @@ public final class FlashlightMethodsTab extends AbstractLaunchConfigurationTab {
         extraFilesViewer.setContentProvider(new IStructuredContentProvider() {
             @Override
             public Object[] getElements(Object inputElement) {
-                return ((java.util.List<String>) inputElement).toArray();
+                return ((java.util.List<?>) inputElement).toArray();
             }
 
             @Override
@@ -130,9 +130,9 @@ public final class FlashlightMethodsTab extends AbstractLaunchConfigurationTab {
 
             @Override
             public void addListener(ILabelProviderListener listener) { /*
-                                                                        * do
-                                                                        * nothing
-                                                                        */
+             * do
+             * nothing
+             */
             }
 
             @Override
@@ -146,20 +146,20 @@ public final class FlashlightMethodsTab extends AbstractLaunchConfigurationTab {
 
             @Override
             public void removeListener(ILabelProviderListener listener) { /*
-                                                                           * do
-                                                                           * nothing
-                                                                           */
+             * do
+             * nothing
+             */
             }
         });
         extraFilesViewer
-                .addSelectionChangedListener(new ISelectionChangedListener() {
-                    @Override
-                    public void selectionChanged(
-                            final SelectionChangedEvent event) {
-                        removeButton
-                                .setEnabled(!event.getSelection().isEmpty());
-                    }
-                });
+        .addSelectionChangedListener(new ISelectionChangedListener() {
+            @Override
+            public void selectionChanged(
+                    final SelectionChangedEvent event) {
+                removeButton
+                .setEnabled(!event.getSelection().isEmpty());
+            }
+        });
         extraFilesViewer.setInput(extraFiles);
     }
 
@@ -246,7 +246,7 @@ public final class FlashlightMethodsTab extends AbstractLaunchConfigurationTab {
      * Initializes this tab's controls with values from the given launch
      * configuration. This method is called when a configuration is selected to
      * view or edit, after this tab's control has been created.
-     * 
+     *
      * @param configuration
      *            launch configuration
      */
@@ -274,13 +274,13 @@ public final class FlashlightMethodsTab extends AbstractLaunchConfigurationTab {
         }
 
         useDefaultMethods.setSelection(useDefault);
-        extraFiles = new ArrayList(xtraFiles);
+        extraFiles = new ArrayList<String>(xtraFiles);
         extraFilesViewer.setInput(extraFiles);
     }
 
     /**
      * Copies values from this tab into the given launch configuration.
-     * 
+     *
      * @param configuration
      *            launch configuration
      */
@@ -299,7 +299,7 @@ public final class FlashlightMethodsTab extends AbstractLaunchConfigurationTab {
      * tab. This method is called when a new launch configuration is created
      * such that the configuration can be initialized with meaningful values.
      * This method may be called before this tab's control is created.
-     * 
+     *
      * @param configuration
      *            launch configuration
      */

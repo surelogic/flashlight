@@ -138,8 +138,8 @@ public final class FlashlightFieldsTab extends AbstractLaunchConfigurationTab {
         noFilteringButton.addSelectionListener(new ViewerEnablementAction(
                 false, FieldFilter.NONE));
         declarationFilteringButton
-                .addSelectionListener(new ViewerEnablementAction(true,
-                        FieldFilter.DECLARATION));
+        .addSelectionListener(new ViewerEnablementAction(true,
+                FieldFilter.DECLARATION));
         useFilteringButton.addSelectionListener(new ViewerEnablementAction(
                 true, FieldFilter.USE));
 
@@ -194,10 +194,10 @@ public final class FlashlightFieldsTab extends AbstractLaunchConfigurationTab {
     }
 
     private static final class PackagesContentProvider implements
-            IStructuredContentProvider {
+    IStructuredContentProvider {
         @Override
         public Object[] getElements(final Object inputElement) {
-            return ((java.util.List) inputElement).toArray();
+            return ((java.util.List<?>) inputElement).toArray();
         }
 
         @Override
@@ -213,7 +213,7 @@ public final class FlashlightFieldsTab extends AbstractLaunchConfigurationTab {
     }
 
     private static final class PackagesLabelProvider implements
-            ITableLabelProvider {
+    ITableLabelProvider {
 
         @Override
         public Image getColumnImage(final Object element, final int columnIndex) {
@@ -267,7 +267,7 @@ public final class FlashlightFieldsTab extends AbstractLaunchConfigurationTab {
      * Initializes this tab's controls with values from the given launch
      * configuration. This method is called when a configuration is selected to
      * view or edit, after this tab's control has been created.
-     * 
+     *
      * @param configuration
      *            launch configuration
      */
@@ -283,7 +283,7 @@ public final class FlashlightFieldsTab extends AbstractLaunchConfigurationTab {
         fieldFilter = Enum.valueOf(FieldFilter.class, filter);
         noFilteringButton.setSelection(fieldFilter == FieldFilter.NONE);
         declarationFilteringButton
-                .setSelection(fieldFilter == FieldFilter.DECLARATION);
+        .setSelection(fieldFilter == FieldFilter.DECLARATION);
         useFilteringButton.setSelection(fieldFilter == FieldFilter.USE);
         listGroup.setVisible(fieldFilter != FieldFilter.NONE);
 
@@ -300,8 +300,8 @@ public final class FlashlightFieldsTab extends AbstractLaunchConfigurationTab {
         LaunchUtils.divideClasspathAsLocations(classpath, user, boot, system);
 
         /* Get the entries that the user does not want instrumented */
-        List noInstrumentUser = Collections.emptyList();
-        List noInstrumentBoot = boot;
+        List<String> noInstrumentUser = Collections.emptyList();
+        List<String> noInstrumentBoot = boot;
         try {
             noInstrumentUser = config
                     .getAttribute(
@@ -315,7 +315,8 @@ public final class FlashlightFieldsTab extends AbstractLaunchConfigurationTab {
             // ignore
         }
 
-        final List<String> instrumentedClasspathEntries = new ArrayList(user);
+        final List<String> instrumentedClasspathEntries = new ArrayList<String>(
+                user);
         instrumentedClasspathEntries.addAll(boot);
         instrumentedClasspathEntries.removeAll(noInstrumentUser);
         instrumentedClasspathEntries.removeAll(noInstrumentBoot);
@@ -375,9 +376,9 @@ public final class FlashlightFieldsTab extends AbstractLaunchConfigurationTab {
         JarFile jarFile = null;
         try {
             jarFile = new JarFile(jar);
-            final Enumeration jarEnum = jarFile.entries();
+            final Enumeration<JarEntry> jarEnum = jarFile.entries();
             while (jarEnum.hasMoreElements()) {
-                final JarEntry jarEntry = (JarEntry) jarEnum.nextElement();
+                final JarEntry jarEntry = jarEnum.nextElement();
                 if (jarEntry.isDirectory()) {
                     final String entryName = jarEntry.getName();
                     final String pkgName = entryName.substring(0,

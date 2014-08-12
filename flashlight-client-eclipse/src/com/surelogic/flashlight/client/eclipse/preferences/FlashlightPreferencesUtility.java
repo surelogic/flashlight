@@ -52,7 +52,7 @@ public final class FlashlightPreferencesUtility {
             EclipseUtility.setDefaultBooleanPreference(USE_SPY, true);
             EclipseUtility.setDefaultIntPreference(CONSOLE_PORT,
                     FL_CONSOLE_PORT_DEFAULT);
-            EclipseUtility.setDefaultIntPreference(MAX_ROWS_PER_QUERY, 5000);
+            EclipseUtility.setDefaultIntPreference(MAX_ROWS_PER_QUERY, 1000);
             EclipseUtility.setDefaultBooleanPreference(
                     AUTO_INCREASE_HEAP_AT_LAUNCH, true);
             EclipseUtility.setDefaultBooleanPreference(USE_REFINERY, true);

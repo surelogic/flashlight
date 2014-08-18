@@ -5,6 +5,7 @@ import static com.surelogic._flashlight.common.AttributeType.ID;
 import static com.surelogic._flashlight.common.AttributeType.IN_CLASS;
 import static com.surelogic._flashlight.common.AttributeType.LINE;
 import static com.surelogic._flashlight.common.AttributeType.LOCATION;
+import static com.surelogic._flashlight.common.AttributeType.LOCATIONDESC;
 import static com.surelogic._flashlight.common.AttributeType.LOCATIONMOD;
 import static com.surelogic._flashlight.common.AttributeType.METHODCALLDESC;
 import static com.surelogic._flashlight.common.AttributeType.METHODCALLMOD;
@@ -49,6 +50,7 @@ public final class StaticCallLocation extends AbstractPrep {
         f_ps.setLong(idx++, attributes.getLong(IN_CLASS));
         f_ps.setString(idx++, attributes.getString(FILE));
         f_ps.setString(idx++, loc);
+        f_ps.setString(idx++, attributes.getString(LOCATIONDESC));
         f_ps.setString(idx++,
                 getMethodCode(loc, attributes.getInt(LOCATIONMOD)));
         f_ps.setString(idx++, attributes.getString(METHODCALLOWNER));
@@ -106,9 +108,9 @@ public final class StaticCallLocation extends AbstractPrep {
     @Override
     public void setup(final Connection c, final Timestamp start,
             final long startNS, final ScanRawFilePreScan scanResults)
-            throws SQLException {
+                    throws SQLException {
         super.setup(c, start, startNS, scanResults);
-        f_ps = c.prepareStatement("INSERT INTO SITE (Id,AtLine,InClass,InFile,Location,LocationCode,MethodClass,MethodCall,MethodSpec,MethodCode) VALUES (?,?,?,?,?,?,?,?,?,?)");
+        f_ps = c.prepareStatement("INSERT INTO SITE (Id,AtLine,InClass,InFile,Location,LocationSpec,LocationCode,MethodClass,MethodCall,MethodSpec,MethodCode) VALUES (?,?,?,?,?,?,?,?,?,?,?)");
     }
 
     @Override

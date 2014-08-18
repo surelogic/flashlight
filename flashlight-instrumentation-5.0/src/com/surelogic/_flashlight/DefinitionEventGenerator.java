@@ -22,9 +22,9 @@ import java.util.zip.GZIPInputStream;
  * The DefinitionGenerator is responsible for adding static-call-location and
  * field-definition events to the output queue. It should be called by the
  * Refinery whenever the Refinery processes an object-definition event.
- * 
+ *
  * @author nathan
- * 
+ *
  */
 public class DefinitionEventGenerator {
 
@@ -214,6 +214,7 @@ public class DefinitionEventGenerator {
     static class SiteInfo {
         final long id;
         final String memberName;
+        final String memberDesc;
         final int memberModifier;
         final int line;
         final String methodName;
@@ -221,11 +222,12 @@ public class DefinitionEventGenerator {
         final String methodDesc;
         final int methodModifier;
 
-        SiteInfo(final long id, final String name, final int mod,
-                final int line, String methodName, String methodClass,
-                String methodDesc, int methodModifier) {
+        SiteInfo(final long id, final String name, final String desc,
+                final int mod, final int line, String methodName,
+                String methodClass, String methodDesc, int methodModifier) {
             this.id = id;
             memberName = name;
+            memberDesc = desc;
             memberModifier = mod;
             this.line = line;
             if ("null".equals(methodName)) {
@@ -245,9 +247,9 @@ public class DefinitionEventGenerator {
 
         void accept(final long declaringType, final List<Event> events,
                 final ClassInfo info) {
-            events.add(new StaticCallLocation(id, memberName, memberModifier,
-                    line, info.fileName, declaringType, methodClass,
-                    methodName, methodDesc, methodModifier));
+            events.add(new StaticCallLocation(id, memberName, memberDesc,
+                    memberModifier, line, info.fileName, declaringType,
+                    methodClass, methodName, methodDesc, methodModifier));
         }
     }
 

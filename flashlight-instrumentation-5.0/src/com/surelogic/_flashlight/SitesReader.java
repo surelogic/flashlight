@@ -41,6 +41,7 @@ class SitesReader {
         String file = st.nextToken();
         String qname = st.nextToken();
         String member = st.nextToken();
+        String memberDesc = st.nextToken();
         final int memberMod = Integer.parseInt(st.nextToken());
         final int lineNo = Integer.parseInt(st.nextToken());
         String methodName = st.nextToken();
@@ -60,8 +61,8 @@ class SitesReader {
             lastFileName = file;
             lastClassName = qname;
         }
-        final SiteInfo site = new SiteInfo(id, member, memberMod, lineNo,
-                methodName, methodClass, methodDesc, methodModifier);
+        final SiteInfo site = new SiteInfo(id, member, memberDesc, memberMod,
+                lineNo, methodName, methodClass, methodDesc, methodModifier);
         sites.add(site);
 
     }

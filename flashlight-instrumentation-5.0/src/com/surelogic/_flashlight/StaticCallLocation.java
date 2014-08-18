@@ -4,6 +4,7 @@ public class StaticCallLocation extends AbstractCallLocation {
     private final long f_withinClassId;
     private final int f_line;
     private final String f_memberName;
+    private final String f_memberDesc;
     private final int f_memberMod;
     private final String f_fileName;
     private final String f_methodCallName;
@@ -44,11 +45,12 @@ public class StaticCallLocation extends AbstractCallLocation {
     }
 
     StaticCallLocation(final long siteId, final String memberName,
-            final int memberMod, final int line, final String file,
-            final long declaringType, final String mcOwner,
+            final String memberDesc, final int memberMod, final int line,
+            final String file, final long declaringType, final String mcOwner,
             final String mcName, final String mcDesc, int mcModifier) {
         super(siteId);
         f_memberName = memberName;
+        f_memberDesc = memberDesc;
         f_memberMod = memberMod;
         f_line = line;
         f_withinClassId = declaringType;
@@ -72,6 +74,7 @@ public class StaticCallLocation extends AbstractCallLocation {
         Entities.addAttribute("in-class", f_withinClassId, b);
         Entities.addAttribute("line", f_line, b);
         Entities.addAttribute("location", f_memberName, b);
+        Entities.addAttribute("location-desc", f_memberDesc, b);
         Entities.addAttribute("location-mod", f_memberMod, b);
         Entities.addAttribute("file", f_fileName, b);
         if (f_methodCallName != null) {

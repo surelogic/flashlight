@@ -16,6 +16,7 @@ public final class SiteIdFactory {
     private String sourceFileName;
     private String className;
     private String callingMethodName;
+    private String callingMethodDesc;
     private int callingMethodAccess;
 
     private static class SiteInfo implements Comparable<SiteInfo> {
@@ -131,10 +132,11 @@ public final class SiteIdFactory {
     }
 
     public void setMethodLocation(final String sourceFileName,
-            final String className, final String callingMethodName, final int access) {
+            final String className, final String callingMethodName, final String callingMethodDesc, final int access) {
         this.sourceFileName = sourceFileName;
         this.className = className;
         this.callingMethodName = callingMethodName;
+        this.callingMethodDesc = callingMethodDesc;
         this.callingMethodAccess = access;
         sitesToIds.clear();
         idsToSites.clear();
@@ -173,6 +175,8 @@ public final class SiteIdFactory {
         pw.print(className);
         pw.print(' ');
         pw.print(callingMethodName);
+        pw.print(' ');
+        pw.print(callingMethodDesc);
         pw.print(' ');
         pw.print(callingMethodAccess);
         pw.print(' ');

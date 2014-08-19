@@ -881,66 +881,6 @@ FROM
    LOCKCYCLETHREAD
 WHERE COMPONENT = ?Cycle?
 GROUP BY LOCKHELD, LOCKACQUIRED, LOCKHELDTYPE,LOCKACQUIREDTYPE</query>
-  <query id="24d17dda-b3a0-4044-ae41-6dc224af24e5" description="What are the lock traces?" revision="2" display="true">-- META-BEGIN(doc)
--- &lt;p&gt;&lt;strong&gt;
--- 	What are the lock traces?
--- &lt;/strong&gt;&lt;/p&gt;
--- &lt;p&gt;Lists all lock traces that were present at a given row in the parent query.  Each line corresponds to a different lock trace.&lt;/p&gt;
--- &lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
--- &lt;img src=&quot;what-are-the-lock-traces.png&quot; alt=&quot;What are the lock traces?&quot;/&gt;
--- META-END
-SELECT
-   LS.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;,
-   LS.CLASSNAME   &quot;Class&quot;,
-   LS.CLASSCODE   &quot;Class__(icon)&quot;,
-   LS.ATLINE      &quot;Line__(change-if &apos;-1&apos; to &apos;unknown&apos;)|&quot;,
-   LS.LOCKTRACE   &quot;LOCKTRACE__(hide)&quot;,
-   ?Multiple?     &quot;Multiple__(hide)&quot;
-FROM
-   (SELECT
-       CO.PACKAGENAME,
-       CO.CLASSNAME,
-       CO.CLASSCODE,
-       S.ATLINE,
-       L.LOCKTRACE
-   FROM
-       INDIRECTACCESS A, 
-       INDIRECTACCESSLOCKSHELD ALH,
-       LOCK L,
-       TRACE TR,
-       SITE S,
-       OBJECT CO
-   WHERE
-       A.TRACE = ?ATRACE? AND
-       ALH.ACCESS = A.ID AND
-       L.ID = ALH.LASTACQUISITION AND
-       TR.ID = L.TRACE AND
-       S.ID = TR.SITE AND
-       CO.ID = S.INCLASS
-   UNION
-   SELECT
-       CO.PACKAGENAME,
-       CO.CLASSNAME,
-       CO.CLASSCODE,
-       S.ATLINE,
-       LE.LOCKTRACE
-   FROM
-       INDIRECTACCESS A, 
-       INDIRECTACCESSLOCKSHELD ALH,
-       LOCKSHELD L,
-       LOCK LE,
-       TRACE TR,
-       SITE S,
-       OBJECT CO
-   WHERE
-          A.TRACE = ?ATRACE? AND
-          ALH.ACCESS = A.ID AND
-          L.LOCKEVENT = ALH.LASTACQUISITION AND
-          LE.ID = ALH.LASTACQUISITION AND
-          TR.ID = LE.TRACE AND
-          S.ID = TR.SITE AND
-          CO.ID = S.INCLASS) LS
-ORDER BY LS.PACKAGENAME,LS.CLASSNAME,LS.ATLINE</query>
   <query id="02475ce2-0b3a-47e9-9200-e4f6e864aa3b" description="What are the lock traces?" revision="3" display="true">-- META-BEGIN(doc)
 -- &lt;p&gt;&lt;strong&gt;
 -- 	What are the lock traces?
@@ -1003,7 +943,7 @@ FROM
           S.ID = TR.SITE AND
           CO.ID = S.INCLASS) LS
 ORDER BY LS.PACKAGENAME,LS.CLASSNAME,LS.ATLINE</query>
-  <query id="00c978ca-dd0c-4b32-a651-293510b3bffa" description="What are the lock traces?" revision="4" display="true">-- META-BEGIN(doc)
+  <query id="24d17dda-b3a0-4044-ae41-6dc224af24e5" description="What are the lock traces?" revision="2" display="true">-- META-BEGIN(doc)
 -- &lt;p&gt;&lt;strong&gt;
 -- 	What are the lock traces?
 -- &lt;/strong&gt;&lt;/p&gt;
@@ -1036,7 +976,6 @@ FROM
        A.TRACE = ?ATRACE? AND
        ALH.ACCESS = A.ID AND
        L.ID = ALH.LASTACQUISITION AND
-       L.LOCK = ?Lock? AND
        TR.ID = L.TRACE AND
        S.ID = TR.SITE AND
        CO.ID = S.INCLASS
@@ -1059,7 +998,6 @@ FROM
           A.TRACE = ?ATRACE? AND
           ALH.ACCESS = A.ID AND
           L.LOCKEVENT = ALH.LASTACQUISITION AND
-          L.LOCKHELD = ?Lock? AND
           LE.ID = ALH.LASTACQUISITION AND
           TR.ID = LE.TRACE AND
           S.ID = TR.SITE AND
@@ -1120,6 +1058,68 @@ FROM
           A.TRACE = ?ATRACE? AND
           ALH.ACCESS = A.ID AND
           L.LOCKEVENT = ALH.LASTACQUISITION AND
+          LE.ID = ALH.LASTACQUISITION AND
+          TR.ID = LE.TRACE AND
+          S.ID = TR.SITE AND
+          CO.ID = S.INCLASS) LS
+ORDER BY LS.PACKAGENAME,LS.CLASSNAME,LS.ATLINE</query>
+  <query id="00c978ca-dd0c-4b32-a651-293510b3bffa" description="What are the lock traces?" revision="4" display="true">-- META-BEGIN(doc)
+-- &lt;p&gt;&lt;strong&gt;
+-- 	What are the lock traces?
+-- &lt;/strong&gt;&lt;/p&gt;
+-- &lt;p&gt;Lists all lock traces that were present at a given row in the parent query.  Each line corresponds to a different lock trace.&lt;/p&gt;
+-- &lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+-- &lt;img src=&quot;what-are-the-lock-traces.png&quot; alt=&quot;What are the lock traces?&quot;/&gt;
+-- META-END
+SELECT
+   LS.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;,
+   LS.CLASSNAME   &quot;Class&quot;,
+   LS.CLASSCODE   &quot;Class__(icon)&quot;,
+   LS.ATLINE      &quot;Line__(change-if &apos;-1&apos; to &apos;unknown&apos;)|&quot;,
+   LS.LOCKTRACE   &quot;LOCKTRACE__(hide)&quot;,
+   ?Multiple?     &quot;Multiple__(hide)&quot;
+FROM
+   (SELECT
+       CO.PACKAGENAME,
+       CO.CLASSNAME,
+       CO.CLASSCODE,
+       S.ATLINE,
+       L.LOCKTRACE
+   FROM
+       INDIRECTACCESS A, 
+       INDIRECTACCESSLOCKSHELD ALH,
+       LOCK L,
+       TRACE TR,
+       SITE S,
+       OBJECT CO
+   WHERE
+       A.TRACE = ?ATRACE? AND
+       ALH.ACCESS = A.ID AND
+       L.ID = ALH.LASTACQUISITION AND
+       L.LOCK = ?Lock? AND
+       TR.ID = L.TRACE AND
+       S.ID = TR.SITE AND
+       CO.ID = S.INCLASS
+   UNION
+   SELECT
+       CO.PACKAGENAME,
+       CO.CLASSNAME,
+       CO.CLASSCODE,
+       S.ATLINE,
+       LE.LOCKTRACE
+   FROM
+       INDIRECTACCESS A, 
+       INDIRECTACCESSLOCKSHELD ALH,
+       LOCKSHELD L,
+       LOCK LE,
+       TRACE TR,
+       SITE S,
+       OBJECT CO
+   WHERE
+          A.TRACE = ?ATRACE? AND
+          ALH.ACCESS = A.ID AND
+          L.LOCKEVENT = ALH.LASTACQUISITION AND
+          L.LOCKHELD = ?Lock? AND
           LE.ID = ALH.LASTACQUISITION AND
           TR.ID = LE.TRACE AND
           S.ID = TR.SITE AND
@@ -3674,50 +3674,6 @@ FROM TABLE (STACKTRACE(?SOURCEID?)) s</query>
 -- META-END
 SELECT s.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;, s.CLASSNAME &quot;Class&quot;, s.CLASSCODE &quot;Class__(icon)&quot;, s.LOCATION &quot;Location&quot;, s.LOCATIONCODE &quot;Location__(icon)&quot;, s.ATLINE &quot;Line__(r)&quot;
 FROM TABLE (STACKTRACE(?TRACEID?)) s</query>
-  <query id="83d613b3-283e-4100-9a82-e42adf107fe6" description="What is the stack trace?" revision="11" display="true">-- META-BEGIN(disable-column-sort)
--- Rows from a trace should not be reordered.
--- META-END
--- META-BEGIN(doc)
--- &lt;p&gt;&lt;strong&gt;
---   What is the stack trace for this edge&apos;s target?
--- &lt;/strong&gt;&lt;/p&gt;
--- &lt;p&gt;
---      Generates a stack trace of the method calls leading up to this point in the
---      program, from newest to oldest.
--- &lt;/p&gt;
--- &lt;table&gt;
---   &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
---   &lt;tbody&gt;
---     &lt;tr&gt;
---       &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
---       &lt;td&gt;Table&lt;/td&gt;
---     &lt;/tr&gt;
---     &lt;tr&gt;
---       &lt;td rowspan=&quot;5&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
---       &lt;td&gt;Package&lt;/td&gt;
---       &lt;td&gt;The package this method call or access occurred in&lt;/td&gt;
---     &lt;/tr&gt;
---     &lt;tr&gt;
---       &lt;td&gt;Class&lt;/td&gt;
---       &lt;td&gt;The class this method call or access occurred in&lt;/td&gt;
---     &lt;/tr&gt;
---     &lt;tr&gt;
---       &lt;td&gt;Location&lt;/td&gt;
---       &lt;td&gt;The location of this method call or access.  This is generally the
---       enclosing method&lt;/td&gt;
---     &lt;/tr&gt;
---     &lt;tr&gt;
---       &lt;td&gt;Line&lt;/td&gt;
---       &lt;td&gt;The line number this method call or access occurred at&lt;/td&gt;
---     &lt;/tr&gt;
---   &lt;/tbody&gt;
--- &lt;/table&gt;
--- &lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
--- &lt;img src=&quot;what-is-the-stack-trace.png&quot; alt=&quot;What is the stack trace?&quot; /&gt;
--- META-END
-SELECT s.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;, s.CLASSNAME &quot;Class&quot;, s.CLASSCODE &quot;Class__(icon)&quot;, s.LOCATION &quot;Location&quot;, s.LOCATIONCODE &quot;Location__(icon)&quot;, s.ATLINE &quot;Line__(r)&quot;
-FROM TABLE (STACKTRACE(?ATRACE?)) s
-</query>
   <query id="10477928-cf86-4416-9118-34eea8cd7e38" description="What is the stack trace?" revision="9" display="true">-- META-BEGIN(disable-column-sort)
 -- Rows from a trace should not be reordered.
 -- META-END
@@ -3761,6 +3717,50 @@ FROM TABLE (STACKTRACE(?ATRACE?)) s
 -- META-END
 SELECT s.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;, s.CLASSNAME &quot;Class&quot;, s.CLASSCODE &quot;Class__(icon)&quot;, s.LOCATION &quot;Location&quot;, s.LOCATIONCODE &quot;Location__(icon)&quot;, s.ATLINE &quot;Line__(r)&quot;
 FROM TABLE (STACKTRACE(?LATRACE?)) s
+</query>
+  <query id="83d613b3-283e-4100-9a82-e42adf107fe6" description="What is the stack trace?" revision="11" display="true">-- META-BEGIN(disable-column-sort)
+-- Rows from a trace should not be reordered.
+-- META-END
+-- META-BEGIN(doc)
+-- &lt;p&gt;&lt;strong&gt;
+--   What is the stack trace for this edge&apos;s target?
+-- &lt;/strong&gt;&lt;/p&gt;
+-- &lt;p&gt;
+--      Generates a stack trace of the method calls leading up to this point in the
+--      program, from newest to oldest.
+-- &lt;/p&gt;
+-- &lt;table&gt;
+--   &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
+--   &lt;tbody&gt;
+--     &lt;tr&gt;
+--       &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
+--       &lt;td&gt;Table&lt;/td&gt;
+--     &lt;/tr&gt;
+--     &lt;tr&gt;
+--       &lt;td rowspan=&quot;5&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
+--       &lt;td&gt;Package&lt;/td&gt;
+--       &lt;td&gt;The package this method call or access occurred in&lt;/td&gt;
+--     &lt;/tr&gt;
+--     &lt;tr&gt;
+--       &lt;td&gt;Class&lt;/td&gt;
+--       &lt;td&gt;The class this method call or access occurred in&lt;/td&gt;
+--     &lt;/tr&gt;
+--     &lt;tr&gt;
+--       &lt;td&gt;Location&lt;/td&gt;
+--       &lt;td&gt;The location of this method call or access.  This is generally the
+--       enclosing method&lt;/td&gt;
+--     &lt;/tr&gt;
+--     &lt;tr&gt;
+--       &lt;td&gt;Line&lt;/td&gt;
+--       &lt;td&gt;The line number this method call or access occurred at&lt;/td&gt;
+--     &lt;/tr&gt;
+--   &lt;/tbody&gt;
+-- &lt;/table&gt;
+-- &lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
+-- &lt;img src=&quot;what-is-the-stack-trace.png&quot; alt=&quot;What is the stack trace?&quot; /&gt;
+-- META-END
+SELECT s.PACKAGENAME &quot;Package__(&apos;@PK&apos;)&quot;, s.CLASSNAME &quot;Class&quot;, s.CLASSCODE &quot;Class__(icon)&quot;, s.LOCATION &quot;Location&quot;, s.LOCATIONCODE &quot;Location__(icon)&quot;, s.ATLINE &quot;Line__(r)&quot;
+FROM TABLE (STACKTRACE(?ATRACE?)) s
 </query>
   <query id="d1176c97-e3b6-483b-a341-6914a6f64860" description="What kinds of objects are indirectly accessed by more than one thread?" revision="13" display="true" display-at-root="true">-- META-BEGIN(no-rows)
 -- No objects are indirectly accessed by more than one thread.
@@ -4210,7 +4210,7 @@ FROM
 WHERE 
    LDS.LOCK = LP.LOCK
 ORDER BY LP.PACKAGES DESC, 1, 2, 3, LDS.DURATION DESC </query>
-  <query id="59fc6ba4-7075-413d-8879-3fbca78b074e" description="What methods acquire locks in more than one place?" revision="2" display="true" display-at-root="true">-- META-BEGIN(empty-is-good-news)
+  <query id="59fc6ba4-7075-413d-8879-3fbca78b074e" description="What methods acquire locks in more than one place?" revision="3" display="true" display-at-root="true">-- META-BEGIN(empty-is-good-news)
 -- No methods acquire the same lock more than once
 -- META-END
 -- META-BEGIN(result-is-bad-news)
@@ -4235,7 +4235,7 @@ ORDER BY LP.PACKAGES DESC, 1, 2, 3, LDS.DURATION DESC </query>
 --     &lt;/tr&gt;
 --     &lt;tr&gt;
 --       &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Tree Structure&lt;/strong&gt;&lt;/td&gt;
---       &lt;td&gt;&lt;em&gt;Package&lt;/em&gt; &amp;#8594; &lt;em&gt;Class&lt;/em&gt; &amp;#8594; Method&lt;/td&gt;
+--       &lt;td&gt;&lt;em&gt;Package&lt;/em&gt; &amp;#8594; &lt;em&gt;Class&lt;/em&gt; &amp;#8594; &lt;em&gt;Method&lt;/em&gt; &amp;#8594; &lt;em&gt;Line&lt;/em&gt;&lt;/td&gt;
 --     &lt;/tr&gt;
 --   &lt;/tbody&gt;
 -- &lt;/table&gt;
@@ -5662,14 +5662,14 @@ WHERE
    F.ID = E.FIELD
 GROUP BY E.TRACE,E.FIELD
 ORDER BY MAX(CO.PACKAGENAME), MAX(CO.CLASSNAME), MAX(S.ATLINE), MIN(E.TS)</query>
-  <query id="7cb571e2-056b-462a-bb08-e524b055c0d4" description="Where are locks acquired more than once at this line?" revision="2" display="true">-- META-BEGIN(doc)
+  <query id="7cb571e2-056b-462a-bb08-e524b055c0d4" description="Where are locks acquired more than once at this line?" revision="3" display="true">-- META-BEGIN(doc)
 -- &lt;p&gt;&lt;strong&gt;
---   Where are locks acquired more than once in this method?
+--   Where are locks acquired more than once at this line?
 -- &lt;/strong&gt;&lt;/p&gt;
 -- &lt;p&gt;
---   Lists all places where the same lock is acquired more than once in the given
---   method.  This could be a indicative of a bad locking policy, such as
---   check-then-act.
+--   Lists all of the locks that were acquired at this line, by lock trace.  Locks
+--   acquired more than once in the same method may be indicative of poor or
+--   incorrect locking policy, such as check-then-act.
 -- &lt;/p&gt;
 -- &lt;table&gt;
 --   &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
@@ -5680,7 +5680,7 @@ ORDER BY MAX(CO.PACKAGENAME), MAX(CO.CLASSNAME), MAX(S.ATLINE), MIN(E.TS)</query
 --     &lt;/tr&gt;
 --     &lt;tr&gt;
 --       &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Tree Structure&lt;/strong&gt;&lt;/td&gt;
---       &lt;td&gt;&lt;em&gt;Package&lt;/em&gt; &amp;#8594; &lt;em&gt;Class&lt;/em&gt; &amp;#8594; &lt;em&gt;Method&lt;/em&gt; &amp;#8594; &lt;em&gt;Line&lt;/em&gt;&lt;/em&gt;&lt;/td&gt;
+--       &lt;td&gt;&lt;em&gt;Package&lt;/em&gt; &amp;#8594; &lt;em&gt;Class&lt;/em&gt; &amp;#8594; &lt;em&gt;Method&lt;/em&gt; &amp;#8594; &lt;em&gt;Line&lt;/em&gt;&lt;/td&gt;
 --     &lt;/tr&gt;
 --     &lt;tr&gt;
 --       &lt;td rowspan=&quot;6&quot;&gt;&lt;strong&gt;Columns&lt;/strong&gt;&lt;/td&gt;
@@ -5709,7 +5709,7 @@ ORDER BY MAX(CO.PACKAGENAME), MAX(CO.CLASSNAME), MAX(S.ATLINE), MIN(E.TS)</query
 --     &lt;/tr&gt;
 --   &lt;/tbody&gt;
 -- &lt;/table&gt;
--- &lt;img src=&quot;where-are-locks-acquired-more-than-once-in-this-method.png&quot; alt=&quot;Where are locks acquired more than once in this method?&quot; /&gt;
+-- &lt;p&gt;&lt;img src=&quot;where-are-locks-acquired-more-than-once-at-this-line.png&quot; alt=&quot;Where are locks acquired more than once at this line?&quot; /&gt;&lt;/p&gt;
 -- META-END
 SELECT
     &apos;?Package?&apos;         &quot;Package__(&apos;@PK&apos;)&quot;,
@@ -5719,8 +5719,8 @@ SELECT
     &apos;?Method (Image)?&apos;  &quot;Method__(icon)&quot;,
     ?AtLine?            &quot;Line__|(change-if &apos;-1&apos; to &apos;unknown&apos;)&quot;,
     OBJID(LS.LOCK)      &quot;Lock&quot;,
-    COALESCELOCKTRACETHREADS(LE.LOCKTRACE)     &quot;Trace (Occurrences By Thread)__(&apos;thread.gif&apos;)&quot;,
     CASE WHEN LS.TYPE = &apos;U&apos; THEN &apos;lock_dynamic.gif&apos; ELSE &apos;lock.gif&apos; END       &quot;Lock__(icon)&quot;,
+    COALESCELOCKTRACETHREADS(LE.LOCKTRACE)     &quot;Trace (Occurrences By Thread)__(&apos;thread.gif&apos;)&quot;,
     MAX(LKCO.CLASSNAME)    &quot;Lock Class&quot;,
     MAX(LKCO.CLASSCODE)    &quot;Lock Class__(icon)&quot;,
     CASE WHEN MAX(LE.LOCKISTHIS) = &apos;Y&apos; THEN &apos;Lock on this&apos;
@@ -5731,7 +5731,8 @@ SELECT
     MIN(LE.TS)              &quot;First Occurrence&quot;,
     MAX(LE.TS)              &quot;Last Occurrence&quot;,
     LE.LOCKTRACE            &quot;LOCKTRACE__(hide)&quot;,
-    MAX(LE.TRACE)           &quot;LATRACE__(hide)&quot;
+    MAX(LE.TRACE)           &quot;LATRACE__(hide)&quot;,
+    LS.LOCK                 &quot;LockId__(hide)&quot;
 FROM
    (SELECT DISTINCT
      L.LOCK, L.TYPE
@@ -6402,6 +6403,62 @@ WHERE
 GROUP BY LE.LOCKTRACE,CO.PACKAGENAME,CO.CLASSNAME,S.LOCATION,S.ATLINE,LE.LOCK
 ORDER BY CO.PACKAGENAME,CO.CLASSNAME,S.LOCATION,S.ATLINE,COALESCELOCKTRACETHREADS(LE.LOCKTRACE)
 </query>
+  <query id="b494333c-adc8-4a56-8789-9e20fc784b55" description="Where is this lock acquired more than once in the same method?" revision="1" display="true">-- META-BEGIN(doc)
+-- &lt;p&gt;&lt;strong&gt;
+--   Where is this lock acquired more than once in the same method?
+-- &lt;/strong&gt;&lt;/p&gt;
+-- &lt;p&gt;
+-- Methods that lock the same lock more than once in a single invocation may be a
+-- source of incorrect behavior if actions taking during the second lock
+-- acquisition rely on data read during the first lock acquistion.  Check-then-act
+-- concurrency bugs, for example, may manifest in this fashion.
+-- &lt;/p&gt;
+-- &lt;table&gt;
+--   &lt;colgroup&gt;&lt;col width=&quot;12%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;24%&quot; align=&quot;right&quot; /&gt;&lt;col width=&quot;64%&quot; align=&quot;left&quot; /&gt;&lt;/colgroup&gt;
+--   &lt;tbody&gt;
+--     &lt;tr&gt;
+--       &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Displayed as&lt;/strong&gt;&lt;/td&gt;
+--       &lt;td&gt;Tree-Table&lt;/td&gt;
+--     &lt;/tr&gt;
+--     &lt;tr&gt;
+--       &lt;td colspan=&quot;2&quot;&gt;&lt;strong&gt;Tree Structure&lt;/strong&gt;&lt;/td&gt;
+--       &lt;td&gt;&lt;em&gt;Lock&lt;/em&gt; &amp;#8594; &lt;em&gt;Package&lt;/em&gt; &amp;#8594; &lt;em&gt;Class&lt;/em&gt; &amp;#8594; &lt;em&gt;Method&lt;/em&gt; &amp;#8594; &lt;em&gt;Line&lt;/em&gt;&lt;/td&gt;
+--     &lt;/tr&gt;
+--   &lt;/tbody&gt;
+-- &lt;/table&gt;
+-- &lt;img src=&quot;where-is-this-lock-acquired-more-than-once-in-the-same-method.png&quot; alt=&quot;Where is this lock acquired more than once in the same method?&quot; /&gt;
+-- META-END
+SELECT DISTINCT
+    &apos;?Lock?&apos;               &quot;Lock&quot;,
+    &apos;?Lock (Image)?&apos;       &quot;Lock__(icon)&quot;,
+    CO.PACKAGENAME         &quot;Package__(&apos;@PK&apos;)&quot;,
+    CO.CLASSNAME           &quot;Class&quot;,
+    CO.CLASSCODE           &quot;Class__(icon)&quot;,
+    S.LOCATION             &quot;Method&quot;,
+    S.LOCATIONCODE         &quot;Method__(icon)&quot;,
+    S.ATLINE               &quot;Line__(change-if &apos;-1&apos; to &apos;unknown&apos;)|&quot;,
+    S.ATLINE               &quot;AtLine__(hide)&quot;,
+    S.LOCATIONSPEC         &quot;MethodDesc__(hide)&quot;,
+    CO.ID                  &quot;InClass__(hide)&quot;
+FROM
+   (SELECT L.LOCK, L.TYPE, S.LOCATION, S.LOCATIONSPEC, S.LOCATIONCODE, S.INCLASS
+   FROM
+      LOCK L,
+      TRACE T,
+      SITE S
+   WHERE
+      L.LOCK = ?LockId? AND
+      T.ID = L.TRACE AND
+      S.ID = T.SITE AND
+      L.STATE = &apos;AFTER ACQUISITION&apos;
+   GROUP BY
+      L.LOCK, L.TYPE, S.LOCATION,S.LOCATIONCODE,S.LOCATIONSPEC,S.INCLASS
+   HAVING COUNT(DISTINCT S.ID) &gt; 1) LS INNER JOIN
+   LOCK LE ON LE.LOCK = LS.LOCK AND LE.TYPE = LS.TYPE AND LE.STATE = &apos;AFTER ACQUISITION&apos; INNER JOIN
+   TRACE TR ON TR.ID = LE.TRACE INNER JOIN
+   SITE S ON S.ID = TR.SITE AND S.LOCATION = LS.LOCATION AND S.LOCATIONCODE = LS.LOCATIONCODE AND S.INCLASS = LS.INCLASS AND S.LOCATIONSPEC = LS.LOCATIONSPEC INNER JOIN
+   OBJECT CO ON CO.ID = S.INCLASS 
+ORDER BY CO.PACKAGENAME,CO.CLASSNAME,S.LOCATION,S.LOCATIONCODE,S.LOCATIONSPEC,S.ATLINE</query>
   <query id="720921b7-6a0d-46b1-b9e9-4c7dc8671028" description="Where is this lock acquired?" revision="19" display="true">-- META-BEGIN(doc)
 -- &lt;p&gt;&lt;strong&gt;
 -- 	Where is this lock acquired?
@@ -7359,10 +7416,10 @@ order by lo.PackageName, lo.ClassName, s.AtLine, tho.ThreadName, sum(ld.Duration
   <sub-query id="1865f98c-ce4a-4e00-a11c-97d81409e54a" sub-query="b4c691be-b394-45c0-8190-6a2e0d9e63d9"/>
   <sub-query id="eee60af8-2385-4e71-9dde-554361b9ef07" sub-query="b4c691be-b394-45c0-8190-6a2e0d9e63d9"/>
   <sub-query id="eebe8cc6-9268-4b26-8d6a-bf94c88084fb" sub-query="4fce8390-7307-45dc-b779-5701ee7f23a1"/>
-  <sub-query id="24d17dda-b3a0-4044-ae41-6dc224af24e5" sub-query="30f37c1b-4a34-4eff-8bca-b76566b216c3"/>
   <sub-query id="02475ce2-0b3a-47e9-9200-e4f6e864aa3b" sub-query="30f37c1b-4a34-4eff-8bca-b76566b216c3"/>
-  <sub-query id="00c978ca-dd0c-4b32-a651-293510b3bffa" sub-query="30f37c1b-4a34-4eff-8bca-b76566b216c3"/>
+  <sub-query id="24d17dda-b3a0-4044-ae41-6dc224af24e5" sub-query="30f37c1b-4a34-4eff-8bca-b76566b216c3"/>
   <sub-query id="a187f1bf-273e-4495-90e1-0fcd1c85eccb" sub-query="30f37c1b-4a34-4eff-8bca-b76566b216c3"/>
+  <sub-query id="00c978ca-dd0c-4b32-a651-293510b3bffa" sub-query="30f37c1b-4a34-4eff-8bca-b76566b216c3"/>
   <sub-query id="cdc2d460-b17f-43bc-8cc6-4c26f1637fda" sub-query="f7ed1ced-73a5-4790-bc7c-8ba5fdf114a6" is-default="10"/>
   <sub-query id="33868960-7df8-4bab-bb33-ffb230957940" sub-query="6d8d0985-0830-4f18-a655-fa7b43703d5f"/>
   <sub-query id="33868960-7df8-4bab-bb33-ffb230957940" sub-query="708d1b8a-5274-4a25-b0b4-67f1a7a86690" is-default="10"/>
@@ -7540,6 +7597,7 @@ order by lo.PackageName, lo.ClassName, s.AtLine, tho.ThreadName, sum(ld.Duration
   <sub-query id="732daa1f-dac0-4f40-b714-8190f903d323" sub-query="02475ce2-0b3a-47e9-9200-e4f6e864aa3b"/>
   <sub-query id="7cb571e2-056b-462a-bb08-e524b055c0d4" sub-query="30f37c1b-4a34-4eff-8bca-b76566b216c3"/>
   <sub-query id="7cb571e2-056b-462a-bb08-e524b055c0d4" sub-query="10477928-cf86-4416-9118-34eea8cd7e38"/>
+  <sub-query id="7cb571e2-056b-462a-bb08-e524b055c0d4" sub-query="b494333c-adc8-4a56-8789-9e20fc784b55"/>
   <sub-query id="9d05ac24-20c2-436e-af6b-2bd0bc7dbcfb" sub-query="8f6cfa4a-8821-4166-adb0-94a17a7b8f1b" is-default="10"/>
   <sub-query id="16872df3-2b60-4827-8f71-95b71e65c349" sub-query="83d613b3-283e-4100-9a82-e42adf107fe6" is-default="10"/>
   <sub-query id="16872df3-2b60-4827-8f71-95b71e65c349" sub-query="30f37c1b-4a34-4eff-8bca-b76566b216c3"/>
@@ -7553,6 +7611,7 @@ order by lo.PackageName, lo.ClassName, s.AtLine, tho.ThreadName, sum(ld.Duration
   <sub-query id="106c3818-78f2-4983-812a-0e83ca3cde89" sub-query="a187f1bf-273e-4495-90e1-0fcd1c85eccb"/>
   <sub-query id="608b8114-de9d-496e-89dc-118298ac06ee" sub-query="10477928-cf86-4416-9118-34eea8cd7e38"/>
   <sub-query id="608b8114-de9d-496e-89dc-118298ac06ee" sub-query="30f37c1b-4a34-4eff-8bca-b76566b216c3"/>
+  <sub-query id="b494333c-adc8-4a56-8789-9e20fc784b55" sub-query="7cb571e2-056b-462a-bb08-e524b055c0d4"/>
   <sub-query id="720921b7-6a0d-46b1-b9e9-4c7dc8671028" sub-query="30f37c1b-4a34-4eff-8bca-b76566b216c3"/>
   <sub-query id="720921b7-6a0d-46b1-b9e9-4c7dc8671028" sub-query="10477928-cf86-4416-9118-34eea8cd7e38"/>
   <sub-query id="2d7e347f-2f6f-4935-b201-2edf1b06a12b" sub-query="83d613b3-283e-4100-9a82-e42adf107fe6"/>
@@ -7588,33 +7647,33 @@ order by lo.PackageName, lo.ClassName, s.AtLine, tho.ThreadName, sum(ld.Duration
     <cat-query id="9d05ac24-20c2-436e-af6b-2bd0bc7dbcfb"/>
   </category>
   <category id="84475b98-4c68-4165-b883-5bdf9479d3d6" description="Lock Use" has-data="Queries about lock use in the program." no-data="No lock use was observed in the program." revision="7">
-    <cat-query id="d4d2af9b-ce4d-4457-9e94-01972fcb58d3"/>
     <cat-query id="3b8251fa-a315-4c36-a856-a53b278fdc91"/>
-    <cat-query id="59fc6ba4-7075-413d-8879-3fbca78b074e"/>
-    <cat-query id="c744b5b5-15f0-4f72-a344-7e52bcac5071"/>
-    <cat-query id="26696a5f-3fd7-4f18-badf-e3d7d01a6d4e"/>
     <cat-query id="ddb5a17c-f5ac-4c26-a251-34d8e3c7bc7f"/>
     <cat-query id="2f505921-50fb-405b-bc78-4a5fe9228957"/>
     <cat-query id="213c73ad-b3f6-4aef-9a05-f0c31d8fdcde"/>
+    <cat-query id="d4d2af9b-ce4d-4457-9e94-01972fcb58d3"/>
+    <cat-query id="26696a5f-3fd7-4f18-badf-e3d7d01a6d4e"/>
+    <cat-query id="c744b5b5-15f0-4f72-a344-7e52bcac5071"/>
+    <cat-query id="59fc6ba4-7075-413d-8879-3fbca78b074e"/>
   </category>
   <category id="3d204f5e-d61d-4637-be14-118223f2fb9e" description="Memory Model" has-data="Queries that show happens-before relationships between threads defined by the Java memory model." no-data="No happens-before relationships between threads were observed in the program." revision="2">
-    <cat-query id="eabad207-22a7-4bb0-a7e1-30946d02ea13"/>
-    <cat-query id="5f166e1b-f0a6-4c07-846b-98f2aba80be2"/>
     <cat-query id="1b191e96-598f-4d1f-9391-5d9feed0da69"/>
+    <cat-query id="5f166e1b-f0a6-4c07-846b-98f2aba80be2"/>
+    <cat-query id="eabad207-22a7-4bb0-a7e1-30946d02ea13"/>
     <cat-query id="7cd8d92c-7aec-4238-b808-e628f83dcb4e"/>
   </category>
   <category id="64511c63-0ce8-44df-8324-95711bff56ce" description="Performance" has-data="Queries that highlight potential performance bottlenecks in the program." no-data="No potential performance bottlenecks were observed in the program." revision="2">
-    <cat-query id="2d506676-eb1d-455b-9256-9ea8f05352d4"/>
     <cat-query id="cb38a427-c259-4690-abe2-acea9661f737"/>
     <cat-query id="4e026769-1b0b-42bd-8893-f3b92add093f"/>
+    <cat-query id="2d506676-eb1d-455b-9256-9ea8f05352d4"/>
   </category>
   <category id="8401fcf7-7d5c-4191-a997-0b82f1db8e66" description="Shared State" has-data="Queries that show state (fields, not local variables or parameters) shared between multiple threads." no-data="No state (fields, not local variables or parameters) was shared between multiple threads." revision="2">
     <cat-query id="33868960-7df8-4bab-bb33-ffb230957940"/>
-    <cat-query id="094fc6db-5a5b-4495-aacd-54f5a5aa1691"/>
-    <cat-query id="bd72a5e4-42aa-415d-aa72-28d351f629a4"/>
-    <cat-query id="419c927e-a87c-4364-b4a9-2e8f50f728f6"/>
-    <cat-query id="d1176c97-e3b6-483b-a341-6914a6f64860"/>
     <cat-query id="cdc2d460-b17f-43bc-8cc6-4c26f1637fda"/>
+    <cat-query id="bd72a5e4-42aa-415d-aa72-28d351f629a4"/>
+    <cat-query id="094fc6db-5a5b-4495-aacd-54f5a5aa1691"/>
+    <cat-query id="d1176c97-e3b6-483b-a341-6914a6f64860"/>
+    <cat-query id="419c927e-a87c-4364-b4a9-2e8f50f728f6"/>
     <cat-query id="71a6fb5b-e5e1-4d25-bdc8-67ab5df1f66e"/>
   </category>
   <category id="b6d89f8b-7dfd-44a5-843c-d8a70f6aaaa9" description="Threads" has-data="Queries about threads in the program." no-data="No threads were observed in the program." revision="2">

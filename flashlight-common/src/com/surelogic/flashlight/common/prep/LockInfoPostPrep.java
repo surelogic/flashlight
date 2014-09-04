@@ -110,5 +110,22 @@ public class LockInfoPostPrep implements IPostPrep {
         lockThreadInfo(mon, q);
         updateLockTypeCounts(mon, q);
         lockPackageAccessCounts(mon, q);
+        doubleLockedMethods(mon, q);
+    }
+
+    private void doubleLockedMethods(SLProgressMonitor mon, Query q) {
+        mon.subTask("Finding double locked methods.");
+        final Queryable<?> insert = q
+                .prepared("LockInfo.insertDoubleLockedMethod");
+        q.prepared("LockInfo.doubleLockedMethods", new NullRowHandler() {
+
+            @Override
+            protected void doHandle(Row r) {
+                insert.call(r.nextLong(), r.nextString(), r.nextLong(),
+                        r.nextString(), r.nextString(), r.nextString());
+
+            }
+        }).call();
+        mon.subTaskDone();
     }
 }

@@ -709,7 +709,7 @@ public final class Instrument extends Task {
 
     /**
      * Set the path of the call site identifiers database file to create.
-     * 
+     *
      * @param fileName
      */
     public void setSitesFile(final File fileName) {
@@ -766,7 +766,7 @@ public final class Instrument extends Task {
     /**
      * Accept a new &lt;dir...&gt; child element. We check that the source and
      * destination directories are set.
-     * 
+     *
      * @param dir
      *            The directory to add
      * @exception BuildException
@@ -835,11 +835,11 @@ public final class Instrument extends Task {
         }
 
         Instrument.this
-                .log(MessageFormat
-                        .format("Expanding list of directories using list=\"{0}\", delimiters=\"{1}\", source pattern=\"{2}\", destination directory pattern=\"{3}\", destination jar file pattern=\"{4}\", replacement pattern=\"{5}\", runtime jar file=\"{6}\"",
-                                list, delimiters, srcDirPattern,
-                                destDirPattern, destFilePattern, replace,
-                                runtime), Project.MSG_VERBOSE);
+        .log(MessageFormat
+                .format("Expanding list of directories using list=\"{0}\", delimiters=\"{1}\", source pattern=\"{2}\", destination directory pattern=\"{3}\", destination jar file pattern=\"{4}\", replacement pattern=\"{5}\", runtime jar file=\"{6}\"",
+                        list, delimiters, srcDirPattern,
+                        destDirPattern, destFilePattern, replace,
+                        runtime), Project.MSG_VERBOSE);
 
         final String srcDirPatternString = srcDirPattern.getAbsolutePath();
         final String destDirPatternString = destDirPattern == null ? null
@@ -879,7 +879,7 @@ public final class Instrument extends Task {
      * Accept a new &lt;jar...&gt; child element. We check that the source file
      * is set, and that exactly one of the destination file or destination
      * directory is set.
-     * 
+     *
      * @param jar
      *            The jar to add
      * @exception BuildException
@@ -1382,7 +1382,7 @@ public final class Instrument extends Task {
 
     /**
      * Get the Java extension directories from the JVM.
-     * 
+     *
      * @return
      */
     private Path getSystemExtensionDirs() {

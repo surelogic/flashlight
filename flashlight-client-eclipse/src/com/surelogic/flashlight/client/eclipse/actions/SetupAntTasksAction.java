@@ -34,12 +34,13 @@ public class SetupAntTasksAction implements IWorkbenchWindowActionDelegate {
             try {
                 if (dir.exists()) {
                     MessageDialog
-                            .openInformation(
-                                    EclipseUIUtility.getShell(),
-                                    I18N.msg("flashlight.eclipse.dialog.promises.saveAs.exists.title"),
-                                    I18N.msg(
-                                            "flashlight.eclipse.dialog.promises.saveAs.exists.msg",
-                                            dir.getPath()));
+                    .openInformation(
+                            EclipseUIUtility.getShell(),
+                            I18N.msg("flashlight.eclipse.dialog.promises.saveAs.exists.title"),
+                            I18N.msg(
+                                    "flashlight.eclipse.dialog.promises.saveAs.exists.msg",
+                                    dir.getPath()));
+                    return;
                 }
 
                 dir.mkdirs();
@@ -53,12 +54,12 @@ public class SetupAntTasksAction implements IWorkbenchWindowActionDelegate {
                     tmp.delete();
                 }
                 MessageDialog
-                .openInformation(
-                        EclipseUIUtility.getShell(),
-                        I18N.msg("flashlight.eclipse.dialog.promises.saveAs.confirm.title"),
-                        I18N.msg(
-                                        "flashlight.eclipse.dialog.promises.saveAs.confirm.msg",
-                                        dir.getPath()));
+                        .openInformation(
+                                EclipseUIUtility.getShell(),
+                                I18N.msg("flashlight.eclipse.dialog.promises.saveAs.confirm.title"),
+                                I18N.msg(
+                                "flashlight.eclipse.dialog.promises.saveAs.confirm.msg",
+                                dir.getPath()));
             } catch (IOException e) {
                 SLLogger.getLogger().log(
                         Level.SEVERE,

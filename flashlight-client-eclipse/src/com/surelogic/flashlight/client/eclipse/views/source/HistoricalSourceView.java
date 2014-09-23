@@ -23,7 +23,7 @@ public final class HistoricalSourceView extends AbstractHistoricalSourceView {
   }
 
   public static void tryToOpenInEditor(final String run, final String pkg, final String type, final int lineNumber) {
-    tryToOpenInEditor(HistoricalSourceView.class, run, pkg, type, lineNumber);
+    tryToOpenInEditor(HistoricalSourceView.class, run, pkg, type, lineNumber, null);
   }
 
   public static void tryToOpenInEditorUsingFieldName(final String run, final String pkg, final String type, final String field) {

@@ -85,4 +85,18 @@ public final class SourceZipFileHandles implements ISourceZipFileHandles {
   public List<File> getSourceZips() {
     return zipHandles;
   }
+
+  @Override
+  public File getSourceZipForProject(String proj) {
+	if (proj == null) {
+		return null;
+	}
+	final String name = proj + SRC_ZIP_EXTENSION;
+	for(File z : zipHandles) {
+		if (name.equals(z.getName())) {
+			return z;
+		}
+	}
+	return null;
+  }
 }

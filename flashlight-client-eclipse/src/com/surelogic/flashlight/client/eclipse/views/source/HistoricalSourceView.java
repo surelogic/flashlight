@@ -1,8 +1,5 @@
 package com.surelogic.flashlight.client.eclipse.views.source;
 
-import java.io.File;
-import java.util.Collections;
-
 import com.surelogic.NonNull;
 import com.surelogic.Nullable;
 import com.surelogic.common.ISourceZipFileHandles;
@@ -20,12 +17,7 @@ public final class HistoricalSourceView extends AbstractHistoricalSourceView {
     if (run != null) {
       zips = run.getSourceZipFileHandles();
     } else {
-      zips = new ISourceZipFileHandles() {
-        @Override
-        public Iterable<File> getSourceZips() {
-          return Collections.emptyList();
-        }
-      };
+      zips = ISourceZipFileHandles.EMPTY;
     }
     return zips;
   }

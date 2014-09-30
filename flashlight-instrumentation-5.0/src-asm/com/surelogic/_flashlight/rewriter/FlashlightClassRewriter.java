@@ -475,7 +475,8 @@ final class FlashlightClassRewriter extends ClassVisitor {
 				new String[] { FlashlightNames.JAVA_IO_IOEXCEPTION,
 						FlashlightNames.JAVA_LANG_CLASSNOTFOUNDEXCEPTION });
 
-		callSiteIdFactory.setMethodLocation(sourceFileName, classNameFullyQualified,
+		callSiteIdFactory.setMethodLocation(
+		    sourceFileName, classNameFullyQualified, false,
         FlashlightNames.READ_OBJECT.getName(),
         FlashlightNames.READ_OBJECT.getDescriptor(),
 		    FlashlightNames.READ_OBJECT_ACCESS | Opcodes.ACC_SYNTHETIC);

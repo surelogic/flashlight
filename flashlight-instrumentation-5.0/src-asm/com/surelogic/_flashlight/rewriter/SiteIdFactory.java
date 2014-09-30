@@ -15,6 +15,7 @@ public final class SiteIdFactory {
     private final SortedMap<Long, SiteInfo> idsToSites = new TreeMap<Long, SiteInfo>();
     private String sourceFileName;
     private String className;
+    private boolean isInterface;
     private String callingMethodName;
     private String callingMethodDesc;
     private int callingMethodAccess;
@@ -131,10 +132,13 @@ public final class SiteIdFactory {
         this.pw = pw;
     }
 
-    public void setMethodLocation(final String sourceFileName,
-            final String className, final String callingMethodName, final String callingMethodDesc, final int access) {
+    public void setMethodLocation(
+          final String sourceFileName, final String className,
+          final boolean isInterface, final String callingMethodName,
+          final String callingMethodDesc, final int access) {
         this.sourceFileName = sourceFileName;
         this.className = className;
+        this.isInterface = isInterface;
         this.callingMethodName = callingMethodName;
         this.callingMethodDesc = callingMethodDesc;
         this.callingMethodAccess = access;
@@ -173,6 +177,8 @@ public final class SiteIdFactory {
         pw.print(sourceFileName);
         pw.print(' ');
         pw.print(className);
+        pw.print(' ');
+        pw.print(isInterface);
         pw.print(' ');
         pw.print(callingMethodName);
         pw.print(' ');

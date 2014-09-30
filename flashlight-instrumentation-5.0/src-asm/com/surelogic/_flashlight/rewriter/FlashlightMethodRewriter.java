@@ -362,8 +362,9 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 		}
 
 		/* Reset the site factory for a new method */
-		siteIdFactory.setMethodLocation(sourceFileName,
-				classBeingAnalyzedFullyQualified, methodName, desc, access);
+		siteIdFactory.setMethodLocation(
+		    sourceFileName, classBeingAnalyzedFullyQualified, inInterface,
+		    methodName, desc, access);
 	}
 
 	@Override

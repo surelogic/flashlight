@@ -67,7 +67,8 @@
  		    <fileset dir="${flashlight-common-project-classes}"/>
 		    <zipfileset src="${common-project-runtime}/commons-lang3-3.3.2.jar" />
 			<zipfileset src="${common-project-runtime}/asm-5.0.2.jar" />
-			<zipfileset src="${common-project-runtime}/asm-commons-5.0.2.jar" />
+            <zipfileset src="${common-project-runtime}/asm-commons-5.0.2.jar" />
+            <zipfileset src="${common-project-runtime}/asm-tree-5.0.2.jar" />
 			<zipfileset src="${flashlight-rewriter-jar}" />
 		</jar>
 		<zip destfile="${flashlight-ant.zip}">

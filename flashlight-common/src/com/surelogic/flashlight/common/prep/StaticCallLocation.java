@@ -76,6 +76,8 @@ public final class StaticCallLocation extends AbstractPrep {
             code.append("CO");
         } else if (name.equals("<clinit>")) {
             code.append("IT");
+        } else if (name.startsWith("lambda$")) {
+            code.append("LA");
         } else {
             code.append("ME");
         }
@@ -108,7 +110,7 @@ public final class StaticCallLocation extends AbstractPrep {
     @Override
     public void setup(final Connection c, final Timestamp start,
             final long startNS, final ScanRawFilePreScan scanResults)
-                    throws SQLException {
+            throws SQLException {
         super.setup(c, start, startNS, scanResults);
         f_ps = c.prepareStatement("INSERT INTO SITE (Id,AtLine,InClass,InFile,Location,LocationSpec,LocationCode,MethodClass,MethodCall,MethodSpec,MethodCode) VALUES (?,?,?,?,?,?,?,?,?,?,?)");
     }

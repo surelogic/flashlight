@@ -143,8 +143,8 @@ public class ClassHierarchy {
                 .readLine()) {
             String[] elems = DELIM.split(line);
             long id = Integer.parseInt(elems[0]);
-            methodCalls.put(id,
-                    new MethodCall(id, elems[7], elems[8], elems[9]));
+            methodCalls.put(id, new MethodCall(id, elems[8], elems[9],
+                    elems[10]));
         }
     }
 

@@ -221,10 +221,12 @@ public class DefinitionEventGenerator {
         final String methodClass;
         final String methodDesc;
         final int methodModifier;
+        final boolean isInInterface;
 
         SiteInfo(final long id, final String name, final String desc,
                 final int mod, final int line, String methodName,
-                String methodClass, String methodDesc, int methodModifier) {
+                String methodClass, String methodDesc, int methodModifier,
+                boolean inInterface) {
             this.id = id;
             memberName = name;
             memberDesc = desc;
@@ -243,6 +245,7 @@ public class DefinitionEventGenerator {
             this.methodClass = methodClass;
             this.methodDesc = methodDesc;
             this.methodModifier = methodModifier;
+            isInInterface = inInterface;
         }
 
         void accept(final long declaringType, final List<Event> events,

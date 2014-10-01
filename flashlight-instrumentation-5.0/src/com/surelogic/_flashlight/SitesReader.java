@@ -40,6 +40,7 @@ class SitesReader {
         final long id = Long.parseLong(st.nextToken());
         String file = st.nextToken();
         String qname = st.nextToken();
+        boolean isInterface = Boolean.valueOf(st.nextToken());
         String member = st.nextToken();
         String memberDesc = st.nextToken();
         final int memberMod = Integer.parseInt(st.nextToken());
@@ -62,7 +63,8 @@ class SitesReader {
             lastClassName = qname;
         }
         final SiteInfo site = new SiteInfo(id, member, memberDesc, memberMod,
-                lineNo, methodName, methodClass, methodDesc, methodModifier);
+                lineNo, methodName, methodClass, methodDesc, methodModifier,
+                isInterface);
         sites.add(site);
 
     }

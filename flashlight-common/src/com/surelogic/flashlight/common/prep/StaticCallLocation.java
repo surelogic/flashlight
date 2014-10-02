@@ -3,6 +3,7 @@ package com.surelogic.flashlight.common.prep;
 import static com.surelogic._flashlight.common.AttributeType.FILE;
 import static com.surelogic._flashlight.common.AttributeType.ID;
 import static com.surelogic._flashlight.common.AttributeType.IN_CLASS;
+import static com.surelogic._flashlight.common.AttributeType.IN_INTERFACE;
 import static com.surelogic._flashlight.common.AttributeType.LINE;
 import static com.surelogic._flashlight.common.AttributeType.LOCATION;
 import static com.surelogic._flashlight.common.AttributeType.LOCATIONDESC;
@@ -51,14 +52,16 @@ public final class StaticCallLocation extends AbstractPrep {
         f_ps.setString(idx++, attributes.getString(FILE));
         f_ps.setString(idx++, loc);
         f_ps.setString(idx++, attributes.getString(LOCATIONDESC));
-        f_ps.setString(idx++,
-                getMethodCode(loc, attributes.getInt(LOCATIONMOD)));
+        f_ps.setString(
+                idx++,
+                getMethodCode(loc, attributes.getBoolean(IN_INTERFACE),
+                        attributes.getInt(LOCATIONMOD)));
         f_ps.setString(idx++, attributes.getString(METHODCALLOWNER));
         f_ps.setString(idx++, callName);
         f_ps.setString(idx++, attributes.getString(METHODCALLDESC));
         f_ps.setString(
                 idx++,
-                callName == null ? null : getMethodCode(callName,
+                callName == null ? null : getMethodCode(callName, false,
                         attributes.getInt(METHODCALLMOD)));
         if (doInsert) {
             f_ps.addBatch();
@@ -69,7 +72,8 @@ public final class StaticCallLocation extends AbstractPrep {
         }
     }
 
-    private static String getMethodCode(String name, int mod) {
+    private static String getMethodCode(String name, boolean isInInterface,
+            int mod) {
         StringBuilder code = new StringBuilder(11);
         code.append('@');
         if (name.equals("<init>")) {
@@ -103,6 +107,10 @@ public final class StaticCallLocation extends AbstractPrep {
         }
         if (Modifier.isAbstract(mod)) {
             code.append("A");
+        }
+        if (isInInterface
+                && !(Modifier.isStatic(mod) || Modifier.isAbstract(mod))) {
+            code.append("D");
         }
         return code.toString();
     }

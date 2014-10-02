@@ -11,6 +11,7 @@ public class StaticCallLocation extends AbstractCallLocation {
     private final String f_methodCallOwner;
     private final String f_methodCallDesc;
     private final int f_methodCallModifier;
+    private final boolean f_isInInterface;
 
     public final long getWithinClassId() {
         return f_withinClassId;
@@ -44,9 +45,14 @@ public class StaticCallLocation extends AbstractCallLocation {
         return f_methodCallDesc;
     }
 
+    public boolean isInInterface() {
+        return f_isInInterface;
+    }
+
     StaticCallLocation(final long siteId, final String memberName,
             final String memberDesc, final int memberMod, final int line,
-            final String file, final long declaringType, final String mcOwner,
+            final String file, final long declaringType,
+            final boolean isInInterface, final String mcOwner,
             final String mcName, final String mcDesc, int mcModifier) {
         super(siteId);
         f_memberName = memberName;
@@ -59,6 +65,7 @@ public class StaticCallLocation extends AbstractCallLocation {
         f_methodCallName = mcName;
         f_methodCallOwner = mcOwner;
         f_methodCallModifier = mcModifier;
+        f_isInInterface = isInInterface;
     }
 
     @Override
@@ -72,6 +79,9 @@ public class StaticCallLocation extends AbstractCallLocation {
         b.append("<static-call-location");
         Entities.addAttribute("id", getSiteId(), b);
         Entities.addAttribute("in-class", f_withinClassId, b);
+        if (isInInterface()) {
+            Entities.addAttribute("interface", true, b);
+        }
         Entities.addAttribute("line", f_line, b);
         Entities.addAttribute("location", f_memberName, b);
         Entities.addAttribute("location-desc", f_memberDesc, b);

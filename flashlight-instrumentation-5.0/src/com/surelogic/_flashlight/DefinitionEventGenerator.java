@@ -252,7 +252,8 @@ public class DefinitionEventGenerator {
                 final ClassInfo info) {
             events.add(new StaticCallLocation(id, memberName, memberDesc,
                     memberModifier, line, info.fileName, declaringType,
-                    methodClass, methodName, methodDesc, methodModifier));
+                    isInInterface, methodClass, methodName, methodDesc,
+                    methodModifier));
         }
     }
 

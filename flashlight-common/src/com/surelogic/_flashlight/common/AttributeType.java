@@ -16,7 +16,7 @@ public enum AttributeType implements IAttributeType {
             "method-call-owner"), METHODCALLDESC("method-call-desc"), METHODCALLMOD(
             "method-call-mod"), OBJECT("object"), ANDROID("android"), CLASS_TYPE(
             "class-type"), TOTHREAD("to-thread"), COLLECTION("coll"), NANO_START(
-            "nano-start"), NANO_END("nano-end");
+            "nano-start"), NANO_END("nano-end"), IN_INTERFACE("interface");
 
     private final String label;
 

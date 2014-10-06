@@ -62,6 +62,7 @@ import com.surelogic._flashlight.common.CollectionType;
 import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic._flashlight.common.OutputType;
 import com.surelogic._flashlight.rewriter.ClassNameUtil;
+import com.surelogic._flashlight.rewriter.MissingClassException;
 import com.surelogic._flashlight.rewriter.PrintWriterMessenger;
 import com.surelogic._flashlight.rewriter.RewriteManager;
 import com.surelogic._flashlight.rewriter.RewriteMessenger;
@@ -336,6 +337,29 @@ public final class FlashlightVMRunner implements IVMRunner {
                     };
                     job.schedule();
                 }
+            } catch (final MissingClassException e) {
+              aborted = true;
+              final StringWriter s = new StringWriter();
+              PrintWriter w = new PrintWriter(s);
+              w.println("Instrumentation and execution were aborted because class ");
+              w.print("    ");
+              w.println(e.getReferringClassName());
+              w.println("refers to the class");
+              w.print("    ");
+              w.println(e.getMissingClassName());
+              w.println("that is not on the classpath.");
+              w.flush();
+              final String message = s.toString();
+              
+              final SLUIJob job = new SLUIJob() {
+                @Override
+                public IStatus runInUIThread(final IProgressMonitor monitor) {
+                  ShowTextDialog.showText(getDisplay().getActiveShell(),
+                      "Instrumentation aborted.", message);
+                  return Status.OK_STATUS;
+                }
+              };
+              job.schedule();
             } catch (final RewriteManager.AlreadyInstrumentedException e) {
                 /*
                  * Found classes on the classpath that are already instrumented.

@@ -964,8 +964,12 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
               + e.getMissingClass());
     }
 
-		/* visitMaxs already cleared out the remaining delayed instructions. */
-		mv.visitEnd();
+	  try {
+  		/* visitMaxs already cleared out the remaining delayed instructions. */
+  		mv.visitEnd();
+	  } catch (final MissingClassException e) {
+	    throw e.setReferringClassName(classBeingAnalyzedInternal);
+	  }
 	}
 
 	// =========================================================================

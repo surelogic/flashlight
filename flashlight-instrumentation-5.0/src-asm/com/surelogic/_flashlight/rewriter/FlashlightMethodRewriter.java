@@ -109,6 +109,9 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 	/** The simple name of the method being rewritten. */
 	private final String methodName;
 	
+	/** The descriptor of the method being rewritten. */
+	private final String methodDesc;
+	
 	/** Are we visiting a constructor? */
 	private final boolean isConstructor;
 
@@ -340,6 +343,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 		wasSynchronized = (access & Opcodes.ACC_SYNCHRONIZED) != 0;
 		isStatic = (access & Opcodes.ACC_STATIC) != 0;
 		methodName = mname;
+		methodDesc = desc;
 		isConstructor = mname.equals(INITIALIZER);
 		isClassInitializer = mname.equals(CLASS_INITIALIZER);
 		isReadObject = mname.equals(FlashlightNames.READ_OBJECT.getName())
@@ -968,7 +972,9 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
   		/* visitMaxs already cleared out the remaining delayed instructions. */
   		mv.visitEnd();
 	  } catch (final MissingClassException e) {
-	    throw e.setReferringClassName(classBeingAnalyzedInternal);
+	    // Add missing information and rethrow
+	    e.completeException(classBeingAnalyzedInternal, methodName, methodDesc);
+	    throw e;
 	  }
 	}
 

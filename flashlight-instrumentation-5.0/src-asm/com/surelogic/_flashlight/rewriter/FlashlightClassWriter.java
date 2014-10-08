@@ -43,8 +43,6 @@ public class FlashlightClassWriter extends ClassWriter {
       }
     } catch (final ClassNotFoundException e) {
       throw new MissingClassException(e.getMissingClass());
-//      throw new IllegalStateException(
-//          "Could not find class " + e.getMissingClass(), e);
     }
   }
 }

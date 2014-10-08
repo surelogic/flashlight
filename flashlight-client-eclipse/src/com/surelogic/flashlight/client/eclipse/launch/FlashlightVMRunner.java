@@ -62,7 +62,7 @@ import com.surelogic._flashlight.common.CollectionType;
 import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic._flashlight.common.OutputType;
 import com.surelogic._flashlight.rewriter.ClassNameUtil;
-import com.surelogic._flashlight.rewriter.MissingClassException;
+import com.surelogic._flashlight.rewriter.MissingClassReference;
 import com.surelogic._flashlight.rewriter.PrintWriterMessenger;
 import com.surelogic._flashlight.rewriter.RewriteManager;
 import com.surelogic._flashlight.rewriter.RewriteMessenger;
@@ -337,29 +337,34 @@ public final class FlashlightVMRunner implements IVMRunner {
                     };
                     job.schedule();
                 }
-            } catch (final MissingClassException e) {
-              aborted = true;
-              final StringWriter s = new StringWriter();
-              PrintWriter w = new PrintWriter(s);
-              w.println("Instrumentation and execution were aborted because class ");
-              w.print("    ");
-              w.println(e.getReferringClassName());
-              w.println("refers to the class");
-              w.print("    ");
-              w.println(e.getMissingClassName());
-              w.println("that is not on the classpath.");
-              w.flush();
-              final String message = s.toString();
-              
-              final SLUIJob job = new SLUIJob() {
-                @Override
-                public IStatus runInUIThread(final IProgressMonitor monitor) {
-                  ShowTextDialog.showText(getDisplay().getActiveShell(),
-                      "Instrumentation aborted.", message);
-                  return Status.OK_STATUS;
+                
+                final Set<MissingClassReference> badRefs = manager.getBadReferences();
+                if (!badRefs.isEmpty()) {
+                  final StringWriter s = new StringWriter();
+                  PrintWriter w = new PrintWriter(s);
+                  for (final MissingClassReference r : badRefs) {
+                    w.print("Method ");
+                    w.println(r.getReferringMethod());
+                    w.print("in class ");
+                    w.println(r.getReferringClassName());
+                    w.print("was not instrumented because it refers to the type ");
+                    w.println(r.getMissingClassName());
+                    w.println("that is not on the classpath.");
+                    w.println();
+                  }
+                  w.flush();
+                  final String message = s.toString();
+                  
+                  final SLUIJob job = new SLUIJob() {
+                    @Override
+                    public IStatus runInUIThread(final IProgressMonitor monitor) {
+                      ShowTextDialog.showText(getDisplay().getActiveShell(),
+                          "Instrumentation aborted.", message);
+                      return Status.OK_STATUS;
+                    }
+                  };
+                  job.schedule();
                 }
-              };
-              job.schedule();
             } catch (final RewriteManager.AlreadyInstrumentedException e) {
                 /*
                  * Found classes on the classpath that are already instrumented.

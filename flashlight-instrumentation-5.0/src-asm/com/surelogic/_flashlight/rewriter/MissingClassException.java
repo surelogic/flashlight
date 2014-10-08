@@ -1,28 +1,21 @@
 package com.surelogic._flashlight.rewriter;
 
 public final class MissingClassException extends RuntimeException {
-  private final String referringClassName;
-  private final String missingClassName;
+  private String missingClassName;
+  private MissingClassReference record;
   
   public MissingClassException(final String missingClassName) {
-    this(null, missingClassName);
-  }
-  
-  private MissingClassException(
-      final String referringClassName, final String missingClassName) {
-    this.referringClassName = referringClassName;
     this.missingClassName = missingClassName;
-  }
-
-  public MissingClassException setReferringClassName(final String referringClassName) {
-    return new MissingClassException(referringClassName, missingClassName);
+    this.record = null;
   }
   
-  public String getReferringClassName() {
-    return referringClassName;
+  public void completeException(final String referringClassName,
+      final String methodName, final String methodDesc) {
+    record = new MissingClassReference(missingClassName, referringClassName, methodName, methodDesc);
+    missingClassName = null;
   }
   
-  public String getMissingClassName() {
-    return missingClassName;
+  public MissingClassReference getRecord() {
+    return record;
   }
 }

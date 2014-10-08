@@ -92,6 +92,21 @@ public abstract class RewriteManager {
             return oversizedMethods;
         }
     }
+    
+    /**
+     * Exception thrown during instrumentation indicating that the instrumented
+     * classfile contains a method that references a type that is not in the
+     * Flashlight class model.
+     */
+    private static final class MissingClass extends Exception {
+      private final MissingClassReference record;
+      
+      public MissingClass(final MissingClassException e) {
+        record = e.getRecord();
+      }
+      
+      public MissingClassReference getRecord() { return record; }
+    }
 
     /**
      * Interface for defining strategies to provide buffered input streams to
@@ -493,22 +508,25 @@ public abstract class RewriteManager {
          */
         private void rewriteClassfileStream(final StreamProvider provider,
                 final OutputStream outClassfile) throws IOException {
-            RewriteMessenger msgr = messenger;
             boolean done = false;
-            Set<MethodIdentifier> badMethods = Collections
-                    .<MethodIdentifier> emptySet();
+            Set<MethodIdentifier> badMethods = new HashSet<MethodIdentifier>();
             while (!done) {
                 try {
-                    tryToRewriteClassfileStream(provider, outClassfile, msgr,
+                    tryToRewriteClassfileStream(provider, outClassfile, messenger,
                             badMethods);
                     done = true;
                 } catch (final OversizedMethodsException e) {
-                    badMethods = e.getOversizedMethods();
-                    /*
-                     * Set the messenger to be silent because it is going to
-                     * output all the same warning messages all over again.
-                     */
-                    msgr = NullMessenger.prototype;
+                    badMethods.addAll(e.getOversizedMethods());
+                    messenger.warning("Redoing rewrite because of oversized methods...");
+                } catch (final MissingClass e) {
+                  final MissingClassReference r = e.getRecord();
+                  badMethods.add(r.getReferringMethod());
+                  badReferences.add(r);
+                  messenger.info(
+                      "Redoing rewrite because method " + r.getReferringMethod() +
+                      " in class " + r.getReferringClassName() +
+                      " refers to class " + r.getMissingClassName() +
+                      " that is NOT on the classpath...");
                 }
             }
         }
@@ -538,7 +556,7 @@ public abstract class RewriteManager {
         private void tryToRewriteClassfileStream(final StreamProvider provider,
                 final OutputStream outClassfile, final RewriteMessenger msgr,
                 final Set<MethodIdentifier> ignoreMethods) throws IOException,
-                OversizedMethodsException {
+                OversizedMethodsException, MissingClass {
             /* First extract the debug information */
             BufferedInputStream inClassfile = provider.getInputStream();
             Map<String, Integer> method2numLocals = null;
@@ -590,6 +608,9 @@ public abstract class RewriteManager {
                 } else {
                     outClassfile.write(output.toByteArray());
                 }
+            } catch (final MissingClassException e) {
+              // Rewrap to a declared exception type
+              throw new MissingClass(e);
             } finally {
                 try {
                     inClassfile.close();
@@ -1152,6 +1173,7 @@ public abstract class RewriteManager {
     private final ClassAndFieldModel classModel = new ClassAndFieldModel();
     private final Set<String> instrumentedAlready = new HashSet<String>();
     private final DuplicateClasses duplicateClasses = new DuplicateClasses();
+    private final Set<MissingClassReference> badReferences = new HashSet<MissingClassReference>(); 
     private final IndirectAccessMethods accessMethods = new IndirectAccessMethods();
     private final Configuration config;
     private final RewriteMessenger messenger;
@@ -1404,6 +1426,10 @@ public abstract class RewriteManager {
         }
     }
 
+    public Set<MissingClassReference> getBadReferences() {
+      return Collections.unmodifiableSet(badReferences);
+    }
+    
     /**
      * Is the classfile blacklisted?
      */

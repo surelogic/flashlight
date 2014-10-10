@@ -835,11 +835,11 @@ public final class Instrument extends Task {
         }
 
         Instrument.this
-        .log(MessageFormat
-                .format("Expanding list of directories using list=\"{0}\", delimiters=\"{1}\", source pattern=\"{2}\", destination directory pattern=\"{3}\", destination jar file pattern=\"{4}\", replacement pattern=\"{5}\", runtime jar file=\"{6}\"",
-                        list, delimiters, srcDirPattern,
-                        destDirPattern, destFilePattern, replace,
-                        runtime), Project.MSG_VERBOSE);
+                .log(MessageFormat
+                        .format("Expanding list of directories using list=\"{0}\", delimiters=\"{1}\", source pattern=\"{2}\", destination directory pattern=\"{3}\", destination jar file pattern=\"{4}\", replacement pattern=\"{5}\", runtime jar file=\"{6}\"",
+                                list, delimiters, srcDirPattern,
+                                destDirPattern, destFilePattern, replace,
+                                runtime), Project.MSG_VERBOSE);
 
         final String srcDirPatternString = srcDirPattern.getAbsolutePath();
         final String destDirPatternString = destDirPattern == null ? null

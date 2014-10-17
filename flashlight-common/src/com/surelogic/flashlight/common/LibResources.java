@@ -8,11 +8,6 @@ import com.surelogic.Nullable;
 import com.surelogic.common.CommonImages;
 
 public final class LibResources {
-    /**
-     * The name of the current version Flashlight Ant tasks. This is used for
-     * the directory created by the tool.
-     */
-    public static final String ANT_TASK_VERSION = "flashlight-ant-5.0.0";
 
     /**
      * The name of the archive that contains the Flashlight Ant tasks.

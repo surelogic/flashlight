@@ -8,8 +8,7 @@
 
 	<property name="flashlight-rewriter-jar" value="../flashlight-instrumentation-5.0/flashlight-rewriter.jar"/>	
 	<property name="flashlight-instrumentation-project-classes" value="../flashlight-instrumentation-5.0/bin"/>
-	<property name="flashlight-instrumentation-runtime" value="../flashlight-instrumentation-5.0/flashlight-runtime.jar"/>
-	<property name="flashlight-instrumentation-runtime1.4" value="../flashlight-instrumentation-5.0/flashlight-runtime.java1.4.jar"/>
+    <property name="flashlight-instrumentation-runtime" value="../flashlight-instrumentation-5.0/flashlight-runtime.jar"/>
     <property name="flashlight-common-project-classes" value="../flashlight-common/bin"/>
     <property name="common-project-classes" value="../../common/common/bin"/>
     <property name="common-project-runtime" value="../../common/common/lib/runtime"/>
@@ -72,9 +71,9 @@
 			<zipfileset src="${flashlight-rewriter-jar}" />
 		</jar>
 		<zip destfile="${flashlight-ant.zip}">
-		    <zipfileset dir="." excludes="lib/** bin/** src/** build.xml .classpath .project .svn .settings/**"/>
-			<file file="${flashlight-instrumentation-runtime}" />
-			<file file="${flashlight-instrumentation-runtime1.4}" />
+		    <zipfileset prefix="flashlight-ant" file="README.txt"/>
+			<zipfileset prefix="flashlight-ant/lib" file="${flashlight-ant.jar}" />
+			<zipfileset prefix="flashlight-ant/lib" file="${flashlight-instrumentation-runtime}" />
 		</zip>
 	</target>
 

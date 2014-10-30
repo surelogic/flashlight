@@ -367,7 +367,7 @@
 			class="com.surelogic.flashlight.client.eclipse.views.source.HistoricalSourceView"
 			icon="platform:/plugin/com.surelogic.common/lib/images/fl_comp_unit.gif"
 			id="com.surelogic.flashlight.client.eclipse.views.source.HistoricalSourceView"
-			name="Historical Source Snapshot">
+			name="Flashlight Historical Source Snapshot">
 		</view>
         <view allowMultiple="false" category="com.surelogic.flashlight.Flashlight"
             class="com.surelogic.flashlight.client.eclipse.views.monitor.MonitorView"

@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.PrintWriter;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collection;
@@ -263,7 +264,8 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
         Properties props = new Properties();
         props.setProperty(InstrumentationConstants.FL_RUN, data.runName);
         props.setProperty(InstrumentationConstants.FL_ANDROID, "true");
-
+        props.setProperty(InstrumentationConstants.FL_DATE_OVERRIDE,
+                data.startTime);
         props.setProperty(InstrumentationConstants.FL_COLLECTION_TYPE,
                 InstrumentationConstants.FL_COLLECTION_TYPE_DEFAULT.toString());
         props.setProperty(InstrumentationConstants.FL_CONSOLE_PORT, Integer
@@ -321,13 +323,16 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
         private final File tmpDir;
         private final File decompiledJarFile;
         private final String runName;
+        private final String startTime;
 
-        RunData(String runName, String runId) throws IOException {
+        RunData(String runName, String runId, String startTime)
+                throws IOException {
 
             consolePort = InstrumentationConstants.FL_CONSOLE_PORT_DEFAULT;
             outputPort = InstrumentationConstants.FL_OUTPUT_PORT_DEFAULT;
             this.runName = runName;
             this.runId = runId;
+            this.startTime = startTime;
             runDir = new File(EclipseUtility.getFlashlightDataDirectory(),
                     runId);
             runDir.mkdir();
@@ -390,16 +395,16 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
                 if (idx > 0) {
                     apkName = apkName.substring(0, idx);
                 }
-                String runId = apkName
-                        + new SimpleDateFormat(
-                                InstrumentationConstants.DATE_FORMAT)
-                                .format(new Date())
+                DateFormat fmt = new SimpleDateFormat(
+                        InstrumentationConstants.DATE_FORMAT);
+                String startTime = fmt.format(new Date());
+                String runId = apkName + startTime
                         + InstrumentationConstants.ANDROID_LAUNCH_SUFFIX;
                 RunManager.getInstance()
                         .notifyPerformingInstrumentationAndLaunch(runId);
                 final RunData data;
                 try {
-                    data = new RunData(apkName, runId);
+                    data = new RunData(apkName, runId, startTime);
                     try {
                         Sdk sdk = Sdk.getCurrent();
                         // Determine goal project target platform
@@ -539,7 +544,7 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
     /**
      * Get the stderr/stdout outputs of a process and return when the process is
      * done. Both <b>must</b> be read or the process will block on windows.
-     * 
+     *
      * @param process
      *            The process to get the output from
      */

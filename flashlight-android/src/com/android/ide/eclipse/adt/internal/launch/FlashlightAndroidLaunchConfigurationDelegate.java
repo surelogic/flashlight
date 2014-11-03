@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -103,7 +102,6 @@ import com.surelogic.flashlight.client.eclipse.launch.LaunchUtils;
 import com.surelogic.flashlight.client.eclipse.model.RunManager;
 import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
 import com.surelogic.flashlight.client.eclipse.views.monitor.MonitorStatus;
-import com.surelogic.flashlight.common.model.FlashlightFileUtility;
 
 /**
  * This Launch Configuration is mostly cribbed from
@@ -115,7 +113,7 @@ import com.surelogic.flashlight.common.model.FlashlightFileUtility;
  *
  */
 public class FlashlightAndroidLaunchConfigurationDelegate extends
-LaunchConfigurationDelegate {
+        LaunchConfigurationDelegate {
 
     /**
      * Default launch action. This launches the activity that is setup to be
@@ -133,7 +131,7 @@ LaunchConfigurationDelegate {
      */
     @SuppressWarnings("restriction")
     public static final String ATTR_ACTIVITY = AdtPlugin.PLUGIN_ID
-    + ".activity"; //$NON-NLS-1$
+            + ".activity"; //$NON-NLS-1$
 
     private final Logger log = SLLogger
             .getLoggerFor(FlashlightAndroidLaunchConfigurationDelegate.class);
@@ -161,22 +159,19 @@ LaunchConfigurationDelegate {
                 @Override
                 public IStatus runInUIThread(IProgressMonitor monitor) {
                     MessageDialog
-                    .openInformation(
-                            EclipseUIUtility.getShell(),
-                            I18N.msg("flashlight.eclipse.android.launchError.title"),
-                            I18N.msg("flashlight.eclipse.android.launchError.message"));
+                            .openInformation(
+                                    EclipseUIUtility.getShell(),
+                                    I18N.msg("flashlight.eclipse.android.launchError.title"),
+                                    I18N.msg("flashlight.eclipse.android.launchError.message"));
                     return Status.OK_STATUS;
                 }
             }.schedule();
             return;
         }
 
-        String runId = project.getName()
-                + new SimpleDateFormat(InstrumentationConstants.DATE_FORMAT)
-        .format(new Date())
-        + InstrumentationConstants.ANDROID_LAUNCH_SUFFIX;
-        RunManager.getInstance()
-        .notifyPerformingInstrumentationAndLaunch(runId);
+        RunId runId = new RunId(project.getName(), new Date());
+        RunManager.getInstance().notifyPerformingInstrumentationAndLaunch(
+                runId.getId());
         FLData data = doFullIncrementalDebugBuild(runId, configuration,
                 project, monitor);
 
@@ -228,34 +223,34 @@ LaunchConfigurationDelegate {
                 // in case it does.
                 if (connections == -1 || restarts == -1) {
                     AdtPlugin
-                    .printErrorToConsole(
-                            project,
-                            "The connection to adb is down, and a severe error has occured.",
-                            "You must restart adb and Eclipse.",
-                            String.format(
-                                    "Please ensure that adb is correctly located at '%1$s' and can be executed.",
-                                    AdtPlugin.getOsAbsoluteAdb()));
+                            .printErrorToConsole(
+                                    project,
+                                    "The connection to adb is down, and a severe error has occured.",
+                                    "You must restart adb and Eclipse.",
+                                    String.format(
+                                            "Please ensure that adb is correctly located at '%1$s' and can be executed.",
+                                            AdtPlugin.getOsAbsoluteAdb()));
                     return;
                 }
 
                 if (restarts == 0) {
                     AdtPlugin
-                    .printErrorToConsole(
-                            project,
-                            "Connection with adb was interrupted.",
-                            String.format(
-                                    "%1$s attempts have been made to reconnect.",
-                                    connections),
-                            "You may want to manually restart adb from the Devices view.");
+                            .printErrorToConsole(
+                                    project,
+                                    "Connection with adb was interrupted.",
+                                    String.format(
+                                            "%1$s attempts have been made to reconnect.",
+                                            connections),
+                                    "You may want to manually restart adb from the Devices view.");
                 } else {
                     AdtPlugin
-                    .printErrorToConsole(
-                            project,
-                            "Connection with adb was interrupted, and attempts to reconnect have failed.",
-                            String.format(
-                                    "%1$s attempts have been made to restart adb.",
-                                    restarts),
-                            "You may want to manually restart adb from the Devices view.");
+                            .printErrorToConsole(
+                                    project,
+                                    "Connection with adb was interrupted, and attempts to reconnect have failed.",
+                                    String.format(
+                                            "%1$s attempts have been made to restart adb.",
+                                            restarts),
+                                    "You may want to manually restart adb from the Devices view.");
 
                 }
                 return;
@@ -349,7 +344,7 @@ LaunchConfigurationDelegate {
     }
 
     @SuppressWarnings("restriction")
-    private FLData doFullIncrementalDebugBuild(String runId,
+    private FLData doFullIncrementalDebugBuild(RunId runId,
             final ILaunchConfiguration launchConfig, final IProject project,
             final IProgressMonitor monitor) throws CoreException {
         // First have android do their full build
@@ -409,8 +404,8 @@ LaunchConfigurationDelegate {
             buildToolInfo = Sdk.getCurrent().getLatestBuildTool();
             if (buildToolInfo == null) {
                 AdtPlugin
-                .printBuildToConsole(BuildVerbosity.VERBOSE, project,
-                        "No \"Build Tools\" package available; use SDK Manager to install one.");
+                        .printBuildToConsole(BuildVerbosity.VERBOSE, project,
+                                "No \"Build Tools\" package available; use SDK Manager to install one.");
                 throw new IllegalStateException(
                         "No \"Build Tools\" package available; use SDK Manager to install one.");
             } else {
@@ -481,11 +476,11 @@ LaunchConfigurationDelegate {
                 mErrStream,
                 false /* jumbo mode doesn't matter here */,
                 false /*
-                 * dex merger doesn't matter here
-                 */,
-                 true /* debugMode */,
-                 AdtPrefs.getPrefs().getBuildVerbosity() == BuildVerbosity.VERBOSE,
-                 mResourceMarker);
+                       * dex merger doesn't matter here
+                       */,
+                true /* debugMode */,
+                AdtPrefs.getPrefs().getBuildVerbosity() == BuildVerbosity.VERBOSE,
+                mResourceMarker);
 
         IPath androidBinLocation = androidOutputFolder.getLocation();
         String osAndroidBinPath = androidBinLocation.toOSString();
@@ -580,8 +575,8 @@ LaunchConfigurationDelegate {
                     msg,
                     String.format(Messages.ApkBuilder_JAVA_HOME_is_s,
                             e.getJavaHome()),
-                            Messages.ApkBuilder_Update_or_Execute_manually_s,
-                            e.getCommandLine());
+                    Messages.ApkBuilder_Update_or_Execute_manually_s,
+                    e.getCommandLine());
 
             return null;
         } catch (ApkCreationException e) {
@@ -622,8 +617,8 @@ LaunchConfigurationDelegate {
             String msg2 = String.format(Messages.Final_Archive_Error_s, msg1);
             AdtPlugin.printErrorToConsole(project, msg2);
             BaseProjectHelper
-            .markResource(project, AdtConstants.MARKER_PACKAGING, msg2,
-                    IMarker.SEVERITY_ERROR);
+                    .markResource(project, AdtConstants.MARKER_PACKAGING, msg2,
+                            IMarker.SEVERITY_ERROR);
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
@@ -653,18 +648,18 @@ LaunchConfigurationDelegate {
         final File portFile;
         final File sourceDir;
         final File apkFolder;
-        final String runId;
+        final RunId runId;
         final List<String> originalClasspaths;
         final List<String> classpaths;
         final int outputPort;
         final RuntimeConfig conf;
 
-        FLData(String runId, final ILaunchConfiguration launch,
+        FLData(RunId runId, final ILaunchConfiguration launch,
                 final IProject project, final Collection<String> dxInputPaths)
-                        throws IOException, CoreException {
+                throws IOException, CoreException {
             this.runId = runId;
             runDir = new File(EclipseUtility.getFlashlightDataDirectory(),
-                    runId);
+                    runId.getId());
             runDir.mkdir();
             conf = LaunchHelper.getRuntimeConfig(launch);
             this.project = project;
@@ -731,8 +726,9 @@ LaunchConfigurationDelegate {
                     InstrumentationConstants.FL_PROPERTIES_CLASS);
             infoClassDest.getParentFile().mkdirs();
             Properties props = new Properties();
-            props.setProperty(InstrumentationConstants.FL_RUN,
-                    FlashlightFileUtility.getRunName(runId));
+            props.setProperty(InstrumentationConstants.FL_RUN, runId.getName());
+            props.setProperty(InstrumentationConstants.FL_DATE_OVERRIDE,
+                    runId.getDateSuffix());
             props.setProperty(InstrumentationConstants.FL_ANDROID, "true");
 
             props.setProperty(InstrumentationConstants.FL_COLLECTION_TYPE,
@@ -782,7 +778,7 @@ LaunchConfigurationDelegate {
     }
 
     @SuppressWarnings("unchecked")
-    private FLData instrumentClasses(String runId,
+    private FLData instrumentClasses(RunId runId,
             final ILaunchConfiguration launchConfig, final IProject project,
             final Collection<String> dxInputPaths) throws IOException,
             CoreException {
@@ -805,7 +801,7 @@ LaunchConfigurationDelegate {
             RewriteManager rm = new AndroidRewriteManager(
                     configBuilder.getConfiguration(), new PrintWriterMessenger(
                             logWriter), data.fieldsFile, data.sitesFile,
-                            data.classesFile, data.hbFile);
+                    data.classesFile, data.hbFile);
             String runtimePath = getRuntimeJarPath();
             List<String> instrumentLast = LaunchHelper
                     .sanitizeInstrumentationList(data.originalClasspaths);
@@ -916,7 +912,7 @@ LaunchConfigurationDelegate {
     @Override
     public boolean buildForLaunch(final ILaunchConfiguration configuration,
             final String mode, final IProgressMonitor monitor)
-                    throws CoreException {
+            throws CoreException {
         // if this returns true, this forces a full workspace rebuild which is
         // not
         // what we want.
@@ -948,15 +944,15 @@ LaunchConfigurationDelegate {
                 // and we can't launch the app. We'll revert to a sync-only
                 // launch
                 AdtPlugin
-                .printErrorToConsole(project,
-                        "The Manifest defines no activity!",
-                        "The launch will only sync the application package on the device!");
+                        .printErrorToConsole(project,
+                                "The Manifest defines no activity!",
+                                "The launch will only sync the application package on the device!");
                 config.mLaunchAction = ACTION_DO_NOTHING;
             } else if (activityName == null) {
                 // if the activity we got is null, we look for the default one.
                 AdtPlugin
-                .printErrorToConsole(project,
-                        "No activity specified! Getting the launcher activity.");
+                        .printErrorToConsole(project,
+                                "No activity specified! Getting the launcher activity.");
                 Activity launcherActivity = manifestData.getLauncherActivity();
                 if (launcherActivity != null) {
                     activityName = launcherActivity.getName();
@@ -966,9 +962,9 @@ LaunchConfigurationDelegate {
                 // launch.
                 if (activityName == null) {
                     AdtPlugin
-                    .printErrorToConsole(project,
-                            "No Launcher activity found!",
-                            "The launch will only sync the application package on the device!");
+                            .printErrorToConsole(project,
+                                    "No Launcher activity found!",
+                                    "The launch will only sync the application package on the device!");
                     config.mLaunchAction = ACTION_DO_NOTHING;
                 }
             } else {
@@ -986,8 +982,8 @@ LaunchConfigurationDelegate {
                 // if any.
                 if (match == false) {
                     AdtPlugin
-                    .printErrorToConsole(project,
-                            "The specified activity does not exist! Getting the launcher activity.");
+                            .printErrorToConsole(project,
+                                    "The specified activity does not exist! Getting the launcher activity.");
                     Activity launcherActivity = manifestData
                             .getLauncherActivity();
                     if (launcherActivity != null) {
@@ -996,9 +992,9 @@ LaunchConfigurationDelegate {
                         // if there's no default activity. We revert to a
                         // sync-only launch.
                         AdtPlugin
-                        .printErrorToConsole(project,
-                                "No Launcher activity found!",
-                                "The launch will only sync the application package on the device!");
+                                .printErrorToConsole(project,
+                                        "No Launcher activity found!",
+                                        "The launch will only sync the application package on the device!");
                         config.mLaunchAction = ACTION_DO_NOTHING;
                     }
                 }
@@ -1012,9 +1008,9 @@ LaunchConfigurationDelegate {
             // if there's no default activity. We revert to a sync-only launch.
             if (activityName == null) {
                 AdtPlugin
-                .printErrorToConsole(project,
-                        "No Launcher activity found!",
-                        "The launch will only sync the application package on the device!");
+                        .printErrorToConsole(project,
+                                "No Launcher activity found!",
+                                "The launch will only sync the application package on the device!");
                 config.mLaunchAction = ACTION_DO_NOTHING;
             }
         }
@@ -1065,12 +1061,12 @@ LaunchConfigurationDelegate {
                         id.createForward(data.outputPort, data.outputPort);
                         EclipseUtility.toEclipseJob(
                                 new WatchFlashlightMonitorJob(
-                                        new MonitorStatus(data.runId)))
-                                        .schedule();
+                                        new MonitorStatus(data.runId.getId())))
+                                .schedule();
                         EclipseUtility.toEclipseJob(
-                                new ReadFlashlightStreamJob(data.runId,
+                                new ReadFlashlightStreamJob(data.runId.getId(),
                                         data.runDir, data.outputPort, id))
-                                        .schedule();
+                                .schedule();
                         // FIXME ReadLogcatJob doesn't work right now
                         // EclipseUtility.toEclipseJob(
                         // new ReadLogcatJob(data.runId, id)).schedule();
@@ -1082,7 +1078,7 @@ LaunchConfigurationDelegate {
             }
             if (timeout > 1) {
                 new ConnectToProjectJob(data, pakkage, timeout - 1)
-                .schedule(1000);
+                        .schedule(1000);
                 return Status.OK_STATUS;
             } else {
                 return SLEclipseStatusUtility.createInfoStatus(String.format(

@@ -69,7 +69,7 @@ import com.surelogic._flashlight.common.OutputType;
  * for the {@link Store} class. These attributes must be set <em>before</em> the
  * {@code FLStore} class is initialized by the virtual machine because the
  * attributes are accessed by the <code>static</code> initializer of the class.
- * 
+ *
  * <p>
  * This class initializes the attributes from Java System properties, but these
  * values can be overridden using the various setter methods.
@@ -359,7 +359,7 @@ public class StoreConfiguration {
 
     /**
      * Is the instrumentation disabled?
-     * 
+     *
      * <P>
      * This value is initialized from the Java system property
      * <code>FL_OFF</code>: If the property has a value, then the
@@ -371,7 +371,7 @@ public class StoreConfiguration {
 
     /**
      * Set whether the instrumentation is disabled.
-     * 
+     *
      * @param flag
      *            {@code true} if the instrumentation should be disabled.
      */
@@ -381,7 +381,7 @@ public class StoreConfiguration {
 
     /**
      * Get the directory to write the data into.
-     * 
+     *
      * <p>
      * Thie value is initialized from the Java system property
      * <code>FL_DIR</code> with the default value coming from the
@@ -400,7 +400,7 @@ public class StoreConfiguration {
 
     /**
      * Get the file prefix&mdash;run id&mdash;for the flashlight data file.
-     * 
+     *
      * <p>
      * This value is initialized from the Java system property
      * <code>FL_RUN</code> with the default value of <code>"flashlight"</code>.
@@ -429,7 +429,7 @@ public class StoreConfiguration {
      * Get the size of the BlockingQueue between the instrumentation and the
      * refinery (which deals with garbage collection). One of these threads
      * exists for each non-flashlight thread in the program.
-     * 
+     *
      * <p>
      * This value is initialized from the Java system property
      * <code>FL_RAWQ_SIZE</code> with the default value of 500.
@@ -452,7 +452,7 @@ public class StoreConfiguration {
      * Get the size of the BlockingQueue between the refinery and the depository
      * (which deals with output). One thread inputs and another thread drains
      * this queue.
-     * 
+     *
      * <p>
      * This value is initialized from the Java system property
      * <code>FL_OUTQ_SIZE</code> with the default value of 500.
@@ -478,7 +478,7 @@ public class StoreConfiguration {
      * object is garbage collected, and that object is thread local, then all
      * the events about that object that are held in the refinery can be
      * discarded (and therefore not output).
-     * 
+     *
      * <p>
      * This value is initialized from the Java system property
      * <code>FL_REFINERY_SIZE</code> with the default value of 5000.
@@ -504,7 +504,7 @@ public class StoreConfiguration {
      * Is the "spy thread" disabled? This thread checks to see if Flashlight
      * threads are all that is running. This is useful if a program just
      * terminates without a call to System.exit()
-     * 
+     *
      * <P>
      * This value is initialized from the Java system property
      * <code>FL_NO_SPY</code>: If the property has a value, then the
@@ -525,7 +525,7 @@ public class StoreConfiguration {
      * The port that a console can connect to to shutdown the instrumentation.
      * If the port specified is used the program counts up...it tries the next
      * 100 and then gives up.
-     * 
+     *
      * <P>
      * This value is initialized from the Java system property
      * <code>FL_CONSOLE_PORT</code> with the default value of 43524.
@@ -615,7 +615,7 @@ public class StoreConfiguration {
     /**
      * Copies the contents of a {@link InputStream} to a file and closes the
      * passed stream.
-     * 
+     *
      * @param is
      *            the stream to copy from
      * @param to
@@ -635,7 +635,7 @@ public class StoreConfiguration {
      * {@link BufferedInputStream}, only if <tt>closeStream == true</tt>. This
      * is because typically not closing the stream is used with a
      * {@link ZipInputStream} which should be buffered already.
-     * 
+     *
      * @param is
      *            the stream to copy from
      * @param to
@@ -682,7 +682,7 @@ public class StoreConfiguration {
 
     /**
      * Indicates that we are streaming data to a remote program.
-     * 
+     *
      * @return
      */
     public static boolean hasOutputPort() {

@@ -46,7 +46,7 @@ final class HappensBeforeTable {
            * so we output a warning, and skip it. 
            */
           messenger.warning(
-              "Provided classpath is incomplete: couldn't find class " +
+              "Provided classpath is incomplete 6: couldn't find class " +
                   ex.getMissingClass() +
                   " that contains the happens-before method " + hb.getMethod());
         }

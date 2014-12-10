@@ -548,7 +548,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
   			}
   		} catch (final ClassNotFoundException e) {
   			messenger
-  					.warning("Provided classpath is incomplete: couldn't find class "
+  					.warning("Provided classpath is incomplete 2: couldn't find class "
   							+ e.getMissingClass());
   		}
 		}
@@ -655,7 +655,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
   			}
   		} catch (final ClassNotFoundException e) {
   			messenger
-  					.warning("Provided classpath is incomplete: couldn't find class "
+  					.warning("Provided classpath is incomplete 3: couldn't find class "
   							+ e.getMissingClass());
   		}
 		}
@@ -964,7 +964,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 	    siteIdFactory.closeMethod(classModel);
     } catch (final ClassNotFoundException e) {
       messenger
-          .warning("Provided classpath is incomplete: couldn't find class "
+          .warning("Provided classpath is incomplete 4: couldn't find class "
               + e.getMissingClass());
     }
 
@@ -1753,7 +1753,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 				}
 			} catch (final ClassNotFoundException e) {
 				messenger
-						.warning("Provided classpath is incomplete: couldn't find class "
+						.warning("Provided classpath is incomplete 5: couldn't find class "
 								+ e.getMissingClass());
 				// Still generated legal code.
 				mv.visitFieldInsn(Opcodes.GETSTATIC,

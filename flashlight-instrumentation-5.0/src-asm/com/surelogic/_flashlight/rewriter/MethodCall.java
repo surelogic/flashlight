@@ -136,7 +136,7 @@ public abstract class MethodCall {
       hbResult = happensBefore.getHappensBefore(originalInsn.owner, originalInsn.name, originalInsn.desc);
     } catch (final ClassNotFoundException e) {
       hbResult = null;
-      messenger.warning("Provided classpath is incomplete: couldn't find class " + e.getMissingClass());
+      messenger.warning("Provided classpath is incomplete 7: couldn't find class " + e.getMissingClass());
     }
 
     // Get the current nanoTime for happens before events
@@ -258,7 +258,7 @@ public abstract class MethodCall {
         ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.INTRINSIC_LOCK_WAIT);      
       }
     } catch (final ClassNotFoundException e) {
-      messenger.warning("Provided classpath is incomplete: couldn't find class " + e.getMissingClass());
+      messenger.warning("Provided classpath is incomplete 8: couldn't find class " + e.getMissingClass());
     }
   }
   
@@ -281,7 +281,7 @@ public abstract class MethodCall {
         ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.INTRINSIC_LOCK_WAIT);
       }
     } catch (final ClassNotFoundException e) {
-      messenger.warning("Provided classpath is incomplete: couldn't find class " + e.getMissingClass());
+      messenger.warning("Provided classpath is incomplete 9: couldn't find class " + e.getMissingClass());
     }
   }
   
@@ -306,7 +306,7 @@ public abstract class MethodCall {
         ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.BEFORE_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT);
       }
     } catch (final ClassNotFoundException e) {
-      messenger.warning("Provided classpath is incomplete: couldn't find class " + e.getMissingClass());
+      messenger.warning("Provided classpath is incomplete 10: couldn't find class " + e.getMissingClass());
     }
   }
   
@@ -330,7 +330,7 @@ public abstract class MethodCall {
         ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT);      
       }
     } catch (final ClassNotFoundException e) {
-      messenger.warning("Provided classpath is incomplete: couldn't find class " + e.getMissingClass());
+      messenger.warning("Provided classpath is incomplete 11: couldn't find class " + e.getMissingClass());
     }
   }
   
@@ -354,7 +354,7 @@ public abstract class MethodCall {
         // ..., gotTheLock
       }
     } catch (final ClassNotFoundException e) {
-      messenger.warning("Provided classpath is incomplete: couldn't find class " + e.getMissingClass());
+      messenger.warning("Provided classpath is incomplete 12: couldn't find class " + e.getMissingClass());
     }
   }
   
@@ -375,7 +375,7 @@ public abstract class MethodCall {
         ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_ACQUISITION_ATTEMPT);      
       }
     } catch (final ClassNotFoundException e) {
-      messenger.warning("Provided classpath is incomplete: couldn't find class " + e.getMissingClass());
+      messenger.warning("Provided classpath is incomplete 13: couldn't find class " + e.getMissingClass());
     }
   }
   
@@ -397,7 +397,7 @@ public abstract class MethodCall {
         ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.AFTER_UTIL_CONCURRENT_LOCK_RELEASE_ATTEMPT);
       }
     } catch (final ClassNotFoundException e) {
-      messenger.warning("Provided classpath is incomplete: couldn't find class " + e.getMissingClass());
+      messenger.warning("Provided classpath is incomplete 14: couldn't find class " + e.getMissingClass());
     }
   }  
   

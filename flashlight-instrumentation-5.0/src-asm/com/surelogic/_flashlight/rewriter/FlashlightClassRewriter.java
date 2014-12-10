@@ -512,7 +512,7 @@ final class FlashlightClassRewriter extends ClassVisitor {
             callSiteIdFactory.closeMethod(classModel);
         } catch (final ClassNotFoundException e) {
             messenger
-                    .warning("Provided classpath is incomplete: couldn't find class "
+                    .warning("Provided classpath is incomplete 1: couldn't find class "
                             + e.getMissingClass());
         }
     }

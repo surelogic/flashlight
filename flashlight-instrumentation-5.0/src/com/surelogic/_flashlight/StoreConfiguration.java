@@ -194,9 +194,12 @@ public class StoreConfiguration {
             // FIXME we set up the additional folders needed by eclipse here,
             // but we should probably remove the dependencies in eclipse or do
             // something more here
-            new File(dir, "source").mkdir();
-            new File(dir, "external").mkdir();
-            new File(dir, "projects").mkdir();
+            new File(dir, InstrumentationConstants.FL_SOURCE_FOLDER_LOC)
+            .mkdirs();
+            new File(dir, InstrumentationConstants.FL_EXTERNAL_FOLDER_LOC)
+            .mkdirs();
+            new File(dir, InstrumentationConstants.FL_PROJECTS_FOLDER_LOC)
+            .mkdirs();
             setDirectory(dir.getAbsolutePath());
         }
         // We will use specific field and sites files, but otherwise we will
@@ -294,6 +297,13 @@ public class StoreConfiguration {
                 } catch (FileNotFoundException e) {
                     // Do nothing
                 }
+            }
+            InputStream hbConfig = context
+                    .getResourceAsStream(InstrumentationConstants.FL_CLASS_HIERARCHY_RESOURCE);
+            File hbConfigFile = new File(getDirectory(),
+                    InstrumentationConstants.FL_CLASS_HIERARCHY_FILE_LOC);
+            if (hbConfig != null) {
+                copy(hbConfig, hbConfigFile);
             }
             final InputStream sources = context
                     .getResourceAsStream(FL_SOURCE_RESOURCE);

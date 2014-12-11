@@ -22,9 +22,9 @@ import com.surelogic._flashlight.common.InstrumentationConstants;
  * Contains information about a configured store. Used for logging and keeping
  * other pieces of information that are not expected to change during a run.
  * This class is thread safe.
- * 
+ *
  * @author nathan
- * 
+ *
  */
 public class RunConf {
 
@@ -47,7 +47,7 @@ public class RunConf {
 
     /**
      * Logs a message if logging is enabled.
-     * 
+     *
      * @param msg
      *            the message to log.
      */
@@ -59,7 +59,7 @@ public class RunConf {
 
     /**
      * Logs a message if logging is enabled.
-     * 
+     *
      * @param msg
      *            the message to log.
      */
@@ -80,7 +80,7 @@ public class RunConf {
 
     /**
      * Logs a problem message if logging is enabled.
-     * 
+     *
      * @param msg
      *            the message to log.
      */
@@ -90,7 +90,7 @@ public class RunConf {
 
     /**
      * Logs a problem message if logging is enabled.
-     * 
+     *
      * @param msg
      *            the message to log.
      * @param e
@@ -138,7 +138,7 @@ public class RunConf {
     /**
      * Gets the string value of the <tt>FL_RUN</tt> property or
      * <tt>"flashlight"</tt> if this property is not set.
-     * 
+     *
      * @return the string value of the <tt>FL_RUN</tt> property or
      *         <tt>"flashlight"</tt> if this property is not set.
      */
@@ -160,7 +160,7 @@ public class RunConf {
     /**
      * The value of {@link System#currentTimeMillis()} when we start collecting
      * data.
-     * 
+     *
      * @return
      */
     public Date getStartTime() {
@@ -176,7 +176,7 @@ public class RunConf {
 
     /**
      * Return the id associated with the given field in the fields.txt file
-     * 
+     *
      * @param clazz
      *            the fully-qualified class name.
      * @param field
@@ -189,7 +189,7 @@ public class RunConf {
 
     /**
      * The number of events a single log file should (roughly) contain.
-     * 
+     *
      * @return
      */
     public int getFileEventCount() {
@@ -206,7 +206,7 @@ public class RunConf {
 
     /**
      * The amount of time per file.
-     * 
+     *
      * @return
      */
     public long getFileEventDuration() {
@@ -254,13 +254,14 @@ public class RunConf {
             try {
                 new File(flashlightDir,
                         InstrumentationConstants.FL_PORT_FILE_LOC)
-                        .createNewFile();
+                .createNewFile();
             } catch (IOException e) {
                 logAProblem("Could not create port file", e);
             }
         } else {
             f_log = initLog(null);
         }
+
         f_start_nano = System.nanoTime();
         FieldDefs defs;
         try {

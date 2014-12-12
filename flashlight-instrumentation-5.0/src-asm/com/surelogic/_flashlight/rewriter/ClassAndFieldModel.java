@@ -2,6 +2,7 @@ package com.surelogic._flashlight.rewriter;
 
 import java.io.File;
 import java.io.PrintWriter;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -9,6 +10,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+
+import org.objectweb.asm.Opcodes;
 
 /**
  * A simple class model built during the first pass of the classfile
@@ -119,6 +122,17 @@ final class ClassAndFieldModel {
   
   
   
+  private static final String OBJECT = "java/lang/Object";
+  private static final String CLONEABLE = "java/lang/Cloneable";
+  private static final String SERIALIZABLE = "java/io/Serializable";
+  
+  private static final String LENGTH = "length";
+  private static final int LENGTH_ACCESS = Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL;
+  
+  private static final String CLONE = "clone";
+  private static final String CLONE_DESC = "()L{0};";
+  private static final int CLONE_ACCESS = Opcodes.ACC_PUBLIC;
+  
   /**
    * A class in the system being instrumented.  Contains the names of the 
    * superclass and any implemented interfaces.  Contains a map from all the 
@@ -176,6 +190,21 @@ final class ClassAndFieldModel {
       this.superClass = superClass;
       this.interfaces = new String[interfaces.length];
       System.arraycopy(interfaces, 0, this.interfaces, 0, interfaces.length);
+    }
+    
+    /**
+     * Create a new array class.
+     */
+    public Clazz(final String name) {
+      this.where = null;
+      this.name = name;
+      this.isInterface = false;
+      this.isInstrumented = false;
+      this.superClass = OBJECT;
+      this.interfaces = new String[] { CLONEABLE, SERIALIZABLE };
+      
+      addField(LENGTH, LENGTH_ACCESS);
+      addMethod(CLONE, MessageFormat.format(CLONE_DESC, name), CLONE_ACCESS);
     }
     
     @Override
@@ -434,7 +463,16 @@ final class ClassAndFieldModel {
   public Clazz getClass(final String name) throws ClassNotFoundException {
     final Clazz clazz = classes.get(name);
     if (clazz == null) {
-      throw new ClassNotFoundException(name);
+      /* Does the class name an array?  If so, we need to create a new 
+       * Clazz object for it.
+       */
+      if (name.charAt(0) == '[') {
+        final Clazz arrayClass = new Clazz(name);
+        classes.put(name, arrayClass);
+        return arrayClass;
+      } else {
+        throw new ClassNotFoundException(name);
+      }
     } else {
       return clazz;
     }

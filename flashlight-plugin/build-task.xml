@@ -1,0 +1,30 @@
+<project name="surelogic-maven-plugin" default="install-tools">
+
+    <property name="local-repo" value="libs" />
+    <property name="mvn" value="/home/nathan/java/apache-maven-3.2.5/bin/mvn" />
+    <target name="install-tools">
+        <exec executable="${mvn}">
+            <arg value="dependency:purge-local-repository" />
+            <arg value="-DmanualInclude=com.surelogic:flashlight-ant,com.surelogic:flashlight-rewriter" />
+        </exec>
+        <exec executable="${mvn}">
+            <arg value="deploy:deploy-file" />
+            <arg value="-Durl=file://${local-repo}" />
+            <arg value="-Dfile=../flashlight-client-eclipse/lib/flashlight-rewriter.jar" />
+            <arg value="-DgroupId=com.surelogic" />
+            <arg value="-DartifactId=flashlight-rewriter" />
+            <arg value="-Dpackaging=jar" />
+            <arg value="-Dversion=1.0.0" />
+        </exec>
+        <exec executable="${mvn}">
+            <arg value="deploy:deploy-file" />
+            <arg value="-Durl=file://${local-repo}" />
+            <arg value="-Dfile=../flashlight-ant/flashlight-ant.jar" />
+            <arg value="-DgroupId=com.surelogic" />
+            <arg value="-DartifactId=flashlight-ant" />
+            <arg value="-Dpackaging=jar" />
+            <arg value="-Dversion=1.0.0" />
+        </exec>
+    </target>
+    
+</project>

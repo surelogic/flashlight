@@ -74,8 +74,17 @@
 				helpContextId="menu-open-run-control">
 			</action>
 			<action
-				class="com.surelogic.flashlight.client.eclipse.actions.SetupAntTasksAction"
-				id="com.surelogic.flashlight.client.eclipse.actions.SetupAntTasksAction"
+				class="com.surelogic.flashlight.client.eclipse.actions.SaveMavenPluginAction"
+				id="com.surelogic.flashlight.client.eclipse.actions.SaveMavenPluginAction"
+				icon="platform:/plugin/com.surelogic.common/lib/images/jar_saveas.gif"
+				label="Save Maven Plugin As..."
+				tooltip="Save a copy of the Flashlight Maven plugin to the disk"
+				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/client"
+				helpContextId="menu-save-flashlight-maven">
+			</action>
+			<action
+				class="com.surelogic.flashlight.client.eclipse.actions.SaveAntTasksAction"
+				id="com.surelogic.flashlight.client.eclipse.actions.SaveAntTasksAction"
 				icon="platform:/plugin/com.surelogic.common/lib/images/jar_saveas.gif"
 				label="Save Ant Task As..."
 				tooltip="Save a copy of the Flashlight Ant task library to the disk"
@@ -86,7 +95,7 @@
 				class="com.surelogic.flashlight.client.eclipse.actions.ImportFlashlightRunAction"
 				id="com.surelogic.flashlight.client.eclipse.actions.ImportFlashlightRunAction"
 				icon="platform:/plugin/com.surelogic.common/lib/images/fl_run_view.gif"
-				label="Import Ant Run..."
+				label="Import Ant/Maven Run..."
 				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/client"
 				helpContextId="menu-import-run">
 			</action>

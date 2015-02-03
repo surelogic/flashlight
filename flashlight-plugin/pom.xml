@@ -4,7 +4,7 @@
 
   <groupId>com.surelogic</groupId>
   <artifactId>flashlight-plugin</artifactId>
-  <version>1.0</version>
+  <version>1.0.0</version>
   <packaging>maven-plugin</packaging>
 
   <name>SureLogic Flashlight Plugin</name>
@@ -134,7 +134,7 @@
         <artifactId>maven-plugin-plugin</artifactId>
         <version>3.2</version>
         <configuration>
-          <goalPrefix>surelogic</goalPrefix>
+          <goalPrefix>flashlight</goalPrefix>
           <skipErrorNoDescriptorsFound>true</skipErrorNoDescriptorsFound>
         </configuration>
         <executions>

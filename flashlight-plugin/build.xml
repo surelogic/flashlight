@@ -1,8 +1,22 @@
 <project name="surelogic-maven-plugin" default="install-tools">
-
+    <!-- Trying to determine the release version from the help plug-in -->
+    <!-- Hack that reads the "Bundle-Version: 5.2.2.qualifier" line to come up with "5.2.2" -->
+    <loadfile property="release-version" srcFile="../flashlight-client-eclipse/META-INF/MANIFEST.MF">
+        <filterchain>
+            <linecontains>
+                <contains value="Bundle-Version:" />
+            </linecontains>
+            <striplinebreaks />
+            <deletecharacters chars="Bundle-Version: qualifier" />
+            <tokenfilter>
+                <replaceregex pattern="\.$" replace="" flags="g" />
+            </tokenfilter>
+        </filterchain>
+    </loadfile>
     <property name="local-repo" value="libs" />
     <property name="mvn" value="/home/nathan/java/apache-maven-3.2.5/bin/mvn" />
     <target name="install-tools">
+        <delete dir="${local-repo}/com" />
         <exec executable="${mvn}">
             <arg value="dependency:purge-local-repository" />
             <arg value="-DmanualInclude=com.surelogic:flashlight-ant,com.surelogic:flashlight-rewriter,com.surelogic:flashlight-runtime,com.surelogic:flashlight-plugin" />
@@ -14,7 +28,7 @@
             <arg value="-DgroupId=com.surelogic" />
             <arg value="-DartifactId=flashlight-rewriter" />
             <arg value="-Dpackaging=jar" />
-            <arg value="-Dversion=1.0.0" />
+            <arg value="-Dversion=${release-version}" />
         </exec>
         <exec executable="${mvn}">
             <arg value="deploy:deploy-file" />
@@ -23,7 +37,7 @@
             <arg value="-DgroupId=com.surelogic" />
             <arg value="-DartifactId=flashlight-runtime" />
             <arg value="-Dpackaging=jar" />
-            <arg value="-Dversion=1.0.0" />
+            <arg value="-Dversion=${release-version}" />
         </exec>
         <exec executable="${mvn}">
             <arg value="deploy:deploy-file" />
@@ -32,10 +46,14 @@
             <arg value="-DgroupId=com.surelogic" />
             <arg value="-DartifactId=flashlight-ant" />
             <arg value="-Dpackaging=jar" />
-            <arg value="-Dversion=1.0.0" />
+            <arg value="-Dversion=${release-version}" />
         </exec>
         <exec executable="${mvn}">
+            <arg value="clean" />
             <arg value="deploy" />
+            <arg value="eclipse:eclipse" />
+            <arg value="-DdownloadSources=true" />
+            <arg value="-DdownloadJavadocs=true" />
         </exec>
         <zip destfile="../flashlight-common/lib/flashlight-maven.zip" >
             <zipfileset dir="libs" prefix="flashlight-repo"/>

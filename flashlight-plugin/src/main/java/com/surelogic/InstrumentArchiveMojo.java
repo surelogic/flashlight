@@ -19,6 +19,7 @@ import org.apache.tools.ant.BuildException;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.artifact.Artifact;
+import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.resolution.ArtifactRequest;
@@ -53,14 +54,17 @@ public class InstrumentArchiveMojo extends AbstractMojo {
     private org.apache.maven.project.MavenProject mavenProject;
 
     /**
-     * The project's remote repositories to use for the resolution of plugins
-     * and their dependencies.
+     * The project's remote repositories to use for the resolution of project
+     * dependencies.
      *
      */
     @Parameter(defaultValue = "${project.remoteProjectRepositories}", readonly = true)
-    private List<RemoteRepository> remoteRepos;
+    private List<RemoteRepository> projectRepos;
+    @Parameter(defaultValue = "${project.remotePluginRepositories}", readonly = true)
+    private List<RemoteRepository> pluginRepos;
 
-    private static final String RUNTIME_JAR_PATH = "flashlight/lib/flashlight-runtime.jar";
+    @Parameter(defaultValue = "${plugin.version}", readonly = true)
+    private String version;
 
     @Parameter(defaultValue = "${project.build.directory}", property = "outputDir", required = false)
     private File buildDirectory;
@@ -84,8 +88,7 @@ public class InstrumentArchiveMojo extends AbstractMojo {
     private String projectVersion;
     @Parameter(defaultValue = "${project.packaging}", property = "packaging")
     private String packagingType;
-    @Parameter(property = "toolHome", required = true)
-    private File toolHome;
+
     @Parameter(defaultValue = "${user.home}/.flashlight", property = "dataDir", required = true)
     private File dataDir;
     @Parameter(defaultValue = "${project.build.finalName}", property = "archiveName")
@@ -93,12 +96,6 @@ public class InstrumentArchiveMojo extends AbstractMojo {
 
     @Override
     public void execute() throws MojoExecutionException {
-        final File runtime = new File(toolHome, RUNTIME_JAR_PATH);
-        if (!runtime.exists()) {
-            throw new BuildException(
-                    "Valid flashlight runtime file must be found in tool home: "
-                            + toolHome);
-        }
 
         String suffix = "war".equals(packagingType) ? "war" : "jar";
         String in = archiveName + '.' + suffix;
@@ -111,17 +108,21 @@ public class InstrumentArchiveMojo extends AbstractMojo {
         if (outFile.exists()) {
             outFile.delete();
         }
-        if (!runtime.exists()) {
-            throw new BuildException(String.format("%s does not exist.",
-                    runtime));
-        }
 
         try {
             ArchiveInstrumenter inst = new ArchiveInstrumenter();
             inst.setIn(inFile);
             inst.setOut(outFile);
             inst.setDataDir(dataDir);
-            inst.setRuntime(runtime);
+
+            ArtifactRequest runtimeRequest = new ArtifactRequest();
+            runtimeRequest.setArtifact(new DefaultArtifact(
+                    "com.surelogic:flashlight-runtime:" + version));
+            runtimeRequest.setRepositories(pluginRepos);
+            ArtifactResult runtimeResult = repoSystem.resolveArtifact(
+                    repoSession, runtimeRequest);
+
+            inst.setRuntime(runtimeResult.getArtifact().getFile());
 
             DefaultDependencyResolutionRequest depRequest = new DefaultDependencyResolutionRequest(
                     mavenProject, repoSession);
@@ -135,7 +136,7 @@ public class InstrumentArchiveMojo extends AbstractMojo {
                     if (a.getFile() == null) {
                         ArtifactRequest request = new ArtifactRequest();
                         request.setArtifact(a);
-                        request.setRepositories(remoteRepos);
+                        request.setRepositories(projectRepos);
                         ArtifactResult result = repoSystem.resolveArtifact(
                                 repoSession, request);
                         Artifact resultArtifact = result.getArtifact();
@@ -148,12 +149,13 @@ public class InstrumentArchiveMojo extends AbstractMojo {
             Log log = getLog();
             log.info(String
                     .format("Instrumenting %s -> %s.\n\tData directory: %s\n\tRuntime: %s\n\t",
-                            inFile, outFile, dataDir, runtime));
+                            inFile, outFile, dataDir, inst.getRuntime()));
             log.info(String.format("\t Library dependencies%s",
                     inst.getLibraries()));
             inst.execute();
         } catch (final Exception e) {
-            throw new BuildException(e);
+            throw new MojoExecutionException(
+                    "Problem encountered while running task", e);
         } finally {
             cleanUp();
         }

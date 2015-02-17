@@ -12,7 +12,7 @@
     <property name="flashlight-common-project-classes" value="../flashlight-common/bin"/>
     <property name="common-project-classes" value="../../common/common/bin"/>
     <property name="common-project-runtime" value="../../common/common/lib/runtime"/>
-	<property name="ant.jar" value="${lib}/ant.jar" />
+	<property name="ant.jar" value="${common-project-runtime}/ant-1.9.4.jar" />
 
 	<property name="antlib.xml" value="com/surelogic/flashlight/ant/antlib.xml"/>
 	

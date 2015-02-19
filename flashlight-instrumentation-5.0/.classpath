@@ -3,7 +3,6 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" output="bin-test" path="test"/>
 	<classpathentry kind="src" path="src-asm"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/3"/>
 	<classpathentry kind="lib" path="lib/servlet-2_5-api.jar"/>
 	<classpathentry kind="lib" path="lib/jaxb1-impl.jar"/>
@@ -21,5 +20,6 @@
 	<classpathentry kind="lib" path="/common/lib/runtime/asm-5.0.2.jar"/>
 	<classpathentry kind="lib" path="/common/lib/runtime/asm-commons-5.0.2.jar"/>
 	<classpathentry kind="lib" path="/common/lib/runtime/asm-tree-5.0.2.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

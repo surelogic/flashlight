@@ -12,6 +12,7 @@ import org.apache.maven.plugins.annotations.Execute;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.DefaultDependencyResolutionRequest;
 import org.apache.maven.project.DependencyResolutionResult;
 import org.apache.maven.project.ProjectDependenciesResolver;
@@ -25,7 +26,7 @@ import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResult;
 
-@Mojo(name = "instrument-archive")
+@Mojo(name = "instrument-archive", requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
 @Execute(phase = LifecyclePhase.PACKAGE)
 public class InstrumentArchiveMojo extends AbstractMojo {
 
@@ -72,11 +73,6 @@ public class InstrumentArchiveMojo extends AbstractMojo {
     private File binDirectory;
     @Parameter(defaultValue = "${project.build.testOutputDirectory", property = "testBinDir", required = false)
     private File testBinDirectory;
-
-    @Parameter(defaultValue = "${project.build.sourceDirectory", property = "srcDir", required = false)
-    private File sourceDirectory;
-    @Parameter(defaultValue = "${project.build.testSourceDirectory", property = "testSrcDir", required = false)
-    private File testSourceDirectory;
 
     @Parameter(defaultValue = "${project.build.resources", property = "resources", required = false)
     private File resources;

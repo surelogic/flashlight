@@ -28,8 +28,8 @@ import com.surelogic.common.FileUtility;
 import com.surelogic.flashlight.ant.Instrument;
 import com.surelogic.flashlight.ant.Instrument.Directory;
 
-@Mojo(name = "instrument", requiresDependencyResolution = ResolutionScope.COMPILE)
-@Execute(phase = LifecyclePhase.COMPILE)
+@Mojo(name = "instrument", requiresDependencyResolution = ResolutionScope.TEST)
+@Execute(phase = LifecyclePhase.TEST_COMPILE)
 public class InstrumentClassesMojo extends AbstractMojo {
 
     @Component

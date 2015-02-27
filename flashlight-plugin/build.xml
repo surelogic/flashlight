@@ -13,14 +13,21 @@
             </tokenfilter>
         </filterchain>
     </loadfile>
+
     <property name="local-repo" value="libs" />
+
+    <!-- Must use mvn.bat on Microsoft Windows -->
+    <condition property="maven.executable" value="mvn.bat" else="mvn">
+       <os family="windows" />
+    </condition>
+
     <target name="install-tools">
         <delete dir="${local-repo}/com" />
-        <exec executable="mvn">
+        <exec executable="${maven.executable}">
             <arg value="dependency:purge-local-repository" />
             <arg value="-DmanualInclude=com.surelogic:flashlight-ant,com.surelogic:flashlight-rewriter,com.surelogic:flashlight-runtime,com.surelogic:flashlight-plugin" />
         </exec>
-        <exec executable="mvn">
+        <exec executable="${maven.executable}">
             <arg value="deploy:deploy-file" />
             <arg value="-Durl=file://${local-repo}" />
             <arg value="-Dfile=../flashlight-client-eclipse/lib/flashlight-rewriter.jar" />
@@ -29,7 +36,7 @@
             <arg value="-Dpackaging=jar" />
             <arg value="-Dversion=${release-version}" />
         </exec>
-        <exec executable="mvn">
+        <exec executable="${maven.executable}">
             <arg value="deploy:deploy-file" />
             <arg value="-Durl=file://${local-repo}" />
             <arg value="-Dfile=../flashlight-instrumentation-5.0/flashlight-runtime.jar" />
@@ -38,7 +45,7 @@
             <arg value="-Dpackaging=jar" />
             <arg value="-Dversion=${release-version}" />
         </exec>
-        <exec executable="mvn">
+        <exec executable="${maven.executable}">
             <arg value="deploy:deploy-file" />
             <arg value="-Durl=file://${local-repo}" />
             <arg value="-Dfile=../flashlight-ant/flashlight-ant.jar" />
@@ -47,7 +54,7 @@
             <arg value="-Dpackaging=jar" />
             <arg value="-Dversion=${release-version}" />
         </exec>
-        <exec executable="mvn">
+        <exec executable="${maven.executable}">
             <arg value="clean" />
             <arg value="deploy" />
             <arg value="eclipse:eclipse" />

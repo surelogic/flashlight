@@ -120,10 +120,10 @@ LaunchConfigurationDelegate {
                 @Override
                 public IStatus runInUIThread(IProgressMonitor monitor) {
                     MessageDialog
-                    .openInformation(
-                            EclipseUIUtility.getShell(),
-                            I18N.msg("flashlight.eclipse.android.launchError.title"),
-                            I18N.msg("flashlight.eclipse.android.launchError.message"));
+                            .openInformation(
+                                    EclipseUIUtility.getShell(),
+                                    I18N.msg("flashlight.eclipse.android.launchError.title"),
+                                    I18N.msg("flashlight.eclipse.android.launchError.message"));
                     return Status.OK_STATUS;
                 }
             }.schedule();
@@ -185,34 +185,34 @@ LaunchConfigurationDelegate {
                 // in case it does.
                 if (connections == -1 || restarts == -1) {
                     AdtPlugin
-                    .printErrorToConsole(
-                            project,
-                            "The connection to adb is down, and a severe error has occured.",
-                            "You must restart adb and Eclipse.",
-                            String.format(
-                                    "Please ensure that adb is correctly located at '%1$s' and can be executed.",
-                                    AdtPlugin.getOsAbsoluteAdb()));
+                            .printErrorToConsole(
+                                    project,
+                                    "The connection to adb is down, and a severe error has occured.",
+                                    "You must restart adb and Eclipse.",
+                                    String.format(
+                                            "Please ensure that adb is correctly located at '%1$s' and can be executed.",
+                                            AdtPlugin.getOsAbsoluteAdb()));
                     return;
                 }
 
                 if (restarts == 0) {
                     AdtPlugin
-                    .printErrorToConsole(
-                            project,
-                            "Connection with adb was interrupted.",
-                            String.format(
-                                    "%1$s attempts have been made to reconnect.",
-                                    connections),
-                            "You may want to manually restart adb from the Devices view.");
+                            .printErrorToConsole(
+                                    project,
+                                    "Connection with adb was interrupted.",
+                                    String.format(
+                                            "%1$s attempts have been made to reconnect.",
+                                            connections),
+                                    "You may want to manually restart adb from the Devices view.");
                 } else {
                     AdtPlugin
-                    .printErrorToConsole(
-                            project,
-                            "Connection with adb was interrupted, and attempts to reconnect have failed.",
-                            String.format(
-                                    "%1$s attempts have been made to restart adb.",
-                                    restarts),
-                            "You may want to manually restart adb from the Devices view.");
+                            .printErrorToConsole(
+                                    project,
+                                    "Connection with adb was interrupted, and attempts to reconnect have failed.",
+                                    String.format(
+                                            "%1$s attempts have been made to restart adb.",
+                                            restarts),
+                                    "You may want to manually restart adb from the Devices view.");
 
                 }
                 return;
@@ -259,17 +259,23 @@ LaunchConfigurationDelegate {
 
         doLaunch(configuration, mode, monitor, project, androidLaunch, config,
                 controller, applicationPackage, manifestData);
-        if (!androidLaunch.isStopped()) {
+        if (androidLaunch.isLaunched()) {
             final Job job = new ConnectToProjectJob(data,
                     manifestData.getPackage());
             job.schedule();
         }
     }
 
+    /**
+     * A version
+     *
+     * @author nathan
+     *
+     */
     @SuppressWarnings("restriction")
-    class InstrumentedAndroidLaunch extends AndroidLaunch {
+    static class InstrumentedAndroidLaunch extends AndroidLaunch {
         String runId;
-        boolean done;
+        private boolean launched;
 
         public InstrumentedAndroidLaunch(
                 ILaunchConfiguration launchConfiguration, String mode,
@@ -281,20 +287,59 @@ LaunchConfigurationDelegate {
             this.runId = runId;
         }
 
-        public boolean isStopped() {
-            return done;
-        }
-
         @Override
         public void stopLaunch() {
-            if (runId != null) {
+            if (runId != null && launched == false) {
                 RunManager.getInstance()
-                .notifyLaunchCancelledPriorToCollectingData(runId);
+                        .notifyLaunchCancelledPriorToCollectingData(runId);
             }
-            done = true;
             super.stopLaunch();
         }
 
+        public boolean isLaunched() {
+            return launched;
+        }
+
+        public void setLaunched(boolean launched) {
+            this.launched = launched;
+        }
+
+        /**
+         * stopLaunch is always called, so if the action has been performed then
+         * we know that even though stopLaunch is being called we haven't
+         * cancelled out.
+         *
+         * @author nathan
+         *
+         */
+        class InstrumentedLaunchAction implements IAndroidLaunchAction {
+
+            private final IAndroidLaunchAction action;
+
+            InstrumentedLaunchAction(IAndroidLaunchAction action) {
+                this.action = action;
+            }
+
+            @Override
+            public boolean doLaunchAction(DelayedLaunchInfo arg0,
+                    Collection<IDevice> arg1) {
+                try {
+                    return action.doLaunchAction(arg0, arg1);
+                } finally {
+                    launched = true;
+                }
+            }
+
+            @Override
+            public String getLaunchDescription() {
+                return action.getLaunchDescription();
+            }
+
+            public boolean isLaunched() {
+                return launched;
+            }
+
+        }
     }
 
     private static final class PermissionChecker extends DefaultHandler {
@@ -496,7 +541,8 @@ LaunchConfigurationDelegate {
     @SuppressWarnings("restriction")
     protected void doLaunch(final ILaunchConfiguration configuration,
             final String mode, final IProgressMonitor monitor,
-            final IProject project, final AndroidLaunch androidLaunch,
+            final IProject project,
+            final InstrumentedAndroidLaunch androidLaunch,
             final AndroidLaunchConfiguration config,
             final AndroidLaunchController controller,
             final IFile applicationPackage, final ManifestData manifestData) {
@@ -593,6 +639,7 @@ LaunchConfigurationDelegate {
         } else {
             launchAction = new ActivityLaunchAction(activityName, controller);
         }
+        launchAction = androidLaunch.new InstrumentedLaunchAction(launchAction);
 
         // everything seems fine, we ask the launch controller to handle
         // the rest

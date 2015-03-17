@@ -429,7 +429,7 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
       if (f_bk.isDisposed())
         return;
 
-      final boolean finished = f_lrun.isFinishedCollectingData();
+      final boolean finished = f_lrun.isFinishedCollectingData() || f_lrun.isCancelled();
 
       final Image image = getImage();
       if (f_image.getImage() != image)
@@ -493,7 +493,7 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
             f_bottom = null;
           }
         }
-      } else {
+      } else if (!f_lrun.isCancelled()) {
         // show duration
         final Label durationLabel;
         if (f_bottom instanceof Label) {
@@ -556,7 +556,7 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
 
         for (Iterator<LaunchedRun> iterator = launchedRuns.iterator(); iterator.hasNext();) {
           LaunchedRun launchedRun = iterator.next();
-          if (!launchedRun.getDisplayToUser() || launchedRun.isCancelled())
+          if (!launchedRun.getDisplayToUser())
             // clear out dismissed launched runs the user doesn't want to see
             iterator.remove();
           else {

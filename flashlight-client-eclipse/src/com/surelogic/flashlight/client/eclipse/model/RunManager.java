@@ -129,7 +129,7 @@ public final class RunManager implements ILifecycle {
   /**
    * Do not call this method while holding a lock!
    */
-  private void notifyCollectionCompletedRunDirectoryChange() {
+  void notifyCollectionCompletedRunDirectoryChange() {
     for (final IRunManagerObserver o : f_observers) {
       o.notifyCollectionCompletedRunDirectoryChange();
     }
@@ -138,7 +138,7 @@ public final class RunManager implements ILifecycle {
   /**
    * Do not call this method while holding a lock!
    */
-  private void notifyLaunchedRunChange() {
+  void notifyLaunchedRunChange() {
     for (final IRunManagerObserver o : f_observers) {
       o.notifyLaunchedRunChange();
     }
@@ -147,7 +147,7 @@ public final class RunManager implements ILifecycle {
   /**
    * Do not call this method while holding a lock!
    */
-  private void notifyPrepareDataJobScheduled() {
+  void notifyPrepareDataJobScheduled() {
     for (final IRunManagerObserver o : f_observers) {
       o.notifyPrepareDataJobScheduled();
     }
@@ -157,7 +157,7 @@ public final class RunManager implements ILifecycle {
    * A reference to the Flashlight data directory.
    */
   @Vouch("ThreadSafe")
-  private final File f_dataDir;
+  final File f_dataDir;
 
   /**
    * Gets an abstract representation of the Flashlight data directory.
@@ -214,7 +214,7 @@ public final class RunManager implements ILifecycle {
   /**
    * Lock used to protect mutable state managed by this class.
    */
-  private final Object f_lock = new Object();
+  final Object f_lock = new Object();
 
   /*
    * Sets that track launching, collection, and termination of an instrumented
@@ -225,7 +225,7 @@ public final class RunManager implements ILifecycle {
    */
 
   @UniqueInRegion("RunState")
-  private final LinkedList<LaunchedRun> f_launchedRuns = new LinkedList<LaunchedRun>();
+  final LinkedList<LaunchedRun> f_launchedRuns = new LinkedList<LaunchedRun>();
 
   /**
    * Gets an ordered list of runs launched during this Eclipse session. The list
@@ -277,7 +277,7 @@ public final class RunManager implements ILifecycle {
    *         {@code null} if none.
    */
   @Nullable
-  private LaunchedRun getLaunchedRunFor(@NonNull final String runIdString) {
+  LaunchedRun getLaunchedRunFor(@NonNull final String runIdString) {
     if (runIdString != null) {
       synchronized (f_lock) {
         for (LaunchedRun lrun : f_launchedRuns) {
@@ -292,7 +292,8 @@ public final class RunManager implements ILifecycle {
 
   /**
    * Notifies the run manager that an application is being instrumented and
-   * launched.
+   * launched. This is the first method called by launch code and it outputs a
+   * warning if it is called twice with the same {@code runIdString}.
    * 
    * @param runIdString
    *          a run identity string.
@@ -315,6 +316,23 @@ public final class RunManager implements ILifecycle {
     notifyLaunchedRunChange();
     // TODO perhaps a better way with a preference
     RunControlDialog.show();
+  }
+
+  /**
+   * Notifies the run manager that a launch in the process of performing
+   * instrumentation and launch of a program or application was cancelled or
+   * failed in some way prior to invoking {@link #notifyCollectingData(String)}.
+   * <p>
+   * This situation can occur when an Android app is launched in the IDE and no
+   * device or emulator exists that can run it, so the user cancels the launch.
+   * 
+   * @param runIdString
+   *          a run identity string.
+   * @throws IllegalArgumentException
+   *           if runIdString is {@code null}.
+   */
+  public void notifyLaunchCancelledPriorToCollectingData(@NonNull final String runIdString) {
+
   }
 
   /**
@@ -512,7 +530,7 @@ public final class RunManager implements ILifecycle {
    * the same elements as {@link #f_preparedRunDirectories}.
    */
   @UniqueInRegion("RunState")
-  private final Set<RunDirectory> f_collectionCompletedRunDirectories = new HashSet<RunDirectory>();
+  final Set<RunDirectory> f_collectionCompletedRunDirectories = new HashSet<RunDirectory>();
 
   /**
    * Holds the set of all run directories that have completed data collection
@@ -527,7 +545,7 @@ public final class RunManager implements ILifecycle {
    * elements as {@link #f_preparedRunDirectories}.
    */
   @UniqueInRegion("RunState")
-  private final Set<RunDirectory> f_preparedRunDirectories = new HashSet<RunDirectory>();
+  final Set<RunDirectory> f_preparedRunDirectories = new HashSet<RunDirectory>();
 
   /**
    * Gets the set of all run directories that have completed data collection.
@@ -776,7 +794,7 @@ public final class RunManager implements ILifecycle {
   }
 
   @NonNull
-  private static Set<RunDescription> getRunDescriptionsFor(Set<RunDirectory> runs) {
+  static Set<RunDescription> getRunDescriptionsFor(Set<RunDirectory> runs) {
     final Set<RunDescription> result = new HashSet<RunDescription>(runs.size());
     for (RunDirectory runDir : runs) {
       result.add(runDir.getDescription());

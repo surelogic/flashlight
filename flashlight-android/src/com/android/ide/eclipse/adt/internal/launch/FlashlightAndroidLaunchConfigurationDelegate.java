@@ -3,17 +3,13 @@ package com.android.ide.eclipse.adt.internal.launch;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -22,25 +18,18 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
 import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IFolder;
-import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IncrementalProjectBuilder;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
+import org.eclipse.debug.core.model.ISourceLocator;
 import org.eclipse.debug.core.model.LaunchConfigurationDelegate;
-import org.eclipse.jdt.core.IClasspathEntry;
-import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
-import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.ui.progress.UIJob;
@@ -49,58 +38,28 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import com.android.SdkConstants;
 import com.android.ddmlib.AndroidDebugBridge;
 import com.android.ddmlib.IDevice;
 import com.android.ide.common.xml.ManifestData;
 import com.android.ide.common.xml.ManifestData.Activity;
 import com.android.ide.eclipse.adt.AdtConstants;
 import com.android.ide.eclipse.adt.AdtPlugin;
-import com.android.ide.eclipse.adt.AndroidPrintStream;
-import com.android.ide.eclipse.adt.internal.build.AaptExecException;
-import com.android.ide.eclipse.adt.internal.build.AaptParser;
-import com.android.ide.eclipse.adt.internal.build.AaptResultException;
-import com.android.ide.eclipse.adt.internal.build.BuildHelper;
-import com.android.ide.eclipse.adt.internal.build.BuildHelper.ResourceMarker;
-import com.android.ide.eclipse.adt.internal.build.DexException;
-import com.android.ide.eclipse.adt.internal.build.Messages;
-import com.android.ide.eclipse.adt.internal.build.NativeLibInJarException;
-import com.android.ide.eclipse.adt.internal.build.builders.PostCompilerBuilder;
-import com.android.ide.eclipse.adt.internal.preferences.AdtPrefs;
-import com.android.ide.eclipse.adt.internal.preferences.AdtPrefs.BuildVerbosity;
 import com.android.ide.eclipse.adt.internal.project.AndroidManifestHelper;
 import com.android.ide.eclipse.adt.internal.project.ApkInstallManager;
-import com.android.ide.eclipse.adt.internal.project.BaseProjectHelper;
 import com.android.ide.eclipse.adt.internal.project.ProjectHelper;
-import com.android.ide.eclipse.adt.internal.sdk.ProjectState;
-import com.android.ide.eclipse.adt.internal.sdk.Sdk;
-import com.android.prefs.AndroidLocation.AndroidLocationException;
-import com.android.sdklib.BuildToolInfo;
-import com.android.sdklib.build.ApkCreationException;
-import com.android.sdklib.build.DuplicateFileException;
-import com.android.sdklib.internal.build.DebugKeyProvider.KeytoolException;
 import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic._flashlight.rewriter.InstrumentationFileTranslator;
-import com.surelogic._flashlight.rewriter.PrintWriterMessenger;
-import com.surelogic._flashlight.rewriter.RewriteManager;
-import com.surelogic._flashlight.rewriter.RewriteManager.AlreadyInstrumentedException;
-import com.surelogic._flashlight.rewriter.config.ConfigurationBuilder;
 import com.surelogic.common.FileUtility;
 import com.surelogic.common.core.EclipseUtility;
 import com.surelogic.common.core.logging.SLEclipseStatusUtility;
 import com.surelogic.common.i18n.I18N;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.common.ui.EclipseUIUtility;
-import com.surelogic.common.ui.dialogs.ShowTextDialog;
-import com.surelogic.common.ui.jobs.SLUIJob;
 import com.surelogic.flashlight.android.jobs.ReadFlashlightStreamJob;
-import com.surelogic.flashlight.client.eclipse.Activator;
 import com.surelogic.flashlight.client.eclipse.jobs.WatchFlashlightMonitorJob;
 import com.surelogic.flashlight.client.eclipse.launch.LaunchHelper;
 import com.surelogic.flashlight.client.eclipse.launch.LaunchHelper.RuntimeConfig;
-import com.surelogic.flashlight.client.eclipse.launch.LaunchUtils;
 import com.surelogic.flashlight.client.eclipse.model.RunManager;
-import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
 import com.surelogic.flashlight.client.eclipse.views.monitor.MonitorStatus;
 
 /**
@@ -113,7 +72,7 @@ import com.surelogic.flashlight.client.eclipse.views.monitor.MonitorStatus;
  *
  */
 public class FlashlightAndroidLaunchConfigurationDelegate extends
-        LaunchConfigurationDelegate {
+LaunchConfigurationDelegate {
 
     /**
      * Default launch action. This launches the activity that is setup to be
@@ -131,17 +90,19 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
      */
     @SuppressWarnings("restriction")
     public static final String ATTR_ACTIVITY = AdtPlugin.PLUGIN_ID
-            + ".activity"; //$NON-NLS-1$
+    + ".activity"; //$NON-NLS-1$
 
-    private final Logger log = SLLogger
-            .getLoggerFor(FlashlightAndroidLaunchConfigurationDelegate.class);
+    static Logger getLog() {
+        return SLLogger
+                .getLoggerFor(FlashlightAndroidLaunchConfigurationDelegate.class);
+    }
 
     @SuppressWarnings("restriction")
     @Override
     public void launch(final ILaunchConfiguration configuration,
             final String mode, final ILaunch launch,
             final IProgressMonitor monitor) throws CoreException {
-        AndroidLaunch androidLaunch = (AndroidLaunch) launch;
+        InstrumentedAndroidLaunch androidLaunch = (InstrumentedAndroidLaunch) launch;
         IProject project = EclipseUtility
                 .getProject(configuration
                         .getAttribute(
@@ -159,10 +120,10 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
                 @Override
                 public IStatus runInUIThread(IProgressMonitor monitor) {
                     MessageDialog
-                            .openInformation(
-                                    EclipseUIUtility.getShell(),
-                                    I18N.msg("flashlight.eclipse.android.launchError.title"),
-                                    I18N.msg("flashlight.eclipse.android.launchError.message"));
+                    .openInformation(
+                            EclipseUIUtility.getShell(),
+                            I18N.msg("flashlight.eclipse.android.launchError.title"),
+                            I18N.msg("flashlight.eclipse.android.launchError.message"));
                     return Status.OK_STATUS;
                 }
             }.schedule();
@@ -172,8 +133,9 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
         RunId runId = new RunId(project.getName(), new Date());
         RunManager.getInstance().notifyPerformingInstrumentationAndLaunch(
                 runId.getId());
-        FLData data = doFullIncrementalDebugBuild(runId, configuration,
-                project, monitor);
+        androidLaunch.setRunId(runId.getId());
+        FLData data = AndroidBuildUtil.doFullIncrementalDebugBuild(runId,
+                configuration, project, monitor);
 
         // if we have a valid debug port, this means we're debugging an app
         // that's already launched.
@@ -223,34 +185,34 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
                 // in case it does.
                 if (connections == -1 || restarts == -1) {
                     AdtPlugin
-                            .printErrorToConsole(
-                                    project,
-                                    "The connection to adb is down, and a severe error has occured.",
-                                    "You must restart adb and Eclipse.",
-                                    String.format(
-                                            "Please ensure that adb is correctly located at '%1$s' and can be executed.",
-                                            AdtPlugin.getOsAbsoluteAdb()));
+                    .printErrorToConsole(
+                            project,
+                            "The connection to adb is down, and a severe error has occured.",
+                            "You must restart adb and Eclipse.",
+                            String.format(
+                                    "Please ensure that adb is correctly located at '%1$s' and can be executed.",
+                                    AdtPlugin.getOsAbsoluteAdb()));
                     return;
                 }
 
                 if (restarts == 0) {
                     AdtPlugin
-                            .printErrorToConsole(
-                                    project,
-                                    "Connection with adb was interrupted.",
-                                    String.format(
-                                            "%1$s attempts have been made to reconnect.",
-                                            connections),
-                                    "You may want to manually restart adb from the Devices view.");
+                    .printErrorToConsole(
+                            project,
+                            "Connection with adb was interrupted.",
+                            String.format(
+                                    "%1$s attempts have been made to reconnect.",
+                                    connections),
+                            "You may want to manually restart adb from the Devices view.");
                 } else {
                     AdtPlugin
-                            .printErrorToConsole(
-                                    project,
-                                    "Connection with adb was interrupted, and attempts to reconnect have failed.",
-                                    String.format(
-                                            "%1$s attempts have been made to restart adb.",
-                                            restarts),
-                                    "You may want to manually restart adb from the Devices view.");
+                    .printErrorToConsole(
+                            project,
+                            "Connection with adb was interrupted, and attempts to reconnect have failed.",
+                            String.format(
+                                    "%1$s attempts have been made to restart adb.",
+                                    restarts),
+                            "You may want to manually restart adb from the Devices view.");
 
                 }
                 return;
@@ -297,9 +259,42 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
 
         doLaunch(configuration, mode, monitor, project, androidLaunch, config,
                 controller, applicationPackage, manifestData);
+        if (!androidLaunch.isStopped()) {
+            final Job job = new ConnectToProjectJob(data,
+                    manifestData.getPackage());
+            job.schedule();
+        }
+    }
 
-        final Job job = new ConnectToProjectJob(data, manifestData.getPackage());
-        job.schedule();
+    @SuppressWarnings("restriction")
+    class InstrumentedAndroidLaunch extends AndroidLaunch {
+        String runId;
+        boolean done;
+
+        public InstrumentedAndroidLaunch(
+                ILaunchConfiguration launchConfiguration, String mode,
+                ISourceLocator locator) {
+            super(launchConfiguration, mode, locator);
+        }
+
+        public void setRunId(String runId) {
+            this.runId = runId;
+        }
+
+        public boolean isStopped() {
+            return done;
+        }
+
+        @Override
+        public void stopLaunch() {
+            if (runId != null) {
+                RunManager.getInstance()
+                .notifyLaunchCancelledPriorToCollectingData(runId);
+            }
+            done = true;
+            super.stopLaunch();
+        }
+
     }
 
     private static final class PermissionChecker extends DefaultHandler {
@@ -343,298 +338,7 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
         return checker.found;
     }
 
-    @SuppressWarnings("restriction")
-    private FLData doFullIncrementalDebugBuild(RunId runId,
-            final ILaunchConfiguration launchConfig, final IProject project,
-            final IProgressMonitor monitor) throws CoreException {
-        // First have android do their full build
-        ProjectHelper.doFullIncrementalDebugBuild(project, monitor);
-
-        // Get list of projects that we depend on
-        List<IJavaProject> androidProjectList = new ArrayList<IJavaProject>();
-        try {
-            androidProjectList = ProjectHelper
-                    .getAndroidProjectDependencies(BaseProjectHelper
-                            .getJavaProject(project));
-        } catch (JavaModelException e) {
-            AdtPlugin.printErrorToConsole(project, e);
-        }
-        // Recursively build dependencies
-        for (IJavaProject dependency : androidProjectList) {
-            ProjectHelper.doFullIncrementalDebugBuild(dependency.getProject(),
-                    monitor);
-        }
-
-        // Do an incremental build to pick up all the deltas
-        project.build(IncrementalProjectBuilder.INCREMENTAL_BUILD, monitor);
-
-        // If the preferences indicate not to use post compiler optimization
-        // then the incremental build will have done everything necessary,
-        // otherwise,
-        // we have to run the final builder manually (if requested).
-        if (AdtPrefs.getPrefs().getBuildSkipPostCompileOnFileSave()) {
-            // Create the map to pass to the PostC builder
-            Map<String, String> args = new TreeMap<String, String>();
-            args.put(PostCompilerBuilder.POST_C_REQUESTED, ""); //$NON-NLS-1$
-
-            // call the post compiler manually, forcing FULL_BUILD otherwise
-            // Eclipse won't
-            // call the builder since the delta is empty.
-            project.build(IncrementalProjectBuilder.FULL_BUILD,
-                    PostCompilerBuilder.ID, args, monitor);
-        }
-
-        // because the post compiler builder does a delayed refresh due to
-        // library not picking the refresh up if it's done during the build,
-        // we want to force a refresh here as this call is generally asking for
-        // a build to use the apk right after the call.
-        project.refreshLocal(IResource.DEPTH_INFINITE, monitor);
-
-        // list of referenced projects. This is a mix of java projects and
-        // library projects
-        // and is computed below.
-        IProject[] allRefProjects = null;
-
-        ProjectState projectState = Sdk.getProjectState(project);
-        if (projectState == null) {
-            return null;
-        }
-        BuildToolInfo buildToolInfo = projectState.getBuildToolInfo();
-        if (buildToolInfo == null) {
-            buildToolInfo = Sdk.getCurrent().getLatestBuildTool();
-            if (buildToolInfo == null) {
-                AdtPlugin
-                        .printBuildToConsole(BuildVerbosity.VERBOSE, project,
-                                "No \"Build Tools\" package available; use SDK Manager to install one.");
-                throw new IllegalStateException(
-                        "No \"Build Tools\" package available; use SDK Manager to install one.");
-            } else {
-                AdtPlugin.printBuildToConsole(BuildVerbosity.VERBOSE, project,
-                        String.format("Using default Build Tools revision %s",
-                                buildToolInfo.getRevision()));
-            }
-        }
-        boolean isLibrary = projectState.isLibrary();
-
-        List<IProject> libProjects = projectState.getFullLibraryProjects();
-
-        IJavaProject javaProject = JavaCore.create(project);
-
-        // get the list of referenced projects.
-        // get the list of referenced projects.
-        List<IProject> javaProjects = ProjectHelper
-                .getReferencedProjects(project);
-        List<IJavaProject> referencedJavaProjects = BuildHelper
-                .getJavaProjects(javaProjects);
-
-        // mix the java project and the library projecst
-        final int size = libProjects.size() + javaProjects.size();
-        ArrayList<IProject> refList = new ArrayList<IProject>(size);
-        refList.addAll(libProjects);
-        refList.addAll(javaProjects);
-        allRefProjects = refList.toArray(new IProject[size]);
-
-        // get the android output folder
-        IFolder androidOutputFolder = BaseProjectHelper
-                .getAndroidOutputFolder(project);
-        IFolder resOutputFolder = androidOutputFolder
-                .getFolder(SdkConstants.FD_RES);
-
-        // now we need to get the classpath list
-        List<IPath> sourceList = BaseProjectHelper
-                .getSourceClasspaths(javaProject);
-
-        AndroidPrintStream mOutStream = new AndroidPrintStream(project,
-                null /* prefix */, AdtPlugin.getOutStream());
-        AndroidPrintStream mErrStream = new AndroidPrintStream(project,
-                null /* prefix */, AdtPlugin.getOutStream());
-
-        ResourceMarker mResourceMarker = new ResourceMarker() {
-            @Override
-            public void setWarning(final IResource resource,
-                    final String message) {
-                BaseProjectHelper.markResource(resource,
-                        AdtConstants.MARKER_PACKAGING, message,
-                        IMarker.SEVERITY_WARNING);
-            }
-        };
-        // public BuildHelper(@com.android.annotations.NonNull
-        // com.android.ide.eclipse.adt.internal.sdk.ProjectState projectState,
-        // @com.android.annotations.NonNull com.android.sdklib.BuildToolInfo
-        // buildToolInfo, @com.android.annotations.NonNull
-        // com.android.ide.eclipse.adt.AndroidPrintStream outStream,
-        // @com.android.annotations.NonNull
-        // com.android.ide.eclipse.adt.AndroidPrintStream errStream, boolean
-        // forceJumbo, boolean disableDexMerger, boolean debugMode, boolean
-        // verbose,
-        // com.android.ide.eclipse.adt.internal.build.BuildHelper.ResourceMarker
-        // resMarker)
-        BuildHelper helper = new BuildHelper(
-                projectState,
-                buildToolInfo,
-                mOutStream,
-                mErrStream,
-                false /* jumbo mode doesn't matter here */,
-                false /*
-                       * dex merger doesn't matter here
-                       */,
-                true /* debugMode */,
-                AdtPrefs.getPrefs().getBuildVerbosity() == BuildVerbosity.VERBOSE,
-                mResourceMarker);
-
-        IPath androidBinLocation = androidOutputFolder.getLocation();
-        String osAndroidBinPath = androidBinLocation.toOSString();
-
-        String classesDexPath = osAndroidBinPath + File.separator
-                + SdkConstants.FN_APK_CLASSES_DEX;
-
-        String finalPackageName = ProjectHelper
-                .getApkFilename(project, null /* config */);
-        String osFinalPackagePath = osAndroidBinPath + File.separator
-                + finalPackageName;
-        // Delete old APK
-        new File(osFinalPackagePath).delete();
-
-        Collection<String> dxInputPaths = helper.getCompiledCodePaths();
-        // Now we instrument all of the code in dxInputPaths and replace it with
-        // ours.
-        IFile manifestFile = project
-                .getFile(SdkConstants.FN_ANDROID_MANIFEST_XML);
-        FLData data = null;
-        try {
-            data = instrumentClasses(runId, launchConfig, project, dxInputPaths);
-            LaunchUtils.createSourceZips(null, data.allProjects,
-                    data.sourceDir, null);
-            try {
-                dxInputPaths = data.getClasspathEntries();
-                helper.packageResources(manifestFile, libProjects, null, 0,
-                        osAndroidBinPath, AdtConstants.FN_RESOURCES_AP_);
-
-                helper.executeDx(javaProject, dxInputPaths, classesDexPath);
-
-                helper.finalDebugPackage(osAndroidBinPath + File.separator
-                        + AdtConstants.FN_RESOURCES_AP_, classesDexPath,
-                        osFinalPackagePath, libProjects, mResourceMarker);
-            } finally {
-                data.deleteTempFiles();
-            }
-        } catch (DexException e) {
-            String message = e.getMessage();
-
-            AdtPlugin.printErrorToConsole(project, message);
-            BaseProjectHelper.markResource(project,
-                    AdtConstants.MARKER_PACKAGING, message,
-                    IMarker.SEVERITY_ERROR);
-
-            Throwable cause = e.getCause();
-
-            if (cause instanceof NoClassDefFoundError
-                    || cause instanceof NoSuchMethodError) {
-                AdtPlugin.printErrorToConsole(project,
-                        Messages.Incompatible_VM_Warning,
-                        Messages.Requires_1_5_Error);
-            }
-            return null;
-
-        } catch (AaptResultException e) {
-            // attempt to parse the error output
-            String[] aaptOutput = e.getOutput();
-            boolean parsingError = AaptParser.parseOutput(aaptOutput, project);
-
-            // if we couldn't parse the output we display it in the console.
-            if (parsingError) {
-                AdtPlugin.printErrorToConsole(project, (Object[]) aaptOutput);
-
-                // if the exec failed, and we couldn't parse the error output
-                // (and
-                // therefore not all files that should have been marked, were
-                // marked),
-                // we put a generic marker on the project and abort.
-                BaseProjectHelper.markResource(project,
-                        AdtConstants.MARKER_PACKAGING,
-                        Messages.Unparsed_AAPT_Errors, IMarker.SEVERITY_ERROR);
-            }
-            return null;
-        } catch (AaptExecException e) {
-            BaseProjectHelper.markResource(project,
-                    AdtConstants.MARKER_PACKAGING, e.getMessage(),
-                    IMarker.SEVERITY_ERROR);
-            return null;
-        } catch (KeytoolException e) {
-            String eMessage = e.getMessage();
-
-            // mark the project with the standard message
-            String msg = String
-                    .format(Messages.Final_Archive_Error_s, eMessage);
-            BaseProjectHelper.markResource(project,
-                    AdtConstants.MARKER_PACKAGING, msg, IMarker.SEVERITY_ERROR);
-
-            // output more info in the console
-            AdtPlugin.printErrorToConsole(
-                    project,
-                    msg,
-                    String.format(Messages.ApkBuilder_JAVA_HOME_is_s,
-                            e.getJavaHome()),
-                    Messages.ApkBuilder_Update_or_Execute_manually_s,
-                    e.getCommandLine());
-
-            return null;
-        } catch (ApkCreationException e) {
-            String eMessage = e.getMessage();
-
-            // mark the project with the standard message
-            String msg = String
-                    .format(Messages.Final_Archive_Error_s, eMessage);
-            BaseProjectHelper.markResource(project,
-                    AdtConstants.MARKER_PACKAGING, msg, IMarker.SEVERITY_ERROR);
-        } catch (AndroidLocationException e) {
-            String eMessage = e.getMessage();
-
-            // mark the project with the standard message
-            String msg = String
-                    .format(Messages.Final_Archive_Error_s, eMessage);
-            BaseProjectHelper.markResource(project,
-                    AdtConstants.MARKER_PACKAGING, msg, IMarker.SEVERITY_ERROR);
-        } catch (NativeLibInJarException e) {
-            String msg = e.getMessage();
-
-            BaseProjectHelper.markResource(project,
-                    AdtConstants.MARKER_PACKAGING, msg, IMarker.SEVERITY_ERROR);
-
-            AdtPlugin.printErrorToConsole(project,
-                    (Object[]) e.getAdditionalInfo());
-        } catch (CoreException e) {
-            // mark project and return
-            String msg = String.format(Messages.Final_Archive_Error_s,
-                    e.getMessage());
-            AdtPlugin.printErrorToConsole(project, msg);
-            BaseProjectHelper.markResource(project,
-                    AdtConstants.MARKER_PACKAGING, msg, IMarker.SEVERITY_ERROR);
-        } catch (DuplicateFileException e) {
-            String msg1 = String
-                    .format("Found duplicate file for APK: %1$s\nOrigin 1: %2$s\nOrigin 2: %3$s",
-                            e.getArchivePath(), e.getFile1(), e.getFile2());
-            String msg2 = String.format(Messages.Final_Archive_Error_s, msg1);
-            AdtPlugin.printErrorToConsole(project, msg2);
-            BaseProjectHelper
-                    .markResource(project, AdtConstants.MARKER_PACKAGING, msg2,
-                            IMarker.SEVERITY_ERROR);
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        }
-
-        // we are done.
-
-        // refresh the bin folder content with no recursion.
-        androidOutputFolder.refreshLocal(IResource.DEPTH_ONE, monitor);
-
-        // reset the installation manager to force new installs of this project
-        ApkInstallManager.getInstance().resetInstallationFor(project);
-
-        return data;
-    }
-
-    private static class FLData {
+    static class FLData {
 
         final IProject project;
         final Set<IProject> allProjects;
@@ -656,7 +360,7 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
 
         FLData(RunId runId, final ILaunchConfiguration launch,
                 final IProject project, final Collection<String> dxInputPaths)
-                throws IOException, CoreException {
+                        throws IOException, CoreException {
             this.runId = runId;
             runDir = new File(EclipseUtility.getFlashlightDataDirectory(),
                     runId.getId());
@@ -717,7 +421,7 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
             List<String> list = new ArrayList<String>(classpaths.size() + 2);
             list.addAll(classpaths);
             list.add(infoDir.getAbsolutePath());
-            list.add(getRuntimeJarPath());
+            list.add(AndroidBuildUtil.getRuntimeJarPath());
             return list;
         }
 
@@ -766,153 +470,21 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
 
     }
 
-    private static String getRuntimeJarPath() {
-        final IPath bundleBase = Activator.getDefault().getBundleLocation();
-        if (bundleBase != null) {
-            String name = "lib/flashlight-runtime.jar";
-            final IPath jarLocation = bundleBase.append(name);
-            return jarLocation.toOSString();
-        } else {
-            throw new IllegalStateException("No bundle location found.");
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    private FLData instrumentClasses(RunId runId,
-            final ILaunchConfiguration launchConfig, final IProject project,
-            final Collection<String> dxInputPaths) throws IOException,
-            CoreException {
-        ConfigurationBuilder configBuilder = LaunchHelper
-                .buildConfigurationFromPreferences(launchConfig);
-
-        /* Get the entries that the user does not want instrumented */
-        final List<String> noInstrumentUser = launchConfig
-                .getAttribute(
-                        FlashlightPreferencesUtility.CLASSPATH_ENTRIES_TO_NOT_INSTRUMENT,
-                        Collections.<String> emptyList());
-        final List<String> noInstrumentBoot = launchConfig
-                .getAttribute(
-                        FlashlightPreferencesUtility.BOOTPATH_ENTRIES_TO_NOT_INSTRUMENT,
-                        Collections.<String> emptyList());
-
-        FLData data = new FLData(runId, launchConfig, project, dxInputPaths);
-        PrintWriter logWriter = new PrintWriter(data.log);
-        try {
-            RewriteManager rm = new AndroidRewriteManager(
-                    configBuilder.getConfiguration(), new PrintWriterMessenger(
-                            logWriter), data.fieldsFile, data.sitesFile,
-                    data.classesFile, data.hbFile);
-            String runtimePath = getRuntimeJarPath();
-            List<String> instrumentLast = LaunchHelper
-                    .sanitizeInstrumentationList(data.originalClasspaths);
-            List<Integer> toInstrument = new ArrayList<Integer>();
-            for (int i = 0; i < data.originalClasspaths.size(); i++) {
-                String fromPath = data.originalClasspaths.get(i);
-                File from = new File(fromPath);
-                File to = new File(data.classpaths.get(i));
-                boolean ignore = noInstrumentBoot.contains(fromPath)
-                        || noInstrumentUser.contains(fromPath);
-                if (!ignore && instrumentLast.contains(fromPath)) {
-                    toInstrument.add(i);
-                }
-                if (from.isDirectory()) {
-                    if (ignore) {
-                        rm.addClasspathDir(from);
-                    } else {
-                        rm.addDirToDir(from, to);
-                    }
-                } else if (from.exists()) {
-                    if (ignore) {
-                        rm.addClasspathJar(from);
-                    } else {
-                        rm.addJarToJar(from, to, runtimePath);
-                    }
-                } else {
-                    log.warning(from.getAbsolutePath().toString()
-                            + " could not be found on the classpath could not be found when trying to instrument this project with Flashlight.");
-                }
-            }
-            for (int i : toInstrument) {
-                String fromPath = data.originalClasspaths.get(i);
-                File from = new File(fromPath);
-                File to = new File(data.classpaths.get(i));
-                if (from.isDirectory()) {
-                    rm.addDirToDir(from, to);
-                } else if (from.exists()) {
-                    rm.addJarToJar(from, to, runtimePath);
-                } else {
-                    log.warning(from.getAbsolutePath().toString()
-                            + " could not be found on the classpath could not be found when trying to instrument this project with Flashlight.");
-                }
-            }
-            // We check the classpath to see if there are any entries that
-            // aren't
-            // being exported, but that we will need in order to fully
-            // instrument
-            // the project.
-            IJavaProject javaProject = JavaCore.create(project);
-            for (IClasspathEntry cpe : javaProject.getResolvedClasspath(true)) {
-                if (cpe.getEntryKind() == IClasspathEntry.CPE_LIBRARY) {
-                    String path = cpe.getPath().toOSString();
-                    if (!data.originalClasspaths.contains(path)) {
-                        File pathFile = new File(path);
-                        if (pathFile.isDirectory()) {
-                            rm.addClasspathDir(pathFile);
-                        } else if (pathFile.exists()) {
-                            rm.addClasspathJar(pathFile);
-                        }
-                    }
-                }
-            }
-            try {
-                rm.execute();
-            } catch (AlreadyInstrumentedException e) {
-                final StringWriter s = new StringWriter();
-                PrintWriter w = new PrintWriter(s);
-                w.println("Instrumentation and execution were aborted because classes were found that have already been instrumented:");
-                for (final String cname : e.getClasses()) {
-                    w.print("  ");
-                    w.println(cname);
-                }
-                w.println();
-                w.println("Flashlight cannot collect meaningful data under these circumstances.");
-                w.flush();
-                final SLUIJob job = new SLUIJob() {
-                    final String message = s.toString();
-
-                    @Override
-                    public IStatus runInUIThread(final IProgressMonitor monitor) {
-                        ShowTextDialog.showText(getDisplay().getActiveShell(),
-                                "Instrumentation aborted.", message);
-                        return Status.OK_STATUS;
-                    }
-                };
-                job.schedule();
-                return null;
-            }
-        } finally {
-            logWriter.close();
-        }
-        data.createInfoClasses();
-        return data;
-    }
-
     /**
      * {@inheritDoc}
      *
      * @throws CoreException
      */
-    @SuppressWarnings("restriction")
     @Override
     public ILaunch getLaunch(final ILaunchConfiguration configuration,
             final String mode) throws CoreException {
-        return new AndroidLaunch(configuration, mode, null);
+        return new InstrumentedAndroidLaunch(configuration, mode, null);
     }
 
     @Override
     public boolean buildForLaunch(final ILaunchConfiguration configuration,
             final String mode, final IProgressMonitor monitor)
-            throws CoreException {
+                    throws CoreException {
         // if this returns true, this forces a full workspace rebuild which is
         // not
         // what we want.
@@ -944,15 +516,15 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
                 // and we can't launch the app. We'll revert to a sync-only
                 // launch
                 AdtPlugin
-                        .printErrorToConsole(project,
-                                "The Manifest defines no activity!",
-                                "The launch will only sync the application package on the device!");
+                .printErrorToConsole(project,
+                        "The Manifest defines no activity!",
+                        "The launch will only sync the application package on the device!");
                 config.mLaunchAction = ACTION_DO_NOTHING;
             } else if (activityName == null) {
                 // if the activity we got is null, we look for the default one.
                 AdtPlugin
-                        .printErrorToConsole(project,
-                                "No activity specified! Getting the launcher activity.");
+                .printErrorToConsole(project,
+                        "No activity specified! Getting the launcher activity.");
                 Activity launcherActivity = manifestData.getLauncherActivity();
                 if (launcherActivity != null) {
                     activityName = launcherActivity.getName();
@@ -962,9 +534,9 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
                 // launch.
                 if (activityName == null) {
                     AdtPlugin
-                            .printErrorToConsole(project,
-                                    "No Launcher activity found!",
-                                    "The launch will only sync the application package on the device!");
+                    .printErrorToConsole(project,
+                            "No Launcher activity found!",
+                            "The launch will only sync the application package on the device!");
                     config.mLaunchAction = ACTION_DO_NOTHING;
                 }
             } else {
@@ -982,8 +554,8 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
                 // if any.
                 if (match == false) {
                     AdtPlugin
-                            .printErrorToConsole(project,
-                                    "The specified activity does not exist! Getting the launcher activity.");
+                    .printErrorToConsole(project,
+                            "The specified activity does not exist! Getting the launcher activity.");
                     Activity launcherActivity = manifestData
                             .getLauncherActivity();
                     if (launcherActivity != null) {
@@ -992,9 +564,9 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
                         // if there's no default activity. We revert to a
                         // sync-only launch.
                         AdtPlugin
-                                .printErrorToConsole(project,
-                                        "No Launcher activity found!",
-                                        "The launch will only sync the application package on the device!");
+                        .printErrorToConsole(project,
+                                "No Launcher activity found!",
+                                "The launch will only sync the application package on the device!");
                         config.mLaunchAction = ACTION_DO_NOTHING;
                     }
                 }
@@ -1008,9 +580,9 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
             // if there's no default activity. We revert to a sync-only launch.
             if (activityName == null) {
                 AdtPlugin
-                        .printErrorToConsole(project,
-                                "No Launcher activity found!",
-                                "The launch will only sync the application package on the device!");
+                .printErrorToConsole(project,
+                        "No Launcher activity found!",
+                        "The launch will only sync the application package on the device!");
                 config.mLaunchAction = ACTION_DO_NOTHING;
             }
         }
@@ -1062,11 +634,11 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
                         EclipseUtility.toEclipseJob(
                                 new WatchFlashlightMonitorJob(
                                         new MonitorStatus(data.runId.getId())))
-                                .schedule();
+                                        .schedule();
                         EclipseUtility.toEclipseJob(
                                 new ReadFlashlightStreamJob(data.runId.getId(),
                                         data.runDir, data.outputPort, id))
-                                .schedule();
+                                        .schedule();
                         // FIXME ReadLogcatJob doesn't work right now
                         // EclipseUtility.toEclipseJob(
                         // new ReadLogcatJob(data.runId, id)).schedule();
@@ -1078,7 +650,7 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends
             }
             if (timeout > 1) {
                 new ConnectToProjectJob(data, pakkage, timeout - 1)
-                        .schedule(1000);
+                .schedule(1000);
                 return Status.OK_STATUS;
             } else {
                 return SLEclipseStatusUtility.createInfoStatus(String.format(

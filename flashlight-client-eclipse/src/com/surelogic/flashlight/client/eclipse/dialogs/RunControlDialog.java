@@ -428,6 +428,8 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
     void updateGUIInformation() {
       if (f_bk.isDisposed())
         return;
+      
+      System.out.println(f_lrun);
 
       final boolean finished = f_lrun.isFinishedCollectingData() || f_lrun.isCancelled();
 
@@ -513,7 +515,7 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
       final Image buttonImage = f_button.getImage();
       final Image newImage;
       final String tipText;
-      if (f_lrun.isFinishedCollectingData()) {
+      if (f_lrun.isFinishedCollectingData() || f_lrun.isCancelled()) {
         newImage = SLImages.getImage(CommonImages.IMG_GRAY_X);
         tipText = "flashlight.dialog.run.control.button.tip-dismiss";
       } else {
@@ -528,7 +530,7 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
     }
 
     final void buttonPressed() {
-      if (f_lrun.isFinishedCollectingData()) {
+      if (f_lrun.isFinishedCollectingData() || f_lrun.isCancelled()) {
         RunManager.getInstance().setDisplayToUser(f_lrun.getRunIdString(), false);
       } else {
         RunManager.getInstance().requestDataCollectionToStop(f_lrun.getRunIdString());

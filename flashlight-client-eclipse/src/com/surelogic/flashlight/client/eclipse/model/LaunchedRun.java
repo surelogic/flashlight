@@ -33,6 +33,12 @@ public final class LaunchedRun {
     f_startTime = new Date();
   }
 
+  @Override
+  public String toString() {
+    return getClass().getName() + " : " + f_runIdString + "(" + f_state.get() + ") - " + f_runLabel + " "
+        + (f_isAndroid ? "(Android)" : "(Java)" + "started @ " + f_startTime);
+  }
+
   @NonNull
   private final String f_runIdString;
 

@@ -64,9 +64,9 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
    * This field tracks the dialog. The field is thread-confined to the SWT
    * thread.
    */
-  private static RunControlDialog f_dialogInstance = null;
+  static RunControlDialog f_dialogInstance = null;
 
-  private static final Runnable f_openDialogJob = new Runnable() {
+  static final Runnable f_openDialogJob = new Runnable() {
     @Override
     public void run() {
       if (f_dialogInstance == null) {
@@ -91,7 +91,7 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
     EclipseUIUtility.nowOrAsyncExec(f_openDialogJob);
   }
 
-  private RunControlDialog(Shell parentShell, @NonNull final TimingSource disposeOnClose) {
+  RunControlDialog(Shell parentShell, @NonNull final TimingSource disposeOnClose) {
     super(parentShell);
     /*
      * Ensure that this dialog is modeless.
@@ -101,7 +101,7 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
     f_disposeOnClose = disposeOnClose;
   }
 
-  private final TimingSource f_disposeOnClose;
+  final TimingSource f_disposeOnClose;
 
   @Override
   public boolean close() {
@@ -111,8 +111,8 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
     return super.close();
   }
 
-  private ScrolledComposite f_sc = null;
-  private Composite f_dialogArea = null;
+  ScrolledComposite f_sc = null;
+  Composite f_dialogArea = null;
 
   @Override
   protected Control createDialogArea(Composite parent) {
@@ -252,15 +252,15 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
     return composite;
   }
 
-  private static final String SEARCH_PROMPT = "Search...";
+  static final String SEARCH_PROMPT = "Search...";
 
-  private void showSearchPrompt(final Text search) {
+  void showSearchPrompt(final Text search) {
     search.setData(SEARCH_PROMPT);
     search.setText(SEARCH_PROMPT);
     search.setForeground(search.getDisplay().getSystemColor(SWT.COLOR_DARK_GRAY));
   }
 
-  private void clearSearchPromptIfNecessary(final Text search) {
+  void clearSearchPromptIfNecessary(final Text search) {
     if (search.getData() == SEARCH_PROMPT) {
       search.setText("");
       search.setForeground(null);
@@ -271,14 +271,14 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
   @Nullable
   String f_searchFilterText = null;
 
-  private void searchCleared() {
+  void searchCleared() {
     if (f_searchFilterText != null) {
       f_searchFilterText = null;
       updateGUIModel();
     }
   }
 
-  private void searchFor(@Nullable String value) {
+  void searchFor(@Nullable String value) {
     if (value == null || "".equals(value))
       searchCleared();
     else {
@@ -306,7 +306,7 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
    * A wrapper for links to the run and its state plus all GUI objects for the
    * displayed panel in the dialog.
    */
-  private final class RunControlItem {
+  final class RunControlItem {
 
     RunControlItem(@NonNull final Composite parent, @NonNull final LaunchedRun lrun) {
       if (parent == null)
@@ -540,12 +540,12 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
     }
   }
 
-  private final LinkedList<RunControlItem> f_guiModel = new LinkedList<RunControlItem>();
+  final LinkedList<RunControlItem> f_guiModel = new LinkedList<RunControlItem>();
 
   /**
    * May be invoked within any thread context.
    */
-  private void updateGUIModel() {
+  void updateGUIModel() {
     EclipseUIUtility.nowOrAsyncExec(new Runnable() {
       @Override
       public void run() {

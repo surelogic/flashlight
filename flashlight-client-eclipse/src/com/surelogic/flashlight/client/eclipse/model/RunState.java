@@ -8,6 +8,8 @@ import com.surelogic.Immutable;
 public enum RunState {
 
   INSTRUMENTATION_AND_LAUNCH("Performing instrumentation and launching the application..."),
+  
+  LAUNCH_CANCELLED("Launch of the application was cancelled or failed..."),
 
   COLLECTING_DATA("Collecting data from the instrumented application..."),
 

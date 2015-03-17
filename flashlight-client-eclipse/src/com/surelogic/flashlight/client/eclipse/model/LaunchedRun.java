@@ -84,9 +84,11 @@ public final class LaunchedRun {
    * Sets the state of this launched run.
    * 
    * @param value
-   *          a state. Ignored if {@code null}.
+   *          a state. IllegalArgumentException is thrown if {@code null}.
    * @return {@code true} if the state changed, {@code false} if the state was
    *         not changed.
+   * 
+   * @see #setStateAndReturnOld(RunState)
    */
   boolean setState(@Nullable final RunState value) {
     if (value == null)
@@ -94,6 +96,24 @@ public final class LaunchedRun {
 
     final RunState oldValue = f_state.getAndSet(value);
     return value != oldValue;
+  }
+
+  /**
+   * Sets the state of this launched run.
+   * <p>
+   * Use {@link #setState(RunState)} if the old state is not needed.
+   * 
+   * @param value
+   *          a state. IllegalArgumentException is thrown if {@code null}.
+   * @return the old state.
+   * 
+   * @see LaunchedRun#setState(RunState)
+   */
+  RunState setStateAndReturnOld(@Nullable final RunState value) {
+    if (value == null)
+      throw new IllegalArgumentException(I18N.err(44, "value"));
+
+    return f_state.getAndSet(value);
   }
 
   private final AtomicReference<SLJobTracker> f_prepTracker = new AtomicReference<SLJobTracker>();

@@ -332,7 +332,22 @@ public final class RunManager implements ILifecycle {
    *           if runIdString is {@code null}.
    */
   public void notifyLaunchCancelledPriorToCollectingData(@NonNull final String runIdString) {
-
+    if (runIdString == null) {
+      throw new IllegalArgumentException(I18N.err(44, "runIdString"));
+    }
+    synchronized (f_lock) {
+      LaunchedRun lrun = getLaunchedRunFor(runIdString);
+      if (lrun == null) {
+        SLLogger.getLogger().log(Level.WARNING, I18N.err(235, runIdString));
+        return;
+      }
+      final RunState old = lrun.setStateAndReturnOld(RunState.LAUNCH_CANCELLED);
+      if (old != RunState.INSTRUMENTATION_AND_LAUNCH) {
+        SLLogger.getLogger().log(Level.WARNING, I18N.err(236, runIdString));
+        return;
+      }
+    }
+    notifyLaunchedRunChange();
   }
 
   /**

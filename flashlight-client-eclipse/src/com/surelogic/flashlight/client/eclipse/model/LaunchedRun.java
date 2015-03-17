@@ -72,6 +72,10 @@ public final class LaunchedRun {
     return f_state.get();
   }
 
+  public boolean isCancelled() {
+    return RunState.LAUNCH_CANCELLED.equals(f_state.get());
+  }
+
   public boolean isFinishedCollectingData() {
     return RunState.IS_FINISHED_COLLECTING_DATA.contains(f_state.get());
   }

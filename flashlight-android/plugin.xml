@@ -10,6 +10,12 @@
         	delegate="com.android.ide.eclipse.adt.internal.launch.FlashlightAndroidLaunchConfigurationDelegate"
         	modes="flashlight">
 		</launchDelegate>
+		<launchDelegate
+            id="com.android.ide.eclipse.adt.internal.launch.FlashlightAndroidJUnitLaunchConfigurationDelegate"
+            type="com.android.ide.eclipse.adt.debug.LaunchConfigType"
+            delegate="com.android.ide.eclipse.adt.internal.launch.junit.FlashlightAndroidJUnitLaunchConfigurationDelegate"
+            modes="flashlight">
+        </launchDelegate>
 	</extension>
     <extension point="org.eclipse.debug.ui.launchShortcuts">
         <shortcut

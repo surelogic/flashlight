@@ -41,6 +41,23 @@
     <method decl="release()" hb="source" />
   </object>
 
+  <object type="android.os.AsyncTask" id="android.os AsyncTask execute">
+      <method decl="execute(java.lang.Object[])" hb="source" />
+      <method decl="onPreExecute()" hb="source" callIn="true"/>
+      <method decl="doInBackground(java.lang.Object[])" hb="target" callIn="true"/>
+  </object>
+  
+  <object type="android.os.AsyncTask" id="android.os AsyncTask process">
+      <method decl="doInBackground(java.lang.Object[])" hb="source" callIn="true"/>
+      <method decl="onPostExecute(java.lang.Object)" hb="target" callIn="true"/>
+  </object>
+  
+  
+  <object type="android.os.AsyncTask" id="android.os AsyncTask publish">
+      <method decl="publishProgress(java.lang.Object[])" hb="source" />
+      <method decl="onProgressUpdate(java.lang.Object[])" hb="target" callIn="true"/>
+  </object>
+  
   <!-- Atomics -->
 
   <object type="java.util.concurrent.atomic.AtomicBoolean" id="java.util.concurrent AtomicBoolean">

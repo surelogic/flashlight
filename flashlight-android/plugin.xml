@@ -48,6 +48,39 @@
                 mode="flashlight">
             </description>
         </shortcut>
+        <shortcut
+            label="Android JUnit Test"
+            icon="/lib/images/androidjunit.gif"
+            modes="flashlight"
+            class="com.android.ide.eclipse.adt.internal.launch.junit.FlashlightJunitLaunchShortcut"
+            id="com.android.ide.eclipse.adt.debug.launching.FlashlightJunitLaunchShortcut">
+            <contextualLaunch>
+                <enablement>
+                    <with variable="selection">
+                        <count value="1" />
+                        <iterate>
+                            <adapt type="org.eclipse.jdt.core.IJavaElement">
+                                <test
+                                    property="org.eclipse.jdt.core.isInJavaProjectWithNature"
+                                    value="com.android.ide.eclipse.adt.AndroidNature" />
+                                <test
+                                    property="org.eclipse.jdt.core.hasTypeOnClasspath"
+                                    value="junit.framework.Test" />
+                                <test property="com.android.ide.eclipse.adt.canLaunchAsJUnit" />
+                            </adapt>
+                        </iterate>
+                    </with>
+                </enablement>
+            </contextualLaunch>
+            <perspective id="org.eclipse.jdt.ui.JavaPerspective" />
+            <perspective id="org.eclipse.debug.ui.DebugPerspective" />
+            <configurationType id="com.surelogic.flashlight.client.eclipse.launch.FlashlightAndroidLaunchConfigurationType">
+            </configurationType>
+            <description
+                description="Runs an Android Application with Flashlight"
+                mode="flashlight">
+            </description>
+        </shortcut>
     </extension>
     <extension point="org.eclipse.debug.ui.launchConfigurationTabGroups">
 		<launchConfigurationTabGroup

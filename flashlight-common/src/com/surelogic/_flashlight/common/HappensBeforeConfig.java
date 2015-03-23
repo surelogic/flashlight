@@ -21,9 +21,9 @@ import org.xml.sax.helpers.DefaultHandler;
 
 /**
  * This class parses happens before configuration files for Flashlight.
- * 
+ *
  * @author nathan
- * 
+ *
  */
 public final class HappensBeforeConfig {
 
@@ -99,23 +99,27 @@ public final class HappensBeforeConfig {
     public static class HappensBeforeObject extends HappensBefore {
 
         public HappensBeforeObject(String id, String qualifiedClass,
-                String decl, HBType type, ReturnCheck returnCheck) {
-            super(id, qualifiedClass, decl, type, returnCheck);
-        }
-
-        @Override
-        public String toString() {
-            return "HappensBeforeObject [getQualifiedClass()="
-                    + getQualifiedClass() + ", getSignature()="
-                    + getSignature() + ", getType()=" + getType()
-                    + ", getReturnCheck()=" + getReturnCheck()
-                    + ", getMethod()=" + getMethod() + "]";
+                String decl, HBType type, ReturnCheck returnCheck,
+                boolean callIn) {
+            super(id, qualifiedClass, decl, type, returnCheck, callIn);
         }
 
         @Override
         public void invokeSwitch(final HappensBeforeSwitch s) {
             s.caseHappensBeforeObject(this);
         }
+
+        @Override
+        public String toString() {
+            return "HappensBeforeObject [getId()=" + getId()
+                    + ", getSignature()=" + getSignature()
+                    + ", getPartialMethodDescriptor()="
+                    + getPartialMethodDescriptor() + ", getType()=" + getType()
+                    + ", getReturnCheck()=" + getReturnCheck()
+                    + ", getMethod()=" + getMethod() + ", isCallIn()="
+                    + isCallIn() + "]";
+        }
+
     }
 
     public static class HappensBeforeCollection extends HappensBeforeObject {
@@ -123,8 +127,8 @@ public final class HappensBeforeConfig {
 
         public HappensBeforeCollection(String id, String qualifiedClass,
                 String decl, HBType type, ReturnCheck returnCheck,
-                int objectParam) {
-            super(id, qualifiedClass, decl, type, returnCheck);
+                int objectParam, boolean callIn) {
+            super(id, qualifiedClass, decl, type, returnCheck, callIn);
             this.objectParam = objectParam;
         }
 
@@ -132,7 +136,7 @@ public final class HappensBeforeConfig {
          * The parameter of this method that corresponds to the object affecting
          * happens-before events, indexed starting at 1. A 0 indicates that it
          * is the return value.
-         * 
+         *
          * @return
          */
         public int getObjectParam() {
@@ -140,18 +144,21 @@ public final class HappensBeforeConfig {
         }
 
         @Override
-        public String toString() {
-            return "HappensBeforeCollection [objectParam=" + objectParam
-                    + ", getQualifiedClass()=" + getQualifiedClass()
-                    + ", getSignature()=" + getSignature() + ", getType()="
-                    + getType() + ", getReturnCheck()=" + getReturnCheck()
-                    + ", getMethod()=" + getMethod() + "]";
-        }
-
-        @Override
         public void invokeSwitch(final HappensBeforeSwitch s) {
             s.caseHappensBeforeCollection(this);
         }
+
+        @Override
+        public String toString() {
+            return "HappensBeforeCollection [objectParam=" + objectParam
+                    + ", getId()=" + getId() + ", getSignature()="
+                    + getSignature() + ", getPartialMethodDescriptor()="
+                    + getPartialMethodDescriptor() + ", getType()=" + getType()
+                    + ", getReturnCheck()=" + getReturnCheck()
+                    + ", getMethod()=" + getMethod() + ", isCallIn()="
+                    + isCallIn() + "]";
+        }
+
     }
 
     public static enum HBType {
@@ -232,7 +239,7 @@ public final class HappensBeforeConfig {
 
     private static enum Attr {
         DECL("decl"), HB("hb"), RESULT_MUST_BE("resultMustBe"), ARG_NUM(
-                "argNum"), TYPE("type"), ID("id");
+                "argNum"), TYPE("type"), ID("id"), CALL_IN("callIn");
         final String name;
 
         Attr(String name) {
@@ -282,6 +289,7 @@ public final class HappensBeforeConfig {
                     HBType type = null;
                     ReturnCheck check = ReturnCheck.NONE;
                     int param = Integer.MIN_VALUE;
+                    boolean callIn = false;
                     for (int i = 0; i < attributes.getLength(); i++) {
                         Attr a = Attr.lookup(attributes.getQName(i));
                         String val = attributes.getValue(i);
@@ -299,6 +307,9 @@ public final class HappensBeforeConfig {
                             case HB:
                                 type = HBType.lookup(val);
                                 break;
+                            case CALL_IN:
+                                callIn = Boolean.parseBoolean(val);
+                                break;
                             default:
                                 throw new IllegalStateException(
                                         "Invalid attribute found.");
@@ -308,16 +319,16 @@ public final class HappensBeforeConfig {
                     switch (hb) {
                     case THREAD:
                         add(curClass, new HappensBefore(curId, curClass, decl,
-                                type, check), threads);
+                                type, check, callIn), threads);
                         break;
                     case COLL:
                         add(curClass, new HappensBeforeCollection(curId,
-                                curClass, decl, type, check, param),
+                                curClass, decl, type, check, param, callIn),
                                 collections);
                         break;
                     case OBJECT:
                         add(curClass, new HappensBeforeObject(curId, curClass,
-                                decl, type, check), objects);
+                                decl, type, check, callIn), objects);
                         break;
                     default:
                         throw new IllegalStateException(
@@ -338,9 +349,9 @@ public final class HappensBeforeConfig {
      * Represents a single method in a class to be instrumented, and also
      * indicates whether or not the return value of the method is to be checked
      * and how the method contributes to a happens-before edge.
-     * 
+     *
      * @author nathan
-     * 
+     *
      */
     public static class HappensBefore {
         private final String id;
@@ -349,9 +360,10 @@ public final class HappensBeforeConfig {
         private final List<String> signature;
         private final HBType type;
         private final ReturnCheck returnCheck;
+        private final boolean callIn;
 
         public HappensBefore(String id, String qualifiedClass, String decl,
-                HBType type, ReturnCheck returnCheck) {
+                HBType type, ReturnCheck returnCheck, boolean callIn) {
             this.id = id;
             this.qualifiedClass = qualifiedClass;
             this.type = type;
@@ -369,11 +381,12 @@ public final class HappensBeforeConfig {
                 throw new IllegalArgumentException(decl
                         + " is not a valid declaration.");
             }
+            this.callIn = callIn;
         }
 
         /**
          * Get the JVM class name this method belongs to.
-         * 
+         *
          * @return
          */
         public String getInternalClass() {
@@ -383,7 +396,7 @@ public final class HappensBeforeConfig {
         /**
          * An identifying string for this happens-before rule. Should be passed
          * into the store from the instrumentation.
-         * 
+         *
          * @return
          */
         public String getId() {
@@ -392,7 +405,7 @@ public final class HappensBeforeConfig {
 
         /**
          * Get the JLS class name that this method belongs to.
-         * 
+         *
          * @return
          */
         public String getQualifiedClass() {
@@ -401,7 +414,7 @@ public final class HappensBeforeConfig {
 
         /**
          * The JLS class names of each parameter in this method.
-         * 
+         *
          * @return
          */
         public List<String> getSignature() {
@@ -410,7 +423,7 @@ public final class HappensBeforeConfig {
 
         /**
          * Returns the method descriptor, minus the type of the return value.
-         * 
+         *
          * @return
          */
         public String getPartialMethodDescriptor() {
@@ -419,7 +432,7 @@ public final class HappensBeforeConfig {
 
         /**
          * The type of happens-before event this corresponds to.
-         * 
+         *
          * @return
          */
         public HBType getType() {
@@ -429,7 +442,7 @@ public final class HappensBeforeConfig {
         /**
          * Indicates whether or not this return value of this method should be
          * checked, and the appropriate way to check it.
-         * 
+         *
          * @return
          */
         public ReturnCheck getReturnCheck() {
@@ -438,7 +451,7 @@ public final class HappensBeforeConfig {
 
         /**
          * The name of the method
-         * 
+         *
          * @return
          */
         public String getMethod() {
@@ -449,12 +462,18 @@ public final class HappensBeforeConfig {
             s.caseHappensBefore(this);
         }
 
+        public boolean isCallIn() {
+            return callIn;
+        }
+
         @Override
         public String toString() {
-            return "HappensBefore [qualifiedClass=" + qualifiedClass
-                    + ", method=" + method + ", signature=" + signature
-                    + ", type=" + type + ", returnCheck=" + returnCheck + "]";
+            return "HappensBefore [id=" + id + ", qualifiedClass="
+                    + qualifiedClass + ", method=" + method + ", signature="
+                    + signature + ", type=" + type + ", returnCheck="
+                    + returnCheck + ", callIn=" + callIn + "]";
         }
+
     }
 
     public static interface HappensBeforeSwitch {
@@ -491,7 +510,7 @@ public final class HappensBeforeConfig {
 
     /**
      * Converts a Java language class name to a Java bytecode class name.
-     * 
+     *
      * @param jlsName
      * @return
      */
@@ -501,7 +520,7 @@ public final class HappensBeforeConfig {
 
     /**
      * Produces a JVM type descriptor from a JLS type declaration.
-     * 
+     *
      * @param jlsName
      * @return
      */
@@ -531,7 +550,7 @@ public final class HappensBeforeConfig {
     /**
      * Converts the list of parameter names in JLS format to a partial bytecode
      * descriptor.
-     * 
+     *
      * @param hb
      * @return
      */

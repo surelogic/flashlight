@@ -173,4 +173,17 @@
     <method decl="drainTo(java.util.Collection,int)" hb="target-all" argNum="1"/>
   </collection>
   
+  <executor id="java.util.concurrent Executor">
+      <method class="java.util.concurrent.Executor" decl="execute(java.lang.Runnable)" argNum="1" hb="source"/>
+      <method class="java.lang.Runnable" decl="run()" hb="target" callIn="true"/>
+  </executor>
+  
+  <!--  Android -->
+  
+  
+  
+  <executor id="android.os AsyncTask">
+      <method class="android.os.AsyncTask" decl="execute(java.lang.Runnable)" argNum="1" hb="source"/>
+      <method class="java.lang.Runnable" decl="run()" hb="target" callIn="true"/>
+  </executor>
 </happens-before>

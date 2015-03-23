@@ -176,6 +176,18 @@ public final class HappensBeforeConfig {
                     callIn);
         }
 
+        @Override
+        public String toString() {
+            return "HappensBeforeExecutor [getObjectParam()="
+                    + getObjectParam() + ", getId()=" + getId()
+                    + ", getSignature()=" + getSignature()
+                    + ", getPartialMethodDescriptor()="
+                    + getPartialMethodDescriptor() + ", getType()=" + getType()
+                    + ", getReturnCheck()=" + getReturnCheck()
+                    + ", getMethod()=" + getMethod() + ", isCallIn()="
+                    + isCallIn() + "]";
+        }
+
     }
 
     public static enum HBType {

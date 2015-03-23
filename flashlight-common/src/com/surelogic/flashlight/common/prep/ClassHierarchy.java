@@ -120,21 +120,36 @@ public class ClassHierarchy {
         for (Entry<String, List<HappensBeforeConfig.HappensBefore>> e : threads
                 .entrySet()) {
             ClassNode node = nodes.get(e.getKey());
-            node.hbs.addAll(e.getValue());
+            if (node != null) {
+                node.hbs.addAll(e.getValue());
+            }
         }
         Map<String, List<HappensBeforeConfig.HappensBeforeObject>> objects = config
                 .getObjects();
         for (Entry<String, List<HappensBeforeConfig.HappensBeforeObject>> e : objects
                 .entrySet()) {
             ClassNode node = nodes.get(e.getKey());
-            node.hbs.addAll(e.getValue());
+            if (node != null) {
+                node.hbs.addAll(e.getValue());
+            }
         }
         Map<String, List<HappensBeforeConfig.HappensBeforeCollection>> collections = config
                 .getCollections();
         for (Entry<String, List<HappensBeforeConfig.HappensBeforeCollection>> e : collections
                 .entrySet()) {
             ClassNode node = nodes.get(e.getKey());
-            node.hbs.addAll(e.getValue());
+            if (node != null) {
+                node.hbs.addAll(e.getValue());
+            }
+        }
+        Map<String, List<HappensBeforeConfig.HappensBeforeExecutor>> execs = config
+                .getExecutors();
+        for (Entry<String, List<HappensBeforeConfig.HappensBeforeExecutor>> e : execs
+                .entrySet()) {
+            ClassNode node = nodes.get(e.getKey());
+            if (node != null) {
+                node.hbs.addAll(e.getValue());
+            }
         }
     }
 

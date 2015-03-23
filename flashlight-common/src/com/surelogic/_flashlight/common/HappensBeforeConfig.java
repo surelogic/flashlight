@@ -30,11 +30,13 @@ public final class HappensBeforeConfig {
     final Map<String, List<HappensBeforeCollection>> collections;
     final Map<String, List<HappensBeforeObject>> objects;
     final Map<String, List<HappensBefore>> threads;
+    final Map<String, List<HappensBeforeExecutor>> executors;
 
     private HappensBeforeConfig() {
         collections = new HashMap<String, List<HappensBeforeCollection>>();
         objects = new HashMap<String, List<HappensBeforeObject>>();
         threads = new HashMap<String, List<HappensBefore>>();
+        executors = new HashMap<String, List<HappensBeforeExecutor>>();
     }
 
     public HappensBeforeConfig parse(File f) {
@@ -80,6 +82,10 @@ public final class HappensBeforeConfig {
 
     public Map<String, List<HappensBefore>> getThreads() {
         return threads;
+    }
+
+    public Map<String, List<HappensBeforeExecutor>> getExecutors() {
+        return executors;
     }
 
     public List<HappensBeforeCollection> getCollectionHappensBefore(
@@ -161,6 +167,17 @@ public final class HappensBeforeConfig {
 
     }
 
+    public static class HappensBeforeExecutor extends HappensBeforeCollection {
+
+        public HappensBeforeExecutor(String id, String qualifiedClass,
+                String decl, HBType type, ReturnCheck returnCheck,
+                int objectParam, boolean callIn) {
+            super(id, qualifiedClass, decl, type, returnCheck, objectParam,
+                    callIn);
+        }
+
+    }
+
     public static enum HBType {
         SOURCE("source"), TARGET("target"), SOURCEANDTARGET("source-and-target"), FROM(
                 "from"), TO("to"), FROMANDTO("from-and-to");
@@ -220,7 +237,8 @@ public final class HappensBeforeConfig {
     }
 
     private static enum Elem {
-        METHOD("method"), THREAD("thread"), OBJECT("object"), COLL("collection");
+        METHOD("method"), THREAD("thread"), OBJECT("object"), COLL("collection"), EXEC(
+                "executor");
         final String name;
 
         Elem(String name) {
@@ -280,12 +298,14 @@ public final class HappensBeforeConfig {
                 case COLL:
                 case OBJECT:
                 case THREAD:
-                    hb = e;
+                case EXEC:
                     curClass = attributes.getValue(Attr.TYPE.name);
+                    hb = e;
                     curId = attributes.getValue(Attr.ID.name);
                     break;
                 case METHOD:
                     String decl = null;
+                    String inClass = curClass;
                     HBType type = null;
                     ReturnCheck check = ReturnCheck.NONE;
                     int param = Integer.MIN_VALUE;
@@ -310,6 +330,9 @@ public final class HappensBeforeConfig {
                             case CALL_IN:
                                 callIn = Boolean.parseBoolean(val);
                                 break;
+                            case TYPE:
+                                inClass = val;
+                                break;
                             default:
                                 throw new IllegalStateException(
                                         "Invalid attribute found.");
@@ -318,17 +341,21 @@ public final class HappensBeforeConfig {
                     }
                     switch (hb) {
                     case THREAD:
-                        add(curClass, new HappensBefore(curId, curClass, decl,
+                        add(inClass, new HappensBefore(curId, inClass, decl,
                                 type, check, callIn), threads);
                         break;
                     case COLL:
-                        add(curClass, new HappensBeforeCollection(curId,
-                                curClass, decl, type, check, param, callIn),
+                        add(inClass, new HappensBeforeCollection(curId,
+                                inClass, decl, type, check, param, callIn),
                                 collections);
                         break;
                     case OBJECT:
-                        add(curClass, new HappensBeforeObject(curId, curClass,
+                        add(inClass, new HappensBeforeObject(curId, inClass,
                                 decl, type, check, callIn), objects);
+                        break;
+                    case EXEC:
+                        add(inClass, new HappensBeforeExecutor(curId, inClass,
+                                decl, type, check, param, callIn), executors);
                         break;
                     default:
                         throw new IllegalStateException(
@@ -339,7 +366,6 @@ public final class HappensBeforeConfig {
             }
 
         }
-
     }
 
     private static final Pattern DECL_PATTERN = Pattern

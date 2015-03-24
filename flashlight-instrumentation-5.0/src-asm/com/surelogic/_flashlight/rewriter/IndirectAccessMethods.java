@@ -2,7 +2,6 @@ package com.surelogic._flashlight.rewriter;
 
 import java.io.File;
 import java.io.InputStream;
-//import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -22,13 +21,14 @@ import com.surelogic._flashlight.rewriter.xml.MethodRecord;
 
 final class IndirectAccessMethods {
   private final Map<String, List<IndirectAccessMethod>> methods;
-  
-  public IndirectAccessMethods() {
+  private final RewriteMessenger messenger;
+
+  public IndirectAccessMethods(RewriteMessenger m) {
     methods = new HashMap<String, List<IndirectAccessMethod>>();
+    messenger = m;
   }
-  
-  public void put(final boolean isStatic,
-      final String on, final Method m, final int[] args) {
+
+  public void put(final boolean isStatic, final String on, final Method m, final int[] args) {
     final String methodName = m.getName();
     final IndirectAccessMethod method = new IndirectAccessMethod(isStatic, on, m, args);
     List<IndirectAccessMethod> methodList = methods.get(methodName);
@@ -38,13 +38,14 @@ final class IndirectAccessMethods {
     }
     methodList.add(method);
   }
-  
+
   public void initClazz(final ClassAndFieldModel classModel) {
     for (final Map.Entry<String, List<IndirectAccessMethod>> entry : methods.entrySet()) {
       final Iterator<IndirectAccessMethod> iter = entry.getValue().iterator();
       while (iter.hasNext()) {
         final IndirectAccessMethod method = iter.next();
-        /* Try to initialize the object; remove it from the set if
+        /*
+         * Try to initialize the object; remove it from the set if
          * initialization fails.
          */
         if (!method.initClazz(classModel)) {
@@ -53,7 +54,7 @@ final class IndirectAccessMethods {
       }
     }
   }
-  
+
   /**
    * @exception ClassNotFoundException
    *              Thrown if there is a problem looking up one of the ancestor
@@ -62,12 +63,11 @@ final class IndirectAccessMethods {
    *              rewriter. In general this should not be the case, but the
    *              dbBenchmark example we use seems to be broken.
    */
-  public IndirectAccessMethod get(
-      final String owner, final String name, final String desc)
-  throws ClassNotFoundException {
-    /* If owner is an array class, then we return null.  It means the
-     * method must be "clone()", and we don't care about that.
-     * XXX: This may bite us in the butt in the future
+  public IndirectAccessMethod get(final String owner, final String name, final String desc) throws ClassNotFoundException {
+    /*
+     * If owner is an array class, then we return null. It means the method must
+     * be "clone()", and we don't care about that. XXX: This may bite us in the
+     * butt in the future
      */
     if (owner.charAt(0) == '[') {
       return null;
@@ -85,35 +85,26 @@ final class IndirectAccessMethods {
       }
     }
   }
-  
-  
-  
-  public void loadFromXML(
-      final InputStream defaultMethods, final List<File> files)
-  throws JAXBException {
+
+  public void loadFromXML(final InputStream defaultMethods, final List<File> files) throws JAXBException {
     // Load the XML
-    final JAXBContext ctxt = JAXBContext.newInstance(
-        Classes.class, ClassRecord.class, MethodRecord.class);
+    final JAXBContext ctxt = JAXBContext.newInstance(Classes.class, ClassRecord.class, MethodRecord.class);
     final Unmarshaller unmarshaller = ctxt.createUnmarshaller();
-    
-//    final PrintWriter pw = new PrintWriter(System.out);
-//    pw.println("From default:");
+    final String msg = "Loading indirect access methods from ";
+
     if (defaultMethods != null) {
-      final Classes classes =
-        (Classes) unmarshaller.unmarshal(defaultMethods);
-//      classes.dump(pw);
+      messenger.info(msg + RewriteManager.DEFAULT_METHODS_FILE);
+      final Classes classes = (Classes) unmarshaller.unmarshal(defaultMethods);
       addFromClasses(classes);
     }
-    
+
     for (final File f : files) {
-//      pw.println("From " + f + ":");
-      final Classes classes =
-        (Classes) unmarshaller.unmarshal(f);
-//      classes.dump(pw);
+      messenger.info(msg + f);
+      final Classes classes = (Classes) unmarshaller.unmarshal(f);
       addFromClasses(classes);
     }
   }
-  
+
   private void addFromClasses(final Classes classes) {
     // Process the XML
     for (final ClassRecord cr : classes.getClasses()) {

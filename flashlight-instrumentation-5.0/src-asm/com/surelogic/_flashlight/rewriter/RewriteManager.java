@@ -1174,7 +1174,7 @@ public abstract class RewriteManager {
     private final Set<String> instrumentedAlready = new HashSet<String>();
     private final DuplicateClasses duplicateClasses = new DuplicateClasses();
     private final Set<MissingClassReference> badReferences = new HashSet<MissingClassReference>(); 
-    private final IndirectAccessMethods accessMethods = new IndirectAccessMethods();
+    private final IndirectAccessMethods accessMethods;
     private final Configuration config;
     private final RewriteMessenger messenger;
     private final File fieldsFile;
@@ -1211,6 +1211,7 @@ public abstract class RewriteManager {
         sitesFile = sf;
         classHierarchyFile = chf;
         happensBeforeFile = hbf;
+        accessMethods  = new IndirectAccessMethods(m);
         final InputStream defaultMethods = config.indirectUseDefault ? RewriteManager.class
                 .getResourceAsStream(DEFAULT_METHODS_FILE) : null;
         try {

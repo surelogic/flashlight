@@ -19,9 +19,8 @@ public class InstrumentedAndroidLaunch extends AndroidLaunch {
     String runId;
     private boolean launched;
 
-    public InstrumentedAndroidLaunch(
-            ILaunchConfiguration launchConfiguration, String mode,
-            ISourceLocator locator) {
+    public InstrumentedAndroidLaunch(ILaunchConfiguration launchConfiguration,
+            String mode, ISourceLocator locator) {
         super(launchConfiguration, mode, locator);
     }
 
@@ -33,7 +32,7 @@ public class InstrumentedAndroidLaunch extends AndroidLaunch {
     public void stopLaunch() {
         if (runId != null && launched == false) {
             RunManager.getInstance()
-            .notifyLaunchCancelledPriorToCollectingData(runId);
+                    .notifyLaunchCancelledPriorToCollectingData(runId);
         }
         super.stopLaunch();
     }
@@ -47,18 +46,18 @@ public class InstrumentedAndroidLaunch extends AndroidLaunch {
     }
 
     /**
-     * stopLaunch is always called, so if the action has been performed then
-     * we know that even though stopLaunch is being called we haven't
-     * cancelled out.
+     * stopLaunch is always called, so if the action has been performed then we
+     * know that even though stopLaunch is being called we haven't cancelled
+     * out.
      *
      * @author nathan
      *
      */
-    class InstrumentedLaunchAction implements IAndroidLaunchAction {
+    public class InstrumentedLaunchAction implements IAndroidLaunchAction {
 
         private final IAndroidLaunchAction action;
 
-        InstrumentedLaunchAction(IAndroidLaunchAction action) {
+        public InstrumentedLaunchAction(IAndroidLaunchAction action) {
             this.action = action;
         }
 

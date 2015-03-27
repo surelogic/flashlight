@@ -5,10 +5,7 @@ import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.junit.launcher.JUnitLaunchShortcut;
 
-import com.android.ide.eclipse.adt.internal.launch.junit.AndroidJUnitLaunchConfigDelegate;
-
 public class FlashlightJunitLaunchShortcut extends JUnitLaunchShortcut {
-
     @Override
     protected String getLaunchConfigurationTypeId() {
         return "com.android.ide.eclipse.adt.junit.launchConfigurationType"; //$NON-NLS-1$
@@ -25,11 +22,11 @@ public class FlashlightJunitLaunchShortcut extends JUnitLaunchShortcut {
         ILaunchConfigurationWorkingCopy config = super
                 .createLaunchConfiguration(element);
         // just get first valid instrumentation runner
-        String instrumentation = new InstrumentationRunnerValidator(
+        String instrumentation = new FlashlightInstrumentationRunnerValidator(
                 element.getJavaProject()).getValidInstrumentationTestRunner();
         if (instrumentation != null) {
             config.setAttribute(
-                    AndroidJUnitLaunchConfigDelegate.ATTR_INSTR_NAME,
+                    FlashlightAndroidJUnitLaunchConfigurationDelegate.ATTR_INSTR_NAME,
                     instrumentation);
         }
         // if a valid runner is not found, rely on launch delegate to log error.
@@ -37,7 +34,8 @@ public class FlashlightJunitLaunchShortcut extends JUnitLaunchShortcut {
         // JUnit, so avoid
         // logging an error here.
 
-        AndroidJUnitLaunchConfigDelegate.setJUnitDefaults(config);
+        FlashlightAndroidJUnitLaunchConfigurationDelegate
+                .setJUnitDefaults(config);
         return config;
     }
 }

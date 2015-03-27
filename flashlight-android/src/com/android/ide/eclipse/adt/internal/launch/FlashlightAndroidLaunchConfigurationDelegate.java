@@ -133,8 +133,8 @@ LaunchConfigurationDelegate {
         RunManager.getInstance().notifyPerformingInstrumentationAndLaunch(
                 runId.getId());
         androidLaunch.setRunId(runId.getId());
-        FLData data = AndroidBuildUtil.doFullIncrementalDebugBuild(runId,
-                configuration, project, monitor);
+
+        FLData data = doBuild(runId, configuration, project, monitor);
 
         // if we have a valid debug port, this means we're debugging an app
         // that's already launched.
@@ -255,12 +255,11 @@ LaunchConfigurationDelegate {
             androidLaunch.stopLaunch();
             return;
         }
-
-        doLaunch(configuration, mode, monitor, project, androidLaunch, config,
-                controller, applicationPackage, manifestData);
-        if (androidLaunch.isLaunched()) {
-            final Job job = new ConnectToProjectJob(data,
-                    manifestData.getPackage());
+        String toWatch = doLaunch(configuration, mode, monitor, project,
+                androidLaunch, config, controller, applicationPackage,
+                manifestData);
+        if (toWatch != null) {
+            final Job job = new ConnectToProjectJob(data, toWatch);
             job.schedule();
         }
     }
@@ -306,7 +305,7 @@ LaunchConfigurationDelegate {
         return checker.found;
     }
 
-    static class FLData {
+    public static class FLData {
 
         final IProject project;
         final Set<IProject> allProjects;
@@ -461,8 +460,15 @@ LaunchConfigurationDelegate {
         return false;
     }
 
+    protected FLData doBuild(RunId runId,
+            final ILaunchConfiguration launchConfig, final IProject project,
+            final IProgressMonitor monitor) throws CoreException {
+        return AndroidBuildUtil.doFullIncrementalDebugBuild(runId,
+                launchConfig, project, monitor);
+    }
+
     @SuppressWarnings("restriction")
-    protected void doLaunch(final ILaunchConfiguration configuration,
+    protected String doLaunch(final ILaunchConfiguration configuration,
             final String mode, final IProgressMonitor monitor,
             final IProject project,
             final InstrumentedAndroidLaunch androidLaunch,
@@ -571,6 +577,7 @@ LaunchConfigurationDelegate {
                 manifestData.getDebuggable(),
                 manifestData.getMinSdkVersionString(), launchAction, config,
                 androidLaunch, monitor);
+        return androidLaunch.isLaunched() ? manifestData.getPackage() : null;
     }
 
     private static final class ConnectToProjectJob extends Job {

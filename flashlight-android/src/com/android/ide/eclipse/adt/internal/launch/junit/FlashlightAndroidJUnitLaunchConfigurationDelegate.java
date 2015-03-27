@@ -8,11 +8,12 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.debug.core.ILaunchConfiguration;
+import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.internal.junit.launcher.JUnitLaunchConfigurationConstants;
+import org.eclipse.jdt.internal.junit.launcher.TestKindRegistry;
 import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
-import org.eclipse.swt.widgets.Display;
 
 import com.android.SdkConstants;
 import com.android.ddmlib.testrunner.IRemoteAndroidTestRunner.TestSize;
@@ -20,12 +21,14 @@ import com.android.ide.common.xml.ManifestData;
 import com.android.ide.common.xml.ManifestData.Instrumentation;
 import com.android.ide.eclipse.adt.AdtConstants;
 import com.android.ide.eclipse.adt.AdtPlugin;
+import com.android.ide.eclipse.adt.internal.launch.AndroidBuildUtil;
 import com.android.ide.eclipse.adt.internal.launch.AndroidLaunchConfiguration;
 import com.android.ide.eclipse.adt.internal.launch.AndroidLaunchController;
 import com.android.ide.eclipse.adt.internal.launch.FlashlightAndroidLaunchConfigurationDelegate;
 import com.android.ide.eclipse.adt.internal.launch.IAndroidLaunchAction;
 import com.android.ide.eclipse.adt.internal.launch.InstrumentedAndroidLaunch;
 import com.android.ide.eclipse.adt.internal.launch.LaunchMessages;
+import com.android.ide.eclipse.adt.internal.launch.RunId;
 import com.android.ide.eclipse.adt.internal.launch.junit.runtime.AndroidJUnitLaunchInfo;
 import com.android.ide.eclipse.adt.internal.project.BaseProjectHelper;
 
@@ -37,8 +40,16 @@ public class FlashlightAndroidJUnitLaunchConfigurationDelegate extends
             + ".instrumentation"; //$NON-NLS-1$
 
     @Override
+    protected FLData doBuild(RunId runId,
+            final ILaunchConfiguration launchConfig, final IProject project,
+            final IProgressMonitor monitor) throws CoreException {
+        return AndroidBuildUtil.doFullIncrementalDebugBuildForTest(runId,
+                launchConfig, project, monitor);
+    }
+
+    @Override
     @SuppressWarnings("restriction")
-    protected void doLaunch(final ILaunchConfiguration configuration,
+    protected String doLaunch(final ILaunchConfiguration configuration,
             final String mode, final IProgressMonitor monitor,
             final IProject project,
             final InstrumentedAndroidLaunch androidLaunch,
@@ -52,7 +63,7 @@ public class FlashlightAndroidJUnitLaunchConfigurationDelegate extends
                     .format(LaunchMessages.AndroidJUnitDelegate_NoRunnerMsg_s,
                             project.getName()));
             androidLaunch.stopLaunch();
-            return;
+            return null;
         }
         // get the target app's package
         final String targetAppPackage = getTargetPackage(manifestData, runner);
@@ -62,7 +73,7 @@ public class FlashlightAndroidJUnitLaunchConfigurationDelegate extends
                             project.getName(), runner,
                             SdkConstants.FN_ANDROID_MANIFEST_XML));
             androidLaunch.stopLaunch();
-            return;
+            return null;
         }
         final String testAppPackage = manifestData.getPackage();
         AndroidJUnitLaunchInfo junitLaunchInfo = new AndroidJUnitLaunchInfo(
@@ -72,31 +83,26 @@ public class FlashlightAndroidJUnitLaunchConfigurationDelegate extends
         junitLaunchInfo.setTestMethod(getTestMethod(configuration));
         junitLaunchInfo.setLaunch(androidLaunch);
         junitLaunchInfo.setTestSize(getTestSize(configuration));
-        final IAndroidLaunchAction junitLaunch = new AndroidJUnitLaunchAction(
+        final IAndroidLaunchAction junitLaunch = new FlashlightAndroidJUnitLaunchAction(
                 junitLaunchInfo);
 
-        // launch on a separate thread if currently on the display thread
-        if (Display.getCurrent() != null) {
-            Job job = new Job("Junit Launch") { //$NON-NLS-1$
-                @Override
-                protected IStatus run(IProgressMonitor m) {
-                    controller.launch(project, mode, applicationPackage,
-                            testAppPackage, targetAppPackage,
-                            manifestData.getDebuggable(),
-                            manifestData.getMinSdkVersionString(), junitLaunch,
-                            config, androidLaunch, monitor);
-                    return Status.OK_STATUS;
-                }
-            };
-            job.setPriority(Job.INTERACTIVE);
-            job.schedule();
-        } else {
-            controller.launch(project, mode, applicationPackage,
-                    testAppPackage, targetAppPackage,
-                    manifestData.getDebuggable(),
-                    manifestData.getMinSdkVersionString(), junitLaunch, config,
-                    androidLaunch, monitor);
-        }
+        Job job = new Job("Junit Launch") { //$NON-NLS-1$
+            @Override
+            protected IStatus run(IProgressMonitor m) {
+                controller.launch(project, mode, applicationPackage,
+                        testAppPackage, targetAppPackage,
+                        manifestData.getDebuggable(),
+                        manifestData.getMinSdkVersionString(), junitLaunch,
+                        config, androidLaunch, monitor);
+                return Status.OK_STATUS;
+            }
+        };
+        job.setPriority(Job.INTERACTIVE);
+        job.schedule();
+        // We can't reliably get whether the junit test has run because the
+        // controller blocks until it finishes in this situation
+        androidLaunch.setLaunched(true);
+        return targetAppPackage;
     }
 
     /**
@@ -218,7 +224,7 @@ public class FlashlightAndroidJUnitLaunchConfigurationDelegate extends
             if (runner != null) {
                 return runner;
             }
-            final InstrumentationRunnerValidator instrFinder = new InstrumentationRunnerValidator(
+            final FlashlightInstrumentationRunnerValidator instrFinder = new FlashlightInstrumentationRunnerValidator(
                     BaseProjectHelper.getJavaProject(project), manifestData);
             runner = instrFinder.getValidInstrumentationTestRunner();
             if (runner != null) {
@@ -273,5 +279,19 @@ public class FlashlightAndroidJUnitLaunchConfigurationDelegate extends
                             attributeName));
         }
         return null;
+    }
+
+    /**
+     * Helper method to set JUnit-related attributes expected by JDT JUnit
+     * runner
+     *
+     * @param config
+     *            the launch configuration to modify
+     */
+    static void setJUnitDefaults(ILaunchConfigurationWorkingCopy config) {
+        // set the test runner to JUnit3 to placate JDT JUnit runner logic
+        config.setAttribute(
+                JUnitLaunchConfigurationConstants.ATTR_TEST_RUNNER_KIND,
+                TestKindRegistry.JUNIT3_TEST_KIND_ID);
     }
 }

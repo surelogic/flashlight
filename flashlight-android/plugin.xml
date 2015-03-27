@@ -12,7 +12,7 @@
 		</launchDelegate>
 		<launchDelegate
             id="com.android.ide.eclipse.adt.internal.launch.FlashlightAndroidJUnitLaunchConfigurationDelegate"
-            type="com.android.ide.eclipse.adt.debug.LaunchConfigType"
+            type="com.android.ide.eclipse.adt.junit.launchConfigurationType"
             delegate="com.android.ide.eclipse.adt.internal.launch.junit.FlashlightAndroidJUnitLaunchConfigurationDelegate"
             modes="flashlight">
         </launchDelegate>
@@ -74,7 +74,7 @@
             </contextualLaunch>
             <perspective id="org.eclipse.jdt.ui.JavaPerspective" />
             <perspective id="org.eclipse.debug.ui.DebugPerspective" />
-            <configurationType id="com.surelogic.flashlight.client.eclipse.launch.FlashlightAndroidLaunchConfigurationType">
+            <configurationType id="com.android.ide.eclipse.adt.junit.flashlightLaunchConfigurationType">
             </configurationType>
             <description
                 description="Runs an Android Application with Flashlight"
@@ -91,6 +91,14 @@
 				description="Run an Android application in Flashlight">
 			</launchMode>
 		</launchConfigurationTabGroup>
+		<launchConfigurationTabGroup
+            type="com.android.ide.eclipse.adt.junit.launchConfigurationType"
+            class="com.android.ide.eclipse.adt.internal.launch.junit.FlashlightAndroidJUnitTabGroup"
+            id="com.android.ide.eclipse.adt.junit.FlashlightLaunchConfigTabGroup">
+            <launchMode mode="flashlight"
+                description="Run an Android application in Flashlight">
+            </launchMode>
+        </launchConfigurationTabGroup>
 	</extension>
 	<extension point="org.eclipse.ui.actionSets">
 		<actionSet label="Flashlight Android ActionSet" visible="true"

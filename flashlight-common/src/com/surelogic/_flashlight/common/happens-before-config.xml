@@ -165,8 +165,8 @@
     <method decl="put(java.lang.Object)" hb="source" argNum="1"/>
     <method decl="offer(java.lang.Object)" hb="source" argNum="1" resultMustBe="true" />
     <method decl="offer(java.lang.Object,long,java.util.concurrent.TimeUnit)" hb="source" argNum="1" resultMustBe="true"/>
-    <method decl="take()" argNum="0" hb="target" />
-    <method decl="poll(long,java.util.concurrent.TimeUnit)" argNum="0" hb="target"/>
+    <method decl="take()" argNum="-1" hb="target" />
+    <method decl="poll(long,java.util.concurrent.TimeUnit)" argNum="-1" hb="target"/>
     <method decl="remove(java.lang.Object)" hb="target" argNum="1" resultMustBe="true"/>
     <method decl="contains(java.lang.Object)" hb="target" argNum="1" resultMustBe="true"/>
     <method decl="drainTo(java.util.Collection)" hb="target-all" argNum="1"/>
@@ -184,6 +184,6 @@
   
   <executor id="android.os AsyncTask">
       <method type="android.os.AsyncTask" decl="execute(java.lang.Runnable)" argNum="1" hb="source"/>
-      <method type="java.lang.Runnable" decl="run()" hb="target" callIn="true"/>
+      <method type="java.lang.Runnable" decl="run()" hb="target" argNum="0" callIn="true"/>
   </executor>
 </happens-before>

@@ -97,6 +97,7 @@ public class PostMortemStore implements StoreListener {
 
     }
 
+    @Override
     public void init(final RunConf conf) {
         f_conf = conf;
         // Create starting events
@@ -133,6 +134,7 @@ public class PostMortemStore implements StoreListener {
         putInQueue(f_outQueue, startingEvents);
         IdPhantomReference
                 .addObserver(new IdPhantomReferenceCreationObserver() {
+                    @Override
                     public void notify(final ClassPhantomReference o,
                             final IdPhantomReference r) {
                         /*
@@ -158,6 +160,7 @@ public class PostMortemStore implements StoreListener {
         f_conf.logFlush();
     }
 
+    @Override
     public void instanceFieldAccess(final boolean read, final Object receiver,
             final int fieldID, final long siteId,
             final ClassPhantomReference dcPhantom, final Class<?> declaringClass) {
@@ -171,6 +174,7 @@ public class PostMortemStore implements StoreListener {
         putInQueue(state, e);
     }
 
+    @Override
     public void staticFieldAccess(final boolean read, final int fieldID,
             final long siteId, final ClassPhantomReference dcPhantom,
             final Class<?> declaringClass) {
@@ -188,6 +192,7 @@ public class PostMortemStore implements StoreListener {
         putInQueue(state, e);
     }
 
+    @Override
     public void indirectAccess(final Object receiver, final long siteId) {
         final State state = tl_withinStore.get();
         /*
@@ -196,15 +201,18 @@ public class PostMortemStore implements StoreListener {
         putInQueue(state, new IndirectAccess(receiver, siteId, state));
     }
 
+    @Override
     public void arrayAccess(final boolean read, final Object receiver,
             final int index, final long siteId) {
         // Do nothing
     }
 
+    @Override
     public void classInit(final boolean before, final Class<?> clazz) {
         // Do nothing
     }
 
+    @Override
     public void constructorCall(final boolean before, final long siteId) {
         State state = tl_withinStore.get();
         if (before) {
@@ -214,11 +222,13 @@ public class PostMortemStore implements StoreListener {
         }
     }
 
+    @Override
     public void constructorExecution(final boolean before,
             final Object receiver, final long siteId) {
         // Do nothing
     }
 
+    @Override
     public void methodCall(final boolean before, final Object receiver,
             final long siteId) {
 
@@ -256,6 +266,7 @@ public class PostMortemStore implements StoreListener {
 
     }
 
+    @Override
     public void beforeIntrinsicLockAcquisition(final Object lockObject,
             final boolean lockIsThis, final long siteId) {
         State state = tl_withinStore.get();
@@ -264,6 +275,7 @@ public class PostMortemStore implements StoreListener {
         putInQueue(state, e);
     }
 
+    @Override
     public void afterIntrinsicLockAcquisition(final Object lockObject,
             boolean lockIsThis, final long siteId) {
         State state = tl_withinStore.get();
@@ -272,6 +284,7 @@ public class PostMortemStore implements StoreListener {
         putInQueue(state, e);
     }
 
+    @Override
     public void intrinsicLockWait(final boolean before,
             final Object lockObject, boolean lockIsThis, final long siteId) {
         final Event e;
@@ -287,6 +300,7 @@ public class PostMortemStore implements StoreListener {
 
     }
 
+    @Override
     public void afterIntrinsicLockRelease(final Object lockObject,
             boolean lockIsThis, final long siteId) {
         State state = tl_withinStore.get();
@@ -295,6 +309,7 @@ public class PostMortemStore implements StoreListener {
         putInQueue(state, e);
     }
 
+    @Override
     public void beforeUtilConcurrentLockAcquisitionAttempt(
             final Object lockObject, final long siteId) {
         if (lockObject instanceof Lock) {
@@ -310,6 +325,7 @@ public class PostMortemStore implements StoreListener {
         }
     }
 
+    @Override
     public void afterUtilConcurrentLockAcquisitionAttempt(
             final boolean gotTheLock, final Object lockObject, final long siteId) {
         if (lockObject instanceof Lock) {
@@ -327,6 +343,7 @@ public class PostMortemStore implements StoreListener {
 
     }
 
+    @Override
     public void afterUtilConcurrentLockReleaseAttempt(
             final boolean releasedTheLock, final Object lockObject,
             final long siteId) {
@@ -344,16 +361,19 @@ public class PostMortemStore implements StoreListener {
         }
     }
 
+    @Override
     public void instanceFieldInit(final Object receiver, final int fieldId,
             final Object value) {
         putInQueue(tl_withinStore.get(), new FieldAssignment(receiver, fieldId,
                 value));
     }
 
+    @Override
     public void staticFieldInit(final int fieldId, final Object value) {
         putInQueue(tl_withinStore.get(), new FieldAssignment(fieldId, value));
     }
 
+    @Override
     public void shutdown() {
         /*
          * Finish up data output.
@@ -377,7 +397,7 @@ public class PostMortemStore implements StoreListener {
     /**
      * Puts an event into a blocking queue. This operation will block if the
      * queue is full and it will ignore any interruptions.
-     * 
+     *
      * @param queue
      *            the blocking queue to put the event into.
      * @param e
@@ -406,7 +426,7 @@ public class PostMortemStore implements StoreListener {
 
     /**
      * Joins on the given thread ignoring any interruptions.
-     * 
+     *
      * @param t
      *            the thread to join on.
      */
@@ -427,7 +447,7 @@ public class PostMortemStore implements StoreListener {
 
     /**
      * Used by the refinery, gets the {@link State} of the current thread.
-     * 
+     *
      * @return
      */
     public State getState() {
@@ -437,17 +457,19 @@ public class PostMortemStore implements StoreListener {
     /**
      * Used by the refinery to notify the store of when a read/write lock has
      * been garbage collected.
-     * 
+     *
      * @param pr
      */
     public void gcRWLock(final IdPhantomReference pr) {
         f_rwLocks.remove(pr);
     }
 
+    @Override
     public Collection<? extends ConsoleCommand> getCommands() {
         return Collections.emptyList();
     }
 
+    @Override
     public void garbageCollect(
             final List<? extends IdPhantomReference> references) {
         for (;;) {
@@ -460,6 +482,7 @@ public class PostMortemStore implements StoreListener {
         }
     }
 
+    @Override
     public void methodExecution(boolean before, long siteId) {
 
         /*
@@ -472,6 +495,7 @@ public class PostMortemStore implements StoreListener {
          */
     }
 
+    @Override
     public void happensBeforeThread(String id, Thread callee, long siteId,
             String typeName, long nanoTime) {
         State state = tl_withinStore.get();
@@ -479,6 +503,7 @@ public class PostMortemStore implements StoreListener {
                 siteId, state, nanoTime));
     }
 
+    @Override
     public void happensBeforeObject(String id, Object object, long siteId,
             String typeName, long nanoTime) {
         State state = tl_withinStore.get();
@@ -486,6 +511,7 @@ public class PostMortemStore implements StoreListener {
                 siteId, state, nanoTime));
     }
 
+    @Override
     public void happensBeforeCollection(String id, Object collection,
             Object item, long siteId, String typeName, long nanoTime) {
         State state = tl_withinStore.get();

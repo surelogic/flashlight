@@ -41,6 +41,7 @@ import com.android.ide.eclipse.adt.internal.build.DexException;
 import com.android.ide.eclipse.adt.internal.build.Messages;
 import com.android.ide.eclipse.adt.internal.build.NativeLibInJarException;
 import com.android.ide.eclipse.adt.internal.build.builders.PostCompilerBuilder;
+import com.android.ide.eclipse.adt.internal.launch.FlashlightAndroidLaunchConfigurationDelegate.FLData;
 import com.android.ide.eclipse.adt.internal.preferences.AdtPrefs;
 import com.android.ide.eclipse.adt.internal.preferences.AdtPrefs.BuildVerbosity;
 import com.android.ide.eclipse.adt.internal.project.ApkInstallManager;
@@ -65,13 +66,59 @@ import com.surelogic.flashlight.client.eclipse.launch.LaunchUtils;
 import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
 
 @SuppressWarnings({ "deprecation", "restriction" })
-class AndroidBuildUtil {
+public class AndroidBuildUtil {
 
     private AndroidBuildUtil() {
         // Do nothing
     }
 
-    static FlashlightAndroidLaunchConfigurationDelegate.FLData doFullIncrementalDebugBuild(
+    public static FlashlightAndroidLaunchConfigurationDelegate.FLData doFullIncrementalDebugBuildForTest(
+            RunId runId, final ILaunchConfiguration launchConfig,
+            final IProject project, final IProgressMonitor monitor)
+            throws CoreException {
+        List<IJavaProject> androidProjectList = new ArrayList<IJavaProject>();
+        try {
+            androidProjectList = ProjectHelper
+                    .getAndroidProjectDependencies(BaseProjectHelper
+                            .getJavaProject(project));
+        } catch (JavaModelException e) {
+            AdtPlugin.printErrorToConsole(project, e);
+        }
+        // Recursively build dependencies
+        FLData data = null;
+        for (IJavaProject dependency : androidProjectList) {
+            data = doFullIncrementalDebugBuild(runId, launchConfig,
+                    dependency.getProject(), monitor);
+        }
+
+        // Do an incremental build to pick up all the deltas
+        project.build(IncrementalProjectBuilder.INCREMENTAL_BUILD, monitor);
+
+        // If the preferences indicate not to use post compiler optimization
+        // then the incremental build will have done everything necessary,
+        // otherwise,
+        // we have to run the final builder manually (if requested).
+        if (AdtPrefs.getPrefs().getBuildSkipPostCompileOnFileSave()) {
+            // Create the map to pass to the PostC builder
+            Map<String, String> args = new TreeMap<String, String>();
+            args.put(PostCompilerBuilder.POST_C_REQUESTED, ""); //$NON-NLS-1$
+
+            // call the post compiler manually, forcing FULL_BUILD otherwise
+            // Eclipse won't
+            // call the builder since the delta is empty.
+            project.build(IncrementalProjectBuilder.FULL_BUILD,
+                    PostCompilerBuilder.ID, args, monitor);
+        }
+
+        // because the post compiler builder does a delayed refresh due to
+        // library not picking the refresh up if it's done during the build,
+        // we want to force a refresh here as this call is generally asking for
+        // a build to use the apk right after the call.
+        project.refreshLocal(IResource.DEPTH_INFINITE, monitor);
+        return data;
+    }
+
+    public static FlashlightAndroidLaunchConfigurationDelegate.FLData doFullIncrementalDebugBuild(
             RunId runId, final ILaunchConfiguration launchConfig,
             final IProject project, final IProgressMonitor monitor)
             throws CoreException {

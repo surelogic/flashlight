@@ -705,7 +705,7 @@ public class Store {
      */
     public static void happensBeforeThread(final long nanoTime,
             final Thread callee, String id, final long siteId,
-            final String typeName) {
+            final String typeName, final boolean isCallIn) {
         if (checkInside()) {
             try {
                 if (typeName == null
@@ -734,7 +734,7 @@ public class Store {
      */
     public static void happensBeforeObject(final long nanoTime,
             final Object object, String id, final long siteId,
-            final String typeName) {
+            final String typeName, final boolean isCallIn) {
         if (checkInside()) {
             try {
                 if (typeName == null
@@ -763,7 +763,7 @@ public class Store {
      */
     public static void happensBeforeCollection(final long nanoTime,
             final Object item, final Object collection, String id,
-            final long siteId, final String typeName) {
+            final long siteId, final String typeName, final boolean isCallIn) {
         if (checkInside()) {
             try {
                 if (typeName == null
@@ -782,6 +782,11 @@ public class Store {
         }
     }
 
+    public static void happensBeforeExecutor(
+        final long nanoTime, final Object object, String id,
+        final long siteId, final String typeName, final boolean isCallIn) {
+    }
+    
     /**
      * Stops collection of events about the instrumented program. This method
      * may be called from within the following thread contexts:

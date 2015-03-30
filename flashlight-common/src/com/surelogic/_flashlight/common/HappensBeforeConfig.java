@@ -140,8 +140,8 @@ public final class HappensBeforeConfig {
 
         /**
          * The parameter of this method that corresponds to the object affecting
-         * happens-before events, indexed starting at 1. A 0 indicates that it
-         * is the return value.
+         * happens-before events, indexed starting at 1. A -1 indicates that it
+         * is the return value.  A 0 indicates that is the receiver.
          *
          * @return
          */
@@ -149,6 +149,14 @@ public final class HappensBeforeConfig {
             return objectParam;
         }
 
+        public boolean isParamReturnValue() {
+          return objectParam == -1;
+        }
+        
+        public boolean isParamReceiver() {
+          return objectParam == 0;
+        }
+        
         @Override
         public void invokeSwitch(final HappensBeforeSwitch s) {
             s.caseHappensBeforeCollection(this);
@@ -174,6 +182,11 @@ public final class HappensBeforeConfig {
                 int objectParam, boolean callIn) {
             super(id, qualifiedClass, decl, type, returnCheck, objectParam,
                     callIn);
+        }
+        
+        @Override
+        public void invokeSwitch(final HappensBeforeSwitch s) {
+            s.caseHappensBeforeExecutor(this);
         }
 
         @Override
@@ -520,6 +533,8 @@ public final class HappensBeforeConfig {
         public void caseHappensBeforeObject(HappensBeforeObject hb);
 
         public void caseHappensBeforeCollection(HappensBeforeCollection hb);
+        
+        public void caseHappensBeforeExecutor(HappensBeforeExecutor hb);
     }
 
     @Override

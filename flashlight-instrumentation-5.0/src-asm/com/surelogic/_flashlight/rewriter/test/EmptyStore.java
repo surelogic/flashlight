@@ -128,19 +128,26 @@ public class EmptyStore {
 
   public static void happensBeforeThread(
       final long nanoTime, final Thread callee, final String id, 
-      final long siteId, final String typeName) {
+      final long siteId, final String typeName, final boolean isCallIn) {
     // do nothing
   }
   
   public static void happensBeforeObject(
       final long nanoTime, final Object object, final String id, 
-      final long siteId, final String typeName) {
+      final long siteId, final String typeName, final boolean isCallIn) {
     // do nothing
   }
   
   public static void happensBeforeCollection(
       final long nanoTime, final Object item, final Object collection,
-      final long siteId, final String id, final String typeName) {
+      final long siteId, final String id, final String typeName,
+      final boolean isCallIn) {
     // do nothing
   }
+  
+  public static void happensBeforeExecutor(
+      final long nanoTime, final Object object, String id,
+      final long siteId, final String typeName, final boolean isCallIn) {
+    // do nothing
+  }  
 }

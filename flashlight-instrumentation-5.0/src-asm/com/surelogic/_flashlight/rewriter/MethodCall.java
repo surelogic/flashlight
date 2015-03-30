@@ -8,6 +8,7 @@ import org.objectweb.asm.tree.MethodInsnNode;
 
 import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBefore;
 import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBeforeCollection;
+import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBeforeExecutor;
 import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBeforeObject;
 import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBeforeSwitch;
 import com.surelogic._flashlight.common.HappensBeforeConfig.ReturnCheck;
@@ -443,8 +444,9 @@ public abstract class MethodCall {
     }
     
     // ..., nanoTime (long), [return value]
-    hb.invokeSwitch( new InstrumentationSwitch(
-        this, mv, config, result.isExact, returnValueSize));
+    hb.invokeSwitch(
+        new InstrumentationSwitch(
+            this, mv, config, result.isExact, returnValueSize));
     // ..., [return value]
     
     final Label resume = new Label();
@@ -527,6 +529,7 @@ public abstract class MethodCall {
 
     
     
+    @Override
     public void caseHappensBefore(final HappensBefore hb) {
       // ..., nanoTime (long), [return value]
       swapNanoTimeAndReturnValue();
@@ -543,10 +546,13 @@ public abstract class MethodCall {
        */
       pushTypeNameForDynamicTesting(hb);
       // ..., [return value], nanoTime (long), threadRef, id, callSideId (long), [type name or null]
+      ByteCodeUtils.pushBooleanConstant(mv, false); // Not a call-in situation
+      // ..., [return value], nanoTime (long), threadRef, id, callSideId (long), [type name or null], false
       ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.HAPPENS_BEFORE_THREAD);
       // ..., [return value]
     }
 
+    @Override
     public void caseHappensBeforeObject(final HappensBeforeObject hb) {
       // ..., nanoTime (long), [return value]
       swapNanoTimeAndReturnValue();
@@ -563,17 +569,20 @@ public abstract class MethodCall {
        */
       pushTypeNameForDynamicTesting(hb);
       // ..., [return value], nanoTime (long), object, id, callSiteId (long), [type name or null]
+      ByteCodeUtils.pushBooleanConstant(mv, false); // Not a call-in situation
+      // ..., [return value], nanoTime (long), object, id, callSiteId (long), [type name or null], false
       ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.HAPPENS_BEFORE_OBJECT);
       // ..., [return value]
     }
 
+    @Override
     public void caseHappensBeforeCollection(final HappensBeforeCollection hb) {
       // ..., nanoTime (long), [return value]
       
-      /* check if the arg pos is 0, if so, then we use the return value,
+      /* check if the arg pos is -1, if so, then we use the return value,
        * so we have to copy it around the nanoTime value on the stack.
        */
-      if (hb.getObjectParam() == 0) {
+      if (hb.isParamReturnValue()) {
         if (returnValueSize == 2) {
           /* this really shouldn't ever be the case because we expect the
            * return value to be a object reference for our purposes. But
@@ -610,7 +619,57 @@ public abstract class MethodCall {
        */
       pushTypeNameForDynamicTesting(hb);
       // ..., [return value], nanoTime (long), item, collection, id, callSiteId (long), [type name or null]
+      ByteCodeUtils.pushBooleanConstant(mv, false); // Not a call-in situation
+      // ..., [return value], nanoTime (long), item, collection, id, callSiteId (long), [type name or null], false
       ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.HAPPENS_BEFORE_COLLECTION);
+      // ..., [return value]
+    }
+
+    @Override
+    public void caseHappensBeforeExecutor(final HappensBeforeExecutor hb) {
+      // ..., nanoTime (long), [return value]
+      
+      /* check if the arg pos is -1, if so, then we use the return value,
+       * so we have to copy it around the nanoTime value on the stack.
+       */
+      if (hb.isParamReturnValue()) {
+        if (returnValueSize == 2) {
+          /* this really shouldn't ever be the case because we expect the
+           * return value to be a object reference for our purposes. But
+           * let's generate legal JVM code for this case anyhow. 
+           */
+          // ..., nanoTime (long), returnValue (long)
+          mv.visitInsn(Opcodes.DUP2_X2);
+          // ..., returnValue (long), nanoTime (long), returnValue (long)
+        } else {
+          // ..., nanoTime (long), returnValue
+          mv.visitInsn(Opcodes.DUP_X2);
+          // ..., returnValue, nanoTime (long), returnValue
+        }
+      } else {
+        // ..., nanoTime (long), [return value]
+        swapNanoTimeAndReturnValue();
+        // ..., [return value], nanoTime (long)
+
+        /* Otherwise, push the reference, collection, the site id, and
+         * the given actual argument
+         */
+        mcall.pushArgumentForEvent(mv, hb.getObjectParam());
+        // ..., [return value], nanoTime (long), object
+      }
+      // ..., [return value], nanoTime (long), object
+      mv.visitLdcInsn(hb.getId());
+      // ..., [return value], nanoTime (long), object, id
+      mcall.pushSiteId(mv);
+      // ..., [return value], nanoTime (long), object, id, callSiteId (long)
+      /* Push null if the call is exact, or the qualified type name if
+       * the result is not exact.
+       */
+      pushTypeNameForDynamicTesting(hb);
+      // ..., [return value], nanoTime (long), object, id, callSiteId (long), [type name or null]
+      ByteCodeUtils.pushBooleanConstant(mv, false); // Not a call-in situation
+      // ..., [return value], nanoTime (long), object, id, callSiteId (long), [type name or null], false
+      ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.HAPPENS_BEFORE_EXECUTOR);
       // ..., [return value]
     }
   }

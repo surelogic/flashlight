@@ -271,29 +271,32 @@ public class DebugStore {
 
   public static synchronized void happensBeforeThread(
       final long nanoTime, final Thread callee, final String id, 
-      final long siteId, final String typeName) {
+      final long siteId, final String typeName, final boolean isCallIn) {
     stdOut.println("happensBeforeThread");
     stdOut.println("  nanoTime = " + nanoTime);
     stdOut.println("  callee = " + objectToString(callee));
     stdOut.println("  id = " + id);
     stdOut.println("  siteID = " + siteId);
     stdOut.println("  typeName = " + typeName);
+    stdOut.println("  isCallin = " + isCallIn);
   }
   
   public static synchronized void happensBeforeObject(
       final long nanoTime, final Object object, final String id, 
-      final long siteId, final String typeName) {
+      final long siteId, final String typeName, final boolean isCallIn) {
     stdOut.println("happensBeforeObject");
     stdOut.println("  nanoTime = " + nanoTime);
     stdOut.println("  object = " + objectToString(object));
     stdOut.println("  id = " + id);
     stdOut.println("  siteID = " + siteId);
     stdOut.println("  typeName = " + typeName);
+    stdOut.println("  isCallin = " + isCallIn);
   }
   
   public static synchronized void happensBeforeCollection(
       final long nanoTime, final Object item, final Object collection,
-      final String id, final long siteId, final String typeName) {
+      final String id, final long siteId, final String typeName,
+      final boolean isCallIn) {
     stdOut.println("happensBeforeCollection");
     stdOut.println("  nanoTime = " + nanoTime);
     stdOut.println("  item = " + objectToString(item));
@@ -301,5 +304,18 @@ public class DebugStore {
     stdOut.println("  id = " + id);
     stdOut.println("  siteID = " + siteId);
     stdOut.println("  typeName = " + typeName);
+    stdOut.println("  isCallin = " + isCallIn);
+  }
+
+  public static void happensBeforeExecutor(
+      final long nanoTime, final Object object, String id,
+      final long siteId, final String typeName, final boolean isCallIn) {
+    stdOut.println("happensBeforeExecutor");
+    stdOut.println("  nanoTime = " + nanoTime);
+    stdOut.println("  object = " + objectToString(object));
+    stdOut.println("  id = " + id);
+    stdOut.println("  siteID = " + siteId);
+    stdOut.println("  typeName = " + typeName);
+    stdOut.println("  isCallin = " + isCallIn);
   }
 }

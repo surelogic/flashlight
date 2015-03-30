@@ -77,13 +77,16 @@ public final class FlashlightNames {
             .getMethod("int getFieldId(String, String)");
     
     public static final Method HAPPENS_BEFORE_THREAD = Method
-            .getMethod("void happensBeforeThread(long, java.lang.Thread, java.lang.String, long, java.lang.String)");
+            .getMethod("void happensBeforeThread(long, java.lang.Thread, java.lang.String, long, java.lang.String, boolean)");
     
     public static final Method HAPPENS_BEFORE_OBJECT = Method
-            .getMethod("void happensBeforeObject(long, java.lang.Object, java.lang.String, long, java.lang.String)");
+            .getMethod("void happensBeforeObject(long, java.lang.Object, java.lang.String, long, java.lang.String, boolean)");
 
     public static final Method HAPPENS_BEFORE_COLLECTION = Method
-            .getMethod("void happensBeforeCollection(long, java.lang.Object, java.lang.Object, java.lang.String, long, java.lang.String)");
+            .getMethod("void happensBeforeCollection(long, java.lang.Object, java.lang.Object, java.lang.String, long, java.lang.String, boolean)");
+
+    public static final Method HAPPENS_BEFORE_EXECUTOR = Method
+            .getMethod("void happensBeforeCollection(long, java.lang.Object, java.lang.String, long, java.lang.String, boolean)");
 
     public static final Method CLOSURE_CREATION = Method
             .getMethod("void closureCreation(java.lang.Object, java.lang.String, java.lang.String, java.lang.String, int, java.lang.String, java.lang.String, java.lang.String)");

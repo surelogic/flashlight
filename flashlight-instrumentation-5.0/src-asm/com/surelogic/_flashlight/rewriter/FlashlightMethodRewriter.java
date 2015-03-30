@@ -19,6 +19,13 @@ import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
+import com.surelogic._flashlight.common.HappensBeforeConfig.HBType;
+import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBefore;
+import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBeforeCollection;
+import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBeforeExecutor;
+import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBeforeObject;
+import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBeforeSwitch;
+import com.surelogic._flashlight.common.HappensBeforeConfig.ReturnCheck;
 import com.surelogic._flashlight.rewriter.ClassAndFieldModel.ClassNotFoundException;
 import com.surelogic._flashlight.rewriter.ClassAndFieldModel.Field;
 import com.surelogic._flashlight.rewriter.ClassAndFieldModel.FieldNotFoundException;
@@ -44,7 +51,8 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 	 * constructor code.
 	 */
 	private final class ObjectInitCallback implements Callback {
-		@SuppressWarnings("synthetic-access")
+		@Override
+    @SuppressWarnings("synthetic-access")
     public void superConstructorCalled() {
 			stateMachine = null;
 			/*
@@ -138,6 +146,44 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 	private final boolean mustImplementIIdObject;
 
 	/**
+	 * The happens-before record of the interesting happens-before "call in" 
+	 * method that this method overrides, or <code>null</code> if the method
+	 * doen't override a happens before method whose callIn attribute is 
+	 * true.
+	 */
+	private final HappensBefore happensBeforeCallInRecord;
+	
+	/**
+	 * Index of the local variable that holds the happensBefore time stamp.
+	 * Only used if {@link #happensBeforeCallInRecord} is non-<code>null</code>.
+	 * Otherwise, the value is <code>-1</code>.
+	 * 
+	 * <p>We need to store the time stamp in a variable because we might have
+	 * to get it at the start of the method.  We don't need it until we
+	 * handle a return instruction.  But we cannot guarantee that the extra
+	 * junk didn't get pushed on the stack between the time stamp and the 
+	 * method return value.  So it needs to be stored and retrieved when needed.
+	 */
+	private final int timeStampVariableIndex;
+	
+	/**
+	 * Index of the local variable that holds the reference to the connecting 
+	 * object in happens-before call-in collection methods.  This variable is 
+	 * set at the beginning of the method by copying the actual that is passed
+	 * to the method.  We have to save it at the beginning of the method in case
+	 * the local variable that it is passed into is reused.  If we don't care
+	 * about this then the value is <code>-1</code>.
+	 */
+	private final int collectionConnectionVariableIndex;
+	
+	/**
+	 * Site index of the start of the method body for happens-before 
+	 * call-in method.  If we don't care about this, it is -1.  Set my 
+	 * {@link #visitCode}.
+	 */
+	private long happensBeforeSiteIndex = -1L;
+	
+	/**
 	 * The current source line of code being rewritten. Driven by calls to
 	 * {@link #visitLineNumber}. This is {@code -1} when no line number
 	 * information is available.
@@ -196,18 +242,6 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 	 * . Once the thunk has been executed, this is reset to null} .
 	 */
 	private DelayedOutput delayedForLabel = null;
-
-//	/**
-//	 * If the previously visited element was an ASTORE instruction, this is set
-//	 * to the index of the local variable stored. Otherwise, it is -1} .
-//	 */
-//	private int previousStore = -1;
-//
-//	/**
-//	 * If the previously visited element was an ALOAD instruction, this is set
-//	 * to the index of the local variable loaded. Otherwise, it is -1} .
-//	 */
-//	private int previousLoad = -1;
 
   /**
    * The instruction node of the previous instruction if it was an ASTORE
@@ -369,6 +403,20 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 		siteIdFactory.setMethodLocation(
 		    sourceFileName, classBeingAnalyzedFullyQualified, inInterface,
 		    methodName, desc, access);
+		
+    
+    HappensBefore hb;
+    try {
+      hb = hbt.isInsideHappensBefore(nameInternal, mname, desc);
+    } catch (final ClassNotFoundException e) {
+      hb = null;
+      messenger.warning(
+          "Provided classpath is incomplete 100: couldn't find class " +
+              e.getMissingClass());
+    }
+    happensBeforeCallInRecord = hb;
+    timeStampVariableIndex = hb == null ? -1 : newLocal(Type.LONG_TYPE);
+    collectionConnectionVariableIndex = hb == null ? -1 : newLocal(Type.getObjectType("java/lang/Object"));
 	}
 
 	@Override
@@ -412,9 +460,47 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 			ByteCodeUtils.initializePhantomObject(mv, config,
 					classBeingAnalyzedInternal);
 		}
+		
+		/*
+		 * If we are inside a method that overrides a happens-before 'callIn'
+		 * 'target' method, we need to get the time stamp and store it in a
+		 * local variable.
+		 */
+		if (happensBeforeCallInRecord != null) {
+		  happensBeforeSiteIndex = siteIdFactory.getSiteId(currentSrcLine);
+		  if (happensBeforeCallInRecord.getType() == HBType.TARGET) {
+		    pushAndStoreTimeStamp();
+		  }
+		  if (happensBeforeCallInRecord instanceof HappensBeforeCollection) {
+		    final int whichActual = ((HappensBeforeCollection) happensBeforeCallInRecord).getObjectParam();
+		    /* N.B. if 0, then the return value is used.  Otherwise we now have to 
+		     * find the local variable that holds the actual parameter so we can
+		     * copy it for later use. 
+		     */
+		    if (whichActual > 0) {
+		      // START WORKING HERE
+		      
+		      final Type[] argTypes = Type.getArgumentTypes(methodDesc);
+		      /* We know the method is not-static so the first actual argument is
+		       * in variable 1
+		       */
+		      int copyFromVar = 1;
+		      for (int current = 1; current < whichActual; current++) {
+		        copyFromVar += argTypes[current-1].getSize();
+		      }
+		      
+		      // Load the actual argument, and then store it back in our variable
+		      // ...
+		      mv.visitVarInsn(Opcodes.ALOAD, copyFromVar);
+		      // ..., object ref from the <whichActual>th formal parameter
+		      mv.visitVarInsn(Opcodes.ASTORE, collectionConnectionVariableIndex);
+		      // ..
+		    }
+		  }
+		}
 	}
 
-	@Override
+  @Override
 	public void visitLineNumber(final int line, final Label start) {
 		/*
 		 * This callback does not correspond to an instruction, so don't worry
@@ -453,6 +539,14 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 			rewriteMonitorexit();
 		} else if (opcode >= Opcodes.IRETURN && opcode <= Opcodes.RETURN) {
 			handlePreviousInstructions();
+			
+			/* Deal with happens-before "callIn" methods.  SHould be done
+			 * before we signal any kind of end of method execution to the store.
+			 */
+			if (happensBeforeCallInRecord != null) {
+			  insertHappensBeforeCallIn(opcode);
+			}
+			
 			if (wasSynchronized && config.rewriteSynchronizedMethod) {
 				insertSynchronizedMethodExit();
 			}
@@ -985,7 +1079,8 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 	/**
 	 * Return the index of a new local variable.
 	 */
-	public int newLocal(final Type type) {
+	@Override
+  public int newLocal(final Type type) {
 		final int local = nextNewLocal;
 		nextNewLocal += type.getSize();
 		return local;
@@ -1240,7 +1335,205 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 				FlashlightNames.CONSTRUCTOR_EXECUTION);
 		// ...
 	}
+	
+	private void insertHappensBeforeCallIn(final int returnOpcode) {
+    /* N.B. This method is very similar to the method
+     * MethodCall.instrumentHappensBefore(). Should really find a way to share
+     * code between the two to prevent problems in the future.
+     */
+	  
+	  /* stack is ..., [return value]
+	   * 
+	   * The return value may be absent (RETURN).  It can be a category 1
+	   * or category 2 type.
+	   */
+	  
+    /* If the method overrides a "source" method then we have to get the time
+     * stamp to use below. If the method overrides a "target" method then the
+     * time stamp was retrieved at the start of the methods execution.
+     */
+	  if (happensBeforeCallInRecord.getType() == HBType.SOURCE) {
+	    pushAndStoreTimeStamp();
+	  }
+	  
+	  // At this point we know that the time stamp is stored in a local variable
+	 
+    /* Check the return value of the method call to see if we should
+     * generate an event.
+     */
+    final Label skip = new Label();
+    final ReturnCheck check = happensBeforeCallInRecord.getReturnCheck();
+    if (check != ReturnCheck.NONE) {
+      final int opCode;
+      switch (check) {
+      case NOT_NULL:
+        opCode = Opcodes.IFNULL;
+        break;
+      case NULL:
+        opCode = Opcodes.IFNONNULL;
+        break;
+      case TRUE:
+        opCode = Opcodes.IFEQ;
+        break;
+      case FALSE:
+        opCode = Opcodes.IFNE;
+        break;
+      default:
+          opCode = Opcodes.NOP;
+      }
+      
+      /* We know there is a return value, because otherwise we wouldn't be
+       * trying to check it here.  We also know the return value has to be
+       * category 1.
+       */
+      // ..., return value
+      mv.visitInsn(Opcodes.DUP);
+      // ..., return value, return value
+      mv.visitJumpInsn(opCode, skip);
+      // ..., return value
+    }
 
+    // ..., [return value]
+    happensBeforeCallInRecord.invokeSwitch(new HappensBeforeCallInSwitch());
+    // ..., [return value]
+    
+    mv.visitLabel(skip);
+    // ..., [return value]    
+	}
+
+  private final class HappensBeforeCallInSwitch implements HappensBeforeSwitch {
+    @Override
+    public void caseHappensBefore(final HappensBefore hb) {
+      // ..., [return value]
+      mv.visitVarInsn(Opcodes.LLOAD, timeStampVariableIndex);
+      // ..., [return value], nanoTime (long)
+      mv.visitVarInsn(Opcodes.ALOAD, 0);
+      // ..., [return value], nanoTime (long), threadRef
+      mv.visitLdcInsn(hb.getId());
+      // ... [return value], nanoTime (long), threadRef, id
+      ByteCodeUtils.pushLongConstant(mv, happensBeforeSiteIndex);
+      // ..., [return value], nanoTime (long), threadRef, id, callSiteId (long)
+      mv.visitInsn(Opcodes.ACONST_NULL);
+      // ..., [return value], nanoTime (long), threadRef, id, callSideId (long), null
+      ByteCodeUtils.pushBooleanConstant(mv, true); // Call-in method situation
+      // ..., [return value], nanoTime (long), threadRef, id, callSideId (long), null, true
+      ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.HAPPENS_BEFORE_THREAD);
+      // ..., [return value]
+    }
+
+    @Override
+    public void caseHappensBeforeObject(final HappensBeforeObject hb) {
+      // ..., [return value]
+      mv.visitVarInsn(Opcodes.LLOAD, timeStampVariableIndex);
+      // ..., [return value], nanoTime (long)
+      mv.visitVarInsn(Opcodes.ALOAD, 0);
+      // ..., [return value], nanoTime (long), object
+      mv.visitLdcInsn(hb.getId());
+      // ..., [return value], nanoTime (long), object, id
+      ByteCodeUtils.pushLongConstant(mv, happensBeforeSiteIndex);
+      // ..., [return value], nanoTime (long), object, id, callSiteId (long)
+      mv.visitInsn(Opcodes.ACONST_NULL);
+      // ..., [return value], nanoTime (long), object, id, callSiteId (long), null
+      ByteCodeUtils.pushBooleanConstant(mv, true); // Call-in method situation
+      // ..., [return value], nanoTime (long), object, id, callSiteId (long), null, true
+      ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.HAPPENS_BEFORE_OBJECT);
+      // ..., [return value]
+    }
+
+    @Override
+    public void caseHappensBeforeCollection(final HappensBeforeCollection hb) {
+      // ..., [return value]
+      
+      /* Check if the arg pos is -1. If so, then we use the return value
+       * as the connecting object.  In this case the return value must
+       * be an object reference, so we don't have to worry about the 
+       * size of the return value being 2.
+       */
+      if (hb.isParamReturnValue()) {
+        mv.visitVarInsn(Opcodes.LLOAD, timeStampVariableIndex);
+        // ..., return value, nanoTime (long)
+        mv.visitInsn(Opcodes.DUP2_X1);
+        // ..., nanonTime (long), return value, nanoTime (long)
+        mv.visitInsn(Opcodes.POP2);
+        // ..., nanonTime (long), return value
+        mv.visitInsn(Opcodes.DUP_X2);
+        // ..., return value, nanonTime (long), return value
+      } else {
+        mv.visitVarInsn(Opcodes.LLOAD, timeStampVariableIndex);
+        // ..., [return value], nanoTime (long)
+
+        // push the parameter we stored at the beginning of the method
+        mv.visitVarInsn(Opcodes.ALOAD, collectionConnectionVariableIndex);
+        // ..., [return value], nanoTime (long), item
+      }
+      // ..., [return value], nanoTime (long), item
+      
+      
+      // collection is the receiver
+      mv.visitVarInsn(Opcodes.ALOAD, 0);
+      // ..., [return value], nanoTime (long), item, collection
+      mv.visitLdcInsn(hb.getId());
+      // ..., [return value], nanoTime (long), item, collection, id
+      ByteCodeUtils.pushLongConstant(mv, happensBeforeSiteIndex);
+      // ..., [return value], nanoTime (long), item, collection, id, callSiteId (long)
+      mv.visitInsn(Opcodes.ACONST_NULL);
+      // ..., [return value], nanoTime (long), item, collection, id, callSiteId (long), null
+      ByteCodeUtils.pushBooleanConstant(mv, true); // Call-in method situation
+      // ..., [return value], nanoTime (long), item, collection, id, callSiteId (long), null, true
+      ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.HAPPENS_BEFORE_COLLECTION);
+      // ..., [return value]
+    }
+
+    @Override
+    public void caseHappensBeforeExecutor(final HappensBeforeExecutor hb) {
+      // ..., [return value]
+      
+      /* Check if the arg pos is -1. If so, then we use the return value
+       * as the connecting object.  In this case the return value must
+       * be an object reference, so we don't have to worry about the 
+       * size of the return value being 2.
+       */
+      if (hb.isParamReturnValue()) {
+        mv.visitVarInsn(Opcodes.LLOAD, timeStampVariableIndex);
+        // ..., return value, nanoTime (long)
+        mv.visitInsn(Opcodes.DUP2_X1);
+        // ..., nanonTime (long), return value, nanoTime (long)
+        mv.visitInsn(Opcodes.POP2);
+        // ..., nanonTime (long), return value
+        mv.visitInsn(Opcodes.DUP_X2);
+        // ..., return value, nanonTime (long), return value
+      } else if (hb.isParamReceiver()) { // do we want the receiver?
+        mv.visitVarInsn(Opcodes.LLOAD, timeStampVariableIndex);
+        // ..., [return value], nanoTime (long)
+        
+        mv.visitVarInsn(Opcodes.ALOAD, 0);
+        // ..., [return value], nanoTime (long), receiver
+      } else { // regular parameter
+        mv.visitVarInsn(Opcodes.LLOAD, timeStampVariableIndex);
+        // ..., [return value], nanoTime (long)
+
+        // push the parameter we stored at the beginning of the method
+        mv.visitVarInsn(Opcodes.ALOAD, collectionConnectionVariableIndex);
+        // ..., [return value], nanoTime (long), object
+      }
+      // ..., [return value], nanoTime (long), object
+      
+      
+      // ..., [return value], nanoTime (long), object
+      mv.visitLdcInsn(hb.getId());
+      // ..., [return value], nanoTime (long), object, id
+      ByteCodeUtils.pushLongConstant(mv, happensBeforeSiteIndex);
+      // ..., [return value], nanoTime (long), object, id, callSiteId (long)
+      mv.visitInsn(Opcodes.ACONST_NULL);
+      // ..., [return value], nanoTime (long), object, id, callSiteId (long), null
+      ByteCodeUtils.pushBooleanConstant(mv, true); // Call-in method situation
+      // ..., [return value], nanoTime (long), object, id, callSiteId (long), null, true
+      ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.HAPPENS_BEFORE_COLLECTION);
+      // ..., [return value]
+    }
+  }
+
+	
 	private void rewriteConstructorCall(
 			final IndirectAccessMethod indirectAccess, final String owner,
 			final String name, final String desc) {
@@ -2158,7 +2451,17 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 	// == Rewrite method calls
 	// =========================================================================
 
-	private void rewriteMethodCall(final int opcode,
+	private void pushAndStoreTimeStamp() {
+    // Get the current nanoTime 
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.JAVA_LANG_SYSTEM,
+        FlashlightNames.NANO_TIME.getName(),
+        FlashlightNames.NANO_TIME.getDescriptor(), false);
+    // stack is now: nanoTime (long)
+    mv.visitVarInsn(Opcodes.LSTORE, timeStampVariableIndex);
+    // stack is now: <empty>
+  }
+
+  private void rewriteMethodCall(final int opcode,
 			final IndirectAccessMethod indirectMethod, final String owner,
 			final String name, final String desc) {
     final MethodInsnNode methodInsn = (MethodInsnNode) currentInsn;

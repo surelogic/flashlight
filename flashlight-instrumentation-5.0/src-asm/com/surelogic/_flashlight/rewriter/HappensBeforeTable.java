@@ -14,9 +14,17 @@ final class HappensBeforeTable {
   private final ClassAndFieldModel classModel;
   
   /* First check the method name.  This is a map from String (method name) to
-   * a list of HappensBefore records.
+   * a list of HappensBefore records.  Only contains those records where 
+   * the callIn attribute if false.
    */
   private final Map<String, List<Record>> methodMap =
+      new HashMap<String, List<Record>>();
+  
+  /* First check the method name.  This is a map from String (method name) to
+   * a list of HappensBefore records.  Only contains those records where 
+   * the callIn attribute if true.
+   */
+  private final Map<String, List<Record>> callInMethodMap =
       new HashMap<String, List<Record>>();
   
   
@@ -33,11 +41,14 @@ final class HappensBeforeTable {
       final Map<String, List<T>> map, final RewriteMessenger messenger) {
     for (final Map.Entry<String, List<T>> e : map.entrySet()) {
       for (final HappensBefore hb : e.getValue()) {
+        final Map<String, List<Record>> mm =
+            hb.isCallIn() ? callInMethodMap : methodMap;
+        
         final String methodName = hb.getMethod();
-        List<Record> records = methodMap.get(methodName);
+        List<Record> records = mm.get(methodName);
         if (records == null) {
           records = new ArrayList<Record>();
-          methodMap.put(methodName, records);
+          mm.put(methodName, records);
         }
         try {
           records.add(new Record(hb));
@@ -101,7 +112,44 @@ final class HappensBeforeTable {
       return null;
     }
   }
-
+  
+  
+  /**
+   * Test if the given method description overrides a callIn method.  Meant
+   * to be called while a method is being instrumented to see if the 
+   * happens-before Store calls should be made.
+   * 
+   * @param internalClassName
+   *          The internal class name of the owner of the method.
+   * @param methodName
+   *          The name of the method.
+   * @param methodDesc
+   *          The description of the method.
+   * @return <code>null</code> if the call definitely does not invoke a
+   *         happens-before method. Returns a happens-before record if the
+   *         method definitely overrides a call-in method.
+   * @throws ClassNotFoundException 
+   */
+  public HappensBefore isInsideHappensBefore(
+      final String internalClassName, final String methodName,
+      final String methodDesc) throws ClassNotFoundException {
+    final List<Record> list = callInMethodMap.get(methodName);
+    if (list != null) {
+      for (final Record rec : list) {
+        // match method m(x, y) declared in class Y.
+        if (methodDesc.startsWith(rec.partialMethodDescriptor)) {
+          /*
+           * Is the method being instrumented inside a class that extends (is
+           * assignable to) the class Y of the declared happens before method?
+           */
+          if (rec.clazz.isAssignableFrom(internalClassName)) {
+            return rec.hb;
+          }
+        }
+      }
+    }
+    return null;
+  }
   
   
   private final class Record {

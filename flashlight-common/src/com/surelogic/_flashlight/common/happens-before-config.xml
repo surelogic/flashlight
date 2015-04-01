@@ -180,10 +180,14 @@
   
   <!--  Android -->
   
-  
-  
   <executor id="android.os AsyncTask">
       <method type="android.os.AsyncTask" decl="execute(java.lang.Runnable)" argNum="1" hb="source"/>
       <method type="java.lang.Runnable" decl="run()" hb="target" argNum="0" callIn="true"/>
   </executor>
+
+  <object type="android.os.AsyncTask" id="android.os AsyncTask execute">
+    <method decl="execute(Object[])" hb="source" />
+    <method decl="doInBackground(Object[])" hb="target" callIn="true" />
+  </object>
+  
 </happens-before>

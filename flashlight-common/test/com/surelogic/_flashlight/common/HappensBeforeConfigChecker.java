@@ -12,6 +12,14 @@ import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBefore;
 import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBeforeCollection;
 import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBeforeObject;
 
+/**
+ * Tool used to try to validate our happens-before-config file. In order to work
+ * properly, you need to add a version of android.jar to the run configuration
+ * when executing the main method.
+ * 
+ * @author nathan
+ *
+ */
 public class HappensBeforeConfigChecker {
 
     public static void main(String[] args) {
@@ -124,7 +132,7 @@ public class HappensBeforeConfigChecker {
                 int param = hbColl.getObjectParam();
                 boolean valid = false;
                 if (param <= sigClasses.length) {
-                    Class<?> paramClass = param == 0 ? returnType
+                    Class<?> paramClass = param == -1 ? returnType
                             : sigClasses[param - 1];
                     if (!paramClass.isPrimitive()) {
                         valid = true;

@@ -540,7 +540,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
 		} else if (opcode >= Opcodes.IRETURN && opcode <= Opcodes.RETURN) {
 			handlePreviousInstructions();
 			
-			/* Deal with happens-before "callIn" methods.  SHould be done
+			/* Deal with happens-before "callIn" methods.  Should be done
 			 * before we signal any kind of end of method execution to the store.
 			 */
 			if (happensBeforeCallInRecord != null) {
@@ -1528,7 +1528,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
       // ..., [return value], nanoTime (long), object, id, callSiteId (long), null
       ByteCodeUtils.pushBooleanConstant(mv, true); // Call-in method situation
       // ..., [return value], nanoTime (long), object, id, callSiteId (long), null, true
-      ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.HAPPENS_BEFORE_COLLECTION);
+      ByteCodeUtils.callStoreMethod(mv, config, FlashlightNames.HAPPENS_BEFORE_EXECUTOR);
       // ..., [return value]
     }
   }

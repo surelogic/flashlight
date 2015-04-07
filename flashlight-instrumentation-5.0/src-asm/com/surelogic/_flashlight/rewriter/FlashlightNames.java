@@ -86,7 +86,7 @@ public final class FlashlightNames {
             .getMethod("void happensBeforeCollection(long, java.lang.Object, java.lang.Object, java.lang.String, long, java.lang.String, boolean)");
 
     public static final Method HAPPENS_BEFORE_EXECUTOR = Method
-            .getMethod("void happensBeforeCollection(long, java.lang.Object, java.lang.String, long, java.lang.String, boolean)");
+            .getMethod("void happensBeforeExecutor(long, java.lang.Object, java.lang.String, long, java.lang.String, boolean)");
 
     public static final Method CLOSURE_CREATION = Method
             .getMethod("void closureCreation(java.lang.Object, java.lang.String, java.lang.String, java.lang.String, int, java.lang.String, java.lang.String, java.lang.String)");

@@ -307,7 +307,7 @@ public class DebugStore {
     stdOut.println("  isCallin = " + isCallIn);
   }
 
-  public static void happensBeforeExecutor(
+  public static synchronized void happensBeforeExecutor(
       final long nanoTime, final Object object, String id,
       final long siteId, final String typeName, final boolean isCallIn) {
     stdOut.println("happensBeforeExecutor");

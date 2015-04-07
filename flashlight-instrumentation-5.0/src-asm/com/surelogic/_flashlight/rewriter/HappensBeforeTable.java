@@ -35,6 +35,7 @@ final class HappensBeforeTable {
     add(config.getObjects(), messenger);
     add(config.getThreads(), messenger);
     add(config.getCollections(), messenger);
+    add(config.getExecutors(), messenger);
   }
 
   private <T extends HappensBefore> void add(

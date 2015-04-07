@@ -130,6 +130,10 @@ public abstract class EventVisitor {
         // do nothing
     }
 
+    void visit(HappensBeforeExecutor e) {
+        // do nothing
+    }
+
     void visit(Environment environment) {
         // do nothing
     }

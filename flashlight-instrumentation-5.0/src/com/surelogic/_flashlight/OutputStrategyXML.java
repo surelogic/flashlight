@@ -30,6 +30,7 @@ final class OutputStrategyXML extends EventVisitor {
     }
 
     static final Factory factory = new Factory() {
+        @Override
         public EventVisitor create(final RunConf conf, final OutputStream stream)
                 throws IOException {
             return new OutputStrategyXML(conf, stream);
@@ -183,6 +184,11 @@ final class OutputStrategyXML extends EventVisitor {
 
     @Override
     void visit(HappensBeforeCollection e) {
+        o(e.toString());
+    }
+
+    @Override
+    void visit(HappensBeforeExecutor e) {
         o(e.toString());
     }
 

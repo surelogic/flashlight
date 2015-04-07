@@ -216,7 +216,7 @@ public class Store {
                  * if the field is not from an instrumented class. We need to
                  * force the creation of the phantom object so that a listener
                  * somewhere else dumps the field definitions into the .fl file.
-                 *
+                 * 
                  * XXX This check is not redundant. Edwin already removed this
                  * once before and broke things.
                  */
@@ -247,7 +247,7 @@ public class Store {
                  * if the field is not from an instrumente class. We need to
                  * force the creation of the phantom object so that a listener
                  * somewhere else dumps the field definitions into the .fl file.
-                 *
+                 * 
                  * XXX This check is not redundant. Edwin already removed this
                  * once before and broke things.
                  */
@@ -782,11 +782,27 @@ public class Store {
         }
     }
 
-    public static void happensBeforeExecutor(
-        final long nanoTime, final Object object, String id,
-        final long siteId, final String typeName, final boolean isCallIn) {
+    public static void happensBeforeExecutor(final long nanoTime,
+            final Object object, String id, final long siteId,
+            final String typeName, final boolean isCallIn) {
+        if (checkInside()) {
+            try {
+                if (typeName == null
+                        || Class.forName(typeName).isAssignableFrom(
+                                object.getClass())) {
+                    for (StoreListener l : f_listeners) {
+                        l.happensBeforeExecutor(id, object, siteId, typeName,
+                                nanoTime);
+                    }
+                }
+            } catch (ClassNotFoundException e) {
+                f_conf.logAProblem(e.getMessage(), e);
+            } finally {
+                tl_withinStore.get().inside = false;
+            }
+        }
     }
-    
+
     /**
      * Stops collection of events about the instrumented program. This method
      * may be called from within the following thread contexts:
@@ -913,10 +929,12 @@ public class Store {
     static class ShutdownCommand implements ConsoleCommand {
         private static final String STOP = "stop";
 
+        @Override
         public String getDescription() {
             return "stop - shutdown the instrumentation";
         }
 
+        @Override
         public String handle(final String command) {
             if (STOP.equals(command)) {
                 shutdown();
@@ -928,6 +946,7 @@ public class Store {
 
     static class PingCommand implements ConsoleCommand {
 
+        @Override
         public String handle(final String command) {
             if ("ping".equalsIgnoreCase(command)) {
                 return String.format("Uptime: %d", System.currentTimeMillis()
@@ -936,6 +955,7 @@ public class Store {
             return null;
         }
 
+        @Override
         public String getDescription() {
             return "ping - displays instrumentation uptime";
         }

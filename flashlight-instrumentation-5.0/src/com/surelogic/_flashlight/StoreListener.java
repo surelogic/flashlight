@@ -9,22 +9,22 @@ import java.util.List;
  * {@link Store} class. Any implementor of {@link StoreListener} is expected to
  * be thread-safe in all respects. The {@link StoreListener} should expect to be
  * provided with only two guarantees:
- * 
+ *
  * <ol>
  * <li>There is a happens-before relationship between init and any other method
  * of the listener interface
  * <li>No methods will be called after shutdown is called
  * </ol>
- * 
+ *
  * @author nathan
- * 
+ *
  */
 public interface StoreListener {
 
     /**
      * Records that a statically numbered instance field was accessed within the
      * instrumented program.
-     * 
+     *
      * @param read
      *            {@code true} indicates a field <i>read</i>, {@code false}
      *            indicates a field <i>write</i>.
@@ -50,7 +50,7 @@ public interface StoreListener {
     /**
      * Records that a statically numbered static field was accessed within the
      * instrumented program.
-     * 
+     *
      * @param read
      *            {@code true} indicates a field <i>read</i>, {@code false}
      *            indicates a field <i>write</i>.
@@ -74,7 +74,7 @@ public interface StoreListener {
     /**
      * Record that the given object was accessed indirectly (via method call) at
      * the given site
-     * 
+     *
      * @param receiver
      *            non-null
      */
@@ -82,7 +82,7 @@ public interface StoreListener {
 
     /**
      * Records that an array element is being accessed.
-     * 
+     *
      * @param read
      *            {@code true} indicates the element is being <i>read</i>,
      *            {@code false} indicates the element is being <i>written</i>.
@@ -99,7 +99,7 @@ public interface StoreListener {
     /**
      * Records that a class initializer is about to begin execution, or has
      * completed execution.
-     * 
+     *
      * @param before
      *            true} if the the class initializer is about to begin
      *            execution; false} if the class initializers has already
@@ -110,7 +110,7 @@ public interface StoreListener {
 
     /**
      * Records that a constructor call occurred within the instrumented program.
-     * 
+     *
      * @param before
      *            {@code true} indicates <i>before</i> the constructor call,
      *            {@code false} indicates <i>after</i> the constructor call.
@@ -137,7 +137,7 @@ public interface StoreListener {
      * code to execute during object construction. The receiver object reported
      * will, of course, be the same for all pairs of constructor executions
      * reported for the construction of an object.
-     * 
+     *
      * @param before
      *            {@code true} indicates <i>before</i> the constructor
      *            execution, {@code false} indicates <i>after</i> the
@@ -162,7 +162,7 @@ public interface StoreListener {
      * Interesting methods include calls to {@link Object#wait()},
      * {@link Object#wait(long)}, {@link Object#wait(long, int)}, and
      * {@code java.util.concurrent} locks.
-     * 
+     *
      * @param before
      *            {@code true} indicates <i>before</i> the method call,
      *            {@code false} indicates <i>after</i> the method call.
@@ -188,7 +188,7 @@ public interface StoreListener {
      * Records that the instrumented program is attempting to acquire an
      * intrinsic lock. An intrinsic lock is a {@code synchronized} block or
      * method.
-     * 
+     *
      * @param lockObject
      *            the object being synchronized (i.e., the lock).
      * @param lockIsThis
@@ -208,7 +208,7 @@ public interface StoreListener {
     /**
      * Records that the instrumented program has acquired an intrinsic lock. An
      * intrinsic lock is a {@code synchronized} block or method.
-     * 
+     *
      * @param lockObject
      *            the object being synchronized (i.e., the lock).
      * @param withinClass
@@ -231,7 +231,7 @@ public interface StoreListener {
      * See the Java Language Specification (3rd edition) section 17.8 <i>Wait
      * Sets and Notification</i> for the semantics of waiting on an intrinsic
      * lock. An intrinsic lock is a {@code synchronized} block or method.
-     * 
+     *
      * @param before
      *            {@code true} indicates <i>before</i> the method call,
      *            {@code false} indicates <i>after</i> the method call.
@@ -249,7 +249,7 @@ public interface StoreListener {
     /**
      * Records that the program has released an intrinsic lock. An intrinsic
      * lock is a {@code synchronized} block or method.
-     * 
+     *
      * @param lockObject
      *            the object being synchronized (i.e., the lock).
      * @param withinClass
@@ -263,7 +263,7 @@ public interface StoreListener {
     /**
      * Records that the instrumented program is attempting to acquire a
      * {@link Lock}.
-     * 
+     *
      * @param lockObject
      *            the {@link Lock} object in use.
      * @param withinClass
@@ -277,7 +277,7 @@ public interface StoreListener {
     /**
      * Records the result of the instrumented program's attempt to acquire a
      * {@link Lock}.
-     * 
+     *
      * @param gotTheLock
      *            {@code true} indicates the attempt succeeded and the lock was
      *            obtained, {@code false} indicates the attempt failed and the
@@ -297,7 +297,7 @@ public interface StoreListener {
     /**
      * Records the result of the instrumented program's attempt to release a
      * {@link Lock}.
-     * 
+     *
      * @param releasedTheLock
      *            {@code true} indicates the attempt succeeded and the lock was
      *            released, {@code false} indicates the attempt failed and the
@@ -315,7 +315,7 @@ public interface StoreListener {
 
     /**
      * Prepare for the collection of events about the instrumented program.
-     * 
+     *
      * XXX The holder of this StoreListener guarantees that there will be a
      * happens before relationship between this initialization and any calls to
      * other methods of this interface.
@@ -347,7 +347,7 @@ public interface StoreListener {
      * collected objects. Listeners are *not* required to be non-blocking, but
      * they should process data in a timely fashion, as the phantom reference
      * queue will not be polled again until this completes.
-     * 
+     *
      * @param references
      *            a list of references to garbage collected objects
      */
@@ -357,7 +357,7 @@ public interface StoreListener {
      * This will be called by the user of this listener. The listener should
      * return a list of commands that a user could use to modify or query this
      * listener.
-     * 
+     *
      * @return a list of commands for this store listener.
      */
     Collection<? extends ConsoleCommand> getCommands();
@@ -392,4 +392,7 @@ public interface StoreListener {
     void happensBeforeCollection(final String id, final Object collection,
             final Object item, final long siteId, final String typeName,
             long nanoTime);
+
+    void happensBeforeExecutor(final String id, final Object object,
+            final long siteId, final String typeName, final long nanoTime);
 }

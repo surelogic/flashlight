@@ -28,7 +28,7 @@ import com.surelogic._flashlight.jsr166y.ConcurrentReferenceHashMap.ReferenceTyp
 
 /**
  * This class defines the interface into the Flashlight data store.
- * 
+ *
  * @policyLock Console is java.lang.System:out
  */
 public final class MonitorStore implements StoreListener {
@@ -51,7 +51,7 @@ public final class MonitorStore implements StoreListener {
      * thread, reenter the store. This situation can occur if we call methods on
      * the objects passed into the store and the implementation of those methods
      * is part of the instrumented program.
-     * 
+     *
      * It also holds the thread-local lock set values.
      */
     final ThreadLocal<State> tl_withinStore;
@@ -85,7 +85,7 @@ public final class MonitorStore implements StoreListener {
 
     /**
      * Revise the set of alerts used by the active analysis.
-     * 
+     *
      * @param spec
      */
     void reviseAlerts(final AlertSpec spec) {
@@ -99,7 +99,7 @@ public final class MonitorStore implements StoreListener {
 
     /**
      * Change the monitor specification used by the active analysis.
-     * 
+     *
      * @param spec
      */
     void reviseSpec(final MonitorSpec spec) {
@@ -124,7 +124,7 @@ public final class MonitorStore implements StoreListener {
     /**
      * Get the active analysis. This is the only thread-safe way for a console
      * to get the active analysis.
-     * 
+     *
      * @return
      */
     Analysis getAnalysis() {
@@ -175,6 +175,7 @@ public final class MonitorStore implements StoreListener {
 
     }
 
+    @Override
     public void init(final RunConf conf) {
         f_spec = new MonitorSpec(System.getProperty("com.surelogic.fieldSpec",
                 ""), conf.getFieldDefs());
@@ -187,7 +188,7 @@ public final class MonitorStore implements StoreListener {
     /**
      * Records that a statically numbered instance field was accessed within the
      * instrumented program.
-     * 
+     *
      * @param read
      *            {@code true} indicates a field <i>read</i>, {@code false}
      *            indicates a field <i>write</i>.
@@ -206,6 +207,7 @@ public final class MonitorStore implements StoreListener {
      *            access when {@code dcPhantom} is null} . If the
      *            {@code dcPhantom} is non- null} then this is null} .
      */
+    @Override
     public void instanceFieldAccess(final boolean read, final Object receiver,
             final int fieldID, final long siteId,
             final ClassPhantomReference dcPhantom, final Class<?> declaringClass) {
@@ -221,7 +223,7 @@ public final class MonitorStore implements StoreListener {
     /**
      * Records that a statically numbered static field was accessed within the
      * instrumented program.
-     * 
+     *
      * @param read
      *            {@code true} indicates a field <i>read</i>, {@code false}
      *            indicates a field <i>write</i>.
@@ -238,6 +240,7 @@ public final class MonitorStore implements StoreListener {
      *            access when {@code dcPhantom} is null} . If the
      *            {@code dcPhantom} is non- null} then this is null} .
      */
+    @Override
     public void staticFieldAccess(final boolean read, final int fieldID,
             final long siteId, final ClassPhantomReference dcPhantom,
             final Class<?> declaringClass) {
@@ -254,10 +257,11 @@ public final class MonitorStore implements StoreListener {
     /**
      * Record that the given object was accessed indirectly (via method call) at
      * the given site
-     * 
+     *
      * @param receiver
      *            non-null
      */
+    @Override
     public void indirectAccess(final Object receiver, final long siteId) {
 
         // Do nothing
@@ -265,7 +269,7 @@ public final class MonitorStore implements StoreListener {
 
     /**
      * Records that an array element is being accessed.
-     * 
+     *
      * @param read
      *            {@code true} indicates the element is being <i>read</i>,
      *            {@code false} indicates the element is being <i>written</i>.
@@ -276,6 +280,7 @@ public final class MonitorStore implements StoreListener {
      * @param siteId
      *            The site in the code of the array access.
      */
+    @Override
     public void arrayAccess(final boolean read, final Object receiver,
             final int index, final long siteId) {
         // Do nothing
@@ -284,20 +289,21 @@ public final class MonitorStore implements StoreListener {
     /**
      * Records that a class initializer is about to begin execution, or has
      * completed execution.
-     * 
+     *
      * @param before
      *            true} if the the class initializer is about to begin
      *            execution; false} if the class initializers has already
      *            completed execution.
      * @param class The class object of the class being initialized.
      */
+    @Override
     public void classInit(final boolean before, final Class<?> clazz) {
         // Do nothing
     }
 
     /**
      * Records that a constructor call occurred within the instrumented program.
-     * 
+     *
      * @param before
      *            {@code true} indicates <i>before</i> the constructor call,
      *            {@code false} indicates <i>after</i> the constructor call.
@@ -311,6 +317,7 @@ public final class MonitorStore implements StoreListener {
      * @param line
      *            the line number where the event occurred.
      */
+    @Override
     public void constructorCall(final boolean before, final long siteId) {
         // Do nothing
     }
@@ -326,7 +333,7 @@ public final class MonitorStore implements StoreListener {
      * code to execute during object construction. The receiver object reported
      * will, of course, be the same for all pairs of constructor executions
      * reported for the construction of an object.
-     * 
+     *
      * @param before
      *            {@code true} indicates <i>before</i> the constructor
      *            execution, {@code false} indicates <i>after</i> the
@@ -338,6 +345,7 @@ public final class MonitorStore implements StoreListener {
      * @param line
      *            the line number where the event occurred.
      */
+    @Override
     public void constructorExecution(final boolean before,
             final Object receiver, final long siteId) {
         // Do nothing
@@ -353,7 +361,7 @@ public final class MonitorStore implements StoreListener {
      * Interesting methods include calls to {@link Object#wait()},
      * {@link Object#wait(long)}, {@link Object#wait(long, int)}, and
      * {@code java.util.concurrent} locks.
-     * 
+     *
      * @param before
      *            {@code true} indicates <i>before</i> the method call,
      *            {@code false} indicates <i>after</i> the method call.
@@ -370,6 +378,7 @@ public final class MonitorStore implements StoreListener {
      * @param line
      *            the line number where the event occurred.
      */
+    @Override
     public void methodCall(final boolean before, final Object receiver,
             final long siteId) {
 
@@ -399,6 +408,7 @@ public final class MonitorStore implements StoreListener {
         }
     }
 
+    @Override
     public void methodExecution(boolean before, long siteid) {
         // Do nothing
     }
@@ -407,7 +417,7 @@ public final class MonitorStore implements StoreListener {
      * Records that the instrumented program is attempting to acquire an
      * intrinsic lock. An intrinsic lock is a {@code synchronized} block or
      * method.
-     * 
+     *
      * @param lockObject
      *            the object being synchronized (i.e., the lock).
      * @param lockIsThis
@@ -421,6 +431,7 @@ public final class MonitorStore implements StoreListener {
      * @param line
      *            the line number where the event occurred.
      */
+    @Override
     public void beforeIntrinsicLockAcquisition(final Object lockObject,
             final boolean lockIsThis, final long siteId) {
         // Do nothing
@@ -429,7 +440,7 @@ public final class MonitorStore implements StoreListener {
     /**
      * Records that the instrumented program has acquired an intrinsic lock. An
      * intrinsic lock is a {@code synchronized} block or method.
-     * 
+     *
      * @param lockObject
      *            the object being synchronized (i.e., the lock).
      * @param withinClass
@@ -437,6 +448,7 @@ public final class MonitorStore implements StoreListener {
      * @param line
      *            the line number where the event occurred.
      */
+    @Override
     public void afterIntrinsicLockAcquisition(final Object lockObject,
             final boolean lockIsThis, final long siteId) {
         final long lockId = Phantom.of(lockObject).getId();
@@ -444,7 +456,7 @@ public final class MonitorStore implements StoreListener {
             if (lockObject instanceof Class) {
                 f_lockNames.put(lockId,
                         "class " + ((Class) lockObject).getName() + '-'
-                                + lockId);
+                        + lockId);
             }
             f_lockNames.put(lockId, lockObject.getClass().getName() + '-'
                     + lockId);
@@ -464,7 +476,7 @@ public final class MonitorStore implements StoreListener {
      * See the Java Language Specification (3rd edition) section 17.8 <i>Wait
      * Sets and Notification</i> for the semantics of waiting on an intrinsic
      * lock. An intrinsic lock is a {@code synchronized} block or method.
-     * 
+     *
      * @param before
      *            {@code true} indicates <i>before</i> the method call,
      *            {@code false} indicates <i>after</i> the method call.
@@ -476,6 +488,7 @@ public final class MonitorStore implements StoreListener {
      * @param line
      *            the line number where the event occurred.
      */
+    @Override
     public void intrinsicLockWait(final boolean before,
             final Object lockObject, final boolean lockIsThis, final long siteId) {
         // Do nothing
@@ -484,7 +497,7 @@ public final class MonitorStore implements StoreListener {
     /**
      * Records that the program has released an intrinsic lock. An intrinsic
      * lock is a {@code synchronized} block or method.
-     * 
+     *
      * @param lockObject
      *            the object being synchronized (i.e., the lock).
      * @param withinClass
@@ -492,6 +505,7 @@ public final class MonitorStore implements StoreListener {
      * @param line
      *            the line number where the event occurred.
      */
+    @Override
     public void afterIntrinsicLockRelease(final Object lockObject,
             final boolean lockIsThis, final long siteId) {
         final IdPhantomReference lockPhantom = Phantom.of(lockObject);
@@ -501,7 +515,7 @@ public final class MonitorStore implements StoreListener {
     /**
      * Records that the instrumented program is attempting to acquire a
      * {@link Lock}.
-     * 
+     *
      * @param lockObject
      *            the {@link Lock} object in use.
      * @param withinClass
@@ -509,6 +523,7 @@ public final class MonitorStore implements StoreListener {
      * @param line
      *            the line number where the event occurred.
      */
+    @Override
     public void beforeUtilConcurrentLockAcquisitionAttempt(
             final Object lockObject, final long siteId) {
         // Do nothing
@@ -517,7 +532,7 @@ public final class MonitorStore implements StoreListener {
     /**
      * Records the result of the instrumented program's attempt to acquire a
      * {@link Lock}.
-     * 
+     *
      * @param gotTheLock
      *            {@code true} indicates the attempt succeeded and the lock was
      *            obtained, {@code false} indicates the attempt failed and the
@@ -531,6 +546,7 @@ public final class MonitorStore implements StoreListener {
      * @param line
      *            the line number where the event occurred.
      */
+    @Override
     public void afterUtilConcurrentLockAcquisitionAttempt(
             final boolean gotTheLock, final Object lockObject, final long siteId) {
         if (lockObject instanceof Lock) {
@@ -555,7 +571,7 @@ public final class MonitorStore implements StoreListener {
     /**
      * Records the result of the instrumented program's attempt to release a
      * {@link Lock}.
-     * 
+     *
      * @param releasedTheLock
      *            {@code true} indicates the attempt succeeded and the lock was
      *            released, {@code false} indicates the attempt failed and the
@@ -568,6 +584,7 @@ public final class MonitorStore implements StoreListener {
      * @param line
      *            the line number where the event occurred.
      */
+    @Override
     public void afterUtilConcurrentLockReleaseAttempt(
             final boolean releasedTheLock, final Object lockObject,
             final long siteId) {
@@ -586,11 +603,13 @@ public final class MonitorStore implements StoreListener {
         }
     }
 
+    @Override
     public void instanceFieldInit(final Object receiver, final int fieldId,
             final Object value) {
         // Do nothing
     }
 
+    @Override
     public void staticFieldInit(final int fieldId, final Object value) {
         // Do nothing
     }
@@ -608,6 +627,7 @@ public final class MonitorStore implements StoreListener {
      * <li>The thread created to run our shutdown hook.</li>
      * </ul>
      */
+    @Override
     public void shutdown() {
         f_analysisLock.lock();
         try {
@@ -617,6 +637,7 @@ public final class MonitorStore implements StoreListener {
         }
     }
 
+    @Override
     public void garbageCollect(
             final List<? extends IdPhantomReference> references) {
         getAnalysis().gcReferences(references);
@@ -635,10 +656,12 @@ public final class MonitorStore implements StoreListener {
     class ListCommand implements ConsoleCommand {
         private static final String LIST = "list";
 
+        @Override
         public String getDescription() {
             return LIST + "- displays all results of the latest ";
         }
 
+        @Override
         public String handle(final String command) {
             if (LIST.equalsIgnoreCase(command)) {
                 return getAnalysis().toString();
@@ -651,11 +674,13 @@ public final class MonitorStore implements StoreListener {
     class AlertsCommand implements ConsoleCommand {
         private static final String ALERTS = "alerts";
 
+        @Override
         public String getDescription() {
             return ALERTS
                     + " - display any and all alerts that have been triggered.";
         }
 
+        @Override
         public String handle(final String command) {
             if (ALERTS.equalsIgnoreCase(command)) {
                 return getAnalysis().getAlerts().toString();
@@ -668,10 +693,12 @@ public final class MonitorStore implements StoreListener {
     class DeadlocksCommand implements ConsoleCommand {
         private static final String DEADLOCKS = "deadlocks";
 
+        @Override
         public String getDescription() {
             return DEADLOCKS + " - display all detected potential deadlocks";
         }
 
+        @Override
         public String handle(final String command) {
             if (DEADLOCKS.equalsIgnoreCase(command)) {
                 return getAnalysis().getDeadlocks().toString();
@@ -684,11 +711,13 @@ public final class MonitorStore implements StoreListener {
     class LockSetsCommand implements ConsoleCommand {
         private static final String LOCKSETS = "lockSets";
 
+        @Override
         public String getDescription() {
             return LOCKSETS
                     + " - display known lock set information for all observed fields";
         }
 
+        @Override
         public String handle(final String command) {
             if (LOCKSETS.equalsIgnoreCase(command)) {
                 return getAnalysis().getLockSets().toString();
@@ -701,11 +730,13 @@ public final class MonitorStore implements StoreListener {
     class RaceConditionsCommand implements ConsoleCommand {
         private static final String RACECONDITIONS = "dataRaces";
 
+        @Override
         public String getDescription() {
             return RACECONDITIONS
                     + " - display all detected potential race conditions";
         }
 
+        @Override
         public String handle(final String command) {
             if (RACECONDITIONS.equalsIgnoreCase(command)) {
                 return getAnalysis().getLockSets().raceInfo();
@@ -718,11 +749,13 @@ public final class MonitorStore implements StoreListener {
     class SharedCommand implements ConsoleCommand {
         private static final String SHARED = "shared";
 
+        @Override
         public String getDescription() {
             return SHARED
                     + " - display all observed fields that are shared between threads";
         }
 
+        @Override
         public String handle(final String command) {
             if (SHARED.equalsIgnoreCase(command)) {
                 return getAnalysis().getShared().toString();
@@ -740,11 +773,13 @@ public final class MonitorStore implements StoreListener {
     class PropsCommand implements ConsoleCommand {
         private static final String PROPS = "props";
 
+        @Override
         public String getDescription() {
             return PROPS
                     + " - List all configurable monitor properties, and their current values.";
         }
 
+        @Override
         public String handle(final String command) {
             if (PROPS.equalsIgnoreCase(command)) {
                 AlertSpec aSpec;
@@ -770,6 +805,7 @@ public final class MonitorStore implements StoreListener {
 
         private final Pattern SETP = Pattern.compile("set ([^=]*)=(.*)");
 
+        @Override
         public String getDescription() {
             return SET
                     + "- Set one of the following properties: "
@@ -777,6 +813,7 @@ public final class MonitorStore implements StoreListener {
                             SHARED_FIELDS, LOCKSET_FIELDS });
         }
 
+        @Override
         public String handle(final String command) {
             final Matcher m = SETP.matcher(command);
             if (m.matches()) {
@@ -817,11 +854,13 @@ public final class MonitorStore implements StoreListener {
         private static final String DESCRIBE = "describe <field-regex>";
         private final Pattern DESCRIBEP = Pattern.compile("describe (.*)");
 
+        @Override
         public String getDescription() {
             return DESCRIBE
                     + " - describe all observed fields in the programming matching the given regular expression";
         }
 
+        @Override
         public String handle(final String command) {
             final Matcher d = DESCRIBEP.matcher(command);
             if (d.matches()) {
@@ -841,6 +880,7 @@ public final class MonitorStore implements StoreListener {
 
     }
 
+    @Override
     public Collection<? extends ConsoleCommand> getCommands() {
         return Arrays.asList(new ConsoleCommand[] { new ListCommand(),
                 new AlertsCommand(), new DeadlocksCommand(),
@@ -849,18 +889,27 @@ public final class MonitorStore implements StoreListener {
                 new DescribeCommand() });
     }
 
+    @Override
     public void happensBeforeThread(String id, Thread callee, long siteId,
             String typeNa, long nanoTime) {
         // Do nothing
     }
 
+    @Override
     public void happensBeforeObject(String id, Object object, long siteId,
             String typeName, long nanoTime) {
         // Do nothing
     }
 
+    @Override
     public void happensBeforeCollection(String id, Object collection,
             Object item, long siteId, String typeName, long nanoTime) {
+        // Do nothing
+    }
+
+    @Override
+    public void happensBeforeExecutor(String id, Object object, long siteId,
+            String typeName, long nanoTime) {
         // Do nothing
     }
 

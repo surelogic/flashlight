@@ -133,17 +133,17 @@ public class PostMortemStore implements StoreListener {
 
         putInQueue(f_outQueue, startingEvents);
         IdPhantomReference
-                .addObserver(new IdPhantomReferenceCreationObserver() {
-                    @Override
-                    public void notify(final ClassPhantomReference o,
-                            final IdPhantomReference r) {
-                        /*
-                         * Create an event to define this object.
-                         */
-                        putInQueue(tl_withinStore.get(), new ObjectDefinition(
-                                o, r));
-                    }
-                });
+        .addObserver(new IdPhantomReferenceCreationObserver() {
+            @Override
+            public void notify(final ClassPhantomReference o,
+                    final IdPhantomReference r) {
+                /*
+                 * Create an event to define this object.
+                 */
+                putInQueue(tl_withinStore.get(), new ObjectDefinition(
+                        o, r));
+            }
+        });
         DefinitionEventGenerator defs = new DefinitionEventGenerator(conf,
                 f_outQueue);
         // Start Refinery and Depository
@@ -518,6 +518,15 @@ public class PostMortemStore implements StoreListener {
         putInQueue(state,
                 new HappensBeforeCollection(id, Phantom.ofObject(collection),
                         item == null ? null : Phantom.ofObject(item), siteId,
+                                state, nanoTime));
+    }
+
+    @Override
+    public void happensBeforeExecutor(String id, Object object, long siteId,
+            String typeName, long nanoTime) {
+        State state = tl_withinStore.get();
+        putInQueue(state,
+                new HappensBeforeExecutor(id, Phantom.ofObject(object), siteId,
                         state, nanoTime));
     }
 

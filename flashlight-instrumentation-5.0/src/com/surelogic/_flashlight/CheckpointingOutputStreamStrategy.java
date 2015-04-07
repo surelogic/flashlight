@@ -209,6 +209,11 @@ public class CheckpointingOutputStreamStrategy extends EventVisitor {
     }
 
     @Override
+    void visit(HappensBeforeExecutor e) {
+        f_out.visit(e);
+    }
+
+    @Override
     public void visit(Environment e) {
         f_out.visit(e);
     }

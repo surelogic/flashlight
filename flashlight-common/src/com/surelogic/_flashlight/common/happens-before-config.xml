@@ -175,7 +175,7 @@
   
   <executor id="java.util.concurrent Executor">
       <method type="java.util.concurrent.Executor" decl="execute(java.lang.Runnable)" argNum="1" hb="source"/>
-      <method type="java.lang.Runnable" decl="run()" hb="target" callIn="true"/>
+      <method type="java.lang.Runnable" decl="run()" hb="target" argNum="0" callIn="true"/>
   </executor>
   
   <!--  Android -->

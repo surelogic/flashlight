@@ -9,7 +9,7 @@ import java.sql.Timestamp;
 import java.util.logging.Level;
 
 import com.surelogic._flashlight.common.AttributeType;
-import com.surelogic._flashlight.common.HappensBeforeConfig.HBType;
+import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBeforeRule;
 import com.surelogic._flashlight.common.PreppedAttributes;
 import com.surelogic.common.logging.SLLogger;
 
@@ -32,19 +32,27 @@ public class HappensBeforeObject extends HappensBefore {
     @Override
     void parseRest(PreppedAttributes attributes, String id, long nanoStart,
             long nanoEnd, long inThread, long trace, long site)
-            throws SQLException {
+                    throws SQLException {
         final long obj = attributes.getLong(AttributeType.OBJECT);
         if (obj == ILLEGAL_ID) {
             SLLogger.getLogger().log(Level.SEVERE,
                     "Missing obj in " + getXMLElementName());
             return;
         }
-        HBType type = f_hbConfig.getHBType(site);
-        if (type.isSource()) {
-            insert(id, nanoStart, inThread, trace, obj, true);
+        HappensBeforeRule rule = f_hbConfig.getHBRule(site);
+        if (rule.getType().isSource()) {
+            if (rule.isCallIn()) {
+                insert(id, nanoEnd, inThread, trace, obj, true);
+            } else {
+                insert(id, nanoStart, inThread, trace, obj, true);
+            }
         }
-        if (type.isTarget()) {
-            insert(id, nanoEnd, inThread, trace, obj, false);
+        if (rule.getType().isTarget()) {
+            if (rule.isCallIn()) {
+                insert(id, nanoStart, inThread, trace, obj, false);
+            } else {
+                insert(id, nanoEnd, inThread, trace, obj, false);
+            }
         }
     }
 
@@ -79,7 +87,7 @@ public class HappensBeforeObject extends HappensBefore {
     @Override
     public void setup(final Connection c, final Timestamp start,
             final long startNS, final ScanRawFilePreScan scanResults)
-            throws SQLException {
+                    throws SQLException {
         super.setup(c, start, startNS, scanResults);
         f_sourcePs = c
                 .prepareStatement("INSERT INTO HAPPENSBEFORESOURCE (ID,OBJ,TS,INTHREAD,TRACE) VALUES (?,?,?,?,?)");

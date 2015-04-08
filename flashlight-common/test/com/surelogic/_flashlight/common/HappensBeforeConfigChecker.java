@@ -8,9 +8,9 @@ import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBefore;
-import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBeforeCollection;
-import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBeforeObject;
+import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBeforeRule;
+import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBeforeCollectionRule;
+import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBeforeObjectRule;
 
 /**
  * Tool used to try to validate our happens-before-config file. In order to work
@@ -24,15 +24,15 @@ public class HappensBeforeConfigChecker {
 
     public static void main(String[] args) {
         HappensBeforeConfig config = HappensBeforeConfig.loadDefault();
-        for (Entry<String, List<HappensBeforeObject>> e : config.getObjects()
+        for (Entry<String, List<HappensBeforeObjectRule>> e : config.getObjects()
                 .entrySet()) {
             check(e);
         }
-        for (Entry<String, List<HappensBefore>> e : config.getThreads()
+        for (Entry<String, List<HappensBeforeRule>> e : config.getThreads()
                 .entrySet()) {
             check(e);
         }
-        for (Entry<String, List<HappensBeforeCollection>> e : config
+        for (Entry<String, List<HappensBeforeCollectionRule>> e : config
                 .getCollections().entrySet()) {
             check(e);
         }
@@ -85,7 +85,7 @@ public class HappensBeforeConfigChecker {
         }
     }
 
-    public static <T extends HappensBefore> void checkMethod(
+    public static <T extends HappensBeforeRule> void checkMethod(
             Entry<String, List<T>> e, Class<?> clazz, T hb) {
         String method = hb.getMethod();
         List<String> signature = hb.getSignature();
@@ -127,8 +127,8 @@ public class HappensBeforeConfigChecker {
                 }
                 break;
             }
-            if (hb instanceof HappensBeforeCollection) {
-                HappensBeforeCollection hbColl = (HappensBeforeCollection) hb;
+            if (hb instanceof HappensBeforeCollectionRule) {
+                HappensBeforeCollectionRule hbColl = (HappensBeforeCollectionRule) hb;
                 int param = hbColl.getObjectParam();
                 boolean valid = false;
                 if (param <= sigClasses.length) {
@@ -151,7 +151,7 @@ public class HappensBeforeConfigChecker {
         }
     }
 
-    public static <T extends HappensBefore> void check(Entry<String, List<T>> e) {
+    public static <T extends HappensBeforeRule> void check(Entry<String, List<T>> e) {
         try {
             Class<?> clazz = declToClass(e.getKey());
             for (T o : e.getValue()) {
@@ -167,7 +167,7 @@ public class HappensBeforeConfigChecker {
         }
     }
 
-    public static <T extends HappensBefore> void err(Entry<String, List<T>> e,
+    public static <T extends HappensBeforeRule> void err(Entry<String, List<T>> e,
             String message) {
         System.out.printf("Problem with data: %s\n%s\n", message, e.toString());
     }

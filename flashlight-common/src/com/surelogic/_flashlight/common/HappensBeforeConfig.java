@@ -27,16 +27,16 @@ import org.xml.sax.helpers.DefaultHandler;
  */
 public final class HappensBeforeConfig {
 
-    final Map<String, List<HappensBeforeCollection>> collections;
-    final Map<String, List<HappensBeforeObject>> objects;
-    final Map<String, List<HappensBefore>> threads;
-    final Map<String, List<HappensBeforeExecutor>> executors;
+    final Map<String, List<HappensBeforeCollectionRule>> collections;
+    final Map<String, List<HappensBeforeObjectRule>> objects;
+    final Map<String, List<HappensBeforeRule>> threads;
+    final Map<String, List<HappensBeforeExecutorRule>> executors;
 
     private HappensBeforeConfig() {
-        collections = new HashMap<String, List<HappensBeforeCollection>>();
-        objects = new HashMap<String, List<HappensBeforeObject>>();
-        threads = new HashMap<String, List<HappensBefore>>();
-        executors = new HashMap<String, List<HappensBeforeExecutor>>();
+        collections = new HashMap<String, List<HappensBeforeCollectionRule>>();
+        objects = new HashMap<String, List<HappensBeforeObjectRule>>();
+        threads = new HashMap<String, List<HappensBeforeRule>>();
+        executors = new HashMap<String, List<HappensBeforeExecutorRule>>();
     }
 
     public HappensBeforeConfig parse(File f) {
@@ -72,39 +72,39 @@ public final class HappensBeforeConfig {
         return this;
     }
 
-    public Map<String, List<HappensBeforeCollection>> getCollections() {
+    public Map<String, List<HappensBeforeCollectionRule>> getCollections() {
         return collections;
     }
 
-    public Map<String, List<HappensBeforeObject>> getObjects() {
+    public Map<String, List<HappensBeforeObjectRule>> getObjects() {
         return objects;
     }
 
-    public Map<String, List<HappensBefore>> getThreads() {
+    public Map<String, List<HappensBeforeRule>> getThreads() {
         return threads;
     }
 
-    public Map<String, List<HappensBeforeExecutor>> getExecutors() {
+    public Map<String, List<HappensBeforeExecutorRule>> getExecutors() {
         return executors;
     }
 
-    public List<HappensBeforeCollection> getCollectionHappensBefore(
+    public List<HappensBeforeCollectionRule> getCollectionHappensBefore(
             String qualifiedClass) {
         return collections.get(qualifiedClass);
     }
 
-    public List<HappensBeforeObject> getObjectHappensBefore(
+    public List<HappensBeforeObjectRule> getObjectHappensBefore(
             String qualifiedClass) {
         return objects.get(qualifiedClass);
     }
 
-    public List<HappensBefore> getThreadHappensBefore(String qualifiedClass) {
+    public List<HappensBeforeRule> getThreadHappensBefore(String qualifiedClass) {
         return threads.get(qualifiedClass);
     }
 
-    public static class HappensBeforeObject extends HappensBefore {
+    public static class HappensBeforeObjectRule extends HappensBeforeRule {
 
-        public HappensBeforeObject(String id, String qualifiedClass,
+        public HappensBeforeObjectRule(String id, String qualifiedClass,
                 String decl, HBType type, ReturnCheck returnCheck,
                 boolean callIn) {
             super(id, qualifiedClass, decl, type, returnCheck, callIn);
@@ -128,10 +128,10 @@ public final class HappensBeforeConfig {
 
     }
 
-    public static class HappensBeforeCollection extends HappensBeforeObject {
+    public static class HappensBeforeCollectionRule extends HappensBeforeObjectRule {
         final int objectParam;
 
-        public HappensBeforeCollection(String id, String qualifiedClass,
+        public HappensBeforeCollectionRule(String id, String qualifiedClass,
                 String decl, HBType type, ReturnCheck returnCheck,
                 int objectParam, boolean callIn) {
             super(id, qualifiedClass, decl, type, returnCheck, callIn);
@@ -175,9 +175,9 @@ public final class HappensBeforeConfig {
 
     }
 
-    public static class HappensBeforeExecutor extends HappensBeforeCollection {
+    public static class HappensBeforeExecutorRule extends HappensBeforeCollectionRule {
 
-        public HappensBeforeExecutor(String id, String qualifiedClass,
+        public HappensBeforeExecutorRule(String id, String qualifiedClass,
                 String decl, HBType type, ReturnCheck returnCheck,
                 int objectParam, boolean callIn) {
             super(id, qualifiedClass, decl, type, returnCheck, objectParam,
@@ -366,20 +366,20 @@ public final class HappensBeforeConfig {
                     }
                     switch (hb) {
                     case THREAD:
-                        add(inClass, new HappensBefore(curId, inClass, decl,
+                        add(inClass, new HappensBeforeRule(curId, inClass, decl,
                                 type, check, callIn), threads);
                         break;
                     case COLL:
-                        add(inClass, new HappensBeforeCollection(curId,
+                        add(inClass, new HappensBeforeCollectionRule(curId,
                                 inClass, decl, type, check, param, callIn),
                                 collections);
                         break;
                     case OBJECT:
-                        add(inClass, new HappensBeforeObject(curId, inClass,
+                        add(inClass, new HappensBeforeObjectRule(curId, inClass,
                                 decl, type, check, callIn), objects);
                         break;
                     case EXEC:
-                        add(inClass, new HappensBeforeExecutor(curId, inClass,
+                        add(inClass, new HappensBeforeExecutorRule(curId, inClass,
                                 decl, type, check, param, callIn), executors);
                         break;
                     default:
@@ -404,7 +404,7 @@ public final class HappensBeforeConfig {
      * @author nathan
      *
      */
-    public static class HappensBefore {
+    public static class HappensBeforeRule {
         private final String id;
         private final String qualifiedClass;
         private final String method;
@@ -413,7 +413,7 @@ public final class HappensBeforeConfig {
         private final ReturnCheck returnCheck;
         private final boolean callIn;
 
-        public HappensBefore(String id, String qualifiedClass, String decl,
+        public HappensBeforeRule(String id, String qualifiedClass, String decl,
                 HBType type, ReturnCheck returnCheck, boolean callIn) {
             this.id = id;
             this.qualifiedClass = qualifiedClass;
@@ -528,13 +528,13 @@ public final class HappensBeforeConfig {
     }
 
     public static interface HappensBeforeSwitch {
-        public void caseHappensBefore(HappensBefore hb);
+        public void caseHappensBefore(HappensBeforeRule hb);
 
-        public void caseHappensBeforeObject(HappensBeforeObject hb);
+        public void caseHappensBeforeObject(HappensBeforeObjectRule hb);
 
-        public void caseHappensBeforeCollection(HappensBeforeCollection hb);
+        public void caseHappensBeforeCollection(HappensBeforeCollectionRule hb);
         
-        public void caseHappensBeforeExecutor(HappensBeforeExecutor hb);
+        public void caseHappensBeforeExecutor(HappensBeforeExecutorRule hb);
     }
 
     @Override

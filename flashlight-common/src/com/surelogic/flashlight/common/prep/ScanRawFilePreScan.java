@@ -28,7 +28,7 @@ public final class ScanRawFilePreScan extends AbstractDataScan {
 
     /**
      * Gets the number of XML elements found in the raw file.
-     * 
+     *
      * @return the number of XML elements found in the raw file.
      */
     public long getElementCount() {
@@ -40,7 +40,7 @@ public final class ScanRawFilePreScan extends AbstractDataScan {
     /**
      * Gets the <tt>nano-time</tt> value from the final <tt>time</tt> event at
      * the end of the raw data file.
-     * 
+     *
      * @return the <tt>nano-time</tt> value from the final <tt>time</tt> event
      *         at the end of the raw data file.
      */
@@ -52,7 +52,7 @@ public final class ScanRawFilePreScan extends AbstractDataScan {
 
     /**
      * Returns the full set of synthetic fields.
-     * 
+     *
      * @return
      */
     public TLongHashSet getSynthetics() {
@@ -61,7 +61,7 @@ public final class ScanRawFilePreScan extends AbstractDataScan {
 
     /**
      * Returns whether or not this field was defined as a synthetic field.
-     * 
+     *
      * @param field
      * @return
      */
@@ -74,7 +74,7 @@ public final class ScanRawFilePreScan extends AbstractDataScan {
     /**
      * Returns the lock id, given the locked object. These id's may be the same,
      * but are different in the case of read-write locks.
-     * 
+     *
      * @param object
      * @return
      */
@@ -205,6 +205,10 @@ public final class ScanRawFilePreScan extends AbstractDataScan {
             break;
         case HAPPENSBEFOREOBJECT:
             break;
+        case HAPPENSBEFORECOLLECTION:
+            break;
+        case HAPPENSBEFOREEXEC:
+            break;
         case INDIRECTACCESS:
             break;
         case SELECTEDPACKAGE:
@@ -243,7 +247,7 @@ public final class ScanRawFilePreScan extends AbstractDataScan {
 
     /**
      * Returns whether or not this field is accessed by multiple threads.
-     * 
+     *
      * @param field
      * @return
      */

@@ -164,10 +164,16 @@ public class ScanRawFileFieldsPreScan extends AbstractDataScan {
         case HAPPENSBEFOREOBJECT:
             useObject(attrs.getLong(AttributeType.OBJECT));
             useObject(attrs.getLong(AttributeType.THREAD));
+            break;
         case HAPPENSBEFORECOLLECTION:
             useObject(attrs.getLong(AttributeType.OBJECT));
             useObject(attrs.getLong(AttributeType.THREAD));
             useObject(attrs.getLong(AttributeType.COLLECTION));
+            break;
+        case HAPPENSBEFOREEXEC:
+            useObject(attrs.getLong(AttributeType.OBJECT));
+            useObject(attrs.getLong(AttributeType.THREAD));
+            break;
         default:
             break;
         }
@@ -181,7 +187,7 @@ public class ScanRawFileFieldsPreScan extends AbstractDataScan {
     /**
      * Returns whether or not this field is accessed by multiple threads for the
      * given receiver.
-     * 
+     *
      * @param field
      * @param receiver
      * @return
@@ -196,7 +202,7 @@ public class ScanRawFileFieldsPreScan extends AbstractDataScan {
 
     /**
      * Returns whether or not this object might be referenced.
-     * 
+     *
      * @param id
      * @return
      */

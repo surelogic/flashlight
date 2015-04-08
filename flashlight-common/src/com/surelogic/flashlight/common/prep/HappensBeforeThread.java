@@ -9,7 +9,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.logging.Level;
 
-import com.surelogic._flashlight.common.HappensBeforeConfig.HBType;
+import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBeforeRule;
 import com.surelogic._flashlight.common.PreppedAttributes;
 import com.surelogic.common.logging.SLLogger;
 
@@ -30,22 +30,28 @@ public class HappensBeforeThread extends HappensBefore {
     @Override
     void parseRest(PreppedAttributes attributes, String id, long nanoStart,
             long nanoEnd, long inThread, long trace, long site)
-            throws SQLException {
+                    throws SQLException {
         final long toThread = attributes.getLong(TOTHREAD);
         if (toThread == ILLEGAL_ID) {
             SLLogger.getLogger().log(Level.SEVERE,
                     "Missing to-Thread in " + getXMLElementName());
             return;
         }
-        HBType type = f_hbConfig.getHBType(site);
-        if (type.isFrom()) {
-            insert(id, nanoStart, inThread, trace, inThread, toThread);
-
+        HappensBeforeRule rule = f_hbConfig.getHBRule(site);
+        if (rule.getType().isFrom()) {
+            if (rule.isCallIn()) {
+                insert(id, nanoEnd, inThread, trace, inThread, toThread);
+            } else {
+                insert(id, nanoStart, inThread, trace, inThread, toThread);
+            }
         }
-        if (type.isTo()) {
-            insert(id, nanoEnd, inThread, trace, toThread, inThread);
+        if (rule.getType().isTo()) {
+            if (rule.isCallIn()) {
+                insert(id, nanoStart, inThread, trace, toThread, inThread);
+            } else {
+                insert(id, nanoEnd, inThread, trace, toThread, inThread);
+            }
         }
-
     }
 
     private void insert(final String id, final long nanoTime,
@@ -70,7 +76,7 @@ public class HappensBeforeThread extends HappensBefore {
     @Override
     public void setup(final Connection c, final Timestamp start,
             final long startNS, final ScanRawFilePreScan scanResults)
-            throws SQLException {
+                    throws SQLException {
         super.setup(c, start, startNS, scanResults);
         f_ps = c.prepareStatement("INSERT INTO HAPPENSBEFORE (ID, SOURCE,TARGET,TS,INTHREAD,TRACE) VALUES (?,?,?,?,?,?)");
     }

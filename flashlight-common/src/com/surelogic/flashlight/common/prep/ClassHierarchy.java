@@ -16,7 +16,6 @@ import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 
 import com.surelogic._flashlight.common.HappensBeforeConfig;
-import com.surelogic._flashlight.common.HappensBeforeConfig.HBType;
 
 public class ClassHierarchy {
 
@@ -44,13 +43,13 @@ public class ClassHierarchy {
         final String name;
         final Set<ClassNode> parents;
         final Set<ClassNode> children;
-        final List<HappensBeforeConfig.HappensBefore> hbs;
+        final List<HappensBeforeConfig.HappensBeforeRule> hbs;
 
         ClassNode(String name) {
             this.name = name;
             parents = new HashSet<ClassNode>();
             children = new HashSet<ClassNode>();
-            hbs = new ArrayList<HappensBeforeConfig.HappensBefore>();
+            hbs = new ArrayList<HappensBeforeConfig.HappensBeforeRule>();
         }
 
         public String getName() {
@@ -115,36 +114,36 @@ public class ClassHierarchy {
         if (hbFile != null && hbFile.exists()) {
             config.parse(hbFile);
         }
-        Map<String, List<HappensBeforeConfig.HappensBefore>> threads = config
+        Map<String, List<HappensBeforeConfig.HappensBeforeRule>> threads = config
                 .getThreads();
-        for (Entry<String, List<HappensBeforeConfig.HappensBefore>> e : threads
+        for (Entry<String, List<HappensBeforeConfig.HappensBeforeRule>> e : threads
                 .entrySet()) {
             ClassNode node = nodes.get(e.getKey());
             if (node != null) {
                 node.hbs.addAll(e.getValue());
             }
         }
-        Map<String, List<HappensBeforeConfig.HappensBeforeObject>> objects = config
+        Map<String, List<HappensBeforeConfig.HappensBeforeObjectRule>> objects = config
                 .getObjects();
-        for (Entry<String, List<HappensBeforeConfig.HappensBeforeObject>> e : objects
+        for (Entry<String, List<HappensBeforeConfig.HappensBeforeObjectRule>> e : objects
                 .entrySet()) {
             ClassNode node = nodes.get(e.getKey());
             if (node != null) {
                 node.hbs.addAll(e.getValue());
             }
         }
-        Map<String, List<HappensBeforeConfig.HappensBeforeCollection>> collections = config
+        Map<String, List<HappensBeforeConfig.HappensBeforeCollectionRule>> collections = config
                 .getCollections();
-        for (Entry<String, List<HappensBeforeConfig.HappensBeforeCollection>> e : collections
+        for (Entry<String, List<HappensBeforeConfig.HappensBeforeCollectionRule>> e : collections
                 .entrySet()) {
             ClassNode node = nodes.get(e.getKey());
             if (node != null) {
                 node.hbs.addAll(e.getValue());
             }
         }
-        Map<String, List<HappensBeforeConfig.HappensBeforeExecutor>> execs = config
+        Map<String, List<HappensBeforeConfig.HappensBeforeExecutorRule>> execs = config
                 .getExecutors();
-        for (Entry<String, List<HappensBeforeConfig.HappensBeforeExecutor>> e : execs
+        for (Entry<String, List<HappensBeforeConfig.HappensBeforeExecutorRule>> e : execs
                 .entrySet()) {
             ClassNode node = nodes.get(e.getKey());
             if (node != null) {
@@ -192,14 +191,14 @@ public class ClassHierarchy {
         }
     }
 
-    public HBType getHBType(long site) {
+    public HappensBeforeConfig.HappensBeforeRule getHBRule(long site) {
         MethodCall call = methodCalls.get(site);
         ClassNode node = nodes.get(call.methodCallClass);
         if (node == null) {
             throw new IllegalStateException(String.format(
                     "Site %d does not match a valid class node.", site));
         }
-        HBType type = checkNode(call, node);
+        HappensBeforeConfig.HappensBeforeRule type = checkNode(call, node);
         if (type == null) {
             type = checkParents(call, node);
             if (type == null) {
@@ -209,15 +208,16 @@ public class ClassHierarchy {
         return type;
     }
 
-    HBType checkParents(MethodCall call, ClassNode node) {
+    HappensBeforeConfig.HappensBeforeRule checkParents(MethodCall call,
+            ClassNode node) {
         for (ClassNode parent : node.parents) {
-            HBType type = checkNode(call, parent);
+            HappensBeforeConfig.HappensBeforeRule type = checkNode(call, parent);
             if (type != null) {
                 return type;
             }
         }
         for (ClassNode parent : node.parents) {
-            HBType type = checkParents(call, parent);
+            HappensBeforeConfig.HappensBeforeRule type = checkParents(call, parent);
             if (type != null) {
                 return type;
             }
@@ -225,15 +225,17 @@ public class ClassHierarchy {
         return null;
     }
 
-    HBType checkChildren(MethodCall call, ClassNode node) {
+    HappensBeforeConfig.HappensBeforeRule checkChildren(MethodCall call,
+            ClassNode node) {
         for (ClassNode children : node.children) {
-            HBType type = checkNode(call, children);
+            HappensBeforeConfig.HappensBeforeRule type = checkNode(call, children);
             if (type != null) {
                 return type;
             }
         }
         for (ClassNode children : node.children) {
-            HBType type = checkChildren(call, children);
+            HappensBeforeConfig.HappensBeforeRule type = checkChildren(call,
+                    children);
             if (type != null) {
                 return type;
             }
@@ -241,12 +243,12 @@ public class ClassHierarchy {
         return null;
     }
 
-    HBType checkNode(MethodCall call, ClassNode node) {
-        for (HappensBeforeConfig.HappensBefore hb : node.hbs) {
+    HappensBeforeConfig.HappensBeforeRule checkNode(MethodCall call, ClassNode node) {
+        for (HappensBeforeConfig.HappensBeforeRule hb : node.hbs) {
             if (hb.getMethod().equals(call.methodCallName)
                     && call.methodCallDesc.startsWith(hb
                             .getPartialMethodDescriptor())) {
-                return hb.getType();
+                return hb;
             }
         }
         return null;

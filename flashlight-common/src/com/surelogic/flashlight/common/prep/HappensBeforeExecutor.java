@@ -9,7 +9,7 @@ import java.sql.Timestamp;
 import java.util.logging.Level;
 
 import com.surelogic._flashlight.common.AttributeType;
-import com.surelogic._flashlight.common.HappensBeforeConfig.HBType;
+import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBeforeRule;
 import com.surelogic._flashlight.common.PreppedAttributes;
 import com.surelogic.common.logging.SLLogger;
 
@@ -39,12 +39,20 @@ public class HappensBeforeExecutor extends HappensBefore {
                     "Missing obj in " + getXMLElementName());
             return;
         }
-        HBType type = f_hbConfig.getHBType(site);
-        if (type.isSource()) {
-            insert(id, nanoStart, inThread, trace, obj, true);
+        HappensBeforeRule rule = f_hbConfig.getHBRule(site);
+        if (rule.getType().isSource()) {
+            if (rule.isCallIn()) {
+                insert(id, nanoEnd, inThread, trace, obj, true);
+            } else {
+                insert(id, nanoStart, inThread, trace, obj, true);
+            }
         }
-        if (type.isTarget()) {
-            insert(id, nanoEnd, inThread, trace, obj, false);
+        if (rule.getType().isTarget()) {
+            if (rule.isCallIn()) {
+                insert(id, nanoStart, inThread, trace, obj, false);
+            } else {
+                insert(id, nanoEnd, inThread, trace, obj, false);
+            }
         }
     }
 

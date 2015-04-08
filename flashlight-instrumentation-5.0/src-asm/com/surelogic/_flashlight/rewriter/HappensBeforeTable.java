@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.surelogic._flashlight.common.HappensBeforeConfig;
-import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBefore;
+import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBeforeRule;
 import com.surelogic._flashlight.rewriter.ClassAndFieldModel.ClassNotFoundException;
 import com.surelogic._flashlight.rewriter.ClassAndFieldModel.Clazz;
 
@@ -38,10 +38,10 @@ final class HappensBeforeTable {
     add(config.getExecutors(), messenger);
   }
 
-  private <T extends HappensBefore> void add(
+  private <T extends HappensBeforeRule> void add(
       final Map<String, List<T>> map, final RewriteMessenger messenger) {
     for (final Map.Entry<String, List<T>> e : map.entrySet()) {
-      for (final HappensBefore hb : e.getValue()) {
+      for (final HappensBeforeRule hb : e.getValue()) {
         final Map<String, List<Record>> mm =
             hb.isCallIn() ? callInMethodMap : methodMap;
         
@@ -83,7 +83,7 @@ final class HappensBeforeTable {
    *         method definitely calls a happens-before method. If
    *         <cod>false</code>, the dynamic type of the receiver needs to be
    *         checked to see if it is assignable to the class type named in the
-   *         {@link HappensBefore} object referenced by <code>hb</code>.
+   *         {@link HappensBeforeRule} object referenced by <code>hb</code>.
    * @throws ClassNotFoundException 
    */
   public Result getHappensBefore(
@@ -131,7 +131,7 @@ final class HappensBeforeTable {
    *         method definitely overrides a call-in method.
    * @throws ClassNotFoundException 
    */
-  public HappensBefore isInsideHappensBefore(
+  public HappensBeforeRule isInsideHappensBefore(
       final String internalClassName, final String methodName,
       final String methodDesc) throws ClassNotFoundException {
     final List<Record> list = callInMethodMap.get(methodName);
@@ -156,9 +156,9 @@ final class HappensBeforeTable {
   private final class Record {
     public final Clazz clazz;
     public final String partialMethodDescriptor;
-    public final HappensBefore hb;
+    public final HappensBeforeRule hb;
     
-    private Record(final HappensBefore hb) throws ClassNotFoundException {
+    private Record(final HappensBeforeRule hb) throws ClassNotFoundException {
       this.hb = hb;
       clazz = classModel.getClass(hb.getInternalClass());
       partialMethodDescriptor = hb.getPartialMethodDescriptor();
@@ -169,9 +169,9 @@ final class HappensBeforeTable {
   
   public static final class Result {
     public final boolean isExact;
-    public final HappensBefore hb;
+    public final HappensBeforeRule hb;
     
-    private Result(final boolean isExact, final HappensBefore hb) {
+    private Result(final boolean isExact, final HappensBeforeRule hb) {
       this.isExact = isExact;
       this.hb = hb;
     }

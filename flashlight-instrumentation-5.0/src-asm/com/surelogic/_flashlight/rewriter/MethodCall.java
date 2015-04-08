@@ -6,10 +6,10 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.MethodInsnNode;
 
-import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBefore;
-import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBeforeCollection;
-import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBeforeExecutor;
-import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBeforeObject;
+import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBeforeRule;
+import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBeforeCollectionRule;
+import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBeforeExecutorRule;
+import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBeforeObjectRule;
 import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBeforeSwitch;
 import com.surelogic._flashlight.common.HappensBeforeConfig.ReturnCheck;
 import com.surelogic._flashlight.rewriter.ClassAndFieldModel.ClassNotFoundException;
@@ -404,7 +404,7 @@ public abstract class MethodCall {
   
   private void instrumentHappensBefore(
       final MethodVisitor mv, final Configuration config, final Result result) {
-      final HappensBefore hb = result.hb;
+      final HappensBeforeRule hb = result.hb;
     final int returnValueSize = getReturnType().getSize();
 
     // ..., nanoTime (long), [returnValue]
@@ -519,7 +519,7 @@ public abstract class MethodCall {
       // ..., [return value], nanoTime (long)
     }
 
-    private void pushTypeNameForDynamicTesting(final HappensBefore hb) {
+    private void pushTypeNameForDynamicTesting(final HappensBeforeRule hb) {
       if (isExact) {
         mv.visitInsn(Opcodes.ACONST_NULL);
       } else {
@@ -530,7 +530,7 @@ public abstract class MethodCall {
     
     
     @Override
-    public void caseHappensBefore(final HappensBefore hb) {
+    public void caseHappensBefore(final HappensBeforeRule hb) {
       // ..., nanoTime (long), [return value]
       swapNanoTimeAndReturnValue();
       // ..., [return value], nanoTime (long)
@@ -553,7 +553,7 @@ public abstract class MethodCall {
     }
 
     @Override
-    public void caseHappensBeforeObject(final HappensBeforeObject hb) {
+    public void caseHappensBeforeObject(final HappensBeforeObjectRule hb) {
       // ..., nanoTime (long), [return value]
       swapNanoTimeAndReturnValue();
       // ..., [return value], nanoTime (long)
@@ -576,7 +576,7 @@ public abstract class MethodCall {
     }
 
     @Override
-    public void caseHappensBeforeCollection(final HappensBeforeCollection hb) {
+    public void caseHappensBeforeCollection(final HappensBeforeCollectionRule hb) {
       // ..., nanoTime (long), [return value]
       
       /* check if the arg pos is -1, if so, then we use the return value,
@@ -626,7 +626,7 @@ public abstract class MethodCall {
     }
 
     @Override
-    public void caseHappensBeforeExecutor(final HappensBeforeExecutor hb) {
+    public void caseHappensBeforeExecutor(final HappensBeforeExecutorRule hb) {
       // ..., nanoTime (long), [return value]
       
       /* check if the arg pos is -1, if so, then we use the return value,

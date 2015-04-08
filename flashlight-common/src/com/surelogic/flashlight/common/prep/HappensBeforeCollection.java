@@ -9,7 +9,7 @@ import java.sql.Timestamp;
 import java.util.logging.Level;
 
 import com.surelogic._flashlight.common.AttributeType;
-import com.surelogic._flashlight.common.HappensBeforeConfig.HBType;
+import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBeforeRule;
 import com.surelogic._flashlight.common.PreppedAttributes;
 import com.surelogic.common.logging.SLLogger;
 
@@ -27,7 +27,7 @@ public class HappensBeforeCollection extends HappensBefore {
     @Override
     void parseRest(PreppedAttributes attributes, String id, long nanoStart,
             long nanoEnd, long inThread, long trace, long site)
-            throws SQLException {
+                    throws SQLException {
         final long coll = attributes.getLong(AttributeType.COLLECTION);
         final long obj = attributes.getLong(AttributeType.OBJECT);
         if (obj == ILLEGAL_ID || coll == ILLEGAL_ID) {
@@ -35,12 +35,20 @@ public class HappensBeforeCollection extends HappensBefore {
                     "Missing obj or coll in " + getXMLElementName());
             return;
         }
-        HBType type = f_hbConfig.getHBType(site);
-        if (type.isSource()) {
-            insert(id, nanoStart, inThread, trace, coll, obj, true);
+        HappensBeforeRule rule = f_hbConfig.getHBRule(site);
+        if (rule.getType().isSource()) {
+            if (rule.isCallIn()) {
+                insert(id, nanoEnd, inThread, trace, coll, obj, true);
+            } else {
+                insert(id, nanoStart, inThread, trace, coll, obj, true);
+            }
         }
-        if (type.isTarget()) {
-            insert(id, nanoEnd, inThread, trace, coll, obj, false);
+        if (rule.getType().isTarget()) {
+            if (rule.isCallIn()) {
+                insert(id, nanoStart, inThread, trace, coll, obj, false);
+            } else {
+                insert(id, nanoEnd, inThread, trace, coll, obj, false);
+            }
         }
     }
 
@@ -76,7 +84,7 @@ public class HappensBeforeCollection extends HappensBefore {
     @Override
     public void setup(final Connection c, final Timestamp start,
             final long startNS, final ScanRawFilePreScan scanResults)
-            throws SQLException {
+                    throws SQLException {
         super.setup(c, start, startNS, scanResults);
         f_sourcePs = c
                 .prepareStatement("INSERT INTO HAPPENSBEFORECOLLSOURCE (ID,COLL,OBJ,TS,INTHREAD,TRACE) VALUES (?,?,?,?,?,?)");

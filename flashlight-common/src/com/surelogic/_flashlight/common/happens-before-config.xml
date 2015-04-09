@@ -41,22 +41,6 @@
     <method decl="release()" hb="source" />
   </object>
 
-  <object type="android.os.AsyncTask" id="android.os AsyncTask execute">
-      <method decl="execute(java.lang.Object[])" hb="source" />
-      <method decl="onPreExecute()" hb="source" callIn="true"/>
-      <method decl="doInBackground(java.lang.Object[])" hb="target" callIn="true"/>
-  </object>
-  
-  <object type="android.os.AsyncTask" id="android.os AsyncTask process">
-      <method decl="doInBackground(java.lang.Object[])" hb="source" callIn="true"/>
-      <method decl="onPostExecute(java.lang.Object)" hb="target" callIn="true"/>
-  </object>
-  
-  
-  <object type="android.os.AsyncTask" id="android.os AsyncTask publish">
-      <method decl="publishProgress(java.lang.Object[])" hb="source" />
-      <method decl="onProgressUpdate(java.lang.Object[])" hb="target" callIn="true"/>
-  </object>
   
   <!-- Atomics -->
 
@@ -179,6 +163,28 @@
   </executor>
   
   <!--  Android -->
+
+  <object type="android.os.AsyncTask" id="android.os AsyncTask execute">
+      <method decl="execute(java.lang.Object[])" hb="source" />
+      <method decl="executeOnExecutor(java.util.concurrent.Executor,java.lang.Object[])" hb="source" />
+      <method decl="onPreExecute()" hb="target" callIn="true" />
+      <method decl="doInBackground(java.lang.Object[])" hb="target" callIn="true" />
+      <method decl="onPostExecute(java.lang.Object)" hb="target" callIn="true" />
+  </object>
+  
+  <object type="android.os.AsyncTask" id="android.os AsyncTask process">
+      <method decl="onPreExecute()" hb="source" callIn="true" />
+      <method decl="doInBackground(java.lang.Object[])" hb="source-and-target" callIn="true" />
+      <method decl="onPostExecute(java.lang.Object)" hb="target" callIn="true" />
+  </object>
+  
+  <object type="android.os.AsyncTask" id="android.os AsyncTask get">
+      <method decl="onPreExecute()" hb="source" callIn="true" />
+      <method decl="doInBackground(java.lang.Object[])" hb="source" callIn="true" />
+      <method decl="onPostExecute(java.lang.Object)" hb="source" callIn="true" />
+      <method decl="get()" hb="target" />
+      <method decl="get(long,java.util.concurrent.TimeUnit)" hb="target" />
+  </object>
   
   <executor id="android.os AsyncTask">
       <method type="android.os.AsyncTask" decl="execute(java.lang.Runnable)" argNum="1" hb="source"/>
@@ -186,8 +192,8 @@
   </executor>
 
   <object type="android.os.AsyncTask" id="android.os AsyncTask execute">
-    <method decl="execute(Object[])" hb="source" />
-    <method decl="doInBackground(Object[])" hb="target" callIn="true" />
+
+    <method decl="doInBackground(java.lang.Object[])" hb="target" callIn="true" />
   </object>
   
 </happens-before>

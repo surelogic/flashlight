@@ -8,15 +8,15 @@ import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBeforeRule;
 import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBeforeCollectionRule;
 import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBeforeObjectRule;
+import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBeforeRule;
 
 /**
  * Tool used to try to validate our happens-before-config file. In order to work
  * properly, you need to add a version of android.jar to the run configuration
  * when executing the main method.
- * 
+ *
  * @author nathan
  *
  */
@@ -24,8 +24,8 @@ public class HappensBeforeConfigChecker {
 
     public static void main(String[] args) {
         HappensBeforeConfig config = HappensBeforeConfig.loadDefault();
-        for (Entry<String, List<HappensBeforeObjectRule>> e : config.getObjects()
-                .entrySet()) {
+        for (Entry<String, List<HappensBeforeObjectRule>> e : config
+                .getObjects().entrySet()) {
             check(e);
         }
         for (Entry<String, List<HappensBeforeRule>> e : config.getThreads()
@@ -40,8 +40,10 @@ public class HappensBeforeConfigChecker {
     }
 
     private static final Pattern primitive = Pattern
-            .compile("(byte|short|int|long|float|double|boolean|char)((\\s*\\[\\s*\\]\\s*)*)");
+            .compile("(byte|short|int|long|float|double|boolean|char|void)((\\s*\\[\\s*\\]\\s*)*)");
     private static final Pattern array = Pattern.compile("\\s*\\[\\s*\\]\\s*");
+    private static final Pattern type = Pattern
+            .compile("([^\\[\\s]+)((\\s*\\[\\s*\\]\\s*)*)");
 
     private static final Map<String, String> primMap = new HashMap<String, String>();
     private static final Map<String, Class<?>> primClassMap = new HashMap<String, Class<?>>();
@@ -81,7 +83,21 @@ public class HappensBeforeConfigChecker {
                 return Class.forName(b.toString());
             }
         } else {
-            return Class.forName(name);
+            m = type.matcher(name);
+            m.matches();
+            if (m.group(3) == null) {
+                return Class.forName(m.group(1));
+            } else {
+                StringBuilder b = new StringBuilder();
+                Matcher arrMatch = array.matcher(m.group(2));
+                while (arrMatch.find()) {
+                    b.append("[");
+                }
+                b.append("L");
+                b.append(m.group(1));
+                b.append(";");
+                return Class.forName(b.toString());
+            }
         }
     }
 
@@ -102,7 +118,7 @@ public class HappensBeforeConfigChecker {
                     return;
                 }
             }
-            Method m = clazz.getMethod(method, sigClasses);
+            Method m = clazz.getDeclaredMethod(method, sigClasses);
             Class<?> returnType = m.getReturnType();
             switch (hb.getReturnCheck()) {
             case NONE:
@@ -151,7 +167,8 @@ public class HappensBeforeConfigChecker {
         }
     }
 
-    public static <T extends HappensBeforeRule> void check(Entry<String, List<T>> e) {
+    public static <T extends HappensBeforeRule> void check(
+            Entry<String, List<T>> e) {
         try {
             Class<?> clazz = declToClass(e.getKey());
             for (T o : e.getValue()) {
@@ -167,8 +184,8 @@ public class HappensBeforeConfigChecker {
         }
     }
 
-    public static <T extends HappensBeforeRule> void err(Entry<String, List<T>> e,
-            String message) {
+    public static <T extends HappensBeforeRule> void err(
+            Entry<String, List<T>> e, String message) {
         System.out.printf("Problem with data: %s\n%s\n", message, e.toString());
     }
 

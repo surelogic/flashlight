@@ -161,6 +161,13 @@
       <method type="java.util.concurrent.Executor" decl="execute(java.lang.Runnable)" argNum="1" hb="source"/>
       <method type="java.lang.Runnable" decl="run()" hb="target" argNum="0" callIn="true"/>
   </executor>
+  <executor id="java.util.concurrent ExecutorService">
+      <method type="java.util.concurrent.ExecutorService" decl="submit(java.util.concurrent.Callable)" argNum="1" hb="source"/>
+      <method type="java.util.concurrent.ExecutorService" decl="submit(java.lang.Runnable)" argNum="1" hb="source"/>
+      <method type="java.util.concurrent.ExecutorService" decl="submit(java.lang.Runnable,Object)" argNum="1" hb="source"/>
+      <method type="java.lang.Runnable" decl="run()" hb="target" argNum="0" callIn="true"/>
+      <method type="java.util.concurrent.Callable" decl="call()" hb="target" argNum="0" callIn="true"/>
+  </executor>
   
   <!--  Android -->
 
@@ -171,7 +178,7 @@
       <method decl="doInBackground(java.lang.Object[])" hb="target" callIn="true" />
       <method decl="onPostExecute(java.lang.Object)" hb="target" callIn="true" />
   </object>
-  
+
   <object type="android.os.AsyncTask" id="android.os AsyncTask process">
       <method decl="onPreExecute()" hb="source" callIn="true" />
       <method decl="doInBackground(java.lang.Object[])" hb="source-and-target" callIn="true" />

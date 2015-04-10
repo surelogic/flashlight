@@ -164,7 +164,7 @@ public class PostMortemRefinery extends Thread {
                 }
                 // New version
                 if (pr instanceof ObjectPhantomReference) {
-                    if (((ObjectPhantomReference) pr).sharedByThreads()) {
+                    if (!((ObjectPhantomReference) pr).sharedByThreads()) {
                         deadRefs.addSingleThreadedObject(pr);
                     }
                 }
@@ -289,7 +289,7 @@ public class PostMortemRefinery extends Thread {
      *
      */
     private static class StateReference extends
-            WeakReference<PostMortemStore.State> {
+    WeakReference<PostMortemStore.State> {
 
         final BlockingQueue<Event> localQueue;
 

@@ -173,7 +173,7 @@ public class DebugStore {
     stdOut.flush();
   }
   
-  public static void closureCreation(
+  public synchronized static void closureCreation(
       final Object closure, final String functionalInterface, 
       final String methodName, final String methodDesc, final int behavior,
       final String owner, final String name, final String desc) {

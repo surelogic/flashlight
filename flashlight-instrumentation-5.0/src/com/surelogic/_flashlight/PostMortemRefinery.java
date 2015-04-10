@@ -159,7 +159,7 @@ public class PostMortemRefinery extends Thread {
             final SingleThreadedRefs deadRefs = new SingleThreadedRefs();
             f_garbageCollectedObjectCount += gcs.size();
             for (IdPhantomReference pr : gcs) {
-                if (pr.shouldBeIgnored()) {
+                if (pr.isDuplicate()) {
                     continue;
                 }
                 // New version

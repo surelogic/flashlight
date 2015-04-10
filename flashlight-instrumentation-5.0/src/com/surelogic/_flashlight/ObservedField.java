@@ -86,7 +86,7 @@ abstract class ObservedField {
      * Returns the one {@link ObservedField} instance associated with the
      * specified field. This method places a {@link FieldDefinition} event into
      * the specified queue if the field has not been observed previously.
-     * 
+     *
      * @param field
      *            a field within the instrumented program.
      * @param rawQueue
@@ -143,16 +143,16 @@ abstract class ObservedField {
         final int mod = field.getModifiers();
         final ObservedField result = Modifier.isStatic(mod) ? new Static(
                 pDeclaringType, fieldName, mod) : new Instance(pDeclaringType,
-                fieldName, mod);
-        final ObservedField sResult = fieldNameToField.putIfAbsent(fieldName,
-                result);
-        if (sResult != null) {
-            return sResult;
-        } else {
-            // put a field-definition event in the raw queue.
-            PostMortemStore.putInQueue(state, new FieldDefinition(result));
-            return result;
-        }
+                        fieldName, mod);
+                final ObservedField sResult = fieldNameToField.putIfAbsent(fieldName,
+                        result);
+                if (sResult != null) {
+                    return sResult;
+                } else {
+                    // put a field-definition event in the raw queue.
+                    PostMortemStore.putInQueue(state, new FieldDefinition(result));
+                    return result;
+                }
     }
 
     /**
@@ -226,7 +226,7 @@ abstract class ObservedField {
      * Mapping from fields to the thread it's used by (or SHARED_BY_THREADS)
      */
     static class FieldInfo extends LongMap<IdPhantomReference> implements
-            IFieldInfo {
+    IFieldInfo {
         FieldInfo() {
             super(2);
             // numInfos++;
@@ -235,6 +235,7 @@ abstract class ObservedField {
         static final IdPhantomReference SHARED_BY_THREADS = Phantom
                 .ofClass(FieldInfo.class);
 
+        @Override
         public void setLastThread(final long key,
                 final IdPhantomReference thread) {
             final PhantomReference lastThread = get(key);
@@ -257,6 +258,7 @@ abstract class ObservedField {
         /**
          * @return true if adding something
          */
+        @Override
         public boolean getSingleThreadedFields(final SingleThreadedRefs refs) {
             boolean added = false;
             /*

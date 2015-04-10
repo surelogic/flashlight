@@ -148,7 +148,7 @@ public class PostMortemRefinery extends Thread {
     /**
      * Examines each garbage collected object and cleans up our information
      * about shared fields and thread-local fields.
-     * 
+     *
      * @param filter
      */
     private void processGarbageCollectedObjects() {
@@ -162,7 +162,12 @@ public class PostMortemRefinery extends Thread {
                 if (pr.shouldBeIgnored()) {
                     continue;
                 }
-                deadRefs.addSingleThreadedObject(pr);
+                // New version
+                if (pr instanceof ObjectPhantomReference) {
+                    if (((ObjectPhantomReference) pr).sharedByThreads()) {
+                        deadRefs.addSingleThreadedObject(pr);
+                    }
+                }
                 removeThreadLocalFieldsWithin(events, deadRefs, pr);
                 f_store.gcRWLock(pr);
                 events.add(new GarbageCollectedObject(pr));
@@ -193,7 +198,7 @@ public class PostMortemRefinery extends Thread {
     /**
      * Remove all mappings within the {@link #f_fieldToThread} map that are
      * within the garbage collected object.
-     * 
+     *
      * @param pr
      *            the phantom of the object.
      */
@@ -227,7 +232,7 @@ public class PostMortemRefinery extends Thread {
     /**
      * Removes all <code>FieldAccess</code> events in the event cache about any
      * field in the passed set.
-     * 
+     *
      * @param fields
      *            the set of fields to remove events about.
      */
@@ -253,7 +258,7 @@ public class PostMortemRefinery extends Thread {
      * Transfers events to the out queue. If we are finished then we add all
      * events, otherwise we just add enough to keep our cache at {@link #f_size}
      * .
-     * 
+     *
      * @param l
      */
     private boolean transferEventsToOutQueue(final boolean flush) {
@@ -279,9 +284,9 @@ public class PostMortemRefinery extends Thread {
      * We keep a weak reference to the state in order to allow it to be garbage
      * collected. The local queue is kept on the reference explicitly in order
      * to allow any final events in the thread to be cleared.
-     * 
+     *
      * @author nathan
-     * 
+     *
      */
     private static class StateReference extends
             WeakReference<PostMortemStore.State> {

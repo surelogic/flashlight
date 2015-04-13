@@ -1,6 +1,9 @@
 package com.surelogic.flashlight.ant;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -30,16 +33,17 @@ public final class SourceFolderZip extends AbstractJavaFileZip {
     private final File root;
     private final String rootPath;
     private final Map<File, List<String>> typeMap;
-    private static final String SOURCE_LEVEL = "1.6";
+    private final String sourceLevel;
 
-    public SourceFolderZip(final File root) {
+    public SourceFolderZip(final File root, String sourceLevel) {
         this.root = root;
         try {
-            this.rootPath = root.getCanonicalPath();
+            rootPath = root.getCanonicalPath();
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
         typeMap = new HashMap<File, List<String>>();
+        this.sourceLevel = sourceLevel;
         generateTypeMap();
     }
 
@@ -61,6 +65,7 @@ public final class SourceFolderZip extends AbstractJavaFileZip {
         final JavaCompiler compiler = JavacTool.create();
 
         final DiagnosticListener<JavaFileObject> nullListener = new DiagnosticListener<JavaFileObject>() {
+            @Override
             public void report(final Diagnostic<? extends JavaFileObject> d) {
                 System.out.println("JCP: " + d);
             }
@@ -75,13 +80,13 @@ public final class SourceFolderZip extends AbstractJavaFileZip {
                 .getJavaFileObjectsFromFiles(expand(root));
         List<String> options = new ArrayList<String>();
         options.add("-source");
-        options.add(SOURCE_LEVEL);
+        options.add(sourceLevel);
         options.add("-printsource");
         final JavacTaskImpl task = (JavacTaskImpl) compiler.getTask(null, // Output
-                                                                          // to
-                                                                          // System.err
+                // to
+                // System.err
                 fileman, nullListener, options, null, // Classes for anno
-                                                      // processing
+                // processing
                 toCompile);
 
         try {
@@ -154,7 +159,7 @@ public final class SourceFolderZip extends AbstractJavaFileZip {
         @Override
         public Void visitCompilationUnit(final CompilationUnitTree cut,
                 final Void none) {
-            this.pakkage = cut.getPackageName().toString();
+            pakkage = cut.getPackageName().toString();
             for (Tree t : cut.getTypeDecls()) {
                 this.visit(t, none);
             }
@@ -200,11 +205,12 @@ public final class SourceFolderZip extends AbstractJavaFileZip {
     /**
      * Generates an archive of the given source information, and places it in
      * the source folder
-     * 
+     *
      * @param src
      * @param sourceFolder
      */
-    public static void generateSource(final File src, final File sourceFolder) {
+    public static void generateSource(final File src, final File sourceFolder,
+            String sourceLevel) {
         String name = src.getName();
         File dest = new File(sourceFolder, name + ".src.zip");
         // Avoid overwriting source zips created from others
@@ -212,7 +218,7 @@ public final class SourceFolderZip extends AbstractJavaFileZip {
             dest = new File(sourceFolder, name + '(' + i + ')' + ".src.zip");
         }
         if (src.isDirectory()) {
-            SourceFolderZip zip = new SourceFolderZip(src);
+            SourceFolderZip zip = new SourceFolderZip(src, sourceLevel);
             try {
                 ZipOutputStream out = new ZipOutputStream(new FileOutputStream(
                         dest));

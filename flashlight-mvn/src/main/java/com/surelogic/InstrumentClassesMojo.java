@@ -81,9 +81,9 @@ public class InstrumentClassesMojo extends AbstractMojo {
 
     @Parameter(defaultValue = "${project.build.directory}", property = "outputDir", required = false)
     private File buildDirectory;
-    @Parameter(defaultValue = "${project.build.outputDirectory", property = "binDir", required = false)
+    @Parameter(defaultValue = "${project.build.outputDirectory}", property = "binDir", required = false)
     private File binDirectory;
-    @Parameter(defaultValue = "${project.build.testOutputDirectory", property = "testBinDir", required = false)
+    @Parameter(defaultValue = "${project.build.testOutputDirectory}", property = "testBinDir", required = false)
     private File testBinDirectory;
 
     @Parameter(defaultValue = "${project.build.sourceDirectory}", property = "srcDir", required = false)
@@ -107,6 +107,9 @@ public class InstrumentClassesMojo extends AbstractMojo {
     @Parameter(property = "collectionType", required = false)
     private CollectionType collectionType;
 
+    @Parameter(property = "sourceLevel", defaultValue = "1.8")
+    private String sourceLevel;
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         final List<File> toDelete = new ArrayList<File>();
@@ -123,13 +126,13 @@ public class InstrumentClassesMojo extends AbstractMojo {
                 i.addConfiguredDir(new Directory(testBinDirectory,
                         testBinDirectory));
             }
+            File confInst = mkTmp(toDelete);
+            setupFlashlightConf(i, confInst);
             i.execute();
             if (binDirectory != null) {
                 FileUtility.recursiveCopy(binInst, binDirectory);
-
             }
             if (testBinDirectory != null) {
-
                 FileUtility.recursiveCopy(testInst, testBinDirectory);
             }
             ArtifactRequest runtimeRequest = new ArtifactRequest();
@@ -141,11 +144,12 @@ public class InstrumentClassesMojo extends AbstractMojo {
             if (binDirectory != null) {
                 FileUtility.unzipFile(runtimeResult.getArtifact().getFile(),
                         binDirectory);
+                FileUtility.recursiveCopy(confInst, binDirectory);
             } else if (testBinDirectory != null) {
                 FileUtility.unzipFile(runtimeResult.getArtifact().getFile(),
                         testBinDirectory);
+                FileUtility.recursiveCopy(confInst, binDirectory);
             }
-
         } catch (IOException e) {
             throw new MojoExecutionException(
                     "IOException while instrumenting class files.", e);
@@ -203,10 +207,12 @@ public class InstrumentClassesMojo extends AbstractMojo {
             sourceDir.delete();
             sourceDir.mkdir();
             if (sourceDirectory != null) {
-                SourceFolderZip.generateSource(sourceDirectory, sourceDir);
+                SourceFolderZip.generateSource(sourceDirectory, sourceDir,
+                        sourceLevel);
             }
             if (testDirectory != null) {
-                SourceFolderZip.generateSource(testDirectory, sourceDir);
+                SourceFolderZip.generateSource(testDirectory, sourceDir,
+                        sourceLevel);
             }
             ZipOutputStream zo = new ZipOutputStream(new FileOutputStream(
                     new File(classDir,

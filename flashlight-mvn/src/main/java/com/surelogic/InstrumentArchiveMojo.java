@@ -90,6 +90,9 @@ public class InstrumentArchiveMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project.build.finalName}", property = "archiveName")
     private String archiveName;
 
+    @Parameter(property = "sourceLevel", defaultValue = "1.8")
+    private String sourceLevel;
+
     @Override
     public void execute() throws MojoExecutionException {
 

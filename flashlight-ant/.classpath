@@ -10,8 +10,8 @@
 	<classpathentry kind="lib" path="lib/jsr173_1.0_api.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/common"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/flashlight-common"/>
-	<classpathentry kind="lib" path="lib/javac.jar"/>
 	<classpathentry kind="lib" path="lib/javadoc.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
+	<classpathentry kind="lib" path="lib/javac-1.9.0-dev-r2644-1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

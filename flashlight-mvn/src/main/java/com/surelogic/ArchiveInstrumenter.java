@@ -35,6 +35,7 @@ public class ArchiveInstrumenter {
     private final List<String> toIgnore = new ArrayList<String>();
     private final List<File> libraries = new ArrayList<File>();
     private Path sources;
+    private String sourceLevel;
     private String collectionType;
     private String runName;
     private File dataDir;
@@ -168,7 +169,8 @@ public class ArchiveInstrumenter {
             sourceDir.delete();
             sourceDir.mkdir();
             for (String source : sources.list()) {
-                SourceFolderZip.generateSource(new File(source), sourceDir);
+                SourceFolderZip.generateSource(new File(source), sourceDir,
+                        sourceLevel);
             }
             ZipOutputStream zo = new ZipOutputStream(new FileOutputStream(
                     new File(classDir,
@@ -269,6 +271,14 @@ public class ArchiveInstrumenter {
 
     public void setSources(Path sources) {
         this.sources = sources;
+    }
+
+    public String getSourceLevel() {
+        return sourceLevel;
+    }
+
+    public void setSourceLevel(String sourceLevel) {
+        this.sourceLevel = sourceLevel;
     }
 
     public String getCollectionType() {

@@ -25,9 +25,9 @@ import com.surelogic.flashlight.ant.Instrument.Jar;
 /**
  * An ant task that is designed to instrument and execute a run in a way that
  * allows the Flashlight eclipse client to prepare and view the results.
- * 
+ *
  * @author nathan
- * 
+ *
  */
 public class Record extends Task {
 
@@ -38,6 +38,8 @@ public class Record extends Task {
     private String name;
 
     private static final int BUF_LEN = 4096;
+
+    private String sourceLevel = "1.8";
 
     /**
      * The paths to directories and jar files that are used as libraries by the
@@ -240,9 +242,17 @@ public class Record extends Task {
         i.setUseDefaultIndirectAccessMethods(flag);
     }
 
+    public String getSourceLevel() {
+        return sourceLevel;
+    }
+
+    public void setSourceLevel(String sourceLevel) {
+        this.sourceLevel = sourceLevel;
+    }
+
     /**
      * Set the location of the JAR file to execute.
-     * 
+     *
      * @param jarfile
      * @throws BuildException
      */
@@ -252,7 +262,7 @@ public class Record extends Task {
 
     /**
      * Set the Java class to execute.
-     * 
+     *
      * @param s
      * @throws BuildException
      */
@@ -334,7 +344,7 @@ public class Record extends Task {
             }
             final File src = p.getSource();
             if (src != null) {
-                SourceFolderZip.generateSource(src, sourceFolder);
+                SourceFolderZip.generateSource(src, sourceFolder, sourceLevel);
             }
         }
         final File externalFolder = new File(runFolder,
@@ -374,7 +384,7 @@ public class Record extends Task {
                                 new File(
                                         runFolder,
                                         InstrumentationConstants.FL_EXTERNAL_FOLDER_LOC),
-                                new File(e).getName()).getAbsolutePath());
+                                        new File(e).getName()).getAbsolutePath());
                     }
                 }
             }
@@ -384,7 +394,7 @@ public class Record extends Task {
         addVMArg(InstrumentationConstants.FL_CLASS_HIERARCHY_FILE,
                 new File(runFolder,
                         InstrumentationConstants.FL_CLASS_HIERARCHY_FILE_LOC)
-                        .getAbsolutePath());
+        .getAbsolutePath());
         addVMArg(InstrumentationConstants.FL_SITES_FILE, new File(runFolder,
                 InstrumentationConstants.FL_SITES_FILE_LOC).getAbsolutePath());
         addVMArg(InstrumentationConstants.FL_RUN, name);

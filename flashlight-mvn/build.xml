@@ -55,6 +55,15 @@
             <arg value="-Dversion=${release-version}" />
         </exec>
         <exec executable="${maven.executable}" failonerror="true">
+            <arg value="deploy:deploy-file" />
+            <arg value="-Durl=file://${local-repo}" />
+            <arg value="-Dfile=../flashlight-ant/lib/javac-1.9.0-dev-r2644-1.jar" />
+            <arg value="-DgroupId=com.surelogic" />
+            <arg value="-DartifactId=javac" />
+            <arg value="-Dpackaging=jar" />
+            <arg value="-Dversion=${release-version}" />
+        </exec>
+        <exec executable="${maven.executable}" failonerror="true">
             <arg value="clean" />
             <arg value="deploy" />
             <arg value="eclipse:eclipse" />

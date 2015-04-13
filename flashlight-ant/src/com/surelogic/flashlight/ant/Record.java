@@ -39,8 +39,6 @@ public class Record extends Task {
 
     private static final int BUF_LEN = 4096;
 
-    private String sourceLevel = "1.8";
-
     /**
      * The paths to directories and jar files that are used as libraries by the
      * application being instrumented. These items are scanned only, and not
@@ -242,14 +240,6 @@ public class Record extends Task {
         i.setUseDefaultIndirectAccessMethods(flag);
     }
 
-    public String getSourceLevel() {
-        return sourceLevel;
-    }
-
-    public void setSourceLevel(String sourceLevel) {
-        this.sourceLevel = sourceLevel;
-    }
-
     /**
      * Set the location of the JAR file to execute.
      *
@@ -344,7 +334,7 @@ public class Record extends Task {
             }
             final File src = p.getSource();
             if (src != null) {
-                SourceFolderZip.generateSource(src, sourceFolder, sourceLevel);
+                SourceFolderZip.generateSource(src, sourceFolder);
             }
         }
         final File externalFolder = new File(runFolder,
@@ -384,7 +374,7 @@ public class Record extends Task {
                                 new File(
                                         runFolder,
                                         InstrumentationConstants.FL_EXTERNAL_FOLDER_LOC),
-                                        new File(e).getName()).getAbsolutePath());
+                                new File(e).getName()).getAbsolutePath());
                     }
                 }
             }
@@ -394,7 +384,7 @@ public class Record extends Task {
         addVMArg(InstrumentationConstants.FL_CLASS_HIERARCHY_FILE,
                 new File(runFolder,
                         InstrumentationConstants.FL_CLASS_HIERARCHY_FILE_LOC)
-        .getAbsolutePath());
+                        .getAbsolutePath());
         addVMArg(InstrumentationConstants.FL_SITES_FILE, new File(runFolder,
                 InstrumentationConstants.FL_SITES_FILE_LOC).getAbsolutePath());
         addVMArg(InstrumentationConstants.FL_RUN, name);

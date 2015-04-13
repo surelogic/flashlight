@@ -64,6 +64,7 @@
 			<fileset dir="${common-project-classes}"/>
 			<!-- (3) Include the contents of flashlight-common -->
  		    <fileset dir="${flashlight-common-project-classes}"/>
+ 		    <zipfileset src="${common-project-runtime}/commons-io-2.4.jar" />
 		    <zipfileset src="${common-project-runtime}/commons-lang3-3.3.2.jar" />
 			<zipfileset src="${common-project-runtime}/asm-5.0.2.jar" />
             <zipfileset src="${common-project-runtime}/asm-commons-5.0.2.jar" />

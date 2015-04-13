@@ -30,12 +30,12 @@ import com.surelogic.common.SLUtility;
 
 public final class SourceFolderZip extends AbstractJavaFileZip {
 
+    private static final String SOURCE_LEVEL = "1.6";
     private final File root;
     private final String rootPath;
     private final Map<File, List<String>> typeMap;
-    private final String sourceLevel;
 
-    public SourceFolderZip(final File root, String sourceLevel) {
+    public SourceFolderZip(final File root) {
         this.root = root;
         try {
             rootPath = root.getCanonicalPath();
@@ -43,7 +43,6 @@ public final class SourceFolderZip extends AbstractJavaFileZip {
             throw new IllegalStateException(e);
         }
         typeMap = new HashMap<File, List<String>>();
-        this.sourceLevel = sourceLevel;
         generateTypeMap();
     }
 
@@ -80,7 +79,7 @@ public final class SourceFolderZip extends AbstractJavaFileZip {
                 .getJavaFileObjectsFromFiles(expand(root));
         List<String> options = new ArrayList<String>();
         options.add("-source");
-        options.add(sourceLevel);
+        options.add(SOURCE_LEVEL);
         options.add("-printsource");
         final JavacTaskImpl task = (JavacTaskImpl) compiler.getTask(null, // Output
                 // to
@@ -209,8 +208,7 @@ public final class SourceFolderZip extends AbstractJavaFileZip {
      * @param src
      * @param sourceFolder
      */
-    public static void generateSource(final File src, final File sourceFolder,
-            String sourceLevel) {
+    public static void generateSource(final File src, final File sourceFolder) {
         String name = src.getName();
         File dest = new File(sourceFolder, name + ".src.zip");
         // Avoid overwriting source zips created from others
@@ -218,7 +216,7 @@ public final class SourceFolderZip extends AbstractJavaFileZip {
             dest = new File(sourceFolder, name + '(' + i + ')' + ".src.zip");
         }
         if (src.isDirectory()) {
-            SourceFolderZip zip = new SourceFolderZip(src, sourceLevel);
+            SourceFolderZip zip = new SourceFolderZip(src);
             try {
                 ZipOutputStream out = new ZipOutputStream(new FileOutputStream(
                         dest));

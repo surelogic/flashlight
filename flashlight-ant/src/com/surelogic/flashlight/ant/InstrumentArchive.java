@@ -1,7 +1,6 @@
 package com.surelogic.flashlight.ant;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
@@ -9,9 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.StringTokenizer;
-import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import java.util.zip.ZipOutputStream;
 
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Task;
@@ -43,8 +40,7 @@ public class InstrumentArchive extends Task {
 
     private String runName;
     private File destFile, srcFile, runtime, dataDir, properties;
-    private Path sources;
-    private String sourceLevel = "1.8";
+
     private String collectionType;
 
     private final List<String> toIgnore;
@@ -102,18 +98,6 @@ public class InstrumentArchive extends Task {
 
     public void setDataDir(final File dataDir) {
         this.dataDir = dataDir;
-    }
-
-    public Path createSources() {
-        return sources = new Path(getProject());
-    }
-
-    public String getSourceLevel() {
-        return sourceLevel;
-    }
-
-    public void setSourceLevel(String sourceLevel) {
-        this.sourceLevel = sourceLevel;
     }
 
     /**
@@ -370,25 +354,6 @@ public class InstrumentArchive extends Task {
         sitesFile.getParentFile().mkdirs();
         i.setSitesFile(sitesFile);
 
-        if (sources != null) {
-            File sourceDir = File.createTempFile("source", null);
-            sourceDir.delete();
-            sourceDir.mkdir();
-            for (String source : sources.list()) {
-                SourceFolderZip.generateSource(new File(source), sourceDir,
-                        sourceLevel);
-            }
-            ZipOutputStream zo = new ZipOutputStream(new FileOutputStream(
-                    new File(classDir,
-                            InstrumentationConstants.FL_SOURCE_RESOURCE)));
-            for (File f : sourceDir.listFiles()) {
-                zo.putNextEntry(new ZipEntry(f.getName()));
-                FileUtility.copyToStream(false, f.getName(),
-                        new FileInputStream(f), f.getName(), zo, false);
-                zo.closeEntry();
-            }
-            zo.close();
-        }
         final Properties properties = new Properties();
         if (this.properties != null) {
             if (this.properties.exists() && this.properties.isFile()) {

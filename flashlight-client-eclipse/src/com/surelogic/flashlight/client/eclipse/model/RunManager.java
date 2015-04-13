@@ -513,11 +513,11 @@ public final class RunManager implements ILifecycle {
    *          {@code true} if the user wants to see this launched run,
    *          {@code false} if the user does not want to see this launched run.
    */
-  public void setDisplayToUserIfReady(final boolean value) {
+  public void setDisplayToUserIfReadyOrCancelled(final boolean value) {
     boolean notify = false;
     synchronized (f_lock) {
       for (LaunchedRun lrun : f_launchedRuns) {
-        if (RunState.READY.equals(lrun.getState())) {
+        if (RunState.READY.equals(lrun.getState()) || RunState.LAUNCH_CANCELLED.equals(lrun.getState())) {
           notify |= lrun.setDisplayToUser(value);
         }
       }

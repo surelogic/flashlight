@@ -196,7 +196,7 @@ public final class RunControlDialog extends Dialog implements
         clearList.addListener(SWT.Selection, new Listener() {
             @Override
             public void handleEvent(Event event) {
-                RunManager.getInstance().setDisplayToUserIfReady(false);
+                RunManager.getInstance().setDisplayToUserIfReadyOrCancelled(false);
             }
         });
 

@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -117,10 +118,10 @@ public class InstrumentClassesMojo extends AbstractMojo {
             setupFlashlightConf(i, confInst);
             i.execute();
             if (binDirectory != null) {
-                FileUtility.recursiveCopy(binInst, binDirectory);
+                FileUtils.copyDirectory(binInst, binDirectory);
             }
             if (testBinDirectory != null) {
-                FileUtility.recursiveCopy(testInst, testBinDirectory);
+                FileUtils.copyDirectory(testInst, testBinDirectory);
             }
             ArtifactRequest runtimeRequest = new ArtifactRequest();
             runtimeRequest.setArtifact(new DefaultArtifact(
@@ -131,11 +132,11 @@ public class InstrumentClassesMojo extends AbstractMojo {
             if (binDirectory != null) {
                 FileUtility.unzipFile(runtimeResult.getArtifact().getFile(),
                         binDirectory);
-                FileUtility.recursiveCopy(confInst, binDirectory);
+                FileUtils.copyDirectory(confInst, binDirectory);
             } else if (testBinDirectory != null) {
                 FileUtility.unzipFile(runtimeResult.getArtifact().getFile(),
                         testBinDirectory);
-                FileUtility.recursiveCopy(confInst, binDirectory);
+                FileUtils.copyDirectory(confInst, binDirectory);
             }
             getLog().info("Instrumentation of class folders complete.");
         } catch (IOException e) {

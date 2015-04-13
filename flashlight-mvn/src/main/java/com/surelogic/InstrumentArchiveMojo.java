@@ -85,7 +85,7 @@ public class InstrumentArchiveMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project.packaging}", property = "packaging")
     private String packagingType;
 
-    @Parameter(defaultValue = "${user.home}/.flashlight", property = "dataDir", required = true)
+    @Parameter(property = "dataDir", required = true)
     private File dataDir;
     @Parameter(defaultValue = "${project.build.finalName}", property = "archiveName")
     private String archiveName;

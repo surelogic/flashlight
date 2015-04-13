@@ -204,7 +204,7 @@
       <method type="android.os.Handler" decl="postAtTime(java.lang.Runnable,java.lang.Object,long)" argNum="1" hb="source"/>
       <method type="android.os.Handler" decl="postAtTime(java.lang.Runnable,long)" argNum="1" hb="source"/>
       <method type="android.os.Handler" decl="postDelayed(java.lang.Runnable,long)" argNum="1" hb="source"/>
-      <method type="java.lang.Runnable" decl="run()" argNum="0" hb="target"/>
+      <method type="java.lang.Runnable" decl="run()" argNum="0" hb="target" callIn="true"/>
   </executor>
   
   <executor id="android.os Handler Message">

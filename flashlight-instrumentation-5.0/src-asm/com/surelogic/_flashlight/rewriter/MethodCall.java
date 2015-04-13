@@ -1,5 +1,8 @@
 package com.surelogic._flashlight.rewriter;
 
+import java.util.Collections;
+import java.util.Set;
+
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -132,16 +135,16 @@ public abstract class MethodCall {
     mv.prependTryCatchBlock(beforeOriginalCall, afterOriginalCall, exceptionHandler, null);
 
     // Non-null if the call is interesting for happens-before events
-    Result hbResult;
+    Set<Result> hbResults;
     try {
-      hbResult = happensBefore.getHappensBefore(originalInsn.owner, originalInsn.name, originalInsn.desc);
+      hbResults = happensBefore.getHappensBefore(originalInsn.owner, originalInsn.name, originalInsn.desc);
     } catch (final ClassNotFoundException e) {
-      hbResult = null;
+      hbResults = Collections.emptySet();
       messenger.warning("Provided classpath is incomplete 7: couldn't find class " + e.getMissingClass());
     }
 
     // Get the current nanoTime for happens before events
-    if (hbResult != null) {
+    if (!hbResults.isEmpty()) {
       mv.visitMethodInsn(Opcodes.INVOKESTATIC, FlashlightNames.JAVA_LANG_SYSTEM,
           FlashlightNames.NANO_TIME.getName(),
           FlashlightNames.NANO_TIME.getDescriptor(), false);
@@ -179,7 +182,64 @@ public abstract class MethodCall {
     instrumentAfterUnlock(mv, config, true); // +4
     instrumentAfterWait(mv, callerIsStatic, config); // +4
     
-    if (hbResult != null) instrumentHappensBefore(mv, config, hbResult);
+    if (!hbResults.isEmpty()) {
+      /* stack is either
+       *   ..., nanoTime (long)                <-- Called method as void return
+       * or
+       *   ..., nanoTime (long), [returnValue] <-- Called method has return value
+       */
+      final int numRecords = hbResults.size();
+      if (numRecords == 1) { // the common case
+        instrumentHappensBefore(mv, config, hbResults.iterator().next());
+      } else {
+        /*
+         * instrumentHappensBefore() eats the nanoTime from the stack and leaves
+         * the return value (if any).  We need to call instrumentHappensBefore()
+         * X times.  So we need to copy the nanoTime X-1 times.
+         */
+        final int returnValueSize = getReturnType().getSize();
+        for (int i = 0; i < numRecords - 1; i++) {
+          if (returnValueSize == 0) {
+            // ..., nanoTime (long)
+            mv.visitInsn(Opcodes.DUP2);
+            // ..., nanoTime (long), nanoTime (long)
+          } else if (returnValueSize == 1) {
+            // ..., nanoTime (long), returnValue (1)
+            mv.visitInsn(Opcodes.DUP_X2);
+            // ..., returnValue (1), nanoTime (long), returnValue (1)
+            mv.visitInsn(Opcodes.POP);
+            // ..., returnValue (1), nanoTime (long)
+            mv.visitInsn(Opcodes.DUP2_X1);
+            // ..., nanoTime (long), returnValue (1), nanoTime (long)
+            mv.visitInsn(Opcodes.DUP2_X1);
+            // ..., nanoTime (long), nanoTime (long), returnValue (1), nanoTime (long)
+            mv.visitInsn(Opcodes.POP2);
+            // ..., nanoTime (long), nanoTime (long), returnValue (1)
+          } else { // size == 2
+            // ..., nanoTime (long), returnValue (2)
+            mv.visitInsn(Opcodes.DUP2_X2);
+            // ..., returnValue (1), nanoTime (long), returnValue (2)
+            mv.visitInsn(Opcodes.POP2);
+            // ..., returnValue (2), nanoTime (long)
+            mv.visitInsn(Opcodes.DUP2_X2);
+            // ..., nanoTime (long), returnValue (2), nanoTime (long)
+            mv.visitInsn(Opcodes.DUP2_X2);
+            // ..., nanoTime (long), nanoTime (long), returnValue (2), nanoTime (long)
+            mv.visitInsn(Opcodes.POP2);
+            // ..., nanoTime (long), nanoTime (long), returnValue (2)
+          }
+        }
+        
+        // ..., nanoTime_1 (long), ..., nanoTime_numRecords (long), [returnValue]
+        
+        for (final Result r : hbResults) {
+          // ..., nanoTime_1 (long), ..., nanoTime_X (long), [returnValue]
+          instrumentHappensBefore(mv, config, r);
+          // ..., nanoTime_1 (long), ..., nanoTime_(x-1) (long), [returnValue]
+        }
+      }
+    }
+    
     /* Stack is now definitely
      *   ..., [returnValue]
      */
@@ -404,7 +464,7 @@ public abstract class MethodCall {
   
   private void instrumentHappensBefore(
       final MethodVisitor mv, final Configuration config, final Result result) {
-      final HappensBeforeRule hb = result.hb;
+    final HappensBeforeRule hb = result.hb;
     final int returnValueSize = getReturnType().getSize();
 
     // ..., nanoTime (long), [returnValue]
@@ -654,7 +714,11 @@ public abstract class MethodCall {
         /* Otherwise, push the reference, collection, the site id, and
          * the given actual argument
          */
-        mcall.pushArgumentForEvent(mv, hb.getObjectParam());
+        if (hb.isParamReceiver()) {
+          mcall.pushReceiverForEvent(mv);
+        } else {
+          mcall.pushArgumentForEvent(mv, hb.getObjectParam());
+        }
         // ..., [return value], nanoTime (long), object
       }
       // ..., [return value], nanoTime (long), object

@@ -1,9 +1,12 @@
 package com.surelogic._flashlight.rewriter;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.surelogic._flashlight.common.HappensBeforeConfig;
 import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBeforeRule;
@@ -77,22 +80,24 @@ final class HappensBeforeTable {
    *          The name of the method being called.
    * @param methodDesc
    *          The description of the method being called.
-   * @return <code>null</code> if the call definitely does not invoke a
-   *         happens-before method. Otherwise, an {@link Result} object is
-   *         returned. The <code>isExact</code> is <code>true</code> if the
+   * @return A set of {@link Result} objects, one for each happens-before
+   *         scenario that method participates in.  If the call does not invoke
+   *         a happens-before method, the set is empty.
+   *         The <code>isExact</code> attribute of a result object is <code>true</code> if the
    *         method definitely calls a happens-before method. If
    *         <cod>false</code>, the dynamic type of the receiver needs to be
    *         checked to see if it is assignable to the class type named in the
    *         {@link HappensBeforeRule} object referenced by <code>hb</code>.
    * @throws ClassNotFoundException 
    */
-  public Result getHappensBefore(
+  public Set<Result> getHappensBefore(
       final String internalClassName, final String methodName,
       final String methodDesc) throws ClassNotFoundException {
     final List<Record> list = methodMap.get(methodName);
     if (list == null) {
-      return null;
+      return Collections.emptySet();
     } else {
+      final Set<Result> answer = new HashSet<Result>();
       for (final Record rec : list) {
         if (methodDesc.startsWith(rec.partialMethodDescriptor)) {
           // match method m(x, y) declared in class Y.
@@ -100,17 +105,17 @@ final class HappensBeforeTable {
           // Is the owner of the called method a class Z such that Z extends Y?
           if (rec.clazz.isAssignableFrom(internalClassName)) {
             // exact match
-            return new Result(true, rec.hb);
+            answer.add(new Result(true, rec.hb));
           }
           
           // Is the owner of the called method a class X such that Y extends X?
           if (classModel.getClass(internalClassName).isAssignableFrom(rec.clazz.getName())) {
             // possible match
-            return new Result(false, rec.hb);
+            answer.add(new Result(false, rec.hb));
           }
         }
       }
-      return null;
+      return Collections.unmodifiableSet(answer);
     }
   }
   
@@ -126,16 +131,16 @@ final class HappensBeforeTable {
    *          The name of the method.
    * @param methodDesc
    *          The description of the method.
-   * @return <code>null</code> if the call definitely does not invoke a
-   *         happens-before method. Returns a happens-before record if the
-   *         method definitely overrides a call-in method.
+   * @return A set of HappensBeforRule objects, one for each happens-before call-in scenario
+   *         the method participates in.  
    * @throws ClassNotFoundException 
    */
-  public HappensBeforeRule isInsideHappensBefore(
+  public Set<HappensBeforeRule> isInsideHappensBefore(
       final String internalClassName, final String methodName,
       final String methodDesc) throws ClassNotFoundException {
     final List<Record> list = callInMethodMap.get(methodName);
     if (list != null) {
+      final Set<HappensBeforeRule> answer = new HashSet<HappensBeforeRule>();
       for (final Record rec : list) {
         // match method m(x, y) declared in class Y.
         if (methodDesc.startsWith(rec.partialMethodDescriptor)) {
@@ -144,12 +149,13 @@ final class HappensBeforeTable {
            * assignable to) the class Y of the declared happens before method?
            */
           if (rec.clazz.isAssignableFrom(internalClassName)) {
-            return rec.hb;
+            answer.add(rec.hb);
           }
         }
       }
+      return Collections.unmodifiableSet(answer);
     }
-    return null;
+    return Collections.emptySet();
   }
   
   

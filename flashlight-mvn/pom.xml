@@ -126,6 +126,12 @@
       <version>5.6.0</version>
       <scope>compile</scope>
     </dependency>
+    <dependency>
+      <groupId>com.surelogic</groupId>
+      <artifactId>javac</artifactId>
+      <version>5.6.0</version>
+      <scope>runtime</scope>
+    </dependency>
   </dependencies>
   <build>
     <plugins>

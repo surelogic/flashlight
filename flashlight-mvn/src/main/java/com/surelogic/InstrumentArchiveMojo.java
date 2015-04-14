@@ -126,7 +126,6 @@ public class InstrumentArchiveMojo extends AbstractMojo {
             List<Dependency> dependencies = depResult.getDependencies();
             for (Dependency d : dependencies) {
                 Artifact a = d.getArtifact();
-                System.err.println(d + " scope: " + d.getScope());
                 if ("provided".equals(d.getScope())
                         || "system".equals(d.getScope())) {
                     if (a.getFile() == null) {

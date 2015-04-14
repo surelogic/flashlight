@@ -19,11 +19,18 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.apache.maven.project.DefaultDependencyResolutionRequest;
+import org.apache.maven.project.DependencyResolutionException;
+import org.apache.maven.project.DependencyResolutionResult;
 import org.apache.maven.project.ProjectDependenciesResolver;
 import org.apache.tools.ant.BuildException;
+import org.apache.tools.ant.types.Path;
+import org.apache.tools.ant.types.Path.PathElement;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
+import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.artifact.DefaultArtifact;
+import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
@@ -99,41 +106,77 @@ public class InstrumentClassesMojo extends AbstractMojo {
     @Parameter(property = "collectionType", required = false)
     private CollectionType collectionType;
 
+    private static boolean exists(File dir) {
+        return dir != null && dir.exists();
+    }
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         final List<File> toDelete = new ArrayList<File>();
         try {
             Instrument i = new Instrument();
             File binInst = null;
-            if (binDirectory != null) {
+            if (exists(binDirectory)) {
                 binInst = mkTmp(toDelete);
                 i.addConfiguredDir(new Directory(binDirectory, binInst));
             }
             File testInst = null;
-            if (testBinDirectory != null) {
+            if (exists(testBinDirectory)) {
                 testInst = mkTmp(toDelete);
                 i.addConfiguredDir(new Directory(testBinDirectory, testInst));
             }
             File confInst = mkTmp(toDelete);
+
+            DefaultDependencyResolutionRequest depRequest = new DefaultDependencyResolutionRequest(
+                    mavenProject, repoSession);
+            DependencyResolutionResult depResult = resolver.resolve(depRequest);
+            List<Dependency> dependencies = depResult.getDependencies();
+            List<File> libs = new ArrayList<File>();
+            for (Dependency d : dependencies) {
+                Artifact a = d.getArtifact();
+                if (a.getFile() == null) {
+                    ArtifactRequest request = new ArtifactRequest();
+                    request.setArtifact(a);
+                    request.setRepositories(projectRepos);
+                    ArtifactResult result = repoSystem.resolveArtifact(
+                            repoSession, request);
+                    Artifact resultArtifact = result.getArtifact();
+                    libs.add(resultArtifact.getFile());
+                } else {
+                    libs.add(a.getFile());
+                }
+            }
+            if (!libs.isEmpty()) {
+                Path p = i.createLibraries();
+                for (final File f : libs) {
+                    PathElement pe = p.new PathElement();
+                    pe.setLocation(f);
+                    p.add(pe);
+                }
+            }
+            getLog().info(String.format("\t Library dependencies%s", libs));
+
             setupFlashlightConf(i, confInst);
+
             i.execute();
-            if (binDirectory != null) {
+            if (exists(binDirectory)) {
                 FileUtils.copyDirectory(binInst, binDirectory);
             }
-            if (testBinDirectory != null) {
+            if (exists(testBinDirectory)) {
                 FileUtils.copyDirectory(testInst, testBinDirectory);
             }
+
             ArtifactRequest runtimeRequest = new ArtifactRequest();
             runtimeRequest.setArtifact(new DefaultArtifact(
                     "com.surelogic:flashlight-runtime:" + version));
             runtimeRequest.setRepositories(pluginRepos);
             ArtifactResult runtimeResult = repoSystem.resolveArtifact(
                     repoSession, runtimeRequest);
-            if (binDirectory != null) {
+            if (exists(binDirectory)) {
                 FileUtility.unzipFile(runtimeResult.getArtifact().getFile(),
                         binDirectory);
                 FileUtils.copyDirectory(confInst, binDirectory);
-            } else if (testBinDirectory != null) {
+            } else if (exists(testBinDirectory)) {
                 FileUtility.unzipFile(runtimeResult.getArtifact().getFile(),
                         testBinDirectory);
                 FileUtils.copyDirectory(confInst, binDirectory);
@@ -146,6 +189,9 @@ public class InstrumentClassesMojo extends AbstractMojo {
             throw new MojoExecutionException(
                     "ArtifactResolutionException while instrumenting class files.",
                     e);
+        } catch (DependencyResolutionException e) {
+            throw new MojoExecutionException(
+                    "IOException while resolving libraries.", e);
         } finally {
             for (File f : toDelete) {
                 FileUtility.recursiveDelete(f);

@@ -393,8 +393,7 @@ public final class HappensBeforeConfig {
         }
     }
 
-    private static final Pattern DECL_PATTERN = Pattern
-            .compile("(.*)\\((.*)\\)");
+    static final Pattern DECL_PATTERN = Pattern.compile("(.*)\\((.*)\\)");
 
     /**
      * Represents a single method in a class to be instrumented, and also

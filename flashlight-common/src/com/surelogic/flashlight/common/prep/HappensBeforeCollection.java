@@ -27,7 +27,7 @@ public class HappensBeforeCollection extends HappensBefore {
     @Override
     void parseRest(PreppedAttributes attributes, String id, long nanoStart,
             long nanoEnd, long inThread, long trace, long site)
-                    throws SQLException {
+            throws SQLException {
         final long coll = attributes.getLong(AttributeType.COLLECTION);
         final long obj = attributes.getLong(AttributeType.OBJECT);
         if (obj == ILLEGAL_ID || coll == ILLEGAL_ID) {
@@ -35,7 +35,7 @@ public class HappensBeforeCollection extends HappensBefore {
                     "Missing obj or coll in " + getXMLElementName());
             return;
         }
-        HappensBeforeRule rule = f_hbConfig.getHBRule(site);
+        HappensBeforeRule rule = f_hbConfig.getHBRule(id, site);
         if (rule.getType().isSource()) {
             if (rule.isCallIn()) {
                 insert(id, nanoEnd, inThread, trace, coll, obj, true);
@@ -84,7 +84,7 @@ public class HappensBeforeCollection extends HappensBefore {
     @Override
     public void setup(final Connection c, final Timestamp start,
             final long startNS, final ScanRawFilePreScan scanResults)
-                    throws SQLException {
+            throws SQLException {
         super.setup(c, start, startNS, scanResults);
         f_sourcePs = c
                 .prepareStatement("INSERT INTO HAPPENSBEFORECOLLSOURCE (ID,COLL,OBJ,TS,INTHREAD,TRACE) VALUES (?,?,?,?,?,?)");

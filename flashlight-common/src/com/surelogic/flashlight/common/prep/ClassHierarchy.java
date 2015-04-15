@@ -191,33 +191,35 @@ public class ClassHierarchy {
         }
     }
 
-    public HappensBeforeConfig.HappensBeforeRule getHBRule(long site) {
+    public HappensBeforeConfig.HappensBeforeRule getHBRule(String id, long site) {
         MethodCall call = methodCalls.get(site);
         ClassNode node = nodes.get(call.methodCallClass);
         if (node == null) {
             throw new IllegalStateException(String.format(
                     "Site %d does not match a valid class node.", site));
         }
-        HappensBeforeConfig.HappensBeforeRule type = checkNode(call, node);
+        HappensBeforeConfig.HappensBeforeRule type = checkNode(id, call, node);
         if (type == null) {
-            type = checkParents(call, node);
+            type = checkParents(id, call, node);
             if (type == null) {
-                type = checkChildren(call, node);
+                type = checkChildren(id, call, node);
             }
         }
         return type;
     }
 
-    HappensBeforeConfig.HappensBeforeRule checkParents(MethodCall call,
-            ClassNode node) {
+    HappensBeforeConfig.HappensBeforeRule checkParents(String id,
+            MethodCall call, ClassNode node) {
         for (ClassNode parent : node.parents) {
-            HappensBeforeConfig.HappensBeforeRule type = checkNode(call, parent);
+            HappensBeforeConfig.HappensBeforeRule type = checkNode(id, call,
+                    parent);
             if (type != null) {
                 return type;
             }
         }
         for (ClassNode parent : node.parents) {
-            HappensBeforeConfig.HappensBeforeRule type = checkParents(call, parent);
+            HappensBeforeConfig.HappensBeforeRule type = checkParents(id, call,
+                    parent);
             if (type != null) {
                 return type;
             }
@@ -225,27 +227,30 @@ public class ClassHierarchy {
         return null;
     }
 
-    HappensBeforeConfig.HappensBeforeRule checkChildren(MethodCall call,
-            ClassNode node) {
+    HappensBeforeConfig.HappensBeforeRule checkChildren(String id,
+            MethodCall call, ClassNode node) {
         for (ClassNode children : node.children) {
-            HappensBeforeConfig.HappensBeforeRule type = checkNode(call, children);
-            if (type != null) {
-                return type;
-            }
-        }
-        for (ClassNode children : node.children) {
-            HappensBeforeConfig.HappensBeforeRule type = checkChildren(call,
+            HappensBeforeConfig.HappensBeforeRule type = checkNode(id, call,
                     children);
             if (type != null) {
                 return type;
             }
         }
+        for (ClassNode children : node.children) {
+            HappensBeforeConfig.HappensBeforeRule type = checkChildren(id,
+                    call, children);
+            if (type != null) {
+                return type;
+            }
+        }
         return null;
     }
 
-    HappensBeforeConfig.HappensBeforeRule checkNode(MethodCall call, ClassNode node) {
+    HappensBeforeConfig.HappensBeforeRule checkNode(String id, MethodCall call,
+            ClassNode node) {
         for (HappensBeforeConfig.HappensBeforeRule hb : node.hbs) {
-            if (hb.getMethod().equals(call.methodCallName)
+            if (hb.getId().equals(id)
+                    && hb.getMethod().equals(call.methodCallName)
                     && call.methodCallDesc.startsWith(hb
                             .getPartialMethodDescriptor())) {
                 return hb;

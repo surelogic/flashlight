@@ -32,14 +32,14 @@ public class HappensBeforeObject extends HappensBefore {
     @Override
     void parseRest(PreppedAttributes attributes, String id, long nanoStart,
             long nanoEnd, long inThread, long trace, long site)
-                    throws SQLException {
+            throws SQLException {
         final long obj = attributes.getLong(AttributeType.OBJECT);
         if (obj == ILLEGAL_ID) {
             SLLogger.getLogger().log(Level.SEVERE,
                     "Missing obj in " + getXMLElementName());
             return;
         }
-        HappensBeforeRule rule = f_hbConfig.getHBRule(site);
+        HappensBeforeRule rule = f_hbConfig.getHBRule(id, site);
         if (rule.getType().isSource()) {
             if (rule.isCallIn()) {
                 insert(id, nanoEnd, inThread, trace, obj, true);
@@ -87,7 +87,7 @@ public class HappensBeforeObject extends HappensBefore {
     @Override
     public void setup(final Connection c, final Timestamp start,
             final long startNS, final ScanRawFilePreScan scanResults)
-                    throws SQLException {
+            throws SQLException {
         super.setup(c, start, startNS, scanResults);
         f_sourcePs = c
                 .prepareStatement("INSERT INTO HAPPENSBEFORESOURCE (ID,OBJ,TS,INTHREAD,TRACE) VALUES (?,?,?,?,?)");

@@ -30,14 +30,14 @@ public class HappensBeforeThread extends HappensBefore {
     @Override
     void parseRest(PreppedAttributes attributes, String id, long nanoStart,
             long nanoEnd, long inThread, long trace, long site)
-                    throws SQLException {
+            throws SQLException {
         final long toThread = attributes.getLong(TOTHREAD);
         if (toThread == ILLEGAL_ID) {
             SLLogger.getLogger().log(Level.SEVERE,
                     "Missing to-Thread in " + getXMLElementName());
             return;
         }
-        HappensBeforeRule rule = f_hbConfig.getHBRule(site);
+        HappensBeforeRule rule = f_hbConfig.getHBRule(id, site);
         if (rule.getType().isFrom()) {
             if (rule.isCallIn()) {
                 insert(id, nanoEnd, inThread, trace, inThread, toThread);
@@ -76,7 +76,7 @@ public class HappensBeforeThread extends HappensBefore {
     @Override
     public void setup(final Connection c, final Timestamp start,
             final long startNS, final ScanRawFilePreScan scanResults)
-                    throws SQLException {
+            throws SQLException {
         super.setup(c, start, startNS, scanResults);
         f_ps = c.prepareStatement("INSERT INTO HAPPENSBEFORE (ID, SOURCE,TARGET,TS,INTHREAD,TRACE) VALUES (?,?,?,?,?,?)");
     }

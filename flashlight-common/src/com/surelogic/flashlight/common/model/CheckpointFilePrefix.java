@@ -25,97 +25,97 @@ import com.surelogic.common.logging.SLLogger;
  */
 public final class CheckpointFilePrefix {
 
-  private File f_dataFile;
+  File f_dataFile;
 
   public File getFile() {
     return f_dataFile;
   }
 
-  private String f_name;
+  String f_name;
 
   public String getName() {
     return f_name;
   }
 
-  private String f_rawDataVersion;
+  String f_rawDataVersion;
 
   public String getRawDataVersion() {
     return f_rawDataVersion;
   }
 
-  private String f_hostname;
+  String f_hostname;
 
   public String getHostname() {
     return f_hostname;
   }
 
-  private String f_userName;
+  String f_userName;
 
   public String getUserName() {
     return f_userName;
   }
 
-  private String f_javaVersion;
+  String f_javaVersion;
 
   public String getJavaVersion() {
     return f_javaVersion;
   }
 
-  private String f_javaVendor;
+  String f_javaVendor;
 
   public String getJavaVendor() {
     return f_javaVendor;
   }
 
-  private String f_osName;
+  String f_osName;
 
   public String getOSName() {
     return f_osName;
   }
 
-  private String f_osArch;
+  String f_osArch;
 
   public String getOSArch() {
     return f_osArch;
   }
 
-  private String f_osVersion;
+  String f_osVersion;
 
   public String getOSVersion() {
     return f_osVersion;
   }
 
-  private int f_maxMemoryMb;
+  int f_maxMemoryMb;
 
   public int getMaxMemoryMb() {
     return f_maxMemoryMb;
   }
 
-  private int f_processors;
+  int f_processors;
 
   public int getProcessors() {
     return f_processors;
   }
 
-  private Timestamp f_started;
+  Timestamp f_started;
 
   public Timestamp getStartTimeOfRun() {
     return f_started;
   }
 
-  private long f_nanoTime;
+  long f_nanoTime;
 
   public long getNanoTime() {
     return f_nanoTime;
   }
 
-  private Date f_wallClockTime;
+  Date f_wallClockTime;
 
   public Date getWallClockTime() {
     return f_wallClockTime;
   }
 
-  private boolean f_android = false;
+  boolean f_android = false;
 
   public boolean isAndroid() {
     return f_android;
@@ -168,7 +168,7 @@ public final class CheckpointFilePrefix {
     return true;
   }
 
-  private class PrefixHandler extends DefaultHandler {
+  class PrefixHandler extends DefaultHandler {
     @Override
     public void startElement(final String uri, final String localName, final String name, final Attributes attributes)
         throws SAXException {

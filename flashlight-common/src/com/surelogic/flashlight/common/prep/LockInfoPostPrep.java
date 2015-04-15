@@ -4,9 +4,11 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 import com.surelogic.common.jdbc.ConnectionQuery;
+import com.surelogic.common.jdbc.NullResultHandler;
 import com.surelogic.common.jdbc.NullRowHandler;
 import com.surelogic.common.jdbc.Query;
 import com.surelogic.common.jdbc.Queryable;
+import com.surelogic.common.jdbc.Result;
 import com.surelogic.common.jdbc.Row;
 import com.surelogic.common.jdbc.SchemaData;
 import com.surelogic.common.jobs.SLProgressMonitor;
@@ -113,19 +115,51 @@ public class LockInfoPostPrep implements IPostPrep {
         doubleLockedMethods(mon, q);
     }
 
-    private void doubleLockedMethods(SLProgressMonitor mon, Query q) {
+    private void doubleLockedMethods(SLProgressMonitor mon, final Query q) {
         mon.subTask("Finding double locked methods.");
         final Queryable<?> insert = q
                 .prepared("LockInfo.insertDoubleLockedMethod");
-        q.prepared("LockInfo.doubleLockedMethods", new NullRowHandler() {
 
-            @Override
-            protected void doHandle(Row r) {
-                insert.call(r.nextLong(), r.nextString(), r.nextLong(),
-                        r.nextString(), r.nextString(), r.nextString());
+        q.prepared("LockInfo.potentialDoubleLockedMethods",
+                new NullRowHandler() {
+                    long lock;
+                    String type;
+                    String location;
+                    String locationSpec;
+                    String locationCode;
+                    long inClass;
 
-            }
-        }).call();
+                    final Queryable<?> test = q.prepared(
+                            "LockInfo.testDoubleLockedMethod",
+                            new NullResultHandler() {
+
+                                @Override
+                                protected void doHandle(Result result) {
+                                    for (@SuppressWarnings("unused")
+                                    Row r : result) {
+                                        insert.call(lock, type, inClass,
+                                                location, locationSpec,
+                                                locationCode);
+                                        return;
+                                    }
+                                }
+                            });
+
+                    @Override
+                    protected void doHandle(Row r) {
+                        // SELECT L.LOCK, L.TYPE, S.LOCATION, S.LOCATIONSPEC,
+                        // S.LOCATIONCODE, S.INCLASS
+                        lock = r.nextLong();
+                        type = r.nextString();
+                        location = r.nextString();
+                        locationSpec = r.nextString();
+                        locationCode = r.nextString();
+                        inClass = r.nextLong();
+                        test.call(location, locationSpec, inClass, lock, type,
+                                location, locationSpec, inClass, lock, type);
+
+                    }
+                }).call();
         mon.subTaskDone();
     }
 }

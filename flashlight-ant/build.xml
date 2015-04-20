@@ -36,7 +36,7 @@
 	<target name="compile">
 		<delete dir="${classes}" />
 		<mkdir dir="${classes}" />
-		<javac destdir="${classes}" debug="true" source="1.5" target="1.5">
+		<javac destdir="${classes}" includeAntRuntime="true" debug="true" source="1.5" target="1.5">
 			<src path="${src}" />
 			<classpath>
 				<path refid="jaxb.classpath"/> 

@@ -2524,7 +2524,7 @@ ORDER BY
    B.RECEIVER,
    F.FIELDNAME,
    RF.FIELDNAME</query>
-  <query id="dd2ea83c-1940-4985-ace7-a578471e3b54" description="What happens before edges allow these field reads to see the previous write?" revision="18" display="true">-- META-BEGIN(no-rows)
+  <query id="dd2ea83c-1940-4985-ace7-a578471e3b54" description="What happens before edges allow these field reads to see the previous write?" revision="19" display="true">-- META-BEGIN(no-rows)
 -- No happens before edges were detected.
 -- META-END
 -- META-BEGIN(doc)
@@ -2598,7 +2598,7 @@ ORDER BY
 -- &lt;p&gt;&lt;strong&gt;Example&lt;/strong&gt;&lt;/p&gt;
 -- &lt;img src=&quot;what-happens-before-edges-allow-these-field-reads-to-see-the-previous-write.png&quot; alt=&quot;What happens before edges allow these fields to see the previous write?&quot; /&gt;
 -- META-END
-SELECT 
+SELECT DISTINCT
 HB.ID &quot;Type&quot;,
 CASE WHEN HB.SOURCETHREAD = -1 THEN &apos;&apos; ELSE OBJID(HB.SOURCETHREAD) END &quot;Source Thread__(&apos;thread.gif&apos;)|&quot;,
 HB.SOURCETS &quot;Source Time&quot;,
@@ -7895,36 +7895,36 @@ order by lo.PackageName, lo.ClassName, s.AtLine, tho.ThreadName, sum(ld.Duration
     <cat-query id="9d05ac24-20c2-436e-af6b-2bd0bc7dbcfb"/>
   </category>
   <category id="84475b98-4c68-4165-b883-5bdf9479d3d6" description="Lock Use" has-data="Queries about lock use in the program." no-data="No lock use was observed in the program." revision="8">
-    <cat-query id="2f505921-50fb-405b-bc78-4a5fe9228957"/>
+    <cat-query id="3b8251fa-a315-4c36-a856-a53b278fdc91"/>
     <cat-query id="ddb5a17c-f5ac-4c26-a251-34d8e3c7bc7f"/>
-    <cat-query id="d4d2af9b-ce4d-4457-9e94-01972fcb58d3"/>
+    <cat-query id="94f51c02-8a5d-4a51-b92f-6e9510f14353"/>
+    <cat-query id="59fc6ba4-7075-413d-8879-3fbca78b074e"/>
     <cat-query id="35393ee0-2932-4e32-b2d6-1d4fa392fd0f"/>
     <cat-query id="213c73ad-b3f6-4aef-9a05-f0c31d8fdcde"/>
-    <cat-query id="94f51c02-8a5d-4a51-b92f-6e9510f14353"/>
     <cat-query id="c744b5b5-15f0-4f72-a344-7e52bcac5071"/>
+    <cat-query id="2f505921-50fb-405b-bc78-4a5fe9228957"/>
+    <cat-query id="d4d2af9b-ce4d-4457-9e94-01972fcb58d3"/>
     <cat-query id="26696a5f-3fd7-4f18-badf-e3d7d01a6d4e"/>
-    <cat-query id="3b8251fa-a315-4c36-a856-a53b278fdc91"/>
-    <cat-query id="59fc6ba4-7075-413d-8879-3fbca78b074e"/>
   </category>
   <category id="3d204f5e-d61d-4637-be14-118223f2fb9e" description="Memory Model" has-data="Queries that show happens-before relationships between threads defined by the Java memory model." no-data="No happens-before relationships between threads were observed in the program." revision="2">
+    <cat-query id="1b191e96-598f-4d1f-9391-5d9feed0da69"/>
     <cat-query id="5f166e1b-f0a6-4c07-846b-98f2aba80be2"/>
     <cat-query id="eabad207-22a7-4bb0-a7e1-30946d02ea13"/>
     <cat-query id="7cd8d92c-7aec-4238-b808-e628f83dcb4e"/>
-    <cat-query id="1b191e96-598f-4d1f-9391-5d9feed0da69"/>
   </category>
   <category id="64511c63-0ce8-44df-8324-95711bff56ce" description="Performance" has-data="Queries that highlight potential performance bottlenecks in the program." no-data="No potential performance bottlenecks were observed in the program." revision="2">
+    <cat-query id="2d506676-eb1d-455b-9256-9ea8f05352d4"/>
     <cat-query id="4e026769-1b0b-42bd-8893-f3b92add093f"/>
     <cat-query id="cb38a427-c259-4690-abe2-acea9661f737"/>
-    <cat-query id="2d506676-eb1d-455b-9256-9ea8f05352d4"/>
   </category>
   <category id="8401fcf7-7d5c-4191-a997-0b82f1db8e66" description="Shared State" has-data="Queries that show state (fields, not local variables or parameters) shared between multiple threads." no-data="No state (fields, not local variables or parameters) was shared between multiple threads." revision="2">
     <cat-query id="094fc6db-5a5b-4495-aacd-54f5a5aa1691"/>
-    <cat-query id="bd72a5e4-42aa-415d-aa72-28d351f629a4"/>
-    <cat-query id="d1176c97-e3b6-483b-a341-6914a6f64860"/>
-    <cat-query id="33868960-7df8-4bab-bb33-ffb230957940"/>
-    <cat-query id="cdc2d460-b17f-43bc-8cc6-4c26f1637fda"/>
     <cat-query id="419c927e-a87c-4364-b4a9-2e8f50f728f6"/>
     <cat-query id="71a6fb5b-e5e1-4d25-bdc8-67ab5df1f66e"/>
+    <cat-query id="bd72a5e4-42aa-415d-aa72-28d351f629a4"/>
+    <cat-query id="d1176c97-e3b6-483b-a341-6914a6f64860"/>
+    <cat-query id="cdc2d460-b17f-43bc-8cc6-4c26f1637fda"/>
+    <cat-query id="33868960-7df8-4bab-bb33-ffb230957940"/>
   </category>
   <category id="b6d89f8b-7dfd-44a5-843c-d8a70f6aaaa9" description="Threads" has-data="Queries about threads in the program." no-data="No threads were observed in the program." revision="2">
     <cat-query id="8107df4c-42eb-407c-88c1-e16d805f3aaa"/>

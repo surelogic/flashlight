@@ -22,6 +22,11 @@
     </condition>
 
     <target name="install-tools">
+        <echo>Building Maven release ${release-version}</echo>
+        <echo>(Ensure pom.xml versions are updated -- there are several entries)</echo>
+        <echo>(Maven executable is ${maven.executable})</echo>
+        <echo>(pausing just a second so you can ^C if anything looks wrong)</echo>
+        <sleep seconds="4" />
         <delete dir="${local-repo}/com" />
         <exec executable="${maven.executable}" failonerror="true">
             <arg value="dependency:purge-local-repository" />

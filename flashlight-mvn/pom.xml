@@ -4,7 +4,7 @@
 
   <groupId>com.surelogic</groupId>
   <artifactId>flashlight-plugin</artifactId>
-  <version>5.6.0</version>
+  <version>5.6.1</version>
   <packaging>maven-plugin</packaging>
 
   <name>SureLogic Flashlight Plugin</name>
@@ -117,13 +117,13 @@
     <dependency>
       <groupId>com.surelogic</groupId>
       <artifactId>flashlight-rewriter</artifactId>
-      <version>5.6.0</version>
+      <version>5.6.1</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.surelogic</groupId>
       <artifactId>flashlight-ant</artifactId>
-      <version>5.6.0</version>
+      <version>5.6.1</version>
       <scope>compile</scope>
     </dependency>
   </dependencies>

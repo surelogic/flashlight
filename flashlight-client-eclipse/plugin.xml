@@ -74,6 +74,15 @@
 				helpContextId="menu-open-run-control">
 			</action>
 			<action
+				class="com.surelogic.flashlight.client.eclipse.actions.SaveHtmlDocsAction"
+				id="com.surelogic.flashlight.client.eclipse.actions.SaveHtmlDocsAction"
+				icon="platform:/plugin/com.surelogic.common/lib/images/file.gif"
+				label="Save Documentation As..."
+				tooltip="Save a copy of the Flashlight documentation to the disk"
+				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/client"
+				helpContextId="menu-save-flashlight-html-docs">
+			</action>
+			<action
 				class="com.surelogic.flashlight.client.eclipse.actions.SaveMavenPluginAction"
 				id="com.surelogic.flashlight.client.eclipse.actions.SaveMavenPluginAction"
 				icon="platform:/plugin/com.surelogic.common/lib/images/jar_saveas.gif"

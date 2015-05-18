@@ -103,7 +103,7 @@
 			<action
 				class="com.surelogic.flashlight.client.eclipse.actions.ImportFlashlightRunAction"
 				id="com.surelogic.flashlight.client.eclipse.actions.ImportFlashlightRunAction"
-				icon="platform:/plugin/com.surelogic.common/lib/images/fl_run_view.gif"
+				icon="platform:/plugin/com.surelogic.common/lib/images/file_drum.gif"
 				label="Import Ant/Maven Run..."
 				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/client"
 				helpContextId="menu-import-run">
@@ -341,7 +341,7 @@
 		<!-- UI for raw data -->
 		<view allowMultiple="false" category="com.surelogic.flashlight.Flashlight"
 			class="com.surelogic.flashlight.client.eclipse.views.run.RunView"
-			icon="platform:/plugin/com.surelogic.common/lib/images/fl_run_view.gif"
+			icon="platform:/plugin/com.surelogic.common/lib/images/file_drum.gif"
 			id="com.surelogic.flashlight.client.eclipse.views.run.RunView" name="Flashlight Runs">
 		</view>
 		<!-- UI for entering ad hoc queries -->

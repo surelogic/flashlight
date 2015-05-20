@@ -76,7 +76,7 @@
 			<action
 				class="com.surelogic.flashlight.client.eclipse.actions.SaveHtmlDocsAction"
 				id="com.surelogic.flashlight.client.eclipse.actions.SaveHtmlDocsAction"
-				icon="platform:/plugin/com.surelogic.common/lib/images/file.gif"
+				icon="platform:/plugin/com.surelogic.common/lib/images/file_saveas.gif"
 				label="Save Documentation As..."
 				tooltip="Save a copy of the Flashlight documentation to the disk"
 				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/client"

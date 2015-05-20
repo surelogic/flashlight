@@ -16,27 +16,23 @@
 			id="com.surelogic.flashlight.client.eclipse.workbenchActionSet">
 			<menu id="com.surelogic.flashlight.client.eclipse.workbenchMenu"
 				label="Flashlight" path="additions">
+				
 				<groupMarker name="client" />
+				<separator name="io" />
 				<separator name="android" />
 				<separator name="jsure" />
 				<separator name="service" />
 				<separator name="license" />
+				<separator name="additions" />
 			</menu>
 			<action
 				class="com.surelogic.flashlight.client.eclipse.actions.ManageLicensesAction"
 				id="com.surelogic.flashlight.client.eclipse.actions.ManageLicensesAction"
+				icon="platform:/plugin/com.surelogic.common/lib/images/sl.gif"
 				label="Manage SureLogic Licenses"
 				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/license"
 				helpContextId="menu-manage-licenses">
 			</action>
-			<action
-				class="com.surelogic.flashlight.client.eclipse.actions.ImportTutorialProjectAction"
-				id="com.surelogic.flashlight.client.eclipse.actions.ImportTutorialProjectsAction"
-				label="Run Flashlight Tutorials"
-				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/service"
-				helpContextId="menu-run-flashlight-tutorials">
-			</action>
-
 			<action
 				class="com.surelogic.flashlight.client.eclipse.actions.SendProblemAction"
 				id="com.surelogic.flashlight.client.eclipse.actions.SendProblemAction"
@@ -60,18 +56,12 @@
 				helpContextId="menu-recommend-regions">
 			</action>
 			<action
-				class="com.surelogic.flashlight.client.eclipse.actions.ShowFlashlightPerspectiveAction"
-				id="com.surelogic.flashlight.client.eclipse.actions.ShowFlashlightPerspectiveAction"
-				icon="platform:/plugin/com.surelogic.common/lib/images/fl_logo.gif"
-				label="Open Flashlight Perspective" menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/client"
-				helpContextId="menu-open-flashlight-perspective">
-			</action>
-			<action
-				class="com.surelogic.flashlight.client.eclipse.actions.ShowRunControlAction"
-				id="com.surelogic.flashlight.client.eclipse.actions.ShowRunControlAction"
-				icon="platform:/plugin/com.surelogic.common/lib/images/fl_run_control.gif"
-				label="Launched Run Control..." menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/client"
-				helpContextId="menu-open-run-control">
+				class="com.surelogic.flashlight.client.eclipse.actions.ImportTutorialProjectAction"
+				id="com.surelogic.flashlight.client.eclipse.actions.ImportTutorialProjectsAction"
+				icon="platform:/plugin/com.surelogic.common/lib/images/import.gif"
+				label="Install Tutorial Projects"
+				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/io"
+				helpContextId="menu-run-flashlight-tutorials">
 			</action>
 			<action
 				class="com.surelogic.flashlight.client.eclipse.actions.SaveHtmlDocsAction"
@@ -79,34 +69,23 @@
 				icon="platform:/plugin/com.surelogic.common/lib/images/file_saveas.gif"
 				label="Save Documentation As..."
 				tooltip="Save a copy of the Flashlight documentation to the disk"
-				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/client"
+				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/io"
 				helpContextId="menu-save-flashlight-html-docs">
-			</action>
-			<action
-				class="com.surelogic.flashlight.client.eclipse.actions.SaveMavenPluginAction"
-				id="com.surelogic.flashlight.client.eclipse.actions.SaveMavenPluginAction"
-				icon="platform:/plugin/com.surelogic.common/lib/images/jar_saveas.gif"
-				label="Save Maven Plugin As..."
-				tooltip="Save a copy of the Flashlight Maven plugin to the disk"
-				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/client"
-				helpContextId="menu-save-flashlight-maven">
-			</action>
-			<action
-				class="com.surelogic.flashlight.client.eclipse.actions.SaveAntTasksAction"
-				id="com.surelogic.flashlight.client.eclipse.actions.SaveAntTasksAction"
-				icon="platform:/plugin/com.surelogic.common/lib/images/jar_saveas.gif"
-				label="Save Ant Task As..."
-				tooltip="Save a copy of the Flashlight Ant task library to the disk"
-				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/client"
-				helpContextId="menu-save-flashlight-ant">
 			</action>
 			<action
 				class="com.surelogic.flashlight.client.eclipse.actions.ImportFlashlightRunAction"
 				id="com.surelogic.flashlight.client.eclipse.actions.ImportFlashlightRunAction"
 				icon="platform:/plugin/com.surelogic.common/lib/images/file_drum.gif"
 				label="Import Ant/Maven Run..."
-				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/client"
+				menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/io"
 				helpContextId="menu-import-run">
+			</action>
+			<action
+				class="com.surelogic.flashlight.client.eclipse.actions.ShowFlashlightPerspectiveAction"
+				id="com.surelogic.flashlight.client.eclipse.actions.ShowFlashlightPerspectiveAction"
+				icon="platform:/plugin/com.surelogic.common/lib/images/fl_logo.gif"
+				label="Open Flashlight Perspective" menubarPath="com.surelogic.flashlight.client.eclipse.workbenchMenu/client"
+				helpContextId="menu-open-flashlight-perspective">
 			</action>
             
         	<!-- UI for launching Java applications in Flashlight -->

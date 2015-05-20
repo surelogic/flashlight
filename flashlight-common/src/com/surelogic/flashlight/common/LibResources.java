@@ -29,33 +29,6 @@ public final class LibResources {
    * plugin.
    */
   public static final String HTML_DOCS_ZIP_PATHNAME = PATH + HTML_DOCS_ZIP;
-  /**
-   * The name of the archive that contains the Flashlight Ant tasks.
-   * <p>
-   * Within this Zip should be a single directory of the form
-   * <tt>flashlight-ant</tt>. The name of the Zip file is versioned when it is
-   * saved to the disk, e.g., <tt>flashlight-ant-5.6.0.zip</tt>.
-   */
-  public static final String ANT_TASK_ZIP = "flashlight-ant.zip";
-
-  /**
-   * Full path to the Flashlight Ant tasks within this Eclipse plugin.
-   */
-  public static final String ANT_TASK_ZIP_PATHNAME = PATH + ANT_TASK_ZIP;
-
-  /**
-   * The name of the archive that contains the Flashlight Maven plugin.
-   * <p>
-   * Within this Zip should be a single directory of the form
-   * <tt>flashlight-maven</tt>. The name of the Zip file is versioned when it is
-   * saved to the disk, e.g., <tt>flashlight-maven-5.6.0.zip</tt>.
-   */
-  public static final String MAVEN_PLUGIN_ZIP = "flashlight-maven.zip";
-
-  /**
-   * Full path to the Flashlight Maven plugin within this Eclipse plugin.
-   */
-  public static final String MAVEN_PLUGIN_ZIP_PATHNAME = PATH + MAVEN_PLUGIN_ZIP;
 
   public static InputStream getStreamFor(String pathname) throws IOException {
     final URL url = LibResources.class.getResource(pathname);

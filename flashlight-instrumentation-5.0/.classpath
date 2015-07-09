@@ -17,9 +17,9 @@
 			<accessrule kind="nonaccessible" pattern="**"/>
 		</accessrules>
 	</classpathentry>
-	<classpathentry kind="lib" path="/common/lib/runtime/asm-5.0.2.jar"/>
-	<classpathentry kind="lib" path="/common/lib/runtime/asm-commons-5.0.2.jar"/>
-	<classpathentry kind="lib" path="/common/lib/runtime/asm-tree-5.0.2.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
+	<classpathentry kind="lib" path="/common/lib/runtime/asm-5.0.4.jar" sourcepath="/common/lib/build/for-javadoc-in-ecilpse/asm-5.0.4src.zip"/>
+	<classpathentry kind="lib" path="/common/lib/runtime/asm-commons-5.0.4.jar" sourcepath="/common/lib/build/for-javadoc-in-ecilpse/asm-5.0.4src.zip"/>
+	<classpathentry kind="lib" path="/common/lib/runtime/asm-tree-5.0.4.jar" sourcepath="/common/lib/build/for-javadoc-in-ecilpse/asm-5.0.4src.zip"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

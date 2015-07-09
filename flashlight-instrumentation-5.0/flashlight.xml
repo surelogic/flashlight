@@ -12,10 +12,10 @@
 	<property name="src-rt" value="${basedir}/../flashlight-common/src" />
 	<property name="test" value="${basedir}/test" />
 
-  <property name="asm-version" value="5.0.2" />
+	<property name="asm-version" value="5.0.4" />
 	<property name="asm.jar" value="${common.lib}/asm-${asm-version}.jar" />
 	<property name="asm-commons.jar" value="${common.lib}/asm-commons-${asm-version}.jar" />
-  <property name="asm-tree.jar" value="${common.lib}/asm-tree-${asm-version}.jar" />
+	<property name="asm-tree.jar" value="${common.lib}/asm-tree-${asm-version}.jar" />
 
 	<property name="junit.jar" value="${lib}/junit-4.3.1.jar" />
 
@@ -29,7 +29,7 @@
 	<property name="flashlight-runtime-4-final.jar" value="${basedir}/flashlight-runtime.java1.4.jar" />
 
 	<property name="flashlight-rewriter.jar" value="${basedir}/flashlight-rewriter.jar" />
-	
+
 	<property name="java1.4.lib" value="${basedir}/lib/1.4" />
 
 	<path id="jaxb.classpath">
@@ -62,14 +62,14 @@
 			<classpath>
 				<path refid="jaxb.classpath" />
 				<pathelement location="${asm.jar}" />
-        <pathelement location="${asm-commons.jar}" />
-        <pathelement location="${asm-tree.jar}" />
+				<pathelement location="${asm-commons.jar}" />
+				<pathelement location="${asm-tree.jar}" />
 			</classpath>
 		</javac>
 		<copy todir="${classes}">
-    		<fileset dir="${src}" includes="**/*.xml" />
-    		<fileset dir="${src-asm}" includes="**/*.xml" />
-    		<fileset dir="${src-rt}" includes="**/*.xml" />
+			<fileset dir="${src}" includes="**/*.xml" />
+			<fileset dir="${src-asm}" includes="**/*.xml" />
+			<fileset dir="${src-rt}" includes="**/*.xml" />
 		</copy>
 		<copy todir="${classes}/resources">
 			<fileset dir="${resources}" />
@@ -78,8 +78,8 @@
 
 	<target name="build-all-jar">
 		<unzip src="${asm.jar}" dest="${classes}" />
-    <unzip src="${asm-commons.jar}" dest="${classes}" />
-    <unzip src="${asm-tree.jar}" dest="${classes}" />
+		<unzip src="${asm-commons.jar}" dest="${classes}" />
+		<unzip src="${asm-tree.jar}" dest="${classes}" />
 		<jar destfile="${flashlight-all.jar}" basedir="${classes}">
 			<exclude name="**/com/surelogic/flashlight/**" />
 			<manifest>
@@ -123,28 +123,28 @@
 
 	<target name="strip-conf">
 		<jar destfile="${flashlight-all-final.jar}">
-    		<zipfileset src="${flashlight-all.jar}" >
-    	  		<exclude name="com/surelogic/_flashlight/InstrumentationConf.class"/>
-    			<exclude name="com/surelogic/_flashlight/SitesConf.class"/>
-    			<exclude name="com/surelogic/_flashlight/FieldsConf.class"/>
-	    	</zipfileset>
-		</jar>
-		<delete file="${flashlight-all.jar}"/>
-		<jar destfile="${flashlight-runtime-final.jar}">
-    		<zipfileset src="${flashlight-runtime.jar}" >
-    	  		<exclude name="com/surelogic/_flashlight/InstrumentationConf.class"/>
-    			<exclude name="com/surelogic/_flashlight/SitesConf.class"/>
-    			<exclude name="com/surelogic/_flashlight/FieldsConf.class"/>
+			<zipfileset src="${flashlight-all.jar}">
+				<exclude name="com/surelogic/_flashlight/InstrumentationConf.class" />
+				<exclude name="com/surelogic/_flashlight/SitesConf.class" />
+				<exclude name="com/surelogic/_flashlight/FieldsConf.class" />
 			</zipfileset>
 		</jar>
-		<delete file="${flashlight-runtime.jar}"/>
-	</target>		
+		<delete file="${flashlight-all.jar}" />
+		<jar destfile="${flashlight-runtime-final.jar}">
+			<zipfileset src="${flashlight-runtime.jar}">
+				<exclude name="com/surelogic/_flashlight/InstrumentationConf.class" />
+				<exclude name="com/surelogic/_flashlight/SitesConf.class" />
+				<exclude name="com/surelogic/_flashlight/FieldsConf.class" />
+			</zipfileset>
+		</jar>
+		<delete file="${flashlight-runtime.jar}" />
+	</target>
 
 	<target name="copy-to-client">
 		<copy file="${flashlight-runtime-final.jar}" todir="${basedir}/../flashlight-client-eclipse/lib" />
 		<copy file="${flashlight-rewriter.jar}" todir="${basedir}/../flashlight-client-eclipse/lib" />
 	</target>
-		
+
 	<target name="compile-test-code" depends="build-jars">
 		<delete dir="${classes}" />
 		<mkdir dir="${classes}" />

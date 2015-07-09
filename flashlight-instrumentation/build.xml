@@ -1,11 +1,13 @@
-<project name="flashlight-instrumentation" default="build-jars">
+<project name="flashlight-instrumentation" default="jar-and-copy-to-client">
 
 	<property environment="env" />
 
 	<property name="lib" value="${basedir}/lib" />
 	<property name="common.lib" value="${basedir}/../../common/common/lib/runtime" />
 	<property name="resources" value="${basedir}/resources" />
-	<property name="classes" value="${basedir}/bin" />
+
+	<property name="build" value="${basedir}/build" />
+	<property name="build.bin" value="${basedir}/build/bin" />
 
 	<property name="src" value="${basedir}/src" />
 	<property name="src-asm" value="${basedir}/src-asm" />
@@ -19,68 +21,45 @@
 
 	<property name="junit.jar" value="${lib}/junit-4.3.1.jar" />
 
-	<property name="flashlight-all.jar" value="${basedir}/flashlight-all-unstripped.jar" />
-	<property name="flashlight-all-final.jar" value="${basedir}/flashlight-all.jar" />
-
-	<property name="flashlight-runtime.jar" value="${basedir}/flashlight-runtime-unstripped.jar" />
-	<property name="flashlight-runtime-final.jar" value="${basedir}/flashlight-runtime.jar" />
-
-	<property name="flashlight-runtime-4.jar" value="${basedir}/flashlight-runtime-unstripped.java1.4.jar" />
-	<property name="flashlight-runtime-4-final.jar" value="${basedir}/flashlight-runtime.java1.4.jar" />
-
-	<property name="flashlight-rewriter.jar" value="${basedir}/flashlight-rewriter.jar" />
-
-	<property name="java1.4.lib" value="${basedir}/lib/1.4" />
-
-	<path id="jaxb.classpath">
-		<pathelement path="${lib}/jaxb1-impl.jar" />
-		<pathelement path="${lib}/jaxb-api.jar" />
-		<pathelement path="${lib}/jaxb-impl.jar" />
-		<pathelement path="${lib}/jaxb-xjc.jar" />
-		<pathelement path="${lib}/jsr173_1.0_api.jar" />
-		<pathelement path="${lib}/activation.jar" />
-	</path>
+	<property name="flashlight-all.jar" value="${build}/flashlight-all-unstripped.jar" />
+	<property name="flashlight-all-final.jar" value="${build}/flashlight-all.jar" />
+	<property name="flashlight-runtime.jar" value="${build}/flashlight-runtime-unstripped.jar" />
+	<property name="flashlight-runtime-final.jar" value="${build}/flashlight-runtime.jar" />
+	<property name="flashlight-rewriter.jar" value="${build}/flashlight-rewriter.jar" />
 
 	<target name="clean">
-		<delete file="${flashlight-all.jar}" />
-		<delete file="${flashlight-runtime.jar}" />
-		<delete file="${flashlight-runtime-4.jar}" />
-		<delete file="${flashlight-all-final.jar}" quiet="true" />
-		<delete file="${flashlight-runtime-final.jar}" quiet="true" />
-		<delete file="${flashlight-runtime-4-final.jar}" quiet="true" />
-		<delete file="${flashlight-rewriter.jar}" />
+		<delete dir="${build}" quiet="true" />
 	</target>
 
 	<target name="compile">
-		<delete dir="${classes}" />
-		<mkdir dir="${classes}" />
-		<javac includeantruntime="false" destdir="${classes}" debug="true" source="1.5" target="1.5">
+		<delete dir="${build}" quiet="true" />
+		<mkdir dir="${build.bin}" />
+		<javac includeantruntime="false" destdir="${build.bin}" debug="true" source="1.6" target="1.6">
 			<src path="${src}" />
 			<src path="${src-asm}" />
 			<src path="${src-rt}" />
 			<exclude name="com/surelogic/flashlight/**" />
 			<classpath>
-				<path refid="jaxb.classpath" />
 				<pathelement location="${asm.jar}" />
 				<pathelement location="${asm-commons.jar}" />
 				<pathelement location="${asm-tree.jar}" />
 			</classpath>
 		</javac>
-		<copy todir="${classes}">
+		<copy todir="${build.bin}">
 			<fileset dir="${src}" includes="**/*.xml" />
 			<fileset dir="${src-asm}" includes="**/*.xml" />
 			<fileset dir="${src-rt}" includes="**/*.xml" />
 		</copy>
-		<copy todir="${classes}/resources">
+		<copy todir="${build.bin}/resources">
 			<fileset dir="${resources}" />
 		</copy>
 	</target>
 
 	<target name="build-all-jar">
-		<unzip src="${asm.jar}" dest="${classes}" />
-		<unzip src="${asm-commons.jar}" dest="${classes}" />
-		<unzip src="${asm-tree.jar}" dest="${classes}" />
-		<jar destfile="${flashlight-all.jar}" basedir="${classes}">
+		<unzip src="${asm.jar}" dest="${build.bin}" />
+		<unzip src="${asm-commons.jar}" dest="${build.bin}" />
+		<unzip src="${asm-tree.jar}" dest="${build.bin}" />
+		<jar destfile="${flashlight-all.jar}" basedir="${build.bin}">
 			<exclude name="**/com/surelogic/flashlight/**" />
 			<manifest>
 				<attribute name="Manifest-Version" value="1.0" />
@@ -89,7 +68,7 @@
 	</target>
 
 	<target name="build-runtime-jar">
-		<jar destfile="${flashlight-runtime.jar}" basedir="${classes}">
+		<jar destfile="${flashlight-runtime.jar}" basedir="${build.bin}">
 			<include name="**/com/surelogic/_flashlight/*" />
 			<include name="**/com/surelogic/_flashlight/monitor/*" />
 			<include name="**/com/surelogic/_flashlight/common/**" />
@@ -105,7 +84,7 @@
 	</target>
 
 	<target name="build-rewriter-jar">
-		<jar destfile="${flashlight-rewriter.jar}" basedir="${classes}">
+		<jar destfile="${flashlight-rewriter.jar}" basedir="${build.bin}">
 			<include name="**/resources/**" />
 			<include name="**/com/surelogic/_flashlight/rewriter/*" />
 			<include name="**/com/surelogic/_flashlight/rewriter/config/*" />
@@ -117,9 +96,6 @@
 		</jar>
 	</target>
 
-	<target name="build-jars-eclipse" depends="build-all-jar, build-runtime-jar,  build-rewriter-jar, strip-conf, copy-to-client" />
-
-	<target name="build-jars" depends="compile, build-all-jar, build-runtime-jar,  build-rewriter-jar, strip-conf, copy-to-client" />
 
 	<target name="strip-conf">
 		<jar destfile="${flashlight-all-final.jar}">
@@ -140,15 +116,17 @@
 		<delete file="${flashlight-runtime.jar}" />
 	</target>
 
+	<target name="build-jars" depends="compile, build-all-jar, build-runtime-jar,  build-rewriter-jar, strip-conf" />
+
 	<target name="copy-to-client">
 		<copy file="${flashlight-runtime-final.jar}" todir="${basedir}/../flashlight-client-eclipse/lib" />
 		<copy file="${flashlight-rewriter.jar}" todir="${basedir}/../flashlight-client-eclipse/lib" />
 	</target>
 
+	<target name="jar-and-copy-to-client" depends="build-jars, copy-to-client" />
+
 	<target name="compile-test-code" depends="build-jars">
-		<delete dir="${classes}" />
-		<mkdir dir="${classes}" />
-		<javac includeantruntime="false" srcdir="${test}" destdir="${classes}" source="1.5" target="1.5">
+		<javac includeantruntime="false" srcdir="${test}" destdir="${build.bin}" source="1.6" target="1.6">
 			<classpath>
 				<pathelement path="${java.class.path}" />
 				<pathelement location="${junit.jar}" />
@@ -157,9 +135,8 @@
 		</javac>
 	</target>
 
-
 	<path id="test.classpath">
-		<pathelement location="${classes}" />
+		<pathelement location="${build.bin}" />
 		<pathelement path="${java.class.path}" />
 		<pathelement location="${junit.jar}" />
 		<pathelement location="${flashlight-all.jar}" />

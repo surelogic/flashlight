@@ -1,4 +1,4 @@
-<project name="flashlight-instrumentation-5.0" default="build-jars">
+<project name="flashlight-instrumentation" default="build-jars">
 
 	<property environment="env" />
 

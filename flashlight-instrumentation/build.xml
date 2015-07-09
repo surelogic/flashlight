@@ -147,28 +147,11 @@
 		<echo message=" - The below test might fail if the GC gods do not smile upon it" />
 		<junit printsummary="on" fork="yes" haltonfailure="yes">
 			<classpath refid="test.classpath" />
-			<test name="com.surelogic._flashlight.TestBasicRefinery" />
-		</junit>
-		<echo message=" - The below test might fail if the GC gods do not smile upon it" />
-		<junit printsummary="on" fork="yes" haltonfailure="yes">
-			<classpath refid="test.classpath" />
-			<test name="com.surelogic._flashlight.TestBasicSharedState" />
-		</junit>
-		<junit printsummary="on" fork="yes" haltonfailure="yes">
-			<classpath refid="test.classpath" />
 			<test name="com.surelogic._flashlight.TestEntities" />
 		</junit>
 		<junit printsummary="on" fork="yes" haltonfailure="yes">
 			<classpath refid="test.classpath" />
-			<test name="com.surelogic._flashlight.TestKeyField" />
-		</junit>
-		<junit printsummary="on" fork="yes" haltonfailure="yes">
-			<classpath refid="test.classpath" />
 			<test name="com.surelogic._flashlight.TestObservedField" />
-		</junit>
-		<junit printsummary="on" fork="yes" haltonfailure="yes">
-			<classpath refid="test.classpath" />
-			<test name="com.surelogic._flashlight.TestOutput" />
 		</junit>
 		<junit printsummary="on" fork="yes" haltonfailure="yes">
 			<classpath refid="test.classpath" />

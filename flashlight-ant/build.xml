@@ -6,9 +6,9 @@
 	<property name="lib" value="${basedir}/lib" />
 	<property name="classes" value="${basedir}/bin" />
 
-	<property name="flashlight-rewriter-jar" value="../flashlight-instrumentation-5.0/flashlight-rewriter.jar"/>	
-	<property name="flashlight-instrumentation-project-classes" value="../flashlight-instrumentation-5.0/bin"/>
-    <property name="flashlight-instrumentation-runtime" value="../flashlight-instrumentation-5.0/flashlight-runtime.jar"/>
+	<property name="flashlight-rewriter-jar" value="../flashlight-instrumentation/build//flashlight-rewriter.jar"/>	
+	<property name="flashlight-instrumentation-project-classes" value="../flashlight-instrumentation/build/bin"/>
+    <property name="flashlight-instrumentation-runtime" value="../flashlight-instrumentation/build/bin/flashlight-runtime.jar"/>
     <property name="flashlight-common-project-classes" value="../flashlight-common/bin"/>
     <property name="common-project-classes" value="../../common/common/bin"/>
     <property name="common-project-runtime" value="../../common/common/lib/runtime"/>
@@ -20,15 +20,6 @@
 	<property name="flashlight-ant.jar" value="${basedir}/flashlight-ant.jar" />
 	<property name="flashlight-ant.jar.manifest" value="${lib}/ANT-MANIFEST.MF" />
 
-  <path id="jaxb.classpath">
-    <pathelement path="${lib}/jaxb1-impl.jar"/>
-    <pathelement path="${lib}/jaxb-api.jar"/>
-    <pathelement path="${lib}/jaxb-impl.jar"/>
-    <pathelement path="${lib}/jaxb-xjc.jar"/>
-    <pathelement path="${lib}/jsr173_1.0_api.jar"/>
-    <pathelement path="${lib}/activation.jar"/>
-  </path>
-
 	<target name="clean">
 		<delete file="${flashlight-ant.jar}"/>
 	</target>
@@ -36,10 +27,9 @@
 	<target name="compile">
 		<delete dir="${classes}" />
 		<mkdir dir="${classes}" />
-		<javac destdir="${classes}" includeAntRuntime="true" debug="true" source="1.5" target="1.5">
+		<javac destdir="${classes}" includeAntRuntime="true" debug="true" source="1.7" target="1.7">
 			<src path="${src}" />
 			<classpath>
-				<path refid="jaxb.classpath"/> 
 				<pathelement location="${ant.jar}" />
 				<pathelement location="${flashlight-instrumentation-project-classes}"/>
 				<pathelement location="${flashlight-common-project-classes}"/>
@@ -65,9 +55,9 @@
 			<!-- (3) Include the contents of flashlight-common -->
  		    <fileset dir="${flashlight-common-project-classes}"/>
 		    <zipfileset src="${common-project-runtime}/commons-lang3-3.4.jar" />
-			<zipfileset src="${common-project-runtime}/asm-5.0.2.jar" />
-            <zipfileset src="${common-project-runtime}/asm-commons-5.0.2.jar" />
-            <zipfileset src="${common-project-runtime}/asm-tree-5.0.2.jar" />
+			<zipfileset src="${common-project-runtime}/asm-5.0.4.jar" />
+            <zipfileset src="${common-project-runtime}/asm-commons-5.0.4.jar" />
+            <zipfileset src="${common-project-runtime}/asm-tree-5.0.4.jar" />
 			<zipfileset src="${flashlight-rewriter-jar}" />
 		</jar>
 		<zip destfile="${flashlight-ant.zip}">

@@ -85,7 +85,7 @@ public class FieldDefs extends HashMap<Long, FieldDef> {
             }
             list.add(f);
         }
-        for (final Entry<String, List<FieldDef>> e : fieldMap.entrySet()) {
+        for (final Map.Entry<String, List<FieldDef>> e : fieldMap.entrySet()) {
             b.append(e.getKey());
             b.append('\n');
             final List<FieldDef> fs = e.getValue();

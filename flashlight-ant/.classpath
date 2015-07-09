@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/flashlight-instrumentation-5.0"/>
 	<classpathentry kind="lib" path="lib/activation.jar"/>
 	<classpathentry kind="lib" path="lib/jaxb1-impl.jar"/>
 	<classpathentry kind="lib" path="lib/jaxb-api.jar"/>
@@ -13,5 +12,6 @@
 	<classpathentry kind="lib" path="lib/javadoc.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
 	<classpathentry kind="lib" path="lib/javac-1.9.0-dev-r2644-1.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/flashlight-instrumentation"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

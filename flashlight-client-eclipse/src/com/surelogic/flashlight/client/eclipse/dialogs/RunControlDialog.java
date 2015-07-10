@@ -560,7 +560,7 @@ public final class RunControlDialog extends Dialog implements IRunManagerObserve
     }
   }
 
-  final LinkedList<RunControlItem> f_guiModel = new LinkedList<RunControlItem>();
+  final LinkedList<RunControlItem> f_guiModel = new LinkedList<>();
 
   /**
    * May be invoked within any thread context.

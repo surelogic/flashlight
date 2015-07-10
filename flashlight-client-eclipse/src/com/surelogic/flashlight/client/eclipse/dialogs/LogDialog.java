@@ -71,7 +71,7 @@ public final class LogDialog extends Dialog {
 
 			@Override
 			public void lineGetStyle(LineStyleEvent event) {
-				ArrayList<StyleRange> result = new ArrayList<StyleRange>();
+				ArrayList<StyleRange> result = new ArrayList<>();
 				boolean highlight = event.lineText.indexOf("!PROBLEM!") != -1;
 				if (highlight) {
 					StyleRange sr = new StyleRange();

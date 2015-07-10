@@ -148,7 +148,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements ILifec
 
   @NonNull
   RunDirectory[] getSelectedRunDirectoriesNotBeingPrepared() {
-    final List<RunDirectory> result = new ArrayList<RunDirectory>();
+    final List<RunDirectory> result = new ArrayList<>();
     for (RunDirectory r : getSelectedRunDirectories()) {
       if (!RunManager.getInstance().isBeingPrepared(r))
         result.add(r);
@@ -158,7 +158,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements ILifec
 
   @NonNull
   List<RunDirectory> getSelectedRunDirectoriesThatArePrepared() {
-    final List<RunDirectory> result = new ArrayList<RunDirectory>();
+    final List<RunDirectory> result = new ArrayList<>();
     for (RunDirectory r : getSelectedRunDirectories()) {
       if (r.isPrepared())
         result.add(r);
@@ -211,7 +211,7 @@ public final class RunViewMediator extends AdHocManagerAdapter implements ILifec
   final Action f_prepAction = new Action() {
     @Override
     public void run() {
-      final List<RunDirectory> notPrepped = new ArrayList<RunDirectory>();
+      final List<RunDirectory> notPrepped = new ArrayList<>();
       RunDirectory one = null;
       boolean hasPrep = false;
       for (final RunDirectory d : getSelectedRunDirectoriesNotBeingPrepared()) {
@@ -288,8 +288,8 @@ public final class RunViewMediator extends AdHocManagerAdapter implements ILifec
         }
         for (final RunDirectory runDir : selected) {
           final SLJob job = new DeleteRunDirectoryJob(runDir);
-          final Job eJob = EclipseUtility
-              .toEclipseJob(job, runDir.getRunIdString(), RunManager.getInstance().getRefreshAccessKey());
+          final Job eJob = EclipseUtility.toEclipseJob(job, runDir.getRunIdString(),
+              RunManager.getInstance().getRefreshAccessKey());
           eJob.setUser(true);
           eJob.schedule();
         }
